@@ -4212,7 +4212,9 @@ static void hdd_ipa_pm_flush(struct work_struct *work)
 		if (pm_tx_cb->exception) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				"FLUSH EXCEPTION");
-			hdd_softap_hard_start_xmit(skb, pm_tx_cb->adapter->dev);
+			if (pm_tx_cb->adapter->dev)
+				hdd_softap_hard_start_xmit(skb,
+					  pm_tx_cb->adapter->dev);
 		} else {
 			hdd_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
 				       pm_tx_cb->ipa_tx_desc);
@@ -5594,32 +5596,19 @@ static void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
 }
 
 /**
- * __hdd_ipa_cleanup - IPA cleanup function
+ * __hdd_ipa_flush - flush IPA exception path SKB's
  * @hdd_ctx: HDD global context
  *
- * Return: QDF_STATUS enumeration
+ * Return: none
  */
-static QDF_STATUS __hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
+static void __hdd_ipa_flush(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = hdd_ctx->hdd_ipa;
-	int i;
-	struct hdd_ipa_iface_context *iface_context = NULL;
 	qdf_nbuf_t skb;
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb = NULL;
 
 	if (!hdd_ipa_is_enabled(hdd_ctx))
-		return QDF_STATUS_SUCCESS;
-
-	if (!hdd_ipa_uc_is_enabled(hdd_ctx)) {
-		unregister_inetaddr_notifier(&hdd_ipa->ipv4_notifier);
-		hdd_ipa_teardown_sys_pipe(hdd_ipa);
-	}
-
-	/* Teardown IPA sys_pipe for MCC */
-	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx))
-		hdd_ipa_teardown_sys_pipe(hdd_ipa);
-
-	hdd_ipa_destroy_rm_resource(hdd_ipa);
+		return;
 
 	cancel_work_sync(&hdd_ipa->pm_work);
 
@@ -5636,6 +5625,35 @@ static QDF_STATUS __hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	}
 	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+}
+
+/**
+ * __hdd_ipa_cleanup - IPA cleanup function
+ * @hdd_ctx: HDD global context
+ *
+ * Return: QDF_STATUS enumeration
+ */
+static QDF_STATUS __hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
+{
+	struct hdd_ipa_priv *hdd_ipa = hdd_ctx->hdd_ipa;
+	int i;
+	struct hdd_ipa_iface_context *iface_context = NULL;
+
+	if (!hdd_ipa_is_enabled(hdd_ctx))
+		return QDF_STATUS_SUCCESS;
+
+	if (!hdd_ipa_uc_is_enabled(hdd_ctx)) {
+		unregister_inetaddr_notifier(&hdd_ipa->ipv4_notifier);
+		hdd_ipa_teardown_sys_pipe(hdd_ipa);
+	}
+
+	/* Teardown IPA sys_pipe for MCC */
+	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx))
+		hdd_ipa_teardown_sys_pipe(hdd_ipa);
+
+	hdd_ipa_destroy_rm_resource(hdd_ipa);
+
+	__hdd_ipa_flush(hdd_ctx);
 
 	qdf_spinlock_destroy(&hdd_ipa->pm_lock);
 	qdf_spinlock_destroy(&hdd_ipa->q_lock);
@@ -5665,6 +5683,19 @@ static QDF_STATUS __hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 	hdd_ctx->hdd_ipa = NULL;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hdd_ipa_cleanup - SSR wrapper for __hdd_ipa_flush
+ * @hdd_ctx: HDD global context
+ *
+ * Return: None
+ */
+void hdd_ipa_flush(struct hdd_context *hdd_ctx)
+{
+	cds_ssr_protect(__func__);
+	__hdd_ipa_flush(hdd_ctx);
+	cds_ssr_unprotect(__func__);
 }
 
 /**

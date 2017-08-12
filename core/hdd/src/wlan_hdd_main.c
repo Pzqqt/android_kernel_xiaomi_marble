@@ -4350,6 +4350,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		break;
 
 	case QDF_SAP_MODE:
+		/* Flush IPA exception path packets */
+		hdd_ipa_flush(hdd_ctx);
 	case QDF_P2P_GO_MODE:
 		/* Any softap specific cleanup here... */
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
