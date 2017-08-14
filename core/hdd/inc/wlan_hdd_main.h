@@ -670,7 +670,7 @@ struct hdd_station_ctx {
 #endif
 
 	/* Connection information*/
-	connection_info_t conn_info;
+	struct hdd_connection_info conn_info;
 
 	roaming_info_t roam_info;
 

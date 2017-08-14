@@ -145,7 +145,7 @@ struct hdd_conn_flag {
 #define ANTENNA_SEL_INFO_RSVD			0x80
 
 /**
- * typedef connection_info_t - structure to store connection information
+ * struct hdd_connection_info - structure to store connection information
  * @connState: connection state of the NIC
  * @bssId: BSSID
  * @SSID: SSID Info
@@ -175,7 +175,7 @@ struct hdd_conn_flag {
  * @assoc_status_code: holds assoc fail reason
  * @congestion: holds congestion percentage
  */
-typedef struct connection_info_s {
+struct hdd_connection_info {
 	eConnectionState connState;
 	struct qdf_mac_addr bssId;
 	tCsrSSIDInfo SSID;
@@ -206,7 +206,7 @@ typedef struct connection_info_s {
 	int8_t signal;
 	int32_t assoc_status_code;
 	uint32_t cca;
-} connection_info_t;
+};
 
 /* Forward declarations */
 typedef struct hdd_adapter hdd_adapter_t;
