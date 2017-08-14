@@ -1439,7 +1439,8 @@ static int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
 		return -EIO;
 }
 
-static int ol_ath_get_reg_table(uint32_t target_version,
+static int ol_ath_get_reg_table(struct hif_opaque_softc *scn,
+				uint32_t target_version,
 				struct tgt_reg_table *reg_table)
 {
 	int section_len = 0;
@@ -1448,6 +1449,10 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 		qdf_assert(0);
 		return section_len;
 	}
+
+	if (hif_get_bus_type(scn) != QDF_BUS_TYPE_PCI &&
+	    hif_get_bus_type(scn) != QDF_BUS_TYPE_SDIO)
+		return section_len;
 
 	switch (target_version) {
 	case AR6320_REV2_1_VERSION:
@@ -1482,7 +1487,7 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_version =  tgt_info->target_version;
 
-	section_len = ol_ath_get_reg_table(target_version, &reg_table);
+	section_len = ol_ath_get_reg_table(scn, target_version, &reg_table);
 
 	if (!reg_table.section || !reg_table.section_size || !section_len) {
 		BMI_ERR("%s: failed to get reg table", __func__);
@@ -1565,28 +1570,16 @@ void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 	}
 }
 
-#ifdef CONFIG_HL_SUPPORT
-
-/**
- * ol_dump_ce_register() - cannot read the section
- * @scn: ol_softc handler
- * @memory_block: non-NULL reserved memory location
- *
- * Return: -EACCES for LL and not apllicable for HL
- */
-static inline int
-ol_dump_ce_register(struct hif_opaque_softc *scn, void *memory_block)
-{
-	return 0;
-}
-#else
-
 static int
 ol_dump_ce_register(struct hif_opaque_softc *scn, void *memory_block)
 {
 	int ret;
 
 	BMI_ERR("Could not read dump section!");
+
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO ||
+	    hif_get_bus_type(scn) == QDF_BUS_TYPE_USB)
+		return 0;
 
 	if (hif_dump_registers(scn))
 		BMI_ERR("Failed to dump bus registers");
@@ -1596,7 +1589,103 @@ ol_dump_ce_register(struct hif_opaque_softc *scn, void *memory_block)
 
 	return ret;
 }
-#endif
+
+static inline uint32_t
+ol_get_max_section_count(struct hif_opaque_softc *scn)
+{
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI)
+		return 5;
+	else
+		return 4;
+}
+
+/**
+ * ol_set_ram_config_reg() - set target RAM configuration register
+ * @sc: pointer of hif_softc context
+ * @config: value to be written to the register
+ *
+ * This function will write the given value to target RAM configuration
+ * register which is bit[23-20] of target CPU inbound address in order to
+ * provide correct address mapping.
+ *
+ * Return: 0 for success or reasons for failure
+ */
+static int ol_set_ram_config_reg(struct hif_opaque_softc *scn, uint32_t config)
+{
+	QDF_STATUS status;
+	uint32_t val;
+	struct targetdef_s *targetdef =
+		(struct targetdef_s *)hif_get_targetdef(scn);
+	uint32_t ram_config_addr =
+		targetdef->d_SOC_CORE_BASE_ADDRESS + FW_RAM_CONFIG_ADDRESS;
+
+	if (hif_get_bus_type(scn) != QDF_BUS_TYPE_PCI)
+		return -EACCES;
+
+	status = hif_diag_write_access(scn, ram_config_addr, config);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		return -EACCES;
+	}
+	status = hif_diag_read_access(scn, ram_config_addr, &val);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		return -EACCES;
+	}
+	if (val != config) {
+		BMI_ERR("%s: Failed to set RAM config reg from 0x%x to 0x%x",
+			__func__, val, config);
+		return -EACCES;
+	}
+	return 0;
+}
+
+static int
+ol_get_iram_len_and_pos(struct hif_opaque_softc *scn, uint32_t *pos,
+			uint32_t *len, uint32_t section)
+{
+	enum hif_target_status status;
+	uint32_t iram_addr, iram_size;
+	int ret;
+
+	if (hif_get_bus_type(scn) != QDF_BUS_TYPE_PCI) {
+		*pos = IRAM_LOCATION;
+		*len = IRAM_SIZE;
+		BMI_ERR("%s: Dumping IRAM Section", __func__);
+		return 0;
+	}
+
+	status = hif_get_target_status(scn);
+	if (status != TARGET_STATUS_RESET) {
+		BMI_ERR("%s: Target status invalid: %d", __func__, status);
+		return -EBUSY;
+	}
+
+	switch (section) {
+	case 3:
+		BMI_ERR("%s: Dumping IRAM1 section", __func__);
+		iram_addr = IRAM1_LOCATION;
+		iram_size = IRAM1_SIZE;
+		break;
+	case 4:
+		BMI_ERR("%s: Dumping IRAM2 section", __func__);
+		iram_addr = IRAM2_LOCATION;
+		iram_size = IRAM2_SIZE;
+		break;
+	default:
+		BMI_ERR("%s: Invalid input iram section %d",
+			__func__, section);
+		return A_EINVAL;
+	}
+
+	ret = ol_set_ram_config_reg(scn, iram_addr >> 20);
+	if (ret) {
+		BMI_ERR("%s: Skip IRAM1 ret:%d", __func__, ret);
+		return -EBUSY;
+	}
+
+	*pos = iram_addr;
+	*len = iram_size;
+	return 0;
+}
 
 /**
  * ol_target_coredump() - API to collect target ramdump
@@ -1619,67 +1708,65 @@ static int ol_target_coredump(void *inst, void *memory_block,
 	uint32_t section_count = 0;
 	uint32_t pos = 0;
 	uint32_t read_len = 0;
+	uint32_t max_count = ol_get_max_section_count(scn);
 
-	/*
-	 * SECTION = DRAM
-	 * START   = 0x00400000
-	 * LENGTH  = 0x000a8000
-	 *
-	 * SECTION = AXI
-	 * START   = 0x000a0000
-	 * LENGTH  = 0x00018000
-	 *
-	 * SECTION = REG
-	 * START   = 0x00000800
-	 * LENGTH  = 0x0007F820
-	 */
-
-	while ((section_count < 3) && (amount_read < block_len)) {
+	while ((section_count < max_count) && (amount_read < block_len)) {
 		switch (section_count) {
 		case 0:
-			/* DRAM SECTION */
 			pos = DRAM_LOCATION;
 			read_len = DRAM_SIZE;
 			BMI_ERR("%s: Dumping DRAM section...", __func__);
 			break;
 		case 1:
-			/* AXI SECTION */
 			pos = AXI_LOCATION;
 			read_len = AXI_SIZE;
 			BMI_ERR("%s: Dumping AXI section...", __func__);
 			break;
 		case 2:
-			/* REG SECTION */
 			pos = REGISTER_LOCATION;
 			/* ol_diag_read_reg_loc checks for buffer overrun */
 			read_len = 0;
 			BMI_ERR("%s: Dumping Register section...", __func__);
 			break;
+		case 3:
+		case 4:
+			ret = ol_get_iram_len_and_pos(scn, &pos, &read_len,
+						      section_count);
+			if (ret) {
+				BMI_ERR("%s: Fail to Dump IRAM Section "
+					"ret:%d", __func__, ret);
+				return ret;
+			}
+			break;
+		default:
+			BMI_ERR("%s: INVALID SECTION_:%d", __func__,
+				section_count);
+			return 0;
 		}
 
-		if ((block_len - amount_read) >= read_len) {
-			if (((hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI) ||
-			     (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)) &&
-			    (pos == REGISTER_LOCATION)) {
-				result = ol_diag_read_reg_loc(scn,
-						buffer_loc,
-						block_len - amount_read);
-			} else {
-				result = ol_diag_read(scn, buffer_loc,
-					      pos, read_len);
-			}
-			if (result != -EIO) {
-				amount_read += result;
-				buffer_loc += result;
-				section_count++;
-			} else {
-				ret = ol_dump_ce_register(scn, memory_block);
-				break;  /* Could not read the section */
-			}
-		} else {
-			BMI_ERR("Insufficient room in dump buffer!");
-			break;  /* Insufficient room in buffer */
+		if (block_len - amount_read < read_len) {
+			BMI_ERR("%s: No memory to dump section:%d buffer!",
+				__func__, section_count);
+			return -ENOMEM;
 		}
+
+		if (((hif_get_bus_type(scn) == QDF_BUS_TYPE_PCI) ||
+		     (hif_get_bus_type(scn) == QDF_BUS_TYPE_SDIO)) &&
+		    pos == REGISTER_LOCATION)
+			result = ol_diag_read_reg_loc(scn, buffer_loc,
+						      block_len - amount_read);
+		else
+			result = ol_diag_read(scn, buffer_loc, pos, read_len);
+
+		if (result == -EIO)
+			return ol_dump_ce_register(scn, memory_block);
+
+		BMI_INFO("%s: Section:%d Bytes Read:%0x", __func__,
+			 section_count, result);
+
+		amount_read += result;
+		buffer_loc += result;
+		section_count++;
 	}
 	return ret;
 }
