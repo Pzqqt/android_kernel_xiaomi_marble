@@ -143,8 +143,7 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(void *data_vdev, qdf_nbuf_t nbuf);
 
-uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
-		uint32_t budget);
+uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota);
 
 int32_t
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);

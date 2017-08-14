@@ -733,60 +733,70 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	struct dp_soc *soc = int_ctx->soc;
 	int ring = 0;
 	uint32_t work_done  = 0;
-	uint32_t budget = dp_budget;
+	int budget = dp_budget;
 	uint8_t tx_mask = int_ctx->tx_ring_mask;
 	uint8_t rx_mask = int_ctx->rx_ring_mask;
 	uint8_t rx_err_mask = int_ctx->rx_err_ring_mask;
 	uint8_t rx_wbm_rel_mask = int_ctx->rx_wbm_rel_ring_mask;
 	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
+	uint32_t remaining_quota = dp_budget;
 
 	/* Process Tx completion interrupts first to return back buffers */
-	if (tx_mask) {
-		for (ring = 0; ring < soc->num_tcl_data_rings; ring++) {
-			if (tx_mask & (1 << ring)) {
-				work_done =
-					dp_tx_comp_handler(soc, ring, budget);
-				budget -= work_done;
-				if (work_done)
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_INFO,
-						"tx mask 0x%x ring %d,"
-						"budget %d",
-						tx_mask, ring, budget);
-				if (budget <= 0)
-					goto budget_done;
-			}
+	while (tx_mask) {
+		if (tx_mask & 0x1) {
+			work_done =
+				dp_tx_comp_handler(soc,
+					soc->tx_comp_ring[ring].hal_srng,
+					remaining_quota);
+
+			QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_INFO,
+					"tx mask 0x%x ring %d,"
+					"budget %d, work_done %d",
+					tx_mask, ring, budget, work_done);
+
+			budget -= work_done;
+			if (budget <= 0)
+				goto budget_done;
+
+			remaining_quota = budget;
 		}
+		tx_mask = tx_mask >> 1;
+		ring++;
 	}
+
 
 	/* Process REO Exception ring interrupt */
 	if (rx_err_mask) {
 		work_done = dp_rx_err_process(soc,
-				soc->reo_exception_ring.hal_srng, budget);
-		budget -=  work_done;
+				soc->reo_exception_ring.hal_srng,
+				remaining_quota);
 
-		if (work_done)
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"REO Exception Ring: work_done %d budget %d",
 				work_done, budget);
+
+		budget -=  work_done;
 		if (budget <= 0) {
 			goto budget_done;
 		}
+		remaining_quota = budget;
 	}
 
 	/* Process Rx WBM release ring interrupt */
 	if (rx_wbm_rel_mask) {
 		work_done = dp_rx_wbm_err_process(soc,
-				soc->rx_rel_ring.hal_srng, budget);
-		budget -=  work_done;
+				soc->rx_rel_ring.hal_srng, remaining_quota);
 
-		if (work_done)
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 				"WBM Release Ring: work_done %d budget %d",
 				work_done, budget);
+
+		budget -=  work_done;
 		if (budget <= 0) {
 			goto budget_done;
 		}
+		remaining_quota = budget;
 	}
 
 	/* Process Rx interrupts */
@@ -796,16 +806,19 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				work_done =
 					dp_rx_process(int_ctx,
 					    soc->reo_dest_ring[ring].hal_srng,
-					    budget);
-				budget -=  work_done;
-				if (work_done)
-					QDF_TRACE(QDF_MODULE_ID_DP,
+					    remaining_quota);
+
+				QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_INFO,
 						"rx mask 0x%x ring %d,"
-						"budget %d",
-						tx_mask, ring, budget);
+						"work_done %d budget %d",
+						rx_mask, ring, work_done,
+						budget);
+
+				budget -=  work_done;
 				if (budget <= 0)
 					goto budget_done;
+				remaining_quota = budget;
 			}
 		}
 	}
@@ -819,16 +832,17 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			continue;
 		if (int_ctx->rx_mon_ring_mask & (1 << ring)) {
 			work_done =
-				dp_mon_process(soc, ring, budget);
-			budget -=  work_done;
+				dp_mon_process(soc, ring, remaining_quota);
+			budget -= work_done;
+			remaining_quota = budget;
 		}
 
 		if (int_ctx->rxdma2host_ring_mask & (1 << ring)) {
 			work_done =
-				dp_rxdma_err_process(soc, ring, budget);
+				dp_rxdma_err_process(soc, ring,
+						remaining_quota);
 			budget -=  work_done;
 		}
-
 	}
 
 	qdf_lro_flush(int_ctx->lro_ctx);

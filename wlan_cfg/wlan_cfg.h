@@ -26,9 +26,19 @@
 #if defined(CONFIG_MCL)
 #define MAX_PDEV_CNT 1
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
+/*
+ * This mask defines how many transmit frames account for 1 NAPI work unit
+ * 0 means each tx completion is 1 unit
+ */
+#define DP_TX_NAPI_BUDGET_DIV_MASK 0
 #else
 #define MAX_PDEV_CNT 3
 #define WLAN_CFG_INT_NUM_CONTEXTS 4
+/*
+ * This mask defines how many transmit frames account for 1 NAPI work unit
+ * 0xFFFF means each 64K tx frame completions account for 1 unit of NAPI budget
+ */
+#define DP_TX_NAPI_BUDGET_DIV_MASK 0xFFFF
 #endif
 
 /* Tx configuration */

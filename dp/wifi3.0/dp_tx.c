@@ -2063,7 +2063,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
  * dp_tx_comp_handler() - Tx completion handler
  * @soc: core txrx main context
  * @ring_id: completion ring id
- * @budget: No. of packets/descriptors that can be serviced in one loop
+ * @quota: No. of packets/descriptors that can be serviced in one loop
  *
  * This function will collect hardware release ring element contents and
  * handle descriptor contents. Based on contents, free packet or handle error
@@ -2071,8 +2071,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
  *
  * Return: none
  */
-uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
-			uint32_t budget)
+uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 {
 	void *tx_comp_hal_desc;
 	uint8_t buffer_src;
@@ -2082,7 +2081,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 	struct dp_tx_desc_s *head_desc = NULL;
 	struct dp_tx_desc_s *tail_desc = NULL;
 	uint32_t num_processed;
-	void *hal_srng = soc->tx_comp_ring[ring_id].hal_srng;
+	uint32_t count;
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -2092,6 +2091,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 	}
 
 	num_processed = 0;
+	count = 0;
 
 	/* Find head descriptor from completion ring */
 	while (qdf_likely(tx_comp_hal_desc =
@@ -2100,16 +2100,15 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 		buffer_src = hal_tx_comp_get_buffer_source(tx_comp_hal_desc);
 
 		/* If this buffer was not released by TQM or FW, then it is not
-		 * Tx completion indication, skip to next descriptor */
+		 * Tx completion indication, assert */
 		if ((buffer_src != HAL_TX_COMP_RELEASE_SOURCE_TQM) &&
 				(buffer_src != HAL_TX_COMP_RELEASE_SOURCE_FW)) {
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_ERROR,
+					QDF_TRACE_LEVEL_FATAL,
 					"Tx comp release_src != TQM | FW");
 
-			/* TODO Handle Freeing of the buffer in descriptor */
-			continue;
+			qdf_assert_always(0);
 		}
 
 		/* Get descriptor id */
@@ -2122,12 +2121,10 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 					soc->wlan_cfg_ctx)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_FATAL,
-					"TX COMP pool id %d not valid",
+					"Tx Comp pool id %d not valid",
 					pool_id);
 
-			/* Check if assert aborts execution, if not handle
-			 * return here */
-			QDF_ASSERT(0);
+			qdf_assert_always(0);
 		}
 
 		/* Find Tx descriptor */
@@ -2144,9 +2141,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 					"Tx Comp pool id %d not matched %d",
 					pool_id, tx_desc->pool_id);
 
-			/* Check if assert aborts execution, if not handle
-			 * return here */
-			QDF_ASSERT(0);
+			qdf_assert_always(0);
 		}
 
 		if (!(tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED) ||
@@ -2160,8 +2155,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 		}
 
 		/*
-		 * If the release source is FW, process the HTT
-		 * status
+		 * If the release source is FW, process the HTT status
 		 */
 		if (qdf_unlikely(buffer_src ==
 					HAL_TX_COMP_RELEASE_SOURCE_FW)) {
@@ -2171,15 +2165,15 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 			dp_tx_process_htt_completion(tx_desc,
 					htt_tx_status);
 		} else {
-			tx_desc->next = NULL;
 
 			/* First ring descriptor on the cycle */
 			if (!head_desc) {
 				head_desc = tx_desc;
-			} else {
-				tail_desc->next = tx_desc;
+				tail_desc = tx_desc;
 			}
 
+			tail_desc->next = tx_desc;
+			tx_desc->next = NULL;
 			tail_desc = tx_desc;
 
 			/* Collect hw completion contents */
@@ -2188,15 +2182,16 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, uint32_t ring_id,
 
 		}
 
-		num_processed++;
+		num_processed += !(count & DP_TX_NAPI_BUDGET_DIV_MASK);
 
 		/*
 		 * Processed packet count is more than given quota
 		 * stop to processing
 		 */
-		if (num_processed >= budget)
+		if ((num_processed >= quota))
 			break;
 
+		count++;
 	}
 
 	hal_srng_access_end(soc->hal_soc, hal_srng);

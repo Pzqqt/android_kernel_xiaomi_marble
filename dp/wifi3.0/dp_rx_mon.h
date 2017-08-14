@@ -38,7 +38,6 @@
 void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota);
 
-
 QDF_STATUS dp_rx_pdev_mon_attach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev);
 
