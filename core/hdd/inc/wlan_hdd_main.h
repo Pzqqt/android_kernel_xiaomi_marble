@@ -432,17 +432,25 @@ enum hdd_roam_state {
 	HDD_ROAM_STATE_SETTING_KEY,
 };
 
-typedef struct roaming_info_s {
+/**
+ * struct hdd_roaming_info - HDD Internal Roaming Information
+ * @roamingState: Current state of roaming
+ * @bssid: BSSID to which we are connected
+ * @peerMac: Peer MAC address for IBSS connection
+ * @roamId: Unique identifier for a roaming instance
+ * @roamStatus: Current roam command status
+ * @deferKeyComplete: Should key complete be deferred?
+ *
+ */
+struct hdd_roaming_info {
 	enum hdd_roam_state roamingState;
-	qdf_event_t roamingEvent;
-
 	tSirMacAddr bssid;
 	tSirMacAddr peerMac;
 	uint32_t roamId;
 	eRoamCmdStatus roamStatus;
 	bool deferKeyComplete;
 
-} roaming_info_t;
+};
 
 #ifdef FEATURE_WLAN_WAPI
 /* Define WAPI macros for Length, BKID count etc*/
@@ -672,7 +680,7 @@ struct hdd_station_ctx {
 	/* Connection information*/
 	struct hdd_connection_info conn_info;
 
-	roaming_info_t roam_info;
+	struct hdd_roaming_info roam_info;
 
 	int ft_carrier_on;
 
