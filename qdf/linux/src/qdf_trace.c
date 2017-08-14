@@ -343,21 +343,23 @@ void qdf_trace_hex_dump(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 			void *data, int buf_len)
 {
 	const u8 *ptr = data;
-	int i;
+	int i = 0;
 
 	if (!qdf_print_is_verbose_enabled(qdf_pidx, module, level))
 		return;
 
-	for (i = 0; i < buf_len; i += ROW_SIZE) {
+	while (buf_len > 0) {
 		unsigned char linebuf[BUFFER_SIZE];
 		int linelen = min(buf_len, ROW_SIZE);
 
 		buf_len -= ROW_SIZE;
 
-		hex_dump_to_buffer(ptr + i, linelen, ROW_SIZE, 1,
+		hex_dump_to_buffer(ptr, linelen, ROW_SIZE, 1,
 				linebuf, sizeof(linebuf), false);
 
 		qdf_trace_msg(module, level, "%.8x: %s", i, linebuf);
+		ptr += ROW_SIZE;
+		i += ROW_SIZE;
 	}
 }
 EXPORT_SYMBOL(qdf_trace_hex_dump);
