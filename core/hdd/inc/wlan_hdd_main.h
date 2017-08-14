@@ -380,7 +380,7 @@ struct hdd_tx_rx_histogram {
 	uint64_t qtime;
 };
 
-typedef struct hdd_tx_rx_stats_s {
+typedef struct hdd_tx_rx_stats {
 	/* start_xmit stats */
 	__u32    txXmitCalled;
 	__u32    txXmitDropped;
