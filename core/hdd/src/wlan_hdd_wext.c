@@ -3899,7 +3899,7 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 static void hdd_statistics_cb(void *pStats, void *pContext)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pContext;
-	hdd_stats_t *pStatsCache = NULL;
+	struct hdd_stats *pStatsCache = NULL;
 	hdd_wext_state_t *pWextState;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 

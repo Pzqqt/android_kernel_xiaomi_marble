@@ -408,7 +408,16 @@ typedef struct hdd_pmf_stats_s {
 } hdd_pmf_stats_t;
 #endif
 
-typedef struct hdd_stats_s {
+/**
+ * struct hdd_stats - per-adapter statistics
+ * @summary_stat: Summary stats reported by firmware
+ * @ClassA_stat: "Class A" stats reported by firmware
+ * @ClassD_stat: "Class D" stats reported by firmware
+ * @per_chain_rssi_stats: Per-chain RSSI stats
+ * @hddTxRxStats: Tx & Rx stats
+ * @hddPmfStats: Protercted Management Frame stats
+ */
+struct hdd_stats {
 	tCsrSummaryStatsInfo summary_stat;
 	tCsrGlobalClassAStatsInfo ClassA_stat;
 	tCsrGlobalClassDStatsInfo ClassD_stat;
@@ -417,7 +426,7 @@ typedef struct hdd_stats_s {
 #ifdef WLAN_FEATURE_11W
 	hdd_pmf_stats_t hddPmfStats;
 #endif
-} hdd_stats_t;
+};
 
 enum hdd_roam_state {
 	HDD_ROAM_STATE_NONE,
@@ -988,7 +997,7 @@ struct hdd_adapter {
 	/**Device TX/RX statistics*/
 	struct net_device_stats stats;
 	/** HDD statistics*/
-	hdd_stats_t hdd_stats;
+	struct hdd_stats hdd_stats;
 
 	/* estimated link speed */
 	uint32_t estimated_linkspeed;
