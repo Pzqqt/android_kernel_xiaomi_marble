@@ -6014,7 +6014,11 @@ enum hdd_link_speed_rpt_type {
 #define CFG_PREVENT_LINK_DOWN_NAME		"gPreventLinkDown"
 #define CFG_PREVENT_LINK_DOWN_MIN		(0)
 #define CFG_PREVENT_LINK_DOWN_MAX		(1)
+#if defined(QCA_WIFI_NAPIER_EMULATION) || defined(QCA_WIFI_QCA6290)
+#define CFG_PREVENT_LINK_DOWN_DEFAULT		(1)
+#else
 #define CFG_PREVENT_LINK_DOWN_DEFAULT		(0)
+#endif /* QCA_WIFI_NAPIER_EMULATION */
 
 #ifdef FEATURE_WLAN_TDLS
 /*
