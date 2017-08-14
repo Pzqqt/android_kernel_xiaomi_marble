@@ -216,6 +216,43 @@ static const struct wiphy_wowlan_support wowlan_support_reg_init = {
 };
 #endif
 
+static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
+	[QDF_MODULE_ID_TLSHIM] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_WMI] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_HTT] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_HDD] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SME] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_PE] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_WMA] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SYS] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_QDF] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SAP] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_HDD_SOFTAP] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_HDD_DATA] = {QDF_DATA_PATH_TRACE_LEVEL},
+	[QDF_MODULE_ID_HDD_SAP_DATA] = {QDF_DATA_PATH_TRACE_LEVEL},
+	[QDF_MODULE_ID_HIF] = {QDF_DATA_PATH_TRACE_LEVEL},
+	[QDF_MODULE_ID_HTC] = {QDF_DATA_PATH_TRACE_LEVEL},
+	[QDF_MODULE_ID_TXRX] = {QDF_DATA_PATH_TRACE_LEVEL},
+	[QDF_MODULE_ID_QDF_DEVICE] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_CFG] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_BMI] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_EPPING] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_QVIT] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_DP] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SOC] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_OS_IF] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_TARGET_IF] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SCHEDULER] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_MGMT_TXRX] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_PMO] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SCAN] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_POLICY_MGR] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_P2P] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_TDLS] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_REGULATORY] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_SERIALIZATION] = {QDF_TRACE_LEVEL_ALL},
+};
+
 /* internal function declaration */
 struct notifier_block hdd_netdev_notifier;
 
@@ -7490,65 +7527,6 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 	int ret = 0;
 	hdd_context_t *hdd_ctx;
 	v_CONTEXT_t p_cds_context;
-	int qdf_print_idx = -1;
-
-	struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
-		[QDF_MODULE_ID_TLSHIM] =  {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_WMI] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_HTT] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_HDD] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SME] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_PE] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_WMA] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SYS] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_QDF] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SAP] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_HDD_SOFTAP] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_HDD_DATA] = {QDF_DATA_PATH_TRACE_LEVEL},
-		[QDF_MODULE_ID_HDD_SAP_DATA] = {QDF_DATA_PATH_TRACE_LEVEL},
-		[QDF_MODULE_ID_HIF] = {QDF_DATA_PATH_TRACE_LEVEL},
-		[QDF_MODULE_ID_HTC] = {QDF_DATA_PATH_TRACE_LEVEL},
-		[QDF_MODULE_ID_TXRX] = {QDF_DATA_PATH_TRACE_LEVEL},
-		[QDF_MODULE_ID_QDF_DEVICE] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_CFG] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_BMI] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_EPPING] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_QVIT] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_DP] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SOC] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_OS_IF] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_TARGET_IF] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SCHEDULER] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_MGMT_TXRX] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_PMO] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SCAN] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_POLICY_MGR] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_P2P] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_TDLS] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_REGULATORY] = {QDF_TRACE_LEVEL_ALL},
-		[QDF_MODULE_ID_SERIALIZATION] = {QDF_TRACE_LEVEL_ALL},
-		};
-
-	status = qdf_print_setup();
-	if (status != QDF_STATUS_SUCCESS) {
-		pr_err("QDF print control object setup failed\n");
-		ret = -EINVAL;
-		goto err_out;
-	}
-	/* Register the module here with QDF */
-	qdf_print_idx = qdf_print_ctrl_register(cinfo, NULL, NULL,
-						"MCL_WLAN");
-
-	/* if qdf_print_idx is negative */
-	if (qdf_print_idx < 0) {
-		pr_err("QDF print control can not be registered %d\n",
-			qdf_print_idx);
-		ret = -EINVAL;
-		goto err_out;
-	}
-
-	/* Store the qdf_pidx information into qdf module */
-	qdf_set_pidx(qdf_print_idx);
 
 	ENTER();
 
@@ -7623,6 +7601,8 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 
 skip_multicast_logging:
 	hdd_set_trace_level_for_each(hdd_ctx);
+
+	EXIT();
 
 	return hdd_ctx;
 
@@ -10548,6 +10528,38 @@ const char *hdd_get_fwpath(void)
 	return fwpath.string;
 }
 
+static int hdd_qdf_print_init(void)
+{
+	int qdf_print_idx;
+	QDF_STATUS status;
+
+	status = qdf_print_setup();
+	if (status != QDF_STATUS_SUCCESS) {
+		pr_err("qdf_print_setup failed\n");
+		return -EINVAL;
+	}
+
+	qdf_print_idx = qdf_print_ctrl_register(cinfo, NULL, NULL, "MCL_WLAN");
+
+	if (qdf_print_idx < 0) {
+		pr_err("qdf_print_ctrl_register failed, ret = %d\n",
+		       qdf_print_idx);
+		return -EINVAL;
+	}
+
+	qdf_set_pidx(qdf_print_idx);
+
+	return 0;
+}
+
+static void hdd_qdf_print_deinit(void)
+{
+	int qdf_print_idx;
+
+	qdf_print_idx = qdf_get_pidx();
+	qdf_print_ctrl_cleanup(qdf_print_idx);
+}
+
 /**
  * hdd_init() - Initialize Driver
  *
@@ -10574,6 +10586,8 @@ int hdd_init(void)
 	}
 
 	hdd_trace_init();
+	hdd_qdf_print_init();
+
 	hdd_register_debug_callback();
 
 err_out:
@@ -10591,6 +10605,8 @@ void hdd_deinit(void)
 {
 	hdd_deinit_wowl();
 	cds_deinit();
+
+	hdd_qdf_print_deinit();
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_deinit_svc();
@@ -10830,7 +10846,6 @@ static void hdd_wait_for_recovery_completion(void)
  */
 static void __hdd_module_exit(void)
 {
-	int qdf_print_idx = -1;
 
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
@@ -10850,8 +10865,6 @@ static void __hdd_module_exit(void)
 	hdd_deinit();
 	pld_deinit();
 
-	qdf_print_idx = qdf_get_pidx();
-	qdf_print_ctrl_cleanup(qdf_print_idx);
 	wlan_hdd_state_ctrl_param_destroy();
 }
 
