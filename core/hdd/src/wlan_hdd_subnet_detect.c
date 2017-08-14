@@ -46,15 +46,15 @@
 static const struct nla_policy
 	policy[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1] = {
 		[PARAM_MAC_ADDR] = {
-				.type = NLA_BINARY,
+				.type = NLA_UNSPEC,
 				.len = QDF_MAC_ADDR_SIZE
 		},
 		[PARAM_IPV4_ADDR] = {
-				.type = NLA_BINARY,
+				.type = NLA_UNSPEC,
 				.len = QDF_IPV4_ADDR_SIZE
 		},
 		[PARAM_IPV6_ADDR] = {
-				.type = NLA_BINARY,
+				.type = NLA_UNSPEC,
 				.len = QDF_IPV6_ADDR_SIZE
 		}
 };
