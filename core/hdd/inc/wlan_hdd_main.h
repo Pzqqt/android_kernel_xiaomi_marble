@@ -425,10 +425,15 @@ typedef struct hdd_tx_rx_stats {
 } hdd_tx_rx_stats_t;
 
 #ifdef WLAN_FEATURE_11W
-typedef struct hdd_pmf_stats_s {
+/**
+ * struct hdd_pmf_stats - Protected Management Frame statistics
+ * @numUnprotDeauthRx: Number of unprotected deauth frames received
+ * @numUnprotDisassocRx: Number of unprotected disassoc frames received
+ */
+struct hdd_pmf_stats {
 	uint8_t numUnprotDeauthRx;
 	uint8_t numUnprotDisassocRx;
-} hdd_pmf_stats_t;
+};
 #endif
 
 /**
@@ -447,7 +452,7 @@ struct hdd_stats {
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
 	hdd_tx_rx_stats_t hddTxRxStats;
 #ifdef WLAN_FEATURE_11W
-	hdd_pmf_stats_t hddPmfStats;
+	struct hdd_pmf_stats hddPmfStats;
 #endif
 };
 
