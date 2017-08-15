@@ -2740,6 +2740,11 @@ static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 #endif
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+static inline void hdd_dev_setup_destructor(struct net_device *dev)
+{
+	dev->destructor = free_netdev;
+}
+
 static inline int
 hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
 	      int len, const struct nla_policy *policy)
@@ -2747,13 +2752,18 @@ hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
 	return nla_parse(tb, maxtype, head, len, policy);
 }
 #else
+static inline void hdd_dev_setup_destructor(struct net_device *dev)
+{
+	dev->needs_free_netdev = true;
+}
+
 static inline int
 hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
 	      int len, const struct nla_policy *policy)
 {
 	return nla_parse(tb, maxtype, head, len, policy, NULL);
 }
-#endif
+#endif /* KERNEL_VERSION(4, 12, 0) */
 
 /**
  * hdd_dp_trace_init() - initialize DP Trace by calling the QDF API

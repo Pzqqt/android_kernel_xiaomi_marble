@@ -6705,7 +6705,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 			     (void *)macAddr, sizeof(tSirMacAddr));
 
 		pHostapdAdapter->offloads_configured = false;
-		pWlanHostapdDev->destructor = free_netdev;
+		hdd_dev_setup_destructor(pWlanHostapdDev);
 		pWlanHostapdDev->ieee80211_ptr = &pHostapdAdapter->wdev;
 		pHostapdAdapter->wdev.wiphy = hdd_ctx->wiphy;
 		pHostapdAdapter->wdev.netdev = pWlanHostapdDev;
