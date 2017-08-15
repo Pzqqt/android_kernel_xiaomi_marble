@@ -1513,7 +1513,7 @@ wlan_get_ieee80211_channel(struct wiphy *wiphy, int chan_no)
 		return NULL;
 	}
 
-	chan = __ieee80211_get_channel(wiphy, freq);
+	chan = ieee80211_get_channel(wiphy, freq);
 
 	if (!chan)
 		cfg80211_err("chan is NULL, chan_no: %d freq: %d",
