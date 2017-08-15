@@ -2725,4 +2725,21 @@ void hdd_clear_fils_connection_info(hdd_adapter_t *adapter);
 static inline void hdd_clear_fils_connection_info(hdd_adapter_t *adapter)
 { }
 #endif
+
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+static inline int
+hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
+	      int len, const struct nla_policy *policy)
+{
+	return nla_parse(tb, maxtype, head, len, policy);
+}
+#else
+static inline int
+hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
+	      int len, const struct nla_policy *policy)
+{
+	return nla_parse(tb, maxtype, head, len, policy, NULL);
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

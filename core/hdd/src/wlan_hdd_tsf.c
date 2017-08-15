@@ -1128,8 +1128,8 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 	if (0 != status)
 		return -EINVAL;
 
-	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_TSF_MAX, data,
-		      data_len, tsf_policy)) {
+	if (hdd_nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_TSF_MAX, data,
+			  data_len, tsf_policy)) {
 		hdd_err("Invalid TSF cmd");
 		return -EINVAL;
 	}

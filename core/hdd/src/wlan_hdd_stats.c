@@ -1214,9 +1214,9 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	if (0 != status)
 		return -EINVAL;
 
-	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX,
-		      (struct nlattr *)data,
-		      data_len, qca_wlan_vendor_ll_set_policy)) {
+	if (hdd_nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX,
+			  (struct nlattr *)data, data_len,
+			  qca_wlan_vendor_ll_set_policy)) {
 		hdd_err("maximum attribute not present");
 		return -EINVAL;
 	}
@@ -1421,9 +1421,9 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
-	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX,
-		      (struct nlattr *)data,
-		      data_len, qca_wlan_vendor_ll_get_policy)) {
+	if (hdd_nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX,
+			  (struct nlattr *)data, data_len,
+			  qca_wlan_vendor_ll_get_policy)) {
 		hdd_err("max attribute not present");
 		return -EINVAL;
 	}
@@ -1537,9 +1537,9 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX,
-		      (struct nlattr *)data,
-		      data_len, qca_wlan_vendor_ll_clr_policy)) {
+	if (hdd_nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX,
+			  (struct nlattr *)data, data_len,
+			  qca_wlan_vendor_ll_clr_policy)) {
 		hdd_err("STATS_CLR_MAX is not present");
 		return -EINVAL;
 	}
@@ -2460,9 +2460,9 @@ static int __wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 	if (0 != status)
 		return -EPERM;
 
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX,
-		      (struct nlattr *)data, data_len,
-		      qca_wlan_vendor_ll_ext_policy)) {
+	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX,
+			  (struct nlattr *)data, data_len,
+			  qca_wlan_vendor_ll_ext_policy)) {
 		hdd_err("maximum attribute not present");
 		return -EPERM;
 	}

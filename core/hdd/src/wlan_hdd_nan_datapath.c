@@ -2003,9 +2003,8 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		hdd_err("NAN datapath is not enabled");
 		return -EPERM;
 	}
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
-			data, data_len,
-			qca_wlan_vendor_ndp_policy)) {
+	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
+			  data, data_len, qca_wlan_vendor_ndp_policy)) {
 		hdd_err("Invalid NDP vendor command attributes");
 		return -EINVAL;
 	}

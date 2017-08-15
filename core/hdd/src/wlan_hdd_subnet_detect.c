@@ -111,8 +111,8 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	 * ipv4 addr: 4 bytes
 	 * ipv6 addr: 16 bytes
 	 */
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX,
-			data, data_len, policy)) {
+	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX, data,
+			  data_len, policy)) {
 		hdd_err("Invalid ATTR list");
 		return -EINVAL;
 	}

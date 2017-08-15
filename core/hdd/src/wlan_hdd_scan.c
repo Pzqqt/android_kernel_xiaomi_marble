@@ -1147,8 +1147,8 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
-		      data_len, scan_policy)) {
+	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data, data_len,
+			  scan_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}
@@ -1381,8 +1381,7 @@ static int __wlan_hdd_vendor_abort_scan(
 	if (0 != ret)
 		return ret;
 
-	wlan_vendor_abort_scan(hdd_ctx->hdd_pdev, data,
-				data_len);
+	wlan_vendor_abort_scan(hdd_ctx->hdd_pdev, data, data_len);
 
 	return ret;
 }
