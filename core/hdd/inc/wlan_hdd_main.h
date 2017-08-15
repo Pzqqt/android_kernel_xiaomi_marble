@@ -592,7 +592,7 @@ struct hdd_wapi_info_s {
 typedef struct hdd_wapi_info_s hdd_wapi_info_t;
 #endif /* FEATURE_WLAN_WAPI */
 
-typedef struct beacon_data_s {
+typedef struct hdd_beacon_data {
 	u8 *head;
 	u8 *tail;
 	u8 *proberesp_ies;

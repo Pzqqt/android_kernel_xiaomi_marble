@@ -28,7 +28,7 @@
 
 struct hdd_context;
 struct wma_tgt_cfg;
-struct beacon_data_s;
+struct hdd_beacon_data;
 struct sap_Config;
 
 #ifdef WLAN_FEATURE_11AX
@@ -90,7 +90,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
  *
  * Return: None
  */
-void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
+void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 				 struct sap_Config *config);
 
 /**
@@ -149,7 +149,7 @@ static inline void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 {
 }
 
-static inline void wlan_hdd_check_11ax_support(struct beacon_data_s *beacon,
+static inline void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 					       struct sap_Config *config)
 {
 }
