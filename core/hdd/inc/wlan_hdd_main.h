@@ -747,7 +747,7 @@ struct hdd_station_ctx {
 
 #define BSS_STOP    0
 #define BSS_START   1
-typedef struct hdd_hostapd_state_s {
+typedef struct hdd_hostapd_state {
 	int bssState;
 	qdf_event_t qdf_event;
 	qdf_event_t qdf_stop_bss_event;
