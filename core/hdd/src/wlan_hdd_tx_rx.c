@@ -885,7 +885,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 			   i, netif_tx_queue_stopped(txq), txq->trans_start);
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "carrier state: %d", netif_carrier_ok(dev));
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
