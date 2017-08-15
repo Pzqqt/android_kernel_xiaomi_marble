@@ -3777,7 +3777,6 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 		++adapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
 
 	HDD_IPA_INCREASE_NET_SEND_COUNT(hdd_ipa);
-	adapter->dev->last_rx = jiffies;
 }
 
 /**

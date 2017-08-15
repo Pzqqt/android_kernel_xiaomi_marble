@@ -782,8 +782,6 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			++pAdapter->hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
 		else
 			++pAdapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
-
-		pAdapter->dev->last_rx = jiffies;
 	}
 
 	return QDF_STATUS_SUCCESS;

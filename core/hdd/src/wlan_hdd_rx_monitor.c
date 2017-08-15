@@ -101,8 +101,6 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 		skb = skb_next;
 	}
 
-	adapter->dev->last_rx = jiffies;
-
 	return;
 }
 

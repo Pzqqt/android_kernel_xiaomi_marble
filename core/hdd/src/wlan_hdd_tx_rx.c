@@ -1023,8 +1023,6 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 		skb = skb_next;
 	}
 
-	adapter->dev->last_rx = jiffies;
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1288,8 +1286,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			++pAdapter->hdd_stats.hddTxRxStats.
 				 rxDelivered[cpu_index];
 		}
-
-		pAdapter->dev->last_rx = jiffies;
 	}
 
 	return QDF_STATUS_SUCCESS;
