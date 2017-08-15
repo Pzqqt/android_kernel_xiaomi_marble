@@ -798,9 +798,10 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 						roam_req->assoc_ie.length);
 	}
 
-	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d"),
+	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d, roam_scan_mode: %d"),
 		params->roam_offload_params.qos_caps,
-		params->roam_offload_params.qos_enabled);
+		params->roam_offload_params.qos_enabled,
+		params->mode);
 
 	status = wmi_unified_roam_scan_offload_mode_cmd(wma_handle->wmi_handle,
 				scan_cmd_fp, params);
@@ -1891,6 +1892,12 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 						&scan_params, NULL, mode,
 						roam_req->sessionId);
 		}
+		/*
+		 * After sending the roam scan mode because of a disconnect,
+		 * clear the scan bitmap client as well by sending
+		 * the following command
+		 */
+		wma_roam_scan_offload_rssi_thresh(wma_handle, roam_req);
 		/*
 		 * If the STOP command is due to a disconnect, then
 		 * send the filter command to clear all the filter
