@@ -137,6 +137,7 @@ enum ATH_BIN_FILE {
  * @bmi_cmd_da - BMI Command Physical address
  * @bmi_rsp_da - BMI Response Physical address
  * @bmi_done - Flag to check if BMI Phase is complete
+ * @board_id - board ID
  * @fw_files - FW files
  *
  */
@@ -146,6 +147,7 @@ struct bmi_info {
 	dma_addr_t bmi_cmd_da;
 	dma_addr_t bmi_rsp_da;
 	bool bmi_done;
+	uint16_t board_id;
 	struct pld_fw_files fw_files;
 };
 
