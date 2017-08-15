@@ -865,27 +865,26 @@ struct hdd_ap_ctx {
 	enum bss_stop_reason bss_stop_reason;
 };
 
-typedef struct hdd_scaninfo_s {
-	/* The scan pending  */
+/**
+ * struct hdd_scan_info - Per-adapter scan information
+ * @mScanPending: is a scan pending on this adapter?
+ * @mScanPendingCounter: Counter for @mScanPending so that the scan
+ *    pending error log is not printed excessively
+ * @scanAddIE: Additional IE for scan
+ * @default_scan_ies: Default scan IEs
+ * @default_scan_ies_len: Length of @default_scan_ies
+ * @scan_mode: Scan mode
+ * @abortscan_event_var: completion variable for abortscan
+ */
+struct hdd_scan_info {
 	uint32_t mScanPending;
-
-	/* Counter for mScanPending so that the scan pending
-	 * error log is not printed for more than 5 times
-	 */
 	uint32_t mScanPendingCounter;
-
-	/* Additional IE for scan */
 	tSirAddie scanAddIE;
-
 	uint8_t *default_scan_ies;
 	uint16_t default_scan_ies_len;
-	/* Scan mode */
 	tSirScanType scan_mode;
-
-	/* completion variable for abortscan */
 	struct completion abortscan_event_var;
-
-} hdd_scaninfo_t;
+};
 
 #define WLAN_HDD_MAX_MC_ADDR_LIST CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES
 
@@ -1141,7 +1140,7 @@ struct hdd_adapter {
 	bool higherDtimTransition;
 	bool survey_idx;
 
-	hdd_scaninfo_t scan_info;
+	struct hdd_scan_info scan_info;
 
 	/* Flag to ensure PSB is configured through framework */
 	uint8_t psbChanged;

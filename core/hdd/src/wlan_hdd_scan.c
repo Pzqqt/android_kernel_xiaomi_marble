@@ -456,7 +456,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 {
 	struct net_device *dev = (struct net_device *)pContext;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_scaninfo_t *pScanInfo = &pAdapter->scan_info;
+	struct hdd_scan_info *pScanInfo = &pAdapter->scan_info;
 	struct cfg80211_scan_request *req = NULL;
 	bool aborted = false;
 	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -696,7 +696,7 @@ static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
  * Return: 0 on success; error number otherwise
  */
 static int wlan_hdd_update_scan_ies(hdd_adapter_t *adapter,
-			hdd_scaninfo_t *scan_info, uint8_t *scan_ie,
+			struct hdd_scan_info *scan_info, uint8_t *scan_ie,
 			uint16_t *scan_ie_len)
 {
 	uint16_t rem_len = scan_info->default_scan_ies_len;
@@ -770,7 +770,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct hdd_config *cfg_param = NULL;
 	int status;
-	hdd_scaninfo_t *pScanInfo = NULL;
+	struct hdd_scan_info *pScanInfo = NULL;
 	hdd_adapter_t *con_sap_adapter;
 	uint16_t con_dfs_ch;
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -1773,7 +1773,7 @@ int wlan_hdd_vendor_abort_scan(
 int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	hdd_scaninfo_t *pScanInfo = NULL;
+	struct hdd_scan_info *pScanInfo = NULL;
 
 	pScanInfo = &pAdapter->scan_info;
 

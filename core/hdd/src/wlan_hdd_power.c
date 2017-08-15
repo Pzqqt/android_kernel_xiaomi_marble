@@ -1710,7 +1710,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *pAdapter;
-	hdd_scaninfo_t *pScanInfo;
+	struct hdd_scan_info *pScanInfo;
 	QDF_STATUS status;
 	int rc;
 

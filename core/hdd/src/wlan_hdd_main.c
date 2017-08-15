@@ -4197,7 +4197,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
-	hdd_scaninfo_t *scan_info = NULL;
+	struct hdd_scan_info *scan_info = NULL;
 
 	ENTER();
 

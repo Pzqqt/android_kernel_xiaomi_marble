@@ -1066,7 +1066,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t we_custom_start_event[64];
 	char *startBssEvent;
 	hdd_context_t *pHddCtx;
-	hdd_scaninfo_t *pScanInfo = NULL;
+	struct hdd_scan_info *pScanInfo = NULL;
 	struct iw_michaelmicfailure msg;
 	uint8_t ignoreCAC = 0;
 	struct hdd_config *cfg = NULL;
@@ -8139,7 +8139,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
-	hdd_scaninfo_t *pScanInfo = NULL;
+	struct hdd_scan_info *pScanInfo = NULL;
 	hdd_adapter_t *staAdapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;

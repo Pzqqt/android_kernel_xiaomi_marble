@@ -5166,7 +5166,7 @@ static int wlan_hdd_save_default_scan_ies(hdd_context_t *hdd_ctx,
 					  hdd_adapter_t *adapter,
 					  uint8_t *ie_data, uint16_t ie_len)
 {
-	hdd_scaninfo_t *scan_info = &adapter->scan_info;
+	struct hdd_scan_info *scan_info = &adapter->scan_info;
 	bool add_qcn_ie = hdd_ctx->config->qcn_ie_support;
 
 	if (!scan_info)
@@ -15945,7 +15945,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 	    (pHddStaCtx->conn_info.connState == eConnectionState_Connecting)) {
 		eCsrRoamDisconnectReason reasonCode =
 			eCSR_DISCONNECT_REASON_UNSPECIFIED;
-		hdd_scaninfo_t *pScanInfo;
+		struct hdd_scan_info *pScanInfo;
 
 		switch (reason) {
 		case WLAN_REASON_MIC_FAILURE:

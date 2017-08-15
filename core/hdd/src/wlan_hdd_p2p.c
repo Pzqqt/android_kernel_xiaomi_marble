@@ -2259,7 +2259,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
 	hdd_adapter_t *pAdapter = NULL;
-	hdd_scaninfo_t *scan_info = NULL;
+	struct hdd_scan_info *scan_info = NULL;
 	int ret;
 	uint8_t session_type;
 
