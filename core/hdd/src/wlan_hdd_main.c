@@ -7199,12 +7199,45 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 	}
 
 }
+
+static void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
+				     hdd_context_t *hdd_ctx)
+{
+	uint8_t restart_chan;
+
+	restart_chan = hdd_get_safe_channel_from_pcl_and_acs_range(adapter);
+	if (!restart_chan) {
+		hdd_alert("fail to restart SAP");
+		return;
+	}
+
+	/* SAP restart due to unsafe channel. While restarting
+	 * the SAP, make sure to clear acs_channel, channel to
+	 * reset to 0. Otherwise these settings will override
+	 * the ACS while restart.
+	 */
+	hdd_ctx->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
+	adapter->sessionCtx.ap.sapConfig.channel = AUTO_CHANNEL_SELECT;
+
+	hdd_debug("sending coex indication");
+
+	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+				    WLAN_SVC_LTE_COEX_IND, NULL, 0);
+	hdd_switch_sap_channel(adapter, restart_chan);
+}
 #else
 static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 {
 }
+
 static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 {
+}
+
+static inline void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
+					    hdd_context_t *hdd_ctx)
+{
+	hdd_debug("Channel avoidance is not enabled; Abort SAP restart");
 }
 #endif /* defined(FEATURE_WLAN_CH_AVOID) */
 
@@ -7258,31 +7291,6 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 						frame_ind->frameType,
 						frame_ind->rxChan,
 						frame_ind->rxRssi);
-}
-
-static void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
-				     hdd_context_t *hdd_ctx)
-{
-	uint8_t restart_chan = 0;
-
-	restart_chan =
-		hdd_get_safe_channel_from_pcl_and_acs_range(adapter);
-	if (!restart_chan) {
-		hdd_alert("fail to restart SAP");
-	} else {
-		/* SAP restart due to unsafe channel. While restarting
-		 * the SAP, make sure to clear acs_channel, channel to
-		 * reset to 0. Otherwise these settings will override
-		 * the ACS while restart.
-		 */
-		hdd_ctx->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
-		adapter->sessionCtx.ap.sapConfig.channel =
-						AUTO_CHANNEL_SELECT;
-		hdd_info("sending coex indication");
-		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
-				WLAN_SVC_LTE_COEX_IND, NULL, 0);
-		hdd_switch_sap_channel(adapter, restart_chan);
-	}
 }
 
 void hdd_acs_response_timeout_handler(void *context)
