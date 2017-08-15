@@ -8915,6 +8915,10 @@ typedef struct {
  *               selected from 0 to 31 values)
  */
 #define WMI_PEER_SET_DEFAULT_ROUTING                    0x13
+/* peer NSS for VHT160 - Extended NSS support */
+#define WMI_PEER_NSS_VHT160                             0x14
+/* peer NSS for VHT160 - Extended NSS support */
+#define WMI_PEER_NSS_VHT80_80                           0x15
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
@@ -9170,17 +9174,19 @@ typedef struct {
      *  peer_ht_rates[] */
     A_UINT32 num_peer_ht_rates;
     /**
-     * Bitmap providing customized mapping of bandwidths to max Rx NSS
-     * for this peer.
-     * This is required since 802.11 standard currently facilitates peer to be
-     * able to advertise only a single max Rx NSS value across all bandwidths.
-     * Some QCA chipsets might need to be able to advertise a different max
-     * Rx NSS value for 160 MHz, than that for 80 MHz and lower.
+     * Bitmap providing the mapping of bandwidths to max Rx NSS for this peer
+     * in VHT160 / VHT80+80 Mode.
+     * As per the New IEEE 802.11 Update, the AP & Peer could advertise and
+     * handshake with the Max Rx NSS differing for different bandwidths
+     * instead of a single max Rx NSS Value.
+     * Some QCA chipsets have to advertise a different max Rx NSS value for
+     * 160 MHz and 80MHz.
      *
      *  bit[2:0] : Represents value of Rx NSS for VHT 160 MHz
-     *  bit[30:3]: Reserved
-     *  bit[31]  : MSB(0/1): 1 in case of valid data else all bits will be set
-     *             to 0 by host
+     *  bit[5:3] : Represents value of Rx NSS for VHT 80_80 MHz -
+     *             Extended NSS support
+     *  bit[30:6]: Reserved
+     *  bit[31]  : MSB(0/1): 1 in case of valid data sent from Host
      */
     A_UINT32 peer_bw_rxnss_override;
 
