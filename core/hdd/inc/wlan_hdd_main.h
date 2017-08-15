@@ -677,7 +677,7 @@ enum action_frm_type {
 	WLAN_HDD_PROV_DIS_RESP,
 };
 
-typedef struct hdd_cfg80211_state_s {
+typedef struct hdd_cfg80211_state {
 	uint16_t current_freq;
 	u64 action_cookie;
 	uint8_t *buf;
