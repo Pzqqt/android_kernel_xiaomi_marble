@@ -1024,6 +1024,8 @@ const char *qdf_dp_code_to_string(enum QDF_DP_TRACE_ID code)
 		return "CE: TX: PTR:";
 	case QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD:
 		return "CE: TX: FAST: PTR:";
+	case QDF_DP_TRACE_CE_FAST_PACKET_ERR_RECORD:
+		return "CE: TX: FAST: ERR:";
 	case QDF_DP_TRACE_FREE_PACKET_PTR_RECORD:
 		return "FREE: TX: PTR:";
 	case QDF_DP_TRACE_RX_HTT_PACKET_PTR_RECORD:
@@ -1841,6 +1843,9 @@ void qdf_dp_display_record(struct qdf_dp_trace_record_s *pRecord,
 		break;
 	case  QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT:
 		DPTRACE_PRINT(" %s: HDD SoftAP TX Timeout", prepend_str);
+		break;
+	case  QDF_DP_TRACE_CE_FAST_PACKET_ERR_RECORD:
+		DPTRACE_PRINT(" %s: CE Fast Packet Error", prepend_str);
 		break;
 	case QDF_DP_TRACE_HDD_TX_PACKET_RECORD:
 	case QDF_DP_TRACE_HDD_RX_PACKET_RECORD:

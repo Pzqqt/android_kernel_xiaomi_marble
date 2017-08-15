@@ -712,6 +712,17 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 	enum hif_ce_event_type type = FAST_TX_SOFTWARE_INDEX_UPDATE;
 	bool ok_to_send = true;
 
+	/*
+	 * Create a log assuming the call will go through, and if not, we would
+	 * add an error trace as well.
+	 * Please add the same failure log for any additional error paths.
+	 */
+	DPTRACE(qdf_dp_trace(msdu,
+			QDF_DP_TRACE_CE_FAST_PACKET_PTR_RECORD,
+			QDF_TRACE_DEFAULT_PDEV_ID,
+			qdf_nbuf_data_addr(msdu),
+			sizeof(qdf_nbuf_data(msdu)), QDF_TX));
+
 	qdf_spin_lock_bh(&ce_state->ce_index_lock);
 
 	/*
@@ -741,6 +752,12 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 		if (ok_to_send)
 			Q_TARGET_ACCESS_END(scn);
 		qdf_spin_unlock_bh(&ce_state->ce_index_lock);
+
+		DPTRACE(qdf_dp_trace(NULL,
+				QDF_DP_TRACE_CE_FAST_PACKET_ERR_RECORD,
+				QDF_TRACE_DEFAULT_PDEV_ID,
+				NULL, 0, QDF_TX));
+
 		return 0;
 	}
 
@@ -844,7 +861,6 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 			ce_state->state = CE_PENDING;
 		hif_pm_runtime_put(hif_hdl);
 	}
-
 
 	qdf_spin_unlock_bh(&ce_state->ce_index_lock);
 
