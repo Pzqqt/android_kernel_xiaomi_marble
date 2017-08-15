@@ -4215,6 +4215,8 @@ static void hdd_ipa_pm_flush(struct work_struct *work)
 			if (pm_tx_cb->adapter->dev)
 				hdd_softap_hard_start_xmit(skb,
 					  pm_tx_cb->adapter->dev);
+			else
+				ipa_free_skb(pm_tx_cb->ipa_tx_desc);
 		} else {
 			hdd_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
 				       pm_tx_cb->ipa_tx_desc);
