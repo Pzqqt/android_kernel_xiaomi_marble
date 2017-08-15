@@ -664,7 +664,7 @@ QDF_STATUS hdd_chan_change_notify(hdd_adapter_t *adapter,
 
 	freq = cds_chan_to_freq(chan_change.chan);
 
-	chan = __ieee80211_get_channel(adapter->wdev.wiphy, freq);
+	chan = ieee80211_get_channel(adapter->wdev.wiphy, freq);
 
 	if (!chan) {
 		hdd_err("Invalid input frequency for channel conversion");

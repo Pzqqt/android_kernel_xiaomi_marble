@@ -1556,8 +1556,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 					count);
 				goto error;
 			}
-			chan = __ieee80211_get_channel(wiphy,
-							nla_get_u32(attr));
+			chan = ieee80211_get_channel(wiphy, nla_get_u32(attr));
 			if (!chan)
 				goto error;
 			if (chan->flags & IEEE80211_CHAN_DISABLED)
