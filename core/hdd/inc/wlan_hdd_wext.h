@@ -241,7 +241,7 @@ enum hdd_wps_mode {
  * This structure contains the interface level (granularity)
  * configuration information in support of wireless extensions.
  */
-typedef struct hdd_wext_state_s {
+typedef struct hdd_wext_state {
 	/** The CSR "desired" Profile */
 	tCsrRoamProfile roamProfile;
 
