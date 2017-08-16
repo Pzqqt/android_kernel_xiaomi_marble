@@ -192,7 +192,10 @@
 		.flags = flag, \
 	}
 
+#ifndef WLAN_AKM_SUITE_FT_8021X
 #define WLAN_AKM_SUITE_FT_8021X         0x000FAC03
+#endif
+
 #define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
 
 #define HDD_CHANNEL_14 14
