@@ -158,7 +158,9 @@
 #define WLAN_AKM_SUITE_FT_8021X         0x000FAC03
 #endif
 
+#ifndef WLAN_AKM_SUITE_FT_PSK
 #define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
+#endif
 
 #define HDD_CHANNEL_14 14
 
