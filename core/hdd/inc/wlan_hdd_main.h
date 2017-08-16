@@ -582,14 +582,17 @@ struct _WLAN_BKID_LIST {
 typedef struct _WLAN_BKID_LIST WLAN_BKID_LIST;
 typedef struct _WLAN_BKID_LIST *pWLAN_BKID_LIST;
 
-/* WAPI Information structure definition */
-struct hdd_wapi_info_s {
+/**
+ * struct hdd_wapi_info - WAPI Information structure definition
+ * @nWapiMode: Is WAPI enabled on this adapter?
+ * @fIsWapiSta: Is the STA associated with WAPI?
+ * @wapiAuthMode: WAPI authentication mode used by this adapter
+ */
+struct hdd_wapi_info {
 	uint32_t nWapiMode;
 	bool fIsWapiSta;
-	struct qdf_mac_addr cachedMacAddr;
 	uint8_t wapiAuthMode;
-} __packed;
-typedef struct hdd_wapi_info_s hdd_wapi_info_t;
+};
 #endif /* FEATURE_WLAN_WAPI */
 
 typedef struct hdd_beacon_data {
@@ -1093,7 +1096,7 @@ struct hdd_adapter {
  */
 
 #ifdef FEATURE_WLAN_WAPI
-	hdd_wapi_info_t wapi_info;
+	struct hdd_wapi_info wapi_info;
 #endif
 
 	int8_t rssi;
