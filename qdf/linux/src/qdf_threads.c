@@ -35,7 +35,11 @@
 #include <qdf_types.h>
 #include <qdf_trace.h>
 #include <linux/jiffies.h>
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 11, 0)
 #include <linux/sched.h>
+#else
+#include <linux/sched/signal.h>
+#endif /* KERNEL_VERSION(4, 11, 0) */
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 #include <linux/export.h>
