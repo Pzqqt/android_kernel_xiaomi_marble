@@ -55,6 +55,7 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 				       struct cfg80211_sched_scan_request
 				       *request);
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 /**
  * wlan_hdd_cfg80211_sched_scan_stop() - stop cfg80211 scheduled (PNO) scan
  * @wiphy: Pointer to wiphy
@@ -69,6 +70,12 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
  */
 int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 				      struct net_device *dev);
+#else
+int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
+				      struct net_device *dev,
+				      uint64_t reqid);
+
+#endif /* KERNEL_VERSION(4, 12, 0) */
 
 /**
  * wlan_hdd_sched_scan_stop() - stop scheduled (PNO) scans
