@@ -35,12 +35,8 @@ enum qdf_debug_domain qdf_debug_domain_get(void)
 
 void qdf_debug_domain_set(enum qdf_debug_domain domain)
 {
-	QDF_BUG(domain >= QDF_DEBUG_DOMAIN_INIT);
-	if (domain < QDF_DEBUG_DOMAIN_INIT)
-		return;
-
-	QDF_BUG(domain < QDF_DEBUG_DOMAIN_COUNT);
-	if (domain >= QDF_DEBUG_DOMAIN_COUNT)
+	QDF_BUG(qdf_debug_domain_valid(domain));
+	if (!qdf_debug_domain_valid(domain))
 		return;
 
 	qdf_debug_domain_current = domain;
@@ -56,4 +52,10 @@ const char *qdf_debug_domain_name(enum qdf_debug_domain domain)
 	default:
 		return "Invalid";
 	}
+}
+
+bool qdf_debug_domain_valid(enum qdf_debug_domain domain)
+{
+	return domain >= QDF_DEBUG_DOMAIN_INIT &&
+		domain < QDF_DEBUG_DOMAIN_COUNT;
 }

@@ -26,6 +26,8 @@
 #ifndef __QDF_DEBUG_DOMAIN_H
 #define __QDF_DEBUG_DOMAIN_H
 
+#include "qdf_types.h"
+
 /**
  * struct qdf_debug_domain - debug domains for tracking resource allocations
  * @QDF_DEBUG_DOMAIN_INIT: The default debug domain, tied to driver load
@@ -62,5 +64,13 @@ void qdf_debug_domain_set(enum qdf_debug_domain domain);
  * Return: name of the given domain
  */
 const char *qdf_debug_domain_name(enum qdf_debug_domain domain);
+
+/**
+ * qdf_debug_domain_valid() - bounds checks the given domain
+ * @domain: the domain to validate
+ *
+ * Return: true is the given domain is a valid debug domain
+ */
+bool qdf_debug_domain_valid(enum qdf_debug_domain domain);
 
 #endif /* __QDF_DEBUG_DOMAIN_H */

@@ -99,10 +99,42 @@ void qdf_mem_exit(void);
 #define qdf_mem_malloc(size) \
 	qdf_mem_malloc_debug(size, __FILE__, __LINE__)
 void *qdf_mem_malloc_debug(size_t size, char *file_name, uint32_t line_num);
+
+/**
+ * qdf_mem_check_for_leaks() - Assert that the current memory domain is empty
+ *
+ * Call this to ensure there are no active memory allocations being tracked
+ * against the current debug domain. For example, one should call this function
+ * immediately before a call to qdf_debug_domain_set() as a memory leak
+ * detection mechanism.
+ *
+ * e.g.
+ *	qdf_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
+ *
+ *	...
+ *
+ *	// memory is allocated and freed
+ *
+ *	...
+ *
+ *	// before transitioning back to inactive state,
+ *	// make sure all active memory has been freed
+ *	qdf_mem_check_for_leaks();
+ *	qdf_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
+ *
+ *	...
+ *
+ *	// also, before program exit, make sure init time memory is freed
+ *	qdf_mem_check_for_leaks();
+ *	exit();
+ *
+ * Return: None
+ */
+void qdf_mem_check_for_leaks(void);
 #else
-void *
-qdf_mem_malloc(qdf_size_t size);
-#endif
+void *qdf_mem_malloc(qdf_size_t size);
+static inline void qdf_mem_check_for_leaks(void) { }
+#endif /* MEMORY_DEBUG */
 
 void *qdf_mem_alloc_outline(qdf_device_t osdev, qdf_size_t size);
 

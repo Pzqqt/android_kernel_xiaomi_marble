@@ -57,15 +57,16 @@
 #endif
 
 #ifdef MEMORY_DEBUG
+#include "qdf_debug_domain.h"
 #include <qdf_list.h>
-static qdf_list_t qdf_mem_list;
-static qdf_list_t qdf_mem_trash_list;
+
+static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
 static qdf_spinlock_t qdf_mem_list_lock;
 
-static uint8_t WLAN_MEM_HEADER[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
-					0x67, 0x68 };
-static uint8_t WLAN_MEM_TAIL[] = { 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
-					0x86, 0x87 };
+static inline qdf_list_t *qdf_mem_list_get(enum qdf_debug_domain domain)
+{
+	return &qdf_mem_domains[domain];
+}
 
 /**
  * struct s_qdf_mem_struct - memory object to dubug
@@ -79,24 +80,22 @@ static uint8_t WLAN_MEM_TAIL[] = { 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
 struct s_qdf_mem_struct {
 	qdf_list_node_t node;
 	char *file_name;
-	unsigned int line_num;
-	unsigned int size;
-	uint8_t header[8];
-	qdf_atomic_t in_use;
+	uint32_t line_num;
+	uint32_t size;
+	uint64_t header;
+	enum qdf_debug_domain domain;
 };
+
+static uint64_t WLAN_MEM_HEADER = 0x6162636465666768;
+static uint64_t WLAN_MEM_TAIL = 0x8081828384858687;
 #endif /* MEMORY_DEBUG */
 
 /* Preprocessor Definitions and Constants */
 #define QDF_GET_MEMORY_TIME_THRESHOLD 300
 
-
 u_int8_t prealloc_disabled = 1;
 qdf_declare_param(prealloc_disabled, byte);
 EXPORT_SYMBOL(prealloc_disabled);
-
-
-
-
 
 #if defined WLAN_DEBUGFS
 
@@ -146,6 +145,30 @@ void qdf_mem_skb_dec(qdf_size_t size)
 }
 
 #ifdef MEMORY_DEBUG
+static int qdf_err_printer(void *priv, const char *fmt, ...)
+{
+	va_list args;
+
+	va_start(args, fmt);
+	QDF_VTRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, (char *)fmt, args);
+	va_end(args);
+
+	return 0;
+}
+
+static int seq_printf_printer(void *priv, const char *fmt, ...)
+{
+	struct seq_file *file = priv;
+	va_list args;
+
+	va_start(args, fmt);
+	seq_vprintf(file, fmt, args);
+	seq_puts(file, "\n");
+	va_end(args);
+
+	return 0;
+}
+
 /**
  * struct __qdf_mem_info - memory statistics
  * @file_name:	the file which allocated memory
@@ -156,186 +179,134 @@ void qdf_mem_skb_dec(qdf_size_t size)
  */
 struct __qdf_mem_info {
 	char *file_name;
-	unsigned int line_num;
-	unsigned int size;
-	unsigned int count;
+	uint32_t line_num;
+	uint32_t size;
+	uint32_t count;
 };
 
-
 /*
- * A table to identify duplicates in close proximity. The table depth defines
- * the proximity scope. A deeper table takes more time. Chose any optimum value.
- *
+ * The table depth defines the de-duplication proximity scope.
+ * A deeper table takes more time, so choose any optimum value.
  */
-#define QDF_MEM_STAT_TABLE_SIZE 4
-static struct __qdf_mem_info qdf_mem_info_table[QDF_MEM_STAT_TABLE_SIZE];
-
-
+#define QDF_MEM_STAT_TABLE_SIZE 8
 
 /**
- * qdf_mem_info_table_init() - initialize the stat table
+ * qdf_mem_domain_print_header() - memory domain header print logic
+ * @print: the print adapter function
+ * @print_priv: the private data to be consumed by @print
  *
  * Return: None
  */
-static void qdf_mem_info_table_init(void)
+static void qdf_mem_domain_print_header(qdf_abstract_print print,
+					void *print_priv)
 {
-	memset(&qdf_mem_info_table, 0, sizeof(qdf_mem_info_table));
+	print(print_priv,
+	      "--------------------------------------------------------------");
+	print(print_priv, " count    size     total    filename");
+	print(print_priv,
+	      "--------------------------------------------------------------");
 }
 
 /**
- * qdf_mem_get_node() - increase the node usage count
- * @n:	node
- *
- * An increased usage count will block the memory from getting released.
- * Initially the usage count is incremented from qdf_mem_malloc_debug().
- * Corresponding qdf_mem_free() will decrement the reference count and frees up
- * the memory when the usage count reaches zero. Here decrement and test is an
- * atomic operation in qdf_mem_free() to avoid any race condition.
- *
- * If a caller wants to take the ownership of an allocated memory, it can call
- * this function with the associated node.
+ * qdf_mem_meta_table_print() - memory metadata table print logic
+ * @table: the memory metadata table to print
+ * @print: the print adapter function
+ * @print_priv: the private data to be consumed by @print
  *
  * Return: None
- *
  */
-static void qdf_mem_get_node(qdf_list_node_t *n)
-{
-	struct s_qdf_mem_struct *m = container_of(n, typeof(*m), node);
-
-	qdf_atomic_inc(&m->in_use);
-}
-
-/**
- * qdf_mem_put_node_free() - decrease the node usage count and free memory
- * @n:	node
- *
- * Additionally it releases the memory when the usage count reaches zero. Usage
- * count is decremented and tested against zero in qdf_mem_free(). If the count
- * is 0, the node and associated memory gets freed.
- *
- * Return: None
- *
- */
-static void qdf_mem_put_node_free(qdf_list_node_t *n)
-{
-	struct s_qdf_mem_struct *m = container_of(n, typeof(*m), node);
-
-	/* qdf_mem_free() is expecting the same address returned by
-	 * qdf_mem_malloc_debug(), which is 'm + sizeof(s_qdf_mem_struct)' */
-	qdf_mem_free(m + 1);
-}
-
-/**
- * qdf_mem_get_first() - get the first node.
- *
- * Return: node
- */
-static qdf_list_node_t *qdf_mem_get_first(void)
-{
-	QDF_STATUS status;
-	qdf_list_node_t *node = NULL;
-
-	qdf_spin_lock_bh(&qdf_mem_list_lock);
-	status = qdf_list_peek_front(&qdf_mem_list, &node);
-	if (QDF_STATUS_SUCCESS == status)
-		qdf_mem_get_node(node);
-	qdf_spin_unlock_bh(&qdf_mem_list_lock);
-
-	return node;
-}
-
-/**
- * qdf_mem_get_next() - get the next node
- * @n: node
- *
- * Return: next node
- */
-static qdf_list_node_t *qdf_mem_get_next(qdf_list_node_t *n)
-{
-	QDF_STATUS status;
-	qdf_list_node_t *node = NULL;
-
-	qdf_spin_lock_bh(&qdf_mem_list_lock);
-	status = qdf_list_peek_next(&qdf_mem_list, n, &node);
-	if (QDF_STATUS_SUCCESS == status)
-		qdf_mem_get_node(node);
-
-	qdf_spin_unlock_bh(&qdf_mem_list_lock);
-
-	qdf_mem_put_node_free(n);
-
-	return node;
-
-}
-
-static void qdf_mem_seq_print_header(struct seq_file *seq)
-{
-	seq_puts(seq, "\n");
-	seq_puts(seq, "filename                             line         size x    no  [ total ]\n");
-	seq_puts(seq, "\n");
-}
-
-/**
- * qdf_mem_info_table_insert() - insert node into an array
- * @n:	node
- *
- * Return:
- *	true  - success
- *	false - failure
- */
-static bool qdf_mem_info_table_insert(qdf_list_node_t *n)
+static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
+				     qdf_abstract_print print,
+				     void *print_priv)
 {
 	int i;
-	struct __qdf_mem_info *t = qdf_mem_info_table;
-	bool dup;
-	bool consumed;
-	struct s_qdf_mem_struct *m = (struct s_qdf_mem_struct *)n;
 
 	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
-		if (!t[i].count) {
-			t[i].file_name = m->file_name;
-			t[i].line_num = m->line_num;
-			t[i].size = m->size;
-			t[i].count++;
+		if (!table[i].count)
 			break;
-		}
-		dup = !strcmp(t[i].file_name, m->file_name) &&
-		      (t[i].line_num == m->line_num) &&
-		      (t[i].size == m->size);
-		if (dup) {
-			t[i].count++;
-			break;
-		}
+
+		print(print_priv,
+		      "%6u x %5u = %7uB @ %s:%u",
+		      table[i].count,
+		      table[i].size,
+		      table[i].count * table[i].size,
+		      kbasename(table[i].file_name),
+		      table[i].line_num);
 	}
-
-	consumed = (i < QDF_MEM_STAT_TABLE_SIZE);
-
-	return consumed;
 }
 
 /**
- * qdf_mem_seq_print() - print the table using seq_printf
- * @seq:	seq_file handle
+ * qdf_mem_meta_table_insert() - insert memory metadata into the given table
+ * @table: the memory metadata table to insert into
+ * @meta: the memory metadata to insert
  *
- * Node table will be cleared once printed.
+ * Return: true if the table is full after inserting, false otherwise
+ */
+static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
+				      struct s_qdf_mem_struct *meta)
+{
+	int i;
+
+	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE; i++) {
+		if (!table[i].count) {
+			table[i].file_name = meta->file_name;
+			table[i].line_num = meta->line_num;
+			table[i].size = meta->size;
+			table[i].count = 1;
+			break;
+		}
+
+		if (table[i].file_name == meta->file_name &&
+		    table[i].line_num == meta->line_num &&
+		    table[i].size == meta->size) {
+			table[i].count++;
+			break;
+		}
+	}
+
+	/* return true if the table is now full */
+	return i >= QDF_MEM_STAT_TABLE_SIZE - 1;
+}
+
+/**
+ * qdf_mem_domain_print() - output agnostic memory domain print logic
+ * @domain: the memory domain to print
+ * @print: the print adapter function
+ * @print_priv: the private data to be consumed by @print
  *
  * Return: None
  */
-static void qdf_mem_seq_print(struct seq_file *seq)
+static void qdf_mem_domain_print(qdf_list_t *domain,
+				 qdf_abstract_print print,
+				 void *print_priv)
 {
-	int i;
-	struct __qdf_mem_info *t = qdf_mem_info_table;
+	QDF_STATUS status;
+	struct __qdf_mem_info table[QDF_MEM_STAT_TABLE_SIZE];
+	qdf_list_node_t *node;
 
-	for (i = 0; i < QDF_MEM_STAT_TABLE_SIZE && t[i].count; i++) {
-		seq_printf(seq,
-			   "%-35s%6d\t%6d x %4d\t[%7d]\n",
-			   kbasename(t[i].file_name),
-			   t[i].line_num, t[i].size,
-			   t[i].count,
-			   t[i].size * t[i].count);
+	qdf_mem_zero(table, sizeof(table));
+	qdf_mem_domain_print_header(print, print_priv);
+
+	/* hold lock while inserting to avoid use-after free of the metadata */
+	qdf_spin_lock(&qdf_mem_list_lock);
+	status = qdf_list_peek_front(domain, &node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		struct s_qdf_mem_struct *meta = (struct s_qdf_mem_struct *)node;
+		bool is_full = qdf_mem_meta_table_insert(table, meta);
+
+		qdf_spin_unlock(&qdf_mem_list_lock);
+
+		if (is_full) {
+			qdf_mem_meta_table_print(table, print, print_priv);
+			qdf_mem_zero(table, sizeof(table));
+		}
+
+		qdf_spin_lock(&qdf_mem_list_lock);
+		status = qdf_list_peek_next(domain, node, &node);
 	}
+	qdf_spin_unlock(&qdf_mem_list_lock);
 
-	qdf_mem_info_table_init();
+	qdf_mem_meta_table_print(table, print, print_priv);
 }
 
 /**
@@ -343,79 +314,60 @@ static void qdf_mem_seq_print(struct seq_file *seq)
  * @seq: seq_file handle
  * @pos: The start position of the sequence
  *
- * Return:
- *	SEQ_START_TOKEN - Prints header
- *	None zero value - Node
- *	NULL		- End of the sequence
+ * Return: iterator pointer, or NULL if iteration is complete
  */
 static void *qdf_mem_seq_start(struct seq_file *seq, loff_t *pos)
 {
-	if (*pos == 0) {
-		qdf_mem_info_table_init();
-		return SEQ_START_TOKEN;
-	} else if (seq->private) {
-		return qdf_mem_get_next(seq->private);
-	}
+	enum qdf_debug_domain domain = *pos;
 
-	return NULL;
+	if (!qdf_debug_domain_valid(domain))
+		return NULL;
+
+	/* just use the current position as our iterator */
+	return pos;
 }
 
 /**
  * qdf_mem_seq_next() - next sequential callback
- * @seq:	seq_file handle
- * @v:		the current iterator
- * @pos:	the current position [not used]
+ * @seq: seq_file handle
+ * @v: the current iterator
+ * @pos: the current position
  *
  * Get the next node and release previous node.
  *
- * Return:
- *	None zero value - Next node
- *	NULL		- No more to process in the list
+ * Return: iterator pointer, or NULL if iteration is complete
  */
 static void *qdf_mem_seq_next(struct seq_file *seq, void *v, loff_t *pos)
 {
-	qdf_list_node_t *node;
-
 	++*pos;
 
-	if (v == SEQ_START_TOKEN)
-		node = qdf_mem_get_first();
-	else
-		node = qdf_mem_get_next(v);
-
-	return node;
+	return qdf_mem_seq_start(seq, pos);
 }
 
 /**
  * qdf_mem_seq_stop() - stop sequential callback
- * @seq:	seq_file handle
- * @v:		current iterator
+ * @seq: seq_file handle
+ * @v: current iterator
  *
- * Return:	None
+ * Return: None
  */
-static void qdf_mem_seq_stop(struct seq_file *seq, void *v)
-{
-	qdf_mem_seq_print(seq);
-	seq->private = v;
-}
+static void qdf_mem_seq_stop(struct seq_file *seq, void *v) { }
 
 /**
  * qdf_mem_seq_show() - print sequential callback
- * @seq:	seq_file handle
- * @v:		current iterator
+ * @seq: seq_file handle
+ * @v: current iterator
  *
  * Return: 0 - success
  */
 static int qdf_mem_seq_show(struct seq_file *seq, void *v)
 {
+	enum qdf_debug_domain domain_id = *(enum qdf_debug_domain *)v;
 
-	if (v == SEQ_START_TOKEN) {
-		qdf_mem_seq_print_header(seq);
-		return 0;
-	}
-
-	while (!qdf_mem_info_table_insert(v))
-		qdf_mem_seq_print(seq);
+	seq_printf(seq, "\n%s Memory Domain (Id %d)\n",
+		   qdf_debug_domain_name(domain_id), domain_id);
+	qdf_mem_domain_print(qdf_mem_list_get(domain_id),
+			     seq_printf_printer, seq);
 
 	return 0;
 }
@@ -821,29 +773,44 @@ static inline bool qdf_mem_prealloc_put(void *ptr)
  */
 static void qdf_mem_debug_init(void)
 {
+	int i;
+
 	/* Initalizing the list with maximum size of 60000 */
-	qdf_list_create(&qdf_mem_list, 60000);
-	qdf_list_create(&qdf_mem_trash_list, 60000);
+	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
+		qdf_list_create(&qdf_mem_domains[i], 60000);
 	qdf_spinlock_create(&qdf_mem_list_lock);
 	qdf_net_buf_debug_init();
 	return;
 }
 
 #ifdef CONFIG_HALT_KMEMLEAK
-static void qdf_handle_leaked_memory(qdf_list_node_t *node)
+/*
+ * There are two scenarios for handling memory leaks. We want to either:
+ *	1) Crash and not release memory for offline debugging (internal testing)
+ *	2) Clean up any leaks and continue (production devices)
+ */
+
+static inline void qdf_mem_leak_panic(void)
 {
-	/* do not free the leaked memory if halt on memleak is enabled
-	 * such that leaked memory does not get poisoned and can be
-	 * used for offline debugging
-	 */
-	qdf_spin_lock(&qdf_mem_list_lock);
-	qdf_list_insert_front(&qdf_mem_trash_list, node);
-	qdf_spin_unlock(&qdf_mem_list_lock);
+	QDF_BUG(0);
 }
+
+static inline void qdf_mem_free_leaked_memory(qdf_list_t *domain) { }
 #else
-static void qdf_handle_leaked_memory(qdf_list_node_t *node)
+static inline void qdf_mem_leak_panic(void) { }
+
+static void qdf_mem_free_leaked_memory(qdf_list_t *domain)
 {
-	kfree((void *)node);
+	QDF_STATUS status;
+	qdf_list_node_t *node;
+
+	qdf_spin_lock(&qdf_mem_list_lock);
+	status = qdf_list_remove_front(domain, &node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		kfree(node);
+		status = qdf_list_remove_front(domain, &node);
+	}
+	qdf_spin_unlock(&qdf_mem_list_lock);
 }
 #endif
 
@@ -855,68 +822,30 @@ static void qdf_handle_leaked_memory(qdf_list_node_t *node)
  */
 static void qdf_mem_debug_clean(void)
 {
-	uint32_t list_size;
+	bool leaks_detected = false;
+	int i;
 
-	list_size = qdf_list_size(&qdf_mem_list);
-	if (list_size) {
-		qdf_list_node_t *node;
-		QDF_STATUS qdf_status;
+	/* detect and print leaks */
+	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i) {
+		qdf_list_t *domain = qdf_mem_list_get(i);
 
-		struct s_qdf_mem_struct *mem_struct;
-		char *prev_mleak_file = "";
-		unsigned int prev_mleak_line_num = 0;
-		unsigned int prev_mleak_sz = 0;
-		unsigned int mleak_cnt = 0;
+		if (qdf_list_empty(domain))
+			continue;
 
-		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-			  "%s: List is not Empty. list_size %d ",
-			  __func__, (int)list_size);
+		leaks_detected = true;
 
-		do {
-			qdf_spin_lock(&qdf_mem_list_lock);
-			qdf_status =
-				qdf_list_remove_front(&qdf_mem_list, &node);
-			qdf_spin_unlock(&qdf_mem_list_lock);
-			if (QDF_STATUS_SUCCESS == qdf_status) {
-				mem_struct = (struct s_qdf_mem_struct *)node;
-				/* Take care to log only once multiple memory
-				 * leaks from the same place
-				 */
-				if (strcmp(prev_mleak_file,
-					mem_struct->file_name)
-				    || (prev_mleak_line_num !=
-					mem_struct->line_num)
-				    || (prev_mleak_sz != mem_struct->size)) {
-					if (mleak_cnt != 0) {
-						QDF_TRACE(QDF_MODULE_ID_QDF,
-							  QDF_TRACE_LEVEL_FATAL,
-							  "%d Time Memory Leak@ File %s, @Line %d, size %d",
-							  mleak_cnt,
-							  prev_mleak_file,
-							  prev_mleak_line_num,
-							  prev_mleak_sz);
-					}
-					prev_mleak_file = mem_struct->file_name;
-					prev_mleak_line_num =
-						 mem_struct->line_num;
-					prev_mleak_sz = mem_struct->size;
-					mleak_cnt = 0;
-				}
-				mleak_cnt++;
-				qdf_handle_leaked_memory(node);
-			}
-		} while (qdf_status == QDF_STATUS_SUCCESS);
+		qdf_err("\nMemory leaks detected in the %s (Id %d) domain!\n\n",
+			qdf_debug_domain_name(i), i);
+		qdf_mem_domain_print(domain, qdf_err_printer, NULL);
+	}
 
-		/* Print last memory leak from the module */
-		if (mleak_cnt) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-				  "%d Time memory Leak@ File %s, @Line %d, size %d",
-				  mleak_cnt, prev_mleak_file,
-				  prev_mleak_line_num, prev_mleak_sz);
-		}
-#ifdef CONFIG_HALT_KMEMLEAK
-		QDF_BUG(0);
-#endif
+	if (leaks_detected) {
+		/* panic, if enabled */
+		qdf_mem_leak_panic();
+
+		/* if we didn't crash, release the leaked memory */
+		for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
+			qdf_mem_free_leaked_memory(qdf_mem_list_get(i));
 	}
 }
 
@@ -927,9 +856,14 @@ static void qdf_mem_debug_clean(void)
  */
 static void qdf_mem_debug_exit(void)
 {
+	int i;
+
 	qdf_net_buf_debug_exit();
 	qdf_mem_debug_clean();
-	qdf_list_destroy(&qdf_mem_list);
+
+	for (i = 0; i < QDF_DEBUG_DOMAIN_COUNT; ++i)
+		qdf_list_destroy(qdf_mem_list_get(i));
+
 	qdf_spinlock_destroy(&qdf_mem_list_lock);
 }
 
@@ -948,14 +882,15 @@ static void qdf_mem_debug_exit(void)
  * memory.  If this function is unable to allocate the amount of memory
  * specified (for any reason) it returns %NULL.
  */
-void *qdf_mem_malloc_debug(size_t size,
-			char *file_name, uint32_t line_num)
+void *qdf_mem_malloc_debug(size_t size, char *file_name, uint32_t line_num)
 {
+	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
+	qdf_list_t *mem_list = qdf_mem_list_get(current_domain);
 	struct s_qdf_mem_struct *mem_struct;
 	void *mem_ptr = NULL;
 	uint32_t new_size;
 	int flags = GFP_KERNEL;
-	unsigned long  time_before_kzalloc;
+	unsigned long time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -971,9 +906,9 @@ void *qdf_mem_malloc_debug(size_t size,
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
 
-	new_size = size + sizeof(struct s_qdf_mem_struct) + 8;/*TBD: what is 8*/
+	new_size = sizeof(*mem_struct) + size + sizeof(WLAN_MEM_TAIL);
 	time_before_kzalloc = qdf_mc_timer_get_system_time();
-	mem_struct = (struct s_qdf_mem_struct *)kzalloc(new_size, flags);
+	mem_struct = kzalloc(new_size, flags);
 	/**
 	 * If time taken by kmalloc is greater than
 	 * QDF_GET_MEMORY_TIME_THRESHOLD msec
@@ -986,32 +921,27 @@ void *qdf_mem_malloc_debug(size_t size,
 			 qdf_mc_timer_get_system_time() - time_before_kzalloc,
 			 size, (void *)_RET_IP_, line_num);
 
-	if (mem_struct != NULL) {
-		QDF_STATUS qdf_status;
+	if (mem_struct) {
+		QDF_STATUS status;
+		uint64_t *trailer;
+
+		mem_ptr = (void *)(mem_struct + 1);
+		trailer = (uint64_t *)(mem_ptr + size);
 
 		mem_struct->file_name = file_name;
 		mem_struct->line_num = line_num;
 		mem_struct->size = size;
-		qdf_atomic_inc(&mem_struct->in_use);
+		mem_struct->domain = current_domain;
+		mem_struct->header = WLAN_MEM_HEADER;
+		*trailer = WLAN_MEM_TAIL;
+
 		qdf_mem_kmalloc_inc(ksize(mem_struct));
 
-		qdf_mem_copy(&mem_struct->header[0],
-			     &WLAN_MEM_HEADER[0], sizeof(WLAN_MEM_HEADER));
-
-		qdf_mem_copy((uint8_t *) (mem_struct + 1) + size,
-			     &WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL));
-
 		qdf_spin_lock_irqsave(&qdf_mem_list_lock);
-		qdf_status = qdf_list_insert_front(&qdf_mem_list,
-						   &mem_struct->node);
+		status = qdf_list_insert_front(mem_list, &mem_struct->node);
 		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
-		if (QDF_STATUS_SUCCESS != qdf_status) {
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-				  "%s: Unable to insert node into List qdf_status %d",
-				  __func__, qdf_status);
-		}
-
-		mem_ptr = (void *)(mem_struct + 1);
+		if (QDF_IS_STATUS_ERROR(status))
+			qdf_err("Unable to insert into list status %d", status);
 	}
 
 	return mem_ptr;
@@ -1065,10 +995,16 @@ static bool qdf_mem_validate_node_for_free(qdf_list_node_t *qdf_node)
  */
 void qdf_mem_free(void *ptr)
 {
+	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
+	qdf_list_t *mem_list = qdf_mem_list_get(current_domain);
 	struct s_qdf_mem_struct *mem_struct;
+	uint64_t *trailer;
 
 	/* freeing a null pointer is valid */
 	if (qdf_unlikely(ptr == NULL))
+		return;
+
+	if (qdf_mem_prealloc_put(ptr))
 		return;
 
 	mem_struct = ((struct s_qdf_mem_struct *)ptr) - 1;
@@ -1079,9 +1015,7 @@ void qdf_mem_free(void *ptr)
 		QDF_BUG(0);
 	}
 
-	if (qdf_mem_prealloc_put(ptr))
-		return;
-
+	trailer = (uint64_t *)(ptr + mem_struct->size);
 
 	qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 
@@ -1090,8 +1024,7 @@ void qdf_mem_free(void *ptr)
 	 * would be a use after free and would indicate a double free
 	 * or invalid pointer passed.
 	 */
-	if (qdf_mem_cmp(mem_struct->header, &WLAN_MEM_HEADER[0],
-			sizeof(WLAN_MEM_HEADER)))
+	if (mem_struct->header != WLAN_MEM_HEADER)
 		goto error;
 
 	/*
@@ -1107,13 +1040,21 @@ void qdf_mem_free(void *ptr)
 	 * It is unlikely that the above checks would pass in a
 	 * double free case.
 	 */
-	if (qdf_mem_cmp((uint8_t *) ptr + mem_struct->size,
-			&WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL)))
+	if (*trailer != WLAN_MEM_TAIL)
 		goto error;
 
-	if (!qdf_atomic_dec_and_test(&mem_struct->in_use)) {
+	/* make sure the memory belongs to the current domain */
+	if (mem_struct->domain != current_domain) {
 		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
-		return;
+		qdf_err("Memory domain mismatch; found %s, expected %s (%s:%u)",
+			qdf_debug_domain_name(mem_struct->domain),
+			qdf_debug_domain_name(current_domain),
+			kbasename(mem_struct->file_name),
+			mem_struct->line_num);
+		qdf_mem_leak_panic();
+
+		/* continue de-allocation if we didn't crash */
+		qdf_spin_lock_irqsave(&qdf_mem_list_lock);
 	}
 
 	/*
@@ -1121,14 +1062,15 @@ void qdf_mem_free(void *ptr)
 	 * The empty list check will guarantee that we avoid a race condition.
 	 */
 	list_del_init(&mem_struct->node);
-	qdf_mem_list.count--;
-	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+	mem_list->count--;
 	qdf_mem_kmalloc_dec(ksize(mem_struct));
 	kfree(mem_struct);
+	qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
+
 	return;
 
 error:
-	if (!qdf_list_has_node(&qdf_mem_list, &mem_struct->node)) {
+	if (!qdf_list_has_node(mem_list, &mem_struct->node)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Unallocated memory (double free?)",
 			  __func__);
@@ -1136,8 +1078,7 @@ error:
 		QDF_BUG(0);
 	}
 
-	if (qdf_mem_cmp(mem_struct->header, &WLAN_MEM_HEADER[0],
-				sizeof(WLAN_MEM_HEADER))) {
+	if (mem_struct->header != WLAN_MEM_HEADER) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Memory Header is corrupted.");
 		qdf_spin_unlock_irqrestore(&qdf_mem_list_lock);
@@ -1151,8 +1092,7 @@ error:
 		QDF_BUG(0);
 	}
 
-	if (qdf_mem_cmp((uint8_t *) ptr + mem_struct->size,
-			&WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL))) {
+	if (*trailer != WLAN_MEM_TAIL) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Memory Trailer is corrupted. mem_info: Filename %s, line_num %d",
 			  mem_struct->file_name, (int)mem_struct->line_num);
@@ -1166,6 +1106,20 @@ error:
 	QDF_BUG(0);
 }
 EXPORT_SYMBOL(qdf_mem_free);
+
+void qdf_mem_check_for_leaks(void)
+{
+	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
+	qdf_list_t *mem_list = qdf_mem_list_get(current_domain);
+
+	if (!qdf_list_empty(mem_list)) {
+		qdf_err("Memory leaks detected in %s domain!",
+			qdf_debug_domain_name(current_domain));
+		qdf_mem_domain_print(mem_list, qdf_err_printer, NULL);
+		qdf_mem_leak_panic();
+	}
+}
+
 #else
 static void qdf_mem_debug_init(void) {}
 
