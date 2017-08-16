@@ -248,9 +248,6 @@ typedef struct hdd_wext_state_s {
 	/** BSSID to which connect request is received */
 	struct qdf_mac_addr req_bssId;
 
-	/** The association status code */
-	uint32_t statusCode;
-
 	/** wpa version WPA/WPA2/None*/
 	int32_t wpaVersion;
 
