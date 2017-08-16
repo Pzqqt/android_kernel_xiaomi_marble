@@ -148,25 +148,6 @@ static inline int pld_pcie_shadow_control(bool enable)
 {
 	return 0;
 }
-static inline int
-pld_pcie_set_wlan_unsafe_channel(u16 *unsafe_ch_list, u16 ch_count)
-{
-	return 0;
-}
-static inline int
-pld_pcie_get_wlan_unsafe_channel(u16 *unsafe_ch_list,
-				 u16 *ch_count, u16 buf_len)
-{
-	return 0;
-}
-static inline int pld_pcie_wlan_set_dfs_nol(void *info, u16 info_len)
-{
-	return 0;
-}
-static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
-{
-	return 0;
-}
 static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
 					uint32_t memtype, uint32_t datalen,
 					uint8_t *output)
@@ -242,12 +223,6 @@ static inline int pld_pcie_force_assert_target(struct device *dev)
 {
 	return -EINVAL;
 }
-static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
-						     uint32_t *num)
-{
-	*num = 0;
-	return NULL;
-}
 static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
 						   char *user_name,
 						   int *num_vectors,
@@ -284,24 +259,6 @@ static inline void pld_pcie_link_down(struct device *dev)
 static inline int pld_pcie_shadow_control(bool enable)
 {
 	return 0;
-}
-static inline int pld_pcie_set_wlan_unsafe_channel(u16 *unsafe_ch_list,
-						   u16 ch_count)
-{
-	return cnss_set_wlan_unsafe_channel(unsafe_ch_list, ch_count);
-}
-static inline int pld_pcie_get_wlan_unsafe_channel(u16 *unsafe_ch_list,
-						   u16 *ch_count, u16 buf_len)
-{
-	return cnss_get_wlan_unsafe_channel(unsafe_ch_list, ch_count, buf_len);
-}
-static inline int pld_pcie_wlan_set_dfs_nol(void *info, u16 info_len)
-{
-	return cnss_wlan_set_dfs_nol(info, info_len);
-}
-static inline int pld_pcie_wlan_get_dfs_nol(void *info, u16 info_len)
-{
-	return cnss_wlan_get_dfs_nol(info, info_len);
 }
 static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
 					uint32_t memtype, uint32_t datalen,
@@ -362,11 +319,6 @@ static inline int pld_pcie_power_off(struct device *dev)
 static inline int pld_pcie_force_assert_target(struct device *dev)
 {
 	return cnss_force_fw_assert(dev);
-}
-static inline uint8_t *pld_pcie_get_wlan_mac_address(struct device *dev,
-						     uint32_t *num)
-{
-	return cnss_common_get_wlan_mac_address(dev, num);
 }
 static inline int pld_pcie_get_user_msi_assignment(struct device *dev,
 						   char *user_name,
