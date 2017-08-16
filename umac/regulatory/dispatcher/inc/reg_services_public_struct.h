@@ -86,6 +86,7 @@
  * @CHAN_ENUM_157:  channel number 157
  * @CHAN_ENUM_161:  channel number 161
  * @CHAN_ENUM_165:  channel number 165
+ * @CHAN_ENUM_169:  channel number 169
  * @CHAN_ENUM_170:  channel number 170
  * @CHAN_ENUM_171:  channel number 171
  * @CHAN_ENUM_172:  channel number 172
@@ -145,6 +146,7 @@ enum channel_enum {
 	CHAN_ENUM_157,
 	CHAN_ENUM_161,
 	CHAN_ENUM_165,
+	CHAN_ENUM_169,
 
 	CHAN_ENUM_170,
 	CHAN_ENUM_171,
@@ -363,6 +365,7 @@ enum channel_enum {
 	CHAN_ENUM_5785,
 	CHAN_ENUM_5805,
 	CHAN_ENUM_5825,
+	CHAN_ENUM_5845,
 
 	CHAN_ENUM_5850,
 	CHAN_ENUM_5855,
