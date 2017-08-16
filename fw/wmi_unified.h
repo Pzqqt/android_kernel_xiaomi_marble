@@ -5064,6 +5064,7 @@ typedef struct {
     A_UINT32 vdev_id;
     /** peer MAC address */
     wmi_mac_addr peer_macaddr;
+    A_UINT32 pdev_id; /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0. */
 /*
  * This TLV is (optionally) followed by other TLVs:
  *     wmi_inst_rssi_stats_params inst_rssi_params;
@@ -5651,6 +5652,8 @@ typedef struct {
     A_UINT32 num_chan_stats;
     /** number of MIB stats event structures (wmi_mib_stats) */
     A_UINT32 num_mib_stats;
+    A_UINT32 pdev_id; /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0. */
+
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
  *  This data array contains
