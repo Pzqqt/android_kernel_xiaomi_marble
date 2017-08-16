@@ -665,7 +665,7 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 			      void *pMsgBuf)
 {
-	tCsrRoamInfo roamInfo = { 0 };
+	tCsrRoamInfo *roamInfo;
 	eCsrRoamResult roamResult;
 	tSirSmeRsp *sme_rsp = pMsgBuf;
 	tSirTdlsAddStaRsp *addStaRsp = (tSirTdlsAddStaRsp *) pMsgBuf;
@@ -679,6 +679,11 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		(tSirTdlsLinkEstablishReqRsp *) pMsgBuf;
 	tSirTdlsEventnotify *tevent = (tSirTdlsEventnotify *) pMsgBuf;
 
+	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
+	if (!roamInfo) {
+		sme_err("failed to allocate memory");
+		return QDF_STATUS_E_FAILURE;
+	}
 	switch (msgType) {
 	case eWNI_SME_TDLS_SEND_MGMT_RSP:
 	{
@@ -695,7 +700,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		if (eSIR_SME_SUCCESS != msg->statusCode) {
 			/* Tx failed, so there wont be any ack confirmation*/
 			/* Indicate ack failure to upper layer */
-			roamInfo.reasonCode = 0;
+			roamInfo->reasonCode = 0;
 			csr_roam_call_callback(pMac, msg->sessionId,
 					&roam_info, 0,
 					eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND,
@@ -704,11 +709,11 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		break;
 	}
 	case eWNI_SME_TDLS_ADD_STA_RSP:
-		qdf_copy_macaddr(&roamInfo.peerMac, &addStaRsp->peermac);
-		roamInfo.staId = addStaRsp->staId;
-		roamInfo.ucastSig = addStaRsp->ucastSig;
-		roamInfo.bcastSig = addStaRsp->bcastSig;
-		roamInfo.statusCode = addStaRsp->statusCode;
+		qdf_copy_macaddr(&roamInfo->peerMac, &addStaRsp->peermac);
+		roamInfo->staId = addStaRsp->staId;
+		roamInfo->ucastSig = addStaRsp->ucastSig;
+		roamInfo->bcastSig = addStaRsp->bcastSig;
+		roamInfo->statusCode = addStaRsp->statusCode;
 		/*
 		 * register peer with TL, we have to go through HDD as
 		 * this is the only way to register any STA with TL.
@@ -718,7 +723,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		else    /* addStaRsp->tdlsAddOper must be TDLS_OPER_UPDATE */
 			roamResult = eCSR_ROAM_RESULT_UPDATE_TDLS_PEER;
 		csr_roam_call_callback(pMac, addStaRsp->sessionId,
-				&roamInfo, 0, eCSR_ROAM_TDLS_STATUS_UPDATE,
+				roamInfo, 0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				roamResult);
 
 		/* remove pending eSmeCommandTdlsDiscovery command */
@@ -726,15 +731,15 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 					addStaRsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_RSP:
-		qdf_copy_macaddr(&roamInfo.peerMac, &delStaRsp->peermac);
-		roamInfo.staId = delStaRsp->staId;
-		roamInfo.statusCode = delStaRsp->statusCode;
+		qdf_copy_macaddr(&roamInfo->peerMac, &delStaRsp->peermac);
+		roamInfo->staId = delStaRsp->staId;
+		roamInfo->statusCode = delStaRsp->statusCode;
 		/*
 		 * register peer with TL, we have to go through HDD as
 		 * this is the only way to register any STA with TL.
 		 */
 		csr_roam_call_callback(pMac, delStaRsp->sessionId,
-				&roamInfo, 0,
+				roamInfo, 0,
 				eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_DELETE_TDLS_PEER);
 
@@ -742,14 +747,14 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 					delStaRsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_IND:
-		qdf_copy_macaddr(&roamInfo.peerMac,
+		qdf_copy_macaddr(&roamInfo->peerMac,
 				 &pSirTdlsDelStaInd->peermac);
-		roamInfo.staId = pSirTdlsDelStaInd->staId;
-		roamInfo.reasonCode = pSirTdlsDelStaInd->reasonCode;
+		roamInfo->staId = pSirTdlsDelStaInd->staId;
+		roamInfo->reasonCode = pSirTdlsDelStaInd->reasonCode;
 
 		/* Sending the TEARDOWN indication to HDD. */
 		csr_roam_call_callback(pMac,
-				pSirTdlsDelStaInd->sessionId, &roamInfo,
+				pSirTdlsDelStaInd->sessionId, roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TEARDOWN_TDLS_PEER_IND);
 		break;
@@ -757,24 +762,24 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		/* Sending the TEARDOWN indication to HDD. */
 		csr_roam_call_callback(pMac,
 				pSirTdlsDelAllPeerInd->sessionId,
-				&roamInfo, 0,
+				roamInfo, 0,
 				eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_DELETE_ALL_TDLS_PEER_IND);
 		break;
 	case eWNI_SME_MGMT_FRM_TX_COMPLETION_IND:
-		roamInfo.reasonCode =
+		roamInfo->reasonCode =
 			tdls_tx_comp_ind->txCompleteStatus;
 
 		csr_roam_call_callback(pMac,
 				tdls_tx_comp_ind->sessionId,
-				&roamInfo, 0,
+				roamInfo, 0,
 				eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND,
 				0);
 		break;
 	case eWNI_SME_TDLS_LINK_ESTABLISH_RSP:
 		csr_roam_call_callback(pMac,
 				linkEstablishReqRsp->sessionId,
-				&roamInfo, 0,
+				roamInfo, 0,
 				eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_LINK_ESTABLISH_REQ_RSP);
 		/* remove pending eSmeCommandTdlsLinkEstablish command */
@@ -782,56 +787,57 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				linkEstablishReqRsp->sessionId);
 		break;
 	case eWNI_SME_TDLS_SHOULD_DISCOVER:
-		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
-		roamInfo.reasonCode = tevent->peer_reason;
+		qdf_copy_macaddr(&roamInfo->peerMac, &tevent->peermac);
+		roamInfo->reasonCode = tevent->peer_reason;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"%s: eWNI_SME_TDLS_SHOULD_DISCOVER for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
 				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 				tevent->peer_reason);
-		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
+		csr_roam_call_callback(pMac, tevent->sessionId, roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_DISCOVER);
 		break;
 	case eWNI_SME_TDLS_SHOULD_TEARDOWN:
-		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
-		roamInfo.reasonCode = tevent->peer_reason;
+		qdf_copy_macaddr(&roamInfo->peerMac, &tevent->peermac);
+		roamInfo->reasonCode = tevent->peer_reason;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"%s: eWNI_SME_TDLS_SHOULD_TEARDOWN for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
 				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 				tevent->peer_reason);
-		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
+		csr_roam_call_callback(pMac, tevent->sessionId, roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_TEARDOWN);
 		break;
 	case eWNI_SME_TDLS_PEER_DISCONNECTED:
-		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
-		roamInfo.reasonCode = tevent->peer_reason;
+		qdf_copy_macaddr(&roamInfo->peerMac, &tevent->peermac);
+		roamInfo->reasonCode = tevent->peer_reason;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"%s: eWNI_SME_TDLS_PEER_DISCONNECTED for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
 				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 				tevent->peer_reason);
-		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
+		csr_roam_call_callback(pMac, tevent->sessionId, roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_PEER_DISCONNECTED);
 		break;
 	case eWNI_SME_TDLS_CONNECTION_TRACKER_NOTIFICATION:
-		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
-		roamInfo.reasonCode = tevent->peer_reason;
+		qdf_copy_macaddr(&roamInfo->peerMac, &tevent->peermac);
+		roamInfo->reasonCode = tevent->peer_reason;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: eWNI_SME_TDLS_CONNECTION_TRACKER_NOTIFICATION for peer mac: "
 			  MAC_ADDRESS_STR " peer_reason: %d",
 			  __func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 			  tevent->peer_reason);
-		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
+		csr_roam_call_callback(pMac, tevent->sessionId, roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 			eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION);
 		break;
 	default:
 		break;
 	}
+	qdf_mem_free(roamInfo);
 
 	return QDF_STATUS_SUCCESS;
 }

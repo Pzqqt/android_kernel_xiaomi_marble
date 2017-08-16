@@ -5652,7 +5652,7 @@ static eCsrJoinState csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 	tScanResultList *bss_list =
 		(tScanResultList *) cmd->u.roamCmd.hBSSList;
 	bool done = false;
-	tCsrRoamInfo roam_info, *roam_info_ptr = NULL;
+	tCsrRoamInfo *roam_info = NULL;
 	uint32_t session_id = cmd->sessionId;
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 	tCsrRoamProfile *profile = &cmd->u.roamCmd.roamProfile;
@@ -5664,8 +5664,12 @@ static eCsrJoinState csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 		return eCsrStopRoaming;
 	}
 
-	qdf_mem_set(&roam_info, sizeof(roam_info), 0);
-	qdf_mem_copy(&roam_info.bssid, &session->joinFailStatusCode.bssId,
+	roam_info = qdf_mem_malloc(sizeof (*roam_info));
+	if (!roam_info) {
+		sme_err("failed to allocate memory");
+		return eCsrStopRoaming;
+	}
+	qdf_mem_copy(&roam_info->bssid, &session->joinFailStatusCode.bssId,
 			sizeof(tSirMacAddr));
 	/*
 	 * When handling AP's capability change, continue to associate
@@ -5696,11 +5700,10 @@ static eCsrJoinState csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 			 * We need to indicate to HDD that we
 			 * are done with this one.
 			 */
-			roam_info.pBssDesc = cmd->u.roamCmd.pLastRoamBss;
+			roam_info->pBssDesc = cmd->u.roamCmd.pLastRoamBss;
 			join_status = &session->joinFailStatusCode;
-			roam_info.statusCode = join_status->statusCode;
-			roam_info.reasonCode = join_status->reasonCode;
-			roam_info_ptr = &roam_info;
+			roam_info->statusCode = join_status->statusCode;
+			roam_info->reasonCode = join_status->reasonCode;
 		}
 		done = csr_roam_select_bss(mac_ctx,
 				cmd->u.roamCmd.pRoamBssEntry, &result,
@@ -5709,11 +5712,9 @@ static eCsrJoinState csr_roam_join_next_bss(tpAniSirGlobal mac_ctx,
 		if (done)
 			goto end;
 	}
-	if (!roam_info_ptr)
-		roam_info_ptr = &roam_info;
-	roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
+	roam_info->u.pConnectedProfile = &session->connectedProfile;
 
-	csr_roam_join_handle_profile(mac_ctx, session_id, cmd, roam_info_ptr,
+	csr_roam_join_handle_profile(mac_ctx, session_id, cmd, roam_info,
 		&roam_state, result, scan_result);
 end:
 	if ((eCsrStopRoaming == roam_state) && CSR_IS_INFRASTRUCTURE(profile) &&
@@ -5727,13 +5728,13 @@ end:
 		 * Complete the last assoc attempte as a
 		 * new one is about to be tried
 		 */
-		roam_info_ptr = &roam_info;
-		roam_info_ptr->pProfile = profile;
+		roam_info->pProfile = profile;
 		csr_roam_call_callback(mac_ctx, session_id,
-			roam_info_ptr, cmd->u.roamCmd.roamId,
+			roam_info, cmd->u.roamCmd.roamId,
 			eCSR_ROAM_ASSOCIATION_COMPLETION,
 			eCSR_ROAM_RESULT_NOT_ASSOCIATED);
 	}
+	qdf_mem_free(roam_info);
 
 	return roam_state;
 }
@@ -9534,7 +9535,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 						   tSirSmeDisassocRsp *pSmeRsp)
 {
 	tScanResultHandle hBSSList;
-	tCsrRoamInfo roamInfo;
+	tCsrRoamInfo *roamInfo;
 	tCsrScanResultFilter *pScanFilter = NULL;
 	uint32_t roamId = 0;
 	tCsrRoamProfile *pCurRoamProfile = NULL;
@@ -9557,6 +9558,13 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 	pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
+		return;
+	}
+
+	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
+
+	if (!roamInfo) {
+		sme_err("failed to allocate memory");
 		return;
 	}
 
@@ -9593,12 +9601,12 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 		csr_dequeue_command(pMac);
 
 		/* notify HDD about handoff and provide the BSSID too */
-		roamInfo.reasonCode = eCsrRoamReasonBetterAP;
+		roamInfo->reasonCode = eCsrRoamReasonBetterAP;
 
-		qdf_copy_macaddr(&roamInfo.bssid,
+		qdf_copy_macaddr(&roamInfo->bssid,
 			pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.bssid);
 
-		csr_roam_call_callback(pMac, sessionId, &roamInfo, 0,
+		csr_roam_call_callback(pMac, sessionId, roamInfo, 0,
 				       eCSR_ROAM_ROAMING_START,
 				       eCSR_ROAM_RESULT_NONE);
 
@@ -9631,12 +9639,13 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 			qdf_mem_free(pCurRoamProfile);
 			csr_free_scan_filter(pMac, pScanFilter);
 			qdf_mem_free(pScanFilter);
+			qdf_mem_free(roamInfo);
 			return;
 		}
 		csr_scan_result_purge(pMac, hBSSList);
 
 POST_ROAM_FAILURE:
-		csr_post_roam_failure(pMac, sessionId, &roamInfo,
+		csr_post_roam_failure(pMac, sessionId, roamInfo,
 			      pScanFilter, pCurRoamProfile);
 	} /* else if ( CSR_IS_ROAM_SUBSTATE_DISASSOC_HO( pMac ) ) */
 	else if (CSR_IS_ROAM_SUBSTATE_REASSOC_FAIL(pMac, sessionId)) {
@@ -9665,6 +9674,7 @@ POST_ROAM_FAILURE:
 		/* We are not done yet. Get the data and continue roaming */
 		csr_roam_reissue_roam_command(pMac, sessionId);
 	}
+	qdf_mem_free(roamInfo);
 }
 
 static void csr_roam_roaming_state_deauth_rsp_processor(tpAniSirGlobal pMac,
