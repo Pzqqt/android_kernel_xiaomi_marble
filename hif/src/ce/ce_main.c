@@ -423,6 +423,7 @@ static struct service_to_pipe target_service_to_ce_map_qca8074[] = {
 	{ HTC_RAW_STREAMS_SVC, PIPEDIR_IN, 1 },
 	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
 	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
+	{ PACKET_LOG_SVC, PIPEDIR_IN, 5, },
 	/* (Additions here) */
 	{ 0, 0, 0, },
 };
