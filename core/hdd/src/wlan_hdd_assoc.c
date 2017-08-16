@@ -6218,11 +6218,7 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 			 * Right now, this breaks all ref to authKeyMgmt because
 			 * our code doesn't realize it is a "bitfield"
 			 */
-			pWextState->authKeyMgmt |=
-				IW_AUTH_KEY_MGMT_CCKM;
-			/* Set the key management to 802.1X */
-			/* pWextState->authKeyMgmt = IW_AUTH_KEY_MGMT_802_1X; */
-			pWextState->isESEConnection = true;
+			pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_CCKM;
 		} else if (wrqu->param.value & IW_AUTH_KEY_MGMT_PSK) {
 			/* Save the key management */
 			pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_PSK;

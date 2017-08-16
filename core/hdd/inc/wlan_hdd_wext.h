@@ -272,10 +272,6 @@ typedef struct hdd_wext_state_s {
 	/**Counter measure state, Started/Stopped*/
 	bool mTKIPCounterMeasures;
 
-#ifdef FEATURE_WLAN_ESE
-	/* ESE state variables */
-	bool isESEConnection;
-#endif
 } hdd_wext_state_t;
 
 struct ccp_freq_chan_map {
