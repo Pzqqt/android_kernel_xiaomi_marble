@@ -10533,7 +10533,7 @@ enum hdd_wext_control {
  * <ini>
  * gActiveMcBcBpfMode - Control MC/BC active BPF mode
  * @Min: 0 (disabled)
- * @Max: 2 (adaptive)
+ * @Max: 1 (enabled)
  * @Default: 0 (disabled)
  *
  * This config item controls MC/BC BPF in active mode. There are 3 modes:
@@ -10550,7 +10550,7 @@ enum hdd_wext_control {
  */
 #define CFG_ACTIVE_MC_BC_BPF_MODE_NAME    "gActiveMcBcBpfMode"
 #define CFG_ACTIVE_MC_BC_BPF_MODE_MIN     (ACTIVE_BPF_DISABLED)
-#define CFG_ACTIVE_MC_BC_BPF_MODE_MAX     (ACTIVE_BPF_MODE_COUNT - 1)
+#define CFG_ACTIVE_MC_BC_BPF_MODE_MAX     (ACTIVE_BPF_ENABLED)
 #define CFG_ACTIVE_MC_BC_BPF_MODE_DEFAULT (ACTIVE_BPF_DISABLED)
 
 #ifdef WLAN_FEATURE_11AX
