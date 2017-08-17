@@ -511,6 +511,13 @@ static int wma_dcc_get_stats_resp_event_handler(void *handle,
 	fix_param = param_tlvs->fixed_param;
 
 	/* Allocate and populate the response */
+	if (fix_param->num_channels > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel))) {
+		WMA_LOGE("%s: too many channels:%d", __func__,
+			fix_param->num_channels);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 	response = qdf_mem_malloc(sizeof(*response) + fix_param->num_channels *
 		sizeof(wmi_dcc_ndl_stats_per_channel));
 	if (response == NULL)
@@ -651,6 +658,13 @@ static int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	param_tlvs = (WMI_DCC_STATS_EVENTID_param_tlvs *)event_buf;
 	fix_param = param_tlvs->fixed_param;
 	/* Allocate and populate the response */
+	if (fix_param->num_channels > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel))) {
+		WMA_LOGE("%s: too many channels:%d", __func__,
+			fix_param->num_channels);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 	response = qdf_mem_malloc(sizeof(*response) +
 	    fix_param->num_channels * sizeof(wmi_dcc_ndl_stats_per_channel));
 	if (response == NULL)

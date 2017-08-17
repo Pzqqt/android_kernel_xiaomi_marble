@@ -453,6 +453,12 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	alloc_len = sizeof(tSirStatsExtEvent);
 	alloc_len += stats_ext_info->data_len;
 
+	if (stats_ext_info->data_len > (WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*stats_ext_info))) {
+		WMA_LOGE("Excess data_len:%d", stats_ext_info->data_len);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 	stats_ext_event = (tSirStatsExtEvent *) qdf_mem_malloc(alloc_len);
 	if (NULL == stats_ext_event) {
 		WMA_LOGE("%s: Memory allocation failure", __func__);
@@ -1145,6 +1151,8 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	uint32_t next_res_offset, next_peer_offset, next_rate_offset;
 	size_t peer_info_size, peer_stats_size, rate_stats_size;
 	size_t link_stats_results_size;
+	bool excess_data = false;
+	uint32_t buf_len;
 
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -1177,6 +1185,33 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	if (!fixed_param || !peer_stats ||
 	    (peer_stats->num_rates && !rate_stats)) {
 		WMA_LOGA("%s: Invalid param_tlvs for Peer Stats", __func__);
+		return -EINVAL;
+	}
+
+	do {
+		if (peer_stats->num_rates >
+			WMI_SVC_MSG_MAX_SIZE/sizeof(wmi_rate_stats)) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len =
+				peer_stats->num_rates * sizeof(wmi_rate_stats);
+		}
+		if (fixed_param->num_peers >
+			WMI_SVC_MSG_MAX_SIZE/sizeof(wmi_peer_link_stats)) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len += fixed_param->num_peers *
+				sizeof(wmi_peer_link_stats);
+		}
+	} while (0);
+
+	if (excess_data ||
+		(sizeof(*fixed_param) > WMI_SVC_MSG_MAX_SIZE - buf_len)) {
+		WMA_LOGE("excess wmi buffer: rates:%d, peers:%d",
+			peer_stats->num_rates, fixed_param->num_peers);
+		QDF_ASSERT(0);
 		return -EINVAL;
 	}
 
@@ -1348,6 +1383,13 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 			 fixed_param->power_level_offset,
 			 fixed_param->radio_id);
 
+	if (fixed_param->num_tx_power_levels > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*fixed_param)) / sizeof(uint32_t))) {
+		WMA_LOGE("%s: excess tx_power buffers:%d", __func__,
+			fixed_param->num_tx_power_levels);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 	rs_results = (tSirWifiRadioStat *) &link_stats_results->results[0] +
 							 fixed_param->radio_id;
 	tx_power_level_values = (uint8_t *) param_tlvs->tx_time_per_power_level;
@@ -2646,7 +2688,7 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_vdev_rate_ht_info *ht_info;
 	struct wma_txrx_node *intr = wma->interfaces;
 	uint8_t link_status = LINK_STATUS_LEGACY;
-	int i;
+	uint32_t i;
 
 	param_buf =
 	      (WMI_UPDATE_VDEV_RATE_STATS_EVENTID_param_tlvs *) cmd_param_info;
@@ -2660,6 +2702,14 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 	ht_info = (wmi_vdev_rate_ht_info *) param_buf->ht_info;
 
 	WMA_LOGD("num_vdev_stats: %d", event->num_vdev_stats);
+
+	if (event->num_vdev_stats > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*event)) / sizeof(*ht_info))) {
+		WMA_LOGE("%s: excess vdev_stats buffers:%d", __func__,
+			event->num_vdev_stats);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 	for (i = 0; (i < event->num_vdev_stats) && ht_info; i++) {
 		WMA_LOGD("%s vdevId:%d  tx_nss:%d rx_nss:%d tx_preamble:%d rx_preamble:%d",
 			__func__, ht_info->vdevid, ht_info->tx_nss,
@@ -2850,7 +2900,10 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_rssi_stats *rssi_stats;
 	wmi_per_chain_rssi_stats *rssi_event;
 	struct wma_txrx_node *node;
-	uint8_t i, *temp;
+	uint8_t *temp;
+	uint32_t i;
+	uint32_t buf_len = 0;
+	bool excess_data = false;
 	wmi_congestion_stats *congestion_stats;
 	tpAniSirGlobal mac;
 
@@ -2861,6 +2914,53 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 	}
 	event = param_buf->fixed_param;
 	temp = (uint8_t *) param_buf->data;
+
+	do {
+		if (event->num_pdev_stats > ((WMI_SVC_MSG_MAX_SIZE -
+		    sizeof(*event)) / sizeof(*pdev_stats))) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len += event->num_pdev_stats * sizeof(*pdev_stats);
+		}
+
+		if (event->num_vdev_stats > ((WMI_SVC_MSG_MAX_SIZE -
+		    sizeof(*event)) / sizeof(*vdev_stats))) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len += event->num_vdev_stats * sizeof(*vdev_stats);
+		}
+
+		if (event->num_peer_stats > ((WMI_SVC_MSG_MAX_SIZE -
+		    sizeof(*event)) / sizeof(*peer_stats))) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len += event->num_peer_stats * sizeof(*peer_stats);
+		}
+
+		rssi_event =
+			(wmi_per_chain_rssi_stats *) param_buf->chain_stats;
+		if (rssi_event && (rssi_event->num_per_chain_rssi_stats >
+		    ((WMI_SVC_MSG_MAX_SIZE - sizeof(*event)) /
+		    sizeof(*peer_stats)))) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len += rssi_event->num_per_chain_rssi_stats *
+						sizeof(*peer_stats);
+		}
+	} while (0);
+
+	if (excess_data ||
+		(sizeof(*event) > WMI_SVC_MSG_MAX_SIZE - buf_len)) {
+		WMA_LOGE("excess wmi buffer: stats pdev %d vdev %d peer %d",
+			 event->num_pdev_stats, event->num_vdev_stats,
+			 event->num_peer_stats);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 
 	if (event->num_pdev_stats > 0) {
 		for (i = 0; i < event->num_pdev_stats; i++) {

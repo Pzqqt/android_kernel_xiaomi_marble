@@ -2384,6 +2384,23 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	}
 	WMA_LOGI("LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
 
+	/*
+	 * All below length fields are unsigned and hence positive numbers.
+	 * Maximum number during the addition would be (3 * MAX_LIMIT(UINT32) +
+	 * few fixed fields).
+	 */
+	if (sizeof(*synch_event) + synch_event->bcn_probe_rsp_len +
+			synch_event->reassoc_rsp_len +
+			synch_event->reassoc_req_len +
+			sizeof(wmi_channel) + sizeof(wmi_key_material) +
+			sizeof(uint32_t) > WMI_SVC_MSG_MAX_SIZE) {
+		WMA_LOGE("excess synch payload: LEN bcn:%d, req:%d, rsp:%d",
+				synch_event->bcn_probe_rsp_len,
+				synch_event->reassoc_req_len,
+				synch_event->reassoc_rsp_len);
+		goto cleanup_label;
+	}
+
 	cds_host_diag_log_work(&wma->roam_ho_wl,
 			       WMA_ROAM_HO_WAKE_LOCK_DURATION,
 			       WIFI_POWER_EVENT_WAKELOCK_WOW);
@@ -4005,6 +4022,8 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	wmi_extscan_rssi_info *src_rssi;
 	int numap, i, moredata, scan_ids_cnt, buf_len;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	uint32_t total_len;
+	bool excess_data = false;
 
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
@@ -4050,6 +4069,44 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	WMA_LOGI("%s: scan_ids_cnt %d", __func__, scan_ids_cnt);
 	dest_cachelist->num_scan_ids = scan_ids_cnt;
 
+	if (event->num_entries_in_page >
+		(WMI_SVC_MSG_MAX_SIZE - sizeof(*event))/sizeof(*src_hotlist)) {
+		WMA_LOGE("%s:excess num_entries_in_page %d in WMI event",
+				__func__, event->num_entries_in_page);
+		qdf_mem_free(dest_cachelist);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	} else {
+		total_len = sizeof(*event) +
+			(event->num_entries_in_page * sizeof(*src_hotlist));
+	}
+	for (i = 0; i < event->num_entries_in_page; i++) {
+		if (src_hotlist[i].ie_length > WMI_SVC_MSG_MAX_SIZE -
+			total_len) {
+			excess_data = true;
+			break;
+		} else {
+			total_len += src_hotlist[i].ie_length;
+			WMA_LOGD("total len IE: %d", total_len);
+		}
+
+		if (src_hotlist[i].number_rssi_samples >
+			(WMI_SVC_MSG_MAX_SIZE - total_len)/sizeof(*src_rssi)) {
+			excess_data = true;
+			break;
+		} else {
+			total_len += (src_hotlist[i].number_rssi_samples *
+					sizeof(*src_rssi));
+			WMA_LOGD("total len RSSI samples: %d", total_len);
+		}
+	}
+	if (excess_data) {
+		WMA_LOGE("%s:excess data in WMI event",
+				__func__);
+		qdf_mem_free(dest_cachelist);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 	buf_len = sizeof(*dest_result) * scan_ids_cnt;
 	dest_cachelist->result = qdf_mem_malloc(buf_len);
 	if (!dest_cachelist->result) {
@@ -4113,6 +4170,8 @@ int wma_extscan_change_results_event_handler(void *handle,
 	int moredata;
 	int rssi_num = 0;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
+	uint32_t buf_len;
+	bool excess_data = false;
 
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
@@ -4145,6 +4204,31 @@ int wma_extscan_change_results_event_handler(void *handle,
 		moredata = 1;
 	} else {
 		moredata = 0;
+	}
+
+	do {
+		if (event->num_entries_in_page >
+			(WMI_SVC_MSG_MAX_SIZE - sizeof(*event))/
+			sizeof(*src_chglist)) {
+			excess_data = true;
+			break;
+		} else {
+			buf_len =
+				sizeof(*event) + (event->num_entries_in_page *
+						sizeof(*src_chglist));
+		}
+		if (rssi_num >
+			(WMI_SVC_MSG_MAX_SIZE - buf_len)/sizeof(int32_t)) {
+			excess_data = true;
+			break;
+		}
+	} while (0);
+
+	if (excess_data) {
+		WMA_LOGE("buffer len exceeds WMI payload,numap:%d, rssi_num:%d",
+				numap, rssi_num);
+		QDF_ASSERT(0);
+		return -EINVAL;
 	}
 	dest_chglist = qdf_mem_malloc(sizeof(*dest_chglist) +
 				      sizeof(*dest_ap) * numap +
@@ -4219,6 +4303,18 @@ int wma_passpoint_match_event_handler(void *handle,
 	}
 	event = param_buf->fixed_param;
 	buf_ptr = (uint8_t *)param_buf->fixed_param;
+
+	/*
+	 * All the below lengths are UINT32 and summing up and checking
+	 * against a constant should not be an issue.
+	 */
+	if ((sizeof(*event) + event->ie_length + event->anqp_length) >
+			WMI_SVC_MSG_MAX_SIZE) {
+		WMA_LOGE("IE Length: %d or ANQP Length: %d is huge",
+				 event->ie_length, event->anqp_length);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
 
 	dest_match = qdf_mem_malloc(sizeof(*dest_match) +
 				event->ie_length + event->anqp_length);
