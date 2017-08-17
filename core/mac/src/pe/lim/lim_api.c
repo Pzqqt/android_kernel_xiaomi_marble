@@ -2168,6 +2168,8 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		ft_session_ptr->bRoamSynchInProgress = false;
 		return status;
 	}
+
+	add_bss_params->bssIdx = roam_sync_ind_ptr->roamedVdevId;
 	ft_session_ptr->bssIdx = (uint8_t) add_bss_params->bssIdx;
 
 	curr_sta_ds->bssId = add_bss_params->bssIdx;
