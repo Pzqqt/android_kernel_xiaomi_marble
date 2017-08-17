@@ -1403,18 +1403,8 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		QDF_MIN(rates->vhtRxHighestDataRate,
 			peer_vht_caps->rxHighSupDataRate);
 
-	if (session_entry && session_entry->nss == NSS_2x2_MODE) {
-		if (mac_ctx->lteCoexAntShare &&
-			IS_24G_CH(session_entry->currentOperChannel)) {
-			if (IS_2X2_CHAIN(session_entry->chainMask))
-				mcs_map_mask2x2 = MCSMAPMASK2x2;
-			else
-				pe_err("2x2 not enabled %d",
-					session_entry->chainMask);
-		} else {
-			mcs_map_mask2x2 = MCSMAPMASK2x2;
-		}
-	}
+	if (session_entry && session_entry->nss == NSS_2x2_MODE)
+		mcs_map_mask2x2 = MCSMAPMASK2x2;
 
 	if ((peer_vht_caps->txMCSMap & mcs_map_mask) <
 	    (rates->vhtRxMCSMap & mcs_map_mask)) {

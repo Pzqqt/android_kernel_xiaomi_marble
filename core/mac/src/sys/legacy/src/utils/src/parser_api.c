@@ -681,17 +681,6 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 				pMac->roam.configParam.disable_high_ht_mcs_2x2;
 		pe_debug("disable HT high MCS INI param[%d]",
 			 disable_high_ht_mcs_2x2);
-
-		if (pMac->lteCoexAntShare
-		    && (IS_24G_CH(psessionEntry->currentOperChannel))) {
-			if (!(IS_2X2_CHAIN(psessionEntry->chainMask))) {
-				pDot11f->supportedMCSSet[1] = 0;
-				if (LIM_IS_STA_ROLE(psessionEntry)) {
-					pDot11f->mimoPowerSave =
-						psessionEntry->smpsMode;
-				}
-			}
-		}
 		if (psessionEntry->nss == NSS_1x1_MODE) {
 			pDot11f->supportedMCSSet[1] = 0;
 		} else if (IS_24G_CH(psessionEntry->currentOperChannel) &&
@@ -1069,13 +1058,6 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 
 	pDot11f->reserved3 = 0;
 	if (psessionEntry) {
-		if (pMac->lteCoexAntShare
-		    && (IS_24G_CH(psessionEntry->currentOperChannel))) {
-			if (!(IS_2X2_CHAIN(psessionEntry->chainMask))) {
-				pDot11f->txMCSMap |= DISABLE_NSS2_MCS;
-				pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
-			}
-		}
 		if (psessionEntry->nss == NSS_1x1_MODE) {
 			pDot11f->txMCSMap |= DISABLE_NSS2_MCS;
 			pDot11f->rxMCSMap |= DISABLE_NSS2_MCS;
