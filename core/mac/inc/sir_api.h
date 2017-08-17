@@ -329,6 +329,20 @@ typedef enum eSirResultCodes {
 	eSIR_DONOT_USE_RESULT_CODE = SIR_MAX_ENUM_SIZE
 } tSirResultCodes;
 
+#ifdef WLAN_FEATURE_FILS_SK
+struct fils_join_rsp_params {
+	uint8_t *fils_pmk;
+	uint8_t fils_pmk_len;
+	uint8_t fils_pmkid[PMKID_LEN];
+	uint8_t kek[MAX_KEK_LEN];
+	uint8_t kek_len;
+	uint8_t tk[MAX_TK_LEN];
+	uint8_t tk_len;
+	uint8_t gtk_len;
+	uint8_t gtk[MAX_GTK_LEN];
+};
+#endif
+
 #define RMENABLEDCAP_MAX_LEN 5
 
 struct rrm_config_param {
@@ -1295,6 +1309,11 @@ typedef struct sSirSmeJoinRsp {
 	tDot11fIEHTInfo ht_operation;
 	tDot11fIEVHTOperation vht_operation;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
+	bool is_fils_connection;
+#ifdef WLAN_FEATURE_FILS_SK
+	uint16_t fils_seq_num;
+	struct fils_join_rsp_params *fils_join_rsp;
+#endif
 	uint8_t frames[1];
 } tSirSmeJoinRsp, *tpSirSmeJoinRsp;
 

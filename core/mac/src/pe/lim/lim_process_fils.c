@@ -1235,4 +1235,555 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 	}
 	return frame_len;
 }
+
+void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
+				  tpPESession session,
+				  tpSirSmeJoinRsp sme_join_rsp)
+{
+	struct fils_join_rsp_params *fils_join_rsp;
+	struct pe_fils_session *fils_info = session->fils_info;
+
+	if (!lim_is_fils_connection(session))
+		return;
+
+	if (!fils_info->fils_pmk_len ||
+			!fils_info->tk_len || !fils_info->gtk_len ||
+			!fils_info->fils_pmk || !fils_info->kek_len) {
+		pe_err("Invalid FILS info pmk len %d kek len %d tk len %d gtk len %d",
+			fils_info->fils_pmk_len,
+			fils_info->kek_len,
+			fils_info->tk_len,
+			fils_info->gtk_len);
+		return;
+	}
+
+	sme_join_rsp->fils_join_rsp = qdf_mem_malloc(sizeof(*fils_join_rsp));
+	if (!sme_join_rsp->fils_join_rsp) {
+		pe_err("fils_join_rsp malloc fails!");
+		pe_delete_fils_info(session);
+		return;
+	}
+
+	fils_join_rsp = sme_join_rsp->fils_join_rsp;
+	fils_join_rsp->fils_pmk = qdf_mem_malloc(fils_info->fils_pmk_len);
+	if (!fils_join_rsp->fils_pmk) {
+		pe_err("fils_pmk malloc fails!");
+		qdf_mem_free(fils_join_rsp);
+		pe_delete_fils_info(session);
+		return;
+	}
+
+	fils_join_rsp->fils_pmk_len = fils_info->fils_pmk_len;
+	qdf_mem_copy(fils_join_rsp->fils_pmk, fils_info->fils_pmk,
+			fils_info->fils_pmk_len);
+
+	qdf_mem_copy(fils_join_rsp->fils_pmkid, fils_info->fils_pmkid,
+			IEEE80211_PMKID_LEN);
+
+	fils_join_rsp->kek_len = fils_info->kek_len;
+	qdf_mem_copy(fils_join_rsp->kek, fils_info->kek, fils_info->kek_len);
+
+	fils_join_rsp->tk_len = fils_info->tk_len;
+	qdf_mem_copy(fils_join_rsp->tk, fils_info->tk, fils_info->tk_len);
+
+	fils_join_rsp->gtk_len = fils_info->gtk_len;
+	qdf_mem_copy(fils_join_rsp->gtk, fils_info->gtk, fils_info->gtk_len);
+
+	pe_debug("FILS connect params copied lim");
+	pe_delete_fils_info(session);
+}
+
+/**
+ * lim_parse_kde_elements() - Parse Key Delivery Elements
+ * @mac_ctx: mac context
+ * @fils_info: FILS info
+ * @kde_list: KDE list buffer
+ * @kde_list_len: Length of @kde_list
+ *
+ * This API is used to parse the Key Delivery Elements from buffer
+ * and populate them in PE FILS session struct i.e @fils_info
+ *
+ *             Key Delivery Element[KDE] format
+ * +----------+--------+-----------+------------+----------+
+ * | ID(0xDD) | length |  KDE OUI  |  data type |  IE data |
+ * |----------|--------|-----------|------------|----------|
+ * |  1 byte  | 1 byte |  3 bytes  |   1 byte   | variable |
+ * +----------+--------+-----------+------------+----------+
+ *
+ * there can be multiple KDE present inside KDE list.
+ * the IE data could be GTK, IGTK etc based on the data type
+ *
+ * Return: QDF_STATUS_SUCCESS if we parse GTK successfully,
+ *         QDF_STATUS_E_FAILURE otherwise
+ */
+static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
+					 struct pe_fils_session *fils_info,
+					 uint8_t *kde_list,
+					 uint8_t kde_list_len)
+{
+	uint8_t rem_len = kde_list_len;
+	uint8_t *temp_ie = kde_list;
+	uint8_t elem_id, data_type, data_len, *ie_data = NULL, *current_ie;
+	uint16_t elem_len;
+
+	if (!kde_list_len || !kde_list) {
+		pe_err("kde_list NULL or kde_list_len %d", kde_list_len);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	while (rem_len >= 2) {
+		current_ie = temp_ie;
+		elem_id = *temp_ie++;
+		elem_len = *temp_ie++;
+		rem_len -= 2;
+
+		if (lim_check_if_vendor_oui_match(mac_ctx, KDE_OUI_TYPE,
+				KDE_OUI_TYPE_SIZE, current_ie, elem_len)) {
+
+			data_type = *(temp_ie + KDE_DATA_TYPE_OFFSET);
+			ie_data = (temp_ie + KDE_IE_DATA_OFFSET);
+			data_len = (elem_len - KDE_IE_DATA_OFFSET);
+
+			switch (data_type) {
+			case DATA_TYPE_GTK:
+				qdf_mem_copy(fils_info->gtk, (ie_data +
+					     GTK_OFFSET), (data_len -
+					     GTK_OFFSET));
+				fils_info->gtk_len = (data_len - GTK_OFFSET);
+				lim_fils_data_dump("GTK: ", fils_info->gtk,
+						   fils_info->gtk_len);
+				break;
+
+			case DATA_TYPE_IGTK:
+				fils_info->igtk_len = (data_len - IGTK_OFFSET);
+				qdf_mem_copy(fils_info->igtk, (ie_data +
+					     IGTK_OFFSET), (data_len -
+					     IGTK_OFFSET));
+				qdf_mem_copy(fils_info->ipn, (ie_data +
+					     IPN_OFFSET), IPN_LEN);
+				lim_fils_data_dump("IGTK: ", fils_info->igtk,
+						   fils_info->igtk_len);
+			break;
+			default:
+				pe_err("Unknown KDE data type %x", data_type);
+			break;
+			}
+		}
+
+		temp_ie += elem_len;
+		rem_len -= elem_len;
+		ie_data = NULL;
+	}
+
+	/* Expecting GTK in KDE */
+	if (!fils_info->gtk_len) {
+		pe_err("GTK not found in KDE");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
+				      tpPESession session_entry,
+				      tpSirAssocRsp assoc_rsp,
+				      tLimMlmAssocCnf *assoc_cnf)
+{
+	struct pe_fils_session *fils_info = session_entry->fils_info;
+	tDot11fIEfils_session fils_session = assoc_rsp->fils_session;
+	tDot11fIEfils_key_confirmation fils_key_auth = assoc_rsp->fils_key_auth;
+	tDot11fIEfils_kde fils_kde = assoc_rsp->fils_kde;
+	QDF_STATUS status;
+
+	if (!lim_is_fils_connection(session_entry))
+		return true;
+
+	if (!assoc_rsp->fils_session.present) {
+		pe_err("FILS IE not present");
+		goto verify_fils_params_fails;
+	}
+
+	/* Compare FILS session */
+	if (qdf_mem_cmp(fils_info->fils_session,
+			fils_session.session, DOT11F_IE_FILS_SESSION_MAX_LEN)) {
+		pe_err("FILS session mismatch");
+		goto verify_fils_params_fails;
+	}
+
+	/* Compare FILS key auth */
+	if ((fils_key_auth.num_key_auth != fils_info->key_auth_len) ||
+		qdf_mem_cmp(fils_info->ap_key_auth_data, fils_key_auth.key_auth,
+					 fils_info->ap_key_auth_len)) {
+		lim_fils_data_dump("session keyauth",
+				   fils_info->ap_key_auth_data,
+				   fils_info->ap_key_auth_len);
+		lim_fils_data_dump("Pkt keyauth",
+				   fils_key_auth.key_auth,
+				   fils_key_auth.num_key_auth);
+		goto verify_fils_params_fails;
+	}
+
+	/* Verify the Key Delivery Element presence */
+	if (!fils_kde.num_kde_list) {
+		pe_err("FILS KDE list absent");
+		goto verify_fils_params_fails;
+	}
+
+	/* Derive KDE elements */
+	status = lim_parse_kde_elements(mac_ctx, fils_info, fils_kde.kde_list,
+					fils_kde.num_kde_list);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		pe_err("KDE parsing fails");
+		goto verify_fils_params_fails;
+	}
+	return true;
+
+verify_fils_params_fails:
+	assoc_cnf->resultCode = eSIR_SME_ASSOC_REFUSED;
+	assoc_cnf->protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+	return false;
+}
+
+/**
+ * find_ie_data_after_fils_session_ie() - Find IE pointer after FILS Session IE
+ * @mac_ctx: MAC context
+ * @buf: IE buffer
+ * @buf_len: Length of @buf
+ * @ie: Pointer to update the found IE pointer after FILS session IE
+ * @ie_len: length of the IE data after FILS session IE
+ *
+ * This API is used to find the IE data ptr and length after FILS session IE
+ *
+ * Return: QDF_STATUS_SUCCESS if found, else QDF_STATUS_E_FAILURE
+ */
+static QDF_STATUS find_ie_data_after_fils_session_ie(tpAniSirGlobal mac_ctx,
+						     uint8_t *buf,
+						     uint32_t buf_len,
+						     uint8_t **ie,
+						     uint32_t *ie_len)
+{
+	uint32_t left = buf_len;
+	uint8_t *ptr = buf;
+	uint8_t elem_id, elem_len;
+
+	if (NULL == buf || 0 == buf_len)
+		return QDF_STATUS_E_FAILURE;
+
+	while (left >= 2) {
+		elem_id = ptr[0];
+		elem_len = ptr[1];
+		left -= 2;
+		if (elem_len > left)
+			return QDF_STATUS_E_FAILURE;
+
+		if (elem_id == SIR_MAC_REQUEST_EID_MAX &&
+			ptr[2] == SIR_FILS_SESSION_EXT_EID) {
+			(*ie) = ((&ptr[1]) + ptr[1] + 1);
+			(*ie_len) = (left - elem_len);
+			return QDF_STATUS_SUCCESS;
+		}
+		left -= elem_len;
+		ptr += (elem_len + 2);
+	}
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * fils_aead_encrypt() - API to do FILS AEAD encryption
+ *
+ * @kek: Pointer to KEK
+ * @kek_len: KEK length
+ * @own_mac: Pointer to own MAC address
+ * @bssid: Bssid
+ * @snonce: Supplicant Nonce
+ * @anonce: Authenticator Nonce
+ * @data: Pointer to data after MAC header
+ * @data_len: length of @data
+ * @plain_text: Pointer to data after FILS Session IE
+ * @plain_text_len: length of @plain_text
+ * @out: Pointer to the encrypted data
+ *
+ * length of AEAD encryption @out is @plain_text_len + AES_BLOCK_SIZE[16 bytes]
+ *
+ * Return: zero on success, error otherwise
+ */
+static int fils_aead_encrypt(const u8 *kek, unsigned int kek_len,
+			     const u8 *own_mac, const u8 *bssid,
+			     const u8 *snonce, const u8 *anonce,
+			     const u8 *data, size_t data_len, u8 *plain_text,
+			     size_t plain_text_len, u8 *out)
+{
+	u8 v[AES_BLOCK_SIZE];
+	const u8 *aad[6];
+	size_t aad_len[6];
+	u8 *buf;
+	int ret;
+
+	/* SIV Encrypt/Decrypt takes input key of length 256, 384 or 512 bits */
+	if (kek_len != 32 && kek_len != 48 && kek_len != 64) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid key length: %u"), kek_len);
+		return -EINVAL;
+	}
+
+	if (own_mac == NULL || bssid == NULL || snonce == NULL ||
+	    anonce == NULL || data_len == 0 || plain_text_len == 0 ||
+	    out == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Error missing params mac:%p bssid:%p snonce:%p anonce:%p data_len:%lu plain_text_len:%lu out:%p"),
+			  own_mac, bssid, snonce, anonce, data_len,
+			  plain_text_len, out);
+		return -EINVAL;
+	}
+
+	if (plain_text == out) {
+		buf = qdf_mem_malloc(plain_text_len);
+		if (buf == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				  FL("Failed to allocate memory"));
+			return -ENOMEM;
+		}
+		qdf_mem_copy(buf, plain_text, plain_text_len);
+	} else {
+		buf = plain_text;
+	}
+
+	aad[0] = own_mac;
+	aad_len[0] = QDF_MAC_ADDR_SIZE;
+	aad[1] = bssid;
+	aad_len[1] = QDF_MAC_ADDR_SIZE;
+	aad[2] = snonce;
+	aad_len[2] = SIR_FILS_NONCE_LENGTH;
+	aad[3] = anonce;
+	aad_len[3] = SIR_FILS_NONCE_LENGTH;
+	aad[4] = data;
+	aad_len[4] = data_len;
+	/* Plain text, P, is Sn in AES-SIV */
+	aad[5] = buf;
+	aad_len[5] = plain_text_len;
+
+	/* AES-SIV S2V */
+	/* K1 = leftmost(K, len(K)/2) */
+	ret = qdf_aes_s2v(kek, kek_len/2, aad, aad_len, 6, v);
+	if (ret)
+		goto error;
+
+	/* out = SIV || C (Synthetic Initialization Vector || Ciphered text) */
+	qdf_mem_copy(out, v, AES_BLOCK_SIZE);
+
+	/* AES-SIV CTR */
+	/* K2 = rightmost(K, len(K)/2) */
+	/* Clear 31st and 63rd bits in counter synthetic iv */
+	v[12] &= 0x7F;
+	v[8] &= 0x7F;
+
+	ret = qdf_aes_ctr(kek + kek_len/2, kek_len/2, v, buf, plain_text_len,
+		      out + AES_BLOCK_SIZE, true);
+
+error:
+	if (plain_text == out)
+		qdf_mem_free(buf);
+	return ret;
+}
+
+QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
+				  tpPESession pe_session,
+				  uint8_t *frm, uint32_t *frm_len)
+{
+	uint8_t *plain_text = NULL, *data;
+	uint32_t plain_text_len = 0, data_len;
+	QDF_STATUS status;
+	struct pe_fils_session *fils_info = pe_session->fils_info;
+
+	/*
+	 * data is the packet data after MAC header till
+	 * FILS session IE(inclusive)
+	 */
+	data = frm + sizeof(tSirMacMgmtHdr);
+
+	/*
+	 * plain_text is the packet data after FILS session IE
+	 * which needs to be encrypted. Get plain_text ptr and
+	 * plain_text_len values using find_ptr_aft_fils_session_ie()
+	 */
+	status = find_ie_data_after_fils_session_ie(mac_ctx, data +
+					      FIXED_PARAM_OFFSET_ASSOC_REQ,
+					      (*frm_len -
+					      FIXED_PARAM_OFFSET_ASSOC_REQ),
+					      &plain_text, &plain_text_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Could not find FILS session IE");
+		return QDF_STATUS_E_FAILURE;
+	}
+	data_len = ((*frm_len) - plain_text_len);
+
+	lim_fils_data_dump("Plain text: ", plain_text, plain_text_len);
+
+	/* Overwrite the AEAD encrypted output @ plain_text */
+	if (fils_aead_encrypt(fils_info->kek, fils_info->kek_len,
+			      pe_session->selfMacAddr, pe_session->bssId,
+			      fils_info->fils_nonce,
+			      fils_info->auth_info.fils_nonce,
+			      data, data_len, plain_text, plain_text_len,
+			      plain_text)) {
+		pe_err("AEAD Encryption fails!");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * AEAD encrypted output(cipher_text) will have length equals to
+	 * plain_text_len + AES_BLOCK_SIZE(AEAD encryption header info).
+	 * Add this to frm_len
+	 */
+	(*frm_len) += (AES_BLOCK_SIZE);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * fils_aead_decrypt() - API to do AEAD decryption
+ *
+ * @kek: Pointer to KEK
+ * @kek_len: KEK length
+ * @own_mac: Pointer to own MAC address
+ * @bssid: Bssid
+ * @snonce: Supplicant Nonce
+ * @anonce: Authenticator Nonce
+ * @data: Pointer to data after MAC header
+ * @data_len: length of @data
+ * @plain_text: Pointer to data after FILS Session IE
+ * @plain_text_len: length of @plain_text
+ * @out: Pointer to the encrypted data
+ *
+ * Return: zero on success, error otherwise
+ */
+static int fils_aead_decrypt(const u8 *kek, unsigned int kek_len,
+			     const u8 *own_mac, const u8 *bssid,
+			     const u8 *snonce, const u8 *anonce,
+			     const u8 *data, size_t data_len, u8 *ciphered_text,
+			     size_t ciphered_text_len, u8 *plain_text)
+{
+	const u8 *aad[6];
+	size_t aad_len[6];
+	u8 *buf;
+	size_t buf_len;
+	u8 v[AES_BLOCK_SIZE];
+	u8 siv[AES_BLOCK_SIZE];
+	int ret;
+
+	/* SIV Encrypt/Decrypt takes input key of length 256, 384 or 512 bits */
+	if (kek_len != 32 && kek_len != 48 && kek_len != 64) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid key length: %u"), kek_len);
+		return -EINVAL;
+	}
+
+	if (own_mac == NULL || bssid == NULL || snonce == NULL ||
+	    anonce == NULL || data_len == 0 || ciphered_text_len == 0 ||
+	    plain_text == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("Error missing params mac:%p bssid:%p snonce:%p anonce:%p data_len:%lu ciphered_text_len:%lu plain_text:%p"),
+			  own_mac, bssid, snonce, anonce, data_len,
+			  ciphered_text_len, plain_text);
+		return -EINVAL;
+	}
+
+	qdf_mem_copy(v, ciphered_text, AES_BLOCK_SIZE);
+	qdf_mem_copy(siv, ciphered_text, AES_BLOCK_SIZE);
+	v[12] &= 0x7F;
+	v[8] &= 0x7F;
+
+	buf_len = ciphered_text_len - AES_BLOCK_SIZE;
+	if (ciphered_text == plain_text) {
+		/* in place decryption */
+		buf = qdf_mem_malloc(buf_len);
+		if (buf == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				  FL("Failed to allocate memory"));
+			return -ENOMEM;
+		}
+		qdf_mem_copy(buf, ciphered_text + AES_BLOCK_SIZE, buf_len);
+	} else {
+		buf = ciphered_text + AES_BLOCK_SIZE;
+	}
+
+	/* AES-SIV CTR */
+	/* K2 = rightmost(K, len(K)/2) */
+	ret = qdf_aes_ctr(kek + kek_len/2, kek_len/2, v, buf, buf_len,
+			  plain_text, false);
+	if (ret)
+		goto error;
+
+	aad[0] = bssid;
+	aad_len[0] = QDF_MAC_ADDR_SIZE;
+	aad[1] = own_mac;
+	aad_len[1] = QDF_MAC_ADDR_SIZE;
+	aad[2] = anonce;
+	aad_len[2] = SIR_FILS_NONCE_LENGTH;
+	aad[3] = snonce;
+	aad_len[3] = SIR_FILS_NONCE_LENGTH;
+	aad[4] = data;
+	aad_len[4] = data_len;
+	aad[5] = plain_text;
+	aad_len[5] = buf_len;
+
+	/* AES-SIV S2V */
+	/* K1 = leftmost(K, len(K)/2) */
+	ret = qdf_aes_s2v(kek, kek_len/2, aad, aad_len, 6, v);
+	if (ret)
+		goto error;
+
+	/* compare the iv generated against the one sent by AP */
+	if (memcmp(v, siv, AES_BLOCK_SIZE) != 0) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("siv not same as frame siv"));
+		ret = -EINVAL;
+	}
+
+error:
+	if (ciphered_text == plain_text)
+		qdf_mem_free(buf);
+	return ret;
+}
+
+QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
+				  tpPESession session,
+				  tDot11fAssocResponse *ar,
+				  uint8_t *p_frame, uint32_t *n_frame)
+{
+	QDF_STATUS status;
+	uint32_t data_len, fils_ies_len;
+	uint8_t *fils_ies;
+	struct pe_fils_session *fils_info = session->fils_info;
+
+	lim_fils_data_dump("Assoc Rsp :", p_frame, *n_frame);
+	status = find_ie_data_after_fils_session_ie(mac_ctx, p_frame +
+					      FIXED_PARAM_OFFSET_ASSOC_RSP,
+					      ((*n_frame) -
+					      FIXED_PARAM_OFFSET_ASSOC_RSP),
+					      &fils_ies, &fils_ies_len);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		pe_err("FILS session IE not present");
+		return status;
+	}
+
+	data_len = (*n_frame) - fils_ies_len;
+
+	if (fils_aead_decrypt(fils_info->kek, fils_info->kek_len,
+			      session->selfMacAddr, session->bssId,
+			      fils_info->fils_nonce,
+			      fils_info->auth_info.fils_nonce,
+			      p_frame, data_len,
+			      fils_ies, fils_ies_len, fils_ies)){
+		pe_err("AEAD decryption fails");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Dump the output of AEAD decrypt */
+	lim_fils_data_dump("Plain text: ", fils_ies,
+			   fils_ies_len - AES_BLOCK_SIZE);
+
+	(*n_frame) -= AES_BLOCK_SIZE;
+	return status;
+}
 #endif

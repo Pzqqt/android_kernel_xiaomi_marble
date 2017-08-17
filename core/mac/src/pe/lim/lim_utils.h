@@ -1127,4 +1127,19 @@ void lim_assoc_rej_add_to_rssi_based_reject_list(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 void lim_decrement_pending_mgmt_count(tpAniSirGlobal mac_ctx);
+
+/**
+ * lim_check_if_vendor_oui_match() - Check if the given OUI match in IE buffer
+ * @mac_ctx: MAC context
+ * @ie: IE buffer
+ * @ie_len: length of @ie
+ *
+ * This API is used to check if given vendor OUI
+ * matches in given IE buffer
+ *
+ * Return: True, if mataches. False otherwise
+ */
+bool lim_check_if_vendor_oui_match(tpAniSirGlobal mac_ctx,
+					uint8_t *oui, uint8_t oui_len,
+			       uint8_t *ie, uint8_t ie_len);
 #endif /* __LIM_UTILS_H */

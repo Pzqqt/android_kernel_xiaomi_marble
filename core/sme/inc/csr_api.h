@@ -1487,6 +1487,11 @@ typedef struct tagCsrRoamInfo {
 	uint8_t tx_mcs_map;
 	/* Extended capabilities of STA */
 	uint8_t ecsa_capable;
+	bool is_fils_connection;
+#ifdef WLAN_FEATURE_FILS_SK
+	uint16_t fils_seq_num;
+	struct fils_join_rsp_params *fils_join_rsp;
+#endif
 } tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo {

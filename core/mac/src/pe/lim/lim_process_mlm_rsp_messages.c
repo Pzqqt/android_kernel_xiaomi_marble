@@ -1289,7 +1289,7 @@ static void lim_join_result_callback(tpAniSirGlobal mac, void *param,
 	lim_send_sme_join_reassoc_rsp(mac, eWNI_SME_JOIN_RSP,
 				      link_state_params->result_code,
 				      link_state_params->prot_status_code,
-				      NULL, sme_session_id, sme_trans_id);
+				      session, sme_session_id, sme_trans_id);
 	pe_delete_session(mac, session);
 	qdf_mem_free(link_state_params);
 }

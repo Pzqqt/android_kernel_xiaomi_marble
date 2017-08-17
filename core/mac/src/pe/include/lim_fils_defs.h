@@ -34,6 +34,9 @@
 #define MAX_KEY_AUTH_DATA_LEN 48
 #define MAX_GTK_LEN 255
 #define MAX_IGTK_LEN 255
+#define SIR_FILS_SESSION_IE_LEN 11
+#define FILS_KEY_RSC_LEN 8
+#define FILS_MAX_KEY_AUTH_LEN (MAX_ICK_LEN + MAX_KEK_LEN + MAX_TK_LEN)
 
 #define IPN_LEN 6
 #define FILS_SESSION_LENGTH 8
@@ -89,6 +92,18 @@
 #define SIR_FILS_EAP_TLV_DOMAIN_NAME 4
 #define SIR_FILS_EAP_TLV_CRYPTO_LIST 5
 #define SIR_FILS_EAP_TLV_AUTH_INDICATION 6
+
+#define DATA_TYPE_GTK 1
+#define DATA_TYPE_IGTK 9
+#define KEY_RSC_LEN 8
+#define KDE_IE_DATA_OFFSET 4
+#define KDE_DATA_TYPE_OFFSET 3
+#define GTK_OFFSET 2
+#define IPN_OFFSET 2
+#define IGTK_OFFSET 8
+
+#define KDE_OUI_TYPE   "\x00\x0F\xAC"
+#define KDE_OUI_TYPE_SIZE  3
 
 /*
  * struct eap_auth_reserved: this structure defines flags format in eap packets

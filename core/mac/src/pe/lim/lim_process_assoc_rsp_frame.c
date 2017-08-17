@@ -51,7 +51,7 @@
 #include "lim_ser_des_utils.h"
 #include "lim_sta_hash_api.h"
 #include "lim_send_messages.h"
-
+#include "lim_process_fils.h"
 
 extern tSirRetStatus sch_beacon_edca_process(tpAniSirGlobal pMac,
 	tSirMacEdcaParamSetIE *edca, tpPESession psessionEntry);
@@ -626,7 +626,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	else
 		body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	/* parse Re/Association Response frame. */
-	if (sir_convert_assoc_resp_frame2_struct(mac_ctx, body,
+	if (sir_convert_assoc_resp_frame2_struct(mac_ctx, session_entry, body,
 		frame_len, assoc_rsp) == eSIR_FAILURE) {
 		qdf_mem_free(assoc_rsp);
 		pe_err("Parse error Assoc resp subtype: %d" "length: %d",
@@ -759,6 +759,23 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			hdr->sa, session_entry, false);
 		goto assocReject;
 	}
+
+	/*
+	 * If it is FILS connection, check is FILS params are matching
+	 * with Authentication stage.
+	 */
+	if (!lim_verify_fils_params_assoc_rsp(mac_ctx, session_entry,
+						assoc_rsp, &assoc_cnf)) {
+		pe_err("FILS params doesnot match");
+		assoc_cnf.resultCode = eSIR_SME_INVALID_ASSOC_RSP_RXED;
+		assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
+		/* Send advisory Disassociation frame to AP */
+		lim_send_disassoc_mgmt_frame(mac_ctx,
+			eSIR_MAC_UNSPEC_FAILURE_REASON,
+			hdr->sa, session_entry, false);
+		goto assocReject;
+	}
+
 	/*
 	 * Association Response received with success code
 	 * Set the link state to POSTASSOC now that we have received

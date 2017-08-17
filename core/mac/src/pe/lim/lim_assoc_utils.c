@@ -767,16 +767,15 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 				mlmStaContext.protStatusCode,
 				psessionEntry->peSessionId);
 
-			if (mlmStaContext.resultCode != eSIR_SME_SUCCESS) {
-				pe_delete_session(pMac, psessionEntry);
-				psessionEntry = NULL;
-			}
-
 			lim_send_sme_join_reassoc_rsp(pMac, eWNI_SME_REASSOC_RSP,
 						      mlmStaContext.resultCode,
 						      mlmStaContext.protStatusCode,
 						      psessionEntry, smesessionId,
 						      smetransactionId);
+			if (mlmStaContext.resultCode != eSIR_SME_SUCCESS) {
+				pe_delete_session(pMac, psessionEntry);
+				psessionEntry = NULL;
+			}
 		} else {
 			qdf_mem_free(psessionEntry->pLimJoinReq);
 			psessionEntry->pLimJoinReq = NULL;
@@ -788,16 +787,16 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 				mlmStaContext.protStatusCode,
 				psessionEntry->peSessionId);
 
-			if (mlmStaContext.resultCode != eSIR_SME_SUCCESS) {
-				pe_delete_session(pMac, psessionEntry);
-				psessionEntry = NULL;
-			}
-
 			lim_send_sme_join_reassoc_rsp(pMac, eWNI_SME_JOIN_RSP,
 						      mlmStaContext.resultCode,
 						      mlmStaContext.protStatusCode,
 						      psessionEntry, smesessionId,
 						      smetransactionId);
+
+			if (mlmStaContext.resultCode != eSIR_SME_SUCCESS) {
+				pe_delete_session(pMac, psessionEntry);
+				psessionEntry = NULL;
+			}
 		}
 
 	} else if (mlmStaContext.cleanupTrigger == eLIM_DUPLICATE_ENTRY) {

@@ -99,6 +99,84 @@ static inline void lim_increase_fils_sequence_number(tpPESession session_entry)
 		session_entry->fils_info->sequence_number++;
 }
 
+/**
+ * populate_fils_connect_params() - Populate FILS connect params to join rsp
+ * @mac_ctx: Mac context
+ * @session: PE session
+ * @sme_join_rsp: SME join rsp
+ *
+ * This API copies the FILS connect params from PE session to SME join rsp
+ *
+ * Return: None
+ */
+void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
+				  tpPESession session,
+				  tpSirSmeJoinRsp sme_join_rsp);
+
+/**
+ * aead_encrypt_assoc_req() - Encrypt FILS IE's in assoc request
+ * @mac_ctx: mac context
+ * @pe_session: PE session
+ * @frame: packed frame buffer
+ * @payload: length of @frame
+ *
+ * This API is used to encrypt the all the IE present after FILS session IE
+ * in Association request frame
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
+				  tpPESession pe_session,
+				  uint8_t *frame, uint32_t *payload);
+
+/**
+ * aead_decrypt_assoc_rsp() - API for AEAD decryption in FILS connection
+ * @mac_ctx: MAC context
+ * @session: PE session
+ * @ar: Assoc response frame structure
+ * @p_frame: frame buffer received
+ * @n_frame: length of @p_frame
+ *
+ * This API is used to decrypt the AEAD encrypted part of FILS assoc response
+ * and populate the decrypted FILS IE's to Assoc response frame structure(ar)
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
+				  tpPESession session,
+				  tDot11fAssocResponse *ar,
+				  uint8_t *p_frame, uint32_t *n_frame);
+/**
+ * lim_is_fils_connection() - Check if it is FILS connection
+ * @pe_session: PE session
+ *
+ * This API is used to check if current PE session is FILS connection
+ *
+ * Return: True if FILS connection, false if not
+ */
+static inline bool lim_is_fils_connection(tpPESession pe_session)
+{
+	if (pe_session->fils_info->is_fils_connection)
+		return true;
+	return false;
+}
+
+/**
+ * lim_verify_fils_params_assoc_rsp() - Verify FILS params in assoc rsp
+ * @mac_ctx: Mac context
+ * @session_entry: PE session
+ * @assoc_rsp: Assoc response received
+ * @assoc_cnf: Assoc cnf msg to be sent to MLME
+ *
+ * This API is used to match FILS params received in Assoc response
+ * with Assoc params received/derived at the Authentication stage
+ *
+ * Return: True, if successfully matches. False, otherwise
+ */
+bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
+				      tpPESession session_entry,
+				      tpSirAssocRsp assoc_rsp,
+				      tLimMlmAssocCnf * assoc_cnf);
 #else
 static inline bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 		tpPESession pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
@@ -129,5 +207,40 @@ static inline uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 		tpSirMacAuthFrameBody auth_frame, tpPESession session)
 {
 	return 0;
+}
+
+static inline bool lim_is_fils_connection(tpPESession pe_session)
+{
+	return false;
+}
+
+static inline void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
+						tpPESession session,
+						tpSirSmeJoinRsp sme_join_rsp)
+{ }
+
+static inline QDF_STATUS aead_encrypt_assoc_req(tpAniSirGlobal mac_ctx,
+						tpPESession pe_session,
+						uint8_t *frame,
+						uint32_t *payload)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
+				  tpPESession session,
+				  tDot11fAssocResponse *ar,
+				  uint8_t *p_frame, uint32_t *n_frame)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
+			tpPESession session_entry,
+			tpSirAssocRsp assoc_rsp,
+			tLimMlmAssocCnf *assoc_cnf)
+
+{
+	return true;
 }
 #endif

@@ -6504,6 +6504,27 @@ static void csr_roam_copy_ht_profile(tCsrRoamHTProfile *dst_profile,
 }
 #endif
 
+#if defined(WLAN_FEATURE_FILS_SK)
+/**
+ * csr_update_fils_seq_number() - Copy FILS sequence number to roam info
+ * @session: CSR Roam Session
+ * @roam_info: Roam info
+ *
+ * Return: None
+ */
+static void csr_update_fils_seq_number(tCsrRoamSession *session,
+					 tCsrRoamInfo *roam_info)
+{
+	roam_info->is_fils_connection = true;
+	roam_info->fils_seq_num = session->fils_seq_num;
+	pe_debug("FILS sequence number %x", session->fils_seq_num);
+}
+#else
+static inline void csr_update_fils_seq_number(tCsrRoamSession *session,
+						tCsrRoamInfo *roam_info)
+{}
+#endif
+
 /**
  * csr_roam_process_results_default() - Process the result for start bss
  * @mac_ctx:          Global MAC Context
@@ -6526,7 +6547,8 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 	}
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	sme_debug("receives no association indication");
+	sme_debug("receives no association indication; FILS %d",
+		  session->is_fils_connection);
 	sme_debug("Assoc ref count: %d", session->bRefAssocStartCnt);
 	if (CSR_IS_INFRASTRUCTURE(&session->connectedProfile)
 		|| CSR_IS_ROAM_SUBSTATE_STOP_BSS_REQ(mac_ctx, session_id)) {
@@ -6540,6 +6562,11 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 		csr_set_default_dot11_mode(mac_ctx);
 	}
 
+	qdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
+	/* Copy FILS sequence number used to be updated to userspace */
+	if (session->is_fils_connection)
+		csr_update_fils_seq_number(session, &roam_info);
+
 	switch (cmd->u.roamCmd.roamReason) {
 	/*
 	 * If this transition is because of an 802.11 OID, then we
@@ -6552,7 +6579,6 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 	case eCsrSmeIssuedDisassocForHandoff:
 		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_IDLE,
 			session_id);
-		qdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
 		roam_info.pBssDesc = cmd->u.roamCmd.pLastRoamBss;
 		roam_info.pProfile = &cmd->u.roamCmd.roamProfile;
 		roam_info.statusCode = session->joinFailStatusCode.statusCode;
@@ -6922,6 +6948,154 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * populate_fils_params_join_rsp() - Copy FILS params from JOIN rsp
+ * @mac_ctx: Global MAC Context
+ * @roam_info: CSR Roam Info
+ * @join_rsp: SME Join response
+ *
+ * Copy the FILS params from the join results
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS populate_fils_params_join_rsp(tpAniSirGlobal mac_ctx,
+						tCsrRoamInfo *roam_info,
+						tSirSmeJoinRsp *join_rsp)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct fils_join_rsp_params *roam_fils_info,
+				    *fils_join_rsp = join_rsp->fils_join_rsp;
+
+	if (!fils_join_rsp->fils_pmk_len ||
+			!fils_join_rsp->fils_pmk || !fils_join_rsp->tk_len ||
+			!fils_join_rsp->kek_len || !fils_join_rsp->gtk_len) {
+		sme_err("fils join rsp err: pmk len %d tk len %d kek len %d gtk len %d",
+			fils_join_rsp->fils_pmk_len,
+			fils_join_rsp->tk_len,
+			fils_join_rsp->kek_len,
+			fils_join_rsp->gtk_len);
+		status = QDF_STATUS_E_FAILURE;
+		goto free_fils_join_rsp;
+	}
+
+	roam_info->fils_join_rsp = qdf_mem_malloc(sizeof(*fils_join_rsp));
+	if (!roam_info->fils_join_rsp) {
+		sme_err("fils_join_rsp malloc fails!");
+		status = QDF_STATUS_E_FAILURE;
+		goto free_fils_join_rsp;
+	}
+
+	roam_fils_info = roam_info->fils_join_rsp;
+	roam_fils_info->fils_pmk = qdf_mem_malloc(fils_join_rsp->fils_pmk_len);
+	if (!roam_fils_info->fils_pmk) {
+		qdf_mem_free(roam_info->fils_join_rsp);
+		roam_info->fils_join_rsp = NULL;
+		sme_err("fils_pmk malloc fails!");
+		status = QDF_STATUS_E_FAILURE;
+		goto free_fils_join_rsp;
+	}
+
+	roam_info->fils_seq_num = join_rsp->fils_seq_num;
+	roam_fils_info->fils_pmk_len = fils_join_rsp->fils_pmk_len;
+	qdf_mem_copy(roam_fils_info->fils_pmk,
+		     fils_join_rsp->fils_pmk, roam_fils_info->fils_pmk_len);
+
+	qdf_mem_copy(roam_fils_info->fils_pmkid,
+		     fils_join_rsp->fils_pmkid, PMKID_LEN);
+
+	roam_fils_info->kek_len = fils_join_rsp->kek_len;
+	qdf_mem_copy(roam_fils_info->kek,
+		     fils_join_rsp->kek, roam_fils_info->kek_len);
+
+	roam_fils_info->tk_len = fils_join_rsp->tk_len;
+	qdf_mem_copy(roam_fils_info->tk,
+		     fils_join_rsp->tk, fils_join_rsp->tk_len);
+
+	roam_fils_info->gtk_len = fils_join_rsp->gtk_len;
+	qdf_mem_copy(roam_fils_info->gtk,
+		     fils_join_rsp->gtk, roam_fils_info->gtk_len);
+
+	sme_debug("FILS connect params copied to CSR!");
+
+free_fils_join_rsp:
+	qdf_mem_free(fils_join_rsp->fils_pmk);
+	qdf_mem_free(fils_join_rsp);
+	return status;
+}
+
+/**
+ * csr_process_fils_join_rsp() - Process join rsp for FILS connection
+ * @mac_ctx: Global MAC Context
+ * @profile: CSR Roam Profile
+ * @session_id: Session ID
+ * @roam_info: CSR Roam Info
+ * @bss_desc: BSS description
+ * @join_rsp: SME Join rsp
+ *
+ * Process SME join response for FILS connection
+ *
+ * Return: None
+ */
+static void csr_process_fils_join_rsp(tpAniSirGlobal mac_ctx,
+					tCsrRoamProfile *profile,
+					uint32_t session_id,
+					tCsrRoamInfo *roam_info,
+					tSirBssDescription *bss_desc,
+					tSirSmeJoinRsp *join_rsp)
+{
+	tSirMacAddr bcast_mac = { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
+	QDF_STATUS status;
+
+	if (!join_rsp || !join_rsp->fils_join_rsp) {
+		sme_err("Join rsp doesn't have FILS info");
+		goto process_fils_join_rsp_fail;
+	}
+
+	/* Copy FILS params */
+	status = populate_fils_params_join_rsp(mac_ctx, roam_info, join_rsp);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Copy FILS params join rsp fails");
+		goto process_fils_join_rsp_fail;
+	}
+
+	status = csr_roam_issue_set_context_req(mac_ctx, session_id,
+					profile->negotiatedMCEncryptionType,
+					bss_desc, &bcast_mac, true, false,
+					eSIR_RX_ONLY, 2,
+					roam_info->fils_join_rsp->gtk_len,
+					roam_info->fils_join_rsp->gtk, 0);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Set context for bcast fail");
+		goto process_fils_join_rsp_fail;
+	}
+
+	status = csr_roam_issue_set_context_req(mac_ctx, session_id,
+					profile->negotiatedUCEncryptionType,
+					bss_desc, &(bss_desc->bssId), true,
+					true, eSIR_TX_RX, 0,
+					roam_info->fils_join_rsp->tk_len,
+					roam_info->fils_join_rsp->tk, 0);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Set context for unicast fail");
+		goto process_fils_join_rsp_fail;
+	}
+	return;
+
+process_fils_join_rsp_fail:
+	csr_roam_substate_change(mac_ctx, eCSR_ROAM_SUBSTATE_NONE, session_id);
+}
+#else
+
+static inline void csr_process_fils_join_rsp(tpAniSirGlobal mac_ctx,
+						tCsrRoamProfile *profile,
+						uint32_t session_id,
+						tCsrRoamInfo *roam_info,
+						tSirBssDescription *bss_desc,
+						tSirSmeJoinRsp *join_rsp)
+{}
+#endif
+
 /**
  * csr_roam_process_join_res() - Process the Join results
  * @mac_ctx:          Global MAC Context
@@ -7097,6 +7271,11 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 				profile->negotiatedMCEncryptionType,
 				bss_desc, &bcast_mac, false, false,
 				eSIR_TX_RX, 0, 0, NULL, 0);
+		} else if (CSR_IS_AUTH_TYPE_FILS(profile->negotiatedAuthType)
+				&& join_rsp->is_fils_connection) {
+			roam_info.is_fils_connection = true;
+			csr_process_fils_join_rsp(mac_ctx, profile, session_id,
+				&roam_info, bss_desc, join_rsp);
 		} else {
 			/* Need to wait for supplicant authtication */
 			roam_info.fAuthRequired = true;
@@ -7468,6 +7647,7 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		break;
 	case eCsrStopBssSuccess:
 		if (CSR_IS_NDI(profile)) {
+			qdf_mem_set(&roam_info, sizeof(roam_info), 0);
 			csr_roam_update_ndp_return_params(mac_ctx, res,
 				&roam_status, &roam_result, &roam_info);
 			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
@@ -7477,6 +7657,7 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		break;
 	case eCsrStopBssFailure:
 		if (CSR_IS_NDI(profile)) {
+			qdf_mem_set(&roam_info, sizeof(roam_info), 0);
 			csr_roam_update_ndp_return_params(mac_ctx, res,
 				&roam_status, &roam_result, &roam_info);
 			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
@@ -8872,6 +9053,11 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry)
 		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
+
+	sme_debug("is_fils_connection %d", pSmeJoinRsp->is_fils_connection);
+	/* Copy Sequence Number last used for FILS assoc failure case */
+	if (session_ptr->is_fils_connection)
+		session_ptr->fils_seq_num = pSmeJoinRsp->fils_seq_num;
 
 	if (eSIR_SME_SUCCESS == pSmeJoinRsp->statusCode) {
 		if (pCommand

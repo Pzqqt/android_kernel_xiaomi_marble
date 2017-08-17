@@ -274,7 +274,7 @@ pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
  *
  * Return: void
  */
-static void pe_delete_fils_info(tpPESession session)
+void pe_delete_fils_info(tpPESession session)
 {
 	struct pe_fils_session *fils_info;
 

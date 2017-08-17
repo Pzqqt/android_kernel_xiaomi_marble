@@ -59,6 +59,7 @@
 #include "cds_utils.h"
 #include "sme_trace.h"
 #include "rrm_api.h"
+#include "qdf_crypto.h"
 
 #include "wma_types.h"
 #include <cdp_txrx_cmn.h>
@@ -1637,6 +1638,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tDot11fIEExtCap bcn_ext_cap;
 	uint8_t *bcn_ie = NULL;
 	uint32_t bcn_ie_len = 0;
+	uint32_t aes_block_size_len = 0;
 
 	if (NULL == pe_session) {
 		pe_err("pe_session is NULL");
@@ -1921,6 +1923,20 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			add_ie, &add_ie_len, &frm->SuppOperatingClasses))
 		pe_debug("Unable to Stripoff supp op classes IE from Assoc Req");
 
+	if (lim_is_fils_connection(pe_session)) {
+		populate_dot11f_fils_params(mac_ctx, frm, pe_session);
+		aes_block_size_len = AES_BLOCK_SIZE;
+	}
+
+	/*
+	 * Do unpack to populate the add_ie buffer to frm structure
+	 * before packing the frm structure. In this way, the IE ordering
+	 * which the latest 802.11 spec mandates is maintained.
+	 */
+	if (add_ie_len)
+		dot11f_unpack_assoc_request(mac_ctx, add_ie,
+					    add_ie_len, frm, true);
+
 	status = dot11f_get_packed_assoc_request_size(mac_ctx, frm, &payload);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Association Request packet size failure(0x%08x)",
@@ -1932,7 +1948,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			status);
 	}
 
-	bytes = payload + sizeof(tSirMacMgmtHdr) + add_ie_len;
+	bytes = payload + sizeof(tSirMacMgmtHdr) +
+			aes_block_size_len;
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				(void **)&packet);
@@ -1974,17 +1991,20 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_warn("Assoc request pack warning (0x%08x)", status);
 	}
 
-	pe_debug("Sending Association Request length %d to ", bytes);
 	if (pe_session->assocReq != NULL) {
 		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
 	}
 
-	if (add_ie_len) {
-		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
-			     add_ie, add_ie_len);
-		payload += add_ie_len;
+	if (lim_is_fils_connection(pe_session)) {
+		qdf_status = aead_encrypt_assoc_req(mac_ctx, pe_session,
+						    frame, &payload);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			cds_packet_free((void *)packet);
+			qdf_mem_free(frm);
+			return;
+		}
 	}
 
 	pe_session->assocReq = qdf_mem_malloc(payload);
@@ -2017,6 +2037,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
+
+	pe_debug("Sending Association Request length %d to ", bytes);
 	qdf_status =
 		wma_tx_frame(mac_ctx, packet,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
