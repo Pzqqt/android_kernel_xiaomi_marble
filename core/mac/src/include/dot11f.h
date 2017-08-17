@@ -8674,6 +8674,46 @@ uint32_t dot11f_get_packed_ie_fils_wrapped_data(
 }; /* End extern "C". */
 #endif /* C++ */
 
+/* EID 242 (0xf2) */
+typedef struct sDot11fIEfragment_ie {
+	uint8_t             present;
+	uint8_t             num_data;
+	uint8_t             data[255];
+} tDot11fIEfragment_ie;
+
+#define DOT11F_EID_FRAGMENT_IE (242)
+
+/* N.B. These #defines do *not* include the EID & length */
+#define DOT11F_IE_FRAGMENT_IE_MIN_LEN (0)
+
+#define DOT11F_IE_FRAGMENT_IE_MAX_LEN (255)
+
+#ifdef __cplusplus
+extern "C" {
+#endif /* C++ */
+uint32_t dot11f_unpack_ie_fragment_ie(
+	tpAniSirGlobal,
+	uint8_t *,
+	uint8_t,
+	tDot11fIEfragment_ie*,
+	bool);
+
+uint32_t dot11f_pack_ie_fragment_ie(
+	tpAniSirGlobal,
+	tDot11fIEfragment_ie *,
+	uint8_t *,
+	uint32_t,
+	uint32_t*);
+
+uint32_t dot11f_get_packed_ie_fragment_ie(
+	tpAniSirGlobal,
+	tDot11fIEfragment_ie *,
+	uint32_t*);
+
+#ifdef __cplusplus
+}; /* End extern "C". */
+#endif /* C++ */
+
 /* EID 221 (0xdd) {OUI 0x50, 0x6f, 0x9a, 0x10} */
 typedef struct sDot11fIEhs20vendor_ie {
 	uint8_t             present;
@@ -9251,6 +9291,7 @@ typedef struct sDot11fAssocRequest{
 	tDot11fIEfils_public_key              fils_public_key;
 	tDot11fIEfils_key_confirmation        fils_key_confirmation;
 	tDot11fIEfils_hlp_container           fils_hlp_container;
+	tDot11fIEfragment_ie                  fragment_ie;
 	tDot11fIEWPAOpaque                    WPAOpaque;
 	tDot11fIEWMMCaps                      WMMCaps;
 	tDot11fIEWMMInfoStation               WMMInfoStation;

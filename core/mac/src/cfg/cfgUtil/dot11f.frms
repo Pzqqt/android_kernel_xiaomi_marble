@@ -124,6 +124,7 @@ const VHT_TRANSMIT_POWER_ENVELOPE    = 195;
 const EID_CHANNEL_SWITCH_WRAPPER     = 196;
 const EID_VENDOR_SPECIFIC            = 221;
 const EID_FILS_INDICATION            = 240;
+const EID_FRAGMENT_IE                = 242;
 /**
  * Extended Element ID
  *
@@ -2647,6 +2648,11 @@ IE fils_nonce (EID_EXTN_ID_ELEMENT) OUI ( 0x0D )
     nonce[16];
 }
 
+IE fragment_ie (EID_FRAGMENT_IE)
+{
+    data[0..255];
+}
+
 const EID_RRM_BEACON_REPORTING     = 1;
 const EID_RRM_BCN_REPORTING_DETAIL = 2;
 
@@ -3582,6 +3588,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  fils_public_key;
     OPTIE  fils_key_confirmation;
     OPTIE  fils_hlp_container;
+    OPTIE  fragment_ie;
     OPTIE  WPAOpaque;
     OPTIE  WMMCaps;
     OPTIE  WMMInfoStation;

@@ -65,6 +65,9 @@
 #define SIR_FILS_SESSION_LENGTH    8
 #define SIR_FILS_SESSION_EXT_EID   4
 
+/* 9.4.2.184 FILS HLP Container Element */
+#define SIR_FILS_HLP_EXT_EID 5
+
 /* 9.4.2.190 FILS Nonce element */
 #define SIR_FILS_NONCE_LENGTH      16
 #define SIR_FILS_NONCE_EXT_EID   13

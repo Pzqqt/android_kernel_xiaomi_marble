@@ -6524,6 +6524,26 @@ uint32_t dot11f_unpack_ie_fils_wrapped_data(tpAniSirGlobal pCtx,
 #define SigIefils_wrapped_data (0x0089)
 
 
+uint32_t dot11f_unpack_ie_fragment_ie(tpAniSirGlobal pCtx,
+				      uint8_t *pBuf,
+				      uint8_t ielen,
+				      tDot11fIEfragment_ie *pDst,
+				      bool append_ie)
+{
+	uint32_t status = DOT11F_PARSE_SUCCESS;
+	(void) pBuf; (void)ielen; /* Shutup the compiler */
+	if (pDst->present)
+		status = DOT11F_DUPLICATE_IE;
+	pDst->present = 1;
+	pDst->num_data = (uint8_t)(ielen);
+	DOT11F_MEMCPY(pCtx, pDst->data, pBuf, (ielen));
+	(void)pCtx;
+	return status;
+} /* End dot11f_unpack_ie_fragment_ie. */
+
+#define SigIefragment_ie (0x008a)
+
+
 uint32_t dot11f_unpack_ie_hs20vendor_ie(tpAniSirGlobal pCtx,
 					 uint8_t *pBuf,
 					 uint8_t ielen,
@@ -6563,7 +6583,7 @@ uint32_t dot11f_unpack_ie_hs20vendor_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_hs20vendor_ie. */
 
-#define SigIehs20vendor_ie (0x008a)
+#define SigIehs20vendor_ie (0x008b)
 
 
 uint32_t dot11f_unpack_ie_ht2040_bss_coexistence(tpAniSirGlobal pCtx,
@@ -6589,7 +6609,7 @@ uint32_t dot11f_unpack_ie_ht2040_bss_coexistence(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_ht2040_bss_coexistence. */
 
-#define SigIeht2040_bss_coexistence (0x008b)
+#define SigIeht2040_bss_coexistence (0x008c)
 
 
 uint32_t dot11f_unpack_ie_ht2040_bss_intolerant_report(tpAniSirGlobal pCtx,
@@ -6617,7 +6637,7 @@ uint32_t dot11f_unpack_ie_ht2040_bss_intolerant_report(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_ht2040_bss_intolerant_report. */
 
-#define SigIeht2040_bss_intolerant_report (0x008c)
+#define SigIeht2040_bss_intolerant_report (0x008d)
 
 
 uint32_t dot11f_unpack_ie_mu_edca_param_set(tpAniSirGlobal pCtx,
@@ -6704,7 +6724,7 @@ uint32_t dot11f_unpack_ie_mu_edca_param_set(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_mu_edca_param_set. */
 
-#define SigIemu_edca_param_set (0x008d)
+#define SigIemu_edca_param_set (0x008e)
 
 
 uint32_t dot11f_unpack_ie_osen_ie(tpAniSirGlobal pCtx,
@@ -6724,7 +6744,7 @@ uint32_t dot11f_unpack_ie_osen_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_osen_ie. */
 
-#define SigIeosen_ie (0x008e)
+#define SigIeosen_ie (0x008f)
 
 
 uint32_t dot11f_unpack_ie_sec_chan_offset_ele(tpAniSirGlobal pCtx,
@@ -6743,7 +6763,7 @@ uint32_t dot11f_unpack_ie_sec_chan_offset_ele(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_sec_chan_offset_ele. */
 
-#define SigIesec_chan_offset_ele (0x008f)
+#define SigIesec_chan_offset_ele (0x0090)
 
 
 static const tFFDefn FFS_vendor_he_cap[] = {
@@ -6874,7 +6894,7 @@ uint32_t dot11f_unpack_ie_vendor_he_cap(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_vendor_he_cap. */
 
-#define SigIevendor_he_cap (0x0090)
+#define SigIevendor_he_cap (0x0091)
 
 
 static const tFFDefn FFS_vendor_he_op[] = {
@@ -6927,7 +6947,7 @@ uint32_t dot11f_unpack_ie_vendor_he_op(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_vendor_he_op. */
 
-#define SigIevendor_he_op (0x0091)
+#define SigIevendor_he_op (0x0092)
 
 
 static const tFFDefn FFS_vendor_vht_ie[] = {
@@ -6971,7 +6991,7 @@ uint32_t dot11f_unpack_ie_vendor_vht_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_vendor_vht_ie. */
 
-#define SigIevendor_vht_ie (0x0092)
+#define SigIevendor_vht_ie (0x0093)
 
 
 static const tFFDefn FFS_AddTSRequest[] = {
@@ -7179,6 +7199,10 @@ static const tIEDefn IES_AssocRequest[] = {
 	offsetof(tDot11fIEfils_hlp_container, present), 0, "fils_hlp_container",
 	0, 14, 269, SigIefils_hlp_container, {0, 0, 0, 0, 0},
 	0, DOT11F_EID_FILS_HLP_CONTAINER, 5, 0, },
+	{ offsetof(tDot11fAssocRequest, fragment_ie),
+	offsetof(tDot11fIEfragment_ie, present), 0, "fragment_ie",
+	0, 2, 257, SigIefragment_ie, {0, 0, 0, 0, 0},
+	0, DOT11F_EID_FRAGMENT_IE, 0, 0, },
 	{ offsetof(tDot11fAssocRequest, WPAOpaque), offsetof(tDot11fIEWPAOpaque,
 	present), 0, "WPAOpaque", 0, 8, 255, SigIeWPAOpaque, {0, 80, 242, 1, 0},
 	4, DOT11F_EID_WPAOPAQUE, 0, 0, },
@@ -11903,6 +11927,16 @@ static uint32_t unpack_core(tpAniSirGlobal pCtx,
 						    countOffset),
 						    append_ie);
 					break;
+				case SigIefragment_ie:
+					status |=
+						dot11f_unpack_ie_fragment_ie(
+						    pCtx, pBufRemaining, len,
+						    (tDot11fIEfragment_ie *)
+						    (pFrm + pIe->offset +
+						    sizeof(tDot11fIEfragment_ie) *
+						    countOffset),
+						    append_ie);
+					break;
 				case SigIehs20vendor_ie:
 					status |=
 						dot11f_unpack_ie_hs20vendor_ie(
@@ -14918,6 +14952,15 @@ static uint32_t get_packed_size_core(tpAniSirGlobal pCtx,
 					  (pFrm + pIe->offset + offset * i))->
 					  num_wrapped_data;
 					pIePresent = ((tDot11fIEfils_wrapped_data *)
+					  (pFrm + pIe->offset + offset * i))->
+					  present;
+					break;
+				case SigIefragment_ie:
+					offset = sizeof(tDot11fIEfragment_ie);
+					byteCount = ((tDot11fIEfragment_ie *)
+					  (pFrm + pIe->offset + offset * i))->
+					  num_data;
+					pIePresent = ((tDot11fIEfragment_ie *)
 					  (pFrm + pIe->offset + offset * i))->
 					  present;
 					break;
@@ -23249,6 +23292,35 @@ uint32_t dot11f_pack_ie_fils_wrapped_data(tpAniSirGlobal pCtx,
 	return DOT11F_PARSE_SUCCESS;
 } /* End dot11f_pack_ie_fils_wrapped_data. */
 
+uint32_t dot11f_pack_ie_fragment_ie(tpAniSirGlobal pCtx,
+				    tDot11fIEfragment_ie *pSrc,
+				    uint8_t *pBuf,
+				    uint32_t nBuf,
+				    uint32_t *pnConsumed)
+{
+	uint8_t *pIeLen = 0;
+	uint32_t nConsumedOnEntry = *pnConsumed;
+	uint32_t nNeeded = 0U;
+	nNeeded  +=  pSrc->num_data;
+	while (pSrc->present) {
+		if (nNeeded > nBuf)
+			return DOT11F_BUFFER_OVERFLOW;
+		*pBuf = 242;
+		++pBuf; ++(*pnConsumed);
+		pIeLen = pBuf;
+		++pBuf; ++(*pnConsumed);
+		DOT11F_MEMCPY(pCtx, pBuf, &(pSrc->data), pSrc->num_data);
+		*pnConsumed += pSrc->num_data;
+		/* fieldsEndFlag = 1 */
+		break;
+	}
+	(void)pCtx;
+	if (pIeLen) {
+		*pIeLen = *pnConsumed - nConsumedOnEntry - 2;
+	}
+	return DOT11F_PARSE_SUCCESS;
+} /* End dot11f_pack_ie_fragment_ie. */
+
 uint32_t dot11f_pack_ie_hs20vendor_ie(tpAniSirGlobal pCtx,
 				      tDot11fIEhs20vendor_ie *pSrc,
 				      uint8_t *pBuf,
@@ -25936,6 +26008,14 @@ static uint32_t pack_core(tpAniSirGlobal pCtx,
 				pCtx, (tDot11fIEfils_wrapped_data *)
 				(pSrc + pIe->offset +
 				sizeof(tDot11fIEfils_wrapped_data) * i),
+				pBufRemaining, nBufRemaining, &len);
+			break;
+			case SigIefragment_ie:
+			status |=
+				dot11f_pack_ie_fragment_ie(
+				pCtx, (tDot11fIEfragment_ie *)
+				(pSrc + pIe->offset +
+				sizeof(tDot11fIEfragment_ie) * i),
 				pBufRemaining, nBufRemaining, &len);
 			break;
 			case SigIehs20vendor_ie:
