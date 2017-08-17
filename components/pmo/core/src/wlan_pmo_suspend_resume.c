@@ -452,6 +452,7 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
 	}
 }
 
+#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 /**
  * pmo_unpause_vdev - unpause all vdev
  * @psoc: objmgr psoc handle
@@ -461,41 +462,33 @@ static void pmo_core_set_resume_dtim(struct wlan_objmgr_psoc *psoc)
  * Return: none
  */
 static void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
-		struct pmo_psoc_priv_obj *psoc_ctx)
+				 struct pmo_psoc_priv_obj *psoc_ctx)
 {
 	uint8_t vdev_id;
-	struct wlan_objmgr_psoc_objmgr *objmgr;
 	struct wlan_objmgr_vdev *vdev;
 
 	/* Iterate through VDEV list */
 	for (vdev_id = 0; vdev_id < WLAN_UMAC_PSOC_MAX_VDEVS; vdev_id++) {
-		wlan_psoc_obj_lock(psoc);
-		objmgr = &psoc->soc_objmgr;
-		if (!objmgr->wlan_vdev_list[vdev_id]) {
-			wlan_psoc_obj_unlock(psoc);
+		vdev = pmo_psoc_get_vdev(psoc, vdev_id);
+		if (!vdev)
 			continue;
-		}
-		vdev = objmgr->wlan_vdev_list[vdev_id];
-		wlan_psoc_obj_unlock(psoc);
-		if (vdev) {
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
-			/*
-			 * When host resume, by default,
-			 * unpause all active vdev
-			 */
-			if (pmo_core_vdev_get_pause_bitmap(psoc_ctx, vdev_id)) {
-				cdp_fc_vdev_unpause(
-					pmo_core_psoc_get_dp_handle(psoc),
-					pmo_core_vdev_get_dp_handle(vdev),
-					0xffffffff);
-				if (psoc_ctx->pause_bitmap_notifier)
-					psoc_ctx->pause_bitmap_notifier(vdev_id,
-							0);
-			}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
+		/* When host resumes, by default unpause all active vdev */
+		if (pmo_core_vdev_get_pause_bitmap(psoc_ctx, vdev_id)) {
+			cdp_fc_vdev_unpause(pmo_core_psoc_get_dp_handle(psoc),
+					    pmo_core_vdev_get_dp_handle(vdev),
+					    0xffffffff);
+			if (psoc_ctx->pause_bitmap_notifier)
+				psoc_ctx->pause_bitmap_notifier(vdev_id, 0);
 		}
 	}
 }
+#else
+static inline void pmo_unpause_all_vdev(struct wlan_objmgr_psoc *psoc,
+					struct pmo_psoc_priv_obj *psoc_ctx)
+{
+}
+#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 /**
  * pmo_core_psoc_configure_resume(): configure events after bus resume
