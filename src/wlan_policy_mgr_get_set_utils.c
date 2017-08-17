@@ -256,7 +256,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 	if (pm_ctx->hw_mode.hw_mode_list) {
 		qdf_mem_free(pm_ctx->hw_mode.hw_mode_list);
 		pm_ctx->hw_mode.hw_mode_list = NULL;
-		policy_mgr_err("DBS list is freed");
+		policy_mgr_debug("DBS list is freed");
 	}
 
 	pm_ctx->num_dbs_hw_modes = phy_caps->num_hw_modes.num_hw_modes;
@@ -268,7 +268,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	policy_mgr_err("Updated HW mode list: Num modes:%d",
+	policy_mgr_debug("Updated HW mode list: Num modes:%d",
 		pm_ctx->num_dbs_hw_modes);
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
@@ -343,17 +343,17 @@ void policy_mgr_dump_dbs_hw_mode(struct wlan_objmgr_psoc *psoc)
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
-		policy_mgr_err("[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d",
+		policy_mgr_debug("[%d]-MAC0: tx_ss:%d rx_ss:%d bw_idx:%d",
 			i,
 			POLICY_MGR_HW_MODE_MAC0_TX_STREAMS_GET(param),
 			POLICY_MGR_HW_MODE_MAC0_RX_STREAMS_GET(param),
 			POLICY_MGR_HW_MODE_MAC0_BANDWIDTH_GET(param));
-		policy_mgr_err("[%d]-MAC1: tx_ss:%d rx_ss:%d bw_idx:%d",
+		policy_mgr_debug("[%d]-MAC1: tx_ss:%d rx_ss:%d bw_idx:%d",
 			i,
 			POLICY_MGR_HW_MODE_MAC1_TX_STREAMS_GET(param),
 			POLICY_MGR_HW_MODE_MAC1_RX_STREAMS_GET(param),
 			POLICY_MGR_HW_MODE_MAC1_BANDWIDTH_GET(param));
-		policy_mgr_err("[%d] DBS:%d SBS:%d", i,
+		policy_mgr_debug("[%d] DBS:%d SBS:%d", i,
 			POLICY_MGR_HW_MODE_DBS_MODE_GET(param),
 			POLICY_MGR_HW_MODE_SBS_MODE_GET(param));
 	}
@@ -522,11 +522,11 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	if (!policy_mgr_is_dbs_enable(psoc)) {
-		policy_mgr_notice("DBS is disabled");
+		policy_mgr_debug("DBS is disabled");
 		return false;
 	}
 	if (pm_ctx->wma_cbacks.wma_is_service_enabled) {
-		policy_mgr_notice("DBS service bit map: %d",
+		policy_mgr_debug("DBS service bit map: %d",
 			pm_ctx->wma_cbacks.wma_is_service_enabled(
 			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
 
@@ -542,9 +542,9 @@ bool policy_mgr_is_hw_dbs_capable(struct wlan_objmgr_psoc *psoc)
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
-		policy_mgr_notice("HW param: %x", param);
+		policy_mgr_debug("HW param: %x", param);
 		if (POLICY_MGR_HW_MODE_DBS_MODE_GET(param)) {
-			policy_mgr_notice("HW (%d) is DBS capable", i);
+			policy_mgr_debug("HW (%d) is DBS capable", i);
 			found = 1;
 			break;
 		}
@@ -567,7 +567,7 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 		return false;
 	}
 	if (pm_ctx->wma_cbacks.wma_is_service_enabled) {
-		policy_mgr_notice("DBS service bit map: %d",
+		policy_mgr_debug("DBS service bit map: %d",
 			pm_ctx->wma_cbacks.wma_is_service_enabled(
 			WMI_SERVICE_DUAL_BAND_SIMULTANEOUS_SUPPORT));
 
@@ -583,9 +583,9 @@ bool policy_mgr_is_hw_sbs_capable(struct wlan_objmgr_psoc *psoc)
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		param = pm_ctx->hw_mode.hw_mode_list[i];
-		policy_mgr_notice("HW param: %x", param);
+		policy_mgr_debug("HW param: %x", param);
 		if (POLICY_MGR_HW_MODE_SBS_MODE_GET(param)) {
-			policy_mgr_notice("HW (%d) is SBS capable", i);
+			policy_mgr_debug("HW (%d) is SBS capable", i);
 			found = 1;
 			break;
 		}
@@ -652,7 +652,7 @@ QDF_STATUS policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
 		    (dbs_mode == HW_MODE_DBS)) &&
 		    (found_one_by_one < 0)) {
 			found_one_by_one = i;
-			policy_mgr_notice("1x1 hw_mode index %d found", i);
+			policy_mgr_debug("1x1 hw_mode index %d found", i);
 			/* Once an entry is found, need not check for 1x1
 			 * again
 			 */
@@ -666,7 +666,7 @@ QDF_STATUS policy_mgr_get_dbs_hw_modes(struct wlan_objmgr_psoc *psoc,
 		    (dbs_mode == HW_MODE_DBS)) &&
 		    (found_two_by_two < 0)) {
 			found_two_by_two = i;
-			policy_mgr_notice("2x2 hw_mode index %d found", i);
+			policy_mgr_debug("2x2 hw_mode index %d found", i);
 			/* Once an entry is found, need not check for 2x2
 			 * again
 			 */
@@ -688,7 +688,7 @@ QDF_STATUS policy_mgr_get_current_hw_mode(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	uint32_t old_hw_index = 0, new_hw_index = 0;
 
-	policy_mgr_notice("Get the current hw mode");
+	policy_mgr_debug("Get the current hw mode");
 
 	status = policy_mgr_get_old_and_new_hw_index(psoc, &old_hw_index,
 			&new_hw_index);
@@ -869,7 +869,7 @@ void policy_mgr_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t scan_config,
 		uint32_t fw_mode_config)
 {
-	policy_mgr_notice("Status:%d for scan_config:%x fw_mode_config:%x",
+	policy_mgr_debug("Status:%d for scan_config:%x fw_mode_config:%x",
 			status, scan_config, fw_mode_config);
 }
 
@@ -918,7 +918,7 @@ void policy_mgr_set_dual_mac_scan_config(struct wlan_objmgr_psoc *psoc,
 
 	cfg.set_dual_mac_cb = (void *)policy_mgr_soc_set_dual_mac_cfg_cb;
 
-	policy_mgr_notice("scan_config:%x fw_mode_config:%x",
+	policy_mgr_debug("scan_config:%x fw_mode_config:%x",
 			cfg.scan_config, cfg.fw_mode_config);
 
 	status = pm_ctx->sme_cbacks.sme_soc_set_dual_mac_config(cfg);
@@ -965,7 +965,7 @@ void policy_mgr_set_dual_mac_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 
 	cfg.set_dual_mac_cb = (void *)policy_mgr_soc_set_dual_mac_cfg_cb;
 
-	policy_mgr_notice("scan_config:%x fw_mode_config:%x",
+	policy_mgr_debug("scan_config:%x fw_mode_config:%x",
 			cfg.scan_config, cfg.fw_mode_config);
 
 	status = pm_ctx->sme_cbacks.sme_soc_set_dual_mac_config(cfg);
@@ -1118,7 +1118,7 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 	}
 
 
-	policy_mgr_notice("No.# of active sessions for mode %d = %d",
+	policy_mgr_debug("No.# of active sessions for mode %d = %d",
 		mode, pm_ctx->no_of_active_sessions[mode]);
 	/*
 	 * Get PCL logic makes use of the connection info structure.
@@ -1130,7 +1130,7 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 		/* Set PCL of STA to the FW */
 		policy_mgr_pdev_set_pcl(psoc, mode);
 		qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-		policy_mgr_notice("Set PCL of STA to FW");
+		policy_mgr_debug("Set PCL of STA to FW");
 	}
 	policy_mgr_incr_connection_count(psoc, session_id);
 	if ((policy_mgr_mode_specific_connection_count(
@@ -1185,7 +1185,7 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		break;
 	}
 
-	policy_mgr_notice("No.# of active sessions for mode %d = %d",
+	policy_mgr_debug("No.# of active sessions for mode %d = %d",
 		mode, pm_ctx->no_of_active_sessions[mode]);
 
 	policy_mgr_decr_connection_count(psoc, session_id);
@@ -1261,7 +1261,7 @@ QDF_STATUS policy_mgr_incr_connection_count(
 			conn_table_entry.mac_id,
 			chain_mask,
 			nss, vdev_id, true);
-	policy_mgr_notice("Add at idx:%d vdev %d mac=%d",
+	policy_mgr_debug("Add at idx:%d vdev %d mac=%d",
 		conn_index, vdev_id,
 		conn_table_entry.mac_id);
 
@@ -1386,7 +1386,7 @@ bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 		status = true;
 	} else {
 		*ibss_channel = pm_conc_connection_list[list[index]].chan;
-		policy_mgr_notice("Multiple IBSS connections, picking first one");
+		policy_mgr_debug("Multiple IBSS connections, picking first one");
 		status = true;
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -1418,7 +1418,7 @@ bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 				psoc, mode, list);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (count == 0) {
-		policy_mgr_err("No mode:[%d] connection", mode);
+		policy_mgr_debug("No mode:[%d] connection", mode);
 		status = false;
 	} else if (count == 1) {
 		*channel = pm_conc_connection_list[list[index]].chan;
@@ -1434,7 +1434,7 @@ bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 		*channel = pm_conc_connection_list[list[index]].chan;
 		*vdev_id =
 			pm_conc_connection_list[list[index]].vdev_id;
-		policy_mgr_notice("Multiple mode:[%d] connections, picking first one",
+		policy_mgr_debug("Multiple mode:[%d] connections, picking first one",
 				mode);
 		status = true;
 	}
