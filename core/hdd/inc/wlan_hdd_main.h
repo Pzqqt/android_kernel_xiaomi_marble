@@ -1277,11 +1277,17 @@ typedef struct hdd_adapter_list_node {
 	hdd_adapter_t *pAdapter;
 } hdd_adapter_list_node_t;
 
-typedef struct hdd_priv_data_s {
+/*
+ * struct hdd_priv_data - driver ioctl private data payload
+ * @buf: pointer to command buffer (may be in userspace)
+ * @used_len: length of the command/data currently in @buf
+ * @total_len: total length of the @buf memory allocation
+ */
+struct hdd_priv_data {
 	uint8_t *buf;
 	int used_len;
 	int total_len;
-} hdd_priv_data_t;
+};
 
 #define  MAX_MOD_LOGLEVEL 10
 typedef struct {
