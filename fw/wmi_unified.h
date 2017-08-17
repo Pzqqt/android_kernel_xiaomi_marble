@@ -3096,6 +3096,12 @@ typedef struct {
     A_UINT32 scan_id;
     /**id of VDEV that requested the scan */
     A_UINT32 vdev_id;
+    /** TSF Timestamp when the scan event (wmi_scan_event_type) is completed
+     * In case of AP it is TSF of the AP vdev
+     * In case of STA connected state this is the TSF of the AP
+     * In case of STA not connected it will be the free running HW timer
+     */
+    A_UINT32 tsf_timestamp;
 } wmi_scan_event_fixed_param;
 
 /* WMI Diag event */
