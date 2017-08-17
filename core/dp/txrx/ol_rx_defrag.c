@@ -332,6 +332,7 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 	void *rx_mpdu_desc;
 	uint8_t pktlog_bit;
 	uint32_t msdu_count = 0;
+	int ret;
 
 	htt_pdev = pdev->htt_pdev;
 	peer = ol_txrx_peer_find_by_id(pdev, peer_id);
@@ -350,9 +351,14 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 	}
 	pktlog_bit =
 		(htt_rx_amsdu_rx_in_order_get_pktlog(rx_frag_ind_msg) == 0x01);
+	ret = htt_rx_frag_pop(htt_pdev, rx_frag_ind_msg, &head_msdu,
+			      &tail_msdu, &msdu_count);
+	/* Return if msdu pop fails from rx hash table, as recovery
+	 * is triggered and we exit gracefully.
+	 */
+	if (!ret)
+		return;
 	if (peer) {
-		htt_rx_frag_pop(htt_pdev, rx_frag_ind_msg, &head_msdu,
-				&tail_msdu, &msdu_count);
 		qdf_assert(head_msdu == tail_msdu);
 		if (ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev)) {
 			rx_mpdu_desc =
@@ -369,8 +375,6 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 		ol_rx_reorder_store_frag(pdev, peer, tid, seq_num, head_msdu);
 	} else {
 		/* invalid frame - discard it */
-		htt_rx_frag_pop(htt_pdev, rx_frag_ind_msg, &head_msdu,
-				&tail_msdu, &msdu_count);
 		if (ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev))
 			htt_rx_msdu_desc_retrieve(htt_pdev, head_msdu);
 		else
