@@ -1003,7 +1003,8 @@ static inline unsigned long pktlog_get_fault_address(struct vm_fault *vmf)
 }
 #endif /* KERNEL_VERSION(4, 10, 0) */
 
-static int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+static int
+pktlog_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	unsigned long address = pktlog_get_fault_address(vmf);
 
@@ -1018,8 +1019,20 @@ static int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	return 0;
 }
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
+static int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
+{
+	return pktlog_fault_handler(vma, vmf);
+}
+#else
+static int pktlog_fault(struct vm_fault *vmf)
+{
+	return pktlog_fault_handler(vmf->vma, vmf);
+}
+#endif
+
 static struct vm_operations_struct pktlog_vmops = {
-	open:  pktlog_vopen,
+	open: pktlog_vopen,
 	close:pktlog_vclose,
 	fault:pktlog_fault,
 };
