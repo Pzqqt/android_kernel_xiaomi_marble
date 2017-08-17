@@ -106,10 +106,7 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 
 	work_done = hif_ext_group->handler(hif_ext_group->context, budget);
 
-	if (hif_ext_group->work_complete(hif_ext_group, work_done)) {
-		if (work_done >= budget)
-			work_done = budget - 1;
-
+	if (work_done < budget) {
 		napi_complete(napi);
 		qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
 		hif_ext_group->irq_enable(hif_ext_group);
