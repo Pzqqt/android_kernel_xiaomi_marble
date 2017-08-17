@@ -31,7 +31,7 @@
  * HIF NAPI interface implementation
  */
 
-#include <string.h> /* memset */
+#include <linux/string.h> /* memset */
 
 /* Linux headers */
 #include <linux/cpumask.h>

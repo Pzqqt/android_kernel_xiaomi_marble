@@ -23,7 +23,7 @@
  * an abstraction layer...  Should this be moved into a /linux folder?
  */
 
-#include <string.h> /* memset */
+#include <linux/string.h> /* memset */
 
 /* Linux headers */
 #include <linux/cpumask.h>

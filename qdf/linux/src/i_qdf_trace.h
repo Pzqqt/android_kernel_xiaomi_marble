@@ -36,8 +36,8 @@
 #define __I_QDF_TRACE_H
 
 /* older kernels have a bug in kallsyms, so ensure module.h is included */
-#include <module.h>
-#include <kallsyms.h>
+#include <linux/module.h>
+#include <linux/kallsyms.h>
 
 #if !defined(__printf)
 #define __printf(a, b)
