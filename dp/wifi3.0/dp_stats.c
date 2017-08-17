@@ -432,7 +432,60 @@ static inline void dp_print_tx_tid_stats_tlv(uint32_t *tag_buf)
 			dp_stats_buf->pause_module_id);
 	DP_TRACE_STATS(FATAL, "block_module_id = %d\n",
 			dp_stats_buf->block_module_id);
+	DP_TRACE_STATS(FATAL, "tid_tx_airtime = %d\n",
+			dp_stats_buf->tid_tx_airtime);
 }
+
+#ifdef CONFIG_WIN
+/*
+ * dp_print_tx_tid_stats_v1_tlv: display htt_tx_tid_stats_v1_tlv
+ * @tag_buf: buffer containing the tlv htt_tx_tid_stats_v1_tlv
+ *
+ * return:void
+ */
+static inline void dp_print_tx_tid_stats_v1_tlv(uint32_t *tag_buf)
+{
+	htt_tx_tid_stats_v1_tlv *dp_stats_buf =
+		(htt_tx_tid_stats_v1_tlv *)tag_buf;
+	uint8_t i;
+	uint16_t index = 0;
+	char tid_name[DP_MAX_STRING_LEN];
+
+	DP_TRACE_STATS(FATAL, "HTT_TX_TID_STATS_V1_TLV:");
+	for (i = 0; i <  DP_HTT_TID_NAME_LEN; i++) {
+		index += qdf_snprint(&tid_name[index],
+				DP_MAX_STRING_LEN - index,
+				" %d:%d,", i, dp_stats_buf->tid_name[i]);
+	}
+	DP_TRACE_STATS(FATAL, "tid_name = %s ", tid_name);
+	DP_TRACE_STATS(FATAL, "sw_peer_id__tid_num = %d",
+			dp_stats_buf->sw_peer_id__tid_num);
+	DP_TRACE_STATS(FATAL, "num_sched_pending__num_ppdu_in_hwq = %d",
+			dp_stats_buf->num_sched_pending__num_ppdu_in_hwq);
+	DP_TRACE_STATS(FATAL, "tid_flags = %d",
+			dp_stats_buf->tid_flags);
+	DP_TRACE_STATS(FATAL, "max_qdepth_bytes = %d",
+			dp_stats_buf->max_qdepth_bytes);
+	DP_TRACE_STATS(FATAL, "max_qdepth_n_msdus = %d",
+			dp_stats_buf->max_qdepth_n_msdus);
+	DP_TRACE_STATS(FATAL, "rsvd = %d",
+			dp_stats_buf->rsvd);
+	DP_TRACE_STATS(FATAL, "qdepth_bytes = %d",
+			dp_stats_buf->qdepth_bytes);
+	DP_TRACE_STATS(FATAL, "qdepth_num_msdu = %d",
+			dp_stats_buf->qdepth_num_msdu);
+	DP_TRACE_STATS(FATAL, "qdepth_num_mpdu = %d",
+			dp_stats_buf->qdepth_num_mpdu);
+	DP_TRACE_STATS(FATAL, "last_scheduled_tsmp = %d",
+			dp_stats_buf->last_scheduled_tsmp);
+	DP_TRACE_STATS(FATAL, "pause_module_id = %d",
+			dp_stats_buf->pause_module_id);
+	DP_TRACE_STATS(FATAL, "block_module_id = %d\n",
+			dp_stats_buf->block_module_id);
+	DP_TRACE_STATS(FATAL, "tid_tx_airtime = %d\n",
+			dp_stats_buf->tid_tx_airtime);
+}
+#endif
 
 /*
  * dp_print_rx_tid_stats_tlv: display htt_rx_tid_stats_tlv
@@ -2789,6 +2842,12 @@ void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
 	case HTT_STATS_TX_TID_DETAILS_TAG:
 		dp_print_tx_tid_stats_tlv(tag_buf);
 		break;
+
+#ifdef CONFIG_WIN
+	case HTT_STATS_TX_TID_DETAILS_V1_TAG:
+		dp_print_tx_tid_stats_v1_tlv(tag_buf);
+		break;
+#endif
 
 	case HTT_STATS_RX_TID_DETAILS_TAG:
 		dp_print_rx_tid_stats_tlv(tag_buf);
