@@ -5126,12 +5126,13 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA7,
 	},
 	{
-		.name = MSM_DAILINK_NAME(Compress3),
-		.stream_name = "Compress3",
+		.name = MSM_DAILINK_NAME(MultiMedia10),
+		.stream_name = "MultiMedia10",
 		.cpu_dai_name = "MultiMedia10",
-		.platform_name = "msm-compress-dsp",
+		.platform_name = "msm-pcm-dsp.1",
 		.dynamic = 1,
 		.dpcm_playback = 1,
+		.dpcm_capture = 1,
 		.trigger = {SND_SOC_DPCM_TRIGGER_POST,
 			 SND_SOC_DPCM_TRIGGER_POST},
 		.codec_dai_name = "snd-soc-dummy-dai",
@@ -6696,16 +6697,18 @@ static int msm_init_wsa_dev(struct platform_device *pdev,
 	ret = of_property_read_u32(pdev->dev.of_node,
 				   "qcom,wsa-max-devs", &wsa_max_devs);
 	if (ret) {
-		dev_dbg(&pdev->dev,
+		dev_info(&pdev->dev,
 			 "%s: wsa-max-devs property missing in DT %s, ret = %d\n",
 			 __func__, pdev->dev.of_node->full_name, ret);
-		goto err;
+		card->num_aux_devs = 0;
+		return 0;
 	}
 	if (wsa_max_devs == 0) {
 		dev_warn(&pdev->dev,
 			 "%s: Max WSA devices is 0 for this target?\n",
 			 __func__);
-		goto err;
+		card->num_aux_devs = 0;
+		return 0;
 	}
 
 	/* Get count of WSA device phandles for this platform */
