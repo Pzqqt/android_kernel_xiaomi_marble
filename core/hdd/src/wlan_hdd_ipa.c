@@ -35,7 +35,7 @@
 #ifdef IPA_OFFLOAD
 
 /* Include Files */
-#include <ipa.h>
+#include <linux/ipa.h>
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_ipa.h>
 

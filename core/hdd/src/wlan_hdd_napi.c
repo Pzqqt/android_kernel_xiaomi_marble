@@ -30,7 +30,7 @@
  *
  * WLAN HDD NAPI interface implementation
  */
-#include <smp.h> /* get_cpu */
+#include <linux/smp.h> /* get_cpu */
 
 #include "wlan_hdd_napi.h"
 #include "cds_api.h"       /* cds_get_context */

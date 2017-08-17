@@ -28,7 +28,7 @@
 #if !defined(WLAN_HDD_IOCTL_H)
 #define WLAN_HDD_IOCTL_H
 
-#include <netdevice.h>
+#include <linux/netdevice.h>
 #include <uapi/linux/if.h>
 #include "wlan_hdd_main.h"
 

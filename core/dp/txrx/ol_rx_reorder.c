@@ -30,7 +30,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_mem.h>         /* qdf_mem_malloc */
 
-#include <ieee80211.h>          /* IEEE80211_SEQ_MAX */
+#include <linux/ieee80211.h>          /* IEEE80211_SEQ_MAX */
 
 /* external interfaces */
 #include <ol_txrx_api.h>        /* ol_txrx_pdev_handle */
