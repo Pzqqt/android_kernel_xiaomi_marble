@@ -1892,7 +1892,8 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	key_info->status = QDF_STATUS_SUCCESS;
 
 out:
-	wma_send_msg(wma_handle, WMA_SET_BSSKEY_RSP, (void *)key_info, 0);
+	wma_send_msg_high_priority(wma_handle, WMA_SET_BSSKEY_RSP,
+				   (void *)key_info, 0);
 }
 
 #ifdef QCA_IBSS_SUPPORT
@@ -2214,8 +2215,8 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	key_info->status = QDF_STATUS_SUCCESS;
 out:
 	if (key_info->sendRsp)
-		wma_send_msg(wma_handle, WMA_SET_STAKEY_RSP, (void *)key_info,
-			     0);
+		wma_send_msg_high_priority(wma_handle, WMA_SET_STAKEY_RSP,
+					   (void *)key_info, 0);
 }
 
 /**

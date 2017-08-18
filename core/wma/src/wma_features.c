@@ -2863,7 +2863,7 @@ void wma_aggr_qos_req(tp_wma_handle wma,
 	wmi_unified_aggr_qos_cmd(wma->wmi_handle,
 			   (struct aggr_add_ts_param *)pAggrQosRspMsg);
 	/* send reponse to upper layers from here only. */
-	wma_send_msg(wma, WMA_AGGR_QOS_RSP, pAggrQosRspMsg, 0);
+	wma_send_msg_high_priority(wma, WMA_AGGR_QOS_RSP, pAggrQosRspMsg, 0);
 }
 
 #ifdef FEATURE_WLAN_ESE
@@ -2930,7 +2930,7 @@ void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg)
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 	}
-	wma_send_msg(wma, WMA_ADD_TS_RSP, msg, 0);
+	wma_send_msg_high_priority(wma, WMA_ADD_TS_RSP, msg, 0);
 }
 
 #ifdef FEATURE_WLAN_ESE

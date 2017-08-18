@@ -1038,7 +1038,7 @@ void wma_add_bss_ndi_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 send_fail_resp:
 	add_bss->status = QDF_STATUS_E_FAILURE;
-	wma_send_msg(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
+	wma_send_msg_high_priority(wma, WMA_ADD_BSS_RSP, (void *)add_bss, 0);
 }
 
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
@@ -1163,7 +1163,7 @@ void wma_add_sta_ndi_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 send_rsp:
 	WMA_LOGD(FL("Sending add sta rsp to umac (mac:%pM, status:%d)"),
 		 add_sta->staMac, add_sta->status);
-	wma_send_msg(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
+	wma_send_msg_high_priority(wma, WMA_ADD_STA_RSP, (void *)add_sta, 0);
 }
 
 /**
@@ -1206,6 +1206,6 @@ send_del_rsp:
 	if (del_sta->respReqd) {
 		WMA_LOGD(FL("Sending del rsp to umac (status: %d)"),
 				del_sta->status);
-		wma_send_msg(wma, WMA_DELETE_STA_RSP, del_sta, 0);
+		wma_send_msg_high_priority(wma, WMA_DELETE_STA_RSP, del_sta, 0);
 	}
 }
