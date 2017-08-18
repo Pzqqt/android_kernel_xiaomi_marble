@@ -153,6 +153,15 @@ static inline int qdf_status_to_os_return(QDF_STATUS status)
  */
 #define qdf_test_and_clear_bit(nr, addr)    __qdf_test_and_clear_bit(nr, addr)
 
+/**
+ * qdf_find_first_bit() - find first bit position in address
+ * @addr: address buffer pointer
+ * @nbits: number of bits
+ *
+ * Return: position first set bit in addr
+ */
+#define qdf_find_first_bit(addr, nbits)    __qdf_find_first_bit(addr, nbits)
+
 #define qdf_wait_queue_interruptible(wait_queue, condition) \
 		__qdf_wait_queue_interruptible(wait_queue, condition)
 

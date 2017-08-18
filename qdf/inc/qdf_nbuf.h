@@ -121,6 +121,7 @@
  * @he_sig_A2: HE (11ax) sig A1 field
  * @he_sig_b_user: HE (11ax) sig B user field
  * @he_sig_b_user_known: HE (11ax) sig B user known field
+ * @preamble_type: Preamble type in radio header
  * @chan_freq: Capture channel frequency
  * @chan_num: Capture channel number
  * @chan_flags: Bitmap of Channel flags, IEEE80211_CHAN_TURBO,
@@ -138,12 +139,20 @@
  * @ant_signal_db: Rx packet RSSI
  * @nr_ant: Number of Antennas used for streaming
  * @mcs: MCS index of Rx frame
+ * @nss: Number of spatial streams
  * @bw: bandwidth of rx frame
  * @is_stbc: Is STBC enabled
  * @sgi: Rx frame short guard interval
+ * @he_re: HE range extension
  * @ldpc: ldpc enabled
  * @beamformed: Is frame beamformed.
  * @he_sig_b_common_RU[4]: HE (11ax) common RU assignment index
+ * @rssi_comb: Combined RSSI
+ * @duration: 802.11 Duration
+ * @first_data_seq_ctrl: Sequence ctrl field of first data frame
+ * @ast_index: AST table hash index
+ * @tid: QoS traffic tid number
+ *
  */
 struct mon_rx_status {
 	uint64_t tsft;
@@ -151,6 +160,7 @@ struct mon_rx_status {
 	uint32_t he_sig_A2;
 	uint32_t he_sig_b_user;
 	uint32_t he_sig_b_user_known;
+	uint32_t preamble_type;
 	uint16_t chan_freq;
 	uint16_t chan_num;
 	uint16_t chan_flags;
@@ -167,6 +177,7 @@ struct mon_rx_status {
 	uint8_t  ant_signal_db;
 	uint8_t  nr_ant;
 	uint8_t  mcs;
+	uint8_t  nss;
 	uint8_t  bw;
 	uint8_t  vht_flag_values1;
 	uint8_t  vht_flag_values2;
@@ -175,9 +186,15 @@ struct mon_rx_status {
 	uint8_t  vht_flag_values5;
 	uint8_t  is_stbc;
 	uint8_t  sgi;
+	uint8_t  he_re;
 	uint8_t  ldpc;
 	uint8_t  beamformed;
 	uint8_t  he_sig_b_common_RU[4];
+	int8_t   rssi_comb;
+	uint16_t duration;
+	int16_t first_data_seq_ctrl;
+	uint32_t ast_index;
+	uint32_t tid;
 };
 
 /* Masks for HE SIG known fields in mon_rx_status structure */

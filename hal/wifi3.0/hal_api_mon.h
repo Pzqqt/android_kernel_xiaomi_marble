@@ -469,6 +469,10 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			"[%s][%d] ppdu_end_e len=%d\n",
 				__func__, __LINE__, tlv_len);
 		/* This is followed by sub-TLVs of PPDU_END */
+
+		ppdu_info->rx_status.duration =
+			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_8,
+					RX_PPDU_DURATION);
 		break;
 
 	case WIFIRXPCU_PPDU_END_INFO_E:
@@ -481,7 +485,26 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		break;
 
 	case WIFIRX_PPDU_END_USER_STATS_E:
+	{
+		unsigned long tid = 0;
+
+		ppdu_info->rx_status.ast_index =
+				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_4,
+						AST_INDEX);
+		tid = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_12,
+				RECEIVED_QOS_DATA_TID_BITMAP);
+		ppdu_info->rx_status.tid = qdf_find_first_bit(&tid, sizeof(tid)*8);
+		ppdu_info->rx_status.mcs =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
+						MCS);
+		ppdu_info->rx_status.nss =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
+						NSS);
+		ppdu_info->rx_status.first_data_seq_ctrl =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
+						DATA_SEQUENCE_CONTROL_INFO_VALID);
 		break;
+	}
 
 	case WIFIRX_PPDU_END_USER_STATS_EXT_E:
 		break;
@@ -589,6 +612,14 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		uint8_t *rssi_info_tlv = (uint8_t *)rx_tlv +
 			HAL_RX_OFFSET(PHYRX_RSSI_LEGACY_3,
 			RECEIVE_RSSI_INFO_PRE_RSSI_INFO_DETAILS);
+
+		ppdu_info->rx_status.rssi_comb = HAL_RX_GET(rssi_info_tlv,
+			PHYRX_RSSI_LEGACY_35, RSSI_COMB);
+		ppdu_info->rx_status.bw = HAL_RX_GET(rssi_info_tlv,
+			PHYRX_RSSI_LEGACY_35, RECEIVE_BANDWIDTH);
+		ppdu_info->rx_status.preamble_type = HAL_RX_GET(rssi_info_tlv,
+			PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
+		ppdu_info->rx_status.he_re = 0;
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);

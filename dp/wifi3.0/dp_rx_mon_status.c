@@ -29,6 +29,107 @@
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
 /**
+* dp_rx_populate_cdp_indication_ppdu() - Populate cdp rx indication structure
+* @soc: core txrx main context
+* @ppdu_info: ppdu info structure from ppdu ring
+* @ppdu_nbuf: qdf nbuf abstraction for linux skb
+*
+* Return: none
+*/
+#ifdef FEATURE_PERPKT_INFO
+static inline void
+dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
+	struct hal_rx_ppdu_info *ppdu_info,
+	qdf_nbuf_t ppdu_nbuf)
+{
+	struct dp_peer *peer;
+	struct dp_ast_entry *ast_entry;
+	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
+	uint32_t ast_index;
+
+	cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
+
+	ast_index = ppdu_info->rx_status.ast_index;
+	if (ast_index > (WLAN_UMAC_PSOC_MAX_PEERS * 2)) {
+		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		return;
+	}
+
+	ast_entry = soc->ast_table[ast_index];
+	if (!ast_entry) {
+		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		return;
+	}
+	peer = ast_entry->peer;
+	if (!peer || peer->peer_ids[0] == HTT_INVALID_PEER) {
+		cdp_rx_ppdu->peer_id = HTT_INVALID_PEER;
+		return;
+	}
+
+	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
+	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
+	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;
+	cdp_rx_ppdu->u.bw = ppdu_info->rx_status.bw;
+	cdp_rx_ppdu->u.nss = ppdu_info->rx_status.nss;
+	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
+	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
+	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
+	cdp_rx_ppdu->timestamp = ppdu_info->com_info.ppdu_timestamp;
+	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_freq;
+
+}
+#else
+static inline void
+dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
+		struct hal_rx_ppdu_info *ppdu_info,
+		qdf_nbuf_t ppdu_nbuf)
+{
+}
+#endif
+
+/**
+* dp_rx_handle_ppdu_stats() - Allocate and deliver ppdu stats to cdp layer
+* @soc: core txrx main context
+* @pdev: pdev strcuture
+* @ppdu_info: structure for rx ppdu ring
+*
+* Return: none
+*/
+#ifdef FEATURE_PERPKT_INFO
+static inline void
+dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
+			struct hal_rx_ppdu_info *ppdu_info)
+{
+	qdf_nbuf_t ppdu_nbuf;
+	struct dp_peer *peer;
+	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
+
+	ppdu_nbuf = qdf_nbuf_alloc(pdev->osif_pdev,
+			sizeof(struct hal_rx_ppdu_info), 0, 0, FALSE);
+	if (ppdu_nbuf) {
+		dp_rx_populate_cdp_indication_ppdu(soc, ppdu_info, ppdu_nbuf);
+		qdf_nbuf_put_tail(ppdu_nbuf,
+				sizeof(struct cdp_rx_indication_ppdu));
+		cdp_rx_ppdu = (struct cdp_rx_indication_ppdu *)ppdu_nbuf->data;
+
+		peer = dp_peer_find_by_id(soc, cdp_rx_ppdu->peer_id);
+		if (peer && cdp_rx_ppdu->peer_id != HTT_INVALID_PEER) {
+			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC, soc,
+					ppdu_nbuf, cdp_rx_ppdu->peer_id,
+					WDI_NO_VAL, pdev->pdev_id);
+		} else
+			qdf_nbuf_free(ppdu_nbuf);
+	}
+}
+#else
+static inline void
+dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
+			struct hal_rx_ppdu_info *ppdu_info)
+{
+}
+#endif
+
+/**
 * dp_rx_mon_status_process_tlv() - Process status TLV in status
 *	buffer on Rx status Queue posted by status SRNG processing.
 * @soc: core txrx main context
@@ -79,6 +180,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		qdf_nbuf_free(status_nbuf);
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
+			if (pdev->enhanced_stats_en)
+				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
 			dp_rx_mon_dest_process(soc, mac_id, quota);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;

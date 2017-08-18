@@ -4462,6 +4462,38 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 }
 
 /*
+ * dp_ppdu_ring_cfg()- Configure PPDU Stats ring
+ * @pdev: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_ppdu_ring_cfg(struct dp_pdev *pdev)
+{
+	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
+
+	htt_tlv_filter.mpdu_start = 0;
+	htt_tlv_filter.msdu_start = 0;
+	htt_tlv_filter.packet = 0;
+	htt_tlv_filter.msdu_end = 0;
+	htt_tlv_filter.mpdu_end = 0;
+	htt_tlv_filter.packet_header = 1;
+	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.ppdu_start = 1;
+	htt_tlv_filter.ppdu_end = 1;
+	htt_tlv_filter.ppdu_end_user_stats = 1;
+	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
+	htt_tlv_filter.ppdu_end_status_done = 1;
+	htt_tlv_filter.enable_fp = 1;
+	htt_tlv_filter.enable_md = 0;
+	htt_tlv_filter.enable_mo = 0;
+
+	htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, pdev->pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
+}
+
+/*
  * dp_enable_enhanced_stats()- API to enable enhanced statistcs
  * @pdev_handle: DP_PDEV handle
  *
@@ -4472,6 +4504,8 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	pdev->enhanced_stats_en = 1;
+
+	dp_ppdu_ring_cfg(pdev);
 }
 
 /*

@@ -168,6 +168,12 @@ static inline bool __qdf_test_and_clear_bit(unsigned int nr,
 	return __test_and_clear_bit(nr, addr);
 }
 
+static inline unsigned long __qdf_find_first_bit(unsigned long *addr,
+					unsigned long nbits)
+{
+	return find_first_bit(addr, nbits);
+}
+
 /**
  * __qdf_set_macaddr_broadcast() - set a QDF MacAddress to the 'broadcast'
  * @mac_addr: pointer to the qdf MacAddress to set to broadcast
