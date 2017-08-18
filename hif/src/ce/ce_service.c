@@ -2594,10 +2594,16 @@ static uint32_t ce_get_desc_size_legacy(uint8_t ring_type)
 	return 0;
 }
 
-static void ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
+static int ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
 		uint32_t ce_id, struct CE_ring_state *ring,
 		struct CE_attr *attr)
 {
+	int status = Q_TARGET_ACCESS_BEGIN(scn);
+
+	if (status < 0)
+		goto out;
+
+
 	switch (ring_type) {
 	case CE_RING_SRC:
 		ce_legacy_src_ring_setup(scn, ce_id, ring, attr);
@@ -2610,6 +2616,10 @@ static void ce_ring_setup_legacy(struct hif_softc *scn, uint8_t ring_type,
 		qdf_assert(0);
 		break;
 	}
+
+	Q_TARGET_ACCESS_END(scn);
+out:
+	return status;
 }
 
 static void ce_prepare_shadow_register_v2_cfg_legacy(struct hif_softc *scn,

@@ -710,7 +710,7 @@ static void ce_srng_status_ring_setup(struct hif_softc *scn, uint32_t ce_id,
 			ce_id, 0, &ring_params);
 }
 
-static void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
+static int ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 		uint32_t ce_id, struct CE_ring_state *ring,
 		struct CE_attr *attr)
 {
@@ -728,6 +728,8 @@ static void ce_ring_setup_srng(struct hif_softc *scn, uint8_t ring_type,
 		qdf_assert(0);
 		break;
 	}
+
+	return 0;
 }
 
 static void ce_construct_shadow_config_srng(struct hif_softc *scn)

@@ -222,7 +222,7 @@ int hif_ahb_configure_legacy_irq(struct hif_pci_softc *sc)
 		ret = -1;
 		goto end;
 	}
-	ret = request_irq(irq, hif_pci_interrupt_handler,
+	ret = request_irq(irq, hif_pci_legacy_ce_interrupt_handler,
 				IRQF_DISABLED, "wlan_ahb", sc);
 	if (ret) {
 		dev_err(&pdev->dev, "ath_request_irq failed\n");
