@@ -69,6 +69,12 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 #define TX_RING_MASK_VAL	0xF
 #define RX_RING_MASK_VAL	0xF
 #endif
+
+unsigned int napi_budget = 128;
+module_param(napi_budget, uint, 0644);
+MODULE_PARM_DESC(napi_budget,
+		"tasklet mode: more than 0xffff , napi budget if <= 0xffff");
+
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -1152,7 +1158,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		ret = hif_register_ext_group(soc->hif_handle,
 				num_irq, irq_id_map, dp_service_srngs,
 				&soc->intr_ctx[i], "dp_intr",
-				HIF_EXEC_NAPI_TYPE);
+				napi_budget);
 
 		if (ret) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

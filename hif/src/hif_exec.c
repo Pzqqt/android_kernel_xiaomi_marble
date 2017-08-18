@@ -162,7 +162,7 @@ struct hif_execution_ops napi_sched_ops = {
 /**
  * hif_exec_napi_create() - allocate and initialize a napi exec context
  */
-static struct hif_exec_context *hif_exec_napi_create(void)
+static struct hif_exec_context *hif_exec_napi_create(uint32_t budget)
 {
 	struct hif_napi_exec_context *ctx;
 
@@ -174,13 +174,13 @@ static struct hif_exec_context *hif_exec_napi_create(void)
 	ctx->exec_ctx.inited = true;
 	init_dummy_netdev(&(ctx->netdev));
 	netif_napi_add(&(ctx->netdev), &(ctx->napi), hif_exec_poll,
-		       QCA_NAPI_BUDGET);
+		       budget);
 	napi_enable(&ctx->napi);
 
 	return &ctx->exec_ctx;
 }
 #else
-static struct hif_exec_context *hif_exec_napi_create(void)
+static struct hif_exec_context *hif_exec_napi_create(uint32_t budget)
 {
 	HIF_WARN("%s: FEATURE_NAPI not defined, making tasklet");
 	return hif_exec_tasklet_create();
@@ -340,7 +340,7 @@ void hif_exec_kill(struct hif_opaque_softc *hif_ctx)
  */
 uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
-		void *cb_ctx, const char *context_name, enum hif_exec_type type)
+		void *cb_ctx, const char *context_name, uint32_t budget)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -361,7 +361,7 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hif_ext_group = hif_exec_create(type);
+	hif_ext_group = hif_exec_create(budget);
 	if (hif_ext_group == NULL)
 		return QDF_STATUS_E_FAILURE;
 
@@ -385,11 +385,15 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
  * hif_exec_create() - create an execution context
  * @type: the type of execution context to create
  */
-struct hif_exec_context *hif_exec_create(enum hif_exec_type type)
+struct hif_exec_context *hif_exec_create(uint32_t budget)
 {
+	uint32_t type = budget <= 0xFFFF ?
+				HIF_EXEC_NAPI_TYPE : HIF_EXEC_TASKLET_TYPE;
+
+	HIF_INFO("%s: create exec_type %d budget %d\n", __func__, type, budget);
 	switch (type) {
 	case HIF_EXEC_NAPI_TYPE:
-		return hif_exec_napi_create();
+		return hif_exec_napi_create(budget);
 
 	case HIF_EXEC_TASKLET_TYPE:
 		return hif_exec_tasklet_create();
