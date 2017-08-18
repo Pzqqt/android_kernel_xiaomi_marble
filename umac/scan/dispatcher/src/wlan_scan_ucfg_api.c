@@ -837,6 +837,45 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 		(found ? "removed" : "not found"), handler_cnt);
 }
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+/**
+ * ucfg_scan_req_update_params() - update scan req params depending
+ * on active modes
+ * @vdev: vdev object pointer
+ * @req: scan request
+ *
+ * Return: void
+ */
+static void ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
+	struct scan_start_request *req)
+{
+	bool ap_or_go_present;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc)
+		return;
+
+	ap_or_go_present = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_SAP_MODE, NULL) ||
+				policy_mgr_mode_specific_connection_count(
+				psoc, QDF_P2P_GO_MODE, NULL);
+
+	/*
+	 * If AP is active set min rest time same as max rest time, so that
+	 * firmware spends more time on home channel which will increase the
+	 * probability of sending beacon at TBTT
+	 */
+	if (ap_or_go_present)
+		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
+}
+#else
+static inline void ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
+	struct scan_start_request *req){}
+#endif
+
+
 QDF_STATUS
 ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	struct scan_start_request *req)
@@ -870,6 +909,8 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 		def->adaptive_dwell_time_mode;
 	req->scan_req.scan_flags = def->scan_flags;
 	req->scan_req.scan_events = def->scan_events;
+
+	ucfg_scan_req_update_params(vdev, req);
 
 	return QDF_STATUS_SUCCESS;
 }
