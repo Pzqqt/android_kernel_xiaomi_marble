@@ -1334,13 +1334,13 @@ static bool scm_serialization_scan_rules_cb(
 		uint8_t comp_id)
 {
 	switch (comp_id) {
-	case QDF_MODULE_ID_TDLS:
+	case WLAN_UMAC_COMP_TDLS:
 		if (comp_info->scan_info.is_tdls_in_progress) {
 			scm_info("Cancel scan. Tdls in progress");
 			return false;
 		}
 		break;
-	case QDF_MODULE_ID_DFS:
+	case WLAN_UMAC_COMP_DFS:
 		if (comp_info->scan_info.is_cac_in_progress) {
 			scm_info("Cancel scan. CAC in progress");
 			return false;

@@ -803,11 +803,11 @@ struct wlan_dfs {
 	os_timer_t dfs_cac_timer;
 	os_timer_t dfs_cac_valid_timer;
 	int dfs_cac_timeout_override;
-	int8_t dfs_enable:1,
-		   dfs_cac_timer_running:1,
-		   dfs_ignore_dfs:1,
-		   dfs_ignore_cac:1,
-		   dfs_cac_valid:1;
+	uint8_t dfs_enable:1,
+		dfs_cac_timer_running:1,
+		dfs_ignore_dfs:1,
+		dfs_ignore_cac:1,
+		dfs_cac_valid:1;
 	uint32_t dfs_cac_valid_time;
 	os_timer_t dfs_precac_timer;
 	int dfs_precac_timeout_override;

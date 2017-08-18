@@ -563,7 +563,7 @@ static QDF_STATUS dispatcher_dfs_psoc_enable(struct wlan_objmgr_psoc *psoc)
 
 static QDF_STATUS dispatcher_dfs_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
-	return QDF_STATUS_SUCCESS;
+	return wifi_dfs_psoc_disable(psoc);
 }
 #else
 static QDF_STATUS dispatcher_init_dfs(void)

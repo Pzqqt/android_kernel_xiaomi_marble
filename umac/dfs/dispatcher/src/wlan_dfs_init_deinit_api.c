@@ -31,6 +31,7 @@
 #include "wlan_dfs_init_deinit_api.h"
 #include "../../core/src/dfs.h"
 #include "a_types.h"
+#include "wlan_serialization_api.h"
 
 struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -203,16 +204,81 @@ QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void dfs_scan_serialization_comp_info_cb(
+		struct wlan_objmgr_vdev *vdev,
+		union wlan_serialization_rules_info *comp_info)
+{
+	struct wlan_dfs *dfs;
+	struct wlan_objmgr_pdev *pdev;
+
+	if (!comp_info) {
+		DFS_PRINTK("%s: comp_info is NULL\n", __func__);
+		return;
+	}
+
+	if (!vdev) {
+		DFS_PRINTK("%s: vdev is NULL\n", __func__);
+		return;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		DFS_PRINTK("%s: pdev is NULL\n", __func__);
+		return;
+	}
+
+	dfs = wlan_pdev_get_dfs_obj(pdev);
+	if (dfs == NULL) {
+		DFS_PRINTK("%s: dfs is NULL\n", __func__);
+		return;
+	}
+
+	if (dfs_is_ap_cac_timer_running(dfs))
+		comp_info->scan_info.is_cac_in_progress = true;
+	else
+		comp_info->scan_info.is_cac_in_progress = false;
+}
+
 QDF_STATUS wifi_dfs_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_STATUS status;
 	bool dfs_offload =
 		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
 
 	DFS_PRINTK("%s: dfs_offload %d\n", __func__, dfs_offload);
 
-	if (QDF_STATUS_SUCCESS != tgt_dfs_reg_ev_handler(psoc, dfs_offload)) {
+	status = tgt_dfs_reg_ev_handler(psoc, dfs_offload);
+	if (status != QDF_STATUS_SUCCESS) {
 		DFS_PRINTK("%s: tgt_dfs_reg_ev_handler failed\n", __func__);
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_serialization_register_comp_info_cb(psoc,
+			WLAN_UMAC_COMP_DFS,
+			WLAN_SER_CMD_SCAN,
+			dfs_scan_serialization_comp_info_cb);
+	if (status != QDF_STATUS_SUCCESS) {
+		DFS_PRINTK(
+				"%s :Serialize scan cmd register failed\n",
+				__func__);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wifi_dfs_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+
+	status = wlan_serialization_deregister_comp_info_cb(psoc,
+			WLAN_UMAC_COMP_DFS,
+			WLAN_SER_CMD_SCAN);
+	if (status != QDF_STATUS_SUCCESS) {
+		DFS_PRINTK(
+				"%s :Serialize scan cmd deregister failed\n",
+				__func__);
+		return status;
 	}
 
 	return QDF_STATUS_SUCCESS;
