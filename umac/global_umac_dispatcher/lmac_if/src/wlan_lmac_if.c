@@ -211,6 +211,9 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 
 	rx_ops->reg_rx_ops.reg_ch_avoid_event_handler =
 		tgt_reg_process_ch_avoid_event;
+
+	rx_ops->reg_rx_ops.reg_freq_to_chan =
+		wlan_reg_freq_to_chan;
 }
 
 #ifdef CONVERGED_P2P_ENABLE

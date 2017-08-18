@@ -47,6 +47,15 @@
 	((chan_num >= REG_MIN_24GHZ_CH_NUM) &&	\
 	 (chan_num <= REG_MAX_24GHZ_CH_NUM))
 
+#ifndef CONFIG_LEGACY_CHAN_ENUM
+#define REG_MIN_49GHZ_CH_FREQ channel_map[MIN_49GHZ_CHANNEL].center_freq
+#define REG_MAX_49GHZ_CH_FREQ channel_map[MAX_49GHZ_CHANNEL].center_freq
+
+#define REG_IS_49GHZ_FREQ(freq) \
+	((freq >= REG_MIN_49GHZ_CH_FREQ) &&   \
+	(freq <= REG_MAX_49GHZ_CH_FREQ))
+#endif
+
 #define REG_IS_5GHZ_CH(chan_num) \
 	((chan_num >= REG_MIN_5GHZ_CH_NUM) &&	\
 	 (chan_num <= REG_MAX_5GHZ_CH_NUM))
