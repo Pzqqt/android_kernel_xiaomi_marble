@@ -1623,7 +1623,7 @@ static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
  *  Return: 0  on success and -ve on failure.
  */
 static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
-			WMI_HOST_PKTLOG_EVENT PKTLOG_EVENT, uint8_t mac_id)
+			uint8_t mac_id)
 {
 	int32_t ret;
 	wmi_pdev_pktlog_disable_cmd_fixed_param *cmd;
@@ -1653,7 +1653,8 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #else
 /**
- *  send_packet_log_enable_cmd_tlv() - WMI request stats function
+ *  send_packet_log_enable_cmd_tlv() - Send WMI command to enable
+ *  packet-log
  *  @param wmi_handle      : handle to WMI.
  *  @param macaddr        : MAC address
  *  @param param    : pointer to hold stats request parameter
@@ -1663,6 +1664,19 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct packet_enable_params *param)
+{
+	return 0;
+}
+/**
+ *  send_packet_log_disable_cmd_tlv() - Send WMI command to disable
+ *  packet-log
+ *  @param wmi_handle      : handle to WMI.
+ *  @mac_id: mac id to have radio context
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
+				uint8_t mac_id)
 {
 	return 0;
 }
@@ -18658,6 +18672,7 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_set_param_cmd = send_vdev_set_param_cmd_tlv,
 	.send_stats_request_cmd = send_stats_request_cmd_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_tlv,
+	.send_packet_log_disable_cmd = send_packet_log_disable_cmd_tlv,
 	.send_beacon_send_cmd = send_beacon_send_cmd_tlv,
 	.send_beacon_tmpl_send_cmd = send_beacon_tmpl_send_cmd_tlv,
 	.send_peer_assoc_cmd = send_peer_assoc_cmd_tlv,
