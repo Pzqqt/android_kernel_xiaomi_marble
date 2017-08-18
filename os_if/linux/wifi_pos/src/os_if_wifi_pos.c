@@ -93,7 +93,7 @@ static int  wifi_pos_parse_req(const void *data, int len, int pid,
 	tAniMsgHdr *msg_hdr;
 	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
 
-	if (nla_parse(tb, CLD80211_ATTR_MAX, data, len, NULL)) {
+	if (wlan_cfg80211_nla_parse(tb, CLD80211_ATTR_MAX, data, len, NULL)) {
 		cfg80211_err("invalid data in request");
 		return OEM_ERR_INVALID_MESSAGE_TYPE;
 	}

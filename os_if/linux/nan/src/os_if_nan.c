@@ -564,8 +564,8 @@ int os_if_nan_process_ndp_cmd(struct wlan_objmgr_psoc *psoc,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1];
 	char *iface_name;
 
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
-			data, data_len, vendor_attr_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
+				    data, data_len, vendor_attr_policy)) {
 		cfg80211_err("Invalid NDP vendor command attributes");
 		return -EINVAL;
 	}
