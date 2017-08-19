@@ -20640,7 +20640,7 @@ void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
 }
 #endif
 
-#if defined(WLAN_FEATURE_FILS_SK)
+#if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 static void csr_copy_fils_join_rsp_roam_info(tCsrRoamInfo *roam_info,
 				      roam_offload_synch_ind *roam_synch_data)
 {

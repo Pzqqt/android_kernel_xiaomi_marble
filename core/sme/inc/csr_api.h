@@ -1364,6 +1364,8 @@ typedef struct tagCsrUpdateConfigParam {
 #define csr_roamIsRoamOffloadEnabled(pMac) \
 	(pMac->roam.configParam.isRoamOffloadEnabled)
 #define DEFAULT_REASSOC_FAILURE_TIMEOUT 1000
+#else
+#define csr_roamIsRoamOffloadEnabled(pMac)  false
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

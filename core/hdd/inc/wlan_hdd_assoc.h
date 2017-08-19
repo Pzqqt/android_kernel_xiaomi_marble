@@ -357,9 +357,24 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t sta_id);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 				  const tSirMacAddr bssid, int channel);
+/**
+ * hdd_save_gtk_params() - Save GTK offload params
+ * @adapter: HDD adapter
+ * @csr_roam_info: CSR roam info
+ * @is_reassoc: boolean to indicate roaming
+ *
+ * Return: None
+ */
+void hdd_save_gtk_params(struct hdd_adapter *adapter,
+			 tCsrRoamInfo *csr_roam_info, bool is_reassoc);
 #else
 static inline void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 		const tSirMacAddr bssid, int channel)
+{
+}
+static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
+				       tCsrRoamInfo *csr_roam_info,
+				       bool is_reassoc)
 {
 }
 #endif
