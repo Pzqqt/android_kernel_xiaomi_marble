@@ -495,7 +495,6 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 		}
 	}
 	dfs->dfs_nol = NULL;
-	dfs_nol_update(dfs);
 }
 
 int dfs_get_rn_use_nol(struct wlan_dfs *dfs)

@@ -46,6 +46,8 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 		return  QDF_STATUS_E_FAILURE;
 
 	dfs_reset(dfs);
+	dfs_nol_update(dfs);
+	dfs_init_precac_list(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -662,6 +664,7 @@ void dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 
 	/* clear local cache first */
 	dfs_nol_timer_cleanup(dfs);
+	dfs_nol_update(dfs);
 
 	/*
 	 * update platform driver nol list with local cache which is zero,
