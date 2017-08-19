@@ -588,6 +588,8 @@ typedef enum {
     WMI_ROAM_SET_MBO_PARAM_CMDID, /* DEPRECATED */
     /** configure packet error rate threshold for triggering roaming */
     WMI_ROAM_PER_CONFIG_CMDID,
+    /** configure BSS Transition Management (BTM) offload for roaming */
+    WMI_ROAM_BTM_CONFIG_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -9517,6 +9519,44 @@ typedef struct {
      */
 } wmi_roam_scan_rssi_threshold_fixed_param;
 
+/**
+ * WMI_ROAM_BTM_CONFIG_CMDID : set BTM (BSS Transition Management. 802.11v) offload config
+ *  Applicable only when WMI_ROAM_SCAN_MODE is enabled with WMI_ROAM_SCAN_MODE_ROAMOFFLOAD
+ */
+
+/**
+ *  btm_config.flags
+ *  BIT 0     : Enable/Disable the BTM offload.
+ *  BIT 1-2   : Action on non matching candidate with cache. Used WMI_ROAM_BTM_OFLD_NON_MATCHING_CND_XXX
+ *  BIT 3-5   : Roaming handoff decisions. Use WMI_ROAM_BTM_OFLD_CNDS_MATCH_XXX
+ *  BIT 6-31  : Reserved
+ */
+#define WMI_ROAM_BTM_SET_ENABLE(flags, val)                    WMI_SET_BITS(flags, 0, 1, val)
+#define WMI_ROAM_BTM_GET_ENABLE(flags)                         WMI_GET_BITS(flags, 0, 1)
+#define WMI_ROAM_BTM_SET_NON_MATCHING_CND_ACTION(flags, val)   WMI_SET_BITS(flags, 1, 2, val)
+#define WMI_ROAM_BTM_GET_NON_MATCHING_CND_ACTION(flags)        WMI_GET_BITS(flags, 1, 2)
+#define WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION(flags, val)      WMI_SET_BITS(flags, 3, 3, val)
+#define WMI_ROAM_BTM_GET_CNDS_MATCH_CONDITION(flags)           WMI_GET_BITS(flags, 3, 3)
+
+/** WMI_ROAM_BTM_SET_NON_MATCHING_CNDS_ACTION definition: When BTM candidate is not matched with cache by WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION, determine what to do */
+#define WMI_ROAM_BTM_NON_MATCHING_CNDS_SCAN_CONSUME      0 /** Invoke roam scan and consume within firmware. Applicable only when ROAM_SCAN_MODE is enabled. If ROAM_SCAN_MODE is disabled, firmware won't scan and forward it to host */
+#define WMI_ROAM_BTM_NON_MATCHING_CNDS_NO_SCAN_FORWARD   1 /** Does not allow roam scan and forward BTM frame to host */
+/** reserved upto 3 */
+
+/** WMI_ROAM_BTM_SET_CNDS_MATCH_CONDITION definition: This is used to invoke WMI_ROAM_BTM_SET_NON_MATCHING_CND_ACTION when compared with cache. i.e this condition is not applied with fresh scan result */
+#define WMI_ROAM_BTM_CNDS_MATCH_EXACT                    0 /** Exactly matched with roam candidate list to BTM candidates */
+#define WMI_ROAM_BTM_CNDS_MATCH_AT_LEAST_TOP             1 /** At least one or more top priority bssid matched */
+/** reserved upto 7 */
+
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_btm_config_fixed_param */
+    A_UINT32 tlv_header;
+    /** unique id identifying the VDEV on which BTM is enabled/disabled */
+    A_UINT32 vdev_id;
+    /** BTM configuration control flags */
+    A_UINT32 flags;
+} wmi_btm_config_fixed_param;
+
 #define WMI_ROAM_5G_BOOST_PENALIZE_ALGO_FIXED  0x0
 #define WMI_ROAM_5G_BOOST_PENALIZE_ALGO_LINEAR 0x1
 #define WMI_ROAM_5G_BOOST_PENALIZE_ALGO_LOG    0x2
@@ -9951,6 +9991,7 @@ typedef struct {
  */
 #define WMI_ROAM_REASON_INVOKE_ROAM_FAIL 0x6
 #define WMI_ROAM_REASON_RSO_STATUS       0x7
+#define WMI_ROAM_REASON_BTM              0x8 /** Roaming because of BTM request received */
 /* reserved up through 0xF */
 
 /* subnet status: bits 4-5 */
@@ -9996,6 +10037,7 @@ typedef enum
 #define WMI_ROAM_NOTIF_ROAM_REASSOC      0x3 /** indicate that reassociation is done. sent only in non WOW state */
 #define WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS 0x4 /** indicate that roaming scan mode is successful */
 #define WMI_ROAM_NOTIF_SCAN_MODE_FAIL    0x5 /** indicate that roaming scan mode is failed due to internal roaming state */
+#define WMI_ROAM_NOTIF_DISCONNECT        0x6 /** indicate that roaming not allowed due BTM req */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
@@ -19862,6 +19904,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_OEM_DMA_RING_CFG_REQ_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_BSS_CHAN_INFO_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_LIMIT_OFFCHAN_CMDID);
+        WMI_RETURN_STRING(WMI_ROAM_BTM_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";

@@ -852,6 +852,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_oic_ping_handoff_event,
     WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_offload_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_event,
+    WMITLV_TAG_STRUC_wmi_btm_config_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1193,6 +1194,7 @@ typedef enum {
     OP(WMI_HB_OIC_PING_OFFLOAD_PARAM_CMDID) \
     OP(WMI_HB_OIC_PING_OFFLOAD_SET_ENABLE_CMDID) \
     OP(WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID) \
+    OP(WMI_ROAM_BTM_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3418,6 +3420,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_HB_OIC_PING_OFFLOAD_SET_ENABLE_CMDID);
 #define WMITLV_TABLE_WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len,WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_offload_cmd_fixed_param, wmi_dhcp_lease_renew_offload_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID);
+
+/* BTM config command */
+#define WMITLV_TABLE_WMI_ROAM_BTM_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_btm_config_fixed_param, wmi_btm_config_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_BTM_CONFIG_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
