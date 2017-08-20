@@ -71,6 +71,30 @@ static int dfs_adjust_thresh_per_chan_busy(int ext_chan_busy, int thresh)
 	return adjust_thresh;
 }
 
+/**
+ * dfs_get_cached_ext_chan_busy() - Get cached ext chan busy.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @ext_chan_busy: Extension channel PRI.
+ */
+static inline void dfs_get_cached_ext_chan_busy(
+		struct wlan_dfs *dfs,
+		int *ext_chan_busy)
+{
+	*ext_chan_busy = 0;
+	/* Check to see if the cached value of ext_chan_busy can be used. */
+
+	if (dfs->dfs_rinfo.dfs_ext_chan_busy &&
+			(dfs->dfs_rinfo.rn_lastfull_ts <
+			 dfs->dfs_rinfo.ext_chan_busy_ts)) {
+		*ext_chan_busy = dfs->dfs_rinfo.dfs_ext_chan_busy;
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
+				"Use cached copy of ext_chan_busy extchanbusy=%d rn_lastfull_ts=%llu ext_chan_busy_ts=%llu\n",
+				*ext_chan_busy,
+				(uint64_t)dfs->dfs_rinfo.rn_lastfull_ts,
+				(uint64_t)dfs->dfs_rinfo.ext_chan_busy_ts);
+	}
+}
+
 int dfs_get_pri_margin(struct wlan_dfs *dfs,
 		int is_extchan_detect,
 		int is_fixed_pattern)
@@ -90,21 +114,7 @@ int dfs_get_pri_margin(struct wlan_dfs *dfs,
 				lmac_get_tsf64(dfs->dfs_pdev_obj);
 			dfs->dfs_rinfo.dfs_ext_chan_busy = ext_chan_busy;
 		} else {
-			/*
-			 * Check to see if the cached value of ext_chan_busy
-			 * can be used.
-			 */
-			ext_chan_busy = 0;
-			if (dfs->dfs_rinfo.dfs_ext_chan_busy) {
-				if (dfs->dfs_rinfo.rn_lastfull_ts <
-					dfs->dfs_rinfo.ext_chan_busy_ts) {
-					ext_chan_busy =
-					    dfs->dfs_rinfo.dfs_ext_chan_busy;
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-						"PRI Use cached copy of ext_chan_busy extchanbusy=%d\n",
-						ext_chan_busy);
-				}
-			}
+			dfs_get_cached_ext_chan_busy(dfs, &ext_chan_busy);
 		}
 		adjust_pri = dfs_adjust_pri_per_chan_busy(ext_chan_busy,
 			pri_margin);
@@ -130,26 +140,7 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 				lmac_get_tsf64(dfs->dfs_pdev_obj);
 			dfs->dfs_rinfo.dfs_ext_chan_busy = ext_chan_busy;
 		} else {
-			/*
-			 * Check to see if the cached value of ext_chan_busy
-			 * can be used.
-			 */
-			ext_chan_busy = 0;
-			if (dfs->dfs_rinfo.dfs_ext_chan_busy) {
-				if (dfs->dfs_rinfo.rn_lastfull_ts <
-					dfs->dfs_rinfo.ext_chan_busy_ts) {
-					ext_chan_busy =
-					    dfs->dfs_rinfo.dfs_ext_chan_busy;
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-						"THRESH Use cached copy of ext_chan_busy extchanbusy=%d rn_lastfull_ts=%llu ext_chan_busy_ts=%llu\n",
-						ext_chan_busy,
-						(uint64_t)
-						dfs->dfs_rinfo.rn_lastfull_ts,
-						(uint64_t)
-						dfs->dfs_rinfo.ext_chan_busy_ts
-						);
-				}
-			}
+			dfs_get_cached_ext_chan_busy(dfs, &ext_chan_busy);
 		}
 
 		adjust_thresh =

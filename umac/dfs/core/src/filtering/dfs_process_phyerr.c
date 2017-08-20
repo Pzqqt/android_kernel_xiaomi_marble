@@ -162,11 +162,7 @@ int dfs_process_phyerr_owl(struct wlan_dfs *dfs,
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
 		"%s: rssi=%u dur=%u, freq=%d MHz, freq_lo=%d MHz, freq_hi=%d MHz\n",
-		__func__,
-		rssi,
-		dur,
-		e->freq/1000,
-		e->freq_lo/1000,
+		__func__, rssi, dur, e->freq/1000, e->freq_lo/1000,
 		e->freq_hi / 1000);
 
 	return 1;
@@ -266,8 +262,7 @@ int dfs_process_phyerr_sowl(struct wlan_dfs *dfs,
 		if (!pulse_bw_info) {
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
 				"ERROR channel dur=%u rssi=%u pulse_bw_info=0x%x datalen MOD 4 = %d\n",
-				dur, rssi, pulse_bw_info,
-				(datalen & 0x3));
+				dur, rssi, pulse_bw_info, (datalen & 0x3));
 			/*
 			 * Bogus bandwidth info received in descriptor, so
 			 * ignore this PHY error.
@@ -305,15 +300,8 @@ int dfs_process_phyerr_sowl(struct wlan_dfs *dfs,
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
 		"%s: pulse_bw_info=0x%x pulse_length_ext=%u pulse_length_pri=%u rssi=%u ext_rssi=%u, freq=%d MHz, freq_lo=%d MHz, freq_hi=%d MHz\n",
-		__func__,
-		pulse_bw_info,
-		pulse_length_ext,
-		pulse_length_pri,
-		rssi,
-		ext_rssi,
-		e->freq/1000,
-		e->freq_lo/1000,
-		e->freq_hi/1000);
+		__func__, pulse_bw_info, pulse_length_ext, pulse_length_pri,
+		rssi, ext_rssi, e->freq/1000, e->freq_lo/1000, e->freq_hi/1000);
 #undef EXT_CH_RADAR_FOUND
 #undef PRI_CH_RADAR_FOUND
 #undef EXT_CH_RADAR_EARLY_FOUND
@@ -354,8 +342,7 @@ int dfs_process_phyerr_merlin(struct wlan_dfs *dfs,
 	case 0x01:
 		/* Radar in ctrl channel */
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"RAW RSSI: rssi=%u ext_rssi=%u\n",
-			rssi, ext_rssi);
+			"RAW RSSI: rssi=%u ext_rssi=%u\n", rssi, ext_rssi);
 		if (ext_rssi >= (rssi + 3)) {
 			/*
 			 * Cannot use ctrl channel RSSI if extension channel is
@@ -367,8 +354,7 @@ int dfs_process_phyerr_merlin(struct wlan_dfs *dfs,
 	case 0x02:
 		/* Radar in extension channel */
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"RAW RSSI: rssi=%u ext_rssi=%u\n",
-			rssi, ext_rssi);
+			"RAW RSSI: rssi=%u ext_rssi=%u\n", rssi, ext_rssi);
 		if (rssi >= (ext_rssi + 12)) {
 			/*
 			 * Cannot use extension channel RSSI if control channel
@@ -433,6 +419,111 @@ static void dfs_dump_phyerr_contents(const char *d, int len)
 	/* Print the final line if we didn't print it above. */
 	if (n != 0)
 		DFS_PRINTK("%s: %s\n", __func__, buf);
+}
+
+/**
+ * dfs_bump_up_bin5_pulse_dur() - Bump up to a random BIN 5 pulse duration.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @e: Pointer to dfs_phy_err structure.
+ * @slope: Slope value.
+ */
+static inline void dfs_bump_up_bin5_pulse_dur(
+		struct wlan_dfs *dfs,
+		struct dfs_phy_err *e,
+		int slope)
+{
+	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR, "old dur %d slope =%d\n",
+			e->dur, slope);
+
+	e->is_sw_chirp = 1;
+	/* bump up to a random bin5 pulse duration */
+	if (e->dur < MIN_BIN5_DUR)
+		e->dur = dfs_get_random_bin5_dur(dfs, e->fulltsf);
+
+	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR, "new dur %d\n", e->dur);
+}
+
+/**
+ * dfs_filter_short_pulses() - Filter short pulses.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @e: Pointer to dfs_phy_err structure.
+ * @retval: Return value
+ *
+ * Rssi is not accurate for short pulses, so donot filter based on that for
+ * short duration pulses.
+ */
+static inline void dfs_filter_short_pulses(
+		struct wlan_dfs *dfs,
+		struct dfs_phy_err *e,
+		int *retval)
+{
+	if (dfs->dfs_caps.wlan_dfs_ext_chan_ok) {
+		if ((e->rssi < dfs->dfs_rinfo.rn_minrssithresh &&
+					(e->dur > MAX_DUR_FOR_LOW_RSSI)) ||
+				e->dur > (dfs->dfs_rinfo.rn_maxpulsedur)) {
+			dfs->wlan_dfs_stats.rssi_discards++;
+			*retval = 1;
+		}
+	} else if (e->rssi < dfs->dfs_rinfo.rn_minrssithresh ||
+			e->dur > dfs->dfs_rinfo.rn_maxpulsedur) {
+		dfs->wlan_dfs_stats.rssi_discards++;
+		*retval = 1;
+	}
+
+	if (*retval) {
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
+				"%s pulse is discarded: dur=%d, maxpulsedur=%d, rssi=%d, minrssi=%d\n",
+				(dfs->dfs_caps.wlan_dfs_ext_chan_ok) ?
+				"Extension channel" : "",
+				e->dur, dfs->dfs_rinfo.rn_maxpulsedur,
+				e->rssi, dfs->dfs_rinfo.rn_minrssithresh);
+	}
+}
+
+/**
+ * dfs_is_second_seg_radar_disabled() - Check for second segment radar disabled.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @seg_id: Segment id.
+ *
+ * Return: true if the second segment RADAR is enabled else false.
+ */
+static inline bool dfs_is_second_seg_radar_disabled(
+		struct wlan_dfs *dfs,
+		int seg_id)
+{
+	if ((seg_id == SEG_ID_SECONDARY) &&
+			!(dfs->dfs_proc_phyerr &
+				DFS_SECOND_SEGMENT_RADAR_EN)) {
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
+				"%s: Do not process PHY error data from Second segment, DFS_SECOND_SEGMENT_RADAR_EN is not enabled\n",
+				__func__);
+		return true;
+	}
+
+	return false;
+}
+
+/**
+ * dfs_set_chan_index() - Set channel index.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @e: Pointer to dfs_phy_err structure.
+ * @event: Pointer to dfs_event structure.
+ */
+static inline void dfs_set_chan_index(
+		struct wlan_dfs *dfs,
+		struct dfs_phy_err *e,
+		struct dfs_event *event)
+{
+	if (e->is_pri) {
+		event->re_chanindex = dfs->dfs_curchan_radindex;
+	} else {
+		event->re_chanindex = dfs->dfs_extchan_radindex;
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"%s %s New extension channel event is added to queue\n",
+				__func__,
+				(event->re_chanindex == -1) ?
+				"- phyerr on ext channel\n" : "");
+	}
 }
 
 void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
@@ -595,16 +686,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 					(e.is_pri ? 1 : 0),
 					(e.is_ext ? 1 : 0), &slope, &dc_found);
 			if (add_dur) {
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-					"old dur %d slope =%d\n", e.dur, slope);
-				e.is_sw_chirp = 1;
-				/* bump up to a random bin5 pulse duration */
-				if (e.dur < MIN_BIN5_DUR) {
-					e.dur = dfs_get_random_bin5_dur(dfs,
-							e.fulltsf);
-				}
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-					"new dur %d\n", e.dur);
+				dfs_bump_up_bin5_pulse_dur(dfs, &e, slope);
 			} else {
 				/* Set the duration so that it is rejected. */
 				e.is_sw_chirp = 0;
@@ -616,7 +698,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 		} else {
 			/*
 			 * We have a pulse that is either bigger than
-			 * MAX_BIN5_DUR or * less than MAYBE_BIN5_DUR
+			 * MAX_BIN5_DUR or less than MAYBE_BIN5_DUR
 			 */
 			if ((dfs->dfsdomain == DFS_FCC_DOMAIN) ||
 					(dfs->dfsdomain == DFS_MKK4_DOMAIN)) {
@@ -654,8 +736,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	if ((dfs->dfs_curchan->dfs_ch_flags & CHANNEL_108G) == CHANNEL_108G) {
 		if (!(dfs->dfs_proc_phyerr & DFS_AR_EN)) {
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"%s: DFS_AR_EN not enabled\n",
-				__func__);
+				"%s: DFS_AR_EN not enabled\n", __func__);
 			return;
 		}
 		WLAN_DFSEVENTQ_LOCK(dfs);
@@ -663,8 +744,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 		if (event == NULL) {
 			WLAN_DFSEVENTQ_UNLOCK(dfs);
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: no more events space left\n",
-				__func__);
+				"%s: no more events space left\n", __func__);
 			return;
 		}
 		STAILQ_REMOVE_HEAD(&(dfs->dfs_eventq), re_list);
@@ -694,54 +774,22 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 		      IEEE80211_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) &&
 		     IEEE80211_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan))) ||
 			(dfs_is_precac_timer_running(dfs))) {
+
+			int retval = 0;
+
 			if (!(dfs->dfs_proc_phyerr & DFS_RADAR_EN)) {
 				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
 					"%s: DFS_RADAR_EN not enabled\n",
 					__func__);
 				return;
 			}
-			/*
-			 * Rssi is not accurate for short pulses, so donot
-			 * filter based on that for short duration pulses.
-			 */
-			if (dfs->dfs_caps.wlan_dfs_ext_chan_ok) {
-				if ((e.rssi < dfs->dfs_rinfo.rn_minrssithresh &&
-					    (e.dur > 4)) || e.dur >
-					(dfs->dfs_rinfo.rn_maxpulsedur)) {
-					dfs->wlan_dfs_stats.rssi_discards++;
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-						"Extension channel pulse is discarded: dur=%d, maxpulsedur=%d, rssi=%d, minrssi=%d\n",
-						e.dur,
-						dfs->dfs_rinfo.rn_maxpulsedur,
-						e.rssi,
-						dfs->dfs_rinfo.rn_minrssithresh
-						);
-					return;
-				}
-			} else {
-				if (e.rssi < dfs->dfs_rinfo.rn_minrssithresh ||
-						e.dur >
-						dfs->dfs_rinfo.rn_maxpulsedur) {
-					dfs->wlan_dfs_stats.rssi_discards++;
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-						"Pulse is discarded: dur=%d, maxpulsedur=%d, rssi=%d, minrssi=%d\n",
-						e.dur,
-						dfs->dfs_rinfo.rn_maxpulsedur,
-						e.rssi,
-						dfs->dfs_rinfo.rn_minrssithresh
-						);
-					return;
-				}
-			}
 
-			if ((e.seg_id == SEG_ID_SECONDARY) &&
-					!(dfs->dfs_proc_phyerr &
-						DFS_SECOND_SEGMENT_RADAR_EN)){
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
-						"%s: Do not process PHY error data from Second segment, DFS_SECOND_SEGMENT_RADAR_EN is not enabled\n",
-						__func__);
+			dfs_filter_short_pulses(dfs, &e, &retval);
+			if (retval)
 				return;
-			}
+
+			if (dfs_is_second_seg_radar_disabled(dfs, e.seg_id))
+				return;
 
 			/* Add the event to the list, if there's space. */
 			WLAN_DFSEVENTQ_LOCK(dfs);
@@ -781,19 +829,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			}
 
 			/* Correctly set which channel is being reported on */
-			if (e.is_pri) {
-				event->re_chanindex = dfs->dfs_curchan_radindex;
-			} else {
-				if (dfs->dfs_extchan_radindex == -1) {
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-						"%s - phyerr on ext channel\n",
-						__func__);
-				}
-				event->re_chanindex = dfs->dfs_extchan_radindex;
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-					"%s New extension channel event is added to queue\n",
-					__func__);
-			}
+			dfs_set_chan_index(dfs, &e, event);
+
 			WLAN_DFSQ_LOCK(dfs);
 			STAILQ_INSERT_TAIL(&(dfs->dfs_radarq), event, re_list);
 			WLAN_DFSQ_UNLOCK(dfs);

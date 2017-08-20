@@ -164,8 +164,13 @@ int dfs_staggered_check(struct wlan_dfs *dfs, struct dfs_filter *rf,
 		delayindex = (dl->dl_firstelem + n) & DFS_MAX_DL_MASK;
 		refpri = dl->dl_elems[delayindex].de_time;
 
-		if ((score[n] >= highestscore) && (dfs_is_unique_pri(highestpri,
-				midpri, lowestpri, refpri))) {
+		if (!dfs_is_unique_pri(highestpri,
+					midpri,
+					lowestpri,
+					refpri))
+			continue;
+
+		if (score[n] >= highestscore) {
 			lowestscore = midscore;
 			lowestpri = midpri;
 			lowestscoreindex = midscoreindex;
@@ -175,25 +180,17 @@ int dfs_staggered_check(struct wlan_dfs *dfs, struct dfs_filter *rf,
 			highestscore = score[n];
 			highestpri = refpri;
 			highestscoreindex = n;
-		} else {
-			if ((score[n] >= midscore) &&
-					(dfs_is_unique_pri(highestpri, midpri,
-							   lowestpri, refpri))
-					) {
-				lowestscore = midscore;
-				lowestpri = midpri;
-				lowestscoreindex = midscoreindex;
-				midscore = score[n];
-				midpri = refpri;
-				midscoreindex = n;
-			} else if ((score[n] >= lowestscore) &&
-					(dfs_is_unique_pri(highestpri, midpri,
-							   lowestpri, refpri))
-					) {
-				lowestscore = score[n];
-				lowestpri = refpri;
-				lowestscoreindex = n;
-			}
+		} else if (score[n] >= midscore) {
+			lowestscore = midscore;
+			lowestpri = midpri;
+			lowestscoreindex = midscoreindex;
+			midscore = score[n];
+			midpri = refpri;
+			midscoreindex = n;
+		} else if (score[n] >= lowestscore) {
+			lowestscore = score[n];
+			lowestpri = refpri;
+			lowestscoreindex = n;
 		}
 	}
 

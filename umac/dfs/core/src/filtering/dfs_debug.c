@@ -44,11 +44,33 @@ void dfs_print_filter(struct wlan_dfs *dfs, struct dfs_filter *rf)
 		rf->rf_maxdur);
 }
 
+/**
+ * dfs_print_filtertype() - Print the filtertype
+ * @dfs: Pointer to wlan_dfs structure.
+ * @ft:  Pointer to dfs_filtertype structure.
+ */
+static void dfs_print_filtertype(
+		struct wlan_dfs *dfs,
+		struct dfs_filtertype *ft)
+{
+	uint32_t j;
+	struct dfs_filter *rf;
+
+	for (j = 0; j < ft->ft_numfilters; j++) {
+		rf = &(ft->ft_filters[j]);
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
+				"filter[%d] filterID = %d rf_numpulses=%u; rf->rf_minpri=%u; rf->rf_maxpri=%u; rf->rf_threshold=%u; rf->rf_filterlen=%u; rf->rf_mindur=%u; rf->rf_maxdur=%u\n",
+				j, rf->rf_pulseid, rf->rf_numpulses,
+				rf->rf_minpri, rf->rf_maxpri,
+				rf->rf_threshold, rf->rf_filterlen,
+				rf->rf_mindur, rf->rf_maxdur);
+	}
+}
+
 void dfs_print_filters(struct wlan_dfs *dfs)
 {
 	struct dfs_filtertype *ft = NULL;
-	struct dfs_filter *rf;
-	int i, j;
+	uint8_t i;
 
 	if (dfs == NULL) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
@@ -64,21 +86,9 @@ void dfs_print_filters(struct wlan_dfs *dfs)
 				continue;
 			}
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"===========ft->ft_numfilters = %u===========\n",
-				ft->ft_numfilters);
-			for (j = 0; j < ft->ft_numfilters; j++) {
-				rf = &(ft->ft_filters[j]);
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"filter[%d] filterID = %d rf_numpulses=%u; rf->rf_minpri=%u; rf->rf_maxpri=%u; rf->rf_threshold=%u; rf->rf_filterlen=%u; rf->rf_mindur=%u; rf->rf_maxdur=%u\n",
-					j, rf->rf_pulseid,
-					rf->rf_numpulses,
-					rf->rf_minpri,
-					rf->rf_maxpri,
-					rf->rf_threshold,
-					rf->rf_filterlen,
-					rf->rf_mindur,
-					rf->rf_maxdur);
-			}
+					"===========ft->ft_numfilters = %u===========\n",
+					ft->ft_numfilters);
+			dfs_print_filtertype(dfs, ft);
 		}
 	}
 }

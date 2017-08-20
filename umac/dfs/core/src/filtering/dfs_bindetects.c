@@ -25,102 +25,249 @@
 
 #include "../dfs.h"
 
-int dfs_bin_fixedpattern_check(struct wlan_dfs *dfs,
+/**
+ * dfs_find_first_index_within_window() - Find first index within window
+ * @pl: Pointer to dfs_pulseline structure.
+ * @index: Index to dfs pulse elements.
+ * @start_ts: Start timestamp.
+ *
+ * Return: Returns index.
+ */
+static inline uint32_t dfs_find_first_index_within_window(
+		struct dfs_pulseline *pl,
+		uint32_t index,
+		uint64_t start_ts)
+{
+	uint16_t i;
+
+	/* Find the index of first element in our window of interest. */
+	for (i = 0; i < pl->pl_numelems; i++) {
+		index = (index - 1) & DFS_MAX_PULSE_BUFFER_MASK;
+		if (pl->pl_elems[index].p_time >= start_ts) {
+			continue;
+		} else {
+			index = (index) & DFS_MAX_PULSE_BUFFER_MASK;
+			break;
+		}
+	}
+
+	return index;
+}
+
+/**
+ * dfs_ts_within_window() - Calculate pulses for timestamp within window
+ * @dfs: Pointer to wlan_dfs structure.
+ * @pl: Pointer to dfs_pulseline structure.
+ * @index: Index to dfs pulse elements.
+ * @dur: Pulse duration/width
+ * @numpulses: Number of pulses
+ *
+ * Return: Returns 1 if pulse count is incremented else returns 0.
+ */
+static inline bool dfs_ts_within_window(
+		struct wlan_dfs *dfs,
+		struct dfs_pulseline *pl,
+		uint32_t *index,
+		uint32_t dur,
+		int *numpulses)
+{
+	uint32_t deltadur;
+
+	deltadur = DFS_DIFF(pl->pl_elems[*index].p_dur, dur);
+	if ((pl->pl_elems[*index].p_dur == 1) ||
+			((dur != 1) && (deltadur <= 2))) {
+		(*numpulses)++;
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "numpulses %u\n", *numpulses);
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * dfs_ts_eq_prevts() - Calculate pulses for timestamp equals to prev event
+ * @dfs: Pointer to wlan_dfs structure.
+ * @pl: Pointer to dfs_pulseline structure.
+ * @index: Index to dfs pulse elements.
+ * @dur: Pulse duration/width
+ * @numpulses: Number of pulses
+ *
+ * Return: Returns 1 if pulse count is incremented else returns 0.
+ */
+static inline bool dfs_ts_eq_prevts(
+		struct wlan_dfs *dfs,
+		struct dfs_pulseline *pl,
+		uint64_t next_event_ts,
+		uint64_t event_ts,
+		uint32_t refpri,
+		uint32_t *index,
+		uint32_t dur,
+		int *numpulses)
+
+{
+	uint32_t deltadur;
+
+	if (((next_event_ts - event_ts) > refpri) ||
+			((next_event_ts - event_ts) == 0)) {
+		deltadur = DFS_DIFF(pl->pl_elems[*index].p_dur, dur);
+		if ((pl->pl_elems[*index].p_dur == 1) ||
+				((pl->pl_elems[*index].p_dur != 1) &&
+				 (deltadur <= 2))) {
+			(*numpulses)++;
+			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
+					"zero PRI: numpulses %u\n", *numpulses);
+			return 1;
+		}
+	}
+
+	return 0;
+}
+
+/**
+ * dfs_pulses_within_window() - Calculate pulses within window
+ * @dfs: Pointer to wlan_dfs structure.
+ * @window_start: Start of the window.
+ * @window_end: End of the window.
+ * @index: Index to dfs pulse elements.
+ * @dur: Pulse duration/width.
+ * @refpri: reference PRI.
+ *
+ * Return: Returns 1 if pulse count is incremented else returns 0.
+ */
+static inline int dfs_pulses_within_window(
+		struct wlan_dfs *dfs,
+		uint64_t window_start,
+		uint64_t window_end,
+		uint32_t *index,
+		uint32_t dur,
+		uint32_t refpri)
+{
+	int numpulses = 0;
+	uint32_t i;
+	struct dfs_pulseline *pl = dfs->pulses;
+	uint64_t event_ts, prev_event_ts, next_event_ts;
+	uint32_t next_index;
+
+	for (i = 0; i < pl->pl_numelems; i++) {
+		prev_event_ts = pl->pl_elems[*index].p_time;
+		*index = (*index+1) & DFS_MAX_PULSE_BUFFER_MASK;
+		event_ts = pl->pl_elems[*index].p_time;
+		next_index = (*index+1) & DFS_MAX_PULSE_BUFFER_MASK;
+		next_event_ts = pl->pl_elems[next_index].p_time;
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "ts %u\n",
+				(uint32_t)event_ts);
+
+		if ((event_ts <= window_end) && (event_ts >= window_start)) {
+			if (dfs_ts_within_window(dfs, pl, index, dur,
+					&numpulses))
+				break;
+		} else if (event_ts > window_end) {
+			*index = (*index-1) & DFS_MAX_PULSE_BUFFER_MASK;
+			break;
+		} else if (event_ts == prev_event_ts) {
+			if (dfs_ts_eq_prevts(dfs, pl, next_event_ts, event_ts,
+					refpri, index, dur, &numpulses))
+				break;
+		}
+	}
+
+	return numpulses;
+}
+
+/**
+ * dfs_count_pulses() - Count pulses
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rf:  Pointer to dfs_filter structure.
+ * @dur: Pulse duration/width.
+ * @ext_chan_flag : Ext channel flag.
+ * @primargin: Primary margin.
+ * @index: Index to dfs pulse elements.
+ * @refpri: reference PRI.
+ * @start_ts: Start timestamp.
+ *
+ * Return: Returns number of pulses within window.
+ */
+static inline int dfs_count_pulses(
+		struct wlan_dfs *dfs,
+		struct dfs_filter *rf,
+		uint32_t dur,
+		int ext_chan_flag,
+		int primargin,
+		uint32_t index,
+		uint32_t refpri,
+		uint64_t start_ts)
+{
+	uint32_t n;
+	int numpulses = 0;
+	uint64_t window_start, window_end;
+
+	for (n = 0; n <= rf->rf_numpulses; n++) {
+		window_start = (start_ts + (refpri*n))-(primargin+n);
+		window_end = window_start + 2*(primargin+n);
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
+				"window_start %u window_end %u\n",
+				(uint32_t)window_start, (uint32_t)window_end);
+		numpulses += dfs_pulses_within_window(dfs, window_start,
+				window_end, &index, dur, refpri);
+	}
+
+	return numpulses;
+}
+
+/**
+ * dfs_bin_fixedpattern_check() - Fixed pattern check
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rf:  Pointer to dfs_filter structure.
+ * @dur: Pulse duration/width.
+ * @ext_chan_flag : Ext channel flag.
+ */
+static int  dfs_bin_fixedpattern_check(
+		struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		uint32_t dur,
 		int ext_chan_flag)
 {
 	struct dfs_pulseline *pl = dfs->pulses;
-	int i, n, refpri, primargin, numpulses = 0;
-	uint64_t start_ts, end_ts, event_ts, prev_event_ts;
-	uint64_t next_event_ts, window_start, window_end;
-	uint32_t index, next_index, deltadur;
-
-	/* For fixed pattern types, rf->rf_patterntype=1. */
-	primargin = dfs_get_pri_margin(dfs, ext_chan_flag,
-		(rf->rf_patterntype == 1));
+	int primargin, numpulses, fil_thresh;
+	uint64_t start_ts, end_ts;
+	uint32_t last_index, first_index;
+	uint32_t refpri;
 
 	refpri = (rf->rf_minpri + rf->rf_maxpri)/2;
-	index = pl->pl_lastelem;
-	end_ts = pl->pl_elems[index].p_time;
+	last_index = pl->pl_lastelem;
+	end_ts = pl->pl_elems[last_index].p_time;
 	start_ts = end_ts - (refpri*rf->rf_numpulses);
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
 		"lastelem ts=%llu start_ts=%llu, end_ts=%llu\n",
-		(unsigned long long)pl->pl_elems[index].p_time,
+		(unsigned long long)pl->pl_elems[last_index].p_time,
 		(unsigned long long)start_ts,
 		(unsigned long long) end_ts);
 
-	/* Find the index of first element in our window of interest. */
-	for (i = 0; i < pl->pl_numelems; i++) {
-		index = (index - 1) & DFS_MAX_PULSE_BUFFER_MASK;
-		if (pl->pl_elems[index].p_time >= start_ts)
-			continue;
-		else {
-			index = (index) & DFS_MAX_PULSE_BUFFER_MASK;
-			break;
-		}
-	}
-	for (n = 0; n <= rf->rf_numpulses; n++) {
-		window_start = (start_ts + (refpri*n))-(primargin+n);
-		window_end = window_start + 2*(primargin+n);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-			"window_start %u window_end %u\n",
-			(uint32_t)window_start, (uint32_t)window_end);
+	first_index = dfs_find_first_index_within_window(pl, last_index,
+			start_ts);
 
-		for (i = 0; i < pl->pl_numelems; i++) {
-			prev_event_ts = pl->pl_elems[index].p_time;
-			index = (index+1) & DFS_MAX_PULSE_BUFFER_MASK;
-			event_ts = pl->pl_elems[index].p_time;
-			next_index = (index+1) & DFS_MAX_PULSE_BUFFER_MASK;
-			next_event_ts = pl->pl_elems[next_index].p_time;
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "ts %u\n",
-				(uint32_t)event_ts);
+	/* For fixed pattern types, rf->rf_patterntype=1. */
+	primargin = dfs_get_pri_margin(dfs, ext_chan_flag,
+			(rf->rf_patterntype == 1));
 
-			if ((event_ts <= window_end) &&
-				(event_ts >= window_start)) {
-				deltadur = DFS_DIFF(pl->pl_elems[index].p_dur,
-					dur);
-				if ((pl->pl_elems[index].p_dur == 1) ||
-					((dur != 1) && (deltadur <= 2))) {
-					numpulses++;
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-						"numpulses %u\n", numpulses);
-					break;
-				}
-			} else if (event_ts > window_end) {
-				index = (index-1) & DFS_MAX_PULSE_BUFFER_MASK;
-				break;
-			} else if (event_ts == prev_event_ts) {
-				if (((next_event_ts - event_ts) > refpri) ||
-					((next_event_ts - event_ts) == 0)) {
-					deltadur =
-					    DFS_DIFF(pl->pl_elems[index].p_dur,
-						    dur);
-					if ((pl->pl_elems[index].p_dur == 1) ||
-						((pl->pl_elems[index].p_dur !=
-						  1) && (deltadur <= 2))) {
-						numpulses++;
-						DFS_DPRINTK(dfs,
-							WLAN_DEBUG_DFS2,
-							"zero PRI: numpulses %u\n",
-							numpulses);
-						break;
-					}
-				}
-			}
-		}
-	}
-	if (numpulses >= dfs_get_filter_threshold(dfs, rf, ext_chan_flag)) {
+	numpulses = dfs_count_pulses(dfs, rf, dur, ext_chan_flag, primargin,
+			first_index, refpri, start_ts);
+
+	fil_thresh = dfs_get_filter_threshold(dfs, rf, ext_chan_flag);
+
+	if (numpulses >= fil_thresh) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
 			"%s FOUND filterID=%u numpulses=%d unadj thresh=%d\n",
 			__func__, rf->rf_pulseid, numpulses, rf->rf_threshold);
 		return 1;
-	} else
+	} else {
 		return 0;
+	}
 }
 
-void dfs_add_pulse(struct wlan_dfs *dfs,
+void dfs_add_pulse(
+		struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		struct dfs_event *re,
 		uint32_t deltaT,
@@ -165,85 +312,107 @@ void dfs_add_pulse(struct wlan_dfs *dfs,
 			dl->dl_firstelem, dl->dl_lastelem);
 }
 
-int dfs_bin_check(struct wlan_dfs *dfs,
-		struct dfs_filter *rf,
-		uint32_t deltaT,
-		uint32_t width,
-		int ext_chan_flag)
+/**
+ * dfs_find_lowestpri() - Find lowest PRI
+ * @dl: Pointer to dfs delayline.
+ * @lowpriindex: Low PRI index.
+ * @lowpri: Low PRI
+ */
+static inline void dfs_find_lowestpri(
+	struct dfs_delayline *dl,
+	uint32_t *lowpriindex,
+	uint32_t *lowpri)
 {
-	struct dfs_delayline *dl;
-	uint32_t refpri, refdur, searchpri, deltapri, deltapri_2, deltapri_3;
-	uint32_t averagerefpri, n, i, primargin, durmargin, highscore;
-	uint32_t highscoreindex;
-	int score[DFS_MAX_DL_SIZE], delayindex, dindex, found = 0;
-	uint32_t scoreindex, lowpriindex = 0, lowpri = 0xffff;
-	int numpulses = 0;
-	int lowprichk = 3, pri_match = 0;
+	int delayindex;
+	uint32_t refpri;
+	uint32_t n;
 
-	dl = &rf->rf_dl;
-	if (dl->dl_numelems < (rf->rf_threshold-1))
-		return 0;
-
-	if (deltaT > rf->rf_filterlen)
-		return 0;
-
-	primargin = dfs_get_pri_margin(dfs, ext_chan_flag,
-			(rf->rf_patterntype == 1));
-
-	if (rf->rf_maxdur < 10)
-		durmargin = 4;
-	else
-		durmargin = 6;
-
-	if (rf->rf_patterntype == 1) {
-		found = dfs_bin_fixedpattern_check(dfs, rf, width,
-				ext_chan_flag);
-		if (found)
-			dl->dl_numelems = 0;
-		return found;
-	}
-
-	qdf_mem_zero(score, sizeof(int)*DFS_MAX_DL_SIZE);
 	/* Find out the lowest pri. */
 	for (n = 0; n < dl->dl_numelems; n++) {
 		delayindex = (dl->dl_firstelem + n) & DFS_MAX_DL_MASK;
 		refpri = dl->dl_elems[delayindex].de_time;
 		if (refpri == 0) {
 			continue;
-		} else if (refpri < lowpri) {
-			lowpri = dl->dl_elems[delayindex].de_time;
-			lowpriindex = n;
+		} else if (refpri < *lowpri) {
+			*lowpri = dl->dl_elems[delayindex].de_time;
+			*lowpriindex = n;
 		}
 	}
-	/* Find out the each delay element's pri score. */
+}
+
+/**
+ * dfs_calculate_score() - Calculate score for the score index
+ * if PRI match is found
+ * @dl: Pointer to dfs delayline.
+ * @rf: Pointer to dfs_filter structure.
+ * @score: score array.
+ * @refpri: reference PRI.
+ * @primargin: PRI margin.
+ * @score_index: Score index.
+ */
+static inline void dfs_calculate_score(
+	struct dfs_delayline *dl,
+	struct dfs_filter *rf,
+	int *score,
+	uint32_t refpri,
+	uint32_t primargin,
+	uint32_t score_index)
+{
+	int pri_match = 0;
+	int dindex;
+	uint32_t searchpri, deltapri, deltapri_2, deltapri_3;
+	uint32_t i;
+
+	for (i = 0; i < dl->dl_numelems; i++) {
+		dindex = (dl->dl_firstelem + i) & DFS_MAX_DL_MASK;
+		searchpri = dl->dl_elems[dindex].de_time;
+		deltapri = DFS_DIFF(searchpri, refpri);
+		deltapri_2 = DFS_DIFF(searchpri, 2*refpri);
+		deltapri_3 = DFS_DIFF(searchpri, 3*refpri);
+		if (rf->rf_ignore_pri_window == 2)
+			pri_match = ((deltapri < primargin) ||
+					(deltapri_2 < primargin) ||
+					(deltapri_3 < primargin));
+		else
+			pri_match = (deltapri < primargin);
+
+		if (pri_match)
+			score[score_index]++;
+	}
+}
+
+/**
+ * dfs_find_priscores() - Find PRI score
+ * @dl: Pointer to dfs delayline.
+ * @rf: Pointer to dfs_filter structure.
+ * @score: score array.
+ * @primargin: PRI margin.
+ */
+static void dfs_find_priscores(
+	struct dfs_delayline *dl,
+	struct dfs_filter *rf,
+	int *score,
+	uint32_t primargin)
+{
+	int delayindex;
+	uint32_t refpri;
+	uint32_t n;
+
+	qdf_mem_zero(score, sizeof(int)*DFS_MAX_DL_SIZE);
+
 	for (n = 0; n < dl->dl_numelems; n++) {
-		delayindex = (dl->dl_firstelem + n) &
-			DFS_MAX_DL_MASK;
+		delayindex = (dl->dl_firstelem + n) & DFS_MAX_DL_MASK;
 		refpri = dl->dl_elems[delayindex].de_time;
 		if (refpri == 0)
 			continue;
 		if (refpri < rf->rf_maxpri) {
 			/* Use only valid PRI range for high score. */
-			for (i = 0; i < dl->dl_numelems; i++) {
-				dindex = (dl->dl_firstelem + i) &
-				    DFS_MAX_DL_MASK;
-				searchpri = dl->dl_elems[dindex].de_time;
-				deltapri = DFS_DIFF(searchpri, refpri);
-				deltapri_2 = DFS_DIFF(searchpri, 2*refpri);
-				deltapri_3 = DFS_DIFF(searchpri, 3*refpri);
-				if (rf->rf_ignore_pri_window == 2) {
-					pri_match = ((deltapri < primargin) ||
-						(deltapri_2 < primargin) ||
-						(deltapri_3 < primargin));
-				} else {
-					pri_match = (deltapri < primargin);
-				}
-				if (pri_match)
-					score[n]++;
-			}
+			dfs_calculate_score(dl, rf, score, refpri, primargin,
+				n);
 		} else {
 			score[n] = 0;
 		}
+
 		if (score[n] > rf->rf_threshold) {
 			/*
 			 * We got the most possible candidate,
@@ -252,67 +421,301 @@ int dfs_bin_check(struct wlan_dfs *dfs,
 			break;
 		}
 	}
+}
 
-	/* Find out the high scorer. */
-	highscore = 0;
-	highscoreindex = 0;
+/**
+ * dfs_find_highscore() - Find PRI high score
+ * @dl: Pointer to dfs delayline.
+ * @score: score array.
+ * @highscore: High score.
+ * @highscoreindex: High score index.
+ */
+static inline void dfs_find_highscore(
+		struct dfs_delayline *dl,
+		int *score,
+		uint32_t *highscore,
+		uint32_t *highscoreindex)
+{
+	int delayindex, dindex;
+	uint32_t n;
+
+	*highscore = 0;
+	*highscoreindex = 0;
+
 	for (n = 0; n < dl->dl_numelems; n++) {
-		if (score[n] > highscore) {
-			highscore = score[n];
-			highscoreindex = n;
-		} else if (score[n] == highscore) {
+		if (score[n] > *highscore) {
+			*highscore = score[n];
+			*highscoreindex = n;
+		} else if (score[n] == *highscore) {
 			/*
 			 * More than one pri has highscore take the least pri.
 			 */
-			delayindex = (dl->dl_firstelem + highscoreindex) &
+			delayindex = (dl->dl_firstelem + *highscoreindex) &
 				DFS_MAX_DL_MASK;
 			dindex = (dl->dl_firstelem + n) & DFS_MAX_DL_MASK;
 			if (dl->dl_elems[dindex].de_time <=
 					dl->dl_elems[delayindex].de_time) {
-				highscoreindex = n;
+				*highscoreindex = n;
 			}
 		}
 	}
 
-	/*
-	 * Find the average pri of pulses around the pri of highscore
-	 * or the pulses around the lowest pri.
-	 */
+	return;
+}
+
+/**
+ * dfs_get_durmargin() - Find duration margin
+ * @rf: Pointer to dfs_filter structure.
+ * @durmargin: Duration margin
+ */
+static inline void dfs_get_durmargin(
+		struct dfs_filter *rf,
+		uint32_t *durmargin)
+{
+#define DUR_THRESH 10
+#define LOW_MARGIN 4
+#define HIGH_MARGIN 6
+
+	if (rf->rf_maxdur < DUR_THRESH)
+		*durmargin = LOW_MARGIN;
+	else
+		*durmargin = HIGH_MARGIN;
+
+#undef DUR_THRESH
+#undef LOW_MARGIN
+#undef HIGH_MARGIN
+}
+
+/**
+ * dfs_handle_fixedpattern() - Handle Fixed pattern radar
+ * @dfs: Pointer to wlan_dfs structure.
+ * @dl: Pointer to dfs delayline.
+ * @rf: Pointer to dfs_filter structure.
+ * @dur: Pulse duration/width
+ * @ext_chan_flag : Ext channel flag.
+ */
+static inline int dfs_handle_fixedpattern(
+		struct wlan_dfs *dfs,
+		struct dfs_delayline *dl,
+		struct dfs_filter *rf,
+		uint32_t dur,
+		int ext_chan_flag)
+{
+	int found = 0;
+
+	found = dfs_bin_fixedpattern_check(dfs, rf, dur, ext_chan_flag);
+	if (found)
+		dl->dl_numelems = 0;
+
+	return found;
+}
+
+/**
+ * dfs_bin_basic_sanity() - Sanity check
+ * @dl: Pointer to dfs delayline.
+ * @rf: Pointer to dfs_filter structure.
+ * @deltaT: Delta time.
+ */
+static inline int dfs_bin_basic_sanity(
+		struct dfs_delayline *dl,
+		struct dfs_filter *rf,
+		uint32_t *deltaT)
+{
+	if (dl->dl_numelems < (rf->rf_threshold-1))
+		return 0;
+
+	if (*deltaT > rf->rf_filterlen)
+		return 0;
+
+	return 1;
+}
+
+/**
+ * dfs_find_scoreindex() - Find score index
+ * @rf: Pointer to dfs_filter structure.
+ * @highscore: High score.
+ * @lowpriindex: Low PRI index.
+ * @highscoreindex: High score index.
+ * @scoreindex: score index.
+ */
+static inline void dfs_find_scoreindex(
+		struct dfs_filter *rf,
+		uint32_t highscore,
+		uint32_t lowpriindex,
+		uint32_t highscoreindex,
+		uint32_t *scoreindex)
+{
+	int lowprichk = 3;
+
 	if (rf->rf_ignore_pri_window > 0)
 		lowprichk = (rf->rf_threshold >> 1)+1;
 	else
 		lowprichk = 3;
 
 	if (highscore < lowprichk)
-		scoreindex = lowpriindex;
+		*scoreindex = lowpriindex;
 	else
-		scoreindex = highscoreindex;
+		*scoreindex = highscoreindex;
+}
 
-	/* We got the possible pri, save its parameters as reference. */
+/**
+ * dfs_find_refs() - Find reference values.
+ * @dl: Pointer to dfs delayline.
+ * @rf: Pointer to dfs_filter structure.
+ * @scoreindex: score index.
+ * @refdur: Duration value.
+ * @refpri: Current "filter" time for start of pulse in usecs.
+ */
+static inline void dfs_find_refs(
+		struct dfs_delayline *dl,
+		struct dfs_filter *rf,
+		uint32_t scoreindex,
+		uint32_t *refdur,
+		uint32_t *refpri)
+{
+	int delayindex;
+
 	delayindex = (dl->dl_firstelem + scoreindex) & DFS_MAX_DL_MASK;
-	refdur = dl->dl_elems[delayindex].de_dur;
-	refpri = dl->dl_elems[delayindex].de_time;
-	averagerefpri = 0;
+	*refdur = dl->dl_elems[delayindex].de_dur;
+	*refpri = dl->dl_elems[delayindex].de_time;
 
 	if (rf->rf_fixed_pri_radar_pulse)
-		refpri = (rf->rf_minpri + rf->rf_maxpri)/2;
+		*refpri = (rf->rf_minpri + rf->rf_maxpri)/2;
+}
 
-	numpulses = dfs_bin_pri_check(dfs, rf, dl, score[scoreindex], refpri,
-			refdur, ext_chan_flag, refpri);
-	if (numpulses >= dfs_get_filter_threshold(dfs, rf, ext_chan_flag)) {
-		found = 1;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
+/**
+ * dfs_bin_success_print() - Debug print
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rf: Pointer to dfs_filter structure.
+ * @ext_chan_flag: Extension channel flag.
+ * @numpulses: Number of pulses.
+ * @refpri: Current "filter" time for start of pulse in usecs.
+ * @refdur: Duration value.
+ * @primargin: PRI margin.
+ */
+static inline void dfs_bin_success_print(
+		struct wlan_dfs *dfs,
+		struct dfs_filter *rf,
+		int ext_chan_flag,
+		int numpulses,
+		uint32_t refpri,
+		uint32_t refdur,
+		uint32_t primargin)
+{
+	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
 			"ext_flag=%d MATCH filter=%u numpulses=%u thresh=%u refdur=%d refpri=%d primargin=%d\n",
 			ext_chan_flag, rf->rf_pulseid, numpulses,
 			rf->rf_threshold, refdur, refpri, primargin);
-		dfs_print_delayline(dfs, &rf->rf_dl);
-		dfs_print_filter(dfs, rf);
+	dfs_print_delayline(dfs, &rf->rf_dl);
+	dfs_print_filter(dfs, rf);
+}
+
+int dfs_bin_check(
+		struct wlan_dfs *dfs,
+		struct dfs_filter *rf,
+		uint32_t deltaT,
+		uint32_t width,
+		int ext_chan_flag)
+{
+	struct dfs_delayline *dl;
+	uint32_t refpri, refdur;
+	uint32_t highscoreindex;
+	uint32_t primargin, highscore;
+	int score[DFS_MAX_DL_SIZE], found = 0;
+	uint32_t scoreindex, lowpriindex = 0, lowpri = 0xffff;
+	int numpulses = 0;
+	int fil_thresh;
+
+	dl = &rf->rf_dl;
+	if (!dfs_bin_basic_sanity(dl, rf, &deltaT))
+		return 0;
+
+	primargin = dfs_get_pri_margin(dfs, ext_chan_flag,
+			(rf->rf_patterntype == 1));
+
+
+	if (rf->rf_patterntype == 1)
+		return dfs_handle_fixedpattern(dfs, dl, rf, width,
+				ext_chan_flag);
+
+	dfs_find_lowestpri(dl, &lowpriindex, &lowpri);
+
+	/* Find out the each delay element's pri score. */
+	dfs_find_priscores(dl, rf, score, primargin);
+
+	/* Find out the high scorer. */
+	dfs_find_highscore(dl, score, &highscore, &highscoreindex);
+
+	/*
+	 * Find the average pri of pulses around the pri of highscore
+	 * or the pulses around the lowest pri.
+	 */
+	dfs_find_scoreindex(rf, highscore, lowpriindex, highscoreindex,
+			&scoreindex);
+
+	/* We got the possible pri, save its parameters as reference. */
+	dfs_find_refs(dl, rf, scoreindex, &refdur, &refpri);
+
+	numpulses = dfs_bin_pri_check(dfs, rf, dl, score[scoreindex], refpri,
+			refdur, ext_chan_flag, refpri);
+
+	fil_thresh = dfs_get_filter_threshold(dfs, rf, ext_chan_flag);
+
+	if (numpulses >= fil_thresh) {
+		found = 1;
+		dfs_bin_success_print(dfs, rf, ext_chan_flag, numpulses,
+				refpri, refdur, primargin);
 	}
 
 	return found;
 }
 
-void count_the_other_delay_elements(struct wlan_dfs *dfs,
+/**
+ * dfs_check_pulses_for_delta_variance() - Check pulses for delta variance.
+ * @rf: Pointer to dfs_filter structure.
+ * @numpulsetochk: Number of pulses to check.
+ * @delta_time_stamps: Delta time stamp.
+ * @fundamentalpri: Highest PRI.
+ * @primargin: Primary margin.
+ * @numpulses: Number of pulses.
+ */
+static inline void dfs_check_pulses_for_delta_variance(
+		struct dfs_filter *rf,
+		int numpulsetochk,
+		uint32_t delta_time_stamps,
+		int fundamentalpri,
+		uint32_t primargin,
+		int *numpulses)
+{
+	uint32_t delta_ts_variance, j;
+
+	for (j = 0; j < numpulsetochk; j++) {
+		delta_ts_variance = DFS_DIFF(delta_time_stamps,
+				((j + 1) * fundamentalpri));
+		if (delta_ts_variance < (2 * (j + 1) * primargin)) {
+			(*numpulses)++;
+			if (rf->rf_ignore_pri_window > 0)
+				break;
+		}
+	}
+}
+
+/**
+ * dfs_count_the_other_delay_elements() - Counts the ther delay elements.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rf: Pointer to dfs_filter structure.
+ * @dl: Pointer to dfs_delayline structure.
+ * @i: Index value.
+ * @refpri: Current "filter" time for start of pulse in usecs.
+ * @refdur: Duration value.
+ * @primargin: Primary margin.
+ * @durmargin: Duration margin.
+ * @numpulses: Number of pulses.
+ * @prev_good_timestamp: Previous good timestamp.
+ * @fundamentalpri: Highest PRI.
+ */
+static void dfs_count_the_other_delay_elements(
+		struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		struct dfs_delayline *dl,
 		uint32_t i,
@@ -322,12 +725,11 @@ void count_the_other_delay_elements(struct wlan_dfs *dfs,
 		uint32_t durmargin,
 		int *numpulses,
 		uint32_t *prev_good_timestamp,
-		int fundamentalpri
-		)
+		int fundamentalpri)
 {
 	int delayindex;
 	uint32_t searchpri, searchdur, deltadur, deltapri1, deltapri2;
-	uint32_t j = 0, delta_time_stamps, delta_ts_variance, deltapri;
+	uint32_t j = 0, delta_time_stamps, deltapri;
 	int dindex, primatch, numpulsetochk = 2;
 
 	delayindex = (dl->dl_firstelem + i) & DFS_MAX_DL_MASK;
@@ -348,21 +750,16 @@ void count_the_other_delay_elements(struct wlan_dfs *dfs,
 	deltapri2 = DFS_DIFF(searchpri, 2 * refpri);
 	primatch = 0;
 
-	if ((rf->rf_ignore_pri_window > 0) &&
-			(rf->rf_patterntype != 2)) {
+	if ((rf->rf_ignore_pri_window > 0) && (rf->rf_patterntype != 2)) {
 		for (j = 0; j < rf->rf_numpulses; j++) {
-			deltapri1 = DFS_DIFF(searchpri,
-					(j + 1) * refpri);
+			deltapri1 = DFS_DIFF(searchpri, (j + 1) * refpri);
 			if (deltapri1 < (2 * primargin)) {
 				primatch = 1;
 				break;
 			}
 		}
-	} else {
-		if ((deltapri1 < primargin) ||
-				(deltapri2 < primargin)) {
-			primatch = 1;
-		}
+	} else if ((deltapri1 < primargin) || (deltapri2 < primargin)) {
+		primatch = 1;
 	}
 
 	if (primatch && (deltadur < durmargin)) {
@@ -380,16 +777,10 @@ void count_the_other_delay_elements(struct wlan_dfs *dfs,
 			} else {
 				numpulsetochk = 4;
 			}
-			for (j = 0; j < numpulsetochk; j++) {
-				delta_ts_variance = DFS_DIFF(delta_time_stamps,
-					((j + 1) * fundamentalpri));
-				if (delta_ts_variance <
-					(2 * (j + 1) * primargin)) {
-					(*numpulses)++;
-					if (rf->rf_ignore_pri_window > 0)
-						break;
-				}
-			}
+
+			dfs_check_pulses_for_delta_variance(rf, numpulsetochk,
+					delta_time_stamps, fundamentalpri,
+					primargin, numpulses);
 		}
 		*prev_good_timestamp = dl->dl_elems[delayindex].de_ts;
 
@@ -400,7 +791,8 @@ void count_the_other_delay_elements(struct wlan_dfs *dfs,
 	}
 }
 
-int dfs_bin_pri_check(struct wlan_dfs *dfs,
+int dfs_bin_pri_check(
+		struct wlan_dfs *dfs,
 		struct dfs_filter *rf,
 		struct dfs_delayline *dl,
 		uint32_t score,
@@ -433,10 +825,7 @@ int dfs_bin_pri_check(struct wlan_dfs *dfs,
 		return numpulses;
 	}
 
-	if (rf->rf_maxdur < 10)
-		durmargin = 4;
-	else
-		durmargin = 6;
+	dfs_get_durmargin(rf, &durmargin);
 
 	if ((!rf->rf_fixed_pri_radar_pulse)) {
 		if (rf->rf_ignore_pri_window == 1)
@@ -481,9 +870,9 @@ int dfs_bin_pri_check(struct wlan_dfs *dfs,
 	 * in the acceptable range from the reference one.
 	 */
 	for (i = 0; i < dl->dl_numelems; i++)
-		count_the_other_delay_elements(dfs, rf, dl, i, refpri, refdur,
-			primargin, durmargin, &numpulses, &prev_good_timestamp,
-			fundamentalpri);
+		dfs_count_the_other_delay_elements(dfs, rf, dl, i, refpri,
+				refdur, primargin, durmargin, &numpulses,
+				&prev_good_timestamp, fundamentalpri);
 
 	return numpulses;
 }

@@ -247,6 +247,32 @@ struct dfs_pulse dfs_korea_radars[] = {
 #define TARGET_TYPE_QCA9888   12
 #define RSSI_THERSH_AR900B    15
 
+/**
+ * dfs_assign_fcc_pulse_table() - Assign FCC pulse table
+ * @rinfo: Pointer to wlan_dfs_radar_tab_info structure.
+ * @target_type: Target type.
+ */
+static inline void dfs_assign_fcc_pulse_table(
+		struct wlan_dfs_radar_tab_info *rinfo,
+		uint32_t target_type)
+{
+	rinfo->dfs_radars = dfs_fcc_radars;
+	rinfo->numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
+
+	if (target_type == TARGET_TYPE_AR900B ||
+			target_type == TARGET_TYPE_IPQ4019) {
+		rinfo->b5pulses = dfs_fcc_bin5pulses_ar900b;
+		rinfo->numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses_ar900b);
+	} else if (target_type == TARGET_TYPE_QCA9984 ||
+			target_type == TARGET_TYPE_QCA9888) {
+		rinfo->b5pulses = dfs_fcc_bin5pulses_qca9984;
+		rinfo->numb5radars =
+			QDF_ARRAY_SIZE(dfs_fcc_bin5pulses_qca9984);
+	} else {
+		rinfo->b5pulses = dfs_fcc_bin5pulses;
+		rinfo->numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
+	}
+}
 void ol_if_dfs_configure(struct wlan_dfs *dfs)
 {
 	struct wlan_dfs_radar_tab_info rinfo;
@@ -284,24 +310,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 			rinfo.b5pulses = NULL;
 			rinfo.numb5radars = 0;
 		} else {
-			rinfo.dfs_radars = dfs_fcc_radars;
-			rinfo.numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
-
-			if (target_type == TARGET_TYPE_AR900B ||
-					target_type == TARGET_TYPE_IPQ4019) {
-				rinfo.b5pulses = dfs_fcc_bin5pulses_ar900b;
-				rinfo.numb5radars = QDF_ARRAY_SIZE(
-						dfs_fcc_bin5pulses_ar900b);
-			} else if (target_type == TARGET_TYPE_QCA9984 ||
-					target_type == TARGET_TYPE_QCA9888) {
-				rinfo.b5pulses = dfs_fcc_bin5pulses_qca9984;
-				rinfo.numb5radars = QDF_ARRAY_SIZE(
-						dfs_fcc_bin5pulses_qca9984);
-			} else {
-				rinfo.b5pulses = dfs_fcc_bin5pulses;
-				rinfo.numb5radars =
-					QDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
-			}
+			dfs_assign_fcc_pulse_table(&rinfo, target_type);
 		}
 
 		break;

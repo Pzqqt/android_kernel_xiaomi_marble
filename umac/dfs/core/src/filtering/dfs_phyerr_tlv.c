@@ -256,6 +256,52 @@ static void dfs_radar_fft_search_report_parse(struct wlan_dfs *dfs,
 }
 
 /**
+ * dfs_check_for_false_detection() -  Check for possible false detection on
+ * beeliner this may also work for Cascade but parameters
+ * (e.g. AGC_MB_GAIN_THRESH1) may be different for Cascade.
+ * @dfs: pointer to wlan_dfs structure.
+ * @rs: pointer to rx_radar_status structure.
+ * @false_detect: Pointer to save false detect value.
+ * @rssi: RSSI.
+ */
+static inline void dfs_check_for_false_detection(
+		struct wlan_dfs *dfs,
+		struct rx_radar_status *rs,
+		bool *false_detect,
+		uint8_t rssi)
+{
+	bool is_ht160 = false;
+	bool is_false_detect = false;
+
+	is_ht160 = dfs->dfs_caps.wlan_chip_is_ht160;
+	is_false_detect = dfs->dfs_caps.wlan_chip_is_false_detect;
+
+	if ((dfs->dfs_caps.wlan_chip_is_over_sampled == 0) &&
+			(is_ht160 == 0 && is_false_detect)) {
+		if ((rs->agc_mb_gain > AGC_MB_GAIN_THRESH1) &&
+				((rs->agc_total_gain - rs->agc_mb_gain) <
+				 AGC_OTHER_GAIN_THRESH1)) {
+			*false_detect = true;
+		}
+
+		if ((rs->agc_mb_gain > AGC_MB_GAIN_THRESH2) &&
+				((rs->agc_total_gain - rs->agc_mb_gain) >
+				 AGC_OTHER_GAIN_THRESH2) &&
+				(rssi > AGC_GAIN_RSSI_THRESH)) {
+			*false_detect = true;
+		}
+	}
+
+	if (*false_detect)
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"%s: setting false_detect to TRUE because of mb/total_gain/rssi, agc_mb_gain=%d, agc_total_gain=%d, rssi=%d\n",
+				__func__,
+				rs->agc_mb_gain,
+				rs->agc_total_gain,
+				rssi);
+}
+
+/**
  * dfs_tlv_parse_frame () - Parse a Peregrine BB TLV frame.
  * @dfs: pointer to wlan_dfs structure.
  * @rs: pointer to rx_radar_status structure.
@@ -282,8 +328,6 @@ static int dfs_tlv_parse_frame(struct wlan_dfs *dfs,
 	uint32_t tlv_hdr[1];
 	bool first_tlv = true;
 	bool false_detect = false;
-	bool is_ht160 = false;
-	bool is_false_detect = false;
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
 			"%s: total length = %zu bytes\n",
@@ -335,47 +379,8 @@ static int dfs_tlv_parse_frame(struct wlan_dfs *dfs,
 			dfs_radar_summary_parse(dfs, buf + i,
 					MS(tlv_hdr[TLV_REG], TLV_LEN), rs);
 
-			/*
-			 * Check for possible false detection on
-			 * beeliner this may also work for Cascade but
-			 * parameters (e.g. AGC_MB_GAIN_THRESH1) may
-			 * be different for Cascade.
-			 */
-			is_ht160 = dfs->dfs_caps.wlan_chip_is_ht160;
-			is_false_detect =
-			    dfs->dfs_caps.wlan_chip_is_false_detect;
-
-			if ((dfs->dfs_caps.wlan_chip_is_over_sampled == 0) &&
-					(is_ht160 == 0 && is_false_detect)
-			   ) {
-				if ((rs->agc_mb_gain > AGC_MB_GAIN_THRESH1) &&
-					((rs->agc_total_gain - rs->agc_mb_gain)
-					 < AGC_OTHER_GAIN_THRESH1)) {
-					false_detect = true;
-					DFS_DPRINTK(dfs,
-						WLAN_DEBUG_DFS_PHYERR,
-						"%s: setting false_detect to TRUE because of mb/total_gain, agc_mb_gain=%d, agc_total_gain=%d, rssi=%d\n",
-						__func__,
-						rs->agc_mb_gain,
-						rs->agc_total_gain,
-						rssi);
-				}
-
-				if ((rs->agc_mb_gain > AGC_MB_GAIN_THRESH2) &&
-					((rs->agc_total_gain - rs->agc_mb_gain)
-					 > AGC_OTHER_GAIN_THRESH2) &&
-					(rssi > AGC_GAIN_RSSI_THRESH)
-				   ) {
-					false_detect = true;
-					DFS_DPRINTK(dfs,
-						WLAN_DEBUG_DFS_PHYERR,
-						"%s: setting false_detect to TRUE because of mb/total_gain/rssi, agc_mb_gain=%d, agc_total_gain=%d, rssi=%d\n",
-						__func__,
-						rs->agc_mb_gain,
-						rs->agc_total_gain,
-						rssi);
-				}
-			}
+			dfs_check_for_false_detection(dfs, rs, &false_detect,
+					rssi);
 			break;
 		case TAG_ID_SEARCH_FFT_REPORT:
 			dfs_radar_fft_search_report_parse(dfs, buf + i,
@@ -722,33 +727,20 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
 		"%s: fbin=%d, freq=%d.%d MHz, raw tsf=%u, offset=%d, cooked tsf=%u, rssi=%d, dur=%d, is_chirp=%d, fulltsf=%llu, freq=%d.%d MHz, freq_lo=%d.%dMHz, freq_hi=%d.%d MHz\n",
-		__func__, rs.sidx,
-		(int) (rs.freq_offset / 1000),
-		(int) abs(rs.freq_offset % 1000),
-		rs.raw_tsf, rs.tsf_offset,
-		e->rs_tstamp, rs.rssi,
-		rs.pulse_duration,
-		(int)rs.is_chirp,
-		(unsigned long long) fulltsf,
-		(int)e->freq / 1000,
-		(int) abs(e->freq) % 1000,
-		(int)e->freq_lo / 1000,
-		(int) abs(e->freq_lo) % 1000,
-		(int)e->freq_hi / 1000,
+		__func__, rs.sidx, (int) (rs.freq_offset / 1000),
+		(int) abs(rs.freq_offset % 1000), rs.raw_tsf, rs.tsf_offset,
+		e->rs_tstamp, rs.rssi, rs.pulse_duration, (int)rs.is_chirp,
+		(unsigned long long) fulltsf, (int)e->freq / 1000,
+		(int) abs(e->freq) % 1000, (int)e->freq_lo / 1000,
+		(int) abs(e->freq_lo) % 1000, (int)e->freq_hi / 1000,
 		(int) abs(e->freq_hi) % 1000);
 
 	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_FALSE_DET,
 		"ts=%u, dur=%d, rssi=%d, freq_offset=%d.%dMHz, is_chirp=%d, seg_id=%d, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d\n",
-		e->rs_tstamp,
-		rs.pulse_duration,
-		rs.rssi,
+		e->rs_tstamp, rs.pulse_duration, rs.rssi,
 		(int)e->freq_offset_khz / 1000,
-		(int)abs(e->freq_offset_khz) % 1000,
-		(int)rs.is_chirp,
-		rsfr.seg_id,
-		rsfr.peak_mag,
-		rs.agc_total_gain,
-		rs.agc_mb_gain,
+		(int)abs(e->freq_offset_khz) % 1000, (int)rs.is_chirp,
+		rsfr.seg_id, rsfr.peak_mag, rs.agc_total_gain, rs.agc_mb_gain,
 		rsfr.relpwr_db);
 
 	return 1;

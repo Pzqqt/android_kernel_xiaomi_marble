@@ -127,17 +127,70 @@ int dfs_bin5_addpulse(struct wlan_dfs *dfs,
 	return 1;
 }
 
+/**
+ * dfs_calculate_bursts_for_same_rssi() - Calculate bursts for same rssi.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @br: Pointer to dfs_bin5radars structure.
+ * @bursts: Bursts.
+ * @numevents: Number of events.
+ * @prev: prev index.
+ * @this: index to br_elems[].
+ * @index: index array.
+ */
+static inline void dfs_calculate_bursts_for_same_rssi(
+		struct wlan_dfs *dfs,
+		struct dfs_bin5radars *br,
+		uint32_t *bursts,
+		uint32_t *numevents,
+		uint32_t prev,
+		uint32_t this,
+		int *index)
+{
+	uint32_t rssi_diff;
+
+	if (br->br_elems[this].be_rssi >= br->br_elems[prev].be_rssi)
+		rssi_diff = (br->br_elems[this].be_rssi -
+				br->br_elems[prev].be_rssi);
+	else
+		rssi_diff = (br->br_elems[prev].be_rssi -
+				br->br_elems[this].be_rssi);
+
+	if (rssi_diff <= DFS_BIN5_RSSI_MARGIN) {
+		(*bursts)++;
+		/*
+		 * Save the indexes of this pair for later
+		 * width variance check.
+		 */
+		if ((*numevents) >= 2) {
+			/*
+			 * Make sure the event is not duplicated, possible in
+			 * a 3 pulse burst.
+			 */
+			if (index[(*numevents)-1] != prev)
+				index[(*numevents)++] = prev;
+		} else {
+			index[(*numevents)++] = prev;
+		}
+
+		index[(*numevents)++] = this;
+	} else {
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
+				"%s %d Bin5 rssi_diff=%d\n",
+				__func__, __LINE__, rssi_diff);
+	}
+}
+
 void bin5_rules_check_internal(struct wlan_dfs *dfs,
 		struct dfs_bin5radars *br,
 		uint32_t *bursts,
 		uint32_t *numevents,
 		uint32_t prev,
 		uint32_t i,
-		uint32_t this)
+		uint32_t this,
+		int *index)
 {
 	uint64_t pri = 0;
-	uint32_t width_diff = 0, rssi_diff = 0;
-	int index[DFS_MAX_B5_SIZE];
+	uint32_t width_diff = 0;
 
 	/* Rule 1: 1000 <= PRI <= 2000 + some margin. */
 	if (br->br_elems[this].be_ts >= br->br_elems[prev].be_ts) {
@@ -168,42 +221,15 @@ void bin5_rules_check_internal(struct wlan_dfs *dfs,
 			width_diff = (br->br_elems[prev].be_dur
 					- br->br_elems[this].be_dur);
 		}
-		if (width_diff <= DFS_BIN5_WIDTH_MARGIN) {
+
+		if (width_diff <= DFS_BIN5_WIDTH_MARGIN)
 			/*
 			 * Rule 3: RSSI of the pulses in the
 			 * burst should be same (+/- margin)
 			 */
-			if (br->br_elems[this].be_rssi >=
-					br->br_elems[prev].be_rssi) {
-				rssi_diff = (br->br_elems[this].be_rssi -
-						br->br_elems[prev].be_rssi);
-			} else {
-				rssi_diff = (br->br_elems[prev].be_rssi -
-						br->br_elems[this].be_rssi);
-			}
-			if (rssi_diff <= DFS_BIN5_RSSI_MARGIN) {
-				(*bursts)++;
-				/*
-				 * Save the indexes of this pair for later
-				 * width variance check.
-				 */
-				if ((*numevents) >= 2) {
-					/*
-					 * Make sure the event is not
-					 * duplicated, possible in a 3 pulse
-					 * burst.
-					 */
-					if (index[(*numevents)-1] != prev)
-						index[(*numevents)++] = prev;
-				} else
-					index[(*numevents)++] = prev;
-
-				index[(*numevents)++] = this;
-			} else
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-					"%s %d Bin5 rssi_diff=%d\n",
-					__func__, __LINE__, rssi_diff);
-		} else
+			dfs_calculate_bursts_for_same_rssi(dfs, br, bursts,
+					numevents, prev, this, index);
+		 else
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
 				"%s %d Bin5 width_diff=%d\n",
 				__func__, __LINE__, width_diff);
@@ -224,6 +250,7 @@ int dfs_bin5_check(struct wlan_dfs *dfs)
 	uint32_t n = 0, i = 0, i1 = 0, this = 0, prev = 0;
 	uint32_t bursts = 0, total_diff = 0, average_diff = 0;
 	uint32_t total_width = 0, average_width = 0, numevents = 0;
+	int index[DFS_MAX_B5_SIZE];
 
 	if (dfs == NULL) {
 		DFS_PRINTK("%s: dfs is NULL\n", __func__);
@@ -258,7 +285,7 @@ int dfs_bin5_check(struct wlan_dfs *dfs)
 				continue;
 			}
 			bin5_rules_check_internal(dfs, br, &bursts, &numevents,
-					prev, i, this);
+					prev, i, this, index);
 			prev = this;
 		}
 
@@ -272,12 +299,9 @@ int dfs_bin5_check(struct wlan_dfs *dfs)
 
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
 				"bursts=%u numevents=%u total_width=%d average_width=%d total_diff=%d average_diff=%d\n",
-				bursts, numevents,
-				total_width, average_width,
+				bursts, numevents, total_width, average_width,
 				total_diff, average_diff);
-			DFS_PRINTK(
-				"bin 5 radar detected, bursts=%d\n",
-				bursts);
+			DFS_PRINTK("bin 5 radar detected, bursts=%d\n", bursts);
 			return 1;
 		}
 	}

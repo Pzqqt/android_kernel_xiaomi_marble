@@ -233,17 +233,17 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	}
 
 	/* Allocate memory for radar table. */
-	dfs->dfs_radartable = (int8_t **)qdf_mem_malloc(256*sizeof(int8_t *));
-	if (dfs->dfs_radartable == NULL) {
+	dfs->dfs_ftindextable = (int8_t **)qdf_mem_malloc(256*sizeof(int8_t *));
+	if (dfs->dfs_ftindextable == NULL) {
 		DFS_PRINTK(
 				"%s: Cannot allocate memory for radar table\n",
 				__func__);
 		goto bad1;
 	}
 	for (n = 0; n < 256; n++) {
-		dfs->dfs_radartable[n] = qdf_mem_malloc(
+		dfs->dfs_ftindextable[n] = qdf_mem_malloc(
 				DFS_MAX_RADAR_OVERLAP*sizeof(int8_t));
-		if (dfs->dfs_radartable[n] == NULL) {
+		if (dfs->dfs_ftindextable[n] == NULL) {
 			DFS_PRINTK(
 					"%s: cannot allocate memory for radar table entry\n",
 					__func__);
@@ -290,8 +290,8 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	return 0;
 
 bad2:
-	qdf_mem_free(dfs->dfs_radartable);
-	dfs->dfs_radartable = NULL;
+	qdf_mem_free(dfs->dfs_ftindextable);
+	dfs->dfs_ftindextable = NULL;
 bad1:
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
 		if (dfs->dfs_radarf[n] != NULL) {
@@ -391,15 +391,15 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 		}
 	}
 
-	if (dfs->dfs_radartable != NULL) {
+	if (dfs->dfs_ftindextable != NULL) {
 		for (n = 0; n < 256; n++) {
-			if (dfs->dfs_radartable[n] != NULL) {
-				qdf_mem_free(dfs->dfs_radartable[n]);
-				dfs->dfs_radartable[n] = NULL;
+			if (dfs->dfs_ftindextable[n] != NULL) {
+				qdf_mem_free(dfs->dfs_ftindextable[n]);
+				dfs->dfs_ftindextable[n] = NULL;
 			}
 		}
-		qdf_mem_free(dfs->dfs_radartable);
-		dfs->dfs_radartable = NULL;
+		qdf_mem_free(dfs->dfs_ftindextable);
+		dfs->dfs_ftindextable = NULL;
 		dfs->wlan_dfs_isdfsregdomain = 0;
 	}
 

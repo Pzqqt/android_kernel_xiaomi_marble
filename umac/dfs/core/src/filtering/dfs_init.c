@@ -23,13 +23,32 @@
 #include "../dfs.h"
 #include "wlan_dfs_lmac_api.h"
 
+/**
+ * dfs_reset_filtertype() - Reset filtertype.
+ * @ft: Pointer to dfs_filtertype structure.
+ */
+static inline void dfs_reset_filtertype(
+		struct dfs_filtertype *ft)
+{
+	int j;
+	struct dfs_filter *rf;
+	struct dfs_delayline *dl;
+
+	for (j = 0; j < ft->ft_numfilters; j++) {
+		rf = &(ft->ft_filters[j]);
+		dl = &(rf->rf_dl);
+		if (dl != NULL) {
+			qdf_mem_zero(dl, sizeof(*dl));
+			dl->dl_lastelem = (0xFFFFFFFF) & DFS_MAX_DL_MASK;
+		}
+	}
+}
+
 void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 {
 	struct dfs_filtertype *ft = NULL;
-	struct dfs_filter *rf;
-	struct dfs_delayline *dl;
 	struct dfs_pulseline *pl;
-	int i, j;
+	int i;
 
 	if (dfs == NULL) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
@@ -57,16 +76,7 @@ void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 	for (i = 0; i < DFS_MAX_RADAR_TYPES; i++) {
 		if (dfs->dfs_radarf[i] != NULL) {
 			ft = dfs->dfs_radarf[i];
-			for (j = 0; j < ft->ft_numfilters; j++) {
-				rf = &(ft->ft_filters[j]);
-				dl = &(rf->rf_dl);
-				if (dl != NULL) {
-					qdf_mem_zero(dl,
-						sizeof(struct dfs_delayline));
-					dl->dl_lastelem =
-						(0xFFFFFFFF) & DFS_MAX_DL_MASK;
-				}
-			}
+			dfs_reset_filtertype(ft);
 		}
 	}
 
@@ -119,6 +129,93 @@ void dfs_reset_radarq(struct wlan_dfs *dfs)
 	WLAN_DFSQ_UNLOCK(dfs);
 }
 
+/**
+ * dfs_fill_ft_index_table() - DFS fill ft index table.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @i: Duration used as an index.
+ *
+ * Return: 1 if too many overlapping radar filters else 0.
+ */
+static inline bool dfs_fill_ft_index_table(
+		struct wlan_dfs *dfs,
+		int i)
+{
+	uint32_t stop = 0, tableindex = 0;
+
+	while ((tableindex < DFS_MAX_RADAR_OVERLAP) && (!stop)) {
+		if ((dfs->dfs_ftindextable[i])[tableindex] == -1)
+			stop = 1;
+		else
+			tableindex++;
+	}
+
+	if (stop) {
+		(dfs->dfs_ftindextable[i])[tableindex] =
+			(int8_t)(dfs->dfs_rinfo.rn_ftindex);
+	} else {
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
+				"%s: Too many overlapping radar filters\n",
+				__func__);
+		return 1;
+	}
+
+	return 0;
+}
+
+/**
+ * dfs_fill_filter_type() - DFS fill filter type.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @ft: Double pointer to dfs_filtertype structure.
+ * @dfs_radars: Pointer to dfs_pulse structure.
+ * @min_rssithresh: Minimum RSSI threshold.
+ * @max_pulsedur: Maximum RSSI threshold.
+ * @p: Index to dfs_pulse structure.
+ *
+ * Return: 1 if too many overlapping radar filters else 0.
+ */
+static inline bool dfs_fill_filter_type(
+		struct wlan_dfs *dfs,
+		struct dfs_filtertype **ft,
+		struct dfs_pulse *dfs_radars,
+		int32_t *min_rssithresh,
+		uint32_t *max_pulsedur,
+		int p)
+{
+	int i;
+
+	/* No filter of the appropriate dur was found. */
+	if ((dfs->dfs_rinfo.rn_ftindex + 1) > DFS_MAX_RADAR_TYPES) {
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
+				"%s: Too many filter types\n", __func__);
+		return 1;
+	}
+	(*ft) = dfs->dfs_radarf[dfs->dfs_rinfo.rn_ftindex];
+	(*ft)->ft_numfilters = 0;
+	(*ft)->ft_numpulses = dfs_radars[p].rp_numpulses;
+	(*ft)->ft_patterntype = dfs_radars[p].rp_patterntype;
+	(*ft)->ft_mindur = dfs_radars[p].rp_mindur;
+	(*ft)->ft_maxdur = dfs_radars[p].rp_maxdur;
+	(*ft)->ft_filterdur = dfs_radars[p].rp_pulsedur;
+	(*ft)->ft_rssithresh = dfs_radars[p].rp_rssithresh;
+	(*ft)->ft_rssimargin = dfs_radars[p].rp_rssimargin;
+	(*ft)->ft_minpri = 1000000;
+
+	if ((*ft)->ft_rssithresh < *min_rssithresh)
+		*min_rssithresh = (*ft)->ft_rssithresh;
+
+	if ((*ft)->ft_maxdur > *max_pulsedur)
+		*max_pulsedur = (*ft)->ft_maxdur;
+
+	for (i = (*ft)->ft_mindur; i <= (*ft)->ft_maxdur; i++) {
+		if (dfs_fill_ft_index_table(dfs, i))
+			return 1;
+	}
+
+	dfs->dfs_rinfo.rn_ftindex++;
+
+	return 0;
+}
+
 int dfs_init_radar_filters(struct wlan_dfs *dfs,
 		struct wlan_dfs_radar_tab_info *radar_info)
 {
@@ -131,6 +228,7 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	uint32_t max_pulsedur = 0;
 	int numpulses, p, n, i;
 	int numradars = 0, numb5radars = 0;
+	int retval;
 
 	if (dfs == NULL) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "dfs is NULL %s", __func__);
@@ -167,17 +265,17 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	dfs->dfs_defaultparams = radar_info->dfs_defaultparams;
 
 	dfs->wlan_dfs_isdfsregdomain = 1;
-	dfs->dfs_rinfo.rn_numradars = 0;
+	dfs->dfs_rinfo.rn_ftindex = 0;
 	/* Clear filter type table. */
 	for (n = 0; n < 256; n++) {
 		for (i = 0; i < DFS_MAX_RADAR_OVERLAP; i++)
-			(dfs->dfs_radartable[n])[i] = -1;
+			(dfs->dfs_ftindextable[n])[i] = -1;
 	}
 
 	/* Now, initialize the radar filters. */
 	for (p = 0; p < numradars; p++) {
 		ft = NULL;
-		for (n = 0; n < dfs->dfs_rinfo.rn_numradars; n++) {
+		for (n = 0; n < dfs->dfs_rinfo.rn_ftindex; n++) {
 			if ((dfs_radars[p].rp_pulsedur ==
 				    dfs->dfs_radarf[n]->ft_filterdur) &&
 				(dfs_radars[p].rp_numpulses ==
@@ -190,57 +288,14 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 				break;
 			}
 		}
+
 		if (ft == NULL) {
-			/* No filter of the appropriate dur was found. */
-			if ((dfs->dfs_rinfo.rn_numradars + 1) >
-					DFS_MAX_RADAR_TYPES) {
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-						"%s: Too many filter types\n",
-						__func__);
+			retval = dfs_fill_filter_type(dfs, &ft, dfs_radars,
+					&min_rssithresh, &max_pulsedur, p);
+			if (retval == 1)
 				goto bad4;
-			}
-			ft = dfs->dfs_radarf[dfs->dfs_rinfo.rn_numradars];
-			ft->ft_numfilters = 0;
-			ft->ft_numpulses = dfs_radars[p].rp_numpulses;
-			ft->ft_patterntype = dfs_radars[p].rp_patterntype;
-			ft->ft_mindur = dfs_radars[p].rp_mindur;
-			ft->ft_maxdur = dfs_radars[p].rp_maxdur;
-			ft->ft_filterdur = dfs_radars[p].rp_pulsedur;
-			ft->ft_rssithresh = dfs_radars[p].rp_rssithresh;
-			ft->ft_rssimargin = dfs_radars[p].rp_rssimargin;
-			ft->ft_minpri = 1000000;
-
-			if (ft->ft_rssithresh < min_rssithresh)
-				min_rssithresh = ft->ft_rssithresh;
-
-			if (ft->ft_maxdur > max_pulsedur)
-				max_pulsedur = ft->ft_maxdur;
-
-			for (i = ft->ft_mindur; i <= ft->ft_maxdur; i++) {
-				uint32_t stop = 0, tableindex = 0;
-
-				while ((tableindex < DFS_MAX_RADAR_OVERLAP) &&
-						(!stop)) {
-					if ((dfs->dfs_radartable[i])[tableindex]
-							== -1)
-						stop = 1;
-					else
-						tableindex++;
-				}
-
-				if (stop) {
-					(dfs->dfs_radartable[i])[tableindex] =
-					    (int8_t)
-					    (dfs->dfs_rinfo.rn_numradars);
-				} else {
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-							"%s: Too many overlapping radar filters\n",
-							__func__);
-					goto bad4;
-				}
-			}
-			dfs->dfs_rinfo.rn_numradars++;
 		}
+
 		rf = &(ft->ft_filters[ft->ft_numfilters++]);
 		dfs_reset_delayline(&rf->rf_dl);
 		numpulses = dfs_radars[p].rp_numpulses;
@@ -254,21 +309,19 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 		rf->rf_ignore_pri_window = dfs_radars[p].rp_ignore_pri_window;
 		T = (100000000 / dfs_radars[p].rp_max_pulsefreq) -
 			100 * (dfs_radars[p].rp_meanoffset);
-		rf->rf_minpri =
-			dfs_round((int32_t)T -
-					(100 * (dfs_radars[p].rp_pulsevar)));
+		rf->rf_minpri = dfs_round((int32_t)T -
+				(100 * (dfs_radars[p].rp_pulsevar)));
 		Tmax = (100000000 / dfs_radars[p].rp_pulsefreq) -
 			100 * (dfs_radars[p].rp_meanoffset);
-		rf->rf_maxpri =
-			dfs_round((int32_t)Tmax +
-					(100 * (dfs_radars[p].rp_pulsevar)));
+		rf->rf_maxpri = dfs_round((int32_t)Tmax +
+				(100 * (dfs_radars[p].rp_pulsevar)));
 
 		if (rf->rf_minpri < ft->ft_minpri)
 			ft->ft_minpri = rf->rf_minpri;
 
-		rf->rf_fixed_pri_radar_pulse =
-			(dfs_radars[p].rp_max_pulsefreq ==
-	   dfs_radars[p].rp_pulsefreq) ?  1 : 0;
+		rf->rf_fixed_pri_radar_pulse = (
+				dfs_radars[p].rp_max_pulsefreq ==
+				dfs_radars[p].rp_pulsefreq) ?  1 : 0;
 		rf->rf_threshold = dfs_radars[p].rp_threshold;
 		rf->rf_filterlen = rf->rf_maxpri * rf->rf_numpulses;
 
@@ -307,10 +360,8 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 			min_rssithresh =
 				dfs->dfs_b5radars[n].br_pulse.b5_rssithresh;
 
-		if (dfs->dfs_b5radars[n].br_pulse.b5_maxdur
-				> max_pulsedur)
-			max_pulsedur =
-				dfs->dfs_b5radars[n].br_pulse.b5_maxdur;
+		if (dfs->dfs_b5radars[n].br_pulse.b5_maxdur > max_pulsedur)
+			max_pulsedur = dfs->dfs_b5radars[n].br_pulse.b5_maxdur;
 	}
 	dfs_reset_alldelaylines(dfs);
 	dfs_reset_radarq(dfs);
@@ -325,15 +376,12 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	 * Relax the max pulse duration a little bit due to inaccuracy
 	 * caused by chirping.
 	 */
-	dfs->dfs_rinfo.rn_maxpulsedur =
-		dfs->dfs_rinfo.rn_maxpulsedur + 20;
+	dfs->dfs_rinfo.rn_maxpulsedur = dfs->dfs_rinfo.rn_maxpulsedur + 20;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"DFS min filter rssiThresh = %d\n",
+	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "DFS min filter rssiThresh = %d\n",
 			min_rssithresh);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"DFS max pulse dur = %d ticks\n",
+	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "DFS max pulse dur = %d ticks\n",
 			dfs->dfs_rinfo.rn_maxpulsedur);
 
 	return 0;

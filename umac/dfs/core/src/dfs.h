@@ -67,6 +67,8 @@
  * XXX Peregrine reports pulses in microseconds, not hardware clocks!
  */
 
+#define MAX_DUR_FOR_LOW_RSSI 4
+
 /**
  * Cascade has issue with reported duration especially when there is a
  * crossover of chirp from one segment to another. It may report a value
@@ -231,7 +233,7 @@
  * struct dfs_pulseparams - DFS pulse param structure.
  * @p_time:        Time for start of pulse in usecs.
  * @p_dur:         Duration of pulse in usecs.
- * @p_rssi:        Duration of pulse in usecs.
+ * @p_rssi:        RSSI of pulse.
  */
 struct dfs_pulseparams {
 	uint64_t p_time;
@@ -497,7 +499,7 @@ struct dfs_nolelem {
 /**
  * struct dfs_info - DFS Info.
  * @rn_use_nol:            Use the NOL when radar found (default: TRUE).
- * @rn_numradars:          Number of different types of radars.
+ * @rn_ftindex:            Number of different types of radars.
  * @rn_lastfull_ts:        Last 64 bit timstamp from recv interrupt.
  * @rn_last_ts:            last 15 bit ts from recv descriptor.
  * @rn_last_unique_ts:     last unique 32 bit ts from recv descriptor.
@@ -513,7 +515,7 @@ struct dfs_nolelem {
  */
 struct dfs_info {
 	int       rn_use_nol;
-	uint32_t  rn_numradars;
+	uint32_t  rn_ftindex;
 	uint64_t  rn_lastfull_ts;
 	uint16_t  rn_last_ts;
 	uint32_t  rn_last_unique_ts;
@@ -663,7 +665,7 @@ struct dfs_event_log {
  * @dfs_radarf[]:          dfs_radarf - One filter for each radar pulse type.
  * @dfs_rinfo:             State vars for radar processing.
  * @dfs_b5radars:          array of bin5 radar events.
- * @dfs_radartable:        map of radar durs to filter types.
+ * @dfs_ftindextable:        map of radar durs to filter types.
  * @dfs_nol:               Non occupancy list for radar.
  * @dfs_nol_count:         How many items?
  * @dfs_defaultparams:     Default phy params per radar state.
@@ -752,7 +754,7 @@ struct wlan_dfs {
 	struct dfs_filtertype *dfs_radarf[DFS_MAX_RADAR_TYPES];
 	struct dfs_info dfs_rinfo;
 	struct dfs_bin5radars *dfs_b5radars;
-	int8_t **dfs_radartable;
+	int8_t **dfs_ftindextable;
 	struct dfs_nolelem *dfs_nol;
 	int dfs_nol_count;
 	struct wlan_dfs_phyerr_param dfs_defaultparams;
@@ -1012,7 +1014,8 @@ void dfs_radar_found_action(struct wlan_dfs *dfs);
  * and ext channels as being unavailable.  This should be fixed for 802.11ac
  * or we'll quickly run out of valid channels to use.
  *
- * Return: If a radar event is found, return 1.  Otherwise, return 0.
+ * Return: If a radar event found on non-DFS channel return 0.
+ * Otherwise, return 1.
  */
 int dfs_process_radarevent(struct wlan_dfs *dfs,
 		struct dfs_ieee80211_channel *chan);
@@ -1228,18 +1231,6 @@ void dfs_add_pulse(struct wlan_dfs *dfs,
 		struct dfs_event *re,
 		uint32_t deltaT,
 		uint64_t this_ts);
-
-/**
- * dfs_bin_fixedpattern_check() - Checks the BIN pattern.
- * @dfs: Pointer to wlan_dfs structure.
- * @rf:  Pointer to dfs_filter structure.
- * @dur: Duration.
- * ext_chan_flag : Ext channel flag.
- */
-int dfs_bin_fixedpattern_check(struct wlan_dfs *dfs,
-		struct dfs_filter *rf,
-		uint32_t dur,
-		int ext_chan_flag);
 
 /**
  * dfs_bin_check() - BIN check
@@ -1845,7 +1836,6 @@ int dfs_process_phyerr_merlin(struct wlan_dfs *dfs,
  * __dfs_process_radarevent() - Continuation of process a radar event function.
  * @dfs: Pointer to wlan_dfs structure.
  * @ft: Pointer to dfs_filtertype structure.
- * @rf: Pointer to dfs_filter structure.
  * @re: Pointer to dfs_event structure.
  * @this_ts: Timestamp.
  *
@@ -1858,7 +1848,6 @@ int dfs_process_phyerr_merlin(struct wlan_dfs *dfs,
  */
 void __dfs_process_radarevent(struct wlan_dfs *dfs,
 		struct dfs_filtertype *ft,
-		struct dfs_filter *rf,
 		struct dfs_event *re,
 		uint64_t this_ts,
 		int *found);
@@ -1879,34 +1868,8 @@ void bin5_rules_check_internal(struct wlan_dfs *dfs,
 		uint32_t *numevents,
 		uint32_t prev,
 		uint32_t i,
-		uint32_t this);
-
-/**
- * count_the_other_delay_elements() - Counts the ther delay elements.
- * @dfs: Pointer to wlan_dfs structure.
- * @rf: Pointer to dfs_filter structure.
- * @dl: Pointer to dfs_delayline structure.
- * @i: Index value.
- * @refpri: Current "filter" time for start of pulse in usecs.
- * @refdur: Duration value.
- * @primargin: Primary margin.
- * @durmargin: Duration margin.
- * @numpulses: Number of pulses.
- * @prev_good_timestamp: Previous good timestamp.
- * @fundamentalpri: Highest PRI.
- */
-void count_the_other_delay_elements(struct wlan_dfs *dfs,
-		struct dfs_filter *rf,
-		struct dfs_delayline *dl,
-		uint32_t i,
-		uint32_t refpri,
-		uint32_t refdur,
-		uint32_t primargin,
-		uint32_t durmargin,
-		int *numpulses,
-		uint32_t *prev_good_timestamp,
-		int fundamentalpri
-		);
+		uint32_t this,
+		int *index);
 
 /**
  * dfs_main_timer_init() - Initialize dfs timers.
