@@ -3588,8 +3588,91 @@ static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 	return fRSNMatch;
 }
 
+/**
+ * csr_lookup_pmkid_using_ssid() - lookup pmkid using ssid and cache_id
+ * @mac: pointer to mac
+ * @session: sme session pointer
+ * @pmk_cache: pointer to pmk cache
+ * @index: index value needs to be seached
+ *
+ * Return: true if pmkid is found else false
+ */
+static bool csr_lookup_pmkid_using_ssid(tpAniSirGlobal mac,
+					tCsrRoamSession *session,
+					tPmkidCacheInfo *pmk_cache,
+					uint32_t *index)
+{
+	uint32_t i;
+	tPmkidCacheInfo *session_pmk;
+
+	for (i = 0; i < session->NumPmkidCache; i++) {
+		session_pmk = &session->PmkidCacheInfo[i];
+		sme_debug("match PMKID ssid %*.*s cache id %x %x ssid_len %d to ssid %s cache_id %x %x",
+			pmk_cache->ssid_len, pmk_cache->ssid_len,
+			pmk_cache->ssid, pmk_cache->cache_id[0],
+			pmk_cache->cache_id[1], pmk_cache->ssid_len,
+			session_pmk->ssid,
+			session_pmk->cache_id[0], session_pmk->cache_id[1]);
+
+		if ((!qdf_mem_cmp(pmk_cache->ssid, session_pmk->ssid,
+				  pmk_cache->ssid_len)) &&
+		    (!qdf_mem_cmp(session_pmk->cache_id,
+				  pmk_cache->cache_id, CACHE_ID_LEN))) {
+			/* match found */
+			*index = i;
+			sme_debug("PMKID found at index %d", i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * csr_lookup_pmkid_using_bssid() - lookup pmkid using bssid
+ * @mac: pointer to mac
+ * @session: sme session pointer
+ * @pmk_cache: pointer to pmk cache
+ * @index: index value needs to be seached
+ *
+ * Return: true if pmkid is found else false
+ */
+static bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
+					tCsrRoamSession *session,
+					tPmkidCacheInfo *pmk_cache,
+					uint32_t *index)
+{
+	uint32_t i;
+	tPmkidCacheInfo *session_pmk;
+
+	for (i = 0; i < session->NumPmkidCache; i++) {
+		session_pmk = &session->PmkidCacheInfo[i];
+		sme_debug("Matching BSSID: " MAC_ADDRESS_STR " to cached BSSID:"
+			MAC_ADDRESS_STR, MAC_ADDR_ARRAY(pmk_cache->BSSID.bytes),
+			MAC_ADDR_ARRAY(session_pmk->BSSID.bytes));
+		if (qdf_is_macaddr_equal(&pmk_cache->BSSID,
+					 &session_pmk->BSSID)) {
+			/* match found */
+			*index = i;
+			sme_debug("PMKID found at index %d", i);
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * csr_lookup_pmkid() - lookup pmkid using bssid or ssid + cache_id
+ * @mac: pointer to mac
+ * @session: sme session pointer
+ * @pmk_cache: pointer to pmk cache
+ * @index: index value needs to be seached
+ *
+ * Return: true if pmkid is found else false
+ */
 static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
-			     uint8_t *pBSSId, uint8_t *pPMKId)
+				tPmkidCacheInfo *pmk_cache)
 {
 	bool fRC = false, fMatchFound = false;
 	uint32_t Index;
@@ -3600,29 +3683,34 @@ static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
 		return false;
 	}
 
-	sme_debug("match PMKID " MAC_ADDRESS_STR " to ",
-		  MAC_ADDR_ARRAY(pBSSId));
-	do {
-		for (Index = 0; Index < CSR_MAX_PMKID_ALLOWED; Index++) {
-			if (!qdf_mem_cmp
-			   (pBSSId, pSession->PmkidCacheInfo[Index].BSSID.bytes,
-			    sizeof(struct qdf_mac_addr))) {
-				/* match found */
-				fMatchFound = true;
-				sme_debug("PMKID found");
-				break;
-			}
-		}
+	if (pmk_cache->ssid_len) {
+		/* Try to find based on cache_id and ssid first */
+		fMatchFound = csr_lookup_pmkid_using_ssid(pMac, pSession,
+							  pmk_cache, &Index);
+	}
 
-		if (!fMatchFound)
-			break;
+	/* If not able to find using cache id or ssid_len is not present */
+	if (!fMatchFound)
+		fMatchFound = csr_lookup_pmkid_using_bssid(pMac,
+						pSession, pmk_cache, &Index);
 
-		qdf_mem_copy(pPMKId, pSession->PmkidCacheInfo[Index].PMKID,
-			     CSR_RSN_PMKID_SIZE);
+	if (!fMatchFound) {
+		sme_debug("no pmkid match found NumPmkidCache = %d",
+			pSession->NumPmkidCache);
+		return false;
+	}
 
-		fRC = true;
-	} while (0);
-	sme_debug("match: %d pMac->roam.NumPmkidCache: %d",
+	qdf_mem_copy(pmk_cache->PMKID,
+		     pSession->PmkidCacheInfo[Index].PMKID,
+		     CSR_RSN_PMKID_SIZE);
+
+	qdf_mem_copy(pmk_cache->pmk,
+		     pSession->PmkidCacheInfo[Index].pmk,
+		     pSession->PmkidCacheInfo[Index].pmk_len);
+	pmk_cache->pmk_len = pSession->PmkidCacheInfo[Index].pmk_len;
+
+	fRC = true;
+	sme_debug("match = %d NumPmkidCache = %d",
 		fRC, pSession->NumPmkidCache);
 
 	return fRC;
@@ -3642,7 +3730,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	tCsrRSNAuthIe *pAuthSuite;
 	tCsrRSNCapabilities RSNCapabilities;
 	tCsrRSNPMKIe *pPMK;
-	uint8_t PMKId[CSR_RSN_PMKID_SIZE];
+	tPmkidCacheInfo pmkid_cache;
 #ifdef WLAN_FEATURE_11W
 	uint8_t *pGroupMgmtCipherSuite;
 #endif
@@ -3715,16 +3803,21 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		pPMK = (tCsrRSNPMKIe *) (((uint8_t *) (&pAuthSuite->AuthOui[1]))
 				+ sizeof(uint16_t));
 
+		qdf_mem_copy(pmkid_cache.BSSID.bytes,
+				pSirBssDesc->bssId, QDF_MAC_ADDR_SIZE);
 		/* Don't include the PMK SA IDs for CCKM associations. */
 		if (
 #ifdef FEATURE_WLAN_ESE
 			(eCSR_AUTH_TYPE_CCKM_RSN != negAuthType) &&
 #endif
-			csr_lookup_pmkid(pMac, sessionId, pSirBssDesc->bssId,
-					 &(PMKId[0]))) {
+			csr_lookup_pmkid(pMac, sessionId, &pmkid_cache)) {
 			pPMK->cPMKIDs = 1;
 
-			qdf_mem_copy(pPMK->PMKIDList[0].PMKID, PMKId,
+			qdf_trace_hex_dump(QDF_MODULE_ID_PE,
+				   QDF_TRACE_LEVEL_INFO,
+				   pmkid_cache.pmk, pmkid_cache.pmk_len);
+			qdf_mem_copy(pPMK->PMKIDList[0].PMKID,
+				     pmkid_cache.PMKID,
 				     CSR_RSN_PMKID_SIZE);
 		} else
 			pPMK->cPMKIDs = 0;

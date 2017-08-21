@@ -17253,6 +17253,102 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifdef CFG80211_FILS_SK_OFFLOAD_SUPPORT
+/*
+ * wlan_hdd_is_pmksa_valid: API to validate pmksa
+ * @pmksa: pointer to cfg80211_pmksa structure
+ *
+ * Return: True if valid else false
+ */
+static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
+{
+	if (!pmksa->bssid) {
+		hdd_err("bssid (%p) is NULL",
+		       pmksa->bssid);
+	} else if (!pmksa->ssid || !pmksa->cache_id) {
+		hdd_err("either ssid (%p) or cache_id (%p) are NULL",
+		       pmksa->ssid, pmksa->cache_id);
+		return false;
+	}
+	return true;
+}
+
+/*
+ * hdd_fill_pmksa_info: API to update tPmkidCacheInfo from cfg80211_pmksa
+ * @pmk_cache: pmksa from supplicant
+ * @pmk_cache: pmk needs to be updated
+ *
+ * Return: None
+ */
+static void hdd_fill_pmksa_info(tPmkidCacheInfo *pmk_cache,
+				  struct cfg80211_pmksa *pmksa, bool is_delete)
+{
+	if (pmksa->bssid) {
+		hdd_debug("%s PMKSA for " MAC_ADDRESS_STR,
+			is_delete ? "Delete" : "Set",
+			MAC_ADDR_ARRAY(pmksa->bssid));
+		qdf_mem_copy(pmk_cache->BSSID.bytes,
+				pmksa->bssid, QDF_MAC_ADDR_SIZE);
+	} else {
+		qdf_mem_copy(pmk_cache->ssid, pmksa->ssid,
+				SIR_MAC_MAX_SSID_LENGTH);
+		qdf_mem_copy(pmk_cache->cache_id,
+			pmksa->cache_id, CACHE_ID_LEN);
+		pmk_cache->ssid_len = pmksa->ssid_len;
+		hdd_debug("%s PMKSA for ssid %*.*s cache_id %x %x",
+			is_delete ? "Delete" : "Set",
+			pmk_cache->ssid_len, pmk_cache->ssid_len,
+			pmksa->ssid, pmksa->cache_id[0], pmksa->cache_id[1]);
+	}
+
+	if (is_delete)
+		return;
+
+	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
+	if (pmksa->pmk_len && (pmksa->pmk_len <= CSR_RSN_MAX_PMK_LEN)) {
+		qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
+		pmk_cache->pmk_len = pmksa->pmk_len;
+	} else
+		hdd_info("pmk len is %zu", pmksa->pmk_len);
+}
+#else
+/*
+ * wlan_hdd_is_pmksa_valid: API to validate pmksa
+ * @pmksa: pointer to cfg80211_pmksa structure
+ *
+ * Return: True if valid else false
+ */
+static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
+{
+	if (!pmksa->bssid) {
+		hdd_err("both bssid is NULL %p", pmksa->bssid);
+		return false;
+	}
+	return true;
+}
+
+/*
+ * hdd_fill_pmksa_info: API to update tPmkidCacheInfo from cfg80211_pmksa
+ * @pmk_cache: pmksa from supplicant
+ * @pmk_cache: pmk needs to be updated
+ *
+ * Return: None
+ */
+static void hdd_fill_pmksa_info(tPmkidCacheInfo *pmk_cache,
+				  struct cfg80211_pmksa *pmksa, bool is_delete)
+{
+	hdd_debug("%s PMKSA for " MAC_ADDRESS_STR, is_delete ? "Delete" : "Set",
+	MAC_ADDR_ARRAY(pmksa->bssid));
+	qdf_mem_copy(pmk_cache->BSSID.bytes,
+				pmksa->bssid, QDF_MAC_ADDR_SIZE);
+
+	if (is_delete)
+		return;
+
+	qdf_mem_copy(pmk_cache->PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
+}
+#endif
+
 /**
  * __wlan_hdd_cfg80211_set_pmksa() - set pmksa
  * @wiphy: Pointer to wiphy
@@ -17270,7 +17366,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	tHalHandle halHandle;
 	QDF_STATUS result = QDF_STATUS_SUCCESS;
 	int status;
-	tPmkidCacheInfo pmk_id;
+	tPmkidCacheInfo pmk_cache;
 
 	ENTER();
 
@@ -17289,14 +17385,14 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!pmksa->bssid || !pmksa->pmkid) {
-		hdd_err("pmksa->bssid(%p) or pmksa->pmkid(%p) is NULL",
-		       pmksa->bssid, pmksa->pmkid);
+	if (!pmksa->pmkid) {
+		hdd_err("pmksa->pmkid(%p) is NULL",
+		       pmksa->pmkid);
 		return -EINVAL;
 	}
 
-	hdd_debug("set PMKSA for " MAC_ADDRESS_STR,
-		MAC_ADDR_ARRAY(pmksa->bssid));
+	if (!wlan_hdd_is_pmksa_valid(pmksa))
+		return -EINVAL;
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
@@ -17305,12 +17401,19 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 
 	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
-	qdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(pmk_id.PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
+	qdf_mem_zero(&pmk_cache, sizeof(pmk_cache));
 
-	/* Add to the PMKSA ID Cache in CSR */
+	hdd_fill_pmksa_info(&pmk_cache, pmksa, false);
+
+	/*
+	 * Add to the PMKSA Cache in CSR
+	 * PMKSA cache will be having following
+	 * 1. pmkid id
+	 * 2. pmk
+	 * 3. bssid or cache identifier
+	 */
 	result = sme_roam_set_pmkid_cache(halHandle, pAdapter->sessionId,
-					  &pmk_id, 1, false);
+					  &pmk_cache, 1, false);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_PMKSA,
@@ -17357,6 +17460,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	tHalHandle halHandle;
 	int status = 0;
+	tPmkidCacheInfo pmk_cache;
 
 	ENTER();
 
@@ -17375,13 +17479,8 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (!pmksa->bssid) {
-		hdd_err("pmksa->bssid is NULL");
+	if (!wlan_hdd_is_pmksa_valid(pmksa))
 		return -EINVAL;
-	}
-
-	hdd_debug("Deleting PMKSA for " MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(pmksa->bssid));
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
@@ -17393,10 +17492,15 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_DEL_PMKSA,
 			 pAdapter->sessionId, 0));
+
+	qdf_mem_zero(&pmk_cache, sizeof(pmk_cache));
+
+	hdd_fill_pmksa_info(&pmk_cache, pmksa, true);
+
 	/* Delete the PMKID CSR cache */
 	if (QDF_STATUS_SUCCESS !=
 	    sme_roam_del_pmkid_from_cache(halHandle,
-					  pAdapter->sessionId, pmksa->bssid,
+					  pAdapter->sessionId, &pmk_cache,
 					  false)) {
 		hdd_err("Failed to delete PMKSA for " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(pmksa->bssid));

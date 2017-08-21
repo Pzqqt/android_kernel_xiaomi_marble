@@ -1024,7 +1024,7 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac);
 QDF_STATUS csr_roam_del_pmkid_from_cache(tpAniSirGlobal pMac,
 					 uint32_t sessionId,
-					 const uint8_t *pBSSId,
+					 tPmkidCacheInfo *pmksa,
 					 bool flush_cache);
 
 bool csr_elected_country_info(tpAniSirGlobal pMac);

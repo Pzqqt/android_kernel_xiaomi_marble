@@ -5447,14 +5447,10 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 				 uint16_t gen_ie_len, uint8_t *gen_ie)
 {
 	tHalHandle halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	QDF_STATUS result;
 	tDot11fIERSN dot11RSNIE;
 	tDot11fIEWPA dot11WPAIE;
-	uint32_t i;
 	uint8_t *pRsnIe;
 	uint16_t RSNIeLen;
-	tPmkidCacheInfo PMKIDCache[4];  /* Local transfer memory */
-	bool updatePMKCache = false;
 
 	/*
 	 * Clear struct of tDot11fIERSN and tDot11fIEWPA specifically
@@ -5500,38 +5496,6 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 		*pMfpRequired = (dot11RSNIE.RSN_Cap[0] >> 6) & 0x1;
 		*pMfpCapable = csr_is_mfpc_capable(&dot11RSNIE);
 #endif
-		/* Set the PMKSA ID Cache for this interface */
-		for (i = 0; i < dot11RSNIE.pmkid_count; i++) {
-			if (is_zero_ether_addr(bssid)) {
-				hdd_warn("MAC address is all zeroes");
-				break;
-			}
-			updatePMKCache = true;
-			/*
-			 * For right now, I assume setASSOCIATE() has passed
-			 * in the bssid.
-			 */
-			qdf_mem_copy(PMKIDCache[i].BSSID.bytes,
-				     bssid, QDF_MAC_ADDR_SIZE);
-			qdf_mem_copy(PMKIDCache[i].PMKID,
-				     dot11RSNIE.pmkid[i], CSR_RSN_PMKID_SIZE);
-		}
-
-		if (updatePMKCache) {
-			/*
-			 * Calling csr_roam_set_pmkid_cache to configure the
-			 * PMKIDs into the cache.
-			 */
-			hdd_debug("Calling sme_roam_set_pmkid_cache with cache entry %d.",
-				 i);
-			/* Finally set the PMKSA ID Cache in CSR */
-			result =
-				sme_roam_set_pmkid_cache(halHandle,
-							 pAdapter->sessionId,
-							 PMKIDCache,
-							 dot11RSNIE.pmkid_count,
-							 false);
-		}
 	} else if (gen_ie[0] == DOT11F_EID_WPA) {
 		/* Validity checks */
 		if ((gen_ie_len < DOT11F_IE_WPA_MIN_LEN) ||

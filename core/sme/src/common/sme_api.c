@@ -4008,7 +4008,8 @@ QDF_STATUS sme_roam_set_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 }
 
 QDF_STATUS sme_roam_del_pmkid_from_cache(tHalHandle hHal, uint8_t sessionId,
-					 const uint8_t *pBSSId, bool flush_cache)
+					 tPmkidCacheInfo *pmksa,
+					 bool flush_cache)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -4020,7 +4021,7 @@ QDF_STATUS sme_roam_del_pmkid_from_cache(tHalHandle hHal, uint8_t sessionId,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
 			status = csr_roam_del_pmkid_from_cache(pMac, sessionId,
-							       pBSSId, flush_cache);
+						       pmksa, flush_cache);
 		} else {
 			status = QDF_STATUS_E_INVAL;
 		}

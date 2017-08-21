@@ -715,7 +715,7 @@ QDF_STATUS sme_del_periodic_tx_ptrn(tHalHandle hHal, tSirDelPeriodicTxPtrn
 QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 		tSirRateUpdateInd *rateUpdateParams);
 QDF_STATUS sme_roam_del_pmkid_from_cache(tHalHandle hHal, uint8_t sessionId,
-		const uint8_t *pBSSId, bool flush_cache);
+		tPmkidCacheInfo *pmksa, bool flush_cache);
 void sme_get_command_q_status(tHalHandle hHal);
 
 QDF_STATUS sme_enable_rmc(tHalHandle hHal, uint32_t sessionId);
