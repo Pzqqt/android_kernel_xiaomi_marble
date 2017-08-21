@@ -5490,7 +5490,7 @@ static QDF_STATUS send_set_passpoint_network_list_cmd_tlv(wmi_unified_t wmi_hand
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_FILS_SK
+#if defined(WLAN_FEATURE_FILS_SK) && defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * wmi_add_fils_tlv() - Add FILS TLV to roam scan offload command
  * @wmi_handle: wmi handle
