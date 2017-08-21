@@ -386,6 +386,11 @@ ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
 endif
 
+# enable unit-test suspend for napier builds
+ifeq ($(CONFIG_LITHIUM), y)
+	CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
+endif
+
 ############ UAPI ############
 UAPI_DIR :=	uapi
 UAPI_INC :=	-I$(WLAN_ROOT)/$(UAPI_DIR)/linux
