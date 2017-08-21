@@ -44,7 +44,6 @@
 #include "rrm_api.h"
 #include "cds_utils.h"
 
-
 /**
  * lim_collect_bss_description()
  *

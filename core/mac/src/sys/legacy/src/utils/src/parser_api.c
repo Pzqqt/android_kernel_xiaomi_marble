@@ -2268,6 +2268,45 @@ void sir_copy_caps_info(tpAniSirGlobal mac_ctx, tDot11fFfCapabilities caps,
 	pProbeResp->capabilityInfo.immediateBA = caps.immediateBA;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+void update_fils_data(struct sir_fils_indication *fils_ind,
+				 tDot11fIEfils_indication *fils_indication)
+{
+	uint8_t *data;
+
+	data = fils_indication->variable_data;
+	fils_ind->is_present = true;
+	fils_ind->is_ip_config_supported =
+			fils_indication->is_ip_config_supported;
+	fils_ind->is_fils_sk_auth_supported =
+			fils_indication->is_fils_sk_auth_supported;
+	fils_ind->is_fils_sk_auth_pfs_supported =
+			fils_indication->is_fils_sk_auth_pfs_supported;
+	fils_ind->is_pk_auth_supported =
+			fils_indication->is_pk_auth_supported;
+	if (fils_indication->is_cache_id_present) {
+		fils_ind->cache_identifier.is_present = true;
+		qdf_mem_copy(fils_ind->cache_identifier.identifier,
+				data, SIR_CACHE_IDENTIFIER_LEN);
+		data = data + SIR_CACHE_IDENTIFIER_LEN;
+	}
+	if (fils_indication->is_hessid_present) {
+		fils_ind->hessid.is_present = true;
+		qdf_mem_copy(fils_ind->hessid.hessid,
+				data, SIR_HESSID_LEN);
+		data = data + SIR_HESSID_LEN;
+	}
+	if (fils_indication->realm_identifiers_cnt) {
+		fils_ind->realm_identifier.is_present = true;
+		fils_ind->realm_identifier.realm_cnt =
+			fils_indication->realm_identifiers_cnt;
+		qdf_mem_copy(fils_ind->realm_identifier.realm,
+			data, fils_ind->realm_identifier.realm_cnt *
+					SIR_REALM_LEN);
+	}
+}
+#endif
+
 tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 					      uint8_t *pFrame,
 					      uint32_t nFrame,

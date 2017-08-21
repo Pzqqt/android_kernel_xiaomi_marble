@@ -5556,6 +5556,52 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * csr_update_bss_with_fils_data: Fill FILS params in bss desc from scan entry
+ * @mac_ctx: mac context
+ * @scan_entry: scan entry
+ * @bss_descr: bss description
+ */
+static void csr_update_bss_with_fils_data(tpAniSirGlobal mac_ctx,
+					  struct scan_cache_entry *scan_entry,
+					  tSirBssDescription *bss_descr)
+{
+	tDot11fIEfils_indication fils_indication;
+	struct sir_fils_indication fils_ind;
+
+	if (!scan_entry->ie_list.fils_indication)
+		return;
+
+	dot11f_unpack_ie_fils_indication(mac_ctx,
+				scan_entry->ie_list.fils_indication,
+				*(scan_entry->ie_list.fils_indication + 1),
+				&fils_indication, false);
+
+	update_fils_data(&fils_ind, &fils_indication);
+	if (fils_ind.realm_identifier.realm_cnt > SIR_MAX_REALM_COUNT)
+		fils_ind.realm_identifier.realm_cnt = SIR_MAX_REALM_COUNT;
+
+	bss_descr->fils_info_element.realm_cnt =
+		fils_ind.realm_identifier.realm_cnt;
+	qdf_mem_copy(bss_descr->fils_info_element.realm,
+			fils_ind.realm_identifier.realm,
+			bss_descr->fils_info_element.realm_cnt * SIR_REALM_LEN);
+	if (fils_ind.cache_identifier.is_present) {
+		bss_descr->fils_info_element.is_cache_id_present = true;
+		qdf_mem_copy(bss_descr->fils_info_element.cache_id,
+			fils_ind.cache_identifier.identifier, CACHE_ID_LEN);
+	}
+	if (fils_ind.is_fils_sk_auth_supported)
+		bss_descr->fils_info_element.is_fils_sk_supported = true;
+}
+#else
+static void csr_update_bss_with_fils_data(tpAniSirGlobal mac_ctx,
+					  struct scan_cache_entry *scan_entry,
+					  tSirBssDescription *bss_descr)
+{ }
+#endif
+
 static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 	struct scan_cache_entry *scan_entry,
 	tCsrScanResult **p_result)
@@ -5675,7 +5721,7 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 			bcn_ies->QBSSLoad.avail;
 	}
 #endif
-
+	csr_update_bss_with_fils_data(mac_ctx, scan_entry, bss_desc);
 	if (scan_entry->alt_wcn_ie.ptr) {
 		bss_desc->WscIeLen = scan_entry->alt_wcn_ie.len;
 		qdf_mem_copy(bss_desc->WscIeProbeRsp,

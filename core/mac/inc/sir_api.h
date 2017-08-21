@@ -117,6 +117,14 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define NUM_CHAINS_MAX  2
 
 #define MAX_RSSI_AVOID_BSSID_LIST    10
+
+/* Maximum number of realms present in fils indication element */
+#define SIR_MAX_REALM_COUNT 7
+/* Realm length */
+#define SIR_REALM_LEN 2
+/* Cache ID length */
+#define CACHE_ID_LEN 2
+
 /**
  * enum sir_conn_update_reason: Reason for conc connection update
  * @SIR_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
@@ -709,6 +717,24 @@ typedef struct sSirSmeStartBssReq {
 
 #define WSCIE_PROBE_RSP_LEN (317 + 2)
 
+#ifdef WLAN_FEATURE_FILS_SK
+/* struct fils_ind_elements: elements parsed from fils indication present
+ * in beacon/probe resp
+ * @realm_cnt: number of realm present
+ * @realm: realms
+ * @is_fils_sk_supported: if FILS SK supported
+ * @is_cache_id_present: if cache id present
+ * @cache_id: cache id
+ */
+struct fils_ind_elements {
+	uint16_t realm_cnt;
+	uint8_t realm[SIR_MAX_REALM_COUNT][SIR_REALM_LEN];
+	bool is_fils_sk_supported;
+	bool is_cache_id_present;
+	uint8_t cache_id[CACHE_ID_LEN];
+};
+#endif
+
 typedef struct sSirBssDescription {
 	/* offset of the ieFields from bssId. */
 	uint16_t length;
@@ -740,8 +766,6 @@ typedef struct sSirBssDescription {
 	/* To achieve 8-byte alignment with ESE enabled */
 	uint32_t reservedPadding5;
 #endif
-	/* Please keep the structure 4 bytes aligned above the ieFields */
-
 	/* whether it is from a probe rsp */
 	uint8_t fProbeRsp;
 	/* Actual channel the beacon/probe response was received on */
@@ -751,7 +775,10 @@ typedef struct sSirBssDescription {
 	uint8_t WscIeProbeRsp[WSCIE_PROBE_RSP_LEN];
 	uint8_t reservedPadding4;
 	uint32_t tsf_delta;
-
+#ifdef WLAN_FEATURE_FILS_SK
+	struct fils_ind_elements fils_info_element;
+#endif
+	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
 } tSirBssDescription, *tpSirBssDescription;
 
