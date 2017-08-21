@@ -96,11 +96,26 @@
 
 void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 {
+	struct dfs_precac_entry *tmp_precac_entry, *precac_entry;
+
 	dfs_get_override_precac_timeout(dfs,
 			&(dfs->dfs_precac_timeout_override));
 	qdf_timer_stop(&dfs->dfs_precac_timer);
 	dfs->dfs_precac_primary_freq = 0;
 	dfs->dfs_precac_secondary_freq = 0;
+
+	PRECAC_LIST_LOCK(dfs);
+	if (!TAILQ_EMPTY(&dfs->dfs_precac_nol_list))
+		TAILQ_FOREACH_SAFE(precac_entry,
+				&dfs->dfs_precac_nol_list,
+				pe_list,
+				tmp_precac_entry) {
+			qdf_timer_stop(&precac_entry->precac_nol_timer);
+			TAILQ_REMOVE(&dfs->dfs_precac_required_list,
+					precac_entry, pe_list);
+			qdf_mem_free(precac_entry);
+		}
+	PRECAC_LIST_UNLOCK(dfs);
 }
 
 int dfs_override_precac_timeout(struct wlan_dfs *dfs, int precac_timeout)
