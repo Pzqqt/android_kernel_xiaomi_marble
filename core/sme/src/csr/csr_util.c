@@ -2402,6 +2402,11 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
 	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
 #endif
+	/* fallthrough */
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+	case eCSR_AUTH_TYPE_FT_FILS_SHA256:
+	case eCSR_AUTH_TYPE_FT_FILS_SHA384:
 		fRSNProfile = true;
 		break;
 
@@ -3097,6 +3102,76 @@ static bool csr_is_auth_rsn8021x_sha256(tpAniSirGlobal pMac,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+/*
+ * csr_is_auth_fils_sha256() - check whether oui is fils sha256
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is FILS SHA256, false otherwise
+ */
+static bool csr_is_auth_fils_sha256(tpAniSirGlobal mac,
+					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+					uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match(mac, all_suites, suite_count,
+				csr_rsn_oui[ENUM_FILS_SHA256], oui);
+}
+
+/*
+ * csr_is_auth_fils_sha384() - check whether oui is fils sha384
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is FILS SHA384, false otherwise
+ */
+static bool csr_is_auth_fils_sha384(tpAniSirGlobal mac,
+					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+					uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match(mac, all_suites, suite_count,
+				csr_rsn_oui[ENUM_FILS_SHA384], oui);
+}
+
+/*
+ * csr_is_auth_fils_ft_sha256() - check whether oui is fils ft sha256
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is FT FILS SHA256, false otherwise
+ */
+static bool csr_is_auth_fils_ft_sha256(tpAniSirGlobal mac,
+					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+					uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match(mac, all_suites, suite_count,
+				csr_rsn_oui[ENUM_FT_FILS_SHA256], oui);
+}
+
+/*
+ * csr_is_auth_fils_ft_sha384() - check whether oui is fils ft sha384
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is FT FILS SHA384, false otherwise
+ */
+static bool csr_is_auth_fils_ft_sha384(tpAniSirGlobal mac,
+					uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+					uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match(mac, all_suites, suite_count,
+				csr_rsn_oui[ENUM_FT_FILS_SHA384], oui);
+}
+#endif
+
 static bool csr_is_auth_wpa(tpAniSirGlobal pMac,
 			    uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 			    uint8_t cAllSuites, uint8_t Oui[])
@@ -3153,6 +3228,66 @@ static uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
 
 	return OUIIndex;
 }
+
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * csr_is_fils_auth() - update negotiated auth if matches to FILS auth type
+ * @mac_ctx: pointer to mac context
+ * @authsuites: auth suites
+ * @c_auth_suites: auth suites count
+ * @authentication: authentication
+ * @auth_type: authentication type list
+ * @index: current counter
+ * @neg_authtype: pointer to negotiated auth
+ *
+ * Return: None
+ */
+static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
+	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
+	uint8_t authentication[], tCsrAuthList *auth_type,
+	uint8_t index, eCsrAuthType *neg_authtype)
+{
+	/*
+	 * TODO Always try with highest security
+	 * move this down once sha384 is validated
+	 */
+	if (csr_is_auth_fils_sha256(mac_ctx, authsuites,
+				c_auth_suites, authentication)) {
+		if (eCSR_AUTH_TYPE_FILS_SHA256 ==
+				auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_FILS_SHA256;
+	}
+	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+			csr_is_auth_fils_sha384(mac_ctx, authsuites,
+				c_auth_suites, authentication)) {
+		if (eCSR_AUTH_TYPE_FILS_SHA384 ==
+				auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_FILS_SHA384;
+	}
+	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+			csr_is_auth_fils_ft_sha256(mac_ctx, authsuites,
+				c_auth_suites, authentication)) {
+		if (eCSR_AUTH_TYPE_FT_FILS_SHA256 ==
+				auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_FT_FILS_SHA256;
+	}
+	if ((*neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+			csr_is_auth_fils_ft_sha384(mac_ctx, authsuites,
+				c_auth_suites, authentication)) {
+		if (eCSR_AUTH_TYPE_FT_FILS_SHA384 ==
+				auth_type->authType[index])
+			*neg_authtype = eCSR_AUTH_TYPE_FT_FILS_SHA384;
+	}
+	sme_debug("negotiated auth type is %d", *neg_authtype);
+}
+#else
+static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
+	uint8_t authsuites[][CSR_RSN_OUI_SIZE], uint8_t c_auth_suites,
+	uint8_t authentication[], tCsrAuthList *auth_type,
+	uint8_t index, eCsrAuthType *neg_authtype)
+{
+}
+#endif
 /**
  * csr_get_rsn_information() - to get RSN infomation
  * @hal: pointer to HAL
@@ -3237,8 +3372,12 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 		 * Ciphers are supported, Match authentication algorithm and
 		 * pick first matching authtype.
 		 */
+		/* Set FILS as first preference */
+		csr_is_fils_auth(mac_ctx, authsuites, c_auth_suites,
+			authentication, auth_type, i, &neg_authtype);
 		/* Changed the AKM suites according to order of preference */
-		if (csr_is_ft_auth_rsn(mac_ctx, authsuites,
+		if ((neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+				csr_is_ft_auth_rsn(mac_ctx, authsuites,
 					c_auth_suites, authentication)) {
 			if (eCSR_AUTH_TYPE_FT_RSN == auth_type->authType[i])
 				neg_authtype = eCSR_AUTH_TYPE_FT_RSN;
