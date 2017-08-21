@@ -7261,10 +7261,10 @@ int hdd_update_acs_timer_reason(hdd_adapter_t *adapter, uint8_t reason)
 	timer_context = (struct hdd_external_acs_timer_context *)
 			adapter->sessionCtx.ap.vendor_acs_timer.user_data;
 	timer_context->reason = reason;
-	qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
-				WLAN_VENDOR_ACS_WAIT_TIME);
-	/* Update config to application */
+	/* Update config to application and start the timer */
 	hdd_cfg80211_update_acs_config(adapter, reason);
+	qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
+		WLAN_VENDOR_ACS_WAIT_TIME);
 	hdd_notice("Updated ACS config to nl with reason %d", reason);
 
 	return 0;
