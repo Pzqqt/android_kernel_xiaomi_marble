@@ -696,7 +696,25 @@ void lim_update_obss_scanparams(tpPESession session,
 void lim_init_obss_params(tpAniSirGlobal mac_ctx, tpPESession session);
 #ifdef WLAN_FEATURE_HOST_ROAM
 uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx);
+/**
+ * lim_delete_timers_host_roam() - Delete timers used in host based roaming
+ * @mac_ctx: Global MAC context
+ *
+ * Delete reassoc and preauth timers
+ *
+ * Return: none
+ */
 void lim_delete_timers_host_roam(tpAniSirGlobal mac_ctx);
+/**
+ * lim_deactivate_timers_host_roam() - deactivate timers used in host based
+ * roaming
+ * @mac_ctx: Global MAC context
+ *
+ * Delete reassoc and preauth timers
+ *
+ * Return: none
+ */
+void lim_deactivate_timers_host_roam(tpAniSirGlobal mac_ctx);
 void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
 		uint32_t timer_id);
 #else
@@ -706,6 +724,7 @@ static inline uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 }
 static inline void lim_delete_timers_host_roam(tpAniSirGlobal mac_ctx)
 {}
+static inline void lim_deactivate_timers_host_roam(tpAniSirGlobal mac_ctx) {}
 static inline void lim_deactivate_and_change_timer_host_roam(
 		tpAniSirGlobal mac_ctx, uint32_t timer_id)
 {}

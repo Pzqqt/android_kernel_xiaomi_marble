@@ -375,10 +375,10 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	return TX_SUCCESS;
 
 err_timer:
+	lim_delete_timers_host_roam(pMac);
 	tx_timer_delete(&pMac->lim.limTimers.gLimDeauthAckTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimDisassocAckTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimRemainOnChannelTimer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimFTPreAuthRspTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimUpdateOlbcCacheTimer);
 	while (((int32_t)-- i) >= 0) {
 		tx_timer_delete(&pMac->lim.limTimers.gpLimCnfWaitTimer[i]);
@@ -386,7 +386,6 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimProbeAfterHBTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimAuthFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimAddtsRspTimer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimReassocFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.open_sys_auth_timer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimAssocFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimJoinFailureTimer);
