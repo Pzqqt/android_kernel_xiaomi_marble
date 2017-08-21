@@ -2194,6 +2194,8 @@ enum qca_wlan_epno_type {
  *@QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS
  *	Signed 32-bit value; 5GHz RSSI score bonus applied to all
  *	5GHz networks
+ *@QCA_WLAN_VENDOR_ATTR_PNO_CONFIG_REQUEST_ID
+ *	Unsigned 32-bit value, representing the PNO Request ID
  * @QCA_WLAN_VENDOR_ATTR_PNO_AFTER_LAST: After last
  * @QCA_WLAN_VENDOR_ATTR_PNO_MAX: max
  */
@@ -2224,6 +2226,7 @@ enum qca_wlan_vendor_attr_pno_config_params {
 	QCA_WLAN_VENDOR_ATTR_EPNO_SECURE_BONUS = 21,
 	QCA_WLAN_VENDOR_ATTR_EPNO_BAND5GHZ_BONUS = 22,
 
+	QCA_WLAN_VENDOR_ATTR_PNO_CONFIG_REQUEST_ID = 23,
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_PNO_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_PNO_MAX =
