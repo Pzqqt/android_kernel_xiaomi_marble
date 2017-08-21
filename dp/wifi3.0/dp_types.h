@@ -1164,6 +1164,9 @@ struct dp_vdev {
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	struct dp_tx_desc_pool_s *pool;
 #endif
+	/* AP BRIDGE enabled */
+	uint32_t ap_bridge_enabled;
+
 };
 
 

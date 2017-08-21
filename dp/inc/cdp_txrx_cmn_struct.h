@@ -516,6 +516,7 @@ struct cdp_soc_t {
  * @CDP_ENABLE_WDS: wds sta
  * @CDP_ENABLE_PROXYSTA: proxy sta
  * @CDP_UPDATE_TDLS_FLAGS: tdls link flags
+ * @CDP_ENABLE_AP_BRIDGE: set ap_bridging enable/disable
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -524,6 +525,7 @@ enum cdp_vdev_param_type {
 	CDP_ENABLE_PROXYSTA,
 	CDP_UPDATE_TDLS_FLAGS,
 	CDP_CFG_WDS_AGING_TIMER,
+	CDP_ENABLE_AP_BRIDGE,
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

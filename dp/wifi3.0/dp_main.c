@@ -4548,7 +4548,6 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 		enum cdp_vdev_param_type param, uint32_t val)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
-
 	switch (param) {
 	case CDP_ENABLE_WDS:
 		vdev->wds_enabled = val;
@@ -4572,6 +4571,12 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 			qdf_timer_mod(&vdev->pdev->soc->wds_aging_timer, val);
 
 		vdev->wds_aging_timer_val = val;
+		break;
+	case CDP_ENABLE_AP_BRIDGE:
+		if (wlan_op_mode_sta != vdev->opmode)
+			vdev->ap_bridge_enabled = val;
+		else
+			vdev->ap_bridge_enabled = false;
 		break;
 	default:
 		break;

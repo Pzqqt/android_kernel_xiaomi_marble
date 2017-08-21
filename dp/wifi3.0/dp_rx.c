@@ -42,6 +42,20 @@ static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 }
 #endif
 
+#ifdef CONFIG_WIN
+static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
+{
+	return vdev->ap_bridge_enabled;
+}
+#else
+static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
+{
+	if (vdev->opmode != wlan_op_mode_sta)
+		return true;
+	else
+		return false;
+}
+#endif
 /*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
@@ -1313,8 +1327,8 @@ done:
 						nbuf);
 
 			/* Intrabss-fwd */
-			if ((vdev->opmode != wlan_op_mode_sta) &&
-					!vdev->nawds_enabled)
+			if (dp_rx_check_ap_bridge(vdev) &&
+				!vdev->nawds_enabled)
 				if (dp_rx_intrabss_fwd(soc,
 							peer,
 							rx_tlv_hdr,
