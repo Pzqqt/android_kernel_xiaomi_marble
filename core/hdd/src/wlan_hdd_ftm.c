@@ -63,16 +63,16 @@
 #define ATH_XIOCTL_UNIFIED_UTF_CMD  0x1000
 #define ATH_XIOCTL_UNIFIED_UTF_RSP  0x1001
 #define MAX_UTF_LENGTH              1024
-typedef struct qcmbr_data_s {
+struct qcmbr_data {
 	unsigned int cmd;
 	unsigned int length;
 	unsigned char buf[MAX_UTF_LENGTH + 4];
 	unsigned int copy_to_user;
-} qcmbr_data_t;
-typedef struct qcmbr_queue_s {
+};
+struct qcmbr_queue {
 	unsigned char utf_buf[MAX_UTF_LENGTH + 4];
 	struct list_head list;
-} qcmbr_queue_t;
+};
 LIST_HEAD(qcmbr_queue_head);
 DEFINE_SPINLOCK(qcmbr_queue_lock);
 static void wlanqcmbr_mc_process_msg(void *message);
@@ -177,10 +177,10 @@ void hdd_ftm_mc_process_msg(void *message)
  * Return: 0 on success, non-zero on error
  */
 static int wlan_hdd_qcmbr_command(hdd_adapter_t *adapter,
-				  qcmbr_data_t *pqcmbr_data)
+				  struct qcmbr_data *pqcmbr_data)
 {
 	int ret = 0;
-	qcmbr_queue_t *qcmbr_buf = NULL;
+	struct qcmbr_queue *qcmbr_buf = NULL;
 
 	switch (pqcmbr_data->cmd) {
 	case ATH_XIOCTL_UNIFIED_UTF_CMD: {
@@ -205,7 +205,7 @@ static int wlan_hdd_qcmbr_command(hdd_adapter_t *adapter,
 		spin_lock_bh(&qcmbr_queue_lock);
 		if (!list_empty(&qcmbr_queue_head)) {
 			qcmbr_buf = list_first_entry(&qcmbr_queue_head,
-						     qcmbr_queue_t,
+						     struct qcmbr_queue,
 						     list);
 			list_del(&qcmbr_buf->list);
 			ret = 0;
@@ -239,10 +239,10 @@ static int wlan_hdd_qcmbr_command(hdd_adapter_t *adapter,
 static int wlan_hdd_qcmbr_compat_ioctl(hdd_adapter_t *adapter,
 				       struct ifreq *ifr)
 {
-	qcmbr_data_t *qcmbr_data;
+	struct qcmbr_data *qcmbr_data;
 	int ret = 0;
 
-	qcmbr_data = qdf_mem_malloc(sizeof(qcmbr_data_t));
+	qcmbr_data = qdf_mem_malloc(sizeof(*qcmbr_data));
 	if (qcmbr_data == NULL)
 		return -ENOMEM;
 
@@ -278,10 +278,10 @@ static int wlan_hdd_qcmbr_compat_ioctl(hdd_adapter_t *adapter,
  */
 static int wlan_hdd_qcmbr_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr)
 {
-	qcmbr_data_t *qcmbr_data;
+	struct qcmbr_data *qcmbr_data;
 	int ret = 0;
 
-	qcmbr_data = qdf_mem_malloc(sizeof(qcmbr_data_t));
+	qcmbr_data = qdf_mem_malloc(sizeof(*qcmbr_data));
 	if (qcmbr_data == NULL)
 		return -ENOMEM;
 
@@ -328,11 +328,11 @@ int wlan_hdd_qcmbr_unified_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr)
  */
 static void wlanqcmbr_mc_process_msg(void *message)
 {
-	qcmbr_queue_t *qcmbr_buf = NULL;
+	struct qcmbr_queue *qcmbr_buf = NULL;
 	uint32_t data_len;
 
 	data_len = *((uint32_t *) message) + sizeof(uint32_t);
-	qcmbr_buf = qdf_mem_malloc(sizeof(qcmbr_queue_t));
+	qcmbr_buf = qdf_mem_malloc(sizeof(*qcmbr_buf));
 	if (qcmbr_buf != NULL) {
 		memcpy(qcmbr_buf->utf_buf, message, data_len);
 		spin_lock_bh(&qcmbr_queue_lock);
