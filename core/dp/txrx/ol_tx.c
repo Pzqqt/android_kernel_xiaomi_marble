@@ -1029,9 +1029,11 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 	}
 	if (vdev->ll_pause.txq.depth) {
 		qdf_timer_stop(&vdev->ll_pause.timer);
-		qdf_timer_start(&vdev->ll_pause.timer,
+		if (!qdf_atomic_read(&vdev->delete.detaching)) {
+			qdf_timer_start(&vdev->ll_pause.timer,
 					OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
-		vdev->ll_pause.is_q_timer_on = true;
+			vdev->ll_pause.is_q_timer_on = true;
+		}
 		if (vdev->ll_pause.txq.depth >= vdev->ll_pause.max_q_depth)
 			vdev->ll_pause.q_overflow_cnt++;
 	}
@@ -1072,9 +1074,11 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 
 	if (start_timer) {
 		qdf_timer_stop(&vdev->ll_pause.timer);
-		qdf_timer_start(&vdev->ll_pause.timer,
+		if (!qdf_atomic_read(&vdev->delete.detaching)) {
+			qdf_timer_start(&vdev->ll_pause.timer,
 					OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
-		vdev->ll_pause.is_q_timer_on = true;
+			vdev->ll_pause.is_q_timer_on = true;
+		}
 	}
 	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 
@@ -1246,7 +1250,8 @@ void ol_tx_vdev_ll_pause_queue_send(void *context)
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)context;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 
-	if (pdev->tx_throttle.current_throttle_level != THROTTLE_LEVEL_0 &&
+	if (pdev &&
+	    pdev->tx_throttle.current_throttle_level != THROTTLE_LEVEL_0 &&
 	    pdev->tx_throttle.current_throttle_phase == THROTTLE_PHASE_OFF)
 		return;
 	ol_tx_vdev_ll_pause_queue_send_base(vdev);
