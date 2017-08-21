@@ -9823,18 +9823,6 @@ void sme_update_enable_ssr(tHalHandle hHal, bool enableSSR)
 	return;
 }
 
-QDF_STATUS sme_check_ch_in_band(tpAniSirGlobal mac_ctx, uint8_t start_ch,
-		uint8_t ch_cnt)
-{
-	uint8_t i;
-	for (i = 0; i < ch_cnt; i++) {
-		if (QDF_STATUS_SUCCESS != csr_is_valid_channel(mac_ctx,
-					(start_ch + i*4)))
-			return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
-}
-
 /*convert the ini value to the ENUM used in csr and MAC for CB state*/
 ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value)
 {

@@ -12602,6 +12602,8 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 	ePhyChanBondState eRet = PHY_SINGLE_CHANNEL_CENTERED;
 	uint8_t centerChn;
 	uint32_t ChannelBondingMode;
+	struct ch_params ch_params = {0};
+
 	if (WLAN_REG_IS_24GHZ_CH(primaryChn)) {
 		ChannelBondingMode =
 			pMac->roam.configParam.channelBondingMode24GHz;
@@ -12665,12 +12667,16 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 		break;
 	}
 
-	if ((PHY_SINGLE_CHANNEL_CENTERED != eRet) &&
-	    (QDF_STATUS_SUCCESS != sme_check_ch_in_band(pMac,
-							centerChn - 2, 2))) {
-		sme_err("Invalid center channel (%d), disable 40MHz mode",
-			centerChn);
-		eRet = PHY_SINGLE_CHANNEL_CENTERED;
+	if (PHY_SINGLE_CHANNEL_CENTERED != eRet) {
+		ch_params.ch_width = CH_WIDTH_MAX;
+
+		wlan_reg_set_channel_params(pMac->pdev, primaryChn,
+					    0, &ch_params);
+		if (ch_params.ch_width == CH_WIDTH_20MHZ) {
+			sme_err("40Mhz not supported for channel %d, continue with 20Mhz",
+				centerChn);
+			eRet = PHY_SINGLE_CHANNEL_CENTERED;
+		}
 	}
 	return eRet;
 }
