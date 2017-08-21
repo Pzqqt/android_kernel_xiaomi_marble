@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015, 2016-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -93,6 +93,31 @@ static inline uint32_t lim_get_u32(uint8_t *ptr)
 #else
 #error "Unknown combination of OS Type and endianess"
 #endif
+}
+
+/**
+ * lim_copy_u16_be()- This API copies a u16 value in buffer
+ * to network byte order
+ * @ptr: pointer to buffer
+ * @u16_val: value needs to be copied
+ *
+ * Return: None
+ */
+static inline void lim_copy_u16_be(uint8_t *ptr, uint16_t u16_val)
+{
+	ptr[0] = u16_val >> 8;
+	ptr[1] = u16_val & 0xff;
+}
+
+/**
+ * lim_copy_u16_be()- This API reads u16 value from network byte order buffer
+ * @ptr: pointer to buffer
+ *
+ * Return: 16bit value
+ */
+static inline uint16_t lim_get_u16_be(uint8_t *buf)
+{
+	return (buf[0] << 8) | buf[1];
 }
 
 tSirRetStatus lim_send_disassoc_frm_req_ser_des(tpAniSirGlobal mac_ctx,

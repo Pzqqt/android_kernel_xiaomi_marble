@@ -47,6 +47,7 @@
 #endif
 #include "wma_if.h"
 #include "wlan_reg_services_api.h"
+#include "lim_process_fils.h"
 
 static void lim_process_mlm_start_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
@@ -2296,6 +2297,7 @@ static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
 			auth_frame.authStatusCode = 0;
 			pe_warn("Retry Auth");
 			mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
+			lim_increase_fils_sequence_number(session_entry);
 			lim_send_auth_mgmt_frame(mac_ctx,
 				&auth_frame,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,

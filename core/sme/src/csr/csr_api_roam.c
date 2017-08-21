@@ -54,6 +54,7 @@
 #include "sme_nan_datapath.h"
 #include "pld_common.h"
 #include "wlan_reg_services_api.h"
+#include "qdf_crypto.h"
 #include <wlan_logging_sock_svc.h>
 #include "wlan_objmgr_psoc_obj.h"
 #include <wlan_scan_ucfg_api.h>
@@ -7493,6 +7494,38 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	return release_cmd;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+/*
+ * update_profile_fils_info: API to update FILS info from
+ * source profile to destination profile.
+ * @des_profile: pointer to destination profile
+ * @src_profile: pointer to souce profile
+ *
+ * Return: None
+ */
+static inline void update_profile_fils_info(tCsrRoamProfile *des_profile,
+					tCsrRoamProfile *src_profile)
+{
+	if (!src_profile->fils_con_info)
+		return;
+
+	if (src_profile->fils_con_info->is_fils_connection) {
+		des_profile->fils_con_info =
+			qdf_mem_malloc(sizeof(struct cds_fils_connection_info));
+		if (!des_profile->fils_con_info) {
+			sme_err("failed to allocate memory");
+			return;
+		}
+		qdf_mem_copy(des_profile->fils_con_info,
+			     src_profile->fils_con_info,
+			     sizeof(struct cds_fils_connection_info));
+	}
+}
+#else
+static inline void update_profile_fils_info(tCsrRoamProfile *des_profile,
+					tCsrRoamProfile *src_profile)
+{ }
+#endif
 QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 				 tCsrRoamProfile *pDstProfile,
 				 tCsrRoamProfile *pSrcProfile)
@@ -7664,6 +7697,9 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	}
 	qdf_mem_copy(&pDstProfile->addIeParams, &pSrcProfile->addIeParams,
 			sizeof(tSirAddIeParams));
+
+	update_profile_fils_info(pDstProfile, pSrcProfile);
+
 	if (pSrcProfile->supported_rates.numRates) {
 		qdf_mem_copy(pDstProfile->supported_rates.rate,
 				pSrcProfile->supported_rates.rate,
@@ -7943,6 +7979,27 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * csr_is_fils_connection() - API to check if FILS connection
+ * @profile: CSR Roam Profile
+ *
+ * Return: true, if fils connection, false otherwise
+ */
+static bool csr_is_fils_connection(tCsrRoamProfile *profile)
+{
+	if (!profile->fils_con_info)
+		return false;
+
+	return profile->fils_con_info->is_fils_connection;
+}
+#else
+static bool csr_is_fils_connection(tCsrRoamProfile *pProfile)
+{
+	return false;
+}
+#endif
+
 QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		tCsrRoamProfile *pProfile,
 		uint32_t *pRoamId)
@@ -7974,6 +8031,7 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	/* Initialize the count before proceeding with the Join requests */
 	pSession->join_bssid_count = 0;
+	pSession->is_fils_connection = csr_is_fils_connection(pProfile);
 	sme_debug(
 		"called  BSSType = %s (%d) authtype = %d  encryType = %d",
 		sme_bss_type_to_string(pProfile->BSSType),
@@ -10346,6 +10404,62 @@ QDF_STATUS csr_roam_set_key(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+/*
+ * csr_create_fils_realm_hash: API to create hash using realm
+ * @fils_con_info: fils connection info obtained from supplicant
+ * @tmp_hash: pointer to new hash
+ *
+ * Return: None
+ */
+static bool
+csr_create_fils_realm_hash(struct cds_fils_connection_info *fils_con_info,
+			   uint8_t *tmp_hash)
+{
+	uint8_t hash[SHA256_DIGEST_SIZE] = {0};
+	uint8_t *data[1];
+
+	if (!fils_con_info->realm_len)
+		return false;
+
+	data[0] = fils_con_info->realm;
+	qdf_get_hash(SHA256_CRYPTO_TYPE, 1, data,
+			&fils_con_info->realm_len, hash);
+	qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+				   hash, SHA256_DIGEST_SIZE);
+	qdf_mem_copy(tmp_hash, hash, 2);
+	return true;
+}
+
+/*
+ * csr_update_fils_scan_filter: update scan filter in case of fils session
+ * @scan_fltr: pointer to scan filer
+ * @profile: csr profile pointer
+ *
+ * Return: None
+ */
+static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
+				tCsrRoamProfile *profile)
+{
+	if (profile->fils_con_info &&
+	    profile->fils_con_info->is_fils_connection) {
+		uint8_t realm_hash[2];
+
+		sme_debug("creating realm based on fils info %d",
+			profile->fils_con_info->is_fils_connection);
+		scan_fltr->realm_check =  csr_create_fils_realm_hash(
+				profile->fils_con_info, realm_hash);
+		memcpy(scan_fltr->fils_realm, realm_hash,
+			sizeof(uint8_t) * 2);
+	}
+
+}
+#else
+static void csr_update_fils_scan_filter(tCsrScanResultFilter *scan_fltr,
+				tCsrRoamProfile *profile)
+{ }
+#endif
+
 /*
  * Prepare a filter base on a profile for parsing the scan results.
  * Upon successful return, caller MUST call csr_free_scan_filter on
@@ -10500,6 +10614,7 @@ csr_roam_prepare_filter_from_profile(tpAniSirGlobal mac_ctx,
 	scan_fltr->MFPCapable = profile->MFPCapable;
 #endif
 	scan_fltr->csrPersona = profile->csrPersona;
+	csr_update_fils_scan_filter(scan_fltr, profile);
 
 free_filter:
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -13813,11 +13928,12 @@ QDF_STATUS csr_roam_del_pmkid_from_cache(tpAniSirGlobal pMac,
 				pmksa->cache_id, CACHE_ID_LEN)))
 			fMatchFound = 1;
 
-		if (fMatchFound)
-			/* Clear this - the matched entry */
+		if (fMatchFound) {
+			/* Clear this - matched entry */
 			qdf_mem_zero(cached_pmksa,
 				     sizeof(tPmkidCacheInfo));
 			break;
+		}
 	}
 
 	if (Index == CSR_MAX_PMKID_ALLOWED && !fMatchFound) {
@@ -14241,6 +14357,34 @@ static inline void csr_set_mgmt_enc_type(tCsrRoamProfile *profile,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+/*
+ * csr_update_fils_connection_info: Copy fils connection info to join request
+ * @profile: pointer to profile
+ * @csr_join_req: csr join request
+ *
+ * Return: None
+ */
+static void csr_update_fils_connection_info(tCsrRoamProfile *profile,
+					tSirSmeJoinReq *csr_join_req)
+{
+	if (!profile->fils_con_info)
+		return;
+
+	if (profile->fils_con_info->is_fils_connection) {
+		qdf_mem_copy(&csr_join_req->fils_con_info,
+			     profile->fils_con_info,
+			     sizeof(struct cds_fils_connection_info));
+	} else {
+		qdf_mem_zero(&csr_join_req->fils_con_info,
+			     sizeof(struct cds_fils_connection_info));
+	}
+}
+#else
+static void csr_update_fils_connection_info(tCsrRoamProfile *profile,
+					tSirSmeJoinReq *csr_join_req)
+{ }
+#endif
 
 /**
  * The communication between HDD and LIM is thru mailbox (MB).
@@ -14912,7 +15056,7 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		qdf_mem_copy(&csr_join_req->bssDescription, pBssDescription,
 				pBssDescription->length +
 				sizeof(pBssDescription->length));
-
+		csr_update_fils_connection_info(pProfile, csr_join_req);
 		/*
 		 * conc_custom_rule1:
 		 * If SAP comes up first and STA comes up later then SAP

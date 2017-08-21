@@ -4277,6 +4277,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			wlan_hdd_scan_abort(adapter);
 
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
+		hdd_clear_fils_connection_info(adapter);
 
 #ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
@@ -4496,6 +4497,7 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 		}
 
+		hdd_clear_fils_connection_info(adapter);
 		if (adapter->device_mode == QDF_SAP_MODE) {
 			/*
 			 * If adapter is SAP, set session ID to invalid

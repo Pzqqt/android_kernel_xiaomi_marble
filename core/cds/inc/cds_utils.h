@@ -126,6 +126,15 @@ QDF_STATUS cds_rand_get_bytes(uint32_t handle, uint8_t *pbBuf,
 uint32_t cds_chan_to_freq(uint8_t chan);
 uint8_t cds_freq_to_chan(uint32_t freq);
 enum cds_band_type cds_chan_to_band(uint32_t chan);
+
+/**
+ * cds_upper_to_lower: API to convert upper case string into lower case
+ * @txt: input text
+ * @length: length of input string
+ *
+ * Return: None
+ */
+void cds_upper_to_lower(uint8_t *txt, uint32_t length);
 #ifdef WLAN_FEATURE_11W
 bool cds_is_mmie_valid(uint8_t *key, uint8_t *ipn,
 		       uint8_t *frm, uint8_t *efrm);

@@ -409,6 +409,10 @@ typedef struct tagCsrScanResultFilter {
 	struct sCsrChannel_ pcl_channels;
 	struct qdf_mac_addr bssid_hint;
 	enum tQDF_ADAPTER_MODE csrPersona;
+#ifdef WLAN_FEATURE_FILS_SK
+	bool realm_check;
+	uint8_t fils_realm[2];
+#endif
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
@@ -999,7 +1003,10 @@ typedef struct tagCsrRoamProfile {
 	bool do_not_roam;
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
-
+#ifdef WLAN_FEATURE_FILS_SK
+	bool fils_connection;
+	struct cds_fils_connection_info *fils_con_info;
+#endif
 } tCsrRoamProfile;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

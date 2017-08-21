@@ -5508,6 +5508,12 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 			pFilter->ChannelInfo.ChannelList,
 			filter->num_of_channels);
 
+	if (pFilter->realm_check) {
+		filter->fils_scan_filter.realm_check = true;
+		qdf_mem_copy(filter->fils_scan_filter.fils_realm,
+			pFilter->fils_realm, REAM_HASH_LEN);
+	}
+
 	filter->num_of_auth =
 		pFilter->authType.numEntries;
 	if (filter->num_of_auth > WLAN_NUM_OF_SUPPORT_AUTH_TYPE)
@@ -5590,7 +5596,8 @@ static void csr_update_bss_with_fils_data(tpAniSirGlobal mac_ctx,
 		return;
 
 	dot11f_unpack_ie_fils_indication(mac_ctx,
-				scan_entry->ie_list.fils_indication,
+				scan_entry->ie_list.fils_indication +
+				SIR_FILS_IND_ELEM_OFFSET,
 				*(scan_entry->ie_list.fils_indication + 1),
 				&fils_indication, false);
 

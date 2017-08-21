@@ -115,7 +115,7 @@ typedef struct sSirQCNIE {
 #define SIR_HESSID_LEN 6
 #define SIR_MAX_KEY_CNT 7
 #define SIR_MAX_KEY_LEN 48
-
+#define SIR_FILS_IND_ELEM_OFFSET 2
 /*
  * struct public_key_identifier: structure for public key identifier
  * present in fils indication element

@@ -4139,6 +4139,51 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 
 } /* End sir_convert_beacon_frame2_struct. */
 
+#ifdef WLAN_FEATURE_FILS_SK
+/* sir_update_auth_frame2_struct_fils_conf: API to update fils info from auth
+ * packet type 2
+ * @auth: auth packet pointer received from AP
+ * @auth_frame: data structure needs to be updated
+ *
+ * Return: None
+ */
+static void sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,
+				tpSirMacAuthFrameBody auth_frame)
+{
+	if (auth->AuthAlgo.algo != eSIR_FILS_SK_WITHOUT_PFS)
+		return;
+
+	if (auth->fils_assoc_delay_info.present)
+		auth_frame->assoc_delay_info =
+			auth->fils_assoc_delay_info.assoc_delay_info;
+
+	if (auth->fils_session.present)
+		qdf_mem_copy(auth_frame->session, auth->fils_session.session,
+			SIR_FILS_SESSION_LENGTH);
+
+	if (auth->fils_nonce.present)
+		qdf_mem_copy(auth_frame->nonce, auth->fils_nonce.nonce,
+			SIR_FILS_NONCE_LENGTH);
+
+	if (auth->fils_wrapped_data.present) {
+		qdf_mem_copy(auth_frame->wrapped_data,
+			auth->fils_wrapped_data.wrapped_data,
+			auth->fils_wrapped_data.num_wrapped_data);
+		auth_frame->wrapped_data_len =
+			auth->fils_wrapped_data.num_wrapped_data;
+	}
+	if (auth->RSNOpaque.present) {
+		qdf_mem_copy(auth_frame->rsn_ie.info, auth->RSNOpaque.data,
+			auth->RSNOpaque.num_data);
+		auth_frame->rsn_ie.length = auth->RSNOpaque.num_data;
+	}
+}
+#else
+static void sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,
+				tpSirMacAuthFrameBody auth_frame)
+{ }
+#endif
+
 tSirRetStatus
 sir_convert_auth_frame2_struct(tpAniSirGlobal pMac,
 			       uint8_t *pFrame,
@@ -4174,6 +4219,7 @@ sir_convert_auth_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(pAuth->challengeText, auth.ChallengeText.text,
 			     auth.ChallengeText.num_text);
 	}
+	sir_update_auth_frame2_struct_fils_conf(&auth, pAuth);
 
 	return eSIR_SUCCESS;
 

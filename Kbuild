@@ -109,6 +109,8 @@ ifeq ($(KERNEL_BUILD), 0)
 	#Flag to enable Fast Transition (11r) feature
 	CONFIG_QCOM_VOWIFI_11R := y
 
+	#Flag to enable FILS Feature (11ai)
+	CONFIG_WLAN_FEATURE_FILS := y
 	ifneq ($(CONFIG_QCA_CLD_WLAN),)
 		ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
 		#Flag to enable Protected Managment Frames (11w) feature
@@ -596,6 +598,10 @@ ifeq ($(CONFIG_QCOM_TDLS),y)
 MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_tdls.o
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_FILS),y)
+MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_fils.o
+endif
+
 ifeq ($(CONFIG_WLAN_FEATURE_NAN_DATAPATH), y)
 MAC_NDP_OBJS += $(MAC_SRC_DIR)/pe/nan/nan_datapath.o
 endif
@@ -792,6 +798,7 @@ QDF_OBJS := 	$(QDF_OBJ_DIR)/qdf_defer.o \
 		$(QDF_OBJ_DIR)/qdf_mem.o \
 		$(QDF_OBJ_DIR)/qdf_nbuf.o \
 		$(QDF_OBJ_DIR)/qdf_threads.o \
+		$(QDF_OBJ_DIR)/qdf_crypto.o \
 		$(QDF_OBJ_DIR)/qdf_trace.o
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
@@ -1622,6 +1629,10 @@ endif
 
 ifneq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_FILS),y)
+CDEFINES += -DWLAN_FEATURE_FILS_SK
 endif
 
 ifeq ($(CONFIG_CNSS), y)

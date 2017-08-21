@@ -2485,6 +2485,23 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 	pHddStaCtx->roam_info.deferKeyComplete = false;
 }
 
+#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+void hdd_clear_fils_connection_info(hdd_adapter_t *adapter)
+{
+	hdd_wext_state_t *wext_state;
+
+	if ((adapter->device_mode == QDF_SAP_MODE) ||
+	    (adapter->device_mode == QDF_P2P_GO_MODE))
+		return;
+
+	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	if (wext_state->roamProfile.fils_con_info) {
+		qdf_mem_free(wext_state->roamProfile.fils_con_info);
+		wext_state->roamProfile.fils_con_info = NULL;
+	}
+}
+#endif
+
 /**
  * hdd_association_completion_handler() - association completion handler
  * @pAdapter: pointer to adapter
@@ -5426,6 +5443,28 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4])
 	return cipher_type;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+/*
+ * hdd_is_fils_connection: API to determine if connection is FILS
+ * @adapter: hdd adapter
+ *
+ * Return: true if fils connection else false
+ */
+static inline bool hdd_is_fils_connection(hdd_adapter_t *adapter)
+{
+	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+
+	if (wext_state->roamProfile.fils_con_info)
+		return wext_state->roamProfile.
+			fils_con_info->is_fils_connection;
+}
+#else
+static inline bool hdd_is_fils_connection(hdd_adapter_t *adapter)
+{
+	return false;
+}
+#endif
+
 /**
  * hdd_process_genie() - process gen ie
  * @pAdapter: pointer to adapter
@@ -5617,23 +5656,33 @@ int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType)
 
 #ifdef WLAN_FEATURE_FILS_SK
 /**
- * hdd_is_rsn_is_fils() - This API checks whether a give auth type is FILS
+ * hdd_check_fils_rsn_n_set_auth_type() - This API checks whether a give
+ * auth type is fils if yes, sets it in profile.
  * @rsn_auth_type: auth type
  *
  * Return: true if FILS auth else false
  */
-static bool hdd_is_rsn_is_fils(eCsrAuthType rsn_auth_type)
+static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
+			    eCsrAuthType rsn_auth_type)
 {
+	bool is_fils_rsn = false;
+
+	if (!roam_profile->fils_con_info)
+		return false;
+
 	if ((rsn_auth_type == eCSR_AUTH_TYPE_FILS_SHA256) ||
 	   (rsn_auth_type == eCSR_AUTH_TYPE_FILS_SHA384) ||
 	   (rsn_auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA256) ||
 	   (rsn_auth_type == eCSR_AUTH_TYPE_FT_FILS_SHA384))
-		return true;
+		is_fils_rsn = true;
+	if (is_fils_rsn)
+		roam_profile->fils_con_info->akm_type = rsn_auth_type;
 
-	return false;
+	return is_fils_rsn;
 }
 #else
-static inline bool hdd_is_rsn_is_fils(eCsrAuthType rsn_auth_type)
+static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
+			    eCsrAuthType rsn_auth_type)
 {
 	return false;
 }
@@ -5736,10 +5785,13 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType)
 					eCSR_AUTH_TYPE_RSN_8021X_SHA256;
 			} else
 #endif
-			if (hdd_is_rsn_is_fils(RSNAuthType)) {
-				hdd_info("updated fils auth");
+			if (hdd_check_fils_rsn_n_set_auth_type(pRoamProfile,
+				RSNAuthType)) {
 				pRoamProfile->AuthType.authType[0] =
 					RSNAuthType;
+				hdd_info("updated profile authtype as %d",
+					RSNAuthType);
+
 			} else if ((pWextState->
 			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			    == IW_AUTH_KEY_MGMT_802_1X) {

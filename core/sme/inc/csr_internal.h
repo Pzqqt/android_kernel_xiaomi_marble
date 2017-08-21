@@ -968,6 +968,8 @@ typedef struct tagCsrRoamSession {
 	uint8_t uapsd_mask;
 	struct scan_cmd_info scan_info;
 	qdf_mc_timer_t roaming_offload_timer;
+	bool is_fils_connection;
+	uint16_t fils_seq_num;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {

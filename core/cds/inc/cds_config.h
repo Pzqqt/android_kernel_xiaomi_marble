@@ -164,4 +164,27 @@ struct cds_config_info {
 	bool auto_power_save_fail_mode;
 	uint8_t ito_repeat_count;
 };
+
+#ifdef WLAN_FEATURE_FILS_SK
+#define MAX_PMK_LEN 48
+#define FILS_MAX_KEYNAME_NAI_LENGTH 255
+#define FILS_MAX_REALM_LEN 255
+#define FILS_MAX_RRK_LENGTH 64
+
+struct cds_fils_connection_info {
+	bool is_fils_connection;
+	uint8_t keyname_nai[FILS_MAX_KEYNAME_NAI_LENGTH];
+	uint32_t key_nai_length;
+	uint16_t sequence_number;
+	uint8_t r_rk[FILS_MAX_RRK_LENGTH];
+	uint32_t r_rk_length;
+	uint8_t realm[FILS_MAX_REALM_LEN];
+	uint32_t realm_len;
+	uint8_t akm_type;
+	uint8_t auth_type;
+	uint8_t pmk[MAX_PMK_LEN];
+	uint8_t pmk_len;
+	uint8_t pmkid[16];
+};
+#endif
 #endif /* !defined( __CDS_CONFIG_H ) */

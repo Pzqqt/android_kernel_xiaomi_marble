@@ -1759,7 +1759,7 @@ static int hdd_update_reg_chan_info(hdd_adapter_t *adapter,
 		if (icv->flags & IEEE80211_CHAN_PASSIVE)
 			icv->flagext |= IEEE80211_CHAN_DFS;
 
-		hdd_info("freq %d flags %d flagext %d ieee %d maxreg %d maxpw %d minpw %d regClass %d antenna %d seg0 %d seg1 %d",
+		hdd_debug("freq %d flags %d flagext %d ieee %d maxreg %d maxpw %d minpw %d regClass %d antenna %d seg0 %d seg1 %d",
 			icv->freq, icv->flags,
 			icv->flagext, icv->ieee_chan_number,
 			icv->max_reg_power, icv->max_radio_power,
@@ -11688,6 +11688,17 @@ static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
 #endif
 
 #define WLAN_HDD_MAX_NUM_CSA_COUNTERS 2
+#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+static void wlan_hdd_cfg80211_set_wiphy_fils_feature(struct wiphy *wiphy)
+{
+	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_FILS_SK_OFFLOAD);
+}
+#else
+static void wlan_hdd_cfg80211_set_wiphy_fils_feature(struct wiphy *wiphy)
+{
+}
+#endif
+
 /*
  * FUNCTION: wlan_hdd_cfg80211_init
  * This function is called by hdd_wlan_startup()
@@ -11741,6 +11752,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_VHT_IBSS);
 #endif
+	wlan_hdd_cfg80211_set_wiphy_fils_feature(wiphy);
 
 	hdd_config_sched_scan_plans_to_wiphy(wiphy, pCfg);
 
@@ -14978,7 +14990,12 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_CCKM_WPA;
 		break;
 #endif
-
+#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+	case NL80211_AUTHTYPE_FILS_SK:
+		hdd_notice("set authentication type to FILS SHARED");
+		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		break;
+#endif
 	default:
 		hdd_err("Unsupported authentication type: %d", auth_type);
 		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_UNKNOWN;
@@ -14989,6 +15006,36 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 		pHddStaCtx->conn_info.authType;
 	return 0;
 }
+
+#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+/**
+ * hdd_validate_fils_info_ptr() - check fils info for FILS AKMs
+ * @wext_state:     wext state pointer
+ * @fils_akm_check: boolean to update whether
+ *                  fils info is present or not
+ *
+ * Return: None
+ */
+static void hdd_validate_fils_info_ptr(hdd_wext_state_t *wext_state,
+				       bool *fils_akm_check)
+{
+	struct cds_fils_connection_info *fils_con_info;
+
+	fils_con_info = wext_state->roamProfile.fils_con_info;
+	if (!fils_con_info) {
+		hdd_debug("No valid Roam profile");
+		*fils_akm_check = false;
+	}
+
+	*fils_akm_check = true;
+}
+#else
+static void hdd_validate_fils_info_ptr(hdd_wext_state_t *wext_state,
+				       bool *fils_akm_check)
+{
+	*fils_akm_check = true;
+}
+#endif
 
 /**
  * wlan_hdd_set_akm_suite() - set key management type
@@ -15002,6 +15049,11 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 static int wlan_hdd_set_akm_suite(hdd_adapter_t *pAdapter, u32 key_mgmt)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	tCsrRoamProfile *roam_profile;
+	bool fils_akm_check;
+
+	roam_profile = &pWextState->roamProfile;
+	hdd_validate_fils_info_ptr(pWextState, &fils_akm_check);
 
 #ifndef WLAN_AKM_SUITE_8021X_SHA256
 #define WLAN_AKM_SUITE_8021X_SHA256 0x000FAC05
@@ -15041,10 +15093,39 @@ static int wlan_hdd_set_akm_suite(hdd_adapter_t *pAdapter, u32 key_mgmt)
 		break;
 #ifdef WLAN_FEATURE_FILS_SK
 	case WLAN_AKM_SUITE_FILS_SHA256:
-	case WLAN_AKM_SUITE_FILS_SHA384:
-	case WLAN_AKM_SUITE_FT_FILS_SHA256:
-	case WLAN_AKM_SUITE_FT_FILS_SHA384:
+		if (!fils_akm_check)
+			return -EINVAL;
+
+		hdd_debug("setting key mgmt type to FILS SHA256");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		roam_profile->fils_con_info->akm_type =
+			eCSR_AUTH_TYPE_FILS_SHA256;
+		break;
+
+	case WLAN_AKM_SUITE_FILS_SHA384:
+		if (!fils_akm_check)
+			return -EINVAL;
+		hdd_debug("setting key mgmt type to FILS SH384");
+		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		roam_profile->fils_con_info->akm_type =
+			eCSR_AUTH_TYPE_FILS_SHA384;
+		break;
+
+	case WLAN_AKM_SUITE_FT_FILS_SHA256:
+		if (!fils_akm_check)
+			return -EINVAL;
+		hdd_debug("setting key mgmt type to FILS FT SH256");
+		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		roam_profile->fils_con_info->akm_type =
+			eCSR_AUTH_TYPE_FT_FILS_SHA256;
+		break;
+
+	case WLAN_AKM_SUITE_FT_FILS_SHA384:
+		if (!fils_akm_check)
+			return -EINVAL;
+		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
+		roam_profile->fils_con_info->akm_type =
+			eCSR_AUTH_TYPE_FT_FILS_SHA384;
 		break;
 #endif
 	default:
@@ -15520,6 +15601,115 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
 	return false;
 }
 
+#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+/**
+ * wlan_hdd_get_fils_auth_type() - API to get FILS auth type
+ * @auth: enum of auth type
+ *
+ * This API converts nl80211 FILS auth type to driver specific
+ * auth type enum
+ *
+ * Return: FILS auth type
+ */
+static int wlan_hdd_get_fils_auth_type(enum nl80211_auth_type auth)
+{
+	switch (auth) {
+	case NL80211_AUTHTYPE_FILS_SK:
+		return eSIR_FILS_SK_WITHOUT_PFS;
+	case NL80211_AUTHTYPE_FILS_SK_PFS:
+		return eSIR_FILS_SK_WITH_PFS;
+	case NL80211_AUTHTYPE_FILS_PK:
+		return eSIR_FILS_PK_AUTH;
+	default:
+		return -EINVAL;
+	}
+}
+
+/**
+ * wlan_hdd_cfg80211_set_fils_config() - set fils config params during connect
+ * @adapter: Pointer to adapter
+ * @req: Pointer to fils parameters
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int wlan_hdd_cfg80211_set_fils_config(hdd_adapter_t *adapter,
+					 struct cfg80211_connect_params *req)
+{
+	hdd_wext_state_t *wext_state;
+	tCsrRoamProfile *roam_profile;
+	int auth_type;
+	uint8_t *buf;
+
+	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	roam_profile = &wext_state->roamProfile;
+
+	hdd_clear_fils_connection_info(adapter);
+	roam_profile->fils_con_info =
+		qdf_mem_malloc(sizeof(struct cds_fils_connection_info));
+
+	if (!roam_profile->fils_con_info) {
+		hdd_err("failed to allocate memory");
+		return -EINVAL;
+	}
+
+	if (req->auth_type != NL80211_AUTHTYPE_FILS_SK) {
+		roam_profile->fils_con_info->is_fils_connection = false;
+		return 0;
+	}
+
+	roam_profile->fils_con_info->is_fils_connection = true;
+	roam_profile->fils_con_info->sequence_number =
+		req->fils_erp_next_seq_num;
+	auth_type = wlan_hdd_get_fils_auth_type(req->auth_type);
+	if (auth_type < 0) {
+		hdd_err("invalid auth type for fils %d", req->auth_type);
+		return -EINVAL;
+	}
+	roam_profile->fils_con_info->auth_type = auth_type;
+
+	roam_profile->fils_con_info->r_rk_length =
+			req->fils_erp_rrk_len;
+	if (req->fils_erp_rrk_len)
+		qdf_mem_copy(roam_profile->fils_con_info->r_rk,
+			req->fils_erp_rrk,
+			roam_profile->fils_con_info->r_rk_length);
+
+	roam_profile->fils_con_info->realm_len = req->fils_erp_realm_len;
+	if (req->fils_erp_realm_len)
+		qdf_mem_copy(roam_profile->fils_con_info->realm,
+			req->fils_erp_realm,
+			roam_profile->fils_con_info->realm_len);
+
+	roam_profile->fils_con_info->key_nai_length =
+		req->fils_erp_username_len + sizeof(char) +
+				req->fils_erp_realm_len;
+	if (req->fils_erp_username_len) {
+		buf = roam_profile->fils_con_info->keyname_nai;
+		qdf_mem_copy(buf,
+			req->fils_erp_username,
+			req->fils_erp_username_len);
+		buf += req->fils_erp_username_len;
+		qdf_mem_copy(buf, "@", sizeof(char));
+		buf += sizeof(char);
+		qdf_mem_copy(buf, req->fils_erp_realm,
+			req->fils_erp_realm_len);
+	}
+	hdd_debug("fils connection seq=%d auth=%d user_len=%zu rrk_len=%zu realm_len=%zu keyname nai len %d\n",
+		req->fils_erp_next_seq_num, req->auth_type,
+		req->fils_erp_username_len, req->fils_erp_rrk_len,
+		req->fils_erp_realm_len,
+		roam_profile->fils_con_info->key_nai_length);
+
+	return 0;
+}
+#else
+static int wlan_hdd_cfg80211_set_fils_config(hdd_adapter_t *adapter,
+					 struct cfg80211_connect_params *req)
+{
+	return 0;
+}
+#endif
+
 /**
  * wlan_hdd_cfg80211_set_privacy() - set security parameters during connection
  * @pAdapter: Pointer to adapter
@@ -15549,6 +15739,9 @@ static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
 
 	/*set authentication type */
 	status = wlan_hdd_cfg80211_set_auth_type(pAdapter, req->auth_type);
+
+	/* Parase extra info from connect request */
+	status = wlan_hdd_cfg80211_set_fils_config(pAdapter, req);
 
 	if (0 > status) {
 		hdd_err("Failed to set authentication type");
@@ -17309,7 +17502,7 @@ static void hdd_fill_pmksa_info(tPmkidCacheInfo *pmk_cache,
 		qdf_mem_copy(pmk_cache->pmk, pmksa->pmk, pmksa->pmk_len);
 		pmk_cache->pmk_len = pmksa->pmk_len;
 	} else
-		hdd_info("pmk len is %zu", pmksa->pmk_len);
+		hdd_debug("pmk len is %zu", pmksa->pmk_len);
 }
 #else
 /*

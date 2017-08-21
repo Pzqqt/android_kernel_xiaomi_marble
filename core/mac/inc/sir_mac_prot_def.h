@@ -39,6 +39,7 @@
 #include "cds_api.h"
 #include "sir_types.h"
 #include "wni_cfg.h"
+#include <lim_fils_defs.h>
 
 /* /Capability information related */
 #define CAPABILITY_INFO_DELAYED_BA_BIT 14
@@ -1955,6 +1956,14 @@ typedef struct sSirMacAuthFrameBody {
 	uint8_t type;           /* = SIR_MAC_CHALLENGE_TEXT_EID */
 	uint8_t length;         /* = SIR_MAC_AUTH_CHALLENGE_LENGTH */
 	uint8_t challengeText[SIR_MAC_AUTH_CHALLENGE_LENGTH];
+#ifdef WLAN_FEATURE_FILS_SK
+	tSirMacRsnInfo rsn_ie;
+	uint8_t assoc_delay_info;
+	uint8_t session[SIR_FILS_SESSION_LENGTH];
+	uint8_t wrapped_data_len;
+	uint8_t wrapped_data[SIR_FILS_WRAPPED_DATA_MAX_SIZE];
+	uint8_t nonce[SIR_FILS_NONCE_LENGTH];
+#endif
 } qdf_packed tSirMacAuthFrameBody, *tpSirMacAuthFrameBody;
 
 typedef struct sSirMacAuthenticationFrame {

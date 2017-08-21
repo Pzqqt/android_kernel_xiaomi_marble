@@ -267,6 +267,86 @@ pe_init_pmf_comeback_timer(tpAniSirGlobal mac_ctx,
 }
 #endif
 
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * pe_delete_fils_info: API to delete fils session info
+ * @session: pe session
+ *
+ * Return: void
+ */
+static void pe_delete_fils_info(tpPESession session)
+{
+	struct pe_fils_session *fils_info;
+
+	if (!session || (session && !session->valid)) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			  FL("session is not valid"));
+		return;
+	}
+	fils_info = session->fils_info;
+	if (!fils_info) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			  FL("fils info not found"));
+		return;
+	}
+	if (fils_info->keyname_nai_data)
+		qdf_mem_free(fils_info->keyname_nai_data);
+	if (fils_info->fils_erp_reauth_pkt)
+		qdf_mem_free(fils_info->fils_erp_reauth_pkt);
+	if (fils_info->fils_r_rk)
+		qdf_mem_free(fils_info->fils_r_rk);
+	if (fils_info->fils_r_ik)
+		qdf_mem_free(fils_info->fils_r_ik);
+	if (fils_info->fils_eap_finish_pkt)
+		qdf_mem_free(fils_info->fils_eap_finish_pkt);
+	if (fils_info->fils_rmsk)
+		qdf_mem_free(fils_info->fils_rmsk);
+	if (fils_info->fils_pmk)
+		qdf_mem_free(fils_info->fils_pmk);
+	if (fils_info->auth_info.keyname)
+		qdf_mem_free(fils_info->auth_info.keyname);
+	if (fils_info->auth_info.domain_name)
+		qdf_mem_free(fils_info->auth_info.domain_name);
+	qdf_mem_free(fils_info);
+	session->fils_info = NULL;
+}
+/**
+ * pe_init_fils_info: API to initialize fils session info elements to null
+ * @session: pe session
+ *
+ * Return: void
+ */
+static void pe_init_fils_info(tpPESession session)
+{
+	struct pe_fils_session *fils_info;
+
+	if (!session || (session && !session->valid)) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			  FL("session is not valid"));
+		return;
+	}
+	session->fils_info = qdf_mem_malloc(sizeof(struct pe_fils_session));
+	fils_info = session->fils_info;
+	if (!fils_info) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			  FL("fils info not found"));
+		return;
+	}
+	fils_info->keyname_nai_data = NULL;
+	fils_info->fils_erp_reauth_pkt = NULL;
+	fils_info->fils_r_rk = NULL;
+	fils_info->fils_r_ik = NULL;
+	fils_info->fils_eap_finish_pkt = NULL;
+	fils_info->fils_rmsk = NULL;
+	fils_info->fils_pmk = NULL;
+	fils_info->auth_info.keyname = NULL;
+	fils_info->auth_info.domain_name = NULL;
+}
+#else
+static void pe_delete_fils_info(tpPESession session) { }
+static void pe_init_fils_info(tpPESession session) { }
+#endif
+
 /**
  * lim_get_peer_idxpool_size: get number of peer idx pool size
  * @num_sta: Max number of STA
@@ -454,6 +534,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		if (status != QDF_STATUS_SUCCESS)
 			pe_err("cannot create or start protectionFieldsResetTimer");
 	}
+	pe_init_fils_info(session_ptr);
 	pe_init_pmf_comeback_timer(pMac, session_ptr, *sessionId);
 	session_ptr->ht_client_cnt = 0;
 
@@ -746,6 +827,7 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		qdf_mc_timer_stop(&session->pmfComebackTimer);
 	qdf_mc_timer_destroy(&session->pmfComebackTimer);
 #endif
+	pe_delete_fils_info(session);
 	session->valid = false;
 
 	if (session->access_policy_vendor_ie)

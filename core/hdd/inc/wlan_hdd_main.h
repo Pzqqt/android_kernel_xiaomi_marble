@@ -2637,4 +2637,17 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 int hdd_get_rssi_snr_by_bssid(hdd_adapter_t *adapter, const uint8_t *bssid,
 			      int8_t *rssi, int8_t *snr);
 
+#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+/**
+ * hdd_clear_fils_connection_info: API to clear fils info from roam profile and
+ * free allocated memory
+ * @adapter: pointer to hdd adapter
+ *
+ * Return: None
+ */
+void hdd_clear_fils_connection_info(hdd_adapter_t *adapter);
+#else
+static inline void hdd_clear_fils_connection_info(hdd_adapter_t *adapter)
+{ }
+#endif
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

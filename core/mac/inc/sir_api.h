@@ -67,6 +67,8 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #define SIR_MDIE_ELEMENT_ID         54
 #define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */
 
+#define SIR_MAX_ELEMENT_ID         255
+
 /* Increase dwell time for P2P search in ms */
 #define P2P_SEARCH_DWELL_TIME_INCREASE   20
 #define P2P_SOCIAL_CHANNELS              3
@@ -1226,6 +1228,10 @@ typedef struct sSirSmeJoinReq {
 	tSirMacPowerCapInfo powerCap;
 	tSirSupChnl supportedChannels;
 	bool enable_bcast_probe_rsp;
+#ifdef WLAN_FEATURE_FILS_SK
+	struct cds_fils_connection_info fils_con_info;
+#endif
+	/* Pls make this as last variable in struct */
 	tSirBssDescription bssDescription;
 	/*
 	 * WARNING: Pls make bssDescription as last variable in struct
