@@ -2171,6 +2171,28 @@ static int wma_flush_complete_evt_handler(void *handle,
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * wma_unified_phyerr_rx_event_handler() - phyerr event handler
+ * @handle: wma handle
+ * @data: data buffer
+ * @datalen: buffer length
+ *
+ * WMI Handler for WMI_PHYERR_EVENTID event from firmware.
+ * This handler is currently handling DFS and spectral scan
+ * phy errors.
+ *
+ * Return: 0 for success, other value for failure
+ */
+static int wma_unified_phyerr_rx_event_handler(void *handle,
+		uint8_t *data, uint32_t datalen) {
+	/* phyerr handling is moved to cmn project
+	 * As WIN still uses handler registration in non-cmn code.
+	 * need complete testing of non offloaded DFS code before we enable
+	 * it in cmn code.
+	 **/
+	return QDF_STATUS_SUCCESS;
+}
+
 void wma_vdev_init(struct wma_txrx_node *vdev)
 {
 	qdf_wake_lock_create(&vdev->vdev_start_wakelock, "vdev_start");
@@ -2700,6 +2722,11 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Failed to register wma cb with Policy Manager");
 	}
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+			WMI_PHYERR_EVENTID,
+			wma_unified_phyerr_rx_event_handler,
+			WMA_RX_WORK_CTX);
 
 	return QDF_STATUS_SUCCESS;
 
