@@ -320,6 +320,16 @@ typedef void (*ol_txrx_tx_flow_control_fp)(void *osif_dev,
 typedef QDF_STATUS(*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdu_list);
 
 /**
+ * ol_txrx_get_key_fp - function to gey key based on keyix and peer
+ * mac address
+ * @osif_dev - the virtual device's OS shim object
+ * @key_buf - pointer to store key
+ * @mac_addr - pointer to mac address
+ * @keyix - key id
+ */
+typedef QDF_STATUS(*ol_txrx_get_key_fp)(void *osif_dev, uint8_t *key_buf, uint8_t *mac_addr, uint8_t keyix);
+
+/**
  * ol_txrx_rsim_rx_decap_fp - raw mode simulation function to decap the
  * packets in receive path.
  * @osif_dev  - the virtual device's OS shim object
@@ -418,6 +428,8 @@ typedef void (*ol_txrx_stats_callback)(void *ctxt,
  * header added before the MPDU contents.
  * @proxy_arp - proxy arp function pointer - specified by
  * OS shim, stored by txrx
+ * @get_key - function pointer to get key of the peer with
+ * specific key index
  */
 struct ol_txrx_ops {
 	/* tx function pointers - specified by txrx, stored by OS shim */
@@ -437,6 +449,8 @@ struct ol_txrx_ops {
 	/* proxy arp function pointer - specified by OS shim, stored by txrx */
 	ol_txrx_proxy_arp_fp      proxy_arp;
 	ol_txrx_mcast_me_fp          me_convert;
+
+	ol_txrx_get_key_fp  get_key;
 };
 
 /**
