@@ -595,7 +595,7 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 		(le16toh(*(uint16_t *)hdr->i_seq) >> WLAN_SEQ_SEQ_SHIFT);
 
 	scan_entry->rssi_raw = rx_param->rssi;
-	scan_entry->avg_rssi = WLAN_RSSI_DUMMY_MARKER;
+	scan_entry->avg_rssi = WLAN_RSSI_IN(scan_entry->rssi_raw);
 	scan_entry->tsf_delta = rx_param->tsf_delta;
 
 	/* store jiffies */

@@ -425,12 +425,12 @@ static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
 		/* If elapsed time since last rssi update for this
 		 * entry is smaller than a thresold, calculate a
 		 * running average of the RSSI values.
-		 * Otherwise last RSSI is more representive of the
-		 * signal strength.
+		 * Otherwise new frames RSSI is more representive
+		 * of the signal strength.
 		 */
 		time_gap =
-			scan_entry->rssi_timestamp -
-			scan_params->rssi_timestamp;
+			scan_params->scan_entry_time -
+			scan_entry->rssi_timestamp;
 		if (time_gap > WLAN_RSSI_AVERAGING_TIME)
 			scan_params->avg_rssi =
 				WLAN_RSSI_IN(scan_params->rssi_raw);
