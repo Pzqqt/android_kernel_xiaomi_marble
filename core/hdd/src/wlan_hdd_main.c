@@ -6364,6 +6364,9 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
+	if (hdd_ctx->isWiphySuspended)
+		goto restart_timer;
+
 	for (status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	     NULL != adapterNode && QDF_STATUS_SUCCESS == status;
 	     status =
@@ -6447,6 +6450,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	hdd_ipa_set_perf_level(hdd_ctx, tx_packets, rx_packets);
 	hdd_ipa_uc_stat_request(adapter, 2);
 
+restart_timer:
 	/* ensure periodic timer should still be running before restarting it */
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	if (hdd_ctx->bus_bw_timer_running)
