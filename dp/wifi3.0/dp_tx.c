@@ -207,8 +207,6 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	uint8_t *hdr = NULL;
 
-	qdf_nbuf_unshare(nbuf);
-
 	HTT_TX_TCL_METADATA_VALID_HTT_SET(vdev->htt_tcl_metadata, 1);
 
 	/*
@@ -221,6 +219,12 @@ static uint8_t dp_tx_prepare_htt_metadata(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 		/* Fill and add HTT metaheader */
 		hdr = qdf_nbuf_push_head(nbuf, htt_desc_size_aligned);
+		if (hdr == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"Error in filling HTT metadata\n");
+
+			return 0;
+		}
 		qdf_mem_copy(hdr, desc_ext, htt_desc_size);
 
 	} else if (vdev->opmode == wlan_op_mode_ocb) {
@@ -543,7 +547,12 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 * start of data through pkt_offset
 	 */
 	align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
-	qdf_nbuf_push_head(nbuf, align_pad);
+	if (qdf_nbuf_push_head(nbuf, align_pad) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_push_head failed\n");
+		goto failure;
+	}
+
 	tx_desc->pkt_offset = align_pad;
 
 	/*
@@ -579,6 +588,8 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 				(vdev->opmode == wlan_op_mode_ocb))) {
 		htt_hdr_size = dp_tx_prepare_htt_metadata(vdev, nbuf,
 				meta_data);
+		if (htt_hdr_size == 0)
+			goto failure;
 		tx_desc->pkt_offset += htt_hdr_size;
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		is_exception = 1;
@@ -1251,15 +1262,23 @@ static qdf_nbuf_t dp_tx_prepare_sg(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  * @nbuf: skb
  * @msdu_info: MSDU info to be setup in MSDU descriptor and MSDU extension desc.
  *
- * Return: void
+ * Return: NULL on failure,
+ *         nbuf when extracted successfully
  */
 static
-void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				struct dp_tx_msdu_info_s *msdu_info)
 {
 	struct meta_hdr_s *mhdr;
 	struct htt_tx_msdu_desc_ext2_t *meta_data =
 				(struct htt_tx_msdu_desc_ext2_t *)&msdu_info->meta_data[0];
+
+	nbuf = qdf_nbuf_unshare(nbuf);
+	if (nbuf == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_unshare failed\n");
+		return nbuf;
+	}
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
 
@@ -1296,7 +1315,12 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	meta_data->valid_key_flags = 1;
 	meta_data->key_flags = (mhdr->keyix & 0x3);
 
-	qdf_nbuf_pull_head(nbuf, sizeof(struct meta_hdr_s));
+	if (qdf_nbuf_pull_head(nbuf, sizeof(struct meta_hdr_s)) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_pull_head failed\n");
+		qdf_nbuf_free(nbuf);
+		return NULL;
+	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s , Meta hdr %0x %0x %0x %0x %0x\n",
@@ -1306,13 +1330,14 @@ void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			msdu_info->meta_data[3],
 			msdu_info->meta_data[4]);
 
-	return;
+	return nbuf;
 }
 #else
 static
-void dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
+qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				struct dp_tx_msdu_info_s *msdu_info)
 {
+	return nbuf;
 }
 
 #endif
@@ -1379,6 +1404,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	struct dp_tx_seg_info_s seg_info;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
 	uint16_t peer_id = HTT_INVALID_PEER;
+	qdf_nbuf_t nbuf_mesh = NULL;
+
 	qdf_mem_set(&msdu_info, sizeof(msdu_info), 0x0);
 	qdf_mem_set(&seg_info, sizeof(seg_info), 0x0);
 
@@ -1394,8 +1421,16 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	msdu_info.tid = HTT_TX_EXT_TID_INVALID;
 	DP_STATS_INC_PKT(vdev, tx_i.rcvd, 1, qdf_nbuf_len(nbuf));
 
-	if (qdf_unlikely(vdev->mesh_vdev))
-		dp_tx_extract_mesh_meta_data(vdev, nbuf, &msdu_info);
+	if (qdf_unlikely(vdev->mesh_vdev)) {
+		nbuf_mesh = dp_tx_extract_mesh_meta_data(vdev, nbuf,
+								&msdu_info);
+		if (nbuf_mesh == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"Extracting mesh metadata failed\n");
+			return nbuf;
+		}
+		nbuf = nbuf_mesh;
+	}
 
 	/*
 	 * Get HW Queue to use for this frame.
@@ -1799,9 +1834,19 @@ void dp_tx_comp_fill_tx_completion_stats(struct dp_tx_desc_s *tx_desc,
 	qdf_nbuf_t netbuf = tx_desc->nbuf;
 
 	if (!tx_desc->msdu_ext_desc) {
-		qdf_nbuf_pull_head(netbuf, tx_desc->pkt_offset);
+		if (qdf_nbuf_pull_head(netbuf, tx_desc->pkt_offset) == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"netbuf %p offset %d\n",
+				netbuf, tx_desc->pkt_offset);
+			return;
+		}
 	}
-	qdf_nbuf_push_head(netbuf, sizeof(struct meta_hdr_s));
+	if (qdf_nbuf_push_head(netbuf, sizeof(struct meta_hdr_s)) == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"netbuf %p offset %d\n", netbuf,
+			sizeof(struct meta_hdr_s));
+		return;
+	}
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(netbuf);
 	mhdr->rssi = ts->ack_frame_rssi;
