@@ -761,10 +761,14 @@ int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 	status = htc_connect_service(pdev->htc_pdev, &connect, &response);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		if (!cds_is_fw_down())
-			QDF_BUG(0);
+		if (cds_is_fw_down())
+			return -EIO;
 
-		return -EIO;       /* failure */
+		if (status == QDF_STATUS_E_NOMEM ||
+		    cds_is_self_recovery_enabled())
+			return qdf_status_to_os_return(status);
+
+		QDF_BUG(0);
 	}
 
 	htt_update_endpoint(pdev, service_id, response.Endpoint);
