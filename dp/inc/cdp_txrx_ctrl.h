@@ -478,4 +478,21 @@ cdp_get_sec_type(ol_txrx_soc_handle soc, struct cdp_peer *peer, uint8_t sec_idx)
 	return A_ERROR;
 
 }
+
+/**
+  * cdp_set_mgmt_tx_power(): function to set tx power for mgmt frames
+  * @vdev_handle: vdev handle
+  * @subtype_index: subtype
+  * @tx_power: Tx power
+  * Return: None
+  */
+static inline int cdp_set_mgmt_tx_power(ol_txrx_soc_handle soc,
+	struct cdp_vdev *vdev, uint8_t subtype, uint8_t tx_power)
+{
+	if (soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev)
+		soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev(vdev,
+							subtype, tx_power);
+
+	return 0;
+}
 #endif

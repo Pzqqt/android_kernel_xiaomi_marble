@@ -412,6 +412,9 @@ struct cdp_ctrl_ops {
 	int (*txrx_wdi_event_unsub)(struct cdp_pdev *pdev, void *event_cb_sub,
 			uint32_t event);
 	int (*txrx_get_sec_type)(struct cdp_peer *peer, uint8_t sec_idx);
+
+	void (*txrx_update_mgmt_txpow_vdev)(struct cdp_vdev *vdev,
+			uint8_t subtype, uint8_t tx_power);
 };
 
 struct cdp_me_ops {
