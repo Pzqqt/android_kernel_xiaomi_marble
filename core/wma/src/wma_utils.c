@@ -3492,9 +3492,27 @@ WLAN_PHY_MODE wma_peer_phymode(tSirNwType nw_type, uint8_t sta_type,
 
 	switch (nw_type) {
 	case eSIR_11B_NW_TYPE:
+#ifdef FEATURE_WLAN_TDLS
+	if (STA_ENTRY_TDLS_PEER == sta_type) {
+		if (is_vht) {
+			if (CH_WIDTH_80MHZ == ch_width)
+				phymode = MODE_11AC_VHT80;
+			else
+				phymode = (CH_WIDTH_40MHZ == ch_width) ?
+					  MODE_11AC_VHT40 :
+					  MODE_11AC_VHT20;
+		} else if (is_ht) {
+			phymode = (CH_WIDTH_40MHZ == ch_width) ?
+				  MODE_11NG_HT40 : MODE_11NG_HT20;
+		} else
+			phymode = MODE_11B;
+	} else
+#endif /* FEATURE_WLAN_TDLS */
+	{
 		phymode = MODE_11B;
 		if (is_ht || is_vht || is_he)
 			WMA_LOGE("HT/VHT is enabled with 11B NW type");
+	}
 		break;
 	case eSIR_11G_NW_TYPE:
 		if (!(is_ht || is_vht || is_he)) {
