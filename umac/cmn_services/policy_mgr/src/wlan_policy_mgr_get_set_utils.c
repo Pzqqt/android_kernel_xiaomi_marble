@@ -375,13 +375,20 @@ void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
 	/* If dual mac features are disabled in the INI, we
 	 * need not proceed further
 	 */
-	if (policy_mgr_is_dual_mac_disabled_in_ini(psoc)) {
+	if (DISABLE_DBS_CXN_AND_SCAN ==
+			wlan_objmgr_psoc_get_dual_mac_disable(psoc)) {
 		policy_mgr_err("Disabling dual mac capabilities");
 		/* All capabilites are initialized to 0. We can return */
 		goto done;
 	}
 
 	/* Initialize concurrent_scan_config_bits with default FW value */
+	WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_SET(
+		pm_ctx->dual_mac_cfg.cur_scan_config,
+		WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_GET(scan_config));
+	WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_SET(
+		pm_ctx->dual_mac_cfg.cur_scan_config,
+		WMI_DBS_CONC_SCAN_CFG_SYNC_DBS_SCAN_GET(scan_config));
 	WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(
 		pm_ctx->dual_mac_cfg.cur_scan_config,
 		WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_GET(scan_config));
@@ -399,6 +406,9 @@ void policy_mgr_init_dbs_config(struct wlan_objmgr_psoc *psoc,
 	WMI_DBS_FW_MODE_CFG_AGILE_DFS_SET(
 		pm_ctx->dual_mac_cfg.cur_fw_mode_config,
 		WMI_DBS_FW_MODE_CFG_AGILE_DFS_GET(fw_config));
+	WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_SET(
+		pm_ctx->dual_mac_cfg.cur_fw_mode_config,
+		WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_GET(fw_config));
 done:
 	/* Initialize the previous scan/fw mode config */
 	pm_ctx->dual_mac_cfg.prev_scan_config =
@@ -2566,4 +2576,53 @@ uint32_t policy_mgr_get_hw_dbs_nss(struct wlan_objmgr_psoc *psoc,
 	}
 
 	return final_max_rf_chains;
+}
+
+bool policy_mgr_is_scan_simultaneous_capable(struct wlan_objmgr_psoc *psoc)
+{
+	if (DISABLE_DBS_CXN_AND_SCAN !=
+			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
+		return true;
+
+	return false;
+}
+
+QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
+		struct wlan_objmgr_psoc *psoc, uint32_t *scan_config,
+		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*scan_config = pm_ctx->dual_mac_cfg.cur_scan_config;
+	*fw_mode_config = pm_ctx->dual_mac_cfg.cur_fw_mode_config;
+	switch (dual_mac_disable_ini) {
+	case DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN_WITH_ASYNC_SCAN_OFF:
+		policy_mgr_debug("dual_mac_disable_ini:%d async/dbs off",
+			dual_mac_disable_ini);
+		WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_SET(*scan_config, 0);
+		WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_SET(*fw_mode_config, 0);
+		break;
+	case DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN:
+		policy_mgr_debug("dual_mac_disable_ini:%d dbs_cxn off",
+			dual_mac_disable_ini);
+		WMI_DBS_FW_MODE_CFG_DBS_FOR_CXN_SET(*fw_mode_config, 0);
+		break;
+	case ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF:
+		policy_mgr_debug("dual_mac_disable_ini:%d async off",
+			dual_mac_disable_ini);
+		WMI_DBS_CONC_SCAN_CFG_ASYNC_DBS_SCAN_SET(*scan_config, 0);
+		break;
+	default:
+		break;
+	}
+	policy_mgr_debug("*scan_config:%x ", *scan_config);
+	policy_mgr_debug("*fw_mode_config:%x ", *fw_mode_config);
+
+	return QDF_STATUS_SUCCESS;
 }

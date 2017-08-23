@@ -359,7 +359,8 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 	/* Resetting the scan_ctrl_flags_ext to 0 */
 	req->scan_req.scan_ctrl_flags_ext = 0;
 
-	if (!policy_mgr_is_hw_dbs_capable(psoc))
+	if (DISABLE_DBS_CXN_AND_SCAN ==
+			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
 		goto end;
 
 	if (!qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
