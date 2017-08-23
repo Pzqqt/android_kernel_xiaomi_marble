@@ -11195,6 +11195,10 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	if (0 != err)
 		return err;
 
+	err = hdd_validate_adapter(adapter);
+	if (err)
+		return err;
+
 	arp_stats_params.pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
 	arp_stats_params.vdev_id = adapter->sessionId;
 
