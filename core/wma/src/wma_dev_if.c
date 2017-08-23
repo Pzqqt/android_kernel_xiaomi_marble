@@ -2237,6 +2237,39 @@ end:
 	return txrx_vdev_handle;
 }
 
+uint32_t wma_get_bcn_rate_code(uint16_t rate)
+{
+	/* rate in multiples of 100 Kbps */
+	switch (rate) {
+	case WMA_BEACON_TX_RATE_1_M:
+		return WMI_BCN_TX_RATE_CODE_1_M;
+	case WMA_BEACON_TX_RATE_2_M:
+		return WMI_BCN_TX_RATE_CODE_2_M;
+	case WMA_BEACON_TX_RATE_5_5_M:
+		return WMI_BCN_TX_RATE_CODE_5_5_M;
+	case WMA_BEACON_TX_RATE_11_M:
+		return WMI_BCN_TX_RATE_CODE_11M;
+	case WMA_BEACON_TX_RATE_6_M:
+		return WMI_BCN_TX_RATE_CODE_6_M;
+	case WMA_BEACON_TX_RATE_9_M:
+		return WMI_BCN_TX_RATE_CODE_9_M;
+	case WMA_BEACON_TX_RATE_12_M:
+		return WMI_BCN_TX_RATE_CODE_12_M;
+	case WMA_BEACON_TX_RATE_18_M:
+		return WMI_BCN_TX_RATE_CODE_18_M;
+	case WMA_BEACON_TX_RATE_24_M:
+		return WMI_BCN_TX_RATE_CODE_24_M;
+	case WMA_BEACON_TX_RATE_36_M:
+		return WMI_BCN_TX_RATE_CODE_36_M;
+	case WMA_BEACON_TX_RATE_48_M:
+		return WMI_BCN_TX_RATE_CODE_48_M;
+	case WMA_BEACON_TX_RATE_54_M:
+		return WMI_BCN_TX_RATE_CODE_54_M;
+	default:
+		return WMI_BCN_TX_RATE_CODE_1_M;
+	}
+}
+
 /**
  * wma_vdev_start() - send vdev start request to fw
  * @wma: wma handle
@@ -2356,6 +2389,19 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	params.beacon_intval = req->beacon_intval;
 	params.dtim_period = req->dtim_period;
+
+	if (req->beacon_tx_rate) {
+		WMA_LOGD("%s: beacon tx rate [%hu * 100 Kbps]",
+				__func__, req->beacon_tx_rate);
+		temp_flags |= WMI_UNIFIED_VDEV_START_BCN_TX_RATE_PRESENT;
+		/*
+		 * beacon_tx_rate is in multiples of 100 Kbps.
+		 * Convert the data rate to hw rate code.
+		 */
+		params.bcn_tx_rate_code =
+			wma_get_bcn_rate_code(req->beacon_tx_rate);
+	}
+
 	/* FIXME: Find out min, max and regulatory power levels */
 	params.max_txpow = req->max_txpow;
 	temp_reg_info_1 &= 0xff00ffff;
@@ -3361,6 +3407,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.dot11_mode = add_bss->dot11_mode;
 	req.beacon_intval = add_bss->beaconInterval;
 	req.dtim_period = add_bss->dtimPeriod;
+	req.beacon_tx_rate = add_bss->beacon_tx_rate;
 	req.hidden_ssid = add_bss->bHiddenSSIDEn;
 	req.is_dfs = add_bss->bSpectrumMgtEnabled;
 	req.oper_mode = BSS_OPERATIONAL_MODE_AP;

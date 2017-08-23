@@ -333,7 +333,7 @@ struct csr_roamstart_bssparams {
 #endif
 	tSirAddIeParams addIeParams;
 	uint8_t sap_dot11mc;
-	uint8_t beacon_tx_rate;
+	uint16_t beacon_tx_rate;
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 };

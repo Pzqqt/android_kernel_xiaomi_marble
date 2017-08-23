@@ -197,7 +197,7 @@ typedef struct sLimMlmStartReq {
 	uint8_t ssidHidden;
 	uint8_t wps_state;
 	uint8_t obssProtEnabled;
-	uint8_t beacon_tx_rate;
+	uint16_t beacon_tx_rate;
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 } tLimMlmStartReq, *tpLimMlmStartReq;

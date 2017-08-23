@@ -8695,6 +8695,80 @@ int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	return ret;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)) || \
+	defined(CFG80211_BEACON_TX_RATE_CUSTOM_BACKPORT)
+/**
+ * hdd_get_data_rate_from_rate_mask() - convert mask to rate
+ * @wiphy: Pointer to wiphy
+ * @band: band
+ * @bit_rate_mask: pointer to bit_rake_mask
+ *
+ * This function takes band and bit_rate_mask as input and
+ * derives the beacon_tx_rate based on the supported rates
+ * published as part of wiphy register.
+ *
+ * Return: data rate for success or zero for failure
+ */
+static uint16_t hdd_get_data_rate_from_rate_mask(struct wiphy *wiphy,
+		enum ieee80211_band band,
+		struct cfg80211_bitrate_mask *bit_rate_mask)
+{
+	struct ieee80211_supported_band *sband = wiphy->bands[band];
+	int sband_n_bitrates;
+	struct ieee80211_rate *sband_bitrates;
+	int i;
+
+	if (sband) {
+		sband_bitrates = sband->bitrates;
+		sband_n_bitrates = sband->n_bitrates;
+		for (i = 0; i < sband_n_bitrates; i++) {
+			if (bit_rate_mask->control[band].legacy ==
+			    sband_bitrates[i].hw_value)
+				return sband_bitrates[i].bitrate;
+		}
+	}
+	return 0;
+}
+
+/**
+ * hdd_update_beacon_rate() - Update beacon tx rate
+ * @pAdapter: Pointer to hdd_adapter_t
+ * @wiphy: Pointer to wiphy
+ * @params: Pointet to cfg80211_ap_settings
+ *
+ * This function updates the beacon tx rate which is provided
+ * as part of cfg80211_ap_settions in to the sapConfig
+ * structure
+ *
+ * Return: none
+ */
+static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
+		struct wiphy *wiphy,
+		struct cfg80211_ap_settings *params)
+{
+	struct cfg80211_bitrate_mask *beacon_rate_mask;
+	enum ieee80211_band band;
+
+	band = params->chandef.chan->band;
+	beacon_rate_mask = &params->beacon_rate;
+	if (beacon_rate_mask->control[band].legacy) {
+		adapter->sessionCtx.ap.sapConfig.beacon_tx_rate =
+			hdd_get_data_rate_from_rate_mask(wiphy, band,
+					beacon_rate_mask);
+		hdd_debug("beacon mask value %u, rate %hu",
+			  params->beacon_rate.control[0].legacy,
+			  adapter->sessionCtx.ap.sapConfig.beacon_tx_rate);
+	}
+}
+#else
+static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
+		struct wiphy *wiphy,
+		struct cfg80211_ap_settings *params)
+{
+}
+#endif
+
+
 /**
  * __wlan_hdd_cfg80211_start_ap() - start soft ap mode
  * @wiphy: Pointer to wiphy structure
@@ -8880,6 +8954,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		wlan_hdd_set_channel(wiphy, dev,
 				     &params->chandef,
 				     channel_type);
+
+		hdd_update_beacon_rate(pAdapter, wiphy, params);
 
 		/* set authentication type */
 		switch (params->auth_type) {

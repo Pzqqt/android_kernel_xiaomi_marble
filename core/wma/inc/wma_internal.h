@@ -609,6 +609,8 @@ void wma_set_vdev_intrabss_fwd(tp_wma_handle wma_handle,
 
 void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params);
 
+uint32_t wma_get_bcn_rate_code(uint16_t rate);
+
 /*
  * wma_mgmt.c functions declarations
  */

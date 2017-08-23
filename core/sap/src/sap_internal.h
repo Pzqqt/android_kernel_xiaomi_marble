@@ -265,7 +265,7 @@ struct sap_context {
 	uint8_t dfs_vendor_channel;
 	uint8_t dfs_vendor_chan_bw;
 	uint8_t chan_before_pre_cac;
-	uint8_t beacon_tx_rate;
+	uint16_t beacon_tx_rate;
 	tSirMacRateSet supp_rate_set;
 	tSirMacRateSet extended_rate_set;
 	enum sap_acs_dfs_mode dfs_mode;

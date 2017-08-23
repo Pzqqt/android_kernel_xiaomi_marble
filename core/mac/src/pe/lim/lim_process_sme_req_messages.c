@@ -611,6 +611,8 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
 	session->isCoalesingInIBSSAllowed =
 		sme_start_bss_req->isCoalesingInIBSSAllowed;
 
+	session->beacon_tx_rate = sme_start_bss_req->beacon_tx_rate;
+
 }
 
 /**
@@ -1113,6 +1115,8 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				 */
 				pe_err("Set LOCAL_POWER_CONSTRAINT failed");
 		}
+
+		mlm_start_req->beacon_tx_rate = session->beacon_tx_rate;
 
 		session->limPrevSmeState = session->limSmeState;
 		session->limSmeState = eLIM_SME_WT_START_BSS_STATE;

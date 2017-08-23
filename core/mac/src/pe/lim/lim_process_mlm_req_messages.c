@@ -604,6 +604,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->nss = session->nss;
 	addbss_param->cac_duration_ms = mlm_start_req->cac_duration_ms;
 	addbss_param->dfs_regdomain = mlm_start_req->dfs_regdomain;
+	addbss_param->beacon_tx_rate = session->beacon_tx_rate;
 	if (QDF_IBSS_MODE == addbss_param->halPersona) {
 		addbss_param->nss_2g = mac_ctx->vdev_type_nss_2g.ibss;
 		addbss_param->nss_5g = mac_ctx->vdev_type_nss_5g.ibss;

@@ -615,7 +615,7 @@ typedef struct sap_Config {
 	/* buffer for addn ies comes from hostapd */
 	void *pProbeRespBcnIEsBuffer;
 	uint8_t sap_dot11mc; /* Specify if 11MC is enabled or disabled*/
-	uint8_t beacon_tx_rate;
+	uint16_t beacon_tx_rate;
 	uint8_t *vendor_ie;
 	enum vendor_ie_access_policy vendor_ie_access_policy;
 	uint16_t sta_inactivity_timeout;

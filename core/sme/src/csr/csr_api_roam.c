@@ -7931,6 +7931,8 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 
 	update_profile_fils_info(pDstProfile, pSrcProfile);
 
+	pDstProfile->beacon_tx_rate = pSrcProfile->beacon_tx_rate;
+
 	if (pSrcProfile->supported_rates.numRates) {
 		qdf_mem_copy(pDstProfile->supported_rates.rate,
 				pSrcProfile->supported_rates.rate,
@@ -13819,6 +13821,7 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 	pParam->sap_dot11mc = pProfile->sap_dot11mc;
 	pParam->cac_duration_ms = pProfile->cac_duration_ms;
 	pParam->dfs_regdomain = pProfile->dfs_regdomain;
+	pParam->beacon_tx_rate = pProfile->beacon_tx_rate;
 
 	/* When starting an IBSS, start on the channel from the Profile. */
 	status = csr_send_mb_start_bss_req_msg(pMac, sessionId,
@@ -16077,6 +16080,7 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t
 			pMac->roam.configParam.vendor_vht_sap;
 	pMsg->cac_duration_ms = pParam->cac_duration_ms;
 	pMsg->dfs_regdomain = pParam->dfs_regdomain;
+	pMsg->beacon_tx_rate = pParam->beacon_tx_rate;
 
 	return umac_send_mb_message_to_mac(pMsg);
 }
