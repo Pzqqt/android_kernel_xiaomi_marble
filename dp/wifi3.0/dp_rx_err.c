@@ -356,10 +356,34 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
 	/*
-	 * This is a Multicast echo check, drop the pkt if we meet
-	 * the Multicast Echo Check condition
+	 * Multicast Echo Check is required only if vdev is STA and
+	 * received pkt is a multicast/broadcast pkt. otherwise
+	 * skip the MEC check.
 	 */
+	if (vdev->opmode != wlan_op_mode_sta)
+		goto skip_mec_check;
+
+	if (!hal_rx_msdu_end_da_is_mcbc_get(rx_desc->rx_buf_start))
+		goto skip_mec_check;
+
 	data = qdf_nbuf_data(nbuf);
+	/*
+	 * if the received pkts src mac addr matches with vdev
+	 * mac address then drop the pkt as it is looped back
+	 */
+	if (!(memcmp(&data[DP_MAC_ADDR_LEN],
+			vdev->mac_addr.raw,
+			DP_MAC_ADDR_LEN))) {
+
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
+	/* if the received pkts src mac addr matches with the
+	 * wired PCs MAC addr which is behind the STA or with
+	 * wireless STAs MAC addr which are behind the Repeater,
+	 * then drop the pkt as it is looped back
+	 */
 	qdf_spin_lock_bh(&soc->ast_lock);
 	if (hal_rx_msdu_end_sa_is_valid_get(rx_desc->rx_buf_start)) {
 		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_desc->rx_buf_start);
@@ -389,6 +413,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	}
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
+skip_mec_check:
 	/* WDS Source Port Learning */
 	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
 		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
