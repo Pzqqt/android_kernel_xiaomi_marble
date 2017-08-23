@@ -4796,36 +4796,47 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 /**
  * dp_fw_stats_process(): Process TxRX FW stats request
  * @vdev_handle: DP VDEV handle
- * @val: value passed by user
+ * @req: stats request
  *
  * return: int
  */
-static int dp_fw_stats_process(struct cdp_vdev *vdev_handle, uint32_t val)
+static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
+		struct cdp_txrx_stats_req *req)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = NULL;
+	uint32_t stats = req->stats;
 
 	if (!vdev) {
 		DP_TRACE(NONE, "VDEV not found");
 		return 1;
 	}
-
 	pdev = vdev->pdev;
-	return dp_h2t_ext_stats_msg_send(pdev, val, 0, 0, 0, 0);
+
+	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
+				req->param1, req->param2, req->param3);
 }
 
-/*
- * dp_txrx_stats() - function to map to firmware and host stats
+/**
+ * dp_txrx_stats_request - function to map to firmware and host stats
  * @vdev: virtual handle
- * @stats: type of statistics requested
+ * @req: stats request
  *
  * Return: integer
  */
-static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
+static int dp_txrx_stats_request(struct cdp_vdev *vdev,
+		struct cdp_txrx_stats_req *req)
 {
 	int host_stats;
 	int fw_stats;
+	enum cdp_stats stats;
 
+	if (!vdev || !req) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"Invalid vdev/req instance");
+		return 0;
+	}
+	stats = req->stats;
 	if (stats >= CDP_TXRX_MAX_STATS)
 		return 0;
 
@@ -4842,8 +4853,11 @@ static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
 		 "stats: %u fw_stats_type: %d host_stats_type: %d",
 		  stats, fw_stats, host_stats);
 
-	if (fw_stats != TXRX_FW_STATS_INVALID)
-		return dp_fw_stats_process(vdev, fw_stats);
+	if (fw_stats != TXRX_FW_STATS_INVALID) {
+		/* update request with FW stats type */
+		req->stats = fw_stats;
+		return dp_fw_stats_process(vdev, req);
+	}
 
 	if ((host_stats != TXRX_HOST_STATS_INVALID) &&
 			(host_stats <= TXRX_HOST_STATS_MAX))
@@ -4853,6 +4867,22 @@ static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
 				"Wrong Input for TxRx Stats");
 
 	return 0;
+}
+
+/**
+ * dp_txrx_stats() - function to map to firmware and host stats
+ * @vdev: virtual handle
+ * @stats: type of statistics requested
+ *
+ * Return: integer
+ */
+static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
+{
+	struct cdp_txrx_stats_req req = {0,};
+
+	req.stats = stats;
+
+	return dp_txrx_stats_request(vdev, &req);
 }
 
 /*
@@ -5240,6 +5270,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
 	.txrx_stats = dp_txrx_stats,
+	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	.display_stats = dp_txrx_dump_stats,
 	.txrx_soc_set_nss_cfg = dp_soc_set_nss_cfg_wifi3,

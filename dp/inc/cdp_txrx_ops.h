@@ -210,6 +210,9 @@ struct cdp_cmn_ops {
 
 	int (*txrx_stats)(struct cdp_vdev *vdev, enum cdp_stats stats);
 
+	int (*txrx_stats_request)(struct cdp_vdev *vdev,
+			struct cdp_txrx_stats_req *req);
+
 	QDF_STATUS (*display_stats)(void *psoc, uint16_t value);
 
 	void (*txrx_soc_set_nss_cfg)(ol_txrx_soc_handle soc, int config);

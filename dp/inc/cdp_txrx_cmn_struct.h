@@ -1317,4 +1317,21 @@ struct cdp_config_params {
 	uint8_t tx_flow_stop_queue_threshold;
 	uint8_t tx_flow_start_queue_offset;
 };
+
+/**
+ * cdp_txrx_stats_req: stats request wrapper
+ *	used to pass request information to cdp layer
+ * @stats: type of stats requested
+ * @param0: opaque argument 0 to be passed to htt
+ * @param1: opaque argument 1 to be passed to htt
+ * @param2: opaque argument 2 to be passed to htt
+ * @param3: opaque argument 3 to be passed to htt
+ */
+struct cdp_txrx_stats_req {
+	enum cdp_stats	stats;
+	uint32_t	param0;
+	uint32_t	param1;
+	uint32_t	param2;
+	uint32_t	param3;
+};
 #endif
