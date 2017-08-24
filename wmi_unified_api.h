@@ -1448,6 +1448,9 @@ QDF_STATUS wmi_extract_pdev_stats(void *wmi_hdl, void *evt_buf,
 					 uint32_t index,
 					 wmi_host_pdev_stats *pdev_stats);
 
+QDF_STATUS wmi_extract_unit_test(void *wmi_hdl, void *evt_buf,
+			wmi_unit_test_event *unit_test, uint32_t maxspace);
+
 QDF_STATUS wmi_extract_pdev_ext_stats(void *wmi_hdl, void *evt_buf,
 			uint32_t index,
 			wmi_host_pdev_ext_stats *pdev_ext_stats);
