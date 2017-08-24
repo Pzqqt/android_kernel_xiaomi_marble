@@ -8196,7 +8196,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 		}
 	}
 	if (!hdd_ctx->config->force_sap_acs &&
-	    !(ssid && (0 == qdf_mem_cmp(ssid, PRE_CAC_SSID, ssid_len)))) {
+	    !(ssid && qdf_str_len(PRE_CAC_SSID) == ssid_len &&
+	      (0 == qdf_mem_cmp(ssid, PRE_CAC_SSID, ssid_len)))) {
 		pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_SUPP_RATES,
 					&pMgmt_frame->u.beacon.variable[0],
 					pBeacon->head_len);
