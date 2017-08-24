@@ -2673,6 +2673,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->indoor_chan_enabled = true;
 	soc_reg_obj->master_vdev_cnt = 0;
 	soc_reg_obj->vdev_cnt_11d = 0;
+	soc_reg_obj->restart_beaconing = CH_AVOID_RULE_RESTART;
 
 	for (i = 0; i < MAX_STA_VDEV_CNT; i++)
 		soc_reg_obj->vdev_ids_11d[i] = INVALID_VDEV_ID;
@@ -3259,6 +3260,7 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 	psoc_priv_obj->indoor_chan_enabled =
 		config_vars.indoor_chan_enabled;
 	psoc_priv_obj->band_capability = config_vars.band_capability;
+	psoc_priv_obj->restart_beaconing = config_vars.restart_beaconing;
 
 	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_REGULATORY_SB_ID);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3808,6 +3810,13 @@ QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
 			sizeof(struct unsafe_ch_list));
 
 	for (i = 0; i < ch_avoid_event->ch_avoid_range_cnt; i++) {
+		if ((CH_AVOID_RULE_RESTART_24G_ONLY ==
+				psoc_priv_obj->restart_beaconing) &&
+			REG_IS_5GHZ_FREQ(ch_avoid_event->
+				avoid_freq_range[i].start_freq)) {
+			reg_debug("skipping 5Ghz LTE Coex unsafe channel range");
+			continue;
+		}
 		psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq =
 			ch_avoid_event->avoid_freq_range[i].start_freq;
 		psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq =

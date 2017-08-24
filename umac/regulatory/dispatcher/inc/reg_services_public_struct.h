@@ -739,6 +739,21 @@ enum band_info {
 };
 
 /**
+ * enum restart_beaconing_on_ch_avoid_rule: control the beaconing entity to
+ * move away from active LTE channels
+ * @CH_AVOID_RULE_DO_NOT_RESTART: Do not move from active LTE
+ *                              channels
+ * @CH_AVOID_RULE_RESTART: Move from active LTE channels
+ * @CH_AVOID_RULE_RESTART_24G_ONLY: move from 2.4G active LTE
+ *                                channels only
+ */
+enum restart_beaconing_on_ch_avoid_rule {
+	CH_AVOID_RULE_DO_NOT_RESTART,
+	CH_AVOID_RULE_RESTART,
+	CH_AVOID_RULE_RESTART_24G_ONLY,
+};
+
+/**
  * struct reg_config_vars
  * @enable_11d_support: enable 11d support
  * @scan_11d_interval: 11d scan interval in ms
@@ -746,6 +761,8 @@ enum band_info {
  * @band_capability: band capability
  * @dfs_disable: dfs disabled
  * @indoor_channel_support: indoor channel support
+ * @restart_beaconing: control the beaconing entity to move
+ * away from active LTE channels
  */
 struct reg_config_vars {
 	uint32_t enable_11d_support;
@@ -754,6 +771,7 @@ struct reg_config_vars {
 	enum band_info band_capability;
 	uint32_t dfs_enabled;
 	uint32_t indoor_chan_enabled;
+	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
 };
 
 /**

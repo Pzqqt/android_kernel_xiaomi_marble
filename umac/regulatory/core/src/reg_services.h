@@ -55,6 +55,10 @@
 	((chan_num >= REG_MIN_11P_CH_NUM) &&	\
 	 (chan_num <= REG_MAX_11P_CH_NUM))
 
+#define REG_IS_5GHZ_FREQ(freq) \
+	((freq >= channel_map[MIN_5GHZ_CHANNEL].center_freq) &&	\
+	 (freq <= channel_map[MAX_5GHZ_CHANNEL].center_freq))
+
 #define REG_CH_NUM(ch_enum) channel_map[ch_enum].chan_num
 #define REG_CH_TO_FREQ(ch_enum) channel_map[ch_enum].center_freq
 

@@ -73,6 +73,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint8_t ch_avoid_ind;
 	struct unsafe_ch_list unsafe_chan_list;
 	struct ch_avoid_ind_type avoid_freq_list;
+	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
 	qdf_spinlock_t cbk_list_lock;
 };
 
