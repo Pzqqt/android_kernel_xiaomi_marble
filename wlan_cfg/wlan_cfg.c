@@ -60,7 +60,7 @@
 #endif
 
 #ifdef CONFIG_WIN
-#define WLAN_CFG_PER_PDEV_RX_RING 1
+#define WLAN_CFG_PER_PDEV_RX_RING 0
 #define NUM_RXDMA_RINGS_PER_PDEV 1
 #define WLAN_LRO_ENABLE 0
 

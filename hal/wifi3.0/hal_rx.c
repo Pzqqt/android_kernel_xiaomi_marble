@@ -55,41 +55,6 @@ static inline void hal_uniform_desc_hdr_setup(uint32_t *desc, uint32_t owner,
 #define HAL_NON_QOS_TID 16
 
 /**
- * When hash based routing is enabled, routing of the rx packet
- * is done based on the following value: 1 _ _ _ _ The last 4
- * bits are based on hash[3:0]. This means the possible values
- * are 0x10 to 0x1f. This value is used to look-up the
- * ring ID configured in Destination_Ring_Ctrl_IX_* register.
- * The Destination_Ring_Ctrl_IX_2 and Destination_Ring_Ctrl_IX_3
- * registers need to be configured to set-up the 16 entries to
- * map the hash values to a ring number. There are 3 bits per
- * hash entry – which are mapped as follows:
- * 0: TCL, 1:SW1, 2:SW2, * 3:SW3, 4:SW4, 5:Release, 6:FW(WIFI),
- * 7: NOT_USED.
-*/
-#ifdef IPA_OFFLOAD
-/**
- * When IPA is enabled, there will be 3 available rings.
- * Otherwise there will be 4.
- */
-#define REO_REMAP_REGISTER_2 ( \
-	((0x1 << 0) | (0x2 << 3) | (0x3 << 6) | (0x1 << 9) | \
-	(0x2 << 12) | (0x3 << 15) | (0x1 << 18) | (0x2 << 21)) << 8)
-
-#define REO_REMAP_REGISTER_3 ( \
-	((0x3 << 0) | (0x1 << 3) | (0x2 << 6) | (0x3 << 9) | \
-	(0x1 << 12) | (0x2 << 15) | (0x3 << 18) | (0x1 << 21)) << 8)
-#else
-#define REO_REMAP_REGISTER_2 ( \
-	((0x1 << 0) | (0x2 << 3) | (0x3 << 6) | (0x4 << 9) | \
-	(0x1 << 12) | (0x2 << 15) | (0x3 << 18) | (0x4 << 21)) << 8)
-
-#define REO_REMAP_REGISTER_3 ( \
-	((0x1 << 0) | (0x2 << 3) | (0x3 << 6) | (0x4 << 9) | \
-	(0x1 << 12) | (0x2 << 15) | (0x3 << 18) | (0x4 << 21)) << 8)
-#endif
-
-/**
  * hal_reo_qdesc_setup - Setup HW REO queue descriptor
  *
  * @hal_soc: Opaque HAL SOC handle
@@ -297,11 +262,24 @@ void hal_reo_setup(void *hal_soc,
 		SEQ_WCSS_UMAC_REO_REG_OFFSET),
 		(HAL_DEFAULT_REO_TIMEOUT_MS * 1000));
 
+	/*
+	 * When hash based routing is enabled, routing of the rx packet
+	 * is done based on the following value: 1 _ _ _ _ The last 4
+	 * bits are based on hash[3:0]. This means the possible values
+	 * are 0x10 to 0x1f. This value is used to look-up the
+	 * ring ID configured in Destination_Ring_Ctrl_IX_* register.
+	 * The Destination_Ring_Ctrl_IX_2 and Destination_Ring_Ctrl_IX_3
+	 * registers need to be configured to set-up the 16 entries to
+	 * map the hash values to a ring number. There are 3 bits per
+	 * hash entry Â– which are mapped as follows:
+	 * 0: TCL, 1:SW1, 2:SW2, * 3:SW3, 4:SW4, 5:Release, 6:FW(WIFI),
+	 * 7: NOT_USED.
+	*/
 	if (reo_params->rx_hash_enabled) {
 		HAL_REG_WRITE(soc,
 			HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR(
 			SEQ_WCSS_UMAC_REO_REG_OFFSET),
-			REO_REMAP_REGISTER_2);
+			reo_params->remap1);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_2_ADDR 0x%x\n"),
@@ -312,7 +290,7 @@ void hal_reo_setup(void *hal_soc,
 		HAL_REG_WRITE(soc,
 			HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR(
 			SEQ_WCSS_UMAC_REO_REG_OFFSET),
-			REO_REMAP_REGISTER_3);
+			reo_params->remap2);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("HWIO_REO_R0_DESTINATION_RING_CTRL_IX_3_ADDR 0x%x\n"),

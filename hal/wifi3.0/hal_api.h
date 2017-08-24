@@ -906,7 +906,12 @@ extern void hal_setup_link_idle_list(void *hal_soc,
 
 /* REO parameters to be passed to hal_reo_setup */
 struct hal_reo_params {
+	/* rx hash steering enabled or disabled */
 	bool rx_hash_enabled;
+	/* reo remap 1 register */
+	uint32_t remap1;
+	/* reo remap 2 register */
+	uint32_t remap2;
 };
 
 /**

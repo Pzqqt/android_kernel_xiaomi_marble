@@ -1654,6 +1654,81 @@ static void dp_soc_reset_cpu_ring_map(struct dp_soc *soc)
 	}
 }
 
+#ifdef IPA_OFFLOAD
+/**
+ * dp_reo_remap_config() - configure reo remap register value based
+ *                         nss configuration.
+ *		based on offload_radio value below remap configuration
+ *		get applied.
+ *		0 - both Radios handled by host (remap rings 1, 2, 3 & 4)
+ *		1 - 1st Radio handled by NSS (remap rings 2, 3 & 4)
+ *		2 - 2nd Radio handled by NSS (remap rings 1, 2 & 4)
+ *		3 - both Radios handled by NSS (remap not required)
+ *		4 - IPA OFFLOAD enabled (remap rings 1,2 & 3)
+ *
+ * @remap1: output parameter indicates reo remap 1 register value
+ * @remap2: output parameter indicates reo remap 2 register value
+ * Return: bool type, true if remap is configured else false.
+ */
+static bool dp_reo_remap_config(struct dp_soc *soc,
+				uint32_t *remap1,
+				uint32_t *remap2)
+{
+
+	*remap1 = ((0x1 << 0) | (0x2 << 3) | (0x3 << 6) | (0x1 << 9) |
+		(0x2 << 12) | (0x3 << 15) | (0x1 << 18) | (0x2 << 21)) << 8;
+
+	*remap2 = ((0x3 << 0) | (0x1 << 3) | (0x2 << 6) | (0x3 << 9) |
+		(0x1 << 12) | (0x2 << 15) | (0x3 << 18) | (0x1 << 21)) << 8;
+
+	return true;
+}
+#else
+static bool dp_reo_remap_config(struct dp_soc *soc,
+				uint32_t *remap1,
+				uint32_t *remap2)
+{
+	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
+
+	switch (offload_radio) {
+	case 0:
+		*remap1 = ((0x1 << 0) | (0x2 << 3) | (0x3 << 6) |
+			(0x4 << 9) | (0x1 << 12) | (0x2 << 15) |
+			(0x3 << 18) | (0x4 << 21)) << 8;
+
+		*remap2 = ((0x1 << 0) | (0x2 << 3) | (0x3 << 6) |
+			(0x4 << 9) | (0x1 << 12) | (0x2 << 15) |
+			(0x3 << 18) | (0x4 << 21)) << 8;
+		break;
+
+	case 1:
+		*remap1 = ((0x2 << 0) | (0x3 << 3) | (0x4 << 6) |
+			(0x2 << 9) | (0x3 << 12) | (0x4 << 15) |
+			(0x2 << 18) | (0x3 << 21)) << 8;
+
+		*remap2 = ((0x4 << 0) | (0x2 << 3) | (0x3 << 6) |
+			(0x4 << 9) | (0x2 << 12) | (0x3 << 15) |
+			(0x4 << 18) | (0x2 << 21)) << 8;
+		break;
+
+	case 2:
+		*remap1 = ((0x1 << 0) | (0x3 << 3) | (0x4 << 6) |
+			(0x1 << 9) | (0x3 << 12) | (0x4 << 15) |
+			(0x1 << 18) | (0x3 << 21)) << 8;
+
+		*remap2 = ((0x4 << 0) | (0x1 << 3) | (0x3 << 6) |
+			(0x4 << 9) | (0x1 << 12) | (0x3 << 15) |
+			(0x4 << 18) | (0x1 << 21)) << 8;
+		break;
+
+	case 3:
+		/* return false if both radios are offloaded to NSS */
+		return false;
+	}
+	return true;
+}
+#endif
+
 /*
  * dp_soc_cmn_setup() - Common SoC level initializion
  * @soc:		Datapath SOC handle
@@ -1826,9 +1901,21 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Setup HW REO */
 	qdf_mem_zero(&reo_params, sizeof(reo_params));
 
-	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx))
-		reo_params.rx_hash_enabled = true;
+	if (wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx)) {
 
+		/*
+		 * Reo ring remap is not required if both radios
+		 * are offloaded to NSS
+		 */
+		if (!dp_reo_remap_config(soc,
+					&reo_params.remap1,
+					&reo_params.remap2))
+			goto out;
+
+		reo_params.rx_hash_enabled = true;
+	}
+
+out:
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
@@ -2998,9 +3085,16 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	peer->last_disassoc_rcvd = 0;
 	peer->last_deauth_rcvd = 0;
 
-	hash_based = wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx);
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		FL("hash based steering %d\n"), hash_based);
+	/*
+	 * hash based steering is disabled for Radios which are offloaded
+	 * to NSS
+	 */
+	if (!wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx))
+		hash_based = wlan_cfg_is_rx_hash_enabled(soc->wlan_cfg_ctx);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		FL("hash based steering for pdev: %d is %d\n"),
+		pdev->pdev_id, hash_based);
 
 	if (!hash_based)
 		reo_dest = pdev->reo_dest;
