@@ -15180,10 +15180,14 @@ static QDF_STATUS send_unit_test_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = wmi_utest->vdev_id;
 	cmd->module_id = wmi_utest->module_id;
 	cmd->num_args = wmi_utest->num_args;
+	cmd->diag_token = wmi_utest->diag_token;
 	buf_ptr += sizeof(wmi_unit_test_cmd_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
 		       (wmi_utest->num_args * sizeof(uint32_t)));
 	unit_test_cmd_args = (A_UINT32 *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	WMI_LOGI("%s: VDEV ID: %d\n", __func__, cmd->vdev_id);
+	WMI_LOGI("%s: MODULE ID: %d\n", __func__, cmd->module_id);
+	WMI_LOGI("%s: TOKEN: %d\n", __func__, cmd->diag_token);
 	WMI_LOGI("%s: %d num of args = ", __func__, wmi_utest->num_args);
 	for (i = 0; (i < wmi_utest->num_args && i < WMI_MAX_NUM_ARGS); i++) {
 		unit_test_cmd_args[i] = wmi_utest->args[i];
@@ -17879,6 +17883,48 @@ static QDF_STATUS extract_pdev_stats_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_unit_test_tlv() - extract unit test data
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param unit_test: pointer to hold unit test data
+ * @param maxspace: Amount of space in evt_buf
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_unit_test_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, wmi_unit_test_event *unit_test, uint32_t maxspace)
+{
+	WMI_UNIT_TEST_EVENTID_param_tlvs *param_buf;
+	wmi_unit_test_event_fixed_param *ev_param;
+	uint32_t num_bufp;
+	uint32_t copy_size;
+	uint8_t *bufp;
+
+	param_buf = (WMI_UNIT_TEST_EVENTID_param_tlvs *) evt_buf;
+	ev_param = param_buf->fixed_param;
+	bufp = param_buf->bufp;
+	num_bufp = param_buf->num_bufp;
+	unit_test->vdev_id = ev_param->vdev_id;
+	unit_test->module_id = ev_param->module_id;
+	unit_test->diag_token = ev_param->diag_token;
+	unit_test->flag = ev_param->flag;
+	unit_test->payload_len = ev_param->payload_len;
+	WMI_LOGI("%s:vdev_id:%d mod_id:%d diag_token:%d flag:%d\n", __func__,
+			ev_param->vdev_id,
+			ev_param->module_id,
+			ev_param->diag_token,
+			ev_param->flag);
+	WMI_LOGD("%s: Unit-test data given below %d", __func__, num_bufp);
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+			bufp, num_bufp);
+	copy_size = (num_bufp < maxspace) ? num_bufp : maxspace;
+	qdf_mem_copy(unit_test->buffer, bufp, copy_size);
+	unit_test->buffer_len = copy_size;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_pdev_ext_stats_tlv() - extract extended pdev stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -20261,6 +20307,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_peer_sta_kickout_ev = extract_peer_sta_kickout_ev_tlv,
 	.extract_all_stats_count = extract_all_stats_counts_tlv,
 	.extract_pdev_stats = extract_pdev_stats_tlv,
+	.extract_unit_test = extract_unit_test_tlv,
 	.extract_pdev_ext_stats = extract_pdev_ext_stats_tlv,
 	.extract_vdev_stats = extract_vdev_stats_tlv,
 	.extract_peer_stats = extract_peer_stats_tlv,
@@ -20479,6 +20526,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_UPDATE_VDEV_RATE_STATS_EVENTID;
 
 	event_ids[wmi_diag_event_id] = WMI_DIAG_EVENTID;
+	event_ids[wmi_unit_test_event_id] = WMI_UNIT_TEST_EVENTID;
 
 	/** Set OCB Sched Response, deprecated */
 	event_ids[wmi_ocb_set_sched_event_id] = WMI_OCB_SET_SCHED_EVENTID;
