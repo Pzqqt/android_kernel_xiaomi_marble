@@ -1715,7 +1715,7 @@ QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		struct wlan_objmgr_psoc *psoc,
 		void *roam_profile, uint8_t *channel)
 {
-	QDF_STATUS status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	void *scan_cache = NULL;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -1739,6 +1739,7 @@ QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		}
 	} else {
 		policy_mgr_err("sme_get_ap_channel_from_scan_cache NULL");
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (pm_ctx->sme_cbacks.sme_scan_result_purge)
