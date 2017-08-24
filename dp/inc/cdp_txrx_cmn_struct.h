@@ -145,6 +145,7 @@ enum htt_cmn_dbg_stats_type {
  * @TXRX_TX_HOST_STATS: Print Tx stats
  * @TXRX_RX_HOST_STATS: Print host Rx stats
  * @TXRX_CLEAR_STATS: clear all host stats
+ * @TXRX_SRNG_PTR_STATS: Print SRNG pointer stats
 */
 enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_INVALID  = -1,
@@ -154,6 +155,7 @@ enum cdp_host_txrx_stats {
 	TXRX_TX_HOST_STATS  = 3,
 	TXRX_RX_HOST_STATS  = 4,
 	TXRX_AST_STATS = 5,
+	TXRX_SRNG_PTR_STATS	= 6,
 	TXRX_HOST_STATS_MAX,
 };
 

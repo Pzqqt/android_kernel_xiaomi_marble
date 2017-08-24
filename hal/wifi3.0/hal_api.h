@@ -570,6 +570,30 @@ static inline uint32_t hal_srng_src_done_val(void *hal_soc, void *hal_ring)
 		return ((srng->ring_size - next_reap_hp) +
 			srng->u.src_ring.cached_tp) / srng->entry_size;
 }
+
+/**
+ * hal_api_get_tphp - Get head and tail pointer location for any ring
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Source ring pointer
+ * @tailp: Tail Pointer
+ * @headp: Head Pointer
+ *
+ * Return: Update tail pointer and head pointer in arguments.
+ */
+static inline void hal_api_get_tphp(void *hal_soc, void *hal_ring,
+	uint32_t *tailp, uint32_t *headp)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
+	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
+		*headp = srng->u.src_ring.hp / srng->entry_size;
+		*tailp = *(srng->u.src_ring.tp_addr) / srng->entry_size;
+	} else {
+		*tailp = srng->u.dst_ring.tp / srng->entry_size;
+		*headp = *(srng->u.dst_ring.hp_addr) / srng->entry_size;
+	}
+}
+
 /**
  * hal_srng_src_get_next - Get next entry from a source ring and move cached tail pointer
  *

@@ -74,6 +74,7 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 bool rx_hash = 1;
 qdf_declare_param(rx_hash, bool);
 
+#define STR_MAXLEN	64
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -260,6 +261,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_TX_HOST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_AST_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_SRNG_PTR_STATS},
 };
 
 /**
@@ -4082,6 +4084,116 @@ dp_print_soc_rx_stats(struct dp_soc *soc)
 			reo_error);
 }
 
+
+/**
+ * dp_print_ring_stat_from_hal(): Print hal level ring stats
+ * @soc: DP_SOC handle
+ * @srng: DP_SRNG handle
+ * @ring_name: SRNG name
+ *
+ * Return: void
+ */
+static inline void
+dp_print_ring_stat_from_hal(struct dp_soc *soc,  struct dp_srng *srng,
+	char *ring_name)
+{
+	uint32_t tailp;
+	uint32_t headp;
+
+	if (srng->hal_srng != NULL) {
+		hal_api_get_tphp(soc->hal_soc, srng->hal_srng, &tailp, &headp);
+		DP_PRINT_STATS("%s : Head pointer = %d  Tail Pointer = %d\n",
+				ring_name, headp, tailp);
+	}
+}
+
+/**
+ * dp_print_ring_stats(): Print tail and head pointer
+ * @pdev: DP_PDEV handle
+ *
+ * Return:void
+ */
+static inline void
+dp_print_ring_stats(struct dp_pdev *pdev)
+{
+	uint32_t i;
+	char ring_name[STR_MAXLEN + 1];
+
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->reo_exception_ring,
+			"Reo Exception Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->reo_reinject_ring,
+			"Reo Inject Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->reo_cmd_ring,
+			"Reo Command Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->reo_status_ring,
+			"Reo Status Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->rx_rel_ring,
+			"Rx Release ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->tcl_cmd_ring,
+			"Tcl command Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->tcl_status_ring,
+			"Tcl Status Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->soc->wbm_desc_rel_ring,
+			"Wbm Desc Rel Ring");
+	for (i = 0; i < MAX_REO_DEST_RINGS; i++) {
+		snprintf(ring_name, STR_MAXLEN, "Reo Dest Ring %d", i);
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->soc->reo_dest_ring[i],
+				ring_name);
+	}
+	for (i = 0; i < pdev->soc->num_tcl_data_rings; i++) {
+		snprintf(ring_name, STR_MAXLEN, "Tcl Data Ring %d", i);
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->soc->tcl_data_ring[i],
+				ring_name);
+	}
+	for (i = 0; i < MAX_TCL_DATA_RINGS; i++) {
+		snprintf(ring_name, STR_MAXLEN, "Tx Comp Ring %d", i);
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->soc->tx_comp_ring[i],
+				ring_name);
+	}
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rx_refill_buf_ring,
+			"Rx Refill Buf Ring");
+
+	#ifdef IPA_OFFLOAD
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->ipa_rx_refill_buf_ring,
+			"IPA Rx Refill Buf Ring");
+	#endif
+
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rxdma_mon_buf_ring,
+			"Rxdma Mon Buf Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rxdma_mon_dst_ring,
+			"Rxdma Mon Dst Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rxdma_mon_status_ring,
+			"Rxdma Mon Status Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rxdma_mon_desc_ring,
+			"Rxdma mon desc Ring");
+	dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rxdma_err_dst_ring,
+			"Rxdma err dst ring");
+	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
+		snprintf(ring_name, STR_MAXLEN, "Rx mac buf ring %d", i);
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->rx_mac_buf_ring[i],
+				ring_name);
+	}
+}
+
 /**
  * dp_txrx_host_stats_clr(): Reinitialize the txrx stats
  * @vdev: DP_VDEV handle
@@ -4418,6 +4530,7 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
  * TXRX_TX_HOST_STATS: Print Tx Stats
  * TXRX_RX_HOST_STATS: Print Rx Stats
  * TXRX_AST_STATS: Print AST Stats
+ * TXRX_SRNG_PTR_STATS: Print SRNG ring pointer stats
  *
  * Return: 0 on success, print error message in case of failure
  */
@@ -4450,6 +4563,9 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 	case TXRX_AST_STATS:
 		dp_print_ast_stats(pdev->soc);
 		break;
+	case TXRX_SRNG_PTR_STATS:
+		 dp_print_ring_stats(pdev);
+		 break;
 	default:
 		DP_TRACE(FATAL, "Wrong Input For TxRx Host Stats");
 		break;
