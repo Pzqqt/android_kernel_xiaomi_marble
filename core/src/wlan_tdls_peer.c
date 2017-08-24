@@ -618,7 +618,9 @@ void tdls_set_peer_caps(struct tdls_vdev_priv_obj *vdev_obj,
 			const uint8_t *macaddr,
 			struct tdls_update_peer_params  *req_info)
 {
-	uint8_t is_buffer_sta, is_off_channel_supported, is_qos_wmm_sta;
+	uint8_t is_buffer_sta = 0;
+	uint8_t is_off_channel_supported = 0;
+	uint8_t is_qos_wmm_sta = 0;
 	struct tdls_soc_priv_obj *soc_obj;
 	struct tdls_peer *curr_peer;
 	uint32_t feature;
@@ -643,7 +645,7 @@ void tdls_set_peer_caps(struct tdls_vdev_priv_obj *vdev_obj,
 		is_off_channel_supported = 1;
 
 	if (TDLS_IS_WMM_ENABLED(feature) && req_info->is_qos_wmm_sta)
-		is_qos_wmm_sta = true;
+		is_qos_wmm_sta = 1;
 
 	curr_peer->uapsd_queues = req_info->uapsd_queues;
 	curr_peer->max_sp = req_info->max_sp;
