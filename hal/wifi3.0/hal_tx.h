@@ -75,6 +75,7 @@ do {                                            \
 #define HAL_TX_COMPLETION_DESC_LEN_DWORDS (NUM_OF_DWORDS_WBM_RELEASE_RING)
 #define HAL_TX_COMPLETION_DESC_LEN_BYTES (NUM_OF_DWORDS_WBM_RELEASE_RING*4)
 #define HAL_TX_BITS_PER_TID 3
+#define HAL_TX_TID_BITS_MASK ((1 << HAL_TX_BITS_PER_TID) - 1)
 #define HAL_TX_NUM_DSCP_PER_REGISTER 10
 #define HAL_MAX_HW_DSCP_TID_MAPS 2
 
@@ -1033,6 +1034,7 @@ static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
 	int index;
 	uint32_t addr;
 	uint32_t value;
+	uint32_t regval;
 
 	struct hal_soc *soc = (struct hal_soc *)hal_soc;
 
@@ -1049,8 +1051,15 @@ static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
 	addr += 4 * (dscp/HAL_TX_NUM_DSCP_PER_REGISTER);
 	value = tid << (HAL_TX_BITS_PER_TID * index);
 
+	/* Read back previous DSCP TID config and update
+	 * with new config.
+	 */
+	regval = HAL_REG_READ(soc, addr);
+	regval &= ~(HAL_TX_TID_BITS_MASK << (HAL_TX_BITS_PER_TID * index));
+	regval |= value;
+
 	HAL_REG_WRITE(soc, addr,
-			(value & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
+			(regval & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
 }
 
 /**

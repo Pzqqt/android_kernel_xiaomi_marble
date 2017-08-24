@@ -4430,7 +4430,8 @@ static void dp_set_pdev_dscp_tid_map_wifi3(struct cdp_pdev *pdev_handle,
 	struct dp_pdev *pdev = (struct dp_pdev *) pdev_handle;
 	dscp = (tos >> DP_IP_DSCP_SHIFT) & DP_IP_DSCP_MASK;
 	pdev->dscp_tid_map[map_id][dscp] = tid;
-	hal_tx_update_dscp_tid(pdev->soc->hal_soc, tid,
+	if (map_id < HAL_MAX_HW_DSCP_TID_MAPS)
+		hal_tx_update_dscp_tid(pdev->soc->hal_soc, tid,
 			map_id, dscp);
 	return;
 }
