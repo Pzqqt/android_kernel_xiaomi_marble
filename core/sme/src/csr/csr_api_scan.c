@@ -5410,6 +5410,10 @@ static enum wlan_enc_type csr_covert_enc_type_new(eCsrEncryptionType enc)
 		return WLAN_ENCRYPT_TYPE_BTK;
 	case eCSR_ENCRYPT_TYPE_AES_CMAC:
 		return WLAN_ENCRYPT_TYPE_AES_CMAC;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP:
+		return WLAN_ENCRYPT_TYPE_AES_GCMP;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
+		return WLAN_ENCRYPT_TYPE_AES_GCMP_256;
 	case eCSR_ENCRYPT_TYPE_ANY:
 	default:
 		return WLAN_ENCRYPT_TYPE_NONE;
@@ -5441,6 +5445,10 @@ static eCsrEncryptionType csr_covert_enc_type_old(enum wlan_enc_type enc)
 		return eCSR_ENCRYPT_TYPE_BTK;
 	case WLAN_ENCRYPT_TYPE_AES_CMAC:
 		return eCSR_ENCRYPT_TYPE_AES_CMAC;
+	case WLAN_ENCRYPT_TYPE_AES_GCMP:
+		return eCSR_ENCRYPT_TYPE_AES_GCMP;
+	case WLAN_ENCRYPT_TYPE_AES_GCMP_256:
+		return eCSR_ENCRYPT_TYPE_AES_GCMP_256;
 	case WLAN_ENCRYPT_TYPE_ANY:
 	default:
 		return eCSR_ENCRYPT_TYPE_NONE;

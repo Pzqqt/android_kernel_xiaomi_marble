@@ -208,6 +208,12 @@
  * WLAN_REASON_DEAUTH_LEAVING DEAUTH is received from user-space.
  */
 #define WLAN_DEAUTH_DPTRACE_DUMP_COUNT 100
+#ifndef WLAN_CIPHER_SUITE_GCMP
+#define WLAN_CIPHER_SUITE_GCMP 0x000FAC08
+#endif
+#ifndef WLAN_CIPHER_SUITE_GCMP_256
+#define WLAN_CIPHER_SUITE_GCMP_256 0x000FAC09
+#endif
 
 static const u32 hdd_cipher_suites[] = {
 	WLAN_CIPHER_SUITE_WEP40,
@@ -228,6 +234,8 @@ static const u32 hdd_cipher_suites[] = {
 #ifdef WLAN_FEATURE_11W
 	WLAN_CIPHER_SUITE_AES_CMAC,
 #endif
+	WLAN_CIPHER_SUITE_GCMP,
+	WLAN_CIPHER_SUITE_GCMP_256,
 };
 
 static const struct ieee80211_channel hdd_channels_2_4_ghz[] = {
@@ -13059,6 +13067,12 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		setKey.encType = eCSR_ENCRYPT_TYPE_AES_CMAC;
 		break;
 #endif
+	case WLAN_CIPHER_SUITE_GCMP:
+		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GCMP;
+		break;
+	case WLAN_CIPHER_SUITE_GCMP_256:
+		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GCMP_256;
+		break;
 
 	default:
 		hdd_err("Unsupported cipher type: %u", params->cipher);
@@ -13293,7 +13307,12 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	case eCSR_ENCRYPT_TYPE_AES:
 		params.cipher = WLAN_CIPHER_SUITE_AES_CMAC;
 		break;
-
+	case eCSR_ENCRYPT_TYPE_AES_GCMP:
+		params.cipher = WLAN_CIPHER_SUITE_GCMP;
+		break;
+	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
+		params.cipher = WLAN_CIPHER_SUITE_GCMP_256;
+		break;
 	default:
 		params.cipher = IW_AUTH_CIPHER_NONE;
 		break;
@@ -13440,6 +13459,10 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
 		     pHddStaCtx->conn_info.ucEncryptionType) &&
 		    (eCSR_ENCRYPT_TYPE_AES !=
+		     pHddStaCtx->conn_info.ucEncryptionType) &&
+		    (eCSR_ENCRYPT_TYPE_AES_GCMP !=
+			pHddStaCtx->conn_info.ucEncryptionType) &&
+		    (eCSR_ENCRYPT_TYPE_AES_GCMP_256 !=
 		     pHddStaCtx->conn_info.ucEncryptionType)) {
 			/* If default key index is not same as previous one,
 			 * then update the default key index
@@ -13502,10 +13525,13 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	} else if (QDF_SAP_MODE == pAdapter->device_mode) {
 		/* In SoftAp mode setting key direction for default mode */
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
-		     pWextState->roamProfile.EncryptionType.encryptionType[0])
-		    && (eCSR_ENCRYPT_TYPE_AES !=
-			pWextState->roamProfile.EncryptionType.
-			encryptionType[0])) {
+		    pWextState->roamProfile.EncryptionType.encryptionType[0]) &&
+		    (eCSR_ENCRYPT_TYPE_AES !=
+		    pWextState->roamProfile.EncryptionType.encryptionType[0]) &&
+		    (eCSR_ENCRYPT_TYPE_AES_GCMP !=
+		    pWextState->roamProfile.EncryptionType.encryptionType[0]) &&
+		    (eCSR_ENCRYPT_TYPE_AES_GCMP_256 !=
+		    pWextState->roamProfile.EncryptionType.encryptionType[0])) {
 			/* Saving key direction for default key index to TX default */
 			hdd_ap_ctx_t *pAPCtx =
 				WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
@@ -14842,6 +14868,12 @@ static int wlan_hdd_cfg80211_set_cipher(hdd_adapter_t *pAdapter,
 			break;
 #endif
 #endif
+		case WLAN_CIPHER_SUITE_GCMP:
+			encryptionType = eCSR_ENCRYPT_TYPE_AES_GCMP;
+			break;
+		case WLAN_CIPHER_SUITE_GCMP_256:
+			encryptionType = eCSR_ENCRYPT_TYPE_AES_GCMP_256;
+			break;
 		default:
 			hdd_err("Unsupported cipher type: %d", cipher);
 			return -EOPNOTSUPP;

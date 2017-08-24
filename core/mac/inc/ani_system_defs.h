@@ -89,6 +89,9 @@ typedef enum eAniEdType {
 	   Thus while setting BIP encryption mode in corresponding DPU Desc
 	   eSIR_ED_AES_128_CMAC should be set to eSIR_ED_CCMP */
 	eSIR_ED_AES_128_CMAC,
+	/* Firmware uses key length to find GCMP 128 or 256 */
+	eSIR_ED_GCMP,
+	eSIR_ED_GCMP_256,
 	eSIR_ED_NOT_IMPLEMENTED = SIR_MAX_ENUM_SIZE
 } tAniEdType;
 

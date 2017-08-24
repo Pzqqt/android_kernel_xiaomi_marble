@@ -995,6 +995,8 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 		break;
 	case eSIR_ED_TKIP:
 	case eSIR_ED_CCMP:
+	case eSIR_ED_GCMP:
+	case eSIR_ED_GCMP_256:
 #ifdef FEATURE_WLAN_WAPI
 	case eSIR_ED_WPI:
 #endif

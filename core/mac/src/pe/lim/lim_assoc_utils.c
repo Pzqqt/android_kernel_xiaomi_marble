@@ -308,6 +308,27 @@ uint8_t lim_check_mcs_set(tpAniSirGlobal pMac, uint8_t *supportedMCSSet)
 #define SECURITY_SUITE_TYPE_TKIP 0x2
 #define SECURITY_SUITE_TYPE_CCMP 0x4
 #define SECURITY_SUITE_TYPE_WEP104 0x4
+#define SECURITY_SUITE_TYPE_GCMP 0x8
+#define SECURITY_SUITE_TYPE_GCMP_256 0x9
+
+/**
+ * is_non_rsn_cipher()- API to check whether cipher suit is rsn or not
+ * @cipher_suite: cipher suit
+ *
+ * Return: True in case non ht cipher else false
+ */
+static inline bool is_non_rsn_cipher(uint8_t cipher_suite)
+{
+	uint8_t cipher_mask;
+
+	cipher_mask = cipher_suite & SECURITY_SUITE_TYPE_MASK;
+	if ((cipher_mask == SECURITY_SUITE_TYPE_CCMP) ||
+	    (cipher_mask == SECURITY_SUITE_TYPE_GCMP) ||
+	    (cipher_mask == SECURITY_SUITE_TYPE_GCMP_256))
+		return false;
+
+	return true;
+}
 
 /**
  * lim_check_rx_rsn_ie_match()- validate received rsn ie with supported cipher
@@ -366,20 +387,14 @@ lim_check_rx_rsn_ie_match(tpAniSirGlobal mac_ctx, tDot11fIERSN rx_rsn_ie,
 			}
 		}
 
-		if ((sta_is_ht)
+		if (sta_is_ht)
 #ifdef ANI_LITTLE_BYTE_ENDIAN
-			&&
-			((rx_rsn_ie.pwise_cipher_suites[i][3] &
-				 SECURITY_SUITE_TYPE_MASK) ==
-					SECURITY_SUITE_TYPE_CCMP))
+			only_non_ht_cipher = is_non_rsn_cipher(
+				rx_rsn_ie.pwise_cipher_suites[i][3]);
 #else
-			&&
-			((rx_rsn_ie.pwise_cipher_suites[i][0] &
-				 SECURITY_SUITE_TYPE_MASK) ==
-					SECURITY_SUITE_TYPE_CCMP))
+			only_non_ht_cipher = is_non_rsn_cipher(
+				rx_rsn_ie.pwise_cipher_suites[i][0]);
 #endif
-			only_non_ht_cipher = 0;
-
 	}
 
 	if ((!match) || ((sta_is_ht) && only_non_ht_cipher)) {

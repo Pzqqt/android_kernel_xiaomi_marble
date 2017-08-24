@@ -1989,6 +1989,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 */
 		switch (mlm_set_keys_req->edType) {
 		case eSIR_ED_CCMP:
+		case eSIR_ED_GCMP:
+		case eSIR_ED_GCMP_256:
 #ifdef WLAN_FEATURE_11W
 		case eSIR_ED_AES_128_CMAC:
 #endif

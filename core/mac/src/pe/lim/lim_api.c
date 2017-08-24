@@ -1409,6 +1409,8 @@ static bool lim_ibss_enc_type_matched(tpSchBeaconStruct pBeacon,
 	if (pBeacon->capabilityInfo.privacy == 1 && pBeacon->wpaPresent == 1
 	    && pBeacon->rsnPresent == 0
 	    && ((pSession->encryptType == eSIR_ED_CCMP) ||
+		(pSession->encryptType == eSIR_ED_GCMP) ||
+		(pSession->encryptType == eSIR_ED_GCMP_256) ||
 		(pSession->encryptType == eSIR_ED_TKIP)))
 		return true;
 
@@ -1533,6 +1535,8 @@ lim_enc_type_matched(tpAniSirGlobal mac_ctx,
 	    ((bcn->wpaPresent == 1) || (bcn->rsnPresent == 1)) &&
 	    ((session->encryptType == eSIR_ED_TKIP) ||
 		(session->encryptType == eSIR_ED_CCMP) ||
+		(session->encryptType == eSIR_ED_GCMP) ||
+		(session->encryptType == eSIR_ED_GCMP_256) ||
 		(session->encryptType == eSIR_ED_AES_128_CMAC)))
 		return true;
 
