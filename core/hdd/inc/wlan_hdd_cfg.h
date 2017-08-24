@@ -11401,6 +11401,30 @@ enum hdd_external_acs_freq_band {
 #define CFG_ROAM_NUM_DISALLOWED_APS_MAX     (8)
 #define CFG_ROAM_NUM_DISALLOWED_APS_DEFAULT (3)
 
+
+/*
+ * <ini>
+ * gEnableNDIMacRandomization - When enabled this will randomize NDI Mac
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * When enabled this will randomize NDI Mac
+ *
+ *
+ * Related: None
+ *
+ * Supported Feature: NAN
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_RANDOMIZE_NDI_MAC_NAME      "gEnableNDIMacRandomization"
+#define CFG_RANDOMIZE_NDI_MAC_MIN       (0)
+#define CFG_RANDOMIZE_NDI_MAC_MAX       (1)
+#define CFG_RANDOMIZE_NDI_MAC_DEFAULT   (1)
+
 /*
  * <ini>
  * gEnableLPRx - Enable/Disable LPRx
@@ -12276,6 +12300,7 @@ struct hdd_config {
 	uint8_t lower_brssi_thresh;
 	bool enable_dtim_1chrx;
 	int8_t rssi_thresh_offset_5g;
+	bool is_ndi_mac_randomized;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

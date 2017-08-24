@@ -342,6 +342,8 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 	struct nan_datapath_ctx *ndp_ctx;
 	uint8_t op_channel =
 		hdd_ctx->config->nan_datapath_ndi_channel;
+	struct qdf_mac_addr random_ndi_mac;
+	uint8_t *ndi_mac_addr;
 
 	ENTER();
 
@@ -365,9 +367,22 @@ static int hdd_ndi_create_req_handler(hdd_context_t *hdd_ctx,
 		return -EEXIST;
 	}
 
+	if (hdd_ctx->config->is_ndi_mac_randomized) {
+		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
+			hdd_err("get random mac address failed");
+			return -EINVAL;
+		}
+		ndi_mac_addr = &random_ndi_mac.bytes[0];
+	} else {
+		ndi_mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+		if (!ndi_mac_addr) {
+			hdd_err("get intf address failed");
+			return -EINVAL;
+		}
+	}
+
 	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
-			wlan_hdd_get_intf_addr(hdd_ctx), NET_NAME_UNKNOWN,
-			true);
+				ndi_mac_addr, NET_NAME_UNKNOWN, true);
 	if (!adapter) {
 		hdd_err("hdd_open_adapter failed");
 		return -ENOMEM;
@@ -2163,18 +2178,28 @@ error_register_wext:
 struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 {
 	hdd_adapter_t *adapter;
-	struct qdf_mac_addr ndi_mac_addr;
+	struct qdf_mac_addr random_ndi_mac;
 	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	uint8_t *ndi_mac_addr;
 
 	ENTER();
 
-	if (hdd_get_random_nan_mac_addr(hdd_ctx, &ndi_mac_addr)) {
-		hdd_err("get random mac address failed");
-		return NULL;
+	if (hdd_ctx->config->is_ndi_mac_randomized) {
+		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
+			hdd_err("get random mac address failed");
+			return NULL;
+		}
+		ndi_mac_addr = &random_ndi_mac.bytes[0];
+	} else {
+		ndi_mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+		if (!ndi_mac_addr) {
+			hdd_err("get intf address failed");
+			return NULL;
+		}
 	}
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_NDI_MODE, iface_name,
-				   ndi_mac_addr.bytes, NET_NAME_UNKNOWN, true);
+				   ndi_mac_addr, NET_NAME_UNKNOWN, true);
 	if (!adapter) {
 		hdd_err("hdd_open_adapter failed");
 		return NULL;
