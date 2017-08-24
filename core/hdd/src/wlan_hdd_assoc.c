@@ -885,12 +885,17 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 
 			pHddStaCtx->conn_info.authType =
 				pRoamInfo->u.pConnectedProfile->AuthType;
+			pHddStaCtx->conn_info.last_auth_type =
+				pHddStaCtx->conn_info.authType;
 
 			pHddStaCtx->conn_info.operationChannel =
 			    pRoamInfo->u.pConnectedProfile->operationChannel;
 
 			/* Save the ssid for the connection */
 			qdf_mem_copy(&pHddStaCtx->conn_info.SSID.SSID,
+				     &pRoamInfo->u.pConnectedProfile->SSID,
+				     sizeof(tSirMacSSid));
+			qdf_mem_copy(&pHddStaCtx->conn_info.last_ssid.SSID,
 				     &pRoamInfo->u.pConnectedProfile->SSID,
 				     sizeof(tSirMacSSid));
 
@@ -1523,10 +1528,10 @@ static void hdd_print_bss_info(hdd_station_ctx_t *hdd_sta_ctx)
 	hdd_info("dot11mode: %d",
 		 hdd_sta_ctx->conn_info.dot11Mode);
 	hdd_info("AKM: %d",
-		 hdd_sta_ctx->conn_info.authType);
+		 hdd_sta_ctx->conn_info.last_auth_type);
 	hdd_info("ssid: %.*s",
-		 hdd_sta_ctx->conn_info.SSID.SSID.length,
-		 hdd_sta_ctx->conn_info.SSID.SSID.ssId);
+		 hdd_sta_ctx->conn_info.last_ssid.SSID.length,
+		 hdd_sta_ctx->conn_info.last_ssid.SSID.ssId);
 	hdd_info("roam count: %d",
 		 hdd_sta_ctx->conn_info.roam_count);
 	hdd_info("ant_info: %d",
