@@ -2260,7 +2260,8 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 			challenge_req = true;
 			body_len = SIR_MAC_AUTH_FRAME_INFO_LEN +
-					SIR_MAC_AUTH_CHALLENGE_BODY_LEN;
+				   SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH +
+				   SIR_MAC_CHALLENGE_ID_LEN;
 			frame_len = sizeof(tSirMacMgmtHdr) + body_len;
 		}
 		break;
@@ -2371,10 +2372,11 @@ alloc_packet:
 				*body = auth_frame->length;
 				body++;
 				qdf_mem_copy(body, auth_frame->challengeText,
-					     SIR_MAC_AUTH_CHALLENGE_LENGTH);
-				body += SIR_MAC_AUTH_CHALLENGE_LENGTH;
+					     SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH);
+				body += SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH;
 
-				body_len -= SIR_MAC_AUTH_CHALLENGE_BODY_LEN;
+				body_len -= SIR_MAC_SAP_AUTH_CHALLENGE_LENGTH +
+							SIR_MAC_CHALLENGE_ID_LEN;
 			}
 		}
 
