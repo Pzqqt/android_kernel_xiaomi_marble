@@ -59,11 +59,11 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		return;
 	}
 
-	policy_mgr_notice("old_hw_mode_index=%d, new_hw_mode_index=%d",
+	policy_mgr_debug("old_hw_mode_index=%d, new_hw_mode_index=%d",
 		old_hw_mode_index, new_hw_mode_index);
 
 	for (i = 0; i < num_vdev_mac_entries; i++)
-		policy_mgr_notice("vdev_id:%d mac_id:%d",
+		policy_mgr_debug("vdev_id:%d mac_id:%d",
 			vdev_mac_map[i].vdev_id,
 			vdev_mac_map[i].mac_id);
 
@@ -74,11 +74,11 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 		return;
 	}
 
-	policy_mgr_notice("MAC0: TxSS:%d, RxSS:%d, Bw:%d",
+	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d",
 		hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss, hw_mode.mac0_bw);
-	policy_mgr_notice("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
+	policy_mgr_debug("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
 		hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss, hw_mode.mac1_bw);
-	policy_mgr_notice("DBS:%d, Agile DFS:%d, SBS:%d",
+	policy_mgr_debug("DBS:%d, Agile DFS:%d, SBS:%d",
 		hw_mode.dbs_cap, hw_mode.agile_dfs_cap, hw_mode.sbs_cap);
 
 	/* update pm_conc_connection_list */
@@ -116,11 +116,11 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	 * allow to request FW for 2x2
 	 */
 	if ((HW_MODE_SS_2x2 == mac0_ss) && (!pm_ctx->user_cfg.enable2x2)) {
-		policy_mgr_notice("2x2 is not allowed downgrading to 1x1 for mac0");
+		policy_mgr_debug("2x2 is not allowed downgrading to 1x1 for mac0");
 		mac0_ss = HW_MODE_SS_1x1;
 	}
 	if ((HW_MODE_SS_2x2 == mac1_ss) && (!pm_ctx->user_cfg.enable2x2)) {
-		policy_mgr_notice("2x2 is not allowed downgrading to 1x1 for mac1");
+		policy_mgr_debug("2x2 is not allowed downgrading to 1x1 for mac1");
 		mac1_ss = HW_MODE_SS_1x1;
 	}
 
@@ -137,7 +137,7 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	msg.session_id = session_id;
 	msg.context = psoc;
 
-	policy_mgr_notice("set hw mode to sme: hw_mode_index: %d session:%d reason:%d",
+	policy_mgr_debug("set hw mode to sme: hw_mode_index: %d session:%d reason:%d",
 		msg.hw_mode_index, msg.session_id, msg.reason);
 
 	status = pm_ctx->sme_cbacks.sme_pdev_set_hw_mode(msg);
@@ -884,7 +884,7 @@ QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 		goto done;
 	}
 
-	policy_mgr_notice("action:%d session id:%d", action, session_id);
+	policy_mgr_debug("action:%d session id:%d", action, session_id);
 
 	/* Opportunistic timer is started, PM will check if MCC upgrade can be
 	 * done on timer expiry. This avoids any possible ping pong effect
@@ -894,7 +894,7 @@ QDF_STATUS policy_mgr_set_hw_mode_on_channel_switch(
 		qdf_status = policy_mgr_restart_opportunistic_timer(
 			psoc, false);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			policy_mgr_notice("opportunistic timer for MCC upgrade");
+			policy_mgr_debug("opportunistic timer for MCC upgrade");
 		goto done;
 	}
 
@@ -928,7 +928,7 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 			if (!WLAN_REG_IS_SAME_BAND_CHANNELS(channel,
 				pm_conc_connection_list[i].chan)) {
 				qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
-				policy_mgr_notice("DBS required");
+				policy_mgr_debug("DBS required");
 				return;
 			}
 	}
@@ -1049,7 +1049,7 @@ QDF_STATUS policy_mgr_update_connection_info_utfw(
 			vdev_id);
 		return status;
 	}
-	policy_mgr_notice("--> updating entry at index[%d]", conn_index);
+	policy_mgr_debug("--> updating entry at index[%d]", conn_index);
 
 	policy_mgr_update_conc_list(psoc, conn_index,
 			policy_mgr_get_mode(type, sub_type),
@@ -1074,7 +1074,7 @@ QDF_STATUS policy_mgr_incr_connection_count_utfw(struct wlan_objmgr_psoc *psoc,
 			MAX_NUMBER_OF_CONC_CONNECTIONS);
 		return status;
 	}
-	policy_mgr_notice("--> filling entry at index[%d]", conn_index);
+	policy_mgr_debug("--> filling entry at index[%d]", conn_index);
 
 	policy_mgr_update_conc_list(psoc, conn_index,
 				policy_mgr_get_mode(type, sub_type),

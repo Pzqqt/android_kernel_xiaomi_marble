@@ -77,7 +77,7 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	policy_mgr_notice("get pcl for existing conn:%d", mode);
+	policy_mgr_debug("get pcl for existing conn:%d", mode);
 
 	if (policy_mgr_mode_specific_connection_count(psoc, mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
@@ -86,7 +86,7 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 		/* Get the PCL */
 		status = policy_mgr_get_pcl(psoc, mode, pcl_ch, len,
 					pcl_weight, weight_len);
-		policy_mgr_notice("Get PCL to FW for mode:%d", mode);
+		policy_mgr_debug("Get PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
@@ -1480,7 +1480,7 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	 * coming up.
 	 */
 	if (!pcl.pcl_len) {
-		policy_mgr_notice("policy_mgr_get_pcl_for_existing_conn returned no pcl");
+		policy_mgr_debug("policy_mgr_get_pcl_for_existing_conn returned no pcl");
 		status = policy_mgr_get_pcl(psoc, PM_SAP_MODE,
 				pcl.pcl_list, &pcl.pcl_len,
 				pcl.weight_list,
@@ -1501,7 +1501,7 @@ QDF_STATUS policy_mgr_get_sap_mandatory_channel(struct wlan_objmgr_psoc *psoc,
 	}
 
 	*chan = pcl.pcl_list[0];
-	policy_mgr_notice("mandatory channel:%d", *chan);
+	policy_mgr_debug("mandatory channel:%d", *chan);
 
 	return QDF_STATUS_SUCCESS;
 }

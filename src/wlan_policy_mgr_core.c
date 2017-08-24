@@ -393,7 +393,7 @@ int8_t policy_mgr_get_matching_hw_mode_index(
 			continue;
 
 		found = i;
-		policy_mgr_notice("hw_mode index %d found", i);
+		policy_mgr_debug("hw_mode index %d found", i);
 		break;
 	}
 	return found;
@@ -430,11 +430,11 @@ int8_t policy_mgr_get_hw_mode_idx_from_dbs_hw_list(
 	policy_mgr_get_tx_rx_ss_from_config(mac0_ss, &mac0_tx_ss, &mac0_rx_ss);
 	policy_mgr_get_tx_rx_ss_from_config(mac1_ss, &mac1_tx_ss, &mac1_rx_ss);
 
-	policy_mgr_notice("MAC0: TxSS=%d, RxSS=%d, BW=%d",
+	policy_mgr_debug("MAC0: TxSS=%d, RxSS=%d, BW=%d",
 		mac0_tx_ss, mac0_rx_ss, mac0_bw);
-	policy_mgr_notice("MAC1: TxSS=%d, RxSS=%d, BW=%d",
+	policy_mgr_debug("MAC1: TxSS=%d, RxSS=%d, BW=%d",
 		mac1_tx_ss, mac1_rx_ss, mac1_bw);
-	policy_mgr_notice("DBS=%d, Agile DFS=%d, SBS=%d",
+	policy_mgr_debug("DBS=%d, Agile DFS=%d, SBS=%d",
 		dbs, dfs, sbs);
 
 	return policy_mgr_get_matching_hw_mode_index(psoc, mac0_tx_ss,
@@ -695,7 +695,7 @@ void policy_mgr_restore_deleted_conn_info(struct wlan_objmgr_psoc *psoc,
 			num_cxn_del * sizeof(*info));
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	policy_mgr_notice("Restored the deleleted conn info, vdev:%d, index:%d",
+	policy_mgr_debug("Restored the deleleted conn info, vdev:%d, index:%d",
 		info->vdev_id, conn_index);
 }
 
@@ -739,7 +739,7 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 		if (found) {
 			pm_conc_connection_list[conn_index].mac =
 				vdev_mac_map[i].mac_id;
-			policy_mgr_notice("vdev:%d, mac:%d",
+			policy_mgr_debug("vdev:%d, mac:%d",
 			  pm_conc_connection_list[conn_index].vdev_id,
 			  pm_conc_connection_list[conn_index].mac);
 			if (pm_ctx->cdp_cbacks.cdp_update_mac_id)
@@ -789,10 +789,10 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 		return;
 	}
 
-	policy_mgr_notice("cfgd_hw_mode_index=%d", cfgd_hw_mode_index);
+	policy_mgr_debug("cfgd_hw_mode_index=%d", cfgd_hw_mode_index);
 
 	for (i = 0; i < num_vdev_mac_entries; i++)
-		policy_mgr_notice("vdev_id:%d mac_id:%d",
+		policy_mgr_debug("vdev_id:%d mac_id:%d",
 				vdev_mac_map[i].vdev_id,
 				vdev_mac_map[i].mac_id);
 
@@ -803,11 +803,11 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 		return;
 	}
 
-	policy_mgr_notice("MAC0: TxSS:%d, RxSS:%d, Bw:%d",
+	policy_mgr_debug("MAC0: TxSS:%d, RxSS:%d, Bw:%d",
 		hw_mode.mac0_tx_ss, hw_mode.mac0_rx_ss, hw_mode.mac0_bw);
-	policy_mgr_notice("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
+	policy_mgr_debug("MAC1: TxSS:%d, RxSS:%d, Bw:%d",
 		hw_mode.mac1_tx_ss, hw_mode.mac1_rx_ss, hw_mode.mac1_bw);
-	policy_mgr_notice("DBS:%d, Agile DFS:%d, SBS:%d",
+	policy_mgr_debug("DBS:%d, Agile DFS:%d, SBS:%d",
 		hw_mode.dbs_cap, hw_mode.agile_dfs_cap, hw_mode.sbs_cap);
 
 	/* update pm_conc_connection_list */
@@ -1188,7 +1188,7 @@ void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		policy_mgr_err("Send soc set PCL to SME failed");
 	else
-		policy_mgr_notice("Set PCL to FW for mode:%d", mode);
+		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
 }
 
 
@@ -1235,7 +1235,7 @@ void policy_mgr_set_pcl_for_existing_combo(
 						info, &num_cxn_del);
 		/* Set the PCL to the FW since connection got updated */
 		policy_mgr_pdev_set_pcl(psoc, pcl_mode);
-		policy_mgr_notice("Set PCL to FW for mode:%d", mode);
+		policy_mgr_debug("Set PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
 		policy_mgr_restore_deleted_conn_info(psoc, info, num_cxn_del);
 	}
@@ -1262,7 +1262,7 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 
 	/* if we still need it */
 	action = policy_mgr_need_opportunistic_upgrade(psoc);
-	policy_mgr_notice("action:%d", action);
+	policy_mgr_debug("action:%d", action);
 	if (action) {
 		/* lets call for action */
 		/* session id is being used only
@@ -1717,7 +1717,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 
 	if (PM_NONE == pcl) {
 		/* msg */
-		policy_mgr_notice("pcl is 0");
+		policy_mgr_debug("pcl is 0");
 		return QDF_STATUS_SUCCESS;
 	}
 	/* get the channel list for current domain */
@@ -1734,7 +1734,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	if (((mode == PM_SAP_MODE) || (mode == PM_P2P_GO_MODE)) &&
 	    (policy_mgr_mode_specific_connection_count(
 		psoc, PM_STA_MODE, NULL) > 0)) {
-		policy_mgr_notice("STA present, skip DFS channels from pcl for SAP/Go");
+		policy_mgr_debug("STA present, skip DFS channels from pcl for SAP/Go");
 		skip_dfs_channel = true;
 	}
 
@@ -2102,7 +2102,7 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if ((*len != 0) && (*len != i))
-		policy_mgr_notice("pcl len (%d) and weight list len mismatch (%d)",
+		policy_mgr_debug("pcl len (%d) and weight list len mismatch (%d)",
 			*len, i);
 
 	/* check the channel avoidance list */
