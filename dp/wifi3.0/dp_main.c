@@ -1763,7 +1763,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);
-	qdf_nbuf_queue_init(&soc->htt_stats_msg);
+	qdf_nbuf_queue_init(&soc->htt_stats.msg);
 	return 0;
 fail1:
 	/*
@@ -2356,8 +2356,11 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	qdf_atomic_set(&soc->cmn_init_done, 0);
 
-	qdf_flush_work(0, &soc->htt_stats_work);
-	qdf_disable_work(0, &soc->htt_stats_work);
+	qdf_flush_work(0, &soc->htt_stats.work);
+	qdf_disable_work(0, &soc->htt_stats.work);
+
+	/* Free pending htt stats messages */
+	qdf_nbuf_queue_free(&soc->htt_stats.msg);
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
@@ -2418,7 +2421,10 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
 
+	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
 	qdf_spinlock_destroy(&soc->peer_ref_mutex);
+	qdf_spinlock_destroy(&soc->htt_stats.lock);
+
 	htt_soc_detach(soc->htt_handle);
 
 	dp_reo_cmdlist_destroy(soc);
@@ -2591,7 +2597,7 @@ static int dp_soc_attach_target_wifi3(struct cdp_soc_t *cdp_soc)
 	DP_STATS_INIT(soc);
 
 	/* initialize work queue for stats processing */
-	qdf_create_work(0, &soc->htt_stats_work, htt_t2h_stats_handler, soc);
+	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
 
 	return 0;
 }
@@ -5075,6 +5081,11 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 
 	/* fill the tx/rx cpu ring map*/
 	dp_soc_set_txrx_ring_map(soc);
+
+	qdf_spinlock_create(&soc->htt_stats.lock);
+	/* initialize work queue for stats processing */
+	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
+
 	return (void *)soc;
 
 fail2:

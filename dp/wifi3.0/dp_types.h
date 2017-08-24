@@ -533,6 +533,21 @@ struct dp_ast_entry {
 	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;
 };
 
+/* SOC level htt stats */
+struct htt_t2h_stats {
+	/* lock to protect htt_stats_msg update */
+	qdf_spinlock_t lock;
+
+	/* work queue to process htt stats */
+	qdf_work_t work;
+
+	/* T2H Ext stats message queue */
+	qdf_nbuf_queue_t msg;
+
+	/* number of completed stats in htt_stats_msg */
+	uint32_t num_stats;
+};
+
 /* SOC level structure for data path */
 struct dp_soc {
 	/* Common base structure - Should be the first member */
@@ -758,12 +773,9 @@ struct dp_soc {
 	u_int16_t pdev_bs_inact_interval;
 	/* Inactivity timer */
 #endif /* QCA_SUPPORT_SON */
-	/* T2H Ext stats message queue */
-	qdf_nbuf_queue_t htt_stats_msg;
-	/* T2H Ext stats message length */
-	uint32_t htt_msg_len;
-	/* work queue to process htt stats */
-	qdf_work_t htt_stats_work;
+
+	/* htt stats */
+	struct htt_t2h_stats htt_stats;
 
 #ifdef IPA_OFFLOAD
 	/* IPA uC datapath offload Wlan Tx resources */
