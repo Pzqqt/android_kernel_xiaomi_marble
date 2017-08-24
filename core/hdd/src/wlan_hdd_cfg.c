@@ -6352,6 +6352,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hdd_debug("Name = [%s] value = [%u]",
 		 CFG_RANDOMIZE_NDI_MAC_NAME,
 		 pHddCtx->config->is_ndi_mac_randomized);
+	hdd_debug("Name = [%s] value = [%u]",
+		CFG_DOT11P_MODE_NAME,
+		pHddCtx->config->dot11p_mode);
 }
 
 
