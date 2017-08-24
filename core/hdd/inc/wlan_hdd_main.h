@@ -203,27 +203,27 @@
 
 #define WLAN_CHIP_VERSION   "WCNSS"
 
-#define hdd_log_rate_limited(rate, level, args...) \
+#define hdd_log_ratelimited(rate, level, args...) \
 		QDF_TRACE_RATE_LIMITED(rate, QDF_MODULE_ID_HDD, level, ## args)
-#define hdd_log_rate_limited_fl(rate, level, format, args...) \
-		hdd_log_rate_limited(rate, level, FL(format), ## args)
-#define hdd_alert_rate_limited(rate, format, args...) \
-		hdd_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_FATAL,\
+#define hdd_log_ratelimited_fl(rate, level, format, args...) \
+		hdd_log_ratelimited(rate, level, FL(format), ## args)
+#define hdd_alert_ratelimited(rate, format, args...) \
+		hdd_log_ratelimited_fl(rate, QDF_TRACE_LEVEL_FATAL,\
 			format, ## args)
-#define hdd_err_rate_limited(rate, format, args...) \
-		hdd_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_ERROR,\
+#define hdd_err_ratelimited(rate, format, args...) \
+		hdd_log_ratelimited_fl(rate, QDF_TRACE_LEVEL_ERROR,\
 			format, ## args)
-#define hdd_warn_rate_limited(rate, format, args...) \
-		hdd_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_WARN,\
+#define hdd_warn_ratelimited(rate, format, args...) \
+		hdd_log_ratelimited_fl(rate, QDF_TRACE_LEVEL_WARN,\
 			format, ## args)
-#define hdd_notice_rate_limited(rate, format, args...) \
-		hdd_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_INFO,\
+#define hdd_notice_ratelimited(rate, format, args...) \
+		hdd_log_ratelimited_fl(rate, QDF_TRACE_LEVEL_INFO,\
 			format, ## args)
-#define hdd_info_rate_limited(rate, format, args...) \
-		hdd_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_INFO,\
+#define hdd_info_ratelimited(rate, format, args...) \
+		hdd_log_ratelimited_fl(rate, QDF_TRACE_LEVEL_INFO,\
 			format, ## args)
-#define hdd_debug_rate_limited(rate, format, args...) \
-		hdd_log_rate_limited_fl(rate, QDF_TRACE_LEVEL_DEBUG,\
+#define hdd_debug_ratelimited(rate, format, args...) \
+		hdd_log_ratelimited_fl(rate, QDF_TRACE_LEVEL_DEBUG,\
 			format, ## args)
 
 #define hdd_log(level, args...) QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
