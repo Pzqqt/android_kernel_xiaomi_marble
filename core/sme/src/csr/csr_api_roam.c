@@ -4332,10 +4332,9 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 		pBssConfig->uJoinTimeOut =
 			QDF_MAX(10 * pBssDesc->beaconInterval,
 				CSR_JOIN_FAILURE_TIMEOUT_MIN);
-		/* make sure it is less than max allowed */
-		pBssConfig->uJoinTimeOut =
-			QDF_MIN(pBssConfig->uJoinTimeOut,
-				WNI_CFG_JOIN_FAILURE_TIMEOUT_STAMAX);
+		if (pBssConfig->uJoinTimeOut > CSR_JOIN_FAILURE_TIMEOUT_DEFAULT)
+			pBssConfig->uJoinTimeOut =
+					CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
 	} else {
 		pBssConfig->uJoinTimeOut =
 			CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
