@@ -6008,6 +6008,27 @@ QDF_STATUS wmi_extract_pdev_stats(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * extract_unit_test() - extract unit test from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param unit_test: Pointer to hold unit-test header
+ * @param maxspace: The amount of space in evt_buf
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_unit_test(void *wmi_hdl, void *evt_buf,
+		wmi_unit_test_event *unit_test, uint32_t maxspace)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_unit_test)
+		return wmi_handle->ops->extract_unit_test(wmi_handle,
+			evt_buf, unit_test, maxspace);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_pdev_ext_stats() - extract extended pdev stats from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
