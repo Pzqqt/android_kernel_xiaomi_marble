@@ -1080,17 +1080,9 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
 	return;
 }
 
-/**
- * wlan_cfg80211_scan() - Process scan request
- * @pdev: pdev object pointer
- * @request: scan request
- * @source : returns source of the scan request
- *
- * Return: 0 on success, error number otherwise
- */
 int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		struct cfg80211_scan_request *request,
-		uint8_t source)
+		struct scan_params *params)
 {
 	struct net_device *dev = request->wdev->netdev;
 	struct scan_start_request *req;
@@ -1288,6 +1280,18 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		req->scan_req.extraie.len = request->ie_len;
 		qdf_mem_copy(req->scan_req.extraie.ptr, request->ie,
 				request->ie_len);
+	} else if (params->default_ie.ptr && params->default_ie.len) {
+		req->scan_req.extraie.ptr =
+			qdf_mem_malloc(params->default_ie.len);
+		if (!req->scan_req.extraie.ptr) {
+			cfg80211_err("Failed to allocate memory");
+			status = -ENOMEM;
+			qdf_mem_free(req);
+			goto end;
+		}
+		req->scan_req.extraie.len = params->default_ie.len;
+		qdf_mem_copy(req->scan_req.extraie.ptr, params->default_ie.ptr,
+			     params->default_ie.len);
 	}
 
 	if (!is_p2p_scan) {
@@ -1302,7 +1306,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		ucfg_scan_flush_results(pdev, NULL);
 
 	/* Enqueue the scan request */
-	wlan_scan_request_enqueue(pdev, request, source, req->scan_req.scan_id);
+	wlan_scan_request_enqueue(pdev, request, params->source,
+				  req->scan_req.scan_id);
 
 	qdf_runtime_pm_prevent_suspend(
 		&osif_priv->osif_scan->runtime_pm_lock);
@@ -1316,7 +1321,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		} else {
 			status = -EIO;
 		}
-		wlan_scan_request_dequeue(pdev, scan_id, &request, &source);
+		wlan_scan_request_dequeue(pdev, scan_id, &request,
+					  &params->source);
 		if (qdf_list_empty(&osif_priv->osif_scan->scan_req_q))
 			qdf_runtime_pm_allow_suspend(
 				&osif_priv->osif_scan->runtime_pm_lock);

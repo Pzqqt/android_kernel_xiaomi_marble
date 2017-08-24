@@ -113,6 +113,17 @@ struct scan_req {
 	uint8_t source;
 };
 
+/**
+ * struct scan_params - Scan params
+ * @source: scan request source
+ * @default_ie: default scan ie
+ *
+ */
+struct scan_params {
+	uint8_t source;
+	struct element_info default_ie;
+};
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * wlan_cfg80211_sched_scan_start() - cfg80211 scheduled scan(pno) start
@@ -176,7 +187,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(
  * wlan_cfg80211_scan() - API to process cfg80211 scan request
  * @pdev: Pointer to pdev
  * @request: Pointer to scan request
- * @source: source of scan request
+ * @params: scan params
  *
  * API to trigger scan and update cfg80211 scan database.
  * scan dump command can be used to fetch scan results
@@ -186,7 +197,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(
  */
 int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		struct cfg80211_scan_request *request,
-		uint8_t source);
+		struct scan_params *params);
 
 /**
  * wlan_cfg80211_inform_bss_frame() - API to inform beacon to cfg80211
