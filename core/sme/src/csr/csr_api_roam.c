@@ -19231,6 +19231,9 @@ QDF_STATUS csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 	msg->csaIeRequired = csa_ie_reqd;
 	msg->ch_switch_beacon_cnt =
 		 mac_ctx->sap.SapDfsInfo.sap_ch_switch_beacon_cnt;
+	msg->ch_switch_mode = mac_ctx->sap.SapDfsInfo.sap_ch_switch_mode;
+	msg->dfs_ch_switch_disable =
+		mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch;
 	qdf_mem_copy(msg->bssid, bssid.bytes, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(&msg->ch_params, ch_params, sizeof(struct ch_params));
 

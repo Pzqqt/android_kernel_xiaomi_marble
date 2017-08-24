@@ -67,6 +67,11 @@
 	((LIntrvl * LIM_TIM_WAIT_COUNT_FACTOR) > LIM_MIN_TIM_WAIT_COUNT ? \
 	(LIntrvl * LIM_TIM_WAIT_COUNT_FACTOR) : LIM_MIN_TIM_WAIT_COUNT)
 
+#ifdef CHANNEL_HOPPING_ALL_BANDS
+#define CHAN_HOP_ALL_BANDS_ENABLE        1
+#else
+#define CHAN_HOP_ALL_BANDS_ENABLE        0
+#endif
 
 /* enums exported by LIM are as follows */
 
