@@ -5535,6 +5535,7 @@ typedef enum {
 	wmi_debug_fatal_condition_eventid,
 #endif /* OL_ATH_SMART_LOGGING */
 	wmi_wlan_sar2_result_event_id,
+	wmi_esp_estimate_event_id,
 	wmi_events_max,
 } wmi_conv_event_id;
 
@@ -5678,7 +5679,7 @@ typedef enum {
 	wmi_pdev_param_tx_ack_timeout,
 	wmi_pdev_param_soft_tx_chain_mask,
 	wmi_pdev_param_cck_tx_enable,
-
+	wmi_pdev_param_esp_indication_period,
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
 
@@ -7736,6 +7737,16 @@ struct sar_limit_event {
 	uint32_t num_limit_rows;
 	struct sar_limit_event_row
 			sar_limit_row[MAX_SAR_LIMIT_ROWS_SUPPORTED];
+};
+
+/**
+ * struct esp_estimation_event - esp airtime estimation event
+ * @ac_airtime_percentage: Estimated Airtime
+ * @pdev_id: PDEV_ID of Data
+ */
+struct esp_estimation_event {
+	uint32_t ac_airtime_percentage;
+	uint32_t pdev_id;
 };
 
 /*

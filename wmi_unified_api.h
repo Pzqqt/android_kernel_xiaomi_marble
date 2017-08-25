@@ -1588,6 +1588,10 @@ QDF_STATUS wmi_extract_mumimo_tx_count_ev_param(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_peer_gid_userpos_list_ev_param(void *wmi_hdl,
 		void *evt_buf, wmi_host_peer_gid_userpos_list_event *param);
 
+QDF_STATUS
+wmi_extract_esp_estimate_ev_param(void *wmi_hdl, void *evt_buf,
+				  struct esp_estimation_event *param);
+
 QDF_STATUS wmi_extract_pdev_caldata_version_check_ev_param(void *wmi_hdl,
 		void *evt_buf, wmi_host_pdev_check_cal_version_event *param);
 
