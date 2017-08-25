@@ -70,6 +70,8 @@
 #include "phyrx_he_sig_b1_mu.h"
 #include "phyrx_he_sig_b2_mu.h"
 #include "phyrx_he_sig_b2_ofdma.h"
+#include "phyrx_l_sig_a.h"
+#include "phyrx_l_sig_b.h"
 #include "phyrx_vht_sig_a.h"
 #include "phyrx_ht_sig.h"
 #include "tx_msdu_extension.h"

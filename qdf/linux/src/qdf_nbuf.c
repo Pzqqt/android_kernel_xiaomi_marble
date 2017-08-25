@@ -53,6 +53,7 @@
 #endif /* FEATURE_TSO */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+
 #define qdf_nbuf_users_inc atomic_inc
 #define qdf_nbuf_users_dec atomic_dec
 #define qdf_nbuf_users_set atomic_set
@@ -63,6 +64,19 @@
 #define qdf_nbuf_users_set refcount_set
 #define qdf_nbuf_users_read refcount_read
 #endif /* KERNEL_VERSION(4, 13, 0) */
+
+#define RATE_MULTIPLIER		2
+
+#define IEEE80211_RADIOTAP_VHT_BW_20	0
+#define IEEE80211_RADIOTAP_VHT_BW_40	1
+#define IEEE80211_RADIOTAP_VHT_BW_80	2
+#define IEEE80211_RADIOTAP_VHT_BW_160	3
+
+#define RADIOTAP_VHT_BW_20	0
+#define RADIOTAP_VHT_BW_40	1
+#define RADIOTAP_VHT_BW_80	4
+#define RADIOTAP_VHT_BW_160	11
+
 
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[QDF_NBUF_TX_PKT_STATE_MAX];
@@ -2674,8 +2688,20 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 		(rx_status->beamformed ?
 		 IEEE80211_RADIOTAP_VHT_FLAG_BEAMFORMED : 0);
 	rtap_len += 1;
-
-	rtap_buf[rtap_len] = (rx_status->vht_flag_values2);
+	switch (rx_status->vht_flag_values2) {
+	case IEEE80211_RADIOTAP_VHT_BW_20:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_20;
+		break;
+	case IEEE80211_RADIOTAP_VHT_BW_40:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_40;
+		break;
+	case IEEE80211_RADIOTAP_VHT_BW_80:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_80;
+		break;
+	case IEEE80211_RADIOTAP_VHT_BW_160:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_160;
+		break;
+	}
 	rtap_len += 1;
 	rtap_buf[rtap_len] = (rx_status->vht_flag_values3[0]);
 	rtap_len += 1;
@@ -2810,7 +2836,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	/* IEEE80211_RADIOTAP_RATE  u8           500kb/s */
 	if (!rx_status->ht_flags && !rx_status->vht_flags) {
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_RATE);
-		rtap_buf[rtap_len] = rx_status->rate;
+		rtap_buf[rtap_len] = rx_status->rate * RATE_MULTIPLIER;
 	} else
 		rtap_buf[rtap_len] = 0;
 	rtap_len += 1;
@@ -2852,6 +2878,8 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_SGI;
 		if (rx_status->bw)
 			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_BW_40;
+		else
+			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_BW_20;
 		rtap_len += 1;
 
 		rtap_buf[rtap_len] = rx_status->mcs;

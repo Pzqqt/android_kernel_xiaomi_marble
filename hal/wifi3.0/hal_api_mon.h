@@ -86,6 +86,23 @@
 #define HAL_RX_RECEPTION_TYPE_OFDMA	2
 #define HAL_RX_RECEPTION_TYPE_MU_OFDMA	3
 
+#define HAL_11B_RATE_0MCS	11
+#define HAL_11B_RATE_1MCS	5.5
+#define HAL_11B_RATE_2MCS	2
+#define HAL_11B_RATE_3MCS	1
+#define HAL_11B_RATE_4MCS	11
+#define HAL_11B_RATE_5MCS	5.5
+#define HAL_11B_RATE_6MCS	2
+
+#define HAL_11A_RATE_0MCS	48
+#define HAL_11A_RATE_1MCS	24
+#define HAL_11A_RATE_2MCS	12
+#define HAL_11A_RATE_3MCS	6
+#define HAL_11A_RATE_4MCS	54
+#define HAL_11A_RATE_5MCS	36
+#define HAL_11A_RATE_6MCS	18
+#define HAL_11A_RATE_7MCS	9
+
 enum {
 	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
 	HAL_HW_RX_DECAP_FORMAT_NWIFI,
@@ -351,7 +368,7 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 	struct rx_msdu_start *rx_msdu_start;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
 	uint32_t reg_value;
-
+	uint8_t nss = 0;
 	static uint32_t sgi_hw_to_cdp[] = {
 		CDP_SGI_0_8_US,
 		CDP_SGI_0_4_US,
@@ -373,12 +390,19 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, PKT_TYPE);
 	switch (reg_value) {
+	case HAL_RX_PKT_TYPE_11N:
+		rs->ht_flags = 1;
+		rs->bw = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
+			RECEIVE_BANDWIDTH);
+		break;
 	case HAL_RX_PKT_TYPE_11AC:
 		rs->vht_flags = 1;
 		reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
-		RECEIVE_BANDWIDTH);
-		rs->vht_flag_values2 = 0x01 << reg_value;
-		rs->vht_flag_values3[0] = rs->mcs << 4;
+			RECEIVE_BANDWIDTH);
+		rs->vht_flag_values2 = reg_value;
+		nss = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, NSS);
+		nss = nss + 1;
+		rs->vht_flag_values3[0] = (rs->mcs << 4) | nss ;
 		break;
 	case HAL_RX_PKT_TYPE_11AX:
 		rs->he_flags = 1;
@@ -386,7 +410,6 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 	default:
 		break;
 	}
-
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, RECEPTION_TYPE);
 	rs->beamformed = (reg_value == HAL_RX_RECEPTION_TYPE_MU_MIMO) ? 1 : 0;
 	/* TODO: rs->beamformed should be set for SU beamforming also */
@@ -436,6 +459,7 @@ static inline uint32_t
 hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 {
 	uint32_t tlv_tag, user_id, tlv_len, value;
+	uint8_t group_id = 0;
 
 	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv);
 	user_id = HAL_RX_GET_USER_TLV32_USERID(rx_tlv);
@@ -526,15 +550,92 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			1 : 0;
 		break;
 	}
+
+	case WIFIPHYRX_L_SIG_B_E:
+	{
+		uint8_t *l_sig_b_info = (uint8_t *)rx_tlv +
+				HAL_RX_OFFSET(PHYRX_L_SIG_B_0,
+				L_SIG_B_INFO_PHYRX_L_SIG_B_INFO_DETAILS);
+
+		value = HAL_RX_GET(l_sig_b_info, L_SIG_B_INFO_0, RATE);
+		switch (value) {
+		case 1:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_3MCS;
+			break;
+		case 2:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_2MCS;
+			break;
+		case 3:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_1MCS;
+			break;
+		case 4:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_0MCS;
+			break;
+		case 5:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_6MCS;
+			break;
+		case 6:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_5MCS;
+			break;
+		case 7:
+			ppdu_info->rx_status.rate = HAL_11B_RATE_4MCS;
+			break;
+		default:
+			break;
+		}
+	break;
+	}
+
+	case WIFIPHYRX_L_SIG_A_E:
+	{
+		uint8_t *l_sig_a_info = (uint8_t *)rx_tlv +
+				HAL_RX_OFFSET(PHYRX_L_SIG_A_0,
+				L_SIG_A_INFO_PHYRX_L_SIG_A_INFO_DETAILS);
+
+		value = HAL_RX_GET(l_sig_a_info, L_SIG_A_INFO_0, RATE);
+		switch (value) {
+		case 8:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_0MCS;
+			break;
+		case 9:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_1MCS;
+			break;
+		case 10:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_2MCS;
+			break;
+		case 11:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_3MCS;
+			break;
+		case 12:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_4MCS;
+			break;
+		case 13:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_5MCS;
+			break;
+		case 14:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_6MCS;
+			break;
+		case 15:
+			ppdu_info->rx_status.rate = HAL_11A_RATE_7MCS;
+			break;
+		default:
+			break;
+		}
+	break;
+	}
+
 	case WIFIPHYRX_VHT_SIG_A_E:
 	{
 		uint8_t *vht_sig_a_info = (uint8_t *)rx_tlv +
 				HAL_RX_OFFSET(PHYRX_VHT_SIG_A_0,
 				VHT_SIG_A_INFO_PHYRX_VHT_SIG_A_INFO_DETAILS);
+
 		value = HAL_RX_GET(vht_sig_a_info, VHT_SIG_A_INFO_1,
 				SU_MU_CODING);
 		ppdu_info->rx_status.ldpc = (value == HAL_SU_MU_CODING_LDPC) ?
 			1 : 0;
+		group_id = HAL_RX_GET(vht_sig_a_info, VHT_SIG_A_INFO_0, GROUP_ID);
+		ppdu_info->rx_status.vht_flag_values5 = group_id;
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_SU_E:
