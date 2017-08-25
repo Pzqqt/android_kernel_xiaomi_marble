@@ -5423,6 +5423,27 @@ QDF_STATUS wmi_extract_peer_gid_userpos_list_ev_param(void *wmi_hdl,
 }
 
 /**
+ * wmi_extract_esp_estimate_ev_param() - extract air time from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to hold esp event
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_extract_esp_estimate_ev_param(void *wmi_hdl, void *evt_buf,
+				  struct esp_estimation_event *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_esp_estimation_ev_param)
+		return wmi_handle->ops->extract_esp_estimation_ev_param(
+				wmi_handle, evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_pdev_caldata_version_check_ev_param() - extract caldata
  * 						       from event
  * @wmi_handle: wmi handle

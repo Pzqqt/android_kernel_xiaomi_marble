@@ -6567,8 +6567,29 @@ static QDF_STATUS extract_mumimo_tx_count_ev_param_non_tlv(wmi_unified_t wmi_han
 }
 
 /**
+ * extract_esp_estimation_ev_param_non_tlv() - extract air time from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @param: Pointer to hold esp event
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS extract_esp_estimation_ev_param_non_tlv(
+		wmi_unified_t wmi_handle,
+		void *evt_buf,
+		struct esp_estimation_event *param)
+{
+	wmi_esp_estimation_event *event = (wmi_esp_estimation_event *)evt_buf;
+
+	param->ac_airtime_percentage = event->ac_airtime_percentage;
+	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_peer_gid_userpos_list_ev_param_non_tlv() - extract gid user position
- * 						      from event
+ * from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
  * @param param: Pointer to hold peer user position list
@@ -8866,6 +8887,8 @@ struct wmi_ops non_tlv_ops =  {
 		send_dfs_average_radar_params_cmd_non_tlv,
 	.extract_dfs_status_from_fw = extract_dfs_status_from_fw_non_tlv,
 #endif
+	.extract_esp_estimation_ev_param =
+				extract_esp_estimation_ev_param_non_tlv,
 };
 
 /**
@@ -9171,6 +9194,8 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_host_dfs_status_check_event_id] =
 		WMI_HOST_DFS_STATUS_CHECK_EVENTID;
 #endif
+	event_ids[wmi_esp_estimate_event_id] =
+					WMI_ESP_ESTIMATE_EVENTID;
 }
 
 /**
@@ -9359,6 +9384,8 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_tx_ack_timeout] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_soft_tx_chain_mask] =
 		WMI_PDEV_PARAM_SOFT_TX_CHAIN_MASK;
+	pdev_param[wmi_pdev_param_esp_indication_period] =
+		WMI_PDEV_PARAM_ESP_INDICATION_PERIOD;
 	pdev_param[wmi_pdev_param_rfkill_enable] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_hw_rfkill_config] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_low_power_rf_enable] = WMI_UNAVAILABLE_PARAM;
