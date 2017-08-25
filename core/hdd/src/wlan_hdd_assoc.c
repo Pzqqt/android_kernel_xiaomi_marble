@@ -5809,8 +5809,8 @@ static int __iw_set_essid(struct net_device *dev,
 	/*Try disconnecting if already in connected state*/
 	status = wlan_hdd_try_disconnect(pAdapter);
 	if (0 > status) {
-	    hdd_err("Failed to disconnect the existing connection");
-	    return -EALREADY;
+		hdd_err("Failed to disconnect the existing connection");
+		return -EALREADY;
 	}
 
 	/*

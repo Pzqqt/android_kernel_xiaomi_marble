@@ -1739,8 +1739,7 @@ static void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 				 */
 				if (pHddCtx->tdls_source_bitmap) {
 					mutex_unlock(&pHddCtx->tdls_lock);
-					hdd_debug("Don't enable TDLS, source"
-						"bitmap: %lu",
+					hdd_debug("Don't enable TDLS, source bitmap: %lu",
 						pHddCtx->tdls_source_bitmap);
 					return;
 				}

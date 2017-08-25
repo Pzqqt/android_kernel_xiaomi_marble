@@ -9236,8 +9236,8 @@ static int __iw_setnone_getint(struct net_device *dev,
 	{
 		sme_get_config_param(hHal, sme_config);
 		*value = (sme_config->csrConfig.enable2x2 == 0) ? 1 : 2;
-		 if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc))
-			 *value = *value-1;
+		if (policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc))
+			*value = *value - 1;
 		hdd_debug("GET_NSS: Current NSS:%d", *value);
 		break;
 	}

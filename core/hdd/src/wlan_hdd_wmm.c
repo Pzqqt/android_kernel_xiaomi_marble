@@ -111,7 +111,6 @@ enum hdd_wmm_linuxac {
 
 void wlan_hdd_process_peer_unauthorised_pause(hdd_adapter_t *adapter)
 {
-	return;
 }
 #endif
 
@@ -386,8 +385,6 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 				   QDF_TIMER_STATE_STOPPED);
 		}
 	}
-
-	return;
 }
 
 /**
@@ -431,9 +428,9 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
 		hdd_err("Starting inactivity timer failed on AC %d",
 			  acType);
 		qdf_status = qdf_mc_timer_destroy(&pAc->wmmInactivityTimer);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Failed to destroy inactivity timer");
-		}
+
 		return qdf_status;
 	}
 	pAc->wmmInactivityTime = inactivityTime;
@@ -1285,9 +1282,8 @@ QDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter)
 	/* DSCP to User Priority Lookup Table
 	 * By default use the 3 Precedence bits of DSCP as the User Priority
 	 */
-	for (dscp = 0; dscp <= WLAN_HDD_MAX_DSCP; dscp++) {
+	for (dscp = 0; dscp <= WLAN_HDD_MAX_DSCP; dscp++)
 		hddWmmDscpToUpMap[dscp] = dscp >> 3;
-	}
 
 	/* Special case for Expedited Forwarding (DSCP 46) */
 	hddWmmDscpToUpMap[46] = SME_QOS_WMM_UP_VO;
@@ -1521,8 +1517,6 @@ void hdd_wmm_classify_pkt(hdd_adapter_t *adapter,
 #ifdef HDD_WMM_DEBUG
 	hdd_debug("tos is %d, dscp is %d, up is %d", tos, dscp, *user_pri);
 #endif /* HDD_WMM_DEBUG */
-
-	return;
 }
 
 /**
@@ -1587,6 +1581,7 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
 	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_eapol = false;
 	int status = 0;
+
 	status = wlan_hdd_validate_context(hddctx);
 
 	if (status != 0) {
@@ -1899,9 +1894,8 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 					       pAdapter->hddWmmDscpToUpMap,
 					       pAdapter->sessionId);
 
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_wmm_init(pAdapter);
-	}
 
 	EXIT();
 

@@ -149,6 +149,7 @@ static const char *pcl_type_to_string(uint8_t idx)
 void clean_report(hdd_context_t *hdd_ctx)
 {
 	uint32_t idx = 0;
+
 	while (idx < NUMBER_OF_SCENARIO) {
 		qdf_mem_zero(&report[idx], sizeof(struct report_t));
 		idx++;
@@ -159,6 +160,7 @@ void clean_report(hdd_context_t *hdd_ctx)
 void print_report(hdd_context_t *hdd_ctx)
 {
 	uint32_t idx = 0;
+
 	pr_info("+----------Report start -----------+\n");
 	while (idx < report_idx) {
 		pr_info("Idx:[%d]\nTitle:%s\nResult:[%s]\n\t1st_person[%s]\n\t2nd_persona[%s]\n\t3rd_persona[%s]\n\tDBS[%s]\n\tsystem_config[%s]\n\treason[%s]\n\tpcl[%s]\n",

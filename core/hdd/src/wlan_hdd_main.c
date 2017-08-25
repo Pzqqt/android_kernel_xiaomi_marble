@@ -691,9 +691,8 @@ int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 		return -EAGAIN;
 	}
 
-	if (cds_is_load_or_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress())
 		return -EAGAIN;
-	}
 
 	if (hdd_ctx->start_modules_in_progress ||
 	    hdd_ctx->stop_modules_in_progress) {
@@ -1988,8 +1987,6 @@ static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
 
 	/* Get the wlan hw/fw version */
 	hdd_wlan_get_version(hdd_ctx, NULL, NULL);
-
-	return;
 }
 
 /**

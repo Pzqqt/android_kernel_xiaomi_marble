@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -293,12 +293,10 @@ void wlan_hdd_dcc_stats_event(void *context_ptr, void *response_ptr);
 #else
 static inline void hdd_set_dot11p_config(hdd_context_t *hdd_ctx)
 {
-	return;
 }
 
 static inline void hdd_remove_ocb_tx_header(struct sk_buff *skb)
 {
-	return;
 }
 static inline int iw_set_dot11p_channel_sched(struct net_device *dev,
 		struct iw_request_info *info,
@@ -374,12 +372,11 @@ static inline int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 static inline void wlan_hdd_dcc_register_for_dcc_stats_event(
 		hdd_context_t *hdd_ctx)
 {
-	return;
 }
+
 static inline void wlan_hdd_dcc_stats_event(void *context_ptr,
 		void *response_ptr)
 {
-	return;
 }
 #endif
 

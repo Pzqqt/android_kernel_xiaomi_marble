@@ -165,7 +165,6 @@ void hdd_ftm_mc_process_msg(void *message)
 	wlan_hdd_testmode_rx_event(data, (size_t) data_len);
 #endif
 #endif
-	return;
 }
 
 #if  defined(QCA_WIFI_FTM)
@@ -313,11 +312,10 @@ int wlan_hdd_qcmbr_unified_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr)
 {
 	int ret = 0;
 
-	if (is_compat_task()) {
+	if (is_compat_task())
 		ret = wlan_hdd_qcmbr_compat_ioctl(adapter, ifr);
-	} else {
+	else
 		ret = wlan_hdd_qcmbr_ioctl(adapter, ifr);
-	}
 
 	return ret;
 }

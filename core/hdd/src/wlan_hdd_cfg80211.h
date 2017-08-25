@@ -93,7 +93,7 @@
 #define WLAN_IS_TDLS_SETUP_ACTION(action) \
 	((SIR_MAC_TDLS_SETUP_REQ <= action) && \
 	(SIR_MAC_TDLS_SETUP_CNF >= action))
-#if !defined (TDLS_MGMT_VERSION2)
+#if !defined(TDLS_MGMT_VERSION2)
 #define TDLS_MGMT_VERSION2 0
 #endif
 

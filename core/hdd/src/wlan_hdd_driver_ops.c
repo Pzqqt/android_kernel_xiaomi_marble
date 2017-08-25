@@ -396,8 +396,7 @@ err_hdd_deinit:
 	if (reinit) {
 		cds_set_driver_in_bad_state(true);
 		cds_set_recovery_in_progress(false);
-	}
-	else
+	} else
 		cds_set_load_in_progress(false);
 
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);

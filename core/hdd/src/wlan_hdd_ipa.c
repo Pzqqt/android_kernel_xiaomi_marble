@@ -527,13 +527,9 @@ struct hdd_ipa_priv {
 	(((_hdd_ctx)->config->IpaConfig & (_mask)) == (_mask))
 
 #define HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa) \
-			do { \
-				hdd_ipa->ipa_rx_internel_drop_count++; \
-			} while (0)
+				hdd_ipa->ipa_rx_internel_drop_count++;
 #define HDD_IPA_INCREASE_NET_SEND_COUNT(hdd_ipa) \
-			do { \
-				hdd_ipa->ipa_rx_net_send_count++; \
-			} while (0)
+				hdd_ipa->ipa_rx_net_send_count++;
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
 #if defined(QCA_WIFI_3_0) && defined(CONFIG_IPA3)
@@ -4982,6 +4978,10 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				    "IPA resource unload in progress");
 			return 0;
 		}
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "IPA resource %s completed",
+			    hdd_ipa->resource_loading ?
+			    "load" : "unload");
 	}
 
 	hdd_ipa->stats.event[type]++;
