@@ -336,7 +336,7 @@ int wlan_cfg80211_roc(struct wlan_objmgr_vdev *vdev,
 	struct ieee80211_channel *chan, uint32_t duration,
 	uint64_t *cookie)
 {
-	struct p2p_roc_req roc_req;
+	struct p2p_roc_req roc_req = {0};
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
 	bool ok;
@@ -405,7 +405,7 @@ int wlan_cfg80211_mgmt_tx(struct wlan_objmgr_vdev *vdev,
 		const uint8_t *buf, uint32_t len, bool no_cck,
 		bool dont_wait_for_ack, uint64_t *cookie)
 {
-	struct p2p_mgmt_tx mgmt_tx;
+	struct p2p_mgmt_tx mgmt_tx = {0};
 	struct wlan_objmgr_psoc *psoc;
 	uint8_t vdev_id;
 
