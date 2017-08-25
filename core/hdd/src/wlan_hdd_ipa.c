@@ -5365,6 +5365,12 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 		}
 
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
+		if (!hdd_ipa->sap_num_connected_sta) {
+			qdf_mutex_release(&hdd_ipa->event_lock);
+			hdd_err("%s: Evt: %d, Client already disconnected",
+				msg_ex->name, meta.msg_type);
+			return 0;
+		}
 		if (!hdd_ipa_uc_find_add_assoc_sta(hdd_ipa, false, sta_id)) {
 			qdf_mutex_release(&hdd_ipa->event_lock);
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
