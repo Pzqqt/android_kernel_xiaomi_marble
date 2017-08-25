@@ -386,7 +386,9 @@ dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev)
 	struct rx_desc_pool *rx_desc_pool;
 
 	rx_desc_pool = &soc->rx_desc_status[pdev_id];
-	dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
+	if (rx_desc_pool->pool_size != 0) {
+		dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

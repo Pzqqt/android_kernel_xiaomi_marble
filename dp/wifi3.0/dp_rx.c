@@ -1401,8 +1401,10 @@ dp_rx_pdev_detach(struct dp_pdev *pdev)
 
 	rx_desc_pool = &soc->rx_desc_buf[pdev_id];
 
-	dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
-	qdf_spinlock_destroy(&soc->rx_desc_mutex[pdev_id]);
+	if (rx_desc_pool->pool_size != 0) {
+		dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
+		qdf_spinlock_destroy(&soc->rx_desc_mutex[pdev_id]);
+	}
 
 	return;
 }
