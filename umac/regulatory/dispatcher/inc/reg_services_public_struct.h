@@ -269,6 +269,7 @@ enum channel_enum {
  * @CHAN_ENUM_5785: channel with freq 5785
  * @CHAN_ENUM_5805: channel with freq 5805
  * @CHAN_ENUM_5825: channel with freq 5825
+ * @CHAN_ENUM_5845: channel with freq 5845
  * @CHAN_ENUM_5850: channel with freq 5850
  * @CHAN_ENUM_5855: channel with freq 5855
  * @CHAN_ENUM_5860: channel with freq 5860
