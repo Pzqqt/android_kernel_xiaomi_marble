@@ -877,11 +877,7 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 	uint8_t STAId;
 	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
 	struct qdf_mac_addr *mac_addr;
-	bool pkt_proto_logged = false;
 	uint8_t pkt_type = 0;
-#ifdef QCA_PKT_PROTO_TRACE
-	uint8_t proto_type = 0;
-#endif
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_arp;
 
@@ -1027,19 +1023,6 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 		skb->queue_mapping = hdd_linux_up_to_ac_map[up];
 	}
 
-#ifdef QCA_PKT_PROTO_TRACE
-	if ((hdd_ctx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_EAPOL) ||
-	    (hdd_ctx->config->gEnableDebugLog & CDS_PKT_TRAC_TYPE_DHCP)) {
-		proto_type = cds_pkt_get_proto_type(skb,
-						    hdd_ctx->config->gEnableDebugLog,
-						    0);
-		if (CDS_PKT_TRAC_TYPE_EAPOL & proto_type)
-			cds_pkt_trace_buf_update("ST:T:EPL");
-		else if (CDS_PKT_TRAC_TYPE_DHCP & proto_type)
-			cds_pkt_trace_buf_update("ST:T:DHC");
-	}
-#endif /* QCA_PKT_PROTO_TRACE */
-
 	adapter->stats.tx_bytes += skb->len;
 
 	mac_addr = (struct qdf_mac_addr *)skb->data;
@@ -1052,9 +1035,6 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 		++adapter->stats.tx_packets;
 
 	hdd_event_eapol_log(skb, QDF_TX);
-	pkt_proto_logged = qdf_dp_trace_log_pkt(adapter->session_id,
-						skb, QDF_TX,
-						QDF_TRACE_DEFAULT_PDEV_ID);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
 
@@ -1064,19 +1044,6 @@ static netdev_tx_t __hdd_hard_start_xmit(struct sk_buff *skb,
 			QDF_TRACE_DEFAULT_PDEV_ID, qdf_nbuf_data_addr(skb),
 			sizeof(qdf_nbuf_data(skb)),
 			QDF_TX));
-	if (!pkt_proto_logged) {
-		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
-				QDF_TRACE_DEFAULT_PDEV_ID, (uint8_t *)skb->data,
-				qdf_nbuf_len(skb), QDF_TX));
-		if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE) {
-			DPTRACE(qdf_dp_trace(skb,
-				QDF_DP_TRACE_HDD_TX_PACKET_RECORD,
-				QDF_TRACE_DEFAULT_PDEV_ID,
-				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE),
-				QDF_TX));
-		}
-	}
 
 	if (!hdd_is_tx_allowed(skb, STAId)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1124,17 +1091,9 @@ drop_pkt_and_release_skb:
 drop_pkt:
 
 	if (skb) {
-		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
-			QDF_TRACE_DEFAULT_PDEV_ID, (uint8_t *)skb->data,
-			qdf_nbuf_len(skb), QDF_TX));
-		if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
-			DPTRACE(qdf_dp_trace(skb,
-				 QDF_DP_TRACE_DROP_PACKET_RECORD,
-				 QDF_TRACE_DEFAULT_PDEV_ID,
-				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE),
-				 QDF_TX));
-
+		qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+				      QDF_DP_TRACE_DROP_PACKET_RECORD, 0,
+				      QDF_TX);
 		kfree_skb(skb);
 	}
 
@@ -1762,7 +1721,6 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	struct qdf_mac_addr *mac_addr;
 	bool wake_lock = false;
 	uint8_t pkt_type = 0;
-	bool proto_pkt_logged = false;
 	bool track_arp = false;
 
 	/* Sanity check on inputs */
@@ -1840,9 +1798,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		hdd_event_eapol_log(skb, QDF_RX);
-		proto_pkt_logged = qdf_dp_trace_log_pkt(adapter->session_id,
-						skb, QDF_RX,
-						QDF_TRACE_DEFAULT_PDEV_ID);
+		qdf_dp_trace_log_pkt(adapter->session_id, skb, QDF_RX,
+				     QDF_TRACE_DEFAULT_PDEV_ID);
 
 		DPTRACE(qdf_dp_trace(skb,
 			QDF_DP_TRACE_RX_HDD_PACKET_PTR_RECORD,
@@ -1850,22 +1807,10 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			qdf_nbuf_data_addr(skb),
 			sizeof(qdf_nbuf_data(skb)), QDF_RX));
 
-		if (!proto_pkt_logged) {
-			DPTRACE(qdf_dp_trace(skb,
-				QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
-				QDF_TRACE_DEFAULT_PDEV_ID,
-				(uint8_t *)skb->data, qdf_nbuf_len(skb),
-				QDF_RX));
-			if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
-				DPTRACE(qdf_dp_trace(skb,
-					QDF_DP_TRACE_HDD_RX_PACKET_RECORD,
-					QDF_TRACE_DEFAULT_PDEV_ID,
-					(uint8_t *)
-					&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-					(qdf_nbuf_len(skb) -
-						QDF_DP_TRACE_RECORD_SIZE),
-					QDF_RX));
-		}
+		DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+			QDF_DP_TRACE_RX_PACKET_RECORD,
+			0, QDF_RX));
+
 		mac_addr = (struct qdf_mac_addr *)(skb->data+QDF_MAC_ADDR_SIZE);
 
 		ucfg_tdls_update_rx_pkt_cnt(adapter->hdd_vdev, mac_addr);

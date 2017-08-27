@@ -510,6 +510,33 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 }
 #endif /* TSO */
 
+/**
+ * ol_tx_trace_pkt() - Trace TX packet at OL layer
+ *
+ * @skb: skb to be traced
+ * @msdu_id: msdu_id of the packet
+ * @vdev_id: vdev_id of the packet
+ *
+ * Return: None
+ */
+static inline void ol_tx_trace_pkt(qdf_nbuf_t skb, uint16_t msdu_id,
+				uint8_t vdev_id)
+{
+	DPTRACE(qdf_dp_trace_ptr(skb,
+		QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
+		QDF_TRACE_DEFAULT_PDEV_ID,
+		qdf_nbuf_data_addr(skb),
+		sizeof(qdf_nbuf_data(skb)),
+		msdu_id, vdev_id));
+
+	qdf_dp_trace_log_pkt(vdev_id, skb, QDF_TX, QDF_TRACE_DEFAULT_PDEV_ID);
+
+	qdf_dp_trace_set_track(skb, QDF_TX);
+	DPTRACE(qdf_dp_trace_data_pkt(skb, QDF_TRACE_DEFAULT_PDEV_ID,
+		QDF_DP_TRACE_TX_PACKET_RECORD,
+		msdu_id, QDF_TX));
+}
+
 #ifdef WLAN_FEATURE_FASTPATH
 /**
  * ol_tx_prepare_ll_fast() Alloc and prepare Tx descriptor
@@ -778,12 +805,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 				if (segments)
 					qdf_nbuf_inc_users(msdu);
 
-				DPTRACE(qdf_dp_trace_ptr(msdu,
-				    QDF_DP_TRACE_TXRX_FAST_PACKET_PTR_RECORD,
-				    QDF_TRACE_DEFAULT_PDEV_ID,
-				    qdf_nbuf_data_addr(msdu),
-				    sizeof(qdf_nbuf_data(msdu)),
-				     tx_desc->id, vdev->vdev_id));
+				ol_tx_trace_pkt(msdu, tx_desc->id,
+						vdev->vdev_id);
 				/*
 				 * If debug display is enabled, show the meta
 				 * data being downloaded to the target via the
