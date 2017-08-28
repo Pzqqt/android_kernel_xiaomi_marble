@@ -32,6 +32,8 @@
  * WLAN LRO interface module headers
  */
 
+struct hdd_context;
+
 /**
  * enum hdd_lro_rx_status - LRO receive frame status
  * @HDD_LRO_RX: frame sent over the LRO interface
@@ -43,24 +45,24 @@ enum hdd_lro_rx_status {
 };
 
 #if defined(FEATURE_LRO)
-int hdd_lro_init(hdd_context_t *hdd_ctx);
+int hdd_lro_init(struct hdd_context *hdd_ctx);
 
-enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
+enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 	 hdd_adapter_t *adapter, struct sk_buff *skb);
-void hdd_lro_display_stats(hdd_context_t *hdd_ctx);
+void hdd_lro_display_stats(struct hdd_context *hdd_ctx);
 #else
-static inline int hdd_lro_init(hdd_context_t *hdd_ctx)
+static inline int hdd_lro_init(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
 
-static inline enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
+static inline enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 	 hdd_adapter_t *adapter, struct sk_buff *skb)
 {
 	return HDD_LRO_NO_RX;
 }
 
-static inline void hdd_lro_display_stats(hdd_context_t *hdd_ctx)
+static inline void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
 {
 }
 #endif /* FEATURE_LRO */

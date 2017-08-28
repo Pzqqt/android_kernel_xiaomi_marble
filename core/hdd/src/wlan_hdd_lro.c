@@ -58,7 +58,7 @@
  *
  * Return: 0 - success, < 0 - failure
  */
-int hdd_lro_init(hdd_context_t *hdd_ctx)
+int hdd_lro_init(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
@@ -79,7 +79,7 @@ static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
  *
  * Return: 0 - success, < 0 - failure
  */
-int hdd_lro_init(hdd_context_t *hdd_ctx)
+int hdd_lro_init(struct hdd_context *hdd_ctx)
 {
 	struct cdp_lro_hash_config lro_config;
 
@@ -135,7 +135,7 @@ static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
  * Return: HDD_LRO_RX - frame delivered to LRO manager
  * HDD_LRO_NO_RX - frame not delivered
  */
-enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
+enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 	 hdd_adapter_t *adapter, struct sk_buff *skb)
 {
 	qdf_lro_ctx_t ctx;
@@ -196,7 +196,7 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
  *
  * Return: none
  */
-void hdd_lro_display_stats(hdd_context_t *hdd_ctx)
+void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("LRO stats is broken, will fix it");
 }
