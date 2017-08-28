@@ -70,7 +70,8 @@ QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 	if (dfs == NULL)
 		return  QDF_STATUS_E_FAILURE;
 
-	dfs_radar_enable(dfs, no_cac, opmode);
+	if (!dfs->dfs_is_offload_enabled)
+		dfs_radar_enable(dfs, no_cac, opmode);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -90,8 +91,13 @@ QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 	if (dfs == NULL)
 		return  QDF_STATUS_E_FAILURE;
 
-	dfs_process_phyerr(dfs, buf, datalen, r_rssi, r_ext_rssi, r_rs_tstamp,
-			r_fulltsf);
+	if (!dfs->dfs_is_offload_enabled)
+		dfs_process_phyerr(dfs, buf, datalen, r_rssi,
+				r_ext_rssi, r_rs_tstamp, r_fulltsf);
+	else
+		DFS_PRINTK(
+				"%s: Received a pulse from firmware even though the DFS is offloaded\n",
+				__func__);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -120,7 +126,8 @@ QDF_STATUS tgt_dfs_get_radars(struct wlan_objmgr_pdev *pdev)
 	if (dfs == NULL)
 		return  QDF_STATUS_E_FAILURE;
 
-	dfs_get_radars(dfs);
+	if (!dfs->dfs_is_offload_enabled)
+		dfs_get_radars(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
