@@ -47,7 +47,7 @@
 /* max length of command string in hostapd ioctl */
 #define HOSTAPD_IOCTL_COMMAND_STRLEN_MAX   8192
 
-hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
+hdd_adapter_t *hdd_wlan_create_ap_dev(struct hdd_context *pHddCtx,
 				      tSirMacAddr macAddr,
 				      unsigned char name_assign_type,
 				      uint8_t *name);
@@ -130,10 +130,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter, bool reinit);
 void hdd_set_ap_ops(struct net_device *pWlanHostapdDev);
 int hdd_hostapd_stop(struct net_device *dev);
-int hdd_sap_context_init(hdd_context_t *hdd_ctx);
-void hdd_sap_context_destroy(hdd_context_t *hdd_ctx);
+int hdd_sap_context_init(struct hdd_context *hdd_ctx);
+void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
-void hdd_restart_softap(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter);
+void hdd_restart_softap(struct hdd_context *pHddCtx, hdd_adapter_t *pAdapter);
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 #ifdef QCA_HT_2040_COEX
 QDF_STATUS hdd_set_sap_ht2040_mode(hdd_adapter_t *pHostapdAdapter,
@@ -154,7 +154,7 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 
 int hdd_destroy_acs_timer(hdd_adapter_t *adapter);
 
-QDF_STATUS wlan_hdd_config_acs(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter);
+QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter);
 void hdd_sap_indicate_disconnect_for_sta(hdd_adapter_t *adapter);
 void hdd_sap_destroy_events(hdd_adapter_t *adapter);
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */
