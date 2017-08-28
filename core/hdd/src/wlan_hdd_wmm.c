@@ -140,7 +140,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	hdd_adapter_t *pAdapter = pQosContext->pAdapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	struct hdd_wmm_ac_status *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS status;
 	uint32_t service_interval;
 	uint32_t suspension_interval;
@@ -1017,7 +1017,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	enum sme_qos_statustype smeStatus;
 #endif
 	struct sme_qos_wmmtspecinfo qosInfo;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_debug("Entered, context %p", pQosContext);
 
@@ -1578,7 +1578,7 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
 	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
 	hdd_adapter_t *adapter = (hdd_adapter_t *) netdev_priv(dev);
-	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_eapol = false;
 	int status = 0;
 
@@ -1612,7 +1612,7 @@ uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 	uint16_t queueIndex;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool is_eapol = false;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	int status;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -1798,7 +1798,7 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 {
 	uint8_t uapsdMask;
 	QDF_STATUS status;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* when we associate we need to notify TL if it needs to
 	 * enable UAPSD for any access categories
