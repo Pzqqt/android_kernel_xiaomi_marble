@@ -36,6 +36,7 @@
 #include <linux/timer.h>
 #include "qdf_event.h"
 
+struct hdd_context;
 struct sap_Config;
 
 /*
@@ -312,7 +313,7 @@ extern int hdd_unregister_wext(struct net_device *dev);
 extern int hdd_register_wext(struct net_device *dev);
 extern int hdd_wlan_get_freq(uint32_t chan, uint32_t *freq);
 extern void hdd_display_stats_help(void);
-extern void hdd_wlan_get_version(hdd_context_t *hdd_ctx,
+extern void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 				 union iwreq_data *wrqu, char *extra);
 
 extern void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
@@ -434,7 +435,7 @@ int hdd_set_peer_rate(hdd_adapter_t *adapter, int value);
 void wlan_hdd_change_country_code_callback(void *pAdapter);
 
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
-			    int new_phymode, hdd_context_t *phddctx);
+			    int new_phymode, struct hdd_context *phddctx);
 
 int wlan_hdd_get_temperature(hdd_adapter_t *pAdapter, int *temperature);
 int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed);
