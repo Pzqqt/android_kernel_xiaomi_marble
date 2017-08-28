@@ -67,7 +67,7 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 	struct hdd_config *config;
 	uint32_t num_chan;
 	uint8_t *chan_list;
-	hdd_context_t *hdd_ctx = adapter->pHddCtx;
+	struct hdd_context *hdd_ctx = adapter->pHddCtx;
 
 	config = hdd_ctx->config;
 	if (!config) {
@@ -144,7 +144,7 @@ int iw_get_oem_data_cap(struct net_device *dev,
 	struct oem_data_cap oemDataCap = { {0} };
 	struct oem_data_cap *pHddOemDataCap;
 	hdd_adapter_t *pAdapter = (netdev_priv(dev));
-	hdd_context_t *pHddContext;
+	struct hdd_context *pHddContext;
 	int ret;
 
 	ENTER();
@@ -401,7 +401,7 @@ static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
  *
  * Return: void
  */
-void hdd_update_channel_bw_info(hdd_context_t *hdd_ctx,
+void hdd_update_channel_bw_info(struct hdd_context *hdd_ctx,
 				uint16_t chan, void *chan_info)
 {
 	struct ch_params ch_params = {0};
