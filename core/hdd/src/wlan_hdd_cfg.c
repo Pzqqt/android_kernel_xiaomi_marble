@@ -49,21 +49,21 @@
 #include <wlan_policy_mgr_api.h>
 
 static void
-cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)
+cb_notify_set_roam_prefer5_g_hz(struct hdd_context *pHddCtx, unsigned long notifyId)
 {
 	sme_update_roam_prefer5_g_hz(pHddCtx->hHal,
 				     pHddCtx->config->nRoamPrefer5GHz);
 }
 
 static void
-cb_notify_set_roam_rssi_diff(hdd_context_t *pHddCtx, unsigned long notifyId)
+cb_notify_set_roam_rssi_diff(struct hdd_context *pHddCtx, unsigned long notifyId)
 {
 	sme_update_roam_rssi_diff(pHddCtx->hHal,
 				  0, pHddCtx->config->RoamRssiDiff);
 }
 
 static void
-cb_notify_set_fast_transition_enabled(hdd_context_t *pHddCtx,
+cb_notify_set_fast_transition_enabled(struct hdd_context *pHddCtx,
 				      unsigned long notifyId)
 {
 	sme_update_fast_transition_enabled(pHddCtx->hHal,
@@ -72,12 +72,12 @@ cb_notify_set_fast_transition_enabled(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_roam_intra_band(hdd_context_t *pHddCtx, unsigned long notifyId)
+cb_notify_set_roam_intra_band(struct hdd_context *pHddCtx, unsigned long notifyId)
 {
 	sme_set_roam_intra_band(pHddCtx->hHal, pHddCtx->config->nRoamIntraBand);
 }
 
-static void cb_notify_set_wes_mode(hdd_context_t *pHddCtx,
+static void cb_notify_set_wes_mode(struct hdd_context *pHddCtx,
 				   unsigned long notifyId)
 {
 	sme_update_wes_mode(pHddCtx->hHal,
@@ -85,14 +85,14 @@ static void cb_notify_set_wes_mode(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_roam_scan_n_probes(hdd_context_t *pHddCtx, unsigned long notifyId)
+cb_notify_set_roam_scan_n_probes(struct hdd_context *pHddCtx, unsigned long notifyId)
 {
 	sme_update_roam_scan_n_probes(pHddCtx->hHal, 0,
 				      pHddCtx->config->nProbes);
 }
 
 static void
-cb_notify_set_roam_scan_home_away_time(hdd_context_t *pHddCtx,
+cb_notify_set_roam_scan_home_away_time(struct hdd_context *pHddCtx,
 				       unsigned long notifyId)
 {
 	sme_update_roam_scan_home_away_time(pHddCtx->hHal, 0,
@@ -101,7 +101,7 @@ cb_notify_set_roam_scan_home_away_time(hdd_context_t *pHddCtx,
 }
 
 static void
-notify_is_fast_roam_ini_feature_enabled(hdd_context_t *pHddCtx,
+notify_is_fast_roam_ini_feature_enabled(struct hdd_context *pHddCtx,
 					unsigned long notifyId)
 {
 	sme_update_is_fast_roam_ini_feature_enabled(pHddCtx->hHal, 0,
@@ -110,7 +110,7 @@ notify_is_fast_roam_ini_feature_enabled(hdd_context_t *pHddCtx,
 }
 
 static void
-notify_is_mawc_ini_feature_enabled(hdd_context_t *pHddCtx,
+notify_is_mawc_ini_feature_enabled(struct hdd_context *pHddCtx,
 				   unsigned long notifyId)
 {
 	sme_update_is_mawc_ini_feature_enabled(pHddCtx->hHal,
@@ -119,7 +119,7 @@ notify_is_mawc_ini_feature_enabled(hdd_context_t *pHddCtx,
 
 #ifdef FEATURE_WLAN_ESE
 static void
-cb_notify_set_ese_feature_enabled(hdd_context_t *pHddCtx,
+cb_notify_set_ese_feature_enabled(struct hdd_context *pHddCtx,
 				  unsigned long notifyId)
 {
 	sme_update_is_ese_feature_enabled(pHddCtx->hHal, 0,
@@ -128,14 +128,14 @@ cb_notify_set_ese_feature_enabled(hdd_context_t *pHddCtx,
 #endif
 
 static void
-cb_notify_set_fw_rssi_monitoring(hdd_context_t *pHddCtx, unsigned long notifyId)
+cb_notify_set_fw_rssi_monitoring(struct hdd_context *pHddCtx, unsigned long notifyId)
 {
 	sme_update_config_fw_rssi_monitoring(pHddCtx->hHal,
 					     pHddCtx->config->
 					     fEnableFwRssiMonitoring);
 }
 
-static void cb_notify_set_opportunistic_scan_threshold_diff(hdd_context_t *pHddCtx,
+static void cb_notify_set_opportunistic_scan_threshold_diff(struct hdd_context *pHddCtx,
 							    unsigned long notifyId)
 {
 	sme_set_roam_opportunistic_scan_threshold_diff(pHddCtx->hHal, 0,
@@ -143,7 +143,7 @@ static void cb_notify_set_opportunistic_scan_threshold_diff(hdd_context_t *pHddC
 						       nOpportunisticThresholdDiff);
 }
 
-static void cb_notify_set_roam_rescan_rssi_diff(hdd_context_t *pHddCtx,
+static void cb_notify_set_roam_rescan_rssi_diff(struct hdd_context *pHddCtx,
 						unsigned long notifyId)
 {
 	sme_set_roam_rescan_rssi_diff(pHddCtx->hHal,
@@ -151,7 +151,7 @@ static void cb_notify_set_roam_rescan_rssi_diff(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_neighbor_lookup_rssi_threshold(hdd_context_t *pHddCtx,
+cb_notify_set_neighbor_lookup_rssi_threshold(struct hdd_context *pHddCtx,
 					     unsigned long notifyId)
 {
 	sme_set_neighbor_lookup_rssi_threshold(pHddCtx->hHal, 0,
@@ -160,7 +160,7 @@ cb_notify_set_neighbor_lookup_rssi_threshold(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_delay_before_vdev_stop(hdd_context_t *hdd_ctx,
+cb_notify_set_delay_before_vdev_stop(struct hdd_context *hdd_ctx,
 				     unsigned long notify_id)
 {
 	sme_set_delay_before_vdev_stop(hdd_ctx->hHal, 0,
@@ -168,7 +168,7 @@ cb_notify_set_delay_before_vdev_stop(hdd_context_t *hdd_ctx,
 }
 
 static void
-cb_notify_set_neighbor_scan_period(hdd_context_t *pHddCtx,
+cb_notify_set_neighbor_scan_period(struct hdd_context *pHddCtx,
 				   unsigned long notifyId)
 {
 	sme_set_neighbor_scan_period(pHddCtx->hHal, 0,
@@ -186,7 +186,7 @@ cb_notify_set_neighbor_scan_period(hdd_context_t *pHddCtx,
  * Return: void
  */
 static void
-cb_notify_set_neighbor_scan_min_period(hdd_context_t *pHddCtx,
+cb_notify_set_neighbor_scan_min_period(struct hdd_context *pHddCtx,
 				   unsigned long notifyId)
 {
 	sme_set_neighbor_scan_min_period(pHddCtx->hHal, 0,
@@ -195,7 +195,7 @@ cb_notify_set_neighbor_scan_min_period(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_neighbor_results_refresh_period(hdd_context_t *pHddCtx,
+cb_notify_set_neighbor_results_refresh_period(struct hdd_context *pHddCtx,
 					      unsigned long notifyId)
 {
 	sme_set_neighbor_scan_refresh_period(pHddCtx->hHal, 0,
@@ -204,7 +204,7 @@ cb_notify_set_neighbor_results_refresh_period(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_empty_scan_refresh_period(hdd_context_t *pHddCtx,
+cb_notify_set_empty_scan_refresh_period(struct hdd_context *pHddCtx,
 					unsigned long notifyId)
 {
 	sme_update_empty_scan_refresh_period(pHddCtx->hHal, 0,
@@ -213,7 +213,7 @@ cb_notify_set_empty_scan_refresh_period(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_neighbor_scan_min_chan_time(hdd_context_t *pHddCtx,
+cb_notify_set_neighbor_scan_min_chan_time(struct hdd_context *pHddCtx,
 					  unsigned long notifyId)
 {
 	sme_set_neighbor_scan_min_chan_time(pHddCtx->hHal,
@@ -222,7 +222,7 @@ cb_notify_set_neighbor_scan_min_chan_time(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_neighbor_scan_max_chan_time(hdd_context_t *pHddCtx,
+cb_notify_set_neighbor_scan_max_chan_time(struct hdd_context *pHddCtx,
 					  unsigned long notifyId)
 {
 	sme_set_neighbor_scan_max_chan_time(pHddCtx->hHal, 0,
@@ -230,21 +230,21 @@ cb_notify_set_neighbor_scan_max_chan_time(hdd_context_t *pHddCtx,
 					    nNeighborScanMaxChanTime);
 }
 
-static void cb_notify_set_roam_bmiss_first_bcnt(hdd_context_t *pHddCtx,
+static void cb_notify_set_roam_bmiss_first_bcnt(struct hdd_context *pHddCtx,
 						unsigned long notifyId)
 {
 	sme_set_roam_bmiss_first_bcnt(pHddCtx->hHal,
 				      0, pHddCtx->config->nRoamBmissFirstBcnt);
 }
 
-static void cb_notify_set_roam_bmiss_final_bcnt(hdd_context_t *pHddCtx,
+static void cb_notify_set_roam_bmiss_final_bcnt(struct hdd_context *pHddCtx,
 						unsigned long notifyId)
 {
 	sme_set_roam_bmiss_final_bcnt(pHddCtx->hHal, 0,
 				      pHddCtx->config->nRoamBmissFinalBcnt);
 }
 
-static void cb_notify_set_roam_beacon_rssi_weight(hdd_context_t *pHddCtx,
+static void cb_notify_set_roam_beacon_rssi_weight(struct hdd_context *pHddCtx,
 						  unsigned long notifyId)
 {
 	sme_set_roam_beacon_rssi_weight(pHddCtx->hHal, 0,
@@ -252,26 +252,26 @@ static void cb_notify_set_roam_beacon_rssi_weight(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_dfs_scan_mode(hdd_context_t *pHddCtx, unsigned long notifyId)
+cb_notify_set_dfs_scan_mode(struct hdd_context *pHddCtx, unsigned long notifyId)
 {
 	sme_update_dfs_scan_mode(pHddCtx->hHal, 0,
 				 pHddCtx->config->allowDFSChannelRoam);
 }
 
-static void cb_notify_set_enable_ssr(hdd_context_t *pHddCtx,
+static void cb_notify_set_enable_ssr(struct hdd_context *pHddCtx,
 				     unsigned long notifyId)
 {
 	sme_update_enable_ssr(pHddCtx->hHal, pHddCtx->config->enableSSR);
 }
 
-static void cb_notify_set_g_sap_preferred_chan_location(hdd_context_t *pHddCtx,
+static void cb_notify_set_g_sap_preferred_chan_location(struct hdd_context *pHddCtx,
 							unsigned long notifyId)
 {
 	wlansap_set_dfs_preferred_channel_location(pHddCtx->hHal,
 						   pHddCtx->config->
 						   gSapPreferredChanLocation);
 }
-static void ch_notify_set_g_disable_dfs_japan_w53(hdd_context_t *pHddCtx,
+static void ch_notify_set_g_disable_dfs_japan_w53(struct hdd_context *pHddCtx,
 						  unsigned long notifyId)
 {
 	wlansap_set_dfs_restrict_japan_w53(pHddCtx->hHal,
@@ -279,7 +279,7 @@ static void ch_notify_set_g_disable_dfs_japan_w53(hdd_context_t *pHddCtx,
 					   gDisableDfsJapanW53);
 }
 static void
-cb_notify_update_roam_scan_offload_enabled(hdd_context_t *pHddCtx,
+cb_notify_update_roam_scan_offload_enabled(struct hdd_context *pHddCtx,
 					   unsigned long notifyId)
 {
 	sme_update_roam_scan_offload_enabled(pHddCtx->hHal,
@@ -294,7 +294,7 @@ cb_notify_update_roam_scan_offload_enabled(hdd_context_t *pHddCtx,
 }
 
 static void
-cb_notify_set_enable_fast_roam_in_concurrency(hdd_context_t *pHddCtx,
+cb_notify_set_enable_fast_roam_in_concurrency(struct hdd_context *pHddCtx,
 					      unsigned long notifyId)
 {
 	sme_update_enable_fast_roam_in_concurrency(pHddCtx->hHal,
@@ -313,7 +313,7 @@ cb_notify_set_enable_fast_roam_in_concurrency(hdd_context_t *pHddCtx,
  */
 
 static void
-cb_notify_set_roam_scan_hi_rssi_scan_params(hdd_context_t *hdd_ctx,
+cb_notify_set_roam_scan_hi_rssi_scan_params(struct hdd_context *hdd_ctx,
 				    unsigned long notify_id)
 {
 	int32_t val;
@@ -4833,7 +4833,7 @@ static char *i_trim(char *str)
 static QDF_STATUS hdd_cfg_get_config(struct reg_table_entry *reg_table,
 				     unsigned long cRegTableEntries,
 				     uint8_t *ini_struct,
-				     hdd_context_t *pHddCtx, char *pBuf,
+				     struct hdd_context *pHddCtx, char *pBuf,
 				     int buflen)
 {
 	unsigned int idx;
@@ -4996,7 +4996,7 @@ static int parse_hex_digit(char c)
  *
  * Return: None
  */
-static void update_mac_from_string(hdd_context_t *pHddCtx,
+static void update_mac_from_string(struct hdd_context *pHddCtx,
 				   tCfgIniEntry *macTable, int num)
 {
 	int i = 0, j = 0, res = 0;
@@ -5033,7 +5033,7 @@ static void update_mac_from_string(hdd_context_t *pHddCtx,
  * Return: QDF_STATUS_SUCCESS if the ini configuration file is correctly parsed,
  *		otherwise QDF_STATUS_E_INVAL
  */
-static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
+static QDF_STATUS hdd_apply_cfg_ini(struct hdd_context *pHddCtx,
 				    tCfgIniEntry *iniTable,
 				    unsigned long entries)
 {
@@ -5282,7 +5282,7 @@ static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 static QDF_STATUS hdd_execute_config_command(struct reg_table_entry *reg_table,
 					     unsigned long tableSize,
 					     uint8_t *ini_struct,
-					     hdd_context_t *pHddCtx,
+					     struct hdd_context *pHddCtx,
 					     char *command)
 {
 	struct reg_table_entry *pRegEntry;
@@ -5476,7 +5476,7 @@ done:
  *
  * Return: none
  */
-static void hdd_set_power_save_offload_config(hdd_context_t *pHddCtx)
+static void hdd_set_power_save_offload_config(struct hdd_context *pHddCtx)
 {
 	struct hdd_config *pConfig = pHddCtx->config;
 	uint32_t listenInterval = 0;
@@ -5506,7 +5506,7 @@ static void hdd_set_power_save_offload_config(hdd_context_t *pHddCtx)
 }
 
 #ifdef FEATURE_RUNTIME_PM
-static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
+static void hdd_cfg_print_runtime_pm(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("Name = [gRuntimePM] Value = [%u] ",
 		 hdd_ctx->config->runtime_pm);
@@ -5515,7 +5515,7 @@ static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
 		 hdd_ctx->config->runtime_pm_delay);
 }
 #else
-static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
+static void hdd_cfg_print_runtime_pm(struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -5526,7 +5526,7 @@ static void hdd_cfg_print_runtime_pm(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_per_roam_print_ini_config(hdd_context_t *hdd_ctx)
+static void hdd_per_roam_print_ini_config(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_PER_ROAM_ENABLE_NAME,
@@ -5557,7 +5557,7 @@ static void hdd_per_roam_print_ini_config(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_cfg_print_ie_whitelist_attrs(hdd_context_t *hdd_ctx)
+static void hdd_cfg_print_ie_whitelist_attrs(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("Name = [%s] Value = [%x] ",
 		  CFG_PRB_REQ_IE_WHITELIST_NAME,
@@ -5597,7 +5597,7 @@ static void hdd_cfg_print_ie_whitelist_attrs(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-void hdd_cfg_print(hdd_context_t *pHddCtx)
+void hdd_cfg_print(struct hdd_context *pHddCtx)
 {
 	int i;
 
@@ -6367,7 +6367,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
  * Return: QDF_STATUS_SUCCESS if the MAC address is found from cfg file
  *      and overwritten, otherwise QDF_STATUS_E_INVAL
  */
-QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
+QDF_STATUS hdd_update_mac_config(struct hdd_context *pHddCtx)
 {
 	int status, i = 0;
 	const struct firmware *fw = NULL;
@@ -6513,7 +6513,7 @@ static void hdd_disable_auto_shutdown(struct hdd_config *cfg_ini)
  *
  * Return: None
  */
-static void hdd_override_all_ps(hdd_context_t *hdd_ctx)
+static void hdd_override_all_ps(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 
@@ -6531,7 +6531,7 @@ static void hdd_override_all_ps(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-static void hdd_set_rx_mode_value(hdd_context_t *hdd_ctx)
+static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 {
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD &&
 		 hdd_ctx->config->rx_mode & CFG_ENABLE_RPS) {
@@ -6559,7 +6559,7 @@ static void hdd_set_rx_mode_value(hdd_context_t *hdd_ctx)
  * Return: QDF_STATUS_SUCCESS if the qcom_cfg.ini is correctly read,
  *		otherwise QDF_STATUS_E_INVAL
  */
-QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
+QDF_STATUS hdd_parse_config_ini(struct hdd_context *pHddCtx)
 {
 	int status, i = 0;
 	/** Pointer for firmware image data */
@@ -6706,7 +6706,7 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode)
  * Return: QDF_STATUS_SUCCESS if command set correctly,
  *		otherwise the QDF_STATUS return from SME layer
  */
-QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
+QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *pHddCtx, uint32_t val)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -6730,7 +6730,7 @@ QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
  *
  * Return: None
  */
-static void hdd_set_fine_time_meas_cap(hdd_context_t *hdd_ctx,
+static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx,
 				       tSmeConfigParams *sme_config)
 {
 	struct hdd_config *config = hdd_ctx->config;
@@ -6885,7 +6885,7 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str,
  *
  * Return: true or false
  */
-static bool hdd_update_ht_cap_in_cfg(hdd_context_t *hdd_ctx)
+static bool hdd_update_ht_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
 	uint32_t val32;
 	uint16_t val16;
@@ -6924,7 +6924,7 @@ static bool hdd_update_ht_cap_in_cfg(hdd_context_t *hdd_ctx)
  *
  * Return: true or false
  */
-static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
+static bool hdd_update_vht_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
 	bool status = true;
 	uint32_t val;
@@ -7057,7 +7057,7 @@ static bool hdd_update_vht_cap_in_cfg(hdd_context_t *hdd_ctx)
  *
  * Return: true or false based on outcome.
  */
-bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
+bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 {
 	bool status = true;
 	uint32_t val;
@@ -7532,7 +7532,7 @@ bool hdd_update_config_cfg(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_update_per_config_to_sme(hdd_context_t *hdd_ctx,
+static void hdd_update_per_config_to_sme(struct hdd_context *hdd_ctx,
 					 tSmeConfigParams *sme_config)
 {
 	sme_config->csrConfig.per_roam_config.enable =
@@ -7577,7 +7577,7 @@ static void hdd_update_per_config_to_sme(hdd_context_t *hdd_ctx,
  * Return: QDF_STATUS_SUCCESS if configuration is correctly applied,
  *		otherwise the appropriate QDF_STATUS would be returned
  */
-QDF_STATUS hdd_set_policy_mgr_user_cfg(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	struct policy_mgr_user_cfg *user_cfg;
@@ -7632,7 +7632,7 @@ hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode)
  * Return: QDF_STATUS_SUCCESS if configuration is correctly applied,
  *		otherwise the appropriate QDF_STATUS would be returned
  */
-QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
+QDF_STATUS hdd_set_sme_config(struct hdd_context *pHddCtx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeConfigParams *smeConfig;
@@ -8028,7 +8028,7 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
  *
  * Return: the QDF_STATUS return from hdd_execute_config_command
  */
-QDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
+QDF_STATUS hdd_execute_global_config_command(struct hdd_context *pHddCtx,
 					     char *command)
 {
 	return hdd_execute_config_command(g_registry_table,
@@ -8046,7 +8046,7 @@ QDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
  * Return: QDF_STATUS_SUCCESS if the configuration and buffer size can carry
  *		the content, otherwise QDF_STATUS_E_RESOURCES
  */
-QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
+QDF_STATUS hdd_cfg_get_global_config(struct hdd_context *pHddCtx, char *pBuf,
 				     int buflen)
 {
 	return hdd_cfg_get_config(g_registry_table,
@@ -8061,7 +8061,7 @@ QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
  *
  * Return: value of pmkid_modes
  */
-void hdd_get_pmkid_modes(hdd_context_t *pHddCtx,
+void hdd_get_pmkid_modes(struct hdd_context *pHddCtx,
 			 struct pmkid_mode_bits *pmkid_modes)
 {
 	pmkid_modes->fw_okc = (pHddCtx->config->pmkid_modes &
@@ -8070,7 +8070,7 @@ void hdd_get_pmkid_modes(hdd_context_t *pHddCtx,
 				       CFG_PMKID_MODES_PMKSA_CACHING) ? 1 : 0;
 }
 
-bool hdd_validate_prb_req_ie_bitmap(hdd_context_t *hdd_ctx)
+bool hdd_validate_prb_req_ie_bitmap(struct hdd_context *hdd_ctx)
 {
 	if (!(hdd_ctx->config->probe_req_ie_bitmap_0 ||
 	    hdd_ctx->config->probe_req_ie_bitmap_1 ||
@@ -8102,7 +8102,7 @@ bool hdd_validate_prb_req_ie_bitmap(hdd_context_t *hdd_ctx)
 	return true;
 }
 
-int hdd_parse_probe_req_ouis(hdd_context_t *hdd_ctx)
+int hdd_parse_probe_req_ouis(struct hdd_context *hdd_ctx)
 {
 	uint32_t *voui = hdd_ctx->config->probe_req_voui;
 	char *str;
@@ -8158,7 +8158,7 @@ int hdd_parse_probe_req_ouis(hdd_context_t *hdd_ctx)
  * Return: QDF_STATUS_SUCCESS if nss is correctly updated,
  *              otherwise QDF_STATUS_E_FAILURE would be returned
  */
-QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
+QDF_STATUS hdd_update_nss(struct hdd_context *hdd_ctx, uint8_t nss)
 {
 	struct hdd_config *hdd_config = hdd_ctx->config;
 	uint32_t temp = 0;
