@@ -11,11 +11,6 @@ HOST_CMN_CONVG_PTT := $(DEPTH)/cmn_dev/utils/ptt
 
 include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
 
-ifeq ($(ATH_SUPPORT_HTC),1)
-INCS = -include $(COMINC)/compat.h -I$(COMINC) -I$(WLAN_TOP)/os/$(OS)/include -I$(WLAN_TOP)/os/$(OS)/src -I$(KERNELPATH)/include
-INCS += -I$(WLAN_TOP)/asf/include
-endif
-
 INCS += -Iinclude/nbuf -Iinclude/net -Iinclude/os
 INCS += -Inbuf/linux -Inet/linux -Ios/linux
 INCS += -I$(WLAN_TOP)/../../include
