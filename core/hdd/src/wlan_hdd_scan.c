@@ -83,7 +83,7 @@ enum essid_bcast_type {
  */
 static bool wlan_hdd_is_scan_pending(hdd_adapter_t *adapter)
 {
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	qdf_list_node_t *pnode = NULL, *ppnode = NULL;
 	struct hdd_scan_req *hdd_scan_req;
 
@@ -163,7 +163,7 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
 			uint8_t source, uint32_t scan_id,
 			uint32_t timestamp)
 {
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_scan_req *hdd_scan_req;
 	QDF_STATUS status;
 
@@ -215,7 +215,7 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
+static QDF_STATUS wlan_hdd_scan_request_dequeue(struct hdd_context *hdd_ctx,
 	uint32_t scan_id, struct cfg80211_scan_request **req, uint8_t *source,
 	uint32_t *timestamp)
 {
@@ -295,7 +295,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 					struct cfg80211_scan_request *req,
 					bool aborted)
 {
-	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *skb;
 	struct nlattr *attr;
 	int i;
@@ -456,7 +456,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	struct hdd_scan_info *pScanInfo = &pAdapter->scan_info;
 	struct cfg80211_scan_request *req = NULL;
 	bool aborted = false;
-	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(pAdapter);
 	int ret = 0;
 	unsigned int current_timestamp, time_elapsed;
 	uint8_t source;
@@ -574,7 +574,7 @@ allow_suspend:
  * Return: true to skip the scan,
  *            false to continue the scan
  */
-static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
+static bool wlan_hdd_sap_skip_scan_check(struct hdd_context *hdd_ctx,
 	struct cfg80211_scan_request *request)
 {
 	int i, j;
@@ -613,7 +613,7 @@ static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
 	return skip;
 }
 #else
-static bool wlan_hdd_sap_skip_scan_check(hdd_context_t *hdd_ctx,
+static bool wlan_hdd_sap_skip_scan_check(struct hdd_context *hdd_ctx,
 	struct cfg80211_scan_request *request)
 {
 	return false;
@@ -625,7 +625,7 @@ static void __wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 	hdd_adapter_t *adapter = container_of(work,
 					      hdd_adapter_t, scan_block_work);
 	struct cfg80211_scan_request *request;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("HDD adapter context is invalid");
@@ -764,7 +764,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 {
 	struct net_device *dev = request->wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct hdd_config *cfg_param = NULL;
 	int status;
 	struct hdd_scan_info *pScanInfo = NULL;
@@ -1478,7 +1478,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	uint32_t tmp, count, j;
 	unsigned int len;
 	struct ieee80211_channel *chan;
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
 	int ret;
 
@@ -1710,7 +1710,7 @@ static int __wlan_hdd_vendor_abort_scan(
 		struct wiphy *wiphy, const void *data,
 		int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int ret;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -1764,7 +1764,7 @@ int wlan_hdd_vendor_abort_scan(
  */
 int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter)
 {
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct hdd_scan_info *pScanInfo = NULL;
 
 	pScanInfo = &pAdapter->scan_info;
@@ -1791,7 +1791,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						*request)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	tHalHandle hHal;
 	int ret = 0;
 
@@ -1864,7 +1864,7 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 int wlan_hdd_sched_scan_stop(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	tHalHandle hHal;
 
 	ENTER_DEV(dev);
@@ -1972,7 +1972,7 @@ static void __wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
 {
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int ret;
 
 	ENTER_DEV(dev);
@@ -2023,7 +2023,7 @@ void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
  *
  * Return: None.
  */
-void hdd_scan_context_destroy(hdd_context_t *hdd_ctx)
+void hdd_scan_context_destroy(struct hdd_context *hdd_ctx)
 {
 #ifndef NAPIER_SCAN
 	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
@@ -2040,7 +2040,7 @@ void hdd_scan_context_destroy(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-int hdd_scan_context_init(hdd_context_t *hdd_ctx)
+int hdd_scan_context_init(struct hdd_context *hdd_ctx)
 {
 	qdf_spinlock_create(&hdd_ctx->sched_scan_lock);
 #ifndef NAPIER_SCAN

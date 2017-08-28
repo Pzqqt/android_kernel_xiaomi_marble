@@ -43,8 +43,8 @@
 #define HDD_SCAN_INACTIVITY_TIMEOUT \
 	(CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT + (10*1000))
 
-int hdd_scan_context_init(hdd_context_t *hdd_ctx);
-void hdd_scan_context_destroy(hdd_context_t *hdd_ctx);
+int hdd_scan_context_init(struct hdd_context *hdd_ctx);
+void hdd_scan_context_destroy(struct hdd_context *hdd_ctx);
 
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			   struct cfg80211_scan_request *request);
