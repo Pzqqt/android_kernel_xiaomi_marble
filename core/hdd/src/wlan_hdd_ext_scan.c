@@ -202,7 +202,7 @@ wlan_hdd_cfg80211_extscan_get_capabilities_rsp(void *ctx,
 	struct ext_scan_capabilities_response *data)
 {
 	struct hdd_ext_scan_context *context;
-	hdd_context_t *hdd_ctx  = ctx;
+	struct hdd_context *hdd_ctx  = ctx;
 
 	ENTER();
 
@@ -325,7 +325,7 @@ static void
 wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
 				struct extscan_cached_scan_results *data)
 {
-	hdd_context_t *pHddCtx = ctx;
+	struct hdd_context *pHddCtx = ctx;
 	struct sk_buff *skb = NULL;
 	struct hdd_ext_scan_context *context;
 	struct extscan_cached_scan_result *result;
@@ -555,7 +555,7 @@ static void
 wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 					    struct extscan_hotlist_match *data)
 {
-	hdd_context_t *pHddCtx = ctx;
+	struct hdd_context *pHddCtx = ctx;
 	struct sk_buff *skb = NULL;
 	uint32_t i, index;
 	int flags = cds_get_gfp_flags();
@@ -691,7 +691,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 			void *ctx,
 			tpSirWifiSignificantChangeEvent pData)
 {
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 	struct sk_buff *skb = NULL;
 	tSirWifiSignificantChange *ap_info;
 	int32_t *rssi;
@@ -814,7 +814,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 						 tpSirWifiFullScanResultEvent
 						 pData)
 {
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 	struct sk_buff *skb = NULL;
 	struct timespec ts;
 	struct hdd_ext_scan_context *context;
@@ -957,7 +957,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 			void *ctx,
 			tpSirExtScanResultsAvailableIndParams pData)
 {
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 	struct sk_buff *skb = NULL;
 	int flags = cds_get_gfp_flags();
 
@@ -1017,7 +1017,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 					      tpSirExtScanOnScanEventIndParams
 					      pData)
 {
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 	struct sk_buff *skb = NULL;
 	int flags = cds_get_gfp_flags();
 	struct hdd_ext_scan_context *context;
@@ -1094,7 +1094,7 @@ static void
 wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
 					struct pno_match_found *data)
 {
-	hdd_context_t *pHddCtx  = (hdd_context_t *)ctx;
+	struct hdd_context *pHddCtx  = (struct hdd_context *)ctx;
 	struct sk_buff *skb     = NULL;
 	uint32_t len, i;
 	int flags = cds_get_gfp_flags();
@@ -1208,7 +1208,7 @@ static void
 wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 					struct wifi_passpoint_match *data)
 {
-	hdd_context_t *pHddCtx  = ctx;
+	struct hdd_context *pHddCtx  = ctx;
 	struct sk_buff *skb     = NULL;
 	uint32_t len, i, num_matches = 1, more_data = 0;
 	struct nlattr *nla_aps, *nla_bss;
@@ -1340,7 +1340,7 @@ wlan_hdd_cfg80211_extscan_generic_rsp
 	(void *ctx,
 	 struct sir_extscan_generic_response *response)
 {
-	hdd_context_t *hdd_ctx = ctx;
+	struct hdd_context *hdd_ctx = ctx;
 	struct hdd_ext_scan_context *context;
 
 	ENTER();
@@ -1374,7 +1374,7 @@ wlan_hdd_cfg80211_extscan_generic_rsp
 void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
 					void *pMsg)
 {
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 
 	/* ENTER() intentionally not used in a frequently invoked API */
 
@@ -1491,7 +1491,7 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
  *
  * Return: 0 for success, non-zero for failure
  */
-static int wlan_hdd_send_ext_scan_capability(hdd_context_t *hdd_ctx)
+static int wlan_hdd_send_ext_scan_capability(struct hdd_context *hdd_ctx)
 {
 	int ret;
 	struct sk_buff *skb;
@@ -1630,7 +1630,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	tpSirGetExtScanCapabilitiesReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	QDF_STATUS status;
@@ -1770,7 +1770,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	tpSirExtScanGetCachedResultsReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	struct hdd_ext_scan_context *context;
@@ -1914,7 +1914,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	tpSirExtScanSetBssidHotListReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
@@ -2135,7 +2135,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	tpSirExtScanSetSigChangeReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	struct nlattr *tb2[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX
@@ -2366,7 +2366,7 @@ int wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
  *
  * Return: none
  */
-static void hdd_remove_dsrc_channels(hdd_context_t *hdd_ctx,
+static void hdd_remove_dsrc_channels(struct hdd_context *hdd_ctx,
 				     struct wiphy *wiphy, uint32_t *chan_list,
 				     uint8_t *num_channels)
 {
@@ -2432,7 +2432,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 						 *wdev, const void *data,
 						 int data_len)
 {
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	uint32_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
@@ -2661,7 +2661,7 @@ static bool hdd_extscan_channel_max_reached(tSirWifiScanCmdReqParams *req,
  * Return: 0 on success; error number otherwise
  */
 static int hdd_extscan_start_fill_bucket_channel_spec(
-			hdd_context_t *hdd_ctx,
+			struct hdd_context *hdd_ctx,
 			tpSirWifiScanCmdReqParams req_msg,
 			struct nlattr **tb)
 {
@@ -3122,7 +3122,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	tpSirWifiScanCmdReqParams pReqMsg       = NULL;
 	struct net_device *dev                  = wdev->netdev;
 	hdd_adapter_t *pAdapter                 = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx                  = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx             = wiphy_priv(wiphy);
 	struct nlattr *tb[PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id, num_buckets;
@@ -3336,7 +3336,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	tpSirExtScanStopReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	QDF_STATUS status;
@@ -3465,7 +3465,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	tpSirExtScanResetBssidHotlistReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	struct hdd_ext_scan_context *context;
@@ -3593,7 +3593,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	tpSirExtScanResetSignificantChangeReqParams pReqMsg = NULL;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	struct hdd_ext_scan_context *context;
@@ -3716,7 +3716,7 @@ int wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy *wiphy,
  * Return: 0 on success, error number otherwise
  */
 static int hdd_extscan_epno_fill_network_list(
-			hdd_context_t *hddctx,
+			struct hdd_context *hddctx,
 			struct wifi_epno_params *req_msg,
 			struct nlattr **tb)
 {
@@ -3820,7 +3820,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	struct wifi_epno_params *req_msg = NULL;
 	struct net_device *dev           = wdev->netdev;
 	hdd_adapter_t *adapter           = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx           = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx      = wiphy_priv(wiphy);
 	struct nlattr *tb[
 		QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
 	QDF_STATUS status;
@@ -4020,7 +4020,7 @@ int wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
  * Return: 0 on success, error number otherwise
  */
 static int hdd_extscan_passpoint_fill_network_list(
-			hdd_context_t *hddctx,
+			struct hdd_context *hddctx,
 			struct wifi_passpoint_req *req_msg,
 			struct nlattr **tb)
 {
@@ -4129,7 +4129,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	struct wifi_passpoint_req *req_msg = NULL;
 	struct net_device *dev             = wdev->netdev;
 	hdd_adapter_t *adapter             = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx             = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx        = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
 	QDF_STATUS status;
 	uint32_t num_networks = 0;
@@ -4251,7 +4251,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	struct wifi_passpoint_req *req_msg = NULL;
 	struct net_device *dev             = wdev->netdev;
 	hdd_adapter_t *adapter             = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx             = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx        = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
 	QDF_STATUS status;
 	int ret;
@@ -4339,12 +4339,12 @@ int wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
  * Return: none
  */
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-static inline void wlan_hdd_init_completion_extwow(hdd_context_t *pHddCtx)
+static inline void wlan_hdd_init_completion_extwow(struct hdd_context *pHddCtx)
 {
 	init_completion(&pHddCtx->ready_to_extwow);
 }
 #else
-static inline void wlan_hdd_init_completion_extwow(hdd_context_t *pHddCtx)
+static inline void wlan_hdd_init_completion_extwow(struct hdd_context *pHddCtx)
 {
 }
 #endif
@@ -4355,7 +4355,7 @@ static inline void wlan_hdd_init_completion_extwow(hdd_context_t *pHddCtx)
  *
  * Return: none
  */
-void wlan_hdd_cfg80211_extscan_init(hdd_context_t *hdd_ctx)
+void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx)
 {
 	wlan_hdd_init_completion_extwow(hdd_ctx);
 	init_completion(&ext_scan_context.response_event);

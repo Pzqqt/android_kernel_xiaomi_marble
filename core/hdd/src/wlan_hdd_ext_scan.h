@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,6 +28,8 @@
  * WLAN Host Device Driver EXT SCAN feature implementation
  *
  */
+
+struct hdd_context;
 
 #ifdef FEATURE_WLAN_EXTSCAN
 
@@ -113,11 +115,11 @@ wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 					     const void *data,
 					     int data_len);
 
-void wlan_hdd_cfg80211_extscan_init(hdd_context_t *hdd_ctx);
+void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx);
 
 #else /* FEATURE_WLAN_EXTSCAN */
 
-static void wlan_hdd_cfg80211_extscan_init(hdd_context_t *hdd_ctx)
+static void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx)
 {
 }
 
