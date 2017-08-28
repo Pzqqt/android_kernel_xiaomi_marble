@@ -73,7 +73,7 @@
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
+int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx, uint8_t psoc_id);
 
 /**
  * hdd_objmgr_release_and_destroy_psoc() - Deletes the psoc object
@@ -83,7 +83,7 @@ int hdd_objmgr_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
+int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_objmgr_create_and_store_pdev() - Create pdev and store in hdd context
@@ -93,7 +93,7 @@ int hdd_objmgr_release_and_destroy_psoc(hdd_context_t *hdd_ctx);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx);
+int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_objmgr_release_and_destroy_pdev() - Deletes the pdev object
@@ -103,7 +103,7 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx);
+int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_objmgr_create_and_store_vdev() - Create vdev and store in hdd adapter

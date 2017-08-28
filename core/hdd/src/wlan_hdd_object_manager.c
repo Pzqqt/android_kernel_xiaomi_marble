@@ -38,7 +38,7 @@
 #define LOW_5GHZ_FREQ  4912
 #define HIGH_5GHZ_FREQ 6100
 
-static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
+static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 	struct pdev_osif_priv *os_priv)
 {
 	/* Initialize the OS private structure*/
@@ -46,7 +46,7 @@ static void hdd_init_pdev_os_priv(hdd_context_t *hdd_ctx,
 	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
 }
 
-static void hdd_deinit_pdev_os_priv(hdd_context_t *hdd_ctx)
+static void hdd_deinit_pdev_os_priv(struct hdd_context *hdd_ctx)
 {
 	wlan_cfg80211_scan_priv_deinit(hdd_ctx->hdd_pdev);
 }
@@ -74,7 +74,7 @@ static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
 	wlan_psoc_set_qdf_dev(psoc, qdf_ctx);
 }
 
-int hdd_objmgr_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
+int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx, uint8_t psoc_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 
@@ -88,7 +88,7 @@ int hdd_objmgr_create_and_store_psoc(hdd_context_t *hdd_ctx, uint8_t psoc_id)
 	return 0;
 }
 
-int hdd_objmgr_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
+int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
@@ -101,7 +101,7 @@ int hdd_objmgr_release_and_destroy_psoc(hdd_context_t *hdd_ctx)
 	return qdf_status_to_os_return(wlan_objmgr_psoc_obj_delete(psoc));
 }
 
-int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
+int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct wlan_objmgr_pdev *pdev;
@@ -141,7 +141,7 @@ int hdd_objmgr_create_and_store_pdev(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
-int hdd_objmgr_release_and_destroy_pdev(hdd_context_t *hdd_ctx)
+int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
 	struct pdev_osif_priv *osif_priv;
