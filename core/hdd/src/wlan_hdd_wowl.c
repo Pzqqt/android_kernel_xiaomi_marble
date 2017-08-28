@@ -109,7 +109,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 	const char *temp;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	uint8_t sessionId = pAdapter->sessionId;
-	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
+	struct hdd_context *pHddCtx = pAdapter->pHddCtx;
 
 	len = find_ptrn_len(ptrn);
 
@@ -269,7 +269,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 	bool patternFound = false;
 	QDF_STATUS qdf_ret_status;
 	uint8_t sessionId = pAdapter->sessionId;
-	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
+	struct hdd_context *pHddCtx = pAdapter->pHddCtx;
 
 	/* Detect pattern */
 	for (id = 0;
