@@ -47,7 +47,7 @@
  *
  * Fill in the channel info to chan_info structure.
  */
-static void wlan_hdd_get_channel_info(hdd_context_t *hdd_ctx,
+static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
 				      struct svc_channel_info *chan_info,
 				      uint32_t chan_id)
 {
@@ -93,7 +93,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 					 hdd_station_ctx_t *sta_ctx,
 					 uint8_t is_on, uint8_t is_connected)
 {
-	hdd_context_t *hdd_ctx = NULL;
+	struct hdd_context *hdd_ctx = NULL;
 	uint8_t buflen = WLAN_SVC_COUNTRY_CODE_LEN;
 	int i;
 	uint32_t chan_id;
@@ -213,7 +213,7 @@ static void wlan_hdd_send_status_pkg(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	struct wlan_status_data *data = NULL;
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx)
 		return;
@@ -253,7 +253,7 @@ static void wlan_hdd_send_version_pkg(uint32_t fw_version,
 {
 	int ret = 0;
 	struct wlan_version_data data;
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx)
 		return;
