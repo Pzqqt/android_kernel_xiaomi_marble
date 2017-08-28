@@ -555,7 +555,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 					      u32 more_data,
 					      tpSirWifiPeerStat pData)
 {
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	tpSirWifiPeerStat pWifiPeerStat;
 	tpSirWifiPeerInfo pWifiPeerInfo;
 	struct sk_buff *vendor_event;
@@ -673,7 +673,7 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 {
 	tpSirWifiIfaceStat pWifiIfaceStat;
 	struct sk_buff *vendor_event;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	int status;
 
 	ENTER();
@@ -796,7 +796,7 @@ static int hdd_llstats_post_radio_stats(hdd_adapter_t *adapter,
 					u32 num_radio)
 {
 	struct sk_buff *vendor_event;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
 	/*
@@ -912,7 +912,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 {
 	int status, i, nr, ret;
 	tSirWifiRadioStat *pWifiRadioStat = pData;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	ENTER();
 
@@ -1040,7 +1040,7 @@ static void hdd_ll_process_peer_stats(hdd_adapter_t *adapter,
 void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 							int indType, void *pRsp)
 {
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 	struct hdd_ll_stats_context *context;
 	hdd_adapter_t *pAdapter = NULL;
 	tpSirLLStatsResults linkLayerStatsResults = (tpSirLLStatsResults) pRsp;
@@ -1149,7 +1149,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 void hdd_lost_link_info_cb(void *context,
 				  struct sir_lost_link_info *lost_link_info)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *)context;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
 	int status;
 	hdd_adapter_t *adapter;
 
@@ -1201,7 +1201,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	tSirLLStatsSetReq LinkLayerStatsSetReq;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 
 	ENTER_DEV(dev);
 
@@ -1302,7 +1302,7 @@ nla_policy
 	[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK] = {.type = NLA_U32}
 };
 
-static int wlan_hdd_send_ll_stats_req(hdd_context_t *hdd_ctx,
+static int wlan_hdd_send_ll_stats_req(struct hdd_context *hdd_ctx,
 				      tSirLLStatsGetReq *req)
 {
 	unsigned long rc;
@@ -1338,7 +1338,7 @@ int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
 	int ret;
 	tSirLLStatsGetReq get_req;
 	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	ENTER();
 
@@ -1392,7 +1392,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 				   int data_len)
 {
 	int ret;
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX + 1];
 	tSirLLStatsGetReq LinkLayerStatsGetReq;
 	struct net_device *dev = wdev->netdev;
@@ -1510,7 +1510,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 				    const void *data,
 				    int data_len)
 {
-	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX + 1];
 	tSirLLStatsClearReq LinkLayerStatsClearReq;
 	struct net_device *dev = wdev->netdev;
@@ -2212,7 +2212,7 @@ put_attr_fail:
 void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
 						     tSirLLStatsResults *rsp)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	struct sk_buff *skb = NULL;
 	uint32_t param_id, index;
 	hdd_adapter_t *adapter = NULL;
@@ -2233,7 +2233,7 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
 		return;
 	}
 
-	hdd_ctx = (hdd_context_t *)ctx;
+	hdd_ctx = (struct hdd_context *)ctx;
 	linkLayer_stats_results = rsp;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -2445,7 +2445,7 @@ static int __wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 	uint32_t period;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct sir_ll_ext_stats_threshold thresh = {0,};
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_LL_STATS_EXT_MAX + 1];
 
@@ -2787,7 +2787,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int ret_val;
 	QDF_STATUS status;
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
 	ENTER_DEV(dev);
 
@@ -2846,7 +2846,7 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 						 tStatsExtEvent *msg)
 {
 
-	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
+	struct hdd_context *pHddCtx = (struct hdd_context *) ctx;
 	struct sk_buff *vendor_event;
 	int status;
 	int ret_val;
@@ -2903,7 +2903,7 @@ void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 void wlan_hdd_cfg80211_stats_ext2_callback(void *ctx,
 				struct sir_sme_rx_aggr_hole_ind *pmsg)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *)ctx;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)ctx;
 	int status;
 	uint32_t data_size, hole_info_size;
 	struct sk_buff *vendor_event;
@@ -3817,7 +3817,7 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 				struct station_info *sinfo)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hddctx = (hdd_context_t *)wiphy_priv(wiphy);
+	struct hdd_context *hddctx = wiphy_priv(wiphy);
 	hdd_ap_ctx_t *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	hdd_station_info_t *stainfo = NULL;
 	struct hdd_config *cfg;
@@ -3891,7 +3891,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	uint8_t rate_flags;
 	uint8_t mcs_index;
 
-	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
+	struct hdd_context *pHddCtx = (struct hdd_context *) wiphy_priv(wiphy);
 	struct hdd_config *pCfg = pHddCtx->config;
 
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
@@ -4436,7 +4436,7 @@ static int __wlan_hdd_cfg80211_dump_station(struct wiphy *wiphy,
 				int idx, u8 *mac,
 				struct station_info *sinfo)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
 
 	hdd_debug("%s: idx %d", __func__, idx);
 	if (idx != 0)
@@ -4561,7 +4561,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 	bool filled = false;
 	int i, j = 0;
 	uint32_t channel = 0, opfreq; /* Initialization Required */
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	sme_get_operation_channel(pHddCtx->hHal, &channel, pAdapter->sessionId);
@@ -4599,7 +4599,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 					   int idx, struct survey_info *survey)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
 	int status;
 	bool filled = false;
