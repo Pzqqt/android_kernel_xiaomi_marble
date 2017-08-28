@@ -32,6 +32,8 @@
  * WLAN Host Device Driver TDLS include file
  */
 
+struct hdd_context;
+
 /*
  * enum tdls_support_mode - TDLS support modes
  * @eTDLS_SUPPORT_NOT_ENABLED: TDLS support not enabled
@@ -530,7 +532,7 @@ int wlan_hdd_tdls_set_sta_id(hdd_adapter_t *pAdapter, const uint8_t *mac,
 hddTdlsPeer_t *wlan_hdd_tdls_find_peer(hdd_adapter_t *pAdapter,
 				       const uint8_t *mac);
 
-hddTdlsPeer_t *wlan_hdd_tdls_find_all_peer(hdd_context_t *pHddCtx,
+hddTdlsPeer_t *wlan_hdd_tdls_find_all_peer(struct hdd_context *pHddCtx,
 					   const uint8_t *mac);
 
 int wlan_hdd_tdls_get_link_establish_params(hdd_adapter_t *pAdapter,
@@ -590,10 +592,10 @@ void wlan_hdd_tdls_increment_peer_count(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_tdls_decrement_peer_count(hdd_adapter_t *pAdapter);
 
-hddTdlsPeer_t *wlan_hdd_tdls_is_progress(hdd_context_t *pHddCtx,
+hddTdlsPeer_t *wlan_hdd_tdls_is_progress(struct hdd_context *pHddCtx,
 					 const uint8_t *mac, uint8_t skip_self);
 
-int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
+int wlan_hdd_tdls_copy_scan_context(struct hdd_context *pHddCtx,
 				    struct wiphy *wiphy,
 				    struct cfg80211_scan_request *request);
 
@@ -710,21 +712,21 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 #endif
 
-void hdd_update_tdls_ct_and_teardown_links(hdd_context_t *hdd_ctx);
-void wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx);
+void hdd_update_tdls_ct_and_teardown_links(struct hdd_context *hdd_ctx);
+void wlan_hdd_tdls_disable_offchan_and_teardown_links(struct hdd_context *hddctx);
 
 hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter);
-int hdd_set_tdls_offchannel(hdd_context_t *hdd_ctx, int offchannel);
-int hdd_set_tdls_secoffchanneloffset(hdd_context_t *hdd_ctx, int offchanoffset);
+int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx, int offchannel);
+int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx, int offchanoffset);
 int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode);
 void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 				     struct sk_buff *skb);
 void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 				     struct sk_buff *skb);
-int hdd_set_tdls_scan_type(hdd_context_t *hdd_ctx, int val);
-void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr);
-void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx);
-int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
+int hdd_set_tdls_scan_type(struct hdd_context *hdd_ctx, int val);
+void hdd_tdls_context_init(struct hdd_context *hdd_ctx, bool ssr);
+void hdd_tdls_context_destroy(struct hdd_context *hdd_ctx);
+int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 				 hdd_adapter_t *adapter,
 				 uint32_t mode);
 /**
@@ -770,7 +772,7 @@ void wlan_hdd_change_tdls_mode(void *hdd_ctx);
  *
  * Return: None
  */
-void hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
+void hdd_tdls_notify_p2p_roc(struct hdd_context *hdd_ctx,
 			    enum tdls_concerned_external_events event);
 
 /**
@@ -795,11 +797,11 @@ QDF_STATUS hdd_tdls_deregister_tdl_peer(void *userdata,
 					uint32_t vdev_id, uint8_t sta_id);
 
 #else
-static inline void hdd_update_tdls_ct_and_teardown_links(hdd_context_t *hdd_ctx)
+static inline void hdd_update_tdls_ct_and_teardown_links(struct hdd_context *hdd_ctx)
 {
 }
 static inline void
-wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
+wlan_hdd_tdls_disable_offchan_and_teardown_links(struct hdd_context *hddctx)
 {
 }
 static inline void wlan_hdd_tdls_exit(hdd_adapter_t *adapter)
@@ -813,10 +815,10 @@ static inline void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 						   struct sk_buff *skb)
 {
 }
-static inline void hdd_tdls_context_init(hdd_context_t *hdd_ctx, bool ssr) { }
-static inline void hdd_tdls_context_destroy(hdd_context_t *hdd_ctx) { }
+static inline void hdd_tdls_context_init(struct hdd_context *hdd_ctx, bool ssr) { }
+static inline void hdd_tdls_context_destroy(struct hdd_context *hdd_ctx) { }
 
-static inline int wlan_hdd_tdls_antenna_switch(hdd_context_t *hdd_ctx,
+static inline int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 					       hdd_adapter_t *adapter,
 					       uint32_t mode)
 {
@@ -848,7 +850,7 @@ static inline void wlan_hdd_change_tdls_mode(void *hdd_ctx)
 {
 }
 static inline void
-hdd_tdls_notify_p2p_roc(hdd_context_t *hdd_ctx,
+hdd_tdls_notify_p2p_roc(struct hdd_context *hdd_ctx,
 			enum tdls_concerned_external_events event)
 {
 }
@@ -889,5 +891,5 @@ void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
 static inline void hdd_wlan_block_scan_by_tdls_event(void) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
-void cds_set_tdls_ct_mode(hdd_context_t *hdd_ctx);
+void cds_set_tdls_ct_mode(struct hdd_context *hdd_ctx);
 #endif /* __HDD_TDLS_H */
