@@ -66,7 +66,7 @@ static struct hdd_fw_dump_context fw_dump_context;
 static void memdump_cleanup_timer_cb(void *data)
 {
 	int status;
-	hdd_context_t *hdd_ctx = data;
+	struct hdd_context *hdd_ctx = data;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
 	qdf_device_t qdf_ctx;
@@ -110,7 +110,7 @@ static void memdump_cleanup_timer_cb(void *data)
 void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 					     struct fw_dump_rsp *dump_rsp)
 {
-	hdd_context_t *hdd_ctx = ctx;
+	struct hdd_context *hdd_ctx = ctx;
 	struct hdd_fw_dump_context *context;
 	int status;
 
@@ -142,7 +142,7 @@ void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
  *
  * Return: 0 for success; non-zero for failure
  */
-static int wlan_hdd_send_memdump_rsp(hdd_context_t *hdd_ctx)
+static int wlan_hdd_send_memdump_rsp(struct hdd_context *hdd_ctx)
 {
 	struct sk_buff *skb;
 	int status;
@@ -193,7 +193,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 {
 	int status;
 	QDF_STATUS sme_status;
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct fw_dump_req fw_mem_dump_req;
 	struct fw_dump_seg_req *seg_req;
 	uint8_t loop;
@@ -386,7 +386,7 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 					size_t count, loff_t *pos)
 {
 	int status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
 	qdf_device_t qdf_ctx;
@@ -480,7 +480,7 @@ static const struct file_operations memdump_fops = {
  */
 static int memdump_procfs_init(void)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -538,7 +538,7 @@ static void memdump_procfs_remove(void)
  */
 int memdump_init(void)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	int status = 0;
 	QDF_STATUS qdf_status;
 
@@ -584,7 +584,7 @@ int memdump_init(void)
  */
 void memdump_deinit(void)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
 	qdf_device_t qdf_ctx;
@@ -656,7 +656,7 @@ static struct proc_dir_entry *proc_file_driver, *proc_dir_driver;
  */
 static void hdd_driver_mem_cleanup(void)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -688,7 +688,7 @@ static ssize_t hdd_driver_memdump_read(struct file *file, char __user *buf,
 {
 	int status;
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	size_t no_of_bytes_read = 0;
 
 	hdd_ctx = memdump_get_file_data(file);
@@ -784,7 +784,7 @@ read: hdd_driver_memdump_read
  */
 static int hdd_driver_memdump_procfs_init(void)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
