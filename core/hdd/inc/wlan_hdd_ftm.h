@@ -41,7 +41,9 @@
 #include "qdf_types.h"
 #include <wlan_ptt_sock_svc.h>
 
-int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx);
+struct hdd_context;
+
+int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx);
 void hdd_ftm_mc_process_msg(void *message);
 #if  defined(QCA_WIFI_FTM)
 QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);

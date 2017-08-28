@@ -117,7 +117,7 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
  * Return: 0 on success; errno on failure
  */
 
-int hdd_update_cds_config_ftm(hdd_context_t *hdd_ctx)
+int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)
 {
 	struct cds_config_info *cds_cfg;
 
