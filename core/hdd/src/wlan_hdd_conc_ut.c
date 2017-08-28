@@ -146,7 +146,7 @@ static const char *pcl_type_to_string(uint8_t idx)
 	}
 }
 
-void clean_report(hdd_context_t *hdd_ctx)
+void clean_report(struct hdd_context *hdd_ctx)
 {
 	uint32_t idx = 0;
 
@@ -157,7 +157,7 @@ void clean_report(hdd_context_t *hdd_ctx)
 	report_idx = 0;
 }
 
-void print_report(hdd_context_t *hdd_ctx)
+void print_report(struct hdd_context *hdd_ctx)
 {
 	uint32_t idx = 0;
 
@@ -175,7 +175,7 @@ void print_report(hdd_context_t *hdd_ctx)
 	pr_info("+----------Report end -----------+\n");
 }
 
-void fill_report(hdd_context_t *hdd_ctx, char *title,
+void fill_report(struct hdd_context *hdd_ctx, char *title,
 	uint32_t first_persona, uint32_t second_persona, uint32_t third_persona,
 	uint32_t chnl_1st_conn, uint32_t chnl_2nd_conn, uint32_t chnl_3rd_conn,
 	bool status, enum policy_mgr_pcl_type pcl_type, char *reason,
@@ -248,7 +248,7 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 	report_idx++;
 }
 
-static bool wlan_hdd_validate_pcl(hdd_context_t *hdd_ctx,
+static bool wlan_hdd_validate_pcl(struct hdd_context *hdd_ctx,
 	enum policy_mgr_pcl_type pcl_type, uint8_t *pcl, uint32_t pcl_len,
 	uint8_t first_connection_chnl, uint8_t second_connection_chnl,
 	char *reason, uint32_t reason_length)
@@ -623,7 +623,7 @@ static void wlan_hdd_map_subtypes_hdd_wma(enum policy_mgr_con_mode *dst,
 		*dst = *src;
 }
 
-void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
+void wlan_hdd_one_connection_scenario(struct hdd_context *hdd_ctx)
 {
 	enum policy_mgr_con_mode sub_type;
 	enum policy_mgr_conc_priority_mode system_pref =
@@ -674,7 +674,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	}
 }
 
-void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
+void wlan_hdd_two_connections_scenario(struct hdd_context *hdd_ctx,
 		uint8_t first_chnl, enum policy_mgr_chain_mode first_chain_mask)
 {
 	uint8_t vdevid = 0, tx_stream = 2, rx_stream = 2;
@@ -755,7 +755,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 	}
 }
 
-void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
+void wlan_hdd_three_connections_scenario(struct hdd_context *hdd_ctx,
 		uint8_t first_chnl, uint8_t second_chnl,
 		enum policy_mgr_chain_mode chain_mask, uint8_t use_same_mac)
 {
