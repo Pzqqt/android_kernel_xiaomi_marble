@@ -292,7 +292,7 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 				unsigned long data, void *arg);
 
-int hdd_set_qpower_config(hdd_context_t *hddctx, hdd_adapter_t *adapter,
+int hdd_set_qpower_config(struct hdd_context *hddctx, hdd_adapter_t *adapter,
 			  uint8_t qpower);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -325,7 +325,7 @@ int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void wlan_hdd_inc_suspend_stats(hdd_context_t *hdd_ctx,
+void wlan_hdd_inc_suspend_stats(struct hdd_context *hdd_ctx,
 				enum suspend_fail_reason reason);
 
 /*
