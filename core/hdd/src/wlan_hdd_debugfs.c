@@ -64,7 +64,7 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 				     loff_t *ppos)
 {
 	hdd_adapter_t *pAdapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	char cmd[MAX_USER_COMMAND_SIZE_WOWL_ENABLE + 1];
 	char *sptr, *token;
 	uint8_t wow_enable = 0;
@@ -184,7 +184,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 				      loff_t *ppos)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) file->private_data;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	char cmd[MAX_USER_COMMAND_SIZE_WOWL_PATTERN + 1];
 	char *sptr, *token;
 	uint8_t pattern_idx = 0;
@@ -303,7 +303,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 				      loff_t *ppos)
 {
 	hdd_adapter_t *pAdapter;
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	tSirAddPeriodicTxPtrn *addPeriodicTxPtrnParams;
 	tSirDelPeriodicTxPtrn *delPeriodicTxPtrnParams;
 
@@ -574,7 +574,7 @@ static ssize_t __wlan_hdd_read_power_debugfs(struct file *file,
 		size_t count, loff_t *pos)
 {
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	struct power_stats_response *chip_power_stats;
 	ssize_t ret_cnt = 0;
@@ -738,7 +738,7 @@ static int wlan_hdd_open_power_debugfs(struct inode *inode, struct file *file)
 static int __wcnss_debugfs_open(struct inode *inode, struct file *file)
 {
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	int ret;
 
 	ENTER();
