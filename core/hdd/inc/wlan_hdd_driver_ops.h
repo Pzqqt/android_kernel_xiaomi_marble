@@ -30,6 +30,8 @@
 
 #include "hif.h"
 
+struct hdd_context;
+
 /**
  * DOC: wlan_hdd_driver_ops.h
  *
@@ -108,7 +110,7 @@ int wlan_hdd_bus_resume_noirq(void);
  *
  * Helper function to close HIF
  */
-void hdd_hif_close(hdd_context_t *hdd_ctx, void *hif_ctx);
+void hdd_hif_close(struct hdd_context *hdd_ctx, void *hif_ctx);
 
 /**
  * hdd_hif_open() - HIF open helper

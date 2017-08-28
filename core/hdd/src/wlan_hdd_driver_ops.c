@@ -209,7 +209,7 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	struct hif_driver_state_callbacks cbk;
 	uint32_t mode = cds_get_conparam();
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx error");
@@ -268,7 +268,7 @@ err_hif_close:
 	return ret;
 }
 
-void hdd_hif_close(hdd_context_t *hdd_ctx, void *hif_ctx)
+void hdd_hif_close(struct hdd_context *hdd_ctx, void *hif_ctx)
 {
 	if (!hdd_ctx) {
 		hdd_err("hdd_ctx error");
@@ -630,7 +630,7 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 {
 	int err;
 	QDF_STATUS status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	void *hif_ctx;
 	void *dp_soc;
 	void *dp_pdev;
@@ -738,7 +738,7 @@ int wlan_hdd_unit_test_bus_suspend(struct wow_enable_params wow_params)
  */
 static int __wlan_hdd_bus_suspend_noirq(void)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
 	int err;
 	int status;
@@ -815,7 +815,7 @@ int wlan_hdd_bus_suspend_noirq(void)
  */
 static int __wlan_hdd_bus_resume(void)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
 	int status;
 	QDF_STATUS qdf_status;
@@ -901,7 +901,7 @@ int wlan_hdd_bus_resume(void)
  */
 static int __wlan_hdd_bus_resume_noirq(void)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
 	int status;
 	QDF_STATUS qdf_status;
@@ -1002,7 +1002,7 @@ static int __wlan_hdd_runtime_suspend(struct device *dev)
 {
 	int err;
 	QDF_STATUS status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_debug("Starting runtime suspend");
 
@@ -1077,7 +1077,7 @@ static int hdd_pld_runtime_resume_cb(void)
  */
 static int __wlan_hdd_runtime_resume(struct device *dev)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	QDF_STATUS status;
 
 	hdd_debug("Starting runtime resume");
