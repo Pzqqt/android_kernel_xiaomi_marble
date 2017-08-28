@@ -5380,7 +5380,8 @@ enum hdd_link_speed_rpt_type {
 #define CFG_QDF_TRACE_ENABLE_CFG_NAME     "qdf_trace_enable_cfg"
 #define CFG_QDF_TRACE_ENABLE_EPPING       "qdf_trace_enable_epping"
 #define CFG_QDF_TRACE_ENABLE_QDF_DEVICES  "qdf_trace_enable_qdf_devices"
-#define CFG_QDF_TRACE_ENABLE_TXRX_NAME    "cfd_trace_enable_txrx"
+#define CFG_QDF_TRACE_ENABLE_TXRX_NAME    "qdf_trace_enable_txrx"
+#define CFG_QDF_TRACE_ENABLE_DP_NAME      "qdf_trace_enable_dp"
 #define CFG_QDF_TRACE_ENABLE_HTC_NAME     "qdf_trace_enable_htc"
 #define CFG_QDF_TRACE_ENABLE_HIF_NAME     "qdf_trace_enable_hif"
 #define CFG_CDR_TRACE_ENABLE_HDD_SAP_DATA_NAME   "qdf_trace_enable_hdd_sap_data"
@@ -5392,6 +5393,8 @@ enum hdd_link_speed_rpt_type {
 #define CFG_QDF_TRACE_ENABLE_MIN          (0)
 #define CFG_QDF_TRACE_ENABLE_MAX          (0xff)
 #define CFG_QDF_TRACE_ENABLE_DEFAULT      (0xffff)
+/* disable debug logs for DP by default */
+#define CFG_QDF_TRACE_ENABLE_DP_DEFAULT   (0x7f)
 
 #define HDD_MCASTBCASTFILTER_FILTER_NONE                       0x00
 #define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST              0x01
@@ -11930,7 +11933,8 @@ struct hdd_config {
 	uint16_t qdf_trace_enable_hdd_sap;
 	uint16_t qdf_trace_enable_bmi;
 	uint16_t qdf_trace_enable_cfg;
-	uint16_t cfd_trace_enable_txrx;
+	uint16_t qdf_trace_enable_txrx;
+	uint16_t qdf_trace_enable_dp;
 	uint16_t qdf_trace_enable_htc;
 	uint16_t qdf_trace_enable_hif;
 	uint16_t qdf_trace_enable_hdd_sap_data;

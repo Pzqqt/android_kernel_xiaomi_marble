@@ -7697,7 +7697,9 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 	hdd_qdf_trace_enable(QDF_MODULE_ID_QDF_DEVICE,
 				hdd_ctx->config->qdf_trace_enable_qdf_devices);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_TXRX,
-				hdd_ctx->config->cfd_trace_enable_txrx);
+				hdd_ctx->config->qdf_trace_enable_txrx);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_DP,
+				hdd_ctx->config->qdf_trace_enable_dp);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_HTC,
 				hdd_ctx->config->qdf_trace_enable_htc);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_HIF,
