@@ -252,7 +252,7 @@ void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
 		config->SapHw_mode = eCSR_DOT11_MODE_11ax;
 }
 
-void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
+void hdd_he_print_ini_config(struct hdd_context *hdd_ctx)
 {
 	hdd_info("Name = [%s] Value = [%d]", CFG_ENABLE_UL_MIMO_NAME,
 		hdd_ctx->config->enable_ul_mimo);
@@ -262,7 +262,7 @@ void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->he_sta_obsspd);
 }
 
-int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
+int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
 	uint32_t val, val1 = 0;
 	QDF_STATUS status;
@@ -317,7 +317,7 @@ __wlan_hdd_cfg80211_get_he_cap(struct wiphy *wiphy,
 			       const void *data,
 			       int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int ret;
 	QDF_STATUS status;
 	struct sk_buff *reply_skb;

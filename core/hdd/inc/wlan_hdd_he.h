@@ -99,7 +99,7 @@ void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
  *
  * Return: None
  */
-void hdd_he_print_ini_config(hdd_context_t *hdd_ctx);
+void hdd_he_print_ini_config(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_update_he_cap_in_cfg() - update HE cap in global CFG
@@ -110,7 +110,7 @@ void hdd_he_print_ini_config(hdd_context_t *hdd_ctx);
  *
  * Return: 0 on success and errno on failure
  */
-int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx);
+int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_he_set_sme_config() - set HE related SME config param
@@ -154,11 +154,11 @@ static inline void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 {
 }
 
-static inline void hdd_he_print_ini_config(hdd_context_t *hdd_ctx)
+static inline void hdd_he_print_ini_config(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline int hdd_update_he_cap_in_cfg(hdd_context_t *hdd_ctx)
+static inline int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
