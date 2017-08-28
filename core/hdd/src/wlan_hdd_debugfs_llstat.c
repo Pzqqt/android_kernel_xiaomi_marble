@@ -341,7 +341,7 @@ static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
 			char __user *buf, size_t count, loff_t *pos)
 {
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	ssize_t ret = 0;
 
 	ENTER();
@@ -399,7 +399,7 @@ static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 					    struct file *file)
 {
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	int ret;
 
 	ENTER();
@@ -463,7 +463,7 @@ static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
 					    struct file *file)
 {
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	int ret;
 
 	ENTER();
