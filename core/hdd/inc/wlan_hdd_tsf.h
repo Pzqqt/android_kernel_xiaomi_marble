@@ -28,6 +28,8 @@
 #if !defined WLAN_HDD_TSF_H
 #define WLAN_HDD_TSF_H
 
+struct hdd_context;
+
 /**
  * enum hdd_tsf_get_state - status of get tsf action
  * @TSF_RETURN:                   get tsf
@@ -68,7 +70,7 @@ enum hdd_tsf_capture_state {
 /**
  * wlan_hdd_tsf_init() - set gpio and callbacks for
  *     capturing tsf and init tsf_plus
- * @hdd_ctx: pointer to the hdd_context_t
+ * @hdd_ctx: pointer to the struct hdd_context
  *
  * This function set the callback to sme module, the callback will be
  * called when a tsf event is reported by firmware; set gpio number
@@ -81,13 +83,13 @@ void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx);
 
 /**
  * wlan_hdd_tsf_deinit() - reset callbacks for capturing tsf, deinit tsf_plus
- * @hdd_ctx: pointer to the hdd_context_t
+ * @hdd_ctx: pointer to the struct hdd_context
  *
  * This function reset the callback to sme module, and deinit tsf_plus
  *
  * Return: nothing
  */
-void wlan_hdd_tsf_deinit(hdd_context_t *hdd_ctx);
+void wlan_hdd_tsf_deinit(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_capture_tsf() - capture tsf
@@ -136,7 +138,7 @@ static inline void wlan_hdd_tsf_init(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline void wlan_hdd_tsf_deinit(hdd_context_t *hdd_ctx)
+static inline void wlan_hdd_tsf_deinit(struct hdd_context *hdd_ctx)
 {
 }
 
