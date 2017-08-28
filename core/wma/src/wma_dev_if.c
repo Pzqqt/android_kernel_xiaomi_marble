@@ -4928,6 +4928,44 @@ fail_del_bss_ho_fail:
 				   (void *)params, 0);
 }
 
+#ifdef WLAN_FEATURE_HOST_ROAM
+/**
+ * wma_wait_tx_complete() - Wait till tx packets are drained
+ * @wma: wma handle
+ * @session_id: vdev id
+ *
+ * Return: none
+ */
+static void wma_wait_tx_complete(tp_wma_handle wma,
+				uint32_t session_id)
+{
+	struct cdp_pdev *pdev;
+	uint8_t max_wait_iterations = 0;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
+	if (!wma->interfaces[session_id].is_vdev_valid) {
+		WMA_LOGE("%s: Vdev is not valid: %d",
+			 __func__, session_id);
+		return;
+	}
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	max_wait_iterations =
+		wma->interfaces[session_id].delay_before_vdev_stop /
+		WMA_TX_Q_RECHECK_TIMER_WAIT;
+
+	while (cdp_get_tx_pending(soc, pdev) && max_wait_iterations) {
+		WMA_LOGW(FL("Waiting for outstanding packet to drain."));
+		qdf_wait_single_event(&wma->tx_queue_empty_event,
+				      WMA_TX_Q_RECHECK_TIMER_WAIT);
+		max_wait_iterations--;
+	}
+}
+#else
+static void wma_wait_tx_complete(tp_wma_handle wma)
+{
+}
+#endif
 /**
  * wma_delete_bss() - process delete bss request from upper layer
  * @wma: wma handle
@@ -4942,7 +4980,6 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	struct wma_target_req *msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t peer_id;
-	uint8_t max_wait_iterations = 0;
 	struct cdp_vdev *txrx_vdev = NULL;
 	bool roam_synch_in_progress = false;
 	struct wma_txrx_node *iface;
@@ -5028,17 +5065,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 
 	WMA_LOGW(FL("Outstanding msdu packets: %d"),
 		 cdp_get_tx_pending(soc, pdev));
-
-	max_wait_iterations =
-		wma->interfaces[params->smesessionId].delay_before_vdev_stop /
-		WMA_TX_Q_RECHECK_TIMER_WAIT;
-
-	while (cdp_get_tx_pending(soc, pdev) && max_wait_iterations) {
-		WMA_LOGW(FL("Waiting for outstanding packet to drain."));
-		qdf_wait_single_event(&wma->tx_queue_empty_event,
-				      WMA_TX_Q_RECHECK_TIMER_MAX_WAIT);
-		max_wait_iterations--;
-	}
+	wma_wait_tx_complete(wma, params->smesessionId);
 
 	if (cdp_get_tx_pending(soc, pdev)) {
 		WMA_LOGW(FL("Outstanding msdu packets before VDEV_STOP : %d"),
