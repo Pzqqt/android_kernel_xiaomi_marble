@@ -34,13 +34,15 @@
  * HDD Regulatory prototype implementation
  */
 
+struct hdd_context;
+
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 #define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
 #define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
 #endif
 
-int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy);
-void hdd_program_country_code(hdd_context_t *hdd_ctx);
+int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy);
+void hdd_program_country_code(struct hdd_context *hdd_ctx);
 void hdd_reset_global_reg_params(void);
 
 /**
@@ -50,7 +52,7 @@ void hdd_reset_global_reg_params(void);
  *
  * Return: zero for success, non-zero error code for failure
  */
-int hdd_reg_set_country(hdd_context_t *hdd_ctx, char *country_code);
+int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code);
 
 /**
  * hdd_reg_set_band() - helper function for setting the regulatory band

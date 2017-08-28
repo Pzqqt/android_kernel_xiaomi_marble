@@ -182,7 +182,7 @@ static bool hdd_is_world_regdomain(uint32_t reg_domain)
  *
  * Return: void
  */
-static void hdd_update_regulatory_info(hdd_context_t *hdd_ctx)
+static void hdd_update_regulatory_info(struct hdd_context *hdd_ctx)
 {
 	uint32_t country_code;
 
@@ -209,7 +209,7 @@ void hdd_reset_global_reg_params(void)
 	init_by_reg_core = false;
 }
 
-static void reg_program_config_vars(hdd_context_t *hdd_ctx,
+static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 				    struct reg_config_vars *config_vars)
 {
 	config_vars->enable_11d_support = hdd_ctx->config->Is11dSupportEnabled;
@@ -232,7 +232,7 @@ static void reg_program_config_vars(hdd_context_t *hdd_ctx,
  * Return: void
  */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
-static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
+static void hdd_regulatory_wiphy_init(struct hdd_context *hdd_ctx,
 				     struct regulatory *reg,
 				     struct wiphy *wiphy)
 {
@@ -277,7 +277,7 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 
 }
 #else
-static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
+static void hdd_regulatory_wiphy_init(struct hdd_context *hdd_ctx,
 				     struct regulatory *reg,
 				     struct wiphy *wiphy)
 {
@@ -378,7 +378,7 @@ static void hdd_modify_wiphy(struct wiphy  *wiphy,
  *
  * Return: void
  */
-static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
+static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 					struct wiphy *wiphy,
 					bool reset)
 {
@@ -488,13 +488,13 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
  * Return: void
  */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
-static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
+static void hdd_set_dfs_region(struct hdd_context *hdd_ctx,
 			       enum dfs_reg dfs_reg)
 {
 	wlan_reg_set_dfs_region(hdd_ctx->hdd_pdev, dfs_reg);
 }
 #else
-static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
+static void hdd_set_dfs_region(struct hdd_context *hdd_ctx,
 			       enum dfs_region dfs_reg)
 {
 
@@ -525,7 +525,7 @@ static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
  *
  * Return: int
  */
-static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
+static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 					  struct wiphy *wiphy)
 {
 	int ret_val;
@@ -570,7 +570,7 @@ static int hdd_regulatory_init_no_offload(hdd_context_t *hdd_ctx,
  *
  * Return: void
  */
-void hdd_program_country_code(hdd_context_t *hdd_ctx)
+void hdd_program_country_code(struct hdd_context *hdd_ctx)
 {
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	uint8_t *country_alpha2 = hdd_ctx->reg.alpha2;
@@ -583,7 +583,7 @@ void hdd_program_country_code(hdd_context_t *hdd_ctx)
 	}
 }
 
-int hdd_reg_set_country(hdd_context_t *hdd_ctx, char *country_code)
+int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code)
 {
 	int err;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -682,7 +682,7 @@ static void hdd_restore_reg_flags(struct wiphy *wiphy, uint32_t flags)
 void hdd_reg_notifier(struct wiphy *wiphy,
 		      struct regulatory_request *request)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	bool reset = false;
 	enum dfs_reg dfs_reg;
 	struct reg_config_vars config_vars;
@@ -858,7 +858,7 @@ static void fill_wiphy_band_channels(struct wiphy *wiphy,
  *
  * Return: None
  */
-void hdd_ch_avoid_ind(hdd_context_t *hdd_ctxt,
+void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 		struct unsafe_ch_list *unsafe_chan_list,
 		struct ch_avoid_ind_type *avoid_freq_list)
 {
@@ -930,7 +930,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 {
 	struct wiphy *wiphy;
 	struct pdev_osif_priv *pdev_priv;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	enum country_src cc_src;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 
@@ -962,7 +962,7 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
  *
  * Return: int
  */
-static int hdd_regulatory_init_offload(hdd_context_t *hdd_ctx,
+static int hdd_regulatory_init_offload(struct hdd_context *hdd_ctx,
 				       struct wiphy *wiphy)
 {
 	struct reg_config_vars config_vars;
@@ -988,7 +988,7 @@ static int hdd_regulatory_init_offload(hdd_context_t *hdd_ctx,
 }
 
 
-int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 {
 	bool offload_enabled;
 
@@ -1011,7 +1011,7 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 }
 
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
-int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 {
 	hdd_ctx->reg_offload = false;
 	wiphy->reg_notifier = hdd_reg_notifier;
@@ -1023,7 +1023,7 @@ int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
 }
 
 #else
-int hdd_regulatory_init(hdd_context_t *hdd_ctx, struct wiphy *wiphy)
+int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 {
 	hdd_ctx->reg_offload = false;
 	wiphy->reg_notifier = hdd_reg_notifier;
