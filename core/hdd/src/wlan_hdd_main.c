@@ -272,11 +272,11 @@ void hdd_start_complete(int ret)
 
 /**
  * hdd_set_rps_cpu_mask - set RPS CPU mask for interfaces
- * @hdd_ctx: pointer to hdd_context_t
+ * @hdd_ctx: pointer to struct hdd_context
  *
  * Return: none
  */
-static void hdd_set_rps_cpu_mask(hdd_context_t *hdd_ctx)
+static void hdd_set_rps_cpu_mask(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_t *adapter;
 	hdd_adapter_list_node_t *adapter_node, *next;
@@ -303,7 +303,7 @@ static void hdd_set_rps_cpu_mask(hdd_context_t *hdd_ctx)
 void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 		enum netif_action_type action, enum netif_reason_type reason)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	hdd_adapter_t *adapter;
 
 	if (!hdd_ctx) {
@@ -434,7 +434,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 	struct net_device *dev = data;
 #endif
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	ENTER_DEV(dev);
 
@@ -650,7 +650,7 @@ int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask)
  *
  * Return: 0 if the context is valid. Error code otherwise
  */
-int wlan_hdd_validate_context_in_loading(hdd_context_t *hdd_ctx)
+int wlan_hdd_validate_context_in_loading(struct hdd_context *hdd_ctx)
 {
 	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
 		hdd_info("%pS HDD context is Null", (void *)_RET_IP_);
@@ -680,7 +680,7 @@ int wlan_hdd_validate_context_in_loading(hdd_context_t *hdd_ctx)
  *
  * Return: 0 if the context is valid. Error code otherwise
  */
-int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
+int wlan_hdd_validate_context(struct hdd_context *hdd_ctx)
 {
 	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
 		hdd_err("%pS HDD context is Null", (void *)_RET_IP_);
@@ -757,7 +757,7 @@ int hdd_validate_adapter(hdd_adapter_t *adapter)
  *
  * Return: True if modules are enabled or false.
  */
-bool wlan_hdd_validate_modules_state(hdd_context_t *hdd_ctx)
+bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx)
 {
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
@@ -784,7 +784,7 @@ bool wlan_hdd_validate_modules_state(hdd_context_t *hdd_ctx)
 QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 {
 	int ret;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (hdd_ctx == NULL) {
 		hdd_err("HDD context is null");
@@ -920,7 +920,7 @@ void hdd_update_macaddr(struct hdd_config *config,
 	}
 }
 
-static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
+static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
 	struct hdd_config *config = hdd_ctx->config;
@@ -974,7 +974,7 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-static void hdd_update_vdev_nss(hdd_context_t *hdd_ctx)
+static void hdd_update_vdev_nss(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 	uint8_t max_supp_nss = 1;
@@ -997,7 +997,7 @@ static void hdd_update_vdev_nss(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_update_wiphy_vhtcap(hdd_context_t *hdd_ctx)
+static void hdd_update_wiphy_vhtcap(struct hdd_context *hdd_ctx)
 {
 	struct ieee80211_supported_band *band_5g =
 		hdd_ctx->wiphy->bands[NL80211_BAND_5GHZ];
@@ -1027,7 +1027,7 @@ static void hdd_update_wiphy_vhtcap(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_update_hw_dbs_capable(hdd_context_t *hdd_ctx)
+static void hdd_update_hw_dbs_capable(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *cfg_ini = hdd_ctx->config;
 	uint8_t hw_dbs_capable = 0;
@@ -1042,7 +1042,7 @@ static void hdd_update_hw_dbs_capable(hdd_context_t *hdd_ctx)
 	sme_update_hw_dbs_capable(hdd_ctx->hHal, hw_dbs_capable);
 }
 
-static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
+static void hdd_update_tgt_ht_cap(struct hdd_context *hdd_ctx,
 				  struct wma_tgt_ht_cap *cfg)
 {
 	QDF_STATUS status;
@@ -1156,7 +1156,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES
 }
 
-static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
+static void hdd_update_tgt_vht_cap(struct hdd_context *hdd_ctx,
 				   struct wma_tgt_vht_cap *cfg)
 {
 	QDF_STATUS status;
@@ -1509,7 +1509,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-static int hdd_generate_macaddr_auto(hdd_context_t *hdd_ctx)
+static int hdd_generate_macaddr_auto(struct hdd_context *hdd_ctx)
 {
 	unsigned int serialno = 0;
 	struct qdf_mac_addr mac_addr = {
@@ -1539,13 +1539,13 @@ static int hdd_generate_macaddr_auto(hdd_context_t *hdd_ctx)
  * Return: None
  */
 #ifdef FEATURE_WLAN_RA_FILTERING
-static void hdd_update_ra_rate_limit(hdd_context_t *hdd_ctx,
+static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 				     struct wma_tgt_cfg *cfg)
 {
 	hdd_ctx->config->IsRArateLimitEnabled = cfg->is_ra_rate_limit_enabled;
 }
 #else
-static void hdd_update_ra_rate_limit(hdd_context_t *hdd_ctx,
+static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 				     struct wma_tgt_cfg *cfg)
 {
 }
@@ -1554,7 +1554,7 @@ static void hdd_update_ra_rate_limit(hdd_context_t *hdd_ctx,
 void hdd_update_tgt_cfg(void *context, void *param)
 {
 	int ret;
-	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
+	struct hdd_context *hdd_ctx = (struct hdd_context *) context;
 	struct wma_tgt_cfg *cfg = param;
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
@@ -1714,7 +1714,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 }
 
-bool hdd_dfs_indicate_radar(hdd_context_t *hdd_ctx)
+bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *adapter;
@@ -1960,7 +1960,7 @@ static void hdd_disable_power_management(void)
  *
  * Return: None
  */
-static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
+static void hdd_update_hw_sw_info(struct hdd_context *hdd_ctx)
 {
 	void *hif_sc;
 	size_t target_hw_name_len;
@@ -2001,7 +2001,7 @@ static void hdd_update_hw_sw_info(hdd_context_t *hdd_ctx)
  * Return: none
  */
 static void
-hdd_update_cds_ac_specs_params(hdd_context_t *hdd_ctx)
+hdd_update_cds_ac_specs_params(struct hdd_context *hdd_ctx)
 {
 	uint8_t num_entries = 0;
 	uint8_t tx_sched_wrr_param[TX_SCHED_WRR_PARAMS_NUM];
@@ -2071,7 +2071,7 @@ static enum policy_mgr_con_mode wlan_hdd_get_mode_for_non_connected_vdev(
 			struct wlan_objmgr_psoc *psoc, uint8_t vdev_id)
 {
 	hdd_adapter_t *adapter = NULL;
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (!adapter) {
@@ -2107,7 +2107,7 @@ static void hdd_register_policy_manager_callback(
 #endif
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
-static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
+static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 {
 	struct nan_callbacks cb_obj = {0};
 
@@ -2125,7 +2125,7 @@ static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
 	os_if_nan_register_hdd_callbacks(hdd_ctx->hdd_psoc, &cb_obj);
 }
 #else
-static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
+static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -2142,7 +2142,7 @@ static void hdd_nan_register_callbacks(hdd_context_t *hdd_ctx)
  *
  * Return: 0 for success; non-zero for failure
  */
-int hdd_wlan_start_modules(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter,
 			   bool reinit)
 {
 	int ret;
@@ -2333,7 +2333,7 @@ release_lock:
 }
 
 #ifdef WIFI_POS_CONVERGED
-static int hdd_activate_wifi_pos(hdd_context_t *hdd_ctx)
+static int hdd_activate_wifi_pos(struct hdd_context *hdd_ctx)
 {
 	int ret = os_if_wifi_pos_register_nl();
 
@@ -2359,7 +2359,7 @@ static int hdd_deactivate_wifi_pos(void)
  *
  * Return: status of operation
  */
-static void hdd_populate_wifi_pos_cfg(hdd_context_t *hdd_ctx)
+static void hdd_populate_wifi_pos_cfg(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct hdd_config *cfg = hdd_ctx->config;
@@ -2374,7 +2374,7 @@ static void hdd_populate_wifi_pos_cfg(hdd_context_t *hdd_ctx)
 	wifi_pos_set_dwell_time_max(psoc, cfg->nNeighborScanMaxChanTime);
 }
 #else
-static int hdd_activate_wifi_pos(hdd_context_t *hdd_ctx)
+static int hdd_activate_wifi_pos(struct hdd_context *hdd_ctx)
 {
 	return oem_activate_service(hdd_ctx);
 }
@@ -2384,7 +2384,7 @@ static int hdd_deactivate_wifi_pos(void)
 	return 0;
 }
 
-static void hdd_populate_wifi_pos_cfg(hdd_context_t *hdd_ctx)
+static void hdd_populate_wifi_pos_cfg(struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -2400,7 +2400,7 @@ static void hdd_populate_wifi_pos_cfg(hdd_context_t *hdd_ctx)
 static int __hdd_open(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
 	ENTER_DEV(dev);
@@ -2487,7 +2487,7 @@ static int hdd_open(struct net_device *dev)
 static int __hdd_stop(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
 	ENTER_DEV(dev);
@@ -2689,7 +2689,7 @@ static void hdd_close_cesium_nl_sock(void)
 static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	struct sockaddr *psta_mac_addr = addr;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	int ret;
@@ -2730,7 +2730,7 @@ static int hdd_set_mac_address(struct net_device *dev, void *addr)
 	return ret;
 }
 
-uint8_t *wlan_hdd_get_intf_addr(hdd_context_t *hdd_ctx)
+uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx)
 {
 	int i;
 
@@ -2746,7 +2746,7 @@ uint8_t *wlan_hdd_get_intf_addr(hdd_context_t *hdd_ctx)
 	return &hdd_ctx->config->intfMacAddr[i].bytes[0];
 }
 
-void wlan_hdd_release_intf_addr(hdd_context_t *hdd_ctx, uint8_t *releaseAddr)
+void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx, uint8_t *releaseAddr)
 {
 	int i;
 
@@ -2775,7 +2775,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int i = 0, status;
 	struct netdev_hw_addr *ha;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct pmo_mc_addr_list_params *mc_list_request = NULL;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	int mc_count = 0;
@@ -2928,7 +2928,7 @@ void hdd_set_station_ops(struct net_device *pWlanDev)
  *
  * Return: None
  */
-static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx)
+static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
@@ -2942,7 +2942,7 @@ static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx)
+static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
@@ -2966,8 +2966,8 @@ static void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter)
 	qdf_runtime_lock_deinit(&ctx->connect);
 }
 #else /* FEATURE_RUNTIME_PM */
-static void hdd_runtime_suspend_context_init(hdd_context_t *hdd_ctx) {}
-static void hdd_runtime_suspend_context_deinit(hdd_context_t *hdd_ctx) {}
+static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx) {}
+static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx) {}
 static inline void hdd_adapter_runtime_suspend_init(hdd_adapter_t *adapter) {}
 static inline void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter) {}
 #endif /* FEATURE_RUNTIME_PM */
@@ -2982,7 +2982,7 @@ static inline void hdd_adapter_runtime_suspend_denit(hdd_adapter_t *adapter) {}
  *
  * Return: the pointer to hdd adapter, otherwise NULL
  */
-static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
+static hdd_adapter_t *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx,
 						tSirMacAddr macAddr,
 						unsigned char name_assign_type,
 						const char *name)
@@ -3206,7 +3206,7 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 {
 	QDF_STATUS status;
 	int errno;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	unsigned long rc;
 
 	hdd_info("destroying vdev %d", adapter->sessionId);
@@ -3269,7 +3269,7 @@ int hdd_vdev_create(hdd_adapter_t *adapter)
 {
 	QDF_STATUS status;
 	int errno;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	uint32_t type;
 	uint32_t sub_type;
 	unsigned long rc;
@@ -3343,7 +3343,7 @@ hdd_vdev_destroy:
 QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 {
 	hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int ret_val;
 
@@ -3425,7 +3425,7 @@ error_register_wext:
 	return status;
 }
 
-void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
+void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter)
 {
 	hdd_cfg80211_state_t *cfgState;
 
@@ -3459,7 +3459,7 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
  *
  * Return: None.
  */
-static void hdd_station_adapter_deinit(hdd_context_t *hdd_ctx,
+static void hdd_station_adapter_deinit(struct hdd_context *hdd_ctx,
 				       hdd_adapter_t *adapter,
 				       bool rtnl_held)
 {
@@ -3500,7 +3500,7 @@ static void hdd_station_adapter_deinit(hdd_context_t *hdd_ctx,
  *
  * Return: None.
  */
-static void hdd_ap_adapter_deinit(hdd_context_t *hdd_ctx,
+static void hdd_ap_adapter_deinit(struct hdd_context *hdd_ctx,
 				  hdd_adapter_t *adapter,
 				  bool rtnl_held)
 {
@@ -3519,7 +3519,7 @@ static void hdd_ap_adapter_deinit(hdd_context_t *hdd_ctx,
 	EXIT();
 }
 
-void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+void hdd_deinit_adapter(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter,
 			bool rtnl_held)
 {
 	ENTER();
@@ -3548,7 +3548,7 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	EXIT();
 }
 
-static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter,
 				bool rtnl_held)
 {
 	struct net_device *pWlanDev = NULL;
@@ -3592,7 +3592,7 @@ static void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	}
 }
 
-static QDF_STATUS hdd_check_for_existing_macaddr(hdd_context_t *hdd_ctx,
+static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 						 tSirMacAddr macAddr)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -3623,7 +3623,7 @@ static QDF_STATUS hdd_check_for_existing_macaddr(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
+static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 				  hdd_adapter_t *adapter)
 {
 	uint8_t count = 0, numentries = 0,
@@ -3705,7 +3705,7 @@ static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
 
 }
 #else
-static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
+static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 				  hdd_adapter_t *adapter)
 {
 }
@@ -3724,7 +3724,7 @@ static void hdd_set_fw_log_params(hdd_context_t *hdd_ctx,
 int hdd_set_fw_params(hdd_adapter_t *adapter)
 {
 	int ret;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	ENTER_DEV(adapter->dev);
 
@@ -3868,7 +3868,7 @@ error:
  *
  * Return: the pointer of hdd adapter, otherwise NULL.
  */
-hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
+hdd_adapter_t *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t session_type,
 				const char *iface_name, tSirMacAddr macAddr,
 				unsigned char name_assign_type,
 				bool rtnl_held)
@@ -4081,7 +4081,7 @@ err_free_netdev:
 	return NULL;
 }
 
-QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter,
 			     bool rtnl_held)
 {
 	hdd_adapter_list_node_t *adapterNode, *pCurrent, *pNext;
@@ -4138,7 +4138,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
  *
  * Return: QDF status code
  */
-QDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
+QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	hdd_adapter_list_node_t *pHddAdapterNode;
 	QDF_STATUS status;
@@ -4210,7 +4210,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 	}
 }
 
-QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
+QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter,
 			    const bool bCloseSession)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
@@ -4410,7 +4410,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
  * @rtnl_held: True if RTNL lock held
  *
  */
-void  hdd_deinit_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
+void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
@@ -4430,7 +4430,7 @@ void  hdd_deinit_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
 	EXIT();
 }
 
-QDF_STATUS hdd_stop_all_adapters(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
@@ -4454,7 +4454,7 @@ QDF_STATUS hdd_stop_all_adapters(hdd_context_t *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
@@ -4542,7 +4542,7 @@ QDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-bool hdd_check_for_opened_interfaces(hdd_context_t *hdd_ctx)
+bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
@@ -4999,7 +4999,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 #endif
 
 
-QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
@@ -5112,7 +5112,7 @@ get_adapter:
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_get_front_adapter(hdd_context_t *hdd_ctx,
+QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
 				 hdd_adapter_list_node_t **padapterNode)
 {
 	QDF_STATUS status;
@@ -5124,7 +5124,7 @@ QDF_STATUS hdd_get_front_adapter(hdd_context_t *hdd_ctx,
 	return status;
 }
 
-QDF_STATUS hdd_get_next_adapter(hdd_context_t *hdd_ctx,
+QDF_STATUS hdd_get_next_adapter(struct hdd_context *hdd_ctx,
 				hdd_adapter_list_node_t *adapterNode,
 				hdd_adapter_list_node_t **pNextAdapterNode)
 {
@@ -5139,7 +5139,7 @@ QDF_STATUS hdd_get_next_adapter(hdd_context_t *hdd_ctx,
 	return status;
 }
 
-QDF_STATUS hdd_remove_adapter(hdd_context_t *hdd_ctx,
+QDF_STATUS hdd_remove_adapter(struct hdd_context *hdd_ctx,
 			      hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
@@ -5151,7 +5151,7 @@ QDF_STATUS hdd_remove_adapter(hdd_context_t *hdd_ctx,
 	return status;
 }
 
-QDF_STATUS hdd_remove_front_adapter(hdd_context_t *hdd_ctx,
+QDF_STATUS hdd_remove_front_adapter(struct hdd_context *hdd_ctx,
 				    hdd_adapter_list_node_t **padapterNode)
 {
 	QDF_STATUS status;
@@ -5163,7 +5163,7 @@ QDF_STATUS hdd_remove_front_adapter(hdd_context_t *hdd_ctx,
 	return status;
 }
 
-QDF_STATUS hdd_add_adapter_back(hdd_context_t *hdd_ctx,
+QDF_STATUS hdd_add_adapter_back(struct hdd_context *hdd_ctx,
 				hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
@@ -5175,7 +5175,7 @@ QDF_STATUS hdd_add_adapter_back(hdd_context_t *hdd_ctx,
 	return status;
 }
 
-QDF_STATUS hdd_add_adapter_front(hdd_context_t *hdd_ctx,
+QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 				 hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
@@ -5187,7 +5187,7 @@ QDF_STATUS hdd_add_adapter_front(hdd_context_t *hdd_ctx,
 	return status;
 }
 
-hdd_adapter_t *hdd_get_adapter_by_macaddr(hdd_context_t *hdd_ctx,
+hdd_adapter_t *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -5212,7 +5212,7 @@ hdd_adapter_t *hdd_get_adapter_by_macaddr(hdd_context_t *hdd_ctx,
 
 }
 
-hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *hdd_ctx,
+hdd_adapter_t *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 				       uint32_t vdev_id)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -5248,7 +5248,7 @@ hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *hdd_ctx,
  * Return: adapter pointer if found
  *
  */
-hdd_adapter_t *hdd_get_adapter_by_sme_session_id(hdd_context_t *hdd_ctx,
+hdd_adapter_t *hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
 						uint32_t sme_session_id)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
@@ -5274,7 +5274,7 @@ hdd_adapter_t *hdd_get_adapter_by_sme_session_id(hdd_context_t *hdd_ctx,
 	return NULL;
 }
 
-hdd_adapter_t *hdd_get_adapter_by_iface_name(hdd_context_t *hdd_ctx,
+hdd_adapter_t *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
 					     const char *iface_name)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
@@ -5309,7 +5309,7 @@ hdd_adapter_t *hdd_get_adapter_by_iface_name(hdd_context_t *hdd_ctx,
  *
  * Return: pointer to adapter or null
  */
-hdd_adapter_t *hdd_get_adapter(hdd_context_t *hdd_ctx,
+hdd_adapter_t *hdd_get_adapter(struct hdd_context *hdd_ctx,
 			enum tQDF_ADAPTER_MODE mode)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -5347,7 +5347,7 @@ hdd_adapter_t *hdd_get_adapter(hdd_context_t *hdd_ctx,
  * Return: channel number. "0" id the requested device is not found OR it is
  *	   not connected.
  */
-uint8_t hdd_get_operating_channel(hdd_context_t *hdd_ctx,
+uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 			enum tQDF_ADAPTER_MODE mode)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -5397,7 +5397,7 @@ uint8_t hdd_get_operating_channel(hdd_context_t *hdd_ctx,
 	return operatingChannel;
 }
 
-static inline QDF_STATUS hdd_unregister_wext_all_adapters(hdd_context_t *
+static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *
 							  hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -5428,7 +5428,7 @@ static inline QDF_STATUS hdd_unregister_wext_all_adapters(hdd_context_t *
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_abort_mac_scan_all_adapters(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
@@ -5465,7 +5465,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(hdd_context_t *hdd_ctx)
  *
  * return: QDF_STATUS_SUCCESS
  */
-static QDF_STATUS hdd_abort_sched_scan_all_adapters(hdd_context_t *hdd_ctx)
+static QDF_STATUS hdd_abort_sched_scan_all_adapters(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next_node = NULL;
 	QDF_STATUS status;
@@ -5507,7 +5507,7 @@ static QDF_STATUS hdd_abort_sched_scan_all_adapters(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_wlan_unregister_ip6_notifier(hdd_context_t *hdd_ctx)
+static void hdd_wlan_unregister_ip6_notifier(struct hdd_context *hdd_ctx)
 {
 	unregister_inet6addr_notifier(&hdd_ctx->ipv6_notifier);
 }
@@ -5520,7 +5520,7 @@ static void hdd_wlan_unregister_ip6_notifier(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
+static int hdd_wlan_register_ip6_notifier(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -5544,7 +5544,7 @@ out:
  *
  * Return: None
  */
-static void hdd_wlan_unregister_ip6_notifier(hdd_context_t *hdd_ctx)
+static void hdd_wlan_unregister_ip6_notifier(struct hdd_context *hdd_ctx)
 {
 }
 
@@ -5556,7 +5556,7 @@ static void hdd_wlan_unregister_ip6_notifier(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static int hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
+static int hdd_wlan_register_ip6_notifier(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
@@ -5570,7 +5570,7 @@ static int hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_register_notifiers(hdd_context_t *hdd_ctx)
+static int hdd_register_notifiers(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -5610,7 +5610,7 @@ out:
  *
  * Return: None.
  */
-void hdd_unregister_notifiers(hdd_context_t *hdd_ctx)
+void hdd_unregister_notifiers(struct hdd_context *hdd_ctx)
 {
 	hdd_wlan_unregister_ip6_notifier(hdd_ctx);
 
@@ -5628,7 +5628,7 @@ void hdd_unregister_notifiers(hdd_context_t *hdd_ctx)
  *
  * Return: None.
  */
-static void hdd_exit_netlink_services(hdd_context_t *hdd_ctx)
+static void hdd_exit_netlink_services(struct hdd_context *hdd_ctx)
 {
 	hdd_close_cesium_nl_sock();
 	hdd_deactivate_wifi_pos();
@@ -5646,7 +5646,7 @@ static void hdd_exit_netlink_services(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_init_netlink_services(hdd_context_t *hdd_ctx)
+static int hdd_init_netlink_services(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -5698,7 +5698,7 @@ out:
  *
  * Return: None.
  */
-static void hdd_rx_wake_lock_destroy(hdd_context_t *hdd_ctx)
+static void hdd_rx_wake_lock_destroy(struct hdd_context *hdd_ctx)
 {
 	qdf_wake_lock_destroy(&hdd_ctx->rx_wake_lock);
 }
@@ -5711,7 +5711,7 @@ static void hdd_rx_wake_lock_destroy(hdd_context_t *hdd_ctx)
  *
  * Return: None.
  */
-static void hdd_rx_wake_lock_create(hdd_context_t *hdd_ctx)
+static void hdd_rx_wake_lock_create(struct hdd_context *hdd_ctx)
 {
 	qdf_wake_lock_create(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
 }
@@ -5724,7 +5724,7 @@ static void hdd_rx_wake_lock_create(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_roc_context_init(hdd_context_t *hdd_ctx)
+static int hdd_roc_context_init(struct hdd_context *hdd_ctx)
 {
 	qdf_spinlock_create(&hdd_ctx->hdd_roc_req_q_lock);
 	qdf_list_create(&hdd_ctx->hdd_roc_req_q, MAX_ROC_REQ_QUEUE_ENTRY);
@@ -5742,7 +5742,7 @@ static int hdd_roc_context_init(hdd_context_t *hdd_ctx)
  *
  * Return: None.
  */
-static void hdd_destroy_roc_req_q(hdd_context_t *hdd_ctx)
+static void hdd_destroy_roc_req_q(struct hdd_context *hdd_ctx)
 {
 	hdd_roc_req_t *hdd_roc_req;
 	QDF_STATUS status;
@@ -5777,7 +5777,7 @@ static void hdd_destroy_roc_req_q(hdd_context_t *hdd_ctx)
  *
  * Return: None.
  */
-static void hdd_roc_context_destroy(hdd_context_t *hdd_ctx)
+static void hdd_roc_context_destroy(struct hdd_context *hdd_ctx)
 {
 	flush_delayed_work(&hdd_ctx->roc_req_work);
 	hdd_destroy_roc_req_q(hdd_ctx);
@@ -5794,7 +5794,7 @@ static void hdd_roc_context_destroy(hdd_context_t *hdd_ctx)
  *
  * return: 0 on success and errno on failure.
  */
-static int hdd_context_deinit(hdd_context_t *hdd_ctx)
+static int hdd_context_deinit(struct hdd_context *hdd_ctx)
 {
 	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
 
@@ -5821,7 +5821,7 @@ static int hdd_context_deinit(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_context_destroy(hdd_context_t *hdd_ctx)
+static void hdd_context_destroy(struct hdd_context *hdd_ctx)
 {
 
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
@@ -5862,7 +5862,7 @@ static void wlan_destroy_bug_report_lock(void)
  *
  * Return: None
  */
-static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
+static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 {
 	v_CONTEXT_t p_cds_context = hdd_ctx->pcds_context;
 	QDF_STATUS qdf_status;
@@ -6008,7 +6008,7 @@ static void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 void __hdd_wlan_exit(void)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	ENTER();
 
@@ -6031,7 +6031,7 @@ void __hdd_wlan_exit(void)
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 /**
  * hdd_skip_acs_scan_timer_handler() - skip ACS scan timer timeout handler
- * @data: pointer to hdd_context_t
+ * @data: pointer to struct hdd_context
  *
  * This function will reset acs_scan_status to eSAP_DO_NEW_ACS_SCAN.
  * Then new ACS request will do a fresh scan without reusing the cached
@@ -6041,7 +6041,7 @@ void __hdd_wlan_exit(void)
  */
 static void hdd_skip_acs_scan_timer_handler(void *data)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) data;
+	struct hdd_context *hdd_ctx = (struct hdd_context *) data;
 
 	hdd_debug("ACS Scan result expired. Reset ACS scan skip");
 	hdd_ctx->skip_acs_scan_status = eSAP_DO_NEW_ACS_SCAN;
@@ -6074,7 +6074,7 @@ int hdd_wlan_set_ht2040_mode(hdd_adapter_t *adapter, uint16_t staId,
 {
 	int status;
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx = NULL;
+	struct hdd_context *hdd_ctx = NULL;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -6108,7 +6108,7 @@ int hdd_wlan_notify_modem_power_state(int state)
 {
 	int status;
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -6134,7 +6134,7 @@ int hdd_wlan_notify_modem_power_state(int state)
  *
  * Return: None
  */
-QDF_STATUS hdd_post_cds_enable_config(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS qdf_ret_status;
 
@@ -6186,7 +6186,7 @@ void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason)
  *
  * Return: None
  */
-void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
+void hdd_exchange_version_and_caps(struct hdd_context *hdd_ctx)
 {
 
 	tSirVersionType versionCompiled;
@@ -6296,7 +6296,7 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 }
 
 /* Initialize channel list in sme based on the country code */
-QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_set_sme_chan_list(struct hdd_context *hdd_ctx)
 {
 
 	return sme_init_chan_list(hdd_ctx->hHal,
@@ -6312,7 +6312,7 @@ QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx)
  *
  * Return:  true if hardware supports 5GHz
  */
-bool hdd_is_5g_supported(hdd_context_t *hdd_ctx)
+bool hdd_is_5g_supported(struct hdd_context *hdd_ctx)
 {
 	if (!hdd_ctx)
 		return true;
@@ -6323,7 +6323,7 @@ bool hdd_is_5g_supported(hdd_context_t *hdd_ctx)
 		return false;
 }
 
-static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
+static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 {
 	struct wiphy *wiphy;
 	int ret_val;
@@ -6383,7 +6383,7 @@ static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
  * Returns: None
  */
 #ifdef MSM_PLATFORM
-static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
+static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					  const uint64_t tx_packets,
 					  const uint64_t rx_packets)
 {
@@ -6501,7 +6501,7 @@ static void hdd_pld_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 static void hdd_bus_bw_work_handler(struct work_struct *work)
 {
-	hdd_context_t *hdd_ctx = container_of(work, hdd_context_t,
+	struct hdd_context *hdd_ctx = container_of(work, struct hdd_context,
 					bus_bw_work);
 	hdd_adapter_t *adapter = NULL;
 	uint64_t tx_packets = 0, rx_packets = 0;
@@ -6622,7 +6622,7 @@ restart_timer:
  */
 static void __hdd_bus_bw_cbk(void *arg)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) arg;
+	struct hdd_context *hdd_ctx = (struct hdd_context *) arg;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -6643,7 +6643,7 @@ static void hdd_bus_bw_cbk(void *arg)
 	cds_ssr_unprotect(__func__);
 }
 
-int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
+int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 {
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
 	INIT_WORK(&hdd_ctx->bus_bw_work,
@@ -6658,7 +6658,7 @@ int hdd_bus_bandwidth_init(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
-void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
+void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
 {
 	if (hdd_ctx->bus_bw_timer_running)
 		hdd_reset_tcp_delack(hdd_ctx);
@@ -6677,7 +6677,7 @@ void hdd_bus_bandwidth_destroy(hdd_context_t *hdd_ctx)
  *
  * Return: 0 for success or error code
  */
-static int wlan_hdd_init_tx_rx_histogram(hdd_context_t *hdd_ctx)
+static int wlan_hdd_init_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist = qdf_mem_malloc(
 		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
@@ -6694,7 +6694,7 @@ static int wlan_hdd_init_tx_rx_histogram(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-void wlan_hdd_deinit_tx_rx_histogram(hdd_context_t *hdd_ctx)
+void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	if (!hdd_ctx || hdd_ctx->hdd_txrx_hist == NULL)
 		return;
@@ -6727,7 +6727,7 @@ static uint8_t *convert_level_to_string(uint32_t level)
  *
  * Return: none
  */
-void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
+void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	int i;
 
@@ -6780,7 +6780,7 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *hdd_ctx)
+void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist_idx = 0;
 	qdf_mem_zero(hdd_ctx->hdd_txrx_hist,
@@ -6793,7 +6793,7 @@ void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
+void wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx)
 {
 
 	hdd_adapter_t *adapter = NULL;
@@ -6877,7 +6877,7 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-void wlan_hdd_clear_netif_queue_history(hdd_context_t *hdd_ctx)
+void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_t *adapter = NULL;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
@@ -6940,7 +6940,7 @@ static QDF_STATUS hdd_11d_scan_done(tHalHandle halHandle, void *pContext,
  *
  * Return: none
  */
-static void hdd_init_offloaded_packets_ctx(hdd_context_t *hdd_ctx)
+static void hdd_init_offloaded_packets_ctx(struct hdd_context *hdd_ctx)
 {
 	uint8_t i;
 
@@ -6951,7 +6951,7 @@ static void hdd_init_offloaded_packets_ctx(hdd_context_t *hdd_ctx)
 	}
 }
 #else
-static void hdd_init_offloaded_packets_ctx(hdd_context_t *hdd_ctx)
+static void hdd_init_offloaded_packets_ctx(struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -6959,12 +6959,12 @@ static void hdd_init_offloaded_packets_ctx(hdd_context_t *hdd_ctx)
 #ifdef WLAN_FEATURE_WOW_PULSE
 /**
  * wlan_hdd_set_wow_pulse() - call SME to send wmi cmd of wow pulse
- * @phddctx: hdd_context_t structure pointer
+ * @phddctx: struct hdd_context structure pointer
  * @enable: enable or disable this behaviour
  *
  * Return: int
  */
-static int wlan_hdd_set_wow_pulse(hdd_context_t *phddctx, bool enable)
+static int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enable)
 {
 	struct hdd_config *pcfg_ini = phddctx->config;
 	struct wow_pulse_mode wow_pulse_set_info;
@@ -7005,7 +7005,7 @@ static int wlan_hdd_set_wow_pulse(hdd_context_t *phddctx, bool enable)
 	return 0;
 }
 #else
-static inline int wlan_hdd_set_wow_pulse(hdd_context_t *phddctx, bool enable)
+static inline int wlan_hdd_set_wow_pulse(struct hdd_context *phddctx, bool enable)
 {
 	return 0;
 }
@@ -7040,7 +7040,7 @@ void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
  */
 static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 {
-	hdd_context_t *hdd_ctx = context;
+	struct hdd_context *hdd_ctx = context;
 
 	/* Change IPA to SW path when throttle level greater than 0 */
 	if (level > THROTTLE_LEVEL_0)
@@ -7069,7 +7069,7 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 	QDF_STATUS status;
 	uint32_t i, j;
 	tHalHandle *hal_handle;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	bool found = false;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -7169,7 +7169,7 @@ void hdd_switch_sap_channel(hdd_adapter_t *adapter, uint8_t channel)
 {
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	tHalHandle *hal_handle;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	if (!adapter) {
 		hdd_err("invalid adapter");
@@ -7236,7 +7236,7 @@ int hdd_update_acs_timer_reason(hdd_adapter_t *adapter, uint8_t reason)
  *
  * Return - none
  */
-void hdd_unsafe_channel_restart_sap(hdd_context_t *hdd_ctxt)
+void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 {
 	QDF_STATUS status;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
@@ -7330,7 +7330,7 @@ next_adapater:
  *
  * Return: None
  */
-static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
+static void hdd_init_channel_avoidance(struct hdd_context *hdd_ctx)
 {
 	uint16_t unsafe_channel_count;
 	int index;
@@ -7355,7 +7355,7 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 }
 
 static void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
-				     hdd_context_t *hdd_ctx)
+				     struct hdd_context *hdd_ctx)
 {
 	uint8_t restart_chan;
 
@@ -7436,7 +7436,7 @@ bool hdd_local_unsafe_channel_updated(struct hdd_context *hdd_ctx,
 	return true;
 }
 #else
-static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
+static void hdd_init_channel_avoidance(struct hdd_context *hdd_ctx)
 {
 }
 
@@ -7445,7 +7445,7 @@ static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 }
 
 static inline void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
-					    hdd_context_t *hdd_ctx)
+					    struct hdd_context *hdd_ctx)
 {
 	hdd_debug("Channel avoidance is not enabled; Abort SAP restart");
 }
@@ -7464,7 +7464,7 @@ static inline void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
  */
 void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 {
-	hdd_context_t *hdd_ctx = NULL;
+	struct hdd_context *hdd_ctx = NULL;
 	hdd_adapter_t *adapter = NULL;
 	void *cds_context = NULL;
 	int i;
@@ -7476,7 +7476,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 		return;
 	}
 	/* Get the HDD context.*/
-	hdd_ctx = (hdd_context_t *)cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -7508,7 +7508,7 @@ void hdd_acs_response_timeout_handler(void *context)
 	struct hdd_external_acs_timer_context *timer_context =
 			(struct hdd_external_acs_timer_context *)context;
 	hdd_adapter_t *adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	uint8_t reason;
 
 	ENTER();
@@ -7568,7 +7568,7 @@ void hdd_acs_response_timeout_handler(void *context)
  *
  * Return: QDF_STATUS_SUCCESS on success
  */
-static QDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
+static QDF_STATUS wlan_hdd_disable_all_dual_mac_features(struct hdd_context *hdd_ctx)
 {
 	struct policy_mgr_dual_mac_config cfg = {0};
 	QDF_STATUS status;
@@ -7594,7 +7594,7 @@ static QDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
 }
 
 static QDF_STATUS
-wlan_hdd_update_dbs_scan_and_fw_mode_config(hdd_context_t *hdd_ctx)
+wlan_hdd_update_dbs_scan_and_fw_mode_config(struct hdd_context *hdd_ctx)
 {
 	struct policy_mgr_dual_mac_config cfg = {0};
 	QDF_STATUS status;
@@ -7638,7 +7638,7 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_override_ini_config(hdd_context_t *hdd_ctx)
+static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 {
 
 	if (0 == enable_dfs_chan_scan || 1 == enable_dfs_chan_scan) {
@@ -7663,7 +7663,7 @@ static void hdd_override_ini_config(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
+static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 {
 	hdd_qdf_trace_enable(QDF_MODULE_ID_WMI,
 			     hdd_ctx->config->qdf_trace_enable_wdi);
@@ -7719,7 +7719,7 @@ static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
  *
  * return: 0 on success and errno on failure.
  */
-static int hdd_context_init(hdd_context_t *hdd_ctx)
+static int hdd_context_init(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -7790,7 +7790,7 @@ list_destroy:
  *         0 - success
  *         negative value - failure
  */
-static int ie_whitelist_attrs_init(hdd_context_t *hdd_ctx)
+static int ie_whitelist_attrs_init(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -7822,11 +7822,11 @@ static int ie_whitelist_attrs_init(hdd_context_t *hdd_ctx)
  *
  * Return: HDD context on success and ERR_PTR on failure
  */
-static hdd_context_t *hdd_context_create(struct device *dev)
+static struct hdd_context *hdd_context_create(struct device *dev)
 {
 	QDF_STATUS status;
 	int ret = 0;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	v_CONTEXT_t p_cds_context;
 
 	ENTER();
@@ -7838,7 +7838,7 @@ static hdd_context_t *hdd_context_create(struct device *dev)
 		goto err_out;
 	}
 
-	hdd_ctx = hdd_cfg80211_wiphy_alloc(sizeof(hdd_context_t));
+	hdd_ctx = hdd_cfg80211_wiphy_alloc(sizeof(struct hdd_context));
 
 	if (hdd_ctx == NULL) {
 		ret = -ENOMEM;
@@ -7939,7 +7939,7 @@ err_out:
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
+static int hdd_open_p2p_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	hdd_adapter_t *adapter;
 	uint8_t *p2p_dev_addr;
@@ -7979,14 +7979,14 @@ static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
 	return 0;
 }
 #else
-static inline int hdd_open_p2p_interface(hdd_context_t *hdd_ctx,
+static inline int hdd_open_p2p_interface(struct hdd_context *hdd_ctx,
 					 bool rtnl_held)
 {
 	return 0;
 }
 #endif
 
-static int hdd_open_ocb_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
+static int hdd_open_ocb_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	hdd_adapter_t *adapter;
 	int ret = 0;
@@ -8096,7 +8096,7 @@ int hdd_start_ftm_adapter(hdd_adapter_t *adapter)
  *
  * Return: 0 if all interfaces were created, otherwise negative errno
  */
-static int hdd_open_interfaces(hdd_context_t *hdd_ctx, bool rtnl_held)
+static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
 	hdd_adapter_t *adapter;
 	int ret;
@@ -8141,7 +8141,7 @@ err_close_adapters:
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_update_country_code(hdd_context_t *hdd_ctx)
+static int hdd_update_country_code(struct hdd_context *hdd_ctx)
 {
 	if (!country_code)
 		return 0;
@@ -8159,7 +8159,7 @@ static int hdd_update_country_code(hdd_context_t *hdd_ctx)
  */
 static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 						*cds_cfg,
-						hdd_context_t *hdd_ctx)
+						struct hdd_context *hdd_ctx)
 {
 	cds_cfg->tx_flow_stop_queue_th =
 		hdd_ctx->config->TxFlowStopQueueThreshold;
@@ -8169,7 +8169,7 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 #else
 static inline void hdd_txrx_populate_cds_config(struct cds_config_info
 						*cds_cfg,
-						hdd_context_t *hdd_ctx)
+						struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -8183,7 +8183,7 @@ static inline void hdd_txrx_populate_cds_config(struct cds_config_info
  * Return: none
  */
 static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
-			      hdd_context_t *hdd_ctx)
+			      struct hdd_context *hdd_ctx)
 {
 	cds_cfg->ra_ratelimit_interval =
 		hdd_ctx->config->RArateLimitInterval;
@@ -8192,7 +8192,7 @@ static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
 }
 #else
 static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
-			     hdd_context_t *hdd_ctx)
+			     struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -8203,7 +8203,7 @@ static inline void hdd_ra_populate_cds_config(struct cds_config_info *cds_cfg,
  *
  * Return: 0 for Success, errno on failure
  */
-static int hdd_update_cds_config(hdd_context_t *hdd_ctx)
+static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 {
 	struct cds_config_info *cds_cfg;
 
@@ -8348,7 +8348,7 @@ exit:
  *
  * Return: 0 for Success, errno on failure
  */
-static int hdd_update_user_config(hdd_context_t *hdd_ctx)
+static int hdd_update_user_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc_user_config *user_config;
 
@@ -8387,7 +8387,7 @@ static int hdd_update_user_config(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_init_thermal_info(hdd_context_t *hdd_ctx)
+static int hdd_init_thermal_info(struct hdd_context *hdd_ctx)
 {
 	tSmeThermalParams thermal_param;
 	QDF_STATUS status;
@@ -8479,7 +8479,7 @@ static inline void hdd_release_rtnl_lock(void) { }
  *
  * Return: 0 for success or error.
  */
-static int hdd_pktlog_set_buff_size(hdd_context_t *hdd_ctx, int set_value2)
+static int hdd_pktlog_set_buff_size(struct hdd_context *hdd_ctx, int set_value2)
 {
 	struct sir_wifi_start_log start_log = { 0 };
 	QDF_STATUS status;
@@ -8507,7 +8507,7 @@ static int hdd_pktlog_set_buff_size(hdd_context_t *hdd_ctx, int set_value2)
  *
  * Return: 0 for success or error.
  */
-static int hdd_pktlog_clear_buff(hdd_context_t *hdd_ctx)
+static int hdd_pktlog_clear_buff(struct hdd_context *hdd_ctx)
 {
 	struct sir_wifi_start_log start_log;
 	QDF_STATUS status;
@@ -8542,7 +8542,7 @@ static int hdd_pktlog_clear_buff(hdd_context_t *hdd_ctx)
  *
  * Return: 0 for success or error.
  */
-int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
+int hdd_process_pktlog_command(struct hdd_context *hdd_ctx, uint32_t set_value,
 			       int set_value2)
 {
 	int ret;
@@ -8598,7 +8598,7 @@ int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value,
  *
  * Return: 0 on success; error number otherwise
  */
-int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
+int hdd_pktlog_enable_disable(struct hdd_context *hdd_ctx, bool enable,
 				uint8_t user_triggered, int size)
 {
 	struct sir_wifi_start_log start_log;
@@ -8654,7 +8654,7 @@ static uint8_t *hdd_get_platform_wlan_mac_buff(struct device *dev,
  *
  * Return: None
  */
-void hdd_populate_random_mac_addr(hdd_context_t *hdd_ctx, uint32_t num)
+void hdd_populate_random_mac_addr(struct hdd_context *hdd_ctx, uint32_t num)
 {
 	uint32_t start_idx = QDF_MAX_CONCURRENCY_PERSONA - num;
 	uint32_t iter;
@@ -8685,7 +8685,7 @@ void hdd_populate_random_mac_addr(hdd_context_t *hdd_ctx, uint32_t num)
  * structures and configure FW with the base mac address.
  * Return: int
  */
-static int hdd_platform_wlan_mac(hdd_context_t *hdd_ctx)
+static int hdd_platform_wlan_mac(struct hdd_context *hdd_ctx)
 {
 	uint32_t no_of_mac_addr, iter;
 	uint32_t max_mac_addr = QDF_MAX_CONCURRENCY_PERSONA;
@@ -8735,7 +8735,7 @@ static int hdd_platform_wlan_mac(hdd_context_t *hdd_ctx)
  * Return: 0 for success
  *         Non-zero error code for failure
  */
-static int hdd_update_mac_addr_to_fw(hdd_context_t *hdd_ctx)
+static int hdd_update_mac_addr_to_fw(struct hdd_context *hdd_ctx)
 {
 	tSirMacAddr customMacAddr;
 	QDF_STATUS status;
@@ -8759,7 +8759,7 @@ static int hdd_update_mac_addr_to_fw(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
+static void hdd_initialize_mac_address(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	int ret;
@@ -8788,7 +8788,7 @@ static void hdd_initialize_mac_address(hdd_context_t *hdd_ctx)
 	}
 }
 
-static int hdd_set_smart_chainmask_enabled(hdd_context_t *hdd_ctx)
+static int hdd_set_smart_chainmask_enabled(struct hdd_context *hdd_ctx)
 {
 	int vdev_id = 0;
 	int param_id = WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME;
@@ -8803,7 +8803,7 @@ static int hdd_set_smart_chainmask_enabled(hdd_context_t *hdd_ctx)
 	return ret;
 }
 
-static int hdd_set_alternative_chainmask_enabled(hdd_context_t *hdd_ctx)
+static int hdd_set_alternative_chainmask_enabled(struct hdd_context *hdd_ctx)
 {
 	int vdev_id = 0;
 	int param_id = WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME;
@@ -8819,7 +8819,7 @@ static int hdd_set_alternative_chainmask_enabled(hdd_context_t *hdd_ctx)
 	return ret;
 }
 
-static int hdd_set_ani_enabled(hdd_context_t *hdd_ctx)
+static int hdd_set_ani_enabled(struct hdd_context *hdd_ctx)
 {
 	int vdev_id = 0;
 	int param_id = WMI_PDEV_PARAM_ANI_ENABLE;
@@ -8842,7 +8842,7 @@ static int hdd_set_ani_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_pre_enable_configure(hdd_context_t *hdd_ctx)
+static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 {
 	int ret;
 	QDF_STATUS status;
@@ -8957,7 +8957,7 @@ out:
 static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
 				void *event_ptr)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *)context_ptr;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)context_ptr;
 	struct sir_p2p_lo_event *evt = event_ptr;
 	struct sk_buff *vendor_event;
 	hdd_adapter_t *adapter;
@@ -9009,7 +9009,7 @@ static void wlan_hdd_p2p_lo_event_callback(void *context_ptr,
  *
  * Return: 0 - success, < 0 - failure
  */
-static int hdd_adaptive_dwelltime_init(hdd_context_t *hdd_ctx)
+static int hdd_adaptive_dwelltime_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	struct adaptive_dwelltime_params dwelltime_params;
@@ -9036,7 +9036,7 @@ static int hdd_adaptive_dwelltime_init(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
-int hdd_dbs_scan_selection_init(hdd_context_t *hdd_ctx)
+int hdd_dbs_scan_selection_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	struct wmi_dbs_scan_sel_params dbs_scan_params;
@@ -9102,7 +9102,7 @@ int hdd_dbs_scan_selection_init(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_set_auto_shutdown_cb(hdd_context_t *hdd_ctx)
+static int hdd_set_auto_shutdown_cb(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
@@ -9118,13 +9118,13 @@ static int hdd_set_auto_shutdown_cb(hdd_context_t *hdd_ctx)
 	return qdf_status_to_os_return(status);
 }
 #else
-static int hdd_set_auto_shutdown_cb(hdd_context_t *hdd_ctx)
+static int hdd_set_auto_shutdown_cb(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
 #endif
 
-static QDF_STATUS hdd_set_dbs_scan_and_fw_mode_cfg(hdd_context_t *hdd_ctx)
+static QDF_STATUS hdd_set_dbs_scan_and_fw_mode_cfg(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -9157,7 +9157,7 @@ static QDF_STATUS hdd_set_dbs_scan_and_fw_mode_cfg(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_features_init(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
+static int hdd_features_init(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter)
 {
 	tSirTxPowerLimit hddtxlimit;
 	QDF_STATUS status;
@@ -9279,7 +9279,7 @@ out:
  *
  * Return: none.
  */
-static void hdd_features_deinit(hdd_context_t *hdd_ctx)
+static void hdd_features_deinit(struct hdd_context *hdd_ctx)
 {
 	wlan_hdd_tsf_deinit(hdd_ctx);
 }
@@ -9290,7 +9290,7 @@ static void hdd_features_deinit(hdd_context_t *hdd_ctx)
  *
  * Return: QDF_STATUS
  */
-static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
+static inline QDF_STATUS hdd_register_bcn_cb(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
@@ -9315,7 +9315,7 @@ static inline QDF_STATUS hdd_register_bcn_cb(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success and errno on failure.
  */
-int hdd_configure_cds(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
+int hdd_configure_cds(struct hdd_context *hdd_ctx, hdd_adapter_t *adapter)
 {
 	int ret;
 	QDF_STATUS status;
@@ -9384,7 +9384,7 @@ out:
  *
  * Return: 0 on success and errno on failure.
  */
-static int hdd_deconfigure_cds(hdd_context_t *hdd_ctx)
+static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS qdf_status;
 	int ret = 0;
@@ -9440,7 +9440,7 @@ static void hdd_deregister_policy_manager_callback(
  *
  * Return: 0 for success; non-zero for failure
  */
-int hdd_wlan_stop_modules(hdd_context_t *hdd_ctx, bool ftm_mode)
+int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 {
 	void *hif_ctx;
 	qdf_device_t qdf_ctx;
@@ -9569,7 +9569,7 @@ done:
  */
 static void hdd_iface_change_callback(void *priv)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *) priv;
+	struct hdd_context *hdd_ctx = (struct hdd_context *) priv;
 	int ret;
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
@@ -9595,7 +9595,7 @@ static void hdd_iface_change_callback(void *priv)
  */
 static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
 	hdd_station_ctx_t *hdd_sta_ctx;
@@ -9688,7 +9688,7 @@ static void wlan_init_bug_report_lock(void)
 int hdd_wlan_startup(struct device *dev)
 {
 	QDF_STATUS status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	int ret;
 	bool rtnl_held;
 	int set_value;
@@ -9920,7 +9920,7 @@ success:
  * Return:None
  */
 
-void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context)
+void hdd_wlan_update_target_info(struct hdd_context *hdd_ctx, void *context)
 {
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(context);
 
@@ -9940,7 +9940,7 @@ void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context)
  *
  * Return: 0 for success or Error code for failure
  */
-int hdd_register_cb(hdd_context_t *hdd_ctx)
+int hdd_register_cb(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	int ret = 0;
@@ -10018,7 +10018,7 @@ int hdd_register_cb(hdd_context_t *hdd_ctx)
  *
  * Return: void
  */
-void hdd_deregister_cb(hdd_context_t *hdd_ctx)
+void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 
@@ -10127,7 +10127,7 @@ void hdd_softap_tkip_mic_fail_counter_measure(hdd_adapter_t *adapter,
  *
  * Return: true if connected; false otherwise
  */
-QDF_STATUS hdd_issta_p2p_clientconnected(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx)
 {
 	return sme_is_sta_p2p_client_connected(hdd_ctx->hHal);
 }
@@ -10146,7 +10146,7 @@ QDF_STATUS hdd_issta_p2p_clientconnected(hdd_context_t *hdd_ctx)
  */
 void wlan_hdd_disable_roaming(hdd_adapter_t *adapter)
 {
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_adapter_t *adapterIdx = NULL;
 	hdd_adapter_list_node_t *adapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
@@ -10198,7 +10198,7 @@ void wlan_hdd_disable_roaming(hdd_adapter_t *adapter)
  */
 void wlan_hdd_enable_roaming(hdd_adapter_t *adapter)
 {
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_adapter_t *adapterIdx = NULL;
 	hdd_adapter_list_node_t *adapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
@@ -10344,7 +10344,7 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 void wlan_hdd_auto_shutdown_cb(void)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (!hdd_ctx)
 		return;
@@ -10354,7 +10354,7 @@ void wlan_hdd_auto_shutdown_cb(void)
 			WLAN_SVC_WLAN_AUTO_SHUTDOWN_IND, NULL, 0);
 }
 
-void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
+void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
@@ -10429,7 +10429,7 @@ void wlan_hdd_auto_shutdown_enable(hdd_context_t *hdd_ctx, bool enable)
 hdd_adapter_t *hdd_get_con_sap_adapter(hdd_adapter_t *this_sap_adapter,
 							bool check_start_bss)
 {
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(this_sap_adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(this_sap_adapter);
 	hdd_adapter_t *adapter, *con_sap_adapter;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -10473,7 +10473,7 @@ static inline bool hdd_adapter_is_ap(hdd_adapter_t *adapter)
 		adapter->device_mode == QDF_P2P_GO_MODE;
 }
 
-static bool hdd_any_adapter_is_assoc(hdd_context_t *hdd_ctx)
+static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS status;
 	hdd_adapter_list_node_t *node;
@@ -10501,7 +10501,7 @@ static bool hdd_any_adapter_is_assoc(hdd_context_t *hdd_ctx)
 	return false;
 }
 
-static bool hdd_bus_bw_compute_timer_is_running(hdd_context_t *hdd_ctx)
+static bool hdd_bus_bw_compute_timer_is_running(struct hdd_context *hdd_ctx)
 {
 	bool is_running;
 
@@ -10512,7 +10512,7 @@ static bool hdd_bus_bw_compute_timer_is_running(hdd_context_t *hdd_ctx)
 	return is_running;
 }
 
-static void __hdd_bus_bw_compute_timer_start(hdd_context_t *hdd_ctx)
+static void __hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 {
 	qdf_spinlock_acquire(&hdd_ctx->bus_bw_timer_lock);
 	hdd_ctx->bus_bw_timer_running = true;
@@ -10521,7 +10521,7 @@ static void __hdd_bus_bw_compute_timer_start(hdd_context_t *hdd_ctx)
 	qdf_spinlock_release(&hdd_ctx->bus_bw_timer_lock);
 }
 
-void hdd_bus_bw_compute_timer_start(hdd_context_t *hdd_ctx)
+void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
 {
 	ENTER();
 
@@ -10535,7 +10535,7 @@ void hdd_bus_bw_compute_timer_start(hdd_context_t *hdd_ctx)
 	EXIT();
 }
 
-void hdd_bus_bw_compute_timer_try_start(hdd_context_t *hdd_ctx)
+void hdd_bus_bw_compute_timer_try_start(struct hdd_context *hdd_ctx)
 {
 	ENTER();
 
@@ -10550,7 +10550,7 @@ void hdd_bus_bw_compute_timer_try_start(hdd_context_t *hdd_ctx)
 	EXIT();
 }
 
-static void __hdd_bus_bw_compute_timer_stop(hdd_context_t *hdd_ctx)
+static void __hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
 	hdd_ipa_set_perf_level(hdd_ctx, 0, 0);
 
@@ -10562,7 +10562,7 @@ static void __hdd_bus_bw_compute_timer_stop(hdd_context_t *hdd_ctx)
 	hdd_reset_tcp_delack(hdd_ctx);
 }
 
-void hdd_bus_bw_compute_timer_stop(hdd_context_t *hdd_ctx)
+void hdd_bus_bw_compute_timer_stop(struct hdd_context *hdd_ctx)
 {
 	ENTER();
 
@@ -10576,7 +10576,7 @@ void hdd_bus_bw_compute_timer_stop(hdd_context_t *hdd_ctx)
 	EXIT();
 }
 
-void hdd_bus_bw_compute_timer_try_stop(hdd_context_t *hdd_ctx)
+void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
 {
 	ENTER();
 
@@ -10665,7 +10665,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	if (NULL == ap_adapter) {
 		hdd_err("ap_adapter is NULL here");
@@ -10719,7 +10719,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit)
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	tsap_Config_t *sap_config;
 
 	if (NULL == ap_adapter) {
@@ -10790,7 +10790,7 @@ end:
 void wlan_hdd_soc_set_antenna_mode_cb(
 	enum set_antenna_mode_status status)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_debug("Status: %d", status);
 
@@ -10815,7 +10815,7 @@ void wlan_hdd_soc_set_antenna_mode_cb(
  *
  * Return:   None
  */
-void hdd_get_fw_version(hdd_context_t *hdd_ctx,
+void hdd_get_fw_version(struct hdd_context *hdd_ctx,
 			uint32_t *major_spid, uint32_t *minor_spid,
 			uint32_t *siid, uint32_t *crmid)
 {
@@ -11422,7 +11422,7 @@ static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
 	}
 }
 
-static void hdd_cleanup_present_mode(hdd_context_t *hdd_ctx,
+static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 				    enum tQDF_GLOBAL_CON_MODE curr_mode)
 {
 	int driver_status;
@@ -11449,7 +11449,7 @@ static void hdd_cleanup_present_mode(hdd_context_t *hdd_ctx,
 	}
 }
 
-static int hdd_register_req_mode(hdd_context_t *hdd_ctx,
+static int hdd_register_req_mode(struct hdd_context *hdd_ctx,
 				 enum tQDF_GLOBAL_CON_MODE mode)
 {
 	hdd_adapter_t *adapter;
@@ -11519,7 +11519,7 @@ static int hdd_register_req_mode(hdd_context_t *hdd_ctx,
  * Return - 0 on success and failure code on failure
  */
 static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
-			      hdd_context_t *hdd_ctx)
+			      struct hdd_context *hdd_ctx)
 {
 	int ret;
 	hdd_adapter_t *adapter;
@@ -11608,7 +11608,7 @@ reset_flags:
 static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 {
 	int ret;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -11665,7 +11665,7 @@ void hdd_set_conparam(uint32_t con_param)
  *
  * Return: None
  */
-void hdd_clean_up_pre_cac_interface(hdd_context_t *hdd_ctx)
+void hdd_clean_up_pre_cac_interface(struct hdd_context *hdd_ctx)
 {
 	uint8_t session_id;
 	QDF_STATUS status;
@@ -11696,7 +11696,7 @@ void hdd_clean_up_pre_cac_interface(hdd_context_t *hdd_ctx)
  *
  * Return: void
  */
-static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
+static void hdd_update_ol_config(struct hdd_context *hdd_ctx)
 {
 	struct ol_config_info cfg;
 	struct ol_context *ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
@@ -11721,14 +11721,14 @@ static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
  *
  * Return: void
  */
-static void hdd_populate_runtime_cfg(hdd_context_t *hdd_ctx,
+static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
 				     struct hif_config_info *cfg)
 {
 	cfg->enable_runtime_pm = hdd_ctx->config->runtime_pm;
 	cfg->runtime_pm_delay = hdd_ctx->config->runtime_pm_delay;
 }
 #else
-static void hdd_populate_runtime_cfg(hdd_context_t *hdd_ctx,
+static void hdd_populate_runtime_cfg(struct hdd_context *hdd_ctx,
 				     struct hif_config_info *cfg)
 {
 }
@@ -11740,7 +11740,7 @@ static void hdd_populate_runtime_cfg(hdd_context_t *hdd_ctx,
  *
  * Return: void
  */
-static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
+static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 {
 	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 	struct hif_config_info cfg;
@@ -11760,7 +11760,7 @@ static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
  * API is used to initialize all driver per module configuration parameters
  * Return: 0 for success, errno for failure
  */
-int hdd_update_config(hdd_context_t *hdd_ctx)
+int hdd_update_config(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -11785,7 +11785,7 @@ int hdd_update_config(hdd_context_t *hdd_ctx)
  */
 static inline void hdd_ra_populate_pmo_config(
 			struct pmo_psoc_cfg *psoc_cfg,
-			hdd_context_t *hdd_ctx)
+			struct hdd_context *hdd_ctx)
 {
 	psoc_cfg->ra_ratelimit_interval =
 		hdd_ctx->config->RArateLimitInterval;
@@ -11795,7 +11795,7 @@ static inline void hdd_ra_populate_pmo_config(
 #else
 static inline void hdd_ra_populate_pmo_config(
 			struct cds_config_info *cds_cfg,
-			hdd_context_t *hdd_ctx)
+			struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -11805,7 +11805,7 @@ static inline void hdd_ra_populate_pmo_config(
  *
  * Return: void
  */
-static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
+static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct pmo_psoc_cfg psoc_cfg;
@@ -11905,7 +11905,7 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
  *
  * Return: 0 if success else err
  */
-static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
+static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct scan_user_cfg scan_cfg;
@@ -11942,7 +11942,7 @@ static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
 }
 
 #ifdef CONVERGED_TDLS_ENABLE
-static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
+static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct tdls_start_params tdls_cfg;
@@ -12009,7 +12009,7 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 	return 0;
 }
 #else
-static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
+static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 {
 	hdd_ctx->tdls_umac_comp_active = false;
 	/* disable napier specific tdls data path */
@@ -12018,7 +12018,7 @@ static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)
 }
 #endif
 
-int hdd_update_components_config(hdd_context_t *hdd_ctx)
+int hdd_update_components_config(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -12066,7 +12066,7 @@ enum  sap_acs_dfs_mode wlan_hdd_get_dfs_mode(enum dfs_mode mode)
  *
  * return - 0 on success, appropriate error values on failure.
  */
-int hdd_enable_disable_ca_event(hdd_context_t *hddctx, uint8_t set_value)
+int hdd_enable_disable_ca_event(struct hdd_context *hddctx, uint8_t set_value)
 {
 	QDF_STATUS status;
 
@@ -12096,7 +12096,7 @@ int hdd_enable_disable_ca_event(hdd_context_t *hddctx, uint8_t set_value)
  */
 void hdd_set_roaming_in_progress(bool value)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -12116,7 +12116,7 @@ void hdd_set_roaming_in_progress(bool value)
  */
 bool hdd_is_roaming_in_progress(hdd_adapter_t *adapter)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	bool ret_status = false;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -12151,7 +12151,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 	QDF_STATUS status = 0;
 	uint8_t sta_id = 0;
 	uint8_t *sta_mac = NULL;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -12269,7 +12269,7 @@ void hdd_restart_sap(hdd_adapter_t *ap_adapter)
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	tsap_Config_t *sap_config;
 	void *sap_ctx;
 
@@ -12350,7 +12350,7 @@ end:
 void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 {
 	hdd_adapter_t *ap_adapter;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	cds_context_type *cds_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -12400,7 +12400,7 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 bool hdd_set_connection_in_progress(bool value)
 {
 	bool status = true;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -12455,7 +12455,7 @@ hdd_adapter_t *wlan_hdd_get_adapter_from_vdev(struct wlan_objmgr_psoc
 					      *psoc, uint8_t vdev_id)
 {
 	hdd_adapter_t *adapter = NULL;
-	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	/*
 	 * Currently PSOC is not being used. But this logic will
