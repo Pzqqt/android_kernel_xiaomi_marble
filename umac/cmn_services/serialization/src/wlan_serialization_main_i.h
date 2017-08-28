@@ -51,63 +51,17 @@
 	serialization_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 /**
- * wlan_serialization_psoc_obj_create_notification() - PSOC obj create callback
- * @psoc: PSOC object
- * @arg_list: Variable argument list
+ * struct serialization_legacy_callback - to handle legacy serialization cb
  *
- * This callback is registered with object manager during initialization and
- * when obj manager gets its turn to create the object, it would notify each
- * component with the corresponding callback registered to inform the
- * completion of the creation of the respective object.
+ * @serialization_purge_cmd_list: function ptr to be filled by serialization
+ *				  module
  *
- * Return: QDF Status
+ * Some of the legacy modules wants to call API to purge the commands in
+ * order to handle backward compatibility.
  */
-QDF_STATUS wlan_serialization_psoc_obj_create_notification(
-		struct wlan_objmgr_psoc *psoc, void *arg_list);
-
-/**
- * wlan_serialization_psoc_obj_destroy_notification() - PSOC obj delete callback
- * @psoc: PSOC object
- * @arg_list: Variable argument list
- *
- * This callback is registered with object manager during initialization and
- * when obj manager gets its turn to delete the object, it would notify each
- * component with the corresponding callback registered to inform the
- * completion of the deletion of the respective object.
- *
- * Return: QDF Status
- */
-QDF_STATUS  wlan_serialization_psoc_obj_destroy_notification(
-		struct wlan_objmgr_psoc *psoc, void *arg_list);
-
-/**
- * wlan_serialization_pdev_obj_create_notification() - PDEV obj create callback
- * @psoc: PDEV object
- * @arg_list: Variable argument list
- *
- * This callback is registered with object manager during initialization and
- * when obj manager gets its turn to create the object, it would notify each
- * component with the corresponding callback registered to inform the
- * completion of the creation of the respective object.
- *
- * Return: QDF Status
- */
-QDF_STATUS wlan_serialization_pdev_obj_create_notification(
-		struct wlan_objmgr_pdev *pdev, void *arg_list);
-
-/**
- * wlan_serialization_pdev_obj_destroy_notification() - PSOC obj delete callback
- * @pdev: PDEV object
- * @arg_list: Variable argument list
- *
- * This callback is registered with object manager during initialization and
- * when obj manager gets its turn to delete the object, it would notify each
- * component with the corresponding callback registered to inform the
- * completion of the deletion of the respective object.
- *
- * Return: QDF Status
- */
-QDF_STATUS wlan_serialization_pdev_obj_destroy_notification(
-		struct wlan_objmgr_pdev *pdev, void *arg_list);
+struct serialization_legacy_callback {
+	void (*serialization_purge_cmd_list) (struct wlan_objmgr_psoc *,
+		struct wlan_objmgr_vdev *, bool, bool, bool, bool, bool);
+};
 
 #endif

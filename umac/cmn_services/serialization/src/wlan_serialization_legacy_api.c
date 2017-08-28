@@ -27,6 +27,8 @@
 #include "wlan_serialization_utils_i.h"
 #include "wlan_objmgr_vdev_obj.h"
 
+extern struct serialization_legacy_callback ser_legacy_cb;
+
 static struct wlan_objmgr_pdev *wlan_serialization_get_first_pdev(
 			struct wlan_objmgr_psoc *psoc)
 {
@@ -372,17 +374,46 @@ release_vdev_ref:
 	return cmd;
 }
 
+void wlan_serialization_legacy_init_callback(void)
+{
+	ser_legacy_cb.serialization_purge_cmd_list =
+			wlan_serialization_purge_cmd_list;
+}
+
+void wlan_serialization_purge_cmd_list_by_vdev_id(struct wlan_objmgr_psoc *psoc,
+			uint8_t vdev_id, bool purge_scan_active_queue,
+			bool purge_scan_pending_queue,
+			bool purge_nonscan_active_queue,
+			bool purge_nonscan_pending_queue,
+			bool purge_all_queues)
+{
+	struct wlan_objmgr_vdev *vdev;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+			WLAN_SERIALIZATION_ID);
+	if (!vdev) {
+		serialization_err("Invalid vdev");
+		return;
+	}
+	wlan_serialization_purge_cmd_list(psoc, vdev, purge_scan_active_queue,
+				purge_scan_pending_queue,
+				purge_nonscan_active_queue,
+				purge_nonscan_pending_queue,
+				purge_all_queues);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
+}
+
 void wlan_serialization_purge_cmd_list(struct wlan_objmgr_psoc *psoc,
-		uint8_t *vdev_id, uint8_t purge_scan_active_queue,
-		uint8_t purge_scan_pending_queue,
-		uint8_t purge_nonscan_active_queue,
-		uint8_t purge_nonscan_pending_queue,
-		uint8_t purge_all_queues)
+		struct wlan_objmgr_vdev *vdev,
+		bool purge_scan_active_queue,
+		bool purge_scan_pending_queue,
+		bool purge_nonscan_active_queue,
+		bool purge_nonscan_pending_queue,
+		bool purge_all_queues)
 {
 	struct wlan_serialization_timer *ser_timer;
 	struct wlan_serialization_psoc_priv_obj *psoc_ser_obj;
 	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj;
-	struct wlan_objmgr_vdev *vdev = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	uint32_t i = 0;
 
@@ -400,18 +431,10 @@ void wlan_serialization_purge_cmd_list(struct wlan_objmgr_psoc *psoc,
 		serialization_err("Invalid psoc_ser_obj");
 		return;
 	}
-	if (vdev_id) {
-		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, *vdev_id,
-				WLAN_SERIALIZATION_ID);
-		if (!vdev) {
-			serialization_err("Invalid vdev");
-			return;
-		}
-	}
 	pdev = wlan_serialization_get_first_pdev(psoc);
 	if (!pdev) {
 		serialization_err("Invalid pdev");
-		goto release_vdev_ref;
+		return;
 	}
 	for (i = 0; psoc_ser_obj->max_active_cmds > i; i++) {
 		ser_timer = &psoc_ser_obj->timers[i];
@@ -464,11 +487,6 @@ void wlan_serialization_purge_cmd_list(struct wlan_objmgr_psoc *psoc,
 			pdev, vdev, NULL, false);
 	}
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_SERIALIZATION_ID);
-release_vdev_ref:
-	/* vdev could be NULL if vdev_id passed is NULL */
-	if (vdev)
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
 
 	return;
 }
-

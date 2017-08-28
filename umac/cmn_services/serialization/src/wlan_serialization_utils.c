@@ -155,11 +155,11 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 		return;
 	}
 
-	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
+	serialization_err("active cmd timeout for cmd_type[%d] vdev[%p]",
+			  cmd->cmd_type, cmd->vdev);
 	if (cmd->cmd_cb)
 		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);
 
-	serialization_err("active command timeout for cmd_id[%d]", cmd->cmd_id);
 	if (cmd->cmd_type >= WLAN_SER_CMD_NONSCAN)
 		QDF_BUG(0);
 	/*
