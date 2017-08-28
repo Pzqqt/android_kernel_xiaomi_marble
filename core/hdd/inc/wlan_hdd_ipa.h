@@ -35,6 +35,8 @@
  * Originally written by Qualcomm Atheros, Inc
  */
 
+struct hdd_context;
+
 /**
  * enum hdd_ipa_wlan_event - HDD IPA events
  * @HDD_IPA_CLIENT_CONNECT: Client Connects
@@ -58,8 +60,6 @@ enum hdd_ipa_wlan_event {
 };
 
 #ifdef IPA_OFFLOAD
-/* Include files */
-#include <wlan_hdd_assoc.h> /* hdd_context_t */
 
 /**
  * enum hdd_ipa_forward_type: Type of forward packet received from IPA
@@ -84,52 +84,52 @@ static inline hdd_ipa_nbuf_cb_fn wlan_hdd_stub_ipa_fn(void)
 	return hdd_ipa_nbuf_cb;
 };
 
-QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx);
-QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx);
+QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_ipa_cleanup(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_ipa_process_rxt(void *cds_context, qdf_nbuf_t rxBuf,
 	uint8_t sta_id);
 int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	enum hdd_ipa_wlan_event type, uint8_t *mac_addr);
-int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
+int hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx, uint64_t tx_packets,
 	uint64_t rx_packets);
-int hdd_ipa_suspend(hdd_context_t *hdd_ctx);
-int hdd_ipa_resume(hdd_context_t *hdd_ctx);
-void hdd_ipa_uc_stat_query(hdd_context_t *hdd_ctx, uint32_t *ipa_tx_diff,
+int hdd_ipa_suspend(struct hdd_context *hdd_ctx);
+int hdd_ipa_resume(struct hdd_context *hdd_ctx);
+void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx, uint32_t *ipa_tx_diff,
 	uint32_t *ipa_rx_diff);
-void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx);
+void hdd_ipa_uc_rt_debug_host_dump(struct hdd_context *hdd_ctx);
 void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason);
 void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
 				      uint8_t reset_stats);
 void hdd_ipa_uc_set_quota(hdd_adapter_t *adapter, uint8_t set_quota,
 			  uint64_t quota_bytes);
-bool hdd_ipa_is_enabled(hdd_context_t *pHddCtx);
-bool hdd_ipa_uc_is_enabled(hdd_context_t *pHddCtx);
+bool hdd_ipa_is_enabled(struct hdd_context *pHddCtx);
+bool hdd_ipa_uc_is_enabled(struct hdd_context *pHddCtx);
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
-int hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode);
+int hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode);
 #else
-static inline int hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx,
+static inline int hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx,
 					   bool mcc_mode)
 {
 	return 0;
 }
 #endif
-int hdd_ipa_uc_ssr_reinit(hdd_context_t *hdd_ctx);
+int hdd_ipa_uc_ssr_reinit(struct hdd_context *hdd_ctx);
 int hdd_ipa_uc_ssr_deinit(void);
-void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx);
-struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
+void hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx);
+struct sk_buff *hdd_ipa_tx_packet_ipa(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb, uint8_t session_id);
-bool hdd_ipa_is_present(hdd_context_t *hdd_ctx);
-void hdd_ipa_dump_info(hdd_context_t *hdd_ctx);
-QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx);
+bool hdd_ipa_is_present(struct hdd_context *hdd_ctx);
+void hdd_ipa_dump_info(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx);
 void hdd_ipa_set_tx_flow_info(void);
-int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx);
+int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx);
 #else
-static inline QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
+static inline QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
+static inline QDF_STATUS hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -146,30 +146,30 @@ static inline int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	return 0;
 }
 
-static inline int hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx,
+static inline int hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx,
 	bool mcc_mode)
 {
 	return 0;
 }
 
-static inline int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx,
+static inline int hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx,
 	uint64_t tx_packets,
 	uint64_t rx_packets)
 {
 	return 0;
 }
 
-static inline int hdd_ipa_suspend(hdd_context_t *hdd_ctx)
+static inline int hdd_ipa_suspend(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
 
-static inline int hdd_ipa_resume(hdd_context_t *hdd_ctx)
+static inline int hdd_ipa_resume(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
 
-static inline void hdd_ipa_uc_stat_query(hdd_context_t *hdd_ctx,
+static inline void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
 	uint32_t *ipa_tx_diff,
 	uint32_t *ipa_rx_diff)
 {
@@ -182,25 +182,25 @@ static inline void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter,
 {
 }
 
-static inline void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
+static inline void hdd_ipa_uc_rt_debug_host_dump(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline bool hdd_ipa_is_enabled(hdd_context_t *pHddCtx)
-{
-	return false;
-}
-
-static inline bool hdd_ipa_uc_is_enabled(hdd_context_t *pHddCtx)
+static inline bool hdd_ipa_is_enabled(struct hdd_context *pHddCtx)
 {
 	return false;
 }
 
-static inline void hdd_ipa_dump_info(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_uc_is_enabled(struct hdd_context *pHddCtx)
+{
+	return false;
+}
+
+static inline void hdd_ipa_dump_info(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline int hdd_ipa_uc_ssr_reinit(hdd_context_t *hdd_ctx)
+static inline int hdd_ipa_uc_ssr_reinit(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
@@ -209,7 +209,7 @@ static inline int hdd_ipa_uc_ssr_deinit(void)
 {
 	return false;
 }
-static inline void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
+static inline void hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx)
 {
 }
 
@@ -225,7 +225,7 @@ static inline void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
  * Return: NULL packet sent to IPA properly
  *         skb packet not sent to IPA. legacy data path should handle
  */
-static inline struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
+static inline struct sk_buff *hdd_ipa_tx_packet_ipa(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb, uint8_t session_id)
 {
 	return skb;
@@ -242,7 +242,7 @@ static inline struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
  * Return: true - ipa hw present
  *         false - ipa hw not present
  */
-static inline bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_present(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
@@ -253,7 +253,7 @@ static inline bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
  *
  * Return: QDF_STATUS
  */
-static inline QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
+static inline QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
 }
@@ -269,7 +269,7 @@ static inline void hdd_ipa_set_tx_flow_info(void)
  *
  * Return: 0 on success, negativer errno on error
  */
-static inline int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
+static inline int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }

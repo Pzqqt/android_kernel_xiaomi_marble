@@ -443,7 +443,7 @@ struct hdd_ipa_priv {
 	struct hdd_ipa_tx_desc *tx_desc_list;
 	struct list_head free_tx_desc_head;
 
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	struct dentry *debugfs_dir;
 	struct hdd_ipa_stats stats;
@@ -717,7 +717,7 @@ static int hdd_ipa_uc_send_wdi_control_msg(bool ctrl)
  *
  * Return: true if IPA is enabled, false otherwise
  */
-bool hdd_ipa_is_enabled(hdd_context_t *hdd_ctx)
+bool hdd_ipa_is_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx, HDD_IPA_ENABLE_MASK);
 }
@@ -728,7 +728,7 @@ bool hdd_ipa_is_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: true if IPA uC offload is enabled, false otherwise
  */
-bool hdd_ipa_uc_is_enabled(hdd_context_t *hdd_ctx)
+bool hdd_ipa_uc_is_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx, HDD_IPA_UC_ENABLE_MASK);
 }
@@ -739,7 +739,7 @@ bool hdd_ipa_uc_is_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: true if STA mode IPA uC offload is enabled, false otherwise
  */
-static inline bool hdd_ipa_uc_sta_is_enabled(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_uc_sta_is_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx, HDD_IPA_UC_STA_ENABLE_MASK);
 }
@@ -764,7 +764,7 @@ static inline void hdd_ipa_uc_sta_reset_sta_connected(
  *
  * Return: true if pre-filter is enabled, otherwise false
  */
-static inline bool hdd_ipa_is_pre_filter_enabled(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_pre_filter_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx,
 					 HDD_IPA_PRE_FILTER_ENABLE_MASK);
@@ -776,7 +776,7 @@ static inline bool hdd_ipa_is_pre_filter_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: true if IPv6 is enabled, otherwise false
  */
-static inline bool hdd_ipa_is_ipv6_enabled(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_ipv6_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx, HDD_IPA_IPV6_ENABLE_MASK);
 }
@@ -787,7 +787,7 @@ static inline bool hdd_ipa_is_ipv6_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: true if resource manager is enabled, otherwise false
  */
-static inline bool hdd_ipa_is_rm_enabled(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_rm_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx, HDD_IPA_RM_ENABLE_MASK);
 }
@@ -798,7 +798,7 @@ static inline bool hdd_ipa_is_rm_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: true if resource manager is enabled, otherwise false
  */
-static inline bool hdd_ipa_is_rt_debugging_enabled(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_rt_debugging_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx, HDD_IPA_REAL_TIME_DEBUGGING);
 }
@@ -809,7 +809,7 @@ static inline bool hdd_ipa_is_rt_debugging_enabled(hdd_context_t *hdd_ctx)
  *
  * Return: true if clock scaling is enabled, otherwise false
  */
-static inline bool hdd_ipa_is_clk_scaling_enabled(hdd_context_t *hdd_ctx)
+static inline bool hdd_ipa_is_clk_scaling_enabled(struct hdd_context *hdd_ctx)
 {
 	return HDD_IPA_IS_CONFIG_ENABLED(hdd_ctx,
 					 HDD_IPA_CLK_SCALING_ENABLE_MASK |
@@ -826,7 +826,7 @@ static inline bool hdd_ipa_is_clk_scaling_enabled(hdd_context_t *hdd_ctx)
  */
 static void hdd_ipa_uc_rt_debug_host_fill(void *ctext)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *)ctext;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)ctext;
 	struct hdd_ipa_priv *hdd_ipa;
 	struct uc_rt_debug_info *dump_info = NULL;
 
@@ -867,7 +867,7 @@ static void hdd_ipa_uc_rt_debug_host_fill(void *ctext)
  *
  * Return: none
  */
-static void __hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
+static void __hdd_ipa_uc_rt_debug_host_dump(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 	unsigned int dump_count;
@@ -923,7 +923,7 @@ static void __hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
+void hdd_ipa_uc_rt_debug_host_dump(struct hdd_context *hdd_ctx)
 {
 	cds_ssr_protect(__func__);
 	__hdd_ipa_uc_rt_debug_host_dump(hdd_ctx);
@@ -942,7 +942,7 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
  */
 static void hdd_ipa_uc_rt_debug_handler(void *ctext)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *)ctext;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)ctext;
 	struct hdd_ipa_priv *hdd_ipa;
 	void *dummy_ptr = NULL;
 
@@ -1002,7 +1002,7 @@ static void hdd_ipa_uc_rt_debug_destructor(struct sk_buff *skb)
  *
  * Return: none
  */
-static void hdd_ipa_uc_rt_debug_deinit(hdd_context_t *hdd_ctx)
+static void hdd_ipa_uc_rt_debug_deinit(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 
@@ -1040,7 +1040,7 @@ static void hdd_ipa_uc_rt_debug_deinit(hdd_context_t *hdd_ctx)
  *
  * Return: none
  */
-static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
+static void hdd_ipa_uc_rt_debug_init(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 
@@ -1298,7 +1298,7 @@ static void hdd_ipa_dump_iface_context(struct hdd_ipa_priv *hdd_ipa)
  *
  * Return: none
  */
-void hdd_ipa_dump_info(hdd_context_t *hdd_ctx)
+void hdd_ipa_dump_info(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
@@ -1328,7 +1328,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	struct qdf_mac_addr apBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
 	uint8_t staChannel = 0, p2pChannel = 0, apChannel = 0;
 	const char *p2pMode = "DEV";
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	cds_context_type *cds_ctx;
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint8_t targetChannel = 0;
@@ -1611,7 +1611,7 @@ void hdd_ipa_set_tx_flow_info(void)
  *
  * Return: true if IPA is enabled, false otherwise
  */
-static void __hdd_ipa_uc_stat_query(hdd_context_t *hdd_ctx,
+static void __hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
 	uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff)
 {
 	struct hdd_ipa_priv *hdd_ipa;
@@ -1648,7 +1648,7 @@ static void __hdd_ipa_uc_stat_query(hdd_context_t *hdd_ctx,
  *
  * Return: true if IPA is enabled, false otherwise
  */
-void hdd_ipa_uc_stat_query(hdd_context_t *hdd_ctx,
+void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
 	uint32_t *ipa_tx_diff, uint32_t *ipa_rx_diff)
 {
 	cds_ssr_protect(__func__);
@@ -1665,13 +1665,13 @@ void hdd_ipa_uc_stat_query(hdd_context_t *hdd_ctx,
  */
 static void __hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
 {
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	struct hdd_ipa_priv *hdd_ipa;
 
 	if (!adapter)
 		return;
 
-	hdd_ctx = (hdd_context_t *)adapter->pHddCtx;
+	hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -1722,7 +1722,7 @@ void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
 void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
 				      uint8_t reset_stats)
 {
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	struct hdd_ipa_priv *hdd_ipa;
 
 	if (!adapter)
@@ -1759,7 +1759,7 @@ void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
 void hdd_ipa_uc_set_quota(hdd_adapter_t *adapter, uint8_t set_quota,
 			  uint64_t quota_bytes)
 {
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	struct hdd_ipa_priv *hdd_ipa;
 
 	if (!adapter)
@@ -1904,7 +1904,7 @@ static int hdd_ipa_uc_disable_pipes(struct hdd_ipa_priv *hdd_ipa)
  */
 static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 {
-	hdd_context_t *hdd_ctx = hdd_ipa->hdd_ctx;
+	struct hdd_context *hdd_ctx = hdd_ipa->hdd_ctx;
 
 	hdd_ipa->activated_fw_pipe = 0;
 	hdd_ipa->resource_loading = true;
@@ -1980,7 +1980,7 @@ hdd_ipa_uc_rm_notify_handler(void *context, enum ipa_rm_event event)
 {
 	struct hdd_ipa_priv *hdd_ipa = context;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	hdd_context_t *hdd_ctx = hdd_ipa->hdd_ctx;
+	struct hdd_context *hdd_ctx = hdd_ipa->hdd_ctx;
 
 	/*
 	 * When SSR is going on or driver is unloading, just return.
@@ -2058,7 +2058,7 @@ static void hdd_ipa_uc_loaded_handler(struct hdd_ipa_priv *hdd_ipa)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "%s : UC READY", __func__);
@@ -2104,7 +2104,7 @@ static void hdd_ipa_uc_loaded_handler(struct hdd_ipa_priv *hdd_ipa)
  * Return: QDF_STATUS enumeration
  */
 #ifdef FEATURE_METERING
-static QDF_STATUS hdd_ipa_uc_op_metering(hdd_context_t *hdd_ctx,
+static QDF_STATUS hdd_ipa_uc_op_metering(struct hdd_context *hdd_ctx,
 					 struct op_msg_type *op_msg)
 {
 	struct op_msg_type *msg = op_msg;
@@ -2180,7 +2180,7 @@ static QDF_STATUS hdd_ipa_uc_op_metering(hdd_context_t *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS hdd_ipa_uc_op_metering(hdd_context_t *hdd_ctx,
+static QDF_STATUS hdd_ipa_uc_op_metering(struct hdd_context *hdd_ctx,
 					 struct op_msg_type *op_msg)
 {
 	return QDF_STATUS_E_INVAL;
@@ -2201,7 +2201,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	struct ipa_uc_fw_stats *uc_fw_stat;
 	struct IpaHwStatsWDIInfoData_t ipa_stat;
 	struct hdd_ipa_priv *hdd_ipa;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!op_msg || !usr_ctxt) {
@@ -2216,7 +2216,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		return;
 	}
 
-	hdd_ctx = (hdd_context_t *) usr_ctxt;
+	hdd_ctx = (struct hdd_context *) usr_ctxt;
 
 	/*
 	 * When SSR is going on or driver is unloading, just return.
@@ -2578,7 +2578,7 @@ static void hdd_ipa_uc_op_event_handler(uint8_t *op_msg, void *hdd_ctx)
 		goto end;
 
 	msg = (struct op_msg_type *)op_msg;
-	hdd_ipa = ((hdd_context_t *)hdd_ctx)->hdd_ipa;
+	hdd_ipa = ((struct hdd_context *)hdd_ctx)->hdd_ipa;
 
 	if (unlikely(!hdd_ipa))
 		goto end;
@@ -2779,7 +2779,7 @@ static void hdd_ipa_init_metering(struct hdd_ipa_priv *ipa_ctxt)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -2845,7 +2845,7 @@ fail_return:
  *
  * Return: 0 on success, negativer errno on error
  */
-int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
+int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = hdd_ctx->hdd_ipa;
 	int ret = 0;
@@ -2883,7 +2883,7 @@ int hdd_ipa_uc_ol_deinit(hdd_context_t *hdd_ctx)
  *
  * Return: NONE
  */
-static void __hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
+static void __hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 
@@ -2913,7 +2913,7 @@ static void __hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
  *
  * Return: NONE
  */
-void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
+void hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx)
 {
 	cds_ssr_protect(__func__);
 	__hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
@@ -3062,7 +3062,7 @@ static int hdd_ipa_uc_disconnect_sta(hdd_adapter_t *adapter)
  *
  * Return: 0 - Success
  */
-static int hdd_ipa_uc_disconnect(hdd_context_t *hdd_ctx)
+static int hdd_ipa_uc_disconnect(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
@@ -3100,7 +3100,7 @@ static int __hdd_ipa_uc_ssr_deinit(void)
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	int idx;
 	struct hdd_ipa_iface_context *iface_context;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 
 	if (!hdd_ipa)
 		return 0;
@@ -3171,7 +3171,7 @@ int hdd_ipa_uc_ssr_deinit(void)
  *
  * Return: 0 - Success
  */
-static int __hdd_ipa_uc_ssr_reinit(hdd_context_t *hdd_ctx)
+static int __hdd_ipa_uc_ssr_reinit(struct hdd_context *hdd_ctx)
 {
 
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -3216,7 +3216,7 @@ static int __hdd_ipa_uc_ssr_reinit(hdd_context_t *hdd_ctx)
  *
  * Return: 0 - Success
  */
-int hdd_ipa_uc_ssr_reinit(hdd_context_t *hdd_ctx)
+int hdd_ipa_uc_ssr_reinit(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -3472,7 +3472,7 @@ static int hdd_ipa_rm_cons_request(void)
  *
  * Return: 0 on success, negative errno on error
  */
-static int __hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
+static int __hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx, uint64_t tx_packets,
 			   uint64_t rx_packets)
 {
 	uint32_t next_cons_bw, next_prod_bw;
@@ -3553,7 +3553,7 @@ static int __hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
  *
  * Return: 0 on success, negative errno on error
  */
-int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
+int hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx, uint64_t tx_packets,
 			   uint64_t rx_packets)
 {
 	int ret;
@@ -4166,7 +4166,7 @@ static void hdd_ipa_send_pkt_to_tl(
  * Return: true - ipa hw present
  *         false - ipa hw not present
  */
-bool hdd_ipa_is_present(hdd_context_t *hdd_ctx)
+bool hdd_ipa_is_present(struct hdd_context *hdd_ctx)
 {
 	/* Check if ipa hw is enabled */
 	if (HDD_IPA_CHECK_HW() != -EPERM)
@@ -4330,7 +4330,7 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
  *
  * Return: 0 on success, negativer errno on error
  */
-static int __hdd_ipa_suspend(hdd_context_t *hdd_ctx)
+static int __hdd_ipa_suspend(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 
@@ -4372,7 +4372,7 @@ static int __hdd_ipa_suspend(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success, negativer errno on error
  */
-int hdd_ipa_suspend(hdd_context_t *hdd_ctx)
+int hdd_ipa_suspend(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -4389,7 +4389,7 @@ int hdd_ipa_suspend(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success, negative errno on error
  */
-static int __hdd_ipa_resume(hdd_context_t *hdd_ctx)
+static int __hdd_ipa_resume(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 
@@ -4416,7 +4416,7 @@ static int __hdd_ipa_resume(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on success, negative errno on error
  */
-int hdd_ipa_resume(hdd_context_t *hdd_ctx)
+int hdd_ipa_resume(struct hdd_context *hdd_ctx)
 {
 	int ret;
 
@@ -4734,7 +4734,7 @@ end:
  *
  * Return: 0 on success, negative errno value on error
  */
-static int __hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode)
+static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
@@ -4795,7 +4795,7 @@ static int __hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode)
  *
  * Return: 0 on success, negative errno value on error
  */
-int hdd_ipa_send_mcc_scc_msg(hdd_context_t *hdd_ctx, bool mcc_mode)
+int hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode)
 {
 	int ret;
 
@@ -5400,7 +5400,7 @@ static inline char *hdd_ipa_rm_state_to_str(enum hdd_ipa_rm_state state)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS __hdd_ipa_init(hdd_context_t *hdd_ctx)
+static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = NULL;
 	int ret, i;
@@ -5515,7 +5515,7 @@ fail_return:
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS ret;
 
@@ -5551,7 +5551,7 @@ static void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS __hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
+static QDF_STATUS __hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = hdd_ctx->hdd_ipa;
 	int i;
@@ -5625,7 +5625,7 @@ static QDF_STATUS __hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
+QDF_STATUS hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS ret;
 
