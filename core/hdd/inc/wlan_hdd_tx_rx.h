@@ -40,6 +40,8 @@
 #include <linux/skbuff.h>
 #include "cdp_txrx_flow_ctrl_legacy.h"
 
+struct hdd_context;
+
 #define HDD_ETHERTYPE_802_1_X              0x888E
 #define HDD_ETHERTYPE_802_1_X_FRAME_OFFSET 12
 #ifdef FEATURE_WLAN_WAPI
@@ -135,9 +137,9 @@ void hdd_send_rps_ind(hdd_adapter_t *adapter);
 void wlan_hdd_classify_pkt(struct sk_buff *skb);
 
 #ifdef MSM_PLATFORM
-void hdd_reset_tcp_delack(hdd_context_t *hdd_ctx);
+void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx);
 #else
-static inline void hdd_reset_tcp_delack(hdd_context_t *hdd_ctx) {}
+static inline void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx) {}
 #endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

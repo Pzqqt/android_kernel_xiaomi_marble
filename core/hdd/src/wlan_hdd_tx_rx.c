@@ -298,7 +298,7 @@ static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
-	hdd_context_t *hdd_ctx = pAdapter->pHddCtx;
+	struct hdd_context *hdd_ctx = pAdapter->pHddCtx;
 
 	nskb = skb_unshare(skb, GFP_ATOMIC);
 	if (unlikely(hdd_ctx->config->tx_orphan_enable) && (nskb == skb)) {
@@ -406,7 +406,7 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb)
 static inline void
 wlan_hdd_latency_opt(hdd_adapter_t *adapter, struct sk_buff *skb)
 {
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (hdd_ctx->config->icmp_disable_ps_val <= 0)
 		return;
@@ -535,7 +535,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct qdf_mac_addr *mac_addr;
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 #endif /* QCA_PKT_PROTO_TRACE */
 
 #ifdef QCA_WIFI_FTM
@@ -862,7 +862,7 @@ static inline void hdd_wlan_datastall_sta_event(void)
 static void __hdd_tx_timeout(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	struct netdev_queue *txq;
 	int i = 0;
 
@@ -1143,7 +1143,7 @@ static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 {
 	hdd_adapter_t *pAdapter = NULL;
-	hdd_context_t *pHddCtx = NULL;
+	struct hdd_context *pHddCtx = NULL;
 	int rxstat;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
@@ -1578,7 +1578,7 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 int hdd_set_mon_rx_cb(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
 	int ret;
 	QDF_STATUS qdf_status;
 	struct ol_txrx_desc_type sta_desc = {0};
@@ -1631,7 +1631,7 @@ void hdd_send_rps_ind(hdd_adapter_t *adapter)
 {
 	int i;
 	uint8_t cpu_map_list_len = 0;
-	hdd_context_t *hdd_ctxt = NULL;
+	struct hdd_context *hdd_ctxt = NULL;
 	struct wlan_rps_data rps_data;
 
 	if (!adapter) {
@@ -1689,7 +1689,7 @@ err:
  *
  * Return: None
  */
-void hdd_reset_tcp_delack(hdd_context_t *hdd_ctx)
+void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 {
 	enum pld_bus_width_type next_level = PLD_BUS_WIDTH_LOW;
 
