@@ -58,7 +58,7 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	tNanRequestReq nan_req;
 	QDF_STATUS status;
 	int ret_val;
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 
 	ENTER_DEV(wdev->netdev);
 
@@ -127,7 +127,7 @@ int wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
  */
 void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg)
 {
-	hdd_context_t *hdd_ctx = ctx;
+	struct hdd_context *hdd_ctx = ctx;
 	struct sk_buff *vendor_event;
 	int status;
 

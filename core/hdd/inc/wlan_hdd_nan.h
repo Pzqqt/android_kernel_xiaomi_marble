@@ -54,7 +54,7 @@ bool wlan_hdd_nan_is_supported(void);
  * Return: none
  */
 static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
-			hdd_context_t *hdd_ctx)
+			struct hdd_context *hdd_ctx)
 {
 	cds_cfg->is_nan_enabled = hdd_ctx->config->enable_nan_support;
 }
@@ -67,7 +67,7 @@ static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
  * Return: none
  */
 static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
-			hdd_context_t *hdd_ctx)
+			struct hdd_context *hdd_ctx)
 {
 	pmo_cfg->nan_enable = hdd_ctx->config->enable_nan_support;
 }
@@ -79,12 +79,12 @@ static inline bool wlan_hdd_nan_is_supported(void)
 	return false;
 }
 static inline void hdd_nan_populate_cds_config(struct cds_config_info *cds_cfg,
-			hdd_context_t *hdd_ctx)
+			struct hdd_context *hdd_ctx)
 {
 }
 
 static inline void hdd_nan_populate_pmo_config(struct pmo_psoc_cfg *pmo_cfg,
-			hdd_context_t *hdd_ctx)
+			struct hdd_context *hdd_ctx)
 {
 }
 
