@@ -219,7 +219,7 @@ static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
-	hdd_context_t *hdd_ctx = pAdapter->pHddCtx;
+	struct hdd_context *hdd_ctx = pAdapter->pHddCtx;
 
 	nskb = skb_unshare(skb, GFP_ATOMIC);
 	if (unlikely(hdd_ctx->config->tx_orphan_enable) && (nskb == skb)) {
@@ -519,7 +519,7 @@ static inline void hdd_wlan_datastall_sap_event(void)
 static void __hdd_softap_tx_timeout(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	struct netdev_queue *txq;
 	int i;
 
@@ -692,7 +692,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	unsigned int cpu_index;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
-	hdd_context_t *pHddCtx = NULL;
+	struct hdd_context *pHddCtx = NULL;
 	struct qdf_mac_addr src_mac;
 	uint8_t staid;
 
@@ -817,7 +817,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	int ret;
 
 	if (NULL == pAdapter) {
@@ -830,7 +830,7 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pHddCtx = (hdd_context_t *) (pAdapter->pHddCtx);
+	pHddCtx = (struct hdd_context *) (pAdapter->pHddCtx);
 	/* Clear station in TL and then update HDD data
 	 * structures. This helps to block RX frames from other
 	 * station to this station.
@@ -886,7 +886,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
-	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
+	struct hdd_context *pHddCtx = pAdapter->pHddCtx;
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -987,7 +987,7 @@ QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 				      bool fPrivacyBit)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct qdf_mac_addr broadcastMacAddr =
 					QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	hdd_ap_ctx_t *pHddApCtx;
@@ -1027,7 +1027,7 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t staId = 0;
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
