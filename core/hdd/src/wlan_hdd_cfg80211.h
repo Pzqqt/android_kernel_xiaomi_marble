@@ -40,6 +40,8 @@
 #include <wlan_cfg80211_tdls.h>
 #endif
 
+struct hdd_context;
+
 /* value for initial part of frames and number of bytes to be compared */
 #define GAS_INITIAL_REQ "\x04\x0a"
 #define GAS_INITIAL_REQ_SIZE 2
@@ -260,7 +262,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len);
 #endif
-hdd_context_t *hdd_cfg80211_wiphy_alloc(int priv_size);
+struct hdd_context *hdd_cfg80211_wiphy_alloc(int priv_size);
 
 int wlan_hdd_cfg80211_tdls_scan(struct wiphy *wiphy,
 				struct cfg80211_scan_request *request,
@@ -274,7 +276,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 void wlan_hdd_cfg80211_deinit(struct wiphy *wiphy);
 
-void wlan_hdd_update_wiphy(hdd_context_t *hdd_ctx);
+void wlan_hdd_update_wiphy(struct hdd_context *hdd_ctx);
 
 void wlan_hdd_update_11n_mode(struct hdd_config *cfg);
 
@@ -348,10 +350,10 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);
 #endif
 
-int wlan_hdd_send_avoid_freq_event(hdd_context_t *pHddCtx,
+int wlan_hdd_send_avoid_freq_event(struct hdd_context *pHddCtx,
 				   struct ch_avoid_ind_type *avoid_freq_list);
 
-int wlan_hdd_send_avoid_freq_for_dnbs(hdd_context_t *pHddCtx, uint8_t op_chan);
+int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *pHddCtx, uint8_t op_chan);
 
 #ifdef FEATURE_WLAN_EXTSCAN
 void wlan_hdd_cfg80211_extscan_callback(void *ctx,
@@ -404,10 +406,10 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter);
 enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 					enum nl80211_iftype type);
 
-int wlan_hdd_enable_dfs_chan_scan(hdd_context_t *hdd_ctx,
+int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 				  bool enable_dfs_channels);
 
-int wlan_hdd_cfg80211_update_band(hdd_context_t *hdd_ctx, struct wiphy *wiphy,
+int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wiphy,
 				  eCsrBand eBand);
 
 /**
@@ -482,7 +484,7 @@ void hdd_lost_link_info_cb(void *context,
  *
  * Return : Corresponding band for SAP operating channel
  */
-uint8_t hdd_get_sap_operating_band(hdd_context_t *hdd_ctx);
+uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
 
 /**
  * wlan_hdd_try_disconnect() - try disconnnect from previous connection
