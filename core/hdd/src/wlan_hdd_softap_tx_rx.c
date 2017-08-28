@@ -253,6 +253,8 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 #endif
 
+	hdd_skb_fill_gso_size(adapter->dev, skb);
+
 	nskb = skb_unshare(skb, GFP_ATOMIC);
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 19, 0))
 	if (unlikely(hdd_ctx->config->tx_orphan_enable) && (nskb == skb)) {
