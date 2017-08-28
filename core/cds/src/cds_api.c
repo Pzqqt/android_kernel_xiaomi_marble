@@ -386,7 +386,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	struct ol_context *ol_ctx;
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 	cds_context_type *cds_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -421,7 +421,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_probe_event;
 	}
 
-	pHddCtx = (hdd_context_t *) (gp_cds_context->pHDDContext);
+	pHddCtx = (struct hdd_context *) (gp_cds_context->pHDDContext);
 	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_err("Hdd Context is Null");
@@ -1701,9 +1701,9 @@ void cds_flush_delayed_work(void *dwork)
  */
 bool cds_is_packet_log_enabled(void)
 {
-	hdd_context_t *pHddCtx;
+	struct hdd_context *pHddCtx;
 
-	pHddCtx = (hdd_context_t *) (gp_cds_context->pHDDContext);
+	pHddCtx = (struct hdd_context *) (gp_cds_context->pHDDContext);
 	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Hdd Context is Null", __func__);
