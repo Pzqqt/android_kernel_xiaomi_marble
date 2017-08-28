@@ -112,7 +112,7 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
  *
  * Return: none
  */
-static int hdd_post_encrypt_decrypt_msg_rsp(hdd_context_t *hdd_ctx,
+static int hdd_post_encrypt_decrypt_msg_rsp(struct hdd_context *hdd_ctx,
 	struct sir_encrypt_decrypt_rsp_params *encrypt_decrypt_rsp_params)
 {
 	struct sk_buff *skb;
@@ -353,7 +353,7 @@ static void hdd_encrypt_decrypt_context_dealloc(void *priv)
  Return: 0 on success, negative errno on failure
  */
 static int hdd_encrypt_decrypt_msg(hdd_adapter_t *adapter,
-				   hdd_context_t *hdd_ctx,
+				   struct hdd_context *hdd_ctx,
 				   const void *data,
 				   int data_len)
 {
@@ -430,7 +430,7 @@ static int __wlan_hdd_cfg80211_encrypt_decrypt_msg(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = NULL;
 	int ret;
