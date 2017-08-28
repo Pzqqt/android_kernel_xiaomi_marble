@@ -105,7 +105,7 @@ int hdd_napi_create(void)
 {
 	struct  hif_opaque_softc *hif_ctx;
 	int     rc = 0;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	uint8_t feature_flags = 0;
 
 	NAPI_DEBUG("-->");
@@ -345,7 +345,7 @@ int hdd_napi_apply_throughput_policy(struct hdd_context *hddctx,
 int hdd_napi_serialize(int is_on)
 {
 	int rc;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 #define POLICY_DELAY_FACTOR (1)
 	rc = hif_napi_serialize(cds_get_context(QDF_MODULE_ID_HIF), is_on);
 	if ((rc == 0) && (is_on == 0)) {
