@@ -60,7 +60,7 @@
  * is set in CSR when we init the channel list. This should be removed
  * once the 5.9 GHz channels are added to the regulatory domain.
  */
-void hdd_set_dot11p_config(hdd_context_t *hdd_ctx)
+void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
 {
 	sme_set_dot11p_config(hdd_ctx->hHal,
 			      hdd_ctx->config->dot11p_mode !=
@@ -199,7 +199,7 @@ static int hdd_ocb_validate_config(hdd_adapter_t *adapter,
 				   struct sir_ocb_config *config)
 {
 	int i;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	for (i = 0; i < config->channel_count; i++) {
 		if (dot11p_validate_channel(hdd_ctx->wiphy,
@@ -232,7 +232,7 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type sta_desc = {0};
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint8_t peer_id;
 	struct ol_txrx_ops txrx_ops;
@@ -388,7 +388,7 @@ static int hdd_ocb_set_config_req(hdd_adapter_t *adapter,
 {
 	int rc;
 	QDF_STATUS status;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	void *cookie;
 	struct hdd_request *hdd_request;
 	struct hdd_ocb_set_config_priv *priv;
@@ -469,7 +469,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 {
 	int rc;
 	struct dot11p_channel_sched *sched;
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct sir_ocb_config *config = NULL;
 	uint8_t *mac_addr;
@@ -772,7 +772,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 					      const void *data,
 					      int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_CONFIG_MAX + 1];
@@ -984,7 +984,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OCB_SET_UTC_TIME_MAX + 1];
@@ -1096,7 +1096,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 					    const void *data,
 					    int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_MAX + 1];
@@ -1212,7 +1212,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 					   const void *data,
 					   int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_MAX + 1];
@@ -1384,7 +1384,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 				      const void *data,
 				      int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int rc;
@@ -1606,7 +1606,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	uint32_t channel_count = 0;
 	uint32_t request_array_len = 0;
 	void *request_array = 0;
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_GET_STATS_MAX + 1];
@@ -1747,7 +1747,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 					       const void *data,
 					       int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_MAX + 1];
@@ -1860,7 +1860,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 					      const void *data,
 					      int data_len)
 {
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX + 1];
@@ -2000,7 +2000,7 @@ int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 static void wlan_hdd_dcc_stats_event_callback(void *context_ptr,
 					      void *response_ptr)
 {
-	hdd_context_t *hdd_ctx = (hdd_context_t *)context_ptr;
+	struct hdd_context *hdd_ctx = (struct hdd_context *)context_ptr;
 	struct sir_dcc_get_stats_response *resp = response_ptr;
 	struct sk_buff *vendor_event;
 
@@ -2037,7 +2037,7 @@ static void wlan_hdd_dcc_stats_event_callback(void *context_ptr,
  * wlan_hdd_dcc_register_for_dcc_stats_event() - Register for dcc stats events
  * @hdd_ctx: hdd context
  */
-void wlan_hdd_dcc_register_for_dcc_stats_event(hdd_context_t *hdd_ctx)
+void wlan_hdd_dcc_register_for_dcc_stats_event(struct hdd_context *hdd_ctx)
 {
 	int rc;
 

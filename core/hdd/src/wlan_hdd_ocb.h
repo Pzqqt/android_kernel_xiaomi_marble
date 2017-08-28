@@ -238,8 +238,11 @@ enum qca_wlan_vendor_attr_dcc_update_ndl {
 	QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_MAX =
 		QCA_WLAN_VENDOR_ATTR_DCC_UPDATE_NDL_AFTER_LAST - 1,
 };
+
+struct hdd_context;
+
 #ifdef WLAN_FEATURE_DSRC
-void hdd_set_dot11p_config(hdd_context_t *hdd_ctx);
+void hdd_set_dot11p_config(struct hdd_context *hdd_ctx);
 
 void hdd_remove_ocb_tx_header(struct sk_buff *skb);
 
@@ -287,11 +290,11 @@ int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 				     const void *data,
 				     int data_len);
 
-void wlan_hdd_dcc_register_for_dcc_stats_event(hdd_context_t *hdd_ctx);
+void wlan_hdd_dcc_register_for_dcc_stats_event(struct hdd_context *hdd_ctx);
 
 void wlan_hdd_dcc_stats_event(void *context_ptr, void *response_ptr);
 #else
-static inline void hdd_set_dot11p_config(hdd_context_t *hdd_ctx)
+static inline void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
 {
 }
 
@@ -370,7 +373,7 @@ static inline int wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 }
 
 static inline void wlan_hdd_dcc_register_for_dcc_stats_event(
-		hdd_context_t *hdd_ctx)
+		struct hdd_context *hdd_ctx)
 {
 }
 
