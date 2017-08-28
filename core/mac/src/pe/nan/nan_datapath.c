@@ -68,23 +68,27 @@ static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
 }
 
-static void lim_send_peer_departed(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
-				uint32_t msg_type, void *body_ptr, uint32_t len,
-				uint32_t body_val)
+static void lim_send_peer_departed(tpAniSirGlobal mac_ctx,
+				   struct sme_ndp_peer_ind *ind)
 {
-	lim_send_ndp_event_to_sme(mac_ctx, msg_type, body_ptr, len, body_val);
+	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_PEER_DEPARTED_IND,
+				  ind, sizeof(*ind), false);
 }
 #else
-static void lim_send_peer_departed(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
-				uint32_t msg_type, void *body_ptr, uint32_t len,
-				uint32_t body_val)
+static void lim_send_peer_departed(tpAniSirGlobal mac_ctx,
+				   struct sme_ndp_peer_ind *ind)
 {
+	struct nan_datapath_peer_ind peer_ind = {0};
 	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
 	struct wlan_objmgr_vdev *vdev =
-			wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
-							     WLAN_NAN_ID);
+		wlan_objmgr_get_vdev_by_id_from_psoc(psoc, ind->session_id,
+						     WLAN_NAN_ID);
 
-	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, body_ptr);
+	peer_ind.session_id = ind->session_id;
+	qdf_mem_copy(&peer_ind.peer_mac_addr, &ind->peer_mac_addr,
+		     sizeof(struct qdf_mac_addr));
+	peer_ind.sta_id = ind->sta_id;
+	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, &peer_ind);
 }
 #endif
 
@@ -509,9 +513,7 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr, sta_ds->assocId,
 			pe_session);
 	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
-	lim_send_peer_departed(mac_ctx, peer_ind.session_id,
-				eWNI_SME_NDP_PEER_DEPARTED_IND,
-				&peer_ind, sizeof(peer_ind), false);
+	lim_send_peer_departed(mac_ctx, &peer_ind);
 
 skip_event:
 	qdf_mem_free(del_sta_params);
