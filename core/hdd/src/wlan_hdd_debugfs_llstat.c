@@ -38,7 +38,7 @@ struct ll_stats_buf {
 
 static struct ll_stats_buf ll_stats;
 
-void hdd_debugfs_process_iface_stats(hdd_adapter_t *adapter,
+void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 		void *data, uint32_t num_peers)
 {
 	tpSirWifiIfaceStat iface_stat;
@@ -139,7 +139,7 @@ void hdd_debugfs_process_iface_stats(hdd_adapter_t *adapter,
 	EXIT();
 }
 
-void hdd_debugfs_process_peer_stats(hdd_adapter_t *adapter, void *data)
+void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 {
 	tpSirWifiPeerStat peer_stat;
 	tpSirWifiPeerInfo peer_info;
@@ -201,7 +201,7 @@ void hdd_debugfs_process_peer_stats(hdd_adapter_t *adapter, void *data)
 
 }
 
-void hdd_debugfs_process_radio_stats(hdd_adapter_t *adapter,
+void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 		uint32_t more_data, void *data, uint32_t num_radio)
 {
 	int i, j;
@@ -340,13 +340,13 @@ static ssize_t hdd_debugfs_stats_update(char __user *buf, size_t count,
 static ssize_t __wlan_hdd_read_ll_stats_debugfs(struct file *file,
 			char __user *buf, size_t count, loff_t *pos)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	ssize_t ret = 0;
 
 	ENTER();
 
-	adapter = (hdd_adapter_t *)file->private_data;
+	adapter = (struct hdd_adapter *)file->private_data;
 	if ((!adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
@@ -398,7 +398,7 @@ static ssize_t wlan_hdd_read_ll_stats_debugfs(struct file *file,
 static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 					    struct file *file)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -407,7 +407,7 @@ static int __wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 	if (inode->i_private)
 		file->private_data = inode->i_private;
 
-	adapter = (hdd_adapter_t *)file->private_data;
+	adapter = (struct hdd_adapter *)file->private_data;
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
@@ -462,7 +462,7 @@ static int wlan_hdd_open_ll_stats_debugfs(struct inode *inode,
 static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
 					    struct file *file)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -471,7 +471,7 @@ static int __wlan_hdd_release_ll_stats_debugfs(struct inode *inode,
 	if (inode->i_private)
 		file->private_data = inode->i_private;
 
-	adapter = (hdd_adapter_t *)file->private_data;
+	adapter = (struct hdd_adapter *)file->private_data;
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
@@ -516,7 +516,7 @@ static const struct file_operations fops_ll_stats_debugfs = {
 	.llseek = default_llseek,
 };
 
-int wlan_hdd_create_ll_stats_file(hdd_adapter_t *adapter)
+int wlan_hdd_create_ll_stats_file(struct hdd_adapter *adapter)
 {
 	if (!debugfs_create_file("ll_stats", 0444, adapter->debugfs_phy,
 				 adapter, &fops_ll_stats_debugfs))
