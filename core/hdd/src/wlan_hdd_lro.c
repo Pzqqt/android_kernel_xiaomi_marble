@@ -136,7 +136,7 @@ static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
  * HDD_LRO_NO_RX - frame not delivered
  */
 enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
-	 hdd_adapter_t *adapter, struct sk_buff *skb)
+	 struct hdd_adapter *adapter, struct sk_buff *skb)
 {
 	qdf_lro_ctx_t ctx;
 	enum hdd_lro_rx_status status = HDD_LRO_NO_RX;

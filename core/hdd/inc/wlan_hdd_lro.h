@@ -48,7 +48,7 @@ enum hdd_lro_rx_status {
 int hdd_lro_init(struct hdd_context *hdd_ctx);
 
 enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
-	 hdd_adapter_t *adapter, struct sk_buff *skb);
+	 struct hdd_adapter *adapter, struct sk_buff *skb);
 void hdd_lro_display_stats(struct hdd_context *hdd_ctx);
 #else
 static inline int hdd_lro_init(struct hdd_context *hdd_ctx)
@@ -57,7 +57,7 @@ static inline int hdd_lro_init(struct hdd_context *hdd_ctx)
 }
 
 static inline enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
-	 hdd_adapter_t *adapter, struct sk_buff *skb)
+	 struct hdd_adapter *adapter, struct sk_buff *skb)
 {
 	return HDD_LRO_NO_RX;
 }
