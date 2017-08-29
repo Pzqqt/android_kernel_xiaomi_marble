@@ -116,7 +116,7 @@
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn);
+bool hdd_add_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn);
 
 /**
  * hdd_del_wowl_ptrn() - Function which will remove a WoWL pattern
@@ -125,7 +125,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn);
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn);
+bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn);
 
 /**
  * hdd_add_wowl_ptrn_debugfs() - Function which will add a WoW pattern
@@ -138,7 +138,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn);
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
+bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx,
 			       uint8_t pattern_offset, char *pattern_buf,
 			       char *pattern_mask);
 
@@ -150,7 +150,7 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx);
+bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx);
 
 /**
  * hdd_enter_wowl() - Function which will enable WoWL. At least one
@@ -161,7 +161,7 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx);
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm);
+bool hdd_enter_wowl(struct hdd_adapter *pAdapter, bool enable_mp, bool enable_pbm);
 
 /**
  * hdd_exit_wowl() - Function which will disable WoWL
@@ -169,7 +169,7 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm);
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_exit_wowl(hdd_adapter_t *pAdapter);
+bool hdd_exit_wowl(struct hdd_adapter *pAdapter);
 
 /**
  * hdd_deinit_wowl() - Deinit function to cleanup WoWL allocated memory
