@@ -78,6 +78,19 @@
 #define RADIOTAP_VHT_BW_80	4
 #define RADIOTAP_VHT_BW_160	11
 
+#ifdef CONFIG_MCL
+#include <qdf_mc_timer.h>
+
+struct qdf_track_timer {
+	qdf_mc_timer_t track_timer;
+	qdf_atomic_t alloc_fail_cnt;
+};
+
+static struct qdf_track_timer alloc_track_timer;
+
+#define QDF_NBUF_ALLOC_EXPIRE_TIMER_MS  5000
+#define QDF_NBUF_ALLOC_EXPIRE_CNT_THRESHOLD  50
+#endif
 
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[QDF_NBUF_TX_PKT_STATE_MAX];
@@ -194,6 +207,90 @@ void qdf_nbuf_set_state(qdf_nbuf_t nbuf, uint8_t current_state)
 }
 EXPORT_SYMBOL(qdf_nbuf_set_state);
 
+#ifdef CONFIG_MCL
+/**
+ * __qdf_nbuf_start_replenish_timer - Start alloc fail replenish timer
+ *
+ * This function starts the alloc fail replenish timer.
+ *
+ * Return: void
+ */
+static void __qdf_nbuf_start_replenish_timer(void)
+{
+	qdf_atomic_inc(&alloc_track_timer.alloc_fail_cnt);
+	if (qdf_mc_timer_get_current_state(&alloc_track_timer.track_timer) !=
+	    QDF_TIMER_STATE_RUNNING)
+		qdf_mc_timer_start(&alloc_track_timer.track_timer,
+				   QDF_NBUF_ALLOC_EXPIRE_TIMER_MS);
+}
+
+/**
+ * __qdf_nbuf_stop_replenish_timer - Stop alloc fail replenish timer
+ *
+ * This function stops the alloc fail replenish timer.
+ *
+ * Return: void
+ */
+static void __qdf_nbuf_stop_replenish_timer(void)
+{
+	if (qdf_atomic_read(&alloc_track_timer.alloc_fail_cnt) == 0)
+		return;
+
+	qdf_atomic_set(&alloc_track_timer.alloc_fail_cnt, 0);
+	if (qdf_mc_timer_get_current_state(&alloc_track_timer.track_timer) ==
+	    QDF_TIMER_STATE_RUNNING)
+		qdf_mc_timer_stop(&alloc_track_timer.track_timer);
+}
+
+/**
+ * qdf_replenish_expire_handler - Replenish expire handler
+ *
+ * This function triggers when the alloc fail replenish timer expires.
+ *
+ * Return: void
+ */
+static void qdf_replenish_expire_handler(void *arg)
+{
+	if (qdf_atomic_read(&alloc_track_timer.alloc_fail_cnt) >
+	    QDF_NBUF_ALLOC_EXPIRE_CNT_THRESHOLD) {
+		qdf_print("ERROR: NBUF allocation timer expired Fail count %d",
+			  qdf_atomic_read(&alloc_track_timer.alloc_fail_cnt));
+
+		/* Error handling here */
+	}
+}
+
+/**
+ * __qdf_nbuf_init_replenish_timer - Initialize the alloc replenish timer
+ *
+ * This function initializes the nbuf alloc fail replenish timer.
+ *
+ * Return: void
+ */
+void __qdf_nbuf_init_replenish_timer(void)
+{
+	qdf_mc_timer_init(&alloc_track_timer.track_timer, QDF_TIMER_TYPE_SW,
+			  qdf_replenish_expire_handler, NULL);
+}
+
+/**
+ * __qdf_nbuf_deinit_replenish_timer - Deinitialize the alloc replenish timer
+ *
+ * This function deinitializes the nbuf alloc fail replenish timer.
+ *
+ * Return: void
+ */
+void __qdf_nbuf_deinit_replenish_timer(void)
+{
+	__qdf_nbuf_stop_replenish_timer();
+	qdf_mc_timer_destroy(&alloc_track_timer.track_timer);
+}
+#else
+
+static inline void __qdf_nbuf_start_replenish_timer(void) {}
+static inline void __qdf_nbuf_stop_replenish_timer(void) {}
+#endif
+
 /* globals do not need to be initialized to NULL/0 */
 qdf_nbuf_trace_update_t qdf_trace_update_cb;
 qdf_nbuf_free_t nbuf_free_cb;
@@ -298,8 +395,13 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 
 	skb = pld_nbuf_pre_alloc(size);
 
-	if (!skb)
+	if (!skb) {
+		pr_info("ERROR:NBUF alloc failed\n");
+		__qdf_nbuf_start_replenish_timer();
 		return NULL;
+	} else {
+		__qdf_nbuf_stop_replenish_timer();
+	}
 
 skb_alloc:
 	memset(skb->cb, 0x0, sizeof(skb->cb));

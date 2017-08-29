@@ -2420,4 +2420,37 @@ qdf_nbuf_get_timedelta_us(struct sk_buff *skb)
 {
 	return __qdf_nbuf_get_timedelta_us(skb);
 }
+
+#ifdef CONFIG_MCL
+/**
+ * qdf_nbuf_init_replenish_timer - Initialize the alloc replenish timer
+ *
+ * This function initializes the nbuf alloc fail replenish timer.
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_init_replenish_timer(void)
+{
+	__qdf_nbuf_init_replenish_timer();
+}
+
+/**
+ * qdf_nbuf_deinit_replenish_timer - Deinitialize the alloc replenish timer
+ *
+ * This function deinitializes the nbuf alloc fail replenish timer.
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_deinit_replenish_timer(void)
+{
+	__qdf_nbuf_deinit_replenish_timer();
+}
+#else
+
+static inline void qdf_nbuf_init_replenish_timer(void) {}
+static inline void qdf_nbuf_deinit_replenish_timer(void) {}
+#endif /* CONFIG_MCL */
+
 #endif /* _QDF_NBUF_H */
