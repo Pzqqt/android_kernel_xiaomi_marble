@@ -29,15 +29,15 @@
 #define _WLAN_HDD_DEBUGFS_H
 
 #ifdef WLAN_DEBUGFS
-QDF_STATUS hdd_debugfs_init(hdd_adapter_t *adapter);
-void hdd_debugfs_exit(hdd_adapter_t *adapter);
+QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter);
+void hdd_debugfs_exit(struct hdd_adapter *adapter);
 #else
-static inline QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
+static inline QDF_STATUS hdd_debugfs_init(struct hdd_adapter *pAdapter)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void hdd_debugfs_exit(hdd_adapter_t *adapter)
+static inline void hdd_debugfs_exit(struct hdd_adapter *adapter)
 {
 }
 #endif /* #ifdef WLAN_DEBUGFS */
