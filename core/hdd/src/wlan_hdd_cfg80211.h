@@ -124,9 +124,9 @@ struct hdd_context;
 #endif
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
-void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter);
+void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter);
 #else
-static inline void wlan_hdd_clear_link_layer_stats(hdd_adapter_t *adapter) {}
+static inline void wlan_hdd_clear_link_layer_stats(struct hdd_adapter *adapter) {}
 #endif
 
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
@@ -236,29 +236,29 @@ typedef struct sHddAvoidFreqList {
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
 
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
+struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *pAdapter,
 						tCsrRoamInfo *pRoamInfo);
 
-int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
+int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					int index, bool preauth);
 
 #ifdef FEATURE_WLAN_LFR_METRICS
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *pAdapter,
 						tCsrRoamInfo *pRoamInfo);
 
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(hdd_adapter_t *
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *
 							 pAdapter,
 							 tCsrRoamInfo *
 							 pRoamInfo,
 							 bool preauth_status);
 
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *pAdapter,
 						   tCsrRoamInfo *pRoamInfo);
 #endif
 
 #ifdef FEATURE_WLAN_WAPI
-void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
+void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *pAdapter, uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len);
 #endif
@@ -292,16 +292,16 @@ int wlan_hdd_cfg80211_register(struct wiphy *wiphy);
  *
  * Return: 0 on success and non zero value on failure
  */
-int wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter);
+int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *pAdapter);
 
-void wlan_hdd_cfg80211_deregister_frames(hdd_adapter_t *pAdapter);
+void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *pAdapter);
 
 void hdd_reg_notifier(struct wiphy *wiphy,
 				 struct regulatory_request *request);
 
-extern void hdd_conn_set_connection_state(hdd_adapter_t *pAdapter,
+extern void hdd_conn_set_connection_state(struct hdd_adapter *pAdapter,
 					  eConnectionState connState);
-QDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *pAdapter,
 					       int channel);
 #ifdef FEATURE_WLAN_TDLS
 int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
@@ -309,7 +309,7 @@ int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
 #endif
 
 void *wlan_hdd_change_country_code_cb(void *pAdapter);
-void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
+void hdd_select_cbmode(struct hdd_adapter *pAdapter, uint8_t operationChannel,
 		       struct ch_params *ch_params);
 
 uint8_t *wlan_hdd_cfg80211_get_ie_ptr(const uint8_t *ies_ptr, int length,
@@ -327,7 +327,7 @@ uint8_t *wlan_hdd_cfg80211_get_ie_ptr(const uint8_t *ies_ptr, int length,
  * Return: true or false based on findings
  */
 bool wlan_hdd_is_ap_supports_immediate_power_save(uint8_t *ies, int length);
-void wlan_hdd_del_station(hdd_adapter_t *adapter);
+void wlan_hdd_del_station(struct hdd_adapter *adapter);
 
 #if defined(USE_CFG80211_DEL_STA_V2)
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
@@ -375,22 +375,22 @@ void wlan_hdd_rso_cmd_status_cb(void *ctx, struct rso_cmd_status *rso_status);
 void hdd_rssi_threshold_breached(void *hddctx,
 				 struct rssi_breach_event *data);
 
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(hdd_adapter_t *pAdapter,
+struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *pAdapter,
 						tSirMacAddr bssid);
 
 int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
-						hdd_adapter_t *pAdapter,
+						struct hdd_adapter *pAdapter,
 						uint32_t scan_timestamp);
 
-void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter);
+void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter, uint8_t *bssid,
+int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		uint8_t *req_rsn_ie, uint32_t req_rsn_length, uint8_t
 		*rsp_rsn_ie, uint32_t rsp_rsn_length, tCsrRoamInfo
 		*roam_info_ptr);
 #else
-static inline int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter,
+static inline int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter,
 		uint8_t *bssid, uint8_t *req_rsn_ie, uint32_t req_rsn_length,
 		uint8_t *rsp_rsn_ie, uint32_t rsp_rsn_length, tCsrRoamInfo
 		*roam_info_ptr)
@@ -399,9 +399,9 @@ static inline int wlan_hdd_send_roam_auth_event(hdd_adapter_t *adapter,
 }
 #endif
 
-int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter);
+int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter);
 int wlan_hdd_request_pre_cac(uint8_t channel);
-int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter);
+int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter);
 
 enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 					enum nl80211_iftype type);
@@ -420,7 +420,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter);
+int wlan_hdd_try_disconnect(struct hdd_adapter *pAdapter);
 
 #if defined(CFG80211_DISCONNECTED_V2) || \
 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
@@ -440,7 +440,7 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
 				GFP_KERNEL);
 }
 #endif
-struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
+struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *pAdapter,
 						tSirBssDescription *bss_desc);
 
 /**
@@ -494,7 +494,7 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_try_disconnect(hdd_adapter_t *adapter);
+int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
 
 /**
  * hdd_process_defer_disconnect() - Handle the deferred disconnect
@@ -507,7 +507,7 @@ int wlan_hdd_try_disconnect(hdd_adapter_t *adapter);
  *
  * Return: None
  */
-void hdd_process_defer_disconnect(hdd_adapter_t *adapter);
+void hdd_process_defer_disconnect(struct hdd_adapter *adapter);
 
 #ifndef CONVERGED_TDLS_ENABLE
 static inline void
