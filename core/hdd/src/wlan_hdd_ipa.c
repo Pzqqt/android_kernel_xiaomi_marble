@@ -212,7 +212,7 @@ struct hdd_ipa_rx_hdr {
 
 struct hdd_ipa_pm_tx_cb {
 	bool exception;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_ipa_iface_context *iface_context;
 	struct ipa_rx_data *ipa_tx_desc;
 };
@@ -240,7 +240,7 @@ struct hdd_ipa_priv;
 
 struct hdd_ipa_iface_context {
 	struct hdd_ipa_priv *hdd_ipa;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	void *tl_context;
 
 	enum ipa_client_type cons_client;
@@ -327,7 +327,7 @@ struct ipa_uc_fw_stats {
 
 struct ipa_uc_pending_event {
 	qdf_list_node_t node;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	enum ipa_wlan_event type;
 	uint8_t sta_id;
 	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
@@ -1319,7 +1319,7 @@ void hdd_ipa_set_tx_flow_info(void)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
@@ -1335,9 +1335,9 @@ void hdd_ipa_set_tx_flow_info(void)
 	uint8_t preAdapterChannel = 0;
 	uint8_t channel24;
 	uint8_t channel5;
-	hdd_adapter_t *preAdapterContext = NULL;
-	hdd_adapter_t *adapter2_4 = NULL;
-	hdd_adapter_t *adapter5 = NULL;
+	struct hdd_adapter *preAdapterContext = NULL;
+	struct hdd_adapter *adapter2_4 = NULL;
+	struct hdd_adapter *adapter5 = NULL;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 	struct wlan_objmgr_psoc *psoc;
@@ -1663,7 +1663,7 @@ void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
  *
  * Return: None
  */
-static void __hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
+static void __hdd_ipa_uc_stat_request(struct hdd_adapter *adapter, uint8_t reason)
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_ipa_priv *hdd_ipa;
@@ -1704,7 +1704,7 @@ static void __hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
  *
  * Return: None
  */
-void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
+void hdd_ipa_uc_stat_request(struct hdd_adapter *adapter, uint8_t reason)
 {
 	cds_ssr_protect(__func__);
 	__hdd_ipa_uc_stat_request(adapter, reason);
@@ -1719,7 +1719,7 @@ void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
  *
  * Return: None
  */
-void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
+void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 				      uint8_t reset_stats)
 {
 	struct hdd_context *pHddCtx;
@@ -1756,7 +1756,7 @@ void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
  *
  * Return: None
  */
-void hdd_ipa_uc_set_quota(hdd_adapter_t *adapter, uint8_t set_quota,
+void hdd_ipa_uc_set_quota(struct hdd_adapter *adapter, uint8_t set_quota,
 			  uint64_t quota_bytes)
 {
 	struct hdd_context *pHddCtx;
@@ -2112,7 +2112,7 @@ static QDF_STATUS hdd_ipa_uc_op_metering(struct hdd_context *hdd_ctx,
 	struct ipa_uc_quota_rsp *uc_quota_rsp;
 	struct ipa_uc_quota_ind *uc_quota_ind;
 	struct hdd_ipa_priv *hdd_ipa;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
@@ -2465,7 +2465,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
  *
  * Return: none
  */
-static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
+static void hdd_ipa_uc_offload_enable_disable(struct hdd_adapter *adapter,
 			uint32_t offload_type, bool enable)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -2630,7 +2630,7 @@ static void __hdd_ipa_wdi_meter_notifier_cb(enum ipa_wdi_meter_evt_type evt,
 					  void *data)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	struct ipa_get_wdi_sap_stats *wdi_sap_stats;
 	struct ipa_set_wifi_quota *ipa_set_quota;
 	int ret = 0;
@@ -2945,7 +2945,7 @@ static void hdd_ipa_msg_free_fn(void *buff, uint32_t len, uint32_t type)
  *
  * Return: 0 - Success
  */
-static int hdd_ipa_uc_send_evt(hdd_adapter_t *adapter,
+static int hdd_ipa_uc_send_evt(struct hdd_adapter *adapter,
 	enum ipa_wlan_event type, uint8_t *mac_addr)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -2989,7 +2989,7 @@ static int hdd_ipa_uc_send_evt(hdd_adapter_t *adapter,
  *
  * Return: 0 - Success
  */
-static int hdd_ipa_uc_disconnect_client(hdd_adapter_t *adapter)
+static int hdd_ipa_uc_disconnect_client(struct hdd_adapter *adapter)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	int ret = 0;
@@ -3019,7 +3019,7 @@ static int hdd_ipa_uc_disconnect_client(hdd_adapter_t *adapter)
  * Return: 0 - Success
  */
 
-static int hdd_ipa_uc_disconnect_ap(hdd_adapter_t *adapter)
+static int hdd_ipa_uc_disconnect_ap(struct hdd_adapter *adapter)
 {
 	int ret = 0;
 
@@ -3038,7 +3038,7 @@ static int hdd_ipa_uc_disconnect_ap(hdd_adapter_t *adapter)
  *
  * Return: 0 - Success
  */
-static int hdd_ipa_uc_disconnect_sta(hdd_adapter_t *adapter)
+static int hdd_ipa_uc_disconnect_sta(struct hdd_adapter *adapter)
 {
 	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -3066,7 +3066,7 @@ static int hdd_ipa_uc_disconnect(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	int ret = 0;
 
 	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
@@ -3742,7 +3742,7 @@ static int hdd_ipa_aggregated_rx_ind(qdf_nbuf_t skb)
  * Return: None
  */
 static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
-	hdd_adapter_t *adapter)
+	struct hdd_adapter *adapter)
 {
 	int result;
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -3792,7 +3792,7 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
  * Return: None
  */
 static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
-			    hdd_adapter_t *adapter, qdf_nbuf_t skb)
+			    struct hdd_adapter *adapter, qdf_nbuf_t skb)
 {
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb;
 
@@ -3840,7 +3840,7 @@ static void hdd_ipa_forward(struct hdd_ipa_priv *hdd_ipa,
 
 static enum hdd_ipa_forward_type hdd_ipa_intrabss_forward(
 		struct hdd_ipa_priv *hdd_ipa,
-		hdd_adapter_t *adapter,
+		struct hdd_adapter *adapter,
 		uint8_t desc,
 		qdf_nbuf_t skb)
 {
@@ -3894,7 +3894,7 @@ static void __hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			   unsigned long data)
 {
 	struct hdd_ipa_priv *hdd_ipa = NULL;
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	qdf_nbuf_t skb;
 	uint8_t iface_id;
 	uint8_t session_id;
@@ -4071,7 +4071,7 @@ static void hdd_ipa_send_pkt_to_tl(
 		struct ipa_rx_data *ipa_tx_desc)
 {
 	struct hdd_ipa_priv *hdd_ipa = iface_context->hdd_ipa;
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	qdf_nbuf_t skb;
 	struct hdd_ipa_tx_desc *tx_desc;
 
@@ -4667,7 +4667,7 @@ static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context)
  * Return: 0 on success, negative errno value on error
  */
 static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
-			       hdd_adapter_t *adapter, uint8_t sta_id)
+			       struct hdd_adapter *adapter, uint8_t sta_id)
 {
 	struct hdd_ipa_iface_context *iface_context = NULL;
 	void *tl_context = NULL;
@@ -4738,7 +4738,7 @@ static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
-	hdd_adapter_t *pAdapter;
+	struct hdd_adapter *pAdapter;
 	struct ipa_msg_meta meta;
 	struct ipa_wlan_msg *msg;
 	int ret;
@@ -4898,7 +4898,7 @@ hdd_to_ipa_wlan_event(enum hdd_ipa_wlan_event hdd_ipa_event_type)
  *
  * Return: 0 on success, negative errno value on error
  */
-static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 		     enum ipa_wlan_event type, uint8_t *mac_addr)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -5314,7 +5314,7 @@ end:
  *
  * Return: 0 on success, negative errno value on error
  */
-int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+int hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 	enum hdd_ipa_wlan_event hdd_event_type, uint8_t *mac_addr)
 {
 	enum ipa_wlan_event type = hdd_to_ipa_wlan_event(hdd_event_type);

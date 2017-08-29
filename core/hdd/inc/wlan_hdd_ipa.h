@@ -88,7 +88,7 @@ QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_ipa_cleanup(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_ipa_process_rxt(void *cds_context, qdf_nbuf_t rxBuf,
 	uint8_t sta_id);
-int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+int hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 	enum hdd_ipa_wlan_event type, uint8_t *mac_addr);
 int hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx, uint64_t tx_packets,
 	uint64_t rx_packets);
@@ -97,10 +97,10 @@ int hdd_ipa_resume(struct hdd_context *hdd_ctx);
 void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx, uint32_t *ipa_tx_diff,
 	uint32_t *ipa_rx_diff);
 void hdd_ipa_uc_rt_debug_host_dump(struct hdd_context *hdd_ctx);
-void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason);
-void hdd_ipa_uc_sharing_stats_request(hdd_adapter_t *adapter,
+void hdd_ipa_uc_stat_request(struct hdd_adapter *adapter, uint8_t reason);
+void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 				      uint8_t reset_stats);
-void hdd_ipa_uc_set_quota(hdd_adapter_t *adapter, uint8_t set_quota,
+void hdd_ipa_uc_set_quota(struct hdd_adapter *adapter, uint8_t set_quota,
 			  uint64_t quota_bytes);
 bool hdd_ipa_is_enabled(struct hdd_context *pHddCtx);
 bool hdd_ipa_uc_is_enabled(struct hdd_context *pHddCtx);
@@ -140,7 +140,7 @@ static inline QDF_STATUS hdd_ipa_process_rxt(void *cds_context,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
+static inline int hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 	enum hdd_ipa_wlan_event type, uint8_t *mac_addr)
 {
 	return 0;
@@ -177,7 +177,7 @@ static inline void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
 	*ipa_rx_diff = 0;
 }
 
-static inline void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter,
+static inline void hdd_ipa_uc_stat_request(struct hdd_adapter *adapter,
 	uint8_t reason)
 {
 }
