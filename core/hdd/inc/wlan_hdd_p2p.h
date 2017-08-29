@@ -115,16 +115,16 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData);
 int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command);
 int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command);
 
-void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
+void __hdd_indicate_mgmt_frame(struct hdd_adapter *pAdapter,
 			     uint32_t nFrameLength, uint8_t *pbFrames,
 			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi);
 
-void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
+void hdd_remain_chan_ready_handler(struct hdd_adapter *pAdapter,
 	uint32_t scan_id);
-void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess);
-int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter);
+void hdd_send_action_cnf(struct hdd_adapter *pAdapter, bool actionSendSuccess);
+int wlan_hdd_check_remain_on_channel(struct hdd_adapter *pAdapter);
 void hdd_send_action_cnf_cb(uint32_t session_id, bool status);
-void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter);
+void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *pAdapter);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
@@ -163,7 +163,7 @@ int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
 int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
 
 
-void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter);
+void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *pAdapter);
 
 void wlan_hdd_roc_request_dequeue(struct work_struct *work);
 
@@ -177,7 +177,7 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work);
  * Return: 0 - success
  *    others - failure
  */
-int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
+int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	tpP2pPsConfig pnoa);
 
 /**
@@ -190,7 +190,7 @@ int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
  * Return: 0 - success
  *    others - failure
  */
-int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
+int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
 	struct sir_p2p_lo_start *params);
 
 /**
@@ -202,7 +202,7 @@ int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
  * Return: 0 - success
  *    others - failure
  */
-int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter);
+int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter);
 
 /**
  * wlan_hdd_set_mas() - Function to set MAS value to FW
@@ -214,7 +214,7 @@ int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter);
  * Return: Configuration message posting status, SUCCESS or Fail
  *
  */
-int32_t wlan_hdd_set_mas(hdd_adapter_t *adapter, uint8_t mas_value);
+int32_t wlan_hdd_set_mas(struct hdd_adapter *adapter, uint8_t mas_value);
 
 /**
  * wlan_hdd_set_mcc_p2p_quota() - Function to set quota for P2P
@@ -227,7 +227,7 @@ int32_t wlan_hdd_set_mas(hdd_adapter_t *adapter, uint8_t mas_value);
  * Return: Configuration message posting status, SUCCESS or Fail
  *
  */
-int wlan_hdd_set_mcc_p2p_quota(hdd_adapter_t *adapter,
+int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 			       uint32_t set_value);
 
 /**
@@ -241,7 +241,7 @@ int wlan_hdd_set_mcc_p2p_quota(hdd_adapter_t *adapter,
  * Return: Configuration message posting status, SUCCESS or Fail
  *
  */
-int wlan_hdd_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
+int wlan_hdd_go_set_mcc_p2p_quota(struct hdd_adapter *hostapd_adapter,
 				  uint32_t set_value);
 /**
  * wlan_hdd_set_mcc_latency() - Set MCC latency to FW
@@ -252,5 +252,5 @@ int wlan_hdd_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
  *
  * Return: None
  */
-void wlan_hdd_set_mcc_latency(hdd_adapter_t *adapter, int set_value);
+void wlan_hdd_set_mcc_latency(struct hdd_adapter *adapter, int set_value);
 #endif /* __P2P_H */

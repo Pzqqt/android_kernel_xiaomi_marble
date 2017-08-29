@@ -173,7 +173,7 @@ static
 QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 			QDF_STATUS status, uint32_t scan_id)
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pCtx;
+	struct hdd_adapter *pAdapter = (struct hdd_adapter *) pCtx;
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -285,7 +285,7 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 }
 
 #ifdef CONVERGED_P2P_ENABLE
-void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
+void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *pAdapter)
 {
 	QDF_STATUS status;
 
@@ -298,7 +298,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 	hdd_debug("status:%d", status);
 }
 #else
-void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
+void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *pAdapter)
 {
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
@@ -386,7 +386,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 }
 #endif
 
-int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter)
+int wlan_hdd_check_remain_on_channel(struct hdd_adapter *pAdapter)
 {
 	int status = 0;
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
@@ -417,7 +417,7 @@ int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter)
  * Return: None
  */
 #ifndef CONVERGED_P2P_ENABLE
-static void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
+static void wlan_hdd_cancel_pending_roc(struct hdd_adapter *adapter)
 {
 	hdd_remain_on_chan_ctx_t *roc_ctx;
 	unsigned long rc;
@@ -495,7 +495,7 @@ wait:
 
 /* Clean up RoC context at hdd_stop_adapter*/
 #ifdef CONVERGED_P2P_ENABLE
-void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
+void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *pAdapter)
 {
 	QDF_STATUS status;
 
@@ -508,7 +508,7 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
 	hdd_debug("status:%d", status);
 }
 #else
-void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
+void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *pAdapter)
 {
 	uint8_t retry = 0;
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
@@ -534,7 +534,7 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
 
 static void wlan_hdd_remain_on_chan_timeout(void *data)
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) data;
+	struct hdd_adapter *pAdapter = (struct hdd_adapter *) data;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	hdd_cfg80211_state_t *cfgState;
 	struct hdd_context *hdd_ctx;
@@ -587,14 +587,14 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 }
 
-static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
+static int wlan_hdd_execute_remain_on_channel(struct hdd_adapter *pAdapter,
 		      hdd_remain_on_chan_ctx_t *pRemainChanCtx)
 {
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
-	hdd_adapter_t *pAdapter_temp;
+	struct hdd_adapter *pAdapter_temp;
 	QDF_STATUS status;
 	bool isGoPresent = false;
 	unsigned int duration;
@@ -756,7 +756,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
  * Return: 0 on success, error number otherwise
  */
 #ifndef CONVERGED_P2P_ENABLE
-static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
+static int wlan_hdd_roc_request_enqueue(struct hdd_adapter *adapter,
 			hdd_remain_on_chan_ctx_t *remain_chan_ctx)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -808,7 +808,7 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
  *
  * Return: None
  */
-static void wlan_hdd_indicate_roc_drop(hdd_adapter_t *adapter,
+static void wlan_hdd_indicate_roc_drop(struct hdd_adapter *adapter,
 				       hdd_remain_on_chan_ctx_t *ctx)
 {
 	hdd_debug("indicate roc drop to userspace");
@@ -883,12 +883,12 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 					      enum rem_on_channel_request_type
 					      request_type)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *pHddCtx;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	bool isBusy = false;
 	uint32_t size = 0;
-	hdd_adapter_t *sta_adapter;
+	struct hdd_adapter *sta_adapter;
 	int ret;
 	int status = 0;
 
@@ -994,7 +994,7 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 						 u64 *cookie)
 {
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int ret;
@@ -1030,7 +1030,7 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 						 u64 *cookie)
 {
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -1080,7 +1080,7 @@ int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 	return ret;
 }
 
-void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
+void hdd_remain_chan_ready_handler(struct hdd_adapter *pAdapter,
 	uint32_t scan_id)
 {
 	hdd_cfg80211_state_t *cfgState = NULL;
@@ -1179,7 +1179,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 {
 	QDF_STATUS status;
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	ENTER();
 
@@ -1205,7 +1205,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 					     u64 cookie)
 {
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -1402,7 +1402,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 {
 	QDF_STATUS status;
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	ENTER();
 
@@ -1431,7 +1431,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 			      bool dont_wait_for_ack, u64 *cookie)
 {
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -1442,7 +1442,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	bool noack = 0;
 	int status;
 	unsigned long rc;
-	hdd_adapter_t *goAdapter;
+	struct hdd_adapter *goAdapter;
 	uint16_t current_freq;
 	uint8_t home_ch = 0;
 	ENTER();
@@ -1895,7 +1895,7 @@ static int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 {
 	QDF_STATUS status;
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	ENTER();
 
@@ -1936,7 +1936,7 @@ int wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 	return ret;
 }
 
-void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
+void hdd_send_action_cnf(struct hdd_adapter *pAdapter, bool actionSendSuccess)
 {
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 
@@ -1990,7 +1990,7 @@ void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
 void hdd_send_action_cnf_cb(uint32_t session_id, bool tx_completed)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 
 	ENTER();
 
@@ -2036,7 +2036,7 @@ void hdd_send_action_cnf_cb(uint32_t session_id, bool tx_completed)
 
 int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tP2pPsConfig NoA;
 	int count, duration, interval;
 	char *param;
@@ -2113,7 +2113,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 
 int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 {
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tP2pPsConfig noa;
 	char *param;
 	int legacy_ps, opp_ps, ctwindow;
@@ -2206,7 +2206,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 
 int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tP2pPsConfig NoA;
 	struct p2p_app_set_ps *pappNoA = (struct p2p_app_set_ps *) msgData;
 
@@ -2258,7 +2258,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 						 struct vif_params *params)
 {
 	struct hdd_context *pHddCtx = (struct hdd_context *) wiphy_priv(wiphy);
-	hdd_adapter_t *pAdapter = NULL;
+	struct hdd_adapter *pAdapter = NULL;
 	struct hdd_scan_info *scan_info = NULL;
 	int ret;
 	uint8_t session_type;
@@ -2458,7 +2458,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
 	struct net_device *dev = wdev->netdev;
 	struct hdd_context *pHddCtx = (struct hdd_context *) wiphy_priv(wiphy);
-	hdd_adapter_t *pVirtAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pVirtAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
 
 	ENTER();
@@ -2561,7 +2561,7 @@ static void wlan_hdd_p2p_action_debug(enum action_frm_type actionFrmType,
 }
 #endif
 
-void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
+void __hdd_indicate_mgmt_frame(struct hdd_adapter *pAdapter,
 			     uint32_t nFrameLength,
 			     uint8_t *pbFrames,
 			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi)
@@ -2847,7 +2847,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 }
 
 #ifdef CONVERGED_P2P_ENABLE
-int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
+int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	tpP2pPsConfig pnoa)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -2889,7 +2889,7 @@ int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
 	return qdf_status_to_os_return(status);
 }
 #else
-int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
+int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	tpP2pPsConfig pnoa)
 {
 	tHalHandle handle;
@@ -2910,7 +2910,7 @@ int wlan_hdd_set_power_save(hdd_adapter_t *adapter,
 #endif
 
 #ifdef CONVERGED_P2P_ENABLE
-int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
+int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
 	struct sir_p2p_lo_start *params)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -2948,7 +2948,7 @@ int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
 	return qdf_status_to_os_return(status);
 }
 #else
-int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
+int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
 	struct sir_p2p_lo_start *params)
 {
 	QDF_STATUS status;
@@ -2966,7 +2966,7 @@ int wlan_hdd_listen_offload_start(hdd_adapter_t *adapter,
 #endif
 
 #ifdef CONVERGED_P2P_ENABLE
-int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter)
+int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct hdd_context *hdd_ctx;
@@ -2992,7 +2992,7 @@ int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter)
 	return qdf_status_to_os_return(status);
 }
 #else
-int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter)
+int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
@@ -3020,7 +3020,7 @@ int wlan_hdd_listen_offload_stop(hdd_adapter_t *adapter)
  *
  */
 static int32_t wlan_hdd_update_mcc_adaptive_scheduler(
-		hdd_adapter_t *adapter, bool is_enable)
+		struct hdd_adapter *adapter, bool is_enable)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -3054,7 +3054,7 @@ static int32_t wlan_hdd_update_mcc_adaptive_scheduler(
  * Return: none
  *
  */
-static void wlan_hdd_update_mcc_p2p_quota(hdd_adapter_t *adapter,
+static void wlan_hdd_update_mcc_p2p_quota(struct hdd_adapter *adapter,
 					  bool is_set)
 {
 
@@ -3080,7 +3080,7 @@ static void wlan_hdd_update_mcc_p2p_quota(hdd_adapter_t *adapter,
 	}
 }
 
-int32_t wlan_hdd_set_mas(hdd_adapter_t *adapter, uint8_t mas_value)
+int32_t wlan_hdd_set_mas(struct hdd_adapter *adapter, uint8_t mas_value)
 {
 	int32_t ret = 0;
 
@@ -3208,7 +3208,7 @@ static uint32_t set_second_connection_operating_channel(
  * Return: Configuration message posting status, SUCCESS or Fail
  *
  */
-int wlan_hdd_set_mcc_p2p_quota(hdd_adapter_t *adapter,
+int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 			       uint32_t set_value)
 {
 	int32_t ret = 0;
@@ -3263,13 +3263,13 @@ int wlan_hdd_set_mcc_p2p_quota(hdd_adapter_t *adapter,
 	return ret;
 }
 
-int wlan_hdd_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
+int wlan_hdd_go_set_mcc_p2p_quota(struct hdd_adapter *hostapd_adapter,
 				  uint32_t set_value)
 {
 	return wlan_hdd_set_mcc_p2p_quota(hostapd_adapter, set_value);
 }
 
-void wlan_hdd_set_mcc_latency(hdd_adapter_t *adapter, int set_value)
+void wlan_hdd_set_mcc_latency(struct hdd_adapter *adapter, int set_value)
 {
 	uint32_t concurrent_state;
 	struct hdd_context *hdd_ctx;
