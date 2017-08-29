@@ -6082,6 +6082,8 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
+	qdf_nbuf_deinit_replenish_timer();
+
 	qdf_spinlock_destroy(&hdd_ctx->hdd_adapter_lock);
 	qdf_spinlock_destroy(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_destroy(&hdd_ctx->connection_status_lock);
@@ -9825,6 +9827,8 @@ int hdd_wlan_startup(struct device *dev)
 	qdf_mc_timer_init(&hdd_ctx->iface_change_timer, QDF_TIMER_TYPE_SW,
 			  hdd_iface_change_callback, (void *)hdd_ctx);
 
+	qdf_nbuf_init_replenish_timer();
+
 	mutex_init(&hdd_ctx->iface_change_lock);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_init(&hdd_ctx->avoid_freq_lock);
@@ -9957,6 +9961,7 @@ err_hdd_free_context:
 	else
 		hdd_start_complete(ret);
 
+	qdf_nbuf_deinit_replenish_timer();
 	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
 	hdd_context_destroy(hdd_ctx);
