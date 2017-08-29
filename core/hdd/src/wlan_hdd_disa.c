@@ -168,7 +168,7 @@ encrypt_decrypt_policy[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX + 1] = {
  */
 static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 						*encrypt_decrypt_params,
-						hdd_adapter_t *adapter,
+						struct hdd_adapter *adapter,
 						const void *data,
 						int data_len)
 {
@@ -352,7 +352,7 @@ static void hdd_encrypt_decrypt_context_dealloc(void *priv)
  *
  Return: 0 on success, negative errno on failure
  */
-static int hdd_encrypt_decrypt_msg(hdd_adapter_t *adapter,
+static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 				   struct hdd_context *hdd_ctx,
 				   const void *data,
 				   int data_len)
@@ -432,7 +432,7 @@ static int __wlan_hdd_cfg80211_encrypt_decrypt_msg(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	int ret;
 
 	ENTER_DEV(dev);
