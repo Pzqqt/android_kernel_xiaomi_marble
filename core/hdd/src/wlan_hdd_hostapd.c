@@ -7338,8 +7338,9 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
 }
 
 /**
- * wlan_hdd_setup_driver_overrides : Overrides SAP / P2P GO Params
- * @adapter: pointer to adapter struct
+ * wlan_hdd_sap_p2p_11ac_overrides: API to overwrite 11ac config in case of
+ * SAP or p2p go
+ * @ap_adapter: pointer to adapter
  *
  * This function overrides SAP / P2P Go configuration based on driver INI
  * parameters for 11AC override and ACS. This overrides are done to support
@@ -7351,15 +7352,10 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
  *
  * Return: 0 for Success or Negative error codes.
  */
-static int wlan_hdd_setup_driver_overrides(struct hdd_adapter *ap_adapter)
+static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 {
 	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sapConfig;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
-
-	if (ap_adapter->device_mode == QDF_SAP_MODE &&
-				hdd_ctx->config->force_sap_acs &&
-				!hdd_ctx->config->vendor_acs_support)
-		goto setup_acs_overrides;
 
 	/* Fixed channel 11AC override:
 	 * 11AC override in qcacld is introduced for following reasons:
@@ -7405,14 +7401,33 @@ static int wlan_hdd_setup_driver_overrides(struct hdd_adapter *ap_adapter)
 				sap_cfg->ch_width_orig =
 					eHT_CHANNEL_WIDTH_20MHZ;
 		}
+		sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
+		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, sap_cfg->channel,
+					sap_cfg->sec_ch, &sap_cfg->ch_params);
 	}
-	sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
-	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, sap_cfg->channel,
-				sap_cfg->sec_ch, &sap_cfg->ch_params);
 
 	return 0;
+}
 
-setup_acs_overrides:
+/**
+ * wlan_hdd_setup_acs_overrides : Overrides ACS configurations
+ * @adapter: pointer to adapter struct
+ *
+ * This function overrides ACS configuration based on driver INI
+ * parameters. These overrides are done to support android legacy
+ * configuration method.
+ *
+ * NOTE: Non android platform supports concurrency and these overrides shall
+ * not be used. Also future driver based overrides shall be consolidated in this
+ * function only. Avoid random overrides in other location based on ini.
+ *
+ * Return: 0 for Success or Negative error codes.
+ */
+static int wlan_hdd_setup_acs_overrides(struct hdd_adapter *ap_adapter)
+{
+	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sapConfig;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+
 	hdd_debug("** Driver force ACS override **");
 
 	sap_cfg->channel = AUTO_CHANNEL_SELECT;
@@ -7489,6 +7504,34 @@ setup_acs_overrides:
 		sap_cfg->acs_cfg.start_ch, sap_cfg->acs_cfg.end_ch);
 
 	return 0;
+}
+
+/**
+ * wlan_hdd_setup_driver_overrides : Overrides SAP / P2P GO Params
+ * @adapter: pointer to adapter struct
+ *
+ * This function overrides SAP / P2P Go configuration based on driver INI
+ * parameters for 11AC override and ACS. These overrides are done to support
+ * android legacy configuration method.
+ *
+ * NOTE: Non android platform supports concurrency and these overrides shall
+ * not be used. Also future driver based overrides shall be consolidated in this
+ * function only. Avoid random overrides in other location based on ini.
+ *
+ * Return: 0 for Success or Negative error codes.
+ */
+static int wlan_hdd_setup_driver_overrides(struct hdd_adapter *ap_adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
+
+	if (!hdd_ctx->config->vendor_acs_support) {
+		if (ap_adapter->device_mode == QDF_SAP_MODE &&
+		    hdd_ctx->config->force_sap_acs)
+			return wlan_hdd_setup_acs_overrides(ap_adapter);
+		else
+			return wlan_hdd_sap_p2p_11ac_overrides(ap_adapter);
+	} else
+		return 0;
 }
 
 /**

@@ -7199,6 +7199,8 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel)
 int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 {
 	struct hdd_external_acs_timer_context *timer_context;
+	int status;
+	QDF_STATUS qdf_status;
 
 	set_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
 
@@ -7210,13 +7212,18 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 	timer_context = (struct hdd_external_acs_timer_context *)
 			adapter->sessionCtx.ap.vendor_acs_timer.user_data;
 	timer_context->reason = reason;
-	/* Update config to application and start the timer */
-	hdd_cfg80211_update_acs_config(adapter, reason);
-	qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
-		WLAN_VENDOR_ACS_WAIT_TIME);
+	qdf_status =
+		qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
+				   WLAN_VENDOR_ACS_WAIT_TIME);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed to start external acs timer");
+		return -ENOSPC;
+	}
+	/* Update config to application */
+	status = hdd_cfg80211_update_acs_config(adapter, reason);
 	hdd_notice("Updated ACS config to nl with reason %d", reason);
 
-	return 0;
+	return status;
 }
 
 /**

@@ -4293,10 +4293,10 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 		return sap_ctx->chan_before_pre_cac;
 	}
 
-	if (sap_ctx->vendor_acs_enabled && (QDF_STATUS_SUCCESS ==
+	if (sap_ctx->vendor_acs_dfs_lte_enabled && (QDF_STATUS_SUCCESS ==
 	    sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NEXT_CHANNEL_REQ,
 	    (void *) eSAP_STATUS_SUCCESS)))
-			return 0;
+		return 0;
 
 	target_channel = sap_random_channel_sel(sap_ctx);
 	if (!target_channel)

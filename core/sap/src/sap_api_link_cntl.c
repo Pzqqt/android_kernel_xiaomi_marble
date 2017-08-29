@@ -1039,8 +1039,8 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			   0;
 		}
 		/* if external acs enabled */
-		if (sap_ctx->vendor_acs_enabled &&
-			!mac_ctx->sap.SapDfsInfo.target_channel) {
+		if (sap_ctx->vendor_acs_dfs_lte_enabled &&
+		    !mac_ctx->sap.SapDfsInfo.target_channel) {
 			/* Return from here, processing will be done later */
 			return 0;
 		}

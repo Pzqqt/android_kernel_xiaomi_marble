@@ -2327,7 +2327,7 @@ QDF_STATUS wlan_sap_set_vendor_acs(struct sap_context *sap_context,
 			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	sap_context->vendor_acs_enabled = is_vendor_acs;
+	sap_context->vendor_acs_dfs_lte_enabled = is_vendor_acs;
 
 	return QDF_STATUS_SUCCESS;
 }
