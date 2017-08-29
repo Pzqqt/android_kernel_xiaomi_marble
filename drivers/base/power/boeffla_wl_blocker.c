@@ -1,7 +1,7 @@
 /*
- * Author: andip71, 28.08.2017
+ * Author: andip71, 29.08.2017
  *
- * Version 1.0.0
+ * Version 1.0.1
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -17,6 +17,9 @@
 /*
  * Change log:
  *
+ * 1.0.1 (29.08.2017)
+ *   - Add killing wakelock when currently active
+ *
  * 1.0.0 (28.08.2017)
  *   - Initial version
  *
@@ -30,7 +33,7 @@
 #include <linux/printk.h>
 
 
-#define BOEFFLA_WL_BLOCKER_VERSION	"1.0.0"
+#define BOEFFLA_WL_BLOCKER_VERSION	"1.0.1"
 
 
 /*****************************************/
