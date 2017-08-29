@@ -2002,11 +2002,19 @@ void hdd_cfg80211_update_acs_config(hdd_adapter_t *adapter,
 	sap_config = &adapter->sessionCtx.ap.sapConfig;
 
 	hdd_get_scan_band(hdd_ctx, &adapter->sessionCtx.ap.sapConfig, &band);
-	/* Get valid channels for SAP */
-	wlan_hdd_sap_get_valid_channellist(adapter,
-								&channel_count,
-								channel_list,
-								band);
+
+	if (sap_config->acs_cfg.ch_list) {
+		/* Copy INI or hostapd provided ACS channel range*/
+		qdf_mem_copy(channel_list, sap_config->acs_cfg.ch_list,
+				sap_config->acs_cfg.ch_list_count);
+		channel_count = sap_config->acs_cfg.ch_list_count;
+	} else {
+		/* No channel list provided, copy all valid channels */
+		wlan_hdd_sap_get_valid_channellist(adapter,
+			&channel_count,
+			channel_list,
+			band);
+	}
 
 	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
 	hdd_get_freq_list(channel_list, freq_list, channel_count);
