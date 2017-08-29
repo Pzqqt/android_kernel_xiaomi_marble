@@ -1751,10 +1751,11 @@ QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-struct cdp_vdev *dp_get_vdev_by_sta_id(uint8_t sta_id)
+struct cdp_vdev *dp_get_vdev_by_sta_id(struct cdp_pdev *pdev_handle,
+				       uint8_t sta_id)
 {
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct dp_peer *peer = NULL;
-	struct dp_pdev *pdev = NULL;
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1762,7 +1763,6 @@ struct cdp_vdev *dp_get_vdev_by_sta_id(uint8_t sta_id)
 		return NULL;
 	}
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "PDEV not found for sta_id [%d]", sta_id);

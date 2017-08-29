@@ -73,6 +73,25 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *pdev);
 QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *pdev);
 QDF_STATUS dp_ipa_set_perf_level(int client,
 		uint32_t max_supported_bw_mbps);
+int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev);
+int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev);
+int dp_ipa_ring_resource_setup(struct dp_soc *soc,
+		struct dp_pdev *pdev);
+#else
+static inline int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
 
+static inline int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline int dp_ipa_ring_resource_setup(struct dp_soc *soc,
+					     struct dp_pdev *pdev)
+{
+	return 0;
+}
 #endif
 #endif /* _DP_IPA_H_ */

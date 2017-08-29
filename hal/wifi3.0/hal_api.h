@@ -338,11 +338,18 @@ extern void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 extern void hal_reo_remap_IX0(struct hal_soc *hal, uint32_t remap_val);
 
 /**
- * hal_srng_set_hp_paddr() - Set physical address to SRNG head pointer
+ * hal_srng_set_hp_paddr() - Set physical address to dest SRNG head pointer
  * @sring: sring pointer
  * @paddr: physical address
  */
-extern void hal_srng_set_hp_paddr(struct hal_srng *sring, uint64_t paddr);
+extern void hal_srng_dst_set_hp_paddr(struct hal_srng *sring, uint64_t paddr);
+
+/**
+ * hal_srng_dst_init_hp() - Initilaize head pointer with cached head pointer
+ * @srng: sring pointer
+ * @vaddr: virtual address
+ */
+extern void hal_srng_dst_init_hp(struct hal_srng *srng, uint32_t *vaddr);
 
 /**
  * hal_srng_cleanup - Deinitialize HW SRNG ring.
@@ -423,6 +430,37 @@ static inline void *hal_srng_dst_get_next(void *hal_soc, void *hal_ring)
 		srng->u.dst_ring.tp = (srng->u.dst_ring.tp + srng->entry_size) %
 			srng->ring_size;
 
+		return (void *)desc;
+	}
+
+	return NULL;
+}
+
+/**
+ * hal_srng_dst_get_next_hp - Get next entry from a destination ring and move
+ * cached head pointer
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @hal_ring: Destination ring pointer
+ *
+ * Return: Opaque pointer for next ring entry; NULL on failire
+ */
+static inline void *hal_srng_dst_get_next_hp(void *hal_soc, void *hal_ring)
+{
+	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+	uint32_t *desc;
+	/* TODO: Using % is expensive, but we have to do this since
+	 * size of some SRNG rings is not power of 2 (due to descriptor
+	 * sizes). Need to create separate API for rings used
+	 * per-packet, with sizes power of 2 (TCL2SW, REO2SW,
+	 * SW2RXDMA and CE rings)
+	 */
+	uint32_t next_hp = (srng->u.dst_ring.cached_hp + srng->entry_size) %
+		srng->ring_size;
+
+	if (next_hp != srng->u.dst_ring.tp) {
+		desc = &(srng->ring_base_vaddr[srng->u.dst_ring.cached_hp]);
+		srng->u.dst_ring.cached_hp = next_hp;
 		return (void *)desc;
 	}
 
@@ -755,6 +793,7 @@ static inline void hal_srng_access_end(void *hal_soc, void *hal_ring)
 static inline void hal_srng_access_end_reap(void *hal_soc, void *hal_ring)
 {
 	struct hal_srng *srng = (struct hal_srng *)hal_ring;
+
 	SRNG_UNLOCK(&(srng->lock));
 }
 

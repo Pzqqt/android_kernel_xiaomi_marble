@@ -837,6 +837,7 @@ struct dp_ipa_resources {
 
 	/* IPA UC doorbell registers paddr */
 	qdf_dma_addr_t tx_comp_doorbell_paddr;
+	uint32_t *tx_comp_doorbell_vaddr;
 	qdf_dma_addr_t rx_ready_doorbell_paddr;
 };
 #endif
@@ -896,10 +897,8 @@ struct dp_pdev {
 	/* Ring used to replenish rx buffers (maybe to the firmware of MAC) */
 	struct dp_srng rx_refill_buf_ring;
 
-#ifdef IPA_OFFLOAD
-	/* Ring used to replenish IPA rx buffers */
-	struct dp_srng ipa_rx_refill_buf_ring;
-#endif
+	/* Second ring used to replenish rx buffers */
+	struct dp_srng rx_refill_buf_ring2;
 
 	/* Empty ring used by firmware to post rx buffers to the MAC */
 	struct dp_srng rx_mac_buf_ring[MAX_RX_MAC_RINGS];
