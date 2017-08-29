@@ -119,7 +119,7 @@ struct hdd_wmm_qos_context {
 	struct list_head node;
 	uint32_t handle;
 	uint32_t qosFlowId;
-	hdd_adapter_t *pAdapter;
+	struct hdd_adapter *pAdapter;
 	sme_ac_enum_type acType;
 	hdd_wlan_wmm_status_e lastStatus;
 	struct work_struct wmmAcSetupImplicitQos;
@@ -201,7 +201,7 @@ extern const uint8_t hdd_linux_up_to_ac_map[];
  *
  * Return: Zero on success, appropriate error on failure.
  */
-int hdd_wmmps_helper(hdd_adapter_t *pAdapter, uint8_t *ptr);
+int hdd_wmmps_helper(struct hdd_adapter *pAdapter, uint8_t *ptr);
 
 /**
  * hdd_wmm_init() - initialize the WMM DSCP configuation
@@ -213,7 +213,7 @@ int hdd_wmmps_helper(hdd_adapter_t *pAdapter, uint8_t *ptr);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_init(struct hdd_adapter *pAdapter);
 
 /**
  * hdd_wmm_adapter_init() - initialize the WMM configuration of an adapter
@@ -225,7 +225,7 @@ QDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *pAdapter);
 
 /**
  * hdd_wmm_close() - WMM close function
@@ -236,7 +236,7 @@ QDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *pAdapter);
 
 /**
  * hdd_wmm_select_queue() - Function which will classify the packet
@@ -277,7 +277,7 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
  *
  * Return: void
  */
-void hdd_wmm_acquire_access_required(hdd_adapter_t *pAdapter,
+void hdd_wmm_acquire_access_required(struct hdd_adapter *pAdapter,
 				     sme_ac_enum_type acType);
 
 /**
@@ -291,7 +291,7 @@ void hdd_wmm_acquire_access_required(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *pAdapter,
 				  sme_ac_enum_type acType, bool *pGranted);
 
 /**
@@ -304,7 +304,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 			 tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
 
 /**
@@ -317,7 +317,7 @@ QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_connect(struct hdd_adapter *pAdapter,
 			   tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
 
 /**
@@ -329,7 +329,7 @@ QDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *pAdapter,
 				  uint8_t *pUapsdMask);
 
 /**
@@ -340,7 +340,7 @@ QDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
  *
  * Return: true if WMM is enabled, false if WMM is not enabled
  */
-bool hdd_wmm_is_active(hdd_adapter_t *pAdapter);
+bool hdd_wmm_is_active(struct hdd_adapter *pAdapter);
 
 /**
  * hdd_wmm_is_acm_allowed() - Function which will determine if WMM is
@@ -362,7 +362,7 @@ bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev);
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_addts(hdd_adapter_t *pAdapter,
+hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *pAdapter,
 				    uint32_t handle,
 				    struct sme_qos_wmmtspecinfo *pTspec);
 
@@ -375,7 +375,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(hdd_adapter_t *pAdapter,
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_delts(hdd_adapter_t *pAdapter, uint32_t handle);
+hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *pAdapter, uint32_t handle);
 
 /**
  * hdd_wmm_checkts() - Function which will return the status of a traffic
@@ -386,7 +386,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(hdd_adapter_t *pAdapter, uint32_t handle);
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_checkts(hdd_adapter_t *pAdapter,
+hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *pAdapter,
 				      uint32_t handle);
 /**
  * hdd_wmm_adapter_clear() - Function which will clear the WMM status
@@ -396,7 +396,7 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *pAdapter);
 
-void wlan_hdd_process_peer_unauthorised_pause(hdd_adapter_t *adapter);
+void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter);
 #endif /* #ifndef _WLAN_HDD_WMM_H */
