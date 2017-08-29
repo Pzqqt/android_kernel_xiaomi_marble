@@ -45,7 +45,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 				qdf_nbuf_t rxbuf,
 				void *rx_status)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	int rxstat;
 	struct sk_buff *skb;
 	struct sk_buff *skb_next;
@@ -54,7 +54,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 	qdf_assert(context);
 	qdf_assert(rxbuf);
 
-	adapter = (hdd_adapter_t *)context;
+	adapter = (struct hdd_adapter *)context;
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			"invalid adapter %p", adapter);
@@ -131,7 +131,7 @@ int hdd_enable_monitor_mode(struct net_device *dev)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
 	ENTER_DEV(dev);
 
