@@ -143,7 +143,7 @@ extern struct notifier_block hdd_netdev_notifier;
  *
  * Return: nothing
  */
-static void hdd_enable_gtk_offload(hdd_adapter_t *adapter)
+static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 	status = pmo_ucfg_enable_gtk_offload_in_fwr(adapter->hdd_vdev);
@@ -159,7 +159,7 @@ static void hdd_enable_gtk_offload(hdd_adapter_t *adapter)
  *
  * Return: nothing
  */
-static void hdd_disable_gtk_offload(hdd_adapter_t *adapter)
+static void hdd_disable_gtk_offload(struct hdd_adapter *adapter)
 {
 	struct pmo_gtk_rsp_req gtk_rsp_request;
 	QDF_STATUS status;
@@ -202,7 +202,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 {
 	struct inet6_ifaddr *ifa = (struct inet6_ifaddr *)arg;
 	struct net_device *ndev = ifa->idev->dev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
 	int errno;
 
@@ -359,7 +359,7 @@ static int hdd_fill_ipv6_ac_addr(struct inet6_dev *idev,
 	return 0;
 }
 
-void hdd_enable_ns_offload(hdd_adapter_t *adapter,
+void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
 	struct inet6_dev *in6_dev;
@@ -431,7 +431,7 @@ out:
 
 }
 
-void hdd_disable_ns_offload(hdd_adapter_t *adapter,
+void hdd_disable_ns_offload(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	QDF_STATUS status;
@@ -468,12 +468,12 @@ out:
 static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	int errno;
 
 	ENTER();
 
-	adapter = container_of(work, hdd_adapter_t, ipv6NotifierWorkQueue);
+	adapter = container_of(work, struct hdd_adapter, ipv6NotifierWorkQueue);
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		goto exit;
@@ -502,7 +502,7 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	cds_ssr_unprotect(__func__);
 }
 
-static void hdd_enable_hw_filter(hdd_adapter_t *adapter)
+static void hdd_enable_hw_filter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
@@ -515,7 +515,7 @@ static void hdd_enable_hw_filter(hdd_adapter_t *adapter)
 	EXIT();
 }
 
-static void hdd_disable_hw_filter(hdd_adapter_t *adapter)
+static void hdd_disable_hw_filter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
@@ -528,7 +528,7 @@ static void hdd_disable_hw_filter(hdd_adapter_t *adapter)
 	EXIT();
 }
 
-void hdd_enable_host_offloads(hdd_adapter_t *adapter,
+void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
 	ENTER();
@@ -555,7 +555,7 @@ out:
 
 }
 
-void hdd_disable_host_offloads(hdd_adapter_t *adapter,
+void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
 	ENTER();
@@ -588,7 +588,7 @@ out:
  *
  * return in_ifaddr pointer on success, NULL for failure
  */
-static struct in_ifaddr *hdd_lookup_ifaddr(hdd_adapter_t *adapter)
+static struct in_ifaddr *hdd_lookup_ifaddr(struct hdd_adapter *adapter)
 {
 	struct in_ifaddr *ifa;
 	struct in_device *in_dev;
@@ -620,7 +620,7 @@ static struct in_ifaddr *hdd_lookup_ifaddr(hdd_adapter_t *adapter)
  *
  * return: zero for success; non-zero for failure
  */
-static int hdd_populate_ipv4_addr(hdd_adapter_t *adapter, uint8_t *ipv4_addr)
+static int hdd_populate_ipv4_addr(struct hdd_adapter *adapter, uint8_t *ipv4_addr)
 {
 	struct in_ifaddr *ifa;
 	int i;
@@ -657,7 +657,7 @@ static int hdd_populate_ipv4_addr(hdd_adapter_t *adapter, uint8_t *ipv4_addr)
  *
  * return: zero for success, non-zero for failure
  */
-static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
+static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 	int exit_code;
@@ -726,12 +726,12 @@ static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
 static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	int errno;
 
 	ENTER();
 
-	adapter = container_of(work, hdd_adapter_t, ipv4NotifierWorkQueue);
+	adapter = container_of(work, struct hdd_adapter, ipv4NotifierWorkQueue);
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		goto exit;
@@ -781,7 +781,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 {
 	struct in_ifaddr *ifa = (struct in_ifaddr *)arg;
 	struct net_device *ndev = ifa->ifa_dev->dev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
 	int errno;
 
@@ -861,7 +861,7 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
  *	NULL - on failure of operation
  */
 static struct in_ifaddr *hdd_get_ipv4_local_interface(
-				hdd_adapter_t *pAdapter)
+				struct hdd_adapter *pAdapter)
 {
 	struct in_ifaddr **ifap = NULL;
 	struct in_ifaddr *ifa = NULL;
@@ -882,7 +882,7 @@ static struct in_ifaddr *hdd_get_ipv4_local_interface(
 	return ifa;
 }
 
-void hdd_enable_arp_offload(hdd_adapter_t *adapter,
+void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -928,7 +928,7 @@ out:
 
 }
 
-void hdd_disable_arp_offload(hdd_adapter_t *adapter,
+void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	QDF_STATUS status;
@@ -950,7 +950,7 @@ out:
 	EXIT();
 }
 
-void hdd_enable_mc_addr_filtering(hdd_adapter_t *adapter,
+void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
@@ -970,7 +970,7 @@ out:
 
 }
 
-void hdd_disable_mc_addr_filtering(hdd_adapter_t *adapter,
+void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
@@ -1007,7 +1007,7 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 	return ret;
 }
 
-void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
+void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
@@ -1039,7 +1039,7 @@ void hdd_disable_and_flush_mc_addr_list(hdd_adapter_t *adapter,
  * currently only need to send connection info.
  */
 static void
-hdd_update_conn_state_mask(hdd_adapter_t *adapter, uint32_t *conn_state_mask)
+hdd_update_conn_state_mask(struct hdd_adapter *adapter, uint32_t *conn_state_mask)
 {
 
 	eConnectionState connState;
@@ -1067,7 +1067,7 @@ hdd_suspend_wlan(void)
 	struct hdd_context *pHddCtx;
 
 	QDF_STATUS status;
-	hdd_adapter_t *pAdapter = NULL;
+	struct hdd_adapter *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	uint32_t conn_state_mask = 0;
 	hdd_info("WLAN being suspended by OS");
@@ -1125,7 +1125,7 @@ next_adapter:
 static int hdd_resume_wlan(void)
 {
 	struct hdd_context *pHddCtx;
-	hdd_adapter_t *pAdapter = NULL;
+	struct hdd_adapter *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 
@@ -1211,7 +1211,7 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 {
 	QDF_STATUS  status;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 
 	ENTER();
 
@@ -1348,7 +1348,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	v_CONTEXT_t p_cds_context = NULL;
 	struct hdd_context *pHddCtx = NULL;
-	hdd_adapter_t *pAdapter;
+	struct hdd_adapter *pAdapter;
 	int ret;
 	bool bug_on_reinit_failure = CFG_BUG_ON_REINIT_FAILURE_DEFAULT;
 
@@ -1447,7 +1447,7 @@ success:
 	return QDF_STATUS_SUCCESS;
 }
 
-int wlan_hdd_set_powersave(hdd_adapter_t *adapter,
+int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	bool allow_power_save, uint32_t timeout)
 {
 	tHalHandle hal;
@@ -1565,7 +1565,7 @@ hdd_sched_scan_results(struct wiphy *wiphy, uint64_t reqid)
 static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 {
 	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
-	hdd_adapter_t *pAdapter;
+	struct hdd_adapter *pAdapter;
 	hdd_adapter_list_node_t *pAdapterNode, *pNext;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int exit_code;
@@ -1723,7 +1723,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
-	hdd_adapter_t *pAdapter;
+	struct hdd_adapter *pAdapter;
 	struct hdd_scan_info *pScanInfo;
 	QDF_STATUS status;
 	int rc;
@@ -1923,7 +1923,7 @@ int wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
  *
  * Return: None
  */
-static void hdd_stop_dhcp_ind(hdd_adapter_t *adapter)
+static void hdd_stop_dhcp_ind(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -1944,7 +1944,7 @@ static void hdd_stop_dhcp_ind(hdd_adapter_t *adapter)
  *
  * Return: None
  */
-static void hdd_start_dhcp_ind(hdd_adapter_t *adapter)
+static void hdd_start_dhcp_ind(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -1971,7 +1971,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 					      bool allow_power_save,
 					      int timeout)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *pHddCtx;
 	int status;
 
@@ -2155,7 +2155,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 
 	struct hdd_context *pHddCtx = (struct hdd_context *) wiphy_priv(wiphy);
 	struct net_device *ndev = wdev->netdev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -2237,7 +2237,7 @@ int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
  *
  * Return: 0 on success; Errno on failure
  */
-int hdd_set_qpower_config(struct hdd_context *hddctx, hdd_adapter_t *adapter,
+int hdd_set_qpower_config(struct hdd_context *hddctx, struct hdd_adapter *adapter,
 			  u8 qpower)
 {
 	QDF_STATUS status;
