@@ -51,7 +51,7 @@ static void hdd_deinit_pdev_os_priv(struct hdd_context *hdd_ctx)
 	wlan_cfg80211_scan_priv_deinit(hdd_ctx->hdd_pdev);
 }
 
-static void hdd_init_vdev_os_priv(hdd_adapter_t *adapter,
+static void hdd_init_vdev_os_priv(struct hdd_adapter *adapter,
 	struct vdev_osif_priv *os_priv)
 {
 	/* Initialize the vdev OS private structure*/
@@ -159,7 +159,7 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 }
 
 int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-				     hdd_adapter_t *adapter)
+				     struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
@@ -211,7 +211,7 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	return 0;
 }
 
-int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter)
+int hdd_objmgr_destroy_vdev(struct hdd_adapter *adapter)
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct vdev_osif_priv *osif_priv;
@@ -236,7 +236,7 @@ int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter)
 	return qdf_status_to_os_return(wlan_objmgr_vdev_obj_delete(vdev));
 }
 
-int hdd_objmgr_release_vdev(hdd_adapter_t *adapter)
+int hdd_objmgr_release_vdev(struct hdd_adapter *adapter)
 {
 	/* allow physical vdev destroy by releasing the hdd reference */
 	wlan_objmgr_vdev_release_ref(adapter->hdd_vdev, WLAN_HDD_ID_OBJ_MGR);
@@ -247,7 +247,7 @@ int hdd_objmgr_release_vdev(hdd_adapter_t *adapter)
 	return 0;
 }
 
-int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter)
+int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
 {
 	int errno;
 

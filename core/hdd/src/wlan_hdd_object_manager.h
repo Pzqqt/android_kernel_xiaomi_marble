@@ -116,7 +116,7 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx);
  * Return: 0 for success, negative error code for failure
  */
 int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
-			      hdd_adapter_t *adapter);
+			      struct hdd_adapter *adapter);
 
 /**
  * hdd_objmgr_destroy_vdev() - Delete vdev
@@ -132,7 +132,7 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter);
+int hdd_objmgr_destroy_vdev(struct hdd_adapter *adapter);
 
 /**
  * hdd_objmgr_release_vdev() - releases the vdev from adapter
@@ -142,7 +142,7 @@ int hdd_objmgr_destroy_vdev(hdd_adapter_t *adapter);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_release_vdev(hdd_adapter_t *adapter);
+int hdd_objmgr_release_vdev(struct hdd_adapter *adapter);
 
 /**
  * hdd_objmgr_release_and_destroy_vdev() - Delete vdev and remove from adapter
@@ -152,7 +152,7 @@ int hdd_objmgr_release_vdev(hdd_adapter_t *adapter);
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_release_and_destroy_vdev(hdd_adapter_t *adapter);
+int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter);
 
 /**
  * hdd_objmgr_add_peer_object() - Create and add the peer to the vdev
