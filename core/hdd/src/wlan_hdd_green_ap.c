@@ -118,7 +118,7 @@ static void hdd_green_ap_update(struct hdd_context *hdd_ctx,
  *
  * Return: 0 upon success, non-zero upon failure
  */
-static int hdd_green_ap_enable(hdd_adapter_t *adapter, uint8_t enable)
+static int hdd_green_ap_enable(struct hdd_adapter *adapter, uint8_t enable)
 {
 	int ret;
 
@@ -142,7 +142,7 @@ static void hdd_green_ap_mc(struct hdd_context *hdd_ctx,
 			    enum hdd_green_ap_event event)
 {
 	struct hdd_green_ap_ctx *green_ap;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 
 	green_ap = hdd_ctx->green_ap_ctx;
 	if (green_ap == NULL)
