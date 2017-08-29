@@ -1235,7 +1235,7 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 {
 	struct ath_pktlog_hdr pktlog_hdr = {0};
 	struct packet_dump pd_hdr = {0};
-	hdd_context_t *hdd_ctx;
+	struct hdd_context *hdd_ctx;
 	hdd_adapter_t *adapter;
 	v_CONTEXT_t vos_ctx;
 
@@ -1243,7 +1243,7 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 	if (!vos_ctx)
 		return;
 
-	hdd_ctx = (hdd_context_t *)cds_get_context(QDF_MODULE_ID_HDD);
+	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx)
 		return;
 
