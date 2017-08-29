@@ -49,27 +49,27 @@ enum hdd_tsf_op_result {
 };
 
 #ifdef WLAN_FEATURE_TSF_PLUS
-static inline void hdd_set_th_sync_status(hdd_adapter_t *adapter,
+static inline void hdd_set_th_sync_status(struct hdd_adapter *adapter,
 					  bool initialized)
 {
 	qdf_atomic_set(&adapter->tsf_sync_ready_flag,
 		       (initialized ? 1 : 0));
 }
 
-static inline bool hdd_get_th_sync_status(hdd_adapter_t *adapter)
+static inline bool hdd_get_th_sync_status(struct hdd_adapter *adapter)
 {
 	return qdf_atomic_read(&adapter->tsf_sync_ready_flag) != 0;
 }
 
 #else
-static inline bool hdd_get_th_sync_status(hdd_adapter_t *adapter)
+static inline bool hdd_get_th_sync_status(struct hdd_adapter *adapter)
 {
 	return true;
 }
 #endif
 
 static
-enum hdd_tsf_get_state hdd_tsf_check_conn_state(hdd_adapter_t *adapter)
+enum hdd_tsf_get_state hdd_tsf_check_conn_state(struct hdd_adapter *adapter)
 {
 	enum hdd_tsf_get_state ret = TSF_RETURN;
 	struct hdd_station_ctx *hdd_sta_ctx;
@@ -92,7 +92,7 @@ enum hdd_tsf_get_state hdd_tsf_check_conn_state(hdd_adapter_t *adapter)
 	return ret;
 }
 
-static bool hdd_tsf_is_initialized(hdd_adapter_t *adapter)
+static bool hdd_tsf_is_initialized(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hddctx;
 
@@ -151,7 +151,7 @@ static int hdd_tsf_reset_gpio(struct hdd_adapter *adapter)
 #endif
 
 static enum hdd_tsf_op_result hdd_capture_tsf_internal(
-	hdd_adapter_t *adapter, uint32_t *buf, int len)
+	struct hdd_adapter *adapter, uint32_t *buf, int len)
 {
 	int ret;
 	struct hdd_context *hddctx;
@@ -210,7 +210,7 @@ static enum hdd_tsf_op_result hdd_capture_tsf_internal(
 }
 
 static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
-	hdd_adapter_t *adapter, uint32_t *buf, int len)
+	struct hdd_adapter *adapter, uint32_t *buf, int len)
 {
 	int ret;
 	struct hdd_context *hddctx;
@@ -302,7 +302,7 @@ enum hdd_ts_status {
 };
 
 static
-enum hdd_tsf_op_result __hdd_start_tsf_sync(hdd_adapter_t *adapter)
+enum hdd_tsf_op_result __hdd_start_tsf_sync(struct hdd_adapter *adapter)
 {
 	QDF_STATUS ret;
 
@@ -321,7 +321,7 @@ enum hdd_tsf_op_result __hdd_start_tsf_sync(hdd_adapter_t *adapter)
 }
 
 static
-enum hdd_tsf_op_result __hdd_stop_tsf_sync(hdd_adapter_t *adapter)
+enum hdd_tsf_op_result __hdd_stop_tsf_sync(struct hdd_adapter *adapter)
 {
 	QDF_STATUS ret;
 
@@ -338,7 +338,7 @@ enum hdd_tsf_op_result __hdd_stop_tsf_sync(hdd_adapter_t *adapter)
 	return HDD_TSF_OP_SUCC;
 }
 
-static inline void hdd_reset_timestamps(hdd_adapter_t *adapter)
+static inline void hdd_reset_timestamps(struct hdd_adapter *adapter)
 {
 	qdf_spin_lock_bh(&adapter->host_target_sync_lock);
 	adapter->cur_host_time = 0;
@@ -413,7 +413,7 @@ enum hdd_ts_status hdd_check_timestamp_status(
 	return HDD_TS_STATUS_READY;
 }
 
-static void hdd_update_timestamp(hdd_adapter_t *adapter,
+static void hdd_update_timestamp(struct hdd_adapter *adapter,
 				 uint64_t target_time, uint64_t host_time)
 {
 	int interval = 0;
@@ -480,7 +480,7 @@ static void hdd_update_timestamp(hdd_adapter_t *adapter,
 		qdf_mc_timer_start(&adapter->host_target_sync_timer, interval);
 }
 
-static inline bool hdd_tsf_is_in_cap(hdd_adapter_t *adapter)
+static inline bool hdd_tsf_is_in_cap(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hddctx;
 
@@ -533,7 +533,7 @@ static inline int hdd_uint64_minus(uint64_t x, uint64_t y, uint64_t *ret)
 }
 
 static inline int32_t hdd_get_hosttime_from_targettime(
-	hdd_adapter_t *adapter, uint64_t target_time,
+	struct hdd_adapter *adapter, uint64_t target_time,
 	uint64_t *host_time)
 {
 	int32_t ret = -EINVAL;
@@ -571,7 +571,7 @@ static inline int32_t hdd_get_hosttime_from_targettime(
 }
 
 static inline int32_t hdd_get_targettime_from_hosttime(
-	hdd_adapter_t *adapter, uint64_t host_time,
+	struct hdd_adapter *adapter, uint64_t host_time,
 	uint64_t *target_time)
 {
 	int32_t ret = -EINVAL;
@@ -613,13 +613,13 @@ static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
 {
 	struct hdd_station_ctx *hdd_sta_ctx;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	ssize_t size;
 	uint64_t host_time, target_time;
 
 	struct net_device *net_dev = container_of(dev, struct net_device, dev);
 
-	adapter = (hdd_adapter_t *)(netdev_priv(net_dev));
+	adapter = (struct hdd_adapter *)(netdev_priv(net_dev));
 	if (adapter->magic != WLAN_HDD_ADAPTER_MAGIC)
 		return scnprintf(buf, PAGE_SIZE, "Invalid device\n");
 
@@ -659,18 +659,18 @@ static DEVICE_ATTR(tsf, 0400, hdd_wlan_tsf_show, NULL);
 static void hdd_capture_tsf_timer_expired_handler(void *arg)
 {
 	uint32_t tsf_op_resp;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 
 	if (!arg)
 		return;
 
-	adapter = (hdd_adapter_t *)arg;
+	adapter = (struct hdd_adapter *)arg;
 	hdd_capture_tsf_internal(adapter, &tsf_op_resp, 1);
 }
 
 static irqreturn_t hdd_tsf_captured_irq_handler(int irq, void *arg)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	uint64_t host_time;
 	char *name = NULL;
@@ -701,7 +701,7 @@ static irqreturn_t hdd_tsf_captured_irq_handler(int irq, void *arg)
 	return IRQ_HANDLED;
 }
 
-static enum hdd_tsf_op_result hdd_tsf_sync_init(hdd_adapter_t *adapter)
+static enum hdd_tsf_op_result hdd_tsf_sync_init(struct hdd_adapter *adapter)
 {
 	QDF_STATUS ret;
 	struct hdd_context *hddctx;
@@ -750,7 +750,7 @@ fail:
 	return HDD_TSF_OP_FAIL;
 }
 
-static enum hdd_tsf_op_result hdd_tsf_sync_deinit(hdd_adapter_t *adapter)
+static enum hdd_tsf_op_result hdd_tsf_sync_deinit(struct hdd_adapter *adapter)
 {
 	QDF_STATUS ret;
 	struct hdd_context *hddctx;
@@ -795,7 +795,7 @@ static enum hdd_tsf_op_result hdd_tsf_sync_deinit(hdd_adapter_t *adapter)
 	return HDD_TSF_OP_SUCC;
 }
 
-static inline void hdd_update_tsf(hdd_adapter_t *adapter, uint64_t tsf)
+static inline void hdd_update_tsf(struct hdd_adapter *adapter, uint64_t tsf)
 {
 	uint32_t tsf_op_resp[3];
 
@@ -807,13 +807,13 @@ static inline
 enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
 					    uint64_t target_time)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct net_device *net_dev = netbuf->dev;
 
 	if (!net_dev)
 		return HDD_TSF_OP_FAIL;
 
-	adapter = (hdd_adapter_t *)(netdev_priv(net_dev));
+	adapter = (struct hdd_adapter *)(netdev_priv(net_dev));
 	if (adapter && adapter->magic == WLAN_HDD_ADAPTER_MAGIC &&
 	    hdd_get_th_sync_status(adapter)) {
 		uint64_t host_time;
@@ -828,7 +828,7 @@ enum hdd_tsf_op_result hdd_netbuf_timestamp(qdf_nbuf_t netbuf,
 	return HDD_TSF_OP_FAIL;
 }
 
-int hdd_start_tsf_sync(hdd_adapter_t *adapter)
+int hdd_start_tsf_sync(struct hdd_adapter *adapter)
 {
 	enum hdd_tsf_op_result ret;
 
@@ -845,7 +845,7 @@ int hdd_start_tsf_sync(hdd_adapter_t *adapter)
 		HDD_TSF_OP_SUCC) ? 0 : -EINVAL;
 }
 
-int hdd_stop_tsf_sync(hdd_adapter_t *adapter)
+int hdd_stop_tsf_sync(struct hdd_adapter *adapter)
 {
 	enum hdd_tsf_op_result ret;
 
@@ -912,7 +912,7 @@ int hdd_rx_timestamp(qdf_nbuf_t netbuf, uint64_t target_time)
 	return -EINVAL;
 }
 
-static inline int __hdd_capture_tsf(hdd_adapter_t *adapter,
+static inline int __hdd_capture_tsf(struct hdd_adapter *adapter,
 				    uint32_t *buf, int len)
 {
 	if (!adapter || !buf) {
@@ -928,7 +928,7 @@ static inline int __hdd_capture_tsf(hdd_adapter_t *adapter,
 	return 0;
 }
 
-static inline int __hdd_indicate_tsf(hdd_adapter_t *adapter,
+static inline int __hdd_indicate_tsf(struct hdd_adapter *adapter,
 				     uint32_t *buf, int len)
 {
 	if (!adapter || !buf) {
@@ -982,7 +982,7 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 	return HDD_TSF_OP_SUCC;
 }
 
-void hdd_tsf_notify_wlan_state_change(hdd_adapter_t *adapter,
+void hdd_tsf_notify_wlan_state_change(struct hdd_adapter *adapter,
 				      eConnectionState old_state,
 				      eConnectionState new_state)
 {
@@ -997,18 +997,18 @@ void hdd_tsf_notify_wlan_state_change(hdd_adapter_t *adapter,
 		hdd_stop_tsf_sync(adapter);
 }
 #else
-static inline void hdd_update_tsf(hdd_adapter_t *adapter, uint64_t tsf)
+static inline void hdd_update_tsf(struct hdd_adapter *adapter, uint64_t tsf)
 {
 }
 
-static inline int __hdd_indicate_tsf(hdd_adapter_t *adapter,
+static inline int __hdd_indicate_tsf(struct hdd_adapter *adapter,
 				     uint32_t *buf, int len)
 {
 	return (hdd_indicate_tsf_internal(adapter, buf, len) ==
 		HDD_TSF_OP_SUCC) ? 0 : -EINVAL;
 }
 
-static inline int __hdd_capture_tsf(hdd_adapter_t *adapter,
+static inline int __hdd_capture_tsf(struct hdd_adapter *adapter,
 				    uint32_t *buf, int len)
 {
 	return (hdd_capture_tsf_internal(adapter, buf, len) ==
@@ -1028,12 +1028,12 @@ enum hdd_tsf_op_result wlan_hdd_tsf_plus_deinit(struct hdd_context *hdd_ctx)
 }
 #endif /* WLAN_FEATURE_TSF_PLUS */
 
-int hdd_capture_tsf(hdd_adapter_t *adapter, uint32_t *buf, int len)
+int hdd_capture_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len)
 {
 	return __hdd_capture_tsf(adapter, buf, len);
 }
 
-int hdd_indicate_tsf(hdd_adapter_t *adapter, uint32_t *buf, int len)
+int hdd_indicate_tsf(struct hdd_adapter *adapter, uint32_t *buf, int len)
 {
 	return __hdd_indicate_tsf(adapter, buf, len);
 }
@@ -1115,7 +1115,7 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 					int data_len)
 {
 	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb_vendor[QCA_WLAN_VENDOR_ATTR_TSF_MAX + 1];
 	int status, ret;
