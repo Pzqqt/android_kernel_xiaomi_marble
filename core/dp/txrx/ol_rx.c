@@ -795,6 +795,8 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 			peer->tids_last_pn[i].pn128[0] =
 				qdf_cpu_to_le64(
 					peer->tids_last_pn[i].pn128[0]);
+			if (sec_index == txrx_sec_ucast)
+				peer->tids_rekey_flag[i] = 1;
 		}
 	}
 }
