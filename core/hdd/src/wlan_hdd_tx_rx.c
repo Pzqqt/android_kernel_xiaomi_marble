@@ -102,7 +102,7 @@ const uint8_t hdd_qdisc_ac_to_tl_ac[] = {
  */
 void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
+	struct hdd_adapter *pAdapter = (struct hdd_adapter *) adapter_context;
 
 	if (!pAdapter) {
 		/* INVALID ARG */
@@ -124,7 +124,7 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context)
  * Return: None
  */
 static void
-hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
+hdd_tx_resume_false(struct hdd_adapter *pAdapter, bool tx_resume)
 {
 	if (true == tx_resume)
 		return;
@@ -154,12 +154,12 @@ hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
 #else
 
 static inline void
-hdd_tx_resume_false(hdd_adapter_t *pAdapter, bool tx_resume)
+hdd_tx_resume_false(struct hdd_adapter *pAdapter, bool tx_resume)
 {
 }
 #endif
 
-static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
+static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *pAdapter,
 		struct sk_buff *skb)
 {
 	if (pAdapter->tx_flow_low_watermark > 0)
@@ -181,7 +181,7 @@ static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
  */
 void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
+	struct hdd_adapter *pAdapter = (struct hdd_adapter *) adapter_context;
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 
 	if (!pAdapter) {
@@ -208,7 +208,7 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 
 bool hdd_tx_flow_control_is_pause(void *adapter_context)
 {
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
+	struct hdd_adapter *pAdapter = (struct hdd_adapter *) adapter_context;
 
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		/* INVALID ARG */
@@ -219,7 +219,7 @@ bool hdd_tx_flow_control_is_pause(void *adapter_context)
 	return pAdapter->pause_map & (1 << WLAN_DATA_FLOW_CONTROL);
 }
 
-void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
+void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flow_control_fp,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause_fp)
@@ -242,7 +242,7 @@ void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter)
+void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter)
 {
 	cdp_fc_deregister(cds_get_context(QDF_MODULE_ID_SOC),
 			adapter->sessionId);
@@ -261,7 +261,7 @@ void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter)
  *
  * Return: none
  */
-void hdd_get_tx_resource(hdd_adapter_t *adapter,
+void hdd_get_tx_resource(struct hdd_adapter *adapter,
 			uint8_t STAId, uint16_t timer_value)
 {
 	if (false ==
@@ -294,7 +294,7 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
  *
  * Return: pointer to skb structure
  */
-static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
+static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
@@ -404,7 +404,7 @@ void wlan_hdd_classify_pkt(struct sk_buff *skb)
  */
 #ifdef WLAN_ICMP_DISABLE_PS
 static inline void
-wlan_hdd_latency_opt(hdd_adapter_t *adapter, struct sk_buff *skb)
+wlan_hdd_latency_opt(struct hdd_adapter *adapter, struct sk_buff *skb)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -419,7 +419,7 @@ wlan_hdd_latency_opt(hdd_adapter_t *adapter, struct sk_buff *skb)
 }
 #else
 static inline void
-wlan_hdd_latency_opt(hdd_adapter_t *adapter, struct sk_buff *skb)
+wlan_hdd_latency_opt(struct hdd_adapter *adapter, struct sk_buff *skb)
 {
 }
 #endif
@@ -435,7 +435,7 @@ wlan_hdd_latency_opt(hdd_adapter_t *adapter, struct sk_buff *skb)
  *
  * Returns: None
  */
-static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
+static void hdd_get_transmit_sta_id(struct hdd_adapter *adapter,
 			struct sk_buff *skb, uint8_t *station_id)
 {
 	bool mcbc_addr = false;
@@ -528,7 +528,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	QDF_STATUS status;
 	sme_ac_enum_type ac;
 	enum sme_qos_wmmuptype up;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool granted;
 	uint8_t STAId;
 	struct hdd_station_ctx *pHddStaCtx = &pAdapter->sessionCtx.station;
@@ -861,7 +861,7 @@ static inline void hdd_wlan_datastall_sta_event(void)
  */
 static void __hdd_tx_timeout(struct net_device *dev)
 {
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	struct netdev_queue *txq;
 	int i = 0;
@@ -917,7 +917,7 @@ void hdd_tx_timeout(struct net_device *dev)
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *pAdapter)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -937,7 +937,7 @@ QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *pAdapter)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -963,7 +963,7 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
  */
 static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	int rxstat;
 	struct sk_buff *skb;
 	struct sk_buff *skb_next;
@@ -976,7 +976,7 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter = (hdd_adapter_t *)context;
+	adapter = (struct hdd_adapter *)context;
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "invalid adapter %p", adapter);
@@ -1142,7 +1142,7 @@ static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
  */
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 {
-	hdd_adapter_t *pAdapter = NULL;
+	struct hdd_adapter *pAdapter = NULL;
 	struct hdd_context *pHddCtx = NULL;
 	int rxstat;
 	struct sk_buff *skb = NULL;
@@ -1159,7 +1159,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pAdapter = (hdd_adapter_t *)context;
+	pAdapter = (struct hdd_adapter *)context;
 	if (unlikely(WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
@@ -1346,7 +1346,7 @@ const char *hdd_action_type_to_string(enum netif_action_type action)
  * @action: action type
  * @reason: reason type
  */
-static void wlan_hdd_update_queue_oper_stats(hdd_adapter_t *adapter,
+static void wlan_hdd_update_queue_oper_stats(struct hdd_adapter *adapter,
 	enum netif_action_type action, enum netif_reason_type reason)
 {
 	switch (action) {
@@ -1421,7 +1421,7 @@ static void wlan_hdd_update_txq_timestamp(struct net_device *dev)
  *
  * Return: none
  */
-static void wlan_hdd_update_unpause_time(hdd_adapter_t *adapter)
+static void wlan_hdd_update_unpause_time(struct hdd_adapter *adapter)
 {
 	qdf_time_t curr_time = qdf_system_ticks();
 
@@ -1435,7 +1435,7 @@ static void wlan_hdd_update_unpause_time(hdd_adapter_t *adapter)
  *
  * Return: none
  */
-static void wlan_hdd_update_pause_time(hdd_adapter_t *adapter,
+static void wlan_hdd_update_pause_time(struct hdd_adapter *adapter,
 	 uint32_t temp_map)
 {
 	qdf_time_t curr_time = qdf_system_ticks();
@@ -1468,7 +1468,7 @@ static void wlan_hdd_update_pause_time(hdd_adapter_t *adapter,
  *
  * Return: None
  */
-void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
+void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 	enum netif_action_type action, enum netif_reason_type reason)
 {
 	uint32_t temp_map;
@@ -1577,7 +1577,7 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
  */
 int hdd_set_mon_rx_cb(struct net_device *dev)
 {
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx =  WLAN_HDD_GET_CTX(adapter);
 	int ret;
 	QDF_STATUS qdf_status;
@@ -1627,7 +1627,7 @@ exit:
  *
  * Return: none
  */
-void hdd_send_rps_ind(hdd_adapter_t *adapter)
+void hdd_send_rps_ind(struct hdd_adapter *adapter)
 {
 	int i;
 	uint8_t cpu_map_list_len = 0;

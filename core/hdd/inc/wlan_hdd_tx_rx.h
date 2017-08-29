@@ -58,8 +58,8 @@ struct hdd_context;
 int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev);
 void hdd_tx_timeout(struct net_device *dev);
 
-QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter);
-QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *pAdapter);
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 
 #ifdef IPA_OFFLOAD
@@ -92,12 +92,12 @@ void hdd_tx_resume_timer_expired_handler(void *adapter_context);
  *
  * Return: none
  */
-void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
+void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flowControl,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause);
-void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter);
-void hdd_get_tx_resource(hdd_adapter_t *adapter,
+void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter);
+void hdd_get_tx_resource(struct hdd_adapter *adapter,
 			uint8_t STAId, uint16_t timer_value);
 
 #else
@@ -111,16 +111,16 @@ static inline bool hdd_tx_flow_control_is_pause(void *adapter_context)
 static inline void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 {
 }
-static inline void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
+static inline void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flowControl,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
 }
-static inline void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter)
+static inline void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter)
 {
 }
-static inline void hdd_get_tx_resource(hdd_adapter_t *adapter,
+static inline void hdd_get_tx_resource(struct hdd_adapter *adapter,
 			uint8_t STAId, uint16_t timer_value)
 {
 }
@@ -130,10 +130,10 @@ int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr)
 
 const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);
-void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
+void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		enum netif_action_type action, enum netif_reason_type reason);
 int hdd_set_mon_rx_cb(struct net_device *dev);
-void hdd_send_rps_ind(hdd_adapter_t *adapter);
+void hdd_send_rps_ind(struct hdd_adapter *adapter);
 void wlan_hdd_classify_pkt(struct sk_buff *skb);
 
 #ifdef MSM_PLATFORM
