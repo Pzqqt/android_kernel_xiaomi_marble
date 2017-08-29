@@ -89,7 +89,7 @@ static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
  * Return: 0 if package was created, otherwise a negative errno
  */
 static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
-					 hdd_adapter_t *adapter,
+					 struct hdd_adapter *adapter,
 					 struct hdd_station_ctx *sta_ctx,
 					 uint8_t is_on, uint8_t is_connected)
 {
@@ -282,7 +282,7 @@ static void wlan_hdd_send_version_pkg(uint32_t fw_version,
  */
 static void wlan_hdd_send_all_scan_intf_info(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	hdd_adapter_list_node_t *node = NULL, *next = NULL;
 	bool scan_intf_found = false;
 	QDF_STATUS status;
