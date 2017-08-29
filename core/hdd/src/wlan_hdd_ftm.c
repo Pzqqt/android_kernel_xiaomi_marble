@@ -176,7 +176,7 @@ void hdd_ftm_mc_process_msg(void *message)
  *
  * Return: 0 on success, non-zero on error
  */
-static int wlan_hdd_qcmbr_command(hdd_adapter_t *adapter,
+static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
 				  struct qcmbr_data *pqcmbr_data)
 {
 	int ret = 0;
@@ -236,7 +236,7 @@ static int wlan_hdd_qcmbr_command(hdd_adapter_t *adapter,
  *
  * Return: 0 on success, non-zero on error
  */
-static int wlan_hdd_qcmbr_compat_ioctl(hdd_adapter_t *adapter,
+static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
 				       struct ifreq *ifr)
 {
 	struct qcmbr_data *qcmbr_data;
@@ -262,7 +262,7 @@ exit:
 	return ret;
 }
 #else                           /* CONFIG_COMPAT */
-static int wlan_hdd_qcmbr_compat_ioctl(hdd_adapter_t *adapter,
+static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
 				       struct ifreq *ifr)
 {
 	return 0;
@@ -276,7 +276,7 @@ static int wlan_hdd_qcmbr_compat_ioctl(hdd_adapter_t *adapter,
  *
  * Return: 0 on success, non-zero on error
  */
-static int wlan_hdd_qcmbr_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr)
+static int wlan_hdd_qcmbr_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 {
 	struct qcmbr_data *qcmbr_data;
 	int ret = 0;
@@ -308,7 +308,7 @@ exit:
  *
  * Return: 0 on success, non-zero on error
  */
-int wlan_hdd_qcmbr_unified_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr)
+int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 {
 	int ret = 0;
 

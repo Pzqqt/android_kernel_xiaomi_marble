@@ -47,7 +47,7 @@ int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx);
 void hdd_ftm_mc_process_msg(void *message);
 #if  defined(QCA_WIFI_FTM)
 QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);
-int wlan_hdd_qcmbr_unified_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr);
+int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr);
 #endif
 
 #endif
