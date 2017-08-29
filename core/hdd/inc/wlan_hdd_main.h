@@ -1191,7 +1191,7 @@ struct hdd_adapter {
 
 	union {
 		hdd_station_ctx_t station;
-		hdd_ap_ctx_t ap;
+		struct hdd_ap_ctx ap;
 	} sessionCtx;
 
 #ifdef WLAN_FEATURE_TSF

@@ -1719,7 +1719,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *adapter;
 	QDF_STATUS status;
-	hdd_ap_ctx_t *ap_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 
 	if (!hdd_ctx || hdd_ctx->config->disableDFSChSwitch) {
 		hdd_info("skip tx block hdd_ctx=%p, disableDFSChSwitch=%d",
@@ -7167,7 +7167,7 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
  */
 void hdd_switch_sap_channel(hdd_adapter_t *adapter, uint8_t channel)
 {
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	tHalHandle *hal_handle;
 	struct hdd_context *hdd_ctx;
 
@@ -10613,7 +10613,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 						  tScanResultHandle *scan_cache,
 						  bool *concurrent_chnl_same)
 {
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t channel_id;
 	QDF_STATUS status;
 	enum tQDF_ADAPTER_MODE device_mode = ap_adapter->device_mode;
@@ -10662,7 +10662,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
  */
 void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 {
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
@@ -10716,7 +10716,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
  */
 void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter, bool reinit)
 {
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
@@ -12266,7 +12266,7 @@ end:
  */
 void hdd_restart_sap(hdd_adapter_t *ap_adapter)
 {
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);

@@ -602,7 +602,7 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 #ifdef DISABLE_CONCURRENCY_AUTOSAVE
 	QDF_STATUS qdf_status;
 	hdd_adapter_t *pHostapdAdapter;
-	hdd_ap_ctx_t *pHddApCtx;
+	struct hdd_ap_ctx *pHddApCtx;
 	struct hdd_context *hdd_ctx;
 #endif /* DISABLE_CONCURRENCY_AUTOSAVE */
 
@@ -1332,7 +1332,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *usrDataForCallback)
 {
 	hdd_adapter_t *pHostapdAdapter;
-	hdd_ap_ctx_t *pHddApCtx;
+	struct hdd_ap_ctx *pHddApCtx;
 	hdd_hostapd_state_t *pHostapdState;
 	struct net_device *dev;
 	eSapHddEvent sapEvent;
@@ -2698,7 +2698,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 				uint8_t *sec_ch)
 {
 	tHalHandle *hal_handle;
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t intf_ch = 0;
 	struct hdd_context *hdd_ctx;
 	hdd_station_ctx_t *hdd_sta_ctx;
@@ -4797,7 +4797,7 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
 	struct sap_wpspbc_probe_reqies WPSPBCProbeReqIEs;
-	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
+	struct hdd_ap_ctx *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -4953,7 +4953,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 			       union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
-	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
+	struct hdd_ap_ctx *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 	struct hdd_context *hdd_ctx;
 	int ret;
 	QDF_STATUS vstatus;
@@ -5164,7 +5164,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	tHalHandle hHal;
 	hdd_hostapd_state_t *pHostapdState;
-	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
+	struct hdd_ap_ctx *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 	int ret;
 
 	ENTER_DEV(dev);

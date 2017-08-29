@@ -3819,7 +3819,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 {
 	hdd_adapter_t *adapter;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	hdd_ap_ctx_t *ap_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 	hdd_station_ctx_t *sta_ctx;
 	QDF_STATUS qdf_status;
 
@@ -8906,7 +8906,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	struct hdd_context *hdd_ctx;
 	int ret;
 	hdd_adapter_t *ap_adapter, *pre_cac_adapter;
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	QDF_STATUS status;
 	struct wiphy *wiphy;
 	struct net_device *dev;
@@ -9550,7 +9550,7 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SAP_CONFIG_MAX + 1];
 	uint8_t config_channel = 0;
-	hdd_ap_ctx_t *ap_ctx;
+	struct hdd_ap_ctx *ap_ctx;
 	int ret;
 	QDF_STATUS status;
 
@@ -10125,7 +10125,7 @@ static int hdd_update_acs_channel(hdd_adapter_t *adapter, uint8_t reason,
 				  struct hdd_vendor_chan_info *channel_list)
 {
 	tsap_Config_t *sap_config;
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -13588,7 +13588,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	hdd_hostapd_state_t *pHostapdState;
 	QDF_STATUS qdf_ret_status;
 	struct hdd_context *pHddCtx;
-	hdd_ap_ctx_t *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
+	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 
 	ENTER();
 
@@ -14192,7 +14192,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP_256 !=
 		    pWextState->roamProfile.EncryptionType.encryptionType[0])) {
 			/* Saving key direction for default key index to TX default */
-			hdd_ap_ctx_t *pAPCtx =
+			struct hdd_ap_ctx *pAPCtx =
 				WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 			pAPCtx->wepKey[key_index].keyDirection =
 				eSIR_TX_DEFAULT;
@@ -14867,7 +14867,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(hdd_adapter_t *adapter,
 {
 	struct hdd_context *hdd_ctx;
 	hdd_adapter_t *ap_adapter;
-	hdd_ap_ctx_t *hdd_ap_ctx;
+	struct hdd_ap_ctx *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	uint8_t channel = 0;
 	QDF_STATUS status;

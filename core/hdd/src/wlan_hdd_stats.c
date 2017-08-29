@@ -3724,7 +3724,7 @@ static uint8_t hdd_get_rate_flags(uint32_t rate,
  *
  * Return: None
  */
-static void wlan_hdd_fill_rate_info(hdd_ap_ctx_t *ap_ctx,
+static void wlan_hdd_fill_rate_info(struct hdd_ap_ctx *ap_ctx,
 				    struct sir_peer_info_ext *peer_info)
 {
 	uint8_t flags;
@@ -3818,7 +3818,7 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hddctx = wiphy_priv(wiphy);
-	hdd_ap_ctx_t *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	hdd_station_info_t *stainfo = NULL;
 	struct hdd_config *cfg;
 	struct qdf_mac_addr macaddr;

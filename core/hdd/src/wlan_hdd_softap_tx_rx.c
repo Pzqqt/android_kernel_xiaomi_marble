@@ -253,7 +253,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
-	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
+	struct hdd_ap_ctx *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 	struct qdf_mac_addr *pDestMacAddress;
 	uint8_t STAId;
 	uint32_t num_seg;
@@ -990,7 +990,7 @@ QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct qdf_mac_addr broadcastMacAddr =
 					QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	hdd_ap_ctx_t *pHddApCtx;
+	struct hdd_ap_ctx *pHddApCtx;
 
 	pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 
