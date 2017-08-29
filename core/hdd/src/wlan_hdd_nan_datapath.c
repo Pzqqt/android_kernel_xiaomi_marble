@@ -119,7 +119,7 @@ void hdd_nan_datapath_target_config(struct hdd_context *hdd_ctx,
  *
  * Returns: 0 on success, negative error code otherwise
  */
-static int hdd_close_ndi(hdd_adapter_t *adapter)
+static int hdd_close_ndi(struct hdd_adapter *adapter)
 {
 	int errno;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -166,7 +166,7 @@ static int hdd_close_ndi(hdd_adapter_t *adapter)
  */
 static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	QDF_STATUS status;
 	hdd_adapter_list_node_t *curr = NULL, *next = NULL;
@@ -209,7 +209,7 @@ next_adapter:
  *
  * Return: 0 on success, error value on failure
  */
-static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
+static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 				uint8_t operating_channel)
 {
 	int ret;
@@ -290,7 +290,7 @@ static int hdd_ndi_start_bss(hdd_adapter_t *adapter,
 static int hdd_get_random_nan_mac_addr(struct hdd_context *hdd_ctx,
 				       struct qdf_mac_addr *mac_addr)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	uint8_t i, attempts, max_attempt = 16;
 
 	for (attempts = 0; attempts < max_attempt; attempts++) {
@@ -335,7 +335,7 @@ static int hdd_get_random_nan_mac_addr(struct hdd_context *hdd_ctx,
 static int hdd_ndi_create_req_handler(struct hdd_context *hdd_ctx,
 						struct nlattr **tb)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	char *iface_name;
 	uint16_t transaction_id;
 	int ret;
@@ -430,7 +430,7 @@ static int hdd_ndi_create_req_handler(struct hdd_context *hdd_ctx,
 static int hdd_ndi_delete_req_handler(struct hdd_context *hdd_ctx,
 						struct nlattr **tb)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	char *iface_name;
 	uint16_t transaction_id;
 	struct nan_datapath_ctx *ndp_ctx;
@@ -528,7 +528,7 @@ static int hdd_ndi_delete_req_handler(struct hdd_context *hdd_ctx,
 static int hdd_ndp_initiator_req_handler(struct hdd_context *hdd_ctx,
 						struct nlattr **tb)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	char *iface_name;
 	struct ndp_initiator_req req = {0};
 	QDF_STATUS status;
@@ -671,7 +671,7 @@ static int hdd_ndp_initiator_req_handler(struct hdd_context *hdd_ctx,
 static int hdd_ndp_responder_req_handler(struct hdd_context *hdd_ctx,
 						struct nlattr **tb)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	char *iface_name;
 	struct ndp_responder_req req = {0};
 	QDF_STATUS status;
@@ -865,7 +865,7 @@ static int hdd_ndp_end_req_handler(struct hdd_context *hdd_ctx, struct nlattr **
  *
  * Return: none
  */
-static void hdd_ndp_iface_create_rsp_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_iface_create_rsp_handler(struct hdd_adapter *adapter,
 							void *rsp_params)
 {
 	struct sk_buff *vendor_event;
@@ -1013,7 +1013,7 @@ close_ndi:
  *
  * Return: none
  */
-static void hdd_ndp_iface_delete_rsp_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_iface_delete_rsp_handler(struct hdd_adapter *adapter,
 							void *rsp_params)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1056,7 +1056,7 @@ static void hdd_ndp_iface_delete_rsp_handler(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
+void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *vendor_event;
@@ -1167,7 +1167,7 @@ failure:
  *
  * Return: none
  */
-static void hdd_ndp_initiator_rsp_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_initiator_rsp_handler(struct hdd_adapter *adapter,
 						void *rsp_params)
 {
 	struct sk_buff *vendor_event;
@@ -1235,7 +1235,7 @@ ndp_initiator_rsp_nla_failed:
  *
  * Return: none
  */
-static void hdd_ndp_new_peer_ind_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_new_peer_ind_handler(struct hdd_adapter *adapter,
 						void *ind_params)
 {
 	struct sme_ndp_peer_ind *new_peer_ind = ind_params;
@@ -1296,7 +1296,7 @@ free:
  *
  * Return: none
  */
-static void hdd_ndp_peer_departed_ind_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_peer_departed_ind_handler(struct hdd_adapter *adapter,
 							void *ind_params)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1335,7 +1335,7 @@ static void hdd_ndp_peer_departed_ind_handler(hdd_adapter_t *adapter,
  *
  * Return: none
  */
-static void hdd_ndp_confirm_ind_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_confirm_ind_handler(struct hdd_adapter *adapter,
 						void *ind_params)
 {
 	int idx;
@@ -1450,7 +1450,7 @@ ndp_confirm_nla_failed:
  *
  * Return: none
  */
-static void hdd_ndp_indication_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_indication_handler(struct hdd_adapter *adapter,
 						void *ind_params)
 {
 	struct sk_buff *vendor_event;
@@ -1597,7 +1597,7 @@ ndp_indication_nla_failed:
  *
  * Return: none
  */
-static void hdd_ndp_responder_rsp_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_responder_rsp_handler(struct hdd_adapter *adapter,
 							void *rsp_params)
 {
 	struct sk_buff *vendor_event;
@@ -1671,7 +1671,7 @@ ndp_responder_rsp_nla_failed:
  *
  * Return: none
  */
-static void hdd_ndp_end_rsp_handler(hdd_adapter_t *adapter, void *rsp_params)
+static void hdd_ndp_end_rsp_handler(struct hdd_adapter *adapter, void *rsp_params)
 {
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -1740,7 +1740,7 @@ ndp_end_rsp_nla_failed:
  *
  * Return: none
  */
-static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
+static void hdd_ndp_end_ind_handler(struct hdd_adapter *adapter,
 						void *ind_params)
 {
 	struct sk_buff *vendor_event;
@@ -1750,7 +1750,7 @@ static void hdd_ndp_end_ind_handler(hdd_adapter_t *adapter,
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint32_t *ndp_instance_array;
-	hdd_adapter_t *ndi_adapter;
+	struct hdd_adapter *ndi_adapter;
 
 	ENTER();
 
@@ -1840,7 +1840,7 @@ ndp_end_ind_nla_failed:
  *
  * Return: none
  */
-void hdd_ndp_event_handler(hdd_adapter_t *adapter,
+void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
 	eCsrRoamResult roam_result)
 {
@@ -1894,7 +1894,7 @@ void hdd_ndp_event_handler(hdd_adapter_t *adapter,
 	}
 }
 #else
-void hdd_ndp_event_handler(hdd_adapter_t *adapter,
+void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
 	eCsrRoamResult roam_result)
 {
@@ -2175,7 +2175,7 @@ error_register_wext:
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 {
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct qdf_mac_addr random_ndi_mac;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t *ndi_mac_addr;
@@ -2211,7 +2211,7 @@ int hdd_ndi_start(uint8_t vdev_id)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	uint8_t op_channel = hdd_ctx->config->nan_datapath_ndi_channel;
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 
 	ENTER();
 	/*
@@ -2241,7 +2241,7 @@ int hdd_ndi_start(uint8_t vdev_id)
 int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 {
 	int ret;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
@@ -2282,7 +2282,7 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 	tCsrRoamInfo roam_info = {0};
 	tSirBssDescription tmp_bss_descp = {0};
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -2310,14 +2310,14 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 void hdd_ndi_close(uint8_t vdev_id)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	hdd_close_ndi(adapter);
 }
 
 void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -2326,7 +2326,7 @@ void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 	complete(&adapter->disconnect_comp_var);
 }
 
-void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
+void hdd_ndp_session_end_handler(struct hdd_adapter *adapter)
 {
 	os_if_nan_ndi_session_end(adapter->hdd_vdev);
 }
@@ -2334,7 +2334,7 @@ void hdd_ndp_session_end_handler(hdd_adapter_t *adapter)
 int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	return hdd_get_peer_idx(sta_ctx, addr);
 }
@@ -2350,7 +2350,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool fist_peer)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	tSirBssDescription tmp_bss_descp = {0};
 	tCsrRoamInfo roam_info = {0};
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -2390,7 +2390,7 @@ void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool last_peer)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER();
