@@ -213,7 +213,7 @@ struct hdd_connection_info {
 };
 
 /* Forward declarations */
-typedef struct hdd_adapter hdd_adapter_t;
+struct hdd_adapter;
 struct hdd_station_ctx;
 
 /**
@@ -263,7 +263,7 @@ QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo,
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType);
+int hdd_set_genie_to_csr(struct hdd_adapter *pAdapter, eCsrAuthType *RSNAuthType);
 
 /**
  * hdd_set_csr_auth_type() - set csr auth type
@@ -272,7 +272,7 @@ int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType);
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType);
+int hdd_set_csr_auth_type(struct hdd_adapter *pAdapter, eCsrAuthType RSNAuthType);
 
 #ifdef FEATURE_WLAN_TDLS
 /**
@@ -287,12 +287,12 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *pAdapter,
 				     const uint8_t *peerMac, uint16_t staId,
 				     uint8_t ucastSig, uint8_t qos);
 #endif
 
-QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter, uint8_t staId);
+QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *pAdapter, uint8_t staId);
 
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
@@ -300,7 +300,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter, uint8_t staId);
  *
  * Return: none
  */
-void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter);
+void hdd_perform_roam_set_key_complete(struct hdd_adapter *pAdapter);
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -316,13 +316,13 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter);
  * Return: none
  */
 void
-hdd_indicate_ese_bcn_report_no_results(const hdd_adapter_t *pAdapter,
+hdd_indicate_ese_bcn_report_no_results(const struct hdd_adapter *pAdapter,
 					    const uint16_t measurementToken,
 					    const bool flag,
 					    const uint8_t numBss);
 #endif /* FEATURE_WLAN_ESE */
 
-QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_change_peer_state(struct hdd_adapter *pAdapter,
 				 uint8_t sta_id,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress);
@@ -350,13 +350,13 @@ bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
 		   struct qdf_mac_addr *peer_mac_addr);
 void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id);
 int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr);
-QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t sta_id);
+QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t sta_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
+void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 				  const tSirMacAddr bssid, int channel);
 #else
-static inline void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
+static inline void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 		const tSirMacAddr bssid, int channel)
 {
 }

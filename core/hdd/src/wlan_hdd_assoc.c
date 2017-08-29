@@ -161,7 +161,7 @@ static const int beacon_filter_table[] = {
  * Return: none
  */
 static void
-hdd_conn_set_authenticated(hdd_adapter_t *pAdapter, uint8_t authState)
+hdd_conn_set_authenticated(struct hdd_adapter *pAdapter, uint8_t authState)
 {
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -184,7 +184,7 @@ hdd_conn_set_authenticated(hdd_adapter_t *pAdapter, uint8_t authState)
  *
  * Return: none
  */
-void hdd_conn_set_connection_state(hdd_adapter_t *adapter,
+void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 				   eConnectionState conn_state)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -307,7 +307,7 @@ hdd_conn_get_connected_cipher_algo(struct hdd_station_ctx *pHddStaCtx,
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_remove_beacon_filter(hdd_adapter_t *adapter)
+static int hdd_remove_beacon_filter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -328,7 +328,7 @@ static int hdd_remove_beacon_filter(hdd_adapter_t *adapter)
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_add_beacon_filter(hdd_adapter_t *adapter)
+static int hdd_add_beacon_filter(struct hdd_adapter *adapter)
 {
 	int i;
 	uint32_t ie_map[SIR_BCN_FLT_MAX_ELEMS_IE_LIST] = {0};
@@ -800,7 +800,7 @@ static void hdd_copy_vht_operation(struct hdd_station_ctx *hdd_sta_ctx,
  *
  * Return: None
  */
-static void hdd_save_bss_info(hdd_adapter_t *adapter,
+static void hdd_save_bss_info(struct hdd_adapter *adapter,
 						tCsrRoamInfo *roam_info)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -852,7 +852,7 @@ static void hdd_save_bss_info(hdd_adapter_t *adapter,
  * Return: none
  */
 static void
-hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
+hdd_conn_save_connect_info(struct hdd_adapter *pAdapter, tCsrRoamInfo *pRoamInfo,
 			   eCsrRoamBssType eBssType)
 {
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -954,7 +954,7 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
  */
 static void
 hdd_send_ft_assoc_response(struct net_device *dev,
-			   hdd_adapter_t *pAdapter,
+			   struct hdd_adapter *pAdapter,
 			   tCsrRoamInfo *pCsrRoamInfo)
 {
 	union iwreq_data wrqu;
@@ -1007,7 +1007,7 @@ hdd_send_ft_assoc_response(struct net_device *dev,
  *
  * Return: none
  */
-static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
+static void hdd_send_ft_event(struct hdd_adapter *pAdapter)
 {
 	uint16_t auth_resp_len = 0;
 	uint32_t ric_ies_length = 0;
@@ -1117,7 +1117,7 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
  * Return: none
  */
 static void
-hdd_send_new_ap_channel_info(struct net_device *dev, hdd_adapter_t *pAdapter,
+hdd_send_new_ap_channel_info(struct net_device *dev, struct hdd_adapter *pAdapter,
 			     tCsrRoamInfo *pCsrRoamInfo)
 {
 	union iwreq_data wrqu;
@@ -1150,7 +1150,7 @@ hdd_send_new_ap_channel_info(struct net_device *dev, hdd_adapter_t *pAdapter,
  * Return: none
  */
 static void
-hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
+hdd_send_update_beacon_ies_event(struct hdd_adapter *pAdapter,
 				  tCsrRoamInfo *pCsrRoamInfo)
 {
 	union iwreq_data wrqu;
@@ -1226,7 +1226,7 @@ static void hdd_send_association_event(struct net_device *dev,
 				       tCsrRoamInfo *pCsrRoamInfo)
 {
 	int ret;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	union iwreq_data wrqu;
@@ -1491,7 +1491,7 @@ static void hdd_conn_remove_connect_info(struct hdd_station_ctx *pHddStaCtx)
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t staid)
+QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 {
 	QDF_STATUS qdf_status;
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -1593,7 +1593,7 @@ static void hdd_print_bss_info(struct hdd_station_ctx *hdd_sta_ctx)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *pAdapter,
 					  tCsrRoamInfo *pRoamInfo,
 					  uint32_t roamId,
 					  eRoamCmdStatus roamStatus,
@@ -1798,7 +1798,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 static void hdd_set_peer_authorized_event(uint32_t vdev_id)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	if (adapter == NULL) {
@@ -1816,7 +1816,7 @@ static void hdd_set_peer_authorized_event(uint32_t vdev_id)
  *
  * Return: QDF status
  */
-QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_change_peer_state(struct hdd_adapter *pAdapter,
 				 uint8_t sta_id,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress)
@@ -1944,7 +1944,7 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					uint8_t staId,
 					struct qdf_mac_addr *pPeerMacAddress,
@@ -2092,7 +2092,7 @@ static inline void hdd_send_roamed_ind(struct net_device *dev,
  * Return: none
  */
 static void hdd_send_re_assoc_event(struct net_device *dev,
-	hdd_adapter_t *pAdapter, tCsrRoamInfo *pCsrRoamInfo,
+	struct hdd_adapter *pAdapter, tCsrRoamInfo *pCsrRoamInfo,
 	uint8_t *reqRsnIe, uint32_t reqRsnLength)
 {
 	unsigned int len = 0;
@@ -2281,7 +2281,7 @@ static uint8_t hdd_get_ibss_peer_staid(struct hdd_station_ctx *hddstactx,
  *
  * Return: 0 on success and errno on failure
  */
-static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
+static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 						 tCsrRoamInfo *roaminfo)
 {
 	QDF_STATUS status;
@@ -2354,7 +2354,7 @@ static inline bool hdd_is_key_install_required_for_ibss(
  *
  * Return: None
  */
-static void hdd_change_peer_state_after_set_key(hdd_adapter_t *adapter,
+static void hdd_change_peer_state_after_set_key(struct hdd_adapter *adapter,
 			tCsrRoamInfo *roaminfo, eCsrRoamResult roam_result)
 {
 	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -2427,7 +2427,7 @@ static void hdd_change_peer_state_after_set_key(hdd_adapter_t *adapter,
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_roam_set_key_complete_handler(struct hdd_adapter *pAdapter,
 						    tCsrRoamInfo *pRoamInfo,
 						    uint32_t roamId,
 						    eRoamCmdStatus roamStatus,
@@ -2476,7 +2476,7 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
  *
  * Return: none
  */
-void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
+void hdd_perform_roam_set_key_complete(struct hdd_adapter *pAdapter)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -2501,7 +2501,7 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 }
 
 #if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
-void hdd_clear_fils_connection_info(hdd_adapter_t *adapter)
+void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 {
 	hdd_wext_state_t *wext_state;
 
@@ -2527,7 +2527,7 @@ void hdd_clear_fils_connection_info(hdd_adapter_t *adapter)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_association_completion_handler(struct hdd_adapter *pAdapter,
 						     tCsrRoamInfo *pRoamInfo,
 						     uint32_t roamId,
 						     eRoamCmdStatus roamStatus,
@@ -3219,7 +3219,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
  *
  * Return: none
  */
-static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
+static void hdd_roam_ibss_indication_handler(struct hdd_adapter *pAdapter,
 					     tCsrRoamInfo *pRoamInfo,
 					     uint32_t roamId,
 					     eRoamCmdStatus roamStatus,
@@ -3404,7 +3404,7 @@ void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id)
  *	true if we remove MAX_PEERS or less STA
  *	false otherwise.
  */
-static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
+static bool roam_remove_ibss_station(struct hdd_adapter *pAdapter, uint8_t staId)
 {
 	bool fSuccess = false;
 	int idx = 0;
@@ -3478,7 +3478,7 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS roam_ibss_connect_handler(struct hdd_adapter *pAdapter,
 					    tCsrRoamInfo *pRoamInfo)
 {
 	struct cfg80211_bss *bss;
@@ -3520,7 +3520,7 @@ static QDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS
-hdd_roam_mic_error_indication_handler(hdd_adapter_t *pAdapter,
+hdd_roam_mic_error_indication_handler(struct hdd_adapter *pAdapter,
 				      tCsrRoamInfo *pRoamInfo,
 				      uint32_t roamId,
 				      eRoamCmdStatus roamStatus,
@@ -3582,7 +3582,7 @@ hdd_roam_mic_error_indication_handler(hdd_adapter_t *pAdapter,
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS
-roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
+roam_roam_connect_status_update_handler(struct hdd_adapter *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					uint32_t roamId,
 					eRoamCmdStatus roamStatus,
@@ -3741,7 +3741,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *pAdapter,
 				     const uint8_t *peerMac, uint16_t staId,
 				     uint8_t ucastSig, uint8_t qos)
 {
@@ -3788,7 +3788,7 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter, uint8_t staId)
+QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *pAdapter, uint8_t staId)
 {
 	QDF_STATUS qdf_status;
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
@@ -3809,7 +3809,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter, uint8_t staId)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
+static QDF_STATUS hdd_tdls_connection_tracker_update(struct hdd_adapter *adapter,
 						     tCsrRoamInfo *roam_info,
 						     tdlsCtx_t *hdd_tdls_ctx)
 {
@@ -3875,7 +3875,7 @@ static QDF_STATUS hdd_tdls_connection_tracker_update(hdd_adapter_t *adapter,
  * Return: QDF_STATUS enumeration
  */
 static QDF_STATUS
-hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
+hdd_roam_tdls_status_update_handler(struct hdd_adapter *pAdapter,
 				    tCsrRoamInfo *pRoamInfo,
 				    uint32_t roamId,
 				    eRoamCmdStatus roamStatus,
@@ -4381,14 +4381,14 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 }
 #else
 
-inline QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
+inline QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *pAdapter,
 					      uint8_t staId)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS
-hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
+hdd_roam_tdls_status_update_handler(struct hdd_adapter *pAdapter,
 				    tCsrRoamInfo *pRoamInfo,
 				    uint32_t roamId,
 				    eRoamCmdStatus roamStatus,
@@ -4411,7 +4411,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
  * Return: nothing
  */
 static void
-hdd_indicate_unprot_mgmt_frame(hdd_adapter_t *pAdapter, uint32_t nFrameLength,
+hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *pAdapter, uint32_t nFrameLength,
 			       uint8_t *pbFrames, uint8_t frameType)
 {
 	uint8_t type = 0;
@@ -4491,7 +4491,7 @@ hdd_indicate_unprot_mgmt_frame(hdd_adapter_t *pAdapter, uint32_t nFrameLength,
  * Return: none
  */
 static void
-hdd_indicate_tsm_ie(hdd_adapter_t *pAdapter, uint8_t tid,
+hdd_indicate_tsm_ie(struct hdd_adapter *pAdapter, uint8_t tid,
 		    uint8_t state, uint16_t measInterval)
 {
 	union iwreq_data wrqu;
@@ -4529,7 +4529,7 @@ hdd_indicate_tsm_ie(hdd_adapter_t *pAdapter, uint8_t tid,
  * Return: none
  */
 static void
-hdd_indicate_cckm_pre_auth(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo)
+hdd_indicate_cckm_pre_auth(struct hdd_adapter *pAdapter, tCsrRoamInfo *pRoamInfo)
 {
 	union iwreq_data wrqu;
 	char buf[IW_CUSTOM_MAX + 1];
@@ -4575,7 +4575,7 @@ hdd_indicate_cckm_pre_auth(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo)
  * Return: none
  */
 static void
-hdd_indicate_ese_adj_ap_rep_ind(hdd_adapter_t *pAdapter,
+hdd_indicate_ese_adj_ap_rep_ind(struct hdd_adapter *pAdapter,
 				tCsrRoamInfo *pRoamInfo)
 {
 	union iwreq_data wrqu;
@@ -4615,7 +4615,7 @@ hdd_indicate_ese_adj_ap_rep_ind(hdd_adapter_t *pAdapter,
  * Return: none
  */
 void
-hdd_indicate_ese_bcn_report_no_results(const hdd_adapter_t *pAdapter,
+hdd_indicate_ese_bcn_report_no_results(const struct hdd_adapter *pAdapter,
 				       const uint16_t measurementToken,
 				       const bool flag, const uint8_t numBss)
 {
@@ -4651,7 +4651,7 @@ hdd_indicate_ese_bcn_report_no_results(const hdd_adapter_t *pAdapter,
  * Return: none
  */
 static void
-hdd_indicate_ese_bcn_report_ind(const hdd_adapter_t *pAdapter,
+hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *pAdapter,
 				const tCsrRoamInfo *pRoamInfo)
 {
 	union iwreq_data wrqu;
@@ -4886,7 +4886,7 @@ static inline bool hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *pHddSta
  *
  * Return: None
  */
-static void hdd_roam_channel_switch_handler(hdd_adapter_t *adapter,
+static void hdd_roam_channel_switch_handler(struct hdd_adapter *adapter,
 				tCsrRoamInfo *roam_info)
 {
 	struct hdd_chan_change_params chan_change;
@@ -4942,7 +4942,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		      eRoamCmdStatus roamStatus, eCsrRoamResult roamResult)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pContext;
+	struct hdd_adapter *pAdapter = (struct hdd_adapter *) pContext;
 	hdd_wext_state_t *pWextState = NULL;
 	struct hdd_station_ctx *pHddStaCtx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -5465,7 +5465,7 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4])
  *
  * Return: true if fils connection else false
  */
-static inline bool hdd_is_fils_connection(hdd_adapter_t *adapter)
+static inline bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 {
 	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
@@ -5474,7 +5474,7 @@ static inline bool hdd_is_fils_connection(hdd_adapter_t *adapter)
 			fils_con_info->is_fils_connection;
 }
 #else
-static inline bool hdd_is_fils_connection(hdd_adapter_t *adapter)
+static inline bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 {
 	return false;
 }
@@ -5490,7 +5490,7 @@ static inline bool hdd_is_fils_connection(hdd_adapter_t *adapter)
  *
  * Return: 0 on success, error number otherwise
  */
-static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
+static int32_t hdd_process_genie(struct hdd_adapter *pAdapter,
 				 u8 *bssid,
 				 eCsrEncryptionType *pEncryptType,
 				 eCsrEncryptionType *mcEncryptType,
@@ -5596,7 +5596,7 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType)
+int hdd_set_genie_to_csr(struct hdd_adapter *pAdapter, eCsrAuthType *RSNAuthType)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	uint32_t status = 0;
@@ -5710,7 +5710,7 @@ static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType)
+int hdd_set_csr_auth_type(struct hdd_adapter *pAdapter, eCsrAuthType RSNAuthType)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
@@ -5860,7 +5860,7 @@ static int __iw_set_essid(struct net_device *dev,
 {
 	uint32_t status = 0;
 	hdd_wext_state_t *pWextState;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	uint32_t roamId;
 	tCsrRoamProfile *pRoamProfile;
@@ -6087,7 +6087,7 @@ static int __iw_get_essid(struct net_device *dev,
 		 struct iw_request_info *info,
 		 struct iw_point *dwrq, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	hdd_wext_state_t *wextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -6158,7 +6158,7 @@ int iw_get_essid(struct net_device *dev,
 static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 		union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -6394,7 +6394,7 @@ int iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 		union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
@@ -6555,7 +6555,7 @@ static int __iw_set_ap_address(struct net_device *dev,
 		      union iwreq_data *wrqu, char *extra)
 {
 
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *pHddStaCtx =
 		WLAN_HDD_GET_STATION_CTX_PTR(WLAN_HDD_GET_PRIV_PTR(dev));
@@ -6620,7 +6620,7 @@ static int __iw_get_ap_address(struct net_device *dev,
 		      struct iw_request_info *info,
 		      union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *pHddStaCtx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
