@@ -664,17 +664,17 @@ enum wlan_hdd_tm_cmd {
 
 #define WLAN_HDD_TM_DATA_MAX_LEN    5000
 
-enum wlan_hdd_vendor_ie_access_policy {
-	WLAN_HDD_VENDOR_IE_ACCESS_NONE = 0,
-	WLAN_HDD_VENDOR_IE_ACCESS_ALLOW_IF_LISTED,
-};
-
 static const struct nla_policy wlan_hdd_tm_policy[WLAN_HDD_TM_ATTR_MAX + 1] = {
 	[WLAN_HDD_TM_ATTR_CMD] = {.type = NLA_U32},
 	[WLAN_HDD_TM_ATTR_DATA] = {.type = NLA_BINARY,
 				   .len = WLAN_HDD_TM_DATA_MAX_LEN},
 };
 #endif /* WLAN_NL80211_TESTMODE */
+
+enum wlan_hdd_vendor_ie_access_policy {
+	WLAN_HDD_VENDOR_IE_ACCESS_NONE = 0,
+	WLAN_HDD_VENDOR_IE_ACCESS_ALLOW_IF_LISTED,
+};
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 static const struct wiphy_wowlan_support wowlan_support_cfg80211_init = {
