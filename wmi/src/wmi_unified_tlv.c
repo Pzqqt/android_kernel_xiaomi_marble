@@ -634,6 +634,12 @@ static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
 	case WMI_HOST_PEER_SET_DEFAULT_ROUTING:
 		*targ_paramid = WMI_PEER_SET_DEFAULT_ROUTING;
 		break;
+	case WMI_HOST_PEER_NSS_VHT160:
+		*targ_paramid = WMI_PEER_NSS_VHT160;
+		break;
+	case WMI_HOST_PEER_NSS_VHT80_80:
+		*targ_paramid = WMI_PEER_NSS_VHT80_80;
+		break;
 	default:
 		return QDF_STATUS_E_NOSUPPORT;
 	}
@@ -19470,6 +19476,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_pkt_routing] = WMI_SERVICE_PKT_ROUTING;
 	wmi_service[wmi_service_offchan_tx_wmi] = WMI_SERVICE_OFFCHAN_TX_WMI;
 	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_CHAN_LOAD_INFO;
+	wmi_service[wmi_service_extended_nss_support] =
+				WMI_SERVICE_EXTENDED_NSS_SUPPORT;
 }
 
 /**

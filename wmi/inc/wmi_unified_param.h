@@ -5462,6 +5462,7 @@ typedef enum {
 	wmi_service_pkt_routing,
 	wmi_service_offchan_tx_wmi,
 	wmi_service_chan_load_info,
+	wmi_service_extended_nss_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
@@ -6156,6 +6157,10 @@ typedef enum {
 	/* Set default Rx routing */
 	WMI_HOST_PEER_SET_DEFAULT_ROUTING = 0x13,
 	WMI_HOST_PEER_SET_MIN_TX_RATE = 0x14,
+	/* peer NSS for 160Mhx */
+	WMI_HOST_PEER_NSS_VHT160 = 0x15,
+	/* peer NSS for 160Mhx */
+	WMI_HOST_PEER_NSS_VHT80_80 = 0x16,
 } PEER_PARAM_ENUM;
 #define WMI_HOST_PEER_MIMO_PS_NONE	0x0
 #define WMI_HOST_PEER_MIMO_PS_STATIC	0x1
