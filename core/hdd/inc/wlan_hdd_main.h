@@ -1190,7 +1190,7 @@ struct hdd_adapter {
 	struct sk_buff *skb_to_tx;
 
 	union {
-		hdd_station_ctx_t station;
+		struct hdd_station_ctx station;
 		struct hdd_ap_ctx ap;
 	} sessionCtx;
 

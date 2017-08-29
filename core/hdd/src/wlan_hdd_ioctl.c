@@ -184,7 +184,7 @@ static int hdd_get_tsm_stats(hdd_adapter_t *adapter,
 			     tAniTrafStrmMetrics *tsm_metrics)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	QDF_STATUS status;
 	int ret;
 	void *cookie;
@@ -395,7 +395,7 @@ hdd_get_ibss_peer_info_cb(void *pUserData,
 				tSirPeerInfoRspParams *pPeerInfo)
 {
 	hdd_adapter_t *adapter = (hdd_adapter_t *) pUserData;
-	hdd_station_ctx_t *pStaCtx;
+	struct hdd_station_ctx *pStaCtx;
 	uint8_t i;
 
 	if ((NULL == adapter) ||
@@ -823,7 +823,7 @@ void hdd_wma_send_fastreassoc_cmd(hdd_adapter_t *adapter,
 int hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 		uint8_t channel, const handoff_src src)
 {
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret = 0;
 
@@ -1022,7 +1022,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	uint8_t *frame;
 	struct ieee80211_hdr_3addr *hdr;
 	u64 cookie;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_context *hdd_ctx;
 	tpSirMacVendorSpecificFrameHdr pVendorSpecific =
 		(tpSirMacVendorSpecificFrameHdr) payload;
@@ -2368,7 +2368,7 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 {
 
-	hdd_station_ctx_t *pHddStaCtx =
+	struct hdd_station_ctx *pHddStaCtx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	QDF_STATUS hstatus;
 	int ret;
@@ -4353,7 +4353,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	uint32_t roamId = 0;
 	tCsrRoamModifyProfileFields modProfileFields;
 	tCsrHandoffRequest handoffInfo;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -4963,7 +4963,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 {
 	int ret = 0;
 	int status = QDF_STATUS_SUCCESS;
-	hdd_station_ctx_t *pHddStaCtx = NULL;
+	struct hdd_station_ctx *pHddStaCtx = NULL;
 	char *extra = NULL;
 	int idx = 0;
 	int length = 0;
@@ -5091,7 +5091,7 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	QDF_STATUS status;
-	hdd_station_ctx_t *pHddStaCtx = NULL;
+	struct hdd_station_ctx *pHddStaCtx = NULL;
 	char extra[128] = { 0 };
 	uint32_t length = 0;
 	uint8_t staIdx = 0;
@@ -5322,7 +5322,7 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 	char extra[128] = { 0 };
 	int len = 0;
 	uint8_t tid = 0;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	tAniTrafStrmMetrics tsm_metrics = {0};
 
 	if ((QDF_STA_MODE != adapter->device_mode) &&

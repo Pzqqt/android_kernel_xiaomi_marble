@@ -67,7 +67,7 @@ QDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,
 				 qdf_nbuf_t rx_buf_list, uint8_t staId);
 #endif /* IPA_OFFLOAD */
 
-QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *sta_ctx,
+QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 				struct qdf_mac_addr *peer_mac_addr,
 				uint8_t *sta_id);
 
@@ -126,7 +126,7 @@ static inline void hdd_get_tx_resource(hdd_adapter_t *adapter,
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr);
+int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr);
 
 const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);

@@ -72,7 +72,7 @@ static
 enum hdd_tsf_get_state hdd_tsf_check_conn_state(hdd_adapter_t *adapter)
 {
 	enum hdd_tsf_get_state ret = TSF_RETURN;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	if (adapter->device_mode == QDF_STA_MODE ||
 			adapter->device_mode == QDF_P2P_CLIENT_MODE) {
@@ -612,7 +612,7 @@ static inline uint64_t hdd_get_monotonic_host_time(void)
 static ssize_t __hdd_wlan_tsf_show(struct device *dev,
 				   struct device_attribute *attr, char *buf)
 {
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	hdd_adapter_t *adapter;
 	ssize_t size;
 	uint64_t host_time, target_time;

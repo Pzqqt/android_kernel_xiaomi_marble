@@ -3820,7 +3820,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 	hdd_adapter_t *adapter;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_ap_ctx *ap_ctx;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 	QDF_STATUS qdf_status;
 
 	qdf_status = hdd_get_front_adapter(hdd_ctx,
@@ -4195,7 +4195,7 @@ static int hdd_get_station_assoc_fail(struct hdd_context *hdd_ctx,
 {
 	struct sk_buff *skb = NULL;
 	uint32_t nl_buf_len;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	nl_buf_len = NLMSG_HDRLEN;
 	nl_buf_len += sizeof(uint32_t);
@@ -4342,7 +4342,7 @@ static int hdd_convert_dot11mode(uint32_t dot11mode)
  * Return: Success(0) or reason code for failure
  */
 static int32_t hdd_add_tx_bitrate(struct sk_buff *skb,
-					  hdd_station_ctx_t *hdd_sta_ctx,
+					  struct hdd_station_ctx *hdd_sta_ctx,
 					  int idx)
 {
 	struct nlattr *nla_attr;
@@ -4386,7 +4386,7 @@ fail:
  * Return: Success(0) or reason code for failure
  */
 static int32_t hdd_add_sta_info(struct sk_buff *skb,
-				       hdd_station_ctx_t *hdd_sta_ctx, int idx)
+				       struct hdd_station_ctx *hdd_sta_ctx, int idx)
 {
 	struct nlattr *nla_attr;
 
@@ -4415,7 +4415,7 @@ fail:
  * Return: Success(0) or reason code for failure
  */
 static int32_t hdd_add_survey_info(struct sk_buff *skb,
-					   hdd_station_ctx_t *hdd_sta_ctx,
+					   struct hdd_station_ctx *hdd_sta_ctx,
 					   int idx)
 {
 	struct nlattr *nla_attr;
@@ -4446,7 +4446,7 @@ fail:
  */
 static int32_t
 hdd_add_link_standard_info(struct sk_buff *skb,
-			   hdd_station_ctx_t *hdd_sta_ctx, int idx)
+			   struct hdd_station_ctx *hdd_sta_ctx, int idx)
 {
 	struct nlattr *nla_attr;
 
@@ -4480,7 +4480,7 @@ fail:
  */
 static int32_t
 hdd_add_ap_standard_info(struct sk_buff *skb,
-			 hdd_station_ctx_t *hdd_sta_ctx, int idx)
+			 struct hdd_station_ctx *hdd_sta_ctx, int idx)
 {
 	struct nlattr *nla_attr;
 
@@ -4520,7 +4520,7 @@ static int hdd_get_station_info(struct hdd_context *hdd_ctx,
 	struct sk_buff *skb = NULL;
 	uint8_t *tmp_hs20 = NULL;
 	uint32_t nl_buf_len;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -7445,7 +7445,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX+1];
 	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t sta_id;
@@ -10747,7 +10747,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	int ret;
 	QDF_STATUS qdf_status;
 	unsigned long rc;
-	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER_DEV(dev);
 
@@ -10849,7 +10849,7 @@ void hdd_update_cca_info_cb(void *context, uint32_t congestion,
 	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
 	int status;
 	hdd_adapter_t *adapter = NULL;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status != 0)
@@ -12675,7 +12675,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len)
 {
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamSetKey setKey;
 	bool isConnected = true;
 	int status = 0;
@@ -13290,7 +13290,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *pHddCtx;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	struct qdf_mac_addr STAMacAddress;
 #if defined(FEATURE_WLAN_TDLS) && !defined(CONVERGED_TDLS_ENABLE)
 	tCsrStaParams StaParams = { 0 };
@@ -13784,7 +13784,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		   (pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		hdd_wext_state_t *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-		hdd_station_ctx_t *pHddStaCtx =
+		struct hdd_station_ctx *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 		if (!pairwise) {
@@ -14076,7 +14076,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *pHddCtx;
 	int status;
 
@@ -14789,7 +14789,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
 void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel,
 			struct ch_params *ch_params)
 {
-	hdd_station_ctx_t *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *station_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_mon_set_ch_info *ch_info = &station_ctx->ch_info;
 	uint8_t sec_ch = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -15024,7 +15024,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 	QDF_STATUS qdf_status;
 	hdd_wext_state_t *pWextState;
 	struct hdd_context *pHddCtx;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	uint32_t roamId;
 	tCsrRoamProfile *pRoamProfile;
 	eCsrAuthType RSNAuthType;
@@ -15061,7 +15061,7 @@ static int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
 	if (pRoamProfile) {
-		hdd_station_ctx_t *pHddStaCtx;
+		struct hdd_station_ctx *pHddStaCtx;
 
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
@@ -15374,7 +15374,7 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 					   enum nl80211_auth_type auth_type)
 {
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	/*set authentication type */
 	switch (auth_type) {
@@ -15561,7 +15561,7 @@ static int wlan_hdd_cfg80211_set_cipher(hdd_adapter_t *pAdapter,
 {
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	if (!cipher) {
 		hdd_debug("received cipher %d - considering none", cipher);
@@ -16248,7 +16248,7 @@ static int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
 int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 {
 	unsigned long rc;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	int status, result = 0;
 	tHalHandle hal;
 
@@ -16636,7 +16636,7 @@ static int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 {
 	int status, result = 0;
 	unsigned long rc;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	eConnectionState prev_conn_state;
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -16813,7 +16813,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 #ifdef FEATURE_WLAN_TDLS
 	uint8_t staIdx;
@@ -16963,7 +16963,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(hdd_adapter_t *pAdapter,
 	int status = 0;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	ENTER();
 
@@ -17056,7 +17056,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile;
 	int status;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct qdf_mac_addr bssid;
 	u8 channelNum = 0;
@@ -18270,7 +18270,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int status;
 
 	ENTER();
@@ -19098,7 +19098,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	hdd_adapter_t *adapter;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_mon_set_ch_info *ch_info;
 	QDF_STATUS status;
 	tHalHandle hal_hdl;

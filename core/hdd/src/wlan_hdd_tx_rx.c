@@ -182,7 +182,7 @@ static inline struct sk_buff *hdd_skb_orphan(hdd_adapter_t *pAdapter,
 void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
-	hdd_station_ctx_t *hdd_sta_ctx = NULL;
+	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 
 	if (!pAdapter) {
 		/* INVALID ARG */
@@ -440,7 +440,7 @@ static void hdd_get_transmit_sta_id(hdd_adapter_t *adapter,
 {
 	bool mcbc_addr = false;
 	QDF_STATUS status;
-	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct qdf_mac_addr *dst_addr = NULL;
 
 	dst_addr = (struct qdf_mac_addr *)skb->data;
@@ -531,7 +531,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool granted;
 	uint8_t STAId;
-	hdd_station_ctx_t *pHddStaCtx = &pAdapter->sessionCtx.station;
+	struct hdd_station_ctx *pHddStaCtx = &pAdapter->sessionCtx.station;
 	struct qdf_mac_addr *mac_addr;
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
@@ -811,7 +811,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
  * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
  */
 
-QDF_STATUS hdd_get_peer_sta_id(hdd_station_ctx_t *pHddStaCtx,
+QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *pHddStaCtx,
 			       struct qdf_mac_addr *pMacAddress, uint8_t *staId)
 {
 	uint8_t idx;
@@ -1033,7 +1033,7 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
  *
  * Return: index when success else INVALID_PEER_IDX
  */
-int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr)
+int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr)
 {
 	uint8_t idx;
 
@@ -1147,7 +1147,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	int rxstat;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
-	hdd_station_ctx_t *pHddStaCtx = NULL;
+	struct hdd_station_ctx *pHddStaCtx = NULL;
 	unsigned int cpu_index;
 	struct qdf_mac_addr *mac_addr;
 	bool wake_lock = false;

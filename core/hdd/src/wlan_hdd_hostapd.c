@@ -2579,7 +2579,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
 	struct hdd_context *pHddCtx = NULL;
 	hdd_adapter_t *sta_adapter;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 
 	pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
@@ -2701,7 +2701,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t intf_ch = 0;
 	struct hdd_context *hdd_ctx;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	hdd_adapter_t *sta_adapter;
 	hdd_adapter_t *ap_adapter = wlan_hdd_get_adapter_from_vdev(
 					psoc, vdev_id);
@@ -6932,7 +6932,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		hdd_wext_state_t *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 		tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
-		hdd_station_ctx_t *pHddStaCtx =
+		struct hdd_station_ctx *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 		if (eConnectionState_IbssConnected ==

@@ -482,7 +482,7 @@ bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 			    tpSirWifiInterfaceInfo pInfo)
 {
 	uint8_t *staMac = NULL;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -1337,7 +1337,7 @@ int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
 {
 	int ret;
 	tSirLLStatsGetReq get_req;
-	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	ENTER();
@@ -1397,7 +1397,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	tSirLLStatsGetReq LinkLayerStatsGetReq;
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	/* ENTER() intentionally not used in a frequently invoked API */
 
@@ -3886,7 +3886,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					   struct station_info *sinfo)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ssidlen = pHddStaCtx->conn_info.SSID.SSID.length;
 	uint8_t rate_flags;
 	uint8_t mcs_index;
@@ -4600,7 +4600,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *pHddCtx;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	int status;
 	bool filled = false;
 

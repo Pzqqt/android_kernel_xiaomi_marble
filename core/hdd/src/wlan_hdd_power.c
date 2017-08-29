@@ -662,7 +662,7 @@ static int hdd_set_grat_arp_keepalive(hdd_adapter_t *adapter)
 	QDF_STATUS status;
 	int exit_code;
 	struct hdd_context *hdd_ctx;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 	tSirKeepAliveReq req = {
 		.packetType = SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP,
 		.dest_macaddr = QDF_MAC_ADDR_BROADCAST_INITIALIZER,
@@ -1043,7 +1043,7 @@ hdd_update_conn_state_mask(hdd_adapter_t *adapter, uint32_t *conn_state_mask)
 {
 
 	eConnectionState connState;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -2157,7 +2157,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	struct net_device *ndev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	int status;
-	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER();
 

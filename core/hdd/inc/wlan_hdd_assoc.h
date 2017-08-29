@@ -214,7 +214,7 @@ struct hdd_connection_info {
 
 /* Forward declarations */
 typedef struct hdd_adapter hdd_adapter_t;
-typedef struct hdd_station_ctx hdd_station_ctx_t;
+struct hdd_station_ctx;
 
 /**
  * hdd_is_connecting() - Function to check connection progress
@@ -222,7 +222,7 @@ typedef struct hdd_station_ctx hdd_station_ctx_t;
  *
  * Return: true if connecting, false otherwise
  */
-bool hdd_is_connecting(hdd_station_ctx_t *hdd_sta_ctx);
+bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx);
 
 /**
  * hdd_conn_is_connected() - Function to check connection status
@@ -230,7 +230,7 @@ bool hdd_is_connecting(hdd_station_ctx_t *hdd_sta_ctx);
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_conn_is_connected(hdd_station_ctx_t *pHddStaCtx);
+bool hdd_conn_is_connected(struct hdd_station_ctx *pHddStaCtx);
 
 /**
  * hdd_conn_get_connected_band() - get current connection radio band
@@ -239,7 +239,7 @@ bool hdd_conn_is_connected(hdd_station_ctx_t *pHddStaCtx);
  * Return: BAND_2G or BAND_5G based on current AP connection
  *      BAND_ALL if not connected
  */
-enum band_info hdd_conn_get_connected_band(hdd_station_ctx_t *pHddStaCtx);
+enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *pHddStaCtx);
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
@@ -346,10 +346,10 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					struct qdf_mac_addr *peer_mac_addr,
 					struct sSirBssDescription *bss_desc);
 
-bool hdd_save_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id,
+bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
 		   struct qdf_mac_addr *peer_mac_addr);
-void hdd_delete_peer(hdd_station_ctx_t *sta_ctx, uint8_t sta_id);
-int hdd_get_peer_idx(hdd_station_ctx_t *sta_ctx, struct qdf_mac_addr *addr);
+void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id);
+int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr);
 QDF_STATUS hdd_roam_deregister_sta(hdd_adapter_t *adapter, uint8_t sta_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

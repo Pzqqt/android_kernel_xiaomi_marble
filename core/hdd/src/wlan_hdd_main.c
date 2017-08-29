@@ -2989,7 +2989,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx,
 {
 	struct net_device *pWlanDev = NULL;
 	hdd_adapter_t *adapter = NULL;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 	/*
 	 * cfg80211 initialization and registration....
 	 */
@@ -3342,7 +3342,7 @@ hdd_vdev_destroy:
 
 QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 {
-	hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station;
+	struct hdd_station_ctx *pHddStaCtx = &adapter->sessionCtx.station;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int ret_val;
@@ -4173,7 +4173,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	{
-		hdd_station_ctx_t *pHddStaCtx =
+		struct hdd_station_ctx *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pHostapdAdapter);
 		bssid = &pHddStaCtx->conn_info.bssId;
 		break;
@@ -4459,7 +4459,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 	hdd_adapter_t *adapter;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	struct qdf_mac_addr peerMacAddr;
 
 	ENTER();
@@ -9598,7 +9598,7 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 	struct hdd_context *hdd_ctx;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	hdd_adapter_t *adapter;
 	uint16_t len = 0;
 	char *buf = *buf_ptr;
@@ -12146,7 +12146,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				enum scan_reject_states *reason)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	hdd_station_ctx_t *hdd_sta_ctx = NULL;
+	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	hdd_adapter_t *adapter = NULL;
 	QDF_STATUS status = 0;
 	uint8_t sta_id = 0;

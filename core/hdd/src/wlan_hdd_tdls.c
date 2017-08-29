@@ -92,7 +92,7 @@ static void wlan_hdd_tdls_determine_channel_opclass(struct hdd_context *hddctx,
 			hdd_adapter_t *adapter, hddTdlsPeer_t *curr_peer,
 			uint32_t *channel, uint32_t *opclass)
 {
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	/*
 	 * If tdls offchannel is not enabled then we provide base channel
@@ -2484,7 +2484,7 @@ int wlan_hdd_tdls_get_all_peers(hdd_adapter_t *pAdapter, char *buf, int buflen)
 	hddTdlsPeer_t *curr_peer;
 	tdlsCtx_t *pHddTdlsCtx;
 	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 
 	ENTER();
 
@@ -3080,7 +3080,7 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
 				 qdf_mc_timer_t *timer,
 				 uint32_t expirationTime)
 {
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 
 	if (NULL == pAdapter || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
 		hdd_err("invalid pAdapter: %p", pAdapter);
@@ -4131,7 +4131,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *pHddCtx = wiphy_priv(wiphy);
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	tdlsCtx_t *hdd_tdls_ctx;
 	u8 peerMac[QDF_MAC_ADDR_SIZE];
 	QDF_STATUS status;
@@ -5472,7 +5472,7 @@ int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx, int offchanoff
 int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 {
 	hddTdlsPeer_t *conn_peer = NULL;
-	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_tdls_chan_switch_params chan_switch_params;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -5663,7 +5663,7 @@ void wlan_hdd_tdls_update_rx_pkt_cnt(hdd_adapter_t *adapter,
 				     struct sk_buff *skb)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	uint8_t mac_cnt;
 	uint8_t valid_mac_entries;
 	struct qdf_mac_addr *mac_addr;
@@ -5730,7 +5730,7 @@ void wlan_hdd_tdls_update_tx_pkt_cnt(hdd_adapter_t *adapter,
 				     struct sk_buff *skb)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_station_ctx_t *hdd_sta_ctx;
+	struct hdd_station_ctx *hdd_sta_ctx;
 	uint8_t mac_cnt;
 	uint8_t valid_mac_entries;
 	struct qdf_mac_addr *mac_addr;
@@ -6356,7 +6356,7 @@ int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 {
 	uint8_t tdls_peer_cnt;
 	uint32_t vdev_nss;
-	hdd_station_ctx_t *sta_ctx;
+	struct hdd_station_ctx *sta_ctx;
 
 	if (hdd_ctx->connected_peer_count == 0)
 		return 0;

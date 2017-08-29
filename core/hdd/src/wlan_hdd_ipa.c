@@ -1320,7 +1320,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 	hdd_adapter_t *adapter;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	struct qdf_mac_addr staBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
@@ -3040,7 +3040,7 @@ static int hdd_ipa_uc_disconnect_ap(hdd_adapter_t *adapter)
  */
 static int hdd_ipa_uc_disconnect_sta(hdd_adapter_t *adapter)
 {
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	int ret = 0;
 

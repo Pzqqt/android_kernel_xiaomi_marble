@@ -90,7 +90,7 @@ static void wlan_hdd_get_channel_info(struct hdd_context *hdd_ctx,
  */
 static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 					 hdd_adapter_t *adapter,
-					 hdd_station_ctx_t *sta_ctx,
+					 struct hdd_station_ctx *sta_ctx,
 					 uint8_t is_on, uint8_t is_connected)
 {
 	struct hdd_context *hdd_ctx = NULL;

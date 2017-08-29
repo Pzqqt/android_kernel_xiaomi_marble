@@ -3307,7 +3307,7 @@ hdd_wlan_get_ibss_mac_addr_from_staid(hdd_adapter_t *pAdapter,
 				      uint8_t staIdx)
 {
 	uint8_t idx;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	for (idx = 0; idx < MAX_PEERS; idx++) {
 		if (HDD_WLAN_INVALID_STA_ID !=
@@ -3332,7 +3332,7 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info(hdd_adapter_t *pAdapter,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	hdd_station_ctx_t *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
 
 	INIT_COMPLETION(pAdapter->ibss_peer_info_comp);
@@ -3381,7 +3381,7 @@ static QDF_STATUS hdd_wlan_get_ibss_peer_info_all(hdd_adapter_t *pAdapter)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	hdd_station_ctx_t *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tSirPeerInfoRspParams *pPeerInfo = &pStaCtx->ibss_peer_info;
 	int i;
 
@@ -3550,7 +3550,7 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t sta_id, void *context)
 QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 {
 	struct hdd_context *pHddCtx;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	QDF_STATUS hstatus;
 	int ret;
 	void *cookie;
@@ -3686,7 +3686,7 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t sta_id, void *context)
 QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 {
 	struct hdd_context *pHddCtx;
-	hdd_station_ctx_t *pHddStaCtx;
+	struct hdd_station_ctx *pHddStaCtx;
 	QDF_STATUS hstatus;
 	int valid;
 	int ret;
@@ -3853,7 +3853,7 @@ return_cached_value:
 int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 {
 	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(sta_adapter);
-	hdd_station_ctx_t *hdd_stactx =
+	struct hdd_station_ctx *hdd_stactx =
 				WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
 	int ret;
 
@@ -4890,7 +4890,7 @@ static int __iw_set_freq(struct net_device *dev, struct iw_request_info *info,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile;
 
 	ENTER_DEV(dev);
@@ -5012,7 +5012,7 @@ static int __iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 	tHalHandle hHal;
 	hdd_wext_state_t *pWextState;
 	tCsrRoamProfile *pRoamProfile;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -5098,7 +5098,7 @@ static int __iw_get_tx_power(struct net_device *dev,
 
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ret;
 
 	ENTER_DEV(dev);
@@ -5221,7 +5221,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 	QDF_STATUS status;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -5311,7 +5311,7 @@ static int __iw_set_bitrate(struct net_device *dev,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_wext_state_t *pWextState;
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	uint8_t supp_rates[WNI_CFG_SUPPORTED_RATES_11A_LEN];
 	uint32_t a_len = WNI_CFG_SUPPORTED_RATES_11A_LEN;
 	uint32_t b_len = WNI_CFG_SUPPORTED_RATES_11B_LEN;
@@ -5611,7 +5611,7 @@ static int __iw_get_genie(struct net_device *dev,
 {
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	QDF_STATUS status;
 	uint32_t length = DOT11F_IE_RSN_MAX_LEN;
 	uint8_t genIeBytes[DOT11F_IE_RSN_MAX_LEN];
@@ -5751,7 +5751,7 @@ static int __iw_get_encode(struct net_device *dev,
 		dwrq->flags |= IW_ENCODE_NOKEY;
 
 	authType =
-		((hdd_station_ctx_t *) WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
+		((struct hdd_station_ctx *) WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
 		conn_info.authType;
 
 	if (eCSR_AUTH_TYPE_OPEN_SYSTEM == authType)
@@ -6381,7 +6381,7 @@ static void hdd_get_class_a_statistics_cb(void *stats, void *context)
  */
 QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 {
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	QDF_STATUS hstatus;
 	int ret;
 	void *cookie;
@@ -6499,7 +6499,7 @@ static void hdd_get_station_statistics_cb(void *stats, void *context)
  */
 QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 {
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	QDF_STATUS status;
 	int errno;
 	void *cookie;
@@ -6770,7 +6770,7 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 			   union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	struct iw_point *encoderq = &(wrqu->encoding);
@@ -7058,7 +7058,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 			      union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
@@ -7439,7 +7439,7 @@ static int __iw_set_mlme(struct net_device *dev,
 			 union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct iw_mlme *mlme = (struct iw_mlme *)extra;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_context *hdd_ctx;
@@ -7954,7 +7954,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	tSmeConfigParams *sme_config;
 	int *value = (int *)extra;
@@ -10183,7 +10183,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 
 		tHalHandle hHal = NULL;
 		tpAniSirGlobal pMac = NULL;
-		hdd_station_ctx_t *pHddStaCtx = NULL;
+		struct hdd_station_ctx *pHddStaCtx = NULL;
 
 		struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		hdd_adapter_t *useAdapter = NULL;
@@ -10475,7 +10475,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 #endif
 	case WE_GET_IBSS_STA_INFO:
 	{
-		hdd_station_ctx_t *pHddStaCtx =
+		struct hdd_station_ctx *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		int idx = 0;
 		int length = 0, buf = 0;
@@ -10631,7 +10631,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		int8_t s7snr = 0;
 		int status = 0;
 		struct hdd_context *pHddCtx;
-		hdd_station_ctx_t *pHddStaCtx;
+		struct hdd_station_ctx *pHddStaCtx;
 
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
@@ -11355,7 +11355,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 			  union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_wlan_wmm_status_e *pStatus = (hdd_wlan_wmm_status_e *) extra;
 	int params[HDD_WLAN_WMM_PARAM_COUNT];
 	struct sme_qos_wmmtspecinfo tSpec;
@@ -11663,7 +11663,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 			  union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	int ret;
 
@@ -12903,7 +12903,7 @@ static int wlan_hdd_set_mon_chan(hdd_adapter_t *adapter, uint32_t chan,
 				 uint32_t bandwidth)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	hdd_station_ctx_t *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_mon_set_ch_info *ch_info = &sta_ctx->ch_info;
 	QDF_STATUS status;
 	tHalHandle hal_hdl = hdd_ctx->hHal;
@@ -14417,7 +14417,7 @@ const struct iw_handler_def we_handler_def = {
 static int hdd_set_wext(hdd_adapter_t *pAdapter)
 {
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	ENTER();
 
