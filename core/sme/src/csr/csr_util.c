@@ -355,7 +355,7 @@ void purge_sme_session_pending_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
 {
 	uint8_t vdev_id = session_id;
 
-	wlan_serialization_purge_cmd_list(mac_ctx->psoc, &vdev_id,
+	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
 			false, true, false, false, false);
 }
 
@@ -364,7 +364,7 @@ void purge_sme_session_pending_cmd_list(struct sAniSirGlobal *mac_ctx,
 {
 	uint8_t vdev_id = session_id;
 
-	wlan_serialization_purge_cmd_list(mac_ctx->psoc, &vdev_id,
+	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
 			false, false, false, true, false);
 }
 
@@ -373,7 +373,7 @@ void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
 {
 	uint8_t vdev_id = session_id;
 
-	wlan_serialization_purge_cmd_list(mac_ctx->psoc, &vdev_id,
+	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
 			false, false, true, false, false);
 }
 
