@@ -799,7 +799,8 @@ struct dp_soc {
 		qdf_dma_addr_t ipa_wbm_tp_paddr;
 
 		/* TX buffers populated into the WBM ring */
-		void **tx_buf_pool_vaddr;
+		void **tx_buf_pool_vaddr_unaligned;
+		qdf_dma_addr_t *tx_buf_pool_paddr_unaligned;
 	} ipa_uc_tx_rsc;
 
 	/* IPA uC datapath offload Wlan Rx resources */
