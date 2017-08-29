@@ -60,7 +60,7 @@ static struct hdd_context *p_hdd_ctx;
  *
  * Return: error code
  */
-static int populate_oem_data_cap(hdd_adapter_t *adapter,
+static int populate_oem_data_cap(struct hdd_adapter *adapter,
 				 struct oem_data_cap *data_cap)
 {
 	QDF_STATUS status;
@@ -143,7 +143,7 @@ int iw_get_oem_data_cap(struct net_device *dev,
 	int status;
 	struct oem_data_cap oemDataCap = { {0} };
 	struct oem_data_cap *pHddOemDataCap;
-	hdd_adapter_t *pAdapter = (netdev_priv(dev));
+	struct hdd_adapter *pAdapter = (netdev_priv(dev));
 	struct hdd_context *pHddContext;
 	int ret;
 
@@ -185,7 +185,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	uint8_t *vdevId;
 	hdd_adapter_list_node_t *pAdapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
-	hdd_adapter_t *pAdapter = NULL;
+	struct hdd_adapter *pAdapter = NULL;
 	QDF_STATUS status = 0;
 
 	/* OEM msg is always to a specific process & cannot be a broadcast */
@@ -353,7 +353,7 @@ void hdd_send_oem_data_rsp_msg(struct oem_data_rsp *oem_data_rsp)
  */
 static QDF_STATUS oem_process_data_req_msg(int oem_data_len, char *oem_data)
 {
-	hdd_adapter_t *adapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	struct oem_data_req oem_data_req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -624,7 +624,7 @@ static int oem_process_get_cap_req_msg(void)
 	struct oem_get_capability_rsp *cap_rsp;
 	struct oem_data_cap data_cap = { {0} };
 	struct sme_oem_capability oem_cap;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
 	tAniMsgHdr *ani_hdr;
