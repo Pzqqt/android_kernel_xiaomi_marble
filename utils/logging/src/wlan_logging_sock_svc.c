@@ -1236,7 +1236,7 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 	struct ath_pktlog_hdr pktlog_hdr = {0};
 	struct packet_dump pd_hdr = {0};
 	struct hdd_context *hdd_ctx;
-	hdd_adapter_t *adapter;
+	struct hdd_adapter *adapter;
 	v_CONTEXT_t vos_ctx;
 
 	vos_ctx = cds_get_global_context();
