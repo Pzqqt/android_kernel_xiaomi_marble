@@ -175,7 +175,7 @@ int wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
  *
  * Return: bool
  */
-bool hdd_get_interface_info(hdd_adapter_t *adapter,
+bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			    tpSirWifiInterfaceInfo info);
 
 /**
@@ -186,7 +186,7 @@ bool hdd_get_interface_info(hdd_adapter_t *adapter,
  *
  * Return: 0 on success and error code otherwise
  */
-int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
+int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 			  uint32_t req_mask);
 
 #else
