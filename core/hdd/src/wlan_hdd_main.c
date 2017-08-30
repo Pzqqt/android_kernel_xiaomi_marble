@@ -4599,16 +4599,7 @@ bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
 	return close_modules;
 }
 
-/**
- * hdd_is_interface_up()- Checkfor interface up before ssr
- * @hdd_ctx: HDD context
- *
- * check  if there are any wlan interfaces before SSR accordingly start
- * the interface.
- *
- * Return: 0 if interface was opened else false
- */
-static bool hdd_is_interface_up(struct hdd_adapter *adapter)
+bool hdd_is_interface_up(struct hdd_adapter *adapter)
 {
 	if (test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags))
 		return true;
