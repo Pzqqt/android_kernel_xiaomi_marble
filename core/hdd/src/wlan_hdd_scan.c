@@ -1433,13 +1433,10 @@ int wlan_hdd_vendor_abort_scan(
 int wlan_hdd_scan_abort(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_scan_info *pScanInfo = NULL;
 
-	pScanInfo = &adapter->scan_info;
+	wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+			adapter->sessionId, INVALID_SCAN_ID, true);
 
-	if (pScanInfo->mScanPending)
-		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->sessionId, INVALID_SCAN_ID, true);
 	return 0;
 }
 
