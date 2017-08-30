@@ -7293,34 +7293,6 @@ enum hdd_link_speed_rpt_type {
 #define CFG_IPA_LOW_BANDWIDTH_MBPS_DEFAULT       (100)
 
 /*
- * <ini>
- * gIPAMccTxDescSize - hdd_ipa_tx_desc pool size for MCC TX
- * @Min: 512
- * @Max: 4096
- * @Default: 1024
- *
- * This ini is used to specify hdd_ipa_tx_desc pool size for MCC TX path.
- * The pool is maintained to have a one-to-one mapping with desc from IPA
- * driver so that when wlan TX completes, wlan driver could replenish the
- * correct desc to IPA driver. Note that in MCC TX case, desc size is limited
- * to global tx desc pool size. Therefore the real hdd_ipa_tx_desc pool size
- * is the minimum of this ini and global tx desc pool size.
- *
- *
- * Related: STA/SAP
- *
- * Supported Feature: IPA offload
- *
- * Usage: Internal
- *
- * </ini>
- */
-#define CFG_IPA_MCC_TX_DESC_SIZE                 "gIPAMccTxDescSize"
-#define CFG_IPA_MCC_TX_DESC_SIZE_MIN             (512)
-#define CFG_IPA_MCC_TX_DESC_SIZE_MAX             (4096)
-#define CFG_IPA_MCC_TX_DESC_SIZE_DEFAULT         (1024)
-
-/*
  * Firmware uart print
  */
 #define CFG_ENABLE_FW_UART_PRINT_NAME             "gEnablefwprint"
@@ -13608,7 +13580,6 @@ struct hdd_config {
 	uint32_t IpaHighBandwidthMbps;
 	uint32_t IpaMediumBandwidthMbps;
 	uint32_t IpaLowBandwidthMbps;
-	uint32_t IpaMccTxDescSize;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint32_t WlanMccToSccSwitchMode;
 #endif
