@@ -6672,7 +6672,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *pHddCtx,
 		/* Initialize the adapter context to zeros. */
 		qdf_mem_zero(pHostapdAdapter, sizeof(struct hdd_adapter));
 		pHostapdAdapter->dev = pWlanHostapdDev;
-		pHostapdAdapter->pHddCtx = pHddCtx;
+		pHostapdAdapter->hdd_ctx = pHddCtx;
 		pHostapdAdapter->magic = WLAN_HDD_ADAPTER_MAGIC;
 		pHostapdAdapter->sessionId = HDD_SESSION_ID_INVALID;
 

@@ -1059,6 +1059,8 @@ struct hdd_connect_pm_context {
 #endif
 #endif
 
+struct hdd_context;
+
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
 	 * needs to be at the beginning of the private data structure so
@@ -1067,7 +1069,7 @@ struct hdd_adapter {
 	 */
 	uint32_t magic;
 
-	void *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *hdd_vdev;
 
 	void *txrx_vdev;
@@ -1316,8 +1318,8 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
 #define WLAN_HDD_GET_AP_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap)
 #define WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter)  (&(pAdapter)->sessionCtx.station.WextState)
-#define WLAN_HDD_GET_CTX(pAdapter) ((struct hdd_context *)pAdapter->pHddCtx)
-#define WLAN_HDD_GET_HAL_CTX(pAdapter)  (((struct hdd_context *)(pAdapter->pHddCtx))->hHal)
+#define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
+#define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap.HostapdState)
 #define WLAN_HDD_GET_CFG_STATE_PTR(pAdapter)  (&(pAdapter)->cfg80211State)
 #define WLAN_HDD_GET_SAP_CTX_PTR(pAdapter) (pAdapter->sessionCtx.ap.sapContext)

@@ -3014,7 +3014,7 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 			sizeof(sta_ctx->conn_info.staId),
 			HDD_WLAN_INVALID_STA_ID);
 		adapter->dev = pWlanDev;
-		adapter->pHddCtx = hdd_ctx;
+		adapter->hdd_ctx = hdd_ctx;
 		adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
 		adapter->sessionId = HDD_SESSION_ID_INVALID;
 
