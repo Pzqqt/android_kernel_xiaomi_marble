@@ -1432,7 +1432,7 @@ send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 	int8_t *buf_ptr;
 	int32_t *module_id_bitmap_array;     /* Used to fomr the second tlv */
 
-	ASSERT(bitmap_len < MAX_MODULE_ID_BITMAP_WORDS);
+	ASSERT(dbglog_param->bitmap_len < MAX_MODULE_ID_BITMAP_WORDS);
 
 	/* Allocate size for 2 tlvs - including tlv hdr space for second tlv */
 	len = sizeof(wmi_debug_log_config_cmd_fixed_param) + WMI_TLV_HDR_SIZE +
