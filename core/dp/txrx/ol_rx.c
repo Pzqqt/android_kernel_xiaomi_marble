@@ -381,7 +381,7 @@ static void process_reorder(ol_txrx_pdev_handle pdev,
 			    qdf_nbuf_t head_msdu,
 			    qdf_nbuf_t tail_msdu,
 			    int num_mpdu_ranges,
-			    int num_pdus,
+			    int num_mpdus,
 			    bool rx_ind_release)
 {
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
