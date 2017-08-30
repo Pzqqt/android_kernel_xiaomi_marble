@@ -224,132 +224,7 @@ static void hdd_cfg80211_scan_done(hdd_adapter_t *adapter,
 	cfg80211_scan_done(req, aborted);
 }
 #endif
-#ifndef NAPIER_SCAN
-/**
- * hdd_cfg80211_scan_done_callback() - scan done callback function called after
- *				       scan is finished
- * @halHandle: Pointer to handle
- * @pContext: Pointer to context
- * @sessionId: Session Id
- * @scanId: Scan Id
- * @status: Scan status
- *
- * Return: QDF status
- */
-static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
-					   void *pContext,
-					   uint8_t sessionId,
-					   uint32_t scanId,
-					   eCsrScanStatus status)
-{
-	struct net_device *dev = (struct net_device *)pContext;
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_scan_info *pScanInfo = &pAdapter->scan_info;
-	struct cfg80211_scan_request *req = NULL;
-	bool aborted = false;
-	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(pAdapter);
-	int ret = 0;
-	unsigned int current_timestamp, time_elapsed;
-	uint8_t source;
-	uint32_t scan_time;
-	uint32_t size = 0;
 
-	ret = wlan_hdd_validate_context(hddctx);
-	if (ret) {
-		hdd_err("Invalid hdd_ctx; Drop results for scanId %d", scanId);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	hdd_debug("called with hal = %p, pContext = %p, ID = %d, status = %d",
-		   halHandle, pContext, (int)scanId, (int)status);
-
-	pScanInfo->mScanPendingCounter = 0;
-
-	if (QDF_STATUS_SUCCESS !=
-		wlan_hdd_scan_request_dequeue(hddctx, scanId, &req, &source,
-			&scan_time)) {
-		hdd_err("Dequeue of scan request failed ID: %d", scanId);
-		goto allow_suspend;
-	}
-
-	/*
-	 * cfg80211_scan_done informing NL80211 about completion
-	 * of scanning
-	 */
-	if (status == eCSR_SCAN_ABORT || status == eCSR_SCAN_FAILURE)
-		aborted = true;
-
-	if (!aborted && !hddctx->beacon_probe_rsp_cnt_per_scan) {
-		hdd_debug("NO SCAN result");
-		if (hddctx->config->bug_report_for_no_scan_results) {
-			current_timestamp = jiffies_to_msecs(jiffies);
-			time_elapsed = current_timestamp -
-				hddctx->last_nil_scan_bug_report_timestamp;
-
-			/*
-			 * check if we have generated bug report in
-			 * MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT time.
-			 */
-			if (time_elapsed >
-			    MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT) {
-				cds_flush_logs(WLAN_LOG_TYPE_FATAL,
-						WLAN_LOG_INDICATOR_HOST_DRIVER,
-						WLAN_LOG_REASON_NO_SCAN_RESULTS,
-						true, false);
-				hddctx->last_nil_scan_bug_report_timestamp =
-					current_timestamp;
-			}
-		}
-	}
-	hddctx->beacon_probe_rsp_cnt_per_scan = 0;
-
-	if (!wlan_hdd_is_scan_pending(pAdapter)) {
-		/* Scan is no longer pending */
-		pScanInfo->mScanPending = false;
-		complete(&pScanInfo->abortscan_event_var);
-	}
-
-	/*
-	 * Scan can be triggred from NL or vendor scan
-	 * - If scan is triggered from NL then cfg80211 scan done should be
-	 * called to updated scan completion to NL.
-	 * - If scan is triggred through vendor command then
-	 * scan done event will be posted
-	 */
-	if (NL_SCAN == source)
-		hdd_cfg80211_scan_done(pAdapter, req, aborted);
-	else
-		hdd_vendor_scan_callback(pAdapter, req, aborted);
-
-allow_suspend:
-	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
-	size = qdf_list_size(&hddctx->hdd_scan_req_q);
-	if (!size) {
-		qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
-		/* release the wake lock at the end of the scan */
-		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_SCAN);
-
-		/* Acquire wakelock to handle the case where APP's tries
-		 * to suspend immediatly after the driver gets connect
-		 * request(i.e after scan) from supplicant, this result in
-		 * app's is suspending and not ableto process the connect
-		 * request to AP
-		 */
-		hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
-					    WIFI_POWER_EVENT_WAKELOCK_SCAN);
-	} else {
-		/* Release the spin lock */
-		qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
-	}
-
-#ifdef FEATURE_WLAN_TDLS
-	wlan_hdd_tdls_scan_done_callback(pAdapter);
-#endif
-
-	EXIT();
-	return 0;
-}
-#endif
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 /**
  * wlan_hdd_sap_skip_scan_check() - The function will check OBSS
@@ -562,13 +437,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	hdd_adapter_t *con_sap_adapter;
 	uint16_t con_dfs_ch;
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-#ifndef NAPIER_SCAN
-	tCsrScanRequest scan_req;
-	uint8_t *channelList = NULL, i;
-	uint8_t *pP2pIe = NULL;
-	uint8_t num_chan = 0;
-	bool is_p2p_scan = false;
-#endif
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
@@ -1815,10 +1683,6 @@ void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
  */
 void hdd_scan_context_destroy(struct hdd_context *hdd_ctx)
 {
-#ifndef NAPIER_SCAN
-	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
-	qdf_spinlock_destroy(&hdd_ctx->hdd_scan_req_q_lock);
-#endif
 	qdf_spinlock_destroy(&hdd_ctx->sched_scan_lock);
 }
 
@@ -1833,9 +1697,5 @@ void hdd_scan_context_destroy(struct hdd_context *hdd_ctx)
 int hdd_scan_context_init(struct hdd_context *hdd_ctx)
 {
 	qdf_spinlock_create(&hdd_ctx->sched_scan_lock);
-#ifndef NAPIER_SCAN
-	qdf_spinlock_create(&hdd_ctx->hdd_scan_req_q_lock);
-	qdf_list_create(&hdd_ctx->hdd_scan_req_q, CFG_MAX_SCAN_COUNT_MAX);
-#endif
 	return 0;
 }
