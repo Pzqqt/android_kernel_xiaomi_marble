@@ -350,6 +350,15 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 	}
 }
 
+void purge_sme_session_active_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
+				uint32_t session_id)
+{
+	uint8_t vdev_id = session_id;
+
+	wlan_serialization_purge_cmd_list_by_vdev_id(mac_ctx->psoc, vdev_id,
+			true, false, false, false, false);
+}
+
 void purge_sme_session_pending_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
 				uint32_t session_id)
 {

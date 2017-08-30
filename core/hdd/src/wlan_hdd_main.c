@@ -3214,13 +3214,6 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 		return -EINVAL;
 	}
 	status = ucfg_reg_11d_vdev_delete_update(adapter->hdd_vdev);
-	/* do vdev logical destroy via objmgr */
-	errno = hdd_objmgr_destroy_vdev(adapter);
-	if (errno) {
-		hdd_err("failed to destroy objmgr vdev: %d", errno);
-		return errno;
-	}
-
 	/*
 	 * In SSR case, there is no need to destroy vdev in firmware since
 	 * it has already asserted. vdev can be released directly.
@@ -3249,8 +3242,14 @@ int hdd_vdev_destroy(hdd_adapter_t *adapter)
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 		return -ETIMEDOUT;
 	}
-
 release_vdev:
+	/* do vdev logical destroy via objmgr */
+	errno = hdd_objmgr_destroy_vdev(adapter);
+	if (errno) {
+		hdd_err("failed to destroy objmgr vdev: %d", errno);
+		return errno;
+	}
+
 	/* now that sme session is closed, allow physical vdev destroy */
 	errno = hdd_objmgr_release_vdev(adapter);
 	if (errno) {

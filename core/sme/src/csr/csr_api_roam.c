@@ -16530,6 +16530,8 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 	purge_sme_session_active_cmd_list(pMac, sessionId);
 	purge_sme_session_pending_scan_cmd_list(pMac,
 			sessionId);
+	purge_sme_session_active_scan_cmd_list(pMac,
+			sessionId);
 	status = csr_issue_del_sta_for_session_req(pMac,
 			sessionId,
 			pSession->selfMacAddr.bytes,

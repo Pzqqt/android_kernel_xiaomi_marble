@@ -1445,6 +1445,8 @@ void purge_sme_session_active_cmd_list(struct sAniSirGlobal *mac_ctx,
 		uint32_t session_id);
 void purge_sme_session_pending_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
 		uint32_t session_id);
+void purge_sme_session_active_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
+		uint32_t session_id);
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
 enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
