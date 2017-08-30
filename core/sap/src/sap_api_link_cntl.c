@@ -612,9 +612,13 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	 * Fetch the number of SAP interfaces. If the number of sap Interface
 	 * more than one then we will make is_sap_ready_for_chnl_chng to true
 	 * for that sapctx. If there is only one SAP interface then process
-	 * immediately
+	 * immediately. If Dual BAND SAP is enabled then also process
+	 * immediately, as in this case the both SAP will be in different band
+	 * and channel change on one SAP doesnt mean channel change on
+	 * other interface.
 	 */
-	if (sap_get_total_number_sap_intf(hHal) <= 1) {
+	if (sap_get_total_number_sap_intf(hHal) <= 1 ||
+	    policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc)) {
 		/* Send channel switch request */
 		sap_event.event = eWNI_SME_CHANNEL_CHANGE_REQ;
 		sap_event.params = 0;
