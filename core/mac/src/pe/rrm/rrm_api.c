@@ -354,6 +354,10 @@ rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 		pe_err("No neighbor report in the frame...Dropping it");
 		return eSIR_FAILURE;
 	}
+	pe_debug("RRM:received num neighbor reports: %d",
+			pNeighborRep->num_NeighborReport);
+	if (pNeighborRep->num_NeighborReport > MAX_SUPPORTED_NEIGHBOR_RPT)
+		pNeighborRep->num_NeighborReport = MAX_SUPPORTED_NEIGHBOR_RPT;
 	length = (sizeof(tSirNeighborReportInd)) +
 		 (sizeof(tSirNeighborBssDescription) *
 		  (pNeighborRep->num_NeighborReport - 1));
