@@ -7371,6 +7371,62 @@ static void hdd_lte_coex_restart_sap(hdd_adapter_t *adapter,
 				    WLAN_SVC_LTE_COEX_IND, NULL, 0);
 	hdd_switch_sap_channel(adapter, restart_chan);
 }
+
+int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,
+	uint16_t **local_unsafe_list, uint16_t *local_unsafe_list_count)
+{
+	uint32_t size;
+	uint16_t *unsafe_list;
+	uint16_t chan_count;
+
+	if (!hdd_ctx || !local_unsafe_list_count || !local_unsafe_list_count)
+		return -EINVAL;
+
+	chan_count = QDF_MIN(hdd_ctx->unsafe_channel_count,
+			     NUM_CHANNELS);
+	if (chan_count) {
+		size = chan_count * sizeof(hdd_ctx->unsafe_channel_list[0]);
+		unsafe_list = qdf_mem_malloc(size);
+		if (!unsafe_list) {
+			hdd_err("No memory for unsafe chan list size%d",
+				size);
+			return -ENOMEM;
+		}
+		qdf_mem_copy(unsafe_list, hdd_ctx->unsafe_channel_list, size);
+	} else {
+		unsafe_list = NULL;
+	}
+
+	*local_unsafe_list = unsafe_list;
+	*local_unsafe_list_count = chan_count;
+
+	return 0;
+}
+
+bool hdd_local_unsafe_channel_updated(struct hdd_context *hdd_ctx,
+	uint16_t *local_unsafe_list, uint16_t local_unsafe_list_count)
+{
+	int i, j;
+
+	if (local_unsafe_list_count != hdd_ctx->unsafe_channel_count)
+		return true;
+	if (local_unsafe_list_count == 0)
+		return false;
+	for (i = 0; i < local_unsafe_list_count; i++) {
+		for (j = 0; j < local_unsafe_list_count; j++)
+			if (local_unsafe_list[i] ==
+			    hdd_ctx->unsafe_channel_list[j])
+				break;
+		if (j >= local_unsafe_list_count)
+			break;
+	}
+	if (i >= local_unsafe_list_count) {
+		hdd_info("unsafe chan list same");
+		return false;
+	}
+
+	return true;
+}
 #else
 static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 {

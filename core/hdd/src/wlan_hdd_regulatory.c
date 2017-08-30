@@ -862,6 +862,8 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 		struct unsafe_ch_list *unsafe_chan_list,
 		struct ch_avoid_ind_type *avoid_freq_list)
 {
+	uint16_t *local_unsafe_list;
+	uint16_t local_unsafe_list_count;
 
 	/* Basic sanity */
 	if (!hdd_ctxt) {
@@ -873,6 +875,13 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 	qdf_mem_copy(&hdd_ctxt->coex_avoid_freq_list, avoid_freq_list,
 			sizeof(struct ch_avoid_ind_type));
 	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
+
+	if (hdd_clone_local_unsafe_chan(hdd_ctxt,
+					&local_unsafe_list,
+					&local_unsafe_list_count) != 0) {
+		hdd_err("failed to clone cur unsafe chan list");
+		return;
+	}
 
 	/* clear existing unsafe channel cache */
 	hdd_ctxt->unsafe_channel_count = 0;
@@ -895,7 +904,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 		hdd_ctxt->unsafe_channel_count = 0;
 		qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
 			sizeof(hdd_ctxt->unsafe_channel_list));
-
+		qdf_mem_free(local_unsafe_list);
 		return;
 	}
 
@@ -905,6 +914,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 					&hdd_ctxt->dnbs_avoid_freq_list)) {
 			mutex_unlock(&hdd_ctxt->avoid_freq_lock);
 			hdd_debug("unable to merge avoid freqs");
+			qdf_mem_free(local_unsafe_list);
 			return;
 	}
 	mutex_unlock(&hdd_ctxt->avoid_freq_lock);
@@ -916,9 +926,15 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 
 	if (!hdd_ctxt->unsafe_channel_count) {
 		hdd_debug("no unsafe channels - not restarting SAP");
+		qdf_mem_free(local_unsafe_list);
 		return;
 	}
-	hdd_unsafe_channel_restart_sap(hdd_ctxt);
+	if (hdd_local_unsafe_channel_updated(hdd_ctxt,
+					    local_unsafe_list,
+					    local_unsafe_list_count))
+		hdd_unsafe_channel_restart_sap(hdd_ctxt);
+	qdf_mem_free(local_unsafe_list);
+
 }
 
 
