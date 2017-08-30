@@ -11792,8 +11792,6 @@ static int hdd_update_pmo_config(hdd_context_t *hdd_ctx)
 	return 0;
 }
 
-#ifdef NAPIER_SCAN
-
 #ifdef FEATURE_WLAN_SCAN_PNO
 static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 	struct hdd_config *cfg)
@@ -11878,12 +11876,6 @@ static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
 
 	return 0;
 }
-#else
-static int hdd_update_scan_config(hdd_context_t *hdd_ctx)
-{
-	return 0;
-}
-#endif
 
 #ifdef CONVERGED_TDLS_ENABLE
 static int hdd_update_tdls_config(hdd_context_t *hdd_ctx)

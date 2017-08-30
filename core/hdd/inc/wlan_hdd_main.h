@@ -1705,10 +1705,6 @@ struct hdd_context {
 	struct delayed_work roc_req_work;
 	qdf_spinlock_t hdd_roc_req_q_lock;
 	qdf_list_t hdd_roc_req_q;
-#ifndef NAPIER_SCAN
-	qdf_spinlock_t hdd_scan_req_q_lock;
-	qdf_list_t hdd_scan_req_q;
-#endif
 	uint8_t miracast_value;
 
 #ifdef WLAN_NS_OFFLOAD
