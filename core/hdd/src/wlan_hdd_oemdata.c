@@ -67,7 +67,7 @@ static int populate_oem_data_cap(struct hdd_adapter *adapter,
 	struct hdd_config *config;
 	uint32_t num_chan;
 	uint8_t *chan_list;
-	struct hdd_context *hdd_ctx = adapter->pHddCtx;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	config = hdd_ctx->config;
 	if (!config) {

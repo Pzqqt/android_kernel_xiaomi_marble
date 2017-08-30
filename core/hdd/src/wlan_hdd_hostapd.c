@@ -228,7 +228,7 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *pAdapter,
 					      uint8_t channel)
 {
 
-	struct hdd_context *pHddCtx = (struct hdd_context *) (pAdapter->pHddCtx);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_hostapd_state_t *pHostapdState =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 
@@ -266,7 +266,7 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *pAdapter,
 static void hdd_hostapd_channel_prevent_suspend(struct hdd_adapter *pAdapter,
 						uint8_t channel)
 {
-	struct hdd_context *pHddCtx = (struct hdd_context *) (pAdapter->pHddCtx);
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_hostapd_state_t *pHostapdState =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 
@@ -973,7 +973,7 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 		return;
 	}
 
-	hdd_ctx = (struct hdd_context *) (adapter->pHddCtx);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hdd_err("HDD context is null");
 		return;
@@ -1023,7 +1023,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 		return;
 	}
 
-	hdd_ctx = (struct hdd_context *) (pHostapdAdapter->pHddCtx);
+	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return;
@@ -1078,7 +1078,7 @@ static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
 	QDF_STATUS qdf_status;
 	int chan_list_size;
 
-	hdd_ctx = (struct hdd_context *)(adapter->pHddCtx);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (!hdd_ctx) {
 		hdd_err("HDD context is null");
 		return QDF_STATUS_E_FAILURE;
@@ -1389,7 +1389,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	sapEvent = pSapEvent->sapHddEventCode;
 	memset(&wrqu, '\0', sizeof(wrqu));
-	pHddCtx = (struct hdd_context *) (pHostapdAdapter->pHddCtx);
+	pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 
 	if (!pHddCtx) {
 		hdd_err("HDD context is null");

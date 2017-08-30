@@ -298,7 +298,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
-	struct hdd_context *hdd_ctx = pAdapter->pHddCtx;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	nskb = skb_unshare(skb, GFP_ATOMIC);
 	if (unlikely(hdd_ctx->config->tx_orphan_enable) && (nskb == skb)) {
@@ -1167,7 +1167,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = pAdapter->pHddCtx;
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	if (unlikely(NULL == pHddCtx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);

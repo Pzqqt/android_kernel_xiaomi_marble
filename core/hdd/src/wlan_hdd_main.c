@@ -2595,6 +2595,7 @@ static int hdd_stop(struct net_device *dev)
 static void __hdd_uninit(struct net_device *dev)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx;
 
 	ENTER_DEV(dev);
 
@@ -2604,7 +2605,8 @@ static void __hdd_uninit(struct net_device *dev)
 			break;
 		}
 
-		if (NULL == adapter->pHddCtx) {
+		hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+		if (!hdd_ctx) {
 			hdd_err("NULL hdd_ctx");
 			break;
 		}
@@ -2612,7 +2614,7 @@ static void __hdd_uninit(struct net_device *dev)
 		if (dev != adapter->dev)
 			hdd_err("Invalid device reference");
 
-		hdd_deinit_adapter(adapter->pHddCtx, adapter, true);
+		hdd_deinit_adapter(hdd_ctx, adapter, true);
 
 		/* after uninit our adapter structure will no longer be valid */
 		adapter->dev = NULL;

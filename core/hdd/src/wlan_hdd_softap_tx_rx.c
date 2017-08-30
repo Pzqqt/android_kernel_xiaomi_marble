@@ -219,7 +219,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *pAdapter,
 		struct sk_buff *skb) {
 
 	struct sk_buff *nskb;
-	struct hdd_context *hdd_ctx = pAdapter->pHddCtx;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	nskb = skb_unshare(skb, GFP_ATOMIC);
 	if (unlikely(hdd_ctx->config->tx_orphan_enable) && (nskb == skb)) {
@@ -713,7 +713,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = pAdapter->pHddCtx;
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	if (unlikely(NULL == pHddCtx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
@@ -833,7 +833,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *pAdapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pHddCtx = (struct hdd_context *) (pAdapter->pHddCtx);
+	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	/* Clear station in TL and then update HDD data
 	 * structures. This helps to block RX frames from other
 	 * station to this station.
@@ -889,7 +889,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *pAdapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
-	struct hdd_context *pHddCtx = pAdapter->pHddCtx;
+	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);

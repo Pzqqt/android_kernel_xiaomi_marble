@@ -1671,7 +1671,7 @@ static void __hdd_ipa_uc_stat_request(struct hdd_adapter *adapter, uint8_t reaso
 	if (!adapter)
 		return;
 
-	hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -1728,7 +1728,7 @@ void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 	if (!adapter)
 		return;
 
-	pHddCtx = adapter->pHddCtx;
+	pHddCtx = WLAN_HDD_GET_CTX(adapter);
 	hdd_ipa = pHddCtx->hdd_ipa;
 	if (!hdd_ipa_is_enabled(pHddCtx) ||
 		!(hdd_ipa_uc_is_enabled(pHddCtx))) {
@@ -1765,7 +1765,7 @@ void hdd_ipa_uc_set_quota(struct hdd_adapter *adapter, uint8_t set_quota,
 	if (!adapter)
 		return;
 
-	pHddCtx = adapter->pHddCtx;
+	pHddCtx = WLAN_HDD_GET_CTX(adapter);
 	hdd_ipa = pHddCtx->hdd_ipa;
 	if (!hdd_ipa_is_enabled(pHddCtx) ||
 		!(hdd_ipa_uc_is_enabled(pHddCtx))) {

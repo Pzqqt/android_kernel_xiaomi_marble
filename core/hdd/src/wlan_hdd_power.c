@@ -953,7 +953,7 @@ out:
 void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
@@ -973,7 +973,7 @@ out:
 void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 		enum pmo_offload_trigger trigger)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
@@ -1010,7 +1010,7 @@ int hdd_cache_mc_addr_list(struct pmo_mc_addr_list_params *mc_list_config)
 void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	enum pmo_offload_trigger trigger)
 {
-	struct hdd_context *hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 

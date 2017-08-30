@@ -6905,7 +6905,7 @@ static int hdd_drv_cmd_process(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	hdd_ctx = (struct hdd_context *)adapter->pHddCtx;
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	for (i = 0; i < cmd_num_total; i++) {
 

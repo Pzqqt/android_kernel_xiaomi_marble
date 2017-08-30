@@ -3238,7 +3238,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *pAdapter,
 	case eCSR_ROAM_RESULT_IBSS_COALESCED:
 	{
 		struct hdd_context *pHddCtx =
-			(struct hdd_context *) pAdapter->pHddCtx;
+			WLAN_HDD_GET_CTX(pAdapter);
 		struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		struct qdf_mac_addr broadcastMacAddr =

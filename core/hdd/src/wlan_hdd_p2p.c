@@ -1578,7 +1578,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	if (NULL != cfgState->buf) {
 		if (!noack) {
 			hdd_err("Previous P2P Action frame packet pending");
-			hdd_cleanup_actionframe(pAdapter->pHddCtx, pAdapter);
+			hdd_cleanup_actionframe(pHddCtx, pAdapter);
 		} else {
 			hdd_err("Pending Action frame packet return EBUSY");
 			return -EBUSY;
@@ -1600,7 +1600,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		home_ch =
 			pAdapter->sessionCtx.station.conn_info.operationChannel;
 	} else {
-		goAdapter = hdd_get_adapter(pAdapter->pHddCtx, QDF_P2P_GO_MODE);
+		goAdapter = hdd_get_adapter(pHddCtx, QDF_P2P_GO_MODE);
 		if (goAdapter &&
 		    (test_bit(SOFTAP_BSS_STARTED, &goAdapter->event_flags)))
 			home_ch = goAdapter->sessionCtx.ap.operatingChannel;
