@@ -9753,6 +9753,12 @@ typedef struct {
     A_UINT32 roam_dense_traffic_thres;
 } wmi_roam_dense_thres_param;
 
+/* Definition for flags in wmi_roam_bg_scan_roaming_param 
+ * Bit 0: BG roaming enabled when we connect to 2G AP only and roaming to 5G AP only.
+ * Bit 1-31: Reserved
+ */
+#define WMI_ROAM_BG_SCAN_FLAGS_2G_TO_5G_ONLY   1
+
 typedef struct {
     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_bg_scan_roaming_param */
     A_UINT32 tlv_header;
@@ -9760,6 +9766,12 @@ typedef struct {
     A_UINT32 roam_bg_scan_bad_rssi_thresh;
     /** bitmap for which scan client will enable/disable background roaming. bit position is mapped to the enum WMI_SCAN_CLIENT_ID. 1 = enable, 0 = disable */
     A_UINT32 roam_bg_scan_client_bitmap;
+    /** roam scan rssi threshold for 2G band.
+     *  offset from roam_bg_scan_bad_rssi_thresh, in dB units
+     */
+    A_INT32 bad_rssi_thresh_offset_2g;
+    /* flags for background roaming */
+    A_UINT32 flags;
 } wmi_roam_bg_scan_roaming_param;
 
 /** Beacon filter wmi command info */
