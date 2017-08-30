@@ -852,4 +852,17 @@ static inline void wlan_pdev_decr_peer_count(struct wlan_objmgr_pdev *pdev)
 {
 	pdev->pdev_objmgr.wlan_peer_count--;
 }
+
+/**
+ * wlan_pdev_get_vdev_count() - get PDEV vdev count
+ * @pdev: PDEV object
+ *
+ * API to get vdev count from PDEV
+ *
+ * Return: vdev_count - pdev's vdev count
+ */
+static inline uint8_t wlan_pdev_get_vdev_count(struct wlan_objmgr_pdev *pdev)
+{
+	return pdev->pdev_objmgr.wlan_vdev_count;
+}
 #endif /* _WLAN_OBJMGR_PDEV_H_*/
