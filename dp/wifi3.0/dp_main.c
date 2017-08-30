@@ -391,7 +391,7 @@ static void dp_srng_msi_setup(struct dp_soc *soc, struct hal_srng_params
 	msi_group_number = dp_srng_calculate_msi_group(soc, ring_type,
 						       ring_num);
 	if (msi_group_number < 0) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			FL("ring not part of an ext_group; ring_type: %d,ring_num %d"),
 			ring_type, ring_num);
 		ring_params->msi_addr = 0;
@@ -485,7 +485,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	 * See if these settings need to passed from DP layer
 	 */
 	ring_params.flags = 0;
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		  FL("Ring type: %d, num:%d"), ring_type, ring_num);
 
 	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
@@ -2071,12 +2071,12 @@ static void dp_lro_hash_setup(struct dp_soc *soc)
 		lro_hash.lro_enable = 1;
 		lro_hash.tcp_flag = QDF_TCPHDR_ACK;
 		lro_hash.tcp_flag_mask = QDF_TCPHDR_FIN | QDF_TCPHDR_SYN |
-				 QDF_TCPHDR_RST | QDF_TCPHDR_ACK | QDF_TCPHDR_URG |
-				 QDF_TCPHDR_ECE | QDF_TCPHDR_CWR;
+			 QDF_TCPHDR_RST | QDF_TCPHDR_ACK | QDF_TCPHDR_URG |
+			 QDF_TCPHDR_ECE | QDF_TCPHDR_CWR;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR, FL("enabled"));
-		qdf_get_random_bytes(lro_hash.toeplitz_hash_ipv4,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW, FL("enabled"));
+	qdf_get_random_bytes(lro_hash.toeplitz_hash_ipv4,
 		 (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
 		 LRO_IPV4_SEED_ARR_SZ));
 
@@ -2084,22 +2084,17 @@ static void dp_lro_hash_setup(struct dp_soc *soc)
 		 (sizeof(lro_hash.toeplitz_hash_ipv6[0]) *
 		 LRO_IPV6_SEED_ARR_SZ));
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		 "lro_hash: lro_enable: 0x%x"
-		 "lro_hash: tcp_flag 0x%x tcp_flag_mask 0x%x",
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
+		 "lro_hash: lro_enable: 0x%x tcp_flag 0x%x tcp_flag_mask 0x%x",
 		 lro_hash.lro_enable, lro_hash.tcp_flag,
 		 lro_hash.tcp_flag_mask);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		FL("lro_hash: toeplitz_hash_ipv4:"));
 	qdf_trace_hex_dump(QDF_MODULE_ID_DP,
 		 QDF_TRACE_LEVEL_ERROR,
 		 (void *)lro_hash.toeplitz_hash_ipv4,
 		 (sizeof(lro_hash.toeplitz_hash_ipv4[0]) *
 		 LRO_IPV4_SEED_ARR_SZ));
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		FL("lro_hash: toeplitz_hash_ipv6:"));
 	qdf_trace_hex_dump(QDF_MODULE_ID_DP,
 		 QDF_TRACE_LEVEL_ERROR,
 		 (void *)lro_hash.toeplitz_hash_ipv6,
@@ -3009,7 +3004,7 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	/* TODO: Enable the following once Tx code is integrated */
 	txrx_ops->tx.tx = dp_tx_send;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		"DP Vdev Register success");
 }
 

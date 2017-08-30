@@ -570,7 +570,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 
 	rx_desc_pool = &soc->rx_desc_status[pdev_id];
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			"%s: Mon RX Status Pool[%d] allocation size=%d\n",
 			__func__, pdev_id, rxdma_entries);
 
@@ -582,7 +582,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 		return status;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			"%s: Mon RX Status Buffers Replenish pdev_id=%d\n",
 			__func__, pdev_id);
 

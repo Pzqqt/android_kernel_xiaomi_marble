@@ -1135,7 +1135,7 @@ static void dp_rx_tid_delete_cb(struct dp_soc *soc, void *cb_ctxt,
 			freedesc->rx_tid.tid);
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		"%s: rx_tid: %d status: %d\n", __func__,
 		freedesc->rx_tid.tid,
 		reo_status->rx_queue_status.header.status);

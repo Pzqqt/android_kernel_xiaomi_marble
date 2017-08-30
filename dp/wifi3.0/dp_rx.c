@@ -288,14 +288,14 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 			vdev_id = DP_PEER_METADATA_ID_GET(
 					mpdu_desc_info.peer_meta_data);
 			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_ERROR,
+				QDF_TRACE_LEVEL_DEBUG,
 				FL("PeerID %d not found use vdevID %d"),
 				peer_id, vdev_id);
 			vdev = dp_get_vdev_from_soc_vdev_id_wifi3(soc,
 							vdev_id);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_ERROR,
+				QDF_TRACE_LEVEL_DEBUG,
 				FL("Invalid PeerID %d"),
 				peer_id);
 			return NULL;
@@ -320,7 +320,7 @@ dp_get_vdev_from_peer(struct dp_soc *soc,
 {
 	if (unlikely(!peer)) {
 		QDF_TRACE(QDF_MODULE_ID_DP,
-			QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE_LEVEL_DEBUG,
 			FL("Peer not found for peerID %d"),
 			peer_id);
 		return NULL;
@@ -1004,7 +1004,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 						mpdu_desc_info);
 
 		if (!vdev) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 				FL("vdev is NULL"));
 			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
 			qdf_nbuf_free(rx_desc->nbuf);

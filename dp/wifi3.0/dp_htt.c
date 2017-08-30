@@ -221,7 +221,7 @@ htt_htc_misc_pkt_pool_free(struct htt_soc *soc)
 		qdf_nbuf_unmap(soc->osdev, netbuf, QDF_DMA_TO_DEVICE);
 
 		soc->stats.htc_pkt_free++;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			 "%s: Pkt free count %d\n",
 			 __func__, soc->stats.htc_pkt_free);
 
