@@ -8196,7 +8196,12 @@ enum hdd_link_speed_rpt_type {
 #define CFG_MULTICAST_HOST_FW_MSGS          "gMulticastHostFwMsgs"
 #define CFG_MULTICAST_HOST_FW_MSGS_MIN      (0)
 #define CFG_MULTICAST_HOST_FW_MSGS_MAX      (1)
+#if defined(MDM_PLATFORM) && !defined(FEATURE_MULTICAST_HOST_FW_MSGS)
+#define CFG_MULTICAST_HOST_FW_MSGS_DEFAULT  (0)
+#else
 #define CFG_MULTICAST_HOST_FW_MSGS_DEFAULT  (1)
+#endif
+
 
 /*
  * <ini>
