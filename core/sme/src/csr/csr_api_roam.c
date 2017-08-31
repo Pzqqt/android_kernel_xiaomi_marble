@@ -918,8 +918,6 @@ QDF_STATUS csr_start(tpAniSirGlobal pMac)
 	uint32_t i;
 
 	do {
-		/* save the global cds context */
-		pMac->roam.g_cds_context = cds_get_global_context();
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			csr_roam_state_change(pMac, eCSR_ROAMING_STATE_IDLE, i);
 
@@ -1056,14 +1054,6 @@ void csr_packetdump_timer_stop(void)
 	QDF_STATUS status;
 	tHalHandle hal;
 	tpAniSirGlobal mac;
-	v_CONTEXT_t vos_ctx_ptr;
-
-	/* get the global voss context */
-	vos_ctx_ptr = cds_get_global_context();
-	if (vos_ctx_ptr == NULL) {
-		QDF_ASSERT(0);
-		return;
-	}
 
 	hal = cds_get_context(QDF_MODULE_ID_SME);
 	if (hal == NULL) {

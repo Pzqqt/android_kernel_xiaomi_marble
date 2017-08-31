@@ -998,7 +998,6 @@ typedef struct tagCsrRoamStruct {
 	tCsrTlStatsReqInfo tlStatsReqInfo;
 	eCsrRoamLinkQualityInd vccLinkQuality;
 	tCsrLinkQualityIndInfo linkQualityIndInfo;
-	v_CONTEXT_t g_cds_context;      /* used for interaction with TL */
 	tCsrTimerInfo WaitForKeyTimerInfo;
 	tCsrRoamSession *roamSession;
 	uint32_t transactionId;  /* Current transaction ID for internal use. */
