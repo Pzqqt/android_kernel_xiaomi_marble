@@ -1558,12 +1558,10 @@ void ol_rx_pkt_dump_call(
 	uint8_t peer_id,
 	uint8_t status)
 {
-	v_CONTEXT_t vos_context;
 	ol_txrx_pdev_handle pdev;
 	struct ol_txrx_peer_t *peer = NULL;
 	tp_ol_packetdump_cb packetdump_cb;
 
-	vos_context = cds_get_global_context();
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
