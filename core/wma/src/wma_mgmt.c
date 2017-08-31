@@ -3547,6 +3547,18 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 
 	wh = (struct ieee80211_frame *)qdf_nbuf_data(buf);
 
+	/*
+	 * If the mpdu_data_len is greater than Max (2k), drop the frame
+	 */
+	if (rx_pkt->pkt_meta.mpdu_data_len > WMA_MAX_MGMT_MPDU_LEN) {
+		WMA_LOGE("Data Len %d greater than max, dropping frame from "MAC_ADDRESS_STR,
+			 rx_pkt->pkt_meta.mpdu_data_len,
+			 MAC_ADDR_ARRAY(wh->i_addr3));
+		qdf_nbuf_free(buf);
+		qdf_mem_free(rx_pkt);
+		return -EINVAL;
+	}
+
 	rx_pkt->pkt_meta.mpdu_hdr_ptr = qdf_nbuf_data(buf);
 	rx_pkt->pkt_meta.mpdu_data_ptr = rx_pkt->pkt_meta.mpdu_hdr_ptr +
 					 rx_pkt->pkt_meta.mpdu_hdr_len;
