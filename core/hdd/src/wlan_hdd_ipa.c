@@ -4977,10 +4977,6 @@ static int __hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				    "IPA resource unload in progress");
 			return 0;
 		}
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-			    "IPA resource %s completed",
-			    hdd_ipa->resource_loading ?
-			    "load" : "unload");
 	}
 
 	hdd_ipa->stats.event[type]++;
