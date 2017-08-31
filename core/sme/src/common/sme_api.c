@@ -5504,12 +5504,11 @@ QDF_STATUS sme_get_wcnss_software_version(tHalHandle hHal,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	v_CONTEXT_t cds_context = cds_get_global_context();
 
 	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
 		if (pVersion != NULL) {
 			status =
-				wma_get_wcnss_software_version(cds_context,
+				wma_get_wcnss_software_version(
 							    pVersion,
 							    versionBufferSize);
 		} else {

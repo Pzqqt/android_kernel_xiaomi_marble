@@ -4149,17 +4149,8 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 }
 #endif /* QCA_WIFI_FTM */
 
-/**
- * wma_get_wcnss_software_version() - get wcnss software version
- * @p_cds_gctx: cds context
- * @pVersion: version pointer
- * @versionBufferSize: buffer size
- *
- * Return: QDF_STATUS_SUCCESS for success or error code
- */
-QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
-					  uint8_t *pVersion,
-					  uint32_t versionBufferSize)
+QDF_STATUS wma_get_wcnss_software_version(uint8_t *version,
+					  uint32_t version_buffer_size)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
@@ -4168,7 +4159,7 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	snprintf(pVersion, versionBufferSize, "%x",
+	snprintf(version, version_buffer_size, "%x",
 		 (unsigned int)wma_handle->target_fw_version);
 	return QDF_STATUS_SUCCESS;
 }
