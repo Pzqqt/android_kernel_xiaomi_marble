@@ -107,32 +107,6 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
 
 /*----------------------------------------------------------------------------
 
-   \brief sysMcStart() - start the system Main Controller thread.
-
-   This function starts the SYS (Main Controller) module.  Starting this
-   module triggers the CFG download to the 'legacy' MAC software.
-
-   \param p_cds_context - pointer to the CDS Context
-
-   \param userCallback - this is a callback that is called when the SYS
-   has completed the 'start' funciton.
-
-   \param pUserData - pointer to some user data entity that is passed to
-   the callback function as a parameter when invoked.
-
-   \return QDF_STATUS_SUCCESS -
-
-   \todo:  We have not 'status' on the callback.  How do we notify the
-   callback that there is a failure ?
-
-   \sa
-
-   --------------------------------------------------------------------------*/
-QDF_STATUS sysMcStart(v_CONTEXT_t p_cds_context, sysResponseCback userCallback,
-		      void *pUserData);
-
-/*----------------------------------------------------------------------------
-
    \brief sys_mc_process_msg() - process SYS messages on the Main Controller thread
 
    This function processes SYS Messages on the Main Controller thread.
