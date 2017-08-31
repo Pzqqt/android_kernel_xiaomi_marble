@@ -622,7 +622,11 @@ out:
 		qdf_mem_free(iface->addBssStaContext);
 	if (iface->staKeyParams)
 		qdf_mem_free(iface->staKeyParams);
+
+	wma_vdev_deinit(iface);
 	qdf_mem_zero(iface, sizeof(*iface));
+	wma_vdev_init(iface);
+
 	del_sta_self_req_param->status = status;
 	if (generate_rsp)
 		wma_send_del_sta_self_resp(del_sta_self_req_param);
@@ -3050,7 +3054,10 @@ void wma_vdev_resp_timer(void *data)
 			qdf_mem_free(iface->addBssStaContext);
 		if (iface->staKeyParams)
 			qdf_mem_free(iface->staKeyParams);
+
+		wma_vdev_deinit(iface);
 		qdf_mem_zero(iface, sizeof(*iface));
+		wma_vdev_init(iface);
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams params = (tpAddBssParams) tgt_req->user_data;
 
