@@ -2942,14 +2942,16 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 
 		rssi_event =
 			(wmi_per_chain_rssi_stats *) param_buf->chain_stats;
-		if (rssi_event && (rssi_event->num_per_chain_rssi_stats >
-		    ((WMI_SVC_MSG_MAX_SIZE - sizeof(*event)) /
-		    sizeof(*peer_stats)))) {
-			excess_data = true;
-			break;
-		} else {
-			buf_len += rssi_event->num_per_chain_rssi_stats *
-						sizeof(*peer_stats);
+		if (rssi_event) {
+			if (rssi_event->num_per_chain_rssi_stats >
+			    ((WMI_SVC_MSG_MAX_SIZE - sizeof(*event)) /
+			    sizeof(*rssi_event))) {
+				excess_data = true;
+				break;
+			} else {
+				buf_len += sizeof(*rssi_event) *
+					rssi_event->num_per_chain_rssi_stats;
+			}
 		}
 	} while (0);
 
