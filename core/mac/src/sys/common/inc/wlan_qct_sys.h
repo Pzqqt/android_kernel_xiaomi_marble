@@ -133,25 +133,6 @@ QDF_STATUS sysMcStart(v_CONTEXT_t p_cds_context, sysResponseCback userCallback,
 
 /*----------------------------------------------------------------------------
 
-   \brief sys_stop() - Stop the SYS module.
-
-   This function stops the SYS module.
-
-   \todo: What else do we need to do on sys_stop()?
-
-   \param p_cds_context - pointer to the CDS Context
-
-   \return QDF_STATUS_SUCCESS - the SYS module is stopped.
-
-   QDF_STATUS_E_FAILURE - the SYS module open failed to stop.
-
-   \sa
-
-   --------------------------------------------------------------------------*/
-QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context);
-
-/*----------------------------------------------------------------------------
-
    \brief sys_mc_process_msg() - process SYS messages on the Main Controller thread
 
    This function processes SYS Messages on the Main Controller thread.

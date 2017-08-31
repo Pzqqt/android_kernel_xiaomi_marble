@@ -37,10 +37,6 @@
 #include "mac_init_api.h"
 #include "qdf_trace.h"
 
-/* SYS stop timeout 30 seconds */
-#define SYS_STOP_TIMEOUT (30000)
-static qdf_event_t g_stop_evt;
-
 /**
  * sys_build_message_header() - to build the sys message header
  * @sysMsgId: message id
@@ -57,70 +53,6 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
 	pMsg->reserved = SYS_MSG_COOKIE;
 
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * sys_stop_complete_cb() - a callback when system stop completes
- * @pUserData: pointer to user provided data context
- *
- * this callback is used once system stop is completed.
- *
- * Return: none
- */
-#ifdef QDF_ENABLE_TRACING
-static void sys_stop_complete_cb(void *pUserData)
-{
-	qdf_event_t *pStopEvt = (qdf_event_t *) pUserData;
-	QDF_STATUS qdf_status = qdf_event_set(pStopEvt);
-
-	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-
-}
-#else
-static void sys_stop_complete_cb(void *pUserData)
-{
-	return;
-}
-#endif
-
-/**
- * sys_stop() - To post stop message to system module
- * @p_cds_context:  pointer to cds context
- *
- * This API is used post a stop message to system module
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct scheduler_msg sysMsg = {0};
-
-	/* Initialize the stop event */
-	qdf_status = qdf_event_create(&g_stop_evt);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		return qdf_status;
-
-	/* post a message to SYS module in MC to stop SME and MAC */
-	sys_build_message_header(SYS_MSG_ID_MC_STOP, &sysMsg);
-
-	/* Save the user callback and user data */
-	sysMsg.callback = sys_stop_complete_cb;
-	sysMsg.bodyptr = (void *)&g_stop_evt;
-
-	/* post the message.. */
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SYS, &sysMsg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		qdf_status = QDF_STATUS_E_BADMSG;
-
-	qdf_status = qdf_wait_single_event(&g_stop_evt, SYS_STOP_TIMEOUT);
-	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-
-	qdf_status = qdf_event_destroy(&g_stop_evt);
-	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-
-	return qdf_status;
 }
 
 /**
