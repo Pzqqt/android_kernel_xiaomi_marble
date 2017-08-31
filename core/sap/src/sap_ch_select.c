@@ -509,6 +509,13 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 				tSapChSelSpectInfo *spectinfo_param)
 {
 	uint8_t i = 0;
+	tpAniSirGlobal mac_ctx = sme_get_mac_context();
+
+	if (NULL == mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"pmac Global Context is NULL");
+		return SAP_CHANNEL_NOT_SELECTED;
+	}
 
 	/*
 	 * If Channel List is not Configured don't do anything
@@ -524,7 +531,9 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 
 	/* Select the best channel from allowed list */
 	for (i = 0; i < sap_ctx->acs_cfg->ch_list_count; i++) {
-		if (sap_ctx->acs_cfg->ch_list[i] == best_chnl) {
+		if ((sap_ctx->acs_cfg->ch_list[i] == best_chnl) &&
+			!(wlan_reg_is_dfs_ch(mac_ctx->pdev, best_chnl) &&
+			policy_mgr_disallow_mcc(mac_ctx->psoc, best_chnl))) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO_HIGH,
 				"Best channel is: %d",

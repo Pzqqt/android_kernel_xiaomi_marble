@@ -120,7 +120,7 @@ QDF_STATUS sme_release_global_lock(tSmeStruct *psSme)
 	return status;
 }
 
-static tpAniSirGlobal sme_get_mac_context(void)
+tpAniSirGlobal sme_get_mac_context(void)
 {
 	tpAniSirGlobal mac_ctx;
 	tHalHandle h_hal;

@@ -1662,6 +1662,15 @@ QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
 		void (*callbackfn)(struct sir_peer_info_ext_resp *param,
 			void *pcontext));
 
+/**
+ * sme_set_5g_band_pref() - sme api to set 5Ghz preference
+ * @hal: hal handle for getting global mac struct
+ * @pref_params: preference info request struct
+ *
+ * This function will set 5Ghz preference for STA connection
+ *
+ * Return: None
+ */
 void sme_set_5g_band_pref(tHalHandle hal_handle,
 			  struct sme_5g_band_pref_params *pref_params);
 
@@ -1695,4 +1704,13 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
  * Return: QDF_STATUS_SUCCESS or non-zero on failure
  */
 QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len);
+
+/**
+ * sme_get_mac_context() - sme api to get the pmac context
+ *
+ * This function will return the pmac context
+ *
+ * Return: pointer to pmac context
+ */
+tpAniSirGlobal sme_get_mac_context(void);
 #endif /* #if !defined( __SME_API_H ) */
