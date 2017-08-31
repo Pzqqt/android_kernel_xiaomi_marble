@@ -87,42 +87,6 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, struct scheduler_msg *p
 	if (SYS_MSG_COOKIE == pMsg->reserved) {
 		/* Process all the new SYS messages.. */
 		switch (pMsg->type) {
-		case SYS_MSG_ID_MC_START:
-			/*
-			 * Handling for this message is not needed now so adding
-			 * debug print and QDF_ASSERT
-			 */
-			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-				"Rx SYS_MSG_ID_MC_START msgType= %d [0x%08x]",
-				pMsg->type, pMsg->type);
-			QDF_ASSERT(0);
-			break;
-
-		case SYS_MSG_ID_MC_STOP:
-			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
-				"Processing SYS MC STOP");
-
-			/* get the HAL context... */
-			hHal = cds_get_context(QDF_MODULE_ID_PE);
-			if (NULL == hHal) {
-				QDF_TRACE(QDF_MODULE_ID_SYS,
-					QDF_TRACE_LEVEL_ERROR,
-					"%s: Invalid hHal", __func__);
-			} else {
-				qdf_status = sme_stop(hHal,
-						HAL_STOP_TYPE_SYS_DEEP_SLEEP);
-				QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-				qdf_status = mac_stop(hHal,
-						HAL_STOP_TYPE_SYS_DEEP_SLEEP);
-				QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-
-				((sysResponseCback) pMsg->callback)(
-						(void *)pMsg->bodyptr);
-
-				qdf_status = QDF_STATUS_SUCCESS;
-			}
-			break;
-
 		case SYS_MSG_ID_MC_THR_PROBE:
 			/*
 			 * Process MC thread probe.  Just callback to the
