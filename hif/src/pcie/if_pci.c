@@ -2208,6 +2208,7 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 			__func__, sc->mem);
 	}
 
+	sc->mem_len = pci_resource_len(pdev, BAR_NUM);
 	ol_sc->mem = mem;
 	ol_sc->mem_pa = pci_resource_start(pdev, BAR_NUM);
 	sc->pci_enabled = true;
@@ -4463,4 +4464,19 @@ int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 
 	/* legacy case only has one irq */
 	return pci_scn->irq;
+}
+
+int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
+{
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+
+	if ((offset >= DRAM_BASE_ADDRESS && offset <= DRAM_BASE_ADDRESS + DRAM_SIZE)
+		 || (offset + sizeof(unsigned int) <= sc->mem_len)) {
+		return 0;
+	}
+
+	HIF_TRACE("Refusing to read memory at 0x%x - 0x%lx (max 0x%zx)\n",
+		 offset, offset + sizeof(unsigned int), sc->mem_len);
+
+	return -EINVAL;
 }

@@ -372,3 +372,8 @@ int hif_dummy_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 	return -(1);
 }
 
+int hif_dummy_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
+{
+	return 0;
+}
+

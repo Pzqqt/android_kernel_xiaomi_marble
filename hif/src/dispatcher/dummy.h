@@ -66,4 +66,4 @@ void hif_dummy_set_bundle_mode(struct hif_softc *hif_ctx,
 					bool enabled, int rx_bundle_cnt);
 int hif_dummy_bus_reset_resume(struct hif_softc *hif_ctx);
 int hif_dummy_map_ce_to_irq(struct hif_softc *scn, int ce_id);
-
+int hif_dummy_addr_in_boundary(struct hif_softc *scn, uint32_t offset);

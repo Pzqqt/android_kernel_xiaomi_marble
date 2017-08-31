@@ -64,6 +64,7 @@ QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops)
 			&hif_dummy_disable_power_management;
 	bus_ops->hif_set_bundle_mode = hif_usb_set_bundle_mode;
 	bus_ops->hif_bus_reset_resume = hif_usb_bus_reset_resume;
+	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
 
 	return QDF_STATUS_SUCCESS;
 }
