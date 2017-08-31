@@ -86,7 +86,7 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&mac_ctx->roam.neighborRoamInfo[session_id];
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (!session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -116,7 +116,7 @@ static void csr_reinit_preauth_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *command)
 {
 	command->u.roamCmd.pLastRoamBss = NULL;
 	command->u.roamCmd.pRoamBssEntry = NULL;
-	qdf_mem_set(&command->u.roamCmd, sizeof(tRoamCmd), 0);
+	qdf_mem_set(&command->u.roamCmd, sizeof(struct roam_cmd), 0);
 }
 
 /**
@@ -144,7 +144,7 @@ void csr_release_command_preauth(tpAniSirGlobal mac_ctx, tSmeCmd *command)
  */
 QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal mac_ctx,
 		uint32_t session_id, tpSirBssDescription bss_desc,
-		eCsrRoamReason reason, bool immediate)
+		enum csr_roam_reason reason, bool immediate)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeCmd *command;
@@ -487,8 +487,9 @@ uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
 			      tpSirBssDescription bss_desc)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	tCsrRoamSession *csr_session = CSR_GET_SESSION(mac_ctx, session_id);
-	eCsrCfgDot11Mode ucfg_dot11_mode, cfg_dot11_mode;
+	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
+				session_id);
+	enum csr_cfgdot11mode ucfg_dot11_mode, cfg_dot11_mode;
 	QDF_STATUS status;
 	tDot11fBeaconIEs *ies_local = NULL;
 	uint32_t dot11mode = 0;
@@ -550,7 +551,8 @@ QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hal, uint32_t session_id,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	tpSirFTPreAuthReq preauth_req;
 	uint16_t auth_req_len = 0;
-	tCsrRoamSession *csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
+				session_id);
 
 	if (NULL == csr_session) {
 		sme_err("Session does not exist for session id: %d",
@@ -626,7 +628,8 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hal,
 	tCsrRoamInfo roam_info;
 	eCsrAuthType conn_Auth_type;
 	uint32_t session_id = preauth_rsp->smeSessionId;
-	tCsrRoamSession *csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
+				session_id);
 	tDot11fAuthentication *p_auth = NULL;
 
 	if (NULL == csr_session) {

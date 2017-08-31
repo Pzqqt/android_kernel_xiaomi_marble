@@ -171,15 +171,15 @@ typedef struct tagSmeCmd {
 	eSmeCommandType command;
 	uint32_t sessionId;
 	union {
-		tScanCmd scanCmd;
-		tRoamCmd roamCmd;
-		tWmStatusChangeCmd wmStatusChangeCmd;
+		struct scan_cmd scanCmd;
+		struct roam_cmd roamCmd;
+		struct wmstatus_changecmd wmStatusChangeCmd;
 		tGenericPmcCmd pmcCmd;
 		tGenericQosCmd qosCmd;
 		tRemainChlCmd remainChlCmd;
 		tNoACmd NoACmd;
-		tAddStaForSessionCmd addStaSessionCmd;
-		tDelStaForSessionCmd delStaSessionCmd;
+		struct addstafor_sessioncmd addStaSessionCmd;
+		struct delstafor_sessionCmd delStaSessionCmd;
 #ifdef FEATURE_WLAN_TDLS
 		tTdlsCmd tdlsCmd;
 #endif
@@ -232,7 +232,7 @@ void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
 void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
-		uint32_t session_id, tSetKeyCmd *set_key_cmd);
+		uint32_t session_id, struct setkey_cmd *set_key_cmd);
 void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd);
 
 QDF_STATUS csr_is_valid_channel(tpAniSirGlobal pMac, uint8_t chnNum);

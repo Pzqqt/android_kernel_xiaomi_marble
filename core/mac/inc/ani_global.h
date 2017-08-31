@@ -915,8 +915,8 @@ typedef struct sAniSirGlobal {
 
 	tSmeStruct sme;
 	tSapStruct sap;
-	tCsrScanStruct scan;
-	tCsrRoamStruct roam;
+	struct csr_scanstruct scan;
+	struct csr_roamstruct roam;
 
 	tRrmContext rrm;
 #ifdef WLAN_FEATURE_CONCURRENT_P2P

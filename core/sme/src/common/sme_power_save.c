@@ -753,7 +753,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	tpSirHostOffloadReq request_buf;
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"%s: IP address = %d.%d.%d.%d", __func__,
@@ -812,7 +812,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tpSirHostOffloadReq request_buf;
 	struct scheduler_msg msg = {0};
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (NULL == session) {
 		sme_err("Session not found");

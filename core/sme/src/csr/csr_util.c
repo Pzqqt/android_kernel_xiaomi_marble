@@ -838,7 +838,7 @@ bool csr_is_conn_state_wds(tpAniSirGlobal pMac, uint32_t sessionId)
 
 static bool csr_is_conn_state_ap(tpAniSirGlobal pMac, uint32_t sessionId)
 {
-	tCsrRoamSession *pSession;
+	struct csr_roam_session *pSession;
 
 	pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (!pSession)
@@ -898,7 +898,7 @@ uint8_t csr_get_infra_operation_channel(tpAniSirGlobal pMac, uint8_t sessionId)
 
 bool csr_is_session_client_and_connected(tpAniSirGlobal pMac, uint8_t sessionId)
 {
-	tCsrRoamSession *pSession = NULL;
+	struct csr_roam_session *pSession = NULL;
 
 	if (CSR_IS_SESSION_VALID(pMac, sessionId)
 	    && csr_is_conn_state_infra(pMac, sessionId)) {
@@ -926,7 +926,7 @@ bool csr_is_session_client_and_connected(tpAniSirGlobal pMac, uint8_t sessionId)
  */
 uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
 {
-	tCsrRoamSession *session = NULL;
+	struct csr_roam_session *session = NULL;
 	uint8_t i = 0;
 	enum tQDF_ADAPTER_MODE persona;
 
@@ -1124,7 +1124,7 @@ static void csr_calc_chb_for_sap_phymode(tpAniSirGlobal mac_ctx,
  * Return: none
  */
 static void csr_handle_conc_chnl_overlap_for_sap_go(tpAniSirGlobal mac_ctx,
-		tCsrRoamSession *session,
+		struct csr_roam_session *session,
 		uint16_t *sap_ch, uint16_t *sap_hbw, uint16_t *sap_cfreq,
 		uint16_t *intf_ch, uint16_t *intf_hbw, uint16_t *intf_cfreq)
 {
@@ -1173,7 +1173,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 			uint16_t sap_ch, eCsrPhyMode sap_phymode,
 			uint8_t cc_switch_mode)
 {
-	tCsrRoamSession *session = NULL;
+	struct csr_roam_session *session = NULL;
 	uint8_t i = 0, chb = PHY_SINGLE_CHANNEL_CENTERED;
 	uint16_t intf_ch = 0, sap_hbw = 0, intf_hbw = 0, intf_cfreq = 0;
 	uint16_t sap_cfreq = 0;
@@ -1335,7 +1335,7 @@ bool csr_is_all_session_disconnected(tpAniSirGlobal pMac)
 bool csr_is_sta_session_connected(tpAniSirGlobal mac_ctx)
 {
 	uint32_t i;
-	tCsrRoamSession *pSession = NULL;
+	struct csr_roam_session *pSession = NULL;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (CSR_IS_SESSION_VALID(mac_ctx, i) &&
@@ -1364,7 +1364,7 @@ bool csr_is_sta_session_connected(tpAniSirGlobal mac_ctx)
 bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 {
 	uint32_t i;
-	tCsrRoamSession *pSession = NULL;
+	struct csr_roam_session *pSession = NULL;
 	enum tQDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
@@ -1521,7 +1521,7 @@ bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal mac_ctx,
 		uint32_t session_id,
 		tSirBssDescription *bss_descr)
 {
-	tCsrRoamSession *pSession = NULL;
+	struct csr_roam_session *pSession = NULL;
 
 	/* Check for MCC support */
 	if (!mac_ctx->roam.configParam.fenableMCCMode)
@@ -1867,7 +1867,7 @@ static eCsrPhyMode csr_translate_to_phy_mode_from_bss_desc(
 }
 
 uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal pMac,
-					     eCsrCfgDot11Mode csrDot11Mode)
+					     enum csr_cfgdot11mode csrDot11Mode)
 {
 	uint32_t ret;
 
@@ -1990,10 +1990,10 @@ QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
 static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 				    eCsrPhyMode bssPhyMode,
 				    bool f5GhzBand,
-				    eCsrCfgDot11Mode *pCfgDot11ModeToUse)
+				    enum csr_cfgdot11mode *pCfgDot11ModeToUse)
 {
 	bool fMatch = false;
-	eCsrCfgDot11Mode cfgDot11Mode;
+	enum csr_cfgdot11mode cfgDot11Mode;
 
 	cfgDot11Mode = eCSR_CFG_DOT11_MODE_11N;
 	switch (phyModeIn) {
@@ -2203,12 +2203,12 @@ static bool csr_get_phy_mode_in_use(eCsrPhyMode phyModeIn,
 bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 			   tSirBssDescription *pSirBssDesc,
 			   tCsrRoamProfile *pProfile,
-			   eCsrCfgDot11Mode *pReturnCfgDot11Mode,
+			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
 			   tDot11fBeaconIEs *pIes)
 {
 	bool fMatch = false;
 	eCsrPhyMode phyModeInBssDesc = eCSR_DOT11_MODE_AUTO, phyMode2;
-	eCsrCfgDot11Mode cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_AUTO;
+	enum csr_cfgdot11mode cfgDot11ModeToUse = eCSR_CFG_DOT11_MODE_AUTO;
 	uint32_t bitMask, loopCount;
 
 	if (!QDF_IS_STATUS_SUCCESS(csr_get_phy_mode_from_bss(pMac, pSirBssDesc,
@@ -2294,9 +2294,10 @@ bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 	return fMatch;
 }
 
-eCsrCfgDot11Mode csr_find_best_phy_mode(tpAniSirGlobal pMac, uint32_t phyMode)
+enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal pMac,
+			uint32_t phyMode)
 {
-	eCsrCfgDot11Mode cfgDot11ModeToUse;
+	enum csr_cfgdot11mode cfgDot11ModeToUse;
 	eCsrBand eBand = pMac->roam.configParam.eBand;
 
 	if ((0 == phyMode) ||
@@ -2455,7 +2456,7 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 static QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
 {
 	uint32_t session_id = 0;
-	tCsrRoamSession *roam_session;
+	struct csr_roam_session *roam_session;
 
 	/* If MCC is not supported just break and return SUCCESS */
 	if (!mac_ctx->roam.configParam.fenableMCCMode)
@@ -2569,7 +2570,7 @@ static bool csr_validate_p2pcli_bcn_intrvl(tpAniSirGlobal mac_ctx,
 		uint8_t chnl_id, uint16_t *bcn_interval, uint32_t session_id,
 		QDF_STATUS *status)
 {
-	tCsrRoamSession *roamsession;
+	struct csr_roam_session *roamsession;
 
 	roamsession = &mac_ctx->roam.roamSession[session_id];
 	if (roamsession->pCurRoamProfile &&
@@ -2607,8 +2608,8 @@ static bool csr_validate_p2pgo_bcn_intrvl(tpAniSirGlobal mac_ctx,
 		uint8_t chnl_id, uint16_t *bcn_interval,
 		uint32_t session_id, QDF_STATUS *status)
 {
-	tCsrRoamSession *roamsession;
-	tCsrConfig *cfg_param;
+	struct csr_roam_session *roamsession;
+	struct csr_config *cfg_param;
 	tCsrRoamConnectedProfile *conn_profile;
 	uint16_t new_bcn_interval;
 
@@ -2671,8 +2672,8 @@ static bool csr_validate_sta_bcn_intrvl(tpAniSirGlobal mac_ctx,
 			uint8_t chnl_id, uint16_t *bcn_interval,
 			uint32_t session_id, QDF_STATUS *status)
 {
-	tCsrRoamSession *roamsession;
-	tCsrConfig *cfg_param;
+	struct csr_roam_session *roamsession;
+	struct csr_config *cfg_param;
 	uint16_t new_bcn_interval;
 
 	roamsession = &mac_ctx->roam.roamSession[session_id];
@@ -3605,7 +3606,7 @@ static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
  * Return: true if pmkid is found else false
  */
 static bool csr_lookup_pmkid_using_ssid(tpAniSirGlobal mac,
-					tCsrRoamSession *session,
+					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
 					uint32_t *index)
 {
@@ -3645,7 +3646,7 @@ static bool csr_lookup_pmkid_using_ssid(tpAniSirGlobal mac,
  * Return: true if pmkid is found else false
  */
 static bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
-					tCsrRoamSession *session,
+					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
 					uint32_t *index)
 {
@@ -3683,7 +3684,7 @@ static bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId,
 {
 	bool fRC = false, fMatchFound = false;
 	uint32_t Index;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -4108,7 +4109,7 @@ static bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId,
 {
 	bool fRC = false, fMatchFound = false;
 	uint32_t Index;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -6127,7 +6128,7 @@ void csr_free_scan_filter(tpAniSirGlobal pMac, tCsrScanResultFilter
 
 void csr_free_roam_profile(tpAniSirGlobal pMac, uint32_t sessionId)
 {
-	tCsrRoamSession *pSession = &pMac->roam.roamSession[sessionId];
+	struct csr_roam_session *pSession = &pMac->roam.roamSession[sessionId];
 
 	if (pSession->pCurRoamProfile) {
 		csr_release_profile(pMac, pSession->pCurRoamProfile);
@@ -6138,7 +6139,7 @@ void csr_free_roam_profile(tpAniSirGlobal pMac, uint32_t sessionId)
 
 void csr_free_connect_bss_desc(tpAniSirGlobal pMac, uint32_t sessionId)
 {
-	tCsrRoamSession *pSession = &pMac->roam.roamSession[sessionId];
+	struct csr_roam_session *pSession = &pMac->roam.roamSession[sessionId];
 
 	if (pSession->pConnectBssDesc) {
 		qdf_mem_free(pSession->pConnectBssDesc);
@@ -6229,7 +6230,7 @@ tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 /* This function use the parameters to decide the CFG value. */
 /* CSR never sets WNI_CFG_DOT11_MODE_ALL to the CFG */
 /* So PE should not see WNI_CFG_DOT11_MODE_ALL when it gets the CFG value */
-eCsrCfgDot11Mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile
+enum csr_cfgdot11mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile
 							*pProfile,
 							  eCsrPhyMode phyMode,
 							  bool fProprietary)
@@ -6399,7 +6400,7 @@ QDF_STATUS csr_set_modify_profile_fields(tpAniSirGlobal pMac,
 					 tCsrRoamModifyProfileFields *
 					 pModifyProfileFields)
 {
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	qdf_mem_copy(&pSession->connectedProfile.modifyProfileFields,
 		     pModifyProfileFields, sizeof(tCsrRoamModifyProfileFields));
@@ -6411,7 +6412,7 @@ QDF_STATUS csr_set_modify_profile_fields(tpAniSirGlobal pMac,
 bool csr_is_set_key_allowed(tpAniSirGlobal pMac, uint32_t sessionId)
 {
 	bool fRet = true;
-	tCsrRoamSession *pSession;
+	struct csr_roam_session *pSession;
 
 	pSession = CSR_GET_SESSION(pMac, sessionId);
 
@@ -6661,7 +6662,7 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 						uint32_t session_id)
 {
-	tCsrRoamSession *session = NULL;
+	struct csr_roam_session *session = NULL;
 
 	session = CSR_GET_SESSION(pmac, session_id);
 	if (NULL == session || NULL == session->pCurRoamProfile)
@@ -6679,7 +6680,7 @@ enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
  */
 bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
 {
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	if (!session)
 		return false;

@@ -512,7 +512,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	tSchBeaconStruct *beacon;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t sme_sessionid = 0;
-	tCsrRoamSession *roam_session;
+	struct csr_roam_session *roam_session;
 #endif
 
 	/* Initialize status code to success. */

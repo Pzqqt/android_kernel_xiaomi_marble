@@ -291,7 +291,7 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
  *
  * Return: session pointer if exists, NULL otherwise.
  */
-tCsrRoamSession *lim_get_session_by_macaddr(tpAniSirGlobal mac_ctx,
+struct csr_roam_session *lim_get_session_by_macaddr(tpAniSirGlobal mac_ctx,
 		tSirMacAddr self_mac);
 
 static inline tSirRFBand lim_get_rf_band(uint8_t channel)

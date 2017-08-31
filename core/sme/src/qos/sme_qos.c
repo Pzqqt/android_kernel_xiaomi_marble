@@ -2980,8 +2980,8 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	tDot11fIEWMMTSPEC *pTspecIE = NULL;
-	tCsrRoamSession *pCsrSession = NULL;
-	tCsrRoamConnectedInfo *pCsrConnectedInfo = NULL;
+	struct csr_roam_session *pCsrSession = NULL;
+	struct csr_roam_connectedinfo *pCsrConnectedInfo = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t ac, numTspec, cnt;
 	uint8_t tspec_flow_index, tspec_mask_status;
@@ -3824,8 +3824,9 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 	uint8_t ac;
 	tDot11fIERICDataDesc *ric_data_desc = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamSession *csr_session = CSR_GET_SESSION(mac_ctx, sessionid);
-	tCsrRoamConnectedInfo *csr_conn_info = NULL;
+	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,
+				sessionid);
+	struct csr_roam_connectedinfo *csr_conn_info = NULL;
 	uint32_t ric_rsplen;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	tDot11fIERICDataDesc *ric_data = NULL;
@@ -3914,7 +3915,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 #ifdef FEATURE_WLAN_ESE
-	tCsrRoamSession *pCsrSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pCsrSession = CSR_GET_SESSION(pMac, sessionId);
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
@@ -4643,7 +4644,7 @@ QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 				uint8_t sessionid, void *event_info)
 {
 
-	tCsrRoamSession *csr_roam_session = NULL;
+	struct csr_roam_session *csr_roam_session = NULL;
 	sme_QosSessionInfo *qos_session;
 	sme_QosACInfo *ac_info;
 	sme_QosEdcaAcType ac;
@@ -5138,7 +5139,8 @@ QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
 				uint8_t sessionid, void *event_info)
 {
 	sme_QosSessionInfo *qos_session;
-	tCsrRoamSession *sme_session = CSR_GET_SESSION(mac_ctx, sessionid);
+	struct csr_roam_session *sme_session = CSR_GET_SESSION(mac_ctx,
+				sessionid);
 	sme_QosACInfo *ac_info;
 	uint8_t ac;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -5432,7 +5434,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	sme_QosEdcaAcType ac, ac_index;
 	sme_QosSearchInfo search_key;
 	sme_QosSearchInfo search_key1;
-	tCsrRoamSession *csr_session;
+	struct csr_roam_session *csr_session;
 	uint8_t tspec_pending;
 	tListElem *pEntry = NULL;
 	sme_QosFlowInfoEntry *flow_info = NULL;

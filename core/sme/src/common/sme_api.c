@@ -158,7 +158,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	hw_mode_cb callback = NULL;
 	struct sir_set_hw_mode_resp *param;
 	enum sir_conn_update_reason reason;
-	tCsrRoamSession *session;
+	struct csr_roam_session *session;
 	uint32_t session_id;
 #ifndef NAPIER_SCAN
 	tSmeCmd *saved_cmd;
@@ -1697,7 +1697,8 @@ QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
 	uint8_t ch_list[WNI_CFG_VALID_CHANNEL_LIST] = { 0 };
 	uint8_t count, valid_count = 0;
 	struct scheduler_msg msg = {0};
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, pPlmReq->sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+					pPlmReq->sessionId);
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -1841,7 +1842,7 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 	tpSirBeaconReportReqInd pSmeBcnReportReq = NULL;
 	tCsrEseBeaconReqParams *pBeaconReq = NULL;
 	uint8_t counter = 0;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 
 	if (pSmeRrmContext->eseBcnReqInProgress == true) {
@@ -3675,7 +3676,7 @@ QDF_STATUS sme_roam_disconnect(tHalHandle hHal, uint8_t sessionId,
 void sme_dhcp_done_ind(tHalHandle hal, uint8_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	tCsrRoamSession *session;
+	struct csr_roam_session *session;
 
 	if (!mac_ctx)
 		return;
@@ -4762,7 +4763,7 @@ QDF_STATUS sme_roam_set_key(tHalHandle hal,  uint8_t session_id,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	uint32_t roam_id;
-	tCsrRoamSession *session = NULL;
+	struct csr_roam_session *session = NULL;
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_SET_KEY,
@@ -5222,7 +5223,7 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct scheduler_msg message = {0};
 	tAniDHCPInd *pMsg;
-	tCsrRoamSession *pSession;
+	struct csr_roam_session *pSession;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -5294,7 +5295,7 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct scheduler_msg message = {0};
 	tAniDHCPInd *pMsg;
-	tCsrRoamSession *pSession;
+	struct csr_roam_session *pSession;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -5900,7 +5901,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 	tpSirKeepAliveReq request_buf;
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, session_id);
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("WMA_SET_KEEP_ALIVE message"));
@@ -5953,7 +5954,7 @@ QDF_STATUS sme_get_operation_channel(tHalHandle hHal, uint32_t *pChannel,
 				     uint8_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession;
+	struct csr_roam_session *pSession;
 
 	if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
 		pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -6069,7 +6070,8 @@ QDF_STATUS sme_register_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		tSirRegisterMgmtFrame *pMsg;
 		uint16_t len;
-		tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+		struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+							sessionId);
 
 		if (!CSR_IS_SESSION_ANY(sessionId) && !pSession) {
 			sme_err("Session %d not found",	sessionId);
@@ -6115,7 +6117,8 @@ QDF_STATUS sme_register_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
     \param matchDataLen - Length of matched data.
     \return QDF_STATUS
    -------------------------------------------------------------------------------*/
-QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal,
+					uint8_t sessionId,
 				     uint16_t frameType, uint8_t *matchData,
 				     uint16_t matchLen)
 {
@@ -6129,7 +6132,8 @@ QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		tSirRegisterMgmtFrame *pMsg;
 		uint16_t len;
-		tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+		struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+							sessionId);
 
 		if (!CSR_IS_SESSION_ANY(sessionId) && !pSession) {
 			sme_err("Session %d not found",	sessionId);
@@ -6948,7 +6952,7 @@ static bool
 sme_search_in_base_ch_lst(tpAniSirGlobal mac_ctx, uint8_t curr_ch)
 {
 	uint8_t i;
-	tCsrChannel *ch_lst_info;
+	struct csr_channel *ch_lst_info;
 	ch_lst_info = &mac_ctx->scan.base_channels;
 	for (i = 0; i < ch_lst_info->numChannels; i++) {
 		if (ch_lst_info->channelList[i] == curr_ch)
@@ -6997,7 +7001,7 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	tpSirRcvFltMcAddrList request_buf;
 	struct scheduler_msg msg = {0};
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession = NULL;
+	struct csr_roam_session *pSession = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, "%s: "
 		  "ulMulticastAddrCnt=%d, multicastAddr[0]=%p", __func__,
@@ -7320,7 +7324,8 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
+QDF_STATUS sme_update_session_param(tHalHandle hal,
+						uint8_t session_id,
 			uint32_t param_type, uint32_t param_val)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -7330,7 +7335,8 @@ QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		struct sir_update_session_param *msg;
-		tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+		struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx,
+							session_id);
 
 		if (!session) {
 			sme_err("Session: %d not found", session_id);
@@ -7370,7 +7376,8 @@ QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
     \param  tmMode - Thermal Mitigation handle mode, default 0
     \return QDF_STATUS
    ---------------------------------------------------------------------------*/
-QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel, uint16_t tmMode)
+QDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel,
+					uint16_t tmMode)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -7470,7 +7477,8 @@ void sme_reset_power_values_for5_g(tHalHandle hHal)
    \- return Success or failure
     -------------------------------------------------------------------------*/
 
-QDF_STATUS sme_update_roam_prefer5_g_hz(tHalHandle hHal, bool nRoamPrefer5GHz)
+QDF_STATUS sme_update_roam_prefer5_g_hz(tHalHandle hHal,
+					bool nRoamPrefer5GHz)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -7905,7 +7913,7 @@ QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
 				   const bool is_fast_roam_enabled)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	QDF_STATUS status;
 
 	/* do_not_roam flag is set in wlan_hdd_cfg80211_connect_start
@@ -8445,7 +8453,7 @@ QDF_STATUS sme_set_neighbor_scan_refresh_period
 	uint8_t sessionId, uint16_t neighborScanResultsRefreshPeriod) {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamConfig *pNeighborRoamConfig = NULL;
+	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -8564,7 +8572,7 @@ QDF_STATUS sme_update_empty_scan_refresh_period(tHalHandle hHal, uint8_t session
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamConfig *pNeighborRoamConfig = NULL;
+	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -8667,7 +8675,7 @@ QDF_STATUS sme_set_neighbor_scan_max_chan_time(tHalHandle hHal, uint8_t sessionI
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamConfig *pNeighborRoamConfig = NULL;
+	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -8877,7 +8885,7 @@ QDF_STATUS sme_set_neighbor_scan_period(tHalHandle hHal, uint8_t sessionId,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamConfig *pNeighborRoamConfig = NULL;
+	struct csr_neighbor_roamconfig *pNeighborRoamConfig = NULL;
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo = NULL;
 
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
@@ -8955,7 +8963,7 @@ QDF_STATUS sme_set_neighbor_scan_min_period(tHalHandle hal,
 {
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamConfig *p_neighbor_roam_config = NULL;
+	struct csr_neighbor_roamconfig *p_neighbor_roam_config = NULL;
 	tpCsrNeighborRoamControlInfo p_neighbor_roam_info = NULL;
 
 	if (session_id >= CSR_ROAM_SESSION_MAX) {
@@ -11057,7 +11065,7 @@ QDF_STATUS sme_set_idle_powersave_config(void *cds_context,
 int16_t sme_get_ht_config(tHalHandle hHal, uint8_t session_id, uint16_t ht_capab)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, session_id);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, session_id);
 
 	if (NULL == pSession) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -11086,7 +11094,7 @@ int sme_update_ht_config(tHalHandle hHal, uint8_t sessionId, uint16_t htCapab,
 			 int value)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (NULL == pSession) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -12211,7 +12219,7 @@ QDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t i, j, peSessionId;
-	tCsrRoamSession *pCsrSession = NULL;
+	struct csr_roam_session *pCsrSession = NULL;
 	tpPESession pSession = NULL;
 
 	status = sme_acquire_global_lock(&pMac->sme);
@@ -13655,7 +13663,7 @@ bool sme_validate_sap_channel_switch(tHalHandle hal,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	tCsrRoamSession *session = CSR_GET_SESSION(mac, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
 	uint16_t intf_channel = 0;
 
 	if (!session)
@@ -14100,7 +14108,7 @@ QDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss)
 		uint16_t cfg_value16;
 		tSirMacHTCapabilityInfo ht_cap_info;
 	} uHTCapabilityInfo;
-	tCsrRoamSession *csr_session;
+	struct csr_roam_session *csr_session;
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 
@@ -14744,7 +14752,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
 	QDF_STATUS status  = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamConfig *nr_config = NULL;
+	struct csr_neighbor_roamconfig *nr_config = NULL;
 	tpCsrNeighborRoamControlInfo nr_info = NULL;
 	uint32_t reason = 0;
 
@@ -15037,7 +15045,7 @@ QDF_STATUS sme_update_mimo_power_save(tHalHandle hal,
 bool sme_is_sta_smps_allowed(tHalHandle hal, uint8_t session_id)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	tCsrRoamSession *csr_session;
+	struct csr_roam_session *csr_session;
 
 	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (NULL == csr_session) {
@@ -16309,7 +16317,7 @@ QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id)
 	struct sir_del_all_tdls_peers *msg;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal p_mac = PMAC_STRUCT(hal);
-	tCsrRoamSession *session = CSR_GET_SESSION(p_mac, session_id);
+	struct csr_roam_session *session = CSR_GET_SESSION(p_mac, session_id);
 
 	msg = qdf_mem_malloc(sizeof(*msg));
 	if (NULL == msg) {

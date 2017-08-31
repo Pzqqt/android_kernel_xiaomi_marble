@@ -317,7 +317,7 @@ QDF_STATUS csr_roam_start_ndi(tpAniSirGlobal mac_ctx, uint32_t session,
 			tCsrRoamProfile *profile)
 {
 	QDF_STATUS status;
-	tBssConfigParam bss_cfg = {0};
+	struct bss_config_param bss_cfg = {0};
 
 	/* Build BSS configuration from profile */
 	status = csr_roam_prepare_bss_config_from_profile(mac_ctx, profile,
@@ -357,7 +357,7 @@ void csr_roam_save_ndi_connected_info(tpAniSirGlobal mac_ctx,
 				      tCsrRoamProfile *roam_profile,
 				      tSirBssDescription *bssdesc)
 {
-	tCsrRoamSession *roam_session = NULL;
+	struct csr_roam_session *roam_session = NULL;
 	tCsrRoamConnectedProfile *connect_profile = NULL;
 
 	roam_session = CSR_GET_SESSION(mac_ctx, session_id);

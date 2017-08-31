@@ -46,7 +46,7 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tSirRemainOnChnReq *pMsg;
 	uint32_t len;
-	tCsrRoamSession *pSession =
+	struct csr_roam_session *pSession =
 		CSR_GET_SESSION(pMac, p2pRemainonChn->sessionId);
 
 	if (!pSession) {

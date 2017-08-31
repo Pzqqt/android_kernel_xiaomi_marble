@@ -944,7 +944,7 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirNeighborReportReqInd pMsg;
-	tCsrRoamSession *pSession;
+	struct csr_roam_session *pSession;
 
 	sme_debug("Request to send Neighbor report request received ");
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {

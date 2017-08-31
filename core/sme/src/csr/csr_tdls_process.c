@@ -372,7 +372,8 @@ static QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tTdlsSendMgmtCmdInfo *tdlsSendMgmtCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsSendMgmtCmdInfo;
 	tSirTdlsSendMgmtReq *tdlsSendMgmtReq = NULL;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+				cmd->sessionId);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
@@ -442,7 +443,8 @@ static QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tTdlsAddStaCmdInfo *tdlsAddStaCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsAddStaCmdInfo;
 	tSirTdlsAddStaReq *tdlsAddStaReq = NULL;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+				cmd->sessionId);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
@@ -508,12 +510,14 @@ static QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	return status;
 }
 
-static QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
+static QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac,
+		tSmeCmd *cmd)
 {
 	tTdlsDelStaCmdInfo *tdlsDelStaCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsDelStaCmdInfo;
 	tSirTdlsDelStaReq *tdlsDelStaReq = NULL;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+				cmd->sessionId);
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
@@ -609,7 +613,8 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		&cmd->u.tdlsCmd.u.tdlsLinkEstablishCmdInfo;
 	tSirTdlsLinkEstablishReq *tdlsLinkEstablishReq = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
+	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac,
+				cmd->sessionId);
 
 	if (NULL == pSession) {
 		sme_err("pSession is NULL");

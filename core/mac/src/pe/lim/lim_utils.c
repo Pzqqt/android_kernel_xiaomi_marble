@@ -8020,11 +8020,11 @@ void lim_decrement_pending_mgmt_count(tpAniSirGlobal mac_ctx)
 	qdf_spin_unlock(&mac_ctx->sys.bbt_mgmt_lock);
 }
 
-tCsrRoamSession *lim_get_session_by_macaddr(tpAniSirGlobal mac_ctx,
+struct csr_roam_session *lim_get_session_by_macaddr(tpAniSirGlobal mac_ctx,
 		tSirMacAddr self_mac)
 {
 	int i = 0;
-	tCsrRoamSession *session;
+	struct csr_roam_session *session;
 
 	if (!mac_ctx || !self_mac) {
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,

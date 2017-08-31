@@ -207,8 +207,8 @@ typedef struct {
 						(eCsrForcedDisassocMICFailure == \
 						  (pCommand)->u.roamCmd.roamReason)))
 
-eCsrRoamState csr_roam_state_change(tpAniSirGlobal pMac,
-				    eCsrRoamState NewRoamState, uint8_t sessionId);
+enum csr_roam_state csr_roam_state_change(tpAniSirGlobal pMac,
+			enum csr_roam_state NewRoamState, uint8_t sessionId);
 QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
 void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
 void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
@@ -316,7 +316,7 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 				   tDot11fBeaconIEs *pIes, bool fForce);
 void csr_apply_country_information(tpAniSirGlobal pMac);
 void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
-				   tCsrChannel *pChannelList);
+				   struct csr_channel *pChannelList);
 void csr_reinit_scan_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_free_scan_result_entry(tpAniSirGlobal pMac, tCsrScanResult *pResult);
 
@@ -326,12 +326,12 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 				  tCsrRoamProfile *pProfile,
 				  tScanResultHandle hBSSList,
-				  eCsrRoamReason reason, uint32_t roamId,
+				  enum csr_roam_reason reason, uint32_t roamId,
 				  bool fImediate, bool fClearScan);
 QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 				  tCsrRoamProfile *pProfile,
 				  tCsrRoamModifyProfileFields *pModProfileFields,
-				  eCsrRoamReason reason, uint32_t roamId,
+				  enum csr_roam_reason reason, uint32_t roamId,
 				  bool fImediate);
 void csr_roam_complete(tpAniSirGlobal pMac, eCsrRoamCompleteResult Result,
 		       void *Context, uint8_t session_id);
@@ -353,11 +353,11 @@ QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 void csr_roam_check_for_link_status_change(tpAniSirGlobal pMac, tSirSmeRsp *pSirMsg);
 void csr_roam_stats_rsp_processor(tpAniSirGlobal pMac, tSirSmeRsp *pSirMsg);
 QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
-				    tCsrRoamStartBssParams *pParam,
+				    struct csr_roamstart_bssparams *pParam,
 				    tCsrRoamProfile *pProfile,
 				    tSirBssDescription *pBssDesc, uint32_t roamId);
 QDF_STATUS csr_roam_issue_stop_bss(tpAniSirGlobal pMac, uint32_t sessionId,
-				   eCsrRoamSubState NewSubstate);
+				   enum csr_roam_substate NewSubstate);
 bool csr_is_same_profile(tpAniSirGlobal pMac, tCsrRoamConnectedProfile *pProfile1,
 			 tCsrRoamProfile *pProfile2);
 bool csr_is_roam_command_waiting(tpAniSirGlobal pMac);
@@ -374,7 +374,7 @@ QDF_STATUS csr_roam_disconnect_internal(tpAniSirGlobal pMac, uint32_t sessionId,
 /* pCommand may be NULL */
 void csr_roam_remove_duplicate_command(tpAniSirGlobal pMac, uint32_t sessionId,
 				       tSmeCmd *pCommand,
-				       eCsrRoamReason eRoamReason);
+				       enum csr_roam_reason eRoamReason);
 
 QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				 tSirBssDescription *pBssDescription,
@@ -396,7 +396,7 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 						     uint8_t sessionId);
 QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 					 eCsrRoamBssType bssType,
-					 tCsrRoamStartBssParams *pParam,
+					 struct csr_roamstart_bssparams *pParam,
 					 tSirBssDescription *pBssDesc);
 QDF_STATUS csr_send_mb_stop_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId);
 
@@ -406,7 +406,7 @@ bool csr_is_ssid_match(tpAniSirGlobal pMac, uint8_t *ssid1, uint8_t ssid1Len,
 bool csr_is_phy_mode_match(tpAniSirGlobal pMac, uint32_t phyMode,
 			   tSirBssDescription *pSirBssDesc,
 			   tCsrRoamProfile *pProfile,
-			   eCsrCfgDot11Mode *pReturnCfgDot11Mode,
+			   enum csr_cfgdot11mode *pReturnCfgDot11Mode,
 			   tDot11fBeaconIEs *pIes);
 bool csr_roam_is_channel_valid(tpAniSirGlobal pMac, uint8_t channel);
 
@@ -431,20 +431,20 @@ bool csr_check_ps_offload_ready(void *pv, uint32_t sessionId);
 void csr_release_profile(tpAniSirGlobal pMac, tCsrRoamProfile *pProfile);
 /* To free memory allocated inside scanFilter */
 void csr_free_scan_filter(tpAniSirGlobal pMac, tCsrScanResultFilter *pScanFilter);
-eCsrCfgDot11Mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile *pProfile,
-							  eCsrPhyMode phyMode,
-							  bool fProprietary);
+enum csr_cfgdot11mode csr_get_cfg_dot11_mode_from_csr_phy_mode(
+	tCsrRoamProfile *pProfile, eCsrPhyMode phyMode,
+	bool fProprietary);
 uint32_t csr_translate_to_wni_cfg_dot11_mode(tpAniSirGlobal pMac,
-					     eCsrCfgDot11Mode csrDot11Mode);
+				    enum csr_cfgdot11mode csrDot11Mode);
 void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fPopulate5GBand);
 void csr_apply_channel_power_info_to_fw(tpAniSirGlobal pMac,
-					tCsrChannel *pChannelList,
+					struct csr_channel *pChannelList,
 					uint8_t *countryCode);
 void csr_apply_power2_current(tpAniSirGlobal pMac);
 void csr_assign_rssi_for_category(tpAniSirGlobal pMac, int8_t bestApRssi,
 				  uint8_t catOffset);
 QDF_STATUS csr_roam_start_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
-				  eCsrRoamingReason roamingReason);
+				  enum csr_roaming_reason roamingReason);
 /* return a bool to indicate whether roaming completed or continue. */
 bool csr_roam_complete_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 			       bool fForce, eCsrRoamResult roamResult);
@@ -483,7 +483,8 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId);
 QDF_STATUS csr_roam_get_session_id_from_bssid(tpAniSirGlobal pMac, struct qdf_mac_addr *bssid,
 					      uint32_t *pSessionId);
-eCsrCfgDot11Mode csr_find_best_phy_mode(tpAniSirGlobal pMac, uint32_t phyMode);
+enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal pMac,
+							uint32_t phyMode);
 
 /* ---------------------------------------------------------------------------
     \fn csr_scan_enable
@@ -897,7 +898,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(tpAniSirGlobal pMac, uint32_t sessionId,
 				       bool fHighPriority);
 
 void csr_call_roaming_completion_callback(tpAniSirGlobal pMac,
-					  tCsrRoamSession *pSession,
+					  struct csr_roam_session *pSession,
 					  tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 					  eCsrRoamResult roamResult);
 /**
@@ -1010,10 +1011,11 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
 #endif
 
 QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal pMac, uint32_t sessionId,
-				    tpSirBssDescription pBssDescription,
-				    eCsrRoamReason reason, bool fImmediate);
-QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason,
-					uint8_t session_id);
+			    tpSirBssDescription pBssDescription,
+			    enum csr_roam_reason reason, bool fImmediate);
+QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac,
+				enum csr_roam_reason reason,
+				uint8_t session_id);
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 						uint8_t sessionId);
@@ -1057,7 +1059,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
 		uint32_t session_id);
 void csr_saved_scan_cmd_free_fields(tpAniSirGlobal mac_ctx,
-				    tCsrRoamSession *session);
+				    struct csr_roam_session *session);
 #endif
 tpSirBssDescription csr_get_fst_bssdescr_ptr(tScanResultHandle result_handle);
 
@@ -1070,11 +1072,11 @@ void csr_scan_active_list_timeout_handle(void *userData);
 QDF_STATUS csr_prepare_disconnect_command(tpAniSirGlobal mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);
 QDF_STATUS csr_roam_prepare_bss_config_from_profile(tpAniSirGlobal mac_ctx,
-		tCsrRoamProfile *profile, tBssConfigParam *bss_cfg,
+		tCsrRoamProfile *profile, struct bss_config_param *bss_cfg,
 		tSirBssDescription *bss_desc);
 void csr_roam_prepare_bss_params(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
-		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies);
+		struct bss_config_param *bss_cfg, tDot11fBeaconIEs *ies);
 
 /**
  * csr_remove_bssid_from_scan_list() - remove the bssid from
@@ -1092,10 +1094,10 @@ void csr_remove_bssid_from_scan_list(tpAniSirGlobal mac_ctx,
 QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal mac_ctx,
 		uint32_t session_id,
 		tCsrRoamProfile *profile, tSirBssDescription *bss_desc,
-		tBssConfigParam *bss_cfg, tDot11fBeaconIEs *ies,
+		struct bss_config_param *bss_cfg, tDot11fBeaconIEs *ies,
 		bool reset_country);
 void csr_prune_channel_list_for_mode(tpAniSirGlobal pMac,
-				     tCsrChannel *pChannelList);
+				     struct csr_channel *pChannelList);
 
 #ifdef WLAN_FEATURE_11W
 bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn);
