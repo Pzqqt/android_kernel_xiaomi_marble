@@ -18428,7 +18428,6 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_hostapd_state_t *pHostapdState;
 	tsap_Config_t *pConfig;
-	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx;
 	int status;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -18451,7 +18450,6 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	p_cds_context = pHddCtx->pcds_context;
 	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 
 	if (NULL == pHostapdState) {
