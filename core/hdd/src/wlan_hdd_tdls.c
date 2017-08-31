@@ -424,15 +424,8 @@ static void wlan_hdd_tdls_discovery_timeout_peer_cb(void *userData)
 	struct list_head *pos, *q;
 	tdlsCtx_t *pHddTdlsCtx;
 	struct hdd_context *hdd_ctx;
-	v_CONTEXT_t cds_context;
 
 	ENTER();
-
-	cds_context = cds_get_global_context();
-	if (NULL == cds_context) {
-		hdd_err("cds_context points to NULL");
-		return;
-	}
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (0 != (wlan_hdd_validate_context(hdd_ctx)))
@@ -5894,17 +5887,10 @@ static void wlan_hdd_tdls_idle_handler(void *user_data)
 	hddTdlsPeer_t *curr_peer;
 	tdlsCtx_t *hdd_tdls_ctx;
 	struct hdd_context *hdd_ctx;
-	v_CONTEXT_t cds_context;
 	struct hdd_adapter *adapter;
 
 	if (!tdls_info->staId) {
 		hdd_err("peer (staidx %u) doesn't exists", tdls_info->staId);
-		return;
-	}
-
-	cds_context = cds_get_global_context();
-	if (NULL == cds_context) {
-		hdd_err("cds_context points to NULL");
 		return;
 	}
 

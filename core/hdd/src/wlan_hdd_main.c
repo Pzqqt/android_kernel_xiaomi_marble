@@ -7345,15 +7345,8 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 {
 	struct hdd_context *hdd_ctx = NULL;
 	struct hdd_adapter *adapter = NULL;
-	void *cds_context = NULL;
 	int i;
 
-	/* Get the global VOSS context.*/
-	cds_context = cds_get_global_context();
-	if (!cds_context) {
-		hdd_err("Global CDS context is Null");
-		return;
-	}
 	/* Get the HDD context.*/
 	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
 
