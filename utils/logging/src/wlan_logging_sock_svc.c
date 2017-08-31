@@ -1237,11 +1237,6 @@ static void send_packetdump(qdf_nbuf_t netbuf, uint8_t status,
 	struct packet_dump pd_hdr = {0};
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter;
-	v_CONTEXT_t vos_ctx;
-
-	vos_ctx = cds_get_global_context();
-	if (!vos_ctx)
-		return;
 
 	hdd_ctx = (struct hdd_context *)cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx)
