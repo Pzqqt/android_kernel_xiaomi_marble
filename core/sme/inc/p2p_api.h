@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,7 +71,6 @@ typedef struct sRemainOnChn {
 #define P2P_SINGLE_NOA 4
 
 typedef struct sp2pContext {
-	v_CONTEXT_t cds_context;
 	tHalHandle hHal;
 	uint8_t sessionId;      /* Session id corresponding to P2P */
 	uint8_t SMEsessionId;
