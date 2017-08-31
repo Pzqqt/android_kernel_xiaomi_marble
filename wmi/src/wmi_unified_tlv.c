@@ -18009,7 +18009,7 @@ static QDF_STATUS fips_conv_data_be(uint32_t data_len, uint8_t *data)
 	/* Endianness to LE */
 	for (c = 0; c < data_len/4; c++) {
 		*((u_int32_t *)data_aligned + c) =
-			qdf_os_le32_to_cpu(*((u_int32_t *)data_aligned + c));
+			qdf_le32_to_cpu(*((u_int32_t *)data_aligned + c));
 	}
 
 	/* Copy content to event->data */
@@ -18280,6 +18280,7 @@ static QDF_STATUS extract_pdev_tpc_ev_param_tlv(wmi_unified_t wmi_handle,
 static QDF_STATUS wds_addr_ev_conv_data_be(uint16_t data_len, uint8_t *ev)
 {
 	uint8_t *datap = (uint8_t *)ev;
+	int i;
 	/* Skip swapping the first word */
 	datap += sizeof(uint32_t);
 	for (i = 0; i < ((data_len / sizeof(uint32_t))-1);
