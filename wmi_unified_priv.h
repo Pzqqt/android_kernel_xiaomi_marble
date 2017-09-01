@@ -955,7 +955,9 @@ QDF_STATUS (*send_lteu_config_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_set_ps_mode_cmd)(wmi_unified_t wmi_handle,
 		       struct set_ps_mode_params *param);
-void (*save_service_bitmap)(wmi_unified_t wmi_handle,
+QDF_STATUS (*save_service_bitmap)(wmi_unified_t wmi_handle,
+		void *evt_buf,  void *bitmap_buf);
+QDF_STATUS (*save_ext_service_bitmap)(wmi_unified_t wmi_handle,
 		void *evt_buf,  void *bitmap_buf);
 bool (*is_service_enabled)(wmi_unified_t wmi_handle,
 	uint32_t service_id);
@@ -1452,8 +1454,6 @@ struct wmi_unified {
 	bool wmi_stopinprogress;
 	uint32_t *wmi_events;
 #ifndef CONFIG_MCL
-	/* WMI service bitmap recieved from target */
-	uint32_t *wmi_service_bitmap;
 	uint32_t *pdev_param;
 	uint32_t *vdev_param;
 	uint32_t *services;
@@ -1478,9 +1478,10 @@ struct wmi_soc {
 	uint16_t max_msg_len[WMI_MAX_RADIOS];
 	struct wmi_ops *ops;
 	uint32_t wmi_events[wmi_events_max];
-#ifndef CONFIG_MCL
 	/* WMI service bitmap recieved from target */
-	uint32_t wmi_service_bitmap[wmi_services_max];
+	uint32_t *wmi_service_bitmap;
+	uint32_t *wmi_ext_service_bitmap;
+#ifndef CONFIG_MCL
 	uint32_t pdev_param[wmi_pdev_param_max];
 	uint32_t vdev_param[wmi_vdev_param_max];
 	uint32_t services[wmi_services_max];

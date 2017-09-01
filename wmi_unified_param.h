@@ -5157,6 +5157,7 @@ typedef enum {
 	wmi_ext_tbttoffset_update_event_id,
 	wmi_11d_new_country_event_id,
 	wmi_get_arp_stats_req_id,
+	wmi_service_available_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
