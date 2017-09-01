@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -599,7 +599,8 @@ typedef enum eDelStaReasonCode {
 	HAL_DEL_STA_REASON_CODE_KEEP_ALIVE = 0x1,
 	HAL_DEL_STA_REASON_CODE_TIM_BASED = 0x2,
 	HAL_DEL_STA_REASON_CODE_RA_BASED = 0x3,
-	HAL_DEL_STA_REASON_CODE_UNKNOWN_A2 = 0x4
+	HAL_DEL_STA_REASON_CODE_UNKNOWN_A2 = 0x4,
+	HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT = 0x5
 } tDelStaReasonCode;
 
 typedef enum eSmpsModeValue {

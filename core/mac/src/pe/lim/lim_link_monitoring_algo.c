@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -263,6 +263,22 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
 		lim_send_deauth_mgmt_frame(mac_ctx,
 			eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON,
 			msg->addr2, session_entry, false);
+		break;
+
+	case HAL_DEL_STA_REASON_CODE_BTM_DISASSOC_IMMINENT:
+		if (session_entry->limMlmState !=
+		    eLIM_MLM_LINK_ESTABLISHED_STATE) {
+			pe_err("BTM request received in state %s",
+				lim_mlm_state_str(session_entry->limMlmState));
+			qdf_mem_free(msg);
+			lim_msg->bodyptr = NULL;
+			return;
+		}
+		lim_send_deauth_mgmt_frame(mac_ctx,
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+				session_entry->bssId, session_entry, false);
+		lim_tear_down_link_with_ap(mac_ctx, session_entry->peSessionId,
+					   eSIR_MAC_UNSPEC_FAILURE_REASON);
 		break;
 
 	default:

@@ -637,6 +637,7 @@ struct csr_config {
 	struct sir_score_config bss_score_params;
 	uint8_t oce_feature_bitmap;
 	struct csr_mbo_thresholds mbo_thresholds;
+	uint32_t btm_offload_config;
 };
 
 struct csr_channel_powerinfo {

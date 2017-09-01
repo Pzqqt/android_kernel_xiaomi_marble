@@ -5409,6 +5409,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_RX_CHAIN_MASK_5G_DEFAULT,
 		     CFG_RX_CHAIN_MASK_5G_MIN,
 		     CFG_RX_CHAIN_MASK_5G_MAX),
+
+	REG_VARIABLE(CFG_BTM_ENABLE_NAME, WLAN_PARAM_HexInteger,
+		     struct hdd_config, btm_offload_config,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BTM_ENABLE_DEFAULT,
+		     CFG_BTM_ENABLE_MIN,
+		     CFG_BTM_ENABLE_MAX),
 };
 
 
@@ -7238,6 +7245,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_ENABLE_PHY_REG,
 		hdd_ctx->config->enable_phy_reg_retention);
+	hdd_debug("Name = [btm_offload_config] value = [0x%x]",
+		  hdd_ctx->config->btm_offload_config);
 }
 
 
@@ -9062,6 +9071,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		(pConfig->rssi_assoc_reject_enabled *
 		WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP);
 	smeConfig->csrConfig.oce_feature_bitmap = val;
+	smeConfig->csrConfig.btm_offload_config =
+					    hdd_ctx->config->btm_offload_config;
 
 	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_thres =
 		hdd_ctx->config->mbo_candidate_rssi_thres;

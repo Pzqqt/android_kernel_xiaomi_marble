@@ -2996,6 +2996,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pMac->roam.configParam.bss_score_params,
 			     &pParam->bss_score_params,
 			     sizeof(struct sir_score_config));
+		pMac->roam.configParam.btm_offload_config =
+						     pParam->btm_offload_config;
 
 		csr_update_he_config_param(pMac, pParam);
 	}
@@ -3265,6 +3267,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	qdf_mem_copy(&pParam->bss_score_params,
 		     &pMac->roam.configParam.bss_score_params,
 		     sizeof(struct sir_score_config));
+	pParam->btm_offload_config = pMac->roam.configParam.btm_offload_config;
 
 	pParam->mbo_thresholds.mbo_candidate_rssi_thres =
 		pMac->roam.configParam.mbo_thresholds.
@@ -18069,6 +18072,8 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.configParam.rssi_channel_penalization;
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->roam.configParam.num_disallowed_aps;
+	req_buf->btm_offload_config =
+				   mac_ctx->roam.configParam.btm_offload_config;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
