@@ -1888,4 +1888,13 @@ QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
 			struct nan_datapath_end_indication_event **ind);
 
 #endif
+/**
+ * wmi_unified_send_btm_config() - Send BTM config to fw
+ * @wmi_hdl:  wmi handle
+ * @params: pointer to wmi_btm_config
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
+				       struct wmi_btm_config *params);
 #endif /* _WMI_UNIFIED_API_H_ */

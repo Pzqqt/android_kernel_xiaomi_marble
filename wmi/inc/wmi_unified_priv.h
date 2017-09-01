@@ -1492,6 +1492,8 @@ QDF_STATUS (*extract_ndp_end_ind)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_end_indication_event **ind);
 
 #endif
+QDF_STATUS (*send_btm_config)(wmi_unified_t wmi_handle,
+			      struct wmi_btm_config *params);
 };
 
 /* Forward declartion for psoc*/

@@ -8090,6 +8090,15 @@ struct wmi_mawc_roam_params {
 	uint8_t rssi_stationary_high_adjust;
 	uint8_t rssi_stationary_low_adjust;
 };
+/**
+ * struct wmi_btm_config - BSS Transition Management offload params
+ * @vdev_id: VDEV on which the parameters should be applied
+ * @btm_offload_config: BTM config
+ */
+struct wmi_btm_config {
+	uint8_t vdev_id;
+	uint32_t btm_offload_config;
+};
 
 /**
  * struct set_arp_stats - set/reset arp stats
