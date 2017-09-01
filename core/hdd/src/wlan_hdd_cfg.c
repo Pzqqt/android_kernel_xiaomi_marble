@@ -5416,6 +5416,15 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_BTM_ENABLE_DEFAULT,
 		     CFG_BTM_ENABLE_MIN,
 		     CFG_BTM_ENABLE_MAX),
+
+#ifdef WLAN_FEATURE_SAE
+	REG_VARIABLE(CFG_IS_SAE_ENABLED_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, is_sae_enabled,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_IS_SAE_ENABLED_DEFAULT,
+		CFG_IS_SAE_ENABLED_MIN,
+		CFG_IS_SAE_ENABLED_MAX),
+#endif
 };
 
 
@@ -6315,6 +6324,19 @@ static void hdd_wlm_cfg_log(struct hdd_context *hdd_ctx)
 		  CFG_LATENCY_FLAGS_ULTRALOW_NAME,
 		  hdd_ctx->config->wlm_latency_flags_ultralow);
 }
+
+#ifdef WLAN_FEATURE_SAE
+static void hdd_cfg_print_sae(struct hdd_context *hdd_ctx)
+{
+	hdd_debug("Name = [%s] value = [%u]",
+		CFG_IS_SAE_ENABLED_NAME,
+		hdd_ctx->config->is_sae_enabled);
+}
+#else
+static void hdd_cfg_print_sae(struct hdd_context *hdd_ctx)
+{
+}
+#endif
 
 /**
  * hdd_cfg_print() - print the hdd configuration
@@ -7247,6 +7269,7 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->enable_phy_reg_retention);
 	hdd_debug("Name = [btm_offload_config] value = [0x%x]",
 		  hdd_ctx->config->btm_offload_config);
+	hdd_cfg_print_sae(hdd_ctx);
 }
 
 

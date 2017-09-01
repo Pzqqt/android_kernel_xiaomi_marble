@@ -12737,6 +12737,29 @@ enum hdd_external_acs_freq_band {
 #define CFG_PHY_REG_MAX     (0x2)
 
 /*
+ * <ini>
+ * sae_enabled - Enable/Disable SAE support in driver
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable SAE support in driver
+ * Driver will update config to supplicant based on this config.
+ *
+ * Related: None
+ *
+ * Supported Feature: SAE
+ * Usage: External
+ *
+ * </ini>
+ */
+
+#define CFG_IS_SAE_ENABLED_NAME    "sae_enabled"
+#define CFG_IS_SAE_ENABLED_DEFAULT (0)
+#define CFG_IS_SAE_ENABLED_MIN     (0)
+#define CFG_IS_SAE_ENABLED_MAX     (1)
+
+/*
  * Type declarations
  */
 #define CFG_CHAN_BAND_WEIGHTAGE_NAME    "chan_band_weightage"
@@ -14916,6 +14939,9 @@ struct hdd_config {
 	uint8_t tx_chain_mask_5g;
 	uint8_t rx_chain_mask_5g;
 	uint32_t btm_offload_config;
+#ifdef WLAN_FEATURE_SAE
+	bool is_sae_enabled;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
