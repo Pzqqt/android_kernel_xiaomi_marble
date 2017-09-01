@@ -20822,6 +20822,44 @@ static QDF_STATUS extract_pdev_caldata_version_check_ev_param_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/*
+ * send_btm_config_cmd_tlv() - Send wmi cmd for BTM config
+ * @wmi_handle: wmi handle
+ * @params: pointer to wmi_btm_config
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
+					  struct wmi_btm_config *params)
+{
+
+	wmi_btm_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_btm_config_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_btm_config_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_btm_config_fixed_param));
+	cmd->vdev_id = params->vdev_id;
+	cmd->flags = params->btm_offload_config;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+	    WMI_ROAM_BTM_CONFIG_CMDID)) {
+		WMI_LOGE("%s: failed to send WMI_ROAM_BTM_CONFIG_CMDID",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -21260,6 +21298,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_ndp_end_rsp = extract_ndp_end_rsp_tlv,
 	.extract_ndp_end_ind = extract_ndp_end_ind_tlv,
 #endif
+	.send_btm_config = send_btm_config_cmd_tlv,
 };
 
 /**

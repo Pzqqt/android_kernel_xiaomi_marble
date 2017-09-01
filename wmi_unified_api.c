@@ -7221,3 +7221,14 @@ QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
+				       struct wmi_btm_config *params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_btm_config)
+		return wmi_handle->ops->send_btm_config(wmi_handle,
+							params);
+
+	return QDF_STATUS_E_FAILURE;
+}
