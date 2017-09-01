@@ -165,11 +165,16 @@
 
 #define WLAN_CFG_MAX_CLIENTS 64
 
+#ifdef CONFIG_MCL
 #ifdef IPA_OFFLOAD
 #define WLAN_CFG_PER_PDEV_TX_RING 0
 #else
 #define WLAN_CFG_PER_PDEV_TX_RING 1
 #endif
+#else
+#define WLAN_CFG_PER_PDEV_TX_RING 0
+#endif
+
 #define WLAN_CFG_NUM_TCL_DATA_RINGS 3
 #define WLAN_CFG_NUM_REO_DEST_RING 4
 
