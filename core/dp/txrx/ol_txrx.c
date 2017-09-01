@@ -4936,17 +4936,11 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
  *
  * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
  */
-static QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
+static QDF_STATUS ol_txrx_register_ocb_peer(uint8_t *mac_addr,
 				     uint8_t *peer_id)
 {
 	ol_txrx_pdev_handle pdev;
 	ol_txrx_peer_handle peer;
-
-	if (!cds_ctx) {
-		ol_txrx_err("%s: Invalid context",
-			   __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {

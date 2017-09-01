@@ -239,7 +239,7 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	qdf_status = cdp_peer_register_ocb_peer(soc, hdd_ctx->pcds_context,
+	qdf_status = cdp_peer_register_ocb_peer(soc,
 				adapter->macAddressCurrent.bytes,
 				&peer_id);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -478,7 +478,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 
 	ENTER_DEV(dev);
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc)
 		return rc;
