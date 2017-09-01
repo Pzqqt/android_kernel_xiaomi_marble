@@ -7056,43 +7056,9 @@ static void wlan_hdd_check_11gmode(u8 *pIe, u8 *require_ht, u8 *require_vht,
 }
 
 /**
- * wlan_hdd_add_ie() - add ie
+ * wlan_hdd_add_hostapd_conf_vsie() - configure Vendor IE in sap mode
  * @pHostapdAdapter: Pointer to hostapd adapter
- * @genie: Pointer to ie to be added
- * @total_ielen: Pointer to store total ie length
- * @oui: Pointer to oui
- * @oui_size: Size of oui
- *
- * Return: 0 for success non-zero for failure
- */
-static int wlan_hdd_add_ie(struct hdd_adapter *pHostapdAdapter, uint8_t *genie,
-			   uint16_t *total_ielen, uint8_t *oui,
-			   uint8_t oui_size)
-{
-	uint16_t ielen = 0;
-	uint8_t *pIe = NULL;
-	beacon_data_t *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
-
-	pIe = wlan_hdd_get_vendor_oui_ie_ptr(oui, oui_size,
-					     pBeacon->tail, pBeacon->tail_len);
-
-	if (pIe) {
-		ielen = pIe[1] + 2;
-		if ((*total_ielen + ielen) <= MAX_GENIE_LEN) {
-			qdf_mem_copy(&genie[*total_ielen], pIe, ielen);
-		} else {
-			hdd_err("**Ie Length is too big***");
-			return -EINVAL;
-		}
-		*total_ielen += ielen;
-	}
-	return 0;
-}
-
-/**
- * wlan_hdd_add_hostapd_conf_vsie() - configure vsie in sap mode
- * @pHostapdAdapter: Pointer to hostapd adapter
- * @genie: Pointer to vsie
+ * @genie: Pointer to Vendor IE
  * @total_ielen: Pointer to store total ie length
  *
  * Return: none
@@ -7106,6 +7072,7 @@ static void wlan_hdd_add_hostapd_conf_vsie(struct hdd_adapter *pHostapdAdapter,
 	uint8_t *ptr = pBeacon->tail;
 	uint8_t elem_id, elem_len;
 	uint16_t ielen = 0;
+	bool skip_ie;
 
 	if (NULL == ptr || 0 == left)
 		return;
@@ -7119,32 +7086,25 @@ static void wlan_hdd_add_hostapd_conf_vsie(struct hdd_adapter *pHostapdAdapter,
 				elem_id, elem_len, left);
 			return;
 		}
-		if (IE_EID_VENDOR == elem_id &&
-				(elem_len >= WPS_OUI_TYPE_SIZE)) {
-			/* skipping the VSIE's which we don't want to include or
-			 * it will be included by existing code
+		if (IE_EID_VENDOR == elem_id) {
+			/*
+			 * skipping the Vendor IE's which we don't want to
+			 * include or it will be included by existing code.
 			 */
-			if ((memcmp(&ptr[2], WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE) !=
-			     0) &&
-#ifdef WLAN_FEATURE_WFD
-			    (memcmp(&ptr[2], WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE) !=
-			     0) &&
-#endif
-			    (memcmp
-				     (&ptr[2], WHITELIST_OUI_TYPE,
-				     WPA_OUI_TYPE_SIZE) != 0)
-			    &&
-			    (memcmp
-				     (&ptr[2], BLACKLIST_OUI_TYPE,
-				     WPA_OUI_TYPE_SIZE) != 0)
-			    &&
-			    (memcmp
-				     (&ptr[2], "\x00\x50\xf2\x02",
-				     WPA_OUI_TYPE_SIZE) != 0)
-			    && (memcmp(&ptr[2], WPA_OUI_TYPE, WPA_OUI_TYPE_SIZE)
-				!= 0)
-			    && (memcmp(&ptr[2], P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE)
-				!= 0)) {
+			if (elem_len >= WPS_OUI_TYPE_SIZE &&
+			    (!qdf_mem_cmp(&ptr[2], WHITELIST_OUI_TYPE,
+					  WPA_OUI_TYPE_SIZE) ||
+			     !qdf_mem_cmp(&ptr[2], BLACKLIST_OUI_TYPE,
+					  WPA_OUI_TYPE_SIZE) ||
+			     !qdf_mem_cmp(&ptr[2], "\x00\x50\xf2\x02",
+					  WPA_OUI_TYPE_SIZE) ||
+			     !qdf_mem_cmp(&ptr[2], WPA_OUI_TYPE,
+					  WPA_OUI_TYPE_SIZE)))
+				skip_ie = true;
+			else
+				skip_ie = false;
+
+			if (!skip_ie) {
 				ielen = ptr[1] + 2;
 				if ((*total_ielen + ielen) <= MAX_GENIE_LEN) {
 					qdf_mem_copy(&genie[*total_ielen], ptr,
@@ -7374,21 +7334,6 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
 			      WLAN_EID_INTERWORKING);
 
-	if (0 != wlan_hdd_add_ie(adapter, genie,
-		&total_ielen, WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE)) {
-		hdd_err("Adding WPS IE failed");
-		ret = -EINVAL;
-		goto done;
-	}
-#ifdef WLAN_FEATURE_WFD
-	if (0 != wlan_hdd_add_ie(adapter, genie,
-		&total_ielen, WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE)) {
-		hdd_err("Adding WFD IE failed");
-		ret = -EINVAL;
-		goto done;
-	}
-#endif
-
 #ifdef FEATURE_WLAN_WAPI
 	if (QDF_SAP_MODE == adapter->device_mode) {
 		wlan_hdd_add_extra_ie(adapter, genie, &total_ielen,
@@ -7396,24 +7341,8 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	}
 #endif
 
-	if (adapter->device_mode == QDF_SAP_MODE ||
-		adapter->device_mode == QDF_P2P_GO_MODE)
-		wlan_hdd_add_hostapd_conf_vsie(adapter, genie,
-					       &total_ielen);
-
-	if (wlan_hdd_add_ie(adapter, genie,
-		&total_ielen, P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE) != 0) {
-		hdd_err("Adding P2P IE failed");
-		ret = -EINVAL;
-		goto done;
-	}
-
-	if (wlan_hdd_add_ie(adapter, genie, &total_ielen,
-			    MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE)) {
-		hdd_err("Adding mbo ie failed");
-		ret = -EINVAL;
-		goto done;
-	}
+	wlan_hdd_add_hostapd_conf_vsie(adapter, genie,
+				       &total_ielen);
 
 	wlan_hdd_add_sap_obss_scan_ie(adapter, genie, &total_ielen);
 
