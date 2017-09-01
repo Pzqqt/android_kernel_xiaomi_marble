@@ -1150,7 +1150,24 @@ QDF_STATUS wmi_unified_init_cmd_send(void *wmi_hdl,
 
 bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id);
 
+/**
+ * wmi_save_service_bitmap() - save service bitmap
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS failure code
+ */
 QDF_STATUS wmi_save_service_bitmap(void *wmi_hdl, void *evt_buf,
+				   void *bitmap_buf);
+
+/**
+ * wmi_save_ext_service_bitmap() - save extended service bitmap
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS failure code
+ */
+QDF_STATUS wmi_save_ext_service_bitmap(void *wmi_hdl, void *evt_buf,
 				   void *bitmap_buf);
 
 QDF_STATUS wmi_save_fw_version(void *wmi_hdl, void *evt_buf);
