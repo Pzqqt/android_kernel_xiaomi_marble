@@ -543,6 +543,8 @@ static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 		return ret_val;
 	}
 
+	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REG);
+
 	hdd_regulatory_wiphy_init(hdd_ctx, reg_info, wiphy);
 
 	hdd_process_regulatory_data(hdd_ctx, wiphy, true);
@@ -553,7 +555,6 @@ static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
-	hdd_set_dfs_region(hdd_ctx, DFS_FCC_REG);
 	wlan_reg_get_dfs_region(hdd_ctx->hdd_pdev, &dfs_reg);
 
 	reg_program_config_vars(hdd_ctx, &config_vars);
