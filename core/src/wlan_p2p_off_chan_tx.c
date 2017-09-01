@@ -145,6 +145,11 @@ static const uint8_t *p2p_get_p2pie_from_probe_rsp(
 	const uint8_t *tmp_p2p_ie;
 	uint16_t ie_len;
 
+	if (tx_ctx->buf_len <= PROBE_RSP_IE_OFFSET) {
+		p2p_err("Invalid header len for probe response");
+		return NULL;
+	}
+
 	ie = tx_ctx->buf + PROBE_RSP_IE_OFFSET;
 	ie_len = tx_ctx->buf_len - PROBE_RSP_IE_OFFSET;
 	p2p_ie = p2p_get_p2pie_ptr(ie, ie_len);
@@ -605,6 +610,11 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 
 	p2p_init_frame_info(frame_info);
 
+	if (length < P2P_ACTION_OFFSET + 1) {
+		p2p_err("invalid p2p mgmt hdr len");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	type = P2P_GET_TYPE_FRM_FC(buf[0]);
 	sub_type = P2P_GET_SUBTYPE_FRM_FC(buf[0]);
 	if (type != P2P_FRAME_MGMT) {
@@ -633,7 +643,8 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 
 	frame_info->sub_type = P2P_MGMT_ACTION;
 	buf += P2P_ACTION_OFFSET;
-	if (buf[0] == P2P_PUBLIC_ACTION_FRAME &&
+	if (length > P2P_PUBLIC_ACTION_FRAME_TYPE_OFFSET &&
+	    buf[0] == P2P_PUBLIC_ACTION_FRAME &&
 	    buf[1] == P2P_PUBLIC_ACTION_VENDOR_SPECIFIC &&
 	    !qdf_mem_cmp(&buf[2], P2P_OUI, P2P_OUI_SIZE)) {
 		buf = data_buf +
@@ -644,8 +655,9 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 				P2P_PUBLIC_ACTION_NOT_SUPPORT;
 		else
 			frame_info->public_action_type = action_type;
-	} else if (buf[0] == P2P_ACTION_VENDOR_SPECIFIC_CATEGORY &&
-		!qdf_mem_cmp(&buf[1], P2P_OUI, P2P_OUI_SIZE)) {
+	} else if (length > P2P_ACTION_FRAME_TYPE_OFFSET &&
+		   buf[0] == P2P_ACTION_VENDOR_SPECIFIC_CATEGORY &&
+		   !qdf_mem_cmp(&buf[1], P2P_OUI, P2P_OUI_SIZE)) {
 		buf = data_buf +
 			P2P_ACTION_FRAME_TYPE_OFFSET;
 		action_type = buf[0];
@@ -1397,7 +1409,7 @@ static QDF_STATUS p2p_execute_tx_action_frame(
 	 */
 	p2p_populate_mac_header(tx_ctx);
 
-	if ((noa_len > 0)
+	if ((noa_len > 0) && p2p_ie
 		&& (noa_len < (P2P_MAX_NOA_ATTR_LEN +
 				P2P_IE_HEADER_LEN))) {
 		/* Add 2 bytes for length and Arribute field */
