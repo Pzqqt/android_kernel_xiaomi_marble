@@ -42,4 +42,4 @@ wcd-core-objs                  := wcd9xxx-rst.o wcd9xxx-core-init.o \
 				wcd9335-regmap.o wcd9335-tables.o \
 				msm-cdc-pinctrl.o msm-cdc-supply.o
 obj-$(CONFIG_WCD9XXX_CODEC_CORE) += wcd-core.o
-obj-$(CONFIG_SND_SOC_MSM_HDMI_CODEC_RX) := msm_hdmi_codec_rx.o
+obj-$(CONFIG_SND_SOC_MSM_HDMI_CODEC_RX) += msm_hdmi_codec_rx.o
