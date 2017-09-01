@@ -1431,6 +1431,39 @@ void reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 	*dfs_reg = pdev_priv_obj->dfs_region;
 }
 
+#ifdef CONFIG_LEGACY_CHAN_ENUM
+static void reg_init_channel_map(enum dfs_reg dfs_region)
+{
+	channel_map = channel_map_old;
+}
+#else
+static void reg_init_channel_map(enum dfs_reg dfs_region)
+{
+	switch (dfs_region) {
+	case DFS_UNINIT_REG:
+	case DFS_UNDEF_REG:
+		channel_map = channel_map_global;
+		break;
+	case DFS_FCC_REG:
+		channel_map = channel_map_us;
+		break;
+	case DFS_ETSI_REG:
+		channel_map = channel_map_eu;
+		break;
+	case DFS_MKK_REG:
+		channel_map = channel_map_jp;
+		break;
+	case DFS_CN_REG:
+		channel_map = channel_map_china;
+		break;
+	case DFS_KR_REG:
+		channel_map = channel_map_eu;
+		break;
+	}
+}
+#endif
+
+
 /**
  * reg_set_dfs_region () - Set the current dfs region
  * @dfs_reg: pointer to dfs region
@@ -1449,6 +1482,8 @@ void reg_set_dfs_region(struct wlan_objmgr_pdev *pdev,
 	}
 
 	pdev_priv_obj->dfs_region = dfs_reg;
+
+	reg_init_channel_map(dfs_reg);
 }
 
 QDF_STATUS reg_get_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
@@ -2468,39 +2503,6 @@ static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
 	}
 }
 
-#ifdef CONFIG_LEGACY_CHAN_ENUM
-static void reg_init_channel_map(enum dfs_reg dfs_region)
-{
-	channel_map = channel_map_old;
-}
-#else
-static void reg_init_channel_map(enum dfs_reg dfs_region)
-{
-	switch (dfs_region) {
-	case DFS_UNINIT_REG:
-	case DFS_UNDEF_REG:
-		channel_map = channel_map_global;
-		break;
-	case DFS_FCC_REG:
-		channel_map = channel_map_us;
-		break;
-	case DFS_ETSI_REG:
-		channel_map = channel_map_eu;
-		break;
-	case DFS_MKK_REG:
-		channel_map = channel_map_jp;
-		break;
-	case DFS_CN_REG:
-		channel_map = channel_map_china;
-		break;
-	case DFS_KR_REG:
-		channel_map = channel_map_eu;
-		break;
-	}
-}
-#endif
-
-
 QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 					*regulat_info)
 {
@@ -3334,7 +3336,6 @@ void reg_program_mas_chan_list(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_copy(psoc_priv_obj->cur_country, alpha2,
 		     REG_ALPHA2_LEN);
 
-	reg_init_channel_map(dfs_region);
 	for (count = 0; count < NUM_CHANNELS; count++) {
 		reg_channels[count].chan_num =
 			channel_map[count].chan_num;
