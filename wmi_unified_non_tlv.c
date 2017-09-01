@@ -5458,21 +5458,36 @@ static QDF_STATUS send_ext_resource_config_non_tlv(wmi_unified_t wmi_handle,
  * @param evt_buf: pointer to event buffer
  * @param bitmap_buf: bitmap buffer for converged legacy support
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static void save_service_bitmap_non_tlv(wmi_unified_t wmi_handle,
+static QDF_STATUS save_service_bitmap_non_tlv(wmi_unified_t wmi_handle,
 				 void *evt_buf, void *bitmap_buf)
 {
 	wmi_service_ready_event *ev;
+	struct wmi_soc *soc = wmi_handle->soc;
 
 	ev = (wmi_service_ready_event *) evt_buf;
 
-	qdf_mem_copy(wmi_handle->wmi_service_bitmap, ev->wmi_service_bitmap,
+	/* If it is already allocated, use that buffer. This can happen
+	 * during target stop/start scenarios where host allocation is skipped.
+	 */
+	if (!soc->wmi_service_bitmap) {
+		soc->wmi_service_bitmap =
+			qdf_mem_malloc(WMI_SERVICE_BM_SIZE * sizeof(uint32_t));
+		if (!soc->wmi_service_bitmap) {
+			WMI_LOGE("Failed memory alloc for service bitmap\n");
+			return QDF_STATUS_E_NOMEM;
+		}
+	}
+
+	qdf_mem_copy(soc->wmi_service_bitmap, ev->wmi_service_bitmap,
 				(WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
 
 	if (bitmap_buf)
 		qdf_mem_copy(bitmap_buf, ev->wmi_service_bitmap,
 				(WMI_SERVICE_BM_SIZE * sizeof(uint32_t)));
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5485,7 +5500,14 @@ static void save_service_bitmap_non_tlv(wmi_unified_t wmi_handle,
 static bool is_service_enabled_non_tlv(wmi_unified_t wmi_handle,
 				uint32_t service_id)
 {
-	return WMI_SERVICE_IS_ENABLED(wmi_handle->wmi_service_bitmap,
+	struct wmi_soc *soc = wmi_handle->soc;
+
+	if (!soc->wmi_service_bitmap) {
+		WMI_LOGE("WMI service bit map is not saved yet\n");
+		return false;
+	}
+
+	return WMI_SERVICE_IS_ENABLED(soc->wmi_service_bitmap,
 			service_id);
 }
 

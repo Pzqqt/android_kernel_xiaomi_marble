@@ -2573,8 +2573,6 @@ void wmi_interface_logging_init(struct wmi_unified *wmi_handle)
 static inline void wmi_target_params_init(struct wmi_soc *soc,
 				struct wmi_unified *wmi_handle)
 {
-	/* WMI service bitmap recieved from target */
-	wmi_handle->wmi_service_bitmap = soc->wmi_service_bitmap;
 	wmi_handle->pdev_param = soc->pdev_param;
 	wmi_handle->vdev_param = soc->vdev_param;
 	wmi_handle->services   = soc->services;
@@ -2783,6 +2781,17 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 		}
 	}
 	qdf_spinlock_destroy(&soc->ctx_lock);
+
+	if (soc->wmi_service_bitmap) {
+		qdf_mem_free(soc->wmi_service_bitmap);
+		soc->wmi_service_bitmap = NULL;
+	}
+
+	if (soc->wmi_ext_service_bitmap) {
+		qdf_mem_free(soc->wmi_ext_service_bitmap);
+		soc->wmi_ext_service_bitmap = NULL;
+	}
+
 	/* Decrease the ref count once refcount infra is present */
 	soc->wmi_psoc = NULL;
 	qdf_mem_free(soc);
