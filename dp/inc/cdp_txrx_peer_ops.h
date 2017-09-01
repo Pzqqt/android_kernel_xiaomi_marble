@@ -100,7 +100,7 @@ cdp_clear_peer(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, uint8_t sta_id)
  *         QDF_STATUS_E_NOSUPPORT not support this feature
  */
 static inline QDF_STATUS
-cdp_peer_register_ocb_peer(ol_txrx_soc_handle soc, void *cds_ctx,
+cdp_peer_register_ocb_peer(ol_txrx_soc_handle soc,
 		uint8_t *mac_addr, uint8_t *peer_id)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
@@ -110,8 +110,7 @@ cdp_peer_register_ocb_peer(ol_txrx_soc_handle soc, void *cds_ctx,
 	}
 
 	if (soc->ops->peer_ops->register_ocb_peer)
-		return soc->ops->peer_ops->register_ocb_peer(cds_ctx,
-			mac_addr, peer_id);
+		return soc->ops->peer_ops->register_ocb_peer(mac_addr, peer_id);
 
 	return QDF_STATUS_E_NOSUPPORT;
 }
