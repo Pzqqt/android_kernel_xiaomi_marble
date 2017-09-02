@@ -1187,12 +1187,6 @@ next_adapter:
 void hdd_svc_fw_shutdown_ind(struct device *dev)
 {
 	struct hdd_context *hdd_ctx;
-	v_CONTEXT_t g_context;
-
-	g_context = cds_get_global_context();
-
-	if (!g_context)
-		return;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
