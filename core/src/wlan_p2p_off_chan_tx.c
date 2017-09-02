@@ -121,7 +121,7 @@ static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
  *
  * Return: pointer to p2p ie
  */
-static uint8_t *p2p_get_p2pie_ptr(uint8_t *ie, uint16_t ie_len)
+static const uint8_t *p2p_get_p2pie_ptr(const uint8_t *ie, uint16_t ie_len)
 {
 	return wlan_get_vendor_ie_ptr_from_oui(P2P_OUI,
 			P2P_OUI_SIZE, ie, ie_len);
@@ -137,12 +137,12 @@ static uint8_t *p2p_get_p2pie_ptr(uint8_t *ie, uint16_t ie_len)
  *
  * Return: pointer to p2p ie
  */
-static uint8_t *p2p_get_p2pie_from_probe_rsp(
+static const uint8_t *p2p_get_p2pie_from_probe_rsp(
 	struct tx_action_context *tx_ctx)
 {
-	uint8_t *ie;
-	uint8_t *p2p_ie;
-	uint8_t *tmp_p2p_ie;
+	const uint8_t *ie;
+	const uint8_t *p2p_ie;
+	const uint8_t *tmp_p2p_ie;
 	uint16_t ie_len;
 
 	ie = tx_ctx->buf + PROBE_RSP_IE_OFFSET;
@@ -176,10 +176,10 @@ static uint8_t *p2p_get_p2pie_from_probe_rsp(
  *
  * Return: pointer to noa attr
  */
-static uint8_t *p2p_get_presence_noa_attr(uint8_t *pies, int length)
+static const uint8_t *p2p_get_presence_noa_attr(const uint8_t *pies, int length)
 {
 	int left = length;
-	uint8_t *ptr = pies;
+	const uint8_t *ptr = pies;
 	uint8_t elem_id;
 	uint16_t elem_len;
 
@@ -387,7 +387,7 @@ static uint8_t p2p_get_noa_attr_stream(
  * Return: noa stream length
  */
 static uint16_t p2p_update_noa_stream(struct tx_action_context *tx_ctx,
-	uint8_t *p2p_ie, uint8_t *noa_attr, uint32_t *total_len,
+	uint8_t *p2p_ie, const uint8_t *noa_attr, uint32_t *total_len,
 	uint8_t *noa_stream)
 {
 	uint16_t noa_len;
@@ -1231,24 +1231,24 @@ static QDF_STATUS p2p_execute_tx_action_frame(
 	uint8_t noa_len = 0;
 	uint8_t noa_stream[P2P_NOA_STREAM_ARR_SIZE];
 	uint8_t orig_len = 0;
-	uint8_t *ie;
+	const uint8_t *ie;
 	uint8_t ie_len;
 	uint8_t *p2p_ie = NULL;
-	uint8_t *presence_noa_attr = NULL;
+	const uint8_t *presence_noa_attr = NULL;
 	uint32_t nbytes_copy;
 	uint32_t buf_len = tx_ctx->buf_len;
 	struct p2p_frame_info *frame_info;
 
 	frame_info = &(tx_ctx->frame_info);
 	if (frame_info->sub_type == P2P_MGMT_PROBE_RSP) {
-		p2p_ie = p2p_get_p2pie_from_probe_rsp(tx_ctx);
+		p2p_ie = (uint8_t *)p2p_get_p2pie_from_probe_rsp(tx_ctx);
 	} else if (frame_info->action_type ==
 			P2P_ACTION_PRESENCE_RSP) {
 		ie = tx_ctx->buf +
 			P2P_PUBLIC_ACTION_FRAME_TYPE_OFFSET;
 		ie_len = tx_ctx->buf_len -
 			P2P_PUBLIC_ACTION_FRAME_TYPE_OFFSET;
-		p2p_ie = p2p_get_p2pie_ptr(ie, ie_len);
+		p2p_ie = (uint8_t *)p2p_get_p2pie_ptr(ie, ie_len);
 		if (p2p_ie) {
 			/* extract the presence of NoA attribute inside
 			 * P2P IE */
