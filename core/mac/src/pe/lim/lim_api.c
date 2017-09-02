@@ -1248,19 +1248,16 @@ void pe_deregister_mgmt_rx_frm_callback(tpAniSirGlobal mac_ctx)
 void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
 				    tSirSmeReadyReq *ready_req)
 {
-	void *p_cds_gctx;
-	QDF_STATUS retStatus;
+	QDF_STATUS status;
 
-	p_cds_gctx = cds_get_global_context();
-
-	retStatus = wma_register_roaming_callbacks(p_cds_gctx,
+	status = wma_register_roaming_callbacks(
 			ready_req->csr_roam_synch_cb,
 			ready_req->pe_roam_synch_cb);
-	if (retStatus != QDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS)
 		pe_err("Registering roaming callbacks with WMA failed");
 
-	retStatus = wma_register_ndp_cb(lim_handle_ndp_event_message);
-	if (retStatus != QDF_STATUS_SUCCESS)
+	status = wma_register_ndp_cb(lim_handle_ndp_event_message);
+	if (status != QDF_STATUS_SUCCESS)
 		pe_err("Registering NDP callbacks with WMA failed");
 }
 
