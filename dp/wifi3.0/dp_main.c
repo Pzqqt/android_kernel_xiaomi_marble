@@ -579,6 +579,7 @@ static void dp_srng_cleanup(struct dp_soc *soc, struct dp_srng *srng,
 				srng->alloc_size,
 				srng->base_vaddr_unaligned,
 				srng->base_paddr_unaligned, 0);
+	srng->hal_srng = NULL;
 }
 
 #ifdef IPA_OFFLOAD
@@ -1481,7 +1482,6 @@ fail:
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef notused
 /*
  * Free link descriptor pool that was setup HW
  */
@@ -1490,7 +1490,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 	int i;
 
 	if (soc->wbm_idle_link_ring.hal_srng) {
-		dp_srng_cleanup(soc->hal_soc, &soc->wbm_idle_link_ring,
+		dp_srng_cleanup(soc, &soc->wbm_idle_link_ring,
 			WBM_IDLE_LINK, 0);
 	}
 
@@ -1513,7 +1513,6 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 		}
 	}
 }
-#endif /* notused */
 
 /* TODO: Following should be configurable */
 #define WBM_RELEASE_RING_SIZE 64
@@ -2584,6 +2583,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	/* REO command and status rings */
 	dp_srng_cleanup(soc, &soc->reo_cmd_ring, REO_CMD, 0);
 	dp_srng_cleanup(soc, &soc->reo_status_ring, REO_STATUS, 0);
+	dp_hw_link_desc_pool_cleanup(soc);
 
 	qdf_spinlock_destroy(&soc->rx.reo_cmd_lock);
 	qdf_spinlock_destroy(&soc->peer_ref_mutex);
