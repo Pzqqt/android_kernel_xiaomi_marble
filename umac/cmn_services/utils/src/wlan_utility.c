@@ -72,21 +72,37 @@ uint8_t wlan_freq_to_chan(uint32_t freq)
 	return chan;
 }
 
-uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
-	uint8_t oui_size, uint8_t *ie, uint16_t ie_len)
+static const uint8_t *wlan_get_ie_ptr_from_eid_n_oui(uint8_t eid,
+						     const uint8_t *oui,
+						     uint8_t oui_size,
+						     const uint8_t *ie,
+						     uint16_t ie_len)
 {
 	int32_t left = ie_len;
-	uint8_t *ptr = ie;
+	const uint8_t *ptr = ie;
 	uint8_t elem_id, elem_len;
 
 	while (left >= 2) {
 		elem_id  = ptr[0];
 		elem_len = ptr[1];
 		left -= 2;
+
 		if (elem_len > left)
 			return NULL;
-		if (WLAN_MAC_EID_VENDOR == elem_id) {
-			if (memcmp(&ptr[2], oui, oui_size) == 0)
+
+		if (eid == elem_id) {
+			/* if oui is not provide eid match is enough */
+			if (!oui)
+				return ptr;
+
+			/*
+			 * if oui is provided and oui_size is more than left
+			 * bytes, then we cannot have match
+			 */
+			if (oui_size > left)
+				return NULL;
+
+			if (qdf_mem_cmp(&ptr[2], oui, oui_size) == 0)
 				return ptr;
 		}
 
@@ -95,6 +111,31 @@ uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
 	}
 
 	return NULL;
+}
+
+const uint8_t *wlan_get_ie_ptr_from_eid(uint8_t eid,
+					const uint8_t *ie,
+					int ie_len)
+{
+	return wlan_get_ie_ptr_from_eid_n_oui(eid, NULL, 0, ie, ie_len);
+}
+
+const uint8_t *wlan_get_vendor_ie_ptr_from_oui(const uint8_t *oui,
+					       uint8_t oui_size,
+					       const uint8_t *ie,
+					       uint16_t ie_len)
+{
+	return wlan_get_ie_ptr_from_eid_n_oui(WLAN_MAC_EID_VENDOR,
+					      oui, oui_size, ie, ie_len);
+}
+
+const uint8_t *wlan_get_ext_ie_ptr_from_ext_id(const uint8_t *oui,
+					       uint8_t oui_size,
+					       const uint8_t *ie,
+					       uint16_t ie_len)
+{
+	return wlan_get_ie_ptr_from_eid_n_oui(WLAN_MAC_EID_EXT,
+					      oui, oui_size, ie, ie_len);
 }
 
 bool wlan_is_emulation_platform(uint32_t phy_version)
