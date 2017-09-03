@@ -5699,7 +5699,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 		   union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *adapter = netdev_priv(dev);
-	hdd_context_t *hddctx;
+	struct hdd_context *hddctx;
 	char macaddrarray[MAC_ADDRESS_STR_LEN];
 	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	int ret;
