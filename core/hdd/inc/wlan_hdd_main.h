@@ -1897,39 +1897,39 @@ void wlan_hdd_check_sta_ap_concurrent_ch_intf(void *sta_pAdapter);
 
 const char *hdd_device_mode_to_string(uint8_t device_mode);
 
-QDF_STATUS hdd_get_front_adapter(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
 				 hdd_adapter_list_node_t **ppAdapterNode);
 
-QDF_STATUS hdd_get_next_adapter(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_get_next_adapter(struct hdd_context *hdd_ctx,
 				hdd_adapter_list_node_t *pAdapterNode,
 				hdd_adapter_list_node_t **pNextAdapterNode);
 
-QDF_STATUS hdd_remove_adapter(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_remove_adapter(struct hdd_context *hdd_ctx,
 			      hdd_adapter_list_node_t *pAdapterNode);
 
-QDF_STATUS hdd_remove_front_adapter(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_remove_front_adapter(struct hdd_context *hdd_ctx,
 				    hdd_adapter_list_node_t **ppAdapterNode);
 
-QDF_STATUS hdd_add_adapter_back(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_add_adapter_back(struct hdd_context *hdd_ctx,
 				hdd_adapter_list_node_t *pAdapterNode);
 
-QDF_STATUS hdd_add_adapter_front(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 				 hdd_adapter_list_node_t *pAdapterNode);
 
-struct hdd_adapter *hdd_open_adapter(struct hdd_context *pHddCtx, uint8_t session_type,
+struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t session_type,
 				const char *name, tSirMacAddr macAddr,
 				unsigned char name_assign_type,
 				bool rtnl_held);
-QDF_STATUS hdd_close_adapter(struct hdd_context *pHddCtx, struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
 			     bool rtnl_held);
-QDF_STATUS hdd_close_all_adapters(struct hdd_context *pHddCtx, bool rtnl_held);
-QDF_STATUS hdd_stop_all_adapters(struct hdd_context *pHddCtx);
+QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
+QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx);
 void hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
-QDF_STATUS hdd_reset_all_adapters(struct hdd_context *pHddCtx);
-QDF_STATUS hdd_start_all_adapters(struct hdd_context *pHddCtx);
-struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx);
+struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 				       uint32_t vdev_id);
-struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *pHddCtx,
+struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr);
 
 int hdd_vdev_create(struct hdd_adapter *adapter);
@@ -1937,22 +1937,22 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter);
 int hdd_vdev_ready(struct hdd_adapter *adapter);
 
 QDF_STATUS hdd_init_station_mode(struct hdd_adapter *pAdapter);
-struct hdd_adapter *hdd_get_adapter(struct hdd_context *pHddCtx,
+struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 			enum tQDF_ADAPTER_MODE mode);
-void hdd_deinit_adapter(struct hdd_context *pHddCtx, struct hdd_adapter *pAdapter,
+void hdd_deinit_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
 			bool rtnl_held);
-QDF_STATUS hdd_stop_adapter(struct hdd_context *pHddCtx, struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
 			    const bool bCloseSession);
 void hdd_set_station_ops(struct net_device *pWlanDev);
-uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *pHddCtx);
-void wlan_hdd_release_intf_addr(struct hdd_context *pHddCtx, uint8_t *releaseAddr);
-uint8_t hdd_get_operating_channel(struct hdd_context *pHddCtx,
+uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx);
+void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx, uint8_t *releaseAddr);
+uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 			enum tQDF_ADAPTER_MODE mode);
 
 void hdd_set_conparam(uint32_t con_param);
 enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void);
 
-void hdd_cleanup_actionframe(struct hdd_context *pHddCtx, struct hdd_adapter *pAdapter);
+void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter);
 
 void crda_regulatory_entry_default(uint8_t *countryCode, int domain_id);
 void wlan_hdd_reset_prob_rspies(struct hdd_adapter *pHostapdAdapter);
@@ -1962,9 +1962,9 @@ void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 
 void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy);
 QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *pAdapter);
-QDF_STATUS wlan_hdd_restart_driver(struct hdd_context *pHddCtx);
-void hdd_exchange_version_and_caps(struct hdd_context *pHddCtx);
-int wlan_hdd_validate_context(struct hdd_context *pHddCtx);
+QDF_STATUS wlan_hdd_restart_driver(struct hdd_context *hdd_ctx);
+void hdd_exchange_version_and_caps(struct hdd_context *hdd_ctx);
+int wlan_hdd_validate_context(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_validate_adapter() - Validate the given adapter
@@ -1985,13 +1985,13 @@ int hdd_validate_adapter(struct hdd_adapter *adapter);
 int wlan_hdd_validate_context_in_loading(struct hdd_context *hdd_ctx);
 
 bool hdd_is_valid_mac_address(const uint8_t *pMacAddr);
-QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *pHddCtx);
+QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx);
 bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 
 struct qdf_mac_addr *
 hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *pAdapter,
 				      uint8_t staIdx);
-void hdd_checkandupdate_phymode(struct hdd_context *pHddCtx);
+void hdd_checkandupdate_phymode(struct hdd_context *hdd_ctx);
 #ifdef MSM_PLATFORM
 /**
  * hdd_bus_bw_compute_timer_start() - start the bandwidth timer
@@ -2103,7 +2103,7 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable);
 struct hdd_adapter *hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
 							bool check_start_bss);
 
-bool hdd_is_5g_supported(struct hdd_context *pHddCtx);
+bool hdd_is_5g_supported(struct hdd_context *hdd_ctx);
 
 int wlan_hdd_scan_abort(struct hdd_adapter *pAdapter);
 
@@ -2229,7 +2229,7 @@ void hdd_update_macaddr(struct hdd_config *config,
 void wlan_hdd_disable_roaming(struct hdd_adapter *pAdapter);
 void wlan_hdd_enable_roaming(struct hdd_adapter *pAdapter);
 
-QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *pHddCtx);
+QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *hdd_ctx);
 
 QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx);
 
@@ -2260,8 +2260,8 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 
 int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value);
 void wlan_hdd_deinit_tx_rx_histogram(struct hdd_context *hdd_ctx);
-void wlan_hdd_display_tx_rx_histogram(struct hdd_context *pHddCtx);
-void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *pHddCtx);
+void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx);
+void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx);
 void wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx);
 void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx);
 const char *hdd_get_fwpath(void);

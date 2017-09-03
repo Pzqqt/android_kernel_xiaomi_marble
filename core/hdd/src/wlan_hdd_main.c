@@ -6794,7 +6794,7 @@ void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx)
 
 /**
  * wlan_hdd_display_netif_queue_history() - display netif queue history
- * @pHddCtx: hdd context
+ * @hdd_ctx: hdd context
  *
  * Return: none
  */
