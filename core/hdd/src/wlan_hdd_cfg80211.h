@@ -350,10 +350,10 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);
 #endif
 
-int wlan_hdd_send_avoid_freq_event(struct hdd_context *pHddCtx,
+int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
 				   struct ch_avoid_ind_type *avoid_freq_list);
 
-int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *pHddCtx, uint8_t op_chan);
+int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx, uint8_t op_chan);
 
 #ifdef FEATURE_WLAN_EXTSCAN
 void wlan_hdd_cfg80211_extscan_callback(void *ctx,
