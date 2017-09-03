@@ -47,7 +47,7 @@
 /* max length of command string in hostapd ioctl */
 #define HOSTAPD_IOCTL_COMMAND_STRLEN_MAX   8192
 
-struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *pHddCtx,
+struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 				      tSirMacAddr macAddr,
 				      unsigned char name_assign_type,
 				      uint8_t *name);
@@ -133,7 +133,7 @@ int hdd_hostapd_stop(struct net_device *dev);
 int hdd_sap_context_init(struct hdd_context *hdd_ctx);
 void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
-void hdd_restart_softap(struct hdd_context *pHddCtx, struct hdd_adapter *pAdapter);
+void hdd_restart_softap(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter);
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 #ifdef QCA_HT_2040_COEX
 QDF_STATUS hdd_set_sap_ht2040_mode(struct hdd_adapter *pHostapdAdapter,
