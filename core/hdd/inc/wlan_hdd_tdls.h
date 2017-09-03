@@ -532,7 +532,7 @@ int wlan_hdd_tdls_set_sta_id(struct hdd_adapter *pAdapter, const uint8_t *mac,
 hddTdlsPeer_t *wlan_hdd_tdls_find_peer(struct hdd_adapter *pAdapter,
 				       const uint8_t *mac);
 
-hddTdlsPeer_t *wlan_hdd_tdls_find_all_peer(struct hdd_context *pHddCtx,
+hddTdlsPeer_t *wlan_hdd_tdls_find_all_peer(struct hdd_context *hdd_ctx,
 					   const uint8_t *mac);
 
 int wlan_hdd_tdls_get_link_establish_params(struct hdd_adapter *pAdapter,
@@ -594,10 +594,10 @@ void wlan_hdd_tdls_increment_peer_count(struct hdd_adapter *pAdapter);
 
 void wlan_hdd_tdls_decrement_peer_count(struct hdd_adapter *pAdapter);
 
-hddTdlsPeer_t *wlan_hdd_tdls_is_progress(struct hdd_context *pHddCtx,
+hddTdlsPeer_t *wlan_hdd_tdls_is_progress(struct hdd_context *hdd_ctx,
 					 const uint8_t *mac, uint8_t skip_self);
 
-int wlan_hdd_tdls_copy_scan_context(struct hdd_context *pHddCtx,
+int wlan_hdd_tdls_copy_scan_context(struct hdd_context *hdd_ctx,
 				    struct wiphy *wiphy,
 				    struct cfg80211_scan_request *request);
 
