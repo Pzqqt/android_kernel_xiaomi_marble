@@ -12584,13 +12584,13 @@ struct reg_table_entry {
 	unsigned long VarMin;   /* minimum value, for range checking */
 	unsigned long VarMax;   /* maximum value, for range checking */
 	/* Dynamic modification notifier */
-	void (*pfnDynamicnotify)(struct hdd_context *pHddCtx,
+	void (*pfnDynamicnotify)(struct hdd_context *hdd_ctx,
 				 unsigned long notifyId);
 	unsigned long notifyId; /* Dynamic modification identifier */
 };
 
 /* Function declarations and documenation */
-QDF_STATUS hdd_parse_config_ini(struct hdd_context *pHddCtx);
+QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_validate_prb_req_ie_bitmap - validates user input for ie bit map
@@ -12622,21 +12622,21 @@ bool hdd_validate_prb_req_ie_bitmap(struct hdd_context *hdd_ctx);
  */
 int hdd_parse_probe_req_ouis(struct hdd_context *hdd_ctx);
 
-QDF_STATUS hdd_update_mac_config(struct hdd_context *pHddCtx);
-QDF_STATUS hdd_set_sme_config(struct hdd_context *pHddCtx);
-QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *pHddCtx);
+QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_sme_chan_list(struct hdd_context *hdd_ctx);
-bool hdd_update_config_cfg(struct hdd_context *pHddCtx);
-QDF_STATUS hdd_cfg_get_global_config(struct hdd_context *pHddCtx, char *pBuf,
+bool hdd_update_config_cfg(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_cfg_get_global_config(struct hdd_context *hdd_ctx, char *pBuf,
 				     int buflen);
 
 eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode);
-QDF_STATUS hdd_execute_global_config_command(struct hdd_context *pHddCtx,
+QDF_STATUS hdd_execute_global_config_command(struct hdd_context *hdd_ctx,
 					     char *command);
 
-bool hdd_is_okc_mode_enabled(struct hdd_context *pHddCtx);
-QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *pHddCtx, uint32_t val);
-void hdd_get_pmkid_modes(struct hdd_context *pHddCtx,
+bool hdd_is_okc_mode_enabled(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, uint32_t val);
+void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 			 struct pmkid_mode_bits *pmkid_modes);
 
 void hdd_update_tgt_cfg(void *context, void *param);
@@ -12646,7 +12646,7 @@ QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
 QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 				uint8_t *len, uint8_t int_array_max_len);
 
-void hdd_cfg_print(struct hdd_context *pHddCtx);
+void hdd_cfg_print(struct hdd_context *hdd_ctx);
 
 QDF_STATUS hdd_update_nss(struct hdd_context *hdd_ctx, uint8_t nss);
 
