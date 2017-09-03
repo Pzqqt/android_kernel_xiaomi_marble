@@ -303,7 +303,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 				      loff_t *ppos)
 {
 	struct hdd_adapter *pAdapter;
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	tSirAddPeriodicTxPtrn *addPeriodicTxPtrnParams;
 	tSirDelPeriodicTxPtrn *delPeriodicTxPtrnParams;
 
@@ -324,12 +324,12 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		return -EINVAL;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(pHddCtx);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
 
-	if (!wlan_hdd_validate_modules_state(pHddCtx))
+	if (!wlan_hdd_validate_modules_state(hdd_ctx))
 		return -EINVAL;
 
 	if (!sme_is_feature_supported_by_fw(WLAN_PERIODIC_TX_PTRN)) {
@@ -395,7 +395,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 				 &pAdapter->macAddressCurrent);
 
 		/* Delete pattern */
-		status = sme_del_periodic_tx_ptrn(pHddCtx->hHal,
+		status = sme_del_periodic_tx_ptrn(hdd_ctx->hHal,
 						  delPeriodicTxPtrnParams);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_err("sme_del_periodic_tx_ptrn() failed!");
@@ -467,7 +467,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	}
 
 	/* Add pattern */
-	status = sme_add_periodic_tx_ptrn(pHddCtx->hHal,
+	status = sme_add_periodic_tx_ptrn(hdd_ctx->hHal,
 					  addPeriodicTxPtrnParams);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("sme_add_periodic_tx_ptrn() failed!");
