@@ -1292,7 +1292,7 @@ static void hdd_ipa_dump_iface_context(struct hdd_ipa_priv *hdd_ipa)
 
 /**
  * hdd_ipa_dump_info() - dump HDD IPA struct
- * @pHddCtx: hdd main context
+ * @hdd_ctx: hdd main context
  *
  * Dump entire struct hdd_ipa
  *
@@ -1722,16 +1722,16 @@ void hdd_ipa_uc_stat_request(struct hdd_adapter *adapter, uint8_t reason)
 void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 				      uint8_t reset_stats)
 {
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	struct hdd_ipa_priv *hdd_ipa;
 
 	if (!adapter)
 		return;
 
-	pHddCtx = WLAN_HDD_GET_CTX(adapter);
-	hdd_ipa = pHddCtx->hdd_ipa;
-	if (!hdd_ipa_is_enabled(pHddCtx) ||
-		!(hdd_ipa_uc_is_enabled(pHddCtx))) {
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	hdd_ipa = hdd_ctx->hdd_ipa;
+	if (!hdd_ipa_is_enabled(hdd_ctx) ||
+		!(hdd_ipa_uc_is_enabled(hdd_ctx))) {
 		return;
 	}
 
@@ -1759,16 +1759,16 @@ void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 void hdd_ipa_uc_set_quota(struct hdd_adapter *adapter, uint8_t set_quota,
 			  uint64_t quota_bytes)
 {
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	struct hdd_ipa_priv *hdd_ipa;
 
 	if (!adapter)
 		return;
 
-	pHddCtx = WLAN_HDD_GET_CTX(adapter);
-	hdd_ipa = pHddCtx->hdd_ipa;
-	if (!hdd_ipa_is_enabled(pHddCtx) ||
-		!(hdd_ipa_uc_is_enabled(pHddCtx))) {
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	hdd_ipa = hdd_ctx->hdd_ipa;
+	if (!hdd_ipa_is_enabled(hdd_ctx) ||
+		!(hdd_ipa_uc_is_enabled(hdd_ctx))) {
 		return;
 	}
 

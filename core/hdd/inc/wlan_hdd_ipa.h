@@ -102,8 +102,8 @@ void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 				      uint8_t reset_stats);
 void hdd_ipa_uc_set_quota(struct hdd_adapter *adapter, uint8_t set_quota,
 			  uint64_t quota_bytes);
-bool hdd_ipa_is_enabled(struct hdd_context *pHddCtx);
-bool hdd_ipa_uc_is_enabled(struct hdd_context *pHddCtx);
+bool hdd_ipa_is_enabled(struct hdd_context *hdd_ctx);
+bool hdd_ipa_uc_is_enabled(struct hdd_context *hdd_ctx);
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 int hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode);
 #else
@@ -186,12 +186,12 @@ static inline void hdd_ipa_uc_rt_debug_host_dump(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline bool hdd_ipa_is_enabled(struct hdd_context *pHddCtx)
+static inline bool hdd_ipa_is_enabled(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
 
-static inline bool hdd_ipa_uc_is_enabled(struct hdd_context *pHddCtx)
+static inline bool hdd_ipa_uc_is_enabled(struct hdd_context *hdd_ctx)
 {
 	return false;
 }
