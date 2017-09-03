@@ -109,7 +109,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
 	const char *temp;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	uint8_t sessionId = pAdapter->sessionId;
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	len = find_ptrn_len(ptrn);
 
@@ -119,7 +119,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
 	 */
 	while (len >= 11) {
 		/* Detect duplicate pattern */
-		for (i = 0; i < pHddCtx->config->maxWoWFilters; i++) {
+		for (i = 0; i < hdd_ctx->config->maxWoWFilters; i++) {
 			if (g_hdd_wowl_ptrns[i] == NULL)
 				continue;
 
@@ -136,7 +136,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
 		first_empty_slot = -1;
 
 		/* Find an empty slot to store the pattern */
-		for (i = 0; i < pHddCtx->config->maxWoWFilters; i++) {
+		for (i = 0; i < hdd_ctx->config->maxWoWFilters; i++) {
 			if (g_hdd_wowl_ptrns[i] == NULL) {
 				first_empty_slot = i;
 				break;
@@ -269,11 +269,11 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
 	bool patternFound = false;
 	QDF_STATUS qdf_ret_status;
 	uint8_t sessionId = pAdapter->sessionId;
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* Detect pattern */
 	for (id = 0;
-	     id < pHddCtx->config->maxWoWFilters
+	     id < hdd_ctx->config->maxWoWFilters
 	     && g_hdd_wowl_ptrns[id] != NULL; id++) {
 		if (!strcmp(ptrn, g_hdd_wowl_ptrns[id])) {
 			patternFound = true;
