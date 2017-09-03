@@ -3549,7 +3549,7 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t sta_id, void *context)
  */
 QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *pAdapter, int8_t *rssi_value)
 {
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *pHddStaCtx;
 	QDF_STATUS hstatus;
 	int ret;
@@ -3573,7 +3573,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *pAdapter, int8_t *rssi_value)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
@@ -3597,10 +3597,10 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *pAdapter, int8_t *rssi_value)
 	}
 	cookie = hdd_request_cookie(request);
 
-	hstatus = sme_get_rssi(pHddCtx->hHal, hdd_get_rssi_cb,
+	hstatus = sme_get_rssi(hdd_ctx->hHal, hdd_get_rssi_cb,
 			       pHddStaCtx->conn_info.staId[0],
 			       pHddStaCtx->conn_info.bssId, pAdapter->rssi,
-			       cookie, pHddCtx->pcds_context);
+			       cookie, hdd_ctx->pcds_context);
 	if (QDF_STATUS_SUCCESS != hstatus) {
 		hdd_err("Unable to retrieve RSSI");
 		/* we'll returned a cached value below */
@@ -3685,7 +3685,7 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t sta_id, void *context)
  */
 QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *pAdapter, int8_t *snr)
 {
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *pHddStaCtx;
 	QDF_STATUS hstatus;
 	int valid;
@@ -3705,9 +3705,9 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *pAdapter, int8_t *snr)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
-	valid = wlan_hdd_validate_context(pHddCtx);
+	valid = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != valid)
 		return QDF_STATUS_E_FAULT;
 
@@ -3720,7 +3720,7 @@ QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *pAdapter, int8_t *snr)
 	}
 	cookie = hdd_request_cookie(request);
 
-	hstatus = sme_get_snr(pHddCtx->hHal, hdd_get_snr_cb,
+	hstatus = sme_get_snr(hdd_ctx->hHal, hdd_get_snr_cb,
 			      pHddStaCtx->conn_info.staId[0],
 			      pHddStaCtx->conn_info.bssId, cookie);
 	if (QDF_STATUS_SUCCESS != hstatus) {
@@ -10185,7 +10185,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		tpAniSirGlobal pMac = NULL;
 		struct hdd_station_ctx *pHddStaCtx = NULL;
 
-		struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 		struct hdd_adapter *useAdapter = NULL;
 
 		/* Print wlan0 or p2p0 states based on the adapter_num
@@ -10206,12 +10206,12 @@ static int __iw_get_char_setnone(struct net_device *dev,
 						  "\n\n p2p0 States:-");
 				len += buf;
 
-				if (!pHddCtx) {
+				if (!hdd_ctx) {
 					buf =
 						scnprintf(extra + len,
 							  WE_MAX_STR_LEN -
 							  len,
-							  "\n pHddCtx is NULL");
+							  "\n hdd_ctx is NULL");
 					len += buf;
 					break;
 				}
@@ -10221,7 +10221,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				 * as a p2p_client
 				 */
 				useAdapter =
-					hdd_get_adapter(pHddCtx,
+					hdd_get_adapter(hdd_ctx,
 							QDF_P2P_CLIENT_MODE);
 				if (!useAdapter) {
 					buf =
@@ -10630,20 +10630,20 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	{
 		int8_t s7snr = 0;
 		int status = 0;
-		struct hdd_context *pHddCtx;
+		struct hdd_context *hdd_ctx;
 		struct hdd_station_ctx *pHddStaCtx;
 
-		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-		status = wlan_hdd_validate_context(pHddCtx);
+		hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+		status = wlan_hdd_validate_context(hdd_ctx);
 		if (status)
 			return status;
 
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-		if (0 == pHddCtx->config->fEnableSNRMonitoring ||
+		if (0 == hdd_ctx->config->fEnableSNRMonitoring ||
 		    eConnectionState_Associated !=
 		    pHddStaCtx->conn_info.connState) {
 			hdd_err("getSNR failed: Enable SNR Monitoring-%d, ConnectionState-%d",
-			       pHddCtx->config->fEnableSNRMonitoring,
+			       hdd_ctx->config->fEnableSNRMonitoring,
 			       pHddStaCtx->conn_info.connState);
 			return -ENONET;
 		}
@@ -12730,7 +12730,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	enum band_info band;
 
 	QDF_STATUS status;
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	hdd_adapter_list_node_t *pAdapterNode, *pNext;
 	enum band_info currBand;
 	enum band_info connectedBand;
@@ -12738,7 +12738,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 	pAdapterNode = NULL;
 	pNext = NULL;
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	switch (ui_band) {
 	case WLAN_HDD_UI_BAND_AUTO:
@@ -12757,20 +12757,20 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 	hdd_debug("change band to %u", band);
 
-	if ((band == BAND_2G && pHddCtx->config->nBandCapability == 2) ||
-	    (band == BAND_5G && pHddCtx->config->nBandCapability == 1)) {
+	if ((band == BAND_2G && hdd_ctx->config->nBandCapability == 2) ||
+	    (band == BAND_5G && hdd_ctx->config->nBandCapability == 1)) {
 		hdd_err("band value %u violate INI settings %u",
-			  band, pHddCtx->config->nBandCapability);
+			  band, hdd_ctx->config->nBandCapability);
 		return -EIO;
 	}
 
 	if (band == BAND_ALL) {
 		hdd_debug("Auto band received. Setting band same as ini value %d",
-			pHddCtx->config->nBandCapability);
-		band = pHddCtx->config->nBandCapability;
+			hdd_ctx->config->nBandCapability);
+		band = hdd_ctx->config->nBandCapability;
 	}
 
-	if (QDF_STATUS_SUCCESS != ucfg_reg_get_curr_band(pHddCtx->hdd_pdev,
+	if (QDF_STATUS_SUCCESS != ucfg_reg_get_curr_band(hdd_ctx->hdd_pdev,
 							 &currBand)) {
 		hdd_debug("Failed to get current band config");
 		return -EIO;
@@ -12779,7 +12779,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	if (currBand == band)
 		return 0;
 
-	pHddCtx->curr_band = band;
+	hdd_ctx->curr_band = band;
 
 	/* Change band request received.
 	 * Abort pending scan requests, flush the existing scan results,
@@ -12788,11 +12788,11 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	hdd_debug("Current band value = %u, new setting %u ",
 			currBand, band);
 
-	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
+	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 		hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-		wlan_abort_scan(pHddCtx->hdd_pdev, INVAL_PDEV_ID,
+		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				pAdapter->sessionId, INVALID_SCAN_ID, false);
 		connectedBand = hdd_conn_get_connected_band(
 				WLAN_HDD_GET_STATION_CTX_PTR(pAdapter));
@@ -12840,12 +12840,12 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 		sme_scan_flush_result(hHal);
 
-		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
+		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}
 
 	if (QDF_STATUS_SUCCESS !=
-			ucfg_reg_set_band(pHddCtx->hdd_pdev, band)) {
+			ucfg_reg_set_band(hdd_ctx->hdd_pdev, band)) {
 		hdd_err("Failed to set the band value to %u",
 				band);
 		return -EINVAL;
