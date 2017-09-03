@@ -59,77 +59,68 @@ QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 		session_id);
 
 	/* Process the message based on the state of the roaming states... */
-#if defined(ANI_RTT_DEBUG)
-	if (!pAdapter->fRttModeEnabled) {
-#endif
-		switch (cur_state) {
-		case eCSR_ROAMING_STATE_JOINED:
-			/* are we in joined state */
-			csr_roam_joined_state_msg_processor(mac_ctx, msg_buf);
-			break;
-		case eCSR_ROAMING_STATE_JOINING:
-			/* are we in roaming states */
-#if defined(ANI_EMUL_ASSOC)
-			emulRoamingStateMsgProcessor(pAdapter, pMBBufHdr);
-#endif
-			csr_roaming_state_msg_processor(mac_ctx, msg_buf);
-			break;
+	switch (cur_state) {
+	case eCSR_ROAMING_STATE_JOINED:
+		/* are we in joined state */
+		csr_roam_joined_state_msg_processor(mac_ctx, msg_buf);
+		break;
+	case eCSR_ROAMING_STATE_JOINING:
+		/* are we in roaming states */
+		csr_roaming_state_msg_processor(mac_ctx, msg_buf);
+		break;
 
-		default:
-			if (sme_rsp->messageType ==
-			    eWNI_SME_GET_STATISTICS_RSP) {
-				csr_roam_joined_state_msg_processor(mac_ctx,
-								    msg_buf);
-				break;
+	default:
+		if (sme_rsp->messageType ==
+		    eWNI_SME_GET_STATISTICS_RSP) {
+			csr_roam_joined_state_msg_processor(mac_ctx,
+							    msg_buf);
+			break;
+		}
+
+		/*
+		 * For all other messages, we ignore it
+		 * To work-around an issue where checking for set/remove
+		 * key base on connection state is no longer workable
+		 * due to failure or finding the condition meets both
+		 * SAP and infra/IBSS requirement.
+		 */
+		if (eWNI_SME_SETCONTEXT_RSP == sme_rsp->messageType) {
+			sme_warn("handling msg 0x%X CSR state is %d",
+				sme_rsp->messageType, cur_state);
+			csr_roam_check_for_link_status_change(mac_ctx,
+					sme_rsp);
+		} else if (eWNI_SME_GET_RSSI_REQ ==
+				sme_rsp->messageType) {
+			tAniGetRssiReq *pGetRssiReq =
+				(tAniGetRssiReq *) msg_buf;
+			if (NULL == pGetRssiReq->rssiCallback) {
+				sme_err("rssiCallback is NULL");
+				return status;
 			}
+			((tCsrRssiCallback)(pGetRssiReq->rssiCallback))(
+					pGetRssiReq->lastRSSI,
+					pGetRssiReq->staId,
+					pGetRssiReq->pDevContext);
+		} else {
+			sme_err("Message 0x%04X is not handled by CSR state is %d session Id %d",
+				sme_rsp->messageType, cur_state,
+				session_id);
 
-			/*
-			 * For all other messages, we ignore it
-			 * To work-around an issue where checking for set/remove
-			 * key base on connection state is no longer workable
-			 * due to failure or finding the condition meets both
-			 * SAP and infra/IBSS requirement.
-			 */
-			if (eWNI_SME_SETCONTEXT_RSP == sme_rsp->messageType) {
-				sme_warn("handling msg 0x%X CSR state is %d",
-					sme_rsp->messageType, cur_state);
-				csr_roam_check_for_link_status_change(mac_ctx,
-						sme_rsp);
-			} else if (eWNI_SME_GET_RSSI_REQ ==
+			if (eWNI_SME_FT_PRE_AUTH_RSP ==
 					sme_rsp->messageType) {
-				tAniGetRssiReq *pGetRssiReq =
-					(tAniGetRssiReq *) msg_buf;
-				if (NULL == pGetRssiReq->rssiCallback) {
-					sme_err("rssiCallback is NULL");
-					return status;
-				}
-				((tCsrRssiCallback)(pGetRssiReq->rssiCallback))(
-						pGetRssiReq->lastRSSI,
-						pGetRssiReq->staId,
-						pGetRssiReq->pDevContext);
-			} else {
-				sme_err("Message 0x%04X is not handled by CSR state is %d session Id %d",
-					sme_rsp->messageType, cur_state,
+				sme_err("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth");
+				csr_dequeue_roam_command(mac_ctx,
+					eCsrPerformPreauth, session_id);
+			} else if (eWNI_SME_REASSOC_RSP ==
+					sme_rsp->messageType) {
+				sme_err("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc");
+				csr_dequeue_roam_command(mac_ctx,
+					eCsrSmeIssuedFTReassoc,
 					session_id);
-
-				if (eWNI_SME_FT_PRE_AUTH_RSP ==
-						sme_rsp->messageType) {
-					sme_err("Dequeue eSmeCommandRoam command with reason eCsrPerformPreauth");
-					csr_dequeue_roam_command(mac_ctx,
-						eCsrPerformPreauth, session_id);
-				} else if (eWNI_SME_REASSOC_RSP ==
-						sme_rsp->messageType) {
-					sme_err("Dequeue eSmeCommandRoam command with reason eCsrSmeIssuedFTReassoc");
-					csr_dequeue_roam_command(mac_ctx,
-						eCsrSmeIssuedFTReassoc,
-						session_id);
-				}
 			}
-			break;
-		} /* switch */
-#if defined(ANI_RTT_DEBUG)
-	}
-#endif
+		}
+		break;
+	} /* switch */
 	return status;
 }
 
