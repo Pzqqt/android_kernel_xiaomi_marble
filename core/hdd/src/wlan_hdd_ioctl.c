@@ -2793,10 +2793,10 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *pAdapter, int targetRate)
 {
 	tSirRateUpdateInd rateUpdate = {0};
 	QDF_STATUS status;
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	struct hdd_config *pConfig = NULL;
 
-	if (pHddCtx == NULL) {
+	if (hdd_ctx == NULL) {
 		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
@@ -2809,7 +2809,7 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *pAdapter, int targetRate)
 		hdd_err("SETMCRATE cmd is allowed only in STA, IBSS or SOFTAP mode");
 		return -EINVAL;
 	}
-	pConfig = pHddCtx->config;
+	pConfig = hdd_ctx->config;
 	rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
 	rateUpdate.dev_mode = pAdapter->device_mode;
 	rateUpdate.mcastDataRate24GHz = targetRate;
@@ -2821,7 +2821,7 @@ int wlan_hdd_set_mc_rate(struct hdd_adapter *pAdapter, int targetRate)
 		  rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
 		  hdd_device_mode_to_string(pAdapter->device_mode),
 		  pAdapter->device_mode);
-	status = sme_send_rate_update_ind(pHddCtx->hHal, &rateUpdate);
+	status = sme_send_rate_update_ind(hdd_ctx->hHal, &rateUpdate);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SETMCRATE failed");
 		return -EFAULT;
@@ -4639,14 +4639,12 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 	int ret = 0;
 	tHalHandle hHal;
 	uint8_t filterType = 0;
-	struct hdd_context *pHddCtx = NULL;
 	uint8_t *value;
 
-	pHddCtx = WLAN_HDD_GET_CTX(adapter);
-	if (wlan_hdd_validate_context(pHddCtx))
+	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
 
-	hHal = pHddCtx->hHal;
+	hHal = hdd_ctx->hHal;
 	value = command + 9;
 
 	/* Convert the value from ascii to integer */
@@ -4668,7 +4666,7 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 		goto exit;
 	}
 	/* Filtertype value should be either 0-Disabled, 1-Source, 2-sink */
-	pHddCtx->miracast_value = filterType;
+	hdd_ctx->miracast_value = filterType;
 
 	ret_status = sme_set_miracast(hHal, filterType);
 	if (QDF_STATUS_SUCCESS != ret_status) {
