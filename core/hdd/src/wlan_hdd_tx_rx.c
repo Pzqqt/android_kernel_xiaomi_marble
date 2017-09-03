@@ -1149,7 +1149,7 @@ static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 {
 	struct hdd_adapter *pAdapter = NULL;
-	struct hdd_context *pHddCtx = NULL;
+	struct hdd_context *hdd_ctx = NULL;
 	int rxstat;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
@@ -1174,8 +1174,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	if (unlikely(NULL == pHddCtx)) {
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	if (unlikely(NULL == hdd_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -1255,7 +1255,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		pAdapter->stats.rx_bytes += skb->len;
 
 		/* Check & drop replayed mcast packets (for IPV6) */
-		if (pHddCtx->config->multicast_replay_filter &&
+		if (hdd_ctx->config->multicast_replay_filter &&
 				hdd_is_mcast_replay(skb)) {
 			++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
@@ -1265,16 +1265,16 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		/* hold configurable wakelock for unicast traffic */
-		if (pHddCtx->config->rx_wakelock_timeout &&
+		if (hdd_ctx->config->rx_wakelock_timeout &&
 				pHddStaCtx->conn_info.uIsAuthenticated)
 			wake_lock = hdd_is_rx_wake_lock_needed(skb);
 
 		if (wake_lock) {
-			cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
-						   pHddCtx->config->rx_wakelock_timeout,
+			cds_host_diag_log_work(&hdd_ctx->rx_wake_lock,
+						   hdd_ctx->config->rx_wakelock_timeout,
 						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
-			qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
-							  pHddCtx->config->
+			qdf_wake_lock_timeout_acquire(&hdd_ctx->rx_wake_lock,
+							  hdd_ctx->config->
 								  rx_wakelock_timeout);
 		}
 
@@ -1285,9 +1285,9 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 		hdd_rx_timestamp(skb, ktime_to_us(skb->tstamp));
 		if (HDD_LRO_NO_RX ==
-			 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
+			 hdd_lro_rx(hdd_ctx, pAdapter, skb)) {
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-				!pHddCtx->enableRxThread &&
+				!hdd_ctx->enableRxThread &&
 				!QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb))
 				rxstat = netif_receive_skb(skb);
 			else
