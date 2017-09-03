@@ -140,7 +140,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	struct hdd_adapter *pAdapter = pQosContext->pAdapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	struct hdd_wmm_ac_status *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS status;
 	uint32_t service_interval;
 	uint32_t suspension_interval;
@@ -187,7 +187,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 					   pAc->wmmAcTspecInfo.ts_info.up,
 					   service_interval, suspension_interval,
 					   direction, psb, pAdapter->sessionId,
-					   pHddCtx->config->DelayedTriggerFrmInt);
+					   hdd_ctx->config->DelayedTriggerFrmInt);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Failed to enable U-APSD for AC=%d", acType);
@@ -1798,7 +1798,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 {
 	uint8_t uapsdMask;
 	QDF_STATUS status;
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* when we associate we need to notify TL if it needs to
 	 * enable UAPSD for any access categories
@@ -1833,11 +1833,11 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 						   (WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_VO, 7, 7,
-						   pHddCtx->config->InfraUapsdVoSrvIntv,
-						   pHddCtx->config->InfraUapsdVoSuspIntv,
+						   hdd_ctx->config->InfraUapsdVoSrvIntv,
+						   hdd_ctx->config->InfraUapsdVoSuspIntv,
 						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
-						   pHddCtx->config->DelayedTriggerFrmInt);
+						   hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -1849,11 +1849,11 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 						   (WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_VI, 5, 5,
-						   pHddCtx->config->InfraUapsdViSrvIntv,
-						   pHddCtx->config->InfraUapsdViSuspIntv,
+						   hdd_ctx->config->InfraUapsdViSrvIntv,
+						   hdd_ctx->config->InfraUapsdViSuspIntv,
 						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
-						   pHddCtx->config->DelayedTriggerFrmInt);
+						   hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -1865,11 +1865,11 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 						   (WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_BK, 2, 2,
-						   pHddCtx->config->InfraUapsdBkSrvIntv,
-						   pHddCtx->config->InfraUapsdBkSuspIntv,
+						   hdd_ctx->config->InfraUapsdBkSrvIntv,
+						   hdd_ctx->config->InfraUapsdBkSuspIntv,
 						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
-						   pHddCtx->config->DelayedTriggerFrmInt);
+						   hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
@@ -1881,16 +1881,16 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 						   (WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_BE, 3, 3,
-						   pHddCtx->config->InfraUapsdBeSrvIntv,
-						   pHddCtx->config->InfraUapsdBeSuspIntv,
+						   hdd_ctx->config->InfraUapsdBeSrvIntv,
+						   hdd_ctx->config->InfraUapsdBeSuspIntv,
 						   SME_QOS_WMM_TS_DIR_BOTH, 1,
 						   pAdapter->sessionId,
-						   pHddCtx->config->DelayedTriggerFrmInt);
+						   hdd_ctx->config->DelayedTriggerFrmInt);
 
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
-	status = sme_update_dsc_pto_up_mapping(pHddCtx->hHal,
+	status = sme_update_dsc_pto_up_mapping(hdd_ctx->hHal,
 					       pAdapter->hddWmmDscpToUpMap,
 					       pAdapter->sessionId);
 
