@@ -694,7 +694,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	unsigned int cpu_index;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
-	struct hdd_context *pHddCtx = NULL;
+	struct hdd_context *hdd_ctx = NULL;
 	struct qdf_mac_addr src_mac;
 	uint8_t staid;
 	bool proto_pkt_logged = false;
@@ -714,8 +714,8 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	if (unlikely(NULL == pHddCtx)) {
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	if (unlikely(NULL == hdd_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -787,14 +787,14 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		skb->protocol = eth_type_trans(skb, skb->dev);
 
 		/* hold configurable wakelock for unicast traffic */
-		if (pHddCtx->config->rx_wakelock_timeout &&
+		if (hdd_ctx->config->rx_wakelock_timeout &&
 			skb->pkt_type != PACKET_BROADCAST &&
 			skb->pkt_type != PACKET_MULTICAST) {
-			cds_host_diag_log_work(&pHddCtx->rx_wake_lock,
-						   pHddCtx->config->rx_wakelock_timeout,
+			cds_host_diag_log_work(&hdd_ctx->rx_wake_lock,
+						   hdd_ctx->config->rx_wakelock_timeout,
 						   WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
-			qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
-							  pHddCtx->config->
+			qdf_wake_lock_timeout_acquire(&hdd_ctx->rx_wake_lock,
+							  hdd_ctx->config->
 								  rx_wakelock_timeout);
 		}
 
@@ -803,7 +803,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		 */
 		qdf_net_buf_debug_release_skb(skb);
 		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-			!pHddCtx->enableRxThread)
+			!hdd_ctx->enableRxThread)
 			rxstat = netif_receive_skb(skb);
 		else
 			rxstat = netif_rx_ni(skb);
@@ -827,7 +827,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *pAdapter,
 				     uint8_t staId)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	int ret;
 
 	if (NULL == pAdapter) {
@@ -840,7 +840,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *pAdapter,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	/* Clear station in TL and then update HDD data
 	 * structures. This helps to block RX frames from other
 	 * station to this station.
@@ -867,7 +867,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *pAdapter,
 		spin_unlock_bh(&pAdapter->staInfo_lock);
 	}
 
-	pHddCtx->sta_to_adapter[staId] = NULL;
+	hdd_ctx->sta_to_adapter[staId] = NULL;
 
 	return qdf_status;
 }
@@ -896,7 +896,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *pAdapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -916,7 +916,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *pAdapter,
 	staDesc.sta_id = staId;
 
 	/* Save the pAdapter Pointer for this staId */
-	pHddCtx->sta_to_adapter[staId] = pAdapter;
+	hdd_ctx->sta_to_adapter[staId] = pAdapter;
 
 	qdf_status =
 		hdd_softap_init_tx_rx_sta(pAdapter, staId,
@@ -997,15 +997,15 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *pAdapter,
 				      bool fPrivacyBit)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct hdd_context *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	struct qdf_mac_addr broadcastMacAddr =
 					QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	struct hdd_ap_ctx *pHddApCtx;
 
 	pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 
-	pHddCtx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = pAdapter;
-	pHddCtx->sta_to_adapter[pHddApCtx->uBCStaId] = pAdapter;
+	hdd_ctx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = pAdapter;
+	hdd_ctx->sta_to_adapter[pHddApCtx->uBCStaId] = pAdapter;
 	qdf_status =
 		hdd_softap_register_sta(pAdapter, false, fPrivacyBit,
 					(WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->
@@ -1037,9 +1037,9 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *pAdapter)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t staId = 0;
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* bss deregister is not allowed during wlan driver loading or
 	 * unloading
