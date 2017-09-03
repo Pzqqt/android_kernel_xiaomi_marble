@@ -227,7 +227,7 @@ int wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 					int data_len);
 
 #else
-static inline void wlan_hdd_cfg80211_stats_ext_init(struct hdd_context *pHddCtx) {}
+static inline void wlan_hdd_cfg80211_stats_ext_init(struct hdd_context *hdd_ctx) {}
 #endif /* End of WLAN_FEATURE_STATS_EXT */
 
 /**
