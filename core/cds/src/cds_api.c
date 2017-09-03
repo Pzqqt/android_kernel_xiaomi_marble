@@ -422,7 +422,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	struct ol_context *ol_ctx;
 	struct hif_opaque_softc *scn;
 	void *HTCHandle;
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 	cds_context_type *cds_ctx;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -457,8 +457,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_probe_event;
 	}
 
-	pHddCtx = (struct hdd_context *) (gp_cds_context->pHDDContext);
-	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
+	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_err("Hdd Context is Null");
 		QDF_ASSERT(0);
@@ -467,7 +467,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	/* Now Open the CDS Scheduler */
 
-	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
+	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
 	    cds_is_driver_recovering()) {
 		qdf_status = cds_sched_open(gp_cds_context,
 					    &gp_cds_context->qdf_sched,
@@ -495,8 +495,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_ASSERT(0);
 		goto err_sched_close;
 	}
-	hdd_enable_fastpath(pHddCtx->config, scn);
-	hdd_wlan_update_target_info(pHddCtx, scn);
+	hdd_enable_fastpath(hdd_ctx->config, scn);
+	hdd_wlan_update_target_info(hdd_ctx, scn);
 
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
@@ -545,14 +545,14 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	/* Number of peers limit differs in each chip version. If peer max
 	 * limit configured in ini exceeds more than supported, WMA adjusts
 	 * and keeps correct limit in cds_cfg.max_station. So, make sure
-	 * config entry pHddCtx->config->maxNumberOfPeers has adjusted value
+	 * config entry hdd_ctx->config->maxNumberOfPeers has adjusted value
 	 */
 	/* In FTM mode cds_cfg->max_stations will be zero. On updating same
 	 * into hdd context config entry, leads to pe_open() to fail, if
 	 * con_mode change happens from FTM mode to any other mode.
 	 */
 	if (QDF_DRIVER_TYPE_PRODUCTION == cds_cfg->driver_type)
-		pHddCtx->config->maxNumberOfPeers = cds_cfg->max_station;
+		hdd_ctx->config->maxNumberOfPeers = cds_cfg->max_station;
 
 	HTCHandle = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!HTCHandle) {
@@ -573,10 +573,10 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 		"%s: target_type %d 8074:%d 6290:%d",
-		__func__, pHddCtx->target_type,
+		__func__, hdd_ctx->target_type,
 		TARGET_TYPE_QCA8074, TARGET_TYPE_QCA6290);
 
-	if (TARGET_TYPE_QCA6290 == pHddCtx->target_type)
+	if (TARGET_TYPE_QCA6290 == hdd_ctx->target_type)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
 			gp_cds_context->pHIFContext, scn,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
@@ -664,7 +664,7 @@ err_bmi_close:
 	bmi_cleanup(ol_ctx);
 
 err_sched_close:
-	if (pHddCtx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
+	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
 	    cds_is_driver_recovering()) {
 		qdf_status = cds_sched_close(gp_cds_context);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -1737,16 +1737,16 @@ void cds_flush_delayed_work(void *dwork)
  */
 bool cds_is_packet_log_enabled(void)
 {
-	struct hdd_context *pHddCtx;
+	struct hdd_context *hdd_ctx;
 
-	pHddCtx = (struct hdd_context *) (gp_cds_context->pHDDContext);
-	if ((NULL == pHddCtx) || (NULL == pHddCtx->config)) {
+	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
+	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Hdd Context is Null", __func__);
 		return false;
 	}
 
-	return pHddCtx->config->enablePacketLog;
+	return hdd_ctx->config->enablePacketLog;
 }
 
 static int cds_force_assert_target_via_pld(qdf_device_t qdf)
