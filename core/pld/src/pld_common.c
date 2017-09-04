@@ -669,6 +669,7 @@ void pld_device_self_recovery(struct device *dev,
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_SDIO:
+		pld_sdio_device_self_recovery(dev);
 		break;
 	default:
 		pr_err("Invalid device type\n");
