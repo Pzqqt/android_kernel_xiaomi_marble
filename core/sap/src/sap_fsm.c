@@ -3727,6 +3727,9 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 			pconfig_params->extended_rates.numRates;
 	}
 
+	profile->chan_switch_hostapd_rate_enabled =
+		pconfig_params->chan_switch_hostapd_rate_enabled;
+
 	return eSAP_STATUS_SUCCESS;     /* Success. */
 }
 

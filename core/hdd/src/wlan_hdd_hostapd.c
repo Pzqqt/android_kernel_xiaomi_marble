@@ -7872,6 +7872,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 	/* Protection parameter to enable or disable */
 	pConfig->protEnabled = iniConfig->apProtEnabled;
 
+	pConfig->chan_switch_hostapd_rate_enabled =
+		iniConfig->chan_switch_hostapd_rate_enabled;
+
 	pConfig->enOverLapCh = iniConfig->gEnableOverLapCh;
 	pConfig->dtim_period = pBeacon->dtim_period;
 	hdd_debug("acs_mode %d", pConfig->acs_cfg.acs_mode);
@@ -8317,6 +8320,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 	       (int)pConfig->RSNWPAReqIELength, pConfig->UapsdEnable);
 	hdd_debug("ProtEnabled = %d, OBSSProtEnabled = %d",
 	       pConfig->protEnabled, pConfig->obssProtEnabled);
+	hdd_debug("ChanSwitchHostapdRateEnabled = %d",
+		pConfig->chan_switch_hostapd_rate_enabled);
 
 	if (test_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags)) {
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
