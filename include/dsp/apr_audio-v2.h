@@ -3252,7 +3252,7 @@ struct asm_aac_enc_cfg_v2_t {
 #define PCM_CHANNEL_R         2
 #define PCM_CHANNEL_C         3
 
-struct asm_custom_enc_cfg_aptx_t {
+struct asm_custom_enc_cfg_t {
 	uint32_t    sample_rate;
 	/* Mono or stereo */
 	uint16_t    num_channels;
@@ -3262,6 +3262,52 @@ struct asm_custom_enc_cfg_aptx_t {
 	 */
 	uint8_t     channel_mapping[8];
 	uint32_t    custom_size;
+} __packed;
+#define ASM_MEDIA_FMT_CELT 0x00013221
+struct asm_celt_specific_enc_cfg_t {
+	/*
+	 * Bit rate used for encoding.
+	 * This is used to calculate the upper threshold
+	 * for bytes per frame if vbr_flag is 1.
+	 * Or else, this will be used as a regular constant
+	 * bit rate for encoder output.
+	 * @Range : 32000 to 1536000
+	 * @Default: 128
+	 */
+	uint32_t                     bit_rate;
+	/*
+	 * Frame size used for encoding.
+	 * @Range : 64, 128, 256, 512
+	 * @Default: 256
+	 */
+	uint16_t                     frame_size;
+	/*
+	 * complexity of algorithm.
+	 * @Range : 0-10
+	 * @Default: 3
+	 */
+	uint16_t                     complexity;
+	/*
+	 * Switch variable for prediction feature.
+	 * Used to choose between the level of interframe
+	 * predictions allowed while encoding.
+	 * @Range:
+	 * 0: Independent Frames.
+	 * 1: Short Term interframe prediction allowed.
+	 * 2: Long term prediction allowed.
+	 * @Default: 2
+	 */
+	uint16_t                     prediction_mode;
+	/*
+	 * Variable Bit Rate flag.
+	 * @Default: 0
+	 */
+	uint16_t                     vbr_flag;
+} __packed;
+
+struct asm_celt_enc_cfg_t {
+	struct asm_custom_enc_cfg_t  custom_config;
+	struct asm_celt_specific_enc_cfg_t  celt_specific_config;
 } __packed;
 
 struct afe_enc_fmt_id_param_t {
@@ -3331,7 +3377,8 @@ struct afe_port_media_type_t {
 union afe_enc_config_data {
 	struct asm_sbc_enc_cfg_t sbc_config;
 	struct asm_aac_enc_cfg_v2_t aac_config;
-	struct asm_custom_enc_cfg_aptx_t  aptx_config;
+	struct asm_custom_enc_cfg_t  custom_config;
+	struct asm_celt_enc_cfg_t  celt_config;
 };
 
 struct afe_enc_config {
