@@ -27,6 +27,29 @@
 #include "cdp_txrx_misc.h"
 #include "ol_txrx_types.h"
 
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+
+/**
+ * hdd_data_stall_send_event()- send data stall information
+ * @reason: data stall event subtype
+ * This Function sends data stall status diag event
+ *
+ * Return: void.
+ */
+static void hdd_data_stall_send_event(uint32_t reason)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(sta_data_stall,
+				struct host_event_wlan_datastall);
+	qdf_mem_zero(&sta_data_stall, sizeof(sta_data_stall));
+	sta_data_stall.reason = reason;
+	WLAN_HOST_DIAG_EVENT_REPORT(&sta_data_stall, EVENT_WLAN_STA_DATASTALL);
+}
+#else
+static inline void hdd_data_stall_send_event(uint32_t reason)
+{
+}
+#endif
+
 /**
  * hdd_data_stall_process_cb() - Process data stall message
  * @message: data stall message
@@ -38,6 +61,7 @@
 static void hdd_data_stall_process_cb(
 			struct data_stall_event_info *data_stall_info)
 {
+	hdd_data_stall_send_event(data_stall_info->data_stall_type);
 }
 
 int hdd_register_data_stall_detect_cb(void)
