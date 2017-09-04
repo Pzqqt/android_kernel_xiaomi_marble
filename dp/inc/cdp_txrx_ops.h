@@ -644,6 +644,9 @@ struct ol_if_ops {
  * @tx_non_std:
  * @get_vdev_id:
  * @set_wisa_mode:
+ * @txrx_data_stall_cb_register:
+ * @txrx_data_stall_cb_deregister:
+ * @txrx_post_data_stall_event
  * @runtime_suspend:
  * @runtime_resume:
  */
@@ -661,6 +664,13 @@ struct cdp_misc_ops {
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 	uint16_t (*get_vdev_id)(struct cdp_vdev *vdev);
 	QDF_STATUS (*set_wisa_mode)(struct cdp_vdev *vdev, bool enable);
+	QDF_STATUS (*txrx_data_stall_cb_register)(data_stall_detect_cb cb);
+	QDF_STATUS (*txrx_data_stall_cb_deregister)(data_stall_detect_cb cb);
+	void (*txrx_post_data_stall_event)(
+			enum data_stall_log_event_indicator indicator,
+			enum data_stall_log_event_type data_stall_type,
+			uint32_t pdev_id, uint32_t vdev_id_bitmap,
+			enum data_stall_log_recovery_type recovery_type);
 	QDF_STATUS (*runtime_suspend)(struct cdp_pdev *pdev);
 	QDF_STATUS (*runtime_resume)(struct cdp_pdev *pdev);
 	int (*get_opmode)(struct cdp_vdev *vdev);

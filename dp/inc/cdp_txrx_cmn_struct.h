@@ -565,6 +565,84 @@ enum cdp_vdev_param_type {
 #define PER_RADIO_FW_STATS_REQUEST 0
 #define PER_VDEV_FW_STATS_REQUEST 1
 
+/**
+ * enum data_stall_log_event_indicator - Module triggering data stall
+ * @DATA_STALL_LOG_INDICATOR_UNUSED: Unused
+ * @DATA_STALL_LOG_INDICATOR_HOST_DRIVER: Host driver indicates data stall
+ * @DATA_STALL_LOG_INDICATOR_FIRMWARE: FW indicates data stall
+ * @DATA_STALL_LOG_INDICATOR_FRAMEWORK: Framework indicates data stall
+ *
+ * Enum indicating the module that indicates data stall event
+ */
+enum data_stall_log_event_indicator {
+	DATA_STALL_LOG_INDICATOR_UNUSED,
+	DATA_STALL_LOG_INDICATOR_HOST_DRIVER,
+	DATA_STALL_LOG_INDICATOR_FIRMWARE,
+	DATA_STALL_LOG_INDICATOR_FRAMEWORK,
+};
+
+/**
+ * enum data_stall_log_event_type - data stall event type
+ * @DATA_STALL_LOG_NONE
+ * @DATA_STALL_LOG_FW_VDEV_PAUSE
+ * @DATA_STALL_LOG_HWSCHED_CMD_FILTER
+ * @DATA_STALL_LOG_HWSCHED_CMD_FLUSH
+ * @DATA_STALL_LOG_FW_RX_REFILL_FAILED
+ * @DATA_STALL_LOG_FW_RX_FCS_LEN_ERROR
+ * @DATA_STALL_LOG_FW_WDOG_ERRORS
+ * @DATA_STALL_LOG_BB_WDOG_ERROR
+ * @DATA_STALL_LOG_HOST_STA_TX_TIMEOUT
+ * @DATA_STALL_LOG_HOST_SOFTAP_TX_TIMEOUT
+ * @DATA_STALL_LOG_NUD_FAILURE
+ *
+ * Enum indicating data stall event type
+ */
+enum data_stall_log_event_type {
+	DATA_STALL_LOG_NONE,
+	DATA_STALL_LOG_FW_VDEV_PAUSE,
+	DATA_STALL_LOG_HWSCHED_CMD_FILTER,
+	DATA_STALL_LOG_HWSCHED_CMD_FLUSH,
+	DATA_STALL_LOG_FW_RX_REFILL_FAILED,
+	DATA_STALL_LOG_FW_RX_FCS_LEN_ERROR,
+	DATA_STALL_LOG_FW_WDOG_ERRORS,
+	DATA_STALL_LOG_BB_WDOG_ERROR,
+	DATA_STALL_LOG_HOST_STA_TX_TIMEOUT,
+	DATA_STALL_LOG_HOST_SOFTAP_TX_TIMEOUT,
+	DATA_STALL_LOG_NUD_FAILURE,
+};
+
+/**
+ * enum data_stall_log_recovery_type - data stall recovery type
+ * @DATA_STALL_LOG_RECOVERY_NONE,
+ * @DATA_STALL_LOG_RECOVERY_CONNECT_DISCONNECT,
+ * @DATA_STALL_LOG_RECOVERY_TRIGGER_PDR
+ *
+ * Enum indicating data stall recovery type
+ */
+enum data_stall_log_recovery_type {
+	DATA_STALL_LOG_RECOVERY_NONE = 0,
+	DATA_STALL_LOG_RECOVERY_CONNECT_DISCONNECT,
+	DATA_STALL_LOG_RECOVERY_TRIGGER_PDR,
+};
+
+/**
+ * struct data_stall_event_info - data stall info
+ * @indicator: Module triggering data stall
+ * @data_stall_type: data stall event type
+ * @vdev_id_bitmap: vdev_id_bitmap
+ * @pdev_id: pdev id
+ * @recovery_type: data stall recovery type
+ */
+struct data_stall_event_info {
+	uint32_t indicator;
+	uint32_t data_stall_type;
+	uint32_t vdev_id_bitmap;
+	uint32_t pdev_id;
+	uint32_t recovery_type;
+};
+
+typedef void (*data_stall_detect_cb)(struct data_stall_event_info *);
+
 /*
  * cdp_stats - options for host and firmware
  * statistics

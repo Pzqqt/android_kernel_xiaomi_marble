@@ -121,6 +121,76 @@ cdp_set_wisa_mode(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, bool enable)
 }
 
 /**
+ * cdp_data_stall_cb_register() - register data stall callback
+ * @soc - data path soc handle
+ * @cb - callback function
+ *
+ * Return: QDF_STATUS_SUCCESS register success
+ */
+static inline QDF_STATUS cdp_data_stall_cb_register(ol_txrx_soc_handle soc,
+						    data_stall_detect_cb cb)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->misc_ops->txrx_data_stall_cb_register)
+		return soc->ops->misc_ops->txrx_data_stall_cb_register(cb);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdp_data_stall_cb_deregister() - de-register data stall callback
+ * @soc - data path soc handle
+ * @cb - callback function
+ *
+ * Return: QDF_STATUS_SUCCESS de-register success
+ */
+static inline QDF_STATUS cdp_data_stall_cb_deregister(ol_txrx_soc_handle soc,
+						      data_stall_detect_cb cb)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (soc->ops->misc_ops->txrx_data_stall_cb_deregister)
+		return soc->ops->misc_ops->txrx_data_stall_cb_deregister(cb);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdp_post_data_stall_event() - post data stall event
+ * @soc - data path soc handle
+ * @indicator: Module triggering data stall
+ * @data_stall_type: data stall event type
+ * @pdev_id: pdev id
+ * @vdev_id_bitmap: vdev id bitmap
+ * @recovery_type: data stall recovery type
+ *
+ * Return: None
+ */
+static inline void
+cdp_post_data_stall_event(ol_txrx_soc_handle soc,
+			  enum data_stall_log_event_indicator indicator,
+			  enum data_stall_log_event_type data_stall_type,
+			  uint32_t pdev_id, uint32_t vdev_id_bitmap,
+			  enum data_stall_log_recovery_type recovery_type)
+{
+	if (!soc || !soc->ops || !soc->ops->misc_ops)
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+
+	if (soc->ops->misc_ops->txrx_post_data_stall_event)
+		soc->ops->misc_ops->txrx_post_data_stall_event(
+				indicator, data_stall_type, pdev_id,
+				vdev_id_bitmap, recovery_type);
+}
+
+/**
  * cdp_set_wmm_param() - set wmm parameter
  * @soc - data path soc handle
  * @pdev - device instance pointer
