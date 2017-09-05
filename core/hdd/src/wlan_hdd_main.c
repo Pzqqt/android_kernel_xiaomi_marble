@@ -252,6 +252,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_TDLS] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_REGULATORY] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_SERIALIZATION] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_DFS] = {QDF_TRACE_LEVEL_ALL},
 };
 
 /* internal function declaration */
