@@ -42,6 +42,7 @@
 #include <qdf_trace.h>
 #include <net/ieee80211_radiotap.h>
 #include <qdf_module.h>
+#include <pld_common.h>
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -210,11 +211,17 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 realloc:
 	skb = dev_alloc_skb(size);
 
+	if (skb)
+		goto skb_alloc;
+
+	skb = pld_nbuf_pre_alloc(size);
+
 	if (!skb) {
 		pr_info("ERROR:NBUF alloc failed\n");
 		return NULL;
 	}
 
+skb_alloc:
 	/* Hawkeye M2M emulation cannot handle memory addresses below 0x50000040
 	 * Though we are trying to reserve low memory upfront to prevent this,
 	 * we sometimes see SKBs allocated from low memory.
@@ -271,9 +278,15 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 
 	skb = dev_alloc_skb(size);
 
+	if (skb)
+		goto skb_alloc;
+
+	skb = pld_nbuf_pre_alloc(size);
+
 	if (!skb)
 		return NULL;
 
+skb_alloc:
 	memset(skb->cb, 0x0, sizeof(skb->cb));
 
 	/*
@@ -315,6 +328,9 @@ EXPORT_SYMBOL(__qdf_nbuf_alloc);
 #ifdef CONFIG_MCL
 void __qdf_nbuf_free(struct sk_buff *skb)
 {
+	if (pld_nbuf_pre_alloc_free(skb))
+		return;
+
 	if (nbuf_free_cb)
 		nbuf_free_cb(skb);
 	else
@@ -323,6 +339,9 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 #else
 void __qdf_nbuf_free(struct sk_buff *skb)
 {
+	if (pld_nbuf_pre_alloc_free(skb))
+		return;
+
 	dev_kfree_skb_any(skb);
 }
 #endif
