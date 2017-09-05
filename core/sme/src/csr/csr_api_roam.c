@@ -4308,14 +4308,19 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	 * Join timeout: if we find a BeaconInterval in the BssDescription,
 	 * then set the Join Timeout to be 10 x the BeaconInterval.
 	 */
-	if (pBssDesc->beaconInterval)
+	if (pBssDesc->beaconInterval) {
 		/* Make sure it is bigger than the minimal */
 		pBssConfig->uJoinTimeOut =
 			QDF_MAX(10 * pBssDesc->beaconInterval,
 				CSR_JOIN_FAILURE_TIMEOUT_MIN);
-	else
+		/* make sure it is less than max allowed */
+		pBssConfig->uJoinTimeOut =
+			QDF_MIN(pBssConfig->uJoinTimeOut,
+				WNI_CFG_JOIN_FAILURE_TIMEOUT_STAMAX);
+	} else {
 		pBssConfig->uJoinTimeOut =
 			CSR_JOIN_FAILURE_TIMEOUT_DEFAULT;
+	}
 	/* validate CB */
 	if ((pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N) ||
 	    (pBssConfig->uCfgDot11Mode == eCSR_CFG_DOT11_MODE_11N_ONLY) ||
