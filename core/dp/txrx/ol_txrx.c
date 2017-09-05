@@ -3548,6 +3548,7 @@ void peer_unmap_timer_handler(void *data)
 /**
  * ol_txrx_peer_detach() - Delete a peer's data object.
  * @peer - the object to detach
+ * @bitmap - bitmap indicating special handling of request.
  *
  * When the host's control SW disassociates a peer, it calls
  * this function to detach and delete the peer. The reference
@@ -3556,7 +3557,7 @@ void peer_unmap_timer_handler(void *data)
  *
  * Return: None
  */
-static void ol_txrx_peer_detach(void *ppeer)
+static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 {
 	ol_txrx_peer_handle peer = ppeer;
 	struct ol_txrx_vdev_t *vdev = peer->vdev;
@@ -3597,20 +3598,26 @@ static void ol_txrx_peer_detach(void *ppeer)
 	 */
 	qdf_atomic_set(&peer->delete_in_progress, 1);
 
-	if (vdev->opmode == wlan_op_mode_sta) {
-		qdf_mem_copy(&peer->vdev->last_peer_mac_addr,
-			&peer->mac_addr,
-			sizeof(union ol_txrx_align_mac_addr_t));
-	}
+	if (bitmap & CDP_PEER_DO_NOT_START_UNMAP_TIMER) {
+		if (vdev->opmode == wlan_op_mode_sta) {
+			qdf_mem_copy(&peer->vdev->last_peer_mac_addr,
+				&peer->mac_addr,
+				sizeof(union ol_txrx_align_mac_addr_t));
+		}
 
-	/*
-	 * Create a timer to track unmap events when the sta peer gets deleted.
-	 */
-	if (vdev->opmode == wlan_op_mode_sta) {
-		qdf_timer_start(&peer->peer_unmap_timer,
-				OL_TXRX_PEER_UNMAP_TIMEOUT);
-		ol_txrx_info_high("%s: started peer_unmap_timer for peer %pK",
-			     __func__, peer);
+		/*
+		 * Create a timer to track unmap events when the sta peer gets
+		 * deleted.
+		 */
+		if (vdev->opmode == wlan_op_mode_sta) {
+			qdf_timer_start(&peer->peer_unmap_timer,
+					OL_TXRX_PEER_UNMAP_TIMEOUT);
+			ol_txrx_info_high("%s: started peer_unmap_timer for peer %pK",
+				__func__, peer);
+		}
+	} else {
+		ol_txrx_err("%s unmap timer not started as PEER_DELETE not sent to FW",
+			__func__);
 	}
 
 	/*
@@ -3643,7 +3650,7 @@ static void ol_txrx_peer_detach_force_delete(void *ppeer)
 
 	/* Clear the peer_id_to_obj map entries */
 	ol_txrx_peer_remove_obj_map_entries(pdev, peer);
-	ol_txrx_peer_detach(peer);
+	ol_txrx_peer_detach(peer, CDP_PEER_DELETE_NO_SPECIAL);
 }
 
 ol_txrx_peer_handle
