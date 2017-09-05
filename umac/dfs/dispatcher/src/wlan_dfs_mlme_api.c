@@ -42,10 +42,11 @@ void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
 				flags);
 }
 
-void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev)
+void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
+		bool *wait_for_csa)
 {
 	if (global_dfs_to_mlme.dfs_start_rcsa != NULL)
-		global_dfs_to_mlme.dfs_start_rcsa(pdev);
+		global_dfs_to_mlme.dfs_start_rcsa(pdev, wait_for_csa);
 }
 
 #ifndef QCA_MCL_DFS_SUPPORT

@@ -494,6 +494,8 @@ void dfs_get_radars(struct wlan_dfs *dfs)
 
 void dfs_radar_found_action(struct wlan_dfs *dfs)
 {
+	bool wait_for_csa = false;
+
 	if (dfs->dfs_rinfo.rn_use_nol == 1) {
 		/*
 		 * If precac is running and the radar found in secondary
@@ -556,7 +558,11 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 	 * needs to be fixed. See EV 105776.
 	 */
 	if (dfs->dfs_rinfo.rn_use_nol == 1)  {
-		dfs_mlme_start_rcsa(dfs->dfs_pdev_obj);
+		dfs_mlme_start_rcsa(dfs->dfs_pdev_obj,
+				&wait_for_csa);
+		if (wait_for_csa)
+			return;
+
 		dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
 				dfs->dfs_curchan->dfs_ch_ieee,
 				dfs->dfs_curchan->dfs_ch_freq,

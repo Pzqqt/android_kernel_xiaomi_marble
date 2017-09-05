@@ -43,8 +43,10 @@ void dfs_mlme_channel_mark_radar(struct wlan_objmgr_pdev *pdev,
 /**
  * dfs_mlme_start_rcsa() - Send RCSA to RootAP.
  * @pdev: Pointer to DFS pdev object.
+ * @wait_for_csa: Wait for CSA from RootAP.
  */
-void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev);
+void dfs_mlme_start_rcsa(struct wlan_objmgr_pdev *pdev,
+		bool *wait_for_csa);
 
 /**
  * dfs_mlme_mark_dfs() - Mark the channel in the channel list.

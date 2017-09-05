@@ -71,7 +71,8 @@ struct dfs_to_mlme {
 			uint16_t freq,
 			uint8_t vhtop_ch_freq_seg2,
 			uint64_t flags);
-	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_start_rcsa)(struct wlan_objmgr_pdev *pdev,
+			bool *wait_for_csa);
 	QDF_STATUS (*mlme_mark_dfs)(struct wlan_objmgr_pdev *pdev,
 			uint8_t ieee,
 			uint16_t freq,
