@@ -9264,7 +9264,7 @@ struct avs_svc_api_info {
 
 struct avcs_fwk_ver_info {
 	struct avcs_get_fwk_version avcs_fwk_version;
-	struct avs_svc_api_info *services;
+	struct avs_svc_api_info services[0];
 } __packed;
 
 /* LSM Specific */
