@@ -382,10 +382,12 @@ enum dfs_ieee80211_opmode {
 	(((_c)->dfs_ch_flags & IEEE80211_CHAN_PASSIVE) != 0)
 
 #define IEEE80211_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(_c) \
-	(IEEE80211_IS_CHAN_DFS(_c->dfs_ch_curchan) ||       \
-	((IEEE80211_IS_CHAN_11AC_VHT160(_c->dfs_ch_curchan) || \
-	 IEEE80211_IS_CHAN_11AC_VHT80_80(_c->dfs_ch_curchan)) \
-	&& IEEE80211_IS_CHAN_DFS_CFREQ2(_c->dfs_ch_curchan)))
+	(IEEE80211_IS_CHAN_DFS(_c) || \
+	 ((IEEE80211_IS_CHAN_11AC_VHT160(_c) || \
+	 IEEE80211_IS_CHAN_11AC_VHT80_80(_c) || \
+	 IEEE80211_IS_CHAN_11AXA_HE160(_c) || \
+	 IEEE80211_IS_CHAN_11AXA_HE80_80(_c)) \
+	&& IEEE80211_IS_CHAN_DFS_CFREQ2(_c)))
 
 #define IEEE80211_IS_CHAN_DFS(_c) \
 	(((_c)->dfs_ch_flagext & \
