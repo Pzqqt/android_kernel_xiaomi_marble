@@ -256,7 +256,8 @@ void pmo_core_configure_dynamic_wake_events(struct wlan_objmgr_psoc *psoc)
 
 		psoc_ctx = pmo_psoc_get_priv(psoc);
 
-		if (psoc_ctx->psoc_cfg.auto_power_save_fail_mode &&
+		if (psoc_ctx->psoc_cfg.auto_power_save_fail_mode ==
+		     PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE &&
 		    (adapter_type == QDF_STA_MODE ||
 		     adapter_type == QDF_P2P_CLIENT_MODE)
 		   ) {
