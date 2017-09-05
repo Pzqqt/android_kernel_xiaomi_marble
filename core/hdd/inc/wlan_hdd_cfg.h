@@ -7755,9 +7755,9 @@ enum hdd_link_speed_rpt_type {
 /*
  * <ini>
  * g_auto_detect_power_failure_mode - auto detect power save failure mode
- * @Min: 0 : Recovery
- * @Max: 1 : WMI
- * @Default: 0
+ * @Min: PMO_FW_TO_CRASH_ON_PWR_FAILURE
+ * @Max: PMO_AUTO_PWR_FAILURE_DETECT_DISABLE
+ * @Default: PMO_FW_TO_CRASH_ON_PWR_FAILURE
  *
  * This ini specifies the behavior of FW in case of
  * CHIP_POWER_SAVE_FAIL_DETECTED event
@@ -7766,10 +7766,11 @@ enum hdd_link_speed_rpt_type {
  *
  * </ini>
  */
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME  "g_auto_detect_power_failure_mode"
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_DEFAULT         (0)
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_MIN             (0)
-#define CFG_AUTO_DETECT_POWER_FAIL_MODE_MAX             (1)
+#define CFG_AUTO_DETECT_POWER_FAIL_MODE_NAME    "g_auto_detect_power_failure_mode"
+#define CFG_AUTO_DETECT_POWER_FAIL_MODE_DEFAULT (PMO_FW_TO_CRASH_ON_PWR_FAILURE)
+#define CFG_AUTO_DETECT_POWER_FAIL_MODE_MIN     (PMO_FW_TO_CRASH_ON_PWR_FAILURE)
+#define CFG_AUTO_DETECT_POWER_FAIL_MODE_MAX \
+					(PMO_AUTO_PWR_FAILURE_DETECT_DISABLE)
 /*
  * <ini>
  * gMaxAmsduNum - Max number of MSDU's in aggregate
@@ -13007,7 +13008,7 @@ struct hdd_config {
 	uint8_t enable_rts_sifsbursting;
 	uint8_t max_mpdus_inampdu;
 	uint16_t sap_max_mcs_txdata;
-	uint8_t auto_pwr_save_fail_mode;
+	enum pmo_auto_pwr_detect_failure_mode auto_pwr_save_fail_mode;
 	uint16_t num_11b_tx_chains;
 	uint16_t num_11ag_tx_chains;
 	uint8_t ito_repeat_count;

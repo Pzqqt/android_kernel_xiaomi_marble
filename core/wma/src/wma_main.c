@@ -2865,7 +2865,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->ito_repeat_count = cds_cfg->ito_repeat_count;
 
 	/* Register PWR_SAVE_FAIL event only in case of recovery(1) */
-	if (cds_cfg->auto_power_save_fail_mode) {
+	if (cds_cfg->auto_power_save_fail_mode ==
+	    PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE) {
 		wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID,
 			wma_chip_power_save_failure_detected_handler,

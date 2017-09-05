@@ -29,6 +29,7 @@
 
 #include "osdep.h"
 #include "cdp_txrx_mob_def.h"
+#include "wlan_pmo_common_public_struct.h"
 
 /**
  * enum cfg_sub_20_channel_width: ini values for su 20 mhz channel width
@@ -162,7 +163,7 @@ struct cds_config_info {
 	struct ol_tx_sched_wrr_ac_specs_t ac_specs[TX_WMM_AC_NUM];
 	enum active_bpf_mode active_uc_bpf_mode;
 	enum active_bpf_mode active_mc_bc_bpf_mode;
-	bool auto_power_save_fail_mode;
+	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;
 };

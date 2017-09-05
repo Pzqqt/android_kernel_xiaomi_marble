@@ -9419,6 +9419,9 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	if (0 != wlan_hdd_set_wow_pulse(hdd_ctx, true))
 		hdd_debug("Failed to set wow pulse");
 
+	sme_cli_set_command(0, WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
+			    hdd_ctx->config->auto_pwr_save_fail_mode, PDEV_CMD);
+
 	return 0;
 
 cds_disable:

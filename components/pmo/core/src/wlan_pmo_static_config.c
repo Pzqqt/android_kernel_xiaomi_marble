@@ -37,16 +37,31 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	uint8_t vdev_id;
 	enum tQDF_ADAPTER_MODE  vdev_opmode;
 	const char *iface_type;
+	struct pmo_psoc_priv_obj *psoc_ctx;
+	pmo_is_device_in_low_pwr_mode is_low_pwr_mode;
 
 	vdev_opmode = pmo_get_vdev_opmode(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
 	pmo_info("vdev_opmode %d vdev_id %d", vdev_opmode, vdev_id);
 
 	switch (vdev_opmode) {
+	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
+		/* set power on failure event only for STA and P2P_CLI mode*/
+		psoc_ctx =  pmo_vdev_get_psoc_priv(vdev);
+		if (psoc_ctx->psoc_cfg.auto_power_save_fail_mode ==
+		    PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE){
+			qdf_spin_lock(&psoc_ctx->lock);
+			is_low_pwr_mode = psoc_ctx->is_device_in_low_pwr_mode;
+			qdf_spin_unlock(&psoc_ctx->lock);
+			if (is_low_pwr_mode && is_low_pwr_mode(vdev_id))
+				pmo_set_wow_event_bitmap(
+					WOW_CHIP_POWER_FAILURE_DETECT_EVENT,
+					PMO_WOW_MAX_EVENT_BM_LEN,
+					event_bitmap);
+		}
 	case QDF_P2P_DEVICE_MODE:
 	case QDF_OCB_MODE:
-	case QDF_STA_MODE:
 	case QDF_MONITOR_MODE:
 		iface_type = "STA";
 		pmo_set_sta_wow_bitmask(event_bitmap, PMO_WOW_MAX_EVENT_BM_LEN);

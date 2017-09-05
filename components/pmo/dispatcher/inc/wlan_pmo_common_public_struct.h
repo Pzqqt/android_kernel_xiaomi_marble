@@ -240,6 +240,24 @@ enum pmo_offload_trigger {
 };
 
 /**
+ * enum pmo_auto_pwr_detect_failure_mode_t - auto detect failure modes
+ * @PMO_FW_TO_CRASH_ON_PWR_FAILURE: Don't register wow wakeup event and FW
+ * crashes on power failure
+ * @PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE: Register wow wakeup event and FW
+ * sends failure event to host on power failure
+ * @PMO_FW_TO_REJUVENATE_ON_PWR_FAILURE: Don't register wow wakeup event and
+ * FW silently rejuvenate on power failure
+ * @PMO_AUTO_PWR_FAILURE_DETECT_DISABLE: Don't register wow wakeup event and the
+ * auto power failure detect feature is disabled in FW.
+ */
+enum pmo_auto_pwr_detect_failure_mode {
+	PMO_FW_TO_CRASH_ON_PWR_FAILURE,
+	PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE,
+	PMO_FW_TO_REJUVENATE_ON_PWR_FAILURE,
+	PMO_AUTO_PWR_FAILURE_DETECT_DISABLE
+};
+
+/**
  * struct pmo_psoc_cfg - user configuration required for pmo
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
  * @ptrn_id_per_vdev: true when pattern id can be same for different vdev
@@ -293,7 +311,7 @@ struct pmo_psoc_cfg {
 	uint8_t sta_mod_dtim;
 	uint8_t sta_max_li_mod_dtim;
 	uint8_t power_save_mode;
-	bool auto_power_save_fail_mode;
+	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
 };
 
 #endif /* end  of _WLAN_PMO_COMMONP_STRUCT_H_ */
