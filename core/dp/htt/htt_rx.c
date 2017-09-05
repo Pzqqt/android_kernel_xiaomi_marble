@@ -3226,8 +3226,10 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 
 	qdf_spin_lock_bh(&(pdev->rx_ring.rx_hash_lock));
 
-	if (!pdev->rx_ring.hash_table)
+	if (!pdev->rx_ring.hash_table) {
+		qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 		return NULL;
+	}
 
 	i = RX_HASH_FUNCTION(paddr);
 
