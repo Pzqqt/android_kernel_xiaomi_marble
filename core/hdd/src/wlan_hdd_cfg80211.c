@@ -13506,7 +13506,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		pAdapter->device_mode);
 
 	hdd_notify_teardown_tdls_links(pAdapter->hdd_vdev);
-	hdd_update_tdls_ct_and_teardown_links(hdd_ctx);
 	if ((pAdapter->device_mode == QDF_STA_MODE) ||
 	    (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) ||
 	    (pAdapter->device_mode == QDF_P2P_DEVICE_MODE) ||

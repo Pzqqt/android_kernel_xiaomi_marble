@@ -1649,7 +1649,6 @@ struct hdd_context {
 	uint8_t tdls_off_channel;
 	uint16_t tdls_channel_offset;
 	int32_t tdls_fw_off_chan_mode;
-	bool enable_tdls_connection_tracker;
 	uint8_t tdls_external_peer_count;
 	bool tdls_nss_switch_in_progress;
 	bool tdls_nss_teardown_complete;

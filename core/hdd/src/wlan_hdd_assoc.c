@@ -3810,65 +3810,6 @@ QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *pAdapter, uint8_t sta
 }
 
 /**
- * hdd_tdls_connection_tracker_update() - update connection tracker state
- * @adapter: pointer to adapter
- * @roam_info: pointer to roam info
- * @hdd_tdls_ctx: tdls context
- *
- * Return: QDF_STATUS enumeration
- */
-static QDF_STATUS hdd_tdls_connection_tracker_update(struct hdd_adapter *adapter,
-						     tCsrRoamInfo *roam_info,
-						     tdlsCtx_t *hdd_tdls_ctx)
-{
-	hddTdlsPeer_t *curr_peer;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	curr_peer = wlan_hdd_tdls_find_peer(adapter,
-					    roam_info->peerMac.bytes);
-
-	if (!curr_peer) {
-		hdd_err("curr_peer is null");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (eTDLS_LINK_CONNECTED ==
-	    curr_peer->link_status) {
-		hdd_debug("Received CONNECTION_TRACKER_NOTIFICATION "
-			MAC_ADDRESS_STR
-			" staId: %d, reason: %d",
-			MAC_ADDR_ARRAY(roam_info->peerMac.bytes),
-			roam_info->staId,
-			roam_info->reasonCode);
-
-		if (roam_info->reasonCode ==
-		    eWNI_TDLS_PEER_ENTER_BUF_STA ||
-		    roam_info->reasonCode ==
-		    eWNI_TDLS_ENTER_BT_BUSY_MODE ||
-		    roam_info->reasonCode ==
-		    eWMI_TDLS_SCAN_STARTED_EVENT)
-			hdd_ctx->enable_tdls_connection_tracker = false;
-		else if (roam_info->reasonCode ==
-			  eWNI_TDLS_PEER_EXIT_BUF_STA ||
-			  roam_info->reasonCode ==
-			  eWNI_TDLS_EXIT_BT_BUSY_MODE ||
-			  roam_info->reasonCode ==
-			  eWMI_TDLS_SCAN_COMPLETED_EVENT)
-			hdd_ctx->enable_tdls_connection_tracker = true;
-		hdd_debug("hdd_ctx->enable_tdls_connection_tracker %d",
-			hdd_ctx->enable_tdls_connection_tracker);
-	} else {
-		hdd_debug("TDLS not connected, ignore notification, reason: %d",
-			roam_info->reasonCode);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-
-
-
-/**
  * hdd_roam_tdls_status_update_handler() - TDLS status update handler
  * @pAdapter: pointer to adapter
  * @pRoamInfo: pointer to roam info
@@ -4361,23 +4302,6 @@ hdd_roam_tdls_status_update_handler(struct hdd_adapter *pAdapter,
 		mutex_unlock(&hdd_ctx->tdls_lock);
 		break;
 	}
-
-	case eCSR_ROAM_RESULT_TDLS_CONNECTION_TRACKER_NOTIFICATION:
-		mutex_lock(&hdd_ctx->tdls_lock);
-		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-		if (!pHddTdlsCtx) {
-			mutex_unlock(&hdd_ctx->tdls_lock);
-			hdd_debug("TDLS ctx is null, ignore roamResult (%d)",
-				 roamResult);
-			status = QDF_STATUS_E_FAILURE;
-			break;
-		}
-
-		status = hdd_tdls_connection_tracker_update(pAdapter,
-							    pRoamInfo,
-							    pHddTdlsCtx);
-		mutex_unlock(&hdd_ctx->tdls_lock);
-		break;
 
 	default:
 	{

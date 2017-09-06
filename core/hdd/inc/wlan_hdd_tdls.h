@@ -374,7 +374,6 @@ struct tdls_set_state_info {
  *
  * @peer_list: peer list
  * @pAdapter: pointer to adapter
- * @peer_update_timer: connection tracker timer
  * @peerDiscoverTimer: peer discovery timer
  * @peerDiscoveryTimeoutTimer: peer discovery timeout timer
  * @threshold_config: threshold config
@@ -389,7 +388,6 @@ struct tdls_set_state_info {
 typedef struct {
 	struct list_head peer_list[TDLS_PEER_LIST_SIZE];
 	struct hdd_adapter *pAdapter;
-	qdf_mc_timer_t peer_update_timer;
 	qdf_mc_timer_t peerDiscoveryTimeoutTimer;
 	tdls_config_params_t threshold_config;
 	int32_t discovery_peer_cnt;
@@ -414,8 +412,6 @@ typedef struct {
  * @is_responder: is responder
  * @discovery_processed: discovery processed flag
  * @discovery_attempt: discovery attempt
- * @tx_pkt: tx packet
- * @rx_pkt: rx packet
  * @uapsdQueues: uapsd queues
  * @maxSp: max sp
  * @isBufSta: is buffer sta
@@ -428,8 +424,6 @@ typedef struct {
  * @op_class_for_pref_off_chan: op class for preferred off channel
  * @pref_off_chan_num: preferred off channel number
  * @op_class_for_pref_off_chan_is_set: op class for preferred off channel set
- * @peer_idle_timer: time to check idle traffic in tdls peers
- * @is_peer_idle_timer_initialised: Flag to check idle timer init
  * @spatial_streams: Number of TX/RX spatial streams for TDLS
  * @reason: reason
  * @state_change_notification: state change notification
@@ -447,8 +441,6 @@ typedef struct _hddTdlsPeer_t {
 	uint8_t is_responder;
 	uint8_t discovery_processed;
 	uint16_t discovery_attempt;
-	uint16_t tx_pkt;
-	uint16_t rx_pkt;
 	uint8_t uapsdQueues;
 	uint8_t maxSp;
 	uint8_t isBufSta;
@@ -461,8 +453,6 @@ typedef struct _hddTdlsPeer_t {
 	uint8_t op_class_for_pref_off_chan;
 	uint8_t pref_off_chan_num;
 	uint8_t op_class_for_pref_off_chan_is_set;
-	qdf_mc_timer_t peer_idle_timer;
-	bool is_peer_idle_timer_initialised;
 	uint8_t spatial_streams;
 	enum tdls_link_reason reason;
 	cfg80211_exttdls_callback state_change_notification;
@@ -717,18 +707,15 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 #endif
 
-void hdd_update_tdls_ct_and_teardown_links(struct hdd_context *hdd_ctx);
-void wlan_hdd_tdls_disable_offchan_and_teardown_links(struct hdd_context *hddctx);
+void
+wlan_hdd_tdls_disable_offchan_and_teardown_links(struct hdd_context *hddctx);
 
 hddTdlsPeer_t *
 wlan_hdd_tdls_find_first_connected_peer(struct hdd_adapter *adapter);
 int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx, int offchannel);
-int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx, int offchanoffset);
+int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
+				     int offchanoffset);
 int hdd_set_tdls_offchannelmode(struct hdd_adapter *adapter, int offchanmode);
-void wlan_hdd_tdls_update_tx_pkt_cnt(struct hdd_adapter *adapter,
-				     struct sk_buff *skb);
-void wlan_hdd_tdls_update_rx_pkt_cnt(struct hdd_adapter *adapter,
-				     struct sk_buff *skb);
 int hdd_set_tdls_scan_type(struct hdd_context *hdd_ctx, int val);
 void hdd_tdls_context_init(struct hdd_context *hdd_ctx, bool ssr);
 void hdd_tdls_context_destroy(struct hdd_context *hdd_ctx);
@@ -814,16 +801,12 @@ wlan_hdd_tdls_disable_offchan_and_teardown_links(struct hdd_context *hddctx)
 static inline void wlan_hdd_tdls_exit(struct hdd_adapter *adapter)
 {
 }
-static inline void wlan_hdd_tdls_update_tx_pkt_cnt(struct hdd_adapter *adapter,
-						   struct sk_buff *skb)
+static inline void hdd_tdls_context_init(struct hdd_context *hdd_ctx, bool ssr)
 {
 }
-static inline void wlan_hdd_tdls_update_rx_pkt_cnt(struct hdd_adapter *adapter,
-						   struct sk_buff *skb)
+static inline void hdd_tdls_context_destroy(struct hdd_context *hdd_ctx)
 {
 }
-static inline void hdd_tdls_context_init(struct hdd_context *hdd_ctx, bool ssr) { }
-static inline void hdd_tdls_context_destroy(struct hdd_context *hdd_ctx) { }
 
 static inline int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
 					       struct hdd_adapter *adapter,
@@ -898,5 +881,4 @@ void hdd_wlan_tdls_enable_link_event(const uint8_t *peer_mac,
 static inline void hdd_wlan_block_scan_by_tdls_event(void) {}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 bool cds_check_is_tdls_allowed(enum tQDF_ADAPTER_MODE device_mode);
-void cds_set_tdls_ct_mode(struct hdd_context *hdd_ctx);
 #endif /* __HDD_TDLS_H */

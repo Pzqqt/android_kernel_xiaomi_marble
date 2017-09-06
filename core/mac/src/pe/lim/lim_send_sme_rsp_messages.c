@@ -1368,9 +1368,6 @@ void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
 	case SIR_HAL_TDLS_PEER_DISCONNECTED:
 		mmhMsg.type = eWNI_SME_TDLS_PEER_DISCONNECTED;
 		break;
-	case SIR_HAL_TDLS_CONNECTION_TRACKER_NOTIFICATION:
-		mmhMsg.type = eWNI_SME_TDLS_CONNECTION_TRACKER_NOTIFICATION;
-		break;
 	}
 
 	mmhMsg.bodyptr = events;
