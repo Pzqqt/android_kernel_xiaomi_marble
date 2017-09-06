@@ -76,7 +76,7 @@ static inline void dp_tx_get_queue(struct dp_vdev *vdev,
 	queue->ring_id = DP_TX_GET_RING_ID(vdev);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s, pool_id:%d ring_id: %d\n",
+			"%s, pool_id:%d ring_id: %d",
 			__func__, queue->desc_pool_id, queue->ring_id);
 
 	return;
@@ -172,9 +172,9 @@ dp_tx_desc_release(struct dp_tx_desc_s *tx_desc, uint8_t desc_pool_id)
 		comp_status = HAL_TX_COMP_RELEASE_REASON_FW;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"Tx Completion Release desc %d status %d outstanding %d\n",
-			tx_desc->id, comp_status,
-			qdf_atomic_read(&pdev->num_tx_outstanding));
+		"Tx Completion Release desc %d status %d outstanding %d",
+		tx_desc->id, comp_status,
+		qdf_atomic_read(&pdev->num_tx_outstanding));
 
 	dp_tx_desc_free(soc, tx_desc, desc_pool_id);
 	return;
@@ -807,8 +807,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_dscp_tid_table_id(hal_tx_desc_cached,
 			vdev->dscp_tid_map_id);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"%s length:%d , type = %d, dma_addr %llx, offset %d desc id %u\n",
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s length:%d , type = %d, dma_addr %llx, offset %d desc id %u",
 			__func__, length, type, (uint64_t)dma_addr,
 			tx_desc->pkt_offset, tx_desc->id);
 

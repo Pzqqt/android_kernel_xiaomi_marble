@@ -1052,7 +1052,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		rx_desc->rx_buf_start = qdf_nbuf_data(rx_desc->nbuf);
 		hal_rx_dump_pkt_tlvs(rx_desc->rx_buf_start,
-						QDF_TRACE_LEVEL_INFO);
+						QDF_TRACE_LEVEL_DEBUG);
 
 		qdf_nbuf_free(rx_desc->nbuf);
 

@@ -1116,8 +1116,7 @@ done:
 					FL("MSDU DONE failure"));
 			DP_STATS_INC(vdev->pdev, dropped.msdu_not_done,
 					1);
-			hal_rx_dump_pkt_tlvs(rx_tlv_hdr,
-						QDF_TRACE_LEVEL_INFO);
+			hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_INFO);
 			qdf_assert(0);
 		}
 
