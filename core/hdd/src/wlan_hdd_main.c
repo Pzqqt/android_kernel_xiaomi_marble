@@ -11779,12 +11779,18 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 	struct hdd_config *cfg)
 {
+	struct nlo_mawc_params *mawc_cfg = &pno_cfg->mawc_params;
+
 	pno_cfg->channel_prediction = cfg->pno_channel_prediction;
 	pno_cfg->top_k_num_of_channels = cfg->top_k_num_of_channels;
 	pno_cfg->stationary_thresh = cfg->stationary_thresh;
 	pno_cfg->adaptive_dwell_mode = cfg->adaptive_dwell_mode_enabled;
 	pno_cfg->channel_prediction_full_scan =
 		cfg->channel_prediction_full_scan;
+	mawc_cfg->enable = cfg->MAWCEnabled && cfg->mawc_nlo_enabled;
+	mawc_cfg->exp_backoff_ratio = cfg->mawc_nlo_exp_backoff_ratio;
+	mawc_cfg->init_scan_interval = cfg->mawc_nlo_init_scan_interval;
+	mawc_cfg->max_scan_interval = cfg->mawc_nlo_max_scan_interval;
 }
 #else
 static inline void
