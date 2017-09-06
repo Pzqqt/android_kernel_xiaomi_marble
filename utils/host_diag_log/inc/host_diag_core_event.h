@@ -536,6 +536,7 @@ enum wifi_connectivity_events {
  * @WIFI_POWER_EVENT_WAKELOCK_MISC: Miscellaneous wakelocks
  * @WIFI_POWER_EVENT_WAKELOCK_DHCP: DHCP negotiation under way
  * @WIFI_POWER_EVENT_WAKELOCK_CONNECT: connection in progress
+ * @WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER: iface change timer running
  *
  * Indicates the reason for which the wakelock was taken/released
  */
@@ -560,6 +561,7 @@ enum wake_lock_reason {
 	WIFI_POWER_EVENT_WAKELOCK_MISC,
 	WIFI_POWER_EVENT_WAKELOCK_DHCP,
 	WIFI_POWER_EVENT_WAKELOCK_CONNECT,
+	WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER,
 };
 
 #ifdef __cplusplus
