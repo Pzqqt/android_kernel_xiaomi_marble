@@ -242,6 +242,7 @@ enum pmo_offload_trigger {
 /**
  * struct pmo_psoc_cfg - user configuration required for pmo
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
+ * @ptrn_id_per_vdev: true when pattern id can be same for different vdev
  * @bpf_enable: true if psoc supports bpf else false
  * @arp_offload_enable: true if arp offload is supported for psoc else false
  * @hw_filter_mode: which mode the hardware filter should use during DTIM
@@ -269,6 +270,7 @@ enum pmo_offload_trigger {
  */
 struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
+	bool ptrn_id_per_vdev;
 	bool bpf_enable;
 	bool arp_offload_enable;
 	enum pmo_hw_filter_mode hw_filter_mode;

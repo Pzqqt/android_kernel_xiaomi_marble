@@ -185,6 +185,8 @@ enum pmo_wow_action_wakeup_opertion {
  * @lphb_cb_ctx: callback context for lphb, kept as void* as
  *                        osif structures are opaque to pmo.
  * @pmo_lphb_callback: registered os if calllback function
+ * @ptrn_id_def: default pattern id counter for legacy firmware
+ * @ptrn_id_usr: user pattern id counter for legacy firmware
  *
  * This structure stores wow patterns and
  * wow related parameters in host.
@@ -205,6 +207,9 @@ struct pmo_wow {
 	struct pmo_lphb_req lphb_cache[2];
 	void *lphb_cb_ctx;
 	pmo_lphb_callback lphb_cb;
+
+	uint8_t ptrn_id_def;
+	uint8_t ptrn_id_usr;
 };
 
 /* WOW related structures */

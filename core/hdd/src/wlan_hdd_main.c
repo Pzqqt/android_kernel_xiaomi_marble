@@ -11912,6 +11912,8 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 		(hdd_ctx->config->wowEnable & 0x01) ? true : false;
 	psoc_cfg.ptrn_match_enable_all_vdev =
 		(hdd_ctx->config->wowEnable & 0x02) ? true : false;
+	psoc_cfg.ptrn_id_per_vdev = wma_is_service_enabled(
+		WMI_SERVICE_UNIFIED_WOW_CAPABILITY);
 	psoc_cfg.bpf_enable =
 		hdd_ctx->config->bpf_packet_filter_enable;
 	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;

@@ -118,9 +118,15 @@ static inline uint8_t pmo_get_and_increment_wow_default_ptrn(
 {
 	uint8_t count;
 
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	count = vdev_ctx->num_wow_default_patterns++;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		count = vdev_ctx->num_wow_default_patterns++;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		count = vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_def++;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
 
 	return count;
 }
@@ -136,9 +142,15 @@ static inline uint8_t pmo_get_and_increment_wow_default_ptrn(
 static inline void pmo_increment_wow_default_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->num_wow_default_patterns++;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		vdev_ctx->num_wow_default_patterns++;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_def++;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
 }
 
 /**
@@ -152,9 +164,15 @@ static inline void pmo_increment_wow_default_ptrn(
 static inline void pmo_decrement_wow_default_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->num_wow_default_patterns--;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		vdev_ctx->num_wow_default_patterns--;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_def--;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
 }
 
 /**
@@ -168,9 +186,15 @@ static inline void pmo_decrement_wow_default_ptrn(
 static inline void pmo_increment_wow_user_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->num_wow_user_patterns++;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		vdev_ctx->num_wow_user_patterns++;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_usr++;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
 }
 
 /**
@@ -184,9 +208,15 @@ static inline void pmo_increment_wow_user_ptrn(
 static inline void pmo_decrement_wow_user_ptrn(
 		struct pmo_vdev_priv_obj *vdev_ctx)
 {
-	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
-	vdev_ctx->num_wow_user_patterns--;
-	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		vdev_ctx->num_wow_user_patterns--;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_usr--;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
 }
 
 void pmo_dump_wow_ptrn(struct pmo_wow_add_pattern *ptrn);
