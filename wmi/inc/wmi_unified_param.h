@@ -4231,14 +4231,78 @@ struct periodic_chan_stats_params {
 };
 
 /**
+ * enum wmi_host_packet_power_rate_flags: packer power rate flags
+ * @WMI_HOST_FLAG_RTSENA: RTS enabled
+ * @WMI_HOST_FLAG_CTSENA: CTS enabled
+ * @WMI_HOST_FLAG_STBC: STBC is set
+ * @WMI_HOST_FLAG_LDPC: LDPC is set
+ * @WMI_HOST_FLAG_TXBF: Tx Bf enabled
+ * @WMI_HOST_FLAG_MU2: MU2 data
+ * @WMI_HOST_FLAG_MU3: MU3 data
+ * @WMI_HOST_FLAG_SERIES1: Rate series 1
+ * @WMI_HOST_FLAG_SGI: Short gaurd interval
+ */
+enum wmi_host_packet_power_rate_flags {
+	WMI_HOST_FLAG_RTSENA        =  0x0001,
+	WMI_HOST_FLAG_CTSENA        =  0x0002,
+	WMI_HOST_FLAG_STBC          =  0x0004,
+	WMI_HOST_FLAG_LDPC          =  0x0008,
+	WMI_HOST_FLAG_TXBF          =  0x0010,
+	WMI_HOST_FLAG_MU2           =  0x0020,
+	WMI_HOST_FLAG_MU3           =  0x0040,
+	WMI_HOST_FLAG_SERIES1       =  0x0080,
+	WMI_HOST_FLAG_SGI           =  0x0100,
+};
+
+/**
+ * enum wmi_host_su_mu_ofdma_flags: packer power su mu ofdma flags
+ * @WMI_HOST_FLAG_SU: SU Data
+ * @WMI_HOST_FLAG_DL_MU_MIMO_AC: DL AC MU data
+ * @WMI_HOST_FLAG_DL_MU_MIMO_AX: DL AX MU data
+ * @WMI_HOST_FLAG_DL_OFDMA: DL OFDMA data
+ * @WMI_HOST_FLAG_UL_OFDMA: UL OFDMA data
+ * @WMI_HOST_FLAG_UL_MU_MIMO: UL MU data
+ */
+enum wmi_host_su_mu_ofdma_flags {
+	WMI_HOST_FLAG_SU            =  0x0001,
+	WMI_HOST_FLAG_DL_MU_MIMO_AC =  0x0002,
+	WMI_HOST_FLAG_DL_MU_MIMO_AX =  0x0003,
+	WMI_HOST_FLAG_DL_OFDMA      =  0x0004,
+	WMI_HOST_FLAG_UL_OFDMA      =  0x0005,
+	WMI_HOST_FLAG_UL_MU_MIMO    =  0x0006,
+};
+
+/**
+ * enum wmi_host_preamble_type: preamble type
+ * @WMI_HOST_PREAMBLE_OFDM: ofdm rate
+ * @WMI_HOST_PREAMBLE_CCK:  cck rate
+ * @WMI_HOST_PREAMBLE_HT: ht rate
+ * @WMI_HOST_PREAMBLE_VHT: vht rate
+ * @WMI_HOST_PREAMBLE_HE: 11ax he rate
+ */
+enum wmi_host_preamble_type {
+	WMI_HOST_PREAMBLE_OFDM  =  0,
+	WMI_HOST_PREAMBLE_CCK   =  1,
+	WMI_HOST_PREAMBLE_HT    =  2,
+	WMI_HOST_PREAMBLE_VHT   =  3,
+	WMI_HOST_PREAMBLE_HE    =  4,
+};
+
+/**
  * struct packet_power_info_params - packet power info params
+ * @chainmask: chain mask
+ * @chan_width: channel bandwidth
  * @rate_flags: rate flags
+ * @su_mu_ofdma: su/mu/ofdma flags
  * @nss: number of spatial streams
  * @preamble: preamble
  * @hw_rate:
  */
 struct packet_power_info_params {
+	uint16_t chainmask;
+	uint16_t chan_width;
 	uint16_t rate_flags;
+	uint16_t su_mu_ofdma;
 	uint16_t nss;
 	uint16_t preamble;
 	uint16_t hw_rate;
@@ -5808,13 +5872,25 @@ typedef struct {
 } wmi_host_pdev_nfcal_power_all_channels_event;
 
 /**
+ * enum wmi_host_pdev_tpc_event_offset: offsets of TPC events
+ * @WMI_HOST_TX_POWER_MAX: offset of max tx power
+ * @WMI_HOST_TX_POWER_MIN: offset of min tx power
+ * @WMI_HOST_TX_POWER_LEN: size of tpc values
+ */
+enum wmi_host_pdev_tpc_event_offset {
+	WMI_HOST_TX_POWER_MAX,
+	WMI_HOST_TX_POWER_MIN,
+	WMI_HOST_TX_POWER_LEN,
+};
+
+/**
  * struct wmi_host_pdev_tpc_event - WMI host pdev TPC event
  * @pdev_id: pdev_id
  * @tpc:
  */
 typedef struct {
 	uint32_t pdev_id;
-	uint32_t tpc[1];
+	int32_t tpc[WMI_HOST_TX_POWER_LEN];
 } wmi_host_pdev_tpc_event;
 
 /**

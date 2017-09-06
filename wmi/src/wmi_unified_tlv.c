@@ -10538,12 +10538,115 @@ send_set_mimogain_table_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * enum packet_power_tlv_flags: target defined
+ * packet power rate flags for TLV
+ * @WMI_TLV_FLAG_ONE_CHAIN: one chain
+ * @WMI_TLV_FLAG_TWO_CHAIN: two chain
+ * @WMI_TLV_FLAG_THREE_CHAIN: three chain
+ * @WMI_TLV_FLAG_FOUR_CHAIN: four chain
+ * @WMI_TLV_FLAG_FIVE_CHAIN: five chain
+ * @WMI_TLV_FLAG_SIX_CHAIN: six chain
+ * @WMI_TLV_FLAG_SEVEN_CHAIN: seven chain
+ * @WMI_TLV_FLAG_EIGHT_CHAIN:eight chain
+ * @WMI_TLV_FLAG_STBC: STBC is set
+ * @WMI_TLV_FLAG_40MHZ: 40MHz chan width
+ * @WMI_TLV_FLAG_80MHZ: 80MHz chan width
+ * @WMI_TLV_FLAG_160MHZ: 160MHz chan width
+ * @WMI_TLV_FLAG_TXBF: Tx Bf enabled
+ * @WMI_TLV_FLAG_RTSENA: RTS enabled
+ * @WMI_TLV_FLAG_CTSENA: CTS enabled
+ * @WMI_TLV_FLAG_LDPC: LDPC is set
+ * @WMI_TLV_FLAG_SGI: Short gaurd interval
+ * @WMI_TLV_FLAG_SU: SU Data
+ * @WMI_TLV_FLAG_DL_MU_MIMO_AC: DL AC MU data
+ * @WMI_TLV_FLAG_DL_MU_MIMO_AX: DL AX MU data
+ * @WMI_TLV_FLAG_DL_OFDMA: DL OFDMA data
+ * @WMI_TLV_FLAG_UL_OFDMA: UL OFDMA data
+ * @WMI_TLV_FLAG_UL_MU_MIMO: UL MU data
+ *
+ * @WMI_TLV_FLAG_BW_MASK: bandwidth mask
+ * @WMI_TLV_FLAG_BW_SHIFT: bandwidth shift
+ * @WMI_TLV_FLAG_SU_MU_OFDMA_MASK: su/mu/ofdma mask
+ * @WMI_TLV_FLAG_SU_MU_OFDMA_shift: su/mu/ofdma shift
+ */
+enum packet_power_tlv_flags {
+	WMI_TLV_FLAG_ONE_CHAIN         = 0x00000001,
+	WMI_TLV_FLAG_TWO_CHAIN         = 0x00000003,
+	WMI_TLV_FLAG_THREE_CHAIN       = 0x00000007,
+	WMI_TLV_FLAG_FOUR_CHAIN        = 0x0000000F,
+	WMI_TLV_FLAG_FIVE_CHAIN        = 0x0000001F,
+	WMI_TLV_FLAG_SIX_CHAIN         = 0x0000003F,
+	WMI_TLV_FLAG_SEVEN_CHAIN       = 0x0000007F,
+	WMI_TLV_FLAG_EIGHT_CHAIN       = 0x0000008F,
+	WMI_TLV_FLAG_STBC              = 0x00000100,
+	WMI_TLV_FLAG_40MHZ             = 0x00000200,
+	WMI_TLV_FLAG_80MHZ             = 0x00000300,
+	WMI_TLV_FLAG_160MHZ            = 0x00000400,
+	WMI_TLV_FLAG_TXBF              = 0x00000800,
+	WMI_TLV_FLAG_RTSENA            = 0x00001000,
+	WMI_TLV_FLAG_CTSENA            = 0x00002000,
+	WMI_TLV_FLAG_LDPC              = 0x00004000,
+	WMI_TLV_FLAG_SGI               = 0x00008000,
+	WMI_TLV_FLAG_SU                = 0x00100000,
+	WMI_TLV_FLAG_DL_MU_MIMO_AC     = 0x00200000,
+	WMI_TLV_FLAG_DL_MU_MIMO_AX     = 0x00300000,
+	WMI_TLV_FLAG_DL_OFDMA          = 0x00400000,
+	WMI_TLV_FLAG_UL_OFDMA          = 0x00500000,
+	WMI_TLV_FLAG_UL_MU_MIMO        = 0x00600000,
+
+	WMI_TLV_FLAG_CHAIN_MASK        = 0xff,
+	WMI_TLV_FLAG_BW_MASK           = 0x3,
+	WMI_TLV_FLAG_BW_SHIFT          = 9,
+	WMI_TLV_FLAG_SU_MU_OFDMA_MASK  = 0x7,
+	WMI_TLV_FLAG_SU_MU_OFDMA_SHIFT = 20,
+};
+
+/**
+ * convert_to_power_info_rate_flags() - convert packet_power_info_params
+ * to FW understandable format
+ * @param: pointer to hold packet power info param
+ *
+ * @return FW understandable 32 bit rate flags
+ */
+static uint32_t
+convert_to_power_info_rate_flags(struct packet_power_info_params *param)
+{
+	uint32_t rateflags = 0;
+
+	if (param->chainmask)
+		rateflags |=
+			(param->chainmask & WMI_TLV_FLAG_CHAIN_MASK);
+	if (param->chan_width)
+		rateflags |=
+			((param->chan_width & WMI_TLV_FLAG_BW_MASK)
+			 << WMI_TLV_FLAG_BW_SHIFT);
+	if (param->su_mu_ofdma)
+		rateflags |=
+			((param->su_mu_ofdma & WMI_TLV_FLAG_SU_MU_OFDMA_MASK)
+			 << WMI_TLV_FLAG_SU_MU_OFDMA_SHIFT);
+	if (param->rate_flags & WMI_HOST_FLAG_STBC)
+		rateflags |= WMI_TLV_FLAG_STBC;
+	if (param->rate_flags & WMI_HOST_FLAG_LDPC)
+		rateflags |= WMI_TLV_FLAG_LDPC;
+	if (param->rate_flags & WMI_HOST_FLAG_TXBF)
+		rateflags |= WMI_TLV_FLAG_TXBF;
+	if (param->rate_flags & WMI_HOST_FLAG_RTSENA)
+		rateflags |= WMI_TLV_FLAG_RTSENA;
+	if (param->rate_flags & WMI_HOST_FLAG_CTSENA)
+		rateflags |= WMI_TLV_FLAG_CTSENA;
+	if (param->rate_flags & WMI_HOST_FLAG_SGI)
+		rateflags |= WMI_TLV_FLAG_SGI;
+
+	return rateflags;
+}
+
+/**
  * send_packet_power_info_get_cmd_tlv() - send request to get packet power
  * info to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold packet power info param
  *
- *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ * @return QDF_STATUS_SUCCESS  on success and -ve on failure.
  */
 static QDF_STATUS
 send_packet_power_info_get_cmd_tlv(wmi_unified_t wmi_handle,
@@ -10567,15 +10670,16 @@ send_packet_power_info_get_cmd_tlv(wmi_unified_t wmi_handle,
 				wmi_pdev_get_tpc_cmd_fixed_param));
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
 								param->pdev_id);
-	cmd->rate_flags = param->rate_flags;
+	cmd->rate_flags = convert_to_power_info_rate_flags(param);
 	cmd->nss = param->nss;
 	cmd->preamble = param->preamble;
 	cmd->hw_rate = param->hw_rate;
-	WMI_LOGI("%s[%d] commandID %d, wmi_pdev_get_tpc_cmd=0x%x\n",
-		 __func__,
-		 __LINE__,
-		 WMI_PDEV_GET_TPC_CMDID,
-		 *((u_int32_t *)cmd));
+
+	WMI_LOGI("%s[%d] commandID %d, wmi_pdev_get_tpc_cmd=0x%x,"
+		"rate_flags: 0x%x, nss: %d, preamble: %d, hw_rate: %d\n",
+		__func__, __LINE__, WMI_PDEV_GET_TPC_CMDID, *((u_int32_t *)cmd),
+		cmd->rate_flags, cmd->nss, cmd->preamble, cmd->hw_rate);
+
 	if (wmi_unified_cmd_send(wmi_handle, wmibuf, len,
 				 WMI_PDEV_GET_TPC_CMDID)) {
 			WMI_LOGE(FL("Failed to get tpc command\n"));
@@ -19356,6 +19460,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_PDEV_DFS_RADAR_DETECTION_EVENTID;
 	event_ids[wmi_tt_stats_event_id] = WMI_THERM_THROT_STATS_EVENTID;
 	event_ids[wmi_11d_new_country_event_id] = WMI_11D_NEW_COUNTRY_EVENTID;
+	event_ids[wmi_pdev_tpc_event_id] = WMI_PDEV_TPC_EVENTID;
 }
 
 #ifndef CONFIG_MCL
