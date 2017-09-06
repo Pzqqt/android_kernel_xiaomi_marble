@@ -239,7 +239,17 @@ static QDF_STATUS
 target_if_pno_start(struct wlan_objmgr_psoc *psoc,
 	struct pno_scan_req_params *req)
 {
-	return wmi_unified_pno_start_cmd(GET_WMI_HDL_FROM_PSOC(psoc), req);
+	QDF_STATUS status;
+
+	status = wmi_unified_pno_start_cmd(GET_WMI_HDL_FROM_PSOC(psoc), req);
+	if (status == QDF_STATUS_SUCCESS) {
+		if (req->mawc_params.enable)
+			status = wmi_unified_nlo_mawc_cmd(
+					GET_WMI_HDL_FROM_PSOC(psoc),
+					&req->mawc_params);
+	}
+
+	return status;
 }
 
 static QDF_STATUS

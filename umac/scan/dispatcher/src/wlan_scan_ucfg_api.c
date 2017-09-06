@@ -227,13 +227,20 @@ bool ucfg_scan_get_pno_match(struct wlan_objmgr_vdev *vdev)
 static QDF_STATUS
 wlan_pno_global_init(struct pno_def_config *pno_def)
 {
+	struct nlo_mawc_params *mawc_cfg;
+
 	qdf_wake_lock_create(&pno_def->pno_wake_lock, "wlan_pno_wl");
+	mawc_cfg = &pno_def->mawc_params;
 	pno_def->channel_prediction = SCAN_PNO_CHANNEL_PREDICTION;
 	pno_def->top_k_num_of_channels = SCAN_TOP_K_NUM_OF_CHANNELS;
 	pno_def->stationary_thresh = SCAN_STATIONARY_THRESHOLD;
 	pno_def->channel_prediction_full_scan =
 			SCAN_CHANNEL_PREDICTION_FULL_SCAN_MS;
 	pno_def->adaptive_dwell_mode = SCAN_ADAPTIVE_PNOSCAN_DWELL_MODE;
+	mawc_cfg->enable = SCAN_MAWC_NLO_ENABLED;
+	mawc_cfg->exp_backoff_ratio = SCAN_MAWC_NLO_EXP_BACKOFF_RATIO;
+	mawc_cfg->init_scan_interval = SCAN_MAWC_NLO_INIT_SCAN_INTERVAL;
+	mawc_cfg->max_scan_interval = SCAN_MAWC_NLO_MAX_SCAN_INTERVAL;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -273,6 +280,9 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	req->stationary_thresh = pno_def->stationary_thresh;
 	req->channel_prediction_full_scan =
 			pno_def->channel_prediction_full_scan;
+	req->mawc_params.vdev_id = wlan_vdev_get_id(vdev);
+	qdf_mem_copy(&req->mawc_params, &pno_def->mawc_params,
+			sizeof(req->mawc_params));
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -286,6 +296,8 @@ static QDF_STATUS ucfg_scan_update_pno_config(struct pno_def_config *pno,
 	pno->adaptive_dwell_mode = pno_cfg->adaptive_dwell_mode;
 	pno->channel_prediction_full_scan =
 		pno_cfg->channel_prediction_full_scan;
+	qdf_mem_copy(&pno->mawc_params, &pno_cfg->mawc_params,
+			sizeof(pno->mawc_params));
 
 	return QDF_STATUS_SUCCESS;
 }
