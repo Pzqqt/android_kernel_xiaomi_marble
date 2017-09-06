@@ -76,6 +76,7 @@
 #define CDP_TX_QUEUE_STATS         22
 #define CDP_BUNDLE_STATS           23
 #define CDP_CREDIT_STATS           24
+#define CDP_DISCONNECT_STATS       25
 
 /* WME stream classes */
 #define WME_AC_BE    0    /* best effort */
