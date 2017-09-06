@@ -4434,6 +4434,87 @@ send_nf_dbr_dbm_info_get_cmd_non_tlv(wmi_unified_t wmi_handle)
 }
 
 /**
+ * enum packet_power_non_tlv_flags: Target defined
+ * packet power rate flags
+ * @WMI_NON_TLV_FLAG_ONE_CHAIN: one chain
+ * @WMI_NON_TLV_FLAG_TWO_CHAIN: two chain
+ * @WMI_NON_TLV_FLAG_THREE_CHAIN: three chain
+ * @WMI_NON_TLV_FLAG_FOUR_CHAIN: four chain
+ * @WMI_NON_TLV_FLAG_STBC: STBC is set
+ * @WMI_NON_TLV_FLAG_40MHZ: 40MHz channel width
+ * @WMI_NON_TLV_FLAG_80MHZ: 80MHz channel width
+ * @WMI_NON_TLV_FLAG_1600MHZ: 1600MHz channel width
+ * @WMI_NON_TLV_FLAG_TXBF: Tx Bf enabled
+ * @WMI_NON_TLV_FLAG_RTSENA: RTS enabled
+ * @WMI_NON_TLV_FLAG_CTSENA: CTS enabled
+ * @WMI_NON_TLV_FLAG_LDPC: LDPC is set
+ * @WMI_NON_TLV_FLAG_SERIES1: Rate series 1
+ * @WMI_NON_TLV_FLAG_SGI: Short gaurd interval
+ * @WMI_NON_TLV_FLAG_MU2: MU2 data
+ * @WMI_NON_TLV_FLAG_MU3: MU3 data
+ */
+enum packet_power_non_tlv_flags {
+	WMI_NON_TLV_FLAG_ONE_CHAIN     = 0x0001,
+	WMI_NON_TLV_FLAG_TWO_CHAIN     = 0x0005,
+	WMI_NON_TLV_FLAG_THREE_CHAIN   = 0x0007,
+	WMI_NON_TLV_FLAG_FOUR_CHAIN    = 0x000F,
+	WMI_NON_TLV_FLAG_STBC          = 0x0010,
+	WMI_NON_TLV_FLAG_40MHZ         = 0x0020,
+	WMI_NON_TLV_FLAG_80MHZ         = 0x0040,
+	WMI_NON_TLV_FLAG_160MHZ        = 0x0080,
+	WMI_NON_TLV_FLAG_TXBF          = 0x0100,
+	WMI_NON_TLV_FLAG_RTSENA        = 0x0200,
+	WMI_NON_TLV_FLAG_CTSENA        = 0x0400,
+	WMI_NON_TLV_FLAG_LDPC          = 0x0800,
+	WMI_NON_TLV_FLAG_SERIES1       = 0x1000,
+	WMI_NON_TLV_FLAG_SGI           = 0x2000,
+	WMI_NON_TLV_FLAG_MU2           = 0x4000,
+	WMI_NON_TLV_FLAG_MU3           = 0x8000,
+};
+
+/**
+ * convert_to_power_info_rate_flags() - convert packet_power_info_params
+ * to FW understandable format
+ * @param: pointer to hold packet power info param
+ *
+ * @return FW understandable 16 bit rate flags
+ */
+static uint16_t
+convert_to_power_info_rate_flags(struct packet_power_info_params *param)
+{
+	uint16_t rateflags = 0;
+
+	if (param->chainmask)
+		rateflags |= (param->chainmask & 0xf);
+	if (param->chan_width == WMI_HOST_CHAN_WIDTH_40)
+		rateflags |= WMI_NON_TLV_FLAG_40MHZ;
+	if (param->chan_width == WMI_HOST_CHAN_WIDTH_80)
+		rateflags |= WMI_NON_TLV_FLAG_80MHZ;
+	if (param->chan_width == WMI_HOST_CHAN_WIDTH_160)
+		rateflags |= WMI_NON_TLV_FLAG_160MHZ;
+	if (param->rate_flags & WMI_HOST_FLAG_STBC)
+		rateflags |= WMI_NON_TLV_FLAG_STBC;
+	if (param->rate_flags & WMI_HOST_FLAG_LDPC)
+		rateflags |= WMI_NON_TLV_FLAG_LDPC;
+	if (param->rate_flags & WMI_HOST_FLAG_TXBF)
+		rateflags |= WMI_NON_TLV_FLAG_TXBF;
+	if (param->rate_flags & WMI_HOST_FLAG_RTSENA)
+		rateflags |= WMI_NON_TLV_FLAG_RTSENA;
+	if (param->rate_flags & WMI_HOST_FLAG_CTSENA)
+		rateflags |= WMI_NON_TLV_FLAG_CTSENA;
+	if (param->rate_flags & WMI_HOST_FLAG_SGI)
+		rateflags |= WMI_NON_TLV_FLAG_SGI;
+	if (param->rate_flags & WMI_HOST_FLAG_SERIES1)
+		rateflags |= WMI_NON_TLV_FLAG_SERIES1;
+	if (param->rate_flags & WMI_HOST_FLAG_MU2)
+		rateflags |= WMI_NON_TLV_FLAG_MU2;
+	if (param->rate_flags & WMI_HOST_FLAG_MU3)
+		rateflags |= WMI_NON_TLV_FLAG_MU3;
+
+	return rateflags;
+}
+
+/**
  * send_packet_power_info_get_cmd_non_tlv() - send request to get packet power
  * info to fw
  * @wmi_handle: wmi handle
@@ -4447,20 +4528,24 @@ send_packet_power_info_get_cmd_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_pdev_get_tpc_cmd *cmd;
 	wmi_buf_t wmibuf;
-	 u_int32_t len = sizeof(wmi_pdev_get_tpc_cmd);
+	u_int32_t len = sizeof(wmi_pdev_get_tpc_cmd);
 
 	wmibuf = wmi_buf_alloc(wmi_handle, len);
 	if (wmibuf == NULL)
 		return QDF_STATUS_E_NOMEM;
 
 	cmd = (wmi_pdev_get_tpc_cmd *)wmi_buf_data(wmibuf);
-	cmd->rate_flags = param->rate_flags;
+	cmd->rate_flags = convert_to_power_info_rate_flags(param);
 	cmd->nss = param->nss;
 	cmd->preamble = param->preamble;
 	cmd->hw_rate = param->hw_rate;
 	cmd->rsvd = 0x0;
-	qdf_print("%s[%d] commandID %d, wmi_pdev_get_tpc_cmd=0x%x\n", __func__,
-		__LINE__, WMI_PDEV_GET_TPC_CMDID, *((u_int32_t *)cmd));
+
+	WMI_LOGD("%s[%d] commandID %d, wmi_pdev_get_tpc_cmd=0x%x,"
+		"rate_flags: 0x%x, nss: %d, preamble: %d, hw_rate: %d\n",
+		__func__, __LINE__, WMI_PDEV_GET_TPC_CMDID, *((u_int32_t *)cmd),
+		cmd->rate_flags, cmd->nss, cmd->preamble, cmd->hw_rate);
+
 	return wmi_unified_cmd_send(wmi_handle, wmibuf, len,
 				   WMI_PDEV_GET_TPC_CMDID);
 }
