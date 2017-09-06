@@ -851,6 +851,24 @@ struct scan_cmd_info {
 	tListElem *roambssentry;
 };
 
+/**
+ * struct csr_disconnect_stats - Disconnect Stats per session
+ * @disconnection_cnt: total no. of disconnections
+ * @disconnection_by_app: diconnections triggered by application
+ * @disassoc_by_peer: disassoc sent by peer
+ * @deauth_by_peer: deauth sent by peer
+ * @bmiss: disconnect triggered by beacon miss
+ * @peer_kickout: disconnect triggered by peer kickout
+ */
+struct csr_disconnect_stats {
+	uint32_t disconnection_cnt;
+	uint32_t disconnection_by_app;
+	uint32_t disassoc_by_peer;
+	uint32_t deauth_by_peer;
+	uint32_t bmiss;
+	uint32_t peer_kickout;
+};
+
 struct csr_roam_session {
 	uint8_t sessionId;      /* Session ID */
 	bool sessionActive;     /* true if it is used */
@@ -970,6 +988,7 @@ struct csr_roam_session {
 	qdf_mc_timer_t roaming_offload_timer;
 	bool is_fils_connection;
 	uint16_t fils_seq_num;
+	struct csr_disconnect_stats disconnect_stats;
 };
 
 struct csr_roamstruct {

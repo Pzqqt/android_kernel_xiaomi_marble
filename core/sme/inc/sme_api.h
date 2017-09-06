@@ -1722,4 +1722,13 @@ QDF_STATUS sme_get_valid_channels(uint8_t *chan_list, uint32_t *list_len);
  * Return: pointer to pmac context
  */
 tpAniSirGlobal sme_get_mac_context(void);
+
+/**
+ * sme_display_disconnect_stats() - Display per session Disconnect stats
+ * @hal: hal global context
+ * session_id: SME session id
+ *
+ * Return: None
+ */
+void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id);
 #endif /* #if !defined( __SME_API_H ) */

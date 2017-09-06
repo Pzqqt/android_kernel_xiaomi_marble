@@ -16630,3 +16630,39 @@ QDF_STATUS sme_get_chain_rssi(tHalHandle hal,
 	SME_EXIT();
 	return status;
 }
+
+void sme_display_disconnect_stats(tHalHandle hal, uint8_t session_id)
+{
+	struct csr_roam_session *session;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("%s Invalid session id: %d", __func__, session_id);
+		return;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
+		sme_err("%s Failed to get session for id: %d",
+			__func__, session_id);
+		return;
+	}
+
+	sme_debug("Total No. of Disconnections: %d",
+		  session->disconnect_stats.disconnection_cnt);
+
+	sme_debug("No. of Diconnects Triggered by Application: %d",
+		  session->disconnect_stats.disconnection_by_app);
+
+	sme_debug("No. of Disassoc Sent by Peer: %d",
+		  session->disconnect_stats.disassoc_by_peer);
+
+	sme_debug("No. of Deauth Sent by Peer: %d",
+		  session->disconnect_stats.deauth_by_peer);
+
+	sme_debug("No. of Disconnections due to Beacon Miss: %d",
+		  session->disconnect_stats.bmiss);
+
+	sme_debug("No. of Disconnections due to Peer Kickout: %d",
+		  session->disconnect_stats.peer_kickout);
+}

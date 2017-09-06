@@ -3228,6 +3228,10 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 			ret = EFAULT;
 		}
 		break;
+	case CDP_DISCONNECT_STATS:
+		sme_display_disconnect_stats(WLAN_HDD_GET_HAL_CTX(adapter),
+						adapter->sessionId);
+		break;
 	default:
 		status = cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
 							value);

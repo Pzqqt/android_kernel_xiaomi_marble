@@ -248,8 +248,8 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx,
 				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
 				msg->addr2, session_entry, false);
 			lim_tear_down_link_with_ap(mac_ctx,
-						session_entry->peSessionId,
-						eSIR_MAC_UNSPEC_FAILURE_REASON);
+				session_entry->peSessionId,
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON);
 			/* only break for STA role (non TDLS) */
 			break;
 		}

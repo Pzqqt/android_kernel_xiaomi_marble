@@ -11168,6 +11168,11 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		qdf_mem_free(cmd);
 		return;
 	}
+
+	/* Update the disconnect stats */
+	session->disconnect_stats.disconnection_cnt++;
+	session->disconnect_stats.disassoc_by_peer++;
+
 	if (csr_is_conn_state_infra(mac_ctx, sessionId))
 		session->connectState = eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -11276,6 +11281,30 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (!session) {
 		sme_err("session %d not found", sessionId);
 		return;
+	}
+
+	/* Update the disconnect stats */
+	switch (pDeauthInd->reasonCode) {
+	case eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON:
+		session->disconnect_stats.disconnection_cnt++;
+		session->disconnect_stats.peer_kickout++;
+		break;
+	case eSIR_MAC_UNSPEC_FAILURE_REASON:
+	case eSIR_MAC_PREV_AUTH_NOT_VALID_REASON:
+	case eSIR_MAC_DEAUTH_LEAVING_BSS_REASON:
+	case eSIR_MAC_CLASS2_FRAME_FROM_NON_AUTH_STA_REASON:
+	case eSIR_MAC_CLASS3_FRAME_FROM_NON_ASSOC_STA_REASON:
+	case eSIR_MAC_STA_NOT_PRE_AUTHENTICATED_REASON:
+		session->disconnect_stats.disconnection_cnt++;
+		session->disconnect_stats.deauth_by_peer++;
+		break;
+	case eSIR_BEACON_MISSED:
+		session->disconnect_stats.disconnection_cnt++;
+		session->disconnect_stats.bmiss++;
+		break;
+	default:
+		/* Unknown reason code */
+		break;
 	}
 
 	if (csr_is_conn_state_infra(mac_ctx, sessionId))
@@ -15364,6 +15393,11 @@ QDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	pMsg->reasonCode = reasonCode;
 	pMsg->process_ho_fail = (pSession->disconnect_reason ==
 		eCSR_DISCONNECT_REASON_ROAM_HO_FAIL) ? true : false;
+
+	/* Update the disconnect stats */
+	pSession->disconnect_stats.disconnection_cnt++;
+	pSession->disconnect_stats.disconnection_by_app++;
+
 	/*
 	 * The state will be DISASSOC_HANDOFF only when we are doing
 	 * handoff. Here we should not send the disassoc over the air
@@ -15557,6 +15591,10 @@ QDF_STATUS csr_send_mb_deauth_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* Set the peer MAC address before sending the message to LIM */
 	qdf_mem_copy(&pMsg->peer_macaddr.bytes, bssId, QDF_MAC_ADDR_SIZE);
 	pMsg->reasonCode = reasonCode;
+
+	/* Update the disconnect stats */
+	pSession->disconnect_stats.disconnection_cnt++;
+	pSession->disconnect_stats.disconnection_by_app++;
 
 	return umac_send_mb_message_to_mac(pMsg);
 }
