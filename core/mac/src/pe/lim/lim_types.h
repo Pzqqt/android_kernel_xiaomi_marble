@@ -554,12 +554,8 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal pMac,
 						 uint32_t *pMsgBuf);
 tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 					       uint32_t *pMsgBuf);
-tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal pMac,
-						     uint32_t *pMsgBuf);
 tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 					       uint32_t *pMsgBuf);
-void lim_send_sme_tdls_delete_all_peer_ind(tpAniSirGlobal pMac,
-					   tpPESession psessionEntry);
 void lim_send_sme_mgmt_tx_completion(
 		tpAniSirGlobal pMac,
 		uint32_t sme_session_id,

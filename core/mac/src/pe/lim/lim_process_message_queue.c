@@ -1269,7 +1269,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 #ifdef FEATURE_WLAN_TDLS
 	tSirTdlsInd *tdls_ind = NULL;
 	tpDphHashNode sta_ds = NULL;
-	tTdlsLinkEstablishParams *tdls_link_params = NULL;
 #endif
 	tSirMbMsgP2p *p2p_msg = NULL;
 	tSirSetActiveModeSetBncFilterReq *bcn_filter_req = NULL;
@@ -1779,29 +1778,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
-#ifdef FEATURE_WLAN_TDLS
-	case WMA_SET_TDLS_LINK_ESTABLISH_REQ_RSP:
-		tdls_link_params = (tTdlsLinkEstablishParams *) msg->bodyptr;
-		session_entry = pe_find_session_by_sta_id(mac_ctx,
-			tdls_link_params->staIdx, &session_id);
-		if (session_entry == NULL) {
-			pe_err("session %u does not exist", session_id);
-			/* Still send the eWNI_SME_TDLS_LINK_ESTABLISH_RSP
-			 * message to SME with session id as zero and status
-			 * as FAILURE so, that message queued in SME queue
-			 * can be freed to prevent the SME cmd buffer leak
-			 */
-			lim_send_sme_tdls_link_establish_req_rsp(mac_ctx, 0,
-				NULL, NULL, eSIR_FAILURE);
-		} else {
-			lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
-				session_entry->smeSessionId, NULL, NULL,
-				tdls_link_params->status);
-		}
-		qdf_mem_free((void *)(msg->bodyptr));
-		msg->bodyptr = NULL;
-		break;
-#endif
 
 	case WMA_RX_CHN_STATUS_EVENT:
 		lim_process_rx_channel_status_event(mac_ctx, msg->bodyptr);

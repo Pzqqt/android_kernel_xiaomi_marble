@@ -494,65 +494,26 @@ void wlan_hdd_tdls_exit(struct hdd_adapter *pAdapter);
 
 void wlan_hdd_tdls_extract_sa(struct sk_buff *skb, uint8_t *mac);
 
-int wlan_hdd_tdls_set_sta_id(struct hdd_adapter *pAdapter, const uint8_t *mac,
-			     uint8_t staId);
-
 hddTdlsPeer_t *wlan_hdd_tdls_find_peer(struct hdd_adapter *pAdapter,
 				       const uint8_t *mac);
 
 hddTdlsPeer_t *wlan_hdd_tdls_find_all_peer(struct hdd_context *hdd_ctx,
 					   const uint8_t *mac);
 
-int wlan_hdd_tdls_get_link_establish_params(struct hdd_adapter *pAdapter,
-					    const uint8_t *mac,
-					    tCsrTdlsLinkEstablishParams *
-					    tdlsLinkEstablishParams);
 hddTdlsPeer_t *wlan_hdd_tdls_get_peer(struct hdd_adapter *pAdapter,
 				      const uint8_t *mac);
-
-int wlan_hdd_tdls_set_cap(struct hdd_adapter *pAdapter, const uint8_t *mac,
-			  enum tdls_cap_type cap);
 
 void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
 					enum tdls_link_status status,
 					enum tdls_link_reason reason);
-void wlan_hdd_tdls_set_link_status(struct hdd_adapter *pAdapter,
-				   const uint8_t *mac,
-				   enum tdls_link_status linkStatus,
-				   enum tdls_link_reason reason);
-
-int wlan_hdd_tdls_recv_discovery_resp(struct hdd_adapter *pAdapter,
-				      const uint8_t *mac);
-
-int wlan_hdd_tdls_set_peer_caps(struct hdd_adapter *pAdapter,
-				const uint8_t *mac,
-				tCsrStaParams *StaParams,
-				bool isBufSta, bool isOffChannelSupported,
-				bool is_qos_wmm_sta);
-
-int wlan_hdd_tdls_set_rssi(struct hdd_adapter *pAdapter, const uint8_t *mac,
-			   int8_t rxRssi);
-
-int wlan_hdd_tdls_set_responder(struct hdd_adapter *pAdapter,
-				const uint8_t *mac,
-				uint8_t responder);
-
-int wlan_hdd_tdls_set_signature(struct hdd_adapter *pAdapter,
-				const uint8_t *mac,
-				uint8_t uSignature);
 
 int wlan_hdd_tdls_set_params(struct net_device *dev,
 			     tdls_config_params_t *config);
-
-int wlan_hdd_tdls_reset_peer(struct hdd_adapter *pAdapter, const uint8_t *mac);
 
 uint16_t wlan_hdd_tdls_connected_peers(struct hdd_adapter *pAdapter);
 
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *pAdapter, char *buf,
 				int buflen);
-
-void wlan_hdd_tdls_mgmt_completion_callback(struct hdd_adapter *pAdapter,
-					    uint32_t statusCode);
 
 void wlan_hdd_tdls_increment_peer_count(struct hdd_adapter *pAdapter);
 
@@ -600,10 +561,6 @@ void wlan_hdd_tdls_get_wifi_hal_state(hddTdlsPeer_t *curr_peer,
 				      uint32_t *state, int32_t *reason);
 int wlan_hdd_set_callback(hddTdlsPeer_t *curr_peer,
 			  cfg80211_exttdls_callback callback);
-
-int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
-			      struct net_device *dev, const uint8_t *mac,
-			      bool update, tCsrStaParams *StaParams);
 
 int wlan_hdd_cfg80211_exttdls_enable(struct wiphy *wiphy,
 				     struct wireless_dev *wdev,

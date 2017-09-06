@@ -245,20 +245,6 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 
 bool csr_roamGetConcurrencyConnectStatusForBmps(tpAniSirGlobal pMac);
 #ifdef FEATURE_WLAN_TDLS
-QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
-		tCsrTdlsSendMgmt * tdlsSendMgmt);
-QDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
-		uint8_t sessionId, const tSirMacAddr peerMac,
-		tCsrTdlsLinkEstablishParams *tdlsLinkEstablishParams);
-QDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac);
-QDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac,
-		tCsrStaParams *pstaParams);
-QDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac);
-QDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
-QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd);
 QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 		void *pMsgBuf);
 #endif /* FEATURE_WLAN_TDLS */

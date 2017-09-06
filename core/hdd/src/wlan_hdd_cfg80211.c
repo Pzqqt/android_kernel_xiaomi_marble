@@ -12915,8 +12915,6 @@ void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy)
 }
 
 /* This function registers for all frame which supplicant is interested in */
-#if defined(CONVERGED_P2P_ENABLE) || defined(CONVERGED_TDLS_ENABLE)
-
 int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *pAdapter)
 {
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -13024,67 +13022,6 @@ dereg_gas_initial_req:
 ret_status:
 	return qdf_status_to_os_return(status);
 }
-#else
-int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *pAdapter)
-{
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	/* Register for all P2P action, public action etc frames */
-	uint16_t type = (SIR_MAC_MGMT_FRAME << 2) | (SIR_MAC_MGMT_ACTION << 4);
-
-	ENTER();
-
-	/* Register frame indication call back */
-	sme_register_mgmt_frame_ind_callback(hHal, hdd_indicate_mgmt_frame);
-
-	/* Register for p2p ack indication */
-	sme_register_p2p_ack_ind_callback(hHal, hdd_send_action_cnf_cb);
-
-	/* Right now we are registering these frame when driver is getting
-	 * initialized. Once we will move to 2.6.37 kernel, in which we have
-	 * frame register ops, we will move this code as a part of that
-	 */
-
-	/* GAS Initial Request */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) GAS_INITIAL_REQ,
-				GAS_INITIAL_REQ_SIZE);
-
-	/* GAS Initial Response */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) GAS_INITIAL_RSP,
-				GAS_INITIAL_RSP_SIZE);
-
-	/* GAS Comeback Request */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) GAS_COMEBACK_REQ,
-				GAS_COMEBACK_REQ_SIZE);
-
-	/* GAS Comeback Response */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) GAS_COMEBACK_RSP,
-				GAS_COMEBACK_RSP_SIZE);
-
-	/* P2P Public Action */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) P2P_PUBLIC_ACTION_FRAME,
-				P2P_PUBLIC_ACTION_FRAME_SIZE);
-
-	/* P2P Action */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) P2P_ACTION_FRAME,
-				P2P_ACTION_FRAME_SIZE);
-
-	/* WNM BSS Transition Request frame */
-	sme_register_mgmt_frame(hHal, SME_SESSION_ID_ANY, type,
-				(uint8_t *) WNM_BSS_ACTION_FRAME,
-				WNM_BSS_ACTION_FRAME_SIZE);
-
-	/* WNM-Notification */
-	sme_register_mgmt_frame(hHal, pAdapter->sessionId, type,
-				(uint8_t *) WNM_NOTIFICATION_FRAME,
-				WNM_NOTIFICATION_FRAME_SIZE);
-}
-#endif
 
 void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *pAdapter)
 {
@@ -13692,20 +13629,6 @@ static int wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 }
 #endif /* KERNEL_VERSION(4, 12, 0) */
 
-#if defined(FEATURE_WLAN_TDLS) && !defined(CONVERGED_TDLS_ENABLE)
-static bool wlan_hdd_is_duplicate_channel(uint8_t *arr,
-					  int index, uint8_t match)
-{
-	int i;
-
-	for (i = 0; i < index; i++) {
-		if (arr[i] == match)
-			return true;
-	}
-	return false;
-}
-#endif
-
 /**
  * __wlan_hdd_change_station() - change station
  * @wiphy: Pointer to the wiphy structure
@@ -13732,12 +13655,6 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *pHddStaCtx;
 	struct qdf_mac_addr STAMacAddress;
-#if defined(FEATURE_WLAN_TDLS) && !defined(CONVERGED_TDLS_ENABLE)
-	tCsrStaParams StaParams = { 0 };
-	uint8_t isBufSta = 0;
-	uint8_t isOffChannelSupported = 0;
-	bool is_qos_wmm_sta = false;
-#endif
 	int ret;
 
 	ENTER();
@@ -13781,202 +13698,9 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	} else if ((pAdapter->device_mode == QDF_STA_MODE) ||
 		   (pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		if (params->sta_flags_set & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
-#if defined(FEATURE_WLAN_TDLS) && defined(CONVERGED_TDLS_ENABLE)
+#if defined(FEATURE_WLAN_TDLS)
 			ret = wlan_cfg80211_tdls_update_peer(hdd_ctx->hdd_pdev,
 							     dev, mac, params);
-#else
-
-			if (cds_is_sub_20_mhz_enabled()) {
-				hdd_err("TDLS not allowed with sub 20 MHz");
-				return -EINVAL;
-			}
-
-			StaParams.capability = params->capability;
-			StaParams.uapsd_queues = params->uapsd_queues;
-			StaParams.max_sp = params->max_sp;
-
-			/* Convert (first channel , number of channels) tuple to
-			 * the total list of channels. This goes with the assumption
-			 * that if the first channel is < 14, then the next channels
-			 * are an incremental of 1 else an incremental of 4 till the number
-			 * of channels.
-			 */
-			hdd_debug("params->supported_channels_len: %d", params->supported_channels_len);
-			if (0 != params->supported_channels_len) {
-				int i = 0, j = 0, k = 0, no_of_channels = 0;
-				int num_unique_channels;
-				int next;
-
-				for (i = 0;
-				     i < params->supported_channels_len
-				     && j < SIR_MAC_MAX_SUPP_CHANNELS; i += 2) {
-					int wifi_chan_index;
-
-					if (!wlan_hdd_is_duplicate_channel
-						    (StaParams.supported_channels, j,
-						    params->supported_channels[i])) {
-						StaParams.
-						supported_channels[j] =
-							params->
-							supported_channels[i];
-					} else {
-						continue;
-					}
-					wifi_chan_index =
-						((StaParams.supported_channels[j] <=
-						  HDD_CHANNEL_14) ? 1 : 4);
-					no_of_channels =
-						params->supported_channels[i + 1];
-
-					hdd_debug("i: %d, j: %d, k: %d, StaParams.supported_channels[%d]: %d, wifi_chan_index: %d, no_of_channels: %d", i, j, k, j,
-						  StaParams.
-						  supported_channels[j],
-						  wifi_chan_index,
-						  no_of_channels);
-					for (k = 1; k <= no_of_channels &&
-					     j < SIR_MAC_MAX_SUPP_CHANNELS - 1;
-					     k++) {
-						next =
-								StaParams.
-								supported_channels[j] +
-								wifi_chan_index;
-						if (!wlan_hdd_is_duplicate_channel(StaParams.supported_channels, j + 1, next)) {
-							StaParams.
-							supported_channels[j
-									   +
-									   1]
-								= next;
-						} else {
-							continue;
-						}
-						hdd_debug("i: %d, j: %d, k: %d, StaParams.supported_channels[%d]: %d", i, j, k,
-							  j + 1,
-							  StaParams.
-							  supported_channels[j +
-									     1]);
-						j += 1;
-					}
-				}
-				num_unique_channels = j + 1;
-				hdd_debug("Unique Channel List");
-				for (i = 0; i < num_unique_channels; i++) {
-					hdd_debug("StaParams.supported_channels[%d]: %d,", i,
-						  StaParams.
-						  supported_channels[i]);
-				}
-				if (MAX_CHANNEL < num_unique_channels)
-					num_unique_channels = MAX_CHANNEL;
-				StaParams.supported_channels_len =
-					num_unique_channels;
-				hdd_debug("After removing duplcates StaParams.supported_channels_len: %d",
-					  StaParams.supported_channels_len);
-			}
-			if (params->supported_oper_classes_len >
-			    CDS_MAX_SUPP_OPER_CLASSES) {
-				hdd_debug("rcvd oper classes:%d, rst to max %d",
-					  params->supported_oper_classes_len,
-					  CDS_MAX_SUPP_OPER_CLASSES);
-				params->supported_oper_classes_len =
-					CDS_MAX_SUPP_OPER_CLASSES;
-			}
-			qdf_mem_copy(StaParams.supported_oper_classes,
-				     params->supported_oper_classes,
-				     params->supported_oper_classes_len);
-			StaParams.supported_oper_classes_len =
-				params->supported_oper_classes_len;
-
-			if (params->ext_capab_len >
-			    sizeof(StaParams.extn_capability)) {
-				hdd_debug("received extn capabilities:%d, resetting it to max supported",
-					  params->ext_capab_len);
-				params->ext_capab_len =
-					sizeof(StaParams.extn_capability);
-			}
-			if (0 != params->ext_capab_len)
-				qdf_mem_copy(StaParams.extn_capability,
-					     params->ext_capab,
-					     params->ext_capab_len);
-
-			if (NULL != params->ht_capa) {
-				StaParams.htcap_present = 1;
-				qdf_mem_copy(&StaParams.HTCap, params->ht_capa,
-					     sizeof(tSirHTCap));
-			}
-
-			StaParams.supported_rates_len =
-				params->supported_rates_len;
-
-			/* Note : The Maximum sizeof supported_rates sent by the Supplicant is 32.
-			 * The supported_rates array , for all the structures propogating till Add Sta
-			 * to the firmware has to be modified , if the supplicant (ieee80211) is
-			 * modified to send more rates.
-			 */
-
-			/* To avoid Data Currption , set to max length to SIR_MAC_MAX_SUPP_RATES
-			 */
-			if (StaParams.supported_rates_len >
-			    SIR_MAC_MAX_SUPP_RATES)
-				StaParams.supported_rates_len =
-					SIR_MAC_MAX_SUPP_RATES;
-
-			if (0 != StaParams.supported_rates_len) {
-				int i = 0;
-
-				qdf_mem_copy(StaParams.supported_rates,
-					     params->supported_rates,
-					     StaParams.supported_rates_len);
-				hdd_debug("Supported Rates with Length %d",
-					  StaParams.supported_rates_len);
-				for (i = 0; i < StaParams.supported_rates_len;
-				     i++)
-					hdd_debug("[%d]: %0x", i,
-						  StaParams.supported_rates[i]);
-			}
-
-			if (NULL != params->vht_capa) {
-				StaParams.vhtcap_present = 1;
-				qdf_mem_copy(&StaParams.VHTCap,
-					     params->vht_capa,
-					     sizeof(tSirVHTCap));
-			}
-
-			if (0 != params->ext_capab_len) {
-				/*Define A Macro : TODO Sunil */
-				if ((1 << 4) & StaParams.extn_capability[3])
-					isBufSta = 1;
-
-				/* TDLS Channel Switching Support */
-				if ((1 << 6) & StaParams.extn_capability[3])
-					isOffChannelSupported = 1;
-			}
-
-			if (hdd_ctx->config->fEnableTDLSWmmMode &&
-			    (params->ht_capa || params->vht_capa ||
-			    (params->sta_flags_set & BIT(NL80211_STA_FLAG_WME))))
-				is_qos_wmm_sta = true;
-
-			hdd_debug("%s: TDLS Peer is QOS capable"
-				" is_qos_wmm_sta= %d HTcapPresent = %d",
-				__func__, is_qos_wmm_sta,
-				StaParams.htcap_present);
-
-			status = wlan_hdd_tdls_set_peer_caps(pAdapter, mac,
-						&StaParams,
-						isBufSta,
-						isOffChannelSupported,
-						is_qos_wmm_sta);
-			if (QDF_STATUS_SUCCESS != status) {
-				hdd_err("wlan_hdd_tdls_set_peer_caps failed!");
-				return -EINVAL;
-			}
-
-			status =
-				wlan_hdd_tdls_add_station(wiphy, dev, mac, 1,
-							  &StaParams);
-			if (QDF_STATUS_SUCCESS != status) {
-				hdd_err("wlan_hdd_tdls_add_station failed!");
-				return -EINVAL;
-			}
 #endif
 		}
 	}
@@ -17261,11 +16985,9 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx =
+		WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-#ifdef FEATURE_WLAN_TDLS
-	uint8_t staIdx;
-#endif
 
 	ENTER();
 
@@ -17340,23 +17062,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		wlan_hdd_cleanup_remain_on_channel_ctx(pAdapter);
 #ifdef FEATURE_WLAN_TDLS
 		/* First clean up the tdls peers if any */
-		for (staIdx = 0; staIdx < hdd_ctx->max_num_tdls_sta; staIdx++) {
-			if ((hdd_ctx->tdlsConnInfo[staIdx].sessionId ==
-			     pAdapter->sessionId)
-			    && (hdd_ctx->tdlsConnInfo[staIdx].staId)) {
-				uint8_t *mac;
-				mac =
-					hdd_ctx->tdlsConnInfo[staIdx].peerMac.bytes;
-				hdd_debug("call sme_delete_tdls_peer_sta staId %d sessionId %d "
-				       MAC_ADDRESS_STR,
-				       hdd_ctx->tdlsConnInfo[staIdx].staId,
-				       pAdapter->sessionId,
-				       MAC_ADDR_ARRAY(mac));
-				sme_delete_tdls_peer_sta(WLAN_HDD_GET_HAL_CTX
-								 (pAdapter),
-							 pAdapter->sessionId, mac);
-			}
-		}
+		/* TDLS-TODO */
 		hdd_notify_sta_disconnect(pAdapter->sessionId,
 					  true, pAdapter->hdd_vdev);
 #endif
@@ -18312,15 +18018,9 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 		MAC_ADDR_ARRAY(mac));
 
 	if (mask & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
-		if (set & BIT(NL80211_STA_FLAG_TDLS_PEER)) {
-#if defined(CONVERGED_TDLS_ENABLE)
+		if (set & BIT(NL80211_STA_FLAG_TDLS_PEER))
 			status = wlan_cfg80211_tdls_add_peer(hdd_ctx->hdd_pdev,
 							     dev, mac);
-#else
-			status =
-				wlan_hdd_tdls_add_station(wiphy, dev, mac, 0, NULL);
-#endif
-		}
 	}
 #endif
 	EXIT();

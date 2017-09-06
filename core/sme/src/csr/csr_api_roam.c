@@ -58,6 +58,7 @@
 #include <wlan_logging_sock_svc.h>
 #include "wlan_objmgr_psoc_obj.h"
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_tdls_tgt_api.h>
 
 #define MAX_PWR_FCC_CHAN_12 8
 #define MAX_PWR_FCC_CHAN_13 2
@@ -20531,9 +20532,8 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 	csr_scan_save_roam_offload_ap_to_scan_cache(mac_ctx, roam_synch_data,
 			bss_desc);
 	roam_info->sessionId = session_id;
-	csr_roam_call_callback(mac_ctx, roam_synch_data->roamedVdevId,
-		roam_info, 0, eCSR_ROAM_TDLS_STATUS_UPDATE,
-		eCSR_ROAM_RESULT_DELETE_ALL_TDLS_PEER_IND);
+	tgt_tdls_peers_deleted_notification(mac_ctx->psoc, session_id);
+
 	qdf_mem_copy(&roam_info->bssid.bytes, &bss_desc->bssId,
 			sizeof(struct qdf_mac_addr));
 	csr_roam_save_connected_infomation(mac_ctx, session_id,

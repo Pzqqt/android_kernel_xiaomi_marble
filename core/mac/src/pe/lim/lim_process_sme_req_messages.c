@@ -5059,9 +5059,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_TDLS_DEL_STA_REQ:
 		lim_process_sme_tdls_del_sta_req(pMac, pMsgBuf);
 		break;
-	case eWNI_SME_TDLS_LINK_ESTABLISH_REQ:
-		lim_process_sme_tdls_link_establish_req(pMac, pMsgBuf);
-		break;
 #endif
 	case eWNI_SME_RESET_AP_CAPS_CHANGED:
 		__lim_process_sme_reset_ap_caps_change(pMac, pMsgBuf);

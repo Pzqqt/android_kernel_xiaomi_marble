@@ -62,9 +62,7 @@
 #include "wlan_reg_services_api.h"
 #include "wlan_utility.h"
 
-#ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_tgt_api.h"
-#endif
 #include "lim_process_fils.h"
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
@@ -1215,85 +1213,19 @@ void
 lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			      tpPESession psessionEntry, uint16_t reasonCode)
 {
-	struct scheduler_msg mmhMsg = {0};
-	tSirTdlsDelStaInd *pSirTdlsDelStaInd;
+	struct tdls_event_info info;
 
-	pSirTdlsDelStaInd = qdf_mem_malloc(sizeof(tSirTdlsDelStaInd));
-	if (NULL == pSirTdlsDelStaInd) {
-		pe_err("AllocateMemory failed for eWNI_SME_TDLS_DEL_STA_IND");
-		return;
-	}
 	pe_debug("Delete TDLS Peer "MAC_ADDRESS_STR "with reason code: %d",
 			MAC_ADDR_ARRAY(pStaDs->staAddr), reasonCode);
-	/* messageType */
-	pSirTdlsDelStaInd->messageType = eWNI_SME_TDLS_DEL_STA_IND;
-	pSirTdlsDelStaInd->length = sizeof(tSirTdlsDelStaInd);
+	info.vdev_id = psessionEntry->smeSessionId;
+	qdf_mem_copy(info.peermac.bytes, pStaDs->staAddr, QDF_MAC_ADDR_SIZE);
+	info.message_type = TDLS_PEER_DISCONNECTED;
+	info.peer_reason = TDLS_DISCONNECTED_PEER_DELETE;
 
-	/* sessionId */
-	pSirTdlsDelStaInd->sessionId = psessionEntry->smeSessionId;
+	tgt_tdls_event_handler(pMac->psoc, &info);
 
-	/* peerMacAddr */
-	qdf_mem_copy(pSirTdlsDelStaInd->peermac.bytes, pStaDs->staAddr,
-		     QDF_MAC_ADDR_SIZE);
-
-	/* staId */
-	lim_copy_u16((uint8_t *) (&pSirTdlsDelStaInd->staId),
-		     (uint16_t) pStaDs->staIndex);
-
-	/* reasonCode */
-	lim_copy_u16((uint8_t *) (&pSirTdlsDelStaInd->reasonCode), reasonCode);
-
-	mmhMsg.type = eWNI_SME_TDLS_DEL_STA_IND;
-	mmhMsg.bodyptr = pSirTdlsDelStaInd;
-	mmhMsg.bodyval = 0;
-
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 	return;
 } /*** end lim_send_sme_tdls_del_sta_ind() ***/
-
-/**
- * lim_send_sme_tdls_delete_all_peer_ind()
- *
- ***FUNCTION:
- * This function is called to send the eWNI_SME_TDLS_DEL_ALL_PEER_IND
- * message to SME.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- * NA
- *
- * @param  pMac   - Pointer to global MAC structure
- * @param  psessionEntry - Pointer to the session entry
- * @return None
- */
-void
-lim_send_sme_tdls_delete_all_peer_ind(tpAniSirGlobal pMac, tpPESession psessionEntry)
-{
-	struct scheduler_msg mmhMsg = {0};
-	tSirTdlsDelAllPeerInd *pSirTdlsDelAllPeerInd;
-
-	pSirTdlsDelAllPeerInd = qdf_mem_malloc(sizeof(tSirTdlsDelAllPeerInd));
-	if (NULL == pSirTdlsDelAllPeerInd) {
-		pe_err("AllocateMemory failed for eWNI_SME_TDLS_DEL_ALL_PEER_IND");
-		return;
-	}
-	/* messageType */
-	pSirTdlsDelAllPeerInd->messageType = eWNI_SME_TDLS_DEL_ALL_PEER_IND;
-	pSirTdlsDelAllPeerInd->length = sizeof(tSirTdlsDelAllPeerInd);
-
-	/* sessionId */
-	pSirTdlsDelAllPeerInd->sessionId = psessionEntry->smeSessionId;
-
-	mmhMsg.type = eWNI_SME_TDLS_DEL_ALL_PEER_IND;
-	mmhMsg.bodyptr = pSirTdlsDelAllPeerInd;
-	mmhMsg.bodyval = 0;
-
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return;
-} /*** end lim_send_sme_tdls_delete_all_peer_ind() ***/
 
 /**
  * lim_send_sme_mgmt_tx_completion()
@@ -1342,15 +1274,10 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
 	mmhMsg.bodyptr = pSirMgmtTxCompletionInd;
 	mmhMsg.bodyval = 0;
 
-#ifdef CONVERGED_TDLS_ENABLE
 	pSirMgmtTxCompletionInd->psoc = pMac->psoc;
 	mmhMsg.callback = tgt_tdls_send_mgmt_tx_completion;
 	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
 	return;
-#else
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return;
-#endif
 } /*** end lim_send_sme_tdls_delete_all_peer_ind() ***/
 
 void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,

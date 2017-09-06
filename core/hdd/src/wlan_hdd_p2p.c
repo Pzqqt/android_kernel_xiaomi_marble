@@ -2775,26 +2775,6 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *pAdapter,
 					hdd_send_action_cnf(pAdapter, true);
 				}
 			}
-#ifdef FEATURE_WLAN_TDLS
-			else if (pbFrames
-				 [WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET + 1] ==
-				 WLAN_HDD_PUBLIC_ACTION_TDLS_DISC_RESP) {
-				u8 *mac = &pbFrames
-					[WLAN_HDD_80211_PEER_ADDR_OFFSET];
-
-				hdd_debug("[TDLS] TDLS Discovery Response,"
-				       MAC_ADDRESS_STR " RSSI[%d] <--- OTA",
-				       MAC_ADDR_ARRAY(mac), rxRssi);
-
-				wlan_hdd_tdls_set_rssi(pAdapter, mac, rxRssi);
-				wlan_hdd_tdls_recv_discovery_resp(pAdapter,
-								  mac);
-				cds_tdls_tx_rx_mgmt_event(SIR_MAC_ACTION_TDLS,
-				   SIR_MAC_ACTION_RX, SIR_MAC_MGMT_ACTION,
-				   WLAN_HDD_PUBLIC_ACTION_TDLS_DISC_RESP,
-				   &pbFrames[WLAN_HDD_80211_PEER_ADDR_OFFSET]);
-			}
-#endif
 		}
 
 		if (pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET] ==

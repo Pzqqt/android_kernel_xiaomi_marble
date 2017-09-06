@@ -457,9 +457,7 @@ typedef struct sSirSmeRsp {
 	uint8_t sessionId;      /* To support BT-AMP */
 	uint16_t transactionId; /* To support BT-AMP */
 	tSirResultCodes statusCode;
-#ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_objmgr_psoc *psoc;
-#endif
 } tSirSmeRsp, *tpSirSmeRsp;
 
 /* / Definition for indicating all modules ready on STA */
@@ -3505,9 +3503,7 @@ typedef struct sSirTdlsAddStaRsp {
 	uint8_t ucastSig;
 	uint8_t bcastSig;
 	eTdlsAddOper tdlsAddOper;
-#ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_objmgr_psoc *psoc;
-#endif
 } tSirTdlsAddStaRsp;
 
 /* TDLS Request struct SME-->PE */
@@ -3559,9 +3555,7 @@ typedef struct sSirTdlsDelStaRsp {
 	tSirResultCodes statusCode;
 	struct qdf_mac_addr peermac;
 	uint16_t staId;
-#ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_objmgr_psoc *psoc;
-#endif
 } tSirTdlsDelStaRsp, *tpSirTdlsDelStaRsp;
 /* TDLS Delete Indication struct PE-->SME */
 typedef struct sSirTdlsDelStaInd {
@@ -3582,9 +3576,7 @@ typedef struct sSirMgmtTxCompletionInd {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint32_t txCompleteStatus;
-#ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_objmgr_psoc *psoc;
-#endif
 } tSirMgmtTxCompletionInd, *tpSirMgmtTxCompletionInd;
 
 typedef struct sSirTdlsEventnotify {

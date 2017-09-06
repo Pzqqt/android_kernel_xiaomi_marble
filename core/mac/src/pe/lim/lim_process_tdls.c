@@ -79,10 +79,7 @@
 #include "cds_regdomain.h"
 #include "cds_utils.h"
 #include "wlan_reg_services_api.h"
-
-#ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_tgt_api.h"
-#endif
 
 /* define NO_PAD_TDLS_MIN_8023_SIZE to NOT padding: See CR#447630
    There was IOT issue with cisco 1252 open mode, where it pads
@@ -2677,18 +2674,11 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 
 	addStaRsp->length = sizeof(tSirTdlsAddStaRsp);
 	addStaRsp->messageType = eWNI_SME_TDLS_ADD_STA_RSP;
-#ifdef CONVERGED_TDLS_ENABLE
 	addStaRsp->psoc = pMac->psoc;
 	mmhMsg.bodyptr = addStaRsp;
 	mmhMsg.callback = tgt_tdls_add_peer_rsp;
 
 	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
-#else
-	mmhMsg.bodyptr = addStaRsp;
-	mmhMsg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-#endif
-	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -2737,7 +2727,6 @@ add_sta_error:
 	return status;
 }
 
-#ifdef CONVERGED_TDLS_ENABLE
 /**
  * lim_send_tdls_comp_mgmt_rsp() - Send Response to upper layers
  * @mac_ctx:          Pointer to Global MAC structure
@@ -2786,7 +2775,6 @@ lim_send_tdls_comp_mgmt_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 
 }
-#endif
 
 /**
  * lim_process_sme_tdls_mgmt_send_req() - send out tdls management frames
@@ -2908,49 +2896,11 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	}
 
 lim_tdls_send_mgmt_error:
-#ifdef CONVERGED_TDLS_ENABLE
 	lim_send_tdls_comp_mgmt_rsp(mac_ctx, eWNI_SME_TDLS_SEND_MGMT_RSP,
 		 result_code, send_req->sessionId,
 		 send_req->transactionId);
-#else
-	lim_send_sme_rsp(mac_ctx, eWNI_SME_TDLS_SEND_MGMT_RSP,
-		 result_code, send_req->sessionId,
-		 send_req->transactionId);
-#endif
 
 	return eSIR_SUCCESS;
-}
-
-/*
- * Send Response to Link Establish Request to SME
- */
-void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
-					      uint8_t sessionId,
-					      struct qdf_mac_addr *peermac,
-					      tDphHashNode *pStaDs, uint8_t status)
-{
-	struct scheduler_msg mmhMsg = { 0 };
-
-	tSirTdlsLinkEstablishReqRsp *pTdlsLinkEstablishReqRsp = NULL;
-
-	pTdlsLinkEstablishReqRsp =
-		qdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReqRsp));
-	if (NULL == pTdlsLinkEstablishReqRsp) {
-		pe_err("Failed to allocate memory");
-		return;
-	}
-	pe_debug("Send Resp to TDL Link Establish Req to SME");
-	pTdlsLinkEstablishReqRsp->statusCode = status;
-	if (peermac)
-		qdf_copy_macaddr(&pTdlsLinkEstablishReqRsp->peermac, peermac);
-
-	pTdlsLinkEstablishReqRsp->sessionId = sessionId;
-	mmhMsg.type = eWNI_SME_TDLS_LINK_ESTABLISH_RSP;
-	mmhMsg.bodyptr = pTdlsLinkEstablishReqRsp;
-	mmhMsg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return;
-
 }
 
 /*
@@ -2982,19 +2932,10 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 
 	pDelSta->length = sizeof(tSirTdlsDelStaRsp);
 	pDelSta->messageType = eWNI_SME_TDLS_DEL_STA_RSP;
-#ifdef CONVERGED_TDLS_ENABLE
 	pDelSta->psoc = pMac->psoc;
 	mmhMsg.bodyptr = pDelSta;
 	mmhMsg.callback = tgt_tdls_del_peer_rsp;
 	return scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &mmhMsg);
-#else
-	mmhMsg.bodyptr = pDelSta;
-
-	mmhMsg.bodyval = 0;
-#endif
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return QDF_STATUS_SUCCESS;
-
 }
 
 /*
@@ -3122,163 +3063,6 @@ lim_tdls_del_sta_error:
 	return eSIR_SUCCESS;
 }
 
-/* Intersects the two input arrays and outputs an array */
-/* For now the array length of uint8_t suffices */
-static void lim_tdls_get_intersection(uint8_t *input_array1,
-				      uint8_t input1_length,
-				      uint8_t *input_array2,
-				      uint8_t input2_length,
-				      uint8_t *output_array,
-				      uint8_t *output_length)
-{
-	uint8_t i, j, k = 0, flag = 0;
-	for (i = 0; i < input1_length; i++) {
-		flag = 0;
-		for (j = 0; j < input2_length; j++) {
-			if (input_array1[i] == input_array2[j]) {
-				flag = 1;
-				break;
-			}
-		}
-		if (flag == 1) {
-			output_array[k] = input_array1[i];
-			k++;
-		}
-	}
-	*output_length = k;
-}
-
-/**
- * lim_process_sme_tdls_link_establish_req() - process tdls link establishment
- *                                            request
- *
- * @mac_ctx - global MAC context
- * @msg_buf - message buffer from SME
- *
- * Process Link Establishment Request from SME
- *
- * Return: eSIR_SUCCESS on success, failure code otherwise.
- */
-tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
-						     uint32_t *msg_buf)
-{
-	/* get all discovery request parameters */
-	tSirTdlsLinkEstablishReq *tdls_req =
-		(tSirTdlsLinkEstablishReq *) msg_buf;
-	tpPESession session_entry;
-	uint8_t session_id;
-	tpTdlsLinkEstablishParams tdls_req_params;
-	struct scheduler_msg msg = {0};
-	uint16_t peer_idx = 0;
-	tpDphHashNode stads = NULL;
-	uint32_t self_num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	uint8_t self_supp_chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-
-	pe_debug("Process TDLS Link Establishment Request from SME");
-
-	session_entry = pe_find_session_by_bssid(mac_ctx, tdls_req->bssid.bytes,
-						 &session_id);
-	if (NULL == session_entry) {
-		pe_err("PE Session does not exist for sme session_id: %d",
-			  tdls_req->sessionId);
-		lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
-			tdls_req->sessionId, &tdls_req->peermac, NULL,
-			eSIR_FAILURE);
-		return eSIR_FAILURE;
-	}
-
-	/* check if we are in proper state to work as TDLS client */
-	if (!LIM_IS_STA_ROLE(session_entry)) {
-		pe_err("TDLS Link Establish Request received in wrong system Role: %d",
-			  GET_LIM_SYSTEM_ROLE(session_entry));
-		goto lim_tdls_link_establish_error;
-	}
-
-	/*
-	 * if we are still good, go ahead and check if we are in proper state to
-	 * do TDLS discovery req/rsp/....frames.
-	 */
-	if ((session_entry->limSmeState != eLIM_SME_ASSOCIATED_STATE) &&
-	    (session_entry->limSmeState != eLIM_SME_LINK_EST_STATE)) {
-		pe_err("TDLS Link Establish Request received in invalid LIMsme state: %d",
-			session_entry->limSmeState);
-		goto lim_tdls_link_establish_error;
-	}
-
-	stads = dph_lookup_hash_entry(mac_ctx, tdls_req->peermac.bytes,
-				      &peer_idx,
-				      &session_entry->dph.dphHashTable);
-	if (NULL == stads) {
-		pe_err("stads is NULL");
-		goto lim_tdls_link_establish_error;
-	}
-	tdls_req_params = qdf_mem_malloc(sizeof(tTdlsLinkEstablishParams));
-	if (NULL == tdls_req_params) {
-		pe_err("Unable to allocate memory TDLS Link Establish Request");
-		return eSIR_MEM_ALLOC_FAILED;
-	}
-
-	tdls_req_params->staIdx = stads->staIndex;
-	tdls_req_params->isResponder = tdls_req->isResponder;
-	tdls_req_params->uapsdQueues = tdls_req->uapsdQueues;
-	tdls_req_params->maxSp = tdls_req->maxSp;
-	tdls_req_params->isBufsta = tdls_req->isBufSta;
-	tdls_req_params->isOffChannelSupported =
-		tdls_req->isOffChannelSupported;
-
-	if (0 == tdls_req->supportedChannelsLen)
-		goto send_tdls_establish_request;
-
-	if (wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
-			     self_supp_chan,
-			     &self_num_chan) != eSIR_SUCCESS) {
-		/**
-		 * Could not get Valid channel list from CFG.
-		 * Log error.
-		 */
-		pe_warn("could not retrieve Valid channel list");
-	}
-
-	if (self_num_chan > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		pe_warn("Channel List more than Valid Channel list");
-		self_num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	}
-
-	if (tdls_req->supportedChannelsLen > SIR_MAC_MAX_SUPP_CHANNELS) {
-		pe_warn("Channel List is more than the supported Channel list");
-		tdls_req->supportedChannelsLen = SIR_MAC_MAX_SUPP_CHANNELS;
-	}
-
-	lim_tdls_get_intersection(self_supp_chan, self_num_chan,
-		tdls_req->supportedChannels, tdls_req->supportedChannelsLen,
-		tdls_req_params->validChannels,
-		&tdls_req_params->validChannelsLen);
-
-send_tdls_establish_request:
-	qdf_mem_copy(tdls_req_params->validOperClasses,
-		     tdls_req->supportedOperClasses,
-		     tdls_req->supportedOperClassesLen);
-	tdls_req_params->validOperClassesLen =
-			tdls_req->supportedOperClassesLen;
-
-	msg.type = WMA_SET_TDLS_LINK_ESTABLISH_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = tdls_req_params;
-	msg.bodyval = 0;
-	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg)) {
-		pe_err("halPostMsgApi failed");
-		goto lim_tdls_link_establish_error;
-	}
-	return eSIR_SUCCESS;
-
-lim_tdls_link_establish_error:
-	lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
-		session_entry->smeSessionId, &tdls_req->peermac, NULL,
-		eSIR_FAILURE);
-
-	return eSIR_SUCCESS;
-}
-
 /**
  * lim_check_aid_and_delete_peer() - Funtion to check aid and delete peer
  * @p_mac: pointer to mac context
@@ -3341,53 +3125,6 @@ skip:
 	}
 }
 
-#ifndef CONVERGED_TDLS_ENABLE
-/**
- * lim_delete_tdls_peers() - delete tdls peers
- *
- * @mac_ctx - global MAC context
- * @session_entry - PE session entry
- *
- * Delete all the TDLS peer connected before leaving the BSS
- *
- * Return: eSIR_SUCCESS on success, error code otherwise
- */
-tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
-				    tpPESession session_entry)
-{
-	cds_msg_t msg;
-	struct sir_tdls_notify_set_state_disable *tdls_state_disable;
-
-	pe_debug("Enter");
-
-	if (NULL == session_entry) {
-		pe_err("NULL session_entry");
-		return eSIR_FAILURE;
-	}
-
-	lim_check_aid_and_delete_peer(mac_ctx, session_entry);
-	if (lim_is_roam_synch_in_progress(session_entry))
-		return eSIR_SUCCESS;
-
-	if (mac_ctx->lim.sme_msg_callback) {
-		tdls_state_disable = qdf_mem_malloc(
-						sizeof(*tdls_state_disable));
-		if (NULL == tdls_state_disable) {
-			pe_err("memory allocation failed");
-			return eSIR_FAILURE;
-		}
-		tdls_state_disable->session_id = session_entry->smeSessionId;
-		msg.type = eWNI_SME_TDLS_NOTIFY_SET_STATE_DISABLE;
-		msg.bodyptr = tdls_state_disable;
-		msg.bodyval = 0;
-		mac_ctx->lim.sme_msg_callback(mac_ctx, &msg);
-	}
-
-	lim_send_sme_tdls_delete_all_peer_ind(mac_ctx, session_entry);
-	pe_debug("Exit");
-	return eSIR_SUCCESS;
-}
-#else
 /**
  * lim_delete_tdls_peers() - delete tdls peers
  *
@@ -3419,7 +3156,6 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 	pe_debug("Exit");
 	return eSIR_SUCCESS;
 }
-#endif
 
 /**
  * lim_process_sme_del_all_tdls_peers(): process delete tdls peers

@@ -36,9 +36,7 @@
 
 #include <wlan_cfg80211_scan.h>
 #include <wlan_cfg80211.h>
-#ifdef CONVERGED_TDLS_ENABLE
 #include <wlan_cfg80211_tdls.h>
-#endif
 
 struct hdd_context;
 
@@ -493,62 +491,6 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
-
-#ifndef CONVERGED_TDLS_ENABLE
-static inline void
-hdd_notify_sta_connect(uint8_t session_id,
-		       bool tdls_chan_swit_prohibited,
-		       bool tdls_prohibited,
-		       struct wlan_objmgr_vdev *vdev)
-{
-}
-
-static inline
-void hdd_notify_sta_disconnect(uint8_t session_id,
-			       bool lfr_roam,
-			       struct wlan_objmgr_vdev *vdev)
-{
-
-}
-
-static inline
-int wlan_cfg80211_tdls_configure_mode(struct wlan_objmgr_vdev *vdev,
-						uint32_t trigger_mode)
-{
-	return 0;
-}
-
-static inline
-void hdd_notify_teardown_tdls_links(struct wlan_objmgr_vdev *vdev)
-{
-
-}
-
-static inline
-void ucfg_tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
-				 struct qdf_mac_addr *mac_addr)
-{
-
-}
-
-static inline
-void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
-				 struct qdf_mac_addr *mac_addr)
-{
-
-}
-
-static inline
-int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
-				struct net_device *dev, const uint8_t *peer,
-				uint8_t action_code, uint8_t dialog_token,
-				uint16_t status_code, uint32_t peer_capability,
-				const uint8_t *buf, size_t len)
-{
-	return 0;
-}
-
-#endif
 
 /**
  * hdd_update_cca_info_cb() - stores congestion value in station context

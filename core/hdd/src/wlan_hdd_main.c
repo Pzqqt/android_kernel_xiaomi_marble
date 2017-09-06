@@ -12022,7 +12022,6 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-#ifdef CONVERGED_TDLS_ENABLE
 static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 {
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
@@ -12089,15 +12088,6 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 
 	return 0;
 }
-#else
-static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
-{
-	hdd_ctx->tdls_umac_comp_active = false;
-	/* disable napier specific tdls data path */
-	hdd_ctx->tdls_nap_active = false;
-	return 0;
-}
-#endif
 
 int hdd_update_components_config(struct hdd_context *hdd_ctx)
 {

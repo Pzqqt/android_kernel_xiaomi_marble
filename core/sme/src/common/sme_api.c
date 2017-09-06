@@ -553,14 +553,6 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 			status = QDF_STATUS_E_FAILURE;
 #endif
 		break;
-#ifdef FEATURE_WLAN_TDLS
-	case eSmeCommandTdlsSendMgmt:
-	case eSmeCommandTdlsAddPeer:
-	case eSmeCommandTdlsDelPeer:
-	case eSmeCommandTdlsLinkEstablish:
-		status = csr_tdls_process_cmd(mac_ctx, sme_cmd);
-		break;
-#endif
 	case e_sme_command_set_hw_mode:
 		csr_process_set_hw_mode(mac_ctx, sme_cmd);
 		break;
@@ -9017,181 +9009,12 @@ bool sme_is_feature_supported_by_fw(enum cap_bitmap feature)
 }
 
 #ifdef FEATURE_WLAN_TDLS
+/* ---------------------------------------------------------------------------
+    \fn sme_set_tdls_power_save_prohibited
+    \API to set/reset the is_tdls_power_save_prohibited.
 
-/*
- * sme_send_tdls_link_establish_params() -
- *   API to send TDLS Peer Link Establishment Parameters.
- *
- * peerMac - peer's Mac Adress.
- * tdlsLinkEstablishParams - TDLS Peer Link Establishment Parameters
- * Return QDF_STATUS_SUCCES
- */
-QDF_STATUS sme_send_tdls_link_establish_params(tHalHandle hHal,
-					       uint8_t sessionId,
-					       const tSirMacAddr peerMac,
-					       tCsrTdlsLinkEstablishParams *
-					       tdlsLinkEstablishParams)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_TDLS_LINK_ESTABLISH_PARAM,
-			 sessionId,
-			 tdlsLinkEstablishParams->isOffChannelSupported));
-	status = sme_acquire_global_lock(&pMac->sme);
-
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_tdls_send_link_establish_params(hHal, sessionId,
-				peerMac, tdlsLinkEstablishParams);
-		sme_release_global_lock(&pMac->sme);
-	}
-	return status;
-}
-
-/*
- * sme_send_tdls_mgmt_frame() -
- *  API to send TDLS management frames.
- *
- * peerMac - peer's Mac Adress.
- * frame_type - Type of TDLS mgmt frame to be sent.
- * dialog - dialog token used in the frame.
- * status - status to be incuded in the frame.
- * peerCapability - peer cpabilities
- * buf - additional IEs to be included
- * len - lenght of additional Ies
- * responder - Tdls request type
- * Return QDF_STATUS_SUCCES
- */
-QDF_STATUS sme_send_tdls_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
-				    const tSirMacAddr peerMac,
-				    uint8_t frame_type,
-				    uint8_t dialog, uint16_t statusCode,
-				    uint32_t peerCapability, uint8_t *buf,
-				    uint8_t len, uint8_t responder)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrTdlsSendMgmt sendTdlsReq = { {0} };
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_TDLS_SEND_MGMT_FRAME,
-			 sessionId, statusCode));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		qdf_mem_copy(sendTdlsReq.peerMac, peerMac, sizeof(tSirMacAddr));
-		sendTdlsReq.frameType = frame_type;
-		sendTdlsReq.buf = buf;
-		sendTdlsReq.len = len;
-		sendTdlsReq.dialog = dialog;
-		sendTdlsReq.statusCode = statusCode;
-		sendTdlsReq.responder = responder;
-		sendTdlsReq.peerCapability = peerCapability;
-
-		status = csr_tdls_send_mgmt_req(hHal, sessionId, &sendTdlsReq);
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-
-}
-
-/*
- * sme_change_tdls_peer_sta() -
- *  API to Update TDLS peer sta parameters.
- *
- * peerMac - peer's Mac Adress.
- * staParams - Peer Station Parameters
- * Return QDF_STATUS_SUCCES
- */
-QDF_STATUS sme_change_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
-				    const tSirMacAddr peerMac,
-				    tCsrStaParams *pstaParams)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pstaParams) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s :pstaParams is NULL", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_TDLS_CHANGE_PEER_STA,
-			 sessionId, pstaParams->capability));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_tdls_change_peer_sta(hHal, sessionId, peerMac,
-						  pstaParams);
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-
-}
-
-/*
- * sme_add_tdls_peer_sta() -
- *   API to Add TDLS peer sta entry.
- *
- * peerMac - peer's Mac Adress.
- * Return QDF_STATUS_SUCCES
- */
-QDF_STATUS sme_add_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
-				 const tSirMacAddr peerMac)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_TDLS_ADD_PEER_STA,
-			 sessionId, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_tdls_add_peer_sta(hHal, sessionId, peerMac);
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-
-}
-
-/*
- * sme_delete_tdls_peer_sta() -
- *   API to Delete TDLS peer sta entry.
- *
- * peerMac - peer's Mac Adress.
- * Return QDF_STATUS_SUCCES
- */
-QDF_STATUS sme_delete_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
-				    const tSirMacAddr peerMac)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_TDLS_DEL_PEER_STA,
-			 sessionId, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_tdls_del_peer_sta(hHal, sessionId, peerMac);
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-
-}
-
-/*
- * sme_set_tdls_power_save_prohibited() -
- *  API to set/reset the is_tdls_power_save_prohibited.
- *
- * Return void
- */
+   \- return void
+   -------------------------------------------------------------------------*/
 void sme_set_tdls_power_save_prohibited(tHalHandle hHal, uint32_t sessionId,
 		bool val)
 {
@@ -16147,46 +15970,6 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("Not able to post ROAM_INVOKE_CMD message to WMA");
 		qdf_mem_free(fastreassoc);
-	}
-
-	return status;
-}
-
-/**
- * sme_delete_all_tdls_peers(): send request to delete tdls peers
- * @hal: handler for HAL
- * @session_id: session id
- *
- * This function sends request to lim to delete tdls peers
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id)
-{
-	struct sir_del_all_tdls_peers *msg;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal p_mac = PMAC_STRUCT(hal);
-	struct csr_roam_session *session = CSR_GET_SESSION(p_mac, session_id);
-
-	msg = qdf_mem_malloc(sizeof(*msg));
-	if (NULL == msg) {
-		sme_err("memory alloc failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	qdf_mem_zero(msg, sizeof(*msg));
-
-	msg->msg_type = eWNI_SME_DEL_ALL_TDLS_PEERS;
-	msg->msg_len = (uint16_t) sizeof(*msg);
-
-	qdf_mem_copy(msg->bssid.bytes, session->connectedProfile.bssid.bytes,
-		     sizeof(struct qdf_mac_addr));
-
-	status = umac_send_mb_message_to_mac(msg);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("cds_send_mb_message_to_mac Failed");
-		status = QDF_STATUS_E_FAILURE;
 	}
 
 	return status;

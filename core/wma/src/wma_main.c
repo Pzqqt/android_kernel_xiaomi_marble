@@ -2695,13 +2695,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->ptrn_match_enable_all_vdev =
 		(cds_cfg->wow_enable & 0x02) ? true : false;
 
-#if defined(FEATURE_WLAN_TDLS) && !defined(CONVERGED_TDLS_ENABLE)
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_TDLS_PEER_EVENTID,
-					   wma_tdls_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-#endif /* FEATURE_WLAN_TDLS */
-
 	/* register for install key completion event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID,

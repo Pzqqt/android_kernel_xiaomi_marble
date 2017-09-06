@@ -679,23 +679,6 @@ QDF_STATUS sme_update_roam_scan_offload_enabled(tHalHandle hHal,
 		bool nRoamScanOffloadEnabled);
 bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
 #ifdef FEATURE_WLAN_TDLS
-QDF_STATUS sme_send_tdls_link_establish_params(tHalHandle hHal,
-		uint8_t sessionId,
-		const tSirMacAddr peerMac,
-		tCsrTdlsLinkEstablishParams *
-		tdlsLinkEstablishParams);
-QDF_STATUS sme_send_tdls_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac, uint8_t frame_type,
-		uint8_t dialog, uint16_t status,
-		uint32_t peerCapability, uint8_t *buf,
-		uint8_t len, uint8_t responder);
-QDF_STATUS sme_change_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac,
-		tCsrStaParams *pstaParams);
-QDF_STATUS sme_add_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac);
-QDF_STATUS sme_delete_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
-		const tSirMacAddr peerMac);
 void sme_set_tdls_power_save_prohibited(tHalHandle hHal, uint32_t sessionId,
 		bool val);
 QDF_STATUS sme_send_tdls_chan_switch_req(
@@ -1530,8 +1513,6 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
  */
 QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
 	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id));
-
-QDF_STATUS sme_delete_all_tdls_peers(tHalHandle hal, uint8_t session_id);
 
 /**
  * sme_rso_cmd_status_cb() - Set RSO cmd status callback
