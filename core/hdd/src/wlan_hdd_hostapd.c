@@ -7437,8 +7437,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 
 	hdd_notify_teardown_tdls_links(pHostapdAdapter->hdd_vdev);
 
-	wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_ctx);
-
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
 		status = policy_mgr_wait_for_connection_update(
 			hdd_ctx->hdd_psoc);

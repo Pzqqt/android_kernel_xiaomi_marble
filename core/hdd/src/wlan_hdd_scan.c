@@ -531,26 +531,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			return 0;
 		}
 	}
-#ifdef FEATURE_WLAN_TDLS
-	/* if tdls disagree scan right now, return immediately.
-	 * tdls will schedule the scan when scan is allowed.
-	 * (return SUCCESS)
-	 * or will reject the scan if any TDLS is in progress.
-	 * (return -EBUSY)
-	 */
-	status = wlan_hdd_tdls_scan_callback(pAdapter, wiphy,
-					request, source);
-	if (status <= 0) {
-		if (!status)
-			hdd_err("TDLS in progress.scan rejected %d",
-			status);
-		else
-			hdd_warn("TDLS teardown is ongoing %d",
-			       status);
-		hdd_wlan_block_scan_by_tdls_event();
-		return status;
-	}
-#endif
 
 	/* Check if scan is allowed at this point of time */
 	if (hdd_is_connection_in_progress(&curr_session_id, &curr_reason)) {

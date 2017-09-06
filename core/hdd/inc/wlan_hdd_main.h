@@ -1638,7 +1638,6 @@ struct hdd_context {
 	uint16_t max_num_tdls_sta;
 	/* TDLS peer connected count */
 	uint16_t connected_peer_count;
-	tdls_scan_context_t tdls_scan_ctxt;
 	/* Lock to avoid race condition during TDLS operations */
 	qdf_spinlock_t tdls_ct_spinlock;
 	/* linear mac address table for counting the packets */
@@ -1832,8 +1831,6 @@ struct hdd_context {
 	struct mutex chan_info_lock;
 	/* bit map to set/reset TDLS by different sources */
 	unsigned long tdls_source_bitmap;
-	/* tdls source timer to enable/disable TDLS on p2p listen */
-	qdf_mc_timer_t tdls_source_timer;
 	bool tdls_umac_comp_active;
 	bool tdls_nap_active;
 	uint8_t beacon_probe_rsp_cnt_per_scan;

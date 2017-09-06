@@ -15501,7 +15501,6 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *pAdapter,
 	}
 
 	hdd_notify_teardown_tdls_links(pAdapter->hdd_vdev);
-	wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_ctx);
 
 	pRoamProfile = &pWextState->roamProfile;
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,

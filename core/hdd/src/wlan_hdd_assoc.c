@@ -1251,7 +1251,6 @@ static void hdd_send_association_event(struct net_device *dev,
 			/* Update tdls module about the disconnection event */
 			hdd_notify_sta_disconnect(pAdapter->sessionId,
 						 true, pAdapter->hdd_vdev);
-			wlan_hdd_tdls_notify_disconnect(pAdapter, true);
 		}
 #endif
 	if (eConnectionState_Associated == pHddStaCtx->conn_info.connState) {
@@ -1347,9 +1346,6 @@ static void hdd_send_association_event(struct net_device *dev,
 				       pCsrRoamInfo->tdls_prohibited,
 				       pAdapter->hdd_vdev);
 
-		wlan_hdd_tdls_notify_connect(pAdapter, pCsrRoamInfo);
-
-
 #ifdef MSM_PLATFORM
 #if defined(CONFIG_ICNSS) || defined(CONFIG_CNSS)
 		/* start timer in sta/p2p_cli */
@@ -1420,7 +1416,6 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_notify_sta_disconnect(pAdapter->sessionId,
 					  false,
 					  pAdapter->hdd_vdev);
-		wlan_hdd_tdls_notify_disconnect(pAdapter, false);
 
 #ifdef MSM_PLATFORM
 		/* stop timer in sta/p2p_cli */
@@ -1771,11 +1766,6 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *pAdapter,
 	hdd_conn_remove_connect_info(pHddStaCtx);
 	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
 	pmo_ucfg_flush_gtk_offload_req(pAdapter->hdd_vdev);
-
-#ifdef FEATURE_WLAN_TDLS
-	if (eCSR_ROAM_IBSS_LEAVE != roamStatus)
-		wlan_hdd_tdls_disconnection_callback(pAdapter);
-#endif
 
 	if ((QDF_STA_MODE == pAdapter->device_mode) ||
 			(QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
@@ -3071,10 +3061,6 @@ static QDF_STATUS hdd_association_completion_handler(struct hdd_adapter *pAdapte
 						   WLAN_WAKE_ALL_NETIF_QUEUE,
 						   WLAN_CONTROL_PATH);
 		}
-
-#ifdef FEATURE_WLAN_TDLS
-		wlan_hdd_tdls_connection_callback(pAdapter);
-#endif
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("STA register with TL failed status: %d [%08X]",

@@ -580,7 +580,6 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 		wlansap_cancel_remain_on_channel(sap_ctx, roc_scan_id);
 	}
 
-	hdd_tdls_notify_p2p_roc(hdd_ctx, P2P_ROC_END);
 	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.roc);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 }
@@ -742,7 +741,7 @@ static int wlan_hdd_execute_remain_on_channel(struct hdd_adapter *pAdapter,
 		}
 
 	}
-	hdd_tdls_notify_p2p_roc(hdd_ctx, P2P_ROC_START);
+
 	return 0;
 }
 
