@@ -59,6 +59,7 @@
 #include "nan_datapath.h"
 #include "wma.h"
 #include "wlan_reg_services_api.h"
+#include "wlan_policy_mgr_api.h"
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 #include "wma_he.h"
 #endif
@@ -5047,6 +5048,17 @@ bool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t channe
 	uint8_t index;
 	uint32_t validChannelListLen = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	tSirMacChanNum validChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	bool ok;
+
+	if (policy_mgr_is_chan_ok_for_dnbs(pMac->psoc, channel, &ok)) {
+		pe_err("policy_mgr_is_chan_ok_for_dnbs() returned error");
+		return false;
+	}
+
+	if (!ok) {
+		pe_debug("channel not ok for DNBS");
+		return false;
+	}
 
 	if (wlan_cfg_get_str(pMac, WNI_CFG_VALID_CHANNEL_LIST,
 			     (uint8_t *) validChannelList,
