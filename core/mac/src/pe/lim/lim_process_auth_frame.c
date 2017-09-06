@@ -1093,6 +1093,16 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		pe_session->limMlmState, MAC_ADDR_ARRAY(mac_hdr->bssId),
 		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)));
 
+	if (pe_session->pePersona == QDF_STA_MODE &&
+		pe_session->prev_auth_seq_num == curr_seq_num) {
+		pe_err("auth frame, seq num: %d is already processed, drop it",
+			curr_seq_num);
+		return;
+	}
+
+	/* save seq number in pe_session */
+	pe_session->prev_auth_seq_num = curr_seq_num;
+
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 
 	/* Restore default failure timeout */

@@ -522,6 +522,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #ifdef WLAN_FEATURE_FILS_SK
 	struct pe_fils_session *fils_info;
 #endif
+	/* previous auth frame's sequence number */
+	uint16_t prev_auth_seq_num;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------
