@@ -863,17 +863,11 @@ dfsfound:
 		ath_hal_setrxfilter(ah, rfilt);
 #endif
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS1,
-			    "Primary channel freq = %u flags=0x%x",
-			    chan->ic_freq, chan->ic_flagext);
-		qdf_spin_lock_bh(&dfs->ic->chan_lock);
-		if ((dfs->ic->ic_curchan->ic_freq != thischan->ic_freq)) {
-			qdf_spin_unlock_bh(&dfs->ic->chan_lock);
-			DFS_DPRINTK(dfs, ATH_DEBUG_DFS1,
-				    "Ext channel freq = %u flags=0x%x",
-				    thischan->ic_freq, thischan->ic_flagext);
-		}
+			"Primary channel freq = %u flags=0x%x, "
+			"Ext channel freq = %u flags=0x%x",
+			chan->ic_freq, chan->ic_flagext,
+			thischan->ic_freq, thischan->ic_flagext);
 
-		qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		dfs->dfs_phyerr_freq_min = 0x7fffffff;
 		dfs->dfs_phyerr_freq_max = 0;
 		dfs->dfs_phyerr_w53_counter = 0;

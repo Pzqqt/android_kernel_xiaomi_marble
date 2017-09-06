@@ -598,6 +598,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 					ol_rx_trigger_restore(htt_pdev,
 							      head_msdu,
 							      tail_msdu);
+					OL_RX_REORDER_TIMEOUT_MUTEX_UNLOCK(
+									pdev);
 					return;
 				}
 #endif
@@ -655,6 +657,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 				if (htt_pdev->rx_ring.rx_reset) {
 					ol_rx_trigger_restore(htt_pdev, msdu,
 							      tail_msdu);
+					OL_RX_REORDER_TIMEOUT_MUTEX_UNLOCK(
+									pdev);
 					return;
 				}
 #endif
