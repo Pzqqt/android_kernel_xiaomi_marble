@@ -559,11 +559,14 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			  "%s: HTCHandle is null!", __func__);
 		goto err_wma_close;
 	}
-	if (htc_wait_target(HTCHandle)) {
+
+	qdf_status = htc_wait_target(HTCHandle);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
 
-		if (!cds_is_fw_down())
+		if (qdf_status != QDF_STATUS_E_NOMEM
+				&& !cds_is_fw_down())
 			QDF_BUG(0);
 
 		goto err_wma_close;
