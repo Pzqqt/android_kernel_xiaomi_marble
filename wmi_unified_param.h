@@ -1997,7 +1997,11 @@ struct roam_offload_scan_params {
  * @initial_dense_status: dense status detected by host
  * @traffic_threshold: dense roam RSSI threshold
  * @bg_scan_bad_rssi_thresh: Bad RSSI threshold to perform bg scan
+ * @roam_bad_rssi_thresh_offset_2g: Offset from Bad RSSI threshold for 2G to 5G Roam
  * @bg_scan_client_bitmap: Bitmap used to identify the client scans to snoop
+ * @flags: Flags for Background Roaming
+ *	Bit 0 : BG roaming enabled when we connect to 2G AP only and roaming to 5G AP only.
+ *	Bit 1-31: Reserved
  */
 struct roam_offload_scan_rssi_params {
 	int8_t rssi_thresh;
@@ -2022,7 +2026,9 @@ struct roam_offload_scan_rssi_params {
 	int traffic_threshold;
 	int32_t rssi_thresh_offset_5g;
 	int8_t bg_scan_bad_rssi_thresh;
+	uint8_t roam_bad_rssi_thresh_offset_2g;
 	uint32_t bg_scan_client_bitmap;
+	uint32_t flags;
 };
 
 /**
