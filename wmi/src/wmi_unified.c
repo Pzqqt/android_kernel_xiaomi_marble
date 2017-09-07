@@ -2473,6 +2473,30 @@ end:
 
 }
 
+#define WMI_WQ_WD_TIMEOUT (10 * 1000) /* 10s */
+
+static inline void wmi_workqueue_watchdog_warn(uint16_t msg_type_id)
+{
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+		  "%s: Message type %x has exceeded its alloted time of %ds",
+		  __func__, msg_type_id, WMI_WQ_WD_TIMEOUT / 1000);
+}
+
+#ifdef CONFIG_SLUB_DEBUG_ON
+static void wmi_workqueue_watchdog_bite(void *arg)
+{
+	wmi_workqueue_watchdog_warn(*(uint16_t *)arg);
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+		  "%s: Going down for WMI WQ Watchdog Bite!", __func__);
+	QDF_BUG(0);
+}
+#else
+static inline void wmi_workqueue_watchdog_bite(void *arg)
+{
+	wmi_workqueue_watchdog_warn(*(uint16_t *)arg);
+}
+#endif
+
 /**
  * wmi_rx_event_work() - process rx event in rx work queue context
  * @arg: opaque pointer to wmi handle
@@ -2485,16 +2509,26 @@ static void wmi_rx_event_work(void *arg)
 {
 	wmi_buf_t buf;
 	struct wmi_unified *wmi = arg;
+	qdf_timer_t wd_timer;
+	uint16_t wd_msg_type_id;
 
+	/* initialize WMI workqueue watchdog timer */
+	qdf_timer_init(NULL, &wd_timer, &wmi_workqueue_watchdog_bite,
+			&wd_msg_type_id, QDF_TIMER_TYPE_SW);
 	qdf_spin_lock_bh(&wmi->eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi->event_queue);
 	qdf_spin_unlock_bh(&wmi->eventq_lock);
 	while (buf) {
+		qdf_timer_start(&wd_timer, WMI_WQ_WD_TIMEOUT);
+		wd_msg_type_id =
+		   WMI_GET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID);
 		__wmi_control_rx(wmi, buf);
+		qdf_timer_stop(&wd_timer);
 		qdf_spin_lock_bh(&wmi->eventq_lock);
 		buf = qdf_nbuf_queue_remove(&wmi->event_queue);
 		qdf_spin_unlock_bh(&wmi->eventq_lock);
 	}
+	qdf_timer_free(&wd_timer);
 }
 
 #ifdef FEATURE_RUNTIME_PM
