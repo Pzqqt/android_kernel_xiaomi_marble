@@ -900,5 +900,23 @@ void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle);
 void hif_set_initial_wakeup_cb(struct hif_opaque_softc *hif_ctx,
 			       void (*callback)(void *),
 			       void *priv);
-
+#ifndef CONFIG_WIN
+#ifndef HIF_CE_DEBUG_DATA_BUF
+#define HIF_CE_DEBUG_DATA_BUF 0
+#endif
+#endif
+/*
+ * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
+ * for defined here
+ */
+#if HIF_CE_DEBUG_DATA_BUF
+ssize_t hif_dump_desc_trace_buf(struct device *dev,
+				struct device_attribute *attr, char *buf);
+ssize_t hif_input_desc_trace_buf_index(struct hif_softc *scn,
+					const char *buf, size_t size);
+ssize_t hif_ce_en_desc_hist(struct hif_softc *scn,
+				const char *buf, size_t size);
+ssize_t hif_disp_ce_enable_desc_data_hist(struct hif_softc *scn, char *buf);
+ssize_t hif_dump_desc_event(struct hif_softc *scn, char *buf);
+#endif /* Note: for MCL, #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 #endif /* _HIF_H_ */

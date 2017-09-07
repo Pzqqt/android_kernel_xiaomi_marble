@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -655,7 +655,7 @@ int hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
 	struct qca_napi_info *napii;
 
 	hif_record_ce_desc_event(scn,  ce_id, NAPI_SCHEDULE,
-				 NULL, NULL, 0);
+				 NULL, NULL, 0, 0);
 
 	napii = scn->napi_data.napis[ce_id];
 	if (qdf_unlikely(!napii)) {
@@ -766,7 +766,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	napi_info->stats[cpu].napi_polls++;
 
 	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
-				 NAPI_POLL_ENTER, NULL, NULL, cpu);
+				 NAPI_POLL_ENTER, NULL, NULL, cpu, 0);
 
 	rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
 	NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
@@ -817,7 +817,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 #endif
 
 		hif_record_ce_desc_event(hif, ce_state->id, NAPI_COMPLETE,
-					 NULL, NULL, 0);
+					 NULL, NULL, 0, 0);
 		if (normalized >= budget)
 			normalized = budget - 1;
 
@@ -838,7 +838,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	}
 
 	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
-				 NAPI_POLL_EXIT, NULL, NULL, normalized);
+				 NAPI_POLL_EXIT, NULL, NULL, normalized, 0);
 
 	NAPI_DEBUG("%s <--[normalized=%d]", __func__, normalized);
 	return normalized;

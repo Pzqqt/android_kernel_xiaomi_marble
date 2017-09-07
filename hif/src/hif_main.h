@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -119,6 +119,21 @@ struct hif_ce_stats {
 	int ce_ring_delta_fail_count;
 };
 
+/*
+ * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
+ * for defined here
+ */
+#if HIF_CE_DEBUG_DATA_BUF
+struct ce_desc_hist {
+	qdf_atomic_t history_index[CE_COUNT_MAX];
+	uint32_t enable[CE_COUNT_MAX];
+	uint32_t data_enable[CE_COUNT_MAX];
+	uint32_t hist_index;
+	uint32_t hist_id;
+	void *hist_ev[CE_COUNT_MAX];
+};
+#endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+
 struct hif_softc {
 	struct hif_opaque_softc osc;
 	struct hif_config_info hif_config;
@@ -175,6 +190,14 @@ struct hif_softc {
 	/* Handle to pktlog device */
 	void *pktlog_dev;
 #endif
+
+/*
+ * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
+ * for defined here
+ */
+#if HIF_CE_DEBUG_DATA_BUF
+	struct ce_desc_hist hif_ce_desc_hist;
+#endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 };
 
 static inline void *hif_get_hal_handle(void *hif_hdl)

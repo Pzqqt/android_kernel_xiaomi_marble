@@ -145,7 +145,7 @@ ce_send_nolock_srng(struct CE_handle *copyeng,
 		 */
 		hif_record_ce_desc_event(scn, CE_state->id, event_type,
 			(union ce_desc *) src_desc, per_transfer_context,
-			src_ring->write_index);
+			src_ring->write_index, nbytes);
 
 		src_ring->write_index = write_index;
 		status = QDF_STATUS_SUCCESS;
@@ -466,6 +466,7 @@ ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 	struct CE_ring_state *src_ring = CE_state->src_ring;
 	unsigned int nentries_mask = src_ring->nentries_mask;
 	unsigned int sw_index = src_ring->sw_index;
+	unsigned int swi = src_ring->sw_index;
 	struct hif_softc *scn = CE_state->scn;
 	struct ce_srng_src_desc *src_desc;
 
@@ -476,6 +477,11 @@ ce_completed_send_next_nolock_srng(struct CE_state *CE_state,
 
 	src_desc = hal_srng_src_reap_next(scn->hal_soc, src_ring->srng_ctx);
 	if (src_desc) {
+		hif_record_ce_desc_event(scn, CE_state->id,
+					HIF_TX_DESC_COMPLETION,
+					(union ce_desc *)src_desc,
+					src_ring->per_transfer_context[swi],
+					swi, src_desc->nbytes);
 
 		/* Return data from completed source descriptor */
 		*bufferp = (qdf_dma_addr_t)

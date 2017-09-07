@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -163,7 +163,7 @@ static void ce_tasklet(unsigned long data)
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
-			HIF_CE_TASKLET_ENTRY, NULL, NULL, 0);
+			HIF_CE_TASKLET_ENTRY, NULL, NULL, 0, 0);
 
 	if (qdf_atomic_read(&scn->link_suspended)) {
 		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
@@ -182,7 +182,8 @@ static void ce_tasklet(unsigned long data)
 		 * any of the Copy Engine pipes.
 		 */
 		hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
-				HIF_CE_TASKLET_RESCHEDULE, NULL, NULL, 0);
+				HIF_CE_TASKLET_RESCHEDULE, NULL, NULL, 0, 0);
+
 		ce_schedule_tasklet(tasklet_entry);
 		return;
 	}
@@ -191,7 +192,7 @@ static void ce_tasklet(unsigned long data)
 		hif_irq_enable(scn, tasklet_entry->ce_id);
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
-				 NULL, NULL, 0);
+				 NULL, NULL, 0, 0);
 
 	qdf_atomic_dec(&scn->active_tasklet_cnt);
 }
@@ -401,7 +402,8 @@ irqreturn_t ce_dispatch_interrupt(int ce_id,
 	if (!TARGET_REGISTER_ACCESS_ALLOWED(scn))
 		return IRQ_HANDLED;
 
-	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
+	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT,
+				NULL, NULL, 0, 0);
 	hif_ce_increment_interrupt_count(hif_ce_state, ce_id);
 
 	if (unlikely(hif_interrupt_is_ut_resume(scn, ce_id))) {

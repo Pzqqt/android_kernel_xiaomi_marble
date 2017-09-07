@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -443,11 +443,12 @@ enum hif_ce_event_type {
 	HIF_RX_NBUF_ENQUEUE_FAILURE,
 };
 
-void ce_init_ce_desc_event_log(int ce_id, int size);
+void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id, int size);
+void ce_deinit_ce_desc_event_log(struct hif_softc *scn, int ce_id);
 void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 			      enum hif_ce_event_type type,
 			      union ce_desc *descriptor, void *memory,
-			      int index);
+			      int index, int len);
 
 enum ce_sendlist_type_e {
 	CE_SIMPLE_BUFFER_TYPE,
@@ -515,4 +516,40 @@ static inline void ce_t2h_msg_ce_cleanup(struct CE_handle *ce_hdl)
  * Return: errno
  */
 int hif_get_wake_ce_id(struct hif_softc *scn, uint8_t *ce_id);
+
+/*
+ * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
+ * for defined here
+ */
+#if HIF_CE_DEBUG_DATA_BUF
+#define HIF_CE_HISTORY_MAX 512
+
+#define CE_DEBUG_MAX_DATA_BUF_SIZE 64
+/**
+ * struct hif_ce_desc_event - structure for detailing a ce event
+ * @type: what the event was
+ * @time: when it happened
+ * @descriptor: descriptor enqueued or dequeued
+ * @memory: virtual address that was used
+ * @index: location of the descriptor in the ce ring;
+ * @data: data pointed by descriptor
+ * @actual_data_len: length of the data
+ */
+struct hif_ce_desc_event {
+	uint16_t index;
+	enum hif_ce_event_type type;
+	uint64_t time;
+	union ce_desc descriptor;
+	void *memory;
+#if HIF_CE_DEBUG_DATA_BUF
+	uint8_t *data;
+	ssize_t actual_data_len;
+#endif
+};
+
+#if HIF_CE_DEBUG_DATA_BUF
+QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
+void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id);
+#endif /*HIF_CE_DEBUG_DATA_BUF*/
+#endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 #endif /* __COPY_ENGINE_INTERNAL_H__ */

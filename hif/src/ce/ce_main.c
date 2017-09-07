@@ -854,7 +854,7 @@ int hif_ce_bus_late_resume(struct hif_softc *scn)
 		if (index_updated)
 			hif_record_ce_desc_event(scn, ce_id,
 				RESUME_WRITE_INDEX_UPDATE,
-				NULL, NULL, write_index);
+				NULL, NULL, write_index, 0);
 	}
 
 	return 0;
@@ -879,6 +879,157 @@ static void ce_oom_recovery(void *context)
 
 	hif_post_recv_buffers_for_pipe(pipe_info);
 }
+
+#if HIF_CE_DEBUG_DATA_BUF
+/**
+ * alloc_mem_ce_debug_hist_data() - Allocate mem for the data pointed by
+ * the CE descriptors.
+ * Allocate HIF_CE_HISTORY_MAX records by CE_DEBUG_MAX_DATA_BUF_SIZE
+ * @scn: hif scn handle
+ * ce_id: Copy Engine Id
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS alloc_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
+{
+	struct hif_ce_desc_event *event = NULL;
+	struct hif_ce_desc_event *hist_ev = NULL;
+	uint32_t index = 0;
+
+	hist_ev =
+	(struct hif_ce_desc_event *)scn->hif_ce_desc_hist.hist_ev[ce_id];
+
+	if (!hist_ev)
+		return QDF_STATUS_E_NOMEM;
+
+	for (index = 0; index < HIF_CE_HISTORY_MAX; index++) {
+		event = &hist_ev[index];
+		event->data =
+			(uint8_t *)qdf_mem_malloc(CE_DEBUG_MAX_DATA_BUF_SIZE);
+		if (event->data == NULL)
+			return QDF_STATUS_E_NOMEM;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * free_mem_ce_debug_hist_data() - Free mem of the data pointed by
+ * the CE descriptors.
+ * @scn: hif scn handle
+ * ce_id: Copy Engine Id
+ *
+ * Return:
+ */
+void free_mem_ce_debug_hist_data(struct hif_softc *scn, uint32_t ce_id)
+{
+	struct hif_ce_desc_event *event = NULL;
+	struct hif_ce_desc_event *hist_ev = NULL;
+	uint32_t index = 0;
+
+	hist_ev =
+	(struct hif_ce_desc_event *)scn->hif_ce_desc_hist.hist_ev[ce_id];
+
+	if (!hist_ev)
+		return;
+
+	for (index = 0; index < HIF_CE_HISTORY_MAX; index++) {
+		event = &hist_ev[index];
+		if (event->data != NULL)
+			qdf_mem_free(event->data);
+		event->data = NULL;
+		event = NULL;
+	}
+}
+#endif /* HIF_CE_DEBUG_DATA_BUF */
+
+/*
+ * Note: For MCL, #if defined (HIF_CONFIG_SLUB_DEBUG_ON) needs to be checked
+ * for defined here
+ */
+#if HIF_CE_DEBUG_DATA_BUF
+/**
+ * alloc_mem_ce_debug_history() - Allocate mem for the CE descriptors storing
+ * @scn: hif scn handle
+ * ce_id: Copy Engine Id
+ *
+ * Return: QDF_STATUS
+ */
+static inline QDF_STATUS alloc_mem_ce_debug_history(struct hif_softc *scn,
+						unsigned int CE_id)
+{
+	scn->hif_ce_desc_hist.hist_ev[CE_id] = (struct hif_ce_desc_event *)
+	qdf_mem_malloc(HIF_CE_HISTORY_MAX * sizeof(struct hif_ce_desc_event));
+
+	if (scn->hif_ce_desc_hist.hist_ev[CE_id] == NULL) {
+		scn->hif_ce_desc_hist.enable[CE_id] = 0;
+		return QDF_STATUS_E_NOMEM;
+	} else {
+		scn->hif_ce_desc_hist.enable[CE_id] = 1;
+		return QDF_STATUS_SUCCESS;
+	}
+}
+
+/**
+ * free_mem_ce_debug_history() - Free mem allocated for the CE descriptors
+ * storing.
+ * @scn: hif scn handle
+ * ce_id: Copy Engine Id
+ *
+ * Return:
+ */
+static inline void free_mem_ce_debug_history(struct hif_softc *scn,
+						unsigned int CE_id)
+{
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+	struct hif_ce_desc_event *hist_ev =
+			(struct hif_ce_desc_event *)ce_hist->hist_ev[CE_id];
+
+	if (!hist_ev)
+		return;
+
+#if HIF_CE_DEBUG_DATA_BUF
+	if (ce_hist->data_enable[CE_id] == 1) {
+		ce_hist->data_enable[CE_id] = 0;
+		free_mem_ce_debug_hist_data(scn, CE_id);
+	}
+#endif
+	ce_hist->enable[CE_id] = 0;
+	qdf_mem_free(ce_hist->hist_ev[CE_id]);
+	ce_hist->hist_ev[CE_id] = NULL;
+}
+
+/**
+ * reset_ce_debug_history() - reset the index and ce id used for dumping the
+ * CE records on the console using sysfs.
+ * @scn: hif scn handle
+ *
+ * Return:
+ */
+static inline void reset_ce_debug_history(struct hif_softc *scn)
+{
+	struct ce_desc_hist *ce_hist = &scn->hif_ce_desc_hist;
+	/* Initialise the CE debug history sysfs interface inputs ce_id and
+	 * index. Disable data storing
+	 */
+	ce_hist->hist_index = 0;
+	ce_hist->hist_id = 0;
+}
+#else /*Note: #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+static inline QDF_STATUS alloc_mem_ce_debug_history(struct hif_softc *scn,
+						unsigned int CE_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline void free_mem_ce_debug_history(struct hif_softc *scn,
+						unsigned int CE_id)
+{
+}
+
+static inline void reset_ce_debug_history(struct hif_softc *scn)
+{
+}
+#endif /*Note: defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
 
 /*
  * Initialize a Copy Engine based on caller-supplied attributes.
@@ -932,8 +1083,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	else
 		CE_state->src_sz_max = attr->src_sz_max;
 
-	ce_init_ce_desc_event_log(CE_id,
-			attr->src_nentries + attr->dest_nentries);
+	ce_init_ce_desc_event_log(scn, CE_id,
+				  attr->src_nentries + attr->dest_nentries);
 
 	/* source ring setup */
 	nentries = attr->src_nentries;
@@ -1089,6 +1240,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	/* update the htt_data attribute */
 	ce_mark_datapath(CE_state);
 	scn->ce_id_to_state[CE_id] = CE_state;
+
+	alloc_mem_ce_debug_history(scn, CE_id);
 
 	return (struct CE_handle *)CE_state;
 
@@ -1358,6 +1511,10 @@ void ce_fini(struct CE_handle *copyeng)
 					    base_addr_CE_space, 0);
 		qdf_mem_free(CE_state->status_ring);
 	}
+
+	free_mem_ce_debug_history(scn, CE_id);
+	reset_ce_debug_history(scn);
+	ce_deinit_ce_desc_event_log(scn, CE_id);
 
 	qdf_spinlock_destroy(&CE_state->ce_index_lock);
 	qdf_mem_free(CE_state);
@@ -1776,7 +1933,7 @@ static void hif_post_recv_buffers_failure(struct HIF_CE_pipe_info *pipe_info,
 		  __func__, pipe_info->pipe_num, bufs_needed_tmp, error_cnt_tmp,
 		  failure_type_string);
 	hif_record_ce_desc_event(scn, ce_id, failure_type,
-				 NULL, nbuf, bufs_needed_tmp);
+				 NULL, nbuf, bufs_needed_tmp, 0);
 	/* if we fail to allocate the last buffer for an rx pipe,
 	 *	there is no trigger to refill the ce and we will
 	 *	eventually crash
@@ -2458,6 +2615,7 @@ int hif_config_ce(struct hif_softc *scn)
 	struct HIF_CE_pipe_info *pipe_info;
 	int pipe_num;
 	struct CE_state *ce_state;
+
 #ifdef ADRASTEA_SHADOW_REGISTERS
 	int i;
 #endif
@@ -2474,6 +2632,11 @@ int hif_config_ce(struct hif_softc *scn)
 	if (ce_srng_based(scn))
 		scn->bus_ops.hif_target_sleep_state_adjust =
 			&hif_srng_sleep_state_adjust;
+
+	/* Initialise the CE debug history sysfs interface inputs ce_id and
+	 * index. Disable data storing
+	 */
+	reset_ce_debug_history(scn);
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr *attr;
