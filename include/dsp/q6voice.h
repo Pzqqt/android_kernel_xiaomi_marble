@@ -245,6 +245,16 @@ struct vss_param_vocproc_dev_channel_info_t {
 	uint8_t channel_mapping[VSS_NUM_CHANNELS_MAX];
 } __packed;
 
+struct vss_param_channel_mixer_info_t {
+	uint32_t index;
+	uint16_t num_output_channels;
+	uint16_t num_input_channels;
+	uint16_t out_channel_map[2];
+	uint16_t in_channel_map[1];
+	uint16_t channel_weight_coeff[2][1];
+	uint16_t reserved;
+} __packed;
+
 struct vss_param_mfc_config_info_t {
 	uint32_t sample_rate;
 	uint16_t bits_per_sample;
@@ -311,6 +321,47 @@ struct vss_icommon_cmd_set_param_channel_info_v2_t {
 	/* Size of the parameter data payload in bytes. */
 	uint32_t mem_size;
 	struct vss_icommon_param_data_channel_info_v2_t param_data;
+} __packed;
+
+struct vss_icommon_param_data_ch_mixer_v2_t {
+	/* Valid ID of the module. */
+	uint32_t module_id;
+	/* Valid ID of the parameter. */
+	uint32_t param_id;
+	/*
+	 * Data size of the structure relating to the param_id/module_id
+	 * combination in uint8_t bytes.
+	 */
+	uint16_t param_size;
+	/* This field must be set to zero. */
+	uint16_t reserved;
+	struct vss_param_channel_mixer_info_t ch_mixer_info;
+} __packed;
+
+struct vss_icommon_cmd_set_param_ch_mixer_v2_t {
+	/*
+	 * Pointer to the unique identifier for an address (physical/virtual).
+	 *
+	 * If the parameter data payload is within the message payload
+	 * (in-band), set this field to 0. The parameter data begins at the
+	 * specified data payload address.
+	 *
+	 * If the parameter data is out-of-band, this field is the handle to
+	 * the physical address in the shared memory that holds the parameter
+	 * data.
+	 */
+	uint32_t mem_handle;
+	/*
+	 * Location of the parameter data payload.
+	 *
+	 * The payload is an array of vss_icommon_param_data_t. If the
+	 * mem_handle is 0, this field is ignored.
+	 */
+	uint64_t mem_address;
+	/* Size of the parameter data payload in bytes. */
+	uint32_t mem_size;
+
+	struct vss_icommon_param_data_ch_mixer_v2_t param_data;
 } __packed;
 
 struct vss_icommon_param_data_mfc_config_v2_t {
@@ -1593,6 +1644,12 @@ struct cvp_set_channel_info_cmd_v2 {
 	struct apr_hdr hdr;
 	struct vss_icommon_cmd_set_param_channel_info_v2_t
 					cvp_set_ch_info_param_v2;
+} __packed;
+
+struct cvp_set_channel_mixer_info_cmd_v2 {
+	struct apr_hdr hdr;
+	struct vss_icommon_cmd_set_param_ch_mixer_v2_t
+					cvp_set_ch_mixer_param_v2;
 } __packed;
 
 struct cvp_set_mfc_config_cmd_v2 {

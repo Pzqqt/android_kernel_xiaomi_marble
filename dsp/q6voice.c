@@ -38,6 +38,7 @@
 #define NUM_CHANNELS_STEREO 2
 #define NUM_CHANNELS_QUAD 4
 #define CVP_VERSION_2 2
+#define GAIN_Q14_FORMAT(a) (a << 14)
 
 enum {
 	VOC_TOKEN_NONE,
@@ -3958,6 +3959,103 @@ done:
 	return ret;
 }
 
+static int voice_send_cvp_ch_mixer_info_v2(struct voice_data *v)
+{
+	int ret;
+	struct cvp_set_channel_mixer_info_cmd_v2 cvp_set_ch_mixer_info_cmd;
+	void *apr_cvp;
+	u16 cvp_handle;
+	struct vss_icommon_param_data_ch_mixer_v2_t *cvp_config_param_data =
+			&cvp_set_ch_mixer_info_cmd.
+			cvp_set_ch_mixer_param_v2.param_data;
+	struct vss_param_channel_mixer_info_t *ch_mixer_info =
+			&cvp_config_param_data->ch_mixer_info;
+
+	if (v == NULL) {
+		pr_err("%s: v is NULL\n", __func__);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	apr_cvp = common.apr_q6_cvp;
+	if (!apr_cvp) {
+		pr_err("%s: apr_cvp is NULL\n", __func__);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	cvp_handle = voice_get_cvp_handle(v);
+	memset(&cvp_set_ch_mixer_info_cmd, 0,
+	       sizeof(cvp_set_ch_mixer_info_cmd));
+
+	cvp_set_ch_mixer_info_cmd.hdr.hdr_field =
+			APR_HDR_FIELD(APR_MSG_TYPE_SEQ_CMD,
+			APR_HDR_LEN(APR_HDR_SIZE),
+			APR_PKT_VER);
+	cvp_set_ch_mixer_info_cmd.hdr.pkt_size =
+			APR_PKT_SIZE(APR_HDR_SIZE,
+			sizeof(cvp_set_ch_mixer_info_cmd) - APR_HDR_SIZE);
+	cvp_set_ch_mixer_info_cmd.hdr.src_svc = 0;
+	cvp_set_ch_mixer_info_cmd.hdr.src_domain = APR_DOMAIN_APPS;
+	cvp_set_ch_mixer_info_cmd.hdr.src_port =
+			voice_get_idx_for_session(v->session_id);
+	cvp_set_ch_mixer_info_cmd.hdr.dest_svc = 0;
+	cvp_set_ch_mixer_info_cmd.hdr.dest_domain = APR_DOMAIN_ADSP;
+	cvp_set_ch_mixer_info_cmd.hdr.dest_port = cvp_handle;
+	cvp_set_ch_mixer_info_cmd.hdr.token = VOC_GENERIC_SET_PARAM_TOKEN;
+	cvp_set_ch_mixer_info_cmd.hdr.opcode = VSS_ICOMMON_CMD_SET_PARAM_V2;
+	cvp_set_ch_mixer_info_cmd.cvp_set_ch_mixer_param_v2.mem_size =
+			sizeof(struct vss_icommon_param_data_ch_mixer_v2_t);
+
+	cvp_config_param_data->module_id = AUDPROC_MODULE_ID_MFC;
+	cvp_config_param_data->param_id =
+			AUDPROC_CHMIXER_PARAM_ID_COEFF;
+	cvp_config_param_data->param_size =
+			sizeof(struct vss_param_channel_mixer_info_t);
+
+	ch_mixer_info->index = 0;
+	ch_mixer_info->num_output_channels = v->dev_rx.no_of_channels;
+	/*
+	 * Configure Rx input to be mono for channel mixer as the DSP
+	 * configures vocproc input as mono.
+	 */
+	ch_mixer_info->num_input_channels = NUM_CHANNELS_MONO;
+	ch_mixer_info->out_channel_map[0] = PCM_CHANNEL_L;
+	ch_mixer_info->out_channel_map[1] = PCM_CHANNEL_R;
+	ch_mixer_info->in_channel_map[0] = PCM_CHANNEL_L;
+	ch_mixer_info->channel_weight_coeff[0][0] = GAIN_Q14_FORMAT(1);
+	ch_mixer_info->channel_weight_coeff[1][0] = GAIN_Q14_FORMAT(1);
+	ch_mixer_info->reserved = 0;
+
+	v->cvp_state = CMD_STATUS_FAIL;
+	v->async_err = 0;
+	ret = apr_send_pkt(apr_cvp, (uint32_t *)&cvp_set_ch_mixer_info_cmd);
+	if (ret < 0) {
+		pr_err("%s: Failed to send VSS_ICOMMON_CMD_SET_PARAM_V2 %d\n",
+		       __func__, ret);
+		goto done;
+	}
+	ret = wait_event_timeout(v->cvp_wait,
+				(v->cvp_state == CMD_STATUS_SUCCESS),
+				 msecs_to_jiffies(TIMEOUT_MS));
+
+	if (!ret) {
+		pr_err("%s: wait_event timeout\n", __func__);
+		ret = -ETIMEDOUT;
+		goto done;
+	}
+
+	if (v->async_err > 0) {
+		pr_err("%s: DSP returned error[%s] handle = %d\n", __func__,
+		       adsp_err_get_err_str(v->async_err), cvp_handle);
+		ret = adsp_err_get_lnx_err_code(v->async_err);
+		goto done;
+	}
+	ret = 0;
+done:
+	return ret;
+}
+
 static int voice_send_cvp_mfc_config_v2(struct voice_data *v)
 {
 	int ret;
@@ -4057,7 +4155,15 @@ static int voice_send_cvp_mfc_config_cmd(struct voice_data *v)
 	int ret = 0;
 
 	if (common.cvp_version >= CVP_VERSION_2) {
+		ret = voice_send_cvp_ch_mixer_info_v2(v);
+		if (ret < 0)
+			pr_warn("%s: Set channel mixer config failed err:%d",
+				__func__, ret);
+
 		ret = voice_send_cvp_mfc_config_v2(v);
+		if (ret < 0)
+			pr_warn("%s: Set MFC config failed err:%d",
+				__func__, ret);
 	} else {
 		pr_warn("%s: CVP Version not supported\n", __func__);
 		ret = -EINVAL;
