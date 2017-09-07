@@ -5426,6 +5426,9 @@ static int wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
 		return -EINVAL;
 	}
 
+	hdd_debug("Update ERP Seq Num %d, Next ERP Seq Num %d",
+			roam_info->update_erp_next_seq_num,
+			roam_info->next_erp_seq_num);
 	if (roam_info->update_erp_next_seq_num &&
 	    nla_put_u16(skb,
 			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_FILS_ERP_NEXT_SEQ_NUM,
