@@ -101,10 +101,7 @@ void lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 				uint8_t sessionId);
 void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 					 uint8_t smesessionId);
-#ifdef FEATURE_WLAN_TDLS
-void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
-				    void *events);
-#endif
+
 void lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 					 tpPESession psessionEntry,
 					 tpSwitchChannelParams pChnlParams);

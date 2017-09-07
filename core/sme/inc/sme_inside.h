@@ -244,10 +244,6 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
 
 bool csr_roamGetConcurrencyConnectStatusForBmps(tpAniSirGlobal pMac);
-#ifdef FEATURE_WLAN_TDLS
-QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
-		void *pMsgBuf);
-#endif /* FEATURE_WLAN_TDLS */
 
 QDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 		uint8_t sessionId);

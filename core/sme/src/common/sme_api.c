@@ -2211,30 +2211,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-#ifdef FEATURE_WLAN_TDLS
-	/*
-	 * command rescived from PE, SME tdls msg processor shall be called
-	 * to process commands recieved from PE
-	 */
-	case eWNI_SME_TDLS_SEND_MGMT_RSP:
-	case eWNI_SME_TDLS_ADD_STA_RSP:
-	case eWNI_SME_TDLS_DEL_STA_RSP:
-	case eWNI_SME_TDLS_DEL_STA_IND:
-	case eWNI_SME_TDLS_DEL_ALL_PEER_IND:
-	case eWNI_SME_MGMT_FRM_TX_COMPLETION_IND:
-	case eWNI_SME_TDLS_LINK_ESTABLISH_RSP:
-	case eWNI_SME_TDLS_SHOULD_DISCOVER:
-	case eWNI_SME_TDLS_SHOULD_TEARDOWN:
-	case eWNI_SME_TDLS_PEER_DISCONNECTED:
-		if (pMsg->bodyptr) {
-			status = tdls_msg_processor(pMac, pMsg->type,
-						    pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
-#endif
 #ifdef WLAN_FEATURE_11W
 	case eWNI_SME_UNPROT_MGMT_FRM_IND:
 		if (pMsg->bodyptr) {

@@ -706,11 +706,6 @@ SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csr_roam_preauth.o \
 		$(SME_SRC_DIR)/csr/csr_host_scan_roam.o
 endif
 
-
-ifeq ($(CONFIG_QCOM_TDLS),y)
-SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csr_tdls_process.o
-endif
-
 SME_QOS_OBJS := $(SME_SRC_DIR)/qos/sme_qos.o
 
 SME_CMN_OBJS := $(SME_SRC_DIR)/common/sme_api.o \

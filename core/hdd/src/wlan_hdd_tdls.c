@@ -51,8 +51,6 @@
 #include <qca_vendor.h>
 #include "wlan_hdd_ipa.h"
 
-static void wlan_hdd_tdls_timers_destroy(tdlsCtx_t *pHddTdlsCtx);
-
 /**
  * enum qca_wlan_vendor_tdls_trigger_mode_hdd_map: Maps the user space TDLS
  *	trigger mode in the host driver.
@@ -205,134 +203,6 @@ static u8 wlan_hdd_tdls_hash_key(const u8 *mac)
 }
 
 /**
- * wlan_hdd_tdls_discovery_sent_cnt() - get value of discovery counter sent
- * @hdd_ctx: HDD context
- *
- * Return: the value of the transmitted TDLS discovery counter
- */
-static uint32_t wlan_hdd_tdls_discovery_sent_cnt(struct hdd_context *hdd_ctx)
-{
-	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
-	struct hdd_adapter *pAdapter = NULL;
-	tdlsCtx_t *pHddTdlsCtx = NULL;
-	QDF_STATUS status = 0;
-	uint32_t count = 0;
-
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
-
-		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-		if (NULL != pHddTdlsCtx)
-			count = count + pHddTdlsCtx->discovery_sent_cnt;
-
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
-	}
-	return count;
-}
-
-/**
- * wlan_hdd_tdls_check_power_save_prohibited() - set/clear proper TDLS power
- *                                               save probihited bit
- * @pAdapter: HDD adapter handle
- *
- * Ensure TDLS power save probihited bit is set/cleared properly
- *
- * Return: None
- */
-static void
-wlan_hdd_tdls_check_power_save_prohibited(struct hdd_adapter *pAdapter)
-{
-	tdlsCtx_t *pHddTdlsCtx;
-	struct hdd_context *hdd_ctx;
-
-	if ((NULL == pAdapter) ||
-	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_err("invalid pAdapter: %pK", pAdapter);
-		return;
-	}
-
-	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-
-	if ((NULL == pHddTdlsCtx) || (NULL == hdd_ctx)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("hdd_ctx or pHddTdlsCtx points to NULL"));
-		return;
-	}
-
-	if ((0 == hdd_ctx->connected_peer_count) &&
-	    (0 == wlan_hdd_tdls_discovery_sent_cnt(hdd_ctx))) {
-		sme_set_tdls_power_save_prohibited(WLAN_HDD_GET_HAL_CTX
-							(pHddTdlsCtx->pAdapter),
-						   pAdapter->sessionId, 0);
-		return;
-	}
-	sme_set_tdls_power_save_prohibited(WLAN_HDD_GET_HAL_CTX
-						   (pHddTdlsCtx->pAdapter),
-					   pAdapter->sessionId, 1);
-}
-
-/**
- * wlan_hdd_tdls_discovery_timeout_peer_cb() - tdls discovery timeout callback
- * @userData: tdls context
- *
- * Return: None
- */
-static void wlan_hdd_tdls_discovery_timeout_peer_cb(void *userData)
-{
-	int i;
-	struct list_head *head;
-	hddTdlsPeer_t *tmp;
-	struct list_head *pos, *q;
-	tdlsCtx_t *pHddTdlsCtx;
-	struct hdd_context *hdd_ctx;
-
-	ENTER();
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (0 != (wlan_hdd_validate_context(hdd_ctx)))
-		return;
-
-	mutex_lock(&hdd_ctx->tdls_lock);
-	pHddTdlsCtx = (tdlsCtx_t *) userData;
-
-	if ((NULL == pHddTdlsCtx) || (NULL == pHddTdlsCtx->pAdapter)) {
-		mutex_unlock(&hdd_ctx->tdls_lock);
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  FL("pHddTdlsCtx or pAdapter points to NULL"));
-		return;
-	}
-
-	if (WLAN_HDD_ADAPTER_MAGIC != pHddTdlsCtx->pAdapter->magic) {
-		mutex_unlock(&hdd_ctx->tdls_lock);
-		hdd_err("pAdapter has invalid magic");
-		return;
-	}
-
-	for (i = 0; i < TDLS_PEER_LIST_SIZE; i++) {
-		head = &pHddTdlsCtx->peer_list[i];
-		list_for_each_safe(pos, q, head) {
-			tmp = list_entry(pos, hddTdlsPeer_t, node);
-			if (eTDLS_LINK_DISCOVERING == tmp->link_status) {
-				hdd_debug(MAC_ADDRESS_STR " to idle state",
-					   MAC_ADDR_ARRAY(tmp->peerMac));
-				wlan_hdd_tdls_set_peer_link_status(tmp,
-						eTDLS_LINK_IDLE,
-						eTDLS_LINK_NOT_SUPPORTED);
-			}
-		}
-	}
-
-	pHddTdlsCtx->discovery_sent_cnt = 0;
-	wlan_hdd_tdls_check_power_save_prohibited(pHddTdlsCtx->pAdapter);
-
-	mutex_unlock(&hdd_ctx->tdls_lock);
-	EXIT();
-}
-
-/**
  * wlan_hdd_tdls_free_list() - free TDLS peer list
  * @pHddTdlsCtx: TDLS context
  *
@@ -388,29 +258,6 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
 		   info->teardown_notification_ms,
 		   info->tdls_peer_kickout_threshold);
 
-}
-
-
-/**
- * wlan_hdd_tdls_monitor_timers_stop() - stop all monitoring timers
- * @hdd_tdls_ctx: TDLS context
- *
- * Return: none
- */
-static void wlan_hdd_tdls_monitor_timers_stop(tdlsCtx_t *hdd_tdls_ctx)
-{
-	qdf_mc_timer_stop(&hdd_tdls_ctx->peerDiscoveryTimeoutTimer);
-}
-
-/**
- * wlan_hdd_tdls_timers_stop() - stop all the tdls timers running
- * @hdd_tdls_ctx: TDLS context
- *
- * Return: none
- */
-static void wlan_hdd_tdls_timers_stop(tdlsCtx_t *hdd_tdls_ctx)
-{
-	wlan_hdd_tdls_monitor_timers_stop(hdd_tdls_ctx);
 }
 
 /**
@@ -578,18 +425,11 @@ int wlan_hdd_tdls_init(struct hdd_adapter *pAdapter)
 			return -ENOMEM;
 		}
 
-		qdf_mc_timer_init(&pHddTdlsCtx->peerDiscoveryTimeoutTimer,
-				  QDF_TIMER_TYPE_SW,
-				  wlan_hdd_tdls_discovery_timeout_peer_cb,
-				  pHddTdlsCtx);
-
 		pAdapter->sessionCtx.station.pHddTdlsCtx = pHddTdlsCtx;
 		for (i = 0; i < TDLS_PEER_LIST_SIZE; i++)
 			INIT_LIST_HEAD(&pHddTdlsCtx->peer_list[i]);
 	} else {
 		pHddTdlsCtx = pAdapter->sessionCtx.station.pHddTdlsCtx;
-
-		wlan_hdd_tdls_timers_stop(pHddTdlsCtx);
 
 		wlan_hdd_tdls_del_non_forced_peers(pHddTdlsCtx);
 
@@ -679,7 +519,6 @@ void wlan_hdd_tdls_exit(struct hdd_adapter *pAdapter)
 	 * must stop timer here before freeing peer list, because
 	 * peerIdleTimer is part of peer list structure.
 	 */
-	wlan_hdd_tdls_timers_destroy(pHddTdlsCtx);
 	wlan_hdd_tdls_free_list(pHddTdlsCtx);
 
 	pHddTdlsCtx->magic = 0;
@@ -692,29 +531,6 @@ void wlan_hdd_tdls_exit(struct hdd_adapter *pAdapter)
 done:
 	EXIT();
 	clear_bit(TDLS_INIT_DONE, &pAdapter->event_flags);
-}
-
-/**
- * wlan_hdd_tdls_monitor_timers_destroy() - destroy all tdls monitoring timers
- * @pHddTdlsCtx: TDLS context
- *
- * Return: Void
- */
-static void wlan_hdd_tdls_monitor_timers_destroy(tdlsCtx_t *pHddTdlsCtx)
-{
-	qdf_mc_timer_stop(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
-	qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
-}
-
-/**
- * wlan_hdd_tdls_timers_destroy() - Destroy all the tdls timers running
- * @pHddTdlsCtx: TDLS Context
- *
- * Return: Void
- */
-static void wlan_hdd_tdls_timers_destroy(tdlsCtx_t *pHddTdlsCtx)
-{
-	wlan_hdd_tdls_monitor_timers_destroy(pHddTdlsCtx);
 }
 
 /**
@@ -920,18 +736,6 @@ static int wlan_hdd_tdls_check_config(tdls_config_params_t *config)
 }
 
 /**
- * wlan_hdd_tdls_implicit_disable() - disable implicit tdls triggering
- * @pHddTdlsCtx: TDLS context
- *
- * Return: Void
- */
-static void wlan_hdd_tdls_implicit_disable(tdlsCtx_t *pHddTdlsCtx)
-{
-	hdd_debug("Disable Implicit TDLS");
-	wlan_hdd_tdls_timers_stop(pHddTdlsCtx);
-}
-
-/**
  * wlan_hdd_tdls_set_mode() - set TDLS mode
  * @hdd_ctx: HDD context
  * @tdls_mode: TDLS mode
@@ -1013,12 +817,10 @@ static void wlan_hdd_tdls_set_mode(struct hdd_context *hdd_ctx,
 			} else if (eTDLS_SUPPORT_DISABLED == tdls_mode) {
 				set_bit((unsigned long)source,
 					&hdd_ctx->tdls_source_bitmap);
-				wlan_hdd_tdls_implicit_disable(pHddTdlsCtx);
 			} else if (eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY ==
 				   tdls_mode) {
 				clear_bit((unsigned long)source,
 					  &hdd_ctx->tdls_source_bitmap);
-				wlan_hdd_tdls_implicit_disable(pHddTdlsCtx);
 
 				/*
 				 * Check if any TDLS source bit is set and if
@@ -1423,182 +1225,6 @@ int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *pAdapter,
 	mutex_unlock(&hdd_ctx->tdls_lock);
 	EXIT();
 	return init_len - buflen;
-}
-
-/**
- * wlan_hdd_tdls_increment_peer_count() - increment connected TDLS peer counter
- * @pAdapter: HDD adapter
- *
- * Return: Void
- */
-void wlan_hdd_tdls_increment_peer_count(struct hdd_adapter *pAdapter)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-
-	ENTER();
-
-	if (0 != (wlan_hdd_validate_context(hdd_ctx)))
-		return;
-
-	mutex_lock(&hdd_ctx->tdls_lock);
-
-	hdd_ctx->connected_peer_count++;
-	wlan_hdd_tdls_check_power_save_prohibited(pAdapter);
-
-	hdd_debug("Connected peer count %d",
-		   hdd_ctx->connected_peer_count);
-
-	mutex_unlock(&hdd_ctx->tdls_lock);
-	EXIT();
-}
-
-/**
- * wlan_hdd_tdls_decrement_peer_count() - decrement connected TDLS peer counter
- * @pAdapter: HDD adapter
- *
- * Return: Void
- */
-void wlan_hdd_tdls_decrement_peer_count(struct hdd_adapter *pAdapter)
-{
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	uint16_t connected_peer_count;
-
-	ENTER();
-
-	if (0 != (wlan_hdd_validate_context(hdd_ctx)))
-		return;
-
-	mutex_lock(&hdd_ctx->tdls_lock);
-
-	if (hdd_ctx->connected_peer_count)
-		hdd_ctx->connected_peer_count--;
-	wlan_hdd_tdls_check_power_save_prohibited(pAdapter);
-
-	connected_peer_count = hdd_ctx->connected_peer_count;
-	mutex_unlock(&hdd_ctx->tdls_lock);
-
-	hdd_debug("Connected peer count %d", connected_peer_count);
-
-	EXIT();
-}
-
-
-/**
- * wlan_hdd_tdls_find_progress_peer() - find peer if TDLS is ongoing
- * @pAdapter: HDD adapter
- * @mac: If NULL check for all the peer list, otherwise, skip this mac when
- *       skip_self is true
- * @skip_self: If true, skip this mac. otherwise, check all the peer list. if
- *             mac is NULL, this argument is ignored, and check for all the peer
- *             list.
- *
- * Return: Pointer to hddTdlsPeer_t if TDLS is ongoing. Otherwise return NULL.
- */
-static hddTdlsPeer_t *
-wlan_hdd_tdls_find_progress_peer(struct hdd_adapter *pAdapter,
-				 const u8 *mac,
-				 u8 skip_self)
-{
-	int i;
-	struct list_head *head;
-	hddTdlsPeer_t *curr_peer;
-	struct list_head *pos;
-	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-
-	if (NULL == pHddTdlsCtx) {
-		hdd_debug("pHddTdlsCtx is NULL");
-		return NULL;
-	}
-
-	for (i = 0; i < TDLS_PEER_LIST_SIZE; i++) {
-		head = &pHddTdlsCtx->peer_list[i];
-		list_for_each(pos, head) {
-			curr_peer = list_entry(pos, hddTdlsPeer_t, node);
-			if (skip_self && mac
-			    && !memcmp(mac, curr_peer->peerMac, 6)) {
-				continue;
-			} else {
-				if (eTDLS_LINK_CONNECTING ==
-				    curr_peer->link_status) {
-					hdd_notice(MAC_ADDRESS_STR
-						   " eTDLS_LINK_CONNECTING",
-						   MAC_ADDR_ARRAY(curr_peer->peerMac));
-					return curr_peer;
-				}
-			}
-		}
-	}
-	return NULL;
-}
-
-/**
- * wlan_hdd_tdls_is_progress() - find the peer with ongoing TDLS progress
- * @hdd_ctx: HDD context
- * @mac: mac address of the peer
- * @skip_self: if 1, skip checking self. If 0, search includes self
- *
- * Return: TDLS peer if found; NULL otherwise
- */
-hddTdlsPeer_t *wlan_hdd_tdls_is_progress(struct hdd_context *hdd_ctx,
-					 const uint8_t *mac,
-					 uint8_t skip_self)
-{
-	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
-	struct hdd_adapter *pAdapter = NULL;
-	tdlsCtx_t *pHddTdlsCtx = NULL;
-	hddTdlsPeer_t *curr_peer = NULL;
-	QDF_STATUS status = 0;
-
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
-
-		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
-		if (NULL != pHddTdlsCtx) {
-			curr_peer =
-				wlan_hdd_tdls_find_progress_peer(pAdapter, mac,
-								 skip_self);
-			if (curr_peer)
-				return curr_peer;
-		}
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
-	}
-
-	return NULL;
-}
-
-/**
- * wlan_hdd_tdls_timer_restart() - restart TDLS timer
- * @pAdapter: HDD adapter
- * @timer: timer to restart
- * @expirationTime: new expiration time to set for the timer
- *
- * Return: Void
- */
-void wlan_hdd_tdls_timer_restart(struct hdd_adapter *pAdapter,
-				 qdf_mc_timer_t *timer,
-				 uint32_t expirationTime)
-{
-	struct hdd_station_ctx *pHddStaCtx;
-
-	if (NULL == pAdapter || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		hdd_err("invalid pAdapter: %pK", pAdapter);
-		return;
-	}
-
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-
-	/* Check whether driver load unload is in progress */
-	if (cds_is_load_or_unload_in_progress()) {
-		hdd_err("Driver load/unload is in progress.");
-		return;
-	}
-
-	if (hdd_conn_is_connected(pHddStaCtx)) {
-		qdf_mc_timer_stop(timer);
-		qdf_mc_timer_start(timer, expirationTime);
-	}
 }
 
 /**
@@ -3114,70 +2740,6 @@ rel_lock:
 	mutex_unlock(&hdd_ctx->tdls_lock);
 ret_status:
 	return ret_value;
-}
-
-/**
- * wlan_hdd_tdls_implicit_send_discovery_request() - send discovery request
- * @hdd_tdls_ctx: tdls context
- *
- * Return: None
- */
-void wlan_hdd_tdls_implicit_send_discovery_request(tdlsCtx_t *hdd_tdls_ctx)
-{
-	struct hdd_context *hdd_ctx;
-	hddTdlsPeer_t *curr_peer, *temp_peer;
-
-	ENTER();
-	if (NULL == hdd_tdls_ctx) {
-		hdd_info("hdd_tdls_ctx is NULL");
-		return;
-	}
-
-	hdd_ctx = WLAN_HDD_GET_CTX(hdd_tdls_ctx->pAdapter);
-
-	if (0 != (wlan_hdd_validate_context(hdd_ctx)))
-		return;
-
-	curr_peer = hdd_tdls_ctx->curr_candidate;
-	if (NULL == curr_peer) {
-		hdd_err("curr_peer is NULL");
-		return;
-	}
-
-	/* This function is called in mutex_lock */
-	temp_peer = wlan_hdd_tdls_is_progress(hdd_ctx, NULL, 0);
-	if (NULL != temp_peer) {
-		hdd_info(MAC_ADDRESS_STR " ongoing. pre_setup ignored",
-			 MAC_ADDR_ARRAY(temp_peer->peerMac));
-		goto done;
-	}
-
-	if (eTDLS_CAP_UNKNOWN != curr_peer->tdls_support)
-		wlan_hdd_tdls_set_peer_link_status(curr_peer,
-					   eTDLS_LINK_DISCOVERING,
-					   eTDLS_LINK_SUCCESS);
-
-	hdd_debug("Implicit TDLS, Send Discovery request event");
-	cfg80211_tdls_oper_request(hdd_tdls_ctx->pAdapter->dev,
-				   curr_peer->peerMac,
-				   NL80211_TDLS_DISCOVERY_REQ,
-				   false,
-				   GFP_KERNEL);
-	hdd_tdls_ctx->discovery_sent_cnt++;
-
-	wlan_hdd_tdls_timer_restart(hdd_tdls_ctx->pAdapter,
-				&hdd_tdls_ctx->peerDiscoveryTimeoutTimer,
-				hdd_tdls_ctx->threshold_config.tx_period_t -
-				TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE);
-
-	hdd_debug("discovery count %u timeout %u msec",
-		 hdd_tdls_ctx->discovery_sent_cnt,
-		 hdd_tdls_ctx->threshold_config.tx_period_t -
-		 TDLS_DISCOVERY_TIMEOUT_BEFORE_UPDATE);
-done:
-	hdd_tdls_ctx->curr_candidate = NULL;
-	hdd_tdls_ctx->magic = 0;
-	EXIT();
 }
 
 /**

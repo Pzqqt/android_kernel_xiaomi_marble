@@ -353,7 +353,6 @@ struct tdls_set_state_info {
  * @peer_list: peer list
  * @pAdapter: pointer to adapter
  * @peerDiscoverTimer: peer discovery timer
- * @peerDiscoveryTimeoutTimer: peer discovery timeout timer
  * @threshold_config: threshold config
  * @discovery_peer_cnt: discovery peer count
  * @discovery_sent_cnt: discovery sent count
@@ -366,7 +365,6 @@ struct tdls_set_state_info {
 typedef struct {
 	struct list_head peer_list[TDLS_PEER_LIST_SIZE];
 	struct hdd_adapter *pAdapter;
-	qdf_mc_timer_t peerDiscoveryTimeoutTimer;
 	tdls_config_params_t threshold_config;
 	int32_t discovery_peer_cnt;
 	uint32_t discovery_sent_cnt;
@@ -515,21 +513,9 @@ uint16_t wlan_hdd_tdls_connected_peers(struct hdd_adapter *pAdapter);
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *pAdapter, char *buf,
 				int buflen);
 
-void wlan_hdd_tdls_increment_peer_count(struct hdd_adapter *pAdapter);
-
-void wlan_hdd_tdls_decrement_peer_count(struct hdd_adapter *pAdapter);
-
-hddTdlsPeer_t *wlan_hdd_tdls_is_progress(struct hdd_context *hdd_ctx,
-					 const uint8_t *mac, uint8_t skip_self);
-
-void wlan_hdd_tdls_timer_restart(struct hdd_adapter *pAdapter,
-				 qdf_mc_timer_t *timer,
-				 uint32_t expirationTime);
 void wlan_hdd_tdls_indicate_teardown(struct hdd_adapter *pAdapter,
 				     hddTdlsPeer_t *curr_peer,
 				     uint16_t reason);
-
-void wlan_hdd_tdls_implicit_send_discovery_request(tdlsCtx_t *hdd_tdls_ctx);
 
 int wlan_hdd_tdls_set_extctrl_param(struct hdd_adapter *pAdapter,
 				    const uint8_t *mac,

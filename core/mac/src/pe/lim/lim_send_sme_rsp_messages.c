@@ -1280,28 +1280,6 @@ lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac,
 	return;
 } /*** end lim_send_sme_tdls_delete_all_peer_ind() ***/
 
-void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
-				    void *events)
-{
-	struct scheduler_msg mmhMsg = {0};
-
-	switch (msgType) {
-	case SIR_HAL_TDLS_SHOULD_DISCOVER:
-		mmhMsg.type = eWNI_SME_TDLS_SHOULD_DISCOVER;
-		break;
-	case SIR_HAL_TDLS_SHOULD_TEARDOWN:
-		mmhMsg.type = eWNI_SME_TDLS_SHOULD_TEARDOWN;
-		break;
-	case SIR_HAL_TDLS_PEER_DISCONNECTED:
-		mmhMsg.type = eWNI_SME_TDLS_PEER_DISCONNECTED;
-		break;
-	}
-
-	mmhMsg.bodyptr = events;
-	mmhMsg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return;
-}
 #endif /* FEATURE_WLAN_TDLS */
 
 /**
