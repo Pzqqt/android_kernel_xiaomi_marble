@@ -15180,7 +15180,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		 * Set MU Bformee only if SU Bformee is enabled and
 		 * MU Bformee is enabled in INI
 		 */
-		if (value && csr_join_req->vht_config.su_beam_formee)
+		if (value && csr_join_req->vht_config.su_beam_formee &&
+				pIes->VHTCaps.muBeamformerCap)
 			csr_join_req->vht_config.mu_beam_formee = 1;
 		else
 			csr_join_req->vht_config.mu_beam_formee = 0;
