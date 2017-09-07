@@ -3074,6 +3074,16 @@ struct afe_param_id_set_topology_cfg {
 	u32		topology_id;
 } __packed;
 
+#define AFE_PARAM_ID_APTX_SYNC_MODE  0x00013205
+
+struct afe_param_id_aptx_sync_mode {
+	/*
+	 * sync mode: 0x0 = stereo sync mode (default)
+	 *            0x01 = dual mono sync mode
+	 *            0x02 = dual mono with no sync on either L or R
+	 */
+	uint32_t     sync_mode;
+} __packed;
 
 /*
  * Generic encoder module ID.
@@ -3305,6 +3315,21 @@ struct asm_custom_enc_cfg_t {
 	uint8_t     channel_mapping[8];
 	uint32_t    custom_size;
 } __packed;
+
+struct asm_aptx_v2_enc_cfg_ext_t {
+	/*
+	 * sync mode: 0x0 = stereo sync mode (default)
+	 *            0x01 = dual mono sync mode
+	 *            0x02 = dual mono with no sync on either L or R
+	 */
+	uint32_t     sync_mode;
+} __packed;
+
+struct asm_aptx_enc_cfg_t {
+	struct asm_custom_enc_cfg_t custom_cfg;
+	struct asm_aptx_v2_enc_cfg_ext_t aptx_v2_cfg;
+} __packed;
+
 #define ASM_MEDIA_FMT_CELT 0x00013221
 struct asm_celt_specific_enc_cfg_t {
 	/*
@@ -3421,6 +3446,7 @@ union afe_enc_config_data {
 	struct asm_aac_enc_cfg_v2_t aac_config;
 	struct asm_custom_enc_cfg_t  custom_config;
 	struct asm_celt_enc_cfg_t  celt_config;
+	struct asm_aptx_enc_cfg_t  aptx_config;
 };
 
 struct afe_enc_config {
@@ -3461,6 +3487,7 @@ union afe_port_config {
 	struct afe_param_id_set_topology_cfg      topology;
 	struct afe_param_id_tdm_cfg               tdm;
 	struct afe_param_id_usb_audio_cfg         usb_audio;
+	struct afe_param_id_aptx_sync_mode        sync_mode_param;
 	struct afe_enc_fmt_id_param_t             enc_fmt;
 	struct afe_port_media_type_t              media_type;
 	struct afe_enc_cfg_blk_param_t            enc_blk_param;
