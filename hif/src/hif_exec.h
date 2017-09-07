@@ -107,7 +107,9 @@ static inline struct hif_tasklet_exec_context*
 	return (struct hif_tasklet_exec_context *) ctx;
 }
 
-struct hif_exec_context *hif_exec_create(enum hif_exec_type type);
+struct hif_exec_context *hif_exec_create(enum hif_exec_type type,
+						uint32_t scale);
+
 void hif_exec_destroy(struct hif_exec_context *ctx);
 
 int hif_grp_irq_configure(struct hif_softc *scn,

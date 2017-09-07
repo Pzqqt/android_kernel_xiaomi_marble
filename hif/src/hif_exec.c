@@ -342,7 +342,8 @@ void hif_exec_kill(struct hif_opaque_softc *hif_ctx)
  */
 uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 		uint32_t numirq, uint32_t irq[], ext_intr_handler handler,
-		void *cb_ctx, const char *context_name, uint32_t budget)
+		void *cb_ctx, const char *context_name,
+		enum hif_exec_type type, uint32_t scale)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -363,7 +364,7 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	hif_ext_group = hif_exec_create(budget);
+	hif_ext_group = hif_exec_create(type, scale);
 	if (hif_ext_group == NULL)
 		return QDF_STATUS_E_FAILURE;
 
@@ -387,15 +388,15 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
  * hif_exec_create() - create an execution context
  * @type: the type of execution context to create
  */
-struct hif_exec_context *hif_exec_create(uint32_t budget)
+struct hif_exec_context *hif_exec_create(enum hif_exec_type type,
+						uint32_t scale)
 {
-	uint32_t type = budget <= 0xFFFF ?
-				HIF_EXEC_NAPI_TYPE : HIF_EXEC_TASKLET_TYPE;
+	HIF_INFO("%s: create exec_type %d budget %d\n",
+			__func__, type, QCA_NAPI_BUDGET * scale);
 
-	HIF_INFO("%s: create exec_type %d budget %d\n", __func__, type, budget);
 	switch (type) {
 	case HIF_EXEC_NAPI_TYPE:
-		return hif_exec_napi_create(budget);
+		return hif_exec_napi_create(QCA_NAPI_BUDGET * scale);
 
 	case HIF_EXEC_TASKLET_TYPE:
 		return hif_exec_tasklet_create();
