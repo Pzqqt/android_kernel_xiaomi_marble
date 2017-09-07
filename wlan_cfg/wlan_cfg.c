@@ -193,9 +193,9 @@ static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 						WLAN_CFG_TX_RING_MASK_0,
 						0,
 						0,
-						WLAN_CFG_TX_RING_MASK_1,
-						WLAN_CFG_TX_RING_MASK_2,
-						WLAN_CFG_TX_RING_MASK_3};
+						0,
+						0,
+						0};
 
 static const int rx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					0,
