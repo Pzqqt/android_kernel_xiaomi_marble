@@ -6583,6 +6583,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		CFG_DOT11P_MODE_NAME,
 		hdd_ctx->config->dot11p_mode);
 	hdd_debug("Name = [%s] value = [%u]",
+		  CFG_PREVENT_LINK_DOWN_NAME,
+		  hdd_ctx->config->prevent_link_down);
+	hdd_debug("Name = [%s] value = [%u]",
 		CFG_CHAN_SWITCH_HOSTAPD_RATE_ENABLED_NAME,
 		hdd_ctx->config->chan_switch_hostapd_rate_enabled);
 	hdd_debug("Name = [%s] value = [%u]",
