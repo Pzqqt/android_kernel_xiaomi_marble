@@ -507,6 +507,32 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_P2P_DEBUG
+/**
+ * wlan_p2p_init_connection_status() - init connection status
+ * @p2p_soc_obj: pointer to p2p psoc object
+ *
+ * This function initial p2p connection status.
+ *
+ * Return: None
+ */
+static void wlan_p2p_init_connection_status(
+		struct p2p_soc_priv_obj *p2p_soc_obj)
+{
+	if (!p2p_soc_obj) {
+		p2p_err("invalid p2p soc obj");
+		return;
+	}
+
+	p2p_soc_obj->connection_status = P2P_NOT_ACTIVE;
+}
+#else
+static void wlan_p2p_init_connection_status(
+		struct p2p_soc_priv_obj *p2p_soc_obj)
+{
+}
+#endif /* WLAN_FEATURE_P2P_DEBUG */
+
 QDF_STATUS p2p_component_init(void)
 {
 	QDF_STATUS status;
@@ -737,6 +763,8 @@ QDF_STATUS p2p_psoc_start(struct wlan_objmgr_psoc *soc,
 	start_param->lo_event_cb = req->lo_event_cb;
 	start_param->lo_event_cb_data = req->lo_event_cb_data;
 	p2p_soc_obj->start_param = start_param;
+
+	wlan_p2p_init_connection_status(p2p_soc_obj);
 
 	/* register p2p lo stop and noa event */
 	tgt_p2p_register_lo_ev_handler(soc);
@@ -1021,3 +1049,210 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 	}
 	p2p_debug("peer is authorized");
 }
+
+#ifdef WLAN_FEATURE_P2P_DEBUG
+static struct p2p_soc_priv_obj *
+get_p2p_soc_obj_by_vdev(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	struct wlan_objmgr_psoc *soc;
+
+	if (!vdev) {
+		p2p_err("vdev context passed is NULL");
+		return NULL;
+	}
+
+	soc = wlan_vdev_get_psoc(vdev);
+	if (!soc) {
+		p2p_err("soc context is NULL");
+		return NULL;
+	}
+
+	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(soc,
+			WLAN_UMAC_COMP_P2P);
+	if (!p2p_soc_obj)
+		p2p_err("P2P soc context is NULL");
+
+	return p2p_soc_obj;
+}
+
+QDF_STATUS p2p_status_scan(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	enum tQDF_ADAPTER_MODE mode;
+
+	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_P2P_CLIENT_MODE &&
+	    mode != QDF_P2P_DEVICE_MODE) {
+		p2p_debug("this is not P2P CLIENT or DEVICE, mode:%d",
+			mode);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
+	switch (p2p_soc_obj->connection_status) {
+	case P2P_GO_NEG_COMPLETED:
+	case P2P_GO_NEG_PROCESS:
+		p2p_soc_obj->connection_status =
+				P2P_CLIENT_CONNECTING_STATE_1;
+		p2p_debug("[P2P State] Changing state from Go nego completed to Connection is started");
+		p2p_debug("P2P Scanning is started for 8way Handshake");
+		break;
+	case P2P_CLIENT_DISCONNECTED_STATE:
+		p2p_soc_obj->connection_status =
+				P2P_CLIENT_CONNECTING_STATE_2;
+		p2p_debug("[P2P State] Changing state from Disconnected state to Connection is started");
+		p2p_debug("P2P Scanning is started for 4way Handshake");
+		break;
+	default:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	enum tQDF_ADAPTER_MODE mode;
+
+	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_P2P_CLIENT_MODE) {
+		p2p_debug("this is not P2P CLIENT, mode:%d", mode);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
+	switch (p2p_soc_obj->connection_status) {
+	case P2P_CLIENT_CONNECTING_STATE_1:
+		p2p_soc_obj->connection_status =
+				P2P_CLIENT_CONNECTED_STATE_1;
+		p2p_debug("[P2P State] Changing state from Connecting state to Connected State for 8-way Handshake");
+		break;
+	case P2P_CLIENT_DISCONNECTED_STATE:
+		p2p_debug("No scan before 4-way handshake");
+		/*
+		 * Fall thru since no scan before 4-way handshake and
+		 * won't enter state P2P_CLIENT_CONNECTING_STATE_2:
+		 */
+	case P2P_CLIENT_CONNECTING_STATE_2:
+		p2p_soc_obj->connection_status =
+				P2P_CLIENT_COMPLETED_STATE;
+		p2p_debug("[P2P State] Changing state from Connecting state to P2P Client Connection Completed");
+		break;
+	default:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	enum tQDF_ADAPTER_MODE mode;
+
+	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_P2P_CLIENT_MODE) {
+		p2p_debug("this is not P2P CLIENT, mode:%d", mode);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
+	switch (p2p_soc_obj->connection_status) {
+	case P2P_CLIENT_CONNECTED_STATE_1:
+		p2p_soc_obj->connection_status =
+				P2P_CLIENT_DISCONNECTED_STATE;
+		p2p_debug("[P2P State] 8 way Handshake completed and moved to disconnected state");
+		break;
+	case P2P_CLIENT_COMPLETED_STATE:
+		p2p_soc_obj->connection_status = P2P_NOT_ACTIVE;
+		p2p_debug("[P2P State] P2P Client is removed and moved to inactive state");
+		break;
+	default:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS p2p_status_start_bss(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	enum tQDF_ADAPTER_MODE mode;
+
+	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_P2P_GO_MODE) {
+		p2p_debug("this is not P2P GO, mode:%d", mode);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
+	switch (p2p_soc_obj->connection_status) {
+	case P2P_GO_NEG_COMPLETED:
+		p2p_soc_obj->connection_status =
+				P2P_GO_COMPLETED_STATE;
+		p2p_debug("[P2P State] From Go nego completed to Non-autonomous Group started");
+		break;
+	case P2P_NOT_ACTIVE:
+		p2p_soc_obj->connection_status =
+				P2P_GO_COMPLETED_STATE;
+		p2p_debug("[P2P State] From Inactive to Autonomous Group started");
+		break;
+	default:
+		break;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+	enum tQDF_ADAPTER_MODE mode;
+
+	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
+	if (!p2p_soc_obj) {
+		p2p_err("P2P soc context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	mode = wlan_vdev_mlme_get_opmode(vdev);
+	if (mode != QDF_P2P_GO_MODE) {
+		p2p_debug("this is not P2P GO, mode:%d", mode);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	p2p_debug("connection status:%d", p2p_soc_obj->connection_status);
+	if (p2p_soc_obj->connection_status == P2P_GO_COMPLETED_STATE) {
+		p2p_soc_obj->connection_status = P2P_NOT_ACTIVE;
+		p2p_debug("[P2P State] From GO completed to Inactive state GO got removed");
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_P2P_DEBUG */

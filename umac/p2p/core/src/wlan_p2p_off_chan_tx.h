@@ -51,6 +51,9 @@
 #define P2P_ACTION_FRAME_ACK_WAIT               300
 #define P2P_ACTION_FRAME_TX_TIMEOUT             2000
 
+#define DST_MAC_ADDR_OFFSET  4
+#define SRC_MAC_ADDR_OFFSET  (DST_MAC_ADDR_OFFSET + QDF_MAC_ADDR_SIZE)
+
 #define P2P_NOA_STREAM_ARR_SIZE (P2P_MAX_NOA_ATTR_LEN + (2 * P2P_IE_HEADER_LEN))
 
 #define P2P_GET_TYPE_FRM_FC(__fc__)         (((__fc__) & 0x0F) >> 2)

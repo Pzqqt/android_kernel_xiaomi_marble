@@ -421,3 +421,53 @@ QDF_STATUS  ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
 
 	return status;
 }
+
+QDF_STATUS ucfg_p2p_status_scan(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		p2p_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return p2p_status_scan(vdev);
+}
+
+QDF_STATUS ucfg_p2p_status_connect(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		p2p_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return p2p_status_connect(vdev);
+}
+
+QDF_STATUS ucfg_p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		p2p_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return p2p_status_disconnect(vdev);
+}
+
+QDF_STATUS ucfg_p2p_status_start_bss(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		p2p_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return p2p_status_start_bss(vdev);
+}
+
+QDF_STATUS ucfg_p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
+{
+	if (!vdev) {
+		p2p_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return p2p_status_stop_bss(vdev);
+}

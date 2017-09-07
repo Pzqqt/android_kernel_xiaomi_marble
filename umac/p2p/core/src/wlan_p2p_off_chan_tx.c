@@ -665,6 +665,117 @@ static QDF_STATUS p2p_get_frame_info(uint8_t *data_buf, uint32_t length,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_P2P_DEBUG
+/**
+ * p2p_tx_update_connection_status() - Update P2P connection status
+ * with tx frame
+ * @p2p_soc_obj:        P2P soc private object
+ * @tx_frame_info:      frame information
+ * @mac_to:              Pointer to dest MAC address
+ *
+ * This function updates P2P connection status with tx frame.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_tx_update_connection_status(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct p2p_frame_info *tx_frame_info,
+	uint8_t *mac_to)
+{
+	if (!p2p_soc_obj || !tx_frame_info || !mac_to) {
+		p2p_err("invalid p2p_soc_obj:%pK or tx_frame_info:%pK or mac_to:%pK",
+			p2p_soc_obj, tx_frame_info, mac_to);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (tx_frame_info->public_action_type !=
+		P2P_PUBLIC_ACTION_NOT_SUPPORT)
+		p2p_debug("%s ---> OTA to "QDF_MAC_ADDRESS_STR,
+				p2p_get_frame_type_str(tx_frame_info),
+				QDF_MAC_ADDR_ARRAY(mac_to));
+
+	if ((tx_frame_info->public_action_type ==
+	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
+	    (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
+		p2p_soc_obj->connection_status = P2P_GO_NEG_PROCESS;
+		p2p_debug("[P2P State]Inactive state to GO negotiation progress state");
+	} else if ((tx_frame_info->public_action_type ==
+		    P2P_PUBLIC_ACTION_NEG_CNF) &&
+		   (p2p_soc_obj->connection_status ==
+		    P2P_GO_NEG_PROCESS)) {
+		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
+		p2p_debug("[P2P State]GO nego progress to GO nego completed state");
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * p2p_rx_update_connection_status() - Update P2P connection status
+ * with rx frame
+ * @p2p_soc_obj:        P2P soc private object
+ * @rx_frame_info:      frame information
+ * @mac_from:            Pointer to source MAC address
+ *
+ * This function updates P2P connection status with rx frame.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_rx_update_connection_status(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct p2p_frame_info *rx_frame_info,
+	uint8_t *mac_from)
+{
+	if (!p2p_soc_obj || !rx_frame_info || !mac_from) {
+		p2p_err("invalid p2p_soc_obj:%pK or rx_frame_info:%pK, mac_from:%pK",
+			p2p_soc_obj, rx_frame_info, mac_from);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (rx_frame_info->public_action_type !=
+		P2P_PUBLIC_ACTION_NOT_SUPPORT)
+		p2p_debug("%s <--- OTA from "QDF_MAC_ADDRESS_STR,
+				p2p_get_frame_type_str(rx_frame_info),
+				QDF_MAC_ADDR_ARRAY(mac_from));
+
+	if ((rx_frame_info->public_action_type ==
+	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
+	    (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
+		p2p_soc_obj->connection_status = P2P_GO_NEG_PROCESS;
+		p2p_debug("[P2P State]Inactive state to GO negotiation progress state");
+	} else if ((rx_frame_info->public_action_type ==
+		    P2P_PUBLIC_ACTION_NEG_CNF) &&
+		   (p2p_soc_obj->connection_status ==
+		    P2P_GO_NEG_PROCESS)) {
+		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
+		p2p_debug("[P2P State]GO negotiation progress to GO negotiation completed state");
+	} else if ((rx_frame_info->public_action_type ==
+		    P2P_PUBLIC_ACTION_INVIT_REQ) &&
+		   (p2p_soc_obj->connection_status == P2P_NOT_ACTIVE)) {
+		p2p_soc_obj->connection_status = P2P_GO_NEG_COMPLETED;
+		p2p_debug("[P2P State]Inactive state to GO negotiation completed state Autonomous GO formation");
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS p2p_tx_update_connection_status(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct p2p_frame_info *tx_frame_info,
+	uint8_t *mac_to)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS p2p_rx_update_connection_status(
+	struct p2p_soc_priv_obj *p2p_soc_obj,
+	struct p2p_frame_info *rx_frame_info,
+	uint8_t *mac_from)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * p2p_packet_alloc() - allocate qdf nbuf
  * @size:         buffe size
@@ -1428,6 +1539,7 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *curr_roc_ctx;
+	uint8_t *mac_to;
 	QDF_STATUS status;
 
 	status = p2p_tx_context_check_valid(tx_ctx);
@@ -1458,6 +1570,11 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 		status = QDF_STATUS_E_INVAL;
 		goto fail;
 	}
+
+	/* update P2P connection status with tx frame info */
+	mac_to = &(tx_ctx->buf[DST_MAC_ADDR_OFFSET]);
+	p2p_tx_update_connection_status(p2p_soc_obj,
+		&(tx_ctx->frame_info), mac_to);
 
 	status = p2p_vdev_check_valid(tx_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -1596,6 +1713,7 @@ QDF_STATUS p2p_process_rx_mgmt(
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_start_param *start_param;
 	struct p2p_frame_info frame_info;
+	uint8_t *mac_from;
 
 	p2p_soc_obj = rx_mgmt_event->p2p_soc_obj;
 	rx_mgmt = rx_mgmt_event->rx_mgmt;
@@ -1614,6 +1732,11 @@ QDF_STATUS p2p_process_rx_mgmt(
 	if (rx_mgmt->frm_type == MGMT_ACTION_VENDOR_SPECIFIC) {
 		p2p_get_frame_info(rx_mgmt->buf, rx_mgmt->frame_len,
 				&frame_info);
+
+		/* update P2P connection status with rx frame info */
+		mac_from = &(rx_mgmt->buf[SRC_MAC_ADDR_OFFSET]);
+		p2p_rx_update_connection_status(p2p_soc_obj,
+						&frame_info, mac_from);
 
 		p2p_debug("action_sub_type %u, action_type %d",
 				frame_info.public_action_type,
