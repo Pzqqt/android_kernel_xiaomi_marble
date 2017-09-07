@@ -1168,7 +1168,7 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 				  "%s: Waiting for %d active entry points to exit",
 				  __func__, r);
 			msleep(SSR_WAIT_SLEEP_TIME);
-			if (count == (MAX_SSR_WAIT_ITERATIONS/2)) {
+			if (count & 0x1) {
 				QDF_TRACE(QDF_MODULE_ID_QDF,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: in middle of waiting for active entry points:",
