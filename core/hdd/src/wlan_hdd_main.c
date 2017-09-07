@@ -3126,12 +3126,6 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		init_completion(&adapter->sta_authorized_event);
 		init_completion(&adapter->offchannel_tx_event);
 		init_completion(&adapter->tx_action_cnf_event);
-#ifdef FEATURE_WLAN_TDLS
-		init_completion(&adapter->tdls_add_station_comp);
-		init_completion(&adapter->tdls_del_station_comp);
-		init_completion(&adapter->tdls_mgmt_comp);
-		init_completion(&adapter->tdls_link_establish_req_comp);
-#endif
 		init_completion(&adapter->ibss_peer_info_comp);
 		init_completion(&adapter->change_country_code);
 
@@ -3251,36 +3245,6 @@ QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 
 	return QDF_STATUS_SUCCESS;
 }
-
-/**
- * hdd_check_and_init_tdls() - check and init TDLS operation for desired mode
- * @adapter: pointer to device adapter
- *
- * This routine will check the mode of adapter and if it is required then it
- * will initialize the TDLS operations
- *
- * Return: QDF_STATUS
- */
-#ifdef FEATURE_WLAN_TDLS
-static QDF_STATUS hdd_check_and_init_tdls(struct hdd_adapter *adapter)
-{
-	if (adapter->device_mode == QDF_IBSS_MODE)
-		return QDF_STATUS_SUCCESS;
-
-	if (wlan_hdd_tdls_init(adapter)) {
-		hdd_err("wlan_hdd_tdls_init failed");
-		return QDF_STATUS_E_FAILURE;
-	}
-	set_bit(TDLS_INIT_DONE, &adapter->event_flags);
-
-	return QDF_STATUS_SUCCESS;
-}
-#else
-static QDF_STATUS hdd_check_and_init_tdls(struct hdd_adapter *adapter)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 int hdd_vdev_ready(struct hdd_adapter *adapter)
 {
@@ -3504,16 +3468,9 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	if (ret_val)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed %d", ret_val);
 
-	status = hdd_check_and_init_tdls(adapter);
-	if (status != QDF_STATUS_SUCCESS)
-		goto error_tdls_init;
-
 	adapter->dev->features |= NETIF_F_LRO;
 	return QDF_STATUS_SUCCESS;
 
-error_tdls_init:
-	clear_bit(WMM_INIT_DONE, &adapter->event_flags);
-	hdd_wmm_adapter_close(adapter);
 error_wmm_init:
 	clear_bit(INIT_TX_RX_SUCCESS, &adapter->event_flags);
 	hdd_deinit_tx_rx(adapter);
@@ -3586,7 +3543,6 @@ static void hdd_station_adapter_deinit(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_cleanup_actionframe(hdd_ctx, adapter);
-	wlan_hdd_tdls_exit(adapter);
 
 	EXIT();
 }
@@ -5900,8 +5856,6 @@ static int hdd_context_deinit(struct hdd_context *hdd_ctx)
 
 	hdd_rx_wake_lock_destroy(hdd_ctx);
 
-	hdd_tdls_context_destroy(hdd_ctx);
-
 	hdd_scan_context_destroy(hdd_ctx);
 
 	qdf_list_destroy(&hdd_ctx->hddAdapters);
@@ -7713,8 +7667,6 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto list_destroy;
 
-	hdd_tdls_context_init(hdd_ctx, false);
-
 	hdd_rx_wake_lock_create(hdd_ctx);
 
 	ret = hdd_sap_context_init(hdd_ctx);
@@ -7745,7 +7697,6 @@ sap_destroy:
 scan_destroy:
 	hdd_scan_context_destroy(hdd_ctx);
 	hdd_rx_wake_lock_destroy(hdd_ctx);
-	hdd_tdls_context_destroy(hdd_ctx);
 list_destroy:
 	qdf_list_destroy(&hdd_ctx->hddAdapters);
 

@@ -678,13 +678,6 @@ bool sme_get_is_ft_feature_enabled(tHalHandle hHal);
 QDF_STATUS sme_update_roam_scan_offload_enabled(tHalHandle hHal,
 		bool nRoamScanOffloadEnabled);
 bool sme_is_feature_supported_by_fw(enum cap_bitmap feature);
-#ifdef FEATURE_WLAN_TDLS
-void sme_set_tdls_power_save_prohibited(tHalHandle hHal, uint32_t sessionId,
-		bool val);
-QDF_STATUS sme_send_tdls_chan_switch_req(
-		tHalHandle hal,
-		sme_tdls_chan_switch_params *ch_switch_params);
-#endif
 
 /*
  * SME API to enable/disable WLAN driver initiated SSR
@@ -739,8 +732,6 @@ QDF_STATUS sme_get_reg_info(tHalHandle hHal, uint8_t chanId,
 #ifdef FEATURE_WLAN_TDLS
 QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 		bool useSmeLock);
-QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
-		tSmeTdlsPeerStateParams *pPeerStateParams);
 #endif /* FEATURE_WLAN_TDLS */
 QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal);
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN

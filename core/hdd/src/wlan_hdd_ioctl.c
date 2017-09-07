@@ -6513,17 +6513,6 @@ static int drv_cmd_set_antenna_mode(struct hdd_adapter *adapter,
 	}
 	ret = 0;
 exit:
-#ifdef FEATURE_WLAN_TDLS
-	/* Reset tdls NSS flags */
-	if (hdd_ctx->tdls_nss_switch_in_progress &&
-	    hdd_ctx->tdls_nss_teardown_complete) {
-		hdd_ctx->tdls_nss_switch_in_progress = false;
-		hdd_ctx->tdls_nss_teardown_complete = false;
-	}
-	hdd_debug("tdls_nss_switch_in_progress: %d tdls_nss_teardown_complete: %d",
-		  hdd_ctx->tdls_nss_switch_in_progress,
-		  hdd_ctx->tdls_nss_teardown_complete);
-#endif
 	hdd_debug("Set antenna status: %d current mode: %d",
 		 ret, hdd_ctx->current_antenna_mode);
 	return ret;

@@ -927,10 +927,6 @@ typedef struct sAniSirGlobal {
 	tp2pContext p2pContext;
 #endif
 
-#ifdef FEATURE_WLAN_TDLS
-	bool is_tdls_power_save_prohibited;
-#endif
-
 	uint8_t isCoalesingInIBSSAllowed;
 
 	bool imps_enabled;

@@ -128,7 +128,6 @@
 #define WMM_INIT_DONE          (3)
 #define SOFTAP_BSS_STARTED     (4)
 #define DEVICE_IFACE_OPENED    (5)
-#define TDLS_INIT_DONE         (6)
 #define ACS_PENDING            (7)
 #define SOFTAP_INIT_DONE       (8)
 
@@ -726,10 +725,6 @@ struct hdd_station_ctx {
 	/* Handle to the Wireless Extension State */
 	hdd_wext_state_t WextState;
 
-#ifdef FEATURE_WLAN_TDLS
-	tdlsCtx_t *pHddTdlsCtx;
-#endif
-
 	/* Connection information*/
 	struct hdd_connection_info conn_info;
 
@@ -1157,13 +1152,6 @@ struct hdd_adapter {
 	struct completion rem_on_chan_ready_event;
 
 	struct completion sta_authorized_event;
-#ifdef FEATURE_WLAN_TDLS
-	struct completion tdls_add_station_comp;
-	struct completion tdls_del_station_comp;
-	struct completion tdls_mgmt_comp;
-	struct completion tdls_link_establish_req_comp;
-	QDF_STATUS tdlsAddStaStatus;
-#endif
 
 	struct completion ibss_peer_info_comp;
 
@@ -1338,14 +1326,6 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap.HostapdState)
 #define WLAN_HDD_GET_CFG_STATE_PTR(pAdapter)  (&(pAdapter)->cfg80211State)
 #define WLAN_HDD_GET_SAP_CTX_PTR(pAdapter) (pAdapter->sessionCtx.ap.sapContext)
-#ifdef FEATURE_WLAN_TDLS
-#define WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter) \
-	(((QDF_STA_MODE != pAdapter->device_mode) && \
-	  (QDF_P2P_CLIENT_MODE != pAdapter->device_mode)) ? 0 : 1)
-#define WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter) \
-	((WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter)) ? \
-	 (tdlsCtx_t *)(pAdapter)->sessionCtx.station.pHddTdlsCtx : NULL)
-#endif
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
@@ -1629,32 +1609,6 @@ struct hdd_context {
 
 	qdf_wake_lock_t rx_wake_lock;
 	qdf_wake_lock_t sap_wake_lock;
-
-#ifdef FEATURE_WLAN_TDLS
-	enum tdls_support_mode tdls_mode;
-	enum tdls_support_mode tdls_mode_last;
-	tdlsConnInfo_t tdlsConnInfo[HDD_MAX_NUM_TDLS_STA];
-	/* maximum TDLS station number allowed upon runtime condition */
-	uint16_t max_num_tdls_sta;
-	/* TDLS peer connected count */
-	uint16_t connected_peer_count;
-	/* Lock to avoid race condition during TDLS operations */
-	qdf_spinlock_t tdls_ct_spinlock;
-	/* linear mac address table for counting the packets */
-	struct tdls_ct_mac_table ct_peer_mac_table[TDLS_CT_MAC_MAX_TABLE_SIZE];
-	/* number of valid mac entry in @ct_peer_mac_table */
-	uint8_t valid_mac_entries;
-	struct mutex tdls_lock;
-	uint8_t tdls_off_channel;
-	uint16_t tdls_channel_offset;
-	int32_t tdls_fw_off_chan_mode;
-	uint8_t tdls_external_peer_count;
-	bool tdls_nss_switch_in_progress;
-	bool tdls_nss_teardown_complete;
-	enum tdls_nss_transition_type tdls_nss_transition_mode;
-	int32_t tdls_teardown_peers_cnt;
-	struct tdls_set_state_info set_state_info;
-#endif
 
 	void *hdd_ipa;
 

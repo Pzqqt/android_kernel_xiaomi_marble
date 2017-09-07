@@ -707,6 +707,7 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct sk_buff *skb;
 	uint32_t set = 0;
+	uint32_t max_num_tdls_sta = 0;
 
 	ENTER_DEV(wdev->netdev);
 
@@ -739,11 +740,17 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 					WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT : 0);
 		set = set | (hdd_ctx->config->fEnableTDLSOffChannel ?
 					WIIF_TDLS_OFFCHANNEL_SUPPORT : 0);
+		if (hdd_ctx->config->fEnableTDLSSleepSta ||
+		    hdd_ctx->config->fEnableTDLSBufferSta ||
+		    hdd_ctx->config->fEnableTDLSOffChannel)
+			max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA_P_UAPSD_OFFCHAN;
+		else
+			max_num_tdls_sta = HDD_MAX_NUM_TDLS_STA;
+
 		hdd_debug("TDLS Feature supported value %x", set);
 		if (nla_put_u32(skb, PARAM_MAX_TDLS_SESSION,
-				 hdd_ctx->max_num_tdls_sta) ||
-			nla_put_u32(skb, PARAM_TDLS_FEATURE_SUPPORT,
-				 set)) {
+				max_num_tdls_sta) ||
+		    nla_put_u32(skb, PARAM_TDLS_FEATURE_SUPPORT, set)) {
 			hdd_err("nla put fail");
 			goto fail;
 		}
@@ -13458,7 +13465,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		case NL80211_IFTYPE_P2P_CLIENT:
 		case NL80211_IFTYPE_ADHOC:
 			if (type == NL80211_IFTYPE_ADHOC) {
-				wlan_hdd_tdls_exit(pAdapter);
 				hdd_deregister_tx_flow_control(pAdapter);
 				hdd_debug("Setting interface Type to ADHOC");
 			}

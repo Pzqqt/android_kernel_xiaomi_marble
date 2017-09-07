@@ -103,9 +103,7 @@ struct ps_params {
 			tpSirWakeReasonInd wake_reason_ind);
 	void *wake_reason_ind_cb_ctx;
 #endif /* WLAN_WAKEUP_EVENTS */
-#ifdef FEATURE_WLAN_TDLS
-	bool is_tdls_power_save_prohibited;
-#endif
+
 	/*
 	 * Auto Sta Ps Enable Timer
 	 * Upon expiration of this timer
