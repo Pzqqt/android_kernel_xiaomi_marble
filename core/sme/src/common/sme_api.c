@@ -1299,8 +1299,14 @@ QDF_STATUS sme_start(tHalHandle hHal)
 			break;
 		}
 		pMac->sme.state = SME_STATE_START;
-	} while (0);
 
+		/* START RRM */
+		status = rrm_start(pMac);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sme_err("Failed to start RRM");
+			break;
+		}
+	} while (0);
 	return status;
 }
 
@@ -2662,12 +2668,16 @@ QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType)
 
 	p2p_stop(hHal);
 
+	status = rrm_stop(pMac);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("rrm_stop failed with status: %d", status);
+	}
+
 	status = csr_stop(pMac, stopType);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("csr_stop failed with status: %d", status);
 		fail_status = status;
 	}
-
 	purge_sme_cmd_list(pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(fail_status))

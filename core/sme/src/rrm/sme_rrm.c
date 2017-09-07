@@ -44,6 +44,7 @@
 #include "csr_inside_api.h"
 
 #include "rrm_global.h"
+#include <wlan_scan_ucfg_api.h>
 
 /* Roam score for a neighbor AP will be calculated based on the below
  * definitions. The calculated roam score will be used to select the
@@ -569,12 +570,13 @@ rrm_send_scan_results_done:
 	return status;
 }
 
+
 /**
  * sme_rrm_scan_request_callback() -Sends the beacon report xmit to PE
- * @halHandle - Pointer to the Hal Handle.
- * @pContext - Pointer to the data context.
- * @scanId - Scan ID.
- * @status - CSR Status.
+ * @halHandle: Pointer to the Hal Handle.
+ * @sessionId: session id
+ * @scanId: Scan ID.
+ * @status: CSR Status.
  *
  * The sme module calls this callback function once it finish the scan request
  * and this function send the beacon report xmit to PE and starts a timer of
@@ -582,14 +584,11 @@ rrm_send_scan_results_done:
  *
  * Return : 0 for success, non zero for failure
  */
-
 static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
-						void *pContext,
 						uint8_t sessionId,
 						uint32_t scanId,
 						eCsrScanStatus status)
 {
-
 	uint16_t interval;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) halHandle;
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
@@ -636,6 +635,43 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void sme_rrm_scan_event_callback(struct wlan_objmgr_vdev *vdev,
+			struct scan_event *event, void *arg)
+{
+	uint32_t scan_id;
+	uint8_t session_id;
+	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
+	tHalHandle hal_handle;
+
+	session_id = wlan_vdev_get_id(vdev);
+	scan_id = event->scan_id;
+	hal_handle = cds_get_context(QDF_MODULE_ID_SME);
+	if (!hal_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
+			  FL("invalid h_hal"));
+		return;
+	}
+	if ((event->type != SCAN_EVENT_TYPE_COMPLETED) &&
+	    (event->type != SCAN_EVENT_TYPE_DEQUEUED) &&
+	    (event->type != SCAN_EVENT_TYPE_START_FAILED))
+		return;
+
+	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
+		((event->reason == SCAN_REASON_CANCELLED) ||
+		(event->reason == SCAN_REASON_TIMEDOUT) ||
+		(event->reason == SCAN_REASON_INTERNAL_FAILURE)))
+		scan_status = eCSR_SCAN_FAILURE;
+	else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
+			(event->reason == SCAN_REASON_COMPLETED))
+		scan_status = eCSR_SCAN_SUCCESS;
+	else
+		return;
+
+	sme_rrm_scan_request_callback(hal_handle, session_id,
+					scan_id, scan_status);
+}
+
+
 /**
  * sme_rrm_issue_scan_req() - To issue rrm scan request
  * @mac_ctx: pointer to mac context
@@ -646,14 +682,14 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
  */
 static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 {
-	/* Issue scan request. */
-	tCsrScanRequest scan_req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
 	uint32_t max_chan_time;
 	tSirScanType scan_type;
 	uint64_t current_time;
+	struct scan_start_request *req;
+	struct wlan_objmgr_vdev *vdev;
 
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
@@ -674,42 +710,50 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 
 	if ((eSIR_ACTIVE_SCAN == scan_type) ||
 			(eSIR_PASSIVE_SCAN == scan_type)) {
-		qdf_mem_zero(&scan_req, sizeof(scan_req));
-		/* set scan_type, active or passive */
-		scan_req.bcnRptReqScan = true;
-		scan_req.scanType = scan_type;
-		qdf_mem_copy(&scan_req.bssid.bytes, sme_rrm_ctx->bssId,
+		req = qdf_mem_malloc(sizeof(*req));
+		if (!req) {
+			sme_debug("Failed to allocate memory");
+			return QDF_STATUS_E_NOMEM;
+		}
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+						mac_ctx->psoc,
+						session_id,
+						WLAN_LEGACY_SME_ID);
+		if (!vdev) {
+			sme_err("VDEV is null %d", session_id);
+			return QDF_STATUS_E_INVAL;
+		}
+		ucfg_scan_init_default_params(vdev, req);
+		req->scan_req.dwell_time_active = 0;
+		req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
+		req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
+		req->scan_req.scan_req_id = sme_rrm_ctx->req_id;
+		qdf_mem_copy(&req->scan_req.bssid_list[0], sme_rrm_ctx->bssId,
 				QDF_MAC_ADDR_SIZE);
+		req->scan_req.num_bssid = 1;
 		if (sme_rrm_ctx->ssId.length) {
-			scan_req.SSIDs.numOfSSIDs = 1;
-			scan_req.SSIDs.SSIDList =
-				(tCsrSSIDInfo *)qdf_mem_malloc(
-					sizeof(tCsrSSIDInfo));
-			if (NULL == scan_req.SSIDs.SSIDList) {
-				sme_err("qdf_mem_malloc failed");
-				return QDF_STATUS_E_NOMEM;
-			}
-			scan_req.SSIDs.SSIDList->SSID.length =
-				sme_rrm_ctx->ssId.length;
-			qdf_mem_copy(scan_req.SSIDs.SSIDList->SSID.ssId,
+			req->scan_req.num_ssids = 1;
+			qdf_mem_copy(&req->scan_req.ssid[0],
 					sme_rrm_ctx->ssId.ssId,
 					sme_rrm_ctx->ssId.length);
+			req->scan_req.ssid[0].length = sme_rrm_ctx->ssId.length;
 		}
 
 		/*
 		 * set min and max channel time
 		 * sme_rrm_ctx->duration; Dont use min timeout.
 		 */
-		scan_req.minChnTime = 0;
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == sme_rrm_ctx->msgSource ||
 			eRRM_MSG_SOURCE_LEGACY_ESE == sme_rrm_ctx->msgSource)
-			scan_req.maxChnTime = sme_rrm_ctx->duration[
+			req->scan_req.dwell_time_active = sme_rrm_ctx->duration[
 						sme_rrm_ctx->currentIndex];
 		else
-			scan_req.maxChnTime = sme_rrm_ctx->duration[0];
+			req->scan_req.dwell_time_active =
+						sme_rrm_ctx->duration[0];
 
-		sme_debug(FL("Scan Type(%d) Max Dwell Time(%d)"),
-				scan_req.scanType, scan_req.maxChnTime);
+		sme_debug("Scan Type(%d) Max Dwell Time(%d)",
+				scan_type,
+				req->scan_req.dwell_time_active);
 		/*
 		 * Use gPassive/gActiveMaxChannelTime if maxChanTime is less
 		 * than default.
@@ -721,8 +765,8 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 			max_chan_time =
 				mac_ctx->roam.configParam.nPassiveMaxChnTime;
 
-		if (scan_req.maxChnTime < max_chan_time) {
-			scan_req.maxChnTime = max_chan_time;
+		if (req->scan_req.dwell_time_active < max_chan_time) {
+			req->scan_req.dwell_time_active = max_chan_time;
 			sme_debug("Setting default max %d ChanTime",
 				max_chan_time);
 		}
@@ -743,32 +787,26 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 				sme_rrm_ctx->channelList.numOfChannels);
 		if ((abs(current_time - rrm_scan_timer) > 1000) &&
 				(sme_rrm_ctx->channelList.numOfChannels == 1)) {
-			scan_req.restTime = 1;
-			scan_req.min_rest_time = 1;
-			scan_req.idle_time = 1;
+			req->scan_req.max_rest_time = 1;
+			req->scan_req.min_rest_time = 1;
+			req->scan_req.idle_time = 1;
 		}
 
 		rrm_scan_timer = (uint64_t)qdf_mc_timer_get_system_time();
 
-		/* set BSSType to default type */
-		scan_req.BSSType = eCSR_BSS_TYPE_ANY;
-		/*Scan all the channels */
-		scan_req.ChannelInfo.numOfChannels = 1;
-		scan_req.ChannelInfo.ChannelList =
-			&sme_rrm_ctx->channelList.ChannelList[
-				sme_rrm_ctx->currentIndex];
-		sme_debug(FL("Duration %d On channel %d "),
-			scan_req.maxChnTime,
-			sme_rrm_ctx->channelList.ChannelList[
-				sme_rrm_ctx->currentIndex]);
 		/* set requestType to full scan */
-		scan_req.requestType = eCSR_SCAN_REQUEST_FULL_SCAN;
-		status = sme_scan_request(mac_ctx, (uint8_t) session_id,
-					&scan_req,
-					&sme_rrm_scan_request_callback, NULL);
 
-		if (sme_rrm_ctx->ssId.length)
-			qdf_mem_free(scan_req.SSIDs.SSIDList);
+
+		req->scan_req.num_chan = 1;
+		req->scan_req.chan_list[0] =
+			sme_rrm_ctx->channelList.ChannelList[
+						sme_rrm_ctx->currentIndex];
+		sme_debug("Duration %d On channel %d ",
+				req->scan_req.dwell_time_active,
+				sme_rrm_ctx->channelList.ChannelList[
+					sme_rrm_ctx->currentIndex]);
+		status = ucfg_scan_start(req);
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 	} else if (eSIR_BEACON_TABLE == scan_type) {
 		/*
 		 * In beacon table mode, scan results are taken directly from
@@ -1456,3 +1494,24 @@ QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS rrm_start(tpAniSirGlobal mac_ctx)
+{
+	tpRrmSMEContext smerrmctx = &mac_ctx->rrm.rrmSmeContext;
+
+	/* Register with scan component */
+	smerrmctx->req_id = ucfg_scan_register_requester(mac_ctx->psoc,
+					"RRM",
+					sme_rrm_scan_event_callback,
+					smerrmctx);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS rrm_stop(tpAniSirGlobal mac_ctx)
+{
+	tpRrmSMEContext smerrmctx = &mac_ctx->rrm.rrmSmeContext;
+
+	ucfg_scan_unregister_requester(mac_ctx->psoc, smerrmctx->req_id);
+
+	return QDF_STATUS_SUCCESS;
+}

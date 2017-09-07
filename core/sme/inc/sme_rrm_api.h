@@ -58,4 +58,22 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac,
 QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		void *pMsgBuf);
 
+/**
+ * rrm_start() - start the RRM module
+ * @mac_ctx: The handle returned by mac_open.
+ *
+ * Return: QDF_STATUS
+ *           QDF_STATUS_SUCCESS  success
+ */
+QDF_STATUS rrm_start(tpAniSirGlobal mac_ctx);
+
+/**
+ * rrm_stop() - stop the RRM module
+ * @mac_ctx: The handle returned by mac_open.
+ *
+ * Return: QDF_STATUS
+ *           QDF_STATUS_SUCCESS  success
+ */
+QDF_STATUS rrm_stop(tpAniSirGlobal mac_ctx);
+
 #endif
