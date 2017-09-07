@@ -297,4 +297,54 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr);
 QDF_STATUS ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
 	uint32_t vdev_id, bool disable_noa);
 
+/**
+ * ucfg_p2p_status_scan() - Show P2P connection status when scanning
+ * @vdev: vdev context
+ *
+ * This function shows P2P connection status when scanning.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_status_scan(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_p2p_status_connect() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * Updates P2P connection status by up layer when connecting.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_status_connect(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_p2p_status_disconnect() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * Updates P2P connection status by up layer when disconnecting.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_status_disconnect(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_p2p_status_start_bss() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * Updates P2P connection status by up layer when starting bss.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_status_start_bss(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_p2p_status_stop_bss() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * Updates P2P connection status by up layer when stopping bss.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev);
+
 #endif /* _WLAN_P2P_UCFG_API_H_ */

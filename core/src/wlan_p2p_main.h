@@ -129,6 +129,32 @@ struct p2p_noa_event {
 	struct p2p_noa_info *noa_info;
 };
 
+#ifdef WLAN_FEATURE_P2P_DEBUG
+/**
+ * enum p2p_connection_status - p2p connection status
+ * @P2P_NOT_ACTIVE:                P2P not active status
+ * @P2P_GO_NEG_PROCESS:            P2P GO negotiation in process
+ * @P2P_GO_NEG_COMPLETED:          P2P GO negotiation complete
+ * @P2P_CLIENT_CONNECTING_STATE_1: P2P client connecting state 1
+ * @P2P_GO_COMPLETED_STATE:        P2P GO complete state
+ * @P2P_CLIENT_CONNECTED_STATE_1:  P2P client connected state 1
+ * @P2P_CLIENT_DISCONNECTED_STATE: P2P client disconnected state
+ * @P2P_CLIENT_CONNECTING_STATE_2: P2P client connecting state 2
+ * @P2P_CLIENT_COMPLETED_STATE:    P2P client complete state
+ */
+enum p2p_connection_status {
+	P2P_NOT_ACTIVE,
+	P2P_GO_NEG_PROCESS,
+	P2P_GO_NEG_COMPLETED,
+	P2P_CLIENT_CONNECTING_STATE_1,
+	P2P_GO_COMPLETED_STATE,
+	P2P_CLIENT_CONNECTED_STATE_1,
+	P2P_CLIENT_DISCONNECTED_STATE,
+	P2P_CLIENT_CONNECTING_STATE_2,
+	P2P_CLIENT_COMPLETED_STATE
+};
+#endif
+
 /**
  * struct p2p_soc_priv_obj - Per SoC p2p private object
  * @soc:              Pointer to SoC context
@@ -140,6 +166,7 @@ struct p2p_noa_event {
  *                    data to HDD
  * @cancel_roc_done:  Cancel roc done event
  * @roc_runtime_lock: Runtime lock for roc request
+ * @connection_status:Global P2P connection status
  */
 struct p2p_soc_priv_obj {
 	struct wlan_objmgr_psoc *soc;
@@ -150,6 +177,9 @@ struct p2p_soc_priv_obj {
 	struct p2p_start_param *start_param;
 	qdf_event_t cancel_roc_done;
 	qdf_runtime_lock_t roc_runtime_lock;
+#ifdef WLAN_FEATURE_P2P_DEBUG
+	enum p2p_connection_status connection_status;
+#endif
 };
 
 /**
@@ -305,4 +335,80 @@ QDF_STATUS p2p_process_lo_stop(
  */
 QDF_STATUS p2p_process_noa(struct p2p_noa_event *noa_event);
 
+#ifdef WLAN_FEATURE_P2P_DEBUG
+/**
+ * p2p_status_scan() - Update P2P connection status
+ * @vdev: vdev context
+ *
+ * This function updates P2P connection status when scanning
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_status_scan(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * p2p_status_connect() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * This function updates P2P connection status when connecting.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * p2p_status_disconnect() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * This function updates P2P connection status when disconnecting.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_status_disconnect(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * p2p_status_start_bss() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * This function updates P2P connection status when starting BSS.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_status_start_bss(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * p2p_status_stop_bss() - Update P2P connection status
+ * @vdev:        vdev context
+ *
+ * This function updates P2P connection status when stopping BSS.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev);
+#else
+static inline QDF_STATUS p2p_status_scan(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS p2p_status_start_bss(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static inline QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_FEATURE_P2P_DEBUG */
 #endif /* _WLAN_P2P_MAIN_H_ */
