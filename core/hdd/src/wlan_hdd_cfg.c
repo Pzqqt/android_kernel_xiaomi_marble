@@ -3985,6 +3985,14 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MIN,
 		CFG_ROAM_BG_SCAN_CLIENT_BITMAP_MAX),
 
+	REG_VARIABLE(CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_NAME,
+		WLAN_PARAM_Integer, struct hdd_config,
+		roam_bad_rssi_thresh_offset_2g,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_DEFAULT,
+		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_MIN,
+		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_MAX),
+
 	REG_VARIABLE(CFG_ENABLE_FATAL_EVENT_TRIGGER, WLAN_PARAM_Integer,
 			struct hdd_config, enable_fatal_event,
 			VAR_FLAGS_OPTIONAL |
@@ -6322,6 +6330,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		CFG_ROAM_BG_SCAN_CLIENT_BITMAP_NAME,
 		hdd_ctx->config->roam_bg_scan_client_bitmap);
 	hdd_debug("Name = [%s] Value = [%u]",
+		CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_NAME,
+		hdd_ctx->config->roam_bad_rssi_thresh_offset_2g);
+	hdd_debug("Name = [%s] Value = [%u]",
 		CFG_MIN_REST_TIME_NAME,
 		hdd_ctx->config->min_rest_time_conc);
 	hdd_debug("Name = [%s] Value = [%u]",
@@ -8127,6 +8138,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->roam_bg_scan_bad_rssi_thresh;
 	smeConfig->csrConfig.roam_bg_scan_client_bitmap =
 		hdd_ctx->config->roam_bg_scan_client_bitmap;
+	smeConfig->csrConfig.roam_bad_rssi_thresh_offset_2g =
+		hdd_ctx->config->roam_bad_rssi_thresh_offset_2g;
 	smeConfig->csrConfig.obss_width_interval =
 			hdd_ctx->config->obss_width_trigger_interval;
 	smeConfig->csrConfig.obss_active_dwelltime =

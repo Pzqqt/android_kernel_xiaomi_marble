@@ -2045,6 +2045,36 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
+ * roam_bad_rssi_thresh_offset_2g - RSSI threshold offset for 2G to 5G roam
+ * @Min: 0
+ * @Max: 86
+ * @Default: 40
+ *
+ * If the DUT is connected to an AP with weak signal in 2G band, then the
+ * bad RSSI offset for 2g would be used as offset from the bad RSSI
+ * threshold configured and then use the resulting rssi for an opportunity
+ * to use the scan results from other scan clients and try to roam to
+ * 5G Band ONLY if there is a better AP available in the environment.
+ *
+ * For example if the roam_bg_scan_bad_rssi_thresh is -76 and
+ * roam_bad_rssi_thresh_offset_2g is 40 then the difference of -36 would be
+ * used as a trigger to roam to a 5G AP if DUT initially connected to a 2G AP
+ *
+ * Related: roam_bg_scan_bad_rssi_thresh
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_NAME "roam_bad_rssi_thresh_offset_2g"
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_MIN     (0)
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_MAX     (86)
+#define CFG_ROAM_BG_SCAN_BAD_RSSI_OFFSET_2G_DEFAULT (40)
+
+/*
+ * <ini>
  * roamscan_adaptive_dwell_mode - Sets dwell time adaptive mode
  * @Min: 0
  * @Max: 4
@@ -12691,6 +12721,7 @@ struct hdd_config {
 	bool ignore_peer_ht_opmode;
 	uint32_t roam_dense_min_aps;
 	int8_t roam_bg_scan_bad_rssi_thresh;
+	uint8_t roam_bad_rssi_thresh_offset_2g;
 	uint32_t roam_bg_scan_client_bitmap;
 	bool enable_edca_params;
 	uint32_t edca_vo_cwmin;

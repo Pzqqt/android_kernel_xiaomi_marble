@@ -2764,11 +2764,9 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->roam_bg_scan_bad_rssi_thresh;
 		pMac->roam.configParam.roam_params.bg_scan_client_bitmap =
 			pParam->roam_bg_scan_client_bitmap;
-
-		pMac->roam.configParam.roam_params.bg_scan_bad_rssi_thresh =
-			pParam->roam_bg_scan_bad_rssi_thresh;
-		pMac->roam.configParam.roam_params.bg_scan_client_bitmap =
-			pParam->roam_bg_scan_client_bitmap;
+		pMac->roam.configParam.roam_params.
+			roam_bad_rssi_thresh_offset_2g =
+			pParam->roam_bad_rssi_thresh_offset_2g;
 
 		pMac->roam.configParam.scan_adaptive_dwell_mode =
 			pParam->scan_adaptive_dwell_mode;
@@ -3016,6 +3014,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		cfg_params->roam_params.bg_scan_bad_rssi_thresh;
 	pParam->roam_bg_scan_client_bitmap =
 		cfg_params->roam_params.bg_scan_client_bitmap;
+	pParam->roam_bad_rssi_thresh_offset_2g =
+		cfg_params->roam_params.roam_bad_rssi_thresh_offset_2g;
 
 	pParam->scan_adaptive_dwell_mode =
 			cfg_params->scan_adaptive_dwell_mode;
@@ -18466,9 +18466,10 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		roam_params_dst->traffic_threshold,
 		roam_params_dst->initial_dense_status,
 		mac_ctx->scan.roam_candidate_count[session_id]);
-	sme_debug("BG Scan Bad RSSI:%d, bitmap:0x%x",
+	sme_debug("BG Scan Bad RSSI:%d, bitmap:0x%x Offset for 2G to 5G Roam %d",
 			roam_params_dst->bg_scan_bad_rssi_thresh,
-			roam_params_dst->bg_scan_client_bitmap);
+			roam_params_dst->bg_scan_client_bitmap,
+			roam_params_dst->roam_bad_rssi_thresh_offset_2g);
 
 	for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

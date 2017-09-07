@@ -3060,6 +3060,7 @@ typedef enum {
  * @good_rssi_roam:             Lazy Roam
  * @is_5g_pref_enabled:         5GHz BSSID preference feature enable/disable.
  * @bg_scan_bad_rssi_thresh:    Bad RSSI threshold to perform bg scan.
+ * @bad_rssi_thresh_offset_2g:  Offset from Bad RSSI threshold for 2G to 5G Roam
  * @bg_scan_client_bitmap:      Bitmap to identify the client scans to snoop.
  *
  * This structure holds all the key parameters related to
@@ -3092,6 +3093,7 @@ struct roam_ext_params {
 	uint8_t num_rssi_rejection_ap;
 	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
 	int8_t bg_scan_bad_rssi_thresh;
+	uint8_t roam_bad_rssi_thresh_offset_2g;
 	uint32_t bg_scan_client_bitmap;
 };
 

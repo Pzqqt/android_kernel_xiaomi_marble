@@ -902,6 +902,10 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.bg_scan_bad_rssi_thresh = roam_params->bg_scan_bad_rssi_thresh -
 		WMA_NOISE_FLOOR_DBM_DEFAULT;
 	params.bg_scan_client_bitmap = roam_params->bg_scan_client_bitmap;
+	params.roam_bad_rssi_thresh_offset_2g =
+				roam_params->roam_bad_rssi_thresh_offset_2g;
+	if (params.roam_bad_rssi_thresh_offset_2g)
+		params.flags |= WMI_ROAM_BG_SCAN_FLAGS_2G_TO_5G_ONLY;
 
 	/*
 	 * The current Noise floor in firmware is -96dBm. Penalty/Boost
@@ -975,9 +979,10 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 			roam_params->dense_min_aps_cnt,
 			roam_params->traffic_threshold,
 			roam_params->initial_dense_status);
-	WMA_LOGD(FL("BG Scan Bad RSSI:%d, bitmap:0x%x"),
+	WMA_LOGD(FL("BG Scan Bad RSSI:%d, bitmap:0x%x Offset for 2G to 5G Roam:%d"),
 			roam_params->bg_scan_bad_rssi_thresh,
-			roam_params->bg_scan_client_bitmap);
+			roam_params->bg_scan_client_bitmap,
+			roam_params->roam_bad_rssi_thresh_offset_2g);
 	return status;
 }
 
