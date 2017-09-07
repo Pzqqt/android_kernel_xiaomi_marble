@@ -11796,6 +11796,9 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
 	hdd_populate_runtime_cfg(hdd_ctx, &cfg);
 	hif_init_ini_config(scn, &cfg);
+
+	if (hdd_ctx->config->prevent_link_down)
+		hif_vote_link_up(scn);
 }
 
 /**
