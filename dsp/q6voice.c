@@ -36,6 +36,7 @@
 #define CMD_STATUS_FAIL 1
 #define NUM_CHANNELS_MONO 1
 #define NUM_CHANNELS_STEREO 2
+#define NUM_CHANNELS_QUAD 4
 #define CVP_VERSION_2 2
 
 enum {
@@ -3889,11 +3890,15 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 	} else if (channel_info->num_channels == NUM_CHANNELS_STEREO) {
 		channel_info->channel_mapping[0] = PCM_CHANNEL_FL;
 		channel_info->channel_mapping[1] = PCM_CHANNEL_FR;
+	} else if (channel_info->num_channels == NUM_CHANNELS_QUAD &&
+		   param_type == TX_PATH) {
+		channel_info->channel_mapping[0] = PCM_CHANNEL_FL;
+		channel_info->channel_mapping[1] = PCM_CHANNEL_FR;
+		channel_info->channel_mapping[2] = PCM_CHANNEL_LS;
+		channel_info->channel_mapping[3] = PCM_CHANNEL_RS;
 	} else {
-		pr_err("%s: Unsupported num channels: %d\n",
-		       __func__, channel_info->num_channels);
-		ret = -EINVAL;
-		goto done;
+		pr_warn("%s: Unsupported num channels: %d for path: %d\n",
+			__func__, channel_info->num_channels, param_type);
 	}
 
 	v->cvp_state = CMD_STATUS_FAIL;
@@ -4014,10 +4019,8 @@ static int voice_send_cvp_mfc_config_v2(struct voice_data *v)
 		mfc_config_info->channel_type[0] = PCM_CHANNEL_FL;
 		mfc_config_info->channel_type[1] = PCM_CHANNEL_FR;
 	} else {
-		pr_err("%s: Unsupported num channels: %d\n",
-		       __func__, mfc_config_info->num_channels);
-		ret = -EINVAL;
-		goto done;
+		pr_warn("%s: Unsupported num channels: %d\n",
+			__func__, mfc_config_info->num_channels);
 	}
 
 	v->cvp_state = CMD_STATUS_FAIL;
