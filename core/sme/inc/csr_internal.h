@@ -1282,7 +1282,6 @@ QDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal pMac,
 		uint32_t sessionId, tCsrRoamConnectedProfile *pProfile);
 bool csr_is_set_key_allowed(tpAniSirGlobal pMac, uint32_t sessionId);
 
-void csr_set_opposite_band_channel_info(tpAniSirGlobal pMac);
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 
