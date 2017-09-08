@@ -1186,8 +1186,6 @@ QDF_STATUS csr_get_modify_profile_fields(tpAniSirGlobal pMac,
 		pModifyProfileFields);
 void csr_set_global_cfgs(tpAniSirGlobal pMac);
 void csr_set_default_dot11_mode(tpAniSirGlobal pMac);
-void csrScanSetChannelMask(tpAniSirGlobal pMac,
-				     tCsrChannelInfo *pChannelInfo);
 bool csr_is_conn_state_disconnected(tpAniSirGlobal pMac,
 						   uint32_t sessionId);
 bool csr_is_conn_state_connected_ibss(tpAniSirGlobal pMac,
