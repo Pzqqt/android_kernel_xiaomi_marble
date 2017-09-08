@@ -120,6 +120,6 @@ extern void cfg_set_capability_info(tpAniSirGlobal, uint16_t);
 /* / Cleanup CFG module */
 void cfg_cleanup(tpAniSirGlobal pMac);
 
-extern uint8_t *g_cfg_param_name[];
+const char *cfg_get_string(uint16_t cfg_id);
 
 #endif /* __CFGAPI_H */
