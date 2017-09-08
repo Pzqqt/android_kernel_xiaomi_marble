@@ -1327,4 +1327,30 @@ util_get_last_scan_time(struct wlan_objmgr_vdev *vdev);
 QDF_STATUS
 util_scan_entry_update_mlme_info(struct wlan_objmgr_pdev *pdev,
 	struct scan_cache_entry *scan_entry);
+
+/**
+ * util_scan_is_hidden_ssid() - function to check if ssid is hidden
+ * @ssid: struct ie_ssid object
+ *
+ * API, function to check if ssid is hidden
+ *
+ * Return: true if ap is hidden, false otherwise
+ */
+bool
+util_scan_is_hidden_ssid(struct ie_ssid *ssid);
+
+/**
+ * util_scan_entry_is_hidden_ap() - function to check if ap is hidden
+ * @scan_entry: scan entry
+ *
+ * API, function to check if ap is hidden
+ *
+ * Return: true if ap is hidden, false otherwise
+ */
+static inline bool
+util_scan_entry_is_hidden_ap(struct scan_cache_entry *scan_entry)
+{
+    return util_scan_is_hidden_ssid(
+			(struct ie_ssid *)scan_entry->ie_list.ssid);
+}
 #endif

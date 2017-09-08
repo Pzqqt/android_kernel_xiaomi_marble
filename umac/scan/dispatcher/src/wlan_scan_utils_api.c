@@ -321,7 +321,7 @@ util_scan_parse_chan_switch_wrapper_ie(struct scan_cache_entry *scan_params,
 	return QDF_STATUS_SUCCESS;
 }
 
-static bool
+bool
 util_scan_is_hidden_ssid(struct ie_ssid *ssid)
 {
 	uint8_t i;
