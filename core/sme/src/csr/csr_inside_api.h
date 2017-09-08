@@ -512,14 +512,6 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal, uint16_t, tCsrScanRequest *,
 			csr_scan_completeCallback callback, void *pContext);
 
 /* ---------------------------------------------------------------------------
-    \fn csrScanAbort
-    \brief If a scan request is abort, the scan complete callback will be called first before csrScanAbort returns.
-    \param pScanRequestID - The request ID returned from csr_scan_request
-    \return QDF_STATUS
-   -------------------------------------------------------------------------------*/
-QDF_STATUS csrScanAbort(tpAniSirGlobal, uint32_t scanRequestID);
-
-/* ---------------------------------------------------------------------------
     \fn csr_scan_get_result
     \brief Return scan results.
     \param pFilter - If pFilter is NULL, all cached results are returned
