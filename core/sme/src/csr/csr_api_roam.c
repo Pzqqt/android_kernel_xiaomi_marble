@@ -2318,6 +2318,12 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	he_cap->qtp = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_A_BQR, &value);
 	he_cap->a_bqr = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_SR_RESPONDER, &value);
+	he_cap->sr_responder = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NDP_FEEDBACK_SUPP, &value);
+	he_cap->ndp_feedback_supp = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_OPS_SUPP, &value);
+	he_cap->ops_supp = value;
 
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DUAL_BAND, &value);
 	he_cap->dual_band = value;
@@ -2330,11 +2336,11 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LDPC, &value);
 	he_cap->ldpc_coding = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LTF_PPDU, &value);
-	he_cap->he_ltf_gi_ppdu = value;
+	he_cap->he_1x_ltf_800_gi_ppdu = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LTF_NDP, &value);
-	he_cap->he_ltf_gi_ndp = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STBC, &value);
-	he_cap->stbc = value;
+	he_cap->he_4x_ltf_3200_gi_ndp = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STBC_LT80, &value);
+	he_cap->stbc_lt_80mhz = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DOPPLER, &value);
 	he_cap->doppler = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_UL_MUMIMO, &value);
@@ -2353,12 +2359,8 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	he_cap->mu_beamformer = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, &value);
 	he_cap->bfee_sts_lt_80 = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSTS_TOT_LT80, &value);
-	he_cap->nsts_tol_lt_80 = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, &value);
-	he_cap->bfee_sta_gt_80 = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSTS_TOT_GT80, &value);
-	he_cap->nsts_tot_gt_80 = value;
+	he_cap->bfee_sts_gt_80 = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, &value);
 	he_cap->num_sounding_lt_80 = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, &value);
@@ -2384,7 +2386,13 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_POWER_BOOST, &value);
 	he_cap->power_boost = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_4x_LTF_GI, &value);
-	he_cap->he_ltf_gi_4x = value;
+	he_cap->he_ltf_800_gi_4x = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MAX_NC, &value);
+	he_cap->max_nc = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STBC_GT80, &value);
+	he_cap->stbc_gt_80mhz = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, &value);
+	he_cap->er_he_ltf_800_gi_4x = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSS, &value);
 	he_cap->nss_supported = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MCS, &value);

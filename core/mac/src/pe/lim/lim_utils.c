@@ -5919,20 +5919,16 @@ bool lim_send_he_ie_update(tpAniSirGlobal mac_ctx, tpPESession pe_session)
 	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
 	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
 	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
-	WMI_HEOPS_MAXBSSID_SET(he_ops, he_op->maxbssid_ind);
 	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
 	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
-	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
 	status = wma_update_he_ops_ie(cds_get_context(QDF_MODULE_ID_WMA),
 				      pe_session->smeSessionId, he_ops);
 	if (status != QDF_STATUS_SUCCESS)  {
-		lim_log(mac_ctx, LOGE,
-			FL("Can't send for vdev_id[%d] he_ops[0x%x]"),
+		pe_err("Can't send for vdev_id[%d] he_ops[0x%x]",
 			pe_session->smeSessionId, he_ops);
 		return false;
 	} else {
-		lim_log(mac_ctx, LOGD,
-			FL("successfully sent for vdev_id[%d] he_ops[0x%x]"),
+		pe_debug("successfully sent for vdev_id[%d] he_ops[0x%x]",
 			pe_session->smeSessionId, he_ops);
 	}
 
@@ -7232,21 +7228,35 @@ static void lim_intersect_he_caps(tDot11fIEvendor_he_cap *rcvd_he,
 	peer_he->fragmentation &= session_he->fragmentation;
 
 	/* Tx STBC is first bit and Rx STBC is second bit */
-	if (session_he->stbc) {
+	if (session_he->stbc_lt_80mhz) {
 		val = 0;
-		if ((session_he->stbc & 0x1) && (peer_he->stbc & 0x10))
+		if ((session_he->stbc_lt_80mhz & 0x1) &&
+		    (peer_he->stbc_lt_80mhz & 0x10))
 			val |= (1 << 1);
-		if ((session_he->stbc & 0x10) && (peer_he->stbc & 0x1))
+		if ((session_he->stbc_lt_80mhz & 0x10) &&
+		    (peer_he->stbc_lt_80mhz & 0x1))
 			val |= (1 << 0);
-		peer_he->stbc = val;
+		peer_he->stbc_lt_80mhz = val;
+	}
+
+	/* Tx STBC is first bit and Rx STBC is second bit */
+	if (session_he->stbc_gt_80mhz) {
+		val = 0;
+		if ((session_he->stbc_gt_80mhz & 0x1) &&
+		    (peer_he->stbc_gt_80mhz & 0x10))
+			val |= (1 << 1);
+		if ((session_he->stbc_gt_80mhz & 0x10) &&
+		    (peer_he->stbc_gt_80mhz & 0x1))
+			val |= (1 << 0);
+		peer_he->stbc_gt_80mhz = val;
 	}
 
 	/* Tx Doppler is first bit and Rx Doppler is second bit */
 	if (session_he->doppler) {
 		val = 0;
-		if ((session_he->stbc & 0x1) && (peer_he->stbc & 0x10))
+		if ((session_he->doppler & 0x1) && (peer_he->doppler & 0x10))
 			val |= (1 << 1);
-		if ((session_he->stbc & 0x10) && (peer_he->stbc & 0x1))
+		if ((session_he->doppler & 0x10) && (peer_he->doppler & 0x1))
 			val |= (1 << 0);
 		peer_he->doppler = val;
 	}
@@ -7385,28 +7395,23 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 	he_ops->twt_required = HE_OP_TWT_REQ_GET(he_op);
 	he_ops->rts_threshold = HE_OP_RTS_THRES_GET(he_op);
 	he_ops->partial_bss_col = HE_OP_PART_BSS_COLOR_GET(he_op);
-	he_ops->maxbssid_ind = HE_OP_MAXBSSID_IND_GET(he_op);
 	he_ops->tx_bssid_ind = HE_OP_TX_BSSIX_IND_GET(he_op);
 	he_ops->bss_col_disabled = HE_OP_BSS_COLOR_DIS_GET(he_op);
-	he_ops->dual_beacon = HE_OP_DUAL_BEACON_GET(he_op);
 
 	session->he_op.bss_color = he_ops->bss_color;
 	session->he_op.default_pe = he_ops->default_pe;
 	session->he_op.twt_required = he_ops->twt_required;
 	session->he_op.rts_threshold = he_ops->rts_threshold;
 	session->he_op.partial_bss_col = he_ops->partial_bss_col;
-	session->he_op.maxbssid_ind = he_ops->maxbssid_ind;
 	session->he_op.tx_bssid_ind = he_ops->tx_bssid_ind;
 	session->he_op.bss_col_disabled = he_ops->bss_col_disabled;
-	session->he_op.dual_beacon = he_ops->dual_beacon;
 
 	pe_debug("HE Operation: bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x",
 		he_ops->bss_color, he_ops->default_pe,
 		he_ops->twt_required, he_ops->rts_threshold);
-	pe_debug("partial_bss_color: %0x, MaxBSSID Indicator: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x, Dual beacon: %0x",
-		he_ops->partial_bss_col, he_ops->maxbssid_ind,
-		he_ops->tx_bssid_ind, he_ops->bss_col_disabled,
-		he_ops->dual_beacon);
+	pe_debug("partial_bss_color: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x",
+		he_ops->partial_bss_col, he_ops->tx_bssid_ind,
+		he_ops->bss_col_disabled);
 }
 
 void lim_copy_bss_he_cap(tpPESession session,
@@ -7475,6 +7480,9 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 			he_cap->bsrp_ampdu_aggr);
 	pe_debug("\tQuite Time Period support: 0x%01x", he_cap->qtp);
 	pe_debug("\tA-BQR support: 0x%01x", he_cap->a_bqr);
+	pe_debug("\tSR Reponder support: 0x%01x", he_cap->sr_responder);
+	pe_debug("\tNDP Feedback support: 0x%01x", he_cap->ndp_feedback_supp);
+	pe_debug("\tOPS support: 0x%01x", he_cap->ops_supp);
 
 	/* HE PHY capabilities */
 	pe_debug("\tDual band support: 0x%01x", he_cap->dual_band);
@@ -7486,10 +7494,11 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 	pe_debug("\tLDPC coding support: 0x%01x",
 			he_cap->ldpc_coding);
 	pe_debug("\tLTF and GI for HE PPDUs: 0x%02x",
-			he_cap->he_ltf_gi_ppdu);
+			he_cap->he_1x_ltf_800_gi_ppdu);
 	pe_debug("\tLTF and GI for NDP: 0x%02x",
-			he_cap->he_ltf_gi_ndp);
-	pe_debug("\tSTBC Tx & Rx support: 0x%02x", he_cap->stbc);
+			he_cap->he_4x_ltf_3200_gi_ndp);
+	pe_debug("\tSTBC Tx & Rx support (<= 80MHz): 0x%02x",
+		 he_cap->stbc_lt_80mhz);
 	pe_debug("\tDoppler support: 0x%02x", he_cap->doppler);
 	pe_debug("\tUL MU: 0x%02x", he_cap->ul_mu);
 	pe_debug("\tDCM encoding Tx: 0x%03x", he_cap->dcm_enc_tx);
@@ -7501,12 +7510,8 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 	pe_debug("\tMU Beamformer: 0x%01x", he_cap->mu_beamformer);
 	pe_debug("\tBeamformee STS for <= 80Mhz: 0x%03x",
 			he_cap->bfee_sts_lt_80);
-	pe_debug("\tNSTS total for <= 80Mhz: 0x%03x",
-			he_cap->nsts_tol_lt_80);
 	pe_debug("\tBeamformee STS for > 80Mhz: 0x%03x",
-			he_cap->bfee_sta_gt_80);
-	pe_debug("\tNSTS total for > 80Mhz: 0x%03x",
-			he_cap->nsts_tot_gt_80);
+			he_cap->bfee_sts_gt_80);
 	pe_debug("\tNo. of sounding dim <= 80Mhz: 0x%03x",
 			he_cap->num_sounding_lt_80);
 	pe_debug("\tNo. of sounding dim > 80Mhz: 0x%03x",
@@ -7528,7 +7533,11 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 	pe_debug("\tPPET present: 0x%01x", he_cap->ppet_present);
 	pe_debug("\tSRP based SR-support: 0x%01x", he_cap->srp);
 	pe_debug("\tPower boost factor: 0x%01x", he_cap->power_boost);
-	pe_debug("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_gi_4x);
+	pe_debug("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
+	pe_debug("\tSTBC Tx & Rx support (> 80MHz): 0x%02x",
+		 he_cap->stbc_gt_80mhz);
+	pe_debug("\tMax Nc: 0x%03x", he_cap->max_nc);
+	pe_debug("\tER 4x HE LTF support: 0x%01x", he_cap->er_he_ltf_800_gi_4x);
 
 	pe_debug("\tHighest NSS supported: 0x%03x",
 			he_cap->nss_supported);
@@ -7550,22 +7559,21 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 
 void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops)
 {
-	tDot11fIEvht_info *vht_info = &he_ops->vht_info;
-
-	pe_debug("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x",
+	pe_debug("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x, vht_oper_present: %0x",
 		he_ops->bss_color, he_ops->default_pe,
-		he_ops->twt_required, he_ops->rts_threshold);
-	pe_debug("\tpartial_bss_color: %0x, MaxBSSID Indicator: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x, Dual beacon: %0x",
-		he_ops->partial_bss_col, he_ops->maxbssid_ind,
-		he_ops->tx_bssid_ind, he_ops->bss_col_disabled,
-		he_ops->dual_beacon);
+		he_ops->twt_required, he_ops->rts_threshold,
+		he_ops->vht_oper_present);
+	pe_debug("\tpartial_bss_color: %0x, MBSSID AP: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x",
+		he_ops->partial_bss_col, he_ops->mbssid_ap,
+		he_ops->tx_bssid_ind, he_ops->bss_col_disabled);
 
-	if (!vht_info->present)
+	if (he_ops->vht_oper_present)
 		pe_debug("VHT Info not present in HE Operation");
 	else
 		pe_debug("VHT Info: chan_width: %d, center_freq0: %d, center_freq1: %d",
-			vht_info->chan_width, vht_info->center_freq_seg0,
-			vht_info->center_freq_seg1);
+			he_ops->vht_oper.info.chan_width,
+			he_ops->vht_oper.info.center_freq_seg0,
+			he_ops->vht_oper.info.center_freq_seg1);
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
@@ -7655,6 +7663,9 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->bsrp_ampdu_aggr = dot11_cap.bsrp_ampdu_aggr;
 		he_cap->qtp = dot11_cap.qtp;
 		he_cap->a_bqr = dot11_cap.a_bqr;
+		he_cap->sr_responder = dot11_cap.sr_responder;
+		he_cap->ops_supp = dot11_cap.ops_supp;
+		he_cap->ndp_feedback_supp = dot11_cap.ndp_feedback_supp;
 		he_cap->reserved1 = dot11_cap.reserved1;
 
 		he_cap->dual_band = dot11_cap.dual_band;
@@ -7662,9 +7673,10 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->rx_pream_puncturing = dot11_cap.rx_pream_puncturing;
 		he_cap->device_class = dot11_cap.device_class;
 		he_cap->ldpc_coding = dot11_cap.ldpc_coding;
-		he_cap->he_ltf_gi_ppdu = dot11_cap.he_ltf_gi_ppdu;
-		he_cap->he_ltf_gi_ndp = dot11_cap.he_ltf_gi_ndp;
-		he_cap->stbc = dot11_cap.stbc;
+		he_cap->he_1x_ltf_800_gi_ppdu = dot11_cap.he_1x_ltf_800_gi_ppdu;
+		he_cap->he_4x_ltf_3200_gi_ndp = dot11_cap.he_4x_ltf_3200_gi_ndp;
+		he_cap->stbc_lt_80mhz = dot11_cap.stbc_lt_80mhz;
+		he_cap->stbc_gt_80mhz = dot11_cap.stbc_gt_80mhz;
 		he_cap->doppler = dot11_cap.doppler;
 		he_cap->ul_mu = dot11_cap.ul_mu;
 		he_cap->dcm_enc_tx = dot11_cap.dcm_enc_tx;
@@ -7675,9 +7687,7 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->su_beamformee = dot11_cap.su_beamformee;
 		he_cap->mu_beamformer = dot11_cap.mu_beamformer;
 		he_cap->bfee_sts_lt_80 = dot11_cap.bfee_sts_lt_80;
-		he_cap->nsts_tol_lt_80 = dot11_cap.nsts_tol_lt_80;
-		he_cap->bfee_sta_gt_80 = dot11_cap.bfee_sta_gt_80;
-		he_cap->nsts_tot_gt_80 = dot11_cap.nsts_tot_gt_80;
+		he_cap->bfee_sts_gt_80 = dot11_cap.bfee_sts_gt_80;
 		he_cap->num_sounding_lt_80 = dot11_cap.num_sounding_lt_80;
 		he_cap->num_sounding_gt_80 = dot11_cap.num_sounding_gt_80;
 		he_cap->su_feedback_tone16 = dot11_cap.su_feedback_tone16;
@@ -7691,7 +7701,9 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->srp = dot11_cap.srp;
 		he_cap->power_boost = dot11_cap.power_boost;
 
-		he_cap->he_ltf_gi_4x = dot11_cap.he_ltf_gi_4x;
+		he_cap->he_ltf_800_gi_4x = dot11_cap.he_ltf_800_gi_4x;
+		he_cap->max_nc = dot11_cap.max_nc;
+		he_cap->er_he_ltf_800_gi_4x = dot11_cap.er_he_ltf_800_gi_4x;
 		he_cap->reserved2 = dot11_cap.reserved2;
 
 		he_cap->nss_supported = dot11_cap.nss_supported;

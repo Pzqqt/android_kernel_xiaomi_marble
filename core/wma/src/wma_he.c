@@ -243,6 +243,9 @@ static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
 	he_cap->bsrp_ampdu_aggr = WMI_HECAP_MAC_BSRPAMPDU_GET(mac_cap);
 	he_cap->qtp = WMI_HECAP_MAC_QTP_GET(mac_cap);
 	he_cap->a_bqr = WMI_HECAP_MAC_ABQR_GET(mac_cap);
+	he_cap->sr_responder = WMI_HECAP_MAC_SRRESP_GET(mac_cap);
+	he_cap->ndp_feedback_supp = WMI_HECAP_MAC_NDPFDBKRPT_GET(mac_cap);
+	he_cap->ops_supp = WMI_HECAP_MAC_OPS_GET(mac_cap);
 
 	/* HE PHY capabilities */
 	he_cap->dual_band = WMI_HECAP_PHY_DB_GET(phy_cap);
@@ -250,13 +253,17 @@ static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
 	he_cap->rx_pream_puncturing = WMI_HECAP_PHY_PREAMBLEPUNCRX_GET(phy_cap);
 	he_cap->device_class = WMI_HECAP_PHY_COD_GET(phy_cap);
 	he_cap->ldpc_coding = WMI_HECAP_PHY_LDPC_GET(phy_cap);
-	he_cap->he_ltf_gi_ppdu = WMI_HECAP_PHY_LTFGIFORHE_GET(phy_cap);
-	he_cap->he_ltf_gi_ndp = WMI_HECAP_PHY_LTFGIFORNDP_GET(phy_cap);
-	he_cap->stbc = (WMI_HECAP_PHY_RXSTBC_GET(phy_cap) << 1) |
-			WMI_HECAP_PHY_TXSTBC_GET(phy_cap);
+	he_cap->he_1x_ltf_800_gi_ppdu = WMI_HECAP_PHY_LTFGIFORHE_GET(phy_cap);
+	he_cap->he_4x_ltf_3200_gi_ndp = WMI_HECAP_PHY_LTFGIFORNDP_GET(phy_cap);
+	he_cap->stbc_lt_80mhz = (WMI_HECAP_PHY_RXSTBC_GET(phy_cap) << 1) |
+				 WMI_HECAP_PHY_TXSTBC_GET(phy_cap);
+	he_cap->stbc_gt_80mhz = (WMI_HECAP_PHY_STBCRXGT80_GET(phy_cap) << 1) |
+				 WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
+
 	he_cap->doppler = (WMI_HECAP_PHY_RXDOPPLER_GET(phy_cap) << 1) |
 				WMI_HECAP_PHY_TXDOPPLER_GET(phy_cap);
-	he_cap->ul_mu = WMI_HECAP_PHY_UL_MU_MIMO_GET(phy_cap);
+	he_cap->ul_mu = (WMI_HECAP_PHY_ULMUMIMOOFDMA_GET(phy_cap) << 1) |
+			 WMI_HECAP_PHY_UL_MU_MIMO_GET(phy_cap);
 	he_cap->dcm_enc_tx = WMI_HECAP_PHY_DCMTX_GET(phy_cap);
 	he_cap->dcm_enc_rx = WMI_HECAP_PHY_DCMRX_GET(phy_cap);
 	he_cap->ul_he_mu = WMI_HECAP_PHY_ULHEMU_GET(phy_cap);
@@ -264,9 +271,7 @@ static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
 	he_cap->su_beamformee = WMI_HECAP_PHY_SUBFME_GET(phy_cap);
 	he_cap->mu_beamformer = WMI_HECAP_PHY_MUBFMR_GET(phy_cap);
 	he_cap->bfee_sts_lt_80 = WMI_HECAP_PHY_SUBFMESTS_GET(phy_cap);
-	he_cap->nsts_tol_lt_80 = WMI_HECAP_PHY_NSTSLT80MHZ_GET(phy_cap);
-	he_cap->bfee_sta_gt_80 = WMI_HECAP_PHY_BFMESTSGT80MHZ_GET(phy_cap);
-	he_cap->nsts_tot_gt_80 = WMI_HECAP_PHY_NSTSGT80MHZ_GET(phy_cap);
+	he_cap->bfee_sts_gt_80 = WMI_HECAP_PHY_BFMESTSGT80MHZ_GET(phy_cap);
 	he_cap->num_sounding_lt_80 = WMI_HECAP_PHY_NUMSOUNDLT80MHZ_GET(phy_cap);
 	he_cap->num_sounding_gt_80 = WMI_HECAP_PHY_NUMSOUNDGT80MHZ_GET(phy_cap);
 	he_cap->su_feedback_tone16 =
@@ -283,7 +288,11 @@ static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
 	he_cap->ppet_present = WMI_HECAP_PHY_PETHRESPRESENT_GET(phy_cap);
 	he_cap->srp = WMI_HECAP_PHY_SRPSPRESENT_GET(phy_cap);
 	he_cap->power_boost = WMI_HECAP_PHY_PWRBOOSTAR_GET(phy_cap);
-	he_cap->he_ltf_gi_4x = WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(phy_cap);
+	he_cap->he_ltf_800_gi_4x =
+			WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(phy_cap);
+	he_cap->max_nc = WMI_HECAP_PHY_MAXNC_GET(phy_cap);
+	he_cap->er_he_ltf_800_gi_4x =
+			WMI_HECAP_PHY_ERSU4X800NSECGI_GET(phy_cap);
 
 	he_cap->nss_supported = nss - 1;
 	he_cap->mcs_supported = mcs;
@@ -382,12 +391,14 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 					       new_cap->device_class);
 		he_cap->ldpc_coding = QDF_MIN(he_cap->ldpc_coding,
 					      new_cap->ldpc_coding);
-		he_cap->he_ltf_gi_ppdu = QDF_MIN(he_cap->he_ltf_gi_ppdu,
-						 new_cap->he_ltf_gi_ppdu);
-		he_cap->he_ltf_gi_ndp = QDF_MIN(he_cap->he_ltf_gi_ndp,
-						new_cap->he_ltf_gi_ndp);
-		he_cap->stbc = QDF_MIN(he_cap->stbc,
-				       new_cap->stbc);
+		he_cap->he_1x_ltf_800_gi_ppdu =
+				QDF_MIN(he_cap->he_1x_ltf_800_gi_ppdu,
+					 new_cap->he_1x_ltf_800_gi_ppdu);
+		he_cap->he_4x_ltf_3200_gi_ndp =
+				QDF_MIN(he_cap->he_4x_ltf_3200_gi_ndp,
+					new_cap->he_4x_ltf_3200_gi_ndp);
+		he_cap->stbc_lt_80mhz = QDF_MIN(he_cap->stbc_lt_80mhz,
+						new_cap->stbc_lt_80mhz);
 		he_cap->doppler = QDF_MIN(he_cap->doppler,
 					  new_cap->doppler);
 		he_cap->ul_mu = QDF_MIN(he_cap->ul_mu, new_cap->ul_mu);
@@ -404,12 +415,8 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 						new_cap->mu_beamformer);
 		he_cap->bfee_sts_lt_80 = QDF_MIN(he_cap->bfee_sts_lt_80,
 						 new_cap->bfee_sts_lt_80);
-		he_cap->nsts_tol_lt_80 = QDF_MIN(he_cap->nsts_tol_lt_80,
-						 new_cap->nsts_tol_lt_80);
-		he_cap->bfee_sta_gt_80 = QDF_MIN(he_cap->bfee_sta_gt_80,
-						 new_cap->bfee_sta_gt_80);
-		he_cap->nsts_tot_gt_80 = QDF_MIN(he_cap->nsts_tot_gt_80,
-						 new_cap->nsts_tot_gt_80);
+		he_cap->bfee_sts_gt_80 = QDF_MIN(he_cap->bfee_sts_gt_80,
+						 new_cap->bfee_sts_gt_80);
 		he_cap->num_sounding_lt_80 = QDF_MIN(he_cap->num_sounding_lt_80,
 						new_cap->num_sounding_lt_80);
 		he_cap->num_sounding_gt_80 = QDF_MIN(he_cap->num_sounding_gt_80,
@@ -434,8 +441,8 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 		he_cap->srp = QDF_MIN(he_cap->srp, new_cap->srp);
 		he_cap->power_boost = QDF_MIN(he_cap->power_boost,
 					      new_cap->power_boost);
-		he_cap->he_ltf_gi_4x = QDF_MIN(he_cap->he_ltf_gi_4x,
-					       new_cap->he_ltf_gi_4x);
+		he_cap->he_ltf_800_gi_4x = QDF_MIN(he_cap->he_ltf_800_gi_4x,
+					       new_cap->he_ltf_800_gi_4x);
 		he_cap->reserved2 = QDF_MIN(he_cap->reserved2,
 					    new_cap->reserved2);
 		he_cap->nss_supported = QDF_MIN(he_cap->nss_supported,
@@ -496,9 +503,10 @@ void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 			he_cap->rx_pream_puncturing);
 	WMA_LOGI("\tClass of device: 0x%01x", he_cap->device_class);
 	WMA_LOGI("\tLDPC coding support: 0x%01x", he_cap->ldpc_coding);
-	WMA_LOGI("\tLTF and GI for HE PPDUs: 0x%02x", he_cap->he_ltf_gi_ppdu);
-	WMA_LOGI("\tLTF and GI for NDP: 0x%02x", he_cap->he_ltf_gi_ndp);
-	WMA_LOGI("\tSTBC Tx & Rx support: 0x%02x", he_cap->stbc);
+	WMA_LOGI("\tLTF and GI for HE PPDUs: 0x%02x",
+		 he_cap->he_1x_ltf_800_gi_ppdu);
+	WMA_LOGI("\tLTF and GI for NDP: 0x%02x", he_cap->he_4x_ltf_3200_gi_ndp);
+	WMA_LOGI("\tSTBC Tx & Rx support: 0x%02x", he_cap->stbc_lt_80mhz);
 	WMA_LOGI("\tDoppler support: 0x%02x", he_cap->doppler);
 	WMA_LOGI("\tUL MU: 0x%02x", he_cap->ul_mu);
 	WMA_LOGI("\tDCM encoding Tx: 0x%03x", he_cap->dcm_enc_tx);
@@ -509,10 +517,8 @@ void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 	WMA_LOGI("\tMU Beamformer: 0x%01x", he_cap->mu_beamformer);
 	WMA_LOGI("\tBeamformee STS for <= 80Mhz: 0x%03x",
 			he_cap->bfee_sts_lt_80);
-	WMA_LOGI("\tNSTS total for <= 80Mhz: 0x%03x", he_cap->nsts_tol_lt_80);
 	WMA_LOGI("\tBeamformee STS for > 80Mhz: 0x%03x",
-			he_cap->bfee_sta_gt_80);
-	WMA_LOGI("\tNSTS total for > 80Mhz: 0x%03x", he_cap->nsts_tot_gt_80);
+			he_cap->bfee_sts_gt_80);
 	WMA_LOGI("\tNo. of sounding dim <= 80Mhz: 0x%03x",
 			he_cap->num_sounding_lt_80);
 	WMA_LOGI("\tNo. of sounding dim > 80Mhz: 0x%03x",
@@ -531,7 +537,7 @@ void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
 	WMA_LOGI("\tPPET present: 0x%01x", he_cap->ppet_present);
 	WMA_LOGI("\tSRP based SR-support: 0x%01x", he_cap->srp);
 	WMA_LOGI("\tPower boost factor: 0x%01x", he_cap->power_boost);
-	WMA_LOGI("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_gi_4x);
+	WMA_LOGI("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
 
 	WMA_LOGI("\tHighest NSS supported: 0x%03x", he_cap->nss_supported);
 	WMA_LOGI("\tHighest MCS supported: 0x%03x", he_cap->mcs_supported);
@@ -607,13 +613,16 @@ void wma_print_he_phy_cap(uint32_t *phy_cap)
 		WMI_HECAP_PHY_LTFGIFORHE_GET(phy_cap));
 	WMA_LOGI("\tLTF and GI for NDP: 0x%02x",
 		WMI_HECAP_PHY_LTFGIFORNDP_GET(phy_cap));
-	WMA_LOGI("\tSTBC Tx & Rx support: 0x%02x",
+	WMA_LOGI("\tSTBC Tx & Rx support (BW <= 80Mhz): 0x%02x",
 			(WMI_HECAP_PHY_RXSTBC_GET(phy_cap) << 1) |
 			 WMI_HECAP_PHY_TXSTBC_GET(phy_cap));
 	WMA_LOGI("\tDoppler support: 0x%02x",
 			(WMI_HECAP_PHY_RXDOPPLER_GET(phy_cap) << 1) |
 			 WMI_HECAP_PHY_TXDOPPLER_GET(phy_cap));
-	WMA_LOGI("\tUL MU: 0x%02x", WMI_HECAP_PHY_UL_MU_MIMO_GET(phy_cap));
+	WMA_LOGI("\tUL MU (Full BW): 0x%01x",
+		  WMI_HECAP_PHY_UL_MU_MIMO_GET(phy_cap));
+	WMA_LOGI("\tUL MU (Partial BW): 0x%01x",
+		  WMI_HECAP_PHY_ULMUMIMOOFDMA_GET(phy_cap));
 	WMA_LOGI("\tDCM encoding Tx: 0x%03x", WMI_HECAP_PHY_DCMTX_GET(phy_cap));
 	WMA_LOGI("\tDCM encoding Tx: 0x%03x", WMI_HECAP_PHY_DCMRX_GET(phy_cap));
 	WMA_LOGI("\tHE MU PPDU payload support: 0x%01x",
@@ -654,6 +663,13 @@ void wma_print_he_phy_cap(uint32_t *phy_cap)
 		WMI_HECAP_PHY_PWRBOOSTAR_GET(phy_cap));
 	WMA_LOGI("\t4x HE LTF support: 0x%01x",
 		WMI_HECAP_PHY_4XLTFAND800NSECSGI_GET(phy_cap));
+	WMA_LOGI("\tMax Nc supported: 0x%03x",
+		WMI_HECAP_PHY_MAXNC_GET(phy_cap));
+	WMA_LOGI("\tSTBC Tx & Rx support (BW > 80Mhz): 0x%02x",
+			(WMI_HECAP_PHY_STBCRXGT80_GET(phy_cap) << 1) |
+			 WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap));
+	WMA_LOGI("\tER 4x HE LTF support: 0x%01x",
+		 WMI_HECAP_PHY_ERSU4X800NSECGI_GET(phy_cap));
 }
 
 void wma_print_he_mac_cap(uint32_t mac_cap)
@@ -710,6 +726,12 @@ void wma_print_he_mac_cap(uint32_t mac_cap)
 	WMA_LOGI("\tQuite Time Period support: 0x%01x",
 		WMI_HECAP_MAC_QTP_GET(mac_cap));
 	WMA_LOGI("\tA-BQR support: 0x%01x", WMI_HECAP_MAC_ABQR_GET(mac_cap));
+	WMA_LOGI("\tSR Responder support: 0x%01x",
+		 WMI_HECAP_MAC_SRRESP_GET(mac_cap));
+	WMA_LOGI("\tOPS Support: 0x%01x",
+		 WMI_HECAP_MAC_OPS_GET(mac_cap));
+	WMA_LOGI("\tNDP Feedback Support: 0x%01x",
+		 WMI_HECAP_MAC_NDPFDBKRPT_GET(mac_cap));
 }
 
 void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
@@ -796,13 +818,13 @@ void wma_he_update_tgt_services(tp_wma_handle wma, struct wma_tgt_services *cfg)
 
 void wma_print_he_op(tDot11fIEvendor_he_op *he_ops)
 {
-	WMA_LOGI(FL("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x"),
+	WMA_LOGI(FL("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x, vht_oper_present: %0x"),
 		he_ops->bss_color, he_ops->default_pe,
-		he_ops->twt_required, he_ops->rts_threshold);
-	WMA_LOGI(("\tpartial_bss_color: %0x, MaxBSSID Indicator: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x, Dual beacon: %0x"),
-		he_ops->partial_bss_col, he_ops->maxbssid_ind,
-		he_ops->tx_bssid_ind, he_ops->bss_col_disabled,
-		he_ops->dual_beacon);
+		he_ops->twt_required, he_ops->rts_threshold,
+		he_ops->vht_oper_present);
+	WMA_LOGI(FL("\tpartial_bss_color: %0x, MBSSID AP: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x"),
+		he_ops->partial_bss_col, he_ops->mbssid_ap,
+		he_ops->tx_bssid_ind, he_ops->bss_col_disabled);
 }
 
 /**
@@ -952,6 +974,10 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_MAC_MBSS_SET(mac_cap, he_cap->rx_ctrl_frame);
 	WMI_HECAP_MAC_BSRPAMPDU_SET(mac_cap, he_cap->bsrp_ampdu_aggr);
 	WMI_HECAP_MAC_QTP_SET(mac_cap, he_cap->qtp);
+	WMI_HECAP_MAC_ABQR_SET(mac_cap, he_cap->a_bqr);
+	WMI_HECAP_MAC_SRRESP_SET(mac_cap, he_cap->sr_responder);
+	WMI_HECAP_MAC_OPS_SET(mac_cap, he_cap->ops_supp);
+	WMI_HECAP_MAC_NDPFDBKRPT_SET(mac_cap, he_cap->ndp_feedback_supp);
 	peer->peer_he_cap_macinfo = mac_cap;
 
 	/* HE PHY capabilities */
@@ -960,12 +986,12 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_PREAMBLEPUNCRX_SET(phy_cap, he_cap->rx_pream_puncturing);
 	WMI_HECAP_PHY_COD_SET(phy_cap, he_cap->device_class);
 	WMI_HECAP_PHY_LDPC_SET(phy_cap, he_cap->ldpc_coding);
-	WMI_HECAP_PHY_LTFGIFORHE_SET(phy_cap, he_cap->he_ltf_gi_ppdu);
-	WMI_HECAP_PHY_LTFGIFORNDP_SET(phy_cap, he_cap->he_ltf_gi_ndp);
+	WMI_HECAP_PHY_LTFGIFORHE_SET(phy_cap, he_cap->he_1x_ltf_800_gi_ppdu);
+	WMI_HECAP_PHY_LTFGIFORNDP_SET(phy_cap, he_cap->he_4x_ltf_3200_gi_ndp);
 
-	temp = he_cap->stbc & 0x1;
+	temp = he_cap->stbc_lt_80mhz & 0x1;
 	WMI_HECAP_PHY_RXSTBC_SET(phy_cap, temp);
-	temp = he_cap->stbc >> 0x1;
+	temp = he_cap->stbc_lt_80mhz >> 0x1;
 	WMI_HECAP_PHY_TXSTBC_SET(phy_cap, temp);
 
 	temp = he_cap->doppler & 0x1;
@@ -973,7 +999,11 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	temp = he_cap->doppler >> 0x1;
 	WMI_HECAP_PHY_TXDOPPLER_SET(phy_cap, temp);
 
-	WMI_HECAP_PHY_UL_MU_MIMO_SET(phy_cap, he_cap->ul_mu);
+	temp = he_cap->ul_mu & 0x1;
+	WMI_HECAP_PHY_UL_MU_MIMO_SET(phy_cap, temp);
+	temp = he_cap->ul_mu >>  0x1;
+	WMI_HECAP_PHY_ULMUMIMOOFDMA_SET(phy_cap, temp);
+
 	WMI_HECAP_PHY_DCMTX_SET(phy_cap, he_cap->dcm_enc_tx);
 	WMI_HECAP_PHY_DCMRX_SET(phy_cap, he_cap->dcm_enc_rx);
 	WMI_HECAP_PHY_ULHEMU_SET(phy_cap, he_cap->ul_he_mu);
@@ -981,9 +1011,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_SUBFME_SET(phy_cap, he_cap->su_beamformee);
 	WMI_HECAP_PHY_MUBFMR_SET(phy_cap, he_cap->mu_beamformer);
 	WMI_HECAP_PHY_BFMESTSLT80MHZ_SET(phy_cap, he_cap->bfee_sts_lt_80);
-	WMI_HECAP_PHY_NSTSLT80MHZ_SET(phy_cap, he_cap->nsts_tol_lt_80);
-	WMI_HECAP_PHY_BFMESTSGT80MHZ_SET(phy_cap, he_cap->bfee_sta_gt_80);
-	WMI_HECAP_PHY_NSTSGT80MHZ_SET(phy_cap, he_cap->nsts_tot_gt_80);
+	WMI_HECAP_PHY_BFMESTSGT80MHZ_SET(phy_cap, he_cap->bfee_sts_gt_80);
 	WMI_HECAP_PHY_NUMSOUNDLT80MHZ_SET(phy_cap, he_cap->num_sounding_lt_80);
 	WMI_HECAP_PHY_NUMSOUNDGT80MHZ_SET(phy_cap, he_cap->num_sounding_gt_80);
 	WMI_HECAP_PHY_NG16SUFEEDBACKLT80_SET(phy_cap,
@@ -999,7 +1027,16 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HECAP_PHY_PETHRESPRESENT_SET(phy_cap, he_cap->ppet_present);
 	WMI_HECAP_PHY_SRPPRESENT_SET(phy_cap, he_cap->srp);
 	WMI_HECAP_PHY_PWRBOOSTAR_SET(phy_cap, he_cap->power_boost);
-	WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(phy_cap, he_cap->he_ltf_gi_4x);
+	WMI_HECAP_PHY_4XLTFAND800NSECSGI_SET(phy_cap, he_cap->he_ltf_800_gi_4x);
+
+	WMI_HECAP_PHY_MAXNC_SET(phy_cap, he_cap->max_nc);
+
+	temp = he_cap->stbc_gt_80mhz & 0x1;
+	WMI_HECAP_PHY_STBCRXGT80_SET(phy_cap, temp);
+	temp = he_cap->stbc_gt_80mhz >> 0x1;
+	WMI_HECAP_PHY_STBCTXGT80_SET(phy_cap, temp);
+
+	WMI_HECAP_PHY_ERSU4X800NSECGI_SET(phy_cap, he_cap->er_he_ltf_800_gi_4x);
 
 	/* until further update in standard */
 	peer->peer_he_mcs_count = WMI_HOST_MAX_HE_RATE_SET;
@@ -1017,10 +1054,8 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
 	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
 	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
-	WMI_HEOPS_MAXBSSID_SET(he_ops, he_op->maxbssid_ind);
 	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
 	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
-	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
 	peer->peer_he_ops = he_ops;
 
 	wma_parse_he_ppet(&he_cap->ppe_threshold, &peer->peer_ppet);
@@ -1047,10 +1082,8 @@ void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
 	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
 	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
-	WMI_HEOPS_MAXBSSID_SET(he_ops, he_op->maxbssid_ind);
 	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
 	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
-	WMI_HEOPS_DUALBEACON_SET(he_ops, he_op->dual_beacon);
 
 	req->he_ops = he_ops;
 }

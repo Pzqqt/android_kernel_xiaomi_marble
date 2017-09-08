@@ -100,6 +100,13 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->bsrp_ampdu_aggr);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_QTP, he_cap->qtp);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_A_BQR, he_cap->a_bqr);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SR_RESPONDER,
+			   he_cap->sr_responder);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NDP_FEEDBACK_SUPP,
+			   he_cap->ndp_feedback_supp);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_OPS_SUPP,
+			   he_cap->ops_supp);
+
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DUAL_BAND, he_cap->dual_band);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CHAN_WIDTH, he_cap->chan_width);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_PREAM_PUNC,
@@ -108,9 +115,11 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->device_class);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LDPC, he_cap->ldpc_coding);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_PPDU,
-			   he_cap->he_ltf_gi_ppdu);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_NDP, he_cap->he_ltf_gi_ndp);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STBC, he_cap->stbc);
+			   he_cap->he_1x_ltf_800_gi_ppdu);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_NDP,
+			   he_cap->he_4x_ltf_3200_gi_ndp);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STBC_LT80,
+			   he_cap->stbc_lt_80mhz);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DOPPLER, he_cap->doppler);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_UL_MUMIMO, he_cap->ul_mu);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DCM_TX, he_cap->dcm_enc_tx);
@@ -124,12 +133,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->mu_beamformer);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_LT80,
 			   he_cap->bfee_sts_lt_80);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NSTS_TOT_LT80,
-			   he_cap->nsts_tol_lt_80);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_BFEE_STS_GT80,
-			   he_cap->bfee_sta_gt_80);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NSTS_TOT_GT80,
-			   he_cap->nsts_tot_gt_80);
+			   he_cap->bfee_sts_gt_80);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_LT80,
 			   he_cap->num_sounding_lt_80);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NUM_SOUND_GT80,
@@ -153,7 +158,13 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_SRP, he_cap->srp);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_POWER_BOOST,
 			   he_cap->power_boost);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_4x_LTF_GI, he_cap->he_ltf_gi_4x);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_4x_LTF_GI,
+			   he_cap->he_ltf_800_gi_4x);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MAX_NC, he_cap->max_nc);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STBC_GT80,
+			   he_cap->stbc_gt_80mhz);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_ER_4x_LTF_GI,
+			   he_cap->er_he_ltf_800_gi_4x);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NSS, he_cap->nss_supported);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MCS, he_cap->mcs_supported);
 

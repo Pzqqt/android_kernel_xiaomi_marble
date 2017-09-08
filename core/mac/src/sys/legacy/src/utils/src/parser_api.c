@@ -6040,6 +6040,13 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->qtp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_A_BQR, value);
 		he_cap->a_bqr = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_SR_RESPONDER, value);
+		he_cap->sr_responder = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NDP_FEEDBACK_SUPP,
+					     value);
+		he_cap->ndp_feedback_supp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OPS_SUPP, value);
+		he_cap->ops_supp = value;
 
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DUAL_BAND, value);
 		he_cap->dual_band = value;
@@ -6052,11 +6059,11 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LDPC, value);
 		he_cap->ldpc_coding = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_PPDU, value);
-		he_cap->he_ltf_gi_ppdu = value;
+		he_cap->he_1x_ltf_800_gi_ppdu = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_NDP, value);
-		he_cap->he_ltf_gi_ndp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC, value);
-		he_cap->stbc = value;
+		he_cap->he_4x_ltf_3200_gi_ndp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC_LT80, value);
+		he_cap->stbc_lt_80mhz = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DOPPLER, value);
 		he_cap->doppler = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_MUMIMO, value);
@@ -6075,12 +6082,8 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->mu_beamformer = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFEE_STS_LT80, value);
 		he_cap->bfee_sts_lt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NSTS_TOT_LT80, value);
-		he_cap->nsts_tol_lt_80 = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_BFEE_STS_GT80, value);
-		he_cap->bfee_sta_gt_80 = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NSTS_TOT_GT80, value);
-		he_cap->nsts_tot_gt_80 = value;
+		he_cap->bfee_sts_gt_80 = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NUM_SOUND_LT80, value);
 		he_cap->num_sounding_lt_80 = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NUM_SOUND_GT80, value);
@@ -6106,7 +6109,13 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_POWER_BOOST, value);
 		he_cap->power_boost = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_4x_LTF_GI, value);
-		he_cap->he_ltf_gi_4x = value;
+		he_cap->he_ltf_800_gi_4x = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_NC, value);
+		he_cap->max_nc = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC_GT80, value);
+		he_cap->stbc_gt_80mhz = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, value);
+		he_cap->er_he_ltf_800_gi_4x = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_NSS, value);
 		he_cap->nss_supported = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MCS, value);
@@ -6148,8 +6157,6 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
 			tpPESession session, tDot11fIEvendor_he_op *he_op)
 {
-	tDot11fIEvht_info *vht_info = &he_op->vht_info;
-
 	he_op->present = 1;
 
 	he_op->bss_color = session->he_op.bss_color;
@@ -6157,28 +6164,26 @@ QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
 	he_op->twt_required = session->he_op.twt_required;
 	he_op->rts_threshold = session->he_op.rts_threshold;
 	he_op->partial_bss_col = session->he_op.partial_bss_col;
-	he_op->maxbssid_ind = session->he_op.maxbssid_ind;
+	he_op->mbssid_ap = session->he_op.mbssid_ap;
 	he_op->tx_bssid_ind = session->he_op.tx_bssid_ind;
 	he_op->bss_col_disabled = session->he_op.bss_col_disabled;
-	he_op->dual_beacon = session->he_op.dual_beacon;
 
-	vht_info->present = 1;
+	he_op->vht_oper_present = 1;
 	if (session->ch_width > CH_WIDTH_40MHZ) {
-		vht_info->chan_width = 1;
-		vht_info->center_freq_seg0 =
+		he_op->vht_oper.info.chan_width = 1;
+		he_op->vht_oper.info.center_freq_seg0 =
 			session->ch_center_freq_seg0;
 		if (session->ch_width == CH_WIDTH_80P80MHZ ||
 				session->ch_width == CH_WIDTH_160MHZ)
-			vht_info->center_freq_seg1 =
+			he_op->vht_oper.info.center_freq_seg1 =
 				session->ch_center_freq_seg1;
 		else
-			vht_info->center_freq_seg1 = 0;
+			he_op->vht_oper.info.center_freq_seg1 = 0;
 	} else {
-		vht_info->chan_width = 0;
-		vht_info->center_freq_seg0 = 0;
-		vht_info->center_freq_seg1 = 0;
+		he_op->vht_oper.info.chan_width = 0;
+		he_op->vht_oper.info.center_freq_seg0 = 0;
+		he_op->vht_oper.info.center_freq_seg1 = 0;
 	}
-
 	lim_log_he_op(mac_ctx, he_op);
 
 	return QDF_STATUS_SUCCESS;
