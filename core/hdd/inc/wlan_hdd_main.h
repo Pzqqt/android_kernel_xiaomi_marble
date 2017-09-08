@@ -1891,9 +1891,6 @@ struct hdd_channel_info {
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 				uint32_t chan_number,
 				enum phy_ch_width chan_bw);
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-void wlan_hdd_check_sta_ap_concurrent_ch_intf(void *sta_pAdapter);
-#endif
 
 const char *hdd_device_mode_to_string(uint8_t device_mode);
 
