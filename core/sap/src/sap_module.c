@@ -505,38 +505,6 @@ QDF_STATUS wlansap_close(void *pCtx)
 	return QDF_STATUS_SUCCESS;
 } /* wlansap_close */
 
-/*==========================================================================
-   FUNCTION    wlansap_pmc_full_pwr_req_cb
-
-   DESCRIPTION
-    Callback provide to PMC in the pmc_request_full_power API.
-
-   DEPENDENCIES
-
-   PARAMETERS
-
-    IN
-    callbackContext:  The user passed in a context to identify
-    status : The qdf_ret_status
-
-   RETURN VALUE
-    None
-
-   SIDE EFFECTS
-   ============================================================================*/
-void
-wlansap_pmc_full_pwr_req_cb(void *callbackContext, QDF_STATUS status)
-{
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		/* If success what else to be handled??? */
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  "wlansap_pmc_full_pwr_req_cb: PMC failed to put the chip in Full power");
-
-	}
-
-} /* wlansap_pmc_full_pwr_req_cb */
-
 bool wlansap_is_channel_in_nol_list(void *p_cds_gctx,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState)

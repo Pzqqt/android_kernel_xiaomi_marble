@@ -330,9 +330,6 @@ wlansap_roam_callback
 QDF_STATUS SapFsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
 
-void
-wlansap_pmc_full_pwr_req_cb(void *callbackContext, QDF_STATUS status);
-
 uint8_t sap_select_channel(tHalHandle halHandle, ptSapContext pSapCtx,
 			   tScanResultHandle pScanResult);
 
