@@ -965,8 +965,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
 	uint32_t targetChannel, enum phy_ch_width target_bw, bool strict);
 QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
-QDF_STATUS wlansap_get_assoc_stations(void *p_cds_gctx,
-	 QDF_MODULE_ID module, tpSap_AssocMacAddr pAssocStas);
 QDF_STATUS wlansap_remove_wps_session_overlap(void *p_cds_gctx,
 	struct qdf_mac_addr pRemoveMac);
 QDF_STATUS wlansap_get_wps_session_overlap(void *p_cds_gctx);

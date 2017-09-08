@@ -1089,48 +1089,6 @@ QDF_STATUS wlansap_stop_bss(void *pCtx)
 }
 
 /**
- * wlansap_get_assoc_stations() - get list of associated stations.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @modId: Module from whom list of associtated stations  is supposed to be
- *         probed. If an invalid module is passed then by default
- *         QDF_MODULE_ID_PE will be probed
- * @pAssocStas: Pointer to list of associated stations that are known to the
- *              module specified in mod parameter
- *
- * This api function is used to probe the list of associated stations from
- * various modules of CORE stack
- * NOTE: The memory for this list will be allocated by the caller of this API
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS
-wlansap_get_assoc_stations
-	(void *pCtx, QDF_MODULE_ID modId, tpSap_AssocMacAddr pAssocStas) {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
-
-	/*------------------------------------------------------------------------
-	   Sanity check
-	   Extract SAP control block
-	   ------------------------------------------------------------------------*/
-	if (NULL == pSapCtx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	sme_roam_get_associated_stas(CDS_GET_HAL_CB(pSapCtx->p_cds_gctx),
-				     pSapCtx->sessionId, modId,
-				     pSapCtx->pUsrContext,
-				     (void **) pSapCtx->pfnSapEventCallback,
-				     (uint8_t *) pAssocStas);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wlansap_remove_wps_session_overlap() - remove overlapping wps session.
  * @pCtx: Pointer to the global cds context; a handle to SAP's control block
  *        can be extracted from its context. When MBSSID feature is enabled,
