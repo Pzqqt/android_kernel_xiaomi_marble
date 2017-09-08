@@ -2804,7 +2804,7 @@ IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
 
 const SUB_EID_PPET = 1;
 
-IE vendor_he_cap (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x01)
+IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
 {
     {
       htc_he:1;
@@ -2899,7 +2899,7 @@ IE vendor_he_cap (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x01)
     }
 }
 
-IE vendor_he_op (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x02)
+IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)
 {
     {
         bss_color: 6;
@@ -3397,8 +3397,8 @@ FRAME Beacon                              // C.f. Sec. 7.2.3.1
     OPTIE  ESEVersion;
     OPTIE  MBO_IE;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
-    OPTIE  vendor_he_op;
+    OPTIE  he_cap;
+    OPTIE  he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
@@ -3492,8 +3492,8 @@ FRAME Beacon2
     OPTIE  QComVendorIE;
     OPTIE  ESEVersion;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
-    OPTIE  vendor_he_op;
+    OPTIE  he_cap;
+    OPTIE  he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
@@ -3564,8 +3564,8 @@ FRAME BeaconIEs
     OPTIE  QComVendorIE;
     OPTIE  MBO_IE;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
-    OPTIE  vendor_he_op;
+    OPTIE  he_cap;
+    OPTIE  he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
@@ -3614,7 +3614,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
+    OPTIE  he_cap;
     OPTIE  MBO_IE;
     OPTIE  osen_ie;
 } // End frame AssocRequest.
@@ -3658,8 +3658,8 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  fils_kde;
     OPTIE  vendor_vht_ie;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
-    OPTIE  vendor_he_op;
+    OPTIE  he_cap;
+    OPTIE  he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  MBO_IE;
@@ -3701,7 +3701,7 @@ FRAME ReAssocRequest                      // 7.2.3.6
     OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
     OPTIE  hs20vendor_ie;
-    OPTIE  vendor_he_cap;
+    OPTIE  he_cap;
 } // End frame ReAssocRequest.
 
 FRAME ReAssocResponse                     // 7.2.3.7
@@ -3737,8 +3737,8 @@ FRAME ReAssocResponse                     // 7.2.3.7
     OPTIE  OBSSScanParameters;
     OPTIE  QosMapSet;
     OPTIE  vendor_vht_ie;
-    OPTIE  vendor_he_cap;
-    OPTIE  vendor_he_op;
+    OPTIE  he_cap;
+    OPTIE  he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  MBO_IE;
@@ -3758,7 +3758,7 @@ FRAME ProbeRequest                        // 7.2.3.8
     OPTIE  VHTCaps;
     OPTIE  ExtCap;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
+    OPTIE  he_cap;
 } // End frame ProbeRequest.
 
 FRAME ProbeResponse                       // 7.2.3.9
@@ -3819,8 +3819,8 @@ FRAME ProbeResponse                       // 7.2.3.9
     OPTIE  ESEVersion;
     OPTIE  MBO_IE;
     OPTIE  QCN_IE;
-    OPTIE  vendor_he_cap;
-    OPTIE  vendor_he_op;
+    OPTIE  he_cap;
+    OPTIE  he_op;
     OPTIE  bss_color_change;
     OPTIE  mu_edca_param_set;
     OPTIE  esp_information;
