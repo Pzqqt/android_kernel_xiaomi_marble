@@ -1959,7 +1959,6 @@ void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 
 void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy);
 QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *pAdapter);
-QDF_STATUS wlan_hdd_restart_driver(struct hdd_context *hdd_ctx);
 void hdd_exchange_version_and_caps(struct hdd_context *hdd_ctx);
 int wlan_hdd_validate_context(struct hdd_context *hdd_ctx);
 
