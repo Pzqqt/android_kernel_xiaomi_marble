@@ -132,9 +132,6 @@ void hdd_set_ap_ops(struct net_device *pWlanHostapdDev);
 int hdd_hostapd_stop(struct net_device *dev);
 int hdd_sap_context_init(struct hdd_context *hdd_ctx);
 void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);
-#ifdef FEATURE_WLAN_FORCE_SAP_SCC
-void hdd_restart_softap(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter);
-#endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 #ifdef QCA_HT_2040_COEX
 QDF_STATUS hdd_set_sap_ht2040_mode(struct hdd_adapter *pHostapdAdapter,
 				   uint8_t channel_type);
