@@ -2350,15 +2350,6 @@ static inline void hdd_set_tso_flags(struct hdd_context *hdd_ctx,
 	 struct net_device *wlan_dev){}
 #endif /* FEATURE_TSO */
 
-#if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH) || \
-	defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
-void wlan_hdd_restart_sap(struct hdd_adapter *ap_adapter);
-#else
-static inline void wlan_hdd_restart_sap(struct hdd_adapter *ap_adapter)
-{
-}
-#endif
-
 void hdd_get_ibss_peer_info_cb(void *pUserData,
 				tSirPeerInfoRspParams *pPeerInfo);
 
