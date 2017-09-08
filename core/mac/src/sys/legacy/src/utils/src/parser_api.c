@@ -2174,9 +2174,9 @@ sir_convert_probe_req_frame2_struct(tpAniSirGlobal pMac,
 	if (pr.P2PProbeReq.present) {
 		pProbeReq->p2pIePresent = 1;
 	}
-	if (pr.vendor_he_cap.present) {
-		qdf_mem_copy(&pProbeReq->vendor_he_cap, &pr.vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+	if (pr.he_cap.present) {
+		qdf_mem_copy(&pProbeReq->he_cap, &pr.he_cap,
+			     sizeof(tDot11fIEhe_cap));
 		pe_debug("11AX: HE cap IE present");
 	}
 	return eSIR_SUCCESS;
@@ -2613,15 +2613,15 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		}
 	}
 
-	if (pr->vendor_he_cap.present) {
+	if (pr->he_cap.present) {
 		pe_debug("11AX: HE cap IE present");
-		qdf_mem_copy(&pProbeResp->vendor_he_cap, &pr->vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+		qdf_mem_copy(&pProbeResp->he_cap, &pr->he_cap,
+			     sizeof(tDot11fIEhe_cap));
 	}
-	if (pr->vendor_he_op.present) {
+	if (pr->he_op.present) {
 		pe_debug("11AX: HE operation IE present");
-		qdf_mem_copy(&pProbeResp->vendor_he_op, &pr->vendor_he_op,
-			     sizeof(tDot11fIEvendor_he_op));
+		qdf_mem_copy(&pProbeResp->he_op, &pr->he_op,
+			     sizeof(tDot11fIEhe_op));
 	}
 
 	qdf_mem_free(pr);
@@ -2815,9 +2815,9 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 			lim_log_vht_cap(pMac, &pAssocReq->VHTCaps);
 		}
 	}
-	if (ar->vendor_he_cap.present) {
-		qdf_mem_copy(&pAssocReq->he_cap, &ar->vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+	if (ar->he_cap.present) {
+		qdf_mem_copy(&pAssocReq->he_cap, &ar->he_cap,
+			     sizeof(tDot11fIEhe_cap));
 		pe_debug("Received Assoc Req with HE Capability IE");
 	}
 	qdf_mem_free(ar);
@@ -3139,15 +3139,15 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		lim_log_vht_operation(pMac, &pAssocRsp->VHTOperation);
 	}
 
-	if (ar->vendor_he_cap.present) {
+	if (ar->he_cap.present) {
 		pe_debug("11AX: HE cap IE present");
-		qdf_mem_copy(&pAssocRsp->vendor_he_cap, &ar->vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+		qdf_mem_copy(&pAssocRsp->he_cap, &ar->he_cap,
+			     sizeof(tDot11fIEhe_cap));
 	}
-	if (ar->vendor_he_op.present) {
+	if (ar->he_op.present) {
 		pe_debug("11AX: HE Operation IE present");
-		qdf_mem_copy(&pAssocRsp->vendor_he_op, &ar->vendor_he_op,
-			     sizeof(tDot11fIEvendor_he_op));
+		qdf_mem_copy(&pAssocRsp->he_op, &ar->he_op,
+			     sizeof(tDot11fIEhe_op));
 	}
 
 	if (ar->MBO_IE.present && ar->MBO_IE.rssi_assoc_rej.present) {
@@ -3325,9 +3325,9 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 			ext_cap->timing_meas, ext_cap->fine_time_meas_initiator,
 			ext_cap->fine_time_meas_responder);
 	}
-	if (ar.vendor_he_cap.present) {
-		qdf_mem_copy(&pAssocReq->he_cap, &ar.vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+	if (ar.he_cap.present) {
+		qdf_mem_copy(&pAssocReq->he_cap, &ar.he_cap,
+			     sizeof(tDot11fIEhe_cap));
 	}
 
 	return eSIR_SUCCESS;
@@ -3900,15 +3900,15 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		}
 	}
 
-	if (pBies->vendor_he_cap.present) {
-		qdf_mem_copy(&pBeaconStruct->vendor_he_cap,
-			     &pBies->vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+	if (pBies->he_cap.present) {
+		qdf_mem_copy(&pBeaconStruct->he_cap,
+			     &pBies->he_cap,
+			     sizeof(tDot11fIEhe_cap));
 	}
-	if (pBies->vendor_he_op.present) {
-		qdf_mem_copy(&pBeaconStruct->vendor_he_op,
-			     &pBies->vendor_he_op,
-			     sizeof(tDot11fIEvendor_he_op));
+	if (pBies->he_op.present) {
+		qdf_mem_copy(&pBeaconStruct->he_op,
+			     &pBies->he_op,
+			     sizeof(tDot11fIEhe_op));
 	}
 
 	qdf_mem_free(pBies);
@@ -4266,17 +4266,17 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		}
 	}
 
-	if (pBeacon->vendor_he_cap.present) {
+	if (pBeacon->he_cap.present) {
 		pe_debug("11AX: HE cap IE present");
-		qdf_mem_copy(&pBeaconStruct->vendor_he_cap,
-			     &pBeacon->vendor_he_cap,
-			     sizeof(tDot11fIEvendor_he_cap));
+		qdf_mem_copy(&pBeaconStruct->he_cap,
+			     &pBeacon->he_cap,
+			     sizeof(tDot11fIEhe_cap));
 	}
-	if (pBeacon->vendor_he_op.present) {
+	if (pBeacon->he_op.present) {
 		pe_debug("11AX: HE operation IE present");
-		qdf_mem_copy(&pBeaconStruct->vendor_he_op,
-			     &pBeacon->vendor_he_op,
-			     sizeof(tDot11fIEvendor_he_op));
+		qdf_mem_copy(&pBeaconStruct->he_op,
+			     &pBeacon->he_op,
+			     sizeof(tDot11fIEhe_op));
 	}
 
 	qdf_mem_free(pBeacon);
@@ -5978,7 +5978,7 @@ tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
  * Populdate the HE capability IE based on the session.
  */
 QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
-				   tDot11fIEvendor_he_cap *he_cap)
+				   tDot11fIEhe_cap *he_cap)
 {
 	uint32_t value = 0;
 	tSirRetStatus status;
@@ -6155,7 +6155,7 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
  * Populdate the HE Operation IE based on the session.
  */
 QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
-			tpPESession session, tDot11fIEvendor_he_op *he_op)
+			tpPESession session, tDot11fIEhe_op *he_op)
 {
 	he_op->present = 1;
 

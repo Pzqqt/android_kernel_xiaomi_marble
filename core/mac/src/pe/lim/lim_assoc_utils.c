@@ -1499,7 +1499,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
 		uint8_t basic_only, tpPESession session_entry,
 		struct sDot11fIEVHTCaps *vht_caps,
-		struct sDot11fIEvendor_he_cap *he_caps)
+		struct sDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -1642,7 +1642,7 @@ tSirRetStatus
 lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
 		uint8_t basicOnly, tpPESession psessionEntry,
-		tDot11fIEVHTCaps *pVHTCaps, tDot11fIEvendor_he_cap *he_caps)
+		tDot11fIEVHTCaps *pVHTCaps, tDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet tempRateSet;
 	tSirMacRateSet tempRateSet2;
@@ -1827,7 +1827,7 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
 					     uint8_t *supported_mcs_set,
 					     tpPESession session_entry,
 					     tDot11fIEVHTCaps *vht_caps,
-					     tDot11fIEvendor_he_cap *he_caps)
+					     tDot11fIEhe_cap *he_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -3700,7 +3700,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			pAddBssParams->ch_center_freq_seg1);
 
 	if (lim_is_session_he_capable(psessionEntry) &&
-			(pAssocRsp->vendor_he_cap.present)) {
+			(pAssocRsp->he_cap.present)) {
 		lim_add_bss_he_cap(pAddBssParams, pAssocRsp);
 		lim_add_bss_he_cfg(pAddBssParams, psessionEntry);
 	}
@@ -3785,7 +3785,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				sta_context->enable_su_tx_bformer = 1;
 		}
 		if (lim_is_session_he_capable(psessionEntry) &&
-			pAssocRsp->vendor_he_cap.present)
+			pAssocRsp->he_cap.present)
 			lim_intersect_ap_he_caps(psessionEntry, pAddBssParams,
 					      NULL, pAssocRsp);
 
@@ -4245,7 +4245,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	}
 
 	if (lim_is_session_he_capable(psessionEntry) &&
-	    pBeaconStruct->vendor_he_cap.present) {
+	    pBeaconStruct->he_cap.present) {
 		lim_update_bss_he_capable(pMac, pAddBssParams);
 		lim_add_bss_he_cfg(pAddBssParams, psessionEntry);
 	}
@@ -4322,7 +4322,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 				pAddBssParams->staContext.enable_su_tx_bformer);
 		}
 		if (lim_is_session_he_capable(psessionEntry) &&
-			pBeaconStruct->vendor_he_cap.present)
+			pBeaconStruct->he_cap.present)
 			lim_intersect_ap_he_caps(psessionEntry, pAddBssParams,
 					      pBeaconStruct, NULL);
 
@@ -4440,7 +4440,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			pBeaconStruct->HTCaps.supportedMCSSet,
 			false, psessionEntry,
 			&pBeaconStruct->VHTCaps,
-			&pBeaconStruct->vendor_he_cap);
+			&pBeaconStruct->he_cap);
 
 	pAddBssParams->staContext.encryptType = psessionEntry->encryptType;
 

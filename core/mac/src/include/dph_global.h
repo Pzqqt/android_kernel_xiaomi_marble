@@ -269,7 +269,7 @@ typedef struct sDphHashNode {
 	uint8_t non_ecsa_capable;
 
 #ifdef WLAN_FEATURE_11AX
-	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEhe_cap he_config;
 #endif
 
 	/*

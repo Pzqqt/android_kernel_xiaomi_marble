@@ -196,7 +196,7 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  *
  * Return: None
  */
-static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
+static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 			       uint32_t *phy_cap, void *he_ppet,
 			       uint32_t supp_mcs, uint32_t tx_chain_mask,
 			       uint32_t rx_chain_mask)
@@ -318,7 +318,7 @@ static void wma_convert_he_cap(tDot11fIEvendor_he_cap *he_cap, uint32_t mac_cap,
  * Return: none
  */
 static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
-		tDot11fIEvendor_he_cap *he_cap, tDot11fIEvendor_he_cap *new_cap)
+		tDot11fIEhe_cap *he_cap, tDot11fIEhe_cap *new_cap)
 {
 	if (!he_cap->present) {
 		/* First time update, copy the capability as is */
@@ -457,7 +457,7 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 	}
 }
 
-void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
+void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 {
 	if (!he_cap->present) {
 		WMA_LOGI(FL("HE Capabilities not present"));
@@ -737,12 +737,12 @@ void wma_print_he_mac_cap(uint32_t mac_cap)
 void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				  struct wma_tgt_cfg *tgt_cfg)
 {
-	tDot11fIEvendor_he_cap *he_cap = &tgt_cfg->he_cap;
+	tDot11fIEhe_cap *he_cap = &tgt_cfg->he_cap;
 	int i, j = 0, max_mac;
 	struct extended_caps *phy_caps;
 	WMI_MAC_PHY_CAPABILITIES *mac_cap;
-	tDot11fIEvendor_he_cap he_cap_mac;
-	tDot11fIEvendor_he_cap tmp_he_cap = {0};
+	tDot11fIEhe_cap he_cap_mac;
+	tDot11fIEhe_cap tmp_he_cap = {0};
 
 	if (!wma_handle ||
 		(0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes)) {
@@ -765,7 +765,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 			max_mac = j + 1;
 		for ( ; j < max_mac; j++) {
 			qdf_mem_zero(&he_cap_mac,
-				     sizeof(tDot11fIEvendor_he_cap));
+				     sizeof(tDot11fIEhe_cap));
 			mac_cap = &phy_caps->each_phy_cap_per_hwmode[j];
 			if (mac_cap->supported_bands & WLAN_2G_CAPABILITY) {
 				wma_convert_he_cap(&he_cap_mac,
@@ -783,7 +783,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 					&he_cap_mac);
 
 			qdf_mem_zero(&he_cap_mac,
-				     sizeof(tDot11fIEvendor_he_cap));
+				     sizeof(tDot11fIEhe_cap));
 			if (mac_cap->supported_bands & WLAN_5G_CAPABILITY) {
 				wma_convert_he_cap(&he_cap_mac,
 						mac_cap->he_cap_info_5G,
@@ -816,7 +816,7 @@ void wma_he_update_tgt_services(tp_wma_handle wma, struct wma_tgt_services *cfg)
 	}
 }
 
-void wma_print_he_op(tDot11fIEvendor_he_op *he_ops)
+void wma_print_he_op(tDot11fIEhe_op *he_ops)
 {
 	WMA_LOGI(FL("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x, vht_oper_present: %0x"),
 		he_ops->bss_color, he_ops->default_pe,
@@ -937,8 +937,8 @@ static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
 void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 			      tpAddStaParams params)
 {
-	tDot11fIEvendor_he_cap *he_cap = &params->he_config;
-	tDot11fIEvendor_he_op *he_op = &params->he_op;
+	tDot11fIEhe_cap *he_cap = &params->he_config;
+	tDot11fIEhe_op *he_op = &params->he_op;
 	uint32_t *phy_cap = peer->peer_he_cap_phyinfo;
 	uint32_t mac_cap = 0, he_ops = 0;
 	uint8_t temp, i;
@@ -1073,7 +1073,7 @@ void wma_update_vdev_he_ops(struct wma_vdev_start_req *req,
 		tpAddBssParams add_bss)
 {
 	uint32_t he_ops = 0;
-	tDot11fIEvendor_he_op *he_op = &add_bss->he_op;
+	tDot11fIEhe_op *he_op = &add_bss->he_op;
 
 	req->he_capable = add_bss->he_capable;
 

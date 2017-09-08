@@ -330,8 +330,8 @@ typedef struct {
 	uint32_t nss;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
-	tDot11fIEvendor_he_cap he_config;
-	tDot11fIEvendor_he_op he_op;
+	tDot11fIEhe_cap he_config;
+	tDot11fIEhe_op he_op;
 #endif
 	uint8_t max_amsdu_num;
 } tAddStaParams, *tpAddStaParams;
@@ -530,8 +530,8 @@ typedef struct {
 	uint32_t rx_aggregation_size;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
-	tDot11fIEvendor_he_cap he_config;
-	tDot11fIEvendor_he_op he_op;
+	tDot11fIEhe_cap he_config;
+	tDot11fIEhe_op he_op;
 	uint32_t he_sta_obsspd;
 #endif
 	uint32_t cac_duration_ms;

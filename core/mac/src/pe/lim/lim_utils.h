@@ -875,7 +875,7 @@ void lim_copy_join_req_he_cap(tpPESession session,
  *
  * Return: None
  */
-void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops);
+void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEhe_op *he_ops);
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 /**
@@ -902,7 +902,7 @@ void lim_log_he_bss_color(tpAniSirGlobal mac,
  *
  * Return: None
  */
-void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap);
+void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap);
 
 /**
  * lim_update_stads_he_caps() - Copy HE capability into STA DPH hash table entry
@@ -1033,7 +1033,7 @@ QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
  * Return: QDF_STATUS
  */
 QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
-		tpSirSupportedRates rates, tDot11fIEvendor_he_cap *peer_he_caps,
+		tpSirSupportedRates rates, tDot11fIEhe_cap *peer_he_caps,
 		tpPESession session_entry, uint8_t nss);
 
 #else
@@ -1097,12 +1097,12 @@ static inline void lim_copy_join_req_he_cap(tpPESession session,
 }
 
 static inline void lim_log_he_op(tpAniSirGlobal mac,
-	tDot11fIEvendor_he_op *he_ops)
+	tDot11fIEhe_op *he_ops)
 {
 }
 
 static inline void lim_log_he_cap(tpAniSirGlobal mac,
-	tDot11fIEvendor_he_cap *he_cap)
+	tDot11fIEhe_cap *he_cap)
 {
 }
 
@@ -1156,7 +1156,7 @@ static inline QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx,
 
 static inline QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 				tpSirSupportedRates rates,
-				tDot11fIEvendor_he_cap *peer_he_caps,
+				tDot11fIEhe_cap *peer_he_caps,
 				tpPESession session_entry, uint8_t nss)
 {
 	return QDF_STATUS_SUCCESS;

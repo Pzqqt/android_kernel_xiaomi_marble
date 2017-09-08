@@ -2262,7 +2262,7 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 			struct csr_roam_session *session)
 {
 	uint32_t value = 0;
-	tDot11fIEvendor_he_cap *he_cap = &session->he_config;
+	tDot11fIEhe_cap *he_cap = &session->he_config;
 
 	he_cap->present = true;
 

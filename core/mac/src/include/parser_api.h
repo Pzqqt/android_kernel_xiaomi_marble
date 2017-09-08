@@ -282,8 +282,8 @@ typedef struct sSirProbeRespBeacon {
 	bool assoc_disallowed;
 	uint8_t assoc_disallowed_reason;
 	tSirQCNIE QCN_IE;
-	tDot11fIEvendor_he_cap vendor_he_cap;
-	tDot11fIEvendor_he_op vendor_he_op;
+	tDot11fIEhe_cap he_cap;
+	tDot11fIEhe_op he_op;
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 	tDot11fIEbss_color_change vendor_he_bss_color_change;
 #endif
@@ -305,7 +305,7 @@ typedef struct sSirProbeReq {
 	uint8_t wscIePresent;
 	uint8_t p2pIePresent;
 	tDot11fIEVHTCaps VHTCaps;
-	tDot11fIEvendor_he_cap vendor_he_cap;
+	tDot11fIEhe_cap he_cap;
 } tSirProbeReq, *tpSirProbeReq;
 
 /* / Association Request structure (one day to be replaced by */
@@ -359,7 +359,7 @@ typedef struct sSirAssocReq {
 	tDot11fIEExtCap ExtCap;
 	tDot11fIEvendor_vht_ie vendor_vht_ie;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
-	tDot11fIEvendor_he_cap he_cap;
+	tDot11fIEhe_cap he_cap;
 } tSirAssocReq, *tpSirAssocReq;
 
 /* / Association Response structure (one day to be replaced by */
@@ -412,8 +412,8 @@ typedef struct sSirAssocRsp {
 	tDot11fIEOBSSScanParameters obss_scanparams;
 	tDot11fTLVrssi_assoc_rej rssi_assoc_rej;
 	tSirQCNIE QCN_IE;
-	tDot11fIEvendor_he_cap vendor_he_cap;
-	tDot11fIEvendor_he_op vendor_he_op;
+	tDot11fIEhe_cap he_cap;
+	tDot11fIEhe_op he_op;
 #ifdef WLAN_FEATURE_FILS_SK
 	tDot11fIEfils_session fils_session;
 	tDot11fIEfils_key_confirmation fils_key_auth;
@@ -1155,9 +1155,9 @@ void update_fils_data(struct sir_fils_indication *fils_ind,
 #endif
 #ifdef WLAN_FEATURE_11AX
 QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal , tpPESession ,
-				   tDot11fIEvendor_he_cap *);
+				   tDot11fIEhe_cap *);
 QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal , tpPESession ,
-					tDot11fIEvendor_he_op *);
+					tDot11fIEhe_op *);
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 QDF_STATUS populate_dot11f_he_bss_color_change(tpAniSirGlobal mac_ctx,
 				tpPESession session,
@@ -1173,13 +1173,13 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 #endif
 #else
 static inline QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx,
-			tpPESession session, tDot11fIEvendor_he_cap *he_cap)
+			tpPESession session, tDot11fIEhe_cap *he_cap)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
 static inline QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
-			tpPESession session, tDot11fIEvendor_he_op *he_op)
+			tpPESession session, tDot11fIEhe_op *he_op)
 {
 	return QDF_STATUS_SUCCESS;
 }
