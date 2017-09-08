@@ -893,8 +893,6 @@ void sapCleanupAllChannelList(void);
  */
 bool sap_is_auto_channel_select(void *pvos_gctx);
 
-QDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
-QDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
 QDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
 void *wlansap_open(void *p_cds_gctx);
 QDF_STATUS wlansap_global_init(void);
