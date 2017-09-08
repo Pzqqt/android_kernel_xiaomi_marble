@@ -1991,7 +1991,6 @@ bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 struct qdf_mac_addr *
 hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *pAdapter,
 				      uint8_t staIdx);
-void hdd_checkandupdate_phymode(struct hdd_context *hdd_ctx);
 #ifdef MSM_PLATFORM
 /**
  * hdd_bus_bw_compute_timer_start() - start the bandwidth timer
