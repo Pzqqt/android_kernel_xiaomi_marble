@@ -4539,7 +4539,9 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 		}
 
-		hdd_clear_fils_connection_info(adapter);
+		if (adapter->device_mode == QDF_STA_MODE)
+			hdd_clear_fils_connection_info(adapter);
+
 		if (adapter->device_mode == QDF_SAP_MODE) {
 			/*
 			 * If adapter is SAP, set session ID to invalid
