@@ -85,6 +85,7 @@
 #include "wlan_hdd_he.h"
 #include "wlan_dfs_tgt_api.h"
 #include <wlan_reg_ucfg_api.h>
+#include "wlan_utility.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -6811,10 +6812,10 @@ static bool wlan_hdd_get_sap_obss(struct hdd_adapter *pHostapdAdapter)
 	tDot11fIEHTCaps dot11_ht_cap_ie = {0};
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	beacon_data_t *beacon = pHostapdAdapter->sessionCtx.ap.beacon;
-	uint8_t *ie = NULL;
+	const uint8_t *ie = NULL;
 
-	ie = wlan_hdd_cfg80211_get_ie_ptr(beacon->tail, beacon->tail_len,
-						WLAN_EID_HT_CAPABILITY);
+	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
+					beacon->tail, beacon->tail_len);
 	if (ie && ie[1]) {
 		qdf_mem_copy(ht_cap_ie, &ie[2], DOT11F_IE_HTCAPS_MAX_LEN);
 		dot11f_unpack_ie_ht_caps((tpAniSirGlobal)hdd_ctx->hHal,
@@ -7023,8 +7024,8 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
  *
  * Return: none
  */
-static void wlan_hdd_check_11gmode(u8 *pIe, u8 *require_ht, u8 *require_vht,
-				   u8 *pCheckRatesfor11g,
+static void wlan_hdd_check_11gmode(const u8 *pIe, u8 *require_ht,
+				   u8 *require_vht, u8 *pCheckRatesfor11g,
 				   eCsrPhyMode *pSapHw_mode)
 {
 	u8 i, num_rates = pIe[0];
@@ -7449,21 +7450,21 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *pHostapdAdapter)
 		(struct ieee80211_mgmt *)pBeacon->head;
 	u8 checkRatesfor11g = true;
 	u8 require_ht = false, require_vht = false;
-	u8 *pIe = NULL;
+	const u8 *pIe = NULL;
 
 	pConfig->SapHw_mode = eCSR_DOT11_MODE_11b;
 
-	pIe = wlan_hdd_cfg80211_get_ie_ptr(&pMgmt_frame->u.beacon.variable[0],
-					   pBeacon->head_len,
-					   WLAN_EID_SUPP_RATES);
+	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
+				       &pMgmt_frame->u.beacon.variable[0],
+				       pBeacon->head_len);
 	if (pIe != NULL) {
 		pIe += 1;
 		wlan_hdd_check_11gmode(pIe, &require_ht, &require_vht,
 			&checkRatesfor11g, &pConfig->SapHw_mode);
 	}
 
-	pIe = wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail, pBeacon->tail_len,
-					   WLAN_EID_EXT_SUPP_RATES);
+	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_EXT_SUPP_RATES,
+					pBeacon->tail, pBeacon->tail_len);
 	if (pIe != NULL) {
 		pIe += 1;
 		wlan_hdd_check_11gmode(pIe, &require_ht, &require_vht,
@@ -7473,18 +7474,16 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *pHostapdAdapter)
 	if (pConfig->channel > 14)
 		pConfig->SapHw_mode = eCSR_DOT11_MODE_11a;
 
-	pIe = wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail, pBeacon->tail_len,
-					   WLAN_EID_HT_CAPABILITY);
-
+	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
+					pBeacon->tail, pBeacon->tail_len);
 	if (pIe) {
 		pConfig->SapHw_mode = eCSR_DOT11_MODE_11n;
 		if (require_ht)
 			pConfig->SapHw_mode = eCSR_DOT11_MODE_11n_ONLY;
 	}
 
-	pIe = wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail, pBeacon->tail_len,
-					   WLAN_EID_VHT_CAPABILITY);
-
+	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_VHT_CAPABILITY,
+					pBeacon->tail, pBeacon->tail_len);
 	if (pIe) {
 		pConfig->SapHw_mode = eCSR_DOT11_MODE_11ac;
 		if (require_vht)
@@ -7494,7 +7493,6 @@ static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *pHostapdAdapter)
 	wlan_hdd_check_11ax_support(pBeacon, pConfig);
 
 	hdd_info("SAP hw_mode: %d", pConfig->SapHw_mode);
-
 }
 
 /**
@@ -7799,7 +7797,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 	tsap_Config_t *pConfig;
 	beacon_data_t *pBeacon = NULL;
 	struct ieee80211_mgmt *pMgmt_frame;
-	uint8_t *pIe = NULL;
+	const uint8_t *pIe = NULL;
 	uint16_t capab_info;
 	eCsrAuthType RSNAuthType;
 	eCsrEncryptionType RSNEncryptType;
@@ -7893,10 +7891,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 		pConfig->dtim_period);
 
 	if (pHostapdAdapter->device_mode == QDF_SAP_MODE) {
-		pIe =
-			wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail,
-						     pBeacon->tail_len,
-						     WLAN_EID_COUNTRY);
+		pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_COUNTRY,
+					pBeacon->tail, pBeacon->tail_len);
 		if (pIe) {
 			pConfig->ieee80211d = 1;
 			qdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
@@ -8009,8 +8005,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 
 	pConfig->RSNWPAReqIELength = 0;
 	memset(&pConfig->RSNWPAReqIE[0], 0, sizeof(pConfig->RSNWPAReqIE));
-	pIe = wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail, pBeacon->tail_len,
-					   WLAN_EID_RSN);
+	pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_RSN, pBeacon->tail,
+				       pBeacon->tail_len);
 	if (pIe && pIe[1]) {
 		pConfig->RSNWPAReqIELength = pIe[1] + 2;
 		if (pConfig->RSNWPAReqIELength < sizeof(pConfig->RSNWPAReqIE))
@@ -8045,7 +8041,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 		}
 	}
 
-	pIe = wlan_hdd_get_vendor_oui_ie_ptr(WPA_OUI_TYPE, WPA_OUI_TYPE_SIZE,
+	pIe = wlan_get_vendor_ie_ptr_from_oui(WPA_OUI_TYPE, WPA_OUI_TYPE_SIZE,
 					     pBeacon->tail, pBeacon->tail_len);
 
 	if (pIe && pIe[1] && (pIe[0] == DOT11F_EID_WPA)) {
@@ -8146,10 +8142,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 		pConfig->cc_switch_mode = iniConfig->WlanMccToSccSwitchMode;
 #endif
 
-	pIe =
-		wlan_hdd_get_vendor_oui_ie_ptr(BLACKLIST_OUI_TYPE,
-					       WPA_OUI_TYPE_SIZE, pBeacon->tail,
-					       pBeacon->tail_len);
+	pIe = wlan_get_vendor_ie_ptr_from_oui(BLACKLIST_OUI_TYPE,
+					      WPA_OUI_TYPE_SIZE, pBeacon->tail,
+					      pBeacon->tail_len);
 
 	/* pIe for black list is following form:
 	 * type    : 1 byte
@@ -8173,7 +8168,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 			acl_entry++;
 		}
 	}
-	pIe = wlan_hdd_get_vendor_oui_ie_ptr(WHITELIST_OUI_TYPE,
+	pIe = wlan_get_vendor_ie_ptr_from_oui(WHITELIST_OUI_TYPE,
 			WPA_OUI_TYPE_SIZE, pBeacon->tail,
 			pBeacon->tail_len);
 
@@ -8202,9 +8197,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 	}
 	if (!hdd_ctx->config->force_sap_acs &&
 	    !(ssid && (0 == qdf_mem_cmp(ssid, PRE_CAC_SSID, ssid_len)))) {
-		pIe = wlan_hdd_cfg80211_get_ie_ptr(
-				&pMgmt_frame->u.beacon.variable[0],
-				pBeacon->head_len, WLAN_EID_SUPP_RATES);
+		pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_SUPP_RATES,
+					&pMgmt_frame->u.beacon.variable[0],
+					pBeacon->head_len);
 
 		if (pIe != NULL) {
 			pIe++;
@@ -8219,9 +8214,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 				}
 			}
 		}
-		pIe = wlan_hdd_cfg80211_get_ie_ptr(pBeacon->tail,
-				pBeacon->tail_len,
-				WLAN_EID_EXT_SUPP_RATES);
+		pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_EXT_SUPP_RATES,
+					       pBeacon->tail,
+					       pBeacon->tail_len);
 		if (pIe != NULL) {
 			pIe++;
 			pConfig->extended_rates.numRates = pIe[0];
@@ -8253,7 +8248,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 	 * Default: enable QOS for SAP unless WMM IE not present for 11bga
 	 */
 	sme_config->csrConfig.WMMSupportMode = eCsrRoamWmmAuto;
-	pIe = wlan_hdd_get_vendor_oui_ie_ptr(WMM_OUI_TYPE, WMM_OUI_TYPE_SIZE,
+	pIe = wlan_get_vendor_ie_ptr_from_oui(WMM_OUI_TYPE, WMM_OUI_TYPE_SIZE,
 					pBeacon->tail, pBeacon->tail_len);
 	if (!pIe && (pConfig->SapHw_mode == eCSR_DOT11_MODE_11a ||
 		pConfig->SapHw_mode == eCSR_DOT11_MODE_11g ||

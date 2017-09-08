@@ -4222,49 +4222,6 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *pAdapter)
 }
 
 /**
- * wlan_hdd_get_vendor_oui_ie_ptr() - Find a vendor OUI
- * @oui: The OUI that is being searched for
- * @oui_size: The length of @oui
- * @ie: The set of IEs within which we're trying to find @oui
- * @ie_len: The length of @ie
- *
- * This function will scan the IEs contained within @ie looking for @oui.
- *
- * Return: Pointer to @oui embedded within @ie if it is present, NULL
- * if @oui is not present within @ie.
- */
-uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,
-					uint8_t *ie, int ie_len)
-{
-	int left = ie_len;
-	uint8_t *ptr = ie;
-	uint8_t elem_id, elem_len;
-	uint8_t eid = 0xDD;
-
-	if (NULL == ie || 0 == ie_len)
-		return NULL;
-
-	while (left >= 2) {
-		elem_id = ptr[0];
-		elem_len = ptr[1];
-		left -= 2;
-		if (elem_len > left) {
-			hdd_err("Invalid IEs eid: %d elem_len: %d left: %d",
-				eid, elem_len, left);
-			return NULL;
-		}
-		if ((elem_id == eid) && (elem_len >= oui_size)) {
-			if (memcmp(&ptr[2], oui, oui_size) == 0)
-				return ptr;
-		}
-
-		left -= elem_len;
-		ptr += (elem_len + 2);
-	}
-	return NULL;
-}
-
-/**
  * hdd_get_ldpc() - Get adapter LDPC
  * @adapter: adapter being queried
  * @value: where to store the value

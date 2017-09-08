@@ -61,6 +61,7 @@
 #include "qdf_types.h"
 #include "wma_types.h"
 #include "lim_types.h"
+#include "wlan_utility.h"
 
 /**
  * lim_cmp_ssid() - utility function to compare SSIDs
@@ -2094,7 +2095,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	tpSirAssocReq assoc_req;
 	uint8_t i, nw_type_11b = 0;
 	tLimIbssPeerNode *peer_node; /* for IBSS mode */
-	uint8_t *p2p_ie = NULL;
+	const uint8_t *p2p_ie = NULL;
 
 	sir_copy_mac_addr(sta_mac, session_entry->selfMacAddr);
 

@@ -54,6 +54,7 @@
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "wma.h"
+#include "wlan_utility.h"
 
 #define LIM_GET_NOISE_MAX_TRY 5
 
@@ -159,14 +160,13 @@ static bool
 lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 			    uint16_t ie_len)
 {
-	uint8_t *ptr = NULL;
+	const uint8_t *ptr = NULL;
 	uint8_t elem_len;
 	uint8_t elem_data[SIR_MAC_VENDOR_AP_2_DATA_LEN];
 
-	if (cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
-					   SIR_MAC_VENDOR_AP_1_OUI,
-					   SIR_MAC_VENDOR_AP_1_OUI_LEN,
-					   ie, ie_len)) {
+	if (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_1_OUI,
+					    SIR_MAC_VENDOR_AP_1_OUI_LEN,
+					    ie, ie_len)) {
 		pe_debug("In lim_check_vendor_ap_present match Vendor AP 1");
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				SIR_MAC_VENDOR_AP_1_OUI,
@@ -177,10 +177,9 @@ lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 	/*
 	 * for SIR_MAC_VENDOR_AP_2_OUI check for Vendor IE Data also
 	 */
-	ptr = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
-					     SIR_MAC_VENDOR_AP_2_OUI,
-					     SIR_MAC_VENDOR_AP_2_OUI_LEN,
-					     ie, ie_len);
+	ptr = wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_2_OUI,
+					      SIR_MAC_VENDOR_AP_2_OUI_LEN,
+					      ie, ie_len);
 	if (!ptr)
 		return false;
 

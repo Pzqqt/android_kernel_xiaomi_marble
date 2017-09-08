@@ -2353,7 +2353,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 			qdf_mem_copy(&reassoc_complete->ies[len],
 				     csr_roaminfo->paddIE,
 				     csr_roaminfo->addIELen);
-			if (cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			if (wlan_get_vendor_ie_ptr_from_oui(
 			    SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE,
 			    csr_roaminfo->paddIE, csr_roaminfo->addIELen)) {
 				reassoc_complete->staType = eSTA_TYPE_P2P_CLI;

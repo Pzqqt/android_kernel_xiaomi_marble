@@ -48,6 +48,7 @@
 #include "parser_api.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
+#include "wlan_utility.h"
 
 void
 
@@ -375,7 +376,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		if ((session->access_policy_vendor_ie) &&
 			(session->access_policy ==
 			LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT)) {
-			if (!cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+			if (!wlan_get_vendor_ie_ptr_from_oui(
 				&session->access_policy_vendor_ie[2],
 				3, body_ptr, frame_len)) {
 				pe_warn("Vendor IE is not present and access policy is: %x dropping probe request",

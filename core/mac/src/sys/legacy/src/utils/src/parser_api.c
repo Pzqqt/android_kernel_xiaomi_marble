@@ -50,6 +50,7 @@
 #include "cds_regdomain.h"
 #include "qdf_crypto.h"
 #include "lim_process_fils.h"
+#include "wlan_utility.h"
 
 /* ////////////////////////////////////////////////////////////////////// */
 void swap_bit_field16(uint16_t in, uint16_t *out)
@@ -269,7 +270,7 @@ populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
 				    tDot11fIEChannelSwitchWrapper *pDot11f,
 				    tpPESession psessionEntry)
 {
-	uint8_t *ie_ptr = NULL;
+	const uint8_t *ie_ptr = NULL;
 
 	/*
 	 * The new country subelement is present only when
@@ -303,17 +304,16 @@ populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
 	/*
 	 * Add the VHT Transmit power Envelope Sublement.
 	 */
-	ie_ptr = lim_get_ie_ptr_new(pMac,
-		psessionEntry->addIeParams.probeRespBCNData_buff,
-		psessionEntry->addIeParams.probeRespBCNDataLen,
-		DOT11F_EID_VHT_TRANSMIT_POWER_ENV, ONE_BYTE);
+	ie_ptr = wlan_get_ie_ptr_from_eid(
+			DOT11F_EID_VHT_TRANSMIT_POWER_ENV,
+			psessionEntry->addIeParams.probeRespBCNData_buff,
+			psessionEntry->addIeParams.probeRespBCNDataLen);
 	if (ie_ptr) {
 		/* Ignore EID field */
-		ie_ptr++;
 		pDot11f->vht_transmit_power_env.present = 1;
-		pDot11f->vht_transmit_power_env.num_bytes = *ie_ptr++;
+		pDot11f->vht_transmit_power_env.num_bytes = ie_ptr[1];
 		qdf_mem_copy(pDot11f->vht_transmit_power_env.bytes,
-			ie_ptr, pDot11f->vht_transmit_power_env.num_bytes);
+			&ie_ptr[2], pDot11f->vht_transmit_power_env.num_bytes);
 	}
 
 }
@@ -5680,16 +5680,16 @@ tSirRetStatus populate_dot11f_assoc_res_wsc_ie(tpAniSirGlobal pMac,
 					       tpSirAssocReq pRcvdAssocReq)
 {
 	tDot11fIEWscAssocReq parsedWscAssocReq = { 0, };
-	uint8_t *wscIe;
+	const uint8_t *wscIe;
 
-	wscIe =
-		limGetWscIEPtr(pMac, pRcvdAssocReq->addIE.addIEdata,
+	wscIe = limGetWscIEPtr(pMac, pRcvdAssocReq->addIE.addIEdata,
 			       pRcvdAssocReq->addIE.length);
 	if (wscIe != NULL) {
 		/* retreive WSC IE from given AssocReq */
-		dot11f_unpack_ie_wsc_assoc_req(pMac, wscIe + 2 + 4,     /* EID, length, OUI */
-					       wscIe[1] - 4, /* length without OUI */
-					       &parsedWscAssocReq, false);
+		dot11f_unpack_ie_wsc_assoc_req(pMac,
+			(uint8_t *)wscIe + 2 + 4, /* EID, length, OUI */
+			wscIe[1] - 4, /* length without OUI */
+			&parsedWscAssocReq, false);
 		pDot11f->present = 1;
 		/* version has to be 0x10 */
 		pDot11f->Version.present = 1;
@@ -5729,10 +5729,9 @@ tSirRetStatus populate_dot11_assoc_res_p2p_ie(tpAniSirGlobal pMac,
 					      tDot11fIEP2PAssocRes *pDot11f,
 					      tpSirAssocReq pRcvdAssocReq)
 {
-	uint8_t *p2pIe;
+	const uint8_t *p2pIe;
 
-	p2pIe =
-		limGetP2pIEPtr(pMac, pRcvdAssocReq->addIE.addIEdata,
+	p2pIe = limGetP2pIEPtr(pMac, pRcvdAssocReq->addIE.addIEdata,
 			       pRcvdAssocReq->addIE.length);
 	if (p2pIe != NULL) {
 		pDot11f->present = 1;

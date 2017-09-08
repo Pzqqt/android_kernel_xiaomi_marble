@@ -65,6 +65,7 @@
 #include <cdp_txrx_cmn.h>
 #include <cdp_txrx_peer_ops.h>
 #include "lim_process_fils.h"
+#include "wlan_utility.h"
 
 /**
  *
@@ -220,7 +221,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	QDF_STATUS qdf_status;
 	tpPESession pesession;
 	uint8_t sessionid;
-	uint8_t *p2pie = NULL;
+	const uint8_t *p2pie = NULL;
 	uint8_t txflag = 0;
 	uint8_t sme_sessionid = 0;
 	bool is_vht_enabled = false;
@@ -556,7 +557,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t wps_ap = 0, tmp;
 	uint8_t tx_flag = 0;
 	uint8_t *add_ie = NULL;
-	uint8_t *p2p_ie = NULL;
+	const uint8_t *p2p_ie = NULL;
 	uint8_t noalen = 0;
 	uint8_t total_noalen = 0;
 	uint8_t noa_stream[SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN];
@@ -1660,7 +1661,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	QDF_STATUS qdf_status;
 	uint16_t add_ie_len;
 	uint8_t *add_ie;
-	uint8_t *wps_ie = NULL;
+	const uint8_t *wps_ie = NULL;
 	uint8_t power_caps = false;
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
@@ -1942,11 +1943,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		if (pe_session->beacon && pe_session->bcnLen > ie_offset) {
 			bcn_ie = pe_session->beacon + ie_offset;
 			bcn_ie_len = pe_session->bcnLen - ie_offset;
-			p_ext_cap = lim_get_ie_ptr_new(mac_ctx,
-							bcn_ie,
-							bcn_ie_len,
+			p_ext_cap = (uint8_t *)wlan_get_ie_ptr_from_eid(
 							DOT11F_EID_EXTCAP,
-							ONE_BYTE);
+							bcn_ie, bcn_ie_len);
 			lim_update_extcap_struct(mac_ctx, p_ext_cap,
 							&bcn_ext_cap);
 			lim_merge_extcap_struct(&frm->ExtCap, &bcn_ext_cap,

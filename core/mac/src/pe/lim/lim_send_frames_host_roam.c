@@ -51,6 +51,7 @@
 #include "rrm_api.h"
 
 #include "wma_types.h"
+#include "wlan_utility.h"
 
 /**
  * lim_send_reassoc_req_with_ft_ies_mgmt_frame() - Send Reassoc Req with FTIEs.
@@ -81,7 +82,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t *body;
 	uint16_t add_ie_len;
 	uint8_t *add_ie;
-	uint8_t *wps_ie = NULL;
+	const uint8_t *wps_ie = NULL;
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
 	bool vht_enabled = false;
@@ -551,7 +552,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	QDF_STATUS qdf_status;
 	uint16_t nAddIELen;
 	uint8_t *pAddIE;
-	uint8_t *wpsIe = NULL;
+	const uint8_t *wpsIe = NULL;
 	uint8_t txFlag = 0;
 	uint8_t PowerCapsPopulated = false;
 	uint8_t smeSessionId = 0;

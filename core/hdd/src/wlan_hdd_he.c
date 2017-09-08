@@ -26,6 +26,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_he.h"
 #include "wma_he.h"
+#include "wlan_utility.h"
 
 /**
  * hdd_he_wni_cfg_to_string() - return string conversion of HE WNI CFG
@@ -244,9 +245,9 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 
 void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
 {
-	uint8_t *ie;
+	const uint8_t *ie;
 
-	ie = wlan_hdd_get_vendor_oui_ie_ptr(HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
+	ie = wlan_get_vendor_ie_ptr_from_oui(HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
 					    beacon->tail, beacon->tail_len);
 	if (ie)
 		config->SapHw_mode = eCSR_DOT11_MODE_11ax;

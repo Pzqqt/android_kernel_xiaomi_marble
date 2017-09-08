@@ -283,22 +283,23 @@ struct ccp_freq_chan_map {
 #define WLAN_KEEP_ALIVE_NULL_PKT              1
 
 #define wlan_hdd_get_wps_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, \
+	wlan_get_vendor_ie_ptr_from_oui(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, \
 	ie, ie_len)
 
 #define wlan_hdd_get_p2p_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, \
+	wlan_get_vendor_ie_ptr_from_oui(P2P_OUI_TYPE, P2P_OUI_TYPE_SIZE, \
 	ie, ie_len)
 
 #ifdef WLAN_FEATURE_WFD
 #define wlan_hdd_get_wfd_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, \
+	wlan_get_vendor_ie_ptr_from_oui(WFD_OUI_TYPE, WFD_OUI_TYPE_SIZE, \
 	ie, ie_len)
 #endif
 
 #define wlan_hdd_get_mbo_ie_ptr(ie, ie_len) \
-	wlan_hdd_get_vendor_oui_ie_ptr(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, \
+	wlan_get_vendor_ie_ptr_from_oui(MBO_OUI_TYPE, MBO_OUI_TYPE_SIZE, \
 	ie, ie_len)
+
 /*
  * Defines for fw_test command
  */
@@ -379,9 +380,6 @@ int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *mac_address,
 				       uint32_t *linkspeed);
 void hdd_clear_roam_profile_ie(struct hdd_adapter *pAdapter);
-
-uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,
-					uint8_t *ie, int ie_len);
 
 QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *pAdapter);
 

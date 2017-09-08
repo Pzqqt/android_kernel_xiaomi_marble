@@ -53,6 +53,7 @@
 #include "lim_session_utils.h"
 #include "wma_types.h"
 #include "lim_types.h"
+#include "wlan_utility.h"
 
 #define   PROBE_RSP_IE_OFFSET    36
 #define   BSSID_OFFSET           16
@@ -551,6 +552,41 @@ static inline void lim_check_rmf_and_set_protected(tpAniSirGlobal mac_ctx,
 }
 #endif
 
+/* function to parse IEs withing P2P IE */
+static const uint8_t *lim_parse_p2p_ie(const uint8_t *ie, int len, uint8_t eid)
+{
+	int left = len;
+	const uint8_t *ptr = ie;
+	uint8_t elem_id, size_of_len_field = 0;
+	uint16_t elem_len;
+
+	/* IE should be at least len(eid + len) = 3 */
+	while (left >= 3) {
+		elem_id = ptr[0];
+		if (elem_id == SIR_P2P_NOA_ATTR) {
+			elem_len = ((uint16_t) ptr[1]) | (ptr[2] << 8);
+			size_of_len_field = 2;
+		} else {
+			elem_len = ptr[1];
+			size_of_len_field = 1;
+		}
+
+		left -= (size_of_len_field + 1);
+		if (elem_len > left) {
+			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
+				eid, elem_len, left);
+			return NULL;
+		}
+
+		if (elem_id == eid)
+			return ptr;
+
+		left -= elem_len;
+		ptr += (elem_len + (size_of_len_field + 1));
+	}
+	return NULL;
+}
+
 /**
  * lim_send_p2p_action_frame() - Process action frame request
  * @mac_ctx:  Pointer to mac context
@@ -575,7 +611,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	uint8_t orig_len = 0;
 	uint8_t *p2p_ie = NULL;
 	tpPESession session_entry = NULL;
-	uint8_t *presence_noa_attr = NULL;
+	const uint8_t *presence_noa_attr = NULL;
 	uint8_t *tmp_p2p_ie = NULL;
 	uint16_t remain_len = 0;
 	uint8_t sme_session_id = 0;
@@ -596,7 +632,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 	if ((SIR_MAC_MGMT_FRAME == fc->type) &&
 		(SIR_MAC_MGMT_PROBE_RSP == fc->subType)) {
 		/* get proper offset for Probe RSP */
-		p2p_ie = limGetP2pIEPtr(mac_ctx,
+		p2p_ie = (uint8_t *)limGetP2pIEPtr(mac_ctx,
 				(uint8_t *) mb_msg->data +
 				PROBE_RSP_IE_OFFSET,
 				msg_len - PROBE_RSP_IE_OFFSET);
@@ -606,12 +642,12 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 				msg_len - (p2p_ie -
 				(uint8_t *) mb_msg->data);
 			if (remain_len > 2) {
-				tmp_p2p_ie = limGetP2pIEPtr(mac_ctx,
+				tmp_p2p_ie = (uint8_t *)limGetP2pIEPtr(mac_ctx,
 					p2p_ie + SIR_MAC_MAX_IE_LENGTH + 2,
 					remain_len);
 			}
 			if (tmp_p2p_ie) {
-				p2p_ie = tmp_p2p_ie;
+				p2p_ie = (uint8_t *)tmp_p2p_ie;
 				tmp_p2p_ie = NULL;
 			} else {
 				break;
@@ -630,7 +666,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 			action_hdr->OuiSubType)) {
 
 			/* In case of Presence RSP response */
-			p2p_ie = limGetP2pIEPtr(mac_ctx,
+			p2p_ie = (uint8_t *)limGetP2pIEPtr(mac_ctx,
 				(uint8_t *)mb_msg->data +
 				ACTION_OFFSET +
 				sizeof(tSirMacP2PActionFrameHdr),
@@ -639,9 +675,9 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 			if (NULL != p2p_ie) {
 				/* extract the presence of NoA attribute inside
 				 * P2P IE */
-				presence_noa_attr =  lim_get_ie_ptr_new(mac_ctx,
+				presence_noa_attr =  lim_parse_p2p_ie(
 					p2p_ie + SIR_P2P_IE_HEADER_LEN,
-					p2p_ie[1], SIR_P2P_NOA_ATTR, TWO_BYTE);
+					p2p_ie[1], SIR_P2P_NOA_ATTR);
 			}
 		}
 	}

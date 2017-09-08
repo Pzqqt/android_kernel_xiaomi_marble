@@ -12739,34 +12739,9 @@ void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *pAdapter, uint8_t key_in
 }
 #endif /* FEATURE_WLAN_WAPI */
 
-uint8_t *wlan_hdd_cfg80211_get_ie_ptr(const uint8_t *ies_ptr, int length,
-				      uint8_t eid)
-{
-	int left = length;
-	uint8_t *ptr = (uint8_t *)ies_ptr;
-	uint8_t elem_id, elem_len;
-
-	while (left >= 2) {
-		elem_id = ptr[0];
-		elem_len = ptr[1];
-		left -= 2;
-		if (elem_len > left) {
-			hdd_err("Invalid IEs eid: %d elem_len: %d left: %d",
-			       eid, elem_len, left);
-			return NULL;
-		}
-		if (elem_id == eid)
-			return ptr;
-
-		left -= elem_len;
-		ptr += (elem_len + 2);
-	}
-	return NULL;
-}
-
 bool wlan_hdd_is_ap_supports_immediate_power_save(uint8_t *ies, int length)
 {
-	uint8_t *vendor_ie;
+	const uint8_t *vendor_ie;
 
 	if (length < 2) {
 		hdd_debug("bss size is less than expected");
@@ -12776,7 +12751,7 @@ bool wlan_hdd_is_ap_supports_immediate_power_save(uint8_t *ies, int length)
 		hdd_debug("invalid IE pointer");
 		return true;
 	}
-	vendor_ie = wlan_hdd_get_vendor_oui_ie_ptr(VENDOR1_AP_OUI_TYPE,
+	vendor_ie = wlan_get_vendor_ie_ptr_from_oui(VENDOR1_AP_OUI_TYPE,
 				VENDOR1_AP_OUI_TYPE_SIZE, ies, length);
 	if (vendor_ie) {
 		hdd_debug("AP can't support immediate powersave. defer it");
@@ -16997,19 +16972,18 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *pAdapter,
 	pHddStaCtx->ibss_enc_key_installed = 0;
 
 	if (params->ie_len && (NULL != params->ie)) {
-		if (wlan_hdd_cfg80211_get_ie_ptr(params->ie,
-					 params->ie_len, WLAN_EID_RSN)) {
+		if (wlan_get_ie_ptr_from_eid(WLAN_EID_RSN, params->ie,
+					     params->ie_len)) {
 			pWextState->wpaVersion = IW_AUTH_WPA_VERSION_WPA2;
 			encryptionType = eCSR_ENCRYPT_TYPE_AES;
 		} else if (hdd_is_wpaie_present(params->ie, params->ie_len)) {
 			tDot11fIEWPA dot11WPAIE;
 			tHalHandle halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
-			u8 *ie;
+			const u8 *ie;
 
 			memset(&dot11WPAIE, 0, sizeof(dot11WPAIE));
-			ie = wlan_hdd_cfg80211_get_ie_ptr(params->ie,
-							  params->ie_len,
-							  DOT11F_EID_WPA);
+			ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_WPA,
+						params->ie, params->ie_len);
 			if (NULL != ie) {
 				pWextState->wpaVersion =
 					IW_AUTH_WPA_VERSION_WPA;
@@ -17018,8 +16992,9 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *pAdapter,
 				 * and four byte WiFi OUI
 				 */
 				dot11f_unpack_ie_wpa((tpAniSirGlobal) halHandle,
-						     &ie[2 + 4], ie[1] - 4,
-						     &dot11WPAIE, false);
+						     (uint8_t *)&ie[2 + 4],
+						     ie[1] - 4, &dot11WPAIE,
+						     false);
 				/*
 				 * Extract the multicast cipher, the
 				 * encType for unicast cipher for

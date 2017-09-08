@@ -482,15 +482,12 @@ tpPESession lim_is_ibss_session_active(tpAniSirGlobal pMac);
 tpPESession lim_is_ap_session_active(tpAniSirGlobal pMac);
 void lim_handle_heart_beat_failure_timeout(tpAniSirGlobal pMac);
 
-uint8_t *lim_get_ie_ptr_new(tpAniSirGlobal pMac, uint8_t *pIes, int length,
-		uint8_t eid, eSizeOfLenField size_of_len_field);
-
 #define limGetWscIEPtr(pMac, ie, ie_len) \
-	cfg_get_vendor_ie_ptr_from_oui(pMac, SIR_MAC_WSC_OUI, \
+	wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_WSC_OUI, \
 			SIR_MAC_WSC_OUI_SIZE, ie, ie_len)
 
 #define limGetP2pIEPtr(pMac, ie, ie_len) \
-	cfg_get_vendor_ie_ptr_from_oui(pMac, SIR_MAC_P2P_OUI, \
+	wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_P2P_OUI, \
 			SIR_MAC_P2P_OUI_SIZE, ie, ie_len)
 
 uint8_t lim_get_noa_attr_stream_in_mult_p2p_ies(tpAniSirGlobal pMac,

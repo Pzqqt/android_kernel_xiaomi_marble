@@ -312,8 +312,6 @@ void *wlan_hdd_change_country_code_cb(void *pAdapter);
 void hdd_select_cbmode(struct hdd_adapter *pAdapter, uint8_t operationChannel,
 		       struct ch_params *ch_params);
 
-uint8_t *wlan_hdd_cfg80211_get_ie_ptr(const uint8_t *ies_ptr, int length,
-				      uint8_t eid);
 /**
  * wlan_hdd_is_ap_supports_immediate_power_save() - to find certain vendor APs
  *				which do not support immediate power-save.

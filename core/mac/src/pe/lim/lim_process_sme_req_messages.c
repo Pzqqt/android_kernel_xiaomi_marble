@@ -65,6 +65,7 @@
 #include <lim_ft.h>
 #include "cds_regdomain.h"
 #include "lim_process_fils.h"
+#include "wlan_utility.h"
 
 /*
  * This overhead is time for sending NOA start to host in case of GO/sending
@@ -1496,7 +1497,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t sme_transaction_id = 0;
 	int8_t local_power_constraint = 0, reg_max = 0;
 	uint16_t ie_len;
-	uint8_t *vendor_ie;
+	const uint8_t *vendor_ie;
 	tSirBssDescription *bss_desc;
 	struct vdev_type_nss *vdev_type_nss;
 
@@ -1643,7 +1644,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		ie_len = (bss_desc->length + sizeof(bss_desc->length) -
 			 GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 
-		vendor_ie = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+		vendor_ie = wlan_get_vendor_ie_ptr_from_oui(
 				SIR_MAC_CISCO_OUI, SIR_MAC_CISCO_OUI_SIZE,
 				((uint8_t *)&bss_desc->ieFields), ie_len);
 
@@ -4742,7 +4743,7 @@ static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 	struct set_ie_param *ie_params;
 	struct scheduler_msg msg = {0};
 	tSirRetStatus rc = eSIR_SUCCESS;
-	uint8_t *p_ie = NULL;
+	const uint8_t *p_ie = NULL;
 	tHtCaps *p_ht_cap;
 	int i;
 
@@ -4769,9 +4770,8 @@ static void lim_set_pdev_ht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 				ie_params->ie_len);
 
 		if (NSS_1x1_MODE == i) {
-			p_ie = lim_get_ie_ptr_new(mac_ctx, ie_params->ie_ptr,
-					ie_params->ie_len,
-					DOT11F_EID_HTCAPS, ONE_BYTE);
+			p_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_HTCAPS,
+					ie_params->ie_ptr, ie_params->ie_len);
 			if (NULL == p_ie) {
 				qdf_mem_free(ie_params->ie_ptr);
 				qdf_mem_free(ie_params);
@@ -4814,7 +4814,7 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 	struct set_ie_param *ie_params;
 	struct scheduler_msg msg = {0};
 	tSirRetStatus rc = eSIR_SUCCESS;
-	uint8_t *p_ie = NULL;
+	const uint8_t *p_ie = NULL;
 	tSirMacVHTCapabilityInfo *vht_cap;
 	int i;
 	tSirVhtMcsInfo *vht_mcs;
@@ -4843,9 +4843,8 @@ static void lim_set_pdev_vht_ie(tpAniSirGlobal mac_ctx, uint8_t pdev_id,
 				ie_params->ie_len);
 
 		if (NSS_1x1_MODE == i) {
-			p_ie = lim_get_ie_ptr_new(mac_ctx, ie_params->ie_ptr,
-					ie_params->ie_len,
-					DOT11F_EID_VHTCAPS, ONE_BYTE);
+			p_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_VHTCAPS,
+					ie_params->ie_ptr, ie_params->ie_len);
 			if (NULL == p_ie) {
 				qdf_mem_free(ie_params->ie_ptr);
 				qdf_mem_free(ie_params);
@@ -5552,7 +5551,7 @@ lim_update_ibss_prop_add_ies(tpAniSirGlobal pMac, uint8_t **pDstData_buff,
 	 * 2. per spec, beacon oui ie might be set twice and original one
 	 * shall be updated.
 	 */
-	vendor_ie = cfg_get_vendor_ie_ptr_from_oui(pMac, MAC_VENDOR_OUI,
+	vendor_ie = (uint8_t *)wlan_get_vendor_ie_ptr_from_oui(MAC_VENDOR_OUI,
 			MAC_VENDOR_SIZE, *pDstData_buff, *pDstDataLen);
 	if (vendor_ie) {
 		QDF_ASSERT((vendor_ie[1] + 2) == pModifyIE->ieBufferlength);

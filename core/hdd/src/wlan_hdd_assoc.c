@@ -65,6 +65,7 @@
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
 #include "wlan_hdd_tsf.h"
+#include "wlan_utility.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4

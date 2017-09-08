@@ -122,10 +122,4 @@ void cfg_cleanup(tpAniSirGlobal pMac);
 
 extern uint8_t *g_cfg_param_name[];
 
-uint8_t *cfg_get_vendor_ie_ptr_from_oui(tpAniSirGlobal mac_ctx,
-					uint8_t *oui,
-					uint8_t oui_size,
-					uint8_t *ie,
-					uint16_t ie_len);
-
 #endif /* __CFGAPI_H */

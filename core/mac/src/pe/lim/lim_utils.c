@@ -63,6 +63,7 @@
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 #include "wma_he.h"
 #endif
+#include "wlan_utility.h"
 
 #ifdef WLAN_FEATURE_11W
 #include "wni_cfg.h"
@@ -5722,38 +5723,6 @@ void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
 
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
-uint8_t *lim_get_ie_ptr_new(tpAniSirGlobal pMac, uint8_t *pIes, int length,
-				 uint8_t eid, eSizeOfLenField size_of_len_field)
-{
-	int left = length;
-	uint8_t *ptr = pIes;
-	uint8_t elem_id;
-	uint16_t elem_len;
-
-	while (left >= (size_of_len_field + 1)) {
-		elem_id = ptr[0];
-		if (size_of_len_field == TWO_BYTE) {
-			elem_len = ((uint16_t) ptr[1]) | (ptr[2] << 8);
-		} else {
-			elem_len = ptr[1];
-		}
-
-		left -= (size_of_len_field + 1);
-		if (elem_len > left) {
-			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
-				eid, elem_len, left);
-			return NULL;
-		}
-		if (elem_id == eid) {
-			return ptr;
-		}
-
-		left -= elem_len;
-		ptr += (elem_len + (size_of_len_field + 1));
-	}
-	return NULL;
-}
-
 /* Returns length of P2P stream and Pointer ie passed to this function is filled with noa stream */
 
 uint8_t lim_build_p2p_ie(tpAniSirGlobal pMac, uint8_t *ie, uint8_t *data,
@@ -6160,12 +6129,12 @@ lim_set_protected_bit(tpAniSirGlobal pMac,
 void lim_set_ht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 		uint8_t *p_ie_start, uint32_t num_bytes)
 {
-	uint8_t *p_ie = NULL;
+	const uint8_t *p_ie = NULL;
 	tDot11fIEHTCaps dot11_ht_cap = {0,};
 
 	populate_dot11f_ht_caps(p_mac, p_session_entry, &dot11_ht_cap);
-	p_ie = lim_get_ie_ptr_new(p_mac, p_ie_start, num_bytes,
-			DOT11F_EID_HTCAPS, ONE_BYTE);
+	p_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_HTCAPS,
+					p_ie_start, num_bytes);
 	pe_debug("p_ie: %p dot11_ht_cap.supportedMCSSet[0]: 0x%x",
 		p_ie, dot11_ht_cap.supportedMCSSet[0]);
 	if (p_ie) {
@@ -6235,13 +6204,12 @@ void lim_set_ht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 void lim_set_vht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 		      uint8_t *p_ie_start, uint32_t num_bytes)
 {
-	uint8_t              *p_ie = NULL;
+	const uint8_t       *p_ie = NULL;
 	tDot11fIEVHTCaps     dot11_vht_cap;
 
 	populate_dot11f_vht_caps(p_mac, p_session_entry, &dot11_vht_cap);
-	p_ie = lim_get_ie_ptr_new(p_mac, p_ie_start, num_bytes,
-				  DOT11F_EID_VHTCAPS, ONE_BYTE);
-
+	p_ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_VHTCAPS, p_ie_start,
+					num_bytes);
 	if (p_ie) {
 		tSirMacVHTCapabilityInfo *vht_cap =
 					(tSirMacVHTCapabilityInfo *) &p_ie[2];
@@ -7394,12 +7362,12 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 
 void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 {
-	uint8_t *vendor_ie;
-	uint8_t *he_cap_data;
+	const uint8_t *vendor_ie;
+	const uint8_t *he_cap_data;
 	tSirAddIeParams *add_ie = &session->addIeParams;
 	tDot11fIEvendor_he_cap *he_cap = &session->he_config;
 
-	vendor_ie = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+	vendor_ie = wlan_get_vendor_ie_ptr_from_oui(
 			HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
 			add_ie->probeRespBCNData_buff,
 			add_ie->probeRespBCNDataLen);
@@ -7427,12 +7395,12 @@ void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		      tpPESession session)
 {
-	uint8_t *vendor_ie;
+	const uint8_t *vendor_ie;
 	uint32_t he_op;
 	tDot11fIEvendor_he_op *he_ops = &add_bss->he_op;
 	tSirAddIeParams *add_ie = &session->addIeParams;
 
-	vendor_ie = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+	vendor_ie = wlan_get_vendor_ie_ptr_from_oui(
 			HE_OP_OUI_TYPE, HE_OP_OUI_SIZE,
 			add_ie->probeRespBCNData_buff,
 			add_ie->probeRespBCNDataLen);
@@ -7679,13 +7647,13 @@ void lim_update_chan_he_capable(tpAniSirGlobal mac, tpSwitchChannelParams chan)
 void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		     uint32_t num_bytes)
 {
-	uint8_t *ie = NULL;
+	const uint8_t *ie = NULL;
 	tDot11fIEvendor_he_cap dot11_cap;
 	struct he_capability_info *he_cap;
 
 	populate_dot11f_he_caps(mac, session, &dot11_cap);
 	lim_log_he_cap(mac, &dot11_cap);
-	ie = cfg_get_vendor_ie_ptr_from_oui(mac, HE_CAP_OUI_TYPE,
+	ie = wlan_get_vendor_ie_ptr_from_oui(HE_CAP_OUI_TYPE,
 			HE_CAP_OUI_SIZE, ie_start, num_bytes);
 
 	if (ie) {

@@ -60,6 +60,7 @@
 #include "nan_datapath.h"
 #include "lim_assoc_utils.h"
 #include "wlan_reg_services_api.h"
+#include "wlan_utility.h"
 
 #ifdef CONVERGED_TDLS_ENABLE
 #include "wlan_tdls_tgt_api.h"
@@ -385,7 +386,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 		bss_ie_len = lim_get_ielen_from_bss_description(
 				&join_reassoc_req->bssDescription);
 		bss_ies = &join_reassoc_req->bssDescription.ieFields;
-		is_vendor_ap_1_present = (cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+		is_vendor_ap_1_present = (wlan_get_vendor_ie_ptr_from_oui(
 			SIR_MAC_VENDOR_AP_1_OUI, SIR_MAC_VENDOR_AP_1_OUI_LEN,
 			bss_ies, bss_ie_len) != NULL);
 

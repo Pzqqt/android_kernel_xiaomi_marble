@@ -54,6 +54,8 @@
 #include <qca_vendor.h>
 #include <wlan_cfg80211_scan.h>
 
+#include "wlan_utility.h"
+
 #define MAX_RATES                       12
 #define HDD_WAKE_LOCK_SCAN_DURATION (5 * 1000) /* in msec */
 
@@ -380,8 +382,8 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 
 		switch (elem_id) {
 		case DOT11F_EID_EXTCAP:
-			if (!wlan_hdd_cfg80211_get_ie_ptr(scan_ie, *scan_ie_len,
-							DOT11F_EID_EXTCAP))
+			if (!wlan_get_ie_ptr_from_eid(DOT11F_EID_EXTCAP,
+						      scan_ie, *scan_ie_len))
 				add_ie = true;
 			break;
 		case IE_EID_VENDOR:

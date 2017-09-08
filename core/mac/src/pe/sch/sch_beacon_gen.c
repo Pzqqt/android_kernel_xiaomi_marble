@@ -50,6 +50,7 @@
 #include "sch_api.h"
 
 #include "parser_api.h"
+#include "wlan_utility.h"
 
 
 const uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x9 };
@@ -114,7 +115,7 @@ sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 
 	qdf_mem_copy(&add_ie[0], addn_ie, addn_ielen);
 
-	p2p_ie = limGetP2pIEPtr(mac_ctx, &add_ie[0], addn_ielen);
+	p2p_ie = (uint8_t *)limGetP2pIEPtr(mac_ctx, &add_ie[0], addn_ielen);
 	if ((p2p_ie != NULL) && !mac_ctx->beacon_offload) {
 		/* get NoA attribute stream P2P IE */
 		noa_len = lim_get_noa_attr_stream(mac_ctx, noa_strm, session);

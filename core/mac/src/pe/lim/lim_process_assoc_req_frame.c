@@ -49,6 +49,7 @@
 
 #include "qdf_types.h"
 #include "cds_utils.h"
+#include "wlan_utility.h"
 
 /**
  * lim_convert_supported_channels - Parses channel support IE
@@ -745,7 +746,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 					 tpSirAssocReq assoc_req,
 					 uint8_t sub_type, bool *pmf_connection)
 {
-	uint8_t *wps_ie = NULL;
+	const uint8_t *wps_ie = NULL;
 	tDot11fIEWPA dot11f_ie_wpa;
 	tDot11fIERSN dot11f_ie_rsn;
 	tSirRetStatus status = eSIR_SUCCESS;
@@ -1837,9 +1838,10 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if ((session->access_policy_vendor_ie) &&
 		(session->access_policy ==
 		LIM_ACCESS_POLICY_RESPOND_IF_IE_IS_PRESENT)) {
-		if (!cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
-			&session->access_policy_vendor_ie[2],
-			3, frm_body + LIM_ASSOC_REQ_IE_OFFSET, frame_len)) {
+		if (!wlan_get_vendor_ie_ptr_from_oui(
+				&session->access_policy_vendor_ie[2],
+				3, frm_body + LIM_ASSOC_REQ_IE_OFFSET,
+				 frame_len)) {
 			pe_err("Vendor ie not present and access policy is %x, Rejected association",
 				session->access_policy);
 			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
@@ -2040,7 +2042,7 @@ error:
  */
 static void lim_fill_assoc_ind_wapi_info(tpAniSirGlobal mac_ctx,
 	tpSirAssocReq assoc_req, tpLimMlmAssocInd assoc_ind,
-	uint8_t *wpsie)
+	const uint8_t *wpsie)
 {
 	if (assoc_req->wapiPresent && (NULL == wpsie)) {
 		pe_debug("Received WAPI IE length in Assoc Req is %d",
@@ -2194,7 +2196,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 	uint16_t temp, rsn_len;
 	uint32_t phy_mode;
 	uint8_t sub_type;
-	uint8_t *wpsie = NULL;
+	const uint8_t *wpsie = NULL;
 	uint8_t maxidx, i;
 	uint32_t tmp;
 

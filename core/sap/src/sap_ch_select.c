@@ -350,7 +350,7 @@ static void sap_process_avoid_ie(tHalHandle hal,
 	while (node) {
 		total_ie_len =
 			GET_IE_LEN_IN_BSS_DESC(node->BssDescriptor.length);
-		temp_ptr = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
+		temp_ptr = wlan_get_vendor_ie_ptr_from_oui(
 				SIR_MAC_QCOM_VENDOR_OUI,
 				SIR_MAC_QCOM_VENDOR_SIZE,
 				((uint8_t *)&node->BssDescriptor.ieFields),
