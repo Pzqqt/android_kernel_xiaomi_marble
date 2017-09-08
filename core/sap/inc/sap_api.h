@@ -905,7 +905,6 @@ QDF_STATUS wlansap_stop(void *p_cds_gctx);
 QDF_STATUS wlansap_close(void *p_cds_gctx);
 typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 					void *pUsrContext);
-uint8_t wlansap_get_state(void *p_cds_gctx);
 
 /**
  * wlansap_is_channel_in_nol_list() - This API checks if channel is

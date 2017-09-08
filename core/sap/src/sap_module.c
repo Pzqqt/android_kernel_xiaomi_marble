@@ -537,30 +537,6 @@ wlansap_pmc_full_pwr_req_cb(void *callbackContext, QDF_STATUS status)
 
 } /* wlansap_pmc_full_pwr_req_cb */
 
-/**
- * wlansap_get_state() - get SAP state
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- *
- * This api returns the current SAP state to the caller.
- *
- * Return: uint8_t - the SAP FSM state.
- */
-uint8_t wlansap_get_state(void *pCtx)
-{
-	ptSapContext pSapCtx = NULL;
-
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
-
-	if (NULL == pSapCtx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-	return pSapCtx->sapsMachine;
-}
-
 bool wlansap_is_channel_in_nol_list(void *p_cds_gctx,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState)
