@@ -1133,6 +1133,10 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	struct wlan_serialization_command cmd = {0,};
 	enum wlan_serialization_status ser_cmd_status;
 	struct wlan_objmgr_vdev *vdev;
+	struct tdls_vdev_priv_obj *vdev_obj;
+	struct tdls_soc_priv_obj *soc_obj;
+	uint8_t *mac;
+	struct tdls_peer *peer;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!req || !req->vdev) {
@@ -1140,7 +1144,35 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
+
 	vdev = req->vdev;
+
+	/* vdev reference cnt is acquired in ucfg_tdls_oper */
+	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
+	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
+
+	if (!vdev_obj || !soc_obj) {
+		tdls_err("tdls vdev_obj: %p soc_obj: %p", vdev_obj, soc_obj);
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto error;
+	}
+
+	mac = req->peer_addr;
+	peer = tdls_find_peer(vdev_obj, mac);
+	if (!peer) {
+		tdls_err(QDF_MAC_ADDRESS_STR
+			 " not found, ignore NL80211_TDLS_ENABLE_LINK",
+			 QDF_MAC_ADDR_ARRAY(mac));
+		status = QDF_STATUS_E_INVAL;
+		goto error;
+	}
+
+	if (soc_obj->tdls_dp_vdev_update)
+		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
+					peer->sta_id,
+					soc_obj->tdls_update_dp_vdev_flags,
+					false);
+
 	cmd.cmd_type = WLAN_SER_CMD_TDLS_DEL_PEER;
 	cmd.cmd_id = 0;
 	cmd.cmd_cb = (wlan_serialization_cmd_callback)
@@ -1904,8 +1936,7 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 		soc_obj->tdls_dp_vdev_update(&soc_obj->soc,
 				peer->sta_id,
 				soc_obj->tdls_update_dp_vdev_flags,
-				((peer->link_status ==
-				TDLS_LINK_CONNECTED) ? true : false));
+				false);
 
 	if (soc_obj->tdls_event_cb) {
 		qdf_mem_copy(ind.peer_mac, macaddr, QDF_MAC_ADDR_SIZE);

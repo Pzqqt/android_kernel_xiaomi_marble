@@ -5119,6 +5119,23 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 }
 #endif
 
+/*
+ * dp_txrx_data_tx_cb_set(): set the callback for non standard tx
+ * @vdev_handle - datapath vdev handle
+ * @callback - callback function
+ * @ctxt: callback context
+ *
+ */
+static void
+dp_txrx_data_tx_cb_set(struct cdp_vdev *vdev_handle,
+		       ol_txrx_data_tx_cb callback, void *ctxt)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+
+	vdev->tx_non_std_data_callback.func = callback;
+	vdev->tx_non_std_data_callback.ctxt = ctxt;
+}
+
 #ifdef CONFIG_WIN
 static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
@@ -5170,6 +5187,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_intr_detach = dp_soc_interrupt_detach,
 	.set_pn_check = dp_set_pn_check_wifi3,
 	/* TODO: Add other functions */
+	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
@@ -5309,6 +5327,7 @@ static QDF_STATUS dp_bus_resume(struct cdp_pdev *opaque_pdev)
 
 #ifndef CONFIG_WIN
 static struct cdp_misc_ops dp_ops_misc = {
+	.tx_non_std = dp_tx_non_std,
 	.get_opmode = dp_get_opmode,
 #ifdef FEATURE_RUNTIME_PM
 	.runtime_suspend = dp_runtime_suspend,

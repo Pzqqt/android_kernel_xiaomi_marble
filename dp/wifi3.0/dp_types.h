@@ -247,7 +247,7 @@ struct dp_tx_desc_s {
 	struct dp_vdev *vdev;
 	struct dp_pdev *pdev;
 	uint8_t  pool_id;
-	uint8_t flags;
+	uint16_t flags;
 	struct hal_tx_desc_comp_s comp;
 	uint16_t tx_encap_type;
 	uint8_t frm_type;
@@ -1102,6 +1102,13 @@ struct dp_vdev {
 		void *context;
 	} delete;
 
+	/* tx data delivery notification callback function */
+	struct {
+		ol_txrx_data_tx_cb func;
+		void *ctxt;
+	} tx_non_std_data_callback;
+
+
 	/* safe mode control to bypass the encrypt and decipher process*/
 	uint32_t safemode;
 
@@ -1113,6 +1120,8 @@ struct dp_vdev {
 #endif
 	/* TDLS Link status */
 	bool tdls_link_connected;
+	bool is_tdls_frame;
+
 
 	/* VDEV operating mode */
 	enum wlan_op_mode opmode;

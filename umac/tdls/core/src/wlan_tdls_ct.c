@@ -532,8 +532,7 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 		tdls_soc->tdls_dp_vdev_update(&tdls_soc->soc,
 				curr_peer->sta_id,
 				tdls_soc->tdls_update_dp_vdev_flags,
-				((curr_peer->link_status ==
-				TDLS_LINK_CONNECTED) ? true : false));
+				false);
 
 	indication.reason = reason;
 	indication.vdev = tdls_vdev->vdev;

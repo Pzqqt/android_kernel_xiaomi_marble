@@ -986,6 +986,46 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	return;
 }
 
+#ifdef CONVERGED_TDLS_ENABLE
+/**
+ * dp_tx_update_tdls_flags() - Update descriptor flags for TDLS frame
+ * @tx_desc: TX descriptor
+ *
+ * Return: None
+ */
+static void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
+{
+	if (tx_desc->vdev) {
+		if (tx_desc->vdev->is_tdls_frame)
+			tx_desc->flags |= DP_TX_DESC_FLAG_TDLS_FRAME;
+			tx_desc->vdev->is_tdls_frame = false;
+	}
+}
+
+/**
+ * dp_non_std_tx_comp_free_buff() - Free the non std tx packet buffer
+ * @tx_desc: TX descriptor
+ * @vdev: datapath vdev handle
+ *
+ * Return: None
+ */
+static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
+				  struct dp_vdev *vdev)
+{
+	struct hal_tx_completion_status ts = {0};
+	qdf_nbuf_t nbuf = tx_desc->nbuf;
+
+	hal_tx_comp_get_status(&tx_desc->comp, &ts);
+	if (vdev->tx_non_std_data_callback.func) {
+		qdf_nbuf_set_next(tx_desc->nbuf, NULL);
+		vdev->tx_non_std_data_callback.func(
+				vdev->tx_non_std_data_callback.ctxt,
+				nbuf, ts.status);
+		return;
+	}
+}
+#endif
+
 /**
  * dp_tx_send_msdu_single() - Setup descriptor and enqueue single MSDU to TCL
  * @vdev: DP vdev handle
@@ -1017,6 +1057,8 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			  __func__, vdev, tx_q->desc_pool_id);
 		return nbuf;
 	}
+
+	dp_tx_update_tdls_flags(tx_desc);
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1702,6 +1744,10 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 	struct dp_vdev *vdev = desc->vdev;
 	qdf_nbuf_t nbuf = desc->nbuf;
 
+	/* If it is TDLS mgmt, don't unmap or free the frame */
+	if (desc->flags & DP_TX_DESC_FLAG_TDLS_FRAME)
+		return dp_non_std_tx_comp_free_buff(desc, vdev);
+
 	/* 0 : MSDU buffer, 1 : MLE */
 	if (desc->msdu_ext_desc) {
 		/* TSO free */
@@ -2224,6 +2270,26 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 		dp_tx_comp_process_desc(soc, head_desc);
 
 	return num_processed;
+}
+
+/**
+ * dp_tx_non_std() - Allow the control-path SW to send data frames
+ *
+ * @data_vdev - which vdev should transmit the tx data frames
+ * @tx_spec - what non-standard handling to apply to the tx data frames
+ * @msdu_list - NULL-terminated list of tx MSDUs
+ *
+ * Return: NULL on success,
+ *         nbuf when it fails to send
+ */
+qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
+		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *) vdev_handle;
+
+	if (tx_spec & OL_TX_SPEC_NO_FREE)
+		vdev->is_tdls_frame = true;
+	return dp_tx_send(vdev_handle, msdu_list);
 }
 
 /**

@@ -30,9 +30,10 @@
 #define DP_TX_DESC_FLAG_FRAG		0x4
 #define DP_TX_DESC_FLAG_RAW		0x8
 #define DP_TX_DESC_FLAG_MESH		0x10
-#define DP_TX_DESC_FLAG_QUEUED_TX		0x20
-#define DP_TX_DESC_FLAG_COMPLETED_TX		0x40
+#define DP_TX_DESC_FLAG_QUEUED_TX	0x20
+#define DP_TX_DESC_FLAG_COMPLETED_TX	0x40
 #define DP_TX_DESC_FLAG_ME		0x80
+#define DP_TX_DESC_FLAG_TDLS_FRAME	0x100
 
 #define DP_TX_FREE_SINGLE_BUF(soc, buf)                  \
 do {                                                           \
@@ -143,10 +144,29 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(void *data_vdev, qdf_nbuf_t nbuf);
 
+qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
+		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
+
 uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota);
 
 int32_t
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
+
+#ifndef CONVERGED_TDLS_ENABLE
+
+static inline void dp_tx_update_tdls_flags(struct dp_tx_desc_s *tx_desc)
+{
+	return;
+}
+
+static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
+				  struct dp_vdev *vdev)
+{
+	return;
+}
+
+#endif
+
 
 
 #ifdef FEATURE_WDS

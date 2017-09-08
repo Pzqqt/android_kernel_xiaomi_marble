@@ -295,7 +295,7 @@ typedef void
 (*ol_txrx_mgmt_tx_cb)(void *ctxt, qdf_nbuf_t tx_mgmt_frm, int had_error);
 
 /**
- * ol_rxrx_data_tx_cb - Function registered with the data path
+ * ol_txrx_data_tx_cb - Function registered with the data path
  * that is called when tx frames marked as "no free" are
  * done being transmitted
  */
