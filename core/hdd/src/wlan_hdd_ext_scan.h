@@ -103,18 +103,6 @@ int wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 						const void *data,
 						int data_len);
 
-int
-wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
-					   struct wireless_dev *wdev,
-					   const void *data,
-					   int data_len);
-
-int
-wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
-					     struct wireless_dev *wdev,
-					     const void *data,
-					     int data_len);
-
 void wlan_hdd_cfg80211_extscan_init(struct hdd_context *hdd_ctx);
 
 #else /* FEATURE_WLAN_EXTSCAN */
