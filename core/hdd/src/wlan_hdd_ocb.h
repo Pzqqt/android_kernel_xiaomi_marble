@@ -244,8 +244,6 @@ struct hdd_context;
 #ifdef WLAN_FEATURE_DSRC
 void hdd_set_dot11p_config(struct hdd_context *hdd_ctx);
 
-void hdd_remove_ocb_tx_header(struct sk_buff *skb);
-
 int iw_set_dot11p_channel_sched(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra);
@@ -298,9 +296,6 @@ static inline void hdd_set_dot11p_config(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline void hdd_remove_ocb_tx_header(struct sk_buff *skb)
-{
-}
 static inline int iw_set_dot11p_channel_sched(struct net_device *dev,
 		struct iw_request_info *info,
 		union iwreq_data *wrqu, char *extra)
