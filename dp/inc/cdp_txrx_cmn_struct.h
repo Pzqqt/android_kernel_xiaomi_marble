@@ -43,6 +43,7 @@
 #endif
 
 #define CDP_BA_256_BIT_MAP_SIZE_DWORDS 256
+#define CDP_BA_64_BIT_MAP_SIZE_DWORDS 64
 
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
@@ -953,8 +954,9 @@ struct cdp_tx_completion_ppdu_user {
 	uint8_t mac_addr[6];
 	uint32_t frame_ctrl:16,
 		 qos_ctrl:16;
-	uint32_t mpdu_tried:16,
-		 mpdu_success:16;
+	uint32_t mpdu_tried_ucast:16,
+		mpdu_tried_mcast:16;
+	uint16_t mpdu_success:16;
 	uint32_t long_retries:4,
 		 short_retries:4,
 		 tx_ratecode:8,
@@ -982,6 +984,8 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t start_seq;
 	uint32_t enq_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
+	uint32_t num_mpdu:9,
+		 num_msdu:16;
 };
 
 /**
@@ -1005,7 +1009,9 @@ struct cdp_tx_completion_ppdu {
 	uint32_t num_users;
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
-	uint8_t channel;
+	uint16_t frame_type;
+	uint16_t channel;
+	uint16_t phy_mode;
 	uint32_t ack_rssi;
 	uint32_t ppdu_start_timestamp;
 	uint32_t ppdu_end_timestamp;

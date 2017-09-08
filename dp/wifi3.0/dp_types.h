@@ -1043,7 +1043,7 @@ struct dp_pdev {
 	struct wdi_event_subscribe_t **wdi_event_list;
 
 	struct {
-		uint8_t curr_user;
+		uint8_t last_user;
 		qdf_nbuf_t buf;
 	} tx_ppdu_info;
 };

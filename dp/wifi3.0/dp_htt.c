@@ -57,7 +57,12 @@ do {                                                             \
 static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		struct cdp_tx_completion_ppdu_user *ppdu, uint32_t ack_rssi)
 {
-	struct dp_pdev *pdev = peer->vdev->pdev;
+	struct dp_pdev *pdev = NULL;
+
+	if (!peer)
+		return;
+
+	pdev = peer->vdev->pdev;
 
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
 			(ppdu->success_msdus + ppdu->retry_msdus +
@@ -1267,6 +1272,120 @@ void htt_t2h_stats_handler(void *context)
 		qdf_sched_work(0, &soc->htt_stats.work);
 }
 
+/*
+ * dp_get_ppdu_info_user_index: Find place holder for the received
+ * ppdu stats info
+ * pdev: DP pdev handle
+ *
+ * return:user index to be populated
+ */
+#ifdef FEATURE_PERPKT_INFO
+static uint8_t dp_get_ppdu_info_user_index(struct dp_pdev *pdev,
+						uint32_t peer_id)
+{
+	uint8_t user_index = 0;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+
+	while ((user_index + 1) <= pdev->tx_ppdu_info.last_user) {
+		ppdu_user_desc = &ppdu_desc->user[user_index];
+		if (ppdu_user_desc->peer_id != peer_id) {
+			user_index++;
+			continue;
+		} else {
+			return user_index;
+		}
+	}
+
+	pdev->tx_ppdu_info.last_user++;
+	return pdev->tx_ppdu_info.last_user - 1;
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_common_tlv: Process htt_ppdu_stats_common_tlv
+ * pdev: DP pdev handle
+ * @tag_buf: buffer containing the tlv htt_ppdu_stats_common_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
+		uint32_t *tag_buf)
+{
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	htt_ppdu_stats_common_tlv *dp_stats_buf =
+		(htt_ppdu_stats_common_tlv *)tag_buf;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	ppdu_desc->ppdu_id = dp_stats_buf->ppdu_id;
+	tag_buf += 2;
+	ppdu_desc->num_users =
+		HTT_PPDU_STATS_COMMON_TLV_NUM_USERS_GET(*tag_buf);
+	tag_buf++;
+	ppdu_desc->frame_type =
+		HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
+	ppdu_desc->ppdu_start_timestamp = dp_stats_buf->ppdu_start_tstmp_us;
+	ppdu_desc->ppdu_end_timestamp = 0; /*TODO: value to be provided by FW */
+	tag_buf += 6;
+	ppdu_desc->channel = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
+	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_user_common_tlv: Process ppdu_stats_user_common
+ * @tag_buf: buffer containing the tlv htt_ppdu_stats_user_common_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_user_common_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	uint32_t peer_id;
+	struct dp_peer *peer;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	uint8_t curr_user_index = 0;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *) qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+	peer_id = HTT_PPDU_STATS_USER_COMMON_TLV_SW_PEER_ID_GET(*tag_buf);
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	ppdu_user_desc->peer_id = peer_id;
+
+	tag_buf++;
+
+	if (HTT_PPDU_STATS_USER_COMMON_TLV_MCAST_GET(*tag_buf))
+		ppdu_user_desc->mpdu_tried_mcast =
+		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
+	else
+		ppdu_user_desc->mpdu_tried_ucast =
+		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
+
+	ppdu_user_desc->qos_ctrl =
+		HTT_PPDU_STATS_USER_COMMON_TLV_QOS_CTRL_GET(*tag_buf);
+	ppdu_user_desc->frame_ctrl =
+		HTT_PPDU_STATS_USER_COMMON_TLV_FRAME_CTRL_GET(*tag_buf);
+}
+#endif
+
+
 /**
  * dp_process_ppdu_stats_user_rate_tlv() - Process htt_ppdu_stats_user_rate_tlv
  * @pdev: DP pdev handle
@@ -1274,6 +1393,7 @@ void htt_t2h_stats_handler(void *context)
  *
  * return:void
  */
+#ifdef FEATURE_PERPKT_INFO
 static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 		uint32_t *tag_buf)
 {
@@ -1281,6 +1401,7 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	struct dp_peer *peer;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	uint8_t curr_user_index = 0;
 
 	ppdu_desc =
 	(struct cdp_tx_completion_ppdu *) qdf_nbuf_data(pdev->tx_ppdu_info.buf);
@@ -1292,12 +1413,15 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	if (!peer)
 		return;
 
-	ppdu_user_desc = &ppdu_desc->user[pdev->tx_ppdu_info.curr_user];
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+	ppdu_user_desc->peer_id = peer_id;
 
 	ppdu_user_desc->tid =
 		HTT_PPDU_STATS_USER_RATE_TLV_TID_NUM_GET(*tag_buf);
-
-	ppdu_user_desc->peer_id = peer_id;
+	ppdu_user_desc->peer_id =
+		HTT_PPDU_STATS_USER_RATE_TLV_SW_PEER_ID_GET(*tag_buf);
 
 	qdf_mem_copy(ppdu_user_desc->mac_addr, peer->mac_addr.raw,
 			DP_MAC_ADDR_LEN);
@@ -1324,6 +1448,289 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	ppdu_user_desc->ppdu_type =
 		HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(*tag_buf);
 }
+#endif
+
+/*
+ * dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv: Process
+ * htt_ppdu_stats_enq_mpdu_bitmap_64_tlv
+ * soc: DP SOC handle
+ * @tag_buf: buffer containing the tlv htt_ppdu_stats_enq_mpdu_bitmap_64_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	htt_ppdu_stats_enq_mpdu_bitmap_64_tlv *dp_stats_buf =
+		(htt_ppdu_stats_enq_mpdu_bitmap_64_tlv *)tag_buf;
+
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	uint8_t curr_user_index = 0;
+	uint32_t peer_id;
+	struct dp_peer *peer;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+
+	peer_id =
+	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
+
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
+	qdf_mem_copy(&ppdu_user_desc->enq_bitmap, &dp_stats_buf->enq_bitmap,
+					CDP_BA_64_BIT_MAP_SIZE_DWORDS);
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv: Process
+ * htt_ppdu_stats_enq_mpdu_bitmap_256_tlv
+ * soc: DP SOC handle
+ * @tag_buf: buffer containing the tlv htt_ppdu_stats_enq_mpdu_bitmap_256_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	htt_ppdu_stats_enq_mpdu_bitmap_256_tlv *dp_stats_buf =
+		(htt_ppdu_stats_enq_mpdu_bitmap_256_tlv *)tag_buf;
+
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	uint8_t curr_user_index = 0;
+	uint32_t peer_id;
+	struct dp_peer *peer;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+
+	peer_id =
+	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
+
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	ppdu_user_desc->start_seq = dp_stats_buf->start_seq;
+	qdf_mem_copy(&ppdu_user_desc->enq_bitmap, &dp_stats_buf->enq_bitmap,
+					CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_user_cmpltn_common_tlv: Process
+ * htt_ppdu_stats_user_cmpltn_common_tlv
+ * soc: DP SOC handle
+ * @tag_buf: buffer containing the tlv htt_ppdu_stats_user_cmpltn_common_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	uint32_t peer_id;
+	struct dp_peer *peer;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	uint8_t curr_user_index = 0;
+	htt_ppdu_stats_user_cmpltn_common_tlv *dp_stats_buf =
+		(htt_ppdu_stats_user_cmpltn_common_tlv *)tag_buf;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+	peer_id =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_SW_PEER_ID_GET(*tag_buf);
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+	ppdu_user_desc->peer_id = peer_id;
+
+	ppdu_user_desc->completion_status =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_COMPLETION_STATUS_GET(
+				*tag_buf);
+
+	ppdu_user_desc->tid =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_TID_NUM_GET(*tag_buf);
+
+
+	tag_buf++;
+	ppdu_desc->ack_rssi = dp_stats_buf->ack_rssi;
+
+	tag_buf++;
+
+	ppdu_user_desc->mpdu_success =
+	HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_MPDU_SUCCESS_GET(*tag_buf);
+
+	tag_buf++;
+
+	ppdu_user_desc->long_retries =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_LONG_RETRY_GET(*tag_buf);
+
+	ppdu_user_desc->short_retries =
+	HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_SHORT_RETRY_GET(*tag_buf);
+
+	ppdu_user_desc->is_ampdu =
+		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_AMPDU_GET(*tag_buf);
+
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv: Process
+ * htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv
+ * soc: DP SOC handle
+ * @tag_buf: buffer containing the htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv *dp_stats_buf =
+		(htt_ppdu_stats_user_compltn_ba_bitmap_64_tlv *)tag_buf;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	uint8_t curr_user_index = 0;
+	uint32_t peer_id;
+	struct dp_peer *peer;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+
+	peer_id =
+	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
+
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
+	qdf_mem_copy(&ppdu_user_desc->ba_bitmap, &dp_stats_buf->ba_bitmap,
+			CDP_BA_64_BIT_MAP_SIZE_DWORDS);
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv: Process
+ * htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv
+ * soc: DP SOC handle
+ * @tag_buf: buffer containing the htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv *dp_stats_buf =
+		(htt_ppdu_stats_user_compltn_ba_bitmap_256_tlv *)tag_buf;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	uint8_t curr_user_index = 0;
+	uint32_t peer_id;
+	struct dp_peer *peer;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf++;
+
+	peer_id =
+	HTT_PPDU_STATS_USER_CMPLTN_BA_BITMAP_TLV_SW_PEER_ID_GET(*tag_buf);
+
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	ppdu_user_desc->ba_seq_no = dp_stats_buf->ba_seq_no;
+	qdf_mem_copy(&ppdu_user_desc->ba_bitmap, &dp_stats_buf->ba_bitmap,
+			CDP_BA_256_BIT_MAP_SIZE_DWORDS);
+}
+#endif
+
+/*
+ * dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv: Process
+ * htt_ppdu_stats_user_compltn_ack_ba_status_tlv
+ * soc: DP SOC handle
+ * @tag_buf: buffer containing the htt_ppdu_stats_user_compltn_ack_ba_status_tlv
+ *
+ * return:void
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
+		struct dp_pdev *pdev, uint32_t *tag_buf)
+{
+	uint32_t peer_id;
+	struct dp_peer *peer;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	struct cdp_tx_completion_ppdu_user *ppdu_user_desc;
+	uint8_t curr_user_index = 0;
+
+	ppdu_desc =
+	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
+
+	tag_buf += 2;
+	peer_id =
+	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_SW_PEER_ID_GET(*tag_buf);
+
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+
+	if (!peer)
+		return;
+
+	curr_user_index = dp_get_ppdu_info_user_index(pdev, peer_id);
+
+	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
+
+	tag_buf += 2;
+	ppdu_user_desc->num_mpdu =
+	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_NUM_MPDU_GET(*tag_buf);
+
+	ppdu_user_desc->num_msdu =
+	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_NUM_MSDU_GET(*tag_buf);
+}
+#endif
 
 /**
  * dp_process_ppdu_tag(): Function to process the PPDU TLVs
@@ -1332,22 +1739,52 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
  *
  * return: void
  */
+#ifdef FEATURE_PERPKT_INFO
 static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 		uint32_t tlv_len)
 {
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
 
 	switch (tlv_type) {
+	case HTT_PPDU_STATS_COMMON_TLV:
+		dp_process_ppdu_stats_common_tlv(pdev, tag_buf);
+		break;
+	case HTT_PPDU_STATS_USR_COMMON_TLV:
+		dp_process_ppdu_stats_user_common_tlv(pdev, tag_buf);
+		break;
 	case HTT_PPDU_STATS_USR_RATE_TLV:
 		qdf_assert_always(tlv_len ==
 				sizeof(htt_ppdu_stats_user_rate_tlv));
 		dp_process_ppdu_stats_user_rate_tlv(pdev, tag_buf);
 		break;
+	case HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_64_TLV:
+		dp_process_ppdu_stats_enq_mpdu_bitmap_64_tlv(pdev, tag_buf);
+		break;
+	case HTT_PPDU_STATS_USR_MPDU_ENQ_BITMAP_256_TLV:
+		dp_process_ppdu_stats_enq_mpdu_bitmap_256_tlv(pdev, tag_buf);
+		break;
+	case HTT_PPDU_STATS_USR_COMPLTN_COMMON_TLV:
+		dp_process_ppdu_stats_user_cmpltn_common_tlv(pdev, tag_buf);
+		break;
+	case HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_64_TLV:
+		dp_process_ppdu_stats_user_compltn_ba_bitmap_64_tlv(pdev,
+								tag_buf);
+		break;
+	case HTT_PPDU_STATS_USR_COMPLTN_BA_BITMAP_256_TLV:
+		dp_process_ppdu_stats_user_compltn_ba_bitmap_256_tlv(pdev,
+								tag_buf);
+		break;
+	case HTT_PPDU_STATS_USR_COMPLTN_ACK_BA_STATUS_TLV:
+		dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(pdev,
+								tag_buf);
+		break;
 	default:
 		break;
 	}
 }
+#endif
 
+#ifdef FEATURE_PERPKT_INFO
 static QDF_STATUS dp_htt_process_tlv(struct dp_pdev *pdev,
 		qdf_nbuf_t htt_t2h_msg)
 {
@@ -1391,6 +1828,7 @@ static QDF_STATUS dp_htt_process_tlv(struct dp_pdev *pdev,
 
 	return status;
 }
+#endif
 
 /**
  * dp_txrx_ppdu_stats_handler() - Function to process HTT PPDU stats from FW
@@ -1460,7 +1898,7 @@ static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 				WDI_NO_VAL, pdev_id);
 
 		pdev->tx_ppdu_info.buf = NULL;
-		pdev->tx_ppdu_info.curr_user = 0;
+		pdev->tx_ppdu_info.last_user = 0;
 	}
 }
 #else

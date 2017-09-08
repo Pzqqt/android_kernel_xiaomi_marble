@@ -4506,6 +4506,7 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 	pdev->enhanced_stats_en = 1;
 
 	dp_ppdu_ring_cfg(pdev);
+	dp_h2t_cfg_stats_msg_send(pdev, 0xffff);
 }
 
 /*
