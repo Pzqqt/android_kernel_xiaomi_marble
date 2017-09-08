@@ -316,6 +316,7 @@ struct htt_pdev_t {
 
 		int fill_level; /* how many rx buffers to keep in the ring */
 		int fill_cnt;   /* # of rx buffers (full+empty) in the ring */
+		int pop_fail_cnt;   /* # of nebuf pop failures */
 
 		/*
 		 * target_idx -

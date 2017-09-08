@@ -2305,6 +2305,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	if (qdf_unlikely(NULL == msdu)) {
 		qdf_print("%s: netbuf pop failed!\n", __func__);
 		*tail_msdu = NULL;
+		pdev->rx_ring.pop_fail_cnt++;
 		return 0;
 	}
 
@@ -2398,6 +2399,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					qdf_print("%s: netbuf pop failed!\n",
 								 __func__);
 					*tail_msdu = NULL;
+					pdev->rx_ring.pop_fail_cnt++;
 					return 0;
 				}
 
@@ -2429,6 +2431,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				qdf_print("%s: netbuf pop failed!\n",
 					  __func__);
 				*tail_msdu = NULL;
+				pdev->rx_ring.pop_fail_cnt++;
 				return 0;
 			}
 			qdf_nbuf_set_next(msdu, next);
@@ -3188,6 +3191,7 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 		qdf_spin_lock_bh(&(pdev->rx_ring.refill_lock));
 	}
 	pdev->rx_buff_fill_n_invoked++;
+
 	filled = htt_rx_ring_fill_n(pdev, num);
 
 	if (filled > num) {
@@ -3629,6 +3633,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 		 QDF_TIMER_TYPE_SW);
 
 	pdev->rx_ring.fill_cnt = 0;
+	pdev->rx_ring.pop_fail_cnt = 0;
 #ifdef DEBUG_DMA_DONE
 	pdev->rx_ring.dbg_ring_idx = 0;
 	pdev->rx_ring.dbg_refill_cnt = 0;
