@@ -272,6 +272,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 		mgmt_txrx_err("mgmt txrx tx op to send mgmt frame is NULL for psoc: %p",
 				psoc);
 		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		desc->nbuf = NULL;
 		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -281,6 +282,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 		mgmt_txrx_err("Mgmt send fail for peer %p psoc %p",
 				peer, psoc);
 		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		desc->nbuf = NULL;
 		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_FAILURE;
 	}
