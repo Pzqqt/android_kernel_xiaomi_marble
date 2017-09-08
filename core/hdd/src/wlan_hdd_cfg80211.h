@@ -496,19 +496,6 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
  */
 int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
 
-/**
- * hdd_process_defer_disconnect() - Handle the deferred disconnect
- * @adapter: HDD Adapter
- *
- * If roaming is in progress and there is a request to
- * disconnect the session, then it is deferred. Once
- * roaming is complete/aborted, then this routine is
- * used to resume the disconnect that was deferred
- *
- * Return: None
- */
-void hdd_process_defer_disconnect(struct hdd_adapter *adapter);
-
 #ifndef CONVERGED_TDLS_ENABLE
 static inline void
 hdd_notify_sta_connect(uint8_t session_id,
