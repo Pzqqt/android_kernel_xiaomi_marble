@@ -2067,10 +2067,6 @@ static inline void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx
 {
 }
 
-static inline void hdd_stop_bus_bw_computer_timer(struct hdd_adapter *pAdapter)
-{
-}
-
 static inline int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 {
 	return 0;
