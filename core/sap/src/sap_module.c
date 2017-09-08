@@ -1438,36 +1438,6 @@ QDF_STATUS wlansap_deauth_sta(void *pCtx,
 }
 
 /**
- * wlansap_update_bw80_cbmode() - fucntion to update channel bonding mode for
- *                                VHT80 channel.
- * @channel: target channel
- * @sme_config: sme configuration context
- *
- * Return: none
- */
-static inline void wlansap_update_bw80_cbmode(uint32_t channel,
-		tSmeConfigParams *sme_config)
-{
-	if (channel == 36 || channel == 52 || channel == 100 ||
-		channel == 116 || channel == 149 || channel == 132) {
-		sme_config->csrConfig.channelBondingMode5GHz =
-			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW;
-	} else if (channel == 40 || channel == 56 || channel == 104 ||
-			channel == 120 || channel == 153 || channel == 136) {
-		sme_config->csrConfig.channelBondingMode5GHz =
-			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW;
-	} else if (channel == 44 || channel == 60 || channel == 108 ||
-			channel == 124 || channel == 157 || channel == 140) {
-		sme_config->csrConfig.channelBondingMode5GHz =
-			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH;
-	} else if (channel == 48 || channel == 64 || channel == 112 ||
-		channel == 128 || channel == 144 || channel == 161) {
-		sme_config->csrConfig.channelBondingMode5GHz =
-			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH;
-	}
-}
-
-/**
  * wlansap_update_csa_channel_params() - fucntion to populate channel width and
  *                                        bonding modes.
  * @sap_context: sap adapter context
