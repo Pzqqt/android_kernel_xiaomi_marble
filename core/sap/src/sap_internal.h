@@ -327,7 +327,6 @@ wlansap_roam_callback
 	uint32_t roamId,
 	eRoamCmdStatus roamStatus, eCsrRoamResult roamResult);
 
-QDF_STATUS wlansap_clean_cb(ptSapContext pSapCtx, uint32_t freeFlag);
 QDF_STATUS SapFsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
 
