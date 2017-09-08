@@ -1175,7 +1175,6 @@ struct csr_roamstruct {
 #endif
 
 QDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal pMac);
-QDF_STATUS csrScanFilter11dResult(tpAniSirGlobal pMac);
 
 QDF_STATUS csr_scan_filter_results(tpAniSirGlobal pMac);
 
