@@ -236,7 +236,6 @@ QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
 void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd);
 
 QDF_STATUS csr_is_valid_channel(tpAniSirGlobal pMac, uint8_t chnNum);
-bool csr_roam_is_valid40_mhz_channel(tpAniSirGlobal pmac, uint8_t channel);
 
 QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme);
 QDF_STATUS sme_release_global_lock(tSmeStruct *psSme);
