@@ -69,8 +69,13 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 	case QDF_NDI_MODE:
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 		iface_type = "NAN";
+		/* wake up host when Nan Management Frame is received */
 		pmo_set_wow_event_bitmap(WOW_NAN_DATA_EVENT,
 					 PMO_WOW_MAX_EVENT_BM_LEN,
+					 event_bitmap);
+		/* wake up host when NDP data packet is received */
+		pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
+					 WMI_WOW_MAX_EVENT_BM_LEN,
 					 event_bitmap);
 #endif
 		break;
