@@ -142,7 +142,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t msdu_ppdu_id, msdu_cnt;
 	uint8_t *data;
 	uint32_t i;
-	bool mpdu_err = false;
 	uint32_t total_frag_len, frag_len;
 	bool is_frag, is_first_msdu;
 
@@ -152,10 +151,6 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
 		&p_last_buf_addr_info, &msdu_cnt);
-
-	if(HAL_RX_WBM_RXDMA_PSH_RSN_ERROR ==
-		hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc))
-		mpdu_err = true;
 
 	is_frag = false;
 	is_first_msdu = true;
@@ -208,7 +203,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					__func__, __LINE__, *ppdu_id,
 					msdu_ppdu_id);
 
-				if ((*ppdu_id != msdu_ppdu_id) && !mpdu_err) {
+				if (*ppdu_id < msdu_ppdu_id) {
 					*ppdu_id = msdu_ppdu_id;
 					return rx_bufs_used;
 				}
@@ -762,8 +757,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	ppdu_id = pdev->ppdu_info.com_info.ppdu_id;
 	rx_bufs_used = 0;
-	while (qdf_likely((rxdma_dst_ring_desc =
-		hal_srng_dst_peek(hal_soc, mon_dst_srng)) && quota--)) {
+	while (qdf_likely(rxdma_dst_ring_desc =
+		hal_srng_dst_peek(hal_soc, mon_dst_srng))) {
 		qdf_nbuf_t head_msdu, tail_msdu;
 		uint32_t npackets;
 		head_msdu = (qdf_nbuf_t) NULL;

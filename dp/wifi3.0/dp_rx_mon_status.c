@@ -146,7 +146,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t status_nbuf;
 	uint8_t *rx_tlv;
 	uint8_t *rx_tlv_start;
-	uint32_t tlv_status = HAL_TLV_STATUS_DUMMY;
+	uint32_t tlv_status = HAL_TLV_STATUS_BUF_DONE;
 
 	ppdu_info = &pdev->ppdu_info;
 

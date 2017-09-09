@@ -71,7 +71,7 @@
 
 #define HAL_TLV_STATUS_PPDU_NOT_DONE		0
 #define HAL_TLV_STATUS_PPDU_DONE		1
-#define HAL_TLV_STATUS_DUMMY			2
+#define HAL_TLV_STATUS_BUF_DONE			2
 
 #define HAL_MAX_UL_MU_USERS			8
 
@@ -537,7 +537,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		return HAL_TLV_STATUS_PPDU_DONE;
 
 	case WIFIDUMMY_E:
-		return HAL_TLV_STATUS_PPDU_DONE;
+		return HAL_TLV_STATUS_BUF_DONE;
 
 	case WIFIPHYRX_HT_SIG_E:
 	{
