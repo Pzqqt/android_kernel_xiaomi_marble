@@ -19,10 +19,16 @@
 #include <ipc/apr.h>
 #include <ipc/apr_tal.h>
 
+/**
+ * apr_get_subsys_state - get Q6 subsys status
+ *
+ * Returns apr_subsys_state
+ */
 enum apr_subsys_state apr_get_subsys_state(void)
 {
 	return apr_get_q6_state();
 }
+EXPORT_SYMBOL(apr_get_subsys_state);
 
 void apr_set_subsys_state(void)
 {
