@@ -51,6 +51,7 @@ enum {
 	TDM_SEC,
 	TDM_TERT,
 	TDM_QUAT,
+	TDM_QUIN,
 	TDM_INTERFACE_MAX,
 };
 

@@ -205,10 +205,12 @@ static int msm_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 	case AFE_PORT_ID_SECONDARY_TDM_RX:
 	case AFE_PORT_ID_TERTIARY_TDM_RX:
 	case AFE_PORT_ID_QUATERNARY_TDM_RX:
+	case AFE_PORT_ID_QUINARY_TDM_RX:
 	case AFE_PORT_ID_PRIMARY_TDM_TX:
 	case AFE_PORT_ID_SECONDARY_TDM_TX:
 	case AFE_PORT_ID_TERTIARY_TDM_TX:
 	case AFE_PORT_ID_QUATERNARY_TDM_TX:
+	case AFE_PORT_ID_QUINARY_TDM_TX:
 		slot_offset = tdm_slot_offset[TDM_0];
 		break;
 	default:
@@ -1568,6 +1570,34 @@ static struct snd_soc_dai_link msm_ext_common_be_dai[] = {
 		.ops = &msm_tdm_be_ops,
 		.ignore_suspend = 1,
 	},
+	{
+		.name = LPASS_BE_QUIN_TDM_RX_0,
+		.stream_name = "Quinary TDM0 Playback",
+		.cpu_dai_name = "msm-dai-q6-tdm.37184",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_QUIN_TDM_RX_0,
+		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
+		.ops = &msm_tdm_be_ops,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_QUIN_TDM_TX_0,
+		.stream_name = "Quinary TDM0 Capture",
+		.cpu_dai_name = "msm-dai-q6-tdm.37185",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_QUIN_TDM_TX_0,
+		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
+		.ops = &msm_tdm_be_ops,
+		.ignore_suspend = 1,
+	},
 };
 
 static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
@@ -1683,6 +1713,35 @@ static struct snd_soc_dai_link msm_mi2s_be_dai_links[] = {
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_QUATERNARY_MI2S_TX,
+		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+	},
+	{
+		.name = LPASS_BE_QUIN_MI2S_RX,
+		.stream_name = "Quinary MI2S Playback",
+		.cpu_dai_name = "msm-dai-q6-mi2s.5",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_QUINARY_MI2S_RX,
+		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
+		.ops = &msm_mi2s_be_ops,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+	},
+	{
+		.name = LPASS_BE_QUIN_MI2S_TX,
+		.stream_name = "Quinary MI2S Capture",
+		.cpu_dai_name = "msm-dai-q6-mi2s.5",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_QUINARY_MI2S_TX,
 		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
 		.ops = &msm_mi2s_be_ops,
 		.ignore_suspend = 1,
@@ -1809,6 +1868,37 @@ static struct snd_soc_dai_link msm_auxpcm_be_dai_links[] = {
 		.no_pcm = 1,
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_QUAT_AUXPCM_TX,
+		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
+		.ignore_suspend = 1,
+		.ignore_pmdown_time = 1,
+		.ops = &msm_aux_pcm_be_ops,
+	},
+	/* Quinary AUX PCM Backend DAI Links */
+	{
+		.name = LPASS_BE_QUIN_AUXPCM_RX,
+		.stream_name = "Quin AUX PCM Playback",
+		.cpu_dai_name = "msm-dai-q6-auxpcm.5",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-rx",
+		.no_pcm = 1,
+		.dpcm_playback = 1,
+		.id = MSM_BACKEND_DAI_QUIN_AUXPCM_RX,
+		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
+		.ignore_pmdown_time = 1,
+		.ignore_suspend = 1,
+		.ops = &msm_aux_pcm_be_ops,
+	},
+	{
+		.name = LPASS_BE_QUIN_AUXPCM_TX,
+		.stream_name = "Quin AUX PCM Capture",
+		.cpu_dai_name = "msm-dai-q6-auxpcm.5",
+		.platform_name = "msm-pcm-routing",
+		.codec_name = "msm-stub-codec.1",
+		.codec_dai_name = "msm-stub-tx",
+		.no_pcm = 1,
+		.dpcm_capture = 1,
+		.id = MSM_BACKEND_DAI_QUIN_AUXPCM_TX,
 		.be_hw_params_fixup = msm_common_be_hw_params_fixup,
 		.ignore_suspend = 1,
 		.ignore_pmdown_time = 1,
