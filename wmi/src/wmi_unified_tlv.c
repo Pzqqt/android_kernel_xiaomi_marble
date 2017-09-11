@@ -18862,6 +18862,113 @@ QDF_STATUS send_limit_off_chan_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_set_arp_stats_req_cmd_tlv() - send wmi cmd to set arp stats request
+ * @wmi_handle: wmi handler
+ * @req_buf: set arp stats request buffer
+ *
+ * Return: 0 for success and non zero for failure
+ */
+static QDF_STATUS send_set_arp_stats_req_cmd_tlv(wmi_unified_t wmi_handle,
+					  struct set_arp_stats *req_buf)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_vdev_set_arp_stats_cmd_fixed_param *wmi_set_arp;
+
+	len = sizeof(wmi_vdev_set_arp_stats_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	wmi_set_arp =
+		(wmi_vdev_set_arp_stats_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&wmi_set_arp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_set_arp_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_vdev_set_arp_stats_cmd_fixed_param));
+
+	/* fill in per roam config values */
+	wmi_set_arp->vdev_id = req_buf->vdev_id;
+
+	wmi_set_arp->set_clr = req_buf->flag;
+	wmi_set_arp->pkt_type = req_buf->pkt_type;
+	wmi_set_arp->ipv4 = req_buf->ip_addr;
+
+	/* Send per roam config parameters */
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_VDEV_SET_ARP_STAT_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("WMI_SET_ARP_STATS_CMDID failed, Error %d",
+			 status);
+		goto error;
+	}
+
+	WMI_LOGI(FL("set arp stats flag=%d, vdev=%d"),
+		 req_buf->flag, req_buf->vdev_id);
+	return QDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return status;
+}
+
+/**
+ * send_get_arp_stats_req_cmd_tlv() - send wmi cmd to get arp stats request
+ * @wmi_handle: wmi handler
+ * @req_buf: get arp stats request buffer
+ *
+ * Return: 0 for success and non zero for failure
+ */
+static QDF_STATUS send_get_arp_stats_req_cmd_tlv(wmi_unified_t wmi_handle,
+					  struct get_arp_stats *req_buf)
+{
+	wmi_buf_t buf = NULL;
+	QDF_STATUS status;
+	int len;
+	uint8_t *buf_ptr;
+	wmi_vdev_get_arp_stats_cmd_fixed_param *get_arp_stats;
+
+	len = sizeof(wmi_vdev_get_arp_stats_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	get_arp_stats =
+		(wmi_vdev_get_arp_stats_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&get_arp_stats->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_get_arp_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_vdev_get_arp_stats_cmd_fixed_param));
+
+	/* fill in arp stats req cmd values */
+	get_arp_stats->vdev_id = req_buf->vdev_id;
+
+	WMI_LOGI(FL("vdev=%d"), req_buf->vdev_id);
+	/* Send per roam config parameters */
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_VDEV_GET_ARP_STAT_CMDID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMI_LOGE("WMI_GET_ARP_STATS_CMDID failed, Error %d",
+			 status);
+		goto error;
+	}
+
+	return QDF_STATUS_SUCCESS;
+error:
+	wmi_buf_free(buf);
+
+	return status;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -19252,6 +19359,8 @@ struct wmi_ops tlv_ops =  {
 		send_limit_off_chan_cmd_tlv,
 	.extract_reg_ch_avoid_event =
 		extract_reg_ch_avoid_event_tlv,
+	.send_set_arp_stats_req_cmd = send_set_arp_stats_req_cmd_tlv,
+	.send_get_arp_stats_req_cmd = send_get_arp_stats_req_cmd_tlv,
 };
 
 /**
@@ -19483,6 +19592,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_tt_stats_event_id] = WMI_THERM_THROT_STATS_EVENTID;
 	event_ids[wmi_11d_new_country_event_id] = WMI_11D_NEW_COUNTRY_EVENTID;
 	event_ids[wmi_pdev_tpc_event_id] = WMI_PDEV_TPC_EVENTID;
+	event_ids[wmi_get_arp_stats_req_id] = WMI_VDEV_GET_ARP_STAT_EVENTID;
 }
 
 #ifndef CONFIG_MCL

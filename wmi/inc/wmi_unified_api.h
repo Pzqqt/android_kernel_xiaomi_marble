@@ -1536,4 +1536,8 @@ QDF_STATUS wmi_unified_send_dbs_scan_sel_params_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_send_limit_off_chan_cmd(void *wmi_hdl,
 		struct wmi_limit_off_chan_param *wmi_param);
+QDF_STATUS wmi_unified_set_arp_stats_req(void *wmi_hdl,
+					 struct set_arp_stats *req_buf);
+QDF_STATUS wmi_unified_get_arp_stats_req(void *wmi_hdl,
+					 struct get_arp_stats *req_buf);
 #endif /* _WMI_UNIFIED_API_H_ */

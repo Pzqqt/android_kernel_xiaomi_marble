@@ -5150,6 +5150,7 @@ typedef enum {
 	wmi_dfs_radar_detection_event_id,
 	wmi_ext_tbttoffset_update_event_id,
 	wmi_11d_new_country_event_id,
+	wmi_get_arp_stats_req_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -7561,6 +7562,30 @@ struct wmi_mawc_roam_params {
 	uint32_t best_ap_rssi_threshold;
 	uint8_t rssi_stationary_high_adjust;
 	uint8_t rssi_stationary_low_adjust;
+};
+
+/**
+ * struct set_arp_stats - set/reset arp stats
+ * @vdev_id: session id
+ * @flag: enable/disable stats
+ * @pkt_type: type of packet(1 - arp)
+ * @ip_addr: subnet ipv4 address in case of encrypted packets
+ */
+struct set_arp_stats {
+	uint32_t vdev_id;
+	uint8_t flag;
+	uint8_t pkt_type;
+	uint32_t ip_addr;
+};
+
+/**
+ * struct get_arp_stats - get arp stats from firmware
+ * @pkt_type: packet type(1 - ARP)
+ * @vdev_id: session id
+ */
+struct get_arp_stats {
+	uint8_t pkt_type;
+	uint32_t vdev_id;
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
