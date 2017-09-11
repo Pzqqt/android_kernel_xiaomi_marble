@@ -750,6 +750,12 @@ QDF_STATUS (*send_roam_scan_offload_rssi_change_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_per_roam_config_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_per_roam_config_req *req_buf);
 
+QDF_STATUS (*send_set_arp_stats_req_cmd)(wmi_unified_t wmi_handle,
+					 struct set_arp_stats *req_buf);
+
+QDF_STATUS (*send_get_arp_stats_req_cmd)(wmi_unified_t wmi_handle,
+					 struct get_arp_stats *req_buf);
+
 QDF_STATUS (*send_get_buf_extscan_hotlist_cmd)(wmi_unified_t wmi_handle,
 				   struct ext_scan_setbssi_hotlist_params *
 				   photlist, int *buf_len);
