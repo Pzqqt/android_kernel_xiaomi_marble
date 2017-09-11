@@ -268,6 +268,7 @@ typedef struct tagSmeStruct {
 	void (*chip_power_save_fail_cb)(void *,
 			struct chip_pwr_save_fail_detected_params *);
 	void (*bt_activity_info_cb)(void *context, uint32_t bt_activity);
+	void (*get_arp_stats_cb)(void *, struct rsp_stats *);
 	get_chain_rssi_callback get_chain_rssi_cb;
 	void *get_chain_rssi_context;
 } tSmeStruct, *tpSmeStruct;

@@ -7529,6 +7529,53 @@ struct sir_del_all_tdls_peers {
 	struct qdf_mac_addr bssid;
 };
 
+/**
+ * struct rsp_stats - arp packet stats
+ * @arp_req_enqueue: fw tx count
+ * @arp_req_tx_success: tx ack count
+ * @arp_req_tx_failure: tx ack fail count
+ * @arp_rsp_recvd: rx fw count
+ * @out_of_order_arp_rsp_drop_cnt: out of order count
+ * @dad_detected: dad detected
+ * @connect_status: connection status
+ * @ba_session_establishment_status: BA session status
+ */
+struct rsp_stats {
+	uint32_t vdev_id;
+	uint32_t arp_req_enqueue;
+	uint32_t arp_req_tx_success;
+	uint32_t arp_req_tx_failure;
+	uint32_t arp_rsp_recvd;
+	uint32_t out_of_order_arp_rsp_drop_cnt;
+	uint32_t dad_detected;
+	uint32_t connect_status;
+	uint32_t ba_session_establishment_status;
+};
+
+/**
+ * struct set_arp_stats_params - set/reset arp stats
+ * @vdev_id: session id
+ * @flag: enable/disable stats
+ * @pkt_type: type of packet(1 - arp)
+ * @ip_addr: subnet ipv4 address in case of encrypted packets
+ */
+struct set_arp_stats_params {
+	uint32_t vdev_id;
+	uint8_t flag;
+	uint8_t pkt_type;
+	uint32_t ip_addr;
+};
+
+/**
+ * struct get_arp_stats_params - get arp stats from firmware
+ * @pkt_type: packet type(1 - ARP)
+ * @vdev_id: session id
+ */
+struct get_arp_stats_params {
+	uint8_t pkt_type;
+	uint32_t vdev_id;
+};
+
 /*
  * @SCAN_REJECT_DEFAULT: default value
  * @CONNECTION_IN_PROGRESS: connection is in progress

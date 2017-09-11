@@ -1425,6 +1425,16 @@ void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 QDF_STATUS sme_set_wow_pulse(struct wow_pulse_mode *wow_pulse_set_info);
 #endif
 
+/* ARP DEBUG STATS */
+QDF_STATUS sme_set_nud_debug_stats(tHalHandle hal,
+				   struct set_arp_stats_params
+				   *set_stats_param);
+QDF_STATUS sme_get_nud_debug_stats(tHalHandle hal,
+				   struct get_arp_stats_params
+				   *get_stats_param);
+QDF_STATUS sme_set_nud_debug_stats_cb(tHalHandle hal,
+				      void (*cb)(void *, struct rsp_stats *));
+
 /**
  * sme_set_chan_info_callback() - Register chan info callback
  * @hal - MAC global handle

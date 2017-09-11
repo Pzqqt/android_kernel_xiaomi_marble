@@ -2526,6 +2526,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_stats_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
+	/* register for stats response event */
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_VDEV_GET_ARP_STAT_EVENTID,
+					   wma_get_arp_stats_handler,
+					   WMA_RX_SERIALIZER_CTX);
+
 	/* register for peer info response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_STATS_INFO_EVENTID,
@@ -6577,6 +6583,62 @@ static QDF_STATUS wma_process_power_debug_stats_req(tp_wma_handle wma_handle)
 }
 #endif
 
+/**
+ * wma_set_arp_req_stats() - process set arp stats request command to fw
+ * @wma_handle: WMA handle
+ * @req_buf: set srp stats request buffer
+ *
+ * Return: None
+ */
+static void wma_set_arp_req_stats(WMA_HANDLE handle,
+				  struct set_arp_stats_params *req_buf)
+{
+	int status;
+	struct set_arp_stats *arp_stats;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, cannot send per roam config",
+			 __func__);
+		return;
+	}
+
+	arp_stats = (struct set_arp_stats *)req_buf;
+	status = wmi_unified_set_arp_stats_req(wma_handle->wmi_handle,
+					       arp_stats);
+	if (status != EOK)
+		WMA_LOGE("%s: failed to set arp stats to FW",
+			 __func__);
+}
+
+/**
+ * wma_get_arp_req_stats() - process get arp stats request command to fw
+ * @wma_handle: WMA handle
+ * @req_buf: get srp stats request buffer
+ *
+ * Return: None
+ */
+static void wma_get_arp_req_stats(WMA_HANDLE handle,
+				  struct get_arp_stats_params *req_buf)
+{
+	int status;
+	struct get_arp_stats *arp_stats;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("%s: WMA is closed, cannot send per roam config",
+			 __func__);
+		return;
+	}
+
+	arp_stats = (struct get_arp_stats *)req_buf;
+	status = wmi_unified_get_arp_stats_req(wma_handle->wmi_handle,
+					       arp_stats);
+	if (status != EOK)
+		WMA_LOGE("%s: failed to send get arp stats to FW",
+			 __func__);
+}
+
 QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 	struct sir_set_rx_reorder_timeout_val *reorder_timeout)
 {
@@ -7505,6 +7567,16 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_SET_DBS_SCAN_SEL_CONF_PARAMS:
 		wma_send_dbs_scan_selection_params(wma_handle,
 			(struct wmi_dbs_scan_sel_params *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_SET_ARP_STATS_REQ:
+		wma_set_arp_req_stats(wma_handle,
+			(struct set_arp_stats_params *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_GET_ARP_STATS_REQ:
+		wma_get_arp_req_stats(wma_handle,
+			(struct get_arp_stats_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

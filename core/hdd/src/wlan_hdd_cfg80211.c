@@ -1305,7 +1305,11 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 	[QCA_NL80211_VENDOR_SUBCMD_PWR_SAVE_FAIL_DETECTED_INDEX] = {
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_CHIP_PWRSAVE_FAILURE
-	}
+	},
+	[QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET,
+	},
 
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_EVENTS
@@ -10998,6 +11002,296 @@ static int wlan_hdd_cfg80211_set_trace_level(struct wiphy *wiphy,
 	return ret;
 }
 
+/*
+ * define short names for the global vendor params
+ * used by wlan_hdd_cfg80211_setarp_stats_cmd()
+ */
+#define STATS_SET_INVALID \
+	QCA_ATTR_NUD_STATS_SET_INVALID
+#define STATS_SET_START \
+	QCA_ATTR_NUD_STATS_SET_START
+#define STATS_GW_IPV4 \
+	QCA_ATTR_NUD_STATS_GW_IPV4
+#define STATS_SET_MAX \
+	QCA_ATTR_NUD_STATS_SET_MAX
+
+const struct nla_policy
+qca_wlan_vendor_set_nud_stats[STATS_SET_MAX + 1] = {
+	[STATS_SET_START] = {.type = NLA_FLAG },
+	[STATS_GW_IPV4] = {.type = NLA_U32 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_set_nud_stats() - set arp stats command to firmware
+ * @wiphy: pointer to wireless wiphy structure.
+ * @wdev: pointer to wireless_dev structure.
+ * @data: pointer to apfind configuration data.
+ * @data_len: the length in byte of apfind data.
+ *
+ * This is called when wlan driver needs to send arp stats to
+ * firmware.
+ *
+ * Return: An error code or 0 on success.
+ */
+static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     const void *data, int data_len)
+{
+	struct nlattr *tb[STATS_SET_MAX + 1];
+	struct net_device   *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct set_arp_stats_params arp_stats_params;
+	int err = 0;
+
+	ENTER();
+
+	err = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != err)
+		return err;
+
+	err = nla_parse(tb, STATS_SET_MAX, data, data_len,
+			qca_wlan_vendor_set_nud_stats);
+	if (err) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s STATS_SET_START ATTR", __func__);
+		return err;
+	}
+
+	if (tb[STATS_SET_START]) {
+		if (!tb[STATS_GW_IPV4]) {
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+				  "%s STATS_SET_START CMD", __func__);
+			return -EINVAL;
+		}
+		arp_stats_params.flag = true;
+		arp_stats_params.ip_addr = nla_get_u32(tb[STATS_GW_IPV4]);
+	} else {
+		arp_stats_params.flag = false;
+	}
+	if (arp_stats_params.flag)
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+			  "%s STATS_SET_START Cleared!!", __func__);
+
+	qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
+		     sizeof(adapter->hdd_stats.hdd_arp_stats));
+
+	arp_stats_params.pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
+	arp_stats_params.vdev_id = adapter->sessionId;
+
+	if (QDF_STATUS_SUCCESS !=
+	    sme_set_nud_debug_stats(hdd_ctx->hHal, &arp_stats_params)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s STATS_SET_START CMD Failed!!", __func__);
+		return -EINVAL;
+	}
+
+	EXIT();
+
+	return err;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_nud_stats() - set arp stats command to firmware
+ * @wiphy: pointer to wireless wiphy structure.
+ * @wdev: pointer to wireless_dev structure.
+ * @data: pointer to apfind configuration data.
+ * @data_len: the length in byte of apfind data.
+ *
+ * This is called when wlan driver needs to send arp stats to
+ * firmware.
+ *
+ * Return: An error code or 0 on success.
+ */
+static int wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_set_nud_stats(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+#undef STATS_SET_INVALID
+#undef STATS_SET_START
+#undef STATS_GW_IPV4
+#undef STATS_SET_MAX
+
+/*
+ * define short names for the global vendor params
+ * used by wlan_hdd_cfg80211_setarp_stats_cmd()
+ */
+#define STATS_GET_INVALID \
+	QCA_ATTR_NUD_STATS_SET_INVALID
+#define COUNT_FROM_NETDEV \
+	QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_FROM_NETDEV
+#define COUNT_TO_LOWER_MAC \
+	QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_TO_LOWER_MAC
+#define RX_COUNT_BY_LOWER_MAC \
+	QCA_ATTR_NUD_STATS_ARP_REQ_RX_COUNT_BY_LOWER_MAC
+#define COUNT_TX_SUCCESS \
+	QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_TX_SUCCESS
+#define RSP_RX_COUNT_BY_LOWER_MAC \
+	QCA_ATTR_NUD_STATS_ARP_RSP_RX_COUNT_BY_LOWER_MAC
+#define RSP_RX_COUNT_BY_UPPER_MAC \
+	QCA_ATTR_NUD_STATS_ARP_RSP_RX_COUNT_BY_UPPER_MAC
+#define RSP_COUNT_TO_NETDEV \
+	QCA_ATTR_NUD_STATS_ARP_RSP_COUNT_TO_NETDEV
+#define RSP_COUNT_OUT_OF_ORDER_DROP \
+	QCA_ATTR_NUD_STATS_ARP_RSP_COUNT_OUT_OF_ORDER_DROP
+#define AP_LINK_ACTIVE \
+	QCA_ATTR_NUD_STATS_AP_LINK_ACTIVE
+#define AP_LINK_DAD \
+	QCA_ATTR_NUD_STATS_IS_DAD
+#define STATS_GET_MAX \
+	QCA_ATTR_NUD_STATS_GET_MAX
+
+const struct nla_policy
+qca_wlan_vendor_get_nud_stats[STATS_GET_MAX + 1] = {
+	[COUNT_FROM_NETDEV] = {.type = NLA_U16 },
+	[COUNT_TO_LOWER_MAC] = {.type = NLA_U16 },
+	[RX_COUNT_BY_LOWER_MAC] = {.type = NLA_U16 },
+	[COUNT_TX_SUCCESS] = {.type = NLA_U16 },
+	[RSP_RX_COUNT_BY_LOWER_MAC] = {.type = NLA_U16 },
+	[RSP_RX_COUNT_BY_UPPER_MAC] = {.type = NLA_U16 },
+	[RSP_COUNT_TO_NETDEV] = {.type = NLA_U16 },
+	[RSP_COUNT_OUT_OF_ORDER_DROP] = {.type = NLA_U16 },
+	[AP_LINK_ACTIVE] = {.type = NLA_FLAG },
+	[AP_LINK_DAD] = {.type = NLA_FLAG },
+};
+
+/**
+ * __wlan_hdd_cfg80211_get_nud_stats() - get arp stats command to firmware
+ * @wiphy: pointer to wireless wiphy structure.
+ * @wdev: pointer to wireless_dev structure.
+ * @data: pointer to apfind configuration data.
+ * @data_len: the length in byte of apfind data.
+ *
+ * This is called when wlan driver needs to get arp stats to
+ * firmware.
+ *
+ * Return: An error code or 0 on success.
+ */
+static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
+					     struct wireless_dev *wdev,
+					     const void *data, int data_len)
+{
+	int err = 0;
+	unsigned long rc;
+	struct hdd_nud_stats_context *context;
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
+	struct get_arp_stats_params arp_stats_params;
+	struct sk_buff *skb;
+
+	ENTER();
+
+	err = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != err)
+		return err;
+
+	arp_stats_params.pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
+	arp_stats_params.vdev_id = adapter->sessionId;
+
+	spin_lock(&hdd_context_lock);
+	context = &hdd_ctx->nud_stats_context;
+	INIT_COMPLETION(context->response_event);
+	spin_unlock(&hdd_context_lock);
+
+	if (QDF_STATUS_SUCCESS !=
+	    sme_get_nud_debug_stats(hdd_ctx->hHal, &arp_stats_params)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s STATS_SET_START CMD Failed!!", __func__);
+		return -EINVAL;
+	}
+
+	rc = wait_for_completion_timeout(&context->response_event,
+					 msecs_to_jiffies(
+						WLAN_WAIT_TIME_NUD_STATS));
+	if (!rc) {
+		hdd_err("Target response timed out request ");
+		return -ETIMEDOUT;
+	}
+
+	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
+						  WLAN_NUD_STATS_LEN);
+	if (!skb) {
+		hdd_err("%s: cfg80211_vendor_cmd_alloc_reply_skb failed",
+			__func__);
+		return -ENOMEM;
+	}
+
+	if (nla_put_u16(skb, COUNT_FROM_NETDEV,
+			adapter->hdd_stats.hdd_arp_stats.tx_count) ||
+	    nla_put_u16(skb, COUNT_TO_LOWER_MAC,
+			adapter->hdd_stats.hdd_arp_stats.tx_host_fw_sent) ||
+	    nla_put_u16(skb, RX_COUNT_BY_LOWER_MAC,
+			adapter->hdd_stats.hdd_arp_stats.tx_fw_cnt) ||
+	    nla_put_u16(skb, COUNT_TX_SUCCESS,
+			adapter->hdd_stats.hdd_arp_stats.tx_ack_cnt) ||
+	    nla_put_u16(skb, RSP_RX_COUNT_BY_LOWER_MAC,
+			adapter->hdd_stats.hdd_arp_stats.rx_fw_cnt) ||
+	    nla_put_u16(skb, RSP_RX_COUNT_BY_UPPER_MAC,
+			adapter->hdd_stats.hdd_arp_stats.rx_count) ||
+	    nla_put_u16(skb, RSP_COUNT_TO_NETDEV,
+			adapter->hdd_stats.hdd_arp_stats.rx_delivered) ||
+	    nla_put_u16(skb, RSP_COUNT_OUT_OF_ORDER_DROP,
+			adapter->hdd_stats.hdd_arp_stats.
+			rx_host_drop_reorder)) {
+		hdd_err("nla put fail");
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+	if (adapter->con_status)
+		nla_put_flag(skb, AP_LINK_ACTIVE);
+	if (adapter->dad)
+		nla_put_flag(skb, AP_LINK_DAD);
+
+	cfg80211_vendor_cmd_reply(skb);
+	return err;
+}
+
+/**
+ * wlan_hdd_cfg80211_get_nud_stats() - get arp stats command to firmware
+ * @wiphy: pointer to wireless wiphy structure.
+ * @wdev: pointer to wireless_dev structure.
+ * @data: pointer to apfind configuration data.
+ * @data_len: the length in byte of apfind data.
+ *
+ * This is called when wlan driver needs to get arp stats to
+ * firmware.
+ *
+ * Return: An error code or 0 on success.
+ */
+static int wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
+					   struct wireless_dev *wdev,
+					   const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_get_nud_stats(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+#undef QCA_ATTR_NUD_STATS_SET_INVALID
+#undef QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_FROM_NETDEV
+#undef QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_TO_LOWER_MAC
+#undef QCA_ATTR_NUD_STATS_ARP_REQ_RX_COUNT_BY_LOWER_MAC
+#undef QCA_ATTR_NUD_STATS_ARP_REQ_COUNT_TX_SUCCESS
+#undef QCA_ATTR_NUD_STATS_ARP_RSP_RX_COUNT_BY_LOWER_MAC
+#undef QCA_ATTR_NUD_STATS_ARP_RSP_RX_COUNT_BY_UPPER_MAC
+#undef QCA_ATTR_NUD_STATS_ARP_RSP_COUNT_TO_NETDEV
+#undef QCA_ATTR_NUD_STATS_ARP_RSP_COUNT_OUT_OF_ORDER_DROP
+#undef QCA_ATTR_NUD_STATS_AP_LINK_ACTIVE
+#undef QCA_ATTR_NUD_STATS_GET_MAX
 
 void hdd_bt_activity_cb(void *context, uint32_t bt_activity)
 {
@@ -11873,6 +12167,22 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 				 WIPHY_VENDOR_CMD_NEED_NETDEV |
 				 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_ll_stats_ext_set_param
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_SET,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_nud_stats
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_get_nud_stats
 	},
 
 #ifdef WLAN_UMAC_CONVERGENCE
