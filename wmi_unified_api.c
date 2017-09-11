@@ -3284,6 +3284,44 @@ QDF_STATUS wmi_unified_set_per_roam_config(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_set_arp_stats_req() - set arp stats request
+ * @wmi_hdl: wmi handle
+ * @req_buf: pointer to set_arp_stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_arp_stats_req(void *wmi_hdl,
+					 struct set_arp_stats *req_buf)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_arp_stats_req_cmd)
+		return wmi_handle->ops->send_set_arp_stats_req_cmd(wmi_handle,
+								   req_buf);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_get_arp_stats_req() - get arp stats request
+ * @wmi_hdl: wmi handle
+ * @req_buf: pointer to get_arp_stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_get_arp_stats_req(void *wmi_hdl,
+					 struct get_arp_stats *req_buf)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_get_arp_stats_req_cmd)
+		return wmi_handle->ops->send_get_arp_stats_req_cmd(wmi_handle,
+								   req_buf);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_get_buf_extscan_hotlist_cmd() - prepare hotlist command
  * @wmi_hdl: wmi handle
  * @photlist: hotlist command params
