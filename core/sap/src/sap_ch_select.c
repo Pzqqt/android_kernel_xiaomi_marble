@@ -2188,10 +2188,10 @@ static void sap_sort_chl_weight_ht40_24_g(tSapChSelSpectInfo *pSpectInfoParams,
 				}
 			}
 		} else {
-			tmpWeight1 = pSpectInfo[j].weight +
-						pSpectInfo[j + 4].weight;
-			if (pSpectInfo[j].weight <=
-					pSpectInfo[j + 4].weight) {
+			tmpWeight1 = pSpectInfo[j].weight_copy +
+						pSpectInfo[j + 4].weight_copy;
+			if (pSpectInfo[j].weight_copy <=
+					pSpectInfo[j + 4].weight_copy) {
 				pSpectInfo[j].weight = tmpWeight1;
 				pSpectInfo[j + 4].weight =
 					SAP_ACS_WEIGHT_MAX * 2;
