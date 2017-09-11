@@ -354,7 +354,6 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 		if (wlan_crypto_vdev_has_auth_mode(vdev,
 					(1 << WLAN_CRYPTO_AUTH_8021X))) {
 			req_key->flags |= WLAN_CRYPTO_KEY_DEFAULT;
-			crypto_priv->def_tx_keyid = req_key->keyix;
 		}
 	}
 
