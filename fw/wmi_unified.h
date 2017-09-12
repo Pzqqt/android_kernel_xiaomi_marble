@@ -240,6 +240,7 @@ typedef enum {
     WMI_GRP_MONITOR,        /* 0x39 */
     WMI_GRP_REGULATORY,     /* 0x3a */
     WMI_GRP_HW_DATA_FILTER, /* 0x3b */
+    WMI_GRP_WLM,            /* 0x3c WLAN Latency Manager */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -1064,6 +1065,9 @@ typedef enum {
 
     /** WMI commands related to HW data filtering **/
     WMI_HW_DATA_FILTER_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_HW_DATA_FILTER),
+
+    /** WMI commands related to WLAN latency module **/
+    WMI_WLM_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_WLM),
 
 } WMI_CMD_ID;
 
@@ -19917,6 +19921,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_BSS_CHAN_INFO_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_VDEV_LIMIT_OFFCHAN_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_BTM_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_WLM_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -20327,6 +20332,116 @@ typedef struct {
      * A_UINT8 payload[1];
      */
 } wmi_unit_test_event_fixed_param;
+
+/* Definition of latency levels */
+typedef enum {
+    WMI_WLM_LL_NORMAL = 0x0,
+    WMI_WLM_LL_MODERATE = 0x1,
+    WMI_WLM_LL_LOW = 0x2,
+    WMI_WLM_LL_ULTRA_LOW = 0x3,
+} WMI_WLM_LATENCY_LEVEL;
+
+/*
+* Lay out of flags in wmi_wlm_config_cmd_fixed_param
+*
+* |31  12|  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
+* +------+------+------+------+------+------+------+-----+-----+
+* | RSVD | SSLP | CSLP | RSVD | Roam | RSVD | DWLT | DFS | SUP |
+* +------+-------------+-------------+-------------------------+
+* |  WAL |      PS     |     Roam    |         Scan            |
+*
+*/
+/* bit 0-3 of flags is used for scan operation */
+/* bit 0: WLM_FLAGS_SCAN_SUPPRESS, suppress all scan and other bits would be ignored if bit is set */
+
+#define WLM_FLAGS_SCAN_SUPPRESS  1  /* suppress all scan request */
+
+/* bit 1: WLM_FLAGS_SCAN_SKIP_DFS, skip dfs channel if bit is set */
+
+#define WLM_FLAGS_SCAN_SKIP_DFS  1  /* skip dfs channel operation */
+
+/* bit 2-3: define policy of dwell time/duration of each foreign channel
+   (b2 b3)
+   (0  0 ): Default dwell time
+   (0  1 ): WLM_FLAGS_STICK_SCAN_DWELL_TIME : Stick to original active/passive dwell time, but split
+   foreign channel dwell times into fitting into min (dl_latency, ul_latency). Note it can increase
+   overall scan duration.
+   (1  0 ): WLM_FLAGS_SHRINK_SCAN_DWELL_TIME: Shrink active/passive dwell time to
+   min(dl_latency, ul_latency, dwell_time). It may reduce overall scan duration, but it may decrease
+   the accuracy of scan result.
+   (1  1 ): reserved
+*/
+#define WLM_FLAGS_DEFAULT_SCAN_DWELL_TIME   0 /* Default scan dwell time */
+#define WLM_FLAGS_STICK_SCAN_DWELL_TIME     1 /* Shrink off channel time but extend overall scan duration */
+#define WLM_FLAGS_SHRINK_SCAN_DWELL_TIME    2 /* Shrink scan off channel time */
+
+/* bit 4-5: reserved for scan */
+
+/* bit 6-7 of flags is used for roaming operation */
+/* bit 6-7: define roaming policy:
+   (b6 b7)
+   (0  0 ): WLM_FLAGS_ROAM_ALLOW: Default behavior, allow roaming in all scenarios
+   (0  1 ): WLM_FLAGS_ROAM_SUPPRESS: Disallow all roaming
+   (1  0 ): WLM_FLAGS_ALLOW_FINAL_BMISS_ROAM: Allow final bmiss roaming only
+   (1  1 ): reserved
+*/
+#define WLM_FLAGS_ROAM_ALLOW     0
+#define WLM_FLAGS_ROAM_SUPPRESS  1
+#define WLM_FLAGS_ALLOW_FINAL_BMISS_ROAM 2
+
+/* bit 8-9: reserved for roaming */
+
+/* bit 10-11 of flags is used for powersave operation */
+/* bit 10: WLM_FLAGS_PS_DISABLE_CSS_COLLAPSE, disable css power collapse if bit is set */
+
+#define WLM_FLAGS_PS_DISABLE_CSS_COLLAPSE  1  /* disable css power collapse */
+
+/* bit 11: WLM_FLAGS_PS_DISABLE_SYS_SLEEP, disable sys sleep if bit is set */
+
+#define WLM_FLAGS_PS_DISABLE_SYS_SLEEP  1  /* disable sys sleep */
+
+
+/* bit 12-31 of flags is reserved for powersave and WAL */
+
+#define WLM_FLAGS_SCAN_IS_SUPPRESS(flag)                  WMI_GET_BITS(flag, 0, 1)
+#define WLM_FLAGS_SCAN_SET_SUPPRESS(flag, val)            WMI_SET_BITS(flag, 0, 1, val)
+#define WLM_FLAGS_SCAN_IS_SKIP_DFS(flag)                  WMI_GET_BITS(flag, 1, 1)
+#define WLM_FLAGS_SCAN_SET_SKIP_DFS(flag, val)            WMI_SET_BITS(flag, 1, 1, val)
+#define WLM_FLAGS_SCAN_GET_DWELL_TIME_POLICY(flag)        WMI_GET_BITS(flag, 2, 2)
+#define WLM_FLAGS_SCAN_SET_DWELL_TIME_POLICY(flag, val)   WMI_SET_BITS(flag, 2, 2, val)
+#define WLM_FLAGS_ROAM_GET_POLICY(flag)                   WMI_GET_BITS(flag, 6, 2)
+#define WLM_FLAGS_ROAM_SET_POLICY(flag, val)              WMI_SET_BITS(flag, 6, 2, val)
+#define WLM_FLAGS_PS_IS_CSS_CLPS_DISABLED(flag)           WMI_GET_BITS(flag, 10, 1)
+#define WLM_FLAGS_PS_SET_CSS_CLPS_DISABLE(flag, val)      WMI_SET_BITS(flag, 10, 1, val)
+#define WLM_FLAGS_PS_IS_SYS_SLP_DISABLED(flag)            WMI_GET_BITS(flag, 11, 1)
+#define WLM_FLAGS_PS_SET_SYS_SLP_DISABLE(flag, val)       WMI_SET_BITS(flag, 11, 1, val)
+
+typedef struct {
+    /** TLV tag and len; tag equals
+    * WMI_WLM_CONFIG_CMD_fixed_param */
+    A_UINT32 tlv_header;
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    /* Refer to WMI_WLM_LATENCY_LEVEL
+    * Once latency change detected, WLM will notify modules e.g. STAPS or SCAN/ROAM,
+    * who subscribed this event. And subscribers, like SCAN, may disable/cutoff offchan
+    * operation to support lower latency of WLAN.
+    */
+    A_UINT32 latency_level;
+    /* represent uplink latency in ms
+    * This parameter will be used by STAPS module to decide timing parameters, like
+    * ITO or SPEC wakeup interval. For SCAN/ROAM, it may used to calculate offchan
+    * durations.
+    */
+    A_UINT32 ul_latency;
+    /* represent downlink latency in ms
+    * Similar usage as ul_latency
+    */
+    A_UINT32 dl_latency;
+    /* flags for each client of WLM, refer to WLM_FLAGS_ definitions above */
+    A_UINT32 flags;
+} wmi_wlm_config_cmd_fixed_param;
+
 
 /* ADD NEW DEFS HERE */
 
