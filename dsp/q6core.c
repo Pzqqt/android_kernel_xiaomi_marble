@@ -210,7 +210,11 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 	case RESET_EVENTS:{
 		pr_debug("%s: Reset event received in Core service\n",
 			__func__);
-		/* no reset done as the data will not change after SSR*/
+		/*
+		 * no reset for q6core_avcs_ver_info done as
+		 * the data will not change after SSR
+		 */
+		apr_reset(q6core_lcl.core_handle_q);
 		q6core_lcl.core_handle_q = NULL;
 		break;
 	}
