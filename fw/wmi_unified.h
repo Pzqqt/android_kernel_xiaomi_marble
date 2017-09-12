@@ -2012,6 +2012,10 @@ typedef struct {
     A_UINT32 vht_supp_mcs; /* VHT Supported MCS Set field Rx/Tx same */
     A_UINT32 hw_min_tx_power;
     A_UINT32 hw_max_tx_power;
+    /* sys_cap_info:
+     * bits  1:0  - RXTX LED + RFKILL enable flags (see WMI_LEDRFKILL_FLAGS)
+     * bits 31:2  - reserved (must be set to zero)
+     */
     A_UINT32 sys_cap_info;
     A_UINT32 min_pkt_size_enable; /* Enterprise mode short pkt enable */
     /** Max beacon and Probe Response IE offload size (includes
@@ -2079,6 +2083,11 @@ typedef struct {
  *     wlan_dbs_hw_mode_list[];
  */
 } wmi_service_ready_event_fixed_param;
+
+typedef enum {
+    WMI_RXTX_LED_ENABLE         = 0x00000001,
+    WMI_RFKILL_ENABLE           = 0x00000002,
+} WMI_LEDRFKILL_FLAGS;
 
 #define WMI_SERVICE_SEGMENT_BM_SIZE32 4 /* 4x A_UINT32 = 128 bits */
 typedef struct {
