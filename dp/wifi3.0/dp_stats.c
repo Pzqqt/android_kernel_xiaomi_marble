@@ -2137,6 +2137,9 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 			dp_stats_buf->tx_ldpc);
 	DP_TRACE_STATS(FATAL, "rts_cnt = %d",
 			dp_stats_buf->rts_cnt);
+	DP_TRACE_STATS(FATAL, "rts_success = %d",
+			dp_stats_buf->rts_success);
+
 	DP_TRACE_STATS(FATAL, "ack_rssi = %d",
 			dp_stats_buf->ack_rssi);
 
