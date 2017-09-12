@@ -883,7 +883,6 @@ typedef struct {
 } sapSafeChannelType;
 #endif /* FEATURE_WLAN_CH_AVOID */
 void sap_cleanup_channel_list(void *sapContext);
-void sapCleanupAllChannelList(void);
 
 /**
  * sap_is_auto_channel_select() - is channel AUTO_CHANNEL_SELECT
