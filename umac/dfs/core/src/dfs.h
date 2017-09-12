@@ -1683,7 +1683,7 @@ void dfs_stacac_stop(struct wlan_dfs *dfs);
  * @chan: Pointer to dfs channel structure.
  */
 void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel **chan);
+		struct dfs_ieee80211_channel *chan);
 
 /**
  * dfs_phyerr_param_copy() - Function to copy src buf to dest buf.

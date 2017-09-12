@@ -205,6 +205,31 @@ static void target_if_sptrl_tx_ops_register(
 }
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+static void target_if_target_tx_ops_register(
+		struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	struct wlan_lmac_if_target_tx_ops *target_tx_ops;
+
+	if (!tx_ops) {
+		target_if_err("invalid tx_ops");
+		return;
+	}
+
+	target_tx_ops = &tx_ops->target_tx_ops;
+
+	target_tx_ops->tgt_is_tgt_type_ar900b =
+		target_is_tgt_type_ar900b;
+
+	target_tx_ops->tgt_is_tgt_type_ipq4019 =
+		target_is_tgt_type_ipq4019;
+
+	target_tx_ops->tgt_is_tgt_type_qca9984 =
+		target_is_tgt_type_qca9984;
+
+	target_tx_ops->tgt_is_tgt_type_qca9888 =
+		target_is_tgt_type_qca9888;
+}
+
 static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -230,6 +255,9 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_son_tx_ops_register(tx_ops);
 
 	target_if_tdls_tx_ops_register(tx_ops);
+
+	target_if_target_tx_ops_register(tx_ops);
+
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
 }
@@ -303,3 +331,22 @@ void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc)
 
 }
 
+bool target_is_tgt_type_ar900b(uint32_t target_type)
+{
+	return target_type == TARGET_TYPE_AR900B;
+}
+
+bool target_is_tgt_type_ipq4019(uint32_t target_type)
+{
+	return target_type == TARGET_TYPE_IPQ4019;
+}
+
+bool target_is_tgt_type_qca9984(uint32_t target_type)
+{
+	return target_type == TARGET_TYPE_QCA9984;
+}
+
+bool target_is_tgt_type_qca9888(uint32_t target_type)
+{
+	return target_type == TARGET_TYPE_QCA9888;
+}

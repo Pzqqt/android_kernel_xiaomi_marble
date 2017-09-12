@@ -34,10 +34,6 @@
 #include "dfs.h"
 
 #define VHT160_IEEE_FREQ_DIFF 16
-#define TARGET_TYPE_AR900B    9
-#define TARGET_TYPE_QCA9984   10
-#define TARGET_TYPE_IPQ4019   11
-#define TARGET_TYPE_QCA9888   12
 
 /**
  * struct dfs_precac_entry - PreCAC entry.
@@ -245,12 +241,4 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  */
 bool dfs_is_precac_timer_running(struct wlan_dfs *dfs);
-
-/**
- * dfs_find_precac_secondary_vht80_chan() - Get a VHT80 channel with the
- *                                          precac primary center frequency.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel **chan);
 #endif /* _DFS_ZERO_CAC_H_ */

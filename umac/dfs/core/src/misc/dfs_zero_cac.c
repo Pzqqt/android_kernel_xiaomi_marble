@@ -371,7 +371,7 @@ bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 
 #define VHT80_IEEE_FREQ_OFFSET 6
 void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel **chan)
+		struct dfs_ieee80211_channel *chan)
 {
 	uint8_t first_primary_dfs_ch_ieee;
 
@@ -381,12 +381,12 @@ void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
 	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
 			first_primary_dfs_ch_ieee, 0,
 			IEEE80211_MODE_11AC_VHT80,
-			&((*chan)->dfs_ch_freq),
-			&((*chan)->dfs_ch_flags),
-			&((*chan)->dfs_ch_flagext),
-			&((*chan)->dfs_ch_ieee),
-			&((*chan)->dfs_ch_vhtop_ch_freq_seg1),
-			&((*chan)->dfs_ch_vhtop_ch_freq_seg2));
+			&(chan->dfs_ch_freq),
+			&(chan->dfs_ch_flags),
+			&(chan->dfs_ch_flagext),
+			&(chan->dfs_ch_ieee),
+			&(chan->dfs_ch_vhtop_ch_freq_seg1),
+			&(chan->dfs_ch_vhtop_ch_freq_seg2));
 }
 
 /**
@@ -781,6 +781,19 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		bool *dfs_set_cfreq2,
 		bool *set_agile)
 {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_target_tx_ops *tx_ops;
+	uint32_t target_type;
+
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	if (!psoc) {
+		DFS_PRINTK("%s: PSOC is NULL\n", __func__);
+		return;
+	}
+
+	tx_ops = &(psoc->soc_cb.tx_ops.target_tx_ops);
+	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
+
 	if (chan_mode == IEEE80211_MODE_11AC_VHT80) {
 		/*
 		 * If
@@ -800,8 +813,7 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 			dfs->dfs_precac_timer_running);
 
 		if (dfs->dfs_precac_enable &&
-				(lmac_get_target_type(dfs->dfs_pdev_obj) ==
-				 TARGET_TYPE_QCA9984) &&
+				tx_ops->tgt_is_tgt_type_qca9984(target_type) &&
 				(lmac_get_dfsdomain(dfs->dfs_pdev_obj) ==
 				 DFS_ETSI_DOMAIN)) {
 			/*

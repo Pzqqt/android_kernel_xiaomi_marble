@@ -52,6 +52,11 @@
 #define GET_WMI_HDL_FROM_PSOC(psoc) \
 		(((struct target_psoc_info *)(psoc->tgt_if_handle))->wmi_handle)
 
+#define TARGET_TYPE_AR900B    9
+#define TARGET_TYPE_QCA9984   15 /* cascade */
+#define TARGET_TYPE_IPQ4019   16 /* dakota */
+#define TARGET_TYPE_QCA9888   17 /* besra */
+
 typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(
 			void *scn_handle);
 
@@ -159,5 +164,37 @@ QDF_STATUS target_if_register_legacy_service_ready_cb(
 	wmi_legacy_service_ready_callback service_ready_cb);
 
 void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_is_tgt_type_ar900b() - Check if the target type is AR900B
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is AR900B, else false.
+ */
+bool target_is_tgt_type_ar900b(uint32_t target_type);
+
+/**
+ * target_is_tgt_type_ipq4019() - Check if the target type is IPQ4019
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is IPQ4019, else false.
+ */
+bool target_is_tgt_type_ipq4019(uint32_t target_type);
+
+/**
+ * target_is_tgt_type_qca9984() - Check if the target type is QCA9984
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is QCA9984, else false.
+ */
+bool target_is_tgt_type_qca9984(uint32_t target_type);
+
+/**
+ * target_is_tgt_type_qca9888() - Check if the target type is QCA9888
+ * @target_type: target type to be checked.
+ *
+ * Return: true if the target_type is QCA9888, else false.
+ */
+bool target_is_tgt_type_qca9888(uint32_t target_type);
 #endif
 

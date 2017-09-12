@@ -241,30 +241,28 @@ struct dfs_pulse dfs_korea_radars[] = {
 	{3,   1, 3003, 3003, 1, 7,  2,  0,  1, 18,  0, 0, 1,  43},
 };
 
-#define TARGET_TYPE_AR900B    9
-#define TARGET_TYPE_QCA9984   10
-#define TARGET_TYPE_IPQ4019   11
-#define TARGET_TYPE_QCA9888   12
 #define RSSI_THERSH_AR900B    15
 
 /**
  * dfs_assign_fcc_pulse_table() - Assign FCC pulse table
  * @rinfo: Pointer to wlan_dfs_radar_tab_info structure.
  * @target_type: Target type.
+ * @tx_ops: target tx ops.
  */
 static inline void dfs_assign_fcc_pulse_table(
 		struct wlan_dfs_radar_tab_info *rinfo,
-		uint32_t target_type)
+		uint32_t target_type,
+		struct wlan_lmac_if_target_tx_ops *tx_ops)
 {
 	rinfo->dfs_radars = dfs_fcc_radars;
 	rinfo->numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
 
-	if (target_type == TARGET_TYPE_AR900B ||
-			target_type == TARGET_TYPE_IPQ4019) {
+	if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
+			tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
 		rinfo->b5pulses = dfs_fcc_bin5pulses_ar900b;
 		rinfo->numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses_ar900b);
-	} else if (target_type == TARGET_TYPE_QCA9984 ||
-			target_type == TARGET_TYPE_QCA9888) {
+	} else if (tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
+			tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
 		rinfo->b5pulses = dfs_fcc_bin5pulses_qca9984;
 		rinfo->numb5radars =
 			QDF_ARRAY_SIZE(dfs_fcc_bin5pulses_qca9984);
@@ -276,6 +274,8 @@ static inline void dfs_assign_fcc_pulse_table(
 void ol_if_dfs_configure(struct wlan_dfs *dfs)
 {
 	struct wlan_dfs_radar_tab_info rinfo;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_target_tx_ops *tx_ops;
 	int i;
 	uint32_t target_type;
 	int dfsdomain = DFS_FCC_DOMAIN;
@@ -292,6 +292,13 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 	dfsdomain = lmac_get_dfsdomain(dfs->dfs_pdev_obj);
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	if (!psoc) {
+		DFS_PRINTK("%s: PSOC is NULL\n", __func__);
+		return;
+	}
+
+	tx_ops = &(psoc->soc_cb.tx_ops.target_tx_ops);
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
 		DFS_PRINTK("%s: FCC domain\n", __func__);
@@ -310,7 +317,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 			rinfo.b5pulses = NULL;
 			rinfo.numb5radars = 0;
 		} else {
-			dfs_assign_fcc_pulse_table(&rinfo, target_type);
+			dfs_assign_fcc_pulse_table(&rinfo, target_type, tx_ops);
 		}
 
 		break;
@@ -346,13 +353,13 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 
-		if (target_type == TARGET_TYPE_AR900B ||
-				target_type == TARGET_TYPE_IPQ4019) {
+		if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
+				tx_ops->tgt_is_tgt_type_ipq4019(target_type)) {
 			rinfo.b5pulses = dfs_jpn_bin5pulses_ar900b;
 			rinfo.numb5radars = QDF_ARRAY_SIZE(
 					dfs_jpn_bin5pulses_ar900b);
-		} else if (target_type == TARGET_TYPE_QCA9984 ||
-				target_type == TARGET_TYPE_QCA9888) {
+		} else if (tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
+				tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
 			rinfo.b5pulses = dfs_jpn_bin5pulses_qca9984;
 			rinfo.numb5radars = QDF_ARRAY_SIZE
 				(dfs_jpn_bin5pulses_qca9984);
@@ -372,10 +379,10 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		break;
 	}
 
-	if (target_type == TARGET_TYPE_AR900B ||
-			target_type == TARGET_TYPE_IPQ4019 ||
-			target_type == TARGET_TYPE_QCA9984 ||
-			target_type == TARGET_TYPE_QCA9888) {
+	if (tx_ops->tgt_is_tgt_type_ar900b(target_type) ||
+			tx_ops->tgt_is_tgt_type_ipq4019(target_type) ||
+			tx_ops->tgt_is_tgt_type_qca9984(target_type) ||
+			tx_ops->tgt_is_tgt_type_qca9888(target_type)) {
 		/* Beeliner WAR: lower RSSI threshold to improve detection of
 		 * certian radar types
 		 */
@@ -503,13 +510,14 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 		if (dfs->is_radar_found_on_secondary_seg &&
 				dfs_is_precac_timer_running(dfs)) {
 			/* Get a VHT80 channel and mark it */
-			struct dfs_ieee80211_channel *ichan;
+			struct dfs_ieee80211_channel ichan;
 
 			dfs_find_precac_secondary_vht80_chan(dfs, &ichan);
+
 			dfs_mlme_channel_mark_radar(dfs->dfs_pdev_obj,
-					ichan->dfs_ch_freq,
-					ichan->dfs_ch_vhtop_ch_freq_seg2,
-					ichan->dfs_ch_flags);
+					ichan.dfs_ch_freq,
+					ichan.dfs_ch_vhtop_ch_freq_seg2,
+					ichan.dfs_ch_flags);
 		} else {
 			dfs_mlme_channel_mark_radar(dfs->dfs_pdev_obj,
 					dfs->dfs_curchan->dfs_ch_freq,
