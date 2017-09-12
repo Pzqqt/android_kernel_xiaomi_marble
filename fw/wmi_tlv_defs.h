@@ -853,6 +853,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_offload_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_dhcp_lease_renew_event,
     WMITLV_TAG_STRUC_wmi_btm_config_fixed_param,
+    WMITLV_TAG_STRUC_wmi_debug_mesg_fw_data_stall_param,
 } WMITLV_TAG_ID;
 
 /*
