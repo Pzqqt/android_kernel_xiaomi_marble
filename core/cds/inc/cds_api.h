@@ -315,7 +315,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc);
 
 QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc);
 
-QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context);
+QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc);
 
 QDF_STATUS cds_post_disable(void);
 

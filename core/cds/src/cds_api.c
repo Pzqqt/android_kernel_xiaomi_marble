@@ -940,11 +940,10 @@ err_wma_stop:
 /**
  * cds_disable() - stop/disable cds module
  * @psoc: Psoc pointer
- * @cds_context: CDS context
  *
  * Return: QDF status
  */
-QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
+QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
 	void *handle;

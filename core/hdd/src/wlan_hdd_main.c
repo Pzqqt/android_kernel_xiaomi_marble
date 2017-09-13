@@ -9244,7 +9244,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	return 0;
 
 cds_disable:
-	cds_disable(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
+	cds_disable(hdd_ctx->hdd_psoc);
 
 out:
 	return -EINVAL;
@@ -9271,7 +9271,7 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 	/* De-register the SME callbacks */
 	hdd_deregister_cb(hdd_ctx);
 
-	qdf_status = cds_disable(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
+	qdf_status = cds_disable(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to Disable the CDS Modules! :%d",
 			qdf_status);
