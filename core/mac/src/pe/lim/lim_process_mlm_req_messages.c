@@ -64,6 +64,48 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal);
 static void lim_process_auth_retry_timer(tpAniSirGlobal);
 
 /**
+ * lim_process_sae_auth_timeout() - This function is called to process sae
+ * auth timeout
+ * @mac_ctx: Pointer to Global MAC structure
+ *
+ * @Return: None
+ */
+static void lim_process_sae_auth_timeout(tpAniSirGlobal mac_ctx)
+{
+	tpPESession session;
+
+	session = pe_find_session_by_session_id(mac_ctx,
+			mac_ctx->lim.limTimers.sae_auth_timer.sessionId);
+	if (session == NULL) {
+		pe_err("Session does not exist for given session id");
+		return;
+	}
+
+	pe_warn("SAE auth timeout sessionid %d mlmstate %X SmeState %X",
+		session->peSessionId, session->limMlmState,
+		session->limSmeState);
+
+	switch (session->limMlmState) {
+	case eLIM_MLM_WT_SAE_AUTH_STATE:
+		/*
+		 * SAE authentication is not completed. Restore from
+		 * auth state.
+		 */
+		if (session->pePersona == QDF_STA_MODE)
+			lim_restore_from_auth_state(mac_ctx,
+				eSIR_SME_AUTH_TIMEOUT_RESULT_CODE,
+				eSIR_MAC_UNSPEC_FAILURE_REASON, session);
+		break;
+	default:
+		/* SAE authentication is timed out in unexpected state */
+		pe_err("received unexpected SAE auth timeout in state %X",
+			session->limMlmState);
+		lim_print_mlm_state(mac_ctx, LOGE, session->limMlmState);
+		break;
+	}
+}
+
+/**
  * lim_process_mlm_req_messages() - process mlm request messages
  * @mac_ctx: global MAC context
  * @msg: mlm request message
@@ -144,6 +186,9 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 		break;
 	case SIR_LIM_AUTH_RETRY_TIMEOUT:
 		lim_process_auth_retry_timer(mac_ctx);
+		break;
+	case SIR_LIM_AUTH_SAE_TIMEOUT:
+		lim_process_sae_auth_timeout(mac_ctx);
 		break;
 	case LIM_MLM_TSPEC_REQ:
 	default:
@@ -1072,6 +1117,17 @@ static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
 
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
 		       session->limMlmState));
+
+	mac_ctx->lim.limTimers.sae_auth_timer.sessionId =
+					session->peSessionId;
+
+	/* Activate SAE auth timer */
+	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
+			 session->peSessionId, eLIM_AUTH_SAE_TIMER));
+	if (tx_timer_activate(&mac_ctx->lim.limTimers.sae_auth_timer)
+		    != TX_SUCCESS) {
+		pe_err("could not start Auth SAE timer");
+	}
 
 	return qdf_status;
 }

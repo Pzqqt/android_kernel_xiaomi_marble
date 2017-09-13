@@ -622,6 +622,8 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 
 	tx_timer_deactivate(&lim_timer->
 			gLimActiveToPassiveChannelTimer);
+
+	tx_timer_deactivate(&lim_timer->sae_auth_timer);
 }
 
 
@@ -704,6 +706,8 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 
 		tx_timer_delete(&lim_timer->
 				gLimActiveToPassiveChannelTimer);
+
+		tx_timer_delete(&lim_timer->sae_auth_timer);
 
 		mac_ctx->lim.gLimTimersCreated = 0;
 	}

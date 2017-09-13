@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,6 +53,12 @@
 #define LIM_JOIN_PROBE_REQ_TIMER_MS              200
 /* Lim Periodic Auth Retry timer default 60 ms */
 #define LIM_AUTH_RETRY_TIMER_MS   60
+
+/*
+ * SAE auth timer of 5secs. This is required for duration of entire SAE
+ * authentication.
+ */
+#define LIM_AUTH_SAE_TIMER_MS 5000
 
 
 /* This timer is a periodic timer which expires at every 1 sec to
@@ -190,6 +196,20 @@ static bool lim_create_non_ap_timers(tpAniSirGlobal pMac)
 			    SIR_LIM_PROBE_HB_FAILURE_TIMEOUT,
 			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
 		pe_err("unable to create ProbeAfterHBTimer");
+		return false;
+	}
+
+	/*
+	 * SAE auth timer of 5secs. This is required for duration of entire SAE
+	 * authentication.
+	 */
+	if ((tx_timer_create(pMac,
+		&pMac->lim.limTimers.sae_auth_timer,
+		"SAE AUTH Timer",
+		lim_timer_handler, SIR_LIM_AUTH_SAE_TIMEOUT,
+		SYS_MS_TO_TICKS(LIM_AUTH_SAE_TIMER_MS), 0,
+		TX_NO_ACTIVATE)) != TX_SUCCESS) {
+		pe_err("could not create SAE AUTH Timer");
 		return false;
 	}
 
@@ -379,6 +399,7 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimPeriodicProbeReqTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
+	tx_timer_delete(&pMac->lim.limTimers.sae_auth_timer);
 
 	if (NULL != pMac->lim.gLimPreAuthTimerTable.pTable) {
 		for (i = 0; i < pMac->lim.gLimPreAuthTimerTable.numEntry; i++)
@@ -922,6 +943,21 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			pe_err("Unable to change timer");
 			return;
 		}
+		break;
+
+	case eLIM_AUTH_SAE_TIMER:
+		if (tx_timer_deactivate
+		   (&pMac->lim.limTimers.sae_auth_timer)
+		    != TX_SUCCESS)
+			pe_err("Unable to deactivate SAE auth timer");
+
+		/* Change timer to reactivate it in future */
+		val = SYS_MS_TO_TICKS(LIM_AUTH_SAE_TIMER_MS);
+
+		if (tx_timer_change(&pMac->lim.limTimers.sae_auth_timer,
+				    val, 0) != TX_SUCCESS)
+			pe_err("unable to change SAE auth timer");
+
 		break;
 
 	default:

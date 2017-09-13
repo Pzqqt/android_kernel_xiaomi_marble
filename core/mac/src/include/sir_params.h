@@ -774,6 +774,8 @@ struct sir_mgmt_msg {
 					 (SIR_LIM_TIMEOUT_MSG_START + 0x2C)
 #define SIR_LIM_AUTH_RETRY_TIMEOUT     (SIR_LIM_TIMEOUT_MSG_START + 0x2D)
 
+#define SIR_LIM_AUTH_SAE_TIMEOUT     (SIR_LIM_TIMEOUT_MSG_START + 0x2E)
+
 #define SIR_LIM_MSG_TYPES_END            (SIR_LIM_MSG_TYPES_BEGIN+0xFF)
 
 /* PMM message types */
