@@ -265,6 +265,45 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 					pe_session);
 }
 
+#ifdef WLAN_FEATURE_SAE
+/**
+ * lim_process_sae_auth_frame()-Process SAE authentication frame
+ * @mac_ctx: MAC context
+ * @rx_pkt_info: Rx packet
+ * @pe_session: PE session
+ *
+ * Return: None
+ */
+static void lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
+		uint8_t *rx_pkt_info, tpPESession pe_session)
+{
+	tpSirMacMgmtHdr mac_hdr;
+	uint32_t frame_len;
+	uint8_t *body_ptr;
+
+	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+
+	pe_debug("Received SAE Auth frame type %d subtype %d",
+		mac_hdr->fc.type, mac_hdr->fc.subType);
+
+	if (pe_session->limMlmState != eLIM_MLM_WT_SAE_AUTH_STATE)
+		pe_err("received SAE auth response in unexpected state %x",
+				pe_session->limMlmState);
+
+	lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
+			(uint8_t *) mac_hdr,
+			frame_len + sizeof(tSirMacMgmtHdr), 0,
+			WMA_GET_RX_CH(rx_pkt_info), pe_session,
+			WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info));
+}
+#else
+static inline void  lim_process_sae_auth_frame(tpAniSirGlobal mac_ctx,
+		uint8_t *rx_pkt_info, tpPESession pe_session)
+{}
+#endif
+
 static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 		tpSirMacMgmtHdr mac_hdr,
 		tSirMacAuthFrameBody *rx_auth_frm_body,
@@ -1062,7 +1101,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	uint8_t defaultkey[SIR_MAC_KEY_LENGTH];
 	uint8_t *plainbody = NULL;
 	uint8_t decrypt_result;
-	uint16_t frame_len, curr_seq_num = 0;
+	uint16_t frame_len, curr_seq_num = 0, auth_alg;
 	uint32_t val, key_length = 8;
 	tSirMacAuthFrameBody *rx_auth_frm_body, *rx_auth_frame, *auth_frame;
 	tpSirMacMgmtHdr mac_hdr;
@@ -1107,6 +1146,9 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	pe_session->prev_auth_seq_num = curr_seq_num;
 
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+
+	auth_alg = *(uint16_t *) body_ptr;
+	pe_debug("auth_alg %d ", auth_alg);
 
 	/* Restore default failure timeout */
 	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona &&
@@ -1337,6 +1379,11 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
 			goto free;
 		}
+	} else if ((auth_alg ==
+		    eSIR_AUTH_TYPE_SAE) && (LIM_IS_STA_ROLE(pe_session))) {
+		lim_process_sae_auth_frame(mac_ctx,
+					rx_pkt_info, pe_session);
+		goto free;
 	} else if ((sir_convert_auth_frame2_struct(mac_ctx, body_ptr,
 				frame_len, rx_auth_frame) != eSIR_SUCCESS)
 				|| (!is_auth_valid(mac_ctx, rx_auth_frame,

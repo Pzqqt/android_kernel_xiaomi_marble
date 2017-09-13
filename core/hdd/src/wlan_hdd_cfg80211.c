@@ -345,7 +345,8 @@ static const struct ieee80211_txrx_stypes
 	[NL80211_IFTYPE_STATION] = {
 		.tx = 0xffff,
 		.rx = BIT(SIR_MAC_MGMT_ACTION) |
-		      BIT(SIR_MAC_MGMT_PROBE_REQ),
+		      BIT(SIR_MAC_MGMT_PROBE_REQ) |
+		      BIT(SIR_MAC_MGMT_AUTH),
 	},
 	[NL80211_IFTYPE_AP] = {
 		.tx = 0xffff,
