@@ -3531,17 +3531,23 @@ end:
 
 /**
  * wma_wmi_service_close() - close wma wmi service interface.
- * @cds_ctx: cds context
  *
  * Return: 0 on success, QDF Error on failure
  */
-QDF_STATUS wma_wmi_service_close(void *cds_ctx)
+QDF_STATUS wma_wmi_service_close(void)
 {
+	void *cds_ctx;
 	tp_wma_handle wma_handle;
 	struct beacon_info *bcn;
 	int i;
 
 	WMA_LOGD("%s: Enter", __func__);
+
+	cds_ctx = cds_get_global_context();
+	if (!cds_ctx) {
+		WMA_LOGE("%s: Invalid CDS context", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 

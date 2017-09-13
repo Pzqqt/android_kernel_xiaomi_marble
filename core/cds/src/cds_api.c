@@ -650,7 +650,7 @@ err_mac_close:
 err_wma_close:
 	cds_shutdown_notifier_purge();
 	wma_close();
-	wma_wmi_service_close(gp_cds_context);
+	wma_wmi_service_close();
 	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
 
 err_htc_close:
@@ -1131,7 +1131,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 		}
 	}
 
-	qdf_status = wma_wmi_service_close(cds_context);
+	qdf_status = wma_wmi_service_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close wma_wmi_service", __func__);

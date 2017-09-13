@@ -104,7 +104,7 @@ QDF_STATUS wma_stop(uint8_t reason);
 
 QDF_STATUS wma_close(void);
 
-QDF_STATUS wma_wmi_service_close(void *cds_context);
+QDF_STATUS wma_wmi_service_close(void);
 
 QDF_STATUS wma_wmi_work_close(void);
 
