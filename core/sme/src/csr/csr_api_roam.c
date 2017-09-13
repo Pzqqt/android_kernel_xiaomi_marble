@@ -15158,17 +15158,27 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		/* Set BF CSN value only if SU Bformee is enabled */
 		if (csr_join_req->vht_config.su_beam_formee) {
 			txBFCsnValue = (uint8_t)value1;
-			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
-			    pIes->VHTCaps.csnofBeamformerAntSup)
-				txBFCsnValue = QDF_MIN(txBFCsnValue,
-					pIes->VHTCaps.csnofBeamformerAntSup);
-			else if (IS_BSS_VHT_CAPABLE(
-				 pIes->vendor_vht_ie.VHTCaps)
-				 && pIes->vendor_vht_ie.VHTCaps.
-				 csnofBeamformerAntSup)
-				txBFCsnValue = QDF_MIN(txBFCsnValue,
-					pIes->vendor_vht_ie.
-					VHTCaps.csnofBeamformerAntSup);
+			/*
+			 * Certain commercial AP display a bad behavior when
+			 * CSN value in  assoc request is more than AP's CSN.
+			 * Sending absolute self CSN value with such AP leads to
+			 * IOT issues. However this issue is observed only with
+			 * CSN cap of less than 4. To avoid such issues, take a
+			 * min of self and peer CSN while sending ASSOC request.
+			 */
+			if (txBFCsnValue < 4) {
+				if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) &&
+					pIes->VHTCaps.csnofBeamformerAntSup)
+					txBFCsnValue = QDF_MIN(txBFCsnValue,
+					  pIes->VHTCaps.csnofBeamformerAntSup);
+				else if (IS_BSS_VHT_CAPABLE(
+					pIes->vendor_vht_ie.VHTCaps)
+					&& pIes->vendor_vht_ie.VHTCaps.
+					csnofBeamformerAntSup)
+					txBFCsnValue = QDF_MIN(txBFCsnValue,
+					  pIes->vendor_vht_ie.
+					  VHTCaps.csnofBeamformerAntSup);
+			}
 		}
 		csr_join_req->vht_config.csnof_beamformer_antSup = txBFCsnValue;
 
