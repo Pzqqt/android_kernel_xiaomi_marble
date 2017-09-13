@@ -1639,15 +1639,14 @@ void cds_sys_probe_thread_cback(void *pUserData)
 
 /**
  * cds_wma_complete_cback() - wma complete callback
- * @pUserData: pointer to user data
  *
  * Return: none
  */
-void cds_wma_complete_cback(void *pUserData)
+void cds_wma_complete_cback(void)
 {
-	if (gp_cds_context != pUserData) {
+	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: gp_cds_context != pUserData", __func__);
+			  "%s: invalid gp_cds_context", __func__);
 		return;
 	}
 

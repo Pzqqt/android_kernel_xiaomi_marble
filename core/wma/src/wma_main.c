@@ -6774,7 +6774,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
 		WMA_LOGD("McThread: WNI_CFG_DNLD_REQ");
 		qdf_status = wma_wni_cfg_dnld(wma_handle);
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
-			cds_wma_complete_cback(cds_context);
+			cds_wma_complete_cback();
 		else
 			WMA_LOGD("config download failure");
 		break;

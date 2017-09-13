@@ -1611,7 +1611,7 @@ typedef struct qdf_packed sHalMacStartParameter {
 	 */
 } tHalMacStartParameter, *tpHalMacStartParameter;
 
-extern void cds_wma_complete_cback(void *p_cds_context);
+extern void cds_wma_complete_cback(void);
 extern void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 					  uint16_t regdmn5G, uint8_t ctl2G,
 					  uint8_t ctl5G);
