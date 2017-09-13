@@ -6104,10 +6104,13 @@ static int msm_dai_q6_tdm_set_tdm_slot(struct snd_soc_dai *dai,
 		return -EINVAL;
 	}
 
-	/* HW only supports 16 and 8 slots configuration */
+	/* HW supports 1-32 slots configuration. Typical: 1, 2, 4, 8, 16, 32 */
 	switch (slots) {
 	case 2:
 		cap_mask = 0x03;
+		break;
+	case 4:
+		cap_mask = 0x0F;
 		break;
 	case 8:
 		cap_mask = 0xFF;
