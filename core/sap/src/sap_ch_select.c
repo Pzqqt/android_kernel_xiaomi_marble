@@ -612,7 +612,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
 			policy_mgr_disallow_mcc(mac_ctx->psoc, best_chnl))) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO_HIGH,
-				"Best channel is: %d",
+				"Best channel so far is: %d",
 				best_chnl);
 			return best_chnl;
 		}
@@ -2422,33 +2422,19 @@ static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 
 }
 
-/*==========================================================================
-   FUNCTION    sap_filter_over_lap_ch
-
-   DESCRIPTION
-    return true if ch is acceptable.
-    This function will decide if we will filter over lap channel or not.
-
-   DEPENDENCIES
-    shall called after ap start.
-
-   PARAMETERS
-
-   IN
-    pSapCtx          : Pointer to ptSapContext.
-    chNum             : Filter channel number.
-
-   RETURN VALUE
-    bool          : true if channel is accepted.
-
-   SIDE EFFECTS
-   ============================================================================*/
-static bool sap_filter_over_lap_ch(ptSapContext pSapCtx, uint16_t chNum)
+/**
+ * sap_is_ch_non_overlap() - returns true if non-overlapping channel
+ * @sap_ctx: Sap context
+ * @ch: channel number
+ *
+ * Returns: true if non-overlapping (1, 6, 11) channel, false otherwise
+ */
+static bool sap_is_ch_non_overlap(ptSapContext sap_ctx, uint16_t ch)
 {
-	if (pSapCtx->enableOverLapCh)
+	if (sap_ctx->enableOverLapCh)
 		return true;
-	else if ((chNum == CHANNEL_1) ||
-		 (chNum == CHANNEL_6) || (chNum == CHANNEL_11))
+
+	if ((ch == CHANNEL_1) || (ch == CHANNEL_6) || (ch == CHANNEL_11))
 		return true;
 
 	return false;
@@ -2675,11 +2661,12 @@ uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
 		}
 
 		/* Give preference to Non-overlap channels */
-		if (false == sap_filter_over_lap_ch(sap_ctx,
+		if (false == sap_is_ch_non_overlap(sap_ctx,
 				spect_info->pSpectCh[count].chNum)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO_HIGH,
-				"sap_filter_over_lap_ch is false");
+				FL("ch: %d skipped as its overlapping ch"),
+				spect_info->pSpectCh[count].chNum);
 			continue;
 		}
 
