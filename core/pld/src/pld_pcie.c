@@ -199,11 +199,18 @@ static void pld_pcie_uevent(struct pci_dev *pdev, uint32_t status)
 	if (!pld_context)
 		return;
 
-	data.uevent = status;
+	switch (status) {
+	case CNSS_RECOVERY:
+		data.uevent = PLD_RECOVERY;
+		break;
+	default:
+		goto out;
+	}
 
 	if (pld_context->ops->uevent)
 		pld_context->ops->uevent(&pdev->dev, &data);
 
+out:
 	return;
 }
 
