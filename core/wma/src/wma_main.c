@@ -53,7 +53,6 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
-
 #include "wma_types.h"
 #include "lim_api.h"
 #include "lim_session_utils.h"
@@ -2183,6 +2182,9 @@ static int wma_flush_complete_evt_handler(void *handle,
 
 	WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID_param_tlvs *param_buf;
 	wmi_debug_mesg_flush_complete_fixed_param *wmi_event;
+	wmi_debug_mesg_fw_data_stall_param *data_stall_event;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	uint8_t *buf_ptr;
 	uint32_t reason_code;
 
 	param_buf = (WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID_param_tlvs *) event;
@@ -2193,6 +2195,60 @@ static int wma_flush_complete_evt_handler(void *handle,
 
 	wmi_event = param_buf->fixed_param;
 	reason_code = wmi_event->reserved0;
+
+	buf_ptr = (uint8_t *)wmi_event;
+	buf_ptr = buf_ptr + sizeof(wmi_debug_mesg_flush_complete_fixed_param) +
+		  WMI_TLV_HDR_SIZE;
+	data_stall_event = (wmi_debug_mesg_fw_data_stall_param *) buf_ptr;
+
+	if (((data_stall_event->tlv_header & 0xFFFF0000) >> 16 ==
+	      WMITLV_TAG_STRUC_wmi_debug_mesg_fw_data_stall_param)) {
+		/**
+		 * Log data stall info received from FW:
+		 *
+		 * Possible data stall recovery types:
+		 * WLAN_DBG_DATA_STALL_RECOVERY_CONNECT_DISCONNECT
+		 * WLAN_DBG_DATA_STALL_RECOVERY_CONNECT_MAC_PHY_RESET
+		 * WLAN_DBG_DATA_STALL_RECOVERY_CONNECT_PDR
+		 *
+		 * Possible data stall event types:
+		 * WLAN_DBG_DATA_STALL_VDEV_PAUSE
+		 * WLAN_DBG_DATA_STALL_HWSCHED_CMD_FILTER
+		 * WLAN_DBG_DATA_STALL_HWSCHED_CMD_FLUSH
+		 * WLAN_DBG_DATA_STALL_RX_REFILL_FAILED
+		 * WLAN_DBG_DATA_STALL_RX_FCS_LEN_ERROR
+		 *
+		 * reason_code1:
+		 * The information stored in reason_code1 varies based on the
+		 * data stall type values:
+		 *
+		 * data_stall_type      | reason_code1
+		 * -----------------------------------------------------
+		 * HWSCHED_CMD_FLUSH    | flush req reason (0-40)
+		 * RX_REFILL_FAILED     | ring_id (0-7)
+		 * RX_FCS_LEN_ERROR     | exact error type
+		 *
+		 * reasone_code2:
+		 * on which tid/hwq stall happened
+		 *
+		 */
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			  "Data Stall event:");
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+			  "data_stall_type: %x vdev_id_bitmap: %x reason_code1: %x reason_code2: %x recovery_type: %x ",
+			  data_stall_event->data_stall_type,
+			  data_stall_event->vdev_id_bitmap,
+			  data_stall_event->reason_code1,
+			  data_stall_event->reason_code2,
+			  data_stall_event->recovery_type);
+
+		cdp_post_data_stall_event(soc,
+					DATA_STALL_LOG_INDICATOR_FIRMWARE,
+					data_stall_event->data_stall_type,
+					0XFF,
+					data_stall_event->vdev_id_bitmap,
+					data_stall_event->recovery_type);
+	}
 
 	/*
 	 * reason_code = 0; Flush event in response to flush command
