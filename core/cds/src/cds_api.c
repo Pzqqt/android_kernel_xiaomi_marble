@@ -649,7 +649,7 @@ err_mac_close:
 
 err_wma_close:
 	cds_shutdown_notifier_purge();
-	wma_close(gp_cds_context);
+	wma_close();
 	wma_wmi_service_close(gp_cds_context);
 	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
 
@@ -1123,7 +1123,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Failed to shutdown wma", __func__);
 	} else {
-		qdf_status = wma_close(cds_context);
+		qdf_status = wma_close();
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Failed to close wma", __func__);

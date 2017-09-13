@@ -3696,11 +3696,10 @@ static void wma_cleanup_dbs_phy_caps(t_wma_handle *wma_handle)
 /**
  * wma_close() - wma close function.
  *               cleanup resources attached with wma.
- * @cds_ctx: cds context
  *
  * Return: 0 on success, QDF Error on failure
  */
-QDF_STATUS wma_close(void *cds_ctx)
+QDF_STATUS wma_close(void)
 {
 	tp_wma_handle wma_handle;
 	uint32_t idx;
