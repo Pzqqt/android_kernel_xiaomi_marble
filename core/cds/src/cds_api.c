@@ -741,7 +741,7 @@ QDF_STATUS cds_pre_enable(void)
 	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
 
 	/*call WMA pre start */
-	qdf_status = wma_pre_start(gp_cds_context);
+	qdf_status = wma_pre_start();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_FATAL,
 			  "Failed to WMA prestart");

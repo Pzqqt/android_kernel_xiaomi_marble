@@ -2781,11 +2781,10 @@ err_wma_handle:
 
 /**
  * wma_pre_start() - wma pre start
- * @cds_ctx:  cds context
  *
  * Return: 0 on success, errno on failure
  */
-QDF_STATUS wma_pre_start(void *cds_ctx)
+QDF_STATUS wma_pre_start(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	A_STATUS status = A_OK;

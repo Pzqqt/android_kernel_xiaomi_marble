@@ -94,7 +94,7 @@ struct wma_caps_per_phy {
 typedef void (*wma_peer_authorized_fp) (uint32_t vdev_id);
 
 
-QDF_STATUS wma_pre_start(void *cds_context);
+QDF_STATUS wma_pre_start(void);
 
 QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg);
 
