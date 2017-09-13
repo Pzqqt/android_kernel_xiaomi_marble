@@ -2208,13 +2208,12 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @psoc: Psoc pointer
- * @cds_context:  cds context
  * @wma_tgt_cfg_cb: tgt config callback fun
  * @cds_cfg:  mac parameters
  *
  * Return: 0 on success, errno on failure
  */
-QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
+QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
 		    struct cds_config_info *cds_cfg)
 {
@@ -2228,8 +2227,15 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *cds_context,
 	struct target_psoc_info *tgt_psoc_info;
 	bool use_cookie = false;
 	int i;
+	void *cds_context;
 
 	WMA_LOGD("%s: Enter", __func__);
+
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		WMA_LOGE("%s: Invalid CDS context", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	g_wmi_version_info.major = __WMI_VER_MAJOR_;
 	g_wmi_version_info.minor = __WMI_VER_MINOR_;

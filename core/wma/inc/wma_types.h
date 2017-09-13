@@ -713,7 +713,7 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 			 uint8_t txFlag, uint8_t sessionId, bool tdlsflag,
 			 uint16_t channel_freq);
 
-QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc, void *p_cds_context,
+QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		    wma_tgt_cfg_cb pTgtUpdCB, struct cds_config_info *cds_cfg);
 
 /**
