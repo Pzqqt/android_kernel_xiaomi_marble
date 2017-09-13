@@ -812,23 +812,22 @@ QDF_STATUS cds_pre_enable(void)
  *
  * Return: QDF status
  */
-QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
+QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
-	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 	tHalMacStartParameters halStartParams;
 
 	/* We support only one instance for now ... */
-	if (gp_cds_context != p_cds_context) {
+	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: mismatch in context", __func__);
+			  "%s: Invalid CDS context", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((p_cds_context->pWMAContext == NULL) ||
-	    (p_cds_context->pMACContext == NULL)) {
-		if (p_cds_context->pWMAContext == NULL)
+	if ((gp_cds_context->pWMAContext == NULL) ||
+	    (gp_cds_context->pMACContext == NULL)) {
+		if (gp_cds_context->pWMAContext == NULL)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: WMA NULL context", __func__);
 		else
@@ -854,7 +853,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	/* Start the MAC */
 	sirStatus =
-		mac_start(p_cds_context->pMACContext, &halStartParams);
+		mac_start(gp_cds_context->pMACContext, &halStartParams);
 
 	if (eSIR_SUCCESS != sirStatus) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -866,7 +865,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 		  "%s: MAC correctly started", __func__);
 
 	/* START SME */
-	qdf_status = sme_start(p_cds_context->pMACContext);
+	qdf_status = sme_start(gp_cds_context->pMACContext);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
@@ -901,10 +900,10 @@ err_soc_target_detach:
 	/* NOOP */
 
 err_sme_stop:
-	sme_stop(p_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
+	sme_stop(gp_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
 
 err_mac_stop:
-	mac_stop(p_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
+	mac_stop(gp_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
 
 err_wma_stop:
 	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));

@@ -9213,7 +9213,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	 * Start CDS which starts up the SME/MAC/HAL modules and everything
 	 * else
 	 */
-	status = cds_enable(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
+	status = cds_enable(hdd_ctx->hdd_psoc);
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("cds_enable failed");
