@@ -12048,8 +12048,8 @@ static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
 	}
 
 	hdd_ctx->tdls_umac_comp_active = true;
-	/* disable napier specific tdls data path */
-	hdd_ctx->tdls_nap_active = false;
+	/* enable napier specific tdls data path */
+	hdd_ctx->tdls_nap_active = true;
 
 	return 0;
 }

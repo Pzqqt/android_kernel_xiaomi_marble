@@ -1919,8 +1919,8 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 		return status;
 
 	psoc = cbk_data;
-	hdd_ctx = container_of(psoc, struct hdd_context, hdd_psoc);
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx->tdls_nap_active)
 		return status;
 
