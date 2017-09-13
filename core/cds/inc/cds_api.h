@@ -309,7 +309,7 @@ static inline bool cds_is_driver_loaded(void)
 v_CONTEXT_t cds_init(void);
 void cds_deinit(void);
 
-QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context);
+QDF_STATUS cds_pre_enable(void);
 
 QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc);
 

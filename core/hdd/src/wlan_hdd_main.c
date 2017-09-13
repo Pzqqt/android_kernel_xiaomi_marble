@@ -2249,7 +2249,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, struct hdd_adapter *adap
 
 		hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 
-		status = cds_pre_enable(hdd_ctx->pcds_context);
+		status = cds_pre_enable();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to pre-enable CDS: %d", status);
 			goto close;

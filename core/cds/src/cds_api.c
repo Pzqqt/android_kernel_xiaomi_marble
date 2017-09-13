@@ -684,33 +684,32 @@ err_probe_event:
 
 /**
  * cds_pre_enable() - pre enable cds
- * @cds_context: CDS context
  *
  * Return: QDF status
  */
-QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
+QDF_STATUS cds_pre_enable(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 	void *scn;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *soc;
 
 	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG, "cds prestart");
-	if (gp_cds_context != p_cds_context) {
+
+	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Context mismatch", __func__);
+			  "%s: NULL CDS context", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (p_cds_context->pMACContext == NULL) {
+	if (gp_cds_context->pMACContext == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: MAC NULL context", __func__);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (p_cds_context->pWMAContext == NULL) {
+	if (gp_cds_context->pWMAContext == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: WMA NULL context", __func__);
 		QDF_ASSERT(0);
@@ -721,6 +720,13 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (!scn) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: scn is null!", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc = cds_get_context(QDF_MODULE_ID_SOC);
+	if (!soc) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: soc is null!", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
