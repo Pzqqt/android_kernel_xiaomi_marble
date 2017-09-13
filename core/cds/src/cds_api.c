@@ -840,7 +840,7 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	}
 
 	/* Start the wma */
-	qdf_status = wma_start(p_cds_context);
+	qdf_status = wma_start();
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to start wma", __func__);

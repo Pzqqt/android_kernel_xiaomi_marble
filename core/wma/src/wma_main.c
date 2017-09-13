@@ -3224,11 +3224,10 @@ fail:
 /**
  * wma_start() - wma start function.
  *               Intialize event handlers and timers.
- * @cds_ctx: cds context
  *
  * Return: 0 on success, QDF Error on failure
  */
-QDF_STATUS wma_start(void *cds_ctx)
+QDF_STATUS wma_start(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
