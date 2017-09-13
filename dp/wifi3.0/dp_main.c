@@ -1590,8 +1590,6 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
  */
 static void dp_soc_wds_attach(struct dp_soc *soc)
 {
-	qdf_spinlock_create(&soc->ast_lock);
-
 	qdf_timer_init(soc->osdev, &soc->wds_aging_timer,
 			dp_wds_aging_timer_fn, (void *)soc,
 			QDF_TIMER_TYPE_WAKE_APPS);
@@ -1609,7 +1607,6 @@ static void dp_soc_wds_detach(struct dp_soc *soc)
 {
 	qdf_timer_stop(&soc->wds_aging_timer);
 	qdf_timer_free(&soc->wds_aging_timer);
-	qdf_spinlock_destroy(&soc->ast_lock);
 }
 #else
 static void dp_soc_wds_attach(struct dp_soc *soc)
@@ -1890,6 +1887,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		goto fail1;
 	}
 
+	qdf_spinlock_create(&soc->ast_lock);
 	dp_soc_wds_attach(soc);
 
 	/* Reset the cpu ring map if radio is NSS offloaded */
@@ -2590,6 +2588,7 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 	wlan_cfg_soc_detach(soc->wlan_cfg_ctx);
 
 	dp_soc_wds_detach(soc);
+	qdf_spinlock_destroy(&soc->ast_lock);
 
 	qdf_mem_free(soc);
 }
@@ -4981,6 +4980,9 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 		DP_TRACE(FATAL, "intra-bss packets %u msdus ( %u bytes),",
 			pdev->stats.rx.intra_bss.pkts.num,
 			pdev->stats.rx.intra_bss.pkts.bytes);
+		DP_TRACE(FATAL, "intra-bss fails %u msdus ( %u bytes),",
+			pdev->stats.rx.intra_bss.fail.num,
+			pdev->stats.rx.intra_bss.fail.bytes);
 		DP_TRACE(FATAL, "raw packets %u msdus ( %u bytes),",
 			pdev->stats.rx.raw.num,
 			pdev->stats.rx.raw.bytes);
