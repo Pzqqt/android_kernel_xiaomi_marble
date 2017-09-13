@@ -961,7 +961,8 @@ static inline void cdp_txrx_intr_detach(ol_txrx_soc_handle soc)
  * @value: statistics option
  */
 static inline QDF_STATUS
-cdp_display_stats(ol_txrx_soc_handle soc, uint16_t value)
+cdp_display_stats(ol_txrx_soc_handle soc, uint16_t value,
+		  enum qdf_stats_verbosity_level level)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -974,7 +975,7 @@ cdp_display_stats(ol_txrx_soc_handle soc, uint16_t value)
 	    !soc->ops->cmn_drv_ops->display_stats)
 		return 0;
 
-	return soc->ops->cmn_drv_ops->display_stats(soc, value);
+	return soc->ops->cmn_drv_ops->display_stats(soc, value, level);
 }
 
 

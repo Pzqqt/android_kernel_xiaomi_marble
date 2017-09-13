@@ -1419,6 +1419,23 @@ static bool qdf_log_eapol_pkt(uint8_t session_id, struct sk_buff *skb,
 		else if (QDF_RX == dir)
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
 
+		switch (subtype) {
+		case QDF_PROTO_EAPOL_M1:
+			g_qdf_dp_trace_data.eapol_m1++;
+			break;
+		case QDF_PROTO_EAPOL_M2:
+			g_qdf_dp_trace_data.eapol_m2++;
+			break;
+		case QDF_PROTO_EAPOL_M3:
+			g_qdf_dp_trace_data.eapol_m3++;
+			break;
+		case QDF_PROTO_EAPOL_M4:
+			g_qdf_dp_trace_data.eapol_m4++;
+			break;
+		default:
+			g_qdf_dp_trace_data.eapol_others++;
+			break;
+		}
 		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
 		return true;
 	}
@@ -1456,6 +1473,27 @@ static bool qdf_log_dhcp_pkt(uint8_t session_id, struct sk_buff *skb,
 			QDF_NBUF_CB_RX_DP_TRACE(skb) = 1;
 
 		QDF_NBUF_CB_DP_TRACE_PRINT(skb) = true;
+		switch (subtype) {
+		case QDF_PROTO_DHCP_DISCOVER:
+			g_qdf_dp_trace_data.dhcp_disc++;
+			break;
+		case QDF_PROTO_DHCP_OFFER:
+			g_qdf_dp_trace_data.dhcp_off++;
+			break;
+		case QDF_PROTO_DHCP_REQUEST:
+			g_qdf_dp_trace_data.dhcp_req++;
+			break;
+		case QDF_PROTO_DHCP_ACK:
+			g_qdf_dp_trace_data.dhcp_ack++;
+			break;
+		case QDF_PROTO_DHCP_NACK:
+			g_qdf_dp_trace_data.dhcp_nack++;
+			break;
+		default:
+			g_qdf_dp_trace_data.eapol_others++;
+			break;
+		}
+
 		return true;
 	}
 	return false;
@@ -1887,6 +1925,32 @@ void qdf_dp_trace_clear_buffer(void)
 }
 EXPORT_SYMBOL(qdf_dp_trace_clear_buffer);
 
+void qdf_dp_trace_dump_stats(void)
+{
+		DPTRACE_PRINT("STATS |DPT: icmp(%u %u) arp(%u %u) icmpv6(%u %u %u %u %u %u) dhcp(%u %u %u %u %u %u) eapol(%u %u %u %u %u)",
+			      g_qdf_dp_trace_data.icmp_req,
+			      g_qdf_dp_trace_data.icmp_resp,
+			      g_qdf_dp_trace_data.arp_req,
+			      g_qdf_dp_trace_data.arp_resp,
+			      g_qdf_dp_trace_data.icmpv6_req,
+			      g_qdf_dp_trace_data.icmpv6_resp,
+			      g_qdf_dp_trace_data.icmpv6_ns,
+			      g_qdf_dp_trace_data.icmpv6_na,
+			      g_qdf_dp_trace_data.icmpv6_rs,
+			      g_qdf_dp_trace_data.icmpv6_ra,
+			      g_qdf_dp_trace_data.dhcp_disc,
+			      g_qdf_dp_trace_data.dhcp_off,
+			      g_qdf_dp_trace_data.dhcp_req,
+			      g_qdf_dp_trace_data.dhcp_ack,
+			      g_qdf_dp_trace_data.dhcp_nack,
+			      g_qdf_dp_trace_data.dhcp_others,
+			      g_qdf_dp_trace_data.eapol_m1,
+			      g_qdf_dp_trace_data.eapol_m2,
+			      g_qdf_dp_trace_data.eapol_m3,
+			      g_qdf_dp_trace_data.eapol_m4,
+			      g_qdf_dp_trace_data.eapol_others);
+}
+
 /**
  * qdf_dp_trace_dump_all() - Dump data from ring buffer via call back functions
  * registered with QDF
@@ -1914,20 +1978,7 @@ void qdf_dp_trace_dump_all(uint32_t count, uint8_t pdev_id)
 		g_qdf_dp_trace_data.high_tput_thresh,
 		g_qdf_dp_trace_data.thresh_time_limit);
 
-	DPTRACE_PRINT("DPT: stats - tx %u rx %u icmp(%u %u) arp(%u %u)"
-		"icmpv6 (%u %u) icmpv6_ns_na (%u %u) icmpv6_rs_ra (%u %u)",
-		g_qdf_dp_trace_data.tx_count,
-		g_qdf_dp_trace_data.rx_count,
-		g_qdf_dp_trace_data.icmp_req,
-		g_qdf_dp_trace_data.icmp_resp,
-		g_qdf_dp_trace_data.arp_req,
-		g_qdf_dp_trace_data.arp_resp,
-		g_qdf_dp_trace_data.icmpv6_req,
-		g_qdf_dp_trace_data.icmpv6_resp,
-		g_qdf_dp_trace_data.icmpv6_ns,
-		g_qdf_dp_trace_data.icmpv6_na,
-		g_qdf_dp_trace_data.icmpv6_rs,
-		g_qdf_dp_trace_data.icmpv6_ra);
+	qdf_dp_trace_dump_stats();
 
 	DPTRACE_PRINT("DPT: Total Records: %d, Head: %d, Tail: %d",
 		      g_qdf_dp_trace_data.num, g_qdf_dp_trace_data.head,
