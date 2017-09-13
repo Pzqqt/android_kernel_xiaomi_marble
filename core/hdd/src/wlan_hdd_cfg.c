@@ -6740,12 +6740,11 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(enum hdd_dot11_mode dot11Mode)
  */
 QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, uint32_t val)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 
-	hdd_debug("hdd_set_idle_ps_config: Enter Val %d", val);
+	hdd_debug("Enter Val %d", val);
 
-	status = sme_set_idle_powersave_config(hdd_ctx->pcds_context,
-			hdd_ctx->hHal, val);
+	status = sme_set_idle_powersave_config(hdd_ctx->hHal, val);
 	if (QDF_STATUS_SUCCESS != status)
 		hdd_err("Fail to Set Idle PS Config val %d", val);
 	return status;

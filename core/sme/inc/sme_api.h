@@ -730,8 +730,7 @@ QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId);
  * This should be called only if powersave offload
  * is enabled
  */
-QDF_STATUS sme_set_idle_powersave_config(void *cds_context,
-		tHalHandle hHal, uint32_t value);
+QDF_STATUS sme_set_idle_powersave_config(tHalHandle hHal, uint32_t value);
 QDF_STATUS sme_notify_modem_power_state(tHalHandle hHal, uint32_t value);
 
 /*SME API to convert convert the ini value to the ENUM used in csr and MAC*/

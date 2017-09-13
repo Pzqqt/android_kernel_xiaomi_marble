@@ -11037,8 +11037,7 @@ QDF_STATUS sme_set_ht2040_mode(tHalHandle hHal, uint8_t sessionId,
  * This should be called only if powersave offload
  * is enabled
  */
-QDF_STATUS sme_set_idle_powersave_config(void *cds_context,
-				tHalHandle hHal, uint32_t value)
+QDF_STATUS sme_set_idle_powersave_config(tHalHandle hHal, uint32_t value)
 {
 	void *wmaContext = cds_get_context(QDF_MODULE_ID_WMA);
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
