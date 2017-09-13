@@ -5895,11 +5895,10 @@ void wma_setneedshutdown(void *cds_ctx)
 
 /**
  * wma_needshutdown() - Is wma needs shutdown?
- * @cds_ctx: cds context
  *
  * Return: returns true/false
  */
-bool wma_needshutdown(void *cds_ctx)
+bool wma_needshutdown(void)
 {
 	tp_wma_handle wma_handle;
 

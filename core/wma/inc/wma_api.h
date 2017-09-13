@@ -118,7 +118,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *ev, uint32_t len);
 
 void wma_setneedshutdown(void *cds_context);
 
-bool wma_needshutdown(void *cds_context);
+bool wma_needshutdown(void);
 
 QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle);
 
