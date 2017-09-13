@@ -20,6 +20,7 @@
 #include <qdf_lock.h>
 #include <qdf_net_types.h>
 #include <qdf_lro.h>
+#include <qdf_module.h>
 #include <hal_api.h>
 #include <hif.h>
 #include <htt.h>
@@ -74,6 +75,9 @@ unsigned int napi_budget = 128;
 module_param(napi_budget, uint, 0644);
 MODULE_PARM_DESC(napi_budget,
 		"tasklet mode: more than 0xffff , napi budget if <= 0xffff");
+
+bool rx_hash = 1;
+qdf_declare_param(rx_hash, bool);
 
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
@@ -5276,6 +5280,8 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 				FL("wlan_cfg_soc_attach failed"));
 		goto fail2;
 	}
+
+	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx, rx_hash);
 
 	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
 		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc,

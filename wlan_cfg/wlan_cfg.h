@@ -504,6 +504,13 @@ bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 bool wlan_cfg_is_rx_hash_enabled(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
+ * wlan_cfg_set_rx_hash - set rx hash enabled/disabled
+ * @wlan_cfg_soc_ctx
+ * @rx_hash
+ */
+void wlan_cfg_set_rx_hash(struct wlan_cfg_dp_soc_ctxt *cfg, bool rx_hash);
+
+/*
  * wlan_cfg_get_dp_pdev_nss_enabled - Return pdev nss enabled/disabled
  * @wlan_cfg_pdev_ctx
  *

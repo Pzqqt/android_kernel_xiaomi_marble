@@ -605,6 +605,11 @@ bool wlan_cfg_is_lro_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return  cfg->lro_enabled;
 }
 
+void wlan_cfg_set_rx_hash(struct wlan_cfg_dp_soc_ctxt *cfg, bool val)
+{
+	cfg->rx_hash = val;
+}
+
 bool wlan_cfg_is_rx_hash_enabled(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return  cfg->rx_hash;
