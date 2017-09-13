@@ -1078,7 +1078,7 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	dispatcher_psoc_close(psoc);
 
-	qdf_status = wma_wmi_work_close(cds_context);
+	qdf_status = wma_wmi_work_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		 "%s: Failed to close wma_wmi_work", __func__);

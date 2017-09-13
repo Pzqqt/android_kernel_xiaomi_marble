@@ -3617,7 +3617,6 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 
 /**
  * wma_wmi_work_close() - close the work queue items associated with WMI
- * @cds_ctx:	Pointer to cds context
  *
  * This function closes work queue items associated with WMI, but not fully
  * closes WMI service.
@@ -3625,7 +3624,7 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
  * Return: QDF_STATUS_SUCCESS if work close is successful. Otherwise
  *	proper error codes.
  */
-QDF_STATUS wma_wmi_work_close(void *cds_ctx)
+QDF_STATUS wma_wmi_work_close(void)
 {
 	tp_wma_handle wma_handle;
 

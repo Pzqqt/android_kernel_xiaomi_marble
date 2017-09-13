@@ -106,7 +106,7 @@ QDF_STATUS wma_close(void);
 
 QDF_STATUS wma_wmi_service_close(void *cds_context);
 
-QDF_STATUS wma_wmi_work_close(void *cds_context);
+QDF_STATUS wma_wmi_work_close(void);
 
 int wma_rx_ready_event(void *handle, uint8_t *ev, uint32_t len);
 
