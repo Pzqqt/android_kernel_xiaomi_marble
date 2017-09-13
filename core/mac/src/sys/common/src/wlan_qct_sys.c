@@ -64,7 +64,7 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, struct scheduler_msg *pMsg)
+static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac_ctx;
@@ -149,14 +149,7 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, struct scheduler_msg *p
 
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg)
 {
-	void *cds_ctx = cds_get_global_context();
-
-	if (cds_ctx == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			"CDS context is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	return sys_mc_process_msg(cds_ctx, msg);
+	return sys_mc_process_msg(msg);
 }
 
 /**
