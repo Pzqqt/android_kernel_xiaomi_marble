@@ -6720,12 +6720,11 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 
 /**
  * wma_mc_process_msg() - process wma messages and call appropriate function.
- * @cds_context: cds context
  * @msg: message
  *
  * Return: QDF_SUCCESS for success otherwise failure
  */
-QDF_STATUS wma_mc_process_msg(void *cds_context, struct scheduler_msg *msg)
+static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
@@ -7518,14 +7517,7 @@ end:
 
 QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg)
 {
-	void *cds_ctx = cds_get_global_context();
-
-	if (cds_ctx == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
-			"CDS context is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-	return wma_mc_process_msg(cds_ctx, msg);
+	return wma_mc_process_msg(msg);
 }
 
 /**
