@@ -2314,7 +2314,7 @@ post_disable:
 
 close:
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
-	cds_close(hdd_ctx->hdd_psoc, p_cds_context);
+	cds_close(hdd_ctx->hdd_psoc);
 
 ol_cds_free:
 	ol_cds_free();
@@ -9390,7 +9390,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
-	qdf_status = cds_close(hdd_ctx->hdd_psoc, hdd_ctx->pcds_context);
+	qdf_status = cds_close(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS: %d", qdf_status);
 		ret = -EINVAL;

@@ -1061,14 +1061,13 @@ QDF_STATUS cds_post_disable(void)
 /**
  * cds_close() - close cds module
  * @psoc: Psoc pointer
- * @cds_context: CDS context
  *
  * This API allows user to close modules registered
  * with connectivity device services.
  *
  * Return: QDF status
  */
-QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
+QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
 	void *ctx;
@@ -1095,21 +1094,21 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
 		       (struct cdp_pdev *)ctx, 1);
 
-	qdf_status = sme_close(((p_cds_contextType) cds_context)->pMACContext);
+	qdf_status = sme_close(gp_cds_context->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close SME", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	qdf_status = mac_close(((p_cds_contextType) cds_context)->pMACContext);
+	qdf_status = mac_close(gp_cds_context->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close MAC", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	((p_cds_contextType) cds_context)->pMACContext = NULL;
+	gp_cds_context->pMACContext = NULL;
 
 	cdp_soc_detach(gp_cds_context->dp_soc);
 	pmo_ucfg_psoc_update_dp_handle(psoc, NULL);
