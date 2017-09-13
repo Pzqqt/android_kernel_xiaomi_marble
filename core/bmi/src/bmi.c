@@ -547,8 +547,8 @@ QDF_STATUS ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx)
 	if (NO_BMI)
 		return QDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
 
-	status = cds_alloc_context(cds_get_global_context(), QDF_MODULE_ID_BMI,
-					(void **)&ol_info, sizeof(*ol_info));
+	status = cds_alloc_context(QDF_MODULE_ID_BMI,
+				   (void **)&ol_info, sizeof(*ol_info));
 
 	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("%s: CDS Allocation failed for ol_bmi context",
@@ -580,5 +580,5 @@ void ol_cds_free(void)
 	if (NO_BMI)
 		return;
 
-	cds_free_context(cds_get_global_context(), QDF_MODULE_ID_BMI, ol_info);
+	cds_free_context(QDF_MODULE_ID_BMI, ol_info);
 }

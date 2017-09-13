@@ -1398,7 +1398,6 @@ void cds_clear_fw_state(enum cds_fw_state state)
 
 /**
  * cds_alloc_context() - allocate a context within the CDS global Context
- * @p_cds_context: pointer to the global Vos context
  * @moduleId: module ID who's context area is being allocated.
  * @ppModuleContext: pointer to location where the pointer to the
  *	allocated context is returned. Note this output pointer
@@ -1410,60 +1409,46 @@ void cds_clear_fw_state(enum cds_fw_state state)
  *
  * Return: QDF status
  */
-QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
+QDF_STATUS cds_alloc_context(QDF_MODULE_ID moduleID,
 			     void **ppModuleContext, uint32_t size)
 {
 	void **pGpModContext = NULL;
 
-	if (p_cds_context == NULL) {
+	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: cds context is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((gp_cds_context != p_cds_context) || (ppModuleContext == NULL)) {
+	if (!ppModuleContext) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: context mismatch or null param passed",
+			  "%s: null param passed",
 			  __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	switch (moduleID) {
 	case QDF_MODULE_ID_WMA:
-	{
 		pGpModContext = &(gp_cds_context->pWMAContext);
 		break;
-	}
 
 	case QDF_MODULE_ID_HIF:
-	{
 		pGpModContext = &(gp_cds_context->pHIFContext);
 		break;
-	}
 
 	case QDF_MODULE_ID_BMI:
-	{
 		pGpModContext = &(gp_cds_context->g_ol_context);
 		break;
-	}
 
-	case QDF_MODULE_ID_EPPING:
-	case QDF_MODULE_ID_SME:
-	case QDF_MODULE_ID_PE:
-	case QDF_MODULE_ID_HDD:
-	case QDF_MODULE_ID_HDD_SOFTAP:
 	default:
-	{
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Module ID %i "
-			  "does not have its context allocated by CDS",
+			  "%s: Module ID %i does not have its context allocated by CDS",
 			  __func__, moduleID);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
-	}
 
-	if (NULL != *pGpModContext) {
+	if (*pGpModContext) {
 		/* Context has already been allocated!
 		 * Prevent double allocation
 		 */
@@ -1477,9 +1462,9 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 
 	*ppModuleContext = qdf_mem_malloc(size);
 
-	if (*ppModuleContext == NULL) {
+	if (!*ppModuleContext) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to " "allocate Context for module ID %i",
+			  "%s: Failed to allocate Context for module ID %i",
 			  __func__, moduleID);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
@@ -1530,7 +1515,6 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 /**
  * cds_free_context() - free an allocated context within the
  *			CDS global Context
- * @p_cds_context: pointer to the global Vos context
  * @moduleId: module ID who's context area is being free
  * @pModuleContext: pointer to module context area to be free'd.
  *
@@ -1539,50 +1523,40 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
  *
  * Return: QDF status
  */
-QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
-			    void *pModuleContext)
+QDF_STATUS cds_free_context(QDF_MODULE_ID moduleID, void *pModuleContext)
 {
 	void **pGpModContext = NULL;
 
-	if ((p_cds_context == NULL) || (gp_cds_context != p_cds_context) ||
-	    (pModuleContext == NULL)) {
+	if (!gp_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Null params or context mismatch", __func__);
+			  "%s: cds context is null", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!pModuleContext) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Null param", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	switch (moduleID) {
 	case QDF_MODULE_ID_WMA:
-	{
 		pGpModContext = &(gp_cds_context->pWMAContext);
 		break;
-	}
 
 	case QDF_MODULE_ID_HIF:
-	{
 		pGpModContext = &(gp_cds_context->pHIFContext);
 		break;
-	}
 
 	case QDF_MODULE_ID_TXRX:
-	{
 		pGpModContext = (void **)&(gp_cds_context->pdev_txrx_ctx);
 		break;
-	}
 
 	case QDF_MODULE_ID_BMI:
-	{
 		pGpModContext = &(gp_cds_context->g_ol_context);
 		break;
-	}
 
-	case QDF_MODULE_ID_EPPING:
-	case QDF_MODULE_ID_HDD:
-	case QDF_MODULE_ID_SME:
-	case QDF_MODULE_ID_PE:
-	case QDF_MODULE_ID_HDD_SOFTAP:
 	default:
-	{
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Module ID %i "
 			  "does not have its context allocated by CDS",
@@ -1590,13 +1564,11 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
-	}
 
 	if (NULL == *pGpModContext) {
 		/* Context has not been allocated or freed already! */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Module ID %i "
-			  "context has not been allocated or freed already",
+			  "%s: Module ID %i context has not been allocated or freed already",
 			  __func__, moduleID);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1607,8 +1579,7 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (pModuleContext != NULL)
-		qdf_mem_free(pModuleContext);
+	qdf_mem_free(pModuleContext);
 
 	*pGpModContext = NULL;
 

@@ -2250,9 +2250,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* Alloc memory for WMA Context */
-	qdf_status = cds_alloc_context(cds_context, QDF_MODULE_ID_WMA,
+	qdf_status = cds_alloc_context(QDF_MODULE_ID_WMA,
 				       (void **)&wma_handle,
-				       sizeof(t_wma_handle));
+				       sizeof(*wma_handle));
 
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Memory allocation failed for wma_handle",
@@ -2778,7 +2778,7 @@ err_wma_handle:
 		qdf_wake_lock_destroy(&wma_handle->roam_ho_wl);
 	}
 
-	cds_free_context(cds_context, QDF_MODULE_ID_WMA, wma_handle);
+	cds_free_context(QDF_MODULE_ID_WMA, wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
 
@@ -3619,8 +3619,7 @@ QDF_STATUS wma_wmi_service_close(void)
 	qdf_mem_free(wma_handle->interfaces);
 
 	/* free the wma_handle */
-	cds_free_context(wma_handle->cds_context, QDF_MODULE_ID_WMA,
-			 wma_handle);
+	cds_free_context(QDF_MODULE_ID_WMA, wma_handle);
 
 	qdf_mem_free(((p_cds_contextType) cds_ctx)->cfg_ctx);
 	WMA_LOGD("%s: Exit", __func__);
