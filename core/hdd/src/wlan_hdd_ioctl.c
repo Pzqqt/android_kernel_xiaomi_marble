@@ -213,7 +213,7 @@ static int hdd_get_tsm_stats(struct hdd_adapter *adapter,
 	status = sme_get_tsm_stats(hdd_ctx->hHal, hdd_get_tsm_stats_cb,
 				   hdd_sta_ctx->conn_info.staId[0],
 				   hdd_sta_ctx->conn_info.bssId,
-				   cookie, hdd_ctx->pcds_context, tid);
+				   cookie, tid);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Unable to retrieve tsm statistics");
 		ret = qdf_status_to_os_return(status);

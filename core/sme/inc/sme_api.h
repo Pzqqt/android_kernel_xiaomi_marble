@@ -379,7 +379,7 @@ QDF_STATUS sme_get_snr(tHalHandle hHal,
 QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId,
-		void *pContext, void *p_cds_context, uint8_t tid);
+		void *pContext, uint8_t tid);
 QDF_STATUS sme_set_cckm_ie(tHalHandle hHal,
 		uint8_t sessionId,
 		uint8_t *pCckmIe, uint8_t cckmIeLen);

@@ -1066,7 +1066,6 @@ typedef struct sAniGetTsmStatsReq {
 	struct qdf_mac_addr bssId;
 	void *tsmStatsCallback;
 	void *pDevContext;      /* device context */
-	void *p_cds_context;    /* cds context */
 } tAniGetTsmStatsReq, *tpAniGetTsmStatsReq;
 
 typedef struct sAniGetTsmStatsRsp {

@@ -1902,7 +1902,6 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
  * @staId: The station ID for which the stats is requested for
  * @bssId: bssid
  * @pContext: user context to be passed back along with the callback
- * @p_cds_context: CDS context
  * @tid: Traffic id
  *
  * API register a callback to get TSM Stats.
@@ -1912,7 +1911,7 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
 			     tCsrTsmStatsCallback callback,
 			     uint8_t staId, struct qdf_mac_addr bssId,
-			     void *pContext, void *p_cds_context, uint8_t tid)
+			     void *pContext, uint8_t tid)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -1921,7 +1920,7 @@ QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_get_tsm_stats(pMac, callback,
 					   staId, bssId, pContext,
-					   p_cds_context, tid);
+					   tid);
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;

@@ -1293,7 +1293,7 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId,
 		struct qdf_mac_addr bssId,
-		void *pContext, void *p_cds_context, uint8_t tid);
+		void *pContext, uint8_t tid);
 #endif
 
 /* Remove this code once SLM_Sessionization is supported */

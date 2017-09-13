@@ -1797,7 +1797,6 @@ static void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal pMac,
  * @staId: Station id
  * @bssId: bssid
  * @pContext: pointer to context
- * @p_cds_context: cds context
  * @tid: traffic id
  *
  * Return: QDF_STATUS enumeration
@@ -1806,7 +1805,7 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 			     tCsrTsmStatsCallback callback,
 			     uint8_t staId,
 			     struct qdf_mac_addr bssId,
-			     void *pContext, void *p_cds_context, uint8_t tid)
+			     void *pContext, uint8_t tid)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tAniGetTsmStatsReq *pMsg = NULL;
@@ -1825,7 +1824,6 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 	qdf_copy_macaddr(&pMsg->bssId, &bssId);
 	pMsg->tsmStatsCallback = callback;
 	pMsg->pDevContext = pContext;
-	pMsg->p_cds_context = p_cds_context;
 	status = umac_send_mb_message_to_mac(pMsg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_debug("csr_get_tsm_stats: failed to send down the rssi req");
