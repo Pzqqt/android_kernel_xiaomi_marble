@@ -3470,12 +3470,11 @@ end:
 /**
  * wma_stop() - wma stop function.
  *              cleanup timers and suspend target.
- * @cds_ctx: cds context
  * @reason: reason for wma_stop.
  *
  * Return: 0 on success, QDF Error on failure
  */
-QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
+QDF_STATUS wma_stop(uint8_t reason)
 {
 	tp_wma_handle wma_handle;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;

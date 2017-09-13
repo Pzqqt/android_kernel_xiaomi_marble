@@ -909,7 +909,7 @@ err_mac_stop:
 
 err_wma_stop:
 	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
-	qdf_status = wma_stop(p_cds_context, HAL_STOP_TYPE_RF_KILL);
+	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to stop wma", __func__);
@@ -959,7 +959,7 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 
 	dispatcher_psoc_disable(psoc);
 
-	qdf_status = wma_stop(cds_context, HAL_STOP_TYPE_RF_KILL);
+	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to stop wma");

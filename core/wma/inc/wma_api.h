@@ -102,7 +102,7 @@ QDF_STATUS wma_mc_process_handler(struct scheduler_msg *msg);
 
 QDF_STATUS wma_start(void);
 
-QDF_STATUS wma_stop(void *cds_context, uint8_t reason);
+QDF_STATUS wma_stop(uint8_t reason);
 
 QDF_STATUS wma_close(void *cds_context);
 
