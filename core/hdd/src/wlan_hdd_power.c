@@ -1284,7 +1284,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	}
 #endif
 
-	qdf_status = cds_sched_close(p_cds_context);
+	qdf_status = cds_sched_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to close CDS Scheduler");
 		QDF_ASSERT(false);

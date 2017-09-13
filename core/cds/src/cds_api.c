@@ -665,7 +665,7 @@ err_bmi_close:
 err_sched_close:
 	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
 	    cds_is_driver_recovering()) {
-		qdf_status = cds_sched_close(gp_cds_context);
+		qdf_status = cds_sched_close();
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to close CDS Scheduler");
 			QDF_ASSERT(false);

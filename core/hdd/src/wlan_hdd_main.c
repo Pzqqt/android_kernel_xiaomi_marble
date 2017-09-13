@@ -5866,7 +5866,6 @@ static void wlan_destroy_bug_report_lock(void)
  */
 static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 {
-	v_CONTEXT_t p_cds_context = hdd_ctx->pcds_context;
 	QDF_STATUS qdf_status;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
 	int driver_status;
@@ -5949,7 +5948,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 * no thread is scheduled after the each module close is
 	 * is called i.e after all the data structures are freed.
 	 */
-	qdf_status = cds_sched_close(p_cds_context);
+	qdf_status = cds_sched_close();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_alert("Failed to close CDS Scheduler");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
@@ -9794,7 +9793,7 @@ err_stop_modules:
 
 err_hdd_free_psoc:
 	if (DRIVER_MODULES_CLOSED == hdd_ctx->driver_status) {
-		status = cds_sched_close(hdd_ctx->pcds_context);
+		status = cds_sched_close();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to close CDS Scheduler");
 			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));

@@ -424,8 +424,6 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 
      - The Tx thread is closed
 
-   \param  p_cds_context - pointer to the global QDF Context
-
    \return QDF_STATUS_SUCCESS - Scheduler was successfully initialized and
    is ready to be used.
 
@@ -437,7 +435,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
    \sa cds_sched_close()
 
    ---------------------------------------------------------------------------*/
-QDF_STATUS cds_sched_close(void *p_cds_context);
+QDF_STATUS cds_sched_close(void);
 
 p_cds_sched_context get_cds_sched_ctxt(void);
 

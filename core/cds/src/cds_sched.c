@@ -842,7 +842,6 @@ static int cds_ol_rx_thread(void *arg)
 
 /**
  * cds_sched_close() - close the cds scheduler
- * @p_cds_context: Pointer to the global CDS Context
  *
  * This api closes the CDS Scheduler upon successful closing:
  *	- All the message queues are flushed
@@ -852,7 +851,7 @@ static int cds_ol_rx_thread(void *arg)
  *
  * Return: qdf status
  */
-QDF_STATUS cds_sched_close(void *p_cds_context)
+QDF_STATUS cds_sched_close(void)
 {
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: invoked", __func__);
