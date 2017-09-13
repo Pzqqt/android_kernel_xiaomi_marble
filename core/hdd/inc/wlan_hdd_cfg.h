@@ -8154,6 +8154,25 @@ enum hdd_link_speed_rpt_type {
 #define CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MIN          (0)
 #define CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MAX          (16000)
 
+/*
+ * <ini>
+ * periodic_stats_display_time - time(seconds) after which stats will be printed
+ * @Min: 0
+ * @Max: 256
+ * @Default: 10
+ *
+ * This values specifies the recurring time period after which stats will be
+ * printed in wlan driver logs.
+ *
+ * Usage: Internal / External
+ *
+ * </ini>
+ */
+#define CFG_PERIODIC_STATS_DISPLAY_TIME_NAME       "periodic_stats_display_time"
+#define CFG_PERIODIC_STATS_DISPLAY_TIME_DEFAULT    (10)
+#define CFG_PERIODIC_STATS_DISPLAY_TIME_MIN        (0)
+#define CFG_PERIODIC_STATS_DISPLAY_TIME_MAX        (256)
+
 #endif /* MSM_PLATFORM */
 
 #ifdef WLAN_FEATURE_11W
@@ -14064,6 +14083,7 @@ struct hdd_config {
 	uint32_t tcpDelackThresholdLow;
 	uint32_t tcp_tx_high_tput_thres;
 	uint32_t tcp_delack_timer_count;
+	u8  periodic_stats_disp_time;
 #endif /* MSM_PLATFORM */
 
 	/* FW debug log parameters */

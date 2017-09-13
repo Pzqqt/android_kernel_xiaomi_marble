@@ -1064,43 +1064,43 @@ static void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 	int msdu_idx;
 	int seg_idx;
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		"TSO Statistics:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		"TSO pkts %lld, bytes %lld\n",
-		pdev->stats.pub.tx.tso.tso_pkts.pkts,
-		pdev->stats.pub.tx.tso.tso_pkts.bytes);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+		  "TSO Statistics:");
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+		  "TSO pkts %lld, bytes %lld\n",
+		 pdev->stats.pub.tx.tso.tso_pkts.pkts,
+		 pdev->stats.pub.tx.tso.tso_pkts.bytes);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"TSO Histogram for numbers of segments:\n"
-			"Single segment	%d\n"
-			"  2-5 segments	%d\n"
-			" 6-10 segments	%d\n"
-			"11-15 segments	%d\n"
-			"16-20 segments	%d\n"
-			"  20+ segments	%d\n",
-			pdev->stats.pub.tx.tso.tso_hist.pkts_1,
-			pdev->stats.pub.tx.tso.tso_hist.pkts_2_5,
-			pdev->stats.pub.tx.tso.tso_hist.pkts_6_10,
-			pdev->stats.pub.tx.tso.tso_hist.pkts_11_15,
-			pdev->stats.pub.tx.tso.tso_hist.pkts_16_20,
-			pdev->stats.pub.tx.tso.tso_hist.pkts_20_plus);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+		  "TSO Histogram for numbers of segments:\n"
+		 "Single segment	%d\n"
+		 "  2-5 segments	%d\n"
+		 " 6-10 segments	%d\n"
+		 "11-15 segments	%d\n"
+		 "16-20 segments	%d\n"
+		 "  20+ segments	%d\n",
+		 pdev->stats.pub.tx.tso.tso_hist.pkts_1,
+		 pdev->stats.pub.tx.tso.tso_hist.pkts_2_5,
+		 pdev->stats.pub.tx.tso.tso_hist.pkts_6_10,
+		 pdev->stats.pub.tx.tso.tso_hist.pkts_11_15,
+		 pdev->stats.pub.tx.tso.tso_hist.pkts_16_20,
+		 pdev->stats.pub.tx.tso.tso_hist.pkts_20_plus);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"TSO History Buffer: Total size %d, current_index %d",
-			NUM_MAX_TSO_MSDUS,
-			TXRX_STATS_TSO_MSDU_IDX(pdev));
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+		  "TSO History Buffer: Total size %d, current_index %d",
+		 NUM_MAX_TSO_MSDUS,
+		 TXRX_STATS_TSO_MSDU_IDX(pdev));
 
 	for (msdu_idx = 0; msdu_idx < NUM_MAX_TSO_MSDUS; msdu_idx++) {
 		if (TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, msdu_idx) == 0)
 			continue;
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"jumbo pkt idx: %d num segs %d gso_len %d total_len %d nr_frags %d",
-			msdu_idx,
-			TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, msdu_idx),
-			TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, msdu_idx),
-			TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, msdu_idx),
-			TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, msdu_idx));
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+			  "jumbo pkt idx: %d num segs %d gso_len %d total_len %d nr_frags %d",
+			 msdu_idx,
+			 TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, msdu_idx),
+			 TXRX_STATS_TSO_MSDU_GSO_SIZE(pdev, msdu_idx),
+			 TXRX_STATS_TSO_MSDU_TOTAL_LEN(pdev, msdu_idx),
+			 TXRX_STATS_TSO_MSDU_NR_FRAGS(pdev, msdu_idx));
 
 		for (seg_idx = 0;
 			 ((seg_idx < TXRX_STATS_TSO_MSDU_NUM_SEG(pdev,
@@ -1109,22 +1109,22 @@ static void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 			struct qdf_tso_seg_t tso_seg =
 				 TXRX_STATS_TSO_SEG(pdev, msdu_idx, seg_idx);
 
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-				 "seg idx: %d", seg_idx);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-				 "tso_enable: %d",
-				 tso_seg.tso_flags.tso_enable);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-				 "fin %d syn %d rst %d psh %d ack %d urg %d ece %d cwr %d ns %d",
-				 tso_seg.tso_flags.fin, tso_seg.tso_flags.syn,
-				 tso_seg.tso_flags.rst, tso_seg.tso_flags.psh,
-				 tso_seg.tso_flags.ack, tso_seg.tso_flags.urg,
-				 tso_seg.tso_flags.ece, tso_seg.tso_flags.cwr,
-				 tso_seg.tso_flags.ns);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-				 "tcp_seq_num: 0x%x ip_id: %d",
-				 tso_seg.tso_flags.tcp_seq_num,
-				 tso_seg.tso_flags.ip_id);
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+				  "seg idx: %d", seg_idx);
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+				  "tso_enable: %d",
+				  tso_seg.tso_flags.tso_enable);
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+				  "fin %d syn %d rst %d psh %d ack %d urg %d ece %d cwr %d ns %d",
+				  tso_seg.tso_flags.fin, tso_seg.tso_flags.syn,
+				  tso_seg.tso_flags.rst, tso_seg.tso_flags.psh,
+				  tso_seg.tso_flags.ack, tso_seg.tso_flags.urg,
+				  tso_seg.tso_flags.ece, tso_seg.tso_flags.cwr,
+				  tso_seg.tso_flags.ns);
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+				  "tcp_seq_num: 0x%x ip_id: %d",
+				  tso_seg.tso_flags.tcp_seq_num,
+				  tso_seg.tso_flags.ip_id);
 		}
 	}
 }
@@ -4152,7 +4152,8 @@ int ol_txrx_debug(ol_txrx_vdev_handle vdev, int debug_specs)
 #endif
 	}
 	if (debug_specs & TXRX_DBG_MASK_STATS)
-		ol_txrx_stats_display(vdev->pdev);
+		ol_txrx_stats_display(vdev->pdev,
+				      QDF_STATS_VERBOSITY_LEVEL_HIGH);
 	if (debug_specs & TXRX_DBG_MASK_PROT_ANALYZE) {
 #if defined(ENABLE_TXRX_PROT_ANALYZE)
 		ol_txrx_prot_ans_display(vdev->pdev);
@@ -4287,13 +4288,13 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned int buf_len)
  */
 static void ol_txrx_disp_peer_cached_bufq_stats(struct ol_txrx_peer_t *peer)
 {
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"cached_bufq: curr %d drops %d hwm %d whatifs %d thresh %d",
-		peer->bufq_info.curr,
-		peer->bufq_info.dropped,
-		peer->bufq_info.high_water_mark,
-		peer->bufq_info.qdepth_no_thresh,
-		peer->bufq_info.thresh);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+		  "cached_bufq: curr %d drops %d hwm %d whatifs %d thresh %d",
+		  peer->bufq_info.curr,
+		  peer->bufq_info.dropped,
+		  peer->bufq_info.high_water_mark,
+		  peer->bufq_info.qdepth_no_thresh,
+		  peer->bufq_info.thresh);
 }
 
 /**
@@ -4329,28 +4330,59 @@ static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"peer stats not supported w/o QCA_SUPPORT_TXRX_LOCAL_PEER_ID");
+		  "peer stats not supported w/o QCA_SUPPORT_TXRX_LOCAL_PEER_ID");
 }
 #endif
 
-void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
+void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
+			   enum qdf_stats_verbosity_level level)
 {
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	u64 tx_dropped =
+		pdev->stats.pub.tx.dropped.download_fail.pkts
+		  + pdev->stats.pub.tx.dropped.target_discard.pkts
+		  + pdev->stats.pub.tx.dropped.no_ack.pkts
+		  + pdev->stats.pub.tx.dropped.others.pkts;
+
+	if (level == QDF_STATS_VERBOSITY_LEVEL_LOW) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+			  "STATS |%u %u|TX: %lld tso %lld ok %lld drops(%u-%lld %u-%lld %u-%lld ?-%lld hR-%lld)|RX: %lld drops(E %lld PI %lld ME %lld) fwd(S %d F %d SF %d)|",
+			  pdev->tx_desc.num_free,
+			  pdev->tx_desc.pool_size,
+			  pdev->stats.pub.tx.from_stack.pkts,
+			  pdev->stats.pub.tx.tso.tso_pkts.pkts,
+			  pdev->stats.pub.tx.delivered.pkts,
+			  htt_tx_status_download_fail,
+			  pdev->stats.pub.tx.dropped.download_fail.pkts,
+			  htt_tx_status_discard,
+			  pdev->stats.pub.tx.dropped.target_discard.pkts,
+			  htt_tx_status_no_ack,
+			  pdev->stats.pub.tx.dropped.no_ack.pkts,
+			  pdev->stats.pub.tx.dropped.others.pkts,
+			  pdev->stats.pub.tx.dropped.host_reject.pkts,
+			  pdev->stats.pub.rx.delivered.pkts,
+			  pdev->stats.pub.rx.dropped_err.pkts,
+			  pdev->stats.pub.rx.dropped_peer_invalid.pkts,
+			  pdev->stats.pub.rx.dropped_mic_err.pkts,
+			  pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
+			  pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
+			  pdev->stats.pub.rx.intra_bss_fwd.packets_stack_n_fwd);
+		return;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "TX PATH Statistics:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "sent %lld msdus (%lld B), host rejected %lld (%lld B), dropped %lld (%lld B)",
 		  pdev->stats.pub.tx.from_stack.pkts,
 		  pdev->stats.pub.tx.from_stack.bytes,
 		  pdev->stats.pub.tx.dropped.host_reject.pkts,
 		  pdev->stats.pub.tx.dropped.host_reject.bytes,
-		  pdev->stats.pub.tx.dropped.download_fail.pkts
-		  + pdev->stats.pub.tx.dropped.target_discard.pkts
-		  + pdev->stats.pub.tx.dropped.no_ack.pkts,
+		  tx_dropped,
 		  pdev->stats.pub.tx.dropped.download_fail.bytes
 		  + pdev->stats.pub.tx.dropped.target_discard.bytes
 		  + pdev->stats.pub.tx.dropped.no_ack.bytes);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "successfully delivered: %lld (%lld B), download fail: %lld (%lld B), target discard: %lld (%lld B), no ack: %lld (%lld B)",
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+		  "successfully delivered: %lld (%lld B), download fail: %lld (%lld B), target discard: %lld (%lld B), no ack: %lld (%lld B) others: %lld (%lld B)",
 		  pdev->stats.pub.tx.delivered.pkts,
 		  pdev->stats.pub.tx.delivered.bytes,
 		  pdev->stats.pub.tx.dropped.download_fail.pkts,
@@ -4358,8 +4390,10 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.tx.dropped.target_discard.pkts,
 		  pdev->stats.pub.tx.dropped.target_discard.bytes,
 		  pdev->stats.pub.tx.dropped.no_ack.pkts,
-		  pdev->stats.pub.tx.dropped.no_ack.bytes);
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+		  pdev->stats.pub.tx.dropped.no_ack.bytes,
+		  pdev->stats.pub.tx.dropped.others.pkts,
+		  pdev->stats.pub.tx.dropped.others.bytes);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Tx completions per HTT message:\n"
 		  "Single Packet  %d\n"
 		  " 2-10 Packets  %d\n"
@@ -4378,9 +4412,9 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.tx.comp_histogram.pkts_51_60,
 		  pdev->stats.pub.tx.comp_histogram.pkts_61_plus);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "RX PATH Statistics:");
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "%lld ppdus, %lld mpdus, %lld msdus, %lld bytes\n"
 		  "dropped: err %lld (%lld B), peer_invalid %lld (%lld B), mic_err %lld (%lld B)\n"
 		  "msdus with frag_ind: %d msdus with offload_ind: %d",
@@ -4397,13 +4431,13 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.rx.msdus_with_frag_ind,
 		  pdev->stats.pub.rx.msdus_with_offload_ind);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  fwd to stack %d, fwd to fw %d, fwd to stack & fw  %d\n",
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack_n_fwd);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "Rx packets per HTT message:\n"
 		  "Single Packet  %d\n"
 		  " 2-10 Packets  %d\n"
@@ -4661,7 +4695,9 @@ ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
  *
  * Return: status
  */
-static QDF_STATUS ol_txrx_display_stats(void *soc, uint16_t value)
+static QDF_STATUS
+ol_txrx_display_stats(void *soc, uint16_t value,
+		      enum qdf_stats_verbosity_level verb_level)
 {
 	ol_txrx_pdev_handle pdev;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -4675,7 +4711,7 @@ static QDF_STATUS ol_txrx_display_stats(void *soc, uint16_t value)
 
 	switch (value) {
 	case CDP_TXRX_PATH_STATS:
-		ol_txrx_stats_display(pdev);
+		ol_txrx_stats_display(pdev, verb_level);
 		break;
 	case CDP_TXRX_TSO_STATS:
 		ol_txrx_stats_display_tso(pdev);

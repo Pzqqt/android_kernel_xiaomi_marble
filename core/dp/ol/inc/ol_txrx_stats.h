@@ -86,6 +86,9 @@ struct ol_txrx_stats_tx_dropped {
 	 * couldn't get an ack for
 	 */
 	struct ol_txrx_stats_elem no_ack;
+
+	/* MSDU which were dropped for other reasons */
+	struct ol_txrx_stats_elem others;
 };
 
 struct ol_txrx_tso_histogram {

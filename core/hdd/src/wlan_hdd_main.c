@@ -59,6 +59,7 @@
 #include "qdf_trace.h"
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
+#include <cdp_txrx_stats.h>
 
 #include <net/addrconf.h>
 #include <linux/wireless.h>
@@ -6411,6 +6412,53 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 	return ret_val;
 }
 
+#ifdef MSM_PLATFORM
+/**
+ * hdd_display_periodic_stats() - Function to display periodic stats
+ * @hdd_ctx - handle to hdd context
+ * @bool data_in_interval - true, if data detected in bw time interval
+ *
+ * The periodicity is determined by hdd_ctx->config->periodic_stats_disp_time.
+ * Stats show up in wlan driver logs.
+ *
+ * Returns: None
+ */
+static inline
+void hdd_display_periodic_stats(struct hdd_context *hdd_ctx,
+				bool data_in_interval)
+{
+	static u32 counter;
+	static bool data_in_time_period;
+	ol_txrx_pdev_handle pdev;
+
+	if (hdd_ctx->config->periodic_stats_disp_time == 0)
+		return;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		hdd_err("pdev is NULL");
+		return;
+	}
+
+	counter++;
+	if (data_in_interval)
+		data_in_time_period = data_in_interval;
+
+	if (counter * hdd_ctx->config->busBandwidthComputeInterval >=
+		hdd_ctx->config->periodic_stats_disp_time * 1000) {
+		if (data_in_time_period) {
+			cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
+					  CDP_TXRX_PATH_STATS,
+					  QDF_STATS_VERBOSITY_LEVEL_LOW);
+			wlan_hdd_display_netif_queue_history
+				(hdd_ctx, QDF_STATS_VERBOSITY_LEVEL_LOW);
+			qdf_dp_trace_dump_stats();
+		}
+		counter = 0;
+		data_in_time_period = false;
+	}
+}
+
 /**
  * hdd_pld_request_bus_bandwidth() - Function to control bus bandwidth
  * @hdd_ctx - handle to hdd context
@@ -6422,12 +6470,12 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
  *
  * Returns: None
  */
-#ifdef MSM_PLATFORM
+
 static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 					  const uint64_t tx_packets,
 					  const uint64_t rx_packets)
 {
-	uint64_t total = tx_packets + rx_packets;
+	u64 total_pkts = tx_packets + rx_packets;
 	uint64_t temp_rx = 0;
 	uint64_t temp_tx = 0;
 	enum pld_bus_width_type next_vote_level = PLD_BUS_WIDTH_NONE;
@@ -6439,11 +6487,11 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	bool rx_level_change = false;
 	bool tx_level_change = false;
 
-	if (total > hdd_ctx->config->busBandwidthHighThreshold)
+	if (total_pkts > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = PLD_BUS_WIDTH_HIGH;
-	else if (total > hdd_ctx->config->busBandwidthMediumThreshold)
+	else if (total_pkts > hdd_ctx->config->busBandwidthMediumThreshold)
 		next_vote_level = PLD_BUS_WIDTH_MEDIUM;
-	else if (total > hdd_ctx->config->busBandwidthLowThreshold)
+	else if (total_pkts > hdd_ctx->config->busBandwidthLowThreshold)
 		next_vote_level = PLD_BUS_WIDTH_LOW;
 	else
 		next_vote_level = PLD_BUS_WIDTH_NONE;
@@ -6540,7 +6588,6 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	}
 
 	index = hdd_ctx->hdd_txrx_hist_idx;
-
 	if (vote_level_change || tx_level_change || rx_level_change) {
 		hdd_ctx->hdd_txrx_hist[index].next_tx_level = next_tx_level;
 		hdd_ctx->hdd_txrx_hist[index].next_rx_level = next_rx_level;
@@ -6551,6 +6598,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		hdd_ctx->hdd_txrx_hist_idx++;
 		hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
 	}
+
+	hdd_display_periodic_stats(hdd_ctx, (total_pkts > 0) ? true : false);
 }
 
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
@@ -6852,13 +6901,100 @@ void wlan_hdd_clear_tx_rx_histogram(struct hdd_context *hdd_ctx)
 		(sizeof(struct hdd_tx_rx_histogram) * NUM_TX_RX_HISTOGRAM));
 }
 
+/* length of the netif queue log needed per adapter */
+#define ADAP_NETIFQ_LOG_LEN ((20 * WLAN_REASON_TYPE_MAX) + 50)
+
+/**
+ *
+ * hdd_display_netif_queue_history_compact() - display compact netifq history
+ * @hdd_ctx: hdd context
+ *
+ * Return: none
+ */
+static void
+hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
+{
+	int adapter_num = 0;
+	int i;
+	int bytes_written;
+	u32 tbytes;
+	qdf_time_t total, pause, unpause, curr_time, delta;
+	QDF_STATUS status;
+	char temp_str[20 * WLAN_REASON_TYPE_MAX];
+	char comb_log_str[(ADAP_NETIFQ_LOG_LEN * MAX_NUMBER_OF_ADAPTERS) + 1];
+	struct hdd_adapter *adapter = NULL;
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+
+	bytes_written = 0;
+	qdf_mem_set(comb_log_str, 0, sizeof(comb_log_str));
+	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
+		adapter = adapter_node->adapter;
+
+		curr_time = qdf_system_ticks();
+		total = curr_time - adapter->start_time;
+		delta = curr_time - adapter->last_time;
+
+		if (adapter->pause_map) {
+			pause = adapter->total_pause_time + delta;
+			unpause = adapter->total_unpause_time;
+		} else {
+			unpause = adapter->total_unpause_time + delta;
+			pause = adapter->total_pause_time;
+		}
+
+		tbytes = 0;
+		qdf_mem_set(temp_str, 0, sizeof(temp_str));
+		for (i = WLAN_CONTROL_PATH; i < WLAN_REASON_TYPE_MAX; i++) {
+			if (adapter->queue_oper_stats[i].pause_count == 0)
+				continue;
+			tbytes +=
+				snprintf(
+					&temp_str[tbytes],
+					(tbytes >= sizeof(temp_str) ?
+					0 : sizeof(temp_str) - tbytes),
+					"%d(%d,%d) ",
+					i,
+					adapter->queue_oper_stats[i].
+								pause_count,
+					adapter->queue_oper_stats[i].
+								unpause_count);
+		}
+		if (tbytes >= sizeof(temp_str))
+			hdd_warn("log truncated");
+
+		bytes_written += snprintf(&comb_log_str[bytes_written],
+			bytes_written >= sizeof(comb_log_str) ? 0 :
+					sizeof(comb_log_str) - bytes_written,
+			"[%d %d] (%d) %u/%ums %s|",
+			adapter->session_id, adapter->device_mode,
+			adapter->pause_map,
+			qdf_system_ticks_to_msecs(pause),
+			qdf_system_ticks_to_msecs(total),
+			temp_str);
+
+		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
+		adapter_node = next;
+		adapter_num++;
+	}
+
+	/* using QDF_TRACE to avoid printing function name */
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_LOW,
+		  "STATS |%s", comb_log_str);
+
+	if (bytes_written >= sizeof(comb_log_str))
+		hdd_warn("log string truncated");
+}
+
 /**
  * wlan_hdd_display_netif_queue_history() - display netif queue history
  * @hdd_ctx: hdd context
  *
  * Return: none
  */
-void wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx)
+void
+wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
+				     enum qdf_stats_verbosity_level verb_lvl)
 {
 
 	struct hdd_adapter *adapter = NULL;
@@ -6866,6 +7002,11 @@ void wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx)
 	QDF_STATUS status;
 	int i;
 	qdf_time_t total, pause, unpause, curr_time, delta;
+
+	if (verb_lvl == QDF_STATS_VERBOSITY_LEVEL_LOW) {
+		hdd_display_netif_queue_history_compact(hdd_ctx);
+		return;
+	}
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
@@ -6932,8 +7073,6 @@ void wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx)
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
 		adapter_node = next;
 	}
-
-
 }
 
 /**

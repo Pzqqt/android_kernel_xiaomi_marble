@@ -3229,7 +3229,9 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 		wlan_hdd_display_tx_rx_histogram(hdd_ctx);
 		break;
 	case CDP_HDD_NETIF_OPER_HISTORY:
-		wlan_hdd_display_netif_queue_history(hdd_ctx);
+		wlan_hdd_display_netif_queue_history
+					(hdd_ctx,
+					 QDF_STATS_VERBOSITY_LEVEL_HIGH);
 		break;
 	case CDP_HIF_STATS:
 		hdd_display_hif_stats();
@@ -3248,7 +3250,8 @@ int hdd_wlan_dump_stats(struct hdd_adapter *adapter, int value)
 		break;
 	default:
 		status = cdp_display_stats(cds_get_context(QDF_MODULE_ID_SOC),
-							value);
+						value,
+						QDF_STATS_VERBOSITY_LEVEL_HIGH);
 		if (status == QDF_STATUS_E_INVAL) {
 			hdd_display_stats_help();
 			ret = EINVAL;

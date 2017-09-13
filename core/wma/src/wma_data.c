@@ -2804,7 +2804,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 * WMA_TX_FRAME_COMPLETE_TIMEOUT (1 sec)
 			 */
 			/* display scheduler stats */
-			return cdp_display_stats(soc, CDP_SCHEDULER_STATS);
+			return cdp_display_stats(soc, CDP_SCHEDULER_STATS,
+						QDF_STATS_VERBOSITY_LEVEL_HIGH);
 		}
 	}
 
