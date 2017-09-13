@@ -5871,11 +5871,10 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 
 /**
  * wma_setneedshutdown() - setting wma needshutdown flag
- * @cds_ctx: cds context
  *
  * Return: none
  */
-void wma_setneedshutdown(void *cds_ctx)
+void wma_setneedshutdown(void)
 {
 	tp_wma_handle wma_handle;
 

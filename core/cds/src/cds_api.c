@@ -914,7 +914,7 @@ err_wma_stop:
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to stop wma", __func__);
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		wma_setneedshutdown(cds_context);
+		wma_setneedshutdown();
 	} else {
 		qdf_status =
 			qdf_wait_single_event(&(gp_cds_context->wmaCompleteEvent),
@@ -932,7 +932,7 @@ err_wma_stop:
 					  __func__);
 			}
 			QDF_ASSERT(0);
-			wma_setneedshutdown(cds_context);
+			wma_setneedshutdown();
 		}
 	}
 
@@ -964,7 +964,7 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc, v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("Failed to stop wma");
 		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-		wma_setneedshutdown(cds_context);
+		wma_setneedshutdown();
 	}
 
 	handle = cds_get_context(QDF_MODULE_ID_PE);
