@@ -2824,7 +2824,8 @@ static int q6afe_send_enc_config(u16 port_id,
 
 	pr_debug("%s:update DSP for enc format = %d\n", __func__, format);
 	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2 &&
-	    format != ASM_MEDIA_FMT_APTX && format != ASM_MEDIA_FMT_APTX_HD) {
+	    format != ASM_MEDIA_FMT_APTX && format != ASM_MEDIA_FMT_APTX_HD &&
+	    format != ASM_MEDIA_FMT_CELT) {
 		pr_err("%s:Unsuppported format Ignore AFE config\n", __func__);
 		return 0;
 	}
