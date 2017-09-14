@@ -1479,6 +1479,32 @@ static void __lim_process_clear_dfs_channel_list(tpAniSirGlobal pMac,
 	qdf_mem_set(&pMac->lim.dfschannelList, sizeof(tSirDFSChannelList), 0);
 }
 
+#ifdef WLAN_FEATURE_SAE
+
+/**
+ * lim_update_sae_config()- This API update SAE session info to csr config
+ * from join request.
+ * @session: PE session
+ * @sme_join_req: pointer to join request
+ *
+ * Return: None
+ */
+static void lim_update_sae_config(tpPESession session,
+		tpSirSmeJoinReq sme_join_req)
+{
+	session->sae_pmk_cached = sme_join_req->sae_pmk_cached;
+
+	pe_debug("pmk_cached %d for BSSID=" MAC_ADDRESS_STR,
+		session->sae_pmk_cached,
+		MAC_ADDR_ARRAY(sme_join_req->bssDescription.bssId));
+}
+#else
+static inline void lim_update_sae_config(tpPESession session,
+		tpSirSmeJoinReq sme_join_req)
+{}
+#endif
+
+
 /**
  * __lim_process_sme_join_req() - process SME_JOIN_REQ message
  * @mac_ctx: Pointer to Global MAC structure
@@ -1802,6 +1828,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			sme_join_req->txLdpcIniFeatureEnabled;
 
 		lim_update_fils_config(session, sme_join_req);
+		lim_update_sae_config(session, sme_join_req);
 		if (session->bssType == eSIR_INFRASTRUCTURE_MODE) {
 			session->limSystemRole = eLIM_STA_ROLE;
 		} else {

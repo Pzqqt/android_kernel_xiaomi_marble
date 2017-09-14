@@ -551,6 +551,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	struct obss_detection_cfg obss_offload_cfg;
 	bool is_session_obss_offload_enabled;
 	bool is_obss_reset_timer_initialized;
+	bool sae_pmk_cached;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

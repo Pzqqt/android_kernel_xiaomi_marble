@@ -634,16 +634,27 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 	if (rx_auth_frm_body->authAlgoNumber !=
 			mac_ctx->lim.gpLimMlmAuthReq->authType) {
 		/*
-		 * Received Authentication frame with an auth
-		 * algorithm other than one requested.
-		 * Wait until Authentication Failure Timeout.
+		 * Auth algo is open in rx auth frame when auth type is SAE and
+		 * PMK is cached as driver sent auth algo as open in tx frame
+		 * as well.
 		 */
+		if ((mac_ctx->lim.gpLimMlmAuthReq->authType ==
+		    eSIR_AUTH_TYPE_SAE) && pe_session->sae_pmk_cached) {
+			pe_debug("rx Auth frame2 auth algo %d in SAE PMK case",
+				rx_auth_frm_body->authAlgoNumber);
+		} else {
+			/*
+			 * Received Authentication frame with an auth
+			 * algorithm other than one requested.
+			 * Wait until Authentication Failure Timeout.
+			 */
 
-		pe_warn("rx Auth frame2 for unexpected auth algo number %d "
-			MAC_ADDRESS_STR,
-			rx_auth_frm_body->authAlgoNumber,
-			MAC_ADDR_ARRAY(mac_hdr->sa));
-		return;
+			pe_warn("rx Auth frame2 for unexpected auth algo %d"
+				MAC_ADDRESS_STR,
+				rx_auth_frm_body->authAlgoNumber,
+				MAC_ADDR_ARRAY(mac_hdr->sa));
+			return;
+		}
 	}
 
 	if (rx_auth_frm_body->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
