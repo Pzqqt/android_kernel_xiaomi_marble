@@ -81,8 +81,6 @@ extern "C" {
 /*----------------------------------------------------------------------------
  *  Typedefs
  * -------------------------------------------------------------------------*/
-typedef struct sSapContext tSapContext;
-/* tSapContext, *ptSapContext; */
 /*----------------------------------------------------------------------------
  *  Type Declarations - For internal SAP context information
  * -------------------------------------------------------------------------*/
@@ -136,7 +134,7 @@ struct sap_avoid_channels_info {
 };
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-typedef struct sSapContext {
+struct sap_context {
 
 	qdf_mutex_t SapGlobalLock;
 
@@ -275,7 +273,9 @@ typedef struct sSapContext {
 	uint8_t sap_acs_pre_start_bss;
 	uint8_t sap_sta_id;
 	bool dfs_cac_offload;
-} *ptSapContext;
+};
+typedef struct sap_context *ptSapContext;
+typedef struct sap_context tSapContext;
 
 /*----------------------------------------------------------------------------
  *  External declarations for global context

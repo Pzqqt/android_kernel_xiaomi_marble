@@ -287,7 +287,7 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
  */
 static QDF_STATUS sap_hdd_signal_event_handler(void *ctx)
 {
-	ptSapContext sap_ctx = (struct sSapContext *)ctx;
+	ptSapContext sap_ctx = ctx;
 	QDF_STATUS status;
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
