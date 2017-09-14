@@ -9054,7 +9054,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 {
 	tSap_Event sap_event;
 	int sta_id;
-	ptSapContext sap_ctx;
+	struct sap_context *sap_ctx;
 
 	ENTER();
 
@@ -9102,7 +9102,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
  */
 void hdd_sap_destroy_events(struct hdd_adapter *adapter)
 {
-	ptSapContext sap_ctx;
+	struct sap_context *sap_ctx;
 
 	ENTER();
 	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);

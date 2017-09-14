@@ -62,7 +62,7 @@ extern "C" {
 #define WLANSAP_SECURITY_ENABLED_STATE true
 
 /* When MBSSID feature is enabled, SAP context is directly passed to SAP APIs */
-#define CDS_GET_SAP_CB(ctx) (ptSapContext)(ctx)
+#define CDS_GET_SAP_CB(ctx) (ctx)
 
 #define CDS_GET_HAL_CB() cds_get_context(QDF_MODULE_ID_PE)
 /* MAC Address length */
@@ -274,7 +274,6 @@ struct sap_context {
 	uint8_t sap_sta_id;
 	bool dfs_cac_offload;
 };
-typedef struct sap_context *ptSapContext;
 
 /*----------------------------------------------------------------------------
  *  External declarations for global context
@@ -298,8 +297,8 @@ typedef struct sWLAN_SAPEvent {
 /*----------------------------------------------------------------------------
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
-QDF_STATUS wlansap_context_get(ptSapContext ctx);
-void wlansap_context_put(ptSapContext ctx);
+QDF_STATUS wlansap_context_get(struct sap_context *ctx);
+void wlansap_context_put(struct sap_context *ctx);
 
 QDF_STATUS
 wlansap_scan_callback
@@ -323,18 +322,18 @@ wlansap_roam_callback
 	uint32_t roamId,
 	eRoamCmdStatus roamStatus, eCsrRoamResult roamResult);
 
-QDF_STATUS SapFsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
+QDF_STATUS SapFsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
 
-uint8_t sap_select_channel(tHalHandle halHandle, ptSapContext pSapCtx,
+uint8_t sap_select_channel(tHalHandle halHandle, struct sap_context *pSapCtx,
 			   tScanResultHandle pScanResult);
 
 QDF_STATUS
-sap_signal_hdd_event(ptSapContext sapContext,
+sap_signal_hdd_event(struct sap_context *sapContext,
 		  tCsrRoamInfo *pCsrRoamInfo,
 		  eSapHddEvent sapHddevent, void *);
 
-QDF_STATUS sap_fsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent);
+QDF_STATUS sap_fsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent);
 
 eSapStatus
 sapconvert_to_csr_profile(tsap_Config_t *pconfig_params,
@@ -344,7 +343,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params,
 void sap_free_roam_profile(tCsrRoamProfile *profile);
 
 QDF_STATUS
-sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac);
+sap_is_peer_mac_allowed(struct sap_context *sapContext, uint8_t *peerMac);
 
 void
 sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size);
@@ -364,17 +363,18 @@ bool
 sap_search_mac_list(struct qdf_mac_addr *macList, uint8_t num_mac,
 		 uint8_t *peerMac, uint8_t *index);
 
-QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx);
+QDF_STATUS sap_acquire_global_lock(struct sap_context *pSapCtx);
 
-QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx);
+QDF_STATUS sap_release_global_lock(struct sap_context *pSapCtx);
 
 #ifdef FEATURE_WLAN_CH_AVOID
-void sap_update_unsafe_channel_list(tHalHandle hal, ptSapContext pSapCtx);
+void sap_update_unsafe_channel_list(tHalHandle hal,
+				    struct sap_context *pSapCtx);
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-QDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext);
+QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sapContext);
 
-bool sap_dfs_is_channel_in_nol_list(ptSapContext sapContext,
+bool sap_dfs_is_channel_in_nol_list(struct sap_context *sapContext,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState);
 void sap_dfs_cac_timer_callback(void *data);
@@ -382,13 +382,12 @@ void sap_dfs_cac_timer_callback(void *data);
 void sap_cac_reset_notify(tHalHandle hHal);
 
 bool
-sap_channel_matrix_check(ptSapContext sapContext,
+sap_channel_matrix_check(struct sap_context *sapContext,
 			 ePhyChanBondState cbMode,
 			 uint8_t target_channel);
 
 bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
-						ptSapContext
-						sapContext);
+						struct sap_context *sapContext);
 
 uint8_t sap_get_total_number_sap_intf(tHalHandle hHal);
 
@@ -398,12 +397,12 @@ bool sap_dfs_is_channel_in_preferred_location(tHalHandle hHal,
 					      uint8_t channelID);
 
 QDF_STATUS sap_goto_channel_sel(
-	ptSapContext sapContext,
+	struct sap_context *sapContext,
 	ptWLAN_SAPEvent sapEvent,
 	bool sap_do_acs_pre_start_bss,
 	bool check_for_connection_update);
 
-void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
+void sap_config_acs_result(tHalHandle hal, struct sap_context *sap_ctx,
 							uint32_t sec_ch);
 /**
  * sap_check_in_avoid_ch_list() - checks if given channel present is channel
@@ -419,11 +418,11 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
  * Return: true, if channel was present, false othersie.
  */
 bool
-sap_check_in_avoid_ch_list(ptSapContext sap_ctx, uint8_t channel);
-QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
+sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel);
+QDF_STATUS sap_open_session(tHalHandle hHal, struct sap_context *sapContext,
 				uint32_t session_id);
 QDF_STATUS sap_close_session(tHalHandle hHal,
-			     ptSapContext sapContext,
+			     struct sap_context *sapContext,
 			     csr_roamSessionCloseCallback callback, bool valid);
 /**
  * sap_set_session_param() - set sap related param to sap context and global var
@@ -435,7 +434,7 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_set_session_param(tHalHandle hal, ptSapContext sapctx,
+QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 				uint32_t session_id);
 /**
  * sap_clear_session_param() - clear sap related param from sap context
@@ -447,7 +446,7 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, ptSapContext sapctx,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sap_clear_session_param(tHalHandle hal, ptSapContext sapctx,
+QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 				uint32_t session_id);
 /**
  * sap_mark_leaking_ch() - to mark channel leaking in to nol
@@ -464,7 +463,7 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, ptSapContext sapctx,
  * Return: QDF_STATUS
  */
 QDF_STATUS
-sap_mark_leaking_ch(ptSapContext sap_ctx,
+sap_mark_leaking_ch(struct sap_context *sap_ctx,
 		enum phy_ch_width ch_width,
 		tSapDfsNolInfo *nol,
 		uint8_t temp_ch_lst_sz,
@@ -481,7 +480,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
  *
  * Return: channel to which sap wishes to switch.
  */
-uint8_t sap_indicate_radar(ptSapContext sap_ctx);
+uint8_t sap_indicate_radar(struct sap_context *sap_ctx);
 
 #ifdef __cplusplus
 }

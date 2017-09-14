@@ -234,7 +234,7 @@ sapAcsChannelInfo acs_ht40_channels24_g[] = {
  *   else false: if channel list was already full.
  */
 static bool
-sap_check_n_add_channel(ptSapContext sap_ctx,
+sap_check_n_add_channel(struct sap_context *sap_ctx,
 			uint8_t new_channel)
 {
 	uint8_t i = 0;
@@ -269,7 +269,8 @@ sap_check_n_add_channel(ptSapContext sap_ctx,
  *   else false: if channel list was already full.
  */
 static bool
-sap_check_n_add_overlapped_chnls(ptSapContext sap_ctx, uint8_t primary_channel)
+sap_check_n_add_overlapped_chnls(struct sap_context *sap_ctx,
+				 uint8_t primary_channel)
 {
 	uint8_t i = 0, j = 0, upper_chnl = 0, lower_chnl = 0;
 	struct sap_avoid_channels_info *ie_info =
@@ -331,7 +332,7 @@ sap_check_n_add_overlapped_chnls(ptSapContext sap_ctx, uint8_t primary_channel)
  * Return: void
  */
 static void sap_process_avoid_ie(tHalHandle hal,
-			  ptSapContext sap_ctx,
+			  struct sap_context *sap_ctx,
 			  tScanResultHandle scan_result,
 			  tSapChSelSpectInfo *spect_info)
 {
@@ -415,7 +416,7 @@ static void sap_process_avoid_ie(tHalHandle hal,
    RETURN VALUE
     NULL
    ============================================================================*/
-void sap_update_unsafe_channel_list(tHalHandle hal, ptSapContext pSapCtx)
+void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *pSapCtx)
 {
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
@@ -503,7 +504,7 @@ void sap_update_unsafe_channel_list(tHalHandle hal, ptSapContext pSapCtx)
 
 void sap_cleanup_channel_list(void *p_cds_gctx)
 {
-	ptSapContext pSapCtx;
+	struct sap_context *pSapCtx;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "Cleaning up the channel list structure");
@@ -547,7 +548,7 @@ void sap_cleanup_channel_list(void *p_cds_gctx)
  */
 static
 uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
-					ptSapContext sap_ctx,
+					struct sap_context *sap_ctx,
 					tSapChSelSpectInfo *spect_info_params)
 {
 	uint8_t i = 0;
@@ -581,7 +582,7 @@ uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
  */
 static
 uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
-				ptSapContext sap_ctx,
+				struct sap_context *sap_ctx,
 				tSapChSelSpectInfo *spectinfo_param)
 {
 	uint8_t i = 0;
@@ -645,7 +646,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
    ============================================================================*/
 static bool sap_chan_sel_init(tHalHandle halHandle,
 			      tSapChSelSpectInfo *pSpectInfoParams,
-			      ptSapContext pSapCtx)
+			      struct sap_context *pSapCtx)
 {
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint8_t *pChans = NULL;
@@ -761,7 +762,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
  * Return: uint32_t Calculated channel weight based on above two
  */
 static
-uint32_t sapweight_rssi_count(ptSapContext sap_ctx, int8_t rssi,
+uint32_t sapweight_rssi_count(struct sap_context *sap_ctx, int8_t rssi,
 			      uint16_t count)
 {
 	int32_t rssiWeight = 0;
@@ -845,7 +846,7 @@ static void sap_clear_channel_status(tpAniSirGlobal p_mac)
  *
  * Return: channel noise floor weight
  */
-static uint32_t sap_weight_channel_noise_floor(ptSapContext sap_ctx,
+static uint32_t sap_weight_channel_noise_floor(struct sap_context *sap_ctx,
 					       struct lim_channel_status
 						*channel_stat)
 {
@@ -897,7 +898,7 @@ static uint32_t sap_weight_channel_noise_floor(ptSapContext sap_ctx,
  *
  * Return: channel free weight
  */
-static uint32_t sap_weight_channel_free(ptSapContext sap_ctx,
+static uint32_t sap_weight_channel_free(struct sap_context *sap_ctx,
 					struct lim_channel_status
 					*channel_stat)
 {
@@ -960,7 +961,7 @@ static uint32_t sap_weight_channel_free(ptSapContext sap_ctx,
  *
  * Return: tx power range weight
  */
-static uint32_t sap_weight_channel_txpwr_range(ptSapContext sap_ctx,
+static uint32_t sap_weight_channel_txpwr_range(struct sap_context *sap_ctx,
 					       struct lim_channel_status
 					       *channel_stat)
 {
@@ -1012,7 +1013,7 @@ static uint32_t sap_weight_channel_txpwr_range(ptSapContext sap_ctx,
  *
  * Return: tx power throughput weight
  */
-static uint32_t sap_weight_channel_txpwr_tput(ptSapContext sap_ctx,
+static uint32_t sap_weight_channel_txpwr_tput(struct sap_context *sap_ctx,
 					      struct lim_channel_status
 					      *channel_stat)
 {
@@ -1064,7 +1065,7 @@ static uint32_t sap_weight_channel_txpwr_tput(ptSapContext sap_ctx,
  * Return: chan status weight
  */
 static
-uint32_t sap_weight_channel_status(ptSapContext sap_ctx,
+uint32_t sap_weight_channel_status(struct sap_context *sap_ctx,
 				   struct lim_channel_status *channel_stat)
 {
 	return sap_weight_channel_noise_floor(sap_ctx, channel_stat) +
@@ -1515,7 +1516,7 @@ static void sap_interference_rssi_count(tSapSpectChInfo *spect_ch,
  *   true:    channel is in PCL,
  *   false:   channel is not in PCL
  */
-static bool ch_in_pcl(ptSapContext sap_ctx, uint8_t channel)
+static bool ch_in_pcl(struct sap_context *sap_ctx, uint8_t channel)
 {
 	uint32_t i;
 
@@ -1541,7 +1542,7 @@ static bool ch_in_pcl(ptSapContext sap_ctx, uint8_t channel)
 static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				     tHalHandle halHandle,
 				     tScanResultHandle pResult,
-				     ptSapContext sap_ctx)
+				     struct sap_context *sap_ctx)
 {
 	int8_t rssi = 0;
 	uint8_t chn_num = 0;
@@ -2342,7 +2343,7 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
    PARAMETERS
 
     IN
-    ptSapContext           : Pointer to the ptSapContext structure
+    pSapCtx                : Pointer to the struct sap_context *structure
     pSpectInfoParams       : Pointer to the tSapChSelSpectInfo structure
 
    RETURN VALUE
@@ -2350,7 +2351,7 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
 
    SIDE EFFECTS
    ============================================================================*/
-static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
+static void sap_sort_chl_weight_all(struct sap_context *pSapCtx,
 				    tSapChSelSpectInfo *pSpectInfoParams,
 				    uint32_t operatingBand,
 				    v_REGDOMAIN_t domain)
@@ -2429,7 +2430,7 @@ static void sap_sort_chl_weight_all(ptSapContext pSapCtx,
  *
  * Returns: true if non-overlapping (1, 6, 11) channel, false otherwise
  */
-static bool sap_is_ch_non_overlap(ptSapContext sap_ctx, uint16_t ch)
+static bool sap_is_ch_non_overlap(struct sap_context *sap_ctx, uint16_t ch)
 {
 	if (sap_ctx->enableOverLapCh)
 		return true;
@@ -2449,7 +2450,7 @@ static bool sap_is_ch_non_overlap(ptSapContext sap_ctx, uint16_t ch)
  * Returns: channel number if success, 0 otherwise
  */
 static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
-						 ptSapContext sap_ctx)
+						 struct sap_context *sap_ctx)
 {
 	enum channel_state ch_type;
 	uint8_t i, first_safe_ch_in_range = SAP_CHANNEL_NOT_SELECTED;
@@ -2522,7 +2523,7 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
 }
 #else
 static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
-						 ptSapContext sap_ctx)
+						 struct sap_context *sap_ctx)
 {
 	uint32_t start_ch_num = sap_ctx->acs_cfg->start_ch;
 
@@ -2550,7 +2551,7 @@ static uint8_t sap_select_channel_no_scan_result(tHalHandle hal,
  *
  * Returns: channel number if success, 0 otherwise
  */
-uint8_t sap_select_channel(tHalHandle hal, ptSapContext sap_ctx,
+uint8_t sap_select_channel(tHalHandle hal, struct sap_context *sap_ctx,
 			   tScanResultHandle scan_result)
 {
 	/* DFS param object holding all the data req by the algo */

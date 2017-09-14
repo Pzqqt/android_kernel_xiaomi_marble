@@ -78,7 +78,7 @@
  * -------------------------------------------------------------------------*/
 /*  No!  Get this from CDS. */
 /*  The main per-Physical Link (per WLAN association) context. */
-static ptSapContext gp_sap_ctx[SAP_MAX_NUM_SESSION];
+static struct sap_context *gp_sap_ctx[SAP_MAX_NUM_SESSION];
 static qdf_atomic_t sap_ctx_ref_count[SAP_MAX_NUM_SESSION];
 
 /*----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ QDF_STATUS wlansap_global_deinit(void)
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS wlansap_save_context(ptSapContext ctx)
+static QDF_STATUS wlansap_save_context(struct sap_context *ctx)
 {
 	uint32_t i;
 
@@ -199,7 +199,7 @@ static QDF_STATUS wlansap_save_context(ptSapContext ctx)
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlansap_context_get(ptSapContext ctx)
+QDF_STATUS wlansap_context_get(struct sap_context *ctx)
 {
 	uint32_t i;
 
@@ -226,7 +226,7 @@ QDF_STATUS wlansap_context_get(ptSapContext ctx)
  *
  * Return: None
  */
-void wlansap_context_put(ptSapContext ctx)
+void wlansap_context_put(struct sap_context *ctx)
 {
 	uint32_t i;
 
@@ -262,7 +262,7 @@ void wlansap_context_put(ptSapContext ctx)
  */
 void *wlansap_open(void)
 {
-	ptSapContext pSapCtx;
+	struct sap_context *pSapCtx;
 	QDF_STATUS status;
 
 	/* dynamically allocate the sapContext */
@@ -311,7 +311,7 @@ void *wlansap_open(void)
 QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 			 uint8_t *addr, uint32_t session_id)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
@@ -412,7 +412,7 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
  */
 QDF_STATUS wlansap_stop(void *pCtx)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
 
@@ -468,7 +468,7 @@ QDF_STATUS wlansap_stop(void *pCtx)
  */
 QDF_STATUS wlansap_close(void *pCtx)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	tHalHandle hal;
 
 	/* Sanity check - Extract SAP control block */
@@ -505,7 +505,7 @@ bool wlansap_is_channel_in_nol_list(void *p_cds_gctx,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 
 	pSapCtx = CDS_GET_SAP_CB(p_cds_gctx);
 
@@ -520,7 +520,7 @@ bool wlansap_is_channel_in_nol_list(void *p_cds_gctx,
 }
 
 #ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
-static QDF_STATUS wlansap_mark_leaking_channel(ptSapContext sap_ctx,
+static QDF_STATUS wlansap_mark_leaking_channel(struct sap_context *sap_ctx,
 		tSapDfsNolInfo *nol,
 		uint8_t *leakage_adjusted_lst,
 		uint8_t chan_bw)
@@ -530,7 +530,7 @@ static QDF_STATUS wlansap_mark_leaking_channel(ptSapContext sap_ctx,
 			leakage_adjusted_lst);
 }
 #else
-static QDF_STATUS wlansap_mark_leaking_channel(ptSapContext sap_ctx,
+static QDF_STATUS wlansap_mark_leaking_channel(struct sap_context *sap_ctx,
 		tSapDfsNolInfo *nol,
 		uint8_t *leakage_adjusted_lst,
 		uint8_t chan_bw)
@@ -542,7 +542,7 @@ static QDF_STATUS wlansap_mark_leaking_channel(ptSapContext sap_ctx,
 bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
 		uint8_t chan_bw)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 	tpAniSirGlobal mac_ctx;
 	uint8_t leakage_adjusted_lst[1];
 	void *handle = NULL;
@@ -588,7 +588,7 @@ uint16_t wlansap_check_cc_intf(void *Ctx)
 {
 	tHalHandle hHal;
 	uint16_t intf_ch;
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(Ctx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(Ctx);
 
 	hHal = (tHalHandle) CDS_GET_HAL_CB();
 	if (NULL == hHal) {
@@ -617,7 +617,7 @@ uint16_t wlansap_check_cc_intf(void *Ctx)
   */
 static QDF_STATUS
 wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
-				ptSapContext psap_ctx,
+				struct sap_context *psap_ctx,
 				void *pusr_context)
 {
 	tHalHandle h_hal = NULL;
@@ -691,7 +691,7 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 
 eCsrPhyMode wlan_sap_get_phymode(void *ctx)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -711,7 +711,7 @@ eCsrPhyMode wlan_sap_get_phymode(void *ctx)
  */
 uint32_t wlan_sap_get_vht_ch_width(void *ctx)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -733,7 +733,7 @@ uint32_t wlan_sap_get_vht_ch_width(void *ctx)
  */
 void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -755,7 +755,7 @@ void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width)
  */
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 static bool wlan_sap_validate_channel_switch(tHalHandle hal, uint16_t sap_ch,
-		ptSapContext sap_context)
+		struct sap_context *sap_context)
 {
 	return sme_validate_sap_channel_switch(
 			hal,
@@ -766,7 +766,7 @@ static bool wlan_sap_validate_channel_switch(tHalHandle hal, uint16_t sap_ch,
 }
 #else
 static inline bool wlan_sap_validate_channel_switch(tHalHandle hal,
-		uint16_t sap_ch, ptSapContext sap_context)
+		uint16_t sap_ch, struct sap_context *sap_context)
 {
 	return true;
 }
@@ -796,7 +796,7 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 			     tsap_Config_t *pConfig, void *pUsrContext) {
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	tHalHandle hHal;
 	tpAniSirGlobal pmac = NULL;
 
@@ -946,7 +946,7 @@ fail:
 QDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
 			       tsap_Config_t *pConfig) {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_set_mac_acl");
@@ -997,7 +997,7 @@ QDF_STATUS wlansap_stop_bss(void *pCtx)
 {
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
 
 	/*------------------------------------------------------------------------
@@ -1031,7 +1031,7 @@ QDF_STATUS wlansap_stop_bss(void *pCtx)
 /* This routine will set the mode of operation for ACL dynamically*/
 QDF_STATUS wlansap_set_mode(void *pCtx, uint32_t mode)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1046,7 +1046,7 @@ QDF_STATUS wlansap_set_mode(void *pCtx, uint32_t mode)
 /* Get ACL Mode */
 QDF_STATUS wlansap_get_acl_mode(void *pCtx, eSapMacAddrACL *mode)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1063,7 +1063,7 @@ QDF_STATUS
 wlansap_get_acl_accept_list(void *pCtx, struct qdf_mac_addr *pAcceptList,
 				uint8_t *nAcceptList)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
@@ -1081,7 +1081,7 @@ QDF_STATUS
 wlansap_get_acl_deny_list(void *pCtx, struct qdf_mac_addr *pDenyList,
 			  uint8_t *nDenyList)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
@@ -1098,7 +1098,7 @@ wlansap_get_acl_deny_list(void *pCtx, struct qdf_mac_addr *pDenyList,
 
 QDF_STATUS wlansap_clear_acl(void *pCtx)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 	uint8_t i;
 
 	if (NULL == pSapCtx) {
@@ -1144,7 +1144,7 @@ wlansap_modify_acl
 	uint8_t *peer_sta_mac, eSapACLType list_type, eSapACLCmdType cmd) {
 	bool sta_white_list = false, sta_black_list = false;
 	uint8_t staWLIndex, staBLIndex;
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1375,7 +1375,7 @@ wlansap_modify_acl
 QDF_STATUS wlansap_disassoc_sta(void *pCtx,
 				struct tagCsrDelStaParams *p_del_sta_params)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	/*------------------------------------------------------------------------
 	   Sanity check
@@ -1411,7 +1411,7 @@ QDF_STATUS wlansap_deauth_sta(void *pCtx,
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	/*------------------------------------------------------------------------
 	   Sanity check
@@ -1441,8 +1441,9 @@ QDF_STATUS wlansap_deauth_sta(void *pCtx,
  *
  * Return: The QDF_STATUS code associated with performing the operation
  */
-static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
-	uint32_t channel)
+static QDF_STATUS
+wlansap_update_csa_channel_params(struct sap_context *sap_context,
+				  uint32_t channel)
 {
 	void *hal;
 	tpAniSirGlobal mac_ctx;
@@ -1522,7 +1523,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 					enum phy_ch_width target_bw, bool strict)
 {
 
-	ptSapContext sapContext = NULL;
+	struct sap_context *sapContext = NULL;
 	tWLAN_SAPEvent sapEvent;
 	tpAniSirGlobal pMac = NULL;
 	void *hHal = NULL;
@@ -1706,7 +1707,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
  */
 QDF_STATUS wlansap_set_counter_measure(void *pCtx, bool bEnable)
 {
-	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
+	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	/*------------------------------------------------------------------------
 	   Sanity check
@@ -1739,7 +1740,7 @@ QDF_STATUS wlansap_set_counter_measure(void *pCtx, bool bEnable)
 QDF_STATUS wlansap_set_key_sta(void *pCtx, tCsrRoamSetKey *pSetKeyInfo)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	uint32_t roamId = 0xFF;
@@ -1786,7 +1787,7 @@ QDF_STATUS
 wlan_sap_getstation_ie_information
 	(void *ctx, uint32_t *len, uint8_t *buf) {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	ptSapContext sap_ctx = NULL;
+	struct sap_context *sap_ctx = NULL;
 	uint32_t ie_len = 0;
 
 	sap_ctx = CDS_GET_SAP_CB(ctx);
@@ -1830,7 +1831,7 @@ wlan_sap_getstation_ie_information
  */
 QDF_STATUS wlansap_get_wps_state(void *pCtx, bool *bWPSState)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
@@ -1865,7 +1866,7 @@ QDF_STATUS wlansap_get_wps_state(void *pCtx, bool *bWPSState)
 
 }
 
-QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx)
+QDF_STATUS sap_acquire_global_lock(struct sap_context *pSapCtx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
@@ -1876,7 +1877,7 @@ QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx)
 	return qdf_status;
 }
 
-QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx)
+QDF_STATUS sap_release_global_lock(struct sap_context *pSapCtx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
@@ -1903,7 +1904,7 @@ QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx)
  */
 QDF_STATUS wlansap_set_wparsn_ies
 	(void *pCtx, uint8_t *pWPARSNIEs, uint32_t WPARSNIEsLen) {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 
@@ -1955,7 +1956,7 @@ QDF_STATUS wlansap_set_wparsn_ies
 QDF_STATUS wlansap_send_action(void *pCtx, const uint8_t *pBuf,
 	uint32_t len, uint16_t wait, uint16_t channel_freq)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
@@ -2008,7 +2009,7 @@ QDF_STATUS wlansap_remain_on_channel(void *pCtx,
 	uint8_t channel, uint32_t duration, remainOnChanCallback callback,
 	void *pContext, uint32_t *scan_id)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
@@ -2054,7 +2055,7 @@ QDF_STATUS wlansap_remain_on_channel(void *pCtx,
 QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 	uint32_t scan_id)
 {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
@@ -2089,7 +2090,7 @@ QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 QDF_STATUS wlan_sap_update_next_channel(void *ctx, uint8_t channel,
 				       enum phy_ch_width chan_bw)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2116,7 +2117,7 @@ QDF_STATUS wlan_sap_update_next_channel(void *ctx, uint8_t channel,
 QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
 					tHalHandle handle)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(handle);
 
 	if (!mac_ctx) {
@@ -2150,7 +2151,7 @@ QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
 QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
 					uint8_t chan_before_pre_cac)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2173,7 +2174,7 @@ QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
  */
 QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status)
 {
-	ptSapContext sap_ctx = CDS_GET_SAP_CB(ctx);
+	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2211,8 +2212,8 @@ bool wlan_sap_is_pre_cac_active(tHalHandle handle)
 	}
 
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		ptSapContext context =
-			(ptSapContext) mac->sap.sapCtxList[i].pSapContext;
+		struct sap_context *context =
+			mac->sap.sapCtxList[i].pSapContext;
 		if (context && context->is_pre_cac_on)
 			return true;
 	}
@@ -2241,8 +2242,8 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id)
 	}
 
 	for (i = 0; i < SAP_MAX_NUM_SESSION; i++) {
-		ptSapContext context =
-			(ptSapContext) mac->sap.sapCtxList[i].pSapContext;
+		struct sap_context *context =
+			mac->sap.sapCtxList[i].pSapContext;
 		if (context && context->is_pre_cac_on) {
 			*vdev_id = i;
 			return QDF_STATUS_SUCCESS;
@@ -2269,7 +2270,7 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id)
 QDF_STATUS wlansap_register_mgmt_frame
 	(void *pCtx,
 	uint16_t frameType, uint8_t *matchData, uint16_t matchLen) {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
@@ -2318,7 +2319,7 @@ QDF_STATUS wlansap_register_mgmt_frame
 QDF_STATUS wlansap_de_register_mgmt_frame
 	(void *pCtx,
 	uint16_t frameType, uint8_t *matchData, uint16_t matchLen) {
-	ptSapContext pSapCtx = NULL;
+	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
@@ -2380,13 +2381,13 @@ QDF_STATUS wlansap_de_register_mgmt_frame
 QDF_STATUS
 wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 {
-	ptSapContext sapContext = NULL;
+	struct sap_context *sapContext = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
 	struct ch_params *ch_params;
-	sapContext = (ptSapContext) pSapCtx;
+	sapContext = pSapCtx;
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2482,12 +2483,12 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
    ============================================================================*/
 QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 {
-	ptSapContext sapContext = NULL;
+	struct sap_context *sapContext = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	uint8_t dfsCacWaitStatus = 0;
 	tpAniSirGlobal pMac = NULL;
-	sapContext = (ptSapContext) pSapCtx;
+	sapContext = pSapCtx;
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2541,11 +2542,11 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
    ============================================================================*/
 QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 {
-	ptSapContext sapContext = NULL;
+	struct sap_context *sapContext = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
-	sapContext = (ptSapContext) pSapCtx;
+	sapContext = pSapCtx;
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2714,7 +2715,7 @@ wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
 
 bool sap_is_auto_channel_select(void *pvos_gctx)
 {
-	ptSapContext sapcontext = CDS_GET_SAP_CB(pvos_gctx);
+	struct sap_context *sapcontext = CDS_GET_SAP_CB(pvos_gctx);
 
 	if (NULL == sapcontext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -3061,7 +3062,7 @@ void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
 
 QDF_STATUS wlan_sap_set_vendor_acs(void *ctx, bool is_vendor_acs)
 {
-	ptSapContext sap_context = (ptSapContext) ctx;
+	struct sap_context *sap_context = ctx;
 
 	if (!sap_context) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -3085,7 +3086,7 @@ QDF_STATUS wlan_sap_set_vendor_acs(void *ctx, bool is_vendor_acs)
 QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 {
 	int i = 0, j = 0;
-	ptSapContext sapContext = (ptSapContext) pSapCtx;
+	struct sap_context *sapContext = pSapCtx;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
 	uint64_t current_time, found_time, elapsed_time;
@@ -3170,7 +3171,7 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 
 QDF_STATUS wlansap_set_dfs_nol(void *psap_ctx, eSapDfsNolType conf)
 {
-	ptSapContext sap_ctx = (ptSapContext) psap_ctx;
+	struct sap_context *sap_ctx = psap_ctx;
 	void *hal = NULL;
 	tpAniSirGlobal mac = NULL;
 
@@ -3286,7 +3287,7 @@ wlansap_acs_chselect(void *pvos_gctx,
 			tsap_Config_t *pconfig,
 			void *pusr_context)
 {
-	ptSapContext sap_context = NULL;
+	struct sap_context *sap_context = NULL;
 	tHalHandle h_hal = NULL;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pmac = NULL;
@@ -3398,7 +3399,7 @@ void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log)
  */
 uint32_t wlansap_get_chan_width(void *cds_ctx)
 {
-	ptSapContext sapcontext;
+	struct sap_context *sapcontext;
 
 	sapcontext = CDS_GET_SAP_CB(cds_ctx);
 	return wlan_sap_get_vht_ch_width(sapcontext);
@@ -3443,7 +3444,7 @@ QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 QDF_STATUS
 wlansap_set_invalid_session(void *cds_ctx)
 {
-	ptSapContext psapctx;
+	struct sap_context *psapctx;
 
 	psapctx = CDS_GET_SAP_CB(cds_ctx);
 	if (NULL == psapctx) {
@@ -3461,7 +3462,7 @@ void wlansap_cleanup_cac_timer(void *sap_ctx)
 {
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
-	ptSapContext psap_ctx = CDS_GET_SAP_CB(sap_ctx);
+	struct sap_context *psap_ctx = CDS_GET_SAP_CB(sap_ctx);
 
 	if (!psap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

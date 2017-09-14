@@ -105,7 +105,7 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 				 uint32_t scan_id, eCsrScanStatus scan_status) {
 	tScanResultHandle result = NULL;
 	QDF_STATUS get_result_status = QDF_STATUS_E_FAILURE;
-	ptSapContext sap_ctx = (ptSapContext) ctx;
+	struct sap_context *sap_ctx = ctx;
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
 	uint8_t operChannel = 0;
 	QDF_STATUS sap_sm_status;
@@ -244,7 +244,7 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
  * Return: None
  */
 
-void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
+void sap_config_acs_result(tHalHandle hal, struct sap_context *sap_ctx,
 							uint32_t sec_ch)
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
@@ -287,7 +287,7 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
  */
 static QDF_STATUS sap_hdd_signal_event_handler(void *ctx)
 {
-	ptSapContext sap_ctx = ctx;
+	struct sap_context *sap_ctx = ctx;
 	QDF_STATUS status;
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -322,7 +322,7 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 {
 	tScanResultHandle presult = NULL;
 	QDF_STATUS scan_get_result_status = QDF_STATUS_E_FAILURE;
-	ptSapContext sap_ctx = (ptSapContext)pcontext;
+	struct sap_context *sap_ctx = pcontext;
 	uint8_t oper_channel = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
@@ -442,7 +442,7 @@ close_session:
  */
 static void
 wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
-				      ptSapContext sap_ctx,
+				      struct sap_context *sap_ctx,
 				      tCsrRoamInfo *csr_roam_info,
 				      QDF_STATUS *ret_status)
 {
@@ -550,7 +550,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
  */
 static void
 wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
-					    ptSapContext sap_ctx,
+					    struct sap_context *sap_ctx,
 					    QDF_STATUS *ret_status)
 {
 	tWLAN_SAPEvent sap_event;
@@ -653,7 +653,7 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 
 	/* Issue channel change req for each sapctx */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		ptSapContext pSapContext;
+		struct sap_context *pSapContext;
 		if (!((QDF_SAP_MODE == mac_ctx->sap.sapCtxList[intf].sapPersona)
 		    && (mac_ctx->sap.sapCtxList[intf].pSapContext != NULL)))
 			continue;
@@ -693,7 +693,7 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
  */
 static void
 wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
-				     ptSapContext sap_ctx,
+				     struct sap_context *sap_ctx,
 				     QDF_STATUS *ret_status)
 {
 	QDF_STATUS qdf_status;
@@ -790,7 +790,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
  * Return: result of operation
  */
 static void
-wlansap_roam_process_infra_assoc_ind(ptSapContext sap_ctx,
+wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 				     eCsrRoamResult roam_result,
 				     tCsrRoamInfo *csr_roam_info,
 				     QDF_STATUS *ret_status)
@@ -840,7 +840,7 @@ wlansap_roam_process_infra_assoc_ind(ptSapContext sap_ctx,
 }
 
 static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
-				ptSapContext sap_ctx)
+				struct sap_context *sap_ctx)
 {
 	int intf;
 	tHalHandle hal;
@@ -869,7 +869,7 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 
 	/* Issue stopbss for each sapctx */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-		ptSapContext pSapContext;
+		struct sap_context *pSapContext;
 
 		if (((QDF_SAP_MODE ==
 		    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
@@ -907,7 +907,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		      eRoamCmdStatus roam_status, eCsrRoamResult roam_result)
 {
 	/* sap_ctx value */
-	ptSapContext sap_ctx;
+	struct sap_context *sap_ctx;
 	/* State machine event */
 	tWLAN_SAPEvent sap_event;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -916,10 +916,10 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	tpAniSirGlobal mac_ctx = NULL;
 	uint8_t intf;
 
-	if (QDF_IS_STATUS_ERROR(wlansap_context_get((ptSapContext)ctx)))
+	if (QDF_IS_STATUS_ERROR(wlansap_context_get(ctx)))
 		return QDF_STATUS_E_FAILURE;
 
-	sap_ctx = (ptSapContext) ctx;
+	sap_ctx = ctx;
 	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1073,7 +1073,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		}
 		/* Issue stopbss for each sapctx */
 		for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
-			ptSapContext pSapContext;
+			struct sap_context *pSapContext;
 			if (((QDF_SAP_MODE ==
 			    mac_ctx->sap.sapCtxList[intf].sapPersona) ||
 			    (QDF_P2P_GO_MODE ==
@@ -1344,7 +1344,7 @@ void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 	uint8_t session_id;
 	eCsrScanStatus scan_status = eCSR_SCAN_FAILURE;
 	tHalHandle hal_handle;
-	ptSapContext sap_ctx = (ptSapContext) arg;
+	struct sap_context *sap_ctx = arg;
 
 	session_id = wlan_vdev_get_id(vdev);
 	scan_id = event->scan_id;
