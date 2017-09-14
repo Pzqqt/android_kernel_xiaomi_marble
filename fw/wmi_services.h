@@ -215,6 +215,7 @@ typedef  enum  {
     WMI_SERVICE_WLAN_DHCP_RENEW=133, /* Support for wlan DHCP Renew service */
     WMI_SERVICE_MAWC_SUPPORT = 134, /* Support for MAWC service */
     WMI_SERVICE_VDEV_LATENCY_CONFIG=135, /* support for vdev latency config */
+    WMI_SERVICE_PDEV_UPDATE_CTLTABLE_SUPPORT=136, /* support for pdev update ctl table */
 
     /******* ADD NEW SERVICES HERE *******/
 

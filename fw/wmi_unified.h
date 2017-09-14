@@ -369,12 +369,14 @@ typedef enum {
     WMI_PDEV_SET_DIVERSITY_GAIN_CMDID,
     /** Get chain RSSI and antena index command */
     WMI_PDEV_DIV_GET_RSSI_ANTID_CMDID,
-    /* get bss chan info */
+    /** get bss chan info */
     WMI_PDEV_BSS_CHAN_INFO_REQUEST_CMDID,
-    /* update pmk cache info */
+    /** update pmk cache info */
     WMI_PDEV_UPDATE_PMK_CACHE_CMDID,
-    /*  update fils HLP */
+    /**  update fils HLP */
     WMI_PDEV_UPDATE_FILS_HLP_PKT_CMDID,
+    /** update ctltable request **/
+    WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -1152,6 +1154,9 @@ typedef enum {
 
     /** provide noise floor and cycle counts for a channel */
     WMI_PDEV_BSS_CHAN_INFO_EVENTID,
+
+    /** Response received the ctl table to host */
+    WMI_PDEV_UPDATE_CTLTABLE_EVENTID,
 
     /* VDEV specific events */
     /** VDEV started event in response to VDEV_START request */
@@ -4579,6 +4584,17 @@ typedef struct {
     A_UINT32 param;   /* 1 = read only, 2= read and clear */
 } wmi_pdev_bss_chan_info_request_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header;    /* WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_request_fixed_param */
+    A_UINT32 total_len;     /* the total number of ctl table bytes to be transferred */
+    A_UINT32 len;           /* the number of ctltable bytes in current payload */
+    A_UINT32 seq;           /* the number of current transfers */
+/*
+ * This TLV is followed by the following additional TLVs:
+ * ARRAY_BYTE TLV of ctltable_data
+ */
+} wmi_pdev_update_ctltable_request_fixed_param;
+
 #define WMI_FAST_DIVERSITY_BIT_OFFSET 0
 #define WMI_SLOW_DIVERSITY_BIT_OFFSET 1
 
@@ -4786,6 +4802,14 @@ typedef struct {
     A_UINT32 rx_bss_cycle_count_low;    /* low 31 bits of rx cycle cnt for my bss in 64bits format */
     A_UINT32 rx_bss_cycle_count_high;   /* high 31 bits of rx_cycle cnt for my bss in 64bits format */
 } wmi_pdev_bss_chan_info_event_fixed_param;
+
+typedef struct {
+    /* WMI event response update ctltable request to host */
+    A_UINT32 tlv_header;                /* WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_event_fixed_param */
+    A_UINT32 total_len;                 /* the total number of bytes to be transferred */
+    A_UINT32 len;                       /* the number of FW received bytes from host */
+    A_UINT32 seq;                       /* the number of current transfers */
+} wmi_pdev_update_ctltable_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_l1ss_track_event_fixed_param  */
@@ -19931,6 +19955,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_VDEV_LIMIT_OFFCHAN_CMDID);
         WMI_RETURN_STRING(WMI_ROAM_BTM_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_WLM_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID);
     }
 
     return "Invalid WMI cmd";

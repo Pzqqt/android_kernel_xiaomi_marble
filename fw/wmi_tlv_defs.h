@@ -855,6 +855,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_btm_config_fixed_param,
     WMITLV_TAG_STRUC_wmi_debug_mesg_fw_data_stall_param,
     WMITLV_TAG_STRUC_wmi_wlm_config_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_request_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1198,6 +1200,7 @@ typedef enum {
     OP(WMI_HB_DHCP_LEASE_RENEW_OFFLOAD_CMDID) \
     OP(WMI_ROAM_BTM_CONFIG_CMDID) \
     OP(WMI_WLM_CONFIG_CMDID) \
+    OP(WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1386,6 +1389,7 @@ typedef enum {
     OP(WMI_OEM_DMA_BUF_RELEASE_EVENTID) \
     OP(WMI_PDEV_BSS_CHAN_INFO_EVENTID) \
     OP(WMI_UNIT_TEST_EVENTID) \
+    OP(WMI_PDEV_UPDATE_CTLTABLE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2232,6 +2236,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DIV_GET_RSSI_ANTID_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_bss_chan_info_request_fixed_param,  wmi_pdev_bss_chan_info_request_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_BSS_CHAN_INFO_REQUEST_CMDID);
+
+/* PDEV update ctl table Cmd */
+#define WMITLV_TABLE_WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_request_fixed_param,  wmi_pdev_update_ctltable_request_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE,  A_UINT8, ctltable_data, WMITLV_SIZE_VAR)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID);
 
 /* VDEV Get Tx power Cmd */
 #define WMITLV_TABLE_WMI_VDEV_GET_TX_POWER_CMDID(id,op,buf,len) \
@@ -3554,6 +3565,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DIV_RSSI_ANTID_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_BSS_CHAN_INFO_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_bss_chan_info_event_fixed_param, wmi_pdev_bss_chan_info_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_BSS_CHAN_INFO_EVENTID);
+
+/* PDEV update ctl table Event */
+#define WMITLV_TABLE_WMI_PDEV_UPDATE_CTLTABLE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_event_fixed_param, wmi_pdev_update_ctltable_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UPDATE_CTLTABLE_EVENTID);
 
 /* VDEV Tx Power Event */
 #define WMITLV_TABLE_WMI_VDEV_GET_TX_POWER_EVENTID(id,op,buf,len) \
