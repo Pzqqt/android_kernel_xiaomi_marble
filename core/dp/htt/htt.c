@@ -430,6 +430,9 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	 * since htt_rx_attach involves sending a rx ring configure
 	 * message to the target.
 	 */
+	HTT_TX_MUTEX_INIT(&pdev->htt_tx_mutex);
+	HTT_TX_NBUF_QUEUE_MUTEX_INIT(pdev);
+	HTT_TX_MUTEX_INIT(&pdev->credit_mutex);
 	if (htt_htc_attach_all(pdev))
 		goto htt_htc_attach_fail;
 	if (hif_ce_fastpath_cb_register(osc, htt_t2h_msg_handler_fast, pdev))
@@ -439,6 +442,9 @@ success:
 	return pdev;
 
 htt_htc_attach_fail:
+	HTT_TX_MUTEX_DESTROY(&pdev->credit_mutex);
+	HTT_TX_MUTEX_DESTROY(&pdev->htt_tx_mutex);
+	HTT_TX_NBUF_QUEUE_MUTEX_DESTROY(pdev);
 	qdf_mem_free(pdev);
 
 fail1:
@@ -466,10 +472,6 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 	ret = htt_rx_attach(pdev);
 	if (ret)
 		goto fail2;
-
-	HTT_TX_MUTEX_INIT(&pdev->htt_tx_mutex);
-	HTT_TX_NBUF_QUEUE_MUTEX_INIT(pdev);
-	HTT_TX_MUTEX_INIT(&pdev->credit_mutex);
 
 	/* pre-allocate some HTC_PACKET objects */
 	for (i = 0; i < HTT_HTC_PKT_POOL_INIT_SIZE; i++) {
