@@ -16856,7 +16856,6 @@ void csr_roam_stats_rsp_processor(tpAniSirGlobal pMac, tSirSmeRsp *pSirMsg)
 	uint8_t counter = 0;
 	uint8_t *pStats = NULL;
 	uint32_t length = 0;
-	void *p_cds_gctx;
 	int8_t rssi = 0, snr = 0;
 	uint32_t *pRssi = NULL, *pSnr = NULL;
 	uint32_t linkCapacity;
@@ -16883,7 +16882,6 @@ void csr_roam_stats_rsp_processor(tpAniSirGlobal pMac, tSirSmeRsp *pSirMsg)
 		tempMask >>= 1;
 		counter++;
 	}
-	p_cds_gctx = cds_get_global_context();
 	if (length != 0) {
 		pRssi = (uint32_t *) pStats;
 		rssi = (int8_t) *pRssi;
