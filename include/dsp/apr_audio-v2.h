@@ -623,6 +623,9 @@ struct audproc_softvolume_params {
  */
 #define AUDPROC_PARAM_ID_MFC_OUTPUT_MEDIA_FORMAT            0x00010913
 
+/* Param ID of Channel Mixer used by AUDPROC_MODULE_ID_MFC */
+#define AUDPROC_CHMIXER_PARAM_ID_COEFF                      0x00010342
+
 
 struct audproc_mfc_output_media_fmt {
 	struct adm_cmd_set_pp_params_v5 params;
