@@ -845,7 +845,7 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 	int intf;
 	tHalHandle hal;
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	mac_ctx->sap.SapDfsInfo.target_channel =
 				sap_ctx->dfs_vendor_channel;
 
@@ -920,7 +920,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		return QDF_STATUS_E_FAILURE;
 
 	sap_ctx = (ptSapContext) ctx;
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid handle"));

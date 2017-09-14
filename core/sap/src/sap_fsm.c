@@ -931,7 +931,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sap_ctx)
 	tpAniSirGlobal mac_ctx;
 	struct dfs_acs_info acs_info = {0};
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("null hal"));
@@ -1069,7 +1069,7 @@ sap_mark_leaking_ch(ptSapContext sap_ctx,
 	uint32_t         j = 0;
 	uint32_t         k = 0;
 	uint8_t          dfs_nol_channel;
-	tHalHandle      hal = CDS_GET_HAL_CB(sap_ctx->pvosGCtx);
+	tHalHandle      hal = CDS_GET_HAL_CB();
 	tpAniSirGlobal  mac;
 
 	if (NULL == hal) {
@@ -1249,7 +1249,7 @@ static void sap_get_cac_dur_dfs_region(ptSapContext sap_ctx,
 		return;
 	}
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: null hal", __func__);
@@ -1300,7 +1300,7 @@ void sap_dfs_set_current_channel(void *ctx)
 	tpAniSirGlobal mac_ctx;
 	tHalHandle hal;
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("null hal"));
@@ -1474,7 +1474,7 @@ sap_dfs_is_channel_in_nol_list(ptSapContext sap_context,
 			       ePhyChanBondState chan_bondState)
 {
 	int i;
-	tHalHandle h_hal = CDS_GET_HAL_CB(sap_context->p_cds_gctx);
+	tHalHandle h_hal = CDS_GET_HAL_CB();
 	tpAniSirGlobal mac_ctx;
 	uint8_t channels[MAX_BONDED_CHANNELS];
 	uint8_t num_channels;
@@ -2037,7 +2037,7 @@ static QDF_STATUS sap_goto_starting(ptSapContext sapContext,
 				    eCsrRoamBssType bssType)
 {
 	/* tHalHandle */
-	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	tHalHandle hHal = CDS_GET_HAL_CB();
 	QDF_STATUS qdf_ret_status;
 
 	/*- - - - - - - - TODO:once configs from hdd available - - - - - - - - -*/
@@ -2096,7 +2096,7 @@ static QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hHal;
 
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		/* we have a serious problem */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -2200,7 +2200,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSap_Event sap_ap_event;       /* This now encodes ALL event types */
-	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	tHalHandle hal = CDS_GET_HAL_CB();
 	tpAniSirGlobal mac_ctx;
 	tSirSmeChanInfo *chaninfo;
 	tSap_StationAssocIndication *assoc_ind;
@@ -3501,7 +3501,7 @@ QDF_STATUS sap_fsm(ptSapContext sap_ctx, ptWLAN_SAPEvent sap_event)
 	eSapFsmStates_t state_var = sap_ctx->sapsMachine;
 	uint32_t msg = sap_event->event; /* State machine input event message */
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	tHalHandle hal = CDS_GET_HAL_CB();
 	tpAniSirGlobal mac_ctx;
 
 	if (NULL == hal) {
@@ -3966,7 +3966,7 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 	uint8_t start_ch_num, band_start_ch;
 	uint8_t end_ch_num, band_end_ch;
 	uint32_t en_lte_coex;
-	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	tHalHandle hal = CDS_GET_HAL_CB();
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint8_t i;
 #endif
@@ -4128,7 +4128,7 @@ uint8_t sap_indicate_radar(ptSapContext sap_ctx)
 		return 0;
 	}
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("null hal"));
@@ -4235,7 +4235,7 @@ static int sap_stop_dfs_cac_timer(ptSapContext sapContext)
 	if (sapContext == NULL)
 		return 0;
 
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "In %s invalid hHal", __func__);
@@ -4280,7 +4280,7 @@ int sap_start_dfs_cac_timer(ptSapContext sap_ctx)
 		return 0;
 	}
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: null hal", __func__);
@@ -4343,7 +4343,7 @@ QDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
 			  "Invalid sapContext pointer on sap_init_dfs_channel_nol_list");
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

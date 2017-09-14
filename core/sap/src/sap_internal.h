@@ -64,7 +64,7 @@ extern "C" {
 /* When MBSSID feature is enabled, SAP context is directly passed to SAP APIs */
 #define CDS_GET_SAP_CB(ctx) (ptSapContext)(ctx)
 
-#define CDS_GET_HAL_CB(ctx) cds_get_context(QDF_MODULE_ID_PE)
+#define CDS_GET_HAL_CB() cds_get_context(QDF_MODULE_ID_PE)
 /* MAC Address length */
 #define ANI_EAPOL_KEY_RSN_NONCE_SIZE      32
 

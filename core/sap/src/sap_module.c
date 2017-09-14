@@ -367,7 +367,7 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hal = (tHalHandle) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hal = (tHalHandle) CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid HAL pointer", __func__);
@@ -430,7 +430,7 @@ QDF_STATUS wlansap_stop(void *pCtx)
 			  "%s: Invalid SAP pointer from pCtx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	pmac = (tpAniSirGlobal) hal;
 	if (NULL == pmac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -488,7 +488,7 @@ QDF_STATUS wlansap_close(void *pCtx)
 	/* Cleanup SAP control block */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
 	sap_cleanup_channel_list(pCtx);
-	hal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("hal is NULL, so lets skip global sap cleanup"));
@@ -553,7 +553,7 @@ bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
 	tSapDfsNolInfo *nol;
 
 	leakage_adjusted_lst[0] = channel;
-	handle = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	handle = CDS_GET_HAL_CB();
 	mac_ctx = PMAC_STRUCT(handle);
 	if (!mac_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -594,7 +594,7 @@ uint16_t wlansap_check_cc_intf(void *Ctx)
 	uint16_t intf_ch;
 	ptSapContext pSapCtx = CDS_GET_SAP_CB(Ctx);
 
-	hHal = (tHalHandle) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = (tHalHandle) CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid MAC context from p_cds_gctx", __func__);
@@ -667,7 +667,7 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 	qdf_mem_copy(psap_ctx->self_mac_addr,
 		pconfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 
-	h_hal = (tHalHandle)CDS_GET_HAL_CB(psap_ctx->p_cds_gctx);
+	h_hal = (tHalHandle)CDS_GET_HAL_CB();
 	if (NULL == h_hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s: Invalid MAC context from pvosGCtx", __func__);
@@ -859,7 +859,7 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 	/* copy the configuration items to csrProfile */
 	sapconvert_to_csr_profile(pConfig, eCSR_BSS_TYPE_INFRA_AP,
 			       &pSapCtx->csr_roamProfile);
-	hHal = (tHalHandle) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = (tHalHandle) CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Invalid MAC context from p_cds_gctx",
@@ -1391,7 +1391,7 @@ QDF_STATUS wlansap_disassoc_sta(void *pCtx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	sme_roam_disconnect_sta(CDS_GET_HAL_CB(pSapCtx->p_cds_gctx),
+	sme_roam_disconnect_sta(CDS_GET_HAL_CB(),
 				pSapCtx->sessionId, p_del_sta_params);
 
 	return QDF_STATUS_SUCCESS;
@@ -1428,7 +1428,7 @@ QDF_STATUS wlansap_deauth_sta(void *pCtx,
 	}
 
 	qdf_ret_status =
-		sme_roam_deauth_sta(CDS_GET_HAL_CB(pSapCtx->p_cds_gctx),
+		sme_roam_deauth_sta(CDS_GET_HAL_CB(),
 				    pSapCtx->sessionId, pDelStaParams);
 
 	if (qdf_ret_status == QDF_STATUS_SUCCESS) {
@@ -1452,7 +1452,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 	tpAniSirGlobal mac_ctx;
 	uint8_t bw;
 
-	hal = CDS_GET_HAL_CB(sap_context->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid hal pointer from p_cds_gctx", __func__);
@@ -1541,7 +1541,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
@@ -1722,7 +1722,7 @@ QDF_STATUS wlansap_set_counter_measure(void *pCtx, bool bEnable)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	sme_roam_tkip_counter_measures(CDS_GET_HAL_CB(pSapCtx->p_cds_gctx),
+	sme_roam_tkip_counter_measures(CDS_GET_HAL_CB(),
 				       pSapCtx->sessionId, bEnable);
 
 	return QDF_STATUS_SUCCESS;
@@ -1755,7 +1755,7 @@ QDF_STATUS wlansap_set_key_sta(void *pCtx, tCsrRoamSetKey *pSetKeyInfo)
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx",
@@ -1845,7 +1845,7 @@ QDF_STATUS wlansap_get_wps_state(void *pCtx, bool *bWPSState)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx",
@@ -1919,7 +1919,7 @@ QDF_STATUS wlansap_set_wparsn_ies
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx",
@@ -1970,7 +1970,7 @@ QDF_STATUS wlansap_send_action(void *pCtx, const uint8_t *pBuf,
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("NULL hal pointer"));
@@ -2023,7 +2023,7 @@ QDF_STATUS wlansap_remain_on_channel(void *pCtx,
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("NULL hal pointer"));
@@ -2069,7 +2069,7 @@ QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("HAL pointer is null"));
@@ -2284,7 +2284,7 @@ QDF_STATUS wlansap_register_mgmt_frame
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("hal pointer null"));
@@ -2333,7 +2333,7 @@ QDF_STATUS wlansap_de_register_mgmt_frame
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("hal pointer null"));
@@ -2398,7 +2398,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
@@ -2499,7 +2499,7 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
@@ -2557,7 +2557,7 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
@@ -3103,7 +3103,7 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
+	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
@@ -3184,7 +3184,7 @@ QDF_STATUS wlansap_set_dfs_nol(void *psap_ctx, eSapDfsNolType conf)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
@@ -3303,7 +3303,7 @@ wlansap_acs_chselect(void *pvos_gctx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	h_hal = (tHalHandle)CDS_GET_HAL_CB(sap_context->p_cds_gctx);
+	h_hal = (tHalHandle)CDS_GET_HAL_CB();
 	if (NULL == h_hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid MAC context from pvosGCtx", __func__);
@@ -3473,7 +3473,7 @@ void wlansap_cleanup_cac_timer(void *sap_ctx)
 		return;
 	}
 
-	hal = CDS_GET_HAL_CB(psap_ctx->p_cds_gctx);
+	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("Invalid hal pointer"));
