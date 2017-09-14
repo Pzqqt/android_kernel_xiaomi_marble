@@ -169,9 +169,6 @@ typedef struct sSapContext {
 	/* SAP event Callback to hdd */
 	tpWLAN_SAPEventCB pfnSapEventCallback;
 
-	/* Include the enclosing CDS context here */
-	void *p_cds_gctx;
-
 	/*
 	 * Include the state machine structure here, state var that keeps
 	 * track of state machine

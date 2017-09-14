@@ -278,9 +278,6 @@ void *wlansap_open(void *p_cds_gctx)
 	/* Clean up SAP control block, initialize all values */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
 
-	/* Setup the "link back" to the CDS context */
-	pSapCtx->p_cds_gctx = p_cds_gctx;
-
 	/* Save the SAP context pointer */
 	status = wlansap_save_context(pSapCtx);
 	if (QDF_IS_STATUS_ERROR(status)) {
