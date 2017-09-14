@@ -253,7 +253,6 @@ void wlansap_context_put(ptSapContext ctx)
 
 /**
  * wlansap_open() - WLAN SAP open function call
- * @p_cds_gctx: Pointer to the global cds context; a handle to SAP's
  *
  * Called at driver initialization (cds_open). SAP will initialize
  * all its internal resources and will wait for the call to start to
@@ -261,7 +260,7 @@ void wlansap_context_put(ptSapContext ctx)
  *
  * Return: Pointer to the SAP context
  */
-void *wlansap_open(void *p_cds_gctx)
+void *wlansap_open(void)
 {
 	ptSapContext pSapCtx;
 	QDF_STATUS status;

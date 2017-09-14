@@ -6475,7 +6475,6 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *pAdapter, bool reinit)
 	struct net_device *dev = pAdapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS status;
-	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(pAdapter))->pcds_context;
 	v_CONTEXT_t sapContext = NULL;
 	int ret;
 	enum tQDF_ADAPTER_MODE mode;
@@ -6488,7 +6487,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *pAdapter, bool reinit)
 	if (reinit)
 		sapContext = pAdapter->sessionCtx.ap.sapContext;
 	else {
-		sapContext = wlansap_open(p_cds_context);
+		sapContext = wlansap_open();
 		if (sapContext == NULL) {
 			hdd_err("wlansap_open failed!!");
 			return QDF_STATUS_E_FAULT;

@@ -893,7 +893,7 @@ void sap_cleanup_channel_list(void *sapContext);
 bool sap_is_auto_channel_select(void *pvos_gctx);
 
 QDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
-void *wlansap_open(void *p_cds_gctx);
+void *wlansap_open(void);
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);
 QDF_STATUS wlansap_start(void *p_cds_gctx, enum tQDF_ADAPTER_MODE mode,
