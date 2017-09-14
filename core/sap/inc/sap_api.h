@@ -65,8 +65,6 @@ extern "C" {
 #define       SAP_WPS_DISABLED             0
 #define       SAP_WPS_ENABLED_UNCONFIGURED 1
 #define       SAP_WPS_ENABLED_CONFIGURED   2
-#define       MAX_NAME_SIZE                64
-#define       MAX_TEXT_SIZE                32
 
 #define       MAX_CHANNEL_LIST_LEN         256
 #define       QDF_MAX_NO_OF_SAP_MODE       2    /* max # of SAP */
@@ -644,22 +642,6 @@ typedef enum {
 #endif
 
 typedef enum {
-	eSAP_WPS_PROBE_RSP_IE,
-	eSAP_WPS_BEACON_IE,
-	eSAP_WPS_ASSOC_RSP_IE
-} eSapWPSIE_CODE;
-
-typedef struct sSapName {
-	uint8_t num_name;
-	uint8_t name[MAX_NAME_SIZE];
-} tSapName;
-
-typedef struct sSapText {
-	uint8_t num_text;
-	uint8_t text[MAX_TEXT_SIZE];
-} tSapText;
-
-typedef enum {
 	eSAP_DFS_DO_NOT_SKIP_CAC,
 	eSAP_DFS_SKIP_CAC
 } eSapDfsCACState_t;
@@ -760,93 +742,6 @@ typedef struct tagSapStruct {
 	bool acs_with_more_param;
 	bool enable_dfs_phy_error_logs;
 } tSapStruct, *tpSapStruct;
-
-#define WPS_PROBRSP_VER_PRESENT                          0x00000001
-#define WPS_PROBRSP_STATE_PRESENT                        0x00000002
-#define WPS_PROBRSP_APSETUPLOCK_PRESENT                  0x00000004
-#define WPS_PROBRSP_SELECTEDREGISTRA_PRESENT             0x00000008
-#define WPS_PROBRSP_DEVICEPASSWORDID_PRESENT             0x00000010
-#define WPS_PROBRSP_SELECTEDREGISTRACFGMETHOD_PRESENT    0x00000020
-#define WPS_PROBRSP_RESPONSETYPE_PRESENT                 0x00000040
-#define WPS_PROBRSP_UUIDE_PRESENT                        0x00000080
-#define WPS_PROBRSP_MANUFACTURE_PRESENT                  0x00000100
-#define WPS_PROBRSP_MODELNAME_PRESENT                    0x00000200
-#define WPS_PROBRSP_MODELNUMBER_PRESENT                  0x00000400
-#define WPS_PROBRSP_SERIALNUMBER_PRESENT                 0x00000800
-#define WPS_PROBRSP_PRIMARYDEVICETYPE_PRESENT            0x00001000
-#define WPS_PROBRSP_DEVICENAME_PRESENT                   0x00002000
-#define WPS_PROBRSP_CONFIGMETHODS_PRESENT                0x00004000
-#define WPS_PROBRSP_RF_BANDS_PRESENT                     0x00008000
-
-typedef struct sap_WPSProbeRspIE_s {
-	uint32_t FieldPresent;
-	uint32_t Version;         /* Version. 0x10 = version 1.0, 0x11 = etc. */
-	uint32_t wpsState;        /* 1 = unconfigured, 2 = configured. */
-	bool APSetupLocked;       /* Must be included if value is true */
-	/* indicates if user has recently activated a reg to add an Enrollee. */
-	bool SelectedRegistra;
-	uint16_t DevicePasswordID;              /* Device Password ID */
-	/* Selected Registrar config method */
-	uint16_t SelectedRegistraCfgMethod;
-	uint8_t ResponseType;           /* Response type */
-	uint8_t UUID_E[16];             /* Unique identifier of the AP. */
-	tSapName Manufacture;
-	tSapText ModelName;
-	tSapText ModelNumber;
-	tSapText SerialNumber;
-	/* Device Category ID: 1Computer, 2Input Device, ... */
-	uint32_t PrimaryDeviceCategory;
-	/* Vendor specific OUI for Device Sub Category */
-	uint8_t PrimaryDeviceOUI[4];
-	/*
-	 * Device Sub Category ID: 1-PC,
-	 * 2-Server if Device Category is computer
-	 */
-	uint32_t DeviceSubCategory;
-	tSapText DeviceName;
-	uint16_t ConfigMethod;  /* Configuaration method */
-	uint8_t RFBand;         /* RF bands available on the AP */
-} tSap_WPSProbeRspIE;
-
-#define WPS_BEACON_VER_PRESENT                         0x00000001
-#define WPS_BEACON_STATE_PRESENT                       0x00000002
-#define WPS_BEACON_APSETUPLOCK_PRESENT                 0x00000004
-#define WPS_BEACON_SELECTEDREGISTRA_PRESENT            0x00000008
-#define WPS_BEACON_DEVICEPASSWORDID_PRESENT            0x00000010
-#define WPS_BEACON_SELECTEDREGISTRACFGMETHOD_PRESENT   0x00000020
-#define WPS_BEACON_UUIDE_PRESENT                       0x00000080
-#define WPS_BEACON_RF_BANDS_PRESENT                    0x00000100
-
-typedef struct sap_WPSBeaconIE_s {
-	uint32_t FieldPresent;
-	uint32_t Version;         /* Version. 0x10 = version 1.0, 0x11 = etc. */
-	uint32_t wpsState;        /* 1 = unconfigured, 2 = configured. */
-	bool APSetupLocked;       /* Must be included if value is true */
-	/* indicates if user has recently activated a reg to add an Enrollee. */
-	bool SelectedRegistra;
-	uint16_t DevicePasswordID;              /* Device Password ID */
-	uint16_t SelectedRegistraCfgMethod;     /* Selected reg config method */
-	uint8_t UUID_E[16];     /* Unique identifier of the AP. */
-	uint8_t RFBand;         /* RF bands available on the AP */
-} tSap_WPSBeaconIE;
-
-#define WPS_ASSOCRSP_VER_PRESENT             0x00000001
-#define WPS_ASSOCRSP_RESPONSETYPE_PRESENT    0x00000002
-
-typedef struct sap_WPSAssocRspIE_s {
-	uint32_t FieldPresent;
-	uint32_t Version;
-	uint8_t ResposeType;
-} tSap_WPSAssocRspIE;
-
-typedef struct sap_WPSIE_s {
-	eSapWPSIE_CODE sapWPSIECode;
-	union {
-		tSap_WPSProbeRspIE sapWPSProbeRspIE; /* WPS Set Probe Resp IE */
-		tSap_WPSBeaconIE sapWPSBeaconIE;     /* WPS Set Beacon IE */
-		tSap_WPSAssocRspIE sapWPSAssocRspIE; /* WPS Set Assoc Resp IE */
-	} sapwpsie;
-} tSap_WPSIE, *tpSap_WPSIE;
 
 #ifdef WLANTL_DEBUG
 #define MAX_RATE_INDEX      136
