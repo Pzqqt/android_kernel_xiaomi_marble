@@ -395,6 +395,7 @@ static void *qdf_mem_seq_next(struct seq_file *seq, void *v, loff_t *pos)
  */
 static void qdf_mem_seq_stop(struct seq_file *seq, void *v)
 {
+	qdf_mem_seq_print(seq);
 	seq->private = v;
 }
 
