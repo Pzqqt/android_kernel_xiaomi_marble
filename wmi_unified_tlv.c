@@ -6297,7 +6297,9 @@ static QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
 		blist_param->rssi_channel_penalization =
 				roam_req->rssi_channel_penalization;
 		blist_param->num_disallowed_aps = roam_req->num_disallowed_aps;
-		blist_param->disallow_lca_enable_source_bitmap = 0x1;
+		blist_param->disallow_lca_enable_source_bitmap =
+			(WMI_ROAM_LCA_DISALLOW_SOURCE_PER |
+			WMI_ROAM_LCA_DISALLOW_SOURCE_BACKGROUND);
 		buf_ptr += (sizeof(wmi_roam_lca_disallow_config_tlv_param));
 	}
 
