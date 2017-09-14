@@ -1943,7 +1943,7 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, ptSapContext sapctx,
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 		QDF_MAX_NO_OF_MODE;
 	sap_clear_global_dfs_param(hal);
-	qdf_mem_zero(sapctx, sizeof(tSapContext));
+	qdf_mem_zero(sapctx, sizeof(*sapctx));
 	sapctx->sessionId = CSR_SESSION_ID_INVALID;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		"%s: Initializing State: %d, sapContext value = %p", __func__,

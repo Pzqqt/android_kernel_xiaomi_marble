@@ -275,7 +275,6 @@ struct sap_context {
 	bool dfs_cac_offload;
 };
 typedef struct sap_context *ptSapContext;
-typedef struct sap_context tSapContext;
 
 /*----------------------------------------------------------------------------
  *  External declarations for global context

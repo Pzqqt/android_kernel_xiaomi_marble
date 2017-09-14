@@ -263,11 +263,11 @@ void wlansap_context_put(ptSapContext ctx)
  */
 void *wlansap_open(void *p_cds_gctx)
 {
-	ptSapContext pSapCtx = NULL;
+	ptSapContext pSapCtx;
 	QDF_STATUS status;
 
 	/* dynamically allocate the sapContext */
-	pSapCtx = (ptSapContext) qdf_mem_malloc(sizeof(tSapContext));
+	pSapCtx = qdf_mem_malloc(sizeof(*pSapCtx));
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
