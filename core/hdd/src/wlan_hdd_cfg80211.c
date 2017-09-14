@@ -13231,7 +13231,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	hdd_add_channel_switch_support(&wiphy->flags);
 	wiphy->max_num_csa_counters = WLAN_HDD_MAX_NUM_CSA_COUNTERS;
-	wlan_hdd_cfg80211_scan_randomization_init(wiphy);
+	if (pCfg->enable_mac_spoofing)
+		wlan_hdd_cfg80211_scan_randomization_init(wiphy);
 
 	EXIT();
 	return 0;
