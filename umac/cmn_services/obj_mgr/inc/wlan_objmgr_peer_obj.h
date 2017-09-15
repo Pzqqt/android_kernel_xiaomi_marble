@@ -374,7 +374,7 @@ static inline void wlan_peer_obj_unlock(struct wlan_objmgr_peer *peer)
  *
  * Return: void
  */
-QDF_STATUS wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
+void wlan_objmgr_peer_get_ref(struct wlan_objmgr_peer *peer,
 					wlan_objmgr_ref_dbgid id);
 
 /**
@@ -399,7 +399,7 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
  *
  * Return: void
  */
-QDF_STATUS wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
+void wlan_objmgr_peer_release_ref(struct wlan_objmgr_peer *peer,
 						 wlan_objmgr_ref_dbgid id);
 
 /**

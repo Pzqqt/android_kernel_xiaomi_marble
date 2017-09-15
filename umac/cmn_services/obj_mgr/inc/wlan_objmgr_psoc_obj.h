@@ -1181,7 +1181,7 @@ static inline void wlan_psoc_set_qdf_dev(
  *
  * Return: void
  */
-QDF_STATUS wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
+void wlan_objmgr_psoc_get_ref(struct wlan_objmgr_psoc *psoc,
 					wlan_objmgr_ref_dbgid id);
 
 /**
@@ -1206,7 +1206,7 @@ QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
  *
  * Return: void
  */
-QDF_STATUS wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
+void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id);
 
 /**
