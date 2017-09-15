@@ -586,13 +586,15 @@ static inline int32_t hdd_get_targettime_from_hosttime(
 
 	if (host_time < adapter->last_host_time)
 		ret = hdd_uint64_minus(adapter->last_target_time,
-				       (adapter->last_host_time - host_time) /
-					HOST_TO_TARGET_TIME_RATIO,
+				       qdf_do_div(adapter->last_host_time -
+						  host_time,
+						  HOST_TO_TARGET_TIME_RATIO),
 				       target_time);
 	else
 		ret = hdd_uint64_plus(adapter->last_target_time,
-				      (host_time - adapter->last_host_time) /
-					HOST_TO_TARGET_TIME_RATIO,
+				      qdf_do_div(host_time -
+						 adapter->last_host_time,
+						 HOST_TO_TARGET_TIME_RATIO),
 				      target_time);
 
 	if (in_cap_state)
