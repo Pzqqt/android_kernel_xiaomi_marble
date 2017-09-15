@@ -518,6 +518,8 @@ struct wcd_mbhc {
 	bool in_swch_irq_handler;
 	bool hphl_swh; /*track HPHL switch NC / NO */
 	bool gnd_swh; /*track GND switch NC / NO */
+	u32 hs_thr;
+	u32 hph_thr;
 	u32 moist_vref;
 	u32 moist_iref;
 	u32 moist_rref;
