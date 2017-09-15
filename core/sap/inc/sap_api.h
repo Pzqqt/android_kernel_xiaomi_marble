@@ -835,6 +835,19 @@ QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
 			 enum tQDF_ADAPTER_MODE mode,
 			 uint8_t *addr, uint32_t session_id);
 
+/**
+ * wlansap_stop() - stop per-BSS SAP
+ * @pSapCtx: Pointer to the SAP context
+ *
+ * Called as part of the BSS stop procedure. SAP will use this call
+ * to perform all activities needed to stop the BSS.
+ *
+ * Return: The result code associated with performing the operation
+ *         QDF_STATUS_E_FAULT: BSS could not be stopped
+ *         QDF_STATUS_SUCCESS: Success
+ */
+QDF_STATUS wlansap_stop(struct sap_context *pSapCtx);
+
 void sap_cleanup_channel_list(void *sapContext);
 
 /**
@@ -847,7 +860,6 @@ bool sap_is_auto_channel_select(void *pvos_gctx);
 
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);
-QDF_STATUS wlansap_stop(void *p_cds_gctx);
 typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 					void *pUsrContext);
 

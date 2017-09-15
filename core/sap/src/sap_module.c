@@ -355,24 +355,8 @@ QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlansap_stop() - stop SAP module.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs
- *
- * Called by cds_disable to stop operation in SAP, before close. SAP will
- * suspend all BT-AMP Protocol Adaption Layer operation and will wait for the
- * close request to clean up its resources.
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
- *                             access would cause a page fault.
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS wlansap_stop(void *pCtx)
+QDF_STATUS wlansap_stop(struct sap_context *pSapCtx)
 {
-	struct sap_context *pSapCtx = NULL;
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
 
@@ -380,18 +364,16 @@ QDF_STATUS wlansap_stop(void *pCtx)
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "wlansap_stop invoked successfully ");
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	hal = CDS_GET_HAL_CB();
 	pmac = (tpAniSirGlobal) hal;
 	if (NULL == pmac) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid MAC context from p_cds_gctx",
-			  __func__);
+			  "%s: Invalid MAC context", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	if (QDF_STATUS_SUCCESS !=
