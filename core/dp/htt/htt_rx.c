@@ -116,6 +116,30 @@
 #define RX_HASH_LOG(x)          /* no-op */
 #endif
 
+#if HTT_PADDR64
+#define NEXT_FIELD_OFFSET_IN32 2
+#else /* ! HTT_PADDR64 */
+#define NEXT_FIELD_OFFSET_IN32 1
+#endif /* HTT_PADDR64 */
+
+/**
+ * htt_get_first_packet_after_wow_wakeup() - get first packet after wow wakeup
+ * @msg_word: pointer to rx indication message word
+ * @buf: pointer to buffer
+ *
+ * Return: None
+ */
+static void
+htt_get_first_packet_after_wow_wakeup(uint32_t *msg_word, qdf_nbuf_t buf)
+{
+	if (HTT_RX_IN_ORD_PADDR_IND_MSDU_INFO_GET(*msg_word) &
+			FW_MSDU_INFO_FIRST_WAKEUP_M) {
+		qdf_nbuf_mark_wakeup_frame(buf);
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+			  "%s: First packet after WOW Wakeup rcvd", __func__);
+	}
+}
+
 /* De -initialization function of the rx buffer hash table. This function will
  *   free up the hash table which includes freeing all the pending rx buffers
  */
@@ -1563,15 +1587,9 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 	qdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_FROM_DEVICE);
 #endif
 
-	if (pdev->cfg.is_first_wakeup_packet) {
-		if (HTT_RX_IN_ORD_PADDR_IND_MSDU_INFO_GET(*(curr_msdu + 1)) &
-			   FW_MSDU_INFO_FIRST_WAKEUP_M) {
-			qdf_nbuf_mark_wakeup_frame(buf);
-			QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
-				  "%s: First packet after WOW Wakeup rcvd",
-				  __func__);
-		}
-	}
+	if (pdev->cfg.is_first_wakeup_packet)
+		htt_get_first_packet_after_wow_wakeup(
+			msg_word + NEXT_FIELD_OFFSET_IN32, buf);
 
 	msdu_hdr = (uint32_t *) qdf_nbuf_data(buf);
 
@@ -1591,11 +1609,6 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 }
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
-#if HTT_PADDR64
-#define NEXT_FIELD_OFFSET_IN32 2
-#else /* ! HTT_PADDR64 */
-#define NEXT_FIELD_OFFSET_IN32 1
-#endif /* HTT_PADDR64 */
 
 /**
  * htt_mon_rx_handle_amsdu_packet() - Handle consecutive fragments of amsdu
@@ -2166,7 +2179,6 @@ static int htt_rx_mon_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		last_frag = ((struct htt_rx_in_ord_paddr_ind_msdu_t *)
 			     msg_word)->msdu_info;
 
-#undef NEXT_FIELD_OFFSET_IN32
 		/* Handle amsdu packet */
 		if (!last_frag) {
 			/*
@@ -2326,11 +2338,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 			qdf_nbuf_data_addr(msdu),
 			sizeof(qdf_nbuf_data(msdu)), QDF_RX));
 
-#if HTT_PADDR64
-#define NEXT_FIELD_OFFSET_IN32 2
-#else /* ! HTT_PADDR64 */
-#define NEXT_FIELD_OFFSET_IN32 1
-#endif /* HTT_PADDR64 */
 		qdf_nbuf_trim_tail(msdu,
 				   HTT_RX_BUF_SIZE -
 				   (RX_STD_DESC_SIZE +
@@ -2342,7 +2349,6 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		*((uint8_t *) &rx_desc->fw_desc.u.val) =
 			HTT_RX_IN_ORD_PADDR_IND_FW_DESC_GET(*(msg_word +
 						NEXT_FIELD_OFFSET_IN32));
-#undef NEXT_FIELD_OFFSET_IN32
 
 		msdu_count--;
 
@@ -2353,6 +2359,11 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				status = RX_PKT_FATE_FW_DROP_INVALID;
 			pdev->rx_pkt_dump_cb(msdu, peer_id, status);
 		}
+
+		if (pdev->cfg.is_first_wakeup_packet)
+			htt_get_first_packet_after_wow_wakeup(
+				msg_word + NEXT_FIELD_OFFSET_IN32, msdu);
+
 		/* if discard flag is set (SA is self MAC), then
 		 * don't check mic failure.
 		 */
