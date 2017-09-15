@@ -343,6 +343,10 @@ struct fils_join_rsp_params {
 	uint8_t tk_len;
 	uint8_t gtk_len;
 	uint8_t gtk[MAX_GTK_LEN];
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
 };
 #endif
 

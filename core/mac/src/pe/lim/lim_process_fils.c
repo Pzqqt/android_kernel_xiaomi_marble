@@ -1294,6 +1294,12 @@ void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
 	fils_join_rsp->gtk_len = fils_info->gtk_len;
 	qdf_mem_copy(fils_join_rsp->gtk, fils_info->gtk, fils_info->gtk_len);
 
+	cds_copy_hlp_info(&fils_info->dst_mac, &fils_info->src_mac,
+			  fils_info->hlp_data_len, fils_info->hlp_data,
+			  &fils_join_rsp->dst_mac, &fils_join_rsp->src_mac,
+			  &fils_join_rsp->hlp_data_len,
+			  fils_join_rsp->hlp_data);
+
 	pe_debug("FILS connect params copied lim");
 	pe_delete_fils_info(session);
 }

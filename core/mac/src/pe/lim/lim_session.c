@@ -307,6 +307,8 @@ void pe_delete_fils_info(tpPESession session)
 		qdf_mem_free(fils_info->auth_info.keyname);
 	if (fils_info->auth_info.domain_name)
 		qdf_mem_free(fils_info->auth_info.domain_name);
+	if (fils_info->hlp_data)
+		qdf_mem_free(fils_info->hlp_data);
 	qdf_mem_free(fils_info);
 	session->fils_info = NULL;
 }

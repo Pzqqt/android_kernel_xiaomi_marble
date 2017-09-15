@@ -217,6 +217,10 @@ struct fils_auth_rsp_info {
  * @igtk_len: igtk length
  * @igtk: igtk data pointer
  * @ipn: pointer to ipn data
+ * @dst_mac: HLP destination mac address
+ * @src_mac: HLP source mac address
+ * @hlp_data_len: HLP data length
+ * @hlp_data: pointer to HLP data
  */
 struct pe_fils_session {
 	bool is_fils_connection;
@@ -260,4 +264,8 @@ struct pe_fils_session {
 	uint8_t igtk_len;
 	uint8_t igtk[MAX_IGTK_LEN];
 	uint8_t ipn[IPN_LEN];
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t *hlp_data;
 };
