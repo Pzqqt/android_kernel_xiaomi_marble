@@ -2997,57 +2997,6 @@ error:
 }
 
 #endif
-#ifndef NAPIER_SCAN
-/**
- * csr_get_active_scan_entry() - To get scan entry from active command list
- *
- * @mac_ctx - MAC context
- * @scan_id - Scan identifier of the scan request
- * @entry - scan entry returned.
- *
- * Scan entry in the active scan list mapping to the sent scan id
- * is returned to the caller.
- *
- * Return: QDF_STATUS.
- */
-QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
-	uint32_t scan_id, tListElem **entry)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tListElem *localentry;
-	tSmeCmd *cmd;
-	uint32_t cmd_scan_id = 0;
-
-	csr_scan_active_ll_lock(mac_ctx);
-
-	if (csr_scan_active_ll_is_list_empty(mac_ctx, LL_ACCESS_NOLOCK)) {
-		sme_err("Active list Empty scanId: %d", scan_id);
-		csr_scan_active_ll_unlock(mac_ctx);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	localentry = csr_scan_active_ll_peek_head(mac_ctx,
-			LL_ACCESS_NOLOCK);
-	while (localentry) {
-		cmd = GET_BASE_ADDR(localentry, tSmeCmd, Link);
-		if (cmd->command == eSmeCommandScan)
-			cmd_scan_id = cmd->u.scanCmd.u.scanRequest.scan_id;
-		else if (cmd->command == eSmeCommandRemainOnChannel)
-			cmd_scan_id = cmd->u.remainChlCmd.scan_id;
-		if (cmd_scan_id == scan_id) {
-			sme_debug("scanId Matched %d", scan_id);
-			*entry = localentry;
-			csr_scan_active_ll_unlock(mac_ctx);
-			return QDF_STATUS_SUCCESS;
-		}
-		localentry = csr_scan_active_ll_next(mac_ctx,
-				localentry, LL_ACCESS_NOLOCK);
-	}
-	csr_scan_active_ll_unlock(mac_ctx);
-	return status;
-}
-
-#else
 
 /* API will be removed after p2p component L0 */
 QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
@@ -3089,7 +3038,6 @@ QDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
 
 	return status;
 }
-#endif
 
 void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 				struct scan_event *event, void *arg)

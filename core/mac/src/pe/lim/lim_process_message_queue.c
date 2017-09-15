@@ -1787,9 +1787,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		msg->bodyptr = NULL;
 		break;
 #endif
-	case WMA_RX_SCAN_EVENT:
-		lim_process_rx_scan_event(mac_ctx, msg->bodyptr);
-		break;
+
 	case WMA_RX_CHN_STATUS_EVENT:
 		lim_process_rx_channel_status_event(mac_ctx, msg->bodyptr);
 		break;

@@ -3247,17 +3247,7 @@ QDF_STATUS wma_start(void)
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
-#ifndef NAPIER_SCAN
-	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_SCAN_EVENTID,
-						    wma_scan_event_callback,
-						    WMA_RX_SERIALIZER_CTX);
-	if (0 != status) {
-		WMA_LOGE("%s: Failed to register scan callback", __func__);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto end;
-	}
-#endif
+
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_ROAM_EVENTID,
 						    wma_roam_event_callback,
