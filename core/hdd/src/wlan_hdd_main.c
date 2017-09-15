@@ -629,7 +629,7 @@ int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask)
 	if (QDF_STATUS_SUCCESS != status)
 		return -EINVAL;
 	/* now cycle through the bitmask until all "set" bits are serviced */
-	level = QDF_TRACE_LEVEL_FATAL;
+	level = QDF_TRACE_LEVEL_NONE;
 	while (0 != bitmask) {
 		if (bitmask & 1) {
 			status = qdf_print_set_category_verbose(qdf_print_idx,
