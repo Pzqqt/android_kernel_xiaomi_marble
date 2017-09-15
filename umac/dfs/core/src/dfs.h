@@ -548,7 +548,6 @@ struct dfs_nolelem {
 
 /**
  * struct dfs_info - DFS Info.
- * @rn_use_nol:            Use the NOL when radar found (default: TRUE).
  * @rn_ftindex:            Number of different types of radars.
  * @rn_lastfull_ts:        Last 64 bit timstamp from recv interrupt.
  * @rn_last_ts:            last 15 bit ts from recv descriptor.
@@ -564,7 +563,6 @@ struct dfs_nolelem {
  * @dfs_last_bin5_dur:     Last bin5 during.
  */
 struct dfs_info {
-	int       rn_use_nol;
 	uint32_t  rn_ftindex;
 	uint64_t  rn_lastfull_ts;
 	uint16_t  rn_last_ts;
@@ -782,6 +780,7 @@ struct dfs_event_log {
  * @dfs_precac_done_list:  PreCAC done list.
  * @dfs_precac_nol_list:   PreCAC NOL List.
  * @dfs_is_offload_enabled: Set if DFS offload enabled.
+ * @dfs_use_nol: Use the NOL when radar found (default: TRUE).
  */
 struct wlan_dfs {
 	uint32_t  dfs_debug_mask;
@@ -871,6 +870,7 @@ struct wlan_dfs {
 	struct dfs_ieee80211_channel *dfs_curchan;
 	struct wlan_objmgr_pdev *dfs_pdev_obj;
 	bool dfs_is_offload_enabled;
+	int dfs_use_nol;
 };
 
 /**
@@ -1528,12 +1528,6 @@ void dfs_cancel_cac_timer(struct wlan_dfs *dfs);
 void dfs_start_cac_timer(struct wlan_dfs *dfs);
 
 /**
- * dfs_get_usenol() - Returns use_nol flag.
- * @dfs: Pointer to wlan_dfs structure.
- */
-uint16_t dfs_get_usenol(struct wlan_dfs *dfs);
-
-/**
  * dfs_set_update_nol_flag() - Sets update_nol flag.
  * @dfs: Pointer to wlan_dfs structure.
  * @val: update_nol flag.
@@ -1548,10 +1542,10 @@ void dfs_set_update_nol_flag(struct wlan_dfs *dfs,
 bool dfs_get_update_nol_flag(struct wlan_dfs *dfs);
 
 /**
- * dfs_get_rn_use_nol() - Get usenol.
+ * dfs_get_use_nol() - Get usenol.
  * @dfs: Pointer to wlan_dfs structure.
  */
-int dfs_get_rn_use_nol(struct wlan_dfs *dfs);
+int dfs_get_use_nol(struct wlan_dfs *dfs);
 
 /**
  * dfs_get_nol_timeout() - Get NOL timeout.
@@ -1924,10 +1918,16 @@ void bin5_rules_check_internal(struct wlan_dfs *dfs,
 		int *index);
 
 /**
- * dfs_main_timer_init() - Initialize dfs timers.
+ * dfs_main_task_timer_init() - Initialize dfs task timer.
  * @dfs: Pointer to wlan_dfs structure.
  */
-void dfs_main_timer_init(struct wlan_dfs *dfs);
+void dfs_main_task_timer_init(struct wlan_dfs *dfs);
+
+/**
+ * dfs_main_task_testtimer_init() - Initialize dfs task testtimer.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+void dfs_main_task_testtimer_init(struct wlan_dfs *dfs);
 
 /**
  * dfs_main_timer_reset() - Stop dfs timers.

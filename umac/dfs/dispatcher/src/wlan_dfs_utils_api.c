@@ -193,7 +193,7 @@ QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
-	*usenol = dfs_get_usenol(dfs);
+	*usenol = dfs_get_use_nol(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -243,8 +243,8 @@ QDF_STATUS utils_dfs_get_update_nol_flag(struct wlan_objmgr_pdev *pdev,
 }
 EXPORT_SYMBOL(utils_dfs_get_update_nol_flag);
 
-QDF_STATUS utils_dfs_get_rn_use_nol(struct wlan_objmgr_pdev *pdev,
-		int *rn_use_nol)
+QDF_STATUS utils_dfs_get_dfs_use_nol(struct wlan_objmgr_pdev *pdev,
+		int *dfs_use_nol)
 {
 	struct wlan_dfs *dfs;
 
@@ -252,11 +252,11 @@ QDF_STATUS utils_dfs_get_rn_use_nol(struct wlan_objmgr_pdev *pdev,
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
-	*rn_use_nol = dfs_get_rn_use_nol(dfs);
+	*dfs_use_nol = dfs_get_use_nol(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
-EXPORT_SYMBOL(utils_dfs_get_rn_use_nol);
+EXPORT_SYMBOL(utils_dfs_get_dfs_use_nol);
 
 QDF_STATUS utils_dfs_get_nol_timeout(struct wlan_objmgr_pdev *pdev,
 		int *dfs_nol_timeout)

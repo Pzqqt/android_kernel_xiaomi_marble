@@ -228,15 +228,15 @@ QDF_STATUS utils_dfs_get_update_nol_flag(struct wlan_objmgr_pdev *pdev,
 		bool *nol_flag);
 
 /**
- * utils_dfs_get_rn_use_nol() - Get usenol.
+ * utils_dfs_get_dfs_use_nol() - Get usenol.
  * @pdev: Pointer to DFS pdev object.
- * @rn_use_nol: Pointer to rn_use_nol.
+ * @dfs_use_nol: Pointer to dfs_use_nol.
  *
- * wrapper function for dfs_get_rn_use_nol(). this
+ * wrapper function for dfs_get_dfs_use_nol(). this
  * function called from outside of dfs component.
  */
-QDF_STATUS utils_dfs_get_rn_use_nol(struct wlan_objmgr_pdev *pdev,
-		int *rn_use_nol);
+QDF_STATUS utils_dfs_get_dfs_use_nol(struct wlan_objmgr_pdev *pdev,
+		int *dfs_use_nol);
 
 /**
  * utils_dfs_get_nol_timeout() - Get NOL timeout.

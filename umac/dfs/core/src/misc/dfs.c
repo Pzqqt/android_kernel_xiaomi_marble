@@ -95,19 +95,21 @@ int dfs_get_debug_info(struct wlan_dfs *dfs, void *data)
 	return (int)dfs->dfs_proc_phyerr;
 }
 
-void dfs_main_timer_init(struct wlan_dfs *dfs)
+void dfs_main_task_timer_init(struct wlan_dfs *dfs)
 {
 	qdf_timer_init(NULL,
 			&(dfs->wlan_dfs_task_timer),
 			dfs_task,
 			(void *)(dfs),
 			QDF_TIMER_TYPE_WAKE_APPS);
+}
 
+void dfs_main_task_testtimer_init(struct wlan_dfs *dfs)
+{
 	qdf_timer_init(NULL,
-			&(dfs->wlan_dfstesttimer),
-			dfs_testtimer_task,
-			(void *)dfs,
-			QDF_TIMER_TYPE_WAKE_APPS);
+		&(dfs->wlan_dfstesttimer),
+		dfs_testtimer_task, (void *)dfs,
+		QDF_TIMER_TYPE_WAKE_APPS);
 }
 
 int dfs_create_object(struct wlan_dfs **dfs)
@@ -187,7 +189,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	dfs->dfs_enable = 1;
 
 	/*Verify : Passing NULL to qdf_timer_init().*/
-	dfs_main_timer_init(dfs);
+	dfs_main_task_timer_init(dfs);
 
 	WLAN_DFSQ_LOCK_INIT(dfs);
 	STAILQ_INIT(&dfs->dfs_radarq);
@@ -250,7 +252,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	else if (usenol == 2)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "NOL disabled; no CSA");
 
-	dfs->dfs_rinfo.rn_use_nol = usenol;
+	dfs->dfs_use_nol = usenol;
 
 	/* Init the cached extension channel busy for false alarm reduction */
 	dfs->dfs_rinfo.ext_chan_busy_ts = lmac_get_tsf64(dfs->dfs_pdev_obj);
@@ -309,6 +311,14 @@ int dfs_attach(struct wlan_dfs *dfs)
 
 	if (!dfs->dfs_is_offload_enabled) {
 		ret = dfs_main_attach(dfs);
+
+	/*
+	 * For full offload we have a wmi handler registered to process a radar
+	 * event from firmware in the event of a radar detect.So ,init of timer,
+	 * dfs_task is not required for full offload. dfs_task timer is called
+	 * in dfs_main_timer_init within dfs_main_attach for partial offload
+	 * in the event of radar detect.
+	 */
 		if (ret) {
 			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_main_attach failed");
 			return ret;
@@ -318,6 +328,11 @@ int dfs_attach(struct wlan_dfs *dfs)
 	dfs_zero_cac_attach(dfs);
 	dfs_nol_attach(dfs);
 
+	/*
+	 * Init of timer ,dfs_testtimer_task is required by both partial
+	 * and full offload, indicating test mode timer initilization for both.
+	 */
+	dfs_main_task_testtimer_init(dfs);
 	return 0;
 }
 
@@ -844,7 +859,7 @@ int dfs_control(struct wlan_dfs *dfs,
 			break;
 		}
 		*outsize = sizeof(uint32_t);
-		*((uint32_t *)outdata) = dfs->dfs_rinfo.rn_use_nol;
+		*((uint32_t *)outdata) = dfs->dfs_use_nol;
 
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 				"#Phyerr=%d, #false detect=%d, #queued=%d",
@@ -892,7 +907,7 @@ int dfs_control(struct wlan_dfs *dfs,
 			error = -EINVAL;
 			break;
 		}
-		dfs->dfs_rinfo.rn_use_nol = *(uint32_t *)indata;
+		dfs->dfs_use_nol = *(uint32_t *)indata;
 		break;
 	case DFS_GET_NOL:
 		if (!outdata || !outsize ||

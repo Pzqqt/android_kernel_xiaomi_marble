@@ -493,7 +493,7 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 {
 	bool wait_for_csa = false;
 
-	if (dfs->dfs_rinfo.rn_use_nol == 1) {
+	if (dfs->dfs_use_nol == 1) {
 		/*
 		 * If precac is running and the radar found in secondary
 		 * VHT80 mark the channel as radar and add to NOL list.
@@ -530,7 +530,7 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 	 * from precac-required-list and precac-done-list to
 	 * precac-nol-list.
 	 */
-	if (dfs->dfs_rinfo.rn_use_nol == 1) {
+	if (dfs->dfs_use_nol == 1) {
 		dfs_mark_precac_dfs(dfs,
 				dfs->is_radar_found_on_secondary_seg);
 	}
@@ -553,7 +553,7 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 	 * NOL code isn't used, that flag is never cleared. This
 	 * needs to be fixed. See EV 105776.
 	 */
-	if (dfs->dfs_rinfo.rn_use_nol == 1)  {
+	if (dfs->dfs_use_nol == 1)  {
 		dfs_mlme_start_rcsa(dfs->dfs_pdev_obj,
 				&wait_for_csa);
 		if (wait_for_csa)
@@ -572,7 +572,7 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 		 */
 		dfs_radar_disable(dfs);
 		dfs_second_segment_radar_disable(dfs);
-	} else if (dfs->dfs_rinfo.rn_use_nol == 0) {
+	} else if (dfs->dfs_use_nol == 0) {
 		/*
 		 * For the test mode, don't do a CSA here; but setup
 		 * the test timer so we get a CSA _back_ to the

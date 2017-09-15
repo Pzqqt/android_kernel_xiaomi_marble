@@ -108,6 +108,7 @@ void dfs_nol_attach(struct wlan_dfs *dfs)
 {
 	dfs->wlan_dfs_nol_timeout = DFS_NOL_TIMEOUT_S;
 	dfs_nol_timer_init(dfs);
+	dfs->dfs_use_nol = 1;
 }
 
 /**
@@ -486,9 +487,9 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 	dfs->dfs_nol = NULL;
 }
 
-int dfs_get_rn_use_nol(struct wlan_dfs *dfs)
+int dfs_get_use_nol(struct wlan_dfs *dfs)
 {
-	return dfs->dfs_rinfo.rn_use_nol;
+	return dfs->dfs_use_nol;
 }
 
 int dfs_get_nol_timeout(struct wlan_dfs *dfs)

@@ -78,11 +78,6 @@ void dfs_cac_valid_reset(struct wlan_dfs *dfs,
 	}
 }
 
-uint16_t dfs_get_usenol(struct wlan_dfs *dfs)
-{
-	return dfs ? (uint16_t)dfs->dfs_rinfo.rn_use_nol : 0;
-}
-
 void dfs_set_update_nol_flag(struct wlan_dfs *dfs, bool val)
 {
 	dfs->update_nol = val;

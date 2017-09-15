@@ -233,12 +233,34 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	dfs_process_radar_found_indication(dfs, radar_found);
-	dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->dfs_ch_ieee,
-		dfs->dfs_curchan->dfs_ch_freq,
-		dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
-		dfs->dfs_curchan->dfs_ch_flags);
+	/*
+	 * Check if the current channel is a non DFS channel
+	 */
+	if (!(IEEE80211_IS_CHAN_DFS(dfs->dfs_curchan) ||
+		((IEEE80211_IS_CHAN_11AC_VHT160(dfs->dfs_curchan) ||
+		IEEE80211_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) &&
+		IEEE80211_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan)))) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "radar event on a non-DFS channel");
+		return QDF_STATUS_E_FAILURE;
+	}
 
+	if (dfs->dfs_use_nol) {
+		dfs_process_radar_found_indication(dfs, radar_found);
+		dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->dfs_ch_ieee,
+				dfs->dfs_curchan->dfs_ch_freq,
+				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+				dfs->dfs_curchan->dfs_ch_flags);
+	} else{
+
+		/* We are in test mode and should send a CSA back
+		 * to same channel.
+		 */
+		qdf_timer_stop(&dfs->wlan_dfstesttimer);
+		dfs->wlan_dfstest = 1;
+		dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
+		dfs->wlan_dfstesttime = 1;   /* 1ms */
+		qdf_timer_mod(&dfs->wlan_dfstesttimer, dfs->wlan_dfstesttime);
+	}
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(tgt_dfs_process_radar_ind);
