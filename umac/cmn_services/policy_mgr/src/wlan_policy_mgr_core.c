@@ -2184,26 +2184,45 @@ bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 {
 	bool status = true;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t mcc_to_scc_switch;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
 		return false;
 	}
+	mcc_to_scc_switch =
+		policy_mgr_mcc_to_scc_switch_mode_in_user_cfg(psoc);
 
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
-	if ((num_connections == 2) &&
-		(pm_conc_connection_list[0].chan !=
-		pm_conc_connection_list[1].chan) &&
-		(pm_conc_connection_list[0].mac ==
-		 pm_conc_connection_list[1].mac)) {
-		if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
-			if ((channel != pm_conc_connection_list[0].chan) &&
-				(channel != pm_conc_connection_list[1].chan)) {
-				policy_mgr_err("don't allow 3rd home channel on same MAC");
-				status = false;
-			}
-		} else if (((WLAN_REG_IS_24GHZ_CH(channel)) &&
+	if (num_connections == 2) {
+	/* No SCC or MCC combination is allowed with / on DFS channel */
+		if ((mcc_to_scc_switch ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+		&& wlan_reg_is_dfs_ch(pm_ctx->pdev, channel) &&
+		(wlan_reg_is_dfs_ch(pm_ctx->pdev,
+			pm_conc_connection_list[0].chan) ||
+		wlan_reg_is_dfs_ch(pm_ctx->pdev,
+			pm_conc_connection_list[1].chan))) {
+
+			policy_mgr_err("Existing DFS connection, new 3-port DFS connection is not allowed");
+			status = false;
+
+		} else if (((pm_conc_connection_list[0].chan !=
+				pm_conc_connection_list[1].chan)
+		|| (mcc_to_scc_switch ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+		) && (pm_conc_connection_list[0].mac ==
+			pm_conc_connection_list[1].mac)) {
+			if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
+				if ((channel !=
+				     pm_conc_connection_list[0].chan) &&
+				    (channel !=
+				     pm_conc_connection_list[1].chan)) {
+					policy_mgr_err("don't allow 3rd home channel on same MAC");
+					status = false;
+				}
+			} else if (((WLAN_REG_IS_24GHZ_CH(channel)) &&
 				(WLAN_REG_IS_24GHZ_CH
 				(pm_conc_connection_list[0].chan)) &&
 				(WLAN_REG_IS_24GHZ_CH
@@ -2213,9 +2232,19 @@ bool policy_mgr_allow_new_home_channel(struct wlan_objmgr_psoc *psoc,
 				(pm_conc_connection_list[0].chan)) &&
 				(WLAN_REG_IS_5GHZ_CH
 				(pm_conc_connection_list[1].chan)))) {
-			policy_mgr_err("don't allow 3rd home channel on same MAC");
-			status = false;
+					policy_mgr_err("don't allow 3rd home channel on same MAC");
+					status = false;
+			}
 		}
+	} else if ((num_connections == 1)
+		&& (mcc_to_scc_switch ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
+		&& wlan_reg_is_dfs_ch(pm_ctx->pdev, channel)
+		&& wlan_reg_is_dfs_ch(pm_ctx->pdev,
+			pm_conc_connection_list[0].chan)) {
+
+		policy_mgr_err("Existing DFS connection, new 2-port DFS connection is not allowed");
+		status = false;
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
