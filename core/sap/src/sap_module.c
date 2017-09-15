@@ -281,45 +281,20 @@ struct sap_context *wlansap_open(void)
 	return pSapCtx;
 } /* wlansap_open */
 
-/**
- * wlansap_start() - wlan start SAP.
- * @pCtx: Pointer to the global cds context; a handle to SAP's
- *        control block can be extracted from its context
- *        When MBSSID feature is enabled, SAP context is directly
- *        passed to SAP APIs
- * @mode: Device mode
- * @addr: MAC address of the SAP
- * @session_id: Pointer to the session id
- *
- * Called as part of the overall start procedure (cds_enable). SAP will
- * use this call to register with TL as the SAP entity for SAP RSN frames.
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
- *                             access would cause a page fault.
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
+QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
+			 enum tQDF_ADAPTER_MODE mode,
 			 uint8_t *addr, uint32_t session_id)
 {
-	struct sap_context *pSapCtx = NULL;
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
 
-	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_start invoked successfully");
-	/*------------------------------------------------------------------------
-	    Sanity check
-	    Extract SAP control block
-	   ------------------------------------------------------------------------*/
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 

@@ -817,6 +817,24 @@ struct sap_context *wlansap_open(void);
  */
 QDF_STATUS wlansap_close(struct sap_context *pSapCtx);
 
+/**
+ * wlansap_start - start per-BSS SAP
+ * @pSapCtx: Pointer to the SAP context
+ * @mode: Device mode
+ * @addr: MAC address of the SAP
+ * @session_id: Pointer to the session id
+ *
+ * Called as part of the BSS start procedure. SAP will use this call
+ * to perform all activities needed to start the BSS.
+ *
+ * Return: The result code associated with performing the operation
+ *         QDF_STATUS_E_FAULT: BSS could not be started
+ *         QDF_STATUS_SUCCESS: Success
+ */
+QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
+			 enum tQDF_ADAPTER_MODE mode,
+			 uint8_t *addr, uint32_t session_id);
+
 void sap_cleanup_channel_list(void *sapContext);
 
 /**
@@ -829,8 +847,6 @@ bool sap_is_auto_channel_select(void *pvos_gctx);
 
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);
-QDF_STATUS wlansap_start(void *p_cds_gctx, enum tQDF_ADAPTER_MODE mode,
-			 uint8_t *addr, uint32_t session_id);
 QDF_STATUS wlansap_stop(void *p_cds_gctx);
 typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 					void *pUsrContext);
