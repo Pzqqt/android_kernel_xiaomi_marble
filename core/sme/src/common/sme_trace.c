@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -193,9 +193,6 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(e_sme_command_nss_update);
 		CASE_RETURN_STRING(e_sme_command_set_dual_mac_config);
 		CASE_RETURN_STRING(e_sme_command_set_antenna_mode);
-		CASE_RETURN_STRING(eSmeCommandNdpInitiatorRequest);
-		CASE_RETURN_STRING(eSmeCommandNdpResponderRequest);
-		CASE_RETURN_STRING(eSmeCommandNdpDataEndInitiatorRequest);
 	default:
 		return "UNKNOWN";
 	}

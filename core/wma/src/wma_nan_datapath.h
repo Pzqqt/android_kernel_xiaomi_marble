@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,50 +33,16 @@
 #include "sir_api.h"
 #include "sme_nan_datapath.h"
 
-#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
-QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
-					struct ndp_responder_req *req_params);
-
-void wma_ndp_register_all_event_handlers(tp_wma_handle wma_handle);
-void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle);
-int wma_ndp_wow_event_callback(void *handle, void *event,
-			       uint32_t len, uint32_t event_id);
-
-QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle, void *req);
-QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle, void *req);
-uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag);
-#else
-static inline void wma_ndp_register_all_event_handlers(
-					tp_wma_handle wma_handle) {}
-static inline void wma_ndp_unregister_all_event_handlers(
-					tp_wma_handle wma_handle) {}
 static inline int wma_ndp_wow_event_callback(void *handle, void *event,
 					     uint32_t len, uint32_t event_id)
 {
 	return 0;
-}
-static inline QDF_STATUS wma_handle_ndp_initiator_req(tp_wma_handle wma_handle,
-						      void *req)
-{
-	return QDF_STATUS_SUCCESS;
-}
-static inline QDF_STATUS wma_handle_ndp_responder_req(tp_wma_handle wma_handle,
-					void *req_params)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS wma_handle_ndp_end_req(tp_wma_handle wma_handle,
-						void *req)
-{
-	return QDF_STATUS_SUCCESS;
 }
 
 static inline uint32_t wma_ndp_get_eventid_from_tlvtag(uint32_t tag)
 {
 	return 0;
 }
-#endif /* WLAN_FEATURE_NAN_DATAPATH !WLAN_FEATURE_NAN_CONVERGENCE */
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #define WMA_IS_VDEV_IN_NDI_MODE(intf, vdev_id) \

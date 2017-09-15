@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -86,9 +86,6 @@ typedef enum eSmeCommandType {
 	e_sme_command_nss_update,
 	e_sme_command_set_dual_mac_config,
 	e_sme_command_set_antenna_mode,
-	eSmeCommandNdpInitiatorRequest,
-	eSmeCommandNdpResponderRequest,
-	eSmeCommandNdpDataEndInitiatorRequest,
 } eSmeCommandType;
 
 typedef enum eSmeState {

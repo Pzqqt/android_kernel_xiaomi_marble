@@ -19418,15 +19418,6 @@ static void csr_free_cmd_memory(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	case eSmeCommandWmStatusChange:
 		csr_release_command_wm_status_change(pMac, pCommand);
 		break;
-	case eSmeCommandNdpInitiatorRequest:
-		csr_release_ndp_initiator_req(pMac, pCommand);
-		break;
-	case eSmeCommandNdpResponderRequest:
-		csr_release_ndp_responder_req(pMac, pCommand);
-		break;
-	case eSmeCommandNdpDataEndInitiatorRequest:
-		csr_release_ndp_data_end_req(pMac, pCommand);
-		break;
 	default:
 		break;
 	}
@@ -19640,15 +19631,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 		break;
 	case eSmeCommandWmStatusChange:
 		cmd_type = WLAN_SER_CMD_WM_STATUS_CHANGE;
-		break;
-	case eSmeCommandNdpInitiatorRequest:
-		cmd_type = WLAN_SER_CMD_NDP_INIT_REQ;
-		break;
-	case eSmeCommandNdpResponderRequest:
-		cmd_type = WLAN_SER_CMD_NDP_RESP_REQ;
-		break;
-	case eSmeCommandNdpDataEndInitiatorRequest:
-		cmd_type = WLAN_SER_CMD_NDP_DATA_END_INIT_REQ;
 		break;
 	case eSmeCommandEnterStandby:
 		cmd_type = WLAN_SER_CMD_ENTER_STANDBY;

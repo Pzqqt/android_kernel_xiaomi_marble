@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -149,26 +149,11 @@ static inline void lim_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 
 #endif /* WLAN_FEATURE_NAN_DATAPATH || WLAN_FEATURE_NAN_CONVERGENCE */
 
-#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
-/* Function to process NDP requests */
-QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg);
-/* Function to process NDP events */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-				      struct scheduler_msg *msg);
-#else
-static inline QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static inline QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 						      struct scheduler_msg *msg)
 {
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* WLAN_FEATURE_NAN_DATAPATH && !WLAN_FEATURE_NAN_CONVERGENCE */
 
 #endif /* __MAC_NAN_DATAPATH_H */
 

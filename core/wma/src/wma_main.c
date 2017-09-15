@@ -2924,7 +2924,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 			WMA_RX_WORK_CTX);
 	}
 
-	wma_ndp_register_all_event_handlers(wma_handle);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				wmi_peer_antdiv_info_event_id,
 				wma_peer_ant_info_evt_handler,
@@ -4062,7 +4061,6 @@ QDF_STATUS wma_close(void)
 
 	wma_unified_radio_tx_mem_free(wma_handle);
 
-	wma_ndp_unregister_all_event_handlers(wma_handle);
 	if (wma_handle->pdev) {
 		wlan_objmgr_pdev_release_ref(wma_handle->pdev,
 				WLAN_LEGACY_WMA_ID);
@@ -7980,19 +7978,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case WDA_BPF_SET_INSTRUCTIONS_REQ:
 		wma_set_bpf_instructions(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case SIR_HAL_NDP_INITIATOR_REQ:
-		wma_handle_ndp_initiator_req(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-
-	case SIR_HAL_NDP_RESPONDER_REQ:
-		wma_handle_ndp_responder_req(wma_handle, msg->bodyptr);
-		break;
-
-	case SIR_HAL_NDP_END_REQ:
-		wma_handle_ndp_end_req(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_POWER_DBG_CMD:

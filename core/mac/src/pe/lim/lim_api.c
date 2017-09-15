@@ -740,7 +740,6 @@ static void lim_register_debug_callback(void)
 	qdf_register_debug_callback(QDF_MODULE_ID_PE, &lim_state_info_dump);
 }
 
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 {
 	struct nan_callbacks cb_obj = {0};
@@ -751,11 +750,6 @@ static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
 
 	ucfg_nan_register_lim_callbacks(mac_ctx->psoc, &cb_obj);
 }
-#else
-static void lim_nan_register_callbacks(tpAniSirGlobal mac_ctx)
-{
-}
-#endif
 
 /*
  * pe_shutdown_notifier_cb - Shutdown notifier callback
@@ -1282,10 +1276,6 @@ void pe_register_callbacks_with_wma(tpAniSirGlobal pMac,
 			ready_req->pe_roam_synch_cb);
 	if (status != QDF_STATUS_SUCCESS)
 		pe_err("Registering roaming callbacks with WMA failed");
-
-	status = wma_register_ndp_cb(lim_handle_ndp_event_message);
-	if (status != QDF_STATUS_SUCCESS)
-		pe_err("Registering NDP callbacks with WMA failed");
 }
 
 /**

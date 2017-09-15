@@ -223,19 +223,6 @@ static inline void wma_register_egap_event_handle(WMA_HANDLE handle) {}
 QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
 QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 
-#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
-QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
-					  (tpAniSirGlobal mac_ctx,
-					  struct scheduler_msg *msg));
-#else
-static inline QDF_STATUS wma_register_ndp_cb(QDF_STATUS (*pe_ndp_event_handler)
-							(tpAniSirGlobal mac_ctx,
-						struct scheduler_msg *msg))
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_NAN_DATAPATH && !WLAN_FEATURE_NAN_CONVERGENCE */
-
 bool wma_is_csa_offload_enabled(void);
 bool wma_is_p2p_lo_capable(void);
 bool wma_capability_enhanced_mcast_filter(void);

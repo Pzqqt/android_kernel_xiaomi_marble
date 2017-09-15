@@ -1495,14 +1495,6 @@ struct csr_roam_info {
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 	union {
-		struct sme_ndp_peer_ind ndp_peer_ind_params;
-		struct ndp_schedule_update_rsp ndp_sched_upd_rsp_params;
-		struct ndp_end_indication_event *ndp_end_ind_params;
-		struct ndp_end_rsp_event *ndp_end_rsp_params;
-		struct ndp_confirm_event ndp_confirm_params;
-		struct ndp_responder_rsp_event ndp_responder_rsp_params;
-		struct ndp_indication_event ndp_indication_params;
-		struct ndp_initiator_rsp ndp_init_rsp_params;
 		struct ndi_create_rsp ndi_create_params;
 		struct ndi_delete_rsp ndi_delete_params;
 	} ndp;

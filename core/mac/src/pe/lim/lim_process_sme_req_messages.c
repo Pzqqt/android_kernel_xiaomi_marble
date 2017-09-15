@@ -5022,11 +5022,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_SET_VDEV_IES_PER_BAND:
 		lim_process_set_vdev_ies_per_band(pMac, pMsgBuf);
 		break;
-	case eWNI_SME_NDP_END_REQ:
-	case eWNI_SME_NDP_INITIATOR_REQ:
-	case eWNI_SME_NDP_RESPONDER_REQ:
-		lim_handle_ndp_request_message(pMac, pMsg);
-		break;
 	case eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE:
 		lim_process_sme_update_access_policy_vendor_ie(pMac, pMsgBuf);
 		break;

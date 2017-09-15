@@ -1538,9 +1538,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
-	case eWNI_SME_NDP_INITIATOR_REQ:
-	case eWNI_SME_NDP_RESPONDER_REQ:
-	case eWNI_SME_NDP_END_REQ:
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
 		break;

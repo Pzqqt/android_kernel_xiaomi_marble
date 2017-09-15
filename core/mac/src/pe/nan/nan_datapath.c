@@ -31,66 +31,9 @@
 #include "lim_types.h"
 #include "lim_send_messages.h"
 #include "wma_nan_datapath.h"
-#ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "os_if_nan.h"
 #include "nan_public_structs.h"
 #include "nan_ucfg_api.h"
-#endif
-
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * lim_send_ndp_event_to_sme() - generic function to prepare and send NDP
- * message to SME.
- * @mac_ctx: handle to mac context structure
- * @msg_type: sme message type to send
- * @body_ptr: buffer
- * @len: buffer length
- * @body_val: value
- *
- * Return: None
- */
-static void lim_send_ndp_event_to_sme(tpAniSirGlobal mac_ctx, uint32_t msg_type,
-				void *body_ptr, uint32_t len, uint32_t body_val)
-{
-	struct scheduler_msg mmh_msg = {0};
-
-	mmh_msg.type = msg_type;
-	if (len && body_ptr) {
-		mmh_msg.bodyptr = qdf_mem_malloc(len);
-		if (NULL == mmh_msg.bodyptr) {
-			pe_err("Malloc failed");
-			return;
-		}
-		qdf_mem_copy(mmh_msg.bodyptr, body_ptr, len);
-	} else {
-		mmh_msg.bodyval = body_val;
-	}
-	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
-}
-
-static void lim_send_peer_departed(tpAniSirGlobal mac_ctx,
-				   struct sme_ndp_peer_ind *ind)
-{
-	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_PEER_DEPARTED_IND,
-				  ind, sizeof(*ind), false);
-}
-#else
-static void lim_send_peer_departed(tpAniSirGlobal mac_ctx,
-				   struct sme_ndp_peer_ind *ind)
-{
-	struct nan_datapath_peer_ind peer_ind = {0};
-	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
-	struct wlan_objmgr_vdev *vdev =
-		wlan_objmgr_get_vdev_by_id_from_psoc(psoc, ind->session_id,
-						     WLAN_NAN_ID);
-
-	peer_ind.session_id = ind->session_id;
-	qdf_mem_copy(&peer_ind.peer_mac_addr, &ind->peer_mac_addr,
-		     sizeof(struct qdf_mac_addr));
-	peer_ind.sta_id = ind->sta_id;
-	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, &peer_ind);
-}
-#endif
 
 /**
  * lim_add_ndi_peer() - Function to add ndi peer
@@ -171,103 +114,6 @@ QDF_STATUS lim_add_ndi_peer_converged(uint32_t vdev_id,
 
 	return lim_add_ndi_peer(mac_ctx, vdev_id, peer_mac_addr);
 }
-
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * lim_handle_ndp_indication_event() - Function to handle SIR_HAL_NDP_INDICATION
- * event from WMA
- * @mac_ctx: handle to mac structure
- * @ndp_ind: ndp indication event params
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-static QDF_STATUS lim_handle_ndp_indication_event(tpAniSirGlobal mac_ctx,
-					struct ndp_indication_event *ndp_ind)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	pe_info("role: %d, vdev: %d, csid: %d, peer_mac_addr "
-			MAC_ADDRESS_STR,
-		ndp_ind->role, ndp_ind->vdev_id, ndp_ind->ncs_sk_type,
-		MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
-
-	if ((ndp_ind->role == NDP_ROLE_INITIATOR) ||
-	   ((NDP_ROLE_RESPONDER == ndp_ind->role) &&
-	   (NDP_ACCEPT_POLICY_ALL == ndp_ind->policy))) {
-		status = lim_add_ndi_peer(mac_ctx, ndp_ind->vdev_id,
-				ndp_ind->peer_mac_addr);
-		if (QDF_STATUS_SUCCESS != status) {
-			pe_err("Couldn't add ndi peer, ndp_role: %d",
-				ndp_ind->role);
-			goto ndp_indication_failed;
-		}
-	}
-	if (NDP_ROLE_RESPONDER == ndp_ind->role)
-		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_INDICATION,
-			ndp_ind, sizeof(*ndp_ind), 0);
-	/*
-	 * With NDP indication if peer does not exists already add_sta is
-	 * executed resulting in new peer else no action is taken. Note that
-	 * new_peer event is not necessary event and should not be sent if case
-	 * anything fails in this function. Rather eWNI_SME_NDP_CONFIRM_IND is
-	 * used to indicate success of final operation and abscence of it can be
-	 * used by service layer to identify failure.
-	 */
-ndp_indication_failed:
-	/*
-	 * Free config if failure or for NDP_ROLE_INITIATOR role
-	 * As for success responder case this info is sent till HDD
-	 * and will be freed in sme.
-	 */
-	if (status != QDF_STATUS_SUCCESS ||
-			NDP_ROLE_INITIATOR == ndp_ind->role) {
-		qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
-		qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
-		ndp_ind->ndp_config.ndp_cfg = NULL;
-		ndp_ind->ndp_info.ndp_app_info = NULL;
-	}
-	return status;
-}
-
-/**
- * lim_ndp_responder_rsp_handler() - Handler for NDP responder rsp
- * @mac_ctx: handle to mac structure
- * @ndp_rsp: pointer to rsp message
- * @bodyval: value
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-static QDF_STATUS lim_ndp_responder_rsp_handler(tpAniSirGlobal mac_ctx,
-	struct ndp_responder_rsp_event *rsp_ind, uint32_t bodyval)
-{
-	QDF_STATUS ret_val = QDF_STATUS_SUCCESS;
-
-	if ((NULL == rsp_ind) || bodyval) {
-		pe_err("rsp_ind is NULL or bodyval %d", bodyval);
-		/* msg to unblock SME, but not send rsp to HDD */
-		bodyval = true;
-		ret_val = QDF_STATUS_E_INVAL;
-		goto responder_rsp;
-	}
-
-	if (QDF_STATUS_SUCCESS == rsp_ind->status &&
-		rsp_ind->create_peer == true) {
-		ret_val = lim_add_ndi_peer(mac_ctx, rsp_ind->vdev_id,
-				rsp_ind->peer_mac_addr);
-		if (QDF_STATUS_SUCCESS != ret_val) {
-			pe_err("Couldn't add ndi peer");
-			rsp_ind->status = QDF_STATUS_E_FAILURE;
-		}
-	}
-
-responder_rsp:
-	/* send eWNI_SME_NDP_RESPONDER_RSP */
-	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_RESPONDER_RSP,
-				bodyval ? NULL : rsp_ind,
-				bodyval ? 0 : sizeof(*rsp_ind), bodyval);
-	return ret_val;
-}
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 
 /**
  * lim_ndp_delete_peer_by_addr() - Delete NAN data peer, given addr and vdev_id
@@ -424,43 +270,6 @@ void lim_ndp_delete_peers_converged(struct peer_nan_datapath_map *ndp_map,
 			     num_peers);
 }
 
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * lim_ndp_end_indication_handler() - Handler for NDP end indication
- * @mac_ctx: handle to mac context
- * @ind_buf: pointer to indication buffer
- *
- * It deletes peers from ndp_map. Response of that operation goes
- * to LIM and HDD. But peer information does not go to service layer.
- * ndp_id_list is sent to service layer; it is not interpreted by the
- * driver.
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-static QDF_STATUS lim_ndp_end_indication_handler(tpAniSirGlobal mac_ctx,
-					uint32_t *ind_buf)
-{
-
-	struct ndp_end_indication_event *ndp_event_buf =
-		(struct ndp_end_indication_event *)ind_buf;
-	int buf_size;
-
-	if (!ind_buf) {
-		pe_err("NDP end indication buffer is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-	lim_ndp_delete_peers(mac_ctx, ndp_event_buf->ndp_map,
-			ndp_event_buf->num_ndp_ids);
-
-	buf_size = sizeof(*ndp_event_buf) + ndp_event_buf->num_ndp_ids *
-			sizeof(ndp_event_buf->ndp_map[0]);
-	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_IND,
-		ndp_event_buf, buf_size, false);
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif
-
 /**
  * lim_process_ndi_del_sta_rsp() - Handle WDA_DELETE_STA_RSP in eLIM_NDI_ROLE
  * @mac_ctx: Global MAC context
@@ -473,10 +282,12 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 				 struct scheduler_msg *lim_msg,
 				 tpPESession pe_session)
 {
-	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
 	tpDphHashNode sta_ds;
+	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
 	tSirResultCodes status = eSIR_SME_SUCCESS;
-	struct sme_ndp_peer_ind peer_ind;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
+	struct nan_datapath_peer_ind peer_ind;
 
 	if (!del_sta_params) {
 		pe_err("del_sta_params is NULL");
@@ -510,276 +321,23 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	 * Copy peer info in del peer indication before
 	 * lim_delete_dph_hash_entry is called as this will be lost.
 	 */
-	peer_ind.msg_len = sizeof(peer_ind);
-	peer_ind.msg_type = eWNI_SME_NDP_PEER_DEPARTED_IND;
 	peer_ind.session_id = pe_session->smeSessionId;
 	peer_ind.sta_id = sta_ds->staIndex;
 	qdf_mem_copy(&peer_ind.peer_mac_addr.bytes,
 		sta_ds->staAddr, sizeof(tSirMacAddr));
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+					pe_session->smeSessionId, WLAN_NAN_ID);
 
 	lim_release_peer_idx(mac_ctx, sta_ds->assocId, pe_session);
 	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr, sta_ds->assocId,
 			pe_session);
 	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
-	lim_send_peer_departed(mac_ctx, &peer_ind);
+	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, &peer_ind);
 
 skip_event:
 	qdf_mem_free(del_sta_params);
 	lim_msg->bodyptr = NULL;
 }
-
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * lim_handle_ndp_event_message() - Handler for NDP events/RSP from WMA
- * @mac_ctx: handle to mac structure
- * @msg: pointer to message
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	switch (msg->type) {
-	case SIR_HAL_NDP_CONFIRM: {
-		struct ndp_confirm_event *ndp_confirm = msg->bodyptr;
-
-		if (ndp_confirm->rsp_code != NDP_RESPONSE_ACCEPT &&
-			ndp_confirm->num_active_ndps_on_peer == 0) {
-			/*
-			 * This peer was created at ndp_indication but
-			 * ndp_confirm failed, so it needs to be deleted
-			 */
-			pe_err("NDP confirm with reject and no active ndp sessions. deleting peer: "MAC_ADDRESS_STR" on vdev_id: %d",
-				MAC_ADDR_ARRAY(
-					ndp_confirm->peer_ndi_mac_addr.bytes),
-				ndp_confirm->vdev_id);
-			lim_ndp_delete_peer_by_addr(mac_ctx,
-						ndp_confirm->vdev_id,
-						ndp_confirm->peer_ndi_mac_addr);
-		}
-		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_CONFIRM_IND,
-				msg->bodyptr, sizeof(*ndp_confirm),
-				msg->bodyval);
-		break;
-	}
-	case SIR_HAL_NDP_INITIATOR_RSP:
-		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_INITIATOR_RSP,
-				msg->bodyptr, sizeof(struct ndp_initiator_rsp),
-				msg->bodyval);
-		break;
-	case SIR_HAL_NDP_INDICATION: {
-		struct ndp_indication_event *ndp_ind = msg->bodyptr;
-
-		status = lim_handle_ndp_indication_event(mac_ctx, ndp_ind);
-		break;
-	}
-	case SIR_HAL_NDP_RESPONDER_RSP:
-		status = lim_ndp_responder_rsp_handler(mac_ctx, msg->bodyptr,
-					msg->bodyval);
-		break;
-	case SIR_HAL_NDP_END_RSP: {
-		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP,
-					  msg->bodyptr,
-					  sizeof(struct ndp_end_rsp_event),
-					  msg->bodyval);
-		break;
-	}
-	case SIR_HAL_NDP_END_IND:
-		status = lim_ndp_end_indication_handler(mac_ctx, msg->bodyptr);
-		break;
-	default:
-		pe_err("Unhandled NDP event: %d", msg->type);
-		status = QDF_STATUS_E_NOSUPPORT;
-		break;
-	}
-	/*
-	 * No need to free body pointer, since the function is serving purpose
-	 * of callback and bodyptr if allocated is freed by caller itself
-	 */
-	return status;
-}
-
-/**
- * lim_process_sme_ndp_initiator_req() - Handler for eWNI_SME_NDP_INITIATOR_REQ
- * from SME.
- * @mac_ctx: handle to mac structure
- * @ndp_msg: ndp initiator request msg
- *
- * Return: Status of operation
- */
-static QDF_STATUS lim_process_sme_ndp_initiator_req(tpAniSirGlobal mac_ctx,
-						    void *ndp_msg)
-{
-	struct scheduler_msg msg = {0};
-	QDF_STATUS status;
-
-	struct sir_sme_ndp_initiator_req *sme_req =
-		(struct sir_sme_ndp_initiator_req *)ndp_msg;
-	struct ndp_initiator_req *wma_req;
-
-	if (NULL == ndp_msg) {
-		pe_err("invalid ndp_req");
-		status = QDF_STATUS_E_INVAL;
-		goto send_initiator_rsp;
-	}
-	wma_req = qdf_mem_malloc(sizeof(*wma_req));
-	if (wma_req == NULL) {
-		pe_err("malloc failed");
-		status = QDF_STATUS_E_NOMEM;
-		goto send_initiator_rsp;
-	}
-
-	qdf_mem_copy(wma_req, &sme_req->req, sizeof(*wma_req));
-	msg.type = SIR_HAL_NDP_INITIATOR_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = wma_req;
-	msg.bodyval = 0;
-
-	pe_debug("sending WDA_NDP_INITIATOR_REQ to WMA");
-	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
-
-	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg))
-		pe_err("wma_post_ctrl_msg failed");
-
-	return QDF_STATUS_SUCCESS;
-send_initiator_rsp:
-	/* msg to unblock SME, but not send rsp to HDD */
-	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_INITIATOR_RSP,
-				  NULL, 0, true);
-	return status;
-}
-
-/**
- * lim_process_sme_ndp_responder_req() - Handler for NDP responder req
- * @mac_ctx: handle to mac structure
- * @ndp_msg: pointer to message
- *
- * Return: QDF_STATUS_SUCCESS on success or failure code in case of failure
- */
-static QDF_STATUS lim_process_sme_ndp_responder_req(tpAniSirGlobal mac_ctx,
-	struct sir_sme_ndp_responder_req *lim_msg)
-{
-	struct scheduler_msg msg = {0};
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct ndp_responder_req *responder_req;
-
-	if (NULL == lim_msg) {
-		pe_err("ndp_msg is NULL");
-		status = QDF_STATUS_E_INVAL;
-		goto send_failure_rsp;
-	}
-	responder_req = qdf_mem_malloc(sizeof(*responder_req));
-	if (NULL == responder_req) {
-		pe_err("Unable to allocate memory for responder_req");
-		status = QDF_STATUS_E_NOMEM;
-		goto send_failure_rsp;
-	}
-	qdf_mem_copy(responder_req, &lim_msg->req, sizeof(*responder_req));
-	msg.type = SIR_HAL_NDP_RESPONDER_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = responder_req;
-	msg.bodyval = 0;
-
-	pe_debug("sending SIR_HAL_NDP_RESPONDER_REQ to WMA");
-	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
-
-	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg)) {
-		pe_err("wma_post_ctrl_msg failed");
-		status = QDF_STATUS_E_FAILURE;
-		qdf_mem_free(responder_req);
-		goto send_failure_rsp;
-	}
-	return status;
-send_failure_rsp:
-	/* msg to unblock SME, but not send rsp to HDD */
-	lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_RESPONDER_RSP,
-				NULL, 0, true);
-	return status;
-}
-
-/**
- * lim_process_sme_ndp_data_end_req() - Handler for eWNI_SME_NDP_END_REQ
- * from SME.
- * @mac_ctx: handle to mac context
- * @sme_msg: ndp data end request msg
- *
- * Return: Status of operation
- */
-static QDF_STATUS lim_process_sme_ndp_data_end_req(tpAniSirGlobal mac_ctx,
-					struct sir_sme_ndp_end_req *sme_msg)
-{
-	struct scheduler_msg msg = {0};
-	uint32_t len;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (NULL == sme_msg) {
-		pe_err("invalid ndp_req");
-		/* msg to unblock SME, but not send rsp to HDD */
-		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP, NULL,
-					  0, true);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	msg.type = SIR_HAL_NDP_END_REQ;
-	msg.reserved = 0;
-	len = sizeof(*sme_msg->req) + (sme_msg->req->num_ndp_instances *
-						 sizeof(uint32_t));
-	msg.bodyptr = qdf_mem_malloc(len);
-	if (NULL == msg.bodyptr) {
-		/* msg to unblock SME, but not send rsp to HDD */
-		lim_send_ndp_event_to_sme(mac_ctx, eWNI_SME_NDP_END_RSP, NULL,
-					  0, true);
-		return QDF_STATUS_E_NOMEM;
-	}
-	qdf_mem_copy(msg.bodyptr, sme_msg->req, len);
-	msg.bodyval = 0;
-
-	pe_debug("sending SIR_HAL_NDP_END_REQ to WMA");
-	MTRACE(mac_trace_msg_tx(mac_ctx, NO_SESSION, msg.type));
-
-	if (eSIR_SUCCESS != wma_post_ctrl_msg(mac_ctx, &msg)) {
-		pe_err("wma_post_ctrl_msg failed");
-		status = QDF_STATUS_E_FAILURE;
-	}
-
-	return status;
-}
-
-/**
- * lim_handle_ndp_request_message() - Handler for NDP req from SME
- * @mac_ctx: handle to mac structure
- * @msg: pointer to message
- *
- * Return: QDF_STATUS_SUCCESS on success; error number otherwise
- */
-QDF_STATUS lim_handle_ndp_request_message(tpAniSirGlobal mac_ctx,
-					  struct scheduler_msg *msg)
-{
-	QDF_STATUS status;
-
-	switch (msg->type) {
-	case eWNI_SME_NDP_END_REQ:
-		status = lim_process_sme_ndp_data_end_req(mac_ctx,
-							  msg->bodyptr);
-		break;
-	case eWNI_SME_NDP_INITIATOR_REQ:
-		status = lim_process_sme_ndp_initiator_req(mac_ctx,
-							   msg->bodyptr);
-		break;
-	case eWNI_SME_NDP_RESPONDER_REQ:
-		status = lim_process_sme_ndp_responder_req(mac_ctx,
-							 msg->bodyptr);
-		break;
-	default:
-		pe_err("Unhandled NDP request: %d", msg->type);
-		status = QDF_STATUS_E_NOSUPPORT;
-		break;
-	}
-	return status;
-}
-#endif
 
 /**
  * lim_process_ndi_mlm_add_bss_rsp() - Process ADD_BSS response for NDI
@@ -887,49 +445,6 @@ end:
 	}
 }
 
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
-/**
- * lim_send_sme_ndp_add_sta_rsp() - prepares and send new peer ind to SME
- * @mac_ctx: handle to mac structure
- * @session: session pointer
- * @add_sta_rsp: add sta response struct
- *
- * Return: status of operation
- */
-static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
-					       tpPESession session,
-					       tAddStaParams *add_sta_rsp)
-{
-	struct scheduler_msg  mmh_msg = {0};
-	struct sme_ndp_peer_ind *new_peer_ind;
-
-	mmh_msg.type = eWNI_SME_NDP_NEW_PEER_IND;
-
-	if (NULL == add_sta_rsp) {
-		pe_err("Invalid add_sta_rsp");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
-	if (NULL == new_peer_ind) {
-		pe_err("Failed to allocate memory");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	/* this message is going to HDD, fill in sme session id */
-	new_peer_ind->session_id = add_sta_rsp->smesessionId;
-	new_peer_ind->msg_len = sizeof(struct sme_ndp_peer_ind);
-	new_peer_ind->msg_type = eWNI_SME_NDP_NEW_PEER_IND;
-	qdf_mem_copy(new_peer_ind->peer_mac_addr.bytes, add_sta_rsp->staMac,
-		     sizeof(tSirMacAddr));
-	new_peer_ind->sta_id = add_sta_rsp->staIdx;
-
-	mmh_msg.bodyptr = new_peer_ind;
-	mmh_msg.bodyval = 0;
-	lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
-	return QDF_STATUS_SUCCESS;
-}
-#else
 static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 						tpPESession session,
 						tAddStaParams *add_sta_rsp)
@@ -973,7 +488,6 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 	return QDF_STATUS_SUCCESS;
 }
-#endif
 
 /**
  * lim_ndp_add_sta_rsp() - handles add sta rsp for NDP from WMA

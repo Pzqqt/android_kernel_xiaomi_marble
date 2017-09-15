@@ -523,15 +523,6 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 		csr_roam_process_wm_status_change_command(mac_ctx,
 					sme_cmd);
 		break;
-	case eSmeCommandNdpInitiatorRequest:
-		status = csr_process_ndp_initiator_request(mac_ctx, sme_cmd);
-		break;
-	case eSmeCommandNdpResponderRequest:
-		status = csr_process_ndp_responder_request(mac_ctx, sme_cmd);
-		break;
-	case eSmeCommandNdpDataEndInitiatorRequest:
-		status = csr_process_ndp_data_end_request(mac_ctx, sme_cmd);
-		break;
 	case eSmeCommandScan:
 		sme_debug("Processing scan offload cmd");
 		qdf_mc_timer_start(&sme_cmd->u.scanCmd.csr_scan_timer,
@@ -2365,16 +2356,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		} else {
 			sme_err("Empty message for: %d", pMsg->type);
 		}
-		break;
-	case eWNI_SME_NDP_CONFIRM_IND:
-	case eWNI_SME_NDP_NEW_PEER_IND:
-	case eWNI_SME_NDP_INITIATOR_RSP:
-	case eWNI_SME_NDP_INDICATION:
-	case eWNI_SME_NDP_RESPONDER_RSP:
-	case eWNI_SME_NDP_END_RSP:
-	case eWNI_SME_NDP_END_IND:
-	case eWNI_SME_NDP_PEER_DEPARTED_IND:
-		sme_ndp_msg_processor(pMac, pMsg);
 		break;
 	case eWNI_SME_LOST_LINK_INFO_IND:
 		if (pMac->sme.lost_link_info_cb)

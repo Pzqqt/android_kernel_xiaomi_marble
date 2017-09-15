@@ -654,9 +654,6 @@ struct hdd_station_ctx {
 	int sta_debug_state;
 	uint8_t broadcast_staid;
 	struct hdd_mon_set_ch_info ch_info;
-#if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
-	struct nan_datapath_ctx ndp_ctx;
-#endif
 	bool ap_supports_immediate_power_save;
 };
 
@@ -1243,10 +1240,6 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->session.ap.sap_context)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
-#ifndef WLAN_FEATURE_NAN_CONVERGENCE
-#define WLAN_HDD_GET_NDP_CTX_PTR(adapter) \
-		(&(adapter)->session.station.ndp_ctx)
-#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) ((hdd_ctx)->nan_datapath_enabled)
 #else
 /* WLAN_HDD_GET_NDP_CTX_PTR and WLAN_HDD_GET_NDP_WEXT_STATE_PTR are not defined
