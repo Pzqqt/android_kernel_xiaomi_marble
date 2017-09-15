@@ -1036,10 +1036,6 @@ QDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,
 			       ePhyChanBondState cbMode, bool obssEnabled);
 #endif
 #ifndef NAPIER_SCAN
-QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac,
-		tSmeCmd *command);
-QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
-		tSmeCmd *command);
 void csr_saved_scan_cmd_free_fields(tpAniSirGlobal mac_ctx,
 				    tSmeCmd *saved_scan_cmd);
 #else

@@ -160,9 +160,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	enum sir_conn_update_reason reason;
 	struct csr_roam_session *session;
 	uint32_t session_id;
-#ifndef NAPIER_SCAN
-	tSmeCmd *saved_cmd;
-#endif
+
 	param = (struct sir_set_hw_mode_resp *)msg;
 	if (!param) {
 		sme_err("HW mode resp param is NULL");
@@ -224,40 +222,6 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 		 * needs to be handled after the response of set hw
 		 * mode
 		 */
-#ifndef NAPIER_SCAN
-		saved_cmd = (tSmeCmd *)mac->sme.saved_scan_cmd;
-		if (!saved_cmd) {
-			sme_err("saved cmd is NULL, Check this");
-			goto end;
-		}
-		if (param->status == SET_HW_MODE_STATUS_OK) {
-			sme_err("search for ssid success");
-			csr_scan_handle_search_for_ssid(mac,
-					saved_cmd);
-		} else {
-			sme_debug("search for ssid failure");
-			csr_scan_handle_search_for_ssid_failure(mac,
-					saved_cmd);
-		}
-		if (saved_cmd->u.roamCmd.pRoamBssEntry)
-			qdf_mem_free(
-					saved_cmd->u.roamCmd.pRoamBssEntry);
-		if (saved_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList)
-			qdf_mem_free(saved_cmd->u.scanCmd.u.
-					scanRequest.SSIDs.SSIDList);
-		if (saved_cmd->u.scanCmd.pToRoamProfile) {
-			csr_release_profile(mac, saved_cmd->
-					    u.scanCmd.pToRoamProfile);
-			qdf_mem_free(saved_cmd->u.scanCmd.pToRoamProfile);
-			saved_cmd->u.scanCmd.pToRoamProfile = NULL;
-		}
-		if (saved_cmd) {
-			csr_saved_scan_cmd_free_fields(mac, saved_cmd);
-			qdf_mem_free(saved_cmd);
-			saved_cmd = NULL;
-			mac->sme.saved_scan_cmd = NULL;
-		}
-#else
 		if (param->status == SET_HW_MODE_STATUS_OK) {
 			sme_debug("search for ssid success");
 			csr_scan_handle_search_for_ssid(mac,
@@ -268,7 +232,6 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 					session_id);
 		}
 		csr_saved_scan_cmd_free_fields(mac, session);
-#endif
 	}
 
 end:
