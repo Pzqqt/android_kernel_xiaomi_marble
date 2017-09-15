@@ -614,3 +614,24 @@ enum cds_band_type cds_chan_to_band(uint32_t chan)
 
 	return CDS_BAND_5GHZ;
 }
+
+void cds_copy_hlp_info(struct qdf_mac_addr *input_dst_mac,
+		       struct qdf_mac_addr *input_src_mac,
+		       uint16_t input_hlp_data_len,
+		       uint8_t *input_hlp_data,
+		       struct qdf_mac_addr *output_dst_mac,
+		       struct qdf_mac_addr *output_src_mac,
+		       uint16_t *output_hlp_data_len,
+		       uint8_t *output_hlp_data)
+{
+	if (!input_hlp_data_len) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Input HLP data len zero\n");
+		return;
+	}
+
+	qdf_copy_macaddr(output_dst_mac, input_dst_mac);
+	qdf_copy_macaddr(output_src_mac, input_src_mac);
+	*output_hlp_data_len = input_hlp_data_len;
+	qdf_mem_copy(output_hlp_data, input_hlp_data, input_hlp_data_len);
+}

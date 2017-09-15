@@ -418,6 +418,10 @@ typedef struct sSirAssocRsp {
 	tDot11fIEfils_session fils_session;
 	tDot11fIEfils_key_confirmation fils_key_auth;
 	tDot11fIEfils_kde fils_kde;
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
 #endif
 } tSirAssocRsp, *tpSirAssocRsp;
 

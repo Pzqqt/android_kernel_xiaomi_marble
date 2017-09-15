@@ -9364,6 +9364,7 @@ typedef struct sDot11fAssocResponse{
 	tDot11fIEfils_public_key              fils_public_key;
 	tDot11fIEfils_key_confirmation        fils_key_confirmation;
 	tDot11fIEfils_hlp_container           fils_hlp_container;
+	tDot11fIEfragment_ie                  fragment_ie;
 	tDot11fIEfils_kde                     fils_kde;
 	tDot11fIEvendor_vht_ie                vendor_vht_ie;
 	tDot11fIEQCN_IE                       QCN_IE;

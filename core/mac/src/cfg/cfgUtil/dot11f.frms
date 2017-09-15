@@ -3640,6 +3640,7 @@ FRAME AssocResponse                       // 7.2.3.5
     OPTIE  fils_public_key;
     OPTIE  fils_key_confirmation;
     OPTIE  fils_hlp_container;
+    OPTIE  fragment_ie;
     OPTIE  fils_kde;
     OPTIE  vendor_vht_ie;
     OPTIE  QCN_IE;
