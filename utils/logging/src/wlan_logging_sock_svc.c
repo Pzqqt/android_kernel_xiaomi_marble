@@ -31,7 +31,7 @@
 ******************************************************************************/
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-#include <vmalloc.h>
+#include <linux/vmalloc.h>
 #ifdef CONFIG_MCL
 #include <cds_api.h>
 #include <host_diag_core_event.h>
@@ -43,7 +43,7 @@
 #include "pktlog_ac.h"
 #endif
 #include <wlan_logging_sock_svc.h>
-#include <kthread.h>
+#include <linux/kthread.h>
 #include <qdf_time.h>
 #include <qdf_trace.h>
 #include <qdf_mc_timer.h>

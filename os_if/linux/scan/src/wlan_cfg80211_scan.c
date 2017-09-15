@@ -1458,8 +1458,8 @@ int wlan_vendor_abort_scan(struct wlan_objmgr_pdev *pdev,
 	uint8_t pdev_id;
 
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
-		      data_len, scan_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data,
+				    data_len, scan_policy)) {
 		cfg80211_err("Invalid ATTR");
 		return ret;
 	}

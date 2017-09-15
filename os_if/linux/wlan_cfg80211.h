@@ -64,6 +64,26 @@
 	.doit = NULL							\
 },
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
+					  int maxtype,
+					  const struct nlattr *head,
+					  int len,
+					  const struct nla_policy *policy)
+{
+	return nla_parse(tb, maxtype, head, len, policy);
+}
+#else
+static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
+					  int maxtype,
+					  const struct nlattr *head,
+					  int len,
+					  const struct nla_policy *policy)
+{
+	return nla_parse(tb, maxtype, head, len, policy, NULL);
+}
+#endif
+
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int
 wlan_cfg80211_nla_put_u64(struct sk_buff *skb, int attrtype, u64 value)

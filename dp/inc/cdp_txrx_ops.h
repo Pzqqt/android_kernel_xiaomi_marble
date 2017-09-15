@@ -33,7 +33,7 @@
 #include <cdp_txrx_mon_struct.h>
 #include "wlan_objmgr_psoc_obj.h"
 #ifdef IPA_OFFLOAD
-#include <ipa.h>
+#include <linux/ipa.h>
 #endif
 
 /******************************************************************************

@@ -2011,4 +2011,78 @@ bool policy_mgr_disallow_mcc(struct wlan_objmgr_psoc *psoc,
  */
 uint8_t policy_mgr_mode_specific_get_channel(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
+
+/**
+ * policy_mgr_enable_disable_sap_mandatory_chan_list() - Update the value of
+ * enable_sap_mandatory_chan_list
+ * @psoc: Pointer to soc
+ * @val: value of enable_sap_mandatory_chan_list
+ *
+ * Update the value of enable_sap_mandatory_chan_list
+ *
+ * Return: void
+ */
+void policy_mgr_enable_disable_sap_mandatory_chan_list(
+		struct wlan_objmgr_psoc *psoc, bool val);
+
+/**
+ * policy_mgr_add_sap_mandatory_chan() - Add chan to SAP mandatory channel
+ * list
+ * @psoc: Pointer to soc
+ * @chan: Channel to be added
+ *
+ * Add chan to SAP mandatory channel list
+ *
+ * Return: None
+ */
+void policy_mgr_add_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+		uint8_t chan);
+
+/**
+ * policy_mgr_is_sap_mandatory_chan_list_enabled() - Return the SAP mandatory
+ * channel list enabled status
+ * @psoc: Pointer to soc
+ *
+ * Get the SAP mandatory channel list enabled status
+ *
+ * Return: Enable or Disable
+ */
+bool policy_mgr_is_sap_mandatory_chan_list_enabled(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_get_sap_mandatory_chan_list_len() - Return the SAP mandatory
+ * channel list len
+ * @psoc: Pointer to soc
+ *
+ * Get the SAP mandatory channel list len
+ *
+ * Return: Channel list length
+ */
+uint32_t policy_mgr_get_sap_mandatory_chan_list_len(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_init_sap_mandatory_2g_chan() - Init 2.4G SAP mandatory channel
+ * list
+ * @psoc: Pointer to soc
+ *
+ * Initialize the 2.4G SAP mandatory channels
+ *
+ * Return: None
+ */
+void  policy_mgr_init_sap_mandatory_2g_chan(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_remove_sap_mandatory_chan() - Remove channel from SAP mandatory
+ * channel list
+ * @psoc: Pointer to soc
+ * @chan: channel to be removed from mandatory channel list
+ *
+ * Remove channel from SAP mandatory channel list
+ *
+ * Return: None
+ */
+void policy_mgr_remove_sap_mandatory_chan(struct wlan_objmgr_psoc *psoc,
+		uint8_t chan);
 #endif /* __WLAN_POLICY_MGR_API_H */

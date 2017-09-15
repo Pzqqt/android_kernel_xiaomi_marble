@@ -980,7 +980,7 @@ typedef struct {
 
 #define WMI_HOST_MAX_NUM_SS		8
 #define WMI_HOST_MAX_HECAP_PHY_SIZE	3
-#define WMI_HOST_MAX_HE_RATE_SET	1
+#define WMI_HOST_MAX_HE_RATE_SET	3
 /**
  * struct wmi_host_ppe_threshold -PPE threshold
  * @numss_m1: NSS - 1

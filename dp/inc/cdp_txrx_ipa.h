@@ -30,7 +30,7 @@
  */
 #ifndef _CDP_TXRX_IPA_H_
 #define _CDP_TXRX_IPA_H_
-#include <ipa.h>
+#include <linux/ipa.h>
 #include <cdp_txrx_mob_def.h>
 #include "cdp_txrx_handle.h"
 
