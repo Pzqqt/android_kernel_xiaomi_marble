@@ -410,15 +410,15 @@ QDF_STATUS policy_mgr_reset_sap_mandatory_channels(
  * policy_mgr_get_mode_specific_conn_info() - Get active mode specific
  * channel and vdev id
  * @psoc: PSOC object information
- * @channel: Mode specific channel
- * @vdev_id: Mode specific vdev id
+ * @channel: Mode specific channel (list)
+ * @vdev_id: Mode specific vdev id (list)
  * @mode: Connection Mode
  *
  * Get active mode specific channel and vdev id
  *
- * Return: true for success, else false
+ * Return: number of connection found as per given mode
  */
-bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
+uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 				  uint8_t *channel, uint8_t *vdev_id,
 				  enum policy_mgr_con_mode mode);
 
