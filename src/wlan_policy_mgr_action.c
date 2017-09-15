@@ -597,12 +597,15 @@ static bool policy_mgr_is_restart_sap_allowed(
 	struct wlan_objmgr_psoc *psoc,
 	uint32_t mcc_to_scc_switch)
 {
+	uint32_t sta_ap_bit_mask = QDF_STA_MASK | QDF_SAP_MASK;
+	uint32_t sta_go_bit_mask = QDF_STA_MASK | QDF_P2P_GO_MASK;
+
 	if ((mcc_to_scc_switch == QDF_MCC_TO_SCC_SWITCH_DISABLE) ||
 		!policy_mgr_concurrent_open_sessions_running(psoc) ||
-		!((policy_mgr_get_concurrency_mode(psoc) ==
-			(QDF_STA_MASK | QDF_SAP_MASK)) ||
-		(policy_mgr_get_concurrency_mode(psoc) ==
-			(QDF_STA_MASK | QDF_P2P_GO_MASK)))) {
+		!(((policy_mgr_get_concurrency_mode(psoc) & sta_ap_bit_mask)
+			== sta_ap_bit_mask) ||
+		((policy_mgr_get_concurrency_mode(psoc) & sta_go_bit_mask)
+			== sta_go_bit_mask))) {
 		policy_mgr_err("MCC switch disabled or not concurrent STA/SAP, STA/GO");
 		return false;
 	}
@@ -653,10 +656,11 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	struct wlan_objmgr_psoc *psoc;
 	struct policy_mgr_psoc_priv_obj *pm_ctx = NULL;
 	struct sta_ap_intf_check_work_ctx *work_info = NULL;
-	uint32_t mcc_to_scc_switch;
+	uint32_t mcc_to_scc_switch, cc_count = 0, i;
 	QDF_STATUS status;
 	uint8_t channel, sec_ch;
-	uint8_t operating_channel, vdev_id;
+	uint8_t operating_channel[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 
 	work_info = (struct sta_ap_intf_check_work_ctx *) data;
 	if (!work_info) {
@@ -684,19 +688,18 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 	if (!policy_mgr_is_restart_sap_allowed(psoc, mcc_to_scc_switch))
 		goto end;
 
-	if (policy_mgr_get_mode_specific_conn_info(psoc,
-						   &operating_channel,
-						   &vdev_id,
-						   PM_SAP_MODE)) {
-		policy_mgr_debug("SAP operating at channel:%d",
-				 operating_channel);
-	} else if (policy_mgr_get_mode_specific_conn_info(psoc,
-							  &operating_channel,
-							  &vdev_id,
-							  PM_P2P_GO_MODE)) {
-		policy_mgr_debug("GO operating at channel:%d",
-				 operating_channel);
-	} else {
+	cc_count = policy_mgr_get_mode_specific_conn_info(psoc,
+					&operating_channel[cc_count],
+					&vdev_id[cc_count],
+					PM_SAP_MODE);
+	policy_mgr_debug("Number of concurrent SAP: %d", cc_count);
+	cc_count = cc_count + policy_mgr_get_mode_specific_conn_info(psoc,
+						&operating_channel[cc_count],
+						&vdev_id[cc_count],
+						PM_P2P_GO_MODE);
+	policy_mgr_debug("Number of beaconing entities (SAP + GO):%d",
+							cc_count);
+	if (!cc_count) {
 		policy_mgr_err("Could not retrieve SAP/GO operating channel&vdevid");
 		goto end;
 	}
@@ -705,16 +708,18 @@ void policy_mgr_check_sta_ap_concurrent_ch_intf(void *data)
 		policy_mgr_err("SAP restart get channel callback in NULL");
 		goto end;
 	}
-	status = pm_ctx->hdd_cbacks.
-		wlan_hdd_get_channel_for_sap_restart(psoc, vdev_id,
-			&channel, &sec_ch);
-	if (status != QDF_STATUS_SUCCESS) {
-		policy_mgr_err("Failed to switch SAP channel");
-		goto end;
+	for (i = 0; i < cc_count; i++) {
+		status = pm_ctx->hdd_cbacks.
+			wlan_hdd_get_channel_for_sap_restart(psoc,
+					vdev_id[i], &channel, &sec_ch);
+		if (status == QDF_STATUS_SUCCESS) {
+			policy_mgr_info("SAP restarts due to MCC->SCC switch, old chan :%d new chan: %d"
+					, operating_channel[i], channel);
+			break;
+		}
 	}
-
-	policy_mgr_info("SAP restarts due to MCC->SCC switch, old chan :%d new chan: %d",
-			operating_channel, channel);
+	if (status != QDF_STATUS_SUCCESS)
+		policy_mgr_err("Failed to switch SAP channel");
 end:
 	if (work_info) {
 		qdf_mem_free(work_info);
@@ -842,20 +847,12 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 		return;
 	}
 
-	if (policy_mgr_get_mode_specific_conn_info(psoc,
-						   &operating_channel,
-						   &vdev_id,
-						   PM_SAP_MODE)) {
-		policy_mgr_debug("SAP operating at channel:%d",
-				 operating_channel);
-	} else if (policy_mgr_get_mode_specific_conn_info(psoc,
-							  &operating_channel,
-							  &vdev_id,
-							  PM_P2P_GO_MODE)) {
-		policy_mgr_debug("GO operating at channel:%d",
-				 operating_channel);
+	if (policy_mgr_get_mode_specific_conn_info(psoc, &operating_channel,
+						&vdev_id, PM_STA_MODE)) {
+		policy_mgr_debug("STA operating Channel: %u",
+				operating_channel);
 	} else {
-		policy_mgr_err("Could not get SAP/GO operating channel&vdevid");
+		policy_mgr_err("Could not get STA operating channel&vdevid");
 		return;
 	}
 
@@ -871,8 +868,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
 	}
 
 	if ((mcc_to_scc_switch != QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
-		policy_mgr_valid_sta_channel_check(psoc,
-					 operating_channel)
+		policy_mgr_valid_sta_channel_check(psoc, operating_channel)
 		&& !pm_ctx->sta_ap_intf_check_work_info) {
 		struct sta_ap_intf_check_work_ctx *work_info;
 		work_info = qdf_mem_malloc(
