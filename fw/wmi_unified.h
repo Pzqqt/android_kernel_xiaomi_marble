@@ -9721,6 +9721,227 @@ typedef struct {
 /** looking for a PMF enabled AP */
 #define WMI_AP_PROFILE_FLAG_PMF    0x4
 
+/* the value used in wmi_roam_cnd_scoring_param->disable_bitmap */
+#define WLAN_ROAM_SCORING_RSSI_DISABLE                  0x00000001
+#define WLAN_ROAM_SCORING_HT_DISABLE                    0x00000002
+#define WLAN_ROAM_SCORING_VHT_DISABLE                   0x00000004
+#define WLAN_ROAM_SCORING_BW_DISABLE                    0x00000008
+#define WLAN_ROAM_SCORING_BAND_DISABLE                  0x00000010
+#define WLAN_ROAM_SCORING_NSS_DISABLE                   0x00000020
+#define WLAN_ROAM_SCORING_CHAN_CONGESTION_DISABLE       0x00000040
+#define WLAN_ROAM_SCORING_BEAMFORMING_DISABLE           0x00000080
+#define WLAN_ROAM_SCORING_PCL_DISABLE                   0x00000100
+#define WLAN_ROAM_SCORING_HE_DISABLE                    0x00000200
+#define WLAN_ROAM_SCORING_OCE_WAN_DISABLE               0x00000400
+#define WLAN_ROAM_SCORING_DISABLE_ALL                   0xFFFFFFFF
+#define WLAN_ROAM_SCORING_DEFAULT_PARAM_ALLOW           0x0
+
+#define WLAN_ROAM_MAX_SELECTION_SCORE                   10000
+
+#define WLAN_ROAM_SCORE_20MHZ_BW_INDEX                  0
+#define WLAN_ROAM_SCORE_40MHZ_BW_INDEX                  1
+#define WLAN_ROAM_SCORE_80MHZ_BW_INDEX                  2
+#define WLAN_ROAM_SCORE_160MHZ_BW_INDEX                 3
+#define WLAN_ROAM_SCORE_MAX_BW_INDEX                    4
+#define WMI_ROAM_GET_BW_SCORE_PERCENTAGE(value32, bw_index)                   WMI_GET_BITS(value32, (8 * (bw_index)), 8)
+#define WMI_ROAM_SET_BW_SCORE_PERCENTAGE(value32, score_pcnt, bw_index)       WMI_SET_BITS(value32, (8 * (bw_index)), 8, score_pcnt)
+
+#define WLAN_ROAM_SCORE_NSS_1x1_INDEX                   0
+#define WLAN_ROAM_SCORE_NSS_2x2_INDEX                   1
+#define WLAN_ROAM_SCORE_NSS_3x3_INDEX                   2
+#define WLAN_ROAM_SCORE_NSS_4x4_INDEX                   3
+#define WLAN_ROAM_SCORE_MAX_NSS_INDEX                   4
+#define WMI_ROAM_GET_NSS_SCORE_PERCENTAGE(value32, nss_index)                 WMI_GET_BITS(value32, (8 * (nss_index)), 8)
+#define WMI_ROAM_SET_NSS_SCORE_PERCENTAGE(value32, score_pcnt, nss_index)     WMI_SET_BITS(value32, (8 * (nss_index)), 8, score_pcnt)
+
+#define WLAN_ROAM_SCORE_BAND_2G_INDEX                   0
+#define WLAN_ROAM_SCORE_BAND_5G_INDEX                   1
+/* 2 and 3 are reserved */
+#define WLAN_ROAM_SCORE_MAX_BAND_INDEX                  4
+#define WMI_ROAM_GET_BAND_SCORE_PERCENTAGE(value32, band_index)                 WMI_GET_BITS(value32, (8 * (band_index)), 8)
+#define WMI_ROAM_SET_BAND_SCORE_PERCENTAGE(value32, score_pcnt, band_index)     WMI_SET_BITS(value32, (8 * (band_index)), 8, score_pcnt)
+
+#define WLAN_ROAM_SCORE_MAX_CHAN_CONGESTION_SLOT        16
+#define WLAN_ROAM_SCORE_DEFAULT_CONGESTION_SLOT         0
+
+#define WLAN_ROAM_SCORE_MAX_OCE_WAN_SLOT                16
+#define WLAN_ROAM_SCORE_DEFAULT_OCE_WAN_SLOT            0
+
+/**
+    best_rssi_threshold: Roamable AP RSSI equal or better than this threshold, full rssi score 100. Units in dBm.
+    good_rssi_threshold: Below this threshold, scoring linear percentage between rssi_good_pcnt and 100. Units in dBm.
+    bad_rssi_threshold:  Between good and bad rssi threshold, scoring linear percentage between rssi_bad_pcnt and rssi_good_pcnt. Units in dBm.
+    good_rssi_pcnt: Used to assigned scoring percentage of each slot between best to good rssi threshold. Units in percentage.
+    bad_rssi_pcnt: Used to assigned scoring percentage of each slot between good to bad rssi threshold. Units in percentage.
+    good_bucket_size : bucket size of slot in good zone.  Units in dB.
+    bad_bucket_size : bucket size of slot in bad zone. Units in dB.
+    rssi_pref_5g_rssi_thresh: Below rssi threshold, 5G AP have given preference of band percentage. Units in dBm.
+*/
+/**
+    The graph below explains how RSSI scoring percentage is calculated
+    as the RSSI improves.  In the graph, the derived parameters good_buckets
+    and bad_buckets are used.  These derived parameters are related to the
+    specified parameters as follows:
+        good_buckets =
+            (best_rssi_threshold - good_rssi_threshold) / good_bucket_size
+        bad_buckets =
+            (good_rssi_threshold - bad_rssi_threshold) / bad_bucket_size
+
+      |     (x0,y0) (x0 = best_rssi, y0 = 100)
+p 100 |-------o
+e     |       |<--------- (100 - good_rssi_pct)/good_buckets
+r     |       |___  ,---- good_bucket_size
+c     |           | |
+e     |           |_V_
+n     |               |
+t     |               |___o (x1,y1) (x1 = good_rssi, y1 = good_rssi_pcnt)
+   80 |                   |
+%     |                   |<------ (good_rssi_pcnt - bad_rssi_pcnt)/bad_buckets
+      |                   |_____
+      |                         |  ,-- bad_bucket_size
+      |                         |  |
+      |                         |__v__
+      |                               |
+      |                               |
+   40 |                               o------------
+      |                             (x2,y2) (x2 = bad_rssi, y2 = bad_rssi_pcnt)
+      +------o------------o-----------o------------->
+            -50         -70          -80          rssi dBm
+
+| excellent  |  good      | bad       | poor
+| zone       |  zone      | zone      | zone
+             V            V           V
+        BEST_THRES   GOOD_THRES     BAD_THRES
+ */
+typedef struct {
+    A_INT32  best_rssi_threshold;
+    A_INT32  good_rssi_threshold;
+    A_INT32  bad_rssi_threshold;
+    A_UINT32 good_rssi_pcnt;
+    A_UINT32 bad_rssi_pcnt;
+    A_UINT32 good_bucket_size;
+    A_UINT32 bad_bucket_size;
+    A_INT32  rssi_pref_5g_rssi_thresh;
+} wmi_roam_cnd_rssi_scoring;
+
+/**
+    Use macro WMI_ROAM_CND_GET/SET_BW_SCORE_PERCENTAGE to get and set the value respectively.
+    BITS 0-7   :- It contains scoring percentage of 20MHz   BW
+    BITS 8-15  :- It contains scoring percentage of 40MHz   BW
+    BITS 16-23 :- It contains scoring percentage of 80MHz   BW
+    BITS 24-31 :- It contains scoring percentage of 1600MHz BW
+
+    The value of each index must be 0-100
+ */
+typedef struct {
+    A_UINT32 score_pcnt;
+} wmi_roam_cnd_bw_scoring;
+
+/**
+    Use macro WMI_ROAM_CND_GET/SET_BAND_SCORE_PERCENTAGE to get and set the value respectively.
+    BITS 0-7   :- It contains scoring percentage of 2G
+    BITS 8-15  :- It contains scoring percentage of 5G
+    BITS 16-23 :- reserved
+    BITS 24-31 :- reserved
+
+    The value of each index must be 0-100
+ */
+typedef struct {
+    A_UINT32 score_pcnt;
+} wmi_roam_cnd_band_scoring;
+
+/**
+    Use macro WMI_ROAM_CND_GET/SET_NSS_SCORE_PERCENTAGE to get and set the value respectively.
+        BITS 0-7   :- It contains scoring percentage of 1x1
+        BITS 8-15  :- It contains scoring percentage of 2x2
+        BITS 16-23 :- It contains scoring percentage of 3x3
+        BITS 24-31 :- It contains scoring percentage of 4x4
+
+    The value of each index must be 0-100
+ */
+typedef struct {
+    A_UINT32 score_pcnt;
+} wmi_roam_cnd_nss_scoring;
+
+/**
+    score_pcnt: Contains roam score percentage of each slot of respective channel_congestion_pcnt.It is also used same BITS for slot(0-3)
+                BITS 0-7   :- the scoring pcnt when AP is not advertise QBSS/ESP info
+                BITS 8-15 :-  SLOT_1
+                BITS 16-23 :- SLOT_2
+                BITS 24-31 :- SLOT_3
+                BITS 32-      ...
+
+    num_slot will equally divide 100. e.g, if num_slot = 4
+    slot 0 = 0-25%, slot 1 = 26-50% slot 2 = 51-75%, slot 3 = 76-100%
+*/
+typedef struct {
+    A_UINT32 num_slot; /* max 15 */
+    A_UINT32 score_pcnt3_to_0;
+    A_UINT32 score_pcnt7_to_4;
+    A_UINT32 score_pcnt11_to_8;
+    A_UINT32 score_pcnt15_to_12;
+} wmi_roam_cnd_esp_qbss_scoring;
+
+/**
+    score_pcnt: Contains roam score percentage of each slot of respective channel_congestion_pcnt.It is also used same BITS for slot(0-3)
+                BITS 0-7   :- the scoring pcnt when AP is not advertise QBSS/ESP info
+                BITS 8-15 :-  SLOT_1
+                BITS 16-23 :- SLOT_2
+                BITS 24-31 :- SLOT_3
+                BITS 32-      ...
+
+    num_slot will equally divide 100. e.g, if num_slot = 4
+    slot 0 = 0-25%, slot 1 = 26-50% slot 2 = 51-75%, slot 3 = 76-100%
+*/
+typedef struct {
+    A_UINT32 num_slot; /* max 15  */
+    A_UINT32 score_pcnt3_to_0;
+    A_UINT32 score_pcnt7_to_4;
+    A_UINT32 score_pcnt11_to_8;
+    A_UINT32 score_pcnt15_to_12;
+} wmi_roam_cnd_oce_wan_scoring;
+
+/**
+    disable_bitmap :- Each bit will be either allow(0)/disallow(1) to considered the roam score param.
+    rssi_weightage_pcnt :- RSSI weightage out of total score in percentage
+    ht_weightage_pcnt :- HT weightage out of total score in percentage.
+    vht_weightage_pcnt :- VHT weightage out of total score in percentage.
+    he_weightage_pcnt :- 11ax weightage out of total score in percentage.
+    bw_weightage_pcnt :- Bandwidth weightage out of total score in percentage.
+    band_weightage_pcnt :- Band(2G/5G) weightage out of total score in percentage.
+    nss_weightage_pcnt:- NSS(1x1 / 2x2) weightage out of total score in percentage.
+    esp_qbss_weightage_pcnt: ESP/QBSS weightage out of total score in percentage.
+    beamforming_weightage_pcnt :- Beamforming weightage out of total score in percentage.
+    pcl_weightage_pcnt :- PCL weightage out of total score in percentage.
+    oce_wan_weightage_pcnt :- OCE WAN metrics weightage out of total score in percentage.
+    rssi_scoring :- RSSI scoring information.
+    bw_scoring :- channel BW scoring percentage information.
+    band_scoring : - band scording percentage information.
+    nss_scoring :- NSS scoring percentage information.
+    esp_qbss_scoring :- ESP/QBSS scoring percentage information
+    oce_wan_scoring : OCE WAN metrics percentage information
+*/
+typedef struct {
+    A_UINT32 tlv_header;     /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_cnd_scoring_param */
+    A_UINT32 disable_bitmap;
+    A_INT32 rssi_weightage_pcnt;
+    A_INT32 ht_weightage_pcnt;
+    A_INT32 vht_weightage_pcnt;
+    A_INT32 he_weightage_pcnt;
+    A_INT32 bw_weightage_pcnt;
+    A_INT32 band_weightage_pcnt;
+    A_INT32 nss_weightage_pcnt;
+    A_INT32 esp_qbss_weightage_pcnt;
+    A_INT32 beamforming_weightage_pcnt;
+    A_INT32 pcl_weightage_pcnt;
+    A_INT32 oce_wan_weightage_pcnt;
+    wmi_roam_cnd_rssi_scoring rssi_scoring;
+    wmi_roam_cnd_bw_scoring bw_scoring;
+    wmi_roam_cnd_band_scoring band_scoring;
+    wmi_roam_cnd_nss_scoring nss_scoring;
+    wmi_roam_cnd_esp_qbss_scoring esp_qbss_scoring;
+    wmi_roam_cnd_oce_wan_scoring oce_wan_scoring;
+} wmi_roam_cnd_scoring_param;
 
 /** To match an open AP, the rs_authmode should be set to WMI_AUTH_NONE
  *  and WMI_AP_PROFILE_FLAG_CRYPTO should be clear.
@@ -9879,6 +10100,7 @@ typedef struct {
 /*
  * Following this structure is the TLV:
  *     wmi_ap_profile ap_profile; <-- AP profile info
+ *     wmi_roam_cnd_scoring_param roam_cnd_scoring_param
  */
 } wmi_roam_ap_profile_fixed_param;
 

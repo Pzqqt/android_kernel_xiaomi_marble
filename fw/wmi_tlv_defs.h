@@ -857,6 +857,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_wlm_config_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_request_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_roam_cnd_scoring_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -2276,7 +2277,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_MCAST_GROUP_CMDID);
 /* Roam AP profile Cmd */
 #define WMITLV_TABLE_WMI_ROAM_AP_PROFILE(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_ap_profile_fixed_param, wmi_roam_ap_profile_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ap_profile, wmi_ap_profile, ap_profile, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_ap_profile, wmi_ap_profile, ap_profile, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_cnd_scoring_param, wmi_roam_cnd_scoring_param, roam_cnd_scoring_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_AP_PROFILE);
 
