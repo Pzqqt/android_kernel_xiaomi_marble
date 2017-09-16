@@ -390,8 +390,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 
 		if (mac_ctx->roam.configParam.is_force_1x1 &&
 			is_vendor_ap_1_present && (session_entry->nss == 2) &&
-			(mac_ctx->lteCoexAntShare == 0 ||
-				IS_5G_CH(session_entry->currentOperChannel))) {
+				IS_5G_CH(session_entry->currentOperChannel)) {
 			/* SET vdev param */
 			pe_debug("sending SMPS intolrent vdev_param");
 			wma_cli_set_command(session_entry->smeSessionId,

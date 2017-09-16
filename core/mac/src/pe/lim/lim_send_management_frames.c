@@ -1238,20 +1238,8 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			populate_dot11f_vht_operation(mac_ctx, pe_session,
 					&frm.VHTOperation);
 			is_vht = true;
-		} else {
-			/*
-			 * 2G-AS platform: SAP associates with HT (11n)clients
-			 * as 2x1 in 2G and 2X2 in 5G
-			 * Non-2G-AS platform: SAP associates with HT (11n)
-			 * clients as 2X2 in 2G and 5G
-			 * 5G-AS: Don’t care
-			 */
-			if (!policy_mgr_is_hw_dbs_2x2_capable(mac_ctx->psoc) &&
-				frm.HTCaps.present && mac_ctx->hw_dbs_capable &&
-				mac_ctx->lteCoexAntShare &&
-				IS_24G_CH(pe_session->currentOperChannel))
-				frm.HTCaps.supportedMCSSet[1] = 0;
 		}
+
 		if (pe_session->vhtCapability &&
 		    pe_session->vendor_vht_sap &&
 		    (assoc_req != NULL) &&

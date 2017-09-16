@@ -14251,7 +14251,6 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
 	mac_ctx->beacon_offload = cfg->beacon_offload;
 	mac_ctx->pmf_offload = cfg->pmf_offload;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

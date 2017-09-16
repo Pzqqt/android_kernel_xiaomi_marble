@@ -933,7 +933,6 @@ typedef struct sAniSirGlobal {
 
 	csr_readyToSuspendCallback readyToSuspendCallback;
 	void *readyToSuspendContext;
-	uint8_t lteCoexAntShare;
 	uint8_t beacon_offload;
 	bool pmf_offload;
 	uint32_t fEnableDebugLog;
