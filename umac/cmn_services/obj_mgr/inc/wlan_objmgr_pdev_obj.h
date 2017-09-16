@@ -706,7 +706,7 @@ static inline uint8_t wlan_pdev_get_max_vdev_count(
  *
  * Return: void
  */
-QDF_STATUS wlan_objmgr_pdev_get_ref(struct wlan_objmgr_pdev *pdev,
+void wlan_objmgr_pdev_get_ref(struct wlan_objmgr_pdev *pdev,
 					wlan_objmgr_ref_dbgid id);
 
 /**
@@ -731,7 +731,7 @@ QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
  *
  * Return: void
  */
-QDF_STATUS wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
+void wlan_objmgr_pdev_release_ref(struct wlan_objmgr_pdev *pdev,
 						wlan_objmgr_ref_dbgid id);
 
 /**
