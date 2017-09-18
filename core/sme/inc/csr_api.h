@@ -482,7 +482,6 @@ typedef enum {
 	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND,
 	eCSR_ROAM_FT_RESPONSE,
 	eCSR_ROAM_FT_START,
-	eCSR_ROAM_REMAIN_CHAN_READY,
 	/* this mean error happens before assoc_start/roam_start is called. */
 	eCSR_ROAM_SESSION_OPENED,
 	eCSR_ROAM_FT_REASSOC_FAILED,

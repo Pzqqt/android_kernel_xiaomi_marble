@@ -491,6 +491,29 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 }
 
 /**
+ * get_rf_band()
+ *
+ * @channel: channel number
+ *
+ * This function is used to translate channel number to band
+ *
+ * Return: SIR_BAND_2_4_GHZ -  if 2.4GHZ channel
+ *         SIR_BAND_5_GHZ   -  if 5GHZ channel
+ */
+static tSirRFBand get_rf_band(uint8_t channel)
+{
+	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
+	    (channel <= SIR_11A_CHANNEL_END))
+		return SIR_BAND_5_GHZ;
+
+	if ((channel >= SIR_11B_CHANNEL_BEGIN) &&
+	    (channel <= SIR_11B_CHANNEL_END))
+		return SIR_BAND_2_4_GHZ;
+
+	return SIR_BAND_UNKNOWN;
+}
+
+/**
  * csr_neighbor_roam_channels_filter_by_current_band()
  *
  * @mac_ctx: Pointer to Global MAC structure

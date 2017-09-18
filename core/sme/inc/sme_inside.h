@@ -90,9 +90,6 @@ typedef struct sRemainChlCmd {
 	void *callbackCtx;
 } tRemainChlCmd;
 
-typedef struct sNoACmd {
-	tP2pPsConfig NoA;
-} tNoACmd;
 #ifdef FEATURE_WLAN_TDLS
 typedef struct TdlsSendMgmtInfo {
 	tSirMacAddr peerMac;
@@ -177,7 +174,6 @@ typedef struct tagSmeCmd {
 		tGenericPmcCmd pmcCmd;
 		tGenericQosCmd qosCmd;
 		tRemainChlCmd remainChlCmd;
-		tNoACmd NoACmd;
 		struct addstafor_sessioncmd addStaSessionCmd;
 		struct delstafor_sessionCmd delStaSessionCmd;
 #ifdef FEATURE_WLAN_TDLS

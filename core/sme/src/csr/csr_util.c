@@ -231,7 +231,6 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_WPS_PBC_PROBE_REQ_IND);
 		CASE_RETURN_STR(eCSR_ROAM_FT_RESPONSE);
 		CASE_RETURN_STR(eCSR_ROAM_FT_START);
-		CASE_RETURN_STR(eCSR_ROAM_REMAIN_CHAN_READY);
 		CASE_RETURN_STR(eCSR_ROAM_SESSION_OPENED);
 		CASE_RETURN_STR(eCSR_ROAM_FT_REASSOC_FAILED);
 		CASE_RETURN_STR(eCSR_ROAM_PMK_NOTIFY);
@@ -658,8 +657,7 @@ tListElem *csr_scan_active_ll_next(struct sAniSirGlobal *mac_ctx,
 	if (!entry)
 		return NULL;
 	sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	if (sme_cmd->command == eSmeCommandScan ||
-			sme_cmd->command == eSmeCommandRemainOnChannel)
+	if (sme_cmd->command == eSmeCommandScan)
 		cmd.cmd_id = sme_cmd->u.scanCmd.scanID;
 	else
 		cmd.cmd_id = 0;
@@ -687,8 +685,7 @@ tListElem *csr_scan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
 	if (!entry)
 		return NULL;
 	sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	if (sme_cmd->command == eSmeCommandScan ||
-			sme_cmd->command == eSmeCommandRemainOnChannel)
+	if (sme_cmd->command == eSmeCommandScan)
 		cmd.cmd_id = sme_cmd->u.scanCmd.scanID;
 	else
 		cmd.cmd_id = 0;
@@ -716,8 +713,7 @@ tListElem *csr_nonscan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
 	if (!entry)
 		return NULL;
 	sme_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
-	if (sme_cmd->command == eSmeCommandScan ||
-			sme_cmd->command == eSmeCommandRemainOnChannel)
+	if (sme_cmd->command == eSmeCommandScan)
 		cmd.cmd_id = sme_cmd->u.scanCmd.scanID;
 	else
 		cmd.cmd_id = 0;

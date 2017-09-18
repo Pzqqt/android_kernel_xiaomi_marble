@@ -41,7 +41,6 @@
 #include "qdf_lock.h"
 #include "qdf_types.h"
 #include "sir_api.h"
-#include "p2p_api.h"
 #include "cds_regdomain.h"
 #include "sme_internal.h"
 #include "wma_tgt_cfg.h"
@@ -1268,8 +1267,6 @@ void sme_get_vdev_type_nss(enum tQDF_ADAPTER_MODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g);
 QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 					  uint8_t default_idx);
-QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
-		sir_p2p_ack_ind_callback callback);
 void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id, uint8_t
 				*peer_mac, uint16_t reason, uint8_t
 				wait_for_ack);

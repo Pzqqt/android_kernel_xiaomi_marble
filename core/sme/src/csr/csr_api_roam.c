@@ -1351,43 +1351,9 @@ void csr_release_command_wm_status_change(tpAniSirGlobal pMac,
 	csr_reinit_wm_status_change_cmd(pMac, pCommand);
 }
 
-/**
- * csr_release_roc_req_cmd() - Release the command
- * @mac_ctx: Global MAC Context
- *
- * Release the remain on channel request command from the queue
- *
- * Return: None
- */
-void csr_release_roc_req_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
-{
-	if (eSmeCommandRemainOnChannel == sme_cmd->command) {
-		remainOnChanCallback callback =
-			sme_cmd->u.remainChlCmd.callback;
-		/* process the msg */
-		if (callback)
-			callback(mac_ctx,
-				 sme_cmd->u.remainChlCmd.callbackCtx, 0,
-				 sme_cmd->u.remainChlCmd.scan_id);
-		sme_err("Remove RoC Request from Active Cmd List");
-	}
-}
-
 void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 {
 	switch (sme_cmd->command) {
-	case eSmeCommandRemainOnChannel:
-		if (NULL != sme_cmd->u.remainChlCmd.callback) {
-			remainOnChanCallback callback =
-				sme_cmd->u.remainChlCmd.callback;
-			/* process the msg */
-			if (callback) {
-				callback(mac_ctx, sme_cmd->u.remainChlCmd.
-					callbackCtx, eCSR_SCAN_ABORT,
-					sme_cmd->u.remainChlCmd.scan_id);
-			}
-		}
-		break;
 	case eSmeCommandScan:
 		/*
 		 * We need to inform the requester before dropping
@@ -18988,9 +18954,6 @@ static void csr_free_cmd_memory(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	case eSmeCommandNdpDataEndInitiatorRequest:
 		csr_release_ndp_data_end_req(pMac, pCommand);
 		break;
-	case eSmeCommandRemainOnChannel:
-		csr_release_roc_req_cmd(pMac, pCommand);
-		break;
 	default:
 		break;
 	}
@@ -19030,8 +18993,7 @@ void csr_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 	}
 	qdf_mem_zero(&cmd_info,
 			sizeof(struct wlan_serialization_queued_cmd_info));
-	if (sme_cmd->command == eSmeCommandScan ||
-			sme_cmd->command == eSmeCommandRemainOnChannel) {
+	if (sme_cmd->command == eSmeCommandScan) {
 		sme_debug("filled cmd_id[%d]",
 			sme_cmd->u.scanCmd.scanID);
 		cmd_info.cmd_id = sme_cmd->u.scanCmd.scanID;
@@ -19214,9 +19176,6 @@ enum wlan_serialization_cmd_type csr_get_cmd_type(tSmeCmd *sme_cmd)
 	case eSmeCommandNdpDataEndInitiatorRequest:
 		cmd_type = WLAN_SER_CMD_NDP_DATA_END_INIT_REQ;
 		break;
-	case eSmeCommandRemainOnChannel:
-		cmd_type = WLAN_SER_CMD_REMAIN_ON_CHANNEL;
-		break;
 	case eSmeCommandEnterStandby:
 		cmd_type = WLAN_SER_CMD_ENTER_STANDBY;
 		break;
@@ -19291,8 +19250,7 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	 * no need to fill command id for non-scan as they will be
 	 * zero always
 	 */
-	if (sme_cmd->command == eSmeCommandScan ||
-			sme_cmd->command == eSmeCommandRemainOnChannel) {
+	if (sme_cmd->command == eSmeCommandScan) {
 		cmd->cmd_id = sme_cmd->u.scanCmd.scanID;
 		sme_debug("cmd_id[%d]", sme_cmd->u.scanCmd.scanID);
 	} else {
@@ -19342,8 +19300,7 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 		}
 	}
 
-	if ((eSmeCommandScan == sme_cmd->command) ||
-	    (sme_cmd->command == eSmeCommandRemainOnChannel)) {
+	if (eSmeCommandScan == sme_cmd->command) {
 		if (csr_scan_active_ll_count(mac_ctx) >=
 		    mac_ctx->scan.max_scan_count) {
 			sme_err("Max scan reached");

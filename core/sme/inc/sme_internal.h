@@ -82,7 +82,6 @@ typedef enum eSmeCommandType {
 	eSmeQosCommandMask = 0x40000,   /* To identify Qos commands */
 	eSmeCommandAddTs,
 	eSmeCommandDelTs,
-	eSmeCommandRemainOnChannel,
 	e_sme_command_set_hw_mode,
 	e_sme_command_nss_update,
 	e_sme_command_set_dual_mac_config,
