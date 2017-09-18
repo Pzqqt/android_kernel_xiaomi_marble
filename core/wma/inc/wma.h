@@ -2365,7 +2365,7 @@ void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %p",
+		WMA_LOGE("%s: Failed to get iface handle: %pK",
 			 __func__, iface->handle);
 		return;
 	}
@@ -2392,7 +2392,7 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %p",
+		WMA_LOGE("%s: Failed to get iface handle: %pK",
 			 __func__, iface->handle);
 		return 0;
 	}
@@ -2418,7 +2418,7 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %p",
+		WMA_LOGE("%s: Failed to get iface handle: %pK",
 			 __func__, iface->handle);
 		return 0;
 	}
@@ -2446,7 +2446,7 @@ void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %p",
+		WMA_LOGE("%s: Failed to get iface handle: %pK",
 			 __func__, iface->handle);
 		return;
 	}
@@ -2474,7 +2474,7 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %p",
+		WMA_LOGE("%s: Failed to get iface handle: %pK",
 			 __func__, iface->handle);
 		return;
 	}

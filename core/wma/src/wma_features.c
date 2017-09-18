@@ -5531,7 +5531,7 @@ int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
 
 	WMA_LOGD("num_peers=%d\tvdev_id=%d",
 		fix_param->num_peers, fix_param->vdev_id);
-	WMA_LOGD("peer_ant_info: %p", peer_ant_info);
+	WMA_LOGD("peer_ant_info: %pK", peer_ant_info);
 
 	if (!peer_ant_info) {
 		WMA_LOGE("Invalid peer_ant_info ptr");

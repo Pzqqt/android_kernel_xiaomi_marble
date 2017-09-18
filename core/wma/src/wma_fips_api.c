@@ -38,7 +38,7 @@ wma_fips_event_handler(void *handle, uint8_t *event, uint32_t len)
 	wma_fips_cb callback;
 	QDF_STATUS status;
 
-	WMA_LOGI(FL("handle:%p event:%p len:%u"), handle, event, len);
+	WMA_LOGI(FL("handle:%pK event:%pK len:%u"), handle, event, len);
 
 	wma_handle = handle;
 	if (!wma_handle) {

@@ -447,7 +447,7 @@ static void wma_vdev_detach_callback(void *ctx)
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma || !iface->del_staself_req) {
-		WMA_LOGE("%s: wma %p iface %p", __func__, wma,
+		WMA_LOGE("%s: wma %pK iface %pK", __func__, wma,
 			 iface->del_staself_req);
 		return;
 	}
@@ -577,7 +577,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 		goto out;
 	}
 
-	WMA_LOGD("vdev_id:%hu vdev_hdl:%p", vdev_id, iface->handle);
+	WMA_LOGD("vdev_id:%hu vdev_hdl:%pK", vdev_id, iface->handle);
 	if (!generate_rsp) {
 		WMA_LOGE("Call txrx detach w/o callback for vdev %d", vdev_id);
 		cdp_vdev_detach(soc,
@@ -762,7 +762,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			 __func__, wma->interfaces[resp_event->vdev_id].type,
 			 wma->interfaces[resp_event->vdev_id].sub_type);
 
-		WMA_LOGD("%s: Allocated beacon struct %p, template memory %p",
+		WMA_LOGD("%s: Allocated beacon struct %pK, template memory %pK",
 			 __func__, bcn, bcn->buf);
 	}
 	add_bss->status = QDF_STATUS_SUCCESS;
@@ -1276,7 +1276,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 						vdev_id);
 
 peer_detach:
-	WMA_LOGE("%s: Remove peer %p with peer_addr %pM vdevid %d peer_count %d",
+	WMA_LOGE("%s: Remove peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, bssid, vdev_id,
 		 wma->interfaces[vdev_id].peer_count);
 
@@ -1384,7 +1384,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	}
 
 	if (roam_synch_in_progress) {
-		WMA_LOGI("%s: LFR3: Created peer %p with peer_addr %pM vdev_id %d, peer_count - %d",
+		WMA_LOGI("%s: LFR3: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
 			 __func__, peer, peer_addr, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
 		return QDF_STATUS_SUCCESS;
@@ -1399,7 +1399,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 		goto err;
 	}
 
-	WMA_LOGD("%s: Created peer %p with peer_addr %pM vdev_id %d, peer_count - %d",
+	WMA_LOGD("%s: Created peer %pK with peer_addr %pM vdev_id %d, peer_count - %d",
 		  __func__, peer, peer_addr, vdev_id,
 		  wma->interfaces[vdev_id].peer_count);
 
@@ -1707,7 +1707,7 @@ wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req,
 
 	bcn = wma->interfaces[vdev_id].beacon;
 	if (bcn) {
-		WMA_LOGD("%s: Freeing beacon struct %p, template memory %p",
+		WMA_LOGD("%s: Freeing beacon struct %pK, template memory %pK",
 			 __func__, bcn, bcn->buf);
 		if (bcn->dma_mapped)
 			qdf_nbuf_unmap_single(wma->qdf_dev, bcn->buf,
@@ -1978,7 +1978,7 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 					txrx_vdev_type);
 	wma_vdev_update_pause_bitmap(self_sta_req->session_id, 0);
 
-	WMA_LOGD("vdev_id %hu, txrx_vdev_handle = %p", self_sta_req->session_id,
+	WMA_LOGD("vdev_id %hu, txrx_vdev_handle = %pK", self_sta_req->session_id,
 		 txrx_vdev_handle);
 
 	if (NULL == txrx_vdev_handle) {
@@ -3061,7 +3061,7 @@ void wma_vdev_resp_timer(void *data)
 		bcn = wma->interfaces[tgt_req->vdev_id].beacon;
 
 		if (bcn) {
-			WMA_LOGD("%s: Freeing beacon struct %p, template memory %p",
+			WMA_LOGD("%s: Freeing beacon struct %pK, template memory %pK",
 				 __func__, bcn, bcn->buf);
 			if (bcn->dma_mapped)
 				qdf_nbuf_unmap_single(wma->qdf_dev, bcn->buf,
@@ -4004,7 +4004,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	peer = cdp_peer_find_by_addr(soc, pdev,
 			add_sta->staMac, &peer_id);
 	if (peer) {
-		WMA_LOGE("%s: My vdev:%p, but Peer exists on other vdev with peer_addr %pM and peer_id %d",
+		WMA_LOGE("%s: My vdev:%pK, but Peer exists on other vdev with peer_addr %pM and peer_id %d",
 			__func__, vdev, add_sta->staMac, peer_id);
 		add_sta->status = QDF_STATUS_E_FAILURE;
 		goto send_rsp;
@@ -4966,7 +4966,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	if (peer)
 		cdp_peer_delete(soc, peer);
 	iface->peer_count--;
-	WMA_LOGI("%s: Removed peer %p with peer_addr %pM vdevid %d peer_count %d",
+	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,
 		 iface->peer_count);
 fail_del_bss_ho_fail:

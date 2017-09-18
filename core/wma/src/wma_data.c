@@ -2198,7 +2198,7 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 
 	/*sanity check */
 	if ((num_peers > 32) || (NULL == peer_info)) {
-		WMA_LOGE("%s: Invalid event data from target num_peers %d peer_info %p",
+		WMA_LOGE("%s: Invalid event data from target num_peers %d peer_info %pK",
 			__func__, num_peers, peer_info);
 		status = 1;
 		goto send_response;
@@ -2284,7 +2284,7 @@ int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
 	if (wma->hddTxFailCb != NULL)
 		wma->hddTxFailCb(peer_mac, tx_fail_cnt);
 	else
-		WMA_LOGE("%s: HDD callback is %p", __func__, wma->hddTxFailCb);
+		WMA_LOGE("%s: HDD callback is %pK", __func__, wma->hddTxFailCb);
 
 	return 0;
 }
@@ -3022,7 +3022,7 @@ void wma_tx_abort(uint8_t vdev_id)
 
 	iface = &wma->interfaces[vdev_id];
 	if (!iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %p",
+		WMA_LOGE("%s: Failed to get iface handle: %pK",
 			 __func__, iface->handle);
 		return;
 	}

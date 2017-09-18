@@ -3744,14 +3744,14 @@ void wma_get_stats_req(WMA_HANDLE handle,
 
 	node->fw_stats_set = 0;
 	if (node->stats_rsp) {
-		WMA_LOGD(FL("stats_rsp is not null, prev_value: %p"),
+		WMA_LOGD(FL("stats_rsp is not null, prev_value: %pK"),
 			node->stats_rsp);
 		qdf_mem_free(node->stats_rsp);
 		node->stats_rsp = NULL;
 	}
 	node->stats_rsp = pGetPEStatsRspParams;
 	wma_handle->get_sta_peer_info = false;
-	WMA_LOGD("stats_rsp allocated: %p, sta_id: %d, mask: %d, vdev_id: %d",
+	WMA_LOGD("stats_rsp allocated: %pK, sta_id: %d, mask: %d, vdev_id: %d",
 		node->stats_rsp, node->stats_rsp->staId,
 		node->stats_rsp->statsMask, get_stats_param->sessionId);
 
