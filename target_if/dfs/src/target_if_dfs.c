@@ -50,7 +50,7 @@ static int target_if_dfs_cac_complete_event_handler(
 	uint32_t vdev_id = 0;
 
 	if (!scn || !data) {
-		target_if_err("scn: %p, data: %p", scn, data);
+		target_if_err("scn: %pK, data: %pK", scn, data);
 		return -EINVAL;
 	}
 
@@ -62,7 +62,7 @@ static int target_if_dfs_cac_complete_event_handler(
 
 	dfs_rx_ops = target_if_dfs_get_rx_ops(psoc);
 	if (!dfs_rx_ops || !dfs_rx_ops->dfs_dfs_cac_complete_ind) {
-		target_if_err("Invalid dfs_rx_ops: %p", dfs_rx_ops);
+		target_if_err("Invalid dfs_rx_ops: %pK", dfs_rx_ops);
 		return -EINVAL;
 	}
 
@@ -104,7 +104,7 @@ static int target_if_dfs_radar_detection_event_handler(
 	int ret = 0;
 
 	if (!scn || !data) {
-		target_if_err("scn: %p, data: %p", scn, data);
+		target_if_err("scn: %pK, data: %pK", scn, data);
 		return -EINVAL;
 	}
 
@@ -116,7 +116,7 @@ static int target_if_dfs_radar_detection_event_handler(
 
 	dfs_rx_ops = target_if_dfs_get_rx_ops(psoc);
 	if (!dfs_rx_ops || !dfs_rx_ops->dfs_process_radar_ind) {
-		target_if_err("Invalid dfs_rx_ops: %p", dfs_rx_ops);
+		target_if_err("Invalid dfs_rx_ops: %pK", dfs_rx_ops);
 		return -EINVAL;
 	}
 

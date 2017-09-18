@@ -46,7 +46,7 @@ target_if_scan_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	QDF_STATUS status;
 
 	if (!scn || !data) {
-		target_if_err("scn: 0x%p, data: 0x%p\n", scn, data);
+		target_if_err("scn: 0x%pK, data: 0x%pK\n", scn, data);
 		return -EINVAL;
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
@@ -99,7 +99,7 @@ int target_if_nlo_complete_handler(ol_scn_t scn, uint8_t *data,
 	QDF_STATUS status;
 
 	if (!scn || !data) {
-		target_if_err("scn: 0x%p, data: 0x%p", scn, data);
+		target_if_err("scn: 0x%pK, data: 0x%pK", scn, data);
 		return -EINVAL;
 	}
 
@@ -149,7 +149,7 @@ int target_if_nlo_match_event_handler(ol_scn_t scn, uint8_t *data,
 	QDF_STATUS status;
 
 	if (!scn || !data) {
-		target_if_err("scn: 0x%p, data: 0x%p", scn, data);
+		target_if_err("scn: 0x%pK, data: 0x%pK", scn, data);
 		return -EINVAL;
 	}
 
