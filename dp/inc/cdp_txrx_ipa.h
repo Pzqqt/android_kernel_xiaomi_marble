@@ -30,11 +30,13 @@
  */
 #ifndef _CDP_TXRX_IPA_H_
 #define _CDP_TXRX_IPA_H_
+
+#ifdef IPA_OFFLOAD
+
 #include <linux/ipa.h>
 #include <cdp_txrx_mob_def.h>
 #include "cdp_txrx_handle.h"
 
-#ifdef IPA_OFFLOAD
 /**
  * cdp_ipa_get_resource() - Get allocated WLAN resources for IPA data path
  * @soc - data path soc handle
