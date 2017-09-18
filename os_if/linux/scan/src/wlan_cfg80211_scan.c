@@ -734,7 +734,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 				*source = scan_req->source;
 				qdf_mem_free(scan_req);
 				qdf_mutex_release(&scan_priv->scan_req_q_lock);
-				cfg80211_info("removed Scan id: %d, req = %p, pending scans %d",
+				cfg80211_info("removed Scan id: %d, req = %pK, pending scans %d",
 				      scan_id, req,
 				      qdf_list_size(&scan_priv->scan_req_q));
 				return QDF_STATUS_SUCCESS;

@@ -55,7 +55,7 @@ static void wlan_p2p_rx_callback(void *user_data,
 	struct wireless_dev *wdev;
 	uint16_t freq;
 
-	cfg80211_debug("user data:%p, vdev id:%d, rssi:%d, buf:%p, len:%d",
+	cfg80211_debug("user data:%pK, vdev id:%d, rssi:%d, buf:%pK, len:%d",
 		user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
 		rx_frame->buf, rx_frame->frame_len);
 
@@ -129,7 +129,7 @@ static void wlan_p2p_action_tx_cnf_callback(void *user_data,
 	struct wireless_dev *wdev;
 	bool is_success;
 
-	cfg80211_info("user data:%p, action cookie:%llx, buf:%p, len:%d, tx status:%d",
+	cfg80211_info("user data:%pK, action cookie:%llx, buf:%pK, len:%d, tx status:%d",
 		user_data, tx_cnf->action_cookie, tx_cnf->buf,
 		tx_cnf->buf_len, tx_cnf->status);
 
@@ -186,7 +186,7 @@ static void wlan_p2p_lo_event_callback(void *user_data,
 	struct wireless_dev *wdev;
 	struct sk_buff *vendor_event;
 
-	cfg80211_debug("user data:%p, vdev id:%d, reason code:%d",
+	cfg80211_debug("user data:%pK, vdev id:%d, reason code:%d",
 		user_data, p2p_lo_event->vdev_id,
 		p2p_lo_event->reason_code);
 
@@ -256,7 +256,7 @@ static void wlan_p2p_event_callback(void *user_data,
 	struct vdev_osif_priv *osif_priv;
 	struct wireless_dev *wdev;
 
-	cfg80211_debug("user data:%p, vdev id:%d, event type:%d",
+	cfg80211_debug("user data:%pK, vdev id:%d, event type:%d",
 		user_data, p2p_event->vdev_id, p2p_event->roc_event);
 
 	psoc = user_data;
