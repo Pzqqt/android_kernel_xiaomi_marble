@@ -37,7 +37,7 @@ QDF_STATUS pmo_tgt_send_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 	PMO_ENTER();
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
+		pmo_err("Failed to find psoc from from vdev:%pK",
 			vdev);
 		status = QDF_STATUS_E_INVAL;
 		goto out;
@@ -94,7 +94,7 @@ QDF_STATUS pmo_tgt_get_gtk_rsp(struct wlan_objmgr_vdev *vdev)
 	PMO_ENTER();
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		pmo_err("Failed to find psoc from from vdev:%p",
+		pmo_err("Failed to find psoc from from vdev:%pK",
 			vdev);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
@@ -131,7 +131,7 @@ QDF_STATUS pmo_tgt_gtk_rsp_evt(struct wlan_objmgr_psoc *psoc,
 
 	vdev = pmo_psoc_get_vdev(psoc, rsp_param->vdev_id);
 	if (!vdev) {
-		pmo_err("vdev is null vdev_id:%d psoc:%p",
+		pmo_err("vdev is null vdev_id:%d psoc:%pK",
 			rsp_param->vdev_id, psoc);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
@@ -155,7 +155,7 @@ QDF_STATUS pmo_tgt_gtk_rsp_evt(struct wlan_objmgr_psoc *psoc,
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	if (vdev_ctx->vdev_gtk_rsp_req.callback) {
-		pmo_info("callback:%p context:%p psoc:%p vdev_id:%d",
+		pmo_info("callback:%pK context:%pK psoc:%pK vdev_id:%d",
 			vdev_ctx->vdev_gtk_rsp_req.callback,
 			vdev_ctx->vdev_gtk_rsp_req.callback_context,
 			psoc, rsp_param->vdev_id);
@@ -163,7 +163,7 @@ QDF_STATUS pmo_tgt_gtk_rsp_evt(struct wlan_objmgr_psoc *psoc,
 			vdev_ctx->vdev_gtk_rsp_req.callback_context,
 			rsp_param);
 	} else {
-		pmo_err("gtk rsp callback is null for vdev_id:%d psoc %p",
+		pmo_err("gtk rsp callback is null for vdev_id:%d psoc %pK",
 			rsp_param->vdev_id,
 			psoc);
 	}

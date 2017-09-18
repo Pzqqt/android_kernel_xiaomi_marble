@@ -38,7 +38,7 @@ QDF_STATUS pmo_tgt_set_pkt_filter(struct wlan_objmgr_vdev *vdev,
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		pmo_err("psoc unavailable for vdev %p", vdev);
+		pmo_err("psoc unavailable for vdev %pK", vdev);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
@@ -104,7 +104,7 @@ QDF_STATUS pmo_tgt_clear_pkt_filter(struct wlan_objmgr_vdev *vdev,
 
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		pmo_err("psoc unavailable for vdev %p", vdev);
+		pmo_err("psoc unavailable for vdev %pK", vdev);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto out;
 	}
