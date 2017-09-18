@@ -338,7 +338,7 @@ tdls_internal_add_peer_rsp(struct tdls_add_peer_request *req,
 	QDF_STATUS ret;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
+		tdls_err("req: %pK", req);
 		return QDF_STATUS_E_INVAL;
 	}
 	vdev = req->vdev;
@@ -370,7 +370,7 @@ tdls_internal_update_peer_rsp(struct tdls_update_peer_request *req,
 	QDF_STATUS ret;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
+		tdls_err("req: %pK", req);
 		return QDF_STATUS_E_INVAL;
 	}
 	vdev = req->vdev;
@@ -400,7 +400,7 @@ static QDF_STATUS tdls_internal_del_peer_rsp(struct tdls_oper_request *req)
 	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
+		tdls_err("req: %pK", req);
 		return QDF_STATUS_E_INVAL;
 	}
 	vdev = req->vdev;
@@ -442,7 +442,7 @@ static QDF_STATUS tdls_activate_add_peer(struct tdls_add_peer_request *req)
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(req->vdev);
 
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc_obj: %p, vdev_obj: %p", soc_obj, vdev_obj);
+		tdls_err("soc_obj: %pK, vdev_obj: %pK", soc_obj, vdev_obj);
 		return QDF_STATUS_E_INVAL;
 	}
 	status = tdls_validate_current_mode(soc_obj);
@@ -516,12 +516,12 @@ tdls_add_peer_serialize_callback(struct wlan_serialization_command *cmd,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!cmd || !cmd->umac_cmd) {
-		tdls_err("cmd: %p, reason: %d", cmd, reason);
+		tdls_err("cmd: %pK, reason: %d", cmd, reason);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	req = cmd->umac_cmd;
-	tdls_debug("reason: %d, req %p", reason, req);
+	tdls_debug("reason: %d, req %pK", reason, req);
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
@@ -806,7 +806,7 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
+		tdls_err("req: %pK", req);
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
@@ -822,7 +822,7 @@ QDF_STATUS tdls_process_add_peer(struct tdls_add_peer_request *req)
 	cmd.vdev = vdev;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
-	tdls_debug("req: 0x%p wlan_serialization_request status:%d", req,
+	tdls_debug("req: 0x%pK wlan_serialization_request status:%d", req,
 		   ser_cmd_status);
 
 	switch (ser_cmd_status) {
@@ -880,7 +880,7 @@ tdls_activate_update_peer(struct tdls_update_peer_request *req)
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc_obj: %p, vdev_obj: %p", soc_obj, vdev_obj);
+		tdls_err("soc_obj: %pK, vdev_obj: %pK", soc_obj, vdev_obj);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -960,12 +960,12 @@ tdls_update_peer_serialize_callback(struct wlan_serialization_command *cmd,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!cmd || !cmd->umac_cmd) {
-		tdls_err("cmd: %p, reason: %d", cmd, reason);
+		tdls_err("cmd: %pK, reason: %d", cmd, reason);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	req = cmd->umac_cmd;
-	tdls_debug("reason: %d, req %p", reason, req);
+	tdls_debug("reason: %d, req %pK", reason, req);
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
@@ -1014,7 +1014,7 @@ QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
+		tdls_err("req: %pK", req);
 		status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
@@ -1031,7 +1031,7 @@ QDF_STATUS tdls_process_update_peer(struct tdls_update_peer_request *req)
 	cmd.vdev = req->vdev;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
-	tdls_debug("req: 0x%p wlan_serialization_request status:%d", req,
+	tdls_debug("req: 0x%pK wlan_serialization_request status:%d", req,
 		   ser_cmd_status);
 
 	switch (ser_cmd_status) {
@@ -1084,12 +1084,12 @@ tdls_del_peer_serialize_callback(struct wlan_serialization_command *cmd,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!cmd || !cmd->umac_cmd) {
-		tdls_err("cmd: %p, reason: %d", cmd, reason);
+		tdls_err("cmd: %pK, reason: %d", cmd, reason);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	req = cmd->umac_cmd;
-	tdls_debug("reason: %d, req %p", reason, req);
+	tdls_debug("reason: %d, req %pK", reason, req);
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
@@ -1136,7 +1136,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
+		tdls_err("req: %pK", req);
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
@@ -1152,7 +1152,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	cmd.vdev = vdev;
 
 	ser_cmd_status = wlan_serialization_request(&cmd);
-	tdls_debug("req: 0x%p wlan_serialization_request status:%d", req,
+	tdls_debug("req: 0x%pK wlan_serialization_request status:%d", req,
 		   ser_cmd_status);
 
 	switch (ser_cmd_status) {
@@ -1256,7 +1256,7 @@ QDF_STATUS tdls_process_send_mgmt_rsp(struct tdls_send_mgmt_rsp *rsp)
 	tdls_soc = wlan_psoc_get_tdls_soc_obj(psoc);
 	tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
 	if (!tdls_soc || !tdls_vdev) {
-		tdls_err("soc object:%p, vdev object:%p", tdls_soc, tdls_vdev);
+		tdls_err("soc object:%pK, vdev object:%pK", tdls_soc, tdls_vdev);
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -1311,7 +1311,7 @@ QDF_STATUS tdls_send_mgmt_tx_completion(
 	tdls_vdev = wlan_vdev_get_tdls_vdev_obj(vdev);
 
 	if (!tdls_soc || !tdls_vdev) {
-		tdls_err("soc object:%p, vdev object:%p", tdls_soc, tdls_vdev);
+		tdls_err("soc object:%pK, vdev object:%pK", tdls_soc, tdls_vdev);
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -1356,7 +1356,7 @@ static QDF_STATUS tdls_add_peer_rsp(struct tdls_add_sta_rsp *rsp)
 	soc_obj = wlan_psoc_get_tdls_soc_obj(psoc);
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc object:%p, vdev object:%p", soc_obj, vdev_obj);
+		tdls_err("soc object:%pK, vdev object:%pK", soc_obj, vdev_obj);
 		status = QDF_STATUS_E_FAILURE;
 		goto cmddone;
 	}
@@ -1449,7 +1449,7 @@ QDF_STATUS tdls_process_del_peer_rsp(struct tdls_del_sta_rsp *rsp)
 	soc_obj = wlan_psoc_get_tdls_soc_obj(psoc);
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc object:%p, vdev object:%p", soc_obj, vdev_obj);
+		tdls_err("soc object:%pK, vdev object:%pK", soc_obj, vdev_obj);
 		status = QDF_STATUS_E_FAILURE;
 		goto cmddone;
 	}
@@ -1622,7 +1622,7 @@ QDF_STATUS tdls_process_enable_link(struct tdls_oper_request *req)
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
 
 	if (!vdev_obj || !soc_obj) {
-		tdls_err("tdls vdev_obj: %p soc_obj: %p", vdev_obj, soc_obj);
+		tdls_err("tdls vdev_obj: %pK soc_obj: %pK", vdev_obj, soc_obj);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
@@ -1734,7 +1734,7 @@ static QDF_STATUS tdls_config_force_peer(
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
 	if (!pdev || !vdev_obj || !soc_obj) {
-		tdls_err("pdev: %p, vdev_obj: %p, soc_obj: %p",
+		tdls_err("pdev: %pK, vdev_obj: %pK, soc_obj: %pK",
 			 pdev, vdev_obj, soc_obj);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1876,7 +1876,7 @@ QDF_STATUS tdls_process_remove_force_peer(struct tdls_oper_request *req)
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(req->vdev);
 	soc_obj = wlan_vdev_get_tdls_soc_obj(req->vdev);
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc_obj: %p, vdev_obj: %p", soc_obj, vdev_obj);
+		tdls_err("soc_obj: %pK, vdev_obj: %pK", soc_obj, vdev_obj);
 		status = QDF_STATUS_E_INVAL;
 		goto error;
 	}
@@ -1988,7 +1988,7 @@ QDF_STATUS tdls_process_should_discover(struct wlan_objmgr_vdev *vdev,
 		   QDF_MAC_ADDR_ARRAY(evt->peermac.bytes),
 		   evt->peer_reason);
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc_obj: %p, vdev_obj: %p, ignore %s",
+		tdls_err("soc_obj: %pK, vdev_obj: %pK, ignore %s",
 			 soc_obj, vdev_obj, tdls_evt_to_str(type));
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -2045,7 +2045,7 @@ QDF_STATUS tdls_process_should_teardown(struct wlan_objmgr_vdev *vdev,
 		   QDF_MAC_ADDR_ARRAY(evt->peermac.bytes), evt->peer_reason);
 
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc_obj: %p, vdev_obj: %p, ignore %s",
+		tdls_err("soc_obj: %pK, vdev_obj: %pK, ignore %s",
 			 soc_obj, vdev_obj, tdls_evt_to_str(type));
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -2090,7 +2090,7 @@ QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
 	vdev_obj = wlan_vdev_get_tdls_vdev_obj(vdev);
 
 	if (!soc_obj || !vdev_obj) {
-		tdls_err("soc_obj: %p, vdev_obj: %p, ignore %s",
+		tdls_err("soc_obj: %pK, vdev_obj: %pK, ignore %s",
 			 soc_obj, vdev_obj, tdls_evt_to_str(type));
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -2138,7 +2138,7 @@ int tdls_set_responder(struct tdls_set_responder_req *set_req)
 	QDF_STATUS status;
 
 	if (!set_req || !set_req->vdev) {
-		tdls_err("Invalid input params %p", set_req);
+		tdls_err("Invalid input params %pK", set_req);
 		return -EINVAL;
 	}
 

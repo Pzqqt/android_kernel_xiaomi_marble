@@ -473,7 +473,7 @@ void tdls_extract_peer_state_param(struct tdls_peer_update_state *peer_param,
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev_obj->vdev);
 	pdev = wlan_vdev_get_pdev(vdev_obj->vdev);
 	if (!soc_obj || !pdev) {
-		tdls_err("soc_obj: %p, pdev: %p", soc_obj, pdev);
+		tdls_err("soc_obj: %pK, pdev: %pK", soc_obj, pdev);
 		return;
 	}
 
