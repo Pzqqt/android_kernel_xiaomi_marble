@@ -188,7 +188,7 @@ static enum pld_bus_type pld_get_bus_type(struct device *dev)
 	pld_context = pld_get_global_context();
 
 	if (dev == NULL || pld_context == NULL) {
-		pr_err("Invalid info: dev %p, context %p\n",
+		pr_err("Invalid info: dev %pK, context %pK\n",
 		       dev, pld_context);
 		return PLD_BUS_TYPE_NONE;
 	}
