@@ -334,6 +334,11 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 		reinit ? "re-" : "", QWLAN_VERSIONSTR);
 
 	mutex_lock(&hdd_init_deinit_lock);
+	if (!reinit)
+		hdd_start_driver_ops_timer(eHDD_DRV_OP_PROBE);
+	else
+		hdd_start_driver_ops_timer(eHDD_DRV_OP_REINIT);
+
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 
 	/*
@@ -378,6 +383,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 	cds_set_driver_in_bad_state(false);
 	probe_fail_cnt = 0;
 	re_init_fail_cnt = 0;
+	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 	return 0;
 
@@ -399,6 +405,7 @@ err_hdd_deinit:
 	hdd_remove_pm_qos(dev);
 
 	cds_set_fw_down(false);
+	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 	return ret;
 }
@@ -1153,7 +1160,11 @@ static void wlan_hdd_pld_remove(struct device *dev,
 {
 	ENTER();
 	mutex_lock(&hdd_init_deinit_lock);
+	hdd_start_driver_ops_timer(eHDD_DRV_OP_REMOVE);
+
 	wlan_hdd_remove(dev);
+
+	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 	EXIT();
 }
@@ -1170,7 +1181,11 @@ static void wlan_hdd_pld_shutdown(struct device *dev,
 {
 	ENTER();
 	mutex_lock(&hdd_init_deinit_lock);
+	hdd_start_driver_ops_timer(eHDD_DRV_OP_SHUTDOWN);
+
 	wlan_hdd_shutdown();
+
+	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 	EXIT();
 }

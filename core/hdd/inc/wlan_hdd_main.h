@@ -1951,6 +1951,19 @@ struct hdd_channel_info {
 };
 
 /*
+ * @eHDD_DRV_OP_PROBE: Refers to .probe operation
+ * @eHDD_DRV_OP_REMOVE: Refers to .remove operation
+ * @eHDD_DRV_OP_SHUTDOWN: Refers to .shutdown operation
+ * @eHDD_DRV_OP_REINIT: Refers to .reinit operation
+ */
+enum {
+	eHDD_DRV_OP_PROBE = 0,
+	eHDD_DRV_OP_REMOVE,
+	eHDD_DRV_OP_SHUTDOWN,
+	eHDD_DRV_OP_REINIT
+};
+
+/*
  * Function declarations and documentation
  */
 int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
@@ -2871,5 +2884,28 @@ void hdd_dp_trace_init(struct hdd_config *config);
  */
 int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 		bool is_tos_active);
+
+/**
+ * hdd_drv_ops_inactivity_handler() - Timeout handler for driver ops
+ * inactivity timer
+ *
+ * Return: None
+ */
+void hdd_drv_ops_inactivity_handler(void);
+
+/**
+ * hdd_start_driver_ops_timer() - Starts driver ops inactivity timer
+ * @drv_op: Enum indicating driver op
+ *
+ * Return: none
+ */
+void hdd_start_driver_ops_timer(int drv_op);
+
+/**
+ * hdd_stop_driver_ops_timer() - Stops driver ops inactivity timer
+ *
+ * Return: none
+ */
+void hdd_stop_driver_ops_timer(void);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

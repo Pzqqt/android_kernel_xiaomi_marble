@@ -174,6 +174,12 @@ static struct attribute *attrs[] = {
 #define MODULE_INITIALIZED 1
 #endif
 
+#define HDD_OPS_INACTIVITY_TIMEOUT (120000)
+#define MAX_OPS_NAME_STRING_SIZE 20
+
+static qdf_timer_t hdd_drv_ops_inactivity_timer;
+static char drv_ops_string[MAX_OPS_NAME_STRING_SIZE];
+
 /* the Android framework expects this param even though we don't use it */
 #define BUF_LEN 20
 static char fwpath_buffer[BUF_LEN];
@@ -10987,6 +10993,10 @@ int hdd_init(void)
 		goto err_out;
 	}
 
+	qdf_timer_init(NULL, &hdd_drv_ops_inactivity_timer,
+		(void *)hdd_drv_ops_inactivity_handler, NULL,
+		QDF_TIMER_TYPE_SW);
+
 	hdd_trace_init();
 	hdd_qdf_print_init();
 
@@ -11006,6 +11016,7 @@ err_out:
 void hdd_deinit(void)
 {
 	hdd_deinit_wowl();
+	qdf_timer_free(&hdd_drv_ops_inactivity_timer);
 
 	hdd_qdf_print_deinit();
 
@@ -12666,6 +12677,66 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 		qdf_mem_free(cmd);
 
 	return ret;
+}
+
+/**
+ * hdd_start_driver_ops_timer() - Starts driver ops inactivity timer
+ * @drv_op: Enum indicating driver op
+ *
+ * Return: none
+ */
+void hdd_start_driver_ops_timer(int drv_op)
+{
+	memset(drv_ops_string, 0, MAX_OPS_NAME_STRING_SIZE);
+	switch (drv_op) {
+	case eHDD_DRV_OP_PROBE:
+		memcpy(drv_ops_string, "probe", sizeof("probe"));
+		break;
+	case eHDD_DRV_OP_REMOVE:
+		memcpy(drv_ops_string, "remove", sizeof("remove"));
+		break;
+	case eHDD_DRV_OP_SHUTDOWN:
+		memcpy(drv_ops_string, "shutdown", sizeof("shutdown"));
+		break;
+	case eHDD_DRV_OP_REINIT:
+		memcpy(drv_ops_string, "reinit", sizeof("reinit"));
+		break;
+	}
+
+	qdf_timer_start(&hdd_drv_ops_inactivity_timer,
+		HDD_OPS_INACTIVITY_TIMEOUT);
+}
+
+/**
+ * hdd_stop_driver_ops_timer() - Stops driver ops inactivity timer
+ *
+ * Return: none
+ */
+void hdd_stop_driver_ops_timer(void)
+{
+	qdf_timer_sync_cancel(&hdd_drv_ops_inactivity_timer);
+}
+
+/**
+ * hdd_drv_ops_inactivity_handler() - Timeout handler for driver ops
+ * inactivity timer
+ *
+ * Return: None
+ */
+void hdd_drv_ops_inactivity_handler(void)
+{
+	hdd_err("%s: %d Sec timer expired while in .%s",
+		__func__, HDD_OPS_INACTIVITY_TIMEOUT/1000, drv_ops_string);
+
+	/* Driver shutdown is stuck, no recovery possible at this point */
+	if (0 == qdf_mem_cmp(&drv_ops_string[0], "shutdown",
+		sizeof("shutdown")))
+		QDF_BUG(0);
+
+	if (cds_is_self_recovery_enabled())
+		cds_trigger_recovery();
+	else
+		QDF_BUG(0);
 }
 
 /* Register the module init/exit functions */
