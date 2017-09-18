@@ -30,7 +30,8 @@
 
 #define PMO_GTK_OFFLOAD_ENABLE  0
 #define PMO_GTK_OFFLOAD_DISABLE 1
-#define PMO_KEK_LEN 16
+#define PMO_KEK_LEN_LEGACY 16
+#define PMO_KEK_LEN 64
 #define PMO_KCK_LEN 16
 #define PMO_REPLAY_COUNTER_LEN 8
 #define PMO_MAC_MAX_KEY_LENGTH 32
@@ -41,6 +42,7 @@
  * @flags: optional flags
  * @kck: Key confirmation key
  * @kek: key encryption key
+ * @kek_len: KEK Length
  * @replay_counter: replay_counter
  * @bssid: bssid
  */
@@ -48,6 +50,7 @@ struct pmo_gtk_req {
 	uint32_t flags;
 	uint8_t kck[PMO_KCK_LEN];
 	uint8_t kek[PMO_KEK_LEN];
+	uint32_t kek_len;
 	uint64_t replay_counter;
 	struct qdf_mac_addr bssid;
 };
