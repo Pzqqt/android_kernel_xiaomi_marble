@@ -924,10 +924,12 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs_print_nolhistory(dfs);
 		break;
 	case DFS_BANGRADAR:
-		dfs->dfs_bangradar = 1;
-		dfs->wlan_radar_tasksched = 1;
-		qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
-		error = 0;
+		if (!dfs->dfs_is_offload_enabled) {
+			dfs->dfs_bangradar = 1;
+			dfs->wlan_radar_tasksched = 1;
+			qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
+			error = 0;
+		}
 		break;
 	case DFS_SHOW_PRECAC_LISTS:
 		dfs_print_precaclists(dfs);
@@ -936,10 +938,12 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs_reset_precac_lists(dfs);
 		break;
 	case DFS_SECOND_SEGMENT_BANGRADAR:
-		dfs->dfs_second_segment_bangradar = 1;
-		dfs->wlan_radar_tasksched = 1;
-		qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
-		error = 0;
+		if (!dfs->dfs_is_offload_enabled) {
+			dfs->dfs_second_segment_bangradar = 1;
+			dfs->wlan_radar_tasksched = 1;
+			qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
+			error = 0;
+		}
 		break;
 	default:
 		error = -EINVAL;
