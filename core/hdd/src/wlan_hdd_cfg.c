@@ -5669,25 +5669,25 @@ static void hdd_per_roam_print_ini_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->min_candidate_rssi);
 }
 
-static void hdd_mawc_cfg_log(struct hdd_context *pHddCtx)
+static void hdd_mawc_cfg_log(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("Name = [MAWCEnabled] Value = [%u] ",
-		  pHddCtx->config->MAWCEnabled);
+		  hdd_ctx->config->MAWCEnabled);
 	hdd_debug("Name = [%s] Value = [%u] ",
 		CFG_MAWC_ROAM_ENABLED_NAME,
-		pHddCtx->config->mawc_roam_enabled);
+		hdd_ctx->config->mawc_roam_enabled);
 	hdd_debug("Name = [%s] Value = [%u] ",
 		CFG_MAWC_ROAM_TRAFFIC_THRESHOLD_NAME,
-		  pHddCtx->config->mawc_roam_traffic_threshold);
+		  hdd_ctx->config->mawc_roam_traffic_threshold);
 	hdd_debug("Name = [%s] Value = [%d] ",
 		CFG_MAWC_ROAM_AP_RSSI_THRESHOLD_NAME,
-		pHddCtx->config->mawc_roam_ap_rssi_threshold);
+		hdd_ctx->config->mawc_roam_ap_rssi_threshold);
 	hdd_debug("Name = [%s] Value = [%u] ",
 		CFG_MAWC_ROAM_RSSI_HIGH_ADJUST_NAME,
-		  pHddCtx->config->mawc_roam_rssi_high_adjust);
+		  hdd_ctx->config->mawc_roam_rssi_high_adjust);
 	hdd_debug("Name = [%s] Value = [%u] ",
 		CFG_MAWC_ROAM_RSSI_LOW_ADJUST_NAME,
-		pHddCtx->config->mawc_roam_rssi_low_adjust);
+		hdd_ctx->config->mawc_roam_rssi_low_adjust);
 }
 
 /**
