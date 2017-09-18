@@ -579,7 +579,7 @@ void wlan_cfg80211_tdls_rx_callback(void *user_data,
 	struct wireless_dev *wdev;
 	uint16_t freq;
 
-	cfg80211_debug("user data:%p, vdev id:%d, rssi:%d, buf:%p, len:%d",
+	cfg80211_debug("user data:%pK, vdev id:%d, rssi:%d, buf:%pK, len:%d",
 		user_data, rx_frame->vdev_id, rx_frame->rx_rssi,
 		rx_frame->buf, rx_frame->frame_len);
 
@@ -808,7 +808,7 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 	struct osif_tdls_vdev *tdls_priv;
 
 	if (!ind || !ind->vdev) {
-		cfg80211_err("ind: %p", ind);
+		cfg80211_err("ind: %pK", ind);
 		return;
 	}
 	osif_vdev = wlan_vdev_get_ospriv(ind->vdev);
