@@ -40,7 +40,7 @@ scm_scan_free_scan_request_mem(struct scan_start_request *req)
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	scm_info("freed scan request: 0x%p, scan_id: %d, requester: %d",
+	scm_info("freed scan request: 0x%pK, scan_id: %d, requester: %d",
 		req, req->scan_req.scan_id, req->scan_req.scan_req_id);
 	/* Free vendor(extra) ie */
 	ie = req->scan_req.extraie.ptr;
@@ -122,14 +122,14 @@ static void scm_scan_post_event(struct wlan_objmgr_vdev *vdev,
 	struct scan_event_listeners *listeners;
 
 	if (!vdev || !event) {
-		scm_err("vdev: 0x%p, event: 0x%p", vdev, event);
+		scm_err("vdev: 0x%pK, event: 0x%pK", vdev, event);
 		return;
 	}
 	if (!event->requester) {
 		scm_err("invalid requester id");
 		QDF_ASSERT(0);
 	}
-	scm_info("vdev: 0x%p, event: 0x%p", vdev, event);
+	scm_info("vdev: 0x%pK, event: 0x%pK", vdev, event);
 
 	scan = wlan_vdev_get_scan_obj(vdev);
 	pdev_ev_handler = wlan_vdev_get_pdev_scan_ev_handlers(vdev);
@@ -167,7 +167,7 @@ static void scm_scan_post_event(struct wlan_objmgr_vdev *vdev,
 
 	/* notify all interested handlers */
 	for (i = 0; i < listeners->count; i++) {
-		scm_debug("func: 0x%p, arg: 0x%p",
+		scm_debug("func: 0x%pK, arg: 0x%pK",
 			listeners->cb[i].func, listeners->cb[i].arg);
 		listeners->cb[i].func(vdev, event, listeners->cb[i].arg);
 	}
@@ -287,7 +287,7 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 	QDF_STATUS status;
 
 	if (!cmd || !cmd->umac_cmd) {
-		scm_err("cmd: %p, umac_cmd: %p, reason: %d",
+		scm_err("cmd: %pK, umac_cmd: %pK, reason: %d",
 			cmd, cmd->umac_cmd, reason);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -348,7 +348,7 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -374,7 +374,7 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		scm_info("[SCAN-EMULATION]: Disabling Serialization Timer for Emulation\n");
 	}
 
-	scm_info("req: 0x%p, reqid: %d, scanid: %d, vdevid: %d",
+	scm_info("req: 0x%pK, reqid: %d, scanid: %d, vdevid: %d",
 		req, req->scan_req.scan_req_id, req->scan_req.scan_id,
 		req->scan_req.vdev_id);
 
@@ -450,7 +450,7 @@ scm_scan_cancel_req(struct scheduler_msg *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -511,7 +511,7 @@ scm_pno_event_handler(struct wlan_objmgr_vdev *vdev,
 	scan_vdev_obj = wlan_get_vdev_scan_obj(vdev);
 	scan_psoc_obj = wlan_vdev_get_scan_obj(vdev);
 	if (!scan_vdev_obj || !scan_psoc_obj) {
-		scm_err("null scan_vdev_obj %p scan_obj %p",
+		scm_err("null scan_vdev_obj %pK scan_obj %pK",
 			scan_vdev_obj, scan_psoc_obj);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -564,7 +564,7 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	struct scan_event_info *event_info;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: %p, bodyptr: %p", msg, msg->bodyptr);
+		scm_err("msg: %pK, bodyptr: %pK", msg, msg->bodyptr);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	event_info = msg->bodyptr;
@@ -605,7 +605,7 @@ QDF_STATUS scm_scan_event_flush_callback(struct scheduler_msg *msg)
 	struct scan_event_info *event_info;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: %p, bodyptr: %p", msg, msg->bodyptr);
+		scm_err("msg: %pK, bodyptr: %pK", msg, msg->bodyptr);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	event_info = msg->bodyptr;
@@ -644,7 +644,7 @@ QDF_STATUS scm_scan_start_flush_callback(struct scheduler_msg *msg)
 	struct scan_start_request *req;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	req = msg->bodyptr;
@@ -659,7 +659,7 @@ QDF_STATUS scm_scan_cancel_flush_callback(struct scheduler_msg *msg)
 	struct scan_cancel_request *req;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%p, bodyptr: 0x%p", msg, msg->bodyptr);
+		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 

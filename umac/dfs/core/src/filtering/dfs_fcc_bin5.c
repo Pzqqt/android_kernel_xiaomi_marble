@@ -356,7 +356,7 @@ static int dfs_check_chirping_sowl(struct wlan_dfs *dfs,
 	/* DEBUG - Print relevant portions of the FFT data. */
 	for (p = 0; p < num_fft_packets; p++) {
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"fft_data_ptr=0x%p\t", fft_data_ptr);
+			"fft_data_ptr=0x%pK\t", fft_data_ptr);
 		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
 			"[66]=%d [69]=%d\n",
 			*(fft_data_ptr + FFT_LOWER_BIN_MAX_INDEX_BYTE) >> 2,

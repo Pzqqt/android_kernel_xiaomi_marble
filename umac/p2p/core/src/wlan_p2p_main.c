@@ -123,7 +123,7 @@ static QDF_STATUS p2p_psoc_obj_create_notification(
 		return status;
 	}
 
-	p2p_debug("p2p soc object create successful, %p", p2p_soc_obj);
+	p2p_debug("p2p soc object create successful, %pK", p2p_soc_obj);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -165,7 +165,7 @@ static QDF_STATUS p2p_psoc_obj_destroy_notification(
 		return status;
 	}
 
-	p2p_debug("destroy p2p soc object, %p", p2p_soc_obj);
+	p2p_debug("destroy p2p soc object, %pK", p2p_soc_obj);
 
 	qdf_mem_free(p2p_soc_obj);
 
@@ -222,7 +222,7 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 		return status;
 	}
 
-	p2p_debug("p2p vdev object create successful, %p", p2p_vdev_obj);
+	p2p_debug("p2p vdev object create successful, %pK", p2p_vdev_obj);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -272,7 +272,7 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 		return status;
 	}
 
-	p2p_debug("destroy p2p vdev object, p2p vdev obj:%p, noa info:%p",
+	p2p_debug("destroy p2p vdev object, p2p vdev obj:%pK, noa info:%pK",
 		p2p_vdev_obj, p2p_vdev_obj->noa_info);
 
 	if (p2p_vdev_obj->noa_info)
@@ -354,7 +354,7 @@ static QDF_STATUS p2p_peer_obj_destroy_notification(
 						WLAN_UMAC_COMP_P2P);
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!p2p_vdev_obj || !psoc) {
-		p2p_err("p2p_vdev_obj:%p psoc:%p", p2p_vdev_obj, psoc);
+		p2p_err("p2p_vdev_obj:%pK psoc:%pK", p2p_vdev_obj, psoc);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -473,13 +473,13 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 	uint8_t vdev_id;
 
 	if (!vdev || !psoc || !peer) {
-		p2p_err("vdev:%p psoc:%p peer:%p", vdev, psoc, peer);
+		p2p_err("vdev:%pK psoc:%pK peer:%pK", vdev, psoc, peer);
 		return QDF_STATUS_E_INVAL;
 	}
 	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
 						WLAN_UMAC_COMP_P2P);
 	if (!p2p_vdev_obj) {
-		p2p_err("p2p_vdev_obj:%p", p2p_vdev_obj);
+		p2p_err("p2p_vdev_obj:%pK", p2p_vdev_obj);
 		return QDF_STATUS_E_INVAL;
 	}
 	mode = wlan_vdev_mlme_get_opmode(vdev);
@@ -948,7 +948,7 @@ QDF_STATUS p2p_process_noa(struct p2p_noa_event *noa_event)
 	p2p_soc_obj = noa_event->p2p_soc_obj;
 	psoc = p2p_soc_obj->soc;
 
-	p2p_debug("psoc:%p, index:%d, opps_ps:%d, ct_window:%d, num_desc:%d, vdev_id:%d",
+	p2p_debug("psoc:%pK, index:%d, opps_ps:%d, ct_window:%d, num_desc:%d, vdev_id:%d",
 		psoc, noa_info->index, noa_info->opps_ps,
 		noa_info->ct_window, noa_info->num_desc,
 		noa_info->vdev_id);
@@ -999,12 +999,12 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr)
 	struct wlan_objmgr_peer *peer;
 
 	if (!vdev) {
-		p2p_err("vdev:%p", vdev);
+		p2p_err("vdev:%pK", vdev);
 		return;
 	}
 	psoc = wlan_vdev_get_psoc(vdev);
 	if (!psoc) {
-		p2p_err("psoc:%p", psoc);
+		p2p_err("psoc:%pK", psoc);
 		return;
 	}
 	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_P2P_ID);

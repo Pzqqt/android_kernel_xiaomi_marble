@@ -413,7 +413,7 @@ wlan_serialization_dequeue_cmd(struct wlan_serialization_command *cmd,
 					ser_pdev_obj);
 			status = WLAN_SER_CMD_IN_ACTIVE_LIST;
 		} else {
-			serialization_err("cmd_type[%d], cmd_id[%d], vdev[%p]",
+			serialization_err("cmd_type[%d], cmd_id[%d], vdev[%pK]",
 					cmd->cmd_type, cmd->cmd_id, cmd->vdev);
 			/*
 			 * if you come here means there is a possibility

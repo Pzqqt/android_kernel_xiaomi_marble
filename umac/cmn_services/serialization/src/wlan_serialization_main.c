@@ -128,7 +128,7 @@ static void wlan_serialization_destroy_cmd_pool(
 		qdf_list_remove_front(&ser_pdev_obj->global_cmd_pool_list,
 				&node);
 		cmd_list = (struct wlan_serialization_command_list *)node;
-		serialization_info("Node being freed from global pool %p",
+		serialization_info("Node being freed from global pool %pK",
 				cmd_list);
 		qdf_mem_free(cmd_list);
 
@@ -168,7 +168,7 @@ wlan_serialization_create_cmd_pool(struct wlan_objmgr_pdev *pdev,
 		qdf_list_insert_back(
 				&ser_pdev_obj->global_cmd_pool_list,
 				&cmd_list_ptr->node);
-		serialization_info("Created node at %p and inserted to pool",
+		serialization_info("Created node at %pK and inserted to pool",
 				cmd_list_ptr);
 	}
 
@@ -334,7 +334,7 @@ static QDF_STATUS wlan_serialization_vdev_obj_destroy_notification(
 	if (!ser_legacy_cb.serialization_purge_cmd_list)
 		return QDF_STATUS_SUCCESS;
 
-	serialization_debug("for vdev_id[%d] vdev[%p] flush all cmds",
+	serialization_debug("for vdev_id[%d] vdev[%pK] flush all cmds",
 			  vdev_id, vdev);
 	ser_legacy_cb.serialization_purge_cmd_list(wlan_vdev_get_psoc(vdev),
 			vdev, false, false, false, false, true);

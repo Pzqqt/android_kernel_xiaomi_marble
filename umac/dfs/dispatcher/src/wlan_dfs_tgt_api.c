@@ -208,7 +208,7 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
 	if (!dfs || !dfs->dfs_curchan) {
-		DFS_PRINTK("%s: err, dfs=%p, dfs->dfs_curchan=%p\n",
+		DFS_PRINTK("%s: err, dfs=%pK, dfs->dfs_curchan=%pK\n",
 			   __func__, dfs, dfs->dfs_curchan);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -248,7 +248,7 @@ QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 	if (dfs_tx_ops && dfs_tx_ops->dfs_reg_ev_handler)
 		status = dfs_tx_ops->dfs_reg_ev_handler(pdev, dfs_offload);
 	else
-		DFS_PRINTK("%s: err, dfs_tx_ops=%p\n", __func__, dfs_tx_ops);
+		DFS_PRINTK("%s: err, dfs_tx_ops=%pK\n", __func__, dfs_tx_ops);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_DFS_ID);
 

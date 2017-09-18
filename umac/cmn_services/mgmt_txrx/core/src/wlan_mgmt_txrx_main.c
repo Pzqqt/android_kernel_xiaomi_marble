@@ -37,7 +37,7 @@ QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	mgmt_txrx_info("mgmt_txrx ctx: %p psoc: %p, initialize mgmt desc pool of size %d",
+	mgmt_txrx_info("mgmt_txrx ctx: %pK psoc: %pK, initialize mgmt desc pool of size %d",
 				mgmt_txrx_ctx, mgmt_txrx_ctx->psoc, pool_size);
 	mgmt_txrx_ctx->mgmt_desc_pool.pool = qdf_mem_malloc(pool_size *
 					sizeof(struct mgmt_txrx_desc_elem_t));
@@ -105,7 +105,7 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 			!= QDF_STATUS_SUCCESS) {
 		qdf_spin_unlock_bh(
 			&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
-		mgmt_txrx_err("Descriptor freelist empty for mgmt_txrx_ctx %p",
+		mgmt_txrx_err("Descriptor freelist empty for mgmt_txrx_ctx %pK",
 				mgmt_txrx_ctx);
 		return NULL;
 	}
@@ -132,7 +132,7 @@ struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
 
 	qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 
-	mgmt_txrx_info("retrieved mgmt desc: %p with desc id: %d",
+	mgmt_txrx_info("retrieved mgmt desc: %pK with desc id: %d",
 			mgmt_txrx_desc, mgmt_txrx_desc->desc_id);
 	return mgmt_txrx_desc;
 }
@@ -156,6 +156,6 @@ void wlan_mgmt_txrx_desc_put(struct mgmt_txrx_priv_context *mgmt_txrx_ctx,
 
 	qdf_spin_unlock_bh(&mgmt_txrx_ctx->mgmt_desc_pool.desc_pool_lock);
 
-	mgmt_txrx_info("put mgmt desc: %p with desc id: %d into freelist",
+	mgmt_txrx_info("put mgmt desc: %pK with desc id: %d into freelist",
 			desc, desc->desc_id);
 }

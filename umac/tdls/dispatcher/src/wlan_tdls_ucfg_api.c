@@ -183,7 +183,7 @@ QDF_STATUS ucfg_tdls_update_config(struct wlan_objmgr_psoc *psoc,
 
 	tdls_notice("tdls update config ");
 	if (!psoc || !req) {
-		tdls_err("psoc: 0x%p, req: 0x%p", psoc, req);
+		tdls_err("psoc: 0x%pK, req: 0x%pK", psoc, req);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -248,7 +248,7 @@ QDF_STATUS ucfg_tdls_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
 
-	tdls_notice("psoc tdls enable: 0x%p", psoc);
+	tdls_notice("psoc tdls enable: 0x%pK", psoc);
 	if (!psoc) {
 		tdls_err("NULL psoc");
 		return QDF_STATUS_E_FAILURE;
@@ -281,7 +281,7 @@ QDF_STATUS ucfg_tdls_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	QDF_STATUS status;
 	struct tdls_soc_priv_obj *soc_obj = NULL;
 
-	tdls_notice("psoc tdls disable: 0x%p", psoc);
+	tdls_notice("psoc tdls disable: 0x%pK", psoc);
 	if (!psoc) {
 		tdls_err("NULL psoc");
 		return QDF_STATUS_E_FAILURE;
@@ -337,7 +337,7 @@ QDF_STATUS ucfg_tdls_add_peer(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 
 	if (!vdev || !add_peer_req) {
-		tdls_err("vdev: %p, req %p", vdev, add_peer_req);
+		tdls_err("vdev: %pK, req %pK", vdev, add_peer_req);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	tdls_debug("vdevid: %d, peertype: %d",
@@ -383,7 +383,7 @@ QDF_STATUS ucfg_tdls_update_peer(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 
 	if (!vdev || !update_peer) {
-		tdls_err("vdev: %p, update_peer: %p", vdev, update_peer);
+		tdls_err("vdev: %pK, update_peer: %pK", vdev, update_peer);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -443,7 +443,7 @@ QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 
 	if (!vdev || !macaddr) {
-		tdls_err("vdev: %p, mac %p", vdev, macaddr);
+		tdls_err("vdev: %pK, mac %pK", vdev, macaddr);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -490,7 +490,7 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 	struct tdls_action_frame_request *mgmt_req;
 
 	if (!req || !req->vdev) {
-		tdls_err("Invalid mgmt req params %p", req);
+		tdls_err("Invalid mgmt req params %pK", req);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -529,7 +529,7 @@ QDF_STATUS ucfg_tdls_responder(struct tdls_set_responder_req *req)
 	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
-		tdls_err("invalid input %p", req);
+		tdls_err("invalid input %pK", req);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -593,7 +593,7 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 	struct tdls_sta_notify_params *notify;
 
 	if (!notify_info || !notify_info->vdev) {
-		tdls_err("notify_info->vdev: %p, notify_info %p",
+		tdls_err("notify_info->vdev: %pK, notify_info %pK",
 				notify_info->vdev, notify_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -625,7 +625,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 	struct tdls_sta_notify_params *notify;
 
 	if (!notify_info || !notify_info->vdev) {
-		tdls_err("notify_info->vdev: %p, notify_info %p",
+		tdls_err("notify_info->vdev: %pK, notify_info %pK",
 				notify_info->vdev, notify_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -659,7 +659,7 @@ QDF_STATUS ucfg_tdls_set_operating_mode(
 	struct tdls_set_mode_params *set_mode;
 
 	if (!set_mode_params || !set_mode_params->vdev) {
-		tdls_err("vdev: %p, set_mode_params %p",
+		tdls_err("vdev: %pK, set_mode_params %pK",
 				set_mode_params->vdev, set_mode_params);
 		return QDF_STATUS_E_NULL_VALUE;
 	}

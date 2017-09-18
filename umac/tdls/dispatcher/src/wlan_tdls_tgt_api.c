@@ -92,7 +92,7 @@ QDF_STATUS tgt_tdls_send_mgmt_tx_completion(struct scheduler_msg *pmsg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!pmsg || !pmsg->bodyptr) {
-		tdls_err("msg: 0x%p", pmsg);
+		tdls_err("msg: 0x%pK", pmsg);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -107,7 +107,7 @@ QDF_STATUS tgt_tdls_send_mgmt_rsp(struct scheduler_msg *pmsg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!pmsg || !pmsg->bodyptr) {
-		tdls_err("msg: 0x%p", pmsg);
+		tdls_err("msg: 0x%pK", pmsg);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -122,7 +122,7 @@ QDF_STATUS tgt_tdls_add_peer_rsp(struct scheduler_msg *pmsg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!pmsg || !pmsg->bodyptr) {
-		tdls_err("msg: 0x%p", pmsg);
+		tdls_err("msg: 0x%pK", pmsg);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -137,7 +137,7 @@ QDF_STATUS tgt_tdls_del_peer_rsp(struct scheduler_msg *pmsg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!pmsg || !pmsg->bodyptr) {
-		tdls_err("msg: 0x%p", pmsg);
+		tdls_err("msg: 0x%pK", pmsg);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -179,7 +179,7 @@ tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	if (!psoc || !info) {
-		tdls_err("psoc: 0x%p, info: 0x%p", psoc, info);
+		tdls_err("psoc: 0x%pK, info: 0x%pK", psoc, info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	tdls_debug("vdev: %d, type: %d, reason: %d" QDF_MAC_ADDRESS_STR,
@@ -196,7 +196,7 @@ tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 		wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 						     vdev_id, WLAN_TDLS_SB_ID);
 	if (!notify->vdev) {
-		tdls_err("null vdev, vdev_id: %d, psoc: 0x%p", vdev_id, psoc);
+		tdls_err("null vdev, vdev_id: %d, psoc: 0x%pK", vdev_id, psoc);
 		return QDF_STATUS_E_INVAL;
 	}
 	qdf_mem_copy(&notify->event, info, sizeof(*info));
@@ -298,16 +298,16 @@ QDF_STATUS tgt_tdls_mgmt_frame_rx_cb(
 {
 	QDF_STATUS status;
 
-	tdls_debug("psoc:%p, peer:%p, type:%d", psoc, peer, frm_type);
+	tdls_debug("psoc:%pK, peer:%pK, type:%d", psoc, peer, frm_type);
 
 
 	if (!buf) {
-		tdls_err("rx frame buff is null buf:%p", buf);
+		tdls_err("rx frame buff is null buf:%pK", buf);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!mgmt_rx_params || !psoc) {
-		tdls_err("input is NULL mgmt_rx_params:%p psoc:%p, peer:%p",
+		tdls_err("input is NULL mgmt_rx_params:%pK psoc:%pK, peer:%pK",
 			  mgmt_rx_params, psoc, peer);
 		status = QDF_STATUS_E_INVAL;
 		goto release_nbuf;

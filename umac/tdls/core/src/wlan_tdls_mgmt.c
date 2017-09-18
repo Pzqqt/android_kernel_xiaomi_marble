@@ -98,7 +98,7 @@ static QDF_STATUS tdls_process_rx_mgmt(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	tdls_debug("soc:%p, frame_len:%d, rx_chan:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%p",
+	tdls_debug("soc:%pK, frame_len:%d, rx_chan:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%pK",
 		tdls_soc_obj->soc, rx_mgmt->frame_len,
 		rx_mgmt->rx_chan, rx_mgmt->vdev_id, rx_mgmt->frm_type,
 		rx_mgmt->rx_rssi, rx_mgmt->buf);
@@ -176,7 +176,7 @@ QDF_STATUS tdls_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	int num_of_entries;
 
-	tdls_debug("psoc:%p, is register rx:%d", psoc, isregister);
+	tdls_debug("psoc:%pK, is register rx:%d", psoc, isregister);
 
 	frm_cb_info.frm_type = MGMT_ACTION_TDLS_DISCRESP;
 	frm_cb_info.mgmt_rx_cb = tgt_tdls_mgmt_frame_rx_cb;
@@ -321,7 +321,7 @@ tdls_send_mgmt_serialize_callback(struct wlan_serialization_command *cmd,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!cmd || !cmd->umac_cmd) {
-		tdls_err("invalid params cmd: %p, ", cmd);
+		tdls_err("invalid params cmd: %pK, ", cmd);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	req = cmd->umac_cmd;

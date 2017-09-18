@@ -181,7 +181,7 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 
 	if (!psoc || !event_info) {
-		scm_err("psoc: 0x%p, event_info: 0x%p", psoc, event_info);
+		scm_err("psoc: 0x%pK, event_info: 0x%pK", psoc, event_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	scm_info("vdev: %d, type: %d, reason: %d, freq: %d, req: %d, scanid: %d",
@@ -192,7 +192,7 @@ tgt_scan_event_handler(struct wlan_objmgr_psoc *psoc,
 		wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 				vdev_id, WLAN_SCAN_ID);
 	if (!event_info->vdev) {
-		scm_err("null vdev, vdev_id: %d, psoc: 0x%p", vdev_id, psoc);
+		scm_err("null vdev, vdev_id: %d, psoc: 0x%pK", vdev_id, psoc);
 		return QDF_STATUS_E_INVAL;
 	}
 	msg.bodyptr = event_info;

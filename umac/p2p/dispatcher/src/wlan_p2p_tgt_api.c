@@ -112,7 +112,7 @@ void tgt_p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 QDF_STATUS tgt_p2p_mgmt_download_comp_cb(void *context,
 	qdf_nbuf_t buf, bool free)
 {
-	p2p_debug("conext:%p, buf:%p, free:%d", context,
+	p2p_debug("conext:%pK, buf:%pK, free:%d", context,
 		qdf_nbuf_data(buf), free);
 
 	qdf_nbuf_free(buf);
@@ -129,7 +129,7 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	struct tx_action_context *tx_ctx;
 	struct scheduler_msg msg = {0};
 
-	p2p_debug("context:%p, buf:%p, status:%d, tx complete params:%p",
+	p2p_debug("context:%pK, buf:%pK, status:%d, tx complete params:%pK",
 		context, buf, status, tx_compl_params);
 
 	if (!context) {
@@ -183,7 +183,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	uint32_t vdev_id;
 	uint8_t *pdata;
 
-	p2p_debug("psoc:%p, peer:%p, type:%d", psoc, peer, frm_type);
+	p2p_debug("psoc:%pK, peer:%pK, type:%d", psoc, peer, frm_type);
 
 	if (!mgmt_rx_params) {
 		p2p_err("mgmt rx params is NULL");
@@ -256,7 +256,7 @@ QDF_STATUS  tgt_p2p_noa_event_cb(struct wlan_objmgr_psoc *psoc,
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
-	p2p_debug("soc:%p, event_info:%p", psoc, event_info);
+	p2p_debug("soc:%pK, event_info:%pK", psoc, event_info);
 
 	if (!psoc) {
 		p2p_err("psoc context passed is NULL");
@@ -303,7 +303,7 @@ QDF_STATUS tgt_p2p_lo_event_cb(struct wlan_objmgr_psoc *psoc,
 	struct scheduler_msg msg = {0};
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
-	p2p_debug("soc:%p, event_info:%p", psoc, event_info);
+	p2p_debug("soc:%pK, event_info:%pK", psoc, event_info);
 
 	if (!psoc) {
 		p2p_err("psoc context passed is NULL");

@@ -865,7 +865,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		goto dec_peer_ref_cnt;
 	}
 
-	mgmt_txrx_info("Rcvd mgmt frame, mgmt txrx frm type: %u, seq. no.: %u, peer: %p",
+	mgmt_txrx_info("Rcvd mgmt frame, mgmt txrx frm type: %u, seq. no.: %u, peer: %pK",
 			frm_type, *(uint16_t *)wh->i_seq, peer);
 
 	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
@@ -944,12 +944,12 @@ QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX);
 	if (!mgmt_txrx_ctx) {
-		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %pK", psoc);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
 	if (!mgmt_desc) {
-		mgmt_txrx_err("Mgmt desc empty for id %d psoc %p ",
+		mgmt_txrx_err("Mgmt desc empty for id %d psoc %pK ",
 				desc_id, psoc);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -1011,12 +1011,12 @@ qdf_nbuf_t tgt_mgmt_txrx_get_nbuf_from_desc_id(
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX);
 	if (!mgmt_txrx_ctx) {
-		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %pK", psoc);
 		goto fail;
 	}
 	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
 	if (!mgmt_desc) {
-		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %p",
+		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %pK",
 				desc_id, psoc);
 		goto fail;
 	}
@@ -1040,13 +1040,13 @@ tgt_mgmt_txrx_get_peer_from_desc_id(
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX);
 	if (!mgmt_txrx_ctx) {
-		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %pK", psoc);
 		goto fail;
 	}
 
 	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
 	if (!mgmt_desc) {
-		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %p",
+		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %pK",
 				desc_id, psoc);
 		goto fail;
 	}
@@ -1070,13 +1070,13 @@ uint8_t tgt_mgmt_txrx_get_vdev_id_from_desc_id(
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
 				WLAN_UMAC_COMP_MGMT_TXRX);
 	if (!mgmt_txrx_ctx) {
-		mgmt_txrx_err("Mgmt txrx context empty for psoc %p", psoc);
+		mgmt_txrx_err("Mgmt txrx context empty for psoc %pK", psoc);
 		goto fail;
 	}
 
 	mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[desc_id];
 	if (!mgmt_desc) {
-		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %p",
+		mgmt_txrx_err("Mgmt descriptor unavailable for id %d psoc %pK",
 				desc_id, psoc);
 		goto fail;
 	}

@@ -674,7 +674,7 @@ int dfs_control(struct wlan_dfs *dfs,
 	case DFS_SET_THRESH:
 		if (insize < sizeof(struct dfs_ioctl_params) || !indata) {
 			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-					"%s: insize = %d, expected = %zu bytes, indata = %p\n",
+					"%s: insize = %d, expected = %zu bytes, indata = %pK\n",
 					__func__, insize,
 					sizeof(struct dfs_ioctl_params),
 					indata);

@@ -843,7 +843,7 @@ util_scan_entry_update_mlme_info(struct wlan_objmgr_pdev *pdev,
 {
 
 	if (!pdev || !scan_entry) {
-		scm_err("pdev 0x%p, scan_entry: 0x%p", pdev, scan_entry);
+		scm_err("pdev 0x%pK, scan_entry: 0x%pK", pdev, scan_entry);
 		return QDF_STATUS_E_INVAL;
 	}
 

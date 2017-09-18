@@ -155,7 +155,7 @@ static void wlan_serialization_generic_timer_callback(void *arg)
 		return;
 	}
 
-	serialization_err("active cmd timeout for cmd_type[%d] vdev[%p]",
+	serialization_err("active cmd timeout for cmd_type[%d] vdev[%pK]",
 			  cmd->cmd_type, cmd->vdev);
 	if (cmd->cmd_cb)
 		cmd->cmd_cb(cmd, WLAN_SER_CB_ACTIVE_CMD_TIMEOUT);

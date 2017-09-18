@@ -58,13 +58,13 @@ void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 	pl = dfs->pulses;
 
 	if (pl == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: pl==NULL, dfs=%p\n",
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: pl==NULL, dfs=%pK\n",
 				__func__, dfs);
 		return;
 	}
 
 	if (dfs->dfs_b5radars == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: pl==NULL, b5radars=%p\n",
+		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: pl==NULL, b5radars=%pK\n",
 				__func__, dfs->dfs_b5radars);
 		return;
 	}

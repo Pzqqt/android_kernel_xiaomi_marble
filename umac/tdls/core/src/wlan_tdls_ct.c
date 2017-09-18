@@ -515,7 +515,7 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 
 	tdls_soc = wlan_vdev_get_tdls_soc_obj(tdls_vdev->vdev);
 	if (!tdls_soc || !tdls_vdev || !curr_peer) {
-		tdls_err("tdls_soc: %p, tdls_vdev: %p, curr_peer: %p",
+		tdls_err("tdls_soc: %pK, tdls_vdev: %pK, curr_peer: %pK",
 			 tdls_soc, tdls_vdev, curr_peer);
 		return;
 	}

@@ -152,7 +152,7 @@ static uint8_t dfs_get_rand_from_lst(uint8_t *ch_lst, uint8_t num_ch)
 	uint32_t rand_byte = 0;
 
 	if (!num_ch || !ch_lst) {
-		DFS_PRINTK("%s: invalid param ch_lst %p, num_ch = %d\n",
+		DFS_PRINTK("%s: invalid param ch_lst %pK, num_ch = %d\n",
 			   __func__, ch_lst, num_ch);
 		return 0;
 	}
@@ -535,7 +535,7 @@ int dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	uint32_t random_chan_cnt = 0;
 
 	if (!ch_list || !ch_cnt) {
-		DFS_PRINTK("%s: Invalid params %p, ch_cnt=%d\n",
+		DFS_PRINTK("%s: Invalid params %pK, ch_cnt=%d\n",
 			   __func__, ch_list, ch_cnt);
 		return 0;
 	}

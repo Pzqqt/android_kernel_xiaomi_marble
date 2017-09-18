@@ -236,7 +236,7 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
-		tdls_err("msg: 0x%p", msg);
+		tdls_err("msg: 0x%pK", msg);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -307,7 +307,7 @@ QDF_STATUS tdls_process_evt(struct scheduler_msg *msg)
 	struct tdls_event_info *event;
 
 	if (!msg || !msg->bodyptr) {
-		tdls_err("msg is not valid: %p", msg);
+		tdls_err("msg is not valid: %pK", msg);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	notify = msg->bodyptr;
@@ -602,7 +602,7 @@ QDF_STATUS
 tdls_process_policy_mgr_notification(struct wlan_objmgr_psoc *psoc)
 {
 	if (!psoc) {
-		tdls_err("psoc: %p", psoc);
+		tdls_err("psoc: %pK", psoc);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	tdls_debug("enter ");
@@ -1252,7 +1252,7 @@ static QDF_STATUS tdls_post_scan_done_msg(struct tdls_soc_priv_obj *tdls_soc)
 	struct scheduler_msg msg = {0, };
 
 	if (!tdls_soc) {
-		tdls_err("tdls_soc: %p ", tdls_soc);
+		tdls_err("tdls_soc: %pK ", tdls_soc);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 

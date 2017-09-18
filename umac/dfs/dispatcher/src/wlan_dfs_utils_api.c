@@ -564,7 +564,7 @@ void dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!dfs || !psoc) {
-		DFS_PRINTK("%s: dfs %p, psoc %p\n", __func__, dfs, psoc);
+		DFS_PRINTK("%s: dfs %pK, psoc %pK\n", __func__, dfs, psoc);
 		return;
 	}
 

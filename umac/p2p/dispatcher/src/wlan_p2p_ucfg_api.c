@@ -52,7 +52,7 @@ static bool is_p2p_ps_allowed(struct wlan_objmgr_vdev *vdev,
 	uint8_t is_p2pgo = 0;
 
 	if (!vdev) {
-		p2p_err("vdev:%p", vdev);
+		p2p_err("vdev:%pK", vdev);
 		return true;
 	}
 	p2p_vdev_obj = wlan_objmgr_vdev_get_comp_private_obj(vdev,
@@ -62,7 +62,7 @@ static bool is_p2p_ps_allowed(struct wlan_objmgr_vdev *vdev,
 		is_p2pgo = 1;
 
 	if (!p2p_vdev_obj || !is_p2pgo) {
-		p2p_err("p2p_vdev_obj:%p is_p2pgo:%u",
+		p2p_err("p2p_vdev_obj:%pK is_p2pgo:%u",
 			p2p_vdev_obj, is_p2pgo);
 		return false;
 	}
@@ -115,7 +115,7 @@ QDF_STATUS ucfg_p2p_roc_req(struct wlan_objmgr_psoc *soc,
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *roc_ctx;
 
-	p2p_debug("soc:%p, vdev_id:%d, chan:%d, phy_mode:%d, duration:%d",
+	p2p_debug("soc:%pK, vdev_id:%d, chan:%d, phy_mode:%d, duration:%d",
 		soc, roc_req->vdev_id, roc_req->chan,
 		roc_req->phy_mode, roc_req->duration);
 
@@ -160,7 +160,7 @@ QDF_STATUS ucfg_p2p_roc_cancel_req(struct wlan_objmgr_psoc *soc,
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct cancel_roc_context *cancel_roc;
 
-	p2p_debug("soc:%p, cookie:0x%llx", soc, cookie);
+	p2p_debug("soc:%pK, cookie:0x%llx", soc, cookie);
 
 	if (!soc) {
 		p2p_err("psoc context passed is NULL");
@@ -196,7 +196,7 @@ QDF_STATUS ucfg_p2p_cleanup_roc(struct wlan_objmgr_vdev *vdev)
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	uint32_t vdev_id;
 
-	p2p_debug("vdev:%p", vdev);
+	p2p_debug("vdev:%pK", vdev);
 
 	if (!vdev) {
 		p2p_err("null vdev");
@@ -227,7 +227,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct  tx_action_context *tx_action;
 
-	p2p_debug("soc:%p, vdev_id:%d, chan:%d, wait:%d, buf_len:%d, cck:%d, no ack:%d, off chan:%d",
+	p2p_debug("soc:%pK, vdev_id:%d, chan:%d, wait:%d, buf_len:%d, cck:%d, no ack:%d, off chan:%d",
 		soc, mgmt_frm->vdev_id, mgmt_frm->chan,
 		mgmt_frm->wait, mgmt_frm->len, mgmt_frm->no_cck,
 		mgmt_frm->dont_wait_for_ack, mgmt_frm->off_chan);
@@ -286,7 +286,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx_cancel(struct wlan_objmgr_psoc *soc,
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct cancel_roc_context *cancel_tx;
 
-	p2p_debug("soc:%p, cookie:0x%llx", soc, cookie);
+	p2p_debug("soc:%pK, cookie:0x%llx", soc, cookie);
 
 	if (!soc) {
 		p2p_err("psoc context passed is NULL");
@@ -324,7 +324,7 @@ QDF_STATUS ucfg_p2p_set_ps(struct wlan_objmgr_psoc *soc,
 	uint16_t obj_id;
 	struct wlan_objmgr_vdev *vdev;
 
-	p2p_debug("soc:%p, vdev_id:%d, opp_ps:%d, ct_window:%d, count:%d, duration:%d, duration:%d, ps_selection:%d",
+	p2p_debug("soc:%pK, vdev_id:%d, opp_ps:%d, ct_window:%d, count:%d, duration:%d, duration:%d, ps_selection:%d",
 		soc, ps_config->vdev_id, ps_config->opp_ps,
 		ps_config->ct_window, ps_config->count,
 		ps_config->duration, ps_config->single_noa_duration,
@@ -364,7 +364,7 @@ QDF_STATUS ucfg_p2p_lo_start(struct wlan_objmgr_psoc *soc,
 	struct wlan_lmac_if_p2p_tx_ops *p2p_ops;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	p2p_debug("soc:%p, vdev_id:%d, ctl_flags:%d, freq:%d, period:%d, interval:%d, count:%d, dev_types_len:%d, probe_resp_len:%d, device_types:%p, probe_resp_tmplt:%p",
+	p2p_debug("soc:%pK, vdev_id:%d, ctl_flags:%d, freq:%d, period:%d, interval:%d, count:%d, dev_types_len:%d, probe_resp_len:%d, device_types:%pK, probe_resp_tmplt:%pK",
 		soc, p2p_lo_start->vdev_id, p2p_lo_start->ctl_flags,
 		p2p_lo_start->freq, p2p_lo_start->period,
 		p2p_lo_start->interval, p2p_lo_start->count,
@@ -391,7 +391,7 @@ QDF_STATUS ucfg_p2p_lo_stop(struct wlan_objmgr_psoc *soc,
 	struct wlan_lmac_if_p2p_tx_ops *p2p_ops;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	p2p_debug("soc:%p, vdev_id:%d", soc, vdev_id);
+	p2p_debug("soc:%pK, vdev_id:%d", soc, vdev_id);
 
 	if (!soc) {
 		p2p_err("psoc context passed is NULL");

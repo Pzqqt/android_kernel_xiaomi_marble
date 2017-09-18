@@ -278,7 +278,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 	enum tQDF_ADAPTER_MODE vdev_mode;
 
 	if (!vdev || !req_key || req_key->keylen > (sizeof(req_key->keydata))) {
-		qdf_print("%s[%d] Invalid params vdev%p, req_key%p\n",
+		qdf_print("%s[%d] Invalid params vdev%pK, req_key%pK\n",
 				__func__, __LINE__, vdev, req_key);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -394,7 +394,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 			if (!(peer && (QDF_STATUS_SUCCESS
 				== wlan_objmgr_peer_try_get_ref(peer,
 							WLAN_CRYPTO_ID)))) {
-				qdf_print("%s[%d] peer %p failed\n",
+				qdf_print("%s[%d] peer %pK failed\n",
 						__func__, __LINE__, peer);
 				if (IS_MGMT_CIPHER(req_key->type)) {
 					crypto_priv->igtk_key = NULL;
@@ -660,7 +660,7 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	uint8_t bssid_mac[WLAN_ALEN];
 
 	if (!vdev || !macaddr || (key_idx >= WLAN_CRYPTO_MAXKEYIDX)) {
-		qdf_print("%s[%d] Invalid params vdev %p, macaddr %p"
+		qdf_print("%s[%d] Invalid params vdev %pK, macaddr %pK"
 					"keyidx %d\n", __func__, __LINE__, vdev,
 					macaddr, key_idx);
 		return QDF_STATUS_E_INVAL;
@@ -759,7 +759,7 @@ QDF_STATUS wlan_crypto_default_key(struct wlan_objmgr_vdev *vdev,
 	wlan_vdev_obj_unlock(vdev);
 
 	if (!vdev || !macaddr || (key_idx >= WLAN_CRYPTO_MAXKEYIDX)) {
-		qdf_print("%s[%d] Invalid params vdev %p, macaddr %p"
+		qdf_print("%s[%d] Invalid params vdev %pK, macaddr %pK"
 				"keyidx %d\n", __func__, __LINE__,
 				vdev, macaddr, key_idx);
 		return QDF_STATUS_E_INVAL;
@@ -2445,7 +2445,7 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 		if (!(peer && (QDF_STATUS_SUCCESS
 			== wlan_objmgr_peer_try_get_ref(peer,
 						WLAN_CRYPTO_ID)))) {
-			qdf_print("%s[%d] peer %p ref failed\n",
+			qdf_print("%s[%d] peer %pK ref failed\n",
 						__func__, __LINE__, peer);
 			return QDF_STATUS_E_INVAL;
 		}
