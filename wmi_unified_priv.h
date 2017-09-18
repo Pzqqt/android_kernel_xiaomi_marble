@@ -1404,6 +1404,11 @@ QDF_STATUS (*extract_encrypt_decrypt_resp_event)(wmi_unified_t wmi_handle,
 			struct disa_encrypt_decrypt_resp_params *resp);
 #endif
 
+#ifdef WLAN_FEATURE_ACTION_OUI
+QDF_STATUS (*send_action_oui_cmd)(wmi_unified_t wmi_handle,
+				  struct action_oui_request *req);
+#endif /* WLAN_FEATURE_ACTION_OUI */
+
 QDF_STATUS (*send_sar_limit_cmd)(wmi_unified_t wmi_handle,
 				struct sar_limit_cmd_params *params);
 
