@@ -367,7 +367,7 @@ QDF_STATUS pmo_core_cache_mc_addr_list(
 	if (status != QDF_STATUS_SUCCESS)
 		goto dec_ref;
 
-	pmo_info("Cache mc addr list for vdev id: %d psoc: %p vdev: %p",
+	pmo_info("Cache mc addr list for vdev id: %d psoc: %pK vdev: %pK",
 			mc_list_config->vdev_id, mc_list_config->psoc, vdev);
 
 	status = pmo_core_cache_mc_addr_list_in_vdev_priv(mc_list_config, vdev);
@@ -410,7 +410,7 @@ QDF_STATUS pmo_core_flush_mc_addr_list(struct wlan_objmgr_psoc *psoc,
 	if (status != QDF_STATUS_SUCCESS)
 		goto dec_ref;
 
-	pmo_info("Flush mc addr list for vdev id: %d psoc: %p vdev: %p",
+	pmo_info("Flush mc addr list for vdev id: %d psoc: %pK vdev: %pK",
 			vdev_id, psoc, vdev);
 
 	status = pmo_core_flush_mc_addr_list_from_vdev_priv(vdev);

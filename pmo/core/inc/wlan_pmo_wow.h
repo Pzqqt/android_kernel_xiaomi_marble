@@ -591,7 +591,7 @@ static inline void pmo_get_event_bitmap_idx(WOW_WAKE_EVENT_TYPE event,
 {
 
 	if (!bit_idx || !idx || wow_bitmap_size == 0) {
-		pmo_err("bit_idx:%p idx:%p wow_bitmap_size:%u",
+		pmo_err("bit_idx:%pK idx:%pK wow_bitmap_size:%u",
 			 bit_idx, idx, wow_bitmap_size);
 		return;
 	}

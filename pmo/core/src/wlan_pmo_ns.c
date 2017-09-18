@@ -327,7 +327,7 @@ QDF_STATUS pmo_core_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
 		goto dec_ref;
 
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("Flush ns offload on vdev id: %d vdev: %p", vdev_id, vdev);
+	pmo_info("Flush ns offload on vdev id: %d vdev: %pK", vdev_id, vdev);
 
 	status = pmo_core_flush_ns_from_vdev_priv(vdev);
 dec_ref:
@@ -388,7 +388,7 @@ skip_ns_dynamic_check:
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("Enable ns offload in fwr vdev id: %d vdev: %p trigger: %d",
+	pmo_info("Enable ns offload in fwr vdev id: %d vdev: %pK trigger: %d",
 		vdev_id, vdev, trigger);
 	status = pmo_core_do_enable_ns_offload(vdev, vdev_id, trigger);
 dec_ref:
@@ -440,7 +440,7 @@ QDF_STATUS pmo_core_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 
 skip_ns_dynamic_check:
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("disable ns offload in fwr vdev id: %d vdev: %p trigger: %d",
+	pmo_info("disable ns offload in fwr vdev id: %d vdev: %pK trigger: %d",
 		vdev_id, vdev, trigger);
 
 	status = pmo_core_do_disable_ns_offload(vdev, vdev_id, trigger);
