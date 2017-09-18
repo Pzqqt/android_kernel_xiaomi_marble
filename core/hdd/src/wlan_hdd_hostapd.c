@@ -630,7 +630,7 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 		 */
 		pHostapdAdapter = netdev_priv(dev);
 		if (WLAN_HDD_ADAPTER_MAGIC != pHostapdAdapter->magic) {
-			hdd_err("invalid adapter: %p", pHostapdAdapter);
+			hdd_err("invalid adapter: %pK", pHostapdAdapter);
 			return;
 		}
 		pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
@@ -1435,7 +1435,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		else
 			pHddApCtx->dfs_cac_block_tx = true;
 
-		hdd_debug("The value of dfs_cac_block_tx[%d] for ApCtx[%p]:%d",
+		hdd_debug("The value of dfs_cac_block_tx[%d] for ApCtx[%pK]:%d",
 				pHddApCtx->dfs_cac_block_tx, pHddApCtx,
 				pHostapdAdapter->sessionId);
 
@@ -6682,7 +6682,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 		pHostapdAdapter->magic = WLAN_HDD_ADAPTER_MAGIC;
 		pHostapdAdapter->sessionId = HDD_SESSION_ID_INVALID;
 
-		hdd_debug("pWlanHostapdDev = %p, pHostapdAdapter = %p, concurrency_mode=0x%x",
+		hdd_debug("pWlanHostapdDev = %pK, pHostapdAdapter = %pK, concurrency_mode=0x%x",
 			pWlanHostapdDev,
 			pHostapdAdapter,
 			(int)policy_mgr_get_concurrency_mode(
@@ -8819,7 +8819,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	hdd_debug("pAdapter = %p, Device mode %s(%d) sub20 %d",
+	hdd_debug("pAdapter = %pK, Device mode %s(%d) sub20 %d",
 		pAdapter, hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode, cds_is_sub_20_mhz_enabled());
 
@@ -9151,7 +9151,7 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 		if (adapter->aStaInfo[sta_id].isUsed) {
-			hdd_debug("sta_id: %d isUsed: %d %p",
+			hdd_debug("sta_id: %d isUsed: %d %pK",
 				 sta_id, adapter->aStaInfo[sta_id].isUsed,
 				 adapter);
 

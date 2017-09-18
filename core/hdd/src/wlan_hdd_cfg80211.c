@@ -10378,7 +10378,7 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 	}
 	hdd_debug("received primary channel as %d", channel_list->pri_ch);
 	if ((channel_cnt <= 0) || !channel_list) {
-		hdd_err("no available channel/chanlist %d/%p", channel_cnt,
+		hdd_err("no available channel/chanlist %d/%pK", channel_cnt,
 			channel_list);
 		qdf_mem_free(channel_list_ptr);
 		return -EINVAL;
@@ -17932,10 +17932,10 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
 {
 	if (!pmksa->bssid) {
-		hdd_err("bssid (%p) is NULL",
+		hdd_err("bssid (%pK) is NULL",
 		       pmksa->bssid);
 	} else if (!pmksa->ssid || !pmksa->cache_id) {
-		hdd_err("either ssid (%p) or cache_id (%p) are NULL",
+		hdd_err("either ssid (%pK) or cache_id (%pK) are NULL",
 		       pmksa->ssid, pmksa->cache_id);
 		return false;
 	}
@@ -17990,7 +17990,7 @@ static void hdd_fill_pmksa_info(tPmkidCacheInfo *pmk_cache,
 static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
 {
 	if (!pmksa->bssid) {
-		hdd_err("both bssid is NULL %p", pmksa->bssid);
+		hdd_err("both bssid is NULL %pK", pmksa->bssid);
 		return false;
 	}
 	return true;
@@ -18055,7 +18055,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 	}
 
 	if (!pmksa->pmkid) {
-		hdd_err("pmksa->pmkid(%p) is NULL",
+		hdd_err("pmksa->pmkid(%pK) is NULL",
 		       pmksa->pmkid);
 		return -EINVAL;
 	}
@@ -18833,7 +18833,7 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
 	struct hdd_context *hdd_ctx;
 
 	if (!buf || !buf_len) {
-		hdd_err("buf or buf_len invalid, buf: %p buf_len: %zu", buf, buf_len);
+		hdd_err("buf or buf_len invalid, buf: %pK buf_len: %zu", buf, buf_len);
 		return;
 	}
 

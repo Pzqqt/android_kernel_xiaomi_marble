@@ -1064,7 +1064,7 @@ void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 	switch (indType) {
 	case SIR_HAL_LL_STATS_RESULTS_RSP:
 	{
-		hdd_debug("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %p",
+		hdd_debug("LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %pK",
 			linkLayerStatsResults->paramId,
 			linkLayerStatsResults->ifaceId,
 			linkLayerStatsResults->rspId,
@@ -2260,7 +2260,7 @@ void wlan_hdd_cfg80211_link_layer_stats_ext_callback(tHddHandle ctx,
 
 	results = linkLayer_stats_results->results;
 	param_id = linkLayer_stats_results->paramId;
-	hdd_info("LL_STATS RESP paramID = 0x%x, ifaceId = %u, result = %p",
+	hdd_info("LL_STATS RESP paramID = 0x%x, ifaceId = %u, result = %pK",
 		 linkLayer_stats_results->paramId,
 		 linkLayer_stats_results->ifaceId,
 		 linkLayer_stats_results->results);

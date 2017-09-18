@@ -252,7 +252,7 @@ static void hdd_wmm_free_context(struct hdd_wmm_qos_context *pQosContext)
 {
 	struct hdd_adapter *pAdapter;
 
-	hdd_debug("Entered, context %p", pQosContext);
+	hdd_debug("Entered, context %pK", pQosContext);
 
 	if (unlikely((NULL == pQosContext) ||
 		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
@@ -295,7 +295,7 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *pQosContext)
 	union iwreq_data wrqu;
 	char buf[MAX_NOTIFY_LEN + 1];
 
-	hdd_debug("Entered, context %p", pQosContext);
+	hdd_debug("Entered, context %pK", pQosContext);
 
 	if (unlikely((NULL == pQosContext) ||
 		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
@@ -350,7 +350,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	pAdapter = pQosContext->pAdapter;
 	if ((NULL == pAdapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_err("invalid pAdapter: %p", pAdapter);
+		hdd_err("invalid pAdapter: %pK", pAdapter);
 		return;
 	}
 
@@ -508,7 +508,7 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 	sme_ac_enum_type acType;
 	struct hdd_wmm_ac_status *pAc;
 
-	hdd_debug("Entered, context %p", pQosContext);
+	hdd_debug("Entered, context %pK", pQosContext);
 
 	if (unlikely((NULL == pQosContext) ||
 		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
@@ -520,7 +520,7 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 	acType = pQosContext->acType;
 	pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 
-	hdd_debug("status %d flowid %d info %p",
+	hdd_debug("status %d flowid %d info %pK",
 		 smeStatus, qosFlowId, pCurrentQosInfo);
 
 	switch (smeStatus) {
@@ -1019,7 +1019,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	struct sme_qos_wmmtspecinfo qosInfo;
 	struct hdd_context *hdd_ctx;
 
-	hdd_debug("Entered, context %p", pQosContext);
+	hdd_debug("Entered, context %pK", pQosContext);
 
 	if (unlikely(HDD_WMM_CTX_MAGIC != pQosContext->magic)) {
 		hdd_err("Invalid QoS Context");
@@ -1035,7 +1035,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	acType = pQosContext->acType;
 	pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 
-	hdd_info("pAdapter %p acType %d", pAdapter, acType);
+	hdd_info("pAdapter %pK acType %d", pAdapter, acType);
 
 	if (!pAc->wmmAcAccessNeeded) {
 		hdd_err("AC %d doesn't need service", acType);
@@ -1743,7 +1743,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *pAdapter,
 	}
 	/* we need to establish implicit QoS */
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Need to schedule implicit QoS for TL AC %d, pAdapter is %p",
+		  "%s: Need to schedule implicit QoS for TL AC %d, pAdapter is %pK",
 		  __func__, acType, pAdapter);
 
 	pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcAccessNeeded = true;
@@ -1771,7 +1771,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *pAdapter,
 	INIT_WORK(&pQosContext->wmmAcSetupImplicitQos, hdd_wmm_do_implicit_qos);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Scheduling work for AC %d, context %p",
+		  "%s: Scheduling work for AC %d, context %pK",
 		  __func__, acType, pQosContext);
 
 	schedule_work(&pQosContext->wmmAcSetupImplicitQos);
@@ -2184,7 +2184,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *pAdapter,
 	pQosContext->magic = HDD_WMM_CTX_MAGIC;
 	pQosContext->is_inactivity_timer_running = false;
 
-	hdd_debug("Setting up QoS, context %p", pQosContext);
+	hdd_debug("Setting up QoS, context %pK", pQosContext);
 
 	mutex_lock(&pAdapter->hddWmmStatus.wmmLock);
 	list_add(&pQosContext->node, &pAdapter->hddWmmStatus.wmmContextList);
@@ -2291,7 +2291,7 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *pAdapter, uint32_t handl
 		return HDD_WLAN_WMM_STATUS_RELEASE_FAILED_BAD_PARAM;
 	}
 
-	hdd_info("found handle 0x%x, flow %d, AC %d, context %p",
+	hdd_info("found handle 0x%x, flow %d, AC %d, context %pK",
 		 handle, qosFlowId, acType, pQosContext);
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -2381,7 +2381,7 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *pAdapter, uint32_t han
 	list_for_each_entry(pQosContext,
 			    &pAdapter->hddWmmStatus.wmmContextList, node) {
 		if (pQosContext->handle == handle) {
-			hdd_info("found handle 0x%x, context %p",
+			hdd_info("found handle 0x%x, context %pK",
 				 handle, pQosContext);
 
 			status = pQosContext->lastStatus;

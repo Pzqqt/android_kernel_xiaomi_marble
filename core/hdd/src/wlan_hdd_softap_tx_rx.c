@@ -68,11 +68,11 @@
 static void hdd_softap_dump_sk_buff(struct sk_buff *skb)
 {
 	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-		  "%s: head = %p ", __func__, skb->head);
+		  "%s: head = %pK ", __func__, skb->head);
 	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,
-		  "%s: tail = %p ", __func__, skb->tail);
+		  "%s: tail = %pK ", __func__, skb->tail);
 	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-		  "%s: end = %p ", __func__, skb->end);
+		  "%s: end = %pK ", __func__, skb->end);
 	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 		  "%s: len = %d ", __func__, skb->len);
 	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
@@ -731,7 +731,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 #ifdef QCA_WIFI_QCA6290 /* Debug code, remove later */
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
-			 "%s: skb %p skb->len %d\n", __func__, skb, skb->len);
+			 "%s: skb %pK skb->len %d\n", __func__, skb, skb->len);
 #endif
 
 		hdd_softap_dump_sk_buff(skb);

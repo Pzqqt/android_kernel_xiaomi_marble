@@ -542,7 +542,7 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 
 	if ((NULL == pAdapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_err("pAdapter is invalid %p !!!", pAdapter);
+		hdd_err("pAdapter is invalid %pK !!!", pAdapter);
 		return;
 	}
 
@@ -668,7 +668,7 @@ static int wlan_hdd_execute_remain_on_channel(struct hdd_adapter *pAdapter,
 			mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 			pAdapter->is_roc_inprogress = false;
 			pRemainChanCtx = cfgState->remain_on_chan_ctx;
-			hdd_debug("Freeing ROC ctx cfgState->remain_on_chan_ctx=%p",
+			hdd_debug("Freeing ROC ctx cfgState->remain_on_chan_ctx=%pK",
 				 cfgState->remain_on_chan_ctx);
 			if (pRemainChanCtx) {
 				if (qdf_mc_timer_destroy(
@@ -709,7 +709,7 @@ static int wlan_hdd_execute_remain_on_channel(struct hdd_adapter *pAdapter,
 			mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 			pAdapter->is_roc_inprogress = false;
 			pRemainChanCtx = cfgState->remain_on_chan_ctx;
-			hdd_debug("Freeing ROC ctx cfgState->remain_on_chan_ctx=%p",
+			hdd_debug("Freeing ROC ctx cfgState->remain_on_chan_ctx=%pK",
 				 cfgState->remain_on_chan_ctx);
 			if (pRemainChanCtx) {
 				if (qdf_mc_timer_destroy(
@@ -938,7 +938,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 			schedule_delayed_work(&hdd_ctx->roc_req_work,
 			msecs_to_jiffies(
 				hdd_ctx->config->p2p_listen_defer_interval));
-			hdd_debug("Defer interval is %hu, pAdapter %p",
+			hdd_debug("Defer interval is %hu, pAdapter %pK",
 				hdd_ctx->config->p2p_listen_defer_interval,
 				pAdapter);
 			return 0;
@@ -2854,7 +2854,7 @@ int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!adapter || !pnoa) {
-		hdd_err("null param, adapter:%p, pnoa:%p",
+		hdd_err("null param, adapter:%pK, pnoa:%pK",
 			adapter, pnoa);
 		return -EINVAL;
 	}
@@ -2894,7 +2894,7 @@ int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!adapter || !pnoa) {
-		hdd_err("null param, adapter:%p, pnoa:%p",
+		hdd_err("null param, adapter:%pK, pnoa:%pK",
 			adapter, pnoa);
 		return -EINVAL;
 	}
@@ -2917,7 +2917,7 @@ int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!adapter || !params) {
-		hdd_err("null param, adapter:%p, params:%p",
+		hdd_err("null param, adapter:%pK, params:%pK",
 			adapter, params);
 		return -EINVAL;
 	}
@@ -2952,7 +2952,7 @@ int wlan_hdd_listen_offload_start(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 
 	if (!params) {
-		hdd_err("params is null, params:%p", params);
+		hdd_err("params is null, params:%pK", params);
 		return -EINVAL;
 	}
 
@@ -2972,7 +2972,7 @@ int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 
 	if (!adapter) {
-		hdd_err("adapter is null, adapter:%p", adapter);
+		hdd_err("adapter is null, adapter:%pK", adapter);
 		return -EINVAL;
 	}
 
@@ -2995,7 +2995,7 @@ int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 
 	if (!adapter) {
-		hdd_err("adapter is null, adapter:%p", adapter);
+		hdd_err("adapter is null, adapter:%pK", adapter);
 		return -EINVAL;
 	}
 

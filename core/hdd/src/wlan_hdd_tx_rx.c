@@ -212,7 +212,7 @@ bool hdd_tx_flow_control_is_pause(void *adapter_context)
 
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		/* INVALID ARG */
-		hdd_err("invalid adapter %p", pAdapter);
+		hdd_err("invalid adapter %pK", pAdapter);
 		return false;
 	}
 
@@ -985,7 +985,7 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 	adapter = (struct hdd_adapter *)context;
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "invalid adapter %p", adapter);
+			  "invalid adapter %pK", adapter);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1192,7 +1192,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 #ifdef QCA_WIFI_QCA6290 /* Debug code, remove later */
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
-			 "%s: skb %p skb->len %d\n", __func__, skb, skb->len);
+			 "%s: skb %pK skb->len %d\n", __func__, skb, skb->len);
 #endif
 
 		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);

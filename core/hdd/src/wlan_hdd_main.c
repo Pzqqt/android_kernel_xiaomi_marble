@@ -1723,7 +1723,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 	struct hdd_ap_ctx *ap_ctx;
 
 	if (!hdd_ctx || hdd_ctx->config->disableDFSChSwitch) {
-		hdd_info("skip tx block hdd_ctx=%p, disableDFSChSwitch=%d",
+		hdd_info("skip tx block hdd_ctx=%pK, disableDFSChSwitch=%d",
 			 hdd_ctx, hdd_ctx->config->disableDFSChSwitch);
 		return true;
 	}
@@ -10027,7 +10027,7 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 
 	ENTER();
 
-	hdd_debug("hdd_softap_sta_deauth:(%p, false)",
+	hdd_debug("hdd_softap_sta_deauth:(%pK, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	/* Ignore request to deauth bcmc station */
@@ -10056,7 +10056,7 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 {
 	ENTER();
 
-	hdd_debug("hdd_softap_sta_disassoc:(%p, false)",
+	hdd_debug("hdd_softap_sta_disassoc:(%pK, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	/* Ignore request to disassoc bcmc station */
@@ -10072,7 +10072,7 @@ void hdd_softap_tkip_mic_fail_counter_measure(struct hdd_adapter *adapter,
 {
 	ENTER();
 
-	hdd_debug("hdd_softap_tkip_mic_fail_counter_measure:(%p, false)",
+	hdd_debug("hdd_softap_tkip_mic_fail_counter_measure:(%pK, false)",
 	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	wlansap_set_counter_measure(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
@@ -12165,7 +12165,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 			&& (eConnectionState_Connecting ==
 				(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
 					conn_info.connState)) {
-			hdd_err("%p(%d) Connection is in progress",
+			hdd_err("%pK(%d) Connection is in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->sessionId);
 			if (session_id && reason) {
@@ -12183,7 +12183,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 			     WLAN_HDD_GET_HAL_CTX(adapter),
 			     adapter->sessionId)) ||
 		    hdd_is_roaming_in_progress(adapter)) {
-			hdd_err("%p(%d) Reassociation in progress",
+			hdd_err("%pK(%d) Reassociation in progress",
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter),
 				adapter->sessionId);
 			if (session_id && reason) {

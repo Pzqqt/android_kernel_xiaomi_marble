@@ -1349,7 +1349,7 @@ wlan_hdd_cfg80211_extscan_generic_rsp
 	ENTER();
 
 	if (wlan_hdd_validate_context(hdd_ctx) || !response) {
-		hdd_err("HDD context is not valid or response(%p) is null",
+		hdd_err("HDD context is not valid or response(%pK) is null",
 		       response);
 		return;
 	}

@@ -365,7 +365,7 @@ wlan_hdd_tdls_check_power_save_prohibited(struct hdd_adapter *pAdapter)
 
 	if ((NULL == pAdapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_err("invalid pAdapter: %p", pAdapter);
+		hdd_err("invalid pAdapter: %pK", pAdapter);
 		return;
 	}
 
@@ -2458,7 +2458,7 @@ uint16_t wlan_hdd_tdls_connected_peers(struct hdd_adapter *pAdapter)
 
 	if ((NULL == pAdapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hdd_err("invalid pAdapter: %p", pAdapter);
+		hdd_err("invalid pAdapter: %pK", pAdapter);
 		return 0;
 	}
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -3088,7 +3088,7 @@ void wlan_hdd_tdls_timer_restart(struct hdd_adapter *pAdapter,
 	struct hdd_station_ctx *pHddStaCtx;
 
 	if (NULL == pAdapter || WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		hdd_err("invalid pAdapter: %p", pAdapter);
+		hdd_err("invalid pAdapter: %pK", pAdapter);
 		return;
 	}
 

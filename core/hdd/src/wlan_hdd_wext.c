@@ -3911,7 +3911,7 @@ static void hdd_get_peer_rssi_cb(struct sir_peer_info_resp *sta_rssi,
 	uint8_t peer_num;
 
 	if ((!sta_rssi) || (!context)) {
-		hdd_err("Bad param, sta_rssi [%p] context [%p]",
+		hdd_err("Bad param, sta_rssi [%pK] context [%pK]",
 			sta_rssi, context);
 		return;
 	}
@@ -3958,7 +3958,7 @@ int wlan_hdd_get_peer_rssi(struct hdd_adapter *adapter,
 	};
 
 	if (!adapter || !macaddress || !peer_sta_info) {
-		hdd_err("pAdapter [%p], macaddress [%p], peer_sta_info[%p]",
+		hdd_err("pAdapter [%pK], macaddress [%pK], peer_sta_info[%pK]",
 			adapter, macaddress, peer_sta_info);
 		return -EFAULT;
 	}
@@ -4018,7 +4018,7 @@ static void wlan_hdd_get_peer_info_cb(struct sir_peer_info_ext_resp *sta_info,
 	uint8_t sta_num;
 
 	if ((!sta_info) || (!context)) {
-		hdd_err("Bad param, sta_info [%p] context [%p]",
+		hdd_err("Bad param, sta_info [%pK] context [%pK]",
 			sta_info, context);
 		return;
 	}
@@ -6311,7 +6311,7 @@ static void hdd_get_class_a_statistics_cb(void *stats, void *context)
 
 	ENTER();
 	if ((NULL == stats) || (NULL == context)) {
-		hdd_err("Bad param, stats [%p] context [%p]",
+		hdd_err("Bad param, stats [%pK] context [%pK]",
 			stats, context);
 		return;
 	}
@@ -6422,7 +6422,7 @@ static void hdd_get_station_statistics_cb(void *stats, void *context)
 	struct csr_per_chain_rssi_stats_info *per_chain_rssi_stats;
 
 	if ((NULL == stats) || (NULL == context)) {
-		hdd_err("Bad param, pStats [%p] pContext [%p]",
+		hdd_err("Bad param, pStats [%pK] pContext [%pK]",
 			stats, context);
 		return;
 	}
@@ -12113,7 +12113,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 	}
 
 	if ((NULL == priv_data.pointer) || (0 == priv_data.length)) {
-		hdd_err("invalid priv data %p or invalid priv data length %d",
+		hdd_err("invalid priv data %pK or invalid priv data length %d",
 			priv_data.pointer, priv_data.length);
 		return -EINVAL;
 	}
@@ -14490,7 +14490,7 @@ int hdd_register_wext(struct net_device *dev)
 
 int hdd_unregister_wext(struct net_device *dev)
 {
-	hdd_debug("dev(%p)", dev);
+	hdd_debug("dev(%pK)", dev);
 
 	if (dev != NULL) {
 		rtnl_lock();

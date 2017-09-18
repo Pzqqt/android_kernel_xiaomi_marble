@@ -64,7 +64,7 @@ struct qca_napi_data *hdd_napi_get_all(void)
 	else
 		rp = hif_napi_get_all(hif);
 
-	NAPI_DEBUG("<-- [addr=%p]", rp);
+	NAPI_DEBUG("<-- [addr=%pK]", rp);
 	return rp;
 }
 
@@ -245,7 +245,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 	int rc = -EFAULT;  /* assume err */
 	struct hif_opaque_softc *hif;
 
-	NAPI_DEBUG("-->(event=%d, aux=%p)", event, data);
+	NAPI_DEBUG("-->(event=%d, aux=%pK)", event, data);
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))

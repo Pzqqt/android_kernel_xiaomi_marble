@@ -109,7 +109,7 @@ struct hdd_request *hdd_request_alloc(const struct hdd_request_params *params)
 	request->cookie = cookie++;
 	qdf_list_insert_back(&requests, &request->node);
 	qdf_spin_unlock_bh(&spinlock);
-	hdd_debug("request %p, cookie %p, caller %pS",
+	hdd_debug("request %pK, cookie %pK, caller %pS",
 		  request, request->cookie, (void *)_RET_IP_);
 
 	return request;
@@ -140,7 +140,7 @@ struct hdd_request *hdd_request_get(void *cookie)
 	if (request)
 		request->reference_count++;
 	qdf_spin_unlock_bh(&spinlock);
-	hdd_debug("cookie %p, request %p, caller %pS",
+	hdd_debug("cookie %pK, request %pK, caller %pS",
 		  cookie, request, (void *)_RET_IP_);
 
 	return request;
@@ -150,7 +150,7 @@ void hdd_request_put(struct hdd_request *request)
 {
 	bool unlinked = false;
 
-	hdd_debug("request %p, cookie %p, caller %pS",
+	hdd_debug("request %pK, cookie %pK, caller %pS",
 		  request, request->cookie, (void *)_RET_IP_);
 	qdf_spin_lock_bh(&spinlock);
 	request->reference_count--;

@@ -57,7 +57,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 	adapter = (struct hdd_adapter *)context;
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			"invalid adapter %p", adapter);
+			"invalid adapter %pK", adapter);
 		return;
 	}
 
