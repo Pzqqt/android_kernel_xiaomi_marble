@@ -287,6 +287,10 @@ extern QDF_STATUS dp_reo_send_cmd(struct dp_soc *soc,
 extern void dp_reo_cmdlist_destroy(struct dp_soc *soc);
 extern void dp_reo_status_ring_handler(struct dp_soc *soc);
 void dp_aggregate_vdev_stats(struct dp_vdev *vdev);
+void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
+	union hal_reo_status *reo_status);
+void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
+		union hal_reo_status *reo_status);
 uint16_t dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle,
 		qdf_nbuf_t nbuf, uint8_t newmac[][DP_MAC_ADDR_LEN],
 		uint8_t new_mac_cnt);
@@ -298,7 +302,8 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t config_param_1, uint32_t config_param_2,
 		uint32_t config_param_3);
 void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf);
-int dp_peer_rxtid_stats(struct dp_peer *peer);
+void dp_peer_rxtid_stats(struct dp_peer *peer, void (*callback_fn),
+		void *cb_ctxt);
 void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 	struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,
 	 uint32_t *rx_pn);

@@ -3745,6 +3745,69 @@ void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
 }
 #endif
 
+/*
+ * dp_aggregate_pdev_ctrl_frames_stats()- function to agreegate peer stats
+ * Current scope is bar recieved count
+ *
+ * @pdev_handle: DP_PDEV handle
+ *
+ * Return: void
+ */
+#define STATS_PROC_TIMEOUT        (HZ/10)
+
+static void
+dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
+{
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	uint32_t waitcnt;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (!peer) {
+				QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					FL("DP Invalid Peer refernce"));
+				return;
+			}
+			waitcnt = 0;
+			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
+			while (!(qdf_atomic_read(&(pdev->stats.cmd_complete)))
+				&& waitcnt < 10) {
+				schedule_timeout_interruptible(
+						STATS_PROC_TIMEOUT);
+				waitcnt++;
+			}
+			qdf_atomic_set(&(pdev->stats.cmd_complete), 0);
+		}
+	}
+}
+
+/**
+ * dp_rx_bar_stats_cb(): BAR received stats callback
+ * @soc: SOC handle
+ * @cb_ctxt: Call back context
+ * @reo_status: Reo status
+ *
+ * return: void
+ */
+void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
+	union hal_reo_status *reo_status)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)cb_ctxt;
+	struct hal_reo_queue_status *queue_status = &(reo_status->queue_status);
+
+	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
+		DP_TRACE_STATS(FATAL, "REO stats failure %d \n",
+			queue_status->header.status);
+		qdf_atomic_set(&(pdev->stats.cmd_complete), 1);
+		return;
+	}
+
+	pdev->stats.rx.bar_recv_cnt += queue_status->bar_rcvd_cnt;
+	qdf_atomic_set(&(pdev->stats.cmd_complete), 1);
+
+}
+
 /**
  * dp_aggregate_vdev_stats(): Consolidate stats at VDEV level
  * @vdev: DP VDEV handle
@@ -4104,6 +4167,12 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 			pdev->stats.replenish.rxdma_err);
 	DP_PRINT_STATS("	Desc Alloc Failed: = %d",
 			pdev->stats.err.desc_alloc_fail);
+
+	/* Get bar_recv_cnt */
+	dp_aggregate_pdev_ctrl_frames_stats(pdev);
+	DP_PRINT_STATS("BAR Received Count: = %d",
+			pdev->stats.rx.bar_recv_cnt);
+
 }
 
 /**
@@ -4690,7 +4759,7 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 	}
 
 	dp_print_peer_stats(peer);
-	dp_peer_rxtid_stats(peer);
+	dp_peer_rxtid_stats(peer, dp_rx_tid_stats_cb, NULL);
 	return;
 }
 

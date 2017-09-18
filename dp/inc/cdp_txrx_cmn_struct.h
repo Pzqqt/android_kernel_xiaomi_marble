@@ -33,6 +33,7 @@
 #include "htc_api.h"
 #include "qdf_types.h"
 #include "qdf_nbuf.h"
+#include "qdf_atomic.h"
 #ifndef CONFIG_WIN
 #include <cdp_txrx_mob_def.h>
 #endif /* CONFIG_WIN */
@@ -836,6 +837,8 @@ struct cdp_rx_stats {
 	uint32_t non_amsdu_cnt;
 	/* Number of MSDUs part of AMSDU*/
 	uint32_t amsdu_cnt;
+	/* Number of bar received */
+	uint32_t bar_recv_cnt;
 };
 
 /* Tx ingress Stats */
@@ -1003,6 +1006,7 @@ struct cdp_pdev_stats {
 	struct cdp_hist_tx_comp tx_comp_histogram;
 	/* Number of Rx ring descriptors reaped per interrupt */
 	struct cdp_hist_rx_ind rx_ind_histogram;
+	qdf_atomic_t cmd_complete;
 };
 
 /**

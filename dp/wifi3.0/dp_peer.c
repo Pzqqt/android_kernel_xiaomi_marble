@@ -625,7 +625,7 @@ int dp_peer_find_attach(struct dp_soc *soc)
 	return 0; /* success */
 }
 
-static void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
+void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 	union hal_reo_status *reo_status)
 {
 	struct dp_rx_tid *rx_tid = (struct dp_rx_tid *)cb_ctxt;
@@ -1991,14 +1991,20 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 /**
  * dp_peer_rxtid_stats: Retried Rx TID (REO queue) stats from HW
  * @peer: DP peer handle
+ * @dp_stats_cmd_cb: REO command callback function
+ * @cb_ctxt: Callback context
  *
- * Return: 0 on success, error code on failure
+ * Return: none
  */
-int dp_peer_rxtid_stats(struct dp_peer *peer)
+void dp_peer_rxtid_stats(struct dp_peer *peer, void (*dp_stats_cmd_cb),
+			void *cb_ctxt)
 {
 	struct dp_soc *soc = peer->vdev->pdev->soc;
 	struct hal_reo_cmd_params params;
 	int i;
+
+	if (!dp_stats_cmd_cb)
+		return;
 
 	qdf_mem_zero(&params, sizeof(params));
 	for (i = 0; i < DP_MAX_TIDS; i++) {
@@ -2009,8 +2015,14 @@ int dp_peer_rxtid_stats(struct dp_peer *peer)
 				rx_tid->hw_qdesc_paddr & 0xffffffff;
 			params.std.addr_hi =
 				(uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
-			dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS, &params,
-				dp_rx_tid_stats_cb, rx_tid);
+
+			if (cb_ctxt) {
+				dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS,
+					&params, dp_stats_cmd_cb, cb_ctxt);
+			} else {
+				dp_reo_send_cmd(soc, CMD_GET_QUEUE_STATS,
+					&params, dp_stats_cmd_cb, rx_tid);
+			}
 
 			/* Flush REO descriptor from HW cache to update stats
 			 * in descriptor memory. This is to help debugging */
@@ -2024,5 +2036,4 @@ int dp_peer_rxtid_stats(struct dp_peer *peer)
 				NULL);
 		}
 	}
-	return 0;
 }
