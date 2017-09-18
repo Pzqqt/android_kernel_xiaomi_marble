@@ -43,7 +43,9 @@
 #ifdef WLAN_FEATURE_DISA
 #include "wlan_disa_public_struct.h"
 #endif
-
+#ifdef WLAN_FEATURE_ACTION_OUI
+#include "wlan_action_oui_public_struct.h"
+#endif
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
 #endif
@@ -1940,6 +1942,20 @@ QDF_STATUS wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_set_country_cmd_send(void *wmi_hdl,
 				struct set_country *param);
+
+#ifdef WLAN_FEATURE_ACTION_OUI
+/**
+ * wmi_unified_send_action_oui_cmd() - send action oui cmd to fw
+ * @wmi_hdl: wma handle
+ * @req: wmi action oui message to be send
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS
+wmi_unified_send_action_oui_cmd(void *wmi_hdl,
+				struct action_oui_request *req);
+#endif /* WLAN_FEATURE_ACTION_OUI */
+
 /*
  * wmi_unified_set_del_pmkid_cache() - set delete PMKID
  * @wmi_hdl: wma handle

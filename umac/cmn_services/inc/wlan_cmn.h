@@ -249,6 +249,7 @@
  * @WLAN_UMAC_COMP_OCB:           OCB
  * @WLAN_UMAC_COMP_IPA:           IPA
  * @WLAN_UMAC_COMP_CP_STATS:      Control Plane Statistics
+ * @WLAN_UMAC_COMP_ACTION_OUI:    ACTION OUI
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -283,6 +284,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_OCB                = 25,
 	WLAN_UMAC_COMP_IPA                = 26,
 	WLAN_UMAC_COMP_CP_STATS           = 27,
+	WLAN_UMAC_COMP_ACTION_OUI         = 28,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

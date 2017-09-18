@@ -216,6 +216,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_WIFI_POS_OSIF_ID:      wifi positioning (OSID)
  * @WLAN_WIFI_POS_TGT_IF_ID:    wifi positioning (Target IF)
  * @WLAN_MLME_OBJ_DEL_ID:       Object delete req/resp tracking with FW
+ * @WLAN_ACTION_OUI_ID:         action oui operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -265,6 +266,7 @@ typedef enum {
 	WLAN_WIFI_POS_OSIF_ID = 40,
 	WLAN_WIFI_POS_TGT_IF_ID = 41,
 	WLAN_MLME_OBJ_DEL_ID    = 42,
+	WLAN_ACTION_OUI_ID      = 43,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -321,6 +323,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_WIFI_POS_OSIF_ID",
 					"WLAN_WIFI_POS_TGT_IF_ID",
 					"WLAN_MLME_OBJ_DEL_ID",
+					"WLAN_ACTION_OUI_ID",
 					"WLAN_REF_ID_MAX"};
 
 	return (char *)strings[id];
