@@ -191,7 +191,7 @@ void qdf_lro_deinit(qdf_lro_ctx_t lro_ctx)
 {
 	if (likely(lro_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			 "LRO instance %p is being freed", lro_ctx);
+			 "LRO instance %pK is being freed", lro_ctx);
 		qdf_mem_free(lro_ctx);
 	}
 }

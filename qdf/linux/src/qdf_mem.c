@@ -1458,7 +1458,7 @@ void qdf_mem_copy(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 
 	if ((dst_addr == NULL) || (src_addr == NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s called with NULL parameter, source:%p destination:%p",
+			  "%s called with NULL parameter, source:%pK destination:%pK",
 			  __func__, src_addr, dst_addr);
 		QDF_ASSERT(0);
 		return;
@@ -1532,7 +1532,7 @@ void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 
 	if ((dst_addr == NULL) || (src_addr == NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s called with NULL parameter, source:%p destination:%p",
+			  "%s called with NULL parameter, source:%pK destination:%pK",
 			  __func__, src_addr, dst_addr);
 		QDF_ASSERT(0);
 		return;
@@ -1725,7 +1725,7 @@ void qdf_ether_addr_copy(void *dst_addr, const void *src_addr)
 {
 	if ((dst_addr == NULL) || (src_addr == NULL)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s called with NULL parameter, source:%p destination:%p",
+			  "%s called with NULL parameter, source:%pK destination:%pK",
 			  __func__, src_addr, dst_addr);
 		QDF_ASSERT(0);
 		return;
