@@ -27,6 +27,9 @@
 #ifdef FEATURE_WLAN_APF
 #include "wmi_unified_apf_tlv.h"
 #endif
+#ifdef WLAN_FEATURE_ACTION_OUI
+#include "wmi_unified_action_oui_tlv.h"
+#endif
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
 #endif
@@ -22218,6 +22221,9 @@ struct wmi_ops tlv_ops =  {
 		extract_peer_sta_ps_statechange_ev_tlv,
 	.extract_inst_rssi_stats_event = extract_inst_rssi_stats_event_tlv,
 	.send_per_roam_config_cmd = send_per_roam_config_cmd_tlv,
+#ifdef WLAN_FEATURE_ACTION_OUI
+	.send_action_oui_cmd = send_action_oui_cmd_tlv,
+#endif
 	.send_dfs_phyerr_offload_en_cmd = send_dfs_phyerr_offload_en_cmd_tlv,
 	.send_dfs_phyerr_offload_dis_cmd = send_dfs_phyerr_offload_dis_cmd_tlv,
 	.extract_reg_chan_list_update_event =
