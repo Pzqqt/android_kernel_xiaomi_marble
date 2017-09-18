@@ -103,7 +103,7 @@ dp_get_vdev_from_soc_vdev_id_wifi3(struct dp_soc *soc,
 			if (vdev->vdev_id == vdev_id) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO,
-					FL("Found vdev 0x%p on pdev %d\n"),
+					FL("Found vdev 0x%pK on pdev %d\n"),
 					vdev, i);
 				return vdev;
 			}

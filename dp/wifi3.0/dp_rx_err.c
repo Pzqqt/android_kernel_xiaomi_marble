@@ -160,7 +160,7 @@ dp_rx_pn_error_handle(struct dp_soc *soc, void *ring_desc,
 		"Packet received with PN error");
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"discard rx due to PN error for peer  %p  "
+		"discard rx due to PN error for peer  %pK  "
 		"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
 		peer,
 		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
@@ -333,7 +333,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	vdev = peer->vdev;
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("INVALID vdev %p OR osif_rx"), vdev);
+				FL("INVALID vdev %pK OR osif_rx"), vdev);
 		/* Drop & free packet */
 		qdf_nbuf_free(nbuf);
 		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
@@ -455,14 +455,14 @@ skip_mec_check:
 
 		if (vdev->osif_rx) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				FL("vdev %p osif_rx %p"), vdev,
+				FL("vdev %pK osif_rx %pK"), vdev,
 				vdev->osif_rx);
 			qdf_nbuf_set_next(nbuf, NULL);
 			vdev->osif_rx(vdev->osif_vdev, nbuf);
 			DP_STATS_INC(vdev->pdev, rx.to_stack.num, 1);
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("INVALID vdev %p OR osif_rx"), vdev);
+				FL("INVALID vdev %pK OR osif_rx"), vdev);
 			DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
 		}
 	}
@@ -536,7 +536,7 @@ dp_rx_err_deliver(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	vdev = peer->vdev;
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				FL("INVALID vdev %p OR osif_rx"), vdev);
+				FL("INVALID vdev %pK OR osif_rx"), vdev);
 		/* Drop & free packet */
 		qdf_nbuf_free(nbuf);
 		DP_STATS_INC(soc, rx.err.invalid_vdev, 1);
@@ -631,7 +631,7 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 		 * Ring Type / Ring Id combo
 		 */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access For WBM Release SRNG Failed - %p"),
+			FL("HAL RING Access For WBM Release SRNG Failed - %pK"),
 			wbm_rel_srng);
 		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		goto done;
@@ -701,7 +701,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 */
 		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access Failed -- %p"), hal_ring);
+			FL("HAL RING Access Failed -- %pK"), hal_ring);
 		goto done;
 	}
 
@@ -839,7 +839,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		 * Ring Type / Ring Id combo
 		 */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access Failed -- %p"), hal_ring);
+			FL("HAL RING Access Failed -- %pK"), hal_ring);
 		goto done;
 	}
 
@@ -1067,7 +1067,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_DEBUG,
-					"[%s][%d] msdu_nbuf=%p \n",
+					"[%s][%d] msdu_nbuf=%pK \n",
 					__func__, __LINE__, msdu);
 
 				qdf_nbuf_free(msdu);
@@ -1127,7 +1127,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (!err_dst_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring Init \
-			Failed -- %p\n",
+			Failed -- %pK\n",
 			__func__, __LINE__, err_dst_srng);
 		return 0;
 	}
@@ -1139,7 +1139,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, err_dst_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : HAL Monitor Destination Ring Init \
-			Failed -- %p\n",
+			Failed -- %pK\n",
 			__func__, __LINE__, err_dst_srng);
 		return 0;
 	}

@@ -2140,8 +2140,8 @@ static inline int dp_ipa_ring_resource_setup(struct dp_soc *soc,
 	soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr = hp_addr;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: ring_base_paddr:%p, ring_base_vaddr:%p"
-		"_entries:%d, hp_addr:%p\n",
+		"%s: ring_base_paddr:%pK, ring_base_vaddr:%pK"
+		"_entries:%d, hp_addr:%pK\n",
 		__func__,
 		(void *)srng_params.ring_base_paddr,
 		(void *)srng_params.ring_base_vaddr,
@@ -2864,7 +2864,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 		 "LRO: vdev_id %d lro_enable %d", vdev_id, vdev->lro_enable);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"Created vdev %p (%pM)", vdev, vdev->mac_addr.raw);
+		"Created vdev %pK (%pM)", vdev, vdev->mac_addr.raw);
 	DP_STATS_INIT(vdev);
 
 	return (struct cdp_vdev *)vdev;
@@ -2941,7 +2941,7 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 	if (!TAILQ_EMPTY(&vdev->peer_list)) {
 		/* debug print - will be removed later */
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
-			FL("not deleting vdev object %p (%pM)"
+			FL("not deleting vdev object %pK (%pM)"
 			"until deletion finishes for all its peers"),
 			vdev, vdev->mac_addr.raw);
 		/* indicate that the vdev needs to be deleted */
@@ -2957,7 +2957,7 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 		vdev->vdev_id);
 	dp_tx_vdev_detach(vdev);
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("deleting vdev object %p (%pM)"), vdev, vdev->mac_addr.raw);
+		FL("deleting vdev object %pK (%pM)"), vdev, vdev->mac_addr.raw);
 
 	qdf_mem_free(vdev);
 
@@ -3033,7 +3033,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	dp_peer_find_hash_add(soc, peer);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		"vdev %p created peer %p (%pM) ref_cnt: %d",
+		"vdev %pK created peer %pK (%pM) ref_cnt: %d",
 		vdev, peer, peer->mac_addr.raw,
 		qdf_atomic_read(&peer->ref_cnt));
 	/*
@@ -3330,7 +3330,7 @@ void dp_peer_unref_delete(void *peer_handle)
 	 */
 	qdf_spin_lock_bh(&soc->peer_ref_mutex);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "%s: peer %p ref_cnt(before decrement): %d\n", __func__,
+		  "%s: peer %pK ref_cnt(before decrement): %d\n", __func__,
 		  peer, qdf_atomic_read(&peer->ref_cnt));
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_ids[0];
@@ -3343,7 +3343,7 @@ void dp_peer_unref_delete(void *peer_handle)
 			soc->peer_id_to_obj_map[peer_id] = NULL;
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Deleting peer %p (%pM)", peer, peer->mac_addr.raw);
+			"Deleting peer %pK (%pM)", peer, peer->mac_addr.raw);
 
 		/* remove the reference to the peer from the hash table */
 		dp_peer_find_hash_remove(soc, peer);
@@ -3360,7 +3360,7 @@ void dp_peer_unref_delete(void *peer_handle)
 		} else {
 			/*Ignoring the remove operation as peer not found*/
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
-				"peer %p not found in vdev (%p)->peer_list:%p",
+				"peer %pK not found in vdev (%pK)->peer_list:%pK",
 				peer, vdev, &peer->vdev->peer_list);
 		}
 
@@ -3386,7 +3386,7 @@ void dp_peer_unref_delete(void *peer_handle)
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO_HIGH,
-					FL("deleting vdev object %p (%pM)"
+					FL("deleting vdev object %pK (%pM)"
 					" - its last peer is done"),
 					vdev, vdev->mac_addr.raw);
 				/* all peers are gone, go ahead and delete it */
@@ -3427,7 +3427,7 @@ static void dp_peer_delete_wifi3(void *peer_handle)
 	peer->rx_opt_proc = dp_rx_discard;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
-		FL("peer %p (%pM)"),  peer, peer->mac_addr.raw);
+		FL("peer %pK (%pM)"),  peer, peer->mac_addr.raw);
 
 #ifndef CONFIG_WIN
 	dp_local_peer_id_free(peer->vdev->pdev, peer);
@@ -3560,13 +3560,13 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	soc = pdev->soc;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-		"pdev=%p, pdev_id=%d, soc=%p vdev=%p\n",
+		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
 		pdev, pdev_id, soc, vdev);
 
 	/*Check if current pdev's monitor_vdev exists */
 	if (pdev->monitor_vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"vdev=%p\n", vdev);
+			"vdev=%pK\n", vdev);
 		qdf_assert(vdev);
 	}
 

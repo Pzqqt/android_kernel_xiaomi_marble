@@ -808,7 +808,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"HAL RING Access For WBM Release SRNG Failed: %p",
+			"HAL RING Access For WBM Release SRNG Failed: %pK",
 			hal_srng);
 		goto done;
 	}
@@ -821,7 +821,7 @@ static QDF_STATUS dp_rx_defrag_reo_reinject(struct dp_peer *peer,
 
 	if (qdf_unlikely(error == HAL_REO_ERROR_DETECTED)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"HAL RING 0x%p:error %d", hal_srng, error);
+			"HAL RING 0x%pK:error %d", hal_srng, error);
 
 		/* Don't know how to deal with this condition -- assert */
 		qdf_assert(0);

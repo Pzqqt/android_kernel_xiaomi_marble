@@ -361,7 +361,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %p ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
 		__func__, peer, hw_peer_id, vdev_id, mac_addr[0],
 		mac_addr[1], mac_addr[2], mac_addr[3],
 		mac_addr[4], mac_addr[5]);
@@ -410,7 +410,7 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	struct dp_ast_entry *ast_entry;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %p mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x\n",
 		__func__, peer, mac_addr[0], mac_addr[1], mac_addr[2],
 		mac_addr[3], mac_addr[4], mac_addr[5]);
 
@@ -720,7 +720,7 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 	peer = dp_peer_find_hash_find(soc, peer_mac_addr, 0 /* is aligned */);
 #endif
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		"%s: peer %p ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
+		"%s: peer %pK ID %d vid %d mac %02x:%02x:%02x:%02x:%02x:%02x\n",
 		__func__, peer, peer_id, vdev_id, peer_mac_addr[0],
 		peer_mac_addr[1], peer_mac_addr[2], peer_mac_addr[3],
 		peer_mac_addr[4], peer_mac_addr[5]);
@@ -767,7 +767,7 @@ dp_rx_peer_map_handler(void *soc_handle, uint16_t peer_id, uint16_t hw_peer_id,
 	struct dp_peer *peer = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"peer_map_event (soc:%p): peer_id %di, hw_peer_id %d, peer_mac "
+		"peer_map_event (soc:%pK): peer_id %di, hw_peer_id %d, peer_mac "
 		"%02x:%02x:%02x:%02x:%02x:%02x, vdev_id %d\n", soc, peer_id,
 		hw_peer_id, peer_mac_addr[0], peer_mac_addr[1],
 		peer_mac_addr[2], peer_mac_addr[3], peer_mac_addr[4],
@@ -805,7 +805,7 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 	peer = dp_peer_find_by_id(soc, peer_id);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"peer_unmap_event (soc:%p) peer_id %d peer %p\n",
+		"peer_unmap_event (soc:%pK) peer_id %d peer %pK\n",
 		soc, peer_id, peer);
 
 	/*
@@ -884,7 +884,7 @@ void *dp_find_peer_by_addr(struct cdp_pdev *dev, uint8_t *peer_mac_addr,
 
 	/* Multiple peer ids? How can know peer id? */
 	*local_id = peer->local_id;
-	DP_TRACE(INFO, "%s: peer %p id %d", __func__, peer, *local_id);
+	DP_TRACE(INFO, "%s: peer %pK id %d", __func__, peer, *local_id);
 
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
@@ -966,7 +966,7 @@ static void dp_reo_desc_free(struct dp_soc *soc,
 		qdf_mem_free(desc);
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Freed: %p\n",
+			"%s: Freed: %pK\n",
 			__func__, desc);
 	}
 	qdf_spin_unlock_bh(&soc->reo_desc_freelist_lock);
@@ -1072,7 +1072,7 @@ try_desc_alloc:
 			hw_qdesc_align);
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Total Size %d Aligned Addr %p\n",
+			"%s: Total Size %d Aligned Addr %pK\n",
 			__func__, rx_tid->hw_qdesc_alloc_size,
 			hw_qdesc_vaddr);
 
@@ -1215,7 +1215,7 @@ static void dp_peer_setup_remaining_tids(struct dp_peer *peer)
 	for (tid = 1; tid < DP_MAX_TIDS-1; tid++) {
 		dp_rx_tid_setup_wifi3(peer, tid, 1, 0);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"Setting up TID %d for peer %p peer->local_id %d\n",
+			"Setting up TID %d for peer %pK peer->local_id %d\n",
 			tid, peer, peer->local_id);
 	}
 }
@@ -1409,7 +1409,7 @@ void dp_rx_discard(struct dp_vdev *vdev, struct dp_peer *peer, unsigned tid,
 
 		msdu_list = qdf_nbuf_next(msdu_list);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			"discard rx %p from partly-deleted peer %p "
+			"discard rx %pK from partly-deleted peer %pK "
 			"(%02x:%02x:%02x:%02x:%02x:%02x)\n",
 			msdu, peer,
 			peer->mac_addr.raw[0], peer->mac_addr.raw[1],
@@ -1532,7 +1532,7 @@ dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 		return;
 	}
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"sec spec for peer %p (%02x:%02x:%02x:%02x:%02x:%02x): "
+		"sec spec for peer %pK (%02x:%02x:%02x:%02x:%02x:%02x): "
 		"%s key of type %d\n",
 		peer,
 		peer->mac_addr.raw[0], peer->mac_addr.raw[1],
@@ -1657,9 +1657,9 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_peer *peer;
 
-	DP_TRACE(INFO, "vdev %p peer_addr %p", vdev, peer_addr);
+	DP_TRACE(INFO, "vdev %pK peer_addr %pK", vdev, peer_addr);
 	peer = dp_peer_find_hash_find(pdev->soc, peer_addr, 0);
-	DP_TRACE(INFO, "peer %p vdev %p", peer, vdev);
+	DP_TRACE(INFO, "peer %pK vdev %pK", peer, vdev);
 
 	if (!peer)
 		return NULL;
@@ -1668,7 +1668,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		return NULL;
 
 	*local_id = peer->local_id;
-	DP_TRACE(INFO, "peer %p vdev %p lcoal id %d", peer, vdev, *local_id);
+	DP_TRACE(INFO, "peer %pK vdev %pK lcoal id %d", peer, vdev, *local_id);
 
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
@@ -1709,7 +1709,7 @@ void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id)
 	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 	peer = pdev->local_peer_ids.map[local_id];
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
-	DP_TRACE(INFO, "peer %p lcoal id %d",
+	DP_TRACE(INFO, "peer %pK lcoal id %d",
 			peer, local_id);
 	return peer;
 }
@@ -1738,7 +1738,7 @@ QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 	}
 	peer->state = state;
 
-	DP_TRACE(INFO, "peer %p state %d", peer, peer->state);
+	DP_TRACE(INFO, "peer %pK state %d", peer, peer->state);
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
 	 */
@@ -1760,7 +1760,7 @@ QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %p vdev %p vdev id %d",
+	DP_TRACE(INFO, "peer %pK vdev %pK vdev id %d",
 			peer, peer->vdev, peer->vdev->vdev_id);
 	*vdev_id = peer->vdev->vdev_id;
 	return QDF_STATUS_SUCCESS;
@@ -1807,7 +1807,7 @@ struct cdp_vdev *dp_get_vdev_for_peer(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %p vdev %p", peer, peer->vdev);
+	DP_TRACE(INFO, "peer %pK vdev %pK", peer, peer->vdev);
 	return (struct cdp_vdev *)peer->vdev;
 }
 
@@ -1826,7 +1826,7 @@ uint8_t *dp_peer_get_peer_mac_addr(void *peer_handle)
 	uint8_t *mac;
 
 	mac = peer->mac_addr.raw;
-	DP_TRACE(INFO, "peer %p mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
+	DP_TRACE(INFO, "peer %pK mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x",
 		peer, mac[0], mac[1], mac[2], mac[3], mac[4], mac[5]);
 	return peer->mac_addr.raw;
 }
@@ -1843,7 +1843,7 @@ int dp_get_peer_state(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %p stats %d", peer, peer->state);
+	DP_TRACE(INFO, "peer %pK stats %d", peer, peer->state);
 	return peer->state;
 }
 
@@ -1857,7 +1857,7 @@ qdf_time_t *dp_get_last_assoc_received(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %p last_assoc_rcvd: %lu", peer,
+	DP_TRACE(INFO, "peer %pK last_assoc_rcvd: %lu", peer,
 		peer->last_assoc_rcvd);
 	return &peer->last_assoc_rcvd;
 }
@@ -1872,7 +1872,7 @@ qdf_time_t *dp_get_last_disassoc_received(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %p last_disassoc_rcvd: %lu", peer,
+	DP_TRACE(INFO, "peer %pK last_disassoc_rcvd: %lu", peer,
 		peer->last_disassoc_rcvd);
 	return &peer->last_disassoc_rcvd;
 }
@@ -1887,7 +1887,7 @@ qdf_time_t *dp_get_last_deauth_received(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %p last_deauth_rcvd: %lu", peer,
+	DP_TRACE(INFO, "peer %pK last_deauth_rcvd: %lu", peer,
 		peer->last_deauth_rcvd);
 	return &peer->last_deauth_rcvd;
 }
@@ -1946,7 +1946,7 @@ void dp_local_peer_id_alloc(struct dp_pdev *pdev, struct dp_peer *peer)
 		pdev->local_peer_ids.map[i] = peer;
 	}
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
-	DP_TRACE(INFO, "peer %p, local id %d", peer, peer->local_id);
+	DP_TRACE(INFO, "peer %pK, local id %d", peer, peer->local_id);
 }
 
 /**
@@ -1991,7 +1991,7 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 	peer = dp_peer_find_by_id(soc, peer_id);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			"soc %p peer_id %d", soc, peer_id);
+			"soc %pK peer_id %d", soc, peer_id);
 
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,

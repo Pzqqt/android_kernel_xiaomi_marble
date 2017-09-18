@@ -190,7 +190,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		(*desc_list)->rx_desc.in_use = 1;
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"rx_netbuf=%p, buf=%p, paddr=0x%llx, cookie=%d\n",
+				"rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d\n",
 			rx_netbuf, qdf_nbuf_data(rx_netbuf),
 			(unsigned long long)paddr, (*desc_list)->rx_desc.cookie);
 
@@ -947,7 +947,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		 */
 		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access Failed -- %p"), hal_ring);
+			FL("HAL RING Access Failed -- %pK"), hal_ring);
 		hal_srng_access_end(hal_soc, hal_ring);
 		goto done;
 	}
@@ -966,7 +966,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 
 		if (qdf_unlikely(error == HAL_REO_ERROR_DETECTED)) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING 0x%p:error %d"), hal_ring, error);
+			FL("HAL RING 0x%pK:error %d"), hal_ring, error);
 			DP_STATS_INC(soc, rx.err.hal_reo_error[ring_id], 1);
 			/* Don't know how to deal with this -- assert */
 			qdf_assert(0);

@@ -1781,7 +1781,7 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] msdu_link=%p msdu_details=%p\n",
+		"[%s][%d] msdu_link=%pK msdu_details=%pK\n",
 		__func__, __LINE__, msdu_link, msdu_details);
 
 	for (i = 0; i < HAL_RX_NUM_MSDU_DESC; i++) {

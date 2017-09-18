@@ -153,7 +153,7 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 
 	temp_list = rx_desc_pool->freelist;
 	qdf_print(
-	"temp_list: %p, *local_desc_list: %p, *tail: %p (*tail)->next: %p\n",
+	"temp_list: %pK, *local_desc_list: %pK, *tail: %pK (*tail)->next: %pK\n",
 	temp_list, *local_desc_list, *tail, (*tail)->next);
 	rx_desc_pool->freelist = *local_desc_list;
 	(*tail)->next = temp_list;

@@ -62,7 +62,7 @@ dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
 		 */
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s %d : \
-			HAL RING Access For WBM Release SRNG Failed -- %p\n",
+			HAL RING Access For WBM Release SRNG Failed -- %pK\n",
 			__func__, __LINE__, hal_srng);
 		goto done;
 	}
@@ -179,7 +179,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_DEBUG,
-					"[%s][%d] msdu_nbuf=%p, data=%p\n",
+					"[%s][%d] msdu_nbuf=%pK, data=%pK\n",
 					__func__, __LINE__, msdu, data);
 
 				rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
@@ -278,7 +278,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 					QDF_TRACE_LEVEL_DEBUG,
 					"rx_pkt_offset=%d, \
 					l2_hdr_offset=%d, msdu_len=%d, \
-					addr=%p\n",
+					addr=%pK\n",
 					rx_pkt_offset,
 					l2_hdr_offset,
 					msdu_list.msdu_info[i].msdu_len,
@@ -702,7 +702,7 @@ mon_deliver_fail:
 		skb_next = qdf_nbuf_next(mon_skb);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] mon_skb=%p\n", __func__, __LINE__, mon_skb);
+			"[%s][%d] mon_skb=%pK\n", __func__, __LINE__, mon_skb);
 
 		qdf_nbuf_free(mon_skb);
 		mon_skb = skb_next;
@@ -739,7 +739,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	if (!mon_dst_srng || !hal_srng_initialized(mon_dst_srng)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring Init Failed -- %p\n",
+			"%s %d : HAL Monitor Destination Ring Init Failed -- %pK\n",
 			__func__, __LINE__, mon_dst_srng);
 		return;
 	}
@@ -750,7 +750,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, mon_dst_srng))) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring access Failed -- %p\n",
+			"%s %d : HAL Monitor Destination Ring access Failed -- %pK\n",
 			__func__, __LINE__, mon_dst_srng);
 		return;
 	}

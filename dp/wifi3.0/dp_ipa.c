@@ -337,7 +337,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	ipa_res->rx_ready_doorbell_paddr = pipe_out.rx_uc_db_pa;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "Tx: %s=%p, %s=%d, %s=%p, %s=%p, %s=%d, %s=%p, %s=%d, %s=%p",
+		  "Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
 		  "transfer_ring_base_pa",
 		  (void *)pipe_in.tx.transfer_ring_base_pa,
 		  "transfer_ring_size",
@@ -356,7 +356,7 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 		  (void *)ipa_res->tx_comp_doorbell_paddr);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "Rx: %s=%p, %s=%d, %s=%p, %s=%p, %s=%d, %s=%p, %s=%d, %s=%p",
+		  "Rx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
 		  "transfer_ring_base_pa",
 		  (void *)pipe_in.rx.transfer_ring_base_pa,
 		  "transfer_ring_size",

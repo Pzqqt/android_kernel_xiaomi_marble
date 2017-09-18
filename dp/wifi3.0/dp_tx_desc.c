@@ -306,7 +306,7 @@ QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 
 	if (!c_element) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				FL("Alloc Failed %p pool_id %d"),
+				FL("Alloc Failed %pK pool_id %d"),
 				soc, pool_id);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -318,7 +318,7 @@ QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		if (!c_element->next) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					FL("Alloc Failed %p pool_id %d"),
+					FL("Alloc Failed %pK pool_id %d"),
 					soc, pool_id);
 			goto fail;
 		}
@@ -405,7 +405,7 @@ QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 
 	if (!c_element) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				FL("Alloc Failed %p pool_id %d"),
+				FL("Alloc Failed %pK pool_id %d"),
 				soc, pool_id);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -418,7 +418,7 @@ QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 
 		if (!c_element->next) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-					FL("Alloc Failed %p pool_id %d"),
+					FL("Alloc Failed %pK pool_id %d"),
 					soc, pool_id);
 			goto fail;
 		}

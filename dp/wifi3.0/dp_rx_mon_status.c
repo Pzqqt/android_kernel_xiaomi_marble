@@ -220,7 +220,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring Init Failed -- %p\n",
+			"%s %d : HAL Monitor Destination Ring Init Failed -- %pK\n",
 			__func__, __LINE__, mon_status_srng);
 		return work_done;
 	}
@@ -504,8 +504,8 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 			(*desc_list)->rx_desc.cookie, owner);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"[%s][%d] rx_desc=%p, cookie=%d, nbuf=%p, \
-			status_buf=%p paddr=%p\n",
+			"[%s][%d] rx_desc=%pK, cookie=%d, nbuf=%pK, \
+			status_buf=%pK paddr=%pK\n",
 			__func__, __LINE__, &(*desc_list)->rx_desc,
 			(*desc_list)->rx_desc.cookie, rx_netbuf,
 			status_buf, (void *)paddr);
@@ -522,7 +522,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		"%d rx desc added back to free list\n", num_desc_to_free);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] desc_list=%p, tail=%p rx_desc=%p, cookie=%d\n",
+		"[%s][%d] desc_list=%pK, tail=%pK rx_desc=%pK, cookie=%d\n",
 		__func__, __LINE__, desc_list, tail, &(*desc_list)->rx_desc,
 		(*desc_list)->rx_desc.cookie);
 

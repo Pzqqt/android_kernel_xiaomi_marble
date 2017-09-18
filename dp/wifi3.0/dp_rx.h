@@ -446,7 +446,7 @@ static inline int check_x86_paddr(struct dp_soc *dp_soc, qdf_nbuf_t *rx_netbuf,
 			return QDF_STATUS_SUCCESS;
 		else {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"phy addr %p exceded 0x50000000 trying again\n",
+				"phy addr %pK exceded 0x50000000 trying again\n",
 				paddr);
 
 			nbuf_retry++;
