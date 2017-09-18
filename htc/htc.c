@@ -62,7 +62,7 @@ static void destroy_htc_tx_ctrl_packet(HTC_PACKET *pPacket)
 	qdf_nbuf_t netbuf;
 
 	netbuf = (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("free ctrl netbuf :0x%p\n", netbuf));
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("free ctrl netbuf :0x%pK\n", netbuf));
 	if (netbuf != NULL)
 		qdf_nbuf_free(netbuf);
 	qdf_mem_free(pPacket);
@@ -86,7 +86,7 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 			break;
 		}
 		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-				("alloc ctrl netbuf :0x%p\n", netbuf));
+				("alloc ctrl netbuf :0x%pK\n", netbuf));
 		SET_HTC_PACKET_NET_BUF_CONTEXT(pPacket, netbuf);
 	} while (false);
 
@@ -252,7 +252,7 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		HTC_ERROR("%s: ol_sc = NULL", __func__);
 		return NULL;
 	}
-	HTC_TRACE("+htc_create ..  HIF :%p", ol_sc);
+	HTC_TRACE("+htc_create ..  HIF :%pK", ol_sc);
 
 	A_REGISTER_MODULE_DEBUG_INFO(htc);
 
@@ -322,7 +322,7 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 
 	htc_recv_init(target);
 
-	HTC_TRACE("-htc_create: (0x%p)", target);
+	HTC_TRACE("-htc_create: (0x%pK)", target);
 
 	return (HTC_HANDLE) target;
 }
@@ -332,7 +332,7 @@ void htc_destroy(HTC_HANDLE HTCHandle)
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-			("+htc_destroy ..  Destroying :0x%p\n", target));
+			("+htc_destroy ..  Destroying :0x%pK\n", target));
 	hif_stop(htc_get_hif_device(HTCHandle));
 	if (target)
 		htc_cleanup(target);
@@ -354,7 +354,7 @@ static void htc_control_tx_complete(void *Context, HTC_PACKET *pPacket)
 	HTC_TARGET *target = (HTC_TARGET *) Context;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-			("+-htc_control_tx_complete 0x%p (l:%d)\n", pPacket,
+			("+-htc_control_tx_complete 0x%pK (l:%d)\n", pPacket,
 			 pPacket->ActualLength));
 	htc_free_control_tx_packet(target, pPacket);
 }
@@ -529,7 +529,7 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 	HTC_PACKET *rx_bundle_packet, *temp_bundle_packet;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-			("htc_wait_target - Enter (target:0x%p)\n", HTCHandle));
+			("htc_wait_target - Enter (target:0x%pK)\n", HTCHandle));
 	AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1, ("+HWT\n"));
 
 	do {

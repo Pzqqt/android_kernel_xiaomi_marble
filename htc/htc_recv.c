@@ -112,7 +112,7 @@ static void do_recv_completion(HTC_ENDPOINT *pEndpoint,
 				pPacket = htc_packet_dequeue(pQueueToIndicate);
 				if (pEndpoint->EpCallBacks.EpRecv == NULL) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-							("HTC ep %d has NULL recv callback on packet %p\n",
+							("HTC ep %d has NULL recv callback on packet %pK\n",
 							 pEndpoint->Id,
 							 pPacket));
 					if (pPacket)
@@ -121,7 +121,7 @@ static void do_recv_completion(HTC_ENDPOINT *pEndpoint,
 					continue;
 				}
 				AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
-						("HTC calling ep %d recv callback on packet %p\n",
+						("HTC calling ep %d recv callback on packet %pK\n",
 						 pEndpoint->Id, pPacket));
 				pEndpoint->EpCallBacks.EpRecv(pEndpoint->
 							      EpCallBacks.
@@ -619,7 +619,7 @@ void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint)
 		pPacket->Status = QDF_STATUS_E_CANCELED;
 		pPacket->ActualLength = 0;
 		AR_DEBUG_PRINTF(ATH_DEBUG_RECV,
-				("Flushing RX packet:%p, length:%d, ep:%d\n",
+				("Flushing RX packet:%pK, length:%d, ep:%d\n",
 				 pPacket, pPacket->BufferLength,
 				 pPacket->Endpoint));
 		INIT_HTC_PACKET_QUEUE_AND_ADD(&container, pPacket);

@@ -116,7 +116,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 	uint8_t rsp_msg_status, rsp_msg_end_id, rsp_msg_serv_meta_len;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-			("+htc_connect_service, target:%p SvcID:0x%X\n", target,
+			("+htc_connect_service, target:%pK SvcID:0x%X\n", target,
 			 pConnectReq->service_id));
 
 	do {
@@ -434,7 +434,7 @@ void htc_set_async_ep(HTC_HANDLE HTCHandle,
 	HTC_ENDPOINT *pEndpoint = &target->endpoint[htc_ep_id];
 
 	pEndpoint->async_update = value;
-	qdf_print("%s: htc_handle %p, ep %d, value %d\n", __func__,
+	qdf_print("%s: htc_handle %pK, ep %d, value %d\n", __func__,
 					HTCHandle, htc_ep_id, value);
 }
 
