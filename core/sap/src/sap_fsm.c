@@ -1927,7 +1927,7 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 				sapctx->csr_roamProfile.csrPersona;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Initializing sapContext = %p with session = %d", __func__,
+		"%s: Initializing sapContext = %pK with session = %d", __func__,
 		sapctx, session_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -1947,7 +1947,7 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 	qdf_mem_zero(sapctx, sizeof(*sapctx));
 	sapctx->sessionId = CSR_SESSION_ID_INVALID;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		"%s: Initializing State: %d, sapContext value = %p", __func__,
+		"%s: Initializing State: %d, sapContext value = %pK", __func__,
 		sapctx->sapsMachine, sapctx);
 
 	return QDF_STATUS_SUCCESS;
@@ -2711,7 +2711,7 @@ static QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 		    && pMac->sap.sapCtxList[intf].pSapContext != NULL &&
 		    (false == pSapContext->isCacStartNotified)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				  "sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%p]",
+				  "sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%pK]",
 				  pSapContext);
 
 			qdf_status = sap_signal_hdd_event(pSapContext, NULL,
@@ -2835,7 +2835,7 @@ static QDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 			pSapContext->isCacEndNotified = true;
 			pMac->sap.SapDfsInfo.sap_radar_found_status = false;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-				  "sapdfs: Start beacon request on sapctx[%p]",
+				  "sapdfs: Start beacon request on sapctx[%pK]",
 				  pSapContext);
 
 			/* Start beaconing on the new channel */
@@ -2936,7 +2936,7 @@ static QDF_STATUS sap_fsm_state_disconnected(struct sap_context *sap_ctx,
 			FL("from state eSAP_DISCONNECTED => SAP_DFS_CAC_WAIT"));
 		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			    FL("sapdfs: starting dfs cac timer on sapctx[%p]"),
+			    FL("sapdfs: starting dfs cac timer on sapctx[%pK]"),
 			    sap_ctx);
 			sap_start_dfs_cac_timer(sap_ctx);
 		}
@@ -3387,7 +3387,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				    mac_ctx->sap.sapCtxList[intf].pSapContext;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_MED,
-					  FL("sapdfs: Sending CSAIE for sapctx[%p]"),
+					  FL("sapdfs: Sending CSAIE for sapctx[%pK]"),
 					  temp_sap_ctx);
 
 				qdf_status = wlansap_dfs_send_csa_ie_request(
@@ -3455,7 +3455,7 @@ static QDF_STATUS sap_fsm_state_disconnecting(struct sap_context *sap_ctx,
 					(void *)eSAP_STATUS_SUCCESS);
 	} else if (msg == eWNI_SME_CHANNEL_CHANGE_REQ) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			  FL("sapdfs: Send channel change request on sapctx[%p]"),
+			  FL("sapdfs: Send channel change request on sapctx[%pK]"),
 			  sap_ctx);
 
 		sap_get_cac_dur_dfs_region(sap_ctx,
@@ -3521,7 +3521,7 @@ QDF_STATUS sap_fsm(struct sap_context *sap_ctx, ptWLAN_SAPEvent sap_event)
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		  FL("sap_ctx=%p, state_var=%d, msg=0x%x"),
+		  FL("sap_ctx=%pK, state_var=%d, msg=0x%x"),
 		  sap_ctx, state_var, msg);
 
 	switch (state_var) {
@@ -4221,7 +4221,7 @@ void sap_dfs_cac_timer_callback(void *data)
 	 * CAC Complete, post eSAP_DFS_CHANNEL_CAC_END to sap_fsm
 	 */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_MED,
-			"sapdfs: Sending eSAP_DFS_CHANNEL_CAC_END for target_channel = %d on sapctx[%p]",
+			"sapdfs: Sending eSAP_DFS_CHANNEL_CAC_END for target_channel = %d on sapctx[%pK]",
 			sapContext->channel, sapContext);
 
 	sapEvent.event = eSAP_DFS_CHANNEL_CAC_END;
@@ -4445,14 +4445,14 @@ bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
 			if (pSapContext == sapContext) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
-					  FL("sapCtx matched [%p]"),
+					  FL("sapCtx matched [%pK]"),
 					  sapContext);
 				continue;
 			} else {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL
-						  ("concurrent sapCtx[%p] didn't matche with [%p]"),
+						  ("concurrent sapCtx[%pK] didn't matche with [%pK]"),
 					  pSapContext, sapContext);
 				return pSapContext->is_sap_ready_for_chnl_chng;
 			}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -318,7 +318,7 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 			rs[1]);
 		/*
 		 * DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR,
-				"%s (p=%p):", __func__, buf);
+				"%s (p=%pK):", __func__, buf);
 		 */
 
 		is_chip_oversampling = PERE_IS_OVERSAMPLING(dfs);
@@ -584,7 +584,7 @@ static int tlv_calc_freq_info(struct ath_dfs *dfs, struct rx_radar_status *rs)
 	 * For now, just handle up to VHT80 correctly.
 	 */
 	if (dfs->ic == NULL || dfs->ic->ic_curchan == NULL) {
-		DFS_PRINTK("%s: dfs->ic=%p, that or curchan is null?",
+		DFS_PRINTK("%s: dfs->ic=%pK, that or curchan is null?",
 			   __func__, dfs->ic);
 		return 0;
 	}

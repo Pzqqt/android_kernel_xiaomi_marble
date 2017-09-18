@@ -87,7 +87,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 
 	if (pl == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s[%d]:  pl==NULL, dfs=%p", __func__, __LINE__, dfs);
+			  "%s[%d]:  pl==NULL, dfs=%pK", __func__, __LINE__, dfs);
 		return;
 	}
 
@@ -95,7 +95,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 		if (((seg_id == 0) ?
 		    dfs->dfs_b5radars : dfs->dfs_b5radars_ext_seg) == NULL) {
 			DFS_DPRINTK(dfs, ATH_DEBUG_DFS,
-				    "%s: pl==NULL, b5radars=%p\n",
+				    "%s: pl==NULL, b5radars=%pK\n",
 				    __func__,
 				    (seg_id == 0) ? dfs->dfs_b5radars :
 						    dfs->dfs_b5radars_ext_seg);
@@ -104,7 +104,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 	} else {
 		if (dfs->dfs_b5radars == NULL) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				"%s[%d]: pl==NULL, b5radars=%p", __func__, __LINE__,
+				"%s[%d]: pl==NULL, b5radars=%pK", __func__, __LINE__,
 				dfs->dfs_b5radars);
 			return;
 		}
