@@ -44,7 +44,6 @@
 #include "cds_packet.h"
 #include "qdf_types.h"
 
-#include "p2p_api.h"
 #include "sme_api.h"
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -152,7 +151,6 @@ typedef enum {
 	eSAP_GET_WPSPBC_SESSION_EVENT,
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
-	eSAP_REMAIN_CHAN_READY,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
 	eSAP_MAC_TRIG_STOP_BSS_EVENT,
 	/*
@@ -1157,56 +1155,6 @@ QDF_STATUS wlansap_get_acl_mode(struct sap_context *sap_ctx,
 QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			      uint8_t *peer_sta_mac,
 			      eSapACLType list_type, eSapACLCmdType cmd);
-
-/**
- * wlansap_send_action() - send action frame
- * @sap_ctx: Pointer to the SAP context
- * @pBuf: Pointer of the action frame to be transmitted
- * @len: Length of the action frame in @pBuf
- * @wait: Unused
- * @channel_freq: Channel upon which to send the frame
- *
- * This api function provides to send action frame sent by upper layer.
- *
- * Return: The QDF_STATUS code associated with performing the operation
-*          QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_send_action(struct sap_context *sap_ctx,
-			       const uint8_t *pBuf, uint32_t len,
-			       uint16_t wait, uint16_t channel_freq);
-
-/**
- * wlansap_remain_on_channel() - set remain on channel
- * @sap_ctx: Pointer to the SAP context
- * @channel: Channel on which driver has to listen
- * @duration: Duration for which driver has to listen on specified channel
- * @callback: Callback function to be called once Listen is done.
- * @pContext: Context needs to be called in callback function.
- * @scan_id: scan identifier
- *
- * This api function provides to set Remain On channel on specified channel
- * for specified duration.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_remain_on_channel(struct sap_context *sap_ctx,
-				     uint8_t channel, uint32_t duration,
-				     remainOnChanCallback callback,
-				     void *pContext, uint32_t *scan_id);
-
-/**
- * wlansap_cancel_remain_on_channel() - cancel remain on channel
- * @sap_ctx: Pointer to the SAP context
- * @scan_id: Scan ID returned by wlansap_remain_on_channel()
- *
- * This api cancel previous remain on channel request.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *sap_ctx,
-					    uint32_t scan_id);
 
 /**
  * wlansap_register_mgmt_frame() - register management frame

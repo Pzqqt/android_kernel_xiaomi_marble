@@ -715,8 +715,6 @@ SME_CMN_OBJS := $(SME_SRC_DIR)/common/sme_api.o \
 		$(SME_SRC_DIR)/common/sme_power_save.o \
 		$(SME_SRC_DIR)/common/sme_trace.o
 
-SME_P2P_OBJS = $(SME_SRC_DIR)/p2p/p2p_api.o
-
 SME_RRM_OBJS := $(SME_SRC_DIR)/rrm/sme_rrm.o
 
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN),y)
@@ -729,7 +727,6 @@ endif
 
 SME_OBJS :=	$(SME_CMN_OBJS) \
 		$(SME_CSR_OBJS) \
-		$(SME_P2P_OBJS) \
 		$(SME_QOS_OBJS) \
 		$(SME_RRM_OBJS) \
 		$(SME_NAN_OBJS) \
