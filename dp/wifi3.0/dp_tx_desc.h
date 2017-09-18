@@ -25,14 +25,14 @@
 
 /**
  * 21 bits cookie
- * 3 bits ring id 0 ~ 7,
- * 8 bits page id 0 ~ 512
+ * 2 bits pool id 0 ~ 3,
+ * 10 bits page id 0 ~ 1023
  * 5 bits offset id 0 ~ 31 (Desc size = 128, Num descs per page = 4096/128 = 32)
  */
 /* ???Ring ID needed??? */
-#define DP_TX_DESC_ID_POOL_MASK    0x01C000
-#define DP_TX_DESC_ID_POOL_OS      14
-#define DP_TX_DESC_ID_PAGE_MASK    0x003FE0
+#define DP_TX_DESC_ID_POOL_MASK    0x018000
+#define DP_TX_DESC_ID_POOL_OS      15
+#define DP_TX_DESC_ID_PAGE_MASK    0x007FE0
 #define DP_TX_DESC_ID_PAGE_OS      5
 #define DP_TX_DESC_ID_OFFSET_MASK  0x00001F
 #define DP_TX_DESC_ID_OFFSET_OS    0

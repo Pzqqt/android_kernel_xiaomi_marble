@@ -65,7 +65,7 @@
 #define WLAN_LRO_ENABLE 0
 
 /* Tx Descriptor and Tx Extension Descriptor pool sizes */
-#define WLAN_CFG_NUM_TX_DESC  (16 << 10)
+#define WLAN_CFG_NUM_TX_DESC  (32 << 10)
 #define WLAN_CFG_NUM_TX_EXT_DESC (8 << 10)
 
 
