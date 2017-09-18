@@ -96,7 +96,7 @@ static QDF_STATUS send_vdev_delete_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 	cmd = (wmi_vdev_delete_cmd *)wmi_buf_data(buf);
 	cmd->vdev_id = if_id;
-	qdf_print("%s for vap %d (%p)\n", __func__, if_id, wmi_handle);
+	qdf_print("%s for vap %d (%pK)\n", __func__, if_id, wmi_handle);
 	return wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_VDEV_DELETE_CMDID);
 }
@@ -147,7 +147,7 @@ static QDF_STATUS send_vdev_down_cmd_non_tlv(wmi_unified_t wmi_handle,
 	}
 	cmd = (wmi_vdev_down_cmd *)wmi_buf_data(buf);
 	cmd->vdev_id = vdev_id;
-	qdf_print("%s for vap %d (%p)\n", __func__, vdev_id, wmi_handle);
+	qdf_print("%s for vap %d (%pK)\n", __func__, vdev_id, wmi_handle);
 	return wmi_unified_cmd_send(wmi_handle, buf, len, WMI_VDEV_DOWN_CMDID);
 }
 
@@ -581,7 +581,7 @@ static QDF_STATUS send_vdev_up_cmd_non_tlv(wmi_unified_t wmi_handle,
 	cmd->vdev_id = param->vdev_id;
 	cmd->vdev_assoc_id = param->assoc_id;
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(bssid, &cmd->vdev_bssid);
-	qdf_print("%s for vap %d (%p)\n", __func__, param->vdev_id, wmi_handle);
+	qdf_print("%s for vap %d (%pK)\n", __func__, param->vdev_id, wmi_handle);
 	return wmi_unified_cmd_send(wmi_handle, buf, len, WMI_VDEV_UP_CMDID);
 }
 
@@ -6970,7 +6970,7 @@ static QDF_STATUS extract_comb_phyerr_non_tlv(wmi_unified_t wmi_handle, void *ev
 	data = (uint8_t *) evt_buf;
 
 #if ATH_PHYERR_DEBUG
-	qdf_print("%s: data=%p, datalen=%d\n", __func__, data, datalen);
+	qdf_print("%s: data=%pK, datalen=%d\n", __func__, data, datalen);
 	/* XXX for now */
 
 	for (i = 0; i < datalen; i++) {

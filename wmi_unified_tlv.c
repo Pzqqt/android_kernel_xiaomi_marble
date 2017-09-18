@@ -4625,8 +4625,8 @@ static QDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
 		if ((NULL == params->hostv4addr) ||
 			(NULL == params->destv4addr) ||
 			(NULL == params->destmac)) {
-			WMI_LOGE("%s: received null pointer, hostv4addr:%p "
-			   "destv4addr:%p destmac:%p ", __func__,
+			WMI_LOGE("%s: received null pointer, hostv4addr:%pK "
+			   "destv4addr:%pK destmac:%pK ", __func__,
 			   params->hostv4addr, params->destv4addr, params->destmac);
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
