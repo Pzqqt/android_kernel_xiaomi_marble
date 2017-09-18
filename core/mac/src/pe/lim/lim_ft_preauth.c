@@ -195,12 +195,12 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
 	    session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)
 	    || lim_is_in_mcc(mac_ctx)) {
 		/* Need to suspend link only if the channels are different */
-		pe_debug("Performing pre-auth on diff channel(session %p)",
+		pe_debug("Performing pre-auth on diff channel(session %pK)",
 			session);
 		lim_send_preauth_scan_offload(mac_ctx, session->peSessionId,
 				session->ftPEContext.pFTPreAuthReq);
 	} else {
-		pe_debug("Performing pre-auth on same channel (session %p)",
+		pe_debug("Performing pre-auth on same channel (session %pK)",
 			session);
 		/* We are in the same channel. Perform pre-auth */
 		lim_perform_ft_pre_auth(mac_ctx, QDF_STATUS_SUCCESS, NULL,
@@ -258,7 +258,7 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 		pe_err("psessionEntry is not in STA mode");
 		return;
 	}
-	pe_debug("Entered wait auth2 state for FT (old session %p)",
+	pe_debug("Entered wait auth2 state for FT (old session %pK)",
 			psessionEntry);
 	if (psessionEntry->is11Rconnection) {
 		/* Now we are on the right channel and need to send out Auth1
@@ -474,7 +474,7 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 		else
 			pftSessionEntry->vdev_nss = pMac->vdev_type_nss_2g.sta;
 
-		pe_debug("created session (%p) with id = %d",
+		pe_debug("created session (%pK) with id = %d",
 			pftSessionEntry, pftSessionEntry->peSessionId);
 
 		/* Update the ReAssoc BSSID of the current session */
@@ -545,7 +545,7 @@ void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
 	 */
 	if (true ==
 	    session->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed) {
-		pe_err("Auth rsp already posted to SME (session %p)",
+		pe_err("Auth rsp already posted to SME (session %pK)",
 			session);
 		return;
 	} else {
@@ -557,7 +557,7 @@ void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal mac_ctx)
 		 * Preauth rsp processed so that any rsp from AP is dropped in
 		 * lim_process_auth_frame_no_session.
 		 */
-		pe_debug("Auth rsp not yet posted to SME (session %p)",
+		pe_debug("Auth rsp not yet posted to SME (session %pK)",
 			session);
 		session->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed = true;
 	}
@@ -599,7 +599,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	pe_debug("Auth Rsp = %p", ft_pre_auth_rsp);
+	pe_debug("Auth Rsp = %pK", ft_pre_auth_rsp);
 	if (session) {
 		/* Nothing to be done if the session is not in STA mode */
 		if (!LIM_IS_STA_ROLE(session)) {

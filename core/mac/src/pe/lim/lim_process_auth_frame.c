@@ -165,7 +165,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 		lim_add_pre_auth_node(mac_ctx, auth_node);
 
-		pe_debug("Alloc new data: %p id: %d peer ",
+		pe_debug("Alloc new data: %pK id: %d peer ",
 			auth_node, auth_node->authNodeIdx);
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		/* / Create and activate Auth Response timer */
@@ -240,7 +240,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 		return;
 	}
-	pe_debug("Alloc new data: %p peer", auth_node);
+	pe_debug("Alloc new data: %pK peer", auth_node);
 	lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 	qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 			mac_hdr->sa, sizeof(tSirMacAddr));
@@ -636,7 +636,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			return;
 		}
 
-		pe_debug("Alloc new data: %p peer", auth_node);
+		pe_debug("Alloc new data: %pK peer", auth_node);
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
@@ -992,7 +992,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGW);
 			return;
 		}
-		pe_debug("Alloc new data: %p peer", auth_node);
+		pe_debug("Alloc new data: %pK peer", auth_node);
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGD);
 		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
@@ -1529,12 +1529,12 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		 * pre-auth.
 		 */
 		pe_debug("Auth rsp already posted to SME"
-			       " (session %p, FT session %p)", psessionEntry,
+			       " (session %pK, FT session %pK)", psessionEntry,
 			       psessionEntry);
 		return eSIR_SUCCESS;
 	} else {
 		pe_warn("Auth rsp not yet posted to SME"
-			       " (session %p, FT session %p)", psessionEntry,
+			       " (session %pK, FT session %pK)", psessionEntry,
 			       psessionEntry);
 		psessionEntry->ftPEContext.pFTPreAuthReq->bPreAuthRspProcessed =
 			true;

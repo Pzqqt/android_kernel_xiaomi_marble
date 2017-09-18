@@ -299,7 +299,7 @@ lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 			eLIM_MLM_WT_DEL_BSS_RSP_STATE) ||
 		sta_ds->sta_deletion_in_progress) {
 		/* Already in the process of deleting context for the peer */
-		pe_debug("Deletion is in progress (%d) for peer:%p in mlmState %d",
+		pe_debug("Deletion is in progress (%d) for peer:%pK in mlmState %d",
 			sta_ds->sta_deletion_in_progress, sta_ds->staAddr,
 			sta_ds->mlmStaContext.mlmState);
 		return;

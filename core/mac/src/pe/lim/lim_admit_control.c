@@ -391,7 +391,7 @@ static void lim_tspec_delete(tpAniSirGlobal pMac, tpLimTspecInfo pInfo)
 	if (pInfo == NULL)
 		return;
 	/* pierre */
-	pe_debug("tspec entry: %d delete tspec: %p", pInfo->idx, pInfo);
+	pe_debug("tspec entry: %d delete tspec: %pK", pInfo->idx, pInfo);
 	pInfo->inuse = 0;
 
 	return;

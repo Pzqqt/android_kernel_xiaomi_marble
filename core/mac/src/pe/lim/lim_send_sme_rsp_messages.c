@@ -368,7 +368,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			ht_profile->apChanWidth = session_entry->ch_width;
 		}
 #endif
-		pe_debug("pLimJoinReq:%p, pLimReAssocReq:%p",
+		pe_debug("pLimJoinReq:%pK, pLimReAssocReq:%pK",
 			session_entry->pLimJoinReq,
 			session_entry->pLimReAssocReq);
 

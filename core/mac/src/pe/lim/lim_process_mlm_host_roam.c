@@ -273,7 +273,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * HT params.
 	 */
 	if (session->ftPEContext.pFTPreAuthReq) {
-		pe_debug("Freeing pFTPreAuthReq: %p",
+		pe_debug("Freeing pFTPreAuthReq: %pK",
 			session->ftPEContext.pFTPreAuthReq);
 		if (session->ftPEContext.pFTPreAuthReq->pbssDescription) {
 			qdf_mem_free(

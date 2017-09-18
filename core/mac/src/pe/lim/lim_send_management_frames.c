@@ -2507,7 +2507,7 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 #endif
 				 (psessionEntry->isFastRoamIniFeatureEnabled) ||
 				 (psessionEntry->is11Rconnection))) {
-			pe_debug("FT Preauth (%p,%d) Deauth rc %d src = %d",
+			pe_debug("FT Preauth (%pK,%d) Deauth rc %d src = %d",
 					psessionEntry,
 					psessionEntry->peSessionId,
 					pMlmDeauthReq->reasonCode,
@@ -2604,7 +2604,7 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 		if (LIM_IS_STA_ROLE(pe_session) &&
 			(disassoc_req->reasonCode !=
 				eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
-			pe_debug("FT Preauth Session (%p %d) Clean up",
+			pe_debug("FT Preauth Session (%pK %d) Clean up",
 					pe_session, pe_session->peSessionId);
 
 			/* Delete FT session if there exists one */

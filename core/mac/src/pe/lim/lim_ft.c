@@ -91,7 +91,7 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	}
 
 	if (NULL != psessionEntry->ftPEContext.pFTPreAuthReq) {
-		pe_debug("Freeing pFTPreAuthReq: %p",
+		pe_debug("Freeing pFTPreAuthReq: %pK",
 			       psessionEntry->ftPEContext.pFTPreAuthReq);
 		if (NULL !=
 		    psessionEntry->ftPEContext.pFTPreAuthReq->

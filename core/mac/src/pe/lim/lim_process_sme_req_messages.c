@@ -5618,7 +5618,7 @@ static void lim_process_modify_add_ies(tpAniSirGlobal mac_ctx,
 	if ((0 == modify_add_ies->modifyIE.ieBufferlength) ||
 		(0 == modify_add_ies->modifyIE.ieIDLen) ||
 		(NULL == modify_add_ies->modifyIE.pIEBuffer)) {
-		pe_err("Invalid request pIEBuffer %p ieBufferlength %d ieIDLen %d ieID %d. update Type %d",
+		pe_err("Invalid request pIEBuffer %pK ieBufferlength %d ieIDLen %d ieID %d. update Type %d",
 				modify_add_ies->modifyIE.pIEBuffer,
 				modify_add_ies->modifyIE.ieBufferlength,
 				modify_add_ies->modifyIE.ieID,

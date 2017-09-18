@@ -721,7 +721,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 				p2p_ie[1] += noa_len;
 			}
 			msg_len += noa_len;
-			pe_debug("noa_len: %d orig_len: %d p2p_ie: %p msg_len: %d nBytesToCopy: %zu ",
+			pe_debug("noa_len: %d orig_len: %d p2p_ie: %pK msg_len: %d nBytesToCopy: %zu ",
 				noa_len, orig_len, p2p_ie, msg_len,
 				((p2p_ie + orig_len + 2) -
 				 (uint8_t *) mb_msg->data));
