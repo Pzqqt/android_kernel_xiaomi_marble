@@ -2378,6 +2378,9 @@ typedef struct {
 
     /* Counters to track packets in dcm mcs (MCS 0, 1, 3, 4) */
     A_UINT32 tx_dcm[HTT_TX_PDEV_STATS_NUM_DCM_COUNTERS];
+
+    /* Number of CTS-acknowledged RTS packets */
+    A_UINT32 rts_success;
 } htt_tx_pdev_rate_stats_tlv;
 
 /* STATS_TYPE : HTT_DBG_EXT_STATS_PDEV_TX_RATE
