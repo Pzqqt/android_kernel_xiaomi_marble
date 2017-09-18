@@ -49,7 +49,7 @@ target_if_tdls_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	QDF_STATUS status;
 
 	if (!scn || !data) {
-		target_if_err("scn: 0x%p, data: 0x%p", scn, data);
+		target_if_err("scn: 0x%pK, data: 0x%pK", scn, data);
 		return -EINVAL;
 	}
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
