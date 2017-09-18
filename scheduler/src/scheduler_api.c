@@ -426,7 +426,7 @@ QDF_STATUS scheduler_target_if_mq_handler(struct scheduler_msg *msg)
 
 	if (NULL == msg || NULL == sched_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-			QDF_TRACE_LEVEL_ERROR, FL("msg %p sch %p"),
+			QDF_TRACE_LEVEL_ERROR, FL("msg %pK sch %pK"),
 			msg, sched_ctx);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -482,7 +482,7 @@ QDF_STATUS scheduler_timer_q_mq_handler(struct scheduler_msg *msg)
 
 	if (NULL == msg || NULL == sched_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
-			QDF_TRACE_LEVEL_ERROR, FL("msg %p sch %p"),
+			QDF_TRACE_LEVEL_ERROR, FL("msg %pK sch %pK"),
 			msg, sched_ctx);
 		return QDF_STATUS_E_FAILURE;
 	}
