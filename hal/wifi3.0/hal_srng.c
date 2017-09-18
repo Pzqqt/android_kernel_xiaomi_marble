@@ -678,7 +678,7 @@ static void hal_validate_shadow_register(struct hal_soc *hal,
 	}
 	return;
 error:
-	qdf_print("%s: baddr %p, desination %p, shadow_address %p s0offset %p index %x",
+	qdf_print("%s: baddr %pK, desination %pK, shadow_address %pK s0offset %pK index %x",
 		  __func__, hal->dev_base_addr, destination, shadow_address,
 		  shadow_0_offset, index);
 	QDF_BUG(0);

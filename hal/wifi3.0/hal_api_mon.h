@@ -257,7 +257,7 @@ void hal_rx_reo_ent_buf_paddr_get(void *rx_desc,
 	buf_info->sw_cookie = HAL_RX_BUF_COOKIE_GET(buf_addr_info);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] ReoAddr=%p, addrInfo=%p, paddr=0x%llx, loopcnt=%d\n",
+		"[%s][%d] ReoAddr=%pK, addrInfo=%pK, paddr=0x%llx, loopcnt=%d\n",
 		__func__, __LINE__, reo_ent_ring, buf_addr_info,
 	(unsigned long long)buf_info->paddr, loop_cnt);
 
@@ -309,7 +309,7 @@ static inline void hal_rx_mon_msdu_link_desc_set(struct hal_soc *soc,
 		(HAL_RX_BUFFER_ADDR_39_32_GET(buf_addr_info)) << 32));
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"[%s][%d] src_srng_desc=%p, buf_addr=0x%llx, cookie=0x%llx\n",
+		"[%s][%d] src_srng_desc=%pK, buf_addr=0x%llx, cookie=0x%llx\n",
 		__func__, __LINE__, src_srng_desc, (unsigned long long)paddr,
 		(unsigned long long)p_buffer_addr_info->sw_buffer_cookie);
 
