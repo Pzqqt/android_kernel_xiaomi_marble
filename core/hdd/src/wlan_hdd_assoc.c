@@ -2187,6 +2187,11 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
 		pCsrRoamInfo->nAssocReqLength);
 
+	wlan_hdd_save_gtk_offload_params(adapter, NULL,
+			pCsrRoamInfo->kek,
+			pCsrRoamInfo->kek_len,
+			pCsrRoamInfo->replay_ctr, true);
+
 	hdd_debug("ReAssoc Req IE dump");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 		assoc_req_ies, pCsrRoamInfo->nAssocReqLength);
@@ -2195,6 +2200,10 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			assoc_req_ies, pCsrRoamInfo->nAssocReqLength,
 			rspRsnIe, rspRsnLength,
 			pCsrRoamInfo);
+	hdd_debug("Kek len %d", pCsrRoamInfo->kek_len);
+
+	hdd_update_hlp_info(dev, pCsrRoamInfo);
+
 done:
 	sme_roam_free_connect_profile(&roam_profile);
 	if (final_req_ie)
@@ -2493,6 +2502,12 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 	if (wext_state->roamProfile.fils_con_info) {
 		qdf_mem_free(wext_state->roamProfile.fils_con_info);
 		wext_state->roamProfile.fils_con_info = NULL;
+	}
+
+	if (wext_state->roamProfile.hlp_ie) {
+		qdf_mem_free(wext_state->roamProfile.hlp_ie);
+		wext_state->roamProfile.hlp_ie = NULL;
+		wext_state->roamProfile.hlp_ie_len = 0;
 	}
 }
 #endif

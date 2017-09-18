@@ -173,9 +173,11 @@ struct cds_config_info {
 
 #ifdef WLAN_FEATURE_FILS_SK
 #define MAX_PMK_LEN 48
+#define MAX_PMKID_LEN 16
 #define FILS_MAX_KEYNAME_NAI_LENGTH 255
 #define FILS_MAX_REALM_LEN 255
 #define FILS_MAX_RRK_LENGTH 64
+#define FILS_MAX_RIK_LENGTH FILS_MAX_RRK_LENGTH
 
 struct cds_fils_connection_info {
 	bool is_fils_connection;

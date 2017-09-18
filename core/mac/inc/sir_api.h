@@ -189,7 +189,10 @@ typedef enum {
 #define SIR_BTK_KEY_LEN 32
 #define SIR_KCK_KEY_LEN 16
 #define SIR_KEK_KEY_LEN 16
+#define SIR_KEK_KEY_LEN_FILS 64
 #define SIR_REPLAY_CTR_LEN 8
+#define SIR_PMK_LEN  48
+#define SIR_PMKID_LEN 16
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define SIR_UAPSD_BITOFFSET_ACVO     0
 #define SIR_UAPSD_BITOFFSET_ACVI     1
@@ -3276,6 +3279,10 @@ typedef struct sSirRoamOffloadScanReq {
 	tSirAddie assoc_ie;
 	struct lca_disallow_config_params lca_config_params;
 	struct scoring_param score_params;
+#ifdef WLAN_FEATURE_FILS_SK
+	bool is_fils_connection;
+	struct roam_fils_params roam_fils_params;
+#endif
 } tSirRoamOffloadScanReq, *tpSirRoamOffloadScanReq;
 
 typedef struct sSirRoamOffloadScanRsp {
@@ -4312,13 +4319,23 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	uint8_t roamReason;
 	uint32_t chan_freq;
 	uint8_t kck[SIR_KCK_KEY_LEN];
-	uint8_t kek[SIR_KEK_KEY_LEN];
+	uint32_t kek_len;
+	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
+	uint32_t   pmk_len;
+	uint8_t    pmk[SIR_PMK_LEN];
+	uint8_t    pmkid[SIR_PMKID_LEN];
+	bool update_erp_next_seq_num;
+	uint16_t next_erp_seq_num;
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
 	void *add_bss_params;
 	tpSirSmeJoinRsp join_rsp;
 	uint16_t aid;
 	struct sir_hw_mode_trans_ind hw_mode_trans_ind;
 	uint8_t nss;
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t hlp_data[FILS_MAX_HLP_DATA_LEN];
 } roam_offload_synch_ind;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

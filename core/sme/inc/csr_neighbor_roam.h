@@ -331,6 +331,7 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ptr);
 #define REASON_ROAM_STOP_ALL                        38
 #define REASON_SUPPLICANT_DISABLED_ROAMING          39
 #define REASON_CTX_INIT                             40
+#define REASON_FILS_PARAMS_CHANGED                  41
 
 #if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac, uint8_t sessionId,
@@ -342,6 +343,22 @@ static inline QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac,
 	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
+
+#if defined(WLAN_FEATURE_FILS_SK)
+/**
+ * csr_update_fils_config - Update FILS config to CSR roam session
+ * @mac: MAC context
+ * @session_id: session id
+ * @src_profile: Source profile having latest FILS config
+ *
+ * API to update FILS config to roam csr session
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_update_fils_config(tpAniSirGlobal mac, uint8_t session_id,
+				  tCsrRoamProfile *src_profile);
+#endif
+
 QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(tpAniSirGlobal pMac, void *pMsg);
 QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal pMac,
 		uint8_t sessionId);

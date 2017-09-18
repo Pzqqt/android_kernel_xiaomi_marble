@@ -6832,6 +6832,30 @@ static void wma_get_arp_req_stats(WMA_HANDLE handle,
 			 __func__);
 }
 
+/**
+ * wma_set_del_pmkid_cache() - API to set/delete PMKID cache entry in fw
+ * @handle: WMA handle
+ * @pmk_cache: PMK cache entry
+ *
+ * Return: None
+ */
+static void wma_set_del_pmkid_cache(WMA_HANDLE handle,
+				    struct wmi_unified_pmk_cache *pmk_cache)
+{
+	int status;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("WMA is closed, cannot send set del pmkid");
+		return;
+	}
+
+	status = wmi_unified_set_del_pmkid_cache(wma_handle->wmi_handle,
+						 pmk_cache);
+	if (status != EOK)
+		WMA_LOGE("failed to send set/del pmkid cmd to fw");
+}
+
 QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 	struct sir_set_rx_reorder_timeout_val *reorder_timeout)
 {
@@ -6973,6 +6997,46 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#if defined(WLAN_FEATURE_FILS_SK)
+/**
+ * wma_roam_scan_send_hlp() - API to send HLP IE info to fw
+ * @wma_handle: WMA handle
+ * @req: HLP params
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_roam_scan_send_hlp(tp_wma_handle wma_handle,
+					 struct hlp_params *req)
+{
+	struct hlp_params *params;
+	QDF_STATUS status;
+
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params) {
+		WMA_LOGE("%s : Memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	params->vdev_id = req->vdev_id;
+	params->hlp_ie_len = req->hlp_ie_len;
+	qdf_mem_copy(params->hlp_ie, req->hlp_ie, req->hlp_ie_len);
+	status = wmi_unified_roam_send_hlp_cmd(wma_handle->wmi_handle, params);
+
+	WMA_LOGD("Send HLP status %d vdev id %d", status, params->vdev_id);
+	qdf_trace_hex_dump(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
+				params->hlp_ie, 10);
+
+	qdf_mem_free(params);
+	return status;
+}
+#else
+static QDF_STATUS wma_roam_scan_send_hlp(tp_wma_handle wma_handle,
+					 struct hlp_params *req)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * wma_process_set_limit_off_chan() - set limit off chanel parameters
@@ -7788,6 +7852,16 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_GET_ARP_STATS_REQ:
 		wma_get_arp_req_stats(wma_handle,
 			(struct get_arp_stats_params *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_SET_DEL_PMKID_CACHE:
+		wma_set_del_pmkid_cache(wma_handle,
+			(struct wmi_unified_pmk_cache *) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_HLP_IE_INFO:
+		wma_roam_scan_send_hlp(wma_handle,
+			(struct hlp_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_LIMIT_OFF_CHAN:

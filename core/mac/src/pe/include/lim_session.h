@@ -521,6 +521,10 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool ch_switch_in_progress;
 #ifdef WLAN_FEATURE_FILS_SK
 	struct pe_fils_session *fils_info;
+	struct qdf_mac_addr dst_mac;
+	struct qdf_mac_addr src_mac;
+	uint16_t hlp_data_len;
+	uint8_t *hlp_data;
 #endif
 	/* previous auth frame's sequence number */
 	uint16_t prev_auth_seq_num;

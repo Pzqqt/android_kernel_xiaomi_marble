@@ -771,6 +771,57 @@ QDF_STATUS wma_roam_scan_mawc_params(tp_wma_handle wma_handle,
 
 	return status;
 }
+#ifdef WLAN_FEATURE_FILS_SK
+/**
+ * wma_roam_scan_fill_fils_params() - API to fill FILS params in RSO command
+ * @wma_handle: WMA handle
+ * @params: Pointer to destination RSO params to be filled
+ * @roam_req: Pointer to RSO params from CSR
+ *
+ * Return: None
+ */
+static void wma_roam_scan_fill_fils_params(tp_wma_handle wma_handle,
+					   struct roam_offload_scan_params
+					   *params, tSirRoamOffloadScanReq
+					   *roam_req)
+{
+	struct roam_fils_params *dst_fils_params, *src_fils_params;
+
+	if (!params || !roam_req || !roam_req->is_fils_connection) {
+		WMA_LOGE("wma_roam_scan_fill_fils_params- NULL");
+		return;
+	}
+
+	src_fils_params = &roam_req->roam_fils_params;
+	dst_fils_params = &params->roam_fils_params;
+
+	params->add_fils_tlv = true;
+
+	dst_fils_params->username_length = src_fils_params->username_length;
+	qdf_mem_copy(dst_fils_params->username, src_fils_params->username,
+		     dst_fils_params->username_length);
+
+	dst_fils_params->next_erp_seq_num = src_fils_params->next_erp_seq_num;
+	dst_fils_params->rrk_length = src_fils_params->rrk_length;
+	qdf_mem_copy(dst_fils_params->rrk, src_fils_params->rrk,
+		     dst_fils_params->rrk_length);
+
+	dst_fils_params->rik_length = src_fils_params->rik_length;
+	qdf_mem_copy(dst_fils_params->rik, src_fils_params->rik,
+		     dst_fils_params->rik_length);
+
+	dst_fils_params->realm_len = src_fils_params->realm_len;
+	qdf_mem_copy(dst_fils_params->realm, src_fils_params->realm,
+		     dst_fils_params->realm_len);
+}
+#else
+static inline void wma_roam_scan_fill_fils_params(
+					tp_wma_handle wma_handle,
+					struct roam_offload_scan_params *params,
+					tSirRoamOffloadScanReq *roam_req)
+
+{ }
+#endif
 
 /**
  * wma_roam_scan_offload_mode() - send roam scan mode request to fw
@@ -841,6 +892,8 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 		params->assoc_ie_length = roam_req->assoc_ie.length;
 		qdf_mem_copy(params->assoc_ie, roam_req->assoc_ie.addIEdata,
 						roam_req->assoc_ie.length);
+
+		wma_roam_scan_fill_fils_params(wma_handle, params, roam_req);
 	}
 
 	WMA_LOGD(FL("qos_caps: %d, qos_enabled: %d, roam_scan_mode: %d"),
@@ -1145,6 +1198,10 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 			return WMI_AUTH_OPEN;
 		}
 		return WMI_AUTH_NONE;
+	case eCSR_AUTH_TYPE_FILS_SHA256:
+		return WMI_AUTH_RSNA_FILS_SHA256;
+	case eCSR_AUTH_TYPE_FILS_SHA384:
+		return WMI_AUTH_RSNA_FILS_SHA384;
 	default:
 		return WMI_AUTH_NONE;
 	}
@@ -2060,6 +2117,7 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 					     roam_req->sessionId);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
+
 		qdf_status = wma_roam_scan_filter(wma_handle, roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Sending update for roam scan filter failed");
@@ -2239,6 +2297,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	uint8_t *reassoc_req_ptr;
 	wmi_channel *chan;
 	wmi_key_material *key;
+	wmi_roam_fils_synch_tlv_param *fils_info;
 
 	synch_event = param_buf->fixed_param;
 	roam_synch_ind_ptr->roamedVdevId = synch_event->vdev_id;
@@ -2296,6 +2355,7 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	if (key != NULL) {
 		qdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
 			     SIR_KCK_KEY_LEN);
+		roam_synch_ind_ptr->kek_len = SIR_KEK_KEY_LEN;
 		qdf_mem_copy(roam_synch_ind_ptr->kek, key->kek,
 			     SIR_KEK_KEY_LEN);
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
@@ -2318,6 +2378,35 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	else
 		WMA_LOGD(FL("hw_mode transition fixed param is NULL"));
 
+	fils_info = (wmi_roam_fils_synch_tlv_param *)
+			(param_buf->roam_fils_synch_info);
+	if (param_buf->roam_fils_synch_info) {
+		roam_synch_ind_ptr->kek_len = fils_info->kek_len;
+		qdf_mem_copy(roam_synch_ind_ptr->kek, fils_info->kek,
+			     fils_info->kek_len);
+
+		roam_synch_ind_ptr->pmk_len = fils_info->pmk_len;
+		qdf_mem_copy(roam_synch_ind_ptr->pmk, fils_info->pmk,
+			     fils_info->pmk_len);
+
+		qdf_mem_copy(roam_synch_ind_ptr->pmkid, fils_info->pmkid,
+			     SIR_PMKID_LEN);
+
+		roam_synch_ind_ptr->update_erp_next_seq_num =
+				fils_info->update_erp_next_seq_num;
+		roam_synch_ind_ptr->next_erp_seq_num =
+				fils_info->next_erp_seq_num;
+
+		WMA_LOGD("%s: KEK dump", __func__);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+				   roam_synch_ind_ptr->kek, fils_info->kek_len);
+		WMA_LOGD("%s: PMK dump", __func__);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+				   roam_synch_ind_ptr->pmk, fils_info->pmk_len);
+		WMA_LOGD("%s: PMKID dump", __func__);
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
+				   roam_synch_ind_ptr->pmkid, SIR_PMKID_LEN);
+	}
 	return 0;
 }
 

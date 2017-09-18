@@ -293,10 +293,10 @@ void pe_delete_fils_info(tpPESession session)
 		qdf_mem_free(fils_info->keyname_nai_data);
 	if (fils_info->fils_erp_reauth_pkt)
 		qdf_mem_free(fils_info->fils_erp_reauth_pkt);
-	if (fils_info->fils_r_rk)
-		qdf_mem_free(fils_info->fils_r_rk);
-	if (fils_info->fils_r_ik)
-		qdf_mem_free(fils_info->fils_r_ik);
+	if (fils_info->fils_rrk)
+		qdf_mem_free(fils_info->fils_rrk);
+	if (fils_info->fils_rik)
+		qdf_mem_free(fils_info->fils_rik);
 	if (fils_info->fils_eap_finish_pkt)
 		qdf_mem_free(fils_info->fils_eap_finish_pkt);
 	if (fils_info->fils_rmsk)
@@ -336,8 +336,8 @@ static void pe_init_fils_info(tpPESession session)
 	}
 	fils_info->keyname_nai_data = NULL;
 	fils_info->fils_erp_reauth_pkt = NULL;
-	fils_info->fils_r_rk = NULL;
-	fils_info->fils_r_ik = NULL;
+	fils_info->fils_rrk = NULL;
+	fils_info->fils_rik = NULL;
 	fils_info->fils_eap_finish_pkt = NULL;
 	fils_info->fils_rmsk = NULL;
 	fils_info->fils_pmk = NULL;

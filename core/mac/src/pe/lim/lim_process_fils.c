@@ -667,8 +667,8 @@ static void lim_generate_rmsk_data(tpPESession pe_session)
 		return;
 
 	auth_info = &(pe_session->fils_info->auth_info);
-	fils_info->fils_rmsk_len = fils_info->fils_r_rk_len;
-	fils_info->fils_rmsk = qdf_mem_malloc(fils_info->fils_r_rk_len);
+	fils_info->fils_rmsk_len = fils_info->fils_rrk_len;
+	fils_info->fils_rmsk = qdf_mem_malloc(fils_info->fils_rrk_len);
 	if (!fils_info->fils_rmsk) {
 		pe_err("failed to alloc memory");
 		return;
@@ -679,9 +679,9 @@ static void lim_generate_rmsk_data(tpPESession pe_session)
 	 * it should be in network byte order
 	 */
 	lim_copy_u16_be(&optional_data[0], fils_info->sequence_number);
-	lim_copy_u16_be(&optional_data[2], fils_info->fils_r_rk_len);
-	lim_default_hmac_sha256_kdf(fils_info->fils_r_rk,
-			fils_info->fils_r_rk_len, rmsk_label,
+	lim_copy_u16_be(&optional_data[2], fils_info->fils_rrk_len);
+	lim_default_hmac_sha256_kdf(fils_info->fils_rrk,
+			fils_info->fils_rrk_len, rmsk_label,
 			optional_data, sizeof(optional_data),
 			fils_info->fils_rmsk, fils_info->fils_rmsk_len);
 	lim_fils_data_dump("RMSK", fils_info->fils_rmsk,
@@ -770,8 +770,10 @@ static QDF_STATUS lim_process_auth_wrapped_data(tpPESession pe_session,
 	input_len[0] -= auth_tag_len;
 	/* if we have auth tag remaining */
 	if (remaining_len == auth_tag_len) {
-		qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE, fils_info->fils_r_ik,
-				fils_info->fils_r_ik_len, 1,
+		qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE,
+				fils_info->fils_rik,
+				fils_info->fils_rik_len,
+				SINGLE_ELEMENT_HASH_CNT,
 				input_data, input_len, hash);
 	} else {
 		pe_err("invalid remaining len %d",
@@ -826,51 +828,34 @@ bool lim_is_valid_fils_auth_frame(tpAniSirGlobal mac_ctx,
 	return true;
 }
 
-/**
- * lim_create_fils_r_ik()- This API create rik using rrk coming from
- * supplicant.
- * rIK = KDF (K, S), where
- * K = rRK and
- * S = rIK Label + "\0" + cryptosuite + length
- * The rIK Label is the 8-bit ASCII string:
- * Re-authentication Integrity Key@ietf.org
- * @fils_info: fils session info
- *
- * Return: None
- */
-static QDF_STATUS lim_create_fils_r_ik(struct pe_fils_session *fils_info)
+QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
+					uint8_t *rik, uint32_t *rik_len)
 {
 	uint8_t optional_data[SIR_FILS_OPTIONAL_DATA_LEN];
 	uint8_t label[] = SIR_FILS_RIK_LABEL;
 
-	if (!fils_info)
+	if (!rrk || !rik) {
+		pe_err("FILS rrk/rik NULL");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	optional_data[0] = HMAC_SHA256_128;
 	/* basic validation */
-	if (fils_info->fils_r_rk_len <= 0) {
-		pe_err("invalid r_rk length %d", fils_info->fils_r_rk_len);
+	if (rrk_len <= 0) {
+		pe_err("invalid r_rk length %d", rrk_len);
 		return QDF_STATUS_E_FAILURE;
 	}
-	lim_copy_u16_be(&optional_data[1], fils_info->fils_r_rk_len);
-	fils_info->fils_r_ik = qdf_mem_malloc(fils_info->fils_r_rk_len);
-	if (!fils_info->fils_r_ik) {
-		pe_err("failed to alloc memory");
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (lim_default_hmac_sha256_kdf(fils_info->fils_r_rk,
-				fils_info->fils_r_rk_len, label,
+	lim_copy_u16_be(&optional_data[1], rrk_len);
+	if (lim_default_hmac_sha256_kdf(rrk, rrk_len, label,
 				optional_data, sizeof(optional_data),
-				fils_info->fils_r_ik, fils_info->fils_r_rk_len)
+				rik, rrk_len)
 			!= QDF_STATUS_SUCCESS) {
-		pe_err("failed to create r_ik");
+		pe_err("failed to create rik");
 		return QDF_STATUS_E_FAILURE;
 	}
-	fils_info->fils_r_ik_len = fils_info->fils_r_rk_len;
-	lim_fils_data_dump("rRk", fils_info->fils_r_rk,
-				fils_info->fils_r_rk_len);
-	lim_fils_data_dump("rIk", fils_info->fils_r_ik,
-				fils_info->fils_r_rk_len);
+	*rik_len = rrk_len;
+	lim_fils_data_dump("rRk", rrk, rrk_len);
+	lim_fils_data_dump("rIk", rik, *rik_len);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -880,13 +865,14 @@ static QDF_STATUS lim_create_fils_r_ik(struct pe_fils_session *fils_info)
  * sent in auth request.
  * @fils_info: fils session info
  *
- * Return: 0 if success else error code
+ * Return: length of the created wrapped data
  */
 static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 {
 	uint8_t *buf;
 	uint8_t auth_tag[FILS_AUTH_TAG_MAX_LENGTH] = {0};
 	uint32_t length = 0;
+	QDF_STATUS status;
 	int buf_len =
 		/* code + identifier */
 		sizeof(uint8_t) * 2 +
@@ -955,12 +941,31 @@ static int lim_create_fils_wrapper_data(struct pe_fils_session *fils_info)
 	 * This should be moved to just after sending probe to save time
 	 * lim_process_switch_channel_join_req ??
 	 */
-	lim_create_fils_r_ik(fils_info);
+	fils_info->fils_rik = qdf_mem_malloc(fils_info->fils_rrk_len);
+	if (!fils_info->fils_rik) {
+		qdf_mem_free(fils_info->fils_erp_reauth_pkt);
+		fils_info->fils_erp_reauth_pkt = NULL;
+		pe_err("failed to alloc memory");
+		return -EINVAL;
+	}
+	status = lim_create_fils_rik(fils_info->fils_rrk,
+				     fils_info->fils_rrk_len,
+				     fils_info->fils_rik,
+				     &fils_info->fils_rik_len);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("RIK create fails");
+		qdf_mem_free(fils_info->fils_erp_reauth_pkt);
+		qdf_mem_free(fils_info->fils_rik);
+		fils_info->fils_erp_reauth_pkt = NULL;
+		fils_info->fils_rik = NULL;
+		return -EINVAL;
+	}
+
 	fils_info->fils_erp_reauth_pkt_len = buf_len;
 	length = fils_info->fils_erp_reauth_pkt_len -
 			lim_get_auth_tag_len(HMAC_SHA256_128);
 	qdf_get_hmac_hash(FILS_SHA256_CRYPTO_TYPE,
-			fils_info->fils_r_ik, fils_info->fils_r_ik_len, 1,
+			fils_info->fils_rik, fils_info->fils_rik_len, 1,
 			&fils_info->fils_erp_reauth_pkt, &length, auth_tag);
 
 	lim_fils_data_dump("Auth tag", auth_tag,
@@ -1138,7 +1143,7 @@ void lim_update_fils_config(tpPESession session,
 		fils_config_info->is_fils_connection;
 	csr_fils_info->keyname_nai_length =
 		fils_config_info->key_nai_length;
-	csr_fils_info->fils_r_rk_len =
+	csr_fils_info->fils_rrk_len =
 		fils_config_info->r_rk_length;
 	csr_fils_info->akm = fils_config_info->akm_type;
 	csr_fils_info->auth = fils_config_info->auth_type;
@@ -1152,16 +1157,16 @@ void lim_update_fils_config(tpPESession session,
 	qdf_mem_copy(csr_fils_info->keyname_nai_data,
 			fils_config_info->keyname_nai,
 			fils_config_info->key_nai_length);
-	csr_fils_info->fils_r_rk =
+	csr_fils_info->fils_rrk =
 		qdf_mem_malloc(fils_config_info->r_rk_length);
-	if (!csr_fils_info->fils_r_rk) {
+	if (!csr_fils_info->fils_rrk) {
 		pe_err("failed to alloc memory");
 		qdf_mem_free(csr_fils_info->keyname_nai_data);
 		return;
 	}
 
 	if (fils_config_info->r_rk_length <= FILS_MAX_RRK_LENGTH)
-		qdf_mem_copy(csr_fils_info->fils_r_rk,
+		qdf_mem_copy(csr_fils_info->fils_rrk,
 				fils_config_info->r_rk,
 				fils_config_info->r_rk_length);
 
@@ -1178,7 +1183,7 @@ void lim_update_fils_config(tpPESession session,
 			qdf_mem_malloc(fils_config_info->pmk_len);
 		if (!csr_fils_info->fils_pmk) {
 			qdf_mem_free(csr_fils_info->keyname_nai_data);
-			qdf_mem_free(csr_fils_info->fils_r_rk);
+			qdf_mem_free(csr_fils_info->fils_rrk);
 			pe_err("failed to alloc memory");
 			return;
 		}
@@ -1215,9 +1220,9 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 		return 0;
 
 	/* These memory may already been allocated if auth retry */
-	if (session->fils_info->fils_r_ik) {
-		qdf_mem_free(session->fils_info->fils_r_ik);
-		session->fils_info->fils_r_ik = NULL;
+	if (session->fils_info->fils_rik) {
+		qdf_mem_free(session->fils_info->fils_rik);
+		session->fils_info->fils_rik = NULL;
 	}
 	if  (session->fils_info->fils_erp_reauth_pkt) {
 		qdf_mem_free(session->fils_info->fils_erp_reauth_pkt);
@@ -1301,7 +1306,6 @@ void populate_fils_connect_params(tpAniSirGlobal mac_ctx,
 			  fils_join_rsp->hlp_data);
 
 	pe_debug("FILS connect params copied lim");
-	pe_delete_fils_info(session);
 }
 
 /**
@@ -1408,6 +1412,11 @@ bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
 
 	if (!lim_is_fils_connection(session_entry))
 		return true;
+
+	if (!fils_info) {
+		pe_err("FILS Info not present");
+		goto verify_fils_params_fails;
+	}
 
 	if (!assoc_rsp->fils_session.present) {
 		pe_err("FILS IE not present");
@@ -1796,5 +1805,49 @@ QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
 
 	(*n_frame) -= AES_BLOCK_SIZE;
 	return status;
+}
+
+void lim_update_fils_rik(tpPESession pe_session,
+			 tSirRoamOffloadScanReq *req_buffer)
+{
+	struct pe_fils_session *pe_fils_info = pe_session->fils_info;
+	struct roam_fils_params *roam_fils_params =
+		&req_buffer->roam_fils_params;
+
+	/*
+	 * If it is first connection, LIM session entries will not be
+	 * set with FILS. However in RSO, CSR filled the RRK, realm
+	 * info and is_fils_connection to true in req_buffer, RIK
+	 * can be created with RRK and send all the FILS info to fw
+	 */
+	if ((!lim_is_fils_connection(pe_session) ||
+	     !pe_fils_info) && (req_buffer->is_fils_connection)) {
+		if (roam_fils_params->rrk_length > FILS_MAX_RRK_LENGTH) {
+			pe_err("FILS rrk len(%d) max (%d)",
+					roam_fils_params->rrk_length,
+					FILS_MAX_RRK_LENGTH);
+			return;
+		}
+
+		lim_create_fils_rik(roam_fils_params->rrk,
+				    roam_fils_params->rrk_length,
+				    roam_fils_params->rik,
+				    &roam_fils_params->rik_length);
+		pe_debug("Fils created rik len %d",
+					roam_fils_params->rik_length);
+		return;
+	}
+
+	if ((pe_fils_info->fils_rik_len > FILS_MAX_RIK_LENGTH) ||
+	    !pe_fils_info->fils_rik) {
+		pe_err("Fils rik len(%d) max %d", pe_fils_info->fils_rik_len,
+				FILS_MAX_RIK_LENGTH);
+		return;
+	}
+
+	roam_fils_params->rik_length = pe_fils_info->fils_rik_len;
+	qdf_mem_copy(roam_fils_params->rik, pe_fils_info->fils_rik,
+			roam_fils_params->rik_length);
+	pe_debug("fils rik len %d", roam_fils_params->rik_length);
 }
 #endif

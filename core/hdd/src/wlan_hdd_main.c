@@ -4888,26 +4888,31 @@ static inline void hdd_populate_fils_params(struct cfg80211_connect_resp_params
 { }
 #endif
 
-/**
- * hdd_update_hlp_info() - Update HLP packet received in FILS assoc rsp
- * @dev: net device
- * @roam_fils_params: Fils join rsp params
- *
- * This API is used to send the received HLP packet in Assoc rsp(FILS AKM)
- * to the network layer.
- *
- * Return: None
- */
-static void hdd_update_hlp_info(struct net_device *dev,
-				struct fils_join_rsp_params *roam_fils_params)
+void hdd_update_hlp_info(struct net_device *dev, tCsrRoamInfo *roam_info)
 {
 	struct sk_buff *skb;
 	uint16_t skb_len;
 	struct llc_snap_hdr_t *llc_hdr;
 	QDF_STATUS status;
-	uint8_t *hlp_data = roam_fils_params->hlp_data;
-	uint16_t hlp_data_len = roam_fils_params->hlp_data_len;
+	uint8_t *hlp_data;
+	uint16_t hlp_data_len;
+	struct fils_join_rsp_params *roam_fils_params
+				= roam_info->fils_join_rsp;
 	struct hdd_adapter *padapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	if (!roam_fils_params) {
+		hdd_err("FILS Roam Param NULL");
+		return;
+	}
+
+	if (!roam_fils_params->hlp_data_len || !roam_fils_params->hlp_data) {
+		hdd_err("FILS HLP Data NULL, len %d",
+			roam_fils_params->hlp_data_len);
+		return;
+	}
+
+	hlp_data = roam_fils_params->hlp_data;
+	hlp_data_len = roam_fils_params->hlp_data_len;
 
 	/* Calculate skb length */
 	skb_len = (2 * ETH_ALEN) + hlp_data_len;
@@ -4960,7 +4965,6 @@ static void hdd_update_hlp_info(struct net_device *dev,
  * @gfp: allocation flags
  * @connect_timeout: If timed out waiting for Auth/Assoc/Probe resp
  * @timeout_reason: reason for connect timeout
- * @roam_fils_params: FILS join response params
  *
  * This API is used as wrapper to send FILS key/sequence number
  * params etc. to supplicant in case of FILS connection
@@ -4972,10 +4976,12 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 			     const u8 *req_ie, size_t req_ie_len,
 			     const u8 *resp_ie, size_t resp_ie_len, u16 status,
 			     gfp_t gfp, bool connect_timeout,
-			     tSirResultCodes timeout_reason,
-			     struct fils_join_rsp_params *roam_fils_params)
+			     tSirResultCodes timeout_reason)
 {
 	struct cfg80211_connect_resp_params fils_params;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct fils_join_rsp_params *roam_fils_params =
+				roam_info->fils_join_rsp;
 
 	qdf_mem_zero(&fils_params, sizeof(fils_params));
 
@@ -4996,6 +5002,10 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 					 roam_fils_params->fils_pmk_len,
 					 roam_fils_params->fils_pmkid,
 					 roam_info->fils_seq_num);
+		wlan_hdd_save_gtk_offload_params(adapter, NULL,
+					roam_fils_params->kek,
+					roam_fils_params->kek_len,
+					roam_info->replay_ctr, true);
 	}
 	hdd_debug("FILS indicate connect status %d seq no %d",
 		  fils_params.status,
@@ -5004,7 +5014,7 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 	cfg80211_connect_done(dev, &fils_params, gfp);
 
 	if (roam_fils_params && roam_fils_params->hlp_data_len)
-		hdd_update_hlp_info(dev, roam_fils_params);
+		hdd_update_hlp_info(dev, roam_info);
 
 	/* Clear all the FILS key info */
 	if (roam_fils_params && roam_fils_params->fils_pmk)
@@ -5020,13 +5030,7 @@ hdd_connect_done(struct net_device *dev, const u8 *bssid,
 		 const u8 *req_ie, size_t req_ie_len,
 		 const u8 *resp_ie, size_t resp_ie_len, u16 status,
 		 gfp_t gfp, bool connect_timeout,
-		 tSirResultCodes timeout_reason,
-		 struct fils_join_rsp_params *roam_fils_params)
-{ }
-
-static inline void hdd_update_hlp_info(struct net_device *dev,
-			struct fils_join_rsp_params *roam_fils_params)
-
+		 tSirResultCodes timeout_reason)
 { }
 #endif
 #endif
@@ -5067,7 +5071,7 @@ static int hdd_fils_update_connect_results(struct net_device *dev,
 
 	hdd_connect_done(dev, bssid, bss, roam_info, req_ie, req_ie_len,
 			 resp_ie, resp_ie_len, status, gfp, connect_timeout,
-			 timeout_reason, roam_info->fils_join_rsp);
+			 timeout_reason);
 	return 0;
 }
 #else

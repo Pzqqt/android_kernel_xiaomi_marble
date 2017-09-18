@@ -7134,6 +7134,144 @@ QDF_STATUS sme_update_roam_rssi_diff(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 
+#ifdef WLAN_FEATURE_FILS_SK
+QDF_STATUS sme_update_fils_config(tHalHandle hal, uint8_t session_id,
+				  tCsrRoamProfile *src_profile)
+{
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpCsrNeighborRoamControlInfo neighbor_roam_info =
+			&mac->roam.neighborRoamInfo[session_id];
+
+	if (session_id >= CSR_ROAM_SESSION_MAX) {
+		sme_err("Invalid sme session id: %d", session_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!src_profile) {
+		sme_err("src roam profile NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!mac->roam.configParam.isFastRoamIniFeatureEnabled ||
+	    (neighbor_roam_info->neighborRoamState !=
+	     eCSR_NEIGHBOR_ROAM_STATE_CONNECTED)) {
+		sme_info("Fast roam is disabled or not connected(%d)",
+				neighbor_roam_info->neighborRoamState);
+		return QDF_STATUS_E_PERM;
+	}
+
+	csr_update_fils_config(mac, session_id, src_profile);
+	if (mac->roam.configParam.isRoamOffloadEnabled) {
+		sme_debug("Updating fils config to fw");
+		csr_roam_offload_scan(mac, session_id,
+				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				      REASON_FILS_PARAMS_CHANGED);
+	} else {
+		sme_info("LFR3 not enabled");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return status;
+}
+
+void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
+			  tCsrRoamProfile *profile, uint32_t if_addr)
+{
+	int i;
+	struct scheduler_msg msg;
+	QDF_STATUS status;
+	struct hlp_params *params;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
+	tpCsrNeighborRoamControlInfo neighbor_roam_info =
+				&mac->roam.neighborRoamInfo[session_id];
+
+	if (!session) {
+		sme_err("session NULL");
+		return;
+	}
+
+	if (!mac->roam.configParam.isFastRoamIniFeatureEnabled ||
+	    (neighbor_roam_info->neighborRoamState !=
+	     eCSR_NEIGHBOR_ROAM_STATE_CONNECTED)) {
+		sme_debug("Fast roam is disabled or not connected(%d)",
+				neighbor_roam_info->neighborRoamState);
+		return;
+	}
+
+	params = qdf_mem_malloc(sizeof(*params));
+	if (!params) {
+		sme_err("Mem alloc for HLP IE fails");
+		return;
+	}
+	if ((profile->hlp_ie_len +
+	     SIR_IPV4_ADDR_LEN) > FILS_MAX_HLP_DATA_LEN) {
+		sme_err("HLP IE len exceeds %d",
+				profile->hlp_ie_len);
+		qdf_mem_free(params);
+		return;
+	}
+
+	params->vdev_id = session_id;
+	params->hlp_ie_len = profile->hlp_ie_len + SIR_IPV4_ADDR_LEN;
+
+	for (i = 0; i < SIR_IPV4_ADDR_LEN; i++)
+		params->hlp_ie[i] = (if_addr >> (i * 8)) & 0xFF;
+
+	qdf_mem_copy(params->hlp_ie + SIR_IPV4_ADDR_LEN,
+		     profile->hlp_ie, profile->hlp_ie_len);
+
+	msg.type = SIR_HAL_HLP_IE_INFO;
+	msg.reserved = 0;
+	msg.bodyptr = params;
+	status = sme_acquire_global_lock(&mac->sme);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("sme lock acquire fails");
+		qdf_mem_free(params);
+		return;
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS
+			(scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
+		sme_err("Not able to post WMA_HLP_IE_INFO message to HAL");
+		sme_release_global_lock(&mac->sme);
+		qdf_mem_free(params);
+		return;
+	}
+
+	sme_release_global_lock(&mac->sme);
+}
+
+void sme_free_join_rsp_fils_params(tCsrRoamInfo *roam_info)
+{
+	struct fils_join_rsp_params *roam_fils_params;
+
+	if (!roam_info) {
+		sme_err("FILS Roam Info NULL");
+		return;
+	}
+
+	roam_fils_params = roam_info->fils_join_rsp;
+	if (!roam_fils_params) {
+		sme_err("FILS Roam Param NULL");
+		return;
+	}
+
+	if (roam_fils_params->fils_pmk)
+		qdf_mem_free(roam_fils_params->fils_pmk);
+
+	qdf_mem_free(roam_fils_params);
+
+	roam_info->fils_join_rsp = NULL;
+}
+
+#else
+inline void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
+			  tCsrRoamProfile *profile, uint32_t if_addr)
+{}
+#endif
+
 /*
  * sme_update_fast_transition_enabled() - enable/disable Fast Transition
  *	support at runtime
@@ -15425,6 +15563,61 @@ QDF_STATUS sme_fast_reassoc(tHalHandle hal, tCsrRoamProfile *profile,
 	}
 
 	return status;
+}
+
+QDF_STATUS sme_set_del_pmkid_cache(tHalHandle hal, uint8_t session_id,
+				   tPmkidCacheInfo *pmk_cache_info,
+				   bool is_add)
+{
+	struct wmi_unified_pmk_cache *pmk_cache;
+	struct scheduler_msg msg;
+
+	pmk_cache = qdf_mem_malloc(sizeof(*pmk_cache));
+	if (!pmk_cache) {
+		sme_err("Memory allocation failure");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	pmk_cache->session_id = session_id;
+
+	if (!pmk_cache_info->ssid_len) {
+		pmk_cache->cat_flag = WMI_PMK_CACHE_CAT_FLAG_BSSID;
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(pmk_cache_info->BSSID.bytes,
+				&pmk_cache->bssid);
+	} else {
+		pmk_cache->cat_flag = WMI_PMK_CACHE_CAT_FLAG_SSID_CACHE_ID;
+		pmk_cache->ssid.length = pmk_cache_info->ssid_len;
+		qdf_mem_copy(pmk_cache->ssid.mac_ssid,
+			     pmk_cache_info->ssid,
+			     pmk_cache->ssid.length);
+	}
+	pmk_cache->cache_id = (uint32_t) (pmk_cache_info->cache_id[0] << 8 |
+					pmk_cache_info->cache_id[1]);
+
+	if (is_add)
+		pmk_cache->action_flag = WMI_PMK_CACHE_ACTION_FLAG_ADD_ENTRY;
+	else
+		pmk_cache->action_flag = WMI_PMK_CACHE_ACTION_FLAG_DEL_ENTRY;
+
+	pmk_cache->pmkid_len = CSR_RSN_PMKID_SIZE;
+	qdf_mem_copy(pmk_cache->pmkid, pmk_cache_info->PMKID,
+		     CSR_RSN_PMKID_SIZE);
+
+	pmk_cache->pmk_len = pmk_cache_info->pmk_len;
+	qdf_mem_copy(pmk_cache->pmk, pmk_cache_info->pmk,
+		     pmk_cache->pmk_len);
+
+	msg.type = SIR_HAL_SET_DEL_PMKID_CACHE;
+	msg.reserved = 0;
+	msg.bodyptr = pmk_cache;
+	if (QDF_STATUS_SUCCESS !=
+	    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
+		sme_err("Not able to post message to WDA");
+		qdf_mem_free(pmk_cache);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /* ARP DEBUG STATS */

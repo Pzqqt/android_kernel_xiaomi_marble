@@ -2763,9 +2763,24 @@ int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
  * Return: None
  */
 void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
+
+/**
+ * hdd_update_hlp_info() - Update HLP packet received in FILS (re)assoc rsp
+ * @dev: net device
+ * @roam_fils_params: Fils join rsp params
+ *
+ * This API is used to send the received HLP packet in Assoc rsp(FILS AKM)
+ * to the network layer.
+ *
+ * Return: None
+ */
+void hdd_update_hlp_info(struct net_device *dev, tCsrRoamInfo *roam_info);
 #else
 static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 { }
+static inline void hdd_update_hlp_info(struct net_device *dev,
+				       tCsrRoamInfo *roam_info)
+{}
 #endif
 
 #undef nla_parse

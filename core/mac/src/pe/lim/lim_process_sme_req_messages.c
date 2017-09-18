@@ -3997,6 +3997,9 @@ static void __lim_process_roam_scan_offload_req(tpAniSirGlobal mac_ctx,
 	}
 	qdf_mem_free(local_ie_buf);
 
+	if (pe_session)
+		lim_update_fils_rik(pe_session, req_buffer);
+
 	wma_msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
 	wma_msg.bodyptr = req_buffer;
 

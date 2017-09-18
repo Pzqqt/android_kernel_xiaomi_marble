@@ -523,4 +523,23 @@ int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
  * Return: none
  */
 void hdd_bt_activity_cb(void *context, uint32_t bt_activity);
+
+/**
+ * wlan_hdd_save_gtk_offload_params() - Save gtk offload parameters in STA
+ *                                      context for offload operations.
+ * @adapter: Adapter context
+ * @kck_ptr: KCK buffer pointer
+ * @kek_ptr: KEK buffer pointer
+ * @kek_len: KEK length
+ * @replay_ctr: Pointer to 64 bit long replay counter
+ * @big_endian: true if replay_ctr is in big endian format
+ *
+ * Return: None
+ */
+void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
+					     uint8_t *kck_ptr,
+					     uint8_t *kek_ptr,
+					     uint32_t kek_len,
+					     uint8_t *replay_ctr,
+					     bool big_endian);
 #endif
