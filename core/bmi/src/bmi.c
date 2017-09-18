@@ -268,7 +268,7 @@ QDF_STATUS bmi_read_soc_register(uint32_t address, uint32_t *param,
 		return QDF_STATUS_E_PERM;
 	}
 
-	BMI_DBG("BMI Read SOC Register:device: 0x%p, address: 0x%x",
+	BMI_DBG("BMI Read SOC Register:device: 0x%pK, address: 0x%x",
 			 scn, address);
 
 	cid = BMI_READ_SOC_REGISTER;
@@ -312,7 +312,7 @@ QDF_STATUS bmi_write_soc_register(uint32_t address, uint32_t param,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	BMI_DBG("SOC Register Write:device:0x%p, addr:0x%x, param:%d",
+	BMI_DBG("SOC Register Write:device:0x%pK, addr:0x%x, param:%d",
 						scn, address, param);
 
 	cid = BMI_WRITE_SOC_REGISTER;
@@ -357,7 +357,7 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 		return QDF_STATUS_E_PERM;
 	}
 
-	BMI_DBG("BMI Send LZ Data: device: 0x%p, length: %d",
+	BMI_DBG("BMI Send LZ Data: device: 0x%pK, length: %d",
 						scn, length);
 
 	cid = BMI_LZ_DATA;
@@ -414,7 +414,7 @@ QDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
 		return QDF_STATUS_E_PERM;
 	}
 
-	BMI_ERR("Sign Stream start:device:0x%p, addr:0x%x, length:%d",
+	BMI_ERR("Sign Stream start:device:0x%pK, addr:0x%x, length:%d",
 						scn, address, length);
 
 	cid = BMI_SIGN_STREAM_START;
@@ -476,7 +476,7 @@ bmilz_stream_start(uint32_t address, struct ol_context *ol_ctx)
 		BMI_DBG("Command disallowed");
 		return QDF_STATUS_E_PERM;
 	}
-	BMI_DBG("BMI LZ Stream Start: (device: 0x%p, address: 0x%x)",
+	BMI_DBG("BMI LZ Stream Start: (device: 0x%pK, address: 0x%x)",
 						scn, address);
 
 	cid = BMI_LZ_STREAM_START;

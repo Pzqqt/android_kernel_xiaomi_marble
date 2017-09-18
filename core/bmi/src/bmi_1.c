@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -202,7 +202,7 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 	qdf_mem_set(bmi_rsp_buff, 0, size);
 
 
-	BMI_DBG("BMI Execute: device: 0x%p, address: 0x%x, param: %d",
+	BMI_DBG("BMI Execute: device: 0x%pK, address: 0x%x, param: %d",
 						scn, address, *param);
 
 	cid = BMI_EXECUTE;
@@ -301,7 +301,7 @@ QDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 	cmd = info->bmi_cmd_da;
 	rsp = info->bmi_rsp_da;
 
-	BMI_DBG("BMI Done: Enter (device: 0x%p)", scn);
+	BMI_DBG("BMI Done: Enter (device: 0x%pK)", scn);
 
 	info->bmi_done = true;
 	cid = BMI_DONE;
