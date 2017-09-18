@@ -20301,6 +20301,7 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_proxy_sta] = WMI_VDEV_PARAM_PROXY_STA;
 	vdev_param[wmi_vdev_param_bw_nss_ratemask] =
 					WMI_VDEV_PARAM_BW_NSS_RATEMASK;
+	vdev_param[wmi_vdev_param_set_he_ltf] = WMI_VDEV_PARAM_HE_LTF;
 }
 #endif
 
