@@ -162,22 +162,22 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		qdf_spinlock_create(&napii->lro_unloading_lock);
 		init_dummy_netdev(&(napii->netdev));
 
-		NAPI_DEBUG("adding napi=%p to netdev=%p (poll=%p, bdgt=%d)",
+		NAPI_DEBUG("adding napi=%pK to netdev=%pK (poll=%pK, bdgt=%d)",
 			   &(napii->napi), &(napii->netdev), poll, budget);
 		netif_napi_add(&(napii->netdev), &(napii->napi), poll, budget);
 
 		NAPI_DEBUG("after napi_add");
-		NAPI_DEBUG("napi=0x%p, netdev=0x%p",
+		NAPI_DEBUG("napi=0x%pK, netdev=0x%pK",
 			   &(napii->napi), &(napii->netdev));
-		NAPI_DEBUG("napi.dev_list.prev=0x%p, next=0x%p",
+		NAPI_DEBUG("napi.dev_list.prev=0x%pK, next=0x%pK",
 			   napii->napi.dev_list.prev,
 			   napii->napi.dev_list.next);
-		NAPI_DEBUG("dev.napi_list.prev=0x%p, next=0x%p",
+		NAPI_DEBUG("dev.napi_list.prev=0x%pK, next=0x%pK",
 			   napii->netdev.napi_list.prev,
 			   napii->netdev.napi_list.next);
 
 		napii->lro_ctx = qdf_lro_init();
-		NAPI_DEBUG("Registering LRO for ce_id %d NAPI callback for %d lro_ctx %p\n",
+		NAPI_DEBUG("Registering LRO for ce_id %d NAPI callback for %d lro_ctx %pK\n",
 				i, napii->id, napii->lro_ctx);
 
 		/* It is OK to change the state variable below without
@@ -279,10 +279,10 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 		}
 		if (0 == rc) {
 			NAPI_DEBUG("before napi_del");
-			NAPI_DEBUG("napi.dlist.prv=0x%p, next=0x%p",
+			NAPI_DEBUG("napi.dlist.prv=0x%pK, next=0x%pK",
 				  napii->napi.dev_list.prev,
 				  napii->napi.dev_list.next);
-			NAPI_DEBUG("dev.napi_l.prv=0x%p, next=0x%p",
+			NAPI_DEBUG("dev.napi_l.prv=0x%pK, next=0x%pK",
 				   napii->netdev.napi_list.prev,
 				   napii->netdev.napi_list.next);
 
@@ -421,7 +421,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		BLACKLIST_OFF_PENDING
 	     } blacklist_pending = BLACKLIST_NOT_PENDING;
 
-	NAPI_DEBUG("%s: -->(event=%d, aux=%p)", __func__, event, data);
+	NAPI_DEBUG("%s: -->(event=%d, aux=%pK)", __func__, event, data);
 
 	if (ce_srng_based(hif))
 		return hif_exec_event(hif_ctx, event, data);

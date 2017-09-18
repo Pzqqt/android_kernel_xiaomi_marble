@@ -179,7 +179,7 @@ static A_STATUS hif_sdio_probe(void *context, void *hif_handle)
 			__func__);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_HIF, QDF_TRACE_LEVEL_INFO,
-			"%s: ramdump base 0x%p size %d\n", __func__,
+			"%s: ramdump base 0x%pK size %d\n", __func__,
 			scn->ramdump_base, (int)scn->ramdump_size);
 	}
 

@@ -135,7 +135,7 @@ static QDF_STATUS hif_send_internal(HIF_DEVICE_USB *hif_usb_device,
 	int frag_count = 0, head_data_len, tmp_frag_count = 0;
 	unsigned char *data_ptr;
 
-	HIF_DBG("+%s pipe : %d, buf:0x%p nbytes %u",
+	HIF_DBG("+%s pipe : %d, buf:0x%pK nbytes %u",
 		__func__, pipe_id, buf, nbytes);
 
 	frag_count = qdf_nbuf_get_num_frags(buf);
@@ -380,7 +380,7 @@ QDF_STATUS hif_usb_device_init(struct hif_usb_softc *sc)
 		device->udev = dev;
 		device->interface = interface;
 
-		HIF_ERROR("%s device %p device->udev %p device->interface %p",
+		HIF_ERROR("%s device %pK device->udev %pK device->interface %pK",
 			__func__,
 			device,
 			device->udev,
@@ -784,7 +784,7 @@ void hif_dump_info(struct hif_opaque_softc *scn)
 		ep_desc = &iface_desc->endpoint[i].desc;
 		if (ep_desc) {
 			HIF_INFO(
-				"ep_desc : %p Index : %d: DescType : %d Addr : %d Maxp : %d Atrrib : %d",
+				"ep_desc : %pK Index : %d: DescType : %d Addr : %d Maxp : %d Atrrib : %d",
 				ep_desc, i, ep_desc->bDescriptorType,
 				ep_desc->bEndpointAddress,
 				ep_desc->wMaxPacketSize,

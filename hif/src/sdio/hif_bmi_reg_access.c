@@ -306,7 +306,7 @@ QDF_STATUS hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
 	struct hif_sdio_dev *device = scn->hif_handle;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_BMI,
-			("BMI Get Target Info: Enter (device: 0x%p)\n",
+			("BMI Get Target Info: Enter (device: 0x%pK)\n",
 			device));
 	cid = BMI_GET_TARGET_INFO;
 	status = hif_bmi_buffer_send(device, (char *) &cid, sizeof(cid));

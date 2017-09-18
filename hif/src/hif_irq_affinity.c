@@ -114,7 +114,7 @@ int hif_exec_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		BLACKLIST_OFF_PENDING
 	     } blacklist_pending = BLACKLIST_NOT_PENDING;
 
-	NAPI_DEBUG("%s: -->(event=%d, aux=%p)", __func__, event, data);
+	NAPI_DEBUG("%s: -->(event=%d, aux=%pK)", __func__, event, data);
 
 	qdf_spin_lock_bh(&(napid->lock));
 	prev_state = napid->state;

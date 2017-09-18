@@ -1592,7 +1592,7 @@ static inline void hif_ce_do_recv(struct hif_msg_callbacks *msg_callbacks,
 			rxCompletionHandler(msg_callbacks->Context,
 					netbuf, pipe_info->pipe_num);
 	} else {
-		HIF_ERROR("%s: Invalid Rx msg buf:%p nbytes:%d",
+		HIF_ERROR("%s: Invalid Rx msg buf:%pK nbytes:%d",
 				__func__, netbuf, nbytes);
 
 		qdf_nbuf_free(netbuf);
@@ -1697,7 +1697,7 @@ static int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 		attr = hif_state->host_ce_config[pipe_num];
 		if (attr.src_nentries) {
 			/* pipe used to send to target */
-			HIF_DBG("%s: pipe_num:%d pipe_info:0x%p",
+			HIF_DBG("%s: pipe_num:%d pipe_info:0x%pK",
 					 __func__, pipe_num, pipe_info);
 			ce_send_cb_register(pipe_info->ce_hdl,
 					    hif_pci_ce_send_done, pipe_info,

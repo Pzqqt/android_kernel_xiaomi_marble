@@ -204,7 +204,7 @@ QDF_STATUS hif_usb_enable_bus(struct hif_softc *scn,
 
 	sc = HIF_GET_USB_SOFTC(scn);
 
-	HIF_INFO("%s hif_softc %p usbdev %p interface %p\n",
+	HIF_INFO("%s hif_softc %pK usbdev %pK interface %pK\n",
 		__func__,
 		scn,
 		usbdev,
@@ -602,7 +602,7 @@ void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc)
 		fw_ram_seg_addr[i] = (sc->ramdump[i])->mem;
 		HIF_ERROR("FW %s start addr = %#08x\n",
 			fw_ram_seg_name[i], *reg);
-		HIF_ERROR("Memory addr for %s = %p\n",
+		HIF_ERROR("Memory addr for %s = %pK\n",
 			fw_ram_seg_name[i],
 			(sc->ramdump[i])->mem);
 		(sc->ramdump[i])->start_addr = *reg;

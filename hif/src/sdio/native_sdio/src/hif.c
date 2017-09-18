@@ -613,7 +613,7 @@ hif_read_write(struct hif_sdio_dev *device,
 	AR_DEBUG_ASSERT(device != NULL);
 	AR_DEBUG_ASSERT(device->func != NULL);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("%s: device 0x%p addr 0x%X buffer 0x%p len %d req 0x%X context 0x%p",
+			("%s: device 0x%pK addr 0x%X buffer 0x%pK len %d req 0x%X context 0x%pK",
 			 __func__, device, address, buffer,
 			 length, request, context));
 
@@ -1370,7 +1370,7 @@ void hif_sdio_shutdown(struct hif_softc *hif_ctx)
 		for (i = 0; i < MAX_HIF_DEVICES; ++i) {
 			if (hif_devices[i] && hif_devices[i]->func == NULL) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-				("%s: Remove pending hif_device %p\n",
+				("%s: Remove pending hif_device %pK\n",
 					 __func__, hif_devices[i]));
 				del_hif_device(hif_devices[i]);
 				hif_devices[i] = NULL;
@@ -1662,7 +1662,7 @@ static int hif_device_inserted(struct sdio_func *func,
 		}
 		if (i == MAX_HIF_DEVICES) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERROR,
-				("%s: No more hif_devices[] slot for %p",
+				("%s: No more hif_devices[] slot for %pK",
 				 __func__, device));
 		}
 
@@ -1927,7 +1927,7 @@ struct bus_request *hif_allocate_bus_request(struct hif_sdio_dev *device)
 	/* Release lock */
 	qdf_spin_unlock_irqrestore(&device->lock);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("%s: hif_allocate_bus_request: 0x%p\n",
+			("%s: hif_allocate_bus_request: 0x%pK\n",
 			__func__, busrequest));
 
 	return busrequest;
@@ -2024,7 +2024,7 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 	int (*taskFunc)(void *) = NULL;
 	int ret = QDF_STATUS_SUCCESS;
 
-	HIF_ENTER("sdio_func 0x%p", func);
+	HIF_ENTER("sdio_func 0x%pK", func);
 
 	device = get_hif_device(func);
 
@@ -2580,7 +2580,7 @@ static void del_hif_device(struct hif_sdio_dev *device)
 {
 	AR_DEBUG_ASSERT(device != NULL);
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRACE,
-			("%s: deleting hif device 0x%p\n",
+			("%s: deleting hif device 0x%pK\n",
 				__func__, device));
 	if (device->dma_buffer != NULL)
 		qdf_mem_free(device->dma_buffer);

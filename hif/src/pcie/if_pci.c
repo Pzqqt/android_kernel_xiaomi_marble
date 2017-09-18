@@ -2190,11 +2190,11 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 		goto err_iomap;
 	}
 
-	pr_err("*****BAR is %p\n", mem);
+	pr_err("*****BAR is %pK\n", mem);
 
 	sc->mem = mem;
 
-	HIF_INFO("%s, mem after pci_iomap:%p\n",
+	HIF_INFO("%s, mem after pci_iomap:%pK\n",
 	       __func__, sc->mem);
 
 	/* Hawkeye emulation specific change */
@@ -2204,7 +2204,7 @@ static int hif_enable_pci(struct hif_pci_softc *sc,
 		(device_id == RUMIM2M_DEVICE_ID_NODE3)) {
 		mem = mem + 0x0c000000;
 		sc->mem = mem;
-		HIF_INFO("%s: Changing PCI mem base to %p\n",
+		HIF_INFO("%s: Changing PCI mem base to %pK\n",
 			__func__, sc->mem);
 	}
 
@@ -3488,7 +3488,7 @@ void hif_target_dump_access_log(void)
 
 	for (idx = 0; idx < len; idx++) {
 		cur_idx = (start_idx + idx) % PCIE_ACCESS_LOG_NUM;
-		HIF_ERROR("%s: idx:%d sn:%u wr:%d addr:%p val:%u.",
+		HIF_ERROR("%s: idx:%d sn:%u wr:%d addr:%pK val:%u.",
 		       __func__, idx,
 		       pcie_access_log[cur_idx].seqnum,
 		       pcie_access_log[cur_idx].is_write,
@@ -3600,7 +3600,7 @@ static int hif_ce_msi_configure_irq(struct hif_softc *scn)
 		unsigned int msi_data = (ce_id % msi_data_count) +
 			msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
-		HIF_DBG("%s: (ce_id %d, msi_data %d, irq %d tasklet %p)",
+		HIF_DBG("%s: (ce_id %d, msi_data %d, irq %d tasklet %pK)",
 			 __func__, ce_id, msi_data, irq,
 			 &ce_sc->tasklets[ce_id]);
 
