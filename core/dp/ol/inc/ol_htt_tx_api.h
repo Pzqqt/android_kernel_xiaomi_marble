@@ -291,7 +291,7 @@ struct htt_msdu_info_t {
 static inline void htt_msdu_info_dump(struct htt_msdu_info_t *msdu_info)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-		  "HTT MSDU info object (%p)\n", msdu_info);
+		  "HTT MSDU info object (%pK)\n", msdu_info);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  ethertype: %#x\n", msdu_info->info.ethertype);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,

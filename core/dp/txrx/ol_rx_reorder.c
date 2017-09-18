@@ -667,7 +667,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 					last_pncheck_print_time =
 						current_time_ms;
 					ol_txrx_warn(
-					   "Tgt PN check failed - TID %d, peer %p "
+					   "Tgt PN check failed - TID %d, peer %pK "
 					   "(%02x:%02x:%02x:%02x:%02x:%02x)\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 					   "    new seq num = %d\n",
@@ -684,7 +684,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 								    rx_desc));
 				} else {
 					ol_txrx_dbg(
-					   "Tgt PN check failed - TID %d, peer %p "
+					   "Tgt PN check failed - TID %d, peer %pK "
 					   "(%02x:%02x:%02x:%02x:%02x:%02x)\n"
 					   "    PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 					   "    new seq num = %d\n",

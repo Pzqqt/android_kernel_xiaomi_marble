@@ -420,7 +420,7 @@ ol_tx_classify(
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Error: STA %p (%02x:%02x:%02x:%02x:%02x:%02x) trying to send bcast DA tx data frame w/o association\n",
+					  "Error: STA %pK (%02x:%02x:%02x:%02x:%02x:%02x) trying to send bcast DA tx data frame w/o association\n",
 					  vdev,
 					  vdev->mac_addr.raw[0],
 					  vdev->mac_addr.raw[1],
@@ -470,7 +470,7 @@ ol_tx_classify(
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "Error: vdev %p (%02x:%02x:%02x:%02x:%02x:%02x) trying to send bcast/mcast, but no self-peer found\n",
+					  "Error: vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x) trying to send bcast/mcast, but no self-peer found\n",
 					  vdev,
 					  vdev->mac_addr.raw[0],
 					  vdev->mac_addr.raw[1],
@@ -536,7 +536,7 @@ ol_tx_classify(
 			 */
 			QDF_TRACE(QDF_MODULE_ID_TXRX,
 				  QDF_TRACE_LEVEL_ERROR,
-				  "Error: vdev %p (%02x:%02x:%02x:%02x:%02x:%02x) trying to send unicast tx data frame to an unknown peer\n",
+				  "Error: vdev %pK (%02x:%02x:%02x:%02x:%02x:%02x) trying to send unicast tx data frame to an unknown peer\n",
 				  vdev,
 				  vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
 				  vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
@@ -580,7 +580,7 @@ ol_tx_classify(
 		if (tx_msdu_info->htt.info.peer_id == HTT_INVALID_PEER_ID) {
 			if (peer) {
 				ol_txrx_info(
-					   "%s: remove the peer for invalid peer_id %p\n",
+					   "%s: remove the peer for invalid peer_id %pK\n",
 					   __func__, peer);
 				/* remove the peer reference added above */
 				OL_TXRX_PEER_UNREF_DELETE(peer);
@@ -603,7 +603,7 @@ ol_tx_classify(
 				wlan_op_mode_sta && tx_msdu_info->peer !=
 								NULL) {
 		ol_txrx_dbg(
-			   "%s: remove the peer reference %p\n",
+			   "%s: remove the peer reference %pK\n",
 			   __func__, peer);
 		/* remove the peer reference added above */
 		OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info->peer);

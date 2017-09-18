@@ -392,7 +392,7 @@ htt_rx_paddr_unmark_high_bits(qdf_dma_addr_t paddr)
 		 * padded (with 0b0) to 8 bits
 		 */
 		if ((markings & 0xFFFF0000) != RX_PADDR_MAGIC_PATTERN) {
-			qdf_print("%s: paddr not marked correctly: 0x%p!\n",
+			qdf_print("%s: paddr not marked correctly: 0x%pK!\n",
 				  __func__, (void *)paddr);
 			HTT_ASSERT_ALWAYS(0);
 		}
@@ -3320,7 +3320,7 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
 	htt_list_add_tail(&pdev->rx_ring.hash_table[i]->listhead,
 			  &hash_element->listnode);
 
-	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x netbuf %p bucket %d\n",
+	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x netbuf %pK bucket %d\n",
 			      __func__, paddr, netbuf, (int)i));
 
 	HTT_RX_HASH_COUNT_INCR(pdev->rx_ring.hash_table[i]);
@@ -3385,14 +3385,14 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 		}
 	}
 
-	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x, netbuf %p, bucket %d\n",
+	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x, netbuf %pK, bucket %d\n",
 			      __func__, paddr, netbuf, (int)i));
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
 
 	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 
 	if (netbuf == NULL) {
-		qdf_print("rx hash: %s: no entry found for %p!\n",
+		qdf_print("rx hash: %s: no entry found for %pK!\n",
 			  __func__, (void *)paddr);
 		HTT_ASSERT_ALWAYS(0);
 	}

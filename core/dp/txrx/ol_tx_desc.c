@@ -49,7 +49,7 @@ static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 {
 	if (tx_desc->pkt_type != ol_tx_frm_freed) {
 		ol_txrx_err(
-				   "%s Potential tx_desc corruption pkt_type:0x%x pdev:0x%p",
+				   "%s Potential tx_desc corruption pkt_type:0x%x pdev:0x%pK",
 				   __func__, tx_desc->pkt_type, pdev);
 		qdf_assert(0);
 	}
@@ -592,7 +592,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
 					 i - 1, frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
-			qdf_print("%s:%d: htt_fdesc=%p frag=%d frag_vaddr=0x%p frag_paddr=0x%llx len=%zu\n",
+			qdf_print("%s:%d: htt_fdesc=%pK frag=%d frag_vaddr=0x%pK frag_paddr=0x%llx len=%zu\n",
 				  __func__, __LINE__, tx_desc->htt_frag_desc,
 				  i-1, frag_vaddr, frag_paddr, frag_len);
 			ol_txrx_dump_pkt(netbuf, frag_paddr, 64);

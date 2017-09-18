@@ -1023,7 +1023,7 @@ void htt_tx_desc_display(void *tx_desc)
 	htt_tx_desc = (struct htt_tx_msdu_desc_t *)tx_desc;
 
 	/* only works for little-endian */
-	qdf_print("HTT tx desc (@ %p):", htt_tx_desc);
+	qdf_print("HTT tx desc (@ %pK):", htt_tx_desc);
 	qdf_print("  msg type = %d", htt_tx_desc->msg_type);
 	qdf_print("  pkt subtype = %d", htt_tx_desc->pkt_subtype);
 	qdf_print("  pkt type = %d", htt_tx_desc->pkt_type);

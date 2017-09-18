@@ -85,7 +85,7 @@ void __ol_txrx_peer_change_ref_cnt(struct ol_txrx_peer_t *peer,
 {
 	qdf_atomic_add(change, &peer->ref_cnt);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-		"[%s][%d]: peer %p peer->ref_cnt changed by (%d) to %d",
+		"[%s][%d]: peer %pK peer->ref_cnt changed by (%d) to %d",
 		fname, line, peer, change, qdf_atomic_read(&peer->ref_cnt));
 }
 
@@ -438,7 +438,7 @@ static inline void ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 				peer_id_to_obj_map[peer_id].peer_id_ref_cnt);
 	peer_ref_cnt = qdf_atomic_read(&peer->ref_cnt);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-	   "%s: peer %p ID %d peer_id[%d] peer_id_ref_cnt %d peer->ref_cnt %d",
+	   "%s: peer %pK ID %d peer_id[%d] peer_id_ref_cnt %d peer->ref_cnt %d",
 	   __func__, peer, peer_id, i, peer_id_ref_cnt, peer_ref_cnt);
 
 	if (status) {
@@ -627,7 +627,7 @@ void ol_rx_peer_unmap_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 	OL_TXRX_PEER_UNREF_DELETE(peer);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: peer_id %d peer %p peer_id_ref_cnt %d",
+		  "%s: peer_id %d peer %pK peer_id_ref_cnt %d",
 		  __func__, peer_id, peer, ref_cnt);
 }
 
@@ -727,7 +727,7 @@ void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent)
 	for (i = 0; i < max_peers; i++) {
 		if (pdev->peer_id_to_obj_map[i].peer) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-				  "%*sid %d -> %p\n",
+				  "%*sid %d -> %pK\n",
 				  indent + 4, " ", i,
 				  pdev->peer_id_to_obj_map[i].peer);
 		}
@@ -742,7 +742,7 @@ void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent)
 				      hash_list_elem) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_INFO_LOW,
-					  "%*shash idx %d -> %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+					  "%*shash idx %d -> %pK (%02x:%02x:%02x:%02x:%02x:%02x)\n",
 					indent + 4, " ", i, peer,
 					peer->mac_addr.raw[0],
 					peer->mac_addr.raw[1],

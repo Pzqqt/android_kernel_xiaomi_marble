@@ -164,7 +164,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 			    (current_time_ms - last_pncheck_print_time)) {
 				last_pncheck_print_time = current_time_ms;
 				ol_txrx_warn(
-				   "PN check failed - TID %d, peer %p "
+				   "PN check failed - TID %d, peer %pK "
 				   "(%02x:%02x:%02x:%02x:%02x:%02x) %s\n"
 				   "    old PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 				   "    new PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
@@ -183,7 +183,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 							    rx_desc));
 			} else {
 				ol_txrx_dbg(
-				   "PN check failed - TID %d, peer %p "
+				   "PN check failed - TID %d, peer %pK "
 				   "(%02x:%02x:%02x:%02x:%02x:%02x) %s\n"
 				   "    old PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
 				   "    new PN (u64 x2)= 0x%08llx %08llx (LSBs = %lld)\n"
@@ -361,7 +361,7 @@ void ol_rx_pn_trace_display(ol_txrx_pdev_handle pdev, int just_once)
 		  "   count  idx    peer   tid uni  num    LSBs");
 	do {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			  "  %6lld %4d  %p %2d   %d %4d %8d",
+			  "  %6lld %4d  %pK %2d   %d %4d %8d",
 			  cnt, i,
 			  pdev->rx_pn_trace.data[i].peer,
 			  pdev->rx_pn_trace.data[i].tid,

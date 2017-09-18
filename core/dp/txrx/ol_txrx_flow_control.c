@@ -230,7 +230,7 @@ QDF_STATUS ol_tx_inc_pool_ref(struct ol_tx_flow_pool_t *pool)
 	qdf_spin_lock_bh(&pool->flow_pool_lock);
 	qdf_atomic_inc(&pool->ref_cnt);
 	qdf_spin_unlock_bh(&pool->flow_pool_lock);
-	ol_txrx_dbg("pool %p, ref_cnt %x",
+	ol_txrx_dbg("pool %pK, ref_cnt %x",
 		    pool, qdf_atomic_read(&pool->ref_cnt));
 
 	return  QDF_STATUS_SUCCESS;
@@ -259,12 +259,12 @@ QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force)
 		TAILQ_REMOVE(&pdev->tx_desc.flow_pool_list, pool,
 			     flow_pool_list_elem);
 		qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
-		ol_txrx_dbg("Deleting pool %p", pool);
+		ol_txrx_dbg("Deleting pool %pK", pool);
 		ol_tx_delete_flow_pool(pool, force);
 	} else {
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
-		ol_txrx_dbg("pool %p, ref_cnt %x",
+		ol_txrx_dbg("pool %pK, ref_cnt %x",
 			    pool, qdf_atomic_read(&pool->ref_cnt));
 	}
 

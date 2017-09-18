@@ -702,7 +702,7 @@ static inline int htt_display_rx_buf_debug(struct htt_pdev_t *pdev)
 			if (buf[i].posted != 0)
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
-					  "[%d][0x%x] %p %lu %p %llu %llu",
+					  "[%d][0x%x] %pK %lu %pK %llu %llu",
 					  i, buf[i].cpu,
 					  buf[i].nbuf_data,
 					  (unsigned long)buf[i].paddr,
