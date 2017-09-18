@@ -45,6 +45,9 @@
 
 #include "lim_types.h"
 
+#define SIZE_OF_NOA_DESCRIPTOR 13
+#define MAX_NOA_PERIOD_IN_MICROSECS 3000000
+
 uint32_t lim_cmp_ssid(tSirMacSSid *, tpPESession);
 uint8_t lim_compare_capabilities(tpAniSirGlobal,
 				 tSirAssocReq *,

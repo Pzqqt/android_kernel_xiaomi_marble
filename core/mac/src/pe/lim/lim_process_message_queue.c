@@ -1270,7 +1270,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	tSirTdlsInd *tdls_ind = NULL;
 	tpDphHashNode sta_ds = NULL;
 #endif
-	tSirMbMsgP2p *p2p_msg = NULL;
 	tSirSetActiveModeSetBncFilterReq *bcn_filter_req = NULL;
 
 	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG) {
@@ -1398,7 +1397,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		}
 		break;
 	case eWNI_SME_SCAN_REQ:
-	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
 	case eWNI_SME_DISASSOC_REQ:
 	case eWNI_SME_DEAUTH_REQ:
 #ifdef FEATURE_WLAN_TDLS
@@ -1458,7 +1456,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
-	case eWNI_SME_UPDATE_NOA:
 	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:
 	case eWNI_SME_GET_STATISTICS_REQ:
 #ifdef FEATURE_WLAN_ESE
@@ -1470,21 +1467,8 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_NDP_INITIATOR_REQ:
 	case eWNI_SME_NDP_RESPONDER_REQ:
 	case eWNI_SME_NDP_END_REQ:
-	case eWNI_SME_REGISTER_P2P_ACK_CB:
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
-		break;
-	case eWNI_SME_SEND_ACTION_FRAME_IND:
-		lim_send_p2p_action_frame(mac_ctx, msg);
-		qdf_mem_free(msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
-	case eWNI_SME_ABORT_REMAIN_ON_CHAN_IND:
-		p2p_msg = (tSirMbMsgP2p *) msg->bodyptr;
-		lim_process_abort_scan_ind(mac_ctx, p2p_msg->sessionId,
-			p2p_msg->scan_id, ROC_SCAN_REQUESTOR_ID);
-		qdf_mem_free(msg->bodyptr);
-		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_MON_INIT_SESSION:
 		lim_mon_init_session(mac_ctx, msg->bodyptr);
@@ -1627,7 +1611,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case SIR_LIM_ASSOC_FAIL_TIMEOUT:
 	case SIR_LIM_REASSOC_FAIL_TIMEOUT:
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
-	case SIR_LIM_REMAIN_CHN_TIMEOUT:
 	case SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT:
 	case SIR_LIM_DISASSOC_ACK_TIMEOUT:
 	case SIR_LIM_DEAUTH_ACK_TIMEOUT:

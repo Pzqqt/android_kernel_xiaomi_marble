@@ -309,15 +309,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		pe_err("Cannot create update OLBC cache tmr");
 		goto err_timer;
 	}
-	cfgValue = 1000;
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimRemainOnChannelTimer,
-			    "FT PREAUTH RSP TIMEOUT",
-			    lim_timer_handler, SIR_LIM_REMAIN_CHN_TIMEOUT,
-			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
-		pe_err("could not create Join failure timer");
-		goto err_timer;
-	}
 
 	cfgValue = 1000;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
@@ -371,7 +362,6 @@ err_timer:
 	lim_delete_timers_host_roam(pMac);
 	tx_timer_delete(&pMac->lim.limTimers.gLimDeauthAckTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimDisassocAckTimer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimRemainOnChannelTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimUpdateOlbcCacheTimer);
 	while (((int32_t)-- i) >= 0) {
 		tx_timer_delete(&pMac->lim.limTimers.gpLimCnfWaitTimer[i]);
@@ -836,31 +826,6 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 		break;
 
 	case eLIM_LEARN_DURATION_TIMER:
-		break;
-
-	case eLIM_REMAIN_CHN_TIMER:
-		if (tx_timer_deactivate
-			    (&pMac->lim.limTimers.gLimRemainOnChannelTimer) !=
-		    TX_SUCCESS) {
-			/**
-			** Could not deactivate Join Failure
-			** timer. Log error.
-			**/
-			pe_err("Unable to deactivate Remain on Chn timer");
-			return;
-		}
-		val = 1000;
-		val = SYS_MS_TO_TICKS(val);
-		if (tx_timer_change
-			    (&pMac->lim.limTimers.gLimRemainOnChannelTimer, val,
-			    0) != TX_SUCCESS) {
-			/**
-			 * Could not change Join Failure
-			 * timer. Log error.
-			 */
-			pe_err("Unable to change timer");
-			return;
-		}
 		break;
 
 	case eLIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE:
