@@ -119,6 +119,7 @@ struct htt_rx_ring_tlv_filter {
 		ppdu_end_user_stats:1,
 		ppdu_end_user_stats_ext:1,
 		ppdu_end_status_done:1,
+		header_per_msdu:1,
 		enable_fp:1,
 		enable_md:1,
 		enable_mo:1;

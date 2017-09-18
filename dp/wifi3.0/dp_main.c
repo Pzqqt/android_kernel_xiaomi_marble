@@ -3564,6 +3564,7 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.ppdu_end_user_stats = 0;
 	htt_tlv_filter.ppdu_end_user_stats_ext = 0;
 	htt_tlv_filter.ppdu_end_status_done = 0;
+	htt_tlv_filter.header_per_msdu = 1;
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
 	htt_tlv_filter.enable_mo = 1;
@@ -3584,6 +3585,7 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.ppdu_end_user_stats = 1;
 	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 	htt_tlv_filter.ppdu_end_status_done = 1;
+	htt_tlv_filter.header_per_msdu = 0;
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
 	htt_tlv_filter.enable_mo = 1;
