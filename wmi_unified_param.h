@@ -5400,6 +5400,7 @@ typedef enum {
 	wmi_vdev_param_he_bss_color,
 	wmi_vdev_param_he_range_ext_enable,
 	wmi_vdev_param_set_hemu_mode,
+	wmi_vdev_param_set_he_ltf,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
