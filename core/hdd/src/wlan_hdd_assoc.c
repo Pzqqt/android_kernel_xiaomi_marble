@@ -2053,6 +2053,7 @@ static inline void hdd_send_roamed_ind(struct net_device *dev,
 #endif
 
 #if defined(WLAN_FEATURE_ROAM_OFFLOAD)
+#if defined(WLAN_FEATURE_FILS_SK)
 void hdd_save_gtk_params(struct hdd_adapter *adapter,
 			 tCsrRoamInfo *csr_roam_info, bool is_reassoc)
 {
@@ -2077,6 +2078,26 @@ void hdd_save_gtk_params(struct hdd_adapter *adapter,
 
 	hdd_debug("Kek len %d", kek_len);
 }
+#else
+void hdd_save_gtk_params(struct hdd_adapter *adapter,
+			 tCsrRoamInfo *csr_roam_info, bool is_reassoc)
+{
+	uint8_t *kek;
+	uint32_t kek_len;
+
+	/*
+	 * is_reassoc is set to true always for Legacy GTK offload
+	 * case, It is false only for FILS case
+	 */
+	kek = csr_roam_info->kek;
+	kek_len = csr_roam_info->kek_len;
+
+	wlan_hdd_save_gtk_offload_params(adapter, NULL, kek, kek_len,
+					 csr_roam_info->replay_ctr, true);
+
+	hdd_debug("Kek len %d", kek_len);
+}
+#endif
 #endif
 /**
  * hdd_send_re_assoc_event() - send reassoc event

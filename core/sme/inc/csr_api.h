@@ -409,10 +409,8 @@ typedef struct tagCsrScanResultFilter {
 	struct sCsrChannel_ pcl_channels;
 	struct qdf_mac_addr bssid_hint;
 	enum tQDF_ADAPTER_MODE csrPersona;
-#ifdef WLAN_FEATURE_FILS_SK
 	bool realm_check;
 	uint8_t fils_realm[2];
-#endif
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
