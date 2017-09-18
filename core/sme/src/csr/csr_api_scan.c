@@ -2902,7 +2902,7 @@ QDF_STATUS csr_scan_sme_scan_response(tpAniSirGlobal pMac,
 	if (!pEntry)
 		goto error_handling;
 
-	sme_debug("Scan completion called:scan_id %d, entry = %p",
+	sme_debug("Scan completion called:scan_id %d, entry = %pK",
 		pScanRsp->scan_id, pEntry);
 
 	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);

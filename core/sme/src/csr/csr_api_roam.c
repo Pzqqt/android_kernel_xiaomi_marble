@@ -1341,7 +1341,7 @@ void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 		 * We need to inform the requester before dropping
 		 * the scan command
 		 */
-		sme_warn("Drop scan reason %d callback %p",
+		sme_warn("Drop scan reason %d callback %pK",
 				sme_cmd->u.scanCmd.reason,
 				sme_cmd->u.scanCmd.callback);
 		if (NULL != sme_cmd->u.scanCmd.callback) {
