@@ -52,7 +52,7 @@ static QDF_STATUS p2p_mgmt_rx_ops(struct wlan_objmgr_psoc *psoc,
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info;
 	QDF_STATUS status;
 
-	p2p_debug("psoc:%p, is register rx:%d", psoc, isregister);
+	p2p_debug("psoc:%pK, is register rx:%d", psoc, isregister);
 
 	frm_cb_info.frm_type = MGMT_PROBE_REQ;
 	frm_cb_info.mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
@@ -184,7 +184,7 @@ static QDF_STATUS p2p_execute_cancel_roc_req(
 	QDF_STATUS status;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -194,7 +194,7 @@ static QDF_STATUS p2p_execute_cancel_roc_req(
 	qdf_event_reset(&p2p_soc_obj->cancel_roc_done);
 	status = qdf_mc_timer_stop(&roc_ctx->roc_timer);
 	if (status != QDF_STATUS_SUCCESS)
-		p2p_err("Failed to stop roc timer, roc %p", roc_ctx);
+		p2p_err("Failed to stop roc timer, roc %pK", roc_ctx);
 
 	status = p2p_scan_abort(roc_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -217,7 +217,7 @@ static void p2p_roc_timeout(void *pdata)
 	struct p2p_roc_context *roc_ctx;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 
-	p2p_debug("p2p soc obj:%p", pdata);
+	p2p_debug("p2p soc obj:%pK", pdata);
 
 	p2p_soc_obj = pdata;
 	if (!p2p_soc_obj) {
@@ -231,7 +231,7 @@ static void p2p_roc_timeout(void *pdata)
 		return;
 	}
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -277,7 +277,7 @@ static QDF_STATUS p2p_send_roc_event(
 	p2p_evt.chan = roc_ctx->chan;
 	p2p_evt.duration = roc_ctx->duration;
 
-	p2p_debug("p2p soc_obj:%p, roc_ctx:%p, vdev_id:%d, roc_event:"
+	p2p_debug("p2p soc_obj:%pK, roc_ctx:%pK, vdev_id:%d, roc_event:"
 		"%d, cookie:%llx, chan:%d, duration:%d", p2p_soc_obj,
 		roc_ctx, p2p_evt.vdev_id, p2p_evt.roc_event,
 		p2p_evt.cookie, p2p_evt.chan, p2p_evt.duration);
@@ -303,7 +303,7 @@ static QDF_STATUS p2p_destroy_roc_ctx(struct p2p_roc_context *roc_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 
-	p2p_debug("p2p_soc_obj:%p, roc_ctx:%p, up_layer_event:%d, in_roc_queue:%d",
+	p2p_debug("p2p_soc_obj:%pK, roc_ctx:%pK, up_layer_event:%d, in_roc_queue:%d",
 		p2p_soc_obj, roc_ctx, up_layer_event, in_roc_queue);
 
 	if (up_layer_event) {
@@ -338,7 +338,7 @@ static QDF_STATUS p2p_execute_roc_req(struct p2p_roc_context *roc_ctx)
 	uint32_t go_num;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -404,7 +404,7 @@ static struct p2p_roc_context *p2p_find_roc_ctx(
 	struct p2p_roc_context *curr_roc_ctx;
 	qdf_list_node_t *tmp, *pos;
 
-	p2p_debug("p2p soc obj:%p, cookie:%llx", p2p_soc_obj, cookie);
+	p2p_debug("p2p soc obj:%pK, cookie:%llx", p2p_soc_obj, cookie);
 
 	list_for_each_safe(pos, tmp, &p2p_soc_obj->roc_q.anchor) {
 		curr_roc_ctx = list_entry(pos, struct p2p_roc_context,
@@ -428,7 +428,7 @@ static QDF_STATUS p2p_process_scan_start_evt(
 	struct p2p_roc_context *roc_ctx)
 {
 	roc_ctx->roc_state = ROC_STATE_STARTED;
-	p2p_debug("scan started, roc ctx:%p, scan id:%d",
+	p2p_debug("scan started, roc ctx:%pK, scan id:%d",
 		roc_ctx, roc_ctx->scan_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -454,7 +454,7 @@ static QDF_STATUS p2p_process_ready_on_channel_evt(
 	p2p_soc_obj = roc_ctx->p2p_soc_obj;
 	roc_ctx->roc_state = ROC_STATE_ON_CHAN;
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -494,7 +494,7 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 	uint32_t size;
 	struct p2p_soc_priv_obj *p2p_soc_obj = roc_ctx->p2p_soc_obj;
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -548,7 +548,7 @@ QDF_STATUS p2p_mgmt_rx_action_ops(struct wlan_objmgr_psoc *psoc,
 	struct mgmt_txrx_mgmt_frame_cb_info frm_cb_info[2];
 	QDF_STATUS status;
 
-	p2p_debug("psoc:%p, is register rx:%d", psoc, isregister);
+	p2p_debug("psoc:%pK, is register rx:%d", psoc, isregister);
 
 	frm_cb_info[0].frm_type = MGMT_ACTION_VENDOR_SPECIFIC;
 	frm_cb_info[0].mgmt_rx_cb = tgt_p2p_mgmt_frame_rx_cb;
@@ -575,7 +575,7 @@ struct p2p_roc_context *p2p_find_current_roc_ctx(
 		roc_ctx = list_entry(pos, struct p2p_roc_context,
 					node);
 		if (roc_ctx->roc_state != ROC_STATE_IDLE) {
-			p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id"
+			p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id"
 				":%d, scan_id:%d, cookie:%llx, chan:"
 				"%d, phy_mode:%d, duration:%d, "
 				"roc_type:%d, roc_state:%d",
@@ -626,7 +626,7 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 		roc_ctx = list_entry(pos, struct p2p_roc_context,
 					node);
 
-		p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 			roc_ctx->p2p_soc_obj, roc_ctx,
 			roc_ctx->vdev_id, roc_ctx->scan_id,
 			roc_ctx->cookie, roc_ctx->chan,
@@ -651,7 +651,7 @@ QDF_STATUS p2p_cleanup_roc_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 		roc_ctx = list_entry(pos, struct p2p_roc_context,
 					node);
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -685,7 +685,7 @@ QDF_STATUS p2p_cleanup_roc_by_vdev(
 		roc_ctx = list_entry(pos, struct p2p_roc_context,
 					node);
 
-		p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+		p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 			roc_ctx->p2p_soc_obj, roc_ctx,
 			roc_ctx->vdev_id, roc_ctx->scan_id,
 			roc_ctx->cookie, roc_ctx->chan,
@@ -710,7 +710,7 @@ QDF_STATUS p2p_cleanup_roc_by_vdev(
 		roc_ctx = list_entry(pos, struct p2p_roc_context,
 					node);
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		roc_ctx->p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -741,7 +741,7 @@ QDF_STATUS p2p_process_roc_req(struct p2p_roc_context *roc_ctx)
 
 	p2p_soc_obj = roc_ctx->p2p_soc_obj;
 
-	p2p_debug("p2p soc obj:%p, roc ctx:%p, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
+	p2p_debug("p2p soc obj:%pK, roc ctx:%pK, vdev_id:%d, scan_id:%d, cookie:%llx, chan:%d, phy_mode:%d, duration:%d, roc_type:%d, roc_state:%d",
 		p2p_soc_obj, roc_ctx, roc_ctx->vdev_id,
 		roc_ctx->scan_id, roc_ctx->cookie, roc_ctx->chan,
 		roc_ctx->phy_mode, roc_ctx->duration,
@@ -777,7 +777,7 @@ QDF_STATUS p2p_process_cancel_roc_req(
 	curr_roc_ctx = p2p_find_roc_ctx(p2p_soc_obj,
 				cancel_roc_ctx->cookie);
 
-	p2p_debug("p2p soc obj:%p, cookie:%llx, roc ctx:%p",
+	p2p_debug("p2p soc obj:%pK, cookie:%llx, roc ctx:%pK",
 		p2p_soc_obj, cancel_roc_ctx->cookie, curr_roc_ctx);
 
 	if (!curr_roc_ctx) {
@@ -811,7 +811,7 @@ void p2p_scan_event_cb(struct wlan_objmgr_vdev *vdev,
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct p2p_roc_context *curr_roc_ctx;
 
-	p2p_debug("soc:%p, scan event:%d", arg, event->type);
+	p2p_debug("soc:%pK, scan event:%d", arg, event->type);
 
 	p2p_soc_obj = (struct p2p_soc_priv_obj *)arg;
 	if (!p2p_soc_obj) {

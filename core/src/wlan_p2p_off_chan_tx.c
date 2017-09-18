@@ -183,7 +183,7 @@ static const uint8_t *p2p_get_presence_noa_attr(const uint8_t *pies, int length)
 	uint8_t elem_id;
 	uint16_t elem_len;
 
-	p2p_debug("pies:%p, length:%d", pies, length);
+	p2p_debug("pies:%pK, length:%d", pies, length);
 
 	while (left >= 3) {
 		elem_id = ptr[0];
@@ -221,7 +221,7 @@ static uint8_t p2p_get_noa_attr_stream_in_mult_p2p_ies(uint8_t *noa_stream,
 {
 	uint8_t overflow_p2p_stream[P2P_MAX_NOA_ATTR_LEN];
 
-	p2p_debug("noa_stream:%p, noa_len:%d, overflow_len:%d",
+	p2p_debug("noa_stream:%pK, noa_len:%d, overflow_len:%d",
 		noa_stream, noa_len, overflow_len);
 	if ((noa_len <= (P2P_MAX_NOA_ATTR_LEN + P2P_IE_HEADER_LEN)) &&
 	    (noa_len >= overflow_len) &&
@@ -424,7 +424,7 @@ static uint16_t p2p_update_noa_stream(struct tx_action_context *tx_ctx,
 	*total_len = buf_len;
 	nbytes_copy = (p2p_ie + orig_len + 2) - tx_ctx->buf;
 
-	p2p_debug("noa_len=%d orig_len=%d p2p_ie=%p buf_len=%d nbytes copy=%d ",
+	p2p_debug("noa_len=%d orig_len=%d p2p_ie=%pK buf_len=%d nbytes copy=%d ",
 		noa_len, orig_len, p2p_ie, buf_len, nbytes_copy);
 
 	return noa_len;
@@ -737,7 +737,7 @@ static QDF_STATUS p2p_send_tx_conf(struct tx_action_context *tx_ctx,
 	tx_cnf.buf_len = tx_ctx->buf_len;
 	tx_cnf.status = status ? 0 : 1;
 
-	p2p_debug("soc:%p, vdev_id:%d, action_cookie:%llx, len:%d, status:%d, buf:%p",
+	p2p_debug("soc:%pK, vdev_id:%d, action_cookie:%llx, len:%d, status:%d, buf:%pK",
 		p2p_soc_obj->soc, tx_cnf.vdev_id,
 		tx_cnf.action_cookie, tx_cnf.buf_len,
 		tx_cnf.status, tx_cnf.buf);
@@ -850,7 +850,7 @@ static QDF_STATUS p2p_roc_req_for_tx_action(
 	roc_ctx->roc_type = OFF_CHANNEL_TX;
 	tx_ctx->roc_cookie = (uintptr_t)roc_ctx;
 
-	p2p_debug("create roc request for off channel tx, tx ctx:%p, roc ctx:%p",
+	p2p_debug("create roc request for off channel tx, tx ctx:%pK, roc ctx:%pK",
 		tx_ctx, roc_ctx);
 
 	status = p2p_process_roc_req(roc_ctx);
@@ -887,7 +887,7 @@ static struct tx_action_context *p2p_find_tx_ctx(
 	*is_roc_q = false;
 	*is_ack_q = false;
 
-	p2p_debug("Start to find tx ctx, p2p soc_obj:%p, cookie:%llx",
+	p2p_debug("Start to find tx ctx, p2p soc_obj:%pK, cookie:%llx",
 		p2p_soc_obj, cookie);
 
 	list_for_each_safe(pos, tmp, &p2p_soc_obj->tx_q_roc.anchor) {
@@ -933,7 +933,7 @@ static struct tx_action_context *p2p_find_tx_ctx_by_roc(
 	*is_roc_q = false;
 	*is_ack_q = false;
 
-	p2p_debug("Start to find tx ctx, p2p soc_obj:%p, cookie:%llx",
+	p2p_debug("Start to find tx ctx, p2p soc_obj:%pK, cookie:%llx",
 		p2p_soc_obj, cookie);
 
 	list_for_each_safe(pos, tmp, &p2p_soc_obj->tx_q_roc.anchor) {
@@ -976,7 +976,7 @@ static QDF_STATUS p2p_move_tx_context_to_ack_queue(
 	struct tx_action_context *cur_tx_ctx;
 	QDF_STATUS status;
 
-	p2p_debug("move tx context to wait for roc queue, %p", tx_ctx);
+	p2p_debug("move tx context to wait for roc queue, %pK", tx_ctx);
 
 	cur_tx_ctx = p2p_find_tx_ctx(p2p_soc_obj, (uintptr_t)tx_ctx,
 					&is_roc_q, &is_ack_q);
@@ -1104,7 +1104,7 @@ static QDF_STATUS p2p_remove_tx_context(
 	struct p2p_soc_priv_obj *p2p_soc_obj = tx_ctx->p2p_soc_obj;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	p2p_debug("tx context:%p", tx_ctx);
+	p2p_debug("tx context:%pK", tx_ctx);
 
 	cur_tx_ctx = p2p_find_tx_ctx(p2p_soc_obj, cookie, &is_roc_q,
 					&is_ack_q);
@@ -1147,7 +1147,7 @@ static void p2p_tx_timeout(void *pdata)
 {
 	struct tx_action_context *tx_ctx = pdata;
 
-	p2p_debug("pdata:%p", pdata);
+	p2p_debug("pdata:%pK", pdata);
 
 	if (!tx_ctx) {
 		p2p_err("invalid tx context");
@@ -1171,7 +1171,7 @@ static QDF_STATUS p2p_enable_tx_timer(struct tx_action_context *tx_ctx)
 {
 	QDF_STATUS status;
 
-	p2p_debug("tx context:%p", tx_ctx);
+	p2p_debug("tx context:%pK", tx_ctx);
 
 	status = qdf_mc_timer_init(&tx_ctx->tx_timer,
 			QDF_TIMER_TYPE_SW, p2p_tx_timeout,
@@ -1201,7 +1201,7 @@ static QDF_STATUS p2p_disable_tx_timer(struct tx_action_context *tx_ctx)
 {
 	QDF_STATUS status;
 
-	p2p_debug("tx context:%p", tx_ctx);
+	p2p_debug("tx context:%pK", tx_ctx);
 
 	status = qdf_mc_timer_stop(&tx_ctx->tx_timer);
 	if (status != QDF_STATUS_SUCCESS)
@@ -1324,12 +1324,12 @@ void p2p_dump_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	struct tx_action_context *tx_ctx;
 	qdf_list_node_t *tmp, *pos;
 
-	p2p_debug("dump tx queue wait for roc, p2p soc obj:%p, size:%d",
+	p2p_debug("dump tx queue wait for roc, p2p soc obj:%pK, size:%d",
 		p2p_soc_obj, qdf_list_size(&p2p_soc_obj->tx_q_roc));
 	list_for_each_safe(pos, tmp, &p2p_soc_obj->tx_q_roc.anchor) {
 		tx_ctx = list_entry(pos, struct tx_action_context,
 				node);
-		p2p_debug("p2p soc object:%p, tx ctx:%p, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%p, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
+		p2p_debug("p2p soc object:%pK, tx ctx:%pK, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%pK, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
 			p2p_soc_obj, tx_ctx,
 			tx_ctx->vdev_id, tx_ctx->scan_id,
 			tx_ctx->roc_cookie, tx_ctx->chan,
@@ -1343,7 +1343,7 @@ void p2p_dump_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)
 	list_for_each_safe(pos, tmp, &p2p_soc_obj->tx_q_ack.anchor) {
 		tx_ctx = list_entry(pos, struct tx_action_context,
 				node);
-		p2p_debug("p2p soc object:%p, tx_ctx:%p, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%p, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
+		p2p_debug("p2p soc object:%pK, tx_ctx:%pK, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%pK, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
 			p2p_soc_obj, tx_ctx,
 			tx_ctx->vdev_id, tx_ctx->scan_id,
 			tx_ctx->roc_cookie, tx_ctx->chan,
@@ -1363,7 +1363,7 @@ QDF_STATUS p2p_ready_to_tx_frame(struct p2p_soc_priv_obj *p2p_soc_obj,
 
 	cur_tx_ctx = p2p_find_tx_ctx_by_roc(p2p_soc_obj, cookie,
 					&is_roc_q, &is_ack_q);
-	p2p_debug("tx_ctx:%p, is_roc_q:%d, is_ack_q:%d", cur_tx_ctx,
+	p2p_debug("tx_ctx:%pK, is_roc_q:%d, is_ack_q:%d", cur_tx_ctx,
 		is_roc_q, is_ack_q);
 	if (cur_tx_ctx) {
 		if (is_roc_q) {
@@ -1445,7 +1445,7 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;
 
-	p2p_debug("soc:%p, tx_ctx:%p, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%p, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
+	p2p_debug("soc:%pK, tx_ctx:%pK, vdev_id:%d, scan_id:%d, roc_cookie:%llx, chan:%d, buf:%pK, len:%d, off_chan:%d, cck:%d, ack:%d, duration:%d",
 		p2p_soc_obj->soc, tx_ctx, tx_ctx->vdev_id,
 		tx_ctx->scan_id, tx_ctx->roc_cookie, tx_ctx->chan,
 		tx_ctx->buf, tx_ctx->buf_len, tx_ctx->off_chan,
@@ -1568,7 +1568,7 @@ QDF_STATUS p2p_process_mgmt_tx_ack_cnf(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	p2p_debug("soc:%p, vdev_id:%d, action_cookie:%llx, len:%d, status:%d, buf:%p",
+	p2p_debug("soc:%pK, vdev_id:%d, action_cookie:%llx, len:%d, status:%d, buf:%pK",
 		p2p_soc_obj->soc, tx_cnf->vdev_id,
 		tx_cnf->action_cookie, tx_cnf->buf_len,
 		tx_cnf->status, tx_cnf->buf);
@@ -1606,7 +1606,7 @@ QDF_STATUS p2p_process_rx_mgmt(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	p2p_debug("soc:%p, frame_len:%d, rx_chan:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%p",
+	p2p_debug("soc:%pK, frame_len:%d, rx_chan:%d, vdev_id:%d, frm_type:%d, rx_rssi:%d, buf:%pK",
 		p2p_soc_obj->soc, rx_mgmt->frame_len,
 		rx_mgmt->rx_chan, rx_mgmt->vdev_id, rx_mgmt->frm_type,
 		rx_mgmt->rx_rssi, rx_mgmt->buf);
