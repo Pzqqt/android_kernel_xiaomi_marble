@@ -141,7 +141,7 @@ static inline void __qdf_queue_delayed_work(qdf_handle_t hdl,
 					    __qdf_delayed_work_t *work,
 					    uint32_t delay)
 {
-	queue_delayed_work(wqueue, work, delay);
+	queue_delayed_work(wqueue, work, msecs_to_jiffies(delay));
 }
 
 /**
@@ -167,7 +167,7 @@ static inline QDF_STATUS __qdf_sched_delayed_work(qdf_handle_t hdl,
 						  __qdf_delayed_work_t *work,
 						  uint32_t delay)
 {
-	schedule_delayed_work(work, delay);
+	schedule_delayed_work(work, msecs_to_jiffies(delay));
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -254,7 +254,7 @@ static inline void __qdf_queue_delayed_work(qdf_handle_t hdl,
 					    __qdf_delayed_work_t *work,
 					    uint32_t delay)
 {
-	queue_delayed_work(wqueue, &work->dwork, delay);
+	queue_delayed_work(wqueue, &work->dwork, msecs_to_jiffies(delay));
 }
 
 static inline QDF_STATUS __qdf_sched_work(qdf_handle_t hdl, __qdf_work_t *work)
@@ -267,7 +267,7 @@ static inline QDF_STATUS __qdf_sched_delayed_work(qdf_handle_t hdl,
 						  __qdf_delayed_work_t *work,
 						  uint32_t delay)
 {
-	schedule_delayed_work(&work->dwork, delay);
+	schedule_delayed_work(&work->dwork, msecs_to_jiffies(delay));
 	return QDF_STATUS_SUCCESS;
 }
 

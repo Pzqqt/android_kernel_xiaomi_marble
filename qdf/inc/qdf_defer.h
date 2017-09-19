@@ -173,7 +173,7 @@ qdf_queue_work(qdf_handle_t hdl, qdf_workqueue_t *wqueue, qdf_work_t *work)
  * @hdl: OS handle
  * @wqueue: pointer to workqueue
  * @work: pointer to work
- * @delay: delay interval
+ * @delay: delay interval in milliseconds
  * Return: none
  */
 static inline void qdf_queue_delayed_work(qdf_handle_t hdl,
@@ -223,7 +223,7 @@ static inline void qdf_sched_work(qdf_handle_t hdl, qdf_work_t *work)
  * qdf_sched_delayed_work() - Schedule a delayed task
  * @hdl: OS handle
  * @work: pointer to delayed work
- * @delay: delay interval
+ * @delay: delay interval in milliseconds
  * Return: none
  */
 static inline void qdf_sched_delayed_work(qdf_handle_t hdl,
