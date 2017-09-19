@@ -48,6 +48,7 @@
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
+#include "wlan_cfg80211.h"
 #endif
 
 #ifdef MULTI_IF_NAME
