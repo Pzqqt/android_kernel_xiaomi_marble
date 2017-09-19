@@ -3506,6 +3506,35 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 	return (struct cdp_cfg *)pdev->wlan_cfg_ctx;
 }
 /**
+ * dp_reset_monitor_mode() - Disable monitor mode
+ * @pdev_handle: Datapath PDEV handle
+ *
+ * Return: 0 on success, not 0 on failure
+ */
+static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct htt_rx_ring_tlv_filter htt_tlv_filter;
+	struct dp_soc *soc;
+	uint8_t pdev_id;
+
+	pdev_id = pdev->pdev_id;
+	soc = pdev->soc;
+
+	pdev->monitor_vdev = NULL;
+	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_buf_ring.hal_srng,
+		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	return 0;
+}
+/**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
  * @vdev_handle: Datapath VDEV handle
  * @smart_monitor: Flag to denote if its smart monitor mode
@@ -5061,7 +5090,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 	.txrx_monitor_get_filter_ucast_data = NULL,
 	.txrx_monitor_get_filter_mcast_data = NULL,
 	.txrx_monitor_get_filter_non_data = NULL,
-	.txrx_reset_monitor_mode = NULL,
+	.txrx_reset_monitor_mode = dp_reset_monitor_mode,
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {
