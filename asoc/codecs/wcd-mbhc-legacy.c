@@ -794,6 +794,8 @@ static irqreturn_t wcd_mbhc_hs_rem_irq(int irq, void *data)
 	unsigned long timeout;
 	bool removed = true;
 	int retry = 0;
+	bool hphpa_on = false;
+	u8 moisture_status = 0;
 
 	pr_debug("%s: enter\n", __func__);
 
@@ -830,29 +832,78 @@ static irqreturn_t wcd_mbhc_hs_rem_irq(int irq, void *data)
 	WCD_MBHC_REG_READ(WCD_MBHC_HS_COMP_RESULT, hs_comp_result);
 
 	if (removed) {
-		if (!(hphl_sch && mic_sch && hs_comp_result)) {
-			/*
-			 * extension cable is still plugged in
-			 * report it as LINEOUT device
-			 */
-			goto report_unplug;
+		if (mbhc->mbhc_cfg->moisture_en) {
+			if (mbhc->mbhc_cb->hph_pa_on_status)
+				if (
+				mbhc->mbhc_cb->hph_pa_on_status(mbhc->codec)) {
+					hphpa_on = true;
+					WCD_MBHC_REG_UPDATE_BITS(
+						WCD_MBHC_HPHL_PA_EN, 0);
+					WCD_MBHC_REG_UPDATE_BITS(
+						WCD_MBHC_HPH_PA_EN, 0);
+				}
+
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHR_GND, 1);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHL_GND, 1);
+			/* wait for 50ms to get moisture status */
+			usleep_range(50000, 50100);
+
+			WCD_MBHC_REG_READ(
+				WCD_MBHC_MOISTURE_STATUS, moisture_status);
+		}
+
+		if (mbhc->mbhc_cfg->moisture_en && !moisture_status) {
+			pr_debug("%s: moisture present in jack\n", __func__);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 0);
+			WCD_MBHC_REG_UPDATE_BITS(
+				WCD_MBHC_MECH_DETECTION_TYPE, 1);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_L_DET_EN, 1);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_FSM_EN, 0);
+			WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_BTN_ISRC_CTL, 0);
+			mbhc->btn_press_intr = false;
+			mbhc->is_btn_press = false;
+			if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET)
+				wcd_mbhc_report_plug(
+					mbhc, 0, SND_JACK_HEADSET);
+			else if (mbhc->current_plug ==
+					MBHC_PLUG_TYPE_HEADPHONE)
+				wcd_mbhc_report_plug(
+					mbhc, 0, SND_JACK_HEADPHONE);
+			else if (mbhc->current_plug ==
+					MBHC_PLUG_TYPE_GND_MIC_SWAP)
+				wcd_mbhc_report_plug(
+					mbhc, 0, SND_JACK_UNSUPPORTED);
+			else if (mbhc->current_plug ==
+					MBHC_PLUG_TYPE_HIGH_HPH)
+				wcd_mbhc_report_plug(
+					mbhc, 0, SND_JACK_LINEOUT);
 		} else {
-			if (!mic_sch) {
-				mic_trigerred++;
-				pr_debug("%s: Removal MIC trigerred %d\n",
-					 __func__, mic_trigerred);
-			}
-			if (!hphl_sch) {
-				hphl_trigerred++;
-				pr_debug("%s: Removal HPHL trigerred %d\n",
-					 __func__, hphl_trigerred);
-			}
-			if (mic_trigerred && hphl_trigerred) {
+			if (!(hphl_sch && mic_sch && hs_comp_result)) {
 				/*
 				 * extension cable is still plugged in
 				 * report it as LINEOUT device
 				 */
 				goto report_unplug;
+			} else {
+				if (!mic_sch) {
+					mic_trigerred++;
+					pr_debug(
+					"%s: Removal MIC trigerred %d\n",
+					__func__, mic_trigerred);
+				}
+				if (!hphl_sch) {
+					hphl_trigerred++;
+					pr_debug(
+					"%s: Removal HPHL trigerred %d\n",
+					 __func__, hphl_trigerred);
+				}
+				if (mic_trigerred && hphl_trigerred) {
+					/*
+					 * extension cable is still plugged in
+					 * report it as LINEOUT device
+					 */
+					goto report_unplug;
+				}
 			}
 		}
 	}
@@ -863,6 +914,11 @@ exit:
 
 report_unplug:
 	wcd_mbhc_elec_hs_report_unplug(mbhc);
+	if (hphpa_on) {
+		hphpa_on = false;
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPHL_PA_EN, 1);
+		WCD_MBHC_REG_UPDATE_BITS(WCD_MBHC_HPH_PA_EN, 1);
+	}
 	hphl_trigerred = 0;
 	mic_trigerred = 0;
 	WCD_MBHC_RSC_UNLOCK(mbhc);

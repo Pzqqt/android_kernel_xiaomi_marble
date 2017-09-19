@@ -16,6 +16,7 @@
 #include <linux/stringify.h>
 #include <linux/power_supply.h>
 #include "wcdcal-hwdep.h"
+#include <sound/jack.h>
 
 #define TOMBAK_MBHC_NC	0
 #define TOMBAK_MBHC_NO	1
@@ -204,6 +205,9 @@ enum wcd_mbhc_register_function {
 	WCD_MBHC_ANC_DET_EN,
 	WCD_MBHC_FSM_STATUS,
 	WCD_MBHC_MUX_CTL,
+	WCD_MBHC_MOISTURE_STATUS,
+	WCD_MBHC_HPHR_GND,
+	WCD_MBHC_HPHL_GND,
 	WCD_MBHC_HPHL_OCP_DET_EN,
 	WCD_MBHC_HPHR_OCP_DET_EN,
 	WCD_MBHC_HPHL_OCP_STATUS,
@@ -594,5 +598,7 @@ void wcd_mbhc_jack_report(struct wcd_mbhc *mbhc,
 			  struct snd_soc_jack *jack, int status, int mask);
 int wcd_cancel_btn_work(struct wcd_mbhc *mbhc);
 int wcd_mbhc_get_button_mask(struct wcd_mbhc *mbhc);
+void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
+			enum snd_jack_types jack_type);
 
 #endif /* __WCD_MBHC_V2_H__ */

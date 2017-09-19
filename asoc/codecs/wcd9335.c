@@ -650,6 +650,12 @@ static struct wcd_mbhc_register
 			  0, 0, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MUX_CTL",
 			  WCD9335_MBHC_CTL_2, 0x70, 4, 0),
+	WCD_MBHC_REGISTER("WCD_MBHC_MOISTURE_STATUS",
+			  WCD9335_MBHC_FSM_STATUS, 0X20, 5, 0),
+	WCD_MBHC_REGISTER("WCD_MBHC_HPHR_GND",
+			  WCD9335_HPH_PA_CTL2, 0x40, 6, 0),
+	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_GND",
+			  WCD9335_HPH_PA_CTL2, 0x10, 4, 0),
 };
 
 static const struct wcd_mbhc_intr intr_ids = {
