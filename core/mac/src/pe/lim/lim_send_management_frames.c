@@ -2350,7 +2350,14 @@ alloc_packet:
 
 		if (challenge_req) {
 			if (body_len < SIR_MAC_AUTH_CHALLENGE_BODY_LEN) {
-				qdf_mem_copy(body, (uint8_t *)&auth_frame->type,
+				/* copy challenge IE id, len, challenge text */
+				*body = auth_frame->type;
+				body++;
+				body_len -= sizeof(uint8_t);
+				*body = auth_frame->length;
+				body++;
+				body_len -= sizeof(uint8_t);
+				qdf_mem_copy(body, auth_frame->challengeText,
 					     body_len);
 				pe_err("Incomplete challenge info: length: %d, expected: %d",
 				       body_len,
