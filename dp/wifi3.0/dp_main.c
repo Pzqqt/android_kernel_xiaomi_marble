@@ -2509,8 +2509,8 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	qdf_atomic_set(&soc->cmn_init_done, 0);
 
-	qdf_flush_work(0, &soc->htt_stats.work);
-	qdf_disable_work(0, &soc->htt_stats.work);
+	qdf_flush_work(&soc->htt_stats.work);
+	qdf_disable_work(&soc->htt_stats.work);
 
 	/* Free pending htt stats messages */
 	qdf_nbuf_queue_free(&soc->htt_stats.msg);
