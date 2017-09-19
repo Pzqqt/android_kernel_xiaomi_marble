@@ -283,10 +283,6 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 		}
 
 		if (QDF_IS_STATUS_ERROR(status)) {
-			if (QDF_STATUS_E_RESOURCES == status) {
-				/* this is actually okay */
-				status = QDF_STATUS_SUCCESS;
-			}
 			break;
 		}
 
@@ -294,7 +290,9 @@ QDF_STATUS hif_dev_alloc_and_prepare_rx_packets(struct hif_sdio_device *pdev,
 
 	UNLOCK_HIF_DEV_RX(pdev);
 
-	if (QDF_IS_STATUS_ERROR(status)) {
+	/* for NO RESOURCE error, no need to flush data queue */
+	if (QDF_IS_STATUS_ERROR(status)
+		&& (status != QDF_STATUS_E_RESOURCES)) {
 		while (!HTC_QUEUE_EMPTY(queue))
 			packet = htc_packet_dequeue(queue);
 	}
