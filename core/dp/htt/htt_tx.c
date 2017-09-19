@@ -1383,6 +1383,7 @@ free_tx_comp_base:
 							    ipa_uc_tx_rsc.
 							    tx_comp_base),
 							   memctx));
+	pdev->ipa_uc_tx_rsc.tx_comp_ring = NULL;
 free_tx_ce_idx:
 	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   4,
@@ -1392,6 +1393,8 @@ free_tx_ce_idx:
 							    ipa_uc_tx_rsc.
 							    tx_ce_idx),
 							   memctx));
+	pdev->ipa_uc_tx_rsc.tx_ce_idx = NULL;
+
 	return return_code;
 }
 
@@ -1416,6 +1419,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 				(&pdev->ipa_uc_tx_rsc.tx_ce_idx),
 				memctx));
 	}
+	pdev->ipa_uc_tx_rsc.tx_ce_idx = NULL;
 
 	if (pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
 		qdf_mem_free_consistent(
@@ -1428,6 +1432,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 						 tx_comp_base),
 						memctx));
 	}
+	pdev->ipa_uc_tx_rsc.tx_comp_ring = NULL;
 
 	/* Free each single buffer */
 	htt_tx_buf_pool_free(pdev);
