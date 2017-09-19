@@ -1666,6 +1666,114 @@ static void dp_soc_reset_cpu_ring_map(struct dp_soc *soc)
 	}
 }
 
+/*
+ * dp_soc_ring_if_nss_offloaded() - find if ring is offloaded to NSS
+ * @dp_soc - DP soc handle
+ * @ring_type - ring type
+ * @ring_num - ring_num
+ *
+ * return 0 or 1
+ */
+static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc, enum hal_ring_type ring_type, int ring_num)
+{
+	uint8_t nss_config = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
+	uint8_t status = 0;
+
+	switch (ring_type) {
+	case WBM2SW_RELEASE:
+	case REO_DST:
+		status = ((nss_config) & (1 << ring_num));
+		break;
+	default:
+		break;
+	}
+
+	return status;
+}
+
+/*
+ * dp_soc_reset_intr_mask() - reset interrupt mask
+ * @dp_soc - DP Soc handle
+ *
+ * Return: Return void
+ */
+static void dp_soc_reset_intr_mask(struct dp_soc *soc)
+{
+	uint8_t j;
+	int *grp_mask = NULL;
+	int group_number, mask, num_ring;
+
+	/* number of tx ring */
+	num_ring = wlan_cfg_num_tcl_data_rings(soc->wlan_cfg_ctx);
+
+	/*
+	 * group mask for tx completion  ring.
+	 */
+	grp_mask =  &soc->wlan_cfg_ctx->int_tx_ring_mask[0];
+
+	/* loop and reset the mask for only offloaded ring */
+	for (j = 0; j < num_ring; j++) {
+		if (!dp_soc_ring_if_nss_offloaded(soc, WBM2SW_RELEASE, j)) {
+			continue;
+		}
+
+		/*
+		 * Group number corresponding to tx offloaded ring.
+		 */
+		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
+		if (group_number < 0) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+					FL("ring not part of an group; ring_type: %d,ring_num %d"),
+					WBM2SW_RELEASE, j);
+			return;
+		}
+
+		/* reset the tx mask for offloaded ring */
+		mask = wlan_cfg_get_tx_ring_mask(soc->wlan_cfg_ctx, group_number);
+		mask &= (~(1 << j));
+
+		/*
+		 * reset the interrupt mask for offloaded ring.
+		 */
+		wlan_cfg_set_tx_ring_mask(soc->wlan_cfg_ctx, group_number, mask);
+	}
+
+	/* number of rx rings */
+	num_ring = wlan_cfg_num_reo_dest_rings(soc->wlan_cfg_ctx);
+
+	/*
+	 * group mask for reo destination ring.
+	 */
+	grp_mask = &soc->wlan_cfg_ctx->int_rx_ring_mask[0];
+
+	/* loop and reset the mask for only offloaded ring */
+	for (j = 0; j < num_ring; j++) {
+		if (!dp_soc_ring_if_nss_offloaded(soc, REO_DST, j)) {
+			continue;
+		}
+
+		/*
+		 * Group number corresponding to rx offloaded ring.
+		 */
+		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
+		if (group_number < 0) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+					FL("ring not part of an group; ring_type: %d,ring_num %d"),
+					REO_DST, j);
+			return;
+		}
+
+		/* set the interrupt mask for offloaded ring */
+		mask =  wlan_cfg_get_rx_ring_mask(soc->wlan_cfg_ctx, group_number);
+		mask &= (~(1 << j));
+
+		/*
+		 * set the interrupt mask to zero for rx offloaded radio.
+		 */
+		wlan_cfg_set_rx_ring_mask(soc->wlan_cfg_ctx, group_number, mask);
+	}
+}
+
 #ifdef IPA_OFFLOAD
 /**
  * dp_reo_remap_config() - configure reo remap register value based
@@ -1909,6 +2017,7 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 	/* Reset the cpu ring map if radio is NSS offloaded */
 	if (wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx)) {
 		dp_soc_reset_cpu_ring_map(soc);
+		dp_soc_reset_intr_mask(soc);
 	}
 
 	/* Setup HW REO */
@@ -2061,24 +2170,6 @@ dp_dscp_tid_map_setup(struct dp_pdev *pdev)
 				pdev->dscp_tid_map[map_id],
 				map_id);
 	}
-}
-
-/*
- * dp_reset_intr_mask() - reset interrupt mask
- * @dp_soc - DP Soc handle
- * @dp_pdev - DP pdev handle
- *
- * Return: Return void
- */
-static inline
-void dp_soc_reset_intr_mask(struct dp_soc *soc, struct dp_pdev *pdev)
-{
-	/*
-	 * We will set the interrupt mask to zero for NSS offloaded radio
-	 */
-	wlan_cfg_set_tx_ring_mask(soc->wlan_cfg_ctx, pdev->pdev_id, 0x0);
-	wlan_cfg_set_rx_ring_mask(soc->wlan_cfg_ctx, pdev->pdev_id, 0x0);
-	wlan_cfg_set_rxdma2host_ring_mask(soc->wlan_cfg_ctx, pdev->pdev_id, 0x0);
 }
 
 /*
@@ -2363,13 +2454,6 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	/* set the reo destination during initialization */
 	pdev->reo_dest = pdev->pdev_id + 1;
-
-	/*
-	 * reset the interrupt mask for offloaded radio
-	 */
-	if (wlan_cfg_get_dp_pdev_nss_enabled(pdev->wlan_cfg_ctx)) {
-		dp_soc_reset_intr_mask(soc, pdev);
-	}
 
 	return (struct cdp_pdev *)pdev;
 
