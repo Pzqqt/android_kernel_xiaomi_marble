@@ -672,8 +672,8 @@ stop_modules:
 	 */
 	if (hdd_check_for_opened_interfaces(hdd_ctx)) {
 		hdd_debug("Closing all modules from the add_virt_iface");
-		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
-				   hdd_ctx->config->iface_change_wait_time);
+		qdf_sched_delayed_work(&hdd_ctx->iface_idle_work,
+				       hdd_ctx->config->iface_change_wait_time);
 		hdd_prevent_suspend_timeout(
 			hdd_ctx->config->iface_change_wait_time,
 			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);

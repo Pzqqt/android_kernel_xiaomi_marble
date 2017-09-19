@@ -1653,8 +1653,8 @@ struct hdd_context {
 #endif
 	/* Present state of driver cds modules */
 	enum driver_modules_status driver_status;
-	/* MC timer interface change */
-	qdf_mc_timer_t iface_change_timer;
+	/* interface idle work */
+	qdf_delayed_work_t iface_idle_work;
 	/* Interface change lock */
 	struct mutex iface_change_lock;
 	bool rps;

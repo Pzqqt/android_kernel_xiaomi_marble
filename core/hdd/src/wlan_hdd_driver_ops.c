@@ -1428,10 +1428,7 @@ static void wlan_hdd_purge_notifier(void)
 	}
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
-	if (QDF_TIMER_STATE_RUNNING ==
-		qdf_mc_timer_get_current_state(&hdd_ctx->iface_change_timer))
-		qdf_mc_timer_stop(&hdd_ctx->iface_change_timer);
-
+	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
 	cds_shutdown_notifier_call();
 	cds_shutdown_notifier_purge();
 	mutex_unlock(&hdd_ctx->iface_change_lock);
