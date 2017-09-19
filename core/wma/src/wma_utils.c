@@ -1377,6 +1377,13 @@ static int wma_unified_radio_tx_power_level_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
+	if (fixed_param->radio_id >= link_stats_results->num_radio) {
+		WMA_LOGE("%s, invalid radio id:%d, num radio:%d",
+			__func__, fixed_param->radio_id,
+			link_stats_results->num_radio);
+		return -EINVAL;
+	}
+
 	WMA_LOGD("%s: tot_num_tx_pwr_lvls: %u num_tx_pwr_lvls: %u pwr_lvl_offset: %u radio_id: %u",
 			__func__, fixed_param->total_num_tx_power_levels,
 			 fixed_param->num_tx_power_levels,
