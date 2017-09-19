@@ -5292,6 +5292,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		hdd_set_connection_in_progress(false);
 		hdd_set_roaming_in_progress(false);
 		pAdapter->roam_ho_fail = false;
+		pHddStaCtx->ft_carrier_on = false;
 		complete(&pAdapter->roaming_comp_var);
 		break;
 
