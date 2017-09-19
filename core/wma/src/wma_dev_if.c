@@ -4997,6 +4997,11 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 	}
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (pdev == NULL) {
+		WMA_LOGE("%s: pdev is not valid: %d",
+			 __func__, session_id);
+		return;
+	}
 	max_wait_iterations =
 		wma->interfaces[session_id].delay_before_vdev_stop /
 		WMA_TX_Q_RECHECK_TIMER_WAIT;
