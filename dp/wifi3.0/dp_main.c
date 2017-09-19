@@ -3217,10 +3217,11 @@ void dp_peer_unref_delete(void *peer_handle)
 
 /*
  * dp_peer_detach_wifi3() – Detach txrx peer
- * @peer_handle:		Datapath peer handle
+ * @peer_handle: Datapath peer handle
+ * @bitmap: bitmap indicating special handling of request.
  *
  */
-static void dp_peer_delete_wifi3(void *peer_handle)
+static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 
