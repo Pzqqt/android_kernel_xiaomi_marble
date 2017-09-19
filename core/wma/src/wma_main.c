@@ -7921,14 +7921,15 @@ resp:
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-QDF_STATUS wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
-			uint32_t delay_time_ms)
+QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
+			    uint32_t delay_time_ms)
 {
 	struct crash_inject param;
+	tp_wma_handle wma = (tp_wma_handle)wma_handle;
 
 	param.type = type;
 	param.delay_time_ms = delay_time_ms;
-	return wmi_crash_inject(wma_handle->wmi_handle, &param);
+	return wmi_crash_inject(wma->wmi_handle, &param);
 }
 
 #if defined(FEATURE_LRO)

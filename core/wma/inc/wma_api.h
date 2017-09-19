@@ -318,4 +318,7 @@ void wma_store_pdev(void *wma_ctx, struct wlan_objmgr_pdev *pdev);
  * Return: tSirWifiPeerType
  */
 tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type);
+
+QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
+			    uint32_t delay_time_ms);
 #endif

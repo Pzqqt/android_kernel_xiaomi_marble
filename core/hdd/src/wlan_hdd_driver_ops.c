@@ -525,6 +525,30 @@ static void wlan_hdd_shutdown(void)
  */
 static void wlan_hdd_crash_shutdown(void)
 {
+	QDF_STATUS ret;
+	WMA_HANDLE wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma_handle) {
+		hdd_err("wma_handle is null");
+		return;
+	}
+
+	/*
+	 * When kernel panic happen, if WiFi FW is still active
+	 * it may cause NOC errors/memory corruption, to avoid
+	 * this, inject a fw crash first.
+	 * send crash_inject to FW directly, because we are now
+	 * in an atomic context, and preempt has been disabled,
+	 * MCThread won't be scheduled at the moment, at the same
+	 * time, TargetFailure event wont't be received after inject
+	 * crash due to the same reason.
+	 */
+	ret = wma_crash_inject(wma_handle, RECOVERY_SIM_ASSERT, 0);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		hdd_err("Failed to send crash inject:%d", ret);
+		return;
+	}
+
 	hif_crash_shutdown(cds_get_context(QDF_MODULE_ID_HIF));
 }
 
