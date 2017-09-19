@@ -162,16 +162,18 @@ lim_check_vendor_ap_present(uint8_t *ie, uint16_t ie_len,
 			    tpSchBeaconStruct beacon_struct,
 			    tpPESession session)
 {
+	uint8_t nss;
 	const uint8_t *ptr = NULL;
 	uint8_t elem_len;
 	uint8_t elem_data[SIR_MAC_VENDOR_AP_2_DATA_LEN];
 
+	nss = lim_get_nss_supported_by_beacon(beacon_struct, session);
 	/*
 	 * for SIR_MAC_VENDOR_AP_1_OUI, check for Vendor OUI and if it is 2x2
 	 */
 	if ((wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_1_OUI,
 	    SIR_MAC_VENDOR_AP_1_OUI_LEN, ie, ie_len)) &&
-	    (lim_get_nss_supported_by_beacon(beacon_struct, session) == 2)) {
+	    (nss == 2)) {
 		pe_debug("In lim_check_vendor_ap_present match Vendor AP 1");
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				SIR_MAC_VENDOR_AP_1_OUI,
@@ -197,8 +199,7 @@ lim_check_vendor_ap_present(uint8_t *ie, uint16_t ie_len,
 	 */
 	elem_data[1] |= 0xFF;
 
-	if ((lim_get_nss_supported_by_beacon(beacon_struct, session) == 2) &&
-	     (elem_len == (SIR_MAC_VENDOR_AP_2_OUI_LEN +
+	if ((nss == 2) && (elem_len == (SIR_MAC_VENDOR_AP_2_OUI_LEN +
 	     SIR_MAC_VENDOR_AP_2_DATA_LEN)) &&
 	     ((qdf_mem_cmp(&elem_data, SIR_MAC_VENDOR_AP_2_DATA,
 	     SIR_MAC_VENDOR_AP_2_DATA_LEN) == 0) ||
@@ -219,7 +220,7 @@ vendor3:
 	 * if Vendor AP 4 IE is not present and if it is 4x4 11ac
 	 */
 	if (beacon_struct->VHTCaps.present &&
-	    (lim_get_nss_supported_by_beacon(beacon_struct, session) == 4) &&
+	    (nss == 4 || nss == 3) &&
 	    (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_3_OUI,
 	    SIR_MAC_VENDOR_AP_3_OUI_LEN, ie, ie_len)) &&
 	    !(wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_4_OUI,
