@@ -5224,6 +5224,13 @@ int wma_unified_power_debug_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
+	if (param_buf->num_debug_register > ((WMI_SVC_MSG_MAX_SIZE -
+		sizeof(wmi_pdev_chip_power_stats_event_fixed_param)) /
+		sizeof(uint32_t))) {
+		WMA_LOGE("excess payload: LEN num_debug_register:%u",
+				param_buf->num_debug_register);
+		return -EINVAL;
+	}
 	debug_registers = param_tlvs->debug_registers;
 	stats_registers_len =
 		(sizeof(uint32_t) * param_buf->num_debug_register);
