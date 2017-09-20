@@ -2745,6 +2745,25 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 }
 
 /**
+ * wma_get_status_str() - get string of tx status from firmware
+ * @status: tx status
+ *
+ * Return: converted string of tx status
+ */
+static const char *wma_get_status_str(uint32_t status)
+{
+	switch (status) {
+	default:
+		return "unknown";
+	CASE_RETURN_STRING(WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK);
+	CASE_RETURN_STRING(WMI_MGMT_TX_COMP_TYPE_DISCARD);
+	CASE_RETURN_STRING(WMI_MGMT_TX_COMP_TYPE_INSPECT);
+	CASE_RETURN_STRING(WMI_MGMT_TX_COMP_TYPE_COMPLETE_NO_ACK);
+	CASE_RETURN_STRING(WMI_MGMT_TX_COMP_TYPE_MAX);
+	}
+}
+
+/**
  * wma_process_mgmt_tx_completion() - process mgmt completion
  * @wma_handle: wma handle
  * @desc_id: descriptor id
@@ -2766,7 +2785,8 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		return -EINVAL;
 	}
 
-	WMA_LOGD("%s: status: %d wmi_desc_id: %d", __func__, status, desc_id);
+	WMA_LOGD("%s: status: %s wmi_desc_id: %d", __func__,
+		wma_get_status_str(status), desc_id);
 
 	psoc = wma_handle->psoc;
 	if (psoc == NULL) {

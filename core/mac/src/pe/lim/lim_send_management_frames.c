@@ -2115,7 +2115,8 @@ static QDF_STATUS lim_auth_tx_complete_cnf(void *context,
 	uint16_t auth_ack_status;
 	uint16_t reason_code;
 
-	pe_debug("tx_complete= %d", tx_complete);
+	pe_debug("tx_complete = %d %s", tx_complete,
+		(tx_complete ? "success":"fail"));
 	if (tx_complete) {
 		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
 		auth_ack_status = ACKED;
