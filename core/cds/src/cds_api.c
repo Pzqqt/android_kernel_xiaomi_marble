@@ -490,19 +490,15 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	/* Now Open the CDS Scheduler */
-	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
-	    cds_is_driver_recovering()) {
-		status = cds_sched_open(gp_cds_context,
-					&gp_cds_context->qdf_sched,
-					sizeof(cds_sched_context));
+	status = cds_sched_open(gp_cds_context,
+				&gp_cds_context->qdf_sched,
+				sizeof(cds_sched_context));
 
-		if (QDF_IS_STATUS_ERROR(status)) {
-			/* Critical Error ...  Cannot proceed further */
-			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-				  "%s: Failed to open CDS Scheduler", __func__);
-			QDF_ASSERT(0);
-			goto err_wma_complete_event;
-		}
+	if (QDF_IS_STATUS_ERROR(status)) {
+		/* Critical Error ...  Cannot proceed further */
+		cds_alert("Failed to open CDS Scheduler");
+		QDF_ASSERT(0);
+		goto err_wma_complete_event;
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
@@ -681,12 +677,9 @@ err_bmi_close:
 	bmi_cleanup(ol_ctx);
 
 err_sched_close:
-	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
-	    cds_is_driver_recovering()) {
-		if (QDF_IS_STATUS_ERROR(cds_sched_close())) {
-			cds_err("Failed to close CDS Scheduler");
-			QDF_ASSERT(false);
-		}
+	if (QDF_IS_STATUS_ERROR(cds_sched_close())) {
+		cds_err("Failed to close CDS Scheduler");
+		QDF_ASSERT(false);
 	}
 
 err_wma_complete_event:

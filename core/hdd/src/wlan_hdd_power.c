@@ -1257,7 +1257,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 {
 	struct hdd_context *hdd_ctx;
 	p_cds_sched_context cds_sched_context = NULL;
-	QDF_STATUS qdf_status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_info("WLAN driver shutting down!");
@@ -1296,12 +1295,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 		hdd_ctx->is_ol_rx_thread_suspended = false;
 	}
 #endif
-
-	qdf_status = cds_sched_close();
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("Failed to close CDS Scheduler");
-		QDF_ASSERT(false);
-	}
 
 	hdd_ipa_uc_ssr_deinit();
 
