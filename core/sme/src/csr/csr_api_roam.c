@@ -13731,8 +13731,10 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 	pParam->ssidHidden = pProfile->SSIDs.SSIDList[0].ssidHidden;
 	if (CSR_IS_INFRA_AP(pProfile) && (pParam->operationChn != 0)) {
 		if (csr_is_valid_channel(pMac, pParam->operationChn) !=
-		    QDF_STATUS_SUCCESS)
+		    QDF_STATUS_SUCCESS) {
 			pParam->operationChn = INFRA_AP_DEFAULT_CHANNEL;
+			pParam->ch_params.ch_width = CH_WIDTH_20MHZ;
+		}
 	}
 	pParam->protEnabled = pProfile->protEnabled;
 	pParam->obssProtEnabled = pProfile->obssProtEnabled;
