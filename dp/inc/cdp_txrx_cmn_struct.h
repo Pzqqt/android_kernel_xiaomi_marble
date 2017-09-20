@@ -1042,6 +1042,8 @@ struct cdp_pdev_stats {
  * @ba_bitmap: Block Ack bitmap
  * @start_seqa: Sequence number of first MPDU
  * @enq_bitmap: Enqueue MPDU bitmap
+ * @tx_duration: PPDU airtime
+ * @is_mcast: MCAST or UCAST
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1082,6 +1084,8 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t enq_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
+	uint32_t tx_duration;
+	bool is_mcast;
 };
 
 /**
