@@ -191,7 +191,6 @@ struct sap_context {
 
 	uint32_t nStaWPARSnReqIeLength;
 	uint8_t pStaWpaRsnReqIE[MAX_ASSOC_IND_IE_LEN];
-	tSirAPWPSIEs APWPSIEs;
 	tSirRSNie APWPARSNIEs;
 
 #ifdef FEATURE_WLAN_WAPI
