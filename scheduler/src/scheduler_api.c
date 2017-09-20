@@ -65,8 +65,8 @@ static QDF_STATUS scheduler_close(struct scheduler_ctx *sched_ctx)
 	}
 
 	/* shut down scheduler thread */
-	qdf_set_bit(MC_SHUTDOWN_EVENT_MASK, &sched_ctx->sch_event_flag);
-	qdf_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
+	qdf_atomic_set_bit(MC_SHUTDOWN_EVENT_MASK, &sched_ctx->sch_event_flag);
+	qdf_atomic_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_wake_up_interruptible(&sched_ctx->sch_wait_queue);
 
 	/* Wait for scheduler thread to exit */
@@ -106,7 +106,7 @@ static void scheduler_watchdog_timeout(void *arg)
 		qdf_print_thread_trace(sched->sch_thread);
 
 	/* avoid crashing during shutdown */
-	if (qdf_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
+	if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK, &sched->sch_event_flag))
 		return;
 
 	sched_fatal("Going down for Scheduler Watchdog Bite!");
@@ -317,7 +317,7 @@ QDF_STATUS scheduler_post_msg_by_priority(QDF_MODULE_ID qid,
 	else
 		scheduler_mq_put(target_mq, msg_wrapper);
 
-	qdf_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
+	qdf_atomic_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_wake_up_interruptible(&sched_ctx->sch_wait_queue);
 
 	return QDF_STATUS_SUCCESS;
@@ -407,7 +407,7 @@ void scheduler_set_event_mask(uint32_t event_mask)
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
 	if (sched_ctx)
-		qdf_set_bit(event_mask, &sched_ctx->sch_event_flag);
+		qdf_atomic_set_bit(event_mask, &sched_ctx->sch_event_flag);
 }
 
 void scheduler_clear_event_mask(uint32_t event_mask)
@@ -415,7 +415,7 @@ void scheduler_clear_event_mask(uint32_t event_mask)
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
 	if (sched_ctx)
-		qdf_clear_bit(event_mask, &sched_ctx->sch_event_flag);
+		qdf_atomic_clear_bit(event_mask, &sched_ctx->sch_event_flag);
 }
 
 QDF_STATUS scheduler_target_if_mq_handler(struct scheduler_msg *msg)

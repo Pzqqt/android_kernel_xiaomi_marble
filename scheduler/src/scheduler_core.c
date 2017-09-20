@@ -26,6 +26,7 @@
  */
 
 #include <scheduler_core.h>
+#include <qdf_atomic.h>
 
 static struct scheduler_ctx g_sched_ctx;
 static struct scheduler_ctx *gp_sched_ctx;
@@ -300,7 +301,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 	i = 0;
 	while (i < SCHEDULER_NUMBER_OF_MSG_QUEUE) {
 		/* Check if MC needs to shutdown */
-		if (qdf_test_bit(MC_SHUTDOWN_EVENT_MASK,
+		if (qdf_atomic_test_bit(MC_SHUTDOWN_EVENT_MASK,
 					&sch_ctx->sch_event_flag)) {
 			QDF_TRACE(QDF_MODULE_ID_SCHEDULER,
 				QDF_TRACE_LEVEL_ERROR,
@@ -308,7 +309,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 				__func__);
 			*shutdown = true;
 			/* Check for any Suspend Indication */
-			if (qdf_test_and_clear_bit(MC_SUSPEND_EVENT_MASK,
+			if (qdf_atomic_test_and_clear_bit(MC_SUSPEND_EVENT_MASK,
 						&sch_ctx->sch_event_flag)) {
 				/* Unblock anyone waiting on suspend */
 				if (gp_sched_ctx->hdd_callback)
@@ -356,7 +357,7 @@ static void scheduler_thread_process_queues(struct scheduler_ctx *sch_ctx,
 		continue;
 	}
 	/* Check for any Suspend Indication */
-	if (qdf_test_and_clear_bit(MC_SUSPEND_EVENT_MASK,
+	if (qdf_atomic_test_and_clear_bit(MC_SUSPEND_EVENT_MASK,
 			&sch_ctx->sch_event_flag)) {
 		qdf_spin_lock(&sch_ctx->sch_thread_lock);
 		qdf_event_reset(&sch_ctx->resume_sch_event);
@@ -397,9 +398,9 @@ int scheduler_thread(void *arg)
 		/* This implements the execution model algorithm */
 		retWaitStatus = qdf_wait_queue_interruptible(
 					sch_ctx->sch_wait_queue,
-					qdf_test_bit(MC_POST_EVENT_MASK,
+					qdf_atomic_test_bit(MC_POST_EVENT_MASK,
 						&sch_ctx->sch_event_flag) ||
-					qdf_test_bit(MC_SUSPEND_EVENT_MASK,
+					qdf_atomic_test_bit(MC_SUSPEND_EVENT_MASK,
 						&sch_ctx->sch_event_flag));
 
 		if (retWaitStatus == -ERESTARTSYS) {
@@ -408,7 +409,7 @@ int scheduler_thread(void *arg)
 					__func__);
 			QDF_BUG(0);
 		}
-		qdf_clear_bit(MC_POST_EVENT_MASK, &sch_ctx->sch_event_flag);
+		qdf_atomic_clear_bit(MC_POST_EVENT_MASK, &sch_ctx->sch_event_flag);
 		scheduler_thread_process_queues(sch_ctx, &shutdown);
 	}
 	/* If we get here the MC thread must exit */
