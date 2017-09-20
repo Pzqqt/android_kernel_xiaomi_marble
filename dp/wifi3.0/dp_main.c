@@ -3111,10 +3111,11 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 		FL("hash based steering for pdev: %d is %d\n"),
 		pdev->pdev_id, hash_based);
 
-	if (!hash_based)
-		reo_dest = pdev->reo_dest;
-	else
-		reo_dest = 1;
+	/*
+	 * Below line of code will ensure the proper reo_dest ring is choosen
+	 * for cases where toeplitz hash cannot be generated (ex: non TCP/UDP)
+	 */
+	reo_dest = pdev->reo_dest;
 
 	if (soc->cdp_soc.ol_ops->peer_set_default_routing) {
 		/* TODO: Check the destination ring number to be passed to FW */
