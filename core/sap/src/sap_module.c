@@ -357,12 +357,6 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 	/* Now configure the auth type in the roaming profile. To open. */
 	pSapCtx->csr_roamProfile.negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;        /* open is the default */
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(&pSapCtx->SapGlobalLock))) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "wlansap_start failed init lock");
-		return QDF_STATUS_E_FAULT;
-	}
-
 	hal = (tHalHandle) CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -442,12 +436,6 @@ QDF_STATUS wlansap_stop(void *pCtx)
 	}
 	ucfg_scan_unregister_requester(pmac->psoc, pSapCtx->req_id);
 	sap_free_roam_profile(&pSapCtx->csr_roamProfile);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(&pSapCtx->SapGlobalLock))) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "wlansap_stop failed destroy lock");
-		return QDF_STATUS_E_FAULT;
-	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1815,28 +1803,6 @@ wlan_sap_getstation_ie_information
 			qdf_status = QDF_STATUS_SUCCESS;
 		}
 	}
-	return qdf_status;
-}
-
-QDF_STATUS sap_acquire_global_lock(struct sap_context *pSapCtx)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
-
-	if (QDF_IS_STATUS_SUCCESS(qdf_mutex_acquire(&pSapCtx->SapGlobalLock))) {
-		qdf_status = QDF_STATUS_SUCCESS;
-	}
-
-	return qdf_status;
-}
-
-QDF_STATUS sap_release_global_lock(struct sap_context *pSapCtx)
-{
-	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
-
-	if (QDF_IS_STATUS_SUCCESS(qdf_mutex_release(&pSapCtx->SapGlobalLock))) {
-		qdf_status = QDF_STATUS_SUCCESS;
-	}
-
 	return qdf_status;
 }
 

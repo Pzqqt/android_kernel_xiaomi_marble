@@ -9192,12 +9192,6 @@ void hdd_sap_destroy_events(struct hdd_adapter *adapter)
 	}
 
 	qdf_event_destroy(&sap_ctx->sap_session_opened_evt);
-	if (!QDF_IS_STATUS_SUCCESS(
-		qdf_mutex_destroy(&sap_ctx->SapGlobalLock))) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "wlansap_stop failed destroy lock");
-		return;
-	}
 	EXIT();
 }
 
