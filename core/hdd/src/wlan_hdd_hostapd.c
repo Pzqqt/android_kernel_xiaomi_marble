@@ -1343,7 +1343,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	int i = 0;
 	uint8_t staId;
 	QDF_STATUS qdf_status;
-	bool bWPSState;
 	bool bAuthRequired = true;
 	tpSap_AssocMacAddr pAssocStasArray = NULL;
 	char unknownSTAEvent[IW_CUSTOM_MAX + 1];
@@ -1827,10 +1826,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
-		wlansap_get_wps_state(
-			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
-			&bWPSState);
-
 		if ((eCSR_ENCRYPT_TYPE_NONE == pHddApCtx->ucEncryptType) ||
 		    (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ==
 		     pHddApCtx->ucEncryptType)
@@ -1839,7 +1834,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			bAuthRequired = false;
 		}
 
-		if (bAuthRequired || bWPSState == true) {
+		if (bAuthRequired) {
 			qdf_status = hdd_softap_register_sta(
 						pHostapdAdapter,
 						true,

@@ -1818,56 +1818,6 @@ wlan_sap_getstation_ie_information
 	return qdf_status;
 }
 
-/**
- * wlansap_get_wps_state() - get WPS session state
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @pbWPSState: Pointer to variable to indicate if device is in
- *              WPS Registration state
- *
- * This api function provides for Ap App/HDD to check if WPS session in process.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success
- */
-QDF_STATUS wlansap_get_wps_state(void *pCtx, bool *bWPSState)
-{
-	struct sap_context *pSapCtx = NULL;
-	void *hHal = NULL;
-
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
-	if (NULL == pSapCtx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	hHal = CDS_GET_HAL_CB();
-	if (NULL == hHal) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid HAL pointer from p_cds_gctx",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	if (sap_acquire_global_lock(pSapCtx) == QDF_STATUS_SUCCESS) {
-		if (pSapCtx->APWPSIEs.SirWPSProbeRspIE.
-		    FieldPresent &
-		    SIR_WPS_PROBRSP_SELECTEDREGISTRA_PRESENT)
-			*bWPSState = true;
-		else
-			*bWPSState = false;
-
-		sap_release_global_lock(pSapCtx);
-
-		return QDF_STATUS_SUCCESS;
-	} else
-		return QDF_STATUS_E_FAULT;
-
-}
-
 QDF_STATUS sap_acquire_global_lock(struct sap_context *pSapCtx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
