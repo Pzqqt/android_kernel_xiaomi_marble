@@ -422,6 +422,7 @@ static QDF_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 			       pEndpoint->Id, HTC_TX_PACKET_TAG_BUNDLED);
 	LOCK_HTC_TX(target);
 	HTC_PACKET_ENQUEUE(&pEndpoint->TxLookupQueue, pPacketTx);
+	pEndpoint->ul_outstanding_cnt++;
 	UNLOCK_HTC_TX(target);
 #if DEBUG_BUNDLE
 	qdf_print(" Send bundle EP%d buffer size:0x%x, total:0x%x, count:%d.\n",
