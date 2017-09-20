@@ -988,6 +988,7 @@ struct csr_roam_session {
 	qdf_mc_timer_t roaming_offload_timer;
 	bool is_fils_connection;
 	uint16_t fils_seq_num;
+	bool discon_in_progress;
 	struct csr_disconnect_stats disconnect_stats;
 };
 

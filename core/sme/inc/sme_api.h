@@ -595,6 +595,16 @@ QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
 QDF_STATUS sme_update_is_mawc_ini_feature_enabled(tHalHandle hHal,
 		const bool MAWCEnabled);
 QDF_STATUS sme_stop_roaming(tHalHandle hHal, uint8_t sessionId, uint8_t reason);
+
+/**
+ * sme_indicate_disconnect_inprogress() - Indicate to csr that disconnect is in
+ * progress
+ * @hal: The handle returned by mac_open
+ * @session_id: sessionId on which disconenct has started
+ *
+ * Return: void
+ */
+void sme_indicate_disconnect_inprogress(tHalHandle hal, uint8_t session_id);
 QDF_STATUS sme_start_roaming(tHalHandle hHal, uint8_t sessionId,
 		uint8_t reason);
 QDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
