@@ -66,7 +66,12 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 		return;
 	}
 
+	qdf_mem_copy(cdp_rx_ppdu->mac_addr,
+			peer->mac_addr.raw, DP_MAC_ADDR_LEN);
+	cdp_rx_ppdu->first_data_seq_ctrl =
+		ppdu_info->rx_status.first_data_seq_ctrl;
 	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
+	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
 	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;
 	cdp_rx_ppdu->u.bw = ppdu_info->rx_status.bw;
@@ -76,7 +81,6 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
 	cdp_rx_ppdu->timestamp = ppdu_info->com_info.ppdu_timestamp;
 	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_freq;
-
 }
 #else
 static inline void
@@ -165,7 +169,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			status_nbuf, HTT_INVALID_PEER, WDI_NO_VAL, mac_id);
 #endif
 #endif
-		if (pdev->monitor_vdev != NULL) {
+		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en)) {
 
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,

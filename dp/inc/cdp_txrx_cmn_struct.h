@@ -159,6 +159,18 @@ enum cdp_host_txrx_stats {
 	TXRX_HOST_STATS_MAX,
 };
 
+/*
+ * cdp_ppdu_ftype: PPDU Frame Type
+ * @CDP_PPDU_FTYPE_DATA: SU or MU Data Frame
+ * @CDP_PPDU_FTYPE_CTRL: Control/Management Frames
+*/
+enum cdp_ppdu_ftype {
+	CDP_PPDU_FTYPE_DATA,
+	CDP_PPDU_FTYPE_CTRL,
+	CDP_PPDU_FTYPE_MAX
+};
+
+
 /**
  * @brief General specification of the tx frame contents
  *
@@ -1168,6 +1180,9 @@ struct cdp_tx_completion_msdu {
  * @duration: PPDU duration
  * @tid: TID number
  * @peer_id: Peer ID
+ * @vdev_id: VAP ID
+ * @mac_addr: Peer MAC Address
+ * @first_data_seq_ctrl: Sequence control field of first data frame
  * @ltf_size: ltf_size
  * @stbc: When set, STBC rate was used
  * @he_re: he_re (range extension)
@@ -1200,6 +1215,9 @@ struct cdp_rx_indication_ppdu {
 	uint16_t duration;
 	uint32_t tid:8,
 		 peer_id:16;
+	uint8_t vdev_id;
+	uint8_t mac_addr[6];
+	uint16_t first_data_seq_ctrl;
 	union {
 		uint32_t rate_info;
 		struct {

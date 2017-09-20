@@ -1320,6 +1320,7 @@ static uint8_t dp_get_ppdu_info_user_index(struct dp_pdev *pdev,
 static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		uint32_t *tag_buf)
 {
+	uint16_t frame_type;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	htt_ppdu_stats_common_tlv *dp_stats_buf =
 		(htt_ppdu_stats_common_tlv *)tag_buf;
@@ -1332,8 +1333,14 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	ppdu_desc->num_users =
 		HTT_PPDU_STATS_COMMON_TLV_NUM_USERS_GET(*tag_buf);
 	tag_buf++;
-	ppdu_desc->frame_type =
-		HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
+	frame_type = HTT_PPDU_STATS_COMMON_TLV_FRM_TYPE_GET(*tag_buf);
+
+	if ((frame_type == HTT_STATS_FTYPE_TIDQ_DATA_SU) ||
+			(frame_type == HTT_STATS_FTYPE_TIDQ_DATA_MU))
+		ppdu_desc->frame_type = CDP_PPDU_FTYPE_DATA;
+	else
+		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
+
 	ppdu_desc->ppdu_start_timestamp = dp_stats_buf->ppdu_start_tstmp_us;
 	ppdu_desc->ppdu_end_timestamp = 0; /*TODO: value to be provided by FW */
 	tag_buf += 6;
