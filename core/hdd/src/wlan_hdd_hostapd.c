@@ -8436,11 +8436,6 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		adapter->device_mode, cds_is_sub_20_mhz_enabled());
 
 
-	if (hdd_is_connection_in_progress(NULL, NULL)) {
-		hdd_err("Can't start BSS: connection is in progress");
-		return -EBUSY;
-	}
-
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
 		status = policy_mgr_wait_for_connection_update(
 			hdd_ctx->hdd_psoc);
