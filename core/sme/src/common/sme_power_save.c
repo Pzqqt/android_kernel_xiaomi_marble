@@ -966,24 +966,26 @@ QDF_STATUS sme_ps_open_per_session(tHalHandle hal_ctx, uint32_t session_id)
 void sme_auto_ps_entry_timer_expired(void *data)
 {
 	struct ps_params *ps_params = (struct ps_params *)data;
-	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)ps_params->mac_ctx;
-	uint32_t session_id = ps_params->session_id;
+	tpAniSirGlobal mac_ctx;
+	uint32_t session_id;
 	QDF_STATUS status;
 
+	if (!ps_params) {
+		sme_err("ps_params is NULL");
+		return;
+	}
+	mac_ctx = (tpAniSirGlobal)ps_params->mac_ctx;
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return;
+	}
+	session_id = ps_params->session_id;
 	sme_debug("auto_ps_timer expired, enabling powersave");
 
 	status = sme_enable_sta_ps_check(mac_ctx, session_id);
 	if (QDF_STATUS_SUCCESS == status)
 		sme_ps_enable_disable((tHalHandle)mac_ctx, session_id,
 				SME_PS_ENABLE);
-	else {
-		sme_debug("failed to enable powersave, restarting timer");
-		status = qdf_mc_timer_start(&ps_params->auto_ps_enable_timer,
-					    AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE);
-		if (!QDF_IS_STATUS_SUCCESS(status)
-				&& (QDF_STATUS_E_ALREADY != status))
-			sme_err("Cannot start traffic timer");
-	}
 }
 
 QDF_STATUS sme_ps_close(tHalHandle hal_ctx)
