@@ -522,7 +522,7 @@ static int wcd_spi_cmd_rdsr(struct spi_device *spi,
 	struct spi_transfer *tx_xfer = &wcd_spi->xfer2[0];
 	struct spi_transfer *rx_xfer = &wcd_spi->xfer2[1];
 	u8 rdsr_cmd;
-	u32 status;
+	u32 status = 0;
 	int ret;
 
 	rdsr_cmd = WCD_SPI_CMD_RDSR;
