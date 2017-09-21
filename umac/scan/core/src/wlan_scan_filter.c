@@ -390,6 +390,18 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 				break;
 			}
 		}
+
+		if (scm_is_cipher_match(rsn.akm_suites,
+		    rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_SAE))) {
+			if (WLAN_AUTH_TYPE_SAE ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_SAE;
+				match = true;
+				break;
+			}
+		}
+
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count, WLAN_RSN_DPP_AKM)) {
 			if (WLAN_AUTH_TYPE_DPP_RSN ==

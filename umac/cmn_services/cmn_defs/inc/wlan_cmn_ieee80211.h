@@ -377,6 +377,7 @@ enum extn_element_ie {
 #define WLAN_AKM_FT_PSK           0x04
 #define WLAN_AKM_SHA256_IEEE8021X 0x05
 #define WLAN_AKM_SHA256_PSK       0x06
+#define WLAN_AKM_SAE              0x08
 #define WLAN_AKM_SUITEB_EAP_SHA256 0x0B
 #define WLAN_AKM_SUITEB_EAP_SHA384 0x0C
 #define WLAN_AKM_FILS_SHA256      0x0E
