@@ -42,6 +42,7 @@
 #include <qdf_trace.h>
 #include <net/ieee80211_radiotap.h>
 #include <qdf_module.h>
+#include <pld_common.h>
 
 #if defined(FEATURE_TSO)
 #include <net/ipv6.h>
@@ -52,6 +53,7 @@
 #endif /* FEATURE_TSO */
 
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 13, 0)
+
 #define qdf_nbuf_users_inc atomic_inc
 #define qdf_nbuf_users_dec atomic_dec
 #define qdf_nbuf_users_set atomic_set
@@ -62,6 +64,19 @@
 #define qdf_nbuf_users_set refcount_set
 #define qdf_nbuf_users_read refcount_read
 #endif /* KERNEL_VERSION(4, 13, 0) */
+
+#define RATE_MULTIPLIER		2
+
+#define IEEE80211_RADIOTAP_VHT_BW_20	0
+#define IEEE80211_RADIOTAP_VHT_BW_40	1
+#define IEEE80211_RADIOTAP_VHT_BW_80	2
+#define IEEE80211_RADIOTAP_VHT_BW_160	3
+
+#define RADIOTAP_VHT_BW_20	0
+#define RADIOTAP_VHT_BW_40	1
+#define RADIOTAP_VHT_BW_80	4
+#define RADIOTAP_VHT_BW_160	11
+
 
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[QDF_NBUF_TX_PKT_STATE_MAX];
@@ -210,11 +225,17 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 realloc:
 	skb = dev_alloc_skb(size);
 
+	if (skb)
+		goto skb_alloc;
+
+	skb = pld_nbuf_pre_alloc(size);
+
 	if (!skb) {
 		pr_info("ERROR:NBUF alloc failed\n");
 		return NULL;
 	}
 
+skb_alloc:
 	/* Hawkeye M2M emulation cannot handle memory addresses below 0x50000040
 	 * Though we are trying to reserve low memory upfront to prevent this,
 	 * we sometimes see SKBs allocated from low memory.
@@ -271,9 +292,15 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 
 	skb = dev_alloc_skb(size);
 
+	if (skb)
+		goto skb_alloc;
+
+	skb = pld_nbuf_pre_alloc(size);
+
 	if (!skb)
 		return NULL;
 
+skb_alloc:
 	memset(skb->cb, 0x0, sizeof(skb->cb));
 
 	/*
@@ -315,6 +342,9 @@ EXPORT_SYMBOL(__qdf_nbuf_alloc);
 #ifdef CONFIG_MCL
 void __qdf_nbuf_free(struct sk_buff *skb)
 {
+	if (pld_nbuf_pre_alloc_free(skb))
+		return;
+
 	if (nbuf_free_cb)
 		nbuf_free_cb(skb);
 	else
@@ -323,6 +353,9 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 #else
 void __qdf_nbuf_free(struct sk_buff *skb)
 {
+	if (pld_nbuf_pre_alloc_free(skb))
+		return;
+
 	dev_kfree_skb_any(skb);
 }
 #endif
@@ -2655,8 +2688,20 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 		(rx_status->beamformed ?
 		 IEEE80211_RADIOTAP_VHT_FLAG_BEAMFORMED : 0);
 	rtap_len += 1;
-
-	rtap_buf[rtap_len] = (rx_status->vht_flag_values2);
+	switch (rx_status->vht_flag_values2) {
+	case IEEE80211_RADIOTAP_VHT_BW_20:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_20;
+		break;
+	case IEEE80211_RADIOTAP_VHT_BW_40:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_40;
+		break;
+	case IEEE80211_RADIOTAP_VHT_BW_80:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_80;
+		break;
+	case IEEE80211_RADIOTAP_VHT_BW_160:
+		rtap_buf[rtap_len] = RADIOTAP_VHT_BW_160;
+		break;
+	}
 	rtap_len += 1;
 	rtap_buf[rtap_len] = (rx_status->vht_flag_values3[0]);
 	rtap_len += 1;
@@ -2791,7 +2836,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	/* IEEE80211_RADIOTAP_RATE  u8           500kb/s */
 	if (!rx_status->ht_flags && !rx_status->vht_flags) {
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_RATE);
-		rtap_buf[rtap_len] = rx_status->rate;
+		rtap_buf[rtap_len] = rx_status->rate * RATE_MULTIPLIER;
 	} else
 		rtap_buf[rtap_len] = 0;
 	rtap_len += 1;
@@ -2833,6 +2878,8 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_SGI;
 		if (rx_status->bw)
 			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_BW_40;
+		else
+			rtap_buf[rtap_len] |= IEEE80211_RADIOTAP_MCS_BW_20;
 		rtap_len += 1;
 
 		rtap_buf[rtap_len] = rx_status->mcs;

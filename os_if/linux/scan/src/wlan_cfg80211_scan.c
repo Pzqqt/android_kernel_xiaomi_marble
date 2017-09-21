@@ -199,6 +199,20 @@ static void wlan_config_sched_scan_plan(struct pno_scan_req_params *pno_req,
 }
 #endif
 
+#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
+static inline void
+wlan_cfg80211_sched_scan_results(struct wiphy *wiphy, uint64_t reqid)
+{
+	cfg80211_sched_scan_results(wiphy);
+}
+#else
+static inline void
+wlan_cfg80211_sched_scan_results(struct wiphy *wiphy, uint64_t reqid)
+{
+	cfg80211_sched_scan_results(wiphy, reqid);
+}
+#endif
+
 /**
  * wlan_cfg80211_pno_callback() - pno callback function to handle
  * pno events.
@@ -231,7 +245,7 @@ static void wlan_cfg80211_pno_callback(struct wlan_objmgr_vdev *vdev,
 		cfg80211_err("pdev_ospriv is NULL");
 		return;
 	}
-	cfg80211_sched_scan_results(pdev_ospriv->wiphy);
+	wlan_cfg80211_sched_scan_results(pdev_ospriv->wiphy, 0);
 }
 
 #ifdef WLAN_POLICY_MGR_ENABLE
@@ -1499,7 +1513,7 @@ wlan_get_ieee80211_channel(struct wiphy *wiphy, int chan_no)
 		return NULL;
 	}
 
-	chan = __ieee80211_get_channel(wiphy, freq);
+	chan = ieee80211_get_channel(wiphy, freq);
 
 	if (!chan)
 		cfg80211_err("chan is NULL, chan_no: %d freq: %d",

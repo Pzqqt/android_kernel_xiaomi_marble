@@ -268,6 +268,14 @@ static inline void *pld_hif_sdio_get_virt_ramdump_mem(struct device *dev,
 static inline void pld_hif_sdio_release_ramdump_mem(unsigned long *address)
 {
 }
+static inline struct sk_buff *pld_nbuf_pre_alloc(size_t size)
+{
+	return NULL;
+}
+static inline int pld_nbuf_pre_alloc_free(struct sk_buff *skb)
+{
+	return 0;
+}
 
 #endif
 #endif
