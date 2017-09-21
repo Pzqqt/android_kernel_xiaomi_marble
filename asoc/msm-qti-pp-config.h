@@ -15,6 +15,7 @@
 
 #include <sound/soc.h>
 #define DSP_BIT_WIDTH_MIXER_CTL "ASM Bit Width"
+#ifdef CONFIG_QTI_PP
 int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
 			uint32_t *payload);
 int msm_adsp_init_mixer_ctl_pp_event_queue(struct snd_soc_pcm_runtime *rtd);
@@ -25,7 +26,6 @@ int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_value *ucontrol);
 int msm_adsp_stream_callback_info(struct snd_kcontrol *kcontrol,
 			struct snd_ctl_elem_info *uinfo);
-#ifdef CONFIG_QTI_PP
 void msm_qti_pp_send_eq_values(int fedai_id);
 int msm_qti_pp_send_stereo_to_custom_stereo_cmd(int port_id, int copp_idx,
 						unsigned int session_id,
@@ -35,6 +35,42 @@ int msm_qti_pp_send_stereo_to_custom_stereo_cmd(int port_id, int copp_idx,
 						uint16_t op_FR_ip_FR_weight);
 void msm_qti_pp_add_controls(struct snd_soc_platform *platform);
 #else /* CONFIG_QTI_PP */
+static inline int msm_adsp_inform_mixer_ctl(struct snd_soc_pcm_runtime *rtd,
+			uint32_t *payload)
+{
+	return 0;
+}
+
+static inline int msm_adsp_init_mixer_ctl_pp_event_queue(
+			struct snd_soc_pcm_runtime *rtd)
+{
+	return 0;
+}
+
+static inline int msm_adsp_clean_mixer_ctl_pp_event_queue(
+			struct snd_soc_pcm_runtime *rtd)
+{
+	return 0;
+}
+
+static inline int msm_adsp_stream_cmd_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *uinfo)
+{
+	return 0;
+}
+
+static inline int msm_adsp_stream_callback_get(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	return 0;
+}
+
+static inline int msm_adsp_stream_callback_info(struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_info *uinfo)
+{
+	return 0;
+}
+
 #define msm_qti_pp_send_eq_values(fedai_id) do {} while (0)
 #define msm_qti_pp_send_stereo_to_custom_stereo_cmd(port_id, copp_idx, \
 			session_id, op_FL_ip_FL_weight, op_FL_ip_FR_weight, \
