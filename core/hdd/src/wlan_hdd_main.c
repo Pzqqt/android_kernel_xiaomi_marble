@@ -4205,9 +4205,18 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 	}
 	adapterNode = pCurrent;
 	if (QDF_STATUS_SUCCESS == status) {
+		/*
+		 * Here we are stopping global bus_bw timer & work per adapter.
+		 *
+		 * The reason is to fix one race condition between
+		 * bus bandwidth work and cleaning up an adapter.
+		 * Under some conditions, it is possible for the bus bandwidth
+		 * work to access a particularly destroyed adapter, leading to
+		 * use-after-free.
+		 */
 		hdd_debug("wait for bus bw work to flush");
 		hdd_bus_bw_compute_timer_stop(hdd_ctx);
-		cancel_work_sync(&hdd_ctx->bus_bw_work);
+		hdd_bus_bw_cancel_work(hdd_ctx);
 
 		/* cleanup adapter */
 		policy_mgr_clear_concurrency_mode(hdd_ctx->hdd_psoc,
@@ -6629,6 +6638,12 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
 	qdf_timer_free(&hdd_ctx->bus_bw_timer);
 	hdd_ctx->bus_bw_timer_running = false;
 	qdf_spinlock_destroy(&hdd_ctx->bus_bw_timer_lock);
+}
+
+void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
+{
+	if (hdd_ctx)
+		cancel_work_sync(&hdd_ctx->bus_bw_work);
 }
 #endif
 

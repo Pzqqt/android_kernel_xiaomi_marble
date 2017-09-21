@@ -2093,7 +2093,7 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_bus_bandwidth_init() - Initialize bus bandwidth data structures.
- * hdd_ctx: HDD context
+ * @hdd_ctx: HDD context
  *
  * Initialize bus bandwidth related data structures like spinlock and timer.
  *
@@ -2103,13 +2103,23 @@ int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx);
 
 /**
  * hdd_bus_bandwidth_destroy() - Destroy bus bandwidth data structures.
- * hdd_ctx: HDD context
+ * @hdd_ctx: HDD context
  *
  * Destroy bus bandwidth related data structures like timer.
  *
  * Return: None.
  */
 void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_bus_bw_cancel_work() - Cancel the bus_bw_work worker
+ * @hdd_ctx: HDD context
+ *
+ * Cancel the bus_bw_work to stop monitor link state.
+ *
+ * Return: None.
+ */
+void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx);
 #else
 
 static inline void hdd_bus_bw_compute_timer_start(struct hdd_context *hdd_ctx)
@@ -2134,6 +2144,10 @@ static inline int hdd_bus_bandwidth_init(struct hdd_context *hdd_ctx)
 }
 
 static inline void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
 {
 }
 #endif
