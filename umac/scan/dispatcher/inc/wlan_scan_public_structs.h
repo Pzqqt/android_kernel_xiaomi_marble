@@ -883,6 +883,11 @@ enum scan_cb_type {
 #define SCAN_STATIONARY_THRESHOLD 10
 #define SCAN_CHANNEL_PREDICTION_FULL_SCAN_MS 60000
 #define SCAN_ADAPTIVE_PNOSCAN_DWELL_MODE 0
+#define SCAN_MAWC_NLO_ENABLED 1
+#define SCAN_MAWC_NLO_EXP_BACKOFF_RATIO 3
+#define SCAN_MAWC_NLO_INIT_SCAN_INTERVAL 10000
+#define SCAN_MAWC_NLO_MAX_SCAN_INTERVAL 60000
+
 
 /**
  * enum ssid_bc_type - SSID broadcast type
@@ -928,6 +933,23 @@ struct cpno_band_rssi_pref {
 };
 
 /**
+ * struct nlo_mawc_params - Motion Aided Wireless Connectivity based
+ *                          Network List Offload configuration
+ * @vdev_id: VDEV ID on which the configuration needs to be applied
+ * @enable: flag to enable or disable
+ * @exp_backoff_ratio: ratio of exponential backoff
+ * @init_scan_interval: initial scan interval(msec)
+ * @max_scan_interval:  max scan interval(msec)
+ */
+struct nlo_mawc_params {
+	uint8_t vdev_id;
+	bool enable;
+	uint32_t exp_backoff_ratio;
+	uint32_t init_scan_interval;
+	uint32_t max_scan_interval;
+};
+
+/**
  * struct pno_scan_req_params - PNO Scan request structure
  * @networks_cnt: Number of networks
  * @vdev_id: vdev id
@@ -957,6 +979,7 @@ struct cpno_band_rssi_pref {
  *	{ fast_scan_period=120, fast_scan_max_cycles=2,
  *	  slow_scan_period=1800, scan_backoff_multiplier=2 }
  *	Result: 120s x2, 240s x2, 480s x2, 960s x2, 1800s xN
+ * @mawc_params: Configuration parameters for NLO MAWC.
  */
 struct pno_scan_req_params {
 	uint32_t networks_cnt;
@@ -979,23 +1002,7 @@ struct pno_scan_req_params {
 	bool relative_rssi_set;
 	int8_t relative_rssi;
 	struct cpno_band_rssi_pref band_rssi_pref;
-};
-
-/**
- * struct nlo_mawc_params - Motion Aided Wireless Connectivity based
- *                          Network List Offload configuration
- * @vdev_id: VDEV ID on which the configuration needs to be applied
- * @enable: flag to enable or disable
- * @exp_backoff_ratio: ratio of exponential backoff
- * @init_scan_interval: initial scan interval(msec)
- * @max_scan_interval:  max scan interval(msec)
- */
-struct nlo_mawc_params {
-	uint8_t vdev_id;
-	bool enable;
-	uint32_t exp_backoff_ratio;
-	uint32_t init_scan_interval;
-	uint32_t max_scan_interval;
+	struct nlo_mawc_params mawc_params;
 };
 
 /**
@@ -1007,6 +1014,7 @@ struct nlo_mawc_params {
  * @pnoscan_adaptive_dwell_mode: def adaptive dwelltime mode for pno scan
  * @channel_prediction_full_scan: def periodic timer upon which full scan needs
  * to be triggered.
+ * @mawc_params: Configuration parameters for NLO MAWC.
  */
 struct pno_user_cfg {
 	bool channel_prediction;
@@ -1014,6 +1022,7 @@ struct pno_user_cfg {
 	uint8_t stationary_thresh;
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_mode;
 	uint32_t channel_prediction_full_scan;
+	struct nlo_mawc_params mawc_params;
 };
 
 /**

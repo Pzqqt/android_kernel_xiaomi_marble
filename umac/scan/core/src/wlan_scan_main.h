@@ -188,6 +188,7 @@ struct scan_vdev_obj {
  * to be triggered.
  * @pno_wake_lock: pno wake lock
  * @pno_cb: callback to call on PNO completion
+ * @mawc_params: Configuration parameters for NLO MAWC.
  */
 struct pno_def_config {
 	bool channel_prediction;
@@ -197,6 +198,7 @@ struct pno_def_config {
 	uint32_t channel_prediction_full_scan;
 	qdf_wake_lock_t pno_wake_lock;
 	struct cb_handler pno_cb;
+	struct nlo_mawc_params mawc_params;
 };
 
 

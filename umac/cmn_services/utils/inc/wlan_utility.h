@@ -63,6 +63,19 @@ bool wlan_is_dsrc_channel(uint16_t center_freq);
 uint8_t wlan_freq_to_chan(uint32_t freq);
 
 /**
+ * wlan_get_ie_ptr_from_eid() - Find out ie from eid
+ * @eid: element id
+ * @ie: source ie address
+ * @ie_len: source ie length
+ *
+ * Return: vendor ie address - success
+ *         NULL - failure
+ */
+const uint8_t *wlan_get_ie_ptr_from_eid(uint8_t eid,
+					const uint8_t *ie,
+					int ie_len);
+
+/**
  * wlan_get_vendor_ie_ptr_from_oui() - Find out vendor ie
  * @oui: oui buffer
  * @oui_size: oui size
@@ -74,8 +87,27 @@ uint8_t wlan_freq_to_chan(uint32_t freq);
  * Return: vendor ie address - success
  *         NULL - failure
  */
-uint8_t *wlan_get_vendor_ie_ptr_from_oui(uint8_t *oui,
-	uint8_t oui_size, uint8_t *ie, uint16_t ie_len);
+const uint8_t *wlan_get_vendor_ie_ptr_from_oui(const uint8_t *oui,
+					       uint8_t oui_size,
+					       const uint8_t *ie,
+					       uint16_t ie_len);
+
+/**
+ * wlan_get_ext_ie_ptr_from_ext_id() - Find out ext ie
+ * @oui: oui buffer
+ * @oui_size: oui size
+ * @ie: source ie address
+ * @ie_len: source ie length
+ *
+ * This function find out ext ie from ext id (passed oui)
+ *
+ * Return: vendor ie address - success
+ *         NULL - failure
+ */
+const uint8_t *wlan_get_ext_ie_ptr_from_ext_id(const uint8_t *oui,
+					       uint8_t oui_size,
+					       const uint8_t *ie,
+					       uint16_t ie_len);
 
 /**
  * wlan_is_emulation_platform() - check if platform is emulation based
