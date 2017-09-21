@@ -4175,8 +4175,8 @@ static int voice_send_cvp_mfc_config_cmd(struct voice_data *v)
 static int voice_get_avcs_version_per_service(uint32_t service_id)
 {
 	int ret = 0;
-	size_t svc_size;
-	struct avcs_fwk_ver_info ver_info = {{0}, NULL};
+	size_t ver_size;
+	struct avcs_fwk_ver_info *ver_info = NULL;
 
 	if (service_id == AVCS_SERVICE_ID_ALL) {
 		pr_err("%s: Invalid service id: %d", __func__,
@@ -4184,19 +4184,20 @@ static int voice_get_avcs_version_per_service(uint32_t service_id)
 		return -EINVAL;
 	}
 
-	svc_size = sizeof(struct avs_svc_api_info);
-	ver_info.services = kzalloc(svc_size, GFP_KERNEL);
-	if (ver_info.services == NULL)
+	ver_size = sizeof(struct avcs_get_fwk_version) +
+		   sizeof(struct avs_svc_api_info);
+	ver_info = kzalloc(ver_size, GFP_KERNEL);
+	if (ver_info == NULL)
 		return -ENOMEM;
 
-	ret = q6core_get_service_version(service_id, &ver_info, svc_size);
+	ret = q6core_get_service_version(service_id, ver_info, ver_size);
 	if (ret < 0)
 		goto done;
 
-	ret = ver_info.services[0].api_version;
+	ret = ver_info->services[0].api_version;
 	common.is_avcs_version_queried = true;
 done:
-	kfree(ver_info.services);
+	kfree(ver_info);
 	return ret;
 }
 

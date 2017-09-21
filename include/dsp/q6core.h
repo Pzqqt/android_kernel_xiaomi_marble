@@ -25,7 +25,7 @@ bool q6core_is_adsp_ready(void);
 int q6core_get_service_version(uint32_t service_id,
 			       struct avcs_fwk_ver_info *ver_info,
 			       size_t size);
-size_t q6core_get_avcs_service_size(uint32_t service_id);
+size_t q6core_get_fwk_version_size(uint32_t service_id);
 
 #define ADSP_CMD_SET_DTS_EAGLE_DATA_ID 0x00012919
 #define DTS_EAGLE_LICENSE_ID           0x00028346
