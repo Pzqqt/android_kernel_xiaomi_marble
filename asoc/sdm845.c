@@ -4495,21 +4495,22 @@ static int sdm845_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 	unsigned int slot_mask, rate, clk_freq;
 	unsigned int slot_offset[8] = {0, 4, 8, 12, 16, 20, 24, 28};
 
+	slot_width = 32;
 	pr_debug("%s: dai id = 0x%x\n", __func__, cpu_dai->id);
 
-	slots = tdm_rx_cfg[TDM_QUAT][TDM_0].channels;
-	/*2 slot config - bits 0 and 1 set for the first two slots */
-	slot_mask = 0x0000FFFF >> (16-slots);
-	slot_width = 32;
-	channels = slots;
-
-	pr_debug("%s: slot_width %d slots %d\n", __func__, slot_width, slots);
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK) {
-		pr_debug("%s: slot_width %d\n", __func__, slot_width);
+		slots = tdm_rx_cfg[TDM_QUAT][TDM_0].channels;
+		/*2 slot config - bits 0 and 1 set for the first two slots */
+		slot_mask = 0x0000FFFF >> (16-slots);
+		channels = slots;
+
+		pr_debug("%s: tdm rx slot_width %d slots %d\n",
+			__func__, slot_width, slots);
+
 		ret = snd_soc_dai_set_tdm_slot(cpu_dai, 0, slot_mask,
 			slots, slot_width);
 		if (ret < 0) {
-			pr_err("%s: failed to set tdm slot, err:%d\n",
+			pr_err("%s: failed to set tdm rx slot, err:%d\n",
 				__func__, ret);
 			goto end;
 		}
@@ -4517,11 +4518,36 @@ static int sdm845_tdm_snd_hw_params(struct snd_pcm_substream *substream,
 		ret = snd_soc_dai_set_channel_map(cpu_dai,
 			0, NULL, channels, slot_offset);
 		if (ret < 0) {
-			pr_err("%s: failed to set channel map, err:%d\n",
+			pr_err("%s: failed to set tdm rx channel map, err:%d\n",
+				__func__, ret);
+			goto end;
+		}
+	} else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE) {
+		slots = tdm_tx_cfg[TDM_QUAT][TDM_0].channels;
+		/*2 slot config - bits 0 and 1 set for the first two slots */
+		slot_mask = 0x0000FFFF >> (16-slots);
+		channels = slots;
+
+		pr_debug("%s: tdm tx slot_width %d slots %d\n",
+			__func__, slot_width, slots);
+
+		ret = snd_soc_dai_set_tdm_slot(cpu_dai, slot_mask, 0,
+			slots, slot_width);
+		if (ret < 0) {
+			pr_err("%s: failed to set tdm tx slot, err:%d\n",
+				__func__, ret);
+			goto end;
+		}
+
+		ret = snd_soc_dai_set_channel_map(cpu_dai,
+			channels, slot_offset, 0, NULL);
+		if (ret < 0) {
+			pr_err("%s: failed to set tdm tx channel map, err:%d\n",
 				__func__, ret);
 			goto end;
 		}
 	} else {
+		ret = -EINVAL;
 		pr_err("%s: invalid use case, err:%d\n",
 			__func__, ret);
 		goto end;
@@ -4548,7 +4574,7 @@ static int sdm845_tdm_snd_startup(struct snd_pcm_substream *substream)
 
 	ret = msm_set_pinctrl(pinctrl_info, STATE_TDM_ACTIVE);
 	if (ret)
-		pr_err("%s: MI2S TLMM pinctrl set failed with %d\n",
+		pr_err("%s: TDM TLMM pinctrl set failed with %d\n",
 			__func__, ret);
 
 	return ret;
@@ -4564,7 +4590,7 @@ static void sdm845_tdm_snd_shutdown(struct snd_pcm_substream *substream)
 
 	ret = msm_set_pinctrl(pinctrl_info, STATE_DISABLE);
 	if (ret)
-		pr_err("%s: MI2S TLMM pinctrl set failed with %d\n",
+		pr_err("%s: TDM TLMM pinctrl set failed with %d\n",
 			__func__, ret);
 
 }
@@ -5742,7 +5768,7 @@ static struct snd_soc_dai_link msm_common_be_dai_links[] = {
 		.dpcm_capture = 1,
 		.id = MSM_BACKEND_DAI_QUAT_TDM_TX_0,
 		.be_hw_params_fixup = msm_be_hw_params_fixup,
-		.ops = &msm_tdm_be_ops,
+		.ops = &sdm845_tdm_be_ops,
 		.ignore_suspend = 1,
 	},
 };
