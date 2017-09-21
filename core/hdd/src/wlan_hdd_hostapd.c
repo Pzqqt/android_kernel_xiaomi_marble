@@ -8710,7 +8710,7 @@ int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
  * Return: data rate for success or zero for failure
  */
 static uint16_t hdd_get_data_rate_from_rate_mask(struct wiphy *wiphy,
-		enum ieee80211_band band,
+		enum nl80211_band band,
 		struct cfg80211_bitrate_mask *bit_rate_mask)
 {
 	struct ieee80211_supported_band *sband = wiphy->bands[band];
@@ -8747,7 +8747,7 @@ static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
 		struct cfg80211_ap_settings *params)
 {
 	struct cfg80211_bitrate_mask *beacon_rate_mask;
-	enum ieee80211_band band;
+	enum nl80211_band band;
 
 	band = params->chandef.chan->band;
 	beacon_rate_mask = &params->beacon_rate;
