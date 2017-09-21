@@ -3710,7 +3710,8 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 			peer->stats.tx.last_ack_rssi;
 	}
 
-	soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
+	if (soc->cdp_soc.ol_ops->update_dp_stats)
+		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
 			&vdev->stats, vdev->vdev_id, UPDATE_VDEV_STATS);
 }
 

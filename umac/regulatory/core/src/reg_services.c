@@ -1750,7 +1750,7 @@ static void reg_populate_band_channels(enum channel_enum start_chan,
 				       enum channel_enum end_chan,
 				       struct cur_reg_rule *rule_start_ptr,
 				       uint32_t num_reg_rules,
-				       uint16_t min_bw,
+				       uint16_t min_reg_bw,
 				       struct regulatory_channel *mas_chan_list)
 {
 	struct cur_reg_rule *found_rule_ptr;
@@ -1759,19 +1759,23 @@ static void reg_populate_band_channels(enum channel_enum start_chan,
 	enum channel_enum chan_enum;
 	uint32_t rule_num, bw;
 	uint16_t max_bw;
+	uint16_t min_bw;
 
 	for (chan_enum = start_chan; chan_enum <= end_chan; chan_enum++) {
 		found_rule_ptr = NULL;
 
 		max_bw = QDF_MIN((uint16_t)20, channel_map[chan_enum].max_bw);
-		min_bw = QDF_MAX(min_bw, channel_map[chan_enum].min_bw);
+		min_bw = QDF_MAX(min_reg_bw, channel_map[chan_enum].min_bw);
 
-		for (bw = max_bw; ((bw >= min_bw) && (NULL == found_rule_ptr));
-		     bw = bw/2) {
+		if (channel_map[chan_enum].chan_num == INVALID_CHANNEL_NUM)
+			continue;
+
+		for (bw = max_bw; bw >= min_bw; bw = bw/2) {
 			for (rule_num = 0, cur_rule_ptr =
 				     rule_start_ptr;
 			     rule_num < num_reg_rules;
 			     cur_rule_ptr++, rule_num++) {
+
 				if ((cur_rule_ptr->start_freq <=
 				     mas_chan_list[chan_enum].center_freq -
 				     bw/2) &&
@@ -1782,11 +1786,13 @@ static void reg_populate_band_channels(enum channel_enum start_chan,
 					break;
 				}
 			}
-			break;
+			if (found_rule_ptr)
+				break;
 		}
 
 		if (found_rule_ptr) {
 			mas_chan_list[chan_enum].max_bw = bw;
+
 			reg_fill_channel_info(chan_enum, found_rule_ptr,
 					      mas_chan_list, min_bw);
 		}
@@ -2609,6 +2615,12 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		reg_populate_band_channels(MIN_5GHZ_CHANNEL, MAX_5GHZ_CHANNEL,
 					   reg_rule_5g, num_5g_reg_rules,
 					   min_bw_5g, mas_chan_list);
+
+	if (num_5g_reg_rules != 0)
+		reg_populate_band_channels(MIN_49GHZ_CHANNEL,
+					MAX_49GHZ_CHANNEL,
+					reg_rule_5g, num_5g_reg_rules,
+					min_bw_5g, mas_chan_list);
 
 	soc_reg->cc_src = SOURCE_DRIVER;
 	if (soc_reg->new_user_ctry_pending == true) {

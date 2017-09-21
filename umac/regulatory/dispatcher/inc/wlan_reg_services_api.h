@@ -41,6 +41,10 @@
 #define WLAN_REG_IS_5GHZ_CH(chan) REG_IS_5GHZ_CH(chan)
 #define WLAN_REG_IS_11P_CH(chan) REG_IS_11P_CH(chan)
 
+#ifndef CONFIG_LEGACY_CHAN_ENUM
+#define WLAN_REG_IS_49GHZ_FREQ(freq) REG_IS_49GHZ_FREQ(freq)
+#endif
+
 #define WLAN_REG_CH_NUM(ch_enum) REG_CH_NUM(ch_enum)
 #define WLAN_REG_CH_TO_FREQ(ch_enum) REG_CH_TO_FREQ(ch_enum)
 
