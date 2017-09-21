@@ -803,12 +803,6 @@ wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 	if (sap_ctx->nStaWPARSnReqIeLength)
 		qdf_mem_copy(sap_ctx->pStaWpaRsnReqIE, csr_roam_info->prsnIE,
 			     sap_ctx->nStaWPARSnReqIeLength);
-#ifdef FEATURE_WLAN_WAPI
-	sap_ctx->nStaWAPIReqIeLength = csr_roam_info->wapiIELen;
-	if (sap_ctx->nStaWAPIReqIeLength)
-		qdf_mem_copy(sap_ctx->pStaWapiReqIE, csr_roam_info->pwapiIE,
-			     sap_ctx->nStaWAPIReqIeLength);
-#endif
 	sap_ctx->nStaAddIeLength = csr_roam_info->addIELen;
 	if (sap_ctx->nStaAddIeLength)
 		qdf_mem_copy(sap_ctx->pStaAddIE, csr_roam_info->paddIE,
