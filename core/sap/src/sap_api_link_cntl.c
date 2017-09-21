@@ -803,10 +803,6 @@ wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 	if (sap_ctx->nStaWPARSnReqIeLength)
 		qdf_mem_copy(sap_ctx->pStaWpaRsnReqIE, csr_roam_info->prsnIE,
 			     sap_ctx->nStaWPARSnReqIeLength);
-	sap_ctx->nStaAddIeLength = csr_roam_info->addIELen;
-	if (sap_ctx->nStaAddIeLength)
-		qdf_mem_copy(sap_ctx->pStaAddIE, csr_roam_info->paddIE,
-			     sap_ctx->nStaAddIeLength);
 	sap_ctx->SapQosCfg.WmmIsEnabled = csr_roam_info->wmmEnabledSta;
 	/* MAC filtering */
 	qdf_status = sap_is_peer_mac_allowed(sap_ctx,
@@ -1121,12 +1117,6 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			qdf_mem_copy(sap_ctx->pStaWpaRsnReqIE,
 				     csr_roam_info->prsnIE,
 				     sap_ctx->nStaWPARSnReqIeLength);
-
-		sap_ctx->nStaAddIeLength = csr_roam_info->addIELen;
-		if (sap_ctx->nStaAddIeLength)
-			qdf_mem_copy(sap_ctx->pStaAddIE,
-				     csr_roam_info->paddIE,
-				     sap_ctx->nStaAddIeLength);
 
 		sap_ctx->SapQosCfg.WmmIsEnabled =
 			csr_roam_info->wmmEnabledSta;
