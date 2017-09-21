@@ -5087,6 +5087,7 @@ typedef enum {
     WMI_REQUEST_RSSI_PER_CHAIN_STAT = 0x100,
     WMI_REQUEST_CONGESTION_STAT = 0x200,
     WMI_REQUEST_PEER_EXTD_STAT = 0x400,
+    WMI_REQUEST_VDEV_EXTD_STAT = 0x800,
 } wmi_stats_id;
 
 /*
@@ -5698,6 +5699,8 @@ typedef struct {
     /** number of MIB stats event structures (wmi_mib_stats) */
     A_UINT32 num_mib_stats;
     A_UINT32 pdev_id; /** pdev_id for identifying the MAC.  See macros starting with WMI_PDEV_ID_ for values. In non-DBDC case host should set it to 0. */
+    /** number of extended vdev stats event structures (wmi_vdev_extd_stats) */
+    A_UINT32 num_vdev_extd_stats;
 
 /* This TLV is followed by another TLV of array of bytes
  *   A_UINT8 data[];
@@ -5708,6 +5711,7 @@ typedef struct {
  *   num_bcnflt_stats * size_of()
  *   num_chan_stats * size of(struct wmi_chan_stats)
  *   num_mib_stats * size of(struct wmi_mib_stats)
+ *   num_vdev_extd_stats * size of(struct wmi_vdev_extd_stats)
  */
 /* If WMI_REQUEST_PEER_EXTD_STAT is set in stats_id,
  * the data[] array also contains num_peer_stats * size of wmi_peer_extd_stats
@@ -6311,6 +6315,17 @@ typedef struct {
     A_UINT32 tx_rate_history[MAX_TX_RATE_VALUES];/*History of last ten transmit rate, in units of 500 kbit/sec*/
     A_UINT32 bcn_rssi_history[MAX_RSSI_VALUES];/*History of last ten Beacon rssi of the connected Bss*/
 } wmi_vdev_stats;
+
+/*
+ * vdev ext stats with additonal bcn stats
+ * (Due to backward compatiblity requirements, these new stats fields cannot be
+ * added inside wmi_vdev_stats.)
+ */
+typedef struct {
+    A_UINT32 vdev_id;
+    A_UINT32 tx_bcn_succ_cnt; /* Total number of beacon frame transmitted successfully */
+    A_UINT32 tx_bcn_outage_cnt; /* Total number of failed beacons */
+} wmi_vdev_extd_stats;
 
 /**
  *  peer statistics.
