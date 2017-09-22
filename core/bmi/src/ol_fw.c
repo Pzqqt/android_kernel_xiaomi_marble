@@ -737,7 +737,7 @@ static QDF_STATUS ol_set_lpass_support(struct ol_context *ol_ctx)
 QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 {
 	uint32_t param;
-	struct pld_platform_cap cap;
+	struct pld_platform_cap cap = {0};
 	int ret;
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
