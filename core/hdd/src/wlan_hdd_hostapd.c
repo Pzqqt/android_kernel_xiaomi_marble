@@ -5488,95 +5488,6 @@ static int iw_softap_get_sta_info(struct net_device *dev,
 	return ret;
 }
 
-/**
- * __iw_set_ap_genie() - set ap wpa/rsn ie
- *
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int __iw_set_ap_genie(struct net_device *dev,
-			   struct iw_request_info *info,
-			   union iwreq_data *wrqu, char *extra) {
-
-	struct hdd_adapter *pHostapdAdapter = netdev_priv(dev);
-	struct hdd_context *hdd_ctx;
-	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	uint8_t *genie = (uint8_t *)extra;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	if (!wrqu->data.length) {
-		EXIT();
-		return 0;
-	}
-
-	if (wrqu->data.length > DOT11F_IE_RSN_MAX_LEN) {
-		hdd_err("WPARSN Ie input length is more than max[%d]",
-			wrqu->data.length);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	switch (genie[0]) {
-	case DOT11F_EID_WPA:
-	case DOT11F_EID_RSN:
-		if ((WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->uPrivacy == 0) {
-			hdd_softap_deregister_bc_sta(pHostapdAdapter);
-			hdd_softap_register_bc_sta(pHostapdAdapter, 1);
-		}
-		(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->uPrivacy = 1;
-		qdf_ret_status = wlansap_set_wparsn_ies(
-			WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
-			 genie, wrqu->data.length);
-		break;
-
-	default:
-		hdd_err("Set UNKNOWN IE %X", genie[0]);
-		qdf_ret_status = 0;
-	}
-
-	EXIT();
-	return qdf_ret_status;
-}
-
-/**
- * iw_set_ap_genie() - Wrapper function to protect __iw_set_ap_genie
- *                      from the SSR.
- *
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int
-iw_set_ap_genie(struct net_device *dev,
-		struct iw_request_info *info,
-		union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_ap_genie(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
 static
 int __iw_get_softap_linkspeed(struct net_device *dev,
 			      struct iw_request_info *info,
@@ -5846,7 +5757,7 @@ static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* SIOCGIWPOWER */
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) iw_set_ap_genie,           /* SIOCSIWGENIE */
+	(iw_handler) NULL,      /* SIOCSIWGENIE */
 	(iw_handler) NULL,      /* SIOCGIWGENIE */
 	(iw_handler) iw_set_auth_hostap,        /* SIOCSIWAUTH */
 	(iw_handler) NULL,      /* SIOCGIWAUTH */
