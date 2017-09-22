@@ -764,6 +764,7 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.scan_f_ofdm_rates = true;
 	scan_obj->scan_def.scan_f_2ghz = true;
 	scan_obj->scan_def.scan_f_5ghz = true;
+	scan_obj->scan_def.scan_f_chan_stat_evnt = SCAN_CHAN_STATS_EVENT_ENAB;
 	/* scan event flags */
 	scan_obj->scan_def.scan_ev_started = true;
 	scan_obj->scan_def.scan_ev_completed = true;
