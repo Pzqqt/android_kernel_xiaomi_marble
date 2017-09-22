@@ -19331,34 +19331,6 @@ QDF_STATUS csr_roam_update_apwpsie(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-QDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac, uint32_t sessionId,
-				      tSirRSNie *pAPSirRSNie)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirUpdateAPWPARSNIEsReq *pMsg;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	if (NULL == pSession) {
-		sme_err("Session does not exist for session id %d",
-			sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirUpdateAPWPARSNIEsReq));
-		if (NULL == pMsg)
-			return QDF_STATUS_E_NOMEM;
-		pMsg->messageType = eWNI_SME_SET_APWPARSNIEs_REQ;
-		pMsg->transactionId = 0;
-		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
-		pMsg->sessionId = sessionId;
-		qdf_mem_copy(&pMsg->APWPARSNIEs, pAPSirRSNie,
-			     sizeof(tSirRSNie));
-		pMsg->length = sizeof(struct sSirUpdateAPWPARSNIEsReq);
-		status = umac_send_mb_message_to_mac(pMsg);
-	} while (0);
-	return status;
-}
-
 /*
  * pBuf points to the beginning of the message
  * LIM packs disassoc rsp as below,

@@ -1278,9 +1278,6 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 QDF_STATUS csr_roam_update_apwpsie(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
 					      tSirAPWPSIEs * pAPWPSIES);
-QDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac,
-						   uint32_t sessionId,
-						   tSirRSNie *pAPSirRSNie);
 void csr_set_cfg_privacy(tpAniSirGlobal pMac,
 						tCsrRoamProfile *pProfile,
 						bool fPrivacy);
