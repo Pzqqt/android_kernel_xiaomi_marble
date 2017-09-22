@@ -4852,94 +4852,6 @@ int iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 }
 
 /**
- * __iw_set_auth_hostap() -
- * This function sets the auth type received from the wpa_supplicant.
- *
- * @dev: pointer to the net device.
- * @info: pointer to the iw_request_info.
- * @wrqu: pointer to the iwreq_data.
- * @extra: pointer to the data.
- *
- * Return: 0 for success, non zero for failure
- */
-static
-int __iw_set_auth_hostap(struct net_device *dev, struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	switch (wrqu->param.flags & IW_AUTH_INDEX) {
-	case IW_AUTH_TKIP_COUNTERMEASURES:
-	{
-		if (wrqu->param.value) {
-			hdd_debug("Counter Measure started %d",
-				 wrqu->param.value);
-			pWextState->mTKIPCounterMeasures =
-				TKIP_COUNTER_MEASURE_STARTED;
-		} else {
-			hdd_debug("Counter Measure stopped=%d",
-				 wrqu->param.value);
-			pWextState->mTKIPCounterMeasures =
-				TKIP_COUNTER_MEASURE_STOPED;
-		}
-
-		hdd_softap_tkip_mic_fail_counter_measure(pAdapter,
-							 wrqu->param.
-							 value);
-	}
-	break;
-
-	default:
-
-		hdd_warn("called with unsupported auth type %d",
-		       wrqu->param.flags & IW_AUTH_INDEX);
-		break;
-	}
-
-	EXIT();
-	return 0;
-}
-
-/**
- * iw_set_auth_hostap() - Wrapper function to protect __iw_set_auth_hostap
- *			from the SSR.
- *
- * @dev - Pointer to the net device.
- * @info - Pointer to the iw_request_info.
- * @wrqu - Pointer to the iwreq_data.
- * @extra - Pointer to the data.
- *
- * Return: 0 for success, non zero for failure.
- */
-static int
-iw_set_auth_hostap(struct net_device *dev,
-			struct iw_request_info *info,
-			union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_auth_hostap(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_ap_encodeext() - set ap encode
  *
  * @dev - Pointer to the net device.
@@ -5759,7 +5671,7 @@ static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* SIOCSIWGENIE */
 	(iw_handler) NULL,      /* SIOCGIWGENIE */
-	(iw_handler) iw_set_auth_hostap,        /* SIOCSIWAUTH */
+	(iw_handler) NULL,      /* SIOCSIWAUTH */
 	(iw_handler) NULL,      /* SIOCGIWAUTH */
 	(iw_handler) iw_set_ap_encodeext,       /* SIOCSIWENCODEEXT */
 	(iw_handler) NULL,      /* SIOCGIWENCODEEXT */
