@@ -1003,17 +1003,6 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 		struct tagCsrDelStaParams *pDelStaParams);
 
 /*
- * csr_roam_issue_tkip_counter_measures() -
- * csr function that HDD calls to start and stop tkip countermeasures
- *
- * sessionId - session Id for Soft AP
- * bEnable   - Flag to start/stop countermeasures
- * Return QDF_STATUS
- */
-QDF_STATUS csr_roam_issue_tkip_counter_measures(tpAniSirGlobal pMac,
-					uint32_t sessionId, bool bEnable);
-
-/*
  * csr_roam_get_associated_stas
  *  csr function that HDD calls to get list of associated stations based on
  * module ID

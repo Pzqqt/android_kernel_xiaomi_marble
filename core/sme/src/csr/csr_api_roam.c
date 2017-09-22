@@ -4088,60 +4088,6 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 	return status;
 }
 
-static QDF_STATUS
-csr_send_mb_tkip_counter_measures_req_msg(tpAniSirGlobal pMac,
-					  uint32_t sessionId, bool bEnable,
-					  struct qdf_mac_addr *bssId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeTkipCntrMeasReq *pMsg;
-
-	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirSmeTkipCntrMeasReq));
-		if (NULL == pMsg)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			break;
-		pMsg->messageType = eWNI_SME_TKIP_CNTR_MEAS_REQ;
-		pMsg->length = sizeof(tSirSmeTkipCntrMeasReq);
-		pMsg->sessionId = sessionId;
-		pMsg->transactionId = 0;
-		qdf_copy_macaddr(&pMsg->bssId, bssId);
-		pMsg->bEnable = bEnable;
-		status = umac_send_mb_message_to_mac(pMsg);
-	} while (0);
-	return status;
-}
-
-QDF_STATUS
-csr_roam_issue_tkip_counter_measures(tpAniSirGlobal pMac, uint32_t sessionId,
-				     bool bEnable)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct qdf_mac_addr bssId = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	if (!pSession) {
-		sme_err("csr_roam_issue_tkip_counter_measures:CSR Session not found");
-		return status;
-	}
-	if (pSession->pConnectBssDesc) {
-		qdf_mem_copy(bssId.bytes, pSession->pConnectBssDesc->bssId,
-			     sizeof(struct qdf_mac_addr));
-	} else {
-		sme_err("csr_roam_issue_tkip_counter_measures:Connected BSS Description in CSR Session not found");
-		return status;
-	}
-	sme_debug("CSR issuing tkip counter measures for Bssid:" MAC_ADDRESS_STR" Enable: %d",
-		MAC_ADDR_ARRAY(bssId.bytes), bEnable);
-	status =
-		csr_send_mb_tkip_counter_measures_req_msg(pMac, sessionId,
-							bEnable, &bssId);
-	return status;
-}
-
 QDF_STATUS
 csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
 			     QDF_MODULE_ID modId, void *pUsrContext,
