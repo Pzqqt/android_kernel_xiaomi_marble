@@ -868,8 +868,6 @@ QDF_STATUS wlansap_set_mode(void *p_cds_gctx, uint32_t mode);
 QDF_STATUS wlansap_get_acl_mode(void *p_cds_gctx, eSapMacAddrACL *mode);
 QDF_STATUS wlansap_modify_acl(void *p_cds_gctx,
 	 uint8_t *pPeerStaMac, eSapACLType listType, eSapACLCmdType cmd);
-QDF_STATUS wlansap_set_wparsn_ies
-	(void *p_cds_gctx, uint8_t *pWPARSNIEs, uint32_t WPARSNIEsLen);
 QDF_STATUS wlansap_send_action
 	(void *p_cds_gctx,
 	 const uint8_t *pBuf, uint32_t len, uint16_t wait, uint16_t channel_freq);

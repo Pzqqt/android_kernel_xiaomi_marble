@@ -1807,58 +1807,6 @@ wlan_sap_getstation_ie_information
 }
 
 /**
- * wlansap_set_wparsn_ies() - set WPA  RSN IEs
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @pWPARSNIEs  : buffer to the WPA/RSN IEs
- * @WPARSNIEsLen: length of WPA/RSN IEs
- *
- * This api function provides for Ap App/HDD to set AP WPA and RSN IE in its
- * beacon and probe response.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_set_wparsn_ies
-	(void *pCtx, uint8_t *pWPARSNIEs, uint32_t WPARSNIEsLen) {
-	struct sap_context *pSapCtx = NULL;
-	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
-	void *hHal = NULL;
-
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
-	if (NULL == pSapCtx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	hHal = CDS_GET_HAL_CB();
-	if (NULL == hHal) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid HAL pointer from p_cds_gctx",
-			  __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	pSapCtx->APWPARSNIEs.length = (uint16_t) WPARSNIEsLen;
-	qdf_mem_copy(pSapCtx->APWPARSNIEs.rsnIEdata, pWPARSNIEs,
-		     WPARSNIEsLen);
-
-	qdf_ret_status =
-		sme_roam_update_apwparsni_es(hHal, pSapCtx->sessionId,
-					     &pSapCtx->APWPARSNIEs);
-
-	if (qdf_ret_status == QDF_STATUS_SUCCESS)
-		return QDF_STATUS_SUCCESS;
-	else
-		return QDF_STATUS_E_FAULT;
-
-	return QDF_STATUS_E_FAULT;
-}
-
-/**
  * wlansap_send_action() - send action frame
  * @pCtx: Pointer to the global cds context; a handle to SAP's control block
  *        can be extracted from its context. When MBSSID feature is enabled,
