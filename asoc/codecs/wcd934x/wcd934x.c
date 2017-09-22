@@ -5577,6 +5577,66 @@ static int tavil_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int tavil_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max = 0;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	bst_state_max = snd_soc_read(codec, WCD934X_CDC_BOOST0_BOOST_CTL);
+	bst_state_max = (bst_state_max & 0x0c) >> 2;
+	ucontrol->value.integer.value[0] = bst_state_max;
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int tavil_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+	bst_state_max =  ucontrol->value.integer.value[0] << 2;
+	snd_soc_update_bits(codec, WCD934X_CDC_BOOST0_BOOST_CTL,
+		0x0c, bst_state_max);
+
+	return 0;
+}
+
+static int tavil_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max = 0;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	bst_state_max = snd_soc_read(codec, WCD934X_CDC_BOOST1_BOOST_CTL);
+	bst_state_max = (bst_state_max & 0x0c) >> 2;
+	ucontrol->value.integer.value[0] = bst_state_max;
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int tavil_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+	bst_state_max =  ucontrol->value.integer.value[0] << 2;
+	snd_soc_update_bits(codec, WCD934X_CDC_BOOST1_BOOST_CTL,
+		0x0c, bst_state_max);
+
+	return 0;
+}
+
 static int tavil_rx_hph_mode_get(struct snd_kcontrol *kcontrol,
 				 struct snd_ctl_elem_value *ucontrol)
 {
@@ -5655,9 +5715,15 @@ static const char * const tavil_ear_spkr_pa_gain_text[] = {
 	"G_4_DB", "G_5_DB", "G_6_DB"
 };
 
+static const char * const tavil_speaker_boost_stage_text[] = {
+	"NO_MAX_STATE", "MAX_STATE_1", "MAX_STATE_2"
+};
+
 static SOC_ENUM_SINGLE_EXT_DECL(tavil_ear_pa_gain_enum, tavil_ear_pa_gain_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tavil_ear_spkr_pa_gain_enum,
 				tavil_ear_spkr_pa_gain_text);
+static SOC_ENUM_SINGLE_EXT_DECL(tavil_spkr_boost_stage_enum,
+			tavil_speaker_boost_stage_text);
 static SOC_ENUM_SINGLE_EXT_DECL(amic_pwr_lvl_enum, amic_pwr_lvl_text);
 static SOC_ENUM_SINGLE_EXT_DECL(hph_idle_detect_enum, hph_idle_detect_text);
 static SOC_ENUM_SINGLE_EXT_DECL(asrc_mode_enum, asrc_mode_text);
@@ -5713,6 +5779,12 @@ static const struct snd_kcontrol_new tavil_snd_controls[] = {
 		tavil_ear_pa_gain_get, tavil_ear_pa_gain_put),
 	SOC_ENUM_EXT("EAR SPKR PA Gain", tavil_ear_spkr_pa_gain_enum,
 		     tavil_ear_spkr_pa_gain_get, tavil_ear_spkr_pa_gain_put),
+	SOC_ENUM_EXT("SPKR Left Boost Max State", tavil_spkr_boost_stage_enum,
+		     tavil_spkr_left_boost_stage_get,
+		     tavil_spkr_left_boost_stage_put),
+	SOC_ENUM_EXT("SPKR Right Boost Max State", tavil_spkr_boost_stage_enum,
+		     tavil_spkr_right_boost_stage_get,
+		     tavil_spkr_right_boost_stage_put),
 	SOC_SINGLE_TLV("HPHL Volume", WCD934X_HPH_L_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("HPHR Volume", WCD934X_HPH_R_EN, 0, 20, 1, line_gain),
 	SOC_SINGLE_TLV("LINEOUT1 Volume", WCD934X_DIFF_LO_LO1_COMPANDER,

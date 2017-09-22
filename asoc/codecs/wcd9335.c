@@ -8659,6 +8659,66 @@ static int tasha_ear_spkr_pa_gain_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
+static int tasha_spkr_left_boost_stage_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max = 0;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	bst_state_max = snd_soc_read(codec, WCD9335_CDC_BOOST0_BOOST_CTL);
+	bst_state_max = (bst_state_max & 0x0c) >> 2;
+	ucontrol->value.integer.value[0] = bst_state_max;
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int tasha_spkr_left_boost_stage_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+	bst_state_max =  ucontrol->value.integer.value[0] << 2;
+	snd_soc_update_bits(codec, WCD9335_CDC_BOOST0_BOOST_CTL,
+		0x0c, bst_state_max);
+
+	return 0;
+}
+
+static int tasha_spkr_right_boost_stage_get(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max = 0;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	bst_state_max = snd_soc_read(codec, WCD9335_CDC_BOOST1_BOOST_CTL);
+	bst_state_max = (bst_state_max & 0x0c) >> 2;
+	ucontrol->value.integer.value[0] = bst_state_max;
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+
+	return 0;
+}
+
+static int tasha_spkr_right_boost_stage_put(struct snd_kcontrol *kcontrol,
+			      struct snd_ctl_elem_value *ucontrol)
+{
+	u8 bst_state_max;
+	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
+
+	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0]  = %ld\n",
+			__func__, ucontrol->value.integer.value[0]);
+	bst_state_max =  ucontrol->value.integer.value[0] << 2;
+	snd_soc_update_bits(codec, WCD9335_CDC_BOOST1_BOOST_CTL,
+		0x0c, bst_state_max);
+
+	return 0;
+}
+
 static int tasha_config_compander(struct snd_soc_codec *codec, int interp_n,
 				  int event)
 {
@@ -8953,6 +9013,10 @@ static const char * const tasha_ear_spkr_pa_gain_text[] = {
 	"G_5_DB", "G_6_DB"
 };
 
+static const char * const tasha_speaker_boost_stage_text[] = {
+	"NO_MAX_STATE", "MAX_STATE_1", "MAX_STATE_2"
+};
+
 static const struct soc_enum tasha_ear_pa_gain_enum =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tasha_ear_pa_gain_text),
 			tasha_ear_pa_gain_text);
@@ -8961,12 +9025,24 @@ static const struct soc_enum tasha_ear_spkr_pa_gain_enum =
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tasha_ear_spkr_pa_gain_text),
 			    tasha_ear_spkr_pa_gain_text);
 
+static const struct soc_enum tasha_spkr_boost_stage_enum =
+	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(tasha_speaker_boost_stage_text),
+			    tasha_speaker_boost_stage_text);
+
 static const struct snd_kcontrol_new tasha_analog_gain_controls[] = {
 	SOC_ENUM_EXT("EAR PA Gain", tasha_ear_pa_gain_enum,
 		tasha_ear_pa_gain_get, tasha_ear_pa_gain_put),
 
 	SOC_ENUM_EXT("EAR SPKR PA Gain", tasha_ear_spkr_pa_gain_enum,
 		     tasha_ear_spkr_pa_gain_get, tasha_ear_spkr_pa_gain_put),
+
+	SOC_ENUM_EXT("SPKR Left Boost Max State", tasha_spkr_boost_stage_enum,
+			tasha_spkr_left_boost_stage_get,
+			tasha_spkr_left_boost_stage_put),
+
+	SOC_ENUM_EXT("SPKR Right Boost Max State", tasha_spkr_boost_stage_enum,
+			tasha_spkr_right_boost_stage_get,
+			tasha_spkr_right_boost_stage_put),
 
 	SOC_SINGLE_TLV("HPHL Volume", WCD9335_HPH_L_EN, 0, 20, 1,
 		line_gain),
