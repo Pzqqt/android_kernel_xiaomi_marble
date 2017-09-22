@@ -115,8 +115,6 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 		struct tagCsrDelStaParams *pDelStaParams);
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     struct tagCsrDelStaParams *pDelStaParams);
-void hdd_softap_tkip_mic_fail_counter_measure(struct hdd_adapter *adapter,
-					      bool enable);
 int hdd_softap_unpack_ie(tHalHandle halHandle,
 			 eCsrEncryptionType *pEncryptType,
 			 eCsrEncryptionType *mcEncryptType,

@@ -10187,18 +10187,6 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     pDelStaParams);
 }
 
-void hdd_softap_tkip_mic_fail_counter_measure(struct hdd_adapter *adapter,
-					      bool enable)
-{
-	ENTER();
-
-	hdd_debug("hdd_softap_tkip_mic_fail_counter_measure:(%pK, false)",
-	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
-
-	wlansap_set_counter_measure(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				    (bool) enable);
-}
-
 /**
  * hdd_issta_p2p_clientconnected() - check if sta or p2p client is connected
  * @hdd_ctx:	HDD Context
