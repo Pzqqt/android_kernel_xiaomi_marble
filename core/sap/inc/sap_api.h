@@ -856,7 +856,6 @@ QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
 	uint32_t targetChannel, enum phy_ch_width target_bw, bool strict);
 QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
-QDF_STATUS wlansap_set_counter_measure(void *p_cds_gctx, bool bEnable);
 QDF_STATUS wlan_sap_getstation_ie_information(void *p_cds_gctx,
 	uint32_t *pLen, uint8_t *pBuf);
 QDF_STATUS wlansap_clear_acl(void *p_cds_gctx);

@@ -1674,48 +1674,6 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 }
 
 /**
- * wlansap_set_counter_measure() - set counter measure.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @bEnable: If true than all stations will be disassociated and no more
- *           will be allowed to associate. If false than CORE will come out
- *            of this state.
- *
- * This api function is used to disassociate all the stations and prevent
- * association for any other station.Whenever Authenticator receives 2 mic
- * failures within 60 seconds, Authenticator will enable counter measure at
- * SAP Layer. Authenticator will start the 60 seconds timer. Core stack will
- * not allow any STA to associate till HDD disables counter meassure. Core
- * stack shall kick out all the STA which are currently associated and DIASSOC
- * Event will be propogated to HDD for each STA to clean up the HDD STA table.
- * Once the 60 seconds timer expires, Authenticator will disable the counter
- * meassure at core stack. Now core stack can allow STAs to associate.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success
- */
-QDF_STATUS wlansap_set_counter_measure(void *pCtx, bool bEnable)
-{
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
-
-	/*------------------------------------------------------------------------
-	   Sanity check
-	   Extract SAP control block
-	   ------------------------------------------------------------------------*/
-	if (NULL == pSapCtx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	sme_roam_tkip_counter_measures(CDS_GET_HAL_CB(),
-				       pSapCtx->sessionId, bEnable);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wlansap_set_key_sta() - set keys for a stations.
  * @pCtx: Pointer to the global cds context; a handle to SAP's control block
  *        can be extracted from its context. When MBSSID feature is enabled,
