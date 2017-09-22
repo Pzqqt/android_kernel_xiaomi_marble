@@ -333,8 +333,6 @@ QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
 		struct tagCsrDelStaParams *p_del_sta_params);
 QDF_STATUS sme_roam_deauth_sta(tHalHandle hHal, uint8_t sessionId,
 		struct tagCsrDelStaParams *pDelStaParams);
-QDF_STATUS sme_roam_tkip_counter_measures(tHalHandle hHal, uint8_t sessionId,
-		bool bEnable);
 QDF_STATUS sme_roam_get_wps_session_overlap(tHalHandle hHal, uint8_t sessionId,
 		void *pUsrContext,
 		void *pfnSapEventCallback,

@@ -3690,40 +3690,6 @@ QDF_STATUS sme_roam_deauth_sta(tHalHandle hHal, uint8_t sessionId,
 }
 
 /*
- * sme_roam_tkip_counter_measures() -
- * To start or stop TKIP counter measures. This is an asynchronous API.
- *
- * sessionId - sessionId of SoftAP
- * pPeerMacAddr - Caller allocated memory filled with peer MAC address (6 bytes)
- * Return QDF_STATUS
- */
-QDF_STATUS sme_roam_tkip_counter_measures(tHalHandle hHal, uint8_t sessionId,
-					  bool bEnable)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (NULL == pMac) {
-		QDF_ASSERT(0);
-		return status;
-	}
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (CSR_IS_SESSION_VALID(pMac, sessionId))
-			status =
-				csr_roam_issue_tkip_counter_measures(pMac,
-								     sessionId,
-								     bEnable);
-		else
-			status = QDF_STATUS_E_INVAL;
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_roam_get_associated_stas() -
  * To probe the list of associated stations from various modules
  *	 of CORE stack.
