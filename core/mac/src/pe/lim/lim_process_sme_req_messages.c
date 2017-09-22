@@ -4142,52 +4142,6 @@ static void __lim_process_sme_session_update(tpAniSirGlobal mac_ctx,
 	}
 }
 
-static void __lim_process_sme_set_wparsni_es(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
-{
-	tpSirUpdateAPWPARSNIEsReq pUpdateAPWPARSNIEsReq;
-	tpPESession psessionEntry;
-	uint8_t sessionId;      /* PE sessionID */
-
-	if (pMsgBuf == NULL) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	pUpdateAPWPARSNIEsReq = qdf_mem_malloc(sizeof(tSirUpdateAPWPSIEsReq));
-	if (NULL == pUpdateAPWPARSNIEsReq) {
-		pe_err("call to AllocateMemory failed for pUpdateAPWPARSNIEsReq");
-		return;
-	}
-	qdf_mem_copy(pUpdateAPWPARSNIEsReq, pMsgBuf,
-			sizeof(struct sSirUpdateAPWPARSNIEsReq));
-
-	psessionEntry = pe_find_session_by_bssid(pMac,
-				pUpdateAPWPARSNIEsReq->bssid.bytes,
-				&sessionId);
-	if (psessionEntry == NULL) {
-		pe_warn("Session does not exist for given BSSID");
-		goto end;
-	}
-
-	qdf_mem_copy(&psessionEntry->pLimStartBssReq->rsnIE,
-		     &pUpdateAPWPARSNIEsReq->APWPARSNIEs, sizeof(tSirRSNie));
-
-	lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(pMac,
-							    &psessionEntry->
-							    pLimStartBssReq->rsnIE,
-							    psessionEntry);
-
-	psessionEntry->pLimStartBssReq->privacy = 1;
-	psessionEntry->privacy = 1;
-
-	sch_set_fixed_beacon_fields(pMac, psessionEntry);
-	lim_send_beacon_ind(pMac, psessionEntry);
-
-end:
-	qdf_mem_free(pUpdateAPWPARSNIEsReq);
-	return;
-} /*** end __lim_process_sme_set_wparsni_es(tpAniSirGlobal pMac, uint32_t *pMsgBuf) ***/
-
 /*
    Update the beacon Interval dynamically if beaconInterval is different in MCC
  */
@@ -5136,11 +5090,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_GET_WPSPBC_SESSION_REQ:
 		lim_process_sme_get_wpspbc_sessions(pMac, pMsgBuf);
 		break;
-
-	case eWNI_SME_SET_APWPARSNIEs_REQ:
-		__lim_process_sme_set_wparsni_es(pMac, pMsgBuf);
-		break;
-
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
 		/* Update the beaconInterval */
 		__lim_process_sme_change_bi(pMac, pMsgBuf);
