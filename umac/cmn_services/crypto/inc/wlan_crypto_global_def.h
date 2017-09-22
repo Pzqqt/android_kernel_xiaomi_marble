@@ -243,6 +243,10 @@ struct wlan_crypto_req_key {
 	uint64_t   keytsc;
 	/* key value */
 	uint8_t    keydata[WLAN_CRYPTO_KEYBUF_SIZE + WLAN_CRYPTO_MICBUF_SIZE];
+	/* wapi key tx iv */
+	uint8_t    txiv[WLAN_CRYPTO_WAPI_IV_SIZE];
+	/* wapi key rx iv */
+	uint8_t    recviv[WLAN_CRYPTO_WAPI_IV_SIZE];
 };
 
 /**

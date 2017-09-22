@@ -633,6 +633,14 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 			return QDF_STATUS_SUCCESS;
 
 		req_key->type = cipher_table->cipher;
+		if (req_key->type == WLAN_CRYPTO_CIPHER_WAPI_SMS4) {
+			qdf_mem_copy((uint8_t *)(&req_key->txiv),
+					(uint8_t *)(key->txiv),
+					sizeof(req_key->txiv));
+			qdf_mem_copy((uint8_t *)(&req_key->recviv),
+					(uint8_t *)(key->recviv),
+					sizeof(req_key->recviv));
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
