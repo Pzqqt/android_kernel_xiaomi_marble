@@ -3878,47 +3878,6 @@ __lim_process_sme_get_tsm_stats_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 }
 #endif /* FEATURE_WLAN_ESE */
 
-static void
-__lim_process_sme_update_apwpsi_es(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
-{
-	tpSirUpdateAPWPSIEsReq pUpdateAPWPSIEsReq;
-	tpPESession psessionEntry;
-	uint8_t sessionId;      /* PE sessionID */
-
-	pe_debug("received UPDATE_APWPSIEs_REQ message");
-
-	if (pMsgBuf == NULL) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	pUpdateAPWPSIEsReq = qdf_mem_malloc(sizeof(tSirUpdateAPWPSIEsReq));
-	if (NULL == pUpdateAPWPSIEsReq) {
-		pe_err("call to AllocateMemory failed for pUpdateAPWPSIEsReq");
-		return;
-	}
-	qdf_mem_copy(pUpdateAPWPSIEsReq, pMsgBuf,
-			sizeof(struct sSirUpdateAPWPSIEsReq));
-
-	psessionEntry = pe_find_session_by_bssid(pMac,
-				pUpdateAPWPSIEsReq->bssid.bytes,
-				&sessionId);
-	if (psessionEntry == NULL) {
-		pe_warn("Session does not exist for given BSSID");
-		goto end;
-	}
-
-	qdf_mem_copy(&psessionEntry->APWPSIEs, &pUpdateAPWPSIEsReq->APWPSIEs,
-		     sizeof(tSirAPWPSIEs));
-
-	sch_set_fixed_beacon_fields(pMac, psessionEntry);
-	lim_send_beacon_ind(pMac, psessionEntry);
-
-end:
-	qdf_mem_free(pUpdateAPWPSIEsReq);
-	return;
-}
-
 static void lim_process_sme_update_config(tpAniSirGlobal mac_ctx,
 					  struct update_config *msg)
 {
@@ -5056,9 +5015,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 		__lim_process_roam_scan_offload_req(pMac, pMsgBuf);
 		bufConsumed = false;
-		break;
-	case eWNI_SME_UPDATE_APWPSIE_REQ:
-		__lim_process_sme_update_apwpsi_es(pMac, pMsgBuf);
 		break;
 	case eWNI_SME_GET_WPSPBC_SESSION_REQ:
 		lim_process_sme_get_wpspbc_sessions(pMac, pMsgBuf);
