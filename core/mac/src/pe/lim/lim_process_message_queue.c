@@ -1447,7 +1447,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_ADDTS_REQ:
 	case eWNI_SME_DELTS_REQ:
 	case eWNI_SME_GET_ASSOC_STAS_REQ:
-	case eWNI_SME_TKIP_CNTR_MEAS_REQ:
 	case eWNI_SME_UPDATE_APWPSIE_REQ:
 	case eWNI_SME_SESSION_UPDATE_PARAM:
 	case eWNI_SME_GET_WPSPBC_SESSION_REQ:

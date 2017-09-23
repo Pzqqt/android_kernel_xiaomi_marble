@@ -3190,29 +3190,6 @@ static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntr
 					     mac, psessionEntry, false);
 };
 
-static void lim_process_tkip_counter_measures(tpAniSirGlobal pMac,
-					      uint32_t *pMsgBuf)
-{
-	tSirSmeTkipCntrMeasReq tkipCntrMeasReq;
-	tpPESession psessionEntry;
-	uint8_t sessionId;      /* PE sessionId */
-
-	qdf_mem_copy(&tkipCntrMeasReq, pMsgBuf,
-			sizeof(struct sSirSmeTkipCntrMeasReq));
-
-	psessionEntry = pe_find_session_by_bssid(pMac,
-				tkipCntrMeasReq.bssId.bytes, &sessionId);
-	if (NULL == psessionEntry) {
-		pe_err("session does not exist for given BSSID");
-		return;
-	}
-
-	if (tkipCntrMeasReq.bEnable)
-		__lim_counter_measures(pMac, psessionEntry);
-
-	psessionEntry->bTkipCntrMeasActive = tkipCntrMeasReq.bEnable;
-}
-
 static void
 __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
@@ -5073,10 +5050,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_GET_ASSOC_STAS_REQ:
 		lim_process_sme_get_assoc_sta_info(pMac, pMsgBuf);
 		break;
-	case eWNI_SME_TKIP_CNTR_MEAS_REQ:
-		lim_process_tkip_counter_measures(pMac, pMsgBuf);
-		break;
-
 	case eWNI_SME_SESSION_UPDATE_PARAM:
 		__lim_process_sme_session_update(pMac, pMsgBuf);
 		break;
