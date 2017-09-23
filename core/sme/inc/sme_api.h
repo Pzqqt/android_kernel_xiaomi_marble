@@ -499,8 +499,6 @@ QDF_STATUS sme_oem_update_capability(tHalHandle hHal,
 QDF_STATUS sme_oem_get_capability(tHalHandle hHal,
 				  struct sme_oem_capability *cap);
 #endif /*FEATURE_OEM_DATA_SUPPORT */
-QDF_STATUS sme_roam_update_apwpsie(tHalHandle, uint8_t sessionId,
-		tSirAPWPSIEs * pAPWPSIES);
 QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId);
 QDF_STATUS sme_set_host_offload(tHalHandle hHal, uint8_t sessionId,
 		tpSirHostOffloadReq pRequest);

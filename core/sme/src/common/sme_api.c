@@ -5591,34 +5591,6 @@ QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 }
 
 /*
- * sme_roam_update_apwpsie() -
- * To update AP's WPS IE. This function should be called after SME AP session is
- * created
- *   This is an asynchronous API.
- *
- * pAPWPSIES - pointer to a caller allocated object of tSirAPWPSIEs
- * Return QDF_STATUS  SUCCESS 
- * FAILURE or RESOURCES  The API finished and failed.
- */
-QDF_STATUS sme_roam_update_apwpsie(tHalHandle hHal, uint8_t sessionId,
-				   tSirAPWPSIEs *pAPWPSIES)
-{
-
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-
-		status = csr_roam_update_apwpsie(pMac, sessionId, pAPWPSIES);
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
-/*
  * sme_change_mcc_beacon_interval() -
  * To update P2P-GO beaconInterval. This function should be called after
  *    disassociating all the station is done
