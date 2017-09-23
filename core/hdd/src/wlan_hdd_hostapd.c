@@ -4852,46 +4852,6 @@ int iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 }
 
 /**
- * __iw_set_ap_mlme() - set ap mlme
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu; pointer to iwreq_data
- * @extra: extra
- *
- * Return; 0 on success, error number otherwise
- */
-static int __iw_set_ap_mlme(struct net_device *dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	ENTER_DEV(dev);
-	return 0;
-}
-
-/**
- * iw_set_ap_mlme() - SSR wrapper for __iw_set_ap_mlme
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu; pointer to iwreq_data
- * @extra: extra
- *
- * Return; 0 on success, error number otherwise
- */
-static int iw_set_ap_mlme(struct net_device *dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu,
-			  char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_ap_mlme(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_ap_freq() - get ap frequency
  * @dev - Pointer to the net device.
  * @info - Pointer to the iw_request_info.
@@ -5474,7 +5434,7 @@ static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* SIOCGIWTHRSPY */
 	(iw_handler) NULL,      /* SIOCSIWAP */
 	(iw_handler) NULL,      /* SIOCGIWAP */
-	(iw_handler) iw_set_ap_mlme,            /* SIOCSIWMLME */
+	(iw_handler) NULL,      /* SIOCSIWMLME */
 	(iw_handler) NULL,      /* SIOCGIWAPLIST */
 	(iw_handler) NULL,      /* SIOCSIWSCAN */
 	(iw_handler) NULL,      /* SIOCGIWSCAN */
