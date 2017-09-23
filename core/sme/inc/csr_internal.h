@@ -1275,9 +1275,6 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 		tDot11fBeaconIEs *pIes, tCsrWapiIe *pWapiIe);
 #endif /* FEATURE_WLAN_WAPI */
 
-QDF_STATUS csr_roam_update_apwpsie(tpAniSirGlobal pMac,
-					       uint32_t sessionId,
-					      tSirAPWPSIEs * pAPWPSIES);
 void csr_set_cfg_privacy(tpAniSirGlobal pMac,
 						tCsrRoamProfile *pProfile,
 						bool fPrivacy);
