@@ -6523,6 +6523,15 @@ typedef struct {
 #define WMI_SGI_HE_1600_NS     0x8 /* for HE 1600 nsec */
 #define WMI_SGI_HE_3200_NS    0x10 /* for HE 3200 nsec */
 
+/*
+ * Param values to be sent for WMI_VDEV_PARAM_HE_LTF command
+ * which are used in 11ax systems
+ */
+#define WMI_HE_LTF_DEFAULT 0x0
+#define WMI_HE_LTF_1X      0x1
+#define WMI_HE_LTF_2X      0x2
+#define WMI_HE_LTF_4X      0x3
+
 /** values for vdev_subtype */
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE 0x1
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT 0x2
@@ -7711,6 +7720,14 @@ typedef enum {
      * This parameter will be applied only for scans triggered on this VDEV.
      */
     WMI_VDEV_PARAM_REPEAT_PROBE_TIME, /* units = milliseconds */
+
+    /** specify the HE LTF setting that should be used for fixed rate
+     * transmissions.
+     *
+     * Expects values of WMI_HE_LTF_DEFAULT, WMI_HE_LTF_1X, WMI_HE_LTF_2X,
+     * or WMI_HE_LTF_4X.
+     */
+    WMI_VDEV_PARAM_HE_LTF,
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
