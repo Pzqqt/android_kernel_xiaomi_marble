@@ -5145,7 +5145,6 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 				hdd_debug("Update TL about UAPSD masks");
 				for (ac = 0; ac < 4; ac++) {
 					status = sme_enable_uapsd_for_ac(
-						 (WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
 						 peer_staid, ucAc[ac],
 						 tlTid[ac], tlTid[ac], 0, 0,
 						 SME_QOS_WMM_TS_DIR_BOTH, 1,

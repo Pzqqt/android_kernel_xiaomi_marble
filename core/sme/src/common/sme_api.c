@@ -13804,23 +13804,7 @@ QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal mac)
 	return status;
 }
 
-/**
- * sme_enable_uapsd_for_ac() - enable uapsd for access catagory requerst to WMA
- * @cds_ctx: cds context
- * @sta_id: station id
- * @ac: access catagory
- * @tid: tid value
- * @pri: user priority
- * @srvc_int: service interval
- * @sus_int: suspend interval
- * @dir: tspec direction
- * @psb: PSB value
- * @sessionId: session id
- * @delay_interval: delay interval
- *
- * Return: QDF status
- */
-QDF_STATUS sme_enable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
+QDF_STATUS sme_enable_uapsd_for_ac(uint8_t sta_id,
 				   sme_ac_enum_type ac, uint8_t tid,
 				   uint8_t pri, uint32_t srvc_int,
 				   uint32_t sus_int,
@@ -13878,16 +13862,7 @@ QDF_STATUS sme_enable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sme_disable_uapsd_for_ac() - disable uapsed access catagory request to WMA
- * @cds_ctx: cds context
- * @sta_id: station id
- * @ac: access catagory
- * @sessionId: session id
- *
- * Return: QDF status
- */
-QDF_STATUS sme_disable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
+QDF_STATUS sme_disable_uapsd_for_ac(uint8_t sta_id,
 				       sme_ac_enum_type ac,
 				       uint32_t sessionId)
 {

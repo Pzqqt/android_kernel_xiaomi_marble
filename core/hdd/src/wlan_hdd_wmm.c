@@ -165,8 +165,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	}
 	/* everything is in place to notify TL */
 	status =
-		sme_enable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
-					   (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
+		sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
 					   conn_info.staId[0], acType,
 					   pAc->wmmAcTspecInfo.ts_info.tid,
 					   pAc->wmmAcTspecInfo.ts_info.up,
@@ -208,9 +207,7 @@ static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 	/* have we previously enabled UAPSD? */
 	if (pAc->wmmAcUapsdInfoValid == true) {
 		status =
-			sme_disable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->
-						    pcds_context,
-						    (WLAN_HDD_GET_STATION_CTX_PTR
+			sme_disable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							     (pAdapter))->conn_info.staId[0],
 						    acType, pAdapter->sessionId);
 
@@ -1832,9 +1829,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 
 	if (uapsdMask & HDD_AC_VO) {
 		status =
-			sme_enable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->
-						   pcds_context,
-						   (WLAN_HDD_GET_STATION_CTX_PTR
+			sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_VO, 7, 7,
 						   hdd_ctx->config->InfraUapsdVoSrvIntv,
@@ -1848,9 +1843,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 
 	if (uapsdMask & HDD_AC_VI) {
 		status =
-			sme_enable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->
-						   pcds_context,
-						   (WLAN_HDD_GET_STATION_CTX_PTR
+			sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_VI, 5, 5,
 						   hdd_ctx->config->InfraUapsdViSrvIntv,
@@ -1864,9 +1857,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 
 	if (uapsdMask & HDD_AC_BK) {
 		status =
-			sme_enable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->
-						   pcds_context,
-						   (WLAN_HDD_GET_STATION_CTX_PTR
+			sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_BK, 2, 2,
 						   hdd_ctx->config->InfraUapsdBkSrvIntv,
@@ -1880,9 +1871,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
 
 	if (uapsdMask & HDD_AC_BE) {
 		status =
-			sme_enable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->
-						   pcds_context,
-						   (WLAN_HDD_GET_STATION_CTX_PTR
+			sme_enable_uapsd_for_ac((WLAN_HDD_GET_STATION_CTX_PTR
 							    (pAdapter))->conn_info.staId[0],
 						   SME_AC_BE, 3, 3,
 						   hdd_ctx->config->InfraUapsdBeSrvIntv,
