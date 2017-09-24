@@ -595,16 +595,6 @@ typedef struct WLAN_WAPI_KEY *pWLAN_WAPI_KEY;
 #define WAPI_PSK_AKM_SUITE  0x02721400
 #define WAPI_CERT_AKM_SUITE 0x01721400
 
-/* WAPI BKID List structure definition */
-struct _WLAN_BKID_LIST {
-	uint32_t length;
-	uint32_t BKIDCount;
-	WAPI_BKID BKID[1];
-} __packed;
-
-typedef struct _WLAN_BKID_LIST WLAN_BKID_LIST;
-typedef struct _WLAN_BKID_LIST *pWLAN_BKID_LIST;
-
 /**
  * struct hdd_wapi_info - WAPI Information structure definition
  * @nWapiMode: Is WAPI enabled on this adapter?
