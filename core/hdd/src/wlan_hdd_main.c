@@ -7833,7 +7833,7 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 
 	hdd_override_ini_config(hdd_ctx);
 
-	((cds_context_type *) (p_cds_context))->pHDDContext = (void *)hdd_ctx;
+	cds_set_context(QDF_MODULE_ID_HDD, hdd_ctx);
 
 	ret = hdd_context_init(hdd_ctx);
 

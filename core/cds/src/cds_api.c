@@ -1495,6 +1495,9 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 	}
 
 	switch (module_id) {
+	case QDF_MODULE_ID_HDD:
+		p_cds_context->pHDDContext = context;
+		break;
 	case QDF_MODULE_ID_TXRX:
 		p_cds_context->pdev_txrx_ctx = context;
 		break;
