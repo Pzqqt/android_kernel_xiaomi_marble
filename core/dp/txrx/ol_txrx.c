@@ -4739,7 +4739,6 @@ static inline int ol_txrx_drop_nbuf_list(qdf_nbuf_t buf_list)
 static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 			  qdf_nbuf_t buf_list, uint16_t staid)
 {
-	void *cds_ctx = cds_get_global_context();
 	void *osif_dev;
 	uint8_t drop_count = 0;
 	qdf_nbuf_t buf, next_buf;
@@ -4747,7 +4746,7 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 	ol_txrx_rx_fp data_rx = NULL;
 	struct ol_txrx_peer_t *peer;
 
-	if (qdf_unlikely(!cds_ctx) || qdf_unlikely(!pdev))
+	if (qdf_unlikely(!pdev))
 		goto free_buf;
 
 	/* Do not use peer directly. Derive peer from staid to
@@ -5006,7 +5005,6 @@ static QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 
 /**
  * ol_txrx_register_ocb_peer - Function to register the OCB peer
- * @cds_ctx: Pointer to the global OS context
  * @mac_addr: MAC address of the self peer
  * @peer_id: Pointer to the peer ID
  *
