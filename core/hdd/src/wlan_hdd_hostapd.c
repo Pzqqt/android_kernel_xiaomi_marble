@@ -6087,7 +6087,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *pAdapter, bool reinit)
 	struct net_device *dev = pAdapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	QDF_STATUS status;
-	v_CONTEXT_t sapContext = NULL;
+	struct sap_context *sapContext = NULL;
 	int ret;
 	enum tQDF_ADAPTER_MODE mode;
 	enum dfs_mode acs_dfs_mode;

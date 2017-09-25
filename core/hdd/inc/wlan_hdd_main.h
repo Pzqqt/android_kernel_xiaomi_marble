@@ -948,7 +948,7 @@ struct hdd_ap_ctx {
 	bool bApActive;
 
 	/* SAP Context */
-	void *sapContext;
+	struct sap_context *sapContext;
 
 	bool dfs_cac_block_tx;
 	qdf_mc_timer_t vendor_acs_timer;

@@ -251,16 +251,7 @@ void wlansap_context_put(struct sap_context *ctx)
 	qdf_mutex_release(&sap_context_lock);
 }
 
-/**
- * wlansap_open() - WLAN SAP open function call
- *
- * Called at driver initialization (cds_open). SAP will initialize
- * all its internal resources and will wait for the call to start to
- * register with the other modules.
- *
- * Return: Pointer to the SAP context
- */
-void *wlansap_open(void)
+struct sap_context *wlansap_open(void)
 {
 	struct sap_context *pSapCtx;
 	QDF_STATUS status;
