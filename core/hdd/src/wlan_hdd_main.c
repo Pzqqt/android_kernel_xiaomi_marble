@@ -11493,6 +11493,7 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 	case QDF_GLOBAL_FTM_MODE:
 		if (driver_status != DRIVER_MODULES_CLOSED) {
 			hdd_abort_mac_scan_all_adapters(hdd_ctx);
+			wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
 			hdd_stop_all_adapters(hdd_ctx);
 		}
 		hdd_deinit_all_adapters(hdd_ctx, false);
