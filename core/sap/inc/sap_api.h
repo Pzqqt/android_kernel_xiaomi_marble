@@ -1349,7 +1349,15 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 				tsap_Config_t *pconfig,
 				void *pusr_context);
 
-uint32_t wlansap_get_chan_width(void *cds_ctx);
+/**
+ * wlansap_get_chan_width() - get sap channel width.
+ * @sap_ctx: pointer to the SAP context
+ *
+ * This function get channel width of sap.
+ *
+ * Return: sap channel width
+ */
+uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
 
 QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 			uint16_t tx_leakage_threshold);

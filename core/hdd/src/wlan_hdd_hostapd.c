@@ -2829,7 +2829,7 @@ static iw_softap_set_ini_cfg(struct net_device *dev,
 
 static int hdd_sap_get_chan_width(struct hdd_adapter *adapter, int *value)
 {
-	void *cds_ctx;
+	struct sap_context *sap_ctx;
 	hdd_hostapd_state_t *hostapdstate;
 
 	ENTER();
@@ -2840,9 +2840,9 @@ static int hdd_sap_get_chan_width(struct hdd_adapter *adapter, int *value)
 		return -EINVAL;
 	}
 
-	cds_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
 
-	*value = wlansap_get_chan_width(cds_ctx);
+	*value = wlansap_get_chan_width(sap_ctx);
 	hdd_debug("chan_width = %d", *value);
 
 	return 0;
