@@ -484,38 +484,12 @@ void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *pSapCtx)
 
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-/*==========================================================================
-   FUNCTION    sap_cleanup_channel_list
-
-   DESCRIPTION
-    Function sap_cleanup_channel_list frees up the memory allocated to the channel list.
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    NULL
-
-   RETURN VALUE
-    NULL
-   ============================================================================*/
-
-void sap_cleanup_channel_list(void *p_cds_gctx)
+void sap_cleanup_channel_list(struct sap_context *pSapCtx)
 {
-	struct sap_context *pSapCtx;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "Cleaning up the channel list structure");
 
-	if (NULL == p_cds_gctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  "SAP Global Context is NULL");
-		return;
-	}
-
-	pSapCtx = CDS_GET_SAP_CB(p_cds_gctx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
 			  "SAP Context is NULL");

@@ -848,7 +848,15 @@ QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
  */
 QDF_STATUS wlansap_stop(struct sap_context *pSapCtx);
 
-void sap_cleanup_channel_list(void *sapContext);
+/**
+ * sap_cleanup_channel_list() - cleanup channel list.
+ * @pSapCtx: Pointer to the SAP context
+ *
+ * Frees up the memory allocated to the channel list.
+ *
+ * Return: None
+ */
+void sap_cleanup_channel_list(struct sap_context *pSapCtx);
 
 /**
  * sap_is_auto_channel_select() - is channel AUTO_CHANNEL_SELECT
