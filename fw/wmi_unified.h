@@ -1787,9 +1787,7 @@ typedef enum {
 
 /* Interested readers refer to Rx/Tx MCS Map definition as defined in 802.11ax
  */
-#define WMI_HE_MAX_MCS_4_SS_MASK(r,ss)      ((7 & (r)) << ((((ss) - 1) << 1)+((ss) - 1)))
-#define WMI_HE_MAX_SUPP_RATE_MASK           0x1f000000
-#define WMI_HE_MAX_SUPP_RATE_MASK_SHIFT     24
+#define WMI_HE_MAX_MCS_4_SS_MASK(r,ss)      ((3 & (r)) << (((ss) - 1) << 1))
 
 /* fragmentation support field value */
 enum {
@@ -9127,41 +9125,24 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_he_rate_set */
     /* HE Supported MCS Set field Rx
-     * - 3 bits are used for each NSS chain.Max of 8 NSS can be encoded with
-     *    bit 2-0 indicating max HE MCS of NSS1
-     *    bit 5-3 indicating max HE MCS of NSS2 and so on
-     * - The max HE-MCS for n SS subfield (where n = 1,...,8) is encoded as follows
-     * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
-     * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
-     * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
-     * - 3 indicates support for VHT-MCS 0-10 for n spatial streams
-     * - 4 indicates support for VHT-MCS 0-11 for n spatial streams
-     * - 5-6 reserved
-     * - 7 indicates that n spatial streams is not supported
+     * - 2 bits are used for each NSS chain.Max of 8 NSS can be encoded with
+     *    value 0 - MCS 0-7 enabled for this NSS
+     *    value 1 - MCS 0-9 enabled for this NSS
+     *    value 2 - MCS 0-11 enabled for this NSS
+     *    value 3 - NSS disabled
      * - WMI_HE_MAX_MCS_4_SS_MASK macro can be used for encoding this info
      */
-    A_UINT32 rx_mcs_set; /* Negotiated RX VHT rates (i.e. rate this node can RX from peer)*/
+    A_UINT32 rx_mcs_set; /* Negotiated RX HE rates (i.e. rate this node can RX from peer)*/
     /* HE Supported MCS Set field Tx
-     * - 3 bits are used for each NSS chain.Max of 8 NSS can be encoded with
-     *    bit 2-0 indicating max HE MCS of NSS1
-     *    bit 5-3 indicating max HE MCS of NSS2 and so on
-     * - The max HE-MCS for n SS subfield (where n = 1,...,8) is encoded as follows
-     * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
-     * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
-     * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
-     * - 3 indicates support for VHT-MCS 0-10 for n spatial streams
-     * - 4 indicates support for VHT-MCS 0-11 for n spatial streams
-     * - 5-6 reserved
-     * - 7 indicates that n spatial streams is not supported
+     * - 2 bits are used for each NSS chain.Max of 8 NSS can be encoded with
+     *    value 0 - MCS 0-7 enabled for this NSS
+     *    value 1 - MCS 0-9 enabled for this NSS
+     *    value 2 - MCS 0-11 enabled for this NSS
+     *    value 3 - NSS disabled
      * - WMI_HE_MAX_MCS_4_SS_MASK macro can be used for encoding this info
      */
-    A_UINT32 tx_mcs_set; /* Negotiated TX VHT rates(i.e. rate this node can TX to peer) */
+    A_UINT32 tx_mcs_set; /* Negotiated TX HE rates(i.e. rate this node can TX to peer) */
 } wmi_he_rate_set;
-
-
-
-
-
 
 /*
  * IMPORTANT: Make sure the bit definitions here are consistent
