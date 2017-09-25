@@ -930,8 +930,23 @@ QDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
 	struct qdf_mac_addr *pDenyList, uint8_t *nDenyList);
 QDF_STATUS wlansap_set_mode(void *p_cds_gctx, uint32_t mode);
 QDF_STATUS wlansap_get_acl_mode(void *p_cds_gctx, eSapMacAddrACL *mode);
-QDF_STATUS wlansap_modify_acl(void *p_cds_gctx,
-	 uint8_t *pPeerStaMac, eSapACLType listType, eSapACLCmdType cmd);
+
+/**
+ * wlansap_modify_acl() - Update ACL entries
+ * @sap_ctx: Pointer to the SAP context
+ * @peer_sta_mac: peer sta mac to be updated.
+ * @list_type: white/Black list type.
+ * @cmd: command to be executed on ACL.
+ *
+ * This function is called when a peer needs to be added or deleted from the
+ * white/black ACL
+ *
+ * Return: Status
+ */
+QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
+			      uint8_t *peer_sta_mac,
+			      eSapACLType list_type, eSapACLCmdType cmd);
+
 QDF_STATUS wlansap_send_action
 	(void *p_cds_gctx,
 	 const uint8_t *pBuf, uint32_t len, uint16_t wait, uint16_t channel_freq);

@@ -1045,27 +1045,12 @@ QDF_STATUS wlansap_clear_acl(void *pCtx)
 	return QDF_STATUS_SUCCESS;
 }
 
-/*
- * wlansap_modify_acl() -Update ACL entries
- *
- * @ctx: Global context
- * @peer_sta_mac: peer sta mac to be updated.
- * @list_type: white/Black list type.
- * @cmd: command to be executed on ACL.
- *
- * This function is called when a peer needs to be added or deleted from the
- * white/black ACL
- *
- * Return: Status
- */
-
-QDF_STATUS
-wlansap_modify_acl
-	(void *ctx,
-	uint8_t *peer_sta_mac, eSapACLType list_type, eSapACLCmdType cmd) {
+QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
+			      uint8_t *peer_sta_mac,
+			      eSapACLType list_type, eSapACLCmdType cmd)
+{
 	bool sta_white_list = false, sta_black_list = false;
 	uint8_t staWLIndex, staBLIndex;
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1084,8 +1069,10 @@ wlansap_modify_acl
 		  "*** BLACK LIST ***");
 	sap_print_acl(sap_ctx->denyMacList, sap_ctx->nDenyMac);
 
-	/* the expectation is a mac addr will not be in both the lists at the same time.
-	   It is the responsiblity of userspace to ensure this */
+	/* the expectation is a mac addr will not be in both the lists
+	 * at the same time. It is the responsiblity of userspace to
+	 * ensure this
+	 */
 	sta_white_list =
 		sap_search_mac_list(sap_ctx->acceptMacList, sap_ctx->nAcceptMac,
 				 peer_sta_mac, &staWLIndex);
@@ -1132,8 +1119,7 @@ wlansap_modify_acl
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_WARN,
 					  "STA present in black list so first remove from it");
-				sap_remove_mac_from_acl(sap_ctx->
-						    denyMacList,
+				sap_remove_mac_from_acl(sap_ctx->denyMacList,
 						    &sap_ctx->nDenyMac,
 						    staBLIndex);
 			}
@@ -1164,7 +1150,7 @@ wlansap_modify_acl
 					eCsrForcedDeauthSta,
 					(SIR_MAC_MGMT_DEAUTH >> 4),
 					&delStaParams);
-				wlansap_deauth_sta(ctx, &delStaParams);
+				wlansap_deauth_sta(sap_ctx, &delStaParams);
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_LOW,
 					  "size of accept and deny lists %d %d",
@@ -1213,10 +1199,8 @@ wlansap_modify_acl
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_WARN,
 					  "Present in white list so first remove from it");
-				sap_remove_mac_from_acl(sap_ctx->
-						    acceptMacList,
-						    &sap_ctx->
-						    nAcceptMac,
+				sap_remove_mac_from_acl(sap_ctx->acceptMacList,
+						    &sap_ctx->nAcceptMac,
 						    staWLIndex);
 			}
 			/* If we are adding a client to the black list; if its connected, send deauth */
@@ -1224,7 +1208,7 @@ wlansap_modify_acl
 				eCsrForcedDeauthSta,
 				(SIR_MAC_MGMT_DEAUTH >> 4),
 				&delStaParams);
-			wlansap_deauth_sta(ctx, &delStaParams);
+			wlansap_deauth_sta(sap_ctx, &delStaParams);
 			QDF_TRACE(QDF_MODULE_ID_SAP,
 				  QDF_TRACE_LEVEL_INFO,
 				  "... Now add to black list");
