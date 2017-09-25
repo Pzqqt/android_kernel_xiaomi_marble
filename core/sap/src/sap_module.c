@@ -2856,13 +2856,12 @@ QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlansap_cleanup_cac_timer(void *sap_ctx)
+void wlansap_cleanup_cac_timer(struct sap_context *sap_ctx)
 {
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
-	struct sap_context *psap_ctx = CDS_GET_SAP_CB(sap_ctx);
 
-	if (!psap_ctx) {
+	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("Invalid SAP context"));
 		return;

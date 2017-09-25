@@ -1392,7 +1392,7 @@ void sap_dfs_set_current_channel(void *sap_ctx);
  *
  * Return: None
  */
-void wlansap_cleanup_cac_timer(void *sap_ctx);
+void wlansap_cleanup_cac_timer(struct sap_context *sap_ctx);
 
 #ifdef __cplusplus
 }
