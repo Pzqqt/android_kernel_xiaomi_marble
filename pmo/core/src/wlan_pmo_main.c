@@ -109,7 +109,7 @@ bool pmo_core_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
 	if ((vdev_opmode == QDF_SAP_MODE ||
 		vdev_opmode == QDF_P2P_GO_MODE) &&
 		!psoc_ctx->psoc_cfg.ap_arpns_support) {
-		pmo_info("ARP/NS Offload is not supported in SAP/P2PGO mode");
+		pmo_debug("ARP/NS Offload is not supported in SAP/P2PGO mode");
 		return false;
 	}
 
@@ -144,7 +144,7 @@ bool pmo_core_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 	bool val;
 
 	opmode = pmo_get_vdev_opmode(vdev);
-	pmo_info("vdev opmode: %d", opmode);
+	pmo_debug("vdev opmode: %d", opmode);
 	switch (opmode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
