@@ -3113,7 +3113,7 @@ static __iw_softap_setparam(struct net_device *dev,
 			hdd_err("Invalid ACL Mode value: %d", set_value);
 			ret = -EINVAL;
 		} else {
-			wlansap_set_mode(
+			wlansap_set_acl_mode(
 				WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
 				set_value);
 		}

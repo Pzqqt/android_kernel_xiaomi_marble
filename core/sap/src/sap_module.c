@@ -834,17 +834,16 @@ QDF_STATUS wlansap_stop_bss(struct sap_context *pSapCtx)
 }
 
 /* This routine will set the mode of operation for ACL dynamically*/
-QDF_STATUS wlansap_set_mode(void *pCtx, uint32_t mode)
+QDF_STATUS wlansap_set_acl_mode(struct sap_context *pSapCtx,
+				eSapMacAddrACL mode)
 {
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
-
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	pSapCtx->eSapMacAddrAclMode = (eSapMacAddrACL) mode;
+	pSapCtx->eSapMacAddrAclMode = mode;
 	return QDF_STATUS_SUCCESS;
 }
 
