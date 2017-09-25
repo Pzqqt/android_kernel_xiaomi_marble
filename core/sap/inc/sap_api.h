@@ -860,11 +860,11 @@ void sap_cleanup_channel_list(struct sap_context *pSapCtx);
 
 /**
  * sap_is_auto_channel_select() - is channel AUTO_CHANNEL_SELECT
- * @pvos_gctx: Pointer to vos global context structure
+ * @sapcontext: Pointer to the SAP context
  *
  * Return: true on AUTO_CHANNEL_SELECT, false otherwise
  */
-bool sap_is_auto_channel_select(void *pvos_gctx);
+bool sap_is_auto_channel_select(struct sap_context *sapcontext);
 
 QDF_STATUS wlansap_global_init(void);
 QDF_STATUS wlansap_global_deinit(void);

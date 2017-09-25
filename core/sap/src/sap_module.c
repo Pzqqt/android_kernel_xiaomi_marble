@@ -2153,14 +2153,12 @@ wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
 	return status;
 }
 
-bool sap_is_auto_channel_select(void *pvos_gctx)
+bool sap_is_auto_channel_select(struct sap_context *sapcontext)
 {
-	struct sap_context *sapcontext = CDS_GET_SAP_CB(pvos_gctx);
-
 	if (NULL == sapcontext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid SAP pointer", __func__);
-		return 0;
+		return false;
 	}
 	return sapcontext->channel == AUTO_CHANNEL_SELECT;
 }
