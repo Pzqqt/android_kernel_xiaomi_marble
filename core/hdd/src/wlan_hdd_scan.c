@@ -447,7 +447,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
-	struct scan_params params;
+	struct scan_params params = {0};
 
 	ENTER();
 
