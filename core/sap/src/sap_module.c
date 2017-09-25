@@ -1489,30 +1489,16 @@ QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 	return qdf_status;
 }
 
-/**
- * wlansap_send_action() - send action frame
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @pBuf: Pointer of the action frame to be transmitted
- * @len: Length of the action frame
- *
- * This api function provides to send action frame sent by upper layer.
- *
- * Return: The QDF_STATUS code associated with performing the operation
-*          QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_send_action(void *pCtx, const uint8_t *pBuf,
-	uint32_t len, uint16_t wait, uint16_t channel_freq)
+QDF_STATUS wlansap_send_action(struct sap_context *pSapCtx,
+			       const uint8_t *pBuf, uint32_t len,
+			       uint16_t wait, uint16_t channel_freq)
 {
-	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
+			  "%s: Invalid SAP pointer",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}

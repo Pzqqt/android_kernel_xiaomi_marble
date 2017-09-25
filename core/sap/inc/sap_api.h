@@ -1123,9 +1123,23 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 			      uint8_t *peer_sta_mac,
 			      eSapACLType list_type, eSapACLCmdType cmd);
 
-QDF_STATUS wlansap_send_action
-	(void *p_cds_gctx,
-	 const uint8_t *pBuf, uint32_t len, uint16_t wait, uint16_t channel_freq);
+/**
+ * wlansap_send_action() - send action frame
+ * @pSapCtx: Pointer to the SAP context
+ * @pBuf: Pointer of the action frame to be transmitted
+ * @len: Length of the action frame in @pBuf
+ * @wait: Unused
+ * @channel_freq: Channel upon which to send the frame
+ *
+ * This api function provides to send action frame sent by upper layer.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+*          QDF_STATUS_SUCCESS:  Success and error code otherwise
+ */
+QDF_STATUS wlansap_send_action(struct sap_context *pSapCtx,
+			       const uint8_t *pBuf, uint32_t len,
+			       uint16_t wait, uint16_t channel_freq);
+
 QDF_STATUS wlansap_remain_on_channel
 	(void *p_cds_gctx,
 	 uint8_t channel,
