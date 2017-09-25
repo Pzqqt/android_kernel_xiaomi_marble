@@ -598,21 +598,11 @@ eCsrPhyMode wlan_sap_get_phymode(struct sap_context *sap_ctx)
 	return sap_ctx->csr_roamProfile.phyMode;
 }
 
-/**
- * wlan_sap_get_vht_ch_width() - Returns SAP VHT channel width.
- * @ctx:	Pointer to cds Context or Sap Context based on MBSSID
- *
- * This function provides the SAP current VHT channel with.
- *
- * Return: VHT channel width
- */
-uint32_t wlan_sap_get_vht_ch_width(void *ctx)
+uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx)
 {
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
-
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			FL("Invalid SAP pointer from ctx"));
+			FL("Invalid SAP pointer"));
 		return 0;
 	}
 
