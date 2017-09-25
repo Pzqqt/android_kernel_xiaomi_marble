@@ -920,6 +920,20 @@ QDF_STATUS wlansap_start_bss(struct sap_context *pSapCtx,
 			     tsap_Config_t *pConfig, void *pUsrContext);
 
 /**
+ * wlansap_stop_bss() - stop BSS.
+ * @pSapCtx: Pointer to SAP context
+ *
+ * This api function provides SAP FSM event eSAP_HDD_STOP_INFRA_BSS for
+ * stopping AP BSS
+ *
+ * Return: The result code associated with performing the operation
+ *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
+ *                             access would cause a page fault
+ *         QDF_STATUS_SUCCESS: Success
+ */
+QDF_STATUS wlansap_stop_bss(struct sap_context *pSapCtx);
+
+/**
  * wlan_sap_update_next_channel() - Update next channel configured using vendor
  * command in SAP context
  * @ctx: SAP context
@@ -949,7 +963,7 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
 uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx);
 #endif
 QDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
-QDF_STATUS wlansap_stop_bss(void *p_cds_gctx);
+
 QDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
 				struct tagCsrDelStaParams *p_del_sta_params);
 QDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,

@@ -830,42 +830,14 @@ QDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
 	return qdf_status;
 } /* wlansap_set_mac_acl */
 
-/**
- * wlansap_stop_bss() - stop BSS.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- *
- * This api function provides SAP FSM event eSAP_HDD_STOP_INFRA_BSS for
- * stopping AP BSS
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
- *                             access would cause a page fault
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS wlansap_stop_bss(void *pCtx)
+QDF_STATUS wlansap_stop_bss(struct sap_context *pSapCtx)
 {
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct sap_context *pSapCtx = NULL;
-	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-
-	/*------------------------------------------------------------------------
-	    Sanity check
-	    Extract SAP control block
-	   ------------------------------------------------------------------------*/
-	if (NULL == pCtx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid Global CDS handle", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	QDF_STATUS qdf_status;
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
