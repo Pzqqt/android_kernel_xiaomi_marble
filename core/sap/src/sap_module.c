@@ -1558,28 +1558,15 @@ QDF_STATUS wlansap_remain_on_channel(struct sap_context *pSapCtx,
 	return QDF_STATUS_E_FAULT;
 }
 
-/**
- * wlansap_cancel_remain_on_channel() - cancel remain on channel
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- *
- * This api cancel previous remain on channel request.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwie
- */
-QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
-	uint32_t scan_id)
+QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *pSapCtx,
+					    uint32_t scan_id)
 {
-	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
+			  "%s: Invalid SAP pointer",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}

@@ -1160,8 +1160,18 @@ QDF_STATUS wlansap_remain_on_channel(struct sap_context *pSapCtx,
 				     remainOnChanCallback callback,
 				     void *pContext, uint32_t *scan_id);
 
-QDF_STATUS wlansap_cancel_remain_on_channel(void *p_cds_gctx,
-		uint32_t scan_id);
+/**
+ * wlansap_cancel_remain_on_channel() - cancel remain on channel
+ * @pSapCtx: Pointer to the SAP context
+ * @scan_id: Scan ID returned by wlansap_remain_on_channel()
+ *
+ * This api cancel previous remain on channel request.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success and error code otherwise
+ */
+QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *pSapCtx,
+					    uint32_t scan_id);
 
 /**
  * wlansap_register_mgmt_frame() - register management frame
