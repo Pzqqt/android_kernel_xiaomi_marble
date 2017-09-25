@@ -1523,35 +1523,17 @@ QDF_STATUS wlansap_send_action(struct sap_context *pSapCtx,
 	return QDF_STATUS_E_FAULT;
 }
 
-/**
- * wlansap_remain_on_channel() - set remain on channel
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @channel: Channel on which driver has to listen
- * @duration: Duration for which driver has to listen on specified channel
- * @callback: Callback function to be called once Listen is done.
- * @pContext: Context needs to be called in callback function.
- * @scan_id: scan identifier
- *
- * This api function provides to set Remain On channel on specified channel
- * for specified duration.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_remain_on_channel(void *pCtx,
-	uint8_t channel, uint32_t duration, remainOnChanCallback callback,
-	void *pContext, uint32_t *scan_id)
+QDF_STATUS wlansap_remain_on_channel(struct sap_context *pSapCtx,
+				     uint8_t channel, uint32_t duration,
+				     remainOnChanCallback callback,
+				     void *pContext, uint32_t *scan_id)
 {
-	struct sap_context *pSapCtx = NULL;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx",
+			  "%s: Invalid SAP pointer",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}

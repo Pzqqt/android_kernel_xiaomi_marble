@@ -1140,11 +1140,26 @@ QDF_STATUS wlansap_send_action(struct sap_context *pSapCtx,
 			       const uint8_t *pBuf, uint32_t len,
 			       uint16_t wait, uint16_t channel_freq);
 
-QDF_STATUS wlansap_remain_on_channel
-	(void *p_cds_gctx,
-	 uint8_t channel,
-	 uint32_t duration, remainOnChanCallback callback, void *pContext,
-	 uint32_t *scan_id);
+/**
+ * wlansap_remain_on_channel() - set remain on channel
+ * @pSapCtx: Pointer to the SAP context
+ * @channel: Channel on which driver has to listen
+ * @duration: Duration for which driver has to listen on specified channel
+ * @callback: Callback function to be called once Listen is done.
+ * @pContext: Context needs to be called in callback function.
+ * @scan_id: scan identifier
+ *
+ * This api function provides to set Remain On channel on specified channel
+ * for specified duration.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success and error code otherwise
+ */
+QDF_STATUS wlansap_remain_on_channel(struct sap_context *pSapCtx,
+				     uint8_t channel, uint32_t duration,
+				     remainOnChanCallback callback,
+				     void *pContext, uint32_t *scan_id);
+
 QDF_STATUS wlansap_cancel_remain_on_channel(void *p_cds_gctx,
 		uint32_t scan_id);
 
