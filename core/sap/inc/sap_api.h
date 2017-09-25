@@ -920,7 +920,15 @@ QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status);
 bool wlan_sap_is_pre_cac_active(tHalHandle handle);
 QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-uint16_t wlansap_check_cc_intf(void *Ctx);
+/**
+ * wlansap_check_cc_intf() - Get interfering concurrent channel
+ * @pSapCtx: SAP context pointer
+ *
+ * Determine if a Concurrent Channel is interfering.
+ *
+ * Return: Channel number of the interfering channel, or 0 if none.
+ */
+uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx);
 #endif
 QDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
 QDF_STATUS wlansap_stop_bss(void *p_cds_gctx);

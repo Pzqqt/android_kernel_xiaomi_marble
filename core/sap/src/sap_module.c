@@ -484,26 +484,10 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 }
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-/*==========================================================================
-   FUNCTION    wlansap_check_cc_intf
-
-   DESCRIPTION Restart SAP if Concurrent Channel interfering
-
-   DEPENDENCIES NA.
-
-   PARAMETERS
-   IN
-   Ctx: Pointer to cds Context or Sap Context based on MBSSID
-
-   RETURN VALUE NONE
-
-   SIDE EFFECTS
-   ============================================================================*/
-uint16_t wlansap_check_cc_intf(void *Ctx)
+uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx)
 {
 	tHalHandle hHal;
 	uint16_t intf_ch;
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(Ctx);
 
 	hHal = (tHalHandle) CDS_GET_HAL_CB();
 	if (NULL == hHal) {
