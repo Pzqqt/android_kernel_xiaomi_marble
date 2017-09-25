@@ -1066,7 +1066,18 @@ eCsrPhyMode wlan_sap_get_phymode(struct sap_context *sap_ctx);
  */
 uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx);
 
-void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width);
+/**
+ * wlan_sap_set_vht_ch_width() - Sets SAP VHT channel width.
+ * @sap_ctx:		Pointer to Sap Context
+ * @vht_channel_width:	SAP VHT channel width value.
+ *
+ * This function sets the SAP current VHT channel width.
+ *
+ * Return: None
+ */
+void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
+			       uint32_t vht_channel_width);
+
 QDF_STATUS wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		const uint8_t *
 		pAdditionIEBuffer,

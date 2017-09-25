@@ -609,22 +609,12 @@ uint32_t wlan_sap_get_vht_ch_width(struct sap_context *sap_ctx)
 	return sap_ctx->ch_params.ch_width;
 }
 
-/**
- * wlan_sap_set_vht_ch_width() - Sets SAP VHT channel width.
- * @ctx:		Pointer to cds Context or Sap Context based on MBSSID
- * @vht_channel_width:	SAP VHT channel width value.
- *
- * This function sets the SAP current VHT channel with.
- *
- * Return: None
- */
-void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width)
+void wlan_sap_set_vht_ch_width(struct sap_context *sap_ctx,
+			       uint32_t vht_channel_width)
 {
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
-
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			FL("Invalid SAP pointer from ctx"));
+			FL("Invalid SAP pointer"));
 		return;
 	}
 
