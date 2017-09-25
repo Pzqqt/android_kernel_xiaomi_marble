@@ -7124,6 +7124,11 @@ __wlan_hdd_cfg80211_set_ns_offload(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (!hdd_ctx->config->active_mode_offload) {
+		hdd_warn("Active mode offload is disabled");
+		return -EINVAL;
+	}
+
 	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ND_OFFLOAD_MAX,
 			  (struct nlattr *)data,
 			  data_len, ns_offload_set_policy)) {
