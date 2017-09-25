@@ -1005,8 +1005,24 @@ QDF_STATUS wlansap_disassoc_sta(struct sap_context *pSapCtx,
 QDF_STATUS wlansap_deauth_sta(struct sap_context *pSapCtx,
 			      struct tagCsrDelStaParams *pDelStaParams);
 
-QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
-	uint32_t targetChannel, enum phy_ch_width target_bw, bool strict);
+/**
+ * wlansap_set_channel_change_with_csa() - Set channel change with CSA
+ * @sapContext: Pointer to SAP context
+ * @targetChannel: Target channel
+ * @target_bw: Target bandwidth
+ * @strict: if true switch to the requested channel always, fail
+ *        otherwise
+ *
+ * This api function does a channel change to the target channel specified.
+ * CSA IE is included in the beacons before doing a channel change.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
+					       uint32_t targetChannel,
+					       enum phy_ch_width target_bw,
+					       bool strict);
+
 QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
 

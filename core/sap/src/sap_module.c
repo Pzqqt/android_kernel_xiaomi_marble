@@ -1250,7 +1250,7 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
 
 /**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
- * @p_cds_gctx: Pointer to cds global context structure
+ * @sapContext: Pointer to SAP context
  * @targetChannel: Target channel
  * @target_bw: Target bandwidth
  * @strict: if true switch to the requested channel always, fail
@@ -1261,22 +1261,21 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS
-wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
-					enum phy_ch_width target_bw, bool strict)
+QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
+					       uint32_t targetChannel,
+					       enum phy_ch_width target_bw,
+					       bool strict)
 {
 
-	struct sap_context *sapContext = NULL;
 	tWLAN_SAPEvent sapEvent;
 	tpAniSirGlobal pMac = NULL;
 	void *hHal = NULL;
 	bool valid;
 	QDF_STATUS status;
 
-	sapContext = CDS_GET_SAP_CB(p_cds_gctx);
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 
 		return QDF_STATUS_E_FAULT;
 	}
