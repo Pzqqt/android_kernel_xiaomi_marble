@@ -962,7 +962,22 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
  */
 uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx);
 #endif
-QDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
+
+/**
+ * wlansap_set_mac_acl() - set MAC list entry in ACL.
+ * @pSapCtx: Pointer to the SAP context
+ * @pConfig: Pointer to SAP config.
+ *
+ * This api function provides SAP to set mac list entry in accept list as well
+ * as deny list
+ *
+ * Return: The result code associated with performing the operation
+ *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
+ *                             access would cause a page fault
+ *         QDF_STATUS_SUCCESS: Success
+ */
+QDF_STATUS wlansap_set_mac_acl(struct sap_context *pSapCtx,
+			       tsap_Config_t *pConfig);
 
 QDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
 				struct tagCsrDelStaParams *p_del_sta_params);

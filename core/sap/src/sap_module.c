@@ -779,34 +779,17 @@ fail:
 	return qdf_status;
 } /* wlansap_start_bss */
 
-/**
- * wlansap_set_mac_acl() - set MAC list entry in ACL.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @pConfig: Pointer to SAP config.
- *
- * This api function provides SAP to set mac list entry in accept list as well
- * as deny list
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
- *                             access would cause a page fault
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
-			       tsap_Config_t *pConfig) {
+QDF_STATUS wlansap_set_mac_acl(struct sap_context *pSapCtx,
+			       tsap_Config_t *pConfig)
+{
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct sap_context *pSapCtx = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_set_mac_acl");
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid SAP pointer from pCtx",
-			  __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	/* Copy MAC filtering settings to sap context */
@@ -819,8 +802,7 @@ QDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
 		pSapCtx->nAcceptMac = pConfig->num_accept_mac;
 		sap_sort_mac_list(pSapCtx->acceptMacList,
 			       pSapCtx->nAcceptMac);
-	} else if (eSAP_ACCEPT_UNLESS_DENIED ==
-		   pSapCtx->eSapMacAddrAclMode) {
+	} else if (eSAP_ACCEPT_UNLESS_DENIED == pSapCtx->eSapMacAddrAclMode) {
 		qdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
 			     sizeof(pConfig->deny_mac));
 		pSapCtx->nDenyMac = pConfig->num_deny_mac;
