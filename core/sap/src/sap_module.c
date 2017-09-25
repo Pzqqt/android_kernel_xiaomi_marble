@@ -876,19 +876,17 @@ QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *pSapCtx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* API to get Deny List */
-QDF_STATUS
-wlansap_get_acl_deny_list(void *pCtx, struct qdf_mac_addr *pDenyList,
-			  uint8_t *nDenyList)
+QDF_STATUS wlansap_get_acl_deny_list(struct sap_context *pSapCtx,
+				     struct qdf_mac_addr *pDenyList,
+				     uint8_t *nDenyList)
 {
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	memcpy((void *)pDenyList, (void *)pSapCtx->denyMacList,
+	memcpy(pDenyList, pSapCtx->denyMacList,
 	       (pSapCtx->nDenyMac * QDF_MAC_ADDR_SIZE));
 	*nDenyList = pSapCtx->nDenyMac;
 	return QDF_STATUS_SUCCESS;

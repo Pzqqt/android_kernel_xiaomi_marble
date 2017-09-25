@@ -1018,8 +1018,19 @@ QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *pSapCtx,
 				       struct qdf_mac_addr *pAcceptList,
 				       uint8_t *nAcceptList);
 
-QDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
-	struct qdf_mac_addr *pDenyList, uint8_t *nDenyList);
+/**
+ * wlansap_get_acl_deny_list() - Get ACL deny list
+ * @pSapCtx: Pointer to the SAP context
+ * @pDenyList: Pointer to the buffer to store the ACL deny list
+ * @nDenyList: Pointer to the location to store the number of
+ *    entries in the ACL deny list.
+ *
+ * Return: QDF_STATUS. If success the data was returned, otherwise an
+ *    error occurred.
+ */
+QDF_STATUS wlansap_get_acl_deny_list(struct sap_context *pSapCtx,
+				     struct qdf_mac_addr *pDenyList,
+				     uint8_t *nDenyList);
 
 /**
  * wlansap_set_acl_mode() - Set the SAP ACL mode
