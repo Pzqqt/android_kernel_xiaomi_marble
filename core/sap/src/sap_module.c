@@ -1139,30 +1139,12 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlansap_disassoc_sta() - initiate disassociation of station.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @p_del_sta_params: pointer to station deletion parameters
- *
- * This api function provides for Ap App/HDD initiated disassociation of station
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success
- */
-QDF_STATUS wlansap_disassoc_sta(void *pCtx,
+QDF_STATUS wlansap_disassoc_sta(struct sap_context *pSapCtx,
 				struct tagCsrDelStaParams *p_del_sta_params)
 {
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
-
-	/*------------------------------------------------------------------------
-	   Sanity check
-	   Extract SAP control block
-	   ------------------------------------------------------------------------*/
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 

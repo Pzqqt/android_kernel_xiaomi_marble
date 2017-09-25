@@ -979,8 +979,19 @@ uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx);
 QDF_STATUS wlansap_set_mac_acl(struct sap_context *pSapCtx,
 			       tsap_Config_t *pConfig);
 
-QDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
+/**
+ * wlansap_disassoc_sta() - initiate disassociation of station.
+ * @pSapCtx: Pointer to the SAP context
+ * @p_del_sta_params: pointer to station deletion parameters
+ *
+ * This api function provides for Ap App/HDD initiated disassociation of station
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success
+ */
+QDF_STATUS wlansap_disassoc_sta(struct sap_context *pSapCtx,
 				struct tagCsrDelStaParams *p_del_sta_params);
+
 QDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
 			struct tagCsrDelStaParams *pDelStaParams);
 QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
