@@ -1362,7 +1362,15 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
 QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 			uint16_t tx_leakage_threshold);
 
-QDF_STATUS wlansap_set_invalid_session(void *cds_ctx);
+/*
+ * wlansap_set_invalid_session() - set session ID to invalid
+ * @sap_ctx: pointer to the SAP context
+ *
+ * This function sets session ID to invalid
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_set_invalid_session(struct sap_context *sap_ctx);
 
 /**
  * sap_dfs_set_current_channel() - Set current channel params in dfs component
