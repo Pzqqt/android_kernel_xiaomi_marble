@@ -431,38 +431,21 @@ QDF_STATUS wlansap_stop(void *pCtx)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlansap_close - close SAP module.
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- *
- * Called by cds_close during general driver close procedure. SAP will clean up
- * all the internal resources.
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
- *                             access would cause a page fault
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS wlansap_close(void *pCtx)
+QDF_STATUS wlansap_close(struct sap_context *pSapCtx)
 {
-	struct sap_context *pSapCtx = NULL;
 	tHalHandle hal;
 
-	/* Sanity check - Extract SAP control block */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_close invoked");
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	/* Cleanup SAP control block */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
-	sap_cleanup_channel_list(pCtx);
+	sap_cleanup_channel_list(pSapCtx);
 	hal = CDS_GET_HAL_CB();
 	if (!hal)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

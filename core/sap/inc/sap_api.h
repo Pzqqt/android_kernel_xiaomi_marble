@@ -803,6 +803,20 @@ struct sap_context;
  */
 struct sap_context *wlansap_open(void);
 
+/**
+ * wlansap_close - close per-BSS SAP
+ * @pSapCtx: Pointer to the SAP context
+ *
+ * Called during BSS close procedure. SAP will clean up all the
+ * internal resources.
+ *
+ * Return: The result code associated with performing the operation
+ *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
+ *                             access would cause a page fault
+ *         QDF_STATUS_SUCCESS: Success
+ */
+QDF_STATUS wlansap_close(struct sap_context *pSapCtx);
+
 void sap_cleanup_channel_list(void *sapContext);
 
 /**
@@ -818,7 +832,6 @@ QDF_STATUS wlansap_global_deinit(void);
 QDF_STATUS wlansap_start(void *p_cds_gctx, enum tQDF_ADAPTER_MODE mode,
 			 uint8_t *addr, uint32_t session_id);
 QDF_STATUS wlansap_stop(void *p_cds_gctx);
-QDF_STATUS wlansap_close(void *p_cds_gctx);
 typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 					void *pUsrContext);
 
