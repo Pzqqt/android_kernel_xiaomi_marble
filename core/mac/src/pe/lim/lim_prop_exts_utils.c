@@ -147,9 +147,10 @@ static uint8_t lim_get_nss_supported_by_beacon(tpSchBeaconStruct bcn,
  * lim_check_vendor_ap_present() - checks if the Vendor OUIs are present
  * in the IE buffer
  *
- * @mac_ctx:    mac context.
- * @ie:         ie buffer
- * @ie_len:     length of ie buffer
+ * @ie:            ie buffer
+ * @ie_len:        length of ie buffer
+ * @beacon_struct: pointer to beacon structure
+ * @session:       pointer to pe session
  *
  * This function parses the IE buffer and finds if any of the vendor OUI
  * is present in it.
@@ -157,16 +158,20 @@ static uint8_t lim_get_nss_supported_by_beacon(tpSchBeaconStruct bcn,
  * Return: true if the vendor OUI is present, else false
  */
 static bool
-lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
-			    uint16_t ie_len)
+lim_check_vendor_ap_present(uint8_t *ie, uint16_t ie_len,
+			    tpSchBeaconStruct beacon_struct,
+			    tpPESession session)
 {
 	const uint8_t *ptr = NULL;
 	uint8_t elem_len;
 	uint8_t elem_data[SIR_MAC_VENDOR_AP_2_DATA_LEN];
 
-	if (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_1_OUI,
-					    SIR_MAC_VENDOR_AP_1_OUI_LEN,
-					    ie, ie_len)) {
+	/*
+	 * for SIR_MAC_VENDOR_AP_1_OUI, check for Vendor OUI and if it is 2x2
+	 */
+	if ((wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_1_OUI,
+	    SIR_MAC_VENDOR_AP_1_OUI_LEN, ie, ie_len)) &&
+	    (lim_get_nss_supported_by_beacon(beacon_struct, session) == 2)) {
 		pe_debug("In lim_check_vendor_ap_present match Vendor AP 1");
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				SIR_MAC_VENDOR_AP_1_OUI,
@@ -175,13 +180,14 @@ lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 	}
 
 	/*
-	 * for SIR_MAC_VENDOR_AP_2_OUI check for Vendor IE Data also
+	 * for SIR_MAC_VENDOR_AP_2_OUI check for Vendor OUI, Vendor IE Data
+	 * and if it is 2x2
 	 */
 	ptr = wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_2_OUI,
 					      SIR_MAC_VENDOR_AP_2_OUI_LEN,
 					      ie, ie_len);
 	if (!ptr)
-		return false;
+		goto vendor3;
 
 	elem_len = ptr[1];
 	qdf_mem_copy(&elem_data, &ptr[2 + SIR_MAC_VENDOR_AP_2_OUI_LEN],
@@ -191,7 +197,8 @@ lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 	 */
 	elem_data[1] |= 0xFF;
 
-	if ((elem_len == (SIR_MAC_VENDOR_AP_2_OUI_LEN +
+	if ((lim_get_nss_supported_by_beacon(beacon_struct, session) == 2) &&
+	     (elem_len == (SIR_MAC_VENDOR_AP_2_OUI_LEN +
 	     SIR_MAC_VENDOR_AP_2_DATA_LEN)) &&
 	     ((qdf_mem_cmp(&elem_data, SIR_MAC_VENDOR_AP_2_DATA,
 	     SIR_MAC_VENDOR_AP_2_DATA_LEN) == 0) ||
@@ -203,6 +210,24 @@ lim_check_vendor_ap_present(tpAniSirGlobal mac_ctx, uint8_t *ie,
 				SIR_MAC_VENDOR_AP_2_OUI_LEN);
 		pe_debug("Verifying vendor IE Data "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(&ptr[2 + SIR_MAC_VENDOR_AP_2_OUI_LEN]));
+		return true;
+	}
+
+vendor3:
+	/*
+	 * for SIR_MAC_VENDOR_AP_3_OUI, check if VENDOR AP 3 IE is present and
+	 * if Vendor AP 4 IE is not present and if it is 4x4 11ac
+	 */
+	if (beacon_struct->VHTCaps.present &&
+	    (lim_get_nss_supported_by_beacon(beacon_struct, session) == 4) &&
+	    (wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_3_OUI,
+	    SIR_MAC_VENDOR_AP_3_OUI_LEN, ie, ie_len)) &&
+	    !(wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_VENDOR_AP_4_OUI,
+	    SIR_MAC_VENDOR_AP_4_OUI_LEN, ie, ie_len))) {
+		pe_debug("In lim_check_vendor_ap_present match Vendor AP 3");
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+					SIR_MAC_VENDOR_AP_3_OUI,
+					SIR_MAC_VENDOR_AP_3_OUI_LEN);
 		return true;
 	}
 
@@ -261,12 +286,13 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		return;
 	}
 
-	is_vendor_ap_present = lim_check_vendor_ap_present(mac_ctx, p_ie,
-							   ie_len);
+	is_vendor_ap_present = lim_check_vendor_ap_present(p_ie,
+							   ie_len,
+							   beacon_struct,
+							   session);
 
 	if (mac_ctx->roam.configParam.is_force_1x1 &&
 		is_vendor_ap_present &&
-		lim_get_nss_supported_by_beacon(beacon_struct, session) == 2 &&
 		mac_ctx->lteCoexAntShare &&
 		IS_24G_CH(session->currentOperChannel)) {
 		session->supported_nss_1x1 = true;

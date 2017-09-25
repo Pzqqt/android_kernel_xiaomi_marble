@@ -635,6 +635,12 @@
 #define SIR_MAC_VENDOR_AP_2_DATA_2          "\x02\xFF\x04\x0C\x00\x00"
 #define SIR_MAC_VENDOR_AP_2_DATA_LEN        6
 
+#define SIR_MAC_VENDOR_AP_3_OUI             "\x00\x03\x7F"
+#define SIR_MAC_VENDOR_AP_3_OUI_LEN         3
+
+#define SIR_MAC_VENDOR_AP_4_OUI             "\x8C\xFD\xF0"
+#define SIR_MAC_VENDOR_AP_4_OUI_LEN         3
+
 /* / Status Code (present in Management response frames) enum */
 
 typedef enum eSirMacStatusCodes {
