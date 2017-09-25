@@ -936,14 +936,16 @@ QDF_STATUS wlansap_stop_bss(struct sap_context *pSapCtx);
 /**
  * wlan_sap_update_next_channel() - Update next channel configured using vendor
  * command in SAP context
- * @ctx: SAP context
+ * @sap_ctx: SAP context
  * @channel: channel number
  * @chan_bw: channel width
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_sap_update_next_channel(void *ctx, uint8_t channel,
-				       enum phy_ch_width chan_bw);
+QDF_STATUS wlan_sap_update_next_channel(struct sap_context *sap_ctx,
+					uint8_t channel,
+					enum phy_ch_width chan_bw);
+
 QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
 		tHalHandle handle);
 QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,

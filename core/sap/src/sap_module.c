@@ -1591,11 +1591,10 @@ QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *pSapCtx,
 	return QDF_STATUS_E_FAULT;
 }
 
-QDF_STATUS wlan_sap_update_next_channel(void *ctx, uint8_t channel,
-				       enum phy_ch_width chan_bw)
+QDF_STATUS wlan_sap_update_next_channel(struct sap_context *sap_ctx,
+					uint8_t channel,
+					enum phy_ch_width chan_bw)
 {
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
-
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);
