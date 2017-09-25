@@ -1607,20 +1607,9 @@ QDF_STATUS wlan_sap_update_next_channel(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_sap_set_pre_cac_status() - Set the pre cac status
- * @ctx: SAP context
- * @status: Status of pre cac
- * @handle: Global MAC handle
- *
- * Sets the pre cac status in the MAC context and updates the state
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_sap_set_pre_cac_status(void *ctx, bool status,
-					tHalHandle handle)
+QDF_STATUS wlan_sap_set_pre_cac_status(struct sap_context *sap_ctx,
+				       bool status, tHalHandle handle)
 {
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(handle);
 
 	if (!mac_ctx) {
