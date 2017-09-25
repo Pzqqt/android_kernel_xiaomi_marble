@@ -959,8 +959,18 @@ QDF_STATUS wlan_sap_update_next_channel(struct sap_context *sap_ctx,
 QDF_STATUS wlan_sap_set_pre_cac_status(struct sap_context *sap_ctx,
 				       bool status, tHalHandle handle);
 
-QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
-		uint8_t chan_before_pre_cac);
+/**
+ * wlan_sap_set_chan_before_pre_cac() - Save the channel before pre cac
+ * @sap_ctx: SAP context
+ * @chan_before_pre_cac: Channel before pre cac
+ *
+ * Saves the channel that was in use before pre cac operation
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_set_chan_before_pre_cac(struct sap_context *sap_ctx,
+					    uint8_t chan_before_pre_cac);
+
 QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status);
 bool wlan_sap_is_pre_cac_active(tHalHandle handle);
 QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);

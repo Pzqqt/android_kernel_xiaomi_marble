@@ -1631,20 +1631,9 @@ QDF_STATUS wlan_sap_set_pre_cac_status(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * wlan_sap_set_chan_before_pre_cac() - Save the channel before pre cac
- * @ctx: SAP context
- * @chan_before_pre_cac: Channel before pre cac
- *
- * Saves the channel that was in use before pre cac operation
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlan_sap_set_chan_before_pre_cac(void *ctx,
-					uint8_t chan_before_pre_cac)
+QDF_STATUS wlan_sap_set_chan_before_pre_cac(struct sap_context *sap_ctx,
+					    uint8_t chan_before_pre_cac)
 {
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
-
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);
