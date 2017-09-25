@@ -971,7 +971,18 @@ QDF_STATUS wlan_sap_set_pre_cac_status(struct sap_context *sap_ctx,
 QDF_STATUS wlan_sap_set_chan_before_pre_cac(struct sap_context *sap_ctx,
 					    uint8_t chan_before_pre_cac);
 
-QDF_STATUS wlan_sap_set_pre_cac_complete_status(void *ctx, bool status);
+/**
+ * wlan_sap_set_pre_cac_complete_status() - Sets pre cac complete status
+ * @sap_ctx: SAP context
+ * @status: Status of pre cac complete
+ *
+ * Sets the status of pre cac i.e., whether pre cac is complete or not
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_sap_set_pre_cac_complete_status(struct sap_context *sap_ctx,
+						bool status);
+
 bool wlan_sap_is_pre_cac_active(tHalHandle handle);
 QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
