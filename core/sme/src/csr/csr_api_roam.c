@@ -2928,6 +2928,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->rx_aggregation_size;
 		pMac->roam.configParam.enable_bcast_probe_rsp =
 			pParam->enable_bcast_probe_rsp;
+		pMac->roam.configParam.is_fils_enabled =
+			pParam->is_fils_enabled;
 		pMac->roam.configParam.qcn_ie_support =
 			pParam->qcn_ie_support;
 		pMac->roam.configParam.fils_max_chan_guard_time =
@@ -3189,6 +3191,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.rx_aggregation_size;
 	pParam->enable_bcast_probe_rsp =
 		pMac->roam.configParam.enable_bcast_probe_rsp;
+	pParam->is_fils_enabled =
+		pMac->roam.configParam.is_fils_enabled;
 	pParam->qcn_ie_support =
 		pMac->roam.configParam.qcn_ie_support;
 	pParam->fils_max_chan_guard_time =

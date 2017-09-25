@@ -1297,6 +1297,16 @@ QDF_STATUS sme_set_default_scan_ie(tHalHandle hal, uint16_t session_id,
 QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 		uint32_t param_type, uint32_t param_val);
 
+/**
+ * sme_update_fils_setting() - API to update PE FILS setting
+ * @hal: HAL handle for device
+ * @session_id: Session ID
+ * @param_val: Param value to be update
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_update_fils_setting(tHalHandle hal, uint8_t session_id,
+				   uint8_t param_val);
 #ifdef WLAN_FEATURE_DISA
 /**
  * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage

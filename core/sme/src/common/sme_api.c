@@ -6470,8 +6470,27 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS sme_update_session_param(tHalHandle hal,
-						uint8_t session_id,
+QDF_STATUS sme_update_fils_setting(tHalHandle hal, uint8_t session_id,
+				   uint8_t param_val)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
+
+	pMac->roam.configParam.is_fils_enabled = !param_val;
+
+	pMac->roam.configParam.enable_bcast_probe_rsp = !param_val;
+	status = wma_cli_set_command((int)session_id,
+			(int)WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+			!param_val, VDEV_CMD);
+	if (status)
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: Failed to set enable bcast probe setting",
+			__func__);
+
+	return status;
+}
+
+QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
 			uint32_t param_type, uint32_t param_val)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;

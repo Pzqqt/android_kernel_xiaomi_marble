@@ -8857,6 +8857,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 			hdd_ctx->config->rx_aggregation_size;
 	smeConfig->csrConfig.enable_bcast_probe_rsp =
 			hdd_ctx->config->enable_bcast_probe_rsp;
+	smeConfig->csrConfig.is_fils_enabled =
+			hdd_ctx->config->is_fils_enabled;
 	smeConfig->csrConfig.qcn_ie_support =
 			hdd_ctx->config->qcn_ie_support;
 	smeConfig->csrConfig.fils_max_chan_guard_time =
