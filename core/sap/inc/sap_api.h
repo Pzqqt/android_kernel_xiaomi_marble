@@ -1003,8 +1003,21 @@ QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 					      uint32_t *len, uint8_t *buf);
 
 QDF_STATUS wlansap_clear_acl(void *p_cds_gctx);
-QDF_STATUS wlansap_get_acl_accept_list(void *p_cds_gctx,
-	 struct qdf_mac_addr *pAcceptList, uint8_t *nAcceptList);
+
+/**
+ * wlansap_get_acl_accept_list() - Get ACL accept list
+ * @pSapCtx: Pointer to the SAP context
+ * @pAcceptList: Pointer to the buffer to store the ACL accept list
+ * @nAcceptList: Pointer to the location to store the number of
+ *    entries in the ACL accept list.
+ *
+ * Return: QDF_STATUS. If success the data was returned, otherwise an
+ *    error occurred.
+ */
+QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *pSapCtx,
+				       struct qdf_mac_addr *pAcceptList,
+				       uint8_t *nAcceptList);
+
 QDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
 	struct qdf_mac_addr *pDenyList, uint8_t *nDenyList);
 

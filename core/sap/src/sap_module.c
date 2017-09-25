@@ -860,19 +860,17 @@ QDF_STATUS wlansap_get_acl_mode(struct sap_context *pSapCtx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* API to get ACL Accept List */
-QDF_STATUS
-wlansap_get_acl_accept_list(void *pCtx, struct qdf_mac_addr *pAcceptList,
-				uint8_t *nAcceptList)
+QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *pSapCtx,
+				       struct qdf_mac_addr *pAcceptList,
+				       uint8_t *nAcceptList)
 {
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
-	memcpy((void *)pAcceptList, (void *)pSapCtx->acceptMacList,
+	memcpy(pAcceptList, pSapCtx->acceptMacList,
 	       (pSapCtx->nAcceptMac * QDF_MAC_ADDR_SIZE));
 	*nAcceptList = pSapCtx->nAcceptMac;
 	return QDF_STATUS_SUCCESS;
