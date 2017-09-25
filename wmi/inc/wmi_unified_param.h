@@ -1913,6 +1913,35 @@ typedef struct {
 	uint32_t mcsset[WMI_HOST_ROAM_OFFLOAD_NUM_MCS_SET >> 2];
 } roam_offload_param;
 
+#define WMI_FILS_MAX_RRK_LENGTH 64
+#define WMI_FILS_MAX_RIK_LENGTH WMI_FILS_MAX_RRK_LENGTH
+#define WMI_FILS_MAX_REALM_LENGTH 256
+#define WMI_FILS_MAX_USERNAME_LENGTH 16
+
+/**
+ * struct roam_fils_params - Roam FILS params
+ * @username: username
+ * @username_length: username length
+ * @next_erp_seq_num: next ERP sequence number
+ * @rrk: RRK
+ * @rrk_length: length of @rrk
+ * @rik: RIK
+ * @rik_length: length of @rik
+ * @realm: realm
+ * @realm_len: length of @realm
+ */
+struct roam_fils_params {
+	uint8_t username[WMI_FILS_MAX_USERNAME_LENGTH];
+	uint32_t username_length;
+	uint32_t next_erp_seq_num;
+	uint8_t rrk[WMI_FILS_MAX_RRK_LENGTH];
+	uint32_t rrk_length;
+	uint8_t rik[WMI_FILS_MAX_RIK_LENGTH];
+	uint32_t rik_length;
+	uint8_t realm[WMI_FILS_MAX_REALM_LENGTH];
+	uint32_t realm_len;
+};
+
 /* struct roam_offload_scan_params - structure
  *     containing roaming offload scan parameters
  * @is_roam_req_valid: flag to tell whether roam req
@@ -1937,6 +1966,10 @@ typedef struct {
  * @is_ese_assoc: flag to determine ese assoc
  * @mdid: mobility domain info
  * @roam_offload_params: roam offload tlv params
+ * @assoc_ie_length: Assoc IE length
+ * @assoc_ie: Assoc IE buffer
+ * @add_fils_tlv: add FILS TLV boolean
+ * @roam_fils_params: roam fils params
  */
 struct roam_offload_scan_params {
 	uint8_t is_roam_req_valid;
@@ -1969,6 +2002,10 @@ struct roam_offload_scan_params {
 #endif
 	uint32_t assoc_ie_length;
 	uint8_t  assoc_ie[MAX_ASSOC_IE_LENGTH];
+	bool add_fils_tlv;
+#ifdef WLAN_FEATURE_FILS_SK
+	struct roam_fils_params roam_fils_params;
+#endif
 };
 
 /* struct roam_offload_scan_rssi_params - structure containing
@@ -3219,6 +3256,11 @@ struct periodic_tx_pattern {
 	uint8_t ucPattern[WMI_PERIODIC_TX_PTRN_MAX_SIZE];
 };
 
+#define WMI_GTK_OFFLOAD_KEK_BYTES       64
+#define WMI_GTK_OFFLOAD_KCK_BYTES       16
+#define WMI_GTK_OFFLOAD_ENABLE          0
+#define WMI_GTK_OFFLOAD_DISABLE         1
+
 /**
  * struct flashing_req_params - led flashing parameter
  * @reqId: request id
@@ -3458,6 +3500,53 @@ struct roam_scan_filter_params {
 	uint32_t num_rssi_rejection_ap;
 	struct rssi_disallow_bssid rssi_rejection_ap[MAX_RSSI_AVOID_BSSID_LIST];
 };
+
+#define WMI_MAX_HLP_IE_LEN 2048
+/**
+ * struct hlp_params - HLP info params
+ * @vdev_id: vdev id
+ * @hlp_ie_len: HLP IE length
+ * @hlp_ie: HLP IE
+ */
+struct hlp_params {
+	uint8_t vdev_id;
+	uint32_t  hlp_ie_len;
+	uint8_t hlp_ie[WMI_MAX_HLP_IE_LEN];
+};
+
+#define WMI_UNIFIED_MAX_PMKID_LEN   16
+#define WMI_UNIFIED_MAX_PMK_LEN     64
+
+/**
+ * struct wmi_unified_pmk_cache - used to set del pmkid cache
+ * @tlv_header: TLV header, TLV tag and len; tag equals WMITLV_TAG_ARRAY_UINT32
+ * @pmk_len: PMK len
+ *	for big-endian hosts, manual endian conversion will be needed to keep
+ *	the array values in their original order in spite of the automatic
+ *	byte-swap applied to WMI messages during download
+ * @pmk: PMK array
+ * @pmkid_len: PMK ID Len
+ * @pmkid: PMK ID Array
+ * @bssid: BSSID
+ * @ssid: SSID
+ * @cache_id: PMK Cache ID
+ * @cat_flag: whether (bssid) or (ssid,cache_id) is valid
+ * @action_flag: add/delete the entry
+ */
+struct wmi_unified_pmk_cache {
+	A_UINT32            tlv_header;
+	A_UINT32            pmk_len;
+	A_UINT8             session_id;
+	A_UINT8             pmk[WMI_UNIFIED_MAX_PMK_LEN];
+	A_UINT32            pmkid_len;
+	A_UINT8             pmkid[WMI_UNIFIED_MAX_PMKID_LEN];
+	wmi_host_mac_addr   bssid;
+	struct mac_ssid     ssid;
+	A_UINT32            cache_id;
+	A_UINT32            cat_flag;
+	A_UINT32            action_flag;
+};
+
 
 /**
  * struct ssid_hotlist_request_params - set SSID hotlist request struct
