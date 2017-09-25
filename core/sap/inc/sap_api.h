@@ -1002,7 +1002,14 @@ QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 					      uint32_t *len, uint8_t *buf);
 
-QDF_STATUS wlansap_clear_acl(void *p_cds_gctx);
+/**
+ * wlansap_clear_acl() - Clear all ACLs
+ * @pSapCtx: Pointer to the SAP context
+ *
+ * Return: QDF_STATUS. If success the ACLs were cleared, otherwise an
+ *    error occurred.
+ */
+QDF_STATUS wlansap_clear_acl(struct sap_context *pSapCtx);
 
 /**
  * wlansap_get_acl_accept_list() - Get ACL accept list

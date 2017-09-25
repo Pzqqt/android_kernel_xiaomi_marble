@@ -892,11 +892,8 @@ QDF_STATUS wlansap_get_acl_deny_list(struct sap_context *pSapCtx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* This routine will clear all the entries in accept list as well as deny list  */
-
-QDF_STATUS wlansap_clear_acl(void *pCtx)
+QDF_STATUS wlansap_clear_acl(struct sap_context *pSapCtx)
 {
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
 	uint8_t i;
 
 	if (NULL == pSapCtx) {
