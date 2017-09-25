@@ -887,13 +887,14 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *pSapCtx,
 /**
  * wlansap_is_channel_leaking_in_nol() - This API checks if channel is leaking
  * in nol list
- * @ctx: context pointer
+ * @sap_ctx: SAP context pointer
  * @channel: channel
  * @chan_bw: channel bandwidth
  *
  * Return: True/False
  */
-bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
+bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
+				       uint8_t channel,
 				       uint8_t chan_bw);
 
 QDF_STATUS wlansap_start_bss(void *p_cds_gctx,

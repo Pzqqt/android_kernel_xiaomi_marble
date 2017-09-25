@@ -454,10 +454,10 @@ static QDF_STATUS wlansap_mark_leaking_channel(struct sap_context *sap_ctx,
 }
 #endif
 
-bool wlansap_is_channel_leaking_in_nol(void *ctx, uint8_t channel,
-		uint8_t chan_bw)
+bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
+				       uint8_t channel,
+				       uint8_t chan_bw)
 {
-	struct sap_context *sap_ctx = CDS_GET_SAP_CB(ctx);
 	tpAniSirGlobal mac_ctx;
 	uint8_t leakage_adjusted_lst[1];
 	void *handle = NULL;
