@@ -970,9 +970,26 @@ QDF_STATUS wlansap_remain_on_channel
 	 uint32_t *scan_id);
 QDF_STATUS wlansap_cancel_remain_on_channel(void *p_cds_gctx,
 		uint32_t scan_id);
-QDF_STATUS wlansap_register_mgmt_frame
-	(void *p_cds_gctx,
-	 uint16_t frameType, uint8_t *matchData, uint16_t matchLen);
+
+/**
+ * wlansap_register_mgmt_frame() - register management frame
+ * @pSapCtx: Pointer to SAP context
+ * @frame_type: frame type that needs to be registered with PE.
+ * @match_data: pointer to data which should be matched after @frame_type
+ *              is matched.
+ * @match_len: Length of the @match_data
+ *
+ * HDD use this API to register specified type of frame with CORE stack.
+ * On receiving such kind of frame CORE stack should pass this frame to HDD
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success and error code otherwise
+ */
+QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *pSapCtx,
+				       uint16_t frame_type,
+				       uint8_t *match_data,
+				       uint16_t match_len);
+
 QDF_STATUS wlansap_de_register_mgmt_frame
 	(void *p_cds_gctx,
 	 uint16_t frameType, uint8_t *matchData, uint16_t matchLen);
