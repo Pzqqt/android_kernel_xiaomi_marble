@@ -874,14 +874,16 @@ typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 /**
  * wlansap_is_channel_in_nol_list() - This API checks if channel is
  * in nol list
- * @ctx: context pointer
- * @channel: channel
+ * @pSapCtx: SAP context pointer
+ * @channelNumber: channel number
  * @chanBondState: channel bonding state
  *
- * Return: True/False
+ * Return: True if the channel is in the NOL list, false otherwise
  */
-bool wlansap_is_channel_in_nol_list(void *p_cds_gctx, uint8_t channel_no,
+bool wlansap_is_channel_in_nol_list(struct sap_context *pSapCtx,
+				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState);
+
 /**
  * wlansap_is_channel_leaking_in_nol() - This API checks if channel is leaking
  * in nol list

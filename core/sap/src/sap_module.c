@@ -420,14 +420,10 @@ QDF_STATUS wlansap_close(struct sap_context *pSapCtx)
 	return QDF_STATUS_SUCCESS;
 } /* wlansap_close */
 
-bool wlansap_is_channel_in_nol_list(void *p_cds_gctx,
+bool wlansap_is_channel_in_nol_list(struct sap_context *pSapCtx,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState)
 {
-	struct sap_context *pSapCtx = NULL;
-
-	pSapCtx = CDS_GET_SAP_CB(p_cds_gctx);
-
 	if (!pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Invalid SAP pointer from pCtx", __func__);
