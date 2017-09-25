@@ -2395,6 +2395,58 @@ static int32_t wma_ieee80211_hdrsize(const void *data)
 }
 
 /**
+ * rate_pream: Mapping from data rates to preamble.
+ */
+static uint32_t rate_pream[] = {WMI_RATE_PREAMBLE_CCK, WMI_RATE_PREAMBLE_CCK,
+				WMI_RATE_PREAMBLE_CCK, WMI_RATE_PREAMBLE_CCK,
+				WMI_RATE_PREAMBLE_OFDM, WMI_RATE_PREAMBLE_OFDM,
+				WMI_RATE_PREAMBLE_OFDM, WMI_RATE_PREAMBLE_OFDM,
+				WMI_RATE_PREAMBLE_OFDM, WMI_RATE_PREAMBLE_OFDM,
+				WMI_RATE_PREAMBLE_OFDM, WMI_RATE_PREAMBLE_OFDM};
+
+/**
+ * rate_mcs: Mapping from data rates to MCS (+4 for OFDM to keep the sequence).
+ */
+static uint32_t rate_mcs[] = {WMI_MAX_CCK_TX_RATE_1M, WMI_MAX_CCK_TX_RATE_2M,
+			      WMI_MAX_CCK_TX_RATE_5_5M, WMI_MAX_CCK_TX_RATE_11M,
+			      WMI_MAX_OFDM_TX_RATE_6M + 4,
+			      WMI_MAX_OFDM_TX_RATE_9M + 4,
+			      WMI_MAX_OFDM_TX_RATE_12M + 4,
+			      WMI_MAX_OFDM_TX_RATE_18M + 4,
+			      WMI_MAX_OFDM_TX_RATE_24M + 4,
+			      WMI_MAX_OFDM_TX_RATE_36M + 4,
+			      WMI_MAX_OFDM_TX_RATE_48M + 4,
+			      WMI_MAX_OFDM_TX_RATE_54M + 4};
+
+#define WMA_TX_SEND_MGMT_TYPE 0
+#define WMA_TX_SEND_DATA_TYPE 1
+
+/**
+ * wma_update_tx_send_params() - Update tx_send_params TLV info
+ * @tx_param: Pointer to tx_send_params
+ * @rid: rate ID passed by PE
+ *
+ * Return: None
+ */
+static void wma_update_tx_send_params(struct tx_send_params *tx_param,
+				      enum rateid rid)
+{
+	uint8_t  preamble = 0, nss = 0, rix = 0;
+
+	preamble = rate_pream[rid];
+	rix = rate_mcs[rid];
+
+	tx_param->mcs_mask = (1 << rix);
+	tx_param->nss_mask = (1 << nss);
+	tx_param->preamble_type = (1 << preamble);
+	tx_param->frame_type = WMA_TX_SEND_MGMT_TYPE;
+
+	WMA_LOGD(FL("rate_id: %d, mcs: %0x, nss: %0x, preamble: %0x"),
+		     rid, tx_param->mcs_mask, tx_param->nss_mask,
+		     tx_param->preamble_type);
+}
+
+/**
  * wma_tx_packet() - Sends Tx Frame to TxRx
  * @wma_context: wma context
  * @tx_frame: frame buffer
@@ -2420,7 +2472,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 void *pData,
 			 wma_tx_ota_comp_callback tx_frm_ota_comp_cb,
 			 uint8_t tx_flag, uint8_t vdev_id, bool tdlsFlag,
-			 uint16_t channel_freq)
+			 uint16_t channel_freq, enum rateid rid)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) (wma_context);
 	int32_t status;
@@ -2796,6 +2848,17 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		mgmt_param.pdata = pData;
 		mgmt_param.chanfreq = chanfreq;
 		mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+		/*
+		 * Update the tx_params TLV only for rates
+		 * other than 1Mbps and 6 Mbps
+		 */
+		if (rid < RATEID_DEFAULT &&
+		    (rid != RATEID_1MBPS && rid != RATEID_6MBPS)) {
+			WMA_LOGD(FL("using rate id: %d for Tx"), rid);
+			mgmt_param.tx_params_valid = true;
+			wma_update_tx_send_params(&mgmt_param.tx_param, rid);
+		}
 
 		psoc = wma_handle->psoc;
 		if (!psoc) {

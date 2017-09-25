@@ -475,7 +475,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 			TXRX_FRM_802_11_MGMT,
 			ANI_TXDIR_TODS, 7, lim_tx_complete,
 			frame, tx_flag, sme_session_id,
-			channel_freq);
+			channel_freq, RATEID_DEFAULT);
 
 		if (!mb_msg->noack)
 			lim_p2p_action_cnf(mac_ctx, packet,
@@ -490,7 +490,7 @@ static void lim_tx_action_frame(tpAniSirGlobal mac_ctx,
 				ANI_TXDIR_TODS, 7, lim_tx_complete,
 				frame, lim_p2p_action_cnf, tx_flag,
 				sme_session_id, false,
-				channel_freq);
+				channel_freq, RATEID_DEFAULT);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			pe_err("couldn't send action frame");
