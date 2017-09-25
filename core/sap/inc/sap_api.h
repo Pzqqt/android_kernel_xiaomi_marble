@@ -1048,13 +1048,14 @@ QDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal,
 
 /**
  * wlan_sap_get_phymode() - Returns sap phymode.
- * @ctx:	Pointer to cds Context or Sap Context.
+ * @sap_ctx:	Pointer to Sap Context.
  *
  * This function provides the SAP current phymode.
  *
  * Return: phymode
  */
-eCsrPhyMode wlan_sap_get_phymode(void *ctx);
+eCsrPhyMode wlan_sap_get_phymode(struct sap_context *sap_ctx);
+
 uint32_t wlan_sap_get_vht_ch_width(void *ctx);
 void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width);
 QDF_STATUS wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
