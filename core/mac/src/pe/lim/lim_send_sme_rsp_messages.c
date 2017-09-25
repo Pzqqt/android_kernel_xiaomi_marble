@@ -2559,6 +2559,7 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 	uint8_t length = sizeof(tSirSmeCSAIeTxCompleteRsp);
 	tpSirFirstBeaconTxCompleteInd pBcnTxInd =
 		(tSirFirstBeaconTxCompleteInd *) event;
+	uint8_t ch, ch_width;
 
 	psessionEntry = pe_find_session_by_bss_idx(pMac, pBcnTxInd->bssIdx);
 	if (psessionEntry == NULL) {
@@ -2579,6 +2580,14 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 			 * Send the next beacon with updated CSA IE count
 			 */
 			lim_send_dfs_chan_sw_ie_update(pMac, psessionEntry);
+
+			ch = psessionEntry->gLimChannelSwitch.primaryChannel;
+			ch_width = psessionEntry->gLimChannelSwitch.ch_width;
+			if (pMac->sap.SapDfsInfo.dfs_beacon_tx_enhanced)
+				/* Send Action frame after updating beacon */
+				lim_send_chan_switch_action_frame(pMac,
+					ch, ch_width, psessionEntry);
+
 			/* Decrement the IE count */
 			psessionEntry->gLimChannelSwitch.switchCount--;
 		} else {

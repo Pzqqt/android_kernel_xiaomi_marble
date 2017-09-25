@@ -1220,4 +1220,21 @@ QDF_STATUS lim_util_get_type_subtype(void *pkt, uint8_t *type,
  */
 enum rateid lim_get_min_session_txrate(tpPESession session);
 
+/**
+ * lim_send_chan_switch_action_frame()- Send an action frame
+ * containing CSA IE or ECSA IE depending on the connected
+ * sta capability.
+ *
+ * @mac_ctx: pointer to global mac structure
+ * @new_channel: new channel to switch to.
+ * @ch_bandwidth: BW of channel to calculate op_class
+ * @session_entry: pe session
+ *
+ * Return: void
+ */
+void lim_send_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
+				       uint16_t new_channel,
+				       uint8_t ch_bandwidth,
+				       tpPESession session_entry);
+
 #endif /* __LIM_UTILS_H */

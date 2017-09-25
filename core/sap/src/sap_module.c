@@ -746,6 +746,8 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 		sap_ctx->csr_roamProfile.csrPersona;
 	pmac->sap.sapCtxList[sap_ctx->sessionId].sessionID =
 		sap_ctx->sessionId;
+	pmac->sap.SapDfsInfo.dfs_beacon_tx_enhanced =
+		pConfig->dfs_beacon_tx_enhanced;
 
 	/* Copy MAC filtering settings to sap context */
 	sap_ctx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
