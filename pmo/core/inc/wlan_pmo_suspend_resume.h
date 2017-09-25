@@ -307,14 +307,14 @@ enum pmo_power_save_qpower_mode pmo_core_psoc_get_qpower_config(
 	switch (ps_mode) {
 	case pmo_ps_qpower_no_deep_sleep:
 	case pmo_ps_qpower_deep_sleep:
-		pmo_info("QPOWER is enabled in power save mode %d", ps_mode);
+		pmo_debug("QPOWER is enabled in power save mode %d", ps_mode);
 		return pmo_qpower_enabled;
 	case pmo_ps_duty_cycling_qpower:
-		pmo_info("DUTY cycling QPOWER is enabled in power save mode %d",
+		pmo_debug("DUTY cycling QPOWER is enabled in power save mode %d",
 			ps_mode);
 		return pmo_qpower_duty_cycling;
 	default:
-		pmo_info("QPOWER is disabled in power save mode %d",
+		pmo_debug("QPOWER is disabled in power save mode %d",
 			ps_mode);
 		return pmo_qpower_disabled;
 	}
