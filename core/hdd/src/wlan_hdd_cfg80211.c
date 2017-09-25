@@ -11577,8 +11577,9 @@ static int __wlan_hdd_cfg80211_set_limit_offchan_param(struct wiphy *wiphy,
 	if (ret < 0)
 		return ret;
 
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACTIVE_TOS_MAX, data, data_len,
-				wlan_hdd_set_limit_off_channel_param_policy)) {
+	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACTIVE_TOS_MAX, data,
+			  data_len,
+			  wlan_hdd_set_limit_off_channel_param_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}

@@ -2791,6 +2791,7 @@ static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 { }
 #endif
 
+#undef nla_parse
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 static inline void hdd_dev_setup_destructor(struct net_device *dev)
 {
@@ -2816,6 +2817,7 @@ hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
 	return nla_parse(tb, maxtype, head, len, policy, NULL);
 }
 #endif /* KERNEL_VERSION(4, 12, 0) */
+#define nla_parse(...) (obsolete, use wlan_cfg80211_nla_parse or hdd_nla_parse)
 
 /**
  * hdd_dp_trace_init() - initialize DP Trace by calling the QDF API
