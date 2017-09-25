@@ -1018,7 +1018,15 @@ QDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
 QDF_STATUS wlansap_set_acl_mode(struct sap_context *pSapCtx,
 				eSapMacAddrACL mode);
 
-QDF_STATUS wlansap_get_acl_mode(void *p_cds_gctx, eSapMacAddrACL *mode);
+/**
+ * wlansap_get_acl_mode() - Get the SAP ACL mode
+ * @pSapCtx: The SAP context pointer
+ * @mode: Pointer where to return the current ACL mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_get_acl_mode(struct sap_context *pSapCtx,
+				eSapMacAddrACL *mode);
 
 /**
  * wlansap_modify_acl() - Update ACL entries

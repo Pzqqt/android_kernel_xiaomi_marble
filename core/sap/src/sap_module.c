@@ -847,14 +847,12 @@ QDF_STATUS wlansap_set_acl_mode(struct sap_context *pSapCtx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/* Get ACL Mode */
-QDF_STATUS wlansap_get_acl_mode(void *pCtx, eSapMacAddrACL *mode)
+QDF_STATUS wlansap_get_acl_mode(struct sap_context *pSapCtx,
+				eSapMacAddrACL *mode)
 {
-	struct sap_context *pSapCtx = CDS_GET_SAP_CB(pCtx);
-
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from pCtx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
