@@ -1529,6 +1529,27 @@ QDF_STATUS wmi_unified_dfs_phyerr_offload_dis_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_set_country_cmd_send(void *wmi_hdl,
 				struct set_country *param);
+/*
+ * wmi_unified_set_del_pmkid_cache() - set delete PMKID
+ * @wmi_hdl: wma handle
+ * @pmksa: pointer to pmk cache entry
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_set_del_pmkid_cache(void *wmi_hdl,
+					struct wmi_unified_pmk_cache *pmksa);
+
+#if defined(WLAN_FEATURE_FILS_SK)
+/*
+ * wmi_unified_roam_send_hlp_cmd() -send HLP command info
+ * @wmi_hdl: wma handle
+ * @req_buf: Pointer to HLP params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_roam_send_hlp_cmd(void *wmi_hdl,
+					struct hlp_params *req_buf);
+#endif
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 void wmi_print_cmd_log(wmi_unified_t wmi, uint32_t count,

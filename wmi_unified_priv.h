@@ -416,6 +416,11 @@ QDF_STATUS (*send_roam_mawc_params_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_roam_scan_filter_cmd)(wmi_unified_t wmi_handle,
 				struct roam_scan_filter_params *roam_req);
 
+#if defined(WLAN_FEATURE_FILS_SK)
+QDF_STATUS (*send_roam_scan_hlp_cmd) (wmi_unified_t wmi_handle,
+				struct hlp_params *params);
+#endif
+
 QDF_STATUS (*send_set_passpoint_network_list_cmd)(wmi_unified_t wmi_handle,
 					struct wifi_passpoint_req_param *req);
 
@@ -880,6 +885,8 @@ QDF_STATUS (*send_vdev_spectral_configure_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_vdev_spectral_enable_cmd)(wmi_unified_t wmi_handle,
 		struct vdev_spectral_enable_params *param);
+QDF_STATUS (*send_set_del_pmkid_cache_cmd) (wmi_unified_t wmi_handle,
+		struct wmi_unified_pmk_cache *req_buf);
 
 QDF_STATUS (*send_bss_chan_info_request_cmd)(wmi_unified_t wmi_handle,
 		struct bss_chan_info_request_params *param);
