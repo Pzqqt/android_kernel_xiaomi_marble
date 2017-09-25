@@ -1634,29 +1634,15 @@ QDF_STATUS wlansap_set_key_sta(void *pCtx, tCsrRoamSetKey *pSetKeyInfo)
 	return qdf_status;
 }
 
-/**
- * wlan_sap_getstation_ie_information() - RSNIE Population
- *
- * @ctx: Global context
- * @len: Length of @buf
- * @buf: RSNIE IE data
- *
- *  Populate RSN IE from CSR to HDD context
- *
- * Return: QDF_STATUS enumeration
- */
-
-QDF_STATUS
-wlan_sap_getstation_ie_information
-	(void *ctx, uint32_t *len, uint8_t *buf) {
+QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
+					      uint32_t *len, uint8_t *buf)
+{
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct sap_context *sap_ctx = NULL;
 	uint32_t ie_len = 0;
 
-	sap_ctx = CDS_GET_SAP_CB(ctx);
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			FL("Invalid SAP pointer from pCtx"));
+			FL("Invalid SAP pointer"));
 		return QDF_STATUS_E_FAULT;
 	}
 

@@ -921,8 +921,21 @@ QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
 	uint32_t targetChannel, enum phy_ch_width target_bw, bool strict);
 QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
-QDF_STATUS wlan_sap_getstation_ie_information(void *p_cds_gctx,
-	uint32_t *pLen, uint8_t *pBuf);
+
+/**
+ * wlan_sap_getstation_ie_information() - RSNIE Population
+ * @sap_ctx: Pointer to the SAP context
+ * @len: Length of @buf
+ * @buf: RSNIE IE data
+ *
+ *  Populate RSN IE from CSR to HDD context
+ *
+ * Return: QDF_STATUS enumeration
+ */
+
+QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
+					      uint32_t *len, uint8_t *buf);
+
 QDF_STATUS wlansap_clear_acl(void *p_cds_gctx);
 QDF_STATUS wlansap_get_acl_accept_list(void *p_cds_gctx,
 	 struct qdf_mac_addr *pAcceptList, uint8_t *nAcceptList);
