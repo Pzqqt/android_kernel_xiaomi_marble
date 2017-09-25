@@ -990,9 +990,24 @@ QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *pSapCtx,
 				       uint8_t *match_data,
 				       uint16_t match_len);
 
-QDF_STATUS wlansap_de_register_mgmt_frame
-	(void *p_cds_gctx,
-	 uint16_t frameType, uint8_t *matchData, uint16_t matchLen);
+/**
+ * wlansap_de_register_mgmt_frame() - de register management frame
+ * @pSapCtx: Pointer to SAP context
+ * @frame_type: frame type that needs to be de-registered with PE.
+ * @match_data: pointer to data which should be matched after @frame_type
+ *              is matched.
+ * @match_len: Length of the @match_data
+ *
+ * HDD use this API to deregister a previously registered frame
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *         QDF_STATUS_SUCCESS:  Success and error code otherwise
+ */
+QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *pSapCtx,
+					  uint16_t frame_type,
+					  uint8_t *match_data,
+					  uint16_t match_len);
+
 QDF_STATUS wlansap_channel_change_request(void *p_cds_gctx,
 		uint8_t tArgetChannel);
 QDF_STATUS wlansap_start_beacon_req(void *pSapCtx);

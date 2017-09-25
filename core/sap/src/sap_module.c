@@ -2012,28 +2012,14 @@ QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *pSapCtx,
 	return QDF_STATUS_E_FAULT;
 }
 
-/**
- * wlansap_de_register_mgmt_frame() - de register management frame
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @frameType: frameType that needs to be De-registered with PE.
- * @matchData: Data pointer which should be matched after frame type is matched.
- * @matchLen: Length of the matchData
- *
- * This API is used to deregister previously registered frame.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- *         QDF_STATUS_SUCCESS:  Success and error code otherwise
- */
-QDF_STATUS wlansap_de_register_mgmt_frame
-	(void *pCtx,
-	uint16_t frameType, uint8_t *matchData, uint16_t matchLen) {
-	struct sap_context *pSapCtx = NULL;
+QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *pSapCtx,
+					  uint16_t frameType,
+					  uint8_t *matchData,
+					  uint16_t matchLen)
+{
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer from pCtx",
