@@ -2704,37 +2704,19 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 		  MAC_ADDR_ARRAY(pDelStaParams->peerMacAddr.bytes));
 }
 
-/**
- * wlansap_acs_chselect() - Initiates acs channel selection
- * @pvos_gctx:                 Pointer to vos global context structure
- * @pacs_event_callback:       Callback function in hdd called by sap
- *                             to inform hdd about channel section result
- * @pconfig:                   Pointer to configuration structure
- *                             passed down from hdd
- * @pusr_context:              Parameter that will be passed back in all
- *                             the sap callback events.
- *
- * This function serves as an api for hdd to initiate acs scan pre
- * start bss.
- *
- * Return: The QDF_STATUS code associated with performing the operation.
- */
-QDF_STATUS
-wlansap_acs_chselect(void *pvos_gctx,
-			tpWLAN_SAPEventCB pacs_event_callback,
-			tsap_Config_t *pconfig,
-			void *pusr_context)
+QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
+				tpWLAN_SAPEventCB pacs_event_callback,
+				tsap_Config_t *pconfig,
+				void *pusr_context)
 {
-	struct sap_context *sap_context = NULL;
 	tHalHandle h_hal = NULL;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pmac = NULL;
 	tWLAN_SAPEvent sapEvent; /* State machine event */
 
-	sap_context = CDS_GET_SAP_CB(pvos_gctx);
 	if (NULL == sap_context) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid SAP pointer from pvos_gctx", __func__);
+			"%s: Invalid SAP pointer", __func__);
 
 		return QDF_STATUS_E_FAULT;
 	}
@@ -2742,7 +2724,7 @@ wlansap_acs_chselect(void *pvos_gctx,
 	h_hal = (tHalHandle)CDS_GET_HAL_CB();
 	if (NULL == h_hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"%s: Invalid MAC context from pvosGCtx", __func__);
+			"%s: Invalid MAC context", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 

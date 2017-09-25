@@ -1328,10 +1328,26 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,
 		uint8_t subtype,
 		struct tagCsrDelStaParams *pDelStaParams);
-QDF_STATUS wlansap_acs_chselect(void *pvos_gctx,
-		tpWLAN_SAPEventCB pacs_event_callback,
-		tsap_Config_t *pconfig,
-		void *pusr_context);
+
+/**
+ * wlansap_acs_chselect() - Initiates acs channel selection
+ * @sap_context:               Pointer to SAP context structure
+ * @pacs_event_callback:       Callback function in hdd called by sap
+ *                             to inform hdd about channel selection result
+ * @pconfig:                   Pointer to configuration structure
+ *                             passed down from hdd
+ * @pusr_context:              Parameter that will be passed back in all
+ *                             the sap callback events.
+ *
+ * This function serves as an api for hdd to initiate acs scan pre
+ * start bss.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation.
+ */
+QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
+				tpWLAN_SAPEventCB pacs_event_callback,
+				tsap_Config_t *pconfig,
+				void *pusr_context);
 
 uint32_t wlansap_get_chan_width(void *cds_ctx);
 
