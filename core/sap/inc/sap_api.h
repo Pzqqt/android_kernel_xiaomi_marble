@@ -992,8 +992,19 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *pSapCtx,
 QDF_STATUS wlansap_disassoc_sta(struct sap_context *pSapCtx,
 				struct tagCsrDelStaParams *p_del_sta_params);
 
-QDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
-			struct tagCsrDelStaParams *pDelStaParams);
+/**
+ * wlansap_deauth_sta() - Ap App/HDD initiated deauthentication of station
+ * @pStaCtx : Pointer to the SAP context
+ * @pDelStaParams : Pointer to parameters of the station to deauthenticate
+ *
+ * This api function provides for Ap App/HDD initiated deauthentication of
+ * station
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ */
+QDF_STATUS wlansap_deauth_sta(struct sap_context *pSapCtx,
+			      struct tagCsrDelStaParams *pDelStaParams);
+
 QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
 	uint32_t targetChannel, enum phy_ch_width target_bw, bool strict);
 QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
