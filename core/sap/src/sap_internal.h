@@ -391,7 +391,8 @@ sap_channel_matrix_check(struct sap_context *sapContext,
 
 bool is_concurrent_sap_ready_for_channel_change(tHalHandle hHal,
 						struct sap_context *sapContext);
-
+bool sap_is_conc_sap_doing_scc_dfs(tHalHandle hal,
+				   struct sap_context *given_sapctx);
 uint8_t sap_get_total_number_sap_intf(tHalHandle hHal);
 
 bool sap_dfs_is_w53_invalid(tHalHandle hHal, uint8_t channelID);
