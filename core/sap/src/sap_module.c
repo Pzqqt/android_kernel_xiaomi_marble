@@ -648,49 +648,21 @@ static inline bool wlan_sap_validate_channel_switch(tHalHandle hal,
 	return true;
 }
 #endif
-/**
- * wlansap_start_bss() - start BSS
- * @pCtx: Pointer to the global cds context; a handle to SAP's control block
- *        can be extracted from its context. When MBSSID feature is enabled,
- *        SAP context is directly passed to SAP APIs.
- * @pQctCommitConfig: Pointer to configuration structure passed down from
- *                    HDD(HostApd for Android)
- * @hdd_SapEventCallback: Callback function in HDD called by SAP to inform HDD
- *                        about SAP results
- * @pUsrContext: Parameter that will be passed back in all the SAP callback
- *               events.
- *
- * This api function provides SAP FSM event eWLAN_SAP_PHYSICAL_LINK_CREATE for
- * starting AP BSS
- *
- * Return: The result code associated with performing the operation
- *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
- *                             access would cause a page fault
- *         QDF_STATUS_SUCCESS: Success
- */
-QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
+QDF_STATUS wlansap_start_bss(struct sap_context *pSapCtx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
-			     tsap_Config_t *pConfig, void *pUsrContext) {
+			     tsap_Config_t *pConfig, void *pUsrContext)
+{
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct sap_context *pSapCtx = NULL;
 	tHalHandle hHal;
 	tpAniSirGlobal pmac = NULL;
-
-	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-
-	/*------------------------------------------------------------------------
-	    Sanity check
-	    Extract SAP control block
-	   ------------------------------------------------------------------------*/
-	pSapCtx = CDS_GET_SAP_CB(pCtx);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_start_bss: sapContext=%pK", pSapCtx);
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: Invalid SAP pointer from pCtx",
+			  "%s: Invalid SAP pointer",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}

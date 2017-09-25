@@ -897,9 +897,27 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 				       uint8_t channel,
 				       uint8_t chan_bw);
 
-QDF_STATUS wlansap_start_bss(void *p_cds_gctx,
-	 tpWLAN_SAPEventCB pSapEventCallback,
-	 tsap_Config_t *pConfig, void *pUsrContext);
+/**
+ * wlansap_start_bss() - start BSS
+ * @pSapCtx: Pointer to the SAP context
+ * @pSapEventCallback: Callback function in HDD called by SAP to inform HDD
+ *                        about SAP results
+ * @pConfig: Pointer to configuration structure passed down from
+ *                    HDD(HostApd for Android)
+ * @pUsrContext: Parameter that will be passed back in all the SAP callback
+ *               events.
+ *
+ * This api function provides SAP FSM event eWLAN_SAP_PHYSICAL_LINK_CREATE for
+ * starting AP BSS
+ *
+ * Return: The result code associated with performing the operation
+ *         QDF_STATUS_E_FAULT: Pointer to SAP cb is NULL;
+ *                             access would cause a page fault
+ *         QDF_STATUS_SUCCESS: Success
+ */
+QDF_STATUS wlansap_start_bss(struct sap_context *pSapCtx,
+			     tpWLAN_SAPEventCB pSapEventCallback,
+			     tsap_Config_t *pConfig, void *pUsrContext);
 
 /**
  * wlan_sap_update_next_channel() - Update next channel configured using vendor
