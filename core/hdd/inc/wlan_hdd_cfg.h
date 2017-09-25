@@ -13163,7 +13163,7 @@ QDF_STATUS hdd_execute_global_config_command(struct hdd_context *hdd_ctx,
 					     char *command);
 
 bool hdd_is_okc_mode_enabled(struct hdd_context *hdd_ctx);
-QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, uint32_t val);
+QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val);
 void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 			 struct pmkid_mode_bits *pmkid_modes);
 

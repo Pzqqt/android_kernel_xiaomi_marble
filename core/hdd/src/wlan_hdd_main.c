@@ -9484,6 +9484,9 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			hdd_err("CNSS power down failed put device into Low power mode:%d",
 				ret);
 	}
+
+	/* Once the firmware sequence is completed reset this flag */
+	hdd_ctx->imps_enabled = false;
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
 	/*
 	 * Reset total mac phy during module stop such that during

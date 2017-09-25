@@ -1822,6 +1822,7 @@ struct hdd_context {
 	struct hdd_nud_stats_context nud_stats_context;
 	eCsrBand curr_band;
 	bool fw_mem_dump_enabled;
+	bool imps_enabled;
 };
 
 /**

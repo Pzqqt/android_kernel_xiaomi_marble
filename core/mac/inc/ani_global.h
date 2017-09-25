@@ -929,8 +929,6 @@ typedef struct sAniSirGlobal {
 
 	uint8_t isCoalesingInIBSSAllowed;
 
-	bool imps_enabled;
-
 	csr_readyToSuspendCallback readyToSuspendCallback;
 	void *readyToSuspendContext;
 	uint8_t lteCoexAntShare;
