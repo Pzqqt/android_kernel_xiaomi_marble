@@ -64,6 +64,7 @@
 	.doit = NULL							\
 },
 
+#undef nla_parse
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
 					  int maxtype,
@@ -83,6 +84,7 @@ static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
 	return nla_parse(tb, maxtype, head, len, policy, NULL);
 }
 #endif
+#define nla_parse(...) (obsolete, use wlan_cfg80211_nla_parse or hdd_nla_parse)
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int
