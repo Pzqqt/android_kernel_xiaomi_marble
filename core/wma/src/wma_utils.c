@@ -3241,6 +3241,13 @@ int wma_peer_info_event_handler(void *handle, u_int8_t *cmd_param_info,
 
 	WMA_LOGI("%s Recv WMI_PEER_STATS_INFO_EVENTID", __func__);
 	event = param_buf->fixed_param;
+	if (event->num_peers >
+		((WMI_SVC_MSG_MAX_SIZE -
+		  sizeof(wmi_peer_stats_info_event_fixed_param))/
+		 sizeof(wmi_peer_stats_info))) {
+		WMA_LOGE("Excess num of peers from fw %d", event->num_peers);
+		return -EINVAL;
+	}
 	buf_size = sizeof(wmi_peer_stats_info_event_fixed_param) +
 		sizeof(wmi_peer_stats_info) * event->num_peers;
 	buf = qdf_mem_malloc(buf_size);
