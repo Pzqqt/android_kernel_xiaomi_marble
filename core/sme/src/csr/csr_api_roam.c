@@ -10954,12 +10954,7 @@ static void csr_update_rssi(tpAniSirGlobal pMac, void *pMsg)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	if (pGetRssiReq) {
-		if (NULL != pGetRssiReq->p_cds_context)
-			qdf_status = csr_send_snr_request(pGetRssiReq);
-		else {
-			sme_err("GetRssiReq->p_cds_context is NULL");
-			return;
-		}
+		qdf_status = csr_send_snr_request(pGetRssiReq);
 
 		if (NULL != pGetRssiReq->rssiCallback) {
 			if (qdf_status != QDF_STATUS_E_BUSY)
@@ -17033,7 +17028,7 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 			tCsrRssiCallback callback,
 			uint8_t staId,
 			struct qdf_mac_addr bssId,
-			int8_t lastRSSI, void *pContext, void *p_cds_context)
+			int8_t lastRSSI, void *pContext)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg msg = {0};
@@ -17059,7 +17054,6 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac,
 	pMsg->staId = staId;
 	pMsg->rssiCallback = callback;
 	pMsg->pDevContext = pContext;
-	pMsg->p_cds_context = p_cds_context;
 	/*
 	 * store RSSI at time of calling, so that if RSSI request cannot
 	 * be sent to firmware, this value can be used to return immediately

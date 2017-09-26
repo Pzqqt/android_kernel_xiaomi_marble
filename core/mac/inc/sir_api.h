@@ -1952,8 +1952,6 @@ typedef struct sAniGetRssiReq {
 	int8_t lastRSSI;        /* in case of error, return last RSSI */
 	void *rssiCallback;
 	void *pDevContext;      /* device context */
-	void *p_cds_context;    /* cds context */
-
 } tAniGetRssiReq, *tpAniGetRssiReq;
 
 typedef struct sAniGetSnrReq {

@@ -1245,7 +1245,7 @@ QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 		uint8_t staId, void *pContext, uint8_t sessionId);
 QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac, tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
-		void *pContext, void *p_cds_context);
+		void *pContext);
 QDF_STATUS csr_get_snr(tpAniSirGlobal pMac, tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac,

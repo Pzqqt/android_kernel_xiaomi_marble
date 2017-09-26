@@ -3604,7 +3604,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *pAdapter, int8_t *rssi_value)
 	hstatus = sme_get_rssi(hdd_ctx->hHal, hdd_get_rssi_cb,
 			       pHddStaCtx->conn_info.staId[0],
 			       pHddStaCtx->conn_info.bssId, pAdapter->rssi,
-			       cookie, hdd_ctx->pcds_context);
+			       cookie);
 	if (QDF_STATUS_SUCCESS != hstatus) {
 		hdd_err("Unable to retrieve RSSI");
 		/* we'll returned a cached value below */

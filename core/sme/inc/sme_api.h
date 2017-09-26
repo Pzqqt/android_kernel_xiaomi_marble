@@ -369,7 +369,7 @@ QDF_STATUS sme_get_statistics(tHalHandle hHal,
 QDF_STATUS sme_get_rssi(tHalHandle hHal,
 		tCsrRssiCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
-		void *pContext, void *p_cds_context);
+		void *pContext);
 QDF_STATUS sme_get_snr(tHalHandle hHal,
 		tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);

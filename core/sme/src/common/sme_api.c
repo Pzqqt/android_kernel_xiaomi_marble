@@ -4718,24 +4718,24 @@ QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 }
 
 
-/*
- * sme_get_rssi() -
+/**
+ * sme_get_rssi() - API to retrieve current RSSI
+ * @hHal: HAL handle for device
+ * @callback: SME sends back the requested stats using the callback
+ * @staId: The station ID for which the RSSI is requested for
+ * @bssid: The bssid of the connected session
+ * @lastRSSI: RSSI value at time of request. In case fw cannot provide
+ *		      RSSI, do not hold up but return this value.
+ * @pContext: user context to be passed back along with the callback
+ *
  * A wrapper function that client calls to register a callback to get RSSI
  *
- * hHal - HAL handle for device
- * callback - SME sends back the requested stats using the callback
- * staId -    The station ID for which the stats is requested for
- * bssid - The bssid of the connected session
- * lastRSSI - RSSI value at time of request. In case fw cannot provide
- *		      RSSI, do not hold up but return this value.
- * pContext - user context to be passed back along with the callback
- * p_cds_context - cds context
- * Return QDF_STATUS
+ * Return: QDF_STATUS
  */
 QDF_STATUS sme_get_rssi(tHalHandle hHal,
 			tCsrRssiCallback callback, uint8_t staId,
 			struct qdf_mac_addr bssId, int8_t lastRSSI,
-			void *pContext, void *p_cds_context)
+			void *pContext)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -4746,7 +4746,7 @@ QDF_STATUS sme_get_rssi(tHalHandle hHal,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_get_rssi(pMac, callback,
 				      staId, bssId, lastRSSI,
-				      pContext, p_cds_context);
+				      pContext);
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;
