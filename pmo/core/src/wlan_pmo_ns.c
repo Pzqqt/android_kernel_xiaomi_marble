@@ -60,7 +60,7 @@ static void pmo_core_fill_ns_addr(struct pmo_ns_offload_params *request,
 		request->target_ipv6_addr_ac_type[i] =
 			ns_req->ipv6_addr_type[i];
 
-		pmo_info("NSoffload solicitIp: %pI6 targetIp: %pI6 Index: %d",
+		pmo_debug("NSoffload solicitIp: %pI6 targetIp: %pI6 Index: %d",
 			&request->self_ipv6_addr[i],
 			&request->target_ipv6_addr[i], i);
 	}
@@ -96,7 +96,7 @@ static QDF_STATUS pmo_core_cache_ns_in_vdev_priv(
 		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
-	pmo_info("vdev self mac addr: %pM bss peer mac addr: %pM",
+	pmo_debug("vdev self mac addr: %pM bss peer mac addr: %pM",
 		wlan_vdev_mlme_get_macaddr(vdev),
 		wlan_peer_get_macaddr(peer));
 	/* get peer and peer mac accdress aka ap mac address */
@@ -156,7 +156,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	case pmo_ipv6_change_notify:
 	case pmo_ns_offload_dynamic_update:
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is disabled, skip in mode:%d",
+			pmo_debug("active offload is disabled, skip in mode:%d",
 				trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto out;
@@ -166,7 +166,7 @@ static QDF_STATUS pmo_core_do_enable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	case pmo_apps_suspend:
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is enabled, skip in mode: %d",
+			pmo_debug("active offload is enabled, skip in mode: %d",
 				trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto out;
@@ -199,7 +199,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 	case pmo_ipv6_change_notify:
 	case pmo_ns_offload_dynamic_update:
 		if (!psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is disabled, skip in mode:%d",
+			pmo_debug("active offload is disabled, skip in mode:%d",
 				trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto out;
@@ -209,7 +209,7 @@ static QDF_STATUS pmo_core_do_disable_ns_offload(struct wlan_objmgr_vdev *vdev,
 		break;
 	case pmo_apps_resume:
 		if (psoc_ctx->psoc_cfg.active_mode_offload) {
-			pmo_info("active offload is enabled, skip in mode: %d",
+			pmo_debug("active offload is enabled, skip in mode: %d",
 				trigger);
 			status = QDF_STATUS_E_INVAL;
 			goto out;
@@ -236,17 +236,17 @@ static QDF_STATUS pmo_core_ns_offload_sanity(struct wlan_objmgr_vdev *vdev)
 	vdev_ctx = pmo_vdev_get_priv(vdev);
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ns_offload_enable_static) {
-		pmo_info("ns offload statically disable");
+		pmo_debug("ns offload statically disable");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ns_offload_enable_dynamic) {
-		pmo_info("ns offload dynamically disable");
+		pmo_debug("ns offload dynamically disable");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
-		pmo_info("vdev in invalid opmode for ns offload %d",
+		pmo_debug("vdev in invalid opmode for ns offload %d",
 			pmo_get_vdev_opmode(vdev));
 		return QDF_STATUS_E_INVAL;
 	}
@@ -292,7 +292,7 @@ QDF_STATUS pmo_core_cache_ns_offload_req(
 		goto dec_ref;
 
 	if (ns_req->count == 0) {
-		pmo_info("skip ns offload caching as ns count is 0");
+		pmo_debug("skip ns offload caching as ns count is 0");
 		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
 	}
@@ -327,7 +327,7 @@ QDF_STATUS pmo_core_flush_ns_offload_req(struct wlan_objmgr_vdev *vdev)
 		goto dec_ref;
 
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("Flush ns offload on vdev id: %d vdev: %pK", vdev_id, vdev);
+	pmo_debug("Flush ns offload on vdev id: %d vdev: %pK", vdev_id, vdev);
 
 	status = pmo_core_flush_ns_from_vdev_priv(vdev);
 dec_ref:
@@ -372,7 +372,7 @@ QDF_STATUS pmo_core_enable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ns_offload_enable_dynamic) {
-		pmo_info("ns offload dynamically disable");
+		pmo_debug("ns offload dynamically disable");
 		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
 	}
@@ -381,14 +381,14 @@ skip_ns_dynamic_check:
 	qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
 	if (vdev_ctx->vdev_ns_req.num_ns_offload_count == 0) {
 		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
-		pmo_info("skip ns offload enable as ns count is 0");
+		pmo_debug("skip ns offload enable as ns count is 0");
 		status = QDF_STATUS_E_INVAL;
 		goto out;
 	}
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("Enable ns offload in fwr vdev id: %d vdev: %pK trigger: %d",
+	pmo_debug("Enable ns offload in fwr vdev id: %d vdev: %pK trigger: %d",
 		vdev_id, vdev, trigger);
 	status = pmo_core_do_enable_ns_offload(vdev, vdev_id, trigger);
 dec_ref:
@@ -433,14 +433,14 @@ QDF_STATUS pmo_core_disable_ns_offload_in_fwr(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (!vdev_ctx->pmo_psoc_ctx->psoc_cfg.ns_offload_enable_dynamic) {
-		pmo_info("ns offload dynamically disable");
+		pmo_debug("ns offload dynamically disable");
 		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
 	}
 
 skip_ns_dynamic_check:
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("disable ns offload in fwr vdev id: %d vdev: %pK trigger: %d",
+	pmo_debug("disable ns offload in fwr vdev id: %d vdev: %pK trigger: %d",
 		vdev_id, vdev, trigger);
 
 	status = pmo_core_do_disable_ns_offload(vdev, vdev_id, trigger);
