@@ -494,6 +494,11 @@ uint32_t csr_get_dot11_mode(tHalHandle hal, uint32_t session_id,
 	tDot11fBeaconIEs *ies_local = NULL;
 	uint32_t dot11mode = 0;
 
+	if (!csr_session) {
+		sme_err("Invalid session id %d", session_id);
+		return 0;
+	}
+
 	sme_debug("phyMode %d", csr_session->pCurRoamProfile->phyMode);
 
 	/* Get IE's */
