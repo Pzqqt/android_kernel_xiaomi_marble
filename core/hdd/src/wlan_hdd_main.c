@@ -10147,9 +10147,6 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
 
 	ENTER();
 
-	hdd_debug("hdd_softap_sta_deauth:(%pK, false)",
-	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
-
 	/* Ignore request to deauth bcmc station */
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
 		return qdf_status;
@@ -10175,9 +10172,6 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 			     struct tagCsrDelStaParams *pDelStaParams)
 {
 	ENTER();
-
-	hdd_debug("hdd_softap_sta_disassoc:(%pK, false)",
-	       (WLAN_HDD_GET_CTX(adapter))->pcds_context);
 
 	/* Ignore request to disassoc bcmc station */
 	if (pDelStaParams->peerMacAddr.bytes[0] & 0x1)
