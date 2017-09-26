@@ -109,6 +109,7 @@ enum active_bpf_mode {
  * @ito_repeat_count: Indicates ito repeated count
  * @force_target_assert_enabled: Indicate whether target assert enabled or not
  * @bandcapability: Configured band by user
+ * @rps_enabled: RPS enabled in SAP mode
  * Structure for holding cds ini parameters.
  */
 
@@ -169,6 +170,7 @@ struct cds_config_info {
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;
 	uint8_t bandcapability;
+	bool rps_enabled;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK

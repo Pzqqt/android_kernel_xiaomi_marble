@@ -9313,7 +9313,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	uint32_t num_abg_tx_chains = 0;
 	uint32_t num_11b_tx_chains = 0;
 	uint32_t num_11ag_tx_chains = 0;
-	struct policy_mgr_dp_cbacks dp_cbs = {0};
+	struct policy_mgr_dp_cbacks dp_cbs;
 
 	if (hdd_ctx->config->sifs_burst_duration) {
 		set_value = (SIFS_BURST_DUR_MULTIPLIER) *
@@ -9408,9 +9408,10 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 		goto cds_disable;
 
 	dp_cbs.hdd_disable_lro_in_concurrency = hdd_disable_lro_in_concurrency;
+	dp_cbs.hdd_set_rx_mode_rps_cb = hdd_set_rx_mode_rps;
 	status = policy_mgr_register_dp_cb(hdd_ctx->hdd_psoc, &dp_cbs);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_debug("LRO disbaled, failed to register with policy mgr");
+		hdd_debug("Failed to register DP cb with Policy Manager");
 		goto cds_disable;
 	}
 
@@ -12852,6 +12853,29 @@ void hdd_pld_ipa_uc_shutdown_pipes(void)
 		return;
 
 	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
+}
+
+/**
+ * hdd_set_rx_mode_rps() - Enable/disable RPS in SAP mode
+ * @struct hdd_context *hdd_ctx
+ * @struct hdd_adapter *padapter
+ * @bool enble
+ *
+ * Return: none
+ */
+void hdd_set_rx_mode_rps(bool enable)
+{
+	struct cds_config_info *cds_cfg = cds_get_ini_config();
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	struct hdd_adapter *adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+
+	if (adapter && hdd_ctx &&
+	    !hdd_ctx->rps && cds_cfg->uc_offload_enabled) {
+		if (enable && !cds_cfg->rps_enabled)
+			hdd_send_rps_ind(adapter);
+		else if (!enable && cds_cfg->rps_enabled)
+			hdd_send_rps_disable_ind(adapter);
+	}
 }
 
 /* Register the module init/exit functions */
