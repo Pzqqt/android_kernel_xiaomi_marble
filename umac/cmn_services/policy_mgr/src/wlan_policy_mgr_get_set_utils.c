@@ -1168,6 +1168,13 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 			pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency(true);
 	};
 
+	/* Enable RPS if SAP interface has come up */
+	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL)
+		== 1) {
+		if (pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb != NULL)
+			pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb(true);
+	}
+
 	policy_mgr_dump_current_concurrency(psoc);
 
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
@@ -1227,6 +1234,13 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
 		if (pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency != NULL)
 			pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency(false);
 	};
+
+	/* Disable RPS if SAP interface has come up */
+	if (policy_mgr_mode_specific_connection_count(psoc, PM_SAP_MODE, NULL)
+		== 0) {
+		if (pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb != NULL)
+			pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb(false);
+	}
 
 	policy_mgr_dump_current_concurrency(psoc);
 

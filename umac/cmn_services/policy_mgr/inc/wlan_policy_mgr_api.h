@@ -816,9 +816,11 @@ struct policy_mgr_cdp_cbacks {
  * struct policy_mgr_dp_cbacks - CDP Callbacks to be invoked
  * from policy manager
  * @hdd_disable_lro_in_concurrency: Callback to disable LRO
+ * @hdd_set_rx_mode_rps_cb: Callback to set RPS
  */
 struct policy_mgr_dp_cbacks {
 	void (*hdd_disable_lro_in_concurrency)(bool);
+	void (*hdd_set_rx_mode_rps_cb)(bool);
 };
 
 /**
