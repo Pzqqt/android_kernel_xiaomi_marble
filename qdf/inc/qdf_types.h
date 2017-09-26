@@ -594,9 +594,6 @@ typedef enum {
 #endif
 #endif
 
-/* typedef for QDF Context... */
-typedef void *v_CONTEXT_t;
-
 #define QDF_MAC_ADDR_SIZE (6)
 #define QDF_MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 #define QDF_MAC_ADDR_ARRAY(a) \
