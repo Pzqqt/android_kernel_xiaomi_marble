@@ -71,7 +71,7 @@ QDF_STATUS pmo_tgt_send_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 		qdf_atomic_set(&vdev_ctx->gtk_err_enable, false);
 	}
 
-	pmo_info("replay counter %llu", op_gtk_req->replay_counter);
+	pmo_debug("replay counter %llu", op_gtk_req->replay_counter);
 	op_gtk_req->flags = gtk_req->flags;
 	status = pmo_tx_ops.send_gtk_offload_req(vdev, op_gtk_req);
 	if (status != QDF_STATUS_SUCCESS)
@@ -155,7 +155,7 @@ QDF_STATUS pmo_tgt_gtk_rsp_evt(struct wlan_objmgr_psoc *psoc,
 	qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
 
 	if (vdev_ctx->vdev_gtk_rsp_req.callback) {
-		pmo_info("callback:%pK context:%pK psoc:%pK vdev_id:%d",
+		pmo_debug("callback:%pK context:%pK psoc:%pK vdev_id:%d",
 			vdev_ctx->vdev_gtk_rsp_req.callback,
 			vdev_ctx->vdev_gtk_rsp_req.callback_context,
 			psoc, rsp_param->vdev_id);
