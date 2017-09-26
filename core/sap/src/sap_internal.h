@@ -286,11 +286,22 @@ typedef struct sWLAN_SAPEvent {
 QDF_STATUS wlansap_context_get(struct sap_context *ctx);
 void wlansap_context_put(struct sap_context *ctx);
 
-QDF_STATUS
-wlansap_scan_callback
-	(tHalHandle halHandle,
-	void *pContext,
-	uint8_t sessionId, uint32_t scanID, eCsrScanStatus scanStatus);
+/**
+ * wlansap_scan_callback() - Callback for Scan (scan results) Events
+ * @hal_handle: tHalHandle passed in with the scan request
+ * @sap_ctx: The sap context
+ * @session_id: ID of the current session
+ * @scan_id: ID assigned to the scan
+ * @scan_status: Status of the scan
+ *
+ * Callback for Scan (scan results) Events
+ *
+ * Return: Status
+ */
+QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
+				 struct sap_context *sap_ctx,
+				 uint8_t session_id,
+				 uint32_t scan_id, eCsrScanStatus scan_status);
 
 QDF_STATUS
 wlansap_pre_start_bss_acs_scan_callback(

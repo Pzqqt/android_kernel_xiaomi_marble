@@ -88,24 +88,13 @@
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
 
-/*
- * wlansap_scan_callback() - Callback for Scan (scan results) Events
- *
- * @hal_handle  : tHalHandle passed in with the scan request
- * @ctx   : The second context pass in for the caller (sapContext)
- * @scanID      : scanID got after the scan
- *
- *  Callback for Scan (scan results) Events
- *
- * Return: Status
- */
 QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
-				 void *ctx,   /* Opaque SAP handle */
+				 struct sap_context *sap_ctx,
 				 uint8_t session_id,
-				 uint32_t scan_id, eCsrScanStatus scan_status) {
+				 uint32_t scan_id, eCsrScanStatus scan_status)
+{
 	tScanResultHandle result = NULL;
 	QDF_STATUS get_result_status = QDF_STATUS_E_FAILURE;
-	struct sap_context *sap_ctx = ctx;
 	tWLAN_SAPEvent sapEvent;        /* State machine event */
 	uint8_t operChannel = 0;
 	QDF_STATUS sap_sm_status;
