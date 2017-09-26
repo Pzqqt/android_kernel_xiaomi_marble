@@ -282,9 +282,9 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 	cmd->u.data_end_req = qdf_mem_malloc(sizeof(*req) +
 				(req->num_ndp_instances * sizeof(uint32_t)));
 	if (NULL == cmd->u.data_end_req) {
-			csr_release_command(mac_ctx, cmd);
-			sme_release_global_lock(&mac_ctx->sme);
-			return QDF_STATUS_E_NOMEM;
+		csr_release_command(mac_ctx, cmd);
+		sme_release_global_lock(&mac_ctx->sme);
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	qdf_mem_copy(cmd->u.data_end_req, req, sizeof(*req));
