@@ -2607,22 +2607,22 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlansap_set_dfs_nol(void *psap_ctx, eSapDfsNolType conf)
+QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
+			       eSapDfsNolType conf)
 {
-	struct sap_context *sap_ctx = psap_ctx;
 	void *hal = NULL;
 	tpAniSirGlobal mac = NULL;
 
 	if (!sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
 	hal = CDS_GET_HAL_CB();
 	if (!hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
+			  "%s: Invalid HAL pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 

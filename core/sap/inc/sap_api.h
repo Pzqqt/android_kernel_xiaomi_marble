@@ -1314,7 +1314,8 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlansap_set_dfs_nol(void *sap_ctx, eSapDfsNolType conf);
+QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
+			       eSapDfsNolType conf);
 
 /**
  * wlan_sap_set_vendor_acs() - Set vendor specific acs in sap context
