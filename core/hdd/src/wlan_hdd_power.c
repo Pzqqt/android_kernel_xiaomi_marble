@@ -1235,20 +1235,12 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
  */
 QDF_STATUS hdd_wlan_shutdown(void)
 {
-	v_CONTEXT_t p_cds_context = NULL;
 	struct hdd_context *hdd_ctx;
 	p_cds_sched_context cds_sched_context = NULL;
 	QDF_STATUS qdf_status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	hdd_info("WLAN driver shutting down!");
-
-	/* Get the global CDS context. */
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		hdd_err("Global CDS context is Null");
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	/* Get the HDD context. */
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -1371,20 +1363,12 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 QDF_STATUS hdd_wlan_re_init(void)
 {
 
-	v_CONTEXT_t p_cds_context = NULL;
 	struct hdd_context *hdd_ctx = NULL;
 	struct hdd_adapter *pAdapter;
 	int ret;
 	bool bug_on_reinit_failure = CFG_BUG_ON_REINIT_FAILURE_DEFAULT;
 
 	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
-
-	/* Get the CDS context */
-	p_cds_context = cds_get_global_context();
-	if (p_cds_context == NULL) {
-		hdd_err("Failed cds_get_global_context");
-		goto err_re_init;
-	}
 
 	/* Get the HDD context */
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
