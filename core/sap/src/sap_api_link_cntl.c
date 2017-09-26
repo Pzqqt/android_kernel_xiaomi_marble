@@ -289,29 +289,14 @@ static QDF_STATUS sap_hdd_signal_event_handler(void *ctx)
 	return status;
 }
 
-/**
- *
- * wlansap_pre_start_bss_acs_scan_callback() - callback for scan results
- *
- * hal_handle:    the hal_handle passed in with the scan request
- * pcontext:      the second context pass in for the caller, opaque sap Handle.
- * scanid:        scan id passed
- * sessionid:     session identifier
- * status:        status of scan -success, failure or abort
- *
- * Api for scan callback. This function is invoked as a result of scan
- * completion and reports the scan results.
- *
- * Return: The QDF_STATUS code associated with performing the operation
- */
-QDF_STATUS
-wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
-					uint8_t sessionid, uint32_t scanid,
-					eCsrScanStatus scan_status)
+QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
+						   struct sap_context *sap_ctx,
+						   uint8_t sessionid,
+						   uint32_t scanid,
+						   eCsrScanStatus scan_status)
 {
 	tScanResultHandle presult = NULL;
 	QDF_STATUS scan_get_result_status = QDF_STATUS_E_FAILURE;
-	struct sap_context *sap_ctx = pcontext;
 	uint8_t oper_channel = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 

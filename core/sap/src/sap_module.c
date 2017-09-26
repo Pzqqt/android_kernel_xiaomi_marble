@@ -1793,43 +1793,14 @@ QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *pSapCtx,
 	return QDF_STATUS_E_FAULT;
 }
 
-/*==========================================================================
-   FUNCTION   wlansap_channel_change_request
-
-   DESCRIPTION
-   This API is used to send an Indication to SME/PE to change the
-   current operating channel to a different target channel.
-
-   The Channel change will be issued by SAP under the following
-   scenarios.
-   1. A radar indication is received  during SAP CAC WAIT STATE and
-      channel change is required.
-   2. A radar indication is received during SAP STARTED STATE and
-      channel change is required.
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   pSapCtx: Pointer to cds global context structure
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS
-wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
+QDF_STATUS wlansap_channel_change_request(struct sap_context *sapContext,
+					  uint8_t target_channel)
 {
-	struct sap_context *sapContext = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
 	struct ch_params *ch_params;
-	sapContext = pSapCtx;
 
 	if (NULL == sapContext) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

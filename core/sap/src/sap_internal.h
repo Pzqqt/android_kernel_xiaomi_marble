@@ -303,14 +303,24 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 				 uint8_t session_id,
 				 uint32_t scan_id, eCsrScanStatus scan_status);
 
-QDF_STATUS
-wlansap_pre_start_bss_acs_scan_callback(
-	tHalHandle hal_handle,
-	void *pcontext,
-	uint8_t sessionid,
-	uint32_t scanid,
-	eCsrScanStatus scan_status
-);
+/**
+ * wlansap_pre_start_bss_acs_scan_callback() - callback for scan results
+ * @hal_handle:    the hal_handle passed in with the scan request
+ * @sap_ctx:       the SAP context pointer.
+ * @scanid:        scan id passed
+ * @sessionid:     session identifier
+ * @scan_status:        status of scan -success, failure or abort
+ *
+ * Api for scan callback. This function is invoked as a result of scan
+ * completion and reports the scan results.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ */
+QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
+						   struct sap_context *sap_ctx,
+						   uint8_t sessionid,
+						   uint32_t scanid,
+						   eCsrScanStatus scan_status);
 
 QDF_STATUS
 wlansap_roam_callback

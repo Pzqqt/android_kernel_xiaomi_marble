@@ -3264,7 +3264,7 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 					(void *)eSAP_STATUS_SUCCESS);
 
 				wlansap_channel_change_request(
-					(void *)t_sap_ctx,
+					t_sap_ctx,
 					mac_ctx->sap.SapDfsInfo.target_channel);
 			}
 		}
@@ -3546,7 +3546,7 @@ static QDF_STATUS sap_fsm_state_disconnecting(struct sap_context *sap_ctx,
 		 * Most likely, radar has been detected and SAP wants to
 		 * change the channel
 		 */
-		qdf_status = wlansap_channel_change_request((void *) sap_ctx,
+		qdf_status = wlansap_channel_change_request(sap_ctx,
 				mac_ctx->sap.SapDfsInfo.target_channel);
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
