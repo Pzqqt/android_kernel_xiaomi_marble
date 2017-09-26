@@ -4514,8 +4514,30 @@ typedef enum {
      *       framework determines how to respond to the power failure
      *   2 - Silently rejuvenate if power failure occurs.
      *   3 - Feature disabled.
-    */
+     */
     WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
+    /** Configure operating voltage corner mode based on phymode and bw.
+     * bit 0-1 -   operating voltage corner mode for 11a/b.
+     * bit 2-3 -   operating voltage corner mode for 11g.
+     * bit 4-5 -   operating voltage corner mode for 11n, 20MHz, 1x1.
+     * bit 6-7 -   operating voltage corner mode for 11n, 20MHz, 2x2.
+     * bit 8-9 -   operating voltage corner mode for 11n, 40MHz, 1x1.
+     * bit 10-11 - operating voltage corner mode for 11n, 40MHz, 2x2.
+     * bit 12-13 - operating voltage corner mode for 11ac, 20MHz, 1x1.
+     * bit 14-15 - operating voltage corner mode for 11ac, 20MHz, 2x2.
+     * bit 16-17 - operating voltage corner mode for 11ac, 40MHz, 1x1.
+     * bit 18-19 - operating voltage corner mode for 11ac, 40MHz, 2x2.
+     * bit 20-21 - operating voltage corner mode for 11ac, 80MHz, 1x1.
+     * bit 22-23 - operating voltage corner mode for 11ac, 80MHz, 2x2.
+     * bit 24-25 - operating voltage corner mode for 11ac, 160MHz, 1x1.
+     * bit 26-27 - operating voltage corner mode for 11ac, 160MHz, 2x2.
+     * ---------------------------------------------
+     * 00 - Static voltage corner SVS
+     * 01 - static voltage corner LOW SVS
+     * 10 - Dynamic voltage corner selection based on TPUT
+     * 11 - Dynamic voltage corner selection based on TPUT and Tx Flush counters
+     */
+    WMI_PDEV_UPDATE_WDCVS_ALGO,
 } WMI_PDEV_PARAM;
 
 typedef struct {
