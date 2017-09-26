@@ -7781,25 +7781,15 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 	QDF_STATUS status;
 	int ret = 0;
 	struct hdd_context *hdd_ctx;
-	v_CONTEXT_t p_cds_context;
 
 	ENTER();
 
-	p_cds_context = cds_get_global_context();
-	if (p_cds_context == NULL) {
-		hdd_err("Failed to get CDS global context");
-		ret = -EINVAL;
-		goto err_out;
-	}
-
 	hdd_ctx = hdd_cfg80211_wiphy_alloc(sizeof(struct hdd_context));
-
 	if (hdd_ctx == NULL) {
 		ret = -ENOMEM;
 		goto err_out;
 	}
 
-	hdd_ctx->pcds_context = p_cds_context;
 	hdd_ctx->parent_dev = dev;
 	hdd_ctx->last_scan_reject_session_id = 0xFF;
 

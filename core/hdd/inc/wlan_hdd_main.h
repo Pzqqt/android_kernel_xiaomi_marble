@@ -1566,9 +1566,6 @@ enum tos {
 
 /** Adapter structure definition */
 struct hdd_context {
-	/** Global CDS context  */
-	v_CONTEXT_t pcds_context;
-
 	struct wlan_objmgr_psoc *hdd_psoc;
 	struct wlan_objmgr_pdev *hdd_pdev;
 
