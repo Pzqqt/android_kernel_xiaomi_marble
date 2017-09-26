@@ -746,7 +746,8 @@ bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 
 bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 					       uint8_t sessionId,
-					       tCsrScanResult *pResult,
+					       struct tag_csrscan_result
+						*pResult,
 					       tDot11fBeaconIEs *pIes)
 {
 	tCsrRoamConnectedProfile *pCurProfile = NULL;
