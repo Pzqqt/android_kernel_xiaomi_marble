@@ -1339,6 +1339,7 @@ const char *hdd_reason_type_to_string(enum netif_reason_type reason)
 	CASE_RETURN_STRING(WLAN_VDEV_STOP);
 	CASE_RETURN_STRING(WLAN_PEER_UNAUTHORISED);
 	CASE_RETURN_STRING(WLAN_THERMAL_MITIGATION);
+	CASE_RETURN_STRING(WLAN_DATA_FLOW_CONTROL_PRIORITY);
 	default:
 		return "Invalid";
 	}
@@ -1362,8 +1363,14 @@ const char *hdd_action_type_to_string(enum netif_action_type action)
 	CASE_RETURN_STRING(WLAN_WAKE_ALL_NETIF_QUEUE);
 	CASE_RETURN_STRING(WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER);
 	CASE_RETURN_STRING(WLAN_START_ALL_NETIF_QUEUE_N_CARRIER);
+	CASE_RETURN_STRING(WLAN_NETIF_TX_DISABLE);
+	CASE_RETURN_STRING(WLAN_NETIF_TX_DISABLE_N_CARRIER);
 	CASE_RETURN_STRING(WLAN_NETIF_CARRIER_ON);
 	CASE_RETURN_STRING(WLAN_NETIF_CARRIER_OFF);
+	CASE_RETURN_STRING(WLAN_NETIF_PRIORITY_QUEUE_ON);
+	CASE_RETURN_STRING(WLAN_NETIF_PRIORITY_QUEUE_OFF);
+	CASE_RETURN_STRING(WLAN_WAKE_NON_PRIORITY_QUEUE);
+	CASE_RETURN_STRING(WLAN_STOP_NON_PRIORITY_QUEUE);
 	default:
 		return "Invalid";
 	}
@@ -1381,11 +1388,15 @@ static void wlan_hdd_update_queue_oper_stats(struct hdd_adapter *adapter,
 	switch (action) {
 	case WLAN_STOP_ALL_NETIF_QUEUE:
 	case WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER:
+	case WLAN_NETIF_PRIORITY_QUEUE_OFF:
+	case WLAN_STOP_NON_PRIORITY_QUEUE:
 		adapter->queue_oper_stats[reason].pause_count++;
 		break;
 	case WLAN_START_ALL_NETIF_QUEUE:
 	case WLAN_WAKE_ALL_NETIF_QUEUE:
 	case WLAN_START_ALL_NETIF_QUEUE_N_CARRIER:
+	case WLAN_NETIF_PRIORITY_QUEUE_ON:
+	case WLAN_WAKE_NON_PRIORITY_QUEUE:
 		adapter->queue_oper_stats[reason].unpause_count++;
 		break;
 	default:
@@ -1486,6 +1497,34 @@ static void wlan_hdd_update_pause_time(struct hdd_adapter *adapter,
 }
 
 /**
+ * wlan_hdd_stop_non_priority_queue() - stop non prority queues
+ * @adapter: adapter handle
+ *
+ * Return: None
+ */
+static inline void wlan_hdd_stop_non_priority_queue(struct hdd_adapter *adapter)
+{
+	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VO);
+	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_VI);
+	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BE);
+	netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_BK);
+}
+
+/**
+ * wlan_hdd_wake_non_priority_queue() - wake non prority queues
+ * @adapter: adapter handle
+ *
+ * Return: None
+ */
+static inline void wlan_hdd_wake_non_priority_queue(struct hdd_adapter *adapter)
+{
+	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_VO);
+	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_VI);
+	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_BE);
+	netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_BK);
+}
+
+/**
  * wlan_hdd_netif_queue_control() - Use for netif_queue related actions
  * @adapter: adapter handle
  * @action: action type
@@ -1529,6 +1568,35 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		spin_unlock_bh(&adapter->pause_map_lock);
 		break;
 
+	case WLAN_STOP_NON_PRIORITY_QUEUE:
+		spin_lock_bh(&adapter->pause_map_lock);
+		if (!adapter->pause_map) {
+			wlan_hdd_stop_non_priority_queue(adapter);
+			wlan_hdd_update_txq_timestamp(adapter->dev);
+			wlan_hdd_update_unpause_time(adapter);
+		}
+		adapter->pause_map |= (1 << reason);
+		spin_unlock_bh(&adapter->pause_map_lock);
+		break;
+
+	case WLAN_NETIF_PRIORITY_QUEUE_ON:
+		spin_lock_bh(&adapter->pause_map_lock);
+		temp_map = adapter->pause_map;
+		adapter->pause_map &= ~(1 << reason);
+		netif_wake_subqueue(adapter->dev, HDD_LINUX_AC_HI_PRIO);
+		wlan_hdd_update_pause_time(adapter, temp_map);
+		spin_unlock_bh(&adapter->pause_map_lock);
+		break;
+
+	case WLAN_NETIF_PRIORITY_QUEUE_OFF:
+		spin_lock_bh(&adapter->pause_map_lock);
+		netif_stop_subqueue(adapter->dev, HDD_LINUX_AC_HI_PRIO);
+		wlan_hdd_update_txq_timestamp(adapter->dev);
+		wlan_hdd_update_unpause_time(adapter);
+		adapter->pause_map |= (1 << reason);
+		spin_unlock_bh(&adapter->pause_map_lock);
+		break;
+
 	case WLAN_START_ALL_NETIF_QUEUE:
 		spin_lock_bh(&adapter->pause_map_lock);
 		temp_map = adapter->pause_map;
@@ -1546,6 +1614,17 @@ void wlan_hdd_netif_queue_control(struct hdd_adapter *adapter,
 		adapter->pause_map &= ~(1 << reason);
 		if (!adapter->pause_map) {
 			netif_tx_wake_all_queues(adapter->dev);
+			wlan_hdd_update_pause_time(adapter, temp_map);
+		}
+		spin_unlock_bh(&adapter->pause_map_lock);
+		break;
+
+	case WLAN_WAKE_NON_PRIORITY_QUEUE:
+		spin_lock_bh(&adapter->pause_map_lock);
+		temp_map = adapter->pause_map;
+		adapter->pause_map &= ~(1 << reason);
+		if (!adapter->pause_map) {
+			wlan_hdd_wake_non_priority_queue(adapter);
 			wlan_hdd_update_pause_time(adapter, temp_map);
 		}
 		spin_unlock_bh(&adapter->pause_map_lock);

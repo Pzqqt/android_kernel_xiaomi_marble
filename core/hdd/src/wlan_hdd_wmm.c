@@ -83,14 +83,6 @@ const uint8_t hdd_wmm_up_to_ac_map[] = {
  * operate on different traffic.
  */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-enum hdd_wmm_linuxac {
-	HDD_LINUX_AC_VO = 0,
-	HDD_LINUX_AC_VI = 1,
-	HDD_LINUX_AC_BE = 2,
-	HDD_LINUX_AC_BK = 3,
-	HDD_LINUX_AC_HI_PRIO = 4,
-};
-
 void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter)
 {
 	/* Enable HI_PRIO queue */
@@ -102,13 +94,6 @@ void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter)
 
 }
 #else
-enum hdd_wmm_linuxac {
-	HDD_LINUX_AC_VO = 0,
-	HDD_LINUX_AC_VI = 1,
-	HDD_LINUX_AC_BE = 2,
-	HDD_LINUX_AC_BK = 3
-};
-
 void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter)
 {
 }
@@ -1610,10 +1595,11 @@ uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 {
 	enum sme_qos_wmmuptype up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	bool is_eapol = false;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	bool is_crtical = false;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
+	enum qdf_proto_subtype proto_subtype;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status != 0) {
@@ -1622,9 +1608,27 @@ uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 	}
 
 	/* Get the user priority from IP header */
-	hdd_wmm_classify_pkt(pAdapter, skb, &up, &is_eapol);
+	hdd_wmm_classify_pkt(adapter, skb, &up, &is_crtical);
+	spin_lock_bh(&adapter->pause_map_lock);
+	if ((adapter->pause_map & (1 <<  WLAN_DATA_FLOW_CONTROL)) &&
+	   !(adapter->pause_map & (1 <<  WLAN_DATA_FLOW_CONTROL_PRIORITY))) {
+		if (qdf_nbuf_is_ipv4_arp_pkt(skb))
+			is_crtical = true;
+		else if (qdf_nbuf_is_icmpv6_pkt(skb)) {
+			proto_subtype = qdf_nbuf_get_icmpv6_subtype(skb);
+			switch (proto_subtype) {
+			case QDF_PROTO_ICMPV6_NA:
+			case QDF_PROTO_ICMPV6_NS:
+				is_crtical = true;
+				break;
+			default:
+				break;
+			}
+		}
+	}
+	spin_unlock_bh(&adapter->pause_map_lock);
 	skb->priority = up;
-	queueIndex = hdd_get_queue_index(skb->priority, is_eapol);
+	queueIndex = hdd_get_queue_index(skb->priority, is_crtical);
 
 	return queueIndex;
 }

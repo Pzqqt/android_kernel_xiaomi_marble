@@ -407,6 +407,21 @@ enum throttle_phase {
 
 #define THROTTLE_TX_THRESHOLD (100)
 
+/*
+ * Threshold to stop/start priority queue in term of % the actual flow start
+ * and stop thresholds. When num of available descriptors falls below
+ * stop_priority_th, priority queue will be paused. When num of available
+ * descriptors are greater than start_priority_th, priority queue will be
+ * un-paused.
+ */
+#define TX_PRIORITY_TH   (80)
+
+/*
+ * No of maximum descriptor used by TSO jumbo packet with
+ * 64K aggregation.
+ */
+#define MAX_TSO_SEGMENT_DESC (44)
+
 typedef void (*ipa_uc_op_cb_type)(uint8_t *op_msg, void *usr_ctxt);
 
 struct ol_tx_queue_group_t {
@@ -437,12 +452,14 @@ struct ol_tx_group_credit_stats_t {
  *			   and network queues are paused
  * @FLOW_POOL_INVALID: pool is invalid (put descriptor)
  * @FLOW_POOL_INACTIVE: pool is inactive (pool is free)
+ * @FLOW_POOL_NON_PRIO_PAUSED: non-priority queues are paused
  */
 enum flow_pool_status {
 	FLOW_POOL_ACTIVE_UNPAUSED = 0,
 	FLOW_POOL_ACTIVE_PAUSED = 1,
-	FLOW_POOL_INVALID = 2,
-	FLOW_POOL_INACTIVE = 3,
+	FLOW_POOL_NON_PRIO_PAUSED = 2,
+	FLOW_POOL_INVALID = 3,
+	FLOW_POOL_INACTIVE = 4
 };
 
 /**
@@ -473,6 +490,8 @@ struct ol_txrx_pool_stats {
  * @freelist: tx descriptor freelist
  * @pkt_drop_no_desc: drop due to no descriptors
  * @ref_cnt: pool's ref count
+ * @stop_priority_th: Threshold to stop priority queue
+ * @start_priority_th: Threshold to start priority queue
  */
 struct ol_tx_flow_pool_t {
 	TAILQ_ENTRY(ol_tx_flow_pool_t) flow_pool_list_elem;
@@ -489,6 +508,8 @@ struct ol_tx_flow_pool_t {
 	union ol_tx_desc_list_elem_t *freelist;
 	uint16_t pkt_drop_no_desc;
 	qdf_atomic_t ref_cnt;
+	uint16_t stop_priority_th;
+	uint16_t start_priority_th;
 };
 
 #endif

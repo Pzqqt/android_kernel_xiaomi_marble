@@ -272,6 +272,26 @@ QDF_STATUS ol_tx_dec_pool_ref(struct ol_tx_flow_pool_t *pool, bool force)
 }
 
 /**
+ * ol_tx_flow_pool_status_to_str() - convert flow pool status to string
+ * @status - flow pool status
+ *
+ * Returns: String corresponding to flow pool status
+ */
+static const char *ol_tx_flow_pool_status_to_str
+					(enum flow_pool_status status)
+{
+	switch (status) {
+	CASE_RETURN_STRING(FLOW_POOL_ACTIVE_UNPAUSED);
+	CASE_RETURN_STRING(FLOW_POOL_ACTIVE_PAUSED);
+	CASE_RETURN_STRING(FLOW_POOL_NON_PRIO_PAUSED);
+	CASE_RETURN_STRING(FLOW_POOL_INVALID);
+	CASE_RETURN_STRING(FLOW_POOL_INACTIVE);
+	default:
+		return "unknown";
+	}
+}
+
+/**
  * ol_tx_dump_flow_pool_info() - dump global_pool and flow_pool info
  *
  * Return: none
@@ -282,23 +302,19 @@ void ol_tx_dump_flow_pool_info(void *ctx)
 	struct ol_tx_flow_pool_t *pool = NULL, *pool_prev = NULL;
 	struct ol_tx_flow_pool_t tmp_pool;
 
-	ol_txrx_dbg("Global Pool");
 	if (!pdev) {
 		ol_txrx_err("ERROR: pdev NULL");
 		QDF_ASSERT(0); /* traceback */
 		return;
 	}
-	ol_txrx_dbg("Total %d :: Available %d",
-		pdev->tx_desc.pool_size, pdev->tx_desc.num_free);
-	ol_txrx_dbg("Invalid flow_pool %d",
-		pdev->tx_desc.num_invalid_bin);
-	ol_txrx_dbg("No of pool map received %d",
-		pdev->pool_stats.pool_map_count);
-	ol_txrx_dbg("No of pool unmap received %d",
-		pdev->pool_stats.pool_unmap_count);
-	ol_txrx_dbg(
-		"Pkt dropped due to unavailablity of pool %d",
-		pdev->pool_stats.pkt_drop_no_pool);
+	ol_txrx_info("Global total %d :: avail %d invalid flow_pool %d "
+			"maps %d pool unmaps %d pkt drops %d",
+			pdev->tx_desc.pool_size,
+			pdev->tx_desc.num_free,
+			pdev->tx_desc.num_invalid_bin,
+			pdev->pool_stats.pool_map_count,
+			pdev->pool_stats.pool_unmap_count,
+			pdev->pool_stats.pkt_drop_no_pool);
 
 	/*
 	 * Nested spin lock.
@@ -317,23 +333,20 @@ void ol_tx_dump_flow_pool_info(void *ctx)
 		if (pool_prev)
 			ol_tx_dec_pool_ref(pool_prev, false);
 
-		ol_txrx_dbg("\n");
-		ol_txrx_dbg(
-			"Flow_pool_id %d :: status %d",
-			tmp_pool.flow_pool_id, tmp_pool.status);
-		ol_txrx_dbg(
-			"Total %d :: Available %d :: Deficient %d",
-			tmp_pool.flow_pool_size, tmp_pool.avail_desc,
-			tmp_pool.deficient_desc);
-		ol_txrx_dbg(
-			"Start threshold %d :: Stop threshold %d",
-			 tmp_pool.start_th, tmp_pool.stop_th);
-		ol_txrx_dbg(
-			"Member flow_id  %d :: flow_type %d",
+		ol_txrx_info("flow_pool_id %d ::", tmp_pool.flow_pool_id);
+		ol_txrx_info("status %s flow_id %d flow_type %d",
+			ol_tx_flow_pool_status_to_str(tmp_pool.status),
 			tmp_pool.member_flow_id, tmp_pool.flow_type);
 		ol_txrx_dbg(
-			"Pkt dropped due to unavailablity of descriptors %d",
+			"total %d :: available %d :: deficient %d :: "
+			"pkt dropped (no desc) %d",
+			tmp_pool.flow_pool_size, tmp_pool.avail_desc,
+			tmp_pool.deficient_desc,
 			tmp_pool.pkt_drop_no_desc);
+		ol_txrx_info(
+			"thresh: start %d stop %d prio start %d prio stop %d",
+			 tmp_pool.start_th, tmp_pool.stop_th,
+			 tmp_pool.start_priority_th, tmp_pool.stop_priority_th);
 
 		pool_prev = pool;
 		qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
@@ -510,6 +523,14 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 	pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
 	pool->start_th = (start_threshold * flow_pool_size)/100;
 	pool->stop_th = (stop_threshold * flow_pool_size)/100;
+	pool->stop_priority_th = (TX_PRIORITY_TH * pool->stop_th)/100;
+	if (pool->stop_priority_th >= MAX_TSO_SEGMENT_DESC)
+		pool->stop_priority_th -= MAX_TSO_SEGMENT_DESC;
+
+	pool->start_priority_th = (TX_PRIORITY_TH * pool->start_th)/100;
+	if (pool->start_priority_th >= MAX_TSO_SEGMENT_DESC)
+			pool->start_priority_th -= MAX_TSO_SEGMENT_DESC;
+
 	qdf_spinlock_create(&pool->flow_pool_lock);
 	qdf_atomic_init(&pool->ref_cnt);
 	ol_tx_inc_pool_ref(pool);
