@@ -6072,8 +6072,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	if (driver_status)
 		hdd_err("Psoc delete failed");
 
-	qdf_mem_free(hdd_ctx->target_hw_name);
-
 	hdd_context_destroy(hdd_ctx);
 }
 
@@ -9492,6 +9490,11 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	}
 
 	hdd_runtime_suspend_context_deinit(hdd_ctx);
+
+	if (hdd_ctx->target_hw_name) {
+		qdf_mem_free(hdd_ctx->target_hw_name);
+		hdd_ctx->target_hw_name = NULL;
+	}
 
 	hdd_hif_close(hdd_ctx, hif_ctx);
 
