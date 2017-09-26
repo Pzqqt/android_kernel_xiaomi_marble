@@ -659,8 +659,10 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 		WMA_LOGA("BSS is not yet stopped. Defering vdev(vdev id %x) deletion",
 			vdev_id);
 		iface->del_staself_req = pdel_sta_self_req_param;
+		iface->is_del_sta_defered = true;
 		return status;
 	}
+	iface->is_del_sta_defered = false;
 
 	if (!iface->handle) {
 		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
@@ -1732,7 +1734,8 @@ wma_send_del_bss_response(tp_wma_handle wma, struct wma_target_req *req,
 					   (void *)params, 0);
 	}
 
-	if (iface->del_staself_req != NULL) {
+	if (iface->del_staself_req && iface->is_del_sta_defered) {
+		iface->is_del_sta_defered = false;
 		WMA_LOGA("scheduling defered deletion (vdev id %x)",
 			 vdev_id);
 		wma_vdev_detach(wma, iface->del_staself_req, 1);
@@ -3074,7 +3077,8 @@ void wma_vdev_resp_timer(void *data)
 		WMA_LOGA("%s: WMA_DELETE_BSS_REQ timedout", __func__);
 		wma_send_msg_high_priority(wma, WMA_DELETE_BSS_RSP,
 					   (void *)params, 0);
-		if (iface->del_staself_req) {
+		if (iface->del_staself_req && iface->is_del_sta_defered) {
+			iface->is_del_sta_defered = false;
 			WMA_LOGA("scheduling defered deletion(vdev id %x)",
 				 tgt_req->vdev_id);
 			wma_vdev_detach(wma, iface->del_staself_req, 1);

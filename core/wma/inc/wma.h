@@ -1080,6 +1080,7 @@ struct wma_txrx_node {
 	tAniGetPEStatsRsp *stats_rsp;
 	uint8_t fw_stats_set;
 	void *del_staself_req;
+	bool is_del_sta_defered;
 	qdf_atomic_t bss_status;
 	uint8_t rate_flags;
 	uint8_t nss;
