@@ -1894,43 +1894,14 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	return QDF_STATUS_E_FAULT;
 }
 
-/*==========================================================================
-
-   FUNCTION    wlansap_start_beacon_req
-   DESCRIPTION
-   This API is used to send an Indication to SME/PE to start
-   beaconing on the current operating channel.
-
-   Brief:When SAP is started on DFS channel and when ADD BSS RESP is received
-   LIM temporarily holds off Beaconing for SAP to do CAC WAIT. When
-   CAC WAIT is done SAP resumes the Beacon Tx by sending a start beacon
-   request to LIM.
-
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-
-   IN
-   pSapCtx: Pointer to cds global context structure
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
+QDF_STATUS wlansap_start_beacon_req(struct sap_context *sap_ctx)
 {
-	struct sap_context *sapContext = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	uint8_t dfsCacWaitStatus = 0;
 	tpAniSirGlobal pMac = NULL;
-	sapContext = pSapCtx;
 
-	if (NULL == sapContext) {
+	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
@@ -1939,7 +1910,7 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
+			  "%s: Invalid HAL pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	pMac = PMAC_STRUCT(hHal);
@@ -1948,9 +1919,9 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 	if (pMac->sap.SapDfsInfo.sap_radar_found_status == false) {
 		/* CAC Wait done without any Radar Detection */
 		dfsCacWaitStatus = true;
-		sapContext->pre_cac_complete = false;
+		sap_ctx->pre_cac_complete = false;
 		qdf_ret_status = sme_roam_start_beacon_req(hHal,
-							   sapContext->bssid,
+							   sap_ctx->bssid,
 							   dfsCacWaitStatus);
 		if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 			return QDF_STATUS_SUCCESS;

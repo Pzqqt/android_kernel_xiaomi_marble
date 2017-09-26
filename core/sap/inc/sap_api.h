@@ -1246,7 +1246,23 @@ QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *pSapCtx,
 
 QDF_STATUS wlansap_channel_change_request(void *p_cds_gctx,
 		uint8_t tArgetChannel);
-QDF_STATUS wlansap_start_beacon_req(void *pSapCtx);
+
+/**
+ * wlansap_start_beacon_req() - Send Start Beaconing Request
+ * @sap_ctx: Pointer to the SAP context
+ *
+ * This API is used to send an Indication to SME/PE to start
+ * beaconing on the current operating channel.
+ *
+ * When SAP is started on DFS channel and when ADD BSS RESP is received
+ * LIM temporarily holds off Beaconing for SAP to do CAC WAIT. When
+ * CAC WAIT is done SAP resumes the Beacon Tx by sending a start beacon
+ * request to LIM.
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *   QDF_STATUS_SUCCESS:  Success
+ */
+QDF_STATUS wlansap_start_beacon_req(struct sap_context *sap_ctx);
 
 /**
  * wlansap_dfs_send_csa_ie_request() - Send CSA IE
