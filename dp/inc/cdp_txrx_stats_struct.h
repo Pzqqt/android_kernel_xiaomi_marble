@@ -868,6 +868,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_TXCHAINSOFT = 361,
 	OL_ATH_PARAM_WIDE_BAND_SCAN = 362,
 	OL_ATH_PARAM_CCK_TX_ENABLE = 363,
+	OL_ATH_PARAM_PAPI_ENABLE = 364,
 };
 
 /* Enumeration of PDEV Configuration parameter */
