@@ -4051,6 +4051,13 @@ wma_process_utf_event(WMA_HANDLE handle, uint8_t *datap, uint32_t dataplen)
 				 currentSeq);
 	}
 
+	if ((datalen > MAX_UTF_EVENT_LENGTH) ||
+		(wma_handle->utf_event_info.offset >
+		(MAX_UTF_EVENT_LENGTH - datalen))) {
+		WMA_LOGE("Excess data from firmware, offset:%zu, len:%d",
+			wma_handle->utf_event_info.offset, datalen);
+		return -EINVAL;
+	}
 	memcpy(&wma_handle->utf_event_info.
 	       data[wma_handle->utf_event_info.offset],
 	       &data[sizeof(segHdrInfo)], datalen);
