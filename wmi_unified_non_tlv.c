@@ -8819,6 +8819,8 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_atf_peer_stats] =
 		WMI_PDEV_PARAM_ATF_PEER_STATS;
 	pdev_param[wmi_pdev_param_tx_ack_timeout] = WMI_UNAVAILABLE_PARAM;
+	pdev_param[wmi_pdev_param_soft_tx_chain_mask] =
+		WMI_PDEV_PARAM_SOFT_TX_CHAIN_MASK;
 	pdev_param[wmi_pdev_param_rfkill_enable] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_hw_rfkill_config] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_low_power_rf_enable] = WMI_UNAVAILABLE_PARAM;
