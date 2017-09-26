@@ -1305,7 +1305,19 @@ QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig,
 void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
 		uint8_t *endChannelNum, uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel);
-QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len);
+
+/**
+ * wlansap_get_dfs_nol() - Get the DFS NOL
+ * @sap_ctx: SAP context
+ * @nol: Pointer to the NOL
+ * @nol_len: Length of the NOL
+ *
+ * Provides the DFS NOL
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlansap_get_dfs_nol(struct sap_context *sap_ctx,
+			       uint8_t *nol, uint32_t *nol_len);
 
 /**
  * wlansap_set_dfs_nol() - Set dfs nol

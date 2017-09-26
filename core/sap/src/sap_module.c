@@ -2511,20 +2511,11 @@ QDF_STATUS wlan_sap_set_vendor_acs(void *ctx, bool is_vendor_acs)
 
 	return QDF_STATUS_SUCCESS;
 }
-/**
- * wlansap_get_dfs_nol() - Get the DFS NOL
- * @pSapCtx: SAP context
- * @nol: Pointer to the NOL
- * @nol_len: Length of the NOL
- *
- * Provides the DFS NOL
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
+
+QDF_STATUS wlansap_get_dfs_nol(struct sap_context *sap_ctx,
+			       uint8_t *nol, uint32_t *nol_len)
 {
 	int i = 0, j = 0;
-	struct sap_context *sapContext = pSapCtx;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
 	uint64_t current_time, found_time, elapsed_time;
@@ -2533,15 +2524,15 @@ QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx, uint8_t *nol, uint32_t *nol_len)
 	bool bAvailable = false;
 	*nol_len = 0;
 
-	if (NULL == sapContext) {
+	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
+			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
+			  "%s: Invalid HAL pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	pMac = PMAC_STRUCT(hHal);
