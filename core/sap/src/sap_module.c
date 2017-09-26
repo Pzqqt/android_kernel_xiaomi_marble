@@ -2498,10 +2498,9 @@ void wlansap_extend_to_acs_range(tHalHandle hal, uint8_t *startChannelNum,
 	}
 }
 
-QDF_STATUS wlan_sap_set_vendor_acs(void *ctx, bool is_vendor_acs)
+QDF_STATUS wlan_sap_set_vendor_acs(struct sap_context *sap_context,
+				   bool is_vendor_acs)
 {
-	struct sap_context *sap_context = ctx;
-
 	if (!sap_context) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);

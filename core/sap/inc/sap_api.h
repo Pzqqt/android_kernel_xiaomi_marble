@@ -1331,12 +1331,14 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 
 /**
  * wlan_sap_set_vendor_acs() - Set vendor specific acs in sap context
- * @pSapCtx: SAP context
+ * @sap_context: SAP context
  * @is_vendor_acs: if vendor specific acs is enabled
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlan_sap_set_vendor_acs(void *sap_ctx, bool is_vendor_acs);
+QDF_STATUS wlan_sap_set_vendor_acs(struct sap_context *sap_context,
+				   bool is_vendor_acs);
+
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,
 		uint8_t subtype,
