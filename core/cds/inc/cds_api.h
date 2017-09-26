@@ -335,7 +335,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId);
 
 uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
 			 struct cdp_vdev **vdev, uint8_t sessionId);
-v_CONTEXT_t cds_get_global_context(void);
+void *cds_get_global_context(void);
 
 QDF_STATUS cds_alloc_context(QDF_MODULE_ID moduleID, void **ppModuleContext,
 			     uint32_t size);

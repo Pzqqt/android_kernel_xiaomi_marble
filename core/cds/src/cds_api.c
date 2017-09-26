@@ -1272,7 +1272,7 @@ void *cds_get_context(QDF_MODULE_ID moduleId)
  * Return: pointer to the CDS global context, NULL if the function is
  *	   unable to retreive the CDS context.
  */
-v_CONTEXT_t cds_get_global_context(void)
+void *cds_get_global_context(void)
 {
 	if (gp_cds_context == NULL) {
 		/*
