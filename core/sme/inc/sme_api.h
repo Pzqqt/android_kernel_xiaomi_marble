@@ -280,9 +280,6 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg);
 QDF_STATUS sme_mc_process_handler(struct scheduler_msg *msg);
 void sme_free_msg(tHalHandle hHal, struct scheduler_msg *pMsg);
-QDF_STATUS sme_scan_request(tHalHandle hHal, uint8_t sessionId,
-		tCsrScanRequest *, csr_scan_completeCallback callback,
-		void *pContext);
 QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 		tCsrScanResultFilter *pFilter,
 		tScanResultHandle *phResult);

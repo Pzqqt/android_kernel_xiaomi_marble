@@ -1834,7 +1834,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 		/* Set requestType to Full scan */
 
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("calling sme_scan_request"));
+			  FL("calling ucfg_scan_start"));
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		if (sap_context->acs_cfg->skip_scan_status ==
 			eSAP_DO_NEW_ACS_SCAN)
@@ -1846,7 +1846,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 
 		if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				  FL("sme_scan_request  fail %d!!!"),
+				  FL("scan request  fail %d!!!"),
 				  qdf_ret_status);
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("SAP Configuring default channel, Ch=%d"),
