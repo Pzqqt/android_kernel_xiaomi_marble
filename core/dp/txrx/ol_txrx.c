@@ -1182,6 +1182,10 @@ ol_txrx_pdev_attach(ol_txrx_soc_handle soc, struct cdp_cfg *ctrl_pdev,
 
 	TAILQ_INIT(&pdev->vdev_list);
 
+	TAILQ_INIT(&pdev->req_list);
+	pdev->req_list_depth = 0;
+	qdf_spinlock_create(&pdev->req_list_spinlock);
+
 	/* do initial set up of the peer ID -> peer object lookup map */
 	if (ol_txrx_peer_find_attach(pdev))
 		goto fail1;
@@ -1956,6 +1960,8 @@ static void ol_txrx_pdev_pre_detach(struct cdp_pdev *ppdev, int force)
 static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+	struct ol_txrx_stats_req_internal *req;
+	int i = 0;
 
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
@@ -1965,6 +1971,30 @@ static void ol_txrx_pdev_detach(struct cdp_pdev *ppdev, int force)
 	}
 
 	htt_pktlogmod_exit(pdev);
+
+	qdf_spin_lock_bh(&pdev->req_list_spinlock);
+	if (pdev->req_list_depth > 0)
+		ol_txrx_err(
+			"Warning: the txrx req list is not empty, depth=%d\n",
+			pdev->req_list_depth
+			);
+	TAILQ_FOREACH(req, &pdev->req_list, req_list_elem) {
+		TAILQ_REMOVE(&pdev->req_list, req, req_list_elem);
+		pdev->req_list_depth--;
+		ol_txrx_err(
+			"%d: %p,verbose(%d), concise(%d), up_m(0x%x), reset_m(0x%x)\n",
+			i++,
+			req,
+			req->base.print.verbose,
+			req->base.print.concise,
+			req->base.stats_type_upload_mask,
+			req->base.stats_type_reset_mask
+			);
+		qdf_mem_free(req);
+	}
+	qdf_spin_unlock_bh(&pdev->req_list_spinlock);
+
+	qdf_spinlock_destroy(&pdev->req_list_spinlock);
 
 	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
 
@@ -3719,13 +3749,6 @@ void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev_handle)
 	ol_tx_discard_target_frms(pdev_handle);
 }
 
-/*--- debug features --------------------------------------------------------*/
-struct ol_txrx_stats_req_internal {
-	struct ol_txrx_stats_req base;
-	int serviced;           /* state of this request */
-	int offset;
-};
-
 static inline
 uint64_t ol_txrx_stats_ptr_to_u64(struct ol_txrx_stats_req_internal *req)
 {
@@ -3782,18 +3805,28 @@ ol_txrx_fw_stats_get(struct cdp_vdev *pvdev, struct ol_txrx_stats_req *req,
 	/* use the non-volatile request object's address as the cookie */
 	cookie = ol_txrx_stats_ptr_to_u64(non_volatile_req);
 
+	if (response_expected) {
+		qdf_spin_lock_bh(&pdev->req_list_spinlock);
+		TAILQ_INSERT_TAIL(&pdev->req_list, non_volatile_req, req_list_elem);
+		pdev->req_list_depth++;
+		qdf_spin_unlock_bh(&pdev->req_list_spinlock);
+	}
+
 	if (htt_h2t_dbg_stats_get(pdev->htt_pdev,
 				  req->stats_type_upload_mask,
 				  req->stats_type_reset_mask,
 				  HTT_H2T_STATS_REQ_CFG_STAT_TYPE_INVALID, 0,
 				  cookie)) {
+		if (response_expected) {
+			qdf_spin_lock_bh(&pdev->req_list_spinlock);
+			TAILQ_REMOVE(&pdev->req_list, non_volatile_req, req_list_elem);
+			pdev->req_list_depth--;
+			qdf_spin_unlock_bh(&pdev->req_list_spinlock);
+		}
+
 		qdf_mem_free(non_volatile_req);
 		return A_ERROR;
 	}
-
-	if (req->wait.blocking)
-		while (qdf_semaphore_acquire(req->wait.sem_ptr))
-			;
 
 	if (response_expected == false)
 		qdf_mem_free(non_volatile_req);
@@ -3809,10 +3842,26 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 	enum htt_dbg_stats_status status;
 	int length;
 	uint8_t *stats_data;
-	struct ol_txrx_stats_req_internal *req;
+	struct ol_txrx_stats_req_internal *req, *tmp;
 	int more = 0;
+	int found = 0;
 
 	req = ol_txrx_u64_to_stats_ptr(cookie);
+
+	qdf_spin_lock_bh(&pdev->req_list_spinlock);
+	TAILQ_FOREACH(tmp, &pdev->req_list, req_list_elem) {
+		if (req == tmp) {
+			found = 1;
+			break;
+		}
+	}
+	qdf_spin_unlock_bh(&pdev->req_list_spinlock);
+
+	if (!found) {
+		ol_txrx_err(
+			"req(%p) from firmware can't be found in the list\n", req);
+		return;
+	}
 
 	do {
 		htt_t2h_dbg_stats_hdr_parse(stats_info_list, &type, &status,
@@ -3994,9 +4043,16 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 	} while (1);
 
 	if (!more) {
-		if (req->base.wait.blocking)
-			qdf_semaphore_release(req->base.wait.sem_ptr);
-		qdf_mem_free(req);
+		qdf_spin_lock_bh(&pdev->req_list_spinlock);
+		TAILQ_FOREACH(tmp, &pdev->req_list, req_list_elem) {
+			if (req == tmp) {
+				TAILQ_REMOVE(&pdev->req_list, req, req_list_elem);
+				pdev->req_list_depth--;
+				qdf_mem_free(req);
+				break;
+			}
+		}
+		qdf_spin_unlock_bh(&pdev->req_list_spinlock);
 	}
 }
 
