@@ -482,6 +482,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 	uint8_t sap_dot11mc;
 	bool is_vendor_specific_vhtcaps;
+	uint8_t vendor_specific_vht_ie_sub_type;
 	bool vendor_vht_sap;
 	/* HS 2.0 Indication */
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
