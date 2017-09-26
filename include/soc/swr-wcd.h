@@ -1,4 +1,4 @@
-/* Copyright (c) 2015, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015, 2017 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -30,6 +30,13 @@ struct swr_mstr_port {
 	u8 *port;
 };
 
+#if IS_ENABLED(CONFIG_SOUNDWIRE_WCD_CTRL)
 extern int swrm_wcd_notify(struct platform_device *pdev, u32 id, void *data);
-
+#else /* CONFIG_SOUNDWIRE_WCD_CTRL */
+static inline int swrm_wcd_notify(struct platform_device *pdev, u32 id,
+				  void *data)
+{
+	return 0;
+}
+#endif /* CONFIG_SOUNDWIRE_WCD_CTRL */
 #endif /* _LINUX_SWR_WCD_H */
