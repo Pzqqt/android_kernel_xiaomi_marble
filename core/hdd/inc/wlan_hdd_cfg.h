@@ -2754,15 +2754,18 @@ enum hdd_dot11_mode {
  * <ini>
  * gWlanMccToSccSwitchMode - Control SAP channel.
  * @Min: 0
- * @Max: 2
+ * @Max: 5
  * @Default: 0
  *
  * This ini is used to override SAP channel.
  * If gWlanMccToSccSwitchMode = 0: disabled.
- * If gWlanMccToSccSwitchMode = 1: override to SCC if channel overlap in
- * same band.
- * If gWlanMccToSccSwitchMode = 2: force to SCC in same band.
- *
+ * If gWlanMccToSccSwitchMode = 1: Enable switch.
+ * If gWlainMccToSccSwitchMode = 2: Force switch with SAP restart.
+ * If gWlainMccToSccSwitchMode = 3: Force switch without SAP restart.
+ * If gWlainMccToSccSwitchMode = 4: Switch using
+ *		fav channel(s)without SAP restart.
+ * If gWlainMccToSccSwitchMode = 5: Force switch without SAP restart.MCC allowed
+ *					in exceptional cases.
  * Related: None.
  *
  * Supported Feature: Concurrency
@@ -2774,7 +2777,7 @@ enum hdd_dot11_mode {
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE          "gWlanMccToSccSwitchMode"
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN      (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX \
-				   (QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)
+		   (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT  (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #endif
 
