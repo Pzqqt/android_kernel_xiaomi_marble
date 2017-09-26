@@ -306,7 +306,17 @@ static inline bool cds_is_driver_loaded(void)
 	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADED);
 }
 
-v_CONTEXT_t cds_init(void);
+/**
+ * cds_init() - Initialize CDS
+ *
+ * This function allocates the resource required for CDS, but does not
+ * initialize all the members. This overall initialization will happen at
+ * cds_open().
+ *
+ * Return: QDF_STATUS_SUCCESS if CDS was initialized and an error on failure
+ */
+QDF_STATUS cds_init(void);
+
 void cds_deinit(void);
 
 QDF_STATUS cds_pre_enable(void);

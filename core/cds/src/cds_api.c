@@ -156,16 +156,7 @@ uint8_t cds_get_datapath_handles(void **soc, struct cdp_pdev **pdev,
 }
 
 
-/**
- * cds_init() - Initialize CDS
- *
- * This function allocates the resource required for CDS, but does not
- * initialize all the members. This overall initialization will happen at
- * cds_open().
- *
- * Return: Global context on success and NULL on failure.
- */
-v_CONTEXT_t cds_init(void)
+QDF_STATUS cds_init(void)
 {
 	qdf_debugfs_init();
 	qdf_lock_stats_init();
@@ -189,7 +180,7 @@ v_CONTEXT_t cds_init(void)
 
 	cds_recovery_work_init();
 
-	return gp_cds_context;
+	return gp_cds_context ? QDF_STATUS_SUCCESS : QDF_STATUS_E_FAILURE;
 }
 
 /**

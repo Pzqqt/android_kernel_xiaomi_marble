@@ -10948,10 +10948,10 @@ static void hdd_qdf_print_deinit(void)
  */
 int hdd_init(void)
 {
-	v_CONTEXT_t p_cds_context = NULL;
+	QDF_STATUS status;
 	int ret = 0;
 
-	p_cds_context = cds_init();
+	status = cds_init();
 
 	wlan_init_bug_report_lock();
 
@@ -10959,7 +10959,7 @@ int hdd_init(void)
 	wlan_logging_sock_init_svc();
 #endif
 
-	if (p_cds_context == NULL) {
+	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("Failed to allocate CDS context");
 		ret = -ENOMEM;
 		goto err_out;
