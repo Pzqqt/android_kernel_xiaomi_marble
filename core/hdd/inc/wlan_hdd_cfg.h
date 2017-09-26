@@ -5484,17 +5484,27 @@ enum hdd_link_speed_rpt_type {
  * <ini>
  * gEnableRTSProfiles - It will use configuring different RTS profiles
  * @Min: 0
- * @Max: 34
+ * @Max: 66
  * @Default: 33
  *
  * This ini used for configuring different RTS profiles
  * to firmware.
- * Following are the valid values for the rtsprofile:
- * RTSCTS_DISABLED                           0
- * RTSCTS_ENABLED_4_SECOND_RATESERIES        17
- * CTS2SELF_ENABLED_4_SECOND_RATESERIES      18
- * RTSCTS_ENABLED_4_SWRETRIES                33
- * CTS2SELF_ENABLED_4_SWRETRIES              34
+ * Following are the valid values for the rts profile:
+ * RTSCTS_DISABLED				0
+ * NOT_ALLOWED					1
+ * NOT_ALLOWED					2
+ * RTSCTS_DISABLED				16
+ * RTSCTS_ENABLED_4_SECOND_RATESERIES		17
+ * CTS2SELF_ENABLED_4_SECOND_RATESERIES		18
+ * RTSCTS_DISABLED				32
+ * RTSCTS_ENABLED_4_SWRETRIES			33
+ * CTS2SELF_ENABLED_4_SWRETRIES			34
+ * NOT_ALLOWED					48
+ * NOT_ALLOWED					49
+ * NOT_ALLOWED					50
+ * RTSCTS_DISABLED				64
+ * RTSCTS_ENABLED_4_ALL_RATESERIES		65
+ * CTS2SELF_ENABLED_4_ALL_RATESERIES		66
  *
  * Related: None
  *
@@ -5507,7 +5517,7 @@ enum hdd_link_speed_rpt_type {
 
 #define CFG_ENABLE_FW_RTS_PROFILE              "gEnableRTSProfiles"
 #define CFG_ENABLE_FW_RTS_PROFILE_MIN          (0)
-#define CFG_ENABLE_FW_RTS_PROFILE_MAX          (34)
+#define CFG_ENABLE_FW_RTS_PROFILE_MAX          (66)
 #define CFG_ENABLE_FW_RTS_PROFILE_DEFAULT      (33)
 
 #ifdef FEATURE_GREEN_AP
