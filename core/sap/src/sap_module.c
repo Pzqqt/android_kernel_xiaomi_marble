@@ -1961,34 +1961,13 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 	return QDF_STATUS_E_FAULT;
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_dfs_send_csa_ie_request
-
-   DESCRIPTION
-   This API is used to send channel switch announcement request to PE
-   DEPENDENCIES
-   NA.
-
-   PARAMETERS
-   IN
-   pSapCtx: Pointer to cds global context structure
-
-   RETURN VALUE
-   The QDF_STATUS code associated with performing the operation
-
-   QDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
+QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx)
 {
-	struct sap_context *sapContext = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
-	sapContext = pSapCtx;
 
-	if (NULL == sapContext) {
+	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer", __func__);
 		return QDF_STATUS_E_FAULT;
@@ -1997,7 +1976,7 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 	hHal = CDS_GET_HAL_CB();
 	if (NULL == hHal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Invalid HAL pointer from p_cds_gctx", __func__);
+			  "%s: Invalid HAL pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	pMac = PMAC_STRUCT(hHal);
@@ -2016,7 +1995,7 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 			pMac->sap.SapDfsInfo.new_ch_params.sec_ch_offset);
 
 	qdf_ret_status = sme_roam_csa_ie_request(hHal,
-				sapContext->bssid,
+				sap_ctx->bssid,
 				pMac->sap.SapDfsInfo.target_channel,
 				pMac->sap.SapDfsInfo.csaIERequired,
 				&pMac->sap.SapDfsInfo.new_ch_params);

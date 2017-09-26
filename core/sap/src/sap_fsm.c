@@ -3472,8 +3472,8 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 					  FL("sapdfs: Sending CSAIE for sapctx[%pK]"),
 					  temp_sap_ctx);
 
-				qdf_status = wlansap_dfs_send_csa_ie_request(
-						(void *) temp_sap_ctx);
+				qdf_status =
+					wlansap_dfs_send_csa_ie_request(temp_sap_ctx);
 			}
 		}
 	} else if (eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START == msg) {
@@ -3493,8 +3493,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				persona, sap_ctx->sessionId);
 
 		if ((QDF_SAP_MODE == persona) || (QDF_P2P_GO_MODE == persona))
-			qdf_status = wlansap_dfs_send_csa_ie_request(
-					(void *) sap_ctx);
+			qdf_status = wlansap_dfs_send_csa_ie_request(sap_ctx);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),

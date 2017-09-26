@@ -1247,7 +1247,18 @@ QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *pSapCtx,
 QDF_STATUS wlansap_channel_change_request(void *p_cds_gctx,
 		uint8_t tArgetChannel);
 QDF_STATUS wlansap_start_beacon_req(void *pSapCtx);
-QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx);
+
+/**
+ * wlansap_dfs_send_csa_ie_request() - Send CSA IE
+ * @sap_ctx: Pointer to the SAP context
+ *
+ * This API is used to send channel switch announcement request to PE
+ *
+ * Return: The QDF_STATUS code associated with performing the operation
+ *    QDF_STATUS_SUCCESS:  Success
+ */
+QDF_STATUS wlansap_dfs_send_csa_ie_request(struct sap_context *sap_ctx);
+
 QDF_STATUS wlansap_get_dfs_ignore_cac(tHalHandle hHal, uint8_t *pIgnore_cac);
 QDF_STATUS wlansap_set_dfs_ignore_cac(tHalHandle hHal, uint8_t ignore_cac);
 QDF_STATUS wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal,
