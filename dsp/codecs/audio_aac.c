@@ -48,7 +48,9 @@ static long audio_ioctl_shared(struct file *file, unsigned int cmd,
 							audio->ac->session);
 		if (audio->feedback == NON_TUNNEL_MODE) {
 			/* Configure PCM output block */
-			rc = q6asm_enc_cfg_blk_pcm(audio->ac, 0, 0);
+			rc = q6asm_enc_cfg_blk_pcm(audio->ac,
+						audio->pcm_cfg.sample_rate,
+						audio->pcm_cfg.channel_count);
 			if (rc < 0) {
 				pr_err("pcm output block config failed\n");
 				break;
