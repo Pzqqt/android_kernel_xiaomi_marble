@@ -24,6 +24,7 @@
 #include "hal_tx.h"
 #include "qdf_mem.h"
 #include "qdf_nbuf.h"
+#include "qdf_net_types.h"
 #include <wlan_cfg.h>
 #ifdef MESH_MODE_SUPPORT
 #include "if_meta_hdr.h"
@@ -1049,10 +1050,11 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	is_mcast = DP_FRAME_IS_MULTICAST(hdr_ptr);
 	ether_type = eh->ether_type;
 
+	llcHdr = (qdf_llc_t *)(nbuf->data + sizeof(struct ether_header));
 	/*
 	 * Check if packet is dot3 or eth2 type.
 	 */
-	if (IS_LLC_PRESENT(ether_type)) {
+	if (DP_FRAME_IS_LLC(ether_type) && DP_FRAME_IS_SNAP(llcHdr)) {
 		ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN +
 				sizeof(*llcHdr));
 
