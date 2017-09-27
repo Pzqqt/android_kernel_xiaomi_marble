@@ -10843,6 +10843,91 @@ static const struct snd_kcontrol_new app_type_cfg_controls[] = {
 	0x2000, 0, 4, NULL, msm_routing_put_app_type_gain_control)
 };
 
+static int msm_routing_put_module_cfg_control(struct snd_kcontrol *kcontrol,
+					  struct snd_ctl_elem_value *ucontrol)
+{
+	int copp_idx, fe_id, be_id, port_type;
+	int ret = 0;
+	unsigned long copp;
+	struct msm_pcm_routing_bdai_data *bedai;
+	char *param_data = NULL;
+	uint32_t *update_param_data = NULL;
+	uint32_t param_size = sizeof(uint32_t) +
+			sizeof(struct adm_param_data_v5);
+	int dir = ucontrol->value.integer.value[0] ? SESSION_TYPE_TX :
+						     SESSION_TYPE_RX;
+	int app_type = ucontrol->value.integer.value[1];
+	int module_id = ucontrol->value.integer.value[2];
+	int instance_id = ucontrol->value.integer.value[3];
+	int param_id = ucontrol->value.integer.value[4];
+	int param_value = ucontrol->value.integer.value[5];
+
+	port_type = (dir == SESSION_TYPE_RX) ? MSM_AFE_PORT_TYPE_RX :
+					       MSM_AFE_PORT_TYPE_TX;
+	pr_debug("%s app_type:%d mod_id:%d instance_id:%d param_id:%d value:%d\n",
+		  __func__, app_type, module_id,
+		  instance_id, param_id, param_value);
+
+	param_data = kzalloc(param_size, GFP_KERNEL);
+	if (!param_data)
+		return -ENOMEM;
+
+	update_param_data = (uint32_t *)param_data;
+	*update_param_data++ = module_id;
+	*update_param_data++ = param_id;
+	*update_param_data++ = sizeof(uint32_t);
+	*update_param_data++ = param_value;
+
+	mutex_lock(&routing_lock);
+	for (be_id = 0; be_id < MSM_BACKEND_DAI_MAX; be_id++) {
+		if (is_be_dai_extproc(be_id))
+			continue;
+
+		bedai = &msm_bedais[be_id];
+		if (afe_get_port_type(bedai->port_id) != port_type)
+			continue;
+
+		if (!bedai->active)
+			continue;
+
+		for (fe_id = 0; fe_id < MSM_FRONTEND_DAI_MAX; fe_id++) {
+			if (!test_bit(fe_id, &bedai->fe_sessions[0]))
+				continue;
+
+			if (app_type !=
+			    fe_dai_app_type_cfg[fe_id][dir][be_id].app_type)
+				continue;
+
+			copp = session_copp_map[fe_id][dir][be_id];
+			for (copp_idx = 0; copp_idx < MAX_COPPS_PER_PORT;
+			     copp_idx++) {
+				if (!test_bit(copp_idx, &copp))
+					continue;
+
+				ret = adm_send_params_v5(bedai->port_id,
+							 copp_idx,
+							 param_data,
+							 param_size);
+				if (ret) {
+					pr_err("%s: Setting param failed with err=%d\n",
+						__func__, ret);
+					ret = -EINVAL;
+					goto done;
+				}
+			}
+		}
+	}
+done:
+	mutex_unlock(&routing_lock);
+	kfree(param_data);
+	return ret;
+}
+
+static const struct snd_kcontrol_new module_cfg_controls[] = {
+	SOC_SINGLE_MULTI_EXT("Audio Effect", SND_SOC_NOPM, 0,
+	0x2000, 0, 6, NULL, msm_routing_put_module_cfg_control)
+};
+
 static int msm_routing_get_lsm_app_type_cfg_control(
 					struct snd_kcontrol *kcontrol,
 					struct snd_ctl_elem_value *ucontrol)
@@ -15842,6 +15927,9 @@ static int msm_routing_probe(struct snd_soc_platform *platform)
 
 	snd_soc_add_platform_controls(platform, lsm_app_type_cfg_controls,
 				      ARRAY_SIZE(lsm_app_type_cfg_controls));
+
+	snd_soc_add_platform_controls(platform, module_cfg_controls,
+				      ARRAY_SIZE(module_cfg_controls));
 
 	snd_soc_add_platform_controls(platform,
 				stereo_to_custom_stereo_controls,
