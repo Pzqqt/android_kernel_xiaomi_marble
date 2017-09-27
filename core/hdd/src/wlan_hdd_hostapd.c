@@ -7405,8 +7405,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				       struct cfg80211_beacon_data *params,
 				       const u8 *ssid, size_t ssid_len,
 				       enum nl80211_hidden_ssid hidden_ssid,
-				       bool check_for_concurrency,
-				       bool update_beacon)
+				       bool check_for_concurrency)
 {
 	tsap_Config_t *pConfig;
 	struct hdd_beacon_data *pBeacon = NULL;
@@ -7433,10 +7432,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	ENTER();
 
-	if (!update_beacon && hdd_is_connection_in_progress(NULL, NULL)) {
-		hdd_err("Can't start BSS: connection is in progress");
-		return -EINVAL;
-	}
 
 	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
 
@@ -8589,7 +8584,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			wlan_hdd_cfg80211_start_bss(adapter,
 				&params->beacon,
 				params->ssid, params->ssid_len,
-				params->hidden_ssid, true, false);
+				params->hidden_ssid, true);
 
 		if (status != 0) {
 			hdd_err("Error Start bss Failed");
@@ -8719,7 +8714,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	adapter->sessionCtx.ap.beacon = new;
 	hdd_debug("update beacon for P2P GO/SAP");
 	status = wlan_hdd_cfg80211_start_bss(adapter, params, NULL,
-					0, 0, false, true);
+					0, 0, false);
 
 	EXIT();
 	return status;
