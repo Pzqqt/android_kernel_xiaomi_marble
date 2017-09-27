@@ -903,6 +903,9 @@ static struct cal_block_data *msm_routing_find_topology_by_path(int path,
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 
+		if (cal_utils_is_cal_stale(cal_block))
+			continue;
+
 		if (((struct audio_cal_info_adm_top *)cal_block
 			->cal_info)->path == path) {
 			return cal_block;
@@ -929,6 +932,9 @@ static struct cal_block_data *msm_routing_find_topology(int path,
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 
+		if (cal_utils_is_cal_stale(cal_block))
+			continue;
+
 		cal_info = (struct audio_cal_info_adm_top *)
 			cal_block->cal_info;
 		if ((cal_info->path == path)  &&
@@ -939,9 +945,14 @@ static struct cal_block_data *msm_routing_find_topology(int path,
 	}
 	pr_debug("%s: Can't find topology for path %d, app %d, acdb_id %d defaulting to search by path\n",
 		__func__, path, app_type, acdb_id);
-	return msm_routing_find_topology_by_path(cal_index, path);
+	return msm_routing_find_topology_by_path(path, cal_index);
 }
 
+/*
+ * Retrieving cal_block will mark cal_block as stale.
+ * Hence it cannot be reused or resent unless the flag
+ * is reset.
+ */
 static int msm_routing_get_adm_topology(int fedai_id, int session_type,
 					int be_id)
 {
@@ -963,20 +974,24 @@ static int msm_routing_get_adm_topology(int fedai_id, int session_type,
 	cal_block = msm_routing_find_topology(session_type, app_type,
 					      acdb_dev_id,
 					      ADM_TOPOLOGY_CAL_TYPE_IDX);
-	if (cal_block != NULL)
+	if (cal_block != NULL) {
 		topology = ((struct audio_cal_info_adm_top *)
 			cal_block->cal_info)->topology;
-	mutex_unlock(&cal_data[ADM_TOPOLOGY_CAL_TYPE_IDX]->lock);
+		cal_utils_mark_cal_used(cal_block);
+		mutex_unlock(&cal_data[ADM_TOPOLOGY_CAL_TYPE_IDX]->lock);
+	} else {
+		mutex_unlock(&cal_data[ADM_TOPOLOGY_CAL_TYPE_IDX]->lock);
 
-	if (cal_block == NULL) {
 		pr_debug("%s: Check for LSM topology\n", __func__);
 		mutex_lock(&cal_data[ADM_LSM_TOPOLOGY_CAL_TYPE_IDX]->lock);
 		cal_block = msm_routing_find_topology(session_type, app_type,
 						acdb_dev_id,
 						ADM_LSM_TOPOLOGY_CAL_TYPE_IDX);
-		if (cal_block != NULL)
+		if (cal_block != NULL) {
 			topology = ((struct audio_cal_info_adm_top *)
 				cal_block->cal_info)->topology;
+			cal_utils_mark_cal_used(cal_block);
+		}
 		mutex_unlock(&cal_data[ADM_LSM_TOPOLOGY_CAL_TYPE_IDX]->lock);
 	}
 
@@ -1434,7 +1449,7 @@ int msm_pcm_routing_reg_phy_stream(int fedai_id, int perf_mode,
 			if ((copp_idx < 0) ||
 				(copp_idx >= MAX_COPPS_PER_PORT)) {
 				pr_err("%s: adm open failed copp_idx:%d\n",
-					__func__, copp_idx);
+				       __func__, copp_idx);
 				mutex_unlock(&routing_lock);
 				return -EINVAL;
 			}

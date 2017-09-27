@@ -1344,7 +1344,7 @@ static void afe_send_custom_topology(void)
 		goto unlock;
 	this_afe.set_custom_topology = 0;
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
 		pr_err("%s cal_block not found!!\n", __func__);
 		goto unlock;
 	}
@@ -1709,7 +1709,9 @@ static struct cal_block_data *afe_find_cal_topo_id_by_port(
 		&cal_type->cal_blocks) {
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
-
+		/* Skip cal_block if it is already marked stale */
+		if (cal_utils_is_cal_stale(cal_block))
+			continue;
 		path = ((afe_get_port_type(port_id) ==
 			MSM_AFE_PORT_TYPE_TX)?(TX_DEVICE):(RX_DEVICE));
 		afe_top =
@@ -1737,6 +1739,11 @@ err_exit:
 	return NULL;
 }
 
+/*
+ * Retrieving cal_block will mark cal_block as stale.
+ * Hence it cannot be reused or resent unless the flag
+ * is reset.
+ */
 static int afe_get_cal_topology_id(u16 port_id, u32 *topology_id,
 				   int cal_type_index)
 {
@@ -1746,7 +1753,8 @@ static int afe_get_cal_topology_id(u16 port_id, u32 *topology_id,
 	struct audio_cal_info_afe_top   *afe_top_info = NULL;
 
 	if (this_afe.cal_data[cal_type_index] == NULL) {
-		pr_err("%s: [AFE_TOPOLOGY_CAL] not initialized\n", __func__);
+		pr_err("%s: cal_type %d not initialized\n", __func__,
+			cal_type_index);
 		return -EINVAL;
 	}
 	if (topology_id == NULL) {
@@ -1759,8 +1767,8 @@ static int afe_get_cal_topology_id(u16 port_id, u32 *topology_id,
 	cal_block = afe_find_cal_topo_id_by_port(
 		this_afe.cal_data[cal_type_index], port_id);
 	if (cal_block == NULL) {
-		pr_err("%s: [AFE_TOPOLOGY_CAL] not initialized for this port %d\n",
-				__func__, port_id);
+		pr_err("%s: cal_type %d not initialized for this port %d\n",
+			__func__, cal_type_index, port_id);
 		ret = -EINVAL;
 		goto unlock;
 	}
@@ -1774,6 +1782,7 @@ static int afe_get_cal_topology_id(u16 port_id, u32 *topology_id,
 		goto unlock;
 	}
 	*topology_id = (u32)afe_top_info->topology;
+	cal_utils_mark_cal_used(cal_block);
 
 	pr_debug("%s: port_id = %u acdb_id = %d topology_id = %u ret=%d\n",
 		__func__, port_id, afe_top_info->acdb_id,
@@ -1940,7 +1949,7 @@ static int send_afe_cal_type(int cal_index, int port_id)
 		cal_block = cal_utils_get_only_cal_block(
 				this_afe.cal_data[cal_index]);
 
-	if (cal_block == NULL) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
 		pr_err("%s cal_block not found!!\n", __func__);
 		ret = -EINVAL;
 		goto unlock;
@@ -1959,6 +1968,9 @@ static int send_afe_cal_type(int cal_index, int port_id)
 	if (ret < 0)
 		pr_debug("%s: No cal sent for cal_index %d, port_id = 0x%x! ret %d\n",
 			__func__, cal_index, port_id, ret);
+
+	cal_utils_mark_cal_used(cal_block);
+
 unlock:
 	mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 done:
@@ -5272,7 +5284,7 @@ static int afe_sidetone_iir(u16 tx_port_id)
 	}
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
 		pr_err("%s: cal_block not found\n ", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
@@ -5399,7 +5411,7 @@ static int afe_sidetone(u16 tx_port_id, u16 rx_port_id, bool enable)
 
 	mutex_lock(&this_afe.cal_data[cal_index]->lock);
 	cal_block = cal_utils_get_only_cal_block(this_afe.cal_data[cal_index]);
-	if (cal_block == NULL) {
+	if (cal_block == NULL || cal_utils_is_cal_stale(cal_block)) {
 		pr_err("%s: cal_block not found\n", __func__);
 		mutex_unlock(&this_afe.cal_data[cal_index]->lock);
 		ret = -EINVAL;
@@ -6533,6 +6545,9 @@ static struct cal_block_data *afe_find_hw_delay_by_path(
 		cal_block = list_entry(ptr,
 			struct cal_block_data, list);
 
+		if (cal_utils_is_cal_stale(cal_block))
+			continue;
+
 		if (((struct audio_cal_info_hw_delay *)cal_block->cal_info)
 			->path == path) {
 			return cal_block;
@@ -6596,6 +6611,8 @@ static int afe_get_cal_hw_delay(int32_t path,
 		ret = -EFAULT;
 		goto unlock;
 	}
+
+	cal_utils_mark_cal_used(cal_block);
 	pr_debug("%s: Path = %d samplerate = %u usec = %u status %d\n",
 		 __func__, path, entry->sample_rate, entry->delay_usec, ret);
 unlock:

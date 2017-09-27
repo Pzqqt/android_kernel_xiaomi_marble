@@ -245,6 +245,11 @@ struct audio_client {
 	struct shared_io_config config;
 };
 
+struct q6asm_cal_info {
+	int topology_id;
+	int app_type;
+};
+
 void q6asm_audio_client_free(struct audio_client *ac);
 
 struct audio_client *q6asm_audio_client_alloc(app_cb cb, void *priv);
