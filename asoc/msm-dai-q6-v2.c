@@ -31,6 +31,7 @@
 #define MSM_DAI_SEC_AUXPCM_DT_DEV_ID 2
 #define MSM_DAI_TERT_AUXPCM_DT_DEV_ID 3
 #define MSM_DAI_QUAT_AUXPCM_DT_DEV_ID 4
+#define MSM_DAI_QUIN_AUXPCM_DT_DEV_ID 5
 
 
 #define spdif_clock_value(rate) (2*rate*32*2)
@@ -155,6 +156,22 @@ enum {
 	IDX_QUATERNARY_TDM_TX_5,
 	IDX_QUATERNARY_TDM_TX_6,
 	IDX_QUATERNARY_TDM_TX_7,
+	IDX_QUINARY_TDM_RX_0,
+	IDX_QUINARY_TDM_RX_1,
+	IDX_QUINARY_TDM_RX_2,
+	IDX_QUINARY_TDM_RX_3,
+	IDX_QUINARY_TDM_RX_4,
+	IDX_QUINARY_TDM_RX_5,
+	IDX_QUINARY_TDM_RX_6,
+	IDX_QUINARY_TDM_RX_7,
+	IDX_QUINARY_TDM_TX_0,
+	IDX_QUINARY_TDM_TX_1,
+	IDX_QUINARY_TDM_TX_2,
+	IDX_QUINARY_TDM_TX_3,
+	IDX_QUINARY_TDM_TX_4,
+	IDX_QUINARY_TDM_TX_5,
+	IDX_QUINARY_TDM_TX_6,
+	IDX_QUINARY_TDM_TX_7,
 	IDX_TDM_MAX,
 };
 
@@ -167,6 +184,8 @@ enum {
 	IDX_GROUP_TERTIARY_TDM_TX,
 	IDX_GROUP_QUATERNARY_TDM_RX,
 	IDX_GROUP_QUATERNARY_TDM_TX,
+	IDX_GROUP_QUINARY_TDM_RX,
+	IDX_GROUP_QUINARY_TDM_TX,
 	IDX_GROUP_TDM_MAX,
 };
 
@@ -394,6 +413,26 @@ int msm_dai_q6_get_group_idx(u16 id)
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_6:
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_7:
 		return IDX_GROUP_QUATERNARY_TDM_TX;
+	case AFE_GROUP_DEVICE_ID_QUINARY_TDM_RX:
+	case AFE_PORT_ID_QUINARY_TDM_RX:
+	case AFE_PORT_ID_QUINARY_TDM_RX_1:
+	case AFE_PORT_ID_QUINARY_TDM_RX_2:
+	case AFE_PORT_ID_QUINARY_TDM_RX_3:
+	case AFE_PORT_ID_QUINARY_TDM_RX_4:
+	case AFE_PORT_ID_QUINARY_TDM_RX_5:
+	case AFE_PORT_ID_QUINARY_TDM_RX_6:
+	case AFE_PORT_ID_QUINARY_TDM_RX_7:
+		return IDX_GROUP_QUINARY_TDM_RX;
+	case AFE_GROUP_DEVICE_ID_QUINARY_TDM_TX:
+	case AFE_PORT_ID_QUINARY_TDM_TX:
+	case AFE_PORT_ID_QUINARY_TDM_TX_1:
+	case AFE_PORT_ID_QUINARY_TDM_TX_2:
+	case AFE_PORT_ID_QUINARY_TDM_TX_3:
+	case AFE_PORT_ID_QUINARY_TDM_TX_4:
+	case AFE_PORT_ID_QUINARY_TDM_TX_5:
+	case AFE_PORT_ID_QUINARY_TDM_TX_6:
+	case AFE_PORT_ID_QUINARY_TDM_TX_7:
+		return IDX_GROUP_QUINARY_TDM_TX;
 	default: return -EINVAL;
 	}
 }
@@ -529,6 +568,38 @@ int msm_dai_q6_get_port_idx(u16 id)
 		return IDX_QUATERNARY_TDM_RX_7;
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_7:
 		return IDX_QUATERNARY_TDM_TX_7;
+	case AFE_PORT_ID_QUINARY_TDM_RX:
+		return IDX_QUINARY_TDM_RX_0;
+	case AFE_PORT_ID_QUINARY_TDM_TX:
+		return IDX_QUINARY_TDM_TX_0;
+	case AFE_PORT_ID_QUINARY_TDM_RX_1:
+		return IDX_QUINARY_TDM_RX_1;
+	case AFE_PORT_ID_QUINARY_TDM_TX_1:
+		return IDX_QUINARY_TDM_TX_1;
+	case AFE_PORT_ID_QUINARY_TDM_RX_2:
+		return IDX_QUINARY_TDM_RX_2;
+	case AFE_PORT_ID_QUINARY_TDM_TX_2:
+		return IDX_QUINARY_TDM_TX_2;
+	case AFE_PORT_ID_QUINARY_TDM_RX_3:
+		return IDX_QUINARY_TDM_RX_3;
+	case AFE_PORT_ID_QUINARY_TDM_TX_3:
+		return IDX_QUINARY_TDM_TX_3;
+	case AFE_PORT_ID_QUINARY_TDM_RX_4:
+		return IDX_QUINARY_TDM_RX_4;
+	case AFE_PORT_ID_QUINARY_TDM_TX_4:
+		return IDX_QUINARY_TDM_TX_4;
+	case AFE_PORT_ID_QUINARY_TDM_RX_5:
+		return IDX_QUINARY_TDM_RX_5;
+	case AFE_PORT_ID_QUINARY_TDM_TX_5:
+		return IDX_QUINARY_TDM_TX_5;
+	case AFE_PORT_ID_QUINARY_TDM_RX_6:
+		return IDX_QUINARY_TDM_RX_6;
+	case AFE_PORT_ID_QUINARY_TDM_TX_6:
+		return IDX_QUINARY_TDM_TX_6;
+	case AFE_PORT_ID_QUINARY_TDM_RX_7:
+		return IDX_QUINARY_TDM_RX_7;
+	case AFE_PORT_ID_QUINARY_TDM_TX_7:
+		return IDX_QUINARY_TDM_TX_7;
 	default: return -EINVAL;
 	}
 }
@@ -908,6 +979,14 @@ static int msm_dai_q6_auxpcm_prepare(struct snd_pcm_substream *substream,
 				aux_dai_data->clk_set.clk_id =
 					Q6AFE_LPASS_CLK_ID_QUAD_PCM_EBIT;
 			break;
+		case MSM_DAI_QUIN_AUXPCM_DT_DEV_ID:
+			if (pcm_clk_rate)
+				aux_dai_data->clk_set.clk_id =
+					Q6AFE_LPASS_CLK_ID_QUIN_PCM_IBIT;
+			else
+				aux_dai_data->clk_set.clk_id =
+					Q6AFE_LPASS_CLK_ID_QUIN_PCM_EBIT;
+			break;
 		default:
 			dev_err(dai->dev, "%s: AUXPCM id: %d not supported\n",
 				__func__, dai->id);
@@ -1142,6 +1221,32 @@ static struct snd_soc_dai_driver msm_dai_q6_aux_pcm_dai[] = {
 			.rate_min = 8000,
 		},
 		.id = MSM_DAI_QUAT_AUXPCM_DT_DEV_ID,
+		.ops = &msm_dai_q6_auxpcm_ops,
+		.probe = msm_dai_q6_aux_pcm_probe,
+		.remove = msm_dai_q6_dai_auxpcm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quin AUX PCM Playback",
+			.aif_name = "QUIN_AUX_PCM_RX",
+			.rates = (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000),
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
+			.channels_min = 1,
+			.channels_max = 1,
+			.rate_max = 16000,
+			.rate_min = 8000,
+		},
+		.capture = {
+			.stream_name = "Quin AUX PCM Capture",
+			.aif_name = "QUIN_AUX_PCM_TX",
+			.rates = (SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000),
+			.formats = SNDRV_PCM_FMTBIT_S16_LE,
+			.channels_min = 1,
+			.channels_max = 1,
+			.rate_max = 16000,
+			.rate_min = 8000,
+		},
+		.id = MSM_DAI_QUIN_AUXPCM_DT_DEV_ID,
 		.ops = &msm_dai_q6_auxpcm_ops,
 		.probe = msm_dai_q6_aux_pcm_probe,
 		.remove = msm_dai_q6_dai_auxpcm_remove,
@@ -3044,6 +3149,11 @@ static int msm_auxpcm_dev_probe(struct platform_device *pdev)
 		dai_data->tx_pid = AFE_PORT_ID_QUATERNARY_PCM_TX;
 		pdev->id = MSM_DAI_QUAT_AUXPCM_DT_DEV_ID;
 		i = 3;
+	} else if (!strcmp(intf_name, "quinary")) {
+		dai_data->rx_pid = AFE_PORT_ID_QUINARY_PCM_RX;
+		dai_data->tx_pid = AFE_PORT_ID_QUINARY_PCM_TX;
+		pdev->id = MSM_DAI_QUIN_AUXPCM_DT_DEV_ID;
+		i = 4;
 	} else {
 		dev_err(&pdev->dev, "%s: invalid DT intf name %s\n",
 			__func__, intf_name);
@@ -5052,6 +5162,13 @@ static int msm_dai_q6_tdm_set_clk_param(u32 group_id,
 		else
 			clk_set->clk_id = Q6AFE_LPASS_CLK_ID_QUAD_TDM_EBIT;
 		break;
+	case AFE_GROUP_DEVICE_ID_QUINARY_TDM_RX:
+	case AFE_GROUP_DEVICE_ID_QUINARY_TDM_TX:
+		if (mode)
+			clk_set->clk_id = Q6AFE_LPASS_CLK_ID_QUIN_TDM_IBIT;
+		else
+			clk_set->clk_id = Q6AFE_LPASS_CLK_ID_QUIN_TDM_EBIT;
+		break;
 	default:
 		return -EINVAL;
 	}
@@ -5510,6 +5627,54 @@ static const struct snd_kcontrol_new tdm_config_controls_data_format[] = {
 	SOC_ENUM_EXT("QUAT_TDM_TX_7 Data Format", tdm_config_enum[0],
 			msm_dai_q6_tdm_data_format_get,
 			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_0 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_1 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_2 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_3 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_4 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_5 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_6 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_7 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_0 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_1 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_2 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_3 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_4 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_5 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_6 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_7 Data Format", tdm_config_enum[0],
+			msm_dai_q6_tdm_data_format_get,
+			msm_dai_q6_tdm_data_format_put),
 };
 
 static const struct snd_kcontrol_new tdm_config_controls_header_type[] = {
@@ -5703,6 +5868,54 @@ static const struct snd_kcontrol_new tdm_config_controls_header_type[] = {
 			msm_dai_q6_tdm_header_type_get,
 			msm_dai_q6_tdm_header_type_put),
 	SOC_ENUM_EXT("QUAT_TDM_TX_7 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_0 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_1 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_2 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_3 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_4 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_5 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_6 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_7 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_0 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_1 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_2 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_3 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_4 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_5 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_6 Header Type", tdm_config_enum[1],
+			msm_dai_q6_tdm_header_type_get,
+			msm_dai_q6_tdm_header_type_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_7 Header Type", tdm_config_enum[1],
 			msm_dai_q6_tdm_header_type_get,
 			msm_dai_q6_tdm_header_type_put),
 };
@@ -5964,6 +6177,70 @@ static const struct snd_kcontrol_new tdm_config_controls_header[] = {
 			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
 			msm_dai_q6_tdm_header_get,
 			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_0 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_1 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_2 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_3 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_4 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_5 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_6 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_RX_7 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_0 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_1 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_2 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_3 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_4 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_5 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_6 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
+	SOC_SINGLE_MULTI_EXT("QUIN_TDM_TX_7 Header",
+			SND_SOC_NOPM, 0, 0xFFFFFFFF, 0, 8,
+			msm_dai_q6_tdm_header_get,
+			msm_dai_q6_tdm_header_put),
 };
 
 static int msm_dai_q6_tdm_set_clk(
@@ -6187,6 +6464,14 @@ static int msm_dai_q6_tdm_set_tdm_slot(struct snd_soc_dai *dai,
 	case AFE_PORT_ID_QUATERNARY_TDM_RX_5:
 	case AFE_PORT_ID_QUATERNARY_TDM_RX_6:
 	case AFE_PORT_ID_QUATERNARY_TDM_RX_7:
+	case AFE_PORT_ID_QUINARY_TDM_RX:
+	case AFE_PORT_ID_QUINARY_TDM_RX_1:
+	case AFE_PORT_ID_QUINARY_TDM_RX_2:
+	case AFE_PORT_ID_QUINARY_TDM_RX_3:
+	case AFE_PORT_ID_QUINARY_TDM_RX_4:
+	case AFE_PORT_ID_QUINARY_TDM_RX_5:
+	case AFE_PORT_ID_QUINARY_TDM_RX_6:
+	case AFE_PORT_ID_QUINARY_TDM_RX_7:
 		tdm_group->nslots_per_frame = slots;
 		tdm_group->slot_width = slot_width;
 		tdm_group->slot_mask = rx_mask & cap_mask;
@@ -6223,6 +6508,14 @@ static int msm_dai_q6_tdm_set_tdm_slot(struct snd_soc_dai *dai,
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_5:
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_6:
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_7:
+	case AFE_PORT_ID_QUINARY_TDM_TX:
+	case AFE_PORT_ID_QUINARY_TDM_TX_1:
+	case AFE_PORT_ID_QUINARY_TDM_TX_2:
+	case AFE_PORT_ID_QUINARY_TDM_TX_3:
+	case AFE_PORT_ID_QUINARY_TDM_TX_4:
+	case AFE_PORT_ID_QUINARY_TDM_TX_5:
+	case AFE_PORT_ID_QUINARY_TDM_TX_6:
+	case AFE_PORT_ID_QUINARY_TDM_TX_7:
 		tdm_group->nslots_per_frame = slots;
 		tdm_group->slot_width = slot_width;
 		tdm_group->slot_mask = tx_mask & cap_mask;
@@ -6316,6 +6609,14 @@ static int msm_dai_q6_tdm_set_channel_map(struct snd_soc_dai *dai,
 	case AFE_PORT_ID_QUATERNARY_TDM_RX_5:
 	case AFE_PORT_ID_QUATERNARY_TDM_RX_6:
 	case AFE_PORT_ID_QUATERNARY_TDM_RX_7:
+	case AFE_PORT_ID_QUINARY_TDM_RX:
+	case AFE_PORT_ID_QUINARY_TDM_RX_1:
+	case AFE_PORT_ID_QUINARY_TDM_RX_2:
+	case AFE_PORT_ID_QUINARY_TDM_RX_3:
+	case AFE_PORT_ID_QUINARY_TDM_RX_4:
+	case AFE_PORT_ID_QUINARY_TDM_RX_5:
+	case AFE_PORT_ID_QUINARY_TDM_RX_6:
+	case AFE_PORT_ID_QUINARY_TDM_RX_7:
 		if (!rx_slot) {
 			dev_err(dai->dev, "%s: rx slot not found\n", __func__);
 			return -EINVAL;
@@ -6366,6 +6667,14 @@ static int msm_dai_q6_tdm_set_channel_map(struct snd_soc_dai *dai,
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_5:
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_6:
 	case AFE_PORT_ID_QUATERNARY_TDM_TX_7:
+	case AFE_PORT_ID_QUINARY_TDM_TX:
+	case AFE_PORT_ID_QUINARY_TDM_TX_1:
+	case AFE_PORT_ID_QUINARY_TDM_TX_2:
+	case AFE_PORT_ID_QUINARY_TDM_TX_3:
+	case AFE_PORT_ID_QUINARY_TDM_TX_4:
+	case AFE_PORT_ID_QUINARY_TDM_TX_5:
+	case AFE_PORT_ID_QUINARY_TDM_TX_6:
+	case AFE_PORT_ID_QUINARY_TDM_TX_7:
 		if (!tx_slot) {
 			dev_err(dai->dev, "%s: tx slot not found\n", __func__);
 			return -EINVAL;
@@ -7981,6 +8290,326 @@ static struct snd_soc_dai_driver msm_dai_q6_tdm_dai[] = {
 		},
 		.ops = &msm_dai_q6_tdm_ops,
 		.id = AFE_PORT_ID_QUATERNARY_TDM_TX_7,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM0 Playback",
+			.aif_name = "QUIN_TDM_RX_0",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM1 Playback",
+			.aif_name = "QUIN_TDM_RX_1",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_1,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM2 Playback",
+			.aif_name = "QUIN_TDM_RX_2",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_2,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM3 Playback",
+			.aif_name = "QUIN_TDM_RX_3",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_3,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM4 Playback",
+			.aif_name = "QUIN_TDM_RX_4",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_4,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM5 Playback",
+			.aif_name = "QUIN_TDM_RX_5",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_5,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM6 Playback",
+			.aif_name = "QUIN_TDM_RX_6",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_6,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.playback = {
+			.stream_name = "Quinary TDM7 Playback",
+			.aif_name = "QUIN_TDM_RX_7",
+			.rates = SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_8000 |
+				SNDRV_PCM_RATE_16000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_RX_7,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM0 Capture",
+			.aif_name = "QUIN_TDM_TX_0",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM1 Capture",
+			.aif_name = "QUIN_TDM_TX_1",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_1,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM2 Capture",
+			.aif_name = "QUIN_TDM_TX_2",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_2,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM3 Capture",
+			.aif_name = "QUIN_TDM_TX_3",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_3,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM4 Capture",
+			.aif_name = "QUIN_TDM_TX_4",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_4,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM5 Capture",
+			.aif_name = "QUIN_TDM_TX_5",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_5,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM6 Capture",
+			.aif_name = "QUIN_TDM_TX_6",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_6,
+		.probe = msm_dai_q6_dai_tdm_probe,
+		.remove = msm_dai_q6_dai_tdm_remove,
+	},
+	{
+		.capture = {
+			.stream_name = "Quinary TDM7 Capture",
+			.aif_name = "QUIN_TDM_TX_7",
+			.rates = SNDRV_PCM_RATE_8000 | SNDRV_PCM_RATE_16000 |
+				SNDRV_PCM_RATE_32000 | SNDRV_PCM_RATE_48000 |
+				SNDRV_PCM_RATE_176400 | SNDRV_PCM_RATE_352800,
+			.formats = SNDRV_PCM_FMTBIT_S16_LE |
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S32_LE,
+			.channels_min = 1,
+			.channels_max = 8,
+			.rate_min = 8000,
+			.rate_max = 352800,
+		},
+		.ops = &msm_dai_q6_tdm_ops,
+		.id = AFE_PORT_ID_QUINARY_TDM_TX_7,
 		.probe = msm_dai_q6_dai_tdm_probe,
 		.remove = msm_dai_q6_dai_tdm_remove,
 	},

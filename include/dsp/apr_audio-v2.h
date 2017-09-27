@@ -1051,7 +1051,7 @@ struct adm_cmd_connect_afe_port_v5 {
 
 /* End of the range of port IDs for TDM devices. */
 #define AFE_PORT_ID_TDM_PORT_RANGE_END \
-	(AFE_PORT_ID_TDM_PORT_RANGE_START+0x40-1)
+	(AFE_PORT_ID_TDM_PORT_RANGE_START+0x50-1)
 
 /* Size of the range of port IDs for TDM ports. */
 #define AFE_PORT_ID_TDM_PORT_RANGE_SIZE \
@@ -1084,6 +1084,7 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_SENARY_MI2S_RX          0x1018
 /* ID of the senary MI2S Tx port. */
 #define AFE_PORT_ID_SENARY_MI2S_TX          0x1019
+
 /* ID of the Internal 0 MI2S Rx port */
 #define AFE_PORT_ID_INT0_MI2S_RX                 0x102E
 /* ID of the Internal 0 MI2S Tx port */
@@ -1112,6 +1113,10 @@ struct adm_cmd_connect_afe_port_v5 {
 #define AFE_PORT_ID_INT6_MI2S_RX                 0x103A
 /* ID of the Internal 6 MI2S Tx port */
 #define AFE_PORT_ID_INT6_MI2S_TX                 0x103B
+
+#define AFE_PORT_ID_QUINARY_PCM_RX       0x103C
+#define AFE_PORT_ID_QUINARY_PCM_TX       0x103D
+
 #define AFE_PORT_ID_SPDIF_RX                0x5000
 #define  AFE_PORT_ID_RT_PROXY_PORT_001_RX   0x2000
 #define  AFE_PORT_ID_RT_PROXY_PORT_001_TX   0x2001
@@ -1327,6 +1332,40 @@ struct adm_cmd_connect_afe_port_v5 {
 	(AFE_PORT_ID_QUATERNARY_TDM_TX + 0x0C)
 #define AFE_PORT_ID_QUATERNARY_TDM_TX_7 \
 	(AFE_PORT_ID_QUATERNARY_TDM_TX + 0x0E)
+
+#define AFE_PORT_ID_QUINARY_TDM_RX \
+	(AFE_PORT_ID_TDM_PORT_RANGE_START + 0x40)
+#define AFE_PORT_ID_QUINARY_TDM_RX_1 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x02)
+#define AFE_PORT_ID_QUINARY_TDM_RX_2 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x04)
+#define AFE_PORT_ID_QUINARY_TDM_RX_3 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x06)
+#define AFE_PORT_ID_QUINARY_TDM_RX_4 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x08)
+#define AFE_PORT_ID_QUINARY_TDM_RX_5 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x0A)
+#define AFE_PORT_ID_QUINARY_TDM_RX_6 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x0C)
+#define AFE_PORT_ID_QUINARY_TDM_RX_7 \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x0E)
+
+#define AFE_PORT_ID_QUINARY_TDM_TX \
+	(AFE_PORT_ID_TDM_PORT_RANGE_START + 0x41)
+#define AFE_PORT_ID_QUINARY_TDM_TX_1 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x02)
+#define AFE_PORT_ID_QUINARY_TDM_TX_2 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x04)
+#define AFE_PORT_ID_QUINARY_TDM_TX_3 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x06)
+#define AFE_PORT_ID_QUINARY_TDM_TX_4 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x08)
+#define AFE_PORT_ID_QUINARY_TDM_TX_5 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x0A)
+#define AFE_PORT_ID_QUINARY_TDM_TX_6 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x0C)
+#define AFE_PORT_ID_QUINARY_TDM_TX_7 \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x0E)
 
 #define AFE_PORT_ID_INVALID             0xFFFF
 
@@ -9595,6 +9634,9 @@ enum afe_lpass_clk_mode {
 /* Clock ID for INT6 I2S IBIT  */
 #define Q6AFE_LPASS_CLK_ID_INT6_MI2S_IBIT                       0x115
 
+/* Clock ID for QUINARY MI2S OSR CLK  */
+#define Q6AFE_LPASS_CLK_ID_QUI_MI2S_OSR                         0x116
+
 /* Clock ID for Primary PCM IBIT */
 #define Q6AFE_LPASS_CLK_ID_PRI_PCM_IBIT                           0x200
 /* Clock ID for Primary PCM EBIT */
@@ -9611,6 +9653,12 @@ enum afe_lpass_clk_mode {
 #define Q6AFE_LPASS_CLK_ID_QUAD_PCM_IBIT                          0x206
 /* Clock ID for Quartery PCM EBIT */
 #define Q6AFE_LPASS_CLK_ID_QUAD_PCM_EBIT                          0x207
+/* Clock ID for Quinary PCM IBIT */
+#define Q6AFE_LPASS_CLK_ID_QUIN_PCM_IBIT                          0x208
+/* Clock ID for Quinary PCM EBIT */
+#define Q6AFE_LPASS_CLK_ID_QUIN_PCM_EBIT                          0x209
+/* Clock ID for QUINARY PCM OSR  */
+#define Q6AFE_LPASS_CLK_ID_QUI_PCM_OSR                            0x20A
 
 /** Clock ID for Primary TDM IBIT */
 #define Q6AFE_LPASS_CLK_ID_PRI_TDM_IBIT                           0x200
@@ -9628,6 +9676,12 @@ enum afe_lpass_clk_mode {
 #define Q6AFE_LPASS_CLK_ID_QUAD_TDM_IBIT                          0x206
 /** Clock ID for Quartery TDM EBIT */
 #define Q6AFE_LPASS_CLK_ID_QUAD_TDM_EBIT                          0x207
+/** Clock ID for Quinary TDM IBIT */
+#define Q6AFE_LPASS_CLK_ID_QUIN_TDM_IBIT                          0x208
+/** Clock ID for Quinary TDM EBIT */
+#define Q6AFE_LPASS_CLK_ID_QUIN_TDM_EBIT                          0x209
+/** Clock ID for Quinary TDM OSR */
+#define Q6AFE_LPASS_CLK_ID_QUIN_TDM_OSR                           0x20A
 
 /* Clock ID for MCLK1 */
 #define Q6AFE_LPASS_CLK_ID_MCLK_1                                 0x300
@@ -10089,6 +10143,10 @@ struct afe_group_device_group_cfg {
 	(AFE_PORT_ID_QUATERNARY_TDM_RX + 0x100)
 #define AFE_GROUP_DEVICE_ID_QUATERNARY_TDM_TX \
 	(AFE_PORT_ID_QUATERNARY_TDM_TX + 0x100)
+#define AFE_GROUP_DEVICE_ID_QUINARY_TDM_RX \
+	(AFE_PORT_ID_QUINARY_TDM_RX + 0x100)
+#define AFE_GROUP_DEVICE_ID_QUINARY_TDM_TX \
+	(AFE_PORT_ID_QUINARY_TDM_TX + 0x100)
 
 /* ID of the parameter used by #AFE_MODULE_GROUP_DEVICE to configure the
  * group device. #AFE_SVC_CMD_SET_PARAM can use this parameter ID.
