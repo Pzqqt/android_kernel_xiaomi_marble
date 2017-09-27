@@ -1,4 +1,4 @@
-/* Copyright (c) 2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -15,7 +15,7 @@
 
 #include <sound/soc.h>
 
-#ifdef CONFIG_SND_SOC_INT_CODEC
+#if IS_ENABLED(CONFIG_SND_SOC_INT_CODEC)
 int msm_int_cdc_init(struct platform_device *pdev,
 		     struct msm_asoc_mach_data *pdata,
 		     struct snd_soc_card **card,
