@@ -18731,9 +18731,9 @@ typedef struct {
     * FLAG_SEVEN_CHAIN   0x0000007F  - seven chain mask
     * FLAG_EIGHT_CHAIN   0x000000FF  - eight chain mask
     * FLAG_STBC          0x00000100  - STBC is set
-    * FLAG_40MHZ         0x00000200
-    * FLAG_80MHZ         0x00000300
-    * FLAG_160MHZ        0x00000400
+    * FLAG_40MHZ         0x00000200  - bits 9-10 used for BW:
+    * FLAG_80MHZ         0x00000400    (bw >> 9) & 3 will give
+    * FLAG_160MHZ        0x00000600    1 -> 40 MHz, 2 -> 80 MHz, 3 -> 160 MHz
     * FLAG_TXBF          0x00000800 - Tx Bf enabled
     * FLAG_RTSENA        0x00001000 - RTS enabled
     * FLAG_CTSENA        0x00002000 - CTS enabled
@@ -18804,7 +18804,13 @@ typedef struct {
     A_UINT32 pdev_id;
    /*
     * Following this structure is the TLV:
-    *    A_UINT32 tpc[1];
+    *    A_UINT32 tpc[2];
+    *    tpc[0] - maximum power per rate
+    *    tpc[1] - minimum power per rate
+    *    Currently this event only provides max and min power limits
+    *    for a single rate.  In the future this event may be expanded
+    *    to provide the information for multiple rates.
+    *    At that time, the format of the data will be provided.
     */
 } wmi_pdev_tpc_event_fixed_param;
 
