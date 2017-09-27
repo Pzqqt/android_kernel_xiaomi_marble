@@ -1788,6 +1788,118 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#ifdef WLAN_SUPPORT_FILS
+/**
+ * extract_swfda_vdev_id_tlv() - extract swfda vdev id from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @vdev_id: pointer to hold vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_INVAL on failure
+ */
+static QDF_STATUS
+extract_swfda_vdev_id_tlv(wmi_unified_t wmi_handle,
+			  void *evt_buf, uint32_t *vdev_id)
+{
+	WMI_HOST_SWFDA_EVENTID_param_tlvs *param_buf;
+	wmi_host_swfda_event_fixed_param *swfda_event;
+
+	param_buf = (WMI_HOST_SWFDA_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid swfda event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+	swfda_event = param_buf->fixed_param;
+	*vdev_id = swfda_event->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_vdev_fils_enable_cmd_tlv() - enable/Disable FD Frame command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold FILS discovery enable param
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE on failure
+ */
+static QDF_STATUS
+send_vdev_fils_enable_cmd_tlv(wmi_unified_t wmi_handle,
+			      struct config_fils_params *param)
+{
+	wmi_enable_fils_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS status;
+	uint32_t len = sizeof(wmi_enable_fils_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_enable_fils_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_enable_fils_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+		       wmi_enable_fils_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->fd_period = param->fd_period;
+	WMI_LOGI("Setting FD period to %d vdev id : %d\n",
+		 param->fd_period, param->vdev_id);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_ENABLE_FILS_CMDID);
+	if (status != QDF_STATUS_SUCCESS) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_fils_discovery_send_cmd_tlv() - WMI FILS Discovery send function
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold FD send cmd parameter
+ *
+ * Return : QDF_STATUS_SUCCESS on success and QDF_STATUS_E_NOMEM on failure.
+ */
+static QDF_STATUS
+send_fils_discovery_send_cmd_tlv(wmi_unified_t wmi_handle,
+				 struct fd_params *param)
+{
+	QDF_STATUS ret;
+	wmi_fd_send_from_host_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	qdf_dma_addr_t dma_addr;
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!wmi_buf) {
+		WMI_LOGE("%s : wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_fd_send_from_host_cmd_fixed_param *)wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_fd_send_from_host_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+		       wmi_fd_send_from_host_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->data_len = qdf_nbuf_len(param->wbuf);
+	dma_addr = qdf_nbuf_get_frag_paddr(param->wbuf, 0);
+	qdf_dmaaddr_to_32s(dma_addr, &cmd->frag_ptr_lo, &cmd->frag_ptr_hi);
+	cmd->frame_ctrl = param->frame_ctrl;
+
+	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf, sizeof(*cmd),
+				   WMI_PDEV_SEND_FD_CMDID);
+	if (ret != QDF_STATUS_SUCCESS) {
+		WMI_LOGE("%s: Failed to send fils discovery frame: %d",
+			 __func__, ret);
+		wmi_buf_free(wmi_buf);
+	}
+
+	return ret;
+}
+#endif /* WLAN_SUPPORT_FILS */
+
 static QDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param)
 {
@@ -21505,6 +21617,11 @@ struct wmi_ops tlv_ops =  {
 	.send_btm_config = send_btm_config_cmd_tlv,
 	.send_obss_detection_cfg_cmd = send_obss_detection_cfg_cmd_tlv,
 	.extract_obss_detection_info = extract_obss_detection_info_tlv,
+#ifdef WLAN_SUPPORT_FILS
+	.send_vdev_fils_enable_cmd = send_vdev_fils_enable_cmd_tlv,
+	.extract_swfda_vdev_id = extract_swfda_vdev_id_tlv,
+	.send_fils_discovery_send_cmd = send_fils_discovery_send_cmd_tlv,
+#endif /* WLAN_SUPPORT_FILS */
 };
 
 /**
@@ -21785,6 +21902,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 					WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID;
 	event_ids[wmi_sap_obss_detection_report_event_id] =
 		WMI_SAP_OBSS_DETECTION_REPORT_EVENTID;
+	event_ids[wmi_host_swfda_event_id] = WMI_HOST_SWFDA_EVENTID;
 }
 
 #ifndef CONFIG_MCL
