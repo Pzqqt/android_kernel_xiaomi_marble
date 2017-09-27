@@ -988,6 +988,7 @@ typedef struct tagCsrRoamProfile {
 	bool ApUapsdEnable;
 	bool protEnabled;
 	bool obssProtEnabled;
+	bool chan_switch_hostapd_rate_enabled;
 	uint16_t cfg_protection;
 	uint8_t wps_state;
 	tCsrMobilityDomainInfo MDID;
@@ -1008,7 +1009,6 @@ typedef struct tagCsrRoamProfile {
 	bool fils_connection;
 	struct cds_fils_connection_info *fils_con_info;
 #endif
-	bool chan_switch_hostapd_rate_enabled;
 } tCsrRoamProfile;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
