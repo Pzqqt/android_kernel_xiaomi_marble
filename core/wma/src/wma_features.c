@@ -5333,6 +5333,15 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 	rx_aggr_failure_info = param_buf->fixed_param;
 	hole_info = param_buf->failure_info;
 
+	if (rx_aggr_failure_info->num_failure_info > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*rx_aggr_hole_event)) /
+	    sizeof(rx_aggr_hole_event->hole_info_array[0]))) {
+		WMA_LOGE("%s: Excess data from WMI num_failure_info %d",
+			 __func__, rx_aggr_failure_info->num_failure_info);
+		QDF_ASSERT(0);
+		return -EINVAL;
+	}
+
 	alloc_len = sizeof(*rx_aggr_hole_event) +
 		(rx_aggr_failure_info->num_failure_info)*
 		sizeof(rx_aggr_hole_event->hole_info_array[0]);
