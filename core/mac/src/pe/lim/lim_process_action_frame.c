@@ -1794,10 +1794,8 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	uint32_t frame_len;
 	tpSirMacVendorSpecificFrameHdr vendor_specific;
 	uint8_t oui[] = { 0x00, 0x00, 0xf0 };
-#ifndef CONVERGED_P2P_ENABLE
 	tpSirMacVendorSpecificPublicActionFrameHdr pub_action;
-	uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x09 };
-#endif
+	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
 #ifdef WLAN_FEATURE_11W
 	if (lim_is_robust_mgmt_action_frame(action_hdr->category) &&
 	   lim_drop_unprotected_action_frame(mac_ctx, session,
@@ -2043,7 +2041,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	break;
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
 		switch (action_hdr->actionID) {
-#ifndef CONVERGED_P2P_ENABLE
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
 			pub_action =
 				(tpSirMacVendorSpecificPublicActionFrameHdr)
@@ -2053,8 +2050,8 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-			/* Check if it is a P2P public action frame. */
-			if (!qdf_mem_cmp(pub_action->Oui, p2p_oui, 4)) {
+			/* Check if it is a DPP public action frame. */
+			if (!qdf_mem_cmp(pub_action->Oui, dpp_oui, 4)) {
 				/*
 				 * Forward to the SME to HDD to wpa_supplicant
 				 * type is ACTION
@@ -2073,7 +2070,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					pub_action->Oui[2], pub_action->Oui[3]);
 			}
 		break;
-#endif
 		/* Handle vendor specific action */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		{
@@ -2222,7 +2218,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	}
 }
 
-#ifndef CONVERGED_P2P_ENABLE
 /*
  * lim_process_action_vendor_specific() - Process action frame received
  * @mac_ctx: Pointer to Global MAC structure
@@ -2241,7 +2236,7 @@ static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr mac_hdr;
 	uint32_t frame_len;
 	uint8_t session_id = 0;
-	uint8_t p2p_oui[] = { 0x50, 0x6F, 0x9A, 0x09 };
+	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(pkt_info);
@@ -2253,8 +2248,8 @@ static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
 	if (session)
 		session_id = session->smeSessionId;
 
-	/* Check if it is a P2P public action frame. */
-	if (!qdf_mem_cmp(action_hdr->Oui, p2p_oui, 4)) {
+	/* Check if it is a DPP public action frame. */
+	if (!qdf_mem_cmp(action_hdr->Oui, dpp_oui, 4)) {
 		/* Forward to the SME to HDD to wpa_supplicant */
 		/* type is ACTION */
 		lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
@@ -2271,7 +2266,6 @@ static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
 			 action_hdr->Oui[3]);
 	}
 }
-#endif
 
 /**
  * lim_process_action_frame_no_session
@@ -2292,7 +2286,6 @@ static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
  * @param  *pBd - A pointer to Buffer descriptor + associated PDUs
  * @return None
  */
-#ifndef CONVERGED_P2P_ENABLE
 void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 {
 	uint8_t *pBody = WMA_GET_RX_MPDU_DATA(pBd);
@@ -2321,8 +2314,3 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 
 	}
 }
-#else
-void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
-{
-}
-#endif
