@@ -38,6 +38,7 @@
  * @early_rx: early rx
  * @pno_offload: pno offload
  * @beacon_offload: beacon offload
+ * @lte_coex_ant_share: LTE coex ant share
  * @en_tdls: enable tdls
  * @en_tdls_offchan: enable tdls offchan
  * @en_tdls_uapsd_buf_sta: enable sta tdls uapsd buf
@@ -57,6 +58,7 @@ struct wma_tgt_services {
 #endif /* FEATURE_WLAN_SCAN_PNO */
 	bool beacon_offload;
 	bool pmf_offload;
+	uint32_t lte_coex_ant_share;
 #ifdef FEATURE_WLAN_TDLS
 	bool en_tdls;
 	bool en_tdls_offchan;
