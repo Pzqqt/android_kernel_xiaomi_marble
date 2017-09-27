@@ -76,6 +76,7 @@ struct scheduler_msg;
  *                  pointers for mgmt txrx component
  * @mgmt_tx_send: function pointer to transmit mgmt tx frame
  * @beacon_send:  function pointer to transmit beacon frame
+ * @fd_action_frame_send: function pointer to transmit FD action frame
  */
 struct wlan_lmac_if_mgmt_txrx_tx_ops {
 	QDF_STATUS (*mgmt_tx_send)(struct wlan_objmgr_vdev *vdev,
@@ -83,6 +84,8 @@ struct wlan_lmac_if_mgmt_txrx_tx_ops {
 			void *mgmt_tx_params);
 	QDF_STATUS (*beacon_send)(struct wlan_objmgr_vdev *vdev,
 			qdf_nbuf_t nbuf);
+	QDF_STATUS (*fd_action_frame_send)(struct wlan_objmgr_vdev *vdev,
+					   qdf_nbuf_t nbuf);
 };
 
 /**
@@ -260,6 +263,21 @@ struct wlan_lmac_if_atf_tx_ops {
 	void (*atf_open)(struct wlan_objmgr_psoc *psoc);
 	void (*atf_register_event_handler)(struct wlan_objmgr_psoc *psoc);
 	void (*atf_unregister_event_handler)(struct wlan_objmgr_psoc *psoc);
+};
+#endif
+
+#ifdef WLAN_SUPPORT_FILS
+/**
+ * struct wlan_lmac_if_fd_tx_ops - FILS Discovery specific Tx function pointers
+ * @fd_vdev_config_fils:         Enable and configure FILS Discovery
+ * @fd_register_event_handler:   Register swfda WMI event handler
+ * @fd_unregister_event_handler: Un-register swfda WMI event handler
+ */
+struct wlan_lmac_if_fd_tx_ops {
+	QDF_STATUS (*fd_vdev_config_fils)(struct wlan_objmgr_vdev *vdev,
+					  uint32_t fd_period);
+	void (*fd_register_event_handler)(struct wlan_objmgr_psoc *psoc);
+	void (*fd_unregister_event_handler)(struct wlan_objmgr_psoc *psoc);
 };
 #endif
 
@@ -638,6 +656,10 @@ struct wlan_lmac_if_tx_ops {
 #ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_lmac_if_tdls_tx_ops tdls_tx_ops;
 #endif
+
+#ifdef WLAN_SUPPORT_FILS
+	struct wlan_lmac_if_fd_tx_ops fd_tx_ops;
+#endif
 	 struct wlan_lmac_if_mlme_tx_ops mops;
 	 struct wlan_lmac_if_target_tx_ops target_tx_ops;
 
@@ -824,6 +846,24 @@ struct wlan_lmac_if_atf_rx_ops {
 					uint16_t value);
 	void (*atf_set_token_utilized)(struct wlan_objmgr_peer *peer,
 					uint16_t value);
+};
+#endif
+
+#ifdef WLAN_SUPPORT_FILS
+/**
+ * struct wlan_lmac_if_fd_rx_ops - FILS Discovery specific Rx function pointers
+ * @fd_alloc:               Allocate FD buffer
+ * @fd_stop:                Stop and free deferred FD buffer
+ * @fd_free:                Free FD frame buffer
+ * @fd_get_valid_fd_period: Get valid FD period
+ * @fd_swfda_handler:       SWFDA event handler
+ */
+struct wlan_lmac_if_fd_rx_ops {
+	void (*fd_alloc)(struct wlan_objmgr_vdev *vdev);
+	void (*fd_stop)(struct wlan_objmgr_vdev *vdev);
+	void (*fd_free)(struct wlan_objmgr_vdev *vdev);
+	uint32_t (*fd_get_valid_fd_period)(struct wlan_objmgr_vdev *vdev);
+	QDF_STATUS (*fd_swfda_handler)(struct wlan_objmgr_vdev *vdev);
 };
 #endif
 
@@ -1096,6 +1136,11 @@ struct wlan_lmac_if_rx_ops {
 #ifdef CONVERGED_TDLS_ENABLE
 	struct wlan_lmac_if_tdls_rx_ops tdls_rx_ops;
 #endif
+
+#ifdef WLAN_SUPPORT_FILS
+	struct wlan_lmac_if_fd_rx_ops fd_rx_ops;
+#endif
+
 	struct wlan_lmac_if_mlme_rx_ops mops;
 
 #ifdef WLAN_SUPPORT_GREEN_AP

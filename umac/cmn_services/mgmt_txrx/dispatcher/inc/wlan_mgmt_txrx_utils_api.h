@@ -753,6 +753,23 @@ QDF_STATUS wlan_mgmt_txrx_beacon_frame_tx(struct wlan_objmgr_peer *peer,
 					  qdf_nbuf_t buf,
 					  enum wlan_umac_comp_id comp_id);
 
+#ifdef WLAN_SUPPORT_FILS
+/**
+ * wlan_mgmt_txrx_fd_action_frame_tx() - transmits mgmt. FD Action frame
+ * @vdev: vdev object
+ * @buf: buffer to be transmitted
+ * @comp_id: umac component id
+ *
+ * This function transmits the FILS Dicovery Action frame to
+ * southbound interface.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_fd_action_frame_tx(struct wlan_objmgr_vdev *vdev,
+					     qdf_nbuf_t buf,
+					     enum wlan_umac_comp_id comp_id);
+#endif /* WLAN_SUPPORT_FILS */
+
 /**
  * wlan_mgmt_txrx_register_rx_cb() - registers the rx cb for mgmt. frames
  * @psoc: psoc context

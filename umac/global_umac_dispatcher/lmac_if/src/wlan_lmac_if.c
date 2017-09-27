@@ -58,6 +58,10 @@
 #endif
 #include <wlan_ftm_ucfg_api.h>
 
+#ifdef WLAN_SUPPORT_FILS
+#include <wlan_fd_tgt_api.h>
+#endif
+
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
  */
@@ -118,6 +122,25 @@ wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 #else
 static void
 wlan_lmac_if_atf_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+}
+#endif
+
+#ifdef WLAN_SUPPORT_FILS
+static void
+wlan_lmac_if_fd_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_fd_rx_ops *fd_rx_ops = &rx_ops->fd_rx_ops;
+
+	fd_rx_ops->fd_alloc = tgt_fd_alloc;
+	fd_rx_ops->fd_stop = tgt_fd_stop;
+	fd_rx_ops->fd_free = tgt_fd_free;
+	fd_rx_ops->fd_get_valid_fd_period = tgt_fd_get_valid_fd_period;
+	fd_rx_ops->fd_swfda_handler = tgt_fd_swfda_handler;
+}
+#else
+static void
+wlan_lmac_if_fd_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 }
 #endif
@@ -405,6 +428,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* FTM rx_ops */
 	wlan_lmac_if_umac_ftm_rx_ops_register(rx_ops);
+
+	/* FILS Discovery */
+	wlan_lmac_if_fd_rx_ops_register(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -204,6 +204,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_DIRECT_BUF_RX_ID:      Direct Buffer Receive operations
  * @WLAN_DISA_ID:               DISA (encryption test) operations
  * @WLAN_FTM_ID:                FTM module
+ * @WLAN_FD_ID:                 FILS Discovery
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -243,6 +244,7 @@ typedef enum {
 	WLAN_DIRECT_BUF_RX_ID = 30,
 	WLAN_DISA_ID          = 31,
 	WLAN_FTM_ID           = 31,
+	WLAN_FD_ID            = 33,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -289,6 +291,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_DIRECT_BUF_RX_ID",
 					"WLAN_DISA_ID",
 					"WLAN_FTM_ID",
+					"WLAN_FD_ID",
 					"WLAN_REF_ID_MAX" };
 
 	return (char *)strings[id];

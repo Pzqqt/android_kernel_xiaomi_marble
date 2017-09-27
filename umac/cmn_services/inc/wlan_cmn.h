@@ -123,6 +123,7 @@
  * @WLAN_UMAC_COMP_DISA:          DISA encryption test
  * @WLAN_UMAC_COMP_GREEN_AP:      Green AP
  * @WLAN_UMAC_COMP_FTM:           FTM component
+ * @WLAN_UMAC_COMP_FD:            FILS Discovery
  *
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
@@ -154,6 +155,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_DISA,
 	WLAN_UMAC_COMP_GREEN_AP,
 	WLAN_UMAC_COMP_FTM,
+	WLAN_UMAC_COMP_FD,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

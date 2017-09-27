@@ -4158,6 +4158,45 @@ QDF_STATUS wmi_unified_vdev_set_fwtest_param_cmd_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_SUPPORT_FILS
+QDF_STATUS
+wmi_unified_fils_discovery_send_cmd(void *wmi_hdl, struct fd_params *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_fils_discovery_send_cmd)
+		return wmi_handle->ops->send_fils_discovery_send_cmd(wmi_handle,
+								     param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_unified_fils_vdev_config_send_cmd(void *wmi_hdl,
+				      struct config_fils_params *param)
+{
+	wmi_unified_t wmi = (wmi_unified_t)wmi_hdl;
+
+	if (wmi->ops->send_vdev_fils_enable_cmd)
+		return wmi->ops->send_vdev_fils_enable_cmd(wmi, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS
+wmi_extract_swfda_vdev_id(void *wmi_hdl, void *evt_buf,
+			  uint32_t *vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_swfda_vdev_id)
+		return wmi_handle->ops->extract_swfda_vdev_id(wmi_handle,
+							      evt_buf, vdev_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif /* WLAN_SUPPORT_FILS */
+
 /**
  *  wmi_unified_vdev_config_ratemask_cmd_send() - WMI config ratemask function
  *  @param wmi_handle      : handle to WMI.

@@ -67,6 +67,10 @@
 #include <target_if_direct_buf_rx_api.h>
 #endif
 
+#ifdef WLAN_SUPPORT_FILS
+#include <target_if_fd.h>
+#endif
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -172,6 +176,17 @@ static void target_if_sa_api_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 }
 #endif /* WLAN_SA_API_ENABLE */
+
+#ifdef WLAN_SUPPORT_FILS
+static void target_if_fd_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_fd_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_fd_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif
 
 #ifdef WIFI_POS_CONVERGED
 static void target_if_wifi_pos_tx_ops_register(
@@ -333,6 +348,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_son_tx_ops_register(tx_ops);
 
 	target_if_tdls_tx_ops_register(tx_ops);
+
+	target_if_fd_tx_ops_register(tx_ops);
 
 	target_if_target_tx_ops_register(tx_ops);
 

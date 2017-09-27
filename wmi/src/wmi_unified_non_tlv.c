@@ -2691,6 +2691,102 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_non_tlv(wmi_unified_t wmi_han
 	return ret;
 }
 
+#ifdef WLAN_SUPPORT_FILS
+/**
+ *  send_fils_discovery_send_cmd_non_tlv() - WMI FILS Discovery send function
+ *  @wmi_handle:  handle to WMI
+ *  @param:  pointer to hold FD send cmd parameter
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS error code on failure.
+ */
+static QDF_STATUS
+send_fils_discovery_send_cmd_non_tlv(wmi_unified_t wmi_handle,
+				     struct fd_params *param)
+{
+	wmi_fd_send_from_host_cmd_t  *cmd;
+	wmi_buf_t wmi_buf;
+	QDF_STATUS status;
+	int fd_len = qdf_nbuf_len(param->wbuf);
+	int len = sizeof(wmi_fd_send_from_host_cmd_t);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, roundup(len, sizeof(u_int32_t)));
+	if (!wmi_buf) {
+		WMI_LOGE("wmi_buf_alloc failed\n");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_fd_send_from_host_cmd_t *)wmi_buf_data(wmi_buf);
+	cmd->vdev_id = param->vdev_id;
+	cmd->data_len = fd_len;
+	cmd->frag_ptr = qdf_nbuf_get_frag_paddr(param->wbuf, 0);
+	cmd->frame_ctrl = param->frame_ctrl;
+	status = wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				      WMI_PDEV_SEND_FD_CMDID);
+	if (status != QDF_STATUS_SUCCESS) {
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_vdev_fils_enable_cmd_non_tlv() - enable/Disable FD Frame command to fw
+ * @wmi_handle:  wmi handle
+ * @param:  pointer to hold FILS discovery enable param
+ *
+ * Return: QDF_STATUS_SUCCESS on success or QDF_STATUS error code on failure
+ */
+static QDF_STATUS
+send_vdev_fils_enable_cmd_non_tlv(wmi_unified_t wmi_handle,
+				  struct config_fils_params *param)
+{
+	wmi_enable_fils_cmd *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS status;
+	int len = sizeof(wmi_enable_fils_cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("wmi_buf_alloc failed\n");
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_enable_fils_cmd *)wmi_buf_data(buf);
+	cmd->vdev_id = param->vdev_id;
+	cmd->fd_period = param->fd_period;
+	WMI_LOGI("Setting FD period to %d vdev id : %d\n",
+		 param->fd_period, param->vdev_id);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_ENABLE_FILS_CMDID);
+	if (status != QDF_STATUS_SUCCESS) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_swfda_vdev_id_non_tlv() - extract swfda vdev id from event
+ * @wmi_handle:  wmi handle
+ * @evt_buf:  pointer to event buffer
+ * @vdev_id:  pointer to hold vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+static QDF_STATUS
+extract_swfda_vdev_id_non_tlv(wmi_unified_t wmi_handle,
+			      void *evt_buf, uint32_t *vdev_id)
+{
+	wmi_host_swfda_event *swfda_event = (wmi_host_swfda_event *)evt_buf;
+
+	*vdev_id = swfda_event->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_FILS */
+
 /**
  * send_vdev_spectral_enable_cmd_non_tlv() - send VDEV spectral configure
  * command to fw
@@ -8449,6 +8545,11 @@ struct wmi_ops non_tlv_ops =  {
 		send_dfs_phyerr_offload_dis_cmd_non_tlv,
 	.send_wds_entry_list_cmd = send_wds_entry_list_cmd_non_tlv,
 	.extract_wds_entry = extract_wds_entry_non_tlv,
+#ifdef WLAN_SUPPORT_FILS
+	.send_vdev_fils_enable_cmd = send_vdev_fils_enable_cmd_non_tlv,
+	.send_fils_discovery_send_cmd = send_fils_discovery_send_cmd_non_tlv,
+	.extract_swfda_vdev_id = extract_swfda_vdev_id_non_tlv,
+#endif /* WLAN_SUPPORT_FILS */
 };
 
 /**
@@ -8740,6 +8841,7 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 					WMI_ATF_PEER_STATS_EVENTID;
 	event_ids[wmi_pdev_wds_entry_list_event_id] =
 					WMI_PDEV_WDS_ENTRY_LIST_EVENTID;
+	event_ids[wmi_host_swfda_event_id] = WMI_HOST_SWFDA_EVENTID;
 }
 
 /**

@@ -327,6 +327,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_GREEN_AP: Green AP related logging
  * @QDF_MODULE_ID_FTM: FTM module ID
  * @QDF_MODULE_ID_EXTAP: Extender AP module ID
+ * @QDF_MODULE_ID_FD: FILS discovery logging
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -426,6 +427,7 @@ typedef enum {
 	QDF_MODULE_ID_GREEN_AP,
 	QDF_MODULE_ID_FTM,
 	QDF_MODULE_ID_EXTAP,
+	QDF_MODULE_ID_FD,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

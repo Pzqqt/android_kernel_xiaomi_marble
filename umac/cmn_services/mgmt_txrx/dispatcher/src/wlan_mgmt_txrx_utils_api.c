@@ -479,6 +479,41 @@ QDF_STATUS wlan_mgmt_txrx_beacon_frame_tx(struct wlan_objmgr_peer *peer,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_FILS
+QDF_STATUS
+wlan_mgmt_txrx_fd_action_frame_tx(struct wlan_objmgr_vdev *vdev,
+				  qdf_nbuf_t buf,
+				  enum wlan_umac_comp_id comp_id)
+{
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t vdev_id;
+
+	if (!vdev) {
+		mgmt_txrx_err("Invalid vdev");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	vdev_id = wlan_vdev_get_id(vdev);
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		mgmt_txrx_err("psoc unavailable for vdev %d", vdev_id);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.fd_action_frame_send) {
+		mgmt_txrx_err("mgmt txrx txop to send fd action frame is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (psoc->soc_cb.tx_ops.mgmt_txrx_tx_ops.fd_action_frame_send(
+			vdev, buf)) {
+		mgmt_txrx_err("FD send fail for vdev %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_FILS */
+
 /**
  * wlan_mgmt_txrx_create_rx_handler() - creates rx handler node for umac comp.
  * @mgmt_txrx_psoc_ctx: mgmt txrx context
