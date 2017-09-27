@@ -1936,7 +1936,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
 			     bool rtnl_held);
 QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
-QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx);
+QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
+				 bool close_session);
 void hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx);
