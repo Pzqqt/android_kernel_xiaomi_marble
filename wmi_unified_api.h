@@ -1888,6 +1888,7 @@ QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
 			struct nan_datapath_end_indication_event **ind);
 
 #endif
+
 /**
  * wmi_unified_send_btm_config() - Send BTM config to fw
  * @wmi_hdl:  wmi handle
@@ -1929,4 +1930,37 @@ QDF_STATUS wmi_unified_extract_obss_detection_info(void *wmi_hdl,
 						   struct wmi_obss_detect_info
 						   *info);
 
+#ifdef WLAN_SUPPORT_FILS
+/**
+ * wmi_unified_fils_vdev_config_send_cmd() - send FILS config cmd to fw
+ * @wmi_hdl: wmi handle
+ * @param:   fils config params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wmi_unified_fils_vdev_config_send_cmd(void *wmi_hdl,
+				      struct config_fils_params *param);
+
+/**
+ * wmi_extract_swfda_vdev_id() - api to extract vdev id
+ * @wmi_hdl: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @vdev_id: pointer to vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_extract_swfda_vdev_id(void *wmi_hdl, void *evt_buf,
+				     uint32_t *vdev_id);
+
+/**
+ * wmi_unified_fils_discovery_send_cmd() - send FILS discovery cmd to fw
+ * @wmi_hdl: wmi handle
+ * @param:   fils discovery params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_unified_fils_discovery_send_cmd(void *wmi_hdl,
+					       struct fd_params *param);
+#endif /* WLAN_SUPPORT_FILS */
 #endif /* _WMI_UNIFIED_API_H_ */

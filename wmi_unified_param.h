@@ -1029,6 +1029,18 @@ struct beacon_params {
 };
 
 /**
+ * struct fd_params - FD cmd parameter
+ * @vdev_id: vdev id
+ * @wbuf: FD buffer
+ * @frame_ctrl: frame control field
+ */
+struct fd_params {
+	uint8_t vdev_id;
+	qdf_nbuf_t wbuf;
+	uint16_t frame_ctrl;
+};
+
+/**
  * struct bcn_prb_template_params - beacon probe template parameter
  * @vdev_id: vdev id
  * @buf_len: Template length
@@ -3927,6 +3939,16 @@ struct config_ratemask_params {
 };
 
 /**
+ * struct config_fils_params - FILS config params
+ * @vdev_id:  vdev id
+ * @fd_period:  0 - Disabled, non-zero - Period in ms (mili seconds)
+ */
+struct config_fils_params {
+	uint8_t vdev_id;
+	uint32_t fd_period;
+};
+
+/**
  * struct peer_add_wds_entry_params - WDS peer entry add params
  * @dest_addr: Pointer to destination macaddr
  * @peer_addr: Pointer to peer mac addr
@@ -5641,6 +5663,7 @@ typedef enum {
 	wmi_report_stats_event_id,
 	wmi_dma_buf_release_event_id,
 	wmi_sap_obss_detection_report_event_id,
+	wmi_host_swfda_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;

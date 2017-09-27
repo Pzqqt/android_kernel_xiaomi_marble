@@ -1490,7 +1490,6 @@ QDF_STATUS (*extract_ndp_end_rsp)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_end_rsp_event **rsp);
 QDF_STATUS (*extract_ndp_end_ind)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_end_indication_event **ind);
-
 #endif
 QDF_STATUS (*send_btm_config)(wmi_unified_t wmi_handle,
 			      struct wmi_btm_config *params);
@@ -1498,6 +1497,15 @@ QDF_STATUS (*send_obss_detection_cfg_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_obss_detection_cfg_param *obss_cfg_param);
 QDF_STATUS (*extract_obss_detection_info)(uint8_t *evt_buf,
 					  struct wmi_obss_detect_info *info);
+
+#ifdef WLAN_SUPPORT_FILS
+QDF_STATUS (*send_vdev_fils_enable_cmd)(wmi_unified_t wmi_handle,
+					struct config_fils_params *param);
+QDF_STATUS (*extract_swfda_vdev_id)(wmi_unified_t wmi_handle, void *evt_buf,
+				    uint32_t *vdev_id);
+QDF_STATUS (*send_fils_discovery_send_cmd)(wmi_unified_t wmi_handle,
+					   struct fd_params *param);
+#endif /* WLAN_SUPPORT_FILS */
 };
 
 /* Forward declartion for psoc*/
