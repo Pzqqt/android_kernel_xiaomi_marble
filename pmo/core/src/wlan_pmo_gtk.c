@@ -73,7 +73,7 @@ static QDF_STATUS pmo_core_do_enable_gtk_offload(
 	uint8_t vdev_id;
 
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
-		pmo_info("vdev in invalid opmode for gtk offload %d",
+		pmo_debug("vdev in invalid opmode for gtk offload %d",
 			pmo_get_vdev_opmode(vdev));
 		return QDF_STATUS_E_INVAL;
 	}
@@ -90,7 +90,7 @@ static QDF_STATUS pmo_core_do_enable_gtk_offload(
 
 	if ((op_gtk_req->flags == PMO_GTK_OFFLOAD_ENABLE) &&
 	    (qdf_atomic_read(&vdev_ctx->gtk_err_enable) == 1)) {
-		pmo_info("GTK Offload already enabled, Disabling vdev_id: %d",
+		pmo_debug("GTK Offload already enabled, Disabling vdev_id: %d",
 			vdev_id);
 		op_gtk_req->flags = PMO_GTK_OFFLOAD_DISABLE;
 		status = pmo_tgt_send_gtk_offload_req(vdev, op_gtk_req);
@@ -116,7 +116,7 @@ static QDF_STATUS pmo_core_is_gtk_enabled_in_fwr(
 	struct qdf_mac_addr peer_bssid;
 
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
-		pmo_info("vdev in invalid opmode for gtk offload enable %d",
+		pmo_debug("vdev in invalid opmode for gtk offload enable %d",
 			pmo_get_vdev_opmode(vdev));
 		return QDF_STATUS_E_INVAL;
 	}
@@ -192,9 +192,9 @@ QDF_STATUS pmo_core_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 
 	opmode = pmo_get_vdev_opmode(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("vdev opmode: %d vdev_id: %d", opmode, vdev_id);
+	pmo_debug("vdev opmode: %d vdev_id: %d", opmode, vdev_id);
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
-		pmo_info("vdev in invalid opmode for caching gtk request %d",
+		pmo_debug("vdev in invalid opmode for caching gtk request %d",
 			opmode);
 		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
@@ -228,9 +228,9 @@ QDF_STATUS pmo_core_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 
 	opmode = pmo_get_vdev_opmode(vdev);
 	vdev_id = pmo_vdev_get_id(vdev);
-	pmo_info("vdev opmode: %d vdev_id: %d", opmode, vdev_id);
+	pmo_debug("vdev opmode: %d vdev_id: %d", opmode, vdev_id);
 	if (!pmo_core_is_vdev_supports_offload(vdev)) {
-		pmo_info("vdev in invalid opmode for flushing gtk request %d",
+		pmo_debug("vdev in invalid opmode for flushing gtk request %d",
 			opmode);
 		status = QDF_STATUS_E_INVAL;
 		goto dec_ref;
