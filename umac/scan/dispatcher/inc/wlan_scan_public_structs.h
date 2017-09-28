@@ -62,6 +62,34 @@ typedef uint32_t wlan_scan_id;
 #define PROBE_REQ_BITMAP_LEN 8
 #define MAX_PROBE_REQ_OUIS 16
 
+#define RSSI_WEIGHTAGE 20
+#define HT_CAPABILITY_WEIGHTAGE 2
+#define VHT_CAP_WEIGHTAGE 1
+#define HE_CAP_WEIGHTAGE 2
+#define CHAN_WIDTH_WEIGHTAGE 17
+#define CHAN_BAND_WEIGHTAGE 2
+#define NSS_WEIGHTAGE 16
+#define BEAMFORMING_CAP_WEIGHTAGE 2
+#define PCL_WEIGHT 10
+#define CHANNEL_CONGESTION_WEIGHTAGE 5
+#define OCE_WAN_WEIGHTAGE 0
+#define BEST_CANDIDATE_MAX_WEIGHT 100
+#define MAX_INDEX_SCORE 100
+#define MAX_INDEX_PER_INI 4
+
+#define WLAN_GET_BITS(_val, _index, _num_bits)                         \
+	    (((_val) >> (_index)) & ((1 << (_num_bits)) - 1))
+
+#define WLAN_SET_BITS(_var, _index, _num_bits, _val) do {               \
+	    (_var) &= ~(((1 << (_num_bits)) - 1) << (_index));              \
+	    (_var) |= (((_val) & ((1 << (_num_bits)) - 1)) << (_index));    \
+	    } while (0)
+
+#define WLAN_GET_SCORE_PERCENTAGE(value32, bw_index) \
+	WLAN_GET_BITS(value32, (8 * (bw_index)), 8)
+#define WLAN_SET_SCORE_PERCENTAGE(value32, score_pcnt, bw_index) \
+	WLAN_SET_BITS(value32, (8 * (bw_index)), 8, score_pcnt)
+
 /* forward declaration */
 struct wlan_objmgr_vdev;
 struct wlan_objmgr_pdev;

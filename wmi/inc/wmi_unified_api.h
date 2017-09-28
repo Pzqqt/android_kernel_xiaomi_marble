@@ -895,8 +895,7 @@ QDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
 
 #ifdef CONFIG_MCL
 QDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(void *wmi_hdl,
-					    wmi_ap_profile *ap_profile_p,
-					    uint32_t vdev_id);
+				   struct ap_profile_params *ap_profile);
 #endif
 
 QDF_STATUS wmi_unified_roam_scan_offload_scan_period(void *wmi_hdl,
