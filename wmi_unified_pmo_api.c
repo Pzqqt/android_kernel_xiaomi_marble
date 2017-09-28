@@ -71,6 +71,18 @@ QDF_STATUS wmi_unified_add_clear_mcbc_filter_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+QDF_STATUS wmi_unified_multiple_add_clear_mcbc_filter_cmd(void *wmi_hdl,
+				uint8_t vdev_id,
+				struct pmo_mcast_filter_params *filter_param)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	if (wmi_handle->ops->send_multiple_add_clear_mcbc_filter_cmd)
+		return wmi_handle->ops->send_multiple_add_clear_mcbc_filter_cmd(
+				wmi_handle, vdev_id, filter_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
 
 #ifdef FEATURE_WLAN_RA_FILTERING
 QDF_STATUS wmi_unified_wow_sta_ra_filter_cmd(void *wmi_hdl,

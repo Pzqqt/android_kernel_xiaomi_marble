@@ -13865,6 +13865,84 @@ static QDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_multiple_add_clear_mcbc_filter_cmd_tlv() - send multiple  mcast filter
+ *						   command to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @mcast_filter_params: mcast filter params
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS send_multiple_add_clear_mcbc_filter_cmd_tlv(
+				wmi_unified_t wmi_handle,
+				uint8_t vdev_id,
+				struct pmo_mcast_filter_params *filter_param)
+
+{
+	WMI_SET_MULTIPLE_MCAST_FILTER_CMD_fixed_param *cmd;
+	uint8_t *buf_ptr;
+	wmi_buf_t buf;
+	int err;
+	int i;
+	uint8_t *mac_addr_src_ptr = NULL;
+	wmi_mac_addr *mac_addr_dst_ptr;
+	uint32_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
+		sizeof(wmi_mac_addr) * filter_param->multicast_addr_cnt;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (A_UINT8 *) wmi_buf_data(buf);
+	cmd = (WMI_SET_MULTIPLE_MCAST_FILTER_CMD_fixed_param *)
+		wmi_buf_data(buf);
+	qdf_mem_zero(cmd, sizeof(*cmd));
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_wmi_set_multiple_mcast_filter_cmd_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (WMI_SET_MULTIPLE_MCAST_FILTER_CMD_fixed_param));
+	cmd->operation =
+		((filter_param->action == 0) ? WMI_MULTIPLE_MCAST_FILTER_DELETE
+					: WMI_MULTIPLE_MCAST_FILTER_ADD);
+	cmd->vdev_id = vdev_id;
+	cmd->num_mcastaddrs = filter_param->multicast_addr_cnt;
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+		       sizeof(wmi_mac_addr) *
+			       filter_param->multicast_addr_cnt);
+
+	if (filter_param->multicast_addr_cnt == 0)
+		goto send_cmd;
+
+	mac_addr_src_ptr = (uint8_t *)&filter_param->multicast_addr;
+	mac_addr_dst_ptr = (wmi_mac_addr *)
+			(buf_ptr + WMI_TLV_HDR_SIZE);
+
+	for (i = 0; i < filter_param->multicast_addr_cnt; i++) {
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(mac_addr_src_ptr, mac_addr_dst_ptr);
+		mac_addr_src_ptr += ATH_MAC_LEN;
+		mac_addr_dst_ptr++;
+	}
+
+send_cmd:
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+				   len,
+				   WMI_SET_MULTIPLE_MCAST_FILTER_CMDID);
+	if (err) {
+		WMI_LOGE("Failed to send set_param cmd");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/**
  * send_gtk_offload_cmd_tlv() - send GTK offload command to fw
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
@@ -19131,6 +19209,8 @@ struct wmi_ops tlv_ops =  {
 	.send_wow_patterns_to_fw_cmd = send_wow_patterns_to_fw_cmd_tlv,
 	.send_enable_arp_ns_offload_cmd = send_enable_arp_ns_offload_cmd_tlv,
 	.send_add_clear_mcbc_filter_cmd = send_add_clear_mcbc_filter_cmd_tlv,
+	.send_multiple_add_clear_mcbc_filter_cmd =
+		send_multiple_add_clear_mcbc_filter_cmd_tlv,
 	.send_conf_hw_filter_cmd = send_conf_hw_filter_cmd_tlv,
 	.send_gtk_offload_cmd = send_gtk_offload_cmd_tlv,
 	.send_process_gtk_offload_getinfo_cmd =
