@@ -149,8 +149,13 @@ QDF_STATUS pmo_core_set_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 
 	PMO_ENTER();
 
-	for (i = 0; i < mc_list->mc_cnt; i++) {
-		pmo_tgt_set_mc_filter_req(vdev, mc_list->mc_addr[i]);
+	if (pmo_tgt_get_multiple_mc_filter_support(vdev)) {
+		pmo_debug("FW supports multiple mcast filter");
+		pmo_tgt_set_multiple_mc_filter_req(vdev, mc_list);
+	} else {
+		pmo_debug("FW does not support multiple mcast filter");
+		for (i = 0; i < mc_list->mc_cnt; i++)
+			pmo_tgt_set_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
 
 	PMO_EXIT();
@@ -164,9 +169,13 @@ QDF_STATUS pmo_core_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 	int i;
 
 	PMO_ENTER();
-
-	for (i = 0; i < mc_list->mc_cnt; i++) {
-		pmo_tgt_clear_mc_filter_req(vdev, mc_list->mc_addr[i]);
+	if (pmo_tgt_get_multiple_mc_filter_support(vdev)) {
+		pmo_debug("FW supports multiple mcast filter");
+		pmo_tgt_clear_multiple_mc_filter_req(vdev, mc_list);
+	} else {
+		pmo_debug("FW does not support multiple mcast filter");
+		for (i = 0; i < mc_list->mc_cnt; i++)
+			pmo_tgt_clear_mc_filter_req(vdev, mc_list->mc_addr[i]);
 	}
 
 	PMO_EXIT();

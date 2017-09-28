@@ -30,6 +30,7 @@
 #include "wlan_pmo_common_public_struct.h"
 
 #define PMO_MAX_MC_ADDR_LIST 32
+#define PMO_MAX_NUM_MULTICAST_ADDRESS 240
 
 /**
  * struct pmo_mc_addr_list_params -pmo mc address list request params
@@ -57,4 +58,15 @@ struct pmo_mc_addr_list {
 	struct qdf_mac_addr mc_addr[PMO_MAX_MC_ADDR_LIST];
 };
 
+/**
+ * struct mcast_filter_params - mcast filter parameters
+ * @multicast_addr_cnt: num of addresses
+ * @multicast_addr: address array
+ * @action: operation to perform
+ */
+struct pmo_mcast_filter_params {
+	uint32_t multicast_addr_cnt;
+	struct qdf_mac_addr multicast_addr[PMO_MAX_NUM_MULTICAST_ADDRESS];
+	uint8_t action;
+};
 #endif /* end  of _WLAN_PMO_MC_ADDR_FILTERING_STRUCT_H_ */
