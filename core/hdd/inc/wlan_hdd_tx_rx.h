@@ -62,11 +62,6 @@ QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *pAdapter);
 QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *pAdapter);
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 
-#ifdef IPA_OFFLOAD
-QDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,
-				 qdf_nbuf_t rx_buf_list, uint8_t staId);
-#endif /* IPA_OFFLOAD */
-
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 				struct qdf_mac_addr *peer_mac_addr,
 				uint8_t *sta_id);
