@@ -3005,16 +3005,16 @@ static void print_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 	}
 }
 
-static QDF_STATUS hdd_print_acl(struct hdd_adapter *pHostapdAdapter)
+static QDF_STATUS hdd_print_acl(struct hdd_adapter *adapter)
 {
 	eSapMacAddrACL acl_mode;
-	struct qdf_mac_addr MacList[MAX_ACL_MAC_ADDRESS];
+	struct qdf_mac_addr maclist[MAX_ACL_MAC_ADDRESS];
 	uint8_t listnum;
-	void *p_cds_gctx = NULL;
+	struct sap_context *sap_ctx;
 
-	p_cds_gctx = WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter);
-	qdf_mem_zero(&MacList[0], sizeof(MacList));
-	if (QDF_STATUS_SUCCESS == wlansap_get_acl_mode(p_cds_gctx, &acl_mode)) {
+	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
+	qdf_mem_zero(&maclist[0], sizeof(maclist));
+	if (QDF_STATUS_SUCCESS == wlansap_get_acl_mode(sap_ctx, &acl_mode)) {
 		pr_info("******** ACL MODE *********\n");
 		switch (acl_mode) {
 		case eSAP_ACCEPT_UNLESS_DENIED:
@@ -3037,22 +3037,22 @@ static QDF_STATUS hdd_print_acl(struct hdd_adapter *pHostapdAdapter)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (QDF_STATUS_SUCCESS == wlansap_get_acl_accept_list(p_cds_gctx,
-							      &MacList[0],
+	if (QDF_STATUS_SUCCESS == wlansap_get_acl_accept_list(sap_ctx,
+							      &maclist[0],
 							      &listnum)) {
 		pr_info("******* WHITE LIST ***********\n");
 		if (listnum <= MAX_ACL_MAC_ADDRESS)
-			print_mac_list(&MacList[0], listnum);
+			print_mac_list(&maclist[0], listnum);
 	} else {
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (QDF_STATUS_SUCCESS == wlansap_get_acl_deny_list(p_cds_gctx,
-							    &MacList[0],
+	if (QDF_STATUS_SUCCESS == wlansap_get_acl_deny_list(sap_ctx,
+							    &maclist[0],
 							    &listnum)) {
 		pr_info("******* BLACK LIST ***********\n");
 		if (listnum <= MAX_ACL_MAC_ADDRESS)
-			print_mac_list(&MacList[0], listnum);
+			print_mac_list(&maclist[0], listnum);
 	} else {
 		return QDF_STATUS_E_FAILURE;
 	}
