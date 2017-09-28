@@ -12602,7 +12602,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0))
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_VHT_IBSS);
 #endif
-	wlan_hdd_cfg80211_set_wiphy_fils_feature(wiphy);
+	if (pCfg->is_fils_enabled)
+		wlan_hdd_cfg80211_set_wiphy_fils_feature(wiphy);
 
 	hdd_config_sched_scan_plans_to_wiphy(wiphy, pCfg);
 	wlan_hdd_cfg80211_add_connected_pno_support(wiphy);

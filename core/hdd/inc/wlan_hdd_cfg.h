@@ -10848,6 +10848,29 @@ enum hdd_wext_control {
 
 /*
  * <ini>
+ * g_is_fils_enabled - Enable/Disable FILS support in driver
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable FILS support in driver
+ * Driver will update config to supplicant based on this config.
+ *
+ * Related: None
+ *
+ * Supported Feature: FILS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_IS_FILS_ENABLED_NAME    "g_is_fils_enabled"
+#define CFG_IS_FILS_ENABLED_DEFAULT (1)
+#define CFG_IS_FILS_ENABLED_MIN     (0)
+#define CFG_IS_FILS_ENABLED_MAX     (1)
+
+/*
+ * <ini>
  * g_enable_bcast_probe_rsp - Enable Broadcast probe response.
  * @Min: 0
  * @Max: 1
@@ -13012,6 +13035,7 @@ struct hdd_config {
 	uint32_t scan_11d_interval;
 	bool chan_switch_hostapd_rate_enabled;
 	bool is_bssid_hint_priority;
+	bool is_fils_enabled;
 	/* mbo related thresholds */
 	int8_t mbo_candidate_rssi_thres;
 	int8_t mbo_current_rssi_thres;
