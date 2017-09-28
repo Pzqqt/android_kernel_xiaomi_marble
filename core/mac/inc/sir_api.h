@@ -3213,6 +3213,7 @@ typedef struct sSirRoamOffloadScanReq {
 	uint8_t OpportunisticScanThresholdDiff;
 	uint8_t RoamRescanRssiDiff;
 	uint8_t RoamRssiDiff;
+	int32_t rssi_abs_thresh;
 	uint8_t ChannelCacheType;
 	uint8_t Command;
 	uint8_t reason;

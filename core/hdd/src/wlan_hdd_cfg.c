@@ -1116,6 +1116,13 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_ROAM_RSSI_DIFF_MAX,
 			     cb_notify_set_roam_rssi_diff, 0),
 
+	REG_VARIABLE(CFG_ROAM_RSSI_ABS_THRESHOLD_NAME, WLAN_PARAM_SignedInteger,
+		     struct hdd_config, rssi_abs_thresh,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ROAM_RSSI_ABS_THRESHOLD_DEFAULT,
+		     CFG_ROAM_RSSI_ABS_THRESHOLD_MIN,
+		     CFG_ROAM_RSSI_ABS_THRESHOLD_MAX),
+
 	REG_DYNAMIC_VARIABLE(CFG_ENABLE_WES_MODE_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isWESModeEnabled,
 			     VAR_FLAGS_OPTIONAL |
@@ -6276,6 +6283,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_mawc_cfg_log(hdd_ctx);
 	hdd_debug("Name = [RoamRssiDiff] Value = [%u] ",
 		  hdd_ctx->config->RoamRssiDiff);
+	hdd_debug("Name = [%s] Value = [%u] ", CFG_ROAM_RSSI_ABS_THRESHOLD_NAME,
+		  hdd_ctx->config->rssi_abs_thresh);
 	hdd_debug("Name = [isWESModeEnabled] Value = [%u] ",
 		  hdd_ctx->config->isWESModeEnabled);
 	hdd_debug("Name = [pmkidModes] Value = [0x%x] ",
@@ -8646,6 +8655,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.isFastTransitionEnabled =
 		pConfig->isFastTransitionEnabled;
 	smeConfig->csrConfig.RoamRssiDiff = pConfig->RoamRssiDiff;
+	smeConfig->csrConfig.rssi_abs_thresh = pConfig->rssi_abs_thresh;
 	smeConfig->csrConfig.isWESModeEnabled = pConfig->isWESModeEnabled;
 	smeConfig->csrConfig.isRoamOffloadScanEnabled =
 		pConfig->isRoamOffloadScanEnabled;

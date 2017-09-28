@@ -532,6 +532,7 @@ struct csr_config {
 #endif
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
+	int32_t rssi_abs_thresh;
 	bool nRoamPrefer5GHz;
 	bool nRoamIntraBand;
 	bool isWESModeEnabled;

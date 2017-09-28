@@ -1586,6 +1586,29 @@ enum hdd_dot11_mode {
 
 /*
  * <ini>
+ * rssi_abs_thresh - The min RSSI of the candidate AP to consider roam
+ * @Min: -96
+ * @Max: 0
+ * @Default: 0
+ *
+ * The RSSI value of the candidate AP should be higher than rssi_abs_thresh
+ * to roam to the AP. 0 means no absolute minimum RSSI is required.
+ *
+ * Related: None
+ *
+ * Supported Feature: Roaming
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ROAM_RSSI_ABS_THRESHOLD_NAME        "rssi_abs_thresh"
+#define CFG_ROAM_RSSI_ABS_THRESHOLD_MIN         (-96)
+#define CFG_ROAM_RSSI_ABS_THRESHOLD_MAX         (0)
+#define CFG_ROAM_RSSI_ABS_THRESHOLD_DEFAULT     (0)
+
+/*
+ * <ini>
  * gRoamScanNProbes - Sets the number of probes to be sent for firmware roaming
  * @Min: 1
  * @Max: 10
@@ -13651,6 +13674,7 @@ struct hdd_config {
 #endif
 	bool isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
+	int32_t rssi_abs_thresh;
 	bool isWESModeEnabled;
 	uint32_t pmkid_modes;
 	bool isRoamOffloadScanEnabled;

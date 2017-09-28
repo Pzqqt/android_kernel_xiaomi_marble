@@ -1212,6 +1212,7 @@ typedef struct tagCsrConfigParam {
 	struct mawc_params csr_mawc_config;
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
+	int32_t rssi_abs_thresh;
 	bool isWESModeEnabled;
 	tCsrNeighborRoamConfigParams neighborRoamConfig;
 	/*

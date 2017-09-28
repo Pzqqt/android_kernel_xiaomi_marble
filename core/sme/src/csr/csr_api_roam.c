@@ -2657,6 +2657,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.isFastTransitionEnabled =
 			pParam->isFastTransitionEnabled;
 		pMac->roam.configParam.RoamRssiDiff = pParam->RoamRssiDiff;
+		pMac->roam.configParam.rssi_abs_thresh =
+						pParam->rssi_abs_thresh;
 		pMac->roam.configParam.nRoamPrefer5GHz =
 			pParam->nRoamPrefer5GHz;
 		pMac->roam.configParam.nRoamIntraBand = pParam->nRoamIntraBand;
@@ -3030,6 +3032,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		     sizeof(tCsr11rConfigParams));
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
+	pParam->rssi_abs_thresh = cfg_params->rssi_abs_thresh;
 	pParam->nRoamPrefer5GHz = cfg_params->nRoamPrefer5GHz;
 	pParam->nRoamIntraBand = cfg_params->nRoamIntraBand;
 	pParam->isWESModeEnabled = cfg_params->isWESModeEnabled;
@@ -17775,6 +17778,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->RoamRescanRssiDiff =
 		roam_info->cfgParams.nRoamRescanRssiDiff;
 	req_buf->RoamRssiDiff = mac_ctx->roam.configParam.RoamRssiDiff;
+	req_buf->rssi_abs_thresh = mac_ctx->roam.configParam.rssi_abs_thresh;
 	req_buf->reason = reason;
 	req_buf->NeighborScanTimerPeriod =
 		roam_info->cfgParams.neighborScanPeriod;

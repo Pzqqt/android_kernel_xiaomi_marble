@@ -1316,6 +1316,10 @@ static void wma_roam_scan_fill_ap_profile(tSirRoamOffloadScanReq *roam_req,
 		profile->rsn_mcastmgmtcipherset =
 			profile->rsn_mcastcipherset;
 		profile->rssi_threshold = roam_req->RoamRssiDiff;
+		if (roam_req->rssi_abs_thresh)
+			profile->rssi_abs_thresh =
+				roam_req->rssi_abs_thresh -
+						WMA_NOISE_FLOOR_DBM_DEFAULT;
 #ifdef WLAN_FEATURE_11W
 		if (roam_req->ConnectedNetwork.mfp_enabled)
 			profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
