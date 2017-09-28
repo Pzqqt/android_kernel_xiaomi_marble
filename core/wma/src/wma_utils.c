@@ -2103,6 +2103,17 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		return -EINVAL;
 	}
 
+	if (link_stats->num_ac > WIFI_AC_MAX) {
+		WMA_LOGE("%s: Excess data received from firmware num_ac %d",
+			 __func__, link_stats->num_ac);
+		return -EINVAL;
+	}
+	if (fixed_param->num_offload_stats > WMI_OFFLOAD_STATS_TYPE_MAX) {
+		WMA_LOGE("%s: Excess num offload stats recvd from fw: %d",
+			__func__, fixed_param->num_offload_stats);
+		return -EINVAL;
+	}
+
 	link_stats_size = sizeof(tSirWifiIfaceStat);
 	iface_info_size = sizeof(tSirWifiInterfaceInfo);
 
