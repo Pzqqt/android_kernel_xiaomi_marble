@@ -110,6 +110,7 @@ struct wlan_lmac_if_mlme_tx_ops {
 			int event_type, int event_status);
 	void (*scan_connection_lost)(struct wlan_objmgr_pdev *pdev);
 	void (*scan_end)(struct wlan_objmgr_pdev *pdev);
+	uint32_t (*get_wifi_iface_id) (struct wlan_objmgr_pdev *pdev);
 };
 
 /**
