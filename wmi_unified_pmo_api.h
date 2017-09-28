@@ -81,6 +81,19 @@ QDF_STATUS wmi_unified_add_clear_mcbc_filter_cmd(void *wmi_hdl,
 					 bool clearList);
 
 /**
+ * wmi_unified_multiple_add_clear_mcbc_filter_cmd() - send multiple mcast
+ *						      filter command to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @mcast_filter_params: mcast filter params
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_multiple_add_clear_mcbc_filter_cmd(void *wmi_hdl,
+				uint8_t vdev_id,
+				struct pmo_mcast_filter_params *filter_param);
+
+/**
  * wmi_unified_wow_sta_ra_filter_cmd() - set RA filter pattern in fw
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
