@@ -2026,6 +2026,166 @@ struct roam_offload_scan_rssi_params {
 };
 
 /**
+ * struct ap_profile - Structure ap profile to match candidate
+ * @flags: flags
+ * @rssi_threshold: the value of the the candidate AP should higher by this
+ *                  threshold than the rssi of the currrently associated AP
+ * @ssid: ssid vlaue to be matched
+ * @rsn_authmode: security params to be matched
+ * @rsn_ucastcipherset: unicast cipher set
+ * @rsn_mcastcipherset: mcast/group cipher set
+ * @rsn_mcastmgmtcipherset: mcast/group management frames cipher set
+ * @rssi_abs_thresh: the value of the candidate AP should higher than this
+ *                   absolute RSSI threshold. Zero means no absolute minimum
+ *                   RSSI is required. units are the offset from the noise
+ *                   floor in dB
+ */
+struct ap_profile {
+	uint32_t flags;
+	uint32_t rssi_threshold;
+	struct mac_ssid  ssid;
+	uint32_t rsn_authmode;
+	uint32_t rsn_ucastcipherset;
+	uint32_t rsn_mcastcipherset;
+	uint32_t rsn_mcastmgmtcipherset;
+	uint32_t rssi_abs_thresh;
+};
+
+/**
+ * struct rssi_scoring - rssi scoring param to sortlist selected AP
+ * @best_rssi_threshold: Roamable AP RSSI equal or better than this threshold,
+ *                      full rssi score 100. Units in dBm.
+ * @good_rssi_threshold: Below threshold, scoring linear percentage between
+ *                      rssi_good_pnt and 100. Units in dBm.
+ * @bad_rssi_threshold: Between good and bad rssi threshold, scoring linear
+ *                      % between rssi_bad_pcnt and rssi_good_pct in dBm.
+ * @good_rssi_pcnt: Used to assigned scoring percentage of each slot between
+ *                 best to good rssi threshold. Units in percentage.
+ * @bad_rssi_pcnt: Used to assigned scoring percentage of each slot between good
+ *                to bad rssi threshold. Unites in percentage.
+ * @good_bucket_size : bucket size of slot in good zone
+ * @bad_bucket_size : bucket size of slot in bad zone
+ * @rssi_pref_5g_rssi_thresh: Below rssi threshold, 5G AP have given preference
+ *                           of band percentage. Units in dBm.
+ */
+struct rssi_scoring {
+	int32_t best_rssi_threshold;
+	int32_t good_rssi_threshold;
+	int32_t  bad_rssi_threshold;
+	uint32_t good_rssi_pcnt;
+	uint32_t bad_rssi_pcnt;
+	uint32_t good_bucket_size;
+	uint32_t bad_bucket_size;
+	int32_t  rssi_pref_5g_rssi_thresh;
+};
+
+/**
+ * struct param_slot_scoring - define % score for differents slots for a
+ *                             scoring param.
+ * @num_slot: number of slots in which the param will be divided.
+ *           Max 15. index 0 is used for 'not_present. Num_slot will
+ *           equally divide 100. e.g, if num_slot = 4 slot 0 = 0-25%, slot
+ *           1 = 26-50% slot 2 = 51-75%, slot 3 = 76-100%
+ * @score_pcnt3_to_0: Conatins score percentage for slot 0-3
+ *             BITS 0-7   :- the scoring pcnt when not present
+ *             BITS 8-15  :- SLOT_1
+ *             BITS 16-23 :- SLOT_2
+ *             BITS 24-31 :- SLOT_3
+ * @score_pcnt7_to_4: Conatins score percentage for slot 4-7
+ *             BITS 0-7   :- SLOT_4
+ *             BITS 8-15  :- SLOT_5
+ *             BITS 16-23 :- SLOT_6
+ *             BITS 24-31 :- SLOT_7
+ * @score_pcnt11_to_8: Conatins score percentage for slot 8-11
+ *             BITS 0-7   :- SLOT_8
+ *             BITS 8-15  :- SLOT_9
+ *             BITS 16-23 :- SLOT_10
+ *             BITS 24-31 :- SLOT_11
+ * @score_pcnt15_to_12: Conatins score percentage for slot 12-15
+ *             BITS 0-7   :- SLOT_12
+ *             BITS 8-15  :- SLOT_13
+ *             BITS 16-23 :- SLOT_14
+ *             BITS 24-31 :- SLOT_15
+ */
+struct param_slot_scoring {
+	uint32_t num_slot;
+	uint32_t score_pcnt3_to_0;
+	uint32_t score_pcnt7_to_4;
+	uint32_t score_pcnt11_to_8;
+	uint32_t score_pcnt15_to_12;
+};
+
+/**
+ * struct scoring_param - scoring param to sortlist selected AP
+ * @disable_bitmap: Each bit will be either allow(0)/disallow(1) to
+ *                 considered the roam score param.
+ * @rssi_weightage: RSSI weightage out of total score in %
+ * @ht_weightage: HT weightage out of total score in %.
+ * @vht_weightage: VHT weightage out of total score in %.
+ * @he_weightaget: 11ax weightage out of total score in %.
+ * @bw_weightage: Bandwidth weightage out of total score in %.
+ * @band_weightage: Band(2G/5G) weightage out of total score in %.
+ * @nss_weightage: NSS(1x1 / 2x2)weightage out of total score in %.
+ * @esp_qbss_weightage: ESP/QBSS weightage out of total score in %.
+ * @beamforming_weightage: Beamforming weightage out of total score in %.
+ * @pcl_weightage: PCL weightage out of total score in %.
+ * @oce_wan_weightage OCE WAN metrics weightage out of total score in %.
+ * @bw_index_score: channel BW scoring percentage information.
+ *                 BITS 0-7   :- It contains scoring percentage of 20MHz   BW
+ *                 BITS 8-15  :- It contains scoring percentage of 40MHz   BW
+ *                 BITS 16-23 :- It contains scoring percentage of 80MHz   BW
+ *                 BITS 24-31 :- It contains scoring percentage of 1600MHz BW
+ *                 The value of each index must be 0-100
+ * @band_index_score: band scording percentage information.
+ *                   BITS 0-7   :- It contains scoring percentage of 2G
+ *                   BITS 8-15  :- It contains scoring percentage of 5G
+ *                   BITS 16-23 :- reserved
+ *                   BITS 24-31 :- reserved
+ *                   The value of each index must be 0-100
+ * @nss_index_score: NSS scoring percentage information.
+ *                  BITS 0-7   :- It contains scoring percentage of 1x1
+ *                  BITS 8-15  :- It contains scoring percentage of 2x2
+ *                  BITS 16-23 :- It contains scoring percentage of 3x3
+ *                  BITS 24-31 :- It contains scoring percentage of 4x4
+ *                  The value of each index must be 0-100
+ * @rssi_scoring: RSSI scoring information.
+ * @esp_qbss_scoring: ESP/QBSS scoring percentage information
+ * @oce_wan_scoring: OCE WAN metrics percentage information
+*/
+struct scoring_param {
+	uint32_t disable_bitmap;
+	int32_t rssi_weightage;
+	int32_t ht_weightage;
+	int32_t vht_weightage;
+	int32_t he_weightage;
+	int32_t bw_weightage;
+	int32_t band_weightage;
+	int32_t nss_weightage;
+	int32_t esp_qbss_weightage;
+	int32_t beamforming_weightage;
+	int32_t pcl_weightage;
+	int32_t oce_wan_weightage;
+	uint32_t bw_index_score;
+	uint32_t band_index_score;
+	uint32_t nss_index_score;
+	struct rssi_scoring rssi_scoring;
+	struct param_slot_scoring esp_qbss_scoring;
+	struct param_slot_scoring oce_wan_scoring;
+};
+
+/**
+ * struct ap_profile_params - ap profile params
+ * @vdev_id: vdev id
+ * @profile: ap profile to match candidate
+ * @param: scoring params to short candidate
+ */
+struct ap_profile_params {
+	uint8_t vdev_id;
+	struct ap_profile profile;
+	struct scoring_param param;
+};
+
+/**
  * struct wifi_epno_network - enhanced pno network block
  * @ssid: ssid
  * @rssi_threshold: threshold for considering this SSID as found, required
