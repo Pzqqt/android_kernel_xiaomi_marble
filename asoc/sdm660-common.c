@@ -87,6 +87,16 @@ static struct dev_config tdm_rx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_5 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_6 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_7 */
+	},
+	{ /* QUIN TDM */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_0 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_2 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_3 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_4 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_5 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_6 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* RX_7 */
 	}
 };
 
@@ -131,6 +141,16 @@ static struct dev_config tdm_tx_cfg[TDM_INTERFACE_MAX][TDM_PORT_MAX] = {
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_5 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_6 */
 		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_7 */
+	},
+	{ /* QUIN TDM */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_0 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_1 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_2 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_3 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_4 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_5 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_6 */
+		{SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1}, /* TX_7 */
 	}
 };
 
@@ -155,6 +175,7 @@ enum {
 	SEC_MI2S,
 	TERT_MI2S,
 	QUAT_MI2S,
+	QUIN_MI2S,
 	MI2S_MAX,
 };
 
@@ -163,6 +184,7 @@ enum {
 	SEC_AUX_PCM,
 	TERT_AUX_PCM,
 	QUAT_AUX_PCM,
+	QUIN_AUX_PCM,
 	AUX_PCM_MAX,
 };
 
@@ -171,6 +193,7 @@ enum {
 	PCM_I2S_SEL_SEC,
 	PCM_I2S_SEL_TERT,
 	PCM_I2S_SEL_QUAT,
+	PCM_I2S_SEL_QUIN,
 	PCM_I2S_SEL_MAX,
 };
 
@@ -231,6 +254,7 @@ static struct dev_config mi2s_rx_cfg[] = {
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
+	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 2},
 };
 
 static struct dev_config mi2s_tx_cfg[] = {
@@ -238,6 +262,7 @@ static struct dev_config mi2s_tx_cfg[] = {
 	[SEC_MI2S]  = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[TERT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[QUAT_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+	[QUIN_MI2S] = {SAMPLING_RATE_48KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 };
 
 static struct dev_config aux_pcm_rx_cfg[] = {
@@ -245,6 +270,7 @@ static struct dev_config aux_pcm_rx_cfg[] = {
 	[SEC_AUX_PCM]  = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[TERT_AUX_PCM] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[QUAT_AUX_PCM] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+	[QUIN_AUX_PCM] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 };
 
 static struct dev_config aux_pcm_tx_cfg[] = {
@@ -252,6 +278,7 @@ static struct dev_config aux_pcm_tx_cfg[] = {
 	[SEC_AUX_PCM]  = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[TERT_AUX_PCM] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 	[QUAT_AUX_PCM] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
+	[QUIN_AUX_PCM] = {SAMPLING_RATE_8KHZ, SNDRV_PCM_FORMAT_S16_LE, 1},
 };
 
 static char const *ch_text[] = {"Two", "Three", "Four", "Five",
@@ -290,26 +317,32 @@ static SOC_ENUM_SINGLE_EXT_DECL(prim_aux_pcm_rx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_aux_pcm_rx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_aux_pcm_rx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_aux_pcm_rx_sample_rate, auxpcm_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_aux_pcm_rx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_aux_pcm_tx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_aux_pcm_tx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_aux_pcm_tx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_aux_pcm_tx_sample_rate, auxpcm_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_aux_pcm_tx_sample_rate, auxpcm_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_mi2s_rx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_mi2s_rx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_mi2s_rx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_mi2s_rx_sample_rate, mi2s_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_mi2s_rx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_mi2s_tx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_mi2s_tx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_mi2s_tx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_mi2s_tx_sample_rate, mi2s_rate_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_mi2s_tx_sample_rate, mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_mi2s_rx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_mi2s_rx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_mi2s_rx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_mi2s_rx_format, mi2s_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_mi2s_rx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_mi2s_tx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_mi2s_tx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_mi2s_tx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_mi2s_tx_format, mi2s_format_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_mi2s_tx_format, mi2s_format_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_mi2s_rx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(prim_mi2s_tx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(sec_mi2s_rx_chs, mi2s_ch_text);
@@ -318,6 +351,8 @@ static SOC_ENUM_SINGLE_EXT_DECL(tert_mi2s_rx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(tert_mi2s_tx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_mi2s_rx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(quat_mi2s_tx_chs, mi2s_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_mi2s_rx_chs, mi2s_ch_text);
+static SOC_ENUM_SINGLE_EXT_DECL(quin_mi2s_tx_chs, mi2s_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(usb_rx_chs, usb_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(usb_tx_chs, usb_ch_text);
 static SOC_ENUM_SINGLE_EXT_DECL(usb_rx_format, bit_format_text);
@@ -520,6 +555,9 @@ static int tdm_get_port_idx(struct snd_kcontrol *kcontrol,
 		} else if (strnstr(kcontrol->id.name, "QUAT",
 		    sizeof(kcontrol->id.name))) {
 			port->mode = TDM_QUAT;
+		} else if (strnstr(kcontrol->id.name, "QUIN",
+		    sizeof(kcontrol->id.name))) {
+			port->mode = TDM_QUIN;
 		} else {
 			pr_err("%s: unsupported mode in: %s",
 				__func__, kcontrol->id.name);
@@ -955,6 +993,9 @@ static int aux_pcm_get_port_idx(struct snd_kcontrol *kcontrol)
 	else if (strnstr(kcontrol->id.name, "QUAT_AUX_PCM",
 			 sizeof("QUAT_AUX_PCM")))
 		idx = QUAT_AUX_PCM;
+	else if (strnstr(kcontrol->id.name, "QUIN_AUX_PCM",
+			 sizeof("QUIN_AUX_PCM")))
+		idx = QUIN_AUX_PCM;
 	else {
 		pr_err("%s: unsupported port: %s",
 			__func__, kcontrol->id.name);
@@ -1052,6 +1093,9 @@ static int mi2s_get_port_idx(struct snd_kcontrol *kcontrol)
 	else if (strnstr(kcontrol->id.name, "QUAT_MI2S_RX",
 		 sizeof("QUAT_MI2S_RX")))
 		idx = QUAT_MI2S;
+	else if (strnstr(kcontrol->id.name, "QUIN_MI2S_RX",
+		 sizeof("QUIN_MI2S_RX")))
+		idx = QUIN_MI2S;
 	else if (strnstr(kcontrol->id.name, "PRIM_MI2S_TX",
 		 sizeof("PRIM_MI2S_TX")))
 		idx = PRIM_MI2S;
@@ -1064,6 +1108,9 @@ static int mi2s_get_port_idx(struct snd_kcontrol *kcontrol)
 	else if (strnstr(kcontrol->id.name, "QUAT_MI2S_TX",
 		 sizeof("QUAT_MI2S_TX")))
 		idx = QUAT_MI2S;
+	else if (strnstr(kcontrol->id.name, "QUIN_MI2S_TX",
+		 sizeof("QUIN_MI2S_TX")))
+		idx = QUIN_MI2S;
 	else {
 		pr_err("%s: unsupported channel: %s",
 			__func__, kcontrol->id.name);
@@ -1836,6 +1883,9 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("QUAT_AUX_PCM_RX SampleRate", quat_aux_pcm_rx_sample_rate,
 			aux_pcm_rx_sample_rate_get,
 			aux_pcm_rx_sample_rate_put),
+	SOC_ENUM_EXT("QUIN_AUX_PCM_RX SampleRate", quin_aux_pcm_rx_sample_rate,
+			aux_pcm_rx_sample_rate_get,
+			aux_pcm_rx_sample_rate_put),
 	SOC_ENUM_EXT("PRIM_AUX_PCM_TX SampleRate", prim_aux_pcm_tx_sample_rate,
 			aux_pcm_tx_sample_rate_get,
 			aux_pcm_tx_sample_rate_put),
@@ -1846,6 +1896,9 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 			aux_pcm_tx_sample_rate_get,
 			aux_pcm_tx_sample_rate_put),
 	SOC_ENUM_EXT("QUAT_AUX_PCM_TX SampleRate", quat_aux_pcm_tx_sample_rate,
+			aux_pcm_tx_sample_rate_get,
+			aux_pcm_tx_sample_rate_put),
+	SOC_ENUM_EXT("QUIN_AUX_PCM_TX SampleRate", quin_aux_pcm_tx_sample_rate,
 			aux_pcm_tx_sample_rate_get,
 			aux_pcm_tx_sample_rate_put),
 	SOC_ENUM_EXT("PRIM_MI2S_RX SampleRate", prim_mi2s_rx_sample_rate,
@@ -1860,6 +1913,9 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("QUAT_MI2S_RX SampleRate", quat_mi2s_rx_sample_rate,
 			mi2s_rx_sample_rate_get,
 			mi2s_rx_sample_rate_put),
+	SOC_ENUM_EXT("QUIN_MI2S_RX SampleRate", quin_mi2s_rx_sample_rate,
+			mi2s_rx_sample_rate_get,
+			mi2s_rx_sample_rate_put),
 	SOC_ENUM_EXT("PRIM_MI2S_TX SampleRate", prim_mi2s_tx_sample_rate,
 			mi2s_tx_sample_rate_get,
 			mi2s_tx_sample_rate_put),
@@ -1870,6 +1926,9 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 			mi2s_tx_sample_rate_get,
 			mi2s_tx_sample_rate_put),
 	SOC_ENUM_EXT("QUAT_MI2S_TX SampleRate", quat_mi2s_tx_sample_rate,
+			mi2s_tx_sample_rate_get,
+			mi2s_tx_sample_rate_put),
+	SOC_ENUM_EXT("QUIN_MI2S_TX SampleRate", quin_mi2s_tx_sample_rate,
 			mi2s_tx_sample_rate_get,
 			mi2s_tx_sample_rate_put),
 	SOC_ENUM_EXT("PRIM_MI2S_RX Format", prim_mi2s_rx_format,
@@ -1884,6 +1943,9 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("QUAT_MI2S_RX Format", quat_mi2s_rx_format,
 			mi2s_rx_format_get,
 			mi2s_rx_format_put),
+	SOC_ENUM_EXT("QUIN_MI2S_RX Format", quin_mi2s_rx_format,
+			mi2s_rx_format_get,
+			mi2s_rx_format_put),
 	SOC_ENUM_EXT("PRIM_MI2S_TX Format", prim_mi2s_tx_format,
 			mi2s_tx_format_get,
 			mi2s_tx_format_put),
@@ -1894,6 +1956,9 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 			mi2s_tx_format_get,
 			mi2s_tx_format_put),
 	SOC_ENUM_EXT("QUAT_MI2S_TX Format", quat_mi2s_tx_format,
+			mi2s_tx_format_get,
+			mi2s_tx_format_put),
+	SOC_ENUM_EXT("QUIN_MI2S_TX Format", quin_mi2s_tx_format,
 			mi2s_tx_format_get,
 			mi2s_tx_format_put),
 	SOC_ENUM_EXT("PRIM_MI2S_RX Channels", prim_mi2s_rx_chs,
@@ -1911,6 +1976,10 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 	SOC_ENUM_EXT("QUAT_MI2S_RX Channels", quat_mi2s_rx_chs,
 			msm_mi2s_rx_ch_get, msm_mi2s_rx_ch_put),
 	SOC_ENUM_EXT("QUAT_MI2S_TX Channels", quat_mi2s_tx_chs,
+			msm_mi2s_tx_ch_get, msm_mi2s_tx_ch_put),
+	SOC_ENUM_EXT("QUIN_MI2S_RX Channels", quin_mi2s_rx_chs,
+			msm_mi2s_rx_ch_get, msm_mi2s_rx_ch_put),
+	SOC_ENUM_EXT("QUIN_MI2S_TX Channels", quin_mi2s_tx_chs,
 			msm_mi2s_tx_ch_get, msm_mi2s_tx_ch_put),
 	SOC_ENUM_EXT("USB_AUDIO_RX Channels", usb_rx_chs,
 			usb_audio_rx_ch_get, usb_audio_rx_ch_put),
@@ -2003,6 +2072,24 @@ const struct snd_kcontrol_new msm_common_snd_controls[] = {
 			tdm_rx_ch_get,
 			tdm_rx_ch_put),
 	SOC_ENUM_EXT("QUAT_TDM_TX_0 Channels", tdm_tx_chs,
+			tdm_tx_ch_get,
+			tdm_tx_ch_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_0 SampleRate", tdm_rx_sample_rate,
+			tdm_rx_sample_rate_get,
+			tdm_rx_sample_rate_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_0 SampleRate", tdm_tx_sample_rate,
+			tdm_tx_sample_rate_get,
+			tdm_tx_sample_rate_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_0 Format", tdm_rx_format,
+			tdm_rx_format_get,
+			tdm_rx_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_0 Format", tdm_tx_format,
+			tdm_tx_format_get,
+			tdm_tx_format_put),
+	SOC_ENUM_EXT("QUIN_TDM_RX_0 Channels", tdm_rx_chs,
+			tdm_rx_ch_get,
+			tdm_rx_ch_put),
+	SOC_ENUM_EXT("QUIN_TDM_TX_0 Channels", tdm_tx_chs,
 			tdm_tx_ch_get,
 			tdm_tx_ch_put),
 };
@@ -2187,6 +2274,22 @@ int msm_common_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 		rate->min = rate->max = tdm_tx_cfg[TDM_QUAT][TDM_0].sample_rate;
 		break;
 
+	case MSM_BACKEND_DAI_QUIN_TDM_RX_0:
+		channels->min = channels->max =
+				tdm_rx_cfg[TDM_QUIN][TDM_0].channels;
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				   tdm_rx_cfg[TDM_QUIN][TDM_0].bit_format);
+		rate->min = rate->max = tdm_rx_cfg[TDM_QUIN][TDM_0].sample_rate;
+		break;
+
+	case MSM_BACKEND_DAI_QUIN_TDM_TX_0:
+		channels->min = channels->max =
+				tdm_tx_cfg[TDM_QUIN][TDM_0].channels;
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+				   tdm_tx_cfg[TDM_QUIN][TDM_0].bit_format);
+		rate->min = rate->max = tdm_tx_cfg[TDM_QUIN][TDM_0].sample_rate;
+		break;
+
 	case MSM_BACKEND_DAI_AUXPCM_RX:
 		rate->min = rate->max =
 			aux_pcm_rx_cfg[PRIM_AUX_PCM].sample_rate;
@@ -2241,6 +2344,20 @@ int msm_common_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			aux_pcm_tx_cfg[QUAT_AUX_PCM].sample_rate;
 		channels->min = channels->max =
 			aux_pcm_tx_cfg[QUAT_AUX_PCM].channels;
+		break;
+
+	case MSM_BACKEND_DAI_QUIN_AUXPCM_RX:
+		rate->min = rate->max =
+			aux_pcm_rx_cfg[QUIN_AUX_PCM].sample_rate;
+		channels->min = channels->max =
+			aux_pcm_rx_cfg[QUIN_AUX_PCM].channels;
+		break;
+
+	case MSM_BACKEND_DAI_QUIN_AUXPCM_TX:
+		rate->min = rate->max =
+			aux_pcm_tx_cfg[QUIN_AUX_PCM].sample_rate;
+		channels->min = channels->max =
+			aux_pcm_tx_cfg[QUIN_AUX_PCM].channels;
 		break;
 
 	case MSM_BACKEND_DAI_PRI_MI2S_RX:
@@ -2305,6 +2422,22 @@ int msm_common_be_hw_params_fixup(struct snd_soc_pcm_runtime *rtd,
 			mi2s_tx_cfg[QUAT_MI2S].channels;
 		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
 			       mi2s_tx_cfg[QUAT_MI2S].bit_format);
+		break;
+
+	case MSM_BACKEND_DAI_QUINARY_MI2S_RX:
+		rate->min = rate->max = mi2s_rx_cfg[QUIN_MI2S].sample_rate;
+		channels->min = channels->max =
+			mi2s_rx_cfg[QUIN_MI2S].channels;
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			       mi2s_rx_cfg[QUIN_MI2S].bit_format);
+		break;
+
+	case MSM_BACKEND_DAI_QUINARY_MI2S_TX:
+		rate->min = rate->max = mi2s_tx_cfg[QUIN_MI2S].sample_rate;
+		channels->min = channels->max =
+			mi2s_tx_cfg[QUIN_MI2S].channels;
+		param_set_mask(params, SNDRV_PCM_HW_PARAM_FORMAT,
+			       mi2s_tx_cfg[QUIN_MI2S].bit_format);
 		break;
 
 	default:
@@ -2380,6 +2513,12 @@ static int msm_get_port_id(int id)
 		break;
 	case MSM_BACKEND_DAI_QUATERNARY_MI2S_TX:
 		afe_port_id = AFE_PORT_ID_QUATERNARY_MI2S_TX;
+		break;
+	case MSM_BACKEND_DAI_QUINARY_MI2S_RX:
+		afe_port_id = AFE_PORT_ID_QUINARY_MI2S_RX;
+		break;
+	case MSM_BACKEND_DAI_QUINARY_MI2S_TX:
+		afe_port_id = AFE_PORT_ID_QUINARY_MI2S_TX;
 		break;
 	default:
 		pr_err("%s: Invalid id: %d\n", __func__, id);
@@ -2481,7 +2620,7 @@ int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 		__func__, substream->name, substream->stream,
 		cpu_dai->name, cpu_dai->id);
 
-	if (index < PRIM_MI2S || index > QUAT_MI2S) {
+	if (index < PRIM_MI2S || index >= MI2S_MAX) {
 		ret = -EINVAL;
 		dev_err(rtd->card->dev,
 			"%s: CPU DAI id (%d) out of range\n",
@@ -2555,7 +2694,7 @@ void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 
 	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
 		 substream->name, substream->stream);
-	if (index < PRIM_MI2S || index > QUAT_MI2S) {
+	if (index < PRIM_MI2S || index >= MI2S_MAX) {
 		pr_err("%s:invalid MI2S DAI(%d)\n", __func__, index);
 		return;
 	}
