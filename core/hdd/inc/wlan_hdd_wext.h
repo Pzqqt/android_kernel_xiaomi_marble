@@ -169,40 +169,6 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
  */
 #define HDD_REASON_MICHAEL_MIC_FAILURE 14
 
-/*
- * These are for TLV fields in WPS IE
- */
-#define HDD_WPS_UUID_LEN                    16
-#define HDD_WPS_ELEM_VERSION                0x104a
-#define HDD_WPS_ELEM_REQUEST_TYPE           0x103a
-#define HDD_WPS_ELEM_CONFIG_METHODS         0x1008
-#define HDD_WPS_ELEM_UUID_E                 0x1047
-#define HDD_WPS_ELEM_PRIMARY_DEVICE_TYPE    0x1054
-#define HDD_WPS_ELEM_RF_BANDS               0x103c
-#define HDD_WPS_ELEM_ASSOCIATION_STATE      0x1002
-#define HDD_WPS_ELEM_CONFIGURATION_ERROR    0x1009
-#define HDD_WPS_ELEM_DEVICE_PASSWORD_ID     0x1012
-
-#define HDD_WPA_ELEM_VENDOR_EXTENSION       0x1049
-
-#define HDD_WPS_MANUFACTURER_LEN            64
-#define HDD_WPS_MODEL_NAME_LEN              32
-#define HDD_WPS_MODEL_NUM_LEN               32
-#define HDD_WPS_SERIAL_NUM_LEN              32
-#define HDD_WPS_DEVICE_OUI_LEN               4
-#define HDD_WPS_DEVICE_NAME_LEN             32
-
-#define HDD_WPS_ELEM_WPS_STATE              0x1044
-#define HDD_WPS_ELEM_APSETUPLOCK            0x1057
-#define HDD_WPS_ELEM_SELECTEDREGISTRA       0x1041
-#define HDD_WPS_ELEM_RSP_TYPE               0x103B
-#define HDD_WPS_ELEM_MANUFACTURER           0x1021
-#define HDD_WPS_ELEM_MODEL_NAME             0x1023
-#define HDD_WPS_ELEM_MODEL_NUM              0x1024
-#define HDD_WPS_ELEM_SERIAL_NUM             0x1042
-#define HDD_WPS_ELEM_DEVICE_NAME            0x1011
-#define HDD_WPS_ELEM_REGISTRA_CONF_METHODS  0x1053
-
 #define HDD_RTSCTS_EN_MASK                  0xF
 #define HDD_RTSCTS_ENABLE                   1
 #define HDD_CTS_ENABLE                      2
@@ -232,11 +198,6 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 
 #define QCN_OUI_TYPE   "\x8c\xfd\xf0\x01"
 #define QCN_OUI_TYPE_SIZE  4
-
-enum hdd_wps_mode {
-	eWEXT_WPS_OFF = 0,
-	eWEXT_WPS_ON = 1,
-};
 
 /*
  * This structure contains the interface level (granularity)
