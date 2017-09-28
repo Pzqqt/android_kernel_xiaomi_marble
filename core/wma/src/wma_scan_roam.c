@@ -1210,60 +1210,56 @@ static uint32_t wma_roam_scan_get_cckm_mode(tSirRoamOffloadScanReq *roam_req,
 #endif
 /**
  * wma_roam_scan_fill_ap_profile() - fill ap_profile
- * @wma_handle: wma handle
- * @pMac: Mac ptr
  * @roam_req: roam offload scan request
- * @ap_profile_p: ap profile
+ * @profile: ap profile
  *
  * Fill ap_profile structure from configured parameters
  *
  * Return: none
  */
-void wma_roam_scan_fill_ap_profile(tp_wma_handle wma_handle,
-				   tpAniSirGlobal pMac,
-				   tSirRoamOffloadScanReq *roam_req,
-				   wmi_ap_profile *ap_profile_p)
+static void wma_roam_scan_fill_ap_profile(tSirRoamOffloadScanReq *roam_req,
+					  struct ap_profile *profile)
 {
 	uint32_t rsn_authmode;
 
-	qdf_mem_zero(ap_profile_p, sizeof(wmi_ap_profile));
+	qdf_mem_zero(profile, sizeof(*profile));
 	if (roam_req == NULL) {
-		ap_profile_p->ssid.ssid_len = 0;
-		ap_profile_p->ssid.ssid[0] = 0;
-		ap_profile_p->rsn_authmode = WMI_AUTH_NONE;
-		ap_profile_p->rsn_ucastcipherset = WMI_CIPHER_NONE;
-		ap_profile_p->rsn_mcastcipherset = WMI_CIPHER_NONE;
-		ap_profile_p->rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
-		ap_profile_p->rssi_threshold = WMA_ROAM_RSSI_DIFF_DEFAULT;
+		profile->ssid.length = 0;
+		profile->ssid.mac_ssid[0] = 0;
+		profile->rsn_authmode = WMI_AUTH_NONE;
+		profile->rsn_ucastcipherset = WMI_CIPHER_NONE;
+		profile->rsn_mcastcipherset = WMI_CIPHER_NONE;
+		profile->rsn_mcastmgmtcipherset = WMI_CIPHER_NONE;
+		profile->rssi_threshold = WMA_ROAM_RSSI_DIFF_DEFAULT;
 	} else {
-		ap_profile_p->ssid.ssid_len =
+		profile->ssid.length =
 			roam_req->ConnectedNetwork.ssId.length;
-		qdf_mem_copy(ap_profile_p->ssid.ssid,
+		qdf_mem_copy(profile->ssid.mac_ssid,
 			     roam_req->ConnectedNetwork.ssId.ssId,
-			     ap_profile_p->ssid.ssid_len);
-		ap_profile_p->rsn_authmode =
+			     profile->ssid.length);
+		profile->rsn_authmode =
 			e_csr_auth_type_to_rsn_authmode(
 				roam_req->ConnectedNetwork.authentication,
 				roam_req->ConnectedNetwork.encryption);
-		rsn_authmode = ap_profile_p->rsn_authmode;
+		rsn_authmode = profile->rsn_authmode;
 
 		if ((rsn_authmode == WMI_AUTH_CCKM_WPA) ||
 			(rsn_authmode == WMI_AUTH_CCKM_RSNA))
-			ap_profile_p->rsn_authmode =
+			profile->rsn_authmode =
 				wma_roam_scan_get_cckm_mode(
 						roam_req, rsn_authmode);
-		ap_profile_p->rsn_ucastcipherset =
+		profile->rsn_ucastcipherset =
 			e_csr_encryption_type_to_rsn_cipherset(
 					roam_req->ConnectedNetwork.encryption);
-		ap_profile_p->rsn_mcastcipherset =
+		profile->rsn_mcastcipherset =
 			e_csr_encryption_type_to_rsn_cipherset(
 				roam_req->ConnectedNetwork.mcencryption);
-		ap_profile_p->rsn_mcastmgmtcipherset =
-			ap_profile_p->rsn_mcastcipherset;
-		ap_profile_p->rssi_threshold = roam_req->RoamRssiDiff;
+		profile->rsn_mcastmgmtcipherset =
+			profile->rsn_mcastcipherset;
+		profile->rssi_threshold = roam_req->RoamRssiDiff;
 #ifdef WLAN_FEATURE_11W
 		if (roam_req->ConnectedNetwork.mfp_enabled)
-			ap_profile_p->flags |= WMI_AP_PROFILE_FLAG_PMF;
+			profile->flags |= WMI_AP_PROFILE_FLAG_PMF;
 #endif
 	}
 }
@@ -1585,19 +1581,23 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 /**
  * wma_roam_scan_offload_ap_profile() - set roam ap profile in fw
  * @wma_handle: wma handle
- * @ap_profile_p: ap profile
- * @vdev_id: vdev id
+ * @mac_ctx: Mac ptr
+ * @roam_req: Request which contains the ap profile
  *
  * Send WMI_ROAM_AP_PROFILE to firmware
  *
  * Return: QDF status
  */
-QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
-					    wmi_ap_profile *ap_profile_p,
-					    uint32_t vdev_id)
+static QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
+				tSirRoamOffloadScanReq *roam_req)
 {
+	struct ap_profile_params ap_profile;
+
+	ap_profile.vdev_id = roam_req->sessionId;
+	wma_roam_scan_fill_ap_profile(roam_req, &ap_profile.profile);
+	ap_profile.param = roam_req->score_params;
 	return wmi_unified_send_roam_scan_offload_ap_cmd(wma_handle->wmi_handle,
-			  ap_profile_p, vdev_id);
+							 &ap_profile);
 }
 
 /**
@@ -1796,7 +1796,6 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_start_scan_cmd_fixed_param scan_params;
-	wmi_ap_profile ap_profile;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t mode = 0;
 	struct wma_txrx_node *intr = NULL;
@@ -1881,11 +1880,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
-		wma_roam_scan_fill_ap_profile(wma_handle, pMac, roam_req,
-					      &ap_profile);
-
 		qdf_status = wma_roam_scan_offload_ap_profile(wma_handle,
-					      &ap_profile, roam_req->sessionId);
+						roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
@@ -2122,10 +2118,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
-		wma_roam_scan_fill_ap_profile(wma_handle, pMac, roam_req,
-					      &ap_profile);
 		qdf_status = wma_roam_scan_offload_ap_profile(wma_handle,
-					&ap_profile, roam_req->sessionId);
+					roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
