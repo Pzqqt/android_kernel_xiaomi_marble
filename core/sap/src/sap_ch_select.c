@@ -71,12 +71,12 @@
 		((extRssi < rssi) ? true : false) \
 	)
 
-#define SET_ACS_BAND(acs_band, pSapCtx) \
+#define SET_ACS_BAND(acs_band, sap_ctx) \
 { \
-	if (pSapCtx->acs_cfg->start_ch <= 14 && \
-		pSapCtx->acs_cfg->end_ch <= 14) \
+	if (sap_ctx->acs_cfg->start_ch <= 14 && \
+		sap_ctx->acs_cfg->end_ch <= 14) \
 		acs_band = eCSR_DOT11_MODE_11g; \
-	else if (pSapCtx->acs_cfg->start_ch >= 14)\
+	else if (sap_ctx->acs_cfg->start_ch >= 14)\
 		acs_band = eCSR_DOT11_MODE_11a; \
 	else \
 		acs_band = eCSR_DOT11_MODE_abg; \
@@ -416,7 +416,7 @@ static void sap_process_avoid_ie(tHalHandle hal,
    RETURN VALUE
     NULL
    ============================================================================*/
-void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *pSapCtx)
+void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *sap_ctx)
 {
 	uint16_t i, j;
 	uint16_t unsafe_channel_list[NUM_CHANNELS];
@@ -445,7 +445,7 @@ void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *pSapCtx)
 	/* Try to find unsafe channel */
 #if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	for (i = 0; i < NUM_CHANNELS; i++) {
-		if (pSapCtx->dfs_ch_disable == true) {
+		if (sap_ctx->dfs_ch_disable == true) {
 			if (wlan_reg_is_dfs_ch(mac_ctx->pdev,
 					safe_channels[i].channelNumber)) {
 				safe_channels[i].isSafe = false;
@@ -484,28 +484,28 @@ void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *pSapCtx)
 
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-void sap_cleanup_channel_list(struct sap_context *pSapCtx)
+void sap_cleanup_channel_list(struct sap_context *sap_ctx)
 {
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "Cleaning up the channel list structure");
 
-	if (NULL == pSapCtx) {
+	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
 			  "SAP Context is NULL");
 		return;
 	}
 
-	pSapCtx->SapChnlList.numChannel = 0;
-	if (pSapCtx->SapChnlList.channelList) {
-		qdf_mem_free(pSapCtx->SapChnlList.channelList);
-		pSapCtx->SapChnlList.channelList = NULL;
+	sap_ctx->SapChnlList.numChannel = 0;
+	if (sap_ctx->SapChnlList.channelList) {
+		qdf_mem_free(sap_ctx->SapChnlList.channelList);
+		sap_ctx->SapChnlList.channelList = NULL;
 	}
 
-	pSapCtx->SapAllChnlList.numChannel = 0;
-	if (pSapCtx->SapAllChnlList.channelList) {
-		qdf_mem_free(pSapCtx->SapAllChnlList.channelList);
-		pSapCtx->SapAllChnlList.channelList = NULL;
+	sap_ctx->SapAllChnlList.numChannel = 0;
+	if (sap_ctx->SapAllChnlList.channelList) {
+		qdf_mem_free(sap_ctx->SapAllChnlList.channelList);
+		sap_ctx->SapAllChnlList.channelList = NULL;
 	}
 }
 
@@ -611,7 +611,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
     IN
     halHandle          : Pointer to tHalHandle
    *pSpectInfoParams  : Pointer to tSapChSelSpectInfo structure
-     pSapCtx           : Pointer to SAP Context
+     sap_ctx           : Pointer to SAP Context
 
    RETURN VALUE
     bool:  Success or FAIL
@@ -620,7 +620,7 @@ uint8_t sap_select_preferred_channel_from_channel_list(uint8_t best_chnl,
    ============================================================================*/
 static bool sap_chan_sel_init(tHalHandle halHandle,
 			      tSapChSelSpectInfo *pSpectInfoParams,
-			      struct sap_context *pSapCtx)
+			      struct sap_context *sap_ctx)
 {
 	tSapSpectChInfo *pSpectCh = NULL;
 	uint8_t *pChans = NULL;
@@ -656,13 +656,13 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 	pChans = pMac->scan.base_channels.channelList;
 
 #if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
-	if (pSapCtx->dfs_ch_disable == true)
+	if (sap_ctx->dfs_ch_disable == true)
 		include_dfs_ch = false;
 #endif
 	sme_cfg_get_int(halHandle, WNI_CFG_DFS_MASTER_ENABLED,
 			&dfs_master_cap_enabled);
 	if (dfs_master_cap_enabled == 0 ||
-	    ACS_DFS_MODE_DISABLE == pSapCtx->dfs_mode)
+	    ACS_DFS_MODE_DISABLE == sap_ctx->dfs_mode)
 		include_dfs_ch = false;
 
 	/* Fill the channel number in the spectrum in the operating freq band */
@@ -672,7 +672,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 		chSafe = true;
 
 		/* check if the channel is in NOL blacklist */
-		if (sap_dfs_is_channel_in_nol_list(pSapCtx, *pChans,
+		if (sap_dfs_is_channel_in_nol_list(sap_ctx, *pChans,
 						   PHY_SINGLE_CHANNEL_CENTERED)) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  "In %s, Ch %d is in NOL list", __func__,
@@ -708,7 +708,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 
 		/* OFDM rates are not supported on channel 14 */
 		if (*pChans == 14 &&
-		    eCSR_DOT11_MODE_11b != pSapCtx->csr_roamProfile.phyMode) {
+		    eCSR_DOT11_MODE_11b != sap_ctx->csr_roamProfile.phyMode) {
 			continue;
 		}
 
@@ -2317,7 +2317,7 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
    PARAMETERS
 
     IN
-    pSapCtx                : Pointer to the struct sap_context *structure
+    sap_ctx                : Pointer to the struct sap_context *structure
     pSpectInfoParams       : Pointer to the tSapChSelSpectInfo structure
 
    RETURN VALUE
@@ -2325,7 +2325,7 @@ static void sap_sort_chl_weight_ht40_5_g(tSapChSelSpectInfo *pSpectInfoParams)
 
    SIDE EFFECTS
    ============================================================================*/
-static void sap_sort_chl_weight_all(struct sap_context *pSapCtx,
+static void sap_sort_chl_weight_all(struct sap_context *sap_ctx,
 				    tSapChSelSpectInfo *pSpectInfoParams,
 				    uint32_t operatingBand,
 				    v_REGDOMAIN_t domain)
@@ -2339,7 +2339,7 @@ static void sap_sort_chl_weight_all(struct sap_context *pSapCtx,
 	pSpectCh = pSpectInfoParams->pSpectCh;
 #ifdef SOFTAP_CHANNEL_RANGE
 
-	switch (pSapCtx->acs_cfg->ch_width) {
+	switch (sap_ctx->acs_cfg->ch_width) {
 	case CH_WIDTH_40MHZ:
 		if (eCSR_DOT11_MODE_11g == operatingBand)
 			sap_sort_chl_weight_ht40_24_g(pSpectInfoParams, domain);

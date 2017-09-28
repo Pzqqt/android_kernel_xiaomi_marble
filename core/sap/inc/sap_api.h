@@ -805,7 +805,7 @@ struct sap_context *wlansap_open(void);
 
 /**
  * wlansap_close - close per-BSS SAP
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  *
  * Called during BSS close procedure. SAP will clean up all the
  * internal resources.
@@ -815,11 +815,11 @@ struct sap_context *wlansap_open(void);
  *                             access would cause a page fault
  *         QDF_STATUS_SUCCESS: Success
  */
-QDF_STATUS wlansap_close(struct sap_context *pSapCtx);
+QDF_STATUS wlansap_close(struct sap_context *sap_ctx);
 
 /**
  * wlansap_start - start per-BSS SAP
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @mode: Device mode
  * @addr: MAC address of the SAP
  * @session_id: Pointer to the session id
@@ -831,13 +831,13 @@ QDF_STATUS wlansap_close(struct sap_context *pSapCtx);
  *         QDF_STATUS_E_FAULT: BSS could not be started
  *         QDF_STATUS_SUCCESS: Success
  */
-QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_start(struct sap_context *sap_ctx,
 			 enum tQDF_ADAPTER_MODE mode,
 			 uint8_t *addr, uint32_t session_id);
 
 /**
  * wlansap_stop() - stop per-BSS SAP
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  *
  * Called as part of the BSS stop procedure. SAP will use this call
  * to perform all activities needed to stop the BSS.
@@ -846,17 +846,17 @@ QDF_STATUS wlansap_start(struct sap_context *pSapCtx,
  *         QDF_STATUS_E_FAULT: BSS could not be stopped
  *         QDF_STATUS_SUCCESS: Success
  */
-QDF_STATUS wlansap_stop(struct sap_context *pSapCtx);
+QDF_STATUS wlansap_stop(struct sap_context *sap_ctx);
 
 /**
  * sap_cleanup_channel_list() - cleanup channel list.
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  *
  * Frees up the memory allocated to the channel list.
  *
  * Return: None
  */
-void sap_cleanup_channel_list(struct sap_context *pSapCtx);
+void sap_cleanup_channel_list(struct sap_context *sap_ctx);
 
 /**
  * sap_is_auto_channel_select() - is channel AUTO_CHANNEL_SELECT
@@ -874,13 +874,13 @@ typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 /**
  * wlansap_is_channel_in_nol_list() - This API checks if channel is
  * in nol list
- * @pSapCtx: SAP context pointer
+ * @sap_ctx: SAP context pointer
  * @channelNumber: channel number
  * @chanBondState: channel bonding state
  *
  * Return: True if the channel is in the NOL list, false otherwise
  */
-bool wlansap_is_channel_in_nol_list(struct sap_context *pSapCtx,
+bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 				    uint8_t channelNumber,
 				    ePhyChanBondState chanBondState);
 
@@ -899,7 +899,7 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 
 /**
  * wlansap_start_bss() - start BSS
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @pSapEventCallback: Callback function in HDD called by SAP to inform HDD
  *                        about SAP results
  * @pConfig: Pointer to configuration structure passed down from
@@ -915,13 +915,13 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
  *                             access would cause a page fault
  *         QDF_STATUS_SUCCESS: Success
  */
-QDF_STATUS wlansap_start_bss(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 			     tpWLAN_SAPEventCB pSapEventCallback,
 			     tsap_Config_t *pConfig, void *pUsrContext);
 
 /**
  * wlansap_stop_bss() - stop BSS.
- * @pSapCtx: Pointer to SAP context
+ * @sap_ctx: Pointer to SAP context
  *
  * This api function provides SAP FSM event eSAP_HDD_STOP_INFRA_BSS for
  * stopping AP BSS
@@ -931,7 +931,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *pSapCtx,
  *                             access would cause a page fault
  *         QDF_STATUS_SUCCESS: Success
  */
-QDF_STATUS wlansap_stop_bss(struct sap_context *pSapCtx);
+QDF_STATUS wlansap_stop_bss(struct sap_context *sap_ctx);
 
 /**
  * wlan_sap_update_next_channel() - Update next channel configured using vendor
@@ -988,18 +988,18 @@ QDF_STATUS wlan_sap_get_pre_cac_vdev_id(tHalHandle handle, uint8_t *vdev_id);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * wlansap_check_cc_intf() - Get interfering concurrent channel
- * @pSapCtx: SAP context pointer
+ * @sap_ctx: SAP context pointer
  *
  * Determine if a Concurrent Channel is interfering.
  *
  * Return: Channel number of the interfering channel, or 0 if none.
  */
-uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx);
+uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx);
 #endif
 
 /**
  * wlansap_set_mac_acl() - set MAC list entry in ACL.
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @pConfig: Pointer to SAP config.
  *
  * This api function provides SAP to set mac list entry in accept list as well
@@ -1010,12 +1010,12 @@ uint16_t wlansap_check_cc_intf(struct sap_context *pSapCtx);
  *                             access would cause a page fault
  *         QDF_STATUS_SUCCESS: Success
  */
-QDF_STATUS wlansap_set_mac_acl(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
 			       tsap_Config_t *pConfig);
 
 /**
  * wlansap_disassoc_sta() - initiate disassociation of station.
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @p_del_sta_params: pointer to station deletion parameters
  *
  * This api function provides for Ap App/HDD initiated disassociation of station
@@ -1023,7 +1023,7 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *pSapCtx,
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success
  */
-QDF_STATUS wlansap_disassoc_sta(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
 				struct tagCsrDelStaParams *p_del_sta_params);
 
 /**
@@ -1036,7 +1036,7 @@ QDF_STATUS wlansap_disassoc_sta(struct sap_context *pSapCtx,
  *
  * Return: The QDF_STATUS code associated with performing the operation
  */
-QDF_STATUS wlansap_deauth_sta(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
 			      struct tagCsrDelStaParams *pDelStaParams);
 
 /**
@@ -1059,7 +1059,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 
 /**
  * wlansap_set_key_sta() - set keys for a stations.
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @pSetKeyInfo : tCsrRoamSetKey structure for the station
  *
  * This api function provides for Ap App/HDD to set key for a station.
@@ -1067,7 +1067,7 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success
  */
-QDF_STATUS wlansap_set_key_sta(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
 			       tCsrRoamSetKey *pSetKeyInfo);
 
 /**
@@ -1086,16 +1086,16 @@ QDF_STATUS wlan_sap_getstation_ie_information(struct sap_context *sap_ctx,
 
 /**
  * wlansap_clear_acl() - Clear all ACLs
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  *
  * Return: QDF_STATUS. If success the ACLs were cleared, otherwise an
  *    error occurred.
  */
-QDF_STATUS wlansap_clear_acl(struct sap_context *pSapCtx);
+QDF_STATUS wlansap_clear_acl(struct sap_context *sap_ctx);
 
 /**
  * wlansap_get_acl_accept_list() - Get ACL accept list
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @pAcceptList: Pointer to the buffer to store the ACL accept list
  * @nAcceptList: Pointer to the location to store the number of
  *    entries in the ACL accept list.
@@ -1103,13 +1103,13 @@ QDF_STATUS wlansap_clear_acl(struct sap_context *pSapCtx);
  * Return: QDF_STATUS. If success the data was returned, otherwise an
  *    error occurred.
  */
-QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *sap_ctx,
 				       struct qdf_mac_addr *pAcceptList,
 				       uint8_t *nAcceptList);
 
 /**
  * wlansap_get_acl_deny_list() - Get ACL deny list
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @pDenyList: Pointer to the buffer to store the ACL deny list
  * @nDenyList: Pointer to the location to store the number of
  *    entries in the ACL deny list.
@@ -1117,28 +1117,28 @@ QDF_STATUS wlansap_get_acl_accept_list(struct sap_context *pSapCtx,
  * Return: QDF_STATUS. If success the data was returned, otherwise an
  *    error occurred.
  */
-QDF_STATUS wlansap_get_acl_deny_list(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_get_acl_deny_list(struct sap_context *sap_ctx,
 				     struct qdf_mac_addr *pDenyList,
 				     uint8_t *nDenyList);
 
 /**
  * wlansap_set_acl_mode() - Set the SAP ACL mode
- * @pSapCtx: The SAP context pointer
+ * @sap_ctx: The SAP context pointer
  * @mode: the desired ACL mode
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlansap_set_acl_mode(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_set_acl_mode(struct sap_context *sap_ctx,
 				eSapMacAddrACL mode);
 
 /**
  * wlansap_get_acl_mode() - Get the SAP ACL mode
- * @pSapCtx: The SAP context pointer
+ * @sap_ctx: The SAP context pointer
  * @mode: Pointer where to return the current ACL mode
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS wlansap_get_acl_mode(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_get_acl_mode(struct sap_context *sap_ctx,
 				eSapMacAddrACL *mode);
 
 /**
@@ -1159,7 +1159,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 
 /**
  * wlansap_send_action() - send action frame
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @pBuf: Pointer of the action frame to be transmitted
  * @len: Length of the action frame in @pBuf
  * @wait: Unused
@@ -1170,13 +1170,13 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
  * Return: The QDF_STATUS code associated with performing the operation
 *          QDF_STATUS_SUCCESS:  Success and error code otherwise
  */
-QDF_STATUS wlansap_send_action(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_send_action(struct sap_context *sap_ctx,
 			       const uint8_t *pBuf, uint32_t len,
 			       uint16_t wait, uint16_t channel_freq);
 
 /**
  * wlansap_remain_on_channel() - set remain on channel
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @channel: Channel on which driver has to listen
  * @duration: Duration for which driver has to listen on specified channel
  * @callback: Callback function to be called once Listen is done.
@@ -1189,14 +1189,14 @@ QDF_STATUS wlansap_send_action(struct sap_context *pSapCtx,
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success and error code otherwise
  */
-QDF_STATUS wlansap_remain_on_channel(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_remain_on_channel(struct sap_context *sap_ctx,
 				     uint8_t channel, uint32_t duration,
 				     remainOnChanCallback callback,
 				     void *pContext, uint32_t *scan_id);
 
 /**
  * wlansap_cancel_remain_on_channel() - cancel remain on channel
- * @pSapCtx: Pointer to the SAP context
+ * @sap_ctx: Pointer to the SAP context
  * @scan_id: Scan ID returned by wlansap_remain_on_channel()
  *
  * This api cancel previous remain on channel request.
@@ -1204,12 +1204,12 @@ QDF_STATUS wlansap_remain_on_channel(struct sap_context *pSapCtx,
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success and error code otherwise
  */
-QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *sap_ctx,
 					    uint32_t scan_id);
 
 /**
  * wlansap_register_mgmt_frame() - register management frame
- * @pSapCtx: Pointer to SAP context
+ * @sap_ctx: Pointer to SAP context
  * @frame_type: frame type that needs to be registered with PE.
  * @match_data: pointer to data which should be matched after @frame_type
  *              is matched.
@@ -1221,14 +1221,14 @@ QDF_STATUS wlansap_cancel_remain_on_channel(struct sap_context *pSapCtx,
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success and error code otherwise
  */
-QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *sap_ctx,
 				       uint16_t frame_type,
 				       uint8_t *match_data,
 				       uint16_t match_len);
 
 /**
  * wlansap_de_register_mgmt_frame() - de register management frame
- * @pSapCtx: Pointer to SAP context
+ * @sap_ctx: Pointer to SAP context
  * @frame_type: frame type that needs to be de-registered with PE.
  * @match_data: pointer to data which should be matched after @frame_type
  *              is matched.
@@ -1239,7 +1239,7 @@ QDF_STATUS wlansap_register_mgmt_frame(struct sap_context *pSapCtx,
  * Return: The QDF_STATUS code associated with performing the operation
  *         QDF_STATUS_SUCCESS:  Success and error code otherwise
  */
-QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *pSapCtx,
+QDF_STATUS wlansap_de_register_mgmt_frame(struct sap_context *sap_ctx,
 					  uint16_t frame_type,
 					  uint8_t *match_data,
 					  uint16_t match_len);

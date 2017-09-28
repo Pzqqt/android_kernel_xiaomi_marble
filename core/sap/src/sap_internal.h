@@ -332,7 +332,7 @@ wlansap_roam_callback
 QDF_STATUS SapFsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
 
-uint8_t sap_select_channel(tHalHandle halHandle, struct sap_context *pSapCtx,
+uint8_t sap_select_channel(tHalHandle halHandle, struct sap_context *sap_ctx,
 			   tScanResultHandle pScanResult);
 
 QDF_STATUS
@@ -372,7 +372,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList, uint8_t num_mac,
 
 #ifdef FEATURE_WLAN_CH_AVOID
 void sap_update_unsafe_channel_list(tHalHandle hal,
-				    struct sap_context *pSapCtx);
+				    struct sap_context *sap_ctx);
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sapContext);
