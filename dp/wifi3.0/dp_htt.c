@@ -2139,6 +2139,20 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				pdev_id);
 			break;
 		}
+	case HTT_T2H_MSG_TYPE_PKTLOG:
+		{
+			uint8_t pdev_id;
+			uint32_t *pl_hdr;
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+				"received HTT_T2H_MSG_TYPE_PKTLOG\n");
+			pdev_id = HTT_T2H_PKTLOG_MAC_ID_GET(*msg_word);
+			pdev_id = DP_HW2SW_MACID(pdev_id);
+			pl_hdr = (msg_word + 1);
+			dp_wdi_event_handler(WDI_EVENT_OFFLOAD_ALL, soc->dp_soc,
+				pl_hdr, HTT_INVALID_PEER, WDI_NO_VAL,
+				pdev_id);
+			break;
+		}
 #endif
 #endif
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
@@ -2231,6 +2245,33 @@ dp_htt_h2t_full(void *context, HTC_PACKET *pkt)
 }
 
 /*
+ * dp_htt_hif_t2h_hp_callback() - HIF callback for high priority T2H messages
+ * @context:	Opaque context (HTT SOC handle)
+ * @nbuf:	nbuf containing T2H message
+ * @pipe_id:	HIF pipe ID
+ *
+ * Return: QDF_STATUS
+ *
+ * TODO: Temporary change to bypass HTC connection for this new HIF pipe, which
+ * will be used for packet log and other high-priority HTT messsages. Proper
+ * HTC connection to be added later once required FW changes are available
+ */
+static QDF_STATUS
+dp_htt_hif_t2h_hp_callback (void *context, qdf_nbuf_t nbuf, uint8_t pipe_id)
+{
+	A_STATUS rc = QDF_STATUS_SUCCESS;
+	HTC_PACKET htc_pkt;
+
+	qdf_assert_always(pipe_id == DP_HTT_T2H_HP_PIPE);
+	qdf_mem_zero(&htc_pkt, sizeof(htc_pkt));
+	htc_pkt.Status = QDF_STATUS_SUCCESS;
+	htc_pkt.pPktContext = (void *)nbuf;
+	dp_htt_t2h_msg_handler(context, &htc_pkt);
+
+	return rc;
+}
+
+/*
  * htt_htc_soc_attach() - Register SOC level HTT instance with HTC
  * @htt_soc:	HTT SOC handle
  *
@@ -2278,6 +2319,9 @@ htt_htc_soc_attach(struct htt_soc *soc)
 		return QDF_STATUS_E_FAILURE;
 
 	soc->htc_endpoint = response.Endpoint;
+
+	dp_hif_update_pipe_callback(soc->dp_soc, (void *)soc,
+		dp_htt_hif_t2h_hp_callback, DP_HTT_T2H_HP_PIPE);
 
 	return 0; /* success */
 }

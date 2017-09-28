@@ -229,6 +229,7 @@ while (0)
 #define DP_TX_HIST_STATS_PER_PDEV()
 #endif
 
+#define DP_HTT_T2H_HP_PIPE 5
 
 
 extern int dp_peer_find_attach(struct dp_soc *soc);
@@ -322,6 +323,22 @@ int dp_wdi_event_attach(struct dp_pdev *txrx_pdev);
 int dp_wdi_event_detach(struct dp_pdev *txrx_pdev);
 int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	bool enable);
+static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
+	QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t), uint8_t pipe_id)
+{
+	struct hif_msg_callbacks hif_pipe_callbacks;
+	struct dp_soc *dp_soc = (struct dp_soc *)soc;
+
+	/* TODO: Temporary change to bypass HTC connection for this new
+	 * HIF pipe, which will be used for packet log and other high-
+	 * priority HTT messsages. Proper HTC connection to be added
+	 * later once required FW changes are available
+	 */
+	hif_pipe_callbacks.rxCompletionHandler = callback;
+	hif_pipe_callbacks.Context = cb_context;
+	hif_update_pipe_callback(dp_soc->hif_handle,
+		DP_HTT_T2H_HP_PIPE, &hif_pipe_callbacks);
+}
 #else
 static inline int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
 	void *event_cb_sub_handle,
@@ -362,6 +379,10 @@ static inline QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask)
 {
 	return 0;
+}
+static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
+	QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t), uint8_t pipe_id)
+{
 }
 #endif /* CONFIG_WIN */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
