@@ -34,6 +34,14 @@
  */
 
 /*
+ * The following terms were in use in prior versions of the driver but
+ * have now been replaced with terms that are aligned with the Linux
+ * Coding style. Macros are defined to hopefully prevent new instances
+ * from being introduced, primarily by code propagation.
+ */
+#define pHddCtx
+
+/*
  * Include files
  */
 
