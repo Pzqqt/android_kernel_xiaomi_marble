@@ -8895,7 +8895,7 @@ struct cmd_set_topologies {
 
 #define AFE_MODULE_FB_SPKR_PROT_RX 0x0001021C
 #define AFE_MODULE_FB_SPKR_PROT_V2_RX 0x0001025F
-
+#define AFE_PARAM_ID_SP_RX_LIMITER_TH 0x000102B1
 #define AFE_PARAM_ID_FBSP_MODE_RX_CFG 0x0001021D
 #define AFE_PARAM_ID_FBSP_PTONE_RAMP_CFG 0x00010260
 
@@ -9123,6 +9123,11 @@ struct afe_sp_ex_vi_get_param_resp {
 	struct afe_sp_ex_vi_ftm_params param;
 } __packed;
 
+struct afe_sp_rx_limiter_th_param {
+	uint32_t minor_version;
+	uint32_t lim_thr_per_calib_q27[SP_V2_NUM_MAX_SPKR];
+} __packed;
+
 union afe_spkr_prot_config {
 	struct asm_fbsp_mode_rx_cfg mode_rx_cfg;
 	struct asm_spkr_calib_vi_proc_cfg vi_proc_cfg;
@@ -9132,6 +9137,7 @@ union afe_spkr_prot_config {
 	struct afe_sp_th_vi_ftm_cfg th_vi_ftm_cfg;
 	struct afe_sp_ex_vi_mode_cfg ex_vi_mode_cfg;
 	struct afe_sp_ex_vi_ftm_cfg ex_vi_ftm_cfg;
+	struct afe_sp_rx_limiter_th_param limiter_th_cfg;
 } __packed;
 
 struct afe_spkr_prot_config_command {

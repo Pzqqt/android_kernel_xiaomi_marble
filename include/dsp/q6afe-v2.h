@@ -41,7 +41,7 @@
 
 #define AFE_CLK_VERSION_V1    1
 #define AFE_CLK_VERSION_V2    2
-
+#define AFE_API_VERSION_SUPPORT_SPV3	2
 typedef int (*routing_cb)(int port);
 
 enum {
