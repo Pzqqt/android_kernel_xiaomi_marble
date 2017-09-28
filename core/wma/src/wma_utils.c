@@ -66,6 +66,8 @@
 #include "wmi_unified_param.h"
 #include "linux/ieee80211.h"
 #include <cdp_txrx_handle.h>
+#include "cds_reg_service.h"
+
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
 static struct index_data_rate_type mcs_nss1[] = {
@@ -1518,9 +1520,21 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		WMA_LOGA("%s: Invalid param_tlvs for Radio Stats", __func__);
 		return -EINVAL;
 	}
+	if (radio_stats->num_channels >
+		(NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)) {
+		WMA_LOGE("%s: Too many channels %d",
+			__func__, radio_stats->num_channels);
+		return -EINVAL;
+	}
 
 	radio_stats_size = sizeof(tSirWifiRadioStat);
 	chan_stats_size = sizeof(tSirWifiChannelStats);
+	if (fixed_param->num_radio >
+		(UINT_MAX - sizeof(*link_stats_results))/radio_stats_size) {
+		WMA_LOGE("excess num_radio %d is leading to int overflow",
+			fixed_param->num_radio);
+		return -EINVAL;
+	}
 	link_stats_results_size = sizeof(*link_stats_results) +
 				  fixed_param->num_radio * radio_stats_size;
 
