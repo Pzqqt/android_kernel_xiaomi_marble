@@ -14944,17 +14944,18 @@ error:
  * Return: CDF status
  */
 static QDF_STATUS send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_handle,
-					    wmi_ap_profile *ap_profile_p,
-					    uint32_t vdev_id)
+					    struct ap_profile_params *ap_profile)
 {
 	wmi_buf_t buf = NULL;
 	QDF_STATUS status;
 	int len;
 	uint8_t *buf_ptr;
 	wmi_roam_ap_profile_fixed_param *roam_ap_profile_fp;
+	wmi_roam_cnd_scoring_param *score_param;
+	wmi_ap_profile *profile;
 
 	len = sizeof(wmi_roam_ap_profile_fixed_param) + sizeof(wmi_ap_profile);
-
+	len += sizeof(*score_param);
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
 		WMI_LOGE("%s : wmi_buf_alloc failed", __func__);
@@ -14968,14 +14969,143 @@ static QDF_STATUS send_roam_scan_offload_ap_profile_cmd_tlv(wmi_unified_t wmi_ha
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_roam_ap_profile_fixed_param));
 	/* fill in threshold values */
-	roam_ap_profile_fp->vdev_id = vdev_id;
+	roam_ap_profile_fp->vdev_id = ap_profile->vdev_id;
 	roam_ap_profile_fp->id = 0;
 	buf_ptr += sizeof(wmi_roam_ap_profile_fixed_param);
 
-	qdf_mem_copy(buf_ptr, ap_profile_p, sizeof(wmi_ap_profile));
-	WMITLV_SET_HDR(buf_ptr,
+	profile = (wmi_ap_profile *)buf_ptr;
+	WMITLV_SET_HDR(&profile->tlv_header,
 		       WMITLV_TAG_STRUC_wmi_ap_profile,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_ap_profile));
+	profile->flags = ap_profile->profile.flags;
+	profile->rssi_threshold = ap_profile->profile.rssi_threshold;
+	profile->ssid.ssid_len = ap_profile->profile.ssid.length;
+	qdf_mem_copy(profile->ssid.ssid, ap_profile->profile.ssid.mac_ssid,
+		     profile->ssid.ssid_len);
+	profile->rsn_authmode = ap_profile->profile.rsn_authmode;
+	profile->rsn_ucastcipherset = ap_profile->profile.rsn_ucastcipherset;
+	profile->rsn_mcastcipherset = ap_profile->profile.rsn_mcastcipherset;
+	profile->rsn_mcastmgmtcipherset =
+				ap_profile->profile.rsn_mcastmgmtcipherset;
+	profile->rssi_abs_thresh = ap_profile->profile.rssi_abs_thresh;
+
+	WMI_LOGD("AP profile: flags %x rssi_threshold %d ssid:%.*s authmode %d uc cipher %d mc cipher %d mc mgmt cipher %d rssi abs thresh %d",
+		 profile->flags, profile->rssi_threshold,
+		 profile->ssid.ssid_len, ap_profile->profile.ssid.mac_ssid,
+		 profile->rsn_authmode, profile->rsn_ucastcipherset,
+		 profile->rsn_mcastcipherset, profile->rsn_mcastmgmtcipherset,
+		 profile->rssi_abs_thresh);
+
+	buf_ptr += sizeof(wmi_ap_profile);
+
+	score_param = (wmi_roam_cnd_scoring_param *)buf_ptr;
+	WMITLV_SET_HDR(&score_param->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_roam_cnd_scoring_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_roam_cnd_scoring_param));
+	score_param->disable_bitmap = ap_profile->param.disable_bitmap;
+	score_param->rssi_weightage_pcnt =
+			ap_profile->param.rssi_weightage;
+	score_param->ht_weightage_pcnt = ap_profile->param.ht_weightage;
+	score_param->vht_weightage_pcnt = ap_profile->param.vht_weightage;
+	score_param->he_weightage_pcnt = ap_profile->param.he_weightage;
+	score_param->bw_weightage_pcnt = ap_profile->param.bw_weightage;
+	score_param->band_weightage_pcnt = ap_profile->param.band_weightage;
+	score_param->nss_weightage_pcnt = ap_profile->param.nss_weightage;
+	score_param->esp_qbss_weightage_pcnt =
+			ap_profile->param.esp_qbss_weightage;
+	score_param->beamforming_weightage_pcnt =
+			ap_profile->param.beamforming_weightage;
+	score_param->pcl_weightage_pcnt = ap_profile->param.pcl_weightage;
+	score_param->oce_wan_weightage_pcnt =
+			ap_profile->param.oce_wan_weightage;
+
+	WMI_LOGD("Score params weightage: disable_bitmap %x rssi %d ht %d vht %d he %d BW %d band %d NSS %d ESP %d BF %d PCL %d OCE WAN %d",
+		 score_param->disable_bitmap, score_param->rssi_weightage_pcnt,
+		 score_param->ht_weightage_pcnt,
+		 score_param->vht_weightage_pcnt,
+		 score_param->he_weightage_pcnt, score_param->bw_weightage_pcnt,
+		 score_param->band_weightage_pcnt,
+		 score_param->nss_weightage_pcnt,
+		 score_param->esp_qbss_weightage_pcnt,
+		 score_param->beamforming_weightage_pcnt,
+		 score_param->pcl_weightage_pcnt,
+		 score_param->oce_wan_weightage_pcnt);
+
+	score_param->bw_scoring.score_pcnt = ap_profile->param.bw_index_score;
+	score_param->band_scoring.score_pcnt =
+			ap_profile->param.band_index_score;
+	score_param->nss_scoring.score_pcnt =
+			ap_profile->param.nss_index_score;
+
+	WMI_LOGD("Params index score bitmask: bw_index_score %x band_index_score %x nss_index_score %x",
+		 score_param->bw_scoring.score_pcnt,
+		 score_param->band_scoring.score_pcnt,
+		 score_param->nss_scoring.score_pcnt);
+
+	score_param->rssi_scoring.best_rssi_threshold =
+		(-1) * ap_profile->param.rssi_scoring.best_rssi_threshold;
+	score_param->rssi_scoring.good_rssi_threshold =
+		(-1) * ap_profile->param.rssi_scoring.good_rssi_threshold;
+	score_param->rssi_scoring.bad_rssi_threshold =
+		(-1) * ap_profile->param.rssi_scoring.bad_rssi_threshold;
+	score_param->rssi_scoring.good_rssi_pcnt =
+		ap_profile->param.rssi_scoring.good_rssi_pcnt;
+	score_param->rssi_scoring.bad_rssi_pcnt =
+		ap_profile->param.rssi_scoring.bad_rssi_pcnt;
+	score_param->rssi_scoring.good_bucket_size =
+		ap_profile->param.rssi_scoring.good_bucket_size;
+	score_param->rssi_scoring.bad_bucket_size =
+		ap_profile->param.rssi_scoring.bad_bucket_size;
+	score_param->rssi_scoring.rssi_pref_5g_rssi_thresh =
+		(-1) * ap_profile->param.rssi_scoring.rssi_pref_5g_rssi_thresh;
+
+	WMI_LOGD("Rssi scoring threshold: best RSSI %d good RSSI %d bad RSSI %d prefer 5g threshold %d",
+		 score_param->rssi_scoring.best_rssi_threshold,
+		 score_param->rssi_scoring.good_rssi_threshold,
+		 score_param->rssi_scoring.bad_rssi_threshold,
+		 score_param->rssi_scoring.rssi_pref_5g_rssi_thresh);
+	WMI_LOGD("Good RSSI score for each slot %d bad RSSI score for each slot %d good bucket %d bad bucket %d",
+		 score_param->rssi_scoring.good_rssi_pcnt,
+		 score_param->rssi_scoring.bad_rssi_pcnt,
+		 score_param->rssi_scoring.good_bucket_size,
+		 score_param->rssi_scoring.bad_bucket_size);
+
+	score_param->esp_qbss_scoring.num_slot =
+			ap_profile->param.esp_qbss_scoring.num_slot;
+	score_param->esp_qbss_scoring.score_pcnt3_to_0 =
+			ap_profile->param.esp_qbss_scoring.score_pcnt3_to_0;
+	score_param->esp_qbss_scoring.score_pcnt7_to_4 =
+			ap_profile->param.esp_qbss_scoring.score_pcnt7_to_4;
+	score_param->esp_qbss_scoring.score_pcnt11_to_8 =
+			ap_profile->param.esp_qbss_scoring.score_pcnt11_to_8;
+	score_param->esp_qbss_scoring.score_pcnt15_to_12 =
+			ap_profile->param.esp_qbss_scoring.score_pcnt15_to_12;
+
+	WMI_LOGD("ESP QBSS index weight: slots %d weight 0to3 %x weight 4to7 %x weight 8to11 %x weight 12to15 %x",
+		 score_param->esp_qbss_scoring.num_slot,
+		 score_param->esp_qbss_scoring.score_pcnt3_to_0,
+		 score_param->esp_qbss_scoring.score_pcnt7_to_4,
+		 score_param->esp_qbss_scoring.score_pcnt11_to_8,
+		 score_param->esp_qbss_scoring.score_pcnt15_to_12);
+
+	score_param->oce_wan_scoring.num_slot =
+			ap_profile->param.oce_wan_scoring.num_slot;
+	score_param->oce_wan_scoring.score_pcnt3_to_0 =
+			ap_profile->param.oce_wan_scoring.score_pcnt3_to_0;
+	score_param->oce_wan_scoring.score_pcnt7_to_4 =
+			ap_profile->param.oce_wan_scoring.score_pcnt7_to_4;
+	score_param->oce_wan_scoring.score_pcnt11_to_8 =
+			ap_profile->param.oce_wan_scoring.score_pcnt11_to_8;
+	score_param->oce_wan_scoring.score_pcnt15_to_12 =
+			ap_profile->param.oce_wan_scoring.score_pcnt15_to_12;
+
+	WMI_LOGD("OCE WAN index weight: slots %d weight 0to3 %x weight 4to7 %x weight 8to11 %x weight 12to15 %x",
+		 score_param->oce_wan_scoring.num_slot,
+		 score_param->oce_wan_scoring.score_pcnt3_to_0,
+		 score_param->oce_wan_scoring.score_pcnt7_to_4,
+		 score_param->oce_wan_scoring.score_pcnt11_to_8,
+		 score_param->oce_wan_scoring.score_pcnt15_to_12);
+
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				      len, WMI_ROAM_AP_PROFILE);
 	if (QDF_IS_STATUS_ERROR(status)) {
