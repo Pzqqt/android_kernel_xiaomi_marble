@@ -2035,6 +2035,7 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sapPersona =
 		QDF_MAX_NO_OF_MODE;
 	sap_clear_global_dfs_param(hal);
+	sap_free_roam_profile(&sapctx->csr_roamProfile);
 	qdf_mem_zero(sapctx, sizeof(*sapctx));
 	sapctx->sessionId = CSR_SESSION_ID_INVALID;
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
