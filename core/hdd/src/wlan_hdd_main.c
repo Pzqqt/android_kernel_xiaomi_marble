@@ -2222,27 +2222,17 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
  *
  * Return: 0 for success; non-zero for failure
  */
-int hdd_wlan_start_modules(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
+int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
+			   struct hdd_adapter *adapter,
 			   bool reinit)
 {
 	int ret;
 	qdf_device_t qdf_dev;
 	QDF_STATUS status;
-	p_cds_contextType p_cds_context;
 	bool unint = false;
 	void *hif_ctx;
 
-	ENTER();
-
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		hdd_err("Global Context is NULL");
-		QDF_ASSERT(0);
-		return -EINVAL;
-	}
-
-	hdd_debug("start modules called in  state! :%d reinit: %d",
-			 hdd_ctx->driver_status, reinit);
+	hdd_debug("state:%d reinit:%d", hdd_ctx->driver_status, reinit);
 
 	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_dev) {
@@ -2400,7 +2390,8 @@ ol_cds_free:
 	ol_cds_free();
 
 hif_close:
-	hdd_hif_close(hdd_ctx, p_cds_context->pHIFContext);
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	hdd_hif_close(hdd_ctx, hif_ctx);
 power_down:
 	if (!reinit && !unint)
 		pld_power_off(qdf_dev->dev);
