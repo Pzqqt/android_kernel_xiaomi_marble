@@ -12579,17 +12579,17 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 	ac_bit = limit_off_chan_tbl[tos][HDD_AC_BIT_INDX];
 
 	if (is_tos_active)
-		hdd_ctx->active_ac |= ac_bit;
+		adapter->active_ac |= ac_bit;
 	else
-		hdd_ctx->active_ac &= ~ac_bit;
+		adapter->active_ac &= ~ac_bit;
 
-	if (hdd_ctx->active_ac) {
-		if (hdd_ctx->active_ac & HDD_AC_VO_BIT) {
+	if (adapter->active_ac) {
+		if (adapter->active_ac & HDD_AC_VO_BIT) {
 			cmd->max_off_chan_time =
 				limit_off_chan_tbl[TOS_VO][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
 					PM_LATENCY);
-		} else if (hdd_ctx->active_ac & HDD_AC_VI_BIT) {
+		} else if (adapter->active_ac & HDD_AC_VI_BIT) {
 			cmd->max_off_chan_time =
 				limit_off_chan_tbl[TOS_VI][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,

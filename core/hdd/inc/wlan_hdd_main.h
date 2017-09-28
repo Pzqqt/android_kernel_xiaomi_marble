@@ -1324,6 +1324,7 @@ struct hdd_adapter {
 	u8 restrict_offchannel_cnt;
 	bool con_status;
 	bool dad;
+	uint8_t active_ac;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
@@ -1820,7 +1821,6 @@ struct hdd_context {
 	uint8_t bt_vo_active:1;
 	struct hdd_nud_stats_context nud_stats_context;
 	eCsrBand curr_band;
-	uint8_t active_ac;
 	bool fw_mem_dump_enabled;
 };
 
