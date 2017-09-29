@@ -567,11 +567,11 @@ enum rem_on_channel_request_type {
 	OFF_CHANNEL_ACTION_TX,
 };
 
-typedef struct action_pkt_buffer {
+struct action_pkt_buffer {
 	uint8_t *frame_ptr;
 	uint32_t frame_length;
 	uint16_t freq;
-} action_pkt_buffer_t;
+};
 
 typedef struct hdd_remain_on_chan_ctx {
 	struct net_device *dev;
@@ -581,7 +581,7 @@ typedef struct hdd_remain_on_chan_ctx {
 	u64 cookie;
 	enum rem_on_channel_request_type rem_on_chan_request;
 	qdf_mc_timer_t hdd_remain_on_chan_timer;
-	action_pkt_buffer_t action_pkt_buff;
+	struct action_pkt_buffer action_pkt_buff;
 	bool hdd_remain_on_chan_cancel_in_progress;
 	uint32_t scan_id;
 } hdd_remain_on_chan_ctx_t;
