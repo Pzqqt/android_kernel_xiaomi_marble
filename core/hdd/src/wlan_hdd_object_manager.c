@@ -43,6 +43,7 @@ static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 {
 	/* Initialize the OS private structure*/
 	os_priv->wiphy = hdd_ctx->wiphy;
+	os_priv->legacy_osif_priv = hdd_ctx;
 	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
 }
 
@@ -56,6 +57,7 @@ static void hdd_init_vdev_os_priv(struct hdd_adapter *adapter,
 {
 	/* Initialize the vdev OS private structure*/
 	os_priv->wdev = adapter->dev->ieee80211_ptr;
+	os_priv->legacy_osif_priv = adapter;
 	wlan_cfg80211_tdls_priv_init(os_priv);
 }
 
