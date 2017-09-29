@@ -5865,6 +5865,7 @@ static int hdd_context_deinit(struct hdd_context *hdd_ctx)
  */
 static void hdd_context_destroy(struct hdd_context *hdd_ctx)
 {
+	cds_set_context(QDF_MODULE_ID_HDD, NULL);
 
 	wlan_hdd_deinit_tx_rx_histogram(hdd_ctx);
 
@@ -7782,8 +7783,6 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 
 	hdd_override_ini_config(hdd_ctx);
 
-	cds_set_context(QDF_MODULE_ID_HDD, hdd_ctx);
-
 	ret = hdd_context_init(hdd_ctx);
 
 	if (ret)
@@ -7810,6 +7809,8 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 
 skip_multicast_logging:
 	hdd_set_trace_level_for_each(hdd_ctx);
+
+	cds_set_context(QDF_MODULE_ID_HDD, hdd_ctx);
 
 	EXIT();
 
