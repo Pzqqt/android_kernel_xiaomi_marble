@@ -987,11 +987,11 @@ struct hdd_scan_info {
 #define WLAN_HDD_MAX_MC_ADDR_LIST CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
-typedef struct multicast_addr_list {
+struct hdd_multicast_addr_list {
 	uint8_t isFilterApplied;
 	uint8_t mc_cnt;
 	uint8_t addr[WLAN_HDD_MAX_MC_ADDR_LIST][ETH_ALEN];
-} t_multicast_add_list;
+};
 #endif
 
 #define WLAN_HDD_MAX_HISTORY_ENTRY		10
@@ -1226,7 +1226,7 @@ struct hdd_adapter {
 	hdd_cfg80211_state_t cfg80211State;
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
-	t_multicast_add_list mc_addr_list;
+	struct hdd_multicast_addr_list mc_addr_list;
 #endif
 	uint8_t addr_filter_pattern;
 
