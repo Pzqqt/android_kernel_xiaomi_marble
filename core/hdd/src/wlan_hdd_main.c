@@ -4409,6 +4409,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 				clear_bit(ACS_PENDING, &adapter->event_flags);
 			}
 		}
+		cds_flush_work(&adapter->sap_stop_bss_work);
 		/* Any softap specific cleanup here... */
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
