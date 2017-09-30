@@ -66,7 +66,7 @@ int hdd_disable_default_pkt_filters(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	uint8_t filters = 0, i = 0, filter_id = 1;
 
-	struct pkt_filter_cfg packet_filter_default_rules;
+	struct pkt_filter_cfg packet_filter_default_rules = {0};
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (hdd_ctx == NULL) {
