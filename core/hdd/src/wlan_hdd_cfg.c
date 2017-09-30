@@ -2687,7 +2687,7 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MIN,
 		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MAX),
 #endif
-	REG_VARIABLE(CFG_MAX_AMSDU_NUM_NAME , WLAN_PARAM_Integer,
+	REG_VARIABLE(CFG_MAX_AMSDU_NUM_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, max_amsdu_num,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_MAX_AMSDU_NUM_DEFAULT,
