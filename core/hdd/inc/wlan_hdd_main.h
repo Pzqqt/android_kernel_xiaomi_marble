@@ -615,7 +615,7 @@ struct hdd_wapi_info {
 };
 #endif /* FEATURE_WLAN_WAPI */
 
-typedef struct hdd_beacon_data {
+struct hdd_beacon_data {
 	u8 *head;
 	u8 *tail;
 	u8 *proberesp_ies;
@@ -625,7 +625,7 @@ typedef struct hdd_beacon_data {
 	int proberesp_ies_len;
 	int assocresp_ies_len;
 	int dtim_period;
-} beacon_data_t;
+};
 
 enum rem_on_channel_request_type {
 	REMAIN_ON_CHANNEL_REQUEST,
@@ -946,7 +946,7 @@ struct hdd_ap_ctx {
 	/* WEP default key index */
 	uint8_t wep_def_key_idx;
 
-	beacon_data_t *beacon;
+	struct hdd_beacon_data *beacon;
 
 	bool bApActive;
 

@@ -6422,7 +6422,7 @@ static bool wlan_hdd_get_sap_obss(struct hdd_adapter *pHostapdAdapter)
 	uint8_t ht_cap_ie[DOT11F_IE_HTCAPS_MAX_LEN];
 	tDot11fIEHTCaps dot11_ht_cap_ie = {0};
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
-	beacon_data_t *beacon = pHostapdAdapter->sessionCtx.ap.beacon;
+	struct hdd_beacon_data *beacon = pHostapdAdapter->sessionCtx.ap.beacon;
 	const uint8_t *ie = NULL;
 
 	ie = wlan_get_ie_ptr_from_eid(WLAN_EID_HT_CAPABILITY,
@@ -6679,7 +6679,7 @@ static void wlan_hdd_add_hostapd_conf_vsie(struct hdd_adapter *pHostapdAdapter,
 					   uint8_t *genie,
 					   uint16_t *total_ielen)
 {
-	beacon_data_t *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
+	struct hdd_beacon_data *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
 	int left = pBeacon->tail_len;
 	uint8_t *ptr = pBeacon->tail;
 	uint8_t elem_id, elem_len;
@@ -6747,7 +6747,7 @@ static void wlan_hdd_add_extra_ie(struct hdd_adapter *pHostapdAdapter,
 				  uint8_t *genie, uint16_t *total_ielen,
 				  uint8_t temp_ie_id)
 {
-	beacon_data_t *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
+	struct hdd_beacon_data *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
 	int left = pBeacon->tail_len;
 	uint8_t *ptr = pBeacon->tail;
 	uint8_t elem_id, elem_len;
@@ -6793,13 +6793,13 @@ static void wlan_hdd_add_extra_ie(struct hdd_adapter *pHostapdAdapter,
  */
 static int
 wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *pAdapter,
-				   beacon_data_t **ppBeacon,
+				   struct hdd_beacon_data **ppBeacon,
 				   struct cfg80211_beacon_data *params,
 				   int dtim_period)
 {
 	int size;
-	beacon_data_t *beacon = NULL;
-	beacon_data_t *old = NULL;
+	struct hdd_beacon_data *beacon = NULL;
+	struct hdd_beacon_data *old = NULL;
 	int head_len, tail_len, proberesp_ies_len, assocresp_ies_len;
 	const u8 *head, *tail, *proberesp_ies, *assocresp_ies;
 
@@ -6849,7 +6849,7 @@ wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *pAdapter,
 		assocresp_ies = old->assocresp_ies;
 	}
 
-	size = sizeof(beacon_data_t) + head_len + tail_len +
+	size = sizeof(struct hdd_beacon_data) + head_len + tail_len +
 		proberesp_ies_len + assocresp_ies_len;
 
 	beacon = qdf_mem_malloc(size);
@@ -6866,7 +6866,7 @@ wlan_hdd_cfg80211_alloc_new_beacon(struct hdd_adapter *pAdapter,
 	 * | head | tail | proberesp_ies | assocresp_ies |
 	 * -----------------------------------------------
 	 */
-	beacon->head = ((u8 *) beacon) + sizeof(beacon_data_t);
+	beacon->head = ((u8 *) beacon) + sizeof(struct hdd_beacon_data);
 	beacon->tail = beacon->head + head_len;
 	beacon->proberesp_ies = beacon->tail + tail_len;
 	beacon->assocresp_ies = beacon->proberesp_ies + proberesp_ies_len;
@@ -6924,7 +6924,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	int ret = 0;
 	tsap_Config_t *pConfig;
 	tSirUpdateIE updateIE;
-	beacon_data_t *beacon = NULL;
+	struct hdd_beacon_data *beacon = NULL;
 	uint16_t proberesp_ies_len;
 	uint8_t *proberesp_ies = NULL;
 
@@ -7056,7 +7056,7 @@ done:
 static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *pHostapdAdapter)
 {
 	tsap_Config_t *pConfig = &pHostapdAdapter->sessionCtx.ap.sapConfig;
-	beacon_data_t *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
+	struct hdd_beacon_data *pBeacon = pHostapdAdapter->sessionCtx.ap.beacon;
 	struct ieee80211_mgmt *pMgmt_frame =
 		(struct ieee80211_mgmt *)pBeacon->head;
 	u8 checkRatesfor11g = true;
@@ -7406,7 +7406,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
 				       bool update_beacon)
 {
 	tsap_Config_t *pConfig;
-	beacon_data_t *pBeacon = NULL;
+	struct hdd_beacon_data *pBeacon = NULL;
 	struct ieee80211_mgmt *pMgmt_frame;
 	const uint8_t *pIe = NULL;
 	uint16_t capab_info;
@@ -8082,7 +8082,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tSirUpdateIE updateIE;
-	beacon_data_t *old;
+	struct hdd_beacon_data *old;
 	int ret;
 	hdd_adapter_list_node_t *pAdapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
@@ -8535,7 +8535,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if ((pAdapter->device_mode == QDF_SAP_MODE)
 	    || (pAdapter->device_mode == QDF_P2P_GO_MODE)
 	    ) {
-		beacon_data_t *old, *new;
+		struct hdd_beacon_data *old, *new;
 		enum nl80211_channel_type channel_type;
 		tsap_Config_t *sap_config =
 			&((WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->sapConfig);
@@ -8668,7 +8668,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	beacon_data_t *old, *new;
+	struct hdd_beacon_data *old, *new;
 	int status;
 
 	ENTER();

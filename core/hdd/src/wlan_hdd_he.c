@@ -243,7 +243,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 		hdd_alert("could not set HE PPET");
 }
 
-void wlan_hdd_check_11ax_support(beacon_data_t *beacon, tsap_Config_t *config)
+void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
+				 tsap_Config_t *config)
 {
 	const uint8_t *ie;
 
