@@ -3046,7 +3046,7 @@ wlan_hdd_get_sap_stats(struct hdd_adapter *adapter, struct station_info *info)
  *
  * Return: max rate on success, otherwise 0
  */
-static uint32_t hdd_get_max_rate_legacy(hdd_station_info_t *stainfo,
+static uint32_t hdd_get_max_rate_legacy(struct hdd_station_info *stainfo,
 					uint8_t rssidx)
 {
 	uint32_t maxrate = 0;
@@ -3089,7 +3089,7 @@ static uint32_t hdd_get_max_rate_legacy(hdd_station_info_t *stainfo,
  *
  * Return: None
  */
-static void hdd_get_max_rate_ht(hdd_station_info_t *stainfo,
+static void hdd_get_max_rate_ht(struct hdd_station_info *stainfo,
 				struct hdd_fw_txrx_stats *stats,
 				uint32_t rate_flags,
 				uint8_t nss,
@@ -3159,7 +3159,7 @@ static void hdd_get_max_rate_ht(hdd_station_info_t *stainfo,
  *
  * Return: None
  */
-static void hdd_get_max_rate_vht(hdd_station_info_t *stainfo,
+static void hdd_get_max_rate_vht(struct hdd_station_info *stainfo,
 				 struct hdd_fw_txrx_stats *stats,
 				 uint32_t rate_flags,
 				 uint8_t nss,
@@ -3421,7 +3421,7 @@ static void hdd_fill_station_info_flags(struct station_info *sinfo)
  * Return: None
  */
 static void hdd_fill_rate_info(struct station_info *sinfo,
-			       hdd_station_info_t *stainfo,
+			       struct hdd_station_info *stainfo,
 			       struct hdd_fw_txrx_stats *stats,
 			       struct hdd_config *cfg)
 {
@@ -3565,7 +3565,7 @@ static void hdd_fill_rate_info(struct station_info *sinfo,
  * Return: None
  */
 static void wlan_hdd_fill_station_info(struct station_info *sinfo,
-				       hdd_station_info_t *stainfo,
+				       struct hdd_station_info *stainfo,
 				       struct hdd_fw_txrx_stats *stats,
 				       struct hdd_config *cfg)
 {
@@ -3819,7 +3819,7 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hddctx = wiphy_priv(wiphy);
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	hdd_station_info_t *stainfo = NULL;
+	struct hdd_station_info *stainfo = NULL;
 	struct hdd_config *cfg;
 	struct qdf_mac_addr macaddr;
 	struct sir_peer_info_ext peer_info;

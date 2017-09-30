@@ -600,7 +600,7 @@ QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *pAdapter)
 
 	for (STAId = 0; STAId < WLAN_MAX_STA_COUNT; STAId++) {
 		qdf_mem_zero(&pAdapter->aStaInfo[STAId],
-			     sizeof(hdd_station_info_t));
+			     sizeof(struct hdd_station_info));
 	}
 
 	return status;
@@ -646,7 +646,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *pAdapter,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&pAdapter->aStaInfo[STAId], sizeof(hdd_station_info_t));
+	qdf_mem_zero(&pAdapter->aStaInfo[STAId],
+		     sizeof(struct hdd_station_info));
 
 	pAdapter->aStaInfo[STAId].isUsed = true;
 	pAdapter->aStaInfo[STAId].isDeauthInProgress = false;
@@ -875,7 +876,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *pAdapter,
 	if (pAdapter->aStaInfo[staId].isUsed) {
 		spin_lock_bh(&pAdapter->staInfo_lock);
 		qdf_mem_zero(&pAdapter->aStaInfo[staId],
-			     sizeof(hdd_station_info_t));
+			     sizeof(struct hdd_station_info));
 		spin_unlock_bh(&pAdapter->staInfo_lock);
 	}
 

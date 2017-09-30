@@ -836,7 +836,7 @@ struct hdd_fw_txrx_stats {
 };
 
 /**
- * typedef struct hdd_station_info_t - Per station structure kept in HDD for
+ * struct hdd_station_info - Per station structure kept in HDD for
  *                                     multiple station support for SoftAP
  * @isUsed: The station entry is used or not
  * @ucSTAId: Station ID reported back from HAL (through SAP).
@@ -871,7 +871,7 @@ struct hdd_fw_txrx_stats {
  * @rx_mcs_map: VHT Rx mcs map
  * @tx_mcs_map: VHT Tx mcs map
  */
-typedef struct {
+struct hdd_station_info {
 	bool isUsed;
 	uint8_t ucSTAId;
 	eStationType staType;
@@ -902,7 +902,7 @@ typedef struct {
 	uint8_t max_mcs_idx;
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
-} hdd_station_info_t;
+};
 
 struct hdd_ap_ctx {
 	hdd_hostapd_state_t HostapdState;
@@ -1179,7 +1179,7 @@ struct hdd_adapter {
 	/** Multiple station supports */
 	/** Per-station structure */
 	spinlock_t staInfo_lock;        /* To protect access to station Info */
-	hdd_station_info_t aStaInfo[WLAN_MAX_STA_COUNT];
+	struct hdd_station_info aStaInfo[WLAN_MAX_STA_COUNT];
 	/* uint8_t uNumActiveStation; */
 
 /*************************************************************

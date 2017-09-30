@@ -4637,10 +4637,10 @@ fail:
  *
  * Return: stainfo if found, NULL if not found
  */
-static hdd_station_info_t *hdd_get_stainfo(struct hdd_adapter *adapter,
+static struct hdd_station_info *hdd_get_stainfo(struct hdd_adapter *adapter,
 					   struct qdf_mac_addr mac_addr)
 {
-	hdd_station_info_t *stainfo = NULL;
+	struct hdd_station_info *stainfo = NULL;
 	int i;
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
@@ -4683,7 +4683,7 @@ static int hdd_get_station_remote(struct hdd_context *hdd_ctx,
 				  struct hdd_adapter *adapter,
 				  struct qdf_mac_addr mac_addr)
 {
-	hdd_station_info_t *stainfo = hdd_get_stainfo(adapter, mac_addr);
+	struct hdd_station_info *stainfo = hdd_get_stainfo(adapter, mac_addr);
 	struct sk_buff *skb = NULL;
 	struct sir_peer_info_ext peer_info;
 	uint32_t nl_buf_len;

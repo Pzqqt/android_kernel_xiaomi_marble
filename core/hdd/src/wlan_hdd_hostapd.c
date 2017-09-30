@@ -1280,7 +1280,7 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
  *
  * Return: None.
  */
-static void hdd_fill_station_info(hdd_station_info_t *stainfo,
+static void hdd_fill_station_info(struct hdd_station_info *stainfo,
 				  tSap_StationAssocReassocCompleteEvent *event)
 {
 	stainfo->staType = event->staType;
@@ -4367,7 +4367,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 				       union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *pHostapdAdapter = (netdev_priv(dev));
-	hdd_station_info_t *pStaInfo = pHostapdAdapter->aStaInfo;
+	struct hdd_station_info *pStaInfo = pHostapdAdapter->aStaInfo;
 	struct hdd_context *hdd_ctx;
 	char *buf;
 	int cnt = 0;
@@ -5112,7 +5112,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 
 	written = scnprintf(buf, size, "\nstaId staAddress\n");
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		hdd_station_info_t *sta = &adapter->aStaInfo[i];
+		struct hdd_station_info *sta = &adapter->aStaInfo[i];
 
 		if (written >= size - 1)
 			break;
