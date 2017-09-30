@@ -1375,7 +1375,7 @@ struct hdd_priv_data {
 };
 
 #define  MAX_MOD_LOGLEVEL 10
-typedef struct {
+struct fw_log_info {
 	uint8_t enable;
 	uint8_t dl_type;
 	uint8_t dl_report;
@@ -1383,7 +1383,7 @@ typedef struct {
 	uint8_t index;
 	uint32_t dl_mod_loglevel[MAX_MOD_LOGLEVEL];
 
-} fw_log_info;
+};
 
 /**
  * enum antenna_mode - number of TX/RX chains
@@ -1692,7 +1692,7 @@ struct hdd_context {
 #ifdef FEATURE_GREEN_AP
 	struct hdd_green_ap_ctx *green_ap_ctx;
 #endif
-	fw_log_info fw_log_settings;
+	struct fw_log_info fw_log_settings;
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	qdf_mc_timer_t skip_acs_scan_timer;
 	uint8_t skip_acs_scan_status;
