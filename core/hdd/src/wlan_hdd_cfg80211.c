@@ -9504,7 +9504,7 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 	ENTER_DEV(wdev->netdev);
 
 	if (!qdf_ctx) {
-		cds_err("qdf_ctx is NULL");
+		hdd_err("qdf_ctx is NULL");
 		return -EINVAL;
 	}
 

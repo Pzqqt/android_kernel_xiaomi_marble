@@ -1347,13 +1347,13 @@ void hdd_ipa_set_tx_flow_info(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
+		hdd_err("HDD context is NULL");
 		return;
 	}
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
+		hdd_err("Invalid CDS Context");
 		return;
 	}
 
@@ -1451,7 +1451,7 @@ void hdd_ipa_set_tx_flow_info(void)
 				cdp_fc_ll_set_tx_pause_q_depth(soc,
 					adapter->sessionId,
 					hdd_ctx->config->TxFlowMaxQueueDepth);
-				cds_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
+				hdd_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
 				    adapter->device_mode,
 				    targetChannel,
 				    adapter->tx_flow_low_watermark,
@@ -1477,7 +1477,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						adapter->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
-					cds_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					       hdd_device_mode_to_string(
 							adapter->device_mode),
 					       adapter->device_mode,
@@ -1490,7 +1490,7 @@ void hdd_ipa_set_tx_flow_info(void)
 					       TxHbwFlowMaxQueueDepth);
 
 					if (!preAdapterContext) {
-						cds_err("SCC: Previous adapter context NULL");
+						hdd_err("SCC: Previous adapter context NULL");
 						continue;
 					}
 
@@ -1503,7 +1503,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						preAdapterContext->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
-					cds_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					       hdd_device_mode_to_string(
 						preAdapterContext->device_mode
 							  ),
@@ -1539,7 +1539,7 @@ void hdd_ipa_set_tx_flow_info(void)
 					}
 
 					if (!adapter5) {
-						cds_err("MCC: 5GHz adapter context NULL");
+						hdd_err("MCC: 5GHz adapter context NULL");
 						continue;
 					}
 					adapter5->tx_flow_low_watermark =
@@ -1553,7 +1553,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						adapter5->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
-					cds_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					    hdd_device_mode_to_string(
 						    adapter5->device_mode),
 					    adapter5->device_mode,
@@ -1567,7 +1567,7 @@ void hdd_ipa_set_tx_flow_info(void)
 					    TxHbwFlowMaxQueueDepth);
 
 					if (!adapter2_4) {
-						cds_err("MCC: 2.4GHz adapter context NULL");
+						hdd_err("MCC: 2.4GHz adapter context NULL");
 						continue;
 					}
 					adapter2_4->tx_flow_low_watermark =
@@ -1581,7 +1581,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						adapter2_4->sessionId,
 						hdd_ctx->config->
 						TxLbwFlowMaxQueueDepth);
-					cds_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 						hdd_device_mode_to_string(
 						    adapter2_4->device_mode),
 						adapter2_4->device_mode,

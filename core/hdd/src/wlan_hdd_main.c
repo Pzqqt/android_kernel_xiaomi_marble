@@ -12383,17 +12383,17 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 					SME_CMD_TIMEOUT_VALUE);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				cds_err("SAP Stop Failed");
+				hdd_err("SAP Stop Failed");
 				goto end;
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 			ap_adapter->device_mode, ap_adapter->sessionId);
-		cds_err("SAP Stop Success");
+		hdd_err("SAP Stop Success");
 
 		if (0 != wlan_hdd_cfg80211_update_apies(ap_adapter)) {
-			cds_err("SAP Not able to set AP IEs");
+			hdd_err("SAP Not able to set AP IEs");
 			wlansap_reset_sap_config_add_ie(sap_config,
 					eUPDATE_IE_ALL);
 			goto end;
@@ -12403,23 +12403,23 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		if (wlansap_start_bss(sap_ctx, hdd_hostapd_sap_event_cb,
 				      sap_config,
 				      ap_adapter->dev) != QDF_STATUS_SUCCESS) {
-			cds_err("SAP Start Bss fail");
+			hdd_err("SAP Start Bss fail");
 			wlansap_reset_sap_config_add_ie(sap_config,
 					eUPDATE_IE_ALL);
 			goto end;
 		}
 
-		cds_info("Waiting for SAP to start");
+		hdd_info("Waiting for SAP to start");
 		qdf_status =
 			qdf_wait_single_event(&hostapd_state->qdf_event,
 					SME_CMD_TIMEOUT_VALUE);
 		wlansap_reset_sap_config_add_ie(sap_config,
 				eUPDATE_IE_ALL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			cds_err("SAP Start failed");
+			hdd_err("SAP Start failed");
 			goto end;
 		}
-		cds_err("SAP Start Success");
+		hdd_err("SAP Start Success");
 		set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 		if (hostapd_state->bssState == BSS_START)
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
@@ -12448,19 +12448,19 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
+		hdd_err("HDD context is NULL");
 		return;
 	}
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
-		cds_err("Invalid CDS Context");
+		hdd_err("Invalid CDS Context");
 		return;
 	}
 
 	if (policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc)
 		!= (QDF_STA_MASK | QDF_SAP_MASK)) {
-		cds_info("Concurrency mode is not SAP");
+		hdd_info("Concurrency mode is not SAP");
 		return;
 	}
 
@@ -12470,7 +12470,7 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
 				ap_adapter->sessionCtx.ap.operatingChannel)) {
 
-		cds_warn("STA-AP Mode DFS not supported. Restart SAP with Non DFS ACS");
+		hdd_warn("STA-AP Mode DFS not supported. Restart SAP with Non DFS ACS");
 		ap_adapter->sessionCtx.ap.sapConfig.channel =
 			AUTO_CHANNEL_SELECT;
 		ap_adapter->sessionCtx.ap.sapConfig.
@@ -12497,7 +12497,7 @@ bool hdd_set_connection_in_progress(bool value)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
+		hdd_err("HDD context is NULL");
 		return false;
 	}
 

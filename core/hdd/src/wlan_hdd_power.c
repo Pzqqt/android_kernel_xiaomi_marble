@@ -1707,7 +1707,7 @@ static void hdd_suspend_cb(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
+		hdd_err("HDD context is NULL");
 		return;
 	}
 
