@@ -528,9 +528,9 @@ struct hdd_ipa_priv {
 	(((_hdd_ctx)->config->IpaConfig & (_mask)) == (_mask))
 
 #define HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa) \
-				hdd_ipa->ipa_rx_internel_drop_count++;
+	(hdd_ipa)->ipa_rx_internel_drop_count++
 #define HDD_IPA_INCREASE_NET_SEND_COUNT(hdd_ipa) \
-				hdd_ipa->ipa_rx_net_send_count++;
+	(hdd_ipa)->ipa_rx_net_send_count++
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
 #if defined(QCA_WIFI_3_0) && defined(CONFIG_IPA3)
