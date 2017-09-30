@@ -418,7 +418,7 @@ struct hdd_tx_rx_histogram {
 	uint64_t qtime;
 };
 
-typedef struct hdd_tx_rx_stats {
+struct hdd_tx_rx_stats {
 	/* start_xmit stats */
 	__u32    txXmitCalled;
 	__u32    txXmitDropped;
@@ -437,7 +437,7 @@ typedef struct hdd_tx_rx_stats {
 	__u32    txflow_pause_cnt;
 	__u32    txflow_unpause_cnt;
 	__u32    txflow_timer_cnt;
-} hdd_tx_rx_stats_t;
+};
 
 #ifdef WLAN_FEATURE_11W
 /**
@@ -479,7 +479,7 @@ struct hdd_stats {
 	tCsrGlobalClassAStatsInfo ClassA_stat;
 	tCsrGlobalClassDStatsInfo ClassD_stat;
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
-	hdd_tx_rx_stats_t hddTxRxStats;
+	struct hdd_tx_rx_stats hddTxRxStats;
 	struct hdd_arp_stats_s hdd_arp_stats;
 #ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hddPmfStats;

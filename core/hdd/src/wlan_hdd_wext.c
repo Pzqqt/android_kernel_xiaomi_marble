@@ -3003,7 +3003,7 @@ int hdd_check_private_wext_control(struct hdd_context *hdd_ctx,
 void hdd_wlan_get_stats(struct hdd_adapter *pAdapter, uint16_t *length,
 			char *buffer, uint16_t buf_len)
 {
-	hdd_tx_rx_stats_t *pStats = &pAdapter->hdd_stats.hddTxRxStats;
+	struct hdd_tx_rx_stats *pStats = &pAdapter->hdd_stats.hddTxRxStats;
 	uint32_t len = 0;
 	uint32_t total_rx_pkt = 0, total_rx_dropped = 0;
 	uint32_t total_rx_delv = 0, total_rx_refused = 0;
