@@ -5111,15 +5111,14 @@ static QDF_STATUS hdd_cfg_get_config(struct reg_table_entry *reg_table,
 	return QDF_STATUS_SUCCESS;
 }
 
-/** struct tCfgIniEntry - ini configuration entry
- *
+/** struct hdd_cfg_entry - ini configuration entry
  * @name: name of the entry
  * @value: value of the entry
  */
-typedef struct {
+struct hdd_cfg_entry {
 	char *name;
 	char *value;
-} tCfgIniEntry;
+};
 
 /**
  * find_cfg_item() - find the configuration item
@@ -5131,7 +5130,8 @@ typedef struct {
  * Return: QDF_STATUS_SUCCESS if the interested configuration is found,
  *		otherwise QDF_STATUS_E_FAILURE
  */
-static QDF_STATUS find_cfg_item(tCfgIniEntry *iniTable, unsigned long entries,
+static QDF_STATUS find_cfg_item(struct hdd_cfg_entry *iniTable,
+				unsigned long entries,
 				char *name, char **value)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
@@ -5178,7 +5178,7 @@ static int parse_hex_digit(char c)
  * Return: None
  */
 static void update_mac_from_string(struct hdd_context *hdd_ctx,
-				   tCfgIniEntry *macTable, int num)
+				   struct hdd_cfg_entry *macTable, int num)
 {
 	int i = 0, j = 0, res = 0;
 	char *candidate = NULL;
@@ -5215,7 +5215,7 @@ static void update_mac_from_string(struct hdd_context *hdd_ctx,
  *		otherwise QDF_STATUS_E_INVAL
  */
 static QDF_STATUS hdd_apply_cfg_ini(struct hdd_context *hdd_ctx,
-				    tCfgIniEntry *iniTable,
+				    struct hdd_cfg_entry *iniTable,
 				    unsigned long entries)
 {
 	QDF_STATUS match_status = QDF_STATUS_E_FAILURE;
@@ -6611,7 +6611,7 @@ QDF_STATUS hdd_update_mac_config(struct hdd_context *hdd_ctx)
 	char *temp = NULL;
 	char *name, *value;
 	int max_mac_addr = QDF_MAX_CONCURRENCY_PERSONA;
-	tCfgIniEntry macTable[QDF_MAX_CONCURRENCY_PERSONA];
+	struct hdd_cfg_entry macTable[QDF_MAX_CONCURRENCY_PERSONA];
 	tSirMacAddr customMacAddr;
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -6804,7 +6804,7 @@ QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx)
 	size_t size;
 	char *name, *value;
 	/* cfgIniTable is static to avoid excess stack usage */
-	static tCfgIniEntry cfgIniTable[MAX_CFG_INI_ITEMS];
+	static struct hdd_cfg_entry cfgIniTable[MAX_CFG_INI_ITEMS];
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	memset(cfgIniTable, 0, sizeof(cfgIniTable));
