@@ -203,29 +203,6 @@ typedef enum {
 #define WIFI_TDLS_EXTERNAL_CONTROL_SUPPORT	BIT(1)
 #define WIIF_TDLS_OFFCHANNEL_SUPPORT		BIT(2)
 
-#define HDD_MAX_AVOID_FREQ_RANGES   4
-/**
- * typedef struct sHddAvoidFreqRange - avoid frequency range
- *
- * @startFreq: Start frequency range
- * @endFreq: End frequency range
- */
-typedef struct sHddAvoidFreqRange {
-	u32 startFreq;
-	u32 endFreq;
-} tHddAvoidFreqRange;
-
-/**
- * typedef struct sHddAvoidFreqList - avoid frequency list
- *
- * @avoidFreqRangeCount: Avoid frequency range count
- * @avoidFreqRange: Avoid frequency list
- */
-typedef struct sHddAvoidFreqList {
-	u32 avoidFreqRangeCount;
-	tHddAvoidFreqRange avoidFreqRange[HDD_MAX_AVOID_FREQ_RANGES];
-} tHddAvoidFreqList;
-
 #define CFG_NON_AGG_RETRY_MAX                  (31)
 #define CFG_AGG_RETRY_MAX                      (31)
 #define CFG_MGMT_RETRY_MAX                     (31)
