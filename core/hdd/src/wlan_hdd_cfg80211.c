@@ -802,7 +802,7 @@ int wlan_hdd_merge_avoid_freqs(struct ch_avoid_ind_type *destFreqList,
 	&destFreqList->avoid_freq_range[destFreqList->ch_avoid_range_cnt];
 
 	destFreqList->ch_avoid_range_cnt += srcFreqList->ch_avoid_range_cnt;
-	if (destFreqList->ch_avoid_range_cnt > HDD_MAX_AVOID_FREQ_RANGES) {
+	if (destFreqList->ch_avoid_range_cnt > CH_AVOID_MAX_RANGE) {
 		hdd_err("avoid freq overflow");
 		return -EINVAL;
 	}
