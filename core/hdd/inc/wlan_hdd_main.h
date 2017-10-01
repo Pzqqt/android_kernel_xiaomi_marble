@@ -521,13 +521,8 @@ struct hdd_roaming_info {
 
 #ifdef FEATURE_WLAN_WAPI
 /* Define WAPI macros for Length, BKID count etc*/
-#define MAX_WPI_KEY_LENGTH    16
-#define MAX_NUM_PN            16
 #define MAC_ADDR_LEN           6
-#define MAX_ADDR_INDEX        12
 #define MAX_NUM_AKM_SUITES    16
-#define MAX_NUM_UNI_SUITES    16
-#define MAX_NUM_BKIDS         16
 
 /** WAPI AUTH mode definition */
 enum wapi_auth_mode {
@@ -535,66 +530,6 @@ enum wapi_auth_mode {
 	WAPI_AUTH_MODE_PSK = 1,
 	WAPI_AUTH_MODE_CERT
 } __packed;
-
-/** WAPI Work mode structure definition */
-#define   WZC_ORIGINAL      0
-#define   WAPI_EXTENTION    1
-
-struct wapi_function_mode {
-	unsigned char wapiMode;
-} __packed;
-
-typedef struct _WAPI_BKID {
-	uint8_t bkid[16];
-} WAPI_BKID, *pWAPI_BKID;
-
-/** WAPI Association information structure definition */
-struct _WAPI_AssocInfo {
-	uint8_t elementID;
-	uint8_t length;
-	uint16_t version;
-	uint16_t akmSuiteCount;
-	uint32_t akmSuite[MAX_NUM_AKM_SUITES];
-	uint16_t unicastSuiteCount;
-	uint32_t unicastSuite[MAX_NUM_UNI_SUITES];
-	uint32_t multicastSuite;
-	uint16_t wapiCability;
-	uint16_t bkidCount;
-	WAPI_BKID bkidList[MAX_NUM_BKIDS];
-} __packed;
-
-typedef struct _WAPI_AssocInfo WAPI_AssocInfo;
-typedef struct _WAPI_AssocInfo *pWAPI_IEAssocInfo;
-
-/** WAPI KEY Type definition */
-enum _WAPIKeyType {
-	PAIRWISE_KEY,           /* 0 */
-	GROUP_KEY               /* 1 */
-} __packed;
-
-/** WAPI KEY Direction definition */
-enum key_direction {
-	None,
-	Rx,
-	Tx,
-	Rx_Tx
-} __packed;
-
-/* WAPI KEY structure definition */
-struct WLAN_WAPI_KEY {
-	enum _WAPIKeyType keyType;
-	enum key_direction keyDirection;        /*reserved for future use */
-	uint8_t keyId;
-	uint8_t addrIndex[MAX_ADDR_INDEX];      /*reserved for future use */
-	int wpiekLen;
-	uint8_t wpiek[MAX_WPI_KEY_LENGTH];
-	int wpickLen;
-	uint8_t wpick[MAX_WPI_KEY_LENGTH];
-	uint8_t pn[MAX_NUM_PN]; /*reserved for future use */
-} __packed;
-
-typedef struct WLAN_WAPI_KEY WLAN_WAPI_KEY;
-typedef struct WLAN_WAPI_KEY *pWLAN_WAPI_KEY;
 
 #define WPA_GET_LE16(a) ((u16) (((a)[1] << 8) | (a)[0]))
 #define WPA_GET_BE24(a) ((u32) ((a[0] << 16) | (a[1] << 8) | a[2]))
