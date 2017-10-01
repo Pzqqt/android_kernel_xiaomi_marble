@@ -573,7 +573,7 @@ struct action_pkt_buffer {
 	uint16_t freq;
 };
 
-typedef struct hdd_remain_on_chan_ctx {
+struct hdd_remain_on_chan_ctx {
 	struct net_device *dev;
 	struct ieee80211_channel chan;
 	enum nl80211_channel_type chan_type;
@@ -584,13 +584,13 @@ typedef struct hdd_remain_on_chan_ctx {
 	struct action_pkt_buffer action_pkt_buff;
 	bool hdd_remain_on_chan_cancel_in_progress;
 	uint32_t scan_id;
-} hdd_remain_on_chan_ctx_t;
+};
 
 /* RoC Request entry */
 typedef struct hdd_roc_req {
 	qdf_list_node_t node;   /* MUST be first element */
 	struct hdd_adapter *pAdapter;
-	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
+	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
 } hdd_roc_req_t;
 
 /**
@@ -640,7 +640,7 @@ typedef struct hdd_cfg80211_state {
 	u64 action_cookie;
 	uint8_t *buf;
 	size_t len;
-	hdd_remain_on_chan_ctx_t *remain_on_chan_ctx;
+	struct hdd_remain_on_chan_ctx *remain_on_chan_ctx;
 	struct mutex remain_on_chan_ctx_lock;
 	enum p2p_action_frame_state actionFrmState;
 	/* is_go_neg_ack_received flag is set to 1 when
