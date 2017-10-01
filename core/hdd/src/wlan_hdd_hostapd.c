@@ -6543,7 +6543,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	if ((pAdapter->device_mode == QDF_STA_MODE)
 	    || (pAdapter->device_mode == QDF_P2P_CLIENT_MODE)
 	    ) {
-		hdd_wext_state_t *pWextState =
+		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 		tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
 		struct hdd_station_ctx *pHddStaCtx =

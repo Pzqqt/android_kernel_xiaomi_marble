@@ -4125,7 +4125,7 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 {
 	struct hdd_adapter *pAdapter = (struct hdd_adapter *) pContext;
 	struct hdd_stats *pStatsCache = NULL;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	tCsrSummaryStatsInfo *pSummaryStats = NULL;
@@ -4169,7 +4169,8 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
  */
 void hdd_clear_roam_profile_ie(struct hdd_adapter *pAdapter)
 {
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
 	ENTER();
 
@@ -4654,7 +4655,7 @@ static int __iw_set_mode(struct net_device *dev,
 			 struct iw_request_info *info,
 			 union iwreq_data *wrqu, char *extra)
 {
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	tCsrRoamProfile *pRoamProfile;
@@ -4771,7 +4772,7 @@ static int
 __iw_get_mode(struct net_device *dev, struct iw_request_info *info,
 	      union iwreq_data *wrqu, char *extra)
 {
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	int ret;
@@ -4847,7 +4848,7 @@ static int __iw_set_freq(struct net_device *dev, struct iw_request_info *info,
 	uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t indx = 0;
 	int ret;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -4971,7 +4972,7 @@ static int __iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 	uint32_t status = false, channel = 0, freq = 0;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tHalHandle hHal;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	tCsrRoamProfile *pRoamProfile;
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
@@ -5180,7 +5181,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 			    union iwreq_data *wrqu, char *extra)
 {
 	QDF_STATUS status;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
@@ -5271,7 +5272,7 @@ static int __iw_set_bitrate(struct net_device *dev,
 			    union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	uint8_t supp_rates[WNI_CFG_SUPPORTED_RATES_11A_LEN];
 	uint32_t a_len = WNI_CFG_SUPPORTED_RATES_11A_LEN;
@@ -5377,7 +5378,8 @@ static int __iw_set_genie(struct net_device *dev,
 			  union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	uint8_t *genie = NULL;
 	uint8_t *base_genie = NULL;
 	uint16_t remLen;
@@ -5570,7 +5572,7 @@ static int __iw_get_genie(struct net_device *dev,
 			  struct iw_request_info *info,
 			  union iwreq_data *wrqu, char *extra)
 {
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	QDF_STATUS status;
@@ -5664,7 +5666,8 @@ static int __iw_get_encode(struct net_device *dev,
 			   struct iw_point *dwrq, char *extra)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
 	int keyId;
 	eCsrAuthType authType = eCSR_AUTH_TYPE_NONE;
@@ -6731,8 +6734,10 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 			   union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx =
+		WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	struct iw_point *encoderq = &(wrqu->encoding);
 	uint32_t keyId;
@@ -6920,7 +6925,8 @@ static int __iw_get_encodeext(struct net_device *dev,
 			      struct iw_point *dwrq, char *extra)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
 	int keyId;
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
@@ -7019,8 +7025,10 @@ static int __iw_set_encodeext(struct net_device *dev,
 			      union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx =
+		WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
@@ -10131,7 +10139,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	int ret;
 #ifdef WLAN_FEATURE_11W
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 #endif
 
 #ifdef WLAN_FEATURE_11W
@@ -12228,7 +12236,7 @@ static int __iw_get_statistics(struct net_device *dev,
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	char *p = extra;
@@ -14432,7 +14440,7 @@ const struct iw_handler_def we_handler_def = {
  */
 static int hdd_set_wext(struct hdd_adapter *pAdapter)
 {
-	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	ENTER();
@@ -14487,12 +14495,12 @@ static int hdd_set_wext(struct hdd_adapter *pAdapter)
 }
 
 #ifdef WLAN_FEATURE_FILS_SK
-static void hdd_initialize_fils_info(hdd_wext_state_t *pwextBuf)
+static void hdd_initialize_fils_info(struct hdd_wext_state *pwextBuf)
 {
 	pwextBuf->roamProfile.fils_con_info = NULL;
 }
 #else
-static void hdd_initialize_fils_info(hdd_wext_state_t *pwextBuf)
+static void hdd_initialize_fils_info(struct hdd_wext_state *pwextBuf)
 { }
 #endif
 
@@ -14507,7 +14515,7 @@ static void hdd_initialize_fils_info(hdd_wext_state_t *pwextBuf)
 int hdd_register_wext(struct net_device *dev)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	QDF_STATUS status;
 
 	ENTER();
@@ -14518,7 +14526,7 @@ int hdd_register_wext(struct net_device *dev)
 	}
 
 	/* Zero the memory. This zeros the profile structure */
-	memset(pwextBuf, 0, sizeof(hdd_wext_state_t));
+	memset(pwextBuf, 0, sizeof(struct hdd_wext_state));
 
 	status = hdd_set_wext(pAdapter);
 

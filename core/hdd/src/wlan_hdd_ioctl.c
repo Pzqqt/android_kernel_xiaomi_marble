@@ -801,7 +801,8 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 				const tSirMacAddr bssid, int channel)
 {
-	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_wext_state *wext_state =
+		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	tCsrRoamProfile *profile = &wext_state->roamProfile;
@@ -4756,7 +4757,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	tSirModifyIE ibssModifyIE;
 	tCsrRoamProfile *pRoamProfile;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 
 
 	if (QDF_IBSS_MODE != adapter->device_mode) {

@@ -666,7 +666,7 @@ struct hdd_mon_set_ch_info {
 
 struct hdd_station_ctx {
 	/* Handle to the Wireless Extension State */
-	hdd_wext_state_t WextState;
+	struct hdd_wext_state WextState;
 
 	/* Connection information*/
 	struct hdd_connection_info conn_info;

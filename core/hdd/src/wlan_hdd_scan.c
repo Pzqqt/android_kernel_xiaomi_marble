@@ -443,7 +443,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	struct hdd_scan_info *pScanInfo = NULL;
 	struct hdd_adapter *con_sap_adapter;
 	uint16_t con_dfs_ch;
-	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;

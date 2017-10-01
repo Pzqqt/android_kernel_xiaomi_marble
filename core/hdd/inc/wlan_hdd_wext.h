@@ -203,7 +203,7 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
  * This structure contains the interface level (granularity)
  * configuration information in support of wireless extensions.
  */
-typedef struct hdd_wext_state {
+struct hdd_wext_state {
 	/** The CSR "desired" Profile */
 	tCsrRoamProfile roamProfile;
 
@@ -230,8 +230,7 @@ typedef struct hdd_wext_state {
 
 	/**Counter measure state, Started/Stopped*/
 	bool mTKIPCounterMeasures;
-
-} hdd_wext_state_t;
+};
 
 struct ccp_freq_chan_map {
 	/* List of frequencies */

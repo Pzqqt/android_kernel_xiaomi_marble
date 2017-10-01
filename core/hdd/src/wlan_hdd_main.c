@@ -4272,7 +4272,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 			    const bool bCloseSession)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
@@ -12519,7 +12520,8 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 			      int8_t *rssi, int8_t *snr)
 {
 	QDF_STATUS status;
-	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_wext_state *wext_state =
+		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	tCsrRoamProfile *profile = &wext_state->roamProfile;
 
 	status = sme_get_rssi_snr_by_bssid(WLAN_HDD_GET_HAL_CTX(adapter),

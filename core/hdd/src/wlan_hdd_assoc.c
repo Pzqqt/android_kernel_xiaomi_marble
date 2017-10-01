@@ -1237,7 +1237,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 	/* Added to find the auth type on the fly at run time */
 	/* rather than with cfg to see if FT is enabled */
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
 
 	memset(&wrqu, '\0', sizeof(wrqu));
@@ -2503,7 +2504,7 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *pAdapter)
 #if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
 void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 {
-	hdd_wext_state_t *wext_state;
+	struct hdd_wext_state *wext_state;
 
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE))
@@ -3072,7 +3073,7 @@ static QDF_STATUS hdd_association_completion_handler(struct hdd_adapter *pAdapte
 #endif
 	} else {
 		bool connect_timeout = false;
-		hdd_wext_state_t *pWextState =
+		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 		if (pRoamInfo)
 			hdd_err("wlan: connection failed with " MAC_ADDRESS_STR
@@ -4359,7 +4360,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct hdd_adapter *pAdapter = (struct hdd_adapter *) pContext;
-	hdd_wext_state_t *pWextState = NULL;
+	struct hdd_wext_state *pWextState = NULL;
 	struct hdd_station_ctx *pHddStaCtx = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct cfg80211_bss *bss_status;
@@ -4871,7 +4872,8 @@ hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4])
  */
 static inline bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 {
-	hdd_wext_state_t *wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_wext_state *wext_state =
+		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
 	if (wext_state->roamProfile.fils_con_info)
 		return wext_state->roamProfile.
@@ -5000,9 +5002,11 @@ static int32_t hdd_process_genie(struct hdd_adapter *pAdapter,
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_genie_to_csr(struct hdd_adapter *pAdapter, eCsrAuthType *RSNAuthType)
+int hdd_set_genie_to_csr(struct hdd_adapter *pAdapter,
+			 eCsrAuthType *RSNAuthType)
 {
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	uint32_t status = 0;
 	eCsrEncryptionType RSNEncryptType;
 	eCsrEncryptionType mcRSNEncryptType;
@@ -5114,11 +5118,14 @@ static bool hdd_check_fils_rsn_n_set_auth_type(tCsrRoamProfile *roam_profile,
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_csr_auth_type(struct hdd_adapter *pAdapter, eCsrAuthType RSNAuthType)
+int hdd_set_csr_auth_type(struct hdd_adapter *pAdapter,
+			  eCsrAuthType RSNAuthType)
 {
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx =
+		WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	pRoamProfile->AuthType.numEntries = 1;
 	hdd_debug("pHddStaCtx->conn_info.authType = %d",
@@ -5263,7 +5270,7 @@ static int __iw_set_essid(struct net_device *dev,
 		 union iwreq_data *wrqu, char *extra)
 {
 	uint32_t status = 0;
-	hdd_wext_state_t *pWextState;
+	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	uint32_t roamId;
@@ -5493,8 +5500,9 @@ static int __iw_get_essid(struct net_device *dev,
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	hdd_wext_state_t *wextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_wext_state *wextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx =
+		WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ret;
 
 	ENTER_DEV(dev);
@@ -5564,8 +5572,10 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_station_ctx *pHddStaCtx =
+		WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
 	eCsrEncryptionType mcEncryptionType;
 	eCsrEncryptionType ucEncryptionType;
@@ -5800,7 +5810,8 @@ static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pWextState =
+		WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
 	int ret;
 
