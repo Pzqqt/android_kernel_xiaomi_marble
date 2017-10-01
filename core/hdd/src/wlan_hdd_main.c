@@ -3475,7 +3475,7 @@ error_register_wext:
 
 void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 {
-	hdd_cfg80211_state_t *cfgState;
+	struct hdd_cfg80211_state *cfgState;
 
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
 
@@ -3923,7 +3923,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	struct hdd_adapter *adapter = NULL;
 	hdd_adapter_list_node_t *pHddAdapterNode = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	hdd_cfg80211_state_t *cfgState;
+	struct hdd_cfg80211_state *cfgState;
 
 
 	if (hdd_ctx->current_intf_count >= hdd_ctx->max_intf_count) {

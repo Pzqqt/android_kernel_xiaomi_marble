@@ -635,7 +635,7 @@ enum action_frm_type {
 	WLAN_HDD_PROV_DIS_RESP,
 };
 
-typedef struct hdd_cfg80211_state {
+struct hdd_cfg80211_state {
 	uint16_t current_freq;
 	u64 action_cookie;
 	uint8_t *buf;
@@ -648,7 +648,7 @@ typedef struct hdd_cfg80211_state {
 	 * received.
 	 */
 	bool is_go_neg_ack_received;
-} hdd_cfg80211_state_t;
+};
 
 /**
  * struct hdd_mon_set_ch_info - Holds monitor mode channel switch params
@@ -1158,7 +1158,7 @@ struct hdd_adapter {
 #endif /* WLAN_FEATURE_TSF_PLUS */
 #endif
 
-	hdd_cfg80211_state_t cfg80211State;
+	struct hdd_cfg80211_state cfg80211State;
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	struct hdd_multicast_addr_list mc_addr_list;

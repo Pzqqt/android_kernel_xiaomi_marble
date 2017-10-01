@@ -174,7 +174,8 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 			QDF_STATUS status, uint32_t scan_id)
 {
 	struct hdd_adapter *pAdapter = (struct hdd_adapter *) pCtx;
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	enum rem_on_channel_request_type req_type;
@@ -300,7 +301,8 @@ void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *pAdapter)
 #else
 void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *pAdapter)
 {
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	unsigned long rc;
@@ -389,7 +391,8 @@ void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *pAdapter)
 int wlan_hdd_check_remain_on_channel(struct hdd_adapter *pAdapter)
 {
 	int status = 0;
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 
 	if (QDF_P2P_GO_MODE != pAdapter->device_mode) {
 		/* Cancel Existing Remain On Channel */
@@ -421,7 +424,8 @@ static void wlan_hdd_cancel_pending_roc(struct hdd_adapter *adapter)
 {
 	struct hdd_remain_on_chan_ctx *roc_ctx;
 	unsigned long rc;
-	hdd_cfg80211_state_t *cfg_state = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
+	struct hdd_cfg80211_state *cfg_state =
+		WLAN_HDD_GET_CFG_STATE_PTR(adapter);
 	uint32_t roc_scan_id;
 
 	hdd_debug("ROC completion is not received !!!");
@@ -511,7 +515,8 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *pAdapter)
 void wlan_hdd_cleanup_remain_on_channel_ctx(struct hdd_adapter *pAdapter)
 {
 	uint8_t retry = 0;
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	while (pAdapter->is_roc_inprogress) {
@@ -536,7 +541,7 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 {
 	struct hdd_adapter *pAdapter = (struct hdd_adapter *) data;
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
-	hdd_cfg80211_state_t *cfgState;
+	struct hdd_cfg80211_state *cfgState;
 	struct hdd_context *hdd_ctx;
 	uint32_t roc_scan_id;
 
@@ -587,7 +592,8 @@ static void wlan_hdd_remain_on_chan_timeout(void *data)
 static int wlan_hdd_execute_remain_on_channel(struct hdd_adapter *pAdapter,
 		      struct hdd_remain_on_chan_ctx *pRemainChanCtx)
 {
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
@@ -1080,7 +1086,7 @@ int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 void hdd_remain_chan_ready_handler(struct hdd_adapter *pAdapter,
 	uint32_t scan_id)
 {
-	hdd_cfg80211_state_t *cfgState = NULL;
+	struct hdd_cfg80211_state *cfgState = NULL;
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx = NULL;
 	QDF_STATUS status;
 
@@ -1203,7 +1209,8 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 {
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	int status;
@@ -1429,7 +1436,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 {
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	uint16_t extendedWait = 0;
@@ -1935,7 +1943,8 @@ int wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 
 void hdd_send_action_cnf(struct hdd_adapter *pAdapter, bool actionSendSuccess)
 {
-	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
+	struct hdd_cfg80211_state *cfgState =
+		WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 
 	cfgState->actionFrmState = HDD_IDLE;
 
@@ -2568,7 +2577,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *pAdapter,
 	uint8_t type = 0;
 	uint8_t subType = 0;
 	enum action_frm_type actionFrmType;
-	hdd_cfg80211_state_t *cfgState = NULL;
+	struct hdd_cfg80211_state *cfgState = NULL;
 	QDF_STATUS status;
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx = NULL;
 	struct hdd_context *hdd_ctx;
