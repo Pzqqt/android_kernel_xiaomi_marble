@@ -4395,7 +4395,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 
 			if (QDF_IS_STATUS_SUCCESS(status)) {
-				hdd_hostapd_state_t *hostapd_state =
+				struct hdd_hostapd_state *hostapd_state =
 					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 				qdf_event_reset(&hostapd_state->
 						qdf_stop_bss_event);
@@ -10680,7 +10680,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapt
 void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	hdd_hostapd_state_t *hostapd_state;
+	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
 
@@ -10734,7 +10734,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	hdd_hostapd_state_t *hostapd_state;
+	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx;
 	tsap_Config_t *sap_config;
@@ -12312,7 +12312,7 @@ end:
 void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	hdd_hostapd_state_t *hostapd_state;
+	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_status;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	tsap_Config_t *sap_config;

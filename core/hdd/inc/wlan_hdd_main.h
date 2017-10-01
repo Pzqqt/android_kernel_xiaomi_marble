@@ -701,15 +701,14 @@ struct hdd_station_ctx {
 
 #define BSS_STOP    0
 #define BSS_START   1
-typedef struct hdd_hostapd_state {
+struct hdd_hostapd_state {
 	int bssState;
 	qdf_event_t qdf_event;
 	qdf_event_t qdf_stop_bss_event;
 	qdf_event_t qdf_sta_disassoc_event;
 	QDF_STATUS qdf_status;
 	bool bCommit;
-
-} hdd_hostapd_state_t;
+};
 
 /**
  * enum bss_stop_reason - reasons why a BSS is stopped.
@@ -840,7 +839,7 @@ struct hdd_station_info {
 };
 
 struct hdd_ap_ctx {
-	hdd_hostapd_state_t HostapdState;
+	struct hdd_hostapd_state HostapdState;
 
 	/* Memory differentiation mode is enabled */
 	/* uint16_t uMemoryDiffThreshold; */

@@ -669,7 +669,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *pAdapter,
 				       uint8_t STAId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	hdd_hostapd_state_t *pHostapdState;
+	struct hdd_hostapd_state *pHostapdState;
 
 	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 

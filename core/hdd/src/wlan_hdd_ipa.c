@@ -1325,7 +1325,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *pHddStaCtx;
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	hdd_hostapd_state_t *hostapd_state;
+	struct hdd_hostapd_state *hostapd_state;
 	struct qdf_mac_addr staBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
 	struct qdf_mac_addr p2pBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
 	struct qdf_mac_addr apBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;

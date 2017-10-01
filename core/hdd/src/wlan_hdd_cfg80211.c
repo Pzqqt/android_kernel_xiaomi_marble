@@ -13797,7 +13797,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	tCsrRoamSetKey setKey;
 	int status;
 	uint32_t roamId = 0xFF;
-	hdd_hostapd_state_t *pHostapdState;
+	struct hdd_hostapd_state *pHostapdState;
 	QDF_STATUS qdf_ret_status;
 	struct hdd_context *hdd_ctx;
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
@@ -15080,7 +15080,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *ap_adapter;
 	struct hdd_ap_ctx *hdd_ap_ctx;
-	hdd_hostapd_state_t *hostapd_state;
+	struct hdd_hostapd_state *hostapd_state;
 	uint8_t channel = 0;
 	QDF_STATUS status;
 
@@ -17781,7 +17781,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	hdd_hostapd_state_t *hapd_state;
+	struct hdd_hostapd_state *hapd_state;
 	int status;
 	uint8_t staId;
 	uint8_t *mac;
@@ -18664,7 +18664,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 {
 	int i;
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_hostapd_state_t *pHostapdState;
+	struct hdd_hostapd_state *pHostapdState;
 	tsap_Config_t *pConfig;
 	struct hdd_context *hdd_ctx;
 	int status;
