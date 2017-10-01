@@ -587,11 +587,11 @@ struct hdd_remain_on_chan_ctx {
 };
 
 /* RoC Request entry */
-typedef struct hdd_roc_req {
+struct hdd_roc_req {
 	qdf_list_node_t node;   /* MUST be first element */
 	struct hdd_adapter *pAdapter;
 	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
-} hdd_roc_req_t;
+};
 
 /**
  * struct hdd_scan_req - Scan Request entry

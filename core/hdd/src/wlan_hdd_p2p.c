@@ -757,7 +757,7 @@ static int wlan_hdd_roc_request_enqueue(struct hdd_adapter *adapter,
 			struct hdd_remain_on_chan_ctx *remain_chan_ctx)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	hdd_roc_req_t *hdd_roc_req;
+	struct hdd_roc_req *hdd_roc_req;
 	QDF_STATUS status;
 
 	/*
@@ -832,7 +832,7 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 {
 	QDF_STATUS status;
 	int ret = 0;
-	hdd_roc_req_t *hdd_roc_req;
+	struct hdd_roc_req *hdd_roc_req;
 	struct hdd_context *hdd_ctx =
 			container_of(work, struct hdd_context, roc_req_work.work);
 
@@ -1210,7 +1210,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	int qdf_status;
 	unsigned long rc;
 	qdf_list_node_t *tmp, *q;
-	hdd_roc_req_t *curr_roc_req;
+	struct hdd_roc_req *curr_roc_req;
 	uint32_t roc_scan_id;
 	ENTER();
 
@@ -1229,7 +1229,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		return status;
 	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
 	list_for_each_safe(tmp, q, &hdd_ctx->hdd_roc_req_q.anchor) {
-		curr_roc_req = list_entry(tmp, hdd_roc_req_t, node);
+		curr_roc_req = list_entry(tmp, struct hdd_roc_req, node);
 		if ((uintptr_t) curr_roc_req->pRemainChanCtx == cookie) {
 			qdf_status = qdf_list_remove_node(&hdd_ctx->hdd_roc_req_q,
 						      (qdf_list_node_t *)

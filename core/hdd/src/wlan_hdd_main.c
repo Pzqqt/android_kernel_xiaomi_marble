@@ -5793,7 +5793,7 @@ static int hdd_roc_context_init(struct hdd_context *hdd_ctx)
  */
 static void hdd_destroy_roc_req_q(struct hdd_context *hdd_ctx)
 {
-	hdd_roc_req_t *hdd_roc_req;
+	struct hdd_roc_req *hdd_roc_req;
 	QDF_STATUS status;
 
 	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
