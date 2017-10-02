@@ -159,22 +159,22 @@ struct epping_cookie *epping_alloc_cookie(epping_context_t *pEpping_ctx);
 void epping_get_dummy_mac_addr(tSirMacAddr macAddr);
 void epping_hex_dump(void *data, int buf_len, const char *str);
 void *epping_get_qdf_ctx(void);
-void epping_log_packet(epping_adapter_t *pAdapter,
+void epping_log_packet(epping_adapter_t *adapter,
 		       EPPING_HEADER *eppingHdr, int ret, const char *str);
-void epping_log_stats(epping_adapter_t *pAdapter, const char *str);
-void epping_set_kperf_flag(epping_adapter_t *pAdapter,
+void epping_log_stats(epping_adapter_t *adapter, const char *str);
+void epping_set_kperf_flag(epping_adapter_t *adapter,
 			   HTC_ENDPOINT_ID eid, A_UINT8 kperf_flag);
 
 /* epping_tx signatures */
-void epping_tx_timer_expire(epping_adapter_t *pAdapter);
+void epping_tx_timer_expire(epping_adapter_t *adapter);
 void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue);
-int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *pAdapter);
+int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *adapter);
 
 #ifdef HIF_SDIO
 enum htc_send_full_action epping_tx_queue_full(void *Context,
 						struct _HTC_PACKET *pPacket);
 #endif
-void epping_tx_dup_pkt(epping_adapter_t *pAdapter,
+void epping_tx_dup_pkt(epping_adapter_t *adapter,
 		       HTC_ENDPOINT_ID eid, qdf_nbuf_t skb);
 /* epping_rx signatures */
 void epping_rx(void *Context, HTC_PACKET *pPacket);
@@ -187,7 +187,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint);
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
 				     enum tQDF_ADAPTER_MODE device_mode);
-void epping_destroy_adapter(epping_adapter_t *pAdapter);
+void epping_destroy_adapter(epping_adapter_t *adapter);
 int epping_connect_service(epping_context_t *pEpping_ctx);
 #ifdef HIF_PCI
 void epping_register_tx_copier(HTC_ENDPOINT_ID eid,

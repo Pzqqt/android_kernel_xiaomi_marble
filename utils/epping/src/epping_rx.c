@@ -110,15 +110,15 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint)
 void epping_rx(void *ctx, HTC_PACKET *pPacket)
 {
 	epping_context_t *pEpping_ctx = (epping_context_t *) ctx;
-	epping_adapter_t *pAdapter = pEpping_ctx->epping_adapter;
-	struct net_device *dev = pAdapter->dev;
+	epping_adapter_t *adapter = pEpping_ctx->epping_adapter;
+	struct net_device *dev = adapter->dev;
 	QDF_STATUS status = pPacket->Status;
 	HTC_ENDPOINT_ID eid = pPacket->Endpoint;
 	struct sk_buff *pktSkb = (struct sk_buff *)pPacket->pPktContext;
 
 	EPPING_LOG(QDF_TRACE_LEVEL_INFO,
-		   "%s: pAdapter = 0x%p eid=%d, skb=0x%p, data=0x%p, len=0x%x status:%d",
-		   __func__, pAdapter, eid, pktSkb, pPacket->pBuffer,
+		   "%s: adapter = 0x%p eid=%d, skb=0x%p, data=0x%p, len=0x%x status:%d",
+		   __func__, adapter, eid, pktSkb, pPacket->pBuffer,
 		   pPacket->ActualLength, status);
 
 	if (status != QDF_STATUS_SUCCESS) {
@@ -140,22 +140,22 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 		pktSkb->dev = dev;
 		if ((pktSkb->dev->flags & IFF_UP) == IFF_UP) {
 			pktSkb->protocol = eth_type_trans(pktSkb, pktSkb->dev);
-			++pAdapter->stats.rx_packets;
-			pAdapter->stats.rx_bytes += pktSkb->len;
+			++adapter->stats.rx_packets;
+			adapter->stats.rx_bytes += pktSkb->len;
 			qdf_net_buf_debug_release_skb(pktSkb);
 			if (hdd_napi_enabled(HDD_NAPI_ANY))
 				netif_receive_skb(pktSkb);
 			else
 				netif_rx_ni(pktSkb);
-			if ((pAdapter->stats.rx_packets %
+			if ((adapter->stats.rx_packets %
 				 EPPING_STATS_LOG_COUNT) == 0) {
 				EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 					   "%s: total_rx_pkts = %lu",
 					   __func__,
-					   pAdapter->stats.rx_packets);
+					   adapter->stats.rx_packets);
 			}
 		} else {
-			++pAdapter->stats.rx_dropped;
+			++adapter->stats.rx_dropped;
 			qdf_nbuf_free(pktSkb);
 		}
 	}

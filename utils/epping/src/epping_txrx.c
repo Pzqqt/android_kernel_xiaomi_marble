@@ -51,13 +51,13 @@
 #include "epping_main.h"
 #include "epping_internal.h"
 
-static int epping_start_adapter(epping_adapter_t *pAdapter);
-static void epping_stop_adapter(epping_adapter_t *pAdapter);
+static int epping_start_adapter(epping_adapter_t *adapter);
+static void epping_stop_adapter(epping_adapter_t *adapter);
 
 static void epping_timer_expire(void *data)
 {
 	struct net_device *dev = (struct net_device *)data;
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 
 	if (dev == NULL) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
@@ -65,79 +65,79 @@ static void epping_timer_expire(void *data)
 		return;
 	}
 
-	pAdapter = netdev_priv(dev);
-	if (pAdapter == NULL) {
+	adapter = netdev_priv(dev);
+	if (adapter == NULL) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: adapter = NULL", __func__);
 		return;
 	}
-	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
-	epping_tx_timer_expire(pAdapter);
+	adapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
+	epping_tx_timer_expire(adapter);
 }
 
 static int epping_ndev_open(struct net_device *dev)
 {
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 	int ret = 0;
 
-	pAdapter = netdev_priv(dev);
-	epping_start_adapter(pAdapter);
+	adapter = netdev_priv(dev);
+	epping_start_adapter(adapter);
 	return ret;
 }
 
 static int epping_ndev_stop(struct net_device *dev)
 {
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 	int ret = 0;
 
-	pAdapter = netdev_priv(dev);
-	if (NULL == pAdapter) {
+	adapter = netdev_priv(dev);
+	if (NULL == adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		ret = -ENODEV;
 		goto end;
 	}
-	epping_stop_adapter(pAdapter);
+	epping_stop_adapter(adapter);
 end:
 	return ret;
 }
 
 static void epping_ndev_uninit(struct net_device *dev)
 {
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 
-	pAdapter = netdev_priv(dev);
-	if (NULL == pAdapter) {
+	adapter = netdev_priv(dev);
+	if (NULL == adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		goto end;
 	}
-	epping_stop_adapter(pAdapter);
+	epping_stop_adapter(adapter);
 end:
 	return;
 }
 
 static void epping_tx_queue_timeout(struct net_device *dev)
 {
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 
-	pAdapter = netdev_priv(dev);
-	if (NULL == pAdapter) {
+	adapter = netdev_priv(dev);
+	if (NULL == adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		goto end;
 	}
 
 	EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
-		   "%s: Transmission timeout occurred, pAdapter->started= %d",
-		   __func__, pAdapter->started);
+		   "%s: Transmission timeout occurred, adapter->started= %d",
+		   __func__, adapter->started);
 
 	/* Getting here implies we disabled the TX queues
 	 * for too long. Since this is epping
 	 * (not because of disassociation or low resource scenarios),
 	 * try to restart the queue
 	 */
-	if (pAdapter->started)
+	if (adapter->started)
 		netif_wake_queue(dev);
 end:
 	return;
@@ -146,47 +146,47 @@ end:
 
 static int epping_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 	int ret = 0;
 
-	pAdapter = netdev_priv(dev);
-	if (NULL == pAdapter) {
+	adapter = netdev_priv(dev);
+	if (NULL == adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		ret = -ENODEV;
 		goto end;
 	}
-	ret = epping_tx_send(skb, pAdapter);
+	ret = epping_tx_send(skb, adapter);
 end:
 	return ret;
 }
 
 static struct net_device_stats *epping_get_stats(struct net_device *dev)
 {
-	epping_adapter_t *pAdapter = netdev_priv(dev);
+	epping_adapter_t *adapter = netdev_priv(dev);
 
-	if (NULL == pAdapter) {
-		EPPING_LOG(QDF_TRACE_LEVEL_ERROR, "%s: pAdapter = NULL",
+	if (NULL == adapter) {
+		EPPING_LOG(QDF_TRACE_LEVEL_ERROR, "%s: adapter = NULL",
 			   __func__);
 		return NULL;
 	}
 
-	return &pAdapter->stats;
+	return &adapter->stats;
 }
 
 static int epping_ndev_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 {
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 	int ret = 0;
 
-	pAdapter = netdev_priv(dev);
-	if (NULL == pAdapter) {
+	adapter = netdev_priv(dev);
+	if (NULL == adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: EPPING adapter context is Null", __func__);
 		ret = -ENODEV;
 		goto end;
 	}
-	if (dev != pAdapter->dev) {
+	if (dev != adapter->dev) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: HDD adapter/dev inconsistency", __func__);
 		ret = -ENODEV;
@@ -217,15 +217,15 @@ end:
 
 static int epping_set_mac_address(struct net_device *dev, void *addr)
 {
-	epping_adapter_t *pAdapter = netdev_priv(dev);
+	epping_adapter_t *adapter = netdev_priv(dev);
 	struct sockaddr *psta_mac_addr = addr;
-	qdf_mem_copy(&pAdapter->macAddressCurrent,
+	qdf_mem_copy(&adapter->macAddressCurrent,
 		     psta_mac_addr->sa_data, ETH_ALEN);
 	qdf_mem_copy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	return 0;
 }
 
-static void epping_stop_adapter(epping_adapter_t *pAdapter)
+static void epping_stop_adapter(epping_adapter_t *adapter)
 {
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
@@ -235,17 +235,17 @@ static void epping_stop_adapter(epping_adapter_t *pAdapter)
 		return;
 	}
 
-	if (pAdapter && pAdapter->started) {
+	if (adapter && adapter->started) {
 		EPPING_LOG(LOG1, FL("Disabling queues"));
-		netif_tx_disable(pAdapter->dev);
-		netif_carrier_off(pAdapter->dev);
-		pAdapter->started = false;
+		netif_tx_disable(adapter->dev);
+		netif_carrier_off(adapter->dev);
+		adapter->started = false;
 		pld_request_bus_bandwidth(qdf_ctx->dev,
 					  PLD_BUS_WIDTH_LOW);
 	}
 }
 
-static int epping_start_adapter(epping_adapter_t *pAdapter)
+static int epping_start_adapter(epping_adapter_t *adapter)
 {
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
@@ -255,78 +255,78 @@ static int epping_start_adapter(epping_adapter_t *pAdapter)
 		return -EINVAL;
 	}
 
-	if (!pAdapter) {
+	if (!adapter) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "%s: pAdapter= NULL\n", __func__);
+			   "%s: adapter= NULL\n", __func__);
 		return -EINVAL;
 	}
-	if (!pAdapter->started) {
+	if (!adapter->started) {
 		pld_request_bus_bandwidth(qdf_ctx->dev,
 					  PLD_BUS_WIDTH_HIGH);
-		netif_carrier_on(pAdapter->dev);
+		netif_carrier_on(adapter->dev);
 		EPPING_LOG(LOG1, FL("Enabling queues"));
-		netif_tx_start_all_queues(pAdapter->dev);
-		pAdapter->started = true;
+		netif_tx_start_all_queues(adapter->dev);
+		adapter->started = true;
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_WARN,
-			   "%s: pAdapter %p already started\n", __func__,
-			   pAdapter);
+			   "%s: adapter %p already started\n", __func__,
+			   adapter);
 	}
 	return 0;
 }
 
-static int epping_register_adapter(epping_adapter_t *pAdapter)
+static int epping_register_adapter(epping_adapter_t *adapter)
 {
 	int ret = 0;
 
-	ret = register_netdev(pAdapter->dev);
+	ret = register_netdev(adapter->dev);
 	if (ret != 0) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: unable to register device\n",
-			   pAdapter->dev->name);
+			   adapter->dev->name);
 	} else {
-		pAdapter->registered = true;
+		adapter->registered = true;
 	}
 	return ret;
 }
 
-static void epping_unregister_adapter(epping_adapter_t *pAdapter)
+static void epping_unregister_adapter(epping_adapter_t *adapter)
 {
-	if (pAdapter) {
-		epping_stop_adapter(pAdapter);
-		if (pAdapter->registered) {
-			unregister_netdev(pAdapter->dev);
-			pAdapter->registered = false;
+	if (adapter) {
+		epping_stop_adapter(adapter);
+		if (adapter->registered) {
+			unregister_netdev(adapter->dev);
+			adapter->registered = false;
 		}
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "%s: pAdapter = NULL, unable to unregister device\n",
+			   "%s: adapter = NULL, unable to unregister device\n",
 			   __func__);
 	}
 }
 
-void epping_destroy_adapter(epping_adapter_t *pAdapter)
+void epping_destroy_adapter(epping_adapter_t *adapter)
 {
 	struct net_device *dev = NULL;
 	epping_context_t *pEpping_ctx;
 
-	if (!pAdapter || !pAdapter->pEpping_ctx) {
+	if (!adapter || !adapter->pEpping_ctx) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "%s: pAdapter = NULL\n", __func__);
+			   "%s: adapter = NULL\n", __func__);
 		return;
 	}
 
-	dev = pAdapter->dev;
-	pEpping_ctx = pAdapter->pEpping_ctx;
-	epping_unregister_adapter(pAdapter);
+	dev = adapter->dev;
+	pEpping_ctx = adapter->pEpping_ctx;
+	epping_unregister_adapter(adapter);
 
-	qdf_spinlock_destroy(&pAdapter->data_lock);
-	qdf_timer_free(&pAdapter->epping_timer);
-	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
+	qdf_spinlock_destroy(&adapter->data_lock);
+	qdf_timer_free(&adapter->epping_timer);
+	adapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 
-	while (qdf_nbuf_queue_len(&pAdapter->nodrop_queue)) {
+	while (qdf_nbuf_queue_len(&adapter->nodrop_queue)) {
 		qdf_nbuf_t tmp_nbuf = NULL;
-		tmp_nbuf = qdf_nbuf_queue_remove(&pAdapter->nodrop_queue);
+		tmp_nbuf = qdf_nbuf_queue_remove(&adapter->nodrop_queue);
 		if (tmp_nbuf)
 			qdf_nbuf_free(tmp_nbuf);
 	}
@@ -358,7 +358,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     enum tQDF_ADAPTER_MODE device_mode)
 {
 	struct net_device *dev;
-	epping_adapter_t *pAdapter;
+	epping_adapter_t *adapter;
 
 	dev = alloc_netdev(sizeof(epping_adapter_t), "wifi%d",
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
@@ -371,30 +371,30 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 		return NULL;
 	}
 
-	pAdapter = netdev_priv(dev);
-	qdf_mem_zero(pAdapter, sizeof(*pAdapter));
-	pAdapter->dev = dev;
-	pAdapter->pEpping_ctx = pEpping_ctx;
-	pAdapter->device_mode = device_mode;    /* station, SAP, etc */
+	adapter = netdev_priv(dev);
+	qdf_mem_zero(adapter, sizeof(*adapter));
+	adapter->dev = dev;
+	adapter->pEpping_ctx = pEpping_ctx;
+	adapter->device_mode = device_mode;    /* station, SAP, etc */
 	qdf_mem_copy(dev->dev_addr, (void *)macAddr, sizeof(tSirMacAddr));
-	qdf_mem_copy(pAdapter->macAddressCurrent.bytes,
+	qdf_mem_copy(adapter->macAddressCurrent.bytes,
 		     macAddr, sizeof(tSirMacAddr));
-	qdf_spinlock_create(&pAdapter->data_lock);
-	qdf_nbuf_queue_init(&pAdapter->nodrop_queue);
-	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
-	qdf_timer_init(epping_get_qdf_ctx(), &pAdapter->epping_timer,
+	qdf_spinlock_create(&adapter->data_lock);
+	qdf_nbuf_queue_init(&adapter->nodrop_queue);
+	adapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
+	qdf_timer_init(epping_get_qdf_ctx(), &adapter->epping_timer,
 		epping_timer_expire, dev, QDF_TIMER_TYPE_SW);
 	dev->type = ARPHRD_IEEE80211;
 	dev->netdev_ops = &epping_drv_ops;
 	dev->watchdog_timeo = 5 * HZ;   /* XXX */
 	dev->tx_queue_len = EPPING_TXBUF - 1;      /* 1 for mgmt frame */
-	if (epping_register_adapter(pAdapter) == 0) {
+	if (epping_register_adapter(adapter) == 0) {
 		EPPING_LOG(LOG1, FL("Disabling queues"));
 		netif_tx_disable(dev);
 		netif_carrier_off(dev);
-		return pAdapter;
+		return adapter;
 	} else {
-		epping_destroy_adapter(pAdapter);
+		epping_destroy_adapter(adapter);
 		return NULL;
 	}
 }
