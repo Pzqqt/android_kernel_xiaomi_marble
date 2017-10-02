@@ -258,26 +258,26 @@ QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo,
 
 /**
  * hdd_set_genie_to_csr() - set genie to csr
- * @pAdapter: pointer to adapter
+ * @adapter: pointer to adapter
  * @RSNAuthType: pointer to auth type
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_genie_to_csr(struct hdd_adapter *pAdapter, eCsrAuthType *RSNAuthType);
+int hdd_set_genie_to_csr(struct hdd_adapter *adapter, eCsrAuthType *RSNAuthType);
 
 /**
  * hdd_set_csr_auth_type() - set csr auth type
- * @pAdapter: pointer to adapter
+ * @adapter: pointer to adapter
  * @RSNAuthType: auth type
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_csr_auth_type(struct hdd_adapter *pAdapter, eCsrAuthType RSNAuthType);
+int hdd_set_csr_auth_type(struct hdd_adapter *adapter, eCsrAuthType RSNAuthType);
 
 #ifdef FEATURE_WLAN_TDLS
 /**
  * hdd_roam_register_tdlssta() - register new TDLS station
- * @pAdapter: pointer to adapter
+ * @adapter: pointer to adapter
  * @peerMac: pointer to peer MAC address
  * @staId: station identifier
  * @ucastSig: unicast signature
@@ -287,25 +287,25 @@ int hdd_set_csr_auth_type(struct hdd_adapter *pAdapter, eCsrAuthType RSNAuthType
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 				     const uint8_t *peerMac, uint16_t staId,
 				     uint8_t ucastSig, uint8_t qos);
 #endif
 
-QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *pAdapter, uint8_t staId);
+QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter, uint8_t staId);
 
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
- * @pAdapter: pointer to adapter
+ * @adapter: pointer to adapter
  *
  * Return: none
  */
-void hdd_perform_roam_set_key_complete(struct hdd_adapter *pAdapter);
+void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter);
 
 #ifdef FEATURE_WLAN_ESE
 /**
  * hdd_indicate_ese_bcn_report_no_results() - beacon report no scan results
- * @pAdapter: pointer to adapter
+ * @adapter: pointer to adapter
  * @measurementToken: measurement token
  * @flag: flag
  * @numBss: number of bss
@@ -316,13 +316,13 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *pAdapter);
  * Return: none
  */
 void
-hdd_indicate_ese_bcn_report_no_results(const struct hdd_adapter *pAdapter,
+hdd_indicate_ese_bcn_report_no_results(const struct hdd_adapter *adapter,
 					    const uint16_t measurementToken,
 					    const bool flag,
 					    const uint8_t numBss);
 #endif /* FEATURE_WLAN_ESE */
 
-QDF_STATUS hdd_change_peer_state(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 uint8_t sta_id,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress);
