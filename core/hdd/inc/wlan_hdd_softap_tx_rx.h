@@ -40,12 +40,12 @@
 int hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			       struct net_device *dev);
 void hdd_softap_tx_timeout(struct net_device *dev);
-QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *pAdapter);
-QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *pAdapter);
-QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *adapter);
+QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *adapter);
+QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 				     uint8_t STAId,
 				     struct qdf_mac_addr *pmacAddrSTA);
-QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 				       uint8_t STAId);
 
 QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBufChain);
@@ -54,9 +54,9 @@ QDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
 					qdf_nbuf_t rx_buf_list, uint8_t staId);
 #endif /* IPA_OFFLOAD */
 
-QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 				     uint8_t staId);
-QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 				   bool fAuthRequired,
 				   bool fPrivacyBit,
 				   uint8_t staId,
@@ -64,14 +64,14 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *pAdapter,
 				   uint8_t bcastSig,
 				   struct qdf_mac_addr *pPeerMacAddress,
 				   bool fWmmEnabled);
-QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 				      bool fPrivacyBit);
-QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *adapter);
 QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *pHostapdAdapter);
-QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *pDestMacAddress,
 				       enum ol_txrx_peer_state state);
-QDF_STATUS hdd_softap_get_sta_id(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_softap_get_sta_id(struct hdd_adapter *adapter,
 				 struct qdf_mac_addr *pMacAddress,
 				 uint8_t *staId);
 
