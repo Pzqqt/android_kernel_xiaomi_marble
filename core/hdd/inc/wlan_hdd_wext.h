@@ -277,7 +277,7 @@ extern void hdd_display_stats_help(void);
 extern void hdd_wlan_get_version(struct hdd_context *hdd_ctx,
 				 union iwreq_data *wrqu, char *extra);
 
-extern void hdd_wlan_get_stats(struct hdd_adapter *pAdapter, uint16_t *length,
+extern void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 			       char *buffer, uint16_t buf_len);
 extern void hdd_wlan_list_fw_profile(uint16_t *length,
 			       char *buffer, uint16_t buf_len);
@@ -339,15 +339,15 @@ extern void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 int wlan_hdd_get_linkspeed_for_peermac(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *mac_address,
 				       uint32_t *linkspeed);
-void hdd_clear_roam_profile_ie(struct hdd_adapter *pAdapter);
+void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter);
 
-QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *pAdapter);
+QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter);
 
-QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *pAdapter);
+QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter);
 
-QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *pAdapter, int8_t *rssi_value);
+QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value);
 
-QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *pAdapter, int8_t *snr);
+QDF_STATUS wlan_hdd_get_snr(struct hdd_adapter *adapter, int8_t *snr);
 
 int hdd_get_ldpc(struct hdd_adapter *adapter, int *value);
 int hdd_set_ldpc(struct hdd_adapter *adapter, int value);
@@ -390,12 +390,12 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int value,
  */
 int hdd_set_peer_rate(struct hdd_adapter *adapter, int value);
 
-void wlan_hdd_change_country_code_callback(void *pAdapter);
+void wlan_hdd_change_country_code_callback(void *adapter);
 
 int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, struct hdd_context *phddctx);
 
-int wlan_hdd_get_temperature(struct hdd_adapter *pAdapter, int *temperature);
+int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
 int wlan_hdd_get_link_speed(struct hdd_adapter *sta_adapter, uint32_t *link_speed);
 
 struct iw_request_info;
