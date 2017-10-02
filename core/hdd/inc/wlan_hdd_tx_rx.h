@@ -58,8 +58,8 @@ struct hdd_context;
 int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev);
 void hdd_tx_timeout(struct net_device *dev);
 
-QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *pAdapter);
-QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_init_tx_rx(struct hdd_adapter *adapter);
+QDF_STATUS hdd_deinit_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
