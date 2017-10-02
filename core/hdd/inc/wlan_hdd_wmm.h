@@ -119,7 +119,7 @@ enum hdd_wmm_linuxac {
  *	of contexts
  * @handle: identifer which uniquely identifies this context to userspace
  * @qosFlowID: identifier which uniquely identifies this flow to SME
- * @pAdapter: adapter upon which this flow was configured
+ * @adapter: adapter upon which this flow was configured
  * @acType: access category for this flow
  * @lastStatus: the status of the last operation performed on this flow by SME
  * @wmmAcSetupImplicitQos: work structure used for deferring implicit QoS work
@@ -131,7 +131,7 @@ struct hdd_wmm_qos_context {
 	struct list_head node;
 	uint32_t handle;
 	uint32_t qosFlowId;
-	struct hdd_adapter *pAdapter;
+	struct hdd_adapter *adapter;
 	sme_ac_enum_type acType;
 	hdd_wlan_wmm_status_e lastStatus;
 	struct work_struct wmmAcSetupImplicitQos;

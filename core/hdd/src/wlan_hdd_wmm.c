@@ -122,7 +122,7 @@ const uint8_t hdd_linux_up_to_ac_map[HDD_WMM_UP_TO_AC_MAP_SIZE] = {
  */
 static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 {
-	struct hdd_adapter *pAdapter = pQosContext->pAdapter;
+	struct hdd_adapter *pAdapter = pQosContext->adapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	struct hdd_wmm_ac_status *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -199,7 +199,7 @@ static void hdd_wmm_enable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
  */
 static void hdd_wmm_disable_tl_uapsd(struct hdd_wmm_qos_context *pQosContext)
 {
-	struct hdd_adapter *pAdapter = pQosContext->pAdapter;
+	struct hdd_adapter *pAdapter = pQosContext->adapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	struct hdd_wmm_ac_status *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 	QDF_STATUS status;
@@ -242,7 +242,7 @@ static void hdd_wmm_free_context(struct hdd_wmm_qos_context *pQosContext)
 		return;
 	}
 	/* get pointer to the adapter context */
-	pAdapter = pQosContext->pAdapter;
+	pAdapter = pQosContext->adapter;
 
 	/* take the wmmLock since we're manipulating the context list */
 	mutex_lock(&pAdapter->hddWmmStatus.wmmLock);
@@ -297,7 +297,7 @@ static void hdd_wmm_notify_app(struct hdd_wmm_qos_context *pQosContext)
 	wrqu.data.length = strlen(buf);
 
 	/* get pointer to the adapter */
-	pAdapter = pQosContext->pAdapter;
+	pAdapter = pQosContext->adapter;
 
 	/* send the event */
 	hdd_debug("Sending [%s]", buf);
@@ -329,7 +329,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	uint32_t currentTrafficCnt = 0;
 	sme_ac_enum_type acType = pQosContext->acType;
 
-	pAdapter = pQosContext->pAdapter;
+	pAdapter = pQosContext->adapter;
 	if ((NULL == pAdapter) ||
 	    (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		hdd_err("invalid pAdapter: %pK", pAdapter);
@@ -387,11 +387,11 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
 				uint32_t inactivityTime)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	struct hdd_adapter *pAdapter = pQosContext->pAdapter;
+	struct hdd_adapter *pAdapter = pQosContext->adapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	struct hdd_wmm_ac_status *pAc;
 
-	pAdapter = pQosContext->pAdapter;
+	pAdapter = pQosContext->adapter;
 	pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 
 	qdf_status = qdf_mc_timer_init(&pAc->wmmInactivityTimer,
@@ -438,7 +438,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
 static QDF_STATUS
 hdd_wmm_disable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext)
 {
-	struct hdd_adapter *pAdapter = pQosContext->pAdapter;
+	struct hdd_adapter *pAdapter = pQosContext->adapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	struct hdd_wmm_ac_status *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -498,7 +498,7 @@ static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pAdapter = pQosContext->pAdapter;
+	pAdapter = pQosContext->adapter;
 	acType = pQosContext->acType;
 	pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 
@@ -1008,7 +1008,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 		return;
 	}
 
-	pAdapter = pQosContext->pAdapter;
+	pAdapter = pQosContext->adapter;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	if (wlan_hdd_validate_context(hdd_ctx))
@@ -1763,7 +1763,7 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *pAdapter,
 	}
 
 	pQosContext->acType = acType;
-	pQosContext->pAdapter = pAdapter;
+	pQosContext->adapter = pAdapter;
 	pQosContext->qosFlowId = 0;
 	pQosContext->handle = HDD_WMM_HANDLE_IMPLICIT;
 	pQosContext->magic = HDD_WMM_CTX_MAGIC;
@@ -2172,7 +2172,7 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *pAdapter,
 			HDD_WMM_UP_TO_AC_MAP_SIZE - 1, hdd_wmm_up_to_ac_map[0]);
 		pQosContext->acType = hdd_wmm_up_to_ac_map[0];
 	}
-	pQosContext->pAdapter = pAdapter;
+	pQosContext->adapter = pAdapter;
 	pQosContext->qosFlowId = 0;
 	pQosContext->magic = HDD_WMM_CTX_MAGIC;
 	pQosContext->is_inactivity_timer_running = false;
