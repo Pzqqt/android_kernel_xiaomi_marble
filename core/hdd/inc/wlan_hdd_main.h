@@ -40,6 +40,7 @@
  * from being introduced, primarily by code propagation.
  */
 #define pHddCtx
+#define pAdapter
 
 /*
  * Include files
@@ -1263,14 +1264,16 @@ struct hdd_adapter {
 	uint32_t mon_bandwidth;
 };
 
-#define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
-#define WLAN_HDD_GET_AP_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap)
-#define WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter)  (&(pAdapter)->sessionCtx.station.WextState)
+#define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->sessionCtx.station)
+#define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->sessionCtx.ap)
+#define WLAN_HDD_GET_WEXT_STATE_PTR(adapter) \
+				(&(adapter)->sessionCtx.station.WextState)
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
-#define WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter) (&(pAdapter)->sessionCtx.ap.HostapdState)
-#define WLAN_HDD_GET_CFG_STATE_PTR(pAdapter)  (&(pAdapter)->cfg80211State)
-#define WLAN_HDD_GET_SAP_CTX_PTR(pAdapter) (pAdapter->sessionCtx.ap.sapContext)
+#define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
+				(&(adapter)->sessionCtx.ap.HostapdState)
+#define WLAN_HDD_GET_CFG_STATE_PTR(adapter)  (&(adapter)->cfg80211State)
+#define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->sessionCtx.ap.sapContext)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
@@ -1874,11 +1877,13 @@ QDF_STATUS hdd_add_adapter_back(struct hdd_context *hdd_ctx,
 QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 				 hdd_adapter_list_node_t *pAdapterNode);
 
-struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t session_type,
-				const char *name, tSirMacAddr macAddr,
-				unsigned char name_assign_type,
-				bool rtnl_held);
-QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
+struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
+				     uint8_t session_type,
+				     const char *name, tSirMacAddr macAddr,
+				     unsigned char name_assign_type,
+				     bool rtnl_held);
+QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx,
+			     struct hdd_adapter *adapter,
 			     bool rtnl_held);
 QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
 QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
@@ -1895,12 +1900,14 @@ int hdd_vdev_create(struct hdd_adapter *adapter);
 int hdd_vdev_destroy(struct hdd_adapter *adapter);
 int hdd_vdev_ready(struct hdd_adapter *adapter);
 
-QDF_STATUS hdd_init_station_mode(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter);
 struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 			enum tQDF_ADAPTER_MODE mode);
-void hdd_deinit_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
+void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
+			struct hdd_adapter *adapter,
 			bool rtnl_held);
-QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter,
 			    const bool bCloseSession);
 void hdd_set_station_ops(struct net_device *pWlanDev);
 uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx);
@@ -1911,7 +1918,8 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 void hdd_set_conparam(uint32_t con_param);
 enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void);
 
-void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, struct hdd_adapter *pAdapter);
+void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx,
+			     struct hdd_adapter *adapter);
 
 void crda_regulatory_entry_default(uint8_t *countryCode, int domain_id);
 void wlan_hdd_reset_prob_rspies(struct hdd_adapter *pHostapdAdapter);
@@ -1920,7 +1928,7 @@ void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 
 void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy);
-QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter);
 int wlan_hdd_validate_context(struct hdd_context *hdd_ctx);
 
 /**
@@ -1946,7 +1954,7 @@ QDF_STATUS hdd_issta_p2p_clientconnected(struct hdd_context *hdd_ctx);
 bool wlan_hdd_validate_modules_state(struct hdd_context *hdd_ctx);
 
 struct qdf_mac_addr *
-hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *pAdapter,
+hdd_wlan_get_ibss_mac_addr_from_staid(struct hdd_adapter *adapter,
 				      uint8_t staIdx);
 #ifdef MSM_PLATFORM
 /**
@@ -2057,7 +2065,7 @@ int hdd_wlan_startup(struct device *dev);
 void __hdd_wlan_exit(void);
 int hdd_wlan_notify_modem_power_state(int state);
 #ifdef QCA_HT_2040_COEX
-int hdd_wlan_set_ht2040_mode(struct hdd_adapter *pAdapter, uint16_t staId,
+int hdd_wlan_set_ht2040_mode(struct hdd_adapter *adapter, uint16_t staId,
 			     struct qdf_mac_addr macAddrSTA, int width);
 #endif
 
@@ -2071,7 +2079,7 @@ struct hdd_adapter *hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter
 
 bool hdd_is_5g_supported(struct hdd_context *hdd_ctx);
 
-int wlan_hdd_scan_abort(struct hdd_adapter *pAdapter);
+int wlan_hdd_scan_abort(struct hdd_adapter *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static inline bool roaming_offload_enabled(struct hdd_context *hdd_ctx)
@@ -2192,8 +2200,8 @@ static inline bool hdd_is_memdump_supported(struct hdd_context *hdd_ctx)
 
 void hdd_update_macaddr(struct hdd_config *config,
 			struct qdf_mac_addr hw_macaddr);
-void wlan_hdd_disable_roaming(struct hdd_adapter *pAdapter);
-void wlan_hdd_enable_roaming(struct hdd_adapter *pAdapter);
+void wlan_hdd_disable_roaming(struct hdd_adapter *adapter);
+void wlan_hdd_enable_roaming(struct hdd_adapter *adapter);
 
 QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *hdd_ctx);
 
