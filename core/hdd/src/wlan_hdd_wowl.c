@@ -96,20 +96,20 @@ static void dump_hdd_wowl_ptrn(struct wow_add_pattern *ptrn)
 /**
  * hdd_add_wowl_ptrn() - Function which will add the WoWL pattern to be
  *			 used when PBM filtering is enabled
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @ptrn: pointer to the pattern string to be added
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_add_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
+bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
 	struct wow_add_pattern localPattern;
 	int i, first_empty_slot, len, offset;
 	QDF_STATUS qdf_ret_status;
 	const char *temp;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	uint8_t sessionId = pAdapter->sessionId;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
+	uint8_t sessionId = adapter->sessionId;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	len = find_ptrn_len(ptrn);
 
@@ -256,20 +256,20 @@ next_ptrn:
 
 /**
  * hdd_del_wowl_ptrn() - Function which will remove a WoWL pattern
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @ptrn: pointer to the pattern string to be removed
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
+bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
 	struct wow_delete_pattern delPattern;
 	unsigned char id;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	bool patternFound = false;
 	QDF_STATUS qdf_ret_status;
-	uint8_t sessionId = pAdapter->sessionId;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	uint8_t sessionId = adapter->sessionId;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* Detect pattern */
 	for (id = 0;
@@ -304,7 +304,7 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
 /**
  * hdd_add_wowl_ptrn_debugfs() - Function which will add a WoW pattern
  *				 sent from debugfs interface
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @pattern_idx: index of the pattern to be added
  * @pattern_offset: offset of the pattern in the frame payload
  * @pattern_buf: pointer to the pattern hex string to be added
@@ -312,14 +312,14 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn)
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx,
+bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 			       uint8_t pattern_offset, char *pattern_buf,
 			       char *pattern_mask)
 {
 	struct wow_add_pattern localPattern;
 	QDF_STATUS qdf_ret_status;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	uint8_t session_id = pAdapter->sessionId;
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
+	uint8_t session_id = adapter->sessionId;
 	uint16_t pattern_len, mask_len, i;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
@@ -420,17 +420,17 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx
 /**
  * hdd_del_wowl_ptrn_debugfs() - Function which will remove a WoW pattern
  *				 sent from debugfs interface
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @pattern_idx: index of the pattern to be removed
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx)
+bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx)
 {
 	struct wow_delete_pattern delPattern;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	QDF_STATUS qdf_ret_status;
-	uint8_t sessionId = pAdapter->sessionId;
+	uint8_t sessionId = adapter->sessionId;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
 		hdd_err("WoW pattern index %d is not in the range (0 ~ %d).",
@@ -467,26 +467,26 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx
 /**
  * hdd_enter_wowl() - Function which will enable WoWL. At least one
  *		      of MP and PBM must be enabled
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @enable_mp: Whether to enable magic packet WoWL mode
  * @enable_pbm: Whether to enable pattern byte matching WoWL mode
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_enter_wowl(struct hdd_adapter *pAdapter, bool enable_mp, bool enable_pbm)
+bool hdd_enter_wowl(struct hdd_adapter *adapter, bool enable_mp, bool enable_pbm)
 {
 	tSirSmeWowlEnterParams wowParams;
 	QDF_STATUS qdf_ret_status;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 
 	qdf_mem_zero(&wowParams, sizeof(tSirSmeWowlEnterParams));
 
 	wowParams.ucPatternFilteringEnable = enable_pbm;
 	wowParams.ucMagicPktEnable = enable_mp;
-	wowParams.sessionId = pAdapter->sessionId;
+	wowParams.sessionId = adapter->sessionId;
 	if (enable_mp) {
 		qdf_copy_macaddr(&wowParams.magic_ptrn,
-				 &pAdapter->macAddressCurrent);
+				 &adapter->macAddressCurrent);
 	}
 #ifdef WLAN_WAKEUP_EVENTS
 	wowParams.ucWoWEAPIDRequestEnable = true;
@@ -497,12 +497,12 @@ bool hdd_enter_wowl(struct hdd_adapter *pAdapter, bool enable_mp, bool enable_pb
 #endif /* WLAN_WAKEUP_EVENTS */
 
 	/* Request to put FW into WoWL */
-	qdf_ret_status = sme_enter_wowl(hHal, hdd_wowl_callback, pAdapter,
+	qdf_ret_status = sme_enter_wowl(hHal, hdd_wowl_callback, adapter,
 #ifdef WLAN_WAKEUP_EVENTS
 					hdd_wowl_wake_indication_callback,
-					pAdapter,
+					adapter,
 #endif /* WLAN_WAKEUP_EVENTS */
-					&wowParams, pAdapter->sessionId);
+					&wowParams, adapter->sessionId);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		if (QDF_STATUS_PMC_PENDING != qdf_ret_status) {
@@ -517,17 +517,17 @@ bool hdd_enter_wowl(struct hdd_adapter *pAdapter, bool enable_mp, bool enable_pb
 
 /**
  * hdd_exit_wowl() - Function which will disable WoWL
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_exit_wowl(struct hdd_adapter *pAdapter)
+bool hdd_exit_wowl(struct hdd_adapter *adapter)
 {
 	tSirSmeWowlExitParams wowParams;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	QDF_STATUS qdf_ret_status;
 
-	wowParams.sessionId = pAdapter->sessionId;
+	wowParams.sessionId = adapter->sessionId;
 
 	qdf_ret_status = sme_exit_wowl(hHal, &wowParams);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {

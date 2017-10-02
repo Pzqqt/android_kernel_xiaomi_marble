@@ -111,26 +111,26 @@
 /**
  * hdd_add_wowl_ptrn() - Function which will add the WoWL pattern to be
  *			 used when PBM filtering is enabled
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @ptrn: pointer to the pattern string to be added
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_add_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn);
+bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn);
 
 /**
  * hdd_del_wowl_ptrn() - Function which will remove a WoWL pattern
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @ptrn: pointer to the pattern string to be removed
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn);
+bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn);
 
 /**
  * hdd_add_wowl_ptrn_debugfs() - Function which will add a WoW pattern
  *				 sent from debugfs interface
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @pattern_idx: index of the pattern to be added
  * @pattern_offset: offset of the pattern in the frame payload
  * @pattern_buf: pointer to the pattern hex string to be added
@@ -138,38 +138,38 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *pAdapter, const char *ptrn);
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx,
+bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 			       uint8_t pattern_offset, char *pattern_buf,
 			       char *pattern_mask);
 
 /**
  * hdd_del_wowl_ptrn_debugfs() - Function which will remove a WoW pattern
  *				 sent from debugfs interface
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @pattern_idx: index of the pattern to be removed
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *pAdapter, uint8_t pattern_idx);
+bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx);
 
 /**
  * hdd_enter_wowl() - Function which will enable WoWL. At least one
  *		      of MP and PBM must be enabled
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  * @enable_mp: Whether to enable magic packet WoWL mode
  * @enable_pbm: Whether to enable pattern byte matching WoWL mode
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_enter_wowl(struct hdd_adapter *pAdapter, bool enable_mp, bool enable_pbm);
+bool hdd_enter_wowl(struct hdd_adapter *adapter, bool enable_mp, bool enable_pbm);
 
 /**
  * hdd_exit_wowl() - Function which will disable WoWL
- * @pAdapter: pointer to the adapter
+ * @adapter: pointer to the adapter
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_exit_wowl(struct hdd_adapter *pAdapter);
+bool hdd_exit_wowl(struct hdd_adapter *adapter);
 
 /**
  * hdd_deinit_wowl() - Deinit function to cleanup WoWL allocated memory
