@@ -184,8 +184,8 @@ static int wlan_hdd_tdls_check_config(struct hdd_tdls_config_params *config)
 int wlan_hdd_tdls_set_params(struct net_device *dev,
 			     struct hdd_tdls_config_params *config)
 {
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	enum tdls_feature_mode req_tdls_mode;
 	tdlsInfo_t *tdlsParams;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
@@ -217,7 +217,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	set_mode_params.source = TDLS_SET_MODE_SOURCE_USER;
 	set_mode_params.tdls_mode = req_tdls_mode;
 	set_mode_params.update_last = true;
-	set_mode_params.vdev = pAdapter->hdd_vdev;
+	set_mode_params.vdev = adapter->hdd_vdev;
 
 	ucfg_tdls_set_operating_mode(&set_mode_params);
 
@@ -227,7 +227,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 		return -ENOMEM;
 	}
 
-	tdlsParams->vdev_id = pAdapter->sessionId;
+	tdlsParams->vdev_id = adapter->sessionId;
 	tdlsParams->tdls_state = config->tdls;
 	tdlsParams->notification_interval_ms = config->tx_period_t;
 	tdlsParams->tx_discovery_threshold = config->tx_packet_n;
@@ -269,13 +269,13 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 
 /**
  * wlan_hdd_tdls_get_all_peers() - dump all TDLS peer info into output string
- * @pAdapter: HDD adapter
+ * @adapter: HDD adapter
  * @buf: output string buffer to hold the peer info
  * @buflen: the size of output string buffer
  *
  * Return: The size (in bytes) of the valid peer info in the output buffer
  */
-int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *pAdapter,
+int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter,
 				char *buf, int buflen)
 {
 	/* TODO */
@@ -626,7 +626,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 #endif
 {
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 15, 0))
 #if !(TDLS_MGMT_VERSION2)
@@ -641,14 +641,14 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
-		hdd_err("invalid session id: %d", pAdapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_TDLS_MGMT,
-			 pAdapter->sessionId, action_code));
+			 adapter->sessionId, action_code));
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -755,7 +755,7 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 /**
  * wlan_hdd_tdls_extctrl_config_peer() - configure an externally controllable
  *                                       TDLS peer
- * @pAdapter: HDD adapter
+ * @adapter: HDD adapter
  * @peer: MAC address of the TDLS peer
  * @callback: Callback to set on the peer
  * @chan: Channel
@@ -765,7 +765,7 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
  *
  * Return: 0 on success; negative otherwise
  */
-int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *pAdapter,
+int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *adapter,
 				      const uint8_t *peer,
 				      cfg80211_exttdls_callback callback,
 				      u32 chan,
@@ -779,12 +779,12 @@ int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *pAdapter,
 /**
  * wlan_hdd_tdls_extctrl_deconfig_peer() - de-configure an externally
  *                                         controllable TDLS peer
- * @pAdapter: HDD adapter
+ * @adapter: HDD adapter
  * @peer: MAC address of the tdls peer
  *
  * Return: 0 if success; negative errno otherwisw
  */
-int wlan_hdd_tdls_extctrl_deconfig_peer(struct hdd_adapter *pAdapter,
+int wlan_hdd_tdls_extctrl_deconfig_peer(struct hdd_adapter *adapter,
 					const uint8_t *peer)
 {
 	/* TODO */
@@ -806,7 +806,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 					 const uint8_t *peer,
 					 enum nl80211_tdls_operation oper)
 {
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int status;
 
@@ -817,14 +817,14 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
-		hdd_err("invalid session id: %d", pAdapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_TDLS_OPER,
-			 pAdapter->sessionId, oper));
+			 adapter->sessionId, oper));
 	if (NULL == peer) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid arguments", __func__);

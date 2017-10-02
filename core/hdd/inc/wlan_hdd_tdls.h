@@ -122,12 +122,12 @@ typedef struct {
 int wlan_hdd_tdls_set_params(struct net_device *dev,
 			     struct hdd_tdls_config_params *config);
 
-int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *pAdapter, char *buf,
+int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter, char *buf,
 				int buflen);
 
-int wlan_hdd_tdls_extctrl_deconfig_peer(struct hdd_adapter *pAdapter,
+int wlan_hdd_tdls_extctrl_deconfig_peer(struct hdd_adapter *adapter,
 					const uint8_t *peer);
-int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *pAdapter,
+int wlan_hdd_tdls_extctrl_config_peer(struct hdd_adapter *adapter,
 				      const uint8_t *peer,
 				      cfg80211_exttdls_callback callback,
 				      uint32_t chan,
