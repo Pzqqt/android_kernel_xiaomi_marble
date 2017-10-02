@@ -107,7 +107,7 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
  *
  * Return: 0 if all parameters are valid; -EINVAL otherwise
  */
-static int wlan_hdd_tdls_check_config(tdls_config_params_t *config)
+static int wlan_hdd_tdls_check_config(struct hdd_tdls_config_params *config)
 {
 	if (config->tdls > 2) {
 		hdd_err("Invalid 1st argument %d. <0...2>",
@@ -182,7 +182,7 @@ static int wlan_hdd_tdls_check_config(tdls_config_params_t *config)
  * Return: 0 if success or negative errno otherwise
  */
 int wlan_hdd_tdls_set_params(struct net_device *dev,
-			     tdls_config_params_t *config)
+			     struct hdd_tdls_config_params *config)
 {
 	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);

@@ -11127,7 +11127,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 #ifdef FEATURE_WLAN_TDLS
 	case WE_TDLS_CONFIG_PARAMS:
 	{
-		tdls_config_params_t tdlsParams;
+		struct hdd_tdls_config_params tdlsParams;
 
 		tdlsParams.tdls = apps_args[0];
 		tdlsParams.tx_period_t = apps_args[1];

@@ -51,7 +51,7 @@ enum tdls_concerned_external_events {
 #define ENA_TDLS_BUFFER_STA   (1 << 1)  /* TDLS Buffer STA support */
 #define ENA_TDLS_SLEEP_STA    (1 << 2)  /* TDLS Sleep STA support */
 /**
- * struct tdls_config_params_t - tdls config params
+ * struct hdd_tdls_config_params - tdls config params
  *
  * @tdls: tdls
  * @tx_period_t: tx period
@@ -63,7 +63,7 @@ enum tdls_concerned_external_events {
  * @rssi_teardown_threshold: rssi tear down threshold
  * @rssi_delta: rssi delta
  */
-typedef struct {
+struct hdd_tdls_config_params {
 	uint32_t tdls;
 	uint32_t tx_period_t;
 	uint32_t tx_packet_n;
@@ -73,7 +73,7 @@ typedef struct {
 	int32_t rssi_trigger_threshold;
 	int32_t rssi_teardown_threshold;
 	int32_t rssi_delta;
-} tdls_config_params_t;
+};
 
 typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
 					 uint32_t opclass,
@@ -120,7 +120,7 @@ typedef struct {
 } tdlsInfo_t;
 
 int wlan_hdd_tdls_set_params(struct net_device *dev,
-			     tdls_config_params_t *config);
+			     struct hdd_tdls_config_params *config);
 
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *pAdapter, char *buf,
 				int buflen);
