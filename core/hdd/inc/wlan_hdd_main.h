@@ -589,8 +589,8 @@ struct hdd_remain_on_chan_ctx {
 /* RoC Request entry */
 struct hdd_roc_req {
 	qdf_list_node_t node;   /* MUST be first element */
-	struct hdd_adapter *pAdapter;
-	struct hdd_remain_on_chan_ctx *pRemainChanCtx;
+	struct hdd_adapter *adapter;
+	struct hdd_remain_on_chan_ctx *remain_chan_ctx;
 };
 
 /**

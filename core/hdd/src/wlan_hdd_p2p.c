@@ -778,8 +778,8 @@ static int wlan_hdd_roc_request_enqueue(struct hdd_adapter *adapter,
 		return -ENOMEM;
 	}
 
-	hdd_roc_req->pAdapter = adapter;
-	hdd_roc_req->pRemainChanCtx = remain_chan_ctx;
+	hdd_roc_req->adapter = adapter;
+	hdd_roc_req->remain_chan_ctx = remain_chan_ctx;
 
 	/* Enqueue this RoC request */
 	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
@@ -866,13 +866,13 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 		return;
 	}
 	ret = wlan_hdd_execute_remain_on_channel(
-			hdd_roc_req->pAdapter,
-			hdd_roc_req->pRemainChanCtx);
+			hdd_roc_req->adapter,
+			hdd_roc_req->remain_chan_ctx);
 	if (ret == -EBUSY) {
 		hdd_err("dropping RoC request");
-		wlan_hdd_indicate_roc_drop(hdd_roc_req->pAdapter,
-					   hdd_roc_req->pRemainChanCtx);
-		qdf_mem_free(hdd_roc_req->pRemainChanCtx);
+		wlan_hdd_indicate_roc_drop(hdd_roc_req->adapter,
+					   hdd_roc_req->remain_chan_ctx);
+		qdf_mem_free(hdd_roc_req->remain_chan_ctx);
 	}
 	qdf_mem_free(hdd_roc_req);
 }
@@ -1237,13 +1237,13 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
 	list_for_each_safe(tmp, q, &hdd_ctx->hdd_roc_req_q.anchor) {
 		curr_roc_req = list_entry(tmp, struct hdd_roc_req, node);
-		if ((uintptr_t) curr_roc_req->pRemainChanCtx == cookie) {
+		if ((uintptr_t) curr_roc_req->remain_chan_ctx == cookie) {
 			qdf_status = qdf_list_remove_node(&hdd_ctx->hdd_roc_req_q,
 						      (qdf_list_node_t *)
 						      curr_roc_req);
 			qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
 			if (qdf_status == QDF_STATUS_SUCCESS) {
-				qdf_mem_free(curr_roc_req->pRemainChanCtx);
+				qdf_mem_free(curr_roc_req->remain_chan_ctx);
 				qdf_mem_free(curr_roc_req);
 			}
 			return 0;

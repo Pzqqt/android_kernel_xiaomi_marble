@@ -5810,8 +5810,8 @@ static void hdd_destroy_roc_req_q(struct hdd_context *hdd_ctx)
 			return;
 		}
 
-		if (hdd_roc_req->pRemainChanCtx)
-			qdf_mem_free(hdd_roc_req->pRemainChanCtx);
+		if (hdd_roc_req->remain_chan_ctx)
+			qdf_mem_free(hdd_roc_req->remain_chan_ctx);
 
 		qdf_mem_free(hdd_roc_req);
 	}
