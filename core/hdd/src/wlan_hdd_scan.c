@@ -436,14 +436,14 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				    uint8_t source)
 {
 	struct net_device *dev = request->wdev->netdev;
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *cfg_param = NULL;
 	int status;
 	struct hdd_scan_info *pScanInfo = NULL;
 	struct hdd_adapter *con_sap_adapter;
 	uint16_t con_dfs_ch;
-	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
+	struct hdd_wext_state *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	uint8_t curr_session_id;
 	enum scan_reject_states curr_reason;
 	static uint32_t scan_ebusy_cnt;
@@ -456,8 +456,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
-		hdd_err("invalid session id: %d", pAdapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -EINVAL;
 	}
 
@@ -467,25 +467,25 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCAN,
-			 pAdapter->sessionId, request->n_channels));
+			 adapter->sessionId, request->n_channels));
 
-	if (!sme_is_session_id_valid(hdd_ctx->hHal, pAdapter->sessionId))
+	if (!sme_is_session_id_valid(hdd_ctx->hHal, adapter->sessionId))
 		return -EINVAL;
 
 	if ((eConnectionState_Associated ==
-			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)->
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
 						conn_info.connState) &&
 	    (!hdd_ctx->config->enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
-		pAdapter->request = request;
-		pAdapter->scan_source = source;
-		schedule_work(&pAdapter->scan_block_work);
+		adapter->request = request;
+		adapter->scan_source = source;
+		schedule_work(&adapter->scan_block_work);
 		return 0;
 	}
 
 	hdd_debug("Device_mode %s(%d)",
-		hdd_device_mode_to_string(pAdapter->device_mode),
-		pAdapter->device_mode);
+		hdd_device_mode_to_string(adapter->device_mode),
+		adapter->device_mode);
 
 	/*
 	 * IBSS vdev does not need to scan to establish
@@ -495,18 +495,18 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	 * NDI does not need scan from userspace to establish connection
 	 * and it does not support scan request either.
 	 */
-	if (QDF_IBSS_MODE == pAdapter->device_mode ||
-	    QDF_NDI_MODE == pAdapter->device_mode) {
+	if (QDF_IBSS_MODE == adapter->device_mode ||
+	    QDF_NDI_MODE == adapter->device_mode) {
 		hdd_err("Scan not supported for %s",
-			hdd_device_mode_to_string(pAdapter->device_mode));
+			hdd_device_mode_to_string(adapter->device_mode));
 		return -EINVAL;
 	}
 
 	cfg_param = hdd_ctx->config;
-	pScanInfo = &pAdapter->scan_info;
+	pScanInfo = &adapter->scan_info;
 
 	/* Block All Scan during DFS operation and send null scan result */
-	con_sap_adapter = hdd_get_con_sap_adapter(pAdapter, true);
+	con_sap_adapter = hdd_get_con_sap_adapter(adapter, true);
 	if (con_sap_adapter) {
 		con_dfs_ch = con_sap_adapter->sessionCtx.ap.sapConfig.channel;
 		if (con_dfs_ch == AUTO_CHANNEL_SELECT)
@@ -528,10 +528,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 * startup.
 			 */
 			hdd_err("##In DFS Master mode. Scan aborted");
-			pAdapter->request = request;
-			pAdapter->scan_source = source;
+			adapter->request = request;
+			adapter->scan_source = source;
 
-			schedule_work(&pAdapter->scan_block_work);
+			schedule_work(&adapter->scan_block_work);
 			return 0;
 		}
 	}
@@ -582,12 +582,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	hdd_ctx->scan_reject_cnt = 0;
 
 	/* Check whether SAP scan can be skipped or not */
-	if (pAdapter->device_mode == QDF_SAP_MODE &&
+	if (adapter->device_mode == QDF_SAP_MODE &&
 	   wlan_hdd_sap_skip_scan_check(hdd_ctx, request)) {
 		hdd_debug("sap scan skipped");
-		pAdapter->request = request;
-		pAdapter->scan_source = source;
-		schedule_work(&pAdapter->scan_block_work);
+		adapter->request = request;
+		adapter->scan_source = source;
+		schedule_work(&adapter->scan_block_work);
 		return 0;
 	}
 
@@ -601,7 +601,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		       request->ie_len);
 		pScanInfo->scanAddIE.length = request->ie_len;
 
-		wlan_hdd_update_scan_ies(pAdapter, pScanInfo,
+		wlan_hdd_update_scan_ies(adapter, pScanInfo,
 				pScanInfo->scanAddIE.addIEdata,
 				&pScanInfo->scanAddIE.length);
 	} else {
@@ -624,9 +624,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		}
 	}
 
-	if ((QDF_STA_MODE == pAdapter->device_mode) ||
-	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
-	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)) {
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 		pwextBuf->roamProfile.pAddIEScan =
 			pScanInfo->scanAddIE.addIEdata;
 		pwextBuf->roamProfile.nAddIEScanLength =
@@ -679,7 +679,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		}
 		/* set the scan type to active */
 		scan_req.scanType = eSIR_ACTIVE_SCAN;
-	} else if (QDF_P2P_GO_MODE == pAdapter->device_mode) {
+	} else if (QDF_P2P_GO_MODE == adapter->device_mode) {
 		/* set the scan type to active */
 		scan_req.scanType = eSIR_ACTIVE_SCAN;
 	} else {
@@ -765,8 +765,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	if (is_p2p_scan ||
 		(request->n_channels != WLAN_HDD_P2P_SINGLE_CHANNEL_SCAN)) {
 		hdd_debug("Flushing P2P Results");
-		sme_scan_flush_p2p_result(WLAN_HDD_GET_HAL_CTX(pAdapter),
-			pAdapter->sessionId);
+		sme_scan_flush_p2p_result(WLAN_HDD_GET_HAL_CTX(adapter),
+			adapter->sessionId);
 	}
 	if (request->ie_len) {
 		pP2pIe = wlan_hdd_get_p2p_ie_ptr((uint8_t *) request->ie,
@@ -778,7 +778,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			     || (global_p2p_connection_status ==
 				 P2P_GO_NEG_PROCESS))
 			    && (QDF_P2P_CLIENT_MODE ==
-						pAdapter->device_mode)) {
+						adapter->device_mode)) {
 				global_p2p_connection_status =
 					P2P_CLIENT_CONNECTING_STATE_1;
 				hdd_debug("[P2P State] Changing state from Go nego completed to Connection is started");
@@ -787,7 +787,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			if ((global_p2p_connection_status ==
 			     P2P_CLIENT_DISCONNECTED_STATE)
 			    && (QDF_P2P_CLIENT_MODE ==
-				pAdapter->device_mode)) {
+				adapter->device_mode)) {
 				global_p2p_connection_status =
 					P2P_CLIENT_CONNECTING_STATE_2;
 				hdd_debug("[P2P State] Changing state from Disconnected state to Connection is started");
@@ -842,10 +842,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	       scan_req.p2pSearch, scan_req.skipDfsChnlInP2pSearch);
 #if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 7, 0))
 	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
-		sme_scan_flush_result(WLAN_HDD_GET_HAL_CTX(pAdapter));
+		sme_scan_flush_result(WLAN_HDD_GET_HAL_CTX(adapter));
 #endif
-	status = sme_scan_request(WLAN_HDD_GET_HAL_CTX(pAdapter),
-				pAdapter->sessionId, &scan_req,
+	status = sme_scan_request(WLAN_HDD_GET_HAL_CTX(adapter),
+				adapter->sessionId, &scan_req,
 				&hdd_cfg80211_scan_done_callback, dev);
 
 	if (QDF_STATUS_SUCCESS != status) {
@@ -861,9 +861,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_SCAN);
 		goto free_mem;
 	}
-	wlan_hdd_scan_request_enqueue(pAdapter, request, source,
+	wlan_hdd_scan_request_enqueue(adapter, request, source,
 			scan_req.scan_id, scan_req.timestamp);
-	pAdapter->scan_info.mScanPending = true;
+	adapter->scan_info.mScanPending = true;
 	hdd_ctx->beacon_probe_rsp_cnt_per_scan = 0;
 free_mem:
 	if (scan_req.SSIDs.SSIDList)
@@ -1421,20 +1421,20 @@ int wlan_hdd_vendor_abort_scan(
 
 /**
  * wlan_hdd_scan_abort() - abort ongoing scan
- * @pAdapter: Pointer to interface adapter
+ * @adapter: Pointer to interface adapter
  *
  * Return: 0 for success, non zero for failure
  */
-int wlan_hdd_scan_abort(struct hdd_adapter *pAdapter)
+int wlan_hdd_scan_abort(struct hdd_adapter *adapter)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_scan_info *pScanInfo = NULL;
 
-	pScanInfo = &pAdapter->scan_info;
+	pScanInfo = &adapter->scan_info;
 
 	if (pScanInfo->mScanPending)
 		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				pAdapter->sessionId, INVALID_SCAN_ID, true);
+				adapter->sessionId, INVALID_SCAN_ID, true);
 	return 0;
 }
 
@@ -1453,7 +1453,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						cfg80211_sched_scan_request
 						*request)
 {
-	struct hdd_adapter *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	tHalHandle hHal;
 	int ret = 0;
@@ -1465,17 +1465,17 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
-		hdd_err("invalid session id: %d", pAdapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -EINVAL;
 	}
 
-	if (QDF_NDI_MODE == pAdapter->device_mode) {
+	if (QDF_NDI_MODE == adapter->device_mode) {
 		hdd_err("Command not allowed for NDI interface");
 		return -EINVAL;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 
 	if (0 != ret)
@@ -1487,17 +1487,17 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	}
 
 	if ((eConnectionState_Associated ==
-				WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)->
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
 							conn_info.connState) &&
 	    (!hdd_ctx->config->enable_connected_scan)) {
 		hdd_info("enable_connected_scan is false, Aborting scan");
 		return -EBUSY;
 	}
 
-	if (!sme_is_session_id_valid(hdd_ctx->hHal, pAdapter->sessionId))
+	if (!sme_is_session_id_valid(hdd_ctx->hHal, adapter->sessionId))
 		return -EINVAL;
 
-	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	if (NULL == hHal) {
 		hdd_err("HAL context  is Null!!!");
 		return -EINVAL;
