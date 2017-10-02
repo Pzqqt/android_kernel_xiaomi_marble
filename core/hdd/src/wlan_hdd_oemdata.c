@@ -143,18 +143,18 @@ int iw_get_oem_data_cap(struct net_device *dev,
 	int status;
 	struct oem_data_cap oemDataCap = { {0} };
 	struct oem_data_cap *pHddOemDataCap;
-	struct hdd_adapter *pAdapter = (netdev_priv(dev));
+	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *pHddContext;
 	int ret;
 
 	ENTER();
 
-	pHddContext = WLAN_HDD_GET_CTX(pAdapter);
+	pHddContext = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(pHddContext);
 	if (0 != ret)
 		return ret;
 
-	status = populate_oem_data_cap(pAdapter, &oemDataCap);
+	status = populate_oem_data_cap(adapter, &oemDataCap);
 	if (0 != status) {
 		hdd_err("Failed to populate oem data capabilities");
 		return status;
@@ -185,7 +185,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	uint8_t *vdevId;
 	hdd_adapter_list_node_t *pAdapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
-	struct hdd_adapter *pAdapter = NULL;
+	struct hdd_adapter *adapter = NULL;
 	QDF_STATUS status = 0;
 
 	/* OEM msg is always to a specific process & cannot be a broadcast */
@@ -219,12 +219,12 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	/* Iterate through each adapter and fill device mode and vdev id */
 	status = hdd_get_front_adapter(p_hdd_ctx, &pAdapterNode);
 	while ((QDF_STATUS_SUCCESS == status) && pAdapterNode) {
-		pAdapter = pAdapterNode->adapter;
-		if (pAdapter) {
+		adapter = pAdapterNode->adapter;
+		if (adapter) {
 			deviceMode = buf++;
 			vdevId = buf++;
-			*deviceMode = pAdapter->device_mode;
-			*vdevId = pAdapter->sessionId;
+			*deviceMode = adapter->device_mode;
+			*vdevId = adapter->sessionId;
 			(*numInterfaces)++;
 			hdd_debug("numInterfaces: %d, deviceMode: %d, vdevId: %d",
 				   *numInterfaces, *deviceMode,
@@ -1058,7 +1058,7 @@ static void oem_cmd_handler(const void *data, int data_len, void *ctx, int pid)
  * @hdd_ctx: Pointer to HDD Context
  *
  * This API is used to register the oem app command handler. Argument
- * @pAdapter is given for prototype compatibility with legacy code.
+ * @adapter is given for prototype compatibility with legacy code.
  *
  * Return: 0
  */
