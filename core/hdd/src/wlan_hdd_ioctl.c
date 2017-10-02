@@ -2363,7 +2363,7 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 
 /**
  * wlan_hdd_get_link_status() - get link status
- * @pAdapter:     pointer to the adapter
+ * @adapter:     pointer to the adapter
  *
  * This function sends a request to query the link status and waits
  * on a timer to invoke the callback. if the callback is invoked then
@@ -2796,38 +2796,38 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 }
 #endif /* FEATURE_WLAN_ESE */
 
-int wlan_hdd_set_mc_rate(struct hdd_adapter *pAdapter, int targetRate)
+int wlan_hdd_set_mc_rate(struct hdd_adapter *adapter, int targetRate)
 {
 	tSirRateUpdateInd rateUpdate = {0};
 	QDF_STATUS status;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *pConfig = NULL;
 
 	if (hdd_ctx == NULL) {
 		hdd_err("HDD context is null");
 		return -EINVAL;
 	}
-	if ((QDF_IBSS_MODE != pAdapter->device_mode) &&
-	    (QDF_SAP_MODE != pAdapter->device_mode) &&
-	    (QDF_STA_MODE != pAdapter->device_mode)) {
+	if ((QDF_IBSS_MODE != adapter->device_mode) &&
+	    (QDF_SAP_MODE != adapter->device_mode) &&
+	    (QDF_STA_MODE != adapter->device_mode)) {
 		hdd_err("Received SETMCRATE cmd in invalid mode %s(%d)",
-			 hdd_device_mode_to_string(pAdapter->device_mode),
-			 pAdapter->device_mode);
+			 hdd_device_mode_to_string(adapter->device_mode),
+			 adapter->device_mode);
 		hdd_err("SETMCRATE cmd is allowed only in STA, IBSS or SOFTAP mode");
 		return -EINVAL;
 	}
 	pConfig = hdd_ctx->config;
 	rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
-	rateUpdate.dev_mode = pAdapter->device_mode;
+	rateUpdate.dev_mode = adapter->device_mode;
 	rateUpdate.mcastDataRate24GHz = targetRate;
 	rateUpdate.mcastDataRate24GHzTxFlag = 1;
 	rateUpdate.mcastDataRate5GHz = targetRate;
 	rateUpdate.bcastDataRate = -1;
-	qdf_copy_macaddr(&rateUpdate.bssid, &pAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&rateUpdate.bssid, &adapter->macAddressCurrent);
 	hdd_debug("MC Target rate %d, mac = %pM, dev_mode %s(%d)",
 		  rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
-		  hdd_device_mode_to_string(pAdapter->device_mode),
-		  pAdapter->device_mode);
+		  hdd_device_mode_to_string(adapter->device_mode),
+		  adapter->device_mode);
 	status = sme_send_rate_update_ind(hdd_ctx->hHal, &rateUpdate);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SETMCRATE failed");
