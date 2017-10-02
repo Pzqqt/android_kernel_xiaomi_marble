@@ -1360,7 +1360,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	psoc = hdd_ctx->hdd_psoc;
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:
 			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -3089,7 +3089,7 @@ static int hdd_ipa_uc_disconnect(struct hdd_context *hdd_ctx)
 
 	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if (adapter->device_mode == QDF_SAP_MODE) {
 			hdd_ipa_uc_disconnect_client(adapter);
 			hdd_ipa_uc_disconnect_ap(adapter);
@@ -4775,7 +4775,7 @@ static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode
 		/* Flush TxRx queue for each adapter before switch to SCC */
 		status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
 		while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-			pAdapter = adapter_node->pAdapter;
+			pAdapter = adapter_node->adapter;
 			if (pAdapter->device_mode == QDF_STA_MODE ||
 			    pAdapter->device_mode == QDF_SAP_MODE) {
 				hdd_debug("MCC->SCC: Flush TxRx queue(d_mode=%d)",

@@ -1086,7 +1086,7 @@ hdd_suspend_wlan(void)
 
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 		if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
 			hdd_err("invalid session id: %d", pAdapter->sessionId);
 			goto next_adapter;
@@ -1150,7 +1150,7 @@ static int hdd_resume_wlan(void)
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 		if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
 			hdd_err("invalid session id: %d", pAdapter->sessionId);
 			goto next_adapter;
@@ -1211,7 +1211,7 @@ static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 
 	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if (adapter && adapter->device_mode == QDF_SAP_MODE) {
 			if (test_bit(SOFTAP_INIT_DONE, &adapter->event_flags)) {
 				hdd_debug("Restart prev SAP session");
@@ -1336,7 +1336,7 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if (hdd_is_interface_up(adapter) &&
 		    (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE)) {
@@ -1649,7 +1649,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 		if ((NULL != pAdapter) &&
 		    (QDF_STA_MODE == pAdapter->device_mode)) {
 			if (0 !=
@@ -1766,7 +1766,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 */
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 
 		if (wlan_hdd_validate_session_id(pAdapter->sessionId)) {
 			hdd_err("invalid session id: %d", pAdapter->sessionId);
@@ -1809,7 +1809,7 @@ next_adapter:
 	/* Stop ongoing scan on each interface */
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 		pScanInfo = &pAdapter->scan_info;
 
 		if (sme_neighbor_middle_of_roaming
@@ -1830,7 +1830,7 @@ next_adapter:
 	/* flush any pending powersave timers */
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (pAdapterNode && QDF_IS_STATUS_SUCCESS(status)) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 
 		sme_ps_timer_flush_sync(hdd_ctx->hHal, pAdapter->sessionId);
 

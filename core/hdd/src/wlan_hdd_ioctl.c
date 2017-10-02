@@ -5691,7 +5691,7 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 	qdf_status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode
 	       && QDF_STATUS_SUCCESS == qdf_status) {
-		adapter = pAdapterNode->pAdapter;
+		adapter = pAdapterNode->adapter;
 		/* Assign correct self MAC address */
 		qdf_copy_macaddr(&bssid,
 				 &adapter->macAddressCurrent);

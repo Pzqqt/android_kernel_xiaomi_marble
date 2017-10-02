@@ -12814,7 +12814,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 		hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				pAdapter->sessionId, INVALID_SCAN_ID, false);

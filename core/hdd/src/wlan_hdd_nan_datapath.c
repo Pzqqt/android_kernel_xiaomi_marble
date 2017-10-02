@@ -173,7 +173,7 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &curr);
 	while (QDF_STATUS_SUCCESS == status) {
-		adapter = curr->pAdapter;
+		adapter = curr->adapter;
 		if (!adapter)
 			goto next_adapter;
 

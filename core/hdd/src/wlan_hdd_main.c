@@ -298,7 +298,7 @@ static void hdd_set_rps_cpu_mask(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if (NULL != adapter)
 			hdd_send_rps_ind(adapter);
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
@@ -1781,7 +1781,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 		if ((QDF_SAP_MODE == adapter->device_mode ||
@@ -3648,7 +3648,7 @@ static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		if (adapter
 		    && !qdf_mem_cmp(adapter->macAddressCurrent.bytes,
 				       macAddr, sizeof(tSirMacAddr))) {
@@ -4085,7 +4085,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		if (NULL == pHddAdapterNode) {
 			status = QDF_STATUS_E_NOMEM;
 		} else {
-			pHddAdapterNode->pAdapter = adapter;
+			pHddAdapterNode->adapter = adapter;
 			status = hdd_add_adapter_back(hdd_ctx, pHddAdapterNode);
 		}
 	}
@@ -4143,7 +4143,7 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 		return status;
 	}
 
-	while (pCurrent->pAdapter != adapter) {
+	while (pCurrent->adapter != adapter) {
 		status = hdd_get_next_adapter(hdd_ctx, pCurrent, &pNext);
 		if (QDF_STATUS_SUCCESS != status)
 			break;
@@ -4168,7 +4168,7 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 		/* cleanup adapter */
 		policy_mgr_clear_concurrency_mode(hdd_ctx->hdd_psoc,
 			adapter->device_mode);
-		hdd_cleanup_adapter(hdd_ctx, adapterNode->pAdapter, rtnl_held);
+		hdd_cleanup_adapter(hdd_ctx, adapterNode->adapter, rtnl_held);
 		hdd_remove_adapter(hdd_ctx, adapterNode);
 		qdf_mem_free(adapterNode);
 		adapterNode = NULL;
@@ -4207,8 +4207,8 @@ QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 		status = hdd_remove_front_adapter(hdd_ctx, &pHddAdapterNode);
 		if (pHddAdapterNode && QDF_STATUS_SUCCESS == status) {
 			wlan_hdd_release_intf_addr(hdd_ctx,
-			pHddAdapterNode->pAdapter->macAddressCurrent.bytes);
-			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->pAdapter,
+			pHddAdapterNode->adapter->macAddressCurrent.bytes);
+			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->adapter,
 					    rtnl_held);
 			qdf_mem_free(pHddAdapterNode);
 			/* Adapter removed. Decrement vdev count */
@@ -4482,7 +4482,7 @@ void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
 		adapter_node = next;
@@ -4505,7 +4505,7 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		hdd_stop_adapter(hdd_ctx, adapter, close_session);
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
@@ -4531,7 +4531,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		hdd_notice("Disabling queues for adapter type: %d",
 			   adapter->device_mode);
 
@@ -4620,7 +4620,7 @@ bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while ((NULL != adapter_node) && (QDF_STATUS_SUCCESS == status)) {
 		if (test_bit(DEVICE_IFACE_OPENED,
-		    &adapter_node->pAdapter->event_flags)) {
+		    &adapter_node->adapter->event_flags)) {
 			hdd_debug("Still other ifaces are up cannot close modules");
 			close_modules = false;
 			break;
@@ -5068,7 +5068,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 
 		if (!hdd_is_interface_up(adapter))
 			goto get_adapter;
@@ -5257,7 +5257,7 @@ struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 
 		if (adapter
 		    && !qdf_mem_cmp(adapter->macAddressCurrent.bytes,
@@ -5282,7 +5282,7 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 	qdf_status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while ((NULL != adapterNode) && (QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 
 		if (adapter->sessionId == vdev_id)
 			return adapter;
@@ -5320,7 +5320,7 @@ struct hdd_adapter *hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ct
 
 	while ((NULL != adapter_node) &&
 			(QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 
 		if (adapter &&
 			 adapter->sessionId == sme_session_id)
@@ -5345,7 +5345,7 @@ struct hdd_adapter *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
 
 	while ((NULL != adapter_node) &&
 			(QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 
 		if (adapter &&
 			 !qdf_str_cmp(adapter->dev->name, iface_name))
@@ -5379,7 +5379,7 @@ struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 
 		if (adapter && (mode == adapter->device_mode))
 			return adapter;
@@ -5418,7 +5418,7 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 
 		if (mode == adapter->device_mode) {
 			switch (adapter->device_mode) {
@@ -5469,7 +5469,7 @@ static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
 		    (adapter->device_mode == QDF_IBSS_MODE) ||
@@ -5499,7 +5499,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
 		    (adapter->device_mode == QDF_IBSS_MODE) ||
@@ -5537,7 +5537,7 @@ static QDF_STATUS hdd_abort_sched_scan_all_adapters(struct hdd_context *hdd_ctx)
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if ((adapter->device_mode == QDF_STA_MODE) ||
 		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
 		    (adapter->device_mode == QDF_IBSS_MODE) ||
@@ -6446,9 +6446,9 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	     status =
 		     hdd_get_next_adapter(hdd_ctx, adapterNode, &adapterNode)) {
 
-		if (adapterNode->pAdapter == NULL)
+		if (adapterNode->adapter == NULL)
 			continue;
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		/*
 		 * Validate magic so we don't end up accessing
 		 * an invalid adapter.
@@ -6731,7 +6731,7 @@ void wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 
 		hdd_debug("Netif queue operation statistics:");
 		hdd_debug("Session_id %d device mode %d",
@@ -6812,7 +6812,7 @@ void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 
 		qdf_mem_zero(adapter->queue_oper_stats,
 					sizeof(adapter->queue_oper_stats));
@@ -7174,7 +7174,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 
 	status = hdd_get_front_adapter(hdd_ctxt, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter_temp = adapter_node->pAdapter;
+		adapter_temp = adapter_node->adapter;
 
 		if (!adapter_temp) {
 			hdd_err("adapter is NULL, moving to next one");
@@ -9611,7 +9611,7 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if (adapter->dev)
 			len += scnprintf(buf + len, *size - len,
 				"\n device name: %s", adapter->dev->name);
@@ -10184,7 +10184,7 @@ void wlan_hdd_disable_roaming(struct hdd_adapter *adapter)
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapterIdx = adapterNode->pAdapter;
+			adapterIdx = adapterNode->adapter;
 
 			if (QDF_STA_MODE == adapterIdx->device_mode
 			    && adapter->sessionId != adapterIdx->sessionId) {
@@ -10236,7 +10236,7 @@ void wlan_hdd_enable_roaming(struct hdd_adapter *adapter)
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapterIdx = adapterNode->pAdapter;
+			adapterIdx = adapterNode->adapter;
 
 			if (QDF_STA_MODE == adapterIdx->device_mode
 			    && adapter->sessionId != adapterIdx->sessionId) {
@@ -10403,7 +10403,7 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 
 		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapter = adapterNode->pAdapter;
+			adapter = adapterNode->adapter;
 			if (adapter
 			    && adapter->device_mode ==
 			    QDF_STA_MODE) {
@@ -10456,7 +10456,7 @@ struct hdd_adapter *hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->pAdapter;
+		adapter = adapterNode->adapter;
 		if (adapter && ((adapter->device_mode == QDF_SAP_MODE) ||
 				(adapter->device_mode == QDF_P2P_GO_MODE)) &&
 						adapter != this_sap_adapter) {
@@ -10498,7 +10498,7 @@ static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &node);
 	while (QDF_IS_STATUS_SUCCESS(status) && node) {
-		struct hdd_adapter *adapter = node->pAdapter;
+		struct hdd_adapter *adapter = node->adapter;
 
 		if (adapter &&
 		    hdd_adapter_is_sta(adapter) &&
@@ -12211,7 +12211,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 	}
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 		if (!adapter)
 			goto end;
 

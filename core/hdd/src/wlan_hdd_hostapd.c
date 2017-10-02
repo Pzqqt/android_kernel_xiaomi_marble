@@ -8134,7 +8134,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		staAdapter = pAdapterNode->pAdapter;
+		staAdapter = pAdapterNode->adapter;
 
 		if (QDF_STA_MODE == staAdapter->device_mode ||
 		    (QDF_P2P_CLIENT_MODE == staAdapter->device_mode) ||

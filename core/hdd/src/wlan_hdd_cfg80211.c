@@ -3850,7 +3850,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 					   &adapter_node);
 	while ((NULL != adapter_node) &&
 	       (QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 
 		if ((device_mode == adapter->device_mode) &&
 		    (device_mode == QDF_SAP_MODE)) {
@@ -9376,7 +9376,7 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->pAdapter;
+		adapter = adapter_node->adapter;
 
 		if (!(adapter && (QDF_SAP_MODE == adapter->device_mode))) {
 			status = hdd_get_next_adapter(hdd_ctx, adapter_node,

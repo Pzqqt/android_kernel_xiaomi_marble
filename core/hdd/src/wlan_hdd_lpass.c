@@ -294,7 +294,7 @@ static void wlan_hdd_send_all_scan_intf_info(struct hdd_context *hdd_ctx)
 
 	status = hdd_get_front_adapter(hdd_ctx, &node);
 	while (NULL != node && QDF_STATUS_SUCCESS == status) {
-		adapter = node->pAdapter;
+		adapter = node->adapter;
 		if (adapter) {
 			if (adapter->device_mode == QDF_STA_MODE
 			    || adapter->device_mode == QDF_P2P_CLIENT_MODE

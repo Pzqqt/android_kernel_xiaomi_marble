@@ -219,7 +219,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	/* Iterate through each adapter and fill device mode and vdev id */
 	status = hdd_get_front_adapter(p_hdd_ctx, &pAdapterNode);
 	while ((QDF_STATUS_SUCCESS == status) && pAdapterNode) {
-		pAdapter = pAdapterNode->pAdapter;
+		pAdapter = pAdapterNode->adapter;
 		if (pAdapter) {
 			deviceMode = buf++;
 			vdevId = buf++;

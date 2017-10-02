@@ -1295,7 +1295,7 @@ struct hdd_adapter {
 
 typedef struct hdd_adapter_list_node {
 	qdf_list_node_t node;   /* MUST be first element */
-	struct hdd_adapter *pAdapter;
+	struct hdd_adapter *adapter;
 } hdd_adapter_list_node_t;
 
 /*

@@ -632,7 +632,7 @@ static int wlan_hdd_execute_remain_on_channel(struct hdd_adapter *pAdapter,
 
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		pAdapter_temp = pAdapterNode->pAdapter;
+		pAdapter_temp = pAdapterNode->adapter;
 		if (pAdapter_temp->device_mode == QDF_P2P_GO_MODE)
 			isGoPresent = true;
 		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
