@@ -208,16 +208,16 @@ extern const uint8_t hdd_linux_up_to_ac_map[];
 /**
  * hdd_wmmps_helper() - Function to set uapsd psb dynamically
  *
- * @pAdapter: [in] pointer to adapter structure
+ * @adapter: [in] pointer to adapter structure
  * @ptr: [in] pointer to command buffer
  *
  * Return: Zero on success, appropriate error on failure.
  */
-int hdd_wmmps_helper(struct hdd_adapter *pAdapter, uint8_t *ptr);
+int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr);
 
 /**
  * hdd_wmm_init() - initialize the WMM DSCP configuation
- * @pAdapter : [in]  pointer to Adapter context
+ * @adapter : [in]  pointer to Adapter context
  *
  * This function will initialize the WMM DSCP configuation of an
  * adapter to an initial state.  The configuration can later be
@@ -225,11 +225,11 @@ int hdd_wmmps_helper(struct hdd_adapter *pAdapter, uint8_t *ptr);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_init(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter);
 
 /**
  * hdd_wmm_adapter_init() - initialize the WMM configuration of an adapter
- * @pAdapter: [in]  pointer to Adapter context
+ * @adapter: [in]  pointer to Adapter context
  *
  * This function will initialize the WMM configuation and status of an
  * adapter to an initial state.  The configuration can later be
@@ -237,18 +237,18 @@ QDF_STATUS hdd_wmm_init(struct hdd_adapter *pAdapter);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter);
 
 /**
  * hdd_wmm_close() - WMM close function
- * @pAdapter: [in]  pointer to adapter context
+ * @adapter: [in]  pointer to adapter context
  *
  * Function which will perform any necessary work to to clean up the
  * WMM functionality prior to the kernel module unload.
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_wmm_adapter_close(struct hdd_adapter *adapter);
 
 /**
  * hdd_wmm_select_queue() - Function which will classify the packet
@@ -284,75 +284,75 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
  * acquire admittance for a WMM AC is required or not based on psb configuration
  * done in framework
  *
- * @pAdapter: [in] pointer to adapter structure
+ * @adapter: [in] pointer to adapter structure
  * @acType: [in] WMM AC type of OS packet
  *
  * Return: void
  */
-void hdd_wmm_acquire_access_required(struct hdd_adapter *pAdapter,
+void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
 				     sme_ac_enum_type acType);
 
 /**
  * hdd_wmm_acquire_access() - Function which will attempt to acquire
  * admittance for a WMM AC
  *
- * @pAdapter: [in]  pointer to adapter context
+ * @adapter: [in]  pointer to adapter context
  * @acType: [in]  WMM AC type of OS packet
  * @pGranted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
 				  sme_ac_enum_type acType, bool *pGranted);
 
 /**
  * hdd_wmm_assoc() - Function which will handle the housekeeping
  * required by WMM when association takes place
  *
- * @pAdapter: [in]  pointer to adapter context
+ * @adapter: [in]  pointer to adapter context
  * @pRoamInfo: [in]  pointer to roam information
  * @eBssType: [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 			 tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
 
 /**
  * hdd_wmm_connect() - Function which will handle the housekeeping
  * required by WMM when a connection is established
  *
- * @pAdapter : [in]  pointer to adapter context
+ * @adapter : [in]  pointer to adapter context
  * @pRoamInfo: [in]  pointer to roam information
  * @eBssType : [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_connect(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 			   tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
 
 /**
  * hdd_wmm_get_uapsd_mask() - Function which will calculate the
  * initial value of the UAPSD mask based upon the device configuration
  *
- * @pAdapter  : [in]  pointer to adapter context
+ * @adapter  : [in]  pointer to adapter context
  * @pUapsdMask: [out] pointer to where the UAPSD Mask is to be stored
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *pAdapter,
+QDF_STATUS hdd_wmm_get_uapsd_mask(struct hdd_adapter *adapter,
 				  uint8_t *pUapsdMask);
 
 /**
  * hdd_wmm_is_active() - Function which will determine if WMM is
  * active on the current connection
  *
- * @pAdapter: [in]  pointer to adapter context
+ * @adapter: [in]  pointer to adapter context
  *
  * Return: true if WMM is enabled, false if WMM is not enabled
  */
-bool hdd_wmm_is_active(struct hdd_adapter *pAdapter);
+bool hdd_wmm_is_active(struct hdd_adapter *adapter);
 
 /**
  * hdd_wmm_is_acm_allowed() - Function which will determine if WMM is
@@ -368,13 +368,13 @@ bool hdd_wmm_is_acm_allowed(struct wlan_objmgr_vdev **vdev);
  * hdd_wmm_addts() - Function which will add a traffic spec at the
  * request of an application
  *
- * @pAdapter  : [in]  pointer to adapter context
+ * @adapter  : [in]  pointer to adapter context
  * @handle    : [in]  handle to uniquely identify a TS
  * @pTspec    : [in]  pointer to the traffic spec
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *pAdapter,
+hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
 				    uint32_t handle,
 				    struct sme_qos_wmmtspecinfo *pTspec);
 
@@ -382,33 +382,33 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *pAdapter,
  * hdd_wmm_delts() - Function which will delete a traffic spec at the
  * request of an application
  *
- * @pAdapter: [in]  pointer to adapter context
+ * @adapter: [in]  pointer to adapter context
  * @handle: [in]  handle to uniquely identify a TS
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *pAdapter, uint32_t handle);
+hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter, uint32_t handle);
 
 /**
  * hdd_wmm_checkts() - Function which will return the status of a traffic
  * spec at the request of an application
  *
- * @pAdapter: [in]  pointer to adapter context
+ * @adapter: [in]  pointer to adapter context
  * @handle: [in]  handle to uniquely identify a TS
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *pAdapter,
+hdd_wlan_wmm_status_e hdd_wmm_checkts(struct hdd_adapter *adapter,
 				      uint32_t handle);
 /**
  * hdd_wmm_adapter_clear() - Function which will clear the WMM status
  * for all the ACs
  *
- * @pAdapter: [in]  pointer to Adapter context
+ * @adapter: [in]  pointer to Adapter context
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *pAdapter);
+QDF_STATUS hdd_wmm_adapter_clear(struct hdd_adapter *adapter);
 
 void wlan_hdd_process_peer_unauthorised_pause(struct hdd_adapter *adapter);
 #endif /* #ifndef _WLAN_HDD_WMM_H */
