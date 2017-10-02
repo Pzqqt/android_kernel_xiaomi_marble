@@ -4760,7 +4760,7 @@ static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
-	struct hdd_adapter *pAdapter;
+	struct hdd_adapter *adapter;
 	struct ipa_msg_meta meta;
 	struct ipa_wlan_msg *msg;
 	int ret;
@@ -4775,12 +4775,12 @@ static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode
 		/* Flush TxRx queue for each adapter before switch to SCC */
 		status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
 		while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-			pAdapter = adapter_node->adapter;
-			if (pAdapter->device_mode == QDF_STA_MODE ||
-			    pAdapter->device_mode == QDF_SAP_MODE) {
+			adapter = adapter_node->adapter;
+			if (adapter->device_mode == QDF_STA_MODE ||
+			    adapter->device_mode == QDF_SAP_MODE) {
 				hdd_debug("MCC->SCC: Flush TxRx queue(d_mode=%d)",
-					 pAdapter->device_mode);
-				hdd_deinit_tx_rx(pAdapter);
+					 adapter->device_mode);
+				hdd_deinit_tx_rx(adapter);
 			}
 			status = hdd_get_next_adapter(
 					hdd_ctx, adapter_node, &next);
