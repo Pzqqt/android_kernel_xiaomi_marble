@@ -32,7 +32,7 @@
 QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter);
 void hdd_debugfs_exit(struct hdd_adapter *adapter);
 #else
-static inline QDF_STATUS hdd_debugfs_init(struct hdd_adapter *pAdapter)
+static inline QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 {
 	return QDF_STATUS_SUCCESS;
 }

@@ -63,7 +63,7 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 				     const char __user *buf, size_t count,
 				     loff_t *ppos)
 {
-	struct hdd_adapter *pAdapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	char cmd[MAX_USER_COMMAND_SIZE_WOWL_ENABLE + 1];
 	char *sptr, *token;
@@ -74,13 +74,13 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 
 	ENTER();
 
-	pAdapter = (struct hdd_adapter *)file->private_data;
-	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+	adapter = (struct hdd_adapter *)file->private_data;
+	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
@@ -114,7 +114,7 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 
 	/* Disable wow */
 	if (!wow_enable) {
-		if (!hdd_exit_wowl(pAdapter)) {
+		if (!hdd_exit_wowl(adapter)) {
 			hdd_err("hdd_exit_wowl failed!");
 			return -EFAULT;
 		}
@@ -140,7 +140,7 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 	if (wow_pbm > 1)
 		wow_pbm = 1;
 
-	if (!hdd_enter_wowl(pAdapter, wow_mp, wow_pbm)) {
+	if (!hdd_enter_wowl(adapter, wow_mp, wow_pbm)) {
 		hdd_err("hdd_enter_wowl failed!");
 		return -EFAULT;
 	}
@@ -183,7 +183,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 				      const char __user *buf, size_t count,
 				      loff_t *ppos)
 {
-	struct hdd_adapter *pAdapter = (struct hdd_adapter *) file->private_data;
+	struct hdd_adapter *adapter = (struct hdd_adapter *) file->private_data;
 	struct hdd_context *hdd_ctx;
 	char cmd[MAX_USER_COMMAND_SIZE_WOWL_PATTERN + 1];
 	char *sptr, *token;
@@ -195,12 +195,12 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 
 	ENTER();
 
-	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
@@ -238,7 +238,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 
 	/* Delete pattern if no further argument */
 	if (!token) {
-		hdd_del_wowl_ptrn_debugfs(pAdapter, pattern_idx);
+		hdd_del_wowl_ptrn_debugfs(adapter, pattern_idx);
 
 		return count;
 	}
@@ -261,7 +261,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 	pattern_mask = token;
 	pattern_mask[strlen(pattern_mask) - 1] = '\0';
 
-	hdd_add_wowl_ptrn_debugfs(pAdapter, pattern_idx, pattern_offset,
+	hdd_add_wowl_ptrn_debugfs(adapter, pattern_idx, pattern_offset,
 				  pattern_buf, pattern_mask);
 	EXIT();
 	return count;
@@ -302,7 +302,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 				      const char __user *buf, size_t count,
 				      loff_t *ppos)
 {
-	struct hdd_adapter *pAdapter;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	tSirAddPeriodicTxPtrn *addPeriodicTxPtrnParams;
 	tSirDelPeriodicTxPtrn *delPeriodicTxPtrnParams;
@@ -318,13 +318,13 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 
 	ENTER();
 
-	pAdapter = (struct hdd_adapter *)file->private_data;
-	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+	adapter = (struct hdd_adapter *)file->private_data;
+	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {
 		hdd_err("Invalid adapter or adapter has invalid magic");
 		return -EINVAL;
 	}
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
@@ -392,7 +392,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		delPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
 		delPeriodicTxPtrnParams->ucPatternIdBitmap = 1 << pattern_idx;
 		qdf_copy_macaddr(&delPeriodicTxPtrnParams->mac_address,
-				 &pAdapter->macAddressCurrent);
+				 &adapter->macAddressCurrent);
 
 		/* Delete pattern */
 		status = sme_del_periodic_tx_ptrn(hdd_ctx->hHal,
@@ -413,9 +413,9 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	 * In STA mode check if it's in connected state before adding
 	 * patterns
 	 */
-	hdd_debug("device mode %d", pAdapter->device_mode);
-	if ((QDF_STA_MODE == pAdapter->device_mode) &&
-	    (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)))) {
+	hdd_debug("device mode %d", adapter->device_mode);
+	if ((QDF_STA_MODE == adapter->device_mode) &&
+	    (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter)))) {
 		hdd_err("Not in Connected state!");
 		goto failure;
 	}
@@ -454,7 +454,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	addPeriodicTxPtrnParams->usPtrnIntervalMs = pattern_duration * 500;
 	addPeriodicTxPtrnParams->ucPtrnSize = pattern_len;
 	qdf_copy_macaddr(&addPeriodicTxPtrnParams->mac_address,
-			 &pAdapter->macAddressCurrent);
+			 &adapter->macAddressCurrent);
 
 	/* Extract the pattern */
 	for (i = 0; i < addPeriodicTxPtrnParams->ucPtrnSize; i++) {
