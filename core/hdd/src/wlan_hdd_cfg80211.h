@@ -211,29 +211,29 @@ typedef enum {
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
 
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *pAdapter,
+struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 						tCsrRoamInfo *pRoamInfo);
 
-int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *pAdapter,
+int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 					tCsrRoamInfo *pRoamInfo,
 					int index, bool preauth);
 
 #ifdef FEATURE_WLAN_LFR_METRICS
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *pAdapter,
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 						tCsrRoamInfo *pRoamInfo);
 
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *
-							 pAdapter,
+							 adapter,
 							 tCsrRoamInfo *
 							 pRoamInfo,
 							 bool preauth_status);
 
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *pAdapter,
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 						   tCsrRoamInfo *pRoamInfo);
 #endif
 
 #ifdef FEATURE_WLAN_WAPI
-void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *pAdapter, uint8_t key_index,
+void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter, uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len);
 #endif
@@ -260,31 +260,31 @@ int wlan_hdd_cfg80211_register(struct wiphy *wiphy);
 /**
  * wlan_hdd_cfg80211_register_frames() - register frame types and callbacks
  * with the PE.
- * @pAdapter: pointer to adapter
+ * @adapter: pointer to adapter
  *
  * This function is used by HDD to register frame types which are interested
  * by supplicant, callbacks for rx frame indication and ack.
  *
  * Return: 0 on success and non zero value on failure
  */
-int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *pAdapter);
+int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *adapter);
 
-void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *pAdapter);
+void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *adapter);
 
 void hdd_reg_notifier(struct wiphy *wiphy,
 				 struct regulatory_request *request);
 
-extern void hdd_conn_set_connection_state(struct hdd_adapter *pAdapter,
+extern void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 					  eConnectionState connState);
-QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *pAdapter,
+QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 					       int channel);
 #ifdef FEATURE_WLAN_TDLS
 int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,
 					     struct net_device *dev, u8 *peer);
 #endif
 
-void *wlan_hdd_change_country_code_cb(void *pAdapter);
-void hdd_select_cbmode(struct hdd_adapter *pAdapter, uint8_t operationChannel,
+void *wlan_hdd_change_country_code_cb(void *adapter);
+void hdd_select_cbmode(struct hdd_adapter *adapter, uint8_t operationChannel,
 		       struct ch_params *ch_params);
 
 /**
@@ -348,11 +348,11 @@ void wlan_hdd_rso_cmd_status_cb(void *ctx, struct rso_cmd_status *rso_status);
 void hdd_rssi_threshold_breached(void *hddctx,
 				 struct rssi_breach_event *data);
 
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *pAdapter,
+struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *adapter,
 						tSirMacAddr bssid);
 
 int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
-						struct hdd_adapter *pAdapter,
+						struct hdd_adapter *adapter,
 						uint32_t scan_timestamp);
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
@@ -387,13 +387,13 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 
 /**
  * wlan_hdd_try_disconnect() - try disconnnect from previous connection
- * @pAdapter: Pointer to adapter
+ * @adapter: Pointer to adapter
  *
  * This function is used to disconnect from previous connection
  *
  * Return: 0 for success, non-zero for failure
  */
-int wlan_hdd_try_disconnect(struct hdd_adapter *pAdapter);
+int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
 
 #if defined(CFG80211_DISCONNECTED_V2) || \
 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0))
@@ -413,7 +413,7 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
 				GFP_KERNEL);
 }
 #endif
-struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *pAdapter,
+struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
 						tSirBssDescription *bss_desc);
 
 /**
