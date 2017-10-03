@@ -7749,6 +7749,16 @@ typedef enum {
      */
     WMI_VDEV_PARAM_HE_LTF,
 
+    /** VDEV parameter to configure the number of TX chains to use for
+     *  a/b/g rates.
+     *  bit 0~15  : 11b mode TX chain number.
+     *  bit 16~31 : 11ag mode TX chain number.
+     *  
+     *  valid values:
+     *      Should not exceed the maximum number of supported TX Chains
+     *      0 - Used to reset the vote. Acts as Don't Care
+     */
+    WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
