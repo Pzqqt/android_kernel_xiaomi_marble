@@ -425,7 +425,8 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx)
+bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
+			       uint8_t pattern_idx)
 {
 	struct wow_delete_pattern delPattern;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
@@ -473,7 +474,8 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx)
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_enter_wowl(struct hdd_adapter *adapter, bool enable_mp, bool enable_pbm)
+bool hdd_enter_wowl(struct hdd_adapter *adapter,
+		    bool enable_mp, bool enable_pbm)
 {
 	tSirSmeWowlEnterParams wowParams;
 	QDF_STATUS qdf_ret_status;
