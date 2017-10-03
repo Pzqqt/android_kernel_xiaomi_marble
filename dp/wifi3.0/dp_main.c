@@ -5041,10 +5041,6 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			pdev->soc->wlan_cfg_ctx->lro_enabled,
 			pdev->soc->wlan_cfg_ctx->rx_hash,
 			pdev->soc->wlan_cfg_ctx->napi_enabled);
-		DP_TRACE_STATS(ERROR, "%s: Tx flow stop queue: %u tx flow start queue offset: %u",
-			__func__,
-			pdev->soc->wlan_cfg_ctx->tx_flow_stop_queue_threshold,
-			pdev->soc->wlan_cfg_ctx->tx_flow_start_queue_offset);
 	}
 }
 
