@@ -1431,7 +1431,7 @@ QDF_STATUS wlansap_set_key_sta(struct sap_context *sap_ctx,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	void *hHal = NULL;
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
-	uint32_t roamId = 0xFF;
+	uint32_t roamId = INVALID_ROAM_ID;
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

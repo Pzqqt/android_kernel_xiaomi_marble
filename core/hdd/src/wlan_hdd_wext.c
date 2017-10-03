@@ -7037,7 +7037,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 	int key_index;
 	struct iw_point *encoding = &wrqu->encoding;
 	tCsrRoamSetKey setKey;
-	uint32_t roamId = 0xFF;
+	uint32_t roamId = INVALID_ROAM_ID;
 
 	ENTER_DEV(dev);
 
@@ -10771,7 +10771,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 
 		tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 		tSirMacAddr bssid;
-		uint32_t roamId = 0;
+		uint32_t roamId = INVALID_ROAM_ID;
 		uint8_t operating_ch =
 			adapter->sessionCtx.station.conn_info.operationChannel;
 		tCsrRoamModifyProfileFields modProfileFields;
