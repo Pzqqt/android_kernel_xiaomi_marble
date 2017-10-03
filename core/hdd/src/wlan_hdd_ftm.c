@@ -308,7 +308,8 @@ exit:
  *
  * Return: 0 on success, non-zero on error
  */
-int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
+int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter,
+				 struct ifreq *ifr)
 {
 	int ret = 0;
 
