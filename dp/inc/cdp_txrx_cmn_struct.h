@@ -532,6 +532,15 @@ struct cdp_soc_t {
 };
 
 /*
+ * cdp_pdev_param_type: different types of parameters
+ *			to set values in pdev
+ * @CDP_ENABLE_TX_CAPTURE: Enable Tx capture feature
+ */
+enum cdp_pdev_param_type {
+	CDP_CONFIG_TX_CAPTURE,
+};
+
+/*
  * cdp_vdev_param_type: different types of parameters
  *			to set values in vdev
  * @CDP_ENABLE_NAWDS: set nawds enable/disable

@@ -44,6 +44,8 @@ do {                                                             \
 		htt_htc_misc_pkt_list_add(soc, pkt);             \
 } while (0)
 
+#define HTT_MGMT_CTRL_TLV_RESERVERD_LEN 12
+
 /*
  * dp_tx_stats_update() - Update per-peer statistics
  * @soc: Datapath soc handle
@@ -1789,6 +1791,42 @@ static void dp_process_ppdu_stats_user_common_array_tlv(struct dp_pdev *pdev,
 		HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_GET(*tag_buf);
 }
 
+/*
+ * dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv: Process
+ * htt_ppdu_stats_tx_mgmtctrl_payload_tlv
+ * @pdev: DP PDEV handle
+ * @tag_buf: buffer containing the htt_ppdu_stats_tx_mgmtctrl_payload_tlv
+ * @length: tlv_length
+ *
+ * return:void
+ */
+static void dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(
+	struct dp_pdev *pdev, uint32_t *tag_buf, uint32_t length)
+{
+	htt_ppdu_stats_tx_mgmtctrl_payload_tlv *dp_stats_buf =
+		(htt_ppdu_stats_tx_mgmtctrl_payload_tlv *)tag_buf;
+
+	qdf_nbuf_t nbuf = NULL;
+
+	uint32_t payload_size = length - HTT_MGMT_CTRL_TLV_RESERVERD_LEN;
+
+	nbuf = qdf_nbuf_alloc(pdev->soc->osdev, payload_size, 0, 4, true);
+
+	if (!nbuf) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"Nbuf Allocation failed for Mgmt. payload");
+		qdf_assert(0);
+		return;
+	}
+
+	qdf_nbuf_put_tail(nbuf, payload_size);
+	qdf_mem_copy(qdf_nbuf_data(nbuf), dp_stats_buf->payload, payload_size);
+
+	dp_wdi_event_handler(WDI_EVENT_TX_MGMT_CTRL, pdev->soc,
+		nbuf, HTT_INVALID_PEER,
+		WDI_NO_VAL, pdev->pdev_id);
+}
+
 /**
  * dp_process_ppdu_tag(): Function to process the PPDU TLVs
  * @soc: DP Physical device (radio) handle
@@ -1837,6 +1875,10 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 	case HTT_PPDU_STATS_USR_COMMON_ARRAY_TLV:
 		dp_process_ppdu_stats_user_common_array_tlv(pdev,
 							tag_buf);
+		break;
+	case HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV:
+		dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(pdev,
+							tag_buf, tlv_len);
 		break;
 	default:
 		break;
@@ -1908,7 +1950,7 @@ static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	int status;
 	int i;
 
-	if (!pdev->enhanced_stats_en)
+	if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable)
 		return;
 
 	if (!pdev->tx_ppdu_info.buf) {

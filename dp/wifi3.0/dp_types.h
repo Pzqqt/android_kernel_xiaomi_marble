@@ -1046,6 +1046,8 @@ struct dp_pdev {
 		uint8_t last_user;
 		qdf_nbuf_t buf;
 	} tx_ppdu_info;
+
+	bool tx_sniffer_enable;
 };
 
 struct dp_peer;

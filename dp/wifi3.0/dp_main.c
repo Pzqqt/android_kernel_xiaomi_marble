@@ -4796,6 +4796,30 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 }
 
 /*
+ * dp_config_tx_capture()- API to enable/disable tx capture
+ * @pdev_handle: DP_PDEV handle
+ * @val: user provided value
+ *
+ * Return: void
+ */
+static void
+dp_config_tx_capture(struct cdp_pdev *pdev_handle, int val)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (val) {
+		pdev->tx_sniffer_enable = 1;
+		dp_h2t_cfg_stats_msg_send(pdev, 0xffff);
+	} else {
+		pdev->tx_sniffer_enable = 0;
+
+		if (!pdev->enhanced_stats_en)
+			dp_h2t_cfg_stats_msg_send(pdev, 0);
+	}
+
+}
+
+/*
  * dp_enable_enhanced_stats()- API to enable enhanced statistcs
  * @pdev_handle: DP_PDEV handle
  *
@@ -4821,7 +4845,11 @@ static void
 dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
 	pdev->enhanced_stats_en = 0;
+
+	if (!pdev->tx_sniffer_enable)
+		dp_h2t_cfg_stats_msg_send(pdev, 0);
 }
 
 /*
@@ -4864,6 +4892,26 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 			config_param0, config_param1, config_param2,
 			config_param3);
 
+}
+
+/*
+ * dp_set_pdev_param: function to set parameters in pdev
+ * @pdev_handle: DP pdev handle
+ * @param: parameter type to be set
+ * @val: value of parameter to be set
+ *
+ * return: void
+ */
+static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
+		enum cdp_pdev_param_type param, uint8_t val)
+{
+	switch (param) {
+	case CDP_CONFIG_TX_CAPTURE:
+		dp_config_tx_capture(pdev_handle, val);
+		break;
+	default:
+		break;
+	}
 }
 
 /*
@@ -5374,6 +5422,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	/* TODO: Add other functions */
 	.txrx_wdi_event_sub = dp_wdi_event_sub,
 	.txrx_wdi_event_unsub = dp_wdi_event_unsub,
+	.txrx_set_pdev_param = dp_set_pdev_param,
 };
 
 static struct cdp_me_ops dp_ops_me = {

@@ -389,6 +389,16 @@ cdp_peer_set_nawds(ol_txrx_soc_handle soc,
 	return;
 }
 
+static inline void cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, enum cdp_pdev_param_type type,
+		uint8_t val)
+{
+	if (soc->ops->ctrl_ops->txrx_set_pdev_param)
+		return soc->ops->ctrl_ops->txrx_set_pdev_param
+			(pdev, type, val);
+
+}
+
 /**
  * @brief Subscribe to a specified WDI event.
  * @details

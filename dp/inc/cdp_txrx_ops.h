@@ -415,6 +415,9 @@ struct cdp_ctrl_ops {
 
 	void (*txrx_update_mgmt_txpow_vdev)(struct cdp_vdev *vdev,
 			uint8_t subtype, uint8_t tx_power);
+
+	void (*txrx_set_pdev_param)(struct cdp_pdev *pdev,
+			enum cdp_pdev_param_type type, uint8_t val);
 };
 
 struct cdp_me_ops {
