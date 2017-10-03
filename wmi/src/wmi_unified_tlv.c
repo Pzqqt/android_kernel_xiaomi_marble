@@ -11874,6 +11874,7 @@ send_mcast_group_update_cmd_tlv(wmi_unified_t wmi_handle,
 		WMI_CHAR_ARRAY_TO_MAC_ADDR(param->ucast_mac_addr,
 					   &cmd->ucast_mac_addr);
 	}
+
 	if (param->mcast_ip_addr) {
 		QDF_ASSERT(param->mcast_ip_addr_bytes <=
 			   sizeof(cmd->mcast_ip_addr));
@@ -12784,6 +12785,15 @@ static QDF_STATUS send_log_supported_evt_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 	wmi_event = param_buf->fixed_param;
 	num_of_diag_events_logs = wmi_event->num_of_diag_events_logs;
+
+	if (num_of_diag_events_logs >
+	    param_buf->num_diag_events_logs_list) {
+		WMI_LOGE("message number of events %d is more than tlv hdr content %d",
+			 num_of_diag_events_logs,
+			 param_buf->num_diag_events_logs_list);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	evt_args = param_buf->diag_events_logs_list;
 	if (!evt_args) {
 		WMI_LOGE("%s: Event list is empty, num_of_diag_events_logs=%d",
