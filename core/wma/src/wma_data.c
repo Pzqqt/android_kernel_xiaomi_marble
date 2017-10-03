@@ -1641,7 +1641,8 @@ int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 	 * vdev_map = (1 << vdev_id)
 	 * So, host should unmap to ID
 	 */
-	for (vdev_id = 0; vdev_map != 0; vdev_id++) {
+	for (vdev_id = 0; vdev_map != 0 && vdev_id < wma->max_bssid;
+	     vdev_id++) {
 		if (!(vdev_map & 0x1)) {
 			/* No Vdev */
 		} else {
