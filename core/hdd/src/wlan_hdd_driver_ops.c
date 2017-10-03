@@ -1427,8 +1427,9 @@ static void wlan_hdd_purge_notifier(void)
 		return;
 	}
 
-	mutex_lock(&hdd_ctx->iface_change_lock);
 	qdf_cancel_delayed_work(&hdd_ctx->iface_idle_work);
+
+	mutex_lock(&hdd_ctx->iface_change_lock);
 	cds_shutdown_notifier_call();
 	cds_shutdown_notifier_purge();
 	mutex_unlock(&hdd_ctx->iface_change_lock);
