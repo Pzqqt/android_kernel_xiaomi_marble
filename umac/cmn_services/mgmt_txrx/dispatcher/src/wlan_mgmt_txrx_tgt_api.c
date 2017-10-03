@@ -808,14 +808,13 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	struct mgmt_rx_handler *rx_handler_head = NULL, *rx_handler_tail = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!psoc) {
-		mgmt_txrx_err("psoc_ctx passed is NULL");
-		qdf_nbuf_free(buf);
+	if (!buf) {
+		mgmt_txrx_err("buffer passed is NULL");
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!buf) {
-		mgmt_txrx_err("buffer passed is NULL");
+	if (!psoc) {
+		mgmt_txrx_err("psoc_ctx passed is NULL");
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
