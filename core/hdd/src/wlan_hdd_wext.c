@@ -3843,22 +3843,11 @@ return_cached_value:
 	return ret;
 }
 
-/**
- * wlan_hdd_get_link_speed() - get link speed
- * @adapter:     pointer to the adapter
- * @link_speed:   pointer to link speed
- *
- * This function fetches per bssid link speed.
- *
- * Return: if associated, link speed shall be returned.
- *         if not associated, link speed of 0 is returned.
- *         On error, error number will be returned.
- */
-int wlan_hdd_get_link_speed(struct hdd_adapter *sta_adapter, uint32_t *link_speed)
+int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed)
 {
-	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(sta_adapter);
+	struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_station_ctx *hdd_stactx =
-				WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
+				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int ret;
 
 	ret = wlan_hdd_validate_context(hddctx);
@@ -3866,10 +3855,10 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *sta_adapter, uint32_t *link_spee
 		return ret;
 
 	/* Linkspeed is allowed only for P2P mode */
-	if (sta_adapter->device_mode != QDF_P2P_CLIENT_MODE) {
+	if (adapter->device_mode != QDF_P2P_CLIENT_MODE) {
 		hdd_err("Link Speed is not allowed in Device mode %s(%d)",
-			hdd_device_mode_to_string(sta_adapter->device_mode),
-			sta_adapter->device_mode);
+			hdd_device_mode_to_string(adapter->device_mode),
+			adapter->device_mode);
 		return -ENOTSUPP;
 	}
 
@@ -3881,7 +3870,7 @@ int wlan_hdd_get_link_speed(struct hdd_adapter *sta_adapter, uint32_t *link_spee
 
 		qdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
 
-		ret = wlan_hdd_get_linkspeed_for_peermac(sta_adapter, &bssid,
+		ret = wlan_hdd_get_linkspeed_for_peermac(adapter, &bssid,
 							 link_speed);
 		if (ret) {
 			hdd_err("Unable to retrieve SME linkspeed");

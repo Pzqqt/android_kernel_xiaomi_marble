@@ -396,9 +396,22 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			    int new_phymode, struct hdd_context *phddctx);
 
 int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature);
-int wlan_hdd_get_link_speed(struct hdd_adapter *sta_adapter, uint32_t *link_speed);
+
+/**
+ * wlan_hdd_get_link_speed() - get link speed
+ * @adapter:     pointer to the adapter
+ * @link_speed:   pointer to link speed
+ *
+ * This function fetches per bssid link speed.
+ *
+ * Return: if associated, link speed shall be returned.
+ *         if not associated, link speed of 0 is returned.
+ *         On error, error number will be returned.
+ */
+int wlan_hdd_get_link_speed(struct hdd_adapter *adapter, uint32_t *link_speed);
 
 struct iw_request_info;
+
 /**
  * hdd_check_standard_wext_control() - Check to see if standard
  *      wireless extensions ioctls are allowed
