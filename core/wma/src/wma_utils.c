@@ -3827,7 +3827,7 @@ void wma_get_stats_req(WMA_HANDLE handle,
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	struct wma_txrx_node *node;
-	struct pe_stats_req  cmd = {0};
+	struct stats_request_params cmd = {0};
 	tAniGetPEStatsRsp *pGetPEStatsRspParams;
 
 
@@ -3872,11 +3872,11 @@ void wma_get_stats_req(WMA_HANDLE handle,
 		node->stats_rsp, node->stats_rsp->staId,
 		node->stats_rsp->statsMask, get_stats_param->sessionId);
 
-	cmd.session_id = get_stats_param->sessionId;
-	cmd.stats_mask = get_stats_param->statsMask;
-	if (wmi_unified_get_stats_cmd(wma_handle->wmi_handle, &cmd,
-				 node->bssid)) {
-
+	cmd.vdev_id = get_stats_param->sessionId;
+	cmd.stats_id = get_stats_param->statsMask;
+	if (wmi_unified_stats_request_send(wma_handle->wmi_handle,
+					   node->bssid,
+					   &cmd)) {
 		WMA_LOGE("%s: Failed to send WMI_REQUEST_STATS_CMDID",
 			 __func__);
 		goto failed;
