@@ -16076,3 +16076,36 @@ QDF_STATUS sme_set_bmiss_bcnt(uint32_t vdev_id, uint32_t first_cnt,
 {
 	return wma_config_bmiss_bcnt_params(vdev_id, first_cnt, final_cnt);
 }
+
+QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
+		bool is_tos_active, uint32_t max_off_chan_time,
+		uint32_t rest_time, bool skip_dfs_chan)
+{
+	struct sir_limit_off_chan *cmd;
+	struct scheduler_msg msg = {0};
+
+	cmd = qdf_mem_malloc(sizeof(*cmd));
+	if (!cmd) {
+		sme_err("qdf_mem_malloc failed for limit off channel");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd->vdev_id = vdev_id;
+	cmd->is_tos_active = is_tos_active;
+	cmd->max_off_chan_time = max_off_chan_time;
+	cmd->rest_time = rest_time;
+	cmd->skip_dfs_chans = skip_dfs_chan;
+
+	msg.type = WMA_SET_LIMIT_OFF_CHAN;
+	msg.reserved = 0;
+	msg.bodyptr = cmd;
+
+	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
+					&msg))) {
+		sme_err("Not able to post WMA_SET_LIMIT_OFF_CHAN to WMA");
+		qdf_mem_free(cmd);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}

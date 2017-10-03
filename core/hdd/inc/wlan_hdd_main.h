@@ -2736,6 +2736,14 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 			      int8_t *rssi, int8_t *snr);
 
+/**
+ * hdd_reset_limit_off_chan() - reset limit off-channel command parameters
+ * @adapter - HDD adapter
+ *
+ * Return: 0 on success and non zero value on failure
+ */
+int hdd_reset_limit_off_chan(struct hdd_adapter *adapter);
+
 #if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
 /**
  * hdd_clear_fils_connection_info: API to clear fils info from roam profile and

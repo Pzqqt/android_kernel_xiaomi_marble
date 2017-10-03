@@ -12621,30 +12621,6 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 }
 
 /**
- * hdd_send_limit_off_chan_cmd() - send limit off-channel command parameters
- * @param - pointer to sir_limit_off_chan
- *
- * Return: 0 on success and non zero value on failure
- */
-static int hdd_send_limit_off_chan_cmd(struct sir_limit_off_chan *param)
-{
-	struct scheduler_msg msg = {0};
-
-	msg.type = WMA_SET_LIMIT_OFF_CHAN;
-	msg.reserved = 0;
-	msg.bodyptr = param;
-
-	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
-					&msg))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Not able to post WMA_SET_LIMIT_OFF_CHAN to WMA"));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return 0;
-}
-
-/**
  * hdd_set_limit_off_chan_for_tos() - set limit off-channel command parameters
  * @adapter - HDD adapter
  * @tos - type of service
@@ -12657,9 +12633,11 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 		bool is_tos_active)
 {
 	int ac_bit;
-	struct sir_limit_off_chan *cmd;
 	struct hdd_context *hdd_ctx;
+	uint32_t max_off_chan_time = 0;
+	QDF_STATUS status;
 	int ret;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -12667,12 +12645,6 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 	if (ret < 0) {
 		hdd_err("failed to set limit off chan params");
 		return ret;
-	}
-
-	cmd = qdf_mem_malloc(sizeof(struct sir_limit_off_chan));
-	if (!cmd) {
-		hdd_err("qdf_mem_malloc failed for limit off channel");
-		return -ENOMEM;
 	}
 
 	ac_bit = limit_off_chan_tbl[tos][HDD_AC_BIT_INDX];
@@ -12684,12 +12656,12 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 
 	if (adapter->active_ac) {
 		if (adapter->active_ac & HDD_AC_VO_BIT) {
-			cmd->max_off_chan_time =
+			max_off_chan_time =
 				limit_off_chan_tbl[TOS_VO][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
 					PM_LATENCY);
 		} else if (adapter->active_ac & HDD_AC_VI_BIT) {
-			cmd->max_off_chan_time =
+			max_off_chan_time =
 				limit_off_chan_tbl[TOS_VI][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
 					PM_LATENCY);
@@ -12705,14 +12677,51 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 				hdd_ctx->config->conc_system_pref);
 	}
 
-	cmd->vdev_id = adapter->sessionId;
-	cmd->is_tos_active = is_tos_active;
-	cmd->rest_time = hdd_ctx->config->nRestTimeConc;
-	cmd->skip_dfs_chans = true;
+	status = sme_send_limit_off_channel_params(hal, adapter->sessionId,
+			is_tos_active, max_off_chan_time,
+			hdd_ctx->config->nRestTimeConc, true);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("failed to set limit off chan params");
+		ret = -EINVAL;
+	}
 
-	ret = hdd_send_limit_off_chan_cmd(cmd);
-	if (ret)
-		qdf_mem_free(cmd);
+	return ret;
+}
+
+/**
+ * hdd_reset_limit_off_chan() - reset limit off-channel command parameters
+ * @adapter - HDD adapter
+ *
+ * Return: 0 on success and non zero value on failure
+ */
+int hdd_reset_limit_off_chan(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx;
+	int ret;
+	QDF_STATUS status;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret < 0)
+		return ret;
+
+	/* set the system preferece to default */
+	policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
+			hdd_ctx->config->conc_system_pref);
+
+	/* clear the bitmap */
+	adapter->active_ac = 0;
+
+	hdd_debug("reset ac_bitmap for session %hu active_ac %0x",
+			adapter->sessionId, adapter->active_ac);
+
+	status = sme_send_limit_off_channel_params(hal, adapter->sessionId,
+			false, 0, 0, false);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("failed to reset limit off chan params");
+		ret = -EINVAL;
+	}
 
 	return ret;
 }
