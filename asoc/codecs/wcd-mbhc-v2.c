@@ -1838,6 +1838,8 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
 	struct snd_soc_card *card = codec->component.card;
 	const char *hph_switch = "qcom,msm-mbhc-hphl-swh";
 	const char *gnd_switch = "qcom,msm-mbhc-gnd-swh";
+	const char *hs_thre = "qcom,msm-mbhc-hs-mic-max-threshold-mv";
+	const char *hph_thre = "qcom,msm-mbhc-hs-mic-min-threshold-mv";
 
 	pr_debug("%s: enter\n", __func__);
 
@@ -1854,6 +1856,18 @@ int wcd_mbhc_init(struct wcd_mbhc *mbhc, struct snd_soc_codec *codec,
 			"%s: missing %s in dt node\n", __func__, gnd_switch);
 		goto err;
 	}
+
+	ret = of_property_read_u32(card->dev->of_node, hs_thre,
+				&(mbhc->hs_thr));
+	if (ret)
+		dev_dbg(card->dev,
+			"%s: missing %s in dt node\n", __func__, hs_thre);
+
+	ret = of_property_read_u32(card->dev->of_node, hph_thre,
+				&(mbhc->hph_thr));
+	if (ret)
+		dev_dbg(card->dev,
+			"%s: missing %s in dt node\n", __func__, hph_thre);
 
 	ret = of_property_read_u32_array(card->dev->of_node,
 					 "qcom,msm-mbhc-moist-cfg",

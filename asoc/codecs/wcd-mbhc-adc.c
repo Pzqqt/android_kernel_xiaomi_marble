@@ -370,11 +370,18 @@ static bool wcd_mbhc_adc_check_for_spl_headset(struct wcd_mbhc *mbhc,
 	 * btn press/relesae for HEADSET type during correct work.
 	 */
 	output_mv = wcd_measure_adc_once(mbhc, MUX_CTL_IN2P);
-	adc_threshold = ((WCD_MBHC_ADC_HS_THRESHOLD_MV *
+	if (mbhc->hs_thr)
+		adc_threshold = mbhc->hs_thr;
+	else
+		adc_threshold = ((WCD_MBHC_ADC_HS_THRESHOLD_MV *
 			  wcd_mbhc_get_micbias(mbhc))/WCD_MBHC_ADC_MICBIAS_MV);
-	adc_hph_threshold = ((WCD_MBHC_ADC_HPH_THRESHOLD_MV *
-			      wcd_mbhc_get_micbias(mbhc))/
-			      WCD_MBHC_ADC_MICBIAS_MV);
+
+	if (mbhc->hph_thr)
+		adc_hph_threshold = mbhc->hph_thr;
+	else
+		adc_hph_threshold = ((WCD_MBHC_ADC_HPH_THRESHOLD_MV *
+				wcd_mbhc_get_micbias(mbhc))/
+				WCD_MBHC_ADC_MICBIAS_MV);
 
 	if (output_mv > adc_threshold || output_mv < adc_hph_threshold) {
 		spl_hs = false;
@@ -426,8 +433,10 @@ static bool wcd_is_special_headset(struct wcd_mbhc *mbhc)
 			return false;
 		}
 	}
-
-	adc_threshold = ((WCD_MBHC_ADC_HS_THRESHOLD_MV *
+	if (mbhc->hs_thr)
+		adc_threshold = mbhc->hs_thr;
+	else
+		adc_threshold = ((WCD_MBHC_ADC_HS_THRESHOLD_MV *
 			  wcd_mbhc_get_micbias(mbhc)) /
 			  WCD_MBHC_ADC_MICBIAS_MV);
 
@@ -556,14 +565,25 @@ static void wcd_micbias_disable(struct wcd_mbhc *mbhc)
 	}
 }
 
-static int wcd_mbhc_get_plug_from_adc(int adc_result)
+static int wcd_mbhc_get_plug_from_adc(struct wcd_mbhc *mbhc, int adc_result)
 
 {
 	enum wcd_mbhc_plug_type plug_type = MBHC_PLUG_TYPE_INVALID;
+	u32 hph_thr = 0, hs_thr = 0;
 
-	if (adc_result < WCD_MBHC_ADC_HPH_THRESHOLD_MV)
+	if (mbhc->hs_thr)
+		hs_thr = mbhc->hs_thr;
+	else
+		hs_thr = WCD_MBHC_ADC_HS_THRESHOLD_MV;
+
+	if (mbhc->hph_thr)
+		hph_thr = mbhc->hph_thr;
+	else
+		hph_thr = WCD_MBHC_ADC_HPH_THRESHOLD_MV;
+
+	if (adc_result < hph_thr)
 		plug_type = MBHC_PLUG_TYPE_HEADPHONE;
-	else if (adc_result > WCD_MBHC_ADC_HS_THRESHOLD_MV)
+	else if (adc_result > hs_thr)
 		plug_type = MBHC_PLUG_TYPE_HIGH_HPH;
 	else
 		plug_type = MBHC_PLUG_TYPE_HEADSET;
@@ -612,7 +632,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	}
 	/* Find plug type */
 	output_mv = wcd_measure_adc_continuous(mbhc);
-	plug_type = wcd_mbhc_get_plug_from_adc(output_mv);
+	plug_type = wcd_mbhc_get_plug_from_adc(mbhc, output_mv);
 
 	/*
 	 * Report plug type if it is either headset or headphone
@@ -667,7 +687,7 @@ correct_plug_type:
 		 * instead of hogging system by contineous polling, wait for
 		 * sometime and re-check stop request again.
 		 */
-		plug_type = wcd_mbhc_get_plug_from_adc(output_mv);
+		plug_type = wcd_mbhc_get_plug_from_adc(mbhc, output_mv);
 
 		if ((output_mv > WCD_MBHC_ADC_HS_THRESHOLD_MV) &&
 		    (spl_hs_count < WCD_MBHC_SPL_HS_CNT)) {
@@ -713,7 +733,7 @@ correct_plug_type:
 				no_gnd_mic_swap_cnt++;
 				pt_gnd_mic_swap_cnt = 0;
 				plug_type = wcd_mbhc_get_plug_from_adc(
-						output_mv);
+						mbhc, output_mv);
 				if ((no_gnd_mic_swap_cnt <
 				    GND_MIC_SWAP_THRESHOLD) &&
 				    (spl_hs_count != WCD_MBHC_SPL_HS_CNT)) {
@@ -747,7 +767,7 @@ correct_plug_type:
 				 plug_type);
 			if (plug_type != MBHC_PLUG_TYPE_GND_MIC_SWAP) {
 				plug_type = wcd_mbhc_get_plug_from_adc(
-						output_mv);
+						mbhc, output_mv);
 				if (!spl_hs_reported &&
 				    spl_hs_count == WCD_MBHC_SPL_HS_CNT) {
 					spl_hs_reported = true;
