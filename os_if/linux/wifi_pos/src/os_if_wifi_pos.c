@@ -237,7 +237,7 @@ int os_if_wifi_pos_register_nl(void)
 	int ret = register_cld_cmd_cb(WLAN_NL_MSG_OEM,
 				os_if_wifi_pos_callback, NULL);
 	if (ret)
-		cfg80211_err("register_cld_cmd_cb failed")
+		cfg80211_err("register_cld_cmd_cb failed");
 
 	return ret;
 }
@@ -253,7 +253,7 @@ int os_if_wifi_pos_deregister_nl(void)
 {
 	int ret = deregister_cld_cmd_cb(WLAN_NL_MSG_OEM);
 	if (ret)
-		cfg80211_err("deregister_cld_cmd_cb failed")
+		cfg80211_err("deregister_cld_cmd_cb failed");
 
 	return ret;
 }
