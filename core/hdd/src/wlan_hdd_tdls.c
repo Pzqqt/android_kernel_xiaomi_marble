@@ -942,7 +942,8 @@ int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx, int offchannel)
  *
  * Return: 0 on success; negative errno otherwise
  */
-int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx, int offchanoffset)
+int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
+				     int offchanoffset)
 {
 	/* TODO */
 	return 0;

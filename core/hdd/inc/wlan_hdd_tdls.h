@@ -198,7 +198,8 @@ int wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 #endif
 
 int hdd_set_tdls_offchannel(struct hdd_context *hdd_ctx, int offchannel);
-int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx, int offchanoffset);
+int hdd_set_tdls_secoffchanneloffset(struct hdd_context *hdd_ctx,
+				     int offchanoffset);
 int hdd_set_tdls_offchannelmode(struct hdd_adapter *adapter, int offchanmode);
 int hdd_set_tdls_scan_type(struct hdd_context *hdd_ctx, int val);
 int wlan_hdd_tdls_antenna_switch(struct hdd_context *hdd_ctx,
