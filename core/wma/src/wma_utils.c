@@ -4141,6 +4141,12 @@ wma_process_utf_event(WMA_HANDLE handle, uint8_t *datap, uint32_t dataplen)
 	data = param_buf->data;
 	datalen = param_buf->num_data;
 
+	if (datalen < sizeof(segHdrInfo)) {
+		WMA_LOGE("message size %d is smaller than struct seg_hdr_info",
+			 datalen);
+		return -EINVAL;
+	}
+
 	segHdrInfo = *(struct seg_hdr_info *) &(data[0]);
 
 	wma_handle->utf_event_info.currentSeq = (segHdrInfo.segmentInfo & 0xF);
