@@ -121,7 +121,8 @@ static inline void hdd_get_tx_resource(struct hdd_adapter *adapter,
 }
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr);
+int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
+		     struct qdf_mac_addr *addr);
 
 const char *hdd_reason_type_to_string(enum netif_reason_type reason);
 const char *hdd_action_type_to_string(enum netif_action_type action);

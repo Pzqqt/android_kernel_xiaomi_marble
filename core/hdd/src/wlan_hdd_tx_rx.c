@@ -1052,7 +1052,8 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
  *
  * Return: index when success else INVALID_PEER_IDX
  */
-int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr)
+int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx,
+		     struct qdf_mac_addr *addr)
 {
 	uint8_t idx;
 
