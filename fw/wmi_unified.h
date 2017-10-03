@@ -10354,6 +10354,7 @@ typedef enum
 #define WMI_ROAM_NOTIF_SCAN_MODE_SUCCESS 0x4 /** indicate that roaming scan mode is successful */
 #define WMI_ROAM_NOTIF_SCAN_MODE_FAIL    0x5 /** indicate that roaming scan mode is failed due to internal roaming state */
 #define WMI_ROAM_NOTIF_DISCONNECT        0x6 /** indicate that roaming not allowed due BTM req */
+#define WMI_ROAM_NOTIF_SUBNET_CHANGED    0x7 /** indicate that subnet has changed */
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
 * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
