@@ -292,7 +292,16 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
 int wlan_hdd_ipv6_changed(struct notifier_block *nb,
 				unsigned long data, void *arg);
 
-int hdd_set_qpower_config(struct hdd_context *hddctx, struct hdd_adapter *adapter,
+/**
+ * hdd_set_qpower_config() - set qpower config to firmware
+ * @hddctx: HDD context
+ * @adapter: HDD adapter
+ * @qpower: new qpower config value
+ *
+ * Return: 0 on success; Errno on failure
+ */
+int hdd_set_qpower_config(struct hdd_context *hddctx,
+			  struct hdd_adapter *adapter,
 			  uint8_t qpower);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

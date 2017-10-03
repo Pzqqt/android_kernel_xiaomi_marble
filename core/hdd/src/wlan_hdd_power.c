@@ -2243,14 +2243,8 @@ int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	return ret;
 }
 
-/**
- * hdd_set_qpower_config() - set qpower config to firmware
- * @adapter: HDD adapter
- * @qpower: new qpower config value
- *
- * Return: 0 on success; Errno on failure
- */
-int hdd_set_qpower_config(struct hdd_context *hddctx, struct hdd_adapter *adapter,
+int hdd_set_qpower_config(struct hdd_context *hddctx,
+			  struct hdd_adapter *adapter,
 			  u8 qpower)
 {
 	QDF_STATUS status;
