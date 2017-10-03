@@ -263,7 +263,8 @@ QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo,
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_genie_to_csr(struct hdd_adapter *adapter, eCsrAuthType *RSNAuthType);
+int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
+			 eCsrAuthType *RSNAuthType);
 
 /**
  * hdd_set_csr_auth_type() - set csr auth type
@@ -272,7 +273,8 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter, eCsrAuthType *RSNAuthType)
  *
  * Return: 0 on success, error number otherwise
  */
-int hdd_set_csr_auth_type(struct hdd_adapter *adapter, eCsrAuthType RSNAuthType);
+int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
+			  eCsrAuthType RSNAuthType);
 
 #ifdef FEATURE_WLAN_TDLS
 /**
@@ -292,7 +294,8 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 				     uint8_t ucastSig, uint8_t qos);
 #endif
 
-QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter, uint8_t staId);
+QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
+				       uint8_t staId);
 
 /**
  * hdd_perform_roam_set_key_complete() - perform set key complete
@@ -349,7 +352,6 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
 		   struct qdf_mac_addr *peer_mac_addr);
 void hdd_delete_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id);
-int hdd_get_peer_idx(struct hdd_station_ctx *sta_ctx, struct qdf_mac_addr *addr);
 QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t sta_id);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
