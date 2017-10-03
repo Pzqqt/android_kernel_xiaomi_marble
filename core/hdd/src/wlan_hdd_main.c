@@ -12738,6 +12738,16 @@ void hdd_drv_ops_inactivity_handler(void)
 		QDF_BUG(0);
 }
 
+void hdd_pld_ipa_uc_shutdown_pipes(void)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx)
+		return;
+
+	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
+}
+
 /* Register the module init/exit functions */
 module_init(hdd_module_init);
 module_exit(hdd_module_exit);

@@ -1373,10 +1373,12 @@ static void wlan_hdd_pld_notify_handler(struct device *dev,
 static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
-	if (uevent->uevent == PLD_RECOVERY)
+	if (uevent->uevent == PLD_RECOVERY) {
 		cds_set_recovery_in_progress(true);
-	else if (uevent->uevent == PLD_FW_DOWN)
+		hdd_pld_ipa_uc_shutdown_pipes();
+	} else if (uevent->uevent == PLD_FW_DOWN) {
 		cds_set_fw_state(CDS_FW_STATE_DOWN);
+	}
 }
 
 #ifdef FEATURE_RUNTIME_PM

@@ -2871,4 +2871,10 @@ void hdd_start_driver_ops_timer(int drv_op);
  */
 void hdd_stop_driver_ops_timer(void);
 
+/**
+ * hdd_pld_ipa_uc_shutdown_pipes() - Disconnect IPA WDI pipes during PDR
+ *
+ * Return: None
+ */
+void hdd_pld_ipa_uc_shutdown_pipes(void);
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
