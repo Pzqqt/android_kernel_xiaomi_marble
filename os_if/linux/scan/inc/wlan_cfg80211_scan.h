@@ -151,6 +151,16 @@ int wlan_cfg80211_sched_scan_stop(struct wlan_objmgr_pdev *pdev,
 #endif
 
 /**
+ * wlan_scan_runtime_pm_init() - API to initialize runtime pm context for scan
+ * @pdev: Pointer to pdev
+ *
+ * This will help to initialize scan runtime pm context separately.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_scan_runtime_pm_init(struct wlan_objmgr_pdev *pdev);
+
+/**
  * wlan_scan_runtime_pm_deinit() - API to deinitialize runtime pm
  * for scan.
  * @pdev: Pointer to pdev
