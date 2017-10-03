@@ -39,7 +39,8 @@
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
 
 /* HDD Scan inactivity timeout set to 10 seconds
- * more than the CSR CMD Timeout */
+ * more than the CSR CMD Timeout
+ */
 #define HDD_SCAN_INACTIVITY_TIMEOUT \
 	(CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT + (10*1000))
 
