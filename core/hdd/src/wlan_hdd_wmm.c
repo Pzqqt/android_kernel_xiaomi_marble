@@ -2252,7 +2252,8 @@ hdd_wlan_wmm_status_e hdd_wmm_addts(struct hdd_adapter *adapter,
  *
  * Return: HDD_WLAN_WMM_STATUS_*
  */
-hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter, uint32_t handle)
+hdd_wlan_wmm_status_e hdd_wmm_delts(struct hdd_adapter *adapter,
+				    uint32_t handle)
 {
 	struct hdd_wmm_qos_context *pQosContext;
 	bool found = false;
