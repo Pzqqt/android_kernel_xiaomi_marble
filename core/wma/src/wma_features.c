@@ -4850,6 +4850,11 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 	param_tlvs = (WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID_param_tlvs *)
 								event_buf;
 	fix_param = param_tlvs->fixed_param;
+	if (fix_param->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("%s: received invalid vdev_id %d",
+			 __func__, fix_param->vdev_id);
+		return -EINVAL;
+	}
 	event = qdf_mem_malloc(sizeof(*event));
 	if (event == NULL) {
 		WMA_LOGE("Event allocation failed");
