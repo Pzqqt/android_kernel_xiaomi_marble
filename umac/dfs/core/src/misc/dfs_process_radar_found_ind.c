@@ -108,6 +108,7 @@ static void dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 	}
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 			nollist, num_ch, DFS_NOL_SET);
+	dfs_nol_update(dfs);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
 }
 
