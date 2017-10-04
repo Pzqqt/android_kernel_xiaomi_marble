@@ -272,7 +272,9 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 		return -EINVAL;
 	}
 
-	for (; vdev_map; vdev_id++, vdev_map >>= 1) {
+	WMA_LOGD("vdev_map = %d", vdev_map);
+	for (; vdev_map && vdev_id < wma->max_bssid;
+			vdev_id++, vdev_map >>= 1) {
 		if (!(vdev_map & 0x1))
 			continue;
 		if (!cdp_cfg_is_high_latency(soc,
