@@ -42,6 +42,7 @@
 #define pHddCtx
 #define pAdapter
 #define pHostapdAdapter
+#define pHddApCtx
 
 /*
  * Include files

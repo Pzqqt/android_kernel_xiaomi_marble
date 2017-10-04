@@ -284,7 +284,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 {
 	sme_ac_enum_type ac = SME_AC_BE;
 	struct hdd_adapter *adapter = (struct hdd_adapter *) netdev_priv(dev);
-	struct hdd_ap_ctx *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	struct qdf_mac_addr *pDestMacAddress;
 	uint8_t STAId;
 	uint32_t num_seg;
@@ -308,7 +308,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	 * SAP starts Tx only after the BSS START is
 	 * done.
 	 */
-	if (pHddApCtx->dfs_cac_block_tx)
+	if (ap_ctx->dfs_cac_block_tx)
 		goto drop_pkt;
 
 	/*
@@ -331,7 +331,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		 * starting phase.  SAP will return the station ID
 		 * used for BC/MC traffic.
 		 */
-		STAId = pHddApCtx->uBCStaId;
+		STAId = ap_ctx->uBCStaId;
 	} else {
 		if (QDF_STATUS_SUCCESS !=
 			 hdd_softap_get_sta_id(adapter,
@@ -1013,12 +1013,12 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct qdf_mac_addr broadcastMacAddr =
 					QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct hdd_ap_ctx *pHddApCtx;
+	struct hdd_ap_ctx *ap_ctx;
 
-	pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 	hdd_ctx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = adapter;
-	hdd_ctx->sta_to_adapter[pHddApCtx->uBCStaId] = adapter;
+	hdd_ctx->sta_to_adapter[ap_ctx->uBCStaId] = adapter;
 	qdf_status =
 		hdd_softap_register_sta(adapter, false, fPrivacyBit,
 					(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
