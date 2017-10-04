@@ -520,6 +520,14 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 	buf_ptr = buf_ptr + sizeof(wmi_wlan_profile_ctx_t) + WMI_TLV_HDR_SIZE;
 	profile_data = (wmi_wlan_profile_t *) buf_ptr;
 	entries = profile_ctx->bin_count;
+
+	if (entries > param_buf->num_profile_data) {
+		WMA_LOGE("FW bin count %d more than data %d in TLV hdr",
+			 entries,
+			 param_buf->num_profile_data);
+		return -EINVAL;
+	}
+
 	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 				"Profile data stats\n");
 	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
