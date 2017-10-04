@@ -269,7 +269,7 @@ static int epping_start_adapter(epping_adapter_t *adapter)
 		adapter->started = true;
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_WARN,
-			   "%s: adapter %p already started\n", __func__,
+			   "%s: adapter %pK already started\n", __func__,
 			   adapter);
 	}
 	return 0;

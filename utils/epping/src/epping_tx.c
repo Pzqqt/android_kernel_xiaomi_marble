@@ -186,7 +186,7 @@ void epping_tx_timer_expire(epping_adapter_t *adapter)
 		htc_set_nodrop_pkt(adapter->pEpping_ctx->HTCHandle, true);
 		if (epping_tx_send_int(nodrop_skb, adapter)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-				   "%s: nodrop: %p xmit fail in timer\n",
+				   "%s: nodrop: %pK xmit fail in timer\n",
 				   __func__, nodrop_skb);
 			/* fail to xmit so put the nodrop packet to the nodrop queue */
 			qdf_nbuf_queue_insert_head(&adapter->nodrop_queue,
@@ -195,7 +195,7 @@ void epping_tx_timer_expire(epping_adapter_t *adapter)
 		} else {
 			htc_set_nodrop_pkt(adapter->pEpping_ctx->HTCHandle, false);
 			EPPING_LOG(QDF_TRACE_LEVEL_INFO,
-				   "%s: nodrop: %p xmit ok in timer\n",
+				   "%s: nodrop: %pK xmit ok in timer\n",
 				   __func__, nodrop_skb);
 		}
 	}
@@ -258,7 +258,7 @@ int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *adapter)
 		htc_set_nodrop_pkt(adapter->pEpping_ctx->HTCHandle, true);
 		if (epping_tx_send_int(nodrop_skb, adapter)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-				   "%s: nodrop: %p xmit fail\n", __func__,
+				   "%s: nodrop: %pK xmit fail\n", __func__,
 				   nodrop_skb);
 			/* fail to xmit so put the nodrop packet to the nodrop queue */
 			qdf_nbuf_queue_insert_head(&adapter->nodrop_queue,
@@ -268,7 +268,7 @@ int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *adapter)
 		} else {
 			htc_set_nodrop_pkt(adapter->pEpping_ctx->HTCHandle, false);
 			EPPING_LOG(QDF_TRACE_LEVEL_INFO,
-				   "%s: nodrop: %p xmit ok\n", __func__,
+				   "%s: nodrop: %pK xmit ok\n", __func__,
 				   nodrop_skb);
 		}
 	}
@@ -285,12 +285,12 @@ tx_fail:
 		qdf_nbuf_free(skb);
 		++adapter->stats.tx_dropped;
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "%s: Tx skb %p dropped, stats.tx_dropped = %ld\n",
+			   "%s: Tx skb %pK dropped, stats.tx_dropped = %ld\n",
 			   __func__, skb, adapter->stats.tx_dropped);
 		return -ENOMEM;
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "%s: nodrop: %p queued\n", __func__, skb);
+			   "%s: nodrop: %pK queued\n", __func__, skb);
 		qdf_nbuf_queue_add(&adapter->nodrop_queue, skb);
 		qdf_spin_lock_bh(&adapter->data_lock);
 		if (adapter->epping_timer_state != EPPING_TX_TIMER_RUNNING) {
@@ -367,7 +367,7 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 		}
 
 		EPPING_LOG(QDF_TRACE_LEVEL_INFO,
-			   "%s skb=%p data=%p len=0x%x eid=%d ",
+			   "%s skb=%pK data=%pK len=0x%x eid=%d ",
 			   __func__, pktSkb, htc_pkt->pBuffer,
 			   htc_pkt->ActualLength, eid);
 

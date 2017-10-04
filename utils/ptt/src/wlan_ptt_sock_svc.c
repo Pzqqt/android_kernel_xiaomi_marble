@@ -62,7 +62,7 @@ static void ptt_sock_dump_buf(const unsigned char *pbuf, int cnt)
 	for (i = 0; i < cnt; i++) {
 		if ((i % 16) == 0)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
-				  "\n%p:", pbuf);
+				  "\n%pK:", pbuf);
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO, " %02X",
 			  *pbuf);
 		pbuf++;
