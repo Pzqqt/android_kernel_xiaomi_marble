@@ -171,15 +171,6 @@ static struct dev_config usb_tx_cfg = {
 };
 
 enum {
-	PRIM_MI2S = 0,
-	SEC_MI2S,
-	TERT_MI2S,
-	QUAT_MI2S,
-	QUIN_MI2S,
-	MI2S_MAX,
-};
-
-enum {
 	PRIM_AUX_PCM = 0,
 	SEC_AUX_PCM,
 	TERT_AUX_PCM,
@@ -2631,6 +2622,8 @@ int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 	int port_id = msm_get_port_id(rtd->dai_link->id);
 	int index = cpu_dai->id;
 	unsigned int fmt = SND_SOC_DAIFMT_CBS_CFS;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(rtd->card);
 
 	dev_dbg(rtd->card->dev,
 		"%s: substream = %s  stream = %d, dai name %s, dai ID %d\n",
@@ -2682,6 +2675,9 @@ int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 				goto clk_off;
 			}
 		}
+		if (pdata->mi2s_gpio_p[index])
+			msm_cdc_pinctrl_select_active_state(
+					pdata->mi2s_gpio_p[index]);
 	}
 	mutex_unlock(&mi2s_intf_conf[index].lock);
 	return 0;
@@ -2708,6 +2704,8 @@ void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
 	int port_id = msm_get_port_id(rtd->dai_link->id);
 	int index = rtd->cpu_dai->id;
+	struct msm_asoc_mach_data *pdata =
+				snd_soc_card_get_drvdata(rtd->card);
 
 	pr_debug("%s(): substream = %s  stream = %d\n", __func__,
 		 substream->name, substream->stream);
@@ -2718,6 +2716,10 @@ void msm_mi2s_snd_shutdown(struct snd_pcm_substream *substream)
 
 	mutex_lock(&mi2s_intf_conf[index].lock);
 	if (--mi2s_intf_conf[index].ref_cnt == 0) {
+		if (pdata->mi2s_gpio_p[index])
+			msm_cdc_pinctrl_select_sleep_state(
+					pdata->mi2s_gpio_p[index]);
+
 		ret = msm_mi2s_set_sclk(substream, false);
 		if (ret < 0) {
 			pr_err("%s:clock disable failed for MI2S (%d); ret=%d\n",
@@ -3262,6 +3264,16 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 					"qcom,cdc-ext-spk-gpios", 0);
 	}
 
+	pdata->mi2s_gpio_p[PRIM_MI2S] = of_parse_phandle(pdev->dev.of_node,
+					"qcom,pri-mi2s-gpios", 0);
+	pdata->mi2s_gpio_p[SEC_MI2S] = of_parse_phandle(pdev->dev.of_node,
+					"qcom,sec-mi2s-gpios", 0);
+	pdata->mi2s_gpio_p[TERT_MI2S] = of_parse_phandle(pdev->dev.of_node,
+					"qcom,tert-mi2s-gpios", 0);
+	pdata->mi2s_gpio_p[QUAT_MI2S] = of_parse_phandle(pdev->dev.of_node,
+					"qcom,quat-mi2s-gpios", 0);
+	pdata->mi2s_gpio_p[QUIN_MI2S] = of_parse_phandle(pdev->dev.of_node,
+					"qcom,quin-mi2s-gpios", 0);
 	/*
 	 * Parse US-Euro gpio info from DT. Report no error if us-euro
 	 * entry is not found in DT file as some targets do not support
