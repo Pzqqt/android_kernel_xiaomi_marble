@@ -4225,17 +4225,17 @@ QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_hdd_reset_prob_rspies(struct hdd_adapter *pHostapdAdapter)
+void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 {
 	struct qdf_mac_addr *bssid = NULL;
 	tSirUpdateIE updateIE;
 
-	switch (pHostapdAdapter->device_mode) {
+	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	{
 		struct hdd_station_ctx *pHddStaCtx =
-			WLAN_HDD_GET_STATION_CTX_PTR(pHostapdAdapter);
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		bssid = &pHddStaCtx->conn_info.bssId;
 		break;
 	}
@@ -4243,7 +4243,7 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *pHostapdAdapter)
 	case QDF_P2P_GO_MODE:
 	case QDF_IBSS_MODE:
 	{
-		bssid = &pHostapdAdapter->macAddressCurrent;
+		bssid = &adapter->macAddressCurrent;
 		break;
 	}
 	case QDF_FTM_MODE:
@@ -4254,17 +4254,17 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *pHostapdAdapter)
 		 * for these kind of devices
 		 */
 		hdd_err("Unexpected request for the current device type %d",
-		       pHostapdAdapter->device_mode);
+		       adapter->device_mode);
 		return;
 	}
 
 	qdf_copy_macaddr(&updateIE.bssid, bssid);
-	updateIE.smeSessionId = pHostapdAdapter->sessionId;
+	updateIE.smeSessionId = adapter->sessionId;
 	updateIE.ieBufferlength = 0;
 	updateIE.pAdditionIEBuffer = NULL;
 	updateIE.append = true;
 	updateIE.notify = false;
-	if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(pHostapdAdapter),
+	if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(adapter),
 			      &updateIE,
 			      eUPDATE_IE_PROBE_RESP) == QDF_STATUS_E_FAILURE) {
 		hdd_err("Could not pass on PROBE_RSP_BCN data to PE");

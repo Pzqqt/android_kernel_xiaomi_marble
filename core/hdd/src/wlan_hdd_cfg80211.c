@@ -13343,9 +13343,9 @@ QDF_STATUS wlan_hdd_validate_operation_channel(struct hdd_adapter *adapter,
 }
 
 #ifdef DHCP_SERVER_OFFLOAD
-static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *pHostapdAdapter)
+static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *adapter)
 {
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tpSirDhcpSrvOffloadInfo pDhcpSrvInfo;
 	uint8_t numEntries = 0;
 	uint8_t srv_ip[IPADDR_NUM_ENTRIES];
@@ -13357,7 +13357,7 @@ static void wlan_hdd_set_dhcp_server_offload(struct hdd_adapter *pHostapdAdapter
 		hdd_err("could not allocate tDhcpSrvOffloadInfo!");
 		return;
 	}
-	pDhcpSrvInfo->vdev_id = pHostapdAdapter->sessionId;
+	pDhcpSrvInfo->vdev_id = adapter->sessionId;
 	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
 	pDhcpSrvInfo->dhcpClientNum = hdd_ctx->config->dhcpMaxNumClients;
 	hdd_string_to_u8_array(hdd_ctx->config->dhcpServerIP,

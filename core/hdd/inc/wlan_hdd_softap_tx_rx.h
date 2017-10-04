@@ -67,7 +67,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 				      bool fPrivacyBit);
 QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *adapter);
-QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *pHostapdAdapter);
+QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter);
 QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *pDestMacAddress,
 				       enum ol_txrx_peer_state state);
