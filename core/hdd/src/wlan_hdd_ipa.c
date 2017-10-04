@@ -1323,7 +1323,7 @@ void hdd_ipa_set_tx_flow_info(void)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 	struct hdd_adapter *adapter;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	struct hdd_hostapd_state *hostapd_state;
 	struct qdf_mac_addr staBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
@@ -1363,26 +1363,26 @@ void hdd_ipa_set_tx_flow_info(void)
 		adapter = adapterNode->adapter;
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:
-			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
-			    pHddStaCtx->conn_info.connState) {
+			    sta_ctx->conn_info.connState) {
 				staChannel =
-					pHddStaCtx->conn_info.operationChannel;
+					sta_ctx->conn_info.operationChannel;
 				qdf_copy_macaddr(&staBssid,
-						 &pHddStaCtx->conn_info.bssId);
+						 &sta_ctx->conn_info.bssId);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = staChannel;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 			}
 			break;
 		case QDF_P2P_CLIENT_MODE:
-			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
-			    pHddStaCtx->conn_info.connState) {
+			    sta_ctx->conn_info.connState) {
 				p2pChannel =
-					pHddStaCtx->conn_info.operationChannel;
+					sta_ctx->conn_info.operationChannel;
 				qdf_copy_macaddr(&p2pBssid,
-						&pHddStaCtx->conn_info.bssId);
+						&sta_ctx->conn_info.bssId);
 				p2pMode = "CLI";
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = p2pChannel;
@@ -3058,15 +3058,15 @@ static int hdd_ipa_uc_disconnect_ap(struct hdd_adapter *adapter)
  */
 static int hdd_ipa_uc_disconnect_sta(struct hdd_adapter *adapter)
 {
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	int ret = 0;
 
 	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
 	    hdd_ipa->sta_connected) {
-		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		hdd_ipa_uc_send_evt(adapter, WLAN_STA_DISCONNECT,
-				pHddStaCtx->conn_info.bssId.bytes);
+				sta_ctx->conn_info.bssId.bytes);
 	}
 
 	return ret;
