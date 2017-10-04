@@ -9254,6 +9254,61 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 {
 	int ret;
 	QDF_STATUS status;
+	int set_value;
+	uint32_t num_abg_tx_chains = 0;
+	uint32_t num_11b_tx_chains = 0;
+	uint32_t num_11ag_tx_chains = 0;
+
+	if (hdd_ctx->config->sifs_burst_duration) {
+		set_value = (SIFS_BURST_DUR_MULTIPLIER) *
+			hdd_ctx->config->sifs_burst_duration;
+
+		if ((set_value > 0) && (set_value <= SIFS_BURST_DUR_MAX))
+			sme_cli_set_command(0, (int)WMI_PDEV_PARAM_BURST_DUR,
+					    set_value, PDEV_CMD);
+	}
+
+	if (hdd_ctx->config->is_force_1x1)
+		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_SET_IOT_PATTERN,
+				1, PDEV_CMD);
+	/* set chip power save failure detected callback */
+	sme_set_chip_pwr_save_fail_cb(hdd_ctx->hHal,
+				      hdd_chip_pwr_save_fail_detected_cb);
+
+	if (hdd_ctx->config->max_mpdus_inampdu) {
+		set_value = hdd_ctx->config->max_mpdus_inampdu;
+		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,
+				    set_value, PDEV_CMD);
+	}
+
+	if (hdd_ctx->config->enable_rts_sifsbursting) {
+		set_value = hdd_ctx->config->enable_rts_sifsbursting;
+		sme_cli_set_command(0,
+				    (int)WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
+				    set_value, PDEV_CMD);
+	}
+
+	if (hdd_ctx->config->sap_get_peer_info) {
+		set_value = hdd_ctx->config->sap_get_peer_info;
+		sme_cli_set_command(0,
+				    (int)WMI_PDEV_PARAM_PEER_STATS_INFO_ENABLE,
+				    set_value, PDEV_CMD);
+	}
+
+	num_11b_tx_chains = hdd_ctx->config->num_11b_tx_chains;
+	num_11ag_tx_chains = hdd_ctx->config->num_11ag_tx_chains;
+	if (!hdd_ctx->config->enable2x2) {
+		if (num_11b_tx_chains > 1)
+			num_11b_tx_chains = 1;
+		if (num_11ag_tx_chains > 1)
+			num_11ag_tx_chains = 1;
+	}
+	WMI_PDEV_PARAM_SET_11B_TX_CHAIN_NUM(num_abg_tx_chains,
+					    num_11b_tx_chains);
+	WMI_PDEV_PARAM_SET_11AG_TX_CHAIN_NUM(num_abg_tx_chains,
+					     num_11ag_tx_chains);
+	sme_cli_set_command(0, (int)WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
+			    num_abg_tx_chains, PDEV_CMD);
 
 	ret = hdd_pre_enable_configure(hdd_ctx);
 	if (ret) {
@@ -9682,10 +9737,6 @@ int hdd_wlan_startup(struct device *dev)
 	struct hdd_context *hdd_ctx;
 	int ret;
 	bool rtnl_held;
-	int set_value;
-	uint32_t num_abg_tx_chains = 0;
-	uint32_t num_11b_tx_chains = 0;
-	uint32_t num_11ag_tx_chains = 0;
 
 	ENTER();
 
@@ -9789,57 +9840,6 @@ int hdd_wlan_startup(struct device *dev)
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
 
-	if (hdd_ctx->config->sifs_burst_duration) {
-		set_value = (SIFS_BURST_DUR_MULTIPLIER) *
-			hdd_ctx->config->sifs_burst_duration;
-
-		if ((set_value > 0) && (set_value <= SIFS_BURST_DUR_MAX))
-			sme_cli_set_command(0, (int)WMI_PDEV_PARAM_BURST_DUR,
-					    set_value, PDEV_CMD);
-	}
-
-	if (hdd_ctx->config->is_force_1x1)
-		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_SET_IOT_PATTERN,
-				1, PDEV_CMD);
-	/* set chip power save failure detected callback */
-	sme_set_chip_pwr_save_fail_cb(hdd_ctx->hHal,
-				      hdd_chip_pwr_save_fail_detected_cb);
-
-	if (hdd_ctx->config->max_mpdus_inampdu) {
-		set_value = hdd_ctx->config->max_mpdus_inampdu;
-		sme_cli_set_command(0, (int)WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,
-				    set_value, PDEV_CMD);
-	}
-
-	if (hdd_ctx->config->enable_rts_sifsbursting) {
-		set_value = hdd_ctx->config->enable_rts_sifsbursting;
-		sme_cli_set_command(0,
-				    (int)WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
-				    set_value, PDEV_CMD);
-	}
-
-	if (hdd_ctx->config->sap_get_peer_info) {
-		set_value = hdd_ctx->config->sap_get_peer_info;
-		sme_cli_set_command(0,
-				    (int)WMI_PDEV_PARAM_PEER_STATS_INFO_ENABLE,
-				    set_value, PDEV_CMD);
-	}
-
-	num_11b_tx_chains = hdd_ctx->config->num_11b_tx_chains;
-	num_11ag_tx_chains = hdd_ctx->config->num_11ag_tx_chains;
-	if (!hdd_ctx->config->enable2x2) {
-		if (num_11b_tx_chains > 1)
-			num_11b_tx_chains = 1;
-		if (num_11ag_tx_chains > 1)
-			num_11ag_tx_chains = 1;
-	}
-	WMI_PDEV_PARAM_SET_11B_TX_CHAIN_NUM(num_abg_tx_chains,
-					    num_11b_tx_chains);
-	WMI_PDEV_PARAM_SET_11AG_TX_CHAIN_NUM(num_abg_tx_chains,
-					     num_11ag_tx_chains);
-	sme_cli_set_command(0, (int)WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
-			    num_abg_tx_chains, PDEV_CMD);
-
 	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time);
@@ -9853,6 +9853,8 @@ err_close_adapters:
 err_release_rtnl_lock:
 	if (rtnl_held)
 		hdd_release_rtnl_lock();
+
+	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
 err_ipa_cleanup:
 	hdd_ipa_cleanup(hdd_ctx);
