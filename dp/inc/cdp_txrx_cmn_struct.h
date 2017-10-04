@@ -42,8 +42,8 @@
 #define OL_TXRX_NUM_LOCAL_PEER_IDS 33   /* default */
 #endif
 
-#define CDP_BA_256_BIT_MAP_SIZE_DWORDS 256
-#define CDP_BA_64_BIT_MAP_SIZE_DWORDS 64
+#define CDP_BA_256_BIT_MAP_SIZE_DWORDS 8
+#define CDP_BA_64_BIT_MAP_SIZE_DWORDS 2
 
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #define CDP_INVALID_VDEV_ID 0xff
@@ -98,6 +98,9 @@
 		WME_AC_VO)
 
 #define CDP_MAX_RX_RINGS 4
+
+#define CDP_MU_MAX_USERS 8
+#define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
 
 /*
  * DP configuration parameters
@@ -1053,7 +1056,8 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t long_retries:4,
 		 short_retries:4,
 		 tx_ratecode:8,
-		 is_ampdu:1;
+		 is_ampdu:1,
+		 ppdu_type:5;
 	uint32_t success_bytes;
 	uint32_t retry_bytes;
 	uint32_t failed_bytes;
@@ -1071,8 +1075,7 @@ struct cdp_tx_completion_ppdu_user {
 		 preamble:4,
 		 gi:4,
 		 dcm:1,
-		 ldpc:1,
-		 ppdu_type:2;
+		 ldpc:1;
 	uint32_t ba_seq_no;
 	uint32_t ba_bitmap[CDP_BA_256_BIT_MAP_SIZE_DWORDS];
 	uint32_t start_seq;
@@ -1109,7 +1112,7 @@ struct cdp_tx_completion_ppdu {
 	uint32_t ppdu_start_timestamp;
 	uint32_t ppdu_end_timestamp;
 	uint32_t ack_timestamp;
-	struct cdp_tx_completion_ppdu_user user[1];
+	struct cdp_tx_completion_ppdu_user user[CDP_MU_MAX_USERS];
 };
 
 /**
