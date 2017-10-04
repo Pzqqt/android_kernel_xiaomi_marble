@@ -2625,7 +2625,9 @@ static int hdd_open(struct net_device *dev)
 	int ret;
 
 	cds_ssr_protect(__func__);
+	hdd_start_driver_ops_timer(eHDD_DRV_OP_IFF_UP);
 	ret = __hdd_open(dev);
+	hdd_stop_driver_ops_timer();
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -12782,6 +12784,9 @@ void hdd_start_driver_ops_timer(int drv_op)
 		break;
 	case eHDD_DRV_OP_REINIT:
 		memcpy(drv_ops_string, "reinit", sizeof("reinit"));
+		break;
+	case eHDD_DRV_OP_IFF_UP:
+		memcpy(drv_ops_string, "iff_up", sizeof("iff_up"));
 		break;
 	}
 
