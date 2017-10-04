@@ -19718,6 +19718,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 static void populate_tlv_service(uint32_t *wmi_service)
 {
 	wmi_service[wmi_service_beacon_offload] = WMI_SERVICE_BEACON_OFFLOAD;
+	wmi_service[wmi_service_ack_timeout] = WMI_SERVICE_ACK_TIMEOUT;
 	wmi_service[wmi_service_scan_offload] = WMI_SERVICE_SCAN_OFFLOAD;
 	wmi_service[wmi_service_roam_scan_offload] =
 					WMI_SERVICE_ROAM_SCAN_OFFLOAD;
@@ -20133,6 +20134,7 @@ static void populate_pdev_param_tlv(uint32_t *pdev_param)
 	pdev_param[wmi_pdev_param_fast_channel_reset] =
 				WMI_PDEV_PARAM_FAST_CHANNEL_RESET;
 	pdev_param[wmi_pdev_param_rx_decap_mode] = WMI_PDEV_PARAM_RX_DECAP_MODE;
+	pdev_param[wmi_pdev_param_tx_ack_timeout] = WMI_PDEV_PARAM_ACK_TIMEOUT;
 }
 
 /**

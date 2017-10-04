@@ -5287,6 +5287,7 @@ typedef enum {
 	wmi_pdev_param_atf_peer_stats,
 	wmi_pdev_param_btcoex_cfg,
 	wmi_pdev_param_mesh_mcast_enable,
+	wmi_pdev_param_tx_ack_timeout,
 
 	wmi_pdev_param_max,
 } wmi_conv_pdev_params_id;
@@ -5546,6 +5547,7 @@ typedef enum {
 	wmi_service_offchan_tx_wmi,
 	wmi_service_chan_load_info,
 	wmi_service_extended_nss_support,
+	wmi_service_ack_timeout,
 
 	wmi_services_max,
 } wmi_conv_service_ids;

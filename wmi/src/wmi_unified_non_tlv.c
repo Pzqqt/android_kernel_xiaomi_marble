@@ -8528,6 +8528,7 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_offchan_tx_wmi] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_extended_nss_support] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_ack_timeout] = WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
@@ -8811,6 +8812,7 @@ static void populate_pdev_param_non_tlv(uint32_t *pdev_param)
 		WMI_PDEV_PARAM_ENABLE_BTCOEX;
 	pdev_param[wmi_pdev_param_atf_peer_stats] =
 		WMI_PDEV_PARAM_ATF_PEER_STATS;
+	pdev_param[wmi_pdev_param_tx_ack_timeout] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_rfkill_enable] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_hw_rfkill_config] = WMI_UNAVAILABLE_PARAM;
 	pdev_param[wmi_pdev_param_low_power_rf_enable] = WMI_UNAVAILABLE_PARAM;
