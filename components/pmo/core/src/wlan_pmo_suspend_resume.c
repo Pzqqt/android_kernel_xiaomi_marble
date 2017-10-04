@@ -121,7 +121,7 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 				&listen_interval);
 		if (ret != QDF_STATUS_SUCCESS) {
 			/* even it fails continue fwr will take default LI */
-			pmo_info("Fail to calculate listen interval");
+			pmo_debug("Fail to calculate listen interval");
 		}
 
 		ret = pmo_tgt_vdev_update_param_req(vdev,
@@ -129,7 +129,7 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 				listen_interval);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			/* even it fails continue fwr will take default LI */
-			pmo_info("Failed to Set Listen Interval vdevId %d",
+			pmo_debug("Failed to Set Listen Interval vdevId %d",
 				 vdev_id);
 		}
 		pmo_debug("Set Listen Interval vdevId %d Listen Intv %d",
@@ -140,14 +140,14 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 			ret = pmo_tgt_send_vdev_sta_ps_param(vdev,
 					pmo_sta_ps_enable_qpower, 0);
 			if (QDF_IS_STATUS_ERROR(ret))
-				pmo_info("Failed to disable Qpower in suspend mode!");
+				pmo_debug("Failed to disable Qpower in suspend mode!");
 		}
 
 		ret = pmo_tgt_vdev_update_param_req(vdev,
 				pmo_vdev_param_dtim_policy,
 				pmo_normal_dtim);
 		if (QDF_IS_STATUS_ERROR(ret))
-			pmo_info("Failed to Set to Normal DTIM vdevId %d",
+			pmo_debug("Failed to Set to Normal DTIM vdevId %d",
 				vdev_id);
 
 		/* Set it to Normal DTIM */
