@@ -274,7 +274,9 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_OFFCHAN_TXRX_ID",
 					"WLAN_POLICY_MGR_ID",
 					"WLAN_SON_ID",
+					"WLAN_SA_API_ID",
 					"WLAN_SPECTRAL_ID",
+					"WLAN_SPLITMAC_ID",
 					"WLAN_REF_ID_MAX" };
 
 	return (char *)strings[id];
