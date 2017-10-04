@@ -330,7 +330,7 @@ static struct miscdevice audio_wma_misc = {
 	.fops = &audio_wma_fops,
 };
 
-static int __init audio_wma_init(void)
+int __init audio_wma_init(void)
 {
 	int ret = misc_register(&audio_wma_misc);
 
@@ -342,4 +342,8 @@ static int __init audio_wma_init(void)
 	return ret;
 }
 
-device_initcall(audio_wma_init);
+void __exit audio_wma_exit(void)
+{
+	mutex_destroy(&audio_wma_ws_mgr.ws_lock);
+	misc_deregister(&audio_wma_misc);
+}

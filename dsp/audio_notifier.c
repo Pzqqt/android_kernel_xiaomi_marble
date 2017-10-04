@@ -12,7 +12,6 @@
 
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <soc/qcom/scm.h>
 #include <soc/qcom/subsystem_notif.h>
 #include <soc/qcom/service-notifier.h>
 #include <dsp/audio_notifier.h>
@@ -489,9 +488,6 @@ static int audio_notifer_pdr_adsp_cb(struct notifier_block *this,
 static int audio_notifer_ssr_adsp_cb(struct notifier_block *this,
 				     unsigned long opcode, void *data)
 {
-	if (opcode == SUBSYS_BEFORE_SHUTDOWN)
-		audio_ssr_send_nmi(data);
-
 	return audio_notifer_service_cb(opcode,
 					AUDIO_NOTIFIER_SSR_SERVICE,
 					AUDIO_NOTIFIER_ADSP_DOMAIN);
@@ -602,23 +598,6 @@ static int __init audio_notifier_subsys_init(void)
 
 	return 0;
 }
-subsys_initcall(audio_notifier_subsys_init);
-
-static int __init audio_notifier_init(void)
-{
-	int ret;
-
-	ret = audio_pdr_register(&pdr_nb);
-	if (ret < 0) {
-		pr_debug("%s: PDR register failed, ret = %d, disable service\n",
-			__func__, ret);
-		audio_notifer_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
-	}
-
-	/* Do not return error since PDR enablement is not critical */
-	return 0;
-}
-module_init(audio_notifier_init);
 
 static int __init audio_notifier_late_init(void)
 {
@@ -633,4 +612,32 @@ static int __init audio_notifier_late_init(void)
 	mutex_unlock(&notifier_mutex);
 	return 0;
 }
-late_initcall(audio_notifier_late_init);
+
+static int __init audio_notifier_init(void)
+{
+	int ret;
+
+	audio_notifier_subsys_init();
+
+	ret = audio_pdr_register(&pdr_nb);
+	if (ret < 0) {
+		pr_err("%s: PDR register failed, ret = %d, disable service\n",
+			__func__, ret);
+		audio_notifer_disable_service(AUDIO_NOTIFIER_PDR_SERVICE);
+	}
+
+	/* Do not return error since PDR enablement is not critical */
+	audio_notifier_late_init();
+
+	return 0;
+}
+module_init(audio_notifier_init);
+
+static void __exit audio_notifier_exit(void)
+{
+	audio_pdr_deregister(&pdr_nb);
+}
+module_exit(audio_notifier_exit);
+
+MODULE_DESCRIPTION("Audio notifier driver");
+MODULE_LICENSE("GPL v2");

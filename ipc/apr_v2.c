@@ -66,6 +66,16 @@ void subsys_notif_register(char *client_name, int domain,
 			__func__, domain, ret);
 }
 
+void subsys_notif_deregister(char *client_name)
+{
+	int ret;
+
+	ret = audio_notifier_deregister(client_name);
+	if (ret < 0)
+		pr_err("%s: Audio notifier de-register failed for client %s\n",
+			__func__, client_name);
+}
+
 uint16_t apr_get_reset_domain(uint16_t proc)
 {
 	return proc;

@@ -1026,7 +1026,7 @@ static int __init soundwire_init(void)
 
 	return retval;
 }
-postcore_initcall(soundwire_init);
+module_init(soundwire_init);
 module_exit(soundwire_exit);
 
 

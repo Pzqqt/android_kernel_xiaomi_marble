@@ -2121,5 +2121,17 @@ void wcd_mbhc_deinit(struct wcd_mbhc *mbhc)
 }
 EXPORT_SYMBOL(wcd_mbhc_deinit);
 
+static int __init mbhc_init(void)
+{
+	return 0;
+}
+
+static void __exit mbhc_exit(void)
+{
+}
+
+module_init(mbhc_init);
+module_exit(mbhc_exit);
+
 MODULE_DESCRIPTION("wcd MBHC v2 module");
 MODULE_LICENSE("GPL v2");

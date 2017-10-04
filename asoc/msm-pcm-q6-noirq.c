@@ -1252,33 +1252,31 @@ static int msm_pcm_remove(struct platform_device *pdev)
 	snd_soc_unregister_platform(&pdev->dev);
 	return 0;
 }
-static const struct of_device_id msm_pcm_dt_match[] = {
+static const struct of_device_id msm_pcm_noirq_dt_match[] = {
 	{.compatible = "qcom,msm-pcm-dsp-noirq"},
 	{}
 };
-MODULE_DEVICE_TABLE(of, msm_pcm_dt_match);
+MODULE_DEVICE_TABLE(of, msm_pcm_noirq_dt_match);
 
 static struct platform_driver msm_pcm_driver_noirq = {
 	.driver = {
 		.name = "msm-pcm-dsp-noirq",
 		.owner = THIS_MODULE,
-		.of_match_table = msm_pcm_dt_match,
+		.of_match_table = msm_pcm_noirq_dt_match,
 	},
 	.probe = msm_pcm_probe,
 	.remove = msm_pcm_remove,
 };
 
-static int __init msm_soc_platform_init(void)
+int __init msm_pcm_noirq_init(void)
 {
 	return platform_driver_register(&msm_pcm_driver_noirq);
 }
-module_init(msm_soc_platform_init);
 
-static void __exit msm_soc_platform_exit(void)
+void __exit msm_pcm_noirq_exit(void)
 {
 	platform_driver_unregister(&msm_pcm_driver_noirq);
 }
-module_exit(msm_soc_platform_exit);
 
 MODULE_DESCRIPTION("PCM NOIRQ module platform driver");
 MODULE_LICENSE("GPL v2");

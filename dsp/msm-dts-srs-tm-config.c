@@ -18,10 +18,9 @@
 #include <linux/atomic.h>
 #include <sound/asound.h>
 #include <sound/control.h>
-#include <asoc/msm-dts-srs-tm-config.h>
 #include <dsp/msm_audio_ion.h>
 #include <dsp/q6adm-v2.h>
-#include "msm-pcm-routing-v2.h"
+#include <dsp/msm-dts-srs-tm-config.h>
 
 static int srs_port_id[AFE_MAX_PORTS] = {-1};
 static int srs_copp_idx[AFE_MAX_PORTS] = {-1};
@@ -142,10 +141,10 @@ static int msm_dts_srs_trumedia_control_set(struct snd_kcontrol *kcontrol,
 	int ret, port_id;
 
 	pr_debug("SRS control normal called\n");
-	msm_pcm_routing_acquire_lock();
+	msm_dts_srs_acquire_lock();
 	port_id = SLIMBUS_0_RX;
 	ret = msm_dts_srs_trumedia_control_set_(port_id, kcontrol, ucontrol);
-	msm_pcm_routing_release_lock();
+	msm_dts_srs_release_lock();
 	return ret;
 }
 
@@ -155,10 +154,10 @@ static int msm_dts_srs_trumedia_control_i2s_set(struct snd_kcontrol *kcontrol,
 	int ret, port_id;
 
 	pr_debug("SRS control I2S called\n");
-	msm_pcm_routing_acquire_lock();
+	msm_dts_srs_acquire_lock();
 	port_id = PRIMARY_I2S_RX;
 	ret = msm_dts_srs_trumedia_control_set_(port_id, kcontrol, ucontrol);
-	msm_pcm_routing_release_lock();
+	msm_dts_srs_release_lock();
 	return ret;
 }
 
@@ -168,10 +167,10 @@ static int msm_dts_srs_trumedia_control_mi2s_set(struct snd_kcontrol *kcontrol,
 	int ret, port_id;
 
 	pr_debug("SRS control MI2S called\n");
-	msm_pcm_routing_acquire_lock();
+	msm_dts_srs_acquire_lock();
 	port_id = AFE_PORT_ID_PRIMARY_MI2S_RX;
 	ret = msm_dts_srs_trumedia_control_set_(port_id, kcontrol, ucontrol);
-	msm_pcm_routing_release_lock();
+	msm_dts_srs_release_lock();
 	return ret;
 }
 
@@ -181,10 +180,10 @@ static int msm_dts_srs_trumedia_control_hdmi_set(struct snd_kcontrol *kcontrol,
 	int ret, port_id;
 
 	pr_debug("SRS control HDMI called\n");
-	msm_pcm_routing_acquire_lock();
+	msm_dts_srs_acquire_lock();
 	port_id = HDMI_RX;
 	ret = msm_dts_srs_trumedia_control_set_(port_id, kcontrol, ucontrol);
-	msm_pcm_routing_release_lock();
+	msm_dts_srs_release_lock();
 	return ret;
 }
 
@@ -270,6 +269,13 @@ static const struct snd_kcontrol_new lpa_srs_trumedia_controls_mi2s[] = {
 	}
 };
 
+/**
+ * msm_dts_srs_tm_add_controls -
+ *        Add DTS SRS module controls
+ *
+ * @platform: component to which controls can be registered
+ *
+ */
 void msm_dts_srs_tm_add_controls(struct snd_soc_platform *platform)
 {
 	snd_soc_add_platform_controls(platform,
@@ -287,6 +293,7 @@ void msm_dts_srs_tm_add_controls(struct snd_soc_platform *platform)
 				lpa_srs_trumedia_controls_mi2s,
 			ARRAY_SIZE(lpa_srs_trumedia_controls_mi2s));
 }
+EXPORT_SYMBOL(msm_dts_srs_tm_add_controls);
 
 static int reg_ion_mem(void)
 {
@@ -322,6 +329,13 @@ static void unreg_ion_mem(void)
 	po.size = 0;
 }
 
+/**
+ * msm_dts_srs_tm_deinit -
+ *        De-Initializes DTS SRS module
+ *
+ * @port_id: Port ID number
+ *
+ */
 void msm_dts_srs_tm_deinit(int port_id)
 {
 	set_port_id(port_id, -1);
@@ -333,7 +347,16 @@ void msm_dts_srs_tm_deinit(int port_id)
 		}
 	}
 }
+EXPORT_SYMBOL(msm_dts_srs_tm_deinit);
 
+/**
+ * msm_dts_srs_tm_init -
+ *        Initializes DTS SRS module
+ *
+ * @port_id: Port ID number
+ * @copp_idx: COPP index
+ *
+ */
 void msm_dts_srs_tm_init(int port_id, int copp_idx)
 {
 	int cur_ref_cnt = 0;
@@ -355,3 +378,4 @@ void msm_dts_srs_tm_init(int port_id, int copp_idx)
 	}
 	msm_dts_srs_tm_send_params(port_id, 1);
 }
+EXPORT_SYMBOL(msm_dts_srs_tm_init);

@@ -904,19 +904,17 @@ static struct platform_driver msm_afe_driver = {
 	.remove = msm_afe_remove,
 };
 
-static int __init msm_soc_platform_init(void)
+int __init msm_pcm_afe_init(void)
 {
 	pr_debug("%s\n", __func__);
 	return platform_driver_register(&msm_afe_driver);
 }
-module_init(msm_soc_platform_init);
 
-static void __exit msm_soc_platform_exit(void)
+void __exit msm_pcm_afe_exit(void)
 {
 	pr_debug("%s\n", __func__);
 	platform_driver_unregister(&msm_afe_driver);
 }
-module_exit(msm_soc_platform_exit);
 
 MODULE_DESCRIPTION("AFE PCM module platform driver");
 MODULE_LICENSE("GPL v2");

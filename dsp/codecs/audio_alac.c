@@ -420,7 +420,7 @@ static struct miscdevice audio_alac_misc = {
 	.fops = &audio_alac_fops,
 };
 
-static int __init audio_alac_init(void)
+int __init audio_alac_init(void)
 {
 	int ret = misc_register(&audio_alac_misc);
 
@@ -432,4 +432,8 @@ static int __init audio_alac_init(void)
 	return ret;
 }
 
-device_initcall(audio_alac_init);
+void __exit audio_alac_exit(void)
+{
+	mutex_destroy(&audio_alac_ws_mgr.ws_lock);
+	misc_deregister(&audio_alac_misc);
+}

@@ -18,7 +18,7 @@
 #include <linux/atomic.h>
 #include <linux/wait.h>
 #include <sound/asound.h>
-#include <asoc/msm-dts-srs-tm-config.h>
+#include <dsp/msm-dts-srs-tm-config.h>
 #include <dsp/apr_audio-v2.h>
 #include <dsp/q6adm-v2.h>
 #include <dsp/q6audio-v2.h>
@@ -127,7 +127,26 @@ static struct adm_multi_ch_map multi_ch_maps[2] = {
 static int adm_get_parameters[MAX_COPPS_PER_PORT * ADM_GET_PARAMETER_LENGTH];
 static int adm_module_topo_list[
 	MAX_COPPS_PER_PORT * ADM_GET_TOPO_MODULE_LIST_LENGTH];
+static struct mutex dts_srs_lock;
 
+void msm_dts_srs_acquire_lock(void)
+{
+	mutex_lock(&dts_srs_lock);
+}
+
+void msm_dts_srs_release_lock(void)
+{
+	mutex_unlock(&dts_srs_lock);
+}
+
+/**
+ * adm_validate_and_get_port_index -
+ *        validate given port id
+ *
+ * @port_id: Port ID number
+ *
+ * Returns valid index on success or error on failure
+ */
 int adm_validate_and_get_port_index(int port_id)
 {
 	int index;
@@ -150,7 +169,16 @@ int adm_validate_and_get_port_index(int port_id)
 	pr_debug("%s: port_idx- %d\n", __func__, index);
 	return index;
 }
+EXPORT_SYMBOL(adm_validate_and_get_port_index);
 
+/**
+ * adm_get_default_copp_idx -
+ *        retrieve default copp_idx for given port
+ *
+ * @port_id: Port ID number
+ *
+ * Returns valid value on success or error on failure
+ */
 int adm_get_default_copp_idx(int port_id)
 {
 	int port_idx = adm_validate_and_get_port_index(port_id), idx;
@@ -167,6 +195,7 @@ int adm_get_default_copp_idx(int port_id)
 	}
 	return -EINVAL;
 }
+EXPORT_SYMBOL(adm_get_default_copp_idx);
 
 int adm_get_topology_for_port_from_copp_id(int port_id, int copp_id)
 {
@@ -185,6 +214,15 @@ int adm_get_topology_for_port_from_copp_id(int port_id, int copp_id)
 	return 0;
 }
 
+/**
+ * adm_get_topology_for_port_copp_idx -
+ *        retrieve topology of given port/copp_idx
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ *
+ * Returns valid value on success or 0 on failure
+ */
 int adm_get_topology_for_port_copp_idx(int port_id, int copp_idx)
 {
 	int port_idx = adm_validate_and_get_port_index(port_id);
@@ -196,6 +234,7 @@ int adm_get_topology_for_port_copp_idx(int port_id, int copp_idx)
 	}
 	return atomic_read(&this_adm.copp.topology[port_idx][copp_idx]);
 }
+EXPORT_SYMBOL(adm_get_topology_for_port_copp_idx);
 
 int adm_get_indexes_from_copp_id(int copp_id, int *copp_idx, int *port_idx)
 {
@@ -264,6 +303,17 @@ static int adm_get_next_available_copp(int port_idx)
 	return idx;
 }
 
+/**
+ * srs_trumedia_open -
+ *        command to set SRS trumedia open
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ * @srs_tech_id: SRS tech index
+ * @srs_params: params pointer
+ *
+ * Returns 0 on success or error on failure
+ */
 int srs_trumedia_open(int port_id, int copp_idx, __s32 srs_tech_id,
 		      void *srs_params)
 {
@@ -529,6 +579,7 @@ fail_cmd:
 	kfree(adm_params);
 	return ret;
 }
+EXPORT_SYMBOL(srs_trumedia_open);
 
 static int adm_populate_channel_weight(u16 *ptr,
 					struct msm_pcm_channel_mixer *ch_mixer,
@@ -790,7 +841,20 @@ fail_cmd:
 
 	return ret;
 }
+EXPORT_SYMBOL(adm_programable_channel_mixer);
 
+/**
+ * adm_set_stereo_to_custom_stereo -
+ *        command to update custom stereo
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ * @session_id: session id to be updated
+ * @params: params pointer
+ * @param_length: length of params
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_set_stereo_to_custom_stereo(int port_id, int copp_idx,
 				    unsigned int session_id, char *params,
 				    uint32_t params_length)
@@ -876,7 +940,19 @@ set_stereo_to_custom_stereo_return:
 	kfree(adm_params);
 	return rc;
 }
+EXPORT_SYMBOL(adm_set_stereo_to_custom_stereo);
 
+/**
+ * adm_dolby_dap_send_params -
+ *        command to send dolby dap params
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ * @params: params pointer
+ * @param_length: length of params
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_dolby_dap_send_params(int port_id, int copp_idx, char *params,
 			      uint32_t params_length)
 {
@@ -951,7 +1027,19 @@ dolby_dap_send_param_return:
 	kfree(adm_params);
 	return rc;
 }
+EXPORT_SYMBOL(adm_dolby_dap_send_params);
 
+/**
+ * adm_get_params_v5 -
+ *        command to retrieve ADM params for given module
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ * @params: params pointer
+ * @param_length: length of params
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_send_params_v5(int port_id, int copp_idx, char *params,
 			      uint32_t params_length)
 {
@@ -1026,6 +1114,7 @@ send_param_return:
 	kfree(adm_params);
 	return rc;
 }
+EXPORT_SYMBOL(adm_send_params_v5);
 
 int adm_get_params_v2(int port_id, int copp_idx, uint32_t module_id,
 		      uint32_t param_id, uint32_t params_length,
@@ -1142,13 +1231,38 @@ adm_get_param_return:
 	return rc;
 }
 
+/**
+ * adm_get_params -
+ *        command to retrieve ADM params for given module
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ * @module_id: module ID
+ * @param_id: Param index
+ * @param_length: length of params
+ * @params: params pointer
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_get_params(int port_id, int copp_idx, uint32_t module_id,
 		   uint32_t param_id, uint32_t params_length, char *params)
 {
 	return adm_get_params_v2(port_id, copp_idx, module_id, param_id,
 				 params_length, params, 0);
 }
+EXPORT_SYMBOL(adm_get_params);
 
+/**
+ * adm_get_pp_topo_module_list -
+ *        command to update PP top module list
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index of ADM copp
+ * @param_length: length of params
+ * @params: pointer with PP top module params
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_get_pp_topo_module_list(int port_id, int copp_idx, int32_t param_length,
 				char *params)
 {
@@ -1245,6 +1359,8 @@ adm_pp_module_list_l:
 	pr_debug("%s : rc = %d ", __func__, rc);
 	return rc;
 }
+EXPORT_SYMBOL(adm_get_pp_topo_module_list);
+
 static void adm_callback_debug_print(struct apr_client_data *data)
 {
 	uint32_t *payload;
@@ -1264,6 +1380,15 @@ static void adm_callback_debug_print(struct apr_client_data *data)
 			__func__, data->opcode, data->payload_size);
 }
 
+/**
+ * adm_set_multi_ch_map -
+ *        Update multi channel map info
+ *
+ * @channel_map: pointer with channel map info
+ * @path: direction or ADM path type
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_set_multi_ch_map(char *channel_map, int path)
 {
 	int idx;
@@ -1283,7 +1408,17 @@ int adm_set_multi_ch_map(char *channel_map, int path)
 
 	return 0;
 }
+EXPORT_SYMBOL(adm_set_multi_ch_map);
 
+/**
+ * adm_get_multi_ch_map -
+ *        Retrieves multi channel map info
+ *
+ * @channel_map: pointer to be updated with channel map
+ * @path: direction or ADM path type
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_get_multi_ch_map(char *channel_map, int path)
 {
 	int idx;
@@ -1304,6 +1439,7 @@ int adm_get_multi_ch_map(char *channel_map, int path)
 
 	return 0;
 }
+EXPORT_SYMBOL(adm_get_multi_ch_map);
 
 static int32_t adm_callback(struct apr_client_data *data, void *priv)
 {
@@ -2170,6 +2306,16 @@ static void send_adm_cal(int port_id, int copp_idx, int path, int perf_mode,
 			  app_type, acdb_id, sample_rate);
 }
 
+/**
+ * adm_connect_afe_port -
+ *        command to send ADM connect AFE port
+ *
+ * @mode: value of mode for ADM connect AFE
+ * @session_id: session active to connect
+ * @port_id: Port ID number
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_connect_afe_port(int mode, int session_id, int port_id)
 {
 	struct adm_cmd_connect_afe_port_v5	cmd;
@@ -2249,6 +2395,7 @@ fail_cmd:
 
 	return ret;
 }
+EXPORT_SYMBOL(adm_connect_afe_port);
 
 int adm_arrange_mch_map(struct adm_cmd_device_open_v5 *open, int path,
 			 int channel_mode)
@@ -2382,6 +2529,22 @@ int adm_arrange_mch_ep2_map(struct adm_cmd_device_open_v6 *open_v6,
 	return rc;
 }
 
+/**
+ * adm_open -
+ *        command to send ADM open
+ *
+ * @port_id: port id number
+ * @path: direction or ADM path type
+ * @rate: sample rate of session
+ * @channel_mode: number of channels set
+ * @topology: topology active for this session
+ * @perf_mode: performance mode like LL/ULL/..
+ * @bit_width: bit width to set for copp
+ * @app_type: App type used for this session
+ * @acdb_id: ACDB ID of this device
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	     int perf_mode, uint16_t bit_width, int app_type, int acdb_id)
 {
@@ -2621,7 +2784,17 @@ int adm_open(int port_id, int path, int rate, int channel_mode, int topology,
 	atomic_inc(&this_adm.copp.cnt[port_idx][copp_idx]);
 	return copp_idx;
 }
+EXPORT_SYMBOL(adm_open);
 
+/**
+ * adm_copp_mfc_cfg -
+ *        command to send ADM MFC config
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @dst_sample_rate: sink sample rate
+ *
+ */
 void adm_copp_mfc_cfg(int port_id, int copp_idx, int dst_sample_rate)
 {
 	struct audproc_mfc_output_media_fmt mfc_cfg;
@@ -2723,6 +2896,7 @@ void adm_copp_mfc_cfg(int port_id, int copp_idx, int dst_sample_rate)
 fail_cmd:
 	return;
 }
+EXPORT_SYMBOL(adm_copp_mfc_cfg);
 
 static void route_set_opcode_matrix_id(
 			struct adm_cmd_matrix_map_routings_v5 **route_addr,
@@ -2763,6 +2937,17 @@ static void route_set_opcode_matrix_id(
 		 __func__, route->hdr.opcode, route->matrix_id);
 }
 
+/**
+ * adm_matrix_map -
+ *        command to send ADM matrix map for ADM copp list
+ *
+ * @path: direction or ADM path type
+ * @payload_map: have info of session id and associated copp_idx/num_copps
+ * @perf_mode: performance mode like LL/ULL/..
+ * @passthr_mode: flag to indicate passthrough mode
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_matrix_map(int path, struct route_payload payload_map, int perf_mode,
 			uint32_t passthr_mode)
 {
@@ -2892,34 +3077,69 @@ fail_cmd:
 	kfree(matrix_map);
 	return ret;
 }
+EXPORT_SYMBOL(adm_matrix_map);
 
+/**
+ * adm_ec_ref_rx_id -
+ *        Update EC ref port ID
+ *
+ */
 void adm_ec_ref_rx_id(int port_id)
 {
 	this_adm.ec_ref_rx = port_id;
 	pr_debug("%s: ec_ref_rx:%d\n", __func__, this_adm.ec_ref_rx);
 }
+EXPORT_SYMBOL(adm_ec_ref_rx_id);
 
+/**
+ * adm_num_ec_ref_rx_chans -
+ *        Update EC ref number of channels
+ *
+ */
 void adm_num_ec_ref_rx_chans(int num_chans)
 {
 	this_adm.num_ec_ref_rx_chans = num_chans;
 	pr_debug("%s: num_ec_ref_rx_chans:%d\n",
 		__func__, this_adm.num_ec_ref_rx_chans);
 }
+EXPORT_SYMBOL(adm_num_ec_ref_rx_chans);
 
+/**
+ * adm_ec_ref_rx_bit_width -
+ *        Update EC ref bit_width
+ *
+ */
 void adm_ec_ref_rx_bit_width(int bit_width)
 {
 	this_adm.ec_ref_rx_bit_width = bit_width;
 	pr_debug("%s: ec_ref_rx_bit_width:%d\n",
 		__func__, this_adm.ec_ref_rx_bit_width);
 }
+EXPORT_SYMBOL(adm_ec_ref_rx_bit_width);
 
+/**
+ * adm_ec_ref_rx_sampling_rate -
+ *        Update EC ref sample rate
+ *
+ */
 void adm_ec_ref_rx_sampling_rate(int sampling_rate)
 {
 	this_adm.ec_ref_rx_sampling_rate = sampling_rate;
 	pr_debug("%s: ec_ref_rx_sampling_rate:%d\n",
 		__func__, this_adm.ec_ref_rx_sampling_rate);
 }
+EXPORT_SYMBOL(adm_ec_ref_rx_sampling_rate);
 
+/**
+ * adm_close -
+ *        command to close ADM copp
+ *
+ * @port_id: Port ID number
+ * @perf_mode: performance mode like LL/ULL/..
+ * @copp_idx: copp index assigned
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_close(int port_id, int perf_mode, int copp_idx)
 {
 	struct apr_hdr close;
@@ -3053,6 +3273,7 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 	}
 	return 0;
 }
+EXPORT_SYMBOL(adm_close);
 
 int send_rtac_audvol_cal(void)
 {
@@ -3474,6 +3695,16 @@ err:
 	return ret;
 }
 
+/**
+ * adm_set_volume -
+ *        command to set volume on ADM copp
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @volume: gain value to set
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_set_volume(int port_id, int copp_idx, int volume)
 {
 	struct audproc_volume_ctrl_master_gain audproc_vol;
@@ -3552,7 +3783,18 @@ int adm_set_volume(int port_id, int copp_idx, int volume)
 fail_cmd:
 	return rc;
 }
+EXPORT_SYMBOL(adm_set_volume);
 
+/**
+ * adm_set_softvolume -
+ *        command to set softvolume
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @softvol_param: Params to set for softvolume
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_set_softvolume(int port_id, int copp_idx,
 			struct audproc_softvolume_params *softvol_param)
 {
@@ -3644,7 +3886,18 @@ int adm_set_softvolume(int port_id, int copp_idx,
 fail_cmd:
 	return rc;
 }
+EXPORT_SYMBOL(adm_set_softvolume);
 
+/**
+ * adm_set_mic_gain -
+ *        command to set MIC gain
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @volume: gain value to set
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_set_mic_gain(int port_id, int copp_idx, int volume)
 {
 	struct adm_set_mic_gain_params	mic_gain_params;
@@ -3722,7 +3975,18 @@ int adm_set_mic_gain(int port_id, int copp_idx, int volume)
 fail_cmd:
 	return rc;
 }
+EXPORT_SYMBOL(adm_set_mic_gain);
 
+/**
+ * adm_send_set_multichannel_ec_primary_mic_ch -
+ *        command to set multi-ch EC primary mic
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @primary_mic_ch: channel number of primary mic
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_send_set_multichannel_ec_primary_mic_ch(int port_id, int copp_idx,
 			int primary_mic_ch)
 {
@@ -3810,7 +4074,19 @@ int adm_send_set_multichannel_ec_primary_mic_ch(int port_id, int copp_idx,
 fail_cmd:
 	return rc;
 }
+EXPORT_SYMBOL(adm_send_set_multichannel_ec_primary_mic_ch);
 
+/**
+ * adm_param_enable -
+ *      command to send params to ADM for given module
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @module_id: ADM module
+ * @enable: flag to enable or disable module
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_param_enable(int port_id, int copp_idx, int module_id,  int enable)
 {
 	struct audproc_enable_param_t adm_mod_enable;
@@ -3896,7 +4172,22 @@ fail_cmd:
 	return rc;
 
 }
+EXPORT_SYMBOL(adm_param_enable);
 
+/**
+ * adm_send_calibration -
+ *        send ADM calibration to DSP
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @path: direction or ADM path type
+ * @perf_mode: performance mode like LL/ULL/..
+ * @cal_type: calibration type to use
+ * @params: pointer with cal data
+ * @size: cal size
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_send_calibration(int port_id, int copp_idx, int path, int perf_mode,
 			 int cal_type, char *params, int size)
 {
@@ -3988,6 +4279,7 @@ end:
 	kfree(adm_params);
 	return rc;
 }
+EXPORT_SYMBOL(adm_send_calibration);
 
 /*
  * adm_update_wait_parameters must be called with routing driver locks.
@@ -4024,7 +4316,17 @@ end:
 	return ret;
 
 }
+EXPORT_SYMBOL(adm_set_wait_parameters);
 
+/**
+ * adm_reset_wait_parameters -
+ *        reset wait parameters or ADM delay value
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_reset_wait_parameters(int port_id, int copp_idx)
 {
 	int ret = 0, port_idx;
@@ -4050,7 +4352,18 @@ int adm_reset_wait_parameters(int port_id, int copp_idx)
 end:
 	return ret;
 }
+EXPORT_SYMBOL(adm_reset_wait_parameters);
 
+/**
+ * adm_wait_timeout -
+ *        ADM wait command after command send to DSP
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @wait_time: value in ms for command timeout
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_wait_timeout(int port_id, int copp_idx, int wait_time)
 {
 	int ret = 0, port_idx;
@@ -4081,7 +4394,22 @@ end:
 	pr_debug("%s: return %d--\n", __func__, ret);
 	return ret;
 }
+EXPORT_SYMBOL(adm_wait_timeout);
 
+/**
+ * adm_store_cal_data -
+ *        Retrieve calibration data for ADM copp device
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @path: direction or copp type
+ * @perf_mode: performance mode like LL/ULL/..
+ * @cal_index: calibration index to use
+ * @params: pointer to store cal data
+ * @size: pointer to fill with cal size
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_store_cal_data(int port_id, int copp_idx, int path, int perf_mode,
 		       int cal_index, char *params, int *size)
 {
@@ -4165,7 +4493,18 @@ unlock:
 end:
 	return rc;
 }
+EXPORT_SYMBOL(adm_store_cal_data);
 
+/**
+ * adm_send_compressed_device_mute -
+ *        command to send mute for compressed device
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @mute_on: flag to indicate mute or unmute
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_send_compressed_device_mute(int port_id, int copp_idx, bool mute_on)
 {
 	struct adm_set_compressed_device_mute mute_params;
@@ -4242,7 +4581,18 @@ int adm_send_compressed_device_mute(int port_id, int copp_idx, bool mute_on)
 end:
 	return ret;
 }
+EXPORT_SYMBOL(adm_send_compressed_device_mute);
 
+/**
+ * adm_send_compressed_device_latency -
+ *        command to send latency for compressed device
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @latency: latency value to pass
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_send_compressed_device_latency(int port_id, int copp_idx, int latency)
 {
 	struct adm_set_compressed_device_latency latency_params;
@@ -4319,6 +4669,7 @@ int adm_send_compressed_device_latency(int port_id, int copp_idx, int latency)
 end:
 	return ret;
 }
+EXPORT_SYMBOL(adm_send_compressed_device_latency);
 
 /**
  * adm_swap_speaker_channels
@@ -4450,6 +4801,16 @@ done:
 }
 EXPORT_SYMBOL(adm_swap_speaker_channels);
 
+/**
+ * adm_set_sound_focus -
+ *       Update sound focus info
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @soundFocusData: sound focus data to pass
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_set_sound_focus(int port_id, int copp_idx,
 			struct sound_focus_param soundFocusData)
 {
@@ -4559,7 +4920,18 @@ done:
 
 	return ret;
 }
+EXPORT_SYMBOL(adm_set_sound_focus);
 
+/**
+ * adm_get_sound_focus -
+ *        Retrieve sound focus info
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @soundFocusData: pointer for sound focus data to be updated with
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_get_sound_focus(int port_id, int copp_idx,
 			struct sound_focus_param *soundFocusData)
 {
@@ -4623,6 +4995,7 @@ done:
 
 	return ret;
 }
+EXPORT_SYMBOL(adm_get_sound_focus);
 
 static int adm_source_tracking_alloc_map_memory(void)
 {
@@ -4682,6 +5055,16 @@ done:
 	return ret;
 }
 
+/**
+ * adm_get_source_tracking -
+ *        Retrieve source tracking info
+ *
+ * @port_id: Port ID number
+ * @copp_idx: copp index assigned
+ * @sourceTrackingData: pointer for source track data to be updated with
+ *
+ * Returns 0 on success or error on failure
+ */
 int adm_get_source_tracking(int port_id, int copp_idx,
 			    struct source_tracking_param *sourceTrackingData)
 {
@@ -4808,8 +5191,9 @@ done:
 
 	return ret;
 }
+EXPORT_SYMBOL(adm_get_source_tracking);
 
-static int __init adm_init(void)
+int __init adm_init(void)
 {
 	int i = 0, j;
 
@@ -4857,14 +5241,13 @@ static int __init adm_init(void)
 	this_adm.sourceTrackingData.apr_cmd_status = -1;
 	atomic_set(&this_adm.mem_map_handles[ADM_MEM_MAP_INDEX_SOURCE_TRACKING],
 		   0);
+	mutex_init(&dts_srs_lock);
 
 	return 0;
 }
 
-static void __exit adm_exit(void)
+void __exit adm_exit(void)
 {
+	mutex_destroy(&dts_srs_lock);
 	adm_delete_cal_data();
 }
-
-device_initcall(adm_init);
-module_exit(adm_exit);

@@ -174,6 +174,7 @@ int apr_send_pkt(void *handle, uint32_t *buf);
 int apr_deregister(void *handle);
 void subsys_notif_register(char *client_name, int domain,
 			   struct notifier_block *nb);
+void subsys_notif_deregister(char *client_name);
 int apr_get_dest_id(char *dest);
 uint16_t apr_get_data_src(struct apr_hdr *hdr);
 void change_q6_state(int state);

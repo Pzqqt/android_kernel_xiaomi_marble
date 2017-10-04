@@ -156,6 +156,7 @@ struct msm_sdw_priv {
 	struct snd_info_entry *version_entry;
 };
 
+#if IS_ENABLED(CONFIG_SND_SOC_MSM_SDW)
 extern int msm_sdw_set_spkr_mode(struct snd_soc_codec *codec, int mode);
 extern int msm_sdw_set_spkr_gain_offset(struct snd_soc_codec *codec,
 					int offset);
@@ -167,4 +168,32 @@ extern struct regmap *msm_sdw_regmap_init(struct device *dev,
 extern int msm_sdw_codec_info_create_codec_entry(
 	struct snd_info_entry *codec_root,
 	struct snd_soc_codec *codec);
+#else /* CONFIG_SND_SOC_MSM_SDW */
+static inline int msm_sdw_set_spkr_mode(struct snd_soc_codec *codec, int mode)
+{
+	return 0;
+}
+static inline int msm_sdw_set_spkr_gain_offset(struct snd_soc_codec *codec,
+					int offset);
+{
+	return 0;
+}
+static inline void msm_sdw_gpio_cb(
+	int (*sdw_cdc_gpio_fn)(bool enable, struct snd_soc_codec *codec),
+	struct snd_soc_codec *codec);
+{
+
+}
+static inline struct regmap *msm_sdw_regmap_init(struct device *dev,
+					  const struct regmap_config *config);
+{
+	return NULL;
+}
+static inline int msm_sdw_codec_info_create_codec_entry(
+	struct snd_info_entry *codec_root,
+	struct snd_soc_codec *codec)
+{
+	return 0;
+}
+#endif /* CONFIG_SND_SOC_MSM_SDW */
 #endif

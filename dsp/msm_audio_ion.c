@@ -89,6 +89,20 @@ static void msm_audio_ion_add_allocation(
 	mutex_unlock(&(msm_audio_ion_data->list_mutex));
 }
 
+/**
+ * msm_audio_ion_alloc -
+ *        Allocs ION memory for given client name
+ *
+ * @name: Name of audio ION client
+ * @client: ION client to be assigned
+ * @handle: ION handle to be assigned
+ * @bufsz: buffer size
+ * @paddr: Physical address to be assigned with allocated region
+ * @pa_len: length of allocated region to be assigned
+ * vaddr: virtual address to be assigned
+ *
+ * Returns 0 on success or error on failure
+ */
 int msm_audio_ion_alloc(const char *name, struct ion_client **client,
 			struct ion_handle **handle, size_t bufsz,
 			ion_phys_addr_t *paddr, size_t *pa_len, void **vaddr)
@@ -243,6 +257,15 @@ err:
 	return rc;
 }
 
+/**
+ * msm_audio_ion_free -
+ *        fress ION memory for given client and handle
+ *
+ * @client: ION client
+ * @handle: ION handle
+ *
+ * Returns 0 on success or error on failure
+ */
 int msm_audio_ion_free(struct ion_client *client, struct ion_handle *handle)
 {
 	if (!client || !handle) {
@@ -260,6 +283,15 @@ int msm_audio_ion_free(struct ion_client *client, struct ion_handle *handle)
 }
 EXPORT_SYMBOL(msm_audio_ion_free);
 
+/**
+ * msm_audio_ion_mmap -
+ *       Audio ION memory map
+ *
+ * @ab: audio buf pointer
+ * @vma: virtual mem area
+ *
+ * Returns 0 on success or error on failure
+ */
 int msm_audio_ion_mmap(struct audio_buffer *ab,
 		       struct vm_area_struct *vma)
 {
@@ -351,6 +383,7 @@ int msm_audio_ion_mmap(struct audio_buffer *ab,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(msm_audio_ion_mmap);
 
 
 bool msm_audio_ion_is_smmu_available(void)
@@ -366,8 +399,15 @@ struct ion_client *msm_audio_ion_client_create(const char *name)
 	pclient = msm_ion_client_create(name);
 	return pclient;
 }
+EXPORT_SYMBOL(msm_audio_ion_client_create);
 
-
+/**
+ * msm_audio_ion_client_destroy -
+ *        Removes ION client handle
+ *
+ * @client: ION client
+ *
+ */
 void msm_audio_ion_client_destroy(struct ion_client *client)
 {
 	pr_debug("%s: client = %pK smmu_enabled = %d\n", __func__,
@@ -375,7 +415,24 @@ void msm_audio_ion_client_destroy(struct ion_client *client)
 
 	ion_client_destroy(client);
 }
+EXPORT_SYMBOL(msm_audio_ion_client_destroy);
 
+/**
+ * msm_audio_ion_import_legacy -
+ *        Alloc ION memory for given size
+ *
+ * @name: ION client name
+ * @client: ION client
+ * @handle: ION handle to be updated
+ * @fd: ION fd
+ * @ionflag: Flags for ION handle
+ * @bufsz: buffer size
+ * @paddr: pointer to be updated with physical address of allocated ION memory
+ * @pa_len: pointer to be updated with size of physical memory
+ * @vaddr: pointer to be updated with virtual address
+ *
+ * Returns 0 on success or error on failure
+ */
 int msm_audio_ion_import_legacy(const char *name, struct ion_client *client,
 			struct ion_handle **handle, int fd,
 			unsigned long *ionflag, size_t bufsz,
@@ -438,7 +495,16 @@ err_ion_handle:
 err:
 	return rc;
 }
+EXPORT_SYMBOL(msm_audio_ion_import_legacy);
 
+/**
+ * msm_audio_ion_free_legacy -
+ *        Frees ION memory for given handle
+ *
+ * @client: ION client
+ * @handle: ION handle
+ *
+ */
 int msm_audio_ion_free_legacy(struct ion_client *client,
 			      struct ion_handle *handle)
 {
@@ -451,6 +517,7 @@ int msm_audio_ion_free_legacy(struct ion_client *client,
 	/* no client_destrody in legacy*/
 	return 0;
 }
+EXPORT_SYMBOL(msm_audio_ion_free_legacy);
 
 int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op)
 {
@@ -710,6 +777,13 @@ u32 msm_audio_ion_get_smmu_sid_mode32(void)
 		return 0;
 }
 
+/**
+ * msm_audio_populate_upper_32_bits -
+ *        retrieve upper 32bits of 64bit address
+ *
+ * @pa: 64bit physical address
+ *
+ */
 u32 msm_audio_populate_upper_32_bits(ion_phys_addr_t pa)
 {
 	if (sizeof(ion_phys_addr_t) == sizeof(u32))
@@ -717,6 +791,7 @@ u32 msm_audio_populate_upper_32_bits(ion_phys_addr_t pa)
 	else
 		return upper_32_bits(pa);
 }
+EXPORT_SYMBOL(msm_audio_populate_upper_32_bits);
 
 static int msm_audio_ion_probe(struct platform_device *pdev)
 {
@@ -837,17 +912,15 @@ static struct platform_driver msm_audio_ion_driver = {
 	.remove = msm_audio_ion_remove,
 };
 
-static int __init msm_audio_ion_init(void)
+int __init msm_audio_ion_init(void)
 {
 	return platform_driver_register(&msm_audio_ion_driver);
 }
-module_init(msm_audio_ion_init);
 
-static void __exit msm_audio_ion_exit(void)
+void __exit msm_audio_ion_exit(void)
 {
 	platform_driver_unregister(&msm_audio_ion_driver);
 }
-module_exit(msm_audio_ion_exit);
 
 MODULE_DESCRIPTION("MSM Audio ION module");
 MODULE_LICENSE("GPL v2");

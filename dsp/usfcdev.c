@@ -217,7 +217,7 @@ static bool usfcdev_filter(struct input_handle *handle,
 	uint16_t ind = (uint16_t)handle->handler->minor;
 	bool rc = (s_usfcdev_events[ind].event_status != USFCDEV_EVENT_ENABLED);
 
-	if (s_usf_pid == sys_getpid()) {
+	if (s_usf_pid == current->pid) {
 		/* Pass events from usfcdev driver */
 		rc = false;
 		pr_debug("%s: event_type=%d; type=%d; code=%d; val=%d",
@@ -395,7 +395,7 @@ bool usfcdev_set_filter(uint16_t event_type_ind, bool filter)
 		if (filter) {
 			s_usfcdev_events[event_type_ind].event_status =
 						USFCDEV_EVENT_DISABLING;
-			s_usf_pid = sys_getpid();
+			s_usf_pid = current->pid;
 			usfcdev_clean_dev(event_type_ind);
 			s_usfcdev_events[event_type_ind].event_status =
 						USFCDEV_EVENT_DISABLED;
@@ -411,12 +411,3 @@ bool usfcdev_set_filter(uint16_t event_type_ind, bool filter)
 
 	return rc;
 }
-
-static int __init usfcdev_init(void)
-{
-	return 0;
-}
-
-device_initcall(usfcdev_init);
-
-MODULE_DESCRIPTION("Handle of events from devices, conflicting with USF");

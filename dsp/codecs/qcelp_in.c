@@ -402,9 +402,12 @@ struct miscdevice audio_qcelp_in_misc = {
 	.fops	= &audio_in_fops,
 };
 
-static int __init qcelp_in_init(void)
+int __init qcelp_in_init(void)
 {
 	return misc_register(&audio_qcelp_in_misc);
 }
 
-device_initcall(qcelp_in_init);
+void __exit qcelp_in_exit(void)
+{
+	misc_deregister(&audio_qcelp_in_misc);
+}

@@ -126,5 +126,6 @@ int q6usm_set_us_stream_param(int dir, struct us_client *usc,
 		uint32_t module_id, uint32_t param_id, uint32_t buf_size);
 int q6usm_get_us_stream_param(int dir, struct us_client *usc,
 		uint32_t module_id, uint32_t param_id, uint32_t buf_size);
+int q6usm_init(void);
 
 #endif /* __Q6_USM_H__ */

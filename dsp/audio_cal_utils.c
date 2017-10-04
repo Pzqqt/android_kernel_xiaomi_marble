@@ -481,6 +481,14 @@ done:
 	return;
 }
 
+/**
+ * cal_utils_destroy_cal_types -
+ *        Destroys cal types and deregister from cal info
+ *
+ * @num_cal_types: number of cal types
+ * @cal_type: cal type pointer with cal info
+ *
+ */
 void cal_utils_destroy_cal_types(int num_cal_types,
 			struct cal_type_data **cal_type)
 {
@@ -506,6 +514,7 @@ void cal_utils_destroy_cal_types(int num_cal_types,
 done:
 	return;
 }
+EXPORT_SYMBOL(cal_utils_destroy_cal_types);
 
 /**
  * cal_utils_get_only_cal_block

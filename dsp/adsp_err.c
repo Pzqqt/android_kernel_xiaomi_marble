@@ -63,7 +63,7 @@
 /* Unexpected error code. */
 #define ADSP_ERR_MAX_STR      "ADSP_ERR_MAX"
 
-#ifdef CONFIG_SND_SOC_QDSP_DEBUG
+#if IS_ENABLED(CONFIG_SND_SOC_QDSP_DEBUG)
 static bool adsp_err_panic;
 
 #ifdef CONFIG_DEBUG_FS
@@ -123,7 +123,7 @@ static struct adsp_err_code adsp_err_code_info[ADSP_ERR_MAX+1] = {
 	{ -EADV, ADSP_ERR_MAX_STR},
 };
 
-#ifdef CONFIG_SND_SOC_QDSP_DEBUG
+#if IS_ENABLED(CONFIG_SND_SOC_QDSP_DEBUG)
 static inline void adsp_err_check_panic(u32 adsp_error)
 {
 	if (adsp_err_panic && adsp_error != ADSP_EALREADY)
@@ -151,8 +151,8 @@ char *adsp_err_get_err_str(u32 adsp_error)
 		return adsp_err_code_info[adsp_error].adsp_err_str;
 }
 
-#if defined(CONFIG_SND_SOC_QDSP_DEBUG) && defined(CONFIG_DEBUG_FS)
-static int __init adsp_err_init(void)
+#if IS_ENABLED(CONFIG_SND_SOC_QDSP_DEBUG) && defined(CONFIG_DEBUG_FS)
+int __init adsp_err_init(void)
 {
 
 
@@ -162,6 +162,12 @@ static int __init adsp_err_init(void)
 
 	return 0;
 }
+#else
+int __init adsp_err_init(void) { return 0; }
 
-device_initcall(adsp_err_init);
 #endif
+
+void __exit adsp_err_exit(void)
+{
+	return;
+}

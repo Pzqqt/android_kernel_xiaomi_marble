@@ -43,7 +43,7 @@ struct audio_notifier_cb_data {
 	int domain;
 };
 
-#ifdef CONFIG_MSM_QDSP6_NOTIFIER
+#if IS_ENABLED(CONFIG_MSM_QDSP6_NOTIFIER)
 
 /*
  * Use audio_notifier_register to register any audio
@@ -100,6 +100,6 @@ static inline int audio_notifier_deregister(char *client_name)
 	return 0;
 }
 
-#endif /* CONFIG_MSM_QDSP6_PDR */
+#endif /* CONFIG_MSM_QDSP6_NOTIFIER */
 
 #endif

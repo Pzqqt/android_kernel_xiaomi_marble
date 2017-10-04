@@ -207,15 +207,29 @@ static struct apr_svc_table svc_tbl_voice[] = {
 	},
 };
 
+/**
+ * apr_get_modem_state:
+ *
+ * Returns current modem load status
+ *
+ */
 enum apr_subsys_state apr_get_modem_state(void)
 {
 	return atomic_read(&q6.modem_state);
 }
+EXPORT_SYMBOL(apr_get_modem_state);
 
+/**
+ * apr_set_modem_state - Update modem load status.
+ *
+ * @state: State to update modem load status
+ *
+ */
 void apr_set_modem_state(enum apr_subsys_state state)
 {
 	atomic_set(&q6.modem_state, state);
 }
+EXPORT_SYMBOL(apr_set_modem_state);
 
 enum apr_subsys_state apr_cmpxchg_modem_state(enum apr_subsys_state prev,
 					      enum apr_subsys_state new)
@@ -318,6 +332,15 @@ struct apr_client *apr_get_client(int dest_id, int client_id)
 	return &client[dest_id][client_id];
 }
 
+/**
+ * apr_send_pkt - Clients call to send packet
+ * to destination processor.
+ *
+ * @handle: APR service handle
+ * @buf: payload to send to destination processor.
+ *
+ * Returns Bytes(>0)pkt_size on success or error on failure.
+ */
 int apr_send_pkt(void *handle, uint32_t *buf)
 {
 	struct apr_svc *svc = handle;
@@ -391,6 +414,7 @@ int apr_send_pkt(void *handle, uint32_t *buf)
 
 	return rc;
 }
+EXPORT_SYMBOL(apr_send_pkt);
 
 int apr_pkt_config(void *handle, struct apr_pkt_cfg *cfg)
 {
@@ -418,6 +442,19 @@ int apr_pkt_config(void *handle, struct apr_pkt_cfg *cfg)
 		cfg->intents.num_of_intents, cfg->intents.size);
 }
 
+/**
+ * apr_register - Clients call to register
+ * to APR.
+ *
+ * @dest: destination processor
+ * @svc_name: name of service to register as
+ * @svc_fn: callback function to trigger when response
+ *   ack or packets received from destination processor.
+ * @src_port: Port number within a service
+ * @priv: private data of client, passed back in cb fn.
+ *
+ * Returns apr_svc handle on success or NULL on failure.
+ */
 struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 				uint32_t src_port, void *priv)
 {
@@ -534,6 +571,7 @@ struct apr_svc *apr_register(char *dest, char *svc_name, apr_fn svc_fn,
 done:
 	return svc;
 }
+EXPORT_SYMBOL(apr_register);
 
 
 void apr_cb_func(void *buf, int len, void *priv)
@@ -735,6 +773,14 @@ static void apr_reset_deregister(struct work_struct *work)
 	kfree(apr_reset);
 }
 
+/**
+ * apr_deregister - Clients call to de-register
+ * from APR.
+ *
+ * @handle: APR service handle to de-register
+ *
+ * Returns 0 on success or -EINVAL on error.
+ */
 int apr_deregister(void *handle)
 {
 	struct apr_svc *svc = handle;
@@ -784,7 +830,15 @@ int apr_deregister(void *handle)
 
 	return 0;
 }
+EXPORT_SYMBOL(apr_deregister);
 
+/**
+ * apr_reset - sets up workqueue to de-register
+ * the given APR service handle.
+ *
+ * @handle: APR service handle
+ *
+ */
 void apr_reset(void *handle)
 {
 	struct apr_reset_work *apr_reset_worker = NULL;
@@ -810,6 +864,7 @@ void apr_reset(void *handle)
 	INIT_WORK(&apr_reset_worker->work, apr_reset_deregister);
 	queue_work(apr_reset_workqueue, &apr_reset_worker->work);
 }
+EXPORT_SYMBOL(apr_reset);
 
 /* Dispatch the Reset events to Modem and audio clients */
 static void dispatch_event(unsigned long code, uint16_t proc)
@@ -920,9 +975,27 @@ static struct notifier_block modem_service_nb = {
 	.priority = 0,
 };
 
+#ifdef CONFIG_DEBUG_FS
+static int __init apr_debug_init(void)
+{
+	debugfs_apr_debug = debugfs_create_file("msm_apr_debug",
+						 S_IFREG | 0444, NULL, NULL,
+						 &apr_debug_ops);
+	return 0;
+}
+#else
+static int __init apr_debug_init(void)
+(
+	return 0;
+)
+#endif
+
 static int __init apr_init(void)
 {
 	int i, j, k;
+
+	init_waitqueue_head(&dsp_wait);
+	init_waitqueue_head(&modem_wait);
 
 	for (i = 0; i < APR_DEST_MAX; i++)
 		for (j = 0; j < APR_CLIENT_MAX; j++) {
@@ -949,28 +1022,16 @@ static int __init apr_init(void)
 	subsys_notif_register("apr_modem", AUDIO_NOTIFIER_MODEM_DOMAIN,
 			      &modem_service_nb);
 
-	return 0;
+	apr_tal_init();
+	return apr_debug_init();
 }
-device_initcall(apr_init);
+module_init(apr_init);
 
-static int __init apr_late_init(void)
+void __exit apr_exit(void)
 {
-	int ret = 0;
-
-	init_waitqueue_head(&dsp_wait);
-	init_waitqueue_head(&modem_wait);
-
-	return ret;
+	subsys_notif_deregister("apr_modem");
+	subsys_notif_deregister("apr_adsp");
 }
-late_initcall(apr_late_init);
-
-#ifdef CONFIG_DEBUG_FS
-static int __init apr_debug_init(void)
-{
-	debugfs_apr_debug = debugfs_create_file("msm_apr_debug",
-						 S_IFREG | 0444, NULL, NULL,
-						 &apr_debug_ops);
-	return 0;
-}
-device_initcall(apr_debug_init);
-#endif
+module_exit(apr_exit);
+MODULE_DESCRIPTION("APR module");
+MODULE_LICENSE("GPL v2");

@@ -650,6 +650,14 @@ int q6audio_is_digital_pcm_interface(u16 port_id)
 	return ret;
 }
 
+/**
+ * q6audio_validate_port -
+ *       validates port id
+ *
+ * @port_id: port id to validate
+ *
+ * Returns 0 on success or error on invalid port
+ */
 int q6audio_validate_port(u16 port_id)
 {
 	int ret;
@@ -805,3 +813,4 @@ int q6audio_validate_port(u16 port_id)
 
 	return ret;
 }
+EXPORT_SYMBOL(q6audio_validate_port);

@@ -454,6 +454,15 @@ done:
 }
 EXPORT_SYMBOL(q6core_get_fwk_version_size);
 
+/**
+ * core_set_license -
+ *       command to set license for module
+ *
+ * @key: license key hash
+ * @module_id: DSP Module ID
+ *
+ * Returns 0 on success or error on failure
+ */
 int32_t core_set_license(uint32_t key, uint32_t module_id)
 {
 	struct avcs_cmd_set_license *cmd_setl = NULL;
@@ -528,7 +537,16 @@ cmd_unlock:
 
 	return rc;
 }
+EXPORT_SYMBOL(core_set_license);
 
+/**
+ * core_get_license_status -
+ *       command to retrieve license status for module
+ *
+ * @module_id: DSP Module ID
+ *
+ * Returns 0 on success or error on failure
+ */
 int32_t core_get_license_status(uint32_t module_id)
 {
 	struct avcs_cmd_get_license_validation_result get_lvr_cmd;
@@ -586,7 +604,16 @@ fail_cmd:
 				__func__, ret, module_id);
 	return ret;
 }
+EXPORT_SYMBOL(core_get_license_status);
 
+/**
+ * core_set_dolby_manufacturer_id -
+ *       command to set dolby manufacturer id
+ *
+ * @manufacturer_id: Dolby manufacturer id
+ *
+ * Returns 0 on success or error on failure
+ */
 uint32_t core_set_dolby_manufacturer_id(int manufacturer_id)
 {
 	struct adsp_dolby_manufacturer_id payload;
@@ -617,6 +644,7 @@ uint32_t core_set_dolby_manufacturer_id(int manufacturer_id)
 	mutex_unlock(&(q6core_lcl.cmd_lock));
 	return rc;
 }
+EXPORT_SYMBOL(core_set_dolby_manufacturer_id);
 
 /**
  * q6core_is_adsp_ready - check adsp ready status
@@ -1062,7 +1090,7 @@ err:
 	return ret;
 }
 
-static int __init core_init(void)
+int __init core_init(void)
 {
 	memset(&q6core_lcl, 0, sizeof(struct q6core_str));
 	init_waitqueue_head(&q6core_lcl.bus_bw_req_wait);
@@ -1076,14 +1104,12 @@ static int __init core_init(void)
 
 	return 0;
 }
-module_init(core_init);
 
-static void __exit core_exit(void)
+void __exit core_exit(void)
 {
 	mutex_destroy(&q6core_lcl.cmd_lock);
 	mutex_destroy(&q6core_lcl.ver_lock);
 	q6core_delete_cal_data();
 }
-module_exit(core_exit);
 MODULE_DESCRIPTION("ADSP core driver");
 MODULE_LICENSE("GPL v2");

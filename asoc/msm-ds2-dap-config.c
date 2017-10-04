@@ -2269,7 +2269,7 @@ static int msm_ds2_dap_param_visualizer_control_get(
 
 static int msm_ds2_dap_set_security_control(u32 cmd, void *arg)
 {
-	return 0
+	return 0;
 }
 
 static int msm_ds2_dap_update_dev_map_port_id(int32_t device_id, int port_id)

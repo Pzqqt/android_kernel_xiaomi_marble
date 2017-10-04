@@ -15,7 +15,7 @@
 #include "wcdcal-hwdep.h"
 #include "wcd-mbhc-v2.h"
 
-#ifdef CONFIG_SND_SOC_WCD_MBHC_LEGACY
+#if IS_ENABLED(CONFIG_SND_SOC_WCD_MBHC_LEGACY)
 void wcd_mbhc_legacy_init(struct wcd_mbhc *mbhc);
 #else
 static inline void wcd_mbhc_legacy_init(struct wcd_mbhc *mbhc)

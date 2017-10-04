@@ -176,7 +176,7 @@ static struct miscdevice audio_qcelp_misc = {
 	.fops = &audio_qcelp_fops,
 };
 
-static int __init audio_qcelp_init(void)
+int audio_qcelp_init(void)
 {
 	int ret = misc_register(&audio_qcelp_misc);
 
@@ -188,4 +188,8 @@ static int __init audio_qcelp_init(void)
 	return ret;
 }
 
-device_initcall(audio_qcelp_init);
+void __exit audio_qcelp_exit(void)
+{
+	mutex_destroy(&audio_qcelp_ws_mgr.ws_lock);
+	misc_deregister(&audio_qcelp_misc);
+}

@@ -73,6 +73,7 @@ int apr_tal_write(struct apr_svc_ch_dev *apr_ch, void *data,
 int apr_tal_close(struct apr_svc_ch_dev *apr_ch);
 int apr_tal_rx_intents_config(struct apr_svc_ch_dev *apr_ch,
 		int num_of_intents, uint32_t size);
+int apr_tal_init(void);
 
 
 struct apr_svc_ch_dev {

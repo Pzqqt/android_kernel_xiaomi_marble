@@ -702,8 +702,12 @@ struct miscdevice audio_aac_in_misc = {
 	.fops	= &audio_in_fops,
 };
 
-static int __init aac_in_init(void)
+int __init aac_in_init(void)
 {
 	return misc_register(&audio_aac_in_misc);
 }
-device_initcall(aac_in_init);
+
+void __exit aac_in_exit(void)
+{
+	misc_deregister(&audio_aac_in_misc);
+}

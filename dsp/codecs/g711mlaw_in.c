@@ -377,9 +377,12 @@ struct miscdevice audio_g711mlaw_in_misc = {
 	.fops	= &audio_in_fops,
 };
 
-static int __init g711mlaw_in_init(void)
+int __init g711mlaw_in_init(void)
 {
 	return misc_register(&audio_g711mlaw_in_misc);
 }
 
-device_initcall(g711mlaw_in_init);
+void __exit g711mlaw_in_exit(void)
+{
+	misc_deregister(&audio_g711mlaw_in_misc);
+}

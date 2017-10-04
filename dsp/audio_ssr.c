@@ -11,18 +11,24 @@
  */
 
 #include <linux/module.h>
-#include <soc/qcom/scm.h>
 #include <soc/qcom/subsystem_restart.h>
 #include <soc/qcom/subsystem_notif.h>
 #include "audio_ssr.h"
-
-#define SCM_Q6_NMI_CMD 0x1
 
 static char *audio_ssr_domains[] = {
 	"adsp",
 	"modem"
 };
 
+/**
+ * audio_ssr_register -
+ *        register to SSR framework
+ *
+ * @domain_id: Domain ID to register with
+ * @nb: notifier block
+ *
+ * Returns handle pointer on success or error PTR on failure
+ */
 void *audio_ssr_register(int domain_id, struct notifier_block *nb)
 {
 	if ((domain_id < 0) ||
@@ -36,31 +42,18 @@ void *audio_ssr_register(int domain_id, struct notifier_block *nb)
 }
 EXPORT_SYMBOL(audio_ssr_register);
 
+/**
+ * audio_ssr_deregister -
+ *        Deregister handle from SSR framework
+ *
+ * @handle: SSR handle
+ * @nb: notifier block
+ *
+ * Returns 0 on success or error on failure
+ */
 int audio_ssr_deregister(void *handle, struct notifier_block *nb)
 {
 	return subsys_notif_unregister_notifier(handle, nb);
 }
 EXPORT_SYMBOL(audio_ssr_deregister);
 
-void audio_ssr_send_nmi(void *ssr_cb_data)
-{
-	struct notif_data *data = (struct notif_data *)ssr_cb_data;
-	struct scm_desc desc;
-
-	if (data && data->crashed) {
-		/* Send NMI to QDSP6 via an SCM call. */
-		if (!is_scm_armv8()) {
-			scm_call_atomic1(SCM_SVC_UTIL,
-					 SCM_Q6_NMI_CMD, 0x1);
-		} else {
-			desc.args[0] = 0x1;
-			desc.arginfo = SCM_ARGS(1);
-			scm_call2_atomic(SCM_SIP_FNID(SCM_SVC_UTIL,
-					 SCM_Q6_NMI_CMD), &desc);
-		}
-		/* The write should go through before q6 is shutdown */
-		mb();
-		pr_debug("%s: Q6 NMI was sent.\n", __func__);
-	}
-}
-EXPORT_SYMBOL(audio_ssr_send_nmi);

@@ -173,7 +173,7 @@ static struct miscdevice audio_mp3_misc = {
 	.fops = &audio_mp3_fops,
 };
 
-static int __init audio_mp3_init(void)
+int __init audio_mp3_init(void)
 {
 	int ret = misc_register(&audio_mp3_misc);
 
@@ -185,4 +185,8 @@ static int __init audio_mp3_init(void)
 	return ret;
 }
 
-device_initcall(audio_mp3_init);
+void __exit audio_mp3_exit(void)
+{
+	mutex_destroy(&audio_mp3_ws_mgr.ws_lock);
+	misc_deregister(&audio_mp3_misc);
+}

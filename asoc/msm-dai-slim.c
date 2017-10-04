@@ -642,7 +642,7 @@ static struct slim_driver msm_dai_slim_driver = {
 	.id_table = msm_dai_slim_dt_match,
 };
 
-static int __init msm_dai_slim_init(void)
+int __init msm_dai_slim_init(void)
 {
 	int rc;
 
@@ -652,12 +652,11 @@ static int __init msm_dai_slim_init(void)
 			__func__, rc);
 	return rc;
 }
-module_init(msm_dai_slim_init);
 
-static void __exit msm_dai_slim_exit(void)
+void __exit msm_dai_slim_exit(void)
 {
+	slim_driver_unregister(&msm_dai_slim_driver);
 }
-module_exit(msm_dai_slim_exit);
 
 /* Module information */
 MODULE_DESCRIPTION("Slimbus apps-owned channel handling driver");

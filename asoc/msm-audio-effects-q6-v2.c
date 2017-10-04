@@ -37,6 +37,11 @@ do {                                                                    \
 } while (0)
 
 
+/**
+ * msm_audio_effects_is_effmodule_supp_in_top -
+ *        Checks if given topology and module in effects
+ *
+ */
 bool msm_audio_effects_is_effmodule_supp_in_top(int effect_module,
 						int topology)
 {
@@ -56,6 +61,7 @@ bool msm_audio_effects_is_effmodule_supp_in_top(int effect_module,
 		return false;
 	}
 }
+EXPORT_SYMBOL(msm_audio_effects_is_effmodule_supp_in_top);
 
 int msm_audio_effects_enable_extn(struct audio_client *ac,
 				struct msm_nt_eff_all_config *effects,
@@ -102,6 +108,16 @@ int msm_audio_effects_enable_extn(struct audio_client *ac,
 	return rc;
 }
 
+/**
+ * msm_audio_effects_virtualizer_handler -
+ *        Audio effects handler for virtualizer
+ *
+ * @ac: audio client handle
+ * @pbe: virtualizer params
+ * @values: values to be updated
+ *
+ * Return 0 on success or error on failure
+ */
 int msm_audio_effects_virtualizer_handler(struct audio_client *ac,
 				struct virtualizer_params *virtualizer,
 				long *values)
@@ -263,7 +279,18 @@ invalid_config:
 	kfree(params);
 	return rc;
 }
+EXPORT_SYMBOL(msm_audio_effects_virtualizer_handler);
 
+/**
+ * msm_audio_effects_reverb_handler -
+ *        Audio effects handler for reverb
+ *
+ * @ac: audio client handle
+ * @pbe: reverb params
+ * @values: values to be updated
+ *
+ * Return 0 on success or error on failure
+ */
 int msm_audio_effects_reverb_handler(struct audio_client *ac,
 				     struct reverb_params *reverb,
 				     long *values)
@@ -733,7 +760,18 @@ invalid_config:
 	kfree(params);
 	return rc;
 }
+EXPORT_SYMBOL(msm_audio_effects_reverb_handler);
 
+/**
+ * msm_audio_effects_bass_boost_handler -
+ *        Audio effects handler for bass_boost
+ *
+ * @ac: audio client handle
+ * @bass_boost: bass_boost params
+ * @values: values to be updated
+ *
+ * Return 0 on success or error on failure
+ */
 int msm_audio_effects_bass_boost_handler(struct audio_client *ac,
 					struct bass_boost_params *bass_boost,
 					long *values)
@@ -868,7 +906,18 @@ invalid_config:
 	kfree(params);
 	return rc;
 }
+EXPORT_SYMBOL(msm_audio_effects_bass_boost_handler);
 
+/**
+ * msm_audio_effects_pbe_handler -
+ *        Audio effects handler for pbe
+ *
+ * @ac: audio client handle
+ * @pbe: pbe params
+ * @values: values to be updated
+ *
+ * Return 0 on success or error on failure
+ */
 int msm_audio_effects_pbe_handler(struct audio_client *ac,
 					struct pbe_params *pbe,
 					long *values)
@@ -975,7 +1024,18 @@ invalid_config:
 	kfree(params);
 	return rc;
 }
+EXPORT_SYMBOL(msm_audio_effects_pbe_handler);
 
+/**
+ * msm_audio_effects_popless_eq_handler -
+ *        Audio effects handler for popless equalizer
+ *
+ * @ac: audio client handle
+ * @eq: equalizer params
+ * @values: values to be updated
+ *
+ * Return 0 on success or error on failure
+ */
 int msm_audio_effects_popless_eq_handler(struct audio_client *ac,
 					 struct eq_params *eq,
 					 long *values)
@@ -1207,6 +1267,7 @@ invalid_config:
 	kfree(params);
 	return rc;
 }
+EXPORT_SYMBOL(msm_audio_effects_popless_eq_handler);
 
 static int __msm_audio_effects_volume_handler(struct audio_client *ac,
 					      struct soft_volume_params *vol,
@@ -1370,9 +1431,21 @@ int msm_audio_effects_volume_handler(struct audio_client *ac,
 						  SOFT_VOLUME_INSTANCE_1);
 }
 
+/**
+ * msm_audio_effects_volume_handler_v2 -
+ *        Audio effects handler for volume
+ *
+ * @ac: audio client handle
+ * @vol: volume params
+ * @values: values to be updated
+ * @instance: instance to update
+ *
+ * Return 0 on success or error on failure
+ */
 int msm_audio_effects_volume_handler_v2(struct audio_client *ac,
 					struct soft_volume_params *vol,
 					long *values, int instance)
 {
 	return __msm_audio_effects_volume_handler(ac, vol, values, instance);
 }
+EXPORT_SYMBOL(msm_audio_effects_volume_handler_v2);

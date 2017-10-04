@@ -221,20 +221,48 @@ struct sdm660_cdc_pdata {
 	struct sdm660_cdc_regulator regulator[MAX_REGULATOR];
 };
 
-
+#if IS_ENABLED(CONFIG_SND_SOC_ANALOG_CDC)
 extern int msm_anlg_cdc_mclk_enable(struct snd_soc_codec *codec,
 				    int mclk_enable, bool dapm);
-
 extern int msm_anlg_cdc_hs_detect(struct snd_soc_codec *codec,
 		    struct wcd_mbhc_config *mbhc_cfg);
-
 extern void msm_anlg_cdc_hs_detect_exit(struct snd_soc_codec *codec);
-
 extern void sdm660_cdc_update_int_spk_boost(bool enable);
-
 extern void msm_anlg_cdc_spk_ext_pa_cb(
 		int (*codec_spk_ext_pa)(struct snd_soc_codec *codec,
 		int enable), struct snd_soc_codec *codec);
 int msm_anlg_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 					   struct snd_soc_codec *codec);
+#else /* CONFIG_SND_SOC_ANALOG_CDC */
+static inline int msm_anlg_cdc_mclk_enable(struct snd_soc_codec *codec,
+					   int mclk_enable, bool dapm)
+{
+	return 0;
+}
+static inline int msm_anlg_cdc_hs_detect(struct snd_soc_codec *codec,
+				struct wcd_mbhc_config *mbhc_cfg)
+{
+	return 0;
+}
+static inline void msm_anlg_cdc_hs_detect_exit(struct snd_soc_codec *codec)
+{
+
+}
+static inline void sdm660_cdc_update_int_spk_boost(bool enable)
+{
+
+}
+static inline void msm_anlg_cdc_spk_ext_pa_cb(
+		int (*codec_spk_ext_pa)(struct snd_soc_codec *codec,
+		int enable), struct snd_soc_codec *codec)
+{
+
+}
+static inline int msm_anlg_codec_info_create_codec_entry(
+					struct snd_info_entry *codec_root,
+					struct snd_soc_codec *codec)
+{
+	return 0;
+}
+#endif /* CONFIG_SND_SOC_ANALOG_CDC */
 #endif

@@ -374,7 +374,7 @@ static struct miscdevice audio_g711mlaw_misc = {
 	.fops = &audio_g711_fops,
 };
 
-static int __init audio_g711mlaw_init(void)
+int __init audio_g711mlaw_init(void)
 {
 	int ret = misc_register(&audio_g711mlaw_misc);
 
@@ -386,11 +386,9 @@ static int __init audio_g711mlaw_init(void)
 	return ret;
 }
 
-static void __exit audio_g711mlaw_exit(void)
+void __exit audio_g711mlaw_exit(void)
 {
-	misc_deregister(&audio_g711mlaw_misc);
 	mutex_destroy(&audio_g711_ws_mgr.ws_lock);
+	misc_deregister(&audio_g711mlaw_misc);
 }
 
-device_initcall(audio_g711mlaw_init);
-__exitcall(audio_g711mlaw_exit);

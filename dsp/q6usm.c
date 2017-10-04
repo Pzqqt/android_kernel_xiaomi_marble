@@ -1455,12 +1455,10 @@ int q6usm_get_us_stream_param(int dir, struct us_client *usc,
 	return rc;
 }
 
-static int __init q6usm_init(void)
+int __init q6usm_init(void)
 {
 	pr_debug("%s\n", __func__);
 	init_waitqueue_head(&this_mmap.cmd_wait);
 	memset(session, 0, sizeof(session));
 	return 0;
 }
-
-device_initcall(q6usm_init);
