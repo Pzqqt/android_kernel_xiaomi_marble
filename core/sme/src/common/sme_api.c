@@ -12936,11 +12936,10 @@ QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
 QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 				uint32_t x0, uint32_t x1)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct scheduler_msg message = {0};
-	tSirLedFlashingReq *ledflashing;
+	struct flashing_req_params *ledflashing;
 
 	ledflashing = qdf_mem_malloc(sizeof(*ledflashing));
 	if (!ledflashing) {
@@ -12949,6 +12948,7 @@ QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	ledflashing->req_id = 0;
 	ledflashing->pattern_id = type;
 	ledflashing->led_x0 = x0;
 	ledflashing->led_x1 = x1;
@@ -12958,12 +12958,12 @@ QDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 		/* Serialize the req through MC thread */
 		message.bodyptr = ledflashing;
 		message.type = WMA_LED_FLASHING_REQ;
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA,
-						 &message);
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			status = QDF_STATUS_E_FAILURE;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 		sme_release_global_lock(&pMac->sme);
 	}
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		qdf_mem_free(ledflashing);
+
 	return status;
 }
 #endif

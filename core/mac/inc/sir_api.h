@@ -5861,15 +5861,6 @@ typedef struct {
 	uint32_t dhcpSrvIP;
 } tSirDhcpSrvOffloadInfo, *tpSirDhcpSrvOffloadInfo;
 #endif /* DHCP_SERVER_OFFLOAD */
-#ifdef WLAN_FEATURE_GPIO_LED_FLASHING
-typedef struct {
-	uint32_t reqId;
-	/* pattern identifier. 0: disconnected 1: connected */
-	uint32_t pattern_id;
-	uint32_t led_x0;        /* led flashing parameter0 */
-	uint32_t led_x1;        /* led flashing parameter1 */
-} tSirLedFlashingReq, *tpSirLedFlashingReq;
-#endif
 
 /**
  * struct sir_lost_link_info - lost link information structure.
