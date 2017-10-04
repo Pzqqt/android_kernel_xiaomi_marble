@@ -1166,26 +1166,4 @@ struct cdp_rx_indication_msdu {
 		 resvd1:19;
 	struct cdp_rate_stats extd;
 };
-
-/**
- * struct cdp_config_params - Propagate configuration parameters to datapath
- * @tso_enable: Enable/Disable TSO
- * @lro_enable: Enable/Disable LRO
- * @flow_steering_enable: Enable/Disable Rx Hash
- * @tcp_Udp_ChecksumOffload: Enable/Disable tcp-Udp checksum Offload
- * @napi_enable: Enable/Disable Napi
- * @tx_flow_stop_queue_threshold: Value to Pause tx queues
- * @tx_flow_start_queue_offset: Available Tx descriptors to unpause
- *				tx queue
- */
-struct cdp_config_params {
-	unsigned int tso_enable:1;
-	unsigned int lro_enable:1;
-	unsigned int flow_steering_enable:1;
-	unsigned int tcp_udp_checksumoffload:1;
-	unsigned int napi_enable:1;
-	/* Set when QCA_LL_TX_FLOW_CONTROL_V2 is enabled */
-	uint8_t tx_flow_stop_queue_threshold;
-	uint8_t tx_flow_start_queue_offset;
-};
 #endif

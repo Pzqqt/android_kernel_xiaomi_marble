@@ -62,7 +62,6 @@
 #define DP_NON_QOS_TID 16
 
 struct wlan_cfg_dp_pdev_ctxt;
-
 /**
  * struct wlan_cfg_dp_soc_ctxt - Configuration parameters for SoC (core TxRx)
  * @num_int_ctxts - Number of NAPI/Interrupt contexts to be registered for DP
@@ -91,11 +90,8 @@ struct wlan_cfg_dp_pdev_ctxt;
  * @int_reo_status_ring_mask - Bitmap of reo status ring interrupts mapped to each
  *                        NAPI/Intr context
  * @int_ce_ring_mask - Bitmap of CE interrupts mapped to each NAPI/Intr context
- * @lro_enabled - enable/disable lro feature
+ * @lro_enabled - is LRO enabled
  * @rx_hash - Enable hash based steering of rx packets
- * @tso_enabled - enable/disable tso feature
- * @napi_enabled - enable/disable interrupt mode for reaping tx and rx packets
- * @tcp_Udp_Checksumoffload - enable/disable checksum offload
  * @nss_cfg - nss configuration
  */
 struct wlan_cfg_dp_soc_ctxt {
@@ -132,13 +128,10 @@ struct wlan_cfg_dp_soc_ctxt {
 	int base_hw_macid;
 	bool lro_enabled;
 	bool rx_hash;
-	bool tso_enabled;
-	bool napi_enabled;
-	bool tcp_udp_checksumoffload;
 	int nss_cfg;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	uint32_t tx_flow_stop_queue_threshold;
-	uint32_t tx_flow_start_queue_offset;
+	int tx_flow_stop_queue_th;
+	int tx_flow_start_queue_offset;
 #endif
 };
 
