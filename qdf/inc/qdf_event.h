@@ -48,7 +48,7 @@ typedef __qdf_event_t qdf_event_t;
 /* Function declarations and documenation */
 
 #ifdef CONFIG_MCL
-typedef void (*qdf_self_recovery_callback)(void);
+typedef void (*qdf_self_recovery_callback)(enum qdf_hang_reason);
 #endif
 
 QDF_STATUS qdf_event_create(qdf_event_t *event);

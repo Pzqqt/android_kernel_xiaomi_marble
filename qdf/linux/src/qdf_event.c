@@ -291,6 +291,6 @@ void qdf_trigger_self_recovery(void)
 			  "No self recovery callback registered %s", __func__);
 		return;
 	}
-	self_recovery_cb();
+	self_recovery_cb(QDF_REASON_UNSPECIFIED);
 }
 #endif

@@ -827,4 +827,30 @@ enum qdf_suspend_type {
 	QDF_RUNTIME_SUSPEND
 };
 
+/**
+ * enum qdf_hang_reason - host hang/ssr reason
+ * @CDS_REASON_UNSPECIFIED: Unspecified reason
+ * @CDS_RX_HASH_NO_ENTRY_FOUND: No Map for the MAC entry for the received frame
+ * @CDS_PEER_DELETION_TIMEDOUT: peer deletion timeout happened
+ * @CDS_PEER_UNMAP_TIMEDOUT: peer unmap timeout
+ * @CDS_SCAN_REQ_EXPIRED: Scan request timed out
+ * @CDS_SCAN_ATTEMPT_FAILURES: Consecutive Scan attempt failures
+ * @CDS_GET_MSG_BUFF_FAILURE: Unable to get the message buffer
+ * @CDS_ACTIVE_LIST_TIMEOUT: Current command processing is timedout
+ * @CDS_SUSPEND_TIMEOUT: Timeout for an ACK from FW for suspend request
+ * @CDS_RESUME_TIMEOUT: Timeout for an ACK from FW for resume request
+ */
+enum qdf_hang_reason {
+	QDF_REASON_UNSPECIFIED = 0,
+	QDF_RX_HASH_NO_ENTRY_FOUND = 1,
+	QDF_PEER_DELETION_TIMEDOUT = 2,
+	QDF_PEER_UNMAP_TIMEDOUT = 3,
+	QDF_SCAN_REQ_EXPIRED = 4,
+	QDF_SCAN_ATTEMPT_FAILURES = 5,
+	QDF_GET_MSG_BUFF_FAILURE = 6,
+	QDF_ACTIVE_LIST_TIMEOUT = 7,
+	QDF_SUSPEND_TIMEOUT = 8,
+	QDF_RESUME_TIMEOUT = 9,
+};
+
 #endif /* __QDF_TYPES_H */
