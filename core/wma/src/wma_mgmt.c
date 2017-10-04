@@ -517,6 +517,12 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 
 	WMA_LOGD("%s", __func__);
 
+	if (resp_event->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("%s: received invalid vdev_id %d",
+			 __func__, resp_event->vdev_id);
+		return -EINVAL;
+	}
+
 	/* Check for valid handle to ensure session is not
 	 * deleted in any race
 	 */
