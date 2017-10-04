@@ -464,4 +464,14 @@ int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
 			   struct qdf_mac_addr macaddress,
 			   struct sir_peer_info_ext *peer_info_ext);
 
+/**
+ * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.
+ * @adapter: Handle to adapter
+ * @chan: Monitor mode channel
+ * @bandwidth: Capture channel bandwidth
+ *
+ * Return: 0 on success else error code.
+ */
+int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
+			  uint32_t bandwidth);
 #endif /* __WEXT_IW_H__ */

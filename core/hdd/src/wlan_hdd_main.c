@@ -5154,7 +5154,12 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 					 GFP_KERNEL);
 #endif
 			break;
-
+		case QDF_MONITOR_MODE:
+			hdd_init_station_mode(adapter);
+			hdd_set_mon_rx_cb(adapter->dev);
+			wlan_hdd_set_mon_chan(adapter, adapter->mon_chan,
+					      adapter->mon_bandwidth);
+			break;
 		default:
 			break;
 		}

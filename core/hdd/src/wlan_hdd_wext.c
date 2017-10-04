@@ -12907,15 +12907,7 @@ static int iw_set_band_config(struct net_device *dev,
 	return ret;
 }
 
-/**
- * wlan_hdd_set_mon_chan() - Set capture channel on the monitor mode interface.
- * @adapter: Handle to adapter
- * @chan: Monitor mode channel
- * @bandwidth: Capture channel bandwidth
- *
- * Return: 0 on success else error code.
- */
-static int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
+int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 				 uint32_t bandwidth)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -12957,6 +12949,8 @@ static int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 			status);
 	}
 
+	adapter->mon_chan = chan;
+	adapter->mon_bandwidth = bandwidth;
 	return qdf_status_to_os_return(status);
 }
 

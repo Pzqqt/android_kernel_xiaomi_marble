@@ -1385,8 +1385,12 @@ QDF_STATUS hdd_wlan_re_init(void)
 		pAdapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 		if (!pAdapter) {
 			pAdapter = hdd_get_adapter(hdd_ctx, QDF_IBSS_MODE);
+			if (!pAdapter) {
+				pAdapter = hdd_get_adapter(hdd_ctx,
+							   QDF_MONITOR_MODE);
 			if (!pAdapter)
 				hdd_err("Failed to get Adapter!");
+			}
 
 		}
 	}

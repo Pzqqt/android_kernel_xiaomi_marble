@@ -1325,6 +1325,8 @@ struct hdd_adapter {
 	bool con_status;
 	bool dad;
 	uint8_t active_ac;
+	uint32_t mon_chan;
+	uint32_t mon_bandwidth;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
