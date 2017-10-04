@@ -230,15 +230,15 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *adapter,
 {
 
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_hostapd_state *pHostapdState =
+	struct hdd_hostapd_state *hostapd_state =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
 	hdd_debug("bssState: %d, channel: %d, dfs_ref_cnt: %d",
-	       pHostapdState->bssState, channel,
+	       hostapd_state->bssState, channel,
 	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
 
 	/* Return if BSS is already stopped */
-	if (pHostapdState->bssState == BSS_STOP)
+	if (hostapd_state->bssState == BSS_STOP)
 		return;
 
 	if (CHANNEL_STATE_DFS != wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
@@ -268,15 +268,15 @@ static void hdd_hostapd_channel_prevent_suspend(struct hdd_adapter *adapter,
 						uint8_t channel)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_hostapd_state *pHostapdState =
+	struct hdd_hostapd_state *hostapd_state =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
 	hdd_debug("bssState: %d, channel: %d, dfs_ref_cnt: %d",
-	       pHostapdState->bssState, channel,
+	       hostapd_state->bssState, channel,
 	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
 
 	/* Return if BSS is already started && wakelock is acquired */
-	if ((pHostapdState->bssState == BSS_START) &&
+	if ((hostapd_state->bssState == BSS_START) &&
 		(atomic_read(&hdd_ctx->sap_dfs_ref_cnt) >= 1))
 		return;
 
@@ -1334,7 +1334,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 {
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
-	struct hdd_hostapd_state *pHostapdState;
+	struct hdd_hostapd_state *hostapd_state;
 	struct net_device *dev;
 	eSapHddEvent sapEvent;
 	union iwreq_data wrqu;
@@ -1379,7 +1379,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 	if (!pSapEvent) {
@@ -1418,7 +1418,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		adapter->sessionId =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.sessionId;
 
-		pHostapdState->qdf_status =
+		hostapd_state->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
 
 		qdf_atomic_set(&hdd_ctx->dfs_radar_found, 0);
@@ -1438,7 +1438,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				ap_ctx->dfs_cac_block_tx, ap_ctx,
 				adapter->sessionId);
 
-		if (pHostapdState->qdf_status) {
+		if (hostapd_state->qdf_status) {
 			hdd_err("startbss event failed!!");
 			/*
 			 * Make sure to set the event before proceeding
@@ -1446,8 +1446,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			 * wait till 10 secs and no other connection will
 			 * go through before that.
 			 */
-			pHostapdState->bssState = BSS_STOP;
-			qdf_event_set(&pHostapdState->qdf_event);
+			hostapd_state->bssState = BSS_STOP;
+			qdf_event_set(&hostapd_state->qdf_event);
 			goto stopbss;
 		} else {
 			sme_ch_avoid_update_req(hdd_ctx->hHal);
@@ -1488,7 +1488,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				 * will wait till 10 secs and no other
 				 * connection will go through before that.
 				 */
-				qdf_event_set(&pHostapdState->qdf_event);
+				qdf_event_set(&hostapd_state->qdf_event);
 				goto stopbss;
 			}
 		}
@@ -1526,7 +1526,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						    ap_ctx->
 						    operatingChannel);
 
-		pHostapdState->bssState = BSS_START;
+		hostapd_state->bssState = BSS_START;
 
 		/* Set default key index */
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
@@ -1606,7 +1606,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 * so once this event gets set, current worker thread might get
 		 * pre-empted by caller thread.
 		 */
-		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
+		qdf_status = qdf_event_set(&hostapd_state->qdf_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("qdf_event_set failed! status: %d", qdf_status);
 			goto stopbss;
@@ -1990,7 +1990,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_notice(" disassociated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
-		qdf_status = qdf_event_set(&pHostapdState->qdf_sta_disassoc_event);
+		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Station Deauth event Set failed");
 
@@ -2221,7 +2221,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_CHANNEL_CHANGE_EVENT:
 		hdd_debug("Received eSAP_CHANNEL_CHANGE_EVENT event");
-		if (pHostapdState->bssState != BSS_STOP) {
+		if (hostapd_state->bssState != BSS_STOP) {
 			/* Prevent suspend for new channel */
 			hdd_hostapd_channel_prevent_suspend(adapter,
 				pSapEvent->sapevt.sap_ch_selected.pri_ch);
@@ -2391,7 +2391,7 @@ stopbss:
 		 * things down, we don't want interfaces to become
 		 * re-enabled
 		 */
-		pHostapdState->bssState = BSS_STOP;
+		hostapd_state->bssState = BSS_STOP;
 
 		if (0 !=
 		    (WLAN_HDD_GET_CTX(adapter))->config->
@@ -2445,7 +2445,7 @@ stopbss:
 		 * by another thread
 		 */
 		if (eSAP_STOP_BSS_EVENT == sapEvent)
-			qdf_event_set(&pHostapdState->qdf_stop_bss_event);
+			qdf_event_set(&hostapd_state->qdf_stop_bss_event);
 
 		hdd_ipa_set_tx_flow_info();
 		/* Send SCC/MCC Switching event to IPA */
@@ -4867,7 +4867,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	struct hdd_adapter *adapter = (netdev_priv(dev));
 	struct hdd_context *hdd_ctx;
 	tHalHandle hHal;
-	struct hdd_hostapd_state *pHostapdState;
+	struct hdd_hostapd_state *hostapd_state;
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	int ret;
 
@@ -4882,10 +4882,10 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 
-	if (pHostapdState->bssState == BSS_STOP) {
+	if (hostapd_state->bssState == BSS_STOP) {
 		if (sme_cfg_get_int(hHal, WNI_CFG_CURRENT_CHANNEL, &channel)
 		    != QDF_STATUS_SUCCESS) {
 			return -EIO;
@@ -5018,15 +5018,15 @@ __iw_softap_stopbss(struct net_device *dev,
 		return ret;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		struct hdd_hostapd_state *pHostapdState =
+		struct hdd_hostapd_state *hostapd_state =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-		qdf_event_reset(&pHostapdState->qdf_stop_bss_event);
+		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		status = wlansap_stop_bss(
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			status =
-				qdf_wait_single_event(&pHostapdState->
+				qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_TIMEOUT_VALUE);
 
@@ -7416,7 +7416,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	int status = QDF_STATUS_SUCCESS, ret;
 	int qdf_status = QDF_STATUS_SUCCESS;
 	tpWLAN_SAPEventCB pSapEventCallback;
-	struct hdd_hostapd_state *pHostapdState;
+	struct hdd_hostapd_state *hostapd_state;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	struct qc_mac_acl_entry *acl_entry = NULL;
 	int32_t i;
@@ -7453,7 +7453,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	iniConfig = hdd_ctx->config;
-	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
 	clear_bit(ACS_PENDING, &adapter->event_flags);
 	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
@@ -7964,7 +7964,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->dfs_cac_block_tx = true;
 	set_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 
-	qdf_event_reset(&pHostapdState->qdf_event);
+	qdf_event_reset(&hostapd_state->qdf_event);
 	status = wlansap_start_bss(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		pSapEventCallback, pConfig, adapter->dev);
@@ -7978,7 +7978,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	hdd_debug("Waiting for Scan to complete(auto mode) and BSS to start");
 
-	qdf_status = qdf_wait_single_event(&pHostapdState->qdf_event,
+	qdf_status = qdf_wait_single_event(&hostapd_state->qdf_event,
 						SME_CMD_TIMEOUT_VALUE);
 
 	wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
@@ -7996,7 +7996,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	set_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 	/* Initialize WMM configuation */
 	hdd_wmm_init(adapter);
-	if (pHostapdState->bssState == BSS_START)
+	if (hostapd_state->bssState == BSS_START)
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					adapter->device_mode,
 					adapter->sessionId);
@@ -8020,7 +8020,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
 	hdd_set_connection_in_progress(false);
-	pHostapdState->bCommit = true;
+	hostapd_state->bCommit = true;
 	EXIT();
 
 	ret = 0;
@@ -8186,14 +8186,14 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
-		struct hdd_hostapd_state *pHostapdState =
+		struct hdd_hostapd_state *hostapd_state =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-		qdf_event_reset(&pHostapdState->qdf_stop_bss_event);
+		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
-				qdf_wait_single_event(&pHostapdState->
+				qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_TIMEOUT_VALUE);
 
