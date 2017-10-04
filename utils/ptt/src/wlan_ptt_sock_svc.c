@@ -270,6 +270,7 @@ static int ptt_sock_rx_nlink_msg(struct sk_buff *skb)
  */
 static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 {
+	uint16_t length;
 	struct sptt_app_reg_req *payload;
 	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
 
@@ -295,6 +296,23 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 	}
 
 	payload = (struct sptt_app_reg_req *)(nla_data(tb[CLD80211_ATTR_DATA]));
+	length = be16_to_cpu(payload->wmsg.length);
+	if ((USHRT_MAX - length) < (sizeof(payload->radio) + sizeof(tAniHdr))) {
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
+			"u16 overflow length %d %zu %zu",
+			length,
+			sizeof(payload->radio),
+			sizeof(tAniHdr));
+		return;
+	}
+
+	if (nla_len(tb[CLD80211_ATTR_DATA]) <  (length +
+						sizeof(payload->radio) +
+						sizeof(tAniHdr))) {
+		PTT_TRACE(VOS_TRACE_LEVEL_ERROR, "ATTR_DATA len check failed");
+		return;
+	}
+
 	switch (payload->wmsg.type) {
 	case ANI_MSG_APP_REG_REQ:
 		ptt_sock_send_msg_to_app(&payload->wmsg, payload->radio,
