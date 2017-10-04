@@ -10996,7 +10996,10 @@ enum hdd_wext_control {
  * @Max: 1
  * @Default: 1
  *
- * This ini is used to enable/disable broadcast probe response
+ * This ini is used to enable/disable broadcast probe response.
+ * This is set only if g_is_fils_enabled is set to 1
+ * If this is disabled then OCE ini oce_sta_enable will also be
+ * disabled and OCE IE will not be sent in frames.
  *
  * Related: None
  *
@@ -13232,7 +13235,6 @@ enum hdd_external_acs_freq_band {
 #define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MIN     (-120)
 #define CFG_MBO_CAND_RSSI_BTC_THRESHOLD_MAX     (0)
 
-
 /*
  * <ini>
  * g_enable_packet_filter_bitmap - Enable Packet filters before going into
@@ -13315,6 +13317,166 @@ enum hdd_external_acs_freq_band {
 #define CFG_REDUCED_BEACON_INTERVAL_MIN     (0)
 #define CFG_REDUCED_BEACON_INTERVAL_MAX     (100)
 #define CFG_REDUCED_BEACON_INTERVAL_DEFAULT (0)
+
+/*
+ * oce_enable_rssi_assoc_reject - Enable/disable rssi based assoc rejection
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable rssi based assoc rejection. If this is
+ * disabled then OCE ini oce_sta_enable will also be disabled and OCE IE will
+ * not be sent in frames.
+ *
+ * Related: None
+ *
+ * Supported Feature: OCE
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_OCE_ENABLE_RSSI_BASED_ASSOC_REJECT_NAME \
+	"oce_enable_rssi_assoc_reject"
+#define CFG_OCE_ENABLE_RSSI_BASED_ASSOC_REJECT_MIN     (0)
+#define CFG_OCE_ENABLE_RSSI_BASED_ASSOC_REJECT_MAX     (1)
+#define CFG_OCE_ENABLE_RSSI_BASED_ASSOC_REJECT_DEFAULT (1)
+
+/*
+ * <ini>
+ * oce_enable_probe_req_rate - Set probe request rate
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set probe request rate to 5.5Mbps as per OCE requirement
+ * in 2.4G band
+ *
+ * Related: None
+ *
+ * Supported Feature: OCE
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_OCE_PROBE_REQ_RATE_NAME    "oce_enable_probe_req_rate"
+#define CFG_OCE_PROBE_REQ_RATE_MIN     (0)
+#define CFG_OCE_PROBE_REQ_RATE_MAX     (1)
+#define CFG_OCE_PROBE_REQ_RATE_DEFAULT (0)
+
+/*
+ * <ini>
+ * oce_enable_probe_resp_rate - Set probe response rate
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set probe response rate to 5.5Mbps as per OCE requirement
+ * in 2.4G band
+ *
+ * Related: None
+ *
+ * Supported Feature: OCE
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_OCE_PROBE_RSP_RATE_NAME    "oce_enable_probe_resp_rate"
+#define CFG_OCE_PROBE_RSP_RATE_MIN     (0)
+#define CFG_OCE_PROBE_RSP_RATE_MAX     (1)
+#define CFG_OCE_PROBE_RSP_RATE_DEFAULT (0)
+
+/*
+ * <ini>
+ * oce_enable_beacon_rate - Set beacon rate
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to set beacon rate to 5.5Mbps as per OCE requirement in
+ * 2.4G band
+ *
+ * Related: None
+ *
+ * Supported Feature: OCE
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_OCE_BEACON_RATE_NAME    "oce_enable_beacon_rate"
+#define CFG_OCE_BEACON_RATE_MIN     (0)
+#define CFG_OCE_BEACON_RATE_MAX     (1)
+#define CFG_OCE_BEACON_RATE_DEFAULT (0)
+
+/*
+ * <ini>
+ * oce_enable_probe_req_deferral - Enable/disable probe request deferral
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable probe request deferral as per OCE spec
+ *
+ * Related: None
+ *
+ * Supported Feature: OCE
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_PROBE_REQ_DEFERRAL_NAME    "oce_enable_probe_req_deferral"
+#define CFG_ENABLE_PROBE_REQ_DEFERRAL_MIN     (0)
+#define CFG_ENABLE_PROBE_REQ_DEFERRAL_MAX     (1)
+#define CFG_ENABLE_PROBE_REQ_DEFERRAL_DEFAULT (0)
+
+/*
+ * <ini>
+ * oce_enable_fils_discovery_sap - Enable/disable fils discovery in sap mode
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable fils discovery in sap mode
+ *
+ * Related: None
+ *
+ * Supported Feature: FILS
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_FILS_DISCOVERY_SAP_NAME    "oce_enable_fils_discovery_sap"
+#define CFG_ENABLE_FILS_DISCOVERY_SAP_MIN     (0)
+#define CFG_ENABLE_FILS_DISCOVERY_SAP_MAX     (1)
+#define CFG_ENABLE_FILS_DISCOVERY_SAP_DEFAULT (0)
+
+/*
+ * <ini>
+ * enable_esp_for_roam - Enable/disable esp feature
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable ESP(Estimated service parameters) IE
+ * parsing and decides whether firmware will include this in its scoring algo.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_ESP_FEATURE_NAME    "enable_esp_for_roam"
+#define CFG_ENABLE_ESP_FEATURE_MIN     (0)
+#define CFG_ENABLE_ESP_FEATURE_MAX     (1)
+#define CFG_ENABLE_ESP_FEATURE_DEFAULT (0)
 
 /*
  * Type declarations
@@ -14182,6 +14344,13 @@ struct hdd_config {
 	uint8_t enable_phy_reg_retention;
 	uint8_t dfs_beacon_tx_enhanced;
 	uint16_t reduced_beacon_interval;
+	bool rssi_assoc_reject_enabled;
+	bool oce_probe_req_rate_enabled;
+	bool oce_probe_resp_rate_enabled;
+	bool oce_beacon_rate_enabled;
+	bool probe_req_deferral_enabled;
+	bool fils_discovery_sap_enabled;
+	bool esp_for_roam_enabled;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

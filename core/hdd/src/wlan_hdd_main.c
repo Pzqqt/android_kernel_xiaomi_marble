@@ -7631,6 +7631,14 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 
 	if (!hdd_ipa_is_present(hdd_ctx))
 		hdd_ctx->config->IpaConfig = 0;
+
+	if (!hdd_ctx->config->rssi_assoc_reject_enabled ||
+	    !hdd_ctx->config->enable_bcast_probe_rsp) {
+		hdd_debug("OCE disabled, rssi_assoc_reject_enabled: %d enable_bcast_probe_rsp: %d",
+			  hdd_ctx->config->rssi_assoc_reject_enabled,
+			  hdd_ctx->config->enable_bcast_probe_rsp);
+		hdd_ctx->config->oce_sta_enabled = 0;
+	}
 }
 
 /**

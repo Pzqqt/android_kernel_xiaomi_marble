@@ -2220,6 +2220,17 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_REPEAT_PROBE_TIME");
 	}
 
+	if ((self_sta_req->type == WMI_VDEV_TYPE_STA ||
+	     self_sta_req->type == WMI_VDEV_TYPE_AP) &&
+	    self_sta_req->sub_type == 0) {
+		ret = wma_vdev_set_param(wma_handle->wmi_handle,
+				     self_sta_req->session_id,
+				     WMI_VDEV_PARAM_ENABLE_DISABLE_OCE_FEATURES,
+				     self_sta_req->oce_feature_bitmap);
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_ENABLE_DISABLE_OCE_FEATURES");
+	}
+
 	/* Initialize BMISS parameters */
 	if ((self_sta_req->type == WMI_VDEV_TYPE_STA) &&
 	    (self_sta_req->sub_type == 0))
