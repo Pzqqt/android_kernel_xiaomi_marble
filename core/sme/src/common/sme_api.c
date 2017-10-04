@@ -12917,6 +12917,13 @@ QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 }
 #endif /* DHCP_SERVER_OFFLOAD */
 
+QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
+				  uint32_t arg_count, uint32_t *arg)
+{
+	return wma_form_unit_test_cmd_and_send(vdev_id, module_id,
+					       arg_count, arg);
+}
+
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
 /*
  * sme_set_led_flashing() -

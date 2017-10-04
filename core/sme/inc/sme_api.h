@@ -790,7 +790,20 @@ void sme_stats_ext_register_callback(tHalHandle hHal,
  */
 void sme_stats_ext2_register_callback(tHalHandle hal_handle,
 	void (*stats_ext2_cb)(void *, struct sir_sme_rx_aggr_hole_ind *));
-
+/**
+ * sme_send_unit_test_cmd() - send unit test command to lower layer
+ * @session_id: sme session id to be filled while forming the command
+ * @module_id: module id given by user to be filled in the command
+ * @arg_count: number of argument count
+ * @arg: pointer to argument list
+ *
+ * This API exposed to HDD layer which takes the argument from user and sends
+ * down to lower layer for further processing
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS sme_send_unit_test_cmd(uint32_t vdev_id, uint32_t module_id,
+				  uint32_t arg_count, uint32_t *arg);
 void sme_stats_ext_deregister_callback(tHalHandle hhal);
 QDF_STATUS sme_stats_ext_request(uint8_t session_id,
 		tpStatsExtRequestReq input);

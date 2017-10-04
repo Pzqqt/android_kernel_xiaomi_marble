@@ -175,6 +175,20 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band);
 bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel);
 int wma_unified_radio_tx_mem_free(void *handle);
+/**
+ * wma_form_unit_test_cmd_and_send() - to form a wma command and send it to FW
+ * @session_id: wma session id to be filled while forming the command
+ * @module_id: module id given by user to be filled in the command
+ * @arg_count: number of argument count
+ * @arg: pointer to argument list
+ *
+ * This API exposed to HDD layer which takes the argument from user and forms
+ * the wma unit test command to be sent down to firmware
+ *
+ * Return: QDF_STATUS based on overall success
+ */
+QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
+		uint32_t module_id, uint32_t arg_count, uint32_t *arg);
 
 #if defined(FEATURE_LRO)
 int wma_lro_init(struct cdp_lro_hash_config *lro_config);

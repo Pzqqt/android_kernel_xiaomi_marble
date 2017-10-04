@@ -604,6 +604,42 @@ int wma_cli_set_command(int vdev_id, int param_id, int sval, int vpdev)
 
 }
 
+QDF_STATUS wma_form_unit_test_cmd_and_send(uint32_t vdev_id,
+			uint32_t module_id, uint32_t arg_count, uint32_t *arg)
+{
+	struct wmi_unit_test_cmd *unit_test_args;
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	uint32_t i;
+	QDF_STATUS status;
+
+	WMA_LOGD(FL("enter"));
+	if (arg_count >= WMA_MAX_NUM_ARGS) {
+		WMA_LOGE(FL("arg_count is crossed the boundary"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE(FL("Invalid WMA/WMI handle"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	unit_test_args = qdf_mem_malloc(sizeof(*unit_test_args));
+	if (NULL == unit_test_args) {
+		WMA_LOGE(FL("qdf_mem_malloc failed for unit_test_args"));
+		return QDF_STATUS_E_NOMEM;
+	}
+	unit_test_args->vdev_id = vdev_id;
+	unit_test_args->module_id = module_id;
+	unit_test_args->num_args = arg_count;
+	for (i = 0; i < arg_count; i++)
+		unit_test_args->args[i] = arg[i];
+
+	status = wmi_unified_unit_test_cmd(wma_handle->wmi_handle,
+					   unit_test_args);
+	qdf_mem_free(unit_test_args);
+	WMA_LOGD(FL("exit"));
+
+	return status;
+}
+
 /**
  * wma_ipa_get_stat() - get IPA data path stats from FW
  *
@@ -7480,11 +7516,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_LINK_LAYER_STATS */
-	case SIR_HAL_UNIT_TEST_CMD:
-		wma_process_unit_test_cmd(wma_handle,
-					  (t_wma_unit_test_cmd *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	case WMA_ROAM_OFFLOAD_SYNCH_FAIL:
 		wma_process_roam_synch_fail(wma_handle,

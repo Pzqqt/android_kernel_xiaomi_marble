@@ -2089,20 +2089,6 @@ enum uapsd_up {
 };
 
 /**
- * struct wma_unit_test_cmd - unit test command parameters
- * @vdev_id: vdev id
- * @module_id: module id
- * @num_args: number of arguments
- * @args: arguments
- */
-typedef struct wma_unit_test_cmd {
-	uint32_t vdev_id;
-	WLAN_MODULE_ID module_id;
-	uint32_t num_args;
-	uint32_t args[WMA_MAX_NUM_ARGS];
-} t_wma_unit_test_cmd;
-
-/**
  * struct wma_roam_invoke_cmd - roam invoke command
  * @vdev_id: vdev id
  * @bssid: mac address

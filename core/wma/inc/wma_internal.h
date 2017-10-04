@@ -420,9 +420,6 @@ QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 			struct sir_ipa_offload_enable_disable *ipa_offload);
 
-void wma_process_unit_test_cmd(WMA_HANDLE handle,
-				      t_wma_unit_test_cmd *wma_utest);
-
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
 
 int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data, uint32_t len);

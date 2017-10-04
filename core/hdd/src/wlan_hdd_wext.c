@@ -11147,41 +11147,25 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 #endif
 	case WE_UNIT_TEST_CMD:
 	{
-		t_wma_unit_test_cmd *unitTestArgs;
-		struct scheduler_msg msg = { 0 };
-		int i, j;
+		QDF_STATUS status;
 
 		if ((apps_args[0] < WLAN_MODULE_ID_MIN) ||
 		    (apps_args[0] >= WLAN_MODULE_ID_MAX)) {
-			hdd_err("Invalid MODULE ID %d",
-			       apps_args[0]);
+			hdd_err("Invalid MODULE ID %d", apps_args[0]);
 			return -EINVAL;
 		}
-		if ((apps_args[1] > (WMA_MAX_NUM_ARGS)) ||
+		if ((apps_args[1] >= (WMA_MAX_NUM_ARGS)) ||
 		    (apps_args[1] < 0)) {
-			hdd_err("Too Many/Few args %d",
-			       apps_args[1]);
+			hdd_err("Too Many/Few args %d", apps_args[1]);
 			return -EINVAL;
 		}
-		unitTestArgs = qdf_mem_malloc(sizeof(*unitTestArgs));
-		if (NULL == unitTestArgs) {
-			hdd_err("qdf_mem_malloc failed for unitTestArgs");
-			return -ENOMEM;
-		}
-		unitTestArgs->vdev_id = (int)adapter->sessionId;
-		unitTestArgs->module_id = apps_args[0];
-		unitTestArgs->num_args = apps_args[1];
-		for (i = 0, j = 2; i < unitTestArgs->num_args; i++, j++)
-			unitTestArgs->args[i] = apps_args[j];
-
-		msg.type = SIR_HAL_UNIT_TEST_CMD;
-		msg.reserved = 0;
-		msg.bodyptr = unitTestArgs;
-		if (QDF_STATUS_SUCCESS !=
-		    scheduler_post_msg(QDF_MODULE_ID_WMA, &msg)) {
-			qdf_mem_free(unitTestArgs);
-			hdd_err("Not able to post UNIT_TEST_CMD message to WMA");
-			return -EINVAL;
+		status = sme_send_unit_test_cmd(adapter->sessionId,
+						apps_args[0],
+						apps_args[1],
+						&apps_args[2]);
+		if (QDF_STATUS_SUCCESS != status) {
+		    hdd_err("Not able to post UNIT_TEST_CMD message to WMA");
+		    return -EINVAL;
 		}
 	}
 	break;

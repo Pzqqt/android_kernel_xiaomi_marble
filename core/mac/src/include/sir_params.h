@@ -519,7 +519,7 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_SET_BASE_MACADDR_IND         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 214)
 
-#define SIR_HAL_UNIT_TEST_CMD                (SIR_HAL_ITC_MSG_TYPES_BEGIN + 215)
+/* (SIR_HAL_ITC_MSG_TYPES_BEGIN + 215) is unused */
 
 #define SIR_HAL_LINK_STATUS_GET_REQ          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 216)
 

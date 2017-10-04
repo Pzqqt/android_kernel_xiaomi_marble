@@ -2836,32 +2836,6 @@ int wma_rssi_breached_event_handler(void *handle,
 	return 0;
 }
 
-/**
- * wma_process_unit_test_cmd() - send unit test command to fw.
- * @handle: wma handle
- * @wma_utest: unit test command
- *
- * This function send unit test command to fw.
- *
- * Return: none
- */
-void wma_process_unit_test_cmd(WMA_HANDLE handle,
-			       t_wma_unit_test_cmd *wma_utest)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-
-	if (!wma_handle || !wma_handle->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not issue fw unit test cmd",
-			 __func__);
-		return;
-	}
-
-	if (wmi_unified_unit_test_cmd(wma_handle->wmi_handle,
-				 (struct wmi_unit_test_cmd *)wma_utest)) {
-		return;
-	}
-}
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wma_roam_ho_fail_handler() - LFR3.0 roam hand off failed handler
