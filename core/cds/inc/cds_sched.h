@@ -484,4 +484,11 @@ QDF_STATUS cds_shutdown_notifier_register(void (*cb)(void *priv), void *priv);
  */
 void cds_shutdown_notifier_purge(void);
 
+/**
+ * cds_shutdown_notifier_call() - Call shutdown notifier call back
+ *
+ * Call registered shutdown notifier call back to indicate about remove or
+ * shutdown.
+ */
+void cds_shutdown_notifier_call(void);
 #endif /* #if !defined __CDS_SCHED_H */

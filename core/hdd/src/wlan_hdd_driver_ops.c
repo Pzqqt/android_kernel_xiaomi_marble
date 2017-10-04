@@ -1363,6 +1363,29 @@ static void wlan_hdd_pld_notify_handler(struct device *dev,
 	wlan_hdd_notify_handler(state);
 }
 
+static void wlan_hdd_purge_notifier(void)
+{
+	struct hdd_context *hdd_ctx;
+
+	ENTER();
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd context is NULL return!!");
+		return;
+	}
+
+	mutex_lock(&hdd_ctx->iface_change_lock);
+	if (QDF_TIMER_STATE_RUNNING ==
+		qdf_mc_timer_get_current_state(&hdd_ctx->iface_change_timer))
+		qdf_mc_timer_stop(&hdd_ctx->iface_change_timer);
+
+	cds_shutdown_notifier_call();
+	cds_shutdown_notifier_purge();
+	mutex_unlock(&hdd_ctx->iface_change_lock);
+	EXIT();
+}
+
 /**
  * wlan_hdd_pld_uevent() - update driver status
  * @dev: device
@@ -1379,6 +1402,8 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 	} else if (uevent->uevent == PLD_FW_DOWN) {
 		cds_set_fw_state(CDS_FW_STATE_DOWN);
 	}
+
+	wlan_hdd_purge_notifier();
 }
 
 #ifdef FEATURE_RUNTIME_PM

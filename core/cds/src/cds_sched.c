@@ -1120,7 +1120,7 @@ void cds_shutdown_notifier_purge(void)
  * Call registered shutdown notifier call back to indicate about remove or
  * shutdown.
  */
-static void cds_shutdown_notifier_call(void)
+void cds_shutdown_notifier_call(void)
 {
 	struct shutdown_notifier *notifier;
 	unsigned long irq_flags;
@@ -1152,8 +1152,6 @@ bool cds_wait_for_external_threads_completion(const char *caller_func)
 {
 	int count = MAX_SSR_WAIT_ITERATIONS;
 	int r;
-
-	cds_shutdown_notifier_call();
 
 	while (count) {
 
