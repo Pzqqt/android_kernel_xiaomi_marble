@@ -3093,6 +3093,11 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 		 */
 		goto fail;
 	}
+	if (param_buf->fixed_param->num_vdev_mac_entries >=
+						MAX_VDEV_SUPPORTED) {
+		WMA_LOGE("num_vdev_mac_entries crossed max value");
+		goto fail;
+	}
 
 	wmi_event = param_buf->fixed_param;
 	hw_mode_resp->status = wmi_event->status;
