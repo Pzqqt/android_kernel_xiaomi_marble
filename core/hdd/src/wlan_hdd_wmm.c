@@ -1789,13 +1789,13 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
  * required by WMM when association takes place
  *
  * @adapter: [in]  pointer to adapter context
- * @pRoamInfo: [in]  pointer to roam information
+ * @roam_info: [in]  pointer to roam information
  * @eBssType: [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
-			 tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType)
+			 tCsrRoamInfo *roam_info, eCsrRoamBssType eBssType)
 {
 	uint8_t uapsdMask;
 	QDF_STATUS status;
@@ -1807,7 +1807,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 
 	ENTER();
 
-	if (pRoamInfo->fReassocReq) {
+	if (roam_info->fReassocReq) {
 		/* when we reassociate we should continue to use
 		 * whatever parameters were previously established.
 		 * if we are reassociating due to a U-APSD change for
@@ -1823,7 +1823,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	}
 	/* get the negotiated UAPSD Mask */
 	uapsdMask =
-		pRoamInfo->u.pConnectedProfile->modifyProfileFields.uapsd_mask;
+		roam_info->u.pConnectedProfile->modifyProfileFields.uapsd_mask;
 
 	hdd_debug("U-APSD mask is 0x%02x", (int)uapsdMask);
 
@@ -1907,13 +1907,13 @@ static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
  * required by WMM when a connection is established
  *
  * @adapter : [in]  pointer to adapter context
- * @pRoamInfo: [in]  pointer to roam information
+ * @roam_info: [in]  pointer to roam information
  * @eBssType : [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
-			   tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType)
+			   tCsrRoamInfo *roam_info, eCsrRoamBssType eBssType)
 {
 	int ac;
 	bool qap;
@@ -1923,10 +1923,10 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 	ENTER();
 
 	if ((eCSR_BSS_TYPE_INFRASTRUCTURE == eBssType) &&
-	    pRoamInfo && pRoamInfo->u.pConnectedProfile) {
-		qap = pRoamInfo->u.pConnectedProfile->qap;
-		qosConnection = pRoamInfo->u.pConnectedProfile->qosConnection;
-		acmMask = pRoamInfo->u.pConnectedProfile->acm_mask;
+	    roam_info && roam_info->u.pConnectedProfile) {
+		qap = roam_info->u.pConnectedProfile->qap;
+		qosConnection = roam_info->u.pConnectedProfile->qosConnection;
+		acmMask = roam_info->u.pConnectedProfile->acm_mask;
 	} else {
 		qap = true;
 		qosConnection = true;
@@ -1959,11 +1959,11 @@ QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
 				adapter->hddWmmStatus.wmmAcStatus[ac].
 				wmmAcAccessAllowed = true;
 			}
-			if (!pRoamInfo->fReassocReq &&
+			if (!roam_info->fReassocReq &&
 			    !sme_neighbor_roam_is11r_assoc(
 			    WLAN_HDD_GET_HAL_CTX(adapter),
 			    adapter->sessionId) &&
-			    !sme_roam_is_ese_assoc(pRoamInfo)) {
+			    !sme_roam_is_ese_assoc(roam_info)) {
 				adapter->hddWmmStatus.wmmAcStatus[ac].
 					wmmAcTspecValid = false;
 				adapter->hddWmmStatus.wmmAcStatus[ac].

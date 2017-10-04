@@ -212,24 +212,24 @@ typedef enum {
 #define CFG_AGG_RETRY_MIN                      (5)
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
-						tCsrRoamInfo *pRoamInfo);
+						tCsrRoamInfo *roam_info);
 
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
-					tCsrRoamInfo *pRoamInfo,
+					tCsrRoamInfo *roam_info,
 					int index, bool preauth);
 
 #ifdef FEATURE_WLAN_LFR_METRICS
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
-						tCsrRoamInfo *pRoamInfo);
+						tCsrRoamInfo *roam_info);
 
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *
 							 adapter,
 							 tCsrRoamInfo *
-							 pRoamInfo,
+							 roam_info,
 							 bool preauth_status);
 
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
-						   tCsrRoamInfo *pRoamInfo);
+						   tCsrRoamInfo *roam_info);
 #endif
 
 #ifdef FEATURE_WLAN_WAPI
