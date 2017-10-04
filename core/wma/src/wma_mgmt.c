@@ -2531,7 +2531,7 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 		return -EINVAL;
 	}
 
-	for (; (vdev_map); vdev_map >>= 1, if_id++) {
+	for (; (if_id < wma->max_bssid && vdev_map); vdev_map >>= 1, if_id++) {
 		if (!(vdev_map & 0x1) || (!(intf[if_id].handle)))
 			continue;
 
