@@ -9670,12 +9670,13 @@ static QDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_process_dhcpserver_offload_cmd_tlv() - enable DHCP server offload
  * @wmi_handle: wmi handle
- * @pDhcpSrvOffloadInfo: DHCP server offload info
+ * @params: DHCP server offload info
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
-static QDF_STATUS send_process_dhcpserver_offload_cmd_tlv(wmi_unified_t wmi_handle,
-		struct dhcp_offload_info_params *pDhcpSrvOffloadInfo)
+static QDF_STATUS
+send_process_dhcpserver_offload_cmd_tlv(wmi_unified_t wmi_handle,
+					struct dhcp_offload_info_params *params)
 {
 	wmi_set_dhcp_server_offload_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -9689,16 +9690,15 @@ static QDF_STATUS send_process_dhcpserver_offload_cmd_tlv(wmi_unified_t wmi_hand
 	}
 
 	cmd = (wmi_set_dhcp_server_offload_cmd_fixed_param *) wmi_buf_data(buf);
-	qdf_mem_zero(cmd, sizeof(*cmd));
 
 	WMITLV_SET_HDR(&cmd->tlv_header,
 	       WMITLV_TAG_STRUC_wmi_set_dhcp_server_offload_cmd_fixed_param,
 	       WMITLV_GET_STRUCT_TLVLEN
 	       (wmi_set_dhcp_server_offload_cmd_fixed_param));
-	cmd->vdev_id = pDhcpSrvOffloadInfo->vdev_id;
-	cmd->enable = pDhcpSrvOffloadInfo->dhcpSrvOffloadEnabled;
-	cmd->num_client = pDhcpSrvOffloadInfo->dhcpClientNum;
-	cmd->srv_ipv4 = pDhcpSrvOffloadInfo->dhcpSrvIP;
+	cmd->vdev_id = params->vdev_id;
+	cmd->enable = params->dhcp_offload_enabled;
+	cmd->num_client = params->dhcp_client_num;
+	cmd->srv_ipv4 = params->dhcp_srv_addr;
 	cmd->start_lsb = 0;
 	status = wmi_unified_cmd_send(wmi_handle, buf,
 				   sizeof(*cmd),
@@ -9709,7 +9709,7 @@ static QDF_STATUS send_process_dhcpserver_offload_cmd_tlv(wmi_unified_t wmi_hand
 		return QDF_STATUS_E_FAILURE;
 	}
 	WMI_LOGD("Set dhcp server offload to vdevId %d",
-		 pDhcpSrvOffloadInfo->vdev_id);
+		 params->vdev_id);
 
 	return status;
 }
