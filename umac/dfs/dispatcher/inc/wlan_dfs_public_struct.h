@@ -34,6 +34,9 @@
  * @segment_id: segment id.
  * @timestamp: timestamp.
  * @is_chirp: is chirp or not.
+ * @chan_freq: channel frequency.
+ * @radar_freq: radar frequency.
+ * @sidx: sidx value.
  */
 struct radar_found_info {
 	uint32_t pdev_id;
@@ -44,6 +47,9 @@ struct radar_found_info {
 	uint32_t segment_id;
 	uint32_t timestamp;
 	uint32_t is_chirp;
+	uint32_t chan_freq;
+	uint32_t radar_freq;
+	int32_t  sidx;
 };
 
 /**

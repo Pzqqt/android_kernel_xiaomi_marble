@@ -245,23 +245,42 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (dfs->dfs_use_nol) {
-		dfs_process_radar_found_indication(dfs, radar_found);
-		dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->dfs_ch_ieee,
+	if (radar_found->detection_mode != 0) {
+
+		/*
+		 * Display information about individual pulse for
+		 * debug purposes
+		 */
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "time_stamp=%d, pulse_dur=%d, RSSI=%d false_radar=%d, false_check=%d, seg=%d, sidx=%d, chirp=%d\n",
+				radar_found->timestamp,
+				radar_found->chan_freq,
+				radar_found->chan_width,
+				radar_found->detector_id,
+				radar_found->freq_offset,
+				radar_found->segment_id,
+				radar_found->sidx,
+				radar_found->is_chirp);
+	} else {
+		if (dfs->dfs_use_nol) {
+			dfs_process_radar_found_indication(dfs, radar_found);
+			dfs_mlme_mark_dfs(pdev, dfs->dfs_curchan->dfs_ch_ieee,
 				dfs->dfs_curchan->dfs_ch_freq,
 				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
 				dfs->dfs_curchan->dfs_ch_flags);
-	} else{
+		} else{
 
-		/* We are in test mode and should send a CSA back
-		 * to same channel.
-		 */
-		qdf_timer_stop(&dfs->wlan_dfstesttimer);
-		dfs->wlan_dfstest = 1;
-		dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
-		dfs->wlan_dfstesttime = 1;   /* 1ms */
-		qdf_timer_mod(&dfs->wlan_dfstesttimer, dfs->wlan_dfstesttime);
+			/* We are in test mode and should send a CSA back
+			 * to same channel. */
+			qdf_timer_stop(&dfs->wlan_dfstesttimer);
+			dfs->wlan_dfstest = 1;
+			dfs->wlan_dfstest_ieeechan =
+				dfs->dfs_curchan->dfs_ch_ieee;
+			dfs->wlan_dfstesttime = 1;   /* 1ms */
+			qdf_timer_mod(&dfs->wlan_dfstesttimer,
+					dfs->wlan_dfstesttime);
+		}
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(tgt_dfs_process_radar_ind);
