@@ -779,6 +779,21 @@ int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 	return 0;               /* success */
 }
 
+void htt_log_rx_ring_info(htt_pdev_handle pdev)
+{
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s: htt pdev is NULL", __func__);
+		return;
+	}
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: Data Stall Detected with reason 4 (=FW_RX_REFILL_FAILED)."
+		  "src htt rx ring:  space for %d elements, filled with %d buffers, buffers in the ring %d, refill debt %d",
+		  __func__, pdev->rx_ring.size, pdev->rx_ring.fill_level,
+		  pdev->rx_ring.fill_cnt,
+		  qdf_atomic_read(&pdev->rx_ring.refill_debt));
+}
+
 #if HTT_DEBUG_LEVEL > 5
 void htt_display(htt_pdev_handle pdev, int indent)
 {

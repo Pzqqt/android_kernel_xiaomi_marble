@@ -196,6 +196,14 @@ htt_t2h_dbg_stats_hdr_parse(uint8_t *stats_info_list,
  */
 void htt_t2h_stats_print(uint8_t *stats_data, int concise);
 
+/**
+ * htt_log_rx_ring_info() - log htt rx ring info during FW_RX_REFILL failure
+ * @pdev: handle to the HTT instance
+ *
+ * Return: None
+ */
+void htt_log_rx_ring_info(htt_pdev_handle pdev);
+
 #ifndef HTT_DEBUG_LEVEL
 #if defined(DEBUG)
 #define HTT_DEBUG_LEVEL 10
