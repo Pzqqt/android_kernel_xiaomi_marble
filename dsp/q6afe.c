@@ -15,7 +15,6 @@
 #include <linux/kthread.h>
 #include <linux/uaccess.h>
 #include <linux/wait.h>
-#include <linux/wakelock.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>
 #include <linux/delay.h>
