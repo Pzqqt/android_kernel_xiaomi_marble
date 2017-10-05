@@ -322,26 +322,6 @@ static struct service_to_pipe target_service_to_ce_map_wlan[] = {
 		2,
 	},
 	{
-		WMI_CONTROL_SVC_WMAC1,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		7,
-	},
-	{
-		WMI_CONTROL_SVC_WMAC1,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
-		WMI_CONTROL_SVC_WMAC2,
-		PIPEDIR_OUT,    /* out = UL = host -> target */
-		9,
-	},
-	{
-		WMI_CONTROL_SVC_WMAC2,
-		PIPEDIR_IN,     /* in = DL = target -> host */
-		2,
-	},
-	{
 		HTC_CTRL_RSVD_SVC,
 		PIPEDIR_OUT,    /* out = UL = host -> target */
 		0,              /* could be moved to 3 (share with WMI) */
