@@ -1915,7 +1915,8 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 
 	/* If RM feature enabled
 	 * Request PROD Resource first
-	 * PROD resource may return sync or async manners */
+	 * PROD resource may return sync or async manners
+	 */
 	if (hdd_ipa_is_rm_enabled(hdd_ctx)) {
 		if (!ipa_rm_request_resource(IPA_RM_RESOURCE_WLAN_PROD)) {
 			/* RM PROD request sync return
@@ -2663,7 +2664,8 @@ static void __hdd_ipa_wdi_meter_notifier_cb(enum ipa_wdi_meter_evt_type evt,
 	switch (evt) {
 	case IPA_GET_WDI_SAP_STATS:
 		/* fill-up ipa_get_wdi_sap_stats structure after getting
-		   ipa_uc_fw_stats from FW */
+		 * ipa_uc_fw_stats from FW
+		 */
 		wdi_sap_stats = data;
 
 		if (!adapter) {
@@ -2718,7 +2720,8 @@ static void __hdd_ipa_wdi_meter_notifier_cb(enum ipa_wdi_meter_evt_type evt,
 		break;
 	case IPA_SET_WIFI_QUOTA:
 		/* get ipa_set_wifi_quota structure from IPA and pass to FW
-		   through quota_exceeded field in ipa_uc_fw_stats */
+		 * through quota_exceeded field in ipa_uc_fw_stats
+		 */
 		ipa_set_quota = data;
 
 		if (!adapter) {

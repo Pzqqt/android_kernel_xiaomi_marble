@@ -15264,7 +15264,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	}
 
 	/*
-     * If channel is 0 or DFS or LTE unsafe then better to call pcl and
+	 * If channel is 0 or DFS or LTE unsafe then better to call pcl and
 	 * find out the best channel. If channel is non-dfs 5 GHz then
 	 * better move SAP to STA's channel to make scc, so we have room
 	 * for 3port MCC scenario.

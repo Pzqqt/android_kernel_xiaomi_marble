@@ -1112,7 +1112,7 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  * Usage: External
  *
  * </ioctl>
-*/
+ */
 #define WE_SET_WOW_DATA_INACTIVITY_TO    94
 
 

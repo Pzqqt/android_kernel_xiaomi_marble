@@ -1089,11 +1089,11 @@ static bool hdd_is_mcast_replay(struct sk_buff *skb)
 }
 
 /**
-* hdd_is_arp_local() - check if local or non local arp
-* @skb: pointer to sk_buff
-*
-* Return: true if local arp or false otherwise.
-*/
+ * hdd_is_arp_local() - check if local or non local arp
+ * @skb: pointer to sk_buff
+ *
+ * Return: true if local arp or false otherwise.
+ */
 static bool hdd_is_arp_local(struct sk_buff *skb)
 {
 	struct arphdr *arp;

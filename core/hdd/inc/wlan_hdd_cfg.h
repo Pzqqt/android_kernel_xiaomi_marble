@@ -4699,25 +4699,25 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_CHANNEL_WIDTH_DEFAULT        (2)
 
 /*
-* <ini>
-* gVhtRxMCS - VHT Rx MCS capability for 1x1 mode
-* @Min: 0
-* @Max: 2
-* @Default: 0
-*
-* This ini is  used to set VHT Rx MCS capability for 1x1 mode.
-* 0, MCS0-7
-* 1, MCS0-8
-* 2, MCS0-9
-*
-* Related: NA
-*
-* Supported Feature: 11AC
-*
-* Usage: Internal/External
-*
-* </ini>
-*/
+ * <ini>
+ * gVhtRxMCS - VHT Rx MCS capability for 1x1 mode
+ * @Min: 0
+ * @Max: 2
+ * @Default: 0
+ *
+ * This ini is  used to set VHT Rx MCS capability for 1x1 mode.
+ * 0, MCS0-7
+ * 1, MCS0-8
+ * 2, MCS0-9
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AC
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
 
 #define CFG_VHT_ENABLE_RX_MCS_8_9               "gVhtRxMCS"
 #define CFG_VHT_ENABLE_RX_MCS_8_9_MIN           (0)
