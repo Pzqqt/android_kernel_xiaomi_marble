@@ -43,6 +43,16 @@
 static qdf_self_recovery_callback self_recovery_cb;
 #endif
 
+struct qdf_evt_node {
+	qdf_list_node_t node;
+	qdf_event_t *pevent;
+};
+
+#define MAX_WAIT_EVENTS 10
+
+static qdf_list_t qdf_wait_event_list;
+static qdf_spinlock_t qdf_wait_event_lock;
+
 /* Function Definitions and Documentation */
 
 /**
@@ -266,6 +276,176 @@ QDF_STATUS qdf_wait_single_event(qdf_event_t *event, uint32_t timeout)
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(qdf_wait_single_event);
+
+/**
+ * qdf_complete_wait_events() - Sets all the events which are in the list.
+ *
+ * This function traverses the list of events and sets all of them. It
+ * sets the flag force_set as TRUE to indicate that these events have
+ * been forcefully set.
+ *
+ * Return: None
+ */
+void qdf_complete_wait_events(void)
+{
+	struct qdf_evt_node *event_node = NULL;
+	qdf_list_node_t *list_node = NULL;
+	QDF_STATUS status;
+
+	if (qdf_list_empty(&qdf_wait_event_list))
+		return;
+
+	qdf_spin_lock(&qdf_wait_event_lock);
+	qdf_list_peek_front(&qdf_wait_event_list,
+			    &list_node);
+
+	while (list_node != NULL) {
+		event_node = qdf_container_of(list_node,
+						struct qdf_evt_node, node);
+
+		event_node->pevent->force_set = true;
+		qdf_event_set(event_node->pevent);
+
+		status = qdf_list_peek_next(&qdf_wait_event_list,
+					&event_node->node, &list_node);
+
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			break;
+	}
+	qdf_spin_unlock(&qdf_wait_event_lock);
+}
+EXPORT_SYMBOL(qdf_complete_wait_events);
+
+/**
+ * qdf_wait_for_event_completion() - Waits for an event to be set.
+ *
+ * @event: Pointer to an event to wait on.
+ * @timeout: Timeout value (in milliseconds).
+ *
+ * This function adds the event in a list and waits on it until it
+ * is set or the timeout duration elapses. The purpose of waiting
+ * is considered complete only if the event is set and the flag
+ * force_set is FALSE, it returns success in this case. In other
+ * cases it returns appropriate error status.
+ *
+ * Return: QDF status
+ */
+QDF_STATUS qdf_wait_for_event_completion(qdf_event_t *event, uint32_t timeout)
+{
+	struct qdf_evt_node *event_node;
+	QDF_STATUS status;
+
+	if (in_interrupt()) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s cannot be called from interrupt context!!!",
+			  __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	/* check for null pointer */
+	if (NULL == event) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "NULL event passed into %s", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	/* check if cookie is same as that of initialized event */
+	if (LINUX_EVENT_COOKIE != event->cookie) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Uninitialized event passed into %s", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	event_node = qdf_mem_malloc(sizeof(*event_node));
+	if (NULL == event_node) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Could not allocate for event node in %s", __func__);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NOMEM;
+	}
+	event_node->pevent = event;
+
+	qdf_spin_lock(&qdf_wait_event_lock);
+	status = qdf_list_insert_back(&qdf_wait_event_list,
+			&event_node->node);
+	qdf_spin_unlock(&qdf_wait_event_lock);
+
+	if (QDF_STATUS_SUCCESS != status) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"Failed to add event in the list in %s", __func__),
+		status = QDF_STATUS_E_FAULT;
+		goto err_list_add;
+	}
+
+	if (timeout) {
+		long ret;
+
+		ret = wait_for_completion_timeout(&event->complete,
+						  msecs_to_jiffies(timeout));
+		if (0 >= ret)
+			/* Timeout occurred */
+			status = QDF_STATUS_E_TIMEOUT;
+		else {
+			if (event->force_set)
+				/* Event forcefully completed, return fail */
+				status = QDF_STATUS_E_FAULT;
+			else
+				status = QDF_STATUS_SUCCESS;
+		}
+	} else {
+		wait_for_completion(&event->complete);
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+			"Signaled for completion %s", __func__);
+		if (event->force_set)
+			/* Event forcefully completed, return fail */
+			status = QDF_STATUS_E_FAULT;
+		else
+			status = QDF_STATUS_SUCCESS;
+	}
+
+	qdf_spin_lock(&qdf_wait_event_lock);
+	qdf_list_remove_node(&qdf_wait_event_list,
+			&event_node->node);
+	qdf_spin_unlock(&qdf_wait_event_lock);
+err_list_add:
+	qdf_mem_free(event_node);
+	return status;
+}
+EXPORT_SYMBOL(qdf_wait_for_event_completion);
+
+/**
+ * qdf_event_list_init() - Creates a list and spinlock for events.
+ *
+ * This function creates a list for maintaining events on which threads
+ * wait for completion. A spinlock is also created to protect related
+ * oprations.
+ *
+ * Return: None
+ */
+void qdf_event_list_init(void)
+{
+	qdf_list_create(&qdf_wait_event_list, MAX_WAIT_EVENTS);
+	qdf_spinlock_create(&qdf_wait_event_lock);
+}
+EXPORT_SYMBOL(qdf_event_list_init);
+
+/**
+ * qdf_event_list_destroy() - Destroys list and spinlock created for events.
+ *
+ * This function destroys the list and spinlock created for events on which
+ * threads wait for completion.
+ *
+ * Return: None
+ */
+void qdf_event_list_destroy(void)
+{
+	qdf_list_destroy(&qdf_wait_event_list);
+	qdf_spinlock_destroy(&qdf_wait_event_lock);
+}
+EXPORT_SYMBOL(qdf_event_list_destroy);
 
 QDF_STATUS qdf_exit_thread(QDF_STATUS status)
 {

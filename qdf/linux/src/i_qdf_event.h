@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,10 +39,12 @@
  * qdf_event_t - manages events
  * @complete: instance to completion
  * @cookie: unsigned int
+ * @force_set: indicate forceful completion
  */
 typedef struct qdf_evt {
 	struct completion complete;
 	uint32_t cookie;
+	bool force_set;
 } __qdf_event_t;
 
 /* Preprocessor definitions and constants */
