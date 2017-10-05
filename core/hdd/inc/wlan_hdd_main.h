@@ -1781,6 +1781,7 @@ struct hdd_context {
 	eCsrBand curr_band;
 	bool fw_mem_dump_enabled;
 	bool imps_enabled;
+	int user_configured_pkt_filter_rules;
 };
 
 /**

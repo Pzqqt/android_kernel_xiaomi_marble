@@ -81,6 +81,7 @@
 #include <wlan_logging_sock_svc.h>
 #include "scheduler_api.h"
 #include "cds_utils.h"
+#include "wlan_hdd_packet_filter_api.h"
 
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -1098,6 +1099,9 @@ hdd_suspend_wlan(void)
 					     WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_CONTROL_PATH);
 
+		if (adapter->device_mode == QDF_STA_MODE)
+			status = hdd_enable_default_pkt_filters(adapter);
+
 		/* Configure supported OffLoads */
 		hdd_enable_host_offloads(adapter, pmo_apps_suspend);
 		hdd_update_conn_state_mask(adapter, &conn_state_mask);
@@ -1163,6 +1167,9 @@ static int hdd_resume_wlan(void)
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_WAKE_ALL_NETIF_QUEUE,
 					WLAN_CONTROL_PATH);
+
+		if (adapter->device_mode == QDF_STA_MODE)
+			status = hdd_disable_default_pkt_filters(adapter);
 
 next_adapter:
 		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
