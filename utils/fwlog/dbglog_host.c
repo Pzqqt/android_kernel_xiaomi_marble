@@ -872,7 +872,7 @@ char *DBG_MSG_ARR[WLAN_MODULE_ID_MAX][MAX_DBG_MSGS] = {
 		"RESOURCE_PEER_FREE",
 		"RESOURCE_PEER_ALLOC_WAL_PEER",
 		"RESOURCE_PEER_NBRHOOD_MGMT_ALLOC",
-		"RESOURCE_PEER_NBRHOOD_MGMT_INFO," "RESOURCE_DBGID_DEFINITION_END",
+		"RESOURCE_PEER_NBRHOOD_MGMT_INFO,RESOURCE_DBGID_DEFINITION_END",
 	},
 	{                       /* DCS */
 		"WLAN_DCS_DBGID_INIT",
@@ -1382,9 +1382,8 @@ static char *dbglog_get_msg(A_UINT32 moduleid, A_UINT32 debugid)
 
 	if (moduleid < WLAN_MODULE_ID_MAX && debugid < MAX_DBG_MSGS) {
 		char *str = DBG_MSG_ARR[moduleid][debugid];
-		if (str && str[0] != '\0') {
+		if (str && str[0] != '\0')
 			return str;
-		}
 	}
 
 	snprintf(unknown_str, sizeof(unknown_str),
@@ -1498,12 +1497,15 @@ static int dbglog_print_raw_data(A_UINT32 *buffer, A_UINT32 length)
 			totalWriteLen = 0;
 
 			for (curArgs = 0; curArgs < numargs; curArgs++) {
-				/* Using sprintf_s instead of sprintf, to avoid length overflow */
+				/*
+				 * Using sprintf_s instead of sprintf,
+				 * to avoid length overflow
+				 */
 				writeLen =
-					snprintf(parseArgsString + totalWriteLen,
-						 DBGLOG_PARSE_ARGS_STRING_LENGTH -
-						 totalWriteLen, "%x ",
-						 buffer[count + 2 + curArgs]);
+				    snprintf(parseArgsString + totalWriteLen,
+					     DBGLOG_PARSE_ARGS_STRING_LENGTH -
+					     totalWriteLen, "%x ",
+					     buffer[count + 2 + curArgs]);
 				totalWriteLen += writeLen;
 			}
 
@@ -1542,7 +1544,8 @@ static int dbglog_print_raw_data(A_UINT32 *buffer, A_UINT32 length)
 			}
 		}
 
-		count += numargs + 2;   /* 32 bit Time stamp + 32 bit Dbg header */
+		/* 32 bit Time stamp + 32 bit Dbg header */
+		count += numargs + 2;
 	}
 
 	return 0;
@@ -1666,7 +1669,7 @@ static int send_fw_diag_nl_data(const uint8_t *buffer, A_UINT32 len,
 		if ((res < 0) && (res != -ESRCH)) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1,
 					("%s: nl_srv_bcast_fw_logs failed 0x%x\n",
-					__func__, res));
+					 __func__, res));
 			return res;
 		}
 	}
@@ -1742,7 +1745,7 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 		if (!skb_out) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Failed to allocate new skb\n"));
-			return -ENOMEM;
+			return A_ERROR;
 		}
 
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG,
@@ -1766,7 +1769,7 @@ send_diag_netlink_data(const uint8_t *buffer, A_UINT32 len, A_UINT32 cmd)
 		if ((res < 0) && (res != -ESRCH)) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1,
 					("%s: nl_srv_bcast_fw_logs failed 0x%x\n",
-					__func__, res));
+					 __func__, res));
 			return res;
 		}
 	}
@@ -1803,7 +1806,7 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 		if (!skb_out) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Failed to allocate new skb\n"));
-			return -ENOMEM;
+			return A_ERROR;
 		}
 
 		nlh = nlmsg_put(skb_out, 0, 0, WLAN_NL_MSG_CNSS_DIAG,
@@ -1826,7 +1829,7 @@ dbglog_process_netlink_data(wmi_unified_t wmi_handle, const uint8_t *buffer,
 		if ((res < 0) && (res != -ESRCH)) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_RSVD1,
 					("%s: nl_srv_bcast_fw_logs failed 0x%x\n",
-					__func__, res));
+					 __func__, res));
 			return res;
 		}
 	}
@@ -1851,7 +1854,7 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 
 	if (!wma) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("NULL Pointer assigned\n"));
-		return -EINVAL;
+		return A_ERROR;
 	}
 	/* when fw asser occurs,host can't use TLV format. */
 	if (wma->is_fw_assert) {
@@ -1863,7 +1866,7 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		if (!param_buf) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Get NULL point message from FW\n"));
-			return -EINVAL;
+			return A_ERROR;
 		}
 
 		param_buf = (wmitlv_cmd_param_info *) data;
@@ -1884,8 +1887,8 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	}
 	if (dbglog_process_type == DBGLOG_PROCESS_PRINT_RAW) {
 		if (!gprint_limiter) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("NOT Supported"
-							" only supports net link socket\n"));
+			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+					("NOT Supported only supports net link socket\n"));
 			gprint_limiter = true;
 		}
 		return 0;
@@ -1898,16 +1901,16 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 #ifdef WLAN_OPEN_SOURCE
 	if (dbglog_process_type == DBGLOG_PROCESS_POOL_RAW) {
 		if (!gprint_limiter) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("NOT Supported"
-							" only supports net link socket\n"));
+			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+					("NOT Supported only supports net link socket\n"));
 			gprint_limiter = true;
 		}
 		return 0;
 	}
 #endif /* WLAN_OPEN_SOURCE */
 	if (!gprint_limiter) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("NOT Supported"
-						" only supports net link socket\n"));
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("NOT Supported only supports net link socket\n"));
 		gprint_limiter = true;
 	}
 	/* Always returns zero */
@@ -1930,7 +1933,7 @@ fw_diag_data_event_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	if (!param_buf) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("Got NULL point message from FW\n"));
-		return -EINVAL;
+		return A_ERROR;
 	}
 
 	num_data = param_buf->num_bufp;
@@ -1958,7 +1961,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 
 	if (!wma) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("NULL Pointer assigned\n"));
-		return -EINVAL;
+		return A_ERROR;
 	}
 	/*when fw asser occurs,host can't use TLV format. */
 	if (wma->is_fw_assert) {
@@ -1970,7 +1973,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		if (!param_buf) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Get NULL point message from FW\n"));
-			return -EINVAL;
+			return A_ERROR;
 		}
 
 		datap = param_buf->bufp;
@@ -1980,7 +1983,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	dropped = *((A_UINT32 *) datap);
 	if (dropped > 0) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-				("%d log buffers are dropped \n", dropped));
+				("%d log buffers are dropped\n", dropped));
 	}
 	datap += sizeof(dropped);
 	len -= sizeof(dropped);
@@ -1989,9 +1992,8 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	buffer = (A_UINT32 *) datap;
 	length = (len >> 2);
 
-	if (dbglog_process_type == DBGLOG_PROCESS_PRINT_RAW) {
+	if (dbglog_process_type == DBGLOG_PROCESS_PRINT_RAW)
 		return dbglog_print_raw_data(buffer, length);
-	}
 
 	if (dbglog_process_type == DBGLOG_PROCESS_NET_RAW) {
 		return dbglog_process_netlink_data((wmi_unified_t) wma->
@@ -2015,23 +2017,29 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		numargs = DBGLOG_GET_NUMARGS(buffer[count + 1]);
 
 		if ((count + 2 + numargs) > length)
-			return 0;
+			return A_OK;
 
 		if (moduleid >= WLAN_MODULE_ID_MAX)
-			return 0;
+			return A_OK;
 
 		if (mod_print[moduleid] == NULL) {
-			/* No module specific log registered use the default handler */
+			/*
+			 * No module specific log registered
+			 * use the default handler
+			 */
 			dbglog_default_print_handler(moduleid, vapid, debugid,
 						     timestamp, numargs,
 						     (((A_UINT32 *) buffer) +
 						      2 + count));
 		} else {
-			if (!
-			    (mod_print[moduleid]
-				     (moduleid, vapid, debugid, timestamp, numargs,
-				     (((A_UINT32 *) buffer) + 2 + count)))) {
-				/* The message is not handled by the module specific handler */
+			if (!(mod_print[moduleid](moduleid, vapid, debugid,
+						  timestamp, numargs,
+						  (((A_UINT32 *) buffer) +
+						  2 + count)))) {
+				/*
+				 * The message is not handled
+				 * by the module specific handler
+				 */
 				dbglog_default_print_handler(moduleid, vapid,
 							     debugid, timestamp,
 							     numargs,
@@ -2042,10 +2050,11 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 			}
 		}
 
-		count += numargs + 2;   /* 32 bit Time stamp + 32 bit Dbg header */
+		/* 32 bit Time stamp + 32 bit Dbg header */
+		count += numargs + 2;
 	}
 	/* Always returns zero */
-	return 0;
+	return A_OK;
 }
 
 void dbglog_reg_modprint(A_UINT32 mod_id, module_dbg_print printfn)
@@ -2065,15 +2074,14 @@ dbglog_sm_print(A_UINT32 timestamp,
 		A_UINT16 numargs,
 		A_UINT32 *args,
 		const char *module_prefix,
-		const char *states[], A_UINT32 num_states,
-		const char *events[], A_UINT32 num_events)
+		const char *const states[], A_UINT32 num_states,
+		const char *const events[], A_UINT32 num_events)
 {
 	A_UINT8 type, arg1, arg2, arg3;
 	A_UINT32 extra, extra2, extra3;
 
-	if (numargs != 4) {
+	if (numargs != 4)
 		return;
-	}
 
 	type = (args[0] >> 24) & 0xff;
 	arg1 = (args[0] >> 16) & 0xff;
@@ -2142,7 +2150,7 @@ dbglog_sta_powersave_print_handler(A_UINT32 mod_id,
 				   A_UINT32 timestamp,
 				   A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"IDLE",
 		"ACTIVE",
 		"SLEEP_TXQ_FLUSH",
@@ -2158,7 +2166,7 @@ dbglog_sta_powersave_print_handler(A_UINT32 mod_id,
 		"IDLE_TX_SENT",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"START",
 		"STOP",
 		"PAUSE",
@@ -2341,7 +2349,7 @@ dbglog_ibss_powersave_print_handler(A_UINT32 mod_id,
 				    A_UINT32 timestamp,
 				    A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *nw_states[] = {
+	static const char *const nw_states[] = {
 		"WAIT_FOR_TBTT",
 		"ATIM_WINDOW_PRE_BCN",
 		"ATIM_WINDOW_POST_BCN",
@@ -2350,7 +2358,7 @@ dbglog_ibss_powersave_print_handler(A_UINT32 mod_id,
 		"PAUSED",
 	};
 
-	static const char *ps_states[] = {
+	static const char *const ps_states[] = {
 		"ACTIVE",
 		"SLEEP_TX_SEND",
 		"SLEEP_DOZE_PAUSE_PENDING",
@@ -2361,14 +2369,14 @@ dbglog_ibss_powersave_print_handler(A_UINT32 mod_id,
 		"PAUSED",
 	};
 
-	static const char *peer_ps_states[] = {
+	static const char *const peer_ps_states[] = {
 		"ACTIVE",
 		"SLEEP_AWAKE",
 		"SLEEP_DOZE",
 		"PS_UNKNOWN",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"START",
 		"STOP",
 		"SWBA",
@@ -3005,7 +3013,7 @@ dbglog_wal_print_handler(A_UINT32 mod_id,
 			 A_UINT32 dbg_id,
 			 A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"ACTIVE",
 		"WAIT",
 		"WAIT_FILTER",
@@ -3014,7 +3022,7 @@ dbglog_wal_print_handler(A_UINT32 mod_id,
 		"BLOCK",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"PAUSE",
 		"PAUSE_FILTER",
 		"UNPAUSE",
@@ -3121,8 +3129,8 @@ dbglog_wal_print_handler(A_UINT32 mod_id,
 			      "WAL Tx enqueue discard msdu_id=0x%x", args[0]);
 		break;
 	case WAL_DBGID_SET_HW_CHAINMASK:
-		dbglog_printf(timestamp, vap_id, "WAL_DBGID_SET_HW_CHAINMASK "
-			      "pdev=%d, txchain=0x%x, rxchain=0x%x",
+		dbglog_printf(timestamp, vap_id,
+			      "WAL_DBGID_SET_HW_CHAINMASK pdev=%d, txchain=0x%x, rxchain=0x%x",
 			      args[0], args[1], args[2]);
 		break;
 	case WAL_DBGID_SET_HW_CHAINMASK_TXRX_STOP_FAIL:
@@ -3160,7 +3168,7 @@ dbglog_scan_print_handler(A_UINT32 mod_id,
 			  A_UINT32 dbg_id,
 			  A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"IDLE",
 		"BSSCHAN",
 		"WAIT_FOREIGN_CHAN",
@@ -3168,7 +3176,7 @@ dbglog_scan_print_handler(A_UINT32 mod_id,
 		"TERMINATING"
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"REQ",
 		"STOP",
 		"BSSCHAN",
@@ -3202,14 +3210,14 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 	A_UINT8 i;
 	char *dbg_id_str;
 
-	static const char *wlan_rx_xput_status[] = {
+	static const char *const wlan_rx_xput_status[] = {
 		"WLAN_XPUT_NORMAL",
 		"WLAN_XPUT_UNDER_THRESH",
 		"WLAN_XPUT_CRITICAL",
 		"WLAN_XPUT_RECOVERY_TIMEOUT",
 	};
 
-	static const char *coex_sched_req[] = {
+	static const char *const coex_sched_req[] = {
 		"SCHED_REQ_NEXT",
 		"SCHED_REQ_BT",
 		"SCHED_REQ_WLAN",
@@ -3217,7 +3225,7 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"SCHED_REQ_UNPAUSE",
 	};
 
-	static const char *coex_sched_type[] = {
+	static const char *const coex_sched_type[] = {
 		"SCHED_NONE",
 		"SCHED_WLAN",
 		"SCHED_BT",
@@ -3227,7 +3235,7 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"COEX_SCHED_MWS",
 	};
 
-	static const char *coex_trf_mgmt_type[] = {
+	static const char *const coex_trf_mgmt_type[] = {
 		"TRF_MGMT_FREERUN",
 		"TRF_MGMT_SHAPE_PM",
 		"TRF_MGMT_SHAPE_PSP",
@@ -3239,7 +3247,7 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"TRF_MGMT_NONE",
 	};
 
-	static const char *coex_system_status[] = {
+	static const char *const coex_system_status[] = {
 		"ALL_OFF",
 		"BTCOEX_NOT_REQD",
 		"WLAN_IS_IDLE",
@@ -3251,14 +3259,14 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"SOC_WAKE",
 	};
 
-	static const char *wlan_rssi_type[] = {
+	static const char *const wlan_rssi_type[] = {
 		"LOW_RSSI",
 		"MID_RSSI",
 		"HI_RSSI",
 		"INVALID_RSSI",
 	};
 
-	static const char *coex_bt_scheme[] = {
+	static const char *const coex_bt_scheme[] = {
 		"IDLE_CTRL",
 		"ACTIVE_ASYNC_CTRL",
 		"PASSIVE_SYNC_CTRL",
@@ -3267,13 +3275,13 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"CONCURRENCY_CTRL",
 	};
 
-	static const char *wal_peer_rx_rate_stats_event_sent[] = {
+	static const char *const wal_peer_rx_rate_stats_event_sent[] = {
 		"PR_RX_EVT_SENT_NONE",
 		"PR_RX_EVT_SENT_LOWER",
 		"PR_RX_EVT_SENT_UPPER",
 	};
 
-	static const char *wlan_psp_stimulus[] = {
+	static const char *const wlan_psp_stimulus[] = {
 		"ENTRY",
 		"EXIT",
 		"PS_READY",
@@ -3299,7 +3307,7 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"RX_NO_MORE_DATA_DATAFRM",
 	};
 
-	static const char *coex_pspoll_state[] = {
+	static const char *const coex_pspoll_state[] = {
 		"STATE_DISABLED",
 		"STATE_NOT_READY",
 		"STATE_ENABLED",
@@ -3308,12 +3316,12 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"STATE_RX_STATUS",
 	};
 
-	static const char *coex_scheduler_interval[] = {
+	static const char *const coex_scheduler_interval[] = {
 		"COEX_SCHED_NONWLAN_INT",
 		"COEX_SCHED_WLAN_INT",
 	};
 
-	static const char *wlan_weight[] = {
+	static const char *const wlan_weight[] = {
 		"BT_COEX_BASE",
 		"BT_COEX_LOW",
 		"BT_COEX_MID",
@@ -3323,13 +3331,13 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"BT_COEX_CRITICAL",
 	};
 
-	static const char *wlan_power_state[] = {
+	static const char *const wlan_power_state[] = {
 		"SLEEP",
 		"AWAKE",
 		"FULL_SLEEP",
 	};
 
-	static const char *coex_psp_error_type[] = {
+	static const char *const coex_psp_error_type[] = {
 		"DISABLED_STATE",
 		"VDEV_NULL",
 		"COEX_PSP_ENTRY",
@@ -3341,7 +3349,7 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"SET_TIMER_PARAM",
 	};
 
-	static const char *wlan_phymode[] = {
+	static const char *const wlan_phymode[] = {
 		"A",
 		"G",
 		"B",
@@ -3359,7 +3367,7 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		"UNKNOWN",
 	};
 
-	static const char *wlan_curr_band[] = {
+	static const char *const wlan_curr_band[] = {
 		"2G",
 		"5G",
 	};
@@ -3519,7 +3527,8 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		}
 		break;
 	case COEX_PSP_MGR_ENTER:
-		if (numargs >= 5 && args[0] < 23 && args[1] < 6 && args[3] < 2) {
+		if (numargs >= 5 && args[0] < 23 &&
+		    args[1] < 6 && args[3] < 2) {
 			dbglog_printf(timestamp, vap_id,
 				      "%s: %s, %s, PsPollAvg(%u), %s, CurrT(%u)",
 				      dbg_id_str, wlan_psp_stimulus[args[0]],
@@ -3551,9 +3560,8 @@ A_BOOL dbglog_coex_print_handler(A_UINT32 mod_id,
 		if (numargs > 0) {
 			dbglog_printf_no_line_break(timestamp, vap_id, "%s: %u",
 						    dbg_id_str, args[0]);
-			for (i = 1; i < numargs; i++) {
-				printk(", %u", args[i]);
-			}
+			for (i = 1; i < numargs; i++)
+				printk("%u", args[i]);
 			printk("\n");
 		} else {
 			return false;
@@ -3693,14 +3701,14 @@ dbglog_beacon_print_handler(A_UINT32 mod_id,
 			    A_UINT32 timestamp,
 			    A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"INIT",
 		"ADJUST_START",
 		"ADJUSTING",
 		"ADJUST_HOLD",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"ADJUST_START",
 		"ADJUST_RESTART",
 		"ADJUST_STOP",
@@ -3796,7 +3804,7 @@ A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
 				 A_UINT32 timestamp,
 				 A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"S_INACTIVE",
 		"S_STATIC",
 		"S_DYNAMIC",
@@ -3806,7 +3814,7 @@ A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
 		"S_DYNAMIC_WAIT",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"E_STOP",
 		"E_STOP_COMPL",
 		"E_START",
@@ -3867,8 +3875,7 @@ A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
 		break;
 	case STA_SMPS_DBGID_DTIM_CHMASK_UPDATE:
 		dbglog_printf(timestamp, vap_id,
-			      "STA_SMPS_DBGID_DTIM_CHMASK_UPDATE "
-			      "tx_mask %#x rx_mask %#x arb_dtim_mask %#x",
+			      "STA_SMPS_DBGID_DTIM_CHMASK_UPDATE tx_mask %#x rx_mask %#x arb_dtim_mask %#x",
 			      args[0], args[1], args[2]);
 		break;
 	case STA_SMPS_DBGID_DTIM_BEACON_EVENT_CHMASK_UPDATE:
@@ -3893,15 +3900,13 @@ A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
 		break;
 	case STA_SMPS_DBGID_DTIM_CHMASK_UPDATE_SLEEP:
 		dbglog_printf(timestamp, vap_id,
-			      "STA_SMPS_DBGID_DTIM_CHMASK_UPDATE_SLEEP "
-			      "tx_mask %#x rx_mask %#x orig_rx %#x dtim_rx %#x",
+			      "STA_SMPS_DBGID_DTIM_CHMASK_UPDATE_SLEEP tx_mask %#x rx_mask %#x orig_rx %#x dtim_rx %#x",
 			      args[0], args[1], args[2], args[3]);
 		break;
 	case STA_SMPS_DBGID_DTIM_CHMASK_UPDATE_AWAKE:
 		dbglog_printf(timestamp, vap_id,
-			      "STA_SMPS_DBGID_DTIM_CHMASK_UPDATE_AWAKE "
-			      "tx_mask %#x rx_mask %#x orig_rx %#x", args[0],
-			      args[1], args[2]);
+			      "STA_SMPS_DBGID_DTIM_CHMASK_UPDATE_AWAKE tx_mask %#x rx_mask %#x orig_rx %#x",
+			      args[0], args[1], args[2]);
 		break;
 	default:
 		dbglog_printf(timestamp, vap_id, "STA_SMPS: UNKNOWN DBGID!");
@@ -3917,7 +3922,7 @@ dbglog_p2p_print_handler(A_UINT32 mod_id,
 			 A_UINT32 dbg_id,
 			 A_UINT32 timestamp, A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"ACTIVE",
 		"DOZE",
 		"TX_BCN",
@@ -3925,7 +3930,7 @@ dbglog_p2p_print_handler(A_UINT32 mod_id,
 		"OPPPS",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"ONESHOT_NOA",
 		"CTWINDOW",
 		"PERIODIC_NOA",
@@ -3957,7 +3962,7 @@ dbglog_pcielp_print_handler(A_UINT32 mod_id,
 			    A_UINT32 timestamp,
 			    A_UINT16 numargs, A_UINT32 *args)
 {
-	static const char *states[] = {
+	static const char *const states[] = {
 		"STOP",
 		"TX",
 		"RX",
@@ -3965,7 +3970,7 @@ dbglog_pcielp_print_handler(A_UINT32 mod_id,
 		"SUSPEND",
 	};
 
-	static const char *events[] = {
+	static const char *const events[] = {
 		"VDEV_UP",
 		"ALL_VDEV_DOWN",
 		"AWAKE",
@@ -4037,7 +4042,7 @@ static ssize_t dbglog_block_read(struct file *file,
 		spin_unlock_bh(&fwlog->fwlog_queue.lock);
 
 		ret =
-			wait_for_completion_interruptible(&fwlog->fwlog_completion);
+		   wait_for_completion_interruptible(&fwlog->fwlog_completion);
 		if (ret == -ERESTARTSYS) {
 			vfree(buf);
 			return ret;
@@ -4097,7 +4102,7 @@ static void dbglog_debugfs_init(wmi_unified_t wmi_handle)
 		return;
 	}
 
-	debugfs_create_file(DEBUGFS_BLOCK_NAME, S_IRUSR,
+	debugfs_create_file(DEBUGFS_BLOCK_NAME, 0400,
 			    wmi_handle->debugfs_phy, &wmi_handle->dbglog,
 			    &fops_dbglog_block);
 
@@ -4136,17 +4141,19 @@ static void cnss_diag_handle_crash_inject(struct dbglog_slot *slot)
 	switch (slot->diag_type) {
 	case DIAG_TYPE_CRASH_INJECT:
 		if (slot->length != 2) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("crash_inject cmd error\n"));
+			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+					("crash_inject cmd error\n"));
 			return;
 		}
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-				("%s : DIAG_TYPE_CRASH_INJECT: %d %d\n", __func__,
-				 slot->payload[0], slot->payload[1]));
+				("%s : DIAG_TYPE_CRASH_INJECT: %d %d\n",
+				 __func__, slot->payload[0],
+				 slot->payload[1]));
 		if (!tgt_assert_enable) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_INFO,
-				("%s: tgt Assert Disabled\n",
-					 __func__));
+					("%s: tgt Assert Disabled\n",
+					  __func__));
 			return;
 		}
 		wma_cli_set2_command(0, (int)GEN_PARAM_CRASH_INJECT,
@@ -4184,13 +4191,13 @@ static void cnss_diag_cmd_handler(const void *data, int data_len,
 	 */
 	if (wlan_cfg80211_nla_parse(tb, CLD80211_ATTR_MAX,
 				    data, data_len, NULL)) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: nla parse fails \n",
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: nla parse fails\n",
 							__func__));
 		return;
 	}
 
 	if (!tb[CLD80211_ATTR_DATA]) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: attr VENDOR_DATA fails \n",
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: attr VENDOR_DATA fails\n",
 								__func__));
 		return;
 	}
@@ -4203,7 +4210,7 @@ static void cnss_diag_cmd_handler(const void *data, int data_len,
 	slot = (struct dbglog_slot *)nla_data(tb[CLD80211_ATTR_DATA]);
 
 	if (!slot) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: data NULL \n", __func__));
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR, ("%s: data NULL\n", __func__));
 		return;
 	}
 
@@ -4227,17 +4234,17 @@ int cnss_diag_activate_service(void)
 
 #else
 
-/**---------------------------------------------------------------------------
-   \brief cnss_diag_msg_callback() - Call back invoked by netlink service
-
-   This function gets invoked by netlink service when a message is recevied
-   from the cnss-diag application in user-space.
-
-   \param -
-      - skb - skb with netlink message
-
-   \return - 0 for success, non zero for failure
-   --------------------------------------------------------------------------*/
+/**
+ *  brief cnss_diag_msg_callback() - Call back invoked by netlink service
+ *
+ *  This function gets invoked by netlink service when a message is recevied
+ *  from the cnss-diag application in user-space.
+ *
+ *  param -
+ *     - skb - skb with netlink message
+ *
+ *  return - 0 for success, non zero for failure
+ */
 static int cnss_diag_msg_callback(struct sk_buff *skb)
 {
 	struct nlmsghdr *nlh;
@@ -4246,8 +4253,8 @@ static int cnss_diag_msg_callback(struct sk_buff *skb)
 	nlh = (struct nlmsghdr *)skb->data;
 	if (!nlh) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("%s: Netlink header null \n", __func__));
-		return -EINVAL;
+				("%s: Netlink header null\n", __func__));
+		return A_ERROR;
 	}
 
 	msg = NLMSG_DATA(nlh);
@@ -4256,17 +4263,17 @@ static int cnss_diag_msg_callback(struct sk_buff *skb)
 	return 0;
 }
 
-/**---------------------------------------------------------------------------
-   \brief cnss_diag_activate_service() - Activate cnss_diag message handler
-
-   This function registers a handler to receive netlink message from
-   an cnss-diag application process.
-
-   \param -
-      - None
-
-   \return - 0 for success, non zero for failure
-   --------------------------------------------------------------------------*/
+/**
+ *  brief cnss_diag_activate_service() - Activate cnss_diag message handler
+ *
+ *  This function registers a handler to receive netlink message from
+ *  an cnss-diag application process.
+ *
+ *  param -
+ *     - None
+ *
+ *  return - 0 for success, non zero for failure
+ */
 int cnss_diag_activate_service(void)
 {
 	int ret = 0;
@@ -4416,9 +4423,8 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 
 int dbglog_parser_type_init(wmi_unified_t wmi_handle, int type)
 {
-	if (type >= DBGLOG_PROCESS_MAX) {
+	if (type >= DBGLOG_PROCESS_MAX)
 		return A_ERROR;
-	}
 
 	dbglog_process_type = type;
 	gprint_limiter = false;
@@ -4429,6 +4435,7 @@ int dbglog_parser_type_init(wmi_unified_t wmi_handle, int type)
 int dbglog_init(wmi_unified_t wmi_handle)
 {
 	int res = 0;
+
 	OS_MEMSET(mod_print, 0, sizeof(mod_print));
 
 	dbglog_reg_modprint(WLAN_MODULE_STA_PWRSAVE,
