@@ -132,8 +132,6 @@ void wlan_hdd_cfg80211_fw_mem_dump_cb(void *ctx,
 	}
 	complete(&context->response_event);
 	spin_unlock(&hdd_context_lock);
-
-	return;
 }
 
 /**

@@ -2230,7 +2230,6 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit);
 static inline void hdd_init_nud_stats_ctx(struct hdd_context *hdd_ctx)
 {
 	init_completion(&hdd_ctx->nud_stats_context.response_event);
-	return;
 }
 
 void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status);

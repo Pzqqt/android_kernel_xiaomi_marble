@@ -2417,8 +2417,6 @@ static void hdd_change_peer_state_after_set_key(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
-
-	return;
 }
 
 /**

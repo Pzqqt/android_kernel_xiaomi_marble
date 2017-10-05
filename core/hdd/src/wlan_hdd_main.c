@@ -6775,8 +6775,6 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 					hdd_ctx->hdd_txrx_hist[i].
 						next_tx_level));
 	}
-
-	return;
 }
 
 /**
@@ -10044,8 +10042,6 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 	spin_unlock(&hdd_context_lock);
 
 	EXIT();
-
-	return;
 }
 
 /**
@@ -12018,9 +12014,8 @@ static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 #else
 static inline void
 hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
-	struct hdd_config *cfg)
+		      struct hdd_config *cfg)
 {
-	return;
 }
 #endif
 
@@ -12471,7 +12466,6 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 	}
 end:
 	mutex_unlock(&hdd_ctx->sap_lock);
-	return;
 }
 
 /**
