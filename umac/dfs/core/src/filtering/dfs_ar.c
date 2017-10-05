@@ -54,9 +54,8 @@ void dfs_process_ar_event(struct wlan_dfs *dfs,
 	uint16_t thistimestamp;
 	int empty;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -70,7 +69,7 @@ void dfs_process_ar_event(struct wlan_dfs *dfs,
 		if (re != NULL)
 			STAILQ_REMOVE_HEAD(&(dfs->dfs_arq), re_list);
 		WLAN_ARQ_UNLOCK(dfs);
-		if (re == NULL)
+		if (!re)
 			return;
 
 		thistimestamp = re->re_ts;
@@ -285,9 +284,8 @@ void dfs_process_ar_event(struct wlan_dfs *dfs,
 
 void dfs_reset_ar(struct wlan_dfs *dfs)
 {
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: sc_dfs is NULL\n",
-			__func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -300,9 +298,8 @@ void dfs_reset_arq(struct wlan_dfs *dfs)
 {
 	struct dfs_event *event;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: sc_dfs is NULL\n",
-			__func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 

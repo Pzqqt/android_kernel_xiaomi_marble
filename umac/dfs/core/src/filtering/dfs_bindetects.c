@@ -77,7 +77,7 @@ static inline bool dfs_ts_within_window(
 	if ((pl->pl_elems[*index].p_dur == 1) ||
 			((dur != 1) && (deltadur <= 2))) {
 		(*numpulses)++;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "numpulses %u\n", *numpulses);
+		dfs_debug(dfs, WLAN_DEBUG_DFS2, "numpulses %u", *numpulses);
 		return 1;
 	}
 
@@ -114,8 +114,8 @@ static inline bool dfs_ts_eq_prevts(
 				((pl->pl_elems[*index].p_dur != 1) &&
 				 (deltadur <= 2))) {
 			(*numpulses)++;
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"zero PRI: numpulses %u\n", *numpulses);
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"zero PRI: numpulses %u", *numpulses);
 			return 1;
 		}
 	}
@@ -154,7 +154,7 @@ static inline int dfs_pulses_within_window(
 		event_ts = pl->pl_elems[*index].p_time;
 		next_index = (*index+1) & DFS_MAX_PULSE_BUFFER_MASK;
 		next_event_ts = pl->pl_elems[next_index].p_time;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "ts %u\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2, "ts %u",
 				(uint32_t)event_ts);
 
 		if ((event_ts <= window_end) && (event_ts >= window_start)) {
@@ -204,8 +204,8 @@ static inline int dfs_count_pulses(
 	for (n = 0; n <= rf->rf_numpulses; n++) {
 		window_start = (start_ts + (refpri*n))-(primargin+n);
 		window_end = window_start + 2*(primargin+n);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"window_start %u window_end %u\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"window_start %u window_end %u",
 				(uint32_t)window_start, (uint32_t)window_end);
 		numpulses += dfs_pulses_within_window(dfs, window_start,
 				window_end, &index, dur, refpri);
@@ -238,8 +238,8 @@ static int  dfs_bin_fixedpattern_check(
 	end_ts = pl->pl_elems[last_index].p_time;
 	start_ts = end_ts - (refpri*rf->rf_numpulses);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
-		"lastelem ts=%llu start_ts=%llu, end_ts=%llu\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS3,
+		"lastelem ts=%llu start_ts=%llu, end_ts=%llu",
 		(unsigned long long)pl->pl_elems[last_index].p_time,
 		(unsigned long long)start_ts,
 		(unsigned long long) end_ts);
@@ -257,9 +257,9 @@ static int  dfs_bin_fixedpattern_check(
 	fil_thresh = dfs_get_filter_threshold(dfs, rf, ext_chan_flag);
 
 	if (numpulses >= fil_thresh) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"%s FOUND filterID=%u numpulses=%d unadj thresh=%d\n",
-			__func__, rf->rf_pulseid, numpulses, rf->rf_threshold);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"FOUND filterID=%u numpulses=%d unadj thresh=%d",
+			 rf->rf_pulseid, numpulses, rf->rf_threshold);
 		return 1;
 	} else {
 		return 0;
@@ -290,9 +290,9 @@ void dfs_add_pulse(
 	dl->dl_elems[index].de_dur = re->re_dur;
 	dl->dl_elems[index].de_rssi = re->re_rssi;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-		"%s: adding: filter id %d, dur=%d, rssi=%d, ts=%llu\n",
-		__func__, rf->rf_pulseid, re->re_dur,
+	dfs_debug(dfs, WLAN_DEBUG_DFS2,
+		"adding: filter id %d, dur=%d, rssi=%d, ts=%llu",
+		 rf->rf_pulseid, re->re_dur,
 		re->re_rssi, (unsigned long long int)this_ts);
 
 	for (n = 0; n < dl->dl_numelems-1; n++) {
@@ -308,7 +308,7 @@ void dfs_add_pulse(
 			dl->dl_numelems = n+1;
 		}
 	}
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "dl firstElem = %d  lastElem = %d\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS2, "dl firstElem = %d  lastElem = %d",
 			dl->dl_firstelem, dl->dl_lastelem);
 }
 
@@ -602,8 +602,8 @@ static inline void dfs_bin_success_print(
 		uint32_t refdur,
 		uint32_t primargin)
 {
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"ext_flag=%d MATCH filter=%u numpulses=%u thresh=%u refdur=%d refpri=%d primargin=%d\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"ext_flag=%d MATCH filter=%u numpulses=%u thresh=%u refdur=%d refpri=%d primargin=%d",
 			ext_chan_flag, rf->rf_pulseid, numpulses,
 			rf->rf_threshold, refdur, refpri, primargin);
 	dfs_print_delayline(dfs, &rf->rf_dl);
@@ -784,8 +784,8 @@ static void dfs_count_the_other_delay_elements(
 		}
 		*prev_good_timestamp = dl->dl_elems[delayindex].de_ts;
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-			"rf->minpri=%d rf->maxpri=%d searchpri = %d index = %d numpulses = %d deltapri=%d j=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+			"rf->minpri=%d rf->maxpri=%d searchpri = %d index = %d numpulses = %d deltapri=%d j=%d",
 			rf->rf_minpri, rf->rf_maxpri, searchpri,
 			i, *numpulses, deltapri, j);
 	}
@@ -862,8 +862,8 @@ int dfs_bin_pri_check(
 	 * are left as it is for readability hoping the complier
 	 * will use left/right shifts wherever possible.
 	 */
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-		"refpri = %d high score = %d index = %d numpulses = %d\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS2,
+		"refpri = %d high score = %d index = %d numpulses = %d",
 		refpri, highscore, highscoreindex, numpulses);
 	/*
 	 * Count the other delay elements that have pri and dur with

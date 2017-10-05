@@ -81,29 +81,29 @@ static void dfs_radar_summary_print(struct wlan_dfs *dfs,
 		struct rx_radar_status *rsu)
 {
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    pulsedur=%d\n", rsu->pulse_duration);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    rssi=%d\n", rsu->rssi);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    ischirp=%d\n", rsu->is_chirp);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    sidx=%d\n", rsu->sidx);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    raw tsf=%d\n", rsu->raw_tsf);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    tsf_offset=%d\n", rsu->tsf_offset);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    cooked tsf=%d\n", rsu->raw_tsf - rsu->tsf_offset);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    frequency offset=%d.%d MHz (oversampling=%d)\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    pulsedur=%d", rsu->pulse_duration);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    rssi=%d", rsu->rssi);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    ischirp=%d", rsu->is_chirp);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    sidx=%d", rsu->sidx);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    raw tsf=%d", rsu->raw_tsf);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    tsf_offset=%d", rsu->tsf_offset);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    cooked tsf=%d", rsu->raw_tsf - rsu->tsf_offset);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    frequency offset=%d.%d MHz (oversampling=%d)",
 		(int)(rsu->freq_offset / 1000),
 		(int)abs(rsu->freq_offset % 1000),
 		PERE_IS_OVERSAMPLING(dfs));
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    agc_total_gain=%d\n", rsu->agc_total_gain);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"    agc_mb_gain=%d\n", rsu->agc_mb_gain);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    agc_total_gain=%d", rsu->agc_total_gain);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"    agc_mb_gain=%d", rsu->agc_mb_gain);
 }
 
 /**
@@ -124,10 +124,9 @@ static void dfs_radar_summary_parse(struct wlan_dfs *dfs,
 
 	/* Drop out if we have < 2 DWORDs available. */
 	if (len < sizeof(rs)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR |
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR |
 			WLAN_DEBUG_DFS_PHYERR_SUM,
-			"%s: len (%zu) < expected (%zu)!\n",
-			__func__, len, sizeof(rs));
+			"len (%zu) < expected (%zu)!", len, sizeof(rs));
 	}
 
 	/*
@@ -138,9 +137,8 @@ static void dfs_radar_summary_parse(struct wlan_dfs *dfs,
 	 */
 	qdf_mem_copy(rs, buf, sizeof(rs));
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: two 32 bit values are: %08x %08x\n",
-		__func__, rs[0], rs[1]);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"two 32 bit values are: %08x %08x", rs[0], rs[1]);
 
 	/* Populate the fields from the summary report. */
 	rsu->tsf_offset =
@@ -182,10 +180,9 @@ static void dfs_radar_fft_search_report_parse(struct wlan_dfs *dfs,
 
 	/* Drop out if we have < 2 DWORDs available. */
 	if (len < sizeof(rs)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR |
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR |
 			WLAN_DEBUG_DFS_PHYERR_SUM,
-			"%s: len (%zu) < expected (%zu)!\n",
-			__func__, len, sizeof(rs));
+			"len (%zu) < expected (%zu)!", len, sizeof(rs));
 	}
 
 	/*
@@ -219,39 +216,30 @@ static void dfs_radar_fft_search_report_parse(struct wlan_dfs *dfs,
 	rsfr->num_str_bins_ib =
 	    MS(rs[SEARCH_FFT_REPORT_REG_2], SEARCH_FFT_REPORT_NUM_STR_BINS_IB);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: two 32 bit values are: %08x %08x\n",
-		__func__, rs[0], rs[1]);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->total_gain_db = %d\n",
-		__func__, rsfr->total_gain_db);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->base_pwr_db = %d\n",
-		__func__, rsfr->base_pwr_db);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->fft_chn_idx = %d\n",
-		__func__, rsfr->fft_chn_idx);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->peak_sidx = %d\n",
-		__func__, rsfr->peak_sidx);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->relpwr_db = %d\n",
-		__func__, rsfr->relpwr_db);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->avgpwr_db = %d\n",
-		__func__, rsfr->avgpwr_db);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->peak_mag = %d\n",
-		__func__, rsfr->peak_mag);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-		"%s: rsfr->num_str_bins_ib = %d\n",
-		__func__, rsfr->num_str_bins_ib);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"two 32 bit values are: %08x %08x", rs[0], rs[1]);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->total_gain_db = %d", rsfr->total_gain_db);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->base_pwr_db = %d", rsfr->base_pwr_db);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->fft_chn_idx = %d", rsfr->fft_chn_idx);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->peak_sidx = %d", rsfr->peak_sidx);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->relpwr_db = %d", rsfr->relpwr_db);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->avgpwr_db = %d", rsfr->avgpwr_db);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->peak_mag = %d", rsfr->peak_mag);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+		"rsfr->num_str_bins_ib = %d", rsfr->num_str_bins_ib);
 
 	if (dfs->dfs_caps.wlan_chip_is_ht160) {
 		rsfr->seg_id =
 		    MS(rs[SEARCH_FFT_REPORT_REG_3], SEARCH_FFT_REPORT_SEG_ID);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"%s: rsfr->seg_id = %d\n", __func__, rsfr->seg_id);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+			"rsfr->seg_id = %d", rsfr->seg_id);
 	}
 }
 
@@ -293,12 +281,9 @@ static inline void dfs_check_for_false_detection(
 	}
 
 	if (*false_detect)
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-				"%s: setting false_detect to TRUE because of mb/total_gain/rssi, agc_mb_gain=%d, agc_total_gain=%d, rssi=%d\n",
-				__func__,
-				rs->agc_mb_gain,
-				rs->agc_total_gain,
-				rssi);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"setting false_detect to TRUE because of mb/total_gain/rssi, agc_mb_gain=%d, agc_total_gain=%d, rssi=%d",
+				rs->agc_mb_gain, rs->agc_total_gain, rssi);
 }
 
 /**
@@ -329,18 +314,14 @@ static int dfs_tlv_parse_frame(struct wlan_dfs *dfs,
 	bool first_tlv = true;
 	bool false_detect = false;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"%s: total length = %zu bytes\n",
-			__func__, len);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+			"total length = %zu bytes", len);
 	while ((i < len) && (false_detect == false)) {
 		/* Ensure we at least have four bytes. */
 		if ((len - i) < sizeof(tlv_hdr)) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR |
+			dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR |
 				WLAN_DEBUG_DFS_PHYERR_SUM,
-				"%s: ran out of bytes, len=%zu, i=%d\n",
-				__func__, len, i);
-			DFS_PRINTK("%s: ran out of bytes, len=%zu, i=%d\n",
-				__func__, len, i);
+				"ran out of bytes, len=%zu, i=%d", len, i);
 			return 0;
 		}
 
@@ -350,9 +331,8 @@ static int dfs_tlv_parse_frame(struct wlan_dfs *dfs,
 		 */
 		qdf_mem_copy(&tlv_hdr, buf + i, sizeof(tlv_hdr));
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"%s: HDR: TLV SIG=0x%x, TAG=0x%x, LEN=%d bytes\n",
-			__func__,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+			"HDR: TLV SIG=0x%x, TAG=0x%x, LEN=%d bytes",
 			MS(tlv_hdr[TLV_REG], TLV_SIG),
 			MS(tlv_hdr[TLV_REG], TLV_TAG),
 			MS(tlv_hdr[TLV_REG], TLV_LEN));
@@ -363,9 +343,9 @@ static int dfs_tlv_parse_frame(struct wlan_dfs *dfs,
 		 * rest of the TLV entries.
 		 */
 		if (MS(tlv_hdr[TLV_REG], TLV_LEN) + i >= len) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-				"%s: TLV oversize: TLV LEN=%d, available=%zu, i=%d\n",
-				__func__, MS(tlv_hdr[TLV_REG], TLV_LEN),
+			dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"TLV oversize: TLV LEN=%d, available=%zu, i=%d",
+				 MS(tlv_hdr[TLV_REG], TLV_LEN),
 				len, i);
 			break;
 		}
@@ -416,22 +396,21 @@ static int dfs_tlv_parse_frame(struct wlan_dfs *dfs,
 				(rsfr->peak_mag < (2 * dfs->wlan_dfs_peak_mag))
 				) {
 				false_detect = true;
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-					"%s: setting false_detect to TRUE because of false_rssi_thres\n",
-					__func__);
+				dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+					"setting false_detect to TRUE because of false_rssi_thres");
 			}
 			break;
 		default:
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-				"%s: unknown entry, SIG=0x%02x\n",
-				__func__, MS(tlv_hdr[TLV_REG], TLV_SIG));
+			dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"unknown entry, SIG=0x%02x",
+				 MS(tlv_hdr[TLV_REG], TLV_SIG));
 		}
 
 		/* Skip the payload. */
 		i += MS(tlv_hdr[TLV_REG], TLV_LEN);
 		first_tlv = false;
 	}
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR, "%s: done\n\n", __func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR, "done");
 
 	return false_detect ? 0 : 1;
 }
@@ -451,8 +430,8 @@ static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
 	int chan_offset;
 
 	/* For now, just handle up to VHT80 correctly. */
-	if (dfs->dfs_curchan == NULL) {
-		DFS_PRINTK("%s: dfs_curchan is null\n", __func__);
+	if (!dfs->dfs_curchan) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_curchan is null");
 		return 0;
 		/*
 		 * For now, the only 11ac channel with freq1/freq2 setup is
@@ -595,9 +574,8 @@ static int dfs_tlv_calc_event_freq_chirp(struct wlan_dfs *dfs,
 	total_bw = delta_peak * (bin_resolution / radar_fft_long_period) *
 		pulse_duration;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR | WLAN_DEBUG_DFS_PHYERR_SUM,
-		"%s: delta_peak=%d, pulse_duration=%d, bin_resolution=%d.%dKHz, radar_fft_long_period=%d, total_bw=%d.%ldKHz\n",
-		__func__,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR | WLAN_DEBUG_DFS_PHYERR_SUM,
+		"delta_peak=%d, pulse_duration=%d, bin_resolution=%d.%dKHz, radar_fft_long_period=%d, total_bw=%d.%ldKHz",
 		delta_peak, pulse_duration, bin_resolution / THOUSAND,
 		bin_resolution % THOUSAND, radar_fft_long_period,
 		total_bw / HUNDRED,
@@ -725,9 +703,9 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 	e->mb_gain = rs.agc_mb_gain;
 	e->relpwr_db = rsfr.relpwr_db;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
-		"%s: fbin=%d, freq=%d.%d MHz, raw tsf=%u, offset=%d, cooked tsf=%u, rssi=%d, dur=%d, is_chirp=%d, fulltsf=%llu, freq=%d.%d MHz, freq_lo=%d.%dMHz, freq_hi=%d.%d MHz\n",
-		__func__, rs.sidx, (int) (rs.freq_offset / 1000),
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
+		"fbin=%d, freq=%d.%d MHz, raw tsf=%u, offset=%d, cooked tsf=%u, rssi=%d, dur=%d, is_chirp=%d, fulltsf=%llu, freq=%d.%d MHz, freq_lo=%d.%dMHz, freq_hi=%d.%d MHz",
+		 rs.sidx, (int) (rs.freq_offset / 1000),
 		(int) abs(rs.freq_offset % 1000), rs.raw_tsf, rs.tsf_offset,
 		e->rs_tstamp, rs.rssi, rs.pulse_duration, (int)rs.is_chirp,
 		(unsigned long long) fulltsf, (int)e->freq / 1000,
@@ -735,8 +713,8 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 		(int) abs(e->freq_lo) % 1000, (int)e->freq_hi / 1000,
 		(int) abs(e->freq_hi) % 1000);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_FALSE_DET,
-		"ts=%u, dur=%d, rssi=%d, freq_offset=%d.%dMHz, is_chirp=%d, seg_id=%d, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS_FALSE_DET,
+		"ts=%u, dur=%d, rssi=%d, freq_offset=%d.%dMHz, is_chirp=%d, seg_id=%d, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d",
 		e->rs_tstamp, rs.pulse_duration, rs.rssi,
 		(int)e->freq_offset_khz / 1000,
 		(int)abs(e->freq_offset_khz) % 1000, (int)rs.is_chirp,

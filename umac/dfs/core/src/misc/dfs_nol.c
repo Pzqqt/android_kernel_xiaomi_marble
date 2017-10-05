@@ -77,9 +77,9 @@ static os_timer_func(dfs_nol_timeout)
 					 * msg instead of one for every channel
 					 * table entry.
 					 */
-					DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-						"%s : radar on channel %u (%u MHz) cleared after timeout\n",
-						__func__,
+					dfs_debug(dfs, WLAN_DEBUG_DFS,
+						"radar on channel %u (%u MHz) cleared after timeout",
+
 						c->dfs_ch_ieee,
 						c->dfs_ch_freq);
 				}
@@ -122,24 +122,23 @@ static void dfs_nol_delete(struct wlan_dfs *dfs,
 {
 	struct dfs_nolelem *nol, **prev_next;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-		"%s: remove channel=%d/%d MHz from NOL\n",
-		__func__, delfreq, delchwidth);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
+		"remove channel=%d/%d MHz from NOL",
+		 delfreq, delchwidth);
 	prev_next = &(dfs->dfs_nol);
 	nol = dfs->dfs_nol;
 	while (nol != NULL) {
 		if (nol->nol_freq == delfreq &&
 			nol->nol_chwidth == delchwidth) {
 			*prev_next = nol->nol_next;
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-				"%s removing channel %d/%dMHz from NOL tstamp=%d\n",
-				__func__, nol->nol_freq,
+			dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
+				"removing channel %d/%dMHz from NOL tstamp=%d",
+				 nol->nol_freq,
 				nol->nol_chwidth,
 				(qdf_system_ticks_to_msecs
 				 (qdf_system_ticks()) / 1000));
@@ -153,9 +152,7 @@ static void dfs_nol_delete(struct wlan_dfs *dfs,
 
 			/* Be paranoid! */
 			if (dfs->dfs_nol_count < 0) {
-				DFS_PRINTK(
-					"%s: dfs_nol_count < 0; eek!\n",
-					__func__);
+				dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "dfs_nol_count < 0; eek!");
 				dfs->dfs_nol_count = 0;
 			}
 
@@ -193,8 +190,8 @@ static os_timer_func(dfs_remove_from_nol)
 
 	dfs_mlme_nol_timeout_notification(dfs->dfs_pdev_obj);
 	chan = utils_dfs_freq_to_chan(delfreq);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-		    "%s: remove channel %d from nol\n", __func__, chan);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
+		    "remove channel %d from nol", chan);
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 			(uint8_t *)&chan, 1, DFS_NOL_RESET);
 	dfs_save_nol(dfs->dfs_pdev_obj);
@@ -206,21 +203,20 @@ void dfs_print_nol(struct wlan_dfs *dfs)
 	int i = 0;
 	uint32_t diff_ms, remaining_sec;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
 	nol = dfs->dfs_nol;
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL, "%s: NOL\n", __func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL, "NOL");
 	while (nol != NULL) {
 		diff_ms = qdf_system_ticks_to_msecs(qdf_system_ticks() -
 				nol->nol_start_ticks);
 		diff_ms = (nol->nol_timeout_ms - diff_ms);
 		remaining_sec = diff_ms / 1000; /* Convert to seconds */
-		DFS_PRINTK(
-			"nol:%d channel=%d MHz width=%d MHz time left=%u seconds nol starttick=%llu\n",
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"nol:%d channel=%d MHz width=%d MHz time left=%u seconds nol starttick=%llu",
 			i++, nol->nol_freq,
 			nol->nol_chwidth,
 			remaining_sec,
@@ -235,9 +231,8 @@ void dfs_print_nolhistory(struct wlan_dfs *dfs)
 	int i, j = 0;
 	int nchans = 0;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -254,8 +249,8 @@ void dfs_print_nolhistory(struct wlan_dfs *dfs)
 				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
 		if (IEEE80211_IS_CHAN_HISTORY_RADAR(c)) {
-			DFS_PRINTK(
-				"nolhistory:%d channel=%d MHz Flags=%llx\n",
+			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+				"nolhistory:%d channel=%d MHz Flags=%llx",
 				j, c->dfs_ch_freq, c->dfs_ch_flags);
 			j++;
 		}
@@ -270,9 +265,8 @@ void dfs_get_nol(struct wlan_dfs *dfs,
 
 	*nchan = 0;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -296,9 +290,8 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 	struct dfs_ieee80211_channel chan;
 	int i;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -330,9 +323,8 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	/* For now, assume all events are 20MHz wide. */
 	int ch_width = 20;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 	nol = dfs->dfs_nol;
@@ -344,9 +336,9 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 			nol->nol_start_ticks = qdf_system_ticks();
 			nol->nol_timeout_ms = dfs_nol_timeout * TIME_IN_MS;
 
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-				"%s: Update OS Ticks for NOL %d MHz / %d MHz\n",
-				__func__, nol->nol_freq, nol->nol_chwidth);
+			dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
+				"Update OS Ticks for NOL %d MHz / %d MHz",
+				 nol->nol_freq, nol->nol_chwidth);
 
 			qdf_timer_stop(&nol->nol_timer);
 			qdf_timer_mod(&nol->nol_timer,
@@ -359,7 +351,7 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 
 	/* Add a new element to the NOL. */
 	elem = (struct dfs_nolelem *)qdf_mem_malloc(sizeof(struct dfs_nolelem));
-	if (elem == NULL)
+	if (!elem)
 		goto bad;
 
 	elem->nol_dfs = dfs;
@@ -383,15 +375,14 @@ void dfs_nol_addchan(struct wlan_dfs *dfs,
 	/* Update the NOL counter. */
 	dfs->dfs_nol_count++;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-		"%s: new NOL channel %d MHz / %d MHz\n",
-		__func__, elem->nol_freq, elem->nol_chwidth);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
+		"new NOL channel %d MHz / %d MHz",
+		 elem->nol_freq, elem->nol_chwidth);
 	return;
 
 bad:
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL | WLAN_DEBUG_DFS,
-		"%s: failed to allocate memory for nol entry\n",
-		__func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL | WLAN_DEBUG_DFS,
+		"failed to allocate memory for nol entry");
 
 #undef TIME_IN_MS
 #undef TIME_IN_US
@@ -402,7 +393,7 @@ void dfs_get_nol_chfreq_and_chwidth(struct dfs_nol_chan_entry *nollist,
 		uint32_t *nol_chwidth,
 		int index)
 {
-	if (nollist == NULL)
+	if (!nollist)
 		return;
 
 	*nol_chfreq = nollist[index].nol_chfreq;
@@ -424,16 +415,14 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 	dfs_nol = (struct dfs_nol_chan_entry *)qdf_mem_malloc(
 		sizeof(struct dfs_nol_chan_entry) * dfs->dfs_nol_count);
 
-	if (dfs_nol == NULL) {
+	if (!dfs_nol) {
 		/*
 		 * XXX TODO: if this fails, just schedule a task to retry
 		 * updating the NOL at a later stage.  That way the NOL
 		 * update _DOES_ happen - hopefully the failure was just
 		 * temporary.
 		 */
-		DFS_PRINTK(
-			"%s: failed to allocate NOL update memory!\n",
-			__func__);
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "failed to allocate NOL update memory!");
 		return;
 	}
 
@@ -452,8 +441,8 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 
 	/* Be suitably paranoid for now. */
 	if (nlen != dfs->dfs_nol_count)
-		DFS_PRINTK("%s: nlen (%d) != dfs->dfs_nol_count (%d)!\n",
-			__func__, nlen, dfs->dfs_nol_count);
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "nlen (%d) != dfs->dfs_nol_count (%d)!",
+			 nlen, dfs->dfs_nol_count);
 
 	/*
 	 * Call the driver layer to have it recalculate the NOL flags
@@ -490,7 +479,7 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 		dfs->dfs_nol_count--;
 
 		if (dfs->dfs_nol_count < 0) {
-			DFS_PRINTK("%s: dfs_nol_count < 0\n", __func__);
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_nol_count < 0");
 			ASSERT(0);
 		}
 	}

@@ -280,8 +280,6 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 	uint32_t target_type;
 	int dfsdomain = DFS_FCC_DOMAIN;
 
-	DFS_PRINTK(KERN_DEBUG"%s: called\n", __func__);
-
 	/* Fetch current radar patterns from the lmac */
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
 
@@ -294,14 +292,14 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
 	if (!psoc) {
-		DFS_PRINTK("%s: PSOC is NULL\n", __func__);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "psoc is NULL");
 		return;
 	}
 
 	tx_ops = &(psoc->soc_cb.tx_ops.target_tx_ops);
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
-		DFS_PRINTK("%s: FCC domain\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		/*
 		 * China uses a radar pattern that is similar to ETSI but it
@@ -309,9 +307,9 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		 * threshold etc.
 		 */
 		if (lmac_is_countryCode_CHINA(dfs->dfs_pdev_obj)) {
-			DFS_PRINTK(
-					"%s: FCC domain -- Country China(156) override FCC radar pattern\n",
-					__func__);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"FCC domain -- Country China(156) override FCC radar pattern"
+					);
 			rinfo.dfs_radars = dfs_china_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(dfs_china_radars);
 			rinfo.b5pulses = NULL;
@@ -322,7 +320,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 
 		break;
 	case DFS_ETSI_DOMAIN:
-		DFS_PRINTK("%s: ETSI domain\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 		rinfo.dfs_radars = dfs_etsi_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
@@ -337,9 +335,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		 */
 
 		if (lmac_is_countryCode_KOREA_ROC3(dfs->dfs_pdev_obj)) {
-			DFS_PRINTK(
-					"%s: ETSI domain -- Korea(412)\n",
-					__func__);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain -- Korea(412)");
 			rinfo.dfs_radars = dfs_korea_radars;
 			rinfo.numradars = QDF_ARRAY_SIZE(dfs_korea_radars);
 		}
@@ -348,7 +344,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		rinfo.numb5radars = 0;
 		break;
 	case DFS_MKK4_DOMAIN:
-		DFS_PRINTK("%s: MKK4 domain\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "MKK4 domain");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
@@ -370,7 +366,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		}
 		break;
 	default:
-		DFS_PRINTK("%s: UNINIT domain\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "UNINIT domain");
 		rinfo.dfsdomain = DFS_UNINIT_DOMAIN;
 		rinfo.dfs_radars = NULL;
 		rinfo.numradars = 0;
@@ -438,8 +434,8 @@ void dfs_get_radars(struct wlan_dfs *dfs)
 #define AR9300_DEVID_AR956X_PCIE    0x0036 /* Aphrodite: 1x1 DB + BT - AR9564 */
 #define AR9300_DEVID_EMU_PCIE       0xabcd
 
-	if (dfs == NULL) {
-		DFS_PRINTK("%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -503,9 +499,8 @@ void dfs_radar_found_action(struct wlan_dfs *dfs)
 		 * Otherwise random channel selection can choose this
 		 * channel.
 		 */
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s : found_on_second = %d is_pre = %d\n",
-				__func__,
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+				"found_on_second = %d is_pre = %d",
 				dfs->is_radar_found_on_secondary_seg,
 				dfs_is_precac_timer_running(dfs));
 

@@ -32,7 +32,7 @@ QDF_STATUS ucfg_dfs_is_ap_cac_timer_running(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	*is_ap_cac_timer_running = dfs_is_ap_cac_timer_running(dfs);
@@ -47,7 +47,7 @@ QDF_STATUS ucfg_dfs_getnol(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	dfs_getnol(dfs, dfs_nolinfo);
@@ -63,7 +63,7 @@ QDF_STATUS ucfg_dfs_override_cac_timeout(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	*status = dfs_override_cac_timeout(dfs, cac_timeout);
@@ -79,7 +79,7 @@ QDF_STATUS ucfg_dfs_get_override_cac_timeout(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	*status = dfs_get_override_cac_timeout(dfs, cac_timeout);
@@ -94,7 +94,7 @@ QDF_STATUS ucfg_dfs_get_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	dfs_get_override_precac_timeout(dfs, precac_timeout);
@@ -109,7 +109,7 @@ QDF_STATUS ucfg_dfs_override_precac_timeout(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	dfs_override_precac_timeout(dfs, precac_timeout);
@@ -124,7 +124,7 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	dfs_set_precac_enable(dfs, value);
@@ -139,7 +139,7 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (dfs == NULL)
+	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
 	*buff = dfs_get_precac_enable(dfs);

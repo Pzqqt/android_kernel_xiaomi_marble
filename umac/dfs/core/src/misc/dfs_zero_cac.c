@@ -120,12 +120,11 @@ void dfs_zero_cac_reset(struct wlan_dfs *dfs)
 
 int dfs_override_precac_timeout(struct wlan_dfs *dfs, int precac_timeout)
 {
-	if (dfs == NULL)
+	if (!dfs)
 		return -EIO;
 
 	dfs->dfs_precac_timeout_override = precac_timeout;
-	DFS_PRINTK("%s: PreCAC timeout is now %s (%d)\n",
-		__func__,
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "PreCAC timeout is now %s (%d)",
 		(precac_timeout == -1) ? "default" : "overridden",
 		precac_timeout);
 
@@ -134,7 +133,7 @@ int dfs_override_precac_timeout(struct wlan_dfs *dfs, int precac_timeout)
 
 int dfs_get_override_precac_timeout(struct wlan_dfs *dfs, int *precac_timeout)
 {
-	if (dfs == NULL)
+	if (!dfs)
 		return -EIO;
 
 	(*precac_timeout) = dfs->dfs_precac_timeout_override;
@@ -170,8 +169,8 @@ bool dfs_is_ht20_40_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 		}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s : vht80_freq = %u ret_val = %d\n",
-		__func__, dfs->dfs_curchan->dfs_ch_ieee, ret_val);
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "vht80_freq = %u ret_val = %d",
+		 dfs->dfs_curchan->dfs_ch_ieee, ret_val);
 
 	return ret_val;
 }
@@ -219,9 +218,8 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : freq_seg1 = %u freq_seq2 = %u ret_val = %d\n",
-		__func__,
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"freq_seg1 = %u freq_seq2 = %u ret_val = %d",
 		dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg1,
 		dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
 		ret_val);
@@ -242,8 +240,7 @@ bool dfs_is_precac_done(struct wlan_dfs *dfs)
 		ret_val = dfs_is_ht80_80_chan_in_precac_done_list(dfs);
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : ret_val = %d\n", __func__, ret_val);
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "ret_val = %d", ret_val);
 
 	return ret_val;
 }
@@ -256,9 +253,8 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 	struct dfs_precac_entry *precac_entry = NULL, *tmp_precac_entry = NULL;
 	uint8_t found = 0;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : is_radar_found_on_secondary_seg = %u secondary_freq = %u primary_freq = %u\n",
-		__func__,
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"is_radar_found_on_secondary_seg = %u secondary_freq = %u primary_freq = %u",
 		is_radar_found_on_secondary_seg,
 		dfs->dfs_precac_secondary_freq,
 		dfs->dfs_precac_primary_freq);
@@ -286,9 +282,8 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
 						precac_entry, pe_list);
 
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s : removing the freq = %u from required list and adding to NOL list\n",
-					__func__,
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"removing the freq = %u from required list and adding to NOL list",
 					precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
 						precac_entry, pe_list);
@@ -319,9 +314,8 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 				TAILQ_REMOVE(&dfs->dfs_precac_done_list,
 					precac_entry, pe_list);
 
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s : removing the the freq = %u from done list and adding to NOL list\n",
-					__func__,
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"removing the the freq = %u from done list and adding to NOL list",
 					precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_nol_list,
 						precac_entry, pe_list);
@@ -353,9 +347,9 @@ void dfs_mark_precac_dfs(struct wlan_dfs *dfs,
 		if (is_radar_found_on_secondary_seg) {
 			if (dfs_is_ap_cac_timer_running(dfs)) {
 				dfs->dfs_defer_precac_channel_change = 1;
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s : Primary CAC is running, defer the channel change\n",
-					__func__);
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"Primary CAC is running, defer the channel change"
+					);
 			} else {
 				dfs_mlme_channel_change_by_precac(
 						dfs->dfs_pdev_obj);
@@ -418,9 +412,8 @@ static os_timer_func(dfs_precac_timeout)
 					precac_entry->vht80_freq) {
 				TAILQ_REMOVE(&dfs->dfs_precac_required_list,
 						precac_entry, pe_list);
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s : removing the the freq = %u from required list and adding to done list\n",
-					__func__,
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"removing the the freq = %u from required list and adding to done list",
 					precac_entry->vht80_freq);
 				TAILQ_INSERT_TAIL(&dfs->dfs_precac_done_list,
 						precac_entry, pe_list);
@@ -430,9 +423,8 @@ static os_timer_func(dfs_precac_timeout)
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Pre-cac expired, Precac Secondary chan %u curr time %d\n",
-		__func__,
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Pre-cac expired, Precac Secondary chan %u curr time %d",
 		dfs->dfs_precac_secondary_freq,
 		(qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000));
 	/* Do vdev restart so that we can change the secondary VHT80 channel. */
@@ -475,9 +467,9 @@ static os_timer_func(dfs_precac_nol_timeout)
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_nol_list)) {
 		/* Move the channel from precac-NOL to precac-required-list */
 		TAILQ_REMOVE(&dfs->dfs_precac_nol_list, precac_entry, pe_list);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s : removing the the freq = %u from PreCAC NOL-list and adding Precac-required list\n",
-			__func__, precac_entry->vht80_freq);
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"removing the the freq = %u from PreCAC NOL-list and adding Precac-required list",
+			 precac_entry->vht80_freq);
 		TAILQ_INSERT_TAIL(&dfs->dfs_precac_required_list, precac_entry,
 				pe_list);
 	}
@@ -562,22 +554,22 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	}
 	PRECAC_LIST_UNLOCK(dfs);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Print the list of VHT80 frequencies from linked list\n",
-		__func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Print the list of VHT80 frequencies from linked list");
 	TAILQ_FOREACH(tmp_precac_entry,
 			&dfs->dfs_precac_required_list,
 			pe_list)
-		DFS_PRINTK("freq=%u\n", tmp_precac_entry->vht80_freq);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "freq=%u",
+				tmp_precac_entry->vht80_freq);
 }
 
 void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 {
 	struct dfs_precac_entry *tmp_precac_entry, *precac_entry;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Free the list of VHT80 frequencies from linked list(precac_required)\n",
-		__func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Free the list of VHT80 frequencies from linked list(precac_required)"
+		);
 	PRECAC_LIST_LOCK(dfs);
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list))
 		TAILQ_FOREACH_SAFE(precac_entry,
@@ -588,9 +580,9 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 			qdf_mem_free(precac_entry);
 		}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Free the list of VHT80 frequencies from linked list(precac_done)\n",
-		__func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Free the list of VHT80 frequencies from linked list(precac_done)"
+		);
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_done_list))
 		TAILQ_FOREACH_SAFE(precac_entry,
 				&dfs->dfs_precac_done_list,
@@ -600,9 +592,9 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 			qdf_mem_free(precac_entry);
 		}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Free the list of VHT80 frequencies from linked list(precac_nol)\n",
-		__func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Free the list of VHT80 frequencies from linked list(precac_nol)"
+		);
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_nol_list))
 		TAILQ_FOREACH_SAFE(precac_entry,
 				&dfs->dfs_precac_nol_list,
@@ -628,8 +620,8 @@ uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
 	struct dfs_precac_entry *precac_entry;
 	uint8_t ieee_freq = 0;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s : exclude_ieee_freq = %u\n",
-		__func__, exclude_ieee_freq);
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "exclude_ieee_freq = %u",
+		 exclude_ieee_freq);
 
 	PRECAC_LIST_LOCK(dfs);
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_required_list)) {
@@ -642,8 +634,7 @@ uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,
 		}
 	}
 	PRECAC_LIST_UNLOCK(dfs);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s : ieee_freq = %u\n",
-		__func__, ieee_freq);
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "ieee_freq = %u", ieee_freq);
 
 	return ieee_freq;
 }
@@ -705,9 +696,8 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 	 */
 	precac_timeout = QDF_MAX(primary_cac_timeout, secondary_cac_timeout) +
 		EXTRA_TIME_IN_SEC;
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : precactimeout = %d\n",
-		__func__, (precac_timeout)*1000);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"precactimeout = %d", (precac_timeout)*1000);
 	qdf_timer_mod(&dfs->dfs_precac_timer, (precac_timeout) * 1000);
 }
 
@@ -715,40 +705,41 @@ void dfs_print_precaclists(struct wlan_dfs *dfs)
 {
 	struct dfs_precac_entry *tmp_precac_entry;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
 	PRECAC_LIST_LOCK(dfs);
 
 	/* Print the Pre-CAC required List */
-	DFS_PRINTK("%s : Pre-cac-required list of VHT80 frequencies\n",
-		__func__);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Pre-cac-required list of VHT80 frequencies");
 	TAILQ_FOREACH(tmp_precac_entry,
 			&dfs->dfs_precac_required_list,
 			pe_list) {
-		DFS_PRINTK("%s : freq=%u\n", __func__,
-				tmp_precac_entry->vht80_freq);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"freq=%u", tmp_precac_entry->vht80_freq);
 	}
 
 	/* Print the Pre-CAC done List */
-	DFS_PRINTK("%s : Pre-cac-done list of VHT80 frequencies\n", __func__);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Pre-cac-done list of VHT80 frequencies");
 	TAILQ_FOREACH(tmp_precac_entry,
 			&dfs->dfs_precac_done_list,
 			pe_list) {
-		DFS_PRINTK("%s : freq=%u\n",
-			__func__, tmp_precac_entry->vht80_freq);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "freq=%u",
+			 tmp_precac_entry->vht80_freq);
 	}
 
 	/* Print the Pre-CAC NOL List */
-	DFS_PRINTK("%s Pre-cac-NOL list of VHT80 frequencies\n", __func__);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Pre-cac-NOL list of VHT80 frequencies");
 	TAILQ_FOREACH(tmp_precac_entry,
 			&dfs->dfs_precac_nol_list,
 			pe_list) {
-		DFS_PRINTK("%s : freq=%u\n", __func__,
-			tmp_precac_entry->vht80_freq);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"freq=%u", tmp_precac_entry->vht80_freq);
 	}
 
 	PRECAC_LIST_UNLOCK(dfs);
@@ -756,17 +747,16 @@ void dfs_print_precaclists(struct wlan_dfs *dfs)
 
 void dfs_reset_precaclists(struct wlan_dfs *dfs)
 {
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Reset precaclist of VHT80 frequencies\n", __func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Reset precaclist of VHT80 frequencies");
 	dfs_deinit_precac_list(dfs);
 	dfs_init_precac_list(dfs);
 }
 
 void dfs_reset_precac_lists(struct wlan_dfs *dfs)
 {
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 	dfs_reset_precaclists(dfs);
@@ -787,7 +777,7 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
 	if (!psoc) {
-		DFS_PRINTK("%s: PSOC is NULL\n", __func__);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "psoc is NULL");
 		return;
 	}
 
@@ -806,9 +796,8 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 		 */
 		uint8_t ieee_freq;
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s : precac_secondary_freq = %u precac_running = %u\n",
-			__func__,
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"precac_secondary_freq = %u precac_running = %u",
 			dfs->dfs_precac_secondary_freq,
 			dfs->dfs_precac_timer_running);
 
@@ -896,14 +885,10 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 				else
 					*set_agile = false;
 
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s : cfreq1 = %u cfreq2 = %u ieee_freq = %u mode = %u set_agile = %d\n",
-					__func__,
-					*cfreq1,
-					*cfreq2,
-					ieee_freq,
-					chan_mode,
-					*set_agile);
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"cfreq1 = %u cfreq2 = %u ieee_freq = %u mode = %u set_agile = %d",
+					*cfreq1, *cfreq2, ieee_freq,
+					chan_mode, *set_agile);
 
 				dfs->dfs_precac_secondary_freq = ieee_freq;
 				dfs->dfs_precac_primary_freq = ch_freq_seg1;

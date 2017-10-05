@@ -41,11 +41,11 @@
 
 int dfs_override_cac_timeout(struct wlan_dfs *dfs, int cac_timeout)
 {
-	if (dfs == NULL)
+	if (!dfs)
 		return -EIO;
 
 	dfs->dfs_cac_timeout_override = cac_timeout;
-	DFS_PRINTK("%s: CAC timeout is now %s %d\n", __func__,
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "CAC timeout is now %s %d",
 		(cac_timeout == -1) ? "default" : "overridden",
 		cac_timeout);
 
@@ -54,7 +54,7 @@ int dfs_override_cac_timeout(struct wlan_dfs *dfs, int cac_timeout)
 
 int dfs_get_override_cac_timeout(struct wlan_dfs *dfs, int *cac_timeout)
 {
-	if (dfs == NULL)
+	if (!dfs)
 		return -EIO;
 
 	(*cac_timeout) = dfs->dfs_cac_timeout_override;
@@ -69,9 +69,9 @@ void dfs_cac_valid_reset(struct wlan_dfs *dfs,
 	if (dfs->dfs_cac_valid_time) {
 		if ((prevchan_ieee != dfs->dfs_curchan->dfs_ch_ieee) ||
 			(prevchan_flags != dfs->dfs_curchan->dfs_ch_flags)) {
-			DFS_PRINTK(
-				"%s : Cancelling timer & clearing cac_valid\n",
-				__func__);
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"Cancelling timer & clearing cac_valid"
+					);
 			qdf_timer_stop(&dfs->dfs_cac_valid_timer);
 			dfs->dfs_cac_valid = 0;
 		}
@@ -103,7 +103,7 @@ static os_timer_func(dfs_cac_valid_timeout)
 
 	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
 	dfs->dfs_cac_valid = 0;
-	DFS_PRINTK("%s : Timed out!!\n", __func__);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, ": Timed out!!");
 }
 
 /**
@@ -118,7 +118,7 @@ static os_timer_func(dfs_cac_timeout)
 	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
 	dfs->dfs_cac_timer_running = 0;
 
-	DFS_PRINTK("%s cac expired, chan %d curr time %d\n", __func__,
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "cac expired, chan %d curr time %d",
 		dfs->dfs_curchan->dfs_ch_freq,
 		(qdf_system_ticks_to_msecs(qdf_system_ticks()) / 1000));
 	/*
@@ -131,13 +131,13 @@ static os_timer_func(dfs_cac_timeout)
 				dfs->dfs_curchan->dfs_ch_freq,
 				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
 				dfs->dfs_curchan->dfs_ch_flags);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"CAC timer on channel %u (%u MHz) stopped due to radar\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"CAC timer on channel %u (%u MHz) stopped due to radar",
 			dfs->dfs_curchan->dfs_ch_ieee,
 			dfs->dfs_curchan->dfs_ch_freq);
 	} else {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"CAC timer on channel %u (%u MHz) expired; no radar detected\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"CAC timer on channel %u (%u MHz) expired; no radar detected",
 			dfs->dfs_curchan->dfs_ch_ieee,
 			dfs->dfs_curchan->dfs_ch_freq);
 
@@ -219,9 +219,9 @@ void dfs_cac_stop(struct wlan_dfs *dfs)
 	uint32_t phyerr;
 
 	dfs_get_debug_info(dfs, (void *)&phyerr);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Stopping CAC Timer %d procphyerr 0x%08x\n",
-		__func__, dfs->dfs_curchan->dfs_ch_freq, phyerr);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Stopping CAC Timer %d procphyerr 0x%08x",
+		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
 	qdf_timer_stop(&dfs->dfs_cac_timer);
 	dfs->dfs_cac_timer_running = 0;
 }
@@ -231,9 +231,9 @@ void dfs_stacac_stop(struct wlan_dfs *dfs)
 	uint32_t phyerr;
 
 	dfs_get_debug_info(dfs, (void *)&phyerr);
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-		"%s : Stopping STA CAC Timer %d procphyerr 0x%08x\n",
-		__func__, dfs->dfs_curchan->dfs_ch_freq, phyerr);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+		"Stopping STA CAC Timer %d procphyerr 0x%08x",
+		 dfs->dfs_curchan->dfs_ch_freq, phyerr);
 }
 
 int dfs_random_channel(struct wlan_dfs *dfs,
@@ -277,8 +277,8 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 	available_chan_idx = qdf_mem_malloc(
 			(IEEE80211_CHAN_MAX + 1) * sizeof(int));
 
-	if (available_chan_idx == NULL) {
-		DFS_PRINTK("%s: cannot allocate memory\n", __func__);
+	if (!(available_chan_idx)) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "cannot allocate memory");
 		return ret_val;
 	}
 
@@ -293,29 +293,29 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 			/* No action required for now. */
 			use_lower_5g_only = 0;
 			use_upper_5g_only = 0;
-			DFS_PRINTK(
-				"%s -- MMK4 domain, HT80_80, no restriction on using upper or lower 5G channel\n",
-				__func__);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"-- MMK4 domain, HT80_80, no restriction on using upper or lower 5G channel"
+				);
 		} else if (IEEE80211_IS_CHAN_11AC_VHT160(dfs->dfs_curchan)) {
 			/* No action required for now. */
 			use_lower_5g_only = 0;
 			use_upper_5g_only = 0;
-			DFS_PRINTK(
-				"%s -- MMK4 domain, HT160, will look for HT160. if can't find no restriction on using upper or lower 5G channel\n",
-				__func__);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"-- MMK4 domain, HT160, will look for HT160. if can't find no restriction on using upper or lower 5G channel"
+				);
 		} else {
 			if (dfs->dfs_curchan->dfs_ch_freq < CH100_START_FREQ) {
 				use_lower_5g_only = 1;
 				use_upper_5g_only = 0;
-				DFS_PRINTK(
-					"%s -- MMK4 domain, search for lower 5G (less than 5490 MHz) channels\n",
-					__func__);
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"-- MMK4 domain, search for lower 5G (less than 5490 MHz) channels"
+					);
 			} else {
 				use_lower_5g_only = 0;
 				use_upper_5g_only = 1;
-				DFS_PRINTK(
-					"%s -- MMK4 domain, search for upper 5G (more than 5490 MHz) channels\n",
-					__func__);
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"-- MMK4 domain, search for upper 5G (more than 5490 MHz) channels"
+					);
 			}
 		}
 	}
@@ -483,9 +483,9 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 		chanStart = (available_chan_idx[j]);
 		ret_val = chanStart;
 	} else {
-		DFS_PRINTK(
-			"%s: Cannot find a channel, looking for channel in other mode. ht80_count=%d, ht80_80_count=%d, ht160_count=%d\n",
-			__func__, ht80_count,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"Cannot find a channel, looking for channel in other mode. ht80_count=%d, ht80_80_count=%d, ht160_count=%d",
+			 ht80_count,
 			ht80_80_count, ht160_count);
 		/*
 		 * We need to handle HT160/HT80_80 in a special way HT160
@@ -525,9 +525,9 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 				(dfs->dfs_pdev_obj, alt_chan_mode, chan_count);
 			if (ret_val == -1) {
 				/* Last attempt to get a valid channel. */
-				DFS_PRINTK(
-					"%s: Cannot find a channel. Forcing to first available HT20 channel\n",
-					__func__);
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"Cannot find a channel. Forcing to first available HT20 channel"
+					);
 				dfs_mlme_find_any_valid_channel
 					(dfs->dfs_pdev_obj,
 					 IEEE80211_CHAN_VHT20, &ret_val);

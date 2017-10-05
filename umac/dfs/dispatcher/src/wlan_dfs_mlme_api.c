@@ -75,8 +75,8 @@ static void dfs_send_radar_ind(struct wlan_objmgr_pdev *pdev,
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = vdev_id;
 	scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
-	DFS_PRINTK("%s: eWNI_SME_DFS_RADAR_FOUND pdev%d posted\n",
-		   __func__, vdev_id);
+	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_RADAR_FOUND pdev%d posted",
+		    vdev_id);
 }
 
 void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
@@ -86,7 +86,7 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 		uint64_t flags)
 {
 	if (!pdev) {
-		DFS_PRINTK("%s: null pdev\n", __func__);
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
 		return;
 	}
 
@@ -119,8 +119,8 @@ void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = vdev_id;
 	scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
-	DFS_PRINTK("%s: eWNI_SME_DFS_CAC_COMPLETE vdev%d posted\n",
-		   __func__, vdev_id);
+	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "eWNI_SME_DFS_CAC_COMPLETE vdev%d posted",
+		    vdev_id);
 }
 #endif
 

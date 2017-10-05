@@ -52,8 +52,8 @@ static os_timer_func(dfs_task)
 
 	OS_GET_TIMER_ARG(dfs, struct wlan_dfs *);
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -81,8 +81,9 @@ static os_timer_func(dfs_testtimer_task)
 	 * Flip the channel back to the original channel.
 	 * Make sure this is done properly with a CSA.
 	 */
-	DFS_PRINTK("%s: go back to channel %d\n", __func__,
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "go back to channel %d",
 			dfs->wlan_dfstest_ieeechan);
+
 	dfs_mlme_start_csa(dfs->dfs_pdev_obj, dfs->wlan_dfstest_ieeechan);
 }
 
@@ -112,8 +113,8 @@ void dfs_main_timer_init(struct wlan_dfs *dfs)
 int dfs_create_object(struct wlan_dfs **dfs)
 {
 	*dfs = (struct wlan_dfs *)qdf_mem_malloc(sizeof(**dfs));
-	if (*dfs == NULL) {
-		DFS_PRINTK("%s: wlan_dfs allocation failed\n", __func__);
+	if (!(*dfs)) {
+		dfs_alert(*dfs, WLAN_DEBUG_DFS_ALWAYS, "wlan_dfs allocation failed");
 		return 1;
 	}
 
@@ -122,8 +123,8 @@ int dfs_create_object(struct wlan_dfs **dfs)
 	(*dfs)->dfs_curchan = (struct dfs_ieee80211_channel *)qdf_mem_malloc(
 			sizeof(struct dfs_ieee80211_channel));
 
-	if ((*dfs)->dfs_curchan == NULL) {
-		DFS_PRINTK("%s: dfs_curchan allocation failed\n", __func__);
+	if (!((*dfs)->dfs_curchan)) {
+		dfs_alert(*dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_curchan allocation failed");
 		return 1;
 	}
 
@@ -139,16 +140,14 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	bool chip_is_false_detect;
 	uint32_t fastdiv_val;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return 0;
 	}
 
 	/* If ignore_dfs is set to 1 then Radar detection is disabled. */
 	if (dfs->dfs_ignore_dfs) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s: ignoring dfs\n", __func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1, "ignoring dfs");
 		return 0;
 	}
 
@@ -183,7 +182,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 
 	dfs_clear_stats(dfs);
 	dfs->dfs_event_log_on = 1;
-	DFS_PRINTK("%s: event log enabled by default\n", __func__);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "event log enabled by default");
 
 	dfs->dfs_enable = 1;
 
@@ -199,9 +198,8 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 
 	dfs->events = (struct dfs_event *)qdf_mem_malloc(
 			sizeof(struct dfs_event)*DFS_MAX_EVENTS);
-	if (dfs->events == NULL) {
-		qdf_mem_free(dfs);
-		DFS_PRINTK("%s: events allocation failed\n", __func__);
+	if (!(dfs->events)) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "events allocation failed");
 		return 1;
 	}
 	for (i = 0; i < DFS_MAX_EVENTS; i++)
@@ -210,10 +208,10 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 
 	dfs->pulses = (struct dfs_pulseline *)qdf_mem_malloc(
 			sizeof(struct dfs_pulseline));
-	if (dfs->pulses == NULL) {
+	if (!(dfs->pulses)) {
 		qdf_mem_free(dfs->events);
 		dfs->events = NULL;
-		DFS_PRINTK("%s: Pulse buffer allocation failed\n", __func__);
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "Pulse buffer allocation failed");
 		return 1;
 	}
 
@@ -223,10 +221,9 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
 		dfs->dfs_radarf[n] = (struct dfs_filtertype *)
 			qdf_mem_malloc(sizeof(struct dfs_filtertype));
-		if (dfs->dfs_radarf[n] == NULL) {
-			DFS_PRINTK(
-					"%s: cannot allocate memory for radar filter types\n",
-					__func__);
+		if (!(dfs->dfs_radarf[n])) {
+			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"cannot allocate memory for radar filter types");
 			goto bad1;
 		}
 		qdf_mem_zero(dfs->dfs_radarf[n], sizeof(struct dfs_filtertype));
@@ -234,27 +231,24 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 
 	/* Allocate memory for radar table. */
 	dfs->dfs_ftindextable = (int8_t **)qdf_mem_malloc(256*sizeof(int8_t *));
-	if (dfs->dfs_ftindextable == NULL) {
-		DFS_PRINTK(
-				"%s: Cannot allocate memory for radar table\n",
-				__func__);
+	if (!(dfs->dfs_ftindextable)) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "Cannot allocate memory for radar table");
 		goto bad1;
 	}
 	for (n = 0; n < 256; n++) {
 		dfs->dfs_ftindextable[n] = qdf_mem_malloc(
 				DFS_MAX_RADAR_OVERLAP*sizeof(int8_t));
-		if (dfs->dfs_ftindextable[n] == NULL) {
-			DFS_PRINTK(
-					"%s: cannot allocate memory for radar table entry\n",
-					__func__);
+		if (!(dfs->dfs_ftindextable[n])) {
+			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"cannot allocate memory for radar table entry");
 			goto bad2;
 		}
 	}
 
 	if (usenol == 0)
-		DFS_PRINTK("%s: NOL disabled\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "NOL disabled");
 	else if (usenol == 2)
-		DFS_PRINTK("%s: NOL disabled; no CSA\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "NOL disabled; no CSA");
 
 	dfs->dfs_rinfo.rn_use_nol = usenol;
 
@@ -272,9 +266,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	 * is available.
 	 */
 	if (dfs_init_radar_filters(dfs, &radar_info)) {
-		DFS_PRINTK(
-				"%s: Radar Filter Intialization Failed\n",
-				__func__);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "Radar Filter Intialization Failed");
 		return 1;
 	}
 
@@ -318,7 +310,7 @@ int dfs_attach(struct wlan_dfs *dfs)
 	if (!dfs->dfs_is_offload_enabled) {
 		ret = dfs_main_attach(dfs);
 		if (ret) {
-			DFS_PRINTK("%s: dfs_main_attach failed\n", __func__);
+			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_main_attach failed");
 			return ret;
 		}
 	}
@@ -350,9 +342,8 @@ void dfs_main_timer_reset(struct wlan_dfs *dfs)
 
 void dfs_reset(struct wlan_dfs *dfs)
 {
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_NOL,
-				"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -464,8 +455,8 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 	int i;
 	QDF_STATUS err;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return NULL;
 	}
 
@@ -480,16 +471,16 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 				&(cmp_ch->dfs_ch_vhtop_ch_freq_seg2));
 
 		if (err == QDF_STATUS_SUCCESS) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"Extension channel freq = %u flags=0x%x\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"Extension channel freq = %u flags=0x%x",
 					cmp_ch->dfs_ch_freq,
 					cmp_ch->dfs_ch_flagext);
 		} else
 			return NULL;
 	} else {
 		cmp_ch = dfs->dfs_curchan;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"Primary channel freq = %u flags=0x%x\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"Primary channel freq = %u flags=0x%x",
 				cmp_ch->dfs_ch_freq, cmp_ch->dfs_ch_flagext);
 	}
 
@@ -521,8 +512,7 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 			return rs;
 		}
 	}
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-			"%s: No more radar states left.\n", __func__);
+	dfs_debug(dfs, WLAN_DEBUG_DFS2, "No more radar states left.");
 
 	return NULL;
 }
@@ -534,9 +524,8 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 	struct dfs_ieee80211_channel *ext_ch, extchan;
 	QDF_STATUS err = QDF_STATUS_E_FAILURE;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -593,9 +582,9 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 				dfs->dfs_extchan_radindex = (int16_t)index_ext;
 
 			dfs_phyerr_param_copy(&pe, &rs_pri->rs_param);
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
-					"%s: firpwr=%d, rssi=%d, height=%d, prssi=%d, inband=%d, relpwr=%d, relstep=%d, maxlen=%d\n",
-					__func__, pe.pe_firpwr,
+			dfs_debug(dfs, WLAN_DEBUG_DFS3,
+					"firpwr=%d, rssi=%d, height=%d, prssi=%d, inband=%d, relpwr=%d, relstep=%d, maxlen=%d",
+					 pe.pe_firpwr,
 					pe.pe_rrssi, pe.pe_height,
 					pe.pe_prssi, pe.pe_inband,
 					pe.pe_relpwr, pe.pe_relstep,
@@ -611,21 +600,20 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 					pe.pe_relstep,
 					pe.pe_maxlen,
 					dfs->dfsdomain);
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"Enabled radar detection on channel %d\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"Enabled radar detection on channel %d",
 					dfs->dfs_curchan->dfs_ch_freq);
 
 			dfs->dur_multiplier = is_fastclk ?
 				DFS_FAST_CLOCK_MULTIPLIER :
 				DFS_NO_FAST_CLOCK_MULTIPLIER;
 
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
-					"%s: duration multiplier is %d\n",
-					__func__, dfs->dur_multiplier);
+			dfs_debug(dfs, WLAN_DEBUG_DFS3,
+					"duration multiplier is %d",
+					 dfs->dur_multiplier);
 		} else
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s: No more radar states left\n",
-					__func__);
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"No more radar states left");
 	}
 }
 
@@ -644,8 +632,9 @@ int dfs_control(struct wlan_dfs *dfs,
 	uint32_t *data = NULL;
 	int i;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1, "%s DFS is null\n", __func__);
+	/* dfs is dereferenced (dfs->dfs_ignore_dfs) when dfs is NULL */
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		/*
 		 * Enable/Disable DFS can be done prior to attach,
 		 * So handle here.
@@ -653,15 +642,13 @@ int dfs_control(struct wlan_dfs *dfs,
 		switch (id) {
 		case DFS_DISABLE_DETECT:
 			dfs->dfs_ignore_dfs = 1;
-			DFS_PRINTK(
-					"%s enable detects, ignore_dfs %d\n",
-					__func__, dfs->dfs_ignore_dfs ? 1:0);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "enable detects, ignore_dfs %d",
+					dfs->dfs_ignore_dfs ? 1:0);
 			break;
 		case DFS_ENABLE_DETECT:
 			dfs->dfs_ignore_dfs = 0;
-			DFS_PRINTK(
-					"%s enable detects, ignore_dfs %d\n",
-					__func__, dfs->dfs_ignore_dfs ? 1:0);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "enable detects, ignore_dfs %d",
+					dfs->dfs_ignore_dfs ? 1:0);
 			break;
 		default:
 			error = -EINVAL;
@@ -673,9 +660,9 @@ int dfs_control(struct wlan_dfs *dfs,
 	switch (id) {
 	case DFS_SET_THRESH:
 		if (insize < sizeof(struct dfs_ioctl_params) || !indata) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-					"%s: insize = %d, expected = %zu bytes, indata = %pK\n",
-					__func__, insize,
+			dfs_debug(dfs, WLAN_DEBUG_DFS1,
+					"insize = %d, expected = %zu bytes, indata = %p",
+					insize,
 					sizeof(struct dfs_ioctl_params),
 					indata);
 			error = -EINVAL;
@@ -736,21 +723,25 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs->dfs_proc_phyerr &= ~DFS_RADAR_EN;
 		dfs->dfs_proc_phyerr &= ~DFS_SECOND_SEGMENT_RADAR_EN;
 		dfs->dfs_ignore_dfs = 1;
-		DFS_PRINTK("%s enable detects, ignore_dfs %d\n", __func__,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"enable detects, ignore_dfs %d",
 				dfs->dfs_ignore_dfs ? 1:0);
 		break;
 	case DFS_ENABLE_DETECT:
 		dfs->dfs_proc_phyerr |= DFS_RADAR_EN;
 		dfs->dfs_proc_phyerr |= DFS_SECOND_SEGMENT_RADAR_EN;
 		dfs->dfs_ignore_dfs = 0;
-		DFS_PRINTK("%s enable detects, ignore_dfs %d\n", __func__,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS
+				, "enable detects, ignore_dfs %d",
 				dfs->dfs_ignore_dfs ? 1:0);
 		break;
 	case DFS_DISABLE_FFT:
-		DFS_PRINTK("%s TODO disable FFT val=0x%x\n", __func__, val);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"TODO disable FFT val=0x%x", val);
 		break;
 	case DFS_ENABLE_FFT:
-		DFS_PRINTK("%s TODO enable FFT val=0x%x\n", __func__, val);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"TODO enable FFT val=0x%x", val);
 		break;
 	case DFS_SET_DEBUG_LEVEL:
 		if (insize < sizeof(uint32_t) || !indata) {
@@ -758,8 +749,15 @@ int dfs_control(struct wlan_dfs *dfs,
 			break;
 		}
 		dfs->dfs_debug_mask = *(uint32_t *)indata;
-		DFS_PRINTK("%s debug level now = 0x%x\n", __func__,
-				dfs->dfs_debug_mask);
+
+		/* Do not allow user to set the ALWAYS/MAX bit.
+		 * It will be used internally  by dfs print macro(s)
+		 * to print messages when dfs is NULL.
+		 */
+		dfs->dfs_debug_mask &= ~(WLAN_DEBUG_DFS_ALWAYS);
+
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"debug level now = 0x%x", dfs->dfs_debug_mask);
 		if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS3) {
 			/* Enable debug Radar Event */
 			dfs->dfs_event_log_on = 1;
@@ -773,7 +771,8 @@ int dfs_control(struct wlan_dfs *dfs,
 			break;
 		}
 		dfs->wlan_dfs_false_rssi_thres = *(uint32_t *)indata;
-		DFS_PRINTK("%s false RSSI threshold now = 0x%x\n", __func__,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"false RSSI threshold now = 0x%x",
 				dfs->wlan_dfs_false_rssi_thres);
 		break;
 	case DFS_SET_PEAK_MAG:
@@ -782,7 +781,8 @@ int dfs_control(struct wlan_dfs *dfs,
 			break;
 		}
 		dfs->wlan_dfs_peak_mag = *(uint32_t *)indata;
-		DFS_PRINTK("%s peak_mag now = 0x%x\n", __func__,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"peak_mag now = 0x%x",
 				dfs->wlan_dfs_peak_mag);
 		break;
 	case DFS_GET_CAC_VALID_TIME:
@@ -799,8 +799,8 @@ int dfs_control(struct wlan_dfs *dfs,
 			break;
 		}
 		dfs->dfs_cac_valid_time = *(uint32_t *)indata;
-		DFS_PRINTK("%s dfs timeout = %d\n", __func__,
-				dfs->dfs_cac_valid_time);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"dfs timeout = %d", dfs->dfs_cac_valid_time);
 		break;
 	case DFS_IGNORE_CAC:
 		if (insize < sizeof(uint32_t) || !indata) {
@@ -813,8 +813,8 @@ int dfs_control(struct wlan_dfs *dfs,
 		else
 			dfs->dfs_ignore_cac = 0;
 
-		DFS_PRINTK("%s ignore cac = 0x%x\n", __func__,
-				dfs->dfs_ignore_cac);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"ignore cac = 0x%x", dfs->dfs_ignore_cac);
 		break;
 	case DFS_SET_NOL_TIMEOUT:
 		if (insize < sizeof(uint32_t) || !indata) {
@@ -826,7 +826,7 @@ int dfs_control(struct wlan_dfs *dfs,
 		else
 			dfs->wlan_dfs_nol_timeout = DFS_NOL_TIMEOUT_S;
 
-		DFS_PRINTK("%s nol timeout = %d sec\n", __func__,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "nol timeout = %d sec",
 				dfs->wlan_dfs_nol_timeout);
 		break;
 	case DFS_MUTE_TIME:
@@ -846,25 +846,25 @@ int dfs_control(struct wlan_dfs *dfs,
 		*outsize = sizeof(uint32_t);
 		*((uint32_t *)outdata) = dfs->dfs_rinfo.rn_use_nol;
 
-		DFS_PRINTK(
-				"%s:#Phyerr=%d, #false detect=%d, #queued=%d\n",
-				__func__, dfs->dfs_phyerr_count,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"#Phyerr=%d, #false detect=%d, #queued=%d",
+				 dfs->dfs_phyerr_count,
 				dfs->dfs_phyerr_reject_count,
 				dfs->dfs_phyerr_queued_count);
 
-		DFS_PRINTK(
-				"%s:dfs_phyerr_freq_min=%d, dfs_phyerr_freq_max=%d\n",
-				__func__, dfs->dfs_phyerr_freq_min,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"dfs_phyerr_freq_min=%d, dfs_phyerr_freq_max=%d",
+				 dfs->dfs_phyerr_freq_min,
 				dfs->dfs_phyerr_freq_max);
 
-		DFS_PRINTK(
-				"%s:Total radar events detected=%d, entries in the radar queue follows:\n",
-				__func__, dfs->dfs_event_log_count);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Total radar events detected=%d, entries in the radar queue follows:",
+				 dfs->dfs_event_log_count);
 
 		for (i = 0; (i < DFS_EVENT_LOG_SIZE) &&
 				(i < dfs->dfs_event_log_count); i++) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			    "ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+			    "ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d",
 			    dfs->radar_log[i].ts,
 			    dfs->radar_log[i].diff_ts,
 			    dfs->radar_log[i].rssi,
@@ -961,23 +961,21 @@ int dfs_set_thresholds(struct wlan_dfs *dfs, const uint32_t threshtype,
 	struct wlan_dfs_phyerr_param pe;
 	int is_fastclk = 0;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return 0;
 	}
 
 	chanindex = dfs->dfs_curchan_radindex;
 	if ((chanindex < 0) || (chanindex >= DFS_NUM_RADAR_STATES)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s: chanindex = %d, DFS_NUM_RADAR_STATES=%d\n",
-				__func__, chanindex, DFS_NUM_RADAR_STATES);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+				"chanindex = %d, DFS_NUM_RADAR_STATES=%d",
+				 chanindex, DFS_NUM_RADAR_STATES);
 		return 0;
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s: threshtype=%d, value=%d\n",
-			__func__, threshtype, value);
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"threshtype=%d, value=%d", threshtype, value);
 
 	wlan_dfs_phyerr_init_noval(&pe);
 
@@ -1017,9 +1015,8 @@ int dfs_set_thresholds(struct wlan_dfs *dfs, const uint32_t threshtype,
 		pe.pe_maxlen = value;
 		break;
 	default:
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s: unknown threshtype (%d)\n",
-				__func__, threshtype);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+				"unknown threshtype (%d)", threshtype);
 		break;
 	}
 
@@ -1068,8 +1065,8 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
 		uint8_t dfs_ch_vhtop_ch_freq_seg1,
 		uint8_t dfs_ch_vhtop_ch_freq_seg2)
 {
-	if (dfs == NULL) {
-		DFS_PRINTK("%s: wlan_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -1083,7 +1080,7 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
 
 u_int dfs_ieee80211_chan2freq(struct dfs_ieee80211_channel *chan)
 {
-	if (chan == NULL)
+	if (!chan)
 		return 0;
 
 	return chan == IEEE80211_CHAN_ANYC ?

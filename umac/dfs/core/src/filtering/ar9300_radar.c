@@ -168,7 +168,7 @@ void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs)
 
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
-		DFS_PRINTK("%s: DFS_FCC_DOMAIN_9300\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_FCC_DOMAIN_9300");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		rinfo.dfs_radars =
 			&ar9300_fcc_radars[AR9300_FCC_RADARS_FCC_OFFSET];
@@ -179,7 +179,7 @@ void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs)
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar9300_bin5pulses);
 		break;
 	case DFS_ETSI_DOMAIN:
-		DFS_PRINTK("%s: DFS_ETSI_DOMAIN_9300\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_ETSI_DOMAIN_9300");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 		rinfo.dfs_radars = &ar9300_etsi_radars[0];
 		rinfo.numradars = QDF_ARRAY_SIZE(ar9300_etsi_radars);
@@ -187,14 +187,13 @@ void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs)
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar9300_bin5pulses);
 
 		if (lmac_is_countryCode_KOREA_ROC3(dfs->dfs_pdev_obj)) {
-			DFS_PRINTK("%s: DFS_ETSI_DOMAIN_9300_Country_Korea\n",
-				__func__);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_ETSI_DOMAIN_9300_Country_Korea");
 			rinfo.dfs_radars = &ar9300_korea_radars[0];
 			rinfo.numradars = QDF_ARRAY_SIZE(ar9300_korea_radars);
 		}
 		break;
 	case DFS_MKK4_DOMAIN:
-		DFS_PRINTK("%s: DFS_MKK4_DOMAIN_9300\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_MKK4_DOMAIN_9300");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = &ar9300_fcc_radars[0];
 		rinfo.numradars = QDF_ARRAY_SIZE(ar9300_fcc_radars);
@@ -202,7 +201,7 @@ void dfs_get_radars_for_ar9300(struct wlan_dfs *dfs)
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar9300_bin5pulses);
 		break;
 	default:
-		DFS_PRINTK("%s: no domain\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "no domain");
 		return;
 	}
 

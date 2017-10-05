@@ -40,18 +40,68 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <osdep.h>
 
-#define DFS_PRINTK(_fmt, ...) printk((_fmt), __VA_ARGS__)
-#define DFS_DPRINTK(dfs, _m, _fmt, ...) do { \
-	if (((dfs) == NULL) ||                   \
-			((dfs) != NULL &&                \
-	   ((_m) & (dfs)->dfs_debug_mask))) {    \
-		printk(_fmt, __VA_ARGS__);           \
-	}                                        \
+/* File Line and Submodule String */
+#define FLSM(x, str)   #str " : " FL(x)
+/* Cast to dfs type */
+#define DC(x)  ((struct wlan_dfs *)(x))
+
+/**
+ * dfs_log: dfs logging using submodule MASKs and
+ * QDF trace level.
+ * The logging is controlled by two bitmasks:
+ * 1) submodule bitmask: sm
+ * 2) trace level masks: level
+ *
+ * @dfs: The dfs object pointer or NULL if dfs is not defined.
+ * @sm: Submodule BITMASK.
+ * @level: QDF trace level.
+ * @args...: Variable argument list.
+ *
+ * The submodule(sm) cannot be empty even if argument dfs is NULL.
+ * Else the macro will create a  compilation  error.
+ * One may provide WLAN_DEBUG_DFS_ALWAYS when  the argument dfs is NULL.
+ * Example:-
+ * dfs_log(NULL, WLAN_DEBUG_DFS_ALWAYS, QDF_TRACE_LEVEL_INFO,"Error pulse");
+ *
+ * Why DC(x) is required?
+ * Since NULL is defined as ((void *)(0)), if the argument "dfs"
+ * in a call to the macro "dfs_log" is NULL
+ * then during compilation (NULL)->dfs_debug_mask will dereference
+ * a (void *) type, which is illegal. Therefore, we need
+ * the cast: (DC(dfs))->dfs_debug_mask.
+ * Example:-
+ * dfs_log(NULL, WLAN_DEBUG_DFS, QDF_TRACE_LEVEL_INFO,"dfs is NULL");
+ */
+#define dfs_log(dfs, sm, level, args...)  do {        \
+	if (((dfs) == NULL) ||                            \
+			((sm) == WLAN_DEBUG_DFS_ALWAYS) ||        \
+			((sm) & ((DC(dfs))->dfs_debug_mask))) {   \
+		QDF_TRACE(QDF_MODULE_ID_DFS, level, ## args); \
+	}                                                 \
 } while (0)
+
+#define dfs_logfl(dfs, level, sm, format, args...) \
+	dfs_log(dfs, sm, level, FLSM(format, sm), ## args)
+
+#define dfs_alert(dfs, sm, format, args...) \
+	dfs_logfl(dfs, QDF_TRACE_LEVEL_FATAL, sm, format, ## args)
+
+#define dfs_err(dfs, sm, format, args...) \
+	dfs_logfl(dfs, QDF_TRACE_LEVEL_ERROR, sm, format, ## args)
+
+#define dfs_warn(dfs, sm, format, args...) \
+	dfs_logfl(dfs, QDF_TRACE_LEVEL_WARN, sm, format, ## args)
+
+#define dfs_info(dfs, sm, format, args...) \
+	dfs_logfl(dfs, QDF_TRACE_LEVEL_INFO, sm, format, ## args)
+
+#define dfs_debug(dfs, sm, format, args...) \
+	dfs_logfl(dfs, QDF_TRACE_LEVEL_DEBUG, sm, format, ## args)
 
 #define DFS_MIN(a, b) ((a) < (b)?(a):(b))
 #define DFS_MAX(a, b) ((a) > (b)?(a) : (b))
 #define DFS_DIFF(a, b)(DFS_MAX(a, b) - DFS_MIN(a, b))
+
 /**
  * Maximum number of radar events to be processed in a single iteration.
  * Allows soft watchdog to run.
@@ -851,6 +901,8 @@ enum {
 	WLAN_DEBUG_DFS_BIN5_FFT   = 0x00020000,
 	WLAN_DEBUG_DFS_BIN5_PULSE = 0x00040000,
 	WLAN_DEBUG_DFS_FALSE_DET  = 0x00080000,
+	WLAN_DEBUG_DFS_MAX        = 0x80000000,
+	WLAN_DEBUG_DFS_ALWAYS     = WLAN_DEBUG_DFS_MAX
 };
 
 /**

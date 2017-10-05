@@ -90,21 +90,21 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 {
 	int i;
 
-	DFS_PRINTK("%s:#Phyerr=%d, #false detect=%d, #queued=%d\n",
-		__func__, dfs->dfs_phyerr_count, dfs->dfs_phyerr_reject_count,
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "#Phyerr=%d, #false detect=%d, #queued=%d",
+		 dfs->dfs_phyerr_count, dfs->dfs_phyerr_reject_count,
 		dfs->dfs_phyerr_queued_count);
 
-	DFS_PRINTK("%s:dfs_phyerr_freq_min=%d, dfs_phyerr_freq_max=%d\n",
-		__func__, dfs->dfs_phyerr_freq_min, dfs->dfs_phyerr_freq_max);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_phyerr_freq_min=%d, dfs_phyerr_freq_max=%d",
+		 dfs->dfs_phyerr_freq_min, dfs->dfs_phyerr_freq_max);
 
-	DFS_PRINTK(
-		"%s:Total radar events detected=%d, entries in the radar queue follows:\n",
-		__func__, dfs->dfs_event_log_count);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		"Total radar events detected=%d, entries in the radar queue follows:",
+		 dfs->dfs_event_log_count);
 
 	for (i = 0; (i < DFS_EVENT_LOG_SIZE) && (i < dfs->dfs_event_log_count);
 			i++) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d",
 			dfs->radar_log[i].ts, dfs->radar_log[i].diff_ts,
 			dfs->radar_log[i].rssi, dfs->radar_log[i].dur,
 			dfs->radar_log[i].is_chirp, dfs->radar_log[i].seg_id,
@@ -139,8 +139,8 @@ static inline bool dfs_reject_on_pri(
 {
 	if ((deltaT < rf->rf_minpri) && (deltaT != 0)) {
 		/* Second line of PRI filtering. */
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"filterID %d : Rejecting on individual filter min PRI deltaT=%lld rf->rf_minpri=%u\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"filterID %d : Rejecting on individual filter min PRI deltaT=%lld rf->rf_minpri=%u",
 				rf->rf_pulseid, (uint64_t)deltaT,
 				rf->rf_minpri);
 		return 1;
@@ -148,8 +148,8 @@ static inline bool dfs_reject_on_pri(
 
 	if (rf->rf_ignore_pri_window > 0) {
 		if (deltaT < rf->rf_minpri) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"filterID %d : Rejecting on individual filter max PRI deltaT=%lld rf->rf_minpri=%u\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"filterID %d : Rejecting on individual filter max PRI deltaT=%lld rf->rf_minpri=%u",
 					rf->rf_pulseid, (uint64_t)deltaT,
 					rf->rf_minpri);
 			/* But update the last time stamp. */
@@ -169,8 +169,8 @@ static inline bool dfs_reject_on_pri(
 
 		if ((deltaT > (dfs->dfs_pri_multiplier * rf->rf_maxpri)) ||
 				(deltaT < rf->rf_minpri)) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"filterID %d : Rejecting on individual filter max PRI deltaT=%lld rf->rf_minpri=%u\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"filterID %d : Rejecting on individual filter max PRI deltaT=%lld rf->rf_minpri=%u",
 					rf->rf_pulseid, (uint64_t) deltaT,
 					rf->rf_minpri);
 			/* But update the last time stamp. */
@@ -232,7 +232,8 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 	}
 
 	if (*found) {
-		DFS_PRINTK("Found on channel minDur = %d, filterId = %d\n",
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Found on channel minDur = %d, filterId = %d",
 				ft->ft_mindur,
 				rf != NULL ?  rf->rf_pulseid : -1);
 	}
@@ -266,10 +267,12 @@ static inline void dfs_radarfound_reset_vars(
 	if ((seg_id == SEG_ID_SECONDARY) &&
 			(dfs_is_precac_timer_running(dfs))) {
 		dfs->is_radar_during_precac = 1;
-		DFS_PRINTK("Radar found on second segment VHT80 freq=%d MHz\n",
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Radar found on second segment VHT80 freq=%d MHz",
 				dfs->dfs_precac_secondary_freq);
 	} else {
-		DFS_PRINTK("Radar found on channel %d (%d MHz)\n",
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+				"Radar found on channel %d (%d MHz)",
 				thischan->dfs_ch_ieee, thischan->dfs_ch_freq);
 	}
 
@@ -284,13 +287,13 @@ static inline void dfs_radarfound_reset_vars(
 	dfs_reset_radarq(dfs);
 	dfs_reset_alldelaylines(dfs);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"Primary channel freq = %u flags=0x%x\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"Primary channel freq = %u flags=0x%x",
 			chan->dfs_ch_freq, chan->dfs_ch_flagext);
 
 	if (chan->dfs_ch_freq != thischan->dfs_ch_freq)
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"Ext channel freq = %u flags=0x%x\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+				"Ext channel freq = %u flags=0x%x",
 				thischan->dfs_ch_freq,
 				thischan->dfs_ch_flagext);
 
@@ -320,8 +323,8 @@ static inline int dfs_radarevent_basic_sanity(
 			    ((IEEE80211_IS_CHAN_11AC_VHT160(chan) ||
 			      IEEE80211_IS_CHAN_11AC_VHT80_80(chan)) &&
 			     IEEE80211_IS_CHAN_DFS_CFREQ2(chan)))) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"%s: radar event on non-DFS chan\n", __func__);
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"radar event on non-DFS chan");
 			dfs_reset_radarq(dfs);
 			dfs_reset_alldelaylines(dfs);
 			dfs->dfs_bangradar = 0;
@@ -353,7 +356,7 @@ static inline int dfs_handle_bangradar(
 		 */
 		*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
 		dfs->dfs_bangradar = 0; /* Reset */
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: bangradar\n", __func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "bangradar");
 		*retval = 1;
 		return 1;
 	}
@@ -364,16 +367,14 @@ static inline int dfs_handle_bangradar(
 				IEEE80211_IS_CHAN_11AC_VHT80_80(chan)) {
 			dfs->is_radar_found_on_secondary_seg = 1;
 			*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s: second segment bangradar on cfreq = %u\n",
-					__func__,
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"second segment bangradar on cfreq = %u",
 					dfs->dfs_precac_secondary_freq);
 			*retval = 1;
 			*seg_id = SEG_ID_SECONDARY;
 		} else {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s: Do not process the second segment bangradar\n",
-					__func__);
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"Do not process the second segment bangradar");
 		}
 		dfs->dfs_second_segment_bangradar = 0; /* Reset */
 		return 1;
@@ -396,9 +397,9 @@ static inline void dfs_process_w53_pulses(
 			DFS_MAX_FREQ_SPREAD)
 		dfs->dfs_pri_multiplier = DFS_LARGE_PRI_MULTIPLIER;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"%s: w53_counter=%d, freq_max=%d, freq_min=%d, pri_multiplier=%d\n",
-			__func__, dfs->dfs_phyerr_w53_counter,
+	dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"w53_counter=%d, freq_max=%d, freq_min=%d, pri_multiplier=%d",
+			 dfs->dfs_phyerr_w53_counter,
 			dfs->dfs_phyerr_freq_max, dfs->dfs_phyerr_freq_min,
 			dfs->dfs_pri_multiplier);
 
@@ -436,8 +437,8 @@ static inline int dfs_handle_missing_pulses(
 			return 0;
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1, "%s: pri_multiplier=%d\n",
-			__func__, dfs->dfs_pri_multiplier);
+	dfs_debug(dfs, WLAN_DEBUG_DFS1, "pri_multiplier=%d",
+			 dfs->dfs_pri_multiplier);
 
 	return 1;
 }
@@ -546,8 +547,8 @@ static inline void dfs_check_if_nonbin5(
 	struct dfs_filtertype *ft;
 	uint64_t deltaT;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"  *** chan freq (%d): ts %llu dur %u rssi %u\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"  *** chan freq (%d): ts %llu dur %u rssi %u",
 			(*rs)->rs_chan.dfs_ch_freq, (uint64_t)this_ts,
 			(*re).re_dur, (*re).re_rssi);
 
@@ -556,23 +557,23 @@ static inline void dfs_check_if_nonbin5(
 			 -1) && (!*retval)) {
 		ft = dfs->dfs_radarf[((dfs->dfs_ftindextable[(*re).re_dur])
 				[tabledepth])];
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"  ** RD (%d): ts %x dur %u rssi %u\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"  ** RD (%d): ts %x dur %u rssi %u",
 				(*rs)->rs_chan.dfs_ch_freq, (*re).re_ts,
 				(*re).re_dur, (*re).re_rssi);
 
 		if ((*re).re_rssi < ft->ft_rssithresh &&
 				(*re).re_dur > MAX_DUR_FOR_LOW_RSSI) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"%s : Rejecting on rssi rssi=%u thresh=%u\n",
-					__func__, (*re).re_rssi,
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"Rejecting on rssi rssi=%u thresh=%u",
+					 (*re).re_rssi,
 					ft->ft_rssithresh);
 			tabledepth++;
 			continue;
 		}
 		deltaT = this_ts - ft->ft_last_ts;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"deltaT = %lld (ts: 0x%llx) (last ts: 0x%llx)\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"deltaT = %lld (ts: 0x%llx) (last ts: 0x%llx)",
 				(uint64_t)deltaT, (uint64_t)this_ts,
 				(uint64_t)ft->ft_last_ts);
 
@@ -582,10 +583,9 @@ static inline void dfs_check_if_nonbin5(
 			 * Individual filters will check this again.
 			 * This is first line of filtering.
 			 */
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-					"%s: Rejecting on pri pri=%lld minpri=%u\n",
-					__func__, (uint64_t)deltaT,
-					ft->ft_minpri);
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"Rejecting on pri pri=%lld minpri=%u",
+					 (uint64_t)deltaT, ft->ft_minpri);
 			tabledepth++;
 			continue;
 		}
@@ -632,9 +632,8 @@ static inline void dfs_check_each_b5radar(
 		if (dfs_bin5_addpulse(dfs, br, re, this_ts))
 			*found |= dfs_bin5_check(dfs);
 	} else {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_PULSE,
-				"%s not a BIN5 pulse (dur=%d)\n",
-				__func__, (*re).re_dur);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_PULSE,
+				"not a BIN5 pulse (dur=%d)", (*re).re_dur);
 	}
 }
 
@@ -669,8 +668,7 @@ static inline void dfs_check_if_bin5(
 	}
 
 	if (*found)
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: Found bin5 radar\n", __func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS, "Found bin5 radar");
 }
 
 /**
@@ -789,8 +787,7 @@ static inline void  dfs_calculate_timestamps(
 		if ((*re).re_dur == 0 && (*re).re_ts ==
 				dfs->dfs_rinfo.rn_last_unique_ts) {
 			debug_dup[debug_dup_cnt++] = '1';
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-					"\n %s deltaT is 0\n", __func__);
+			dfs_debug(dfs, WLAN_DEBUG_DFS1, "deltaT is 0");
 		} else {
 			dfs->dfs_rinfo.rn_last_unique_ts = (*re).re_ts;
 			debug_dup[debug_dup_cnt++] = '0';
@@ -872,8 +869,8 @@ static inline void dfs_add_to_pulseline(
 	*diff_ts = (uint32_t)*this_ts - *test_ts;
 	*test_ts = (uint32_t)*this_ts;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"ts%u %u %u diff %u pl->pl_lastelem.p_time=%llu\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"ts%u %u %u diff %u pl->pl_lastelem.p_time=%llu",
 			(uint32_t)*this_ts, (*re).re_dur,
 			(*re).re_rssi, *diff_ts,
 			(uint64_t)pl->pl_elems[index].p_time);
@@ -926,7 +923,7 @@ static inline int dfs_process_each_radarevent(
 
 	while ((!empty) && (!*retval) && (events_processed < MAX_EVENTS)) {
 		dfs_remove_event_from_radarq(dfs, &event);
-		if (event == NULL) {
+		if (!event) {
 			empty = 1;
 			break;
 		}

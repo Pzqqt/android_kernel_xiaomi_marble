@@ -32,18 +32,18 @@ int dfs_bin5_check_pulse(struct wlan_dfs *dfs, struct dfs_event *re,
 {
 	int b5_rssithresh = br->br_pulse.b5_rssithresh;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_PULSE,
-		"%s: re_dur=%d, rssi=%d, check_chirp=%d, hw_chirp=%d, sw_chirp=%d\n",
-		__func__, (int)re->re_dur, (int)re->re_rssi,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_PULSE,
+		"re_dur=%d, rssi=%d, check_chirp=%d, hw_chirp=%d, sw_chirp=%d",
+		 (int)re->re_dur, (int)re->re_rssi,
 		!!(re->re_flags & DFS_EVENT_CHECKCHIRP),
 		!!(re->re_flags & DFS_EVENT_HW_CHIRP),
 		!!(re->re_flags & DFS_EVENT_SW_CHIRP));
 
 	/* If the SW/HW chirp detection says to fail the pulse,do so. */
 	if (DFS_EVENT_NOTCHIRP(re)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-			"%s: rejecting chirp: ts=%llu, dur=%d, rssi=%d checkchirp=%d, hwchirp=%d, swchirp=%d\n",
-			__func__, (unsigned long long)re->re_full_ts,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+			"rejecting chirp: ts=%llu, dur=%d, rssi=%d checkchirp=%d, hwchirp=%d, swchirp=%d",
+			 (unsigned long long)re->re_full_ts,
 			(int)re->re_dur, (int)re->re_rssi,
 			!!(re->re_flags & DFS_EVENT_CHECKCHIRP),
 			!!(re->re_flags & DFS_EVENT_HW_CHIRP),
@@ -61,15 +61,15 @@ int dfs_bin5_check_pulse(struct wlan_dfs *dfs, struct dfs_event *re,
 	if ((re->re_dur >= br->br_pulse.b5_mindur) &&
 			(re->re_dur <= br->br_pulse.b5_maxdur) &&
 			(re->re_rssi >= b5_rssithresh)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-			"%s: dur=%d, rssi=%d - adding!\n",
-			__func__, (int)re->re_dur, (int)re->re_rssi);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+			"dur=%d, rssi=%d - adding!",
+			 (int)re->re_dur, (int)re->re_rssi);
 		return 1;
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-		"%s: too low to be Bin5 pulse tsf=%llu, dur=%d, rssi=%d\n",
-		__func__, (unsigned long long)re->re_full_ts,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+		"too low to be Bin5 pulse tsf=%llu, dur=%d, rssi=%d",
+		 (unsigned long long)re->re_full_ts,
 		(int)re->re_dur, (int)re->re_rssi);
 
 	return 0;
@@ -174,9 +174,8 @@ static inline void dfs_calculate_bursts_for_same_rssi(
 
 		index[(*numevents)++] = this;
 	} else {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-				"%s %d Bin5 rssi_diff=%d\n",
-				__func__, __LINE__, rssi_diff);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+				"Bin5 rssi_diff=%d", rssi_diff);
 	}
 }
 
@@ -199,8 +198,8 @@ void bin5_rules_check_internal(struct wlan_dfs *dfs,
 		/* Roll over case */
 		pri = br->br_elems[this].be_ts;
 	}
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-		" pri=%llu this.ts=%llu this.dur=%d this.rssi=%d prev.ts=%llu\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+		" pri=%llu this.ts=%llu this.dur=%d this.rssi=%d prev.ts=%llu",
 		(uint64_t)pri,
 		(uint64_t) br->br_elems[this].be_ts,
 		(int) br->br_elems[this].be_dur,
@@ -230,17 +229,15 @@ void bin5_rules_check_internal(struct wlan_dfs *dfs,
 			dfs_calculate_bursts_for_same_rssi(dfs, br, bursts,
 					numevents, prev, this, index);
 		 else
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-				"%s %d Bin5 width_diff=%d\n",
-				__func__, __LINE__, width_diff);
+			dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+				"Bin5 width_diff=%d", width_diff);
 	} else if ((pri >= DFS_BIN5_BRI_LOWER_LIMIT) &&
 			(pri <= DFS_BIN5_BRI_UPPER_LIMIT)) {
 		/* Check pulse width to make sure it is in range of bin 5. */
 		(*bursts)++;
 	} else{
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-			"%s %d Bin5 PRI check fail pri=%llu\n",
-			__func__, __LINE__, (uint64_t)pri);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+			"Bin5 PRI check fail pri=%llu", (uint64_t)pri);
 	}
 }
 
@@ -252,14 +249,14 @@ int dfs_bin5_check(struct wlan_dfs *dfs)
 	uint32_t total_width = 0, average_width = 0, numevents = 0;
 	int index[DFS_MAX_B5_SIZE];
 
-	if (dfs == NULL) {
-		DFS_PRINTK("%s: dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return 1;
 	}
 
 	for (n = 0; n < dfs->dfs_rinfo.rn_numbin5radars; n++) {
 		br = &(dfs->dfs_b5radars[n]);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5, "Num elems = %d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5, "Num elems = %d",
 				br->br_numelems);
 
 		/* Find a valid bin 5 pulse and use it as reference. */
@@ -289,19 +286,22 @@ int dfs_bin5_check(struct wlan_dfs *dfs)
 			prev = this;
 		}
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-			"bursts=%u numevents=%u\n", bursts, numevents);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+			"bursts=%u numevents=%u", bursts, numevents);
 		if (bursts >= br->br_pulse.b5_threshold) {
 			if ((br->br_elems[br->br_lastelem].be_ts -
 					br->br_elems[br->br_firstelem].be_ts) <
 					3000000)
 				return 0;
 
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-				"bursts=%u numevents=%u total_width=%d average_width=%d total_diff=%d average_diff=%d\n",
-				bursts, numevents, total_width, average_width,
-				total_diff, average_diff);
-			DFS_PRINTK("bin 5 radar detected, bursts=%d\n", bursts);
+			dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+					"bursts=%u numevents=%u total_width=%d average_width=%d total_diff=%d average_diff=%d",
+					bursts, numevents, total_width,
+					average_width, total_diff,
+					average_diff);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"bin 5 radar detected, bursts=%d",
+					bursts);
 			return 1;
 		}
 	}
@@ -355,17 +355,17 @@ static int dfs_check_chirping_sowl(struct wlan_dfs *dfs,
 
 	/* DEBUG - Print relevant portions of the FFT data. */
 	for (p = 0; p < num_fft_packets; p++) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
 			"fft_data_ptr=0x%pK\t", fft_data_ptr);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"[66]=%d [69]=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"[66]=%d [69]=%d",
 			*(fft_data_ptr + FFT_LOWER_BIN_MAX_INDEX_BYTE) >> 2,
 			*(fft_data_ptr + FFT_UPPER_BIN_MAX_INDEX_BYTE) >> 2);
 		fft_data_ptr += FFT_LEN;
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-		"datalen=%d num_fft_packets=%d\n", datalen, num_fft_packets);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+		"datalen=%d num_fft_packets=%d", datalen, num_fft_packets);
 
 	/*
 	 * There is not enough FFT data to figure out whether the pulse
@@ -404,8 +404,8 @@ static int dfs_check_chirping_sowl(struct wlan_dfs *dfs,
 		    ((ctl_slope0 > ctl_slope1) ? ctl_slope0 : ctl_slope1);
 		*slope = ctl_slope;
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"ctl_slope0=%d ctl_slope1=%d ctl_slope=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"ctl_slope0=%d ctl_slope1=%d ctl_slope=%d",
 			ctl_slope0, ctl_slope1, ctl_slope);
 	} else if (is_ext) {
 		fft_data_ptr = (uint8_t *)buf;
@@ -433,8 +433,8 @@ static int dfs_check_chirping_sowl(struct wlan_dfs *dfs,
 		ext_slope = ((ext_slope0 > ext_slope1) ?
 				ext_slope0 : ext_slope1);
 		*slope = ext_slope;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT | WLAN_DEBUG_DFS_BIN5,
-			"ext_slope0=%d ext_slope1=%d ext_slope=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT | WLAN_DEBUG_DFS_BIN5,
+			"ext_slope0=%d ext_slope1=%d ext_slope=%d",
 			ext_slope0, ext_slope1, ext_slope);
 	} else
 		return 0;
@@ -442,8 +442,8 @@ static int dfs_check_chirping_sowl(struct wlan_dfs *dfs,
 	if ((ctl_slope >= MIN_CHIRPING_SLOPE) ||
 			(ext_slope >= MIN_CHIRPING_SLOPE)) {
 		is_chirp = 1;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5 | WLAN_DEBUG_DFS_BIN5_FFT |
-			WLAN_DEBUG_DFS_PHYERR_SUM, "is_chirp=%d is_dc=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5 | WLAN_DEBUG_DFS_BIN5_FFT |
+			WLAN_DEBUG_DFS_PHYERR_SUM, "is_chirp=%d is_dc=%d",
 			is_chirp, *is_dc);
 	}
 
@@ -572,17 +572,16 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 
 	ptr = (uint8_t *)buf;
 	/* Sanity check for FFT buffer. */
-	if ((ptr == NULL) || (datalen == 0)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"%s: FFT buffer pointer is null or size is 0\n",
-			__func__);
+	if (!ptr || (datalen == 0)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"FFT buffer pointer is null or size is 0");
 		return 0;
 	}
 
 	num_fft_packets = (datalen - 3) / num_fft_bytes;
 	if (num_fft_packets < (NUM_DIFFS + DELTA_STEP)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"datalen = %d, num_fft_packets = %d, too few packets... (exiting)\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"datalen = %d, num_fft_packets = %d, too few packets... (exiting)",
 			datalen, num_fft_packets);
 		return 0;
 	}
@@ -652,8 +651,8 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 				max_index[i] = max_index_lower[i];
 			}
 		}
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"i=%d, max_index[i]=%d, max_index_lower[i]=%d, max_index_upper[i]=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"i=%d, max_index[i]=%d, max_index_lower[i]=%d, max_index_upper[i]=%d",
 			i, max_index[i], max_index_lower[i],
 			max_index_upper[i]);
 	}
@@ -679,19 +678,17 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 			(ABS(delta_peak[i]) >= min_d[DELTA_STEP - 1]) &&
 			(ABS(delta_peak[i]) <= max_d[DELTA_STEP - 1]) &&
 			same_sign && (ABS(delta_diff) <= MAX_DIFF);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"i=%d, delta_peak[i]=%d, delta_diff=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"i=%d, delta_peak[i]=%d, delta_diff=%d",
 			i, delta_peak[i], delta_diff);
 	}
 
 	if (chirp_found) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"%s: CHIRPING_BEFORE_STRONGBIN_YES\n",
-			__func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"CHIRPING_BEFORE_STRONGBIN_YES");
 	} else {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"%s: CHIRPING_BEFORE_STRONGBIN_NO\n",
-			__func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"CHIRPING_BEFORE_STRONGBIN_NO");
 	}
 
 	/*
@@ -721,20 +718,19 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 			bin_count += (ptr[fft_start + j] & 0x88) ? 1 : 0;
 		}
 		chirp_found &= (bin_count > BIN_COUNT_MAX) ? 0 : 1;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
-			"i=%d, computed bin_count=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT,
+			"i=%d, computed bin_count=%d",
 			i, bin_count);
 	}
 
 	if (chirp_found) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT |
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT |
 			WLAN_DEBUG_DFS_PHYERR_SUM,
-			"%s: CHIRPING_YES\n",
-			__func__);
+			"CHIRPING_YES");
 	} else {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5_FFT |
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5_FFT |
 			WLAN_DEBUG_DFS_PHYERR_SUM,
-			"%s: CHIRPING_NO\n", __func__);
+			"CHIRPING_NO");
 	}
 
 	return chirp_found;
@@ -794,9 +790,9 @@ uint8_t dfs_retain_bin5_burst_pattern(struct wlan_dfs *dfs,
 	 */
 	/* SPLIT pulses will have a time stamp difference of < 50 */
 	if (diff_ts < 50) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-			"%s SPLIT pulse diffTs=%u dur=%d (old_dur=%d)\n",
-			__func__, diff_ts,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+			"SPLIT pulse diffTs=%u dur=%d (old_dur=%d)",
+			 diff_ts,
 			dfs->dfs_rinfo.dfs_last_bin5_dur, old_dur);
 	}
 
@@ -810,9 +806,9 @@ uint8_t dfs_retain_bin5_burst_pattern(struct wlan_dfs *dfs,
 		 * This pulse belongs to the same burst as the pulse before,
 		 * so return the same random duration for it.
 		 */
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_BIN5,
-			"%s this pulse belongs to the same burst as before, give it same dur=%d (old_dur=%d)\n",
-			__func__, dfs->dfs_rinfo.dfs_last_bin5_dur, old_dur);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_BIN5,
+			"this pulse belongs to the same burst as before, give it same dur=%d (old_dur=%d)",
+			 dfs->dfs_rinfo.dfs_last_bin5_dur, old_dur);
 		return dfs->dfs_rinfo.dfs_last_bin5_dur;
 	}
 

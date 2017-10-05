@@ -87,8 +87,8 @@ static inline void dfs_get_cached_ext_chan_busy(
 			(dfs->dfs_rinfo.rn_lastfull_ts <
 			 dfs->dfs_rinfo.ext_chan_busy_ts)) {
 		*ext_chan_busy = dfs->dfs_rinfo.dfs_ext_chan_busy;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"Use cached copy of ext_chan_busy extchanbusy=%d rn_lastfull_ts=%llu ext_chan_busy_ts=%llu\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"Use cached copy of ext_chan_busy extchanbusy=%d rn_lastfull_ts=%llu ext_chan_busy_ts=%llu",
 				*ext_chan_busy,
 				(uint64_t)dfs->dfs_rinfo.rn_lastfull_ts,
 				(uint64_t)dfs->dfs_rinfo.ext_chan_busy_ts);
@@ -145,8 +145,8 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 
 		adjust_thresh =
 			dfs_adjust_thresh_per_chan_busy(ext_chan_busy, thresh);
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-			" filterID=%d extchanbusy=%d adjust_thresh=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+			" filterID=%d extchanbusy=%d adjust_thresh=%d",
 			rf->rf_pulseid, ext_chan_busy, adjust_thresh);
 
 		thresh += adjust_thresh;

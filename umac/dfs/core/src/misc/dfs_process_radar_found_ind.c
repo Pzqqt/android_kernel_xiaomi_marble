@@ -94,15 +94,17 @@ static void dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 			continue;
 		if (!utils_is_dfs_ch(dfs->dfs_pdev_obj,
 		     freq_offset->chan_num[i])) {
-			DFS_PRINTK("%s: ch=%d is not dfs skip\n",
-				   __func__, freq_offset->chan_num[i]);
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"ch=%d is not dfs skip",
+					freq_offset->chan_num[i]);
 			continue;
 		}
 		last_chan = freq_offset->chan_num[i];
 		dfs_nol_addchan(dfs, (uint16_t)freq_offset->freq[i],
 				dfs->wlan_dfs_nol_timeout);
 		nollist[num_ch++] = last_chan;
-		DFS_PRINTK("%s: ch=%d Added to NOL\n", __func__, last_chan);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"ch=%d Added to NOL", last_chan);
 	}
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 			nollist, num_ch, DFS_NOL_SET);
@@ -217,7 +219,7 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 	int32_t sidx;
 
 	if (!dfs || !dfs->dfs_curchan) {
-		DFS_PRINTK("%s: dfs is null\n", __func__);
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs is null");
 		return;
 	}
 
@@ -239,10 +241,11 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 			freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
 	}
 
-	DFS_PRINTK("%s: seg=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d\n",
-		   __func__, radar_found->segment_id, sidx,
-		   radar_found->freq_offset, radar_found->is_chirp,
-		   flag, freq_center);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"seg=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d",
+			radar_found->segment_id, sidx,
+			radar_found->freq_offset, radar_found->is_chirp,
+			flag, freq_center);
 
 	if ((flag & IEEE80211_CHAN_A)         ||
 	    (flag & IEEE80211_CHAN_11NA_HT20) ||
@@ -280,15 +283,16 @@ void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
 		}
 		dfs_radar_chan_for_80(&freq_offset, freq_center);
 	} else {
-		DFS_PRINTK("%s: channel flag(%d) is invalid\n", __func__, flag);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"channel flag(%d) is invalid", flag);
 		return;
 	}
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
 		freq_offset.chan_num[i] = utils_dfs_freq_to_chan(
 				freq_offset.freq[i]);
-		DFS_PRINTK("%s: offset=%d, channel%d\n",
-			   __func__, i, freq_offset.chan_num[i]);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "offset=%d, channel%d",
+			    i, freq_offset.chan_num[i]);
 	}
 
 	dfs_radar_add_to_nol(dfs, &freq_offset);

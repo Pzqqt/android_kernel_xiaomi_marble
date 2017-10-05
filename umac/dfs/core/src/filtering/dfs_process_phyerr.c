@@ -39,10 +39,10 @@
 static inline int dfs_get_event_freqwidth(struct wlan_dfs *dfs)
 {
 	/* Handle edge cases during startup/transition, shouldn't happen! */
-	if (dfs == NULL)
+	if (!dfs)
 		return 0;
 
-	if (dfs->dfs_curchan == NULL)
+	if (!dfs->dfs_curchan)
 		return 0;
 
 	/*
@@ -70,9 +70,9 @@ static inline uint16_t dfs_get_event_freqcentre(struct wlan_dfs *dfs,
 	int chan_offset = 0, chan_width;
 
 	/* Handle edge cases during startup/transition, shouldn't happen! */
-	if (dfs == NULL)
+	if (!dfs)
 		return 0;
-	if (dfs->dfs_curchan == NULL)
+	if (!dfs->dfs_curchan)
 		return 0;
 
 	/*
@@ -160,9 +160,9 @@ int dfs_process_phyerr_owl(struct wlan_dfs *dfs,
 	e->freq_lo = e->freq - (event_width / 2) * 1000;
 	e->freq_hi = e->freq + (event_width / 2) * 1000;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
-		"%s: rssi=%u dur=%u, freq=%d MHz, freq_lo=%d MHz, freq_hi=%d MHz\n",
-		__func__, rssi, dur, e->freq/1000, e->freq_lo/1000,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
+		"rssi=%u dur=%u, freq=%d MHz, freq_lo=%d MHz, freq_hi=%d MHz",
+		 rssi, dur, e->freq/1000, e->freq_lo/1000,
 		e->freq_hi / 1000);
 
 	return 1;
@@ -198,9 +198,8 @@ int dfs_process_phyerr_sowl(struct wlan_dfs *dfs,
 
 	/* Ensure that we have at least three bytes of payload. */
 	if (datalen < 3) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s: short error frame (%d bytes)\n",
-			__func__, datalen);
+		dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"short error frame (%d bytes)", datalen);
 		dfs->wlan_dfs_stats.datalen_discards++;
 		return 0;
 	}
@@ -255,13 +254,13 @@ int dfs_process_phyerr_sowl(struct wlan_dfs *dfs,
 			ext_found = 1;
 			early_ext = 1;
 			dfs->wlan_dfs_stats.early_ext_phy_errors++;
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-				"EARLY ext channel dur=%u rssi=%u datalen=%d\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"EARLY ext channel dur=%u rssi=%u datalen=%d",
 				dur, rssi, datalen);
 		}
 		if (!pulse_bw_info) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-				"ERROR channel dur=%u rssi=%u pulse_bw_info=0x%x datalen MOD 4 = %d\n",
+			dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"ERROR channel dur=%u rssi=%u pulse_bw_info=0x%x datalen MOD 4 = %d",
 				dur, rssi, pulse_bw_info, (datalen & 0x3));
 			/*
 			 * Bogus bandwidth info received in descriptor, so
@@ -298,9 +297,9 @@ int dfs_process_phyerr_sowl(struct wlan_dfs *dfs,
 	e->freq_lo = e->freq - (event_width / 2) * 1000;
 	e->freq_hi = e->freq + (event_width / 2) * 1000;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
-		"%s: pulse_bw_info=0x%x pulse_length_ext=%u pulse_length_pri=%u rssi=%u ext_rssi=%u, freq=%d MHz, freq_lo=%d MHz, freq_hi=%d MHz\n",
-		__func__, pulse_bw_info, pulse_length_ext, pulse_length_pri,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
+		"pulse_bw_info=0x%x pulse_length_ext=%u pulse_length_pri=%u rssi=%u ext_rssi=%u, freq=%d MHz, freq_lo=%d MHz, freq_hi=%d MHz",
+		 pulse_bw_info, pulse_length_ext, pulse_length_pri,
 		rssi, ext_rssi, e->freq/1000, e->freq_lo/1000, e->freq_hi/1000);
 #undef EXT_CH_RADAR_FOUND
 #undef PRI_CH_RADAR_FOUND
@@ -341,8 +340,8 @@ int dfs_process_phyerr_merlin(struct wlan_dfs *dfs,
 		break;
 	case 0x01:
 		/* Radar in ctrl channel */
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"RAW RSSI: rssi=%u ext_rssi=%u\n", rssi, ext_rssi);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+			"RAW RSSI: rssi=%u ext_rssi=%u", rssi, ext_rssi);
 		if (ext_rssi >= (rssi + 3)) {
 			/*
 			 * Cannot use ctrl channel RSSI if extension channel is
@@ -353,8 +352,8 @@ int dfs_process_phyerr_merlin(struct wlan_dfs *dfs,
 		break;
 	case 0x02:
 		/* Radar in extension channel */
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-			"RAW RSSI: rssi=%u ext_rssi=%u\n", rssi, ext_rssi);
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+			"RAW RSSI: rssi=%u ext_rssi=%u", rssi, ext_rssi);
 		if (rssi >= (ext_rssi + 12)) {
 			/*
 			 * Cannot use extension channel RSSI if control channel
@@ -410,7 +409,7 @@ static void dfs_dump_phyerr_contents(const char *d, int len)
 
 		n += snprintf(buf + n, bufsize - n, "%02x ", d[i] & 0xff);
 		if (i % 16 == 15) {
-			DFS_PRINTK("%s: %s\n", __func__, buf);
+			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "%s", buf);
 			n = 0;
 			buf[0] = '\0';
 		}
@@ -418,7 +417,7 @@ static void dfs_dump_phyerr_contents(const char *d, int len)
 
 	/* Print the final line if we didn't print it above. */
 	if (n != 0)
-		DFS_PRINTK("%s: %s\n", __func__, buf);
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "%s", buf);
 }
 
 /**
@@ -432,7 +431,7 @@ static inline void dfs_bump_up_bin5_pulse_dur(
 		struct dfs_phy_err *e,
 		int slope)
 {
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR, "old dur %d slope =%d\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR, "old dur %d slope =%d",
 			e->dur, slope);
 
 	e->is_sw_chirp = 1;
@@ -440,7 +439,7 @@ static inline void dfs_bump_up_bin5_pulse_dur(
 	if (e->dur < MIN_BIN5_DUR)
 		e->dur = dfs_get_random_bin5_dur(dfs, e->fulltsf);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR, "new dur %d\n", e->dur);
+	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR, "new dur %d", e->dur);
 }
 
 /**
@@ -471,8 +470,8 @@ static inline void dfs_filter_short_pulses(
 	}
 
 	if (*retval) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-				"%s pulse is discarded: dur=%d, maxpulsedur=%d, rssi=%d, minrssi=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+				"%s pulse is discarded: dur=%d, maxpulsedur=%d, rssi=%d, minrssi=%d",
 				(dfs->dfs_caps.wlan_dfs_ext_chan_ok) ?
 				"Extension channel" : "",
 				e->dur, dfs->dfs_rinfo.rn_maxpulsedur,
@@ -494,9 +493,8 @@ static inline bool dfs_is_second_seg_radar_disabled(
 	if ((seg_id == SEG_ID_SECONDARY) &&
 			!(dfs->dfs_proc_phyerr &
 				DFS_SECOND_SEGMENT_RADAR_EN)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
-				"%s: Do not process PHY error data from Second segment, DFS_SECOND_SEGMENT_RADAR_EN is not enabled\n",
-				__func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS3,
+				"Do not process PHY error data from Second segment, DFS_SECOND_SEGMENT_RADAR_EN is not enabled");
 		return true;
 	}
 
@@ -518,11 +516,10 @@ static inline void dfs_set_chan_index(
 		event->re_chanindex = dfs->dfs_curchan_radindex;
 	} else {
 		event->re_chanindex = dfs->dfs_extchan_radindex;
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-				"%s %s New extension channel event is added to queue\n",
-				__func__,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+				"%s New extension channel event is added to queue",
 				(event->re_chanindex == -1) ?
-				"- phyerr on ext channel\n" : "");
+				"- phyerr on ext channel" : "");
 	}
 }
 
@@ -534,15 +531,13 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	struct dfs_phy_err e;
 	int empty;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
 	if (dfs->dfs_ignore_dfs) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"%s: ignoring dfs\n", __func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1, "ignoring dfs");
 		return;
 	}
 
@@ -552,9 +547,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	 */
 
 	if (!(dfs->dfs_proc_phyerr & DFS_RADAR_EN)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"%s: DFS_RADAR_EN not set in dfs->dfs_proc_phyerr\n",
-			__func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"DFS_RADAR_EN not set in dfs->dfs_proc_phyerr");
 		return;
 	}
 
@@ -578,15 +572,13 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 		dfs_dump_phyerr_contents(buf, datalen);
 
 	if (IEEE80211_IS_CHAN_RADAR(dfs->dfs_curchan)) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS1,
-			"%s: Radar already found in the channel, do not queue radar data\n",
-			__func__);
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"Radar already found in the channel, do not queue radar data");
 		return;
 	}
 
 	dfs->wlan_dfs_stats.total_phy_errors++;
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2, "%s : %d phyerr %d len %d\n",
-		__func__, __LINE__,
+	dfs_debug(dfs, WLAN_DEBUG_DFS2, "phyerr %d len %d",
 		dfs->wlan_dfs_stats.total_phy_errors, datalen);
 
 	/*
@@ -691,8 +683,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 				/* Set the duration so that it is rejected. */
 				e.is_sw_chirp = 0;
 				e.dur = MAX_BIN5_DUR + 100;
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS_PHYERR,
-					"is_chirping = %d dur=%d\n",
+				dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR,
+					"is_chirping = %d dur=%d",
 					add_dur, e.dur);
 			}
 		} else {
@@ -735,16 +727,16 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	 */
 	if ((dfs->dfs_curchan->dfs_ch_flags & CHANNEL_108G) == CHANNEL_108G) {
 		if (!(dfs->dfs_proc_phyerr & DFS_AR_EN)) {
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"%s: DFS_AR_EN not enabled\n", __func__);
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"DFS_AR_EN not enabled");
 			return;
 		}
 		WLAN_DFSEVENTQ_LOCK(dfs);
 		event = STAILQ_FIRST(&(dfs->dfs_eventq));
-		if (event == NULL) {
+		if (!event) {
 			WLAN_DFSEVENTQ_UNLOCK(dfs);
-			DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: no more events space left\n", __func__);
+			dfs_debug(dfs, WLAN_DEBUG_DFS,
+				"no more events space left");
 			return;
 		}
 		STAILQ_REMOVE_HEAD(&(dfs->dfs_eventq), re_list);
@@ -778,9 +770,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			int retval = 0;
 
 			if (!(dfs->dfs_proc_phyerr & DFS_RADAR_EN)) {
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS3,
-					"%s: DFS_RADAR_EN not enabled\n",
-					__func__);
+				dfs_debug(dfs, WLAN_DEBUG_DFS3,
+					"DFS_RADAR_EN not enabled");
 				return;
 			}
 
@@ -794,11 +785,10 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			/* Add the event to the list, if there's space. */
 			WLAN_DFSEVENTQ_LOCK(dfs);
 			event = STAILQ_FIRST(&(dfs->dfs_eventq));
-			if (event == NULL) {
+			if (!event) {
 				WLAN_DFSEVENTQ_UNLOCK(dfs);
-				DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-					"%s: no more events space left\n",
-					__func__);
+				dfs_debug(dfs, WLAN_DEBUG_DFS,
+					"no more events space left");
 				return;
 			}
 			STAILQ_REMOVE_HEAD(&(dfs->dfs_eventq), re_list);

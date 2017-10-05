@@ -50,22 +50,20 @@ void dfs_reset_alldelaylines(struct wlan_dfs *dfs)
 	struct dfs_pulseline *pl;
 	int i;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: sc_dfs is NULL\n", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 	pl = dfs->pulses;
 
-	if (pl == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: pl==NULL, dfs=%pK\n",
-				__func__, dfs);
+	if (!pl) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "pl==NULL, dfs=%p", dfs);
 		return;
 	}
 
-	if (dfs->dfs_b5radars == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: pl==NULL, b5radars=%pK\n",
-				__func__, dfs->dfs_b5radars);
+	if (!(dfs->dfs_b5radars)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "pl==NULL, b5radars=%p",
+				dfs->dfs_b5radars);
 		return;
 	}
 
@@ -111,9 +109,8 @@ void dfs_reset_radarq(struct wlan_dfs *dfs)
 {
 	struct dfs_event *event;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: sc_dfs is NULL\n",
-				__func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
@@ -153,9 +150,7 @@ static inline bool dfs_fill_ft_index_table(
 		(dfs->dfs_ftindextable[i])[tableindex] =
 			(int8_t)(dfs->dfs_rinfo.rn_ftindex);
 	} else {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: Too many overlapping radar filters\n",
-				__func__);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "Too many overlapping radar filters");
 		return 1;
 	}
 
@@ -185,8 +180,7 @@ static inline bool dfs_fill_filter_type(
 
 	/* No filter of the appropriate dur was found. */
 	if ((dfs->dfs_rinfo.rn_ftindex + 1) > DFS_MAX_RADAR_TYPES) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: Too many filter types\n", __func__);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "Too many filter types");
 		return 1;
 	}
 	(*ft) = dfs->dfs_radarf[dfs->dfs_rinfo.rn_ftindex];
@@ -230,14 +224,14 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	int numradars = 0, numb5radars = 0;
 	int retval;
 
-	if (dfs == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "dfs is NULL %s", __func__);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return 1;
 	}
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-			"%s: dfsdomain=%d, numradars=%d, numb5radars=%d\n",
-			__func__, radar_info->dfsdomain,
+	dfs_debug(dfs, WLAN_DEBUG_DFS,
+			"dfsdomain=%d, numradars=%d, numb5radars=%d",
+			 radar_info->dfsdomain,
 			radar_info->numradars, radar_info->numb5radars);
 
 	/* Clear up the dfs domain flag first. */
@@ -247,9 +241,9 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	 * If radar_info is NULL or dfsdomain is NULL, treat the
 	 * rest of the radar configuration as suspect.
 	 */
-	if (radar_info == NULL || radar_info->dfsdomain == 0) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "%s: Unknown dfs domain %d\n",
-				__func__, dfs->dfsdomain);
+	if (!radar_info || radar_info->dfsdomain == 0) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "Unknown dfs domain %d",
+				 dfs->dfsdomain);
 		/* Disable radar detection since we don't have a radar domain.*/
 		dfs->dfs_proc_phyerr &= ~DFS_RADAR_EN;
 		dfs->dfs_proc_phyerr &= ~DFS_SECOND_SEGMENT_RADAR_EN;
@@ -289,7 +283,7 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 			}
 		}
 
-		if (ft == NULL) {
+		if (!ft) {
 			retval = dfs_fill_filter_type(dfs, &ft, dfs_radars,
 					&min_rssithresh, &max_pulsedur, p);
 			if (retval == 1)
@@ -325,15 +319,15 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 		rf->rf_threshold = dfs_radars[p].rp_threshold;
 		rf->rf_filterlen = rf->rf_maxpri * rf->rf_numpulses;
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"minprf = %d maxprf = %d pulsevar = %d thresh=%d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"minprf = %d maxprf = %d pulsevar = %d thresh=%d",
 				dfs_radars[p].rp_pulsefreq,
 				dfs_radars[p].rp_max_pulsefreq,
 				dfs_radars[p].rp_pulsevar,
 				rf->rf_threshold);
 
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS2,
-				"minpri = %d maxpri = %d filterlen = %d filterID = %d\n",
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+				"minpri = %d maxpri = %d filterlen = %d filterID = %d",
 				rf->rf_minpri, rf->rf_maxpri,
 				rf->rf_filterlen, rf->rf_pulseid);
 	}
@@ -341,15 +335,14 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	dfs_print_filters(dfs);
 
 	dfs->dfs_rinfo.rn_numbin5radars  = numb5radars;
-	if (dfs->dfs_b5radars != NULL)
+	if (!(dfs->dfs_b5radars))
 		qdf_mem_free(dfs->dfs_b5radars);
 
 	dfs->dfs_b5radars = (struct dfs_bin5radars *)qdf_mem_malloc(
 			numb5radars * sizeof(struct dfs_bin5radars));
-	if (dfs->dfs_b5radars == NULL) {
-		DFS_DPRINTK(dfs, WLAN_DEBUG_DFS,
-				"%s: cannot allocate memory for bin5 radars\n",
-				__func__);
+	if (!(dfs->dfs_b5radars)) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"cannot allocate memory for bin5 radars");
 		goto bad4;
 	}
 	for (n = 0; n < numb5radars; n++) {
@@ -378,10 +371,10 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	 */
 	dfs->dfs_rinfo.rn_maxpulsedur = dfs->dfs_rinfo.rn_maxpulsedur + 20;
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "DFS min filter rssiThresh = %d\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "DFS min filter rssiThresh = %d",
 			min_rssithresh);
 
-	DFS_DPRINTK(dfs, WLAN_DEBUG_DFS, "DFS max pulse dur = %d ticks\n",
+	dfs_debug(dfs, WLAN_DEBUG_DFS, "DFS max pulse dur = %d ticks",
 			dfs->dfs_rinfo.rn_maxpulsedur);
 
 	return 0;
@@ -392,7 +385,7 @@ bad4:
 
 void dfs_clear_stats(struct wlan_dfs *dfs)
 {
-	if (dfs == NULL)
+	if (!dfs)
 		return;
 
 	qdf_mem_zero(&dfs->wlan_dfs_stats, sizeof(struct dfs_stats));

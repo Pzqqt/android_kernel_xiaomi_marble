@@ -114,7 +114,7 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:
-		DFS_PRINTK("%s: DFS_FCC_DOMAIN_5416\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_FCC_DOMAIN_5416");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		rinfo.dfs_radars = &ar5416_fcc_radars[3];
 		rinfo.numradars = QDF_ARRAY_SIZE(ar5416_fcc_radars)-3;
@@ -122,7 +122,7 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar5416_bin5pulses);
 		break;
 	case DFS_ETSI_DOMAIN:
-		DFS_PRINTK("%s: DFS_ETSI_DOMAIN_5416\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_ETSI_DOMAIN_5416");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 		rinfo.dfs_radars = &ar5416_etsi_radars[0];
 		rinfo.numradars = QDF_ARRAY_SIZE(ar5416_etsi_radars);
@@ -130,7 +130,7 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar5416_bin5pulses);
 		break;
 	case DFS_MKK4_DOMAIN:
-		DFS_PRINTK("%s: DFS_MKK4_DOMAIN_5416\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_MKK4_DOMAIN_5416");
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = &ar5416_fcc_radars[0];
 		rinfo.numradars = QDF_ARRAY_SIZE(ar5416_fcc_radars);
@@ -138,7 +138,7 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar5416_bin5pulses);
 		break;
 	default:
-		DFS_PRINTK("%s: no domain\n", __func__);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "no domain");
 		return;
 	}
 
