@@ -18915,17 +18915,31 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 	}
 
 	radar_event = param_tlv->fixed_param;
-	radar_found->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
-							radar_event->pdev_id);
+	radar_found->pdev_id = wmi_handle->ops->
+		convert_pdev_id_target_to_host(radar_event->pdev_id);
 	radar_found->detection_mode = radar_event->detection_mode;
-	radar_found->freq_offset = radar_event->chan_freq;
+	radar_found->chan_freq = radar_event->chan_freq;
 	radar_found->chan_width = radar_event->chan_width;
 	radar_found->detector_id = radar_event->detector_id;
 	radar_found->segment_id = radar_event->segment_id;
 	radar_found->timestamp = radar_event->timestamp;
 	radar_found->is_chirp = radar_event->is_chirp;
+	radar_found->freq_offset = radar_event->freq_offset;
+	radar_found->sidx = radar_event->sidx;
+
 
 	WMI_LOGD("processed radar found event pdev %d", radar_event->pdev_id);
+	WMI_LOGD("Radar Event Info:");
+	WMI_LOGD("pdev_id %d", radar_event->pdev_id);
+	WMI_LOGD("detection mode %d", radar_event->detection_mode);
+	WMI_LOGD("chan_freq  (dur) %d", radar_event->chan_freq);
+	WMI_LOGD("chan_width (RSSI) %d", radar_event->chan_width);
+	WMI_LOGD("detector_id (false_radar) %d", radar_event->detector_id);
+	WMI_LOGD("segment_id %d", radar_event->segment_id);
+	WMI_LOGD("timestamp %d", radar_event->timestamp);
+	WMI_LOGD("is_chirp %d", radar_event->is_chirp);
+	WMI_LOGD("freq_offset (radar_check) %d", radar_event->freq_offset);
+	WMI_LOGD("sidx %d", radar_event->sidx);
 
 	return QDF_STATUS_SUCCESS;
 }
