@@ -7096,6 +7096,16 @@ static QDF_STATUS wma_process_limit_off_chan(tp_wma_handle wma_handle,
 	int32_t err;
 	struct wmi_limit_off_chan_param limit_off_chan_param;
 
+	if (param->vdev_id >= wma_handle->max_bssid) {
+		WMA_LOGE(FL("Invalid vdev_id: %d"), param->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!wma_is_vdev_up(param->vdev_id)) {
+		WMA_LOGE("vdev %d is not up skipping limit_off_chan_param",
+			param->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	limit_off_chan_param.vdev_id = param->vdev_id;
 	limit_off_chan_param.status = param->is_tos_active;
 	limit_off_chan_param.max_offchan_time = param->max_off_chan_time;
