@@ -302,20 +302,21 @@ void ol_tx_dump_flow_pool_info(void *ctx)
 	struct ol_tx_flow_pool_t *pool = NULL, *pool_prev = NULL;
 	struct ol_tx_flow_pool_t tmp_pool;
 
+
 	if (!pdev) {
 		ol_txrx_err("ERROR: pdev NULL");
 		QDF_ASSERT(0); /* traceback */
 		return;
 	}
-	ol_txrx_info("Global total %d :: avail %d invalid flow_pool %d "
-			"maps %d pool unmaps %d pkt drops %d",
-			pdev->tx_desc.pool_size,
-			pdev->tx_desc.num_free,
-			pdev->tx_desc.num_invalid_bin,
-			pdev->pool_stats.pool_map_count,
-			pdev->pool_stats.pool_unmap_count,
-			pdev->pool_stats.pkt_drop_no_pool);
-
+	ol_txrx_log(QDF_TRACE_LEVEL_INFO_LOW,
+		"Global total %d :: avail %d invalid flow_pool %d "
+		"maps %d pool unmaps %d pkt drops %d",
+		pdev->tx_desc.pool_size,
+		pdev->tx_desc.num_free,
+		pdev->tx_desc.num_invalid_bin,
+		pdev->pool_stats.pool_map_count,
+		pdev->pool_stats.pool_unmap_count,
+		pdev->pool_stats.pkt_drop_no_pool);
 	/*
 	 * Nested spin lock.
 	 * Always take in below order.
@@ -333,21 +334,22 @@ void ol_tx_dump_flow_pool_info(void *ctx)
 		if (pool_prev)
 			ol_tx_dec_pool_ref(pool_prev, false);
 
-		ol_txrx_info("flow_pool_id %d ::", tmp_pool.flow_pool_id);
-		ol_txrx_info("status %s flow_id %d flow_type %d",
+		ol_txrx_log(QDF_TRACE_LEVEL_INFO_LOW,
+			"flow_pool_id %d ::", tmp_pool.flow_pool_id);
+		ol_txrx_log(QDF_TRACE_LEVEL_INFO_LOW,
+			"status %s flow_id %d flow_type %d",
 			ol_tx_flow_pool_status_to_str(tmp_pool.status),
 			tmp_pool.member_flow_id, tmp_pool.flow_type);
-		ol_txrx_dbg(
+		ol_txrx_log(QDF_TRACE_LEVEL_INFO_LOW,
 			"total %d :: available %d :: deficient %d :: "
 			"pkt dropped (no desc) %d",
 			tmp_pool.flow_pool_size, tmp_pool.avail_desc,
 			tmp_pool.deficient_desc,
 			tmp_pool.pkt_drop_no_desc);
-		ol_txrx_info(
+		ol_txrx_log(QDF_TRACE_LEVEL_INFO_LOW,
 			"thresh: start %d stop %d prio start %d prio stop %d",
 			 tmp_pool.start_th, tmp_pool.stop_th,
 			 tmp_pool.start_priority_th, tmp_pool.stop_priority_th);
-
 		pool_prev = pool;
 		qdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
 	}
@@ -517,7 +519,6 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 		   "%s: malloc failed\n", __func__);
 		return NULL;
 	}
-
 	pool->flow_pool_id = flow_pool_id;
 	pool->flow_pool_size = flow_pool_size;
 	pool->status = FLOW_POOL_ACTIVE_UNPAUSED;
