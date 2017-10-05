@@ -801,7 +801,7 @@ QDF_STATUS wmi_unified_nan_req_cmd(void *wmi_hdl,
 			struct nan_req_params *nan_req);
 
 QDF_STATUS wmi_unified_process_dhcpserver_offload_cmd(void *wmi_hdl,
-				struct dhcp_offload_info_params *pDhcpSrvOffloadInfo);
+				struct dhcp_offload_info_params *params);
 
 QDF_STATUS wmi_unified_process_ch_avoid_update_cmd(void *wmi_hdl);
 

@@ -2594,13 +2594,13 @@ QDF_STATUS wmi_unified_nan_req_cmd(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_process_dhcpserver_offload_cmd(void *wmi_hdl,
-				struct dhcp_offload_info_params *pDhcpSrvOffloadInfo)
+				struct dhcp_offload_info_params *params)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_process_dhcpserver_offload_cmd)
 		return wmi_handle->ops->send_process_dhcpserver_offload_cmd(wmi_handle,
-			    pDhcpSrvOffloadInfo);
+			    params);
 
 	return QDF_STATUS_E_FAILURE;
 }
