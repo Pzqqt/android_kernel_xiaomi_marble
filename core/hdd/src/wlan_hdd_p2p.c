@@ -1219,6 +1219,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	qdf_list_node_t *tmp, *q;
 	struct hdd_roc_req *curr_roc_req;
 	uint32_t roc_scan_id;
+
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -1450,6 +1451,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	struct hdd_adapter *goAdapter;
 	uint16_t current_freq;
 	uint8_t home_ch = 0;
+
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {

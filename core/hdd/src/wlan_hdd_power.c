@@ -146,6 +146,7 @@ extern struct notifier_block hdd_netdev_notifier;
 static void hdd_enable_gtk_offload(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
+
 	status = pmo_ucfg_enable_gtk_offload_in_fwr(adapter->hdd_vdev);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("Failed to enable gtk offload");
@@ -1070,6 +1071,7 @@ hdd_suspend_wlan(void)
 	struct hdd_adapter *adapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	uint32_t conn_state_mask = 0;
+
 	hdd_info("WLAN being suspended by OS");
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);

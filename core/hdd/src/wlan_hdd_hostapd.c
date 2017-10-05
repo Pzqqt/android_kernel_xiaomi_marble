@@ -3666,6 +3666,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		struct hdd_context *hdd_ctx =
 			WLAN_HDD_GET_CTX(adapter);
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
 		hdd_debug("QCASAP_CLEAR_STATS val %d", set_value);
 		switch (set_value) {
 		case CDP_HDD_STATS:

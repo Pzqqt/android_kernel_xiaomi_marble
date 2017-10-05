@@ -5385,6 +5385,7 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 	struct hdd_context *hdd_ctx_ptr = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *skb = NULL;
 	eCsrAuthType auth_type;
+
 	ENTER();
 
 	if (wlan_hdd_validate_context(hdd_ctx_ptr))
@@ -14544,6 +14545,7 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					     bool unicast, bool multicast)
 {
 	int ret;
+
 	cds_ssr_protect(__func__);
 	ret =
 		__wlan_hdd_cfg80211_set_default_key(wiphy, ndev, key_index, unicast,

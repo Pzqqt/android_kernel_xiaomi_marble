@@ -8188,6 +8188,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_PHYMODE:
 	{
 		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
+
 		if (!hHal)
 			return -EINVAL;
 
@@ -8374,6 +8375,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		bool chwidth = false;
 		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
+
 		if (!hHal)
 			return -EINVAL;
 
@@ -9012,6 +9014,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_DEBUG_LOG:
 	{
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
 		if (!hHal)
 			return -EINVAL;
 

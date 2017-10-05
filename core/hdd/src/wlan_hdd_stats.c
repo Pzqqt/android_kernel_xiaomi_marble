@@ -4575,6 +4575,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 
 		for (j = 0; j < wiphy->bands[i]->n_channels && !filled; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];
+
 			filled = wlan_fill_survey_result(survey, opfreq,
 				&hdd_ctx->chan_info[idx],
 				&band->channels[j]);

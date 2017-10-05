@@ -2170,6 +2170,7 @@ static void hdd_register_policy_manager_callback(
 			struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_hdd_cbacks hdd_cbacks;
+
 	hdd_cbacks.sap_restart_chan_switch_cb =
 		sap_restart_chan_switch_cb;
 	hdd_cbacks.wlan_hdd_get_channel_for_sap_restart =
@@ -4940,11 +4941,12 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 			     struct cfg80211_bss *bss, tCsrRoamInfo *roam_info,
 			     const u8 *req_ie, size_t req_ie_len,
 			     const u8 *resp_ie, size_t resp_ie_len, u16 status,
-			     gfp_t gfp, bool connect_timeout, tSirResultCodes
-			     timeout_reason, struct fils_join_rsp_params
-			     *roam_fils_params)
+			     gfp_t gfp, bool connect_timeout,
+			     tSirResultCodes timeout_reason,
+			     struct fils_join_rsp_params *roam_fils_params)
 {
 	struct cfg80211_connect_resp_params fils_params;
+
 	qdf_mem_zero(&fils_params, sizeof(fils_params));
 
 	if (!roam_fils_params) {
@@ -4982,14 +4984,14 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 	roam_info->fils_join_rsp = NULL;
 }
 #else
-static inline void hdd_connect_done(struct net_device *dev, const u8 *bssid,
-				    struct cfg80211_bss *bss, tCsrRoamInfo
-				    *roam_info, const u8 *req_ie,
-				    size_t req_ie_len, const u8 *resp_ie,
-				    size_t resp_ie_len, u16 status, gfp_t gfp,
-				    bool connect_timeout, tSirResultCodes
-				    timeout_reason, struct fils_join_rsp_params
-				    *roam_fils_params)
+static inline void
+hdd_connect_done(struct net_device *dev, const u8 *bssid,
+		 struct cfg80211_bss *bss, tCsrRoamInfo *roam_info,
+		 const u8 *req_ie, size_t req_ie_len,
+		 const u8 *resp_ie, size_t resp_ie_len, u16 status,
+		 gfp_t gfp, bool connect_timeout,
+		 tSirResultCodes timeout_reason,
+		 struct fils_join_rsp_params *roam_fils_params)
 { }
 
 static inline void hdd_update_hlp_info(struct net_device *dev,
