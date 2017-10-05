@@ -65,8 +65,8 @@ int dp_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 		uint8_t session_id, bool is_ipv6_enabled);
 int dp_ipa_register_interface(char *ifname, bool is_ipv6_enabled);
 QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
-		enum ipa_client_type prod_client,
-		enum ipa_client_type cons_client,
+		qdf_ipa_client_type_t prod_client,
+		qdf_ipa_client_type_t cons_client,
 		uint8_t session_id, bool is_ipv6_enabled);
 QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled);
 QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *pdev);
