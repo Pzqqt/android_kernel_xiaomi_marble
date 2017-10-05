@@ -326,6 +326,15 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);
 int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
 				   struct ch_avoid_ind_type *avoid_freq_list);
 
+/**
+ * wlan_hdd_send_hang_reason_event() - Send hang reason to the userspace
+ * @hdd_ctx: Pointer to hdd context
+ * @reason: cds recovery reason
+ *
+ * Return: 0 on success or failure reason
+ */
+int wlan_hdd_send_hang_reason_event(struct hdd_context *pHddCtx, uint32_t reason);
+
 int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx, uint8_t op_chan);
 
 #ifdef FEATURE_WLAN_EXTSCAN

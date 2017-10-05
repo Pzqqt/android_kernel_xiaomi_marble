@@ -462,7 +462,7 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 				false,
 				pMac->sme.enableSelfRecovery ? true : false);
 		else
-			cds_trigger_recovery();
+			cds_trigger_recovery(QDF_GET_MSG_BUFF_FAILURE);
 	}
 
 	/* memset to zero */

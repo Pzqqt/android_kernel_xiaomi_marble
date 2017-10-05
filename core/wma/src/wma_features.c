@@ -3928,7 +3928,7 @@ static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
 		WMA_LOGE("%s: Module (un)loading; Ignoring suspend timeout",
 			 __func__);
 	else
-		cds_trigger_recovery();
+		cds_trigger_recovery(QDF_SUSPEND_TIMEOUT);
 }
 
 #ifdef FEATURE_WLAN_TDLS

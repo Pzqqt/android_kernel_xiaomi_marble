@@ -2463,6 +2463,9 @@ static void ol_txrx_flush_cache_rx_queue(void)
 	}
 }
 
+/* Define short name to use in cds_trigger_recovery */
+#define PEER_DEL_TIMEOUT QDF_PEER_DELETION_TIMEDOUT
+
 /**
  * ol_txrx_peer_attach - Allocate and set up references for a
  * data peer object.
@@ -2566,7 +2569,7 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 		if (QDF_STATUS_SUCCESS != rc) {
 			ol_txrx_err("error waiting for peer(%d) deletion, status %d\n",
 				    vdev->wait_on_peer_id, (int) rc);
-			cds_trigger_recovery();
+			cds_trigger_recovery(PEER_DEL_TIMEOUT);
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 
 			return NULL;
@@ -2672,6 +2675,8 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 
 	return (void *)peer;
 }
+
+#undef PEER_DEL_TIMEOUT
 
 /*
  * Discarding tx filter - removes all data frames (disconnected state)
@@ -3457,7 +3462,7 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 void peer_unmap_timer_work_function(void *param)
 {
 	WMA_LOGE("Enter: %s", __func__);
-	cds_trigger_recovery();
+	cds_trigger_recovery(QDF_PEER_UNMAP_TIMEDOUT);
 }
 
 /**

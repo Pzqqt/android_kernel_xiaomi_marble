@@ -2929,7 +2929,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 			return 0;
 		}
 		if (value[1] == 3) {
-			cds_trigger_recovery();
+			cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 			return 0;
 		}
 		ret = wma_cli_set2_command(adapter->sessionId,

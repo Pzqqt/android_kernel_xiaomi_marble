@@ -354,7 +354,28 @@ bool cds_is_packet_log_enabled(void);
 
 uint64_t cds_get_monotonic_boottime(void);
 
-void cds_trigger_recovery(void);
+/**
+ * cds_get_recovery_reason() - get self recovery reason
+ * @reason: cds hang reason
+ *
+ * Return: None
+ */
+void cds_get_recovery_reason(enum qdf_hang_reason *reason);
+
+/**
+ * cds_reset_recovery_reason() - reset the reason to unspecified
+ *
+ * Return: None
+ */
+void cds_reset_recovery_reason(void);
+
+/**
+ * cds_trigger_recovery() - trigger self recovery
+ * @reason: recovery reason
+ *
+ * Return: none
+ */
+void cds_trigger_recovery(enum qdf_hang_reason reason);
 
 void cds_set_wakelock_logging(bool value);
 bool cds_is_wakelock_enabled(void);

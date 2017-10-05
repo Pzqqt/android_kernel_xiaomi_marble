@@ -12686,7 +12686,7 @@ void hdd_drv_ops_inactivity_handler(void)
 		QDF_BUG(0);
 
 	if (cds_is_self_recovery_enabled())
-		cds_trigger_recovery();
+		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 	else
 		QDF_BUG(0);
 }

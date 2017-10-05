@@ -419,6 +419,9 @@ static int wlan_hdd_update_scan_ies(struct hdd_adapter *adapter,
 	return 0;
 }
 
+/* Define short name to use in cds_trigger_recovery */
+#define SCAN_FAILURE QDF_SCAN_ATTEMPT_FAILURES
+
 /**
  * __wlan_hdd_cfg80211_scan() - API to process cfg80211 scan request
  * @wiphy: Pointer to wiphy
@@ -570,7 +573,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 					   hdd_ctx->config->enableSelfRecovery);
 				} else {
 					hdd_err("Triggering SSR due to scan stuck");
-					cds_trigger_recovery();
+					cds_trigger_recovery(SCAN_FAILURE);
 				}
 			}
 		}
@@ -880,6 +883,7 @@ free_mem:
 #endif
 
 }
+#undef SCAN_FAILURE
 
 /**
  * wlan_hdd_cfg80211_scan() - API to process cfg80211 scan request
