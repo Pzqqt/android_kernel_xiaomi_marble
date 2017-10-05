@@ -14649,7 +14649,8 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adap
 	struct ieee80211_channel *chan;
 	struct ieee80211_mgmt *mgmt = NULL;
 	struct cfg80211_bss *bss_status = NULL;
-	size_t frame_len = sizeof(struct ieee80211_mgmt) + ie_length;
+	size_t frame_len = ie_length + offsetof(struct ieee80211_mgmt,
+						u.probe_resp.variable);
 	int rssi = 0;
 	struct hdd_context *hdd_ctx;
 	struct timespec ts;
