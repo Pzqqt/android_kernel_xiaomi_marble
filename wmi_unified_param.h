@@ -3121,15 +3121,15 @@ struct tdls_channel_switch_params {
 /**
  * struct dhcp_offload_info_params - dhcp offload parameters
  * @vdev_id: request data length
- * @dhcpSrvOffloadEnabled: dhcp offload enabled
- * @dhcpClientNum: dhcp client no
- * @dhcpSrvIP: dhcp server ip
+ * @dhcp_offload_enabled: dhcp offload enabled
+ * @dhcp_client_num: dhcp client no
+ * @dhcp_srv_addr: dhcp server ip
  */
 struct dhcp_offload_info_params {
 	uint32_t vdev_id;
-	uint32_t dhcpSrvOffloadEnabled;
-	uint32_t dhcpClientNum;
-	uint32_t dhcpSrvIP;
+	bool dhcp_offload_enabled;
+	uint32_t dhcp_client_num;
+	uint32_t dhcp_srv_addr;
 };
 
 /**
