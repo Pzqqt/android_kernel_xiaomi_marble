@@ -37,7 +37,6 @@
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
-#include <linux/net.h>              /* struct llc, struct ether_header, etc. */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT1 */
 #include <ol_txrx_encap.h>      /* struct ol_rx_decap_info_t */
 

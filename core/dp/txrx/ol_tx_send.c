@@ -33,7 +33,6 @@
 
 #include <cds_queue.h>          /* TAILQ */
 #ifdef QCA_COMPUTE_TX_DELAY
-#include <linux/ieee80211.h>          /* ieee80211_frame, etc. */
 #include <enet.h>               /* ethernet_hdr_t, etc. */
 #include <ipv6_defs.h>          /* ipv6_traffic_class */
 #endif

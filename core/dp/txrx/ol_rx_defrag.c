@@ -61,7 +61,6 @@
 #include <ol_ctrl_txrx_api.h>
 #include <ol_txrx_peer_find.h>
 #include <qdf_nbuf.h>
-#include <linux/ieee80211.h>
 #include <qdf_util.h>
 #include <athdefs.h>
 #include <qdf_mem.h>

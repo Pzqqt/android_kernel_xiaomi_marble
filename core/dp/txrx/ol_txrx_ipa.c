@@ -303,39 +303,45 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 {
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)ppdev;
 	struct ol_txrx_ipa_resources *ipa_res = &pdev->ipa_resource;
-	struct ipa_wdi_in_params pipe_in;
-	struct ipa_wdi_out_params pipe_out;
+	qdf_ipa_wdi_in_params_t pipe_in;
+	qdf_ipa_wdi_out_params_t pipe_out;
+
 	int ret;
 
-	qdf_mem_zero(&pipe_in, sizeof(struct ipa_wdi_in_params));
-	qdf_mem_zero(&pipe_out, sizeof(struct ipa_wdi_out_params));
+	qdf_mem_zero(&pipe_in, sizeof(pipe_in));
+	qdf_mem_zero(&pipe_out, sizeof(pipe_out));
+
 
 	/* TX PIPE */
-	pipe_in.sys.ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_len = OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_ofst_pkt_size_valid = 1;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_ofst_pkt_size = 0;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_additional_const_len =
+	QDF_IPA_PIPE_IN_NAT_EN(&pipe_in) = IPA_BYPASS_NAT;
+	QDF_IPA_PIPE_IN_HDR_LEN(&pipe_in) = OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN;
+	QDF_IPA_PIPE_IN_HDR_OFST_PKT_SIZE_VALID(&pipe_in) = 1;
+	QDF_IPA_PIPE_IN_HDR_OFST_PKT_SIZE(&pipe_in) = 0;
+	QDF_IPA_PIPE_IN_HDR_ADDITIONAL_CONST_LEN(&pipe_in) =
 		OL_TXRX_IPA_UC_WLAN_8023_HDR_SIZE;
-	pipe_in.sys.ipa_ep_cfg.mode.mode = IPA_BASIC;
-	pipe_in.sys.client = IPA_CLIENT_WLAN1_CONS;
-	pipe_in.sys.desc_fifo_sz = ipa_desc_size;
-	pipe_in.sys.priv = ipa_priv;
-	pipe_in.sys.ipa_ep_cfg.hdr_ext.hdr_little_endian = true;
-	pipe_in.sys.notify = ipa_i2w_cb;
+	QDF_IPA_PIPE_IN_MODE(&pipe_in) = IPA_BASIC;
+	QDF_IPA_PIPE_IN_CLIENT(&pipe_in) = IPA_CLIENT_WLAN1_CONS;
+	QDF_IPA_PIPE_IN_DESC_FIFO_SZ(&pipe_in) = ipa_desc_size;
+	QDF_IPA_PIPE_IN_PRIV(&pipe_in) = ipa_priv;
+	QDF_IPA_PIPE_IN_HDR_LITTLE_ENDIAN(&pipe_in) = true;
+	QDF_IPA_PIPE_IN_NOTIFY(&pipe_in) = ipa_i2w_cb;
+
 	if (!is_rm_enabled) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			    "%s: IPA RM DISABLED, IPA AWAKE", __func__);
-		pipe_in.sys.keep_ipa_awake = true;
+		QDF_IPA_PIPE_IN_KEEP_IPA_AWAKE(&pipe_in) = true;
 	}
 
-	pipe_in.u.dl.comp_ring_base_pa = ipa_res->tx_comp_ring_base_paddr;
-	pipe_in.u.dl.comp_ring_size = ipa_res->tx_comp_ring_size *
-				      sizeof(qdf_dma_addr_t);
-	pipe_in.u.dl.ce_ring_base_pa = ipa_res->ce_sr_base_paddr;
-	pipe_in.u.dl.ce_door_bell_pa = ipa_res->ce_reg_paddr;
-	pipe_in.u.dl.ce_ring_size = ipa_res->ce_sr_ring_size;
-	pipe_in.u.dl.num_tx_buffers = ipa_res->tx_num_alloc_buffer;
+	QDF_IPA_PIPE_IN_DL_COMP_RING_BASE_PA(&pipe_in) =
+		ipa_res->tx_comp_ring_base_paddr;
+	QDF_IPA_PIPE_IN_DL_COMP_RING_SIZE(&pipe_in) =
+		ipa_res->tx_comp_ring_size * sizeof(qdf_dma_addr_t);
+	QDF_IPA_PIPE_IN_DL_CE_RING_BASE_PA(&pipe_in) =
+		ipa_res->ce_sr_base_paddr;
+	QDF_IPA_PIPE_IN_DL_CE_DOOR_BELL_PA(&pipe_in) = ipa_res->ce_reg_paddr;
+	QDF_IPA_PIPE_IN_DL_CE_RING_SIZE(&pipe_in) = ipa_res->ce_sr_ring_size;
+	QDF_IPA_PIPE_IN_DL_NUM_TX_BUFFERS(&pipe_in) =
+		ipa_res->tx_num_alloc_buffer;
 
 	/* Connect WDI IPA PIPE */
 	ret = ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
@@ -347,52 +353,56 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 
 	/* Micro Controller Doorbell register */
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		"%s CONS DB pipe out 0x%x TX PIPE Handle 0x%x",
-		__func__, (unsigned int)pipe_out.uc_door_bell_pa,
+		"%s CONS DB pipe out 0x%x TX PIPE Handle 0x%x", __func__,
+		(unsigned int)QDF_IPA_PIPE_OUT_UC_DOOR_BELL_PA(&pipe_out),
 		pipe_out.clnt_hdl);
-	ipa_res->tx_comp_doorbell_paddr = pipe_out.uc_door_bell_pa;
+	ipa_res->tx_comp_doorbell_paddr =
+		QDF_IPA_PIPE_OUT_UC_DOOR_BELL_PA(&pipe_out);
 	/* WLAN TX PIPE Handle */
-	ipa_res->tx_pipe_handle = pipe_out.clnt_hdl;
-	*p_tx_pipe_handle = pipe_out.clnt_hdl;
+	ipa_res->tx_pipe_handle = QDF_IPA_PIPE_OUT_CLNT_HDL(&pipe_out);
+	*p_tx_pipe_handle = QDF_IPA_PIPE_OUT_CLNT_HDL(&pipe_out);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		"TX: %s 0x%x, %s %d, %s 0x%x, %s 0x%x, %s %d, %sNB %d, %s 0x%x",
 		"comp_ring_base_pa",
-		(unsigned int)pipe_in.u.dl.comp_ring_base_pa,
+		(unsigned int)QDF_IPA_PIPE_IN_DL_COMP_RING_BASE_PA(&pipe_in),
 		"comp_ring_size",
-		pipe_in.u.dl.comp_ring_size,
+		QDF_IPA_PIPE_IN_DL_COMP_RING_SIZE(&pipe_in),
 		"ce_ring_base_pa",
-		(unsigned int)pipe_in.u.dl.ce_ring_base_pa,
+		(unsigned int)QDF_IPA_PIPE_IN_DL_CE_RING_BASE_PA(&pipe_in),
 		"ce_door_bell_pa",
-		(unsigned int)pipe_in.u.dl.ce_door_bell_pa,
+		(unsigned int)QDF_IPA_PIPE_IN_DL_CE_DOOR_BELL_PA(&pipe_in),
 		"ce_ring_size",
-		pipe_in.u.dl.ce_ring_size,
+		QDF_IPA_PIPE_IN_DL_CE_RING_SIZE(&pipe_in),
 		"num_tx_buffers",
-		pipe_in.u.dl.num_tx_buffers,
+		QDF_IPA_PIPE_IN_DL_NUM_TX_BUFFERS(&pipe_in),
 		"tx_comp_doorbell_paddr",
 		(unsigned int)ipa_res->tx_comp_doorbell_paddr);
 
 	/* RX PIPE */
-	pipe_in.sys.ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_len = OL_TXRX_IPA_UC_WLAN_RX_HDR_LEN;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 0;
-	pipe_in.sys.ipa_ep_cfg.hdr.hdr_metadata_reg_valid = 1;
-	pipe_in.sys.ipa_ep_cfg.mode.mode = IPA_BASIC;
-	pipe_in.sys.client = IPA_CLIENT_WLAN1_PROD;
-	pipe_in.sys.desc_fifo_sz = ipa_desc_size + sizeof(struct sps_iovec);
-	pipe_in.sys.notify = ipa_w2i_cb;
+	QDF_IPA_PIPE_IN_NAT_EN(&pipe_in) = IPA_BYPASS_NAT;
+	QDF_IPA_PIPE_IN_HDR_LEN(&pipe_in) = OL_TXRX_IPA_UC_WLAN_RX_HDR_LEN;
+	QDF_IPA_PIPE_IN_HDR_OFST_METADATA_VALID(&pipe_in) = 0;
+	QDF_IPA_PIPE_IN_HDR_METADATA_REG_VALID(&pipe_in) = 1;
+	QDF_IPA_PIPE_IN_MODE(&pipe_in) = IPA_BASIC;
+	QDF_IPA_PIPE_IN_CLIENT(&pipe_in) = IPA_CLIENT_WLAN1_PROD;
+	QDF_IPA_PIPE_IN_DESC_FIFO_SZ(&pipe_in) =
+		ipa_desc_size + sizeof(struct sps_iovec);
+	QDF_IPA_PIPE_IN_NOTIFY(&pipe_in) = ipa_w2i_cb;
 	if (!is_rm_enabled) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			    "%s: IPA RM DISABLED, IPA AWAKE", __func__);
-		pipe_in.sys.keep_ipa_awake = true;
+		QDF_IPA_PIPE_IN_KEEP_IPA_AWAKE(&pipe_in) = true;
 	}
 
-	pipe_in.u.ul.rdy_ring_base_pa = ipa_res->rx_rdy_ring_base_paddr;
-	pipe_in.u.ul.rdy_ring_size = ipa_res->rx_rdy_ring_size;
-	pipe_in.u.ul.rdy_ring_rp_pa = ipa_res->rx_proc_done_idx_paddr;
+	QDF_IPA_PIPE_IN_UL_RDY_RING_BASE_PA(&pipe_in) =
+		ipa_res->rx_rdy_ring_base_paddr;
+	QDF_IPA_PIPE_IN_UL_RDY_RING_SIZE(&pipe_in) = ipa_res->rx_rdy_ring_size;
+	QDF_IPA_PIPE_IN_UL_RDY_RING_RP_PA(&pipe_in) =
+		ipa_res->rx_proc_done_idx_paddr;
 	OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res);
 
 #ifdef FEATURE_METERING
-	pipe_in.wdi_notify = ipa_wdi_meter_notifier_cb;
+	QDF_IPA_PIPE_IN_WDI_NOTIFY(&pipe_in) = ipa_wdi_meter_notifier_cb;
 #endif
 
 	ret = ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
@@ -401,17 +411,18 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 		    "ipa_connect_wdi_pipe: Rx pipe setup failed: ret=%d", ret);
 		return QDF_STATUS_E_FAILURE;
 	}
-	ipa_res->rx_ready_doorbell_paddr = pipe_out.uc_door_bell_pa;
-	ipa_res->rx_pipe_handle = pipe_out.clnt_hdl;
-	*p_rx_pipe_handle = pipe_out.clnt_hdl;
+	ipa_res->rx_ready_doorbell_paddr =
+		QDF_IPA_PIPE_OUT_UC_DOOR_BELL_PA(&pipe_out);
+	ipa_res->rx_pipe_handle = QDF_IPA_PIPE_OUT_CLNT_HDL(&pipe_out);
+	*p_rx_pipe_handle = QDF_IPA_PIPE_OUT_CLNT_HDL(&pipe_out);
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "RX: %s 0x%x, %s %d, %s 0x%x, %s 0x%x",
 		  "rdy_ring_base_pa",
-		  (unsigned int)pipe_in.u.ul.rdy_ring_base_pa,
+		  (unsigned int)QDF_IPA_PIPE_IN_UL_RDY_RING_BASE_PA(&pipe_in),
 		  "rdy_ring_size",
-		  pipe_in.u.ul.rdy_ring_size,
+		  QDF_IPA_PIPE_IN_UL_RDY_RING_SIZE(&pipe_in),
 		  "rdy_ring_rp_pa",
-		  (unsigned int)pipe_in.u.ul.rdy_ring_rp_pa,
+		  (unsigned int)QDF_IPA_PIPE_IN_UL_RDY_RING_RP_PA(&pipe_in),
 		  "rx_ready_doorbell_paddr",
 		  (unsigned int)ipa_res->rx_ready_doorbell_paddr);
 
@@ -462,13 +473,13 @@ QDF_STATUS ol_txrx_ipa_cleanup(uint32_t tx_pipe_handle, uint32_t rx_pipe_handle)
  */
 static QDF_STATUS ol_txrx_ipa_remove_header(char *name)
 {
-	struct ipa_ioc_get_hdr hdrlookup;
+	qdf_ipa_ioc_get_hdr_t hdrlookup;
 	int ret = 0, len;
-	struct ipa_ioc_del_hdr *ipa_hdr;
+	qdf_ipa_ioc_del_hdr_t *ipa_hdr;
 
 	qdf_mem_zero(&hdrlookup, sizeof(hdrlookup));
 	strlcpy(hdrlookup.name, name, sizeof(hdrlookup.name));
-	ret = ipa_get_hdr(&hdrlookup);
+	ret = qdf_ipa_get_hdr(&hdrlookup);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			  "Hdr deleted already %s, %d", name, ret);
@@ -477,18 +488,18 @@ static QDF_STATUS ol_txrx_ipa_remove_header(char *name)
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG, "hdl: 0x%x",
 		  hdrlookup.hdl);
-	len = sizeof(struct ipa_ioc_del_hdr) + sizeof(struct ipa_hdr_del) * 1;
-	ipa_hdr = (struct ipa_ioc_del_hdr *)qdf_mem_malloc(len);
+	len = sizeof(qdf_ipa_ioc_del_hdr_t) + sizeof(qdf_ipa_hdr_del_t) * 1;
+	ipa_hdr = (qdf_ipa_ioc_del_hdr_t *)qdf_mem_malloc(len);
 	if (ipa_hdr == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "ipa_hdr allocation failed");
 		return QDF_STATUS_E_FAILURE;
 	}
-	ipa_hdr->num_hdls = 1;
-	ipa_hdr->commit = 0;
-	ipa_hdr->hdl[0].hdl = hdrlookup.hdl;
-	ipa_hdr->hdl[0].status = -1;
-	ret = ipa_del_hdr(ipa_hdr);
+	QDF_IPA_IOC_DEL_HDR_NUM_HDRS(ipa_hdr) = 1;
+	QDF_IPA_IOC_DEL_HDR_COMMIT(ipa_hdr) = 0;
+	QDF_IPA_IOC_DEL_HDR_HDL(ipa_hdr) = QDF_IPA_IOC_GET_HDR_HDL(&hdrlookup);
+	QDF_IPA_IOC_DEL_HDR_STATUS(ipa_hdr) = -1;
+	ret = qdf_ipa_del_hdr(ipa_hdr);
 	if (ret != 0) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "Delete header failed: %d", ret);
@@ -511,7 +522,7 @@ static QDF_STATUS ol_txrx_ipa_remove_header(char *name)
 static int ol_txrx_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 				       uint8_t session_id, bool is_ipv6_enabled)
 {
-	struct ipa_ioc_add_hdr *ipa_hdr = NULL;
+	qdf_ipa_ioc_add_hdr_t *ipa_hdr = NULL;
 	int ret = -EINVAL;
 	struct ol_txrx_ipa_uc_tx_hdr *uc_tx_hdr = NULL;
 
@@ -519,8 +530,8 @@ static int ol_txrx_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 		  "Add Partial hdr: %s, %pM", ifname, mac_addr);
 
 	/* dynamically allocate the memory to add the hdrs */
-	ipa_hdr = qdf_mem_malloc(sizeof(struct ipa_ioc_add_hdr)
-				 + sizeof(struct ipa_hdr_add));
+	ipa_hdr = qdf_mem_malloc(sizeof(qdf_ipa_ioc_add_hdr_t)
+				 + sizeof(qdf_ipa_hdr_add_t));
 	if (!ipa_hdr) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			    "%s: ipa_hdr allocation failed", ifname);
@@ -528,26 +539,28 @@ static int ol_txrx_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 		goto end;
 	}
 
-	ipa_hdr->commit = 0;
-	ipa_hdr->num_hdrs = 1;
+	QDF_IPA_IOC_ADD_HDR_COMMIT(ipa_hdr) = 0;
+	QDF_IPA_IOC_ADD_HDR_NUM_HDRS(ipa_hdr) = 1;
 
-	uc_tx_hdr = (struct ol_txrx_ipa_uc_tx_hdr *)ipa_hdr->hdr[0].hdr;
+	uc_tx_hdr = (struct ol_txrx_ipa_uc_tx_hdr *)
+		QDF_IPA_IOC_ADD_HDR_HDR(ipa_hdr);
 	memcpy(uc_tx_hdr, &ipa_uc_tx_hdr, OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN);
 	memcpy(uc_tx_hdr->eth.h_source, mac_addr, ETH_ALEN);
 	uc_tx_hdr->ipa_hd.vdev_id = session_id;
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "ifname=%s, vdev_id=%d",
 		  ifname, uc_tx_hdr->ipa_hd.vdev_id);
-	snprintf(ipa_hdr->hdr[0].name, IPA_RESOURCE_NAME_MAX, "%s%s",
-		 ifname, OL_TXRX_IPA_IPV4_NAME_EXT);
-	ipa_hdr->hdr[0].hdr_len = OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN;
-	ipa_hdr->hdr[0].type = IPA_HDR_L2_ETHERNET_II;
-	ipa_hdr->hdr[0].is_partial = 1;
-	ipa_hdr->hdr[0].hdr_hdl = 0;
-	ipa_hdr->hdr[0].is_eth2_ofst_valid = 1;
-	ipa_hdr->hdr[0].eth2_ofst = OL_TXRX_IPA_UC_WLAN_HDR_DES_MAC_OFFSET;
+	snprintf(QDF_IPA_IOC_ADD_HDR_NAME(ipa_hdr), IPA_RESOURCE_NAME_MAX,
+		 "%s%s", ifname, OL_TXRX_IPA_IPV4_NAME_EXT);
+	QDF_IPA_IOC_ADD_HDR_HDR_LEN(ipa_hdr) = OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN;
+	QDF_IPA_IOC_ADD_HDR_TYPE(ipa_hdr) = IPA_HDR_L2_ETHERNET_II;
+	QDF_IPA_IOC_ADD_HDR_IS_PARTIAL(ipa_hdr) = 1;
+	QDF_IPA_IOC_ADD_HDR_HDR_HDL(ipa_hdr) = 0;
+	QDF_IPA_IOC_ADD_HDR_IS_ETH2_OFST_VALID(ipa_hdr) = 1;
+	QDF_IPA_IOC_ADD_HDR_ETH2_OFST(ipa_hdr) =
+		OL_TXRX_IPA_UC_WLAN_HDR_DES_MAC_OFFSET;
 
-	ret = ipa_add_hdr(ipa_hdr);
+	ret = qdf_ipa_add_hdr(ipa_hdr);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s IPv4 add hdr failed: %d", ifname, ret);
@@ -555,17 +568,20 @@ static int ol_txrx_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: IPv4 hdr_hdl: 0x%x",
-		  ipa_hdr->hdr[0].name, ipa_hdr->hdr[0].hdr_hdl);
+		"%s: IPv4 hdr_hdl: 0x%x",
+		QDF_IPA_IOC_ADD_HDR_NAME(ipa_hdr),
+		QDF_IPA_IOC_ADD_HDR_HDR_HDL(ipa_hdr));
 
 	if (is_ipv6_enabled) {
-		snprintf(ipa_hdr->hdr[0].name, IPA_RESOURCE_NAME_MAX, "%s%s",
+		snprintf(QDF_IPA_IOC_ADD_HDR_NAME(ipa_hdr),
+			 IPA_RESOURCE_NAME_MAX, "%s%s",
 			 ifname, OL_TXRX_IPA_IPV6_NAME_EXT);
 
-		uc_tx_hdr = (struct ol_txrx_ipa_uc_tx_hdr *)ipa_hdr->hdr[0].hdr;
+		uc_tx_hdr = (struct ol_txrx_ipa_uc_tx_hdr *)
+			QDF_IPA_IOC_ADD_HDR_HDR(ipa_hdr);
 		uc_tx_hdr->eth.h_proto = cpu_to_be16(ETH_P_IPV6);
 
-		ret = ipa_add_hdr(ipa_hdr);
+		ret = qdf_ipa_add_hdr(ipa_hdr);
 		if (ret) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				    "%s: IPv6 add hdr failed: %d", ifname, ret);
@@ -573,8 +589,9 @@ static int ol_txrx_ipa_add_header_info(char *ifname, uint8_t *mac_addr,
 		}
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-			  "%s: IPv6 hdr_hdl: 0x%x",
-			  ipa_hdr->hdr[0].name, ipa_hdr->hdr[0].hdr_hdl);
+			"%s: IPv6 hdr_hdl: 0x%x",
+			QDF_IPA_IOC_ADD_HDR_NAME(ipa_hdr),
+			QDF_IPA_IOC_ADD_HDR_HDR_HDL(ipa_hdr));
 	}
 
 	qdf_mem_free(ipa_hdr);
@@ -603,15 +620,15 @@ end:
  * Return: 0 on success, negative errno on error
  */
 static int ol_txrx_ipa_register_interface(char *ifname,
-					  enum ipa_client_type prod_client,
-					  enum ipa_client_type cons_client,
+					  qdf_ipa_client_type_t prod_client,
+					  qdf_ipa_client_type_t cons_client,
 					  uint8_t session_id,
 					  bool is_ipv6_enabled)
 {
-	struct ipa_tx_intf tx_intf;
-	struct ipa_rx_intf rx_intf;
-	struct ipa_ioc_tx_intf_prop *tx_prop = NULL;
-	struct ipa_ioc_rx_intf_prop *rx_prop = NULL;
+	qdf_ipa_tx_intf_t tx_intf;
+	qdf_ipa_rx_intf_t rx_intf;
+	qdf_ipa_ioc_tx_intf_prop_t *tx_prop = NULL;
+	qdf_ipa_ioc_rx_intf_prop_t *rx_prop = NULL;
 
 	char ipv4_hdr_name[IPA_RESOURCE_NAME_MAX];
 	char ipv6_hdr_name[IPA_RESOURCE_NAME_MAX];
@@ -624,7 +641,7 @@ static int ol_txrx_ipa_register_interface(char *ifname,
 
 	/* Allocate TX properties for TOS categories, 1 each for IPv4 & IPv6 */
 	tx_prop =
-		qdf_mem_malloc(sizeof(struct ipa_ioc_tx_intf_prop) * num_prop);
+		qdf_mem_malloc(sizeof(qdf_ipa_ioc_tx_intf_prop_t) * num_prop);
 	if (!tx_prop) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "tx_prop allocation failed");
@@ -633,7 +650,7 @@ static int ol_txrx_ipa_register_interface(char *ifname,
 
 	/* Allocate RX properties, 1 each for IPv4 & IPv6 */
 	rx_prop =
-		qdf_mem_malloc(sizeof(struct ipa_ioc_rx_intf_prop) * num_prop);
+		qdf_mem_malloc(sizeof(qdf_ipa_ioc_rx_intf_prop_t) * num_prop);
 	if (!rx_prop) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "rx_prop allocation failed");
@@ -648,52 +665,65 @@ static int ol_txrx_ipa_register_interface(char *ifname,
 	snprintf(ipv6_hdr_name, IPA_RESOURCE_NAME_MAX, "%s%s",
 		 ifname, OL_TXRX_IPA_IPV6_NAME_EXT);
 
-	rx_prop[IPA_IP_v4].ip = IPA_IP_v4;
-	rx_prop[IPA_IP_v4].src_pipe = prod_client;
-	rx_prop[IPA_IP_v4].hdr_l2_type = IPA_HDR_L2_ETHERNET_II;
-	rx_prop[IPA_IP_v4].attrib.attrib_mask = IPA_FLT_META_DATA;
+	QDF_IPA_IOC_RX_INTF_PROP_IP(&rx_prop[IPA_IP_v4]) = IPA_IP_v4;
+	QDF_IPA_IOC_RX_INTF_PROP_SRC_PIPE(&rx_prop[IPA_IP_v4]) = prod_client;
+	QDF_IPA_IOC_RX_INTF_PROP_HDR_L2_TYPE(&rx_prop[IPA_IP_v4]) =
+		IPA_HDR_L2_ETHERNET_II;
+	QDF_IPA_IOC_RX_INTF_PROP_ATTRIB_MASK(&rx_prop[IPA_IP_v4]) =
+		IPA_FLT_META_DATA;
 
 	/*
 	 * Interface ID is 3rd byte in the CLD header. Add the meta data and
 	 * mask to identify the interface in IPA hardware
 	 */
-	rx_prop[IPA_IP_v4].attrib.meta_data =
+	QDF_IPA_IOC_RX_INTF_PROP_META_DATA(&rx_prop[IPA_IP_v4]) =
 		htonl(session_id << 16);
-	rx_prop[IPA_IP_v4].attrib.meta_data_mask = htonl(0x00FF0000);
+	QDF_IPA_IOC_RX_INTF_PROP_META_DATA_MASK(&rx_prop[IPA_IP_v4]) =
+		htonl(0x00FF0000);
 
 	rx_intf.num_props++;
 	if (is_ipv6_enabled) {
-		rx_prop[IPA_IP_v6].ip = IPA_IP_v6;
-		rx_prop[IPA_IP_v6].src_pipe = prod_client;
-		rx_prop[IPA_IP_v6].hdr_l2_type = IPA_HDR_L2_ETHERNET_II;
-		rx_prop[IPA_IP_v6].attrib.attrib_mask = IPA_FLT_META_DATA;
-		rx_prop[IPA_IP_v6].attrib.meta_data =
+		QDF_IPA_IOC_RX_INTF_PROP_IP(&rx_prop[IPA_IP_v6]) = IPA_IP_v6;
+		QDF_IPA_IOC_RX_INTF_PROP_SRC_PIPE(&rx_prop[IPA_IP_v6]) =
+			prod_client;
+		QDF_IPA_IOC_RX_INTF_PROP_HDR_L2_TYPE(&rx_prop[IPA_IP_v6]) =
+			IPA_HDR_L2_ETHERNET_II;
+		QDF_IPA_IOC_RX_INTF_PROP_ATTRIB_MASK(&rx_prop[IPA_IP_v6]) =
+			IPA_FLT_META_DATA;
+		QDF_IPA_IOC_RX_INTF_PROP_META_DATA(&rx_prop[IPA_IP_v6]) =
 			htonl(session_id << 16);
-		rx_prop[IPA_IP_v4].attrib.meta_data_mask = htonl(0x00FF0000);
+		QDF_IPA_IOC_RX_INTF_PROP_META_DATA_MASK(&rx_prop[IPA_IP_v6]) =
+			htonl(0x00FF0000);
 
 		rx_intf.num_props++;
 	}
 
-	tx_prop[IPA_IP_v4].ip = IPA_IP_v4;
-	tx_prop[IPA_IP_v4].hdr_l2_type = IPA_HDR_L2_ETHERNET_II;
-	tx_prop[IPA_IP_v4].dst_pipe = IPA_CLIENT_WLAN1_CONS;
-	tx_prop[IPA_IP_v4].alt_dst_pipe = cons_client;
-	strlcpy(tx_prop[IPA_IP_v4].hdr_name, ipv4_hdr_name,
-			IPA_RESOURCE_NAME_MAX);
+	QDF_IPA_IOC_TX_INTF_PROP_IP(&tx_prop[IPA_IP_v4]) = IPA_IP_v4;
+	QDF_IPA_IOC_TX_INTF_PROP_HDR_L2_TYPE(&tx_prop[IPA_IP_v4]) =
+			IPA_HDR_L2_ETHERNET_II;
+	QDF_IPA_IOC_TX_INTF_PROP_DST_PIPE(&tx_prop[IPA_IP_v4]) =
+			IPA_CLIENT_WLAN1_CONS;
+	QDF_IPA_IOC_TX_INTF_PROP_ALT_DST_PIPE(&tx_prop[IPA_IP_v4]) =
+			cons_client;
+	strlcpy(QDF_IPA_IOC_TX_INTF_PROP_HDR_NAME(&tx_prop[IPA_IP_v4]),
+		ipv4_hdr_name, IPA_RESOURCE_NAME_MAX);
 	tx_intf.num_props++;
 
 	if (is_ipv6_enabled) {
-		tx_prop[IPA_IP_v6].ip = IPA_IP_v6;
-		tx_prop[IPA_IP_v6].hdr_l2_type = IPA_HDR_L2_ETHERNET_II;
-		tx_prop[IPA_IP_v6].dst_pipe = IPA_CLIENT_WLAN1_CONS;
-		tx_prop[IPA_IP_v6].alt_dst_pipe = cons_client;
-		strlcpy(tx_prop[IPA_IP_v6].hdr_name, ipv6_hdr_name,
-				IPA_RESOURCE_NAME_MAX);
+		QDF_IPA_IOC_TX_INTF_PROP_IP(&tx_prop[IPA_IP_v6]) = IPA_IP_v6;
+		QDF_IPA_IOC_TX_INTF_PROP_HDR_L2_TYPE(&tx_prop[IPA_IP_v6]) =
+			IPA_HDR_L2_ETHERNET_II;
+		QDF_IPA_IOC_TX_INTF_PROP_DST_PIPE(&tx_prop[IPA_IP_v6]) =
+			IPA_CLIENT_WLAN1_CONS;
+		QDF_IPA_IOC_TX_INTF_PROP_ALT_DST_PIPE(&tx_prop[IPA_IP_v6]) =
+			cons_client;
+		strlcpy(QDF_IPA_IOC_TX_INTF_PROP_HDR_NAME(&tx_prop[IPA_IP_v6]),
+			ipv6_hdr_name, IPA_RESOURCE_NAME_MAX);
 		tx_intf.num_props++;
 	}
 
-	tx_intf.prop = tx_prop;
-	rx_intf.prop = rx_prop;
+	QDF_IPA_TX_INTF_PROP(&tx_intf) = tx_prop;
+	QDF_IPA_RX_INTF_PROP(&rx_intf) = rx_prop;
 
 	/* Call the ipa api to register interface */
 	ret = ipa_register_intf(ifname, &tx_intf, &rx_intf);
@@ -716,8 +746,8 @@ register_interface_fail:
  * Return: QDF_STATUS
  */
 QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
-				   enum ipa_client_type prod_client,
-				   enum ipa_client_type cons_client,
+				   qdf_ipa_client_type_t prod_client,
+				   qdf_ipa_client_type_t cons_client,
 				   uint8_t session_id, bool is_ipv6_enabled)
 {
 	int ret;
@@ -728,7 +758,9 @@ QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 		return QDF_STATUS_E_FAILURE;
 
 	/* Configure the TX and RX pipes filter rules */
-	ret = ol_txrx_ipa_register_interface(ifname, prod_client, cons_client,
+	ret = ol_txrx_ipa_register_interface(ifname,
+					     prod_client,
+					     cons_client,
 					     session_id, is_ipv6_enabled);
 	if (ret)
 		return QDF_STATUS_E_FAILURE;
@@ -759,7 +791,7 @@ QDF_STATUS ol_txrx_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
 		ol_txrx_ipa_remove_header(name_ipa);
 	}
 	/* unregister the interface with IPA */
-	ret = ipa_deregister_intf(ifname);
+	ret = qdf_ipa_deregister_intf(ifname);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 				"%s: ipa_deregister_intf fail: %d",
@@ -885,11 +917,12 @@ QDF_STATUS ol_txrx_ipa_disable_pipes(struct cdp_pdev *ppdev)
 QDF_STATUS ol_txrx_ipa_set_perf_level(int client,
 				      uint32_t max_supported_bw_mbps)
 {
-	struct ipa_rm_perf_profile profile;
+	qdf_ipa_rm_perf_profile_t profile;
 	int result;
 
-	profile.max_supported_bandwidth_mbps = max_supported_bw_mbps;
-	result = ipa_rm_set_perf_profile(client, &profile);
+	QDF_IPA_RM_PERF_PROFILE_MAX_SUPPORTED_BANDWIDTH_MBPS(&profile) =
+		max_supported_bw_mbps;
+	result = qdf_ipa_rm_set_perf_profile(client, &profile);
 
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,

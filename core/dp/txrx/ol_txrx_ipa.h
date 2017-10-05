@@ -117,8 +117,8 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
 QDF_STATUS ol_txrx_ipa_cleanup(uint32_t tx_pipe_handle,
 		uint32_t rx_pipe_handle);
 QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
-		enum ipa_client_type prod_client,
-		enum ipa_client_type cons_client,
+		qdf_ipa_client_type_t prod_client,
+		qdf_ipa_client_type_t cons_client,
 		uint8_t session_id, bool is_ipv6_enabled);
 QDF_STATUS ol_txrx_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled);
 QDF_STATUS ol_txrx_ipa_enable_pipes(struct cdp_pdev *pdev);
