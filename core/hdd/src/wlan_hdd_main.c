@@ -5584,8 +5584,9 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
 		    (adapter->device_mode == QDF_SAP_MODE) ||
 		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-		    wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->sessionId, INVALID_SCAN_ID, false);
+			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+					adapter->sessionId, INVALID_SCAN_ID,
+					false);
 		}
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
@@ -6417,7 +6418,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			}
 			if (cds_sched_handle_throughput_req(false))
 				hdd_warn("low bandwidth set rx affinity fail");
-		 } else {
+		} else {
 			if (!hdd_ctx->hbw_requested) {
 				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
 				hdd_ctx->hbw_requested = true;
@@ -6425,7 +6426,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 			if (cds_sched_handle_throughput_req(true))
 				hdd_warn("high bandwidth set rx affinity fail");
-		 }
+		}
 		hdd_napi_apply_throughput_policy(hdd_ctx, tx_packets, rx_packets);
 	}
 

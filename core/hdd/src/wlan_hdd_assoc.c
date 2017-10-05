@@ -3173,13 +3173,13 @@ static QDF_STATUS hdd_association_completion_handler(struct hdd_adapter *adapter
 			hdd_clear_roam_profile_ie(adapter);
 		} else  if ((eCSR_ROAM_CANCELLED == roamStatus
 		    && !hddDisconInProgress)) {
-				hdd_connect_result(dev,
-						pWextState->req_bssId.bytes,
-						NULL, NULL, 0, NULL, 0,
-						WLAN_STATUS_UNSPECIFIED_FAILURE,
-						GFP_KERNEL,
-						connect_timeout,
-						timeout_reason);
+			hdd_connect_result(dev,
+					   pWextState->req_bssId.bytes,
+					   NULL, NULL, 0, NULL, 0,
+					   WLAN_STATUS_UNSPECIFIED_FAILURE,
+					   GFP_KERNEL,
+					   connect_timeout,
+					   timeout_reason);
 		}
 
 		/*

@@ -7822,9 +7822,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			for (i = 0;
 			     i < pConfig->supported_rates.numRates; i++) {
 				if (pIe[i]) {
-				     pConfig->supported_rates.rate[i] = pIe[i];
-				     hdd_debug("Configured Supported rate is %2x",
-					pConfig->supported_rates.rate[i]);
+					pConfig->supported_rates.rate[i] = pIe[i];
+					hdd_debug("Configured Supported rate is %2x",
+						  pConfig->supported_rates.rate[i]);
 				}
 			}
 		}
@@ -7837,9 +7837,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			pIe++;
 			for (i = 0; i < pConfig->extended_rates.numRates; i++) {
 				if (pIe[i]) {
-				      pConfig->extended_rates.rate[i] = pIe[i];
-				      hdd_debug("Configured ext Supported rate is %2x",
-					pConfig->extended_rates.rate[i]);
+					pConfig->extended_rates.rate[i] = pIe[i];
+					hdd_debug("Configured ext Supported rate is %2x",
+						  pConfig->extended_rates.rate[i]);
 				}
 			}
 		}

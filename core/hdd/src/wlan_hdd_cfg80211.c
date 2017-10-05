@@ -3118,15 +3118,15 @@ static int __wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 	}
 
 	if (nla_put_u32(reply_skb,
-		QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET_SIZE,
-		feature_sets) ||
+			QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET_SIZE,
+			feature_sets) ||
 	    nla_put(reply_skb,
-		QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET,
-		sizeof(u32) * feature_sets,
-		feature_set_matrix)) {
-			hdd_err("nla put fail");
-			kfree_skb(reply_skb);
-			return -EINVAL;
+		    QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET,
+		    sizeof(u32) * feature_sets,
+		    feature_set_matrix)) {
+		hdd_err("nla put fail");
+		kfree_skb(reply_skb);
+		return -EINVAL;
 	}
 	return cfg80211_vendor_cmd_reply(reply_skb);
 }
@@ -12737,7 +12737,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 */
 
 #if  defined QCA_WIFI_FTM
-}
+	}
 #endif
 
 	wiphy->max_scan_ssids = MAX_SCAN_SSID;

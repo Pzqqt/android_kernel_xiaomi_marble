@@ -4441,9 +4441,9 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
 		}
 	} else if (sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax &&
 		   sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax_ONLY) {
-			hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
-				sap_config->SapHw_mode, sap_config->channel);
-			return -EIO;
+		hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
+			sap_config->SapHw_mode, sap_config->channel);
+		return -EIO;
 	}
 
 	if (set_value != 0xff) {
@@ -11108,15 +11108,15 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		conn_info = policy_mgr_get_conn_info(&len);
 		pr_info("+--------------------------+\n");
 		for (i = 0; i < len; i++) {
-		     pr_info("|table_index[%d]\t\t\n", i);
-		     pr_info("|\t|vdev_id - %-10d|\n", conn_info->vdev_id);
-		     pr_info("|\t|chan    - %-10d|\n", conn_info->chan);
-		     pr_info("|\t|bw      - %-10d|\n", conn_info->bw);
-		     pr_info("|\t|mode    - %-10d|\n", conn_info->mode);
-		     pr_info("|\t|mac     - %-10d|\n", conn_info->mac);
-		     pr_info("|\t|in_use  - %-10d|\n", conn_info->in_use);
-		     pr_info("+--------------------------+\n");
-		     conn_info++;
+			pr_info("|table_index[%d]\t\t\n", i);
+			pr_info("|\t|vdev_id - %-10d|\n", conn_info->vdev_id);
+			pr_info("|\t|chan    - %-10d|\n", conn_info->chan);
+			pr_info("|\t|bw      - %-10d|\n", conn_info->bw);
+			pr_info("|\t|mode    - %-10d|\n", conn_info->mode);
+			pr_info("|\t|mac     - %-10d|\n", conn_info->mac);
+			pr_info("|\t|in_use  - %-10d|\n", conn_info->in_use);
+			pr_info("+--------------------------+\n");
+			conn_info++;
 		}
 	}
 	break;
@@ -11739,7 +11739,7 @@ static int iw_set_dynamic_mcbc_filter(struct net_device *dev,
 		"Configure broadcast filtering via ini item, 'g_enable_non_arp_bc_hw_filter.'\n"
 		"\tg_enable_non_arp_bc_hw_filter=1 # drop all non-ARP broadcast traffic\n"
 		"\tg_enable_non_arp_bc_hw_filter=0 # allow all broadcast traffic");
-	 return -EINVAL;
+	return -EINVAL;
 }
 
 /**

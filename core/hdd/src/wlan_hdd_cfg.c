@@ -8413,7 +8413,7 @@ int hdd_parse_probe_req_ouis(struct hdd_context *hdd_ctx)
 		if (oui_indx >= MAX_PROBE_REQ_OUIS)
 			break;
 
-		next_token:
+next_token:
 		token = strsep(&str, " ");
 	}
 
