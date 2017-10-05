@@ -1115,6 +1115,33 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  */
 #define WE_SET_WOW_DATA_INACTIVITY_TO    94
 
+/*
+ * <ioctl>
+ * pdev_reset - reset the pdev
+ *
+ * @INPUT: Reset command to initiate:
+ *    TX_FLUSH = 1
+ *    WARM_RESET = 2
+ *    COLD_RESET = 3
+ *    WARM_RESET_RESTORE_CAL = 4
+ *    COLD_RESET_RESTORE_CAL = 5
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to reset the pdev. The primary use is
+ * for internal testing. It is not expected that this will
+ * be used on a production device.
+ *
+ * @E.g: iwpriv wlan0 pdev_reset <command>
+ * iwpriv wlan0 pdev_reset 1
+ *
+ * Supported Feature: None
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_PDEV_RESET    95
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -7903,6 +7930,39 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 	return 0;
 }
 
+static int hdd_validate_pdev_reset(int value)
+{
+	if ((value < 1) || (value > 5)) {
+		hdd_warn(" Invalid value %d: Use any one of the below values\n"
+			 "    TX_FLUSH = 1\n"
+			 "    WARM_RESET = 2\n"
+			 "    COLD_RESET = 3\n"
+			 "    WARM_RESET_RESTORE_CAL = 4\n"
+			 "    COLD_RESET_RESTORE_CAL = 5", value);
+
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
+{
+	int ret;
+
+	hdd_debug("%d", value);
+
+	ret = hdd_validate_pdev_reset(value);
+	if (ret)
+		return ret;
+
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_PDEV_PARAM_PDEV_RESET,
+				  value, PDEV_CMD);
+
+	return ret;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -9162,13 +9222,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 					  WMI_VDEV_PARAM_HE_RANGE_EXT,
 					  set_value, VDEV_CMD);
 		break;
+	case WE_SET_PDEV_RESET:
+		ret = hdd_handle_pdev_reset(adapter, set_value);
+		break;
 	default:
-	{
-		hdd_err("Invalid sub command %d",
-		       sub_cmd);
+		hdd_err("Invalid sub command %d", sub_cmd);
 		ret = -EINVAL;
 		break;
-	}
 	}
 	EXIT();
 free:
@@ -13679,6 +13739,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_CONC_SYSTEM_PREF,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0, "setConcSysPref" },
+
+	{WE_SET_PDEV_RESET,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0, "pdev_reset" },
 
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,
