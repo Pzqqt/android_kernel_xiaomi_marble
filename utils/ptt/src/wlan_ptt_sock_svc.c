@@ -60,6 +60,7 @@ static int32_t ptt_pid = INVALID_PID;
 static void ptt_sock_dump_buf(const unsigned char *pbuf, int cnt)
 {
 	int i;
+
 	for (i = 0; i < cnt; i++) {
 		if ((i % 16) == 0)
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
@@ -184,9 +185,10 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
  */
 static void ptt_sock_proc_reg_req(tAniHdr *wmsg, int radio)
 {
-	tAniNlAppRegReq *reg_req;
-	tAniNlAppRegRsp rspmsg;
-	reg_req = (tAniNlAppRegReq *) (wmsg + 1);
+	struct sAniAppRegReq *reg_req;
+	struct sAniNlAppRegRsp rspmsg;
+
+	reg_req = (struct sAniAppRegReq *) (wmsg + 1);
 	memset((char *)&rspmsg, 0, sizeof(rspmsg));
 	/* send reg response message to the application */
 	rspmsg.ret = ANI_NL_MSG_OK;
@@ -210,6 +212,7 @@ static void ptt_sock_proc_reg_req(tAniHdr *wmsg, int radio)
 static void ptt_proc_pumac_msg(struct sk_buff *skb, tAniHdr *wmsg, int radio)
 {
 	u16 ani_msg_type = be16_to_cpu(wmsg->type);
+
 	switch (ani_msg_type) {
 	case ANI_MSG_APP_REG_REQ:
 		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
@@ -233,6 +236,7 @@ static int ptt_sock_rx_nlink_msg(struct sk_buff *skb)
 	tAniNlHdr *wnl;
 	int radio;
 	int type;
+
 	wnl = (tAniNlHdr *) skb->data;
 	radio = wnl->radio;
 	type = wnl->nlh.nlmsg_type;
@@ -266,7 +270,7 @@ static int ptt_sock_rx_nlink_msg(struct sk_buff *skb)
  */
 static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 {
-	ptt_app_reg_req *payload;
+	struct sptt_app_reg_req *payload;
 	struct nlattr *tb[CLD80211_ATTR_MAX + 1];
 
 	/*
@@ -290,7 +294,7 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 		return;
 	}
 
-	payload = (ptt_app_reg_req *)(nla_data(tb[CLD80211_ATTR_DATA]));
+	payload = (struct sptt_app_reg_req *)(nla_data(tb[CLD80211_ATTR_DATA]));
 	switch (payload->wmsg.type) {
 	case ANI_MSG_APP_REG_REQ:
 		ptt_sock_send_msg_to_app(&payload->wmsg, payload->radio,
