@@ -1217,6 +1217,9 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 
 	HIF_INFO("wake interrupt received on irq %d", irq);
 
+	if (scn->initial_wakeup_cb)
+		scn->initial_wakeup_cb(scn->initial_wakeup_priv);
+
 	if (hif_is_ut_suspended(scn))
 		hif_ut_fw_resume(scn);
 
@@ -1225,8 +1228,24 @@ irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 #else /* WLAN_SUSPEND_RESUME_TEST */
 irqreturn_t hif_wake_interrupt_handler(int irq, void *context)
 {
+	struct hif_softc *scn = context;
+
 	HIF_INFO("wake interrupt received on irq %d", irq);
+
+	if (scn->initial_wakeup_cb)
+		scn->initial_wakeup_cb(scn->initial_wakeup_priv);
 
 	return IRQ_HANDLED;
 }
 #endif /* WLAN_SUSPEND_RESUME_TEST */
+
+void hif_set_initial_wakeup_cb(struct hif_opaque_softc *hif_ctx,
+			       void (*callback)(void *),
+			       void *priv)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	scn->initial_wakeup_cb = callback;
+	scn->initial_wakeup_priv = priv;
+}
+
