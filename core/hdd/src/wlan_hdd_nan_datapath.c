@@ -800,7 +800,8 @@ static int hdd_ndp_responder_req_handler(struct hdd_context *hdd_ctx,
  *
  * Return: 0 on success or error code on failure
  */
-static int hdd_ndp_end_req_handler(struct hdd_context *hdd_ctx, struct nlattr **tb)
+static int hdd_ndp_end_req_handler(struct hdd_context *hdd_ctx,
+				   struct nlattr **tb)
 {
 	struct ndp_end_req req = {0};
 	QDF_STATUS status;
@@ -1671,7 +1672,8 @@ ndp_responder_rsp_nla_failed:
  *
  * Return: none
  */
-static void hdd_ndp_end_rsp_handler(struct hdd_adapter *adapter, void *rsp_params)
+static void hdd_ndp_end_rsp_handler(struct hdd_adapter *adapter,
+				    void *rsp_params)
 {
 	struct sk_buff *vendor_event;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
