@@ -19974,6 +19974,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_profile_match] = WMI_PROFILE_MATCH;
 
 	event_ids[wmi_roam_synch_event_id] = WMI_ROAM_SYNCH_EVENTID;
+	event_ids[wmi_roam_synch_frame_event_id] = WMI_ROAM_SYNCH_FRAME_EVENTID;
 
 	event_ids[wmi_p2p_disc_event_id] = WMI_P2P_DISC_EVENTID;
 
