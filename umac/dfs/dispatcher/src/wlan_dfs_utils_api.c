@@ -167,25 +167,6 @@ QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev)
 }
 EXPORT_SYMBOL(utils_dfs_stacac_stop);
 
-QDF_STATUS utils_dfs_random_channel(struct wlan_objmgr_pdev *pdev,
-		uint8_t is_select_nondfs,
-		uint8_t skip_curchan,
-		int *target_channel)
-{
-	struct wlan_dfs *dfs;
-
-	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
-	if (!dfs)
-		return  QDF_STATUS_E_FAILURE;
-
-	*target_channel = dfs_random_channel(dfs,
-			is_select_nondfs,
-			skip_curchan);
-
-	return QDF_STATUS_SUCCESS;
-}
-EXPORT_SYMBOL(utils_dfs_random_channel);
-
 QDF_STATUS utils_dfs_get_usenol(struct wlan_objmgr_pdev *pdev, uint16_t *usenol)
 {
 	struct wlan_dfs *dfs;

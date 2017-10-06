@@ -169,23 +169,6 @@ QDF_STATUS utils_dfs_cac_stop(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS utils_dfs_stacac_stop(struct wlan_objmgr_pdev *pdev);
 
 /**
- * utils_dfs_random_channel() - Function to choose the random channel from the
- *                        current channel list.
- * @pdev: Pointer to DFS pdev object.
- * @is_select_nondfs: Select NON-DFS chan or both NON-DFS and DFS.
- * @skip_curchan: Select the next channel post radar detecr and skip the
- *                curchan.
- * @target_channel: Pointer to target_channel.
- *
- * wrapper function for dfs_random_channel(). this
- * function called from outside of dfs component.
- */
-QDF_STATUS  utils_dfs_random_channel(struct wlan_objmgr_pdev *pdev,
-		uint8_t is_select_nondfs,
-		uint8_t skip_curchan,
-		int *target_channel);
-
-/**
  * utils_dfs_get_usenol() - Returns use_nol flag.
  * @pdev: Pointer to DFS pdev object.
  * @usenol: Pointer to usenol value.

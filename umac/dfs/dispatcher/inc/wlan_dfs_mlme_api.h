@@ -98,35 +98,6 @@ void dfs_mlme_deliver_event_up_afrer_cac(struct wlan_objmgr_pdev *pdev);
 void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev, int *nchans);
 
 /**
- * dfs_mlme_get_dfs_ch_no_weather_radar_chan() - Checks is the channel is
- * 						 weather radar channel.
- * @pdev: Pointer to DFS pdev object.
- * @no_wradar: Pointer to save weather radar filter value.
- */
-void dfs_mlme_get_dfs_ch_no_weather_radar_chan(struct wlan_objmgr_pdev *pdev,
-	uint8_t *no_wradar);
-
-/**
- * dfs_mlme_find_alternate_mode_channel() - Finds the channel.
- * @pdev: Pointer to DFS pdev object.
- * @alt_chan_mode: Input mode.
- * @chan_count: channel count.
- */
-int dfs_mlme_find_alternate_mode_channel(struct wlan_objmgr_pdev *pdev,
-	uint32_t alt_chan_mode,
-	int chan_count);
-
-/**
- * dfs_mlme_find_any_valid_channel() - Finds the channel with the given mode.
- * @pdev: Pointer to DFS pdev object.
- * @chan_mode: Channel mode.
- * @ret_val: Pointer to save the channel index.
- */
-void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
-	uint32_t chan_mode,
-	int *ret_val);
-
-/**
  * dfs_mlme_get_extchan() - Get extension channel.
  * @pdev: Pointer to DFS pdev object.
  * @dfs_ch_freq:                Frequency in Mhz.

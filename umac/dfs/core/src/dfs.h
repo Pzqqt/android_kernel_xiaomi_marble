@@ -1476,18 +1476,6 @@ int dfs_create_object(struct wlan_dfs **dfs);
 void dfs_destroy_object(struct wlan_dfs *dfs);
 
 /**
- * dfs_random_channel() - Function to choose the random channel from the current
- *                        channel list.
- * @dfs: Pointer to wlan_dfs structure.
- * @is_select_nondfs: Select NON-DFS chan or both NON-DFS and DFS.
- * @skip_curchan: Select the next channel post radar detecr and skip the
- *                curchan.
- */
-int dfs_random_channel(struct wlan_dfs *dfs,
-		uint8_t is_select_nondfs,
-		uint8_t skip_curchan);
-
-/**
  * dfs_detach() - Wrapper function to free dfs variables.
  * @dfs: Pointer to wlan_dfs structure.
  */
