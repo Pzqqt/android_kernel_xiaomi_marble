@@ -84,6 +84,67 @@
  */
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
 
+
+#ifdef FEATURE_WLAN_DIAG_SUPPORT
+/**
+ * qdf_wma_wow_wakeup_stats_event()- send wow wakeup stats
+ * @tp_wma_handle wma: WOW wakeup packet counter
+ *
+ * This function sends wow wakeup stats diag event
+ *
+ * Return: void.
+ */
+static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
+{
+	QDF_STATUS status;
+	struct sir_wake_lock_stats stats;
+
+	WLAN_HOST_DIAG_EVENT_DEF(WowStats,
+	struct host_event_wlan_powersave_wow_stats);
+
+	status = wma_get_wakelock_stats(&stats);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	qdf_mem_zero(&WowStats, sizeof(WowStats));
+
+	WowStats.wow_bcast_wake_up_count =
+		stats.wow_bcast_wake_up_count;
+	WowStats.wow_ipv4_mcast_wake_up_count =
+		stats.wow_ipv4_mcast_wake_up_count;
+	WowStats.wow_ipv6_mcast_wake_up_count =
+		stats.wow_ipv6_mcast_wake_up_count;
+	WowStats.wow_ipv6_mcast_ra_stats =
+		stats.wow_ipv6_mcast_ra_stats;
+	WowStats.wow_ipv6_mcast_ns_stats =
+		stats.wow_ipv6_mcast_ns_stats;
+	WowStats.wow_ipv6_mcast_na_stats =
+		stats.wow_ipv6_mcast_na_stats;
+	WowStats.wow_pno_match_wake_up_count =
+		stats.wow_pno_match_wake_up_count;
+	WowStats.wow_pno_complete_wake_up_count =
+		stats.wow_pno_complete_wake_up_count;
+	WowStats.wow_gscan_wake_up_count =
+		stats.wow_gscan_wake_up_count;
+	WowStats.wow_low_rssi_wake_up_count =
+		stats.wow_low_rssi_wake_up_count;
+	WowStats.wow_rssi_breach_wake_up_count =
+		stats.wow_rssi_breach_wake_up_count;
+	WowStats.wow_icmpv4_count =
+		stats.wow_icmpv4_count;
+	WowStats.wow_icmpv6_count =
+		stats.wow_icmpv6_count;
+	WowStats.wow_oem_response_wake_up_count =
+		stats.wow_oem_response_wake_up_count;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&WowStats, EVENT_WLAN_POWERSAVE_WOW_STATS);
+}
+#else
+static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
+{
+	return;
+}
+#endif
+
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
  * wma_post_auto_shutdown_msg() - to post auto shutdown event to sme
@@ -2665,6 +2726,7 @@ static void wma_wake_event_log_reason(t_wma_handle *wma,
 	}
 
 	qdf_wow_wakeup_host_event(wake_info->wake_reason);
+	qdf_wma_wow_wakeup_stats_event(wma);
 }
 
 /**
