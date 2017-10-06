@@ -626,25 +626,6 @@ bool htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
 void htc_unblock_recv(HTC_HANDLE HTCHandle);
 
 /**
- * htc_send_pkts_multiple - Send a series of HTC packets
- * @HTCHandle - HTC handle
- * @pPktQueue - local queue holding packets to send
- *
- * Caller must initialize each packet using SET_HTC_PACKET_INFO_TX()
- * macro. The queue must only contain packets directed at the same
- * endpoint. Caller supplies a pointer to an HTC_PACKET_QUEUE structure
- * holding the TX packets in FIFO order. This API will remove the
- * packets from the pkt queue and place them into the HTC Tx Queue
- * and bundle messages where possible.
- * The caller may allocate the pkt queue on the stack to hold the pkts.
- * This interface is fully asynchronous.  On error, htc_send_pkts will
- * call the registered Endpoint callback to cleanup the packet.
- * Return: QDF_STATUS_SUCCESS
- */
-QDF_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle,
-				HTC_PACKET_QUEUE *pPktQueue);
-
-/**
  * htc_add_receive_pkt_multiple - Add multiple receive packets to HTC
  * @HTCHandle - HTC handle
  * @pPktQueue - HTC receive packet queue holding packets to add
