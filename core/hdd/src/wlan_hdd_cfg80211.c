@@ -14627,8 +14627,9 @@ wlan_hdd_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
  *
  * Return: struct cfg80211_bss pointer
  */
-struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
-						tSirBssDescription *bss_desc)
+struct cfg80211_bss *
+wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
+				   struct bss_description *bss_desc)
 {
 	/*
 	 * cfg80211_inform_bss() is not updating ie field of bss entry, if entry

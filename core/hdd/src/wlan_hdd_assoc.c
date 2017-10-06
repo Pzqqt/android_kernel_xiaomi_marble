@@ -1122,7 +1122,7 @@ hdd_send_new_ap_channel_info(struct net_device *dev, struct hdd_adapter *adapter
 			     tCsrRoamInfo *pCsrRoamInfo)
 {
 	union iwreq_data wrqu;
-	tSirBssDescription *descriptor = pCsrRoamInfo->pBssDesc;
+	struct bss_description *descriptor = pCsrRoamInfo->pBssDesc;
 
 	if (descriptor == NULL) {
 		hdd_err("bss descriptor is null");
@@ -1943,7 +1943,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					tCsrRoamInfo *roam_info,
 					uint8_t staId,
 					struct qdf_mac_addr *pPeerMacAddress,
-					tSirBssDescription *pBssDesc)
+					struct bss_description *pBssDesc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };

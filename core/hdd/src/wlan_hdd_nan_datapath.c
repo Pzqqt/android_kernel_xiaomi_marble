@@ -881,7 +881,7 @@ static void hdd_ndp_iface_create_rsp_handler(struct hdd_adapter *adapter,
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	tCsrRoamInfo *roam_info;
-	tSirBssDescription tmp_bss_descp = {0};
+	struct bss_description tmp_bss_descp = {0};
 
 	ENTER();
 
@@ -1240,7 +1240,7 @@ static void hdd_ndp_new_peer_ind_handler(struct hdd_adapter *adapter,
 {
 	struct sme_ndp_peer_ind *new_peer_ind = ind_params;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tSirBssDescription tmp_bss_descp = {0};
+	struct bss_description tmp_bss_descp = {0};
 	tCsrRoamInfo *roam_info;
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -2280,7 +2280,7 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 				struct nan_datapath_inf_create_rsp *ndi_rsp)
 {
 	tCsrRoamInfo roam_info = {0};
-	tSirBssDescription tmp_bss_descp = {0};
+	struct bss_description tmp_bss_descp = {0};
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
@@ -2353,7 +2353,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	tSirBssDescription tmp_bss_descp = {0};
+	struct bss_description tmp_bss_descp = {0};
 	tCsrRoamInfo roam_info = {0};
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
