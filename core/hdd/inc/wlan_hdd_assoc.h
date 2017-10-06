@@ -344,10 +344,10 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 				    bool is_link_up);
 
 QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
-					struct tagCsrRoamInfo *roam_info,
-					uint8_t sta_id,
-					struct qdf_mac_addr *peer_mac_addr,
-					struct sSirBssDescription *bss_desc);
+				 struct tagCsrRoamInfo *roam_info,
+				 uint8_t sta_id,
+				 struct qdf_mac_addr *peer_mac_addr,
+				 struct bss_description *bss_desc);
 
 bool hdd_save_peer(struct hdd_station_ctx *sta_ctx, uint8_t sta_id,
 		   struct qdf_mac_addr *peer_mac_addr);

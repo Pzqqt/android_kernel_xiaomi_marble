@@ -757,7 +757,7 @@ struct fils_ind_elements {
 };
 #endif
 
-typedef struct sSirBssDescription {
+struct bss_description {
 	/* offset of the ieFields from bssId. */
 	uint16_t length;
 	tSirMacAddr bssId;
@@ -802,7 +802,8 @@ typedef struct sSirBssDescription {
 #endif
 	/* Please keep the structure 4 bytes aligned above the ieFields */
 	uint32_t ieFields[1];
-} tSirBssDescription, *tpSirBssDescription;
+};
+typedef struct bss_description tSirBssDescription, *tpSirBssDescription;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 typedef struct sSirSmeHTProfile {
