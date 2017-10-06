@@ -196,6 +196,56 @@ typedef struct {
 } host_event_wlan_powersave_wow_payload_type;
 
 /*-------------------------------------------------------------------------
+  Event ID: EVENT_WLAN_POWERSAVE_WOW_STATS
+  ------------------------------------------------------------------------*/
+/**
+ * host_event_wlan_powersave_wow_stats - Structure holding wow stats information
+ * @wow_ucast_wake_up_count: wow unicast packet wakeup count
+ * @wow_bcast_wake_up_count: wow broadcast packet wakeup count
+ * @wow_ipv4_mcast_wake_up_count: wow ipv4 multicast packet wakeup count
+ * @wow_ipv6_mcast_wake_up_count: wow ipv6 multicast packet wakeup count
+ * @wow_ipv6_mcast_ra_stats: wow ipv6 multicast router advertisement
+ *                           packet wakeup count
+ * @wow_ipv6_mcast_ns_stats: wow ipv6 multicast Neighbor Solicitation
+ *                           packet wakeup count
+ * @wow_ipv6_mcast_na_stats: wow ipv6 multicast address space
+ *                           packet wakeup count
+ * @wow_pno_match_wake_up_count: wow preferred network offload match
+ *                           packet wakeup count
+ * @wow_pno_complete_wake_up_count: wow preferred network offload complete
+ *                                  packet wakeup count
+ * @wow_gscan_wake_up_count: wow external scan packet wakeup count
+ * @wow_low_rssi_wake_up_count: wow low rssi packet wakeup count
+ * @wow_rssi_breach_wake_up_count: wow rssi breach packet wakeup count
+ * @wow_icmpv4_count: wow icmpv4 packet count
+ * @wow_icmpv6_count: wow icmpv6 packet count
+ * @wow_oem_response_wake_up_count: wow  oem response packet wakeup count
+ *
+ * This structure contains the wow stats information related to diag event
+ */
+struct host_event_wlan_powersave_wow_stats {
+	uint32_t    wow_ucast_wake_up_count;
+	uint32_t    wow_bcast_wake_up_count;
+	uint32_t    wow_ipv4_mcast_wake_up_count;
+	uint32_t    wow_ipv6_mcast_wake_up_count;
+	uint32_t    wow_ipv6_mcast_ra_stats;
+	uint32_t    wow_ipv6_mcast_ns_stats;
+	uint32_t    wow_ipv6_mcast_na_stats;
+	uint32_t    wow_pno_match_wake_up_count;
+	uint32_t    wow_pno_complete_wake_up_count;
+	uint32_t    wow_gscan_wake_up_count;
+	uint32_t    wow_low_rssi_wake_up_count;
+	uint32_t    wow_rssi_breach_wake_up_count;
+	uint32_t    wow_icmpv4_count;
+	uint32_t    wow_icmpv6_count;
+	uint32_t    wow_oem_response_wake_up_count;
+	uint32_t    Reserved_1;
+	uint32_t    Reserved_2;
+	uint32_t    Reserved_3;
+	uint32_t    Reserved_4;
+};
+
+/*-------------------------------------------------------------------------
    Event ID: EVENT_WLAN_BTC
    ------------------------------------------------------------------------*/
 typedef struct {
