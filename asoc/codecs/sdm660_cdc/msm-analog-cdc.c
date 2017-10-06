@@ -30,7 +30,7 @@
 #include "msm-analog-cdc.h"
 #include "msm-cdc-common.h"
 #include "sdm660-cdc-irq.h"
-#include "sdm660-cdc-registers.h"
+#include "msm-analog-cdc-regmap.h"
 #include "../../sdm660-common.h"
 #include "../wcd-mbhc-v2-api.h"
 
@@ -351,6 +351,7 @@ void msm_anlg_cdc_spk_ext_pa_cb(
 	dev_dbg(codec->dev, "%s: Enter\n", __func__);
 	sdm660_cdc->codec_spk_ext_pa_cb = codec_spk_ext_pa;
 }
+EXPORT_SYMBOL(msm_anlg_cdc_spk_ext_pa_cb);
 
 static void msm_anlg_cdc_compute_impedance(struct snd_soc_codec *codec, s16 l,
 					   s16 r, uint32_t *zl, uint32_t *zr,
@@ -3172,6 +3173,7 @@ int msm_anlg_cdc_mclk_enable(struct snd_soc_codec *codec,
 	}
 	return 0;
 }
+EXPORT_SYMBOL(msm_anlg_cdc_mclk_enable);
 
 static int msm_anlg_cdc_set_dai_sysclk(struct snd_soc_dai *dai,
 		int clk_id, unsigned int freq, int dir)
