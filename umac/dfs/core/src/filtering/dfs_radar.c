@@ -22,8 +22,8 @@
 
 #include "../dfs.h"
 #include "wlan_dfs_mlme_api.h"
+#include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_lmac_api.h"
-#include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
 
 /**
@@ -287,7 +287,7 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 	 * Look up the current DFS regulatory domain and decide
 	 * which radar pulses to use.
 	 */
-	dfsdomain = lmac_get_dfsdomain(dfs->dfs_pdev_obj);
+	dfsdomain = utils_get_dfsdomain(dfs->dfs_pdev_obj);
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 
 	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
@@ -301,29 +301,35 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 	case DFS_FCC_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "FCC domain");
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
+		dfs_assign_fcc_pulse_table(&rinfo, target_type, tx_ops);
+		break;
+	case DFS_CN_DOMAIN:
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"FCC domain -- Country China(156) override FCC radar pattern"
+				);
+		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		/*
 		 * China uses a radar pattern that is similar to ETSI but it
 		 * follows FCC in all other respect like transmit power, CCA
 		 * threshold etc.
 		 */
-		if (lmac_is_countryCode_CHINA(dfs->dfs_pdev_obj)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"FCC domain -- Country China(156) override FCC radar pattern"
-					);
-			rinfo.dfs_radars = dfs_china_radars;
-			rinfo.numradars = QDF_ARRAY_SIZE(dfs_china_radars);
-			rinfo.b5pulses = NULL;
-			rinfo.numb5radars = 0;
-		} else {
-			dfs_assign_fcc_pulse_table(&rinfo, target_type, tx_ops);
-		}
-
+		rinfo.dfs_radars = dfs_china_radars;
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_china_radars);
+		rinfo.b5pulses = NULL;
+		rinfo.numb5radars = 0;
 		break;
 	case DFS_ETSI_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 		rinfo.dfs_radars = dfs_etsi_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
+		rinfo.b5pulses = NULL;
+		rinfo.numb5radars = 0;
+		break;
+	case DFS_KR_DOMAIN:
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"ETSI domain -- Korea(412)");
+		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 
 		/*
 		 * So far we have treated Korea as part of ETSI and did not
@@ -333,13 +339,8 @@ void ol_if_dfs_configure(struct wlan_dfs *dfs)
 		 * we will address in the future. However, for now override
 		 * ETSI tables for Korea.
 		 */
-
-		if (lmac_is_countryCode_KOREA_ROC3(dfs->dfs_pdev_obj)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "ETSI domain -- Korea(412)");
-			rinfo.dfs_radars = dfs_korea_radars;
-			rinfo.numradars = QDF_ARRAY_SIZE(dfs_korea_radars);
-		}
-
+		rinfo.dfs_radars = dfs_korea_radars;
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_korea_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
 		break;

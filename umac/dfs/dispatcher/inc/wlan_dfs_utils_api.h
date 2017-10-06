@@ -432,8 +432,19 @@ uint32_t utils_dfs_chan_to_freq(uint8_t chan);
  * @pdev: Pointer to DFS pdev object.
  * @flags: New channel flags
  * @flagext: New Extended flags
+ *
+ * Return: QDF_STATUS
  */
 QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
 		uint64_t flags,
 		uint16_t flagext);
+
+/**
+ * utils_get_dfsdomain() - Get DFS domain.
+ * @pdev: Pointer to PDEV structure.
+ *
+ * Return: DFS domain.
+ */
+int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev);
+
 #endif /* _WLAN_DFS_UTILS_API_H_ */

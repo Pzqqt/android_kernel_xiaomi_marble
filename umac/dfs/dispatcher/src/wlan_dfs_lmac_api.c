@@ -85,15 +85,6 @@ void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac)
 		dfs_tx_ops->dfs_disable(pdev, no_cac);
 }
 
-int lmac_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
-{
-	enum dfs_reg dfsdomain;
-
-	wlan_reg_get_dfs_region(pdev, &dfsdomain);
-
-	return dfsdomain;
-}
-
 void lmac_dfs_enable(struct wlan_objmgr_pdev *pdev,
 		int *is_fastclk,
 		int32_t pe_firpwr,
@@ -204,24 +195,6 @@ uint32_t lmac_get_ext_busy(struct wlan_objmgr_pdev *pdev)
 	return ext_chan_busy;
 }
 
-bool lmac_is_countryCode_KOREA_ROC3(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
-	bool ctry_korea = false;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-
-	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
-
-	if (dfs_tx_ops->dfs_is_countryCode_KOREA_ROC3)
-		dfs_tx_ops->dfs_is_countryCode_KOREA_ROC3(pdev,
-				&ctry_korea);
-
-	return ctry_korea;
-
-}
-
 void lmac_set_use_cac_prssi(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -249,22 +222,6 @@ uint32_t lmac_get_target_type(struct wlan_objmgr_pdev *pdev)
 		dfs_tx_ops->dfs_get_target_type(pdev, &target_type);
 
 	return target_type;
-}
-
-bool lmac_is_countryCode_CHINA(struct wlan_objmgr_pdev *pdev)
-{
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
-	bool country_china = false;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-
-	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
-
-	if (dfs_tx_ops->dfs_is_countryCode_CHINA)
-		dfs_tx_ops->dfs_is_countryCode_CHINA(pdev, &country_china);
-
-	return country_china;
 }
 
 uint32_t lmac_get_phymode_info(struct wlan_objmgr_pdev *pdev,

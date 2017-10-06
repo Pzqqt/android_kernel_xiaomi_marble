@@ -25,7 +25,7 @@
  */
 #include "../dfs.h"
 #include "../dfs_internal.h"
-#include "wlan_dfs_lmac_api.h"
+#include "wlan_dfs_utils_api.h"
 
 /* Default 5212/5312 radar phy parameters. */
 #define AR5212_DFS_FIRPWR -41
@@ -167,7 +167,7 @@ void dfs_get_radars_for_ar5212(struct wlan_dfs *dfs)
 	int dfsdomain = DFS_FCC_DOMAIN;
 
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
-	dfsdomain = lmac_get_dfsdomain(dfs->dfs_pdev_obj);
+	dfsdomain = utils_get_dfsdomain(dfs->dfs_pdev_obj);
 
 	switch (dfsdomain) {
 	case DFS_FCC_DOMAIN:

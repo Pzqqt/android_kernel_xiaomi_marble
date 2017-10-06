@@ -30,7 +30,7 @@
 
 #include "../dfs_channel.h"
 #include "../dfs_zero_cac.h"
-#include "wlan_dfs_lmac_api.h"
+#include "wlan_dfs_utils_api.h"
 #include "wlan_dfs_mlme_api.h"
 #include "../dfs_internal.h"
 
@@ -288,7 +288,7 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 	 * Similarly if the current channel is 100 or higher then
 	 * pick a channel that is 100 or higher.
 	 */
-	if (lmac_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_MKK4_DOMAIN) {
+	if (utils_get_dfsdomain(dfs->dfs_pdev_obj) == DFS_MKK4_DOMAIN) {
 		if (IEEE80211_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) {
 			/* No action required for now. */
 			use_lower_5g_only = 0;
@@ -390,7 +390,7 @@ int dfs_random_channel(struct wlan_dfs *dfs,
 					  chan_flags)
 			 && (freq == ADJACENT_WEATHER_RADAR_CHANNEL)
 			)) && (DFS_ETSI_DOMAIN ==
-			lmac_get_dfsdomain(dfs->dfs_pdev_obj)))
+			utils_get_dfsdomain(dfs->dfs_pdev_obj)))
 				continue;
 		}
 #undef ADJACENT_WEATHER_RADAR_CHANNEL

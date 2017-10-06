@@ -29,17 +29,23 @@
 #include "dfs.h"
 
 /**
- * enum DFS_DOMAIN - These defines should match the table from ah_internal.h
- * @DFS_UNINIT_DOMAIN: Uninitialized dfs domain.
- * @DFS_FCC_DOMAIN:    FCC3 dfs domain.
- * @DFS_ETSI_DOMAIN:   ETSI dfs domain.
- * @DFS_MKK4_DOMAIN:   Japan dfs domain.
+ * enum DFS_DOMAIN - DFS domain
+ * @DFS_UNINIT_DOMAIN: Uninitialized domain
+ * @DFS_FCC_DOMAIN: FCC domain
+ * @DFS_ETSI_DOMAIN: ETSI domain
+ * @DFS_MKK4_DOMAIN: MKK domain
+ * @DFS_CN_DOMAIN: China domain
+ * @DFS_KR_DOMAIN: Korea domain
+ * @DFS_UNDEF_DOMAIN: Undefined domain
  */
 enum DFS_DOMAIN {
 	DFS_UNINIT_DOMAIN = 0,
 	DFS_FCC_DOMAIN    = 1,
 	DFS_ETSI_DOMAIN   = 2,
-	DFS_MKK4_DOMAIN   = 3
+	DFS_MKK4_DOMAIN   = 3,
+	DFS_CN_DOMAIN     = 4,
+	DFS_KR_DOMAIN     = 5,
+	DFS_UNDEF_DOMAIN
 };
 
 /* CAPABILITY: the device support STA DFS */

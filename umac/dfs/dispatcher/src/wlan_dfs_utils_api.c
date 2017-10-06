@@ -761,3 +761,12 @@ uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 		return DFS_5_GHZ_BASE_FREQ + (chan * DFS_CHAN_SPACING_5MHZ);
 }
 EXPORT_SYMBOL(utils_dfs_chan_to_freq);
+
+int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
+{
+	enum dfs_reg dfsdomain;
+
+	wlan_reg_get_dfs_region(pdev, &dfsdomain);
+
+	return dfsdomain;
+}

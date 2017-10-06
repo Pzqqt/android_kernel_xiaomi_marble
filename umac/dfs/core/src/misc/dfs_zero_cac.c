@@ -92,6 +92,7 @@
 #include "../dfs_zero_cac.h"
 #include "wlan_dfs_lmac_api.h"
 #include "wlan_dfs_mlme_api.h"
+#include "wlan_dfs_utils_api.h"
 #include "../dfs_internal.h"
 
 void dfs_zero_cac_reset(struct wlan_dfs *dfs)
@@ -803,7 +804,7 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 
 		if (dfs->dfs_precac_enable &&
 				tx_ops->tgt_is_tgt_type_qca9984(target_type) &&
-				(lmac_get_dfsdomain(dfs->dfs_pdev_obj) ==
+				(utils_get_dfsdomain(dfs->dfs_pdev_obj) ==
 				 DFS_ETSI_DOMAIN)) {
 			/*
 			 * If precac timer is running then do not change the

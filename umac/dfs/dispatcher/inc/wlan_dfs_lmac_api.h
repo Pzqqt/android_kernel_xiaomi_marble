@@ -76,12 +76,6 @@ uint64_t lmac_get_tsf64(struct wlan_objmgr_pdev *pdev);
 void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac);
 
 /**
- * lmac_get_dfsdomain() - Get DFS domain.
- * @pdev: Pointer to PDEV structure.
- */
-int lmac_get_dfsdomain(struct wlan_objmgr_pdev *pdev);
-
-/**
  * lmac_dfs_enable() - Enable DFS.
  * @pdev: Pointer to PDEV structure.
  * @is_fastclk: fastclk value.
@@ -148,12 +142,6 @@ uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev);
 uint32_t lmac_get_ext_busy(struct wlan_objmgr_pdev *pdev);
 
 /**
- * lmac_is_countryCode_KOREA_ROC3() - Check is county code Korea.
- * @pdev: Pointer to PDEV structure.
- */
-bool lmac_is_countryCode_KOREA_ROC3(struct wlan_objmgr_pdev *pdev);
-
-/**
  * lmac_set_use_cac_prssi() - Set use_cac_prssi value.
  * @pdev: Pointer to PDEV structure.
  */
@@ -164,12 +152,6 @@ void lmac_set_use_cac_prssi(struct wlan_objmgr_pdev *pdev);
  * @pdev: Pointer to PDEV structure.
  */
 uint32_t lmac_get_target_type(struct wlan_objmgr_pdev *pdev);
-
-/**
- * lmac_is_countryCode_CHINA() - Check is country code CHINA.
- * @pdev: Pointer to PDEV structure.
- */
-bool lmac_is_countryCode_CHINA(struct wlan_objmgr_pdev *pdev);
 
 /**
  * lmac_get_phymode_info() - Get phymode info.

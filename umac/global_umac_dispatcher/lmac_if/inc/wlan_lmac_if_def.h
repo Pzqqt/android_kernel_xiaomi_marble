@@ -437,12 +437,9 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_disable:                   Disable DFS
  * @dfs_gettsf64:                  Get tsf64 value.
  * @dfs_set_use_cac_prssi:         Set use_cac_prssi value.
- * @dfs_get_dfsdomain:             Get DFS domain.
- * @dfs_is_countryCode_CHINA:      Check is country code CHINA.
  * @dfs_get_thresholds:            Get thresholds.
  * @dfs_get_ext_busy:              Get ext_busy.
  * @dfs_get_target_type:           Get target type.
- * @dfs_is_countryCode_KOREA_ROC3: Check is county code Korea.
  * @dfs_is_mode_offload:           Check the radio for offload.
  * @dfs_get_ah_devid:              Get ah devid.
  * @dfs_get_phymode_info:          Get phymode info.
@@ -476,10 +473,6 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_gettsf64)(struct wlan_objmgr_pdev *pdev,
 			uint64_t *tsf64);
 	QDF_STATUS (*dfs_set_use_cac_prssi)(struct wlan_objmgr_pdev *pdev);
-	QDF_STATUS (*dfs_get_dfsdomain)(struct wlan_objmgr_pdev *pdev,
-			int *country_china);
-	QDF_STATUS (*dfs_is_countryCode_CHINA)(struct wlan_objmgr_pdev *pdev,
-			bool *status);
 	QDF_STATUS (*dfs_get_thresholds)(struct wlan_objmgr_pdev *pdev,
 			int32_t *pe_firpwr,
 			int32_t *pe_rrssi,
@@ -493,9 +486,6 @@ struct wlan_lmac_if_dfs_tx_ops {
 			int *dfs_ext_chan_busy);
 	QDF_STATUS (*dfs_get_target_type)(struct wlan_objmgr_pdev *pdev,
 			uint32_t *target_type);
-	QDF_STATUS (*dfs_is_countryCode_KOREA_ROC3)(
-			struct wlan_objmgr_pdev *pdev,
-			bool *ctry_korea);
 	QDF_STATUS (*dfs_is_mode_offload)(struct wlan_objmgr_pdev *pdev,
 			bool *is_offload);
 	QDF_STATUS (*dfs_get_ah_devid)(struct wlan_objmgr_pdev *pdev,
