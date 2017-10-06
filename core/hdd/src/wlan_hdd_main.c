@@ -2841,7 +2841,8 @@ uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx)
 	return &hdd_ctx->config->intfMacAddr[i].bytes[0];
 }
 
-void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx, uint8_t *releaseAddr)
+void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
+				uint8_t *releaseAddr)
 {
 	int i;
 
@@ -5386,8 +5387,9 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
  * Return: adapter pointer if found
  *
  */
-struct hdd_adapter *hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
-						uint32_t sme_session_id)
+struct hdd_adapter *
+hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
+				  uint32_t sme_session_id)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_adapter *adapter;
@@ -8592,6 +8594,7 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx, uint32_t set_value,
 
 	return hdd_pktlog_enable_disable(hdd_ctx, enable, user_triggered, 0);
 }
+
 /**
  * hdd_pktlog_enable_disable() - Enable/Disable packet logging
  * @hdd_ctx: HDD context
@@ -10534,8 +10537,9 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 }
 #endif
 
-struct hdd_adapter *hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
-							bool check_start_bss)
+struct hdd_adapter *
+hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
+			bool check_start_bss)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(this_sap_adapter);
 	struct hdd_adapter *adapter, *con_sap_adapter;
@@ -10715,11 +10719,12 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
  */
-QDF_STATUS wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
-						  struct hdd_adapter *ap_adapter,
-						  tCsrRoamProfile *roam_profile,
-						  tScanResultHandle *scan_cache,
-						  bool *concurrent_chnl_same)
+QDF_STATUS
+wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
+					struct hdd_adapter *ap_adapter,
+					tCsrRoamProfile *roam_profile,
+					tScanResultHandle *scan_cache,
+					bool *concurrent_chnl_same)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t channel_id;
