@@ -114,8 +114,6 @@
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
-#define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
-					   ((uintptr_t)OFFSET_OF(tSirBssDescription, ieFields)))
 
 /*
  * Android CTS verifier needs atleast this much wait time (in msec)
@@ -14648,9 +14646,9 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adap
 #ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
 	qcom_ie_age *qie_age = NULL;
 	int ie_length =
-		GET_IE_LEN_IN_BSS_DESC(bss_desc->length) + sizeof(qcom_ie_age);
+		GET_IE_LEN_IN_BSS(bss_desc->length) + sizeof(qcom_ie_age);
 #else
-	int ie_length = GET_IE_LEN_IN_BSS_DESC(bss_desc->length);
+	int ie_length = GET_IE_LEN_IN_BSS(bss_desc->length);
 #endif
 	const char *ie =
 		((ie_length != 0) ? (const char *)&bss_desc->ieFields : NULL);

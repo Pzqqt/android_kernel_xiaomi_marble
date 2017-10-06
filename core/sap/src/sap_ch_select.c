@@ -82,9 +82,6 @@
 		acs_band = eCSR_DOT11_MODE_abg; \
 }
 
-#define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
-			((uintptr_t)OFFSET_OF(tSirBssDescription, ieFields)))
-
 #define ACS_WEIGHT_AMOUNT_LOCAL    240
 
 #define ACS_WEIGHT_AMOUNT_CONFIG(weights) \
@@ -350,7 +347,7 @@ static void sap_process_avoid_ie(tHalHandle hal,
 
 	while (node) {
 		total_ie_len =
-			GET_IE_LEN_IN_BSS_DESC(node->BssDescriptor.length);
+			GET_IE_LEN_IN_BSS(node->BssDescriptor.length);
 		temp_ptr = wlan_get_vendor_ie_ptr_from_oui(
 				SIR_MAC_QCOM_VENDOR_OUI,
 				SIR_MAC_QCOM_VENDOR_SIZE,
