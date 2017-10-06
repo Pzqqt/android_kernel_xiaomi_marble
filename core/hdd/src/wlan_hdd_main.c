@@ -2172,7 +2172,7 @@ static void hdd_register_policy_manager_callback(
 	struct policy_mgr_hdd_cbacks hdd_cbacks;
 
 	hdd_cbacks.sap_restart_chan_switch_cb =
-		sap_restart_chan_switch_cb;
+		hdd_sap_restart_chan_switch_cb;
 	hdd_cbacks.wlan_hdd_get_channel_for_sap_restart =
 		wlan_hdd_get_channel_for_sap_restart;
 	hdd_cbacks.get_mode_for_non_connected_vdev =

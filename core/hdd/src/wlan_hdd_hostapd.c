@@ -2673,12 +2673,13 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 	}
 }
 
-void sap_restart_chan_switch_cb (struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint32_t channel,
-				uint32_t channel_bw)
+void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id, uint32_t channel,
+				    uint32_t channel_bw)
 {
-	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(
-					psoc, vdev_id);
+	struct hdd_adapter *ap_adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, vdev_id);
+
 	if (!ap_adapter) {
 		hdd_err("Adapter is NULL");
 		return;
@@ -2775,7 +2776,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	*sec_ch = hdd_ap_ctx->sapConfig.sec_ch;
 
 	hdd_info("SAP channel change with CSA/ECSA");
-	sap_restart_chan_switch_cb(psoc, vdev_id,
+	hdd_sap_restart_chan_switch_cb(psoc, vdev_id,
 		hdd_ap_ctx->sapConfig.channel,
 		hdd_ap_ctx->sapConfig.ch_params.ch_width);
 
