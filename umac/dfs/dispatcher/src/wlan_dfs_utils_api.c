@@ -853,3 +853,12 @@ int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
 
 	return dfsdomain;
 }
+
+uint16_t utils_dfs_get_cur_rd(struct wlan_objmgr_pdev *pdev)
+{
+	struct cur_regdmn_info cur_regdmn;
+
+	wlan_reg_get_curr_regdomain(pdev, &cur_regdmn);
+
+	return cur_regdmn.regdmn_pair_id;
+}

@@ -43,6 +43,13 @@
  *                                       AR5416 chipset.
  */
 struct dfs_pulse ar5416_etsi_radars[] = {
+
+	/* EN 302 502 frequency hopping pulse */
+	/* PRF 3000, 1us duration, 9 pulses per burst */
+	{9,   1, 3000, 3000, 1,  4,  5,  0,  1, 18,  0, 0, 1,  1000, 0, 40},
+	/* PRF 4500, 20us duration, 9 pulses per burst */
+	{9,  20, 4500, 4500, 1,  4,  5, 19, 21, 18,  0, 0, 1,  1000, 0, 41},
+
 	/* TYPE staggered pulse */
 	/* 0.8-2us, 2-3 bursts,300-400 PRF, 10 pulses each */
 	{20,  2,  300,  400, 2, 30,  4,  0,  2, 15, 0,   0, 0, 0, 0, 31},
@@ -108,6 +115,8 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 {
 	struct wlan_dfs_radar_tab_info rinfo;
 	int dfsdomain = DFS_FCC_DOMAIN;
+	uint16_t ch_freq;
+	uint16_t regdmn;
 
 	qdf_mem_zero(&rinfo, sizeof(rinfo));
 	dfsdomain = utils_get_dfsdomain(dfs->dfs_pdev_obj);
@@ -124,8 +133,22 @@ void dfs_get_radars_for_ar5416(struct wlan_dfs *dfs)
 	case DFS_ETSI_DOMAIN:
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "DFS_ETSI_DOMAIN_5416");
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
-		rinfo.dfs_radars = &ar5416_etsi_radars[0];
-		rinfo.numradars = QDF_ARRAY_SIZE(ar5416_etsi_radars);
+
+		ch_freq = dfs->dfs_curchan->dfs_ch_freq;
+		regdmn = utils_dfs_get_cur_rd(dfs->dfs_pdev_obj);
+
+		if ((regdmn == ETSI11_WORLD_REGDMN_PAIR_ID) &&
+				DFS_CURCHAN_IS_58GHz(ch_freq)) {
+			rinfo.dfs_radars = ar5416_etsi_radars;
+			rinfo.numradars = QDF_ARRAY_SIZE(ar5416_etsi_radars);
+		} else {
+			uint8_t offset = ETSI_LEGACY_PULSE_ARR_OFFSET;
+
+			rinfo.dfs_radars = &ar5416_etsi_radars[offset];
+			rinfo.numradars =
+				QDF_ARRAY_SIZE(ar5416_etsi_radars) - offset;
+		}
+
 		rinfo.b5pulses = &ar5416_bin5pulses[0];
 		rinfo.numb5radars = QDF_ARRAY_SIZE(ar5416_bin5pulses);
 		break;

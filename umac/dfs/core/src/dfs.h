@@ -280,6 +280,16 @@
 #define NUM_BINS 128
 #define THOUSAND 1000
 
+/* Check if the dfs current channel is 5.8GHz */
+#define DFS_CURCHAN_IS_58GHz(freq) \
+	((((freq) >= 5745) && ((freq) <= 5865)) ? true : false)
+
+/* ETSI11_WORLD regdmn pair id */
+#define ETSI11_WORLD_REGDMN_PAIR_ID 0x26
+
+/* Array offset to ETSI legacy pulse */
+#define ETSI_LEGACY_PULSE_ARR_OFFSET 2
+
 /**
  * struct dfs_pulseparams - DFS pulse param structure.
  * @p_time:        Time for start of pulse in usecs.

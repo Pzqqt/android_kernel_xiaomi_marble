@@ -430,4 +430,12 @@ QDF_STATUS utils_dfs_update_cur_chan_flags(struct wlan_objmgr_pdev *pdev,
  */
 int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * utils_dfs_get_cur_rd() - Get current regdomain.
+ * @pdev: pdev ptr
+ *
+ * Return: Regdomain pair id.
+ */
+uint16_t utils_dfs_get_cur_rd(struct wlan_objmgr_pdev *pdev);
+
 #endif /* _WLAN_DFS_UTILS_API_H_ */
