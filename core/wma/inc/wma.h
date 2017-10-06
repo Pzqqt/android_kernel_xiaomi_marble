@@ -979,6 +979,17 @@ typedef struct {
 	uint8_t ssidHidden;
 } vdev_restart_params_t;
 
+struct roam_synch_frame_ind {
+	uint32_t bcn_probe_rsp_len;
+	uint8_t *bcn_probe_rsp;
+	uint8_t is_beacon;
+	uint32_t reassoc_req_len;
+	uint8_t *reassoc_req;
+	uint32_t reassoc_rsp_len;
+	uint8_t *reassoc_rsp;
+};
+
+
 /**
  * struct wma_txrx_node - txrx node
  * @addr: mac address
@@ -1133,6 +1144,7 @@ struct wma_txrx_node {
 	qdf_wake_lock_t vdev_start_wakelock;
 	qdf_wake_lock_t vdev_stop_wakelock;
 	qdf_wake_lock_t vdev_set_key_wakelock;
+	struct roam_synch_frame_ind roam_synch_frame_ind;
 };
 
 #if defined(QCA_WIFI_FTM)

@@ -2293,7 +2293,8 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
 }
 
 /**
- * wma_fill_roam_synch_buffer() - Fill the the roam sync buffer
+ * wma_fill_data_synch_frame_event() - Fill the the roam sync data buffer using
+ * synch frame event data
  * @wma: Global WMA Handle
  * @roam_synch_ind_ptr: Buffer to be filled
  * @param_buf: Source buffer
@@ -2303,39 +2304,84 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
  * parameters are parsed and filled into the roam synch indication
  * buffer which will be used at different layers for propagation.
  *
- * Return: Success or Failure
+ * Return: None
  */
-static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
+static void wma_fill_data_synch_frame_event(tp_wma_handle wma,
 				roam_offload_synch_ind *roam_synch_ind_ptr,
-				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
+				struct wma_txrx_node *iface)
 {
-	wmi_roam_synch_event_fixed_param *synch_event;
 	uint8_t *bcn_probersp_ptr;
 	uint8_t *reassoc_rsp_ptr;
 	uint8_t *reassoc_req_ptr;
-	wmi_channel *chan;
-	wmi_key_material *key;
-	wmi_roam_fils_synch_tlv_param *fils_info;
+
+	/* Beacon/Probe Rsp data */
+	roam_synch_ind_ptr->beaconProbeRespOffset =
+		sizeof(roam_offload_synch_ind);
+	bcn_probersp_ptr = (uint8_t *) roam_synch_ind_ptr +
+		roam_synch_ind_ptr->beaconProbeRespOffset;
+	roam_synch_ind_ptr->beaconProbeRespLength =
+		iface->roam_synch_frame_ind.bcn_probe_rsp_len;
+	qdf_mem_copy(bcn_probersp_ptr,
+		iface->roam_synch_frame_ind.bcn_probe_rsp,
+		roam_synch_ind_ptr->beaconProbeRespLength);
+	qdf_mem_free(iface->roam_synch_frame_ind.bcn_probe_rsp);
+		iface->roam_synch_frame_ind.bcn_probe_rsp = NULL;
+
+	/* ReAssoc Rsp data */
+	roam_synch_ind_ptr->reassocRespOffset =
+		sizeof(roam_offload_synch_ind) +
+		roam_synch_ind_ptr->beaconProbeRespLength;
+	roam_synch_ind_ptr->reassocRespLength =
+		iface->roam_synch_frame_ind.reassoc_rsp_len;
+	reassoc_rsp_ptr = (uint8_t *) roam_synch_ind_ptr +
+			  roam_synch_ind_ptr->reassocRespOffset;
+	qdf_mem_copy(reassoc_rsp_ptr,
+		     iface->roam_synch_frame_ind.reassoc_rsp,
+		     roam_synch_ind_ptr->reassocRespLength);
+	qdf_mem_free(iface->roam_synch_frame_ind.reassoc_rsp);
+	iface->roam_synch_frame_ind.reassoc_rsp = NULL;
+
+	/* ReAssoc Req data */
+	roam_synch_ind_ptr->reassoc_req_offset =
+		sizeof(roam_offload_synch_ind) +
+		roam_synch_ind_ptr->beaconProbeRespLength +
+		roam_synch_ind_ptr->reassocRespLength;
+	roam_synch_ind_ptr->reassoc_req_length =
+		iface->roam_synch_frame_ind.reassoc_req_len;
+	reassoc_req_ptr = (uint8_t *) roam_synch_ind_ptr +
+			  roam_synch_ind_ptr->reassoc_req_offset;
+	qdf_mem_copy(reassoc_req_ptr,
+		     iface->roam_synch_frame_ind.reassoc_req,
+		     roam_synch_ind_ptr->reassoc_req_length);
+	qdf_mem_free(iface->roam_synch_frame_ind.reassoc_req);
+	iface->roam_synch_frame_ind.reassoc_req = NULL;
+}
+
+/**
+ * wma_fill_data_synch_event() - Fill the the roam sync data buffer using synch
+ * event data
+ * @wma: Global WMA Handle
+ * @roam_synch_ind_ptr: Buffer to be filled
+ * @param_buf: Source buffer
+ *
+ * Firmware sends all the required information required for roam
+ * synch propagation as TLV's and stored in param_buf. These
+ * parameters are parsed and filled into the roam synch indication
+ * buffer which will be used at different layers for propagation.
+ *
+ * Return: None
+ */
+static void wma_fill_data_synch_event(tp_wma_handle wma,
+				roam_offload_synch_ind *roam_synch_ind_ptr,
+				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
+{
+	uint8_t *bcn_probersp_ptr;
+	uint8_t *reassoc_rsp_ptr;
+	uint8_t *reassoc_req_ptr;
+	wmi_roam_synch_event_fixed_param *synch_event;
 
 	synch_event = param_buf->fixed_param;
-	roam_synch_ind_ptr->roamedVdevId = synch_event->vdev_id;
-	roam_synch_ind_ptr->authStatus = synch_event->auth_status;
-	roam_synch_ind_ptr->roamReason = synch_event->roam_reason;
-	roam_synch_ind_ptr->rssi = synch_event->rssi;
-	roam_synch_ind_ptr->isBeacon = synch_event->is_beacon;
-	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
-				   roam_synch_ind_ptr->bssid.bytes);
-	WMA_LOGI("%s: roamedVdevId %d authStatus %d roamReason %d rssi %d isBeacon %d",
-		__func__, roam_synch_ind_ptr->roamedVdevId,
-		roam_synch_ind_ptr->authStatus, roam_synch_ind_ptr->roamReason,
-		roam_synch_ind_ptr->rssi, roam_synch_ind_ptr->isBeacon);
 
-	if (!QDF_IS_STATUS_SUCCESS(
-		wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
-		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA))) {
-		WMA_LOGE("LFR3: CSR Roam synch cb failed");
-		return -EINVAL;
-	}
 	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
 		sizeof(roam_offload_synch_ind);
@@ -2366,6 +2412,82 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 			  roam_synch_ind_ptr->reassoc_req_offset;
 	qdf_mem_copy(reassoc_req_ptr, param_buf->reassoc_req_frame,
 		     roam_synch_ind_ptr->reassoc_req_length);
+}
+
+/**
+ * wma_fill_roam_synch_buffer() - Fill the the roam sync buffer
+ * @wma: Global WMA Handle
+ * @roam_synch_ind_ptr: Buffer to be filled
+ * @param_buf: Source buffer
+ *
+ * Firmware sends all the required information required for roam
+ * synch propagation as TLV's and stored in param_buf. These
+ * parameters are parsed and filled into the roam synch indication
+ * buffer which will be used at different layers for propagation.
+ *
+ * Return: Success or Failure
+ */
+static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
+				roam_offload_synch_ind *roam_synch_ind_ptr,
+				WMI_ROAM_SYNCH_EVENTID_param_tlvs *param_buf)
+{
+	wmi_roam_synch_event_fixed_param *synch_event;
+	wmi_channel *chan;
+	wmi_key_material *key;
+	struct wma_txrx_node *iface = NULL;
+	wmi_roam_fils_synch_tlv_param *fils_info;
+
+	synch_event = param_buf->fixed_param;
+	roam_synch_ind_ptr->roamedVdevId = synch_event->vdev_id;
+	roam_synch_ind_ptr->authStatus = synch_event->auth_status;
+	roam_synch_ind_ptr->roamReason = synch_event->roam_reason;
+	roam_synch_ind_ptr->rssi = synch_event->rssi;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
+				   roam_synch_ind_ptr->bssid.bytes);
+	WMA_LOGD("%s: roamedVdevId %d authStatus %d roamReason %d rssi %d isBeacon %d",
+		__func__, roam_synch_ind_ptr->roamedVdevId,
+		roam_synch_ind_ptr->authStatus, roam_synch_ind_ptr->roamReason,
+		roam_synch_ind_ptr->rssi, roam_synch_ind_ptr->isBeacon);
+
+	if (!QDF_IS_STATUS_SUCCESS(
+		wma->csr_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
+		roam_synch_ind_ptr, NULL, SIR_ROAMING_DEREGISTER_STA))) {
+		WMA_LOGE("LFR3: CSR Roam synch cb failed");
+		return -EINVAL;
+	}
+
+	iface = &wma->interfaces[synch_event->vdev_id];
+
+	/*
+	 * If lengths of bcn_probe_rsp, reassoc_req and reassoc_rsp are zero in
+	 * synch_event driver would have received bcn_probe_rsp, reassoc_req
+	 * and reassoc_rsp via the event WMI_ROAM_SYNCH_FRAME_EVENTID
+	 */
+	if ((!synch_event->bcn_probe_rsp_len) &&
+		(!synch_event->reassoc_req_len) &&
+		(!synch_event->reassoc_rsp_len)) {
+		if (!iface->roam_synch_frame_ind.bcn_probe_rsp) {
+			WMA_LOGE("LFR3: bcn_probe_rsp is NULL");
+			QDF_ASSERT(iface->roam_synch_frame_ind.
+				   bcn_probe_rsp != NULL);
+			return -EINVAL;
+		}
+		if (!iface->roam_synch_frame_ind.reassoc_rsp) {
+			WMA_LOGE("LFR3: reassoc_rsp is NULL");
+			QDF_ASSERT(iface->roam_synch_frame_ind.
+				   reassoc_rsp != NULL);
+			return -EINVAL;
+		}
+		if (!iface->roam_synch_frame_ind.reassoc_req) {
+			WMA_LOGE("LFR3: reassoc_req is NULL");
+			QDF_ASSERT(iface->roam_synch_frame_ind.
+				   reassoc_req != NULL);
+			return -EINVAL;
+		}
+		wma_fill_data_synch_frame_event(wma, roam_synch_ind_ptr, iface);
+	} else {
+		wma_fill_data_synch_event(wma, roam_synch_ind_ptr, param_buf);
+	}
 
 	chan = (wmi_channel *) param_buf->chan;
 	roam_synch_ind_ptr->chan_freq = chan->mhz;
@@ -2502,6 +2624,9 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	tSirRoamOffloadScanReq *roam_req;
 	qdf_time_t roam_synch_received = qdf_get_system_timestamp();
 	uint32_t roam_synch_data_len;
+	A_UINT32 bcn_probe_rsp_len;
+	A_UINT32 reassoc_rsp_len;
+	A_UINT32 reassoc_req_len;
 
 	WMA_LOGD("LFR3:%s", __func__);
 	if (!event) {
@@ -2551,26 +2676,64 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 			synch_event->bcn_probe_rsp_len,
 			synch_event->reassoc_req_len,
 			synch_event->reassoc_rsp_len);
-	if (synch_event->bcn_probe_rsp_len > WMI_SVC_MSG_MAX_SIZE)
-		goto cleanup_label;
-	if (synch_event->reassoc_rsp_len >
-		(WMI_SVC_MSG_MAX_SIZE - synch_event->bcn_probe_rsp_len))
-		goto cleanup_label;
-	if (synch_event->reassoc_req_len >
-		WMI_SVC_MSG_MAX_SIZE - (synch_event->bcn_probe_rsp_len +
-			synch_event->reassoc_rsp_len))
-		goto cleanup_label;
-	roam_synch_data_len = synch_event->bcn_probe_rsp_len +
-		synch_event->reassoc_rsp_len + synch_event->reassoc_req_len;
+
 	/*
-	 * Below is the check for the entire size of the message received from'
-	 * the firmware.
+	 * If lengths of bcn_probe_rsp, reassoc_req and reassoc_rsp are zero in
+	 * synch_event driver would have received bcn_probe_rsp, reassoc_req
+	 * and reassoc_rsp via the event WMI_ROAM_SYNCH_FRAME_EVENTID
 	 */
-	if (roam_synch_data_len > WMI_SVC_MSG_MAX_SIZE -
-		(sizeof(*synch_event) + sizeof(wmi_channel) +
-		 sizeof(wmi_key_material) + sizeof(uint32_t)))
-		goto cleanup_label;
-	roam_synch_data_len += sizeof(roam_offload_synch_ind);
+	if ((!synch_event->bcn_probe_rsp_len) &&
+		(!synch_event->reassoc_req_len) &&
+		(!synch_event->reassoc_rsp_len)) {
+		bcn_probe_rsp_len = wma->interfaces[synch_event->vdev_id].
+				      roam_synch_frame_ind.
+				      bcn_probe_rsp_len;
+		reassoc_req_len = wma->interfaces[synch_event->vdev_id].
+				      roam_synch_frame_ind.reassoc_req_len;
+		reassoc_rsp_len = wma->interfaces[synch_event->vdev_id].
+				      roam_synch_frame_ind.reassoc_rsp_len;
+
+		roam_synch_data_len = bcn_probe_rsp_len + reassoc_rsp_len +
+			reassoc_req_len + sizeof(roam_offload_synch_ind);
+
+		WMA_LOGD("Updated synch payload: LEN bcn:%d, req:%d, rsp:%d",
+			bcn_probe_rsp_len,
+			reassoc_req_len,
+			reassoc_rsp_len);
+	} else {
+		bcn_probe_rsp_len = synch_event->bcn_probe_rsp_len;
+		reassoc_req_len = synch_event->reassoc_req_len;
+		reassoc_rsp_len = synch_event->reassoc_rsp_len;
+
+		if (synch_event->bcn_probe_rsp_len > WMI_SVC_MSG_MAX_SIZE)
+			goto cleanup_label;
+		if (synch_event->reassoc_rsp_len >
+		    (WMI_SVC_MSG_MAX_SIZE - synch_event->bcn_probe_rsp_len))
+			goto cleanup_label;
+		if (synch_event->reassoc_req_len >
+		    WMI_SVC_MSG_MAX_SIZE - (synch_event->bcn_probe_rsp_len +
+			synch_event->reassoc_rsp_len))
+			goto cleanup_label;
+
+		roam_synch_data_len = bcn_probe_rsp_len +
+			reassoc_rsp_len + reassoc_req_len;
+
+		/*
+		 * Below is the check for the entire size of the message
+		 * received from the firmware.
+		 */
+		if (roam_synch_data_len > WMI_SVC_MSG_MAX_SIZE -
+			(sizeof(*synch_event) + sizeof(wmi_channel) +
+			 sizeof(wmi_key_material) + sizeof(uint32_t)))
+			goto cleanup_label;
+
+		roam_synch_data_len += sizeof(roam_offload_synch_ind);
+	}
+
+	WMA_LOGI("synch payload: LEN bcn:%d, req:%d, rsp:%d",
+			bcn_probe_rsp_len,
+			reassoc_req_len,
+			reassoc_rsp_len);
 
 	cds_host_diag_log_work(&wma->roam_ho_wl,
 			       WMA_ROAM_HO_WAKE_LOCK_DURATION,
@@ -2579,6 +2742,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 				      WMA_ROAM_HO_WAKE_LOCK_DURATION);
 
 	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = true;
+
 	roam_synch_ind_ptr =
 		(roam_offload_synch_ind *)qdf_mem_malloc(roam_synch_data_len);
 	if (!roam_synch_ind_ptr) {
@@ -2664,6 +2828,133 @@ cleanup_label:
 		wma->interfaces[synch_event->vdev_id].roam_synch_in_progress =
 			false;
 
+	return status;
+}
+
+int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
+					uint32_t len)
+{
+	WMI_ROAM_SYNCH_FRAME_EVENTID_param_tlvs *param_buf = NULL;
+	wmi_roam_synch_frame_event_fixed_param *synch_frame_event = NULL;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	A_UINT32 vdev_id;
+	struct wma_txrx_node *iface = NULL;
+	int status = -EINVAL;
+
+	WMA_LOGD("LFR3:Synch Frame event");
+	if (!event) {
+		WMA_LOGE("event param null");
+		goto cleanup_label;
+	}
+
+	param_buf = (WMI_ROAM_SYNCH_FRAME_EVENTID_param_tlvs *) event;
+	if (!param_buf) {
+		WMA_LOGE("received null buf from target");
+		goto cleanup_label;
+	}
+
+	synch_frame_event = param_buf->fixed_param;
+	if (!synch_frame_event) {
+		WMA_LOGE("received null event data from target");
+		goto cleanup_label;
+	}
+
+	if (synch_frame_event->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("received invalid vdev_id %d",
+				 synch_frame_event->vdev_id);
+		goto cleanup_label;
+	}
+
+	vdev_id = synch_frame_event->vdev_id;
+	iface = &wma->interfaces[vdev_id];
+
+	if (wma_is_roam_synch_in_progress(wma, vdev_id)) {
+		WMA_LOGE("Ignoring this event as it is unexpected");
+		goto cleanup_label;
+	}
+	WMA_LOGD("LFR3: Received ROAM_SYNCH_FRAME_EVENT");
+
+	WMA_LOGD("synch frame payload: LEN bcn:%d, req:%d, rsp:%d morefrag: %d",
+				synch_frame_event->bcn_probe_rsp_len,
+				synch_frame_event->reassoc_req_len,
+				synch_frame_event->reassoc_rsp_len,
+				synch_frame_event->more_frag);
+
+	if (synch_frame_event->bcn_probe_rsp_len) {
+		iface->roam_synch_frame_ind.bcn_probe_rsp_len =
+				synch_frame_event->bcn_probe_rsp_len;
+		iface->roam_synch_frame_ind.is_beacon =
+				synch_frame_event->is_beacon;
+
+		iface->roam_synch_frame_ind.bcn_probe_rsp =
+			qdf_mem_malloc(iface->roam_synch_frame_ind.
+				       bcn_probe_rsp_len);
+		if (!iface->roam_synch_frame_ind.bcn_probe_rsp) {
+			WMA_LOGE("failed to allocate memory for bcn_probe_rsp");
+			QDF_ASSERT(iface->roam_synch_frame_ind.
+				   bcn_probe_rsp != NULL);
+			status = -ENOMEM;
+			goto cleanup_label;
+		}
+		qdf_mem_copy(iface->roam_synch_frame_ind.
+			bcn_probe_rsp,
+			param_buf->bcn_probe_rsp_frame,
+			iface->roam_synch_frame_ind.bcn_probe_rsp_len);
+	}
+
+	if (synch_frame_event->reassoc_req_len) {
+		iface->roam_synch_frame_ind.reassoc_req_len =
+				synch_frame_event->reassoc_req_len;
+
+		iface->roam_synch_frame_ind.reassoc_req =
+			qdf_mem_malloc(iface->roam_synch_frame_ind.
+				       reassoc_req_len);
+		if (!iface->roam_synch_frame_ind.reassoc_req) {
+			WMA_LOGE("failed to allocate memory for reassoc_req");
+			QDF_ASSERT(iface->roam_synch_frame_ind.
+				   reassoc_req != NULL);
+			status = -ENOMEM;
+			goto cleanup_label;
+		}
+		qdf_mem_copy(iface->roam_synch_frame_ind.reassoc_req,
+			     param_buf->reassoc_req_frame,
+			     iface->roam_synch_frame_ind.reassoc_req_len);
+	}
+
+	if (synch_frame_event->reassoc_rsp_len) {
+		iface->roam_synch_frame_ind.reassoc_rsp_len =
+				synch_frame_event->reassoc_rsp_len;
+
+		iface->roam_synch_frame_ind.reassoc_rsp =
+			qdf_mem_malloc(iface->roam_synch_frame_ind.
+				       reassoc_rsp_len);
+		if (!iface->roam_synch_frame_ind.reassoc_rsp) {
+			WMA_LOGE("failed to allocate memory for reassoc_req");
+			QDF_ASSERT(iface->roam_synch_frame_ind.
+				   reassoc_rsp != NULL);
+			status = -ENOMEM;
+			goto cleanup_label;
+		}
+		qdf_mem_copy(iface->roam_synch_frame_ind.reassoc_rsp,
+			     param_buf->reassoc_rsp_frame,
+			     iface->roam_synch_frame_ind.reassoc_rsp_len);
+	}
+	return 0;
+
+cleanup_label:
+	if (iface && (iface->roam_synch_frame_ind.bcn_probe_rsp)) {
+		qdf_mem_free(iface->roam_synch_frame_ind.
+			     bcn_probe_rsp);
+		iface->roam_synch_frame_ind.bcn_probe_rsp = NULL;
+	}
+	if (iface && (iface->roam_synch_frame_ind.reassoc_req)) {
+		qdf_mem_free(iface->roam_synch_frame_ind.reassoc_req);
+		iface->roam_synch_frame_ind.reassoc_req = NULL;
+	}
+	if (iface && (iface->roam_synch_frame_ind.reassoc_rsp)) {
+		qdf_mem_free(iface->roam_synch_frame_ind.reassoc_rsp);
+		iface->roam_synch_frame_ind.reassoc_rsp = NULL;
+	}
 	return status;
 }
 
