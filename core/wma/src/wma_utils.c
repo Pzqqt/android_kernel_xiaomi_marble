@@ -780,7 +780,6 @@ static tSirLLStatsResults *wma_get_ll_stats_ext_buf(uint32_t *len,
 			 fixed_param->tx_ppdu_delay_array_len,
 			 fixed_param->rx_mpdu_aggr_array_len,
 			 fixed_param->rx_mcs_array_len);
-		QDF_ASSERT(0);
 		return NULL;
 	}
 
