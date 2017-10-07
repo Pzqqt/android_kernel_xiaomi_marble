@@ -131,10 +131,6 @@ void hdd_wlan_offload_event(uint8_t type, uint8_t state)
 }
 #endif
 
-/* Function and variables declarations */
-
-extern struct notifier_block hdd_netdev_notifier;
-
 /**
  * hdd_enable_gtk_offload() - enable GTK offload
  * @adapter: pointer to the adapter
@@ -621,7 +617,8 @@ static struct in_ifaddr *hdd_lookup_ifaddr(struct hdd_adapter *adapter)
  *
  * return: zero for success; non-zero for failure
  */
-static int hdd_populate_ipv4_addr(struct hdd_adapter *adapter, uint8_t *ipv4_addr)
+static int hdd_populate_ipv4_addr(struct hdd_adapter *adapter,
+				  uint8_t *ipv4_addr)
 {
 	struct in_ifaddr *ifa;
 	int i;
@@ -941,7 +938,8 @@ void hdd_disable_arp_offload(struct hdd_adapter *adapter,
 		goto out;
 	}
 
-	status = pmo_ucfg_disable_arp_offload_in_fwr(adapter->hdd_vdev, trigger);
+	status = pmo_ucfg_disable_arp_offload_in_fwr(adapter->hdd_vdev,
+						     trigger);
 	if (status == QDF_STATUS_SUCCESS)
 		hdd_wlan_offload_event(PMO_IPV4_ARP_REPLY_OFFLOAD,
 			PMO_OFFLOAD_DISABLE);
@@ -1039,8 +1037,8 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
  *
  * currently only need to send connection info.
  */
-static void
-hdd_update_conn_state_mask(struct hdd_adapter *adapter, uint32_t *conn_state_mask)
+static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
+				       uint32_t *conn_state_mask)
 {
 
 	eConnectionState connState;
