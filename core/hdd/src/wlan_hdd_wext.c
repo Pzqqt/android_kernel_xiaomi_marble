@@ -11222,8 +11222,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 						apps_args[1],
 						&apps_args[2]);
 		if (QDF_STATUS_SUCCESS != status) {
-		    hdd_err("Not able to post UNIT_TEST_CMD message to WMA");
-		    return -EINVAL;
+			hdd_err("sme_send_unit_test_cmd returned %d", status);
+			return -EINVAL;
 		}
 	}
 	break;
