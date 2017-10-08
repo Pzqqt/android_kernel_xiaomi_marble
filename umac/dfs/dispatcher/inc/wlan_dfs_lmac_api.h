@@ -31,34 +31,10 @@
 /**
  * lmac_get_caps() - Get DFS capabilities.
  * @pdev: Pointer to PDEV structure.
- * @ext_chan:                Can radar be detected on the extension chan?
- * @combined_rssi:           Can use combined radar RSSI?
- * @use_enhancement:         This flag is used to indicate if radar
- *                           detection scheme should use enhanced chirping
- *                           detection algorithm. This flag also determines
- *                           if certain radar data should be discarded to
- *                           minimize false detection of radar.
- * @strong_signal_diversiry: Strong Signal fast diversity count.
- * @chip_is_bb_tlv:          Chip is BB TLV?
- * @chip_is_over_sampled:    Is Over sampled.
- * @chip_is_ht160:           IS VHT160?
- * @chip_is_false_detect:    Is False detected?
- * @fastdiv_val:             Goes with wlan_strong_signal_diversiry: If we
- *                           have fast diversity capability, read off
- *                           Strong Signal fast diversity count set in the
- *                           ini file, and store so we can restore the
- *                           value when radar is disabled.
+ * @dfs_caps: Pointer to dfs_caps structure
  */
 void lmac_get_caps(struct wlan_objmgr_pdev *pdev,
-		bool *ext_chan,
-		bool *combined_rssi,
-		bool *use_enhancement,
-		bool *strong_signal_diversiry,
-		bool *chip_is_bb_tlv,
-		bool *chip_is_over_sampled,
-		bool *chip_is_ht160,
-		bool *chip_is_false_detect,
-		uint32_t *fastdiv_val);
+		struct wlan_dfs_caps *dfs_caps);
 
 /**
  * lmac_get_tsf64() - Get tsf64 value.
@@ -79,49 +55,21 @@ void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac);
  * lmac_dfs_enable() - Enable DFS.
  * @pdev: Pointer to PDEV structure.
  * @is_fastclk: fastclk value.
- * @pe_firpwr:  FIR pwr out threshold.
- * @pe_rrssi:   Radar rssi thresh.
- * @pe_height:  Pulse height thresh.
- * @pe_prssi:   Pulse rssi thresh.
- * @pe_inband:  Inband thresh.
- * @pe_relpwr:  Relative power threshold in 0.5dB steps.
- * @pe_relstep: Pulse Relative step threshold in 0.5dB steps.
- * @pe_maxlen:  Max length of radar sign in 0.8us units.
+ * @param: Pointer to wlan_dfs_phyerr_param structure.
  * @dfsdomain:  DFS domain.
  */
 void lmac_dfs_enable(struct wlan_objmgr_pdev *pdev,
 		int *is_fastclk,
-		int32_t pe_firpwr,
-		int32_t pe_rrssi,
-		int32_t pe_height,
-		int32_t pe_prssi,
-		int32_t pe_inband,
-		uint32_t pe_relpwr,
-		uint32_t pe_relstep,
-		uint32_t pe_maxlen,
+		struct wlan_dfs_phyerr_param *param,
 		int dfsdomain);
 
 /**
  * lmac_dfs_get_thresholds() - Get thresholds.
  * @pdev: Pointer to PDEV structure.
- * @pe_firpwr:     FIR pwr out threshold.
- * @pe_rrssi:      Radar rssi thresh.
- * @pe_height:     Pulse height thresh.
- * @pe_prssi:      Pulse rssi thresh.
- * @pe_inband:     Inband thresh.
- * @pe_relpwr:     Relative power threshold in 0.5dB steps.
- * @pe_relstep:    Pulse Relative step threshold in 0.5dB steps.
- * @pe_maxlen:     Max length of radar sign in 0.8us units.
+ * @param: Pointer to wlan_dfs_phyerr_param structure.
  */
 void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
-	int32_t *pe_firpwr,
-	int32_t *pe_rrssi,
-	int32_t *pe_height,
-	int32_t *pe_prssi,
-	int32_t *pe_inband,
-	uint32_t *pe_relpwr,
-	uint32_t *pe_relstep,
-	uint32_t *pe_maxlen);
+		struct wlan_dfs_phyerr_param *param);
 
 /**
  * lmac_is_mode_offload() - Check the radio for offload.

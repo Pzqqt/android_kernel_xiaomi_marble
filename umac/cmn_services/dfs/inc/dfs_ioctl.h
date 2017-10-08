@@ -144,4 +144,67 @@ struct dfs_ioctl_params {
 /* Flag to exclude all 2.4GHz channels */
 #define DFS_RANDOM_CH_FLAG_NO_2GHZ_CH           0x0040 /* 0000 0000 0100 0000 */
 
+/**
+ * struct wlan_dfs_caps - DFS capability structure.
+ * @wlan_dfs_ext_chan_ok:         Can radar be detected on the extension chan?
+ * @wlan_dfs_combined_rssi_ok:    Can use combined radar RSSI?
+ * @wlan_dfs_use_enhancement:     This flag is used to indicate if radar
+ *                                detection scheme should use enhanced chirping
+ *                                detection algorithm. This flag also determines
+ *                                if certain radar data should be discarded to
+ *                                minimize false detection of radar.
+ * @wlan_strong_signal_diversiry: Strong Signal fast diversity count.
+ * @wlan_chip_is_bb_tlv:          Chip is BB TLV?
+ * @wlan_chip_is_over_sampled:    Is Over sampled.
+ * @wlan_chip_is_ht160:           IS VHT160?
+ * @wlan_chip_is_false_detect:    Is False detected?
+ * @wlan_fastdiv_val:             Goes with wlan_strong_signal_diversiry: If we
+ *                                have fast diversity capability, read off
+ *                                Strong Signal fast diversity count set in the
+ *                                ini file, and store so we can restore the
+ *                                value when radar is disabled.
+ */
+struct wlan_dfs_caps {
+	uint32_t wlan_dfs_ext_chan_ok:1,
+			 wlan_dfs_combined_rssi_ok:1,
+			 wlan_dfs_use_enhancement:1,
+			 wlan_strong_signal_diversiry:1,
+			 wlan_chip_is_bb_tlv:1,
+			 wlan_chip_is_over_sampled:1,
+			 wlan_chip_is_ht160:1,
+			 wlan_chip_is_false_detect:1;
+	uint32_t wlan_fastdiv_val;
+};
+
+/**
+ * struct wlan_dfs_phyerr_param - DFS Phyerr structure.
+ * @pe_firpwr:     FIR pwr out threshold.
+ * @pe_rrssi:      Radar rssi thresh.
+ * @pe_height:     Pulse height thresh.
+ * @pe_prssi:      Pulse rssi thresh.
+ * @pe_inband:     Inband thresh.
+ * @pe_relpwr:     Relative power threshold in 0.5dB steps.
+ * @pe_relstep:    Pulse Relative step threshold in 0.5dB steps.
+ * @pe_maxlen:     Max length of radar sign in 0.8us units.
+ * @pe_usefir128:  Use the average in-band power measured over 128 cycles.
+ * @pe_blockradar: Enable to block radar check if pkt detect is done via OFDM
+ *                 weak signal detect or pkt is detected immediately after tx
+ *                 to rx transition.
+ * @pe_enmaxrssi:  Enable to use the max rssi instead of the last rssi during
+ *                 fine gain changes for radar detection.
+ */
+struct wlan_dfs_phyerr_param {
+	int32_t    pe_firpwr;
+	int32_t    pe_rrssi;
+	int32_t    pe_height;
+	int32_t    pe_prssi;
+	int32_t    pe_inband;
+	uint32_t   pe_relpwr;
+	uint32_t   pe_relstep;
+	uint32_t   pe_maxlen;
+	bool       pe_usefir128;
+	bool       pe_blockradar;
+	bool       pe_enmaxrssi;
+};
+
 #endif  /* _DFS_IOCTL_H_ */

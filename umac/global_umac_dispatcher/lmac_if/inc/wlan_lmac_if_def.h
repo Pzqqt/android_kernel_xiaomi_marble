@@ -448,39 +448,17 @@ struct wlan_lmac_if_reg_tx_ops {
 struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_enable)(struct wlan_objmgr_pdev *pdev,
 			int *is_fastclk,
-			int32_t pe_firpwr,
-			int32_t pe_rrssi,
-			int32_t pe_height,
-			int32_t pe_prssi,
-			int32_t pe_inband,
-			uint32_t pe_relpwr,
-			uint32_t pe_relstep,
-			uint32_t pe_maxlen,
+			struct wlan_dfs_phyerr_param *param,
 			uint32_t dfsdomain);
 	QDF_STATUS (*dfs_get_caps)(struct wlan_objmgr_pdev *pdev,
-			bool *wlan_dfs_ext_chan_ok,
-			bool *wlan_dfs_combined_rssi_ok,
-			bool *wlan_dfs_use_enhancement,
-			bool *wlan_strong_signal_diversiry,
-			bool *wlan_chip_is_bb_tlv,
-			bool *wlan_chip_is_over_sampled,
-			bool *wlan_chip_is_ht160,
-			bool *wlan_chip_is_false_detect,
-			uint32_t *wlan_fastdiv_val);
+			struct wlan_dfs_caps *dfs_caps);
 	QDF_STATUS (*dfs_disable)(struct wlan_objmgr_pdev *pdev,
 			int no_cac);
 	QDF_STATUS (*dfs_gettsf64)(struct wlan_objmgr_pdev *pdev,
 			uint64_t *tsf64);
 	QDF_STATUS (*dfs_set_use_cac_prssi)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*dfs_get_thresholds)(struct wlan_objmgr_pdev *pdev,
-			int32_t *pe_firpwr,
-			int32_t *pe_rrssi,
-			int32_t *pe_height,
-			int32_t *pe_prssi,
-			int32_t *pe_inband,
-			uint32_t *pe_relpwr,
-			uint32_t *pe_relstep,
-			uint32_t *pe_maxlen);
+			struct wlan_dfs_phyerr_param *param);
 	QDF_STATUS (*dfs_get_ext_busy)(struct wlan_objmgr_pdev *pdev,
 			int *dfs_ext_chan_busy);
 	QDF_STATUS (*dfs_get_target_type)(struct wlan_objmgr_pdev *pdev,

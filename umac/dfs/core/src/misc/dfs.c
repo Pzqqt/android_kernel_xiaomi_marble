@@ -164,10 +164,6 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 {
 	int i, n;
 	struct wlan_dfs_radar_tab_info radar_info;
-	bool ext_chan, combined_rssi, use_enhancement, strong_signal_diversiry;
-	bool chip_is_bb_tlv, chip_is_over_sampled, chip_is_ht160;
-	bool chip_is_false_detect;
-	uint32_t fastdiv_val;
 
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
@@ -188,26 +184,7 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	 */
 	qdf_mem_zero(&radar_info, sizeof(radar_info));
 
-	lmac_get_caps(dfs->dfs_pdev_obj,
-		&ext_chan,
-		&combined_rssi,
-		&use_enhancement,
-		&strong_signal_diversiry,
-		&chip_is_bb_tlv,
-		&chip_is_over_sampled,
-		&chip_is_ht160,
-		&chip_is_false_detect,
-		&fastdiv_val);
-
-	dfs->dfs_caps.wlan_dfs_ext_chan_ok = ext_chan;
-	dfs->dfs_caps.wlan_dfs_combined_rssi_ok = combined_rssi;
-	dfs->dfs_caps.wlan_dfs_use_enhancement = use_enhancement;
-	dfs->dfs_caps.wlan_strong_signal_diversiry = strong_signal_diversiry;
-	dfs->dfs_caps.wlan_chip_is_bb_tlv = chip_is_bb_tlv;
-	dfs->dfs_caps.wlan_chip_is_over_sampled = chip_is_over_sampled;
-	dfs->dfs_caps.wlan_chip_is_ht160 = chip_is_ht160;
-	dfs->dfs_caps.wlan_chip_is_false_detect = chip_is_false_detect;
-	dfs->dfs_caps.wlan_fastdiv_val = fastdiv_val;
+	lmac_get_caps(dfs->dfs_pdev_obj, &(dfs->dfs_caps));
 
 	dfs_clear_stats(dfs);
 	dfs->dfs_event_log_on = 1;
@@ -633,15 +610,7 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 					pe.pe_maxlen);
 
 			lmac_dfs_enable(dfs->dfs_pdev_obj, &is_fastclk,
-					pe.pe_firpwr,
-					pe.pe_rrssi,
-					pe.pe_height,
-					pe.pe_prssi,
-					pe.pe_inband,
-					pe.pe_relpwr,
-					pe.pe_relstep,
-					pe.pe_maxlen,
-					dfs->dfsdomain);
+					&pe, dfs->dfsdomain);
 			dfs_debug(dfs, WLAN_DEBUG_DFS,
 					"Enabled radar detection on channel %d",
 					dfs->dfs_curchan->dfs_ch_freq);
@@ -1062,15 +1031,7 @@ int dfs_set_thresholds(struct wlan_dfs *dfs, const uint32_t threshtype,
 	 * format.
 	 */
 	lmac_dfs_enable(dfs->dfs_pdev_obj, &is_fastclk,
-			pe.pe_firpwr,
-			pe.pe_rrssi,
-			pe.pe_height,
-			pe.pe_prssi,
-			pe.pe_inband,
-			pe.pe_relpwr,
-			pe.pe_relstep,
-			pe.pe_maxlen,
-			dfs->dfsdomain);
+			&pe, dfs->dfsdomain);
 
 	return 1;
 }
@@ -1080,15 +1041,7 @@ int dfs_get_thresholds(struct wlan_dfs *dfs,
 {
 	qdf_mem_zero(param, sizeof(*param));
 
-	lmac_dfs_get_thresholds(dfs->dfs_pdev_obj,
-			&(param->pe_firpwr),
-			&(param->pe_rrssi),
-			&(param->pe_height),
-			&(param->pe_prssi),
-			&(param->pe_inband),
-			&(param->pe_relpwr),
-			&(param->pe_relstep),
-			&(param->pe_maxlen));
+	lmac_dfs_get_thresholds(dfs->dfs_pdev_obj, param);
 
 	return 1;
 }

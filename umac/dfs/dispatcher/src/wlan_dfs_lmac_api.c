@@ -26,15 +26,7 @@
 #include <wlan_reg_services_api.h>
 
 void lmac_get_caps(struct wlan_objmgr_pdev *pdev,
-		bool *ext_chan,
-		bool *combined_rssi,
-		bool *use_enhancement,
-		bool *strong_signal_diversiry,
-		bool *chip_is_bb_tlv,
-		bool *chip_is_over_sampled,
-		bool *chip_is_ht160,
-		bool *chip_is_false_detect,
-		uint32_t *fastdiv_val)
+		struct wlan_dfs_caps *dfs_caps)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
@@ -44,16 +36,7 @@ void lmac_get_caps(struct wlan_objmgr_pdev *pdev,
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
 	if (dfs_tx_ops->dfs_get_caps)
-		dfs_tx_ops->dfs_get_caps(pdev,
-				ext_chan,
-				combined_rssi,
-				use_enhancement,
-				strong_signal_diversiry,
-				chip_is_bb_tlv,
-				chip_is_over_sampled,
-				chip_is_ht160,
-				chip_is_false_detect,
-				fastdiv_val);
+		dfs_tx_ops->dfs_get_caps(pdev, dfs_caps);
 }
 
 uint64_t lmac_get_tsf64(struct wlan_objmgr_pdev *pdev)
@@ -87,14 +70,7 @@ void lmac_dfs_disable(struct wlan_objmgr_pdev *pdev, int no_cac)
 
 void lmac_dfs_enable(struct wlan_objmgr_pdev *pdev,
 		int *is_fastclk,
-		int32_t pe_firpwr,
-		int32_t pe_rrssi,
-		int32_t pe_height,
-		int32_t pe_prssi,
-		int32_t pe_inband,
-		uint32_t pe_relpwr,
-		uint32_t pe_relstep,
-		uint32_t pe_maxlen,
+		struct wlan_dfs_phyerr_param *param,
 		int dfsdomain)
 {
 	struct wlan_objmgr_psoc *psoc;
@@ -107,26 +83,12 @@ void lmac_dfs_enable(struct wlan_objmgr_pdev *pdev,
 	if (dfs_tx_ops->dfs_enable)
 		dfs_tx_ops->dfs_enable(pdev,
 				is_fastclk,
-				pe_firpwr,
-				pe_rrssi,
-				pe_height,
-				pe_prssi,
-				pe_inband,
-				pe_relpwr,
-				pe_relstep,
-				pe_maxlen,
+				param,
 				dfsdomain);
 }
 
 void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
-	int32_t *pe_firpwr,
-	int32_t *pe_rrssi,
-	int32_t *pe_height,
-	int32_t *pe_prssi,
-	int32_t *pe_inband,
-	uint32_t *pe_relpwr,
-	uint32_t *pe_relstep,
-	uint32_t *pe_maxlen)
+		struct wlan_dfs_phyerr_param *param)
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
@@ -136,15 +98,7 @@ void lmac_dfs_get_thresholds(struct wlan_objmgr_pdev *pdev,
 	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
 
 	if (dfs_tx_ops->dfs_get_thresholds)
-		dfs_tx_ops->dfs_get_thresholds(pdev,
-				pe_firpwr,
-				pe_rrssi,
-				pe_height,
-				pe_prssi,
-				pe_inband,
-				pe_relpwr,
-				pe_relstep,
-				pe_maxlen);
+		dfs_tx_ops->dfs_get_thresholds(pdev, param);
 }
 
 bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev)
