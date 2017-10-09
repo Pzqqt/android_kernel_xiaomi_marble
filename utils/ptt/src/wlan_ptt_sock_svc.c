@@ -41,6 +41,7 @@
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
+#include <wlan_cfg80211.h>
 #else
 
 /** ptt Process ID */
@@ -283,7 +284,7 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 		return;
 	}
 
-	if (nla_len(tb[CLD80211_ATTR_DATA]) < sizeof(struct ptt_app_reg_req)) {
+	if (nla_len(tb[CLD80211_ATTR_DATA]) < sizeof(ptt_app_reg_req)) {
 		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "%s:attr length check fails\n",
 			__func__);
 		return;
