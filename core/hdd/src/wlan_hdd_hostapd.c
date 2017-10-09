@@ -3695,7 +3695,10 @@ static __iw_softap_setparam(struct net_device *dev,
 		/* If input value is non-zero get stats */
 		switch (set_value) {
 		case 1:
-			hdd_ipa_uc_stat_request(adapter, set_value);
+			hdd_ipa_uc_stat(adapter);
+			break;
+		case 2:
+			hdd_ipa_uc_info(hdd_ctx);
 			break;
 		case 3:
 			hdd_ipa_uc_rt_debug_host_dump(hdd_ctx);

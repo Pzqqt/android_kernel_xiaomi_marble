@@ -124,7 +124,25 @@ void hdd_ipa_dump_info(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx);
 void hdd_ipa_set_tx_flow_info(void);
 int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_ipa_uc_stat() - Print IPA uC stats
+ * @adapter: network adapter
+ *
+ * Return: None
+ */
+void hdd_ipa_uc_stat(struct hdd_adapter *adapter);
+
+/**
+ * hdd_ipa_uc_info() - Print IPA uC resource and session information
+ * @adapter: network adapter
+ *
+ * Return: None
+ */
+void hdd_ipa_uc_info(struct hdd_context *hdd_ctx);
+
 #else
+
 static inline QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx)
 {
 	return QDF_STATUS_SUCCESS;
@@ -277,5 +295,26 @@ static inline int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx)
 {
 	return 0;
 }
+
+/**
+ * hdd_ipa_uc_stat() - Print IPA uC stats
+ * @adapter: network adapter
+ *
+ * Return: None
+ */
+static inline void hdd_ipa_uc_stat(struct hdd_adapter *adapter)
+{
+}
+
+/**
+ * hdd_ipa_uc_info() - Print IPA uC resource and session information
+ * @adapter: network adapter
+ *
+ * Return: None
+ */
+static inline void hdd_ipa_uc_info(struct hdd_context *hdd_ctx)
+{
+}
+
 #endif /* IPA_OFFLOAD */
 #endif /* #ifndef HDD_IPA_H__ */
