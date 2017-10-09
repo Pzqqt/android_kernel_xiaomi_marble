@@ -1894,10 +1894,14 @@ void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
  */
 void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 {
-	enum pld_bus_width_type next_level = PLD_BUS_WIDTH_LOW;
+	enum pld_bus_width_type next_level = WLAN_SVC_TP_LOW;
+	struct wlan_rx_tp_data rx_tp_data = {0};
 
+	rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
+	rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+	rx_tp_data.level = next_level;
 	hdd_ctx->rx_high_ind_cnt = 0;
 	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index, WLAN_SVC_WLAN_TP_IND,
-				    &next_level, sizeof(next_level));
+				    &rx_tp_data, sizeof(rx_tp_data));
 }
 #endif /* MSM_PLATFORM */
