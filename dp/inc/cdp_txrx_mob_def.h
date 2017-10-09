@@ -384,10 +384,6 @@ struct ieee80211_delba_parameterset {
 #endif
 } __packed;
 
-typedef QDF_STATUS(*rx_callback_fp)(void *p_cds_gctx,
-		qdf_nbuf_t pDataBuff,
-		uint8_t ucSTAId);
-
 /**
  * ol_txrx_vdev_peer_remove_cb - wma_remove_peer callback
  */
