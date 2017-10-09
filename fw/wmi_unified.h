@@ -2603,6 +2603,9 @@ typedef struct {
 
     /** Maximum number of scan clients whose DBS scan duty cycle can be configured */
     A_UINT32 max_num_dbs_scan_duty_cycle;
+
+    /** Maximum number of Multi group key to support */
+    A_UINT32 max_num_group_keys;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
@@ -7760,6 +7763,18 @@ typedef enum {
      *      0 - Used to reset the vote. Acts as Don't Care
      */
     WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,                     /* 0x75 */
+
+    /**
+     * Enable or disable the multi group key feature on this VDEV.
+     * used for NAN APP and VLAN Tagging
+     */
+    WMI_VDEV_PARAM_ENABLE_MULTI_GROUP_KEY,                    /* 0x76 */
+
+   /*
+    * Specify the total number of multi group key on this VDEV.
+    */
+    WMI_VDEV_PARAM_NUM_GROUP_KEYS,                            /* 0x77 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
