@@ -86,7 +86,7 @@ int hdd_lro_init(struct hdd_context *hdd_ctx)
 	if ((!hdd_ctx->config->lro_enable) &&
 	    (hdd_napi_enabled(HDD_NAPI_ANY) == 0)) {
 		hdd_warn("LRO and NAPI are both disabled");
-		return 0;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	lro_config.lro_enable = 1;
@@ -141,9 +141,13 @@ enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 	qdf_lro_ctx_t ctx;
 	enum hdd_lro_rx_status status = HDD_LRO_NO_RX;
 
-	if ((adapter->dev->features & NETIF_F_LRO) &&
-		 QDF_NBUF_CB_RX_TCP_PROTO(skb) &&
-		 !QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb)) {
+	if (((adapter->dev->features & NETIF_F_LRO) != NETIF_F_LRO) ||
+		!QDF_NBUF_CB_RX_TCP_PROTO(skb) ||
+		QDF_NBUF_CB_RX_PEER_CACHED_FRM(skb) ||
+		qdf_atomic_read(&hdd_ctx->disable_lro_in_concurrency))
+		return HDD_LRO_NO_RX;
+
+	{
 		struct qdf_lro_info info;
 		struct net_lro_desc *lro_desc = NULL;
 		struct hif_opaque_softc *hif_hdl =
@@ -199,4 +203,20 @@ enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
 {
 	hdd_debug("LRO stats is broken, will fix it");
+}
+
+/**
+ * hdd_disable_lro_in_concurrency() - Disable LRO due to concurrency
+ * @disable: bool value
+ *
+ * Return: none
+ */
+void hdd_disable_lro_in_concurrency(bool disable)
+{
+	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (disable)
+		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);
+	else
+		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 0);
 }

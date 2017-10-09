@@ -50,6 +50,7 @@ int hdd_lro_init(struct hdd_context *hdd_ctx);
 enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 	 struct hdd_adapter *adapter, struct sk_buff *skb);
 void hdd_lro_display_stats(struct hdd_context *hdd_ctx);
+void hdd_disable_lro_in_concurrency(bool);
 #else
 static inline int hdd_lro_init(struct hdd_context *hdd_ctx)
 {
@@ -63,6 +64,10 @@ static inline enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 }
 
 static inline void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline void hdd_disable_lro_in_concurrency(bool disable)
 {
 }
 #endif /* FEATURE_LRO */

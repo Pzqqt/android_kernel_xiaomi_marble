@@ -1763,6 +1763,7 @@ struct hdd_context {
 	bool imps_enabled;
 	int user_configured_pkt_filter_rules;
 	bool is_fils_roaming_supported;
+	qdf_atomic_t disable_lro_in_concurrency;
 };
 
 /**
