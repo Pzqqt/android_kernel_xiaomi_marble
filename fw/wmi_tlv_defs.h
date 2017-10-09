@@ -858,6 +858,8 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_request_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_update_ctltable_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_roam_cnd_scoring_param,
+    WMITLV_TAG_STRUC_wmi_pdev_config_vendor_oui_action_fixed_param,
+    WMITLV_TAG_STRUC_wmi_vendor_oui_ext,
 } WMITLV_TAG_ID;
 
 /*
@@ -1202,6 +1204,7 @@ typedef enum {
     OP(WMI_ROAM_BTM_CONFIG_CMDID) \
     OP(WMI_WLM_CONFIG_CMDID) \
     OP(WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID) \
+    OP(WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2494,6 +2497,13 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SCAN_UPDATE_REQUEST_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_scan_prob_req_oui_cmd_fixed_param, wmi_scan_prob_req_oui_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vendor_oui, vendor_oui, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SCAN_PROB_REQ_OUI_CMDID);
+
+#define WMITLV_TABLE_WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_config_vendor_oui_action_fixed_param, \
+        wmi_pdev_config_vendor_oui_action_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_vendor_oui_ext, vendor_oui_ext, WMITLV_SIZE_VAR) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID);
 
 #define WMITLV_TABLE_WMI_CHATTER_ADD_COALESCING_FILTER_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len,WMITLV_TAG_STRUC_wmi_chatter_coalescing_add_filter_cmd_fixed_param, wmi_chatter_coalescing_add_filter_cmd_fixed_param, fixed_param,WMITLV_SIZE_FIX) \

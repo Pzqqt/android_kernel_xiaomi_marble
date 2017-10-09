@@ -377,6 +377,8 @@ typedef enum {
     WMI_PDEV_UPDATE_FILS_HLP_PKT_CMDID,
     /** update ctltable request **/
     WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID,
+    /** Command to set beacon OUI **/
+    WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -6631,12 +6633,6 @@ typedef struct {
 
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
 
-
-
-
-
-
-
 /* Dual Band both 2.4 GHz and 5 GHz Supported */
 #define WMI_HECAP_PHY_DB_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 0, 1)
 #define WMI_HECAP_PHY_DB_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 0, 1, value)
@@ -7316,55 +7312,55 @@ typedef enum {
     /** RTS Threshold */
     WMI_VDEV_PARAM_RTS_THRESHOLD = 0x1,
     /** Fragmentation threshold */
-    WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
+    WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,                   /* 0x2 */
     /** beacon interval in TUs */
-    WMI_VDEV_PARAM_BEACON_INTERVAL,
+    WMI_VDEV_PARAM_BEACON_INTERVAL,                           /* 0x3 */
     /** Listen interval in TUs */
-    WMI_VDEV_PARAM_LISTEN_INTERVAL,
+    WMI_VDEV_PARAM_LISTEN_INTERVAL,                           /* 0x4 */
     /** muticast rate in Mbps */
-    WMI_VDEV_PARAM_MULTICAST_RATE,
+    WMI_VDEV_PARAM_MULTICAST_RATE,                            /* 0x5 */
     /** management frame rate in Mbps */
-    WMI_VDEV_PARAM_MGMT_TX_RATE,
+    WMI_VDEV_PARAM_MGMT_TX_RATE,                              /* 0x6 */
     /** slot time (long vs short) */
-    WMI_VDEV_PARAM_SLOT_TIME,
+    WMI_VDEV_PARAM_SLOT_TIME,                                 /* 0x7 */
     /** preamble (long vs short) */
-    WMI_VDEV_PARAM_PREAMBLE,
+    WMI_VDEV_PARAM_PREAMBLE,                                  /* 0x8 */
     /** SWBA time (time before tbtt in msec) */
-    WMI_VDEV_PARAM_SWBA_TIME,
+    WMI_VDEV_PARAM_SWBA_TIME,                                 /* 0x9 */
     /** time period for updating VDEV stats */
-    WMI_VDEV_STATS_UPDATE_PERIOD,
+    WMI_VDEV_STATS_UPDATE_PERIOD,                             /* 0xa */
     /** age out time in msec for frames queued for station in power save*/
-    WMI_VDEV_PWRSAVE_AGEOUT_TIME,
+    WMI_VDEV_PWRSAVE_AGEOUT_TIME,                             /* 0xb */
     /** Host SWBA interval (time in msec before tbtt for SWBA event generation) */
-    WMI_VDEV_HOST_SWBA_INTERVAL,
+    WMI_VDEV_HOST_SWBA_INTERVAL,                              /* 0xc */
     /** DTIM period (specified in units of num beacon intervals) */
-    WMI_VDEV_PARAM_DTIM_PERIOD,
+    WMI_VDEV_PARAM_DTIM_PERIOD,                               /* 0xd */
     /** scheduler air time limit for this VDEV. used by off chan scheduler  */
-    WMI_VDEV_OC_SCHEDULER_AIR_TIME_LIMIT,
+    WMI_VDEV_OC_SCHEDULER_AIR_TIME_LIMIT,                     /* 0xe */
     /** enable/dsiable WDS for this VDEV  */
-    WMI_VDEV_PARAM_WDS,
+    WMI_VDEV_PARAM_WDS,                                       /* 0xf */
     /** ATIM Window */
-    WMI_VDEV_PARAM_ATIM_WINDOW,
+    WMI_VDEV_PARAM_ATIM_WINDOW,                               /* 0x10 */
     /** BMISS max */
-    WMI_VDEV_PARAM_BMISS_COUNT_MAX,
+    WMI_VDEV_PARAM_BMISS_COUNT_MAX,                           /* 0x11 */
     /** BMISS first time */
-    WMI_VDEV_PARAM_BMISS_FIRST_BCNT,
+    WMI_VDEV_PARAM_BMISS_FIRST_BCNT,                          /* 0x12 */
     /** BMISS final time */
-    WMI_VDEV_PARAM_BMISS_FINAL_BCNT,
+    WMI_VDEV_PARAM_BMISS_FINAL_BCNT,                          /* 0x13 */
     /** WMM enables/disabled */
-    WMI_VDEV_PARAM_FEATURE_WMM,
+    WMI_VDEV_PARAM_FEATURE_WMM,                               /* 0x14 */
     /** Channel width */
-    WMI_VDEV_PARAM_CHWIDTH,
+    WMI_VDEV_PARAM_CHWIDTH,                                   /* 0x15 */
     /** Channel Offset */
-    WMI_VDEV_PARAM_CHEXTOFFSET,
+    WMI_VDEV_PARAM_CHEXTOFFSET,                               /* 0x16 */
     /** Disable HT Protection */
-    WMI_VDEV_PARAM_DISABLE_HTPROTECTION,
+    WMI_VDEV_PARAM_DISABLE_HTPROTECTION,                      /* 0x17 */
     /** Quick STA Kickout */
-    WMI_VDEV_PARAM_STA_QUICKKICKOUT,
+    WMI_VDEV_PARAM_STA_QUICKKICKOUT,                          /* 0x18 */
     /** Rate to be used with Management frames */
-    WMI_VDEV_PARAM_MGMT_RATE,
+    WMI_VDEV_PARAM_MGMT_RATE,                                 /* 0x19 */
     /** Protection Mode */
-    WMI_VDEV_PARAM_PROTECTION_MODE,
+    WMI_VDEV_PARAM_PROTECTION_MODE,                           /* 0x1a */
     /** Fixed rate setting
      * The top nibble is used to select which format to use for encoding
      * the rate specification: 0xVXXXXXXX
@@ -7377,38 +7373,38 @@ typedef enum {
      * host driver, or through WMI_SERVICE_READY PHY capabilities provided
      * by the target).
      */
-    WMI_VDEV_PARAM_FIXED_RATE,
+    WMI_VDEV_PARAM_FIXED_RATE,                                /* 0x1b */
     /**
      * 11AX: GI =
      *     WMI_GI_400_NS, WMI_GI_800_NS, WMI_GI_1600_NS, or WMI_GI_3200_NS
      * 11N: SGI=WMI_GI_400_NS
      */
-    WMI_VDEV_PARAM_SGI,
+    WMI_VDEV_PARAM_SGI,                                       /* 0x1c */
     /** Enable LDPC */
-    WMI_VDEV_PARAM_LDPC,
+    WMI_VDEV_PARAM_LDPC,                                      /* 0x1d */
     /** Enable Tx STBC */
-    WMI_VDEV_PARAM_TX_STBC,
+    WMI_VDEV_PARAM_TX_STBC,                                   /* 0x1e */
     /** Enable Rx STBC */
-    WMI_VDEV_PARAM_RX_STBC,
+    WMI_VDEV_PARAM_RX_STBC,                                   /* 0x1f */
     /** Intra BSS forwarding  */
-    WMI_VDEV_PARAM_INTRA_BSS_FWD,
+    WMI_VDEV_PARAM_INTRA_BSS_FWD,                             /* 0x20 */
     /** Setting Default xmit key for Vdev */
-    WMI_VDEV_PARAM_DEF_KEYID,
+    WMI_VDEV_PARAM_DEF_KEYID,                                 /* 0x21 */
     /** NSS width */
-    WMI_VDEV_PARAM_NSS,
+    WMI_VDEV_PARAM_NSS,                                       /* 0x22 */
     /** Set the custom rate for the broadcast data frames */
-    WMI_VDEV_PARAM_BCAST_DATA_RATE,
+    WMI_VDEV_PARAM_BCAST_DATA_RATE,                           /* 0x23 */
     /** Set the custom rate (rate-code) for multicast data frames */
-    WMI_VDEV_PARAM_MCAST_DATA_RATE,
+    WMI_VDEV_PARAM_MCAST_DATA_RATE,                           /* 0x24 */
     /** Tx multicast packet indicate Enable/Disable */
-    WMI_VDEV_PARAM_MCAST_INDICATE,
+    WMI_VDEV_PARAM_MCAST_INDICATE,                            /* 0x25 */
     /** Tx DHCP packet indicate Enable/Disable */
-    WMI_VDEV_PARAM_DHCP_INDICATE,
+    WMI_VDEV_PARAM_DHCP_INDICATE,                             /* 0x26 */
     /** Enable host inspection of Tx unicast packet to unknown destination */
-    WMI_VDEV_PARAM_UNKNOWN_DEST_INDICATE,
+    WMI_VDEV_PARAM_UNKNOWN_DEST_INDICATE,                     /* 0x27 */
 
     /* The minimum amount of time AP begins to consider STA inactive */
-    WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
+    WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,  /* 0x28 */
 
     /* An associated STA is considered inactive when there is no recent TX/RX
      * activity and no downlink frames are buffered for it. Once a STA exceeds
@@ -7417,28 +7413,28 @@ typedef enum {
      * the data-null, or if the data-null is buffered and the STA does not
      * retrieve it, the STA will be considered unresponsive (see
      * WMI_VDEV_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS). */
-    WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
+    WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,  /* 0x29 */
 
     /* An associated STA is considered unresponsive if there is no recent
      * TX/RX activity and downlink frames are buffered for it. Once a STA
      * exceeds the maximum unresponsive time, the AP will send a
      * WMI_STA_KICKOUT event to the host so the STA can be deleted. */
-    WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
+    WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,   /* 0x2a */
 
     /* Enable NAWDS : MCAST INSPECT Enable, NAWDS Flag set */
-    WMI_VDEV_PARAM_AP_ENABLE_NAWDS,
+    WMI_VDEV_PARAM_AP_ENABLE_NAWDS,                           /* 0x2b */
     /** Enable/Disable RTS-CTS */
-    WMI_VDEV_PARAM_ENABLE_RTSCTS,
+    WMI_VDEV_PARAM_ENABLE_RTSCTS,                             /* 0x2c */
     /* Enable TXBFee/er */
-    WMI_VDEV_PARAM_TXBF,
+    WMI_VDEV_PARAM_TXBF,                                      /* 0x2d */
 
     /**Set packet power save */
-    WMI_VDEV_PARAM_PACKET_POWERSAVE,
+    WMI_VDEV_PARAM_PACKET_POWERSAVE,                          /* 0x2e */
 
     /**Drops un-encrypted packets if any received in an encryted connection
      * otherwise forwards to host
      */
-    WMI_VDEV_PARAM_DROP_UNENCRY,
+    WMI_VDEV_PARAM_DROP_UNENCRY,                              /* 0x2f */
 
     /*
      * Set TX encap type.
@@ -7446,7 +7442,7 @@ typedef enum {
      * enum wmi_pkt_type is to be used as the parameter
      * specifying the encap type.
      */
-    WMI_VDEV_PARAM_TX_ENCAP_TYPE,
+    WMI_VDEV_PARAM_TX_ENCAP_TYPE,                             /* 0x30 */
 
     /*
      * Try to detect stations that woke-up and exited power save but did not
@@ -7458,7 +7454,7 @@ typedef enum {
      *
      * 0 disables out-of-sync detection. Maximum time is 255 seconds.
      */
-    WMI_VDEV_PARAM_AP_DETECT_OUT_OF_SYNC_SLEEPING_STA_TIME_SECS,
+    WMI_VDEV_PARAM_AP_DETECT_OUT_OF_SYNC_SLEEPING_STA_TIME_SECS,  /* 0x31 */
 
     /* Enable/Disable early rx dynamic adjust feature.
      * Early-rx dynamic adjust is a advance power save feature.
@@ -7467,127 +7463,127 @@ typedef enum {
      * In current code branch, the duration is set to a very conservative fix value to make sure the drift impact is minimum.
      * The fix early-tx will result in the unnessary power consume, so a dynamic early-rx adjust algorithm can be designed
      * properly to minimum the power consume.*/
-    WMI_VDEV_PARAM_EARLY_RX_ADJUST_ENABLE,
+    WMI_VDEV_PARAM_EARLY_RX_ADJUST_ENABLE,                    /* 0x32 */
 
     /* set target bmiss number per sample cycle if bmiss adjust was chosen.
      * In this adjust policy,early-rx is adjusted by comparing the current bmiss rate to target bmiss rate
      * which can be set by user through WMI command.
      */
-    WMI_VDEV_PARAM_EARLY_RX_TGT_BMISS_NUM,
+    WMI_VDEV_PARAM_EARLY_RX_TGT_BMISS_NUM,                    /* 0x33 */
 
     /* set sample cycle(in the unit of beacon interval) if bmiss adjust was chosen */
-    WMI_VDEV_PARAM_EARLY_RX_BMISS_SAMPLE_CYCLE,
+    WMI_VDEV_PARAM_EARLY_RX_BMISS_SAMPLE_CYCLE,               /* 0x34 */
 
     /* set slop_step */
-    WMI_VDEV_PARAM_EARLY_RX_SLOP_STEP,
+    WMI_VDEV_PARAM_EARLY_RX_SLOP_STEP,                        /* 0x35 */
 
     /* set init slop */
-    WMI_VDEV_PARAM_EARLY_RX_INIT_SLOP,
+    WMI_VDEV_PARAM_EARLY_RX_INIT_SLOP,                        /* 0x36 */
 
     /* pause adjust enable/disable */
-    WMI_VDEV_PARAM_EARLY_RX_ADJUST_PAUSE,
+    WMI_VDEV_PARAM_EARLY_RX_ADJUST_PAUSE,                     /* 0x37 */
 
 
     /* Set channel pwr limit value of the vdev the minimal value of all
      * vdevs operating on this channel will be set as channel tx power
      * limit, which is used to configure ratearray
      */
-    WMI_VDEV_PARAM_TX_PWRLIMIT,
+    WMI_VDEV_PARAM_TX_PWRLIMIT,                               /* 0x38 */
 
     /* set the count of snr value for calculation in snr monitor */
-    WMI_VDEV_PARAM_SNR_NUM_FOR_CAL,
+    WMI_VDEV_PARAM_SNR_NUM_FOR_CAL,                           /* 0x39 */
 
     /** Roaming offload */
-    WMI_VDEV_PARAM_ROAM_FW_OFFLOAD,
+    WMI_VDEV_PARAM_ROAM_FW_OFFLOAD,                           /* 0x3a */
 
     /** Enable Leader request RX functionality for RMC */
-    WMI_VDEV_PARAM_ENABLE_RMC,
+    WMI_VDEV_PARAM_ENABLE_RMC,                                /* 0x3b */
 
    /* IBSS does not have deauth/disassoc, vdev has to detect peer gone event
      * by himself. If the beacon lost time exceed this threshold, the peer is
      * thought to be gone. */
-    WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
+    WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,                      /* 0x3c */
 
     /** max rate in kpbs, transmit rate can't go beyond it */
-    WMI_VDEV_PARAM_MAX_RATE,
+    WMI_VDEV_PARAM_MAX_RATE,                                  /* 0x3d */
 
     /* enable/disable drift sample. 0: disable; 1: clk_drift; 2: ap_drift; 3 both clk and ap drift*/
-    WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE,
+    WMI_VDEV_PARAM_EARLY_RX_DRIFT_SAMPLE,                     /* 0x3e */
 
     /* set Tx failure count threshold for the vdev */
-    WMI_VDEV_PARAM_SET_IBSS_TX_FAIL_CNT_THR,
+    WMI_VDEV_PARAM_SET_IBSS_TX_FAIL_CNT_THR,                  /* 0x3f */
 
     /* set ebt resync timeout value, in the unit of TU */
-    WMI_VDEV_PARAM_EBT_RESYNC_TIMEOUT,
+    WMI_VDEV_PARAM_EBT_RESYNC_TIMEOUT,                        /* 0x40 */
 
     /* Enable Aggregation State Trigger Event */
-    WMI_VDEV_PARAM_AGGR_TRIG_EVENT_ENABLE,
+    WMI_VDEV_PARAM_AGGR_TRIG_EVENT_ENABLE,                    /* 0x41 */
 
     /* This parameter indicates whether IBSS station can enter into power save
     * mode by sending Null frame (with PM=1). When not allowed, IBSS station has to stay
     * awake all the time and should never set PM=1 in its transmitted frames.
     * This parameter is meaningful/valid only when WMI_VDEV_PARAM_ATIM_WINDOW_LENGTH
     * is non-zero. */
-    WMI_VDEV_PARAM_IS_IBSS_POWER_SAVE_ALLOWED,
+    WMI_VDEV_PARAM_IS_IBSS_POWER_SAVE_ALLOWED,                /* 0x42 */
 
     /* This parameter indicates if this station can enter into power collapse
     * for the remaining beacon interval after the ATIM window.
     * This parameter is meaningful/valid only when WMI_VDEV_PARAM_IS_IBSS_POWER_SAVE_ALLOWED
     * is set to TRUE. */
-    WMI_VDEV_PARAM_IS_POWER_COLLAPSE_ALLOWED,
+    WMI_VDEV_PARAM_IS_POWER_COLLAPSE_ALLOWED,                 /* 0x43 */
 
     /* This parameter indicates whether IBSS station exit power save mode and
     * enter power active state (by sending Null frame with PM=0 in the immediate ATIM Window)
     * whenever there is a TX/RX activity. */
-    WMI_VDEV_PARAM_IS_AWAKE_ON_TXRX_ENABLED,
+    WMI_VDEV_PARAM_IS_AWAKE_ON_TXRX_ENABLED,                  /* 0x44 */
 
     /* If Awake on TX/RX activity is enabled, this parameter indicates
     * the data inactivity time in number of beacon intervals after which
     * IBSS station reenters power save by sending Null frame with PM=1. */
-    WMI_VDEV_PARAM_INACTIVITY_CNT,
+    WMI_VDEV_PARAM_INACTIVITY_CNT,                            /* 0x45 */
 
     /* Inactivity time in msec after which TX Service Period (SP) is
     * terminated by sending a Qos Null frame with EOSP.
     * If value is 0, TX SP is terminated with the last buffered packet itself
     * instead of waiting for the inactivity timeout. */
-    WMI_VDEV_PARAM_TXSP_END_INACTIVITY_TIME_MS,
+    WMI_VDEV_PARAM_TXSP_END_INACTIVITY_TIME_MS,               /* 0x46 */
 
     /** DTIM policy */
-    WMI_VDEV_PARAM_DTIM_POLICY,
+    WMI_VDEV_PARAM_DTIM_POLICY,                               /* 0x47 */
 
     /* When IBSS network is initialized, PS-supporting device
     * does not enter protocol sleep state during first
     * WMI_VDEV_PARAM_IBSS_PS_WARMUP_TIME_SECS seconds. */
-    WMI_VDEV_PARAM_IBSS_PS_WARMUP_TIME_SECS,
+    WMI_VDEV_PARAM_IBSS_PS_WARMUP_TIME_SECS,                  /* 0x48 */
 
     /* Enable/Disable 1 RX chain usage during the ATIM window */
-    WMI_VDEV_PARAM_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_ENABLE,
+    WMI_VDEV_PARAM_IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_ENABLE,   /* 0x49 */
 
     /* RX Leak window is the time driver waits before shutting down
      * the radio or switching the channel and after receiving an ACK
      * for a data frame with PM bit set) */
-    WMI_VDEV_PARAM_RX_LEAK_WINDOW,
+    WMI_VDEV_PARAM_RX_LEAK_WINDOW,                            /* 0x4a */
 
     /** Averaging factor(16 bit value) is used in the calculations to
      * perform averaging of different link level statistics like average
      * beacon spread or average number of frames leaked */
-    WMI_VDEV_PARAM_STATS_AVG_FACTOR,
+    WMI_VDEV_PARAM_STATS_AVG_FACTOR,                          /* 0x4b */
 
     /** disconnect threshold, once the consecutive error for specific peer
      * exceed this threhold, FW will send kickout event to host */
-    WMI_VDEV_PARAM_DISCONNECT_TH,
+    WMI_VDEV_PARAM_DISCONNECT_TH,                             /* 0x4c */
 
     /** The rate_code of RTS_CTS changed by host. Now FW can support
      * more non-HT rates rather than 1Mbps or 6Mbps */
-    WMI_VDEV_PARAM_RTSCTS_RATE,
+    WMI_VDEV_PARAM_RTSCTS_RATE,                               /* 0x4d */
 
     /** This parameter indicates whether using a long duration RTS-CTS
      * protection when a SAP goes off channel in MCC mode */
-    WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE,
+    WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE,              /* 0x4e */
 
     /** This parameter indicates whether using a broadcast probe response
      * to increase the detectability of SAP in MCC mode */
-    WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE,
+    WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE,                /* 0x4f */
 
     /** This parameter indicates the power backoff in percentage
      * currently supports 100%, 50%, 25%, 12.5%, and minimum
@@ -7595,61 +7591,61 @@ typedef enum {
      * 0 --> 100% --> no changes, 1 --> 50% --> -3dB,
      * 2 --> 25% --> -6dB, 3 --> 12.5% --> -9dB, 4 --> minimum --> -32dB
      */
-    WMI_VDEV_PARAM_TXPOWER_SCALE,
+    WMI_VDEV_PARAM_TXPOWER_SCALE,                             /* 0x50 */
 
     /** TX power backoff in dB: tx power -= param value
      * Host passes values(DB) to Halphy, Halphy reduces the power table
      * by the values.  Safety check will happen in Halphy.
      */
-    WMI_VDEV_PARAM_TXPOWER_SCALE_DECR_DB,
+    WMI_VDEV_PARAM_TXPOWER_SCALE_DECR_DB,                     /* 0x51 */
 
     /** Multicast to Unicast conversion setting */
-    WMI_VDEV_PARAM_MCAST2UCAST_SET,
+    WMI_VDEV_PARAM_MCAST2UCAST_SET,                           /* 0x52 */
 
     /** Total number of HW retries */
-    WMI_VDEV_PARAM_RC_NUM_RETRIES,
+    WMI_VDEV_PARAM_RC_NUM_RETRIES,                            /* 0x53 */
 
     /** Max tx percentage for cabq */
-    WMI_VDEV_PARAM_CABQ_MAXDUR,
+    WMI_VDEV_PARAM_CABQ_MAXDUR,                               /* 0x54 */
 
     /** MFPTEST settings */
-    WMI_VDEV_PARAM_MFPTEST_SET,
+    WMI_VDEV_PARAM_MFPTEST_SET,                               /* 0x55 */
 
     /** RTS Fixed rate setting */
-    WMI_VDEV_PARAM_RTS_FIXED_RATE,
+    WMI_VDEV_PARAM_RTS_FIXED_RATE,                            /* 0x56 */
 
     /** VHT SGI MASK */
-    WMI_VDEV_PARAM_VHT_SGIMASK,
+    WMI_VDEV_PARAM_VHT_SGIMASK,                               /* 0x57 */
 
     /** VHT80 Auto Rate MASK */
-    WMI_VDEV_PARAM_VHT80_RATEMASK,
+    WMI_VDEV_PARAM_VHT80_RATEMASK,                            /* 0x58 */
 
     /** set Proxy STA features for this vap */
-    WMI_VDEV_PARAM_PROXY_STA,
+    WMI_VDEV_PARAM_PROXY_STA,                                 /* 0x59 */
 
     /** set virtual cell mode - enable/disable */
-    WMI_VDEV_PARAM_VIRTUAL_CELL_MODE,
+    WMI_VDEV_PARAM_VIRTUAL_CELL_MODE,                         /* 0x5a */
 
     /** Set receive packet type */
-    WMI_VDEV_PARAM_RX_DECAP_TYPE,
+    WMI_VDEV_PARAM_RX_DECAP_TYPE,                             /* 0x5b */
 
     /** Set ratemask with specific Bandwidth and NSS */
-    WMI_VDEV_PARAM_BW_NSS_RATEMASK,
+    WMI_VDEV_PARAM_BW_NSS_RATEMASK,                           /* 0x5c */
 
     /** Set SENSOR Support */
-    WMI_VDEV_PARAM_SENSOR_AP,
+    WMI_VDEV_PARAM_SENSOR_AP,                                 /* 0x5d */
 
     /** Set beacon rate */
-    WMI_VDEV_PARAM_BEACON_RATE,
+    WMI_VDEV_PARAM_BEACON_RATE,                               /* 0x5e */
 
     /** Enable CTS to self for DTIM beacon */
-    WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
+    WMI_VDEV_PARAM_DTIM_ENABLE_CTS,                           /* 0x5f */
 
     /** Disable station kickout at Vap level */
-    WMI_VDEV_PARAM_STA_KICKOUT,
+    WMI_VDEV_PARAM_STA_KICKOUT,                               /* 0x60 */
 
     /* VDEV capabilities */
-    WMI_VDEV_PARAM_CAPABILITIES, /* see capabilities defs below */
+    WMI_VDEV_PARAM_CAPABILITIES, /* see capabilities defs below */ /* 0x61 */
 
     /**
      * Increment TSF in micro seconds to avoid beacon collision on mesh VAP.
@@ -7657,7 +7653,7 @@ typedef enum {
      * this vdev, or else that it is acceptable to apply this TSF adjustment
      * to all vdevs sharing the TSF.
      */
-    WMI_VDEV_PARAM_TSF_INCREMENT,
+    WMI_VDEV_PARAM_TSF_INCREMENT,                             /* 0x62 */
 
     /** Disable/Enable AMPDU of vdev per AC:
      * bit | AC
@@ -7669,7 +7665,7 @@ typedef enum {
      * A value of 0 in a given bit disables A-MPDU aggregation for
      * that AC; a value of 1 enables A-MPDU aggregation
      */
-    WMI_VDEV_PARAM_AMPDU_PER_AC,
+    WMI_VDEV_PARAM_AMPDU_PER_AC,                              /* 0x63 */
 
     /**
      * Vdev level rx filter of from-ds / to-ds / no-ds / ta / ra frames.
@@ -7677,42 +7673,42 @@ typedef enum {
      * The parameter value delivered with the RX_FILTER vdev param contains
      * a bit-or mask of wmi_vdev_param_filter enum values.
      */
-    WMI_VDEV_PARAM_RX_FILTER,
+    WMI_VDEV_PARAM_RX_FILTER,                                 /* 0x64 */
 
     /** vdev-specific mgmt tx power in dBm units (signed integer value) */
-    WMI_VDEV_PARAM_MGMT_TX_POWER,
+    WMI_VDEV_PARAM_MGMT_TX_POWER,                             /* 0x65 */
 
     /** Vdev level non aggregration/11g sw retry threshold. 0-disable, min:0, max:31, default:15 */
-    WMI_VDEV_PARAM_NON_AGG_SW_RETRY_TH,
+    WMI_VDEV_PARAM_NON_AGG_SW_RETRY_TH,                       /* 0x66 */
     /** Vdev level aggregration sw retry threshold. 0-disable, min:0, max:31, default:15 */
-    WMI_VDEV_PARAM_AGG_SW_RETRY_TH,
+    WMI_VDEV_PARAM_AGG_SW_RETRY_TH,                           /* 0x67 */
 
     /** disable dynamic bw RTS **/
-    WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS,
+    WMI_VDEV_PARAM_DISABLE_DYN_BW_RTS,                        /* 0x68 */
 
     /** per ssid (vdev) based ATF strict/fair scheduling policy
      *  param values are WMI_ATF_SSID_FAIR_SCHED or WMI_ATF_SSID_STRICT_SCHED
      */
-    WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY,
+    WMI_VDEV_PARAM_ATF_SSID_SCHED_POLICY,                     /* 0x69 */
 
     /** Enable or disable Dual carrier modulation
      * valid values: 0-Disable DCM, 1-Enable DCM.
      */
-    WMI_VDEV_PARAM_HE_DCM,
+    WMI_VDEV_PARAM_HE_DCM,                                    /* 0x6a */
 
     /** Enable or disable Extended range
      * valid values: 0-Disable ER, 1-Enable ER.
      */
-    WMI_VDEV_PARAM_HE_RANGE_EXT,
+    WMI_VDEV_PARAM_HE_RANGE_EXT,                              /* 0x6b */
 
     /* enable or disable BCAST probe response feature */
-    WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,
+    WMI_VDEV_PARAM_ENABLE_BCAST_PROBE_RESPONSE,               /* 0x6c */
 
     /* param to specify probe request Tx delay during Fast Initial Link Setup */
-    WMI_VDEV_PARAM_FILS_MAX_CHANNEL_GUARD_TIME, /* units = milliseconds */
+    WMI_VDEV_PARAM_FILS_MAX_CHANNEL_GUARD_TIME, /* units = milliseconds */ /* 0x6d */
 
     /* enable or disable NOA for P2P GO */
-    WMI_VDEV_PARAM_DISABLE_NOA_P2P_GO,
+    WMI_VDEV_PARAM_DISABLE_NOA_P2P_GO,                        /* 0x6e */
 
     /** Per band user management frame fix rate setting
      *  BIT 31: enable (1) or disable (0) mgmt fix rate for 5G
@@ -7724,9 +7720,9 @@ typedef enum {
      *  BIT 11: 11ax (1) or legacy (0) rate code
      *  BITS [10..0]: rate code for 2G
      */
-    WMI_VDEV_PARAM_PER_BAND_MGMT_TX_RATE,
+    WMI_VDEV_PARAM_PER_BAND_MGMT_TX_RATE,                     /* 0x6f */
     /* This should be called before WMI_VDEV_PARAM_TXBF */
-    WMI_VDEV_PARAM_11AX_TXBF,
+    WMI_VDEV_PARAM_11AX_TXBF,                                 /* 0x70 */
 
     /** This parameter indicates whether VDEV is SMPS intolerant.
      * I.e. - SMPS action frame cannot be transmitted by the VDEV to
@@ -7734,17 +7730,17 @@ typedef enum {
      *
      * valid values: 1 - VDEV is SMPS intolerant, 0 - VDEV is SMPS tolerant
      */
-    WMI_VDEV_PARAM_SMPS_INTOLERANT,
+    WMI_VDEV_PARAM_SMPS_INTOLERANT,                           /* 0x71 */
 
     /** specify probe request Tx delay for scans triggered on this VDEV */
-    WMI_VDEV_PARAM_PROBE_DELAY, /* units = milliseconds */
+    WMI_VDEV_PARAM_PROBE_DELAY, /* units = milliseconds */    /* 0x72 */
 
     /** specify the time gap between each set of probe request transmissions.
      * The number of probe requests in each set depends on the ssid_list and
      * bssid_list in the scan request.
      * This parameter will be applied only for scans triggered on this VDEV.
      */
-    WMI_VDEV_PARAM_REPEAT_PROBE_TIME, /* units = milliseconds */
+    WMI_VDEV_PARAM_REPEAT_PROBE_TIME, /* units = milliseconds */ /* 0x73 */
 
     /** specify the HE LTF setting that should be used for fixed rate
      * transmissions.
@@ -7752,7 +7748,7 @@ typedef enum {
      * Expects values of WMI_HE_LTF_DEFAULT, WMI_HE_LTF_1X, WMI_HE_LTF_2X,
      * or WMI_HE_LTF_4X.
      */
-    WMI_VDEV_PARAM_HE_LTF,
+    WMI_VDEV_PARAM_HE_LTF,                                    /* 0x74 */
 
     /** VDEV parameter to configure the number of TX chains to use for
      *  a/b/g rates.
@@ -7763,7 +7759,7 @@ typedef enum {
      *      Should not exceed the maximum number of supported TX Chains
      *      0 - Used to reset the vote. Acts as Don't Care
      */
-    WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
+    WMI_VDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,                     /* 0x75 */
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -7772,7 +7768,7 @@ typedef enum {
     WMI_VDEV_PARAM_PROTOTYPE = 0x8000,
         /* 11AX SPECIFIC defines */
         /* USE this for BSS color change */
-        WMI_VDEV_PARAM_BSS_COLOR,
+        WMI_VDEV_PARAM_BSS_COLOR,                             /* 0x8001 */
         /*
          * Enable / disable trigger access for a AP vdev's peers.
          * For a STA mode vdev this will enable/disable triggered access
@@ -7788,9 +7784,9 @@ typedef enum {
          * 8  Enable UL OFDMA
          * 9  Enable UL MUMIMO
          */
-        WMI_VDEV_PARAM_SET_HEMU_MODE,
-        WMI_VDEV_PARAM_HEOPS_0_31,
-        WMI_VDEV_PARAM_OBSSPD,
+        WMI_VDEV_PARAM_SET_HEMU_MODE,                         /* 0x8002 */
+        WMI_VDEV_PARAM_HEOPS_0_31,                            /* 0x8003 */
+        WMI_VDEV_PARAM_OBSSPD,                                /* 0x8004 */
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
 
@@ -12303,6 +12299,83 @@ typedef struct {
     A_UINT32 mcc_tbttmode;
     wmi_mac_addr mcc_bssid;
 } wmi_vdev_mcc_set_tbtt_mode_cmd_fixed_param;
+
+#define WMI_MAX_VENDOR_OUI_ACTION_SUPPORTED_PER_ACTION 10
+#define WMI_MAX_VENDOR_OUI_DATA_LENGTH                 20
+
+typedef enum
+{
+    WMI_VENDOR_OUI_ACTION_CONNECTION_1X1 = 0, /* Connect in 1X1 only */
+    WMI_VENDOR_OUI_ACTION_ITO_EXTENSION = 1,  /* Extend the Immediate Time-Out (ITO) if data is not received from AP after beacon with TIM bit set */
+    WMI_VENDOR_OUI_ACTION_CCKM_1X1 = 2,       /* TX (only) CCKM rates with 1 chain only */
+    /* Add any action before this line */
+    WMI_VENDOR_OUI_ACTION_MAX_ACTION_ID
+} wmi_vendor_oui_action_id;
+
+typedef struct {
+    A_UINT32 tlv_header;
+    /** vendor OUI actions */
+    A_UINT32 action_id;  /* enum wmi_vendor_oui_action_id */
+    A_UINT32 total_num_vendor_oui; /* total number of OUI present in ini for all actions.
+                                   ** For first command, this value will be used for allocating memory in FW accordingly */
+    A_UINT32 num_vendor_oui_ext; /* the number of wmi_vendor_oui_ext for action_id */
+    /* followed by TLVs, an array of structure of type wmi_vendor_oui_ext
+    ** wmi_vendor_oui_ext vendor_oui_ext[num_vendor_oui_ext];
+    */
+    /* followed by A_UINT8 data[] of concatenated data for each vendor_oui_ext[] element
+    ** first byte contains the index i of structure vendor_oui_ext[]
+    ** for which data is coming and length of the data is extracted as
+    ** wmi_vendor_oui_ext[i].buf_data_length. No padding between data of
+    ** N th OUI and (N+1) th OUI.
+    ** For example, if vendor_oui_ext[0].buf_data_length is 18, then
+    ** data[0] will hold the index value 0, data[1] through data[17]
+    ** will hold the OUI data for this first OUI, data[18] will hold
+    ** the index value 1, and the OUI data for the second OUI will
+    ** begin at data[19].
+    */
+} wmi_pdev_config_vendor_oui_action_fixed_param;
+
+typedef enum {
+    WMI_BEACON_INFO_PRESENCE_OUI_EXT            = 1 <<  0,
+    WMI_BEACON_INFO_PRESENCE_MAC_ADDRESS        = 1 <<  1,
+    WMI_BEACON_INFO_PRESENCE_AP_CAPABILITY_NSS  = 1 <<  2,
+    WMI_BEACON_INFO_PRESENCE_AP_CAPABILITY_HT   = 1 <<  3,
+    WMI_BEACON_INFO_PRESENCE_AP_CAPABILITY_VHT  = 1 <<  4,
+    WMI_BEACON_INFO_PRESENCE_AP_CAPABILITY_BAND = 1 <<  5,
+} wmi_beacon_info_presence_items;
+
+typedef struct _wmi_vendor_oui_ext {
+    A_UINT32 tlv_header;
+    A_UINT32 buf_data_length;        /* length of data in bytes for this OUI including index byte */
+    A_UINT32 info_presence_bit_mask; /* see enum wmi_beacon_info_presence_items */
+    A_UINT32 oui_header_length;      /* either 3 or 5 bytes */
+    A_UINT32 oui_data_length;        /* length of oui_data to compare in beacon which follows OUI header. Max length is capped to WMI_MAX_VENDOR_OUI_DATA_LENGTH bytes */
+    A_UINT32 mac_address_length;     /* MAC address length in bytes
+                                     ** (This value will always be 6,
+                                     ** but is explicitly specified for sake
+                                     ** of uniformity and completeness).
+                                     */
+    A_UINT32 capability_data_length; /* length of capability in bytes */
+} wmi_vendor_oui_ext;
+
+#define WMI_INFO_CAPABILITY_NSS_MASK                       0x0f
+#define WMI_INFO_CAPABILITY_NSS_OFFSET                     0
+#define WMI_INFO_CAPABILITY_HT_ENABLE_MASK                 0x10
+#define WMI_INFO_CAPABILITY_HT_ENABLE_OFFSET               4
+#define WMI_INFO_CAPABILITY_VHT_ENABLE_MASK                0x20
+#define WMI_INFO_CAPABILITY_VHT_ENABLE_OFFSET              5
+#define WMI_INFO_CAPABILITY_BAND_MASK                      0xc0
+#define WMI_INFO_CAPABILITY_BAND_OFFSET                    6
+
+/* definition of WMI_INFO_CAPABILITY_NSS_MASK */
+#define WMI_INFO_CAPABILITY_NSS_1X1                        1
+#define WMI_INFO_CAPABILITY_NSS_2X2                        2
+#define WMI_INFO_CAPABILITY_NSS_3X3                        3
+#define WMI_INFO_CAPABILITY_NSS_4X4                        4
+
+/* definition of WMI_INFO_CAPABILITY_BAND_MASK */
+#define WMI_INFO_CAPABILITY_2G_BAND_MASK                   (1 << 0)
+#define WMI_INFO_CAPABILITY_5G_BAND_MASK                   (1 << 1)
 
 typedef struct {
     A_UINT32 tlv_header;
@@ -20235,6 +20308,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ROAM_BTM_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_WLM_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID);
     }
 
     return "Invalid WMI cmd";
