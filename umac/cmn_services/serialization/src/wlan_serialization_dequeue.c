@@ -80,7 +80,6 @@ void wlan_serialization_move_pending_to_active(
 	return;
 }
 
-
 enum wlan_serialization_cmd_status
 wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 		struct wlan_serialization_pdev_priv_obj *ser_pdev_obj,
@@ -91,7 +90,17 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 	struct wlan_serialization_command_list *cmd_list;
 	qdf_list_node_t *nnode = NULL, *pnode = NULL;
 	enum wlan_serialization_cmd_status status = WLAN_SER_CMD_NOT_FOUND;
+	struct wlan_objmgr_psoc *psoc = NULL;
 	QDF_STATUS qdf_status;
+
+	if (pdev)
+		psoc = wlan_pdev_get_psoc(pdev);
+	else if (vdev)
+		psoc = wlan_vdev_get_psoc(vdev);
+	else if (cmd && cmd->vdev)
+		psoc = wlan_vdev_get_psoc(cmd->vdev);
+	else
+		serialization_debug("Can't find psoc");
 
 	qsize = qdf_list_size(queue);
 	while (qsize--) {
@@ -111,14 +120,29 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 			pnode = nnode;
 			continue;
 		}
+
 		/*
 		 * active queue can't be removed directly, requester needs to
 		 * wait for active command response and send remove request for
 		 * active command seperately
 		 */
 		if (is_active_queue) {
+			if (!psoc || !cmd_list) {
+			    serialization_err("Can't find cmd psoc:0x%p",
+					      psoc);
+			    serialization_err("Can't find cmd cmd_list:0x%p",
+					      cmd_list);
+				status = WLAN_SER_CMD_NOT_FOUND;
+				break;
+			}
+			qdf_status = wlan_serialization_find_and_stop_timer(
+							psoc, &cmd_list->cmd);
+			if (QDF_STATUS_SUCCESS != qdf_status) {
+			    serialization_err("Can't fix timer for active cmd");
+			    status = WLAN_SER_CMD_NOT_FOUND;
+			    break;
+			}
 			status = WLAN_SER_CMD_IN_ACTIVE_LIST;
-			break;
 		}
 		/*
 		 * call pending cmd's callback to notify that
@@ -141,8 +165,9 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 			break;
 		}
 		nnode = pnode;
-		/* If cmd was on active list then we wouldn't have come here */
-		status = WLAN_SER_CMD_IN_PENDING_LIST;
+
+		if (!is_active_queue)
+			status = WLAN_SER_CMD_IN_PENDING_LIST;
 	}
 
 	return status;

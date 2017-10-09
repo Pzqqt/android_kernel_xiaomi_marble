@@ -69,6 +69,10 @@ wlan_serialization_get_pdev_from_cmd(struct wlan_serialization_command *cmd)
 		serialization_err("invalid cmd");
 		return pdev;
 	}
+	if (!cmd->vdev) {
+		serialization_err("invalid cmd->vdev");
+		return pdev;
+	}
 	pdev = wlan_vdev_get_pdev(cmd->vdev);
 
 	return pdev;
