@@ -109,6 +109,10 @@ int hdd_lro_init(struct hdd_context *hdd_ctx)
 		return -EAGAIN;
 	}
 
+	if (hdd_ctx->config->enable_tcp_delack) {
+		hdd_ctx->en_tcp_delack_no_lro = 0;
+		hdd_reset_tcp_delack(hdd_ctx);
+	}
 	return 0;
 }
 
@@ -215,8 +219,21 @@ void hdd_disable_lro_in_concurrency(bool disable)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
-	if (disable)
+	if (disable) {
+		if (hdd_ctx->en_tcp_delack_no_lro) {
+			hdd_info("Enable TCP delack as LRO disabled in concurrency");
+			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+				WLAN_SVC_WLAN_TP_IND, &hdd_ctx->cur_rx_level,
+				sizeof(hdd_ctx->cur_rx_level));
+			hdd_ctx->en_tcp_delack_no_lro = 1;
+		}
 		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);
-	else
+	} else {
+		if (hdd_ctx->en_tcp_delack_no_lro) {
+			hdd_info("Disable TCP delack as LRO is enabled");
+			hdd_ctx->en_tcp_delack_no_lro = 0;
+			hdd_reset_tcp_delack(hdd_ctx);
+		}
 		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 0);
+	}
 }

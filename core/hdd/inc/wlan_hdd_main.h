@@ -1764,6 +1764,7 @@ struct hdd_context {
 	int user_configured_pkt_filter_rules;
 	bool is_fils_roaming_supported;
 	qdf_atomic_t disable_lro_in_concurrency;
+	bool en_tcp_delack_no_lro;
 };
 
 /**
