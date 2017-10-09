@@ -562,6 +562,7 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	struct wlan_objmgr_vdev *vdev;
 	struct scan_event *event;
 	struct scan_event_info *event_info;
+	struct wlan_serialization_command cmd = {0,};
 
 	if (!msg || !msg->bodyptr) {
 		scm_err("msg: %pK, bodyptr: %pK", msg, msg->bodyptr);
@@ -571,9 +572,37 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	vdev = event_info->vdev;
 	event = &(event_info->event);
 
-	scm_info("vdev: %d, type: %d, reason: %d, freq: %d, req: %d, scanid: %d",
+	scm_info("vdevid:%d, type:%d, reason:%d, freq:%d, reqstr:%d, scanid:%d",
 		event->vdev_id, event->type, event->reason, event->chan_freq,
 		event->requester, event->scan_id);
+	/*
+	 * NLO requests are never queued, so post NLO events
+	 * without checking for their presence in active queue.
+	 */
+	switch (event->type) {
+	case SCAN_EVENT_TYPE_NLO_COMPLETE:
+	case SCAN_EVENT_TYPE_NLO_MATCH:
+		scm_pno_event_handler(vdev, event);
+		goto exit;
+	default:
+		break;
+	}
+
+	cmd.cmd_type = WLAN_SER_CMD_SCAN;
+	cmd.cmd_id = event->scan_id;
+	cmd.cmd_cb = NULL;
+	cmd.umac_cmd = NULL;
+	cmd.source = WLAN_UMAC_COMP_SCAN;
+	cmd.is_high_priority = false;
+	cmd.vdev = vdev;
+	if (!wlan_serialization_is_cmd_present_in_active_queue(NULL, &cmd)) {
+		/*
+		 * We received scan event for an already completed/cancelled
+		 * scan request. Drop this event.
+		 */
+		scm_warn("Received scan event while request not in active queue");
+		goto exit;
+	}
 
 	switch (event->type) {
 	case SCAN_EVENT_TYPE_COMPLETED:
@@ -581,10 +610,6 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	case SCAN_EVENT_TYPE_DEQUEUED:
 		scm_release_serialization_command(vdev, event->scan_id);
 		break;
-	case SCAN_EVENT_TYPE_NLO_COMPLETE:
-	case SCAN_EVENT_TYPE_NLO_MATCH:
-		scm_pno_event_handler(vdev, event);
-		goto exit;
 	default:
 		break;
 	}
