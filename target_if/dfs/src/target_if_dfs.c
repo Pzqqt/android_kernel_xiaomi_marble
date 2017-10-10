@@ -26,12 +26,14 @@
 #include <qdf_types.h>
 #include <qdf_status.h>
 #include <target_if_dfs.h>
+#include <wlan_module_ids.h>
 #include <wmi_unified_api.h>
 #include <wlan_lmac_if_def.h>
 #include <wmi_unified_priv.h>
 #include <wlan_scan_tgt_api.h>
 #include <wmi_unified_param.h>
 #include <wmi_unified_dfs_api.h>
+#include "wlan_dfs_tgt_api.h"
 
 static inline struct wlan_lmac_if_dfs_rx_ops *
 target_if_dfs_get_rx_ops(struct wlan_objmgr_psoc *psoc)
@@ -196,6 +198,37 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 	return status;
 }
 
+static QDF_STATUS target_process_bang_radar_cmd(
+		struct wlan_objmgr_pdev *pdev,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct wmi_unit_test_cmd wmi_utest;
+	int i;
+	wmi_unified_t wmi_handle;
+
+	wmi_handle = (wmi_unified_t) pdev->tgt_if_handle;
+
+	wmi_utest.vdev_id = dfs_unit_test->vdev_id;
+	wmi_utest.module_id = WLAN_MODULE_PHYERR_DFS;
+	wmi_utest.num_args = dfs_unit_test->num_args;
+
+	for (i = 0; i < dfs_unit_test->num_args; i++)
+		wmi_utest.args[i] = dfs_unit_test->args[i];
+	/*
+	 * Host to Target  conversion for pdev id required
+	 * before we send a wmi unit test command
+	 */
+	wmi_utest.args[IDX_PDEV_ID] = wmi_handle->ops->
+		convert_pdev_id_host_to_target(pdev->pdev_objmgr.wlan_pdev_id);
+
+	status = wmi_unified_unit_test_cmd(pdev->tgt_if_handle, &wmi_utest);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		target_if_err("dfs: unit_test_cmd send failed %d", status);
+
+	return status;
+}
+
 QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
@@ -207,6 +240,9 @@ QDF_STATUS target_if_register_dfs_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	dfs_tx_ops = &tx_ops->dfs_tx_ops;
 	dfs_tx_ops->dfs_reg_ev_handler = &target_if_dfs_register_event_handler;
+
+	dfs_tx_ops->dfs_process_emulate_bang_radar_cmd =
+						&target_process_bang_radar_cmd;
 
 	return QDF_STATUS_SUCCESS;
 }

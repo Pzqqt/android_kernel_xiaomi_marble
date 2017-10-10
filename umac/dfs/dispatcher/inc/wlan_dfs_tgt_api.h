@@ -25,8 +25,43 @@
 #ifndef _WLAN_DFS_TGT_API_H_
 #define _WLAN_DFS_TGT_API_H_
 
-#include "wlan_dfs_ucfg_api.h"
-#include "wlan_dfs_utils_api.h"
+/* Max number arguments for DFS unit test command */
+#define DFS_MAX_NUM_UNIT_TEST_ARGS 3
+
+/* Command id to send test radar to firmware */
+#define DFS_PHYERR_OFFLOAD_TEST_SET_RADAR 0
+
+/* Number of arguments for  DFS unit test command */
+#define DFS_UNIT_TEST_NUM_ARGS 3
+
+/* Segment ID corresponding to primary segment */
+#define SEG_ID_PRIMARY 0
+
+/* Segment ID corresponding to secondary segment */
+#define SEG_ID_SECONDARY 1
+
+/* Index id pointing to command id value */
+#define IDX_CMD_ID 0
+
+/* Index id pointing to pdev id value */
+#define IDX_PDEV_ID 1
+
+/* Index pointing to segment id value */
+#define IDX_SEG_ID 2
+
+/**
+ * struct dfs_emulate_bang_radar_test_cmd - Unit test command structure to send
+ *                                          WMI command to firmware from host
+ *                                          and simulate bangradar event.
+ * @vdev_id: vdev id
+ * @num_args: number of arguments
+ * @args: arguments
+ */
+struct dfs_emulate_bang_radar_test_cmd {
+	uint32_t vdev_id;
+	uint32_t num_args;
+	uint32_t args[DFS_MAX_NUM_UNIT_TEST_ARGS];
+};
 
 extern struct dfs_to_mlme global_dfs_to_mlme;
 
@@ -191,4 +226,17 @@ QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
  * @dfs: Pointer to wlan_dfs structure.
  */
 QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev);
+
+/**
+* tgt_dfs_process_emulate_bang_radar_cmd() - Process to emulate dfs bangradar
+*                                            command.
+* @pdev: Pointer to DFS pdev object.
+*
+* Process  to emulate dfs bangradar command.
+*
+* Return: QDF_STATUS.
+*/
+QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
+
 #endif /* _WLAN_DFS_TGT_API_H_ */

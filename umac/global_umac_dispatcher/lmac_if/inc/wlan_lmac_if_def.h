@@ -46,6 +46,8 @@
 #include "wlan_crypto_global_def.h"
 #endif
 
+#include <wlan_dfs_tgt_api.h>
+
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
 
@@ -432,18 +434,22 @@ struct wlan_lmac_if_reg_tx_ops {
 /**
  * struct wlan_lmac_if_dfs_tx_ops - Function pointer to call offload/lmac
  *                                  functions from DFS module.
- * @dfs_enable:                    Enable DFS.
- * @dfs_get_caps:                  Get DFS capabilities.
- * @dfs_disable:                   Disable DFS
- * @dfs_gettsf64:                  Get tsf64 value.
- * @dfs_set_use_cac_prssi:         Set use_cac_prssi value.
- * @dfs_get_thresholds:            Get thresholds.
- * @dfs_get_ext_busy:              Get ext_busy.
- * @dfs_get_target_type:           Get target type.
- * @dfs_is_mode_offload:           Check the radio for offload.
- * @dfs_get_ah_devid:              Get ah devid.
- * @dfs_get_phymode_info:          Get phymode info.
- * @dfs_reg_ev_handler:            Register dfs event handler.
+ * @dfs_enable:                         Enable DFS.
+ * @dfs_get_caps:                       Get DFS capabilities.
+ * @dfs_disable:                        Disable DFS
+ * @dfs_gettsf64:                       Get tsf64 value.
+ * @dfs_set_use_cac_prssi:              Set use_cac_prssi value.
+ * @dfs_get_dfsdomain:                  Get DFS domain.
+ * @dfs_is_countryCode_CHINA:           Check is country code CHINA.
+ * @dfs_get_thresholds:                 Get thresholds.
+ * @dfs_get_ext_busy:                   Get ext_busy.
+ * @dfs_get_target_type:                Get target type.
+ * @dfs_is_countryCode_KOREA_ROC3:      Check is county code Korea.
+ * @dfs_is_mode_offload:                Check the radio for offload.
+ * @dfs_get_ah_devid:                   Get ah devid.
+ * @dfs_get_phymode_info:               Get phymode info.
+ * @dfs_reg_ev_handler:                 Register dfs event handler.
+ * @dfs_process_emulate_bang_radar_cmd: Process emulate bang radar test command.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -495,6 +501,9 @@ struct wlan_lmac_if_dfs_tx_ops {
 			uint32_t *mode_info);
 	QDF_STATUS (*dfs_reg_ev_handler)(struct wlan_objmgr_pdev *pdev,
 			bool dfs_offload);
+	QDF_STATUS (*dfs_process_emulate_bang_radar_cmd)(
+			struct wlan_objmgr_pdev *pdev,
+			struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
 };
 
 /**

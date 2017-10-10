@@ -25,6 +25,7 @@
 #include "../dfs_zero_cac.h"
 #include "wlan_dfs_lmac_api.h"
 #include "wlan_dfs_mlme_api.h"
+#include "wlan_dfs_tgt_api.h"
 #include "../dfs_internal.h"
 #include <dfs_ioctl.h>
 
@@ -85,6 +86,29 @@ static os_timer_func(dfs_testtimer_task)
 			dfs->wlan_dfstest_ieeechan);
 
 	dfs_mlme_start_csa(dfs->dfs_pdev_obj, dfs->wlan_dfstest_ieeechan);
+}
+
+static inline int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,
+		uint32_t segid,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
+{
+	/*
+	 * More parameters are to be added later indicating
+	 * seg id, chirp and sidx values to be sent to fw.
+	 */
+	dfs_unit_test->num_args = DFS_UNIT_TEST_NUM_ARGS;
+	dfs_unit_test->args[IDX_CMD_ID] =
+			DFS_PHYERR_OFFLOAD_TEST_SET_RADAR;
+	dfs_unit_test->args[IDX_PDEV_ID] =
+			wlan_objmgr_pdev_get_pdev_id(dfs->dfs_pdev_obj);
+	dfs_unit_test->args[IDX_SEG_ID] = segid;
+
+	if (tgt_dfs_process_emulate_bang_radar_cmd(dfs->dfs_pdev_obj,
+				dfs_unit_test) == QDF_STATUS_E_FAILURE) {
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 int dfs_get_debug_info(struct wlan_dfs *dfs, void *data)
@@ -646,6 +670,9 @@ int dfs_control(struct wlan_dfs *dfs,
 	struct dfsreq_nolinfo *nol;
 	uint32_t *data = NULL;
 	int i;
+	struct dfs_emulate_bang_radar_test_cmd dfs_unit_test;
+
+	qdf_mem_zero(&dfs_unit_test, sizeof(dfs_unit_test));
 
 	/* dfs is dereferenced (dfs->dfs_ignore_dfs) when dfs is NULL */
 	if (!dfs) {
@@ -939,7 +966,11 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs_print_nolhistory(dfs);
 		break;
 	case DFS_BANGRADAR:
-		if (!dfs->dfs_is_offload_enabled) {
+		if (dfs->dfs_is_offload_enabled) {
+			error = dfs_fill_emulate_bang_radar_test(dfs,
+					SEG_ID_PRIMARY,
+					&dfs_unit_test);
+		} else {
 			dfs->dfs_bangradar = 1;
 			dfs->wlan_radar_tasksched = 1;
 			qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
@@ -953,7 +984,11 @@ int dfs_control(struct wlan_dfs *dfs,
 		dfs_reset_precac_lists(dfs);
 		break;
 	case DFS_SECOND_SEGMENT_BANGRADAR:
-		if (!dfs->dfs_is_offload_enabled) {
+		if (dfs->dfs_is_offload_enabled) {
+			error = dfs_fill_emulate_bang_radar_test(dfs,
+					SEG_ID_SECONDARY,
+					&dfs_unit_test);
+		} else {
 			dfs->dfs_second_segment_bangradar = 1;
 			dfs->wlan_radar_tasksched = 1;
 			qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);

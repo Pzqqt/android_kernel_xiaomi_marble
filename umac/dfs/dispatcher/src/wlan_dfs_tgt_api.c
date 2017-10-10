@@ -21,6 +21,7 @@
  * DOC: This file has the DFS dispatcher API implementation which is exposed
  * to outside of DFS component.
  */
+#include <wlan_objmgr_pdev_obj.h>
 #include "wlan_dfs_tgt_api.h"
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
@@ -314,3 +315,27 @@ QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(tgt_dfs_stop);
+
+QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (dfs_tx_ops && dfs_tx_ops->dfs_process_emulate_bang_radar_cmd)
+		return dfs_tx_ops->dfs_process_emulate_bang_radar_cmd(pdev,
+				dfs_unit_test);
+	else
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+				"dfs_tx_ops=%p", dfs_tx_ops);
+
+	return QDF_STATUS_E_FAILURE;
+}
+EXPORT_SYMBOL(tgt_dfs_process_emulate_bang_radar_cmd);
