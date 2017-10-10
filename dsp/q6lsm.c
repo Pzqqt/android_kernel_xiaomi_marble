@@ -148,6 +148,10 @@ static int q6lsm_callback(struct apr_client_data *data, void *priv)
 			 __func__, data->opcode, data->reset_event,
 			 data->reset_proc);
 
+		apr_reset(client->apr);
+		client->apr = NULL;
+		atomic_set(&client->cmd_state, CMD_STATE_CLEARED);
+		wake_up(&client->cmd_wait);
 		cal_utils_clear_cal_block_q6maps(LSM_MAX_CAL_IDX,
 			lsm_common.cal_data);
 		mutex_lock(&lsm_common.cal_data[LSM_CUSTOM_TOP_IDX]->lock);
@@ -367,6 +371,11 @@ static int q6lsm_apr_send_pkt(struct lsm_client *client, void *handle,
 	int ret;
 	unsigned long flags = 0;
 	struct apr_hdr *msg_hdr = (struct apr_hdr *) data;
+
+	if (!handle) {
+		pr_err("%s: handle is NULL\n", __func__);
+		return -EINVAL;
+	}
 
 	pr_debug("%s: enter wait %d\n", __func__, wait);
 	if (wait)
@@ -1341,6 +1350,10 @@ static int q6lsm_mmapcallback(struct apr_client_data *data, void *priv)
 		pr_debug("%s: SSR event received 0x%x, event 0x%x,\n"
 			 "proc 0x%x SID 0x%x\n", __func__, data->opcode,
 			 data->reset_event, data->reset_proc, sid);
+
+		apr_reset(lsm_common.apr);
+		lsm_common.apr = NULL;
+		atomic_set(&lsm_common.apr_users, 0);
 		lsm_common.common_client[sid].lsm_cal_phy_addr = 0;
 		cal_utils_clear_cal_block_q6maps(LSM_MAX_CAL_IDX,
 			lsm_common.cal_data);
