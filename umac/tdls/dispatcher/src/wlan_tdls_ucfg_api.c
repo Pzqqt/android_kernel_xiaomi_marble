@@ -642,6 +642,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 	notify->tdls_prohibited = false;
 	notify->vdev = notify_info->vdev;
 	notify->lfr_roam = notify_info->lfr_roam;
+	notify->user_disconnect = notify_info->user_disconnect;
 
 	msg.bodyptr = notify;
 	msg.callback = tdls_process_cmd;

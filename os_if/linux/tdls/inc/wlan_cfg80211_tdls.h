@@ -224,6 +224,7 @@ hdd_notify_sta_connect(uint8_t session_id,
  * hdd_notify_sta_disconnect() - notify sta disconnect to TDLS
  * @session_id: pointer to soc object
  * @lfr_roam: indicate, whether disconnect due to lfr roam
+ * @bool user_disconnect: disconnect from user space
  * @vdev: vdev object manager
  *
  * Notify sta disconnect event to TDLS component
@@ -232,6 +233,7 @@ hdd_notify_sta_connect(uint8_t session_id,
  */
 void hdd_notify_sta_disconnect(uint8_t session_id,
 			       bool lfr_roam,
+			       bool user_disconnect,
 			       struct wlan_objmgr_vdev *vdev);
 
 /**
@@ -262,6 +264,7 @@ hdd_notify_sta_connect(uint8_t session_id,
 static inline
 void hdd_notify_sta_disconnect(uint8_t session_id,
 			       bool lfr_roam,
+			       bool user_disconnect,
 			       struct wlan_objmgr_vdev *vdev)
 {
 

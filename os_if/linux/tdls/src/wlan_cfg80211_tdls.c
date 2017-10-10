@@ -140,6 +140,7 @@ hdd_notify_sta_connect(uint8_t session_id,
 
 void hdd_notify_sta_disconnect(uint8_t session_id,
 			       bool lfr_roam,
+			       bool user_disconnect,
 			       struct wlan_objmgr_vdev *vdev)
 {
 	struct tdls_sta_notify_params notify_info;
@@ -147,6 +148,7 @@ void hdd_notify_sta_disconnect(uint8_t session_id,
 	notify_info.session_id = session_id;
 	notify_info.lfr_roam = lfr_roam;
 	notify_info.vdev = vdev;
+	notify_info.user_disconnect = user_disconnect;
 	ucfg_tdls_notify_sta_disconnect(&notify_info);
 
 }
