@@ -78,15 +78,6 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 				enum tQDF_ADAPTER_MODE dev_mode);
 
 /**
- * os_if_wifi_pos_set_ftm_cap() - set ftm capabilities
- * @psoc: psoc object
- * @val: value to set
- *
- * Return: none
- */
-void os_if_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val);
-
-/**
  * os_if_wifi_pos_populate_caps() - populate oem capabilities
  * @psoc: psoc object
  * @caps: pointer to populate the capabilities
@@ -113,11 +104,6 @@ static inline void os_if_wifi_pos_send_peer_status(
 		uint8_t session_id,
 		struct wifi_pos_ch_info *chan_info,
 		enum tQDF_ADAPTER_MODE dev_mode)
-{
-}
-
-static inline void os_if_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc,
-					      uint32_t val)
 {
 }
 

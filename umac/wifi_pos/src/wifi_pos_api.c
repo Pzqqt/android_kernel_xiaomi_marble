@@ -205,21 +205,6 @@ void wifi_pos_set_current_dwell_time_min(struct wlan_objmgr_psoc *psoc,
 	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
 }
 
-void wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val)
-{
-	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
-			wifi_pos_get_psoc_priv_obj(psoc);
-
-	if (!wifi_pos_psoc) {
-		wifi_pos_alert("unable to get wifi_pos psoc obj");
-		return;
-	}
-
-	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
-	wifi_pos_psoc->fine_time_meas_cap = val;
-	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
-}
-
 uint32_t wifi_pos_get_app_pid(struct wlan_objmgr_psoc *psoc)
 {
 	uint32_t app_pid;

@@ -319,16 +319,6 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 	qdf_mem_free(peer_info);
 }
 
-void os_if_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val)
-{
-	if (!psoc) {
-		cfg80211_err("psoc is null");
-		return;
-	}
-
-	wifi_pos_set_ftm_cap(psoc, val);
-}
-
 int os_if_wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
 				   struct wifi_pos_driver_caps *caps)
 {

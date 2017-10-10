@@ -71,3 +71,38 @@ unlock_and_exit:
 	qdf_spin_unlock_bh(&wifi_pos_psoc_obj->wifi_pos_lock);
 	return status;
 }
+
+
+uint32_t ucfg_wifi_pos_get_ftm_cap(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t val = 0;
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+			wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_psoc) {
+		wifi_pos_alert("unable to get wifi_pos psoc obj");
+		return val;
+	}
+
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	val = wifi_pos_psoc->fine_time_meas_cap;
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+
+	return val;
+}
+
+void ucfg_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val)
+{
+	struct wifi_pos_psoc_priv_obj *wifi_pos_psoc =
+			wifi_pos_get_psoc_priv_obj(psoc);
+
+	if (!wifi_pos_psoc) {
+		wifi_pos_alert("unable to get wifi_pos psoc obj");
+		return;
+	}
+
+	qdf_spin_lock_bh(&wifi_pos_psoc->wifi_pos_lock);
+	wifi_pos_psoc->fine_time_meas_cap = val;
+	qdf_spin_unlock_bh(&wifi_pos_psoc->wifi_pos_lock);
+}
+

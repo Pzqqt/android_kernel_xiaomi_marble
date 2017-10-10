@@ -292,13 +292,21 @@ QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
 			   struct wifi_pos_driver_caps *caps);
 
 /**
- * wifi_pos_set_ftm_cap: API to set fine timing measurement caps
+ * ucfg_wifi_pos_get_ftm_cap: API to get fine timing measurement caps
+ * @psoc: psoc object
+ *
+ * Return: FTM value
+ */
+uint32_t ucfg_wifi_pos_get_ftm_cap(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_wifi_pos_set_ftm_cap: API to set fine timing measurement caps
  * @psoc: psoc object
  * @val: value to set
  *
  * Return: None
  */
-void wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val);
+void ucfg_wifi_pos_set_ftm_cap(struct wlan_objmgr_psoc *psoc, uint32_t val);
 
 /**
  * wifi_pos_get_app_pid: returns oem app pid.
