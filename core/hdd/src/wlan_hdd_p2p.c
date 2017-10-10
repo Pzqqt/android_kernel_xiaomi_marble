@@ -2380,6 +2380,9 @@ stop_modules:
 		hdd_debug("Closing all modules from the add_virt_iface");
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 				   hdd_ctx->config->iface_change_wait_time);
+		hdd_prevent_suspend_timeout(
+			hdd_ctx->config->iface_change_wait_time,
+			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 	} else
 		hdd_debug("Other interfaces are still up dont close modules!");
 
