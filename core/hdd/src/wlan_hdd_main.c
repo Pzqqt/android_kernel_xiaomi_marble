@@ -2288,6 +2288,7 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 
 static void hdd_check_for_leaks(void)
 {
+	qdf_mc_timer_check_for_leaks();
 }
 
 /**
