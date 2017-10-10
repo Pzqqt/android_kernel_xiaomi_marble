@@ -1278,16 +1278,14 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 			(intf_ch > 14 && sap_ch > 14))) {
 			if (policy_mgr_is_dbs_enable(mac_ctx->psoc))
 				intf_ch = 0;
-		}
-		else if (cc_switch_mode ==
+		} else if (cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) {
 			status =
 				policy_mgr_get_sap_mandatory_channel(
 				mac_ctx->psoc,
 				(uint32_t *)&intf_ch);
-			if (QDF_IS_STATUS_ERROR(status)) {
+			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
-			}
 		}
 	} else if ((intf_ch == sap_ch) && (cc_switch_mode ==
 				QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL)) {
@@ -1295,9 +1293,8 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 			status =
 				policy_mgr_get_sap_mandatory_channel(
 					mac_ctx->psoc, (uint32_t *)&intf_ch);
-			if (QDF_IS_STATUS_ERROR(status)) {
+			if (QDF_IS_STATUS_ERROR(status))
 				sme_err("no mandatory channel");
-			}
 		}
 	}
 
