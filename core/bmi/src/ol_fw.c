@@ -646,8 +646,14 @@ void ramdump_work_handler(void *data)
 
 	BMI_ERR("%s: RAM dump collecting completed!", __func__);
 
-	/* notify SSR framework the target has crashed. */
-	pld_device_crashed(qdf_dev->dev);
+	/*
+	 * if unloading is in progress, then skip SSR,
+	 * otherwise notify SSR framework the target has crashed.
+	 */
+	if (cds_is_load_or_unload_in_progress())
+		cds_set_recovery_in_progress(false);
+	else
+		pld_device_crashed(qdf_dev->dev);
 	return;
 
 out_fail:
