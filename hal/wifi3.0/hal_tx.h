@@ -78,6 +78,7 @@ do {                                            \
 #define HAL_TX_TID_BITS_MASK ((1 << HAL_TX_BITS_PER_TID) - 1)
 #define HAL_TX_NUM_DSCP_PER_REGISTER 10
 #define HAL_MAX_HW_DSCP_TID_MAPS 2
+#define HAL_MAX_HW_DSCP_TID_MAPS_11AX 32
 
 #define HTT_META_HEADER_LEN_BYTES 64
 #define HAL_TX_EXT_DESC_WITH_META_DATA \
@@ -459,6 +460,7 @@ static inline void hal_tx_desc_set_to_fw(void *desc, uint8_t to_fw)
  *
  * Return: void
  */
+#if !defined(QCA_WIFI_QCA6290_11AX)
 static inline void hal_tx_desc_set_dscp_tid_table_id(void *desc,
 						     uint8_t id)
 {
@@ -467,6 +469,16 @@ static inline void hal_tx_desc_set_dscp_tid_table_id(void *desc,
 		HAL_TX_SM(TCL_DATA_CMD_3,
 		       DSCP_TO_TID_PRIORITY_TABLE_ID, id);
 }
+#else
+static inline void hal_tx_desc_set_dscp_tid_table_id(void *desc,
+						     uint8_t id)
+{
+	HAL_SET_FLD(desc, TCL_DATA_CMD_5,
+			 DSCP_TID_TABLE_NUM) |=
+		HAL_TX_SM(TCL_DATA_CMD_5,
+		       DSCP_TID_TABLE_NUM, id);
+}
+#endif
 
 /**
  * hal_tx_desc_set_mesh_en - Set mesh_enable flag in Tx descriptor
@@ -968,6 +980,7 @@ static inline void hal_tx_comp_get_htt_desc(void *hw_desc, uint8_t *htt_desc)
 	qdf_mem_copy(htt_desc, desc, HAL_TX_COMP_HTT_STATUS_LEN);
 }
 
+#if !defined(QCA_WIFI_QCA6290_11AX)
 /**
  * hal_tx_set_dscp_tid_map_default() - Configure default DSCP to TID map table
  * @soc: HAL SoC context
@@ -1061,6 +1074,76 @@ static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
 	HAL_REG_WRITE(soc, addr,
 			(regval & HWIO_TCL_R0_DSCP_TID1_MAP_1_RMSK));
 }
+#else
+/**
+ * hal_tx_set_dscp_tid_map_default() - Configure default DSCP to TID map table
+ * @soc: HAL SoC context
+ * @map: DSCP-TID mapping table
+ * @id: mapping table ID - 0-31
+ *
+ * DSCP are mapped to 8 TID values using TID values programmed
+ * in any of the 32 DSCP_TID_MAPS (id = 0-31).
+ *
+ * Return: none
+ */
+static inline void hal_tx_set_dscp_tid_map(void *hal_soc, uint8_t *map,
+		uint8_t id)
+{
+	int i;
+	uint32_t addr;
+	uint32_t value;
+
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+
+	if (id >= HAL_MAX_HW_DSCP_TID_MAPS_11AX) {
+		return;
+	}
+
+	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET, id);
+
+	for (i = 0; i < 64; i += 10) {
+		value = (map[i] |
+			(map[i+1] << 0x3) |
+			(map[i+2] << 0x6) |
+			(map[i+3] << 0x9) |
+			(map[i+4] << 0xc) |
+			(map[i+5] << 0xf) |
+			(map[i+6] << 0x12) |
+			(map[i+7] << 0x15) |
+			(map[i+8] << 0x18) |
+			(map[i+9] << 0x1b));
+
+		HAL_REG_WRITE(soc, addr,
+				(value & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
+
+		addr += 4;
+	}
+}
+static inline void hal_tx_update_dscp_tid(void *hal_soc, uint8_t tid,
+		uint8_t id, uint8_t dscp)
+{
+	int index;
+	uint32_t addr;
+	uint32_t value;
+	uint32_t regval;
+
+	struct hal_soc *soc = (struct hal_soc *)hal_soc;
+	addr = HWIO_TCL_R0_DSCP_TID_MAP_n_ADDR(
+				SEQ_WCSS_UMAC_MAC_TCL_REG_OFFSET, id);
+
+	index = dscp % HAL_TX_NUM_DSCP_PER_REGISTER;
+	addr += 4 * (dscp/HAL_TX_NUM_DSCP_PER_REGISTER);
+	value = tid << (HAL_TX_BITS_PER_TID * index);
+
+	regval = HAL_REG_READ(soc, addr);
+	regval &= ~(HAL_TX_TID_BITS_MASK << (HAL_TX_BITS_PER_TID * index));
+	regval |= value;
+
+	HAL_REG_WRITE(soc, addr,
+			(regval & HWIO_TCL_R0_DSCP_TID_MAP_n_RMSK));
+}
+#endif
 
 /**
  * hal_tx_init_data_ring() - Initialize all the TCL Descriptors in SRNG
