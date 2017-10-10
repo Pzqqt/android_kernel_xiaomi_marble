@@ -2869,7 +2869,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->auto_bmps_timer_val;
 		pMac->roam.configParam.ignore_peer_ht_opmode =
 			pParam->ignore_peer_ht_opmode;
-		pMac->fine_time_meas_cap = pParam->fine_time_meas_cap;
 		pMac->dual_mac_feature_disable =
 			pParam->dual_mac_feature_disable;
 		pMac->roam.configParam.early_stop_scan_enable =
@@ -3112,7 +3111,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
 	pParam->f_prefer_non_dfs_on_radar =
 		pMac->f_prefer_non_dfs_on_radar;
-	pParam->fine_time_meas_cap = pMac->fine_time_meas_cap;
 	pParam->dual_mac_feature_disable =
 		pMac->dual_mac_feature_disable;
 	pParam->is_ps_enabled = pMac->sme.ps_global_info.ps_enabled;

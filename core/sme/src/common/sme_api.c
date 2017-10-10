@@ -62,6 +62,7 @@
 #include <wlan_scan_ucfg_api.h>
 #include "wlan_reg_ucfg_api.h"
 #include "ol_txrx.h"
+#include "wifi_pos_api.h"
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -892,7 +893,7 @@ void sme_update_fine_time_measurement_capab(tHalHandle hal, uint8_t session_id,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	mac_ctx->fine_time_meas_cap = val;
+	ucfg_wifi_pos_set_ftm_cap(mac_ctx->psoc, val);
 
 	if (!val) {
 		mac_ctx->rrm.rrmPEContext.rrmEnabledCaps.fine_time_meas_rpt = 0;

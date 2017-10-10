@@ -111,6 +111,7 @@
 #include "os_if_wifi_pos.h"
 #include "wlan_utility.h"
 #include "wlan_reg_ucfg_api.h"
+#include "wifi_pos_api.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -6034,7 +6035,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		sme_update_fine_time_measurement_capab(hdd_ctx->hHal,
 			adapter->sessionId,
 			hdd_ctx->config->fine_time_meas_cap);
-		os_if_wifi_pos_set_ftm_cap(hdd_ctx->hdd_psoc,
+		ucfg_wifi_pos_set_ftm_cap(hdd_ctx->hdd_psoc,
 			hdd_ctx->config->fine_time_meas_cap);
 		hdd_debug("FTM capability: user value: 0x%x, target value: 0x%x, final value: 0x%x",
 			 ftm_capab, hdd_ctx->fine_time_meas_cap_target,
