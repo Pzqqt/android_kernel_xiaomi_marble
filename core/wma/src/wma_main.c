@@ -8203,10 +8203,8 @@ void wma_peer_set_default_routing(void *scn_handle, uint8_t *peer_macaddr,
 	param.param_id = WMI_HOST_PEER_SET_DEFAULT_ROUTING;
 	param.vdev_id = vdev_id;
 	param.param_value = ((hash_based) ? 1 : 0) | (ring_num << 1);
-	WMA_LOGD("%s: param_value 0x%d", __func__, param.param_value);
+	WMA_LOGD("%s: param_value 0x%x", __func__, param.param_value);
 	wmi_set_peer_param_send(wma->wmi_handle, peer_macaddr, &param);
-
-	return;
 }
 
 int wma_peer_rx_reorder_queue_setup(void *scn_handle,
