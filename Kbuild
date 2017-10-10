@@ -1450,8 +1450,13 @@ ifeq ($(CONFIG_PLD_USB_CNSS), y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
+ifeq ($(CONFIG_QCA6290_11AX), y)
+TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v1 \
+		-I$(WLAN_ROOT)/../fw-api/fw
+else
 TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2 \
 		-I$(WLAN_ROOT)/../fw-api/fw
+endif
 
 LINUX_INC :=	-Iinclude
 
@@ -2232,6 +2237,10 @@ CDEFINES += -DCONFIG_DP_TRACE
 CDEFINES += -DFEATURE_TSO
 CDEFINES += -DTSO_DEBUG_LOG_ENABLE
 CDEFINES += -DDP_LFR
+endif
+
+ifeq ($(CONFIG_QCA6290_11AX), y)
+CDEFINES += -DQCA_WIFI_QCA6290_11AX
 endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_11AX),y)
