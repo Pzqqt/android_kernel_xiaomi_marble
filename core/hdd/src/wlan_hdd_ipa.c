@@ -4112,12 +4112,15 @@ static void hdd_ipa_send_pkt_to_tl(
 	 * During CAC period, data packets shouldn't be sent over the air so
 	 * drop all the packets here
 	 */
-	if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx) {
-		ipa_free_skb(ipa_tx_desc);
-		qdf_spin_unlock_bh(&iface_context->interface_lock);
-		iface_context->stats.num_tx_cac_drop++;
-		hdd_ipa_rm_try_release(hdd_ipa);
-		return;
+	if (QDF_SAP_MODE == adapter->device_mode ||
+	    QDF_P2P_GO_MODE == adapter->device_mode) {
+		if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx) {
+			ipa_free_skb(ipa_tx_desc);
+			qdf_spin_unlock_bh(&iface_context->interface_lock);
+			iface_context->stats.num_tx_cac_drop++;
+			hdd_ipa_rm_try_release(hdd_ipa);
+			return;
+		}
 	}
 
 	++adapter->stats.tx_packets;
