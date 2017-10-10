@@ -2872,6 +2872,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->ignore_peer_ht_opmode;
 		pMac->dual_mac_feature_disable =
 			pParam->dual_mac_feature_disable;
+		pMac->sta_sap_scc_on_dfs_chan =
+			pParam->sta_sap_scc_on_dfs_chan;
 		pMac->roam.configParam.early_stop_scan_enable =
 			pParam->early_stop_scan_enable;
 		pMac->roam.configParam.early_stop_scan_min_threshold =
@@ -3114,6 +3116,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->f_prefer_non_dfs_on_radar;
 	pParam->dual_mac_feature_disable =
 		pMac->dual_mac_feature_disable;
+	pParam->sta_sap_scc_on_dfs_chan =
+		pMac->sta_sap_scc_on_dfs_chan;
 	pParam->is_ps_enabled = pMac->sme.ps_global_info.ps_enabled;
 	pParam->auto_bmps_timer_val =
 		pMac->sme.ps_global_info.auto_bmps_timer_val;

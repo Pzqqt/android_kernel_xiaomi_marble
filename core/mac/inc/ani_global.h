@@ -944,6 +944,7 @@ typedef struct sAniSirGlobal {
 	uint8_t hw_dbs_capable;
 	/* Based on INI parameter */
 	uint32_t dual_mac_feature_disable;
+	uint32_t sta_sap_scc_on_dfs_chan;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
