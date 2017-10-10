@@ -1012,6 +1012,7 @@ struct tdls_sta_notify_params {
 	bool tdls_prohibited;
 	bool tdls_chan_swit_prohibited;
 	bool lfr_roam;
+	bool user_disconnect;
 	uint8_t session_id;
 };
 

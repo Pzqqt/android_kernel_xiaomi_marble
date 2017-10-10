@@ -915,6 +915,12 @@ tdls_process_sta_disconnect(struct tdls_sta_notify_params *notify)
 							&tdls_soc_obj))
 		return QDF_STATUS_E_INVAL;
 
+	/* if the disconnect comes from user space, we have to delete all the
+	 * tdls peers before sending the set state cmd.
+	 */
+	if (notify->user_disconnect)
+		return tdls_delete_all_tdls_peers(notify->vdev, tdls_soc_obj);
+
 	tdls_debug("Check and update TDLS state");
 
 	curr_tdls_vdev = tdls_vdev_obj;
@@ -1026,6 +1032,7 @@ void tdls_peers_deleted_notification(struct wlan_objmgr_vdev *vdev,
 	notify->tdls_prohibited = false;
 	notify->session_id = session_id;
 	notify->vdev = vdev;
+	notify->user_disconnect = false;
 
 	tdls_notify_sta_disconnect(notify);
 }

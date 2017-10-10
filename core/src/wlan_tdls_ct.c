@@ -1157,7 +1157,6 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
  *
  * Return: QDF_STATUS
  */
-static
 QDF_STATUS tdls_delete_all_tdls_peers(struct wlan_objmgr_vdev *vdev,
 					  struct tdls_soc_priv_obj *tdls_soc)
 {

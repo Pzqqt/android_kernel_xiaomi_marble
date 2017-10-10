@@ -194,4 +194,16 @@ void tdls_teardown_connections(struct wlan_objmgr_vdev *vdev);
 void tdls_disable_offchan_and_teardown_links(
 				struct wlan_objmgr_vdev *vdev);
 
+/**
+ * tdls_delete_all_tdls_peers(): send request to delete tdls peers
+ * @vdev: vdev object
+ * @tdls_soc: tdls soc object
+ *
+ * This function sends request to lim to delete tdls peers
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tdls_delete_all_tdls_peers(struct wlan_objmgr_vdev *vdev,
+					  struct tdls_soc_priv_obj *tdls_soc);
+
 #endif
