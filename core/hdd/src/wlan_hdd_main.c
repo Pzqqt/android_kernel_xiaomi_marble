@@ -2370,10 +2370,10 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		hdd_update_cds_ac_specs_params(hdd_ctx);
 
 		status = cds_open(hdd_ctx->hdd_psoc);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
-			ret = (status == QDF_STATUS_E_NOMEM) ? -ENOMEM : -EINVAL;
-			goto cds_free;
+			ret = qdf_status_to_os_return(status);
+			goto deinit_config;
 		}
 
 		/* initalize components configurations  after psoc open */
@@ -2467,6 +2467,9 @@ cds_txrx_free:
 close:
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
 	cds_close(hdd_ctx->hdd_psoc);
+
+deinit_config:
+	cds_deinit_ini_config();
 
 cds_free:
 	ol_cds_free();
@@ -9949,8 +9952,6 @@ err_hdd_free_psoc:
 	hdd_green_ap_deinit(hdd_ctx);
 	hdd_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
-
-	cds_deinit_ini_config();
 
 	hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 
