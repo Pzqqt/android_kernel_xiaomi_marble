@@ -144,8 +144,10 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(void *data_vdev, qdf_nbuf_t nbuf);
 
+#ifdef CONVERGED_TDLS_ENABLE
 qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
+#endif
 
 uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota);
 

@@ -2272,6 +2272,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 	return num_processed;
 }
 
+#ifdef CONVERGED_TDLS_ENABLE
 /**
  * dp_tx_non_std() - Allow the control-path SW to send data frames
  *
@@ -2283,7 +2284,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
  *         nbuf when it fails to send
  */
 qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
-		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
+			enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
 	struct dp_vdev *vdev = (struct dp_vdev *) vdev_handle;
 
@@ -2291,6 +2292,7 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
 		vdev->is_tdls_frame = true;
 	return dp_tx_send(vdev_handle, msdu_list);
 }
+#endif
 
 /**
  * dp_tx_vdev_attach() - attach vdev to dp tx
