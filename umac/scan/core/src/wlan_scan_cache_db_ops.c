@@ -47,7 +47,7 @@ int scm_calculate_bss_score(struct wlan_objmgr_psoc *psoc,
 	int32_t ap_load = 0;
 	int32_t normalised_width = BEST_CANDIDATE_20MHZ;
 	int32_t pcl_score = 0;
-	int32_t temp_pcl_chan_weight = 0;
+	uint64_t temp_pcl_chan_weight = 0;
 	int32_t est_air_time_percentage = 0;
 	int32_t congestion = 0;
 	int32_t rssi_diff = 0;

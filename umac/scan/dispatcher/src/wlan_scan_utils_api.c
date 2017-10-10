@@ -582,7 +582,7 @@ static void util_scan_update_esp_data(struct wlan_esp_ie *esp_information,
 
 	uint8_t *data;
 	int i = 0;
-	int total_elements;
+	uint64_t total_elements;
 	struct wlan_esp_info *esp_info;
 	struct wlan_esp_ie *esp_ie;
 
