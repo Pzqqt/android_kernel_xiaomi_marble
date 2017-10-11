@@ -2794,14 +2794,18 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 */
 	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
 	hdd_info("intf_ch: %d", intf_ch);
-	if (QDF_IS_STATUS_ERROR(
-		policy_mgr_valid_sap_conc_channel_check(hdd_ctx->hdd_psoc,
-			&intf_ch,
-			policy_mgr_mode_specific_get_channel(
-				hdd_ctx->hdd_psoc, PM_SAP_MODE)))) {
-		hdd_debug("can't move sap to %d",
-			hdd_sta_ctx->conn_info.operationChannel);
-		return QDF_STATUS_E_FAILURE;
+	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
+		hdd_ctx->config->WlanMccToSccSwitchMode) {
+		if (QDF_IS_STATUS_ERROR(
+			policy_mgr_valid_sap_conc_channel_check(
+				hdd_ctx->hdd_psoc,
+				&intf_ch,
+				policy_mgr_mode_specific_get_channel(
+					hdd_ctx->hdd_psoc, PM_SAP_MODE)))) {
+			hdd_debug("can't move sap to %d",
+				hdd_sta_ctx->conn_info.operationChannel);
+			return QDF_STATUS_E_FAILURE;
+		}
 	}
 
 	if (intf_ch == 0) {
