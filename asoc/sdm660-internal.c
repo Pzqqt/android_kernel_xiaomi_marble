@@ -2612,7 +2612,7 @@ static struct snd_soc_dai_link msm_int_be_dai[] = {
 	{
 		.name = LPASS_BE_QUIN_TDM_RX_0,
 		.stream_name = "Quinary TDM0 Playback",
-		.cpu_dai_name = "msm-dai-q6-tdm.37184",
+		.cpu_dai_name = "msm-dai-q6-tdm.36928",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-rx",
@@ -2626,7 +2626,7 @@ static struct snd_soc_dai_link msm_int_be_dai[] = {
 	{
 		.name = LPASS_BE_QUIN_TDM_TX_0,
 		.stream_name = "Quinary TDM0 Capture",
-		.cpu_dai_name = "msm-dai-q6-tdm.37185",
+		.cpu_dai_name = "msm-dai-q6-tdm.36929",
 		.platform_name = "msm-pcm-routing",
 		.codec_name = "msm-stub-codec.1",
 		.codec_dai_name = "msm-stub-tx",
