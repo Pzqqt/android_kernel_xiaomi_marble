@@ -1939,7 +1939,7 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	retVal = WNI_CFG_SUCCESS;
 	pe_debug("<CFG> Completed successfully");
 
-end :
+end:
 
 	if (retVal != WNI_CFG_SUCCESS)
 		pMac->cfg.gCfgStatus = CFG_FAILURE;
@@ -2261,19 +2261,19 @@ check_param(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t flag,
 	/* Check if parameter ID is out of bound */
 	if (cfgId >= CFG_PARAM_MAX_NUM) {
 		pe_warn("Invalid param id: %d", cfgId);
-		* pResult = WNI_CFG_INVALID_PID;
+		*pResult = WNI_CFG_INVALID_PID;
 	} else {
 		/* Check if parameter is valid */
 		if ((pMac->cfg.gCfgEntry[cfgId].control & CFG_CTL_VALID) == 0) {
 			pe_warn("Param id: %d not valid", cfgId);
-			* pResult = WNI_CFG_INVALID_PID;
+			*pResult = WNI_CFG_INVALID_PID;
 		} else {
 			/* Check control field against flag */
 			if ((pMac->cfg.gCfgEntry[cfgId].control & flag) == 0) {
 				pe_debug("Param id: %d wrong permissions: %x",
 					       cfgId,
 					       pMac->cfg.gCfgEntry[cfgId].control);
-				* pResult = failedResult;
+				*pResult = failedResult;
 			} else
 				return true;
 		}
