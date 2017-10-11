@@ -118,6 +118,9 @@
 /* Time(in ms) to detect DOS attack */
 #define WMA_MGMT_FRAME_DETECT_DOS_TIMER 1000
 
+#define MAX_NUM_HW_MODE    0xff
+#define MAX_NUM_PHY        0xff
+
 /**
  * struct index_data_rate_type - non vht data rate type
  * @mcs_index: mcs rate index
