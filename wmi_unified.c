@@ -1681,22 +1681,9 @@ static void wmi_process_fw_event_worker_thread_ctx
 		(struct wmi_unified *wmi_handle, HTC_PACKET *htc_packet)
 {
 	wmi_buf_t evt_buf;
-	uint32_t id;
-	uint8_t *data;
 
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
-	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
-	data = qdf_nbuf_data(evt_buf);
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
-	if (wmi_handle->log_info.wmi_logging_enable) {
-		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
-		/* Exclude 4 bytes of TLV header */
-		WMI_RX_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
-				wmi_handle->log_info.buf_offset_event));
-		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
-	}
-#endif
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	qdf_nbuf_queue_add(&wmi_handle->event_queue, evt_buf);
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
@@ -1766,6 +1753,19 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	qdf_spin_lock_bh(&soc->ctx_lock);
 	exec_ctx = wmi_handle->ctx[idx];
 	qdf_spin_unlock_bh(&soc->ctx_lock);
+
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+	if (wmi_handle->log_info.wmi_logging_enable) {
+		uint8_t *data;
+		data = qdf_nbuf_data(evt_buf);
+
+		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
+		/* Exclude 4 bytes of TLV header */
+		WMI_RX_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
+				wmi_handle->log_info.buf_offset_event));
+		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
+	}
+#endif
 
 	if (exec_ctx == WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_worker_thread_ctx
