@@ -2627,6 +2627,13 @@ struct reg_table_entry g_registry_table[] = {
 			     CFG_ENABLE_SSR_MAX,
 			     cb_notify_set_enable_ssr, 0),
 
+	REG_VARIABLE(CFG_ENABLE_DATA_STALL_DETECTION, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_data_stall_det,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_DATA_STALL_DETECTION_DEFAULT,
+		     CFG_ENABLE_DATA_STALL_DETECTION_MIN,
+		     CFG_ENABLE_DATA_STALL_DETECTION_MAX),
+
 	REG_VARIABLE(CFG_MAX_MEDIUM_TIME, WLAN_PARAM_Integer,
 		     struct hdd_config, cfgMaxMediumTime,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6466,6 +6473,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->enableLpwrImgTransition);
 	hdd_debug("Name = [gEnableSSR] Value = [%u] ",
 		  hdd_ctx->config->enableSSR);
+	hdd_debug("Name = [gEnableDataStallDetection] Value = [%u] ",
+		  hdd_ctx->config->enable_data_stall_det);
 	hdd_debug("Name = [gEnableVhtFor24GHzBand] Value = [%u] ",
 		  hdd_ctx->config->enableVhtFor24GHzBand);
 	hdd_debug("Name = [gEnableIbssHeartBeatOffload] Value = [%u] ",

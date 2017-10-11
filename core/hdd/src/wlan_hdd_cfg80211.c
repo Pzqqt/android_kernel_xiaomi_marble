@@ -11717,7 +11717,9 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&hdd_context_lock);
 
-	cdp_post_data_stall_event(soc, DATA_STALL_LOG_INDICATOR_FRAMEWORK,
+	if (hdd_ctx->config->enable_data_stall_det)
+		cdp_post_data_stall_event(soc,
+				      DATA_STALL_LOG_INDICATOR_FRAMEWORK,
 				      DATA_STALL_LOG_NUD_FAILURE,
 				      0xFF, 0XFF,
 				      DATA_STALL_LOG_RECOVERY_TRIGGER_PDR);
