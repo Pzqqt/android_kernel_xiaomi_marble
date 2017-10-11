@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -297,6 +297,24 @@ static inline int qdf_spin_trylock_bh(qdf_spinlock_t *lock, const char *func)
 #define qdf_spin_trylock_bh(lock) qdf_spin_trylock_bh(lock, __func__)
 
 int qdf_spin_trylock_bh_outline(qdf_spinlock_t *lock);
+
+/**
+ * qdf_spin_trylock() - spin trylock
+ * @lock: spinlock object
+ * Return: int
+ */
+static inline int qdf_spin_trylock(qdf_spinlock_t *lock, const char *func)
+{
+	int result = 0;
+
+	BEFORE_LOCK(lock, qdf_spin_is_locked(lock));
+	result = __qdf_spin_trylock(&lock->lock);
+	AFTER_LOCK(lock, func);
+
+	return result;
+}
+
+#define qdf_spin_trylock(lock) qdf_spin_trylock(lock, __func__)
 
 /**
  * qdf_spin_lock_bh() - locks the spinlock mutex in soft irq context

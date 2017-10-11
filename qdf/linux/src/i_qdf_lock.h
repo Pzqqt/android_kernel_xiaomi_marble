@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -264,6 +264,17 @@ static inline int __qdf_spin_trylock_bh(__qdf_spinlock_t *lock)
 	}
 
 	return 0;
+}
+
+/**
+ * __qdf_spin_trylock() - spin trylock
+ * @lock: spinlock object
+ *
+ * Return: int
+ */
+static inline int __qdf_spin_trylock(__qdf_spinlock_t *lock)
+{
+	return spin_trylock(&lock->spinlock);
 }
 
 /**
