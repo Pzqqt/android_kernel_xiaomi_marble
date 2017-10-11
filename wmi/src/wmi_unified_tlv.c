@@ -12410,6 +12410,103 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1,
 						tgt_res_cfg->atf_config);
 }
+
+/* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
+ * @wmi_handle: pointer to wmi handle
+ * @buf_ptr: pointer to current position in init command buffer
+ * @len: pointer to length. This will be updated with current lenght of cmd
+ * @param: point host parameters for init command
+ *
+ * Return: Updated pointer of buf_ptr.
+ */
+static inline uint8_t *copy_hw_mode_in_init_cmd(struct wmi_unified *wmi_handle,
+		uint8_t *buf_ptr, int *len, struct wmi_init_cmd_param *param)
+{
+	uint16_t idx;
+
+	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
+		wmi_pdev_set_hw_mode_cmd_fixed_param *hw_mode;
+		wmi_pdev_band_to_mac *band_to_mac;
+
+		hw_mode = (wmi_pdev_set_hw_mode_cmd_fixed_param *)
+			(buf_ptr + sizeof(wmi_init_cmd_fixed_param) +
+			 sizeof(wmi_resource_config) +
+			 WMI_TLV_HDR_SIZE + (param->num_mem_chunks *
+				 sizeof(wlan_host_memory_chunk)));
+
+		WMITLV_SET_HDR(&hw_mode->tlv_header,
+			WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
+			(WMITLV_GET_STRUCT_TLVLEN
+			 (wmi_pdev_set_hw_mode_cmd_fixed_param)));
+
+		hw_mode->hw_mode_index = param->hw_mode_id;
+		hw_mode->num_band_to_mac = param->num_band_to_mac;
+
+		buf_ptr = (uint8_t *) (hw_mode + 1);
+		band_to_mac = (wmi_pdev_band_to_mac *) (buf_ptr +
+				WMI_TLV_HDR_SIZE);
+		for (idx = 0; idx < param->num_band_to_mac; idx++) {
+			WMITLV_SET_HDR(&band_to_mac[idx].tlv_header,
+					WMITLV_TAG_STRUC_wmi_pdev_band_to_mac,
+					WMITLV_GET_STRUCT_TLVLEN
+					(wmi_pdev_band_to_mac));
+			band_to_mac[idx].pdev_id =
+				wmi_handle->ops->convert_pdev_id_host_to_target(
+					param->band_to_mac[idx].pdev_id);
+			band_to_mac[idx].start_freq =
+				param->band_to_mac[idx].start_freq;
+			band_to_mac[idx].end_freq =
+				param->band_to_mac[idx].end_freq;
+		}
+		*len += sizeof(wmi_pdev_set_hw_mode_cmd_fixed_param) +
+			(param->num_band_to_mac *
+			 sizeof(wmi_pdev_band_to_mac)) +
+			WMI_TLV_HDR_SIZE;
+
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+				(param->num_band_to_mac *
+				 sizeof(wmi_pdev_band_to_mac)));
+	}
+
+	return buf_ptr;
+}
+
+static inline void copy_fw_abi_version_tlv(wmi_unified_t wmi_handle,
+		wmi_init_cmd_fixed_param *cmd)
+{
+	int num_whitelist;
+	wmi_abi_version my_vers;
+
+	num_whitelist = sizeof(version_whitelist) /
+		sizeof(wmi_whitelist_version_info);
+	my_vers.abi_version_0 = WMI_ABI_VERSION_0;
+	my_vers.abi_version_1 = WMI_ABI_VERSION_1;
+	my_vers.abi_version_ns_0 = WMI_ABI_VERSION_NS_0;
+	my_vers.abi_version_ns_1 = WMI_ABI_VERSION_NS_1;
+	my_vers.abi_version_ns_2 = WMI_ABI_VERSION_NS_2;
+	my_vers.abi_version_ns_3 = WMI_ABI_VERSION_NS_3;
+
+	wmi_cmp_and_set_abi_version(num_whitelist, version_whitelist,
+			&my_vers,
+			(struct _wmi_abi_version *)&wmi_handle->fw_abi_version,
+			&cmd->host_abi_vers);
+
+	qdf_print("%s: INIT_CMD version: %d, %d, 0x%x, 0x%x, 0x%x, 0x%x",
+			__func__,
+			WMI_VER_GET_MAJOR(cmd->host_abi_vers.abi_version_0),
+			WMI_VER_GET_MINOR(cmd->host_abi_vers.abi_version_0),
+			cmd->host_abi_vers.abi_version_ns_0,
+			cmd->host_abi_vers.abi_version_ns_1,
+			cmd->host_abi_vers.abi_version_ns_2,
+			cmd->host_abi_vers.abi_version_ns_3);
+
+	/* Save version sent from host -
+	 * Will be used to check ready event
+	 */
+	qdf_mem_copy(&wmi_handle->final_abi_vers, &cmd->host_abi_vers,
+			sizeof(wmi_abi_version));
+}
+
 #ifdef CONFIG_MCL
 /**
  * send_init_cmd_tlv() - wmi init command
@@ -12430,8 +12527,6 @@ static QDF_STATUS send_init_cmd_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_buf_t buf;
 	wmi_init_cmd_fixed_param *cmd;
-	wmi_abi_version my_vers;
-	int num_whitelist;
 	uint8_t *buf_ptr;
 	wmi_resource_config *resource_cfg;
 	wlan_host_memory_chunk *host_mem_chunks;
@@ -12484,36 +12579,9 @@ static QDF_STATUS send_init_cmd_tlv(wmi_unified_t wmi_handle,
 			(sizeof(wlan_host_memory_chunk) *
 			 num_mem_chunks));
 
-	num_whitelist = sizeof(version_whitelist) /
-		sizeof(wmi_whitelist_version_info);
-	my_vers.abi_version_0 = WMI_ABI_VERSION_0;
-	my_vers.abi_version_1 = WMI_ABI_VERSION_1;
-	my_vers.abi_version_ns_0 = WMI_ABI_VERSION_NS_0;
-	my_vers.abi_version_ns_1 = WMI_ABI_VERSION_NS_1;
-	my_vers.abi_version_ns_2 = WMI_ABI_VERSION_NS_2;
-	my_vers.abi_version_ns_3 = WMI_ABI_VERSION_NS_3;
-#ifdef CONFIG_MCL
-	/* This needs to be enabled for WIN Lithium after removing dependency
-	 * on wmi_unified.h from priv.h for using wmi_abi_version type */
-	wmi_cmp_and_set_abi_version(num_whitelist, version_whitelist,
-			&my_vers,
-			&wmi_handle->fw_abi_version,
-			&cmd->host_abi_vers);
-#endif
-	WMI_LOGD("%s: INIT_CMD version: %d, %d, 0x%x, 0x%x, 0x%x, 0x%x",
-		__func__, WMI_VER_GET_MAJOR(cmd->host_abi_vers.abi_version_0),
-			WMI_VER_GET_MINOR(cmd->host_abi_vers.abi_version_0),
-			cmd->host_abi_vers.abi_version_ns_0,
-			cmd->host_abi_vers.abi_version_ns_1,
-			cmd->host_abi_vers.abi_version_ns_2,
-			cmd->host_abi_vers.abi_version_ns_3);
-#ifdef CONFIG_MCL
-	/* Save version sent from host -
-	 * Will be used to check ready event
-	 */
-	qdf_mem_copy(&wmi_handle->final_abi_vers, &cmd->host_abi_vers,
-			sizeof(wmi_abi_version));
-#endif
+	/* Fill fw_abi_vers */
+	copy_fw_abi_version_tlv(wmi_handle, cmd);
+
 	if (action) {
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_INIT_CMDID);
@@ -12576,12 +12644,11 @@ static QDF_STATUS save_fw_version_cmd_tlv(wmi_unified_t wmi_handle, void *evt_bu
 	if (!ev)
 		return QDF_STATUS_E_FAILURE;
 
-#ifdef CONFIG_MCL
 	/*Save fw version from service ready message */
 	/*This will be used while sending INIT message */
 	qdf_mem_copy(&wmi_handle->fw_abi_version, &ev->fw_abi_vers,
 			sizeof(wmi_handle->fw_abi_version));
-#endif
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -12605,8 +12672,8 @@ static QDF_STATUS check_and_update_fw_version_cmd_tlv(wmi_unified_t wmi_handle,
 
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
 	ev = param_buf->fixed_param;
-#ifdef CONFIG_MCL
-	if (!wmi_versions_are_compatible(&wmi_handle->final_abi_vers,
+	if (!wmi_versions_are_compatible((struct _wmi_abi_version *)
+				&wmi_handle->final_abi_vers,
 				&ev->fw_abi_vers)) {
 		/*
 		 * Error: Our host version and the given firmware version
@@ -12636,7 +12703,6 @@ static QDF_STATUS check_and_update_fw_version_cmd_tlv(wmi_unified_t wmi_handle,
 			sizeof(wmi_abi_version));
 	qdf_mem_copy(&wmi_handle->fw_abi_version, &ev->fw_abi_vers,
 			sizeof(wmi_abi_version));
-#endif
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -15816,66 +15882,6 @@ error:
 	return status;
 }
 
-/* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
- * @wmi_handle: pointer to wmi handle
- * @buf_ptr: pointer to current position in init command buffer
- * @len: pointer to length. This will be updated with current lenght of cmd
- * @param: point host parameters for init command
- *
- * Return: Updated pointer of buf_ptr.
- */
-static inline uint8_t *copy_hw_mode_in_init_cmd(struct wmi_unified *wmi_handle,
-		uint8_t *buf_ptr, int *len, struct wmi_init_cmd_param *param)
-{
-	uint16_t idx;
-
-	if (param->hw_mode_id != WMI_HOST_HW_MODE_MAX) {
-		wmi_pdev_set_hw_mode_cmd_fixed_param *hw_mode;
-		wmi_pdev_band_to_mac *band_to_mac;
-
-		hw_mode = (wmi_pdev_set_hw_mode_cmd_fixed_param *)
-			(buf_ptr + sizeof(wmi_init_cmd_fixed_param) +
-			 sizeof(wmi_resource_config) +
-			 WMI_TLV_HDR_SIZE + (param->num_mem_chunks *
-				 sizeof(wlan_host_memory_chunk)));
-
-		WMITLV_SET_HDR(&hw_mode->tlv_header,
-			WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
-			(WMITLV_GET_STRUCT_TLVLEN
-			 (wmi_pdev_set_hw_mode_cmd_fixed_param)));
-
-		hw_mode->hw_mode_index = param->hw_mode_id;
-		hw_mode->num_band_to_mac = param->num_band_to_mac;
-
-		buf_ptr = (uint8_t *) (hw_mode + 1);
-		band_to_mac = (wmi_pdev_band_to_mac *) (buf_ptr +
-				WMI_TLV_HDR_SIZE);
-		for (idx = 0; idx < param->num_band_to_mac; idx++) {
-			WMITLV_SET_HDR(&band_to_mac[idx].tlv_header,
-					WMITLV_TAG_STRUC_wmi_pdev_band_to_mac,
-					WMITLV_GET_STRUCT_TLVLEN
-					(wmi_pdev_band_to_mac));
-			band_to_mac[idx].pdev_id =
-				wmi_handle->ops->convert_pdev_id_host_to_target(
-					param->band_to_mac[idx].pdev_id);
-			band_to_mac[idx].start_freq =
-				param->band_to_mac[idx].start_freq;
-			band_to_mac[idx].end_freq =
-				param->band_to_mac[idx].end_freq;
-		}
-		*len += sizeof(wmi_pdev_set_hw_mode_cmd_fixed_param) +
-			(param->num_band_to_mac *
-			 sizeof(wmi_pdev_band_to_mac)) +
-			WMI_TLV_HDR_SIZE;
-
-		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-				(param->num_band_to_mac *
-				 sizeof(wmi_pdev_band_to_mac)));
-	}
-
-	return buf_ptr;
-}
-
 /**
  * send_multiple_vdev_restart_req_cmd_tlv() - send multiple vdev restart req
  * @wmi_handle: wmi handle
@@ -16081,8 +16087,6 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_buf_t buf;
 	wmi_init_cmd_fixed_param *cmd;
-	wmi_abi_version my_vers;
-	int num_whitelist;
 	uint8_t *buf_ptr;
 	wmi_resource_config *resource_cfg;
 	wlan_host_memory_chunk *host_mem_chunks;
@@ -16147,43 +16151,16 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 	/* Fill hw mode id config */
 	buf_ptr = copy_hw_mode_in_init_cmd(wmi_handle, buf_ptr, &len, param);
 
-	num_whitelist = sizeof(version_whitelist) /
-		sizeof(wmi_whitelist_version_info);
-	my_vers.abi_version_0 = WMI_ABI_VERSION_0;
-	my_vers.abi_version_1 = WMI_ABI_VERSION_1;
-	my_vers.abi_version_ns_0 = WMI_ABI_VERSION_NS_0;
-	my_vers.abi_version_ns_1 = WMI_ABI_VERSION_NS_1;
-	my_vers.abi_version_ns_2 = WMI_ABI_VERSION_NS_2;
-	my_vers.abi_version_ns_3 = WMI_ABI_VERSION_NS_3;
+	/* Fill fw_abi_vers */
+	copy_fw_abi_version_tlv(wmi_handle, cmd);
 
-#ifdef CONFIG_MCL
-	wmi_cmp_and_set_abi_version(num_whitelist, version_whitelist,
-			&my_vers,
-			(struct _wmi_abi_version *)&wmi_handle->fw_abi_version,
-			&cmd->host_abi_vers);
-#endif
-	qdf_print("%s: INIT_CMD version: %d, %d, 0x%x, 0x%x, 0x%x, 0x%x",
-			__func__,
-			WMI_VER_GET_MAJOR(cmd->host_abi_vers.abi_version_0),
-			WMI_VER_GET_MINOR(cmd->host_abi_vers.abi_version_0),
-			cmd->host_abi_vers.abi_version_ns_0,
-			cmd->host_abi_vers.abi_version_ns_1,
-			cmd->host_abi_vers.abi_version_ns_2,
-			cmd->host_abi_vers.abi_version_ns_3);
-
-	/* Save version sent from host -
-	 * Will be used to check ready event
-	 */
-#ifdef CONFIG_MCL
-	qdf_mem_copy(&wmi_handle->final_abi_vers, &cmd->host_abi_vers,
-			sizeof(wmi_abi_version));
-#endif
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_INIT_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMI_LOGE("wmi_unified_cmd_send WMI_INIT_CMDID returned Error %d",
 			ret);
 		wmi_buf_free(buf);
 	}
+
 	return ret;
 
 }
@@ -16539,12 +16516,11 @@ save_fw_version_in_service_ready_tlv(wmi_unified_t wmi_handle, void *evt_buf)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-#ifdef CONFIG_MCL
 	/*Save fw version from service ready message */
 	/*This will be used while sending INIT message */
 	qdf_mem_copy(&wmi_handle->fw_abi_version, &ev->fw_abi_vers,
 			sizeof(wmi_handle->fw_abi_version));
-#endif
+
 	return QDF_STATUS_SUCCESS;
 }
 
