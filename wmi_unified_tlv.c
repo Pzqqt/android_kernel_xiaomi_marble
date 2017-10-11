@@ -19400,7 +19400,10 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 	QDF_STATUS status;
 	uint8_t *buf_ptr;
 	wmi_pmk_cache *pmksa;
-	uint32_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + sizeof(*pmksa);
+	uint32_t len = sizeof(*cmd);
+
+	if (pmk_info->pmk_len)
+		len += WMI_TLV_HDR_SIZE + sizeof(*pmksa);
 
 	buf = wmi_buf_alloc(wmi_handle, len);
 	if (!buf) {
@@ -19418,6 +19421,14 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 			wmi_pdev_update_pmk_cache_cmd_fixed_param));
 
 	cmd->vdev_id = pmk_info->session_id;
+
+	/* If pmk_info->pmk_len is 0, this is a flush request */
+	if (!pmk_info->pmk_len) {
+		cmd->op_flag = WMI_PMK_CACHE_OP_FLAG_FLUSH_ALL;
+		cmd->num_cache = 0;
+		goto send_cmd;
+	}
+
 	cmd->num_cache = 1;
 	buf_ptr += sizeof(*cmd);
 
@@ -19441,6 +19452,7 @@ static QDF_STATUS send_set_del_pmkid_cache_cmd_tlv(wmi_unified_t wmi_handle,
 	pmksa->cat_flag = pmk_info->cat_flag;
 	pmksa->action_flag = pmk_info->action_flag;
 
+send_cmd:
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
 			WMI_PDEV_UPDATE_PMK_CACHE_CMDID);
 	if (status != QDF_STATUS_SUCCESS) {
