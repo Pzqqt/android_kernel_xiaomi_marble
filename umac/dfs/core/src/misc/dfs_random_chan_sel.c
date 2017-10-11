@@ -530,7 +530,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	}
 }
 
-int dfs_prepare_random_channel(struct wlan_dfs *dfs,
+uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	struct dfs_ieee80211_channel *ch_list,
 	uint32_t ch_cnt,
 	uint32_t flags,

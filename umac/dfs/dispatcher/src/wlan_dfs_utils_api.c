@@ -509,12 +509,12 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
-QDF_STATUS dfs_get_random_channel(
+QDF_STATUS utils_dfs_get_random_channel(
 	struct wlan_objmgr_pdev *pdev,
 	uint16_t flags,
 	struct ch_params *ch_params,
 	uint32_t *hw_mode,
-	int *target_chan,
+	uint8_t *target_chan,
 	struct dfs_acs_info *acs_info)
 {
 	uint32_t dfs_reg;
@@ -569,7 +569,7 @@ QDF_STATUS dfs_get_random_channel(
 
 	if (*target_chan) {
 		wlan_reg_set_channel_params(pdev,
-			(uint8_t)*target_chan, 0, ch_params);
+				*target_chan, 0, ch_params);
 		utils_dfs_get_max_phy_mode(pdev, hw_mode);
 		status = QDF_STATUS_SUCCESS;
 	}
@@ -584,14 +584,14 @@ random_chan_error:
 
 	return status;
 }
-EXPORT_SYMBOL(dfs_get_random_channel);
+EXPORT_SYMBOL(utils_dfs_get_random_channel);
 
 #ifndef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
-void dfs_init_nol(struct wlan_objmgr_pdev *pdev)
+void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 {
 }
 #else
-void dfs_init_nol(struct wlan_objmgr_pdev *pdev)
+void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs;
 	struct wlan_objmgr_psoc *psoc;
@@ -625,14 +625,14 @@ void dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	}
 }
 #endif
-EXPORT_SYMBOL(dfs_init_nol);
+EXPORT_SYMBOL(utils_dfs_init_nol);
 
 #ifndef QCA_DFS_NOL_PLATFORM_DRV_SUPPORT
-void dfs_save_nol(struct wlan_objmgr_pdev *pdev)
+void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 {
 }
 #else
-void dfs_save_nol(struct wlan_objmgr_pdev *pdev)
+void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 {
 	struct dfs_nol_info dfs_nolinfo;
 	struct wlan_dfs *dfs = NULL;
@@ -672,9 +672,9 @@ void dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 	}
 }
 #endif
-EXPORT_SYMBOL(dfs_save_nol);
+EXPORT_SYMBOL(utils_dfs_save_nol);
 
-void dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
+void utils_dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs = NULL;
 
@@ -686,9 +686,9 @@ void dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
 
 	dfs_print_nol(dfs);
 }
-EXPORT_SYMBOL(dfs_print_nol_channels);
+EXPORT_SYMBOL(utils_dfs_print_nol_channels);
 
-void dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
+void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_dfs *dfs = NULL;
 
@@ -709,9 +709,9 @@ void dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 	 * update platform driver nol list with local cache which is zero,
 	 * cleared in above step, so this will clear list in platform driver.
 	 */
-	dfs_save_nol(pdev);
+	utils_dfs_save_nol(pdev);
 }
-EXPORT_SYMBOL(dfs_clear_nol_channels);
+EXPORT_SYMBOL(utils_dfs_clear_nol_channels);
 
 bool utils_is_dfs_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan)
 {

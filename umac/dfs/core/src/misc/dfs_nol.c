@@ -194,7 +194,7 @@ static os_timer_func(dfs_remove_from_nol)
 		    "remove channel %d from nol", chan);
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 			(uint8_t *)&chan, 1, DFS_NOL_RESET);
-	dfs_save_nol(dfs->dfs_pdev_obj);
+	utils_dfs_save_nol(dfs->dfs_pdev_obj);
 }
 
 void dfs_print_nol(struct wlan_dfs *dfs)

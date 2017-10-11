@@ -177,7 +177,7 @@ struct chan_bonding_bitmap {
  *
  * Return: channel number, else zero.
  */
-int dfs_prepare_random_channel(struct wlan_dfs *dfs,
+uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	struct dfs_ieee80211_channel *ch_list,
 	uint32_t ch_count,
 	uint32_t flags,

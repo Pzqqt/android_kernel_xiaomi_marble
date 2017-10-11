@@ -181,7 +181,7 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 		dfs_destroy_object(dfs);
 		return QDF_STATUS_E_FAILURE;
 	}
-	dfs_init_nol(pdev);
+	utils_dfs_init_nol(pdev);
 	dfs_print_nol(dfs);
 
 	return QDF_STATUS_SUCCESS;
