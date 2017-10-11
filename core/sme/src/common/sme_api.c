@@ -10347,26 +10347,37 @@ QDF_STATUS sme_set_ht2040_mode(tHalHandle hHal, uint8_t sessionId,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	ePhyChanBondState cbMode;
+	struct csr_roam_session *session = CSR_GET_SESSION(pMac, sessionId);
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Update HT operation beacon IE, channel_type=%d",
-		  __func__, channel_type);
+	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+		sme_err("Session not valid for session id %d", sessionId);
+		return QDF_STATUS_E_INVAL;
+	}
+	session = CSR_GET_SESSION(pMac, sessionId);
+	sme_debug("Update HT operation beacon IE, channel_type=%d cur cbmode %d",
+		channel_type, session->bssParams.cbMode);
 
 	switch (channel_type) {
 	case eHT_CHAN_HT20:
+		if (!session->bssParams.cbMode)
+			return QDF_STATUS_SUCCESS;
 		cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 		break;
 	case eHT_CHAN_HT40MINUS:
+		if (session->bssParams.cbMode)
+			return QDF_STATUS_SUCCESS;
 		cbMode = PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
 		break;
 	case eHT_CHAN_HT40PLUS:
+		if (session->bssParams.cbMode)
+			return QDF_STATUS_SUCCESS;
 		cbMode = PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s:Error!!! Invalid HT20/40 mode !", __func__);
+		sme_err("Error!!! Invalid HT20/40 mode !");
 		return QDF_STATUS_E_FAILURE;
 	}
+	session->bssParams.cbMode = cbMode;
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_set_ht2040_mode(pMac, sessionId,
