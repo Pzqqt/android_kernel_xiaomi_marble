@@ -3976,7 +3976,7 @@ static __iw_softap_getparam(struct net_device *dev,
 			return -EINVAL;
 		}
 
-		dfs_print_nol_channels(pdev);
+		utils_dfs_print_nol_channels(pdev);
 	}
 	break;
 
