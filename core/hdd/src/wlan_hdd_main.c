@@ -8329,6 +8329,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->auto_pwr_save_fail_mode;
 
 	cds_cfg->ito_repeat_count = hdd_ctx->config->ito_repeat_count;
+	cds_cfg->bandcapability = hdd_ctx->config->nBandCapability;
 
 	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);

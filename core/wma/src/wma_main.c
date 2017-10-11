@@ -2865,6 +2865,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				WMA_RX_SERIALIZER_CTX);
 
 	wma_handle->ito_repeat_count = cds_cfg->ito_repeat_count;
+	wma_handle->bandcapability = cds_cfg->bandcapability;
 
 	/* Register PWR_SAVE_FAIL event only in case of recovery(1) */
 	if (cds_cfg->auto_power_save_fail_mode ==
@@ -7904,6 +7905,12 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 	for (i = 0; i < msg->saved_num_chan; i++) {
 		msg->weighed_valid_list[i] =
 			wma_map_pcl_weights(msg->weighed_valid_list[i]);
+		/* Dont allow roaming on 2G when 5G_ONLY configured */
+		if ((wma_handle->bandcapability == eCSR_BAND_5G) &&
+			(msg->saved_chan_list[i] <= MAX_24GHZ_CHANNEL)) {
+			msg->weighed_valid_list[i] =
+				WEIGHT_OF_DISALLOWED_CHANNELS;
+		}
 		WMA_LOGD("%s: chan:%d weight[%d]=%d", __func__,
 			 msg->saved_chan_list[i], i,
 			 msg->weighed_valid_list[i]);
