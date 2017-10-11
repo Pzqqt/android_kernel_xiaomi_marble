@@ -709,13 +709,12 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 		return;
 	}
 
-	cds_set_recovery_in_progress(true);
 	if (cds_is_load_or_unload_in_progress()) {
-		cds_set_recovery_in_progress(false);
 		BMI_ERR("%s: Loading/Unloading is in progress, ignore!",
 		       __func__);
 		return;
 	}
+	cds_set_recovery_in_progress(true);
 
 	ret = hif_check_fw_reg(scn);
 	if (0 == ret) {

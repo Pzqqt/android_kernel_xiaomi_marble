@@ -11278,8 +11278,6 @@ static void __hdd_module_exit(void)
 	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
 
-	cds_set_unload_in_progress(true);
-
 	hdd_wait_for_recovery_completion();
 
 	wlan_hdd_unregister_driver();
