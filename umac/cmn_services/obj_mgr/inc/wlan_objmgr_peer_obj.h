@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -169,6 +169,7 @@ struct wlan_peer_activity {  /*TODO */
  * @peer_comp_priv_obj[]:  Component's private object pointers
  * @obj_status[]:     status of each component object
  * @obj_state:        Status of Peer object
+ * @dp_handle:        DP module handle
  * @peer_lock:        Lock for access/update peer contents
  */
 struct wlan_objmgr_peer {
@@ -181,6 +182,7 @@ struct wlan_objmgr_peer {
 	void *peer_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
+	void *dp_handle;
 	qdf_spinlock_t peer_lock;
 };
 
@@ -810,6 +812,40 @@ static inline void wlan_peer_mlme_reset_seq_num(
 {
 	/* This API is invoked with lock acquired, do not add log prints */
 	peer->peer_mlme.seq_num = 0;
+}
+
+/**
+ * wlan_peer_set_dp_handle() - set dp handle
+ * @peer: peer object pointer
+ * @dp_handle: Data path module handle
+ *
+ * Return: void
+ */
+static inline void wlan_peer_set_dp_handle(struct wlan_objmgr_peer *peer,
+		void *dp_handle)
+{
+	if (qdf_unlikely(!peer)) {
+		QDF_BUG(0);
+		return;
+	}
+
+	peer->dp_handle = dp_handle;
+}
+
+/**
+ * wlan_peer_get_dp_handle() - get dp handle
+ * @peer: peer object pointer
+ *
+ * Return: dp handle
+ */
+static inline void *wlan_peer_get_dp_handle(struct wlan_objmgr_peer *peer)
+{
+	if (qdf_unlikely(!peer)) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	return peer->dp_handle;
 }
 
 #endif /* _WLAN_OBJMGR_PEER_OBJ_H_*/

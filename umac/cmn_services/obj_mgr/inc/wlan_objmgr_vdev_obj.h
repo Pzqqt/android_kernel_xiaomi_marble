@@ -351,6 +351,7 @@ struct wlan_objmgr_vdev_objmgr {
  * @vdev_comp_priv_obj[]:Component's private objects list
  * @obj_status[]:   Component object status
  * @obj_state:      VDEV object state
+ * @dp_handle:      DP module handle
  * @vdev_lock:      VDEV lock
  */
 struct wlan_objmgr_vdev {
@@ -361,6 +362,7 @@ struct wlan_objmgr_vdev {
 	void *vdev_comp_priv_obj[WLAN_UMAC_MAX_COMPONENTS];
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
+	void *dp_handle;
 	qdf_spinlock_t vdev_lock;
 };
 
@@ -1457,5 +1459,39 @@ static inline uint16_t wlan_vdev_get_max_peer_count(
  * Return: true in case success else false
  */
 bool wlan_vdev_is_connected(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * wlan_vdev_set_dp_handle() - set dp handle
+ * @vdev: vdev object pointer
+ * @dp_handle: Data path module handle
+ *
+ * Return: void
+ */
+static inline void wlan_vdev_set_dp_handle(struct wlan_objmgr_vdev *vdev,
+		void *dp_handle)
+{
+	if (qdf_unlikely(!vdev)) {
+		QDF_BUG(0);
+		return;
+	}
+
+	vdev->dp_handle = dp_handle;
+}
+
+/**
+ * wlan_vdev_get_dp_handle() - get dp handle
+ * @vdev: vdev object pointer
+ *
+ * Return: dp handle
+ */
+static inline void *wlan_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
+{
+	if (qdf_unlikely(!vdev)) {
+		QDF_BUG(0);
+		return NULL;
+	}
+
+	return vdev->dp_handle;
+}
 
 #endif /* _WLAN_OBJMGR_VDEV_OBJ_H_*/
