@@ -520,6 +520,8 @@ typedef enum {
     WMI_MGMT_TX_SEND_CMDID,
     /** Transmit data frame by reference */
     WMI_OFFCHAN_DATA_TX_SEND_CMDID,
+    /** transmit FILS Discovery frame by value */
+    WMI_PDEV_SEND_FD_CMDID,
 
     /** commands to directly control ba negotiation directly from host. only used in test mode */
 
@@ -595,6 +597,8 @@ typedef enum {
     WMI_ROAM_PER_CONFIG_CMDID,
     /** configure BSS Transition Management (BTM) offload for roaming */
     WMI_ROAM_BTM_CONFIG_CMDID,
+    /** Enable or Disable Fast Initial Link Setup (FILS) feature */
+    WMI_ENABLE_FILS_CMDID,
 
     /** offload scan specific commands */
     /** set offload scan AP profile   */
@@ -1255,6 +1259,9 @@ typedef enum {
     WMI_TBTTOFFSET_EXT_UPDATE_EVENTID,
     /** Event for offchan data TX completion event */
     WMI_OFFCHAN_DATA_TX_COMPLETION_EVENTID,
+
+    /** software FILS Discovery Frame alert event to Host, requesting host to Queue an FD frame for transmission */
+    WMI_HOST_SWFDA_EVENTID,
 
     /* ADDBA Related WMI Events*/
     /** Indication the completion of the prior
@@ -8686,6 +8693,15 @@ typedef struct {
 
 #define WMI_MAX_AP_VDEV 16
 
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_host_swfda_event_fixed_param  */
+    /** vdev_id identifying the VDEV for which FILS should be generated */
+    A_UINT32 vdev_id;
+    /** time (in TU) at which current FILS Discovery frame is scheduled for Tx */
+    A_UINT32 fils_tt;
+    /** next TBTT time (in TU) for this vdev  */
+    A_UINT32 tbtt;
+} wmi_host_swfda_event_fixed_param;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_tbtt_offset_event_fixed_param  */
@@ -10166,6 +10182,28 @@ typedef struct wmi_pdev_send_bcn {
     A_UINT32 num_vdevs;
     wmi_bcn_send_from_host_cmd_fixed_param bcn_cmd[1];
 } wmi_pdev_send_bcn_cmd_t;
+
+typedef struct wmi_fd_send_from_host {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_fd_send_from_host_cmd_fixed_param  */
+    A_UINT32 vdev_id;
+    A_UINT32 data_len;
+    union {
+        A_UINT32 frag_ptr; /* Physical address of the frame */
+        A_UINT32 frag_ptr_lo; /* LSBs of physical address of the frame */
+    };
+    A_UINT32 frag_ptr_hi; /* MSBs of physical address of the frame */
+    A_UINT32 frame_ctrl; /* frame ctrl to setup PPDU desc */
+} wmi_fd_send_from_host_cmd_fixed_param;
+
+/*
+ * WMI command structure for FILS feature enable/disable
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_enable_fils_cmd_fixed_param  */
+    /* VDEV identifier */
+    A_UINT32 vdev_id;
+    A_UINT32 fd_period; /* non-zero - enable Fils Discovery frames with this period (in TU), 0 - disable FD frames */
+} wmi_enable_fils_cmd_fixed_param;
 
 /*
  * WMI_ROAM_AP_PROFILE:  AP profile of connected AP for roaming.
@@ -20377,6 +20415,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_WLM_CONFIG_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_UPDATE_CTLTABLE_REQUEST_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SEND_FD_CMDID);
+        WMI_RETURN_STRING(WMI_ENABLE_FILS_CMDID;
     }
 
     return "Invalid WMI cmd";
