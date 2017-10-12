@@ -842,7 +842,7 @@ void sme_set_scan_disable(tHalHandle h_hal, int value)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(h_hal);
 
-	mac_ctx->lim.scan_disabled = value;
+	ucfg_scan_set_enable(mac_ctx->psoc, !value);
 }
 /*
  * sme_get_soft_ap_domain() - Get the current regulatory domain of softAp.
