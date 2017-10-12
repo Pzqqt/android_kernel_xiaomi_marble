@@ -3943,9 +3943,79 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header;   /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param */
     A_UINT32 vdev_id;      /* vdev id indicating to which the vdev custom aggregation size will be applied. */
-    A_UINT32 tx_aggr_size; /* Size for tx aggregation (max MPDUs per A-MPDU) for the vdev mentioned in vdev id */
-    A_UINT32 rx_aggr_size; /* Size for rx aggregation (block ack window size limit) for the vdev mentioned in vdev id*/
+    /* Size for tx aggregation for the vdev mentioned in vdev id
+     * (max MPDUs per A-MPDU or max MSDUs per A-MSDU based on aggr_type field)
+     */
+    A_UINT32 tx_aggr_size;
+
+    A_UINT32 rx_aggr_size; /* Size for rx aggregation (block ack window size limit) for the vdev mentioned in vdev id */
+
+    /*
+     * To set TX aggregation size limits per VDEV per AC
+     * bits 1:0 (ac):
+     *     Access Category (0x0=BE, 0x1=BK, 0x2=VI, 0x3=VO)
+     *     If tx_ac_enable bit is not set, tx_aggr_size is applied
+     *     for all Access Categories
+     * bit 2 (aggr_type):            TX Aggregation Type (0=A-MPDU, 1=A-MSDU)
+     * bit 3 (tx_aggr_size_disable): If set tx_aggr_size is invalid
+     * bit 4 (rx_aggr_size_disable): If set rx_aggr_size is invalid
+     * bit 5 (tx_ac_enable):         If set, above ac bitmap is valid.
+     * bits 31:6:                    Reserved bits. should be set to zero.
+     */
+    A_UINT32 enable_bitmap;
 } wmi_vdev_set_custom_aggr_size_cmd_fixed_param;
+
+typedef enum {
+    WMI_VDEV_CUSTOM_AGGR_TYPE_AMPDU = 0,
+    WMI_VDEV_CUSTOM_AGGR_TYPE_AMSDU = 1,
+    WMI_VDEV_CUSTOM_AGGR_TYPE_MAX,
+} wmi_vdev_custom_aggr_type_t;
+
+#define WMI_VDEV_CUSTOM_AGGR_AC_BITPOS           0
+#define WMI_VDEV_CUSTOM_AGGR_AC_NUM_BITS         2
+#define WMI_VDEV_CUSTOM_AGGR_TYPE_BITPOS         2
+#define WMI_VDEV_CUSTOM_AGGR_TYPE_NUM_BITS       1
+#define WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_BITPOS    3
+#define WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_NUM_BITS  1
+#define WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_BITPOS    4
+#define WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_NUM_BITS  1
+#define WMI_VDEV_CUSTOM_TX_AC_EN_BITPOS          5
+#define WMI_VDEV_CUSTOM_TX_AC_EN_NUM_BITS        1
+
+#define WMI_VDEV_CUSTOM_AGGR_AC_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VDEV_CUSTOM_AGGR_AC_BITPOS, \
+        WMI_VDEV_CUSTOM_AGGR_AC_NUM_BITS, value)
+#define WMI_VDEV_CUSTOM_AGGR_AC_GET(param)         \
+    WMI_GET_BITS(param, WMI_VDEV_CUSTOM_AGGR_AC_BITPOS, \
+        WMI_VDEV_CUSTOM_AGGR_AC_NUM_BITS)
+
+#define WMI_VDEV_CUSTOM_AGGR_TYPE_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VDEV_CUSTOM_AGGR_TYPE_BITPOS, \
+        WMI_VDEV_CUSTOM_AGGR_TYPE_NUM_BITS, value)
+#define WMI_VDEV_CUSTOM_AGGR_TYPE_GET(param)         \
+    WMI_GET_BITS(param, WMI_VDEV_CUSTOM_AGGR_TYPE_BITPOS, \
+        WMI_VDEV_CUSTOM_AGGR_TYPE_NUM_BITS)
+
+#define WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_BITPOS, \
+        WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_NUM_BITS, value)
+#define WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_GET(param)         \
+    WMI_GET_BITS(param, WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_BITPOS, \
+        WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_NUM_BITS)
+
+#define WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_BITPOS, \
+        WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_NUM_BITS, value)
+#define WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_GET(param)         \
+    WMI_GET_BITS(param, WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_BITPOS, \
+        WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_NUM_BITS)
+
+#define WMI_VDEV_CUSTOM_TX_AC_EN_SET(param, value) \
+    WMI_SET_BITS(param, WMI_VDEV_CUSTOM_TX_AC_EN_BITPOS, \
+        WMI_VDEV_CUSTOM_TX_AC_EN_NUM_BITS, value)
+#define WMI_VDEV_CUSTOM_TX_AC_EN_GET(param)         \
+    WMI_GET_BITS(param, WMI_VDEV_CUSTOM_TX_AC_EN_BITPOS, \
+        WMI_VDEV_CUSTOM_TX_AC_EN_NUM_BITS)
 
 /*
  * Command to enable/disable Green AP Power Save.
@@ -7796,6 +7866,17 @@ typedef enum {
     /** VDEV parameter to enable or disable various OCE features */
     WMI_VDEV_PARAM_ENABLE_DISABLE_OCE_FEATURES,              /* 0x78 */
 
+    /*
+     * Set/Clear 3 least-significant bits to
+     * Disable or Enable rate drop down for MGMT, SU data and MU data pkts
+     *
+     * bit 0 -> If set MGMT Pkt rate drop down is enabled else disabled
+     * bit 1 -> If set SU data Pkt rate drop down is enabled else disabled
+     * bit 2 -> If set MU data Pkt rate drop down is enabled else disabled
+     * bits 31:3 -> Reserved bits. should be set to zero.
+     */
+    WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP,                       /* 0x79 */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
@@ -7834,6 +7915,25 @@ typedef enum {
 #define WMI_VDEV_IS_BEACON_SUPPORTED(param) ((param) & WMI_VDEV_BEACON_SUPPORT)
 #define WMI_VDEV_IS_WDS_LRN_ENABLED(param) ((param) & WMI_VDEV_WDS_LRN_ENABLED)
 #define WMI_VDEV_IS_VOW_ENABLED(param) ((param) & WMI_VDEV_VOW_ENABLED)
+
+/* Per VAP rate dropdown masks */
+#define WMI_VDEV_MGMT_RATE_DROPDOWN_M        0x01
+#define WMI_VDEV_MGMT_RATE_DROPDOWN_S           0
+#define WMI_VDEV_MGMT_RATE_DROPDOWN (WMI_VDEV_MGMT_RATE_DROPDOWN_M << WMI_VDEV_MGMT_RATE_DROPDOWN_S)
+#define WMI_VDEV_MGMT_RATE_DROPDOWN_GET(x) WMI_F_MS(x, WMI_VDEV_MGMT_RATE_DROPDOWN)
+#define WMI_VDEV_MGMT_RATE_DROPDOWN_SET(x,z) WMI_F_RMW(x, z, WMI_VDEV_MGMT_RATE_DROPDOWN)
+
+#define WMI_VDEV_SU_DATA_RATE_DROPDOWN_M     0x01
+#define WMI_VDEV_SU_DATA_RATE_DROPDOWN_S        1
+#define WMI_VDEV_SU_DATA_RATE_DROPDOWN (WMI_VDEV_SU_DATA_RATE_DROPDOWN_M << WMI_VDEV_SU_DATA_RATE_DROPDOWN_S)
+#define WMI_VDEV_SU_DATA_RATE_DROPDOWN_GET(x) WMI_F_MS(x, WMI_VDEV_SU_DATA_RATE_DROPDOWN)
+#define WMI_VDEV_SU_DATA_RATE_DROPDOWN_SET(x,z) WMI_F_RMW(x, z, WMI_VDEV_SU_DATA_RATE_DROPDOWN)
+
+#define WMI_VDEV_MU_DATA_RATE_DROPDOWN_M     0x01
+#define WMI_VDEV_MU_DATA_RATE_DROPDOWN_S        2
+#define WMI_VDEV_MU_DATA_RATE_DROPDOWN (WMI_VDEV_MU_DATA_RATE_DROPDOWN_M << WMI_VDEV_MU_DATA_RATE_DROPDOWN_S)
+#define WMI_VDEV_MU_DATA_RATE_DROPDOWN_GET(x) WMI_F_MS(x, WMI_VDEV_MU_DATA_RATE_DROPDOWN)
+#define WMI_VDEV_MU_DATA_RATE_DROPDOWN_SET(x,z) WMI_F_RMW(x, z, WMI_VDEV_MU_DATA_RATE_DROPDOWN)
 
 /* TXBF capabilities masks */
 #define WMI_TXBF_CONF_SU_TX_BFEE_S 0
