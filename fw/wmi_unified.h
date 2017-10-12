@@ -7312,6 +7312,15 @@ typedef enum {
 #define WMI_GI_1600_NS 2
 #define WMI_GI_3200_NS 3
 
+/** OCE(Optimized Connectivity_Experience) Feature flags */
+#define WMI_VDEV_OCE_PROBE_REQUEST_RATE_FEATURE_BITMAP                 0x1
+#define WMI_VDEV_OCE_PROBE_RESPONSE_RATE_FEATURE_BITMAP                0x2
+#define WMI_VDEV_OCE_BEACON_RATE_FEATURE_BITMAP                        0x4
+#define WMI_VDEV_OCE_PROBE_REQUEST_DEFERRAL_FEATURE_BITMAP             0x8
+#define WMI_VDEV_OCE_FILS_DISCOVERY_FRAME_FEATURE_BITMAP               0x10
+#define WMI_VDEV_OCE_ESP_FEATURE_BITMAP                                0x20
+#define WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP                     0x40
+
 /** the definition of different VDEV parameters */
 typedef enum {
     /** RTS Threshold */
@@ -7776,6 +7785,9 @@ typedef enum {
     * Specify the total number of multi group key on this VDEV.
     */
     WMI_VDEV_PARAM_NUM_GROUP_KEYS,                            /* 0x77 */
+
+    /** VDEV parameter to enable or disable various OCE features */
+    WMI_VDEV_PARAM_ENABLE_DISABLE_OCE_FEATURES,              /* 0x78 */
 
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
