@@ -5589,6 +5589,8 @@ static QDF_STATUS extract_service_ready_non_tlv(wmi_unified_t wmi_handle,
 	cap->sys_cap_info = ev->sys_cap_info;
 	cap->min_pkt_size_enable = ev->min_pkt_size_enable;
 	cap->max_bcn_ie_size = ev->max_bcn_ie_size;
+	cap->fw_version = ev->sw_version;
+	cap->fw_version_1 = ev->sw_version_1;
 	/* Following caps not recieved in older fw/hw
 	 * Initialize it as zero(default). */
 	cap->max_num_scan_channels = 0;

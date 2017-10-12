@@ -16231,6 +16231,9 @@ static QDF_STATUS extract_service_ready_tlv(wmi_unified_t wmi_handle,
 	cap->txrx_chainmask = ev->txrx_chainmask;
 	cap->default_dbs_hw_mode_index = ev->default_dbs_hw_mode_index;
 	cap->num_msdu_desc = ev->num_msdu_desc;
+	cap->fw_version = ev->fw_build_vers;
+	/* fw_version_1 is not available in TLV. */
+	cap->fw_version_1 = 0;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17864,6 +17867,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	param->he_cap_info = ev->he_cap_info;
 	param->mpdu_density = ev->mpdu_density;
 	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
+	param->fw_build_vers_ext = ev->fw_build_vers_ext;
 	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
 	hw_caps = param_buf->soc_hw_mode_caps;

@@ -79,6 +79,8 @@ struct wlan_psoc_hal_reg_capability {
  * @txrx_chainmask: TXRX chain mask
  * @default_dbs_hw_mode_index: DBS hw mode index
  * @num_msdu_desc: number of msdu desc
+ * @fw_version: FW build version
+ * @fw_version_1: Second dword of FW version (Valid for non-tlv FW)
  */
 struct wlan_psoc_target_capability_info {
 	uint32_t phy_capability;
@@ -98,6 +100,8 @@ struct wlan_psoc_target_capability_info {
 	uint32_t txrx_chainmask;
 	uint32_t default_dbs_hw_mode_index;
 	uint32_t num_msdu_desc;
+	uint32_t fw_version;
+	uint32_t fw_version_1;
 };
 
 /**
@@ -299,6 +303,9 @@ struct wlan_psoc_host_chainmask_table {
  * @mpdu_density: units are microseconds
  * @max_bssid_rx_filters: Maximum no of BSSID based RX filters host can program
  *                        Value 0 means FW hasn't given any limit to host.
+ * @fw_build_vers_ext: Extended FW build version info.
+ *                        bits 27:0 rsvd
+ *                        bits 31:28 CRM sub ID
  * @num_hw_modes: Number of HW modes in event
  * @num_phy: Number of Phy mode.
  * @num_chainmask_tables: Number of chain mask tables.
@@ -311,6 +318,7 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t he_cap_info;
 	uint32_t mpdu_density;
 	uint32_t max_bssid_rx_filters;
+	uint32_t fw_build_vers_ext;
 	uint32_t num_hw_modes;
 	uint32_t num_phy;
 	uint32_t num_chainmask_tables;
