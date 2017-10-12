@@ -7886,26 +7886,56 @@ typedef enum {
         /* 11AX SPECIFIC defines */
         /* USE this for BSS color change */
         WMI_VDEV_PARAM_BSS_COLOR,                             /* 0x8001 */
+
         /*
          * Enable / disable trigger access for a AP vdev's peers.
          * For a STA mode vdev this will enable/disable triggered access
          * and enable/disable Multi User mode of operation.
-         * 0  Disable MU OFDMA and MU MIMO
-         * 1  Disable DL OFDMA
-         * 2  Disable DL MUMIMO
-         * 3  Disable UL OFDMA
-         * 4  Disable UL MUMIMO
-         * 5  Enable MU OFDMA and MU MIMO
-         * 6  Enable DL OFDMA
-         * 7  Enable DL MUMIMO
-         * 8  Enable UL OFDMA
-         * 9  Enable UL MUMIMO
+         * A value of 0 in a given bit disables corresponding mode.
+         * bit | hemu mode
+         * ---------------
+         *  0  | HE SUBFEE
+         *  1  | HE SUBFER
+         *  2  | HE MUBFEE
+         *  3  | HE MUBFER
+         *  4  | DL OFDMA, for AP its DL Tx OFDMA for Sta its Rx OFDMA
+         *  5  | UL OFDMA, for AP its Tx OFDMA trigger for Sta its Rx OFDMA
+         *     |           trigger receive & UL response
+         *  6  | UL MUMIMO
          */
         WMI_VDEV_PARAM_SET_HEMU_MODE,                         /* 0x8002 */
         WMI_VDEV_PARAM_HEOPS_0_31,                            /* 0x8003 */
         WMI_VDEV_PARAM_OBSSPD,                                /* 0x8004 */
     /*=== END VDEV_PARAM_PROTOTYPE SECTION ===*/
 } WMI_VDEV_PARAM;
+
+#define WMI_VDEV_HE_SUBFEE_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 0, 1)
+#define WMI_VDEV_HE_SUBFEE_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 0, 1, 1)
+#define WMI_VDEV_HE_SUBFEE_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 0, 1, 0)
+
+#define WMI_VDEV_HE_SUBFER_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 1, 1)
+#define WMI_VDEV_HE_SUBFER_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 1, 1, 1)
+#define WMI_VDEV_HE_SUBFER_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 1, 1, 0)
+
+#define WMI_VDEV_HE_MUBFEE_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 2, 1)
+#define WMI_VDEV_HE_MUBFEE_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 2, 1, 1)
+#define WMI_VDEV_HE_MUBFEE_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 2, 1, 0)
+
+#define WMI_VDEV_HE_MUBFER_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 3, 1)
+#define WMI_VDEV_HE_MUBFER_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 3, 1, 1)
+#define WMI_VDEV_HE_MUBFER_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 3, 1, 0)
+
+#define WMI_VDEV_HE_DLOFDMA_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 4, 1)
+#define WMI_VDEV_HE_DLOFDMA_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 4, 1, 1)
+#define WMI_VDEV_HE_DLOFDMA_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 4, 1, 0)
+
+#define WMI_VDEV_HE_ULOFDMA_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 5, 1)
+#define WMI_VDEV_HE_ULOFDMA_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 5, 1, 1)
+#define WMI_VDEV_HE_ULOFDMA_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 5, 1, 0)
+
+#define WMI_VDEV_HE_ULMUMIMO_IS_ENABLED(hemu_mode) WMI_GET_BITS(hemu_mode, 6, 1)
+#define WMI_VDEV_HE_ULMUMIMO_ENABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 6, 1, 1)
+#define WMI_VDEV_HE_ULMUMIMO_DISABLE(hemu_mode) WMI_SET_BITS(hemu_mode, 6, 1, 0)
 
 /* vdev capabilities bit mask */
 #define WMI_VDEV_BEACON_SUPPORT  0x1
