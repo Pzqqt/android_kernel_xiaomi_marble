@@ -2557,6 +2557,8 @@ static int __hdd_open(struct net_device *dev)
 
 	mutex_lock(&hdd_init_deinit_lock);
 
+	hdd_start_driver_ops_timer(eHDD_DRV_OP_IFF_UP);
+
 	/*
 	 * This scenario can be hit in cases where in the wlan driver after
 	 * registering the netdevices and there is a failure in driver
@@ -2607,6 +2609,7 @@ static int __hdd_open(struct net_device *dev)
 	hdd_populate_wifi_pos_cfg(hdd_ctx);
 
 err_hdd_hdd_init_deinit_lock:
+	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
 	return ret;
 }
@@ -2625,9 +2628,7 @@ static int hdd_open(struct net_device *dev)
 	int ret;
 
 	cds_ssr_protect(__func__);
-	hdd_start_driver_ops_timer(eHDD_DRV_OP_IFF_UP);
 	ret = __hdd_open(dev);
-	hdd_stop_driver_ops_timer();
 	cds_ssr_unprotect(__func__);
 
 	return ret;
