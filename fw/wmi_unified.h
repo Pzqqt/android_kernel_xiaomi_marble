@@ -468,7 +468,7 @@ typedef enum {
      */
     WMI_PEER_GET_ESTIMATED_LINKSPEED_CMDID,
     /** Set the conditions to report peer justified rate to driver
-     * The justified rate means the the user-rate is justified by PER.
+     * The justified rate means the user-rate is justified by PER.
      */
     WMI_PEER_SET_RATE_REPORT_CONDITION_CMDID,
 
@@ -1234,7 +1234,7 @@ typedef enum {
     /** software beacon alert event to Host requesting host to Queue a beacon for transmission
      use only in host beacon mode */
     WMI_HOST_SWBA_EVENTID,
-    /** beacon tbtt offset event indicating the tsf offset of the tbtt from the theritical value.
+    /** beacon tbtt offset event indicating the tsf offset of the tbtt from the theoretical value.
      tbtt offset is normally 0 and will be non zero if there are multiple VDEVs operating in
      staggered beacon transmission mode */
     WMI_TBTTOFFSET_UPDATE_EVENTID,
@@ -3274,9 +3274,9 @@ typedef struct {
 /* ATH_MAX_ANTENNA value (4) can't be changed without breaking the compatibility */
 #define ATH_MAX_ANTENNA 4 /* To support beelinear, which is up to 4 chains */
 
-/** flag indicating that the the  mgmt frame (probe req/beacon) is received in the context of extscan performed by FW */
+/** flag indicating that the mgmt frame (probe req/beacon) is received in the context of extscan performed by FW */
 #define WMI_MGMT_RX_HDR_EXTSCAN     0x01
-/** flag indicating that the the  mgmt frame (probe req/beacon) is received in the context of matched network by FW ENLO */
+/** flag indicating that the mgmt frame (probe req/beacon) is received in the context of matched network by FW ENLO */
 #define WMI_MGMT_RX_HDR_ENLO     0x02
 
 #define MAX_ANTENNA_EIGHT 8
@@ -4131,255 +4131,255 @@ typedef enum {
     /** TX chain mask */
     WMI_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
     /** RX chain mask */
-    WMI_PDEV_PARAM_RX_CHAIN_MASK,
+    WMI_PDEV_PARAM_RX_CHAIN_MASK,                     /* 0x2 */
     /** TX power limit for 2G Radio */
-    WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
+    WMI_PDEV_PARAM_TXPOWER_LIMIT2G,                   /* 0x3 */
     /** TX power limit for 5G Radio */
-    WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
+    WMI_PDEV_PARAM_TXPOWER_LIMIT5G,                   /* 0x4 */
     /** TX power scale */
-    WMI_PDEV_PARAM_TXPOWER_SCALE,
+    WMI_PDEV_PARAM_TXPOWER_SCALE,                     /* 0x5 */
     /** Beacon generation mode . 0: host, 1: target   */
-    WMI_PDEV_PARAM_BEACON_GEN_MODE,
+    WMI_PDEV_PARAM_BEACON_GEN_MODE,                   /* 0x6 */
     /** Beacon generation mode . 0: staggered 1: bursted   */
-    WMI_PDEV_PARAM_BEACON_TX_MODE,
+    WMI_PDEV_PARAM_BEACON_TX_MODE,                    /* 0x7 */
     /** Resource manager off chan mode .
      * 0: turn off off chan mode. 1: turn on offchan mode
      */
-    WMI_PDEV_PARAM_RESMGR_OFFCHAN_MODE,
+    WMI_PDEV_PARAM_RESMGR_OFFCHAN_MODE,               /* 0x8 */
     /** Protection mode  0: no protection 1:use CTS-to-self 2: use RTS/CTS */
-    WMI_PDEV_PARAM_PROTECTION_MODE,
+    WMI_PDEV_PARAM_PROTECTION_MODE,                   /* 0x9 */
     /** Dynamic bandwidth 0: disable 1: enable */
-    WMI_PDEV_PARAM_DYNAMIC_BW,
+    WMI_PDEV_PARAM_DYNAMIC_BW,                        /* 0xa */
     /** Non aggregrate/ 11g sw retry threshold.0-disable */
-    WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH,
+    WMI_PDEV_PARAM_NON_AGG_SW_RETRY_TH,               /* 0xb */
     /** aggregrate sw retry threshold. 0-disable*/
-    WMI_PDEV_PARAM_AGG_SW_RETRY_TH,
+    WMI_PDEV_PARAM_AGG_SW_RETRY_TH,                   /* 0xc */
     /** Station kickout threshold (non of consecutive failures).0-disable */
-    WMI_PDEV_PARAM_STA_KICKOUT_TH,
+    WMI_PDEV_PARAM_STA_KICKOUT_TH,                    /* 0xd */
     /** Aggerate size scaling configuration per AC */
-    WMI_PDEV_PARAM_AC_AGGRSIZE_SCALING,
+    WMI_PDEV_PARAM_AC_AGGRSIZE_SCALING,               /* 0xe */
     /** LTR enable */
-    WMI_PDEV_PARAM_LTR_ENABLE,
+    WMI_PDEV_PARAM_LTR_ENABLE,                        /* 0xf */
     /** LTR latency for BE, in us */
-    WMI_PDEV_PARAM_LTR_AC_LATENCY_BE,
+    WMI_PDEV_PARAM_LTR_AC_LATENCY_BE,                 /* 0x10 */
     /** LTR latency for BK, in us */
-    WMI_PDEV_PARAM_LTR_AC_LATENCY_BK,
+    WMI_PDEV_PARAM_LTR_AC_LATENCY_BK,                 /* 0x11 */
     /** LTR latency for VI, in us */
-    WMI_PDEV_PARAM_LTR_AC_LATENCY_VI,
+    WMI_PDEV_PARAM_LTR_AC_LATENCY_VI,                 /* 0x12 */
     /** LTR latency for VO, in us  */
-    WMI_PDEV_PARAM_LTR_AC_LATENCY_VO,
+    WMI_PDEV_PARAM_LTR_AC_LATENCY_VO,                 /* 0x13 */
     /** LTR AC latency timeout, in ms */
-    WMI_PDEV_PARAM_LTR_AC_LATENCY_TIMEOUT,
+    WMI_PDEV_PARAM_LTR_AC_LATENCY_TIMEOUT,            /* 0x14 */
     /** LTR platform latency override, in us */
-    WMI_PDEV_PARAM_LTR_SLEEP_OVERRIDE,
+    WMI_PDEV_PARAM_LTR_SLEEP_OVERRIDE,                /* 0x15 */
     /** LTR-M override, in us */
-    WMI_PDEV_PARAM_LTR_RX_OVERRIDE,
+    WMI_PDEV_PARAM_LTR_RX_OVERRIDE,                   /* 0x16 */
     /** Tx activity timeout for LTR, in us */
-    WMI_PDEV_PARAM_LTR_TX_ACTIVITY_TIMEOUT,
+    WMI_PDEV_PARAM_LTR_TX_ACTIVITY_TIMEOUT,           /* 0x17 */
     /** L1SS state machine enable */
-    WMI_PDEV_PARAM_L1SS_ENABLE,
+    WMI_PDEV_PARAM_L1SS_ENABLE,                       /* 0x18 */
     /** Deep sleep state machine enable */
-    WMI_PDEV_PARAM_DSLEEP_ENABLE,
+    WMI_PDEV_PARAM_DSLEEP_ENABLE,                     /* 0x19 */
     /** RX buffering flush enable */
-    WMI_PDEV_PARAM_PCIELP_TXBUF_FLUSH,
+    WMI_PDEV_PARAM_PCIELP_TXBUF_FLUSH,                /* 0x1a */
     /** RX buffering matermark */
-    WMI_PDEV_PARAM_PCIELP_TXBUF_WATERMARK,
+    WMI_PDEV_PARAM_PCIELP_TXBUF_WATERMARK,            /* 0x1b */
     /** RX buffering timeout enable */
-    WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_EN,
+    WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_EN,               /* 0x1c */
     /** RX buffering timeout value */
-    WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_VALUE,
+    WMI_PDEV_PARAM_PCIELP_TXBUF_TMO_VALUE,            /* 0x1d */
     /** pdev level stats update period in ms */
-    WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD,
+    WMI_PDEV_PARAM_PDEV_STATS_UPDATE_PERIOD,          /* 0x1e */
     /** vdev level stats update period in ms */
-    WMI_PDEV_PARAM_VDEV_STATS_UPDATE_PERIOD,
+    WMI_PDEV_PARAM_VDEV_STATS_UPDATE_PERIOD,          /* 0x1f */
     /** peer level stats update period in ms */
-    WMI_PDEV_PARAM_PEER_STATS_UPDATE_PERIOD,
+    WMI_PDEV_PARAM_PEER_STATS_UPDATE_PERIOD,          /* 0x20 */
     /** beacon filter status update period */
-    WMI_PDEV_PARAM_BCNFLT_STATS_UPDATE_PERIOD,
+    WMI_PDEV_PARAM_BCNFLT_STATS_UPDATE_PERIOD,        /* 0x21 */
     /** QOS Mgmt frame protection MFP/PMF 0: disable, 1: enable */
-    WMI_PDEV_PARAM_PMF_QOS,
+    WMI_PDEV_PARAM_PMF_QOS,                           /* 0x22 */
     /** Access category on which ARP frames are sent */
-    WMI_PDEV_PARAM_ARP_AC_OVERRIDE,
+    WMI_PDEV_PARAM_ARP_AC_OVERRIDE,                   /* 0x23 */
     /** DCS configuration */
-    WMI_PDEV_PARAM_DCS,
+    WMI_PDEV_PARAM_DCS,                               /* 0x24 */
     /** Enable/Disable ANI on target */
-    WMI_PDEV_PARAM_ANI_ENABLE,
+    WMI_PDEV_PARAM_ANI_ENABLE,                        /* 0x25 */
     /** configure the ANI polling period */
-    WMI_PDEV_PARAM_ANI_POLL_PERIOD,
+    WMI_PDEV_PARAM_ANI_POLL_PERIOD,                   /* 0x26 */
     /** configure the ANI listening period */
-    WMI_PDEV_PARAM_ANI_LISTEN_PERIOD,
+    WMI_PDEV_PARAM_ANI_LISTEN_PERIOD,                 /* 0x27 */
     /** configure OFDM immunity level */
-    WMI_PDEV_PARAM_ANI_OFDM_LEVEL,
+    WMI_PDEV_PARAM_ANI_OFDM_LEVEL,                    /* 0x28 */
     /** configure CCK immunity level */
-    WMI_PDEV_PARAM_ANI_CCK_LEVEL,
+    WMI_PDEV_PARAM_ANI_CCK_LEVEL,                     /* 0x29 */
     /** Enable/Disable CDD for 1x1 STAs in rate control module */
-    WMI_PDEV_PARAM_DYNTXCHAIN,
+    WMI_PDEV_PARAM_DYNTXCHAIN,                        /* 0x2a */
     /** Enable/Disable proxy STA */
-    WMI_PDEV_PARAM_PROXY_STA,
+    WMI_PDEV_PARAM_PROXY_STA,                         /* 0x2b */
     /** Enable/Disable low power state when all VDEVs are inactive/idle. */
-    WMI_PDEV_PARAM_IDLE_PS_CONFIG,
+    WMI_PDEV_PARAM_IDLE_PS_CONFIG,                    /* 0x2c */
     /** Enable/Disable power gating sleep */
-    WMI_PDEV_PARAM_POWER_GATING_SLEEP,
+    WMI_PDEV_PARAM_POWER_GATING_SLEEP,                /* 0x2d */
     /** Enable/Disable Rfkill */
-    WMI_PDEV_PARAM_RFKILL_ENABLE,
+    WMI_PDEV_PARAM_RFKILL_ENABLE,                     /* 0x2e */
     /** Set Bursting DUR */
-    WMI_PDEV_PARAM_BURST_DUR,
+    WMI_PDEV_PARAM_BURST_DUR,                         /* 0x2f */
     /** Set Bursting ENABLE */
-    WMI_PDEV_PARAM_BURST_ENABLE,
+    WMI_PDEV_PARAM_BURST_ENABLE,                      /* 0x30 */
     /** HW rfkill config */
-    WMI_PDEV_PARAM_HW_RFKILL_CONFIG,
+    WMI_PDEV_PARAM_HW_RFKILL_CONFIG,                  /* 0x31 */
     /** Enable radio low power features */
-    WMI_PDEV_PARAM_LOW_POWER_RF_ENABLE,
+    WMI_PDEV_PARAM_LOW_POWER_RF_ENABLE,               /* 0x32 */
    /** L1SS entry and residency time track */
-    WMI_PDEV_PARAM_L1SS_TRACK,
+    WMI_PDEV_PARAM_L1SS_TRACK,                        /* 0x33 */
     /** set hyst at runtime, requirement from SS */
-    WMI_PDEV_PARAM_HYST_EN,
+    WMI_PDEV_PARAM_HYST_EN,                           /* 0x34 */
     /** Enable/ Disable POWER COLLAPSE */
-    WMI_PDEV_PARAM_POWER_COLLAPSE_ENABLE,
+    WMI_PDEV_PARAM_POWER_COLLAPSE_ENABLE,             /* 0x35 */
    /** configure LED system state */
-    WMI_PDEV_PARAM_LED_SYS_STATE,
+    WMI_PDEV_PARAM_LED_SYS_STATE,                     /* 0x36 */
    /** Enable/Disable LED */
-    WMI_PDEV_PARAM_LED_ENABLE,
+    WMI_PDEV_PARAM_LED_ENABLE,                        /* 0x37 */
     /** set DIRECT AUDIO time latency */
-    WMI_PDEV_PARAM_AUDIO_OVER_WLAN_LATENCY, /* DEPRECATED */
+    WMI_PDEV_PARAM_AUDIO_OVER_WLAN_LATENCY, /* DEPRECATED */ /* 0x38 */
     /** set DIRECT AUDIO Feature ENABLE */
-    WMI_PDEV_PARAM_AUDIO_OVER_WLAN_ENABLE, /* DEPRECATED */
+    WMI_PDEV_PARAM_AUDIO_OVER_WLAN_ENABLE, /* DEPRECATED */  /* 0x39 */
     /** pdev level whal mib stats update enable */
-    WMI_PDEV_PARAM_WHAL_MIB_STATS_UPDATE_ENABLE,
+    WMI_PDEV_PARAM_WHAL_MIB_STATS_UPDATE_ENABLE,      /* 0x3a */
     /** ht/vht info based on vdev */
-    WMI_PDEV_PARAM_VDEV_RATE_STATS_UPDATE_PERIOD,
+    WMI_PDEV_PARAM_VDEV_RATE_STATS_UPDATE_PERIOD,     /* 0x3b */
     /** Set CTS channel BW for dynamic BW adjustment feature */
-    WMI_PDEV_PARAM_CTS_CBW,
+    WMI_PDEV_PARAM_CTS_CBW,                           /* 0x3c */
     /** Set GPIO pin info used by WNTS */
-    WMI_PDEV_PARAM_WNTS_CONFIG,
+    WMI_PDEV_PARAM_WNTS_CONFIG,                       /* 0x3d */
     /** Enable/Disable hardware adaptive early rx feature */
-    WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_ENABLE,
+    WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_ENABLE,          /* 0x3e */
     /** The minimum early rx duration, to ensure early rx duration is non-zero */
-    WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_MIN_SLEEP_SLOP,
+    WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_MIN_SLEEP_SLOP,  /* 0x3f */
     /** Increasing/decreasing step used by hardware */
-    WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_INC_DEC_STEP,
+    WMI_PDEV_PARAM_ADAPTIVE_EARLY_RX_INC_DEC_STEP,    /* 0x40 */
     /** The fixed early rx duration when adaptive early rx is disabled */
-    WMI_PDEV_PARAM_EARLY_RX_FIX_SLEEP_SLOP,
+    WMI_PDEV_PARAM_EARLY_RX_FIX_SLEEP_SLOP,           /* 0x41 */
     /** Enable/Disable bmiss based adaptive beacon timeout feature */
-    WMI_PDEV_PARAM_BMISS_BASED_ADAPTIVE_BTO_ENABLE,
+    WMI_PDEV_PARAM_BMISS_BASED_ADAPTIVE_BTO_ENABLE,   /* 0x42 */
     /** The minimum beacon timeout duration, to ensure beacon timeout duration is non-zero */
-    WMI_PDEV_PARAM_BMISS_BTO_MIN_BCN_TIMEOUT,
+    WMI_PDEV_PARAM_BMISS_BTO_MIN_BCN_TIMEOUT,         /* 0x43 */
     /** Increasing/decreasing step used by hardware */
-    WMI_PDEV_PARAM_BMISS_BTO_INC_DEC_STEP,
+    WMI_PDEV_PARAM_BMISS_BTO_INC_DEC_STEP,            /* 0x44 */
     /** The fixed beacon timeout duration when bmiss based adaptive beacon timeout is disabled */
-    WMI_PDEV_PARAM_BTO_FIX_BCN_TIMEOUT,
+    WMI_PDEV_PARAM_BTO_FIX_BCN_TIMEOUT,               /* 0x45 */
     /** Enable/Disable Congestion Estimator based adaptive beacon timeout feature */
-    WMI_PDEV_PARAM_CE_BASED_ADAPTIVE_BTO_ENABLE,
+    WMI_PDEV_PARAM_CE_BASED_ADAPTIVE_BTO_ENABLE,      /* 0x46 */
     /** combo value of ce_id, ce_threshold, ce_time, refer to WMI_CE_BTO_CE_ID_MASK */
-    WMI_PDEV_PARAM_CE_BTO_COMBO_CE_VALUE,
+    WMI_PDEV_PARAM_CE_BTO_COMBO_CE_VALUE,             /* 0x47 */
     /** 2G TX chain mask */
-    WMI_PDEV_PARAM_TX_CHAIN_MASK_2G,
+    WMI_PDEV_PARAM_TX_CHAIN_MASK_2G,                  /* 0x48 */
     /** 2G RX chain mask */
-    WMI_PDEV_PARAM_RX_CHAIN_MASK_2G,
+    WMI_PDEV_PARAM_RX_CHAIN_MASK_2G,                  /* 0x49 */
     /** 5G TX chain mask */
-    WMI_PDEV_PARAM_TX_CHAIN_MASK_5G,
+    WMI_PDEV_PARAM_TX_CHAIN_MASK_5G,                  /* 0x4a */
     /** 5G RX chain mask */
-    WMI_PDEV_PARAM_RX_CHAIN_MASK_5G,
+    WMI_PDEV_PARAM_RX_CHAIN_MASK_5G,                  /* 0x4b */
     /* Set tx chain mask for CCK rates */
-    WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK,
+    WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK,                 /* 0x4c */
     /* Set tx chain mask for 1SS stream */
-    WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
+    WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,                 /* 0x4d */
     /* Enable/Disable CTS2Self for P2P GO when Non-P2P Client is connected */
-    WMI_PDEV_PARAM_CTS2SELF_FOR_P2P_GO_CONFIG,
+    WMI_PDEV_PARAM_CTS2SELF_FOR_P2P_GO_CONFIG,        /* 0x4e */
     /** TX power backoff in dB: tx power -= param value
      * Host passes values(DB) to Halphy, Halphy reduces the power table by
      * the values. Safety check will happen in Halphy
      */
-    WMI_PDEV_PARAM_TXPOWER_DECR_DB,
+    WMI_PDEV_PARAM_TXPOWER_DECR_DB,                   /* 0x4f */
     /** enable and disable aggregate burst along with duration */
-    WMI_PDEV_PARAM_AGGR_BURST,
+    WMI_PDEV_PARAM_AGGR_BURST,                        /* 0x50 */
     /** Set the global RX decap mode */
-    WMI_PDEV_PARAM_RX_DECAP_MODE,
+    WMI_PDEV_PARAM_RX_DECAP_MODE,                     /* 0x51 */
     /** Enable/Disable Fast channel reset */
-    WMI_PDEV_PARAM_FAST_CHANNEL_RESET,
+    WMI_PDEV_PARAM_FAST_CHANNEL_RESET,                /* 0x52 */
     /** Default antenna for Smart antenna */
-    WMI_PDEV_PARAM_SMART_ANTENNA_DEFAULT_ANTENNA,
+    WMI_PDEV_PARAM_SMART_ANTENNA_DEFAULT_ANTENNA,     /* 0x53 */
     /** Set the user-specified antenna gain */
-    WMI_PDEV_PARAM_ANTENNA_GAIN,
+    WMI_PDEV_PARAM_ANTENNA_GAIN,                      /* 0x54 */
     /** Set the user-specified RX filter */
-    WMI_PDEV_PARAM_RX_FILTER,
+    WMI_PDEV_PARAM_RX_FILTER,                         /* 0x55 */
     /** configure the user-specified MCAST tid for managed mcast feature
      *  0-15 is the valid range. 0xff will clear the tid setting */
-    WMI_PDEV_SET_MCAST_TO_UCAST_TID,
+    WMI_PDEV_SET_MCAST_TO_UCAST_TID,                  /* 0x56 */
     /** Enable/Disable Proxy sta mode */
-    WMI_PDEV_PARAM_PROXY_STA_MODE,
+    WMI_PDEV_PARAM_PROXY_STA_MODE,                    /* 0x57 */
     /** configure the mcast2ucast mode for the pdev->peer_mcast.
      *  See WMI_PEER_MCAST2UCAST_MODE for possible values */
-    WMI_PDEV_PARAM_SET_MCAST2UCAST_MODE,
+    WMI_PDEV_PARAM_SET_MCAST2UCAST_MODE,              /* 0x58 */
     /** Sets the Mcast buffers for cloning, to support Mcast enhancement */
-    WMI_PDEV_PARAM_SET_MCAST2UCAST_BUFFER,
+    WMI_PDEV_PARAM_SET_MCAST2UCAST_BUFFER,            /* 0x59 */
     /** Remove the Mcast buffers added by host */
-    WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER,
+    WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER,         /* 0x5a */
     /** En/disable station power save state indication */
-    WMI_PDEV_PEER_STA_PS_STATECHG_ENABLE,
+    WMI_PDEV_PEER_STA_PS_STATECHG_ENABLE,             /* 0x5b */
     /** Access category on which ARP frames are sent */
-    WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE,
+    WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE,               /* 0x5c */
     /** allow or disallow interbss frame forwarding */
-    WMI_PDEV_PARAM_BLOCK_INTERBSS,
+    WMI_PDEV_PARAM_BLOCK_INTERBSS,                    /* 0x5d */
     /** Enable/Disable reset */
-    WMI_PDEV_PARAM_SET_DISABLE_RESET_CMDID,
+    WMI_PDEV_PARAM_SET_DISABLE_RESET_CMDID,           /* 0x5e */
     /** Enable/Disable/Set MSDU_TTL in milliseconds. */
-    WMI_PDEV_PARAM_SET_MSDU_TTL_CMDID,
+    WMI_PDEV_PARAM_SET_MSDU_TTL_CMDID,                /* 0x5f */
     /** Set global PPDU duration limit (usec). */
-    WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID,
+    WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID,           /* 0x60 */
     /** set txbf sounding period of vap in milliseconds */
-    WMI_PDEV_PARAM_TXBF_SOUND_PERIOD_CMDID,
+    WMI_PDEV_PARAM_TXBF_SOUND_PERIOD_CMDID,           /* 0x61 */
     /** Set promiscuous mode */
-    WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID,
+    WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID,            /* 0x62 */
     /** Set burst mode */
-    WMI_PDEV_PARAM_SET_BURST_MODE_CMDID,
+    WMI_PDEV_PARAM_SET_BURST_MODE_CMDID,              /* 0x63 */
     /** enable enhanced stats */
-    WMI_PDEV_PARAM_EN_STATS,
+    WMI_PDEV_PARAM_EN_STATS,                          /* 0x64 */
     /** Set mu-grouping policy */
-    WMI_PDEV_PARAM_MU_GROUP_POLICY,
+    WMI_PDEV_PARAM_MU_GROUP_POLICY,                   /* 0x65 */
     /** Channel Hopping Enable */
-    WMI_PDEV_PARAM_NOISE_DETECTION,
+    WMI_PDEV_PARAM_NOISE_DETECTION,                   /* 0x66 */
     /** Set Channel Hopping NF threshold in dBm */
-    WMI_PDEV_PARAM_NOISE_THRESHOLD,
+    WMI_PDEV_PARAM_NOISE_THRESHOLD,                   /* 0x67 */
     /** Set PAPRD policy */
-    WMI_PDEV_PARAM_DPD_ENABLE,
+    WMI_PDEV_PARAM_DPD_ENABLE,                        /* 0x68 */
     /** Enable/disable mcast/bcast echo, used by ProxySTA */
-    WMI_PDEV_PARAM_SET_MCAST_BCAST_ECHO,
+    WMI_PDEV_PARAM_SET_MCAST_BCAST_ECHO,              /* 0x69 */
     /** ATF enable/disable strict schedule */
-    WMI_PDEV_PARAM_ATF_STRICT_SCH,
+    WMI_PDEV_PARAM_ATF_STRICT_SCH,                    /* 0x6a */
     /** ATF set access category duration, B0-B29 duration, B30-B31: AC */
-    WMI_PDEV_PARAM_ATF_SCHED_DURATION,
+    WMI_PDEV_PARAM_ATF_SCHED_DURATION,                /* 0x6b */
     /** Default antenna polarization */
-    WMI_PDEV_PARAM_ANT_PLZN,
+    WMI_PDEV_PARAM_ANT_PLZN,                          /* 0x6c */
     /** Set mgmt retry limit */
-    WMI_PDEV_PARAM_MGMT_RETRY_LIMIT,
+    WMI_PDEV_PARAM_MGMT_RETRY_LIMIT,                  /* 0x6d */
     /** Set CCA sensitivity level in dBm */
-    WMI_PDEV_PARAM_SENSITIVITY_LEVEL,
+    WMI_PDEV_PARAM_SENSITIVITY_LEVEL,                 /* 0x6e */
     /** Set 2G positive and negative Tx power in 0.5dBm units */
-    WMI_PDEV_PARAM_SIGNED_TXPOWER_2G,
+    WMI_PDEV_PARAM_SIGNED_TXPOWER_2G,                 /* 0x6f */
     /** Set 5G positive and negative Tx power in 0.5dBm
      *  units */
-    WMI_PDEV_PARAM_SIGNED_TXPOWER_5G,
+    WMI_PDEV_PARAM_SIGNED_TXPOWER_5G,                 /* 0x70 */
     /** Enable/disble AMSDU for tids */
-    WMI_PDEV_PARAM_ENABLE_PER_TID_AMSDU,
+    WMI_PDEV_PARAM_ENABLE_PER_TID_AMSDU,              /* 0x71 */
     /** Enable/disable AMPDU for tids */
-    WMI_PDEV_PARAM_ENABLE_PER_TID_AMPDU,
+    WMI_PDEV_PARAM_ENABLE_PER_TID_AMPDU,              /* 0x72 */
     /** Set CCA threshold in dBm */
-    WMI_PDEV_PARAM_CCA_THRESHOLD,
+    WMI_PDEV_PARAM_CCA_THRESHOLD,                     /* 0x73 */
     /** RTS Fixed rate setting */
-    WMI_PDEV_PARAM_RTS_FIXED_RATE,
+    WMI_PDEV_PARAM_RTS_FIXED_RATE,                    /* 0x74 */
     /** Pdev reset */
-    WMI_PDEV_PARAM_PDEV_RESET,
+    WMI_PDEV_PARAM_PDEV_RESET,                        /* 0x75 */
     /** wapi mbssid offset **/
-    WMI_PDEV_PARAM_WAPI_MBSSID_OFFSET,
+    WMI_PDEV_PARAM_WAPI_MBSSID_OFFSET,                /* 0x76 */
     /** ARP DEBUG source address*/
-    WMI_PDEV_PARAM_ARP_DBG_SRCADDR,
+    WMI_PDEV_PARAM_ARP_DBG_SRCADDR,                   /* 0x77 */
     /** ARP DEBUG destination address*/
-    WMI_PDEV_PARAM_ARP_DBG_DSTADDR,
+    WMI_PDEV_PARAM_ARP_DBG_DSTADDR,                   /* 0x78 */
     /** ATF enable/disable obss noise scheduling */
-    WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCH,
+    WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCH,                /* 0x79 */
     /** ATF obss noise scaling factor */
-    WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCALING_FACTOR,
+    WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCALING_FACTOR,     /* 0x7a */
     /**
      * TX power reduction scaling exponent - final tx power is the
      * nominal tx power (A_MIN(reg_pow,ctl,etc..)) divided by
@@ -4389,11 +4389,11 @@ typedef enum {
      * If this factor is 2, the power is scaled down by 2^2, i.e. 6 dB
      * If this factor is 3, the power is scaled down by 2^3, i.e. 9 dB
      */
-    WMI_PDEV_PARAM_CUST_TXPOWER_SCALE,
+    WMI_PDEV_PARAM_CUST_TXPOWER_SCALE,                /* 0x7b */
     /** ATF enabe/disabe dynamically */
-    WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE,
+    WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE,                /* 0x7c */
     /** Set tx retry limit for control frames. 0 = disable, 31 = max */
-    WMI_PDEV_PARAM_CTRL_RETRY_LIMIT,
+    WMI_PDEV_PARAM_CTRL_RETRY_LIMIT,                  /* 0x7d */
     /** Set propagation delay for 2G / 5G band.
      * The propagation delay is fundamentally a per-peer property, but
      * the target may not support per-peer settings for ack timeouts.
@@ -4402,97 +4402,97 @@ typedef enum {
      * within that pdev.
      * Units are microseconds.
      */
-    WMI_PDEV_PARAM_PROPAGATION_DELAY,
+    WMI_PDEV_PARAM_PROPAGATION_DELAY,                 /* 0x7e */
     /**
      * Host can enable/disable ANT DIV feature
      * if it's been enabled in BDF
      */
-    WMI_PDEV_PARAM_ENA_ANT_DIV,
+    WMI_PDEV_PARAM_ENA_ANT_DIV,                       /* 0x7f */
     /** Host can force one chain to select a specific ANT */
-    WMI_PDEV_PARAM_FORCE_CHAIN_ANT,
+    WMI_PDEV_PARAM_FORCE_CHAIN_ANT,                   /* 0x80 */
     /**
      * Start a cycle ANT self test periodically.
      * In the test, the FW would select each ANT pair
      * one by one, the cycle time could be configured
      * via WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL
      */
-    WMI_PDEV_PARAM_ANT_DIV_SELFTEST,
+    WMI_PDEV_PARAM_ANT_DIV_SELFTEST,                  /* 0x81 */
     /**
      * Configure the cycle time of ANT self test,
      * the unit is micro second. Per the timer
      * limitation, too small value could be not so
      * accurate.
      */
-    WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL,
+    WMI_PDEV_PARAM_ANT_DIV_SELFTEST_INTVL,            /* 0x82 */
     /**
      * wlan stats observation period, the unit is millisecond.
      * The value of 0 is used to turn off periodic stats report.
      */
-    WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD,
+    WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD,          /* 0x83 */
     /**
      * Set tx_ppdu_delay[] bin size to specify how many
      * milliseconds each bin of the wmi_tx_stats.tx_ppdu_delay[]
      * histogram represents.
      */
-    WMI_PDEV_PARAM_TX_PPDU_DELAY_BIN_SIZE_MS,
+    WMI_PDEV_PARAM_TX_PPDU_DELAY_BIN_SIZE_MS,         /* 0x84 */
     /** set wmi_tx_stats.tx_ppdu_delay[] array length */
-    WMI_PDEV_PARAM_TX_PPDU_DELAY_ARRAY_LEN,
+    WMI_PDEV_PARAM_TX_PPDU_DELAY_ARRAY_LEN,           /* 0x85 */
     /** set wmi_tx_stats.tx_mpdu_aggr[] array length */
-    WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_LEN,
+    WMI_PDEV_PARAM_TX_MPDU_AGGR_ARRAY_LEN,            /* 0x86 */
     /** set wmi_rx_stats.rx_mpdu_aggr[] array length */
-    WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_LEN,
+    WMI_PDEV_PARAM_RX_MPDU_AGGR_ARRAY_LEN,            /* 0x87 */
     /** Set TX delay value in TX sch module, unit is microseconds */
-    WMI_PDEV_PARAM_TX_SCH_DELAY,
+    WMI_PDEV_PARAM_TX_SCH_DELAY,                      /* 0x88 */
     /** Set RTS enable for SIFS bursting */
-    WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,
+    WMI_PDEV_PARAM_ENABLE_RTS_SIFS_BURSTING,          /* 0x89 */
     /** Set Maximum number of MPDUs in an AMPDU*/
-    WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,
+    WMI_PDEV_PARAM_MAX_MPDUS_IN_AMPDU,                /* 0x8a */
 
     /** Enable/disable peer stats info mechanism
      * A zero value disables; a non-zero value enables.
      */
-    WMI_PDEV_PARAM_PEER_STATS_INFO_ENABLE,
+    WMI_PDEV_PARAM_PEER_STATS_INFO_ENABLE,            /* 0x8b */
 
     /** Configure Fast PWR Transition mode
      * 0x0 -> inidcates Fast PWR transition disabled
      * 0x1 -> indicates Static mode enabled
      * 0x2 -> indicates Dynamic mode enabled
      */
-    WMI_PDEV_PARAM_FAST_PWR_TRANSITION,
+    WMI_PDEV_PARAM_FAST_PWR_TRANSITION,               /* 0x8c */
 
     /** Enable/disable radio channel stats mechanism
      *  A zero value disables; a non-zero value enables.
      */
-    WMI_PDEV_PARAM_RADIO_CHAN_STATS_ENABLE,
+    WMI_PDEV_PARAM_RADIO_CHAN_STATS_ENABLE,           /* 0x8d */
     /** Enable/disable radio diagnosis feature
      *  which allows retrieving the status of radio.
      *  A zero value disables; a non-zero value enables.
      */
-    WMI_PDEV_PARAM_RADIO_DIAGNOSIS_ENABLE,
+    WMI_PDEV_PARAM_RADIO_DIAGNOSIS_ENABLE,            /* 0x8e */
     /** Enable/Disable mesh mcast traffic
      * 1 - Allow mesh mcast traffic
      * 0 - Disallow mesh mcast traffic
      */
-    WMI_PDEV_PARAM_MESH_MCAST_ENABLE,
+    WMI_PDEV_PARAM_MESH_MCAST_ENABLE,                 /* 0x8f */
     /** Enable/Disable smart chainmask scheme
       * 1 - Enable smart chainmask scheme
       * 0 - Disable smart chainmask scheme
       */
-    WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME,
+    WMI_PDEV_PARAM_SMART_CHAINMASK_SCHEME,            /* 0x90 */
     /** Enable/Disable alternate chainmask scheme
      * 1 - Enable alternate chainmask scheme
      * 0 - Disable alternate chainmask scheme
      */
-    WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME,
+    WMI_PDEV_PARAM_ALTERNATIVE_CHAINMASK_SCHEME,      /* 0x91 */
     /** User configured parameters for antenna diversity algorithm
      *  BIT[25..13]: Probe period (milliseconds units)
      *  BIT[12..0]: Stay period (milliseconds units)
      */
-    WMI_PDEV_PARAM_ANT_DIV_USRCFG,
+    WMI_PDEV_PARAM_ANT_DIV_USRCFG,                    /* 0x92 */
     /** pdev packet power save levels,
      *  refer to WMI_PDEV_PKT_PWR_SAVE_LEVEL
      */
-    WMI_PDEV_PARAM_PACKET_POWER_SAVE_LEVEL,
+    WMI_PDEV_PARAM_PACKET_POWER_SAVE_LEVEL,           /* 0x93 */
     /** Define IOT pattern to be enabled/disabled
       * bit values: 0 - disable, 1 - enable
       * BIT[0..31]: each bit represents an IOT pattern
@@ -4500,26 +4500,26 @@ typedef enum {
       * Bit 0 - avoid SMPS with certain APs
       * Bits 31:1 - reserved
       */
-    WMI_PDEV_PARAM_SET_IOT_PATTERN,
+    WMI_PDEV_PARAM_SET_IOT_PATTERN,                   /* 0x94 */
     /** ACK timeout - change wireless packet ack timeout configuration,
      *  units are microseconds
      */
-    WMI_PDEV_PARAM_ACK_TIMEOUT,
+    WMI_PDEV_PARAM_ACK_TIMEOUT,                       /* 0x95 */
     /** Number of TX chains to use for a/b/g rates.
      *  bit 0~15  : 11b mode TX chain number.
      *  bit 16~31 : 11ag mode TX chain number.
      */
-    WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,
+    WMI_PDEV_PARAM_ABG_MODE_TX_CHAIN_NUM,             /* 0x96 */
     /** Enable/Disable cck txfir override
      *  bit 0 - enable (1) or disable (0) CCK tx FIR
      *  bits 31:1 - unused / reserved (set to 0)
      */
-    WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,
+    WMI_PDEV_PARAM_ENABLE_CCK_TXFIR_OVERRIDE,         /* 0x97 */
     /** Enable/Disable DTIM Synth
      *   1- Enable DTIM Synth
      *   0- Disable DTIM Synth
      */
-    WMI_PDEV_PARAM_DTIM_SYNTH,
+    WMI_PDEV_PARAM_DTIM_SYNTH,                        /* 0x98 */
     /** Configure auto detect power failure feature.
      *   0 - FW will trigger crash if power failure happens.
      *   1 - FW will send a failure notification to host, and the host
@@ -4527,7 +4527,7 @@ typedef enum {
      *   2 - Silently rejuvenate if power failure occurs.
      *   3 - Feature disabled.
      */
-    WMI_PDEV_AUTO_DETECT_POWER_FAILURE,
+    WMI_PDEV_AUTO_DETECT_POWER_FAILURE,               /* 0x99 */
     /** Configure operating voltage corner mode based on phymode and bw.
      * bit 0-1 -   operating voltage corner mode for 11a/b.
      * bit 2-3 -   operating voltage corner mode for 11g.
@@ -4549,7 +4549,7 @@ typedef enum {
      * 10 - Dynamic voltage corner selection based on TPUT
      * 11 - Dynamic voltage corner selection based on TPUT and Tx Flush counters
      */
-    WMI_PDEV_UPDATE_WDCVS_ALGO,
+    WMI_PDEV_UPDATE_WDCVS_ALGO,                       /* 0x9a */
 } WMI_PDEV_PARAM;
 
 typedef struct {
@@ -10017,7 +10017,7 @@ typedef struct {
     /** flags as defined above */
     A_UINT32 flags;
     /**
-     * rssi thresold value: the value of the the candidate AP should
+     * rssi threshold value in dB: the value of the candidate AP should
      * higher by this threshold than the rssi of the currrently associated AP.
      */
     A_UINT32 rssi_threshold;
@@ -10038,12 +10038,18 @@ typedef struct {
     /** mcast/group management frames cipher set */
     A_UINT32 rsn_mcastmgmtcipherset;
     /**
-     * rssi_abs_thresold value: the value of the candidate AP should
+     * rssi_abs_threshold value: the value of the candidate AP should
      * higher than this absolute RSSI threshold.
      * Zero means no absolute minimum RSSI is required.
      * units are the offset from the noise floor in dB.
      */
     A_UINT32 rssi_abs_thresh;
+    /**
+     * bg_rssi_threshold value in dB: For background scan the value of
+     * the candidate AP should be higher by this threshold than the rssi
+     * of the currrently associated AP.
+     */
+    A_UINT32 bg_rssi_threshold;
 } wmi_ap_profile;
 
 /** Support early stop roaming scanning when finding a strong candidate AP
