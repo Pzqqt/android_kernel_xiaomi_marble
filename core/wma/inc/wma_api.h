@@ -337,4 +337,18 @@ tSirWifiPeerType wmi_to_sir_peer_type(enum wmi_peer_type type);
 
 QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
 			    uint32_t delay_time_ms);
+
+/**
+ * wma_set_vc_mode_config() - set voltage corner mode config to FW.
+ * @wma_handle:	pointer to wma handle.
+ * @vc_bitmap:	value needs to set to firmware.
+ *
+ * At the time of driver startup, set operating voltage corner mode
+ * for differenet phymode and bw configurations.
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS wma_set_vc_mode_config(void *wma_handle,
+		uint32_t vc_bitmap);
+
 #endif
