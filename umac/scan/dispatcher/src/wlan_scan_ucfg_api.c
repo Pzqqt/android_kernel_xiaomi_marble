@@ -368,9 +368,6 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 
 	psoc = wlan_vdev_get_psoc(req->vdev);
 
-	/* Resetting the scan_ctrl_flags_ext to 0 */
-	req->scan_req.scan_ctrl_flags_ext = 0;
-
 	if (DISABLE_DBS_CXN_AND_SCAN ==
 			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
 		goto end;
@@ -442,6 +439,9 @@ ucfg_scan_start(struct scan_start_request *req)
 		req->scan_req.vdev_id);
 
 	ucfg_scan_update_dbs_scan_ctrl_ext_flag(req);
+	if (req->scan_req.scan_f_passive)
+		req->scan_req.scan_ctrl_flags_ext |=
+			SCAN_FLAG_EXT_FILTER_PUBLIC_ACTION_FRAME;
 
 	/* Try to get vdev reference. Return if reference could
 	 * not be taken. Reference will be released once scan
