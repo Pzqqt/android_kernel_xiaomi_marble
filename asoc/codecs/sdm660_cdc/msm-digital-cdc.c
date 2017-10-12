@@ -231,6 +231,12 @@ static int msm_dig_cdc_codec_config_compander(struct snd_soc_codec *codec,
 	}
 
 	if (SND_SOC_DAPM_EVENT_ON(event)) {
+		/* compander is not enabled */
+		if (!dig_cdc->comp_enabled[interp_n]) {
+			dig_cdc->set_compander_mode(dig_cdc->handle, 0x00);
+			return 0;
+		};
+		dig_cdc->set_compander_mode(dig_cdc->handle, 0x08);
 		/* Enable Compander Clock */
 		snd_soc_update_bits(codec,
 			MSM89XX_CDC_CORE_COMP0_B2_CTL, 0x0F, 0x09);
@@ -2080,6 +2086,7 @@ static int msm_dig_cdc_probe(struct platform_device *pdev)
 			msm_dig_cdc->dig_base, &msm_digital_regmap_config);
 
 	msm_dig_cdc->update_clkdiv = pdata->update_clkdiv;
+	msm_dig_cdc->set_compander_mode = pdata->set_compander_mode;
 	msm_dig_cdc->get_cdc_version = pdata->get_cdc_version;
 	msm_dig_cdc->handle = pdata->handle;
 	msm_dig_cdc->register_notifier = pdata->register_notifier;
