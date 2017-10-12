@@ -2277,6 +2277,52 @@ err:
 	qdf_mem_free(csa_params);
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * lim_del_pmf_sa_query_timer() - This function deletes SA query timer
+ * @mac_ctx: pointer to mac context
+ * @pe_session: pointer to PE session
+ *
+ * This API is to delete the PMF SA query timer created for each associated STA
+ *
+ * Return: none
+ */
+static void
+lim_del_pmf_sa_query_timer(tpAniSirGlobal mac_ctx, tpPESession pe_session)
+{
+	uint32_t associated_sta;
+	tpDphHashNode sta_ds = NULL;
+
+	for (associated_sta = 1;
+	     associated_sta < mac_ctx->lim.gLimAssocStaLimit;
+	     associated_sta++) {
+		sta_ds = dph_get_hash_entry(mac_ctx, associated_sta,
+					    &pe_session->dph.dphHashTable);
+		if (NULL == sta_ds)
+			continue;
+
+		pe_err("Deleting pmfSaQueryTimer for staid: %d",
+			sta_ds->staIndex);
+		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
+		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
+	}
+}
+#else
+/**
+ * lim_del_pmf_sa_query_timer() - This function deletes SA query timer
+ * @mac_ctx: pointer to mac context
+ * @pe_session: pointer to PE session
+ *
+ * This API is to delete the PMF SA query timer created for each associated STA
+ *
+ * Return: none
+ */
+static void
+lim_del_pmf_sa_query_timer(tpAniSirGlobal mac_ctx, tpPESession pe_session)
+{
+}
+#endif
+
 /*--------------------------------------------------------------------------
    \brief pe_delete_session() - Handle the Delete BSS Response from HAL.
 
@@ -2299,6 +2345,19 @@ void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, struct scheduler_msg *MsgQ)
 		qdf_mem_free(MsgQ->bodyptr);
 		return;
 	}
+
+	/*
+	 * If for some reasons PEERs who are associated to SAP DUT can't get
+	 * clean-up then here is the chance to release any left out memory.
+	 *
+	 * One of the memory, driver assign to PEER is PMF SA query timer.
+	 * Release it before calling del bss response handling API.
+	 *
+	 */
+	if (LIM_IS_AP_ROLE(psessionEntry) &&
+	    (psessionEntry->statypeForBss == STA_ENTRY_SELF))
+		lim_del_pmf_sa_query_timer(pMac, psessionEntry);
+
 	/*
 	 * During DEL BSS handling, the PE Session will be deleted, but it is
 	 * better to clear this flag if the session is hanging around due

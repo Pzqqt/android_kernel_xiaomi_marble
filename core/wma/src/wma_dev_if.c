@@ -4855,6 +4855,11 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 			WMA_LOGD(FL("vdev_id %d status %d"),
 				 del_sta->smesessionId, del_sta->status);
 			qdf_mem_free(del_sta);
+		} else if (!rsp_requested &&
+				(del_sta->status != QDF_STATUS_SUCCESS)) {
+			WMA_LOGD(FL("Release del_sta mem vdev_id %d status %d"),
+				 del_sta->smesessionId, del_sta->status);
+			qdf_mem_free(del_sta);
 		}
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
