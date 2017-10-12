@@ -416,12 +416,26 @@ ucfg_scan_start(struct scan_start_request *req)
 {
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
+	struct wlan_scan_obj *scan_obj;
 
 	if (!req || !req->vdev) {
 		scm_err("vdev: %pK, req: %pK", req->vdev, req);
 		if (req)
 			scm_scan_free_scan_request_mem(req);
 		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	scan_obj = wlan_pdev_get_scan_obj(wlan_vdev_get_pdev(req->vdev));
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		scm_scan_free_scan_request_mem(req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!scan_obj->enable_scan) {
+		scm_err("scan disabled, rejecting the scan req");
+		scm_scan_free_scan_request_mem(req);
+		return QDF_STATUS_E_AGAIN;
 	}
 	scm_info("reqid: %d, scanid: %d, vdevid: %d",
 		req->scan_req.scan_req_id, req->scan_req.scan_id,
@@ -453,6 +467,34 @@ ucfg_scan_start(struct scan_start_request *req)
 
 	return status;
 }
+
+QDF_STATUS ucfg_scan_set_enable(struct wlan_objmgr_psoc *psoc, bool enable)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	scan_obj->enable_scan = enable;
+	scm_debug("set enable_scan to %d", scan_obj->enable_scan);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_scan_get_enable(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return false;
+	}
+	return scan_obj->enable_scan;
+}
+
 
 QDF_STATUS
 ucfg_scan_cancel(struct scan_cancel_request *req)
@@ -739,6 +781,7 @@ ucfg_scan_register_event_handler(struct wlan_objmgr_pdev *pdev,
 static QDF_STATUS
 wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 {
+	scan_obj->enable_scan = true;
 	scan_obj->scan_def.active_dwell = SCAN_ACTIVE_DWELL_TIME;
 	scan_obj->scan_def.passive_dwell = SCAN_PASSIVE_DWELL_TIME;
 	scan_obj->scan_def.max_rest_time = SCAN_MAX_REST_TIME;
