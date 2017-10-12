@@ -1277,6 +1277,8 @@ typedef enum {
     WMI_PROFILE_MATCH,
     /** roam synch event */
     WMI_ROAM_SYNCH_EVENTID,
+    /** roam synch frame event */
+    WMI_ROAM_SYNCH_FRAME_EVENTID,
 
     /** P2P disc found */
     WMI_P2P_DISC_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_P2P),
@@ -15264,6 +15266,39 @@ typedef struct {
      *
      **/
 } wmi_roam_synch_event_fixed_param;
+
+/**
+ * The WMI_ROAM_SYNCH_FRAME_EVENTID message is used in conjunction with the
+ * WMI_ROAM_SYNCH_EVENTID message.  The former will be sent 1st followed by
+ * the latter for cases where the WMI_ROAM_SYNCH_EVENTID message size would
+ * exceed 2K.  The more_frag field in the WMI_ROAM_SYNCH_FRAME_EVENTID informs
+ * the host whether more WMI_ROAM_SYNCH_FRAME_EVENTID messages would follow;
+ * after the WMI_ROAM_SYNCH_FRAME_EVENTID messages the target sends the
+ * WMI_ROAM_SYNCH_EVENTID with bcn_probe_rsp_len, reassoc_rsp_len, and
+ * reassoc_rsp_len set to 0.
+ */
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_roam_synch_frame_event_fixed_param  */
+    /** Unique id identifying the VDEV on which roaming is done by firmware */
+    A_UINT32 vdev_id;
+    /** More frags to follow? */
+    A_UINT32 more_frag;
+    /** whether the frame is beacon or probe rsp */
+    A_UINT32 is_beacon;
+    /** the length of beacon/probe rsp */
+    A_UINT32 bcn_probe_rsp_len;
+    /** the length of reassoc rsp */
+    A_UINT32 reassoc_rsp_len;
+    /** the length of reassoc req */
+    A_UINT32 reassoc_req_len;
+    /**
+     * TLV (tag length value) parameters follows roam_synch_event
+     * The TLV's are:
+     *     A_UINT8 bcn_probe_rsp_frame[bcn_probe_rsp_len];
+     *     A_UINT8 reassoc_rsp_frame[reassoc_rsp_len];
+     *     A_UINT8 reassoc_req_frame[reassoc_req_len];
+     */
+} wmi_roam_synch_frame_event_fixed_param;
 
 #define WMI_PEER_ESTIMATED_LINKSPEED_INVALID    0xFFFFFFFF
 
