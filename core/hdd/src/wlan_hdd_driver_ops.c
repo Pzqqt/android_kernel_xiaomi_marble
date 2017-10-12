@@ -56,7 +56,7 @@
 
 #define DISABLE_KRAIT_IDLE_PS_VAL      1
 
-#define SSR_MAX_FAIL_CNT 2
+#define SSR_MAX_FAIL_CNT 3
 static uint8_t re_init_fail_cnt, probe_fail_cnt;
 
 /*
