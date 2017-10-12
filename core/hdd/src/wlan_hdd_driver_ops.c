@@ -828,53 +828,60 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	void *hif_ctx;
-	int err;
-	int status;
+	int errno;
+	uint32_t pending_events;
 
-	err = wlan_hdd_validate_context(hdd_ctx);
-	if (err) {
-		hdd_err("Invalid HDD context: %d", err);
-		return err;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno) {
+		hdd_err("Invalid HDD context: errno %d", errno);
+		return errno;
 	}
 
 	if (hdd_ctx->driver_status != DRIVER_MODULES_ENABLED) {
-		hdd_debug("Driver Module closed return success");
+		hdd_debug("Driver module closed; skip bus-noirq suspend");
 		return 0;
 	}
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	if (NULL == hif_ctx) {
-		err = -EINVAL;
-		goto done;
+	if (!hif_ctx) {
+		hdd_err("hif_ctx is null");
+		return -EINVAL;
 	}
 
-	err = hif_bus_suspend_noirq(hif_ctx);
-	if (err)
+	errno = hif_bus_suspend_noirq(hif_ctx);
+	if (errno)
 		goto done;
 
-	err = pmo_ucfg_psoc_is_target_wake_up_received(
-			hdd_ctx->hdd_psoc);
-	if (err)
+	errno = pmo_ucfg_psoc_is_target_wake_up_received(hdd_ctx->hdd_psoc);
+	if (errno == -EAGAIN) {
+		hdd_err("Firmware attempting wakeup, try again");
+		wlan_hdd_inc_suspend_stats(hdd_ctx,
+					   SUSPEND_FAIL_INITIAL_WAKEUP);
+	}
+	if (errno)
 		goto resume_hif_noirq;
+
+	pending_events = wma_critical_events_in_flight();
+	if (pending_events) {
+		hdd_err("%d critical event(s) in flight; try again",
+			pending_events);
+		errno = -EAGAIN;
+		goto resume_hif_noirq;
+	}
 
 	hdd_ctx->suspend_resume_stats.suspends++;
 
 	hdd_debug("suspend_noirq done");
+
 	return 0;
 
 resume_hif_noirq:
-	status = hif_bus_resume_noirq(hif_ctx);
-	QDF_BUG(!status);
-done:
-	if (err == -EAGAIN) {
-		hdd_err("Firmware attempting wakeup, try again");
-		wlan_hdd_inc_suspend_stats(hdd_ctx,
-					   SUSPEND_FAIL_INITIAL_WAKEUP);
-	} else {
-		hdd_err("suspend_noirq failed, status: %d", err);
-	}
+	QDF_BUG(!hif_bus_resume_noirq(hif_ctx));
 
-	return err;
+done:
+	hdd_err("suspend_noirq failed, status: %d", errno);
+
+	return errno;
 }
 
 int wlan_hdd_bus_suspend_noirq(void)
@@ -942,7 +949,7 @@ static int __wlan_hdd_bus_resume(void)
 			QDF_SYSTEM_SUSPEND);
 	status = qdf_status_to_os_return(qdf_status);
 	if (status) {
-		hdd_err("Failed wma bus resume");
+		hdd_err("Failed pmo bus resume");
 		goto out;
 	}
 

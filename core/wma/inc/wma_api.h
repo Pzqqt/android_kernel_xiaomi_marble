@@ -339,6 +339,16 @@ QDF_STATUS wma_crash_inject(WMA_HANDLE wma_handle, uint32_t type,
 			    uint32_t delay_time_ms);
 
 /**
+ * wma_critical_events_in_flight() - get the number of critical events in flight
+ *
+ * This API gets the number of events in flight which should prevent power
+ * collapse.
+ *
+ * Return: the number of critical events in flight
+ */
+uint32_t wma_critical_events_in_flight(void);
+
+/**
  * wma_set_vc_mode_config() - set voltage corner mode config to FW.
  * @wma_handle:	pointer to wma handle.
  * @vc_bitmap:	value needs to set to firmware.
