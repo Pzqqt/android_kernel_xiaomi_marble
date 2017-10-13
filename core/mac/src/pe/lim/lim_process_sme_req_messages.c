@@ -5438,9 +5438,21 @@ lim_update_ibss_prop_add_ies(tpAniSirGlobal pMac, uint8_t **pDstData_buff,
 		qdf_mem_copy(vendor_ie, pModifyIE->pIEBuffer,
 				pModifyIE->ieBufferlength);
 	} else {
-		uint16_t new_length = pModifyIE->ieBufferlength + *pDstDataLen;
-		uint8_t *new_ptr = qdf_mem_malloc(new_length);
+		uint16_t new_length;
+		uint8_t *new_ptr;
 
+		/*
+		 * check for uint16 overflow before using sum of two numbers as
+		 * length of size to malloc
+		 */
+		if (USHRT_MAX - pModifyIE->ieBufferlength < *pDstDataLen) {
+			pe_err("U16 overflow due to %d + %d",
+				pModifyIE->ieBufferlength, *pDstDataLen);
+			return false;
+		}
+
+		new_length = pModifyIE->ieBufferlength + *pDstDataLen;
+		new_ptr = qdf_mem_malloc(new_length);
 		if (NULL == new_ptr) {
 			pe_err("Memory allocation failed");
 			return false;
