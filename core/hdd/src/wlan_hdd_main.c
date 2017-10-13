@@ -923,6 +923,59 @@ QDF_STATUS hdd_set_ibss_power_save_params(struct hdd_adapter *adapter)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * hdd_runtime_suspend_context_init() - API to initialize HDD Runtime Contexts
+ * @hdd_ctx: HDD context
+ *
+ * Return: None
+ */
+static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
+{
+	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
+
+	qdf_runtime_lock_init(&ctx->roc);
+	qdf_runtime_lock_init(&ctx->dfs);
+
+	wlan_scan_runtime_pm_init(hdd_ctx->hdd_pdev);
+}
+
+/**
+ * hdd_runtime_suspend_context_deinit() - API to deinit HDD runtime context
+ * @hdd_ctx: HDD Context
+ *
+ * Return: None
+ */
+static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
+{
+	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
+
+	qdf_runtime_lock_deinit(&ctx->roc);
+	qdf_runtime_lock_deinit(&ctx->dfs);
+
+	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);
+}
+
+static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter)
+{
+	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
+
+	qdf_runtime_lock_init(&ctx->connect);
+}
+
+static void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter)
+{
+	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
+
+	qdf_runtime_lock_deinit(&ctx->connect);
+}
+#else /* FEATURE_RUNTIME_PM */
+static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx) {}
+static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx) {}
+static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter) {}
+static void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter) {}
+#endif /* FEATURE_RUNTIME_PM */
+
 #define INTF_MACADDR_MASK       0x7
 
 /**
@@ -1763,6 +1816,12 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		hdd_ctx->config->maxWoWFilters = WMA_STA_WOW_DEFAULT_PTRN_MAX;
 
 	hdd_ctx->wmi_max_len = cfg->wmi_max_len;
+
+	/*
+	 * This needs to be done after HDD pdev is created and stored since
+	 * it will access the HDD pdev object lock.
+	 */
+	hdd_runtime_suspend_context_init(hdd_ctx);
 
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
@@ -3020,56 +3079,6 @@ void hdd_set_station_ops(struct net_device *pWlanDev)
 		pWlanDev->netdev_ops = &wlan_drv_ops;
 }
 
-#ifdef FEATURE_RUNTIME_PM
-/**
- * hdd_runtime_suspend_context_init() - API to initialize HDD Runtime Contexts
- * @hdd_ctx: HDD context
- *
- * Return: None
- */
-static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
-{
-	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
-
-	qdf_runtime_lock_init(&ctx->roc);
-	qdf_runtime_lock_init(&ctx->dfs);
-}
-
-/**
- * hdd_runtime_suspend_context_deinit() - API to deinit HDD runtime context
- * @hdd_ctx: HDD Context
- *
- * Return: None
- */
-static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
-{
-	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
-
-	qdf_runtime_lock_deinit(&ctx->roc);
-	qdf_runtime_lock_deinit(&ctx->dfs);
-
-	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);
-}
-
-static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter)
-{
-	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
-
-	qdf_runtime_lock_init(&ctx->connect);
-}
-
-static void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter)
-{
-	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
-
-	qdf_runtime_lock_deinit(&ctx->connect);
-}
-#else /* FEATURE_RUNTIME_PM */
-static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx) {}
-static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx) {}
-static inline void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter) {}
-static inline void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter) {}
-#endif /* FEATURE_RUNTIME_PM */
 /**
  * hdd_alloc_station_adapter() - allocate the station hdd adapter
  * @hdd_ctx: global hdd context
@@ -9912,7 +9921,6 @@ int hdd_wlan_startup(struct device *dev)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_close_adapters;
 
-	hdd_runtime_suspend_context_init(hdd_ctx);
 	memdump_init();
 	hdd_driver_memdump_init();
 
