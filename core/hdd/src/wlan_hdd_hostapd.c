@@ -2207,10 +2207,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		qdf_mem_free(pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas);
 		pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas = NULL;
 		return QDF_STATUS_SUCCESS;
-	case eSAP_REMAIN_CHAN_READY:
-		hdd_remain_chan_ready_handler(adapter,
-			pSapEvent->sapevt.sap_roc_ind.scan_id);
-		return QDF_STATUS_SUCCESS;
 	case eSAP_UNKNOWN_STA_JOIN:
 		snprintf(unknownSTAEvent, IW_CUSTOM_MAX,
 			 "JOIN_UNKNOWN_STA-%02x:%02x:%02x:%02x:%02x:%02x",

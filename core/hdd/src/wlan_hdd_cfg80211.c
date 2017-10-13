@@ -13091,14 +13091,6 @@ int wlan_hdd_cfg80211_register_frames(struct hdd_adapter *adapter)
 		goto ret_status;
 	}
 
-	/* Register for p2p ack indication */
-	status = sme_register_p2p_ack_ind_callback(hHal,
-			hdd_send_action_cnf_cb);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("Failed to register p2p_ack_ind_callback");
-		goto ret_status;
-	}
-
 	/* Right now we are registering these frame when driver is getting
 	 * initialized. Once we will move to 2.6.37 kernel, in which we have
 	 * frame register ops, we will move this code as a part of that
