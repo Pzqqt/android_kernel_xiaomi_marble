@@ -295,6 +295,8 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
 	uint8_t ecsa_capable;
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
 } tSap_StationAssocReassocCompleteEvent;
 
 typedef struct sap_StationDisassocCompleteEvent_s {
@@ -302,7 +304,11 @@ typedef struct sap_StationDisassocCompleteEvent_s {
 	uint8_t staId;          /* STAID should not be used */
 	uint8_t status;
 	uint32_t statusCode;
+	uint32_t reason_code;
 	eSapDisassocReason reason;
+	int rssi;
+	int tx_rate;
+	int rx_rate;
 } tSap_StationDisassocCompleteEvent;
 
 typedef struct sap_StationSetKeyCompleteEvent_s {

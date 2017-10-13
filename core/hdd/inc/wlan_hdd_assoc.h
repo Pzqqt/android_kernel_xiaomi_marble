@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -377,5 +377,28 @@ static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
 {
 }
 #endif
+
+/**
+ * hdd_copy_ht_caps()- copy ht caps info from roam ht caps
+ * info to source ht_cap info of type ieee80211_ht_cap.
+ * @hdd_ht_cap: pointer to Source ht_cap info of type ieee80211_ht_cap
+ * @roam_ht_cap: pointer to roam ht_caps info
+ *
+ * Return: None
+ */
+
+void hdd_copy_ht_caps(struct ieee80211_ht_cap *hdd_ht_cap,
+		      tDot11fIEHTCaps *roam_ht_cap);
+
+/**
+ * hdd_copy_vht_caps()- copy vht caps info from roam vht caps
+ * info to source vht_cap info of type ieee80211_vht_cap.
+ * @hdd_vht_cap: pointer to Source vht_cap info of type ieee80211_vht_cap
+ * @roam_vht_cap: pointer to roam vht_caps info
+ *
+ * Return: None
+ */
+void hdd_copy_vht_caps(struct ieee80211_vht_cap *hdd_vht_cap,
+		       tDot11fIEVHTCaps *roam_vht_cap);
 
 #endif

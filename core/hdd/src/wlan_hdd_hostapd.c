@@ -1405,9 +1405,25 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
  *
  * Return: None.
  */
-static void hdd_fill_station_info(struct hdd_station_info *stainfo,
+static void hdd_fill_station_info(struct hdd_adapter *adapter,
 				  tSap_StationAssocReassocCompleteEvent *event)
 {
+	struct hdd_station_info *stainfo;
+	uint8_t i = 0;
+
+	if (event->staId >= WLAN_MAX_STA_COUNT) {
+		hdd_err("invalid sta id");
+		return;
+	}
+
+	stainfo = &adapter->sta_info[event->staId];
+
+	if (!stainfo) {
+		hdd_err("invalid stainfo");
+		return;
+	}
+
+	stainfo->freq = cds_chan_to_freq(event->chan_info.chan_id);
 	stainfo->sta_type = event->staType;
 	stainfo->nss = event->chan_info.nss;
 	stainfo->rate_flags = event->chan_info.rate_flags;
@@ -1434,6 +1450,40 @@ static void hdd_fill_station_info(struct hdd_station_info *stainfo,
 				      stainfo->rx_mcs_map);
 	/* expect max_phy_rate report in kbps */
 	stainfo->max_phy_rate *= 100;
+
+	if (event->vht_caps.present) {
+		stainfo->vht_present = true;
+		hdd_copy_vht_caps(&stainfo->vht_caps, &event->vht_caps);
+	}
+	if (event->ht_caps.present) {
+		stainfo->ht_present = true;
+		hdd_copy_ht_caps(&stainfo->ht_caps, &event->ht_caps);
+	}
+
+	while (i < WLAN_MAX_STA_COUNT) {
+		if (!qdf_mem_cmp(adapter->cache_sta_info[i].sta_mac.bytes,
+				 event->staMac.bytes,
+				 QDF_MAC_ADDR_SIZE)) {
+			qdf_mem_zero(&adapter->cache_sta_info[i],
+				     sizeof(*stainfo));
+			break;
+		}
+		i++;
+	}
+	if (i >= WLAN_MAX_STA_COUNT) {
+		i = 0;
+		while (i < WLAN_MAX_STA_COUNT) {
+			if (adapter->cache_sta_info[i].in_use != TRUE)
+				break;
+			i++;
+		}
+	}
+	if (i < WLAN_MAX_STA_COUNT)
+		qdf_mem_copy(&adapter->cache_sta_info[i],
+			     stainfo, sizeof(struct hdd_station_info));
+	else
+		hdd_debug("reached max staid, stainfo can't be cached");
+
 	hdd_debug("cap %d %d %d %d %d %d %d %d %d %x %d",
 		  stainfo->ampdu,
 		  stainfo->sgi_enable,
@@ -1529,6 +1579,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	struct ch_params sap_ch_param = {0};
 	eCsrPhyMode phy_mode;
 	bool legacy_phymode;
+	tSap_StationDisassocCompleteEvent *disassoc_comp;
+	struct hdd_station_info *stainfo;
 
 	dev = (struct net_device *)usrDataForCallback;
 	if (!dev) {
@@ -2027,13 +2079,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 
 		staId = event->staId;
-		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_fill_station_info(
-				&adapter->sta_info[staId],
-				event);
-			hdd_debug("hdd_hostapd_sap_event_cb, StaID: %d, Type: %d",
-			      staId, adapter->sta_info[staId].sta_type);
-		}
+		if (QDF_IS_STATUS_SUCCESS(qdf_status))
+			hdd_fill_station_info(adapter, event);
 
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
 			status = hdd_ipa_wlan_evt(adapter,
@@ -2148,11 +2195,21 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
+		disassoc_comp =
+			&pSapEvent->sapevt.sapStationDisassocCompleteEvent;
 		memcpy(wrqu.addr.sa_data,
-		       &pSapEvent->sapevt.sapStationDisassocCompleteEvent.
-		       staMac, QDF_MAC_ADDR_SIZE);
+		       &disassoc_comp->staMac, QDF_MAC_ADDR_SIZE);
 		hdd_notice(" disassociated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+
+		stainfo = hdd_get_stainfo(adapter->cache_sta_info,
+					  disassoc_comp->staMac);
+		if (stainfo) {
+			stainfo->rssi = disassoc_comp->rssi;
+			stainfo->tx_rate = disassoc_comp->tx_rate;
+			stainfo->rx_rate = disassoc_comp->rx_rate;
+			stainfo->reason_code = disassoc_comp->reason_code;
+		}
 
 		qdf_status = qdf_event_set(&hostapd_state->qdf_sta_disassoc_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -4672,6 +4729,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 			(SIR_MAC_MGMT_DISASSOC >> 4),
 			&del_sta_params);
 	hdd_softap_sta_disassoc(adapter, &del_sta_params);
+
 	EXIT();
 	return 0;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2077,9 +2077,12 @@ static void lim_fill_assoc_ind_wapi_info(tpAniSirGlobal mac_ctx,
 static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
 					tpPESession session_entry,
 					tpSirAssocReq assoc_req,
-					tpLimMlmAssocInd assoc_ind)
+					tpLimMlmAssocInd assoc_ind,
+					tpDphHashNode sta_ds)
 {
 	uint8_t chan;
+	uint8_t i;
+	bool nw_type_11b = true;
 
 	if (session_entry->limRFBand == BAND_2G) {
 		if (session_entry->vhtCapability && assoc_req->VHTCaps.present)
@@ -2087,8 +2090,19 @@ static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
 		else if (session_entry->htCapability
 			    && assoc_req->HTCaps.present)
 			assoc_ind->chan_info.info = MODE_11NG_HT20;
-		else
-			assoc_ind->chan_info.info = MODE_11G;
+		else {
+			for (i = 0; i < SIR_NUM_11A_RATES; i++) {
+				if (sirIsArate(sta_ds->
+					       supportedRates.llaRates[i]
+					       & 0x7F)) {
+					assoc_ind->chan_info.info = MODE_11G;
+					nw_type_11b = false;
+					break;
+				}
+			}
+			if (nw_type_11b)
+				assoc_ind->chan_info.info = MODE_11B;
+		}
 		return;
 	}
 
@@ -2311,6 +2325,9 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 		 * processing in hostapd
 		 */
 		if (assoc_req->HTCaps.present) {
+			qdf_mem_copy(&assoc_ind->ht_caps, &assoc_req->HTCaps,
+				     sizeof(tDot11fIEHTCaps));
+
 			rsn_len = assoc_ind->addIE.length;
 			if (assoc_ind->addIE.length + DOT11F_IE_HTCAPS_MIN_LEN
 				+ 2 < SIR_MAC_MAX_IE_LENGTH) {
@@ -2423,8 +2440,10 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 			ext_chan_switch;
 
 		/* updates VHT information in assoc indication */
+		 qdf_mem_copy(&assoc_ind->vht_caps, &assoc_req->VHTCaps,
+			      sizeof(tDot11fIEVHTCaps));
 		lim_fill_assoc_ind_vht_info(mac_ctx, session_entry, assoc_req,
-			assoc_ind);
+					    assoc_ind, sta_ds);
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_IND,
 			 (uint32_t *) assoc_ind);
 		qdf_mem_free(assoc_ind);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1737,6 +1737,18 @@ QDF_STATUS sme_set_bt_activity_info_cb(tHalHandle hal,
 
 QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
 				uint32_t param_val);
+
+/**
+ * sme_get_peer_stats() - sme api to post peer info request
+ * @mac: mac handle
+ * @req: peer info request struct send to wma
+ *
+ * Return: QDF_STATUS_SUCCESS or non-zero on failure
+ */
+
+QDF_STATUS sme_get_peer_stats(tpAniSirGlobal mac,
+			      struct sir_peer_info_req req);
+
 /**
  * sme_get_peer_info() - sme api to get peer info
  * @hal: hal handle for getting global mac struct

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3857,9 +3857,8 @@ static void hdd_get_peer_rssi_cb(struct sir_peer_info_resp *sta_rssi,
 	struct sir_peer_info *rssi_info;
 	uint8_t peer_num;
 
-	if ((!sta_rssi) || (!context)) {
-		hdd_err("Bad param, sta_rssi [%pK] context [%pK]",
-			sta_rssi, context);
+	if ((!sta_rssi)) {
+		hdd_err("Bad param, sta_rssi [%pK]", sta_rssi);
 		return;
 	}
 
@@ -3887,6 +3886,7 @@ static void hdd_get_peer_rssi_cb(struct sir_peer_info_resp *sta_rssi,
 
 	hdd_request_complete(request);
 	hdd_request_put(request);
+
 }
 
 int wlan_hdd_get_peer_rssi(struct hdd_adapter *adapter,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -784,6 +784,11 @@ lim_fill_assoc_ind_params(tpAniSirGlobal mac_ctx,
 	sme_assoc_ind->rx_mcs_map = assoc_ind->rx_mcs_map;
 	sme_assoc_ind->tx_mcs_map = assoc_ind->tx_mcs_map;
 	sme_assoc_ind->ecsa_capable = assoc_ind->ecsa_capable;
+
+	if (assoc_ind->ht_caps.present)
+		sme_assoc_ind->HTCaps = assoc_ind->ht_caps;
+	if (assoc_ind->vht_caps.present)
+		sme_assoc_ind->VHTCaps = assoc_ind->vht_caps;
 }
 
 /**

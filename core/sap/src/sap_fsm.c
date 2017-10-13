@@ -2469,10 +2469,14 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		reassoc_complete->rx_mcs_map = csr_roaminfo->rx_mcs_map;
 		reassoc_complete->tx_mcs_map = csr_roaminfo->tx_mcs_map;
 		reassoc_complete->ecsa_capable = csr_roaminfo->ecsa_capable;
+		if (csr_roaminfo->ht_caps.present)
+			reassoc_complete->ht_caps = csr_roaminfo->ht_caps;
+		if (csr_roaminfo->vht_caps.present)
+			reassoc_complete->vht_caps = csr_roaminfo->vht_caps;
+
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
-
 		if (!csr_roaminfo) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("Invalid CSR Roam Info"));
@@ -2485,13 +2489,17 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		qdf_copy_macaddr(&disassoc_comp->staMac,
 				 &csr_roaminfo->peerMac);
 		disassoc_comp->staId = csr_roaminfo->staId;
-		if (csr_roaminfo->reasonCode == eCSR_ROAM_RESULT_FORCED)
+		if (csr_roaminfo->disassoc_reason == eCSR_ROAM_RESULT_FORCED)
 			disassoc_comp->reason = eSAP_USR_INITATED_DISASSOC;
 		else
 			disassoc_comp->reason = eSAP_MAC_INITATED_DISASSOC;
 
 		disassoc_comp->statusCode = csr_roaminfo->statusCode;
 		disassoc_comp->status = (eSapStatus) context;
+		disassoc_comp->rssi = csr_roaminfo->rssi;
+		disassoc_comp->rx_rate = csr_roaminfo->rx_rate;
+		disassoc_comp->tx_rate = csr_roaminfo->tx_rate;
+		disassoc_comp->reason_code = csr_roaminfo->reasonCode;
 		break;
 
 	case eSAP_STA_SET_KEY_EVENT:

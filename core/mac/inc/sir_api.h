@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1410,6 +1410,8 @@ typedef struct sSirSmeAssocInd {
 	uint8_t tx_mcs_map;
 	/* Extended CSA capability of station */
 	uint8_t ecsa_capable;
+	tDot11fIEHTCaps HTCaps;
+	tDot11fIEVHTCaps VHTCaps;
 } tSirSmeAssocInd, *tpSirSmeAssocInd;
 
 /* / Definition for Association confirm */

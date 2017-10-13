@@ -278,6 +278,9 @@ typedef struct sLimMlmAssocInd {
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
 	uint8_t ecsa_capable;
+
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
 } tLimMlmAssocInd, *tpLimMlmAssocInd;
 
 typedef struct sLimMlmReassocReq {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -6816,6 +6816,10 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 		break;
 	case eCsrForcedDisassocSta:
 	case eCsrForcedDeauthSta:
+		roam_info.rssi = mac_ctx->peer_rssi;
+		roam_info.tx_rate = mac_ctx->peer_txrate;
+		roam_info.rx_rate = mac_ctx->peer_rxrate;
+
 		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
 			session_id);
 		session = CSR_GET_SESSION(mac_ctx, session_id);
@@ -6826,7 +6830,8 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 			qdf_mem_copy(roam_info.peerMac.bytes,
 					cmd->u.roamCmd.peerMac,
 					sizeof(tSirMacAddr));
-			roam_info.reasonCode = eCSR_ROAM_RESULT_FORCED;
+			roam_info.reasonCode = cmd->u.roamCmd.reason;
+			roam_info.disassoc_reason = eCSR_ROAM_RESULT_FORCED;
 			roam_info.statusCode = eSIR_SME_SUCCESS;
 			status = csr_roam_call_callback(mac_ctx, session_id,
 					&roam_info, cmd->u.roamCmd.roamId,
@@ -10363,6 +10368,10 @@ void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		roam_info->rx_mcs_map = pUpperLayerAssocCnf->rx_mcs_map;
 		roam_info->tx_mcs_map = pUpperLayerAssocCnf->tx_mcs_map;
 		roam_info->ecsa_capable = pUpperLayerAssocCnf->ecsa_capable;
+		if (pUpperLayerAssocCnf->ht_caps.present)
+			roam_info->ht_caps = pUpperLayerAssocCnf->ht_caps;
+		if (pUpperLayerAssocCnf->vht_caps.present)
+			roam_info->vht_caps = pUpperLayerAssocCnf->vht_caps;
 		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile)) {
 			pMac->roam.roamSession[sessionId].connectState =
 				eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED;
@@ -11209,6 +11218,16 @@ csr_roam_chk_lnk_assoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	qdf_mem_copy(&roam_info_ptr->chan_info,
 		     &pAssocInd->chan_info,
 		     sizeof(tSirSmeChanInfo));
+
+	if (pAssocInd->HTCaps.present)
+		qdf_mem_copy(&roam_info_ptr->ht_caps,
+			     &pAssocInd->HTCaps,
+			     sizeof(tDot11fIEHTCaps));
+	if (pAssocInd->VHTCaps.present)
+		qdf_mem_copy(&roam_info_ptr->vht_caps,
+			     &pAssocInd->VHTCaps,
+			     sizeof(tDot11fIEVHTCaps));
+
 	if (CSR_IS_INFRA_AP(roam_info_ptr->u.pConnectedProfile)) {
 		if (session->pCurRoamProfile &&
 		    CSR_IS_ENC_TYPE_STATIC(
@@ -11364,6 +11383,11 @@ csr_roam_send_disconnect_done_indication(tpAniSirGlobal mac_ctx, tSirSmeRsp
 		roam_info.statusCode = eSIR_SME_STA_NOT_ASSOCIATED;
 		qdf_mem_copy(roam_info.peerMac.bytes, discon_ind->peer_mac,
 			     ETH_ALEN);
+
+		roam_info.rssi = mac_ctx->peer_rssi;
+		roam_info.tx_rate = mac_ctx->peer_txrate;
+		roam_info.rx_rate = mac_ctx->peer_rxrate;
+
 		csr_roam_call_callback(mac_ctx, discon_ind->session_id,
 				       &roam_info, 0, eCSR_ROAM_LOSTLINK,
 				       eCSR_ROAM_RESULT_DISASSOC_IND);
@@ -12656,6 +12680,7 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 		sme_err("session: %d not found", sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
+	qdf_mem_set(&roamInfo, sizeof(struct csr_roam_info), 0);
 #ifndef NAPIER_SCAN
 	pSession->fCancelRoaming = false;
 #endif
@@ -12665,22 +12690,34 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 		pSession->roamingStatusCode = pDisassocIndMsg->statusCode;
 		pSession->joinFailStatusCode.reasonCode =
 			pDisassocIndMsg->reasonCode;
+
+		qdf_copy_macaddr(&roamInfo.peerMac,
+				 &pDisassocIndMsg->peer_macaddr);
 	} else if (eWNI_SME_DEAUTH_IND == type) {
 		result = eCSR_ROAM_RESULT_DEAUTH_IND;
 		pDeauthIndMsg = (tSirSmeDeauthInd *) pSirMsg;
 		pSession->roamingStatusCode = pDeauthIndMsg->statusCode;
 		pSession->joinFailStatusCode.reasonCode =
 			pDeauthIndMsg->reasonCode;
+
+		qdf_copy_macaddr(&roamInfo.peerMac,
+				 &pDeauthIndMsg->peer_macaddr);
+
 	} else {
 		sme_warn("gets an unknown type (%d)", type);
 		result = eCSR_ROAM_RESULT_NONE;
 		pSession->joinFailStatusCode.reasonCode = 1;
 	}
 
-	/* call profile lost link routine here */
-	if (!CSR_IS_INFRA_AP(&pSession->connectedProfile))
-		csr_roam_call_callback(pMac, sessionId, NULL, 0,
-				       eCSR_ROAM_LOSTLINK_DETECTED, result);
+	if (type == eWNI_SME_DISASSOC_IND || type == eWNI_SME_DEAUTH_IND) {
+		struct	sir_peer_info_req req;
+
+		req.sessionid = sessionId;
+		req.peer_macaddr = roamInfo.peerMac;
+		sme_get_peer_stats(pMac, req);
+	}
+	csr_roam_call_callback(pMac, sessionId, NULL, 0,
+			       eCSR_ROAM_LOSTLINK_DETECTED, result);
 
 	if (eWNI_SME_DISASSOC_IND == type)
 		status = csr_send_mb_disassoc_cnf_msg(pMac, pDisassocIndMsg);
@@ -15957,6 +15994,11 @@ QDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 
 		pBuf = (uint8_t *)&pMsg->ecsa_capable;
 		*pBuf = pAssocInd->ecsa_capable;
+
+		if (pAssocInd->HTCaps.present)
+			pMsg->ht_caps = pAssocInd->HTCaps;
+		if (pAssocInd->VHTCaps.present)
+			pMsg->vht_caps = pAssocInd->VHTCaps;
 
 		msgQ.type = eWNI_SME_UPPER_LAYER_ASSOC_CNF;
 		msgQ.bodyptr = pMsg;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -959,6 +959,9 @@ typedef struct sAniSirGlobal {
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
 	uint32_t rx_packet_drop_counter;
 	bool ignore_assoc_disallowed;
+	uint32_t peer_rssi;
+	uint32_t peer_txrate;
+	uint32_t peer_rxrate;
 } tAniSirGlobal;
 
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1415,6 +1415,9 @@ struct csr_roam_info {
 	tSirResultCodes statusCode;
 	/* this'd be our own defined or sent from otherBSS(per 802.11spec) */
 	uint32_t reasonCode;
+
+	uint8_t disassoc_reason;
+
 	uint8_t staId;         /* Peer stationId when connected */
 	/*
 	 * The DPU signatures will be sent eventually to TL to help it
@@ -1523,6 +1526,9 @@ struct csr_roam_info {
 	uint16_t fils_seq_num;
 	struct fils_join_rsp_params *fils_join_rsp;
 #endif
+	int rssi;
+	int tx_rate;
+	int rx_rate;
 };
 
 typedef struct tagCsrFreqScanInfo {
@@ -1563,6 +1569,9 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	uint8_t tx_mcs_map;
 	/* Extended capabilities of STA */
 	uint8_t              ecsa_capable;
+
+	tDot11fIEHTCaps ht_caps;
+	tDot11fIEVHTCaps vht_caps;
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {

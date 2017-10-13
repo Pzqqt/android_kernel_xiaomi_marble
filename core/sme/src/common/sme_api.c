@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1954,6 +1954,8 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	struct sir_peer_info *peer_stats;
+	struct sir_peer_info_resp *peer_info_rsp;
 
 	if (pMsg == NULL) {
 		sme_err("Empty message for SME");
@@ -2141,6 +2143,17 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		if (pMac->sme.pget_peer_info_ind_cb)
 			pMac->sme.pget_peer_info_ind_cb(pMsg->bodyptr,
 				pMac->sme.pget_peer_info_cb_context);
+		if (pMsg->bodyptr) {
+			peer_info_rsp = (struct sir_peer_info_resp *)
+							(pMsg->bodyptr);
+			peer_stats = (struct sir_peer_info *)
+							(peer_info_rsp->info);
+			if (peer_stats) {
+				pMac->peer_rssi = peer_stats[0].rssi;
+				pMac->peer_txrate = peer_stats[0].tx_rate;
+				pMac->peer_rxrate = peer_stats[0].rx_rate;
+			}
+		}
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 	case eWNI_SME_GET_PEER_INFO_EXT_IND:
@@ -8581,6 +8594,39 @@ QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 	return status;
 }
 
+QDF_STATUS sme_get_peer_stats(tpAniSirGlobal mac,
+			      struct sir_peer_info_req req)
+{
+	QDF_STATUS qdf_status;
+	struct scheduler_msg message = {0};
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		sme_debug("Failed to get Lock");
+		return qdf_status;
+	}
+	/* serialize the req through MC thread */
+	message.bodyptr = qdf_mem_malloc(sizeof(req));
+	if (NULL == message.bodyptr) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Memory allocation failed.", __func__);
+		sme_release_global_lock(&mac->sme);
+		return QDF_STATUS_E_NOMEM;
+	}
+	qdf_mem_copy(message.bodyptr, &req, sizeof(req));
+	message.type = WMA_GET_PEER_INFO;
+	message.reserved = 0;
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Post get peer info msg fail", __func__);
+		qdf_mem_free(message.bodyptr);
+		qdf_status = QDF_STATUS_E_FAILURE;
+	}
+	sme_release_global_lock(&mac->sme);
+	return qdf_status;
+}
+
 QDF_STATUS sme_get_peer_info(tHalHandle hal, struct sir_peer_info_req req,
 			void *context,
 			void (*callbackfn)(struct sir_peer_info_resp *param,
@@ -8615,6 +8661,7 @@ QDF_STATUS sme_get_peer_info(tHalHandle hal, struct sir_peer_info_req req,
 		}
 		qdf_mem_copy(message.bodyptr, &req, sizeof(req));
 		message.type = WMA_GET_PEER_INFO;
+		message.reserved = 0;
 		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,

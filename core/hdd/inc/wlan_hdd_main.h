@@ -56,6 +56,7 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
+#include <linux/ieee80211.h>
 #include <qdf_list.h>
 #include <qdf_types.h>
 #include "sir_mac_prot_def.h"
@@ -821,6 +822,13 @@ struct hdd_station_info {
 	uint8_t max_mcs_idx;
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
+	uint32_t freq;
+	bool ht_present;
+	bool vht_present;
+	struct ieee80211_ht_cap ht_caps;
+	struct ieee80211_vht_cap vht_caps;
+	uint32_t reason_code;
+	int8_t rssi;
 };
 
 /**
@@ -1082,6 +1090,7 @@ struct hdd_adapter {
 	/** Per-station structure */
 	spinlock_t sta_info_lock;        /* To protect access to station Info */
 	struct hdd_station_info sta_info[WLAN_MAX_STA_COUNT];
+	struct hdd_station_info cache_sta_info[WLAN_MAX_STA_COUNT];
 
 
 #ifdef FEATURE_WLAN_WAPI
@@ -2837,6 +2846,18 @@ void hdd_pld_ipa_uc_shutdown_pipes(void);
  * Return: per_index_score within the max limit
  */
 uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score);
+/**
+ * hdd_get_stainfo() - get stainfo for the specified peer
+ * @astainfo: array of the station info in which the sta info
+ * corresponding to mac_addr needs to be searched
+ * @mac_addr: mac address of requested peer
+ *
+ * This function find the stainfo for the peer with mac_addr
+ *
+ * Return: stainfo if found, NULL if not found
+ */
+struct hdd_station_info *hdd_get_stainfo(struct hdd_station_info *astainfo,
+					 struct qdf_mac_addr mac_addr);
 
 int hdd_driver_memdump_init(void);
 void hdd_driver_memdump_deinit(void);
