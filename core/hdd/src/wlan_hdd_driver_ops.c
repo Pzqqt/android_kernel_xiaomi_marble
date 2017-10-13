@@ -312,6 +312,27 @@ static void hdd_init_qdf_ctx(struct device *dev, void *bdev,
 }
 
 /**
+ * check_for_probe_defer() - API to check return value
+ * @ret: Return Value
+ *
+ * Return: return -EPROBE_DEFER to platform driver if return value
+ * is -ENOMEM. Platform driver will try to re-probe.
+ */
+#ifdef MODULE
+static int check_for_probe_defer(int ret)
+{
+	return ret;
+}
+#else
+static int check_for_probe_defer(int ret)
+{
+	if (ret == -ENOMEM)
+		return -EPROBE_DEFER;
+	return ret;
+}
+#endif
+
+/**
  * wlan_hdd_probe() - handles probe request
  *
  * This function is called to probe the wlan driver
@@ -407,7 +428,7 @@ err_hdd_deinit:
 	cds_set_fw_down(false);
 	hdd_stop_driver_ops_timer();
 	mutex_unlock(&hdd_init_deinit_lock);
-	return ret;
+	return check_for_probe_defer(ret);
 }
 
 static inline void hdd_pld_driver_unloading(struct device *dev)
