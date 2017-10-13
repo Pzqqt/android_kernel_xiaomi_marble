@@ -3811,9 +3811,9 @@ QDF_STATUS wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
  * Return: QDF status
  */
 QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
-				tSirLedFlashingReq *flashing)
+				struct flashing_req_params *flashing)
 {
-	struct flashing_req_params cmd = {0};
+	QDF_STATUS status;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE(FL("WMA is closed, can not issue cmd"));
@@ -3823,15 +3823,9 @@ QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 		WMA_LOGE(FL("invalid parameter: flashing"));
 		return QDF_STATUS_E_INVAL;
 	}
-	cmd.req_id = flashing->reqId;
-	cmd.pattern_id = flashing->pattern_id;
-	cmd.led_x0 = flashing->led_x0;
-	cmd.led_x1 = flashing->led_x1;
 	status = wmi_unified_set_led_flashing_cmd(wma_handle->wmi_handle,
-				      &cmd);
-	if (status != EOK)
-		return QDF_STATUS_E_FAILURE;
-	return QDF_STATUS_SUCCESS;
+						  flashing);
+	return status;
 }
 #endif /* WLAN_FEATURE_GPIO_LED_FLASHING */
 

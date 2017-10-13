@@ -7568,8 +7568,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 #endif /* DHCP_SERVER_OFFLOAD */
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
 	case WMA_LED_FLASHING_REQ:
-		wma_set_led_flashing(wma_handle,
-				     (tSirLedFlashingReq *) msg->bodyptr);
+		wma_set_led_flashing(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* WLAN_FEATURE_GPIO_LED_FLASHING */

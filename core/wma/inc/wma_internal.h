@@ -1128,7 +1128,7 @@ int wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
 
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
 QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
-				tSirLedFlashingReq *flashing);
+				struct flashing_req_params *flashing);
 #endif
 
 
