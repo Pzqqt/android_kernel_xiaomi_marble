@@ -226,20 +226,20 @@ bool hdd_is_connecting(struct hdd_station_ctx *hdd_sta_ctx);
 
 /**
  * hdd_conn_is_connected() - Function to check connection status
- * @pHddStaCtx:    pointer to global HDD Station context
+ * @sta_ctx:    pointer to global HDD Station context
  *
  * Return: false if any errors encountered, true otherwise
  */
-bool hdd_conn_is_connected(struct hdd_station_ctx *pHddStaCtx);
+bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx);
 
 /**
  * hdd_conn_get_connected_band() - get current connection radio band
- * @pHddStaCtx:    pointer to global HDD Station context
+ * @sta_ctx:    pointer to global HDD Station context
  *
  * Return: BAND_2G or BAND_5G based on current AP connection
  *      BAND_ALL if not connected
  */
-enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *pHddStaCtx);
+enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx);
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback

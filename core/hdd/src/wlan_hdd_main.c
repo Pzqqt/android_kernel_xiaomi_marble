@@ -3400,7 +3400,7 @@ hdd_vdev_destroy:
 
 QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 {
-	struct hdd_station_ctx *pHddStaCtx = &adapter->sessionCtx.station;
+	struct hdd_station_ctx *sta_ctx = &adapter->sessionCtx.station;
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int ret_val;
@@ -3424,18 +3424,18 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	}
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
 
-	qdf_mem_set(pHddStaCtx->conn_info.staId,
-		sizeof(pHddStaCtx->conn_info.staId), HDD_WLAN_INVALID_STA_ID);
+	qdf_mem_set(sta_ctx->conn_info.staId,
+		sizeof(sta_ctx->conn_info.staId), HDD_WLAN_INVALID_STA_ID);
 
 	/* set fast roaming capability in sme session */
 	status = sme_config_fast_roaming(hdd_ctx->hHal, adapter->sessionId,
 					 adapter->fast_roaming_allowed);
 	/* Set the default operation channel */
-	pHddStaCtx->conn_info.operationChannel =
+	sta_ctx->conn_info.operationChannel =
 		hdd_ctx->config->OperatingChannel;
 
 	/* Make the default Auth Type as OPEN */
-	pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+	sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
 	status = hdd_init_tx_rx(adapter);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -4234,9 +4234,9 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	{
-		struct hdd_station_ctx *pHddStaCtx =
+		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		bssid = &pHddStaCtx->conn_info.bssId;
+		bssid = &sta_ctx->conn_info.bssId;
 		break;
 	}
 	case QDF_SAP_MODE:
@@ -4524,7 +4524,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 	struct hdd_adapter *adapter;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	struct qdf_mac_addr peerMacAddr;
 
 	ENTER();
@@ -4589,9 +4589,9 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		/* Delete peers if any for STA and P2P client modes */
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			qdf_copy_macaddr(&peerMacAddr,
-					 &pHddStaCtx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssId);
 
 			hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
 						      peerMacAddr.bytes);

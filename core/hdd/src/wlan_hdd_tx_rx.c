@@ -564,7 +564,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool granted;
 	uint8_t STAId;
-	struct hdd_station_ctx *pHddStaCtx = &adapter->sessionCtx.station;
+	struct hdd_station_ctx *sta_ctx = &adapter->sessionCtx.station;
 	struct qdf_mac_addr *mac_addr;
 	bool pkt_proto_logged = false;
 #ifdef QCA_PKT_PROTO_TRACE
@@ -645,7 +645,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (((adapter->psbChanged & (1 << ac)) &&
 		likely(adapter->hddWmmStatus.wmmAcStatus[ac].
 			wmmAcAccessAllowed)) ||
-		((pHddStaCtx->conn_info.uIsAuthenticated == false) &&
+		((sta_ctx->conn_info.uIsAuthenticated == false) &&
 		 (QDF_NBUF_CB_PACKET_TYPE_EAPOL ==
 			QDF_NBUF_CB_GET_PACKET_TYPE(skb) ||
 		  QDF_NBUF_CB_PACKET_TYPE_WAPI ==
@@ -823,22 +823,22 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 /**
  * hdd_get_peer_sta_id() - Get the StationID using the Peer Mac address
- * @pHddStaCtx: pointer to HDD Station Context
+ * @sta_ctx: pointer to HDD Station Context
  * @pMacAddress: pointer to Peer Mac address
  * @staID: pointer to returned Station Index
  *
  * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
  */
 
-QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *pHddStaCtx,
+QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 			       struct qdf_mac_addr *pMacAddress, uint8_t *staId)
 {
 	uint8_t idx;
 
 	for (idx = 0; idx < MAX_PEERS; idx++) {
-		if (!qdf_mem_cmp(&pHddStaCtx->conn_info.peerMacAddress[idx],
+		if (!qdf_mem_cmp(&sta_ctx->conn_info.peerMacAddress[idx],
 				    pMacAddress, QDF_MAC_ADDR_SIZE)) {
-			*staId = pHddStaCtx->conn_info.staId[idx];
+			*staId = sta_ctx->conn_info.staId[idx];
 			return QDF_STATUS_SUCCESS;
 		}
 	}
@@ -1167,7 +1167,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	int rxstat;
 	struct sk_buff *skb = NULL;
 	struct sk_buff *next = NULL;
-	struct hdd_station_ctx *pHddStaCtx = NULL;
+	struct hdd_station_ctx *sta_ctx = NULL;
 	unsigned int cpu_index;
 	struct qdf_mac_addr *mac_addr;
 	bool wake_lock = false;
@@ -1209,8 +1209,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			 "%s: skb %pK skb->len %d\n", __func__, skb, skb->len);
 #endif
 
-		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		if ((pHddStaCtx->conn_info.proxyARPService) &&
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if ((sta_ctx->conn_info.proxyARPService) &&
 			cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
 			uint32_t rx_dropped;
 
@@ -1278,7 +1278,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 		/* hold configurable wakelock for unicast traffic */
 		if (hdd_ctx->config->rx_wakelock_timeout &&
-				pHddStaCtx->conn_info.uIsAuthenticated)
+				sta_ctx->conn_info.uIsAuthenticated)
 			wake_lock = hdd_is_rx_wake_lock_needed(skb);
 
 		if (wake_lock) {

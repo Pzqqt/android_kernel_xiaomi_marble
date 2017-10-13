@@ -233,7 +233,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type sta_desc = {0};
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint8_t peer_id;
 	struct ol_txrx_ops txrx_ops;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
@@ -269,13 +269,13 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
-	if (pHddStaCtx->conn_info.staId[0] != HDD_WLAN_INVALID_STA_ID &&
-	     pHddStaCtx->conn_info.staId[0] != peer_id) {
+	if (sta_ctx->conn_info.staId[0] != HDD_WLAN_INVALID_STA_ID &&
+	     sta_ctx->conn_info.staId[0] != peer_id) {
 		hdd_err("The ID for the OCB station has changed.");
 	}
 
-	pHddStaCtx->conn_info.staId[0] = peer_id;
-	qdf_copy_macaddr(&pHddStaCtx->conn_info.peerMacAddress[0],
+	sta_ctx->conn_info.staId[0] = peer_id;
+	qdf_copy_macaddr(&sta_ctx->conn_info.peerMacAddress[0],
 			 &adapter->macAddressCurrent);
 
 	return 0;

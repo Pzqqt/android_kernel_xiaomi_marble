@@ -482,7 +482,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			    tpSirWifiInterfaceInfo pInfo)
 {
 	uint8_t *staMac = NULL;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -493,20 +493,20 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 	if (((QDF_STA_MODE == adapter->device_mode) ||
 	     (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 	     (QDF_P2P_DEVICE_MODE == adapter->device_mode))) {
-		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if (eConnectionState_NotConnected ==
-		    pHddStaCtx->conn_info.connState) {
+		    sta_ctx->conn_info.connState) {
 			pInfo->state = WIFI_DISCONNECTED;
 		}
 		if (eConnectionState_Connecting ==
-		    pHddStaCtx->conn_info.connState) {
+		    sta_ctx->conn_info.connState) {
 			hdd_err("Session ID %d, Connection is in progress",
 				adapter->sessionId);
 			pInfo->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
-		     pHddStaCtx->conn_info.connState)
-		    && (false == pHddStaCtx->conn_info.uIsAuthenticated)) {
+		     sta_ctx->conn_info.connState)
+		    && (false == sta_ctx->conn_info.uIsAuthenticated)) {
 			staMac =
 				(uint8_t *) &(adapter->macAddressCurrent.
 					      bytes[0]);
@@ -516,17 +516,17 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 			pInfo->state = WIFI_AUTHENTICATING;
 		}
 		if (eConnectionState_Associated ==
-		    pHddStaCtx->conn_info.connState) {
+		    sta_ctx->conn_info.connState) {
 			pInfo->state = WIFI_ASSOCIATED;
 			qdf_copy_macaddr(&pInfo->bssid,
-					 &pHddStaCtx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssId);
 			qdf_mem_copy(pInfo->ssid,
-				     pHddStaCtx->conn_info.SSID.SSID.ssId,
-				     pHddStaCtx->conn_info.SSID.SSID.length);
+				     sta_ctx->conn_info.SSID.SSID.ssId,
+				     sta_ctx->conn_info.SSID.SSID.length);
 			/*
 			 * NULL Terminate the string
 			 */
-			pInfo->ssid[pHddStaCtx->conn_info.SSID.SSID.length] = 0;
+			pInfo->ssid[sta_ctx->conn_info.SSID.SSID.length] = 0;
 		}
 	}
 
@@ -3886,8 +3886,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					   struct station_info *sinfo)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	int ssidlen = pHddStaCtx->conn_info.SSID.SSID.length;
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	int ssidlen = sta_ctx->conn_info.SSID.SSID.length;
 	uint8_t rate_flags;
 	uint8_t mcs_index;
 
@@ -3938,7 +3938,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (adapter->device_mode == QDF_SAP_MODE)
 		return wlan_hdd_get_sap_stats(adapter, sinfo);
 
-	if ((eConnectionState_Associated != pHddStaCtx->conn_info.connState) ||
+	if ((eConnectionState_Associated != sta_ctx->conn_info.connState) ||
 	    (0 == ssidlen)) {
 		hdd_debug("Not associated or Invalid ssidlen, %d",
 			ssidlen);
@@ -3946,7 +3946,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		return 0;
 	}
 
-	if (true == pHddStaCtx->hdd_ReassocScenario) {
+	if (true == sta_ctx->hdd_ReassocScenario) {
 		hdd_debug("Roaming is in progress, cannot continue with this request");
 		/*
 		 * supplicant reports very low rssi to upper layer
@@ -3966,7 +3966,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	/* for new connection there might be no valid previous RSSI */
 	if (!adapter->rssi) {
 		hdd_get_rssi_snr_by_bssid(adapter,
-				pHddStaCtx->conn_info.bssId.bytes,
+				sta_ctx->conn_info.bssId.bytes,
 				&adapter->rssi, NULL);
 	}
 
@@ -3975,9 +3975,9 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	hdd_debug("snr: %d, rssi: %d",
 		adapter->hdd_stats.summary_stat.snr,
 		adapter->hdd_stats.summary_stat.rssi);
-	pHddStaCtx->conn_info.signal = sinfo->signal;
-	pHddStaCtx->conn_info.noise =
-		pHddStaCtx->conn_info.signal - snr;
+	sta_ctx->conn_info.signal = sinfo->signal;
+	sta_ctx->conn_info.noise =
+		sta_ctx->conn_info.signal - snr;
 
 	wlan_hdd_fill_station_info_signal(sinfo);
 
@@ -4332,7 +4332,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	sinfo->rx_bytes = adapter->stats.rx_bytes;
 	sinfo->rx_packets = adapter->stats.rx_packets;
 
-	qdf_mem_copy(&pHddStaCtx->conn_info.txrate,
+	qdf_mem_copy(&sta_ctx->conn_info.txrate,
 		     &sinfo->txrate, sizeof(sinfo->txrate));
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
@@ -4600,7 +4600,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	int status;
 	bool filled = false;
 
@@ -4625,12 +4625,12 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	if (hdd_ctx->config->fEnableSNRMonitoring == 0)
 		return -ENONET;
 
-	if (pHddStaCtx->hdd_ReassocScenario) {
+	if (sta_ctx->hdd_ReassocScenario) {
 		hdd_info("Roaming in progress, hence return");
 		return -ENONET;
 	}

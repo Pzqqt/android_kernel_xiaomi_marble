@@ -13230,7 +13230,7 @@ void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter, uint8_t key_ind
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len)
 {
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	tCsrRoamSetKey setKey;
 	bool isConnected = true;
 	int status = 0;
@@ -13257,14 +13257,14 @@ void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter, uint8_t key_ind
 
 	hdd_debug("WAPI KEY LENGTH:0x%04x", key_Len);
 
-	pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
+	sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 	if (isConnected) {
 		status = sme_roam_set_key(WLAN_HDD_GET_HAL_CTX(adapter),
 					  adapter->sessionId, &setKey, &roamId);
 	}
 	if (status != 0) {
 		hdd_err("sme_roam_set_key failed status: %d", status);
-		pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
+		sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
 	}
 }
 #endif /* FEATURE_WLAN_WAPI */
@@ -13804,7 +13804,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	struct qdf_mac_addr STAMacAddress;
 	int ret;
 
@@ -13829,7 +13829,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	qdf_mem_copy(STAMacAddress.bytes, mac, QDF_MAC_ADDR_SIZE);
 
@@ -14106,12 +14106,12 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		   (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		struct hdd_station_ctx *pHddStaCtx =
+		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		if (!pairwise) {
 			/* set group key */
-			if (pHddStaCtx->roam_info.deferKeyComplete) {
+			if (sta_ctx->roam_info.deferKeyComplete) {
 				hdd_debug("%s- %d: Perform Set key Complete",
 					  __func__, __LINE__);
 				hdd_perform_roam_set_key_complete(adapter);
@@ -14127,7 +14127,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			     KeyMaterial[key_index][0], params->key,
 			     params->key_len);
 
-		pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
+		sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 
 		hdd_debug("Set key for peerMac "MAC_ADDRESS_STR" direction %d",
 		       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
@@ -14153,7 +14153,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
-			pHddStaCtx->roam_info.roamingState =
+			sta_ctx->roam_info.roamingState =
 				HDD_ROAM_STATE_NONE;
 			return -EINVAL;
 		}
@@ -14169,7 +14169,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		    !((IW_AUTH_KEY_MGMT_802_1X ==
 		       (pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X))
 		      && (eCSR_AUTH_TYPE_OPEN_SYSTEM ==
-			  pHddStaCtx->conn_info.authType)
+			  sta_ctx->conn_info.authType)
 		      )
 		    && ((WLAN_CIPHER_SUITE_WEP40 == params->cipher)
 			|| (WLAN_CIPHER_SUITE_WEP104 == params->cipher)
@@ -14188,7 +14188,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 			if (0 != status) {
 				hdd_err("sme_roam_set_key failed for group key (IBSS), returned %d", status);
-				pHddStaCtx->roam_info.roamingState =
+				sta_ctx->roam_info.roamingState =
 					HDD_ROAM_STATE_NONE;
 				return -EINVAL;
 			}
@@ -14400,7 +14400,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx;
 	int status;
@@ -14439,15 +14439,15 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
-		     pHddStaCtx->conn_info.ucEncryptionType) &&
+		     sta_ctx->conn_info.ucEncryptionType) &&
 		    !hdd_is_wapi_enc_type(
-		     pHddStaCtx->conn_info.ucEncryptionType) &&
+		     sta_ctx->conn_info.ucEncryptionType) &&
 		    (eCSR_ENCRYPT_TYPE_AES !=
-		     pHddStaCtx->conn_info.ucEncryptionType) &&
+		     sta_ctx->conn_info.ucEncryptionType) &&
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP !=
-			pHddStaCtx->conn_info.ucEncryptionType) &&
+			sta_ctx->conn_info.ucEncryptionType) &&
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP_256 !=
-		     pHddStaCtx->conn_info.ucEncryptionType)) {
+		     sta_ctx->conn_info.ucEncryptionType)) {
 			/* If default key index is not same as previous one,
 			 * then update the default key index
 			 */
@@ -14470,7 +14470,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			setKey.keyDirection = eSIR_TX_RX;
 
 			qdf_copy_macaddr(&setKey.peerMac,
-					 &pHddStaCtx->conn_info.bssId);
+					 &sta_ctx->conn_info.bssId);
 
 			if (Keys->KeyLength[key_index] == CSR_WEP40_KEY_LEN &&
 			    pWextState->roamProfile.EncryptionType.
@@ -15386,9 +15386,9 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
 	if (pRoamProfile) {
-		struct hdd_station_ctx *pHddStaCtx;
+		struct hdd_station_ctx *sta_ctx;
 
-		pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		/* Restart the opportunistic timer
 		 *
@@ -15700,46 +15700,46 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 {
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/*set authentication type */
 	switch (auth_type) {
 	case NL80211_AUTHTYPE_AUTOMATIC:
 		hdd_debug("set authentication type to AUTOSWITCH");
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_AUTOSWITCH;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_AUTOSWITCH;
 		break;
 
 	case NL80211_AUTHTYPE_OPEN_SYSTEM:
 	case NL80211_AUTHTYPE_FT:
 		hdd_debug("set authentication type to OPEN");
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		break;
 
 	case NL80211_AUTHTYPE_SHARED_KEY:
 		hdd_debug("set authentication type to SHARED");
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_SHARED_KEY;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_SHARED_KEY;
 		break;
 #ifdef FEATURE_WLAN_ESE
 	case NL80211_AUTHTYPE_NETWORK_EAP:
 		hdd_debug("set authentication type to CCKM WPA");
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_CCKM_WPA;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_CCKM_WPA;
 		break;
 #endif
 #if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
 	case NL80211_AUTHTYPE_FILS_SK:
 		hdd_notice("set authentication type to FILS SHARED");
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		break;
 #endif
 	default:
 		hdd_err("Unsupported authentication type: %d", auth_type);
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_UNKNOWN;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_UNKNOWN;
 		return -EINVAL;
 	}
 
 	pWextState->roamProfile.AuthType.authType[0] =
-		pHddStaCtx->conn_info.authType;
+		sta_ctx->conn_info.authType;
 	return 0;
 }
 
@@ -15890,7 +15890,7 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	if (!cipher) {
@@ -15949,13 +15949,13 @@ static int wlan_hdd_cfg80211_set_cipher(struct hdd_adapter *adapter,
 
 	if (ucast) {
 		hdd_debug("setting unicast cipher type to %d", encryptionType);
-		pHddStaCtx->conn_info.ucEncryptionType = encryptionType;
+		sta_ctx->conn_info.ucEncryptionType = encryptionType;
 		pWextState->roamProfile.EncryptionType.numEntries = 1;
 		pWextState->roamProfile.EncryptionType.encryptionType[0] =
 			encryptionType;
 	} else {
 		hdd_debug("setting mcast cipher type to %d", encryptionType);
-		pHddStaCtx->conn_info.mcEncryptionType = encryptionType;
+		sta_ctx->conn_info.mcEncryptionType = encryptionType;
 		pWextState->roamProfile.mcEncryptionType.numEntries = 1;
 		pWextState->roamProfile.mcEncryptionType.encryptionType[0] =
 			encryptionType;
@@ -16605,11 +16605,11 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 {
 	unsigned long rc;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	int status, result = 0;
 	tHalHandle hal;
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	if (adapter->device_mode ==  QDF_STA_MODE) {
 		sme_indicate_disconnect_inprogress(hal, adapter->sessionId);
@@ -16639,9 +16639,9 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 	}
 
 	if ((QDF_IBSS_MODE == adapter->device_mode) ||
-	  (eConnectionState_Associated == pHddStaCtx->conn_info.connState) ||
-	  (eConnectionState_Connecting == pHddStaCtx->conn_info.connState) ||
-	  (eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState)) {
+	  (eConnectionState_Associated == sta_ctx->conn_info.connState) ||
+	  (eConnectionState_Connecting == sta_ctx->conn_info.connState) ||
+	  (eConnectionState_IbssConnected == sta_ctx->conn_info.connState)) {
 		hdd_conn_set_connection_state(adapter,
 						eConnectionState_Disconnecting);
 		/* Issue disconnect to CSR */
@@ -16661,7 +16661,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		} else if (0 != status) {
 			hdd_err("sme_roam_disconnect failure, status: %d",
 				(int)status);
-			pHddStaCtx->staDebugState = status;
+			sta_ctx->staDebugState = status;
 			result = -EINVAL;
 			goto disconnected;
 		}
@@ -16671,16 +16671,16 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 			msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
 		if (!rc && (QDF_STATUS_CMD_NOT_QUEUED != status)) {
 			hdd_err("Sme disconnect event timed out session Id: %d staDebugState: %d",
-				adapter->sessionId, pHddStaCtx->staDebugState);
+				adapter->sessionId, sta_ctx->staDebugState);
 			result = -ETIMEDOUT;
 		}
 	} else if (eConnectionState_Disconnecting ==
-				pHddStaCtx->conn_info.connState) {
+				sta_ctx->conn_info.connState) {
 		rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
 		if (!rc) {
 			hdd_err("Disconnect event timed out session Id: %d staDebugState: %d",
-				adapter->sessionId, pHddStaCtx->staDebugState);
+				adapter->sessionId, sta_ctx->staDebugState);
 			result = -ETIMEDOUT;
 		}
 	}
@@ -16997,7 +16997,7 @@ static int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 {
 	int status, result = 0;
 	unsigned long rc;
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	eConnectionState prev_conn_state;
 	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
@@ -17040,7 +17040,7 @@ static int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		}
 	}
 
-	prev_conn_state = pHddStaCtx->conn_info.connState;
+	prev_conn_state = sta_ctx->conn_info.connState;
 	/*stop tx queues */
 	hdd_info("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -17069,7 +17069,7 @@ static int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		hdd_debug("Already disconnected or connect was in sme/roam pending list and removed by disconnect");
 	} else if (0 != status) {
 		hdd_err("csr_roam_disconnect failure, status: %d", (int)status);
-		pHddStaCtx->staDebugState = status;
+		sta_ctx->staDebugState = status;
 		result = -EINVAL;
 		goto disconnected;
 	}
@@ -17175,7 +17175,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -17204,8 +17204,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		return status;
 
 	/* Issue disconnect request to SME, if station is in connected state */
-	if ((pHddStaCtx->conn_info.connState == eConnectionState_Associated) ||
-	    (pHddStaCtx->conn_info.connState == eConnectionState_Connecting)) {
+	if ((sta_ctx->conn_info.connState == eConnectionState_Associated) ||
+	    (sta_ctx->conn_info.connState == eConnectionState_Connecting)) {
 		eCsrRoamDisconnectReason reasonCode =
 			eCSR_DISCONNECT_REASON_UNSPECIFIED;
 		struct hdd_scan_info *pScanInfo;
@@ -17265,7 +17265,7 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		}
 	} else {
 		hdd_err("Unexpected cfg disconnect called while in state: %d",
-		       pHddStaCtx->conn_info.connState);
+		       sta_ctx->conn_info.connState);
 	}
 
 	return status;
@@ -17308,14 +17308,14 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER();
 
 	pWextState->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
-	qdf_mem_zero(&pHddStaCtx->ibss_enc_key, sizeof(tCsrRoamSetKey));
-	pHddStaCtx->ibss_enc_key_installed = 0;
+	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
+	sta_ctx->ibss_enc_key_installed = 0;
 
 	if (params->ie_len && (NULL != params->ie)) {
 		if (wlan_get_ie_ptr_from_eid(WLAN_EID_RSN, params->ie,
@@ -17363,7 +17363,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 	}
 
 	pWextState->roamProfile.AuthType.authType[0] =
-		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
+		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
 	if (params->privacy) {
 		/* Security enabled IBSS, At this time there is no information
@@ -17377,7 +17377,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 		encryptionType = eCSR_ENCRYPT_TYPE_WEP40_STATICKEY;
 	}
 	hdd_debug("encryptionType=%d", encryptionType);
-	pHddStaCtx->conn_info.ucEncryptionType = encryptionType;
+	sta_ctx->conn_info.ucEncryptionType = encryptionType;
 	pWextState->roamProfile.EncryptionType.numEntries = 1;
 	pWextState->roamProfile.EncryptionType.encryptionType[0] =
 		encryptionType;
@@ -17403,7 +17403,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	tCsrRoamProfile *pRoamProfile;
 	int status;
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct qdf_mac_addr bssid;
@@ -17544,9 +17544,9 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		/* Set the Operational Channel */
 		hdd_debug("set channel %d", channelNum);
 		pRoamProfile->ChannelInfo.numOfChannels = 1;
-		pHddStaCtx->conn_info.operationChannel = channelNum;
+		sta_ctx->conn_info.operationChannel = channelNum;
 		pRoamProfile->ChannelInfo.ChannelList =
-			&pHddStaCtx->conn_info.operationChannel;
+			&sta_ctx->conn_info.operationChannel;
 	}
 
 	/* Initialize security parameters */
@@ -17560,7 +17560,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	status = wlan_hdd_cfg80211_connect_start(adapter, params->ssid,
 						 params->ssid_len,
 						 bssid.bytes, NULL,
-						 pHddStaCtx->conn_info.
+						 sta_ctx->conn_info.
 						 operationChannel,
 						 params->chandef.width);
 
@@ -18613,7 +18613,7 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int status;
 
 	ENTER();
@@ -18634,9 +18634,9 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_UPDATE_FT_IES,
-			 adapter->sessionId, pHddStaCtx->conn_info.connState));
+			 adapter->sessionId, sta_ctx->conn_info.connState));
 	/* Added for debug on reception of Re-assoc Req. */
-	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_err("Called with Ie of length = %zu when not associated",
 		       ftie->ie_len);
 		hdd_err("Should be Re-assoc Req IEs");

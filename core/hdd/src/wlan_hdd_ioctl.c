@@ -830,7 +830,7 @@ void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		uint8_t channel, const handoff_src src)
 {
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret = 0;
 
@@ -846,10 +846,10 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* if not associated, no need to proceed with reassoc */
-	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_warn("Not associated");
 		ret = -EINVAL;
 		goto exit;
@@ -859,10 +859,10 @@ int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * if the target bssid is same as currently associated AP,
 	 * use the current connections's channel.
 	 */
-	if (!memcmp(bssid, pHddStaCtx->conn_info.bssId.bytes,
+	if (!memcmp(bssid, sta_ctx->conn_info.bssId.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
-		channel = pHddStaCtx->conn_info.operationChannel;
+		channel = sta_ctx->conn_info.operationChannel;
 	}
 
 	/* Check channel number is a valid channel number */
@@ -1030,7 +1030,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	uint8_t *frame;
 	struct ieee80211_hdr_3addr *hdr;
 	u64 cookie;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_context *hdd_ctx;
 	tpSirMacVendorSpecificFrameHdr pVendorSpecific =
 		(tpSirMacVendorSpecificFrameHdr) payload;
@@ -1045,11 +1045,11 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* if not associated, no need to send action frame */
-	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_warn("Not associated");
 		ret = -EINVAL;
 		goto exit;
@@ -1059,7 +1059,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 	 * if the target bssid is different from currently associated AP,
 	 * then no need to send action frame
 	 */
-	if (memcmp(bssid, pHddStaCtx->conn_info.bssId.bytes,
+	if (memcmp(bssid, sta_ctx->conn_info.bssId.bytes,
 			QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("STA is not associated to this AP");
 		ret = -EINVAL;
@@ -1079,10 +1079,10 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 			 */
 			if (channel != 0) {
 				if (channel !=
-				    pHddStaCtx->conn_info.operationChannel) {
+				    sta_ctx->conn_info.operationChannel) {
 					hdd_warn("channel(%d) is different from operating channel(%d)",
 						  channel,
-						  pHddStaCtx->conn_info.
+						  sta_ctx->conn_info.
 						  operationChannel);
 					ret = -EINVAL;
 					goto exit;
@@ -1103,7 +1103,7 @@ hdd_sendactionframe(struct hdd_adapter *adapter, const uint8_t *bssid,
 				 * delayed transmission of action frame is ok.
 				 */
 				chan.center_freq =
-					sme_chn_to_freq(pHddStaCtx->conn_info.
+					sme_chn_to_freq(sta_ctx->conn_info.
 							operationChannel);
 			}
 		}
@@ -2376,7 +2376,7 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 {
 
-	struct hdd_station_ctx *pHddStaCtx =
+	struct hdd_station_ctx *sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	QDF_STATUS hstatus;
 	int ret;
@@ -2402,8 +2402,8 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		/* If not associated, then expected link status return
 		 * value is 0
 		 */
@@ -4361,7 +4361,7 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	uint32_t roamId = INVALID_ROAM_ID;
 	tCsrRoamModifyProfileFields modProfileFields;
 	tCsrHandoffRequest handoffInfo;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 
 	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -4370,10 +4370,10 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* if not associated, no need to proceed with reassoc */
-	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_warn("Not associated!");
 		ret = -EINVAL;
 		goto exit;
@@ -4391,13 +4391,13 @@ static int drv_cmd_fast_reassoc(struct hdd_adapter *adapter,
 	 * issue reassoc to same AP
 	 */
 	if (!qdf_mem_cmp(targetApBssid,
-				    pHddStaCtx->conn_info.bssId.bytes,
+				    sta_ctx->conn_info.bssId.bytes,
 				    QDF_MAC_ADDR_SIZE)) {
 		hdd_warn("Reassoc BSSID is same as currently associated AP bssid");
 		if (roaming_offload_enabled(hdd_ctx)) {
 			hdd_wma_send_fastreassoc_cmd(adapter,
 				targetApBssid,
-				pHddStaCtx->conn_info.operationChannel);
+				sta_ctx->conn_info.operationChannel);
 		} else {
 			sme_get_modify_profile_fields(hdd_ctx->hHal,
 				adapter->sessionId,
@@ -4969,7 +4969,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 {
 	int ret = 0;
 	int status = QDF_STATUS_SUCCESS;
-	struct hdd_station_ctx *pHddStaCtx = NULL;
+	struct hdd_station_ctx *sta_ctx = NULL;
 	char *extra = NULL;
 	int idx = 0;
 	int length = 0;
@@ -4983,7 +4983,7 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_debug("Received GETIBSSPEERINFOALL Command");
 
 	/* Handle the command */
@@ -5005,26 +5005,26 @@ static int drv_cmd_get_ibss_peer_info_all(struct hdd_adapter *adapter,
 
 		/* Copy number of stations */
 		length = scnprintf(extra, WLAN_MAX_BUF_SIZE, "%d ",
-				   pHddStaCtx->ibss_peer_info.numPeers);
+				   sta_ctx->ibss_peer_info.numPeers);
 		numOfBytestoPrint = length;
-		for (idx = 0; idx < pHddStaCtx->ibss_peer_info.numPeers;
+		for (idx = 0; idx < sta_ctx->ibss_peer_info.numPeers;
 								idx++) {
 			int8_t rssi;
 			uint32_t tx_rate;
 
 			qdf_mem_copy(mac_addr,
-				pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
+				sta_ctx->ibss_peer_info.peerInfoParams[idx].
 				mac_addr, sizeof(mac_addr));
 
 			tx_rate =
-				pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
+				sta_ctx->ibss_peer_info.peerInfoParams[idx].
 									txRate;
 			/*
 			 * Only lower 3 bytes are rate info. Mask of the MSByte
 			 */
 			tx_rate &= 0x00FFFFFF;
 
-			rssi = pHddStaCtx->ibss_peer_info.peerInfoParams[idx].
+			rssi = sta_ctx->ibss_peer_info.peerInfoParams[idx].
 									rssi;
 
 			length += scnprintf((extra + length),
@@ -5097,7 +5097,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	QDF_STATUS status;
-	struct hdd_station_ctx *pHddStaCtx = NULL;
+	struct hdd_station_ctx *sta_ctx = NULL;
 	char extra[128] = { 0 };
 	uint32_t length = 0;
 	uint8_t staIdx = 0;
@@ -5110,13 +5110,13 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	hdd_debug("Received GETIBSSPEERINFO Command");
 
 	/* if there are no peers, no need to continue with the command */
 	if (eConnectionState_IbssConnected !=
-	    pHddStaCtx->conn_info.connState) {
+	    sta_ctx->conn_info.connState) {
 		hdd_err("No IBSS Peers coalesced");
 		ret = -EINVAL;
 		goto exit;
@@ -5131,7 +5131,7 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	}
 
 	/* Get station index for the peer mac address and sanitize it */
-	hdd_get_peer_sta_id(pHddStaCtx, &peerMacAddr, &staIdx);
+	hdd_get_peer_sta_id(sta_ctx, &peerMacAddr, &staIdx);
 
 	if (staIdx > MAX_PEERS) {
 		hdd_err("Invalid StaIdx %d returned", staIdx);
@@ -5143,13 +5143,13 @@ static int drv_cmd_get_ibss_peer_info(struct hdd_adapter *adapter,
 	status = hdd_cfg80211_get_ibss_peer_info(adapter, staIdx);
 	if (QDF_STATUS_SUCCESS == status) {
 		uint32_t txRate =
-			pHddStaCtx->ibss_peer_info.peerInfoParams[0].txRate;
+			sta_ctx->ibss_peer_info.peerInfoParams[0].txRate;
 		/* Only lower 3 bytes are rate info. Mask of the MSByte */
 		txRate &= 0x00FFFFFF;
 
 		length = scnprintf(extra, sizeof(extra), "%d %d",
 				(int)txRate,
-				(int)pHddStaCtx->ibss_peer_info.
+				(int)sta_ctx->ibss_peer_info.
 				peerInfoParams[0].rssi);
 
 		/* Copy the data back into buffer */
@@ -5328,7 +5328,7 @@ static int drv_cmd_get_tsm_stats(struct hdd_adapter *adapter,
 	char extra[128] = { 0 };
 	int len = 0;
 	uint8_t tid = 0;
-	struct hdd_station_ctx *pHddStaCtx;
+	struct hdd_station_ctx *sta_ctx;
 	tAniTrafStrmMetrics tsm_metrics = {0};
 
 	if ((QDF_STA_MODE != adapter->device_mode) &&
@@ -5339,10 +5339,10 @@ static int drv_cmd_get_tsm_stats(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	/* if not associated, return error */
-	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
 		hdd_err("Not associated!");
 		ret = -EINVAL;
 		goto exit;

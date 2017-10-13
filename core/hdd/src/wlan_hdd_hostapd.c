@@ -6546,20 +6546,20 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 		tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
-		struct hdd_station_ctx *pHddStaCtx =
+		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		if (eConnectionState_IbssConnected ==
-		    pHddStaCtx->conn_info.connState) {
+		    sta_ctx->conn_info.connState) {
 			/* Link is up then return cant set channel */
 			hdd_err("IBSS Associated, can't set the channel");
 			return -EINVAL;
 		}
 
 		num_ch = pRoamProfile->ChannelInfo.numOfChannels = 1;
-		pHddStaCtx->conn_info.operationChannel = channel;
+		sta_ctx->conn_info.operationChannel = channel;
 		pRoamProfile->ChannelInfo.ChannelList =
-			&pHddStaCtx->conn_info.operationChannel;
+			&sta_ctx->conn_info.operationChannel;
 	} else if ((adapter->device_mode == QDF_SAP_MODE)
 		   || (adapter->device_mode == QDF_P2P_GO_MODE)
 		   ) {
