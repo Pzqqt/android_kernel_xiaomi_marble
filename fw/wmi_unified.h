@@ -4627,6 +4627,9 @@ typedef enum {
      * 11 - Dynamic voltage corner selection based on TPUT and Tx Flush counters
      */
     WMI_PDEV_UPDATE_WDCVS_ALGO,                       /* 0x9a */
+
+    /* Enable/Disable data stall detection */
+    WMI_PDEV_PARAM_DATA_STALL_DETECT_ENABLE,          /* 0x9b */
 } WMI_PDEV_PARAM;
 
 typedef struct {
