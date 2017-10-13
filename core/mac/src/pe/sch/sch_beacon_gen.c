@@ -908,7 +908,7 @@ void sch_generate_tim(tpAniSirGlobal pMac, uint8_t **pPtr, uint16_t *timLength,
 	*ptr++ = 0xFF;
 	ptr += (N2 - N1 + 1);
 
-	* pPtr = ptr;
+	*pPtr = ptr;
 }
 /* -------------------------------------------------------------------- */
 /**
