@@ -1155,7 +1155,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 				  tCsrRoamInfo *pCsrRoamInfo)
 {
 	union iwreq_data wrqu;
-	u8 *pBeaconIes;
+	u8 *beacon_ies;
 	u8 currentLen = 0;
 	char *buff;
 	int totalIeLen = 0, currentOffset = 0, strLen;
@@ -1166,15 +1166,15 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 		hdd_debug("beacon frame length is 0");
 		return;
 	}
-	pBeaconIes = (u8 *) (pCsrRoamInfo->pbFrames + BEACON_FRAME_IES_OFFSET);
-	if (pBeaconIes == NULL) {
+	beacon_ies = (u8 *) (pCsrRoamInfo->pbFrames + BEACON_FRAME_IES_OFFSET);
+	if (beacon_ies == NULL) {
 		hdd_warn("Beacon IEs is NULL");
 		return;
 	}
-	/* pBeaconIes needs to point to the IEs */
+	/* beacon_ies needs to point to the IEs */
 	hdd_debug("Beacon IEs is now at %02x%02x",
-		   (unsigned int)pBeaconIes[0],
-		   (unsigned int)pBeaconIes[1]);
+		   (unsigned int)beacon_ies[0],
+		   (unsigned int)beacon_ies[1]);
 	hdd_debug("Beacon IEs length = %d",
 		   pCsrRoamInfo->nBeaconLength - BEACON_FRAME_IES_OFFSET);
 
@@ -1198,7 +1198,7 @@ hdd_send_update_beacon_ies_event(struct hdd_adapter *adapter,
 		qdf_mem_zero(&buff[strLen + 1], IW_CUSTOM_MAX - (strLen + 1));
 		currentLen =
 			QDF_MIN(totalIeLen, IW_CUSTOM_MAX - (strLen + 1) - 1);
-		qdf_mem_copy(&buff[strLen + 1], pBeaconIes + currentOffset,
+		qdf_mem_copy(&buff[strLen + 1], beacon_ies + currentOffset,
 			     currentLen);
 		currentOffset += currentLen;
 		totalIeLen -= currentLen;

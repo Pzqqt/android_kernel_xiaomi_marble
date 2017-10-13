@@ -46,6 +46,7 @@
 #define pHddStaCtx
 #define pHostapdState
 #define pRoamInfo
+#define pBeaconIes
 
 /*
  * Include files
