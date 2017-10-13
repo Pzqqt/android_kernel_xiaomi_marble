@@ -27,6 +27,7 @@
 
 #if !defined WLAN_HDD_TSF_H
 #define WLAN_HDD_TSF_H
+#include "wlan_hdd_cfg.h"
 
 struct hdd_context;
 
@@ -169,6 +170,39 @@ static inline int hdd_get_tsf_cb(void *pcb_cxt, struct stsf *ptsf)
 #endif
 
 #if defined(WLAN_FEATURE_TSF_PLUS) && defined(WLAN_FEATURE_TSF)
+#define HDD_TSF_IS_PTP_ENABLED(hdd) \
+({ \
+	struct hdd_context *hdd_ctx = (hdd); \
+	hdd_ctx && hdd_ctx->config && hdd_ctx->config->tsf_ptp_options; \
+})
+
+#define HDD_TSF_IS_TX_SET(hdd) \
+({ \
+	struct hdd_context *hdd_ctx = (hdd); \
+	hdd_ctx && hdd_ctx->config && \
+	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_PTP_OPT_TX); \
+})
+
+#define HDD_TSF_IS_RX_SET(hdd) \
+({ \
+	struct hdd_context *hdd_ctx = (hdd); \
+	hdd_ctx && hdd_ctx->config && \
+	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_PTP_OPT_RX); \
+})
+
+#define HDD_TSF_IS_RAW_SET(hdd) \
+({ \
+	struct hdd_context *hdd_ctx = (hdd); \
+	hdd_ctx && hdd_ctx->config && \
+	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_PTP_OPT_RAW); \
+})
+
+#define HDD_TSF_IS_DBG_FS_SET(hdd) \
+({ \
+	struct hdd_context *hdd_ctx = (hdd); \
+	hdd_ctx && hdd_ctx->config && \
+	(hdd_ctx->config->tsf_ptp_options & CFG_SET_TSF_DBG_FS); \
+})
 
 /**
  * hdd_start_tsf_sync() - start tsf sync

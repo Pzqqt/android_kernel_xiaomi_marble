@@ -1148,6 +1148,24 @@ static bool hdd_is_rx_wake_lock_needed(struct sk_buff *skb)
 	return false;
 }
 
+#ifdef WLAN_FEATURE_TSF_PLUS
+static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
+					qdf_nbuf_t netbuf,
+					uint64_t target_time)
+{
+	if (!HDD_TSF_IS_RX_SET(hdd_ctx))
+		return;
+
+	hdd_rx_timestamp(netbuf, target_time);
+}
+#else
+static inline void hdd_tsf_timestamp_rx(struct hdd_context *hdd_ctx,
+					qdf_nbuf_t netbuf,
+					uint64_t target_time)
+{
+}
+#endif
+
 /**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @context: pointer to HDD context
@@ -1295,7 +1313,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		 */
 		qdf_net_buf_debug_release_skb(skb);
 
-		hdd_rx_timestamp(skb, ktime_to_us(skb->tstamp));
+		hdd_tsf_timestamp_rx(hdd_ctx, skb, ktime_to_us(skb->tstamp));
+
 		if (HDD_LRO_NO_RX ==
 			 hdd_lro_rx(hdd_ctx, adapter, skb)) {
 			if (hdd_napi_enabled(HDD_NAPI_ANY) &&

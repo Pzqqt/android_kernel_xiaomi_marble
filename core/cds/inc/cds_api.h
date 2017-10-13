@@ -393,6 +393,22 @@ void cds_get_and_reset_log_completion(uint32_t *is_fatal,
 		bool *recovery_needed);
 bool cds_is_log_report_in_progress(void);
 bool cds_is_fatal_event_enabled(void);
+
+#ifdef WLAN_FEATURE_TSF_PLUS
+bool cds_is_ptp_rx_opt_enabled(void);
+bool cds_is_ptp_tx_opt_enabled(void);
+#else
+static inline bool cds_is_ptp_rx_opt_enabled(void)
+{
+	return false;
+}
+
+static inline bool cds_is_ptp_tx_opt_enabled(void)
+{
+	return false;
+}
+#endif
+
 uint32_t cds_get_log_indicator(void);
 void cds_set_fatal_event(bool value);
 void cds_wlan_flush_host_logs_for_fatal(void);

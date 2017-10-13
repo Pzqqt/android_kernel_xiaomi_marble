@@ -97,15 +97,6 @@ ol_usb_extra_initialization(struct ol_context *ol_ctx)
 	return status;
 }
 
-#if defined(WLAN_FEATURE_TSF_PLUS)
-#define SDIO_HI_ACS_FLAGS (HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_SET | \
-	HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE)
-#else
-#define SDIO_HI_ACS_FLAGS (HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_SET | \
-	HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_SET | \
-	HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE)
-#endif
-
 /*Setting SDIO block size, mbox ISR yield limit for SDIO based HIF*/
 static
 QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
@@ -173,7 +164,11 @@ QDF_STATUS ol_sdio_extra_initialization(struct ol_context *ol_ctx)
 		goto exit;
 	}
 
-	param |= SDIO_HI_ACS_FLAGS;
+	param |= (HI_ACS_FLAGS_SDIO_SWAP_MAILBOX_SET |
+		HI_ACS_FLAGS_ALT_DATA_CREDIT_SIZE);
+
+	if (!cds_is_ptp_tx_opt_enabled())
+		param |= HI_ACS_FLAGS_SDIO_REDUCE_TX_COMPL_SET;
 
 	/* enable TX completion to collect tx_desc for pktlog */
 	if (cds_is_packet_log_enabled())

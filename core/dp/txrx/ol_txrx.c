@@ -5640,6 +5640,7 @@ static struct cdp_cfg_ops ol_ops_cfg = {
 	.set_flow_control_parameters =
 		ol_txrx_wrapper_set_flow_control_parameters,
 	.set_flow_steering = ol_set_cfg_flow_steering,
+	.set_ptp_rx_opt_enabled = ol_set_cfg_ptp_rx_opt_enabled,
 };
 
 static struct cdp_peer_ops ol_ops_peer = {
