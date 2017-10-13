@@ -13683,7 +13683,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	struct wireless_dev *wdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_context *hdd_ctx;
-	tCsrRoamProfile *pRoamProfile = NULL;
+	tCsrRoamProfile *roam_profile = NULL;
 	eCsrRoamBssType LastBSSType;
 	struct hdd_config *pConfig = NULL;
 	int status;
@@ -13735,8 +13735,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
-		pRoamProfile = &pWextState->roamProfile;
-		LastBSSType = pRoamProfile->BSSType;
+		roam_profile = &pWextState->roamProfile;
+		LastBSSType = roam_profile->BSSType;
 
 		switch (type) {
 		case NL80211_IFTYPE_STATION:
@@ -14362,7 +14362,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
+	tCsrRoamProfile *roam_profile = &(pWextState->roamProfile);
 	struct key_params params;
 
 	ENTER();
@@ -14383,7 +14383,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	switch (pRoamProfile->EncryptionType.encryptionType[0]) {
+	switch (roam_profile->EncryptionType.encryptionType[0]) {
 	case eCSR_ENCRYPT_TYPE_NONE:
 		params.cipher = IW_AUTH_CIPHER_NONE;
 		break;
@@ -14420,10 +14420,10 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_GET_KEY,
 			 adapter->sessionId, params.cipher));
 
-	params.key_len = pRoamProfile->Keys.KeyLength[key_index];
+	params.key_len = roam_profile->Keys.KeyLength[key_index];
 	params.seq_len = 0;
 	params.seq = NULL;
-	params.key = &pRoamProfile->Keys.KeyMaterial[key_index][0];
+	params.key = &roam_profile->Keys.KeyMaterial[key_index][0];
 	callback(cookie, &params);
 
 	EXIT();
@@ -15487,7 +15487,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	uint32_t roamId = INVALID_ROAM_ID;
-	tCsrRoamProfile *pRoamProfile;
+	tCsrRoamProfile *roam_profile;
 	eCsrAuthType RSNAuthType;
 	tSmeConfigParams *sme_config;
 	uint8_t channel = 0;
@@ -15516,11 +15516,11 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 
 	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
 
-	pRoamProfile = &pWextState->roamProfile;
+	roam_profile = &pWextState->roamProfile;
 	qdf_mem_zero(&hdd_sta_ctx->conn_info.conn_flag,
 		     sizeof(hdd_sta_ctx->conn_info.conn_flag));
 
-	if (pRoamProfile) {
+	if (roam_profile) {
 		struct hdd_station_ctx *sta_ctx;
 
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -15549,35 +15549,35 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		if (HDD_WMM_USER_MODE_NO_QOS ==
 		    (WLAN_HDD_GET_CTX(adapter))->config->WmmMode) {
 			/*QoS not enabled in cfg file */
-			pRoamProfile->uapsd_mask = 0;
+			roam_profile->uapsd_mask = 0;
 		} else {
 			/*QoS enabled, update uapsd mask from cfg file */
-			pRoamProfile->uapsd_mask =
+			roam_profile->uapsd_mask =
 				(WLAN_HDD_GET_CTX(adapter))->config->UapsdMask;
 		}
 
-		pRoamProfile->SSIDs.numOfSSIDs = 1;
-		pRoamProfile->SSIDs.SSIDList->SSID.length = ssid_len;
-		qdf_mem_zero(pRoamProfile->SSIDs.SSIDList->SSID.ssId,
-			     sizeof(pRoamProfile->SSIDs.SSIDList->SSID.ssId));
-		qdf_mem_copy((void *)(pRoamProfile->SSIDs.SSIDList->SSID.ssId),
+		roam_profile->SSIDs.numOfSSIDs = 1;
+		roam_profile->SSIDs.SSIDList->SSID.length = ssid_len;
+		qdf_mem_zero(roam_profile->SSIDs.SSIDList->SSID.ssId,
+			     sizeof(roam_profile->SSIDs.SSIDList->SSID.ssId));
+		qdf_mem_copy((void *)(roam_profile->SSIDs.SSIDList->SSID.ssId),
 			     ssid, ssid_len);
 
-		pRoamProfile->do_not_roam = !adapter->fast_roaming_allowed;
+		roam_profile->do_not_roam = !adapter->fast_roaming_allowed;
 		/* cleanup bssid hint */
-		qdf_mem_zero(pRoamProfile->bssid_hint.bytes,
+		qdf_mem_zero(roam_profile->bssid_hint.bytes,
 			QDF_MAC_ADDR_SIZE);
-		qdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
+		qdf_mem_zero((void *)(roam_profile->BSSIDs.bssid),
 			QDF_MAC_ADDR_SIZE);
 
 		if (bssid) {
-			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
-			pRoamProfile->do_not_roam = true;
-			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
+			roam_profile->BSSIDs.numOfBSSIDs = 1;
+			roam_profile->do_not_roam = true;
+			qdf_mem_copy((void *)(roam_profile->BSSIDs.bssid),
 				     bssid, QDF_MAC_ADDR_SIZE);
 			/*
 			 * Save BSSID in seperate variable as
-			 * pRoamProfile's BSSID is getting zeroed out in the
+			 * roam_profile's BSSID is getting zeroed out in the
 			 * association process. In case of join failure
 			 * we should send valid BSSID to supplicant
 			 */
@@ -15585,11 +15585,11 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 				     bssid, QDF_MAC_ADDR_SIZE);
 			hdd_debug("bssid is given by upper layer %pM", bssid);
 		} else if (bssid_hint) {
-			qdf_mem_copy(pRoamProfile->bssid_hint.bytes,
+			qdf_mem_copy(roam_profile->bssid_hint.bytes,
 				bssid_hint, QDF_MAC_ADDR_SIZE);
 			/*
 			 * Save BSSID in a separate variable as
-			 * pRoamProfile's BSSID is getting zeroed out in the
+			 * roam_profile's BSSID is getting zeroed out in the
 			 * association process. In case of join failure
 			 * we should send valid BSSID to supplicant
 			 */
@@ -15600,8 +15600,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		}
 
 		hdd_debug("Connect to SSID: %.*s operating Channel: %u",
-		       pRoamProfile->SSIDs.SSIDList->SSID.length,
-		       pRoamProfile->SSIDs.SSIDList->SSID.ssId,
+		       roam_profile->SSIDs.SSIDList->SSID.length,
+		       roam_profile->SSIDs.SSIDList->SSID.ssId,
 		       operatingChannel);
 
 		if (hdd_sta_ctx->wpa_versions) {
@@ -15616,7 +15616,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			{
 				hdd_debug("WAPI AUTH TYPE: PSK: %d",
 				       adapter->wapi_info.wapiAuthMode);
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WAPI_WAI_PSK;
 				break;
 			}
@@ -15624,7 +15624,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			{
 				hdd_debug("WAPI AUTH TYPE: CERT: %d",
 				       adapter->wapi_info.wapiAuthMode);
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE;
 				break;
 			}
@@ -15634,26 +15634,26 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			    || adapter->wapi_info.wapiAuthMode ==
 			    WAPI_AUTH_MODE_CERT) {
 				hdd_debug("WAPI PAIRWISE/GROUP ENCRYPTION: WPI");
-				pRoamProfile->AuthType.numEntries = 1;
-				pRoamProfile->EncryptionType.numEntries = 1;
-				pRoamProfile->EncryptionType.encryptionType[0] =
+				roam_profile->AuthType.numEntries = 1;
+				roam_profile->EncryptionType.numEntries = 1;
+				roam_profile->EncryptionType.encryptionType[0] =
 					eCSR_ENCRYPT_TYPE_WPI;
-				pRoamProfile->mcEncryptionType.numEntries = 1;
-				pRoamProfile->mcEncryptionType.
+				roam_profile->mcEncryptionType.numEntries = 1;
+				roam_profile->mcEncryptionType.
 				encryptionType[0] = eCSR_ENCRYPT_TYPE_WPI;
 			}
 		}
 #endif
 		pmo_ucfg_flush_gtk_offload_req(adapter->hdd_vdev);
-		pRoamProfile->csrPersona = adapter->device_mode;
+		roam_profile->csrPersona = adapter->device_mode;
 
 		if (operatingChannel) {
-			pRoamProfile->ChannelInfo.ChannelList =
+			roam_profile->ChannelInfo.ChannelList =
 				&operatingChannel;
-			pRoamProfile->ChannelInfo.numOfChannels = 1;
+			roam_profile->ChannelInfo.numOfChannels = 1;
 		} else {
-			pRoamProfile->ChannelInfo.ChannelList = NULL;
-			pRoamProfile->ChannelInfo.numOfChannels = 0;
+			roam_profile->ChannelInfo.ChannelList = NULL;
+			roam_profile->ChannelInfo.numOfChannels = 0;
 		}
 		if ((QDF_IBSS_MODE == adapter->device_mode)
 		    && operatingChannel) {
@@ -15670,17 +15670,17 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 				status = -EINVAL;
 				goto conn_failure;
 			}
-			pRoamProfile->ch_params.ch_width =
+			roam_profile->ch_params.ch_width =
 				hdd_map_nl_chan_width(ch_width);
 			/*
 			 * In IBSS mode while operating in 2.4 GHz,
 			 * the device supports only 20 MHz.
 			 */
 			if (WLAN_REG_IS_24GHZ_CH(operatingChannel))
-				pRoamProfile->ch_params.ch_width =
+				roam_profile->ch_params.ch_width =
 					CH_WIDTH_20MHZ;
 			hdd_select_cbmode(adapter, operatingChannel,
-					  &pRoamProfile->ch_params);
+					  &roam_profile->ch_params);
 		}
 
 		if (wlan_hdd_cfg80211_check_pmf_valid(
@@ -15700,16 +15700,16 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		 */
 
 		if ((adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
-		    (!pRoamProfile->pAddIEScan)) {
-			pRoamProfile->pAddIEScan =
+		    (!roam_profile->pAddIEScan)) {
+			roam_profile->pAddIEScan =
 				&adapter->scan_info.scanAddIE.addIEdata[0];
-			pRoamProfile->nAddIEScanLength =
+			roam_profile->nAddIEScanLength =
 				adapter->scan_info.scanAddIE.length;
 		}
 
 		if ((policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc) == true)
 			&& (false == wlan_hdd_handle_sap_sta_dfs_conc(adapter,
-				pRoamProfile))) {
+				roam_profile))) {
 			hdd_err("sap-sta conc will fail, can't allow sta");
 			hdd_conn_set_connection_state(adapter,
 					eConnectionState_NotConnected);
@@ -15767,7 +15767,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
 					    WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 		qdf_status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(adapter),
-					  adapter->sessionId, pRoamProfile,
+					  adapter->sessionId, roam_profile,
 					  &roamId);
 		if (QDF_IS_STATUS_ERROR(qdf_status))
 			status = qdf_status_to_os_return(qdf_status);
@@ -15789,8 +15789,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		/* Reset connect_in_progress */
 		hdd_set_connection_in_progress(false);
 
-		pRoamProfile->ChannelInfo.ChannelList = NULL;
-		pRoamProfile->ChannelInfo.numOfChannels = 0;
+		roam_profile->ChannelInfo.ChannelList = NULL;
+		roam_profile->ChannelInfo.numOfChannels = 0;
 
 		if ((QDF_STA_MODE == adapter->device_mode)
 			&& policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc)
@@ -15798,7 +15798,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			hdd_ctx->hdd_psoc)) {
 			policy_mgr_get_channel_from_scan_result(
 				hdd_ctx->hdd_psoc,
-				pRoamProfile, &channel);
+				roam_profile, &channel);
 			hdd_info("Move to single MAC mode(optimization) if applicable");
 			if (channel)
 				policy_mgr_checkn_update_hw_mode_single_mac_mode(
@@ -16919,7 +16919,7 @@ static bool wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 				channel, MAC_ADDR_ARRAY(bssid));
 		/*
 		 * Save BSSID in a separate variable as
-		 * pRoamProfile's BSSID is getting zeroed out in the
+		 * roam_profile's BSSID is getting zeroed out in the
 		 * association process. In case of join failure
 		 * we should send valid BSSID to supplicant
 		 */
@@ -17592,7 +17592,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile;
+	tCsrRoamProfile *roam_profile;
 	int status;
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -17688,15 +17688,15 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return -EALREADY;
 	}
 
-	pRoamProfile = &pWextState->roamProfile;
+	roam_profile = &pWextState->roamProfile;
 
-	if (eCSR_BSS_TYPE_START_IBSS != pRoamProfile->BSSType) {
+	if (eCSR_BSS_TYPE_START_IBSS != roam_profile->BSSType) {
 		hdd_err("Interface type is not set to IBSS");
 		return -EINVAL;
 	}
 
 	/* enable selected protection checks in IBSS mode */
-	pRoamProfile->cfg_protection = IBSS_CFG_PROTECTION_ENABLE_MASK;
+	roam_profile->cfg_protection = IBSS_CFG_PROTECTION_ENABLE_MASK;
 
 	if (QDF_STATUS_E_FAILURE == sme_cfg_set_int(hdd_ctx->hHal,
 						    WNI_CFG_IBSS_ATIM_WIN_SIZE,
@@ -17723,20 +17723,20 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	}
 	if ((params->beacon_interval > CFG_BEACON_INTERVAL_MIN)
 	    && (params->beacon_interval <= CFG_BEACON_INTERVAL_MAX))
-		pRoamProfile->beaconInterval = params->beacon_interval;
+		roam_profile->beaconInterval = params->beacon_interval;
 	else {
-		pRoamProfile->beaconInterval = CFG_BEACON_INTERVAL_DEFAULT;
+		roam_profile->beaconInterval = CFG_BEACON_INTERVAL_DEFAULT;
 		hdd_debug("input beacon interval %d TU is invalid, use default %d TU",
-			params->beacon_interval, pRoamProfile->beaconInterval);
+			params->beacon_interval, roam_profile->beaconInterval);
 	}
 
 	/* Set Channel */
 	if (channelNum)	{
 		/* Set the Operational Channel */
 		hdd_debug("set channel %d", channelNum);
-		pRoamProfile->ChannelInfo.numOfChannels = 1;
+		roam_profile->ChannelInfo.numOfChannels = 1;
 		sta_ctx->conn_info.operationChannel = channelNum;
-		pRoamProfile->ChannelInfo.ChannelList =
+		roam_profile->ChannelInfo.ChannelList =
 			&sta_ctx->conn_info.operationChannel;
 	}
 
@@ -17801,7 +17801,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile;
+	tCsrRoamProfile *roam_profile;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int status;
 	QDF_STATUS hal_status;
@@ -17836,10 +17836,10 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		return -EIO;
 	}
 
-	pRoamProfile = &pWextState->roamProfile;
+	roam_profile = &pWextState->roamProfile;
 
 	/* Issue disconnect only if interface type is set to IBSS */
-	if (eCSR_BSS_TYPE_START_IBSS != pRoamProfile->BSSType) {
+	if (eCSR_BSS_TYPE_START_IBSS != roam_profile->BSSType) {
 		hdd_err("BSS Type is not set to IBSS");
 		return -EINVAL;
 	}
