@@ -3922,8 +3922,6 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 	QDF_STATUS status;
 	struct wmi_mgmt_params *mgmt_params =
 			(struct wmi_mgmt_params *)mgmt_tx_params;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-	struct cdp_vdev *txrx_vdev;
 
 	if (!mgmt_params) {
 		WMA_LOGE("%s: mgmt_params ptr passed is NULL", __func__);
@@ -3942,22 +3940,8 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	txrx_vdev = wma_handle->interfaces[mgmt_params->vdev_id].handle;
-
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_MGMT_TX_WMI)) {
-		status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
-						   mgmt_params);
-	} else {
-		QDF_NBUF_CB_MGMT_TXRX_DESC_ID(buf)
-						= mgmt_params->desc_id;
-
-		status = cdp_mgmt_send_ext(soc, txrx_vdev, buf,
-					   mgmt_params->tx_type,
-					   mgmt_params->use_6mbps,
-					   mgmt_params->chanfreq);
-	}
-
+	status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
+				mgmt_params);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: mgmt tx failed", __func__);
 		return status;

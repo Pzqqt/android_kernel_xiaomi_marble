@@ -1894,13 +1894,15 @@ ol_txrx_data_tx_cb_set(struct cdp_vdev *pvdev,
 
 void
 ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
+		       uint8_t type,
 		       ol_txrx_mgmt_tx_cb download_cb,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
-	pdev->tx_mgmt_cb.download_cb = download_cb;
-	pdev->tx_mgmt_cb.ota_ack_cb = ota_ack_cb;
-	pdev->tx_mgmt_cb.ctxt = ctxt;
+	TXRX_ASSERT1(type < OL_TXRX_MGMT_NUM_TYPES);
+	pdev->tx_mgmt.callbacks[type].download_cb = download_cb;
+	pdev->tx_mgmt.callbacks[type].ota_ack_cb = ota_ack_cb;
+	pdev->tx_mgmt.callbacks[type].ctxt = ctxt;
 }
 
 #if defined(HELIUMPLUS)
@@ -1962,7 +1964,7 @@ ol_txrx_mgmt_send_ext(struct cdp_vdev *pvdev,
 	tx_msdu_info.htt.info.ext_tid = HTT_TX_EXT_TID_MGMT;
 	tx_msdu_info.htt.info.vdev_id = vdev->vdev_id;
 	tx_msdu_info.htt.action.do_tx_complete =
-		pdev->tx_mgmt_cb.ota_ack_cb ? 1 : 0;
+		pdev->tx_mgmt.callbacks[type].ota_ack_cb ? 1 : 0;
 
 	/*
 	 * FIX THIS: l2_hdr_type should only specify L2 header type

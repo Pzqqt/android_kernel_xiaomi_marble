@@ -82,7 +82,6 @@
 #include "wlan_objmgr_peer_obj.h"
 #include <cdp_txrx_handle.h>
 #include <wlan_pmo_ucfg_api.h>
-#include "wlan_lmac_if_api.h"
 
 struct wma_search_rate {
 	int32_t rate;
@@ -1370,6 +1369,66 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 }
 
 /**
+ * wma_mgmt_tx_ack_work_handler() - mgmt tx ack work queue
+ * @ack_work: work structure
+ *
+ * Return: none
+ */
+static void wma_mgmt_tx_ack_work_handler(void *ack_work)
+{
+	struct wma_tx_ack_work_ctx *work;
+	tp_wma_handle wma_handle;
+	wma_tx_ota_comp_callback ack_cb;
+
+	if (cds_is_load_or_unload_in_progress()) {
+		WMA_LOGE("%s: Driver load/unload in progress", __func__);
+		return;
+	}
+
+	work = (struct wma_tx_ack_work_ctx *)ack_work;
+
+	wma_handle = work->wma_handle;
+	ack_cb = wma_handle->umac_ota_ack_cb[work->sub_type];
+
+	WMA_LOGD("Tx Ack Cb SubType %d Status %d",
+		 work->sub_type, work->status);
+
+	/* Call the Ack Cb registered by UMAC */
+	ack_cb((tpAniSirGlobal) (wma_handle->mac_context), NULL,
+	       work->status ? 0 : 1, NULL);
+
+	qdf_mem_free(work);
+	wma_handle->ack_work_ctx = NULL;
+}
+
+/**
+ * wma_mgmt_tx_comp_conf_ind() - Post mgmt tx complete indication to PE.
+ * @wma_handle: Pointer to WMA handle
+ * @sub_type: Tx mgmt frame sub type
+ * @status: Mgmt frame tx status
+ *
+ * This function sends mgmt complition confirmation to PE for deauth
+ * and deassoc frames.
+ *
+ * Return: none
+ */
+static void
+wma_mgmt_tx_comp_conf_ind(tp_wma_handle wma_handle, uint8_t sub_type,
+			  int32_t status)
+{
+	int32_t tx_comp_status;
+
+	tx_comp_status = status ? 0 : 1;
+	if (sub_type == SIR_MAC_MGMT_DISASSOC) {
+		wma_send_msg(wma_handle, WMA_DISASSOC_TX_COMP, NULL,
+			     tx_comp_status);
+	} else if (sub_type == SIR_MAC_MGMT_DEAUTH) {
+		wma_send_msg(wma_handle, WMA_DEAUTH_TX_COMP, NULL,
+			     tx_comp_status);
+	}
+}
+
+/**
  * wma_mgmt_tx_ack_comp_hdlr() - handles tx ack mgmt completion
  * @context: context with which the handler is registered
  * @netbuf: tx mgmt nbuf
@@ -1383,14 +1442,34 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 static void
 wma_mgmt_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 {
+	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(netbuf));
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
-	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)
-					wma_handle->psoc;
-	uint16_t desc_id;
 
-	desc_id = QDF_NBUF_CB_MGMT_TXRX_DESC_ID(netbuf);
+	if (wma_handle && wma_handle->umac_ota_ack_cb[pFc->subType]) {
+		if ((pFc->subType == SIR_MAC_MGMT_DISASSOC) ||
+		    (pFc->subType == SIR_MAC_MGMT_DEAUTH)) {
+			wma_mgmt_tx_comp_conf_ind(wma_handle,
+						  (uint8_t) pFc->subType,
+						  status);
+		} else {
+			struct wma_tx_ack_work_ctx *ack_work;
 
-	mgmt_txrx_tx_completion_handler(psoc, desc_id, status, NULL);
+			ack_work = qdf_mem_malloc(sizeof(
+						struct wma_tx_ack_work_ctx));
+
+			if (ack_work) {
+				ack_work->wma_handle = wma_handle;
+				ack_work->sub_type = pFc->subType;
+				ack_work->status = status;
+
+				qdf_create_work(0, &ack_work->ack_cmp_work,
+						wma_mgmt_tx_ack_work_handler,
+						ack_work);
+
+				qdf_sched_work(0, &ack_work->ack_cmp_work);
+			}
+		}
+	}
 }
 
 /**
@@ -1451,6 +1530,15 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 
 	/* Register for Tx Management Frames */
 	cdp_mgmt_tx_cb_set(soc, txrx_pdev,
+			GENERIC_NODOWLOAD_ACK_COMP_INDEX,
+			NULL, wma_mgmt_tx_ack_comp_hdlr, wma_handle);
+
+	cdp_mgmt_tx_cb_set(soc, txrx_pdev,
+			GENERIC_DOWNLD_COMP_NOACK_COMP_INDEX,
+			wma_mgmt_tx_dload_comp_hldr, NULL, wma_handle);
+
+	cdp_mgmt_tx_cb_set(soc, txrx_pdev,
+			GENERIC_DOWNLD_COMP_ACK_COMP_INDEX,
 			wma_mgmt_tx_dload_comp_hldr,
 			wma_mgmt_tx_ack_comp_hdlr, wma_handle);
 
@@ -1470,6 +1558,7 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
  */
 QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 {
+	uint32_t frame_index = 0;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 
 	/* Get the Vos Context */
@@ -1486,7 +1575,12 @@ QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 
 	if (txrx_pdev) {
 		/* Deregister with TxRx for Tx Mgmt completion call back */
-		cdp_mgmt_tx_cb_set(soc, txrx_pdev, NULL, NULL, txrx_pdev);
+		for (frame_index = 0; frame_index < FRAME_INDEX_MAX;
+							frame_index++) {
+			cdp_mgmt_tx_cb_set(soc,
+				txrx_pdev,
+				frame_index, NULL, NULL, txrx_pdev);
+		}
 	}
 
 	/* Reset Tx Frm Callbacks */
@@ -2680,6 +2774,11 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			else
 				tx_frm_index = GENERIC_NODOWLOAD_ACK_COMP_INDEX;
 
+			/* Store the Ack Cb sent by UMAC */
+			if (pFc->subType < SIR_MAC_MGMT_RESERVED15) {
+				wma_handle->umac_ota_ack_cb[pFc->subType] =
+					tx_frm_ota_comp_cb;
+			}
 		} else {
 			if (downld_comp_required)
 				tx_frm_index =
@@ -2742,52 +2841,58 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		}
 	}
 
-	mgmt_param.tx_frame = tx_frame;
-	mgmt_param.frm_len = frmLen;
-	mgmt_param.vdev_id = vdev_id;
-	mgmt_param.pdata = pData;
-	mgmt_param.chanfreq = chanfreq;
-	mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	mgmt_param.use_6mbps = use_6mbps;
-	mgmt_param.tx_type = tx_frm_index;
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_MGMT_TX_WMI)) {
+		mgmt_param.tx_frame = tx_frame;
+		mgmt_param.frm_len = frmLen;
+		mgmt_param.vdev_id = vdev_id;
+		mgmt_param.pdata = pData;
+		mgmt_param.chanfreq = chanfreq;
+		mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	/*
-	 * Update the tx_params TLV only for rates
-	 * other than 1Mbps and 6 Mbps
-	 */
-	if (rid < RATEID_DEFAULT &&
-	    (rid != RATEID_1MBPS && rid != RATEID_6MBPS)) {
-		WMA_LOGD(FL("using rate id: %d for Tx"), rid);
-		mgmt_param.tx_params_valid = true;
-		wma_update_tx_send_params(&mgmt_param.tx_param, rid);
-	}
+		/*
+		 * Update the tx_params TLV only for rates
+		 * other than 1Mbps and 6 Mbps
+		 */
+		if (rid < RATEID_DEFAULT &&
+		    (rid != RATEID_1MBPS && rid != RATEID_6MBPS)) {
+			WMA_LOGD(FL("using rate id: %d for Tx"), rid);
+			mgmt_param.tx_params_valid = true;
+			wma_update_tx_send_params(&mgmt_param.tx_param, rid);
+		}
 
-	psoc = wma_handle->psoc;
-	if (!psoc) {
-		WMA_LOGE("%s: psoc ctx is NULL", __func__);
-		goto error;
-	}
+		psoc = wma_handle->psoc;
+		if (!psoc) {
+			WMA_LOGE("%s: psoc ctx is NULL", __func__);
+			goto error;
+		}
 
-	wh = (struct ieee80211_frame *)(qdf_nbuf_data(tx_frame));
-	mac_addr = wh->i_addr1;
-	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_NB_ID);
-	if (!peer) {
-		mac_addr = wh->i_addr2;
-		peer = wlan_objmgr_get_peer(psoc, mac_addr,
-					WLAN_MGMT_NB_ID);
-	}
+		wh = (struct ieee80211_frame *)(qdf_nbuf_data(tx_frame));
+		mac_addr = wh->i_addr1;
+		peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_MGMT_NB_ID);
+		if (!peer) {
+			mac_addr = wh->i_addr2;
+			peer = wlan_objmgr_get_peer(psoc, mac_addr,
+						WLAN_MGMT_NB_ID);
+		}
 
-	status = wlan_mgmt_txrx_mgmt_frame_tx(peer,
-			(tpAniSirGlobal)wma_handle->mac_context,
-			(qdf_nbuf_t)tx_frame,
-			NULL, tx_frm_ota_comp_cb,
-			WLAN_UMAC_COMP_MLME, &mgmt_param);
+		status = wlan_mgmt_txrx_mgmt_frame_tx(peer,
+				(tpAniSirGlobal)wma_handle->mac_context,
+				(qdf_nbuf_t)tx_frame,
+				NULL, tx_frm_ota_comp_cb,
+				WLAN_UMAC_COMP_MLME, &mgmt_param);
 
-	wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
-	if (status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: mgmt tx failed", __func__);
-		qdf_nbuf_free((qdf_nbuf_t)tx_frame);
-		goto error;
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
+		if (status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE("%s: mgmt tx failed", __func__);
+			qdf_nbuf_free((qdf_nbuf_t)tx_frame);
+			goto error;
+		}
+	} else {
+		/* Hand over the Tx Mgmt frame to TxRx */
+		status = cdp_mgmt_send_ext(soc,
+				txrx_vdev, tx_frame,
+				tx_frm_index, use_6mbps, chanfreq);
 	}
 
 	/*
