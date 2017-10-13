@@ -1092,6 +1092,7 @@ struct pno_user_cfg {
  * @pno_cfg: Pno related config params
  * @ie_whitelist: probe req IE whitelist attrs
  * @is_bssid_hint_priority: True if bssid_hint is priority
+ * @enable_mac_spoofing: enable mac address spoof in scan
  */
 struct scan_user_cfg {
 	uint32_t active_dwell;
@@ -1113,6 +1114,7 @@ struct scan_user_cfg {
 	uint32_t usr_cfg_probe_rpt_time;
 	uint32_t usr_cfg_num_probes;
 	bool is_bssid_hint_priority;
+	bool enable_mac_spoofing;
 };
 
 /**

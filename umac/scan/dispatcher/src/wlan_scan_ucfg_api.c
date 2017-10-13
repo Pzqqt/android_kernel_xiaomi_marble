@@ -992,6 +992,7 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 		def->adaptive_dwell_time_mode;
 	req->scan_req.scan_flags = def->scan_flags;
 	req->scan_req.scan_events = def->scan_events;
+	req->scan_req.scan_random.randomize = def->enable_mac_spoofing;
 	ucfg_scan_req_update_params(vdev, req);
 
 	return QDF_STATUS_SUCCESS;
@@ -1244,6 +1245,7 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->usr_cfg_probe_rpt_time = scan_cfg->usr_cfg_probe_rpt_time;
 	scan_def->usr_cfg_num_probes = scan_cfg->usr_cfg_num_probes;
 	scan_def->is_bssid_hint_priority = scan_cfg->is_bssid_hint_priority;
+	scan_def->enable_mac_spoofing = scan_cfg->enable_mac_spoofing;
 
 	ucfg_scan_assign_rssi_category(scan_def,
 			scan_cfg->scan_bucket_threshold,
