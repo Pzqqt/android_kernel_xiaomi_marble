@@ -2430,7 +2430,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		goto cleanup_label;
 	}
 
-	if (synch_event->vdev_id > wma->max_bssid) {
+	if (synch_event->vdev_id >= wma->max_bssid) {
 		WMA_LOGE("%s: received invalid vdev_id %d",
 			 __func__, synch_event->vdev_id);
 		goto cleanup_label;
@@ -2474,9 +2474,6 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	if (roam_synch_data_len > WMI_SVC_MSG_MAX_SIZE -
 		(sizeof(*synch_event) + sizeof(wmi_channel) +
 		 sizeof(wmi_key_material) + sizeof(uint32_t)))
-		goto cleanup_label;
-	if (sizeof(roam_offload_synch_ind) >
-		(WMI_SVC_MSG_MAX_SIZE - roam_synch_data_len))
 		goto cleanup_label;
 	roam_synch_data_len += sizeof(roam_offload_synch_ind);
 
