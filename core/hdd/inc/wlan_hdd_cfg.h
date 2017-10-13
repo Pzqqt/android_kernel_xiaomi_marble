@@ -1741,9 +1741,9 @@ enum hdd_dot11_mode {
  * </ini>
  */
 #define CFG_11AG_NUM_TX_CHAIN_NAME      "g11agNumTxChains"
-#define CFG_11AG_NUM_TX_CHAIN_MIN       (1)
-#define CFG_11AG_NUM_TX_CHAIN_MAX       (4)
-#define CFG_11AG_NUM_TX_CHAIN_DEFAULT   (1)
+#define CFG_11AG_NUM_TX_CHAIN_MIN       (0)
+#define CFG_11AG_NUM_TX_CHAIN_MAX       (2)
+#define CFG_11AG_NUM_TX_CHAIN_DEFAULT   (0)
 
 /*
  * <ini>
