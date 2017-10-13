@@ -344,7 +344,7 @@ void csr_free_scan_result_entry(tpAniSirGlobal pMac, struct tag_csrscan_result
 				*pResult);
 
 QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
-				  tCsrRoamInfo *pRoamInfo, uint32_t roamId,
+				  tCsrRoamInfo *roam_info, uint32_t roamId,
 				  eRoamCmdStatus u1, eCsrRoamResult u2);
 QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 				  tCsrRoamProfile *pProfile,
@@ -486,7 +486,7 @@ QDF_STATUS csr_roam_start_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 bool csr_roam_complete_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 			       bool fForce, eCsrRoamResult roamResult);
 void csr_roam_completion(tpAniSirGlobal pMac, uint32_t sessionId,
-			 tCsrRoamInfo *pRoamInfo, tSmeCmd *pCommand,
+			 tCsrRoamInfo *roam_info, tSmeCmd *pCommand,
 			 eCsrRoamResult roamResult, bool fSuccess);
 void csr_roam_cancel_roaming(tpAniSirGlobal pMac, uint32_t sessionId);
 void csr_apply_channel_power_info_wrapper(tpAniSirGlobal pMac);
@@ -972,7 +972,7 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(tpAniSirGlobal pMac, uint32_t sessionId,
 
 void csr_call_roaming_completion_callback(tpAniSirGlobal pMac,
 					  struct csr_roam_session *pSession,
-					  tCsrRoamInfo *pRoamInfo,
+					  tCsrRoamInfo *roam_info,
 					  uint32_t roamId,
 					  eCsrRoamResult roamResult);
 /**

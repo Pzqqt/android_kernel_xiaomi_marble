@@ -3727,7 +3727,7 @@ static void csr_roam_populate_channels(tDot11fBeaconIEs *beacon_ies,
 }
 
 QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
-				  tCsrRoamInfo *pRoamInfo, uint32_t roamId,
+				  tCsrRoamInfo *roam_info, uint32_t roamId,
 				  eRoamCmdStatus u1, eCsrRoamResult u2)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -3756,41 +3756,41 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 	sme_debug("Received RoamCmdStatus %d with Roam Result %d", u1, u2);
 
 	if (eCSR_ROAM_ASSOCIATION_COMPLETION == u1 &&
-			eCSR_ROAM_RESULT_ASSOCIATED == u2 && pRoamInfo) {
+			eCSR_ROAM_RESULT_ASSOCIATED == u2 && roam_info) {
 		sme_info("Assoc complete result: %d status: %d reason: %d",
-			u2, pRoamInfo->statusCode, pRoamInfo->reasonCode);
+			u2, roam_info->statusCode, roam_info->reasonCode);
 		beacon_ies = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
-		if ((NULL != beacon_ies) && (NULL != pRoamInfo->pBssDesc)) {
+		if ((NULL != beacon_ies) && (NULL != roam_info->pBssDesc)) {
 			status = csr_parse_bss_description_ies(
-					(tHalHandle) pMac, pRoamInfo->pBssDesc,
+					(tHalHandle) pMac, roam_info->pBssDesc,
 					beacon_ies);
-			csr_roam_populate_channels(beacon_ies, pRoamInfo,
+			csr_roam_populate_channels(beacon_ies, roam_info,
 					&chan1, &chan2);
 			if (0 != chan1)
-				pRoamInfo->chan_info.band_center_freq1 =
+				roam_info->chan_info.band_center_freq1 =
 					cds_chan_to_freq(chan1);
 			else
-				pRoamInfo->chan_info.band_center_freq1 = 0;
+				roam_info->chan_info.band_center_freq1 = 0;
 			if (0 != chan2)
-				pRoamInfo->chan_info.band_center_freq2 =
+				roam_info->chan_info.band_center_freq2 =
 					cds_chan_to_freq(chan2);
 			else
-				pRoamInfo->chan_info.band_center_freq2 = 0;
+				roam_info->chan_info.band_center_freq2 = 0;
 		} else {
-			pRoamInfo->chan_info.band_center_freq1 = 0;
-			pRoamInfo->chan_info.band_center_freq2 = 0;
-			pRoamInfo->chan_info.info = 0;
+			roam_info->chan_info.band_center_freq1 = 0;
+			roam_info->chan_info.band_center_freq2 = 0;
+			roam_info->chan_info.info = 0;
 		}
-		pRoamInfo->chan_info.chan_id =
-			pRoamInfo->u.pConnectedProfile->operationChannel;
-		pRoamInfo->chan_info.mhz =
-			cds_chan_to_freq(pRoamInfo->chan_info.chan_id);
-		pRoamInfo->chan_info.reg_info_1 =
+		roam_info->chan_info.chan_id =
+			roam_info->u.pConnectedProfile->operationChannel;
+		roam_info->chan_info.mhz =
+			cds_chan_to_freq(roam_info->chan_info.chan_id);
+		roam_info->chan_info.reg_info_1 =
 			(csr_get_cfg_max_tx_power(pMac,
-				pRoamInfo->chan_info.chan_id) << 16);
-		pRoamInfo->chan_info.reg_info_2 =
+				roam_info->chan_info.chan_id) << 16);
+		roam_info->chan_info.reg_info_2 =
 			(csr_get_cfg_max_tx_power(pMac,
-				pRoamInfo->chan_info.chan_id) << 8);
+				roam_info->chan_info.chan_id) << 8);
 		qdf_mem_free(beacon_ies);
 	} else if ((u1 == eCSR_ROAM_FT_REASSOC_FAILED)
 			&& (pSession->bRefAssocStartCnt)) {
@@ -3808,11 +3808,11 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 	} else if (u1 == eCSR_ROAM_SET_CHANNEL_RSP && u2 ==
 				eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS)
 		pSession->connectedProfile.operationChannel =
-			pRoamInfo->channelChangeRespEvent->newChannelNumber;
+			roam_info->channelChangeRespEvent->newChannelNumber;
 
 	if (NULL != pSession->callback) {
-		if (pRoamInfo) {
-			pRoamInfo->sessionId = (uint8_t) sessionId;
+		if (roam_info) {
+			roam_info->sessionId = (uint8_t) sessionId;
 			/*
 			 * the reasonCode will be passed to supplicant by
 			 * cfg80211_disconnected. Based on the document,
@@ -3820,11 +3820,11 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			 * to 0 if unknow. eSIR_BEACON_MISSED reason code is not
 			 * recognizable so that we set to 0 instead.
 			 */
-			pRoamInfo->reasonCode =
-				(pRoamInfo->reasonCode == eSIR_BEACON_MISSED) ?
-				0 : pRoamInfo->reasonCode;
+			roam_info->reasonCode =
+				(roam_info->reasonCode == eSIR_BEACON_MISSED) ?
+				0 : roam_info->reasonCode;
 		}
-		status = pSession->callback(pSession->pContext, pRoamInfo,
+		status = pSession->callback(pSession->pContext, roam_info,
 					roamId, u1, u2);
 	}
 	/*
@@ -3837,32 +3837,32 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 			sizeof(host_event_wlan_status_payload_type), 0);
 
 	if ((eCSR_ROAM_ASSOCIATION_COMPLETION == u1)
-			&& (eCSR_ROAM_RESULT_ASSOCIATED == u2) && pRoamInfo) {
+			&& (eCSR_ROAM_RESULT_ASSOCIATED == u2) && roam_info) {
 		connectionStatus.eventId = eCSR_WLAN_STATUS_CONNECT;
 		connectionStatus.bssType =
-			pRoamInfo->u.pConnectedProfile->BSSType;
+			roam_info->u.pConnectedProfile->BSSType;
 
-		if (NULL != pRoamInfo->pBssDesc) {
+		if (NULL != roam_info->pBssDesc) {
 			connectionStatus.rssi =
-				pRoamInfo->pBssDesc->rssi * (-1);
+				roam_info->pBssDesc->rssi * (-1);
 			connectionStatus.channel =
-				pRoamInfo->pBssDesc->channelId;
+				roam_info->pBssDesc->channelId;
 		}
 		if (cfg_set_int(pMac, WNI_CFG_CURRENT_RSSI,
 				connectionStatus.rssi) == eSIR_FAILURE)
 			sme_err("Can't pass WNI_CFG_CURRENT_RSSI to cfg");
 
 		connectionStatus.qosCapability =
-			pRoamInfo->u.pConnectedProfile->qosConnection;
+			roam_info->u.pConnectedProfile->qosConnection;
 		connectionStatus.authType =
 			(uint8_t) diag_auth_type_from_csr_type(
-				pRoamInfo->u.pConnectedProfile->AuthType);
+				roam_info->u.pConnectedProfile->AuthType);
 		connectionStatus.encryptionType =
 			(uint8_t) diag_enc_type_from_csr_type(
-				pRoamInfo->u.pConnectedProfile->EncryptionType);
+				roam_info->u.pConnectedProfile->EncryptionType);
 		qdf_mem_copy(connectionStatus.ssid,
-				pRoamInfo->u.pConnectedProfile->SSID.ssId,
-				pRoamInfo->u.pConnectedProfile->SSID.length);
+				roam_info->u.pConnectedProfile->SSID.ssId,
+				roam_info->u.pConnectedProfile->SSID.length);
 
 		connectionStatus.reason = eCSR_REASON_UNSPECIFIED;
 		qdf_mem_copy(&pMac->sme.eventPayload, &connectionStatus,
@@ -3904,9 +3904,9 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_DISASSOC;
-		if (pRoamInfo)
+		if (roam_info)
 			connectionStatus.reasonDisconnect =
-				pRoamInfo->reasonCode;
+				roam_info->reasonCode;
 
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
 				EVENT_WLAN_STATUS_V2);
@@ -3920,9 +3920,9 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 
 		connectionStatus.eventId = eCSR_WLAN_STATUS_DISCONNECT;
 		connectionStatus.reason = eCSR_REASON_DEAUTH;
-		if (pRoamInfo)
+		if (roam_info)
 			connectionStatus.reasonDisconnect =
-				pRoamInfo->reasonCode;
+				roam_info->reasonCode;
 		WLAN_HOST_DIAG_EVENT_REPORT(&connectionStatus,
 				EVENT_WLAN_STATUS_V2);
 	}
@@ -10208,13 +10208,13 @@ void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		struct csr_roam_session *pSession;
 		tSirSmeAssocIndToUpperLayerCnf *pUpperLayerAssocCnf;
 		tCsrRoamInfo roamInfo;
-		tCsrRoamInfo *pRoamInfo = NULL;
+		tCsrRoamInfo *roam_info = NULL;
 		uint32_t sessionId;
 		QDF_STATUS status;
 
 		sme_debug("ASSOCIATION confirmation can be given to upper layer ");
 		qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
-		pRoamInfo = &roamInfo;
+		roam_info = &roamInfo;
 		pUpperLayerAssocCnf =
 			(tSirSmeAssocIndToUpperLayerCnf *) pMsgBuf;
 		status = csr_roam_get_session_id_from_bssid(pMac,
@@ -10228,56 +10228,56 @@ void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 			return;
 		}
 		/* send the status code as Success */
-		pRoamInfo->statusCode = eSIR_SME_SUCCESS;
-		pRoamInfo->u.pConnectedProfile =
+		roam_info->statusCode = eSIR_SME_SUCCESS;
+		roam_info->u.pConnectedProfile =
 			&pSession->connectedProfile;
-		pRoamInfo->staId = (uint8_t) pUpperLayerAssocCnf->aid;
-		pRoamInfo->rsnIELen =
+		roam_info->staId = (uint8_t) pUpperLayerAssocCnf->aid;
+		roam_info->rsnIELen =
 			(uint8_t) pUpperLayerAssocCnf->rsnIE.length;
-		pRoamInfo->prsnIE =
+		roam_info->prsnIE =
 			pUpperLayerAssocCnf->rsnIE.rsnIEdata;
 #ifdef FEATURE_WLAN_WAPI
-		pRoamInfo->wapiIELen =
+		roam_info->wapiIELen =
 			(uint8_t) pUpperLayerAssocCnf->wapiIE.length;
-		pRoamInfo->pwapiIE =
+		roam_info->pwapiIE =
 			pUpperLayerAssocCnf->wapiIE.wapiIEdata;
 #endif
-		pRoamInfo->addIELen =
+		roam_info->addIELen =
 			(uint8_t) pUpperLayerAssocCnf->addIE.length;
-		pRoamInfo->paddIE =
+		roam_info->paddIE =
 			pUpperLayerAssocCnf->addIE.addIEdata;
-		qdf_mem_copy(pRoamInfo->peerMac.bytes,
+		qdf_mem_copy(roam_info->peerMac.bytes,
 			     pUpperLayerAssocCnf->peerMacAddr,
 			     sizeof(tSirMacAddr));
-		qdf_mem_copy(&pRoamInfo->bssid,
+		qdf_mem_copy(&roam_info->bssid,
 			     pUpperLayerAssocCnf->bssId,
 			     sizeof(struct qdf_mac_addr));
-		pRoamInfo->wmmEnabledSta =
+		roam_info->wmmEnabledSta =
 			pUpperLayerAssocCnf->wmmEnabledSta;
-		pRoamInfo->timingMeasCap =
+		roam_info->timingMeasCap =
 			pUpperLayerAssocCnf->timingMeasCap;
-		qdf_mem_copy(&pRoamInfo->chan_info,
+		qdf_mem_copy(&roam_info->chan_info,
 			     &pUpperLayerAssocCnf->chan_info,
 			     sizeof(tSirSmeChanInfo));
-		pRoamInfo->ampdu = pUpperLayerAssocCnf->ampdu;
-		pRoamInfo->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
-		pRoamInfo->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
-		pRoamInfo->tx_stbc = pUpperLayerAssocCnf->rx_stbc;
-		pRoamInfo->ch_width = pUpperLayerAssocCnf->ch_width;
-		pRoamInfo->mode = pUpperLayerAssocCnf->mode;
-		pRoamInfo->max_supp_idx = pUpperLayerAssocCnf->max_supp_idx;
-		pRoamInfo->max_ext_idx = pUpperLayerAssocCnf->max_ext_idx;
-		pRoamInfo->max_mcs_idx = pUpperLayerAssocCnf->max_mcs_idx;
-		pRoamInfo->rx_mcs_map = pUpperLayerAssocCnf->rx_mcs_map;
-		pRoamInfo->tx_mcs_map = pUpperLayerAssocCnf->tx_mcs_map;
-		pRoamInfo->ecsa_capable = pUpperLayerAssocCnf->ecsa_capable;
-		if (CSR_IS_INFRA_AP(pRoamInfo->u.pConnectedProfile)) {
+		roam_info->ampdu = pUpperLayerAssocCnf->ampdu;
+		roam_info->sgi_enable = pUpperLayerAssocCnf->sgi_enable;
+		roam_info->tx_stbc = pUpperLayerAssocCnf->tx_stbc;
+		roam_info->tx_stbc = pUpperLayerAssocCnf->rx_stbc;
+		roam_info->ch_width = pUpperLayerAssocCnf->ch_width;
+		roam_info->mode = pUpperLayerAssocCnf->mode;
+		roam_info->max_supp_idx = pUpperLayerAssocCnf->max_supp_idx;
+		roam_info->max_ext_idx = pUpperLayerAssocCnf->max_ext_idx;
+		roam_info->max_mcs_idx = pUpperLayerAssocCnf->max_mcs_idx;
+		roam_info->rx_mcs_map = pUpperLayerAssocCnf->rx_mcs_map;
+		roam_info->tx_mcs_map = pUpperLayerAssocCnf->tx_mcs_map;
+		roam_info->ecsa_capable = pUpperLayerAssocCnf->ecsa_capable;
+		if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile)) {
 			pMac->roam.roamSession[sessionId].connectState =
 				eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED;
-			pRoamInfo->fReassocReq =
+			roam_info->fReassocReq =
 				pUpperLayerAssocCnf->reassocReq;
 			status = csr_roam_call_callback(pMac, sessionId,
-						       pRoamInfo, 0,
+						       roam_info, 0,
 						       eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
 		}
@@ -12140,7 +12140,7 @@ void csr_roam_check_for_link_status_change(tpAniSirGlobal pMac,
 
 void csr_call_roaming_completion_callback(tpAniSirGlobal pMac,
 					  struct csr_roam_session *pSession,
-					  tCsrRoamInfo *pRoamInfo,
+					  tCsrRoamInfo *roam_info,
 					uint32_t roamId,
 					  eCsrRoamResult roamResult)
 {
@@ -12160,7 +12160,7 @@ void csr_call_roaming_completion_callback(tpAniSirGlobal pMac,
 					       eCSR_ROAM_ASSOCIATION_COMPLETION,
 					       eCSR_ROAM_RESULT_FAILURE);
 		}
-		csr_roam_call_callback(pMac, pSession->sessionId, pRoamInfo,
+		csr_roam_call_callback(pMac, pSession->sessionId, roam_info,
 				       roamId, eCSR_ROAM_ROAMING_COMPLETION,
 				       roamResult);
 	} else
@@ -12499,7 +12499,7 @@ QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac)
 }
 
 void csr_roam_completion(tpAniSirGlobal pMac, uint32_t sessionId,
-			 tCsrRoamInfo *pRoamInfo, tSmeCmd *pCommand,
+			 tCsrRoamInfo *roam_info, tSmeCmd *pCommand,
 			 eCsrRoamResult roamResult, bool fSuccess)
 {
 	eRoamCmdStatus roamStatus = csr_get_roam_complete_status(pMac,
@@ -12530,7 +12530,7 @@ void csr_roam_completion(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 		sme_debug("indicates association completion roamResult: %d",
 			roamResult);
-		csr_roam_call_callback(pMac, sessionId, pRoamInfo, roamId,
+		csr_roam_call_callback(pMac, sessionId, roam_info, roamId,
 				       roamStatus, roamResult);
 	}
 }

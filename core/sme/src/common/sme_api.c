@@ -1448,15 +1448,15 @@ QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo pRoamInfo = { 0 };
+	tCsrRoamInfo roam_info = { 0 };
 	uint32_t SessionId = pSmeMgmtFrm->sessionId;
 
-	pRoamInfo.nFrameLength = pSmeMgmtFrm->frameLen;
-	pRoamInfo.pbFrames = pSmeMgmtFrm->frameBuf;
-	pRoamInfo.frameType = pSmeMgmtFrm->frameType;
+	roam_info.nFrameLength = pSmeMgmtFrm->frameLen;
+	roam_info.pbFrames = pSmeMgmtFrm->frameBuf;
+	roam_info.frameType = pSmeMgmtFrm->frameType;
 
 	/* forward the mgmt frame to HDD */
-	csr_roam_call_callback(pMac, SessionId, &pRoamInfo, 0,
+	csr_roam_call_callback(pMac, SessionId, &roam_info, 0,
 			       eCSR_ROAM_UNPROT_MGMT_FRAME_IND, 0);
 
 	return status;
@@ -1708,14 +1708,14 @@ static QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo pRoamInfo = { 0 };
+	tCsrRoamInfo roam_info = { 0 };
 	uint32_t SessionId = pSmeTsmIeInd->sessionId;
 
-	pRoamInfo.tsmIe.tsid = pSmeTsmIeInd->tsmIe.tsid;
-	pRoamInfo.tsmIe.state = pSmeTsmIeInd->tsmIe.state;
-	pRoamInfo.tsmIe.msmt_interval = pSmeTsmIeInd->tsmIe.msmt_interval;
+	roam_info.tsmIe.tsid = pSmeTsmIeInd->tsmIe.tsid;
+	roam_info.tsmIe.state = pSmeTsmIeInd->tsmIe.state;
+	roam_info.tsmIe.msmt_interval = pSmeTsmIeInd->tsmIe.msmt_interval;
 	/* forward the tsm ie information to HDD */
-	csr_roam_call_callback(pMac, SessionId, &pRoamInfo, 0,
+	csr_roam_call_callback(pMac, SessionId, &roam_info, 0,
 			       eCSR_ROAM_TSM_IE_IND, 0);
 	return status;
 }

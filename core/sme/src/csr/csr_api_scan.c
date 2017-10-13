@@ -1229,10 +1229,10 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 	}
 	/* Only indicate assoc_completion if we indicate assoc_start. */
 	if (session->bRefAssocStartCnt > 0) {
-		tCsrRoamInfo *pRoamInfo = NULL, roamInfo;
+		tCsrRoamInfo *roam_info = NULL, roamInfo;
 
 		qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
-		pRoamInfo = &roamInfo;
+		roam_info = &roamInfo;
 		if (session->scan_info.roambssentry) {
 			struct tag_csrscan_result *pScanResult = GET_BASE_ADDR(
 				session->scan_info.roambssentry,
@@ -1243,7 +1243,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 		roamInfo.statusCode = session->joinFailStatusCode.statusCode;
 		roamInfo.reasonCode = session->joinFailStatusCode.reasonCode;
 		session->bRefAssocStartCnt--;
-		csr_roam_call_callback(mac_ctx, session_id, pRoamInfo,
+		csr_roam_call_callback(mac_ctx, session_id, roam_info,
 				       session->scan_info.roam_id,
 				       eCSR_ROAM_ASSOCIATION_COMPLETION,
 				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
@@ -1403,7 +1403,7 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	struct csr_roam_session *pSession;
 	tSirSmeAssocIndToUpperLayerCnf *pUpperLayerAssocCnf;
 	tCsrRoamInfo roamInfo;
-	tCsrRoamInfo *pRoamInfo = NULL;
+	tCsrRoamInfo *roam_info = NULL;
 	uint32_t sessionId;
 
 	if (eWNI_SME_SCAN_RSP == pMsg->type)
@@ -1427,7 +1427,7 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 
 	sme_debug("Scanning: ASSOC cnf can be given to upper layer");
 	qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
-	pRoamInfo = &roamInfo;
+	roam_info = &roamInfo;
 	pUpperLayerAssocCnf = (tSirSmeAssocIndToUpperLayerCnf *) pMsgBuf;
 	status = csr_roam_get_session_id_from_bssid(pMac,
 			(struct qdf_mac_addr *)pUpperLayerAssocCnf->bssId,
@@ -1440,25 +1440,25 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	}
 
 	/* send the status code as Success */
-	pRoamInfo->statusCode = eSIR_SME_SUCCESS;
-	pRoamInfo->u.pConnectedProfile = &pSession->connectedProfile;
-	pRoamInfo->staId = (uint8_t) pUpperLayerAssocCnf->aid;
-	pRoamInfo->rsnIELen = (uint8_t) pUpperLayerAssocCnf->rsnIE.length;
-	pRoamInfo->prsnIE = pUpperLayerAssocCnf->rsnIE.rsnIEdata;
-	pRoamInfo->addIELen = (uint8_t) pUpperLayerAssocCnf->addIE.length;
-	pRoamInfo->paddIE = pUpperLayerAssocCnf->addIE.addIEdata;
-	qdf_mem_copy(pRoamInfo->peerMac.bytes,
+	roam_info->statusCode = eSIR_SME_SUCCESS;
+	roam_info->u.pConnectedProfile = &pSession->connectedProfile;
+	roam_info->staId = (uint8_t) pUpperLayerAssocCnf->aid;
+	roam_info->rsnIELen = (uint8_t) pUpperLayerAssocCnf->rsnIE.length;
+	roam_info->prsnIE = pUpperLayerAssocCnf->rsnIE.rsnIEdata;
+	roam_info->addIELen = (uint8_t) pUpperLayerAssocCnf->addIE.length;
+	roam_info->paddIE = pUpperLayerAssocCnf->addIE.addIEdata;
+	qdf_mem_copy(roam_info->peerMac.bytes,
 			pUpperLayerAssocCnf->peerMacAddr,
 			QDF_MAC_ADDR_SIZE);
-	qdf_mem_copy(&pRoamInfo->bssid.bytes, pUpperLayerAssocCnf->bssId,
+	qdf_mem_copy(&roam_info->bssid.bytes, pUpperLayerAssocCnf->bssId,
 		     QDF_MAC_ADDR_SIZE);
-	pRoamInfo->wmmEnabledSta = pUpperLayerAssocCnf->wmmEnabledSta;
-	if (CSR_IS_INFRA_AP(pRoamInfo->u.pConnectedProfile)) {
+	roam_info->wmmEnabledSta = pUpperLayerAssocCnf->wmmEnabledSta;
+	if (CSR_IS_INFRA_AP(roam_info->u.pConnectedProfile)) {
 		pMac->roam.roamSession[sessionId].connectState =
 			eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED;
-		pRoamInfo->fReassocReq = pUpperLayerAssocCnf->reassocReq;
+		roam_info->fReassocReq = pUpperLayerAssocCnf->reassocReq;
 		status = csr_roam_call_callback(pMac, sessionId,
-					pRoamInfo, 0,
+					roam_info, 0,
 					eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
 	}
