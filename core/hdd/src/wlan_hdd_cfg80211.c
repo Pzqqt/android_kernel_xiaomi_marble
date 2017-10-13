@@ -14805,14 +14805,14 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adap
 /**
  * wlan_hdd_cfg80211_update_bss_db() - update bss database of CF80211
  * @adapter: Pointer to adapter
- * @pRoamInfo: Pointer to roam info
+ * @roam_info: Pointer to roam info
  *
  * This function is used to update the BSS data base of CFG8011
  *
  * Return: struct cfg80211_bss pointer
  */
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
-						     tCsrRoamInfo *pRoamInfo)
+						     tCsrRoamInfo *roam_info)
 {
 	tCsrRoamConnectedProfile roamProfile;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
@@ -14936,7 +14936,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
 /**
  * wlan_hdd_cfg80211_pmksa_candidate_notify() - notify a new PMSKA candidate
  * @adapter: Pointer to adapter
- * @pRoamInfo: Pointer to roam info
+ * @roam_info: Pointer to roam info
  * @index: Index
  * @preauth: Preauth flag
  *
@@ -14948,7 +14948,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
-					     tCsrRoamInfo *pRoamInfo,
+					     tCsrRoamInfo *roam_info,
 					     int index, bool preauth)
 {
 	struct net_device *dev = adapter->dev;
@@ -14956,15 +14956,15 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 	ENTER();
 	hdd_debug("is going to notify supplicant of:");
 
-	if (NULL == pRoamInfo) {
-		hdd_err("pRoamInfo is NULL");
+	if (NULL == roam_info) {
+		hdd_err("roam_info is NULL");
 		return -EINVAL;
 	}
 
 	hdd_notice(MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
+	       MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 	cfg80211_pmksa_candidate_notify(dev, index,
-					pRoamInfo->bssid.bytes,
+					roam_info->bssid.bytes,
 					preauth, GFP_KERNEL);
 	return 0;
 }
@@ -14973,7 +14973,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
 /**
  * wlan_hdd_cfg80211_roam_metrics_preauth() - roam metrics preauth
  * @adapter: Pointer to adapter
- * @pRoamInfo: Pointer to roam info
+ * @roam_info: Pointer to roam info
  *
  * 802.11r/LFR metrics reporting function to report preauth initiation
  *
@@ -14981,7 +14981,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
  */
 #define MAX_LFR_METRICS_EVENT_LENGTH 100
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
-						  tCsrRoamInfo *pRoamInfo)
+						  tCsrRoamInfo *roam_info)
 {
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;
@@ -15001,7 +15001,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 	wrqu.data.length = scnprintf(metrics_notification,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_INIT " MAC_ADDRESS_STR,
-				     MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
+				     MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);
@@ -15014,7 +15014,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
 /**
  * wlan_hdd_cfg80211_roam_metrics_handover() - roam metrics hand over
  * @adapter: Pointer to adapter
- * @pRoamInfo: Pointer to roam info
+ * @roam_info: Pointer to roam info
  * @preauth_status: Preauth status
  *
  * 802.11r/LFR metrics reporting function to report handover initiation
@@ -15023,7 +15023,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
  */
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
-					      tCsrRoamInfo *pRoamInfo,
+					      tCsrRoamInfo *roam_info,
 					      bool preauth_status)
 {
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
@@ -15042,7 +15042,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 
 	scnprintf(metrics_notification, sizeof(metrics_notification),
 		  "QCOM: LFR_PREAUTH_STATUS " MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
+		  MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
 	if (1 == preauth_status)
 		strlcat(metrics_notification, " true",
@@ -15065,14 +15065,14 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
 /**
  * wlan_hdd_cfg80211_roam_metrics_handover() - roam metrics hand over
  * @adapter: Pointer to adapter
- * @pRoamInfo: Pointer to roam info
+ * @roam_info: Pointer to roam info
  *
  * 802.11r/LFR metrics reporting function to report handover initiation
  *
  * Return: QDF status
  */
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
-						   tCsrRoamInfo *pRoamInfo)
+						   tCsrRoamInfo *roam_info)
 {
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;
@@ -15093,7 +15093,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
 				     sizeof(metrics_notification),
 				     "QCOM: LFR_PREAUTH_HANDOVER "
 				     MAC_ADDRESS_STR,
-				     MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes));
+				     MAC_ADDR_ARRAY(roam_info->bssid.bytes));
 
 	wireless_send_event(adapter->dev, IWEVCUSTOM, &wrqu,
 			    metrics_notification);

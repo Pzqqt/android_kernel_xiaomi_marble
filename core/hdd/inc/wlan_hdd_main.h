@@ -45,6 +45,7 @@
 #define pHddApCtx
 #define pHddStaCtx
 #define pHostapdState
+#define pRoamInfo
 
 /*
  * Include files

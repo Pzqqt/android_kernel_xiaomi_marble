@@ -244,14 +244,14 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx);
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback
  * @pContext: pointer to adapter context
- * @pRoamInfo: pointer to roam info
+ * @roam_info: pointer to roam info
  * @roamId: roam id
  * @roamStatus: roam status
  * @roamResult: roam result
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo,
+QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info,
 				 uint32_t roamId,
 				 eRoamCmdStatus roamStatus,
 				 eCsrRoamResult roamResult);

@@ -311,26 +311,26 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
  * required by WMM when association takes place
  *
  * @adapter: [in]  pointer to adapter context
- * @pRoamInfo: [in]  pointer to roam information
+ * @roam_info: [in]  pointer to roam information
  * @eBssType: [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
-			 tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
+			 tCsrRoamInfo *roam_info, eCsrRoamBssType eBssType);
 
 /**
  * hdd_wmm_connect() - Function which will handle the housekeeping
  * required by WMM when a connection is established
  *
  * @adapter : [in]  pointer to adapter context
- * @pRoamInfo: [in]  pointer to roam information
+ * @roam_info: [in]  pointer to roam information
  * @eBssType : [in]  type of BSS
  *
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
-			   tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
+			   tCsrRoamInfo *roam_info, eCsrRoamBssType eBssType);
 
 /**
  * hdd_wmm_get_uapsd_mask() - Function which will calculate the
