@@ -9933,6 +9933,8 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
+	else
+		hdd_set_idle_ps_config(hdd_ctx, false);
 
 	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
