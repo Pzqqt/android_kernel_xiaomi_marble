@@ -61,6 +61,7 @@ static void hdd_request_destroy(struct hdd_request *request)
 	params = &request->params;
 	if (params->dealloc) {
 		void *priv = hdd_request_priv(request);
+
 		params->dealloc(priv);
 	}
 	qdf_event_destroy(&request->completed);

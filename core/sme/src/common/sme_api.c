@@ -10347,26 +10347,37 @@ QDF_STATUS sme_set_ht2040_mode(tHalHandle hHal, uint8_t sessionId,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	ePhyChanBondState cbMode;
+	struct csr_roam_session *session = CSR_GET_SESSION(pMac, sessionId);
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: Update HT operation beacon IE, channel_type=%d",
-		  __func__, channel_type);
+	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
+		sme_err("Session not valid for session id %d", sessionId);
+		return QDF_STATUS_E_INVAL;
+	}
+	session = CSR_GET_SESSION(pMac, sessionId);
+	sme_debug("Update HT operation beacon IE, channel_type=%d cur cbmode %d",
+		channel_type, session->bssParams.cbMode);
 
 	switch (channel_type) {
 	case eHT_CHAN_HT20:
+		if (!session->bssParams.cbMode)
+			return QDF_STATUS_SUCCESS;
 		cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 		break;
 	case eHT_CHAN_HT40MINUS:
+		if (session->bssParams.cbMode)
+			return QDF_STATUS_SUCCESS;
 		cbMode = PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
 		break;
 	case eHT_CHAN_HT40PLUS:
+		if (session->bssParams.cbMode)
+			return QDF_STATUS_SUCCESS;
 		cbMode = PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
 		break;
 	default:
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "%s:Error!!! Invalid HT20/40 mode !", __func__);
+		sme_err("Error!!! Invalid HT20/40 mode !");
 		return QDF_STATUS_E_FAILURE;
 	}
+	session->bssParams.cbMode = cbMode;
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_set_ht2040_mode(pMac, sessionId,
@@ -16075,4 +16086,37 @@ QDF_STATUS sme_set_bmiss_bcnt(uint32_t vdev_id, uint32_t first_cnt,
 		uint32_t final_cnt)
 {
 	return wma_config_bmiss_bcnt_params(vdev_id, first_cnt, final_cnt);
+}
+
+QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
+		bool is_tos_active, uint32_t max_off_chan_time,
+		uint32_t rest_time, bool skip_dfs_chan)
+{
+	struct sir_limit_off_chan *cmd;
+	struct scheduler_msg msg = {0};
+
+	cmd = qdf_mem_malloc(sizeof(*cmd));
+	if (!cmd) {
+		sme_err("qdf_mem_malloc failed for limit off channel");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd->vdev_id = vdev_id;
+	cmd->is_tos_active = is_tos_active;
+	cmd->max_off_chan_time = max_off_chan_time;
+	cmd->rest_time = rest_time;
+	cmd->skip_dfs_chans = skip_dfs_chan;
+
+	msg.type = WMA_SET_LIMIT_OFF_CHAN;
+	msg.reserved = 0;
+	msg.bodyptr = cmd;
+
+	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
+					&msg))) {
+		sme_err("Not able to post WMA_SET_LIMIT_OFF_CHAN to WMA");
+		qdf_mem_free(cmd);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
 }

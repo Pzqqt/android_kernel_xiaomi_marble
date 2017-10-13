@@ -2170,8 +2170,9 @@ static void hdd_register_policy_manager_callback(
 			struct wlan_objmgr_psoc *psoc)
 {
 	struct policy_mgr_hdd_cbacks hdd_cbacks;
+
 	hdd_cbacks.sap_restart_chan_switch_cb =
-		sap_restart_chan_switch_cb;
+		hdd_sap_restart_chan_switch_cb;
 	hdd_cbacks.wlan_hdd_get_channel_for_sap_restart =
 		wlan_hdd_get_channel_for_sap_restart;
 	hdd_cbacks.get_mode_for_non_connected_vdev =
@@ -2650,6 +2651,9 @@ static int __hdd_stop(struct net_device *dev)
 		hdd_debug("Closing all modules from the hdd_stop");
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 				   hdd_ctx->config->iface_change_wait_time);
+		hdd_prevent_suspend_timeout(
+			hdd_ctx->config->iface_change_wait_time,
+			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 	}
 
 	EXIT();
@@ -2840,7 +2844,8 @@ uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx)
 	return &hdd_ctx->config->intfMacAddr[i].bytes[0];
 }
 
-void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx, uint8_t *releaseAddr)
+void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
+				uint8_t *releaseAddr)
 {
 	int i;
 
@@ -4940,11 +4945,12 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 			     struct cfg80211_bss *bss, tCsrRoamInfo *roam_info,
 			     const u8 *req_ie, size_t req_ie_len,
 			     const u8 *resp_ie, size_t resp_ie_len, u16 status,
-			     gfp_t gfp, bool connect_timeout, tSirResultCodes
-			     timeout_reason, struct fils_join_rsp_params
-			     *roam_fils_params)
+			     gfp_t gfp, bool connect_timeout,
+			     tSirResultCodes timeout_reason,
+			     struct fils_join_rsp_params *roam_fils_params)
 {
 	struct cfg80211_connect_resp_params fils_params;
+
 	qdf_mem_zero(&fils_params, sizeof(fils_params));
 
 	if (!roam_fils_params) {
@@ -4982,14 +4988,14 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 	roam_info->fils_join_rsp = NULL;
 }
 #else
-static inline void hdd_connect_done(struct net_device *dev, const u8 *bssid,
-				    struct cfg80211_bss *bss, tCsrRoamInfo
-				    *roam_info, const u8 *req_ie,
-				    size_t req_ie_len, const u8 *resp_ie,
-				    size_t resp_ie_len, u16 status, gfp_t gfp,
-				    bool connect_timeout, tSirResultCodes
-				    timeout_reason, struct fils_join_rsp_params
-				    *roam_fils_params)
+static inline void
+hdd_connect_done(struct net_device *dev, const u8 *bssid,
+		 struct cfg80211_bss *bss, tCsrRoamInfo *roam_info,
+		 const u8 *req_ie, size_t req_ie_len,
+		 const u8 *resp_ie, size_t resp_ie_len, u16 status,
+		 gfp_t gfp, bool connect_timeout,
+		 tSirResultCodes timeout_reason,
+		 struct fils_join_rsp_params *roam_fils_params)
 { }
 
 static inline void hdd_update_hlp_info(struct net_device *dev,
@@ -5384,8 +5390,9 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
  * Return: adapter pointer if found
  *
  */
-struct hdd_adapter *hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
-						uint32_t sme_session_id)
+struct hdd_adapter *
+hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
+				  uint32_t sme_session_id)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_adapter *adapter;
@@ -5582,8 +5589,9 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
 		    (adapter->device_mode == QDF_SAP_MODE) ||
 		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-		    wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->sessionId, INVALID_SCAN_ID, false);
+			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
+					adapter->sessionId, INVALID_SCAN_ID,
+					false);
 		}
 		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
 		adapterNode = pNext;
@@ -6077,6 +6085,8 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
+	qdf_nbuf_deinit_replenish_timer();
+
 	qdf_spinlock_destroy(&hdd_ctx->hdd_adapter_lock);
 	qdf_spinlock_destroy(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_destroy(&hdd_ctx->connection_status_lock);
@@ -6415,7 +6425,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 			}
 			if (cds_sched_handle_throughput_req(false))
 				hdd_warn("low bandwidth set rx affinity fail");
-		 } else {
+		} else {
 			if (!hdd_ctx->hbw_requested) {
 				pld_request_pm_qos(hdd_ctx->parent_dev, 1);
 				hdd_ctx->hbw_requested = true;
@@ -6423,7 +6433,7 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 			if (cds_sched_handle_throughput_req(true))
 				hdd_warn("high bandwidth set rx affinity fail");
-		 }
+		}
 		hdd_napi_apply_throughput_policy(hdd_ctx, tx_packets, rx_packets);
 	}
 
@@ -6773,8 +6783,6 @@ void wlan_hdd_display_tx_rx_histogram(struct hdd_context *hdd_ctx)
 					hdd_ctx->hdd_txrx_hist[i].
 						next_tx_level));
 	}
-
-	return;
 }
 
 /**
@@ -8329,6 +8337,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->auto_pwr_save_fail_mode;
 
 	cds_cfg->ito_repeat_count = hdd_ctx->config->ito_repeat_count;
+	cds_cfg->bandcapability = hdd_ctx->config->nBandCapability;
 
 	hdd_ra_populate_cds_config(cds_cfg, hdd_ctx);
 	hdd_txrx_populate_cds_config(cds_cfg, hdd_ctx);
@@ -8590,6 +8599,7 @@ int hdd_process_pktlog_command(struct hdd_context *hdd_ctx, uint32_t set_value,
 
 	return hdd_pktlog_enable_disable(hdd_ctx, enable, user_triggered, 0);
 }
+
 /**
  * hdd_pktlog_enable_disable() - Enable/Disable packet logging
  * @hdd_ctx: HDD context
@@ -9536,6 +9546,9 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			mutex_unlock(&hdd_ctx->iface_change_lock);
 			qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 				hdd_ctx->config->iface_change_wait_time);
+			hdd_prevent_suspend_timeout(
+				hdd_ctx->config->iface_change_wait_time,
+				WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 			hdd_ctx->stop_modules_in_progress = false;
 			return 0;
 		}
@@ -9820,6 +9833,8 @@ int hdd_wlan_startup(struct device *dev)
 	qdf_mc_timer_init(&hdd_ctx->iface_change_timer, QDF_TIMER_TYPE_SW,
 			  hdd_iface_change_callback, (void *)hdd_ctx);
 
+	qdf_nbuf_init_replenish_timer();
+
 	mutex_init(&hdd_ctx->iface_change_lock);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_init(&hdd_ctx->avoid_freq_lock);
@@ -9904,9 +9919,13 @@ int hdd_wlan_startup(struct device *dev)
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
 
-	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 			   hdd_ctx->config->iface_change_wait_time);
+		hdd_prevent_suspend_timeout(
+			hdd_ctx->config->iface_change_wait_time,
+			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
+	}
 
 	hdd_start_complete(0);
 	goto success;
@@ -9952,6 +9971,7 @@ err_hdd_free_context:
 	else
 		hdd_start_complete(ret);
 
+	qdf_nbuf_deinit_replenish_timer();
 	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
 	hdd_context_destroy(hdd_ctx);
@@ -10041,8 +10061,6 @@ static void hdd_get_nud_stats_cb(void *data, struct rsp_stats *rsp)
 	spin_unlock(&hdd_context_lock);
 
 	EXIT();
-
-	return;
 }
 
 /**
@@ -10534,8 +10552,9 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 }
 #endif
 
-struct hdd_adapter *hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
-							bool check_start_bss)
+struct hdd_adapter *
+hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
+			bool check_start_bss)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(this_sap_adapter);
 	struct hdd_adapter *adapter, *con_sap_adapter;
@@ -10715,11 +10734,12 @@ void hdd_bus_bw_compute_timer_try_stop(struct hdd_context *hdd_ctx)
  *
  * Return: QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE.
  */
-QDF_STATUS wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
-						  struct hdd_adapter *ap_adapter,
-						  tCsrRoamProfile *roam_profile,
-						  tScanResultHandle *scan_cache,
-						  bool *concurrent_chnl_same)
+QDF_STATUS
+wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
+					struct hdd_adapter *ap_adapter,
+					tCsrRoamProfile *roam_profile,
+					tScanResultHandle *scan_cache,
+					bool *concurrent_chnl_same)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t channel_id;
@@ -12015,9 +12035,8 @@ static inline void hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
 #else
 static inline void
 hdd_update_pno_config(struct pno_user_cfg *pno_cfg,
-	struct hdd_config *cfg)
+		      struct hdd_config *cfg)
 {
-	return;
 }
 #endif
 
@@ -12468,7 +12487,6 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 	}
 end:
 	mutex_unlock(&hdd_ctx->sap_lock);
-	return;
 }
 
 /**
@@ -12621,30 +12639,6 @@ int hdd_get_rssi_snr_by_bssid(struct hdd_adapter *adapter, const uint8_t *bssid,
 }
 
 /**
- * hdd_send_limit_off_chan_cmd() - send limit off-channel command parameters
- * @param - pointer to sir_limit_off_chan
- *
- * Return: 0 on success and non zero value on failure
- */
-static int hdd_send_limit_off_chan_cmd(struct sir_limit_off_chan *param)
-{
-	struct scheduler_msg msg = {0};
-
-	msg.type = WMA_SET_LIMIT_OFF_CHAN;
-	msg.reserved = 0;
-	msg.bodyptr = param;
-
-	if (!QDF_IS_STATUS_SUCCESS(scheduler_post_msg(QDF_MODULE_ID_WMA,
-					&msg))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Not able to post WMA_SET_LIMIT_OFF_CHAN to WMA"));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return 0;
-}
-
-/**
  * hdd_set_limit_off_chan_for_tos() - set limit off-channel command parameters
  * @adapter - HDD adapter
  * @tos - type of service
@@ -12657,9 +12651,11 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 		bool is_tos_active)
 {
 	int ac_bit;
-	struct sir_limit_off_chan *cmd;
 	struct hdd_context *hdd_ctx;
+	uint32_t max_off_chan_time = 0;
+	QDF_STATUS status;
 	int ret;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -12667,12 +12663,6 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 	if (ret < 0) {
 		hdd_err("failed to set limit off chan params");
 		return ret;
-	}
-
-	cmd = qdf_mem_malloc(sizeof(struct sir_limit_off_chan));
-	if (!cmd) {
-		hdd_err("qdf_mem_malloc failed for limit off channel");
-		return -ENOMEM;
 	}
 
 	ac_bit = limit_off_chan_tbl[tos][HDD_AC_BIT_INDX];
@@ -12684,12 +12674,12 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 
 	if (adapter->active_ac) {
 		if (adapter->active_ac & HDD_AC_VO_BIT) {
-			cmd->max_off_chan_time =
+			max_off_chan_time =
 				limit_off_chan_tbl[TOS_VO][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
 					PM_LATENCY);
 		} else if (adapter->active_ac & HDD_AC_VI_BIT) {
-			cmd->max_off_chan_time =
+			max_off_chan_time =
 				limit_off_chan_tbl[TOS_VI][HDD_DWELL_TIME_INDX];
 			policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
 					PM_LATENCY);
@@ -12705,14 +12695,51 @@ int hdd_set_limit_off_chan_for_tos(struct hdd_adapter *adapter, enum tos tos,
 				hdd_ctx->config->conc_system_pref);
 	}
 
-	cmd->vdev_id = adapter->sessionId;
-	cmd->is_tos_active = is_tos_active;
-	cmd->rest_time = hdd_ctx->config->nRestTimeConc;
-	cmd->skip_dfs_chans = true;
+	status = sme_send_limit_off_channel_params(hal, adapter->sessionId,
+			is_tos_active, max_off_chan_time,
+			hdd_ctx->config->nRestTimeConc, true);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("failed to set limit off chan params");
+		ret = -EINVAL;
+	}
 
-	ret = hdd_send_limit_off_chan_cmd(cmd);
-	if (ret)
-		qdf_mem_free(cmd);
+	return ret;
+}
+
+/**
+ * hdd_reset_limit_off_chan() - reset limit off-channel command parameters
+ * @adapter - HDD adapter
+ *
+ * Return: 0 on success and non zero value on failure
+ */
+int hdd_reset_limit_off_chan(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx;
+	int ret;
+	QDF_STATUS status;
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret < 0)
+		return ret;
+
+	/* set the system preferece to default */
+	policy_mgr_set_cur_conc_system_pref(hdd_ctx->hdd_psoc,
+			hdd_ctx->config->conc_system_pref);
+
+	/* clear the bitmap */
+	adapter->active_ac = 0;
+
+	hdd_debug("reset ac_bitmap for session %hu active_ac %0x",
+			adapter->sessionId, adapter->active_ac);
+
+	status = sme_send_limit_off_channel_params(hal, adapter->sessionId,
+			false, 0, 0, false);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("failed to reset limit off chan params");
+		ret = -EINVAL;
+	}
 
 	return ret;
 }

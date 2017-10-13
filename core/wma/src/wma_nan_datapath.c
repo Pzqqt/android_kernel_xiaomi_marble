@@ -684,6 +684,13 @@ static int wma_ndp_end_indication_event_handler(void *handle,
 	WMA_LOGD(FL("number of ndp instances = %d"),
 		event->num_ndp_end_indication_list);
 
+	if (event->num_ndp_end_indication_list > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*ndp_event_buf)) / sizeof(ndp_event_buf->ndp_map[0]))) {
+		WMA_LOGE("%s: excess data received from fw num_ndp_end_indication_list %d",
+			 __func__, event->num_ndp_end_indication_list);
+		return -EINVAL;
+	}
+
 	buf_size = sizeof(*ndp_event_buf) + event->num_ndp_end_indication_list *
 			sizeof(ndp_event_buf->ndp_map[0]);
 	ndp_event_buf = qdf_mem_malloc(buf_size);

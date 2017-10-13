@@ -922,7 +922,7 @@ static inline void sap_event_init(ptWLAN_SAPEvent sapEvent)
  **/
 static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 {
-	int ch;
+	uint8_t ch;
 	uint8_t ch_wd;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	tHalHandle hal;
@@ -964,7 +964,7 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	acs_info.acs_mode = sap_ctx->acs_cfg->acs_mode;
 	acs_info.start_ch = sap_ctx->acs_cfg->start_ch;
 	acs_info.end_ch = sap_ctx->acs_cfg->end_ch;
-	if (QDF_IS_STATUS_ERROR(dfs_get_random_channel(
+	if (QDF_IS_STATUS_ERROR(utils_dfs_get_random_channel(
 	    pdev, 0, ch_params, &hw_mode, &ch, &acs_info))) {
 		/* No available channel found */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

@@ -3815,6 +3815,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	tDot11fBeaconIEs *pIesLocal = pIes;
 	eCsrAuthType negAuthType = eCSR_AUTH_TYPE_UNKNOWN;
 
+	qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
 	do {
 		if (!csr_is_profile_rsn(pProfile))
 			break;

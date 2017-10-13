@@ -517,6 +517,12 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 
 	WMA_LOGD("%s", __func__);
 
+	if (resp_event->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("%s: received invalid vdev_id %d",
+			 __func__, resp_event->vdev_id);
+		return -EINVAL;
+	}
+
 	/* Check for valid handle to ensure session is not
 	 * deleted in any race
 	 */
@@ -1240,8 +1246,13 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 #ifdef FEATURE_WLAN_WAPI
 	    || params->encryptType == eSIR_ED_WPI
 #endif /* FEATURE_WLAN_WAPI */
-	    )
+	    ) {
 		cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
+		WMA_LOGD("Acquire set key wake lock for %d ms",
+			WMA_VDEV_SET_KEY_REQUEST_TIMEOUT);
+		wma_acquire_wakelock(&intr->vdev_set_key_wakelock,
+			WMA_VDEV_SET_KEY_REQUEST_TIMEOUT);
+	}
 	if (params->wpa_rsn >> 1)
 		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
 
@@ -1630,6 +1641,17 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	if (NULL == wma_handle) {
+		WMA_LOGE(FL("Invalid wma_handle for vdev_id: %d"),
+			key_params->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (key_params->vdev_id >= wma_handle->max_bssid) {
+		WMA_LOGE(FL("Invalid vdev_id: %d"), key_params->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	iface = &wma_handle->interfaces[key_params->vdev_id];
+
 	params.vdev_id = key_params->vdev_id;
 	params.key_idx = key_params->key_idx;
 	qdf_mem_copy(params.peer_mac, key_params->peer_mac, IEEE80211_ADDR_LEN);
@@ -1778,6 +1800,13 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 
 	status = wmi_unified_setup_install_key_cmd(wma_handle->wmi_handle,
 								&params);
+
+
+	if (!key_params->unicast) {
+		/* Its GTK release the wake lock */
+		WMA_LOGD("Release set key wake lock");
+		wma_release_wakelock(&iface->vdev_set_key_wakelock);
+	}
 
 	return status;
 }

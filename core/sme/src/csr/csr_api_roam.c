@@ -1569,6 +1569,27 @@ static void init_config_param(tpAniSirGlobal pMac)
 		MAWC_ROAM_RSSI_HIGH_ADJUST_DEFAULT;
 	pMac->roam.configParam.csr_mawc_config.mawc_roam_rssi_low_adjust =
 		MAWC_ROAM_RSSI_LOW_ADJUST_DEFAULT;
+
+	qdf_mem_zero(&pMac->roam.configParam.bss_score_params,
+		     sizeof(struct sir_score_config));
+	pMac->roam.configParam.bss_score_params.weight_cfg.rssi_weightage =
+		RSSI_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.weight_cfg.ht_caps_weightage =
+		HT_CAPABILITY_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.weight_cfg.vht_caps_weightage =
+		VHT_CAP_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.
+		weight_cfg.chan_width_weightage = CHAN_WIDTH_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.
+		weight_cfg.chan_band_weightage = CHAN_BAND_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.weight_cfg.nss_weightage =
+		NSS_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.weight_cfg.
+		beamforming_cap_weightage = BEAMFORMING_CAP_WEIGHTAGE;
+	pMac->roam.configParam.bss_score_params.weight_cfg.pcl_weightage =
+		PCL_WEIGHT;
+	pMac->roam.configParam.bss_score_params.weight_cfg.
+		channel_congestion_weightage = CHANNEL_CONGESTION_WEIGHTAGE;
 }
 
 eCsrBand csr_get_current_band(tHalHandle hHal)
@@ -2926,6 +2947,10 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.num_disallowed_aps =
 			pParam->num_disallowed_aps;
 
+		qdf_mem_copy(&pMac->roam.configParam.bss_score_params,
+			     &pParam->bss_score_params,
+			     sizeof(struct sir_score_config));
+
 		csr_update_he_config_param(pMac, pParam);
 	}
 	return status;
@@ -3182,6 +3207,10 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	qdf_mem_copy(&pParam->csr_mawc_config,
 		&pMac->roam.configParam.csr_mawc_config,
 		sizeof(pParam->csr_mawc_config));
+
+	qdf_mem_copy(&pParam->bss_score_params,
+		     &pMac->roam.configParam.bss_score_params,
+		     sizeof(struct sir_score_config));
 
 	csr_get_he_config_param(pParam, pMac);
 
@@ -3494,7 +3523,7 @@ static QDF_STATUS csr_init11d_info(tpAniSirGlobal pMac, tCsr11dinfo *ps11dinfo)
 			count++;
 		}
 		if (count) {
-			csr_save_to_channel_power2_g_5_g(pMac,
+			status = csr_save_to_channel_power2_g_5_g(pMac,
 							 count *
 							sizeof(tSirMacChanInfo),
 							 pChanInfoStart);
@@ -18399,6 +18428,88 @@ csr_roam_offload_per_scan(tpAniSirGlobal mac_ctx, uint8_t session_id)
 }
 
 /**
+ * csr_update_score_params() - API to update Score params in RSO
+ * @mac_ctx: Mac context
+ * @req_buffer: RSO request buffer
+ *
+ * Return: None
+ */
+static void csr_update_score_params(tpAniSirGlobal mac_ctx,
+				    tSirRoamOffloadScanReq *req_buffer)
+{
+	struct scoring_param *req_score_params;
+	struct rssi_scoring *req_rssi_score;
+	struct sir_score_config *bss_score_params;
+	struct sir_weight_config *weight_config;
+	struct sir_rssi_cfg_score *rssi_score;
+
+	req_score_params = &req_buffer->score_params;
+	req_rssi_score = &req_score_params->rssi_scoring;
+
+	bss_score_params = &mac_ctx->roam.configParam.bss_score_params;
+	weight_config = &bss_score_params->weight_cfg;
+	rssi_score = &bss_score_params->rssi_score;
+
+	if (!bss_score_params->enable_scoring_for_roam)
+			req_score_params->disable_bitmap =
+				WLAN_ROAM_SCORING_DISABLE_ALL;
+
+	req_score_params->rssi_weightage = weight_config->rssi_weightage;
+	req_score_params->ht_weightage = weight_config->ht_caps_weightage;
+	req_score_params->vht_weightage = weight_config->vht_caps_weightage;
+	req_score_params->he_weightage = weight_config->he_caps_weightage;
+	req_score_params->bw_weightage = weight_config->chan_width_weightage;
+	req_score_params->band_weightage = weight_config->chan_band_weightage;
+	req_score_params->nss_weightage = weight_config->nss_weightage;
+	req_score_params->esp_qbss_weightage =
+		weight_config->channel_congestion_weightage;
+	req_score_params->beamforming_weightage =
+		weight_config->beamforming_cap_weightage;
+	req_score_params->pcl_weightage =
+		weight_config->pcl_weightage;
+	req_score_params->oce_wan_weightage = weight_config->oce_wan_weightage;
+
+	req_score_params->bw_index_score =
+		bss_score_params->bandwidth_weight_per_index;
+	req_score_params->band_index_score =
+		bss_score_params->band_weight_per_index;
+	req_score_params->nss_index_score =
+		bss_score_params->nss_weight_per_index;
+
+	req_rssi_score->best_rssi_threshold = rssi_score->best_rssi_threshold;
+	req_rssi_score->good_rssi_threshold = rssi_score->good_rssi_threshold;
+	req_rssi_score->bad_rssi_threshold = rssi_score->bad_rssi_threshold;
+	req_rssi_score->good_rssi_pcnt = rssi_score->good_rssi_pcnt;
+	req_rssi_score->bad_rssi_pcnt = rssi_score->bad_rssi_pcnt;
+	req_rssi_score->good_bucket_size = rssi_score->good_rssi_bucket_size;
+	req_rssi_score->bad_bucket_size = rssi_score->bad_rssi_bucket_size;
+	req_rssi_score->rssi_pref_5g_rssi_thresh =
+			rssi_score->rssi_pref_5g_rssi_thresh;
+
+	req_score_params->esp_qbss_scoring.num_slot =
+		bss_score_params->esp_qbss_scoring.num_slot;
+	req_score_params->esp_qbss_scoring.score_pcnt3_to_0 =
+		bss_score_params->esp_qbss_scoring.score_pcnt3_to_0;
+	req_score_params->esp_qbss_scoring.score_pcnt7_to_4 =
+		bss_score_params->esp_qbss_scoring.score_pcnt7_to_4;
+	req_score_params->esp_qbss_scoring.score_pcnt11_to_8 =
+		bss_score_params->esp_qbss_scoring.score_pcnt11_to_8;
+	req_score_params->esp_qbss_scoring.score_pcnt15_to_12 =
+		bss_score_params->esp_qbss_scoring.score_pcnt15_to_12;
+
+	req_score_params->oce_wan_scoring.num_slot =
+		bss_score_params->oce_wan_scoring.num_slot;
+	req_score_params->oce_wan_scoring.score_pcnt3_to_0 =
+		bss_score_params->oce_wan_scoring.score_pcnt3_to_0;
+	req_score_params->oce_wan_scoring.score_pcnt7_to_4 =
+		bss_score_params->oce_wan_scoring.score_pcnt7_to_4;
+	req_score_params->oce_wan_scoring.score_pcnt11_to_8 =
+		bss_score_params->oce_wan_scoring.score_pcnt11_to_8;
+	req_score_params->oce_wan_scoring.score_pcnt15_to_12 =
+		bss_score_params->oce_wan_scoring.score_pcnt15_to_12;
+}
+
+/**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
  * WMA
  *
@@ -18609,6 +18720,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 				session->pAddIEAssoc,
 				session->nAddIEAssocLength);
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
+		csr_update_score_params(mac_ctx, req_buf);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

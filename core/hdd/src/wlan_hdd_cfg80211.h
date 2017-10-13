@@ -422,8 +422,9 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
 				GFP_KERNEL);
 }
 #endif
-struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
-						tSirBssDescription *bss_desc);
+struct cfg80211_bss *
+wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
+				   struct bss_description *bss_desc);
 
 /**
  * hdd_rate_info_bw: an HDD internal rate bandwidth representation

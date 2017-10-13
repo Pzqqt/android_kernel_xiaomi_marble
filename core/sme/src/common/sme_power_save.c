@@ -84,11 +84,11 @@ static void sme_ps_fill_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 
 	uapsd_delivery_mask =
-		ps_param->uapsd_per_ac_bit_mask &
+		ps_param->uapsd_per_ac_bit_mask |
 		ps_param->uapsd_per_ac_delivery_enable_mask;
 
 	uapsd_trigger_mask =
-		ps_param->uapsd_per_ac_bit_mask &
+		ps_param->uapsd_per_ac_bit_mask |
 		ps_param->uapsd_per_ac_trigger_enable_mask;
 
 	uapsdParams->bkDeliveryEnabled =

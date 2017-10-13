@@ -108,6 +108,7 @@ enum active_bpf_mode {
  * @auto_power_save_fail_mode: auto detect power save failure mode
  * @ito_repeat_count: Indicates ito repeated count
  * @force_target_assert_enabled: Indicate whether target assert enabled or not
+ * @bandcapability: Configured band by user
  * Structure for holding cds ini parameters.
  */
 
@@ -166,6 +167,7 @@ struct cds_config_info {
 	enum pmo_auto_pwr_detect_failure_mode auto_power_save_fail_mode;
 	uint8_t ito_repeat_count;
 	bool force_target_assert_enabled;
+	uint8_t bandcapability;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK

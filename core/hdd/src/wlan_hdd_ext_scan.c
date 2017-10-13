@@ -1580,11 +1580,11 @@ static int wlan_hdd_send_ext_scan_capability(struct hdd_context *hdd_ctx)
 	    nla_put_u32(skb, MAX_NUM_EPNO_NETS_BY_SSID,
 			data->max_number_epno_networks_by_ssid) ||
 	    nla_put_u32(skb, MAX_NUM_WHITELISTED_SSID,
-		data->max_number_of_white_listed_ssid) ||
+			data->max_number_of_white_listed_ssid) ||
 	    nla_put_u32(skb, MAX_NUM_BLACKLISTED_BSSID,
-		data->max_number_of_black_listed_bssid)) {
-			hdd_err("nla put fail");
-			goto nla_put_failure;
+			data->max_number_of_black_listed_bssid)) {
+		hdd_err("nla put fail");
+		goto nla_put_failure;
 	}
 
 	cfg80211_vendor_cmd_reply(skb);

@@ -2504,8 +2504,6 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 	if (pr->WMMParams.present) {
 		pProbeResp->wmeEdcaPresent = 1;
 		convert_wmm_params(pMac, &pProbeResp->edcaParams, &pr->WMMParams);
-		pe_debug("WMM Parameter present in Probe Response Frame!");
-		       __print_wmm_params(pMac, &pr->WMMParams);
 	}
 
 	if (pr->WMMInfoAp.present) {
@@ -4118,8 +4116,6 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		pBeaconStruct->wmeEdcaPresent = 1;
 		convert_wmm_params(pMac, &pBeaconStruct->edcaParams,
 				   &pBeacon->WMMParams);
-		pe_debug("WMM Parameter present in Beacon Frame!");
-		       __print_wmm_params(pMac, &pBeacon->WMMParams);
 	}
 
 	if (pBeacon->WMMInfoAp.present) {

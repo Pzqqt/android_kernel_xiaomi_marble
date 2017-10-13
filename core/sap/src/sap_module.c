@@ -213,7 +213,7 @@ QDF_STATUS wlansap_context_get(struct sap_context *ctx)
 	}
 	qdf_mutex_release(&sap_context_lock);
 
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 			"%s: sap session is not valid", __func__);
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2556,7 +2556,7 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 				  "%s: null pdev", __func__);
 			return QDF_STATUS_E_FAULT;
 		}
-		dfs_clear_nol_channels(pdev);
+		utils_dfs_clear_nol_channels(pdev);
 	} else if (conf == eSAP_DFS_NOL_RANDOMIZE) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Randomize the DFS NOL", __func__);

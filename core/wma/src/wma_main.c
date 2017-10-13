@@ -2356,12 +2356,14 @@ void wma_vdev_init(struct wma_txrx_node *vdev)
 {
 	qdf_wake_lock_create(&vdev->vdev_start_wakelock, "vdev_start");
 	qdf_wake_lock_create(&vdev->vdev_stop_wakelock, "vdev_stop");
+	qdf_wake_lock_create(&vdev->vdev_set_key_wakelock, "vdev_set_key");
 }
 
 void wma_vdev_deinit(struct wma_txrx_node *vdev)
 {
 	qdf_wake_lock_destroy(&vdev->vdev_start_wakelock);
 	qdf_wake_lock_destroy(&vdev->vdev_stop_wakelock);
+	qdf_wake_lock_destroy(&vdev->vdev_set_key_wakelock);
 }
 
 /**
@@ -2863,6 +2865,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 				WMA_RX_SERIALIZER_CTX);
 
 	wma_handle->ito_repeat_count = cds_cfg->ito_repeat_count;
+	wma_handle->bandcapability = cds_cfg->bandcapability;
 
 	/* Register PWR_SAVE_FAIL event only in case of recovery(1) */
 	if (cds_cfg->auto_power_save_fail_mode ==
@@ -5804,6 +5807,13 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 		return;
 	}
 
+	if (param_buf->soc_hw_mode_caps->num_hw_modes >
+			MAX_NUM_HW_MODE) {
+		WMA_LOGE("Invalid num_hw_modes %u received from firmware",
+			 param_buf->soc_hw_mode_caps->num_hw_modes);
+		return;
+	}
+
 	qdf_mem_copy(&phy_caps->num_hw_modes,
 			param_buf->soc_hw_mode_caps,
 			sizeof(WMI_SOC_MAC_PHY_HW_MODE_CAPS));
@@ -5878,6 +5888,14 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 	/*
 	 * next thing is to populate reg caps per phy
 	 */
+
+	if (param_buf->soc_hal_reg_caps->num_phy >
+			MAX_NUM_PHY) {
+		WMA_LOGE("Invalid num_phy %u received from firmware",
+			 param_buf->soc_hal_reg_caps->num_phy);
+		return;
+	}
+
 	qdf_mem_copy(&phy_caps->num_phy_for_hal_reg_cap,
 			param_buf->soc_hal_reg_caps,
 			sizeof(WMI_SOC_HAL_REG_CAPABILITIES));
@@ -7902,6 +7920,12 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 	for (i = 0; i < msg->saved_num_chan; i++) {
 		msg->weighed_valid_list[i] =
 			wma_map_pcl_weights(msg->weighed_valid_list[i]);
+		/* Dont allow roaming on 2G when 5G_ONLY configured */
+		if ((wma_handle->bandcapability == eCSR_BAND_5G) &&
+			(msg->saved_chan_list[i] <= MAX_24GHZ_CHANNEL)) {
+			msg->weighed_valid_list[i] =
+				WEIGHT_OF_DISALLOWED_CHANNELS;
+		}
 		WMA_LOGD("%s: chan:%d weight[%d]=%d", __func__,
 			 msg->saved_chan_list[i], i,
 			 msg->weighed_valid_list[i]);

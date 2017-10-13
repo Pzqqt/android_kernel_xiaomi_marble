@@ -1666,7 +1666,8 @@ void hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
  *
  * Return: None
  */
-static void __hdd_ipa_uc_stat_request(struct hdd_adapter *adapter, uint8_t reason)
+static void __hdd_ipa_uc_stat_request(struct hdd_adapter *adapter,
+				      uint8_t reason)
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_ipa_priv *hdd_ipa;
@@ -1915,7 +1916,8 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 
 	/* If RM feature enabled
 	 * Request PROD Resource first
-	 * PROD resource may return sync or async manners */
+	 * PROD resource may return sync or async manners
+	 */
 	if (hdd_ipa_is_rm_enabled(hdd_ctx)) {
 		if (!ipa_rm_request_resource(IPA_RM_RESOURCE_WLAN_PROD)) {
 			/* RM PROD request sync return
@@ -2663,7 +2665,8 @@ static void __hdd_ipa_wdi_meter_notifier_cb(enum ipa_wdi_meter_evt_type evt,
 	switch (evt) {
 	case IPA_GET_WDI_SAP_STATS:
 		/* fill-up ipa_get_wdi_sap_stats structure after getting
-		   ipa_uc_fw_stats from FW */
+		 * ipa_uc_fw_stats from FW
+		 */
 		wdi_sap_stats = data;
 
 		if (!adapter) {
@@ -2718,7 +2721,8 @@ static void __hdd_ipa_wdi_meter_notifier_cb(enum ipa_wdi_meter_evt_type evt,
 		break;
 	case IPA_SET_WIFI_QUOTA:
 		/* get ipa_set_wifi_quota structure from IPA and pass to FW
-		   through quota_exceeded field in ipa_uc_fw_stats */
+		 * through quota_exceeded field in ipa_uc_fw_stats
+		 */
 		ipa_set_quota = data;
 
 		if (!adapter) {
@@ -3490,8 +3494,9 @@ static int hdd_ipa_rm_cons_request(void)
  *
  * Return: 0 on success, negative errno on error
  */
-static int __hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx, uint64_t tx_packets,
-			   uint64_t rx_packets)
+static int __hdd_ipa_set_perf_level(struct hdd_context *hdd_ctx,
+				    uint64_t tx_packets,
+				    uint64_t rx_packets)
 {
 	uint32_t next_cons_bw, next_prod_bw;
 	struct hdd_ipa_priv *hdd_ipa;
@@ -4112,12 +4117,15 @@ static void hdd_ipa_send_pkt_to_tl(
 	 * During CAC period, data packets shouldn't be sent over the air so
 	 * drop all the packets here
 	 */
-	if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx) {
-		ipa_free_skb(ipa_tx_desc);
-		qdf_spin_unlock_bh(&iface_context->interface_lock);
-		iface_context->stats.num_tx_cac_drop++;
-		hdd_ipa_rm_try_release(hdd_ipa);
-		return;
+	if (QDF_SAP_MODE == adapter->device_mode ||
+	    QDF_P2P_GO_MODE == adapter->device_mode) {
+		if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx) {
+			ipa_free_skb(ipa_tx_desc);
+			qdf_spin_unlock_bh(&iface_context->interface_lock);
+			iface_context->stats.num_tx_cac_drop++;
+			hdd_ipa_rm_try_release(hdd_ipa);
+			return;
+		}
 	}
 
 	++adapter->stats.tx_packets;
@@ -4756,11 +4764,13 @@ end:
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * __hdd_ipa_send_mcc_scc_msg() - send IPA WLAN_SWITCH_TO_MCC/SCC message
+ * @hdd_ctx: HDD context
  * @mcc_mode: 0=MCC/1=SCC
  *
  * Return: 0 on success, negative errno value on error
  */
-static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx, bool mcc_mode)
+static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx,
+				      bool mcc_mode)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	QDF_STATUS status;
@@ -5018,12 +5028,11 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 				qdf_mutex_release(&hdd_ipa->ipa_lock);
 			}
 			return 0;
-		} else {
-			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-				    "IPA resource %s completed",
-				    hdd_ipa->resource_loading ?
-				    "load" : "unload");
 		}
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "IPA resource %s completed",
+			    hdd_ipa->resource_loading ?
+			    "load" : "unload");
 	}
 
 	hdd_ipa->stats.event[type]++;

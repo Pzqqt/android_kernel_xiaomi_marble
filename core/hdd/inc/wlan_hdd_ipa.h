@@ -265,7 +265,6 @@ static inline QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx)
 
 static inline void hdd_ipa_set_tx_flow_info(void)
 {
-	return;
 }
 
 /**

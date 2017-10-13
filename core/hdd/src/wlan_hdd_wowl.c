@@ -50,6 +50,7 @@ static uint8_t g_hdd_wowl_ptrns_count;
 static inline int find_ptrn_len(const char *ptrn)
 {
 	int len = 0;
+
 	while (*ptrn != '\0' && *ptrn != WOWL_INTER_PTRN_TOKENIZER) {
 		len++;
 		ptrn++;

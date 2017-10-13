@@ -2673,12 +2673,13 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 	}
 }
 
-void sap_restart_chan_switch_cb (struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint32_t channel,
-				uint32_t channel_bw)
+void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id, uint32_t channel,
+				    uint32_t channel_bw)
 {
-	struct hdd_adapter *ap_adapter = wlan_hdd_get_adapter_from_vdev(
-					psoc, vdev_id);
+	struct hdd_adapter *ap_adapter =
+		wlan_hdd_get_adapter_from_vdev(psoc, vdev_id);
+
 	if (!ap_adapter) {
 		hdd_err("Adapter is NULL");
 		return;
@@ -2775,7 +2776,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	*sec_ch = hdd_ap_ctx->sapConfig.sec_ch;
 
 	hdd_info("SAP channel change with CSA/ECSA");
-	sap_restart_chan_switch_cb(psoc, vdev_id,
+	hdd_sap_restart_chan_switch_cb(psoc, vdev_id,
 		hdd_ap_ctx->sapConfig.channel,
 		hdd_ap_ctx->sapConfig.ch_params.ch_width);
 
@@ -3666,6 +3667,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		struct hdd_context *hdd_ctx =
 			WLAN_HDD_GET_CTX(adapter);
 		void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
 		hdd_debug("QCASAP_CLEAR_STATS val %d", set_value);
 		switch (set_value) {
 		case CDP_HDD_STATS:
@@ -3976,7 +3978,7 @@ static __iw_softap_getparam(struct net_device *dev,
 			return -EINVAL;
 		}
 
-		dfs_print_nol_channels(pdev);
+		utils_dfs_print_nol_channels(pdev);
 	}
 	break;
 
@@ -7821,9 +7823,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			for (i = 0;
 			     i < pConfig->supported_rates.numRates; i++) {
 				if (pIe[i]) {
-				     pConfig->supported_rates.rate[i] = pIe[i];
-				     hdd_debug("Configured Supported rate is %2x",
-					pConfig->supported_rates.rate[i]);
+					pConfig->supported_rates.rate[i] = pIe[i];
+					hdd_debug("Configured Supported rate is %2x",
+						  pConfig->supported_rates.rate[i]);
 				}
 			}
 		}
@@ -7836,9 +7838,9 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			pIe++;
 			for (i = 0; i < pConfig->extended_rates.numRates; i++) {
 				if (pIe[i]) {
-				      pConfig->extended_rates.rate[i] = pIe[i];
-				      hdd_debug("Configured ext Supported rate is %2x",
-					pConfig->extended_rates.rate[i]);
+					pConfig->extended_rates.rate[i] = pIe[i];
+					hdd_debug("Configured ext Supported rate is %2x",
+						  pConfig->extended_rates.rate[i]);
 				}
 			}
 		}

@@ -1112,9 +1112,36 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  * Usage: External
  *
  * </ioctl>
-*/
+ */
 #define WE_SET_WOW_DATA_INACTIVITY_TO    94
 
+/*
+ * <ioctl>
+ * pdev_reset - reset the pdev
+ *
+ * @INPUT: Reset command to initiate:
+ *    TX_FLUSH = 1
+ *    WARM_RESET = 2
+ *    COLD_RESET = 3
+ *    WARM_RESET_RESTORE_CAL = 4
+ *    COLD_RESET_RESTORE_CAL = 5
+ *
+ * @OUTPUT: None
+ *
+ * This IOCTL is used to reset the pdev. The primary use is
+ * for internal testing. It is not expected that this will
+ * be used on a production device.
+ *
+ * @E.g: iwpriv wlan0 pdev_reset <command>
+ * iwpriv wlan0 pdev_reset 1
+ *
+ * Supported Feature: None
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_PDEV_RESET    95
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -4441,9 +4468,9 @@ int hdd_set_11ax_rate(struct hdd_adapter *adapter, int set_value,
 		}
 	} else if (sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax &&
 		   sap_config->SapHw_mode != eCSR_DOT11_MODE_11ax_ONLY) {
-			hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
-				sap_config->SapHw_mode, sap_config->channel);
-			return -EIO;
+		hdd_err("Invalid hw mode, SAP hw_mode= 0x%x, ch = %d",
+			sap_config->SapHw_mode, sap_config->channel);
+		return -EIO;
 	}
 
 	if (set_value != 0xff) {
@@ -7903,6 +7930,39 @@ int wlan_hdd_get_temperature(struct hdd_adapter *adapter, int *temperature)
 	return 0;
 }
 
+static int hdd_validate_pdev_reset(int value)
+{
+	if ((value < 1) || (value > 5)) {
+		hdd_warn(" Invalid value %d: Use any one of the below values\n"
+			 "    TX_FLUSH = 1\n"
+			 "    WARM_RESET = 2\n"
+			 "    COLD_RESET = 3\n"
+			 "    WARM_RESET_RESTORE_CAL = 4\n"
+			 "    COLD_RESET_RESTORE_CAL = 5", value);
+
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int hdd_handle_pdev_reset(struct hdd_adapter *adapter, int value)
+{
+	int ret;
+
+	hdd_debug("%d", value);
+
+	ret = hdd_validate_pdev_reset(value);
+	if (ret)
+		return ret;
+
+	ret = wma_cli_set_command(adapter->sessionId,
+				  WMI_PDEV_PARAM_PDEV_RESET,
+				  value, PDEV_CMD);
+
+	return ret;
+}
+
 /**
  * iw_setint_getnone() - Generic "set integer" private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -8188,6 +8248,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_PHYMODE:
 	{
 		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
+
 		if (!hHal)
 			return -EINVAL;
 
@@ -8374,6 +8435,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		bool chwidth = false;
 		struct hdd_context *phddctx = WLAN_HDD_GET_CTX(adapter);
+
 		if (!hHal)
 			return -EINVAL;
 
@@ -9012,6 +9074,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	case WE_SET_DEBUG_LOG:
 	{
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
 		if (!hHal)
 			return -EINVAL;
 
@@ -9159,13 +9222,13 @@ static int __iw_setint_getnone(struct net_device *dev,
 					  WMI_VDEV_PARAM_HE_RANGE_EXT,
 					  set_value, VDEV_CMD);
 		break;
+	case WE_SET_PDEV_RESET:
+		ret = hdd_handle_pdev_reset(adapter, set_value);
+		break;
 	default:
-	{
-		hdd_err("Invalid sub command %d",
-		       sub_cmd);
+		hdd_err("Invalid sub command %d", sub_cmd);
 		ret = -EINVAL;
 		break;
-	}
 	}
 	EXIT();
 free:
@@ -11105,15 +11168,15 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		conn_info = policy_mgr_get_conn_info(&len);
 		pr_info("+--------------------------+\n");
 		for (i = 0; i < len; i++) {
-		     pr_info("|table_index[%d]\t\t\n", i);
-		     pr_info("|\t|vdev_id - %-10d|\n", conn_info->vdev_id);
-		     pr_info("|\t|chan    - %-10d|\n", conn_info->chan);
-		     pr_info("|\t|bw      - %-10d|\n", conn_info->bw);
-		     pr_info("|\t|mode    - %-10d|\n", conn_info->mode);
-		     pr_info("|\t|mac     - %-10d|\n", conn_info->mac);
-		     pr_info("|\t|in_use  - %-10d|\n", conn_info->in_use);
-		     pr_info("+--------------------------+\n");
-		     conn_info++;
+			pr_info("|table_index[%d]\t\t\n", i);
+			pr_info("|\t|vdev_id - %-10d|\n", conn_info->vdev_id);
+			pr_info("|\t|chan    - %-10d|\n", conn_info->chan);
+			pr_info("|\t|bw      - %-10d|\n", conn_info->bw);
+			pr_info("|\t|mode    - %-10d|\n", conn_info->mode);
+			pr_info("|\t|mac     - %-10d|\n", conn_info->mac);
+			pr_info("|\t|in_use  - %-10d|\n", conn_info->in_use);
+			pr_info("+--------------------------+\n");
+			conn_info++;
 		}
 	}
 	break;
@@ -11159,8 +11222,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 						apps_args[1],
 						&apps_args[2]);
 		if (QDF_STATUS_SUCCESS != status) {
-		    hdd_err("Not able to post UNIT_TEST_CMD message to WMA");
-		    return -EINVAL;
+			hdd_err("sme_send_unit_test_cmd returned %d", status);
+			return -EINVAL;
 		}
 	}
 	break;
@@ -11736,7 +11799,7 @@ static int iw_set_dynamic_mcbc_filter(struct net_device *dev,
 		"Configure broadcast filtering via ini item, 'g_enable_non_arp_bc_hw_filter.'\n"
 		"\tg_enable_non_arp_bc_hw_filter=1 # drop all non-ARP broadcast traffic\n"
 		"\tg_enable_non_arp_bc_hw_filter=0 # allow all broadcast traffic");
-	 return -EINVAL;
+	return -EINVAL;
 }
 
 /**
@@ -13676,6 +13739,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_CONC_SYSTEM_PREF,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0, "setConcSysPref" },
+
+	{WE_SET_PDEV_RESET,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0, "pdev_reset" },
 
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,

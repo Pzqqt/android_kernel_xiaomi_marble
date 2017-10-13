@@ -114,8 +114,6 @@
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
-#define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
-					   ((uintptr_t)OFFSET_OF(tSirBssDescription, ieFields)))
 
 /*
  * Android CTS verifier needs atleast this much wait time (in msec)
@@ -3118,15 +3116,15 @@ static int __wlan_hdd_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 	}
 
 	if (nla_put_u32(reply_skb,
-		QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET_SIZE,
-		feature_sets) ||
+			QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET_SIZE,
+			feature_sets) ||
 	    nla_put(reply_skb,
-		QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET,
-		sizeof(u32) * feature_sets,
-		feature_set_matrix)) {
-			hdd_err("nla put fail");
-			kfree_skb(reply_skb);
-			return -EINVAL;
+		    QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET,
+		    sizeof(u32) * feature_sets,
+		    feature_set_matrix)) {
+		hdd_err("nla put fail");
+		kfree_skb(reply_skb);
+		return -EINVAL;
 	}
 	return cfg80211_vendor_cmd_reply(reply_skb);
 }
@@ -5385,6 +5383,7 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 	struct hdd_context *hdd_ctx_ptr = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *skb = NULL;
 	eCsrAuthType auth_type;
+
 	ENTER();
 
 	if (wlan_hdd_validate_context(hdd_ctx_ptr))
@@ -12736,7 +12735,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	 */
 
 #if  defined QCA_WIFI_FTM
-}
+	}
 #endif
 
 	wiphy->max_scan_ssids = MAX_SCAN_SSID;
@@ -14544,6 +14543,7 @@ static int wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					     bool unicast, bool multicast)
 {
 	int ret;
+
 	cds_ssr_protect(__func__);
 	ret =
 		__wlan_hdd_cfg80211_set_default_key(wiphy, ndev, key_index, unicast,
@@ -14627,8 +14627,9 @@ wlan_hdd_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
  *
  * Return: struct cfg80211_bss pointer
  */
-struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
-						tSirBssDescription *bss_desc)
+struct cfg80211_bss *
+wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
+				   struct bss_description *bss_desc)
 {
 	/*
 	 * cfg80211_inform_bss() is not updating ie field of bss entry, if entry
@@ -14646,9 +14647,9 @@ struct cfg80211_bss *wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adap
 #ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
 	qcom_ie_age *qie_age = NULL;
 	int ie_length =
-		GET_IE_LEN_IN_BSS_DESC(bss_desc->length) + sizeof(qcom_ie_age);
+		GET_IE_LEN_IN_BSS(bss_desc->length) + sizeof(qcom_ie_age);
 #else
-	int ie_length = GET_IE_LEN_IN_BSS_DESC(bss_desc->length);
+	int ie_length = GET_IE_LEN_IN_BSS(bss_desc->length);
 #endif
 	const char *ie =
 		((ie_length != 0) ? (const char *)&bss_desc->ieFields : NULL);
@@ -15262,7 +15263,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	}
 
 	/*
-     * If channel is 0 or DFS or LTE unsafe then better to call pcl and
+	 * If channel is 0 or DFS or LTE unsafe then better to call pcl and
 	 * find out the best channel. If channel is non-dfs 5 GHz then
 	 * better move SAP to STA's channel to make scc, so we have room
 	 * for 3port MCC scenario.
@@ -19218,8 +19219,6 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
-	tSmeConfigParams *sme_config;
-	bool cbModeChange = false;
 	int retval = 0;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -19231,60 +19230,17 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 		hdd_err("invalid session id: %d", adapter->sessionId);
 		return -EINVAL;
 	}
+	if (!(adapter->device_mode == QDF_SAP_MODE ||
+	      adapter->device_mode == QDF_P2P_GO_MODE))
+		return -EOPNOTSUPP;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status)
 		return status;
 
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-	qdf_mem_zero(sme_config, sizeof(*sme_config));
-	sme_get_config_param(hdd_ctx->hHal, sme_config);
-	switch (chandef->width) {
-	case NL80211_CHAN_WIDTH_20:
-	case NL80211_CHAN_WIDTH_20_NOHT:
-		if (sme_config->csrConfig.channelBondingMode24GHz !=
-		    eCSR_INI_SINGLE_CHANNEL_CENTERED) {
-			sme_config->csrConfig.channelBondingMode24GHz =
-				eCSR_INI_SINGLE_CHANNEL_CENTERED;
-			sme_update_config(hdd_ctx->hHal, sme_config);
-			cbModeChange = true;
-		}
-		break;
-
-	case NL80211_CHAN_WIDTH_40:
-		if (sme_config->csrConfig.channelBondingMode24GHz ==
-		    eCSR_INI_SINGLE_CHANNEL_CENTERED) {
-			if (NL80211_CHAN_HT40MINUS ==
-			    cfg80211_get_chandef_type(chandef))
-				sme_config->csrConfig.channelBondingMode24GHz =
-					eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY;
-			else
-				sme_config->csrConfig.channelBondingMode24GHz =
-					eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
-			sme_update_config(hdd_ctx->hHal, sme_config);
-			cbModeChange = true;
-		}
-		break;
-
-	default:
-		hdd_err("Error!!! Invalid HT20/40 mode !");
-		retval = -EINVAL;
-		goto free;
-	}
-
-	if (!cbModeChange)
-		goto free;
-
-	if (QDF_SAP_MODE != adapter->device_mode)
-		goto free;
-
-	hdd_debug("Channel bonding changed to %d",
-	       sme_config->csrConfig.channelBondingMode24GHz);
+	hdd_debug("Channel width changed to %d ",
+		  cfg80211_get_chandef_type(chandef));
 
 	/* Change SAP ht2040 mode */
 	status = hdd_set_sap_ht2040_mode(adapter,
@@ -19294,8 +19250,6 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 		retval = -EINVAL;
 	}
 
-free:
-	qdf_mem_free(sme_config);
 	return retval;
 }
 

@@ -630,6 +630,7 @@ struct csr_config {
 	uint32_t disallow_duration;
 	uint32_t rssi_channel_penalization;
 	uint32_t num_disallowed_aps;
+	struct sir_score_config bss_score_params;
 };
 
 struct csr_channel_powerinfo {

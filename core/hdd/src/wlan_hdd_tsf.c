@@ -245,30 +245,31 @@ static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
 		hdd_info("TSF value not received");
 		buf[0] = TSF_NOT_RETURNED_BY_FW;
 		return HDD_TSF_OP_SUCC;
-	} else {
-		buf[0] = TSF_RETURN;
-		buf[1] = (uint32_t)(adapter->cur_target_time & 0xffffffff);
-		buf[2] = (uint32_t)((adapter->cur_target_time >> 32) &
+	}
+
+	buf[0] = TSF_RETURN;
+	buf[1] = (uint32_t)(adapter->cur_target_time & 0xffffffff);
+	buf[2] = (uint32_t)((adapter->cur_target_time >> 32) &
 				0xffffffff);
 
-		if (!qdf_atomic_read(&hddctx->cap_tsf_flag)) {
-			hdd_info("old: status=%u, tsf_low=%u, tsf_high=%u",
-				 buf[0], buf[1], buf[2]);
-			return HDD_TSF_OP_SUCC;
-		}
-
-		ret = hdd_tsf_reset_gpio(adapter);
-		if (0 != ret) {
-			hdd_err("reset tsf gpio fail");
-			buf[0] = TSF_RESET_GPIO_FAIL;
-			return HDD_TSF_OP_SUCC;
-		}
-		hddctx->cap_tsf_context = NULL;
-		qdf_atomic_set(&hddctx->cap_tsf_flag, 0);
-		hdd_info("get tsf cmd,status=%u, tsf_low=%u, tsf_high=%u",
-			buf[0], buf[1], buf[2]);
+	if (!qdf_atomic_read(&hddctx->cap_tsf_flag)) {
+		hdd_info("old: status=%u, tsf_low=%u, tsf_high=%u",
+			 buf[0], buf[1], buf[2]);
 		return HDD_TSF_OP_SUCC;
 	}
+
+	ret = hdd_tsf_reset_gpio(adapter);
+	if (0 != ret) {
+		hdd_err("reset tsf gpio fail");
+		buf[0] = TSF_RESET_GPIO_FAIL;
+		return HDD_TSF_OP_SUCC;
+	}
+	hddctx->cap_tsf_context = NULL;
+	qdf_atomic_set(&hddctx->cap_tsf_flag, 0);
+	hdd_info("get tsf cmd,status=%u, tsf_low=%u, tsf_high=%u",
+		 buf[0], buf[1], buf[2]);
+
+	return HDD_TSF_OP_SUCC;
 }
 
 #ifdef WLAN_FEATURE_TSF_PLUS

@@ -188,7 +188,8 @@ hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t authState)
 void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 				   eConnectionState conn_state)
 {
-	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* save the new connection state */
@@ -215,8 +216,9 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
  *	and sets output parameter pConnState;
  *	false otherwise
  */
-static inline bool hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
-						 eConnectionState *pConnState)
+static inline bool
+hdd_conn_get_connection_state(struct hdd_station_ctx *sta_ctx,
+			      eConnectionState *pConnState)
 {
 	bool fConnected = false;
 	eConnectionState connState;
@@ -804,7 +806,8 @@ static void hdd_copy_vht_operation(struct hdd_station_ctx *hdd_sta_ctx,
 static void hdd_save_bss_info(struct hdd_adapter *adapter,
 						tCsrRoamInfo *roam_info)
 {
-	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	hdd_sta_ctx->conn_info.freq = cds_chan_to_freq(
 		hdd_sta_ctx->conn_info.operationChannel);
@@ -1118,11 +1121,12 @@ static void hdd_send_ft_event(struct hdd_adapter *adapter)
  * Return: none
  */
 static void
-hdd_send_new_ap_channel_info(struct net_device *dev, struct hdd_adapter *adapter,
+hdd_send_new_ap_channel_info(struct net_device *dev,
+			     struct hdd_adapter *adapter,
 			     tCsrRoamInfo *pCsrRoamInfo)
 {
 	union iwreq_data wrqu;
-	tSirBssDescription *descriptor = pCsrRoamInfo->pBssDesc;
+	struct bss_description *descriptor = pCsrRoamInfo->pBssDesc;
 
 	if (descriptor == NULL) {
 		hdd_err("bss descriptor is null");
@@ -1668,7 +1672,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 			if (eCSR_ROAM_LOSTLINK == roamStatus) {
 				if (roam_info->reasonCode ==
 				    eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON)
-					pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n", roam_info->rxRssi);
+					pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n",
+						roam_info->rxRssi);
 				wlan_hdd_cfg80211_indicate_disconnect(
 							dev, false,
 							roam_info->reasonCode);
@@ -1777,6 +1782,9 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	wlan_hdd_clear_link_layer_stats(adapter);
 	/* Unblock anyone waiting for disconnect to complete */
 	complete(&adapter->disconnect_comp_var);
+
+	hdd_reset_limit_off_chan(adapter);
+
 	hdd_print_bss_info(sta_ctx);
 	return status;
 }
@@ -1940,7 +1948,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 					tCsrRoamInfo *roam_info,
 					uint8_t staId,
 					struct qdf_mac_addr *pPeerMacAddress,
-					tSirBssDescription *pBssDesc)
+					struct bss_description *pBssDesc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
@@ -2288,7 +2296,8 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 	QDF_STATUS status;
 	uint32_t timeout;
 	uint8_t staid = HDD_WLAN_INVALID_STA_ID;
-	struct hdd_station_ctx *hddstactx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hddstactx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	timeout = hddstactx->hdd_ReassocScenario ?
@@ -2358,7 +2367,8 @@ static inline bool hdd_is_key_install_required_for_ibss(
 static void hdd_change_peer_state_after_set_key(struct hdd_adapter *adapter,
 			tCsrRoamInfo *roaminfo, eCsrRoamResult roam_result)
 {
-	struct hdd_station_ctx *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_station_ctx *hdd_sta_ctx =
+		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	eCsrEncryptionType encr_type = hdd_sta_ctx->conn_info.ucEncryptionType;
 
 	/*
@@ -2414,8 +2424,6 @@ static void hdd_change_peer_state_after_set_key(struct hdd_adapter *adapter,
 	}
 
 	hdd_sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
-
-	return;
 }
 
 /**
@@ -2528,11 +2536,12 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
  *
  * Return: QDF_STATUS enumeration
  */
-static QDF_STATUS hdd_association_completion_handler(struct hdd_adapter *adapter,
-						     tCsrRoamInfo *roam_info,
-						     uint32_t roamId,
-						     eRoamCmdStatus roamStatus,
-						     eCsrRoamResult roamResult)
+static QDF_STATUS
+hdd_association_completion_handler(struct hdd_adapter *adapter,
+				   tCsrRoamInfo *roam_info,
+				   uint32_t roamId,
+				   eRoamCmdStatus roamStatus,
+				   eCsrRoamResult roamResult)
 {
 	struct net_device *dev = adapter->dev;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -3172,13 +3181,13 @@ static QDF_STATUS hdd_association_completion_handler(struct hdd_adapter *adapter
 			hdd_clear_roam_profile_ie(adapter);
 		} else  if ((eCSR_ROAM_CANCELLED == roamStatus
 		    && !hddDisconInProgress)) {
-				hdd_connect_result(dev,
-						pWextState->req_bssId.bytes,
-						NULL, NULL, 0, NULL, 0,
-						WLAN_STATUS_UNSPECIFIED_FAILURE,
-						GFP_KERNEL,
-						connect_timeout,
-						timeout_reason);
+			hdd_connect_result(dev,
+					   pWextState->req_bssId.bytes,
+					   NULL, NULL, 0, NULL, 0,
+					   WLAN_STATUS_UNSPECIFIED_FAILURE,
+					   GFP_KERNEL,
+					   connect_timeout,
+					   timeout_reason);
 		}
 
 		/*
@@ -3787,6 +3796,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 				       uint8_t staId)
 {
 	QDF_STATUS qdf_status;
+
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
 			staId);
@@ -3829,7 +3839,8 @@ hdd_roam_tdls_status_update_handler(struct hdd_adapter *adapter,
  * Return: nothing
  */
 static void
-hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *adapter, uint32_t nFrameLength,
+hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *adapter,
+			       uint32_t nFrameLength,
 			       uint8_t *pbFrames, uint8_t frameType)
 {
 	uint8_t type = 0;
@@ -4285,13 +4296,15 @@ hdd_indicate_ese_bcn_report_ind(const struct hdd_adapter *adapter,
  * Return: bool
  */
 #ifdef WLAN_FEATURE_11W
-static inline bool hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
+static inline bool
+hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
 {
 	return eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==
 				sta_ctx->conn_info.authType;
 }
 #else
-static inline bool hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
+static inline bool
+hdd_is_8021x_sha256_auth_type(struct hdd_station_ctx *sta_ctx)
 {
 	return false;
 }
@@ -5045,7 +5058,9 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 		pWextState->roamProfile.EncryptionType.numEntries = 1;
 		pWextState->roamProfile.mcEncryptionType.numEntries = 1;
 
-		pWextState->roamProfile.EncryptionType.encryptionType[0] = RSNEncryptType;      /* Use the cipher type in the RSN IE */
+		/* Use the cipher type in the RSN IE */
+		pWextState->roamProfile.EncryptionType.encryptionType[0] =
+			RSNEncryptType;
 		pWextState->roamProfile.mcEncryptionType.encryptionType[0] =
 			mcRSNEncryptType;
 

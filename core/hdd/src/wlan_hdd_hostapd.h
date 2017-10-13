@@ -66,7 +66,7 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
 				uint32_t target_channel,
 				uint32_t target_bw);
 /**
- * sap_restart_chan_switch_cb() - Function to restart SAP with
+ * hdd_sap_restart_chan_switch_cb() - Function to restart SAP with
  * a different channel
  * @psoc: PSOC object information
  * @vdev_id: vdev id
@@ -77,9 +77,9 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
  * Return: None
  *
  */
-void sap_restart_chan_switch_cb (struct wlan_objmgr_psoc *psoc,
-				uint8_t vdev_id, uint32_t channel,
-				uint32_t channel_bw);
+void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
+				    uint8_t vdev_id, uint32_t channel,
+				    uint32_t channel_bw);
 /**
  * wlan_hdd_get_channel_for_sap_restart() - Function to get
  * suitable channel and restart SAP
@@ -149,7 +149,9 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 
 int hdd_destroy_acs_timer(struct hdd_adapter *adapter);
 
-QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter);
+QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
+			       struct hdd_adapter *adapter);
+
 void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter);
 void hdd_sap_destroy_events(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */

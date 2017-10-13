@@ -333,6 +333,9 @@ static void wlanqcmbr_mc_process_msg(void *message)
 	uint32_t data_len;
 
 	data_len = *((uint32_t *) message) + sizeof(uint32_t);
+	if (data_len > MAX_UTF_LENGTH + 4)
+		return;
+
 	qcmbr_buf = qdf_mem_malloc(sizeof(*qcmbr_buf));
 	if (qcmbr_buf != NULL) {
 		memcpy(qcmbr_buf->utf_buf, message, data_len);

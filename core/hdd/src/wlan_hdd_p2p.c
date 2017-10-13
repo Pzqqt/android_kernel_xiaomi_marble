@@ -1219,6 +1219,7 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	qdf_list_node_t *tmp, *q;
 	struct hdd_roc_req *curr_roc_req;
 	uint32_t roc_scan_id;
+
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -1450,6 +1451,7 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	struct hdd_adapter *goAdapter;
 	uint16_t current_freq;
 	uint8_t home_ch = 0;
+
 	ENTER();
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -2378,6 +2380,9 @@ stop_modules:
 		hdd_debug("Closing all modules from the add_virt_iface");
 		qdf_mc_timer_start(&hdd_ctx->iface_change_timer,
 				   hdd_ctx->config->iface_change_wait_time);
+		hdd_prevent_suspend_timeout(
+			hdd_ctx->config->iface_change_wait_time,
+			WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 	} else
 		hdd_debug("Other interfaces are still up dont close modules!");
 
@@ -3133,9 +3138,9 @@ static uint32_t set_first_connection_operating_channel(
 	set_value = set_value << 8;
 
 	/*
-	* Store the channel number of 1st channel at bits 7-0
-	* of the bit vector
-	*/
+	 * Store the channel number of 1st channel at bits 7-0
+	 * of the bit vector
+	 */
 	return set_value | operating_channel;
 }
 
@@ -3169,16 +3174,16 @@ static uint32_t set_second_connection_operating_channel(
 	hdd_info("Second connection channel No.:%d and quota:%dms",
 			operating_channel, set_value);
 	/*
-	* Now move the time quota and channel number of the
-	* 1st adapter to bits 23-16 and bits 15-8 of the bit
-	* vector, respectively.
-	*/
+	 * Now move the time quota and channel number of the
+	 * 1st adapter to bits 23-16 and bits 15-8 of the bit
+	 * vector, respectively.
+	 */
 	set_value = set_value << 8;
 
 	/*
-	* Set the channel number for 2nd MCC vdev at bits
-	* 7-0 of set_value
-	*/
+	 * Set the channel number for 2nd MCC vdev at bits
+	 * 7-0 of set_value
+	 */
 	return set_value | operating_channel;
 }
 

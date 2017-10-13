@@ -516,6 +516,7 @@ struct power_stats_priv {
 static void hdd_power_debugstats_dealloc(void *priv)
 {
 	struct power_stats_priv *stats = priv;
+
 	qdf_mem_free(stats->power_stats.debug_registers);
 }
 
@@ -845,6 +846,7 @@ static QDF_STATUS wlan_hdd_create_power_stats_file(struct hdd_adapter *adapter)
 QDF_STATUS hdd_debugfs_init(struct hdd_adapter *adapter)
 {
 	struct net_device *dev = adapter->dev;
+
 	adapter->debugfs_phy = debugfs_create_dir(dev->name, 0);
 
 	if (NULL == adapter->debugfs_phy)

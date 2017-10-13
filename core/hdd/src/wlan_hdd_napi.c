@@ -184,6 +184,7 @@ int hdd_napi_destroy(int force)
 				}
 	} else {
 		struct hif_opaque_softc *hif_ctx;
+
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
 		if (unlikely(NULL == hif_ctx))

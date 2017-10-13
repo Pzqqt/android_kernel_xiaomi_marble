@@ -780,7 +780,6 @@ static tSirLLStatsResults *wma_get_ll_stats_ext_buf(uint32_t *len,
 			 fixed_param->tx_ppdu_delay_array_len,
 			 fixed_param->rx_mpdu_aggr_array_len,
 			 fixed_param->rx_mcs_array_len);
-		QDF_ASSERT(0);
 		return NULL;
 	}
 
@@ -2101,6 +2100,17 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	if (!fixed_param || !link_stats || (link_stats->num_ac && !ac_stats) ||
 	    (fixed_param->num_offload_stats && !offload_stats)) {
 		WMA_LOGA("%s: Invalid param_tlvs for Iface Stats", __func__);
+		return -EINVAL;
+	}
+
+	if (link_stats->num_ac > WIFI_AC_MAX) {
+		WMA_LOGE("%s: Excess data received from firmware num_ac %d",
+			 __func__, link_stats->num_ac);
+		return -EINVAL;
+	}
+	if (fixed_param->num_offload_stats > WMI_OFFLOAD_STATS_TYPE_MAX) {
+		WMA_LOGE("%s: Excess num offload stats recvd from fw: %d",
+			__func__, fixed_param->num_offload_stats);
 		return -EINVAL;
 	}
 
