@@ -73,7 +73,8 @@
  *
  * Return: 0 for success, negative error code for failure
  */
-int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx, uint8_t psoc_id);
+int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx,
+				     uint8_t psoc_id);
 
 /**
  * hdd_objmgr_release_and_destroy_psoc() - Deletes the psoc object

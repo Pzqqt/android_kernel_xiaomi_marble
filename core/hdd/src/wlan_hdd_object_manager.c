@@ -74,7 +74,8 @@ static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
 	wlan_psoc_set_qdf_dev(psoc, qdf_ctx);
 }
 
-int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx, uint8_t psoc_id)
+int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx,
+				     uint8_t psoc_id)
 {
 	struct wlan_objmgr_psoc *psoc;
 
