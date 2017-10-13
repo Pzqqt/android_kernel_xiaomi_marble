@@ -745,8 +745,11 @@ int wlan_hdd_validate_context(struct hdd_context *hdd_ctx)
 		return -EAGAIN;
 	}
 
-	if (cds_is_load_or_unload_in_progress())
+	if (cds_is_load_or_unload_in_progress()) {
+		hdd_debug("%pS Load or unload in progress, state: 0x%x, ignore!",
+			  (void *)_RET_IP_, cds_get_driver_state());
 		return -EAGAIN;
+	}
 
 	if (hdd_ctx->start_modules_in_progress ||
 	    hdd_ctx->stop_modules_in_progress) {
