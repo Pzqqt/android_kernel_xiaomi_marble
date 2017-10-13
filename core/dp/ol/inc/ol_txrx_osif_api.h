@@ -49,10 +49,6 @@ struct ol_rx_cached_buf {
 
 struct txrx_rx_metainfo;
 
-typedef QDF_STATUS (*ol_rx_callback_fp)(void *p_cds_gctx,
-					 qdf_nbuf_t pDataBuff,
-					 uint8_t ucSTAId);
-
 /**
  * @brief Divide a jumbo TCP frame into smaller segments.
  * @details
