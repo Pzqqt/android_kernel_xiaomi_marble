@@ -101,6 +101,40 @@ QDF_STATUS target_if_pmo_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 		struct qdf_mac_addr multicast_addr);
 
 /**
+ * target_if_pmo_get_multiple_mc_filter_support() - get multiple mc filter
+ *						    request fw support
+ * @psoc: the psoc containing the vdev to configure
+ *
+ * Return: true if fw supports else false
+ */
+bool target_if_pmo_get_multiple_mc_filter_support(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_pmo_set_multiple_mc_filter_req() - set multiple mcast filter
+ *						command to fw
+ * @vdev: objmgr vdev handle
+ * @multicastAddr: mcast address
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS target_if_pmo_set_multiple_mc_filter_req(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_mc_addr_list *mc_list);
+
+/**
+ * target_if_pmo_clear_multiple_mc_filter_req() - clear multiple mcast
+ *						  filter command to fw
+ * @vdev: objmgr vdev handle
+ * @multicastAddr: mcast address
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS target_if_pmo_clear_multiple_mc_filter_req(
+		struct wlan_objmgr_vdev *vdev,
+		struct pmo_mc_addr_list *mc_list);
+
+/**
  * target_if_pmo_send_ra_filter_req() - set RA filter pattern in fw
  * @vdev: objmgr vdev handle
  * @default_pattern: default pattern id

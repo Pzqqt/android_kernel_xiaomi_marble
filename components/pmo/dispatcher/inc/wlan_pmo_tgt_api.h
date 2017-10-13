@@ -171,6 +171,35 @@ QDF_STATUS pmo_tgt_clear_mc_filter_req(struct wlan_objmgr_vdev *vdev,
 		struct qdf_mac_addr multicast_addr);
 
 /**
+ * pmo_tgt_get_multiple_mc_filter_support() - get multiple mcast filter support
+ * @vdev: objmgr vdev
+ *
+ * Return: true if FW supports else false
+ */
+bool pmo_tgt_get_multiple_mc_filter_support(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * pmo_tgt_set_multiple_mc_filter_req() - Set multiple mcast filter cmd to fw
+ * @vdev: objmgr vdev
+ * @mc_list: mcast address list
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_tgt_set_multiple_mc_filter_req(struct wlan_objmgr_vdev *vdev,
+		struct pmo_mc_addr_list *mc_list);
+
+/**
+ * pmo_tgt_clear_multiple_mc_filter_req() - clear multiple mcast filter
+ *					    to fw
+ * @vdev: objmgr vdev
+ * @mc_list: mcast address list
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS pmo_tgt_clear_multiple_mc_filter_req(struct wlan_objmgr_vdev *vdev,
+		struct pmo_mc_addr_list *mc_list);
+
+/**
  * pmo_tgt_send_enhance_multicast_offload_req() - send enhance mc offload req
  * @vdev: the vdev to configure
  * @action: enable or disable enhance multicast offload

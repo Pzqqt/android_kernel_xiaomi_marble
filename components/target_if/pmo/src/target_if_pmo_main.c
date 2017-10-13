@@ -49,6 +49,12 @@ void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 		target_if_pmo_set_mc_filter_req;
 	pmo_tx_ops->send_clear_mc_filter_req =
 		target_if_pmo_clear_mc_filter_req;
+	pmo_tx_ops->get_multiple_mc_filter_support =
+		target_if_pmo_get_multiple_mc_filter_support;
+	pmo_tx_ops->send_set_multiple_mc_filter_req =
+		target_if_pmo_set_multiple_mc_filter_req;
+	pmo_tx_ops->send_clear_multiple_mc_filter_req =
+		target_if_pmo_clear_multiple_mc_filter_req;
 	pmo_tx_ops->send_ra_filter_req =
 		target_if_pmo_send_ra_filter_req;
 	pmo_tx_ops->send_gtk_offload_req =

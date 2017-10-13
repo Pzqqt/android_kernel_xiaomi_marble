@@ -78,6 +78,9 @@ int (*pmo_pld_auto_resume_cb)(void);
  * @send_enhance_mc_offload_req: fp to send enhanced multicast offload request
  * @send_set_mc_filter_req: fp to send set mc filter request
  * @send_clear_mc_filter_req: fp to send clear mc filter request
+ * @get_multiple_mc_filter_support: fp to get mc filter support
+ * @send_set_multiple_mc_filter_req: fp to send set multiple mc filter request
+ * @send_clear_multiple_mc_filter_req: fp to send clear multiple mc filter req
  * @send_ra_filter_req: fp to send ra filter request
  * @send_gtk_offload_req: fp to send gtk offload request command
  * @send_get_gtk_rsp_cmd: fp to send get gtk response request cmd to firmware
@@ -134,6 +137,14 @@ struct wlan_pmo_tx_ops {
 	QDF_STATUS (*send_clear_mc_filter_req)(
 			struct wlan_objmgr_vdev *vdev,
 			struct qdf_mac_addr multicast_addr);
+	bool (*get_multiple_mc_filter_support)(
+			struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS(*send_set_multiple_mc_filter_req)(
+			struct wlan_objmgr_vdev *vdev,
+			struct pmo_mc_addr_list *mc_list);
+	QDF_STATUS(*send_clear_multiple_mc_filter_req)(
+			struct wlan_objmgr_vdev *vdev,
+			struct pmo_mc_addr_list *mc_list);
 	QDF_STATUS (*send_ra_filter_req)(
 			struct wlan_objmgr_vdev *vdev,
 			uint8_t default_pattern, uint16_t rate_limit_interval);
