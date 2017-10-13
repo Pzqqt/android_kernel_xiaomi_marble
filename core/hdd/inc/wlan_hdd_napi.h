@@ -49,6 +49,7 @@ int hdd_napi_enabled(int id);
 int hdd_napi_create(void);
 int hdd_napi_destroy(int force);
 int hdd_display_napi_stats(void);
+int hdd_clear_napi_stats(void);
 
 /* the following triggers napi_enable/disable as required */
 int hdd_napi_event(enum qca_napi_event event, void *data);
@@ -88,6 +89,7 @@ static inline int hdd_napi_enabled(int id) { return 0; }
 static inline int hdd_napi_create(void) { return 0; }
 static inline int hdd_napi_destroy(int force) { return 0; }
 static inline int hdd_display_napi_stats(void) { return 0; }
+static inline int hdd_clear_napi_stats(void) { return 0; }
 static inline int hdd_napi_event(enum qca_napi_event event, void *data)
 {
 	return 0;

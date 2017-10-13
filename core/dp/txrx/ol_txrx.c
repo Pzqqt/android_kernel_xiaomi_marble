@@ -1124,7 +1124,21 @@ static void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 		}
 	}
 }
+
+static void ol_txrx_tso_stats_clear(ol_txrx_pdev_handle pdev)
+{
+	qdf_mem_zero(&pdev->stats.pub.tx.tso.tso_pkts,
+		     sizeof(struct ol_txrx_stats_elem));
+#if defined(FEATURE_TSO)
+	qdf_mem_zero(&pdev->stats.pub.tx.tso.tso_info,
+		     sizeof(struct ol_txrx_stats_tso_info));
+	qdf_mem_zero(&pdev->stats.pub.tx.tso.tso_hist,
+		     sizeof(struct ol_txrx_tso_histogram));
+#endif
+}
+
 #else
+
 static void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 {
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -1147,6 +1161,13 @@ static void ol_txrx_tso_stats_deinit(ol_txrx_pdev_handle pdev)
 	 */
 }
 
+static void ol_txrx_tso_stats_clear(ol_txrx_pdev_handle pdev)
+{
+	/*
+	 * keeping the body empty and not keeping an error print as print will
+	 * will show up everytime during driver unload if TSO is not enabled.
+	 */
+}
 #endif /* defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG) */
 
 /**
@@ -4675,6 +4696,9 @@ static void ol_txrx_clear_stats(uint16_t value)
 	switch (value) {
 	case CDP_TXRX_PATH_STATS:
 		ol_txrx_stats_clear(pdev);
+		break;
+	case CDP_TXRX_TSO_STATS:
+		ol_txrx_tso_stats_clear(pdev);
 		break;
 	case CDP_DUMP_TX_FLOW_POOL_INFO:
 		ol_tx_clear_flow_pool_stats();
