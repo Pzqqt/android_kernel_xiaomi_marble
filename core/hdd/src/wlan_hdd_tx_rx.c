@@ -187,15 +187,14 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 #endif
 	} else if (hdd_ctx->config->tx_orphan_enable) {
 		if (qdf_nbuf_is_ipv4_tcp_pkt(skb) ||
-			qdf_nbuf_is_ipv6_tcp_pkt(skb))
+		    qdf_nbuf_is_ipv6_tcp_pkt(skb))
 			need_orphan = 1;
 	}
 
 	if (need_orphan) {
 		skb_orphan(skb);
 		++adapter->hdd_stats.hddTxRxStats.txXmitOrphaned;
-	}
-	else
+	} else
 		skb = skb_unshare(skb, GFP_ATOMIC);
 
 	return skb;
