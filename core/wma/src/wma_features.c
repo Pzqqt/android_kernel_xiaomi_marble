@@ -2514,6 +2514,13 @@ static int wma_wake_event_packet(
 		return 0;
 	}
 
+	if (packet_len > (event_param->num_wow_packet_buffer - 4)) {
+		WMA_LOGE("Invalid packet_len from firmware, packet_len: %u, num_wow_packet_buffer: %u",
+			 packet_len,
+			 event_param->num_wow_packet_buffer);
+		return -EINVAL;
+	}
+
 	wake_info = event_param->fixed_param;
 
 	switch (wake_info->wake_reason) {
@@ -2600,6 +2607,12 @@ static int wma_wake_event_piggybacked(
 
 		/* first 4 bytes are the length, followed by the buffer */
 		pb_event_len = *(uint32_t *)event_param->wow_packet_buffer;
+		if (pb_event_len > (event_param->num_wow_packet_buffer - 4)) {
+			WMA_LOGE("Invalid pb_event_len from firmware, pb_event_len: %u, num_wow_packet_buffer: %u",
+				 pb_event_len,
+				 event_param->num_wow_packet_buffer);
+			return -EINVAL;
+		}
 		pb_event_buf = event_param->wow_packet_buffer + 4;
 
 		WMA_LOGD("piggybacked event buffer:");
