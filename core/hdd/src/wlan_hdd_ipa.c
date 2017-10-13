@@ -2878,6 +2878,21 @@ fail_return:
 }
 
 /**
+ * hdd_ipa_cleanup_pending_event() - Cleanup IPA pending event list
+ * @hdd_ipa: pointer to HDD IPA struct
+ *
+ * Return: none
+ */
+static void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
+{
+	struct ipa_uc_pending_event *pending_event = NULL;
+
+	while (qdf_list_remove_front(&hdd_ipa->pending_event,
+		(qdf_list_node_t **)&pending_event) == QDF_STATUS_SUCCESS)
+		qdf_mem_free(pending_event);
+}
+
+/**
  * hdd_ipa_uc_ol_deinit() - Disconnect IPA TX and RX pipes
  * @hdd_ctx: Global HDD context
  *
@@ -2908,6 +2923,8 @@ int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx)
 			return -EFAULT;
 		}
 	}
+
+	hdd_ipa_cleanup_pending_event(hdd_ipa);
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "exit: ret=%d", ret);
 	return ret;
@@ -5663,24 +5680,6 @@ QDF_STATUS hdd_ipa_init(struct hdd_context *hdd_ctx)
 
 
 /**
- * hdd_ipa_cleanup_pending_event() - Cleanup IPA pending event list
- * @hdd_ipa: pointer to HDD IPA struct
- *
- * Return: none
- */
-static void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
-{
-	struct ipa_uc_pending_event *pending_event = NULL;
-
-	while (qdf_list_remove_front(&hdd_ipa->pending_event,
-		(qdf_list_node_t **)&pending_event) == QDF_STATUS_SUCCESS) {
-		qdf_mem_free(pending_event);
-	}
-
-	qdf_list_destroy(&hdd_ipa->pending_event);
-}
-
-/**
  * __hdd_ipa_flush - flush IPA exception path SKB's
  * @hdd_ctx: HDD global context
  *
@@ -5756,7 +5755,7 @@ static QDF_STATUS __hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 		hdd_ipa_uc_rt_debug_deinit(hdd_ctx);
 		qdf_mutex_destroy(&hdd_ipa->event_lock);
 		qdf_mutex_destroy(&hdd_ipa->ipa_lock);
-		hdd_ipa_cleanup_pending_event(hdd_ipa);
+		qdf_list_destroy(&hdd_ipa->pending_event);
 
 		for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
 			cancel_work_sync(&hdd_ipa->uc_op_work[i].work);
