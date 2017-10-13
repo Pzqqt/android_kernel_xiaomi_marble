@@ -398,6 +398,12 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			goto drop_pkt_accounting;
 
 #if defined(IPA_OFFLOAD)
+	} else {
+		/*
+		 * Clear the IPA ownership after check it to avoid ipa_free_skb
+		 * is called when Tx completed for intra-BSS Tx packets
+		 */
+		qdf_nbuf_ipa_owned_clear(skb);
 	}
 #endif
 
