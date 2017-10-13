@@ -318,7 +318,8 @@ QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
  * Return: none
  */
 void wma_update_edca_params_for_ac(tSirMacEdcaParamRecord *edca_param,
-				   struct wmi_host_wme_vparams *wmm_param, int ac)
+				   struct wmi_host_wme_vparams *wmm_param,
+				   int ac)
 {
 #define WMA_WMM_EXPO_TO_VAL(val)        ((1 << (val)) - 1)
 	wmm_param->cwmin = WMA_WMM_EXPO_TO_VAL(edca_param->cw.min);
@@ -1820,7 +1821,7 @@ static void wma_configure_vdev_suspend_params(tp_wma_handle wma,
 
 	if (ito_repeat_count_value) {
 		ret = wma_unified_set_sta_ps_param(wma->wmi_handle, vdev_id,
-			WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX ,
+			WMI_STA_PS_PARAM_MAX_RESET_ITO_COUNT_ON_TIM_NO_TXRX,
 			ito_repeat_count_value);
 		WMA_LOGD("%s: Setting ito_repeat_count_value %d.", __func__,
 				ito_repeat_count_value);
@@ -1852,6 +1853,7 @@ static void wma_set_vdev_suspend_dtim(tp_wma_handle wma, uint8_t vdev_id)
 
 		/* get mac to acess CFG data base */
 		struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+
 		if (!mac) {
 			WMA_LOGE(FL("Failed to get mac context"));
 			return;
