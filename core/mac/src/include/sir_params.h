@@ -42,6 +42,9 @@
 
 #include "sir_types.h"
 
+#define WAKELOCK_DURATION_RECOMMENDED	1000
+#define WAKELOCK_DURATION_MAX		3000
+
 /* defines for WPS config states */
 #define       SAP_WPS_DISABLED             0
 #define       SAP_WPS_ENABLED_UNCONFIGURED 1

@@ -1249,9 +1249,9 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	    ) {
 		cmd->peer_flags |= WMI_PEER_NEED_PTK_4_WAY;
 		WMA_LOGD("Acquire set key wake lock for %d ms",
-			WMA_VDEV_SET_KEY_REQUEST_TIMEOUT);
+			WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT);
 		wma_acquire_wakelock(&intr->vdev_set_key_wakelock,
-			WMA_VDEV_SET_KEY_REQUEST_TIMEOUT);
+			WMA_VDEV_SET_KEY_WAKELOCK_TIMEOUT);
 	}
 	if (params->wpa_rsn >> 1)
 		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
