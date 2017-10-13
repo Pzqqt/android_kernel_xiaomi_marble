@@ -1136,6 +1136,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			uint8_t sub_type, tHalBitVal qos_mode)
 {
 	tHalBitVal wme_mode;
+
 	limGetWmeMode(session, &wme_mode);
 	if ((qos_mode == eHAL_SET) || (wme_mode == eHAL_SET)) {
 		/*
@@ -1144,6 +1145,7 @@ static bool lim_chk_wmm(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		 */
 		if (assoc_req->addtsPresent) {
 			uint8_t tspecIdx = 0;
+
 			if (lim_admit_control_add_ts(mac_ctx, hdr->sa,
 				&(assoc_req->addtsReq),
 				&(assoc_req->qosCapability),
@@ -1343,7 +1345,8 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			 * Check if STA has enabled it's channel bonding mode.
 			 * If channel bonding mode is enabled, we decide based
 			 * on SAP's current configuration. else, we set it to
-			 * VHT20. */
+			 * VHT20.
+			 */
 			sta_ds->vhtSupportedChannelWidthSet =
 				(uint8_t) ((sta_ds->htSupportedChannelWidthSet
 					== eHT_CHANNEL_WIDTH_20MHZ) ?
@@ -1400,12 +1403,11 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			&(assoc_req->extendedRates),
 			assoc_req->HTCaps.supportedMCSSet,
 			session, vht_caps,
-			&assoc_req->he_cap) != eSIR_SUCCESS)
-	{
+			&assoc_req->he_cap) != eSIR_SUCCESS) {
 		/* Could not update hash table entry at DPH with rateset */
 		pe_err("Couldn't update hash entry for aid: %d MacAddr: "
-				MAC_ADDRESS_STR,
-			peer_idx, MAC_ADDR_ARRAY(hdr->sa));
+		       MAC_ADDRESS_STR,
+		       peer_idx, MAC_ADDR_ARRAY(hdr->sa));
 
 		/* Release AID */
 		lim_release_peer_idx(mac_ctx, peer_idx, session);
