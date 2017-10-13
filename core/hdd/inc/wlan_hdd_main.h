@@ -41,6 +41,7 @@
  */
 #define pHddCtx
 #define pAdapter
+#define pHostapdAdapter
 
 /*
  * Include files
@@ -1922,7 +1923,7 @@ void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx,
 			     struct hdd_adapter *adapter);
 
 void crda_regulatory_entry_default(uint8_t *countryCode, int domain_id);
-void wlan_hdd_reset_prob_rspies(struct hdd_adapter *pHostapdAdapter);
+void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter);
 void hdd_prevent_suspend(uint32_t reason);
 void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
@@ -2288,7 +2289,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 		struct net_device *dev,
 		struct cfg80211_chan_def *chandef,
 		enum nl80211_channel_type channel_type);
-int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *pHostapdAdapter,
+int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		struct cfg80211_beacon_data *params,
 		const u8 *ssid, size_t ssid_len,
 		enum nl80211_hidden_ssid hidden_ssid,
