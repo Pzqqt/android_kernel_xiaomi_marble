@@ -817,17 +817,23 @@ typedef enum {
 	WMI_HOST_REQUEST_VDEV_EXTD_STAT =  0x100,
 } wmi_host_stats_id;
 
+typedef struct {
+	uint16_t cfg_retry_count;
+	uint16_t retry_count;
+} wmi_host_inst_rssi_args;
 
 /**
  * struct stats_request_params - stats_request cmd parameter
  * @stats_id: Bit mask of all the STATS request are specified with values from wmi_host_stats_id
  * @vdev_id: vdev id
  * @pdev_id: pdev_id
+ * @wmi_host_inst_rssi_args: Instantaneous rssi stats args
  */
 struct stats_request_params {
 	uint32_t stats_id;
 	uint8_t vdev_id;
 	uint8_t pdev_id;
+	wmi_host_inst_rssi_args rssi_args;
 };
 
 /**
