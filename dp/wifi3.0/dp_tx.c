@@ -1813,8 +1813,9 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 		mac_addr[(DP_MAC_ADDR_LEN - 1) - i] =
 					status[(DP_MAC_ADDR_LEN - 2) + i];
 
-	if (!dp_peer_add_ast(soc, peer, mac_addr, 2)) {
-		soc->cdp_soc.ol_ops->peer_add_wds_entry(
+	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, DP_MAC_ADDR_LEN) &&
+		!dp_peer_add_ast(soc, peer, mac_addr, 2)) {
+			soc->cdp_soc.ol_ops->peer_add_wds_entry(
 				vdev->pdev->osif_pdev,
 				mac_addr,
 				vdev->mac_addr.raw,
