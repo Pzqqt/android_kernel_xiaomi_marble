@@ -2950,15 +2950,6 @@ void wma_vdev_resp_timer(void *data)
 		goto free_tgt_req;
 	}
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (NULL == pdev) {
-		WMA_LOGE("%s: Failed to get pdev", __func__);
-		wma_cleanup_target_req_param(tgt_req);
-		qdf_mc_timer_stop(&tgt_req->event_timeout);
-		goto free_tgt_req;
-	}
-
 	WMA_LOGA("%s: request %d is timed out for vdev_id - %d", __func__,
 		 tgt_req->msg_type, tgt_req->vdev_id);
 	msg = wma_find_vdev_req(wma, tgt_req->vdev_id, tgt_req->type, true);
@@ -2966,7 +2957,15 @@ void wma_vdev_resp_timer(void *data)
 	if (!msg) {
 		WMA_LOGE("%s: Failed to lookup request message - %d",
 			 __func__, tgt_req->msg_type);
+		return;
+	}
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+
+	if (NULL == pdev) {
+		WMA_LOGE("%s: Failed to get pdev", __func__);
 		wma_cleanup_target_req_param(tgt_req);
+		qdf_mc_timer_stop(&tgt_req->event_timeout);
 		goto free_tgt_req;
 	}
 
