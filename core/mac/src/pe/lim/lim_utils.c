@@ -612,9 +612,6 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 	/* Deactivate Association failure timer. */
 	tx_timer_deactivate(&lim_timer->gLimAssocFailureTimer);
 
-	/* Deactivate Open system auth timer. */
-	tx_timer_deactivate(&lim_timer->open_sys_auth_timer);
-
 	/* Deactivate Authentication failure timer. */
 	tx_timer_deactivate(&lim_timer->gLimAuthFailureTimer);
 
@@ -699,9 +696,6 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 
 		/* Delete Association failure timer. */
 		tx_timer_delete(&lim_timer->gLimAssocFailureTimer);
-
-		/* Delete Open system auth timer. */
-		tx_timer_delete(&lim_timer->open_sys_auth_timer);
 
 		/* Delete Authentication failure timer. */
 		tx_timer_delete(&lim_timer->gLimAuthFailureTimer);

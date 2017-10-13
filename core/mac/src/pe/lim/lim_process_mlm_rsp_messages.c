@@ -474,7 +474,8 @@ void lim_pmf_comeback_timer_callback(void *context)
  */
 void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 {
-	tAniAuthType auth_type;
+	tAniAuthType auth_type, auth_mode;
+	tLimMlmAuthReq *auth_req;
 	tLimMlmAuthCnf *auth_cnf;
 	tpPESession session_entry;
 
@@ -544,18 +545,34 @@ void lim_process_mlm_auth_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		 * When shared authentication fails with reason
 		 * code "13" and authType set to 'auto switch',
 		 * Try with open Authentication
-		 * There is a possibility that AP does not receive
-		 * ack and retries auth frame. The retry frame could be
-		 * received at host after open sys auth is sent to firmware
-		 * resulting in auth failure. So, to fix this issue, open system
-		 * auth frame is sent to firmware after timer of 15msec expires.
 		 */
-		mac_ctx->lim.limTimers.open_sys_auth_timer.sessionId =
-							    auth_cnf->sessionId;
-		if (tx_timer_activate(&mac_ctx->lim.limTimers.
-				      open_sys_auth_timer) != TX_SUCCESS) {
-			pe_err("failed to activate system Auth timer");
+		auth_mode = eSIR_OPEN_SYSTEM;
+		/* Trigger MAC based Authentication */
+		auth_req = qdf_mem_malloc(sizeof(tLimMlmAuthReq));
+		if (NULL == auth_req) {
+			pe_err("mlmAuthReq :Memory alloc failed");
+			return;
 		}
+		if (session_entry->limSmeState ==
+			eLIM_SME_WT_AUTH_STATE) {
+			sir_copy_mac_addr(auth_req->peerMacAddr,
+				session_entry->bssId);
+		} else {
+			qdf_mem_copy((uint8_t *)&auth_req->peerMacAddr,
+			(uint8_t *)&mac_ctx->lim.gLimPreAuthPeerAddr,
+			sizeof(tSirMacAddr));
+		}
+		auth_req->authType = auth_mode;
+		/* Update PE session Id */
+		auth_req->sessionId = auth_cnf->sessionId;
+		if (wlan_cfg_get_int(mac_ctx,
+			WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,
+			(uint32_t *) &auth_req->authFailureTimeout)
+			!= eSIR_SUCCESS) {
+			pe_err("Fail:retrieve AuthFailureTimeout");
+		}
+		lim_post_mlm_message(mac_ctx, LIM_MLM_AUTH_REQ,
+			(uint32_t *) auth_req);
 		return;
 	} else {
 		/* MAC based authentication failure */

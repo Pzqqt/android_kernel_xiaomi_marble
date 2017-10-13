@@ -104,18 +104,6 @@ void lim_print_sme_state(tpAniSirGlobal pMac, uint16_t logLevel,
 		tLimSmeStates state);
 void lim_print_msg_name(tpAniSirGlobal pMac, uint16_t logLevel, uint32_t msgType);
 
-/**
- * lim_send_open_system_auth() - api to send open system auth frame
- * @ctx: Pointer to global mac structure
- * @session_id: session id
- *
- * This function is used to send open system auth when
- * shared auth fails with reason-algo not supported
- *
- * Return: None
- */
-void lim_send_open_system_auth(void *ctx, uint32_t param);
-
 extern tSirRetStatus lim_send_set_max_tx_power_req(tpAniSirGlobal pMac,
 		int8_t txPower,
 		tpPESession pSessionEntry);
