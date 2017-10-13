@@ -13907,7 +13907,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	tCsrRoamSetKey setKey;
 	int status;
 	uint32_t roamId = INVALID_ROAM_ID;
-	struct hdd_hostapd_state *pHostapdState;
+	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_ret_status;
 	struct hdd_context *hdd_ctx;
 	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
@@ -14082,8 +14082,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	}
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-		pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-		if (pHostapdState->bssState == BSS_START) {
+		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+		if (hostapd_state->bssState == BSS_START) {
 			status = wlansap_set_key_sta(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter), &setKey);
 			if (status != QDF_STATUS_SUCCESS) {
@@ -18818,7 +18818,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 {
 	int i;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_hostapd_state *pHostapdState;
+	struct hdd_hostapd_state *hostapd_state;
 	tsap_Config_t *pConfig;
 	struct hdd_context *hdd_ctx;
 	int status;
@@ -18842,10 +18842,10 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	if (NULL == pHostapdState) {
-		hdd_err("pHostapdState is Null");
+	if (NULL == hostapd_state) {
+		hdd_err("hostapd_state is Null");
 		return -EINVAL;
 	}
 
