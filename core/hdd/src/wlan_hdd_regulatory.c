@@ -835,6 +835,9 @@ static void fill_wiphy_band_channels(struct wiphy *wiphy,
 	uint32_t chan_cnt;
 	struct ieee80211_channel *wiphy_chan;
 
+	if (wiphy->bands[band_id] == NULL)
+		return;
+
 	wiphy_num_chan = wiphy->bands[band_id]->n_channels;
 	wiphy_chan = wiphy->bands[band_id]->channels;
 
