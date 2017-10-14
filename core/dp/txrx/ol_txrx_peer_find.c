@@ -508,6 +508,7 @@ ol_rx_peer_map_handler(ol_txrx_pdev_handle pdev,
 void ol_txrx_peer_tx_ready_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id)
 {
 	struct ol_txrx_peer_t *peer;
+
 	peer = ol_txrx_peer_find_by_id(pdev, peer_id);
 	if (peer) {
 		int i;

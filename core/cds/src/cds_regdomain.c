@@ -454,6 +454,7 @@ static bool is_reg_dmn_valid(uint16_t reg_dmn)
 
 	if (reg_dmn & CTRY_FLAG) {
 		uint16_t cc = reg_dmn & ~CTRY_FLAG;
+
 		for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++)
 			if (g_reg_dmn_tbl.all_countries[i].country_code == cc)
 				return true;

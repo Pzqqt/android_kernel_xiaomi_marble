@@ -150,6 +150,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
 			     tpPESession session_entry)
 {
 	tSirWPSPBCSession *pbc, *prev = NULL;
+
 	prev = pbc = session_entry->pAPWPSPBCSession;
 
 	while (pbc) {
@@ -473,6 +474,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 					QDF_P2P_GO_MODE) {
 				uint8_t direct_ssid[7] = "DIRECT-";
 				uint8_t direct_ssid_len = 7;
+
 				if (!qdf_mem_cmp((uint8_t *) &direct_ssid,
 					(uint8_t *) &(probe_req.ssId.ssId),
 					(uint8_t) (direct_ssid_len))) {

@@ -290,6 +290,7 @@ uint8_t cds_get_mmie_size(void)
 static void cds_increase_seq(uint8_t *ipn)
 {
 	uint64_t value = 0;
+
 	if (ipn) {
 		value = (0xffffffffffff) & (*((uint64_t *) ipn));
 		value = value + 1;

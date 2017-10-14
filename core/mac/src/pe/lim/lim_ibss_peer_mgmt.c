@@ -107,6 +107,7 @@ ibss_peer_add(tpAniSirGlobal pMac, tLimIbssPeerNode *pPeerNode)
 		 * Delete last entry & add new entry at the beginning.
 		 */
 		tLimIbssPeerNode *pTemp, *pPrev;
+
 		pTemp = pPrev = pMac->lim.gLimIbssPeerList;
 		while (pTemp->next != NULL) {
 			pPrev = pTemp;
@@ -595,6 +596,7 @@ static void ibss_bss_add(tpAniSirGlobal pMac, tpPESession psessionEntry)
 static void ibss_bss_delete(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	tSirRetStatus status;
+
 	pe_debug("Initiating IBSS Delete BSS");
 	if (psessionEntry->limMlmState != eLIM_MLM_BSS_STARTED_STATE) {
 		pe_warn("Incorrect LIM MLM state for delBss: %d",

@@ -2408,6 +2408,7 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 			pMac->cfg.gCfgIBuf[index]    = cfg_static[i].cfgIVal;
 		} else {
 			uint8_t maxSavedLen;
+
 			if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
 				continue;
 			if (index >= pMac->cfg.gCfgMaxSBufSize) {

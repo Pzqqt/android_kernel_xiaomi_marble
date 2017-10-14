@@ -119,6 +119,7 @@ ol_tx_target_credit_incr_int(struct ol_txrx_pdev_t *pdev, int delta)
 void ol_txrx_flow_control_cb(struct cdp_vdev *pvdev, bool tx_resume)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	qdf_spin_lock_bh(&vdev->flow_control_lock);
 	if ((vdev->osif_flow_control_cb) && (vdev->osif_fc_ctx))
 		vdev->osif_flow_control_cb(vdev->osif_fc_ctx, tx_resume);
@@ -136,6 +137,7 @@ void ol_txrx_flow_control_cb(struct cdp_vdev *pvdev, bool tx_resume)
 static bool ol_txrx_flow_control_is_pause(ol_txrx_vdev_handle vdev)
 {
 	bool is_pause = false;
+
 	if ((vdev->osif_flow_control_is_pause) && (vdev->osif_fc_ctx))
 		is_pause = vdev->osif_flow_control_is_pause(vdev->osif_fc_ctx);
 
@@ -651,10 +653,10 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	struct htt_tx_compl_ind_append_tx_tstamp *txtstamp_list = NULL;
 	u_int32_t *msg_word = (u_int32_t *)msg;
 	u_int16_t *desc_ids = (u_int16_t *)(msg_word + 1);
-
 	union ol_tx_desc_list_elem_t *lcl_freelist = NULL;
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
 	ol_tx_desc_list tx_descs;
+
 	TAILQ_INIT(&tx_descs);
 
 	ol_tx_delay_compute(pdev, status, desc_ids, num_msdus);
@@ -1032,6 +1034,7 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 void ol_tx_set_compute_interval(struct cdp_pdev *ppdev, uint32_t interval)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
 	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(interval);
 }
 

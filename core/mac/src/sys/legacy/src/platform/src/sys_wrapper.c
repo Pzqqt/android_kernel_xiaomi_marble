@@ -263,6 +263,7 @@ static void tx_main_timer_func(void *functionContext)
 	/* check if this needs to be rescheduled */
 	if (0 != timer_ptr->rescheduleTimeInMsecs) {
 		QDF_STATUS status;
+
 		status = qdf_mc_timer_start(&timer_ptr->qdf_timer,
 					    timer_ptr->rescheduleTimeInMsecs);
 		timer_ptr->rescheduleTimeInMsecs = 0;

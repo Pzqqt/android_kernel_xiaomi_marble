@@ -626,6 +626,7 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 {
 	uint32_t n;
+
 	tLimPreAuthNode **pAuthNode;
 	tLimTimers *lim_timer = NULL;
 
@@ -721,6 +722,7 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 uint8_t lim_is_addr_bc(tSirMacAddr macAddr)
 {
 	int i;
+
 	for (i = 0; i < 6; i++) {
 		if ((macAddr[i] & 0xFF) != 0xFF)
 			return false;
@@ -891,6 +893,7 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx,
 		(LIM_DEFERRED_Q_CHECK_THRESHOLD <
 			mac_ctx->lim.gLimDeferredMsgQ.size)) {
 		uint16_t idx, count = 0;
+
 		for (idx = 0; idx < mac_ctx->lim.gLimDeferredMsgQ.size;
 								idx++) {
 			if (SIR_BB_XPORT_MGMT_MSG ==
@@ -1695,6 +1698,7 @@ lim_decide_sta_protection_on_assoc(tpAniSirGlobal pMac,
 	/* protection related factors other than HT operating mode. Applies to 2.4 GHZ as well as 5 GHZ. */
 	if ((psessionEntry->htCapability) && (pBeaconStruct->HTInfo.present)) {
 		tDot11fIEHTInfo htInfo = pBeaconStruct->HTInfo;
+
 		psessionEntry->beaconParams.fRIFSMode =
 			(uint8_t) htInfo.rifsMode;
 		psessionEntry->beaconParams.llnNonGFCoexist =
@@ -2433,6 +2437,7 @@ void lim_process_quiet_bss_timeout(tpAniSirGlobal mac_ctx)
 void lim_start_quiet_timer(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	tpPESession psessionEntry;
+
 	psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
 
 	if (psessionEntry == NULL) {
@@ -2722,6 +2727,7 @@ uint8_t lim_active_scan_allowed(tpAniSirGlobal pMac, uint8_t channelNum)
 	uint32_t i;
 	uint8_t channelPair[WNI_CFG_SCAN_CONTROL_LIST_LEN];
 	uint32_t len = WNI_CFG_SCAN_CONTROL_LIST_LEN;
+
 	if (wlan_cfg_get_str(pMac, WNI_CFG_SCAN_CONTROL_LIST, channelPair, &len)
 	    != eSIR_SUCCESS) {
 		pe_err("Unable to get scan control list");
@@ -5420,6 +5426,7 @@ void lim_handle_heart_beat_timeout_for_session(tpAniSirGlobal mac_ctx,
 uint8_t lim_get_current_operating_channel(tpAniSirGlobal pMac)
 {
 	uint8_t i;
+
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		if (pMac->lim.gpSession[i].valid == true) {
 			if ((pMac->lim.gpSession[i].bssType ==
@@ -5642,6 +5649,7 @@ void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
 			   uint16_t reasonCode)
 {
 	tSirMacAddr nullBssid = { 0, 0, 0, 0, 0, 0 };
+
 	WLAN_HOST_DIAG_EVENT_DEF(peEvent, host_event_wlan_pe_payload_type);
 
 	qdf_mem_set(&peEvent, sizeof(host_event_wlan_pe_payload_type), 0);
@@ -5804,6 +5812,7 @@ void pe_set_resume_channel(tpAniSirGlobal pMac, uint16_t channel,
 bool lim_is_noa_insert_reqd(tpAniSirGlobal pMac)
 {
 	uint8_t i;
+
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		if (pMac->lim.gpSession[i].valid == true) {
 			if ((eLIM_AP_ROLE ==

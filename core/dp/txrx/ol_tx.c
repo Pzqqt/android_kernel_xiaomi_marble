@@ -1899,6 +1899,7 @@ ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
 	TXRX_ASSERT1(type < OL_TXRX_MGMT_NUM_TYPES);
 	pdev->tx_mgmt.callbacks[type].download_cb = download_cb;
 	pdev->tx_mgmt.callbacks[type].ota_ack_cb = ota_ack_cb;

@@ -137,6 +137,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 #endif
 		/* TearDownLink with AP */
 		tLimMlmDeauthInd mlm_deauth_ind;
+
 		pe_debug("Delete Station (staId: %d, assocId: %d)",
 			msg->staId, msg->assocId);
 

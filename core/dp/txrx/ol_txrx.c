@@ -325,6 +325,7 @@ ol_txrx_find_peer_by_addr_and_vdev(struct cdp_pdev *ppdev,
 static QDF_STATUS ol_txrx_get_vdevid(void *ppeer, uint8_t *vdev_id)
 {
 	struct ol_txrx_peer_t *peer = ppeer;
+
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "peer argument is null!!");
@@ -431,6 +432,7 @@ ol_txrx_peer_handle ol_txrx_find_peer_by_addr_inc_ref(ol_txrx_pdev_handle pdev,
 static uint16_t ol_txrx_local_peer_id(void *ppeer)
 {
 	ol_txrx_peer_handle peer = ppeer;
+
 	return peer->local_id;
 }
 
@@ -915,6 +917,7 @@ void
 ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *pvdev, bool flag)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	vdev->hlTdlsFlag = flag;
 }
 #endif
@@ -1282,6 +1285,7 @@ fail0:
 void htt_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
 {
 	struct ol_txrx_pdev_t *handle = (struct ol_txrx_pdev_t *)ppdev;
+
 	if (handle->pkt_log_init)
 		return;
 
@@ -1832,6 +1836,7 @@ ol_attach_fail:
 static A_STATUS ol_txrx_pdev_attach_target(struct cdp_pdev *ppdev)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
 	return htt_attach_target(pdev->htt_pdev) == QDF_STATUS_SUCCESS ? 0:1;
 }
 
@@ -2203,6 +2208,7 @@ static void ol_txrx_vdev_register(struct cdp_vdev *pvdev,
 				struct ol_txrx_ops *txrx_ops)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	if (qdf_unlikely(!vdev) || qdf_unlikely(!txrx_ops)) {
 		qdf_print("%s: vdev/txrx_ops is NULL!\n", __func__);
 		qdf_assert(0);
@@ -2735,6 +2741,7 @@ static uint8_t *
 ol_txrx_peer_get_peer_mac_addr(void *ppeer)
 {
 	ol_txrx_peer_handle peer = ppeer;
+
 	if (!peer)
 		return NULL;
 
@@ -2777,6 +2784,7 @@ ol_txrx_get_pn_info(void *ppeer, uint8_t **last_pn_valid,
 static int ol_txrx_get_opmode(struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	return vdev->opmode;
 }
 
@@ -2789,6 +2797,7 @@ static int ol_txrx_get_opmode(struct cdp_vdev *pvdev)
 static int ol_txrx_get_peer_state(void *ppeer)
 {
 	ol_txrx_peer_handle peer = ppeer;
+
 	return peer->state;
 }
 
@@ -2801,6 +2810,7 @@ static int ol_txrx_get_peer_state(void *ppeer)
 static struct cdp_vdev *ol_txrx_get_vdev_for_peer(void *ppeer)
 {
 	ol_txrx_peer_handle peer = ppeer;
+
 	return (struct cdp_vdev *)peer->vdev;
 }
 
@@ -2814,6 +2824,7 @@ static uint8_t *
 ol_txrx_get_vdev_mac_addr(struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	if (!vdev)
 		return NULL;
 
@@ -2858,6 +2869,7 @@ static struct cdp_cfg *
 ol_txrx_get_ctrl_pdev_from_vdev(struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	return vdev->pdev->ctrl_pdev;
 }
 
@@ -3006,6 +3018,7 @@ static void ol_txrx_set_ocb_chan_info(struct cdp_vdev *pvdev,
 			  struct ol_txrx_ocb_set_chan ocb_set_chan)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	vdev->ocb_channel_info = ocb_set_chan.ocb_channel_info;
 	vdev->ocb_channel_count = ocb_set_chan.ocb_channel_count;
 }
@@ -3020,6 +3033,7 @@ static struct ol_txrx_ocb_chan_info *
 ol_txrx_get_ocb_chan_info(struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	return vdev->ocb_channel_info;
 }
 
@@ -3618,6 +3632,7 @@ ol_txrx_peer_handle
 ol_txrx_peer_find_by_addr(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac_addr)
 {
 	struct ol_txrx_peer_t *peer;
+
 	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_mac_addr, 0, 0);
 	if (peer) {
 		ol_txrx_info_high(
@@ -4424,6 +4439,7 @@ ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 static void ol_vdev_rx_set_intrabss_fwd(struct cdp_vdev *pvdev, bool val)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	if (NULL == vdev)
 		return;
 
@@ -4836,6 +4852,7 @@ static inline void ol_txrx_drop_frames(
 					qdf_nbuf_t rx_buf_list)
 {
 	uint32_t dropped = ol_txrx_drop_nbuf_list(rx_buf_list);
+
 	bufqi->dropped += dropped;
 	bufqi->qdepth_no_thresh += dropped;
 
@@ -5317,6 +5334,7 @@ static QDF_STATUS ol_txrx_set_wisa_mode(struct cdp_vdev *pvdev, bool enable)
 static uint16_t ol_txrx_get_vdev_id(struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	return vdev->vdev_id;
 }
 
@@ -5770,6 +5788,7 @@ struct cdp_soc_t *ol_txrx_soc_attach(void *scn_handle,
 				     struct ol_if_ops *dp_ol_if_ops)
 {
 	struct cdp_soc_t *soc = qdf_mem_malloc(sizeof(struct cdp_soc_t));
+
 	if (!soc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: OL SOC memory allocation failed\n", __func__);

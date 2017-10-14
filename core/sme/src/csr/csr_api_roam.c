@@ -708,6 +708,7 @@ csr_scan_chan_list_2g[SCAN_CHAN_LIST_2G_LEN] = { 1, 6, 11 };
 static QDF_STATUS csr_emu_chan_req(uint32_t channel)
 {
 	int i;
+
 	if (WLAN_REG_IS_24GHZ_CH(channel)) {
 		for (i = 0; i < QDF_ARRAY_SIZE(csr_scan_chan_list_2g); i++) {
 			if (csr_scan_chan_list_2g[i] == channel)
@@ -5453,8 +5454,9 @@ static void csr_set_abort_roaming_command(tpAniSirGlobal pMac,
  */
 static bool csr_roam_select_bss(tpAniSirGlobal mac_ctx,
 		tListElem *roam_bss_entry, tCsrScanResultInfo **csr_result_info,
-		struct tag_csrscan_result **csr_scan_result, uint32_t
-		session_id, uint32_t roam_id, enum csr_join_state *roam_state,
+		struct tag_csrscan_result **csr_scan_result,
+		uint32_t session_id, uint32_t roam_id,
+		enum csr_join_state *roam_state,
 		struct scan_result_list *bss_list)
 {
 	uint8_t conc_channel = 0;
@@ -19247,6 +19249,7 @@ static enum wlan_serialization_cmd_type csr_get_roam_cmd_type(
 		tSmeCmd *sme_cmd)
 {
 	enum wlan_serialization_cmd_type cmd_type = WLAN_SER_CMD_MAX;
+
 	switch (sme_cmd->u.roamCmd.roamReason) {
 	case eCsrForcedDisassoc:
 		cmd_type = WLAN_SER_CMD_FORCE_DISASSOC;

@@ -1241,6 +1241,7 @@ static void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 {
 	uint16_t num_ch;
 	int32_t offset = 0;
+
 	if (NULL == spect_ch) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("spect_ch is NULL"));

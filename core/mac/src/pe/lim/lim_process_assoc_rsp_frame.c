@@ -228,6 +228,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	if (qos_mode) {
 		if (assoc_rsp->edcaPresent) {
 			tSirRetStatus status;
+
 			status =
 				sch_beacon_edca_process(mac_ctx,
 					&assoc_rsp->edca, session_entry);
@@ -247,6 +248,7 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 	sta_ds->wsmEnabled = 0;
 	if (session_entry->limWmeEnabled && assoc_rsp->wmeEdcaPresent) {
 		tSirRetStatus status;
+
 		status = sch_beacon_edca_process(mac_ctx, &assoc_rsp->edca,
 				session_entry);
 		pe_debug("WME Edca set update based on AssocRsp: status %d",
@@ -440,6 +442,7 @@ static void lim_update_stads_ext_cap(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds)
 {
 	struct s_ext_cap *ext_cap;
+
 	if (!assoc_rsp->ExtCap.present) {
 		sta_ds->timingMeasCap = 0;
 #ifdef FEATURE_WLAN_TDLS

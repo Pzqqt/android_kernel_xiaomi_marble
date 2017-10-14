@@ -846,6 +846,7 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 {
 	tpSirAggrQosRsp rsp;
 	int i = 0;
+
 	if (!rspReqd) {
 		return;
 	}
@@ -884,6 +885,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac,
 	uint8_t rspReqd = 1;
 	tpPESession psessionEntry = NULL;
 	int i = 0;
+
 	pe_debug(" Received AGGR_QOS_RSP from HAL");
 	SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
 	pAggrQosRspMsg = (tpAggrAddTsParams) (limMsg->bodyptr);

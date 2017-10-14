@@ -2688,6 +2688,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 	uint8_t txFlag = 0;
 	uint32_t val = 0;
 	uint8_t smeSessionId = 0;
+
 	if (NULL == psessionEntry) {
 		return;
 	}

@@ -1997,6 +1997,7 @@ QDF_STATUS
 wlan_sap_set_channel_avoidance(tHalHandle hal, bool sap_channel_avoidance)
 {
 	tpAniSirGlobal mac_ctx = NULL;
+
 	if (NULL != hal)
 		mac_ctx = PMAC_STRUCT(hal);
 	if (mac_ctx == NULL || hal == NULL) {
@@ -2617,6 +2618,7 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
 void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
 	mac_ctx->sap.enable_dfs_phy_error_logs = enable_log;
 }
 

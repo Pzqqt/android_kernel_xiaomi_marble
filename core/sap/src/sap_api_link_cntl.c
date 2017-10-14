@@ -278,6 +278,7 @@ static QDF_STATUS sap_hdd_signal_event_handler(void *ctx)
 {
 	struct sap_context *sap_ctx = ctx;
 	QDF_STATUS status;
+
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				FL("sap context is not valid"));
@@ -650,6 +651,7 @@ wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 	/* Issue channel change req for each sapctx */
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		struct sap_context *pSapContext;
+
 		if (!((QDF_SAP_MODE == mac_ctx->sap.sapCtxList[intf].sapPersona)
 		    && (mac_ctx->sap.sapCtxList[intf].pSapContext != NULL)))
 			continue;
@@ -693,6 +695,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 {
 	QDF_STATUS qdf_status;
 	tWLAN_SAPEvent sap_event;
+
 	if (eSAP_DFS_CAC_WAIT == sap_ctx->sapsMachine) {
 		if (sap_ctx->csr_roamProfile.disableDFSChSwitch) {
 			QDF_TRACE(QDF_MODULE_ID_SAP,
@@ -791,6 +794,7 @@ wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 				     QDF_STATUS *ret_status)
 {
 	QDF_STATUS qdf_status;
+
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("CSR roam_result = eCSR_ROAM_RESULT_INFRA_ASSOCIATION_IND (%d)"),
 		  roam_result);

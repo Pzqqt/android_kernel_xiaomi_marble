@@ -973,6 +973,7 @@ htt_tx_send_batch(htt_pdev_handle pdev, qdf_nbuf_t head_msdu, int num_msdus)
 	msdu = head_msdu;
 	while (num_msdus--) {
 		qdf_nbuf_t next_msdu = qdf_nbuf_next(msdu);
+
 		msdu_id_storage = ol_tx_msdu_id_storage(msdu);
 		msdu_id = *msdu_id_storage;
 

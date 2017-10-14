@@ -805,6 +805,7 @@ ol_tx_classify_extension(
 			msdu_info->htt.info.ethertype = ethertype;
 		} else { /* 802.11 */
 			struct llc_snap_hdr_t *llc;
+
 			l2_hdr_size = ol_txrx_ieee80211_hdrsize(datap);
 			llc = (struct llc_snap_hdr_t *)(datap + l2_hdr_size);
 			ethertype = (llc->ethertype[0] << 8) |

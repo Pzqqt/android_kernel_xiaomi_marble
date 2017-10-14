@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -208,6 +208,7 @@ uint32_t dfs_round(int32_t val)
 struct dfs_ieee80211_channel *ieee80211_get_extchan(struct ieee80211com *ic)
 {
 	int chan_offset = 0;
+
 	if (IEEE80211_IS_CHAN_HT40PLUS_CAPABLE(ic->ic_curchan)) {
 		chan_offset = 20;
 	} else if (IEEE80211_IS_CHAN_HT40MINUS_CAPABLE(ic->ic_curchan)) {

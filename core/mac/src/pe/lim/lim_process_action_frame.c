@@ -1084,6 +1084,7 @@ static void __lim_process_qos_map_configure_frame(tpAniSirGlobal mac_ctx,
 	uint32_t frame_len;
 	uint8_t *body_ptr;
 	tSirRetStatus retval;
+
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
@@ -1189,6 +1190,7 @@ __lim_process_tpc_request_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	uint8_t *pBody;
 	tpSirMacTpcReqActionFrame pTpcReqFrame;
 	uint32_t frameLen;
+
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);

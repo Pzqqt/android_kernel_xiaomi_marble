@@ -2440,6 +2440,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 #ifdef FEATURE_WLAN_WAPI
 		if (csr_roaminfo->wapiIELen) {
 			uint8_t len = reassoc_complete->iesLen;
+
 			reassoc_complete->iesLen += csr_roaminfo->wapiIELen;
 			qdf_mem_copy(&reassoc_complete->ies[len],
 				     csr_roaminfo->pwapiIE,
@@ -2448,6 +2449,7 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 #endif
 		if (csr_roaminfo->addIELen) {
 			uint8_t len = reassoc_complete->iesLen;
+
 			reassoc_complete->iesLen += csr_roaminfo->addIELen;
 			qdf_mem_copy(&reassoc_complete->ies[len],
 				     csr_roaminfo->paddIE,
@@ -3899,6 +3901,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 {
 	int32_t nRes = -1;
 	int8_t nStart = 0, nEnd, nMiddle;
+
 	nEnd = num_mac - 1;
 
 	if ((NULL == macList) || (num_mac > MAX_ACL_MAC_ADDRESS)) {
@@ -4007,6 +4010,7 @@ void sap_print_acl(struct qdf_mac_addr *macList, uint8_t size)
 {
 	int i;
 	uint8_t *macArray;
+
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "print acl entered");
 
@@ -4173,6 +4177,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 #endif
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		uint8_t ch;
+
 		ch = WLAN_REG_CH_NUM(loop_count);
 		if ((sap_ctx->acs_cfg->skip_scan_status ==
 			eSAP_DO_PAR_ACS_SCAN)) {
@@ -4358,6 +4363,7 @@ static int sap_stop_dfs_cac_timer(struct sap_context *sapContext)
 {
 	tHalHandle hHal;
 	tpAniSirGlobal pMac;
+
 	if (sapContext == NULL)
 		return 0;
 

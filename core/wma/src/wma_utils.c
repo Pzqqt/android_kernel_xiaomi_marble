@@ -4572,6 +4572,7 @@ QDF_STATUS wma_send_vdev_stop_to_fw(t_wma_handle *wma, uint8_t vdev_id)
 bool wma_is_service_enabled(WMI_SERVICE service_type)
 {
 	tp_wma_handle wma;
+
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);

@@ -544,6 +544,7 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 	switch (msg->type) {
 	case SIR_HAL_NDP_CONFIRM: {
 		struct ndp_confirm_event *ndp_confirm = msg->bodyptr;
+
 		if (ndp_confirm->rsp_code != NDP_RESPONSE_ACCEPT &&
 			ndp_confirm->num_active_ndps_on_peer == 0) {
 			/*
@@ -570,6 +571,7 @@ QDF_STATUS lim_handle_ndp_event_message(tpAniSirGlobal mac_ctx,
 		break;
 	case SIR_HAL_NDP_INDICATION: {
 		struct ndp_indication_event *ndp_ind = msg->bodyptr;
+
 		status = lim_handle_ndp_indication_event(mac_ctx, ndp_ind);
 		break;
 	}

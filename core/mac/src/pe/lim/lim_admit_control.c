@@ -193,6 +193,7 @@ lim_validate_tspec(tpAniSirGlobal pMac,
 		   tSirMacTspecIE *pTspec, tpPESession psessionEntry)
 {
 	tSirRetStatus retval = eSIR_SUCCESS;
+
 	switch (pTspec->tsinfo.traffic.accessPolicy) {
 	case SIR_MAC_ACCESSPOLICY_EDCA:
 		retval = lim_validate_tspec_edca(pMac, pTspec, psessionEntry);
@@ -554,6 +555,7 @@ tSirRetStatus lim_tspec_add(tpAniSirGlobal pMac,
 			 * LIM TSPEC list and add this new entry
 			 */
 			uint8_t ctspec = 0;
+
 			for (ctspec = 0, pTspecList = &pMac->lim.tspecInfo[0];
 			     ctspec < LIM_NUM_TSPEC_MAX;
 			     ctspec++, pTspecList++) {
@@ -832,6 +834,7 @@ tSirRetStatus lim_admit_control_init(tpAniSirGlobal pMac)
 tSirRetStatus lim_update_admit_policy(tpAniSirGlobal pMac)
 {
 	uint32_t val;
+
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ADMIT_POLICY, &val) != eSIR_SUCCESS) {
 		pe_err("Unable to get CFG_ADMIT_POLICY");
 		return eSIR_FAILURE;
@@ -880,6 +883,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	tpAddTsParams pAddTsParam;
 
 	tpPESession psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
+
 	if (psessionEntry == NULL) {
 		pe_err("Unable to get Session for session Id: %d",
 			sessionId);

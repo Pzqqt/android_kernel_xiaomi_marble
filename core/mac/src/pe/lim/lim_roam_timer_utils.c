@@ -40,6 +40,7 @@
 uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
 {
 	uint32_t cfg_value;
+
 	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
 			     &cfg_value) != eSIR_SUCCESS)
 		pe_warn("could not retrieve ReassocFailureTimeout value");

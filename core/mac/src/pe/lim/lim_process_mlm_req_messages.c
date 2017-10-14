@@ -1516,6 +1516,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 {
 	tLimMlmDisassocReq *mlm_disassoc_req;
 	tLimMlmDeauthReq *mlm_deauth_req;
+
 	mlm_disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 	if (mlm_disassoc_req &&
 	    (!qdf_mem_cmp((uint8_t *) sta_mac,
@@ -2628,6 +2629,7 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 		     uint32_t dfs_regdomain)
 {
 	tpPESession pe_session;
+
 	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
 
 	if (NULL == pe_session) {

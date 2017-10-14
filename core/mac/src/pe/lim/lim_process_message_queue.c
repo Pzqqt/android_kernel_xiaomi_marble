@@ -661,8 +661,8 @@ static void
 __lim_handle_beacon(tpAniSirGlobal pMac, struct scheduler_msg *pMsg,
 		    tpPESession psessionEntry)
 {
-	/* checking for global SME state... */
 	uint8_t *pRxPacketInfo;
+
 	lim_get_b_dfrom_rx_packet(pMac, pMsg->bodyptr,
 				  (uint32_t **) &pRxPacketInfo);
 
