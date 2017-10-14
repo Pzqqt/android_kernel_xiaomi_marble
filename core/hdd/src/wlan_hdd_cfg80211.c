@@ -15478,8 +15478,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		       pRoamProfile->SSIDs.SSIDList->SSID.ssId,
 		       operatingChannel);
 
-		if ((IW_AUTH_WPA_VERSION_WPA == pWextState->wpaVersion) ||
-		    (IW_AUTH_WPA_VERSION_WPA2 == pWextState->wpaVersion)) {
+		if (hdd_sta_ctx->wpa_versions) {
 			hdd_set_genie_to_csr(adapter, &RSNAuthType);
 			hdd_set_csr_auth_type(adapter, RSNAuthType);
 		}
@@ -16497,20 +16496,13 @@ static int wlan_hdd_cfg80211_set_privacy(struct hdd_adapter *adapter,
 	int status = 0;
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx;
 
 	ENTER();
 
-	/*set wpa version */
-	pWextState->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
-
-	if (req->crypto.wpa_versions) {
-		if (NL80211_WPA_VERSION_1 == req->crypto.wpa_versions)
-			pWextState->wpaVersion = IW_AUTH_WPA_VERSION_WPA;
-		else if (NL80211_WPA_VERSION_2 == req->crypto.wpa_versions)
-			pWextState->wpaVersion = IW_AUTH_WPA_VERSION_WPA2;
-	}
-
-	hdd_debug("set wpa version to %d", pWextState->wpaVersion);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	sta_ctx->wpa_versions = req->crypto.wpa_versions;
+	hdd_debug("set wpa version to %d", sta_ctx->wpa_versions);
 
 	/*set authentication type */
 	status = wlan_hdd_cfg80211_set_auth_type(adapter, req->auth_type);
@@ -17322,14 +17314,14 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 
 	ENTER();
 
-	pWextState->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
+	sta_ctx->wpa_versions = 0;
 	qdf_mem_zero(&sta_ctx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 	sta_ctx->ibss_enc_key_installed = 0;
 
 	if (params->ie_len && (NULL != params->ie)) {
 		if (wlan_get_ie_ptr_from_eid(WLAN_EID_RSN, params->ie,
 					     params->ie_len)) {
-			pWextState->wpaVersion = IW_AUTH_WPA_VERSION_WPA2;
+			sta_ctx->wpa_versions = NL80211_WPA_VERSION_2;
 			encryptionType = eCSR_ENCRYPT_TYPE_AES;
 		} else if (hdd_is_wpaie_present(params->ie, params->ie_len)) {
 			tDot11fIEWPA dot11WPAIE;
@@ -17340,8 +17332,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 			ie = wlan_get_ie_ptr_from_eid(DOT11F_EID_WPA,
 						params->ie, params->ie_len);
 			if (NULL != ie) {
-				pWextState->wpaVersion =
-					IW_AUTH_WPA_VERSION_WPA;
+				sta_ctx->wpa_versions = NL80211_WPA_VERSION_1;
 				/* Unpack the WPA IE
 				 * Skip past the EID byte and length byte
 				 * and four byte WiFi OUI

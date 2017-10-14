@@ -6816,7 +6816,7 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 							CSR_MAX_NUM_KEY);
 		}
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
-		pWextState->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
+		sta_ctx->wpa_versions = 0;
 		pWextState->roamProfile.EncryptionType.encryptionType[0] =
 			eCSR_ENCRYPT_TYPE_NONE;
 		pWextState->roamProfile.mcEncryptionType.encryptionType[0] =
@@ -14575,7 +14575,7 @@ static int hdd_set_wext(struct hdd_adapter *adapter)
 	pwextBuf->roamProfile.AuthType.authType[0] = eCSR_AUTH_TYPE_OPEN_SYSTEM;
 
 	pwextBuf->roamProfile.phyMode = eCSR_DOT11_MODE_AUTO;
-	pwextBuf->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
+	sta_ctx->wpa_versions = 0;
 
 	/*Set the default scan mode */
 	adapter->scan_info.scan_mode = eSIR_ACTIVE_SCAN;

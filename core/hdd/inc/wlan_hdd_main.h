@@ -681,34 +681,41 @@ struct hdd_mon_set_ch_info {
 	eCsrPhyMode phy_mode;
 };
 
+/**
+ * struct hdd_station_ctx -- STA-specific information
+ * @WextState: wireless extensions state
+ * @wpa_versions: bitmap of supported WPA versions
+ * @conn_info: current connection information
+ * @roam_info: current roaming information
+ * @ft_carrier_on: is carrier on
+ * @ibss_sta_generation: current ibss generation. Incremented whenever
+ *    ibss New peer joins and departs the network
+ * @ibss_enc_key_installed: is the ibss wep/wpa-none encryptions key
+ *    installed?
+ * @ibss_enc_key: current ibss wep/wpa-none encryption key (if
+ *    @ibss_enc_key_installed is %true)
+ * @ibss_peer_info: information about the ibss peer
+ * @hdd_ReassocScenario: is station in the middle of reassociation?
+ * @staDebugState: STA context debug variable
+ * @broadcast_staid: STA ID assigned for broadcast frames
+ * @ch_info: monitor mode channel information
+ * @ndp_ctx: NAN data path context
+ * @ap_supports_immediate_power_save: Does the current AP allow our STA
+ *    to immediately go into power save?
+ */
 struct hdd_station_ctx {
-	/* Handle to the Wireless Extension State */
 	struct hdd_wext_state WextState;
-
-	/* Connection information*/
+	enum nl80211_wpa_versions wpa_versions;
 	struct hdd_connection_info conn_info;
-
 	struct hdd_roaming_info roam_info;
-
 	int ft_carrier_on;
-
-	/* Increment whenever ibss New peer joins and departs the network */
 	int ibss_sta_generation;
-
-	/* Indication of wep/wpa-none keys installation */
 	bool ibss_enc_key_installed;
-
-	/* Save the wep/wpa-none keys */
 	tCsrRoamSetKey ibss_enc_key;
 	tSirPeerInfoRspParams ibss_peer_info;
-
 	bool hdd_ReassocScenario;
-
-	/* STA ctx debug variables */
 	int staDebugState;
-
 	uint8_t broadcast_staid;
-
 	struct hdd_mon_set_ch_info ch_info;
 #if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
 	struct nan_datapath_ctx ndp_ctx;
