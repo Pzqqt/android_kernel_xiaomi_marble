@@ -144,6 +144,8 @@ static void htc_cleanup(HTC_TARGET *target)
 	HTC_PACKET *pPacket;
 	int i;
 	HTC_ENDPOINT *endpoint;
+	HTC_PACKET_QUEUE *pkt_queue;
+	qdf_nbuf_t netbuf;
 
 	if (target->hif_dev != NULL) {
 		hif_detach_htc(target->hif_dev);
@@ -158,13 +160,22 @@ static void htc_cleanup(HTC_TARGET *target)
 		qdf_mem_free(pPacket);
 	}
 
+	LOCK_HTC_TX(target);
 	pPacket = target->pBundleFreeList;
+	target->pBundleFreeList = NULL;
+	UNLOCK_HTC_TX(target);
 	while (pPacket) {
 		HTC_PACKET *pPacketTmp = (HTC_PACKET *) pPacket->ListLink.pNext;
-
+		netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
+		if (netbuf)
+			qdf_nbuf_free(netbuf);
+		pkt_queue = pPacket->pContext;
+		if (pkt_queue)
+			qdf_mem_free(pkt_queue);
 		qdf_mem_free(pPacket);
 		pPacket = pPacketTmp;
 	}
+
 #ifdef TODO_FIXME
 	while (true) {
 		pPacket = htc_alloc_control_tx_packet(target);
@@ -609,7 +620,9 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 
 				temp_bundle_packet = rx_bundle_packet;
 			}
+			LOCK_HTC_TX(target);
 			target->pBundleFreeList = temp_bundle_packet;
+			UNLOCK_HTC_TX(target);
 		}
 
 		/* done processing */
