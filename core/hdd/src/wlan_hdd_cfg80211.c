@@ -871,7 +871,7 @@ int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
 static enum qca_wlan_vendor_hang_reason
 hdd_convert_hang_reason(enum qdf_hang_reason reason)
 {
-	uint32_t ret_val;
+	u32 ret_val;
 
 	switch (reason) {
 	case QDF_RX_HASH_NO_ENTRY_FOUND:
@@ -941,7 +941,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 	hang_reason = hdd_convert_hang_reason(reason);
 
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_HANG_REASON,
-			(uint32_t) hang_reason)) {
+			(uint32_t)hang_reason)) {
 		hdd_err("QCA_WLAN_VENDOR_ATTR_HANG_REASON put fail");
 		kfree_skb(vendor_event);
 		return -EINVAL;
@@ -952,6 +952,7 @@ int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
 	EXIT();
 	return 0;
 }
+
 #undef HANG_REASON_INDEX
 
 /**
