@@ -84,6 +84,7 @@
 #include <cdp_txrx_stats.h>
 #include "wlan_hdd_he.h"
 #include "wlan_dfs_tgt_api.h"
+#include "wlan_dfs_utils_api.h"
 #include <wlan_reg_ucfg_api.h>
 #include "wlan_utility.h"
 
