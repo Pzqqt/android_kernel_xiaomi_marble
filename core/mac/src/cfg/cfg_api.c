@@ -58,7 +58,7 @@ typedef enum {
 } eRfBandMode;
 
 extern cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING];
-extern cgstatic cfg_static[CFG_PARAM_MAX_NUM] ;
+extern cgstatic cfg_static[CFG_PARAM_MAX_NUM];
 
 /* --------------------------------------------------------------------- */
 uint32_t cfg_need_restart(tpAniSirGlobal pMac, uint16_t cfgId)

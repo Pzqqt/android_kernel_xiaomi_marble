@@ -83,7 +83,7 @@
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 #define A_PRINTF_LOG(args ...) \
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
-#define A_SNPRINTF(buf, len, args ...)   snprintf (buf, len, args)
+#define A_SNPRINTF(buf, len, args ...)   snprintf(buf, len, args)
 
 /*
  * Timer Functions
