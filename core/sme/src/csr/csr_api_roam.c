@@ -4041,10 +4041,8 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 		pCommand->u.roamCmd.reason =
 			(tSirMacReasonCodes)p_del_sta_params->reason_code;
 		status = csr_queue_sme_command(pMac, pCommand, false);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
-			csr_release_command(pMac, pCommand);
-		}
 	} while (0);
 
 	return status;
@@ -4082,10 +4080,8 @@ QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 		pCommand->u.roamCmd.reason =
 			(tSirMacReasonCodes)pDelStaParams->reason_code;
 		status = csr_queue_sme_command(pMac, pCommand, false);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
-			csr_release_command(pMac, pCommand);
-		}
 	} while (0);
 
 	return status;
@@ -8192,9 +8188,8 @@ QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 		status = csr_queue_sme_command(pMac, pCommand, fImediate);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("fail to send message status = %d", status);
-			csr_roam_completion(pMac, sessionId, NULL, pCommand,
+			csr_roam_completion(pMac, sessionId, NULL, NULL,
 					    eCSR_ROAM_RESULT_FAILURE, false);
-			csr_release_command(pMac, pCommand);
 		}
 	}
 	return status;
@@ -8880,10 +8875,8 @@ QDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac,
 		}
 		pCommand->u.roamCmd.disconnect_reason = reason;
 		status = csr_queue_sme_command(pMac, pCommand, true);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
-			csr_release_command(pMac, pCommand);
-		}
 	} while (0);
 	return status;
 }
@@ -8906,10 +8899,8 @@ QDF_STATUS csr_roam_issue_stop_bss_cmd(tpAniSirGlobal pMac, uint32_t sessionId,
 		pCommand->sessionId = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrStopBss;
 		status = csr_queue_sme_command(pMac, pCommand, fHighPriority);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
-			csr_release_command(pMac, pCommand);
-		}
 	} else {
 		sme_err("fail to get command buffer");
 		status = QDF_STATUS_E_RESOURCES;
@@ -10969,12 +10960,10 @@ bool csr_roam_issue_wm_status_change(tpAniSirGlobal pMac, uint32_t sessionId,
 					    DeauthIndMsg));
 		}
 		if (QDF_IS_STATUS_SUCCESS
-			    (csr_queue_sme_command(pMac, pCommand, true))) {
+			    (csr_queue_sme_command(pMac, pCommand, true)))
 			fCommandQueued = true;
-		} else {
+		else
 			sme_err("fail to send message");
-			csr_release_command(pMac, pCommand);
-		}
 
 		/* AP has issued Dissac/Deauth, Set the operating mode
 		 * value to configured value
@@ -19417,26 +19406,27 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 				 bool high_priority)
 {
 	struct wlan_serialization_command cmd;
+	struct wlan_objmgr_vdev *vdev = NULL;
 	QDF_STATUS status;
 
 	if (!SME_IS_START(mac_ctx)) {
 		sme_err("Sme in stop state");
 		QDF_ASSERT(0);
-		return QDF_STATUS_E_PERM;
+		goto error;
 	}
 
 	if ((eSmeCommandScan == sme_cmd->command) &&
 				mac_ctx->scan.fDropScanCmd) {
 		sme_debug("drop scan (scan reason %d) command",
 			sme_cmd->u.scanCmd.reason);
-		return QDF_STATUS_CSR_WRONG_STATE;
+		goto error;
 	}
 
 	if (CSR_IS_WAIT_FOR_KEY(mac_ctx, sme_cmd->sessionId)) {
 		if (!CSR_IS_DISCONNECT_COMMAND(sme_cmd)) {
 			sme_err("Can't process cmd(%d), waiting for key",
 				sme_cmd->command);
-			return QDF_STATUS_CMD_NOT_QUEUED;
+			goto error;
 		}
 	}
 
@@ -19446,7 +19436,7 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 			sme_err("Max scan reached");
 			csr_scan_call_callback(mac_ctx, sme_cmd,
 					       eCSR_SCAN_ABORT);
-			return QDF_STATUS_E_FAILURE;
+			goto error;
 		}
 	}
 
@@ -19454,19 +19444,23 @@ QDF_STATUS csr_queue_sme_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd,
 	status = csr_set_serialization_params_to_cmd(mac_ctx, sme_cmd,
 					&cmd, high_priority);
 	if (QDF_STATUS_SUCCESS == status) {
+		vdev = cmd.vdev;
 		if (WLAN_SER_CMD_DENIED_UNSPECIFIED ==
-				wlan_serialization_request(&cmd)) {
-			sme_err("failed to enq to req");
+				wlan_serialization_request(&cmd))
 			status = QDF_STATUS_E_FAILURE;
-		}
-		if (cmd.vdev)
-			wlan_objmgr_vdev_release_ref(cmd.vdev,
-						WLAN_LEGACY_SME_ID);
+		if (vdev)
+			wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+		if (status == QDF_STATUS_E_FAILURE)
+			goto error;
 	} else {
 		sme_err("failed to set ser params");
-		status = QDF_STATUS_E_FAILURE;
+		goto error;
 	}
 	return status;
+
+error:
+	csr_release_command_buffer(mac_ctx, sme_cmd);
+	return QDF_STATUS_E_FAILURE;
 }
 
 QDF_STATUS csr_roam_update_config(tpAniSirGlobal mac_ctx, uint8_t session_id,
