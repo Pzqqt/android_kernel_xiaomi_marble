@@ -2223,7 +2223,7 @@ static int hdd_get_dwell_time(struct hdd_config *pCfg, uint8_t *command,
 		return 0;
 	}
 	if (strncmp(command, "GETDWELLTIME", 12) == 0) {
-		*len = scnprintf(extra, n, "GETDWELLTIME %u \n",
+		*len = scnprintf(extra, n, "GETDWELLTIME %u\n",
 				 (int)pCfg->nActiveMaxChnTime);
 		return 0;
 	}

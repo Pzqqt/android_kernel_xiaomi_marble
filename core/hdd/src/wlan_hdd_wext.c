@@ -7938,7 +7938,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			buf =
 				scnprintf(extra + len, WE_MAX_STR_LEN - len,
 					  "\n HDD Conn State - %s "
-					  "\n \n SME State:"
+					  "\n\n SME State:"
 					  "\n Neighbour Roam State - %s"
 					  "\n CSR State - %s"
 					  "\n CSR Substate - %s",
@@ -7962,7 +7962,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			/* Printing Lim State starting with global lim states */
 			buf =
 				scnprintf(extra + len, WE_MAX_STR_LEN - len,
-					  "\n \n LIM STATES:-"
+					  "\n\n LIM STATES:-"
 					  "\n Global Sme State - %s "
 					  "\n Global mlm State - %s " "\n",
 					  mac_trace_get_lim_sme_state
