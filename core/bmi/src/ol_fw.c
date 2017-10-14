@@ -867,6 +867,8 @@ QDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 		if (ol_disable_cdc_max_perf(ol_ctx))
 			return QDF_STATUS_E_FAILURE;
 
+		qdf_mem_zero(&cap, sizeof(cap));
+
 		ret = pld_get_platform_cap(qdf_dev->dev, &cap);
 		if (ret)
 			BMI_ERR("platform capability info not available");
