@@ -5023,112 +5023,6 @@ static int iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 }
 
 /**
- * __iw_set_bitrate() - SIOCSIWRATE ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_bitrate(struct net_device *dev,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_wext_state *pWextState;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	uint8_t supp_rates[WNI_CFG_SUPPORTED_RATES_11A_LEN];
-	uint32_t a_len = WNI_CFG_SUPPORTED_RATES_11A_LEN;
-	uint32_t b_len = WNI_CFG_SUPPORTED_RATES_11B_LEN;
-	uint32_t i, rate;
-	uint32_t valid_rate = false, active_phy_mode = 0;
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState)
-		return -ENXIO;
-
-	rate = wrqu->bitrate.value;
-
-	if (rate == -1) {
-		rate = WNI_CFG_FIXED_RATE_AUTO;
-		valid_rate = true;
-	} else if (sme_cfg_get_int(WLAN_HDD_GET_HAL_CTX(adapter),
-				   WNI_CFG_DOT11_MODE,
-				   &active_phy_mode) == QDF_STATUS_SUCCESS) {
-		if (active_phy_mode == WNI_CFG_DOT11_MODE_11A
-		    || active_phy_mode == WNI_CFG_DOT11_MODE_11G
-		    || active_phy_mode == WNI_CFG_DOT11_MODE_11B) {
-			if ((sme_cfg_get_str(WLAN_HDD_GET_HAL_CTX(adapter),
-				     WNI_CFG_SUPPORTED_RATES_11A, supp_rates,
-				     &a_len) == QDF_STATUS_SUCCESS)
-			    &&
-			    (sme_cfg_get_str(WLAN_HDD_GET_HAL_CTX(adapter),
-				     WNI_CFG_SUPPORTED_RATES_11B, supp_rates,
-				     &b_len) == QDF_STATUS_SUCCESS)) {
-				for (i = 0; i < (b_len + a_len); ++i) {
-					/* supported rates returned is double
-					 * the actual rate so we divide it by 2
-					 */
-					if ((supp_rates[i] & 0x7F) / 2 ==
-							rate) {
-						valid_rate = true;
-						rate = i +
-						WNI_CFG_FIXED_RATE_1MBPS;
-						break;
-					}
-				}
-			}
-		}
-	}
-	if (valid_rate != true)
-		return -EINVAL;
-
-	if (sme_cfg_set_int(WLAN_HDD_GET_HAL_CTX(adapter),
-			    WNI_CFG_FIXED_RATE, rate) != QDF_STATUS_SUCCESS) {
-		hdd_err("failed to set ini parameter, WNI_CFG_FIXED_RATE");
-		return -EIO;
-	}
-	return 0;
-}
-
-/**
- * iw_set_bitrate() - SSR wrapper for __iw_set_bitrate()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_bitrate(struct net_device *dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_bitrate(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_range() - SIOCGIWRANGE ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11567,7 +11461,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_get_nick,       /* SIOCGIWNICKN */
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* -- hole -- */
-	(iw_handler) iw_set_bitrate,    /* SIOCSIWRATE */
+	(iw_handler) NULL,      /* SIOCSIWRATE */
 	(iw_handler) NULL,      /* SIOCGIWRATE */
 	(iw_handler) NULL,      /* SIOCSIWRTS */
 	(iw_handler) NULL,      /* SIOCGIWRTS */
