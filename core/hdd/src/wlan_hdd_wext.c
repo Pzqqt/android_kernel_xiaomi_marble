@@ -3501,69 +3501,6 @@ int hdd_wlan_get_freq(uint32_t channel, uint32_t *pfreq)
 	return -EINVAL;
 }
 
-/**
- * hdd_is_auth_type_rsn() - RSN authentication type check
- * @authType: authentication type to be checked
- *
- * Return: true if @authType is an RSN authentication type,
- *	   false if it is not
- */
-static bool hdd_is_auth_type_rsn(eCsrAuthType authType)
-{
-	bool rsnType = false;
-	/* is the authType supported? */
-	switch (authType) {
-	case eCSR_AUTH_TYPE_NONE:       /* never used */
-		rsnType = false;
-		break;
-	/* MAC layer authentication types */
-	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		rsnType = false;
-		break;
-	case eCSR_AUTH_TYPE_SHARED_KEY:
-		rsnType = false;
-		break;
-	case eCSR_AUTH_TYPE_AUTOSWITCH:
-		rsnType = false;
-		break;
-
-	/* Upper layer authentication types */
-	case eCSR_AUTH_TYPE_WPA:
-		rsnType = true;
-		break;
-	case eCSR_AUTH_TYPE_WPA_PSK:
-		rsnType = true;
-		break;
-	case eCSR_AUTH_TYPE_WPA_NONE:
-		rsnType = true;
-		break;
-	case eCSR_AUTH_TYPE_FT_RSN:
-	case eCSR_AUTH_TYPE_RSN:
-		rsnType = true;
-		break;
-	case eCSR_AUTH_TYPE_FT_RSN_PSK:
-	case eCSR_AUTH_TYPE_RSN_PSK:
-#ifdef WLAN_FEATURE_11W
-	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
-	case eCSR_AUTH_TYPE_RSN_8021X_SHA256:
-#endif
-		rsnType = true;
-		break;
-	/* case eCSR_AUTH_TYPE_FAILED: */
-	case eCSR_AUTH_TYPE_UNKNOWN:
-		rsnType = false;
-		break;
-	default:
-		hdd_err("unknown authType %d, treat as open",
-		       authType);
-		rsnType = false;
-		break;
-	}
-	hdd_debug("called with authType: %d, returned: %d",
-	       authType, rsnType);
-	return rsnType;
-}
-
 struct rssi_priv {
 	int8_t rssi;
 };
@@ -5595,99 +5532,6 @@ static int iw_set_genie(struct net_device *dev,
 
 	cds_ssr_protect(__func__);
 	ret = __iw_set_genie(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
- * __iw_get_genie() - SIOCGIWGENIE ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_get_genie(struct net_device *dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_wext_state *pWextState;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	QDF_STATUS status;
-	uint32_t length = DOT11F_IE_RSN_MAX_LEN;
-	uint8_t genIeBytes[DOT11F_IE_RSN_MAX_LEN];
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	hdd_debug("getGEN_IE ioctl");
-
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
-	if (sta_ctx->conn_info.connState == eConnectionState_NotConnected)
-		return -ENXIO;
-
-	/* Return something ONLY if we are associated with an RSN or
-	 * WPA network
-	 */
-	if (!hdd_is_auth_type_rsn(pWextState->roamProfile.negotiatedAuthType))
-		return -ENXIO;
-
-	/* Actually retrieve the RSN IE from CSR.  (We previously sent
-	 * it down in the CSR Roam Profile.)
-	 */
-	status = csr_roam_get_wpa_rsn_req_ie(WLAN_HDD_GET_HAL_CTX(adapter),
-					     adapter->sessionId,
-					     &length, genIeBytes);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_err("Failed to get WPA-RSN IE data status: %d", status);
-		return -EFAULT;
-	}
-	wrqu->data.length = length;
-	if (length > DOT11F_IE_RSN_MAX_LEN) {
-		hdd_err("Invalid buffer length: %d", length);
-		return -E2BIG;
-	}
-	qdf_mem_copy(extra, (void *)genIeBytes, length);
-
-	hdd_debug("RSN IE of %d bytes returned",
-	       wrqu->data.length);
-
-	EXIT();
-
-	return 0;
-}
-
-/**
- * iw_get_genie() - SSR wrapper for __iw_get_genie()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_get_genie(struct net_device *dev,
-			struct iw_request_info *info,
-			union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_genie(dev, info, wrqu, extra);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -12977,7 +12821,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) iw_set_genie,      /* SIOCSIWGENIE */
-	(iw_handler) iw_get_genie,      /* SIOCGIWGENIE */
+	(iw_handler) NULL,      /* SIOCGIWGENIE */
 	(iw_handler) NULL,      /* SIOCSIWAUTH */
 	(iw_handler) NULL,      /* SIOCGIWAUTH */
 	(iw_handler) NULL,      /* SIOCSIWENCODEEXT */
