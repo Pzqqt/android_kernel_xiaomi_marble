@@ -6953,106 +6953,6 @@ static int iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 }
 
 /**
- * __iw_get_encodeext() - SIOCGIWENCODEEXT ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_get_encodeext(struct net_device *dev,
-			      struct iw_request_info *info,
-			      struct iw_point *dwrq, char *extra)
-{
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
-	int keyId;
-	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
-	eCsrAuthType authType = eCSR_AUTH_TYPE_NONE;
-	int i, ret;
-	struct hdd_context *hdd_ctx;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	keyId = pRoamProfile->Keys.defaultIndex;
-
-	if (keyId < 0 || keyId >= MAX_WEP_KEYS) {
-		hdd_err("Invalid keyId: %d", keyId);
-		return -EINVAL;
-	}
-
-	if (pRoamProfile->Keys.KeyLength[keyId] > 0) {
-		dwrq->flags |= IW_ENCODE_ENABLED;
-		dwrq->length = pRoamProfile->Keys.KeyLength[keyId];
-		qdf_mem_copy(extra, &(pRoamProfile->Keys.KeyMaterial[keyId][0]),
-			     pRoamProfile->Keys.KeyLength[keyId]);
-	} else {
-		dwrq->flags |= IW_ENCODE_DISABLED;
-	}
-
-	for (i = 0; i < MAX_WEP_KEYS; i++) {
-		if (pRoamProfile->Keys.KeyLength[i] == 0)
-			continue;
-		else
-			break;
-	}
-
-	if (MAX_WEP_KEYS == i)
-		dwrq->flags |= IW_ENCODE_NOKEY;
-	else
-		dwrq->flags |= IW_ENCODE_ENABLED;
-
-	encryptionType = pRoamProfile->EncryptionType.encryptionType[0];
-
-	if (eCSR_ENCRYPT_TYPE_NONE == encryptionType)
-		dwrq->flags |= IW_ENCODE_DISABLED;
-
-	authType = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))->conn_info.authType;
-
-	if (IW_AUTH_ALG_OPEN_SYSTEM == authType)
-		dwrq->flags |= IW_ENCODE_OPEN;
-	else
-		dwrq->flags |= IW_ENCODE_RESTRICTED;
-
-	EXIT();
-	return 0;
-}
-
-/**
- * iw_get_encodeext() - SSR wrapper for __iw_get_encodeext()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @dwrq: pointer to encoding information
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_get_encodeext(struct net_device *dev,
-			    struct iw_request_info *info,
-			    struct iw_point *dwrq, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_encodeext(dev, info, dwrq, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_encodeext() - SIOCSIWENCODEEXT ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -13297,7 +13197,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_set_auth,       /* SIOCSIWAUTH */
 	(iw_handler) iw_get_auth,       /* SIOCGIWAUTH */
 	(iw_handler) iw_set_encodeext,  /* SIOCSIWENCODEEXT */
-	(iw_handler) iw_get_encodeext,  /* SIOCGIWENCODEEXT */
+	(iw_handler) NULL,      /* SIOCGIWENCODEEXT */
 	(iw_handler) NULL,      /* SIOCSIWPMKSA */
 };
 
