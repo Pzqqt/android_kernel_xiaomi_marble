@@ -12978,7 +12978,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) iw_set_genie,      /* SIOCSIWGENIE */
 	(iw_handler) iw_get_genie,      /* SIOCGIWGENIE */
-	(iw_handler) iw_set_auth,       /* SIOCSIWAUTH */
+	(iw_handler) NULL,      /* SIOCSIWAUTH */
 	(iw_handler) NULL,      /* SIOCGIWAUTH */
 	(iw_handler) NULL,      /* SIOCSIWENCODEEXT */
 	(iw_handler) NULL,      /* SIOCGIWENCODEEXT */
