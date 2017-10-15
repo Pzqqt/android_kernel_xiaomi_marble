@@ -303,9 +303,6 @@ extern int iw_get_ap_address(struct net_device *dev,
 extern int iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 		       union iwreq_data *wrqu, char *extra);
 
-extern int iw_get_auth(struct net_device *dev, struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra);
-
 extern int iw_set_var_ints_getnone(struct net_device *dev,
 				   struct iw_request_info *info,
 				   union iwreq_data *wrqu, char *extra);
