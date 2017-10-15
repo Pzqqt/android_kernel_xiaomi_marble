@@ -5023,67 +5023,6 @@ static int iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 }
 
 /**
- * __iw_get_tx_power() - SIOCGIWTXPOW ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_get_tx_power(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	int ret;
-
-	ENTER_DEV(dev);
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
-		wrqu->txpower.value = 0;
-		return 0;
-	}
-	wlan_hdd_get_class_astats(adapter);
-	wrqu->txpower.value = adapter->hdd_stats.ClassA_stat.max_pwr;
-
-	return 0;
-}
-
-/**
- * iw_get_tx_power() - SSR wrapper for __iw_get_tx_power()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_get_tx_power(struct net_device *dev,
-			   struct iw_request_info *info,
-			   union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_tx_power(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_tx_power() - SIOCSIWTXPOW ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -12055,7 +11994,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_set_frag_threshold,     /* SIOCSIWFRAG */
 	(iw_handler) iw_get_frag_threshold,     /* SIOCGIWFRAG */
 	(iw_handler) iw_set_tx_power,   /* SIOCSIWTXPOW */
-	(iw_handler) iw_get_tx_power,   /* SIOCGIWTXPOW */
+	(iw_handler) NULL,      /* SIOCGIWTXPOW */
 	(iw_handler) NULL,      /* SIOCSIWRETRY */
 	(iw_handler) NULL,      /* SIOCGIWRETRY */
 	(iw_handler) NULL,      /* SIOCSIWENCODE */
