@@ -276,10 +276,6 @@ extern void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 extern void hdd_wlan_list_fw_profile(uint16_t *length,
 			       char *buffer, uint16_t buf_len);
 
-int iw_get_rts_threshold(struct net_device *dev,
-			 struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra);
-
 extern int iw_set_essid(struct net_device *dev,
 			struct iw_request_info *info,
 			union iwreq_data *wrqu, char *extra);
