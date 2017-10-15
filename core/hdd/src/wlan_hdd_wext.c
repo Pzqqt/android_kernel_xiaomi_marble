@@ -5706,60 +5706,6 @@ static int iw_set_frag_threshold(struct net_device *dev,
 }
 
 /**
- * __iw_set_power_mode() - SIOCSIWPOWER ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_power_mode(struct net_device *dev,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	return -EOPNOTSUPP;
-}
-
-/**
- * iw_set_power_mode() - SSR wrapper function for __iw_set_power_mode
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: extra
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_power_mode(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_power_mode(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_range() - SIOCGIWRANGE ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -12567,7 +12513,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_get_retry,      /* SIOCGIWRETRY */
 	(iw_handler) iw_set_encode,     /* SIOCSIWENCODE */
 	(iw_handler) iw_get_encode,     /* SIOCGIWENCODE */
-	(iw_handler) iw_set_power_mode, /* SIOCSIWPOWER */
+	(iw_handler) NULL,      /* SIOCSIWPOWER */
 	(iw_handler) NULL,      /* SIOCGIWPOWER */
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* -- hole -- */
