@@ -8071,7 +8071,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
 	hdd_set_connection_in_progress(false);
-	hostapd_state->bCommit = true;
 	EXIT();
 
 	ret = 0;
