@@ -4208,6 +4208,7 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
  */
 void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 {
+	struct hdd_station_ctx *sta_ctx;
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
@@ -4261,7 +4262,8 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	adapter->wapi_info.nWapiMode = 0;
 #endif
 
-	qdf_zero_macaddr(&pWextState->req_bssId);
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	qdf_zero_macaddr(&sta_ctx->requested_bssid);
 	EXIT();
 }
 

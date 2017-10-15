@@ -655,6 +655,7 @@ struct hdd_mon_set_ch_info {
  * struct hdd_station_ctx -- STA-specific information
  * @WextState: wireless extensions state
  * @wpa_versions: bitmap of supported WPA versions
+ * @requested_bssid: Specific BSSID to which to connect
  * @conn_info: current connection information
  * @roam_info: current roaming information
  * @ft_carrier_on: is carrier on
@@ -676,6 +677,7 @@ struct hdd_mon_set_ch_info {
 struct hdd_station_ctx {
 	struct hdd_wext_state WextState;
 	enum nl80211_wpa_versions wpa_versions;
+	struct qdf_mac_addr requested_bssid;
 	struct hdd_connection_info conn_info;
 	struct hdd_roaming_info roam_info;
 	int ft_carrier_on;

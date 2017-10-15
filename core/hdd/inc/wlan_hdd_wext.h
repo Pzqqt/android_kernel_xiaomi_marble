@@ -207,9 +207,6 @@ struct hdd_wext_state {
 	/** The CSR "desired" Profile */
 	tCsrRoamProfile roamProfile;
 
-	/** BSSID to which connect request is received */
-	struct qdf_mac_addr req_bssId;
-
 	/**WPA or RSN IE*/
 	uint8_t WPARSNIE[MAX_WPA_RSN_IE_LEN];
 
