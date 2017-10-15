@@ -5353,72 +5353,6 @@ static int iw_set_rts_threshold(struct net_device *dev,
 }
 
 /**
- * __iw_get_frag_threshold() - SIOCGIWFRAG ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_get_frag_threshold(struct net_device *dev,
-				   struct iw_request_info *info,
-				   union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
-	uint32_t threshold = 0;
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	if (sme_cfg_get_int(hal, WNI_CFG_FRAGMENTATION_THRESHOLD, &threshold)
-	    != QDF_STATUS_SUCCESS) {
-		hdd_warn("failed to get ini parameter, WNI_CFG_FRAGMENTATION_THRESHOLD");
-		return -EIO;
-	}
-	wrqu->frag.value = threshold;
-
-	hdd_notice("Frag-Threshold=%d!!", wrqu->frag.value);
-
-	EXIT();
-
-	return 0;
-}
-
-/**
- * iw_get_frag_threshold() - SSR wrapper for __iw_get_frag_threshold()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-int iw_get_frag_threshold(struct net_device *dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_frag_threshold(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_frag_threshold() - SIOCSIWFRAG ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11930,7 +11864,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_set_rts_threshold,      /* SIOCSIWRTS */
 	(iw_handler) iw_get_rts_threshold,      /* SIOCGIWRTS */
 	(iw_handler) iw_set_frag_threshold,     /* SIOCSIWFRAG */
-	(iw_handler) iw_get_frag_threshold,     /* SIOCGIWFRAG */
+	(iw_handler) NULL,      /* SIOCGIWFRAG */
 	(iw_handler) NULL,      /* SIOCSIWTXPOW */
 	(iw_handler) NULL,      /* SIOCGIWTXPOW */
 	(iw_handler) NULL,      /* SIOCSIWRETRY */
