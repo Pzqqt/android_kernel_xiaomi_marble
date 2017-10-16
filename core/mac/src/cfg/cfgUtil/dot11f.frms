@@ -2842,7 +2842,13 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
     }
     {
       dual_band:1;
-      chan_width:7;
+      chan_width_0:1;
+      chan_width_1:1;
+      chan_width_2:1;
+      chan_width_3:1;
+      chan_width_4:1;
+      chan_width_5:1;
+      chan_width_6:1;
       rx_pream_puncturing:4;
       device_class:1;
       ldpc_coding:1;
@@ -2882,12 +2888,12 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       er_he_ltf_800_gi_4x:1;
       reserved2:7;
     }
-    {
-      nss_supported:3;
-      mcs_supported:3;
-      tx_bw_bitmap:5;
-      rx_bw_bitmap:5;
-    }
+    rx_he_mcs_map_lt_80, 2;
+    tx_he_mcs_map_lt_80, 2;
+    rx_he_mcs_map_160[2][0..1] COUNTIS chan_width_2;
+    tx_he_mcs_map_160[2][0..1] COUNTIS chan_width_2;
+    rx_he_mcs_map_80_80[2][0..1] COUNTIS chan_width_3;
+    tx_he_mcs_map_80_80[2][0..1] COUNTIS chan_width_3;
     OPTIE IE ppe_threshold (SUB_EID_PPET)
     {
       {
