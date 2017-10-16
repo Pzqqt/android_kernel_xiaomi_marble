@@ -312,6 +312,7 @@ void pld_snoc_unregister_driver(void)
 
 /**
  * pld_snoc_wlan_enable() - Enable WLAN
+ * @dev: device
  * @config: WLAN configuration data
  * @mode: WLAN mode
  * @host_version: host software version
@@ -322,7 +323,43 @@ void pld_snoc_unregister_driver(void)
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_snoc_wlan_enable(struct pld_wlan_enable_cfg *config,
+
+#ifdef ICNSS_API_WITH_DEV
+int pld_snoc_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
+			 enum pld_driver_mode mode, const char *host_version)
+{
+	struct icnss_wlan_enable_cfg cfg;
+	enum icnss_driver_mode icnss_mode;
+
+	if (!dev)
+		return -ENODEV;
+
+	cfg.num_ce_tgt_cfg = config->num_ce_tgt_cfg;
+	cfg.ce_tgt_cfg = (struct ce_tgt_pipe_cfg *)
+		config->ce_tgt_cfg;
+	cfg.num_ce_svc_pipe_cfg = config->num_ce_svc_pipe_cfg;
+	cfg.ce_svc_cfg = (struct ce_svc_pipe_cfg *)
+		config->ce_svc_cfg;
+	cfg.num_shadow_reg_cfg = config->num_shadow_reg_cfg;
+	cfg.shadow_reg_cfg = (struct icnss_shadow_reg_cfg *)
+		config->shadow_reg_cfg;
+
+	switch (mode) {
+	case PLD_FTM:
+		icnss_mode = ICNSS_FTM;
+		break;
+	case PLD_EPPING:
+		icnss_mode = ICNSS_EPPING;
+		break;
+	default:
+		icnss_mode = ICNSS_MISSION;
+		break;
+	}
+
+	return icnss_wlan_enable(dev, &cfg, icnss_mode, host_version);
+}
+#else
+int pld_snoc_wlan_enable(struct device *dev, struct pld_wlan_enable_cfg *config,
 			 enum pld_driver_mode mode, const char *host_version)
 {
 	struct icnss_wlan_enable_cfg cfg;
@@ -349,11 +386,14 @@ int pld_snoc_wlan_enable(struct pld_wlan_enable_cfg *config,
 		icnss_mode = ICNSS_MISSION;
 		break;
 	}
+
 	return icnss_wlan_enable(&cfg, icnss_mode, host_version);
 }
+#endif
 
 /**
  * pld_snoc_wlan_disable() - Disable WLAN
+ * @dev: device
  * @mode: WLAN mode
  *
  * This function disables WLAN FW. It passes WLAN mode to FW.
@@ -361,13 +401,24 @@ int pld_snoc_wlan_enable(struct pld_wlan_enable_cfg *config,
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_snoc_wlan_disable(enum pld_driver_mode mode)
+#ifdef ICNSS_API_WITH_DEV
+int pld_snoc_wlan_disable(struct device *dev, enum pld_driver_mode mode)
+{
+	if (!dev)
+		return -ENODEV;
+
+	return icnss_wlan_disable(dev, ICNSS_OFF);
+}
+#else
+int pld_snoc_wlan_disable(struct device *dev, enum pld_driver_mode mode)
 {
 	return icnss_wlan_disable(ICNSS_OFF);
 }
+#endif
 
 /**
  * pld_snoc_get_soc_info() - Get SOC information
+ * @dev: device
  * @info: buffer to SOC information
  *
  * Return SOC info to the buffer.
@@ -375,7 +426,24 @@ int pld_snoc_wlan_disable(enum pld_driver_mode mode)
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-int pld_snoc_get_soc_info(struct pld_soc_info *info)
+#ifdef ICNSS_API_WITH_DEV
+int pld_snoc_get_soc_info(struct device *dev, struct pld_soc_info *info)
+{
+	int ret = 0;
+	struct icnss_soc_info icnss_info;
+
+	if (info == NULL || !dev)
+		return -ENODEV;
+
+	ret = icnss_get_soc_info(dev, &icnss_info);
+	if (0 != ret)
+		return ret;
+
+	memcpy(info, &icnss_info, sizeof(*info));
+	return 0;
+}
+#else
+int pld_snoc_get_soc_info(struct device *dev, struct pld_soc_info *info)
 {
 	int ret = 0;
 	struct icnss_soc_info icnss_info;
@@ -390,4 +458,5 @@ int pld_snoc_get_soc_info(struct pld_soc_info *info)
 	memcpy(info, &icnss_info, sizeof(*info));
 	return 0;
 }
+#endif
 #endif
