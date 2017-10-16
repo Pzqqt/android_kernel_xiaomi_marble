@@ -14249,10 +14249,8 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	tCsrRoamSetKey setKey;
 	int status;
 	uint32_t roamId = INVALID_ROAM_ID;
-	struct hdd_hostapd_state *hostapd_state;
 	QDF_STATUS qdf_ret_status;
 	struct hdd_context *hdd_ctx;
-	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 	ENTER();
 
@@ -14432,7 +14430,11 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	}
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
-		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+		struct hdd_hostapd_state *hostapd_state =
+			WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
+		struct hdd_ap_ctx *ap_ctx =
+			WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
 		if (hostapd_state->bss_state == BSS_START) {
 			status = wlansap_set_key_sta(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter), &setKey);
@@ -14570,9 +14572,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 				       )
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *roam_profile = &(pWextState->roamProfile);
+	tCsrRoamProfile *roam_profile;
 	struct key_params params;
 
 	ENTER();
@@ -14591,6 +14591,18 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 	if (CSR_MAX_NUM_KEY <= key_index) {
 		hdd_err("Invalid key index: %d", key_index);
 		return -EINVAL;
+	}
+
+	if ((adapter->device_mode == QDF_SAP_MODE) ||
+	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
+		struct hdd_ap_ctx *ap_ctx =
+			WLAN_HDD_GET_AP_CTX_PTR(adapter);
+		roam_profile =
+			wlan_sap_get_roam_profile(ap_ctx->sap_context);
+	} else {
+		struct hdd_wext_state *pWextState =
+			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+		roam_profile = &(pWextState->roamProfile);
 	}
 
 	switch (roam_profile->EncryptionType.encryptionType[0]) {
@@ -14741,10 +14753,6 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 					       bool unicast, bool multicast)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	struct hdd_wext_state *pWextState =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	struct hdd_station_ctx *sta_ctx =
-		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx;
 	int status;
 
@@ -14781,6 +14789,11 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 	if ((adapter->device_mode == QDF_STA_MODE) ||
 	    (adapter->device_mode == QDF_P2P_CLIENT_MODE)) {
+		struct hdd_wext_state *pWextState =
+			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+		struct hdd_station_ctx *sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
 		     sta_ctx->conn_info.ucEncryptionType) &&
 		    !hdd_is_wapi_enc_type(
@@ -14850,23 +14863,30 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			}
 		}
 	} else if (QDF_SAP_MODE == adapter->device_mode) {
+		struct hdd_ap_ctx *ap_ctx =
+			WLAN_HDD_GET_AP_CTX_PTR(adapter);
+		tCsrRoamProfile *profile =
+			wlan_sap_get_roam_profile(ap_ctx->sap_context);
+
+		if (!profile) {
+			hdd_err("Failed to get SAP Roam Profile");
+			return -EINVAL;
+		}
 		/* In SoftAp mode setting key direction for default mode */
 		if ((eCSR_ENCRYPT_TYPE_TKIP !=
-		    pWextState->roamProfile.EncryptionType.encryptionType[0]) &&
+		    profile->EncryptionType.encryptionType[0]) &&
 		    (eCSR_ENCRYPT_TYPE_AES !=
-		    pWextState->roamProfile.EncryptionType.encryptionType[0]) &&
+		    profile->EncryptionType.encryptionType[0]) &&
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP !=
-		    pWextState->roamProfile.EncryptionType.encryptionType[0]) &&
+		    profile->EncryptionType.encryptionType[0]) &&
 		    (eCSR_ENCRYPT_TYPE_AES_GCMP_256 !=
-		    pWextState->roamProfile.EncryptionType.encryptionType[0])) {
+		    profile->EncryptionType.encryptionType[0])) {
 			/* Saving key direction for default key index to TX default */
-			struct hdd_ap_ctx *pAPCtx =
-				WLAN_HDD_GET_AP_CTX_PTR(adapter);
-			pAPCtx->wep_key[key_index].keyDirection =
+			ap_ctx->wep_key[key_index].keyDirection =
 				eSIR_TX_DEFAULT;
 			hdd_debug("WEP default key index set to SAP context %d",
 				key_index);
-			pAPCtx->wep_def_key_idx = key_index;
+			ap_ctx->wep_def_key_idx = key_index;
 		}
 	}
 
