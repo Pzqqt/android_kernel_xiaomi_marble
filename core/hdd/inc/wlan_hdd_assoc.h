@@ -47,8 +47,6 @@
 #define TDLS_STA_INDEX_VALID(staId) \
 	(((staId) >= 0) && ((staId) < 0xFF))
 #endif
-#define TKIP_COUNTER_MEASURE_STARTED 1
-#define TKIP_COUNTER_MEASURE_STOPED  0
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
 

@@ -3550,56 +3550,27 @@ static QDF_STATUS roam_ibss_connect_handler(struct hdd_adapter *adapter,
  *
  * This function indicates the Mic failure to the supplicant
  *
- * Return: QDF_STATUS enumeration
+ * Return: None
  */
-static QDF_STATUS
+static void
 hdd_roam_mic_error_indication_handler(struct hdd_adapter *adapter,
-				      tCsrRoamInfo *roam_info,
-				      uint32_t roamId,
-				      eRoamCmdStatus roamStatus,
-				      eCsrRoamResult roamResult)
+				      tCsrRoamInfo *roam_info)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	tSirMicFailureInfo *mic_failure_info;
 
-	if (eConnectionState_Associated == sta_ctx->conn_info.connState &&
-	    TKIP_COUNTER_MEASURE_STOPED ==
-	    sta_ctx->WextState.mTKIPCounterMeasures) {
-		struct iw_michaelmicfailure msg;
-		union iwreq_data wreq;
+	if (eConnectionState_Associated != sta_ctx->conn_info.connState)
+		return;
 
-		memset(&msg, '\0', sizeof(msg));
-		msg.src_addr.sa_family = ARPHRD_ETHER;
-		memcpy(msg.src_addr.sa_data,
-		       roam_info->u.pMICFailureInfo->taMacAddr,
-		       sizeof(roam_info->u.pMICFailureInfo->taMacAddr));
-		hdd_debug("MIC MAC " MAC_ADDRESS_STR,
-			 MAC_ADDR_ARRAY(msg.src_addr.sa_data));
-
-		if (roam_info->u.pMICFailureInfo->multicast == true)
-			msg.flags = IW_MICFAILURE_GROUP;
-		else
-			msg.flags = IW_MICFAILURE_PAIRWISE;
-		memset(&wreq, 0, sizeof(wreq));
-		wreq.data.length = sizeof(msg);
-		wireless_send_event(adapter->dev, IWEVMICHAELMICFAILURE, &wreq,
-				    (char *)&msg);
-		/* inform mic failure to nl80211 */
-		cfg80211_michael_mic_failure(adapter->dev,
-					     roam_info->u.pMICFailureInfo->
-					     taMacAddr,
-					     ((roam_info->u.pMICFailureInfo->
-					       multicast ==
-					       true) ?
-					      NL80211_KEYTYPE_GROUP :
-					      NL80211_KEYTYPE_PAIRWISE),
-					     roam_info->u.pMICFailureInfo->
-					     keyId,
-					     roam_info->u.pMICFailureInfo->TSC,
-					     GFP_KERNEL);
-
-	}
-
-	return QDF_STATUS_SUCCESS;
+	mic_failure_info = roam_info->u.pMICFailureInfo;
+	cfg80211_michael_mic_failure(adapter->dev,
+				     mic_failure_info->taMacAddr,
+				     mic_failure_info->multicast ?
+					NL80211_KEYTYPE_GROUP :
+					NL80211_KEYTYPE_PAIRWISE,
+				     mic_failure_info->keyId,
+				     mic_failure_info->TSC,
+				     GFP_KERNEL);
 }
 
 /**
@@ -4577,12 +4548,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info, uint32_t roamId,
 		break;
 
 	case eCSR_ROAM_MIC_ERROR_IND:
-		qdf_ret_status =
-			hdd_roam_mic_error_indication_handler(adapter,
-							      roam_info,
-							      roamId,
-							      roamStatus,
-							      roamResult);
+		hdd_roam_mic_error_indication_handler(adapter, roam_info);
 		break;
 
 	case eCSR_ROAM_SET_KEY_COMPLETE:

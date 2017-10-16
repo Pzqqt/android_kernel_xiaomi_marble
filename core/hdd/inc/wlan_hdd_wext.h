@@ -221,9 +221,6 @@ struct hdd_wext_state {
 
 	/* qdf event */
 	qdf_event_t hdd_qdf_event;
-
-	/**Counter measure state, Started/Stopped*/
-	bool mTKIPCounterMeasures;
 };
 
 struct ccp_freq_chan_map {
