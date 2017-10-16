@@ -75,28 +75,6 @@
 /* Max channel width */
 #define DFS_CH_WIDTH_MAX        8
 
-/* Random channel flags */
-/* Flag to exclude current operating channels */
-#define DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH       0x0001 /* 0000 0000 0000 0001 */
-
-/* Flag to exclude weather channels */
-#define DFS_RANDOM_CH_FLAG_NO_WEATHER_CH        0x0002 /* 0000 0000 0000 0010 */
-
-/* Flag to exclude indoor channels */
-#define DFS_RANDOM_CH_FLAG_NO_LOWER_5G_CH       0x0004 /* 0000 0000 0000 0100 */
-
-/* Flag to exclude outdoor channels */
-#define DFS_RANDOM_CH_FLAG_NO_UPEER_5G_CH       0x0008 /* 0000 0000 0000 1000 */
-
-/* Flag to exclude dfs channels */
-#define DFS_RANDOM_CH_FLAG_NO_DFS_CH            0x0010 /* 0000 0000 0001 0000 */
-
-/* Flag to exclude all 5GHz channels */
-#define DFS_RANDOM_CH_FLAG_NO_5GHZ_CH           0x0020 /* 0000 0000 0010 0000 */
-
-/* Flag to exclude all 2.4GHz channels */
-#define DFS_RANDOM_CH_FLAG_NO_2GHZ_CH           0x0040 /* 0000 0000 0100 0000 */
-
 /* Next 5GHz channel number */
 #define DFS_80_NUM_SUB_CHANNNEL                 4
 
@@ -124,8 +102,11 @@
 /* Bitmap mask for 40MHz higher */
 #define DFS_40MHZ_MASK_H                        0x0C
 
-/* Adjacent weather radar channel */
+/* Adjacent weather radar channel frequency */
 #define DFS_ADJACENT_WEATHER_RADAR_CHANNEL      5580
+
+/* Adjacent weather radar channel number */
+#define DFS_ADJACENT_WEATHER_RADAR_CHANNEL_NUM  116
 
 /* Max 2.4 GHz channel number */
 #define DFS_MAX_24GHZ_CHANNEL                   14

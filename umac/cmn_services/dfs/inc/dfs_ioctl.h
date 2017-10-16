@@ -122,4 +122,26 @@ struct dfs_ioctl_params {
 #define DFS_IOCTL_PARAM_NOVAL  65535
 #define DFS_IOCTL_PARAM_ENABLE 0x8000
 
+/* Random channel flags */
+/* Flag to exclude current operating channels */
+#define DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH       0x0001 /* 0000 0000 0000 0001 */
+
+/* Flag to exclude weather channels */
+#define DFS_RANDOM_CH_FLAG_NO_WEATHER_CH        0x0002 /* 0000 0000 0000 0010 */
+
+/* Flag to exclude indoor channels */
+#define DFS_RANDOM_CH_FLAG_NO_LOWER_5G_CH       0x0004 /* 0000 0000 0000 0100 */
+
+/* Flag to exclude outdoor channels */
+#define DFS_RANDOM_CH_FLAG_NO_UPEER_5G_CH       0x0008 /* 0000 0000 0000 1000 */
+
+/* Flag to exclude dfs channels */
+#define DFS_RANDOM_CH_FLAG_NO_DFS_CH            0x0010 /* 0000 0000 0001 0000 */
+
+/* Flag to exclude all 5GHz channels */
+#define DFS_RANDOM_CH_FLAG_NO_5GHZ_CH           0x0020 /* 0000 0000 0010 0000 */
+
+/* Flag to exclude all 2.4GHz channels */
+#define DFS_RANDOM_CH_FLAG_NO_2GHZ_CH           0x0040 /* 0000 0000 0100 0000 */
+
 #endif  /* _DFS_IOCTL_H_ */

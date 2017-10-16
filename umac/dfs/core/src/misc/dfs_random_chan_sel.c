@@ -415,7 +415,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	struct dfs_acs_info *acs_info)
 {
 	struct dfs_ieee80211_channel *chan;
-	uint16_t flag_no_wheather = 0;
+	uint16_t flag_no_weather = 0;
 	uint16_t flag_no_lower_5g = 0;
 	uint16_t flag_no_upper_5g = 0;
 	uint16_t flag_no_dfs_chan = 0;
@@ -424,7 +424,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	int i;
 
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "flags %d", flags);
-	flag_no_wheather = (dfs_region == DFS_ETSI_REGION_VAL) ?
+	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
 
 	flag_no_lower_5g = (dfs_region == DFS_MKK_REGION_VAL) ?
@@ -445,6 +445,17 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "invalid channel %d",
 					chan->dfs_ch_ieee);
 			continue;
+		}
+
+		if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH) {
+			/* TODO : Skip all HT20 channels in the given mode */
+			if (chan->dfs_ch_ieee ==
+					dfs->dfs_curchan->dfs_ch_ieee) {
+				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+						"skip %d current operating channel\n",
+						chan->dfs_ch_ieee);
+				continue;
+			}
 		}
 
 		if (acs_info && (acs_info->acs_mode == 1) &&
@@ -474,31 +485,17 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 			continue;
 		}
 
-		if (flag_no_wheather) {
-			/*
-			 * We should also avoid this channel in HT40 mode as
-			 * extension channel will be on 5600.
-			 */
-			/* TODO check if reg updating chan->dfs_ch_flags for
-			 * IEEE80211_CHAN_11NA_HT40PLUS
-			 */
+		if (flag_no_weather) {
 			if (DFS_IS_CHANNEL_WEATHER_RADAR(chan->dfs_ch_freq)) {
 				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 						"skip weather channel=%d",
 						chan->dfs_ch_ieee);
 				continue;
-			} else if (DFS_ADJACENT_WEATHER_RADAR_CHANNEL ==
-				   chan->dfs_ch_freq && (chan->dfs_ch_flags &
-				   IEEE80211_CHAN_11NA_HT40PLUS)) {
-				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-						"skip weather adjacent ch=%d",
-					    chan->dfs_ch_ieee);
-				continue;
 			}
 		}
 
 		if (flag_no_lower_5g &&
-		    DFS_IS_CHAN_JAPAN_INDOOR(chan->dfs_ch_freq)) {
+		    DFS_IS_CHAN_JAPAN_INDOOR(chan->dfs_ch_ieee)) {
 			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 					"skip indoor channel=%d",
 					chan->dfs_ch_ieee);
@@ -506,7 +503,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 		}
 
 		if (flag_no_upper_5g &&
-		    DFS_IS_CHAN_JAPAN_OUTDOOR(chan->dfs_ch_freq)) {
+		    DFS_IS_CHAN_JAPAN_OUTDOOR(chan->dfs_ch_ieee)) {
 			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "skip outdoor channel=%d",
 				    chan->dfs_ch_ieee);
 			continue;
@@ -542,6 +539,7 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	uint8_t target_ch = 0;
 	uint8_t *random_chan_list = NULL;
 	uint32_t random_chan_cnt = 0;
+	uint16_t flag_no_weather = 0;
 
 	if (!ch_list || !ch_cnt) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -569,6 +567,9 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	dfs_apply_rules(dfs, flags, random_chan_list, &random_chan_cnt,
 		    ch_list, ch_cnt, dfs_region, acs_info);
 
+	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
+		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
+
 	do {
 		if (*ch_wd == DFS_CH_WIDTH_20MHZ) {
 			target_ch = dfs_get_rand_from_lst(
@@ -580,6 +581,22 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 				&cur_chan->dfs_ch_vhtop_ch_freq_seg2,
 				random_chan_list,
 				random_chan_cnt);
+
+		/*
+		 * When flag_no_weather is set, avoid usage of Adjacent
+		 * weather radar channel in HT40 mode as extension channel
+		 * will be on 5600.
+		 */
+		if (flag_no_weather &&
+				(target_ch ==
+				 DFS_ADJACENT_WEATHER_RADAR_CHANNEL_NUM) &&
+				(*ch_wd == DFS_CH_WIDTH_40MHZ)) {
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"skip weather adjacent ch=%d\n",
+					target_ch);
+			continue;
+		}
+
 		if (target_ch)
 			break;
 	} while (true);

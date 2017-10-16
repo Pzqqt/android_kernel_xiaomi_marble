@@ -51,11 +51,6 @@ enum DFS_DOMAIN {
 /* CAPABILITY: the device support STA DFS */
 #define IEEE80211_CEXT_STADFS 0x00000040
 
-#define IEEE80211_SELECT_NONDFS_AND_DFS 0
-#define IEEE80211_SELECT_NONDFS_ONLY    1
-#define IEEE80211_SELECT_NXT_CH_POST_RADAR_DETECT   0
-#define IEEE80211_SELECT_APRIORI_NXT_CH             1
-
 /**
  * dfs_ieee80211_chan2freq() - Convert channel to frequency value.
  * @chan: Pointer to dfs_ieee80211_channel structure.

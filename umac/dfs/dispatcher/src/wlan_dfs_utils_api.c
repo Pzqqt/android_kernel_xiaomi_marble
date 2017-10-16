@@ -24,6 +24,7 @@
 #include "wlan_dfs_utils_api.h"
 #include "../../core/src/dfs.h"
 #include "../../core/src/dfs_zero_cac.h"
+#include <wlan_reg_services_api.h>
 #include "../../core/src/dfs_random_chan_sel.h"
 #ifdef QCA_DFS_USE_POLICY_MANAGER
 #include "wlan_policy_mgr_api.h"
@@ -421,6 +422,13 @@ static void utils_dfs_get_max_sup_width(struct wlan_objmgr_pdev *pdev,
 	return;
 }
 
+/**
+ * utils_dfs_get_chan_list() - Get channel list from regdb based on current
+ *                             operating channel.
+ * @pdev: Pointer to DFS pdev object.
+ * @chan_list: Pointer to current channel list
+ * @num_chan: number of channels in the current channel list.
+ */
 #ifndef QCA_DFS_USE_POLICY_MANAGER
 static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
@@ -436,8 +444,11 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 
 	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
 			sizeof(struct regulatory_channel));
-	if (cur_chan_list == NULL)
+	if (!cur_chan_list) {
 		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "fail to alloc");
+		*num_chan = 0;
+		return;
+	}
 
 	if (wlan_reg_get_current_chan_list(
 			pdev, cur_chan_list) != QDF_STATUS_SUCCESS) {
@@ -450,9 +461,12 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	for (i = 0; i < NUM_CHANNELS; i++) {
 		state = cur_chan_list[i].state;
 		if (state == CHANNEL_STATE_DFS ||
-		    state == CHANNEL_STATE_ENABLE) {
+				state == CHANNEL_STATE_ENABLE) {
 			chan_list[j].dfs_ch_ieee = cur_chan_list[i].chan_num;
 			chan_list[j].dfs_ch_freq = cur_chan_list[i].center_freq;
+			if (state == CHANNEL_STATE_DFS)
+				chan_list[j].dfs_ch_flagext =
+					IEEE80211_CHAN_DFS;
 			j++;
 		}
 	}
@@ -461,7 +475,82 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 
 	return;
 }
+
+/**
+ * utils_dfs_get_channel_list() - Get channel list from regdb component based
+ * on current channel list.
+ * @pdev: Pointer to pdev structure.
+ * @chan_list: Pointer to regdb channel list.
+ * @num_chan: number of channels.
+ *
+ * Get regdb channel list based on dfs current channel.
+ * ex: When  AP is operating in 5GHz channel, filter 2.4GHz and 4.9GHZ channels
+ * so that the random channel function does not select either 2.4GHz or 4.9GHz
+ * channel.
+ */
+static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
+	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
+{
+	struct dfs_ieee80211_channel *tmp_chan_list = NULL;
+	struct wlan_dfs *dfs;
+	bool is_curchan_5g;
+	bool is_curchan_24g;
+	bool is_curchan_49g;
+	uint32_t chan_num;
+	uint32_t center_freq;
+	uint16_t flagext;
+	int i, j = 0;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "null dfs");
+		return;
+	}
+
+	tmp_chan_list = qdf_mem_malloc(*num_chan * sizeof(*tmp_chan_list));
+	if (!tmp_chan_list) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "mem alloc failed");
+		return;
+	}
+
+	utils_dfs_get_chan_list(pdev, tmp_chan_list, num_chan);
+
+	chan_num = dfs->dfs_curchan->dfs_ch_ieee;
+	center_freq = dfs->dfs_curchan->dfs_ch_freq;
+	is_curchan_5g = WLAN_REG_IS_5GHZ_CH(chan_num);
+	is_curchan_24g = WLAN_REG_IS_24GHZ_CH(chan_num);
+	is_curchan_49g = WLAN_REG_IS_49GHZ_FREQ(center_freq);
+
+	for (i = 0; i < *num_chan; i++) {
+		chan_num = tmp_chan_list[i].dfs_ch_ieee;
+		center_freq = tmp_chan_list[i].dfs_ch_freq;
+		flagext = tmp_chan_list[i].dfs_ch_flagext;
+
+		if ((is_curchan_5g) && WLAN_REG_IS_5GHZ_CH(chan_num)) {
+			chan_list[j].dfs_ch_ieee = chan_num;
+			chan_list[j].dfs_ch_freq = center_freq;
+			chan_list[j].dfs_ch_flagext = flagext;
+			j++;
+		} else if ((is_curchan_24g) &&
+				WLAN_REG_IS_24GHZ_CH(chan_num)) {
+			chan_list[j].dfs_ch_ieee = chan_num;
+			chan_list[j].dfs_ch_freq = center_freq;
+			j++;
+		} else if ((is_curchan_49g) &&
+				WLAN_REG_IS_49GHZ_FREQ(center_freq)) {
+			chan_list[j].dfs_ch_ieee = chan_num;
+			chan_list[j].dfs_ch_freq = center_freq;
+			j++;
+		}
+	}
+
+	*num_chan = j;
+
+	qdf_mem_free(tmp_chan_list);
+}
+
 #else
+
 static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
 {
@@ -507,6 +596,19 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 	*num_chan = i;
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "num channels %d", i);
 }
+
+/**
+ * utils_dfs_get_channel_list() - Wrapper function to get channel list from
+ * regdb component.
+ * @pdev: Pointer to pdev structure.
+ * @chan_list: Pointer to regdb channel list.
+ * @num_chan: number of channels.
+ */
+static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
+	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
+{
+	utils_dfs_get_chan_list(pdev, chan_list, num_chan);
+}
 #endif
 
 QDF_STATUS utils_dfs_get_random_channel(
@@ -545,7 +647,7 @@ QDF_STATUS utils_dfs_get_random_channel(
 		goto random_chan_error;
 	}
 
-	utils_dfs_get_chan_list(pdev, chan_list, &num_chan);
+	utils_dfs_get_channel_list(pdev, chan_list, &num_chan);
 	if (!num_chan) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "zero channels");
 		goto random_chan_error;
