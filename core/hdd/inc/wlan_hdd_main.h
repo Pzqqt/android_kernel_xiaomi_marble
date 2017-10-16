@@ -127,6 +127,9 @@
 #else
 #define HDD_TX_TIMEOUT          msecs_to_jiffies(5000)
 #endif
+
+#define HDD_TX_STALL_THRESHOLD 4
+
 /** Hdd Default MTU */
 #define HDD_DEFAULT_MTU         (1500)
 
@@ -446,6 +449,11 @@ struct hdd_tx_rx_stats {
 	__u32    txflow_pause_cnt;
 	__u32    txflow_unpause_cnt;
 	__u32    txflow_timer_cnt;
+
+	/*tx timeout stats*/
+	__u32 tx_timeout_cnt;
+	__u32 cont_txtimeout_cnt;
+	u64 jiffies_last_txtimeout;
 };
 
 #ifdef WLAN_FEATURE_11W

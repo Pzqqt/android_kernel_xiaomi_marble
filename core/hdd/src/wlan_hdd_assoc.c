@@ -1780,6 +1780,9 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 				adapter->sessionId);
 	}
 	wlan_hdd_clear_link_layer_stats(adapter);
+
+	adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+
 	/* Unblock anyone waiting for disconnect to complete */
 	complete(&adapter->disconnect_comp_var);
 
