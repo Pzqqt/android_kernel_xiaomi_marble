@@ -104,6 +104,55 @@
 #define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
 
 /*
+ * advance rx monitor filter
+ * */
+#define MON_FILTER_PASS			0x0001
+#define MON_FILTER_OTHER		0x0002
+#define MON_FILTER_ALL			0x0003
+
+#define FILTER_MGMT_ALL			0xFFFF
+#define FILTER_MGMT_ASSOC_REQ		0x0001
+#define FILTER_MGMT_ASSOC_RES		0x0002
+#define FILTER_MGMT_REASSOC_REQ		0x0004
+#define FILTER_MGMT_REASSOC_RES		0x0008
+#define FILTER_MGMT_PROBE_REQ		0x0010
+#define FILTER_MGMT_PROBE_RES		0x0020
+#define FILTER_MGMT_TIM_ADVT		0x0040
+#define FILTER_MGMT_RESERVED_7		0x0080
+#define FILTER_MGMT_BEACON		0x0100
+#define FILTER_MGMT_ATIM		0x0200
+#define FILTER_MGMT_DISASSOC		0x0400
+#define FILTER_MGMT_AUTH		0x0800
+#define FILTER_MGMT_DEAUTH		0x1000
+#define FILTER_MGMT_ACTION		0x2000
+#define FILTER_MGMT_ACT_NO_ACK		0x4000
+#define FILTER_MGMT_RESERVED_15		0x8000
+
+#define FILTER_CTRL_ALL			0xFFFF
+#define FILTER_CTRL_RESERVED_1		0x0001
+#define FILTER_CTRL_RESERVED_2		0x0002
+#define FILTER_CTRL_TRIGGER		0x0004
+#define FILTER_CTRL_RESERVED_4		0x0008
+#define FILTER_CTRL_BF_REP_POLL		0x0010
+#define FILTER_CTRL_VHT_NDP		0x0020
+#define FILTER_CTRL_FRAME_EXT		0x0040
+#define FILTER_CTRL_CTRLWRAP		0x0080
+#define FILTER_CTRL_BA_REQ		0x0100
+#define FILTER_CTRL_BA			0x0200
+#define FILTER_CTRL_PSPOLL		0x0400
+#define FILTER_CTRL_RTS			0x0800
+#define FILTER_CTRL_CTS			0x1000
+#define FILTER_CTRL_ACK			0x2000
+#define FILTER_CTRL_CFEND		0x4000
+#define FILTER_CTRL_CFEND_CFACK		0x8000
+
+#define FILTER_DATA_ALL			0xFFFF
+#define FILTER_DATA_MCAST		0x4000
+#define FILTER_DATA_UCAST		0x8000
+#define FILTER_DATA_DATA		0x0001
+#define FILTER_DATA_NULL		0x0008
+
+/*
  * DP configuration parameters
  */
 enum cdp_cfg_param_type {
@@ -1358,5 +1407,26 @@ struct cdp_txrx_stats_req {
 	uint32_t	param1;
 	uint32_t	param2;
 	uint32_t	param3;
+};
+
+/**
+ * struct cdp_monitor_filter - monitor filter info
+ * @mode: set filter mode
+ * @fp_mgmt: set Filter Pass MGMT Configuration
+ * @fp_ctrl: set Filter Pass CTRL Configuration
+ * @fp_data: set Filter Pass DATA Configuration
+ * @mo_mgmt: set Monitor Other MGMT Configuration
+ * @mo_ctrl: set Monitor Other CTRL Configuration
+ * @mo_data: set Monitor other DATA Configuration
+ *
+ */
+struct cdp_monitor_filter {
+	uint16_t mode;
+	uint16_t fp_mgmt;
+	uint16_t fp_ctrl;
+	uint16_t fp_data;
+	uint16_t mo_mgmt;
+	uint16_t mo_ctrl;
+	uint16_t mo_data;
 };
 #endif

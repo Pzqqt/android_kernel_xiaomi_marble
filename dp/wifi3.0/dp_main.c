@@ -2263,6 +2263,15 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	}
 	DP_STATS_INIT(pdev);
 
+	/* Monitor filter init */
+	pdev->mon_filter_mode = MON_FILTER_ALL;
+	pdev->fp_mgmt_filter = FILTER_MGMT_ALL;
+	pdev->fp_ctrl_filter = FILTER_CTRL_ALL;
+	pdev->fp_data_filter = FILTER_DATA_ALL;
+	pdev->mo_mgmt_filter = FILTER_MGMT_ALL;
+	pdev->mo_ctrl_filter = FILTER_CTRL_ALL;
+	pdev->mo_data_filter = FILTER_DATA_ALL;
+
 #ifndef CONFIG_WIN
 	/* MCL */
 	dp_local_peer_id_pool_init(pdev);
@@ -3517,6 +3526,13 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	if (smart_monitor)
 		return QDF_STATUS_SUCCESS;
 
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]\n",
+		pdev->mon_filter_mode, pdev->fp_mgmt_filter,
+		pdev->fp_ctrl_filter, pdev->fp_data_filter,
+		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
+		pdev->mo_data_filter);
+
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
 	htt_tlv_filter.packet = 1;
@@ -3530,9 +3546,17 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.ppdu_end_user_stats_ext = 0;
 	htt_tlv_filter.ppdu_end_status_done = 0;
 	htt_tlv_filter.header_per_msdu = 1;
-	htt_tlv_filter.enable_fp = 1;
+	htt_tlv_filter.enable_fp =
+		(pdev->mon_filter_mode & MON_FILTER_PASS) ? 1 : 0;
 	htt_tlv_filter.enable_md = 0;
-	htt_tlv_filter.enable_mo = 1;
+	htt_tlv_filter.enable_mo =
+		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
+	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
+	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
+	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
+	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
+	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 
 	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
 		pdev->rxdma_mon_buf_ring.hal_srng,
@@ -3551,9 +3575,136 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 	htt_tlv_filter.ppdu_end_status_done = 1;
 	htt_tlv_filter.header_per_msdu = 0;
-	htt_tlv_filter.enable_fp = 1;
+	htt_tlv_filter.enable_fp =
+		(pdev->mon_filter_mode & MON_FILTER_PASS) ? 1 : 0;
 	htt_tlv_filter.enable_md = 0;
-	htt_tlv_filter.enable_mo = 1;
+	htt_tlv_filter.enable_mo =
+		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
+	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
+	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
+	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
+	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
+	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_pdev_set_advance_monitor_filter() - Set DP PDEV monitor filter
+ * @pdev_handle: Datapath PDEV handle
+ * @filter_val: Flag to select Filter for monitor mode
+ * Return: 0 on success, not 0 on failure
+ */
+static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
+	struct cdp_monitor_filter *filter_val)
+{
+	/* Many monitor VAPs can exists in a system but only one can be up at
+	 * anytime
+	 */
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_vdev *vdev = pdev->monitor_vdev;
+	struct htt_rx_ring_tlv_filter htt_tlv_filter;
+	struct dp_soc *soc;
+	uint8_t pdev_id;
+
+	pdev_id = pdev->pdev_id;
+	soc = pdev->soc;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
+		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
+		pdev, pdev_id, soc, vdev);
+
+	/*Check if current pdev's monitor_vdev exists */
+	if (!pdev->monitor_vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"vdev=%pK\n", vdev);
+		qdf_assert(vdev);
+	}
+
+	/* update filter mode, type in pdev structure */
+	pdev->mon_filter_mode = filter_val->mode;
+	pdev->fp_mgmt_filter = filter_val->fp_mgmt;
+	pdev->fp_ctrl_filter = filter_val->fp_ctrl;
+	pdev->fp_data_filter = filter_val->fp_data;
+	pdev->mo_mgmt_filter = filter_val->mo_mgmt;
+	pdev->mo_ctrl_filter = filter_val->mo_ctrl;
+	pdev->mo_data_filter = filter_val->mo_data;
+
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
+		"MODE[%x] FP[%02x|%02x|%02x] MO[%02x|%02x|%02x]\n",
+		pdev->mon_filter_mode, pdev->fp_mgmt_filter,
+		pdev->fp_ctrl_filter, pdev->fp_data_filter,
+		pdev->mo_mgmt_filter, pdev->mo_ctrl_filter,
+		pdev->mo_data_filter);
+
+	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_buf_ring.hal_srng,
+		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	htt_tlv_filter.mpdu_start = 1;
+	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.packet = 1;
+	htt_tlv_filter.msdu_end = 1;
+	htt_tlv_filter.mpdu_end = 1;
+	htt_tlv_filter.packet_header = 1;
+	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.ppdu_start = 0;
+	htt_tlv_filter.ppdu_end = 0;
+	htt_tlv_filter.ppdu_end_user_stats = 0;
+	htt_tlv_filter.ppdu_end_user_stats_ext = 0;
+	htt_tlv_filter.ppdu_end_status_done = 0;
+	htt_tlv_filter.header_per_msdu = 1;
+	htt_tlv_filter.enable_fp =
+		(pdev->mon_filter_mode & MON_FILTER_PASS) ? 1 : 0;
+	htt_tlv_filter.enable_md = 0;
+	htt_tlv_filter.enable_mo =
+		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
+	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
+	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
+	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
+	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
+	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
+
+	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
+		pdev->rxdma_mon_buf_ring.hal_srng, RXDMA_MONITOR_BUF,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
+
+	htt_tlv_filter.mpdu_start = 1;
+	htt_tlv_filter.msdu_start = 1;
+	htt_tlv_filter.packet = 0;
+	htt_tlv_filter.msdu_end = 1;
+	htt_tlv_filter.mpdu_end = 1;
+	htt_tlv_filter.packet_header = 1;
+	htt_tlv_filter.attention = 1;
+	htt_tlv_filter.ppdu_start = 1;
+	htt_tlv_filter.ppdu_end = 1;
+	htt_tlv_filter.ppdu_end_user_stats = 1;
+	htt_tlv_filter.ppdu_end_user_stats_ext = 1;
+	htt_tlv_filter.ppdu_end_status_done = 1;
+	htt_tlv_filter.header_per_msdu = 0;
+	htt_tlv_filter.enable_fp =
+		(pdev->mon_filter_mode & MON_FILTER_PASS) ? 1 : 0;
+	htt_tlv_filter.enable_md = 0;
+	htt_tlv_filter.enable_mo =
+		(pdev->mon_filter_mode & MON_FILTER_OTHER) ? 1 : 0;
+	htt_tlv_filter.fp_mgmt_filter = pdev->fp_mgmt_filter;
+	htt_tlv_filter.fp_ctrl_filter = pdev->fp_ctrl_filter;
+	htt_tlv_filter.fp_data_filter = pdev->fp_data_filter;
+	htt_tlv_filter.mo_mgmt_filter = pdev->mo_mgmt_filter;
+	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
+	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 
 	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
 		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
@@ -4661,6 +4812,12 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
 	htt_tlv_filter.enable_mo = 0;
+	htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
+	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
+	htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
+	htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
+	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
+	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 
 	htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, pdev->pdev_id,
 		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
@@ -5550,6 +5707,8 @@ static struct cdp_mon_ops dp_ops_mon = {
 	.txrx_monitor_get_filter_mcast_data = NULL,
 	.txrx_monitor_get_filter_non_data = NULL,
 	.txrx_reset_monitor_mode = dp_reset_monitor_mode,
+	/* Added support for HK advance filter */
+	.txrx_set_advance_monitor_filter = dp_pdev_set_advance_monitor_filter,
 };
 
 static struct cdp_host_stats_ops dp_ops_host_stats = {
@@ -5996,6 +6155,12 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				htt_tlv_filter.ppdu_end_user_stats_ext = 1;
 				htt_tlv_filter.ppdu_end_status_done = 1;
 				htt_tlv_filter.enable_fp = 1;
+				htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
+				htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
+				htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
+				htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
+				htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
+				htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
@@ -6033,6 +6198,12 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 				htt_tlv_filter.ppdu_end_status_done = 1;
 				htt_tlv_filter.mpdu_start = 1;
 				htt_tlv_filter.enable_fp = 1;
+				htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
+				htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
+				htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;
+				htt_tlv_filter.mo_mgmt_filter = FILTER_MGMT_ALL;
+				htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
+				htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {

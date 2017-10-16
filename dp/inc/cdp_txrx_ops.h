@@ -490,6 +490,9 @@ struct cdp_mon_ops {
 		(struct cdp_vdev *vdev_txrx_handle);
 	int (*txrx_reset_monitor_mode)(struct cdp_pdev *pdev);
 
+	/* HK advance monitor filter support */
+	int (*txrx_set_advance_monitor_filter)
+		(struct cdp_pdev *pdev, struct cdp_monitor_filter *filter_val);
 };
 
 struct cdp_host_stats_ops {

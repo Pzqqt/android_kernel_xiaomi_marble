@@ -348,6 +348,17 @@ cdp_set_privacy_filters(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 			filter, num);
 }
 
+static inline int
+cdp_set_monitor_filter(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+		struct cdp_monitor_filter *filter_val)
+{
+	if (soc->ops->mon_ops->txrx_set_advance_monitor_filter)
+		return soc->ops->mon_ops->txrx_set_advance_monitor_filter(pdev,
+					filter_val);
+	return 0;
+}
+
+
 /******************************************************************************
  * Data Interface (B Interface)
  *****************************************************************************/

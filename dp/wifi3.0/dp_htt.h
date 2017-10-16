@@ -105,6 +105,9 @@ struct htt_soc {
  * @enable_fp: enable/disable FP packet
  * @enable_md: enable/disable MD packet
  * @enable_mo: enable/disable MO packet
+ * @enable_mgmt: enable/disable MGMT packet
+ * @enable_ctrl: enable/disable CTRL packet
+ * @enable_data: enable/disable DATA packet
  */
 struct htt_rx_ring_tlv_filter {
 	u_int32_t mpdu_start:1,
@@ -123,6 +126,12 @@ struct htt_rx_ring_tlv_filter {
 		enable_fp:1,
 		enable_md:1,
 		enable_mo:1;
+	u_int32_t fp_mgmt_filter:16,
+		mo_mgmt_filter:16;
+	u_int32_t fp_ctrl_filter:16,
+		mo_ctrl_filter:16;
+	u_int32_t fp_data_filter:16,
+		mo_data_filter:16;
 };
 
 void *

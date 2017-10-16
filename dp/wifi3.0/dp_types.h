@@ -1003,6 +1003,15 @@ struct dp_pdev {
 	/* Enhanced Stats is enabled */
 	bool enhanced_stats_en;
 
+	/* advance filter mode and type*/
+	uint8_t mon_filter_mode;
+	uint16_t fp_mgmt_filter;
+	uint16_t fp_ctrl_filter;
+	uint16_t fp_data_filter;
+	uint16_t mo_mgmt_filter;
+	uint16_t mo_ctrl_filter;
+	uint16_t mo_data_filter;
+
 	qdf_atomic_t num_tx_outstanding;
 
 	qdf_atomic_t num_tx_exception;

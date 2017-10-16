@@ -815,26 +815,48 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	*msg_word = 0;
 
 	if (htt_tlv_filter->enable_fp) {
+		/* TYPE: MGMT */
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0000,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_ASSOC_REQ) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0001,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_ASSOC_RES) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0010,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_REASSOC_REQ) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0011,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_REASSOC_RES) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0100,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_PROBE_REQ) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0101,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_PROBE_RES) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 0110,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_TIM_ADVT) ? 1 : 0);
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0000, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0001, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0010, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0011, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0100, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0101, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0110, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 0111, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 1000, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, FP,
-				MGMT, 1001, 1);
+			MGMT, 0111,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_RESERVED_7) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 1000,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_BEACON) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			FP, MGMT, 1001,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_ATIM) ? 1 : 0);
 	}
 
 	if (htt_tlv_filter->enable_md) {
@@ -861,26 +883,48 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	}
 
 	if (htt_tlv_filter->enable_mo) {
+		/* TYPE: MGMT */
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0000,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_ASSOC_REQ) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0001,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_ASSOC_RES) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0010,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_REASSOC_REQ) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0011,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_REASSOC_RES) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0100,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_PROBE_REQ) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0101,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_PROBE_RES) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 0110,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_TIM_ADVT) ? 1 : 0);
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0000, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0001, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0010, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0011, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0100, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0101, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0110, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 0111, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 1000, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0, MO,
-				MGMT, 1001, 1);
+			MGMT, 0111,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_RESERVED_7) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 1000,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_BEACON) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG0,
+			MO, MGMT, 1001,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_ATIM) ? 1 : 0);
 	}
 
 	/* word 3 */
@@ -888,18 +932,32 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	*msg_word = 0;
 
 	if (htt_tlv_filter->enable_fp) {
+		/* TYPE: MGMT */
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			FP, MGMT, 1010,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_DISASSOC) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			FP, MGMT, 1011,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_AUTH) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			FP, MGMT, 1100,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_DEAUTH) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			FP, MGMT, 1101,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_ACTION) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			FP, MGMT, 1110,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_ACT_NO_ACK) ? 1 : 0);
+		/* reserved*/
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-				MGMT, 1010, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-				MGMT, 1011, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-				MGMT, 1100, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-				MGMT, 1101, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-				MGMT, 1110, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, FP,
-				MGMT, 1111, 1);
+			MGMT, 1111,
+			(htt_tlv_filter->fp_mgmt_filter &
+			FILTER_MGMT_RESERVED_15) ? 1 : 0);
 	}
 
 	if (htt_tlv_filter->enable_md) {
@@ -916,18 +974,32 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	}
 
 	if (htt_tlv_filter->enable_mo) {
+		/* TYPE: MGMT */
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			MO, MGMT, 1010,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_DISASSOC) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			MO, MGMT, 1011,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_AUTH) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			MO, MGMT, 1100,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_DEAUTH) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			MO, MGMT, 1101,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_ACTION) ? 1 : 0);
+		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1,
+			MO, MGMT, 1110,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_ACT_NO_ACK) ? 1 : 0);
+		/* reserved*/
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-				MGMT, 1010, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-				MGMT, 1011, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-				MGMT, 1100, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-				MGMT, 1101, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-				MGMT, 1110, 1);
-		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG1, MO,
-				MGMT, 1111, 1);
+			MGMT, 1111,
+			(htt_tlv_filter->mo_mgmt_filter &
+			FILTER_MGMT_RESERVED_15) ? 1 : 0);
 	}
 
 	/* word 4 */
@@ -935,26 +1007,50 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	*msg_word = 0;
 
 	if (htt_tlv_filter->enable_fp) {
+		/* TYPE: CTRL */
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0000, 1);
+			CTRL, 0000,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_RESERVED_1) ? 1 : 0);
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0001, 1);
+			CTRL, 0001,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_RESERVED_2) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0010, 1);
+			CTRL, 0010,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_TRIGGER) ? 1 : 0);
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0011, 1);
+			CTRL, 0011,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_RESERVED_4) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0100, 1);
+			CTRL, 0100,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_BF_REP_POLL) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0101, 1);
+			CTRL, 0101,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_VHT_NDP) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0110, 1);
+			CTRL, 0110,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_FRAME_EXT) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 0111, 1);
+			CTRL, 0111,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_CTRLWRAP) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 1000, 1);
+			CTRL, 1000,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_BA_REQ) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, FP,
-				CTRL, 1001, 1);
+			CTRL, 1001,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_BA) ? 1 : 0);
 	}
 
 	if (htt_tlv_filter->enable_md) {
@@ -981,50 +1077,94 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	}
 
 	if (htt_tlv_filter->enable_mo) {
+		/* TYPE: CTRL */
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0000, 1);
+			CTRL, 0000,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_RESERVED_1) ? 1 : 0);
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0001, 1);
+			CTRL, 0001,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_RESERVED_2) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0010, 1);
+			CTRL, 0010,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_TRIGGER) ? 1 : 0);
+		/* reserved */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0011, 1);
+			CTRL, 0011,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_RESERVED_4) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0100, 1);
+			CTRL, 0100,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_BF_REP_POLL) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0101, 1);
+			CTRL, 0101,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_VHT_NDP) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0110, 1);
+			CTRL, 0110,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_FRAME_EXT) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 0111, 1);
+			CTRL, 0111,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_CTRLWRAP) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 1000, 1);
+			CTRL, 1000,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_BA_REQ) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG2, MO,
-				CTRL, 1001, 1);
+			CTRL, 1001,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_BA) ? 1 : 0);
 	}
 
 	/* word 5 */
 	msg_word++;
 	*msg_word = 0;
 	if (htt_tlv_filter->enable_fp) {
+		/* TYPE: CTRL */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				CTRL, 1010, 1);
+			CTRL, 1010,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_PSPOLL) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				CTRL, 1011, 1);
+			CTRL, 1011,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_RTS) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				CTRL, 1100, 1);
+			CTRL, 1100,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_CTS) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				CTRL, 1101, 1);
+			CTRL, 1101,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_ACK) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				CTRL, 1110, 1);
+			CTRL, 1110,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_CFEND) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				CTRL, 1111, 1);
+			CTRL, 1111,
+			(htt_tlv_filter->fp_ctrl_filter &
+			FILTER_CTRL_CFEND_CFACK) ? 1 : 0);
+		/* TYPE: DATA */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				DATA, MCAST, 1);
+			DATA, MCAST,
+			(htt_tlv_filter->fp_data_filter &
+			FILTER_DATA_MCAST) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				DATA, UCAST, 1);
+			DATA, UCAST,
+			(htt_tlv_filter->fp_data_filter &
+			FILTER_DATA_UCAST) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, FP,
-				DATA, NULL, 1);
+			DATA, NULL,
+			(htt_tlv_filter->fp_data_filter &
+			FILTER_DATA_NULL) ? 1 : 0);
 	}
 
 	if (htt_tlv_filter->enable_md) {
@@ -1049,24 +1189,44 @@ int htt_h2t_rx_ring_cfg(void *htt_soc, int pdev_id, void *hal_srng,
 	}
 
 	if (htt_tlv_filter->enable_mo) {
+		/* TYPE: CTRL */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				CTRL, 1010, 1);
+			CTRL, 1010,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_PSPOLL) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				CTRL, 1011, 1);
+			CTRL, 1011,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_RTS) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				CTRL, 1100, 1);
+			CTRL, 1100,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_CTS) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				CTRL, 1101, 1);
+			CTRL, 1101,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_ACK) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				CTRL, 1110, 1);
+			CTRL, 1110,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_CFEND) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				CTRL, 1111, 1);
+			CTRL, 1111,
+			(htt_tlv_filter->mo_ctrl_filter &
+			FILTER_CTRL_CFEND_CFACK) ? 1 : 0);
+		/* TYPE: DATA */
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				DATA, MCAST, 1);
+			DATA, MCAST,
+			(htt_tlv_filter->mo_data_filter &
+			FILTER_DATA_MCAST) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				DATA, UCAST, 1);
+			DATA, UCAST,
+			(htt_tlv_filter->mo_data_filter &
+			FILTER_DATA_UCAST) ? 1 : 0);
 		htt_rx_ring_pkt_enable_subtype_set(*msg_word, FLAG3, MO,
-				DATA, NULL, 1);
+			DATA, NULL,
+			(htt_tlv_filter->mo_data_filter &
+			FILTER_DATA_NULL) ? 1 : 0);
 	}
 
 	/* word 6 */
