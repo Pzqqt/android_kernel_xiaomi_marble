@@ -194,21 +194,14 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 			       uint32_t supp_mcs, uint32_t tx_chain_mask,
 			       uint32_t rx_chain_mask)
 {
+	uint8_t nss, chan_width;
+	uint16_t rx_mcs_le_80, tx_mcs_le_80, rx_mcs_160, tx_mcs_160;
 	struct wmi_host_ppe_threshold *ppet = he_ppet;
-	uint8_t mcs, nss, k, mcs_temp;
 
 	nss = QDF_MAX(wma_get_num_of_setbits_from_bitmask(tx_chain_mask),
-		      wma_get_num_of_setbits_from_bitmask(rx_chain_mask));
-
-	mcs = 0;
-	for (k = 1; k < nss; k++) {
-		mcs_temp = WMI_HE_MAX_MCS_4_SS_MASK(supp_mcs, k);
-		if (mcs_temp > mcs)
-			mcs = mcs_temp;
-	}
+			wma_get_num_of_setbits_from_bitmask(rx_chain_mask));
 
 	he_cap->present = true;
-
 	/* HE MAC capabilities */
 	he_cap->htc_he = WMI_HECAP_MAC_HECTRL_GET(mac_cap);
 	he_cap->twt_request = WMI_HECAP_MAC_TWTREQ_GET(mac_cap);
@@ -242,7 +235,14 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 
 	/* HE PHY capabilities */
 	he_cap->dual_band = WMI_HECAP_PHY_DB_GET(phy_cap);
-	he_cap->chan_width = WMI_HECAP_PHY_CBW_GET(phy_cap);
+	chan_width = WMI_HECAP_PHY_CBW_GET(phy_cap);
+	he_cap->chan_width_0 = HE_CH_WIDTH_GET_BIT(chan_width, 0);
+	he_cap->chan_width_1 = HE_CH_WIDTH_GET_BIT(chan_width, 1);
+	he_cap->chan_width_2 = HE_CH_WIDTH_GET_BIT(chan_width, 2);
+	he_cap->chan_width_3 = HE_CH_WIDTH_GET_BIT(chan_width, 3);
+	he_cap->chan_width_4 = HE_CH_WIDTH_GET_BIT(chan_width, 4);
+	he_cap->chan_width_5 = HE_CH_WIDTH_GET_BIT(chan_width, 5);
+	he_cap->chan_width_6 = HE_CH_WIDTH_GET_BIT(chan_width, 6);
 	he_cap->rx_pream_puncturing = WMI_HECAP_PHY_PREAMBLEPUNCRX_GET(phy_cap);
 	he_cap->device_class = WMI_HECAP_PHY_COD_GET(phy_cap);
 	he_cap->ldpc_coding = WMI_HECAP_PHY_LDPC_GET(phy_cap);
@@ -287,12 +287,28 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 	he_cap->er_he_ltf_800_gi_4x =
 			WMI_HECAP_PHY_ERSU4X800NSECGI_GET(phy_cap);
 
-	he_cap->nss_supported = nss - 1;
-	he_cap->mcs_supported = mcs;
-
-	/* For Draft 1.0, following fields will be zero */
-	he_cap->tx_bw_bitmap = 0;
-	he_cap->rx_bw_bitmap = 0;
+	/*
+	 * supp_mcs is split into 16 bits with lower indicating le_80 and
+	 * upper indicating 160 and 80_80.
+	 */
+	WMA_LOGD(FL("supported_mcs: 0x%08x\n"), supp_mcs);
+	rx_mcs_le_80 = supp_mcs & 0xFFFF;
+	tx_mcs_le_80 = supp_mcs & 0xFFFF;
+	rx_mcs_160 = (supp_mcs & 0xFFFF0000) >> 16;
+	tx_mcs_160 = (supp_mcs & 0xFFFF0000) >> 16;
+	/* if FW indicated it is using 1x1 disable upper NSS-MCS sets */
+	if (nss == NSS_1x1_MODE) {
+		rx_mcs_le_80 |= HE_MCS_INV_MSK_4_NSS(1);
+		tx_mcs_le_80 |= HE_MCS_INV_MSK_4_NSS(1);
+		rx_mcs_160 |= HE_MCS_INV_MSK_4_NSS(1);
+		tx_mcs_160 |= HE_MCS_INV_MSK_4_NSS(1);
+	}
+	he_cap->rx_he_mcs_map_lt_80 = rx_mcs_le_80;
+	he_cap->tx_he_mcs_map_lt_80 = tx_mcs_le_80;
+	*((uint16_t *)he_cap->tx_he_mcs_map_160) = rx_mcs_160;
+	*((uint16_t *)he_cap->rx_he_mcs_map_160) = tx_mcs_160;
+	*((uint16_t *)he_cap->rx_he_mcs_map_80_80) = rx_mcs_160;
+	*((uint16_t *)he_cap->tx_he_mcs_map_80_80) = tx_mcs_160;
 
 	wma_convert_he_ppet(&he_cap->ppe_threshold, ppet);
 }
@@ -313,6 +329,8 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 		tDot11fIEhe_cap *he_cap, tDot11fIEhe_cap *new_cap)
 {
+	uint16_t mcs_1, mcs_2;
+
 	if (!he_cap->present) {
 		/* First time update, copy the capability as is */
 		qdf_mem_copy(he_cap, new_cap, sizeof(*he_cap));
@@ -375,8 +393,22 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 
 		he_cap->dual_band = QDF_MIN(he_cap->dual_band,
 					    new_cap->dual_band);
-		he_cap->chan_width = QDF_MIN(he_cap->chan_width,
-					     new_cap->chan_width);
+
+		he_cap->chan_width_0 = he_cap->chan_width_0 &
+						new_cap->chan_width_0;
+		he_cap->chan_width_1 = he_cap->chan_width_1 &
+						new_cap->chan_width_1;
+		he_cap->chan_width_2 = he_cap->chan_width_2 &
+						new_cap->chan_width_2;
+		he_cap->chan_width_3 = he_cap->chan_width_3 &
+						new_cap->chan_width_3;
+		he_cap->chan_width_4 = he_cap->chan_width_4 &
+						new_cap->chan_width_4;
+		he_cap->chan_width_5 = he_cap->chan_width_5 &
+						new_cap->chan_width_5;
+		he_cap->chan_width_6 = he_cap->chan_width_6 &
+						new_cap->chan_width_6;
+
 		he_cap->rx_pream_puncturing =
 			QDF_MIN(he_cap->rx_pream_puncturing,
 				new_cap->rx_pream_puncturing);
@@ -438,20 +470,37 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 					       new_cap->he_ltf_800_gi_4x);
 		he_cap->reserved2 = QDF_MIN(he_cap->reserved2,
 					    new_cap->reserved2);
-		he_cap->nss_supported = QDF_MIN(he_cap->nss_supported,
-						new_cap->nss_supported);
-		he_cap->mcs_supported = QDF_MIN(he_cap->mcs_supported,
-						new_cap->mcs_supported);
-		he_cap->tx_bw_bitmap = QDF_MIN(he_cap->tx_bw_bitmap,
-					       new_cap->tx_bw_bitmap);
-		he_cap->rx_bw_bitmap = QDF_MIN(he_cap->rx_bw_bitmap,
-					       new_cap->rx_bw_bitmap);
 
+		/* take intersection for MCS map */
+		mcs_1 = he_cap->rx_he_mcs_map_lt_80;
+		mcs_2 = new_cap->rx_he_mcs_map_lt_80;
+		he_cap->rx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = he_cap->tx_he_mcs_map_lt_80;
+		mcs_2 = new_cap->tx_he_mcs_map_lt_80;
+		he_cap->tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_160);
+		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_160);
+		*((uint16_t *)he_cap->rx_he_mcs_map_160) =
+						HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_160);
+		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_160);
+		*((uint16_t *)he_cap->tx_he_mcs_map_160) =
+						HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_80_80);
+		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_80_80);
+		*((uint16_t *)he_cap->rx_he_mcs_map_80_80) =
+						HE_INTERSECT_MCS(mcs_1, mcs_2);
+		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_80_80);
+		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_80_80);
+		*((uint16_t *)he_cap->tx_he_mcs_map_80_80) =
+						HE_INTERSECT_MCS(mcs_1, mcs_2);
 	}
 }
 
 void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 {
+	uint8_t chan_width;
+
 	if (!he_cap->present) {
 		WMA_LOGI(FL("HE Capabilities not present"));
 		return;
@@ -491,7 +540,12 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 
 	/* HE PHY capabilities */
 	WMA_LOGD("\tDual band support: 0x%01x", he_cap->dual_band);
-	WMA_LOGD("\tChannel width support: 0x%07x", he_cap->chan_width);
+	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
+				he_cap->chan_width_1, he_cap->chan_width_2,
+				he_cap->chan_width_3, he_cap->chan_width_4,
+				he_cap->chan_width_5, he_cap->chan_width_6);
+
+	WMA_LOGD("\tChannel width support: 0x%07x", chan_width);
 	WMA_LOGD("\tPreamble puncturing Rx: 0x%04x",
 			he_cap->rx_pream_puncturing);
 	WMA_LOGD("\tClass of device: 0x%01x", he_cap->device_class);
@@ -532,10 +586,18 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	WMA_LOGD("\tPower boost factor: 0x%01x", he_cap->power_boost);
 	WMA_LOGD("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
 
-	WMA_LOGD("\tHighest NSS supported: 0x%03x", he_cap->nss_supported);
-	WMA_LOGD("\tHighest MCS supported: 0x%03x", he_cap->mcs_supported);
-	WMA_LOGD("\tTX BW bitmap: 0x%05x", he_cap->tx_bw_bitmap);
-	WMA_LOGD("\tRX BW bitmap: 0x%05x ", he_cap->rx_bw_bitmap);
+	WMA_LOGD("\tRx MCS MAP for BW <= 80 MHz: 0x%x",
+		he_cap->rx_he_mcs_map_lt_80);
+	WMA_LOGD("\tTx MCS MAP for BW <= 80 MHz: 0x%x",
+		he_cap->tx_he_mcs_map_lt_80);
+	WMA_LOGD("\tRx MCS MAP for BW = 160 MHz: 0x%x",
+		*((uint16_t *)he_cap->rx_he_mcs_map_160));
+	WMA_LOGD("\tTx MCS MAP for BW = 160 MHz: 0x%x",
+		*((uint16_t *)he_cap->tx_he_mcs_map_160));
+	WMA_LOGD("\tRx MCS MAP for BW = 80 + 80 MHz: 0x%x",
+		*((uint16_t *)he_cap->rx_he_mcs_map_80_80));
+	WMA_LOGD("\tTx MCS MAP for BW = 80 + 80 MHz: 0x%x",
+		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
 	/* HE PPET */
 	WMA_LOGD("\tNSS: %d", he_cap->ppe_threshold.nss_count + 1);
@@ -934,7 +996,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	tDot11fIEhe_op *he_op = &params->he_op;
 	uint32_t *phy_cap = peer->peer_he_cap_phyinfo;
 	uint32_t mac_cap = 0, he_ops = 0;
-	uint8_t temp, i;
+	uint8_t temp, i, chan_width;
 
 	if (params->he_capable)
 		peer->peer_flags |= WMI_PEER_HE;
@@ -975,7 +1037,11 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 
 	/* HE PHY capabilities */
 	WMI_HECAP_PHY_DB_SET(phy_cap, he_cap->dual_band);
-	WMI_HECAP_PHY_CBW_SET(phy_cap, he_cap->chan_width);
+	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
+				he_cap->chan_width_1, he_cap->chan_width_2,
+				he_cap->chan_width_3, he_cap->chan_width_4,
+				he_cap->chan_width_5, he_cap->chan_width_6);
+	WMI_HECAP_PHY_CBW_SET(phy_cap, chan_width);
 	WMI_HECAP_PHY_PREAMBLEPUNCRX_SET(phy_cap, he_cap->rx_pream_puncturing);
 	WMI_HECAP_PHY_COD_SET(phy_cap, he_cap->device_class);
 	WMI_HECAP_PHY_LDPC_SET(phy_cap, he_cap->ldpc_coding);
@@ -1031,16 +1097,29 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 
 	WMI_HECAP_PHY_ERSU4X800NSECGI_SET(phy_cap, he_cap->er_he_ltf_800_gi_4x);
 
-	/* until further update in standard */
-	peer->peer_he_mcs_count = WMI_HOST_MAX_HE_RATE_SET;
-	for (i = 0; i < peer->peer_he_mcs_count; i++) {
-		peer->peer_he_rx_mcs_set[i] = params->supportedRates.he_rx_mcs;
-		peer->peer_he_tx_mcs_set[i] = params->supportedRates.he_tx_mcs;
+	/* as per 11ax draft 1.4 */
+	peer->peer_he_mcs_count = 1;
+	peer->peer_he_rx_mcs_set[0] =
+		params->supportedRates.rx_he_mcs_map_lt_80;
+	peer->peer_he_tx_mcs_set[0] =
+		params->supportedRates.tx_he_mcs_map_lt_80;
 
-		WMA_LOGD(FL("[HE - MCS Map: %d] rx_mcs: %x, tx_mcs: %x"), i,
-			 peer->peer_he_rx_mcs_set[i],
-			 peer->peer_he_tx_mcs_set[i]);
+	if (params->ch_width > CH_WIDTH_80MHZ) {
+		peer->peer_he_mcs_count = WMI_HOST_MAX_HE_RATE_SET;
+		peer->peer_he_rx_mcs_set[1] =
+			params->supportedRates.rx_he_mcs_map_160;
+		peer->peer_he_tx_mcs_set[1] =
+			params->supportedRates.tx_he_mcs_map_160;
+		peer->peer_he_rx_mcs_set[2] =
+			params->supportedRates.rx_he_mcs_map_80_80;
+		peer->peer_he_tx_mcs_set[2] =
+			params->supportedRates.tx_he_mcs_map_80_80;
 	}
+
+	for (i = 0; i < peer->peer_he_mcs_count; i++)
+		WMA_LOGD(FL("[HE - MCS Map: %d] rx_mcs: 0x%x, tx_mcs: 0x%x"), i,
+			peer->peer_he_rx_mcs_set[i],
+			peer->peer_he_tx_mcs_set[i]);
 
 	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
 	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);

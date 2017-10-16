@@ -2175,10 +2175,12 @@ struct he_capability_info {
 	uint8_t reserved2:3;
 	uint8_t er_he_ltf_800_gi_4x:1;
 
-	uint16_t rx_bw_bitmap:5;
-	uint16_t tx_bw_bitmap:5;
-	uint16_t mcs_supported:3;
-	uint16_t nss_supported:3;
+	uint16_t tx_he_mcs_map_80_80;
+	uint16_t rx_he_mcs_map_80_80;
+	uint16_t tx_he_mcs_map_160;
+	uint16_t rx_he_mcs_map_160;
+	uint16_t tx_he_mcs_map_lt_80;
+	uint16_t rx_he_mcs_map_lt_80;
 #else
 	uint32_t htc_he:1;
 	uint32_t twt_request:1;
@@ -2251,13 +2253,20 @@ struct he_capability_info {
 	uint8_t er_he_ltf_800_gi_4x:1;
 	uint8_t reserved3:7;
 
-	uint16_t nss_supported:3;
-	uint16_t mcs_supported:3;
-	uint16_t tx_bw_bitmap:5;
-	uint16_t rx_bw_bitmap:5;
+	uint16_t rx_he_mcs_map_lt_80;
+	uint16_t tx_he_mcs_map_lt_80;
+	uint16_t rx_he_mcs_map_160;
+	uint16_t tx_he_mcs_map_160;
+	uint16_t rx_he_mcs_map_80_80;
+	uint16_t tx_he_mcs_map_80_80;
 #endif
 } qdf_packed;
 #endif
+
+/*
+ * frame parser does not include optional 160 and 80+80 mcs set for MIN IE len
+ */
+#define SIR_MAC_HE_CAP_MIN_LEN       (DOT11F_IE_HE_CAP_MIN_LEN + 8)
 
 /* QOS action frame definitions */
 

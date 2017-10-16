@@ -855,6 +855,7 @@ void lim_copy_bss_he_cap(tpPESession session,
 
 /**
  * lim_copy_join_req_he_cap() - Copy HE capability to PE session from Join req
+ * and update as per bandwidth supported
  * @session: pointer to PE session
  * @sme_join_req: pointer to SME join request
  *

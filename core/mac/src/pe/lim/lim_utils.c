@@ -7388,10 +7388,23 @@ void lim_copy_join_req_he_cap(tpPESession session,
 {
 	qdf_mem_copy(&(session->he_config), &(sme_join_req->he_config),
 		     sizeof(session->he_config));
+
+	if (session->ch_width <= CH_WIDTH_80MHZ) {
+		*(uint16_t *)session->he_config.rx_he_mcs_map_160 =
+							HE_MCS_ALL_DISABLED;
+		*(uint16_t *)session->he_config.tx_he_mcs_map_160 =
+							HE_MCS_ALL_DISABLED;
+		*(uint16_t *)session->he_config.rx_he_mcs_map_80_80 =
+							HE_MCS_ALL_DISABLED;
+		*(uint16_t *)session->he_config.tx_he_mcs_map_80_80 =
+							HE_MCS_ALL_DISABLED;
+	}
 }
 
 void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 {
+	uint8_t chan_width;
+
 	if (!he_cap->present)
 		return;
 
@@ -7448,8 +7461,12 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 
 	/* HE PHY capabilities */
 	pe_debug("\tDual band support: 0x%01x", he_cap->dual_band);
-	pe_debug("\tChannel width support: 0x%07x",
-			he_cap->chan_width);
+	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
+			he_cap->chan_width_1, he_cap->chan_width_2,
+			he_cap->chan_width_3, he_cap->chan_width_4,
+			he_cap->chan_width_5, he_cap->chan_width_6);
+
+	pe_debug("\tChannel width support: 0x%07x", chan_width);
 	pe_debug("\tPreamble puncturing Rx: 0x%04x",
 			he_cap->rx_pream_puncturing);
 	pe_debug("\tClass of device: 0x%01x", he_cap->device_class);
@@ -7501,12 +7518,18 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tMax Nc: 0x%03x", he_cap->max_nc);
 	pe_debug("\tER 4x HE LTF support: 0x%01x", he_cap->er_he_ltf_800_gi_4x);
 
-	pe_debug("\tHighest NSS supported: 0x%03x",
-			he_cap->nss_supported);
-	pe_debug("\tHighest MCS supported: 0x%03x",
-			he_cap->mcs_supported);
-	pe_debug("\tTX BW bitmap: 0x%05x", he_cap->tx_bw_bitmap);
-	pe_debug("\tRX BW bitmap: 0x%05x ", he_cap->rx_bw_bitmap);
+	pe_debug("\tRx MCS map for <= 80 Mhz: 0x%04x",
+		he_cap->rx_he_mcs_map_lt_80);
+	pe_debug("\tTx MCS map for <= 80 Mhz: 0x%04x",
+		he_cap->tx_he_mcs_map_lt_80);
+	pe_debug("\tRx MCS map for <= 160 Mhz: 0x%04x",
+		*((uint16_t *)he_cap->rx_he_mcs_map_160));
+	pe_debug("\tTx MCS map for <= 160 Mhz: 0x%04x",
+		*((uint16_t *)he_cap->tx_he_mcs_map_160));
+	pe_debug("\tRx MCS map for <= 80+80 Mhz: 0x%04x",
+		*((uint16_t *)he_cap->rx_he_mcs_map_80_80));
+	pe_debug("\tTx MCS map for <= 80+80 Mhz: 0x%04x",
+		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
 	/* HE PPET */
 	if (!he_cap->ppet_present)
@@ -7630,7 +7653,12 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->reserved1 = dot11_cap.reserved1;
 
 		he_cap->dual_band = dot11_cap.dual_band;
-		he_cap->chan_width = dot11_cap.chan_width;
+
+		he_cap->chan_width = HE_CH_WIDTH_COMBINE(dot11_cap.chan_width_0,
+				dot11_cap.chan_width_1, dot11_cap.chan_width_2,
+				dot11_cap.chan_width_3, dot11_cap.chan_width_4,
+				dot11_cap.chan_width_5, dot11_cap.chan_width_6);
+
 		he_cap->rx_pream_puncturing = dot11_cap.rx_pream_puncturing;
 		he_cap->device_class = dot11_cap.device_class;
 		he_cap->ldpc_coding = dot11_cap.ldpc_coding;
@@ -7667,40 +7695,46 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->er_he_ltf_800_gi_4x = dot11_cap.er_he_ltf_800_gi_4x;
 		he_cap->reserved2 = dot11_cap.reserved2;
 
-		he_cap->nss_supported = dot11_cap.nss_supported;
-		he_cap->mcs_supported = dot11_cap.mcs_supported;
-		he_cap->tx_bw_bitmap = dot11_cap.tx_bw_bitmap;
-		he_cap->rx_bw_bitmap = dot11_cap.rx_bw_bitmap;
+		he_cap->rx_he_mcs_map_lt_80 = dot11_cap.rx_he_mcs_map_lt_80;
+		he_cap->tx_he_mcs_map_lt_80 = dot11_cap.tx_he_mcs_map_lt_80;
+		he_cap->rx_he_mcs_map_160 =
+				*((uint16_t *)dot11_cap.rx_he_mcs_map_160);
+		he_cap->tx_he_mcs_map_160 =
+				*((uint16_t *)dot11_cap.tx_he_mcs_map_160);
+		he_cap->rx_he_mcs_map_80_80 =
+				*((uint16_t *)dot11_cap.rx_he_mcs_map_80_80);
+		he_cap->tx_he_mcs_map_80_80 =
+				*((uint16_t *)dot11_cap.tx_he_mcs_map_80_80);
 	}
 }
 
 QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 			       uint8_t vdev_id)
 {
-	uint8_t he_caps[DOT11F_IE_HE_CAP_MIN_LEN + 3];
+	uint8_t he_caps[SIR_MAC_HE_CAP_MIN_LEN + 3];
 	struct he_capability_info *he_cap;
 	QDF_STATUS status_5g, status_2g;
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
-	qdf_mem_zero(he_caps, DOT11F_IE_HE_CAP_MIN_LEN + 3);
+	qdf_mem_zero(he_caps, SIR_MAC_HE_CAP_MIN_LEN + 3);
 	he_caps[0] = DOT11F_EID_HE_CAP;
-	he_caps[1] = DOT11F_IE_HE_CAP_MIN_LEN;
+	he_caps[1] = SIR_MAC_HE_CAP_MIN_LEN;
 	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
 	lim_set_he_caps(mac_ctx, session, he_caps,
-			DOT11F_IE_HE_CAP_MIN_LEN + 3);
+			SIR_MAC_HE_CAP_MIN_LEN + 3);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
 	he_cap->ppet_present = 0;
 
 	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_5GHZ, &he_caps[2],
-			DOT11F_IE_HE_CAP_MIN_LEN + 1);
+			SIR_MAC_HE_CAP_MIN_LEN + 1);
 	if (QDF_IS_STATUS_ERROR(status_5g))
 		pe_err("Unable send HE Cap IE for 5GHZ band, status: %d",
 			status_5g);
 
 	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_2GHZ, &he_caps[2],
-			DOT11F_IE_HE_CAP_MIN_LEN + 1);
+			SIR_MAC_HE_CAP_MIN_LEN + 1);
 	if (QDF_IS_STATUS_ERROR(status_2g))
 		pe_err("Unable send HE Cap IE for 2GHZ band, status: %d",
 			status_2g);
@@ -7713,64 +7747,88 @@ QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 }
 
 /**
- * MCS-NSS Map will be as follows - Each MCS is 3 bits
- *  - 0 indicates support for HE-MCS 0-7 for n spatial streams
- *  - 1 indicates support for HE-MCS 0-8 for n spatial streams
- *  - 2 indicates support for HE-MCS 0-9 for n spatial streams
- *  - 3 indicates support for HE-MCS 0-10 for n spatial streams
- *  - 4 indicates support for HE-MCS 0-11 for n spatial streams
- *  - 5-6 reserved
- *  - 7 indicates that n spatial streams is not supported
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+-
- * |  SS |  8  |  7  |  6  |  5  |  4  |  3  |  2  |  1  |
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
- * | MCS |   7 |  7  |  7  |  7  |  7  |  7  |  4  |  4  |
- * +-----+-----+-----+-----+-----+-----+-----+-----+-----+
+ * lim_populate_he_mcs_per_bw() - pouldate HE mcs set per BW (le 80, 160, 80+80)
+ * @mac_ctx: Global MAC context
+ * @self_rx: self rx mcs set
+ * @self_tx: self tx mcs set
+ * @peer_rx: peer rx mcs set
+ * @peer_tx: peer tx mcs set
+ * @nss: nss
+ * @cfg_rx_param: rx wni param to read
+ * @cfg_tx_param: tx wni param to read
+ *
+ * MCS values are interpreted as in IEEE 11ax-D1.4 spec onwards
+ * +-----------------------------------------------------+
+ * |  SS8  |  SS7  |  SS6  | SS5 | SS4 | SS3 | SS2 | SS1 |
+ * +-----------------------------------------------------+
+ * | 15-14 | 13-12 | 11-10 | 9-8 | 7-6 | 5-4 | 3-2 | 1-0 |
+ * +-----------------------------------------------------+
+ *
+ * Return: status of operation
  */
+static QDF_STATUS lim_populate_he_mcs_per_bw(tpAniSirGlobal mac_ctx,
+				uint16_t *self_rx, uint16_t *self_tx,
+				uint16_t peer_rx, uint16_t peer_tx, uint8_t nss,
+				uint32_t cfg_rx_param, uint32_t cfg_tx_param)
+{
+	uint32_t val;
+
+	pe_debug("peer rates: rx_mcs - 0x%04x tx_mcs - 0x%04x",
+		 peer_rx, peer_tx);
+	if (wlan_cfg_get_int(mac_ctx, cfg_rx_param, &val) != eSIR_SUCCESS) {
+		pe_err("could not retrieve HE_MCS");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*self_rx = (uint16_t) val;
+	if (wlan_cfg_get_int(mac_ctx, cfg_tx_param, &val) != eSIR_SUCCESS) {
+		pe_err("could not retrieve HE_MCS");
+		return QDF_STATUS_E_FAILURE;
+	}
+	*self_tx = (uint16_t) val;
+
+	*self_rx = HE_INTERSECT_MCS(*self_rx, peer_tx);
+	*self_tx = HE_INTERSECT_MCS(*self_tx, peer_rx);
+
+	if (nss == NSS_1x1_MODE) {
+		*self_rx |= HE_MCS_INV_MSK_4_NSS(1);
+		*self_tx |= HE_MCS_INV_MSK_4_NSS(1);
+	}
+	/* if nss is 2, disable higher NSS */
+	if (nss == NSS_2x2_MODE) {
+		*self_rx |= (HE_MCS_INV_MSK_4_NSS(1) & HE_MCS_INV_MSK_4_NSS(2));
+		*self_tx |= (HE_MCS_INV_MSK_4_NSS(1) & HE_MCS_INV_MSK_4_NSS(2));
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 				   tpSirSupportedRates rates,
 				   tDot11fIEhe_cap *peer_he_caps,
 				   tpPESession session_entry, uint8_t nss)
 {
-	uint32_t val;
-	uint32_t self_sta_dot11mode = 0;
-	uint8_t self_mcs, peer_mcs, negotiated_mcs;
-	uint32_t mcsmap = 0xFFFFFFFF;
 	bool support_2x2 = false;
+	uint32_t self_sta_dot11mode = 0;
 
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_sta_dot11mode);
 
 	if (!IS_DOT11_MODE_HE(self_sta_dot11mode))
 		return QDF_STATUS_SUCCESS;
 
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_HE_MCS, &val) != eSIR_SUCCESS) {
-		pe_err("could not retrieve HE_MCS");
-		goto error;
-	}
-
-	self_mcs = (uint16_t) val;
-	if (NSS_1x1_MODE == nss) {
-		/* Add MCS for SS-1 */
-		mcsmap = self_mcs;
-		mcsmap |= HE_MCS_1x1;
-	} else if (NSS_2x2_MODE == nss) {
-		/* Add MCS for SS-1 */
-		mcsmap = self_mcs;
-		/* Add MCS for SS-2 */
-		mcsmap |= (self_mcs << HEMCSSIZE);
-		mcsmap |= HE_MCS_2x2;
-
-	}
-	rates->he_rx_mcs = rates->he_tx_mcs = mcsmap;
-
 	if ((peer_he_caps == NULL) || (!peer_he_caps->present)) {
-		pe_debug("self rate: nss %d he_rx_mcs - %x he_tx_mcs - %x",
-			nss, rates->he_rx_mcs, rates->he_tx_mcs);
+		pe_debug("peer not he capable or he_caps NULL");
 		return QDF_STATUS_SUCCESS;
 	}
 
-	pe_debug("peer rates: rx_mcs - %x tx_mcs - %x",
-		peer_he_caps->mcs_supported, peer_he_caps->mcs_supported);
+	pe_debug("peer rates lt 80: rx_mcs - 0x%04x tx_mcs - 0x%04x",
+		peer_he_caps->rx_he_mcs_map_lt_80,
+		peer_he_caps->tx_he_mcs_map_lt_80);
+	pe_debug("peer rates 160: rx_mcs - 0x%04x tx_mcs - 0x%04x",
+		(*(uint16_t *)peer_he_caps->rx_he_mcs_map_160),
+		(*(uint16_t *)peer_he_caps->tx_he_mcs_map_160));
+	pe_debug("peer rates 80+80: rx_mcs - 0x%04x tx_mcs - 0x%04x",
+		(*(uint16_t *)peer_he_caps->rx_he_mcs_map_80_80),
+		(*(uint16_t *)peer_he_caps->tx_he_mcs_map_80_80));
 
 	if (session_entry && session_entry->nss == NSS_2x2_MODE) {
 		if (mac_ctx->lteCoexAntShare &&
@@ -7785,29 +7843,40 @@ QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-	peer_mcs = peer_he_caps->mcs_supported;
-	negotiated_mcs = QDF_MIN(peer_mcs, self_mcs);
-
-	if (support_2x2) {
-		/* Add MCS for SS-1 */
-		mcsmap = negotiated_mcs;
-		/* Add MCS for SS-2 */
-		mcsmap |= (negotiated_mcs << HEMCSSIZE);
-		mcsmap |= HE_MCS_2x2;
-	} else {
-		/* Add MCS for SS-1 */
-		mcsmap = negotiated_mcs;
-		mcsmap |= HE_MCS_1x1;
+	lim_populate_he_mcs_per_bw(mac_ctx,
+		&rates->rx_he_mcs_map_lt_80, &rates->tx_he_mcs_map_lt_80,
+		peer_he_caps->rx_he_mcs_map_lt_80,
+		peer_he_caps->tx_he_mcs_map_lt_80, nss,
+		WNI_CFG_HE_RX_MCS_MAP_LT_80, WNI_CFG_HE_TX_MCS_MAP_LT_80);
+	lim_populate_he_mcs_per_bw(mac_ctx,
+		&rates->rx_he_mcs_map_160, &rates->tx_he_mcs_map_160,
+		*((uint16_t *)peer_he_caps->rx_he_mcs_map_160),
+		*((uint16_t *)peer_he_caps->tx_he_mcs_map_160), nss,
+		WNI_CFG_HE_RX_MCS_MAP_160, WNI_CFG_HE_TX_MCS_MAP_160);
+	lim_populate_he_mcs_per_bw(mac_ctx,
+		&rates->rx_he_mcs_map_80_80, &rates->tx_he_mcs_map_80_80,
+		*((uint16_t *)peer_he_caps->rx_he_mcs_map_80_80),
+		*((uint16_t *)peer_he_caps->tx_he_mcs_map_80_80), nss,
+		WNI_CFG_HE_RX_MCS_MAP_80_80, WNI_CFG_HE_TX_MCS_MAP_80_80);
+	if (!support_2x2) {
+		/* disable 2 and higher NSS MCS sets */
+		rates->rx_he_mcs_map_lt_80 |= 0xFFFD;
+		rates->tx_he_mcs_map_lt_80 |= 0xFFFD;
+		rates->rx_he_mcs_map_160 |= 0xFFFD;
+		rates->tx_he_mcs_map_160 |= 0xFFFD;
+		rates->rx_he_mcs_map_80_80 |= 0xFFFD;
+		rates->tx_he_mcs_map_80_80 |= 0xFFFD;
 	}
-	rates->he_rx_mcs = rates->he_tx_mcs = mcsmap;
 
-	pe_debug("enable2x2 - %d nss %d he_rx_mcs - %x he_tx_mcs - %x",
-		mac_ctx->roam.configParam.enable2x2, nss,
-		rates->he_rx_mcs, rates->he_tx_mcs);
-
+	pe_debug("enable2x2 - %d nss %d",
+		mac_ctx->roam.configParam.enable2x2, nss);
+	pe_debug("he_rx_lt_80 - 0x%x he_tx_lt_80 0x%x",
+		rates->rx_he_mcs_map_lt_80, rates->tx_he_mcs_map_lt_80);
+	pe_debug("he_rx_160 - 0x%x he_tx_160 0x%x",
+		rates->rx_he_mcs_map_160, rates->tx_he_mcs_map_160);
+	pe_debug("he_rx_80_80 - 0x%x he_tx_80_80 0x%x",
+		rates->rx_he_mcs_map_80_80, rates->tx_he_mcs_map_80_80);
 	return QDF_STATUS_SUCCESS;
-error:
-	return QDF_STATUS_E_FAILURE;
 }
 #endif
 

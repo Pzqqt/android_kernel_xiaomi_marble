@@ -2329,7 +2329,14 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DUAL_BAND, &value);
 	he_cap->dual_band = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CHAN_WIDTH, &value);
-	he_cap->chan_width = value;
+	he_cap->chan_width_0 = HE_CH_WIDTH_GET_BIT(value, 0);
+	he_cap->chan_width_1 = HE_CH_WIDTH_GET_BIT(value, 1);
+	he_cap->chan_width_2 = HE_CH_WIDTH_GET_BIT(value, 2);
+	he_cap->chan_width_3 = HE_CH_WIDTH_GET_BIT(value, 3);
+	he_cap->chan_width_4 = HE_CH_WIDTH_GET_BIT(value, 4);
+	he_cap->chan_width_5 = HE_CH_WIDTH_GET_BIT(value, 5);
+	he_cap->chan_width_6 = HE_CH_WIDTH_GET_BIT(value, 6);
+
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_PREAM_PUNC, &value);
 	he_cap->rx_pream_puncturing = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_CLASS_OF_DEVICE, &value);
@@ -2394,10 +2401,19 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	he_cap->stbc_gt_80mhz = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, &value);
 	he_cap->er_he_ltf_800_gi_4x = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_NSS, &value);
-	he_cap->nss_supported = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MCS, &value);
-	he_cap->mcs_supported = value;
+
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80, &value);
+	he_cap->rx_he_mcs_map_lt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80, &value);
+	he_cap->tx_he_mcs_map_lt_80 = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_160, &value);
+	*((uint16_t *)he_cap->rx_he_mcs_map_160) = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_160, &value);
+	*((uint16_t *)he_cap->tx_he_mcs_map_160) = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_80_80, &value);
+	*((uint16_t *)he_cap->rx_he_mcs_map_80_80) = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_80_80, &value);
+	*((uint16_t *)he_cap->tx_he_mcs_map_80_80) = value;
 
 	if (he_cap->ppet_present) {
 		value = WNI_CFG_HE_PPET_LEN;

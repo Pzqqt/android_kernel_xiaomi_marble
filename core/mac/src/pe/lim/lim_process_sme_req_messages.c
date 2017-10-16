@@ -1726,11 +1726,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					session->vht_config.su_beam_former);
 		}
 
-		if (IS_DOT11_MODE_HE(session->dot11mode)) {
-			lim_update_session_he_capable(mac_ctx, session);
-			lim_copy_join_req_he_cap(session, sme_join_req);
-		}
-
 		pe_debug("vhtCapability: %d su_beam_formee: %d txbf_csn_value: %d su_tx_bformer %d",
 				session->vhtCapability,
 				session->vht_config.su_beam_formee,
@@ -1762,6 +1757,12 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->ch_center_freq_seg0 = 0;
 			session->ch_width = CH_WIDTH_20MHZ;
 		}
+
+		if (IS_DOT11_MODE_HE(session->dot11mode)) {
+			lim_update_session_he_capable(mac_ctx, session);
+			lim_copy_join_req_he_cap(session, sme_join_req);
+		}
+
 
 		/* Record if management frames need to be protected */
 #ifdef WLAN_FEATURE_11W

@@ -406,8 +406,12 @@ typedef struct sSirSupportedRates {
 	uint16_t vhtTxMCSMap;
 	uint16_t vhtTxHighestDataRate;
 #ifdef WLAN_FEATURE_11AX
-	uint32_t he_rx_mcs;
-	uint32_t he_tx_mcs;
+	uint16_t rx_he_mcs_map_lt_80;
+	uint16_t tx_he_mcs_map_lt_80;
+	uint16_t rx_he_mcs_map_160;
+	uint16_t tx_he_mcs_map_160;
+	uint16_t rx_he_mcs_map_80_80;
+	uint16_t tx_he_mcs_map_80_80;
 #endif
 } tSirSupportedRates, *tpSirSupportedRates;
 
@@ -7574,16 +7578,77 @@ struct wow_enable_params {
 
 #define HE_MAX_PHY_CAP_SIZE 3
 
-/*
- * Three bits are used for each MCS
- * For SS - 1; bits 0-2
- * For SS - 2; bits 3-5
- * MCS values are interpreted as in IEEE 11ax-D1.0 spec
- */
-#define HE_MCS_1x1 0xFFFFFFF8
-#define HE_MCS_2x2 0xFFFFFFC0
+#define HE_CH_WIDTH_GET_BIT(ch_wd, bit)      (((ch_wd) >> (bit)) & 1)
+#define HE_CH_WIDTH_COMBINE(b0, b1, b2, b3, b4, b5, b6)             \
+	((uint8_t)(b0) | ((b1) << 1) | ((b2) << 2) |  ((b3) << 3) | \
+	((b4) << 4) | ((b5) << 5) | ((b6) << 6))
 
-#define HEMCSSIZE 3
+/*
+ * MCS values are interpreted as in IEEE 11ax-D1.4 spec onwards
+ * +-----------------------------------------------------+
+ * |  SS8  |  SS7  |  SS6  | SS5 | SS4 | SS3 | SS2 | SS1 |
+ * +-----------------------------------------------------+
+ * | 15-14 | 13-12 | 11-10 | 9-8 | 7-6 | 5-4 | 3-2 | 1-0 |
+ * +-----------------------------------------------------+
+ */
+#define HE_MCS_NSS_SHIFT(nss)                 (((nss) - 1) << 1)
+#define HE_MCS_MSK_4_NSS(nss)                 (3 << HE_MCS_NSS_SHIFT(nss))
+#define HE_MCS_INV_MSK_4_NSS(nss)             (~HE_MCS_MSK_4_NSS(nss))
+#define HE_GET_MCS_4_NSS(mcs_set, nss)             \
+	(((mcs_set) >> HE_MCS_NSS_SHIFT(nss)) & 3)
+#define HE_SET_MCS_4_NSS(mcs_set, mcs, nss)        \
+	(((mcs_set) & HE_MCS_INV_MSK_4_NSS(nss)) | \
+	((mcs) << HE_MCS_NSS_SHIFT(nss)))
+#define HE_MCS_IS_NSS_ENABLED(mcs_set, nss)        \
+	((HE_MCS_MSK_4_NSS(nss) & (mcs_set)) != HE_MCS_MSK_4_NSS(nss))
+
+#define HE_MCS_ALL_DISABLED                   0xFFFF
+/*
+ * Following formuala has been arrived at using karnaugh map and unit tested
+ * with sample code. Take MCS for each NSS as 2 bit value first and solve for
+ * 2 bit intersection of NSS. Use following table/Matrix as guide for solving
+ * K-Maps
+ * MCS 1\MCS 2    00         01         10         11
+ *    00          00         00         00         11
+ *    01          00         01         01         11
+ *    10          00         01         10         11
+ *    11          11         11         11         11
+ * if output MCS is o1o0, then as per K-map reduction:
+ * o0 = m1.m0 | n1.n0 | (~m1).m0.(n1^n0) | (~n1).n0.(m1^m0)
+ * o1 = m1.m0 | n1.n0 | m1.(~m0).n1.(~n0)
+ *
+ * Please note: Calculating MCS intersection is 80211 protocol specific and
+ * should be implemented in PE. WMA can use this macro rather than calling any
+ * lim API to do the intersection.
+ */
+#define HE_INTERSECT_MCS_BITS_PER_NSS(m1, m0, n1, n0)                \
+	(((m1 & m0) | (n1 & n0) | (((~m1) & m0) & (n1 ^ n0))  |      \
+	(((~n1) & n0) & (m1 ^ m0))) | (((m1 & m0) | (n1 & n0) |      \
+	(m1 & ~m0 & n1 & ~n0)) << 1))
+
+/* following takes MCS as 2 bits */
+#define HE_INTERSECT_MCS_PER_NSS(mcs_1, mcs_2)                       \
+	HE_INTERSECT_MCS_BITS_PER_NSS((mcs_1 >> 1), (mcs_1 & 1),     \
+				      (mcs_2 >> 1), (mcs_2 & 1))
+
+/* following takes MCS as 16 bits */
+#define HE_INTERSECT_MCS(mcs_1, mcs_2)                             ( \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 1),         \
+		HE_GET_MCS_4_NSS(mcs_2, 1)) << HE_MCS_NSS_SHIFT(1) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 2),         \
+		HE_GET_MCS_4_NSS(mcs_2, 2)) << HE_MCS_NSS_SHIFT(2) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 3),         \
+		HE_GET_MCS_4_NSS(mcs_2, 3)) << HE_MCS_NSS_SHIFT(3) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 4),         \
+		HE_GET_MCS_4_NSS(mcs_2, 4)) << HE_MCS_NSS_SHIFT(4) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 5),         \
+		HE_GET_MCS_4_NSS(mcs_2, 5)) << HE_MCS_NSS_SHIFT(5) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 6),         \
+		HE_GET_MCS_4_NSS(mcs_2, 6)) << HE_MCS_NSS_SHIFT(6) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 7),         \
+		HE_GET_MCS_4_NSS(mcs_2, 7)) << HE_MCS_NSS_SHIFT(7) | \
+	HE_INTERSECT_MCS_PER_NSS(HE_GET_MCS_4_NSS(mcs_1, 8),         \
+		HE_GET_MCS_4_NSS(mcs_2, 8)) << HE_MCS_NSS_SHIFT(8))
 
 /**
  * struct he_capability - to store 11ax HE capabilities
@@ -7599,6 +7664,13 @@ struct he_capability {
 	struct wlan_psoc_host_ppe_threshold ppet;
 };
 #endif
+
+#define HE_GET_NSS(mcs, nss)                                         \
+	do {                                                         \
+		(nss) = 0;                                           \
+		while ((((mcs) >> ((nss)*2)) & 3) != 3 && nss <= 8)  \
+			(nss)++;                                     \
+	} while (0)
 
 /**
  * struct sir_del_all_tdls_peers - delete all tdls peers

@@ -53,6 +53,7 @@ static int hdd_he_set_wni_cfg(struct hdd_context *hdd_ctx,
 void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   struct wma_tgt_cfg *cfg)
 {
+	uint8_t chan_width;
 	uint32_t ppet_size = sizeof(tDot11fIEppe_threshold);
 	QDF_STATUS status;
 	tDot11fIEhe_cap *he_cap = &cfg->he_cap;
@@ -108,7 +109,12 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->ops_supp);
 
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DUAL_BAND, he_cap->dual_band);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CHAN_WIDTH, he_cap->chan_width);
+	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
+				he_cap->chan_width_1, he_cap->chan_width_2,
+				he_cap->chan_width_3, he_cap->chan_width_4,
+				he_cap->chan_width_5, he_cap->chan_width_6);
+
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CHAN_WIDTH, chan_width);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_PREAM_PUNC,
 			   he_cap->rx_pream_puncturing);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CLASS_OF_DEVICE,
@@ -165,8 +171,19 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->stbc_gt_80mhz);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_ER_4x_LTF_GI,
 			   he_cap->er_he_ltf_800_gi_4x);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_NSS, he_cap->nss_supported);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MCS, he_cap->mcs_supported);
+
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80,
+			he_cap->rx_he_mcs_map_lt_80);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80,
+			he_cap->tx_he_mcs_map_lt_80);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_MCS_MAP_160,
+		*((uint16_t *)he_cap->rx_he_mcs_map_160));
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_MCS_MAP_160,
+		*((uint16_t *)he_cap->tx_he_mcs_map_160));
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_MCS_MAP_80_80,
+		*((uint16_t *)he_cap->rx_he_mcs_map_80_80));
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_MCS_MAP_80_80,
+		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
 	/* PPET can not be configured by user - Set values from FW */
 	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET,
