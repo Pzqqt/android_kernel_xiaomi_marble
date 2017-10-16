@@ -280,10 +280,6 @@ extern int iw_set_essid(struct net_device *dev,
 			struct iw_request_info *info,
 			union iwreq_data *wrqu, char *extra);
 
-extern int iw_get_essid(struct net_device *dev,
-			struct iw_request_info *info,
-			struct iw_point *dwrq, char *extra);
-
 extern int iw_set_ap_address(struct net_device *dev,
 			     struct iw_request_info *info,
 			     union iwreq_data *wrqu, char *extra);
