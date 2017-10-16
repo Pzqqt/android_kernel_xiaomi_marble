@@ -4738,79 +4738,6 @@ static int iw_set_mode(struct net_device *dev, struct iw_request_info *info,
 }
 
 /**
- * __iw_get_mode() - SIOCGIWMODE ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int
-__iw_get_mode(struct net_device *dev, struct iw_request_info *info,
-	      union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_wext_state *pWextState;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
-	switch (pWextState->roamProfile.BSSType) {
-	case eCSR_BSS_TYPE_INFRASTRUCTURE:
-		hdd_debug("returns IW_MODE_INFRA");
-		wrqu->mode = IW_MODE_INFRA;
-		break;
-	case eCSR_BSS_TYPE_IBSS:
-	case eCSR_BSS_TYPE_START_IBSS:
-		hdd_debug("returns IW_MODE_ADHOC");
-		wrqu->mode = IW_MODE_ADHOC;
-		break;
-	case eCSR_BSS_TYPE_ANY:
-	default:
-		hdd_debug("returns IW_MODE_AUTO");
-		wrqu->mode = IW_MODE_AUTO;
-		break;
-	}
-
-	EXIT();
-	return 0;
-}
-
-/**
- * iw_get_mode() - SSR wrapper for __iw_get_mode()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_get_mode(struct net_device *dev, struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_mode(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_freq() - SIOCSIWFREQ ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11218,7 +11145,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_set_freq,       /* SIOCSIWFREQ */
 	(iw_handler) iw_get_freq,       /* SIOCGIWFREQ */
 	(iw_handler) iw_set_mode,       /* SIOCSIWMODE */
-	(iw_handler) iw_get_mode,       /* SIOCGIWMODE */
+	(iw_handler) NULL,      /* SIOCGIWMODE */
 	(iw_handler) NULL,      /* SIOCSIWSENS */
 	(iw_handler) NULL,      /* SIOCGIWSENS */
 	(iw_handler) NULL,      /* SIOCSIWRANGE */
