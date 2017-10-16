@@ -4746,93 +4746,6 @@ static int iw_set_freq(struct net_device *dev, struct iw_request_info *info,
 }
 
 /**
- * __iw_get_freq() - SIOCGIWFREQ ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_get_freq(struct net_device *dev, struct iw_request_info *info,
-			 struct iw_freq *fwrq, char *extra)
-{
-	uint32_t status = false, channel = 0, freq = 0;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tHalHandle hHal;
-	struct hdd_wext_state *pWextState;
-	tCsrRoamProfile *pRoamProfile;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-
-	pRoamProfile = &pWextState->roamProfile;
-
-	if (sta_ctx->conn_info.connState == eConnectionState_Associated) {
-		if (sme_get_operation_channel(hHal, &channel,
-			adapter->sessionId) != QDF_STATUS_SUCCESS) {
-			hdd_err("failed to get operating channel %u",
-				  adapter->sessionId);
-			return -EIO;
-		}
-		status = hdd_wlan_get_freq(channel, &freq);
-		if (true == status) {
-			/* Set Exponent parameter as 6 (MHZ)
-			 * in struct iw_freq iwlist & iwconfig
-			 * command shows frequency into proper
-			 * format (2.412 GHz instead of 246.2
-			 * MHz)
-			 */
-			fwrq->m = freq;
-			fwrq->e = MHZ;
-		}
-	} else {
-		/* Set Exponent parameter as 6 (MHZ) in struct iw_freq
-		 * iwlist & iwconfig command shows frequency into proper
-		 * format (2.412 GHz instead of 246.2 MHz)
-		 */
-		fwrq->m = 0;
-		fwrq->e = MHZ;
-	}
-	return 0;
-}
-
-/**
- * iw_get_freq() - SSR wrapper for __iw_get_freq()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @fwrq: pointer to frequency data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_get_freq(struct net_device *dev, struct iw_request_info *info,
-		       struct iw_freq *fwrq, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_freq(dev, info, fwrq, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_range() - SIOCGIWRANGE ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11026,7 +10939,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,      /* SIOCSIWNWID */
 	(iw_handler) NULL,      /* SIOCGIWNWID */
 	(iw_handler) iw_set_freq,       /* SIOCSIWFREQ */
-	(iw_handler) iw_get_freq,       /* SIOCGIWFREQ */
+	(iw_handler) NULL,      /* SIOCGIWFREQ */
 	(iw_handler) NULL,      /* SIOCSIWMODE */
 	(iw_handler) NULL,      /* SIOCGIWMODE */
 	(iw_handler) NULL,      /* SIOCSIWSENS */
