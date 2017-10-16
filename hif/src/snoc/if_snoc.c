@@ -40,7 +40,6 @@
 #include "ce_api.h"
 #include "ce_internal.h"
 #include "snoc_api.h"
-#include <soc/qcom/icnss.h>
 #include "pld_common.h"
 #include "qdf_util.h"
 #ifdef IPA_OFFLOAD
@@ -191,7 +190,7 @@ int hif_snoc_bus_configure(struct hif_softc *scn)
 	if (ret)
 		goto unconfig_ce;
 
-	scn->wake_irq = icnss_get_irq(wake_ce_id);
+	scn->wake_irq = pld_get_irq(scn->qdf_dev->dev, wake_ce_id);
 
 	HIF_INFO(FL("expecting wake from ce %d, irq %d"),
 		 wake_ce_id, scn->wake_irq);
@@ -462,7 +461,7 @@ int hif_snoc_bus_suspend_noirq(struct hif_softc *scn)
 
 int hif_snoc_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 {
-	return icnss_get_irq(ce_id);
+	return pld_get_irq(scn->qdf_dev->dev, ce_id);
 }
 
 /**
