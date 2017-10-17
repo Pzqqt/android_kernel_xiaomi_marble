@@ -12950,8 +12950,15 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
 static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
 {
-	wiphy->features |= NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
-	wiphy->features |= NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR;
+	struct hdd_context *hdd_ctx;
+	hdd_ctx = wiphy_priv(wiphy);
+
+	if (false == hdd_ctx->config->enable_mac_spoofing) {
+		hdd_warn("MAC address spoofing is not enabled");
+	} else {
+		wiphy->features |= NL80211_FEATURE_SCAN_RANDOM_MAC_ADDR;
+		wiphy->features |= NL80211_FEATURE_SCHED_SCAN_RANDOM_MAC_ADDR;
+	}
 }
 #else
 static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
