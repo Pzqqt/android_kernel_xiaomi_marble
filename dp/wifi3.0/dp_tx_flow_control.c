@@ -147,8 +147,10 @@ struct dp_tx_desc_pool_s *dp_tx_create_flow_pool(struct dp_soc *soc,
 		return pool;
 	}
 
-	if (dp_tx_desc_pool_alloc(soc, flow_pool_id, flow_pool_size))
+	if (dp_tx_desc_pool_alloc(soc, flow_pool_id, flow_pool_size)) {
+		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		return NULL;
+	}
 
 	stop_threshold = wlan_cfg_get_tx_flow_stop_queue_th(soc->wlan_cfg_ctx);
 	start_threshold = stop_threshold +
