@@ -199,19 +199,6 @@ QDF_STATUS sme_p2p_close(tHalHandle hHal)
 	return QDF_STATUS_SUCCESS;
 }
 
-tSirRFBand get_rf_band(uint8_t channel)
-{
-	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
-	    (channel <= SIR_11A_CHANNEL_END))
-		return SIR_BAND_5_GHZ;
-
-	if ((channel >= SIR_11B_CHANNEL_BEGIN) &&
-	    (channel <= SIR_11B_CHANNEL_END))
-		return SIR_BAND_2_4_GHZ;
-
-	return SIR_BAND_UNKNOWN;
-}
-
 /*
  * p2p_remain_on_channel() -
  *  API to post the remain on channel command.
@@ -239,7 +226,7 @@ QDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 	if (pRemainChlCmd == NULL)
 		return QDF_STATUS_E_FAILURE;
 
-	if (SIR_BAND_5_GHZ == get_rf_band(channel))
+	if (SIR_BAND_5_GHZ == csr_get_rf_band(channel))
 		phyMode = WNI_CFG_PHY_MODE_11A;
 	else
 		phyMode = WNI_CFG_PHY_MODE_11G;

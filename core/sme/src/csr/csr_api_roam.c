@@ -17607,7 +17607,8 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
  */
 static QDF_STATUS
 csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
-		       tSirRoamOffloadScanReq *req_buf)
+		       tSirRoamOffloadScanReq *req_buf,
+		       uint8_t session_id)
 {
 	QDF_STATUS status;
 	uint32_t host_channels = 0;
@@ -17618,6 +17619,7 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 	uint16_t  cnt = 0;
 	bool      is_unsafe_chan;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	eCsrBand band = eCSR_BAND_ALL;
 
 	if (!qdf_ctx) {
 		cds_err("qdf_ctx is NULL");
@@ -17637,10 +17639,27 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 			 "Failed to get the valid channel list");
 		return status;
 	}
+
+	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
+		band = csr_get_rf_band(mac_ctx->roam.roamSession[session_id].
+				connectedProfile.operationChannel);
+		sme_debug("updated band %d operational ch %d", band,
+				mac_ctx->roam.roamSession[session_id].
+				connectedProfile.operationChannel);
+	}
+
 	ch_lst = mac_ctx->roam.validChannelList;
 	mac_ctx->roam.numValidChannels = host_channels;
+
 	for (i = 0; i < mac_ctx->roam.numValidChannels; i++) {
-		ch_lst++;
+		if (!csr_check_band_channel_match(band, *ch_lst)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+				("ignoring non-intra band channel %d"),
+				*ch_lst);
+			ch_lst++;
+			continue;
+		}
+
 		if ((!mac_ctx->roam.configParam.allowDFSChannelRoam ||
 		    (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
 			 CSR_STA_ROAM_POLICY_DFS_DISABLED)) &&
@@ -17675,6 +17694,12 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 		ch_lst++;
 	}
 	req_buf->ValidChannelCount = num_channels;
+
+	if (CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
+		req_buf->ChannelCacheType = CHANNEL_LIST_STATIC;
+		req_buf->ConnectedNetwork.ChannelCount = num_channels;
+	}
+
 	return status;
 }
 
@@ -17815,41 +17840,48 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 			ese_neighbor_list_recvd,
 			curr_ch_lst_info->numOfChannels);
 #endif
-	if (ese_neighbor_list_recvd || curr_ch_lst_info->numOfChannels == 0) {
-		/*
-		 * Retrieve the Channel Cache either from ini or from the
-		 * occupied channels list. Give Preference to INI Channels
-		 */
-		if (roam_info->cfgParams.channelInfo.numOfChannels) {
-			status = csr_fetch_ch_lst_from_ini(mac_ctx, roam_info,
-							   req_buf);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					QDF_TRACE_LEVEL_DEBUG,
-					"Fetch channel list from ini failed");
-				qdf_mem_free(req_buf);
-				return NULL;
-			}
-		} else {
-			csr_fetch_ch_lst_from_occupied_lst(mac_ctx, session_id,
-						reason, req_buf, roam_info);
-		}
-	}
-#ifdef FEATURE_WLAN_ESE
-	else {
-		/*
-		 * If ESE is enabled, and a neighbor Report is received,then
-		 * Ignore the INI Channels or the Occupied Channel List.
-		 * Consider the channels in the neighbor list sent by the ESE AP
-		 */
-		 csr_fetch_ch_lst_from_received_list(mac_ctx, roam_info,
-						curr_ch_lst_info, req_buf);
-	}
-#endif
 
+	if (!CSR_IS_ROAM_INTRA_BAND_ENABLED(mac_ctx)) {
+		if (ese_neighbor_list_recvd ||
+		    curr_ch_lst_info->numOfChannels == 0) {
+			/*
+			 * Retrieve the Channel Cache either from ini or from
+			 * the occupied channels list.
+			 * Give Preference to INI Channels
+			 */
+			if (roam_info->cfgParams.channelInfo.numOfChannels) {
+				status = csr_fetch_ch_lst_from_ini(mac_ctx,
+								   roam_info,
+								   req_buf);
+				if (!QDF_IS_STATUS_SUCCESS(status)) {
+					QDF_TRACE(QDF_MODULE_ID_SME,
+						  QDF_TRACE_LEVEL_DEBUG,
+						  "Fetch channel list from ini failed");
+					qdf_mem_free(req_buf);
+					return NULL;
+				}
+			} else {
+				csr_fetch_ch_lst_from_occupied_lst(mac_ctx,
+						session_id, reason, req_buf,
+						roam_info);
+			}
+		}
+#ifdef FEATURE_WLAN_ESE
+		else {
+			/*
+			 * If ESE is enabled, and a neighbor Report is received,
+			 * then Ignore the INI Channels or the Occupied Channel
+			 * List. Consider the channels in the neighbor list sent
+			 * by the ESE AP
+			 */
+			csr_fetch_ch_lst_from_received_list(mac_ctx, roam_info,
+					curr_ch_lst_info, req_buf);
+		}
+#endif
+	}
 	if (req_buf->ConnectedNetwork.ChannelCount == 0) {
 		/* Maintain the Valid Channels List */
-		status = csr_fetch_valid_ch_lst(mac_ctx, req_buf);
+		status = csr_fetch_valid_ch_lst(mac_ctx, req_buf, session_id);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 					"Fetch channel list fail");
