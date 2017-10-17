@@ -1077,7 +1077,9 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sapdfs: no available channel for sapctx[%pK], StopBss"),
 					  pSapContext);
-				wlansap_stop_bss(pSapContext);
+				sap_signal_hdd_event(sap_ctx, NULL,
+					eSAP_STOP_BSS_DUE_TO_NO_CHNL,
+					(void *) eSAP_STATUS_SUCCESS);
 			}
 		}
 		break;

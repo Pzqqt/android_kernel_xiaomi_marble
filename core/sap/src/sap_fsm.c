@@ -2669,6 +2669,13 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				__func__, "eSAP_DFS_NEXT_CHANNEL_REQ");
 		sap_ap_event.sapHddEventCode = eSAP_DFS_NEXT_CHANNEL_REQ;
 		break;
+	case eSAP_STOP_BSS_DUE_TO_NO_CHNL:
+		sap_ap_event.sapHddEventCode = eSAP_STOP_BSS_DUE_TO_NO_CHNL;
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+			  FL("stopping session_id:%d, bssid:%pM, channel:%d"),
+			     sap_ctx->sessionId, sap_ctx->self_mac_addr,
+			     sap_ctx->channel);
+		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("SAP Unknown callback event = %d"),
