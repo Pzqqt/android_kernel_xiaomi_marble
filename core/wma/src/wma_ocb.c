@@ -673,6 +673,14 @@ static int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	response->num_channels = fix_param->num_channels;
 	response->channel_stats_array_len =
 		fix_param->num_channels * sizeof(wmi_dcc_ndl_stats_per_channel);
+
+	if (fix_param->num_channels > param_tlvs->num_stats_per_channel_list) {
+		WMA_LOGE("FW message num_chan %d more than TLV hdr %d",
+			 fix_param->num_channels,
+			 param_tlvs->num_stats_per_channel_list);
+		return -EINVAL;
+	}
+
 	response->channel_stats_array = ((void *)response) + sizeof(*response);
 	qdf_mem_copy(response->channel_stats_array,
 		     param_tlvs->stats_per_channel_list,

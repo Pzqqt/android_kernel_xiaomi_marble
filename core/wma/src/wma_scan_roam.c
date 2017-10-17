@@ -3561,6 +3561,14 @@ int wma_extscan_operations_event_handler(void *handle,
 	case WMI_EXTSCAN_CYCLE_STARTED_EVENT:
 		WMA_LOGD("%s: received WMI_EXTSCAN_CYCLE_STARTED_EVENT",
 			 __func__);
+
+		if (oprn_event->num_buckets > param_buf->num_bucket_id) {
+			WMA_LOGE("FW mesg num_buk %d more than TLV hdr %d",
+				 oprn_event->num_buckets,
+				 param_buf->num_bucket_id);
+			return -EINVAL;
+		}
+
 		cds_host_diag_log_work(&wma->extscan_wake_lock,
 				       WMA_EXTSCAN_CYCLE_WAKE_LOCK_DURATION,
 				       WIFI_POWER_EVENT_WAKELOCK_EXT_SCAN);
