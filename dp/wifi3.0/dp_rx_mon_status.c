@@ -75,12 +75,18 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
 	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;
 	cdp_rx_ppdu->u.bw = ppdu_info->rx_status.bw;
+	cdp_rx_ppdu->tcp_msdu_count = ppdu_info->rx_status.tcp_msdu_count;
+	cdp_rx_ppdu->udp_msdu_count = ppdu_info->rx_status.udp_msdu_count;
+	cdp_rx_ppdu->other_msdu_count = ppdu_info->rx_status.other_msdu_count;
 	cdp_rx_ppdu->u.nss = ppdu_info->rx_status.nss;
 	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
 	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
 	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
 	cdp_rx_ppdu->timestamp = ppdu_info->com_info.ppdu_timestamp;
 	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_freq;
+	cdp_rx_ppdu->num_msdu = (cdp_rx_ppdu->tcp_msdu_count +
+			cdp_rx_ppdu->udp_msdu_count +
+			cdp_rx_ppdu->other_msdu_count);
 }
 #else
 static inline void
@@ -88,6 +94,77 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 		struct hal_rx_ppdu_info *ppdu_info,
 		qdf_nbuf_t ppdu_nbuf)
 {
+}
+#endif
+/**
+ * dp_rx_stats_update() - Update per-peer statistics
+ * @soc: Datapath SOC handle
+ * @peer: Datapath peer handle
+ * @ppdu: PPDU Descriptor
+ *
+ * Return: None
+ */
+#ifdef FEATURE_PERPKT_INFO
+static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
+		struct cdp_rx_indication_ppdu *ppdu)
+{
+	struct dp_pdev *pdev = NULL;
+	uint8_t mcs, preamble;
+	uint16_t num_msdu;
+
+	mcs = ppdu->u.mcs;
+	preamble = ppdu->u.preamble;
+	num_msdu = ppdu->num_msdu;
+
+	if (!peer)
+		return;
+
+	pdev = peer->vdev->pdev;
+
+	if (soc->process_rx_status)
+		return;
+	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
+	DP_STATS_INC(peer, rx.sgi_count[ppdu->u.gi], 1);
+	DP_STATS_INC(peer, rx.bw[ppdu->u.bw], num_msdu);
+	DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ppdu->is_ampdu);
+	DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ppdu->is_ampdu));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11A) && (preamble == DOT11_A)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11A) &&	(preamble == DOT11_A)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11B) && (preamble == DOT11_B)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11B) &&	(preamble == DOT11_B)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11A) && (preamble == DOT11_N)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11A) &&	(preamble == DOT11_N)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11AC) && (preamble == DOT11_AC)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11AC) && (preamble == DOT11_AC)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= (MAX_MCS - 1)) && (preamble == DOT11_AX)));
+	DP_STATS_INCC(peer,
+			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
+	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], 1);
+
+	if (soc->cdp_soc.ol_ops->update_dp_stats) {
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+				&peer->stats, ppdu->peer_id,
+				UPDATE_PEER_STATS);
+	}
 }
 #endif
 
@@ -118,6 +195,7 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 
 		peer = dp_peer_find_by_id(soc, cdp_rx_ppdu->peer_id);
 		if (peer && cdp_rx_ppdu->peer_id != HTT_INVALID_PEER) {
+			dp_rx_stats_update(soc, peer, cdp_rx_ppdu);
 			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC, soc,
 					ppdu_nbuf, cdp_rx_ppdu->peer_id,
 					WDI_NO_VAL, pdev->pdev_id);

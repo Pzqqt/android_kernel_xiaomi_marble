@@ -179,6 +179,9 @@ struct mon_rx_status {
 	uint8_t  nr_ant;
 	uint8_t  mcs;
 	uint8_t  nss;
+	uint16_t  tcp_msdu_count;
+	uint16_t  udp_msdu_count;
+	uint16_t  other_msdu_count;
 	uint8_t  bw;
 	uint8_t  vht_flag_values1;
 	uint8_t  vht_flag_values2;

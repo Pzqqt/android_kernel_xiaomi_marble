@@ -521,12 +521,24 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.mcs =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
 						MCS);
+		ppdu_info->rx_status.tcp_msdu_count =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_9,
+						TCP_MSDU_COUNT);
+		ppdu_info->rx_status.udp_msdu_count =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_9,
+						UDP_MSDU_COUNT);
+		ppdu_info->rx_status.other_msdu_count =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_10,
+						OTHER_MSDU_COUNT);
 		ppdu_info->rx_status.nss =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
 						NSS);
 		ppdu_info->rx_status.first_data_seq_ctrl =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
-						DATA_SEQUENCE_CONTROL_INFO_VALID);
+					DATA_SEQUENCE_CONTROL_INFO_VALID);
+		ppdu_info->rx_status.preamble_type =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
+						HT_CONTROL_FIELD_PKT_TYPE);
 		break;
 	}
 
@@ -718,8 +730,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			PHYRX_RSSI_LEGACY_35, RSSI_COMB);
 		ppdu_info->rx_status.bw = HAL_RX_GET(rssi_info_tlv,
 			PHYRX_RSSI_LEGACY_35, RECEIVE_BANDWIDTH);
-		ppdu_info->rx_status.preamble_type = HAL_RX_GET(rssi_info_tlv,
-			PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
 		ppdu_info->rx_status.he_re = 0;
 
 		value = HAL_RX_GET(rssi_info_tlv,

@@ -2001,14 +2001,15 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
+	uint8_t mcs, pkt_type;
 
-	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
+	mcs = ts->mcs;
+	pkt_type = ts->pkt_type;
+
 
 	if (!ts->release_src == HAL_TX_COMP_RELEASE_SOURCE_TQM)
 		return;
 
-	DP_STATS_INCC(peer, tx.tx_failed, 1,
-			!(ts->status == HAL_TX_TQM_RR_FRAME_ACKED));
 
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 			(ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
@@ -2024,39 +2025,39 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 
 	if (!ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
 		return;
+	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
+	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
 
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[MAX_MCS], 1,
-		((ts->mcs >= MAX_MCS_11A) && (ts->pkt_type == DOT11_A)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[ts->mcs], 1,
-		((ts->mcs <= MAX_MCS_11A) && (ts->pkt_type == DOT11_A)));
+	if (!(soc->process_tx_status))
+		return;
 
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[MAX_MCS], 1,
-		((ts->mcs >= MAX_MCS_11B) && (ts->pkt_type == DOT11_B)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[ts->mcs], 1,
-		((ts->mcs <= MAX_MCS_11B) && (ts->pkt_type == DOT11_B)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[MAX_MCS], 1,
-		((ts->mcs >= MAX_MCS_11A) && (ts->pkt_type == DOT11_N)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[ts->mcs], 1,
-		((ts->mcs <= MAX_MCS_11A) && (ts->pkt_type == DOT11_N)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[MAX_MCS], 1,
-		((ts->mcs >= MAX_MCS_11AC) && (ts->pkt_type == DOT11_AC)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[ts->mcs], 1,
-		((ts->mcs <= MAX_MCS_11AC) && (ts->pkt_type == DOT11_AC)));
-
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[MAX_MCS], 1,
-		((ts->mcs >= (MAX_MCS-1)) && (ts->pkt_type == DOT11_AX)));
-	DP_STATS_INCC(peer, tx.pkt_type[ts->pkt_type].mcs_count[ts->mcs], 1,
-		((ts->mcs <= (MAX_MCS-1)) && (ts->pkt_type == DOT11_AX)));
-
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+			((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_A)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+			((mcs < (MAX_MCS_11A)) && (pkt_type == DOT11_A)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+			((mcs >= MAX_MCS_11B) && (pkt_type == DOT11_B)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+			((mcs < MAX_MCS_11B) && (pkt_type == DOT11_B)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+			((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_N)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+			((mcs < MAX_MCS_11A) && (pkt_type == DOT11_N)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+			((mcs >= MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+			((mcs < MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+			((mcs >= (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
+			((mcs < (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
 	DP_STATS_INC(peer, tx.sgi_count[ts->sgi], 1);
 	DP_STATS_INC(peer, tx.bw[ts->bw], 1);
 	DP_STATS_UPD(peer, tx.last_ack_rssi, ts->ack_frame_rssi);
 	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ts->tid)], 1);
 	DP_STATS_INCC(peer, tx.stbc, 1, ts->stbc);
-	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
 	DP_STATS_INCC(peer, tx.ldpc, 1, ts->ldpc);
 	DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
-	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
 	DP_STATS_INCC(peer, tx.retries, 1, ts->transmit_cnt > 1);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
@@ -2667,7 +2668,7 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	 * only for NPR EMU, should be removed, once NPR platforms
 	 * are stable.
 	 */
-	soc->process_tx_status = 1;
+	soc->process_tx_status = 0;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s HAL Tx init Success\n", __func__);

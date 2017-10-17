@@ -902,21 +902,21 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	struct dp_peer *peer = NULL;
 	struct dp_vdev *vdev = NULL;
 	uint32_t pkt_len;
-	struct hal_rx_mpdu_desc_info mpdu_desc_info;
-	struct hal_rx_msdu_desc_info msdu_desc_info;
+	struct hal_rx_mpdu_desc_info mpdu_desc_info = { 0 };
+	struct hal_rx_msdu_desc_info msdu_desc_info = { 0 };
 	enum hal_reo_error_status error;
 	uint32_t peer_mdata;
 	uint8_t *rx_tlv_hdr;
 	uint32_t rx_bufs_reaped[MAX_PDEV_CNT] = { 0 };
 	uint32_t sgi, mcs, tid, nss, bw, reception_type, pkt_type;
-	uint8_t mac_id;
+	uint8_t mac_id = 0;
 	uint32_t ampdu_flag, amsdu_flag;
 	struct dp_pdev *pdev;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
 	struct dp_soc *soc = int_ctx->soc;
-	uint8_t ring_id;
-	uint8_t core_id;
+	uint8_t ring_id = 0;
+	uint8_t core_id = 0;
 	bool is_first_frag = 0;
 	uint16_t mpdu_len = 0;
 	qdf_nbuf_t head_frag_nbuf = NULL;
@@ -938,6 +938,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	qdf_assert(hal_soc);
 
 	hif_pm_runtime_mark_last_busy(soc->osdev->dev);
+	sgi = mcs = tid = nss = bw = reception_type = pkt_type = 0;
 
 	if (qdf_unlikely(hal_srng_access_start(hal_soc, hal_ring))) {
 
@@ -1191,8 +1192,6 @@ done:
 			qdf_nbuf_set_rx_cksum(nbuf, &cksum);
 		}
 
-		sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
-		mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
 		tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -1204,15 +1203,12 @@ done:
 				rx_tlv_hdr);
 		nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
 		pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
-
-		DP_STATS_INC(vdev->pdev, rx.bw[bw], 1);
 		DP_STATS_INC(vdev->pdev,
 				rx.reception_type[reception_type], 1);
 		DP_STATS_INCC(vdev->pdev, rx.nss[nss], 1,
 				((reception_type == REPT_MU_MIMO) ||
 				 (reception_type == REPT_MU_OFDMA_MIMO))
 				);
-		DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
 		DP_STATS_INCC(peer, rx.err.mic_err, 1,
 				hal_rx_mpdu_end_mic_err_get(
 					rx_tlv_hdr));
@@ -1222,50 +1218,58 @@ done:
 
 		DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(tid)],
 				1);
-		DP_STATS_INC(peer, rx.bw[bw], 1);
 		DP_STATS_INC(peer, rx.reception_type[reception_type],
 				1);
-
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[MAX_MCS], 1,
-				((mcs >= MAX_MCS_11A) && (pkt_type
-					== DOT11_A)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[mcs], 1,
-				((mcs <= MAX_MCS_11A) && (pkt_type
-					== DOT11_A)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[MAX_MCS], 1,
-				((mcs >= MAX_MCS_11B)
-				 && (pkt_type == DOT11_B)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[mcs], 1,
-				((mcs <= MAX_MCS_11B)
-				 && (pkt_type == DOT11_B)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[MAX_MCS], 1,
-				((mcs >= MAX_MCS_11A)
-				 && (pkt_type == DOT11_N)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[mcs], 1,
-				((mcs <= MAX_MCS_11A)
-				 && (pkt_type == DOT11_N)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[MAX_MCS], 1,
-				((mcs >= MAX_MCS_11AC)
-				 && (pkt_type == DOT11_AC)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[mcs], 1,
-				((mcs <= MAX_MCS_11AC)
-				 && (pkt_type == DOT11_AC)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[MAX_MCS], 1,
-				((mcs >= (MAX_MCS-1))
-				 && (pkt_type == DOT11_AX)));
-		DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-				mcs_count[mcs], 1,
-				((mcs <= (MAX_MCS-1))
-				 && (pkt_type == DOT11_AX)));
+		if (soc->process_rx_status) {
+			ampdu_flag = (mpdu_desc_info.mpdu_flags &
+					HAL_MPDU_F_AMPDU_FLAG);
+			sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
+			mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
+			DP_STATS_INC(peer, rx.bw[bw], 1);
+			DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
+			DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
+			DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[MAX_MCS], 1,
+					((mcs >= MAX_MCS_11A) &&
+					 (pkt_type == DOT11_A)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[mcs], 1,
+					((mcs < MAX_MCS_11A) &&
+					 (pkt_type == DOT11_A)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[MAX_MCS], 1,
+					((mcs >= MAX_MCS_11B) &&
+					 (pkt_type == DOT11_B)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[mcs], 1,
+					((mcs < MAX_MCS_11B) &&
+					 (pkt_type == DOT11_B)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[MAX_MCS], 1,
+					((mcs >= MAX_MCS_11A) &&
+					 (pkt_type == DOT11_N)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[mcs], 1,
+					((mcs < MAX_MCS_11A) &&
+					 (pkt_type == DOT11_N)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[MAX_MCS], 1,
+					((mcs >= MAX_MCS_11AC) &&
+					 (pkt_type == DOT11_AC)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[mcs], 1,
+					((mcs < MAX_MCS_11AC) &&
+					 (pkt_type == DOT11_AC)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[MAX_MCS], 1,
+					((mcs >= (MAX_MCS - 1)) &&
+					 (pkt_type == DOT11_AX)));
+			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
+					mcs_count[mcs], 1,
+					((mcs < (MAX_MCS - 1)) &&
+					 (pkt_type == DOT11_AX)));
+		}
 
 		/*
 		 * HW structures call this L3 header padding --
@@ -1440,7 +1444,7 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	qdf_spinlock_create(&soc->rx_desc_mutex[pdev_id]);
 	pdev = soc->pdev_list[pdev_id];
 	rxdma_srng = pdev->rx_refill_buf_ring;
-
+	soc->process_rx_status = 0;
 	rxdma_entries = rxdma_srng.alloc_size/hal_srng_get_entrysize(
 						     soc->hal_soc, RXDMA_BUF);
 
