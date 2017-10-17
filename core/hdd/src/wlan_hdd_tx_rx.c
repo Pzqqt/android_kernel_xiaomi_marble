@@ -60,7 +60,7 @@
 #include <cdp_txrx_flow_ctrl_v2.h>
 #include "wlan_hdd_nan_datapath.h"
 #include "pld_common.h"
-#include <cdp_txrx_handle.h>
+#include <cdp_txrx_misc.h>
 #include "wlan_hdd_rx_monitor.h"
 #include "wlan_hdd_power.h"
 #include <wlan_hdd_tsf.h>
@@ -583,6 +583,8 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif
 
 	++adapter->hdd_stats.hddTxRxStats.txXmitCalled;
+	adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			"Recovery in progress, dropping the packet");
@@ -849,28 +851,6 @@ QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
-/**
- * hdd_wlan_datastall_sta_event()- send sta datastall information
- *
- * This Function send send sta datastall status diag event
- *
- * Return: void.
- */
-static void hdd_wlan_datastall_sta_event(void)
-{
-	WLAN_HOST_DIAG_EVENT_DEF(sta_data_stall,
-				struct host_event_wlan_datastall);
-	qdf_mem_zero(&sta_data_stall, sizeof(sta_data_stall));
-	sta_data_stall.reason = STA_TX_TIMEOUT;
-	WLAN_HOST_DIAG_EVENT_REPORT(&sta_data_stall, EVENT_WLAN_STA_DATASTALL);
-}
-#else
-static inline void hdd_wlan_datastall_sta_event(void)
-{
-}
-#endif
-
 /**
  * __hdd_tx_timeout() - TX timeout handler
  * @dev: pointer to network device
@@ -886,6 +866,8 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
 	struct netdev_queue *txq;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	u64 diff_jiffies;
 	int i = 0;
 
 	TX_TIMEOUT_TRACE(dev, QDF_MODULE_ID_HDD_DATA);
@@ -912,7 +894,45 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
 	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
-	hdd_wlan_datastall_sta_event();
+
+	++adapter->hdd_stats.hddTxRxStats.tx_timeout_cnt;
+	++adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt;
+
+	diff_jiffies = jiffies -
+		       adapter->hdd_stats.hddTxRxStats.jiffies_last_txtimeout;
+
+	if ((adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt > 1) &&
+	    (diff_jiffies > (HDD_TX_TIMEOUT * 2))) {
+		/*
+		 * In case when there is no traffic is running, it may
+		 * possible tx time-out may once happen and later system
+		 * recovered then continuous tx timeout count has to be
+		 * reset as it is gets modified only when traffic is running.
+		 * If over a period of time if this count reaches to threshold
+		 * then host triggers a false subsystem restart. In genuine
+		 * time out case kernel will call the tx time-out back to back
+		 * at interval of HDD_TX_TIMEOUT. Here now check if previous
+		 * TX TIME out has occurred more than twice of HDD_TX_TIMEOUT
+		 * back then host may recovered here from data stall.
+		 */
+		adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
+			  "Reset continous tx timeout stat");
+	}
+
+	adapter->hdd_stats.hddTxRxStats.jiffies_last_txtimeout = jiffies;
+
+	if (adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt >
+	    HDD_TX_STALL_THRESHOLD) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "Data stall due to continuous TX timeouts");
+		adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+		cdp_post_data_stall_event(soc,
+					  DATA_STALL_LOG_INDICATOR_HOST_DRIVER,
+					  DATA_STALL_LOG_HOST_STA_TX_TIMEOUT,
+					  0xFF, 0xFF,
+					  DATA_STALL_LOG_RECOVERY_TRIGGER_PDR);
+	}
 }
 
 /**
