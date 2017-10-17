@@ -4306,11 +4306,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
-	struct hdd_scan_info *scan_info = NULL;
 
 	ENTER();
 
-	scan_info = &adapter->scan_info;
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -4370,8 +4368,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 			wireless_send_event(adapter->dev, SIOCGIWAP, &wrqu,
 					    NULL);
 		}
-		if (scan_info != NULL && scan_info->mScanPending)
-			wlan_hdd_scan_abort(adapter);
+		wlan_hdd_scan_abort(adapter);
 
 		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 		hdd_clear_fils_connection_info(adapter);
