@@ -77,6 +77,7 @@
 #include <cdp_txrx_pmf.h>
 #include "wma.h"
 #include "hif.h"
+#include "hif_main.h"
 #include <cdp_txrx_peer_ops.h>
 #ifndef REMOVE_PKT_LOG
 #include "pktlog_ac.h"
