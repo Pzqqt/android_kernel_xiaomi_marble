@@ -1634,6 +1634,13 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	}
 	link_stats_results = wma_handle->link_stats_results;
 
+	if (radio_stats->radio_id >= link_stats_results->num_radio) {
+		WMA_LOGE("%s, invalid radio id:%d, num radio:%d",
+			__func__, radio_stats->radio_id,
+			link_stats_results->num_radio);
+		return -EINVAL;
+	}
+
 	WMA_LOGD("Radio stats Fixed Param:");
 	WMA_LOGD("req_id: %u num_radio: %u more_radio_events: %u",
 		 fixed_param->request_id, fixed_param->num_radio,
