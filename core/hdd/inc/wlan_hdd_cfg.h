@@ -13106,6 +13106,44 @@ enum hdd_external_acs_freq_band {
 
 
 /*
+ * <ini>
+ * g_enable_packet_filter_bitmap - Enable Packet filters before going into
+ * suspend mode
+ * @Min: 0
+ * @Max: 63
+ * @Default: 0
+ * Below is the Detailed bit map of the Filters
+ * bit-0 : IPv6 multicast
+ * bit-1 : IPv4 multicast
+ * bit-2 : IPv4 broadcast
+ * bit-3 : XID - Exchange station Identification packet, solicits the
+ * identification of the receiving station
+ * bit-4 : STP - Spanning Tree Protocol, builds logical loop free topology
+ * bit-5 : DTP/LLC/CDP
+ * DTP - Dynamic Trunking Protocol is used by Ciscoswitches to negotiate
+ * whether an interconnection between two switches should be put into access or
+ * trunk mode
+ * LLC - Logical link control, used for multiplexing, flow & error control
+ * CDP - Cisco Discovery Protocol packet contains information about the cisco
+ * devices in the network
+ *
+ * This ini support to enable above mentioned packet filters
+ * when target goes to suspend mode, clear those when resume
+ *
+ * Related: None
+ *
+ * Supported Feature: PACKET FILTERING
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_PACKET_FILTERS_NAME     "g_enable_packet_filter_bitmap"
+#define CFG_ENABLE_PACKET_FILTERS_DEFAULT  (0)
+#define CFG_ENABLE_PACKET_FILTERS_MIN      (0)
+#define CFG_ENABLE_PACKET_FILTERS_MAX      (63)
+
+/*
  * Type declarations
  */
 
@@ -13961,6 +13999,7 @@ struct hdd_config {
 	int8_t mbo_current_rssi_thres;
 	int8_t mbo_current_rssi_mcc_thres;
 	int8_t mbo_candidate_rssi_btc_thres;
+	uint8_t packet_filters_bitmap;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
