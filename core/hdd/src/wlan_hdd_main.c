@@ -4670,7 +4670,9 @@ bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
 	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
 	while ((NULL != adapter_node) && (QDF_STATUS_SUCCESS == status)) {
 		if (test_bit(DEVICE_IFACE_OPENED,
-		    &adapter_node->adapter->event_flags)) {
+		    &adapter_node->adapter->event_flags) ||
+		    test_bit(SME_SESSION_OPENED,
+			     &adapter_node->adapter->event_flags)) {
 			hdd_debug("Still other ifaces are up cannot close modules");
 			close_modules = false;
 			break;
