@@ -2209,23 +2209,29 @@ wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig, eUpdateIEsType updateTyp
 	switch (updateType) {
 	case eUPDATE_IE_ALL:    /*only used to reset */
 	case eUPDATE_IE_PROBE_RESP:
-		qdf_mem_free(pConfig->pProbeRespIEsBuffer);
-		pConfig->probeRespIEsBufferLen = 0;
-		pConfig->pProbeRespIEsBuffer = NULL;
+		if (pConfig->pProbeRespIEsBuffer) {
+			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
+			pConfig->probeRespIEsBufferLen = 0;
+			pConfig->pProbeRespIEsBuffer = NULL;
+		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
 	case eUPDATE_IE_ASSOC_RESP:
-		qdf_mem_free(pConfig->pAssocRespIEsBuffer);
-		pConfig->assocRespIEsLen = 0;
-		pConfig->pAssocRespIEsBuffer = NULL;
+		if (pConfig->pAssocRespIEsBuffer) {
+			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
+			pConfig->assocRespIEsLen = 0;
+			pConfig->pAssocRespIEsBuffer = NULL;
+		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
 	case eUPDATE_IE_PROBE_BCN:
-		qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
-		pConfig->probeRespBcnIEsLen = 0;
-		pConfig->pProbeRespBcnIEsBuffer = NULL;
+		if (pConfig->pProbeRespBcnIEsBuffer) {
+			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
+			pConfig->probeRespBcnIEsLen = 0;
+			pConfig->pProbeRespBcnIEsBuffer = NULL;
+		}
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
