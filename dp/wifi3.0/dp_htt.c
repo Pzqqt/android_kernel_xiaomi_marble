@@ -59,6 +59,12 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 
+	/* If the peer statistics are already processed as part of
+	 * per-MSDU completion handler, do not process these again in per-PPDU
+	 * indications */
+	if (soc->process_tx_status)
+		return;
+
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
 			(ppdu->success_msdus + ppdu->retry_msdus +
 			 ppdu->failed_msdus),

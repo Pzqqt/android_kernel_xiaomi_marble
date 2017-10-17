@@ -2609,7 +2609,7 @@ QDF_STATUS dp_tx_soc_attach(struct dp_soc *soc)
 	 * only for NPR EMU, should be removed, once NPR platforms
 	 * are stable.
 	 */
-	soc->process_tx_status = 0;
+	soc->process_tx_status = 1;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
 			"%s HAL Tx init Success\n", __func__);
