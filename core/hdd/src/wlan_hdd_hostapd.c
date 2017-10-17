@@ -2834,34 +2834,48 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 }
 #endif
 
-int
-static __iw_softap_set_ini_cfg(struct net_device *dev,
-			       struct iw_request_info *info,
-			       union iwreq_data *wrqu, char *extra)
+static int __iw_softap_set_ini_cfg(struct net_device *dev,
+				   struct iw_request_info *info,
+				   union iwreq_data *wrqu,
+				   char *extra)
 {
 	QDF_STATUS status;
-	int ret;
-	struct hdd_adapter *adapter = (netdev_priv(dev));
+	int errno;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
+	char *value;
+	size_t len;
 
 	ENTER_DEV(dev);
 
+	adapter = netdev_priv(dev);
+	errno = hdd_validate_adapter(adapter);
+	if (errno)
+		return errno;
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
+	errno = wlan_hdd_validate_context(hdd_ctx);
+	if (errno)
+		return errno;
 
-	ret = hdd_check_private_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
+	errno = hdd_check_private_wext_control(hdd_ctx, info);
+	if (errno)
+		return errno;
 
-	hdd_debug("Received data %s", extra);
+	/* ensure null termination by copying into a larger, zeroed buffer */
+	len = min_t(size_t, wrqu->data.length, QCSAP_IOCTL_MAX_STR_LEN);
+	value = qdf_mem_malloc(len + 1);
+	if (!value)
+		return -ENOMEM;
 
-	status = hdd_execute_global_config_command(hdd_ctx, extra);
-	if (QDF_STATUS_SUCCESS != status)
-		ret = -EINVAL;
+	qdf_mem_copy(value, extra, len);
+	hdd_debug("Received data %s", value);
+	status = hdd_execute_global_config_command(hdd_ctx, value);
+	qdf_mem_free(value);
 
-	return ret;
+	EXIT();
+
+	return qdf_status_to_os_return(status);
 }
 
 int
