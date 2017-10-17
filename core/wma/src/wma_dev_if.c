@@ -960,6 +960,11 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
+	if (resp_event->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("Invalid vdev id received from firmware");
+		return -EINVAL;
+	}
+
 	if (resp_event->status == QDF_STATUS_SUCCESS) {
 		wma->interfaces[resp_event->vdev_id].tx_streams =
 			resp_event->cfgd_tx_streams;
