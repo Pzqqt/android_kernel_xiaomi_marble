@@ -234,7 +234,22 @@ vendor3:
 
 	return false;
 }
-
+#ifdef WLAN_FEATURE_11AX
+static void lim_extract_he_op(tpPESession session,
+		tSirProbeRespBeacon *beacon_struct)
+{
+	if (session->he_capable && beacon_struct->he_op.present) {
+		qdf_mem_copy(&session->he_op, &beacon_struct->he_op,
+				sizeof(session->he_op));
+		pe_debug("he_op.bss_color %d", session->he_op.bss_color);
+		pe_debug("he_op.default_pe %d", session->he_op.default_pe);
+	}
+}
+#else
+static inline void lim_extract_he_op(tpPESession session,
+		tSirProbeRespBeacon *beacon_struct)
+{}
+#endif
 /**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
  * @mac_ctx: Pointer to Global MAC structure
@@ -469,6 +484,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			pe_err("AP does not support op_mode rx");
 		}
 	}
+	lim_extract_he_op(session, beacon_struct);
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)
 		*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;

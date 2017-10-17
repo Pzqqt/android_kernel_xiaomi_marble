@@ -261,6 +261,7 @@ enum {
 	QCASAP_PARAM_RANGE_EXT,
 	QCSAP_SET_DEFAULT_AMPDU,
 	QCSAP_ENABLE_RTS_BURSTING,
+	QCASAP_SET_HE_BSS_COLOR,
 };
 
 int iw_get_channel_list(struct net_device *dev,

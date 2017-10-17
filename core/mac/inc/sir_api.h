@@ -2719,6 +2719,20 @@ struct sir_update_session_param {
 };
 
 /**
+ * struct sir_set_he_bss_color
+ * @message_type: SME message type
+ * @length: size of struct sir_set_he_bss_color
+ * @session_id: Session ID
+ * @bss_color: bss color value
+ */
+struct sir_set_he_bss_color {
+	uint16_t message_type;
+	uint16_t length;
+	uint8_t session_id;
+	uint8_t bss_color;
+};
+
+/**
  * struct sir_create_session - Used for creating session in monitor mode
  * @type: SME host message type.
  * @msg_len: Length of the message.

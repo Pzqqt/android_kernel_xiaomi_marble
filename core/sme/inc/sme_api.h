@@ -1856,4 +1856,23 @@ static inline void sme_free_join_rsp_fils_params(tCsrRoamInfo *roam_info)
 {}
 
 #endif
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+/**
+ * sme_set_he_bss_color() - Sets the HE BSS color
+ *
+ * @hal: The handle returned by mac_open
+ * @session_id: session_id of the request
+ * @bss_color: HE BSS color value to set
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_he_bss_color(tHalHandle hal, uint8_t session_id,
+		uint8_t bss_color);
+#else
+static inline QDF_STATUS sme_set_he_bss_color(tHalHandle hal,
+		uint8_t session_id, uint8_t bss_color)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif /* #if !defined( __SME_API_H ) */

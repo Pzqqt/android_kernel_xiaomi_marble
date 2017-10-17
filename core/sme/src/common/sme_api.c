@@ -14792,6 +14792,42 @@ void sme_update_vdev_type_nss(tHalHandle hal, uint8_t max_supp_nss,
 		vdev_nss->tdls, vdev_nss->ocb);
 }
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+#define MAX_BSS_COLOR_VAL 63
+#define MIN_BSS_COLOR_VAL 1
+
+QDF_STATUS sme_set_he_bss_color(tHalHandle hal, uint8_t session_id,
+		uint8_t bss_color)
+
+{
+	struct sir_set_he_bss_color *bss_color_msg;
+	uint8_t len;
+
+	if (!hal) {
+		sme_err("Invalid hal pointer");
+		return QDF_STATUS_E_FAULT;
+	}
+
+	sme_debug("Set HE bss_color  %d", bss_color);
+
+	if (bss_color < MIN_BSS_COLOR_VAL || bss_color > MAX_BSS_COLOR_VAL) {
+		sme_debug("Invalid HE bss_color  %d", bss_color);
+		return QDF_STATUS_E_INVAL;
+	}
+	len = sizeof(*bss_color_msg);
+	bss_color_msg = qdf_mem_malloc(len);
+	if (!bss_color_msg) {
+		sme_err("mem alloc failed");
+		return QDF_STATUS_E_NOMEM;
+	}
+	bss_color_msg->message_type = eWNI_SME_SET_HE_BSS_COLOR;
+	bss_color_msg->length = len;
+	bss_color_msg->session_id = session_id;
+	bss_color_msg->bss_color = bss_color;
+	return umac_send_mb_message_to_mac(bss_color_msg);
+}
+#endif
+
 /**
  * sme_update_hw_dbs_capable() - sets the HW DBS capability
  * @hal: Pointer to HAL

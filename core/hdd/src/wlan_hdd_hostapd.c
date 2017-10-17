@@ -3633,6 +3633,17 @@ static __iw_softap_setparam(struct net_device *dev,
 		break;
 	}
 
+	case QCASAP_SET_HE_BSS_COLOR:
+		if (adapter->device_mode != QDF_SAP_MODE)
+			return -EINVAL;
+
+		status = sme_set_he_bss_color(hHal, adapter->sessionId,
+				set_value);
+		if (QDF_STATUS_SUCCESS != status) {
+			hdd_err("SET_HE_BSS_COLOR failed");
+			return -EIO;
+		}
+		break;
 	case QCASAP_SET_DFS_NOL:
 		wlansap_set_dfs_nol(
 			WLAN_HDD_GET_SAP_CTX_PTR(adapter),
@@ -5662,6 +5673,9 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_RX_CHAINMASK_CMD,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "set_rxchainmask"
+	}, {
+		QCASAP_SET_HE_BSS_COLOR,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "set_he_bss_clr"
 	}, {
 		QCASAP_NSS_CMD,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, 0, "set_nss"
