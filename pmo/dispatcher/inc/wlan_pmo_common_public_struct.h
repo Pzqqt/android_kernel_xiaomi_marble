@@ -185,7 +185,7 @@ enum pmo_wow_interface_pause {
 
 #define PMO_TGT_SUSPEND_COMPLETE_TIMEOUT   6000
 #define PMO_WAKE_LOCK_TIMEOUT              1000
-#define PMO_RESUME_TIMEOUT                 25000
+#define PMO_RESUME_TIMEOUT                 6000
 
 /**
  * struct wow_enable_params - A collection of wow enable override parameters
