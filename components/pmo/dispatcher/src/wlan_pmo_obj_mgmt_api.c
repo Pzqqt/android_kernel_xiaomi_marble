@@ -757,5 +757,3 @@ QDF_STATUS pmo_unregister_is_device_in_low_pwr_mode(
 
 	return QDF_STATUS_SUCCESS;
 }
-
-
