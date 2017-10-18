@@ -10851,8 +10851,6 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					ap_adapter->device_mode,
 					ap_adapter->sessionId);
-	hostapd_state->bCommit = true;
-
 end:
 	mutex_unlock(&hdd_ctx->sap_lock);
 	/* SAP context and beacon cleanup will happen during driver unload
@@ -12439,7 +12437,6 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 						ap_adapter->device_mode,
 						ap_adapter->sessionId);
-		hostapd_state->bCommit = true;
 	}
 end:
 	mutex_unlock(&hdd_ctx->sap_lock);
