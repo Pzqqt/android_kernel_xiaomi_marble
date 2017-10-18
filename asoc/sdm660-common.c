@@ -3135,20 +3135,6 @@ err_dt:
 	return ret;
 }
 
-static void msm_free_auxdev_mem(struct platform_device *pdev)
-{
-	struct snd_soc_card *card = platform_get_drvdata(pdev);
-	int i;
-
-	if (card->num_aux_devs > 0) {
-		for (i = 0; i < card->num_aux_devs; i++) {
-			kfree(msm_aux_dev[i].codec_name);
-			kfree(msm_codec_conf[i].dev_name);
-			kfree(msm_codec_conf[i].name_prefix);
-		}
-	}
-}
-
 static void i2s_auxpcm_init(struct platform_device *pdev)
 {
 	int count;
@@ -3367,7 +3353,6 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	if (pdata->snd_card_val == INT_SND_CARD)
 		mutex_destroy(&pdata->cdc_int_mclk0_mutex);
 
-	msm_free_auxdev_mem(pdev);
 	gpio_free(pdata->us_euro_gpio);
 	gpio_free(pdata->hph_en1_gpio);
 	gpio_free(pdata->hph_en0_gpio);
