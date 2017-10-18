@@ -4074,6 +4074,22 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 					WLAN_CONTROL_PATH);
+
+		/*
+		 * Workqueue which gets scheduled in IPv4 notification
+		 * callback
+		 */
+		INIT_WORK(&adapter->ipv4NotifierWorkQueue,
+			  hdd_ipv4_notifier_work_queue);
+
+#ifdef WLAN_NS_OFFLOAD
+		/*
+		 * Workqueue which gets scheduled in IPv6
+		 * notification callback.
+		 */
+		INIT_WORK(&adapter->ipv6NotifierWorkQueue,
+			  hdd_ipv6_notifier_work_queue);
+#endif
 		break;
 	case QDF_FTM_MODE:
 		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
@@ -4485,6 +4501,16 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		if (true == bCloseSession)
 			hdd_vdev_destroy(adapter);
 		mutex_unlock(&hdd_ctx->sap_lock);
+
+#ifdef WLAN_OPEN_SOURCE
+		cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
+#endif
+
+#ifdef WLAN_NS_OFFLOAD
+#ifdef WLAN_OPEN_SOURCE
+		cancel_work_sync(&adapter->ipv6NotifierWorkQueue);
+#endif
+#endif
 		break;
 	case QDF_OCB_MODE:
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
