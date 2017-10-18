@@ -5125,6 +5125,14 @@ int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
 
 	encrypt_decrypt_rsp_params.vdev_id = data_event->vdev_id;
 	encrypt_decrypt_rsp_params.status = data_event->status;
+
+	if (data_event->data_length > param_buf->num_enc80211_frame) {
+		WMA_LOGE("FW msg data_len %d more than TLV hdr %d",
+			 data_event->data_length,
+			 param_buf->num_enc80211_frame);
+		return -EINVAL;
+	}
+
 	encrypt_decrypt_rsp_params.data_length = data_event->data_length;
 
 	if (encrypt_decrypt_rsp_params.data_length) {
