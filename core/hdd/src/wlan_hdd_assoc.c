@@ -5156,11 +5156,11 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 	case eCSR_AUTH_TYPE_CCKM_WPA:
 	case eCSR_AUTH_TYPE_CCKM_RSN:
 #endif
-		if (pWextState->wpaVersion & IW_AUTH_WPA_VERSION_DISABLED) {
+		if (!sta_ctx->wpa_versions) {
 
 			pRoamProfile->AuthType.authType[0] =
 				eCSR_AUTH_TYPE_OPEN_SYSTEM;
-		} else if (pWextState->wpaVersion & IW_AUTH_WPA_VERSION_WPA) {
+		} else if (sta_ctx->wpa_versions & NL80211_WPA_VERSION_1) {
 
 #ifdef FEATURE_WLAN_ESE
 			if ((RSNAuthType == eCSR_AUTH_TYPE_CCKM_WPA) &&
@@ -5190,7 +5190,7 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 					eCSR_AUTH_TYPE_WPA_NONE;
 			}
 		}
-		if (pWextState->wpaVersion & IW_AUTH_WPA_VERSION_WPA2) {
+		if (sta_ctx->wpa_versions & NL80211_WPA_VERSION_2) {
 #ifdef FEATURE_WLAN_ESE
 			if ((RSNAuthType == eCSR_AUTH_TYPE_CCKM_RSN) &&
 			    ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
@@ -5292,6 +5292,7 @@ static int __iw_set_essid(struct net_device *dev,
 	struct hdd_wext_state *pWextState;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
+	struct hdd_station_ctx *sta_ctx;
 	uint32_t roamId;
 	tCsrRoamProfile *pRoamProfile;
 	eCsrAuthType RSNAuthType;
@@ -5318,6 +5319,7 @@ static int __iw_set_essid(struct net_device *dev,
 		return -EINVAL;
 	}
 
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 
 	if (pWextState->mTKIPCounterMeasures == TKIP_COUNTER_MEASURE_STARTED) {
@@ -5358,8 +5360,7 @@ static int __iw_set_essid(struct net_device *dev,
 		     sizeof(pWextState->roamProfile.SSIDs.SSIDList->SSID.ssId));
 	qdf_mem_copy((void *)(pWextState->roamProfile.SSIDs.SSIDList->SSID.
 			      ssId), extra, wrqu->essid.length);
-	if (IW_AUTH_WPA_VERSION_WPA == pWextState->wpaVersion
-	    || IW_AUTH_WPA_VERSION_WPA2 == pWextState->wpaVersion) {
+	if (sta_ctx->wpa_versions) {
 
 		/* set gen ie */
 		hdd_set_genie_to_csr(adapter, &RSNAuthType);
@@ -5576,6 +5577,18 @@ int iw_get_essid(struct net_device *dev,
 	return ret;
 }
 
+static enum nl80211_wpa_versions iw2nl_wpa_version(int iw_value)
+{
+	enum nl80211_wpa_versions nl_value = 0;
+
+	if (iw_value & IW_AUTH_WPA_VERSION_WPA)
+		nl_value |= NL80211_WPA_VERSION_1;
+	if (iw_value & IW_AUTH_WPA_VERSION_WPA2)
+		nl_value |= NL80211_WPA_VERSION_2;
+
+	return nl_value;
+}
+
 /**
  * __iw_set_auth() -
  *	This function sets the auth type received from the wpa_supplicant
@@ -5613,7 +5626,7 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 
 	switch (wrqu->param.flags & IW_AUTH_INDEX) {
 	case IW_AUTH_WPA_VERSION:
-		pWextState->wpaVersion = wrqu->param.value;
+		sta_ctx->wpa_versions = iw2nl_wpa_version(wrqu->param.value);
 		break;
 
 	case IW_AUTH_CIPHER_PAIRWISE:
