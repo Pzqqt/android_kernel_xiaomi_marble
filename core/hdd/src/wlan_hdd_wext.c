@@ -8880,6 +8880,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 		case CDP_HIF_STATS:
 			hdd_clear_hif_stats();
 			break;
+		case CDP_NAPI_STATS:
+			hdd_clear_napi_stats();
+			break;
 		default:
 			cdp_clear_stats(cds_get_context(QDF_MODULE_ID_SOC),
 						set_value);

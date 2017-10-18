@@ -455,3 +455,33 @@ int hdd_display_napi_stats(void)
 	return 0;
 }
 
+/**
+ * hdd_clear_napi_stats() - clear NAPI stats
+ *
+ * Return: == 0: success; !=0: failure
+ */
+int hdd_clear_napi_stats(void)
+{
+	int i, j;
+	struct qca_napi_data *napid;
+	struct qca_napi_info *napii;
+	struct qca_napi_stat *napis;
+
+	napid = hdd_napi_get_all();
+	if (NULL == napid) {
+		hdd_err("%s unable to retrieve napi structure", __func__);
+		return -EFAULT;
+	}
+
+	for (i = 0; i < CE_COUNT_MAX; i++)
+		if (napid->ce_map & (0x01 << i)) {
+			napii = napid->napis[i];
+			for (j = 0; j < NR_CPUS; j++) {
+				napis = &(napii->stats[j]);
+				qdf_mem_zero(napis,
+					     sizeof(struct qca_napi_stat));
+			}
+		}
+
+	return 0;
+}
