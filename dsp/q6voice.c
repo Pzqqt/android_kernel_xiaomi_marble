@@ -2368,6 +2368,9 @@ static int voice_send_set_device_cmd(struct voice_data *v)
 			&cvp_setdev_cmd.cvp_set_device_v2.tx_topology_id,
 			&cvp_setdev_cmd.cvp_set_device_v2.rx_topology_id);
 
+	voice_set_topology_specific_info(v, CVP_VOC_RX_TOPOLOGY_CAL);
+	voice_set_topology_specific_info(v, CVP_VOC_TX_TOPOLOGY_CAL);
+
 	cvp_setdev_cmd.cvp_set_device_v2.tx_port_id = v->dev_tx.port_id;
 	cvp_setdev_cmd.cvp_set_device_v2.rx_port_id = v->dev_rx.port_id;
 
@@ -2721,6 +2724,9 @@ static int voice_send_cvp_create_cmd(struct voice_data *v)
 	voc_get_tx_rx_topology(v,
 			&cvp_session_cmd.cvp_session.tx_topology_id,
 			&cvp_session_cmd.cvp_session.rx_topology_id);
+
+	voice_set_topology_specific_info(v, CVP_VOC_RX_TOPOLOGY_CAL);
+	voice_set_topology_specific_info(v, CVP_VOC_TX_TOPOLOGY_CAL);
 
 	cvp_session_cmd.cvp_session.direction = 2; /*tx and rx*/
 	cvp_session_cmd.cvp_session.tx_port_id = v->dev_tx.port_id;
@@ -3864,6 +3870,9 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 			VSS_PARAM_VOCPROC_RX_CHANNEL_INFO;
 		channel_info->num_channels = v->dev_rx.no_of_channels;
 		channel_info->bits_per_sample = v->dev_rx.bits_per_sample;
+		memcpy(&channel_info->channel_mapping,
+		       v->dev_rx.channel_mapping,
+		       VSS_NUM_CHANNELS_MAX * sizeof(uint8_t));
 		break;
 
 	case TX_PATH:
@@ -3871,6 +3880,9 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 			VSS_PARAM_VOCPROC_TX_CHANNEL_INFO;
 		channel_info->num_channels = v->dev_tx.no_of_channels;
 		channel_info->bits_per_sample = v->dev_tx.bits_per_sample;
+		memcpy(&channel_info->channel_mapping,
+		       v->dev_tx.channel_mapping,
+		       VSS_NUM_CHANNELS_MAX * sizeof(uint8_t));
 		break;
 
 	case EC_REF_PATH:
@@ -3878,6 +3890,9 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 			VSS_PARAM_VOCPROC_EC_REF_CHANNEL_INFO;
 		channel_info->num_channels = v->dev_rx.no_of_channels;
 		channel_info->bits_per_sample = v->dev_rx.bits_per_sample;
+		memcpy(&channel_info->channel_mapping,
+		       v->dev_rx.channel_mapping,
+		       VSS_NUM_CHANNELS_MAX * sizeof(uint8_t));
 		break;
 	default:
 		pr_err("%s: Invalid param type\n",
@@ -3886,21 +3901,6 @@ static int voice_send_cvp_channel_info_v2(struct voice_data *v,
 		goto done;
 	}
 
-	if (channel_info->num_channels == NUM_CHANNELS_MONO) {
-		channel_info->channel_mapping[0] = PCM_CHANNEL_FC;
-	} else if (channel_info->num_channels == NUM_CHANNELS_STEREO) {
-		channel_info->channel_mapping[0] = PCM_CHANNEL_FL;
-		channel_info->channel_mapping[1] = PCM_CHANNEL_FR;
-	} else if (channel_info->num_channels == NUM_CHANNELS_QUAD &&
-		   param_type == TX_PATH) {
-		channel_info->channel_mapping[0] = PCM_CHANNEL_FL;
-		channel_info->channel_mapping[1] = PCM_CHANNEL_FR;
-		channel_info->channel_mapping[2] = PCM_CHANNEL_LS;
-		channel_info->channel_mapping[3] = PCM_CHANNEL_RS;
-	} else {
-		pr_warn("%s: Unsupported num channels: %d for path: %d\n",
-			__func__, channel_info->num_channels, param_type);
-	}
 
 	v->cvp_state = CMD_STATUS_FAIL;
 	v->async_err = 0;
@@ -4110,16 +4110,9 @@ static int voice_send_cvp_mfc_config_v2(struct voice_data *v)
 	mfc_config_info->num_channels = v->dev_rx.no_of_channels;
 	mfc_config_info->bits_per_sample = 16;
 	mfc_config_info->sample_rate = v->dev_rx.sample_rate;
-
-	if (mfc_config_info->num_channels == NUM_CHANNELS_MONO) {
-		mfc_config_info->channel_type[0] = PCM_CHANNEL_FC;
-	} else if (mfc_config_info->num_channels == NUM_CHANNELS_STEREO) {
-		mfc_config_info->channel_type[0] = PCM_CHANNEL_FL;
-		mfc_config_info->channel_type[1] = PCM_CHANNEL_FR;
-	} else {
-		pr_warn("%s: Unsupported num channels: %d\n",
-			__func__, mfc_config_info->num_channels);
-	}
+	memcpy(&mfc_config_info->channel_type,
+	       v->dev_rx.channel_mapping,
+	       VSS_NUM_CHANNELS_MAX * sizeof(uint8_t));
 
 	v->cvp_state = CMD_STATUS_FAIL;
 	v->async_err = 0;
@@ -8181,6 +8174,96 @@ done:
 	pr_debug("%s: Using topology %d\n", __func__, topology);
 
 	return topology;
+}
+
+int voice_set_topology_specific_info(struct voice_data *v,
+				     uint32_t topology_idx)
+{
+	struct cal_block_data *cal_block = NULL;
+	int ret = 0;
+	uint32_t topo_channels;
+
+	if (common.cal_data[topology_idx] == NULL) {
+		pr_err("%s: cal type is NULL for cal index %x\n",
+			__func__, topology_idx);
+		ret = -EINVAL;
+		goto done;
+	}
+
+	mutex_lock(&common.cal_data[topology_idx]->lock);
+	cal_block = cal_utils_get_only_cal_block(
+		common.cal_data[topology_idx]);
+	if (cal_block == NULL) {
+		pr_debug("%s: cal_block not found for cal index %x\n",
+			__func__, topology_idx);
+		ret = -EINVAL;
+		goto unlock;
+	}
+
+	if (topology_idx == CVP_VOC_RX_TOPOLOGY_CAL) {
+		topo_channels = ((struct audio_cal_info_voc_top *)
+				cal_block->cal_info)->num_channels;
+		if (topo_channels > 0) {
+			v->dev_rx.no_of_channels = topo_channels;
+			pr_debug("%s: Topology Rx no of channels: %d",
+				 __func__, v->dev_rx.no_of_channels);
+			memcpy(&v->dev_rx.channel_mapping,
+			       &((struct audio_cal_info_voc_top *)
+			       cal_block->cal_info)->channel_mapping,
+			       VSS_CHANNEL_MAPPING_SIZE);
+		} else {
+			pr_debug("%s: cal data is zero, default to Rx backend config\n",
+				 __func__);
+			if (v->dev_rx.no_of_channels == NUM_CHANNELS_MONO) {
+				v->dev_rx.channel_mapping[0] = PCM_CHANNEL_FC;
+			} else if (v->dev_rx.no_of_channels ==
+							NUM_CHANNELS_STEREO) {
+				v->dev_rx.channel_mapping[0] = PCM_CHANNEL_FL;
+				v->dev_rx.channel_mapping[1] = PCM_CHANNEL_FR;
+			} else {
+				pr_warn("%s: Unsupported Rx num channels: %d\n",
+					__func__, v->dev_rx.no_of_channels);
+			}
+		}
+	} else if (topology_idx == CVP_VOC_TX_TOPOLOGY_CAL) {
+		topo_channels = ((struct audio_cal_info_voc_top *)
+				cal_block->cal_info)->num_channels;
+		if (topo_channels > 0) {
+			v->dev_tx.no_of_channels = topo_channels;
+			pr_debug("%s: Topology Tx no of channels: %d",
+				 __func__, v->dev_tx.no_of_channels);
+			memcpy(&v->dev_tx.channel_mapping,
+			       &((struct audio_cal_info_voc_top *)
+			       cal_block->cal_info)->channel_mapping,
+			       VSS_CHANNEL_MAPPING_SIZE);
+		} else {
+			pr_debug("%s: cal data is zero, default to Tx backend config\n",
+				 __func__);
+			if (v->dev_tx.no_of_channels == NUM_CHANNELS_MONO) {
+				v->dev_tx.channel_mapping[0] = PCM_CHANNEL_FC;
+			} else if (v->dev_tx.no_of_channels ==
+							NUM_CHANNELS_STEREO) {
+				v->dev_tx.channel_mapping[0] = PCM_CHANNEL_FL;
+				v->dev_tx.channel_mapping[1] = PCM_CHANNEL_FR;
+			} else if (v->dev_tx.no_of_channels ==
+							NUM_CHANNELS_QUAD) {
+				v->dev_tx.channel_mapping[0] = PCM_CHANNEL_FL;
+				v->dev_tx.channel_mapping[1] = PCM_CHANNEL_FR;
+				v->dev_tx.channel_mapping[2] = PCM_CHANNEL_LS;
+				v->dev_tx.channel_mapping[3] = PCM_CHANNEL_RS;
+			} else {
+				pr_warn("%s: Unsupported Tx num channels: %d\n",
+					__func__, v->dev_tx.no_of_channels);
+			}
+		}
+	} else {
+		pr_err("%s: topology index %x is invalid\n",
+		       __func__, topology_idx);
+	}
+unlock:
+	mutex_unlock(&common.cal_data[topology_idx]->lock);
+done:
+	return ret;
 }
 
 static int get_cal_type_index(int32_t cal_type)

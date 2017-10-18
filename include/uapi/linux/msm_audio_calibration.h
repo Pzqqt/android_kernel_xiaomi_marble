@@ -107,6 +107,8 @@ enum {
 
 #define AFE_SIDETONE_IIR_CAL_TYPE AFE_SIDETONE_IIR_CAL_TYPE
 
+#define TOPOLOGY_SPECIFIC_CHANNEL_INFO
+
 enum {
 	VERSION_0_0,
 };
@@ -376,9 +378,15 @@ struct audio_cal_info_lsm {
 	int32_t		app_type;
 };
 
+#define VSS_NUM_CHANNELS_MAX	8
+
 struct audio_cal_info_voc_top {
 	int32_t		topology;
 	int32_t		acdb_id;
+#ifdef TOPOLOGY_SPECIFIC_CHANNEL_INFO
+	uint32_t	num_channels;
+	uint8_t		channel_mapping[VSS_NUM_CHANNELS_MAX];
+#endif
 };
 
 struct audio_cal_info_vocproc {

@@ -2063,6 +2063,8 @@ int voc_disable_topology(uint32_t session_id, uint32_t disable);
 int voc_set_device_config(uint32_t session_id, uint8_t path_dir,
 			  struct media_format_info *finfo);
 uint32_t voice_get_topology(uint32_t topology_idx);
+int voice_set_topology_specific_info(struct voice_data *v,
+				     uint32_t topology_idx);
 int voc_set_sound_focus(struct sound_focus_param sound_focus_param);
 int voc_get_sound_focus(struct sound_focus_param *soundFocusData);
 int voc_get_source_tracking(struct source_tracking_param *sourceTrackingData);
