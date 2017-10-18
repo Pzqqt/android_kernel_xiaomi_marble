@@ -14188,12 +14188,12 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 	if (!pairwise) {
 		/* set group key */
-		hdd_debug("%s- %d: setting Broadcast key", __func__, __LINE__);
+		hdd_debug("setting Broadcast key");
 		setKey.keyDirection = eSIR_RX_ONLY;
 		qdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
 		/* set pairwise key */
-		hdd_debug("%s- %d: setting pairwise key", __func__, __LINE__);
+		hdd_debug("setting pairwise key");
 		setKey.keyDirection = eSIR_TX_RX;
 		qdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
@@ -14254,8 +14254,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		if (!pairwise) {
 			/* set group key */
 			if (sta_ctx->roam_info.deferKeyComplete) {
-				hdd_debug("%s- %d: Perform Set key Complete",
-					  __func__, __LINE__);
+				hdd_debug("Perform Set key Complete");
 				hdd_perform_roam_set_key_complete(adapter);
 			}
 		}
