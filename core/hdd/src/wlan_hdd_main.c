@@ -3504,25 +3504,7 @@ error_register_wext:
 
 void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 {
-	struct hdd_cfg80211_state *cfgState;
-
-	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
-
-	if (NULL != cfgState->buf) {
-		unsigned long rc;
-
-		rc = wait_for_completion_timeout(
-			&adapter->tx_action_cnf_event,
-			msecs_to_jiffies(ACTION_FRAME_TX_TIMEOUT));
-		if (!rc) {
-			hdd_err("HDD Wait for Action Confirmation Failed!!");
-			/*
-			 * Inform tx status as FAILURE to upper layer and free
-			 * cfgState->buf
-			 */
-			 hdd_send_action_cnf(adapter, false);
-		}
-	}
+	hdd_debug("Cleanup action frame");
 }
 
 /**
@@ -4121,7 +4103,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	INIT_WORK(&adapter->scan_block_work, wlan_hdd_cfg80211_scan_block_cb);
 
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
-	mutex_init(&cfgState->remain_on_chan_ctx_lock);
 
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Add it to the hdd's session list. */
@@ -5896,74 +5877,6 @@ static void hdd_rx_wake_lock_create(struct hdd_context *hdd_ctx)
 }
 
 /**
- * hdd_roc_context_init() - Init ROC context
- * @hdd_ctx:	HDD context.
- *
- * Initialize ROC context.
- *
- * Return: 0 on success and errno on failure.
- */
-static int hdd_roc_context_init(struct hdd_context *hdd_ctx)
-{
-	qdf_spinlock_create(&hdd_ctx->hdd_roc_req_q_lock);
-	qdf_list_create(&hdd_ctx->hdd_roc_req_q, MAX_ROC_REQ_QUEUE_ENTRY);
-
-	INIT_DELAYED_WORK(&hdd_ctx->roc_req_work, wlan_hdd_roc_request_dequeue);
-
-	return 0;
-}
-
-/**
- * hdd_destroy_roc_req_q() - Free allocations in ROC Req Queue
- * @hdd_ctx: HDD context.
- *
- * Free memory allocations made in ROC Req Queue nodes.
- *
- * Return: None.
- */
-static void hdd_destroy_roc_req_q(struct hdd_context *hdd_ctx)
-{
-	struct hdd_roc_req *hdd_roc_req;
-	QDF_STATUS status;
-
-	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
-
-	while (!qdf_list_empty(&hdd_ctx->hdd_roc_req_q)) {
-		status = qdf_list_remove_front(&hdd_ctx->hdd_roc_req_q,
-				(qdf_list_node_t **) &hdd_roc_req);
-
-		if (QDF_STATUS_SUCCESS != status) {
-			qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
-			hdd_debug("unable to remove roc element from list");
-			QDF_ASSERT(0);
-			return;
-		}
-
-		if (hdd_roc_req->remain_chan_ctx)
-			qdf_mem_free(hdd_roc_req->remain_chan_ctx);
-
-		qdf_mem_free(hdd_roc_req);
-	}
-
-	qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
-}
-
-/**
- * hdd_roc_context_destroy() - Destroy ROC context
- * @hdd_ctx:	HDD context.
- *
- * Destroy roc list and flush the pending roc work.
- *
- * Return: None.
- */
-static void hdd_roc_context_destroy(struct hdd_context *hdd_ctx)
-{
-	flush_delayed_work(&hdd_ctx->roc_req_work);
-	hdd_destroy_roc_req_q(hdd_ctx);
-	qdf_spinlock_destroy(&hdd_ctx->hdd_roc_req_q_lock);
-}
-
-/**
  * hdd_context_deinit() - Deinitialize HDD context
  * @hdd_ctx:    HDD context.
  *
@@ -5976,8 +5889,6 @@ static void hdd_roc_context_destroy(struct hdd_context *hdd_ctx)
 static int hdd_context_deinit(struct hdd_context *hdd_ctx)
 {
 	wlan_hdd_cfg80211_deinit(hdd_ctx->wiphy);
-
-	hdd_roc_context_destroy(hdd_ctx);
 
 	hdd_sap_context_destroy(hdd_ctx);
 
@@ -6148,9 +6059,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	hdd_close_all_adapters(hdd_ctx, false);
 
 	hdd_ipa_cleanup(hdd_ctx);
-
-	/* Free up RoC request queue and flush workqueue */
-	cds_flush_work(&hdd_ctx->roc_req_work);
 
 	wlansap_global_deinit();
 	wlan_hdd_deinit_chan_info(hdd_ctx);
@@ -7806,10 +7714,6 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto scan_destroy;
 
-	ret = hdd_roc_context_init(hdd_ctx);
-	if (ret)
-		goto sap_destroy;
-
 	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
 
 	hdd_init_offloaded_packets_ctx(hdd_ctx);
@@ -7817,12 +7721,9 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	ret = wlan_hdd_cfg80211_init(hdd_ctx->parent_dev, hdd_ctx->wiphy,
 				     hdd_ctx->config);
 	if (ret)
-		goto roc_destroy;
+		goto sap_destroy;
 
 	return 0;
-
-roc_destroy:
-	hdd_roc_context_destroy(hdd_ctx);
 
 sap_destroy:
 	hdd_sap_context_destroy(hdd_ctx);

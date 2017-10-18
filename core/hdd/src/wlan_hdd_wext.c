@@ -9451,9 +9451,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	}
 	break;
 	case WE_SET_AP_WPS_IE:
-		hdd_debug("Received WE_SET_AP_WPS_IE");
-		sme_update_p2p_ie(WLAN_HDD_GET_HAL_CTX(adapter), pBuffer,
-				  s_priv_data.length);
+		hdd_debug("Received WE_SET_AP_WPS_IE, won't process");
 		break;
 	case WE_SET_CONFIG:
 		vstatus = hdd_execute_global_config_command(hdd_ctx, pBuffer);

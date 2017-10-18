@@ -579,35 +579,10 @@ struct hdd_beacon_data {
 	int dtim_period;
 };
 
-enum rem_on_channel_request_type {
-	REMAIN_ON_CHANNEL_REQUEST,
-	OFF_CHANNEL_ACTION_TX,
-};
-
 struct action_pkt_buffer {
 	uint8_t *frame_ptr;
 	uint32_t frame_length;
 	uint16_t freq;
-};
-
-struct hdd_remain_on_chan_ctx {
-	struct net_device *dev;
-	struct ieee80211_channel chan;
-	enum nl80211_channel_type chan_type;
-	unsigned int duration;
-	u64 cookie;
-	enum rem_on_channel_request_type rem_on_chan_request;
-	qdf_mc_timer_t hdd_remain_on_chan_timer;
-	struct action_pkt_buffer action_pkt_buff;
-	bool hdd_remain_on_chan_cancel_in_progress;
-	uint32_t scan_id;
-};
-
-/* RoC Request entry */
-struct hdd_roc_req {
-	qdf_list_node_t node;   /* MUST be first element */
-	struct hdd_adapter *adapter;
-	struct hdd_remain_on_chan_ctx *remain_chan_ctx;
 };
 
 /**
@@ -654,11 +629,6 @@ enum action_frm_type {
 
 struct hdd_cfg80211_state {
 	uint16_t current_freq;
-	u64 action_cookie;
-	uint8_t *buf;
-	size_t len;
-	struct hdd_remain_on_chan_ctx *remain_on_chan_ctx;
-	struct mutex remain_on_chan_ctx_lock;
 	enum p2p_action_frame_state actionFrmState;
 	/* is_go_neg_ack_received flag is set to 1 when
 	 * the pending ack for GO negotiation req is

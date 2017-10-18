@@ -4600,9 +4600,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info, uint32_t roamId,
 		}
 		break;
 #endif
-	case eCSR_ROAM_REMAIN_CHAN_READY:
-		hdd_remain_chan_ready_handler(adapter, roam_info->roc_scan_id);
-		break;
 #ifdef WLAN_FEATURE_11W
 	case eCSR_ROAM_UNPROT_MGMT_FRAME_IND:
 		hdd_indicate_unprot_mgmt_frame(adapter,

@@ -103,11 +103,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 			     uint32_t nFrameLength, uint8_t *pbFrames,
 			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi);
 
-void hdd_remain_chan_ready_handler(struct hdd_adapter *adapter,
-	uint32_t scan_id);
-void hdd_send_action_cnf(struct hdd_adapter *adapter, bool actionSendSuccess);
 int wlan_hdd_check_remain_on_channel(struct hdd_adapter *adapter);
-void hdd_send_action_cnf_cb(uint32_t session_id, bool status);
 void wlan_hdd_cancel_existing_remain_on_channel(struct hdd_adapter *adapter);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
@@ -154,7 +150,7 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work);
 /**
  * wlan_hdd_set_power_save() - hdd set power save
  * @adapter:    adapter context
- * @pnoa:       pointer to noa parameters
+ * @ps_config:  pointer to power save configure
  *
  * This function sets power save parameters.
  *
@@ -162,7 +158,7 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work);
  *    others - failure
  */
 int wlan_hdd_set_power_save(struct hdd_adapter *adapter,
-	tpP2pPsConfig pnoa);
+	struct p2p_ps_config *ps_config);
 
 /**
  * wlan_hdd_listen_offload_start() - hdd set listen offload start
