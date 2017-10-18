@@ -321,9 +321,6 @@ void dp_rx_msdus_set_payload(qdf_nbuf_t msdu)
 	l2_hdr_offset = hal_rx_msdu_end_l3_hdr_padding_get(data);
 	qdf_nbuf_pull_head(msdu, rx_pkt_offset + l2_hdr_offset);
 
-	data = qdf_nbuf_data(msdu);
-
-	/* hexdump(data, 32); */
 }
 
 static inline
@@ -388,14 +385,12 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		prev_buf = mpdu_buf;
 
 		frag_list_sum_len = 0;
-		msdu_orig = qdf_nbuf_next(head_msdu);
+		msdu = qdf_nbuf_next(head_msdu);
 		is_first_frag = 1;
 
-		while (msdu_orig) {
+		while (msdu) {
 
-			dp_rx_msdus_set_payload(head_msdu);
-
-			msdu = msdu_orig;
+			dp_rx_msdus_set_payload(msdu);
 
 			if (is_first_frag) {
 				is_first_frag = 0;
@@ -409,7 +404,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 			/* Move to the next */
 			prev_buf = msdu;
-			msdu_orig = qdf_nbuf_next(msdu_orig);
+			msdu = qdf_nbuf_next(msdu);
 		}
 
 		qdf_nbuf_trim_tail(prev_buf, HAL_RX_FCS_LEN);
