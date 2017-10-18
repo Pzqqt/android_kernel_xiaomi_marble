@@ -4966,6 +4966,13 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	WMA_LOGD("WMA <-- WMI_SERVICE_READY_EVENTID");
 
+	if (ev->num_dbs_hw_modes > param_buf->num_wlan_dbs_hw_mode_list) {
+		WMA_LOGE("FW dbs_hw_mode entry %d more than value %d in TLV hdr",
+			 ev->num_dbs_hw_modes,
+			 param_buf->num_wlan_dbs_hw_mode_list);
+		return -EINVAL;
+	}
+
 	wma_handle->num_dbs_hw_modes = ev->num_dbs_hw_modes;
 	ev_wlan_dbs_hw_mode_list = param_buf->wlan_dbs_hw_mode_list;
 	wma_handle->hw_mode.hw_mode_list =
