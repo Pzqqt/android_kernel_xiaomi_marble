@@ -47,6 +47,7 @@
 #include "wlan_hdd_power.h"
 #include "wma_api.h"
 #include "cds_utils.h"
+#include "wlan_p2p_ucfg_api.h"
 
 #ifdef WLAN_UMAC_CONVERGENCE
 #include "wlan_cfg80211.h"
@@ -635,6 +636,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		pwextBuf->roamProfile.nAddIEScanLength =
 			pScanInfo->scanAddIE.length;
 	}
+
+	if ((request->n_ssids == 1) && (request->ssids != NULL) &&
+	    (request->ssids[0].ssid_len > 7) &&
+	     !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
+		ucfg_p2p_status_scan(adapter->hdd_vdev);
+
 #ifdef NAPIER_SCAN
 	status = wlan_cfg80211_scan(hdd_ctx->hdd_pdev, request, &params);
 	if (params.default_ie.ptr)
@@ -775,29 +782,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		pP2pIe = wlan_hdd_get_p2p_ie_ptr((uint8_t *) request->ie,
 						 request->ie_len);
 		if (pP2pIe != NULL) {
-#ifdef WLAN_FEATURE_P2P_DEBUG
-			if (((global_p2p_connection_status ==
-							P2P_GO_NEG_COMPLETED)
-			     || (global_p2p_connection_status ==
-				 P2P_GO_NEG_PROCESS))
-			    && (QDF_P2P_CLIENT_MODE ==
-						adapter->device_mode)) {
-				global_p2p_connection_status =
-					P2P_CLIENT_CONNECTING_STATE_1;
-				hdd_debug("[P2P State] Changing state from Go nego completed to Connection is started");
-				hdd_debug("[P2P]P2P Scanning is started for 8way Handshake");
-			} else
-			if ((global_p2p_connection_status ==
-			     P2P_CLIENT_DISCONNECTED_STATE)
-			    && (QDF_P2P_CLIENT_MODE ==
-				adapter->device_mode)) {
-				global_p2p_connection_status =
-					P2P_CLIENT_CONNECTING_STATE_2;
-				hdd_debug("[P2P State] Changing state from Disconnected state to Connection is started");
-				hdd_debug("[P2P]P2P Scanning is started for 4way Handshake");
-			}
-#endif
-
 			/* no_cck will be set during p2p find to
 			 * disable 11b rates
 			 */

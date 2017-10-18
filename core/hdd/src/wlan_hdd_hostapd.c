@@ -87,6 +87,7 @@
 #include "wlan_dfs_utils_api.h"
 #include <wlan_reg_ucfg_api.h>
 #include "wlan_utility.h"
+#include <wlan_p2p_ucfg_api.h>
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -8068,17 +8069,8 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		wlan_hdd_set_dhcp_server_offload(adapter);
 #endif /* DHCP_SERVER_OFFLOAD */
 
-#ifdef WLAN_FEATURE_P2P_DEBUG
-	if (adapter->device_mode == QDF_P2P_GO_MODE) {
-		if (global_p2p_connection_status == P2P_GO_NEG_COMPLETED) {
-			global_p2p_connection_status = P2P_GO_COMPLETED_STATE;
-			hdd_debug("[P2P State] From Go nego completed to Non-autonomous Group started");
-		} else if (global_p2p_connection_status == P2P_NOT_ACTIVE) {
-			global_p2p_connection_status = P2P_GO_COMPLETED_STATE;
-			hdd_debug("[P2P State] From Inactive to Autonomous Group started");
-		}
-	}
-#endif
+	ucfg_p2p_status_start_bss(adapter->hdd_vdev);
+
 	/* Check and restart SAP if it is on unsafe channel */
 	hdd_unsafe_channel_restart_sap(hdd_ctx);
 
@@ -8304,13 +8296,9 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	/* Reset WNI_CFG_PROBE_RSP Flags */
 	wlan_hdd_reset_prob_rspies(adapter);
 	hdd_destroy_acs_timer(adapter);
-#ifdef WLAN_FEATURE_P2P_DEBUG
-	if ((adapter->device_mode == QDF_P2P_GO_MODE) &&
-	    (global_p2p_connection_status == P2P_GO_COMPLETED_STATE)) {
-		hdd_debug("[P2P State] From GO completed to Inactive state GO got removed");
-		global_p2p_connection_status = P2P_NOT_ACTIVE;
-	}
-#endif
+
+	ucfg_p2p_status_stop_bss(adapter->hdd_vdev);
+
 	EXIT();
 
 	return ret;

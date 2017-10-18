@@ -105,13 +105,6 @@ const char *p2p_action_frame_type[] = { "GO Negotiation Request",
 					"Provision Discovery Request",
 					"Provision Discovery Response"};
 
-/* We no need to protect this variable since
- * there is no chance of race to condition
- * and also not make any complicating the code
- * just for debugging log
- */
-enum p2p_connection_status global_p2p_connection_status = P2P_NOT_ACTIVE;
-
 #endif
 #define MAX_TDLS_ACTION_FRAME_TYPE 11
 const char *tdls_action_frame_type[] = { "TDLS Setup Request",
@@ -1479,38 +1472,6 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		   buf[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET +
 		   WLAN_HDD_PUBLIC_ACTION_FRAME_ACTION_OFFSET]);
 
-#ifdef WLAN_FEATURE_P2P_DEBUG
-	if ((type == SIR_MAC_MGMT_FRAME) &&
-	    (subType == SIR_MAC_MGMT_ACTION) &&
-	    wlan_hdd_is_type_p2p_action(&buf
-				[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET])) {
-		actionFrmType = buf[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
-		if (actionFrmType >= MAX_P2P_ACTION_FRAME_TYPE) {
-			hdd_debug("[P2P] unknown[%d] ---> OTA to " MAC_ADDRESS_STR,
-				actionFrmType,
-				MAC_ADDR_ARRAY(&buf
-					       [WLAN_HDD_80211_FRM_DA_OFFSET]));
-		} else {
-			hdd_debug("[P2P] %s ---> OTA to "
-			       MAC_ADDRESS_STR,
-			       p2p_action_frame_type[actionFrmType],
-			       MAC_ADDR_ARRAY(&buf
-					      [WLAN_HDD_80211_FRM_DA_OFFSET]));
-			if ((actionFrmType == WLAN_HDD_PROV_DIS_REQ)
-			    && (global_p2p_connection_status == P2P_NOT_ACTIVE)) {
-				global_p2p_connection_status = P2P_GO_NEG_PROCESS;
-				hdd_debug("[P2P State]Inactive state to GO negotiation progress state");
-			} else if ((actionFrmType == WLAN_HDD_GO_NEG_CNF) &&
-				   (global_p2p_connection_status ==
-				    P2P_GO_NEG_PROCESS)) {
-				global_p2p_connection_status =
-					P2P_GO_NEG_COMPLETED;
-				hdd_debug("[P2P State]GO nego progress to GO nego completed state");
-			}
-		}
-	}
-#endif
-
 	noack = dont_wait_for_ack;
 
 	/* If the wait is coming as 0 with off channel set */
@@ -2522,56 +2483,6 @@ int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_P2P_DEBUG
-/*
- * wlan_hdd_p2p_action_debug() - Log P2P state and update global status
- * @actionFrmType: action frame type
- * @macFrom: peer mac address
- *
- * return: void
- */
-static void wlan_hdd_p2p_action_debug(enum action_frm_type actionFrmType,
-					uint8_t *macFrom)
-{
-	if (actionFrmType >= MAX_P2P_ACTION_FRAME_TYPE) {
-		hdd_debug("[P2P] unknown[%d] <--- OTA from " MAC_ADDRESS_STR,
-			actionFrmType, MAC_ADDR_ARRAY(macFrom));
-	} else {
-		hdd_debug("[P2P] %s <--- OTA from " MAC_ADDRESS_STR,
-			p2p_action_frame_type[actionFrmType],
-			MAC_ADDR_ARRAY(macFrom));
-		if ((actionFrmType == WLAN_HDD_PROV_DIS_REQ)
-		    && (global_p2p_connection_status == P2P_NOT_ACTIVE)) {
-			global_p2p_connection_status = P2P_GO_NEG_PROCESS;
-			hdd_debug("[P2P State]Inactive state to GO negotiation progress state");
-		} else
-		if ((actionFrmType == WLAN_HDD_GO_NEG_CNF)
-		    && (global_p2p_connection_status == P2P_GO_NEG_PROCESS)) {
-			global_p2p_connection_status = P2P_GO_NEG_COMPLETED;
-			hdd_debug("[P2P State]GO negotiation progress to GO negotiation completed state");
-		} else
-		if ((actionFrmType == WLAN_HDD_INVITATION_REQ)
-		    && (global_p2p_connection_status == P2P_NOT_ACTIVE)) {
-			global_p2p_connection_status = P2P_GO_NEG_COMPLETED;
-			hdd_debug("[P2P State]Inactive state to GO negotiation completed state Autonomous GO formation");
-		}
-	}
-}
-#else
-/*
- * wlan_hdd_p2p_action_debug() - dummy
- * @actionFrmType: action frame type
- * @macFrom: peer mac address
- *
- * return: void
- */
-static void wlan_hdd_p2p_action_debug(enum action_frm_type actionFrmType,
-					uint8_t *macFrom)
-{
-
-}
-#endif
-
 void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 			     uint32_t nFrameLength,
 			     uint8_t *pbFrames,
@@ -2686,16 +2597,11 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 					     + 2], SIR_MAC_P2P_OUI,
 					    SIR_MAC_P2P_OUI_SIZE)) {
 			/* P2P action frames */
-				uint8_t *macFrom = &pbFrames
-					[WLAN_HDD_80211_PEER_ADDR_OFFSET];
 				actionFrmType =
 					pbFrames
 					[WLAN_HDD_PUBLIC_ACTION_FRAME_TYPE_OFFSET];
 				hdd_debug("Rx Action Frame %u",
 					 actionFrmType);
-
-				wlan_hdd_p2p_action_debug(actionFrmType,
-								macFrom);
 
 				mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 				pRemainChanCtx = cfgState->remain_on_chan_ctx;

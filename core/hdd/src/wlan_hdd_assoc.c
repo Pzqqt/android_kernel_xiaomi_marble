@@ -66,6 +66,7 @@
 #include "wlan_pmo_ucfg_api.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_utility.h"
+#include "wlan_p2p_ucfg_api.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1272,21 +1273,8 @@ static void hdd_send_association_event(struct net_device *dev,
 		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
 		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
 
-#ifdef WLAN_FEATURE_P2P_DEBUG
-		if (adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-			if (global_p2p_connection_status ==
-			    P2P_CLIENT_CONNECTING_STATE_1) {
-				global_p2p_connection_status =
-					P2P_CLIENT_CONNECTED_STATE_1;
-				hdd_debug("[P2P State] Changing state from Connecting state to Connected State for 8-way Handshake");
-			} else if (global_p2p_connection_status ==
-				   P2P_CLIENT_CONNECTING_STATE_2) {
-				global_p2p_connection_status =
-					P2P_CLIENT_COMPLETED_STATE;
-				hdd_debug("[P2P State] Changing state from Connecting state to P2P Client Connection Completed");
-			}
-		}
-#endif
+		ucfg_p2p_status_connect(adapter->hdd_vdev);
+
 		pr_info("wlan: " MAC_ADDRESS_STR " connected to "
 			MAC_ADDRESS_STR "\n",
 			MAC_ADDR_ARRAY(adapter->macAddressCurrent.bytes),
@@ -1689,29 +1677,9 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 				roam_info->reasonCode :
 				WLAN_REASON_UNSPECIFIED);
 		}
-		/*
-		 * During the WLAN uninitialization,supplicant is stopped
-		 * before the driver so not sending the status of the
-		 * connection to supplicant.
-		 */
-		if (cds_is_load_or_unload_in_progress()) {
-#ifdef WLAN_FEATURE_P2P_DEBUG
-			if (adapter->device_mode == QDF_P2P_CLIENT_MODE) {
-				if (global_p2p_connection_status ==
-				    P2P_CLIENT_CONNECTED_STATE_1) {
-					global_p2p_connection_status =
-						P2P_CLIENT_DISCONNECTED_STATE;
-					hdd_debug("[P2P State] 8 way Handshake completed and moved to disconnected state");
-				} else if (global_p2p_connection_status ==
-					   P2P_CLIENT_COMPLETED_STATE) {
-					global_p2p_connection_status =
-						P2P_NOT_ACTIVE;
-					hdd_debug("[P2P State] P2P Client is removed and moved to inactive state");
-				}
-			}
-#endif
 
-		}
+		/* update P2P connection status */
+		ucfg_p2p_status_disconnect(adapter->hdd_vdev);
 	}
 
 	hdd_wmm_adapter_clear(adapter);

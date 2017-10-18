@@ -72,22 +72,6 @@
 #define ACTION_FRAME_RSP_WAIT 500
 #define ACTION_FRAME_ACK_WAIT 300
 
-#ifdef WLAN_FEATURE_P2P_DEBUG
-enum p2p_connection_status {
-	P2P_NOT_ACTIVE,
-	P2P_GO_NEG_PROCESS,
-	P2P_GO_NEG_COMPLETED,
-	P2P_CLIENT_CONNECTING_STATE_1,
-	P2P_GO_COMPLETED_STATE,
-	P2P_CLIENT_CONNECTED_STATE_1,
-	P2P_CLIENT_DISCONNECTED_STATE,
-	P2P_CLIENT_CONNECTING_STATE_2,
-	P2P_CLIENT_COMPLETED_STATE
-};
-
-extern enum p2p_connection_status global_p2p_connection_status;
-#endif
-
 struct p2p_app_set_ps {
 	uint8_t opp_ps;
 	uint32_t ctWindow;
