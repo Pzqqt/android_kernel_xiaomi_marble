@@ -217,6 +217,7 @@ static int msm_dai_q6_hdmi_hw_params(struct snd_pcm_substream *substream,
 		dai_data->port_config.hdmi_multi_ch.bit_width = 16;
 		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
+	case SNDRV_PCM_FORMAT_S24_3LE:
 		dai_data->port_config.hdmi_multi_ch.bit_width = 24;
 		break;
 	}
@@ -435,7 +436,9 @@ static struct snd_soc_dai_driver msm_dai_q6_hdmi_hdmi_rx_dai = {
 			 SNDRV_PCM_RATE_48000 | SNDRV_PCM_RATE_88200 |
 			 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
 			 SNDRV_PCM_RATE_192000,
-		.formats = SNDRV_PCM_FMTBIT_S16_LE | SNDRV_PCM_FMTBIT_S24_LE,
+		.formats = SNDRV_PCM_FMTBIT_S16_LE |
+			   SNDRV_PCM_FMTBIT_S24_LE |
+			   SNDRV_PCM_FMTBIT_S24_3LE,
 		.channels_min = 2,
 		.channels_max = 8,
 		.rate_max = 192000,
@@ -457,7 +460,8 @@ static struct snd_soc_dai_driver msm_dai_q6_display_port_rx_dai[] = {
 				 SNDRV_PCM_RATE_96000 | SNDRV_PCM_RATE_176400 |
 				 SNDRV_PCM_RATE_192000,
 			.formats = SNDRV_PCM_FMTBIT_S16_LE |
-				   SNDRV_PCM_FMTBIT_S24_LE,
+				   SNDRV_PCM_FMTBIT_S24_LE |
+				   SNDRV_PCM_FMTBIT_S24_3LE,
 			.channels_min = 2,
 			.channels_max = 8,
 			.rate_max =     192000,

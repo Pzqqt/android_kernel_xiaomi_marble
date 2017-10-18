@@ -408,7 +408,8 @@ static const char *const slim_tx_ch_text[] = {"One", "Two", "Three", "Four",
 static const char *const vi_feed_ch_text[] = {"One", "Two"};
 static char const *bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE",
 					  "S32_LE"};
-static char const *ext_disp_bit_format_text[] = {"S16_LE", "S24_LE"};
+static char const *ext_disp_bit_format_text[] = {"S16_LE", "S24_LE",
+						 "S24_3LE"};
 static char const *slim_sample_rate_text[] = {"KHZ_8", "KHZ_16",
 					"KHZ_32", "KHZ_44P1", "KHZ_48",
 					"KHZ_88P2", "KHZ_96", "KHZ_176P4",
@@ -1420,10 +1421,12 @@ static int ext_disp_rx_format_get(struct snd_kcontrol *kcontrol,
 		return idx;
 
 	switch (ext_disp_rx_cfg[idx].bit_format) {
+	case SNDRV_PCM_FORMAT_S24_3LE:
+		ucontrol->value.integer.value[0] = 2;
+		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
 		ucontrol->value.integer.value[0] = 1;
 		break;
-
 	case SNDRV_PCM_FORMAT_S16_LE:
 	default:
 		ucontrol->value.integer.value[0] = 0;
@@ -1445,6 +1448,9 @@ static int ext_disp_rx_format_put(struct snd_kcontrol *kcontrol,
 		return idx;
 
 	switch (ucontrol->value.integer.value[0]) {
+	case 2:
+		ext_disp_rx_cfg[idx].bit_format = SNDRV_PCM_FORMAT_S24_3LE;
+		break;
 	case 1:
 		ext_disp_rx_cfg[idx].bit_format = SNDRV_PCM_FORMAT_S24_LE;
 		break;
