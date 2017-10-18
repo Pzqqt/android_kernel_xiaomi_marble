@@ -9793,14 +9793,15 @@ void hdd_dp_trace_init(struct hdd_config *config)
 	uint8_t proto_bitmap = DP_TRACE_CONFIG_DEFAULT_BITMAP;
 	uint8_t config_params[DP_TRACE_CONFIG_NUM_PARAMS];
 	uint8_t num_entries = 0;
+	uint32_t bw_compute_interval;
 
 	hdd_string_to_u8_array(config->dp_trace_config, config_params,
 				&num_entries, sizeof(config_params));
 
 	/* calculating, num bw timer intervals in a second (1000ms) */
-	if (config->busBandwidthComputeInterval)
-		thresh_time_limit =
-			(1000 / config->busBandwidthComputeInterval);
+	bw_compute_interval = GET_BW_COMPUTE_INTV(config);
+	if (bw_compute_interval)
+		thresh_time_limit = 1000 / bw_compute_interval;
 	else
 		hdd_err("busBandwidthComputeInterval is 0, using defaults");
 

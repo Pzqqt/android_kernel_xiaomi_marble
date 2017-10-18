@@ -1981,6 +1981,9 @@ void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx);
  * Return: None.
  */
 void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx);
+
+#define GET_BW_COMPUTE_INTV(config) ((config)->busBandwidthComputeInterval)
+
 #else
 
 static inline
@@ -2023,6 +2026,9 @@ static inline
 void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx)
 {
 }
+
+#define GET_BW_COMPUTE_INTV(config) 0
+
 #endif
 
 int hdd_qdf_trace_enable(QDF_MODULE_ID module_id, uint32_t bitmask);
