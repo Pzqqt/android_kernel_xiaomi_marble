@@ -877,7 +877,7 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 	mgmt_ota_comp_cb tx_ota_comp_cb;
 	struct wlan_frame_hdr *wh;
 	struct wlan_objmgr_peer *peer;
-	struct wmi_mgmt_params mgmt_param;
+	struct wmi_mgmt_params mgmt_param = { 0 };
 	struct wlan_objmgr_psoc *psoc;
 	void *mac_addr;
 
