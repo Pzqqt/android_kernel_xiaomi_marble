@@ -21,6 +21,7 @@
 #include <linux/module.h>
 #include <linux/input.h>
 #include <linux/of_device.h>
+#include <linux/pm_qos.h>
 #include <sound/core.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
@@ -72,6 +73,7 @@
 #define TDM_CHANNEL_MAX 8
 
 #define MSM_HIFI_ON 1
+#define MSM_LL_QOS_VALUE 300 /* time in us to ensure LPM doesn't go in C3/C4 */
 
 enum {
 	SLIM_RX_0 = 0,
@@ -2614,21 +2616,6 @@ static int msm_hifi_put(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static s32 msm_qos_value(struct snd_pcm_runtime *runtime)
-{
-	s32 usecs;
-
-	if (!runtime->rate)
-		return -EINVAL;
-
-	/* take 75% of period time as the deadline */
-	usecs = (750000 / runtime->rate) * runtime->period_size;
-	usecs += ((750000 % runtime->rate) * runtime->period_size) /
-		 runtime->rate;
-
-	return usecs;
-}
-
 static int msm_qos_ctl_get(struct snd_kcontrol *kcontrol,
 			   struct snd_ctl_elem_value *ucontrol)
 {
@@ -2668,7 +2655,7 @@ static int msm_qos_ctl_put(struct snd_kcontrol *kcontrol,
 			pr_err("%s: runtime is null\n", __func__);
 			return -EINVAL;
 		}
-		usecs = msm_qos_value(substream->runtime);
+		usecs = MSM_LL_QOS_VALUE;
 		if (usecs >= 0)
 			pm_qos_add_request(&substream->latency_pm_qos_req,
 					PM_QOS_CPU_DMA_LATENCY, usecs);
@@ -4616,6 +4603,30 @@ static struct snd_soc_ops sdm845_tdm_be_ops = {
 	.shutdown = sdm845_tdm_snd_shutdown
 };
 
+static int msm_fe_qos_prepare(struct snd_pcm_substream *substream)
+{
+	cpumask_t mask;
+
+	if (pm_qos_request_active(&substream->latency_pm_qos_req))
+		pm_qos_remove_request(&substream->latency_pm_qos_req);
+
+	cpumask_clear(&mask);
+	cpumask_set_cpu(1, &mask); /* affine to core 1 */
+	cpumask_set_cpu(2, &mask); /* affine to core 2 */
+	cpumask_copy(&substream->latency_pm_qos_req.cpus_affine, &mask);
+
+	substream->latency_pm_qos_req.type = PM_QOS_REQ_AFFINE_CORES;
+
+	pm_qos_add_request(&substream->latency_pm_qos_req,
+			  PM_QOS_CPU_DMA_LATENCY,
+			  MSM_LL_QOS_VALUE);
+	return 0;
+}
+
+static struct snd_soc_ops msm_fe_qos_ops = {
+	.prepare = msm_fe_qos_prepare,
+};
+
 static int msm_mi2s_snd_startup(struct snd_pcm_substream *substream)
 {
 	int ret = 0;
@@ -4986,6 +4997,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		/* this dainlink has playback support */
 		.ignore_pmdown_time = 1,
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA5,
+		.ops = &msm_fe_qos_ops,
 	},
 	{
 		.name = "Listen 1 Audio Service",
@@ -5053,6 +5065,7 @@ static struct snd_soc_dai_link msm_common_dai_links[] = {
 		.ignore_pmdown_time = 1,
 		 /* this dainlink has playback support */
 		.id = MSM_FRONTEND_DAI_MULTIMEDIA8,
+		.ops = &msm_fe_qos_ops,
 	},
 	/* HDMI Hostless */
 	{
