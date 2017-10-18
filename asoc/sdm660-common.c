@@ -3353,9 +3353,18 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	if (pdata->snd_card_val == INT_SND_CARD)
 		mutex_destroy(&pdata->cdc_int_mclk0_mutex);
 
-	gpio_free(pdata->us_euro_gpio);
-	gpio_free(pdata->hph_en1_gpio);
-	gpio_free(pdata->hph_en0_gpio);
+	if (gpio_is_valid(pdata->us_euro_gpio)) {
+		gpio_free(pdata->us_euro_gpio);
+		pdata->us_euro_gpio = 0;
+	}
+	if (gpio_is_valid(pdata->hph_en1_gpio)) {
+		gpio_free(pdata->hph_en1_gpio);
+		pdata->hph_en1_gpio = 0;
+	}
+	if (gpio_is_valid(pdata->hph_en0_gpio)) {
+		gpio_free(pdata->hph_en0_gpio);
+		pdata->hph_en0_gpio = 0;
+	}
 
 	if (pdata->snd_card_val != INT_SND_CARD)
 		audio_notifier_deregister("sdm660");
