@@ -619,6 +619,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_ENABLE_LTE_COEX_MIN,
 		     CFG_ENABLE_LTE_COEX_MAX),
 
+	REG_VARIABLE(CFG_VC_MODE_BITMAP, WLAN_PARAM_HexInteger,
+		struct hdd_config, vc_mode_cfg_bitmap,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_VC_MODE_BITMAP_DEFAULT,
+		CFG_VC_MODE_BITMAP_MIN,
+		CFG_VC_MODE_BITMAP_MAX),
+
 	REG_VARIABLE(CFG_FORCE_SAP_ACS, WLAN_PARAM_Integer,
 		     struct hdd_config, force_sap_acs,
 		     VAR_FLAGS_DYNAMIC_CFG |
@@ -6945,6 +6952,8 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [%u]",
 		CFG_OCE_WAN_SCORE_IDX15_TO_12_NAME,
 		hdd_ctx->config->oce_wan_score_slots15_to_12);
+	hdd_debug("Name = [%s] value = [0x%x]", CFG_VC_MODE_BITMAP,
+		hdd_ctx->config->vc_mode_cfg_bitmap);
 }
 
 
