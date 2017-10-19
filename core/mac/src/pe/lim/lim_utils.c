@@ -6608,6 +6608,28 @@ tSirRetStatus lim_strip_ie(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11W
+void lim_del_pmf_sa_query_timer(tpAniSirGlobal mac_ctx, tpPESession pe_session)
+{
+	uint32_t associated_sta;
+	tpDphHashNode sta_ds = NULL;
+
+	for (associated_sta = 1;
+			associated_sta < mac_ctx->lim.gLimAssocStaLimit;
+			associated_sta++) {
+		sta_ds = dph_get_hash_entry(mac_ctx, associated_sta,
+				&pe_session->dph.dphHashTable);
+		if (NULL == sta_ds)
+			continue;
+
+		pe_err("Deleting pmfSaQueryTimer for staid: %d",
+			sta_ds->staIndex);
+		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
+		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
+	}
+}
+#endif
+
 tSirRetStatus lim_strip_supp_op_class_update_struct(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen,
 		tDot11fIESuppOperatingClasses *dst)
