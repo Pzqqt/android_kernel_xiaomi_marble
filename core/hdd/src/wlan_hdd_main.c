@@ -4410,6 +4410,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 	case QDF_SAP_MODE:
 		/* Flush IPA exception path packets */
 		hdd_ipa_flush(hdd_ctx);
+
 	case QDF_P2P_GO_MODE:
 		if (QDF_SAP_MODE == adapter->device_mode) {
 			if (test_bit(ACS_PENDING, &adapter->event_flags)) {
@@ -4419,7 +4420,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 			}
 		}
 		cds_flush_work(&adapter->sap_stop_bss_work);
+
 		/* Any softap specific cleanup here... */
+		wlan_hdd_undo_acs(adapter);
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
