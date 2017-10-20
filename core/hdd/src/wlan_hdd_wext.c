@@ -5513,116 +5513,6 @@ void wlan_hdd_change_country_code_callback(void *context)
 }
 
 /**
- * __iw_set_mlme() - SIOCSIWMLME ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_mlme(struct net_device *dev,
-			 struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct iw_mlme *mlme = (struct iw_mlme *)extra;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	/* reason_code is unused. By default it is set to
-	 * eCSR_DISCONNECT_REASON_UNSPECIFIED
-	 */
-	switch (mlme->cmd) {
-	case IW_MLME_DISASSOC:
-	case IW_MLME_DEAUTH:
-
-		if (sta_ctx->conn_info.connState ==
-		    eConnectionState_Associated) {
-			eCsrRoamDisconnectReason reason =
-				eCSR_DISCONNECT_REASON_UNSPECIFIED;
-
-			if (mlme->reason_code == HDD_REASON_MICHAEL_MIC_FAILURE)
-				reason = eCSR_DISCONNECT_REASON_MIC_ERROR;
-
-			INIT_COMPLETION(adapter->disconnect_comp_var);
-			status =
-				sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(adapter),
-						    adapter->sessionId, reason);
-
-			if (QDF_STATUS_SUCCESS == status) {
-				unsigned long rc;
-
-				rc = wait_for_completion_timeout(&adapter->
-								 disconnect_comp_var,
-								 msecs_to_jiffies
-									 (WLAN_WAIT_TIME_DISCONNECT));
-				if (!rc)
-					hdd_err("disconnect_comp_var failed");
-			} else
-				hdd_err("%d Command Disassociate/Deauthenticate : csr_roam_disconnect failure returned %d",
-					(int)mlme->cmd, (int)status);
-
-			/* Resetting authKeyMgmt */
-			(WLAN_HDD_GET_WEXT_STATE_PTR(adapter))->authKeyMgmt =
-				0;
-
-			hdd_debug("Disabling queues");
-			wlan_hdd_netif_queue_control(adapter,
-					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
-					WLAN_CONTROL_PATH);
-
-		} else {
-			hdd_warn("%d Command Disassociate/Deauthenticate called but station is not in associated state",
-				(int)mlme->cmd);
-		}
-		break;
-	default:
-		hdd_err("Unexpected cmd: %d", (int)mlme->cmd);
-		return -EINVAL;
-	} /* end of switch */
-
-	EXIT();
-
-	return status;
-
-}
-
-/**
- * iw_set_mlme() - SSR wrapper for __iw_set_mlme()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_mlme(struct net_device *dev, struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_mlme(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * wlan_hdd_update_phymode() - handle change in PHY mode
  * @net: device upon which PHY mode change was received
  * @hal: umac handle for the driver
@@ -11343,7 +11233,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,      /* SIOCGIWTHRSPY */
 	(iw_handler) iw_set_ap_address, /* SIOCSIWAP */
 	(iw_handler) iw_get_ap_address, /* SIOCGIWAP */
-	(iw_handler) iw_set_mlme,       /* SIOCSIWMLME */
+	(iw_handler) NULL,      /* SIOCSIWMLME */
 	(iw_handler) NULL,      /* SIOCGIWAPLIST */
 	(iw_handler) NULL,      /* SIOCSIWSCAN */
 	(iw_handler) NULL,      /* SIOCGIWSCAN */
