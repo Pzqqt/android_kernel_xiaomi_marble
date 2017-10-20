@@ -866,6 +866,8 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 	qdf_spinlock_destroy(&pMac->sys.bbt_mgmt_lock);
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		if (pMac->lim.gpSession[i].valid == true) {
+			lim_del_pmf_sa_query_timer(pMac,
+						   &pMac->lim.gpSession[i]);
 			pe_delete_session(pMac, &pMac->lim.gpSession[i]);
 		}
 	}
