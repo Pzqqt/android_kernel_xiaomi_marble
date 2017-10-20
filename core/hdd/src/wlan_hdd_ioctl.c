@@ -4756,7 +4756,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 	uint32_t ibss_ie_length;
 	uint8_t *value = command;
 	tSirModifyIE ibssModifyIE;
-	tCsrRoamProfile *pRoamProfile;
+	tCsrRoamProfile *roam_profile;
 	struct hdd_wext_state *pWextState;
 
 
@@ -4811,10 +4811,10 @@ static int drv_cmd_set_ibss_beacon_oui_data(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	pRoamProfile = &pWextState->roamProfile;
+	roam_profile = &pWextState->roamProfile;
 
 	qdf_copy_macaddr(&ibssModifyIE.bssid,
-		     pRoamProfile->BSSIDs.bssid);
+		     roam_profile->BSSIDs.bssid);
 
 	ibssModifyIE.smeSessionId = adapter->sessionId;
 	ibssModifyIE.notify = true;

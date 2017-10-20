@@ -6552,7 +6552,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	    ) {
 		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-		tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
+		tCsrRoamProfile *roam_profile = &pWextState->roamProfile;
 		struct hdd_station_ctx *sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -6563,9 +6563,9 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
-		num_ch = pRoamProfile->ChannelInfo.numOfChannels = 1;
+		num_ch = roam_profile->ChannelInfo.numOfChannels = 1;
 		sta_ctx->conn_info.operationChannel = channel;
-		pRoamProfile->ChannelInfo.ChannelList =
+		roam_profile->ChannelInfo.ChannelList =
 			&sta_ctx->conn_info.operationChannel;
 	} else if ((adapter->device_mode == QDF_SAP_MODE)
 		   || (adapter->device_mode == QDF_P2P_GO_MODE)

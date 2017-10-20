@@ -1244,7 +1244,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	/* rather than with cfg to see if FT is enabled */
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
+	tCsrRoamProfile *roam_profile = &(pWextState->roamProfile);
 
 	memset(&wrqu, '\0', sizeof(wrqu));
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
@@ -1287,14 +1287,14 @@ static void hdd_send_association_event(struct net_device *dev,
 		 * fFTEnable is true.
 		 * Send FT Keys to the supplicant when FT is enabled
 		 */
-		if ((pRoamProfile->AuthType.authType[0] ==
+		if ((roam_profile->AuthType.authType[0] ==
 		     eCSR_AUTH_TYPE_FT_RSN_PSK)
-		    || (pRoamProfile->AuthType.authType[0] ==
+		    || (roam_profile->AuthType.authType[0] ==
 			eCSR_AUTH_TYPE_FT_RSN)
 #ifdef FEATURE_WLAN_ESE
-		    || (pRoamProfile->AuthType.authType[0] ==
+		    || (roam_profile->AuthType.authType[0] ==
 			eCSR_AUTH_TYPE_CCKM_RSN)
-		    || (pRoamProfile->AuthType.authType[0] ==
+		    || (roam_profile->AuthType.authType[0] ==
 			eCSR_AUTH_TYPE_CCKM_WPA)
 #endif
 		    ) {
@@ -1434,9 +1434,9 @@ static void hdd_send_association_event(struct net_device *dev,
 #ifdef FEATURE_WLAN_ESE
 		if (eConnectionState_Associated ==
 			 sta_ctx->conn_info.connState) {
-			if ((pRoamProfile->AuthType.authType[0] ==
+			if ((roam_profile->AuthType.authType[0] ==
 			     eCSR_AUTH_TYPE_CCKM_RSN) ||
-			    (pRoamProfile->AuthType.authType[0] ==
+			    (roam_profile->AuthType.authType[0] ==
 				eCSR_AUTH_TYPE_CCKM_WPA))
 				hdd_send_new_ap_channel_info(dev, adapter,
 							     pCsrRoamInfo);
@@ -5131,11 +5131,11 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 {
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
+	tCsrRoamProfile *roam_profile = &(pWextState->roamProfile);
 	struct hdd_station_ctx *sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
-	pRoamProfile->AuthType.numEntries = 1;
+	roam_profile->AuthType.numEntries = 1;
 	hdd_debug("sta_ctx->conn_info.authType = %d",
 		 sta_ctx->conn_info.authType);
 
@@ -5147,7 +5147,7 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 #endif
 		if (!sta_ctx->wpa_versions) {
 
-			pRoamProfile->AuthType.authType[0] =
+			roam_profile->AuthType.authType[0] =
 				eCSR_AUTH_TYPE_OPEN_SYSTEM;
 		} else if (sta_ctx->wpa_versions & NL80211_WPA_VERSION_1) {
 
@@ -5156,26 +5156,26 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			    ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			     == IW_AUTH_KEY_MGMT_802_1X)) {
 				hdd_debug("set authType to CCKM WPA. AKM also 802.1X.");
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_CCKM_WPA;
 			} else if (RSNAuthType == eCSR_AUTH_TYPE_CCKM_WPA) {
 				hdd_debug("Last chance to set authType to CCKM WPA.");
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_CCKM_WPA;
 			} else
 #endif
 			if ((pWextState->
 			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			    == IW_AUTH_KEY_MGMT_802_1X) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WPA;
 			} else
 			if ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_PSK)
 			    == IW_AUTH_KEY_MGMT_PSK) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WPA_PSK;
 			} else {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WPA_NONE;
 			}
 		}
@@ -5185,11 +5185,11 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			    ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			     == IW_AUTH_KEY_MGMT_802_1X)) {
 				hdd_debug("set authType to CCKM RSN. AKM also 802.1X.");
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_CCKM_RSN;
 			} else if (RSNAuthType == eCSR_AUTH_TYPE_CCKM_RSN) {
 				hdd_debug("Last chance to set authType to CCKM RSN.");
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_CCKM_RSN;
 			} else
 #endif
@@ -5198,30 +5198,30 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			    ((pWextState->
 			      authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			     == IW_AUTH_KEY_MGMT_802_1X)) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_RSN;
 			} else if ((RSNAuthType == eCSR_AUTH_TYPE_FT_RSN_PSK)
 				   &&
 				   ((pWextState->
 				     authKeyMgmt & IW_AUTH_KEY_MGMT_PSK)
 				    == IW_AUTH_KEY_MGMT_PSK)) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_RSN_PSK;
 			} else
 
 #ifdef WLAN_FEATURE_11W
 			if (RSNAuthType == eCSR_AUTH_TYPE_RSN_PSK_SHA256) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_PSK_SHA256;
 			} else if (RSNAuthType ==
 				   eCSR_AUTH_TYPE_RSN_8021X_SHA256) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_8021X_SHA256;
 			} else
 #endif
-			if (hdd_check_fils_rsn_n_set_auth_type(pRoamProfile,
+			if (hdd_check_fils_rsn_n_set_auth_type(roam_profile,
 				RSNAuthType)) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					RSNAuthType;
 				hdd_debug("updated profile authtype as %d",
 					RSNAuthType);
@@ -5229,15 +5229,15 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 			} else if ((pWextState->
 			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			    == IW_AUTH_KEY_MGMT_802_1X) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN;
 			} else
 			if ((pWextState->authKeyMgmt & IW_AUTH_KEY_MGMT_PSK)
 			    == IW_AUTH_KEY_MGMT_PSK) {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_RSN_PSK;
 			} else {
-				pRoamProfile->AuthType.authType[0] =
+				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_UNKNOWN;
 			}
 		}
@@ -5245,14 +5245,14 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 
 	case eCSR_AUTH_TYPE_SHARED_KEY:
 
-		pRoamProfile->AuthType.authType[0] = eCSR_AUTH_TYPE_SHARED_KEY;
+		roam_profile->AuthType.authType[0] = eCSR_AUTH_TYPE_SHARED_KEY;
 		break;
 	default:
 
 #ifdef FEATURE_WLAN_ESE
 		hdd_debug("In default, unknown auth type.");
 #endif /* FEATURE_WLAN_ESE */
-		pRoamProfile->AuthType.authType[0] = eCSR_AUTH_TYPE_UNKNOWN;
+		roam_profile->AuthType.authType[0] = eCSR_AUTH_TYPE_UNKNOWN;
 		break;
 	}
 
