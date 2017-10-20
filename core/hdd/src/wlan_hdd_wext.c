@@ -4621,131 +4621,6 @@ static int iw_get_name(struct net_device *dev,
 }
 
 /**
- * __iw_set_freq() - SIOCSIWFREQ ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_freq(struct net_device *dev, struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra)
-{
-	uint32_t numChans = 0;
-	uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	uint32_t indx = 0;
-	int ret;
-	struct hdd_wext_state *pWextState;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	tCsrRoamProfile *pRoamProfile;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
-	pRoamProfile = &pWextState->roamProfile;
-
-	/* Link is up then return cant set channel */
-	if (eConnectionState_IbssConnected == sta_ctx->conn_info.connState ||
-	    eConnectionState_Associated == sta_ctx->conn_info.connState) {
-		hdd_debug("IBSS Associated");
-		return -EOPNOTSUPP;
-	}
-
-	/* Settings by Frequency as input */
-	if ((wrqu->freq.e == 1) && (wrqu->freq.m >= (uint32_t) 2.412e8) &&
-	    (wrqu->freq.m <= (uint32_t) 5.825e8)) {
-		uint32_t freq = wrqu->freq.m / 100000;
-
-		while ((indx < FREQ_CHAN_MAP_TABLE_SIZE)
-		       && (freq != freq_chan_map[indx].freq))
-			indx++;
-		if (indx >= FREQ_CHAN_MAP_TABLE_SIZE)
-			return -EINVAL;
-
-		wrqu->freq.e = 0;
-		wrqu->freq.m = freq_chan_map[indx].chan;
-
-	}
-
-	if (wrqu->freq.e == 0) {
-		if ((wrqu->freq.m < WNI_CFG_CURRENT_CHANNEL_STAMIN) ||
-		    (wrqu->freq.m > WNI_CFG_CURRENT_CHANNEL_STAMAX)) {
-			hdd_debug("Channel %d is not in range[%d to %d]",
-				   wrqu->freq.m,
-				   WNI_CFG_CURRENT_CHANNEL_STAMIN,
-				   WNI_CFG_CURRENT_CHANNEL_STAMAX);
-			return -EINVAL;
-		}
-
-		numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-
-		if (sme_cfg_get_str(hHal, WNI_CFG_VALID_CHANNEL_LIST,
-				    validChan, &numChans) !=
-				QDF_STATUS_SUCCESS) {
-			hdd_err("WNI_CFG_VALID_CHANNEL_LIST failed");
-			return -EIO;
-		}
-
-		for (indx = 0; indx < numChans; indx++) {
-			if (wrqu->freq.m == validChan[indx])
-				break;
-		}
-	} else {
-		return -EINVAL;
-	}
-
-	if (indx >= numChans)
-		return -EINVAL;
-
-	/* Set the Operational Channel */
-	numChans = pRoamProfile->ChannelInfo.numOfChannels = 1;
-	sta_ctx->conn_info.operationChannel = wrqu->freq.m;
-	pRoamProfile->ChannelInfo.ChannelList =
-		&sta_ctx->conn_info.operationChannel;
-
-	hdd_debug("pRoamProfile->operationChannel  = %d", wrqu->freq.m);
-
-	EXIT();
-
-	return ret;
-}
-
-/**
- * iw_set_freq() - SSR wrapper for __iw_set_freq()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_freq(struct net_device *dev, struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_freq(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_get_range() - SIOCGIWRANGE ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -10938,7 +10813,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_get_name,       /* SIOCGIWNAME */
 	(iw_handler) NULL,      /* SIOCSIWNWID */
 	(iw_handler) NULL,      /* SIOCGIWNWID */
-	(iw_handler) iw_set_freq,       /* SIOCSIWFREQ */
+	(iw_handler) NULL,      /* SIOCSIWFREQ */
 	(iw_handler) NULL,      /* SIOCGIWFREQ */
 	(iw_handler) NULL,      /* SIOCSIWMODE */
 	(iw_handler) NULL,      /* SIOCGIWMODE */
