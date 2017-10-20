@@ -48,6 +48,64 @@ static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
 #endif
 
 /**
+ * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
+ *			      (WBM), following error handling
+ *
+ * @soc: core DP main context
+ * @ring_desc: opaque pointer to the REO error ring descriptor
+ *
+ * Return: QDF_STATUS
+ */
+	static QDF_STATUS
+dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
+{
+	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
+	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
+	void *wbm_rel_srng = wbm_desc_rel_ring->hal_srng;
+	void *hal_soc = soc->hal_soc;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	void *src_srng_desc;
+
+	if (!wbm_rel_srng) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"WBM RELEASE RING not initialized");
+		return status;
+	}
+
+	if (qdf_unlikely(hal_srng_access_start(hal_soc, wbm_rel_srng))) {
+
+		/* TODO */
+		/*
+		 * Need API to convert from hal_ring pointer to
+		 * Ring Type / Ring Id combo
+		 */
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("HAL RING Access For WBM Release SRNG Failed - %pK"),
+			wbm_rel_srng);
+		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
+		goto done;
+	}
+	src_srng_desc = hal_srng_src_get_next(hal_soc, wbm_rel_srng);
+	if (qdf_likely(src_srng_desc)) {
+		/* Return link descriptor through WBM ring (SW2WBM)*/
+		hal_rx_msdu_link_desc_set(hal_soc,
+				src_srng_desc, buf_addr_info, bm_action);
+		status = QDF_STATUS_SUCCESS;
+	} else {
+		struct hal_srng *srng = (struct hal_srng *)wbm_rel_srng;
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("WBM Release Ring (Id %d) Full"), srng->ring_id);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"HP 0x%x Reap HP 0x%x TP 0x%x Cached TP 0x%x",
+			*srng->u.src_ring.hp_addr, srng->u.src_ring.reap_hp,
+			*srng->u.src_ring.tp_addr, srng->u.src_ring.cached_tp);
+	}
+done:
+	hal_srng_access_end(hal_soc, wbm_rel_srng);
+	return status;
+}
+
+/**
  * dp_rx_msdus_drop() - Drops all MSDU's per MPDU
  *
  * @soc: core txrx main context
@@ -111,6 +169,9 @@ static uint32_t dp_rx_msdus_drop(struct dp_soc *soc, void *ring_desc,
 
 		dp_rx_add_to_free_desc_list(head, tail, rx_desc);
 	}
+
+	/* Return link descriptor through WBM ring (SW2WBM)*/
+	dp_rx_link_desc_return(soc, ring_desc, HAL_BM_ACTION_PUT_IN_IDLE_LIST);
 
 	return rx_bufs_used;
 }
@@ -666,65 +727,6 @@ fail:
 	return;
 }
 
-
-/**
- * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
- *			      (WBM), following error handling
- *
- * @soc: core DP main context
- * @ring_desc: opaque pointer to the REO error ring descriptor
- *
- * Return: QDF_STATUS
- */
-	static QDF_STATUS
-dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
-{
-	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
-	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
-	void *wbm_rel_srng = wbm_desc_rel_ring->hal_srng;
-	void *hal_soc = soc->hal_soc;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	void *src_srng_desc;
-
-	if (!wbm_rel_srng) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"WBM RELEASE RING not initialized");
-		return status;
-	}
-
-	if (qdf_unlikely(hal_srng_access_start(hal_soc, wbm_rel_srng))) {
-
-		/* TODO */
-		/*
-		 * Need API to convert from hal_ring pointer to
-		 * Ring Type / Ring Id combo
-		 */
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL RING Access For WBM Release SRNG Failed - %pK"),
-			wbm_rel_srng);
-		DP_STATS_INC(soc, rx.err.hal_ring_access_fail, 1);
-		goto done;
-	}
-	src_srng_desc = hal_srng_src_get_next(hal_soc, wbm_rel_srng);
-	if (qdf_likely(src_srng_desc)) {
-		/* Return link descriptor through WBM ring (SW2WBM)*/
-		hal_rx_msdu_link_desc_set(hal_soc,
-				src_srng_desc, buf_addr_info, bm_action);
-		status = QDF_STATUS_SUCCESS;
-	} else {
-		struct hal_srng *srng = (struct hal_srng *)wbm_rel_srng;
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("WBM Release Ring (Id %d) Full"), srng->ring_id);
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"HP 0x%x Reap HP 0x%x TP 0x%x Cached TP 0x%x",
-			*srng->u.src_ring.hp_addr, srng->u.src_ring.reap_hp,
-			*srng->u.src_ring.tp_addr, srng->u.src_ring.cached_tp);
-	}
-done:
-	hal_srng_access_end(hal_soc, wbm_rel_srng);
-	return status;
-}
-
 /**
  * dp_rx_err_process() - Processes error frames routed to REO error ring
  *
@@ -752,6 +754,10 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 	struct dp_pdev *dp_pdev;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
+	uint32_t cookie = 0;
+	void *link_desc_va;
+	struct hal_rx_msdu_list msdu_list; /* MSDU's per MPDU */
+	uint16_t num_msdus;
 
 	/* Debug -- Remove later */
 	qdf_assert(soc && hal_ring);
@@ -783,27 +789,41 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 		qdf_assert(error == HAL_REO_ERROR_DETECTED);
 
+		buf_type = HAL_RX_REO_BUF_TYPE_GET(ring_desc);
+		/*
+		 * For REO error ring, expect only MSDU LINK DESC
+		 */
+		qdf_assert_always(buf_type == HAL_RX_REO_MSDU_LINK_DESC_TYPE);
+
+		cookie = HAL_RX_REO_BUF_COOKIE_GET(ring_desc);
+		/*
+		 * check for the magic number in the sw cookie
+		 */
+		qdf_assert_always((cookie >> LINK_DESC_ID_SHIFT) &
+							LINK_DESC_ID_START);
+
 		/*
 		 * Check if the buffer is to be processed on this processor
 		 */
 		rbm = hal_rx_ret_buf_manager_get(ring_desc);
 
-		if (qdf_unlikely(rbm != HAL_RX_BUF_RBM_SW3_BM)) {
+		hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
+		link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &hbi);
+		hal_rx_msdu_list_get(link_desc_va, &msdu_list, &num_msdus);
+
+		if (qdf_unlikely(msdu_list.rbm[0] != HAL_RX_BUF_RBM_SW3_BM)) {
 			/* TODO */
 			/* Call appropriate handler */
 			DP_STATS_INC(soc, rx.err.invalid_rbm, 1);
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("Invalid RBM %d"), rbm);
+
+			/* Return link descriptor through WBM ring (SW2WBM)*/
+			dp_rx_link_desc_return(soc, ring_desc,
+					HAL_BM_ACTION_RELEASE_MSDU_LIST);
 			continue;
 		}
 
-		buf_type = HAL_RX_REO_BUF_TYPE_GET(ring_desc);
-		/*
-		 * For REO error ring, expect only MSDU LINK DESC
-		 */
-		qdf_assert(buf_type == HAL_RX_REO_MSDU_LINK_DESC_TYPE);
-
-		hal_rx_reo_buf_paddr_get(ring_desc, &hbi);
 
 		/* Get the MPDU DESC info */
 		hal_rx_mpdu_desc_info_get(ring_desc, &mpdu_desc_info);
@@ -840,10 +860,6 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 					&head, &tail, quota);
 			continue;
 		}
-		/* Return link descriptor through WBM ring (SW2WBM)*/
-		dp_rx_link_desc_return(soc, ring_desc,
-					HAL_BM_ACTION_PUT_IN_IDLE_LIST);
-
 	}
 
 done:
