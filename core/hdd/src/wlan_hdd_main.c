@@ -5007,10 +5007,7 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 					 roam_fils_params->fils_pmk_len,
 					 roam_fils_params->fils_pmkid,
 					 roam_info->fils_seq_num);
-		wlan_hdd_save_gtk_offload_params(adapter, NULL,
-					roam_fils_params->kek,
-					roam_fils_params->kek_len,
-					roam_info->replay_ctr, true);
+		hdd_save_gtk_params(adapter, roam_info, false);
 	}
 	hdd_debug("FILS indicate connect status %d seq no %d",
 		  fils_params.status,

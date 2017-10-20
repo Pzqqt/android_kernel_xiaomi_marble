@@ -7162,7 +7162,7 @@ QDF_STATUS sme_update_fils_config(tHalHandle hal, uint8_t session_id,
 	}
 
 	csr_update_fils_config(mac, session_id, src_profile);
-	if (mac->roam.configParam.isRoamOffloadEnabled) {
+	if (csr_roamIsRoamOffloadEnabled(mac)) {
 		sme_debug("Updating fils config to fw");
 		csr_roam_offload_scan(mac, session_id,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
