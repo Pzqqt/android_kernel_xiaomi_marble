@@ -276,10 +276,6 @@ extern void hdd_wlan_get_stats(struct hdd_adapter *adapter, uint16_t *length,
 extern void hdd_wlan_list_fw_profile(uint16_t *length,
 			       char *buffer, uint16_t buf_len);
 
-extern int iw_set_ap_address(struct net_device *dev,
-			     struct iw_request_info *info,
-			     union iwreq_data *wrqu, char *extra);
-
 extern int iw_set_var_ints_getnone(struct net_device *dev,
 				   struct iw_request_info *info,
 				   union iwreq_data *wrqu, char *extra);
