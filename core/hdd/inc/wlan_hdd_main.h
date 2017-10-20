@@ -432,17 +432,17 @@ struct hdd_tx_rx_histogram {
 
 struct hdd_tx_rx_stats {
 	/* start_xmit stats */
-	__u32    txXmitCalled;
-	__u32    txXmitDropped;
-	__u32    txXmitOrphaned;
-	__u32    txXmitClassifiedAC[NUM_TX_QUEUES];
-	__u32    txXmitDroppedAC[NUM_TX_QUEUES];
+	__u32    tx_called;
+	__u32    tx_dropped;
+	__u32    tx_orphaned;
+	__u32    tx_classified_ac[NUM_TX_QUEUES];
+	__u32    tx_dropped_ac[NUM_TX_QUEUES];
 
 	/* rx stats */
-	__u32 rxPackets[NUM_CPUS];
-	__u32 rxDropped[NUM_CPUS];
-	__u32 rxDelivered[NUM_CPUS];
-	__u32 rxRefused[NUM_CPUS];
+	__u32 rx_packets[NUM_CPUS];
+	__u32 rx_dropped[NUM_CPUS];
+	__u32 rx_delivered[NUM_CPUS];
+	__u32 rx_refused[NUM_CPUS];
 
 	/* txflow stats */
 	bool     is_txflow_paused;
@@ -488,15 +488,15 @@ struct hdd_arp_stats_s {
  * @ClassA_stat: "Class A" stats reported by firmware
  * @ClassD_stat: "Class D" stats reported by firmware
  * @per_chain_rssi_stats: Per-chain RSSI stats
- * @hddTxRxStats: Tx & Rx stats
- * @hddPmfStats: Protercted Management Frame stats
+ * @tx_rx_stats: Tx & Rx stats
+ * @hddPmfStats: Protected Management Frame stats
  */
 struct hdd_stats {
 	tCsrSummaryStatsInfo summary_stat;
 	tCsrGlobalClassAStatsInfo ClassA_stat;
 	tCsrGlobalClassDStatsInfo ClassD_stat;
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
-	struct hdd_tx_rx_stats hddTxRxStats;
+	struct hdd_tx_rx_stats tx_rx_stats;
 	struct hdd_arp_stats_s hdd_arp_stats;
 #ifdef WLAN_FEATURE_11W
 	struct hdd_pmf_stats hddPmfStats;

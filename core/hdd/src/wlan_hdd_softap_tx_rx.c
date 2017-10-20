@@ -151,7 +151,7 @@ hdd_softap_tx_resume_false(struct hdd_adapter *adapter, bool tx_resume)
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("Failed to start tx_flow_control_timer");
 		else
-			adapter->hdd_stats.hddTxRxStats.txflow_timer_cnt++;
+			adapter->hdd_stats.tx_rx_stats.txflow_timer_cnt++;
 	}
 }
 #else
@@ -230,7 +230,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 
 	if (need_orphan) {
 		skb_orphan(skb);
-		++adapter->hdd_stats.hddTxRxStats.txXmitOrphaned;
+		++adapter->hdd_stats.tx_rx_stats.tx_orphaned;
 	} else
 		skb = skb_unshare(skb, GFP_ATOMIC);
 
@@ -263,7 +263,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 		 * to send more packets. The flow would ultimately be controlled
 		 * by the limited number of tx descriptors for the vdev.
 		 */
-		++adapter->hdd_stats.hddTxRxStats.txXmitOrphaned;
+		++adapter->hdd_stats.tx_rx_stats.tx_orphaned;
 		skb_orphan(skb);
 	}
 #endif
@@ -294,8 +294,8 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	uint8_t STAId;
 	uint32_t num_seg;
 
-	++adapter->hdd_stats.hddTxRxStats.txXmitCalled;
-	adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+	++adapter->hdd_stats.tx_rx_stats.tx_called;
+	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
 	/* Prevent this function from being called during SSR since TL
 	 * context may not be reinitialized at this time which may
@@ -394,7 +394,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 
 	/* Get TL AC corresponding to Qdisc queue index/AC. */
 	ac = hdd_qdisc_ac_to_tl_ac[skb->queue_mapping];
-	++adapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[ac];
+	++adapter->hdd_stats.tx_rx_stats.tx_classified_ac[ac];
 
 #if defined(IPA_OFFLOAD)
 	if (!qdf_nbuf_ipa_owned_get(skb)) {
@@ -458,7 +458,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
-		++adapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
+		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
 	netif_trans_update(dev);
@@ -481,7 +481,7 @@ drop_pkt:
 
 drop_pkt_accounting:
 	++adapter->stats.tx_dropped;
-	++adapter->hdd_stats.hddTxRxStats.txXmitDropped;
+	++adapter->hdd_stats.tx_rx_stats.tx_dropped;
 
 	return NETDEV_TX_OK;
 }
@@ -556,14 +556,14 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			"carrier state: %d", netif_carrier_ok(dev));
 
-	++adapter->hdd_stats.hddTxRxStats.tx_timeout_cnt;
-	++adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt;
+	++adapter->hdd_stats.tx_rx_stats.tx_timeout_cnt;
+	++adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt;
 
-	if (adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt >
+	if (adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt >
 	    HDD_TX_STALL_THRESHOLD) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Detected data stall due to continuous TX timeouts");
-		adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+		adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 		cdp_post_data_stall_event(soc,
 					  DATA_STALL_LOG_INDICATOR_HOST_DRIVER,
 					  DATA_STALL_LOG_HOST_SOFTAP_TX_TIMEOUT,
@@ -762,7 +762,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			continue;
 		}
 		cpu_index = wlan_hdd_get_cpu();
-		++adapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
 
@@ -825,9 +825,9 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		else
 			rxstat = netif_rx_ni(skb);
 		if (NET_RX_SUCCESS == rxstat)
-			++adapter->hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
+			++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
 		else
-			++adapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
+			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
 	}
 
 	return QDF_STATUS_SUCCESS;
