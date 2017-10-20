@@ -15578,7 +15578,12 @@ QDF_STATUS sme_set_del_pmkid_cache(tHalHandle hal, uint8_t session_id,
 		return QDF_STATUS_E_NOMEM;
 	}
 
+	qdf_mem_set(pmk_cache, sizeof(*pmk_cache), 0);
+
 	pmk_cache->session_id = session_id;
+
+	if (!pmk_cache_info)
+		goto send_flush_cmd;
 
 	if (!pmk_cache_info->ssid_len) {
 		pmk_cache->cat_flag = WMI_PMK_CACHE_CAT_FLAG_BSSID;
@@ -15607,6 +15612,7 @@ QDF_STATUS sme_set_del_pmkid_cache(tHalHandle hal, uint8_t session_id,
 	qdf_mem_copy(pmk_cache->pmk, pmk_cache_info->pmk,
 		     pmk_cache->pmk_len);
 
+send_flush_cmd:
 	msg.type = SIR_HAL_SET_DEL_PMKID_CACHE;
 	msg.reserved = 0;
 	msg.bodyptr = pmk_cache;
