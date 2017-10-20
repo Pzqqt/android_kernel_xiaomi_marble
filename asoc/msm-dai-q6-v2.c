@@ -2419,6 +2419,36 @@ static int msm_dai_q6_afe_input_bit_format_put(
 	return 0;
 }
 
+static int msm_dai_q6_afe_scrambler_mode_get(
+			struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+	ucontrol->value.integer.value[0] = dai_data->enc_config.scrambler_mode;
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_scrambler_mode_put(
+			struct snd_kcontrol *kcontrol,
+			struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+	dai_data->enc_config.scrambler_mode = ucontrol->value.integer.value[0];
+	pr_debug("%s: afe scrambler mode : %d\n",
+		  __func__, dai_data->enc_config.scrambler_mode);
+	return 0;
+}
 
 static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 	{
@@ -2436,6 +2466,10 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 	SOC_ENUM_EXT("AFE Input Bit Format", afe_input_bit_format_enum[0],
 		     msm_dai_q6_afe_input_bit_format_get,
 		     msm_dai_q6_afe_input_bit_format_put),
+	SOC_SINGLE_EXT("AFE Scrambler Mode",
+		       0, 0, 1, 0,
+		       msm_dai_q6_afe_scrambler_mode_get,
+		       msm_dai_q6_afe_scrambler_mode_put),
 };
 
 static int msm_dai_q6_slim_rx_drift_info(struct snd_kcontrol *kcontrol,
@@ -2597,6 +2631,9 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 				 dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				 snd_ctl_new1(&afe_enc_config_controls[2],
+				 dai_data));
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_enc_config_controls[3],
 				 dai_data));
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&avd_drift_config_controls[2],

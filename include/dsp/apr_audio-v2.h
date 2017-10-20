@@ -3119,6 +3119,12 @@ struct afe_param_id_aptx_sync_mode {
 #define AFE_ENCODER_PARAM_ID_ENC_FMT_ID         0x0001322B
 
 /*
+ * Encoder scrambler parameter for the #AVS_MODULE_ID_ENCODER module.
+ * This parameter cannot be set runtime.
+ */
+#define AFE_ENCODER_PARAM_ID_ENABLE_SCRAMBLING         0x0001323C
+
+/*
  * Data format to send compressed data
  * is transmitted/received over Slimbus lines.
  */
@@ -3451,6 +3457,7 @@ union afe_enc_config_data {
 
 struct afe_enc_config {
 	u32 format;
+	u32 scrambler_mode;
 	union afe_enc_config_data data;
 };
 
@@ -3474,6 +3481,18 @@ struct avs_enc_packetizer_id_param_t {
 	uint32_t enc_packetizer_id;
 };
 
+/*
+ * Payload of the AVS_ENCODER_PARAM_ID_ENABLE_SCRAMBLING parameter.
+ */
+struct avs_enc_set_scrambler_param_t {
+	/*
+	 *  Supported values:
+	 *  1 : enable scrambler
+	 *  0 : disable scrambler
+	 */
+	uint32_t enable_scrambler;
+};
+
 union afe_port_config {
 	struct afe_param_id_pcm_cfg               pcm;
 	struct afe_param_id_i2s_cfg               i2s;
@@ -3492,6 +3511,7 @@ union afe_port_config {
 	struct afe_port_media_type_t              media_type;
 	struct afe_enc_cfg_blk_param_t            enc_blk_param;
 	struct avs_enc_packetizer_id_param_t      enc_pkt_id_param;
+	struct avs_enc_set_scrambler_param_t      enc_set_scrambler_param;
 } __packed;
 
 struct afe_audioif_config_command_no_payload {
