@@ -5023,97 +5023,6 @@ static int iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 }
 
 /**
- * __iw_get_bitrate() - SIOCGIWRATE ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_get_bitrate(struct net_device *dev,
-			    struct iw_request_info *info,
-			    union iwreq_data *wrqu, char *extra)
-{
-	QDF_STATUS status;
-	struct hdd_wext_state *pWextState;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	if (eConnectionState_Associated != sta_ctx->conn_info.connState) {
-		wrqu->bitrate.value = 0;
-	} else {
-		status =
-			sme_get_statistics(WLAN_HDD_GET_HAL_CTX(adapter),
-					   eCSR_HDD,
-					   SME_SUMMARY_STATS |
-					   SME_GLOBAL_CLASSA_STATS |
-					   SME_GLOBAL_CLASSD_STATS,
-					   hdd_statistics_cb,
-					   sta_ctx->conn_info.staId[0],
-					   adapter, adapter->sessionId);
-
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_err("Unable to retrieve statistics");
-			return qdf_status_to_os_return(status);
-		}
-
-		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-
-		status =
-			qdf_wait_single_event(&pWextState->hdd_qdf_event,
-					      WLAN_WAIT_TIME_STATS);
-
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("SME timeout while retrieving statistics");
-			return qdf_status_to_os_return(status);
-		}
-
-		wrqu->bitrate.value =
-			adapter->hdd_stats.ClassA_stat.tx_rate * 500 * 1000;
-	}
-
-	EXIT();
-
-	return 0;
-}
-
-/**
- * iw_get_bitrate() - SSR wrapper for __iw_get_bitrate()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_get_bitrate(struct net_device *dev,
-			  struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_bitrate(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_bitrate() - SIOCSIWRATE ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11659,7 +11568,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) iw_set_bitrate,    /* SIOCSIWRATE */
-	(iw_handler) iw_get_bitrate,    /* SIOCGIWRATE */
+	(iw_handler) NULL,      /* SIOCGIWRATE */
 	(iw_handler) NULL,      /* SIOCSIWRTS */
 	(iw_handler) NULL,      /* SIOCGIWRTS */
 	(iw_handler) NULL,      /* SIOCSIWFRAG */
