@@ -55,7 +55,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 {
 	uint32_t ppet_size = sizeof(tDot11fIEppe_threshold);
 	QDF_STATUS status;
-	tDot11fIEvendor_he_cap *he_cap = &cfg->he_cap;
+	tDot11fIEhe_cap *he_cap = &cfg->he_cap;
 
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CONTROL, he_cap->htc_he);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TWT_REQUESTOR,
@@ -180,7 +180,7 @@ void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,
 {
 	const uint8_t *ie;
 
-	ie = wlan_get_vendor_ie_ptr_from_oui(HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
+	ie = wlan_get_ext_ie_ptr_from_ext_id(HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
 					    beacon->tail, beacon->tail_len);
 	if (ie)
 		config->SapHw_mode = eCSR_DOT11_MODE_11ax;

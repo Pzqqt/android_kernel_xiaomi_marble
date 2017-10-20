@@ -969,7 +969,7 @@ struct csr_roam_session {
 	tSirHTConfig htConfig;
 	struct sir_vht_config vht_config;
 #ifdef WLAN_FEATURE_11AX
-	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEhe_cap he_config;
 	uint32_t he_sta_obsspd;
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

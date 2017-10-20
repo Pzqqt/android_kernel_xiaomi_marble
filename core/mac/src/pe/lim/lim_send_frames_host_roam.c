@@ -315,7 +315,7 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
-					&frm.vendor_he_cap);
+					&frm.he_cap);
 	}
 
 	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, &frm,
@@ -688,7 +688,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	if (lim_is_session_he_capable(psessionEntry)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(pMac, psessionEntry,
-					&frm.vendor_he_cap);
+					&frm.he_cap);
 	}
 
 	nStatus =

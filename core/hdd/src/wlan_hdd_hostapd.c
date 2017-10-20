@@ -88,6 +88,7 @@
 #include <wlan_reg_ucfg_api.h>
 #include "wlan_utility.h"
 #include <wlan_p2p_ucfg_api.h>
+#include "sir_api.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -6674,6 +6675,42 @@ static void wlan_hdd_check_11gmode(const u8 *pIe, u8 *require_ht,
 	}
 }
 
+#ifdef WLAN_FEATURE_11AX
+/**
+ * wlan_hdd_add_extn_ie() - add extension IE
+ * @adapter: Pointer to hostapd adapter
+ * @genie: Pointer to ie to be added
+ * @total_ielen: Pointer to store total ie length
+ * @oui: Pointer to oui
+ * @oui_size: Size of oui
+ *
+ * Return: 0 for success non-zero for failure
+ */
+static int wlan_hdd_add_extn_ie(struct hdd_adapter *adapter, uint8_t *genie,
+			   uint16_t *total_ielen, uint8_t *oui,
+			   uint8_t oui_size)
+{
+	const uint8_t *ie;
+	uint16_t ielen = 0;
+	struct hdd_beacon_data *beacon = adapter->sessionCtx.ap.beacon;
+
+	ie = wlan_get_ext_ie_ptr_from_ext_id(oui, oui_size,
+					      beacon->tail,
+					      beacon->tail_len);
+	if (ie) {
+		ielen = ie[1] + 2;
+		if ((*total_ielen + ielen) <= MAX_GENIE_LEN) {
+			qdf_mem_copy(&genie[*total_ielen], ie, ielen);
+		} else {
+			hdd_err("**Ie Length is too big***");
+			return -EINVAL;
+		}
+		*total_ielen += ielen;
+	}
+	return 0;
+}
+#endif
+
 /**
  * wlan_hdd_add_hostapd_conf_vsie() - configure Vendor IE in sap mode
  * @adapter: Pointer to hostapd adapter
@@ -6919,6 +6956,41 @@ static void wlan_hdd_add_sap_obss_scan_ie(
 #endif
 
 /**
+ * wlan_hdd_cfg80211_update_apies() - update ap mode 11ax ies
+ * @adapter: Pointer to hostapd adapter
+ * @genie: generic IE buffer
+ * @total_ielen: out param to update total ielen
+ *
+ * Return: 0 for success non-zero for failure
+ */
+
+#ifdef WLAN_FEATURE_11AX
+static int hdd_update_11ax_apies(struct hdd_adapter *adapter,
+				 uint8_t *genie, uint16_t *total_ielen)
+{
+	if (wlan_hdd_add_extn_ie(adapter, genie, total_ielen,
+			    HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE)) {
+		hdd_err("Adding HE Cap ie failed");
+		return -EINVAL;
+	}
+
+	if (wlan_hdd_add_extn_ie(adapter, genie, total_ielen,
+			    HE_OP_OUI_TYPE, HE_OP_OUI_SIZE)) {
+		hdd_err("Adding HE Op ie failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#else
+static int hdd_update_11ax_apies(struct hdd_adapter *adapter,
+				 uint8_t *genie, uint16_t *total_ielen)
+{
+	return 0;
+}
+#endif
+
+/**
  * wlan_hdd_cfg80211_update_apies() - update ap mode ies
  * @adapter: Pointer to hostapd adapter
  *
@@ -6962,6 +7034,10 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	wlan_hdd_add_hostapd_conf_vsie(adapter, genie,
 				       &total_ielen);
+
+	ret = hdd_update_11ax_apies(adapter, genie, &total_ielen);
+	if (ret)
+		goto done;
 
 	wlan_hdd_add_sap_obss_scan_ie(adapter, genie, &total_ielen);
 

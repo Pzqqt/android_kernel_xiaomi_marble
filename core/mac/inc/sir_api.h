@@ -718,7 +718,7 @@ typedef struct sSirSmeStartBssReq {
 	tSirHTConfig htConfig;
 	struct sir_vht_config vht_config;
 #ifdef WLAN_FEATURE_11AX
-	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEhe_cap he_config;
 #endif
 #ifdef WLAN_FEATURE_11W
 	bool pmfCapable;
@@ -1233,7 +1233,7 @@ typedef struct sSirSmeJoinReq {
 	tSirHTConfig htConfig;
 	struct sir_vht_config vht_config;
 #ifdef WLAN_FEATURE_11AX
-	tDot11fIEvendor_he_cap he_config;
+	tDot11fIEhe_cap he_config;
 #endif
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
@@ -7526,10 +7526,10 @@ struct wow_enable_params {
 };
 
 #ifdef WLAN_FEATURE_11AX
-#define HE_CAP_OUI_TYPE "\x00\x13\x74\x01"
-#define HE_CAP_OUI_SIZE 4
-#define HE_OP_OUI_TYPE "\x00\x13\x74\x02"
-#define HE_OP_OUI_SIZE 4
+#define HE_CAP_OUI_TYPE "\x23"
+#define HE_CAP_OUI_SIZE 1
+#define HE_OP_OUI_TYPE "\x24"
+#define HE_OP_OUI_SIZE 1
 
 /* HE Op Mask is based on the HE Operation definition in the D1.0 spec */
 #define HE_OP_BSS_COLOR_MASK (0x3F << 0)

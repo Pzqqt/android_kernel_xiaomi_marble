@@ -357,7 +357,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_update_session_he_capable(mac_ctx, pesession);
 
 	pe_debug("Populate HE IEs");
-	populate_dot11f_he_caps(mac_ctx, pesession, &pr.vendor_he_cap);
+	populate_dot11f_he_caps(mac_ctx, pesession, &pr.he_cap);
 
 	if (addn_ielen) {
 		qdf_mem_zero((uint8_t *)&extracted_ext_cap,
@@ -690,9 +690,9 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
-					&frm->vendor_he_cap);
+					&frm->he_cap);
 		populate_dot11f_he_operation(mac_ctx, pe_session,
-					     &frm->vendor_he_op);
+					     &frm->he_op);
 	}
 
 	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &frm->ExtCap,
@@ -1262,9 +1262,9 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		    lim_is_session_he_capable(pe_session)) {
 			pe_debug("Populate HE IEs");
 			populate_dot11f_he_caps(mac_ctx, pe_session,
-						&frm.vendor_he_cap);
+						&frm.he_cap);
 			populate_dot11f_he_operation(mac_ctx, pe_session,
-						     &frm.vendor_he_op);
+						     &frm.he_op);
 		}
 #ifdef WLAN_FEATURE_11W
 		if (eSIR_MAC_TRY_AGAIN_LATER == status_code) {
@@ -1873,7 +1873,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (lim_is_session_he_capable(pe_session)) {
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
-					&frm->vendor_he_cap);
+					&frm->he_cap);
 	}
 
 	if (pe_session->pLimJoinReq->is11Rconnection) {

@@ -33,7 +33,7 @@
  *
  * Return: None
  */
-void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap);
+void wma_print_he_cap(tDot11fIEhe_cap *he_cap);
 
 /**
  * wma_print_he_ppet() - Prints HE PPE Threshold
@@ -75,7 +75,7 @@ void wma_print_he_mac_cap(uint32_t mac_cap);
  *
  * Return: None
  */
-void wma_print_he_op(tDot11fIEvendor_he_op *he_ops);
+void wma_print_he_op(tDot11fIEhe_op *he_ops);
 
 /**
  * wma_update_target_ext_he_cap() - Update HE caps with given extended cap
@@ -230,7 +230,7 @@ uint32_t wma_get_he_vdev_param(struct wma_txrx_node *intr,
 			       WMI_VDEV_PARAM param_id);
 
 #else
-static inline void wma_print_he_cap(tDot11fIEvendor_he_cap *he_cap)
+static inline void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 {
 }
 
@@ -246,7 +246,7 @@ static inline void wma_print_he_mac_cap(uint32_t mac_cap)
 {
 }
 
-static inline void wma_print_he_op(tDot11fIEvendor_he_op *he_ops)
+static inline void wma_print_he_op(tDot11fIEhe_op *he_ops)
 {
 }
 

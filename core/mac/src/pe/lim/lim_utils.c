@@ -5911,7 +5911,7 @@ bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac, tpPESession psessionEntry
 bool lim_send_he_ie_update(tpAniSirGlobal mac_ctx, tpPESession pe_session)
 {
 	uint32_t he_ops = 0;
-	tDot11fIEvendor_he_op *he_op = &pe_session->he_op;
+	tDot11fIEhe_op *he_op = &pe_session->he_op;
 	QDF_STATUS status;
 
 	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
@@ -7217,9 +7217,9 @@ void lim_add_self_he_cap(tpAddStaParams add_sta_params, tpPESession session)
  *
  * Return: None
  */
-static void lim_intersect_he_caps(tDot11fIEvendor_he_cap *rcvd_he,
-			tDot11fIEvendor_he_cap *session_he,
-			tDot11fIEvendor_he_cap *peer_he)
+static void lim_intersect_he_caps(tDot11fIEhe_cap *rcvd_he,
+			tDot11fIEhe_cap *session_he,
+			tDot11fIEhe_cap *peer_he)
 {
 	uint8_t val;
 
@@ -7278,9 +7278,9 @@ static void lim_intersect_he_caps(tDot11fIEvendor_he_cap *rcvd_he,
 void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, tpPESession session,
 		tpDphHashNode sta_ds)
 {
-	tDot11fIEvendor_he_cap *rcvd_he = &assoc_req->he_cap;
-	tDot11fIEvendor_he_cap *session_he = &session->he_config;
-	tDot11fIEvendor_he_cap *peer_he = &sta_ds->he_config;
+	tDot11fIEhe_cap *rcvd_he = &assoc_req->he_cap;
+	tDot11fIEhe_cap *session_he = &session->he_config;
+	tDot11fIEhe_cap *peer_he = &sta_ds->he_config;
 
 	if (sta_ds->mlmStaContext.he_capable)
 		lim_intersect_he_caps(rcvd_he, session_he, peer_he);
@@ -7289,14 +7289,14 @@ void lim_intersect_sta_he_caps(tpSirAssocReq assoc_req, tpPESession session,
 void lim_intersect_ap_he_caps(tpPESession session, tpAddBssParams add_bss,
 		tSchBeaconStruct *beacon, tpSirAssocRsp assoc_rsp)
 {
-	tDot11fIEvendor_he_cap *rcvd_he;
-	tDot11fIEvendor_he_cap *session_he = &session->he_config;
-	tDot11fIEvendor_he_cap *peer_he = &add_bss->staContext.he_config;
+	tDot11fIEhe_cap *rcvd_he;
+	tDot11fIEhe_cap *session_he = &session->he_config;
+	tDot11fIEhe_cap *peer_he = &add_bss->staContext.he_config;
 
 	if (beacon)
-		rcvd_he = &beacon->vendor_he_cap;
+		rcvd_he = &beacon->he_cap;
 	else
-		rcvd_he = &assoc_rsp->vendor_he_cap;
+		rcvd_he = &assoc_rsp->he_cap;
 
 	lim_intersect_he_caps(rcvd_he, session_he, peer_he);
 	add_bss->staContext.he_capable = true;
@@ -7304,11 +7304,11 @@ void lim_intersect_ap_he_caps(tpPESession session, tpAddBssParams add_bss,
 
 void lim_add_bss_he_cap(tpAddBssParams add_bss, tpSirAssocRsp assoc_rsp)
 {
-	tDot11fIEvendor_he_cap *he_cap;
-	tDot11fIEvendor_he_op *he_op;
+	tDot11fIEhe_cap *he_cap;
+	tDot11fIEhe_op *he_op;
 
-	he_cap = &assoc_rsp->vendor_he_cap;
-	he_op = &assoc_rsp->vendor_he_op;
+	he_cap = &assoc_rsp->he_cap;
+	he_op = &assoc_rsp->he_op;
 	add_bss->he_capable = he_cap->present;
 	if (he_cap)
 		qdf_mem_copy(&add_bss->staContext.he_config,
@@ -7326,9 +7326,9 @@ void lim_add_bss_he_cfg(tpAddBssParams add_bss, tpPESession session)
 void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 			      tpPESession session_entry)
 {
-	tDot11fIEvendor_he_cap *he_cap;
+	tDot11fIEhe_cap *he_cap;
 
-	he_cap = &assoc_rsp->vendor_he_cap;
+	he_cap = &assoc_rsp->he_cap;
 	sta_ds->mlmStaContext.he_capable = he_cap->present;
 
 	if (!he_cap->present)
@@ -7343,13 +7343,12 @@ void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 	const uint8_t *vendor_ie;
 	const uint8_t *he_cap_data;
 	tSirAddIeParams *add_ie = &session->addIeParams;
-	tDot11fIEvendor_he_cap *he_cap = &session->he_config;
+	tDot11fIEhe_cap *he_cap = &session->he_config;
 
-	vendor_ie = wlan_get_vendor_ie_ptr_from_oui(
+	vendor_ie = wlan_get_ext_ie_ptr_from_ext_id(
 			HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
 			add_ie->probeRespBCNData_buff,
 			add_ie->probeRespBCNDataLen);
-
 	if (!vendor_ie) {
 		pe_err("11AX: Unable to parse HE Caps");
 		return;
@@ -7375,14 +7374,13 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 {
 	const uint8_t *vendor_ie;
 	uint32_t he_op;
-	tDot11fIEvendor_he_op *he_ops = &add_bss->he_op;
+	tDot11fIEhe_op *he_ops = &add_bss->he_op;
 	tSirAddIeParams *add_ie = &session->addIeParams;
 
-	vendor_ie = wlan_get_vendor_ie_ptr_from_oui(
+	vendor_ie = wlan_get_ext_ie_ptr_from_ext_id(
 			HE_OP_OUI_TYPE, HE_OP_OUI_SIZE,
 			add_ie->probeRespBCNData_buff,
 			add_ie->probeRespBCNDataLen);
-
 	if (!vendor_ie) {
 		pe_err("11AX: Unable to parse HE Operation");
 		return;
@@ -7428,7 +7426,7 @@ void lim_copy_join_req_he_cap(tpPESession session,
 		     sizeof(session->he_config));
 }
 
-void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
+void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 {
 	if (!he_cap->present)
 		return;
@@ -7557,7 +7555,7 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEvendor_he_cap *he_cap)
 
 }
 
-void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEvendor_he_op *he_ops)
+void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEhe_op *he_ops)
 {
 	pe_debug("bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x, vht_oper_present: %0x",
 		he_ops->bss_color, he_ops->default_pe,
@@ -7624,14 +7622,13 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		     uint32_t num_bytes)
 {
 	const uint8_t *ie = NULL;
-	tDot11fIEvendor_he_cap dot11_cap;
+	tDot11fIEhe_cap dot11_cap;
 	struct he_capability_info *he_cap;
 
 	populate_dot11f_he_caps(mac, session, &dot11_cap);
 	lim_log_he_cap(mac, &dot11_cap);
-	ie = wlan_get_vendor_ie_ptr_from_oui(HE_CAP_OUI_TYPE,
+	ie = wlan_get_ext_ie_ptr_from_ext_id(HE_CAP_OUI_TYPE,
 			HE_CAP_OUI_SIZE, ie_start, num_bytes);
-
 	if (ie) {
 		/* convert from unpacked to packed structure */
 		he_cap = (struct he_capability_info *) &ie[2 + HE_CAP_OUI_SIZE];
@@ -7716,30 +7713,30 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 			       uint8_t vdev_id)
 {
-	uint8_t he_caps[DOT11F_IE_VENDOR_HE_CAP_MIN_LEN + 2];
+	uint8_t he_caps[DOT11F_IE_HE_CAP_MIN_LEN + 2];
 	struct he_capability_info *he_cap;
 	QDF_STATUS status_5g, status_2g;
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
-	qdf_mem_zero(he_caps, DOT11F_IE_VENDOR_HE_CAP_MIN_LEN + 2);
-	he_caps[0] = DOT11F_EID_VENDOR_HE_CAP;
-	he_caps[1] = DOT11F_IE_VENDOR_HE_CAP_MIN_LEN;
+	qdf_mem_zero(he_caps, DOT11F_IE_HE_CAP_MIN_LEN + 2);
+	he_caps[0] = DOT11F_EID_HE_CAP;
+	he_caps[1] = DOT11F_IE_HE_CAP_MIN_LEN;
 	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
 	lim_set_he_caps(mac_ctx, session, he_caps,
-			DOT11F_IE_VENDOR_HE_CAP_MIN_LEN + 2);
+			DOT11F_IE_HE_CAP_MIN_LEN + 2);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
 	he_cap->ppet_present = 0;
 
-	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VENDOR_HE_CAP,
+	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_5GHZ, &he_caps[2],
-			DOT11F_IE_VENDOR_HE_CAP_MIN_LEN);
+			DOT11F_IE_HE_CAP_MIN_LEN);
 	if (QDF_IS_STATUS_ERROR(status_5g))
 		pe_err("Unable send HE Cap IE for 5GHZ band, status: %d",
 			status_5g);
 
-	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_VENDOR_HE_CAP,
+	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_2GHZ, &he_caps[2],
-			DOT11F_IE_VENDOR_HE_CAP_MIN_LEN);
+			DOT11F_IE_HE_CAP_MIN_LEN);
 	if (QDF_IS_STATUS_ERROR(status_2g))
 		pe_err("Unable send HE Cap IE for 2GHZ band, status: %d",
 			status_2g);
@@ -7768,7 +7765,7 @@ QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
  */
 QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 				   tpSirSupportedRates rates,
-				   tDot11fIEvendor_he_cap *peer_he_caps,
+				   tDot11fIEhe_cap *peer_he_caps,
 				   tpPESession session_entry, uint8_t nss)
 {
 	uint32_t val;

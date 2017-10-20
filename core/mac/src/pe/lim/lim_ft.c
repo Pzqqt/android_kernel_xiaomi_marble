@@ -375,7 +375,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 					sta_ctx->enable_su_tx_bformer = 1;
 			}
 			if (lim_is_session_he_capable(pftSessionEntry) &&
-				pBeaconStruct->vendor_he_cap.present)
+				pBeaconStruct->he_cap.present)
 				lim_intersect_ap_he_caps(pftSessionEntry,
 					pAddBssParams, pBeaconStruct, NULL);
 
@@ -439,7 +439,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 					   pBeaconStruct->HTCaps.supportedMCSSet,
 					   false, pftSessionEntry,
 					   &pBeaconStruct->VHTCaps,
-					   &pBeaconStruct->vendor_he_cap);
+					   &pBeaconStruct->he_cap);
 	}
 
 	pAddBssParams->maxTxPower = pftSessionEntry->maxTxPower;

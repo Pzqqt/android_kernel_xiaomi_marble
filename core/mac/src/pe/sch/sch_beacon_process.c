@@ -497,7 +497,7 @@ sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	uint8_t session_bss_col_disabled_flag;
 	bool anything_changed = false;
 
-	if (session->he_op.present && bcn->vendor_he_op.present) {
+	if (session->he_op.present && bcn->he_op.present) {
 		if (bcn->vendor_he_bss_color_change.present &&
 				(session->he_op.bss_color !=
 				 bcn->vendor_he_bss_color_change.new_color)) {
@@ -510,12 +510,12 @@ sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		}
 		session_bss_col_disabled_flag = session->he_op.bss_col_disabled;
 		if (session_bss_col_disabled_flag !=
-				bcn->vendor_he_op.bss_col_disabled) {
+				bcn->he_op.bss_col_disabled) {
 			pe_debug("color disable flag changed from [%d] to [%d]",
 				session->he_op.bss_col_disabled,
-				bcn->vendor_he_op.bss_col_disabled);
+				bcn->he_op.bss_col_disabled);
 			session->he_op.bss_col_disabled =
-				bcn->vendor_he_op.bss_col_disabled;
+				bcn->he_op.bss_col_disabled;
 			anything_changed = true;
 		}
 	}
@@ -974,8 +974,8 @@ static void sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 {
 	/* check bss color in the beacon */
 	if (ap_session->he_op.present && !ap_session->he_op.bss_color) {
-		if (bcn->vendor_he_op.present &&
-			(bcn->vendor_he_op.bss_color ==
+		if (bcn->he_op.present &&
+			(bcn->he_op.bss_color ==
 					ap_session->he_op.bss_color)) {
 			ap_session->he_op.bss_col_disabled = 1;
 			bcn_prm->paramChangeBitmap |=
@@ -994,10 +994,10 @@ static void sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 			ap_session->bss_color_changing = 1;
 		} else {
 			/* update info for the bss color */
-			if (bcn->vendor_he_op.present)
+			if (bcn->he_op.present)
 				ap_update_bss_color_info(mac_ctx,
 						ap_session,
-						bcn->vendor_he_op.bss_color);
+						bcn->he_op.bss_color);
 		}
 	}
 }

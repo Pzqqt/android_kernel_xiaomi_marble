@@ -1961,7 +1961,7 @@ QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
 			if (IS_BSS_VHT_CAPABLE(pIes->VHTCaps) ||
 				IS_BSS_VHT_CAPABLE(pIes->vendor_vht_ie.VHTCaps))
 				phyMode = eCSR_DOT11_MODE_11ac;
-			if (pIes->vendor_he_cap.present)
+			if (pIes->he_cap.present)
 				phyMode = eCSR_DOT11_MODE_11ax;
 		}
 		*pPhyMode = phyMode;

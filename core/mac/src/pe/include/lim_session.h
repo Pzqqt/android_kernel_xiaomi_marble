@@ -506,8 +506,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t lim_non_ecsa_cap_num;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
-	tDot11fIEvendor_he_cap he_config;
-	tDot11fIEvendor_he_op he_op;
+	tDot11fIEhe_cap he_config;
+	tDot11fIEhe_op he_op;
 	uint32_t he_sta_obsspd;
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 	tDot11fIEbss_color_change he_bss_color_change;

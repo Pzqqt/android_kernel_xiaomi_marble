@@ -71,7 +71,7 @@ tSirRetStatus lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 					 uint8_t basicOnly,
 					 tpPESession psessionEntry,
 					 tDot11fIEVHTCaps *pVHTCaps,
-					 tDot11fIEvendor_he_cap *he_caps);
+					 tDot11fIEhe_cap *he_caps);
 
 tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
 					tpSirSupportedRates pRates,
@@ -79,7 +79,7 @@ tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
 					uint8_t basicOnly,
 					tpPESession psessionEntry,
 					tDot11fIEVHTCaps *pVHTCaps,
-					tDot11fIEvendor_he_cap *he_caps);
+					tDot11fIEhe_cap *he_caps);
 
 tSirRetStatus
 lim_populate_matching_rate_set(tpAniSirGlobal pMac,
@@ -89,7 +89,7 @@ lim_populate_matching_rate_set(tpAniSirGlobal pMac,
 			       uint8_t *pSupportedMCSSet,
 			       tpPESession psessionEntry,
 			       tDot11fIEVHTCaps *pVHTCaps,
-			       tDot11fIEvendor_he_cap *he_caps);
+			       tDot11fIEhe_cap *he_caps);
 
 tSirRetStatus lim_add_sta(tpAniSirGlobal, tpDphHashNode, uint8_t, tpPESession);
 tSirRetStatus lim_del_bss(tpAniSirGlobal, tpDphHashNode, uint16_t, tpPESession);
