@@ -1320,8 +1320,8 @@ typedef struct sSirSmeJoinRsp {
 	tDot11fIEVHTOperation vht_operation;
 	tDot11fIEhs20vendor_ie hs20vendor_ie;
 	bool is_fils_connection;
-#ifdef WLAN_FEATURE_FILS_SK
 	uint16_t fils_seq_num;
+#ifdef WLAN_FEATURE_FILS_SK
 	struct fils_join_rsp_params *fils_join_rsp;
 #endif
 	uint8_t frames[1];
