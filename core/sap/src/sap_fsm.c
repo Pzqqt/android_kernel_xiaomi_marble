@@ -849,7 +849,6 @@ static uint8_t *sap_hdd_event_to_string(eSapHddEvent event)
 	CASE_RETURN_STRING(eSAP_ASSOC_STA_CALLBACK_EVENT);
 	CASE_RETURN_STRING(eSAP_GET_WPSPBC_SESSION_EVENT);
 	CASE_RETURN_STRING(eSAP_WPS_PBC_PROBE_REQ_EVENT);
-	CASE_RETURN_STRING(eSAP_REMAIN_CHAN_READY);
 	CASE_RETURN_STRING(eSAP_DISCONNECT_ALL_P2P_CLIENT);
 	CASE_RETURN_STRING(eSAP_MAC_TRIG_STOP_BSS_EVENT);
 	CASE_RETURN_STRING(eSAP_UNKNOWN_STA_JOIN);
@@ -2569,12 +2568,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 		qdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
 			     WPSPBCProbeReq, csr_roaminfo->u.pWPSPBCProbeReq,
 			     sizeof(tSirWPSPBCProbeReq));
-		break;
-
-	case eSAP_REMAIN_CHAN_READY:
-		sap_ap_event.sapHddEventCode = eSAP_REMAIN_CHAN_READY;
-		sap_ap_event.sapevt.sap_roc_ind.scan_id =
-				sap_ctx->roc_ind_scan_id;
 		break;
 
 	case eSAP_DISCONNECT_ALL_P2P_CLIENT:
