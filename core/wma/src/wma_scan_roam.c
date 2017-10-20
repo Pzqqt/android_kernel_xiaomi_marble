@@ -2391,6 +2391,9 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		roam_synch_ind_ptr->next_erp_seq_num =
 				fils_info->next_erp_seq_num;
 
+		WMA_LOGD("Update ERP Seq Num %d, Next ERP Seq Num %d",
+			 roam_synch_ind_ptr->update_erp_next_seq_num,
+			 roam_synch_ind_ptr->next_erp_seq_num);
 		WMA_LOGD("%s: KEK dump", __func__);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   roam_synch_ind_ptr->kek, fils_info->kek_len);
