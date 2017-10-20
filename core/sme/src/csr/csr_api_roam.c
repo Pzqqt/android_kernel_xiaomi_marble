@@ -18660,6 +18660,15 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		sme_err("Roam Scan Offload is already started");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	/* Roaming is not supported currently for FILS akm */
+	if (session->pCurRoamProfile && CSR_IS_AUTH_TYPE_FILS(
+	    session->pCurRoamProfile->AuthType.authType[0]) &&
+				!mac_ctx->is_fils_roaming_supported) {
+		sme_info("FILS Roaming not suppprted by fw");
+		return QDF_STATUS_SUCCESS;
+	}
+
 	/*
 	 * The Dynamic Config Items Update may happen even if the state is in
 	 * INIT. It is important to ensure that the command is passed down to

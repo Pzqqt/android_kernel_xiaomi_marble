@@ -70,6 +70,7 @@ struct wma_tgt_services {
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	bool en_11ax;
 	bool get_peer_info_enabled;
+	bool is_fils_roaming_supported;
 };
 
 /**

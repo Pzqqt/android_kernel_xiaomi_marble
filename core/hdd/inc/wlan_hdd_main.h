@@ -1760,6 +1760,7 @@ struct hdd_context {
 	bool fw_mem_dump_enabled;
 	bool imps_enabled;
 	int user_configured_pkt_filter_rules;
+	bool is_fils_roaming_supported;
 };
 
 /**

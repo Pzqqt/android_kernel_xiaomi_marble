@@ -921,6 +921,7 @@ typedef struct sAniSirGlobal {
 	uint8_t lteCoexAntShare;
 	uint8_t beacon_offload;
 	bool pmf_offload;
+	bool is_fils_roaming_supported;
 	uint32_t fEnableDebugLog;
 	uint16_t mgmtSeqNum;
 	bool enable5gEBT;

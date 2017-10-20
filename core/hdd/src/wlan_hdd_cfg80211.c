@@ -19891,8 +19891,11 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 			req->fils_erp_rrk_len, req->fils_erp_realm_len,
 			roam_profile->fils_con_info->key_nai_length);
 
-	if (!adapter->fast_roaming_allowed) {
-		hdd_debug("LFR3 not enabled on this interface");
+	if (!adapter->fast_roaming_allowed ||
+	    !hdd_ctx->is_fils_roaming_supported) {
+		hdd_debug("LFR3: %d, FILS support %d",
+			  adapter->fast_roaming_allowed,
+			  hdd_ctx->is_fils_roaming_supported);
 		return 0;
 	}
 

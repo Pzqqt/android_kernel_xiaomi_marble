@@ -749,10 +749,13 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 	if (hdd_ctx->config->sta_keepalive_method == HDD_STA_KEEPALIVE_GRAT_ARP)
 		hdd_set_grat_arp_keepalive(adapter);
 
+	hdd_debug("FILS Roaming support: %d",
+		  hdd_ctx->is_fils_roaming_supported);
 	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	roam_profile = &wext_state->roamProfile;
+
 	ifa = hdd_lookup_ifaddr(adapter);
-	if (ifa)
+	if (ifa && hdd_ctx->is_fils_roaming_supported)
 		sme_send_hlp_ie_info(hdd_ctx->hHal, adapter->sessionId,
 				     roam_profile, ifa->ifa_local);
 exit:
