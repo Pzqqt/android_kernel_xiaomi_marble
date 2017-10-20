@@ -14594,6 +14594,8 @@ static int hdd_set_wext(struct hdd_adapter *adapter)
 static void hdd_initialize_fils_info(struct hdd_wext_state *pwextBuf)
 {
 	pwextBuf->roamProfile.fils_con_info = NULL;
+	pwextBuf->roamProfile.hlp_ie = NULL;
+	pwextBuf->roamProfile.hlp_ie_len = 0;
 }
 #else
 static void hdd_initialize_fils_info(struct hdd_wext_state *pwextBuf)

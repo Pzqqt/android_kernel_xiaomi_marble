@@ -1006,6 +1006,8 @@ typedef struct tagCsrRoamProfile {
 	uint32_t dfs_regdomain;
 #ifdef WLAN_FEATURE_FILS_SK
 	bool fils_connection;
+	uint8_t *hlp_ie;
+	uint32_t hlp_ie_len;
 	struct cds_fils_connection_info *fils_con_info;
 #endif
 } tCsrRoamProfile;
@@ -1453,7 +1455,13 @@ typedef struct tagCsrRoamInfo {
 	uint8_t roamSynchInProgress;
 	uint8_t synchAuthStatus;
 	uint8_t kck[SIR_KCK_KEY_LEN];
-	uint8_t kek[SIR_KEK_KEY_LEN];
+	uint8_t kek[SIR_KEK_KEY_LEN_FILS];
+	uint8_t kek_len;
+	uint32_t pmk_len;
+	uint8_t pmk[SIR_PMK_LEN];
+	uint8_t pmkid[SIR_PMKID_LEN];
+	bool update_erp_next_seq_num;
+	uint16_t next_erp_seq_num;
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
 	uint8_t subnet_change_status;
 #endif

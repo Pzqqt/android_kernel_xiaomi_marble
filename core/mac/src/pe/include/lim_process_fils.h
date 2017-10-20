@@ -62,6 +62,25 @@ bool lim_is_valid_fils_auth_frame(tpAniSirGlobal mac_ctx,
 	tpPESession pe_session, tSirMacAuthFrameBody *rx_auth_frm_body);
 
 /**
+ * lim_create_fils_rik()- This API create rik using rrk coming from
+ * supplicant.
+ * @rrk: input rrk
+ * @rrk_len: rrk length
+ * @rik: Created rik
+ * @rik_len: rik length to be filled
+ *
+ * rIK = KDF (K, S), where
+ * K = rRK and
+ * S = rIK Label + "\0" + cryptosuite + length
+ * The rIK Label is the 8-bit ASCII string:
+ * Re-authentication Integrity Key@ietf.org
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
+			       uint8_t *rik, uint32_t *rik_len);
+
+/**
  * lim_update_fils_config()- This API updates fils session info to csr config
  * from join request.
  * @session: PE session
@@ -177,6 +196,19 @@ bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
 				      tpPESession session_entry,
 				      tpSirAssocRsp assoc_rsp,
 				      tLimMlmAssocCnf * assoc_cnf);
+
+/**
+ * lim_update_fils_rik() - API to update FILS RIK in RSO
+ * @pe_session: PE Session
+ * @req_buffer: Pointer to RSO request
+ *
+ * This API is used to calculate(if required) RIK and fill
+ * the same in RSO request to fw.
+ *
+ * Return: None
+ */
+void lim_update_fils_rik(tpPESession pe_session,
+			 tSirRoamOffloadScanReq *req_buffer);
 #else
 static inline bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 		tpPESession pe_session, tSirMacAuthFrameBody *rx_auth_frm_body)
@@ -243,4 +275,8 @@ static inline bool lim_verify_fils_params_assoc_rsp(tpAniSirGlobal mac_ctx,
 {
 	return true;
 }
+
+static inline void lim_update_fils_rik(tpPESession pe_session,
+				       tSirRoamOffloadScanReq *req_buffer)
+{ }
 #endif

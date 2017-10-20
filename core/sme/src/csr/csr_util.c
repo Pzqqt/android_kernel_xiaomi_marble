@@ -6056,6 +6056,12 @@ static inline void csr_free_fils_profile_info(tCsrRoamProfile *profile)
 		qdf_mem_free(profile->fils_con_info);
 		profile->fils_con_info = NULL;
 	}
+
+	if (profile->hlp_ie) {
+		qdf_mem_free(profile->hlp_ie);
+		profile->hlp_ie = NULL;
+		profile->hlp_ie_len = 0;
+	}
 }
 #else
 static inline void csr_free_fils_profile_info(tCsrRoamProfile *profile)

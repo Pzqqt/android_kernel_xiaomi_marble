@@ -2051,6 +2051,45 @@ lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	qdf_mem_free(parsed_frm_ptr);
 	return QDF_STATUS_SUCCESS;
 }
+
+#if defined(WLAN_FEATURE_FILS_SK)
+/**
+ * lim_copy_and_free_hlp_data_from_session - Copy HLP info
+ * @session_ptr: PE session
+ * @roam_sync_ind_ptr: Roam Synch Indication pointer
+ *
+ * This API is used to copy the parsed HLP info from PE session
+ * to roam synch indication data. THe HLP info is expected to be
+ * parsed/stored in PE session already from assoc IE's received
+ * from fw as part of Roam Synch Indication.
+ *
+ * Return: None
+ */
+static void lim_copy_and_free_hlp_data_from_session(tpPESession session_ptr,
+				    roam_offload_synch_ind *roam_sync_ind_ptr)
+{
+	if (session_ptr->hlp_data && session_ptr->hlp_data_len) {
+		cds_copy_hlp_info(&session_ptr->dst_mac,
+				&session_ptr->src_mac,
+				session_ptr->hlp_data_len,
+				session_ptr->hlp_data,
+				&roam_sync_ind_ptr->dst_mac,
+				&roam_sync_ind_ptr->src_mac,
+				&roam_sync_ind_ptr->hlp_data_len,
+				roam_sync_ind_ptr->hlp_data);
+		qdf_mem_free(session_ptr->hlp_data);
+		session_ptr->hlp_data = NULL;
+		session_ptr->hlp_data_len = 0;
+	}
+}
+#else
+static inline void lim_copy_and_free_hlp_data_from_session(
+					tpPESession session_ptr,
+					roam_offload_synch_ind
+					*roam_sync_ind_ptr)
+{}
+#endif
+
 /**
  * pe_roam_synch_callback() - PE level callback for roam synch propagation
  * @mac_ctx: MAC Context
@@ -2199,8 +2238,13 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			mac_ctx->roam.pReassocResp,
 			mac_ctx->roam.reassocRespLen);
 	ft_session_ptr->bRoamSynchInProgress = true;
+
 	lim_process_assoc_rsp_frame(mac_ctx, mac_ctx->roam.pReassocResp,
 			LIM_REASSOC, ft_session_ptr);
+
+	lim_copy_and_free_hlp_data_from_session(ft_session_ptr,
+						roam_sync_ind_ptr);
+
 	roam_sync_ind_ptr->aid = ft_session_ptr->limAID;
 	curr_sta_ds->mlmStaContext.mlmState =
 		eLIM_MLM_LINK_ESTABLISHED_STATE;

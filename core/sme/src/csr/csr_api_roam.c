@@ -3922,6 +3922,7 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 				EVENT_WLAN_STATUS_V2);
 	}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
+
 	return status;
 }
 
@@ -7548,6 +7549,7 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 #endif
 		csr_roam_link_up(mac_ctx, conn_profile->bssid);
 	}
+	sme_free_join_rsp_fils_params(&roam_info);
 }
 
 /**
@@ -7735,23 +7737,38 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
  *
  * Return: None
  */
-static inline void update_profile_fils_info(tCsrRoamProfile *des_profile,
+static void update_profile_fils_info(tCsrRoamProfile *des_profile,
 					tCsrRoamProfile *src_profile)
 {
-	if (!src_profile->fils_con_info)
+	if (!src_profile || !src_profile->fils_con_info)
 		return;
 
-	if (src_profile->fils_con_info->is_fils_connection) {
-		des_profile->fils_con_info =
-			qdf_mem_malloc(sizeof(struct cds_fils_connection_info));
-		if (!des_profile->fils_con_info) {
-			sme_err("failed to allocate memory");
-			return;
-		}
-		qdf_mem_copy(des_profile->fils_con_info,
-			     src_profile->fils_con_info,
-			     sizeof(struct cds_fils_connection_info));
+	sme_debug("is fils %d", src_profile->fils_con_info->is_fils_connection);
+
+	if (!src_profile->fils_con_info->is_fils_connection)
+		return;
+
+	des_profile->fils_con_info =
+		qdf_mem_malloc(sizeof(struct cds_fils_connection_info));
+	if (!des_profile->fils_con_info) {
+		sme_err("failed to allocate memory");
+		return;
 	}
+
+	qdf_mem_copy(des_profile->fils_con_info,
+			src_profile->fils_con_info,
+			sizeof(struct cds_fils_connection_info));
+
+	des_profile->hlp_ie =
+		qdf_mem_malloc(src_profile->hlp_ie_len);
+	if (!des_profile->hlp_ie) {
+		sme_err("failed to allocate memory for hlp ie");
+		return;
+	}
+
+	qdf_mem_copy(des_profile->hlp_ie, src_profile->hlp_ie,
+		     src_profile->hlp_ie_len);
+	des_profile->hlp_ie_len = src_profile->hlp_ie_len;
 }
 #else
 static inline void update_profile_fils_info(tCsrRoamProfile *des_profile,
@@ -10693,11 +10710,17 @@ static bool
 csr_create_fils_realm_hash(struct cds_fils_connection_info *fils_con_info,
 			   uint8_t *tmp_hash)
 {
-	uint8_t hash[SHA256_DIGEST_SIZE] = {0};
+	uint8_t *hash;
 	uint8_t *data[1];
 
 	if (!fils_con_info->realm_len)
 		return false;
+
+	hash = qdf_mem_malloc(SHA256_DIGEST_SIZE);
+	if (!hash) {
+		sme_err("malloc fails in fils realm");
+		return false;
+	}
 
 	data[0] = fils_con_info->realm;
 	qdf_get_hash(SHA256_CRYPTO_TYPE, 1, data,
@@ -10705,6 +10728,7 @@ csr_create_fils_realm_hash(struct cds_fils_connection_info *fils_con_info,
 	qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 				   hash, SHA256_DIGEST_SIZE);
 	qdf_mem_copy(tmp_hash, hash, 2);
+	qdf_mem_free(hash);
 	return true;
 }
 
@@ -18393,6 +18417,106 @@ csr_roam_offload_per_scan(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	return QDF_STATUS_SUCCESS;
 }
 
+#if defined(WLAN_FEATURE_FILS_SK)
+QDF_STATUS csr_update_fils_config(tpAniSirGlobal mac, uint8_t session_id,
+				  tCsrRoamProfile *src_profile)
+{
+	struct csr_roam_session *session = CSR_GET_SESSION(mac, session_id);
+	tCsrRoamProfile *dst_profile = NULL;
+
+	if (!session) {
+		sme_err("session NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dst_profile = session->pCurRoamProfile;
+
+	if (!dst_profile) {
+		sme_err("Current Roam profile of SME session NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	update_profile_fils_info(dst_profile, src_profile);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * copy_all_before_char() - API to copy all character before a particular char
+ * @str: Source string
+ * @dst: Destination string
+ * @c: Character before which all characters need to be copied
+ *
+ * Return: length of the copied string, if success. zero otherwise.
+ */
+static uint32_t copy_all_before_char(char *str, char *dst, char c)
+{
+	uint32_t len = 0;
+
+	if (!str)
+		return len;
+
+	while (*str != '\0' && *str != c) {
+		*dst++ = *str++;
+		len++;
+	}
+	return len;
+}
+
+/**
+ * csr_update_fils_params_rso() - API to update FILS params in RSO
+ * @mac: Mac context
+ * @session: CSR Roam Session
+ * @req_buffer: RSO request buffer
+ *
+ * Return: None
+ */
+static void csr_update_fils_params_rso(tpAniSirGlobal mac,
+		struct csr_roam_session *session,
+		tSirRoamOffloadScanReq *req_buffer)
+{
+	struct roam_fils_params *roam_fils_params;
+	struct cds_fils_connection_info *fils_info;
+
+	if (!session->pCurRoamProfile)
+		return;
+
+	fils_info = session->pCurRoamProfile->fils_con_info;
+	if (!fils_info || !req_buffer)
+		return;
+
+	roam_fils_params = &req_buffer->roam_fils_params;
+	if ((fils_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH) ||
+			(fils_info->r_rk_length > FILS_MAX_RRK_LENGTH)) {
+		sme_err("Fils info len error: keyname nai len(%d) rrk len(%d)",
+			fils_info->key_nai_length, fils_info->r_rk_length);
+		return;
+	}
+
+	req_buffer->is_fils_connection = true;
+	roam_fils_params->username_length =
+			copy_all_before_char(fils_info->keyname_nai,
+				roam_fils_params->username, '@');
+
+	roam_fils_params->next_erp_seq_num =
+			(fils_info->sequence_number + 1);
+
+	roam_fils_params->rrk_length = fils_info->r_rk_length;
+	qdf_mem_copy(roam_fils_params->rrk, fils_info->r_rk,
+			roam_fils_params->rrk_length);
+
+	/* REALM info */
+	roam_fils_params->realm_len = fils_info->key_nai_length
+			- roam_fils_params->username_length - 1;
+	qdf_mem_copy(roam_fils_params->realm, fils_info->keyname_nai
+			+ roam_fils_params->username_length + 1,
+			roam_fils_params->realm_len);
+}
+#else
+static inline void csr_update_fils_params_rso(tpAniSirGlobal mac,
+		struct csr_roam_session *session,
+		tSirRoamOffloadScanReq *req_buffer)
+{}
+#endif
+
 /**
  * csr_update_score_params() - API to update Score params in RSO
  * @mac_ctx: Mac context
@@ -18687,6 +18811,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 				session->nAddIEAssocLength);
 		csr_update_driver_assoc_ies(mac_ctx, session, req_buf);
 		csr_update_score_params(mac_ctx, req_buf);
+		csr_update_fils_params_rso(mac_ctx, session, req_buf);
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
@@ -20515,6 +20640,34 @@ void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
 }
 #endif
 
+#if defined(WLAN_FEATURE_FILS_SK)
+static void csr_copy_fils_join_rsp_roam_info(tCsrRoamInfo *roam_info,
+				      roam_offload_synch_ind *roam_synch_data)
+{
+	struct fils_join_rsp_params *roam_fils_info;
+
+	roam_info->fils_join_rsp = qdf_mem_malloc(sizeof(*roam_fils_info));
+	if (!roam_info->fils_join_rsp) {
+		sme_err("fils_join_rsp malloc fails!");
+		return;
+	}
+
+	roam_fils_info = roam_info->fils_join_rsp;
+	cds_copy_hlp_info(&roam_synch_data->dst_mac,
+			&roam_synch_data->src_mac,
+			roam_synch_data->hlp_data_len,
+			roam_synch_data->hlp_data,
+			&roam_fils_info->dst_mac,
+			&roam_fils_info->src_mac,
+			&roam_fils_info->hlp_data_len,
+			roam_fils_info->hlp_data);
+}
+#else
+static inline void csr_copy_fils_join_rsp_roam_info(tCsrRoamInfo *roam_info,
+				      roam_offload_synch_ind *roam_synch_data)
+{}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 		roam_offload_synch_ind *roam_synch_data,
@@ -20823,14 +20976,29 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 	}
 	roam_info->roamSynchInProgress = true;
 	roam_info->synchAuthStatus = roam_synch_data->authStatus;
+	roam_info->kek_len = roam_synch_data->kek_len;
+	roam_info->pmk_len = roam_synch_data->pmk_len;
 	qdf_mem_copy(roam_info->kck, roam_synch_data->kck, SIR_KCK_KEY_LEN);
-	qdf_mem_copy(roam_info->kek, roam_synch_data->kek, SIR_KEK_KEY_LEN);
+	qdf_mem_copy(roam_info->kek, roam_synch_data->kek, roam_info->kek_len);
+
+	if (roam_synch_data->pmk_len)
+		qdf_mem_copy(roam_info->pmk, roam_synch_data->pmk,
+			     roam_synch_data->pmk_len);
+
+	qdf_mem_copy(roam_info->pmkid, roam_synch_data->pmkid, SIR_PMKID_LEN);
+	roam_info->update_erp_next_seq_num =
+			roam_synch_data->update_erp_next_seq_num;
+	roam_info->next_erp_seq_num = roam_synch_data->next_erp_seq_num;
 	qdf_mem_copy(roam_info->replay_ctr, roam_synch_data->replay_ctr,
 			SIR_REPLAY_CTR_LEN);
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		FL("LFR3: Copy KCK, KEK and Replay Ctr"));
+		FL("LFR3: Copy KCK, KEK(len %d) and Replay Ctr"),
+		roam_info->kek_len);
 	roam_info->subnet_change_status =
 		CSR_GET_SUBNET_STATUS(roam_synch_data->roamReason);
+
+	csr_copy_fils_join_rsp_roam_info(roam_info, roam_synch_data);
+
 	csr_roam_call_callback(mac_ctx, session_id, roam_info, 0,
 		eCSR_ROAM_ASSOCIATION_COMPLETION, eCSR_ROAM_RESULT_ASSOCIATED);
 	csr_reset_pmkid_candidate_list(mac_ctx, session_id);
@@ -20847,6 +21015,7 @@ static QDF_STATUS csr_process_roam_sync_callback(tpAniSirGlobal mac_ctx,
 
 	session->fRoaming = false;
 	session->roam_synch_in_progress = false;
+	sme_free_join_rsp_fils_params(roam_info);
 	qdf_mem_free(roam_info->pbFrames);
 	qdf_mem_free(roam_info);
 	qdf_mem_free(ies_local);

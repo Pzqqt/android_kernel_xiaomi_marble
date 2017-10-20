@@ -656,6 +656,8 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_SET_LIMIT_OFF_CHAN          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 390)
 
+#define SIR_HAL_SET_DEL_PMKID_CACHE         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 391)
+#define SIR_HAL_HLP_IE_INFO                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 392)
 #define SIR_HAL_MSG_TYPES_END               (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */
