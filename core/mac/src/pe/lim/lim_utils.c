@@ -2703,51 +2703,6 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 }
 
 /**
- * lim_active_scan_allowed()
- *
- ***FUNCTION:
- * Checks if active scans are permitted on the given channel
- *
- ***LOGIC:
- * The config variable SCAN_CONTROL_LIST contains pairs of (channelNum, activeScanAllowed)
- * Need to check if the channelNum matches, then depending on the corresponding
- * scan flag, return true (for activeScanAllowed==1) or false (otherwise).
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  pMac       Pointer to Global MAC structure
- * @param  channelNum channel number
- * @return None
- */
-
-uint8_t lim_active_scan_allowed(tpAniSirGlobal pMac, uint8_t channelNum)
-{
-	uint32_t i;
-	uint8_t channelPair[WNI_CFG_SCAN_CONTROL_LIST_LEN];
-	uint32_t len = WNI_CFG_SCAN_CONTROL_LIST_LEN;
-
-	if (wlan_cfg_get_str(pMac, WNI_CFG_SCAN_CONTROL_LIST, channelPair, &len)
-	    != eSIR_SUCCESS) {
-		pe_err("Unable to get scan control list");
-		return false;
-	}
-
-	if (len > WNI_CFG_SCAN_CONTROL_LIST_LEN) {
-		pe_err("Invalid scan control list length: %d", len);
-		return false;
-	}
-
-	for (i = 0; (i + 1) < len; i += 2) {
-		if (channelPair[i] == channelNum)
-			return ((channelPair[i + 1] ==
-				 eSIR_ACTIVE_SCAN) ? true : false);
-	}
-	return false;
-}
-
-/**
  * lim_get_ht_capability()
  *
  ***FUNCTION:
