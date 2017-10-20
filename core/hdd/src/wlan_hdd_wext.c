@@ -11345,9 +11345,9 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_get_ap_address, /* SIOCGIWAP */
 	(iw_handler) iw_set_mlme,       /* SIOCSIWMLME */
 	(iw_handler) NULL,      /* SIOCGIWAPLIST */
-	(iw_handler) NULL,       /* SIOCSIWSCAN */
-	(iw_handler) NULL,       /* SIOCGIWSCAN */
-	(iw_handler) iw_set_essid,      /* SIOCSIWESSID */
+	(iw_handler) NULL,      /* SIOCSIWSCAN */
+	(iw_handler) NULL,      /* SIOCGIWSCAN */
+	(iw_handler) NULL,      /* SIOCSIWESSID */
 	(iw_handler) NULL,      /* SIOCGIWESSID */
 	(iw_handler) NULL,      /* SIOCSIWNICKN */
 	(iw_handler) NULL,      /* SIOCGIWNICKN */
