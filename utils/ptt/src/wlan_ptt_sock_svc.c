@@ -309,7 +309,7 @@ static void ptt_cmd_handler(const void *data, int data_len, void *ctx, int pid)
 	if (nla_len(tb[CLD80211_ATTR_DATA]) <  (length +
 						sizeof(payload->radio) +
 						sizeof(tAniHdr))) {
-		PTT_TRACE(VOS_TRACE_LEVEL_ERROR, "ATTR_DATA len check failed");
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "ATTR_DATA len check failed");
 		return;
 	}
 
