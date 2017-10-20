@@ -12781,7 +12781,10 @@ static void wlan_hdd_cfg80211_scan_randomization_init(struct wiphy *wiphy)
 #endif
 
 #define WLAN_HDD_MAX_NUM_CSA_COUNTERS 2
-#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 static void wlan_hdd_cfg80211_set_wiphy_fils_feature(struct wiphy *wiphy)
 {
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_FILS_SK_OFFLOAD);
@@ -13033,7 +13036,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif
 	wiphy->features |= NL80211_FEATURE_INACTIVITY_TIMER;
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 8, 0)) || \
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 9, 0)) || \
 	defined(CFG80211_BEACON_TX_RATE_CUSTOM_BACKPORT)
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_BEACON_RATE_LEGACY);
 	wiphy_ext_feature_set(wiphy, NL80211_EXT_FEATURE_BEACON_RATE_HT);
@@ -15854,7 +15857,9 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_CCKM_WPA;
 		break;
 #endif
-#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 	case NL80211_AUTHTYPE_FILS_SK:
 		hdd_notice("set authentication type to FILS SHARED");
 		sta_ctx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
@@ -15871,7 +15876,9 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 	return 0;
 }
 
-#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 /**
  * hdd_validate_fils_info_ptr() - check fils info for FILS AKMs
  * @wext_state:     wext state pointer
@@ -15956,7 +15963,9 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 		hdd_debug("setting key mgmt type to OSEN");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
 		break;
-#ifdef WLAN_FEATURE_FILS_SK
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 	case WLAN_AKM_SUITE_FILS_SHA256:
 		if (!fils_akm_check)
 			return -EINVAL;
@@ -16551,7 +16560,9 @@ static bool hdd_is_wpaie_present(const uint8_t *ie, uint8_t ie_len)
 	return false;
 }
 
-#if defined(WLAN_FEATURE_FILS_SK) && defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT)
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 /**
  * wlan_hdd_get_fils_auth_type() - API to get FILS auth type
  * @auth: enum of auth type
@@ -18427,7 +18438,8 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	return ret;
 }
 
-#ifdef CFG80211_FILS_SK_OFFLOAD_SUPPORT
+#if defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+	 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0))
 /*
  * wlan_hdd_is_pmksa_valid: API to validate pmksa
  * @pmksa: pointer to cfg80211_pmksa structure
