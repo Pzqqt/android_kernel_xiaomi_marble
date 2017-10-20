@@ -6208,92 +6208,6 @@ static int iw_get_nick(struct net_device *dev,
 }
 
 /**
- * __iw_set_retry() - SIOCSIWRETRY ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_retry(struct net_device *dev, struct iw_request_info *info,
-			  union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	if (wrqu->retry.value < WNI_CFG_LONG_RETRY_LIMIT_STAMIN ||
-	    wrqu->retry.value > WNI_CFG_LONG_RETRY_LIMIT_STAMAX) {
-
-		hdd_err("Invalid Retry-Limit=%d!!", wrqu->retry.value);
-
-		return -EINVAL;
-	}
-
-	if (wrqu->retry.flags & IW_RETRY_LIMIT) {
-
-		if ((wrqu->retry.flags & IW_RETRY_LONG)) {
-			if (sme_cfg_set_int (hHal, WNI_CFG_LONG_RETRY_LIMIT,
-						wrqu->retry.value) !=
-					QDF_STATUS_SUCCESS) {
-				hdd_err("WNI_CFG_LONG_RETRY_LIMIT failed");
-				return -EIO;
-			}
-		} else if ((wrqu->retry.flags & IW_RETRY_SHORT)) {
-			if (sme_cfg_set_int (hHal, WNI_CFG_SHORT_RETRY_LIMIT,
-						wrqu->retry.value) !=
-					QDF_STATUS_SUCCESS) {
-				hdd_err("WNI_CFG_SHORT_RETRY_LIMIT failed");
-				return -EIO;
-			}
-		}
-	} else {
-		return -EOPNOTSUPP;
-	}
-
-	hdd_debug("Set Retry-Limit=%d!!", wrqu->retry.value);
-
-	EXIT();
-
-	return 0;
-
-}
-
-/**
- * iw_set_retry() - SSR wrapper for __iw_set_retry()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_retry(struct net_device *dev, struct iw_request_info *info,
-			union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_retry(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_mlme() - SIOCSIWMLME ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -12142,7 +12056,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) iw_get_frag_threshold,     /* SIOCGIWFRAG */
 	(iw_handler) iw_set_tx_power,   /* SIOCSIWTXPOW */
 	(iw_handler) iw_get_tx_power,   /* SIOCGIWTXPOW */
-	(iw_handler) iw_set_retry,      /* SIOCSIWRETRY */
+	(iw_handler) NULL,      /* SIOCSIWRETRY */
 	(iw_handler) NULL,      /* SIOCGIWRETRY */
 	(iw_handler) NULL,      /* SIOCSIWENCODE */
 	(iw_handler) NULL,      /* SIOCGIWENCODE */
