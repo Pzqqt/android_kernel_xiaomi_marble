@@ -3344,13 +3344,29 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		rx_pkt->pkt_meta.mpdu_hdr_ptr =
 				qdf_nbuf_data(wbuf);
 		rx_pkt->pkt_meta.mpdu_len = qdf_nbuf_len(wbuf);
-		rx_pkt->pkt_meta.mpdu_data_len =
-		rx_pkt->pkt_meta.mpdu_len -
-		rx_pkt->pkt_meta.mpdu_hdr_len;
+		rx_pkt->pkt_buf = wbuf;
+		if (rx_pkt->pkt_meta.mpdu_len >=
+			rx_pkt->pkt_meta.mpdu_hdr_len) {
+			rx_pkt->pkt_meta.mpdu_data_len =
+				rx_pkt->pkt_meta.mpdu_len -
+				rx_pkt->pkt_meta.mpdu_hdr_len;
+		} else {
+			WMA_LOGE("mpdu len %d less than hdr %d, dropping frame",
+				rx_pkt->pkt_meta.mpdu_len,
+				rx_pkt->pkt_meta.mpdu_hdr_len);
+			cds_pkt_return_packet(rx_pkt);
+			return -EINVAL;
+		}
+
+		if (rx_pkt->pkt_meta.mpdu_data_len > WMA_MAX_MGMT_MPDU_LEN) {
+			WMA_LOGE("Data Len %d greater than max, dropping frame",
+				rx_pkt->pkt_meta.mpdu_data_len);
+			cds_pkt_return_packet(rx_pkt);
+			return -EINVAL;
+		}
 		rx_pkt->pkt_meta.mpdu_data_ptr =
 		rx_pkt->pkt_meta.mpdu_hdr_ptr +
 		rx_pkt->pkt_meta.mpdu_hdr_len;
-		rx_pkt->pkt_buf = wbuf;
 		WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" tsf_delta: %u"),
 		    MAC_ADDR_ARRAY(wh->i_addr3), rx_pkt->pkt_meta.tsf_delta);
 	} else {
