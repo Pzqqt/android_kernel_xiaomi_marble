@@ -3610,19 +3610,6 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
-#ifndef CONVERGED_P2P_ENABLE
-	/* Initialize the P2P Listen Offload event handler */
-	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID,
-			wma_p2p_lo_event_handler,
-			WMA_RX_SERIALIZER_CTX);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		WMA_LOGE("Failed to register p2p lo event cb");
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto end;
-	}
-#endif
-
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
 			wma_wlan_bt_activity_evt_handler,
@@ -5134,22 +5121,12 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	}
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
-#ifndef CONVERGED_P2P_ENABLE
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_FW_MEM_DUMP_SUPPORT))
 		wma_handle->fw_mem_dump_enabled = true;
 	else
 		wma_handle->fw_mem_dump_enabled = false;
 
-	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_P2P_NOA_EVENTID,
-						    wma_p2p_noa_event_handler,
-						    WMA_RX_SERIALIZER_CTX);
-	if (status) {
-		WMA_LOGE("Failed to register WMI_P2P_NOA_EVENTID callback");
-		return -EINVAL;
-	}
-#endif
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_TBTTOFFSET_UPDATE_EVENTID,
 				wma_tbttoffset_update_event_handler,
@@ -7399,11 +7376,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 			break;
 #endif
-	case WMA_SET_P2P_GO_NOA_REQ:
-		wma_process_set_p2pgo_noa_req(wma_handle,
-					      (tP2pPsParams *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_SET_MIMOPS_REQ:
 		wma_process_set_mimops_req(wma_handle,
 					   (tSetMIMOPS *) msg->bodyptr);

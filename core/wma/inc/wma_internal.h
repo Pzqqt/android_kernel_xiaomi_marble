@@ -733,9 +733,6 @@ void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
 int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
 				     uint32_t len);
 
-void wma_process_set_p2pgo_noa_req(tp_wma_handle wma,
-					  tP2pPsParams *ps_params);
-
 void wma_process_set_mimops_req(tp_wma_handle wma_handle,
 				       tSetMIMOPS *mimops);
 
