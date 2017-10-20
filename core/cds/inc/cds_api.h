@@ -65,15 +65,17 @@
  * CDS_DRIVER_STATE_UNLOADING: Driver remove is in progress.
  * CDS_DRIVER_STATE_RECOVERING: Recovery in progress.
  * CDS_DRIVER_STATE_BAD: Driver in bad state.
+ * CDS_DRIVER_STATE_MODULE_STOPPING: Module stop in progress.
  */
 enum cds_driver_state {
-	CDS_DRIVER_STATE_UNINITIALIZED	= 0,
-	CDS_DRIVER_STATE_LOADED		= BIT(0),
-	CDS_DRIVER_STATE_LOADING	= BIT(1),
-	CDS_DRIVER_STATE_UNLOADING	= BIT(2),
-	CDS_DRIVER_STATE_RECOVERING	= BIT(3),
-	CDS_DRIVER_STATE_BAD		= BIT(4),
-	CDS_DRIVER_STATE_FW_READY	= BIT(5),
+	CDS_DRIVER_STATE_UNINITIALIZED          = 0,
+	CDS_DRIVER_STATE_LOADED                 = BIT(0),
+	CDS_DRIVER_STATE_LOADING                = BIT(1),
+	CDS_DRIVER_STATE_UNLOADING              = BIT(2),
+	CDS_DRIVER_STATE_RECOVERING             = BIT(3),
+	CDS_DRIVER_STATE_BAD                    = BIT(4),
+	CDS_DRIVER_STATE_FW_READY               = BIT(5),
+	CDS_DRIVER_STATE_MODULE_STOPPING        = BIT(6),
 };
 
 #define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
@@ -200,6 +202,37 @@ static inline bool cds_is_load_or_unload_in_progress(void)
 }
 
 /**
+ * cds_is_module_stop_in_progress() - Is module stopping
+ *
+ * Return: true if module stop is in progress.
+ */
+static inline bool cds_is_module_stop_in_progress(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_MODULE_STOPPING);
+}
+
+/**
+ * cds_is_module_state_transitioning() - Is module state transitioning
+ *
+ * Return: true if module stop is in progress.
+ */
+static inline int cds_is_module_state_transitioning(void)
+{
+	if (cds_is_load_or_unload_in_progress() || cds_is_driver_recovering() ||
+		cds_is_module_stop_in_progress()) {
+		pr_info("%s: Load/Unload %d or recovery %d or module_stop %d is in progress",
+			__func__, cds_is_load_or_unload_in_progress(),
+				cds_is_driver_recovering(),
+				cds_is_module_stop_in_progress());
+		return true;
+	} else {
+		return false;
+	}
+}
+
+/**
  * cds_is_fw_down() - Is FW down or not
  *
  * Return: true if FW is down and false otherwise.
@@ -319,6 +352,21 @@ static inline void cds_set_unload_in_progress(uint8_t value)
 		cds_set_driver_state(CDS_DRIVER_STATE_UNLOADING);
 	else
 		cds_clear_driver_state(CDS_DRIVER_STATE_UNLOADING);
+}
+
+/**
+ * cds_set_module_stop_in_progress() - Setting module stop in progress
+ *
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_module_stop_in_progress(bool value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_MODULE_STOPPING);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_MODULE_STOPPING);
 }
 
 /**
