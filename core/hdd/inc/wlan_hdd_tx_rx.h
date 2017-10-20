@@ -167,4 +167,16 @@ static inline void netif_trans_update(struct net_device *dev)
 	__func__, jiffies)
 #endif
 
+static inline void
+hdd_skb_fill_gso_size (struct net_device *dev,
+					struct sk_buff *skb) {
+	if (skb_cloned(skb) && skb_is_nonlinear(skb) &&
+		skb_shinfo(skb)->gso_size == 0 &&
+		ip_hdr(skb)->protocol == IPPROTO_TCP) {
+		skb_shinfo(skb)->gso_size = dev->mtu -
+			((skb_transport_header(skb) - skb_network_header(skb))
+				+ tcp_hdrlen(skb));
+	}
+}
+
 #endif /* end #if !defined(WLAN_HDD_TX_RX_H) */
