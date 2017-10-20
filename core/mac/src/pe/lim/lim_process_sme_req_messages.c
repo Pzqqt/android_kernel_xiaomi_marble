@@ -4444,8 +4444,6 @@ static void __lim_deregister_deferred_sme_req_after_noa_start(tpAniSirGlobal pMa
  */
 void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal mac_ctx)
 {
-	bool buf_consumed = true;
-
 	pe_debug("Process defd sme req %d",
 		mac_ctx->lim.gDeferMsgTypeForNOA);
 
@@ -4459,17 +4457,6 @@ void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal mac_ctx)
 	case eWNI_SME_SCAN_REQ:
 		__lim_process_sme_scan_req(mac_ctx,
 				mac_ctx->lim.gpDefdSmeMsgForNOA);
-		break;
-	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
-		buf_consumed = lim_process_remain_on_chnl_req(mac_ctx,
-				mac_ctx->lim.gpDefdSmeMsgForNOA);
-		/*
-		 * lim_process_remain_on_chnl_req doesnt want us to free
-		 * the buffer since it is freed in lim_remain_on_chn_rsp.
-		 * this change is to avoid "double free"
-		 */
-		if (false == buf_consumed)
-			mac_ctx->lim.gpDefdSmeMsgForNOA = NULL;
 		break;
 	case eWNI_SME_JOIN_REQ:
 		__lim_process_sme_join_req(mac_ctx,
@@ -4505,32 +4492,6 @@ __lim_process_sme_reset_ap_caps_change(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	psessionEntry->limSentCapsChangeNtf = false;
 	return;
-}
-
-/**
- * lim_register_p2p_ack_ind_cb() - Save the p2p ack indication callback.
- * @mac_ctx: Mac pointer
- * @msg_buf: Msg pointer containing the callback
- *
- * This function is used to save the p2p ack indication callback in PE.
- *
- * Return: None
- */
-static void lim_register_p2p_ack_ind_cb(tpAniSirGlobal mac_ctx,
-		uint32_t *msg_buf)
-{
-	struct sir_sme_p2p_ack_ind_cb_req *sme_req =
-		(struct sir_sme_p2p_ack_ind_cb_req *)msg_buf;
-
-	if (NULL == msg_buf) {
-		pe_err("msg_buf is null");
-		return;
-	}
-	if (sme_req->callback)
-		mac_ctx->p2p_ack_ind_cb =
-			sme_req->callback;
-	else
-		pe_err("sme_req->callback is null");
 }
 
 /**
@@ -4930,13 +4891,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 		__lim_process_sme_scan_req(pMac, pMsgBuf);
 		break;
 
-	case eWNI_SME_REMAIN_ON_CHANNEL_REQ:
-		bufConsumed = lim_process_remain_on_chnl_req(pMac, pMsgBuf);
-		break;
-
-	case eWNI_SME_UPDATE_NOA:
-		__lim_process_sme_no_a_update(pMac, pMsgBuf);
-		break;
 	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:
 		__lim_process_clear_dfs_channel_list(pMac, pMsg);
 		break;
@@ -5114,9 +5068,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_NDP_INITIATOR_REQ:
 	case eWNI_SME_NDP_RESPONDER_REQ:
 		lim_handle_ndp_request_message(pMac, pMsg);
-		break;
-	case eWNI_SME_REGISTER_P2P_ACK_CB:
-		lim_register_p2p_ack_ind_cb(pMac, pMsgBuf);
 		break;
 	case eWNI_SME_UPDATE_ACCESS_POLICY_VENDOR_IE:
 		lim_process_sme_update_access_policy_vendor_ie(pMac, pMsgBuf);

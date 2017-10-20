@@ -48,7 +48,6 @@
 
 #include "sme_rrm_internal.h"
 #include "rrm_global.h"
-#include "p2p_api.h"
 
 #include <lim_ft_defs.h>
 #include "wlan_objmgr_psoc_obj.h"
@@ -318,8 +317,6 @@ typedef struct sLimTimers {
 #ifdef FEATURE_WLAN_ESE
 	TX_TIMER gLimEseTsmTimer;
 #endif
-	TX_TIMER gLimRemainOnChannelTimer;
-
 	TX_TIMER gLimPeriodicJoinProbeReqTimer;
 	TX_TIMER gLimDisassocAckTimer;
 	TX_TIMER gLimDeauthAckTimer;
@@ -916,11 +913,6 @@ typedef struct sAniSirGlobal {
 	struct csr_roamstruct roam;
 
 	tRrmContext rrm;
-#ifdef WLAN_FEATURE_CONCURRENT_P2P
-	tp2pContext p2pContext[MAX_NO_OF_P2P_SESSIONS];
-#else
-	tp2pContext p2pContext;
-#endif
 
 	uint8_t isCoalesingInIBSSAllowed;
 
@@ -953,7 +945,6 @@ typedef struct sAniSirGlobal {
 	/* Based on INI parameter */
 	uint32_t dual_mac_feature_disable;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
-	sir_p2p_ack_ind_callback p2p_ack_ind_cb;
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
 	enum auth_tx_ack_status auth_ack_status;

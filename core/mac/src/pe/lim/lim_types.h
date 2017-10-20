@@ -873,7 +873,6 @@ void lim_process_remain_on_chn_timeout(tpAniSirGlobal pMac);
 void lim_process_insert_single_shot_noa_timeout(tpAniSirGlobal pMac);
 void lim_convert_active_channel_to_passive_channel(tpAniSirGlobal pMac);
 void lim_send_p2p_action_frame(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
-tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
 void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal pMac);
 
 void lim_process_disassoc_ack_timeout(tpAniSirGlobal pMac);

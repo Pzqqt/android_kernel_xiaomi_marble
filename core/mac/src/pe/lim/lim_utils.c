@@ -602,9 +602,6 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 	tx_timer_deactivate(&lim_timer->gLimUpdateOlbcCacheTimer);
 	tx_timer_deactivate(&lim_timer->gLimPreAuthClnupTimer);
 
-	/* Deactivate remain on channel timer */
-	tx_timer_deactivate(&lim_timer->gLimRemainOnChannelTimer);
-
 	tx_timer_deactivate(&lim_timer->gLimDisassocAckTimer);
 
 	tx_timer_deactivate(&lim_timer->gLimDeauthAckTimer);
@@ -685,9 +682,6 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 
 		tx_timer_delete(&lim_timer->gLimUpdateOlbcCacheTimer);
 		tx_timer_delete(&lim_timer->gLimPreAuthClnupTimer);
-
-		/* Delete remain on channel timer */
-		tx_timer_delete(&lim_timer->gLimRemainOnChannelTimer);
 
 		tx_timer_delete(&lim_timer->gLimDisassocAckTimer);
 

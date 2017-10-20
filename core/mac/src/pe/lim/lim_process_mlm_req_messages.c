@@ -133,9 +133,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 		lim_process_ft_preauth_rsp_timeout(mac_ctx);
 		break;
-	case SIR_LIM_REMAIN_CHN_TIMEOUT:
-		lim_process_remain_on_chn_timeout(mac_ctx);
-		break;
 	case SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT:
 		lim_process_insert_single_shot_noa_timeout(mac_ctx);
 		break;
