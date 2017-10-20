@@ -7936,7 +7936,10 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	pDstProfile->wps_state = pSrcProfile->wps_state;
 	pDstProfile->ieee80211d = pSrcProfile->ieee80211d;
 	pDstProfile->sap_dot11mc = pSrcProfile->sap_dot11mc;
-	pDstProfile->do_not_roam = pSrcProfile->do_not_roam;
+	pDstProfile->supplicant_disabled_roaming =
+		pSrcProfile->supplicant_disabled_roaming;
+	pDstProfile->roaming_allowed_on_iface =
+		pSrcProfile->roaming_allowed_on_iface;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
 #ifdef WLAN_FEATURE_11W
@@ -18664,10 +18667,16 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if ((session->pCurRoamProfile &&
+		session->pCurRoamProfile->roaming_allowed_on_iface == false)) {
+		sme_debug("Roaming disabled on iface, session: %d", session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	if ((ROAM_SCAN_OFFLOAD_START == command &&
-			REASON_CTX_INIT != reason) &&
-			(session->pCurRoamProfile &&
-			 session->pCurRoamProfile->do_not_roam)) {
+		REASON_CTX_INIT != reason) &&
+		(session->pCurRoamProfile &&
+		session->pCurRoamProfile->supplicant_disabled_roaming)) {
 		sme_debug("Supplicant disabled driver roaming");
 		return QDF_STATUS_E_FAILURE;
 	}
