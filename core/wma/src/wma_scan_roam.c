@@ -2360,12 +2360,6 @@ static int wma_fill_roam_synch_buffer(tp_wma_handle wma,
 			     SIR_KEK_KEY_LEN);
 		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     key->replay_counter, SIR_REPLAY_CTR_LEN);
-		WMA_LOGD("%s: KCK dump", __func__);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
-				   key->kck, SIR_KCK_KEY_LEN);
-		WMA_LOGD("%s: KEK dump", __func__);
-		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
-				   key->kek, SIR_KEK_KEY_LEN);
 		WMA_LOGD("%s: Key Replay Counter dump", __func__);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   key->replay_counter, SIR_REPLAY_CTR_LEN);

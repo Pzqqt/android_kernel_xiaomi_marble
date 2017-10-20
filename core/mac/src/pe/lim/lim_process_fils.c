@@ -572,10 +572,6 @@ static void lim_get_keys(tpPESession pe_session)
 	buf += kek_len;
 	qdf_mem_copy(fils_info->tk, buf, tk_len);
 	fils_info->tk_len = tk_len;
-	lim_fils_data_dump("Key Data", key_data, key_data_len);
-	lim_fils_data_dump("ICK", fils_info->ick, ick_len);
-	lim_fils_data_dump("KEK", fils_info->kek, kek_len);
-	lim_fils_data_dump("TK", fils_info->tk, tk_len);
 	qdf_mem_free(data);
 }
 
@@ -646,7 +642,6 @@ static void lim_generate_pmk(tpPESession pe_session)
 				nounce_len, 1,
 				&addr[0], &len[0], fils_info->fils_pmk) < 0)
 		pe_err("failed to generate PMK");
-	lim_fils_data_dump("PMK", fils_info->fils_pmk, fils_info->fils_pmk_len);
 }
 
 /**
@@ -684,8 +679,6 @@ static void lim_generate_rmsk_data(tpPESession pe_session)
 			fils_info->fils_rrk_len, rmsk_label,
 			optional_data, sizeof(optional_data),
 			fils_info->fils_rmsk, fils_info->fils_rmsk_len);
-	lim_fils_data_dump("RMSK", fils_info->fils_rmsk,
-				fils_info->fils_rmsk_len);
 }
 
 /**
@@ -854,8 +847,6 @@ QDF_STATUS lim_create_fils_rik(uint8_t *rrk, uint8_t rrk_len,
 		return QDF_STATUS_E_FAILURE;
 	}
 	*rik_len = rrk_len;
-	lim_fils_data_dump("rRk", rrk, rrk_len);
-	lim_fils_data_dump("rIk", rik, *rik_len);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1105,10 +1096,6 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 			rx_auth_frm_body->wrapped_data,
 			rx_auth_frm_body->wrapped_data_len))
 			return false;
-	} else {
-		lim_fils_data_dump("PMK",
-			pe_session->fils_info->fils_pmk,
-			pe_session->fils_info->fils_pmk_len);
 	}
 	lim_get_keys(pe_session);
 	lim_generate_key_auth(pe_session);
@@ -1365,8 +1352,6 @@ static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
 					     GTK_OFFSET), (data_len -
 					     GTK_OFFSET));
 				fils_info->gtk_len = (data_len - GTK_OFFSET);
-				lim_fils_data_dump("GTK: ", fils_info->gtk,
-						   fils_info->gtk_len);
 				break;
 
 			case DATA_TYPE_IGTK:
@@ -1376,8 +1361,6 @@ static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
 					     IGTK_OFFSET));
 				qdf_mem_copy(fils_info->ipn, (ie_data +
 					     IPN_OFFSET), IPN_LEN);
-				lim_fils_data_dump("IGTK: ", fils_info->igtk,
-						   fils_info->igtk_len);
 			break;
 			default:
 				pe_err("Unknown KDE data type %x", data_type);
@@ -1776,7 +1759,6 @@ QDF_STATUS aead_decrypt_assoc_rsp(tpAniSirGlobal mac_ctx,
 	uint8_t *fils_ies;
 	struct pe_fils_session *fils_info = session->fils_info;
 
-	lim_fils_data_dump("Assoc Rsp :", p_frame, *n_frame);
 	status = find_ie_data_after_fils_session_ie(mac_ctx, p_frame +
 					      FIXED_PARAM_OFFSET_ASSOC_RSP,
 					      ((*n_frame) -
