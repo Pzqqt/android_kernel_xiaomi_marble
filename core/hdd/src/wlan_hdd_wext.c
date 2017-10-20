@@ -5513,60 +5513,6 @@ void wlan_hdd_change_country_code_callback(void *context)
 }
 
 /**
- * __iw_set_nick() - SIOCSIWNICKN ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_nick(struct net_device *dev,
-		       struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter;
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	return 0;
-}
-
-/**
- * iw_set_nick() - SSR wrapper for __iw_set_nick
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: extra
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_nick(struct net_device *dev,
-		       struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_nick(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_mlme() - SIOCSIWMLME ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11403,7 +11349,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,       /* SIOCGIWSCAN */
 	(iw_handler) iw_set_essid,      /* SIOCSIWESSID */
 	(iw_handler) iw_get_essid,      /* SIOCGIWESSID */
-	(iw_handler) iw_set_nick,       /* SIOCSIWNICKN */
+	(iw_handler) NULL,      /* SIOCSIWNICKN */
 	(iw_handler) NULL,      /* SIOCGIWNICKN */
 	(iw_handler) NULL,      /* -- hole -- */
 	(iw_handler) NULL,      /* -- hole -- */
