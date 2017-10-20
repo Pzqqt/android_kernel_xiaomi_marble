@@ -189,7 +189,6 @@ static uint8_t *sme_trace_get_command_string(uint32_t command)
 		CASE_RETURN_STRING(eSmeQosCommandMask);
 		CASE_RETURN_STRING(eSmeCommandAddTs);
 		CASE_RETURN_STRING(eSmeCommandDelTs);
-		CASE_RETURN_STRING(eSmeCommandRemainOnChannel);
 		CASE_RETURN_STRING(e_sme_command_set_hw_mode);
 		CASE_RETURN_STRING(e_sme_command_nss_update);
 		CASE_RETURN_STRING(e_sme_command_set_dual_mac_config);

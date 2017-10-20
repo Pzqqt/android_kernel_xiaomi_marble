@@ -536,9 +536,6 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 				CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT);
 		status = csr_process_scan_command(mac_ctx, sme_cmd);
 		break;
-	case eSmeCommandRemainOnChannel:
-		status = p2p_process_remain_on_channel_cmd(mac_ctx, sme_cmd);
-		break;
 	/*
 	 * Treat standby differently here because caller may not be able
 	 * to handle the failure so we do our best here
@@ -780,7 +777,6 @@ QDF_STATUS sme_open(tHalHandle hHal)
 		sme_err("rrm_open failed, status: %d", status);
 		return status;
 	}
-	sme_p2p_open(pMac);
 	sme_trace_init(pMac);
 	sme_register_debug_callback();
 	wlan_serialization_legacy_init_callback();
@@ -1339,41 +1335,6 @@ static QDF_STATUS sme_handle_scan_req(tpAniSirGlobal mac_ctx,
 
 	csr_scan_free_request(mac_ctx, scan_msg->scan_param);
 	qdf_mem_free(scan_msg->scan_param);
-	return status;
-}
-
-/**
- * sme_handle_roc_req() - Roc request handler
- * @mac_ctx: MAC global context
- * @msg: message buffer
- *
- * Roc request message from upper layer is handled as
- * part of this API
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sme_handle_roc_req(tHalHandle hal,
-					void *msg)
-{
-	struct ani_roc_req *roc_msg;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	remainOnChanCallback callback;
-
-	if (msg == NULL) {
-		sme_err("ROC request is NULL");
-		return status;
-	}
-
-	roc_msg = msg;
-	callback = roc_msg->callback;
-	status = p2p_remain_on_channel(hal, roc_msg->session_id,
-		roc_msg->channel, roc_msg->duration, callback,
-		roc_msg->ctx, roc_msg->is_p2pprobe_allowed,
-		roc_msg->scan_id);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("Scan request failed. session_id: %d scan_id: %d",
-			roc_msg->session_id, roc_msg->scan_id);
-
 	return status;
 }
 
@@ -2164,22 +2125,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-	case eWNI_SME_REMAIN_ON_CHN_RSP:
-		if (pMsg->bodyptr) {
-			status = sme_remain_on_chn_rsp(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
-	case eWNI_SME_REMAIN_ON_CHN_RDY_IND:
-		if (pMsg->bodyptr) {
-			status = sme_remain_on_chn_ready(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
 	case eWNI_SME_CHANGE_COUNTRY_CODE:
 		if (pMsg->bodyptr) {
 			status = sme_handle_change_country_code((void *)pMac,
@@ -2201,14 +2146,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 	case eWNI_SME_SCAN_CMD:
 		if (pMsg->bodyptr) {
 			status = sme_handle_scan_req(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
-	case eWNI_SME_ROC_CMD:
-		if (pMsg->bodyptr) {
-			status = sme_handle_roc_req(hHal, pMsg->bodyptr);
 			qdf_mem_free(pMsg->bodyptr);
 		} else {
 			sme_err("Empty message for: %d", pMsg->type);
@@ -2666,8 +2603,6 @@ QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType)
 	QDF_STATUS fail_status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	p2p_stop(hHal);
-
 	status = rrm_stop(pMac);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("rrm_stop failed with status: %d", status);
@@ -2736,8 +2671,6 @@ QDF_STATUS sme_close(tHalHandle hHal)
 		sme_err("RRM close failed with status: %d", status);
 		fail_status = status;
 	}
-
-	sme_p2p_close(hHal);
 
 	free_sme_cmd_list(pMac);
 
@@ -5713,42 +5646,6 @@ QDF_STATUS sme_get_operation_channel(tHalHandle hHal, uint32_t *pChannel,
 } /* sme_get_operation_channel ends here */
 
 /**
- * sme_register_p2p_ack_ind_callback() - p2p ack indication callback
- * @hal: hal pointer
- * @callback: callback pointer to be registered
- *
- * This function is used to register a callback to PE for p2p ack
- * indication
- *
- * Return: Success if msg is posted to PE else Failure.
- */
-QDF_STATUS sme_register_p2p_ack_ind_callback(tHalHandle hal,
-				sir_p2p_ack_ind_callback callback)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-	struct sir_sme_p2p_ack_ind_cb_req *msg;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		msg = qdf_mem_malloc(sizeof(*msg));
-		if (NULL == msg) {
-			sme_err("Failed to allocate memory");
-			sme_release_global_lock(&mac_ctx->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-		msg->message_type = eWNI_SME_REGISTER_P2P_ACK_CB;
-		msg->length = sizeof(*msg);
-
-		msg->callback = callback;
-		status = umac_send_mb_message_to_mac(msg);
-		sme_release_global_lock(&mac_ctx->sme);
-		return status;
-	}
-	return status;
-}
-
-/**
  * sme_register_mgmt_frame_ind_callback() - Register a callback for
  * management frame indication to PE.
  *
@@ -5899,211 +5796,6 @@ QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 			qdf_mem_copy(pMsg->matchData, matchData, matchLen);
 			status = umac_send_mb_message_to_mac(pMsg);
 		}
-		sme_release_global_lock(&pMac->sme);
-	}
-	return status;
-}
-
-/**
- * sme_remain_on_channel - API to request remain on channel for 'x' duration
- *
- * @hHal: pointer to MAC handle
- * @session_id: Session identifier
- * @channel: channel information
- * @duration: duration in ms
- * @callback: HDD registered callback to process reaminOnChannelRsp
- * @context: HDD Callback param
- * @scan_id: scan identifier
- *
- * This function process the roc request and generates scan identifier.s
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t session_id,
-				 uint8_t channel, uint32_t duration,
-				 remainOnChanCallback callback,
-				 void *pContext, uint8_t isP2PProbeReqAllowed,
-				 uint32_t *scan_id)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
-	uint32_t san_req_id, scan_count;
-	struct ani_roc_req *roc_msg;
-	struct scheduler_msg msg = {0};
-
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_REMAIN_ONCHAN, session_id, 0));
-
-	scan_count = csr_scan_active_ll_count(mac_ctx);
-	if (scan_count >= mac_ctx->scan.max_scan_count) {
-		sme_err("Max scan reached");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	wma_get_scan_id(&san_req_id);
-	*scan_id = san_req_id;
-	status = sme_acquire_global_lock(&mac_ctx->sme);
-
-	roc_msg = qdf_mem_malloc(sizeof(struct ani_roc_req));
-	if (NULL == roc_msg) {
-		sme_err("scan_req: failed to allocate mem for msg");
-		sme_release_global_lock(&mac_ctx->sme);
-		return QDF_STATUS_E_NOMEM;
-	}
-	roc_msg->msg_type = eWNI_SME_ROC_CMD;
-	roc_msg->msg_len = (uint16_t) sizeof(struct ani_roc_req);
-	roc_msg->session_id = session_id;
-	roc_msg->callback = callback;
-	roc_msg->duration = duration;
-	roc_msg->channel = channel;
-	roc_msg->is_p2pprobe_allowed = isP2PProbeReqAllowed;
-	roc_msg->ctx = pContext;
-	roc_msg->scan_id = *scan_id;
-	msg.type = eWNI_SME_ROC_CMD;
-	msg.bodyptr = roc_msg;
-	msg.reserved = 0;
-	msg.bodyval = 0;
-	if (QDF_STATUS_SUCCESS !=
-		scheduler_post_msg(QDF_MODULE_ID_SME, &msg)) {
-		sme_err("sme_scan_req failed to post msg");
-		qdf_mem_free(roc_msg);
-		status = QDF_STATUS_E_FAILURE;
-	}
-	sme_release_global_lock(&mac_ctx->sme);
-	return status;
-}
-
-/*
- * sme_report_probe_req() -
- * API to enable/disable forwarding of probeReq to apps in p2p.
- *
- * hHal - The handle returned by mac_open.
- * falg: to set the Probe request forarding to wpa_supplicant in listen state
- * in p2p
- * Return QDF_STATUS
- */
-
-#ifndef WLAN_FEATURE_CONCURRENT_P2P
-QDF_STATUS sme_report_probe_req(tHalHandle hHal, uint8_t flag)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	do {
-		/* acquire the lock for the sme object */
-		status = sme_acquire_global_lock(&pMac->sme);
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			/* call set in context */
-			pMac->p2pContext.probeReqForwarding = flag;
-			/* release the lock for the sme object */
-			sme_release_global_lock(&pMac->sme);
-		}
-	} while (0);
-
-	return status;
-}
-
-/*
- * sme_update_p2p_ie() -
- * API to set the P2p Ie in p2p context
- *
- * hHal - The handle returned by mac_open.
- * p2pIe -  Ptr to p2pIe from HDD.
- * p2pIeLength: length of p2pIe
- * Return QDF_STATUS
- */
-
-QDF_STATUS sme_update_p2p_ie(tHalHandle hHal, void *p2pIe, uint32_t p2pIeLength)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_UPDATE_P2P_IE, NO_SESSION, 0));
-	/* acquire the lock for the sme object */
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (NULL != pMac->p2pContext.probeRspIe) {
-			qdf_mem_free(pMac->p2pContext.probeRspIe);
-			pMac->p2pContext.probeRspIeLength = 0;
-		}
-
-		pMac->p2pContext.probeRspIe = qdf_mem_malloc(p2pIeLength);
-		if (NULL == pMac->p2pContext.probeRspIe) {
-			sme_err("Unable to allocate P2P IE");
-			pMac->p2pContext.probeRspIeLength = 0;
-			status = QDF_STATUS_E_NOMEM;
-		} else {
-			pMac->p2pContext.probeRspIeLength = p2pIeLength;
-			qdf_mem_copy((uint8_t *) pMac->p2pContext.probeRspIe,
-				     p2pIe, p2pIeLength);
-		}
-
-		/* release the lock for the sme object */
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-#endif
-
-/*
- * sme_send_action() -
- * API to send action frame from supplicant.
- *
- * hHal - The handle returned by mac_open.
- * Return QDF_STATUS
- */
-
-QDF_STATUS sme_send_action(tHalHandle hHal, uint8_t sessionId,
-			   const uint8_t *pBuf, uint32_t len,
-			   uint16_t wait, bool noack,
-			   uint16_t channel_freq)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_SEND_ACTION, sessionId, 0));
-	/* acquire the lock for the sme object */
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		p2p_send_action(hHal, sessionId, pBuf, len, wait, noack,
-		channel_freq);
-		/* release the lock for the sme object */
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
-}
-
-QDF_STATUS sme_cancel_remain_on_channel(tHalHandle hHal,
-	uint8_t sessionId, uint32_t scan_id)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_CANCEL_REMAIN_ONCHAN, sessionId,
-			 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = p2p_cancel_remain_on_channel(hHal, sessionId, scan_id);
-		sme_release_global_lock(&pMac->sme);
-	}
-	return status;
-}
-
-/* Power Save Related */
-QDF_STATUS sme_p2p_set_ps(tHalHandle hHal, tP2pPsConfig *data)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = p2p_set_ps(hHal, data);
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;
