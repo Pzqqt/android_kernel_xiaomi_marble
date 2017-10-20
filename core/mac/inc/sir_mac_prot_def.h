@@ -2128,7 +2128,10 @@ struct he_capability_info {
 	uint32_t twt_request:1;
 	uint32_t htc_he:1;
 
-	uint8_t reserved1:5;
+	uint8_t reserved1:2;
+	uint8_t ops_supp:1;
+	uint8_t ndp_feedback_supp:1;
+	uint8_t sr_responder:1;
 	uint8_t a_bqr:1;
 	uint8_t qtp:1;
 	uint8_t bsrp_ampdu_aggr:1;
@@ -2139,15 +2142,19 @@ struct he_capability_info {
 	uint32_t dcm_enc_tx:3;
 	uint32_t ul_mu:2;
 	uint32_t doppler:2;
-	uint32_t stbc:2;
-	uint32_t he_ltf_gi_ndp:2;
-	uint32_t he_ltf_gi_ppdu:2;
+	uint32_t stbc_lt_80mhz:2;
+	uint32_t he_4x_ltf_3200_gi_ndp:1;
+	uint32_t reserved2:2;
+	uint32_t he_1x_ltf_800_gi_ppdu:1;
 	uint32_t ldpc_coding:1;
 	uint32_t device_class:1;
 	uint32_t rx_pream_puncturing:4;
 	uint32_t chan_width:7;
 	uint32_t dual_band:1;
 
+	uint32_t stbc_gt_80mhz:2;
+	uint32_t max_nc:3;
+	uint32_t he_ltf_800_gi_4x:1;
 	uint32_t power_boost:1;
 	uint32_t srp:1;
 	uint32_t ppet_present:1;
@@ -2160,15 +2167,13 @@ struct he_capability_info {
 	uint32_t su_feedback_tone16:1;
 	uint32_t num_sounding_gt_80:3;
 	uint32_t num_sounding_lt_80:3;
-	uint32_t nsts_tot_gt_80:3;
-	uint32_t bfee_sta_gt_80:3;
-	uint32_t nsts_tol_lt_80:3;
+	uint32_t bfee_sts_gt_80:3;
 	uint32_t bfee_sts_lt_80:3;
 	uint32_t mu_beamformer:1;
 	uint32_t su_beamformee:1;
 
-	uint8_t reserved2:7;
-	uint8_t he_ltf_gi_4x:1;
+	uint8_t reserved2:3;
+	uint8_t er_he_ltf_800_gi_4x:1;
 
 	uint16_t rx_bw_bitmap:5;
 	uint16_t tx_bw_bitmap:5;
@@ -2202,16 +2207,20 @@ struct he_capability_info {
 	uint8_t bsrp_ampdu_aggr:1;
 	uint8_t qtp:1;
 	uint8_t a_bqr:1;
-	uint8_t reserved1:5;
+	uint8_t sr_responder:1;
+	uint8_t ndp_feedback_supp:1;
+	uint8_t ops_supp:1;
+	uint8_t reserved1:2;
 
 	uint32_t dual_band:1;
 	uint32_t chan_width:7;
 	uint32_t rx_pream_puncturing:4;
 	uint32_t device_class:1;
 	uint32_t ldpc_coding:1;
-	uint32_t he_ltf_gi_ppdu:2;
-	uint32_t he_ltf_gi_ndp:2;
-	uint32_t stbc:2;
+	uint32_t he_1x_ltf_800_gi_ppdu:1;
+	uint32_t reserved2:2;
+	uint32_t he_4x_ltf_3200_gi_ndp:1;
+	uint32_t stbc_lt_80mhz:2;
 	uint32_t doppler:2;
 	uint32_t ul_mu:2;
 	uint32_t dcm_enc_tx:3;
@@ -2222,9 +2231,7 @@ struct he_capability_info {
 	uint32_t su_beamformee:1;
 	uint32_t mu_beamformer:1;
 	uint32_t bfee_sts_lt_80:3;
-	uint32_t nsts_tol_lt_80:3;
-	uint32_t bfee_sta_gt_80:3;
-	uint32_t nsts_tot_gt_80:3;
+	uint32_t bfee_sts_gt_80:3;
 	uint32_t num_sounding_lt_80:3;
 	uint32_t num_sounding_gt_80:3;
 	uint32_t su_feedback_tone16:1;
@@ -2237,9 +2244,12 @@ struct he_capability_info {
 	uint32_t ppet_present:1;
 	uint32_t srp:1;
 	uint32_t power_boost:1;
+	uint32_t he_ltf_800_gi_4x:1;
+	uint32_t max_nc:3;
+	uint32_t stbc_gt_80mhz:2;
 
-	uint8_t he_ltf_gi_4x:1;
-	uint8_t reserved2:7;
+	uint8_t er_he_ltf_800_gi_4x:1;
+	uint8_t reserved3:7;
 
 	uint16_t nss_supported:3;
 	uint16_t mcs_supported:3;
