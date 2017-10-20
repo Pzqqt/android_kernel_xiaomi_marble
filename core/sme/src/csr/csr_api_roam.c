@@ -19395,6 +19395,10 @@ QDF_STATUS csr_set_serialization_params_to_cmd(tpAniSirGlobal mac_ctx,
 	}
 	cmd->vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac_ctx->psoc,
 				sme_cmd->sessionId, WLAN_LEGACY_SME_ID);
+	if (!cmd->vdev) {
+		sme_err("vdev is NULL for sme_session:%d", sme_cmd->sessionId);
+		return status;
+	}
 	cmd->umac_cmd = sme_cmd;
 	cmd->cmd_timeout_duration = SME_DEFAULT_CMD_TIMEOUT;
 	cmd->cmd_cb = sme_ser_cmd_callback;
