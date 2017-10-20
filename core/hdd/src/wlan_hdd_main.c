@@ -2300,7 +2300,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 			   struct hdd_adapter *adapter,
 			   bool reinit)
 {
-	int ret;
+	int ret = 0;
 	qdf_device_t qdf_dev;
 	QDF_STATUS status;
 	bool unint = false;
@@ -2373,6 +2373,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		status = cds_open(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
+			ret = (status == QDF_STATUS_E_NOMEM) ? -ENOMEM : -EINVAL;
 			goto ol_cds_free;
 		}
 
@@ -2396,6 +2397,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		status = cds_pre_enable();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to pre-enable CDS: %d", status);
+			ret = (status == QDF_STATUS_E_NOMEM) ? -ENOMEM : -EINVAL;
 			goto close;
 		}
 
@@ -2474,7 +2476,7 @@ release_lock:
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 	EXIT();
 
-	return -EINVAL;
+	return ret;
 }
 
 #ifdef WIFI_POS_CONVERGED
@@ -9946,7 +9948,7 @@ err_hdd_free_context:
 	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
 	mutex_destroy(&hdd_ctx->iface_change_lock);
 	hdd_context_destroy(hdd_ctx);
-	return -EIO;
+	return ret;
 
 success:
 	EXIT();
