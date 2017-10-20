@@ -4621,123 +4621,6 @@ static int iw_get_name(struct net_device *dev,
 }
 
 /**
- * __iw_set_mode() - ioctl handler
- * @dev: device upon which the ioctl was received
- * @info: ioctl request information
- * @wrqu: ioctl request data
- * @extra: ioctl extra data
- *
- * Return: 0 on success, non-zero on error
- */
-static int __iw_set_mode(struct net_device *dev,
-			 struct iw_request_info *info,
-			 union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_wext_state *pWextState;
-	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	struct hdd_context *hdd_ctx;
-	tCsrRoamProfile *pRoamProfile;
-	eCsrRoamBssType LastBSSType;
-	struct hdd_config *pConfig;
-	struct wireless_dev *wdev;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_standard_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	wdev = dev->ieee80211_ptr;
-	pRoamProfile = &pWextState->roamProfile;
-	LastBSSType = pRoamProfile->BSSType;
-
-	hdd_debug("Old Bss type = %d", LastBSSType);
-
-	switch (wrqu->mode) {
-	case IW_MODE_ADHOC:
-		hdd_debug("Setting AP Mode as IW_MODE_ADHOC");
-		pRoamProfile->BSSType = eCSR_BSS_TYPE_START_IBSS;
-		/* Set the phymode correctly for IBSS. */
-		pConfig = (WLAN_HDD_GET_CTX(adapter))->config;
-		pWextState->roamProfile.phyMode =
-			hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);
-		adapter->device_mode = QDF_IBSS_MODE;
-		wdev->iftype = NL80211_IFTYPE_ADHOC;
-		break;
-	case IW_MODE_INFRA:
-		hdd_debug("Setting AP Mode as IW_MODE_INFRA");
-		pRoamProfile->BSSType = eCSR_BSS_TYPE_INFRASTRUCTURE;
-		wdev->iftype = NL80211_IFTYPE_STATION;
-		break;
-	case IW_MODE_AUTO:
-		hdd_debug("Setting AP Mode as IW_MODE_AUTO");
-		pRoamProfile->BSSType = eCSR_BSS_TYPE_ANY;
-		break;
-	default:
-		hdd_err("Unknown AP Mode value %d", wrqu->mode);
-		return -EOPNOTSUPP;
-	}
-
-	if (LastBSSType != pRoamProfile->BSSType) {
-		/* the BSS mode changed.  We need to issue disconnect
-		 * if connected or in IBSS disconnect state
-		 */
-		if (hdd_conn_is_connected
-			    (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
-		    || (eCSR_BSS_TYPE_START_IBSS == LastBSSType)) {
-			QDF_STATUS qdf_status;
-			/* need to issue a disconnect to CSR. */
-			INIT_COMPLETION(adapter->disconnect_comp_var);
-			qdf_status =
-				sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(adapter),
-						    adapter->sessionId,
-						    eCSR_DISCONNECT_REASON_IBSS_LEAVE);
-			if (QDF_STATUS_SUCCESS == qdf_status) {
-				unsigned long rc;
-
-				rc = wait_for_completion_timeout(&adapter->
-								 disconnect_comp_var,
-								 msecs_to_jiffies
-									 (WLAN_WAIT_TIME_DISCONNECT));
-				if (!rc)
-					hdd_err("disconnect_comp_var failed");
-			}
-		}
-	}
-
-	EXIT();
-	return 0;
-}
-
-/**
- * iw_set_mode() - SSR wrapper for __iw_set_mode()
- * @dev: pointer to net_device
- * @info: pointer to iw_request_info
- * @wrqu: pointer to iwreq_data
- * @extra: pointer to extra ioctl payload
- *
- * Return: 0 on success, error number otherwise
- */
-static int iw_set_mode(struct net_device *dev, struct iw_request_info *info,
-		       union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_set_mode(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
  * __iw_set_freq() - SIOCSIWFREQ ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -11144,7 +11027,7 @@ static const iw_handler we_handler[] = {
 	(iw_handler) NULL,      /* SIOCGIWNWID */
 	(iw_handler) iw_set_freq,       /* SIOCSIWFREQ */
 	(iw_handler) iw_get_freq,       /* SIOCGIWFREQ */
-	(iw_handler) iw_set_mode,       /* SIOCSIWMODE */
+	(iw_handler) NULL,      /* SIOCSIWMODE */
 	(iw_handler) NULL,      /* SIOCGIWMODE */
 	(iw_handler) NULL,      /* SIOCSIWSENS */
 	(iw_handler) NULL,      /* SIOCGIWSENS */
