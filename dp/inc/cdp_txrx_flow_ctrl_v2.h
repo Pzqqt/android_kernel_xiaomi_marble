@@ -46,16 +46,19 @@ static inline QDF_STATUS
 cdp_register_pause_cb(ol_txrx_soc_handle soc,
 		tx_pause_callback pause_cb)
 {
-	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (soc->ops->flowctl_ops->register_pause_cb)
-		return soc->ops->flowctl_ops->register_pause_cb(soc, pause_cb);
+	if (!soc->ops->flowctl_ops ||
+	    !soc->ops->flowctl_ops->register_pause_cb)
+		return QDF_STATUS_SUCCESS;
 
-	return QDF_STATUS_SUCCESS;
+	return soc->ops->flowctl_ops->register_pause_cb(soc, pause_cb);
+
 }
 
 /**
@@ -71,17 +74,19 @@ static inline void
 cdp_set_desc_global_pool_size(ol_txrx_soc_handle soc,
 		uint32_t num_msdu_desc)
 {
-	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->flowctl_ops->set_desc_global_pool_size)
-		return soc->ops->flowctl_ops->set_desc_global_pool_size(
-			num_msdu_desc);
+	if (!soc->ops->flowctl_ops ||
+	    !soc->ops->flowctl_ops->set_desc_global_pool_size)
+		return;
 
-	return;
+	soc->ops->flowctl_ops->set_desc_global_pool_size(
+			num_msdu_desc);
 }
 
 /**
@@ -97,17 +102,17 @@ cdp_dump_flow_pool_info(struct cdp_soc_t *soc)
 {
 	void *dp_soc = (void *)soc;
 
-	if (!soc || !soc->ops || !soc->ops->flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
+	if (!soc->ops->flowctl_ops ||
+	    !soc->ops->flowctl_ops->dump_flow_pool_info)
+		return;
 
-	if (soc->ops->flowctl_ops->dump_flow_pool_info)
-		return soc->ops->flowctl_ops->dump_flow_pool_info(dp_soc);
-
-	return;
+	soc->ops->flowctl_ops->dump_flow_pool_info(dp_soc);
 }
-
 #endif /* _CDP_TXRX_FC_V2_H_ */

@@ -37,9 +37,18 @@
 static inline int cdp_is_target_ar900b
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
-	if (soc->ops->ctrl_ops->txrx_is_target_ar900b)
-		return soc->ops->ctrl_ops->txrx_is_target_ar900b(vdev);
-	return 0;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_is_target_ar900b)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_is_target_ar900b(vdev);
 }
 
 
@@ -47,9 +56,18 @@ static inline int cdp_is_target_ar900b
 static inline int
 cdp_mempools_attach(ol_txrx_soc_handle soc, void *ctrl_pdev)
 {
-	if (soc->ops->ctrl_ops->txrx_mempools_attach)
-		return soc->ops->ctrl_ops->txrx_mempools_attach(ctrl_pdev);
-	return 0;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_mempools_attach)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_mempools_attach(ctrl_pdev);
 }
 
 /**
@@ -66,10 +84,19 @@ static inline int
 cdp_set_filter_neighbour_peers(ol_txrx_soc_handle soc,
 	struct cdp_pdev *pdev, u_int32_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers)
-		return soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_set_filter_neighbour_peers
 			(pdev, val);
-	return 0;
 }
 
 /**
@@ -88,10 +115,19 @@ static inline int
 cdp_update_filter_neighbour_peers(ol_txrx_soc_handle soc,
 	struct cdp_pdev *pdev, uint32_t cmd, uint8_t *macaddr)
 {
-	if (soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers)
-		return soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_update_filter_neighbour_peers
 			(pdev, cmd, macaddr);
-	return 0;
 }
 
 /**
@@ -110,9 +146,18 @@ static inline void
 cdp_set_safemode(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev, u_int32_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_safemode)
-		return soc->ops->ctrl_ops->txrx_set_safemode(vdev, val);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_safemode)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_safemode(vdev, val);
 }
 /**
  * @brief configure the drop unencrypted frame flag
@@ -128,9 +173,18 @@ static inline void
 cdp_set_drop_unenc(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev, u_int32_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_drop_unenc)
-		return soc->ops->ctrl_ops->txrx_set_drop_unenc(vdev, val);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_drop_unenc)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_drop_unenc(vdev, val);
 }
 
 
@@ -147,9 +201,18 @@ static inline void
 cdp_set_tx_encap_type(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev, enum htt_cmn_pkt_type val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_tx_encap_type)
-		return soc->ops->ctrl_ops->txrx_set_tx_encap_type(vdev, val);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_tx_encap_type)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_tx_encap_type(vdev, val);
 }
 
 /**
@@ -166,10 +229,19 @@ static inline void
 cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev, enum htt_cmn_pkt_type val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type)
-		return soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_vdev_rx_decap_type
 			(vdev, val);
-	return;
 }
 
 /**
@@ -181,9 +253,18 @@ cdp_set_vdev_rx_decap_type(ol_txrx_soc_handle soc,
 static inline enum htt_cmn_pkt_type
 cdp_get_vdev_rx_decap_type(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
-	if (soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type)
-		return soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type(vdev);
-	return 0;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_get_vdev_rx_decap_type(vdev);
 }
 
 /**
@@ -200,10 +281,19 @@ static inline void
 cdp_set_pdev_reo_dest(ol_txrx_soc_handle soc,
 	struct cdp_pdev *pdev, enum cdp_host_reo_dest_ring val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_pdev_reo_dest)
-		return soc->ops->ctrl_ops->txrx_set_pdev_reo_dest
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_pdev_reo_dest)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_pdev_reo_dest
 			(pdev, val);
-	return;
 }
 
 /**
@@ -216,9 +306,18 @@ cdp_set_pdev_reo_dest(ol_txrx_soc_handle soc,
 static inline enum cdp_host_reo_dest_ring
 cdp_get_pdev_reo_dest(ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
-	if (soc->ops->ctrl_ops->txrx_get_pdev_reo_dest)
-		return soc->ops->ctrl_ops->txrx_get_pdev_reo_dest(pdev);
-	return cdp_host_reo_dest_ring_unknown;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return cdp_host_reo_dest_ring_unknown;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_pdev_reo_dest)
+		return cdp_host_reo_dest_ring_unknown;
+
+	return soc->ops->ctrl_ops->txrx_get_pdev_reo_dest(pdev);
 }
 
 /* Is this similar to ol_txrx_peer_state_update() in MCL */
@@ -238,10 +337,19 @@ static inline void
 cdp_peer_authorize(ol_txrx_soc_handle soc,
 	struct cdp_peer *peer, u_int32_t authorize)
 {
-	if (soc->ops->ctrl_ops->txrx_peer_authorize)
-		return soc->ops->ctrl_ops->txrx_peer_authorize
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_authorize)
+		return;
+
+	soc->ops->ctrl_ops->txrx_peer_authorize
 			(peer, authorize);
-	return;
 }
 
 static inline bool
@@ -250,28 +358,40 @@ cdp_set_inact_params(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 			u_int16_t inact_normal,
 			u_int16_t inact_overload)
 {
-	if (!soc || !pdev)
+	if (!soc || !pdev || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return false;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_inact_params)
 		return false;
 
-	if (soc->ops->ctrl_ops->txrx_set_inact_params)
-		return soc->ops->ctrl_ops->txrx_set_inact_params
+	return soc->ops->ctrl_ops->txrx_set_inact_params
 			(pdev, inact_check_interval, inact_normal,
 			inact_overload);
-
-	return false;
 }
+
 static inline bool
 cdp_start_inact_timer(ol_txrx_soc_handle soc,
 	struct cdp_pdev *pdev,
 	bool enable)
 {
-	if (!soc || !pdev)
+	if (!soc || !pdev || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return false;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_start_inact_timer)
 		return false;
 
-	if (soc->ops->ctrl_ops->txrx_start_inact_timer)
-		return soc->ops->ctrl_ops->txrx_start_inact_timer
+	return soc->ops->ctrl_ops->txrx_start_inact_timer
 			(pdev, enable);
-	return false;
 }
 
 /**
@@ -287,13 +407,18 @@ static inline void
 cdp_set_overload(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	bool overload)
 {
-	if (!soc || !pdev)
+	if (!soc || !pdev || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_overload)
 		return;
 
-	if (soc->ops->ctrl_ops->txrx_set_overload)
-		return soc->ops->ctrl_ops->txrx_set_overload(pdev, overload);
-
-	return;
+	soc->ops->ctrl_ops->txrx_set_overload(pdev, overload);
 }
 
 /**
@@ -305,13 +430,18 @@ cdp_set_overload(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 static inline bool
 cdp_peer_is_inact(ol_txrx_soc_handle soc, void *peer)
 {
-	if (!soc || !peer)
+	if (!soc || !peer || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return false;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_is_inact)
 		return false;
 
-	if (soc->ops->ctrl_ops->txrx_peer_is_inact)
-		return soc->ops->ctrl_ops->txrx_peer_is_inact(peer);
-
-	return false;
+	return soc->ops->ctrl_ops->txrx_peer_is_inact(peer);
 }
 
 /**
@@ -328,10 +458,19 @@ cdp_mark_peer_inact(ol_txrx_soc_handle soc,
 	void *peer,
 	bool inactive)
 {
-	if (soc->ops->ctrl_ops->txrx_mark_peer_inact)
-		return soc->ops->ctrl_ops->txrx_mark_peer_inact
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_mark_peer_inact)
+		return;
+
+	soc->ops->ctrl_ops->txrx_mark_peer_inact
 			(peer, inactive);
-	return;
 }
 
 
@@ -339,9 +478,18 @@ cdp_mark_peer_inact(ol_txrx_soc_handle soc,
 static inline void cdp_set_mesh_mode
 (ol_txrx_soc_handle soc, struct cdp_vdev *vdev, u_int32_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_mesh_mode)
-		return soc->ops->ctrl_ops->txrx_set_mesh_mode(vdev, val);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_mesh_mode)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_mesh_mode(vdev, val);
 }
 
 /**
@@ -357,46 +505,91 @@ static inline
 void cdp_set_mesh_rx_filter(ol_txrx_soc_handle soc,
 				struct cdp_vdev *vdev, uint32_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_mesh_rx_filter)
-		return soc->ops->ctrl_ops->txrx_set_mesh_rx_filter(vdev, val);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_mesh_rx_filter)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_mesh_rx_filter(vdev, val);
 }
 
 static inline void cdp_tx_flush_buffers
 (ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
-	if (soc->ops->ctrl_ops->tx_flush_buffers)
-		return soc->ops->ctrl_ops->tx_flush_buffers(vdev);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->tx_flush_buffers)
+		return;
+
+	soc->ops->ctrl_ops->tx_flush_buffers(vdev);
 }
 
 static inline void cdp_txrx_set_vdev_param(ol_txrx_soc_handle soc,
 		struct cdp_vdev *vdev, enum cdp_vdev_param_type type,
 		uint32_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_vdev_param)
-		return soc->ops->ctrl_ops->txrx_set_vdev_param(vdev, type, val);
-	return;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_vdev_param)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_vdev_param(vdev, type, val);
 }
 
 static inline void
 cdp_peer_set_nawds(ol_txrx_soc_handle soc,
 		struct cdp_peer *peer, uint8_t value)
 {
-	if (soc->ops->ctrl_ops->txrx_peer_set_nawds)
-		return soc->ops->ctrl_ops->txrx_peer_set_nawds
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_peer_set_nawds)
+		return;
+
+	soc->ops->ctrl_ops->txrx_peer_set_nawds
 			(peer, value);
-	return;
 }
 
 static inline void cdp_txrx_set_pdev_param(ol_txrx_soc_handle soc,
 		struct cdp_pdev *pdev, enum cdp_pdev_param_type type,
 		uint8_t val)
 {
-	if (soc->ops->ctrl_ops->txrx_set_pdev_param)
-		return soc->ops->ctrl_ops->txrx_set_pdev_param
-			(pdev, type, val);
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
 
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_set_pdev_param)
+		return;
+
+	soc->ops->ctrl_ops->txrx_set_pdev_param
+			(pdev, type, val);
 }
 
 /**
@@ -419,16 +612,19 @@ static inline int
 cdp_wdi_event_sub(ol_txrx_soc_handle soc,
 		struct cdp_pdev *pdev, void *event_cb_sub, uint32_t event)
 {
-	if (!soc || !soc->ops || !soc->ops->ctrl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->ctrl_ops->txrx_wdi_event_sub)
-		return soc->ops->ctrl_ops->txrx_wdi_event_sub
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_wdi_event_sub)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_wdi_event_sub
 			(pdev, event_cb_sub, event);
-	return 0;
 }
 
 /**
@@ -449,16 +645,19 @@ static inline int
 cdp_wdi_event_unsub(ol_txrx_soc_handle soc,
 		struct cdp_pdev *pdev, void *event_cb_sub, uint32_t event)
 {
-	if (!soc || !soc->ops || !soc->ops->ctrl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->ctrl_ops->txrx_wdi_event_unsub)
-		return soc->ops->ctrl_ops->txrx_wdi_event_unsub
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_wdi_event_unsub)
+		return 0;
+
+	return soc->ops->ctrl_ops->txrx_wdi_event_unsub
 			(pdev, event_cb_sub, event);
-	return 0;
 }
 
 /**
@@ -476,17 +675,19 @@ cdp_wdi_event_unsub(ol_txrx_soc_handle soc,
 static inline int
 cdp_get_sec_type(ol_txrx_soc_handle soc, struct cdp_peer *peer, uint8_t sec_idx)
 {
-	if (!soc || !soc->ops || !soc->ops->ctrl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return A_ERROR;
 	}
 
-	if (soc->ops->ctrl_ops->txrx_get_sec_type)
-		return soc->ops->ctrl_ops->txrx_get_sec_type
-			(peer, sec_idx);
-	return A_ERROR;
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_get_sec_type)
+		return A_ERROR;
 
+	return soc->ops->ctrl_ops->txrx_get_sec_type
+			(peer, sec_idx);
 }
 
 /**
@@ -499,10 +700,19 @@ cdp_get_sec_type(ol_txrx_soc_handle soc, struct cdp_peer *peer, uint8_t sec_idx)
 static inline int cdp_set_mgmt_tx_power(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev, uint8_t subtype, uint8_t tx_power)
 {
-	if (soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev)
-		soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev(vdev,
-							subtype, tx_power);
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
 
+	if (!soc->ops->ctrl_ops ||
+	    !soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev)
+		return 0;
+
+	soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev(vdev,
+							subtype, tx_power);
 	return 0;
 }
 #endif

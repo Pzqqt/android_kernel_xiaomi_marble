@@ -51,18 +51,20 @@ cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
 		ol_txrx_tx_flow_control_fp flowControl, void *osif_fc_ctx,
 		ol_txrx_tx_flow_control_is_pause_fp flow_control_is_pause)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->l_flowctl_ops->register_tx_flow_control)
-		return soc->ops->l_flowctl_ops->register_tx_flow_control(
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->register_tx_flow_control)
+		return 0;
+
+	return soc->ops->l_flowctl_ops->register_tx_flow_control(
 			vdev_id, flowControl, osif_fc_ctx,
 			flow_control_is_pause);
-
-	return 0;
 }
 
 /**
@@ -77,17 +79,19 @@ cdp_fc_register(ol_txrx_soc_handle soc, uint8_t vdev_id,
 static inline int
 cdp_fc_deregister(ol_txrx_soc_handle soc, uint8_t vdev_id)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->l_flowctl_ops->deregister_tx_flow_control_cb)
-		return soc->ops->l_flowctl_ops->deregister_tx_flow_control_cb(
-			vdev_id);
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->deregister_tx_flow_control_cb)
+		return 0;
 
-	return 0;
+	return soc->ops->l_flowctl_ops->deregister_tx_flow_control_cb(
+			vdev_id);
 }
 
 /**
@@ -106,17 +110,19 @@ static inline bool
 cdp_fc_get_tx_resource(ol_txrx_soc_handle soc, uint8_t sta_id,
 		unsigned int low_watermark, unsigned int high_watermark_offset)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return false;
 	}
 
-	if (soc->ops->l_flowctl_ops->get_tx_resource)
-		return soc->ops->l_flowctl_ops->get_tx_resource(sta_id,
-			low_watermark, high_watermark_offset);
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->get_tx_resource)
+		return false;
 
-	return false;
+	return soc->ops->l_flowctl_ops->get_tx_resource(sta_id,
+			low_watermark, high_watermark_offset);
 }
 
 /**
@@ -133,17 +139,20 @@ static inline int
 cdp_fc_ll_set_tx_pause_q_depth(ol_txrx_soc_handle soc,
 		uint8_t vdev_id, int pause_q_depth)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->l_flowctl_ops->ll_set_tx_pause_q_depth)
-		return soc->ops->l_flowctl_ops->ll_set_tx_pause_q_depth(vdev_id,
-			pause_q_depth);
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->ll_set_tx_pause_q_depth)
+		return 0;
 
-	return 0;
+	return soc->ops->l_flowctl_ops->ll_set_tx_pause_q_depth(
+			vdev_id, pause_q_depth);
+
 }
 
 /**
@@ -158,16 +167,18 @@ cdp_fc_ll_set_tx_pause_q_depth(ol_txrx_soc_handle soc,
 static inline void
 cdp_fc_vdev_flush(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->l_flowctl_ops->vdev_flush)
-		return soc->ops->l_flowctl_ops->vdev_flush(vdev);
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->vdev_flush)
+		return;
 
-	return;
+	soc->ops->l_flowctl_ops->vdev_flush(vdev);
 }
 
 /**
@@ -184,16 +195,18 @@ static inline void
 cdp_fc_vdev_pause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		uint32_t reason)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->l_flowctl_ops->vdev_pause)
-		return soc->ops->l_flowctl_ops->vdev_pause(vdev, reason);
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->vdev_pause)
+		return;
 
-	return;
+	soc->ops->l_flowctl_ops->vdev_pause(vdev, reason);
 }
 
 /**
@@ -210,15 +223,16 @@ static inline void
 cdp_fc_vdev_unpause(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		uint32_t reason)
 {
-	if (!soc || !soc->ops || !soc->ops->l_flowctl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
 		return;
 	}
 
-	if (soc->ops->l_flowctl_ops->vdev_unpause)
-		return soc->ops->l_flowctl_ops->vdev_unpause(vdev, reason);
+	if (!soc->ops->l_flowctl_ops ||
+	    !soc->ops->l_flowctl_ops->vdev_unpause)
+		return;
 
-	return;
+	soc->ops->l_flowctl_ops->vdev_unpause(vdev, reason);
 }
 #endif /* _CDP_TXRX_FC_LEG_H_ */
