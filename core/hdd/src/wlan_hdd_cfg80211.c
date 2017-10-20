@@ -15447,8 +15447,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			 * association process. In case of join failure
 			 * we should send valid BSSID to supplicant
 			 */
-			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
-					bssid, QDF_MAC_ADDR_SIZE);
+			qdf_mem_copy(sta_ctx->requested_bssid.bytes,
+				     bssid, QDF_MAC_ADDR_SIZE);
 			hdd_debug("bssid is given by upper layer %pM", bssid);
 		} else if (bssid_hint) {
 			qdf_mem_copy(pRoamProfile->bssid_hint.bytes,
@@ -15459,7 +15459,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			 * association process. In case of join failure
 			 * we should send valid BSSID to supplicant
 			 */
-			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
+			qdf_mem_copy(sta_ctx->requested_bssid.bytes,
 					bssid_hint, QDF_MAC_ADDR_SIZE);
 			hdd_debug("bssid_hint is given by upper layer %pM",
 					bssid_hint);
@@ -16702,8 +16702,7 @@ static bool wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 	bool reassoc = false;
 	const uint8_t *bssid = NULL;
 	uint16_t channel = 0;
-	struct hdd_wext_state *wext_state =
-		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	struct hdd_station_ctx *sta_ctx;
 
 	if (req->bssid)
 		bssid = req->bssid;
@@ -16725,7 +16724,8 @@ static bool wlan_hdd_reassoc_bssid_hint(struct hdd_adapter *adapter,
 		 * association process. In case of join failure
 		 * we should send valid BSSID to supplicant
 		 */
-		qdf_mem_copy(wext_state->req_bssId.bytes, bssid,
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		qdf_mem_copy(sta_ctx->requested_bssid.bytes, bssid,
 			     QDF_MAC_ADDR_SIZE);
 
 		*status = hdd_reassoc(adapter, bssid, channel,

@@ -3053,8 +3053,6 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 #endif
 	} else {
 		bool connect_timeout = false;
-		struct hdd_wext_state *pWextState =
-			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 		if (roam_info)
 			hdd_err("wlan: connection failed with " MAC_ADDRESS_STR
 				 " result: %d and Status: %d",
@@ -3063,7 +3061,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		else
 			hdd_err("wlan: connection failed with " MAC_ADDRESS_STR
 				 " result: %d and Status: %d",
-				 MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
+				 MAC_ADDR_ARRAY(sta_ctx->requested_bssid.bytes),
 				 roamResult, roamStatus);
 
 		if ((eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE == roamResult) ||
@@ -3077,11 +3075,11 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			wlan_hdd_cfg80211_update_bss_list(adapter,
 				roam_info ?
 				roam_info->bssid.bytes :
-				pWextState->req_bssId.bytes);
+				sta_ctx->requested_bssid.bytes);
 			sme_remove_bssid_from_scan_list(hdd_ctx->hHal,
 				roam_info ?
 				roam_info->bssid.bytes :
-				pWextState->req_bssId.bytes);
+				sta_ctx->requested_bssid.bytes);
 			connect_timeout = true;
 		}
 
@@ -3104,7 +3102,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				hdd_err("connect failed: for bssid "
 				       MAC_ADDRESS_STR
 				       " result: %d and status: %d ",
-				       MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
+				       MAC_ADDR_ARRAY(sta_ctx->requested_bssid.bytes),
 				       roamResult, roamStatus);
 			}
 			hdd_debug("Invoking packetdump deregistration API");
@@ -3123,7 +3121,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						roam_info->statusCode);
 				else
 					hdd_connect_result(dev,
-						pWextState->req_bssId.bytes,
+						sta_ctx->requested_bssid.bytes,
 						NULL, NULL, 0, NULL, 0,
 						WLAN_STATUS_ASSOC_DENIED_UNSPEC,
 						GFP_KERNEL,
@@ -3142,7 +3140,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 						roam_info->statusCode);
 				else
 					hdd_connect_result(dev,
-						pWextState->req_bssId.bytes,
+						sta_ctx->requested_bssid.bytes,
 						NULL, NULL, 0, NULL, 0,
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL,
@@ -3153,7 +3151,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		} else  if ((eCSR_ROAM_CANCELLED == roamStatus
 		    && !hddDisconInProgress)) {
 			hdd_connect_result(dev,
-					   pWextState->req_bssId.bytes,
+					   sta_ctx->requested_bssid.bytes,
 					   NULL, NULL, 0, NULL, 0,
 					   WLAN_STATUS_UNSPECIFIED_FAILURE,
 					   GFP_KERNEL,
