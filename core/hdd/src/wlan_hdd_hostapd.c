@@ -5512,7 +5512,7 @@ static const iw_handler hostapd_handler[] = {
 	(iw_handler) NULL,      /* SIOCSIWRTS */
 	(iw_handler) iw_get_rts_threshold,           /* SIOCGIWRTS */
 	(iw_handler) NULL,      /* SIOCSIWFRAG */
-	(iw_handler) iw_get_frag_threshold,          /* SIOCGIWFRAG */
+	(iw_handler) NULL,      /* SIOCGIWFRAG */
 	(iw_handler) NULL,      /* SIOCSIWTXPOW */
 	(iw_handler) NULL,      /* SIOCGIWTXPOW */
 	(iw_handler) NULL,      /* SIOCSIWRETRY */
