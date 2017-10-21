@@ -3861,10 +3861,10 @@ QDF_STATUS wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
 	}
 
 	params.vdev_id = pDhcpSrvOffloadInfo->vdev_id;
-	params.dhcpSrvOffloadEnabled =
+	params.dhcp_offload_enabled =
 				pDhcpSrvOffloadInfo->dhcpSrvOffloadEnabled;
-	params.dhcpClientNum = pDhcpSrvOffloadInfo->dhcpClientNum;
-	params.dhcpSrvIP = pDhcpSrvOffloadInfo->;
+	params.dhcp_client_num = pDhcpSrvOffloadInfo->dhcpClientNum;
+	params.dhcp_srv_addr = pDhcpSrvOffloadInfo->dhcpSrvIP;
 
 	status = wmi_unified_process_dhcpserver_offload_cmd(
 				wma_handle->wmi_handle, &params);
