@@ -4817,7 +4817,7 @@ static struct hdd_station_info *hdd_get_stainfo(struct hdd_adapter *adapter,
 	int i;
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		if (!qdf_mem_cmp(&adapter->aStaInfo[i].macAddrSTA,
+		if (!qdf_mem_cmp(&adapter->aStaInfo[i].sta_mac,
 				 &mac_addr,
 				 QDF_MAC_ADDR_SIZE))
 			stainfo = &adapter->aStaInfo[i];
@@ -7896,9 +7896,9 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 			if (adapter->aStaInfo[sta_id].in_use &&
 			    !qdf_is_macaddr_broadcast(
-				&adapter->aStaInfo[sta_id].macAddrSTA) &&
+				&adapter->aStaInfo[sta_id].sta_mac) &&
 			    !qdf_mem_cmp(
-				&adapter->aStaInfo[sta_id].macAddrSTA.bytes,
+				&adapter->aStaInfo[sta_id].sta_mac.bytes,
 				peer_mac, QDF_MAC_ADDR_SIZE))
 				break;
 		}
@@ -18256,7 +18256,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 					qdf_mem_copy(
 						mac,
 						adapter->aStaInfo[i].
-							macAddrSTA.bytes,
+							sta_mac.bytes,
 						QDF_MAC_ADDR_SIZE);
 					if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
 						hdd_ipa_wlan_evt(adapter,

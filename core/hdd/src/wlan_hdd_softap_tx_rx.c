@@ -646,7 +646,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 
 	adapter->aStaInfo[sta_id].in_use = true;
 	adapter->aStaInfo[sta_id].is_deauth_in_progress = false;
-	qdf_copy_macaddr(&adapter->aStaInfo[sta_id].macAddrSTA, sta_mac);
+	qdf_copy_macaddr(&adapter->aStaInfo[sta_id].sta_mac, sta_mac);
 
 	spin_unlock_bh(&adapter->staInfo_lock);
 	return QDF_STATUS_SUCCESS;
@@ -855,10 +855,10 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 
 	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
 					    adapter->aStaInfo[staId].
-						macAddrSTA.bytes);
+						sta_mac.bytes);
 	if (ret)
 		hdd_err("Peer obj %pM delete fails",
-			adapter->aStaInfo[staId].macAddrSTA.bytes);
+			adapter->aStaInfo[staId].sta_mac.bytes);
 
 	if (adapter->aStaInfo[staId].in_use) {
 		spin_lock_bh(&adapter->staInfo_lock);
@@ -1094,7 +1094,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	}
 
 	if (false ==
-	    qdf_is_macaddr_equal(&adapter->aStaInfo[ucSTAId].macAddrSTA,
+	    qdf_is_macaddr_equal(&adapter->aStaInfo[ucSTAId].sta_mac,
 				 pDestMacAddress)) {
 		hdd_err("Station %u MAC address not matching", ucSTAId);
 		return QDF_STATUS_E_FAILURE;
@@ -1132,7 +1132,7 @@ QDF_STATUS hdd_softap_get_sta_id(struct hdd_adapter *adapter,
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 		if (!qdf_mem_cmp
-			(&adapter->aStaInfo[i].macAddrSTA, pMacAddress,
+			(&adapter->aStaInfo[i].sta_mac, pMacAddress,
 			QDF_MAC_ADDR_SIZE) && adapter->aStaInfo[i].in_use) {
 			*staId = i;
 			return QDF_STATUS_SUCCESS;
