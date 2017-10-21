@@ -968,7 +968,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	 */
 
 	adapter->aStaInfo[staId].ucSTAId = staId;
-	adapter->aStaInfo[staId].isQosEnabled = fWmmEnabled;
+	adapter->aStaInfo[staId].is_qos_enabled = fWmmEnabled;
 
 	if (!fAuthRequired) {
 		hdd_info("open/shared auth StaId= %d.  Changing TL state to AUTHENTICATED at Join time",
