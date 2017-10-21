@@ -4492,7 +4492,7 @@ int hdd_set_peer_rate(struct hdd_adapter *adapter, int set_value)
 	hdd_get_aid_rc(&aid, &rc, set_value);
 
 	if ((adapter->aStaInfo[aid].in_use) &&
-	    (OL_TXRX_PEER_STATE_CONN == adapter->aStaInfo[aid].tlSTAState)) {
+	    (OL_TXRX_PEER_STATE_CONN == adapter->aStaInfo[aid].peer_state)) {
 		peer_mac =
 		    (uint8_t *)&(adapter->aStaInfo[aid].macAddrSTA.bytes[0]);
 		hdd_info("Peer AID: %d MAC_ADDR: "MAC_ADDRESS_STR,
