@@ -3104,8 +3104,8 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 				qdf_status, qdf_status);
 		}
 #ifdef WLAN_FEATURE_11W
-		qdf_mem_zero(&adapter->hdd_stats.hddPmfStats,
-			     sizeof(adapter->hdd_stats.hddPmfStats));
+		qdf_mem_zero(&adapter->hdd_stats.hdd_pmf_stats,
+			     sizeof(adapter->hdd_stats.hdd_pmf_stats));
 #endif
 	} else {
 		bool connect_timeout = false;
@@ -3883,7 +3883,7 @@ hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *adapter,
 		cfg80211_send_unprot_disassoc(adapter->dev, pbFrames,
 					      nFrameLength);
 #endif
-		adapter->hdd_stats.hddPmfStats.numUnprotDisassocRx++;
+		adapter->hdd_stats.hdd_pmf_stats.num_unprot_disassoc_rx++;
 	} else if (type == SIR_MAC_MGMT_FRAME &&
 		   subType == SIR_MAC_MGMT_DEAUTH) {
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
@@ -3893,7 +3893,7 @@ hdd_indicate_unprot_mgmt_frame(struct hdd_adapter *adapter,
 		cfg80211_send_unprot_deauth(adapter->dev, pbFrames,
 					    nFrameLength);
 #endif
-		adapter->hdd_stats.hddPmfStats.numUnprotDeauthRx++;
+		adapter->hdd_stats.hdd_pmf_stats.num_unprot_deauth_rx++;
 	} else {
 		hdd_warn("Frame type %d and subtype %d are not valid",
 			type, subType);
