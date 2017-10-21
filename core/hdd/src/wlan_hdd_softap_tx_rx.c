@@ -361,7 +361,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 				  STAId);
 			goto drop_pkt;
 		} else if (true == adapter->aStaInfo[STAId].
-							isDeauthInProgress) {
+							is_deauth_in_progress) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: STA %d deauth in progress", __func__,
@@ -654,7 +654,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 		     sizeof(struct hdd_station_info));
 
 	adapter->aStaInfo[STAId].in_use = true;
-	adapter->aStaInfo[STAId].isDeauthInProgress = false;
+	adapter->aStaInfo[STAId].is_deauth_in_progress = false;
 	qdf_copy_macaddr(&adapter->aStaInfo[STAId].macAddrSTA, pmacAddrSTA);
 
 	spin_unlock_bh(&adapter->staInfo_lock);
@@ -686,7 +686,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 	}
 
 	adapter->aStaInfo[STAId].in_use = false;
-	adapter->aStaInfo[STAId].isDeauthInProgress = false;
+	adapter->aStaInfo[STAId].is_deauth_in_progress = false;
 
 	spin_unlock_bh(&adapter->staInfo_lock);
 	return status;
