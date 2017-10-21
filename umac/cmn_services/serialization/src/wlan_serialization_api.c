@@ -219,6 +219,10 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	}
 
 	ser_soc_obj = wlan_serialization_get_obj(cmd);
+	if (!ser_soc_obj) {
+		serialization_err("ser_soc_obj is invalid");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
 
 	/*
 	 * Get Component Info callback by calling

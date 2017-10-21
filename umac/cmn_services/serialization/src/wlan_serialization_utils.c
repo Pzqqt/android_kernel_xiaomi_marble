@@ -532,8 +532,11 @@ struct wlan_serialization_pdev_priv_obj *wlan_serialization_get_pdev_priv_obj(
 struct wlan_serialization_psoc_priv_obj *
 wlan_serialization_get_obj(struct wlan_serialization_command *cmd)
 {
-	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
+	struct wlan_serialization_psoc_priv_obj *ser_soc_obj = NULL;
 	struct wlan_objmgr_psoc *psoc;
+
+	if (!cmd->vdev)
+		return ser_soc_obj;
 
 	psoc = wlan_vdev_get_psoc(cmd->vdev);
 	ser_soc_obj = wlan_serialization_get_psoc_priv_obj(psoc);
