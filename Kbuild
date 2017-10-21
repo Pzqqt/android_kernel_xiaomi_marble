@@ -780,27 +780,34 @@ SYS_OBJS :=	$(SYS_COMMON_SRC_DIR)/wlan_qct_sys.o \
 ############ Qca-wifi-host-cmn ############
 QDF_OS_DIR :=	qdf
 QDF_OS_INC_DIR := $(QDF_OS_DIR)/inc
-QDF_OS_SRC_DIR := $(QDF_OS_DIR)/linux/src
+QDF_OS_SRC_DIR := $(QDF_OS_DIR)/src
+QDF_OS_LINUX_SRC_DIR := $(QDF_OS_DIR)/linux/src
 QDF_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QDF_OS_SRC_DIR)
+QDF_LINUX_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QDF_OS_LINUX_SRC_DIR)
 
 QDF_INC :=	-I$(WLAN_COMMON_INC)/$(QDF_OS_INC_DIR) \
-		-I$(WLAN_COMMON_INC)/$(QDF_OS_SRC_DIR)
+		-I$(WLAN_COMMON_INC)/$(QDF_OS_LINUX_SRC_DIR)
 
-QDF_OBJS := 	$(QDF_OBJ_DIR)/qdf_defer.o \
-		$(QDF_OBJ_DIR)/qdf_event.o \
-		$(QDF_OBJ_DIR)/qdf_list.o \
-		$(QDF_OBJ_DIR)/qdf_lock.o \
-		$(QDF_OBJ_DIR)/qdf_mc_timer.o \
-		$(QDF_OBJ_DIR)/qdf_mem.o \
-		$(QDF_OBJ_DIR)/qdf_nbuf.o \
-		$(QDF_OBJ_DIR)/qdf_threads.o \
-		$(QDF_OBJ_DIR)/qdf_crypto.o \
-		$(QDF_OBJ_DIR)/qdf_trace.o
+QDF_OBJS := 	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_list.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_lock.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_mc_timer.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_mem.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_nbuf.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_crypto.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_trace.o
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
-QDF_OBJS += $(QDF_OBJ_DIR)/qdf_debugfs.o
+QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_debugfs.o
 endif
 
+# enable CPU hotplug support if SMP is enabled
+ifeq ($(CONFIG_SMP),y)
+	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_cpuhp.o
+	QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_cpuhp.o
+endif
 
 ##########OS_IF #######
 OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
@@ -847,7 +854,7 @@ UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc \
 UMAC_COMMON_OBJS := $(WLAN_COMMON_ROOT)/umac/cmn_services/utils/src/wlan_utility.o
 
 ifeq ($(CONFIG_WLAN_LRO), y)
-QDF_OBJS +=     $(QDF_OBJ_DIR)/qdf_lro.o
+QDF_OBJS +=     $(QDF_LINUX_OBJ_DIR)/qdf_lro.o
 endif
 
 ############ CDS (Connectivity driver services) ############

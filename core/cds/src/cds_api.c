@@ -66,6 +66,7 @@
 #include <cdp_txrx_misc.h>
 #include <dispatcher_init_deinit.h>
 #include <cdp_txrx_handle.h>
+#include "qdf_cpuhp.h"
 
 /* Preprocessor Definitions and Constants */
 
@@ -163,6 +164,7 @@ QDF_STATUS cds_init(void)
 	qdf_lock_stats_init();
 	qdf_mem_init();
 	qdf_mc_timer_manager_init();
+	qdf_cpuhp_init();
 	qdf_register_self_recovery_callback(cds_trigger_recovery);
 
 	gp_cds_context = &g_cds_context;
@@ -195,6 +197,7 @@ void cds_deinit(void)
 		return;
 
 	cds_recovery_work_deinit();
+	qdf_cpuhp_deinit();
 	qdf_mc_timer_manager_exit();
 	qdf_mem_exit();
 	qdf_lock_stats_deinit();
