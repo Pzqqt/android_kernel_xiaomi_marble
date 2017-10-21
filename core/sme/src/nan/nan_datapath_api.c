@@ -149,10 +149,8 @@ QDF_STATUS sme_ndp_initiator_req_handler(tHalHandle hal,
 	}
 
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
-	if (QDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status)
 		sme_err("SME enqueue failed, status: %d", status);
-		csr_release_command(mac_ctx, cmd);
-	}
 
 	sme_release_global_lock(&mac_ctx->sme);
 	return status;
@@ -239,10 +237,8 @@ QDF_STATUS sme_ndp_responder_req_handler(tHalHandle hal,
 	}
 
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
-	if (QDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status)
 		sme_err("SME enqueue failed, status: %d", status);
-		csr_release_command(mac_ctx, cmd);
-	}
 
 	sme_release_global_lock(&mac_ctx->sme);
 	return status;
@@ -297,7 +293,6 @@ QDF_STATUS sme_ndp_end_req_handler(tHalHandle hal, struct ndp_end_req *req)
 	if (QDF_STATUS_SUCCESS != status) {
 		sme_err("SME enqueue failed, status: %d", status);
 		ret = QDF_STATUS_E_FAILURE;
-		csr_release_command(mac_ctx, cmd);
 	}
 
 	sme_release_global_lock(&mac_ctx->sme);

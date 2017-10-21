@@ -161,11 +161,10 @@ QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal mac_ctx,
 			command->u.roamCmd.pLastRoamBss = bss_desc;
 			status = csr_queue_sme_command(mac_ctx, command,
 					immediate);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
+			if (!QDF_IS_STATUS_SUCCESS(status))
 				sme_err("fail to queue preauth,status: %d",
 					status);
-				csr_release_command_preauth(mac_ctx, command);
-			}
+				csr_reinit_preauth_cmd(mac_ctx, command);
 		} else {
 			status = QDF_STATUS_E_RESOURCES;
 		}

@@ -565,15 +565,9 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 		break;
 	default:
 		/* something is wrong */
-		/* remove it from the active list */
 		sme_err("unknown command %d", sme_cmd->command);
 		status = QDF_STATUS_E_FAILURE;
 		break;
-	}
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Releasing memory for %d",
-			sme_cmd->command);
-		csr_release_command(mac_ctx, sme_cmd);
 	}
 	return status;
 }

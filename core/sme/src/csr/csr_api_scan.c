@@ -603,8 +603,10 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 		MAC_ADDR_ARRAY(scan_cmd->u.scanCmd.u.scanRequest.bssid.bytes));
 
 	status = csr_queue_sme_command(pMac, scan_cmd, false);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("fail to send message status: %d", status);
+		return status;
+	}
 
 release_cmd:
 	if (!QDF_IS_STATUS_SUCCESS(status) && scan_cmd) {
@@ -612,7 +614,7 @@ release_cmd:
 			sessionId, status, scan_cmd->u.scanCmd.reason,
 			scan_req->SSIDs.numOfSSIDs, scan_req->p2pSearch,
 			scan_cmd->u.scanCmd.scanID);
-		csr_release_command(pMac, scan_cmd);
+		csr_release_command_buffer(pMac, scan_cmd);
 	}
 
 	return status;
@@ -907,14 +909,16 @@ csr_scan_request_lost_link1(tpAniSirGlobal mac_ctx, uint32_t session_id)
 	qdf_mem_set(&cmd->u.scanCmd.u.scanRequest.bssid,
 		    sizeof(struct qdf_mac_addr), 0xFF);
 	status = csr_queue_sme_command(mac_ctx, cmd, false);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("fail to send message status: %d", status);
+		return status;
+	}
 
 release_lost_link1_cmd:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_warn("failed with status %d", status);
 		if (cmd)
-			csr_release_command(mac_ctx, cmd);
+			csr_release_command_buffer(mac_ctx, cmd);
 		status = csr_scan_handle_failed_lostlink1(mac_ctx, session_id);
 	}
 	return status;
@@ -1034,14 +1038,14 @@ csr_scan_request_lost_link2(tpAniSirGlobal mac_ctx, uint32_t session_id)
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("fail to send message status: %d", status);
-		goto release_lost_link2_cmd;
+		return status;
 	}
 
 release_lost_link2_cmd:
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_warn("failed with status %d", status);
 		if (cmd)
-			csr_release_command(mac_ctx, cmd);
+			csr_release_command_buffer(mac_ctx, cmd);
 		status = csr_scan_handle_failed_lostlink2(mac_ctx, session_id);
 	}
 	return status;
@@ -1064,6 +1068,7 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 		cmd = csr_get_command_buffer(mac_ctx);
 		if (!cmd) {
 			status = QDF_STATUS_E_RESOURCES;
+			sme_warn("failed with status %d", status);
 			break;
 		}
 		qdf_mem_set(&cmd->u.scanCmd, sizeof(struct scan_cmd), 0);
@@ -1088,14 +1093,9 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 		status = csr_queue_sme_command(mac_ctx, cmd, true);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("fail to send message status: %d", status);
-			break;
+			return status;
 		}
 	} while (0);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_warn("failed with status %d", status);
-		if (cmd)
-			csr_release_command(mac_ctx, cmd);
-	}
 
 	return status;
 }

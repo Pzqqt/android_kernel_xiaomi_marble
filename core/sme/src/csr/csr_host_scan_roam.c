@@ -112,10 +112,8 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
 		pCommand->sessionId = (uint8_t) sessionId;
 		pCommand->u.roamCmd.roamReason = eCsrSmeIssuedFTReassoc;
 		status = csr_queue_sme_command(pMac, pCommand, fHighPriority);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_err("fail to send message status: %d", status);
-			csr_release_command(pMac, pCommand);
-		}
 	} while (0);
 
 	return status;
