@@ -51,6 +51,7 @@
 #include "qdf_crypto.h"
 #include "lim_process_fils.h"
 #include "wlan_utility.h"
+#include "wifi_pos_api.h"
 
 /* ////////////////////////////////////////////////////////////////////// */
 void swap_bit_field16(uint16_t in, uint16_t *out)
@@ -1179,20 +1180,17 @@ populate_dot11f_ext_cap(tpAniSirGlobal pMac,
 	}
 
 	if (val) {
+		uint32_t ftm = ucfg_wifi_pos_get_ftm_cap(pMac->psoc);
 		if (!psessionEntry || LIM_IS_STA_ROLE(psessionEntry)) {
 			p_ext_cap->fine_time_meas_initiator =
-				(pMac->fine_time_meas_cap &
-				 WMI_FW_STA_RTT_INITR) ? 1 : 0;
+				(ftm & WMI_FW_STA_RTT_INITR) ? 1 : 0;
 			p_ext_cap->fine_time_meas_responder =
-				(pMac->fine_time_meas_cap &
-				 WMI_FW_STA_RTT_RESPR) ? 1 : 0;
+				(ftm & WMI_FW_STA_RTT_RESPR) ? 1 : 0;
 		} else if (LIM_IS_AP_ROLE(psessionEntry)) {
 			p_ext_cap->fine_time_meas_initiator =
-				(pMac->fine_time_meas_cap &
-				 WMI_FW_AP_RTT_INITR) ? 1 : 0;
+				(ftm & WMI_FW_AP_RTT_INITR) ? 1 : 0;
 			p_ext_cap->fine_time_meas_responder =
-				(pMac->fine_time_meas_cap &
-				 WMI_FW_AP_RTT_RESPR) ? 1 : 0;
+				(ftm & WMI_FW_AP_RTT_RESPR) ? 1 : 0;
 		}
 	}
 #ifdef QCA_HT_2040_COEX

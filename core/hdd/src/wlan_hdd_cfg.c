@@ -47,6 +47,7 @@
 #include <cds_api.h>
 #include "wlan_hdd_he.h"
 #include <wlan_policy_mgr_api.h>
+#include "wifi_pos_api.h"
 
 static void
 cb_notify_set_roam_prefer5_g_hz(struct hdd_context *hdd_ctx, unsigned long notifyId)
@@ -7331,7 +7332,6 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
 /**
  * hdd_set_fine_time_meas_cap() - set fine timing measurement capability
  * @hdd_ctx: HDD context
- * @sme_config: pointer to SME config
  *
  * This function is used to pass fine timing measurement capability coming
  * from INI to SME. This function make sure that configure INI is supported
@@ -7339,19 +7339,18 @@ QDF_STATUS hdd_set_idle_ps_config(struct hdd_context *hdd_ctx, bool val)
  *
  * Return: None
  */
-static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx,
-				       tSmeConfigParams *sme_config)
+static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
 {
 	struct hdd_config *config = hdd_ctx->config;
 	uint32_t capability = config->fine_time_meas_cap;
 
 	/* Make sure only supported capabilities are enabled in INI */
 	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
-	sme_config->csrConfig.fine_time_meas_cap = capability;
+	ucfg_wifi_pos_set_ftm_cap(hdd_ctx->hdd_psoc, capability);
 
 	hdd_debug("fine time meas capability - INI: %04x Enabled: %04x",
 		config->fine_time_meas_cap,
-		sme_config->csrConfig.fine_time_meas_cap);
+		capability);
 }
 
 /**
@@ -8667,7 +8666,7 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	smeConfig->csrConfig.is_ps_enabled = hdd_ctx->config->is_ps_enabled;
 	smeConfig->csrConfig.auto_bmps_timer_val =
 		hdd_ctx->config->auto_bmps_timer_val;
-	hdd_set_fine_time_meas_cap(hdd_ctx, smeConfig);
+	hdd_set_fine_time_meas_cap(hdd_ctx);
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
