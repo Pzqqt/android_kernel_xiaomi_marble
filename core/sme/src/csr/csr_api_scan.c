@@ -4073,6 +4073,9 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	req->scan_req.scan_id = scan_id;
 	req->scan_req.vdev_id = session_id;
 	req->scan_req.scan_req_id = mac_ctx->scan.requester_id;
+	req->scan_req.scan_f_passive = false;
+	req->scan_req.scan_f_bcast_probe = false;
+
 
 	if (QDF_P2P_CLIENT_MODE == profile->csrPersona)
 		req->scan_req.scan_priority = SCAN_PRIORITY_HIGH;
