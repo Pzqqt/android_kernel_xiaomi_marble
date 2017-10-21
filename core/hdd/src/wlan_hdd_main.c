@@ -12417,7 +12417,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				(QDF_P2P_GO_MODE == adapter->device_mode)) {
 			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
 				sta_id++) {
-				if (!((adapter->aStaInfo[sta_id].isUsed)
+				if (!((adapter->aStaInfo[sta_id].in_use)
 				    && (OL_TXRX_PEER_STATE_CONN ==
 				    adapter->aStaInfo[sta_id].tlSTAState)))
 					continue;

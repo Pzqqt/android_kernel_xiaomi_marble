@@ -354,7 +354,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: Failed to find right station", __func__);
 			goto drop_pkt;
-		} else if (false == adapter->aStaInfo[STAId].isUsed) {
+		} else if (false == adapter->aStaInfo[STAId].in_use) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: STA %d is unregistered", __func__,
@@ -644,7 +644,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 				     struct qdf_mac_addr *pmacAddrSTA)
 {
 	spin_lock_bh(&adapter->staInfo_lock);
-	if (adapter->aStaInfo[STAId].isUsed) {
+	if (adapter->aStaInfo[STAId].in_use) {
 		spin_unlock_bh(&adapter->staInfo_lock);
 		hdd_err("Reinit of in use station %d", STAId);
 		return QDF_STATUS_E_FAILURE;
@@ -653,7 +653,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 	qdf_mem_zero(&adapter->aStaInfo[STAId],
 		     sizeof(struct hdd_station_info));
 
-	adapter->aStaInfo[STAId].isUsed = true;
+	adapter->aStaInfo[STAId].in_use = true;
 	adapter->aStaInfo[STAId].isDeauthInProgress = false;
 	qdf_copy_macaddr(&adapter->aStaInfo[STAId].macAddrSTA, pmacAddrSTA);
 
@@ -679,13 +679,13 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 
 	spin_lock_bh(&adapter->staInfo_lock);
 
-	if (false == adapter->aStaInfo[STAId].isUsed) {
+	if (false == adapter->aStaInfo[STAId].in_use) {
 		spin_unlock_bh(&adapter->staInfo_lock);
 		hdd_err("Deinit station not inited %d", STAId);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter->aStaInfo[STAId].isUsed = false;
+	adapter->aStaInfo[STAId].in_use = false;
 	adapter->aStaInfo[STAId].isDeauthInProgress = false;
 
 	spin_unlock_bh(&adapter->staInfo_lock);
@@ -877,7 +877,7 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 		hdd_err("Peer obj %pM delete fails",
 			adapter->aStaInfo[staId].macAddrSTA.bytes);
 
-	if (adapter->aStaInfo[staId].isUsed) {
+	if (adapter->aStaInfo[staId].in_use) {
 		spin_lock_bh(&adapter->staInfo_lock);
 		qdf_mem_zero(&adapter->aStaInfo[staId],
 			     sizeof(struct hdd_station_info));
@@ -924,7 +924,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	/*
 	 * Clean up old entry if it is not cleaned up properly
 	 */
-	if (adapter->aStaInfo[staId].isUsed) {
+	if (adapter->aStaInfo[staId].in_use) {
 		hdd_info("clean up old entry for STA %d", staId);
 		hdd_softap_deregister_sta(adapter, staId);
 	}
@@ -1076,7 +1076,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
 		/* This excludes BC sta as it is already deregistered */
-		if (adapter->aStaInfo[staId].isUsed) {
+		if (adapter->aStaInfo[staId].in_use) {
 			qdf_status = hdd_softap_deregister_sta(adapter, staId);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("Failed to deregister sta Id %d",
@@ -1150,7 +1150,7 @@ QDF_STATUS hdd_softap_get_sta_id(struct hdd_adapter *adapter,
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 		if (!qdf_mem_cmp
 			(&adapter->aStaInfo[i].macAddrSTA, pMacAddress,
-			QDF_MAC_ADDR_SIZE) && adapter->aStaInfo[i].isUsed) {
+			QDF_MAC_ADDR_SIZE) && adapter->aStaInfo[i].in_use) {
 			*staId = i;
 			return QDF_STATUS_SUCCESS;
 		}

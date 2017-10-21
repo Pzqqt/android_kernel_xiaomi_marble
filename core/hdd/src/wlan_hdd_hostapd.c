@@ -671,7 +671,7 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter,
 
 	hdd_debug("Clearing all the STA entry....");
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
-		if (adapter->aStaInfo[staId].isUsed &&
+		if (adapter->aStaInfo[staId].in_use &&
 		    (staId !=
 		     (WLAN_HDD_GET_AP_CTX_PTR(adapter))->uBCStaId)) {
 			wlansap_populate_del_sta_params(
@@ -2077,7 +2077,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		ap_ctx->bApActive = false;
 		spin_lock_bh(&adapter->staInfo_lock);
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-			if (adapter->aStaInfo[i].isUsed
+			if (adapter->aStaInfo[i].in_use
 			    && i !=
 			    (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 			    uBCStaId) {
@@ -4489,7 +4489,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 
 	spin_lock_bh(&adapter->staInfo_lock);
 	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= QDF_MAC_ADDR_SIZE)) {
-		if ((pStaInfo[cnt].isUsed) &&
+		if ((pStaInfo[cnt].in_use) &&
 		    (!IS_BROADCAST_MAC(pStaInfo[cnt].macAddrSTA.bytes))) {
 			memcpy(&buf[maclist_index], &(pStaInfo[cnt].macAddrSTA),
 			       QDF_MAC_ADDR_SIZE);
@@ -5129,7 +5129,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 		if (written >= size - 1)
 			break;
 
-		if (!sta->isUsed)
+		if (!sta->in_use)
 			continue;
 
 		if (i == bc_sta_id)
@@ -5258,7 +5258,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	 */
 	if (wrqu->data.length < 17 || !QDF_IS_STATUS_SUCCESS(status)) {
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-			if (adapter->aStaInfo[i].isUsed &&
+			if (adapter->aStaInfo[i].in_use &&
 			    (!qdf_is_macaddr_broadcast
 				  (&adapter->aStaInfo[i].macAddrSTA))) {
 				qdf_copy_macaddr(
@@ -8834,9 +8834,9 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 	}
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		if (adapter->aStaInfo[sta_id].isUsed) {
-			hdd_debug("sta_id: %d isUsed: %d %pK",
-				 sta_id, adapter->aStaInfo[sta_id].isUsed,
+		if (adapter->aStaInfo[sta_id].in_use) {
+			hdd_debug("sta_id: %d in_use: %d %pK",
+				 sta_id, adapter->aStaInfo[sta_id].in_use,
 				 adapter);
 
 			if (qdf_is_macaddr_broadcast(

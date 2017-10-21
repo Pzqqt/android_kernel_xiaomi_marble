@@ -769,7 +769,7 @@ struct hdd_fw_txrx_stats {
 /**
  * struct hdd_station_info - Per station structure kept in HDD for
  *                                     multiple station support for SoftAP
- * @isUsed: The station entry is used or not
+ * @in_use: Is the station entry in use?
  * @ucSTAId: Station ID reported back from HAL (through SAP).
  *           Broadcast uses station ID zero by default.
  * @staType: Type of station i.e. p2p client or infrastructure station
@@ -803,7 +803,7 @@ struct hdd_fw_txrx_stats {
  * @tx_mcs_map: VHT Tx mcs map
  */
 struct hdd_station_info {
-	bool isUsed;
+	bool in_use;
 	uint8_t ucSTAId;
 	eStationType staType;
 	struct qdf_mac_addr macAddrSTA;
