@@ -950,12 +950,12 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	 * put TL directly into 'authenticated' state
 	 */
 
-	adapter->aStaInfo[staId].ucSTAId = staId;
+	adapter->aStaInfo[staId].sta_id = staId;
 	adapter->aStaInfo[staId].is_qos_enabled = fWmmEnabled;
 
 	if (!fAuthRequired) {
 		hdd_info("open/shared auth StaId= %d.  Changing TL state to AUTHENTICATED at Join time",
-			 adapter->aStaInfo[staId].ucSTAId);
+			 adapter->aStaInfo[staId].sta_id);
 
 		/* Connections that do not need Upper layer auth,
 		 * transition TL directly to 'Authenticated' state.
@@ -968,7 +968,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	} else {
 
 		hdd_info("ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
-			 adapter->aStaInfo[staId].ucSTAId);
+			 adapter->aStaInfo[staId].sta_id);
 
 		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_CONN, false);
@@ -1082,30 +1082,30 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 				       struct qdf_mac_addr *pDestMacAddress,
 				       enum ol_txrx_peer_state state)
 {
-	uint8_t ucSTAId = WLAN_MAX_STA_COUNT;
+	uint8_t sta_id = WLAN_MAX_STA_COUNT;
 	QDF_STATUS qdf_status;
 
 	ENTER_DEV(adapter->dev);
 
-	qdf_status = hdd_softap_get_sta_id(adapter, pDestMacAddress, &ucSTAId);
+	qdf_status = hdd_softap_get_sta_id(adapter, pDestMacAddress, &sta_id);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		hdd_err("Failed to find right station");
 		return qdf_status;
 	}
 
 	if (false ==
-	    qdf_is_macaddr_equal(&adapter->aStaInfo[ucSTAId].sta_mac,
+	    qdf_is_macaddr_equal(&adapter->aStaInfo[sta_id].sta_mac,
 				 pDestMacAddress)) {
-		hdd_err("Station %u MAC address not matching", ucSTAId);
+		hdd_err("Station %u MAC address not matching", sta_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	qdf_status =
-		hdd_change_peer_state(adapter, ucSTAId, state, false);
-	hdd_info("Station %u changed to state %d", ucSTAId, state);
+		hdd_change_peer_state(adapter, sta_id, state, false);
+	hdd_info("Station %u changed to state %d", sta_id, state);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
-		adapter->aStaInfo[ucSTAId].peer_state =
+		adapter->aStaInfo[sta_id].peer_state =
 			OL_TXRX_PEER_STATE_AUTH;
 		p2p_peer_authorized(adapter->hdd_vdev, pDestMacAddress->bytes);
 	}
