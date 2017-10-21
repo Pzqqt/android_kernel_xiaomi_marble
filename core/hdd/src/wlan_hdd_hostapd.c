@@ -1286,7 +1286,7 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
 static void hdd_fill_station_info(struct hdd_station_info *stainfo,
 				  tSap_StationAssocReassocCompleteEvent *event)
 {
-	stainfo->staType = event->staType;
+	stainfo->sta_type = event->staType;
 	stainfo->nss = event->chan_info.nss;
 	stainfo->rate_flags = event->chan_info.rate_flags;
 	stainfo->ampdu = event->ampdu;
@@ -1911,8 +1911,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_fill_station_info(
 				&adapter->aStaInfo[staId],
 				event);
-			hdd_debug("hdd_hostapd_sap_event_cb, StaID: %d, StaType: %d",
-			      staId, adapter->aStaInfo[staId].staType);
+			hdd_debug("hdd_hostapd_sap_event_cb, StaID: %d, Type: %d",
+			      staId, adapter->aStaInfo[staId].sta_type);
 		}
 
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
@@ -2018,7 +2018,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			adapter->hdd_vdev,
 			adapter->device_mode,
 			event->staMac.bytes,
-			(adapter->aStaInfo[event->staId].staType
+			(adapter->aStaInfo[event->staId].sta_type
 							== eSTA_TYPE_P2P_CLI));
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
