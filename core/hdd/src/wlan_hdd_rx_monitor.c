@@ -69,7 +69,7 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 		skb_next = skb->next;
 		skb->dev = adapter->dev;
 
-		++adapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
 
@@ -94,9 +94,9 @@ void hdd_rx_monitor_callback(ol_osif_vdev_handle context,
 
 		if (NET_RX_SUCCESS == rxstat)
 			++adapter->
-				hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
+				hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
 		else
-			++adapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
+			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
 
 		skb = skb_next;
 	}

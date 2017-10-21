@@ -145,11 +145,11 @@ hdd_tx_resume_false(struct hdd_adapter *adapter, bool tx_resume)
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("Failed to start tx_flow_control_timer");
 		else
-			adapter->hdd_stats.hddTxRxStats.txflow_timer_cnt++;
+			adapter->hdd_stats.tx_rx_stats.txflow_timer_cnt++;
 	}
 
-	adapter->hdd_stats.hddTxRxStats.txflow_pause_cnt++;
-	adapter->hdd_stats.hddTxRxStats.is_txflow_paused = true;
+	adapter->hdd_stats.tx_rx_stats.txflow_pause_cnt++;
+	adapter->hdd_stats.tx_rx_stats.is_txflow_paused = true;
 }
 #else
 
@@ -193,7 +193,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 
 	if (need_orphan) {
 		skb_orphan(skb);
-		++adapter->hdd_stats.hddTxRxStats.txXmitOrphaned;
+		++adapter->hdd_stats.tx_rx_stats.tx_orphaned;
 	} else
 		skb = skb_unshare(skb, GFP_ATOMIC);
 
@@ -309,9 +309,9 @@ void hdd_get_tx_resource(struct hdd_adapter *adapter,
 						    tx_flow_control_timer))) {
 			qdf_mc_timer_start(&adapter->tx_flow_control_timer,
 					   timer_value);
-			adapter->hdd_stats.hddTxRxStats.txflow_timer_cnt++;
-			adapter->hdd_stats.hddTxRxStats.txflow_pause_cnt++;
-			adapter->hdd_stats.hddTxRxStats.is_txflow_paused = true;
+			adapter->hdd_stats.tx_rx_stats.txflow_timer_cnt++;
+			adapter->hdd_stats.tx_rx_stats.txflow_pause_cnt++;
+			adapter->hdd_stats.tx_rx_stats.is_txflow_paused = true;
 		}
 	}
 }
@@ -342,7 +342,7 @@ static inline struct sk_buff *hdd_skb_orphan(struct hdd_adapter *adapter,
 		 * to send more packets. The flow would ultimately be controlled
 		 * by the limited number of tx descriptors for the vdev.
 		 */
-		++adapter->hdd_stats.hddTxRxStats.txXmitOrphaned;
+		++adapter->hdd_stats.tx_rx_stats.tx_orphaned;
 		skb_orphan(skb);
 	}
 #endif
@@ -584,8 +584,8 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 #endif
 
-	++adapter->hdd_stats.hddTxRxStats.txXmitCalled;
-	adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+	++adapter->hdd_stats.tx_rx_stats.tx_called;
+	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
 	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -629,7 +629,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 */
 	up = skb->priority;
 
-	++adapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[ac];
+	++adapter->hdd_stats.tx_rx_stats.tx_classified_ac[ac];
 #ifdef HDD_WMM_DEBUG
 	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Classified as ac %d up %d", __func__, ac, up);
@@ -753,7 +753,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	if (!hdd_is_tx_allowed(skb, STAId)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Tx not allowed for sta_id: %d"), STAId);
-		++adapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
+		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
 
@@ -764,7 +764,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			 "%s: TX function not registered by the data path",
 			 __func__);
-		++adapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
+		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
 
@@ -773,7 +773,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Failed to send packet to txrx for staid: %d",
 			  __func__, STAId);
-		++adapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
+		++adapter->hdd_stats.tx_rx_stats.tx_dropped_ac[ac];
 		goto drop_pkt_and_release_skb;
 	}
 	netif_trans_update(dev);
@@ -802,7 +802,7 @@ drop_pkt:
 drop_pkt_accounting:
 
 	++adapter->stats.tx_dropped;
-	++adapter->hdd_stats.hddTxRxStats.txXmitDropped;
+	++adapter->hdd_stats.tx_rx_stats.tx_dropped;
 
 	return NETDEV_TX_OK;
 }
@@ -897,13 +897,13 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	wlan_hdd_display_netif_queue_history(hdd_ctx);
 	cdp_dump_flow_pool_info(cds_get_context(QDF_MODULE_ID_SOC));
 
-	++adapter->hdd_stats.hddTxRxStats.tx_timeout_cnt;
-	++adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt;
+	++adapter->hdd_stats.tx_rx_stats.tx_timeout_cnt;
+	++adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt;
 
 	diff_jiffies = jiffies -
-		       adapter->hdd_stats.hddTxRxStats.jiffies_last_txtimeout;
+		       adapter->hdd_stats.tx_rx_stats.jiffies_last_txtimeout;
 
-	if ((adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt > 1) &&
+	if ((adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt > 1) &&
 	    (diff_jiffies > (HDD_TX_TIMEOUT * 2))) {
 		/*
 		 * In case when there is no traffic is running, it may
@@ -917,18 +917,18 @@ static void __hdd_tx_timeout(struct net_device *dev)
 		 * TX TIME out has occurred more than twice of HDD_TX_TIMEOUT
 		 * back then host may recovered here from data stall.
 		 */
-		adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+		adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "Reset continous tx timeout stat");
 	}
 
-	adapter->hdd_stats.hddTxRxStats.jiffies_last_txtimeout = jiffies;
+	adapter->hdd_stats.tx_rx_stats.jiffies_last_txtimeout = jiffies;
 
-	if (adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt >
+	if (adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt >
 	    HDD_TX_STALL_THRESHOLD) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "Data stall due to continuous TX timeouts");
-		adapter->hdd_stats.hddTxRxStats.cont_txtimeout_cnt = 0;
+		adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 		cdp_post_data_stall_event(soc,
 					  DATA_STALL_LOG_INDICATOR_HOST_DRIVER,
 					  DATA_STALL_LOG_HOST_STA_TX_TIMEOUT,
@@ -1035,7 +1035,7 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 		skb_next = skb->next;
 		skb->dev = adapter->dev;
 
-		++adapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
 
@@ -1060,9 +1060,9 @@ static QDF_STATUS hdd_mon_rx_packet_cbk(void *context, qdf_nbuf_t rxbuf)
 
 		if (NET_RX_SUCCESS == rxstat)
 			++adapter->
-				hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
+				hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
 		else
-			++adapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
+			++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
 
 		skb = skb_next;
 	}
@@ -1257,8 +1257,8 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 			cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
 			uint32_t rx_dropped;
 
-			rx_dropped = ++adapter->hdd_stats.hddTxRxStats.
-							rxDropped[cpu_index];
+			rx_dropped = ++adapter->hdd_stats.tx_rx_stats.
+							rx_dropped[cpu_index];
 			/* rate limit error messages to 1/8th */
 			if ((rx_dropped & 0x07) == 0)
 				QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
@@ -1305,14 +1305,14 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 
 		skb->dev = adapter->dev;
 		skb->protocol = eth_type_trans(skb, skb->dev);
-		++adapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+		++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
 		++adapter->stats.rx_packets;
 		adapter->stats.rx_bytes += skb->len;
 
 		/* Check & drop replayed mcast packets (for IPV6) */
 		if (hdd_ctx->config->multicast_replay_filter &&
 				hdd_is_mcast_replay(skb)) {
-			++adapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
+			++adapter->hdd_stats.tx_rx_stats.rx_dropped[cpu_index];
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 				"%s: Dropping multicast replay pkt", __func__);
 			qdf_nbuf_free(skb);
@@ -1350,14 +1350,14 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 				rxstat = netif_rx_ni(skb);
 
 			if (NET_RX_SUCCESS == rxstat)
-				++adapter->hdd_stats.hddTxRxStats.
-					 rxDelivered[cpu_index];
+				++adapter->hdd_stats.tx_rx_stats.
+					 rx_delivered[cpu_index];
 			else
-				++adapter->hdd_stats.hddTxRxStats.
-					 rxRefused[cpu_index];
+				++adapter->hdd_stats.tx_rx_stats.
+					 rx_refused[cpu_index];
 		} else {
-			++adapter->hdd_stats.hddTxRxStats.
-				 rxDelivered[cpu_index];
+			++adapter->hdd_stats.tx_rx_stats.
+				 rx_delivered[cpu_index];
 		}
 	}
 

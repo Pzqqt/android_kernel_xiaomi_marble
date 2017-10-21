@@ -3846,12 +3846,12 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 
 	cpu_index = wlan_hdd_get_cpu();
 
-	++adapter->hdd_stats.hddTxRxStats.rxPackets[cpu_index];
+	++adapter->hdd_stats.tx_rx_stats.rx_packets[cpu_index];
 	result = hdd_ipa_aggregated_rx_ind(skb);
 	if (result == NET_RX_SUCCESS)
-		++adapter->hdd_stats.hddTxRxStats.rxDelivered[cpu_index];
+		++adapter->hdd_stats.tx_rx_stats.rx_delivered[cpu_index];
 	else
-		++adapter->hdd_stats.hddTxRxStats.rxRefused[cpu_index];
+		++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
 
 	HDD_IPA_INCREASE_NET_SEND_COUNT(hdd_ipa);
 }

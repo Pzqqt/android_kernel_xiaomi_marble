@@ -340,7 +340,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 
 	/* Get the Tx stats for this AC. */
 	currentTrafficCnt =
-		adapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[pQosContext->
+		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[pQosContext->
 								    acType];
 
 	hdd_warn("WMM inactivity Timer for AC=%d, currentCnt=%d, prevCnt=%d",
@@ -418,7 +418,7 @@ hdd_wmm_enable_inactivity_timer(struct hdd_wmm_qos_context *pQosContext,
 	pAc->wmmInactivityTime = inactivityTime;
 	/* Initialize the current tx traffic count on this AC */
 	pAc->wmmPrevTrafficCnt =
-		adapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[pQosContext->
+		adapter->hdd_stats.tx_rx_stats.tx_classified_ac[pQosContext->
 								    acType];
 	pQosContext->is_inactivity_timer_running = true;
 	return qdf_status;
