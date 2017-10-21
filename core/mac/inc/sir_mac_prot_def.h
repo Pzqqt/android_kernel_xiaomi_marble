@@ -575,6 +575,7 @@
 
 /* / MAX key length when ULA is used */
 #define SIR_MAC_MAX_KEY_LENGTH               32
+#define SIR_MAC_MAX_KEY_RSC_LEN              16
 
 /* / Macro definitions for get/set on FC fields */
 #define SIR_MAC_GET_PROT_VERSION(x)      ((((uint16_t) x) & 0x0300) >> 8)
