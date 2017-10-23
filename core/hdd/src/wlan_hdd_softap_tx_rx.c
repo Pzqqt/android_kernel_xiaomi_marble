@@ -354,13 +354,13 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: Failed to find right station", __func__);
 			goto drop_pkt;
-		} else if (false == adapter->aStaInfo[STAId].in_use) {
+		} else if (false == adapter->sta_info[STAId].in_use) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: STA %d is unregistered", __func__,
 				  STAId);
 			goto drop_pkt;
-		} else if (true == adapter->aStaInfo[STAId].
+		} else if (true == adapter->sta_info[STAId].
 							is_deauth_in_progress) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -370,15 +370,15 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		}
 
 		if ((OL_TXRX_PEER_STATE_CONN !=
-		     adapter->aStaInfo[STAId].peer_state)
+		     adapter->sta_info[STAId].peer_state)
 		    && (OL_TXRX_PEER_STATE_AUTH !=
-			adapter->aStaInfo[STAId].peer_state)) {
+			adapter->sta_info[STAId].peer_state)) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: Station not connected yet", __func__);
 			goto drop_pkt;
 		} else if (OL_TXRX_PEER_STATE_CONN ==
-			   adapter->aStaInfo[STAId].peer_state) {
+			   adapter->sta_info[STAId].peer_state) {
 			if (ntohs(skb->protocol) != HDD_ETHERTYPE_802_1_X) {
 				QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -421,17 +421,17 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	qdf_net_buf_debug_acquire_skb(skb, __FILE__, __LINE__);
 
 	adapter->stats.tx_bytes += skb->len;
-	adapter->aStaInfo[STAId].tx_bytes += skb->len;
+	adapter->sta_info[STAId].tx_bytes += skb->len;
 
 	if (qdf_nbuf_is_tso(skb)) {
 		num_seg = qdf_nbuf_get_tso_num_seg(skb);
 		adapter->stats.tx_packets += num_seg;
-		adapter->aStaInfo[STAId].tx_packets += num_seg;
+		adapter->sta_info[STAId].tx_packets += num_seg;
 	} else {
 		++adapter->stats.tx_packets;
-		adapter->aStaInfo[STAId].tx_packets++;
+		adapter->sta_info[STAId].tx_packets++;
 	}
-	adapter->aStaInfo[STAId].last_tx_rx_ts = qdf_system_ticks();
+	adapter->sta_info[STAId].last_tx_rx_ts = qdf_system_ticks();
 
 	hdd_event_eapol_log(skb, QDF_TX);
 	qdf_dp_trace_log_pkt(adapter->sessionId, skb, QDF_TX,
@@ -600,10 +600,10 @@ QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *adapter)
 
 	qdf_mem_zero(&adapter->stats, sizeof(struct net_device_stats));
 
-	spin_lock_init(&adapter->staInfo_lock);
+	spin_lock_init(&adapter->sta_info_lock);
 
 	for (STAId = 0; STAId < WLAN_MAX_STA_COUNT; STAId++) {
-		qdf_mem_zero(&adapter->aStaInfo[STAId],
+		qdf_mem_zero(&adapter->sta_info[STAId],
 			     sizeof(struct hdd_station_info));
 	}
 
@@ -634,21 +634,21 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 				     uint8_t sta_id,
 				     struct qdf_mac_addr *sta_mac)
 {
-	spin_lock_bh(&adapter->staInfo_lock);
-	if (adapter->aStaInfo[sta_id].in_use) {
-		spin_unlock_bh(&adapter->staInfo_lock);
+	spin_lock_bh(&adapter->sta_info_lock);
+	if (adapter->sta_info[sta_id].in_use) {
+		spin_unlock_bh(&adapter->sta_info_lock);
 		hdd_err("Reinit of in use station %d", sta_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&adapter->aStaInfo[sta_id],
+	qdf_mem_zero(&adapter->sta_info[sta_id],
 		     sizeof(struct hdd_station_info));
 
-	adapter->aStaInfo[sta_id].in_use = true;
-	adapter->aStaInfo[sta_id].is_deauth_in_progress = false;
-	qdf_copy_macaddr(&adapter->aStaInfo[sta_id].sta_mac, sta_mac);
+	adapter->sta_info[sta_id].in_use = true;
+	adapter->sta_info[sta_id].is_deauth_in_progress = false;
+	qdf_copy_macaddr(&adapter->sta_info[sta_id].sta_mac, sta_mac);
 
-	spin_unlock_bh(&adapter->staInfo_lock);
+	spin_unlock_bh(&adapter->sta_info_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -660,18 +660,18 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	spin_lock_bh(&adapter->staInfo_lock);
+	spin_lock_bh(&adapter->sta_info_lock);
 
-	if (false == adapter->aStaInfo[sta_id].in_use) {
-		spin_unlock_bh(&adapter->staInfo_lock);
+	if (false == adapter->sta_info[sta_id].in_use) {
+		spin_unlock_bh(&adapter->sta_info_lock);
 		hdd_err("Deinit station not inited %d", sta_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter->aStaInfo[sta_id].in_use = false;
-	adapter->aStaInfo[sta_id].is_deauth_in_progress = false;
+	adapter->sta_info[sta_id].in_use = false;
+	adapter->sta_info[sta_id].is_deauth_in_progress = false;
 
-	spin_unlock_bh(&adapter->staInfo_lock);
+	spin_unlock_bh(&adapter->sta_info_lock);
 	return status;
 }
 
@@ -754,9 +754,9 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 	if (QDF_STATUS_SUCCESS ==
 		hdd_softap_get_sta_id(adapter, &src_mac, &staid)) {
 		if (staid < WLAN_MAX_STA_COUNT) {
-			adapter->aStaInfo[staid].rx_packets++;
-			adapter->aStaInfo[staid].rx_bytes += skb->len;
-			adapter->aStaInfo[staid].last_tx_rx_ts =
+			adapter->sta_info[staid].rx_packets++;
+			adapter->sta_info[staid].rx_bytes += skb->len;
+			adapter->sta_info[staid].last_tx_rx_ts =
 				qdf_system_ticks();
 		}
 	}
@@ -854,17 +854,17 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 	}
 
 	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
-					    adapter->aStaInfo[staId].
+					    adapter->sta_info[staId].
 						sta_mac.bytes);
 	if (ret)
 		hdd_err("Peer obj %pM delete fails",
-			adapter->aStaInfo[staId].sta_mac.bytes);
+			adapter->sta_info[staId].sta_mac.bytes);
 
-	if (adapter->aStaInfo[staId].in_use) {
-		spin_lock_bh(&adapter->staInfo_lock);
-		qdf_mem_zero(&adapter->aStaInfo[staId],
+	if (adapter->sta_info[staId].in_use) {
+		spin_lock_bh(&adapter->sta_info_lock);
+		qdf_mem_zero(&adapter->sta_info[staId],
 			     sizeof(struct hdd_station_info));
-		spin_unlock_bh(&adapter->staInfo_lock);
+		spin_unlock_bh(&adapter->sta_info_lock);
 	}
 
 	hdd_ctx->sta_to_adapter[staId] = NULL;
@@ -907,7 +907,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	/*
 	 * Clean up old entry if it is not cleaned up properly
 	 */
-	if (adapter->aStaInfo[staId].in_use) {
+	if (adapter->sta_info[staId].in_use) {
 		hdd_info("clean up old entry for STA %d", staId);
 		hdd_softap_deregister_sta(adapter, staId);
 	}
@@ -950,12 +950,12 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	 * put TL directly into 'authenticated' state
 	 */
 
-	adapter->aStaInfo[staId].sta_id = staId;
-	adapter->aStaInfo[staId].is_qos_enabled = fWmmEnabled;
+	adapter->sta_info[staId].sta_id = staId;
+	adapter->sta_info[staId].is_qos_enabled = fWmmEnabled;
 
 	if (!fAuthRequired) {
 		hdd_info("open/shared auth StaId= %d.  Changing TL state to AUTHENTICATED at Join time",
-			 adapter->aStaInfo[staId].sta_id);
+			 adapter->sta_info[staId].sta_id);
 
 		/* Connections that do not need Upper layer auth,
 		 * transition TL directly to 'Authenticated' state.
@@ -963,16 +963,16 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_AUTH, false);
 
-		adapter->aStaInfo[staId].peer_state = OL_TXRX_PEER_STATE_AUTH;
+		adapter->sta_info[staId].peer_state = OL_TXRX_PEER_STATE_AUTH;
 		adapter->sessionCtx.ap.uIsAuthenticated = true;
 	} else {
 
 		hdd_info("ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
-			 adapter->aStaInfo[staId].sta_id);
+			 adapter->sta_info[staId].sta_id);
 
 		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_CONN, false);
-		adapter->aStaInfo[staId].peer_state = OL_TXRX_PEER_STATE_CONN;
+		adapter->sta_info[staId].peer_state = OL_TXRX_PEER_STATE_CONN;
 
 		adapter->sessionCtx.ap.uIsAuthenticated = false;
 
@@ -1059,7 +1059,7 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
 		/* This excludes BC sta as it is already deregistered */
-		if (adapter->aStaInfo[staId].in_use) {
+		if (adapter->sta_info[staId].in_use) {
 			qdf_status = hdd_softap_deregister_sta(adapter, staId);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_err("Failed to deregister sta Id %d",
@@ -1094,7 +1094,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	}
 
 	if (false ==
-	    qdf_is_macaddr_equal(&adapter->aStaInfo[sta_id].sta_mac,
+	    qdf_is_macaddr_equal(&adapter->sta_info[sta_id].sta_mac,
 				 pDestMacAddress)) {
 		hdd_err("Station %u MAC address not matching", sta_id);
 		return QDF_STATUS_E_FAILURE;
@@ -1105,7 +1105,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	hdd_info("Station %u changed to state %d", sta_id, state);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
-		adapter->aStaInfo[sta_id].peer_state =
+		adapter->sta_info[sta_id].peer_state =
 			OL_TXRX_PEER_STATE_AUTH;
 		p2p_peer_authorized(adapter->hdd_vdev, pDestMacAddress->bytes);
 	}
@@ -1132,8 +1132,8 @@ QDF_STATUS hdd_softap_get_sta_id(struct hdd_adapter *adapter,
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 		if (!qdf_mem_cmp
-			(&adapter->aStaInfo[i].sta_mac, pMacAddress,
-			QDF_MAC_ADDR_SIZE) && adapter->aStaInfo[i].in_use) {
+			(&adapter->sta_info[i].sta_mac, pMacAddress,
+			QDF_MAC_ADDR_SIZE) && adapter->sta_info[i].in_use) {
 			*staId = i;
 			return QDF_STATUS_SUCCESS;
 		}

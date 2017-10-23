@@ -1108,8 +1108,8 @@ struct hdd_adapter {
  */
 	/** Multiple station supports */
 	/** Per-station structure */
-	spinlock_t staInfo_lock;        /* To protect access to station Info */
-	struct hdd_station_info aStaInfo[WLAN_MAX_STA_COUNT];
+	spinlock_t sta_info_lock;        /* To protect access to station Info */
+	struct hdd_station_info sta_info[WLAN_MAX_STA_COUNT];
 	/* uint8_t uNumActiveStation; */
 
 /*************************************************************

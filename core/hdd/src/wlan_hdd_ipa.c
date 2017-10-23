@@ -3060,13 +3060,13 @@ static int hdd_ipa_uc_disconnect_client(struct hdd_adapter *adapter)
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "enter");
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		if (qdf_is_macaddr_broadcast(&adapter->aStaInfo[i].sta_mac))
+		if (qdf_is_macaddr_broadcast(&adapter->sta_info[i].sta_mac))
 			continue;
-		if ((adapter->aStaInfo[i].in_use) &&
-		   (!adapter->aStaInfo[i].is_deauth_in_progress) &&
+		if ((adapter->sta_info[i].in_use) &&
+		   (!adapter->sta_info[i].is_deauth_in_progress) &&
 		   hdd_ipa->sap_num_connected_sta) {
 			hdd_ipa_uc_send_evt(adapter, WLAN_CLIENT_DISCONNECT,
-				adapter->aStaInfo[i].sta_mac.bytes);
+				adapter->sta_info[i].sta_mac.bytes);
 			hdd_ipa->sap_num_connected_sta--;
 		}
 	}

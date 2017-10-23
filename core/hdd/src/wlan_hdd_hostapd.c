@@ -671,11 +671,11 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter,
 
 	hdd_debug("Clearing all the STA entry....");
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
-		if (adapter->aStaInfo[staId].in_use &&
+		if (adapter->sta_info[staId].in_use &&
 		    (staId !=
 		     (WLAN_HDD_GET_AP_CTX_PTR(adapter))->uBCStaId)) {
 			wlansap_populate_del_sta_params(
-				&adapter->aStaInfo[staId].sta_mac.
+				&adapter->sta_info[staId].sta_mac.
 				bytes[0], eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
 				(SIR_MAC_MGMT_DISASSOC >> 4), &del_sta_params);
 
@@ -1516,7 +1516,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-		adapter->aStaInfo[staId].ecsa_capable = pSapEvent->
+		adapter->sta_info[staId].ecsa_capable = pSapEvent->
 			sapevt.sapStationAssocReassocCompleteEvent.ecsa_capable;
 
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
@@ -1909,10 +1909,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		staId = event->staId;
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_fill_station_info(
-				&adapter->aStaInfo[staId],
+				&adapter->sta_info[staId],
 				event);
 			hdd_debug("hdd_hostapd_sap_event_cb, StaID: %d, Type: %d",
-			      staId, adapter->aStaInfo[staId].sta_type);
+			      staId, adapter->sta_info[staId].sta_type);
 		}
 
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
@@ -2018,7 +2018,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			adapter->hdd_vdev,
 			adapter->device_mode,
 			event->staMac.bytes,
-			(adapter->aStaInfo[event->staId].sta_type
+			(adapter->sta_info[event->staId].sta_type
 							== eSTA_TYPE_P2P_CLI));
 		if (ret)
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
@@ -2075,9 +2075,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_softap_deregister_sta(adapter, staId);
 
 		ap_ctx->bApActive = false;
-		spin_lock_bh(&adapter->staInfo_lock);
+		spin_lock_bh(&adapter->sta_info_lock);
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-			if (adapter->aStaInfo[i].in_use
+			if (adapter->sta_info[i].in_use
 			    && i !=
 			    (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 			    uBCStaId) {
@@ -2085,7 +2085,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				break;
 			}
 		}
-		spin_unlock_bh(&adapter->staInfo_lock);
+		spin_unlock_bh(&adapter->sta_info_lock);
 
 		/* Start AP inactivity timer if no stations associated */
 		if ((0 !=
@@ -4435,7 +4435,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 				       union iwreq_data *wrqu, char *extra)
 {
 	struct hdd_adapter *adapter = (netdev_priv(dev));
-	struct hdd_station_info *pStaInfo = adapter->aStaInfo;
+	struct hdd_station_info *pStaInfo = adapter->sta_info;
 	struct hdd_context *hdd_ctx;
 	char *buf;
 	int cnt = 0;
@@ -4487,7 +4487,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	maclist_index = sizeof(maclist_index);
 	left = wrqu->data.length - maclist_index;
 
-	spin_lock_bh(&adapter->staInfo_lock);
+	spin_lock_bh(&adapter->sta_info_lock);
 	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= QDF_MAC_ADDR_SIZE)) {
 		if ((pStaInfo[cnt].in_use) &&
 		    (!IS_BROADCAST_MAC(pStaInfo[cnt].sta_mac.bytes))) {
@@ -4498,7 +4498,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 		}
 		cnt++;
 	}
-	spin_unlock_bh(&adapter->staInfo_lock);
+	spin_unlock_bh(&adapter->sta_info_lock);
 
 	*((u32 *) buf) = maclist_index;
 	wrqu->data.length = maclist_index;
@@ -5124,7 +5124,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 
 	written = scnprintf(buf, size, "\nstaId staAddress\n");
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		struct hdd_station_info *sta = &adapter->aStaInfo[i];
+		struct hdd_station_info *sta = &adapter->sta_info[i];
 
 		if (written >= size - 1)
 			break;
@@ -5258,12 +5258,12 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	 */
 	if (wrqu->data.length < 17 || !QDF_IS_STATUS_SUCCESS(status)) {
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-			if (adapter->aStaInfo[i].in_use &&
+			if (adapter->sta_info[i].in_use &&
 			    (!qdf_is_macaddr_broadcast
-				  (&adapter->aStaInfo[i].sta_mac))) {
+				  (&adapter->sta_info[i].sta_mac))) {
 				qdf_copy_macaddr(
 					&macAddress,
-					&adapter->aStaInfo[i].
+					&adapter->sta_info[i].
 					 sta_mac);
 				status = QDF_STATUS_SUCCESS;
 				break;
@@ -8834,20 +8834,20 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 	}
 
 	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-		if (adapter->aStaInfo[sta_id].in_use) {
+		if (adapter->sta_info[sta_id].in_use) {
 			hdd_debug("sta_id: %d in_use: %d %pK",
-				 sta_id, adapter->aStaInfo[sta_id].in_use,
+				 sta_id, adapter->sta_info[sta_id].in_use,
 				 adapter);
 
 			if (qdf_is_macaddr_broadcast(
-				&adapter->aStaInfo[sta_id].sta_mac))
+				&adapter->sta_info[sta_id].sta_mac))
 				continue;
 
 			sap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
 			qdf_mem_copy(
 				&sap_event.sapevt.
 				sapStationDisassocCompleteEvent.staMac,
-				&adapter->aStaInfo[sta_id].sta_mac,
+				&adapter->sta_info[sta_id].sta_mac,
 				sizeof(struct qdf_mac_addr));
 			sap_event.sapevt.sapStationDisassocCompleteEvent.
 			reason =

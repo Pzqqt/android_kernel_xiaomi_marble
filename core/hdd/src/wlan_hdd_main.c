@@ -12406,13 +12406,13 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				(QDF_P2P_GO_MODE == adapter->device_mode)) {
 			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
 				sta_id++) {
-				if (!((adapter->aStaInfo[sta_id].in_use)
+				if (!((adapter->sta_info[sta_id].in_use)
 				    && (OL_TXRX_PEER_STATE_CONN ==
-				    adapter->aStaInfo[sta_id].peer_state)))
+				    adapter->sta_info[sta_id].peer_state)))
 					continue;
 
 				sta_mac = (uint8_t *)
-						&(adapter->aStaInfo[sta_id].
+						&(adapter->sta_info[sta_id].
 							sta_mac.bytes[0]);
 				hdd_debug("client " MAC_ADDRESS_STR
 				" of SAP/GO is in middle of WPS/EAPOL exchange",
