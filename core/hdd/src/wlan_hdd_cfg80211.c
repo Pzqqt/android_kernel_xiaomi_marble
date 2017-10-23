@@ -1706,6 +1706,34 @@ static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 
 static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
 
+
+static void hdd_update_acs_channel_list(tsap_Config_t *sap_config,
+					eCsrBand band)
+{
+	int i, temp_count = 0;
+	int acs_list_count = sap_config->acs_cfg.ch_list_count;
+
+	for (i = 0; i < acs_list_count; i++) {
+		if (eCSR_BAND_24 == band) {
+			if (WLAN_REG_IS_24GHZ_CH(
+				sap_config->acs_cfg.ch_list[i])) {
+				sap_config->acs_cfg.ch_list[temp_count] =
+					sap_config->acs_cfg.ch_list[i];
+				temp_count++;
+			}
+		} else if (eCSR_BAND_5G == band) {
+			if (WLAN_REG_IS_5GHZ_CH(
+				sap_config->acs_cfg.ch_list[i])) {
+				sap_config->acs_cfg.ch_list[temp_count] =
+					sap_config->acs_cfg.ch_list[i];
+				temp_count++;
+			}
+		}
+	}
+	sap_config->acs_cfg.ch_list_count = temp_count;
+}
+
+
 /**
  * wlan_hdd_cfg80211_start_acs : Start ACS Procedure for SAP
  * @adapter: pointer to SAP adapter struct
@@ -1733,18 +1761,49 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		sap_config->channel = hdd_ctx->acs_policy.acs_channel;
 	else
 		sap_config->channel = AUTO_CHANNEL_SELECT;
+	/*
+	 * No DFS SCC is allowed in Auto use case. Hence not
+	 * calling DFS override
+	 */
+	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
+	    hdd_ctx->config->WlanMccToSccSwitchMode) {
+		status = wlan_hdd_sap_cfg_dfs_override(adapter);
+		if (status < 0)
+			return status;
 
-	status = wlan_hdd_sap_cfg_dfs_override(adapter);
-	if (status < 0)
-		return status;
-
-	if (status > 0) {
-		/*notify hostapd about channel override */
-		wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
-		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
-		return 0;
+		if (status > 0) {
+			/*notify hostapd about channel override */
+			wlan_hdd_cfg80211_acs_ch_select_evt(adapter);
+			clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
+			return 0;
+		}
 	}
+	/* When first 2 connections are on the same frequency band,
+	 * then PCL would include only channels from the other
+	 * frequency band on which no connections are active
+	 */
+	if ((policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) == 2) &&
+		(sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211ANY)) {
+		struct policy_mgr_conc_connection_info *conc_connection_info;
+		uint32_t i;
 
+		conc_connection_info = policy_mgr_get_conn_info(&i);
+		if (conc_connection_info[0].mac ==
+			conc_connection_info[1].mac) {
+			if (WLAN_REG_IS_5GHZ_CH(sap_config->acs_cfg.
+				pcl_channels[0])) {
+				sap_config->acs_cfg.band =
+					QCA_ACS_MODE_IEEE80211A;
+				hdd_update_acs_channel_list(sap_config,
+					eCSR_BAND_5G);
+			} else {
+				sap_config->acs_cfg.band =
+					QCA_ACS_MODE_IEEE80211G;
+				hdd_update_acs_channel_list(sap_config,
+					eCSR_BAND_24);
+			}
+		}
+	}
 	status = wlan_hdd_config_acs(hdd_ctx, adapter);
 	if (status) {
 		hdd_err("ACS config failed");
@@ -2060,8 +2119,6 @@ static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
 			      tsap_Config_t *sap_config,
 			      eCsrBand *band)
 {
-	int i, temp_count = 0;
-	int acs_list_count = sap_config->acs_cfg.ch_list_count;
 	/* Get scan band */
 	if ((sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211B) ||
 	   (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211G)) {
@@ -2076,29 +2133,9 @@ static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
 		hdd_err("invalid band");
 		if (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ ==
 			hdd_ctx->config->external_acs_freq_band)
-			*band = eCSR_BAND_24;
+			hdd_update_acs_channel_list(sap_config, eCSR_BAND_24);
 		else
-			*band = eCSR_BAND_5G;
-		for (i = 0; i < acs_list_count; i++) {
-			if (eCSR_BAND_24 == *band) {
-				if (WLAN_REG_IS_24GHZ_CH(
-					sap_config->acs_cfg.ch_list[i])) {
-					sap_config->acs_cfg.ch_list[
-						temp_count] =
-						sap_config->acs_cfg.ch_list[i];
-					temp_count++;
-				}
-			} else if (eCSR_BAND_5G == *band) {
-				if (WLAN_REG_IS_5GHZ_CH(
-					sap_config->acs_cfg.ch_list[i])) {
-					sap_config->acs_cfg.ch_list[
-							temp_count] =
-						sap_config->acs_cfg.ch_list[i];
-					temp_count++;
-				}
-			}
-		}
-		sap_config->acs_cfg.ch_list_count = temp_count;
+			hdd_update_acs_channel_list(sap_config, eCSR_BAND_5G);
 	}
 }
 
@@ -2145,6 +2182,32 @@ void hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 
 	ENTER();
 	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	/* When first 2 connections are on the same frequency band,
+	 * then PCL would include only channels from the other
+	 * frequency band on which no connections are active
+	 */
+	if ((policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) == 2) &&
+	    (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211ANY)) {
+		struct policy_mgr_conc_connection_info	*conc_connection_info;
+
+		conc_connection_info = policy_mgr_get_conn_info(&i);
+		if (conc_connection_info[0].mac ==
+			conc_connection_info[1].mac) {
+
+			if (WLAN_REG_IS_5GHZ_CH(sap_config->acs_cfg.
+				pcl_channels[0])) {
+				sap_config->acs_cfg.band =
+					QCA_ACS_MODE_IEEE80211A;
+				hdd_update_acs_channel_list(sap_config,
+					eCSR_BAND_5G);
+			} else {
+				sap_config->acs_cfg.band =
+					QCA_ACS_MODE_IEEE80211G;
+				hdd_update_acs_channel_list(sap_config,
+					eCSR_BAND_24);
+			}
+		}
+	}
 
 	hdd_get_scan_band(hdd_ctx, &adapter->sessionCtx.ap.sapConfig, &band);
 
