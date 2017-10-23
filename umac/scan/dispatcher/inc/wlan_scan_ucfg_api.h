@@ -173,6 +173,23 @@ QDF_STATUS
 ucfg_scan_start(struct scan_start_request *req);
 
 /**
+ * ucfg_scan_set_enable() - Public API to disable/enable scans
+ * @psoc: psoc on which scans need to be disabled
+ * @enable: enable scan if true disable is false
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS ucfg_scan_set_enable(struct wlan_objmgr_psoc *psoc, bool enable);
+
+/**
+ * ucfg_scan_get_enable() - Public API to get if scan is enabled or disabled
+ * @psoc: psoc on which scans status need to be checked
+ *
+ * Return: true if enabled else false.
+ */
+bool ucfg_scan_get_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_scan_cancel() - Public API to stop a scan
  * @req: stop scan request params
  *

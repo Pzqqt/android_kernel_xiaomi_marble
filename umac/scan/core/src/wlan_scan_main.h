@@ -366,6 +366,7 @@ struct scan_cb {
 
 /**
  * struct wlan_scan_obj - scan object definition
+ * @enable_scan: if scan is enabled
  * @scan_db:    scan cache data base
  * @lock:       spin lock
  * @scan_def:   default scan parameters
@@ -378,6 +379,7 @@ struct scan_cb {
  * @ie_whitelist: default ie whitelist attrs
  */
 struct wlan_scan_obj {
+	bool enable_scan;
 	qdf_spinlock_t lock;
 	qdf_atomic_t scan_ids;
 	struct scan_dbs scan_db[WLAN_UMAC_MAX_PDEVS];
