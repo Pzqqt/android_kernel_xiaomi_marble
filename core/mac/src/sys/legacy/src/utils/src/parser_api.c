@@ -6114,6 +6114,8 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->ndp_feedback_supp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_OPS_SUPP, value);
 		he_cap->ops_supp = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_AMSDU_IN_AMPDU, value);
+		he_cap->amsdu_in_ampdu = value;
 
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DUAL_BAND, value);
 		he_cap->dual_band = value;
@@ -6134,6 +6136,9 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->ldpc_coding = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_PPDU, value);
 		he_cap->he_1x_ltf_800_gi_ppdu = value;
+		CFG_GET_INT(status, mac_ctx,
+			    WNI_CFG_HE_MIDAMBLE_RX_MAX_NSTS, value);
+		he_cap->midamble_rx_max_nsts = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_NDP, value);
 		he_cap->he_4x_ltf_3200_gi_ndp = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC_LT80, value);
@@ -6190,7 +6195,20 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->stbc_gt_80mhz = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, value);
 		he_cap->er_he_ltf_800_gi_4x = value;
-
+		CFG_GET_INT(status, mac_ctx,
+			    WNI_CFG_HE_PPDU_20_IN_40MHZ_2G, value);
+		he_cap->he_ppdu_20_in_40Mhz_2G = value;
+		CFG_GET_INT(status, mac_ctx,
+			    WNI_CFG_HE_PPDU_20_IN_160_80P80MHZ, value);
+		he_cap->he_ppdu_20_in_160_80p80Mhz = value;
+		CFG_GET_INT(status, mac_ctx,
+			    WNI_CFG_HE_PPDU_80_IN_160_80P80MHZ, value);
+		he_cap->he_ppdu_80_in_160_80p80Mhz = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_1X_HE_LTF_GI, value);
+		he_cap->er_1x_he_ltf_gi = value;
+		CFG_GET_INT(status, mac_ctx,
+			    WNI_CFG_HE_MIDAMBLE_RX_1X_HE_LTF, value);
+		he_cap->midamble_rx_1x_he_ltf = value;
 		CFG_GET_INT(status, mac_ctx,
 			WNI_CFG_HE_RX_MCS_MAP_LT_80, value);
 		he_cap->rx_he_mcs_map_lt_80 = value;

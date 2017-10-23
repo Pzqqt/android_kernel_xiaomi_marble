@@ -2129,7 +2129,8 @@ struct he_capability_info {
 	uint32_t twt_request:1;
 	uint32_t htc_he:1;
 
-	uint8_t reserved1:2;
+	uint8_t reserved1:1;
+	uint8_t amsdu_in_ampdu:1;
 	uint8_t ops_supp:1;
 	uint8_t ndp_feedback_supp:1;
 	uint8_t sr_responder:1;
@@ -2145,7 +2146,7 @@ struct he_capability_info {
 	uint32_t doppler:2;
 	uint32_t stbc_lt_80mhz:2;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
-	uint32_t reserved2:2;
+	uint32_t midamble_rx_max_nsts:2;
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
 	uint32_t ldpc_coding:1;
 	uint32_t device_class:1;
@@ -2173,7 +2174,12 @@ struct he_capability_info {
 	uint32_t mu_beamformer:1;
 	uint32_t su_beamformee:1;
 
-	uint8_t reserved2:3;
+	uint8_t reserved2:2;
+	uint8_t midamble_rx_1x_he_ltf:1;
+	uint8_t er_1x_he_ltf_gi:1;
+	uint8_t he_ppdu_80_in_160_80p80Mhz:1;
+	uint8_t he_ppdu_20_in_160_80p80Mhz:1;
+	uint8_t he_ppdu_20_in_40Mhz_2G:1;
 	uint8_t er_he_ltf_800_gi_4x:1;
 
 	uint16_t tx_he_mcs_map_80_80;
@@ -2213,7 +2219,8 @@ struct he_capability_info {
 	uint8_t sr_responder:1;
 	uint8_t ndp_feedback_supp:1;
 	uint8_t ops_supp:1;
-	uint8_t reserved1:2;
+	uint8_t amsdu_in_ampdu:1;
+	uint8_t reserved1:1;
 
 	uint32_t dual_band:1;
 	uint32_t chan_width:7;
@@ -2221,7 +2228,7 @@ struct he_capability_info {
 	uint32_t device_class:1;
 	uint32_t ldpc_coding:1;
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
-	uint32_t reserved2:2;
+	uint32_t midamble_rx_max_nsts:2;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
 	uint32_t stbc_lt_80mhz:2;
 	uint32_t doppler:2;
@@ -2252,7 +2259,12 @@ struct he_capability_info {
 	uint32_t stbc_gt_80mhz:2;
 
 	uint8_t er_he_ltf_800_gi_4x:1;
-	uint8_t reserved3:7;
+	uint8_t he_ppdu_20_in_40Mhz_2G:1;
+	uint8_t he_ppdu_20_in_160_80p80Mhz:1;
+	uint8_t he_ppdu_80_in_160_80p80Mhz:1;
+	uint8_t er_1x_he_ltf_gi:1;
+	uint8_t midamble_rx_1x_he_ltf:1;
+	uint8_t reserved2:2;
 
 	uint16_t rx_he_mcs_map_lt_80;
 	uint16_t tx_he_mcs_map_lt_80;
