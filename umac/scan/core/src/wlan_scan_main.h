@@ -117,6 +117,11 @@
 #define SCAN_DBS_POLICY_MAX                 0x3
 /* Minimum number of channels for enabling DBS Scan */
 #define SCAN_MIN_CHAN_DBS_SCAN_THRESHOLD         8
+/*
+ * Enable Reception of Public Action frame with this flag
+ */
+#define SCAN_FLAG_EXT_FILTER_PUBLIC_ACTION_FRAME 0x4
+
 
 
 /**

@@ -169,8 +169,8 @@ enum cdp_host_txrx_stats {
  * @CDP_PPDU_FTYPE_CTRL: Control/Management Frames
 */
 enum cdp_ppdu_ftype {
-	CDP_PPDU_FTYPE_DATA,
 	CDP_PPDU_FTYPE_CTRL,
+	CDP_PPDU_FTYPE_DATA,
 	CDP_PPDU_FTYPE_MAX
 };
 

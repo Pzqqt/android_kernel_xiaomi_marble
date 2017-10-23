@@ -1404,24 +1404,23 @@ bool policy_mgr_is_ibss_conn_exist(struct wlan_objmgr_psoc *psoc,
 	return status;
 }
 
-bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
+uint32_t policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 				  uint8_t *channel, uint8_t *vdev_id,
 				  enum policy_mgr_con_mode mode)
 {
 
-	uint32_t count, index = 0;
+	uint32_t count = 0, index = 0;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
-	bool status = false;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
 		policy_mgr_err("Invalid Context");
-		return false;
+		return count;
 	}
 	if (NULL == channel || NULL == vdev_id) {
 		policy_mgr_err("Null pointer error");
-		return false;
+		return count;
 	}
 
 	count = policy_mgr_mode_specific_connection_count(
@@ -1429,28 +1428,23 @@ bool policy_mgr_get_mode_specific_conn_info(struct wlan_objmgr_psoc *psoc,
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
 	if (count == 0) {
 		policy_mgr_debug("No mode:[%d] connection", mode);
-		status = false;
 	} else if (count == 1) {
 		*channel = pm_conc_connection_list[list[index]].chan;
 		*vdev_id =
 			pm_conc_connection_list[list[index]].vdev_id;
-		status = true;
 	} else {
-		/*
-		 * Todo Currently the first SAP connection info is
-		 * returned. Modify this to accommodate SAP+SAP+STA
-		 * and SAP+SAP+P2P
-		 */
-		*channel = pm_conc_connection_list[list[index]].chan;
-		*vdev_id =
+		for (index = 0; index < count; index++) {
+			channel[index] =
+			pm_conc_connection_list[list[index]].chan;
+
+			vdev_id[index] =
 			pm_conc_connection_list[list[index]].vdev_id;
-		policy_mgr_debug("Multiple mode:[%d] connections, picking first one",
-				mode);
-		status = true;
+		}
+		policy_mgr_debug("Multiple mode:[%d] connections", mode);
 	}
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 
-	return status;
+	return count;
 }
 
 bool policy_mgr_max_concurrent_connections_reached(
@@ -2472,7 +2466,9 @@ bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 			uint8_t channel, bool *ok)
 {
-	uint8_t operating_channel = 0, vdev_id = 0;
+	uint32_t cc_count = 0, i;
+	uint8_t operating_channel[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint8_t vdev_id[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	struct wlan_objmgr_vdev *vdev;
 
 	if (!channel || !ok) {
@@ -2480,27 +2476,31 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (policy_mgr_get_mode_specific_conn_info(psoc,
-				  &operating_channel,
-				  &vdev_id,
-				  PM_SAP_MODE))
-		policy_mgr_debug("SAP mode active");
-	else if (policy_mgr_get_mode_specific_conn_info(psoc,
-				  &operating_channel,
-				  &vdev_id,
-				  PM_P2P_GO_MODE))
-		policy_mgr_debug("P2P_GO_MODE mode active");
-	else {
+	cc_count = policy_mgr_get_mode_specific_conn_info(psoc,
+					&operating_channel[cc_count],
+					&vdev_id[cc_count],
+					PM_SAP_MODE);
+	policy_mgr_debug("Number of SAP modes: %d", cc_count);
+	cc_count = cc_count + policy_mgr_get_mode_specific_conn_info(psoc,
+					&operating_channel[cc_count],
+					&vdev_id[cc_count],
+					PM_P2P_GO_MODE);
+	policy_mgr_debug("Number of beaconing entities (SAP + GO):%d",
+							cc_count);
+	if (!cc_count) {
 		*ok = true;
 		return QDF_STATUS_SUCCESS;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+	for (i = 0; i < cc_count; i++) {
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+							vdev_id[i],
 						WLAN_POLICY_MGR_ID);
-	if (!vdev) {
-		policy_mgr_err("vdev is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
+		if (!vdev) {
+			policy_mgr_err("vdev for vdev_id:%d is NULL",
+							vdev_id[i]);
+			return QDF_STATUS_E_INVAL;
+		}
 
 	/**
 	 * If channel passed is same as AP/GO operating channel, then
@@ -2511,18 +2511,24 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	 *   return true.
 	 */
 	/* TODO: To be enhanced for SBS */
-	if (policy_mgr_is_dnsc_set(vdev)) {
-		if (operating_channel == channel)
+		if (policy_mgr_is_dnsc_set(vdev)) {
+			if (operating_channel[i] == channel) {
+				*ok = true;
+				wlan_objmgr_vdev_release_ref(vdev,
+						WLAN_POLICY_MGR_ID);
+				break;
+			} else if (WLAN_REG_IS_SAME_BAND_CHANNELS(
+				operating_channel[i], channel)) {
+				*ok = false;
+				wlan_objmgr_vdev_release_ref(vdev,
+						WLAN_POLICY_MGR_ID);
+				break;
+			}
+		} else {
 			*ok = true;
-		else if (WLAN_REG_IS_SAME_BAND_CHANNELS(operating_channel,
-							channel))
-			*ok = false;
-		else
-			*ok = true;
-	} else {
-		*ok = true;
+		}
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	}
-	wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2672,6 +2678,8 @@ bool policy_mgr_is_force_scc(struct wlan_objmgr_psoc *psoc)
 
 	return ((pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
 		QDF_MCC_TO_SCC_SWITCH_FORCE_WITHOUT_DISCONNECTION) ||
-			(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
-		QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL));
+		(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_WITH_FAVORITE_CHANNEL) ||
+		(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION));
 }

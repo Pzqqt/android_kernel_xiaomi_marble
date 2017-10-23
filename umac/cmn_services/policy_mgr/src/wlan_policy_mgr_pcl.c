@@ -747,26 +747,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_P2P_CLI_SAP_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_P2P_CLI_SAP_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_CLI_SAP_DBS_1x1;
+			else
+				index = PM_P2P_CLI_SAP_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_P2P_CLI_SAP_DBS_1x1;
-		else
-			index = PM_P2P_CLI_SAP_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -819,26 +817,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_STA_SAP_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_STA_SAP_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_STA_SAP_DBS_1x1;
+			else
+				index = PM_STA_SAP_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_STA_SAP_DBS_1x1;
-		else
-			index = PM_STA_SAP_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -891,26 +887,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_SAP_SAP_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_SAP_SAP_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_SAP_SAP_DBS_1x1;
+			else
+				index = PM_SAP_SAP_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_SAP_SAP_DBS_1x1;
-		else
-			index = PM_SAP_SAP_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -963,26 +957,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_STA_P2P_GO_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_STA_P2P_GO_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_STA_P2P_GO_DBS_1x1;
+			else
+				index = PM_STA_P2P_GO_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_STA_P2P_GO_DBS_1x1;
-		else
-			index = PM_STA_P2P_GO_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -1035,26 +1027,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_STA_P2P_CLI_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_STA_P2P_CLI_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_STA_P2P_CLI_DBS_1x1;
+			else
+				index = PM_STA_P2P_CLI_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_STA_P2P_CLI_DBS_1x1;
-		else
-			index = PM_STA_P2P_CLI_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -1107,26 +1097,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_P2P_GO_P2P_CLI_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_P2P_GO_P2P_CLI_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_P2P_CLI_DBS_1x1;
+			else
+				index = PM_P2P_GO_P2P_CLI_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_P2P_GO_P2P_CLI_DBS_1x1;
-		else
-			index = PM_P2P_GO_P2P_CLI_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -1179,26 +1167,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_P2P_GO_SAP_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_P2P_GO_SAP_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_P2P_GO_SAP_DBS_1x1;
+			else
+				index = PM_P2P_GO_SAP_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_P2P_GO_SAP_DBS_1x1;
-		else
-			index = PM_P2P_GO_SAP_DBS_2x2;
 	}
-
 	return index;
 }
 
@@ -1251,26 +1237,24 @@ static enum policy_mgr_two_connection_mode
 			else
 				index = PM_STA_STA_MCC_24_5_2x2;
 		}
-	/* SBS */
+	/* SBS or DBS */
 	} else if (pm_conc_connection_list[0].mac !=
-		pm_conc_connection_list[1].mac) {
-		if ((WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[0].chan)) &&
-			(WLAN_REG_IS_5GHZ_CH(
-			pm_conc_connection_list[1].chan))) {
+			pm_conc_connection_list[1].mac) {
+		/* SBS */
+		if ((WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[0].chan)) &&
+		    (WLAN_REG_IS_5GHZ_CH(pm_conc_connection_list[1].chan))) {
 			if (POLICY_MGR_ONE_ONE ==
 				pm_conc_connection_list[0].chain_mask)
 				index = PM_STA_STA_SBS_5_1x1;
+		} else {
+		/* DBS */
+			if (POLICY_MGR_ONE_ONE ==
+				pm_conc_connection_list[0].chain_mask)
+				index = PM_STA_STA_DBS_1x1;
+			else
+				index = PM_STA_STA_DBS_2x2;
 		}
-	/* DBS */
-	} else {
-		if (POLICY_MGR_ONE_ONE ==
-			pm_conc_connection_list[0].chain_mask)
-			index = PM_STA_STA_DBS_1x1;
-		else
-			index = PM_STA_STA_DBS_2x2;
 	}
-
 	return index;
 }
 
