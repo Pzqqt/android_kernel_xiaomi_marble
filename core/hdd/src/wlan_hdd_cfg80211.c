@@ -15959,32 +15959,44 @@ static int wlan_hdd_cfg80211_set_auth_type(struct hdd_adapter *adapter,
 #if defined(WLAN_FEATURE_FILS_SK) && \
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
-/**
- * hdd_validate_fils_info_ptr() - check fils info for FILS AKMs
- * @wext_state:     wext state pointer
- * @fils_akm_check: boolean to update whether
- *                  fils info is present or not
- *
- * Return: None
- */
-static void hdd_validate_fils_info_ptr(struct hdd_wext_state *wext_state,
-				       bool *fils_akm_check)
+static bool hdd_validate_fils_info_ptr(struct hdd_wext_state *wext_state)
 {
 	struct cds_fils_connection_info *fils_con_info;
 
 	fils_con_info = wext_state->roamProfile.fils_con_info;
 	if (!fils_con_info) {
-		hdd_debug("No valid Roam profile");
-		*fils_akm_check = false;
+		hdd_err("No valid Roam profile");
+		return false;
 	}
 
-	*fils_akm_check = true;
+	return true;
 }
 #else
-static void hdd_validate_fils_info_ptr(struct hdd_wext_state *wext_state,
-				       bool *fils_akm_check)
+static bool hdd_validate_fils_info_ptr(struct hdd_wext_state *wext_state)
 {
-	*fils_akm_check = true;
+	return true;
+}
+#endif
+
+#if defined(WLAN_FEATURE_FILS_SK) && \
+	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
+		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
+static bool wlan_hdd_is_akm_suite_fils(uint32_t key_mgmt)
+{
+	switch (key_mgmt) {
+	case WLAN_AKM_SUITE_FILS_SHA256:
+	case WLAN_AKM_SUITE_FILS_SHA384:
+	case WLAN_AKM_SUITE_FT_FILS_SHA256:
+	case WLAN_AKM_SUITE_FT_FILS_SHA384:
+		return true;
+	default:
+		return false;
+	}
+}
+#else
+static bool wlan_hdd_is_akm_suite_fils(uint32_t key_mgmt)
+{
+	return false;
 }
 #endif
 
@@ -16002,11 +16014,12 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 	struct hdd_wext_state *pWextState =
 		WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	tCsrRoamProfile *roam_profile;
-	bool fils_akm_check;
 
 	roam_profile = &pWextState->roamProfile;
-	hdd_validate_fils_info_ptr(pWextState, &fils_akm_check);
 
+	if (wlan_hdd_is_akm_suite_fils(key_mgmt) &&
+	    !hdd_validate_fils_info_ptr(pWextState))
+		return -EINVAL;
 #ifndef WLAN_AKM_SUITE_8021X_SHA256
 #define WLAN_AKM_SUITE_8021X_SHA256 0x000FAC05
 #endif
@@ -16047,9 +16060,6 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 	(defined(CFG80211_FILS_SK_OFFLOAD_SUPPORT) || \
 		 (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 12, 0)))
 	case WLAN_AKM_SUITE_FILS_SHA256:
-		if (!fils_akm_check)
-			return -EINVAL;
-
 		hdd_debug("setting key mgmt type to FILS SHA256");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
@@ -16057,26 +16067,21 @@ static int wlan_hdd_set_akm_suite(struct hdd_adapter *adapter, u32 key_mgmt)
 		break;
 
 	case WLAN_AKM_SUITE_FILS_SHA384:
-		if (!fils_akm_check)
-			return -EINVAL;
-		hdd_debug("setting key mgmt type to FILS SH384");
+		hdd_debug("setting key mgmt type to FILS SHA384");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FILS_SHA384;
 		break;
 
 	case WLAN_AKM_SUITE_FT_FILS_SHA256:
-		if (!fils_akm_check)
-			return -EINVAL;
-		hdd_debug("setting key mgmt type to FILS FT SH256");
+		hdd_debug("setting key mgmt type to FILS FT SHA256");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FT_FILS_SHA256;
 		break;
 
 	case WLAN_AKM_SUITE_FT_FILS_SHA384:
-		if (!fils_akm_check)
-			return -EINVAL;
+		hdd_debug("setting key mgmt type to FILS FT SHA384");
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
 		roam_profile->fils_con_info->akm_type =
 			eCSR_AUTH_TYPE_FT_FILS_SHA384;
@@ -16680,9 +16685,30 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 	tCsrRoamProfile *roam_profile;
 	int auth_type;
 	uint8_t *buf;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	wext_state = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	roam_profile = &wext_state->roamProfile;
+
+	if (!roam_profile) {
+		hdd_err("No valid Roam profile");
+		return -EINVAL;
+	}
+
+	if (!hdd_ctx->config->is_fils_enabled) {
+		hdd_err("FILS disabled");
+		return -EINVAL;
+	}
+
+	if (req->auth_type != NL80211_AUTHTYPE_FILS_SK) {
+		roam_profile->fils_con_info->is_fils_connection = false;
+		return 0;
+	}
+	auth_type = wlan_hdd_get_fils_auth_type(req->auth_type);
+	if (auth_type < 0) {
+		hdd_err("invalid auth type for fils %d", req->auth_type);
+		return -EINVAL;
+	}
 
 	hdd_clear_fils_connection_info(adapter);
 	roam_profile->fils_con_info =
@@ -16693,19 +16719,9 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	if (req->auth_type != NL80211_AUTHTYPE_FILS_SK) {
-		roam_profile->fils_con_info->is_fils_connection = false;
-		return 0;
-	}
-
 	roam_profile->fils_con_info->is_fils_connection = true;
 	roam_profile->fils_con_info->sequence_number =
 		req->fils_erp_next_seq_num;
-	auth_type = wlan_hdd_get_fils_auth_type(req->auth_type);
-	if (auth_type < 0) {
-		hdd_err("invalid auth type for fils %d", req->auth_type);
-		return -EINVAL;
-	}
 	roam_profile->fils_con_info->auth_type = auth_type;
 
 	roam_profile->fils_con_info->r_rk_length =
@@ -16735,7 +16751,7 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		qdf_mem_copy(buf, req->fils_erp_realm,
 			req->fils_erp_realm_len);
 	}
-	hdd_debug("fils connection seq=%d auth=%d user_len=%zu rrk_len=%zu realm_len=%zu keyname nai len %d\n",
+	hdd_info("fils connection seq=%d auth=%d user_len=%zu rrk_len=%zu realm_len=%zu keyname nai len %d\n",
 		req->fils_erp_next_seq_num, req->auth_type,
 		req->fils_erp_username_len, req->fils_erp_rrk_len,
 		req->fils_erp_realm_len,
