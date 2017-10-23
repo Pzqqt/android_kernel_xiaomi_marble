@@ -1764,14 +1764,17 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
-			if (QDF_IS_STATUS_ERROR(
-				policy_mgr_valid_sap_conc_channel_check(
-					mac_ctx->psoc, &con_ch,
-					sap_context->channel)))	{
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					QDF_TRACE_LEVEL_WARN,
-					FL("SAP can't start (no MCC)"));
-				return QDF_STATUS_E_ABORTED;
+			if (sap_context->cc_switch_mode !=
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) {
+				if (QDF_IS_STATUS_ERROR(
+					policy_mgr_valid_sap_conc_channel_check(
+						mac_ctx->psoc, &con_ch,
+						sap_context->channel)))	{
+					QDF_TRACE(QDF_MODULE_ID_SAP,
+						QDF_TRACE_LEVEL_WARN,
+						FL("SAP can't start (no MCC)"));
+					return QDF_STATUS_E_ABORTED;
+				}
 			}
 			if (con_ch && !wlan_reg_is_dfs_ch(mac_ctx->pdev,
 						con_ch)) {
