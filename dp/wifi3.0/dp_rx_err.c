@@ -677,7 +677,7 @@ fail:
  * Return: QDF_STATUS
  */
 	static QDF_STATUS
-dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
+dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
 {
 	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
 	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
@@ -709,7 +709,7 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc)
 	if (qdf_likely(src_srng_desc)) {
 		/* Return link descriptor through WBM ring (SW2WBM)*/
 		hal_rx_msdu_link_desc_set(hal_soc,
-				src_srng_desc, buf_addr_info);
+				src_srng_desc, buf_addr_info, bm_action);
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		struct hal_srng *srng = (struct hal_srng *)wbm_rel_srng;
@@ -841,7 +841,8 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 			continue;
 		}
 		/* Return link descriptor through WBM ring (SW2WBM)*/
-		dp_rx_link_desc_return(soc, ring_desc);
+		dp_rx_link_desc_return(soc, ring_desc,
+					HAL_BM_ACTION_PUT_IN_IDLE_LIST);
 	}
 
 done:
@@ -1109,6 +1110,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t i;
 	uint8_t push_reason;
 	uint8_t rxdma_error_code = 0;
+	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
+	struct dp_pdev *pdev = soc->pdev_list[mac_id];
 
 	msdu = 0;
 
@@ -1134,29 +1137,42 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				HAL_RX_NUM_MSDU_DESC:msdu_cnt;
 
 		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
-
 		msdu_cnt -= num_msdus;
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
-			for (i = 0; i < num_msdus; i++) {
-				struct dp_rx_desc *rx_desc =
-					dp_rx_cookie_2_va_rxdma_buf(soc,
-						msdu_list.sw_cookie[i]);
-				qdf_assert(rx_desc);
-				msdu = rx_desc->nbuf;
+			/* if the msdus belongs to NSS offloaded radio &&
+			 * the rbm is not SW3_BM then return the msdu_link
+			 * descriptor without freeing the msdus (nbufs). let
+			 * these buffers be given to NSS completion ring for
+			 * NSS to free them.
+			 * else iterate through the msdu link desc list and
+			 * free each msdu in the list.
+			 */
+			if (msdu_list.rbm[0] != HAL_RX_BUF_RBM_SW3_BM &&
+				wlan_cfg_get_dp_pdev_nss_enabled(
+							  pdev->wlan_cfg_ctx))
+				bm_action = HAL_BM_ACTION_RELEASE_MSDU_LIST;
+			else {
+				for (i = 0; i < num_msdus; i++) {
+					struct dp_rx_desc *rx_desc =
+						dp_rx_cookie_2_va_rxdma_buf(soc,
+							msdu_list.sw_cookie[i]);
+					qdf_assert(rx_desc);
+					msdu = rx_desc->nbuf;
 
-				qdf_nbuf_unmap_single(soc->osdev, msdu,
-					QDF_DMA_FROM_DEVICE);
+					qdf_nbuf_unmap_single(soc->osdev, msdu,
+						QDF_DMA_FROM_DEVICE);
 
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_DEBUG,
-					"[%s][%d] msdu_nbuf=%pK \n",
-					__func__, __LINE__, msdu);
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_DEBUG,
+						"[%s][%d] msdu_nbuf=%pK \n",
+						__func__, __LINE__, msdu);
 
-				qdf_nbuf_free(msdu);
-				rx_bufs_used++;
-				dp_rx_add_to_free_desc_list(head,
-					tail, rx_desc);
+					qdf_nbuf_free(msdu);
+					rx_bufs_used++;
+					dp_rx_add_to_free_desc_list(head,
+						tail, rx_desc);
+				}
 			}
 		} else {
 			rxdma_error_code = HAL_RXDMA_ERR_WAR;
@@ -1165,7 +1181,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
 			&p_buf_addr_info);
 
-		dp_rx_link_desc_return(soc, p_last_buf_addr_info);
+		dp_rx_link_desc_return(soc, p_last_buf_addr_info, bm_action);
 		p_last_buf_addr_info = p_buf_addr_info;
 
 	} while (buf_info.paddr && msdu_cnt);

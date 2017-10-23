@@ -302,6 +302,25 @@ enum hal_rx_ret_buf_manager {
  * shift by the corresponding _LSB. This is because, they are
  * finally taken and "OR'ed" into a single word again.
  */
+#define HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_SET(msdu_info_ptr, val)		\
+	((*(((uint32_t *)msdu_info_ptr) +				\
+		(RX_MSDU_DESC_INFO_0_FIRST_MSDU_IN_MPDU_FLAG_OFFSET >> 2))) |= \
+		(val << RX_MSDU_DESC_INFO_0_FIRST_MSDU_IN_MPDU_FLAG_LSB) & \
+		RX_MSDU_DESC_INFO_0_FIRST_MSDU_IN_MPDU_FLAG_MASK)
+
+#define HAL_RX_LAST_MSDU_IN_MPDU_FLAG_SET(msdu_info_ptr, val)		\
+	((*(((uint32_t *)msdu_info_ptr) +				\
+		(RX_MSDU_DESC_INFO_0_LAST_MSDU_IN_MPDU_FLAG_OFFSET >> 2))) |= \
+		(val << RX_MSDU_DESC_INFO_0_LAST_MSDU_IN_MPDU_FLAG_LSB) & \
+		RX_MSDU_DESC_INFO_0_LAST_MSDU_IN_MPDU_FLAG_MASK)
+
+#define HAL_RX_MSDU_CONTINUATION_FLAG_SET(msdu_info_ptr, val)		\
+	((*(((uint32_t *)msdu_info_ptr) +				\
+		(RX_MSDU_DESC_INFO_0_MSDU_CONTINUATION_OFFSET >> 2))) |= \
+		(val << RX_MSDU_DESC_INFO_0_MSDU_CONTINUATION_LSB) & \
+		RX_MSDU_DESC_INFO_0_MSDU_CONTINUATION_MASK)
+
+
 #define HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_GET(msdu_info_ptr)	\
 	((*_OFFSET_TO_WORD_PTR(msdu_info_ptr,			\
 		RX_MSDU_DESC_INFO_0_FIRST_MSDU_IN_MPDU_FLAG_OFFSET)) & \
@@ -1746,6 +1765,7 @@ hal_rx_mpdu_end_mic_err_get(uint8_t *buf)
 struct hal_rx_msdu_list {
 	struct hal_rx_msdu_desc_info msdu_info[HAL_RX_NUM_MSDU_DESC];
 	uint32_t sw_cookie[HAL_RX_NUM_MSDU_DESC];
+	uint8_t rbm[HAL_RX_NUM_MSDU_DESC];
 };
 
 struct hal_buf_info {
@@ -1789,9 +1809,20 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 		 * sometimes due to HW issue. Check msdu buffer address also */
 		if (HAL_RX_BUFFER_ADDR_31_0_GET(
 			&msdu_details[i].buffer_addr_info_details) == 0) {
+			/* set the last msdu bit in the prev msdu_desc_info */
+			msdu_desc_info =
+				HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i - 1]);
+			HAL_RX_LAST_MSDU_IN_MPDU_FLAG_SET(msdu_desc_info, 1);
 			break;
 		}
 		msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[i]);
+
+		/* set first MSDU bit or the last MSDU bit */
+		if (!i)
+			HAL_RX_FIRST_MSDU_IN_MPDU_FLAG_SET(msdu_desc_info, 1);
+		else if (i == (HAL_RX_NUM_MSDU_DESC - 1))
+			HAL_RX_LAST_MSDU_IN_MPDU_FLAG_SET(msdu_desc_info, 1);
+
 		msdu_list->msdu_info[i].msdu_flags =
 			 HAL_RX_MSDU_FLAGS_GET(msdu_desc_info);
 		msdu_list->msdu_info[i].msdu_len =
@@ -1799,7 +1830,8 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 		msdu_list->sw_cookie[i] =
 			 HAL_RX_BUF_COOKIE_GET(
 				&msdu_details[i].buffer_addr_info_details);
-
+		 msdu_list->rbm[i] = HAL_RX_BUF_RBM_GET(
+				&msdu_details[i].buffer_addr_info_details);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"[%s][%d] i=%d sw_cookie=%d\n",
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
@@ -1942,6 +1974,7 @@ enum hal_rxdma_error_code {
  * HW BM action settings in WBM release ring
  */
 #define HAL_BM_ACTION_PUT_IN_IDLE_LIST 0
+#define HAL_BM_ACTION_RELEASE_MSDU_LIST 1
 
 /**
  * enum hal_rx_wbm_error_source: Indicates which module initiated the
@@ -2030,12 +2063,14 @@ static inline bool hal_rx_reo_is_2k_jump(void *rx_desc)
  * @ soc		: HAL version of the SOC pointer
  * @ src_srng_desc	: void pointer to the WBM Release Ring descriptor
  * @ buf_addr_info	: void pointer to the buffer_addr_info
+ * @ bm_action		: put in IDLE list or release to MSDU_LIST
  *
  * Return: void
  */
 /* look at implementation at dp_hw_link_desc_pool_setup()*/
 static inline void hal_rx_msdu_link_desc_set(struct hal_soc *soc,
-			void *src_srng_desc, void *buf_addr_info)
+			void *src_srng_desc, void *buf_addr_info,
+			uint8_t bm_action)
 {
 	struct wbm_release_ring *wbm_rel_srng =
 			(struct wbm_release_ring *)src_srng_desc;
@@ -2046,7 +2081,7 @@ static inline void hal_rx_msdu_link_desc_set(struct hal_soc *soc,
 	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2,
 		RELEASE_SOURCE_MODULE, HAL_RX_WBM_ERR_SRC_SW);
 	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2, BM_ACTION,
-		HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+		bm_action);
 	HAL_DESC_SET_FIELD(src_srng_desc, WBM_RELEASE_RING_2,
 		BUFFER_OR_DESC_TYPE, HAL_RX_WBM_BUF_TYPE_MSDU_LINK_DESC);
 }
