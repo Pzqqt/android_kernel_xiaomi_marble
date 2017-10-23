@@ -1688,8 +1688,13 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 				FL("Invalid MAC context"));
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc)) {
+	if (policy_mgr_concurrent_beaconing_sessions_running(mac_ctx->psoc) ||
+	   ((sap_context->cc_switch_mode ==
+		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION) &&
+	   (policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
+		PM_SAP_MODE, NULL) ||
+	     policy_mgr_mode_specific_connection_count(mac_ctx->psoc,
+		PM_P2P_GO_MODE, NULL)))) {
 		con_ch =
 			sme_get_concurrent_operation_channel(h_hal);
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
