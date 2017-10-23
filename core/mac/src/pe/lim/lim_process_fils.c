@@ -1072,7 +1072,7 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 	if (!pe_session->fils_info)
 		return false;
 
-	if (rx_auth_frm_body->authAlgoNumber != eSIR_FILS_SK_WITHOUT_PFS)
+	if (rx_auth_frm_body->authAlgoNumber != SIR_FILS_SK_WITHOUT_PFS)
 		return false;
 
 	dot11f_unpack_ie_rsn(mac_ctx,
@@ -1215,7 +1215,7 @@ uint32_t lim_create_fils_auth_data(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(session->fils_info->fils_erp_reauth_pkt);
 		session->fils_info->fils_erp_reauth_pkt = NULL;
 	}
-	if (auth_frame->authAlgoNumber == eSIR_FILS_SK_WITHOUT_PFS) {
+	if (auth_frame->authAlgoNumber == SIR_FILS_SK_WITHOUT_PFS) {
 		frame_len += session->fils_info->rsn_ie_len;
 		/* FILS nounce */
 		frame_len += SIR_FILS_NONCE_LENGTH + EXTENDED_IE_HEADER_LEN;
