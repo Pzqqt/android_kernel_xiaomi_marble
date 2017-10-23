@@ -815,7 +815,7 @@ struct hdd_station_info {
 	bool sgi_enable;
 	bool tx_stbc;
 	bool rx_stbc;
-	uint8_t ch_width;
+	tSirMacHTChannelWidth ch_width;
 	uint8_t mode;
 	uint8_t max_supp_idx;
 	uint8_t max_ext_idx;
