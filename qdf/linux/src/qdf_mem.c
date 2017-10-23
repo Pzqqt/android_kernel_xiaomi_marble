@@ -1468,6 +1468,56 @@ void qdf_mem_copy(void *dst_addr, const void *src_addr, uint32_t num_bytes)
 }
 qdf_export_symbol(qdf_mem_copy);
 
+qdf_shared_mem_t *qdf_mem_shared_mem_alloc(qdf_device_t osdev, uint32_t size)
+{
+	qdf_shared_mem_t *shared_mem;
+	qdf_dma_addr_t dma_addr, paddr;
+	int ret;
+
+	shared_mem = qdf_mem_malloc(sizeof(*shared_mem));
+	if (!shared_mem) {
+		qdf_err("Unable to allocate memory for shared resource struct");
+		return NULL;
+	}
+
+	shared_mem->vaddr = qdf_mem_alloc_consistent(osdev, osdev->dev,
+				size, qdf_mem_get_dma_addr_ptr(osdev,
+						&shared_mem->mem_info));
+	if (!shared_mem->vaddr) {
+		qdf_err("Unable to allocate DMA memory for shared resource");
+		qdf_mem_free(shared_mem);
+		return NULL;
+	}
+
+	qdf_mem_set_dma_size(osdev, &shared_mem->mem_info, size);
+	size = qdf_mem_get_dma_size(osdev, &shared_mem->mem_info);
+
+	qdf_mem_zero(shared_mem->vaddr, size);
+	dma_addr = qdf_mem_get_dma_addr(osdev, &shared_mem->mem_info);
+	paddr = qdf_mem_paddr_from_dmaaddr(osdev, dma_addr);
+
+	qdf_mem_set_dma_pa(osdev, &shared_mem->mem_info, paddr);
+	ret = qdf_mem_dma_get_sgtable(osdev->dev, &shared_mem->sgtable,
+				      shared_mem->vaddr, dma_addr, size);
+	if (ret) {
+		qdf_err("Unable to get DMA sgtable");
+		qdf_mem_free_consistent(osdev, osdev->dev,
+					shared_mem->mem_info.size,
+					shared_mem->vaddr,
+					dma_addr,
+					qdf_get_dma_mem_context(shared_mem,
+								memctx));
+		qdf_mem_free(shared_mem);
+		return NULL;
+	}
+
+	qdf_dma_get_sgtable_dma_addr(&shared_mem->sgtable);
+
+	return shared_mem;
+}
+
+qdf_export_symbol(qdf_mem_shared_mem_alloc);
+
 /**
  * qdf_mem_zero() - zero out memory
  * @ptr: pointer to memory that will be set to zero

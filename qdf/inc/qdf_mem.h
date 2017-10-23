@@ -569,10 +569,22 @@ qdf_mem_dma_get_sgtable(struct device *dev, void *sgt, void *cpu_addr,
 }
 
 /**
+ * qdf_mem_free_sgtable() - Free a previously allocated sg table
+ * @sgt: the mapped sg table header
+ *
+ * Return: None
+ */
+static inline void
+qdf_mem_free_sgtable(struct sg_table *sgt)
+{
+	__qdf_os_mem_free_sgtable(sgt);
+}
+
+/**
  * qdf_dma_get_sgtable_dma_addr() - Assigns DMA address to scatterlist elements
  * @sgt: scatter gather table pointer
  *
- * @Return: None
+ * Return: None
  */
 static inline void
 qdf_dma_get_sgtable_dma_addr(struct sg_table *sgt)
@@ -683,49 +695,9 @@ qdf_mem_set_dma_pa(qdf_device_t osdev,
  * Allocate DMA memory which will be shared with external kernel module. This
  * information is needed for SMMU mapping.
  *
- * Return: 0 suceess
+ * Return: 0 success
  */
-static inline qdf_shared_mem_t *qdf_mem_shared_mem_alloc(qdf_device_t osdev,
-							 uint32_t size)
-{
-	qdf_shared_mem_t *shared_mem;
-
-	shared_mem = qdf_mem_malloc(sizeof(*shared_mem));
-	if (!shared_mem) {
-		__qdf_print("%s: Unable to allocate memory for shared resource struct\n",
-			    __func__);
-		return NULL;
-	}
-
-	shared_mem->vaddr = qdf_mem_alloc_consistent(osdev, osdev->dev,
-				size, qdf_mem_get_dma_addr_ptr(osdev,
-						&shared_mem->mem_info));
-	if (!shared_mem->vaddr) {
-		__qdf_print("%s; Unable to allocate DMA memory for shared resource\n",
-			    __func__);
-		qdf_mem_free(shared_mem);
-		return NULL;
-	}
-
-	qdf_mem_set_dma_size(osdev, &shared_mem->mem_info, size);
-	qdf_mem_zero(shared_mem->vaddr,
-		     qdf_mem_get_dma_size(osdev, &shared_mem->mem_info));
-	qdf_mem_set_dma_pa(osdev, &shared_mem->mem_info,
-			   qdf_mem_paddr_from_dmaaddr(osdev,
-				qdf_mem_get_dma_addr(osdev,
-						     &shared_mem->mem_info)));
-	qdf_mem_dma_get_sgtable(osdev->dev,
-				(void *)&shared_mem->sgtable,
-				shared_mem->vaddr,
-				qdf_mem_get_dma_addr(osdev,
-						     &shared_mem->mem_info),
-				qdf_mem_get_dma_size(osdev,
-						     &shared_mem->mem_info));
-
-	qdf_dma_get_sgtable_dma_addr(&shared_mem->sgtable);
-
-	return shared_mem;
-}
+qdf_shared_mem_t *qdf_mem_shared_mem_alloc(qdf_device_t osdev, uint32_t size);
 
 /**
  * qdf_mem_shared_mem_free() - Free shared memory
@@ -755,6 +727,7 @@ static inline void qdf_mem_shared_mem_free(qdf_device_t osdev,
 					qdf_get_dma_mem_context(shared_mem,
 								memctx));
 	}
+	qdf_mem_free_sgtable(&shared_mem->sgtable);
 	qdf_mem_free(shared_mem);
 }
 

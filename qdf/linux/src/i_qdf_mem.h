@@ -267,10 +267,22 @@ __qdf_os_mem_dma_get_sgtable(struct device *dev, void *sgt, void *cpu_addr,
 }
 
 /**
+ * __qdf_os_mem_free_sgtable() - Free a previously allocated sg table
+ * @sgt: the mapped sg table header
+ *
+ * Return: None
+ */
+static inline void
+__qdf_os_mem_free_sgtable(struct sg_table *sgt)
+{
+	sg_free_table(sgt);
+}
+
+/**
  * __qdf_dma_get_sgtable_dma_addr()-Assigns DMA address to scatterlist elements
  * @sgt: scatter gather table pointer
  *
- * @Return: None
+ * Return: None
  */
 static inline void
 __qdf_dma_get_sgtable_dma_addr(struct sg_table *sgt)
