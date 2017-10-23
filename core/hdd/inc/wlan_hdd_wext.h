@@ -210,9 +210,6 @@ struct hdd_wext_state {
 	/**WPA or RSN IE*/
 	uint8_t WPARSNIE[MAX_WPA_RSN_IE_LEN];
 
-	/**gen IE */
-	tSirAddie genIE;
-
 	/**Additional IE for assoc */
 	tSirAddie assocAddIE;
 
