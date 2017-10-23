@@ -495,7 +495,8 @@ uint16_t wlansap_check_cc_intf(struct sap_context *sap_ctx)
 			  "%s: Invalid MAC context from p_cds_gctx", __func__);
 		return 0;
 	}
-	intf_ch = sme_check_concurrent_channel_overlap(hHal, 0, 0,
+	intf_ch = sme_check_concurrent_channel_overlap(hHal, sap_ctx->channel,
+					     sap_ctx->csr_roamProfile.phyMode,
 						       sap_ctx->cc_switch_mode);
 	return intf_ch;
 }
