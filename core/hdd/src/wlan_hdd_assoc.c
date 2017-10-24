@@ -1885,6 +1885,7 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct hdd_context *hdd_ctx;
+	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct wlan_objmgr_psoc **psoc;
 
 	if (!cbk_data)
@@ -1896,7 +1897,7 @@ QDF_STATUS hdd_update_dp_vdev_flags(void *cbk_data,
 	if (!hdd_ctx->tdls_nap_active)
 		return status;
 
-	data_vdev = cdp_peer_get_vdev_by_sta_id(soc, sta_id);
+	data_vdev = cdp_peer_get_vdev_by_sta_id(soc, pdev, sta_id);
 	if (NULL == data_vdev) {
 		status = QDF_STATUS_E_FAILURE;
 		return status;

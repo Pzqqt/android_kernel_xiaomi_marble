@@ -539,7 +539,7 @@ struct hdd_ipa_priv {
 #define HDD_IPA_CHECK_HW() 0
 #endif /* IPA3 */
 
-#define HDD_IPA_DBG_DUMP_RX_LEN 32
+#define HDD_IPA_DBG_DUMP_RX_LEN 84
 #define HDD_IPA_DBG_DUMP_TX_LEN 48
 
 static struct hdd_ipa_adapter_2_client {
@@ -1636,8 +1636,6 @@ static void __hdd_ipa_uc_stat_query(struct hdd_context *hdd_ctx,
 		(false == hdd_ipa->resource_loading)) {
 		*ipa_tx_diff = hdd_ipa->ipa_tx_packets_diff;
 		*ipa_rx_diff = hdd_ipa->ipa_rx_packets_diff;
-		hdd_debug("STAT Query TX DIFF %d, RX DIFF %d",
-			    *ipa_tx_diff, *ipa_rx_diff);
 	}
 	qdf_mutex_release(&hdd_ipa->ipa_lock);
 }
@@ -1685,7 +1683,6 @@ static void __hdd_ipa_uc_stat_request(struct hdd_adapter *adapter,
 		return;
 	}
 
-	hdd_debug("STAT REQ Reason %d", reason);
 	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
 		(false == hdd_ipa->resource_loading)) {
@@ -3931,11 +3928,14 @@ static enum hdd_ipa_forward_type hdd_ipa_intrabss_forward(
 		qdf_nbuf_t skb)
 {
 	int ret = HDD_IPA_FORWARD_PKT_NONE;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((desc & FW_RX_DESC_FORWARD_M)) {
 		if (!ol_txrx_fwd_desc_thresh_check(
-			(struct ol_txrx_vdev_t *)ol_txrx_get_vdev_from_vdev_id(
-							adapter->sessionId))) {
+			(struct ol_txrx_vdev_t *)cdp_get_vdev_from_vdev_id(soc,
+						(struct cdp_pdev *)pdev,
+						adapter->sessionId))) {
 			/* Drop the packet*/
 			hdd_ipa->stats.num_tx_fwd_err++;
 			kfree_skb(skb);
@@ -4761,6 +4761,8 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 			       struct hdd_adapter *adapter, uint8_t sta_id)
 {
 	struct hdd_ipa_iface_context *iface_context = NULL;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	void *tl_context = NULL;
 	int i, ret = 0;
 
@@ -4792,7 +4794,7 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 	iface_context->adapter = adapter;
 	iface_context->sta_id = sta_id;
 	tl_context = (void *)cdp_peer_get_vdev_by_sta_id(
-				cds_get_context(QDF_MODULE_ID_SOC), sta_id);
+				soc, (struct cdp_pdev *)pdev, sta_id);
 	if (tl_context == NULL) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "Not able to get TL context sta_id: %d", sta_id);

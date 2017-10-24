@@ -335,10 +335,11 @@ static QDF_STATUS ol_txrx_get_vdevid(void *ppeer, uint8_t *vdev_id)
 	return QDF_STATUS_SUCCESS;
 }
 
-static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
+static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(struct cdp_pdev *ppdev,
+						   uint8_t sta_id)
 {
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_peer_t *peer = NULL;
-	ol_txrx_pdev_handle pdev = NULL;
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -346,7 +347,6 @@ static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
 		return NULL;
 	}
 
-	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "PDEV not found for sta_id [%d]", sta_id);
@@ -377,8 +377,8 @@ static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
  * Return: peer handle if peer is found, NULL if peer is not found.
  */
 void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
-					      uint8_t *peer_addr,
-					      uint8_t *peer_id)
+				uint8_t *peer_addr,
+				uint8_t *peer_id)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
