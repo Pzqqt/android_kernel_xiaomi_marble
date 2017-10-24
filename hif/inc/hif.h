@@ -282,6 +282,7 @@ struct qca_napi_cpu {
  * @lilcl_head:
  * @bigcl_head:
  * @napi_mode: irq affinity & clock voting mode
+ * @cpuhp_handler: CPU hotplug event registration handle
  */
 struct qca_napi_data {
 	struct               hif_softc *hif_softc;
@@ -297,8 +298,7 @@ struct qca_napi_data {
 	struct qca_napi_cpu  napi_cpu[NR_CPUS];
 	int                  lilcl_head, bigcl_head;
 	enum qca_napi_tput_state napi_mode;
-	struct notifier_block hnc_cpu_notifier;
-	bool cpu_notifier_registered;
+	struct qdf_cpuhp_handler *cpuhp_handler;
 	uint8_t              flags;
 };
 
