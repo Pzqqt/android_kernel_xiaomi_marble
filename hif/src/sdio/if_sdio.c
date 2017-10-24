@@ -417,6 +417,15 @@ void hif_disable_aspm(void)
  */
 void hif_sdio_close(struct hif_softc *hif_sc)
 {
+	if (ol_sc) {
+		qdf_mem_free(ol_sc);
+		ol_sc = NULL;
+	}
+
+	if (scn) {
+		qdf_mem_free(scn);
+		scn = NULL;
+	}
 }
 
 /**
