@@ -9313,6 +9313,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	uint32_t num_abg_tx_chains = 0;
 	uint32_t num_11b_tx_chains = 0;
 	uint32_t num_11ag_tx_chains = 0;
+	struct policy_mgr_dp_cbacks dp_cbs = {0};
 
 	if (hdd_ctx->config->sifs_burst_duration) {
 		set_value = (SIFS_BURST_DUR_MULTIPLIER) *
@@ -9405,6 +9406,13 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	ret = hdd_features_init(hdd_ctx, adapter);
 	if (ret)
 		goto cds_disable;
+
+	dp_cbs.hdd_disable_lro_in_concurrency = hdd_disable_lro_in_concurrency;
+	status = policy_mgr_register_dp_cb(hdd_ctx->hdd_psoc, &dp_cbs);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_debug("LRO disbaled, failed to register with policy mgr");
+		goto cds_disable;
+	}
 
 	if (hdd_enable_egap(hdd_ctx))
 		hdd_debug("enhance green ap is not enabled");
