@@ -5494,8 +5494,8 @@ hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
 			(qdf_list_node_t **)&pending_event);
 	while (pending_event != NULL) {
 		__hdd_ipa_wlan_evt(pending_event->adapter,
-			pending_event->type,
 			pending_event->sta_id,
+			pending_event->type,
 			pending_event->mac_addr);
 		qdf_mem_free(pending_event);
 		pending_event = NULL;
