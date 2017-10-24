@@ -1174,4 +1174,16 @@ static inline bool csr_is_mfpc_capable(struct sDot11fIERSN *rsn)
 }
 #endif
 
+/**
+ * csr_get_rf_band()
+ *
+ * @channel: channel number
+ *
+ * This function is used to translate channel number to band
+ *
+ * Return: SIR_BAND_2_4_GHZ -  if 2.4GHZ channel
+ *         SIR_BAND_5_GHZ   -  if 5GHZ channel
+ */
+tSirRFBand csr_get_rf_band(uint8_t channel);
+
 #endif /* CSR_INSIDE_API_H__ */

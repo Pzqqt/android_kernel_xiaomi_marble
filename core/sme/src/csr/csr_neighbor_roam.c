@@ -490,17 +490,7 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * get_rf_band()
- *
- * @channel: channel number
- *
- * This function is used to translate channel number to band
- *
- * Return: SIR_BAND_2_4_GHZ -  if 2.4GHZ channel
- *         SIR_BAND_5_GHZ   -  if 5GHZ channel
- */
-static tSirRFBand get_rf_band(uint8_t channel)
+tSirRFBand csr_get_rf_band(uint8_t channel)
 {
 	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
 	    (channel <= SIR_11A_CHANNEL_END))
@@ -558,8 +548,8 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal
 		return QDF_STATUS_E_INVAL;
 	}
 	for (i = 0; i < inputNumOfChannels; i++) {
-		if (get_rf_band(currAPoperationChannel) ==
-		    get_rf_band(pInputChannelList[i])) {
+		if (csr_get_rf_band(currAPoperationChannel) ==
+		    csr_get_rf_band(pInputChannelList[i])) {
 			pOutputChannelList[numChannels] = pInputChannelList[i];
 			numChannels++;
 		}
