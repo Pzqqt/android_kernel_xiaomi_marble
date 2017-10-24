@@ -4589,6 +4589,11 @@ QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,
 	QDF_STATUS status;
 	struct wma_txrx_node *vdev = &wma->interfaces[params->vdev_id];
 
+	if (wma_is_vdev_up(params->vdev_id)) {
+		WMA_LOGD("vdev %d is already up for bssid %pM. Do not send",
+			 params->vdev_id, bssid);
+		return QDF_STATUS_SUCCESS;
+	}
 	status = wmi_unified_vdev_up_send(wma->wmi_handle, bssid, params);
 	wma_release_wakelock(&vdev->vdev_start_wakelock);
 
