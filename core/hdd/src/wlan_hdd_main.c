@@ -11291,6 +11291,7 @@ static int __hdd_module_init(void)
 	return 0;
 out:
 	qdf_wake_lock_destroy(&wlan_wake_lock);
+	component_deinit();
 	dispatcher_deinit();
 	hdd_deinit();
 
