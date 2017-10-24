@@ -124,6 +124,7 @@
 #include "wlan_hdd_rx_monitor.h"
 #include "sme_power_save_api.h"
 #include "enet.h"
+#include <cdp_txrx_cmn_struct.h>
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2365,7 +2366,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		ret = hdd_update_config(hdd_ctx);
 		if (ret) {
 			hdd_err("Failed to update configuration :%d", ret);
-			goto ol_cds_free;
+			goto cds_free;
 		}
 
 		hdd_update_cds_ac_specs_params(hdd_ctx);
@@ -2374,7 +2375,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to Open CDS: %d", status);
 			ret = (status == QDF_STATUS_E_NOMEM) ? -ENOMEM : -EINVAL;
-			goto ol_cds_free;
+			goto cds_free;
 		}
 
 		/* initalize components configurations  after psoc open */
@@ -2382,6 +2383,11 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		if (ret) {
 			hdd_err("Failed to update components configs :%d",
 				ret);
+			goto close;
+		}
+		status = cds_dp_open(hdd_ctx->hdd_psoc);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("Failed to Open cds post open: %d", status);
 			goto close;
 		}
 
@@ -2398,7 +2404,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hdd_err("Failed to pre-enable CDS: %d", status);
 			ret = (status == QDF_STATUS_E_NOMEM) ? -ENOMEM : -EINVAL;
-			goto close;
+			goto cds_txrx_free;
 		}
 
 		hdd_register_policy_manager_callback(
@@ -2458,11 +2464,13 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 post_disable:
 	cds_post_disable();
 
+cds_txrx_free:
+	cds_dp_close(hdd_ctx->hdd_psoc);
 close:
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
 	cds_close(hdd_ctx->hdd_psoc);
 
-ol_cds_free:
+cds_free:
 	ol_cds_free();
 
 hif_close:
@@ -9561,6 +9569,14 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
+
+	qdf_status = cds_dp_close(hdd_ctx->hdd_psoc);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_warn("Failed to stop CDS DP: %d", qdf_status);
+		ret = -EINVAL;
+		QDF_ASSERT(0);
+	}
+
 	qdf_status = cds_close(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS: %d", qdf_status);
@@ -11882,6 +11898,43 @@ static void hdd_update_hif_config(struct hdd_context *hdd_ctx)
 }
 
 /**
+ * hdd_update_dp_config() - Propagate config parameters to Lithium
+ *                          datapath
+ * @hdd_ctx: HDD Context
+ *
+ * Return: 0 for success/errno for failure
+ */
+static int hdd_update_dp_config(struct hdd_context *hdd_ctx)
+{
+	struct cdp_config_params params;
+	QDF_STATUS status;
+
+	params.tso_enable = hdd_ctx->config->tso_enable;
+	params.lro_enable = hdd_ctx->config->lro_enable;
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+	params.tx_flow_stop_queue_threshold =
+			hdd_ctx->config->TxFlowStopQueueThreshold;
+	params.tx_flow_start_queue_offset =
+			hdd_ctx->config->TxFlowStartQueueOffset;
+#endif
+	params.flow_steering_enable = hdd_ctx->config->flow_steering_enable;
+	params.napi_enable = hdd_ctx->napi_enable;
+	params.tcp_udp_checksumoffload =
+			hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
+
+	status = cdp_update_config_parameters(
+					cds_get_context(QDF_MODULE_ID_SOC),
+					&params);
+	if (status) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			"%s: Failed to attach config parameters", __func__);
+		return status;
+	}
+
+	return 0;
+}
+
+/**
  * hdd_update_config() - Initialize driver per module ini parameters
  * @hdd_ctx: HDD Context
  *
@@ -12151,10 +12204,16 @@ int hdd_update_components_config(struct hdd_context *hdd_ctx)
 	ret = hdd_update_pmo_config(hdd_ctx);
 	if (ret)
 		return ret;
+
 	ret = hdd_update_scan_config(hdd_ctx);
 	if (ret)
 		return ret;
+
 	ret = hdd_update_tdls_config(hdd_ctx);
+	if (ret)
+		return ret;
+
+	ret = hdd_update_dp_config(hdd_ctx);
 
 	return ret;
 }
