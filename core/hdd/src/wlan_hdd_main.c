@@ -11031,18 +11031,17 @@ int hdd_init(void)
 	int ret = 0;
 
 	status = cds_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to allocate CDS context");
+		ret = -ENOMEM;
+		goto err_out;
+	}
 
 	wlan_init_bug_report_lock();
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_init_svc();
 #endif
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("Failed to allocate CDS context");
-		ret = -ENOMEM;
-		goto err_out;
-	}
 
 	qdf_timer_init(NULL, &hdd_drv_ops_inactivity_timer,
 		(void *)hdd_drv_ops_inactivity_handler, NULL,
