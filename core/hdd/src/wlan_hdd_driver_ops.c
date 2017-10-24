@@ -124,6 +124,17 @@ static bool hdd_is_recovery_in_progress(void *data)
 }
 
 /**
+ * hdd_is_target_ready() - API to query if target is in ready state
+ * @data: Private Data
+ *
+ * Return: bool
+ */
+static bool hdd_is_target_ready(void *data)
+{
+	return cds_is_target_ready();
+}
+
+/**
  * hdd_hif_init_driver_state_callbacks() - API to initialize HIF callbacks
  * @data: Private Data
  * @cbk: HIF Driver State callbacks
@@ -141,6 +152,7 @@ static void hdd_hif_init_driver_state_callbacks(void *data,
 	cbk->is_recovery_in_progress = hdd_is_recovery_in_progress;
 	cbk->is_load_unload_in_progress = hdd_is_load_or_unload_in_progress;
 	cbk->is_driver_unloading = hdd_is_driver_unloading;
+	cbk->is_target_ready = hdd_is_target_ready;
 }
 
 /**
@@ -1436,11 +1448,18 @@ static void wlan_hdd_purge_notifier(void)
 static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
-	if (uevent->uevent == PLD_RECOVERY) {
+	switch (uevent->uevent) {
+	case PLD_RECOVERY:
 		cds_set_recovery_in_progress(true);
 		hdd_pld_ipa_uc_shutdown_pipes();
-	} else if (uevent->uevent == PLD_FW_DOWN) {
+		break;
+	case PLD_FW_DOWN:
 		cds_set_fw_state(CDS_FW_STATE_DOWN);
+		cds_set_target_ready(false);
+		break;
+	case PLD_FW_READY:
+		cds_set_target_ready(true);
+		break;
 	}
 
 	wlan_hdd_purge_notifier();

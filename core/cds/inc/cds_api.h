@@ -72,7 +72,8 @@ enum cds_driver_state {
 	CDS_DRIVER_STATE_LOADING	= BIT(1),
 	CDS_DRIVER_STATE_UNLOADING	= BIT(2),
 	CDS_DRIVER_STATE_RECOVERING	= BIT(3),
-	CDS_DRIVER_STATE_BAD		= BIT(4)
+	CDS_DRIVER_STATE_BAD		= BIT(4),
+	CDS_DRIVER_STATE_FW_READY	= BIT(5),
 };
 
 #define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
@@ -225,6 +226,18 @@ static inline void cds_set_fw_down(uint8_t value)
 }
 
 /**
+ * cds_is_target_ready() - Is target is in ready state
+ *
+ * Return: true if target is in ready state and false otherwise.
+ */
+static inline bool cds_is_target_ready(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_FW_READY);
+}
+
+/**
  * cds_set_recovery_in_progress() - Set recovery in progress
  * @value: value to set
  *
@@ -250,6 +263,20 @@ static inline void cds_set_driver_in_bad_state(uint8_t value)
 		cds_set_driver_state(CDS_DRIVER_STATE_BAD);
 	else
 		cds_clear_driver_state(CDS_DRIVER_STATE_BAD);
+}
+
+/**
+ * cds_set_target_ready() - Set target ready state
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_target_ready(uint8_t value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_FW_READY);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_FW_READY);
 }
 
 /**
