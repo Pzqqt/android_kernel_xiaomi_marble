@@ -645,12 +645,10 @@ err_bmi_close:
 	bmi_cleanup(ol_ctx);
 
 err_sched_close:
-	if (QDF_IS_STATUS_SUCCESS(qdf_status) &&
-	   (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
-	    cds_is_driver_recovering())) {
-		qdf_status = cds_sched_close();
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			hdd_err("Failed to close CDS Scheduler");
+	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
+	    cds_is_driver_recovering()) {
+		if (QDF_IS_STATUS_ERROR(cds_sched_close())) {
+			cds_err("Failed to close CDS Scheduler");
 			QDF_ASSERT(false);
 		}
 	}
