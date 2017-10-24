@@ -619,6 +619,25 @@ QDF_STATUS policy_mgr_register_cdp_cb(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_register_dp_cb(struct wlan_objmgr_psoc *psoc,
+		struct policy_mgr_dp_cbacks *dp_cbacks)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pm_ctx->dp_cbacks.hdd_disable_lro_in_concurrency =
+		dp_cbacks->hdd_disable_lro_in_concurrency;
+	pm_ctx->dp_cbacks.hdd_set_rx_mode_rps_cb =
+		dp_cbacks->hdd_set_rx_mode_rps_cb;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_register_tdls_cb(struct wlan_objmgr_psoc *psoc,
 		struct policy_mgr_tdls_cbacks *tdls_cbacks)
 {
