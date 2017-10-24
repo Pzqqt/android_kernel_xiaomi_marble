@@ -967,18 +967,37 @@ void hal_reo_remap_IX0(struct hal_soc *hal, uint32_t remap_val)
 }
 
 /**
- * hal_srng_set_hp_paddr() - Set physical address to SRNG head pointer
- * @sring: sring pointer
+ * hal_srng_dst_set_hp_paddr() - Set physical address to dest ring head pointer
+ * @srng: sring pointer
  * @paddr: physical address
  */
-void hal_srng_set_hp_paddr(struct hal_srng *sring,
-				uint64_t paddr)
+void hal_srng_dst_set_hp_paddr(struct hal_srng *srng,
+			       uint64_t paddr)
 {
-	SRNG_DST_REG_WRITE(sring, HP_ADDR_LSB,
+	SRNG_DST_REG_WRITE(srng, HP_ADDR_LSB,
 			   paddr & 0xffffffff);
-	SRNG_DST_REG_WRITE(sring, HP_ADDR_MSB,
+	SRNG_DST_REG_WRITE(srng, HP_ADDR_MSB,
 			   paddr >> 32);
 }
+
+/**
+ * hal_srng_dst_init_hp() - Initilaize destination ring head pointer
+ * @srng: sring pointer
+ * @vaddr: virtual address
+ */
+void hal_srng_dst_init_hp(struct hal_srng *srng,
+			  uint32_t *vaddr)
+{
+	srng->u.dst_ring.hp_addr = vaddr;
+	SRNG_DST_REG_WRITE(srng, HP, srng->u.dst_ring.cached_hp);
+	*(srng->u.dst_ring.hp_addr) = srng->u.dst_ring.cached_hp;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+		"hp_addr=%p, cached_hp=%d, hp=%d\n",
+		(void *)srng->u.dst_ring.hp_addr, srng->u.dst_ring.cached_hp,
+		*(srng->u.dst_ring.hp_addr));
+}
+
 /**
  * hal_srng_dst_hw_init - Private function to initialize SRNG
  * destination ring HW

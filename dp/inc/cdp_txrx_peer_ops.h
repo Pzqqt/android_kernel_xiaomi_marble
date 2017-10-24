@@ -339,6 +339,7 @@ cdp_peer_get_vdevid(ol_txrx_soc_handle soc, void *peer, uint8_t *vdev_id)
 /**
  * cdp_peer_get_vdev_by_sta_id() - Get vdev instance by local peer id
  * @soc - data path soc handle
+ * @pdev - data path device instance
  * @sta_id - local peer id
  *
  * Get virtaul interface id by local peer id
@@ -347,7 +348,8 @@ cdp_peer_get_vdevid(ol_txrx_soc_handle soc, void *peer, uint8_t *vdev_id)
  *         NULL in case cannot find
  */
 static inline struct cdp_vdev
-*cdp_peer_get_vdev_by_sta_id(ol_txrx_soc_handle soc, uint8_t sta_id)
+*cdp_peer_get_vdev_by_sta_id(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+			     uint8_t sta_id)
 {
 	if (!soc || !soc->ops || !soc->ops->peer_ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
@@ -356,7 +358,7 @@ static inline struct cdp_vdev
 	}
 
 	if (soc->ops->peer_ops->get_vdev_by_sta_id)
-		return soc->ops->peer_ops->get_vdev_by_sta_id(sta_id);
+		return soc->ops->peer_ops->get_vdev_by_sta_id(pdev, sta_id);
 
 	return NULL;
 }

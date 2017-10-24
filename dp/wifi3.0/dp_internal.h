@@ -257,7 +257,8 @@ void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id);
 QDF_STATUS dp_peer_state_update(struct cdp_pdev *pdev_handle, uint8_t *peer_mac,
 		enum ol_txrx_peer_state state);
 QDF_STATUS dp_get_vdevid(void *peer_handle, uint8_t *vdev_id);
-struct cdp_vdev *dp_get_vdev_by_sta_id(uint8_t sta_id);
+struct cdp_vdev *dp_get_vdev_by_sta_id(struct cdp_pdev *pdev_handle,
+		uint8_t sta_id);
 struct cdp_vdev *dp_get_vdev_for_peer(void *peer);
 uint8_t *dp_peer_get_peer_mac_addr(void *peer);
 int dp_get_peer_state(void *peer_handle);
