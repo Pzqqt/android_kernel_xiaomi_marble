@@ -341,7 +341,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	unsigned char *dest;
 	struct ieee80211_frame *wh;
 	struct ieee80211_qoscntl *qos;
-	qdf_nbuf_t amsdu_llc_buf;
 	head_frag_list = NULL;
 
 	/* The nbuf has been pulled just beyond the status and points to the
@@ -382,6 +381,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		dp_rx_msdus_set_payload(head_msdu);
 
 		mpdu_buf = head_msdu;
+
 		if (!mpdu_buf)
 			goto mpdu_stitch_fail;
 
@@ -396,8 +396,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 			dp_rx_msdus_set_payload(head_msdu);
 
 			msdu = msdu_orig;
-			if (!msdu)
-				goto mpdu_stitch_fail;
 
 			if (is_first_frag) {
 				is_first_frag = 0;
@@ -498,10 +496,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 	prev_buf = mpdu_buf;
 	dest = qdf_nbuf_put_tail(prev_buf, wifi_hdr_len);
-	if (!dest) {
-		prev_buf = mpdu_buf = NULL;
-		goto mpdu_stitch_done;
-	}
+	if (!dest)
+		goto mpdu_stitch_fail;
 
 	qdf_mem_copy(dest, hdr_desc, wifi_hdr_len);
 	hdr_desc += wifi_hdr_len;
@@ -526,9 +522,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 
 		msdu = msdu_orig;
 
-		if (!msdu)
-			goto mpdu_stitch_fail;
-
 		if (is_first_frag) {
 			head_frag_list  = msdu;
 		} else {
@@ -540,46 +533,17 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 		/* Copy this buffers MSDU related status into the prev buffer */
 
 		if (is_first_frag) {
-				is_first_frag = 0;
-
-				dest = qdf_nbuf_put_tail(prev_buf,
-						msdu_llc_len + amsdu_pad);
-				if (!dest) {
-					mpdu_buf = NULL;
-					qdf_nbuf_free(msdu);
-					goto mpdu_stitch_done;
-				}
-
-				dest += amsdu_pad;
-				qdf_mem_copy(dest, hdr_desc, msdu_llc_len);
-
-
-		} else {
-				amsdu_llc_buf = qdf_nbuf_alloc(
-					dp_pdev->osif_pdev,
-					32 + 32,
-					32, 4, FALSE);
-
-				if (!amsdu_llc_buf)
-					goto mpdu_stitch_fail;
-
-				dest = qdf_nbuf_put_tail(amsdu_llc_buf,
-					msdu_llc_len + amsdu_pad);
-
-				if (!dest)
-					goto mpdu_stitch_fail;
-
-				dest += amsdu_pad;
-				qdf_mem_copy(dest, hdr_desc, msdu_llc_len);
-
-				/* Maintain the linking of the MSDU header
-				 * and cloned MSDUS */
-				qdf_nbuf_set_next_ext(prev_buf, amsdu_llc_buf);
-				prev_buf = amsdu_llc_buf;
-
-				qdf_nbuf_set_next_ext(prev_buf, msdu);
-
+			is_first_frag = 0;
 		}
+
+		dest = qdf_nbuf_put_tail(prev_buf,
+				msdu_llc_len + amsdu_pad);
+
+		if (!dest)
+			goto mpdu_stitch_fail;
+
+		dest += amsdu_pad;
+		qdf_mem_copy(dest, hdr_desc, msdu_llc_len);
 
 		dp_rx_msdus_set_payload(msdu);
 
@@ -685,7 +649,7 @@ QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	mon_mpdu = dp_rx_mon_restitch_mpdu_from_msdus(soc, mac_id, head_msdu,
 				tail_msdu, rs);
 
-	if (mon_mpdu) {
+	if (mon_mpdu && pdev->monitor_vdev && pdev->monitor_vdev->osif_vdev) {
 		qdf_nbuf_update_radiotap(&(pdev->ppdu_info.rx_status),
 			mon_mpdu, sizeof(struct rx_pkt_tlvs));
 		pdev->monitor_vdev->osif_rx_mon(
