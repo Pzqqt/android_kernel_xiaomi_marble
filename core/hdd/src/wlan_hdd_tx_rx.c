@@ -1781,9 +1781,17 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter)
 	uint8_t cpu_map_list_len = 0;
 	struct hdd_context *hdd_ctxt = NULL;
 	struct wlan_rps_data rps_data;
+	struct cds_config_info *cds_cfg;
+
+	cds_cfg = cds_get_ini_config();
 
 	if (!adapter) {
 		hdd_err("adapter is NULL");
+		return;
+	}
+
+	if (!cds_cfg) {
+		hdd_err("cds_cfg is NULL");
 		return;
 	}
 
@@ -1822,10 +1830,57 @@ void hdd_send_rps_ind(struct hdd_adapter *adapter)
 				WLAN_SVC_RPS_ENABLE_IND,
 				&rps_data, sizeof(rps_data));
 
+	cds_cfg->rps_enabled = true;
+
+	return;
+
 err:
 	hdd_err("Wrong RPS configuration. enabling rx_thread");
-	hdd_ctxt->rps = false;
-	hdd_ctxt->enableRxThread = true;
+	cds_cfg->rps_enabled = false;
+}
+
+/**
+ * hdd_send_rps_disable_ind() - send rps disable indication to daemon
+ * @adapter: adapter context
+ *
+ * Return: none
+ */
+void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
+{
+	uint8_t cpu_map_list_len = 0;
+	struct hdd_context *hdd_ctxt = NULL;
+	struct wlan_rps_data rps_data;
+	struct cds_config_info *cds_cfg;
+
+	cds_cfg = cds_get_ini_config();
+
+	if (!adapter) {
+		hdd_err("adapter is NULL");
+		return;
+	}
+
+	if (!cds_cfg) {
+		hdd_err("cds_cfg is NULL");
+		return;
+	}
+
+	hdd_ctxt = WLAN_HDD_GET_CTX(adapter);
+	rps_data.num_queues = NUM_TX_QUEUES;
+
+	hdd_info("Set cpu_map_list 0");
+
+	qdf_mem_zero(&rps_data.cpu_map_list, sizeof(rps_data.cpu_map_list));
+	cpu_map_list_len = 0;
+	rps_data.num_queues =
+		(cpu_map_list_len < rps_data.num_queues) ?
+				cpu_map_list_len : rps_data.num_queues;
+
+	strlcpy(rps_data.ifname, adapter->dev->name, sizeof(rps_data.ifname));
+	wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
+				    WLAN_SVC_RPS_ENABLE_IND,
+				    &rps_data, sizeof(rps_data));
+
+	cds_cfg->rps_enabled = false;
 }
 
 #ifdef MSM_PLATFORM

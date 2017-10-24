@@ -2825,6 +2825,7 @@ hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
  * Return: NONE
  */
 void hdd_dp_trace_init(struct hdd_config *config);
+void hdd_set_rx_mode_rps(bool enable);
 
 /**
  * hdd_set_limit_off_chan_for_tos() - set limit off-chan command parameters
