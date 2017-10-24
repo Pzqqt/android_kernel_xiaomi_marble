@@ -1051,6 +1051,11 @@ struct dp_pdev {
 
 	bool tx_sniffer_enable;
 	bool am_copy_mode;
+
+	struct {
+		uint16_t tx_ppdu_id;
+		uint16_t tx_peer_id;
+	} am_copy_id;
 };
 
 struct dp_peer;
