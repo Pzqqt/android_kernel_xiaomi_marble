@@ -285,12 +285,19 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 }
 EXPORT_SYMBOL(tgt_dfs_process_radar_ind);
 
+#ifndef QCA_MCL_DFS_SUPPORT
+QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#else
 QDF_STATUS tgt_dfs_cac_complete(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
 {
 	dfs_mlme_proc_cac(pdev, vdev_id);
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 EXPORT_SYMBOL(tgt_dfs_cac_complete);
 
 QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
