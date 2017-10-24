@@ -1041,15 +1041,10 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	/* bss deregister is not allowed during wlan driver loading or
-	 * unloading
+	/* This is stop bss callback running in scheduler thread so do not
+	 * driver unload in progress check otherwise it can lead to peer
+	 * object leak
 	 */
-	if (cds_is_load_or_unload_in_progress()) {
-		hdd_err("Loading_unloading in Progress, state: 0x%x. Ignore!!!",
-			cds_get_driver_state());
-		return QDF_STATUS_E_PERM;
-	}
-
 	qdf_status = hdd_softap_deregister_bc_sta(adapter);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
