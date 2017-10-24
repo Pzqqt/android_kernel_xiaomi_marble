@@ -2877,7 +2877,7 @@ QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx)
 	}
 
 fail_return:
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "exit: stat=%d", stat);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "exit: stat=%d", status);
 	return status;
 }
 
