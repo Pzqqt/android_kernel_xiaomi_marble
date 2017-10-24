@@ -410,10 +410,10 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 
 	/* these fields are the same for all service endpoints */
 	connect.EpCallbacks.pContext = pEpping_ctx;
-	connect.EpCallbacks.EpTxCompleteMultiple = epping_tx_complete_multiple;
+	connect.EpCallbacks.EpTxCompleteMultiple = NULL;
 	connect.EpCallbacks.EpRecv = epping_rx;
 	/* epping_tx_complete use Multiple version */
-	connect.EpCallbacks.EpTxComplete = NULL;
+	connect.EpCallbacks.EpTxComplete  = epping_tx_complete;
 	connect.MaxSendQueueDepth = 64;
 
 #ifdef HIF_SDIO

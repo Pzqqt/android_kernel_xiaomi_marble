@@ -167,7 +167,7 @@ void epping_set_kperf_flag(epping_adapter_t *adapter,
 
 /* epping_tx signatures */
 void epping_tx_timer_expire(epping_adapter_t *adapter);
-void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue);
+void epping_tx_complete(void *ctx, HTC_PACKET *htc_pkt);
 int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *adapter);
 
 #ifdef HIF_SDIO
