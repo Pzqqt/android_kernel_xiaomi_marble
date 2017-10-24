@@ -4123,8 +4123,8 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 			     sizeof(pStatsCache->summary_stat));
 		qdf_mem_copy(&pStatsCache->class_a_stat, pClassAStats,
 			     sizeof(pStatsCache->class_a_stat));
-		qdf_mem_copy(&pStatsCache->ClassD_stat, pClassDStats,
-			     sizeof(pStatsCache->ClassD_stat));
+		qdf_mem_copy(&pStatsCache->class_d_stat, pClassDStats,
+			     sizeof(pStatsCache->class_d_stat));
 	}
 
 	if (adapter) {
@@ -9895,7 +9895,7 @@ static int __iw_get_statistics(struct net_device *dev,
 	int tlen = 0;
 	tCsrSummaryStatsInfo *pStats = &(adapter->hdd_stats.summary_stat);
 	tCsrGlobalClassAStatsInfo *aStats = &(adapter->hdd_stats.class_a_stat);
-	tCsrGlobalClassDStatsInfo *dStats = &(adapter->hdd_stats.ClassD_stat);
+	tCsrGlobalClassDStatsInfo *dStats = &(adapter->hdd_stats.class_d_stat);
 	int ret;
 
 	ENTER_DEV(dev);
