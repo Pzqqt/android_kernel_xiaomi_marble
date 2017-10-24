@@ -2214,7 +2214,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		mutex_unlock(&hdd_ctx->iface_change_lock);
 		hdd_debug("Driver Module not enabled return success");
 		/* Send cached data to upperlayer*/
-		*dbm = adapter->hdd_stats.ClassA_stat.max_pwr;
+		*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
 		return 0;
 	}
 	mutex_unlock(&hdd_ctx->iface_change_lock);
@@ -2230,7 +2230,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
 			 adapter->sessionId, adapter->device_mode));
 	wlan_hdd_get_class_astats(adapter);
-	*dbm = adapter->hdd_stats.ClassA_stat.max_pwr;
+	*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
 
 	EXIT();
 	return 0;

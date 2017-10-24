@@ -3989,13 +3989,13 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	 */
 	hdd_lpass_notify_connect(adapter);
 
-	rate_flags = adapter->hdd_stats.ClassA_stat.tx_rate_flags;
-	mcs_index = adapter->hdd_stats.ClassA_stat.mcs_index;
+	rate_flags = adapter->hdd_stats.class_a_stat.tx_rate_flags;
+	mcs_index = adapter->hdd_stats.class_a_stat.mcs_index;
 
 	/* convert to the UI units of 100kbps */
-	myRate = adapter->hdd_stats.ClassA_stat.tx_rate * 5;
+	myRate = adapter->hdd_stats.class_a_stat.tx_rate * 5;
 	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
-		nss = adapter->hdd_stats.ClassA_stat.nss;
+		nss = adapter->hdd_stats.class_a_stat.nss;
 		if ((nss > 1) &&
 		    policy_mgr_is_current_hwmode_dbs(hdd_ctx->hdd_psoc) &&
 		    !policy_mgr_is_hw_dbs_2x2_capable(hdd_ctx->hdd_psoc)) {
@@ -4010,7 +4010,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				rate_flags = eHAL_TX_RATE_LEGACY;
 			else
 				rate_flags =
-				 adapter->hdd_stats.ClassA_stat.mcs_rate_flags;
+				 adapter->hdd_stats.class_a_stat.mcs_rate_flags;
 		}
 
 		if (mcs_index == INVALID_MCS_IDX)

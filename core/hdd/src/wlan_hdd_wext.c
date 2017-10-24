@@ -4121,8 +4121,8 @@ static void hdd_statistics_cb(void *pStats, void *pContext)
 		 */
 		qdf_mem_copy(&pStatsCache->summary_stat, pSummaryStats,
 			     sizeof(pStatsCache->summary_stat));
-		qdf_mem_copy(&pStatsCache->ClassA_stat, pClassAStats,
-			     sizeof(pStatsCache->ClassA_stat));
+		qdf_mem_copy(&pStatsCache->class_a_stat, pClassAStats,
+			     sizeof(pStatsCache->class_a_stat));
 		qdf_mem_copy(&pStatsCache->ClassD_stat, pClassDStats,
 			     sizeof(pStatsCache->ClassD_stat));
 	}
@@ -4890,7 +4890,7 @@ QDF_STATUS wlan_hdd_get_class_astats(struct hdd_adapter *adapter)
 
 	/* update the adapter with the fresh results */
 	priv = hdd_request_priv(request);
-	adapter->hdd_stats.ClassA_stat = priv->class_a_stats;
+	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
 
 return_cached_results:
 	/*
@@ -5008,7 +5008,7 @@ QDF_STATUS wlan_hdd_get_station_stats(struct hdd_adapter *adapter)
 	/* update the adapter with the fresh results */
 	priv = hdd_request_priv(request);
 	adapter->hdd_stats.summary_stat = priv->summary_stats;
-	adapter->hdd_stats.ClassA_stat = priv->class_a_stats;
+	adapter->hdd_stats.class_a_stat = priv->class_a_stats;
 	adapter->hdd_stats.per_chain_rssi_stats = priv->per_chain_rssi_stats;
 
 put_request:
@@ -9894,7 +9894,7 @@ static int __iw_get_statistics(struct net_device *dev,
 	char *p = extra;
 	int tlen = 0;
 	tCsrSummaryStatsInfo *pStats = &(adapter->hdd_stats.summary_stat);
-	tCsrGlobalClassAStatsInfo *aStats = &(adapter->hdd_stats.ClassA_stat);
+	tCsrGlobalClassAStatsInfo *aStats = &(adapter->hdd_stats.class_a_stat);
 	tCsrGlobalClassDStatsInfo *dStats = &(adapter->hdd_stats.ClassD_stat);
 	int ret;
 
