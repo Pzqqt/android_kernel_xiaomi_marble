@@ -3476,7 +3476,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	peer = cdp_peer_find_by_addr(soc, pdev_ctx,
 				peer_addr, &peer_id);
 	if (!peer) {
-		if (SIR_MAC_MGMT_ASSOC_REQ != subtype) {
+		if (IEEE80211_FC0_SUBTYPE_ASSOC_REQ != subtype) {
 			WMA_LOGI(
 			   FL("Received mgmt frame: %0x from unknow peer: %pM"),
 			   subtype, peer_addr);
@@ -3486,7 +3486,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	}
 
 	switch (subtype) {
-	case SIR_MAC_MGMT_ASSOC_REQ:
+	case IEEE80211_FC0_SUBTYPE_ASSOC_REQ:
 		ptr = cdp_peer_last_assoc_received(soc, peer);
 		if (ptr == NULL) {
 			WMA_LOGE(FL("cdp_peer_last_assoc_received Failed"));
@@ -3502,7 +3502,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 		*cdp_peer_last_assoc_received(soc, peer) =
 				qdf_get_system_timestamp();
 		break;
-	case SIR_MAC_MGMT_DISASSOC:
+	case IEEE80211_FC0_SUBTYPE_DISASSOC:
 		ptr = cdp_peer_last_disassoc_received(soc, peer);
 		if (ptr == NULL) {
 			WMA_LOGE(FL("cdp_peer_last_disassoc_received Failed"));
@@ -3518,7 +3518,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 		*cdp_peer_last_disassoc_received(soc, peer) =
 				qdf_get_system_timestamp();
 		break;
-	case SIR_MAC_MGMT_DEAUTH:
+	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		ptr = cdp_peer_last_deauth_received(soc, peer);
 		if (ptr == NULL) {
 			WMA_LOGE(FL("cdp_peer_last_deauth_received Failed"));
