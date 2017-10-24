@@ -98,10 +98,12 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 #endif
 
 void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
-		uint8_t ieeeChan)
+		uint8_t ieee_chan, uint16_t freq,
+		uint8_t cfreq2, uint64_t flags)
 {
 	if (global_dfs_to_mlme.mlme_start_csa != NULL)
-		global_dfs_to_mlme.mlme_start_csa(pdev, ieeeChan);
+		global_dfs_to_mlme.mlme_start_csa(pdev, ieee_chan, freq, cfreq2,
+				flags);
 }
 
 #ifndef QCA_MCL_DFS_SUPPORT

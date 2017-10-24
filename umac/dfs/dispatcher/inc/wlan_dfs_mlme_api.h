@@ -65,9 +65,16 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 /**
  * dfs_mlme_start_csa() - Sends CSA in ieeeChan
  * @pdev: Pointer to DFS pdev object.
- * @ieeeChan: Channel number.
+ * @ieee_chan: Channel number.
+ * @freq: Channel frequency.
+ * @cfreq2: HT80 cfreq2.
+ * @flags: channel flags.
  */
-void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev, uint8_t ieeeChan);
+void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
+		uint8_t ieee_chan,
+		uint16_t freq,
+		uint8_t cfreq2,
+		uint64_t flags);
 
 /**
  * dfs_mlme_proc_cac() - Process the CAC completion event.

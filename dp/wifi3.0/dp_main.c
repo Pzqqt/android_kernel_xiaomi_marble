@@ -965,10 +965,9 @@ static QDF_STATUS dp_soc_interrupt_attach_poll(void *txrx_soc)
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef CONFIG_MCL
+#if defined(CONFIG_MCL)
 extern int con_mode_monitor;
 static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
-
 /*
  * dp_soc_interrupt_attach_wrapper() - Register handlers for DP interrupts
  * @txrx_soc: DP SOC handle
@@ -980,13 +979,17 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc);
  */
 static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 {
-	if (con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("Attach interrupts in Poll mode"));
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	if (!(soc->wlan_cfg_ctx->napi_enabled) ||
+	     con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s: Poll mode", __func__);
 		return dp_soc_interrupt_attach_poll(txrx_soc);
 	} else {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("Attach interrupts in MSI mode"));
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			"%s: Interrupt  mode", __func__);
 		return dp_soc_interrupt_attach(txrx_soc);
 	}
 }
@@ -3899,6 +3902,7 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
 		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
 			&vdev->stats, vdev->vdev_id, UPDATE_VDEV_STATS);
+
 }
 
 /**
@@ -4796,6 +4800,30 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 }
 
 /*
+ * dp_config_tx_capture()- API to enable/disable tx capture
+ * @pdev_handle: DP_PDEV handle
+ * @val: user provided value
+ *
+ * Return: void
+ */
+static void
+dp_config_tx_capture(struct cdp_pdev *pdev_handle, int val)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (val) {
+		pdev->tx_sniffer_enable = 1;
+		dp_h2t_cfg_stats_msg_send(pdev, 0xffff);
+	} else {
+		pdev->tx_sniffer_enable = 0;
+
+		if (!pdev->enhanced_stats_en)
+			dp_h2t_cfg_stats_msg_send(pdev, 0);
+	}
+
+}
+
+/*
  * dp_enable_enhanced_stats()- API to enable enhanced statistcs
  * @pdev_handle: DP_PDEV handle
  *
@@ -4821,7 +4849,11 @@ static void
 dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
 	pdev->enhanced_stats_en = 0;
+
+	if (!pdev->tx_sniffer_enable)
+		dp_h2t_cfg_stats_msg_send(pdev, 0);
 }
 
 /*
@@ -4864,6 +4896,26 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 			config_param0, config_param1, config_param2,
 			config_param3);
 
+}
+
+/*
+ * dp_set_pdev_param: function to set parameters in pdev
+ * @pdev_handle: DP pdev handle
+ * @param: parameter type to be set
+ * @val: value of parameter to be set
+ *
+ * return: void
+ */
+static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
+		enum cdp_pdev_param_type param, uint8_t val)
+{
+	switch (param) {
+	case CDP_CONFIG_TX_CAPTURE:
+		dp_config_tx_capture(pdev_handle, val);
+		break;
+	default:
+		break;
+	}
 }
 
 /*
@@ -5196,6 +5248,19 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
 			 pdev->stats.rx_ind_histogram.pkts_101_200);
 		DP_TRACE(FATAL, "   201+ Packets: %u",
 			 pdev->stats.rx_ind_histogram.pkts_201_plus);
+
+		DP_TRACE_STATS(ERROR, "%s: tso_enable: %u lro_enable: %u rx_hash: %u napi_enable: %u",
+			__func__,
+			pdev->soc->wlan_cfg_ctx->tso_enabled,
+			pdev->soc->wlan_cfg_ctx->lro_enabled,
+			pdev->soc->wlan_cfg_ctx->rx_hash,
+			pdev->soc->wlan_cfg_ctx->napi_enabled);
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+		DP_TRACE_STATS(ERROR, "%s: Tx flow stop queue: %u tx flow start queue offset: %u",
+			__func__,
+			pdev->soc->wlan_cfg_ctx->tx_flow_stop_queue_threshold,
+			pdev->soc->wlan_cfg_ctx->tx_flow_start_queue_offset);
+#endif
 	}
 }
 
@@ -5247,6 +5312,64 @@ static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
 
 	return status;
 
+}
+
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+/**
+ * dp_update_flow_control_parameters() - API to store datapath
+ *                            config parameters
+ * @soc: soc handle
+ * @cfg: ini parameter handle
+ *
+ * Return: void
+ */
+static inline
+void dp_update_flow_control_parameters(struct dp_soc *soc,
+				struct cdp_config_params *params)
+{
+	soc->wlan_cfg_ctx->tx_flow_stop_queue_threshold =
+					params->tx_flow_stop_queue_threshold;
+	soc->wlan_cfg_ctx->tx_flow_start_queue_offset =
+					params->tx_flow_start_queue_offset;
+}
+#else
+static inline
+void dp_update_flow_control_parameters(struct dp_soc *soc,
+				struct cdp_config_params *params)
+{
+}
+#endif
+
+/**
+ * dp_update_config_parameters() - API to store datapath
+ *                            config parameters
+ * @soc: soc handle
+ * @cfg: ini parameter handle
+ *
+ * Return: status
+ */
+static
+QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
+				struct cdp_config_params *params)
+{
+	struct dp_soc *soc = (struct dp_soc *)psoc;
+
+	if (!(soc)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: Invalid handle", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	soc->wlan_cfg_ctx->tso_enabled = params->tso_enable;
+	soc->wlan_cfg_ctx->lro_enabled = params->lro_enable;
+	soc->wlan_cfg_ctx->rx_hash = params->flow_steering_enable;
+	soc->wlan_cfg_ctx->tcp_udp_checksumoffload =
+				params->tcp_udp_checksumoffload;
+	soc->wlan_cfg_ctx->napi_enabled = params->napi_enable;
+
+	dp_update_flow_control_parameters(soc, params);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static struct cdp_wds_ops dp_ops_wds = {
@@ -5351,6 +5474,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 #endif
 	.txrx_intr_detach = dp_soc_interrupt_detach,
 	.set_pn_check = dp_set_pn_check_wifi3,
+	.update_config_parameters = dp_update_config_parameters,
 	/* TODO: Add other functions */
 	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set
 };
@@ -5374,6 +5498,7 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	/* TODO: Add other functions */
 	.txrx_wdi_event_sub = dp_wdi_event_sub,
 	.txrx_wdi_event_unsub = dp_wdi_event_unsub,
+	.txrx_set_pdev_param = dp_set_pdev_param,
 };
 
 static struct cdp_me_ops dp_ops_me = {

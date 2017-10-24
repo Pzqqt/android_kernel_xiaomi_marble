@@ -79,7 +79,8 @@ struct dfs_to_mlme {
 			uint8_t vhtop_ch_freq_seg2,
 			uint64_t flags);
 	QDF_STATUS (*mlme_start_csa)(struct wlan_objmgr_pdev *pdev,
-			uint8_t ieeeChan);
+			uint8_t ieee_chan, uint16_t freq,
+			uint8_t cfreq2, uint64_t flags);
 	QDF_STATUS (*mlme_proc_cac)(struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_deliver_event_up_afrer_cac)(
 			struct wlan_objmgr_pdev *pdev);

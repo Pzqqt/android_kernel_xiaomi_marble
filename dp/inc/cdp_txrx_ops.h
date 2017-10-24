@@ -213,6 +213,8 @@ struct cdp_cmn_ops {
 	void  (*set_pn_check)(struct cdp_vdev *vdev,
 		struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,
 		 uint32_t *rx_pn);
+	QDF_STATUS (*update_config_parameters)(struct cdp_soc *psoc,
+			struct cdp_config_params *params);
 };
 
 struct cdp_ctrl_ops {
@@ -415,6 +417,9 @@ struct cdp_ctrl_ops {
 
 	void (*txrx_update_mgmt_txpow_vdev)(struct cdp_vdev *vdev,
 			uint8_t subtype, uint8_t tx_power);
+
+	void (*txrx_set_pdev_param)(struct cdp_pdev *pdev,
+			enum cdp_pdev_param_type type, uint8_t val);
 };
 
 struct cdp_me_ops {

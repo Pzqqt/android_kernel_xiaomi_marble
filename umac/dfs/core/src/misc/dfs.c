@@ -84,8 +84,11 @@ static os_timer_func(dfs_testtimer_task)
 	 */
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "go back to channel %d",
 			dfs->wlan_dfstest_ieeechan);
-
-	dfs_mlme_start_csa(dfs->dfs_pdev_obj, dfs->wlan_dfstest_ieeechan);
+	dfs_mlme_start_csa(dfs->dfs_pdev_obj,
+			dfs->wlan_dfstest_ieeechan,
+			dfs->dfs_curchan->dfs_ch_freq,
+			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+			dfs->dfs_curchan->dfs_ch_flags);
 }
 
 static inline int dfs_fill_emulate_bang_radar_test(struct wlan_dfs *dfs,

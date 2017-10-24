@@ -1731,6 +1731,56 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 }
 
+#ifdef FEATURE_PERPKT_INFO
+static QDF_STATUS
+dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_tx_desc_s *desc,
+				uint16_t peer_id, uint16_t ppdu_id)
+{
+	struct tx_capture_hdr *ppdu_hdr;
+	struct ethhdr *eh;
+	struct dp_peer *peer = NULL;
+	qdf_nbuf_t netbuf = desc->nbuf;
+
+	if (!desc->pdev->tx_sniffer_enable)
+		return QDF_STATUS_E_NOSUPPORT;
+
+	eh = (struct ethhdr *)(netbuf->data);
+	peer = (peer_id == HTT_INVALID_PEER) ? NULL :
+			dp_peer_find_by_id(soc, peer_id);
+
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Peer Invalid"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!qdf_nbuf_push_head(netbuf, sizeof(struct tx_capture_hdr))) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("No headroom"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	ppdu_hdr = (struct tx_capture_hdr *)qdf_nbuf_data(netbuf);
+	qdf_mem_copy(ppdu_hdr->ta, (eh->h_dest), IEEE80211_ADDR_LEN);
+	ppdu_hdr->ppdu_id = ppdu_id;
+	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
+			IEEE80211_ADDR_LEN);
+
+	dp_wdi_event_handler(WDI_EVENT_TX_DATA, soc,
+			netbuf, peer_id,
+			WDI_NO_VAL, desc->pdev->pdev_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_tx_desc_s *desc,
+				uint16_t peer_id, uint16_t ppdu_id)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 /**
  * dp_tx_comp_free_buf() - Free nbuf associated with the Tx Descriptor
  * @soc: Soc handle
@@ -1743,6 +1793,10 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 {
 	struct dp_vdev *vdev = desc->vdev;
 	qdf_nbuf_t nbuf = desc->nbuf;
+	struct hal_tx_completion_status ts = {0};
+
+	if (desc)
+		hal_tx_comp_get_status(&desc->comp, &ts);
 
 	/* If it is TDLS mgmt, don't unmap or free the frame */
 	if (desc->flags & DP_TX_DESC_FLAG_TDLS_FRAME)
@@ -1768,6 +1822,9 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 		dp_tx_me_free_buf(desc->pdev, desc->me_buffer);
 
 	qdf_nbuf_unmap(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+
+	if (dp_send_compl_to_stack(soc, desc, ts.peer_id, ts.ppdu_id))
+		return;
 
 	if (!vdev->mesh_vdev) {
 		qdf_nbuf_free(nbuf);
