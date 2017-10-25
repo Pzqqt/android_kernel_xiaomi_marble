@@ -622,6 +622,7 @@ static int lpi_pinctrl_remove(struct platform_device *pdev)
 {
 	struct lpi_gpio_state *state = platform_get_drvdata(pdev);
 
+	audio_notifier_deregister("lpi_tlmm");
 	gpiochip_remove(&state->chip);
 	return 0;
 }
