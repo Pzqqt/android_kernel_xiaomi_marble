@@ -49,6 +49,7 @@
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
 #include "cds_config.h"
+#include "qdf_cpuhp.h"
 
 #define TX_POST_EVENT               0x001
 #define TX_SUSPEND_EVENT            0x002
@@ -142,8 +143,8 @@ typedef struct _cds_sched_context {
 	/* Free message queue for OL Rx processing */
 	struct list_head cds_ol_rx_pkt_freeq;
 
-	/* cpu hotplug notifier */
-	struct notifier_block *cpu_hot_plug_notifier;
+	/* The CPU hotplug event registration handle, used to unregister */
+	struct qdf_cpuhp_handler *cpuhp_event_handle;
 
 	/* affinity lock */
 	struct mutex affinity_lock;
