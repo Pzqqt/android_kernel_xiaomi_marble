@@ -2858,6 +2858,26 @@ void wma_hold_req_timer(void *data)
 		else
 			wma_send_msg_high_priority(wma, WMA_DELETE_BSS_RSP,
 						   params, 0);
+	} else if ((tgt_req->msg_type == SIR_HAL_PDEV_SET_HW_MODE) &&
+			(tgt_req->type == WMA_PDEV_SET_HW_MODE_RESP)) {
+		struct sir_set_hw_mode_resp *params =
+			qdf_mem_malloc(sizeof(*params));
+
+		WMA_LOGE(FL("set hw mode req timed out"));
+
+		if (!params)
+			WMA_LOGE("%s: Memory allocation failed", __func__);
+		else {
+			params->status = SET_HW_MODE_STATUS_ECANCELED;
+			params->cfgd_hw_mode_index = 0;
+			params->num_vdev_mac_entries = 0;
+
+			if (wma_crash_on_fw_timeout(wma->fw_timeout_crash) == true)
+				QDF_BUG(0);
+			else
+				wma_send_msg_high_priority(wma,
+					SIR_HAL_PDEV_SET_HW_MODE_RESP, params, 0);
+		}
 	} else {
 		WMA_LOGE(FL("Unhandled timeout for msg_type:%d and type:%d"),
 				tgt_req->msg_type, tgt_req->type);

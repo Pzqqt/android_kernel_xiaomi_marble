@@ -20403,6 +20403,8 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 		policy_mgr_set_hw_mode_change_in_progress(mac->psoc,
 			POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
 		sme_err("Posting to PE failed");
+		wlan_objmgr_vdev_release_ref(command->u.set_hw_mode_cmd.vdev,
+			WLAN_LEGACY_SME_ID);
 		return;
 	}
 	return;
@@ -20413,6 +20415,8 @@ fail:
 	if (!param) {
 		sme_err(
 			"Malloc fail: Fail to send response to SME");
+		wlan_objmgr_vdev_release_ref(command->u.set_hw_mode_cmd.vdev,
+			WLAN_LEGACY_SME_ID);
 		return;
 	}
 	sme_err("Sending set HW fail response to SME");

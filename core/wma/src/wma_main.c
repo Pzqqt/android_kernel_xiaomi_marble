@@ -8140,6 +8140,7 @@ QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 					 struct policy_mgr_hw_mode *msg)
 {
 	struct sir_set_hw_mode_resp *param;
+	struct wma_target_req *timeout_msg;
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA handle is NULL. Cannot issue command",
@@ -8162,6 +8163,14 @@ QDF_STATUS wma_send_pdev_set_hw_mode_cmd(tp_wma_handle wma_handle,
 					    msg->hw_mode_index)) {
 		wma_release_wakelock(&wma_handle->wmi_cmd_rsp_wake_lock);
 		goto fail;
+	}
+	timeout_msg = wma_fill_hold_req(wma_handle, 0,
+			SIR_HAL_PDEV_SET_HW_MODE,
+			WMA_PDEV_SET_HW_MODE_RESP, NULL,
+			WMA_VDEV_HW_MODE_REQUEST_TIMEOUT - 1);
+	if (!timeout_msg) {
+		WMA_LOGE("Failed to allocate request for SIR_HAL_PDEV_SET_HW_MODE");
+		wma_remove_req(wma_handle, 0, WMA_PDEV_SET_HW_MODE_RESP);
 	}
 
 	return QDF_STATUS_SUCCESS;

@@ -2714,6 +2714,8 @@ static int __hdd_stop(struct net_device *dev)
 	if (WLAN_HDD_IS_NDI(adapter))
 		return 0;
 
+	policy_mgr_check_and_stop_opportunistic_timer(hdd_ctx->hdd_psoc);
+
 	/*
 	 * The interface is marked as down for outside world (aka kernel)
 	 * But the driver is pretty much alive inside. The driver needs to
