@@ -81,7 +81,7 @@ enum lpi_gpio_func_index {
  * @function: See lpi_gpio_functions[]
  */
 struct lpi_gpio_pad {
-	u16		offset;
+	u32		offset;
 	bool		output_enabled;
 	bool		value;
 	char __iomem	*base;
