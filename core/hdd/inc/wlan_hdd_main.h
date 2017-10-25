@@ -774,7 +774,7 @@ struct hdd_fw_txrx_stats {
  *           Broadcast uses station ID zero by default.
  * @staType: Type of station i.e. p2p client or infrastructure station
  * @macAddrSTA: MAC address of the station
- * @tlSTAState: Current Station state so HDD knows how to deal with packet
+ * @peer_state: Current Station state so HDD knows how to deal with packet
  *              queue. Most recent states used to change TLSHIM STA state.
  * @isQosEnabled: Track QoS status of station
  * @is_deauth_in_progress: The station entry for which Deauth is in progress
@@ -807,7 +807,7 @@ struct hdd_station_info {
 	uint8_t ucSTAId;
 	eStationType staType;
 	struct qdf_mac_addr macAddrSTA;
-	enum ol_txrx_peer_state tlSTAState;
+	enum ol_txrx_peer_state peer_state;
 	bool isQosEnabled;
 	bool is_deauth_in_progress;
 	uint8_t   nss;

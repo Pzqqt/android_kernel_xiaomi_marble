@@ -370,15 +370,15 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		}
 
 		if ((OL_TXRX_PEER_STATE_CONN !=
-		     adapter->aStaInfo[STAId].tlSTAState)
+		     adapter->aStaInfo[STAId].peer_state)
 		    && (OL_TXRX_PEER_STATE_AUTH !=
-			adapter->aStaInfo[STAId].tlSTAState)) {
+			adapter->aStaInfo[STAId].peer_state)) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: Station not connected yet", __func__);
 			goto drop_pkt;
 		} else if (OL_TXRX_PEER_STATE_CONN ==
-			   adapter->aStaInfo[STAId].tlSTAState) {
+			   adapter->aStaInfo[STAId].peer_state) {
 			if (ntohs(skb->protocol) != HDD_ETHERTYPE_802_1_X) {
 				QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
@@ -980,7 +980,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_AUTH, false);
 
-		adapter->aStaInfo[staId].tlSTAState = OL_TXRX_PEER_STATE_AUTH;
+		adapter->aStaInfo[staId].peer_state = OL_TXRX_PEER_STATE_AUTH;
 		adapter->sessionCtx.ap.uIsAuthenticated = true;
 	} else {
 
@@ -989,7 +989,7 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 
 		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_CONN, false);
-		adapter->aStaInfo[staId].tlSTAState = OL_TXRX_PEER_STATE_CONN;
+		adapter->aStaInfo[staId].peer_state = OL_TXRX_PEER_STATE_CONN;
 
 		adapter->sessionCtx.ap.uIsAuthenticated = false;
 
@@ -1122,7 +1122,7 @@ QDF_STATUS hdd_softap_change_sta_state(struct hdd_adapter *adapter,
 	hdd_info("Station %u changed to state %d", ucSTAId, state);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
-		adapter->aStaInfo[ucSTAId].tlSTAState =
+		adapter->aStaInfo[ucSTAId].peer_state =
 			OL_TXRX_PEER_STATE_AUTH;
 		p2p_peer_authorized(adapter->hdd_vdev, pDestMacAddress->bytes);
 	}

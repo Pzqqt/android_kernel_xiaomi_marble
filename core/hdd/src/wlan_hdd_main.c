@@ -12419,7 +12419,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				sta_id++) {
 				if (!((adapter->aStaInfo[sta_id].in_use)
 				    && (OL_TXRX_PEER_STATE_CONN ==
-				    adapter->aStaInfo[sta_id].tlSTAState)))
+				    adapter->aStaInfo[sta_id].peer_state)))
 					continue;
 
 				sta_mac = (uint8_t *)
