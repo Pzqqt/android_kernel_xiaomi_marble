@@ -1729,7 +1729,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 			sme_remove_bssid_from_scan_list(hdd_ctx->hHal,
 			sta_ctx->conn_info.bssId.bytes);
 		}
-		hdd_ctx->sta_to_adapter[sta_id] = NULL;
+		if (sta_id < HDD_MAX_ADAPTERS)
+			hdd_ctx->sta_to_adapter[sta_id] = NULL;
 	}
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(sta_ctx);
