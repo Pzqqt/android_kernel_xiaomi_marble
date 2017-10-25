@@ -944,7 +944,6 @@ static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
-	qdf_runtime_lock_init(&ctx->roc);
 	qdf_runtime_lock_init(&ctx->dfs);
 
 	wlan_scan_runtime_pm_init(hdd_ctx->hdd_pdev);
@@ -960,7 +959,6 @@ static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
 {
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
-	qdf_runtime_lock_deinit(&ctx->roc);
 	qdf_runtime_lock_deinit(&ctx->dfs);
 
 	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);

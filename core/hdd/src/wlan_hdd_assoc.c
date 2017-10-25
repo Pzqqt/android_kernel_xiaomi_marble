@@ -166,15 +166,11 @@ static void
 hdd_conn_set_authenticated(struct hdd_adapter *adapter, uint8_t authState)
 {
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* save the new connection state */
 	hdd_debug("Authenticated state Changed from oldState:%d to State:%d",
 		   sta_ctx->conn_info.uIsAuthenticated, authState);
 	sta_ctx->conn_info.uIsAuthenticated = authState;
-
-	/* Check is pending ROC request or not when auth state changed */
-	schedule_delayed_work(&hdd_ctx->roc_req_work, 0);
 }
 
 /**
@@ -191,7 +187,6 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 {
 	struct hdd_station_ctx *hdd_sta_ctx =
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* save the new connection state */
 	hdd_debug("%pS Changed conn state from old:%d to new:%d for dev %s",
@@ -202,8 +197,6 @@ void hdd_conn_set_connection_state(struct hdd_adapter *adapter,
 					 hdd_sta_ctx->conn_info.connState,
 					 conn_state);
 	hdd_sta_ctx->conn_info.connState = conn_state;
-
-	schedule_delayed_work(&hdd_ctx->roc_req_work, 0);
 }
 
 /**

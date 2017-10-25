@@ -1819,8 +1819,6 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				return -EOPNOTSUPP;
 			}
 		}
-		if (adapter->is_roc_inprogress)
-			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 next_adapter:
 		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;

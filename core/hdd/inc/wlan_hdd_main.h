@@ -969,7 +969,6 @@ struct hdd_chan_change_params {
  * Prevent Runtime PM for scan
  */
 struct hdd_runtime_pm_context {
-	qdf_runtime_lock_t roc;
 	qdf_runtime_lock_t dfs;
 };
 
@@ -1187,8 +1186,6 @@ struct hdd_adapter {
 	uint64_t prev_fwd_rx_packets;
 	int connection;
 #endif
-	bool is_roc_inprogress;
-
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	qdf_mc_timer_t tx_flow_control_timer;
 	bool tx_flow_timer_initialized;
@@ -1207,12 +1204,6 @@ struct hdd_adapter {
 
 	/* variable for temperature in Celsius */
 	int temperature;
-
-	/* Time stamp for last completed RoC request */
-	uint64_t last_roc_ts;
-
-	/* Time stamp for start RoC request */
-	uint64_t start_roc_ts;
 
 #ifdef WLAN_FEATURE_DSRC
 	/* MAC addresses used for OCB interfaces */
@@ -1652,10 +1643,6 @@ struct hdd_context {
 	/* Time since boot up to extscan start (in micro seconds) */
 	uint64_t ext_scan_start_since_boot;
 	unsigned long g_event_flags;
-	/* RoC request queue and work */
-	struct delayed_work roc_req_work;
-	qdf_spinlock_t hdd_roc_req_q_lock;
-	qdf_list_t hdd_roc_req_q;
 	uint8_t miracast_value;
 
 #ifdef WLAN_NS_OFFLOAD
