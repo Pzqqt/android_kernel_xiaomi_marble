@@ -8143,10 +8143,10 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 pWextState->roamProfile.BSSIDs.bssid->bytes[4],
 			 pWextState->roamProfile.BSSIDs.bssid->bytes[5],
 			 pWextState->roamProfile.MFPEnabled,
-			 adapter->hdd_stats.hddPmfStats.
-			 numUnprotDisassocRx,
-			 adapter->hdd_stats.hddPmfStats.
-			 numUnprotDeauthRx);
+			 adapter->hdd_stats.hdd_pmf_stats.
+			 num_unprot_disassoc_rx,
+			 adapter->hdd_stats.hdd_pmf_stats.
+			 num_unprot_deauth_rx);
 
 		wrqu->data.length = strlen(extra) + 1;
 		break;
