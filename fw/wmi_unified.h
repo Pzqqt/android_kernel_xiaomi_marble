@@ -2768,6 +2768,26 @@ typedef struct {
     wmi_ssid ssids[1];
 } wmi_ssid_list;
 
+/**
+ * WLAN_SCAN_CHAN_MODE Macros defined for A_UINT8 phymode_list[]
+ */
+/** enum WLAN_PHY_MODE _mode starts from 0, but the WMI message requires
+ * 0 to be used to represent unspecified / don't care / default values.
+ * Therefore, WMI phy mode = WLAN phy mode + 1.
+ */
+/** If the received WMI phy mode is 0 then it is ignored by the FW,
+ * and the FW will use any mode as long as the frequency matches.
+ */
+/** The number of phy_mode's (BW+mode) passed in the TLV phymode_list[] must
+ * be equal to num_chan.  (Unless the host does not specify phymode_list values
+ * at all, in which case the number of phymode_list elements will be zero.)
+ * The indexing of the phymode_list[] array corresponds to same index of
+ * the chan_list[] array.
+ */
+#define WMI_SCAN_CHAN_SET_MODE(_c) ((_c) + 1)
+#define WMI_SCAN_CHAN_GET_MODE(_c) ((_c) - 1)
+#define WMI_SCAN_CHAN_MODE_IS_SET(_c) (_c)
+
 /* prefix used by scan requestor ids on the host */
 #define WMI_HOST_SCAN_REQUESTOR_ID_PREFIX 0xA000
 /* prefix used by scan request ids generated on the host */
@@ -2849,11 +2869,12 @@ typedef struct {
 /**
  * TLV (tag length value) parameters follow the scan_cmd
  * structure. The TLV's are:
- *     A_UINT32 channel_list[];
- *     wmi_ssid ssid_list[];
- *     wmi_mac_addr bssid_list[];
- *     A_UINT8 ie_data[];
- *     wmi_vendor_oui vendor_oui[];
+ *     A_UINT32 channel_list[num_chan];
+ *     wmi_ssid ssid_list[num_ssids];
+ *     wmi_mac_addr bssid_list[num_bssid];
+ *     A_UINT8 ie_data[ie_len];
+ *     wmi_vendor_oui vendor_oui[num_vendor_oui];
+ *     A_UINT8 phymode_list[0 or num_chan]; // see WMI_SCAN_CHAN_MODE macros
  */
 } wmi_start_scan_cmd_fixed_param;
 
