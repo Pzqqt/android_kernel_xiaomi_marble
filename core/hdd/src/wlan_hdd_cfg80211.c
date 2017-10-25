@@ -18252,7 +18252,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 				if ((adapter->aStaInfo[i].in_use) &&
 				    (!adapter->aStaInfo[i].
-				     isDeauthInProgress)) {
+				     is_deauth_in_progress)) {
 					qdf_mem_copy(
 						mac,
 						adapter->aStaInfo[i].
@@ -18282,7 +18282,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 							pDelStaParams);
 					if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 						adapter->aStaInfo[i].
-						isDeauthInProgress = true;
+						is_deauth_in_progress = true;
 						qdf_status =
 							qdf_wait_single_event(
 							 &hapd_state->
@@ -18311,7 +18311,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 					HDD_IPA_CLIENT_DISCONNECT, mac);
 			}
 
-			if (adapter->aStaInfo[staId].isDeauthInProgress ==
+			if (adapter->aStaInfo[staId].is_deauth_in_progress ==
 			    true) {
 				hdd_debug("Skip DEL STA as deauth is in progress::"
 					  MAC_ADDRESS_STR,
@@ -18319,7 +18319,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				return -ENOENT;
 			}
 
-			adapter->aStaInfo[staId].isDeauthInProgress = true;
+			adapter->aStaInfo[staId].is_deauth_in_progress = true;
 
 			hdd_debug("Delete STA with MAC::" MAC_ADDRESS_STR,
 			       MAC_ADDR_ARRAY(mac));
@@ -18342,7 +18342,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			qdf_status = hdd_softap_sta_deauth(adapter,
 							   pDelStaParams);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				adapter->aStaInfo[staId].isDeauthInProgress =
+				adapter->aStaInfo[staId].is_deauth_in_progress =
 					false;
 				hdd_debug("STA removal failed for ::"
 					  MAC_ADDRESS_STR,
