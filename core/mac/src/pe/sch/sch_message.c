@@ -254,6 +254,7 @@ sch_get_params(tpAniSirGlobal pMac,
 	for (i = 0; i < 4; i++) {
 		uint8_t data[WNI_CFG_EDCA_ANI_ACBK_LEN];
 		uint32_t len = WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN;
+
 		if (wlan_cfg_get_str
 			    (pMac, (uint16_t) prf[i], (uint8_t *) &data[0],
 			    &len) != eSIR_SUCCESS) {
@@ -539,6 +540,7 @@ get_wmm_local_params(tpAniSirGlobal pMac,
 	for (i = 0; i < 4; i++) {
 		uint8_t data[WNI_CFG_EDCA_ANI_ACBK_LEN];
 		uint32_t len = WNI_CFG_EDCA_ANI_ACBK_LOCAL_LEN;
+
 		if (wlan_cfg_get_str
 			    (pMac, (uint16_t) prf[i], (uint8_t *) &data[0],
 			    &len) != eSIR_SUCCESS) {

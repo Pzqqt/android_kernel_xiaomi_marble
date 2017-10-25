@@ -266,6 +266,7 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
 {
 	uint32_t val;
+
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val)
 		!= eSIR_SUCCESS)
 		pe_err("cfg get assoc sta limit failed");
@@ -1336,6 +1337,7 @@ lim_update_overlap_sta_param(tpAniSirGlobal pMac, tSirMacAddr bssId,
 			     tpLimProtStaParams pStaParams)
 {
 	int i;
+
 	if (!pStaParams->numSta) {
 		qdf_mem_copy(pMac->lim.protStaOverlapCache[0].addr,
 			     bssId, sizeof(tSirMacAddr));
@@ -1466,6 +1468,7 @@ lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 		uint32_t ieLen;
 		uint16_t tsfLater;
 		uint8_t *pIEs;
+
 		ieLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 		tsfLater = WMA_GET_RX_TSF_LATER(pRxPacketInfo);
 		pIEs = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
@@ -1836,6 +1839,7 @@ void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac,
 void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
 {
 	tSirSmeHTProfile *ht_profile;
+
 	if (session == NULL) {
 		pe_err("Invalid Session");
 		return;
@@ -1876,6 +1880,7 @@ static void sir_parse_bcn_fixed_fields(tpAniSirGlobal mac_ctx,
 					uint8_t *buf)
 {
 	tDot11fFfCapabilities dst;
+
 	beacon_struct->timeStamp[0] = lim_get_u32(buf);
 	beacon_struct->timeStamp[1] = lim_get_u32(buf + 4);
 	buf += 8;
@@ -2479,6 +2484,7 @@ QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe)
 QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
 	if (psPe) {
 		if (QDF_IS_STATUS_SUCCESS
 			    (qdf_mutex_release(&psPe->lkPeGlobalLock))) {

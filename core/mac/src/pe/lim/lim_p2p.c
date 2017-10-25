@@ -89,6 +89,7 @@ void lim_convert_active_channel_to_passive_channel(tpAniSirGlobal pMac)
 	uint64_t lastTime = 0;
 	uint64_t timeDiff;
 	uint8_t i;
+
 	currentTime = (uint64_t)qdf_mc_timer_get_system_time();
 	for (i = 1; i < SIR_MAX_24G_5G_CHANNEL_RANGE; i++) {
 		if ((pMac->lim.dfschannelList.timeStamp[i]) != 0) {

@@ -1205,6 +1205,7 @@ static bool __lim_process_sme_start_bss_req(tpAniSirGlobal pMac,
 void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data)
 {
 	uint32_t random[2];
+
 	random[0] = tx_time_get();
 	random[0] |= (random[0] << 15);
 	random[1] = random[0] >> 1;
@@ -2000,6 +2001,7 @@ uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 {
 	uint8_t maxTxPower = 0;
 	uint8_t txPower = QDF_MIN(regMax, (apTxPower));
+
 	txPower = QDF_MIN(txPower, iniTxPower);
 	if ((txPower >= MIN_TX_PWR_CAP) && (txPower <= MAX_TX_PWR_CAP))
 		maxTxPower = txPower;
@@ -2942,6 +2944,7 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		    LIM_IS_AP_ROLE(session_entry)) {
 			if (set_context_req->keyMaterial.key[0].keyLength) {
 				uint8_t key_id;
+
 				key_id =
 					set_context_req->keyMaterial.key[0].keyId;
 				qdf_mem_copy((uint8_t *)
@@ -2950,6 +2953,7 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					sizeof(tSirKeyMaterial));
 			} else {
 				uint32_t i;
+
 				for (i = 0; i < SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
 				     i++) {
 					qdf_mem_copy((uint8_t *)
@@ -3185,6 +3189,7 @@ lim_get_wpspbc_sessions_end:
 static void __lim_counter_measures(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	tSirMacAddr mac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
 	if (LIM_IS_AP_ROLE(psessionEntry))
 		lim_send_disassoc_mgmt_frame(pMac, eSIR_MAC_MIC_FAILURE_REASON,
 					     mac, psessionEntry, false);
@@ -3270,6 +3275,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	if (!LIM_IS_IBSS_ROLE(psessionEntry) &&
 	    !LIM_IS_NDI_ROLE(psessionEntry)) {
 		tSirMacAddr bcAddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+
 		if (stopBssReq.reasonCode == eSIR_SME_MIC_COUNTER_MEASURES)
 			/* Send disassoc all stations associated thru TKIP */
 			__lim_counter_measures(pMac, psessionEntry);
@@ -3777,6 +3783,7 @@ void lim_process_sme_addts_rsp_timeout(tpAniSirGlobal pMac, uint32_t param)
 {
 	/* fetch the sessionEntry based on the sessionId */
 	tpPESession psessionEntry;
+
 	psessionEntry = pe_find_session_by_session_id(pMac,
 				pMac->lim.limTimers.gLimAddtsRspTimer.
 				sessionId);
@@ -4479,6 +4486,7 @@ __lim_process_sme_reset_ap_caps_change(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	tpSirResetAPCapsChange pResetCapsChange;
 	tpPESession psessionEntry;
 	uint8_t sessionId = 0;
+
 	if (pMsgBuf == NULL) {
 		pe_err("Buffer is Pointing to NULL");
 		return;

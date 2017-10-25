@@ -209,6 +209,7 @@ static os_timer_func(dfs_testtimer_task)
 static int dfs_get_debug_info(struct ieee80211com *ic, int type, void *data)
 {
 	struct ath_dfs *dfs = (struct ath_dfs *)ic->ic_dfs;
+
 	if (data) {
 		*(uint32_t *) data = dfs->dfs_proc_phyerr;
 	}
@@ -529,6 +530,7 @@ void dfs_detach(struct ieee80211com *ic)
 	OS_CANCEL_TIMER(&dfs->sc_dfs_war_timer);
 	if (dfs->dfs_nol != NULL) {
 		struct dfs_nolelem *nol, *next;
+
 		nol = dfs->dfs_nol;
 		/* Bug 29099 - each NOL element has its own timer, cancel it and
 		   free the element */
@@ -644,17 +646,15 @@ int dfs_radar_enable(struct ieee80211com *ic,
 	int is_ext_ch;
 	int is_fastclk = 0;
 	int radar_filters_init_status = 0;
-	/* uint32_t                        rfilt; */
 	struct ath_dfs *dfs;
 	struct dfs_state *rs_pri, *rs_ext;
 	struct dfs_ieee80211_channel *chan = ic->ic_curchan, *ext_ch = NULL;
+
 	is_ext_ch = IEEE80211_IS_CHAN_11N_HT40(ic->ic_curchan);
 	dfs = (struct ath_dfs *)ic->ic_dfs;
 	rs_pri = NULL;
 	rs_ext = NULL;
-#if 0
-	int i;
-#endif
+
 	if (dfs == NULL) {
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS, "%s: ic_dfs is NULL\n",
 			    __func__);
@@ -1110,12 +1110,14 @@ dfs_get_thresholds(struct ieee80211com *ic, struct ath_dfs_phyerr_param *param)
 uint16_t dfs_usenol(struct ieee80211com *ic)
 {
 	struct ath_dfs *dfs = (struct ath_dfs *)ic->ic_dfs;
+
 	return dfs ? (uint16_t) dfs->dfs_rinfo.rn_use_nol : 0;
 }
 
 uint16_t dfs_isdfsregdomain(struct ieee80211com *ic)
 {
 	struct ath_dfs *dfs = (struct ath_dfs *)ic->ic_dfs;
+
 	return dfs ? dfs->dfsdomain : 0;
 }
 

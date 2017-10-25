@@ -939,6 +939,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 
 	{
 		tpSirMacMgmtHdr pMacHdr;
+
 		pMacHdr = (tpSirMacMgmtHdr) pFrame;
 		pMacHdr->fc.toDS = ANI_TXDIR_IBSS;
 		pMacHdr->fc.powerMgmt = 0;
@@ -2251,6 +2252,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 	uint8_t a_rateindex = 0;
 	uint8_t b_rateindex = 0;
 	uint8_t nss;
+
 	is_a_rate = 0;
 	temp_rate_set2.numRates = 0;
 
@@ -2651,6 +2653,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	tSirTdlsAddStaRsp *addStaRsp = NULL;
+
 	mmhMsg.type = eWNI_SME_TDLS_ADD_STA_RSP;
 
 	addStaRsp = qdf_mem_malloc(sizeof(tSirTdlsAddStaRsp));
@@ -2921,6 +2924,7 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 {
 	struct scheduler_msg mmhMsg = { 0 };
 	tSirTdlsDelStaRsp *pDelSta = NULL;
+
 	mmhMsg.type = eWNI_SME_TDLS_DEL_STA_RSP;
 
 	pDelSta = qdf_mem_malloc(sizeof(tSirTdlsDelStaRsp));

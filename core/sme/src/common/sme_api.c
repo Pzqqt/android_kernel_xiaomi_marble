@@ -4347,6 +4347,7 @@ QDF_STATUS sme_wow_add_pattern(tHalHandle hal,
 	struct wow_add_pattern *ptrn;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
 	struct scheduler_msg msg_q = {0};
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			TRACE_CODE_SME_RX_HDD_WOWL_ADDBCAST_PATTERN, session_id,
 			0));
@@ -4387,6 +4388,7 @@ QDF_STATUS sme_wow_delete_pattern(tHalHandle hal,
 	struct wow_delete_pattern *delete_ptrn;
 	tSirRetStatus ret_code = eSIR_SUCCESS;
 	struct scheduler_msg msg_q = {0};
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_WOWL_DELBCAST_PATTERN, sessionId,
 			 0));

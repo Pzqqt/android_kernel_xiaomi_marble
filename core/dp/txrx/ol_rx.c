@@ -1700,6 +1700,7 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 void ol_htt_mon_note_chan(struct cdp_pdev *ppdev, int mon_ch)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
 	htt_rx_mon_note_capture_channel(pdev->htt_pdev, mon_ch);
 }
 

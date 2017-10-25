@@ -2282,6 +2282,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	uint8_t vdev_id;
 	QDF_STATUS status;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+
 	vdev_id = edca_params->bssIdx;
 
 	for (ac = 0; ac < WME_NUM_AC; ac++) {

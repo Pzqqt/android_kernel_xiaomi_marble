@@ -2260,6 +2260,7 @@ void wma_process_roam_synch_fail(WMA_HANDLE handle,
 				 struct roam_offload_synch_fail *synch_fail)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not clean-up roam synch",
 			__func__);

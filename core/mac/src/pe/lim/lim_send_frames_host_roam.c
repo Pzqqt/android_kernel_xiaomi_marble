@@ -480,6 +480,7 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
 {
 	tLimMlmReassocCnf mlmReassocCnf;        /* keep sme */
 	tLimMlmReassocReq *pTmpMlmReassocReq = NULL;
+
 	if (NULL == pTmpMlmReassocReq) {
 		pTmpMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
 		if (NULL == pTmpMlmReassocReq)

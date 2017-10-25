@@ -619,6 +619,7 @@ void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		int i;
+
 		for (i = 0; i < QDF_ARRAY_SIZE(peer->txqs); i++)
 			ol_txrx_peer_tid_unpause_base(pdev, peer, i);
 	}
@@ -834,6 +835,7 @@ ol_txrx_bad_peer_txctl_set_setting(struct cdp_pdev *ppdev,
 				   int enable, int period, int txq_limit)
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
 	if (enable)
 		pdev->tx_peer_bal.enabled = ol_tx_peer_bal_enable;
 	else
@@ -1781,6 +1783,7 @@ void ol_txrx_vdev_unpause(struct cdp_vdev *pvdev, uint32_t reason)
 void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
+
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	qdf_timer_stop(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
@@ -2234,6 +2237,7 @@ u_int32_t ol_tx_txq_group_credit_limit(
 	for (i = 0; i < OL_TX_MAX_GROUPS_PER_QUEUE; i++) {
 		if (txq->group_ptrs[i]) {
 			int group_credit;
+
 			group_credit = qdf_atomic_read(
 					&txq->group_ptrs[i]->credit);
 			updated_credit = QDF_MIN(updated_credit, group_credit);

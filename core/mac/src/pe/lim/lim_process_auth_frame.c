@@ -1273,6 +1273,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		if (LIM_IS_AP_ROLE(pe_session)) {
 			tpSirKeys key_ptr;
+
 			key_ptr = &pe_session->WEPKeyMaterial[key_id].key[0];
 			qdf_mem_copy(defaultkey, key_ptr->key,
 					key_ptr->keyLength);

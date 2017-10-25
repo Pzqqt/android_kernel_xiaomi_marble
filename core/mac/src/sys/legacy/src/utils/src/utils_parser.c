@@ -93,6 +93,7 @@ tSirRetStatus convert_wpa(tpAniSirGlobal pMac,
 	/* array... */
 	uint8_t buffer[257];
 	uint32_t status, written = 0, nbuffer = 257;
+
 	status = dot11f_pack_ie_wpa(pMac, pNew, buffer, nbuffer, &written);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to re-pack the WPA IE (0x%0x8)", status);
@@ -198,6 +199,7 @@ tSirRetStatus convert_rsn(tpAniSirGlobal pMac,
 {
 	uint8_t buffer[257];
 	uint32_t status, written = 0, nbuffer = 257;
+
 	status = dot11f_pack_ie_rsn(pMac, pNew, buffer, nbuffer, &written);
 	if (DOT11F_FAILED(status)) {
 		pe_err("Failed to re-pack the RSN IE (0x%0x8)", status);

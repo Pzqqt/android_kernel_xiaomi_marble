@@ -2894,6 +2894,7 @@ QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 void wma_calculate_and_update_conn_state(tp_wma_handle wma)
 {
 	int i;
+
 	for (i = 0; i < wma->max_bssid; i++) {
 		wma->interfaces[i].conn_state =
 			!!(wma_is_vdev_up(i) &&
@@ -2913,6 +2914,7 @@ void wma_calculate_and_update_conn_state(tp_wma_handle wma)
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask)
 {
 	int i;
+
 	for (i = 0; i < wma->max_bssid; i++) {
 		if (conn_mask & (1 << i))
 			wma->interfaces[i].conn_state = true;

@@ -212,6 +212,7 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	tpSwitchChannelParams pChnlParams = NULL;
 	struct scheduler_msg msgQ = {0};
 	tpPESession pSessionEntry;
+
 	pSessionEntry = pe_find_session_by_session_id(pMac, peSessionId);
 	if (pSessionEntry == NULL) {
 		pe_err("Unable to get Session for session Id %d",

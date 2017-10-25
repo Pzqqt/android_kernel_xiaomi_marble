@@ -129,6 +129,7 @@ void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 		tpDphHashNode pStaDs;
 		tSirRetStatus retStatus = eSIR_SUCCESS;
 		tpSchBeaconStruct beacon_struct;
+
 		beacon_struct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 		if (NULL == beacon_struct) {
 			pe_err("beaconStruct alloc failed");
@@ -259,6 +260,7 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac,
 		tpDphHashNode pStaDs;
 		tSirRetStatus retStatus = eSIR_SUCCESS;
 		tSchBeaconStruct *pBeaconStruct;
+
 		pBeaconStruct =
 			qdf_mem_malloc(sizeof(tSchBeaconStruct));
 		if (NULL == pBeaconStruct) {

@@ -7123,6 +7123,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
 	struct cdp_vdev *txrx_vdev_handle = NULL;
+
 	extern uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 

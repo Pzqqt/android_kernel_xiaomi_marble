@@ -134,6 +134,7 @@ uint8_t pe_get_current_stas_count(tpAniSirGlobal mac_ctx)
 {
 	uint8_t i;
 	uint8_t stacount = 0;
+
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++)
 		if (mac_ctx->lim.gpSession[i].valid == true)
 			stacount +=
