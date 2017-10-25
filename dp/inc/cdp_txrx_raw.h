@@ -38,9 +38,18 @@
 static inline int cdp_get_nwifi_mode(ol_txrx_soc_handle soc,
 	struct cdp_vdev *vdev)
 {
-	if (soc->ops->raw_ops->txrx_get_nwifi_mode)
-		return soc->ops->raw_ops->txrx_get_nwifi_mode(vdev);
-	return 0;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->raw_ops ||
+	    !soc->ops->raw_ops->txrx_get_nwifi_mode)
+		return 0;
+
+	return soc->ops->raw_ops->txrx_get_nwifi_mode(vdev);
 }
 
 /**
@@ -60,13 +69,18 @@ cdp_rawsim_get_astentry (ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 			qdf_nbuf_t *pnbuf, struct cdp_raw_ast *raw_ast)
 {
 
-	if (!soc || !soc->ops || !soc->ops->raw_ops)
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->raw_ops ||
+	    !soc->ops->raw_ops->rsim_get_astentry)
 		return;
 
-	if (soc->ops->raw_ops->rsim_get_astentry)
-		soc->ops->raw_ops->rsim_get_astentry(vdev, pnbuf, raw_ast);
-
-	return;
+	soc->ops->raw_ops->rsim_get_astentry(vdev, pnbuf, raw_ast);
 }
 
 #endif

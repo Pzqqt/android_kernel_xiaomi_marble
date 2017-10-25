@@ -61,7 +61,7 @@ cdp_tx_non_std(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 		enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
 	if (!soc || !soc->ops || !soc->ops->misc_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
 		return NULL;
 	}
@@ -180,12 +180,18 @@ cdp_post_data_stall_event(ol_txrx_soc_handle soc,
 			  uint32_t pdev_id, uint32_t vdev_id_bitmap,
 			  enum data_stall_log_recovery_type recovery_type)
 {
-	if (!soc || !soc->ops || !soc->ops->misc_ops)
+	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
 
-	if (soc->ops->misc_ops->txrx_post_data_stall_event)
-		soc->ops->misc_ops->txrx_post_data_stall_event(
+	if (!soc->ops->misc_ops ||
+	    !soc->ops->misc_ops->txrx_post_data_stall_event)
+		return;
+
+	soc->ops->misc_ops->txrx_post_data_stall_event(
 				indicator, data_stall_type, pdev_id,
 				vdev_id_bitmap, recovery_type);
 }

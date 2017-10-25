@@ -48,10 +48,9 @@ cdp_set_ocb_chan_info(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
 	}
 
 	if (soc->ops->ocb_ops->set_ocb_chan_info)
-		return soc->ops->ocb_ops->set_ocb_chan_info(vdev,
+		soc->ops->ocb_ops->set_ocb_chan_info(vdev,
 			ocb_set_chan);
 
-	return;
 }
 /**
  * cdp_get_ocb_chan_info() - return handle to vdev ocb_channel_info

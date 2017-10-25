@@ -36,18 +36,37 @@
 static inline void
 cdp_clear_stats(ol_txrx_soc_handle soc, uint16_t bitmap)
 {
-	if (soc->ops->mob_stats_ops->clear_stats)
-		return soc->ops->mob_stats_ops->clear_stats(bitmap);
-	return;
+
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mob_stats_ops ||
+	    !soc->ops->mob_stats_ops->clear_stats)
+		return;
+
+	soc->ops->mob_stats_ops->clear_stats(bitmap);
 }
 
 static inline int
 cdp_stats(ol_txrx_soc_handle soc, uint8_t vdev_id, char *buffer,
 		unsigned int buf_len)
 {
-	if (soc->ops->mob_stats_ops->stats)
-		return soc->ops->mob_stats_ops->stats(vdev_id, buffer, buf_len);
-	return 0;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->mob_stats_ops ||
+	    !soc->ops->mob_stats_ops->stats)
+		return 0;
+
+	return soc->ops->mob_stats_ops->stats(vdev_id, buffer, buf_len);
 }
 
 #endif /* _CDP_TXRX_STATS_H_ */
