@@ -2129,6 +2129,19 @@ void policy_mgr_set_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc,
  * Return: conc_system_pref
  */
 uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc);
+/**
+ * policy_mgr_check_and_stop_opportunistic_timer - Get current
+ * state of opportunistic timer, if running, stop it and take
+ * action
+ * @psoc: soc pointer
+ *
+ * Get the current state of opportunistic timer, if it is
+ * running, stop it and take action.
+ *
+ * Return: None
+ */
+void policy_mgr_check_and_stop_opportunistic_timer(
+	struct wlan_objmgr_psoc *psoc);
 
 /**
  * policy_mgr_set_weight_of_dfs_passive_channels_to_zero() - set weight of dfs

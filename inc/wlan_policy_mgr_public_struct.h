@@ -896,6 +896,7 @@ struct policy_mgr_hw_mode {
 	void *set_hw_mode_cb;
 	enum policy_mgr_conn_update_reason reason;
 	uint32_t session_id;
+	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *context;
 };
 
