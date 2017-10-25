@@ -1092,6 +1092,23 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 	pm_dbs_opportunistic_timer_handler((void *)psoc);
 }
 
+void policy_mgr_check_and_stop_opportunistic_timer(
+	struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+	if (QDF_TIMER_STATE_RUNNING ==
+		pm_ctx->dbs_opportunistic_timer.state) {
+		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
+		pm_dbs_opportunistic_timer_handler((void *)psoc);
+	}
+}
+
 void policy_mgr_set_hw_mode_change_in_progress(
 	struct wlan_objmgr_psoc *psoc, enum policy_mgr_hw_mode_change value)
 {
