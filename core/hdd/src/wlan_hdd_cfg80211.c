@@ -4817,10 +4817,10 @@ static struct hdd_station_info *hdd_get_stainfo(struct hdd_adapter *adapter,
 	int i;
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		if (!qdf_mem_cmp(&adapter->aStaInfo[i].sta_mac,
+		if (!qdf_mem_cmp(&adapter->sta_info[i].sta_mac,
 				 &mac_addr,
 				 QDF_MAC_ADDR_SIZE))
-			stainfo = &adapter->aStaInfo[i];
+			stainfo = &adapter->sta_info[i];
 	}
 
 	return stainfo;
@@ -7894,11 +7894,11 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		   adapter->device_mode == QDF_SAP_MODE) {
 
 		for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-			if (adapter->aStaInfo[sta_id].in_use &&
+			if (adapter->sta_info[sta_id].in_use &&
 			    !qdf_is_macaddr_broadcast(
-				&adapter->aStaInfo[sta_id].sta_mac) &&
+				&adapter->sta_info[sta_id].sta_mac) &&
 			    !qdf_mem_cmp(
-				&adapter->aStaInfo[sta_id].sta_mac.bytes,
+				&adapter->sta_info[sta_id].sta_mac.bytes,
 				peer_mac, QDF_MAC_ADDR_SIZE))
 				break;
 		}
@@ -7909,10 +7909,10 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 			return -EINVAL;
 		}
 
-		nss = adapter->aStaInfo[sta_id].nss;
+		nss = adapter->sta_info[sta_id].nss;
 		freq = cds_chan_to_freq(
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operatingChannel);
-		rate_flags = adapter->aStaInfo[sta_id].rate_flags;
+		rate_flags = adapter->sta_info[sta_id].rate_flags;
 	} else {
 		hdd_err("Not Associated! with mac "MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(peer_mac));
@@ -18250,18 +18250,18 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			uint16_t i;
 
 			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-				if ((adapter->aStaInfo[i].in_use) &&
-				    (!adapter->aStaInfo[i].
+				if ((adapter->sta_info[i].in_use) &&
+				    (!adapter->sta_info[i].
 				     is_deauth_in_progress)) {
 					qdf_mem_copy(
 						mac,
-						adapter->aStaInfo[i].
+						adapter->sta_info[i].
 							sta_mac.bytes,
 						QDF_MAC_ADDR_SIZE);
 					if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
 						hdd_ipa_wlan_evt(adapter,
 							adapter->
-								 aStaInfo[i].
+								 sta_info[i].
 								 sta_id,
 							HDD_IPA_CLIENT_DISCONNECT,
 							mac);
@@ -18281,7 +18281,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						hdd_softap_sta_deauth(adapter,
 							pDelStaParams);
 					if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
-						adapter->aStaInfo[i].
+						adapter->sta_info[i].
 						is_deauth_in_progress = true;
 						qdf_status =
 							qdf_wait_single_event(
@@ -18311,7 +18311,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 					HDD_IPA_CLIENT_DISCONNECT, mac);
 			}
 
-			if (adapter->aStaInfo[staId].is_deauth_in_progress ==
+			if (adapter->sta_info[staId].is_deauth_in_progress ==
 			    true) {
 				hdd_debug("Skip DEL STA as deauth is in progress::"
 					  MAC_ADDRESS_STR,
@@ -18319,7 +18319,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				return -ENOENT;
 			}
 
-			adapter->aStaInfo[staId].is_deauth_in_progress = true;
+			adapter->sta_info[staId].is_deauth_in_progress = true;
 
 			hdd_debug("Delete STA with MAC::" MAC_ADDRESS_STR,
 			       MAC_ADDR_ARRAY(mac));
@@ -18342,7 +18342,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			qdf_status = hdd_softap_sta_deauth(adapter,
 							   pDelStaParams);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				adapter->aStaInfo[staId].is_deauth_in_progress =
+				adapter->sta_info[staId].is_deauth_in_progress =
 					false;
 				hdd_debug("STA removal failed for ::"
 					  MAC_ADDRESS_STR,
