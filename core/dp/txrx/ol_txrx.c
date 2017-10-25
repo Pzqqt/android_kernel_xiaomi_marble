@@ -2948,6 +2948,7 @@ ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	ol_txrx_peer_handle peer, temp;
+	int self_removed = 0;
 	/* remove all remote peers for vdev */
 	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 
@@ -2964,15 +2965,17 @@ ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 		}
 		/* self peer is deleted last */
 		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
-			ol_txrx_info_high(
-				   "%s: self peer removed by caller ",
-				   __func__);
+			self_removed = 1;
 			break;
 		}
 		temp = peer;
 	}
 
 	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+
+	if (self_removed)
+		ol_txrx_info("%s: self peer removed by caller ",
+				   __func__);
 
 	if (remove_last_peer) {
 		/* remove IBSS bss peer last */
