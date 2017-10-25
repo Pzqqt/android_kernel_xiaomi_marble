@@ -6159,23 +6159,12 @@ static void hdd_skip_acs_scan_timer_handler(void *data)
 #endif
 
 #ifdef QCA_HT_2040_COEX
-/**
- * hdd_wlan_set_ht2040_mode() - notify FW with HT20/HT40 mode
- * @adapter: pointer to adapter
- * @staId: station id
- * @macAddrSTA: station MAC address
- * @channel_type: channel type
- *
- * This function notifies FW with HT20/HT40 mode
- *
- * Return: 0 if successful, error number otherwise
- */
-int hdd_wlan_set_ht2040_mode(struct hdd_adapter *adapter, uint16_t staId,
-			     struct qdf_mac_addr macAddrSTA, int channel_type)
+int hdd_wlan_set_ht2040_mode(struct hdd_adapter *adapter, uint16_t sta_id,
+			     struct qdf_mac_addr sta_mac, int channel_type)
 {
 	int status;
 	QDF_STATUS qdf_status;
-	struct hdd_context *hdd_ctx = NULL;
+	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -6186,7 +6175,7 @@ int hdd_wlan_set_ht2040_mode(struct hdd_adapter *adapter, uint16_t staId,
 	if (!hdd_ctx->hHal)
 		return -EINVAL;
 
-	qdf_status = sme_notify_ht2040_mode(hdd_ctx->hHal, staId, macAddrSTA,
+	qdf_status = sme_notify_ht2040_mode(hdd_ctx->hHal, sta_id, sta_mac,
 					    adapter->sessionId, channel_type);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		hdd_err("Fail to send notification with ht2040 mode");
