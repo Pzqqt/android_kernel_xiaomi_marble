@@ -17004,7 +17004,7 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		} else if (0 != status) {
 			hdd_err("sme_roam_disconnect failure, status: %d",
 				(int)status);
-			sta_ctx->staDebugState = status;
+			sta_ctx->sta_debug_state = status;
 			result = -EINVAL;
 			goto disconnected;
 		}
@@ -17013,8 +17013,8 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 			&adapter->disconnect_comp_var,
 			msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
 		if (!rc && (QDF_STATUS_CMD_NOT_QUEUED != status)) {
-			hdd_err("Sme disconnect event timed out session Id: %d staDebugState: %d",
-				adapter->sessionId, sta_ctx->staDebugState);
+			hdd_err("Sme disconnect event timed out session Id: %d sta_debug_state: %d",
+				adapter->sessionId, sta_ctx->sta_debug_state);
 			result = -ETIMEDOUT;
 		}
 	} else if (eConnectionState_Disconnecting ==
@@ -17022,8 +17022,8 @@ int wlan_hdd_try_disconnect(struct hdd_adapter *adapter)
 		rc = wait_for_completion_timeout(&adapter->disconnect_comp_var,
 				msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
 		if (!rc) {
-			hdd_err("Disconnect event timed out session Id: %d staDebugState: %d",
-				adapter->sessionId, sta_ctx->staDebugState);
+			hdd_err("Disconnect event timed out session Id: %d sta_debug_state: %d",
+				adapter->sessionId, sta_ctx->sta_debug_state);
 			result = -ETIMEDOUT;
 		}
 	}
@@ -17420,7 +17420,7 @@ static int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason)
 		hdd_debug("Already disconnected or connect was in sme/roam pending list and removed by disconnect");
 	} else if (0 != status) {
 		hdd_err("csr_roam_disconnect failure, status: %d", (int)status);
-		sta_ctx->staDebugState = status;
+		sta_ctx->sta_debug_state = status;
 		result = -EINVAL;
 		goto disconnected;
 	}
