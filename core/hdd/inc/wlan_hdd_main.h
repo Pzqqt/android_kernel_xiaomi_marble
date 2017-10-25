@@ -772,7 +772,7 @@ struct hdd_fw_txrx_stats {
  * @in_use: Is the station entry in use?
  * @sta_id: Station ID reported back from HAL (through SAP).
  *           Broadcast uses station ID zero by default.
- * @staType: Type of station i.e. p2p client or infrastructure station
+ * @sta_type: Type of station i.e. p2p client or infrastructure station
  * @sta_mac: MAC address of the station
  * @peer_state: Current Station state so HDD knows how to deal with packet
  *              queue. Most recent states used to change TLSHIM STA state.
@@ -805,7 +805,7 @@ struct hdd_fw_txrx_stats {
 struct hdd_station_info {
 	bool in_use;
 	uint8_t sta_id;
-	eStationType staType;
+	eStationType sta_type;
 	struct qdf_mac_addr sta_mac;
 	enum ol_txrx_peer_state peer_state;
 	bool is_qos_enabled;
