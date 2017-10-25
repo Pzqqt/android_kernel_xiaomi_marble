@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -299,7 +299,7 @@ struct ath_pktlog_buf {
 
 #define PKTLOG_MOV_RD_IDX(_rd_offset, _log_buf, _log_size)  \
 	do { \
-		if((_rd_offset + sizeof(struct ath_pktlog_hdr) + \
+		if ((_rd_offset + sizeof(struct ath_pktlog_hdr) + \
 		    ((struct ath_pktlog_hdr *)((_log_buf)->log_data + \
 					       (_rd_offset)))->size) <= _log_size) { \
 			_rd_offset = ((_rd_offset) + sizeof(struct ath_pktlog_hdr) + \
@@ -311,7 +311,7 @@ struct ath_pktlog_buf {
 		} \
 		(_rd_offset) = (((_log_size) - (_rd_offset)) >=	\
 				sizeof(struct ath_pktlog_hdr)) ? _rd_offset : 0; \
-	} while(0)
+	} while (0)
 
 /**
  * enum tx_pkt_fate - tx packet fate

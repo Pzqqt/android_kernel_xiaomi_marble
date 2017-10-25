@@ -1154,9 +1154,9 @@ void update_fils_data(struct sir_fils_indication *fils_ind,
 				 tDot11fIEfils_indication * fils_indication);
 #endif
 #ifdef WLAN_FEATURE_11AX
-QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal , tpPESession ,
+QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal, tpPESession,
 				   tDot11fIEhe_cap *);
-QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal , tpPESession ,
+QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal, tpPESession,
 					tDot11fIEhe_op *);
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 QDF_STATUS populate_dot11f_he_bss_color_change(tpAniSirGlobal mac_ctx,

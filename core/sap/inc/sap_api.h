@@ -424,7 +424,7 @@ struct sap_roc_ready_ind_s {
  * @channellist: acs scan channels
  * @num_of_channels: number of channels
  */
-struct sap_acs_scan_complete_event{
+struct sap_acs_scan_complete_event {
 	uint8_t status;
 	uint8_t *channellist;
 	uint8_t num_of_channels;

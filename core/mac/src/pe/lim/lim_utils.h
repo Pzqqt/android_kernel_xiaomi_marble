@@ -1179,7 +1179,7 @@ static inline QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
  * Return: void
  */
 void lim_assoc_rej_add_to_rssi_based_reject_list(tpAniSirGlobal mac_ctx,
-	tDot11fTLVrssi_assoc_rej  *rssi_assoc_rej,
+	tDot11fTLVrssi_assoc_rej *rssi_assoc_rej,
 	tSirMacAddr bssid, int8_t rssi);
 
 /**

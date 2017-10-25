@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2014-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -233,7 +233,7 @@ struct ieee80211_ctlframe_addr2 {
 #define IEEE80211_SEQ_SEQ_SHIFT             4
 #define IEEE80211_SEQ_MAX                   4096
 
-#define IEEE80211_SEQ_LEQ(a,b)  ((int)((a)-(b)) <= 0)
+#define IEEE80211_SEQ_LEQ(a, b)  ((int)((a) - (b)) <= 0)
 
 #define IEEE80211_QOS_TXOP                  0x00ff
 
@@ -462,18 +462,18 @@ struct ieee80211_wme_param {
 #define WME_CAPINFO_UAPSD_MAXSP_MASK            0x3
 #define WME_CAPINFO_IE_OFFSET                   8
 #define WME_UAPSD_MAXSP(_qosinfo) (((_qosinfo) >> WME_CAPINFO_UAPSD_MAXSP_SHIFT) & WME_CAPINFO_UAPSD_MAXSP_MASK)
-#define WME_UAPSD_AC_ENABLED(_ac, _qosinfo) ( (1<<(3 - (_ac))) &   \
-					      (((_qosinfo) >> WME_CAPINFO_UAPSD_ACFLAGS_SHIFT) & WME_CAPINFO_UAPSD_ACFLAGS_MASK) )
+#define WME_UAPSD_AC_ENABLED(_ac, _qosinfo) ((1 << (3 - (_ac))) &   \
+					      (((_qosinfo) >> WME_CAPINFO_UAPSD_ACFLAGS_SHIFT) & WME_CAPINFO_UAPSD_ACFLAGS_MASK))
 
 /* Mask used to determined whether all queues are UAPSD-enabled */
 #define WME_CAPINFO_UAPSD_ALL                   (WME_CAPINFO_UAPSD_VO |	\
 						 WME_CAPINFO_UAPSD_VI |	\
 						 WME_CAPINFO_UAPSD_BK |	\
 						 WME_CAPINFO_UAPSD_BE)
-#define WME_CAPINFO_UAPSD_NONE                  0
+#define WME_CAPINFO_UAPSD_NONE          0
 
 #define WME_UAPSD_AC_MAX_VAL            1
-#define WME_UAPSD_AC_INVAL                      WME_UAPSD_AC_MAX_VAL+1
+#define WME_UAPSD_AC_INVAL              (WME_UAPSD_AC_MAX_VAL + 1)
 
 /*
  * Atheros Advanced Capability information element.
@@ -1840,7 +1840,7 @@ enum {
 #define IEEE80211_AID_MAX       2007
 #define IEEE80211_AID_DEF       128
 
-#define IEEE80211_AID(b)    ((b) &~0xc000)
+#define IEEE80211_AID(b)    ((b) & ~0xc000)
 
 /*
  * RTS frame length parameters.  The default is specified in

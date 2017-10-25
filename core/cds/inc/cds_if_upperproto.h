@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014, 2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -233,6 +233,6 @@ struct igmp_v3_report {
 };
 
 /* Calculate the group record length*/
-#define IGMPV3_GRP_REC_LEN(x) (8 + (4 * x->grec_nsrcs) + (4 * x->grec_auxwords) )
+#define IGMPV3_GRP_REC_LEN(x) (8 + (4 * x->grec_nsrcs) + (4 * x->grec_auxwords))
 
 #endif /* _NET_IF_ETHERSUBR_H_ */
