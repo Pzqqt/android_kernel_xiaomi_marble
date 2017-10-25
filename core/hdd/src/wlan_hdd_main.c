@@ -11054,14 +11054,13 @@ void hdd_deinit(void)
 	hdd_deinit_wowl();
 	qdf_timer_free(&hdd_drv_ops_inactivity_timer);
 
-	hdd_qdf_print_deinit();
+	wlan_destroy_bug_report_lock();
+	cds_deinit();
 
+	hdd_qdf_print_deinit();
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_deinit_svc();
 #endif
-
-	wlan_destroy_bug_report_lock();
-	cds_deinit();
 }
 
 #ifdef QCA_WIFI_NAPIER_EMULATION
