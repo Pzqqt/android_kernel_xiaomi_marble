@@ -3062,7 +3062,7 @@ static int hdd_ipa_uc_disconnect_client(struct hdd_adapter *adapter)
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 		if (qdf_is_macaddr_broadcast(&adapter->aStaInfo[i].macAddrSTA))
 			continue;
-		if ((adapter->aStaInfo[i].isUsed) &&
+		if ((adapter->aStaInfo[i].in_use) &&
 		   (!adapter->aStaInfo[i].isDeauthInProgress) &&
 		   hdd_ipa->sap_num_connected_sta) {
 			hdd_ipa_uc_send_evt(adapter, WLAN_CLIENT_DISCONNECT,

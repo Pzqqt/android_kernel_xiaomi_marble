@@ -7894,7 +7894,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		   adapter->device_mode == QDF_SAP_MODE) {
 
 		for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
-			if (adapter->aStaInfo[sta_id].isUsed &&
+			if (adapter->aStaInfo[sta_id].in_use &&
 			    !qdf_is_macaddr_broadcast(
 				&adapter->aStaInfo[sta_id].macAddrSTA) &&
 			    !qdf_mem_cmp(
@@ -18250,7 +18250,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			uint16_t i;
 
 			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-				if ((adapter->aStaInfo[i].isUsed) &&
+				if ((adapter->aStaInfo[i].in_use) &&
 				    (!adapter->aStaInfo[i].
 				     isDeauthInProgress)) {
 					qdf_mem_copy(
