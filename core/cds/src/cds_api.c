@@ -410,7 +410,7 @@ cds_set_ac_specs_params(struct cds_config_info *cds_cfg)
  */
 QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	struct cds_config_info *cds_cfg;
 	qdf_device_t qdf_ctx;
@@ -439,37 +439,40 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	cds_init_log_completion();
 
 	/* Initialize the probe event */
-	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
+	status = qdf_event_create(&gp_cds_context->ProbeEvent);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Unable to init probeEvent", __func__);
 		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
-	if (qdf_event_create(&(gp_cds_context->wmaCompleteEvent)) !=
-	    QDF_STATUS_SUCCESS) {
+
+	status = qdf_event_create(&gp_cds_context->wmaCompleteEvent);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Unable to init wmaCompleteEvent", __func__);
 		QDF_ASSERT(0);
 		goto err_probe_event;
 	}
 
-	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
-	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
+	hdd_ctx = (struct hdd_context *)(gp_cds_context->pHDDContext);
+	if (!hdd_ctx || !hdd_ctx->config) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_err("Hdd Context is Null");
 		QDF_ASSERT(0);
+
+		status = QDF_STATUS_E_FAILURE;
 		goto err_wma_complete_event;
 	}
 
 	/* Now Open the CDS Scheduler */
-
 	if (hdd_ctx->driver_status == DRIVER_MODULES_UNINITIALIZED ||
 	    cds_is_driver_recovering()) {
-		qdf_status = cds_sched_open(gp_cds_context,
-					    &gp_cds_context->qdf_sched,
-					    sizeof(cds_sched_context));
+		status = cds_sched_open(gp_cds_context,
+					&gp_cds_context->qdf_sched,
+					sizeof(cds_sched_context));
 
-		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			/* Critical Error ...  Cannot proceed further */
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				  "%s: Failed to open CDS Scheduler", __func__);
@@ -482,6 +485,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	if (!scn) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: scn is null!", __func__);
+
+		status = QDF_STATUS_E_FAILURE;
 		goto err_sched_close;
 	}
 
@@ -489,17 +494,20 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	if (!cds_cfg) {
 		cds_err("Cds config is NULL");
 		QDF_ASSERT(0);
+
+		status = QDF_STATUS_E_FAILURE;
 		goto err_sched_close;
 	}
+
 	hdd_enable_fastpath(hdd_ctx->config, scn);
 	hdd_wlan_update_target_info(hdd_ctx, scn);
 
-	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
-	qdf_status = bmi_download_firmware(ol_ctx);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
+	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
+	status = bmi_download_firmware(ol_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
-			  "BMI FIALED status:%d", qdf_status);
+			  "BMI FIALED status:%d", status);
 		goto err_bmi_close;
 	}
 	htcInfo.pContext = ol_ctx;
@@ -516,20 +524,22 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	if (!gp_cds_context->htc_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);
+
+		status = QDF_STATUS_E_FAILURE;
 		goto err_bmi_close;
 	}
 	pmo_ucfg_psoc_update_htc_handle(psoc, (void *)gp_cds_context->htc_ctx);
 
-	if (bmi_done(ol_ctx)) {
+	status = bmi_done(ol_ctx);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
 		goto err_htc_close;
 	}
 
 	/*Open the WMA module */
-	qdf_status = wma_open(psoc, hdd_update_tgt_cfg, cds_cfg);
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	status = wma_open(psoc, hdd_update_tgt_cfg, cds_cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		/* Critical Error ...  Cannot proceed further */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to open WMA module", __func__);
@@ -553,15 +563,16 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	if (!HTCHandle) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: HTCHandle is null!", __func__);
+
+		status = QDF_STATUS_E_FAILURE;
 		goto err_wma_close;
 	}
 
-	qdf_status = htc_wait_target(HTCHandle);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		cds_alert("Complete BMI phase failed. status: %d", qdf_status);
+	status = htc_wait_target(HTCHandle);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_alert("Failed to complete BMI phase. status: %d", status);
 
-		if (qdf_status != QDF_STATUS_E_NOMEM
-				&& !cds_is_fw_down())
+		if (status != QDF_STATUS_E_NOMEM && !cds_is_fw_down())
 			QDF_BUG(0);
 
 		goto err_wma_close;
@@ -584,13 +595,12 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
 			&dp_ol_if_ops, psoc);
 
-	if (!gp_cds_context->dp_soc)
+	if (!gp_cds_context->dp_soc) {
+		status = QDF_STATUS_E_FAILURE;
 		goto err_wma_close;
+	}
 
 	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
-
-	if (gp_cds_context->dp_soc == NULL)
-		goto err_wma_close;
 
 	cds_set_ac_specs_params(cds_cfg);
 
@@ -606,12 +616,14 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to open MAC", __func__);
 		QDF_ASSERT(0);
+
+		status = QDF_STATUS_E_FAILURE;
 		goto err_soc_detach;
 	}
 
 	/* Now proceed to open the SME */
-	qdf_status = sme_open(gp_cds_context->pMACContext);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+	status = sme_open(gp_cds_context->pMACContext);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		/* Critical Error ...  Cannot proceed further */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to open SME", __func__);
@@ -659,7 +671,7 @@ err_wma_complete_event:
 err_probe_event:
 	qdf_event_destroy(&gp_cds_context->ProbeEvent);
 
-	return qdf_status;
+	return status;
 } /* cds_open() */
 
 QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
