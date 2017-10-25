@@ -5137,7 +5137,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 
 		written += scnprintf(buf + written, size - written,
 				     "%5d %02x:%02x:%02x:%02x:%02x:%02x ecsa=%d\n",
-				     sta->ucSTAId,
+				     sta->sta_id,
 				     sta->sta_mac.bytes[0],
 				     sta->sta_mac.bytes[1],
 				     sta->sta_mac.bytes[2],

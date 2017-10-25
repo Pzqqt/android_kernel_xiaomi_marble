@@ -18262,7 +18262,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						hdd_ipa_wlan_evt(adapter,
 							adapter->
 								 aStaInfo[i].
-								 ucSTAId,
+								 sta_id,
 							HDD_IPA_CLIENT_DISCONNECT,
 							mac);
 					}
