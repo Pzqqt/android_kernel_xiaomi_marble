@@ -4874,7 +4874,7 @@ static int hdd_get_station_remote(struct hdd_context *hdd_ctx,
 		(sizeof(stainfo->tx_bytes) + NLA_HDRLEN) +
 		(sizeof(stainfo->rx_packets) + NLA_HDRLEN) +
 		(sizeof(stainfo->rx_bytes) + NLA_HDRLEN) +
-		(sizeof(stainfo->isQosEnabled) + NLA_HDRLEN) +
+		(sizeof(stainfo->is_qos_enabled) + NLA_HDRLEN) +
 		(sizeof(stainfo->mode) + NLA_HDRLEN);
 
 	if (!hdd_ctx->config->sap_get_peer_info ||
@@ -4917,7 +4917,7 @@ static int hdd_get_station_remote(struct hdd_context *hdd_ctx,
 			 stainfo->ampdu, stainfo->tx_stbc,
 			 stainfo->rx_stbc);
 		hdd_info("wmm %d chwidth %d sgi %d",
-			 stainfo->isQosEnabled,
+			 stainfo->is_qos_enabled,
 			 stainfo->ch_width,
 			 stainfo->sgi_enable);
 	}
@@ -4927,7 +4927,7 @@ static int hdd_get_station_remote(struct hdd_context *hdd_ctx,
 	    remote_station_put_u64(skb, REMOTE_TX_BYTES, stainfo->tx_bytes) ||
 	    nla_put_u32(skb, REMOTE_RX_PACKETS, stainfo->rx_packets) ||
 	    remote_station_put_u64(skb, REMOTE_RX_BYTES, stainfo->rx_bytes) ||
-	    nla_put_u8(skb, REMOTE_WMM, stainfo->isQosEnabled) ||
+	    nla_put_u8(skb, REMOTE_WMM, stainfo->is_qos_enabled) ||
 	    nla_put_u8(skb, REMOTE_SUPPORTED_MODE, stainfo->mode)) {
 		hdd_err("put fail");
 		goto fail;

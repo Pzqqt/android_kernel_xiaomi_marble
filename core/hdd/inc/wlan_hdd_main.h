@@ -776,7 +776,7 @@ struct hdd_fw_txrx_stats {
  * @macAddrSTA: MAC address of the station
  * @peer_state: Current Station state so HDD knows how to deal with packet
  *              queue. Most recent states used to change TLSHIM STA state.
- * @isQosEnabled: Track QoS status of station
+ * @is_qos_enabled: Track QoS status of station
  * @is_deauth_in_progress: The station entry for which Deauth is in progress
  * @nss: Number of spatial streams supported
  * @rate_flags: Rate Flags for this connection
@@ -808,7 +808,7 @@ struct hdd_station_info {
 	eStationType staType;
 	struct qdf_mac_addr macAddrSTA;
 	enum ol_txrx_peer_state peer_state;
-	bool isQosEnabled;
+	bool is_qos_enabled;
 	bool is_deauth_in_progress;
 	uint8_t   nss;
 	uint32_t  rate_flags;
