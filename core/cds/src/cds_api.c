@@ -1849,6 +1849,11 @@ static void cds_trigger_recovery_work(void *param)
 		return;
 	}
 
+	if (cds_is_fw_down()) {
+		cds_err("FW is down; ignoring recovery trigger");
+		return;
+	}
+
 	qdf = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf) {
 		cds_err("Qdf context is null");
