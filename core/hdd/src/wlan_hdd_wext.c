@@ -3574,7 +3574,7 @@ QDF_STATUS wlan_hdd_get_rssi(struct hdd_adapter *adapter, int8_t *rssi_value)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	if (sta_ctx->hdd_ReassocScenario) {
+	if (sta_ctx->hdd_reassoc_scenario) {
 		hdd_debug("Roaming in progress, return cached RSSI");
 		*rssi_value = adapter->rssi;
 		return QDF_STATUS_SUCCESS;

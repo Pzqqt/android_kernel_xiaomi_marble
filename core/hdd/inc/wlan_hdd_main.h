@@ -639,7 +639,7 @@ struct hdd_mon_set_ch_info {
  * @ibss_enc_key: current ibss wep/wpa-none encryption key (if
  *    @ibss_enc_key_installed is %true)
  * @ibss_peer_info: information about the ibss peer
- * @hdd_ReassocScenario: is station in the middle of reassociation?
+ * @hdd_reassoc_scenario: is station in the middle of reassociation?
  * @staDebugState: STA context debug variable
  * @broadcast_staid: STA ID assigned for broadcast frames
  * @ch_info: monitor mode channel information
@@ -658,7 +658,7 @@ struct hdd_station_ctx {
 	bool ibss_enc_key_installed;
 	tCsrRoamSetKey ibss_enc_key;
 	tSirPeerInfoRspParams ibss_peer_info;
-	bool hdd_ReassocScenario;
+	bool hdd_reassoc_scenario;
 	int staDebugState;
 	uint8_t broadcast_staid;
 	struct hdd_mon_set_ch_info ch_info;

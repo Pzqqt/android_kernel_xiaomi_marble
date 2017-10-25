@@ -4608,7 +4608,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 					   WLAN_CONTROL_PATH);
 		}
 
-		adapter->sessionCtx.station.hdd_ReassocScenario = false;
+		adapter->sessionCtx.station.hdd_reassoc_scenario = false;
 
 		hdd_deinit_tx_rx(adapter);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
@@ -5230,7 +5230,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 				wireless_send_event(adapter->dev, SIOCGIWAP,
 						    &wrqu, NULL);
 				adapter->sessionCtx.station.
-				hdd_ReassocScenario = false;
+				hdd_reassoc_scenario = false;
 
 				/* indicate disconnected event to nl80211 */
 				wlan_hdd_cfg80211_indicate_disconnect(
