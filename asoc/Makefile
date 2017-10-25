@@ -15,19 +15,9 @@ obj-$(CONFIG_SND_SOC_CPE) += snd-soc-cpe.o
 snd-soc-msm8998-objs := msm8998.o
 obj-$(CONFIG_SND_SOC_MACHINE_MSM8998) += snd-soc-msm8998.o
 
-# for SDM660 sound card driver
-snd-soc-sdm660-common-objs := sdm660-common.o
-obj-$(CONFIG_SND_SOC_SDM670) += snd-soc-sdm660-common.o
-
-# for SDM660 sound card driver
-snd-soc-int-codec-objs := sdm660-internal.o
-obj-$(CONFIG_SND_SOC_INT_CODEC) += snd-soc-sdm660-common.o
-obj-$(CONFIG_SND_SOC_INT_CODEC) += snd-soc-int-codec.o
-
-# for SDM660 sound card driver
-snd-soc-ext-codec-objs := sdm660-external.o sdm660-ext-dai-links.o
-obj-$(CONFIG_SND_SOC_EXT_CODEC) += snd-soc-sdm660-common.o
-obj-$(CONFIG_SND_SOC_EXT_CODEC) += snd-soc-ext-codec.o
+# for SDM670 sound card driver
+snd-soc-sdm670-objs := sdm660-common.o sdm660-internal.o sdm660-external.o sdm660-ext-dai-links.o
+obj-$(CONFIG_SND_SOC_SDM670) += snd-soc-sdm670.o
 
 # for SDM845 sound card driver
 snd-soc-sdm845-objs := sdm845.o
