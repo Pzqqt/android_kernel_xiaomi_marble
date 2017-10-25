@@ -1692,7 +1692,10 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 					sta_id, status, status);
 			status = QDF_STATUS_E_FAILURE;
 		}
-		hdd_ctx->sta_to_adapter[sta_id] = NULL;
+		if (sta_id < HDD_MAX_ADAPTERS)
+			hdd_ctx->sta_to_adapter[sta_id] = NULL;
+		else
+			hdd_debug("invalid sta id %d", sta_id);
 		/* Clear all the peer sta register with TL. */
 		for (i = 0; i < MAX_PEERS; i++) {
 			if (HDD_WLAN_INVALID_STA_ID ==
@@ -1713,8 +1716,10 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 						HDD_WLAN_INVALID_STA_ID;
 			qdf_mem_zero(&sta_ctx->conn_info.peerMacAddress[i],
 				sizeof(struct qdf_mac_addr));
-			if (sta_id < (WLAN_MAX_STA_COUNT + 3))
+			if (sta_id < HDD_MAX_ADAPTERS)
 				hdd_ctx->sta_to_adapter[sta_id] = NULL;
+			else
+				hdd_debug("invalid sta_id %d", sta_id);
 		}
 	} else {
 		sta_id = sta_ctx->conn_info.staId[0];
@@ -1731,6 +1736,8 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 		}
 		if (sta_id < HDD_MAX_ADAPTERS)
 			hdd_ctx->sta_to_adapter[sta_id] = NULL;
+		else
+			hdd_debug("invalid sta_id %d", sta_id);
 	}
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(sta_ctx);
@@ -2700,12 +2707,10 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			sta_ctx->ft_carrier_on = false;
 			ft_carrier_on = true;
 		}
-		if ((WLAN_MAX_STA_COUNT + 3) > roam_info->staId)
+		if (roam_info->staId < HDD_MAX_ADAPTERS)
 			hdd_ctx->sta_to_adapter[roam_info->staId] = adapter;
 		else
 			hdd_err("Wrong Staid: %d", roam_info->staId);
-
-		hdd_ctx->sta_to_adapter[roam_info->staId] = adapter;
 
 		if (hdd_ipa_is_enabled(hdd_ctx))
 			hdd_ipa_wlan_evt(adapter, roam_info->staId,
@@ -3291,8 +3296,11 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 
 		hdd_sta_ctx->broadcast_staid = roam_info->staId;
 
-		hdd_ctx->sta_to_adapter[roam_info->staId] =
-			adapter;
+		if (roam_info->staId < HDD_MAX_ADAPTERS)
+			hdd_ctx->sta_to_adapter[roam_info->staId] =
+				adapter;
+		else
+			hdd_debug("invalid sta id %d", roam_info->staId);
 		hdd_roam_register_sta(adapter, roam_info,
 				      roam_info->staId,
 				      &broadcastMacAddr,
@@ -3615,7 +3623,10 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 			break;
 		}
 
-		hdd_ctx->sta_to_adapter[roam_info->staId] = adapter;
+		if (roam_info->staId < HDD_MAX_ADAPTERS)
+			hdd_ctx->sta_to_adapter[roam_info->staId] = adapter;
+		else
+			hdd_debug("invalid sta id %d", roam_info->staId);
 
 		if (hdd_is_key_install_required_for_ibss(encr_type))
 			roam_info->fAuthRequired = true;
@@ -3697,7 +3708,11 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 
 		hdd_roam_deregister_sta(adapter, roam_info->staId);
 
-		hdd_ctx->sta_to_adapter[roam_info->staId] = NULL;
+		if (roam_info->staId < HDD_MAX_ADAPTERS)
+			hdd_ctx->sta_to_adapter[roam_info->staId] = NULL;
+		else
+			hdd_debug("invalid sta id %d", roam_info->staId);
+
 		sta_ctx->ibss_sta_generation++;
 
 		cfg80211_del_sta(adapter->dev,
