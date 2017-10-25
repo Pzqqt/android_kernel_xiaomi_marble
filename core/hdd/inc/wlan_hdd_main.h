@@ -626,7 +626,7 @@ struct hdd_mon_set_ch_info {
 
 /**
  * struct hdd_station_ctx -- STA-specific information
- * @WextState: wireless extensions state
+ * @wext_state: wireless extensions state
  * @wpa_versions: bitmap of supported WPA versions
  * @requested_bssid: Specific BSSID to which to connect
  * @conn_info: current connection information
@@ -648,7 +648,7 @@ struct hdd_mon_set_ch_info {
  *    to immediately go into power save?
  */
 struct hdd_station_ctx {
-	struct hdd_wext_state WextState;
+	struct hdd_wext_state wext_state;
 	enum nl80211_wpa_versions wpa_versions;
 	struct qdf_mac_addr requested_bssid;
 	struct hdd_connection_info conn_info;
@@ -1224,7 +1224,7 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->sessionCtx.station)
 #define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->sessionCtx.ap)
 #define WLAN_HDD_GET_WEXT_STATE_PTR(adapter) \
-				(&(adapter)->sessionCtx.station.WextState)
+				(&(adapter)->sessionCtx.station.wext_state)
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
