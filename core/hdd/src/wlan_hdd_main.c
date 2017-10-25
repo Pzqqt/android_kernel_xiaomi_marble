@@ -12413,7 +12413,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 
 				sta_mac = (uint8_t *)
 						&(adapter->aStaInfo[sta_id].
-							macAddrSTA.bytes[0]);
+							sta_mac.bytes[0]);
 				hdd_debug("client " MAC_ADDRESS_STR
 				" of SAP/GO is in middle of WPS/EAPOL exchange",
 				MAC_ADDR_ARRAY(sta_mac));

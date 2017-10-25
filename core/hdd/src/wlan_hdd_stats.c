@@ -3835,7 +3835,7 @@ int wlan_hdd_get_station_remote(struct wiphy *wiphy,
 	hdd_debug("get peer %pM info", mac);
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		if (!qdf_mem_cmp(adapter->aStaInfo[i].macAddrSTA.bytes,
+		if (!qdf_mem_cmp(adapter->aStaInfo[i].sta_mac.bytes,
 				 mac,
 				 QDF_MAC_ADDR_SIZE)) {
 			stainfo = &adapter->aStaInfo[i];

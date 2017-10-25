@@ -675,7 +675,7 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter,
 		    (staId !=
 		     (WLAN_HDD_GET_AP_CTX_PTR(adapter))->uBCStaId)) {
 			wlansap_populate_del_sta_params(
-				&adapter->aStaInfo[staId].macAddrSTA.
+				&adapter->aStaInfo[staId].sta_mac.
 				bytes[0], eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
 				(SIR_MAC_MGMT_DISASSOC >> 4), &del_sta_params);
 
@@ -4490,8 +4490,8 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	spin_lock_bh(&adapter->staInfo_lock);
 	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= QDF_MAC_ADDR_SIZE)) {
 		if ((pStaInfo[cnt].in_use) &&
-		    (!IS_BROADCAST_MAC(pStaInfo[cnt].macAddrSTA.bytes))) {
-			memcpy(&buf[maclist_index], &(pStaInfo[cnt].macAddrSTA),
+		    (!IS_BROADCAST_MAC(pStaInfo[cnt].sta_mac.bytes))) {
+			memcpy(&buf[maclist_index], &(pStaInfo[cnt].sta_mac),
 			       QDF_MAC_ADDR_SIZE);
 			maclist_index += QDF_MAC_ADDR_SIZE;
 			left -= QDF_MAC_ADDR_SIZE;
@@ -5138,12 +5138,12 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 		written += scnprintf(buf + written, size - written,
 				     "%5d %02x:%02x:%02x:%02x:%02x:%02x ecsa=%d\n",
 				     sta->ucSTAId,
-				     sta->macAddrSTA.bytes[0],
-				     sta->macAddrSTA.bytes[1],
-				     sta->macAddrSTA.bytes[2],
-				     sta->macAddrSTA.bytes[3],
-				     sta->macAddrSTA.bytes[4],
-				     sta->macAddrSTA.bytes[5],
+				     sta->sta_mac.bytes[0],
+				     sta->sta_mac.bytes[1],
+				     sta->sta_mac.bytes[2],
+				     sta->sta_mac.bytes[3],
+				     sta->sta_mac.bytes[4],
+				     sta->sta_mac.bytes[5],
 				     sta->ecsa_capable);
 	}
 
@@ -5260,11 +5260,11 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 			if (adapter->aStaInfo[i].in_use &&
 			    (!qdf_is_macaddr_broadcast
-				  (&adapter->aStaInfo[i].macAddrSTA))) {
+				  (&adapter->aStaInfo[i].sta_mac))) {
 				qdf_copy_macaddr(
 					&macAddress,
 					&adapter->aStaInfo[i].
-					 macAddrSTA);
+					 sta_mac);
 				status = QDF_STATUS_SUCCESS;
 				break;
 			}
@@ -8840,14 +8840,14 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 				 adapter);
 
 			if (qdf_is_macaddr_broadcast(
-				&adapter->aStaInfo[sta_id].macAddrSTA))
+				&adapter->aStaInfo[sta_id].sta_mac))
 				continue;
 
 			sap_event.sapHddEventCode = eSAP_STA_DISASSOC_EVENT;
 			qdf_mem_copy(
 				&sap_event.sapevt.
 				sapStationDisassocCompleteEvent.staMac,
-				&adapter->aStaInfo[sta_id].macAddrSTA,
+				&adapter->aStaInfo[sta_id].sta_mac,
 				sizeof(struct qdf_mac_addr));
 			sap_event.sapevt.sapStationDisassocCompleteEvent.
 			reason =
