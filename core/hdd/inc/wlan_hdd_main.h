@@ -610,35 +610,6 @@ struct hdd_scan_req {
 	uint32_t scan_req_flags;
 };
 
-enum p2p_action_frame_state {
-	HDD_IDLE,
-	HDD_PD_REQ_ACK_PENDING,
-	HDD_GO_NEG_REQ_ACK_PENDING,
-	HDD_INVALID_STATE,
-};
-
-enum action_frm_type {
-	WLAN_HDD_GO_NEG_REQ,
-	WLAN_HDD_GO_NEG_RESP,
-	WLAN_HDD_GO_NEG_CNF,
-	WLAN_HDD_INVITATION_REQ,
-	WLAN_HDD_INVITATION_RESP,
-	WLAN_HDD_DEV_DIS_REQ,
-	WLAN_HDD_DEV_DIS_RESP,
-	WLAN_HDD_PROV_DIS_REQ,
-	WLAN_HDD_PROV_DIS_RESP,
-};
-
-struct hdd_cfg80211_state {
-	uint16_t current_freq;
-	enum p2p_action_frame_state actionFrmState;
-	/* is_go_neg_ack_received flag is set to 1 when
-	 * the pending ack for GO negotiation req is
-	 * received.
-	 */
-	bool is_go_neg_ack_received;
-};
-
 /**
  * struct hdd_mon_set_ch_info - Holds monitor mode channel switch params
  * @channel: Channel number.
@@ -1154,8 +1125,6 @@ struct hdd_adapter {
 #endif /* WLAN_FEATURE_TSF_PLUS */
 #endif
 
-	struct hdd_cfg80211_state cfg80211State;
-
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 	struct hdd_multicast_addr_list mc_addr_list;
 #endif
@@ -1260,7 +1229,6 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
 				(&(adapter)->sessionCtx.ap.HostapdState)
-#define WLAN_HDD_GET_CFG_STATE_PTR(adapter)  (&(adapter)->cfg80211State)
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->sessionCtx.ap.sapContext)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
