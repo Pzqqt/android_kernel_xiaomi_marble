@@ -2196,6 +2196,18 @@ uint32_t __qdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 					tso_seg_size = tso_seg_size -
 						tso_frag_len;
 					i++;
+					if (curr_seg->seg.num_frags ==
+								FRAG_NUM_MAX) {
+						more_tso_frags = 0;
+						/*
+						 * reset i and the tso
+						 * payload size
+						 */
+						i = 1;
+						tso_seg_size =
+							skb_shinfo(skb)->
+								gso_size;
+					}
 				}
 			} else {
 				more_tso_frags = 0;
@@ -2339,17 +2351,91 @@ EXPORT_SYMBOL(__qdf_nbuf_unmap_tso_segment);
 #ifndef BUILD_X86
 uint32_t __qdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 {
-	uint32_t gso_size, tmp_len, num_segs = 0;
+	uint32_t tso_seg_size = skb_shinfo(skb)->gso_size;
+	uint32_t remainder, num_segs = 0;
+	uint8_t skb_nr_frags = skb_shinfo(skb)->nr_frags;
+	uint8_t frags_per_tso = 0;
+	uint32_t skb_frag_len = 0;
+	uint32_t eit_hdr_len = (skb_transport_header(skb)
+			 - skb_mac_header(skb)) + tcp_hdrlen(skb);
+	struct skb_frag_struct *frag = NULL;
+	int j = 0;
+	uint32_t temp_num_seg = 0;
 
-	gso_size = skb_shinfo(skb)->gso_size;
-	tmp_len = skb->len - ((skb_transport_header(skb) - skb_mac_header(skb))
-		+ tcp_hdrlen(skb));
-	while (tmp_len) {
-		num_segs++;
-		if (tmp_len > gso_size)
-			tmp_len -= gso_size;
+	/* length of the first chunk of data in the skb minus eit header*/
+	skb_frag_len = skb_headlen(skb) - eit_hdr_len;
+
+	/* Calculate num of segs for skb's first chunk of data*/
+	remainder = skb_frag_len % tso_seg_size;
+	num_segs = skb_frag_len / tso_seg_size;
+	/**
+	 * Remainder non-zero and nr_frags zero implies end of skb data.
+	 * In that case, one more tso seg is required to accommodate
+	 * remaining data, hence num_segs++. If nr_frags is non-zero,
+	 * then remaining data will be accomodated while doing the calculation
+	 * for nr_frags data. Hence, frags_per_tso++.
+	 */
+	if (remainder) {
+		if (!skb_nr_frags)
+			num_segs++;
 		else
-			break;
+			frags_per_tso++;
+	}
+
+	while (skb_nr_frags) {
+		if (j >= skb_shinfo(skb)->nr_frags) {
+			qdf_print("TSO: nr_frags %d j %d\n",
+			skb_shinfo(skb)->nr_frags, j);
+			qdf_assert(0);
+			return 0;
+		}
+		/**
+		 * Calculate the number of tso seg for nr_frags data:
+		 * Get the length of each frag in skb_frag_len, add to
+		 * remainder.Get the number of segments by dividing it to
+		 * tso_seg_size and calculate the new remainder.
+		 * Decrement the nr_frags value and keep
+		 * looping all the skb_fragments.
+		 */
+		frag = &skb_shinfo(skb)->frags[j];
+		skb_frag_len = skb_frag_size(frag);
+		temp_num_seg = num_segs;
+		remainder += skb_frag_len;
+		num_segs += remainder / tso_seg_size;
+		remainder = remainder % tso_seg_size;
+		skb_nr_frags--;
+		if (remainder) {
+			if (num_segs > temp_num_seg)
+				frags_per_tso = 0;
+			/**
+			 * increment the tso per frags whenever remainder is
+			 * positive. If frags_per_tso reaches the (max-1),
+			 * [First frags always have EIT header, therefore max-1]
+			 * increment the num_segs as no more data can be
+			 * accomodated in the curr tso seg. Reset the remainder
+			 * and frags per tso and keep looping.
+			 */
+			frags_per_tso++;
+			if (frags_per_tso == FRAG_NUM_MAX - 1) {
+				num_segs++;
+				frags_per_tso = 0;
+				remainder = 0;
+			}
+			/**
+			 * If this is the last skb frag and still remainder is
+			 * non-zero(frags_per_tso is not reached to the max-1)
+			 * then increment the num_segs to take care of the
+			 * remaining length.
+			 */
+			if (!skb_nr_frags && remainder) {
+				num_segs++;
+				frags_per_tso = 0;
+			}
+		} else {
+			 /* Whenever remainder is 0, reset the frags_per_tso. */
+			frags_per_tso = 0;
+		}
+		j++;
 	}
 
 	return num_segs;

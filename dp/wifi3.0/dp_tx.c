@@ -1823,7 +1823,8 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 
 	qdf_nbuf_unmap(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
 
-	if (dp_send_compl_to_stack(soc, desc, ts.peer_id, ts.ppdu_id))
+	if (dp_send_compl_to_stack(soc, desc, ts.peer_id, ts.ppdu_id) ==
+			QDF_STATUS_SUCCESS)
 		return;
 
 	if (!vdev->mesh_vdev) {
