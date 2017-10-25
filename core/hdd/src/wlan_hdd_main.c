@@ -6406,6 +6406,11 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	hdd_ctx->prev_rx = rx_packets;
 
+	if (temp_rx < hdd_ctx->config->busBandwidthLowThreshold)
+		hdd_disable_lro_for_low_tput(hdd_ctx, true);
+	else
+		hdd_disable_lro_for_low_tput(hdd_ctx, false);
+
 	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
 		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
 		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
