@@ -2085,18 +2085,6 @@ wma_wow_get_pkt_proto_subtype(uint8_t *data, uint32_t len)
 	}
 }
 
-static inline bool wma_pkt_is_tcpv4_mcast(uint8_t *data, uint32_t length)
-{
-	return length >= WMA_IPV4_PKT_INFO_GET_MIN_LEN &&
-	       qdf_nbuf_data_is_ipv4_mcast_pkt(data);
-}
-
-static inline bool wma_pkt_is_tcpv6_mcast(uint8_t *data, uint32_t length)
-{
-	return length >= WMA_IPV6_PKT_INFO_GET_MIN_LEN &&
-	       qdf_nbuf_data_is_ipv6_mcast_pkt(data);
-}
-
 static void wma_log_pkt_eapol(uint8_t *data, uint32_t length)
 {
 	uint16_t pkt_len, key_len;
@@ -2833,18 +2821,6 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 
 	return 0;
 }
-/**
- * wma_set_wow_bus_suspend() - set suspend flag
- * @wma: wma handle
- * @val: value
- *
- * Return: none
- */
-static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
-{
-	qdf_atomic_set(&wma->is_wow_bus_suspended, val);
-	wmi_set_is_wow_bus_suspended(wma->wmi_handle, val);
-}
 
 /**
  * wma_wow_enter() - store enable/disable status for pattern
@@ -2871,53 +2847,6 @@ QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info)
 QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 {
 	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_calculate_and_update_conn_state(): calculate each interfaces conn state
- * @wma: validated wma handle
- *
- * Identifies any vdev that is up and not in ap mode as connected.
- * stores this in the interfaces conn_state varible.
- */
-void wma_calculate_and_update_conn_state(tp_wma_handle wma)
-{
-	int i;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		wma->interfaces[i].conn_state =
-			!!(wma_is_vdev_up(i) &&
-					!wma_is_vdev_in_ap_mode(wma, i));
-	}
-}
-
-/**
- * wma_update_conn_state(): synchronize wma & hdd
- * @wma: wma handle
- * @conn_state: boolean array to populate
- * @len: validation parameter
- *
- * populate interfaces conn_state with true if the interface
- * is a connected client and wow will configure a pattern.
- */
-void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask)
-{
-	int i;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		if (conn_mask & (1 << i))
-			wma->interfaces[i].conn_state = true;
-		else
-			wma->interfaces[i].conn_state = false;
-	}
-
-	if (wma->wow.magic_ptrn_enable)
-		return;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		if (!wma->interfaces[i].ptrn_match_enable)
-			wma->interfaces[i].conn_state = false;
-	}
 }
 
 /**
@@ -3974,21 +3903,6 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set PDEV tx_chain_mask_cck %d",
 			 ret);
-}
-
-/**
- * wma_suspend_target_timeout() - Handles the target suspend timeout
- * @is_self_recovery_enabled: Is self recovery enabled or not
- *
- * Return: NONE
- */
-static inline void wma_suspend_target_timeout(bool is_self_recovery_enabled)
-{
-	if (cds_is_load_or_unload_in_progress())
-		WMA_LOGE("%s: Module (un)loading; Ignoring suspend timeout",
-			 __func__);
-	else
-		cds_trigger_recovery(QDF_SUSPEND_TIMEOUT);
 }
 
 #ifdef FEATURE_WLAN_TDLS

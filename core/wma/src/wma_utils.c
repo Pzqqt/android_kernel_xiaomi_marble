@@ -1858,60 +1858,6 @@ static inline int wma_peer_ps_evt_handler(void *handle, u_int8_t *event,
 #endif
 
 /**
- * wma_tx_failure_cb() - TX failure callback
- * @ctx: txrx context
- * @num_msdu: number of msdu with the same status
- * @tid: TID number
- * @status: failure status
- */
-void wma_tx_failure_cb(void *ctx, uint32_t num_msdu,
-		       uint8_t tid, enum htt_tx_status status)
-{
-	tSirLLStatsResults *results;
-	struct sir_wifi_iface_tx_fail *tx_fail;
-	struct scheduler_msg sme_msg = { 0 };
-	QDF_STATUS qdf_status;
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (!mac) {
-		WMA_LOGD("%s: NULL mac ptr. Exiting", __func__);
-		return;
-	}
-
-	if (!mac->sme.link_layer_stats_ext_cb) {
-		WMA_LOGD("%s: HDD callback is null", __func__);
-		return;
-	}
-
-	results = qdf_mem_malloc(sizeof(tSirLLStatsResults) +
-				 sizeof(struct sir_wifi_iface_tx_fail));
-	if (results == NULL) {
-		WMA_LOGE("%s: Cannot allocate link layer stats.", __func__);
-		return;
-	}
-
-	results->paramId            = WMI_LL_STATS_EXT_TX_FAIL;
-	results->num_peers          = 1;
-	results->peer_event_number  = 1;
-	results->moreResultToFollow = 0;
-
-	tx_fail = (struct sir_wifi_iface_tx_fail *)results->results;
-	tx_fail->tid = tid;
-	tx_fail->msdu_num = num_msdu;
-	tx_fail->status = status;
-
-	sme_msg.type = eWMI_SME_LL_STATS_IND;
-	sme_msg.bodyptr = results;
-	sme_msg.bodyval = 0;
-
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SME, &sme_msg);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		WMA_LOGE("%s: Fail to post TX failure ind msg", __func__);
-		qdf_mem_free(results);
-	}
-}
-
-/**
  * wma_register_ll_stats_event_handler() - register link layer stats related
  *                                         event handler
  * @wma_handle: wma handle

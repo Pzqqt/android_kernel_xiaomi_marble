@@ -467,23 +467,6 @@ struct cdp_vdev *wma_find_vdev_by_id(tp_wma_handle wma, uint8_t vdev_id)
 	return wma->interfaces[vdev_id].handle;
 }
 
-/**
- * wma_get_vdev_count() - Returns number of active vdev.
- * @wma - wma handle
- *
- * Return: Returns valid vdev count.
- */
-static inline uint8_t wma_get_vdev_count(tp_wma_handle wma)
-{
-	uint8_t vdev_count = 0, i;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].handle)
-			vdev_count++;
-	}
-	return vdev_count;
-}
-
 bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef QCA_IBSS_SUPPORT
@@ -502,23 +485,6 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 	return false;
 }
 #endif
-
-/**
- * wma_is_vdev_in_beaconning_mode() - check if vdev is in a beaconning mode
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Helper function to know whether given vdev id
- * is in a beaconning mode or not.
- *
- * Return: True if vdev needs to beacon.
- */
-static inline
-bool wma_is_vdev_in_beaconning_mode(tp_wma_handle wma, uint8_t vdev_id)
-{
-	return wma_is_vdev_in_ap_mode(wma, vdev_id) ||
-		wma_is_vdev_in_ibss_mode(wma, vdev_id);
-}
 
 /**
  * wma_find_bssid_by_vdev_id() - Get the BSS ID corresponding to the vdev ID
@@ -785,8 +751,6 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 
 void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params);
 
-void wma_unpause_vdev(tp_wma_handle wma);
-
 QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 					    tSirRateUpdateInd *
 					    pRateUpdateParams);
@@ -1000,10 +964,6 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 
 QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
-
-void wma_calculate_and_update_conn_state(tp_wma_handle wma);
-void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
-void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
 

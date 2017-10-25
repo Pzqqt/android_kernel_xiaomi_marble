@@ -1249,38 +1249,6 @@ out:
 }
 
 /**
- * wma_unpause_vdev - unpause all vdev
- * @wma: wma handle
- *
- * unpause all vdev aftter resume/coming out of wow mode
- *
- * Return: none
- */
-void wma_unpause_vdev(tp_wma_handle wma)
-{
-	int8_t vdev_id;
-	struct wma_txrx_node *iface;
-
-	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
-		if (!wma->interfaces[vdev_id].handle)
-			continue;
-
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
-		/* When host resume, by default, unpause all active vdev */
-		if (wma_vdev_get_pause_bitmap(vdev_id)) {
-			cdp_fc_vdev_unpause(cds_get_context(QDF_MODULE_ID_SOC),
-			     wma->interfaces[vdev_id].handle,
-			     0xffffffff);
-			wma_vdev_update_pause_bitmap(vdev_id, 0);
-		}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-
-		iface = &wma->interfaces[vdev_id];
-		iface->conn_state = false;
-	}
-}
-
-/**
  * wma_process_rate_update_indate() - rate update indication
  * @wma: wma handle
  * @pRateUpdateParams: Rate update params
