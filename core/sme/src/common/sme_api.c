@@ -2832,10 +2832,10 @@ QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 
 /**
  * sme_get_ap_channel_from_scan() - a wrapper function to get
- *      				  AP's channel id from
- *      				  CSR by filtering the
- *      				  result which matches
- *      				  our roam profile.
+ *				  AP's channel id from
+ *				  CSR by filtering the
+ *				  result which matches
+ *				  our roam profile.
  * @profile: SAP profile
  * @ap_chnl_id: pointer to channel id of SAP. Fill the value after finding the
  *              best ap from scan cache.
