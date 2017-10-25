@@ -100,7 +100,7 @@ dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 		window_start = (start_ts + (refpri * n)) - (primargin + n);
 		window_end = window_start + 2 * (primargin + n);
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
-			    "window_start %u window_end %u \n",
+			    "window_start %u window_end %u\n",
 			    (uint32_t) window_start, (uint32_t) window_end);
 		for (i = 0; i < pl->pl_numelems; i++) {
 			prev_event_ts = pl->pl_elems[index].p_time;
@@ -109,7 +109,7 @@ dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 			next_index = (index + 1) & DFS_MAX_PULSE_BUFFER_MASK;
 			next_event_ts = pl->pl_elems[next_index].p_time;
 			DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
-				    "ts %u \n", (uint32_t) event_ts);
+				    "ts %u\n", (uint32_t) event_ts);
 			if ((event_ts <= window_end)
 			    && (event_ts >= window_start)) {
 				deltadur =
@@ -118,7 +118,7 @@ dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 				    || ((dur != 1) && (deltadur <= 2))) {
 					numpulses++;
 					DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
-						    "numpulses %u \n",
+						    "numpulses %u\n",
 						    numpulses);
 					break;
 				}
@@ -136,7 +136,7 @@ dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 						&& (deltadur <= 2))) {
 						numpulses++;
 						DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
-							    "zero PRI: numpulses %u \n",
+							    "zero PRI: numpulses %u\n",
 							    numpulses);
 						break;
 					}

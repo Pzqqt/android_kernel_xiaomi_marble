@@ -138,13 +138,13 @@ typedef struct timer_list A_TIMER;
 extern unsigned int panic_on_assert;
 #define A_ASSERT(expr)	\
 	if (!(expr)) {	 \
-		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s \n", __FILE__, __LINE__, # expr); \
+		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s\n", __FILE__, __LINE__, # expr); \
 		if (panic_on_assert) panic(# expr);								  \
 	}
 #else
 #define A_ASSERT(expr)	\
 	if (!(expr)) {	 \
-		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s \n", __FILE__, __LINE__, # expr); \
+		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s\n", __FILE__, __LINE__, # expr); \
 	}
 #endif
 #else

@@ -491,7 +491,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 				__func__, re.sidx, re.re_dur, diff_ts);
 
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-				"\n%s: Modify pulse dur to fit valid range \n",
+				"\n%s: Modify pulse dur to fit valid range\n",
 				__func__);
 
 			re.re_dur = DFS_TYPE4_WAR_VALID_PULSE_DURATION;
@@ -528,7 +528,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 				__func__, re.sidx, re.re_dur, diff_ts);
 
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-				"%s:Modify ETSI pulse dur to valid range \n",
+				"%s:Modify ETSI pulse dur to valid range\n",
 				__func__);
 
 			re.re_dur  = DFS_ETSI_WAR_VALID_PULSE_DURATION;

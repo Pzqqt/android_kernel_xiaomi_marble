@@ -124,7 +124,7 @@ dfs_get_pri_margin(struct ath_dfs *dfs, int is_extchan_detect,
 					ext_chan_busy =
 						dfs->dfs_rinfo.dfs_ext_chan_busy;
 					DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
-						    " PRI Use cached copy of ext_chan_busy extchanbusy=%d \n",
+						    " PRI Use cached copy of ext_chan_busy extchanbusy=%d\n",
 						    ext_chan_busy);
 				}
 			}
