@@ -487,7 +487,7 @@ struct hdd_arp_stats_s {
 /**
  * struct hdd_stats - per-adapter statistics
  * @summary_stat: Summary stats reported by firmware
- * @ClassA_stat: "Class A" stats reported by firmware
+ * @class_a_stat: "Class A" stats reported by firmware
  * @ClassD_stat: "Class D" stats reported by firmware
  * @per_chain_rssi_stats: Per-chain RSSI stats
  * @tx_rx_stats: Tx & Rx stats
@@ -495,7 +495,7 @@ struct hdd_arp_stats_s {
  */
 struct hdd_stats {
 	tCsrSummaryStatsInfo summary_stat;
-	tCsrGlobalClassAStatsInfo ClassA_stat;
+	tCsrGlobalClassAStatsInfo class_a_stat;
 	tCsrGlobalClassDStatsInfo ClassD_stat;
 	struct csr_per_chain_rssi_stats_info  per_chain_rssi_stats;
 	struct hdd_tx_rx_stats tx_rx_stats;
