@@ -112,9 +112,6 @@ extern uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 uint8_t lim_is_addr_bc(tSirMacAddr);
 uint8_t lim_is_group_addr(tSirMacAddr);
 
-/* check for type of scan allowed */
-uint8_t lim_active_scan_allowed(tpAniSirGlobal, uint8_t);
-
 /* AID pool management functions */
 void lim_init_peer_idxpool(tpAniSirGlobal, tpPESession);
 uint16_t lim_assign_peer_idx(tpAniSirGlobal, tpPESession);
