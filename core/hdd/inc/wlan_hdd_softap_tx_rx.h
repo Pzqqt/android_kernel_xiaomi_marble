@@ -56,8 +56,16 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 				     uint8_t sta_id,
 				     struct qdf_mac_addr *sta_mac);
 
+/**
+ * hdd_softap_deinit_tx_rx_sta() - Deinitialize tx/rx for a softap station
+ * @adapter: pointer to adapter context
+ * @sta_id: Station ID to deinitialize
+ *
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
+ */
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
-				       uint8_t STAId);
+				       uint8_t sta_id);
 
 QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBufChain);
 #ifdef IPA_OFFLOAD

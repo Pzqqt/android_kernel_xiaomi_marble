@@ -652,16 +652,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_softap_deinit_tx_rx_sta() - Deinitialize tx/rx for a softap station
- * @adapter: pointer to adapter context
- * @STAId: Station ID to deinitialize
- *
- * Return: QDF_STATUS_E_FAILURE if any errors encountered,
- *	   QDF_STATUS_SUCCESS otherwise
- */
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
-				       uint8_t STAId)
+				       uint8_t sta_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct hdd_hostapd_state *hostapd_state;
@@ -670,14 +662,14 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 
 	spin_lock_bh(&adapter->staInfo_lock);
 
-	if (false == adapter->aStaInfo[STAId].in_use) {
+	if (false == adapter->aStaInfo[sta_id].in_use) {
 		spin_unlock_bh(&adapter->staInfo_lock);
-		hdd_err("Deinit station not inited %d", STAId);
+		hdd_err("Deinit station not inited %d", sta_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	adapter->aStaInfo[STAId].in_use = false;
-	adapter->aStaInfo[STAId].is_deauth_in_progress = false;
+	adapter->aStaInfo[sta_id].in_use = false;
+	adapter->aStaInfo[sta_id].is_deauth_in_progress = false;
 
 	spin_unlock_bh(&adapter->staInfo_lock);
 	return status;
