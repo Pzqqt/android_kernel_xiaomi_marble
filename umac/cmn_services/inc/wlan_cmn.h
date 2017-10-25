@@ -204,6 +204,22 @@ enum wlan_phymode {
 #define WLAN_PHYMODE_MAX      (WLAN_PHYMODE_11AC_VHT80_80 + 1)
 
 /**
+ * enum wifi_traffic_ac - access category type
+ * @WIFI_AC_VO: Voice AC
+ * @WIFI_AC_VI: Video AC
+ * @WIFI_AC_BE: Best effort AC
+ * @WIFI_AC_BK: Background AC
+ * @WIFI_AC_MAX: MAX access category
+ */
+enum wifi_traffic_ac {
+	WIFI_AC_VO = 0,
+	WIFI_AC_VI = 1,
+	WIFI_AC_BE = 2,
+	WIFI_AC_BK = 3,
+	WIFI_AC_MAX = 4,
+};
+
+/**
  * enum wlan_peer_type  - peer type
  * @WLAN_PEER_SELF:     for AP mode, SELF PEER or AP PEER are same
  * @WLAN_PEER_AP:       BSS peer for STA mode, Self peer for AP mode

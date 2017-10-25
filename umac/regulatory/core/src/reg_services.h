@@ -180,7 +180,7 @@ QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS reg_enable_dfs_channels(struct wlan_objmgr_pdev *pdev, bool enable);
 
 
-void reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
+void reg_get_current_dfs_region(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg *dfs_reg);
 
 uint32_t reg_get_channel_reg_power(struct wlan_objmgr_pdev *pdev,

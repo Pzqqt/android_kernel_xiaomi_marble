@@ -140,7 +140,7 @@ QDF_STATUS wlan_reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
 	/*
 	 * Get the current dfs region
 	 */
-	reg_get_dfs_region(pdev, dfs_reg);
+	reg_get_current_dfs_region(pdev, dfs_reg);
 
 	return QDF_STATUS_SUCCESS;
 }

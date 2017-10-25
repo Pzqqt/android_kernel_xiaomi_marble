@@ -985,6 +985,7 @@ struct tdls_action_frame_request {
 	const uint8_t *cmd_buf;
 	uint8_t len;
 	struct tdls_send_mgmt tdls_mgmt;
+	bool use_default_ac;
 };
 
 /**

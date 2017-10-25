@@ -1418,12 +1418,12 @@ QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc)
 }
 
 /**
- * reg_get_dfs_region () - Get the current dfs region
+ * reg_get_current_dfs_region () - Get the current dfs region
  * @dfs_reg: pointer to dfs region
  *
  * Return: None
  */
-void reg_get_dfs_region(struct wlan_objmgr_pdev *pdev,
+void reg_get_current_dfs_region(struct wlan_objmgr_pdev *pdev,
 			enum dfs_reg *dfs_reg)
 {
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;

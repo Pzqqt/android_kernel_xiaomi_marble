@@ -287,14 +287,6 @@ int tdls_set_cap(struct tdls_vdev_priv_obj *tdls_vdev, const uint8_t *mac,
 			  enum tdls_peer_capab cap);
 
 /**
- * tdls_validate_mgmt_request() -validate mgmt request
- * @tdls_validate: action frame request
- *
- * Return: 0 for success or -EINVAL otherwise
- */
-int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate);
-
-/**
  * tdls_process_send_mgmt_rsp() - handle response for send mgmt
  * @rsp: TDLS send mgmt response
  *
@@ -355,7 +347,7 @@ QDF_STATUS tdls_process_connection_tracker_notify(struct wlan_objmgr_vdev *vdev,
  *
  * Return: 0 for success or -EINVAL otherwise
  */
-int tdls_validate_mgmt_request(struct tdls_validate_action_req *tdls_validate);
+int tdls_validate_mgmt_request(struct tdls_action_frame_request *tdls_mgmt_req);
 
 /**
  * tdls_set_responder() - Set/clear TDLS peer's responder role

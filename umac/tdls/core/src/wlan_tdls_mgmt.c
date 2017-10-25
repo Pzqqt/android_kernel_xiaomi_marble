@@ -291,6 +291,10 @@ static QDF_STATUS tdls_activate_send_mgmt_request(
 
 	tdls_mgmt_req->length = sizeof(struct tdls_send_mgmt_request) +
 				action_req->tdls_mgmt.len;
+	if (action_req->use_default_ac)
+		tdls_mgmt_req->ac = WIFI_AC_VI;
+	else
+		tdls_mgmt_req->ac = WIFI_AC_BK;
 
 	/* Send the request to PE. */
 	qdf_mem_zero(&msg, sizeof(msg));
@@ -370,7 +374,7 @@ QDF_STATUS tdls_process_mgmt_req(
 	enum wlan_serialization_status ser_cmd_status;
 
 	/* If connected and in Infra. Only then allow this */
-	status = tdls_validate_mgmt_request(tdls_mgmt_req->chk_frame);
+	status = tdls_validate_mgmt_request(tdls_mgmt_req);
 	if (status != QDF_STATUS_SUCCESS) {
 		status = tdls_internal_send_mgmt_tx_done(tdls_mgmt_req,
 							 status);
