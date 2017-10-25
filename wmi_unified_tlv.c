@@ -4940,6 +4940,9 @@ static QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
 	key_data = (A_UINT8 *) (buf_ptr + WMI_TLV_HDR_SIZE);
 	qdf_mem_copy((void *)key_data,
 		     (const void *)key_params->key_data, key_params->key_len);
+	if (key_params->key_rsc_counter)
+	    qdf_mem_copy(&cmd->key_rsc_counter, key_params->key_rsc_counter,
+			 sizeof(wmi_key_seq_counter));
 	cmd->key_len = key_params->key_len;
 
 	status = wmi_unified_cmd_send(wmi_handle, buf, len,
