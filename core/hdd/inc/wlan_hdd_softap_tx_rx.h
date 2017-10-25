@@ -42,9 +42,20 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb,
 void hdd_softap_tx_timeout(struct net_device *dev);
 QDF_STATUS hdd_softap_init_tx_rx(struct hdd_adapter *adapter);
 QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *adapter);
+
+/**
+ * hdd_softap_init_tx_rx_sta() - Initialize tx/rx for a softap station
+ * @adapter: pointer to adapter context
+ * @sta_id: Station ID to initialize
+ * @sta_mac: pointer to the MAC address of the station
+ *
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
+ */
 QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
-				     uint8_t STAId,
-				     struct qdf_mac_addr *pmacAddrSTA);
+				     uint8_t sta_id,
+				     struct qdf_mac_addr *sta_mac);
+
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(struct hdd_adapter *adapter,
 				       uint8_t STAId);
 

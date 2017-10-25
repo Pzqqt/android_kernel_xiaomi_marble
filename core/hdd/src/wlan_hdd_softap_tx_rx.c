@@ -630,32 +630,23 @@ QDF_STATUS hdd_softap_deinit_tx_rx(struct hdd_adapter *adapter)
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * hdd_softap_init_tx_rx_sta() - Initialize tx/rx for a softap station
- * @adapter: pointer to adapter context
- * @STAId: Station ID to initialize
- * @pmacAddrSTA: pointer to the MAC address of the station
- *
- * Return: QDF_STATUS_E_FAILURE if any errors encountered,
- *	   QDF_STATUS_SUCCESS otherwise
- */
 QDF_STATUS hdd_softap_init_tx_rx_sta(struct hdd_adapter *adapter,
-				     uint8_t STAId,
-				     struct qdf_mac_addr *pmacAddrSTA)
+				     uint8_t sta_id,
+				     struct qdf_mac_addr *sta_mac)
 {
 	spin_lock_bh(&adapter->staInfo_lock);
-	if (adapter->aStaInfo[STAId].in_use) {
+	if (adapter->aStaInfo[sta_id].in_use) {
 		spin_unlock_bh(&adapter->staInfo_lock);
-		hdd_err("Reinit of in use station %d", STAId);
+		hdd_err("Reinit of in use station %d", sta_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	qdf_mem_zero(&adapter->aStaInfo[STAId],
+	qdf_mem_zero(&adapter->aStaInfo[sta_id],
 		     sizeof(struct hdd_station_info));
 
-	adapter->aStaInfo[STAId].in_use = true;
-	adapter->aStaInfo[STAId].is_deauth_in_progress = false;
-	qdf_copy_macaddr(&adapter->aStaInfo[STAId].macAddrSTA, pmacAddrSTA);
+	adapter->aStaInfo[sta_id].in_use = true;
+	adapter->aStaInfo[sta_id].is_deauth_in_progress = false;
+	qdf_copy_macaddr(&adapter->aStaInfo[sta_id].macAddrSTA, sta_mac);
 
 	spin_unlock_bh(&adapter->staInfo_lock);
 	return QDF_STATUS_SUCCESS;
