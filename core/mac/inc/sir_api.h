@@ -3544,6 +3544,7 @@ typedef struct sSirTdlsSendMgmtReq {
 	/* For multi-session, for PE to locate peSession ID */
 	struct qdf_mac_addr bssid;
 	struct qdf_mac_addr peer_mac;
+	enum wifi_traffic_ac ac;
 	/* Variable length. Dont add any field after this. */
 	uint8_t addIe[1];
 } tSirTdlsSendMgmtReq, *tpSirSmeTdlsSendMgmtReq;
@@ -5239,15 +5240,6 @@ typedef struct {
 	/* number of long data pkt retries */
 	uint32_t retriesLong;
 } tSirWifiRateStat, *tpSirWifiRateStat;
-
-/* access categories */
-typedef enum {
-	WIFI_AC_VO = 0,
-	WIFI_AC_VI = 1,
-	WIFI_AC_BE = 2,
-	WIFI_AC_BK = 3,
-	WIFI_AC_MAX = 4,
-} tSirWifiTrafficAc;
 
 /* wifi peer type */
 typedef enum {

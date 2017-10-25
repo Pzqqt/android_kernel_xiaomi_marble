@@ -100,6 +100,7 @@ typedef struct TdlsSendMgmtInfo {
 	uint32_t peerCapability;
 	uint8_t *buf;
 	uint8_t len;
+	enum wifi_traffic_ac ac;
 } tTdlsSendMgmtCmdInfo;
 
 typedef struct TdlsLinkEstablishInfo {

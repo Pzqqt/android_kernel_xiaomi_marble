@@ -1650,7 +1650,7 @@ typedef struct tagCsrTdlsSendMgmt {
 	uint32_t peerCapability;
 	uint8_t *buf;
 	uint8_t len;
-
+	enum wifi_traffic_ac ac;
 } tCsrTdlsSendMgmt;
 #endif
 
