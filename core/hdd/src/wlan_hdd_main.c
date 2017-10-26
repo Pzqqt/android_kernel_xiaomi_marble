@@ -9509,6 +9509,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	mutex_lock(&hdd_ctx->iface_change_lock);
 	hdd_ctx->stop_modules_in_progress = true;
+	cds_set_module_stop_in_progress(true);
 
 	active_threads = cds_return_external_threads_count();
 	if (active_threads > 0 || hdd_ctx->isWiphySuspended) {
@@ -9525,6 +9526,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 				hdd_ctx->config->iface_change_wait_time,
 				WIFI_POWER_EVENT_WAKELOCK_IFACE_CHANGE_TIMER);
 			hdd_ctx->stop_modules_in_progress = false;
+			cds_set_module_stop_in_progress(false);
 			return 0;
 		}
 	}
@@ -9617,6 +9619,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 done:
 	hdd_ctx->stop_modules_in_progress = false;
+	cds_set_module_stop_in_progress(false);
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 	hdd_alert("stop WLAN module: exit driver status=%d",
 		  hdd_ctx->driver_status);

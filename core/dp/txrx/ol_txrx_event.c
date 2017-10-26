@@ -113,9 +113,10 @@ wdi_event_sub(struct ol_txrx_pdev_t *txrx_pdev,
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
 	/* Input validation */
-	if (!txrx_pdev) {
+	if (!txrx_pdev || !txrx_pdev->wdi_event_list) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Invalid txrx_pdev in %s", __func__);
+			  "Invalid txrx_pdev or wdi_event_list in %s",
+			  __func__);
 		return A_ERROR;
 	}
 	if (!event_cb_sub) {
@@ -224,6 +225,7 @@ A_STATUS wdi_event_detach(struct ol_txrx_pdev_t *txrx_pdev)
 	}
 	/* txrx_pdev->wdi_event_list would be non-null */
 	qdf_mem_free(txrx_pdev->wdi_event_list);
+	txrx_pdev->wdi_event_list = NULL;
 	return A_OK;
 }
 
