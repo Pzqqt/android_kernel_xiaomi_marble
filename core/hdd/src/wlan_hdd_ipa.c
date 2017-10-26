@@ -4728,6 +4728,13 @@ static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context)
 
 	if (iface_context == NULL)
 		return;
+	if (iface_context->adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+			    "%s: bad adapter(%pK).magic(%d)!",
+			    __func__, iface_context->adapter,
+			    iface_context->adapter->magic);
+		return;
+	}
 
 	cdp_ipa_cleanup_iface(cds_get_context(QDF_MODULE_ID_SOC),
 		      iface_context->adapter->dev->name,
