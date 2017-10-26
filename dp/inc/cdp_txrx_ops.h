@@ -104,10 +104,10 @@ struct cdp_cmn_ops {
 	 * callback function
 	 */
 
-	void (*txrx_mgmt_tx_cb_set)
-		(struct cdp_pdev *pdev, uint8_t type,
-		 ol_txrx_mgmt_tx_cb download_cb, ol_txrx_mgmt_tx_cb ota_ack_cb,
-		 void *ctxt);
+	void (*txrx_mgmt_tx_cb_set)(struct cdp_pdev *pdev, uint8_t type,
+				    ol_txrx_mgmt_tx_cb download_cb,
+				    ol_txrx_mgmt_tx_cb ota_ack_cb,
+				    void *ctxt);
 
 	int (*txrx_get_tx_pending)(struct cdp_pdev *pdev);
 

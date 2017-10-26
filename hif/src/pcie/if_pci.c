@@ -2551,6 +2551,10 @@ static int hif_ce_srng_msi_free_irq(struct hif_softc *scn)
 	 */
 	for (ce_id = 0; ce_id < scn->ce_count; ce_id++) {
 		unsigned int msi_data;
+
+		if (!ce_sc->tasklets[ce_id].inited)
+			continue;
+
 		msi_data = (ce_id % msi_data_count) + msi_irq_start;
 		irq = pld_get_msi_irq(scn->qdf_dev->dev, msi_data);
 
@@ -2605,7 +2609,13 @@ void hif_pci_nointrs(struct hif_softc *scn)
 	hif_pci_deconfigure_grp_irq(scn);
 
 	ret = hif_ce_srng_msi_free_irq(scn);
-	if (ret != 0 && sc->num_msi_intrs > 0) {
+	if (ret != -EINVAL) {
+		/* ce irqs freed in hif_ce_srng_msi_free_irq */
+
+		if (scn->wake_irq)
+			free_irq(scn->wake_irq, scn);
+		scn->wake_irq = 0;
+	} else if (sc->num_msi_intrs > 0) {
 		/* MSI interrupt(s) */
 		for (i = 0; i < sc->num_msi_intrs; i++)
 			free_irq(sc->irq + i, sc);
@@ -2618,7 +2628,6 @@ void hif_pci_nointrs(struct hif_softc *scn)
 		free_irq(sc->irq, sc);
 	}
 	scn->request_irq_done = false;
-
 }
 
 /**
