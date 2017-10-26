@@ -806,16 +806,12 @@ struct hdd_station_info {
 	uint8_t tx_mcs_map;
 };
 
+/**
+ * struct hdd_ap_ctx - SAP/P2PGO specific information
+ * @hostapd_state: state control information
+ */
 struct hdd_ap_ctx {
-	struct hdd_hostapd_state HostapdState;
-
-	/* Memory differentiation mode is enabled */
-	/* uint16_t uMemoryDiffThreshold; */
-	/* uint8_t uNumActiveAC; */
-	/* uint8_t uActiveACMask; */
-
-	/** Packet Count to update uNumActiveAC and uActiveACMask */
-	/* uint16_t uUpdatePktCount; */
+	struct hdd_hostapd_state hostapd_state;
 
 	/** Station ID assigned after BSS starts */
 	uint8_t uBCStaId;
@@ -1224,7 +1220,7 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
-				(&(adapter)->sessionCtx.ap.HostapdState)
+				(&(adapter)->sessionCtx.ap.hostapd_state)
 #define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->sessionCtx.ap.sapContext)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
