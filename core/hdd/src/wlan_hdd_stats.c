@@ -1351,7 +1351,7 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 	if (0 != ret)
 		return -EINVAL;
 
-	if (hddstactx->hdd_ReassocScenario) {
+	if (hddstactx->hdd_reassoc_scenario) {
 		hdd_err("Roaming in progress, cannot process the request");
 		return -EBUSY;
 	}
@@ -1416,7 +1416,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (hddstactx->hdd_ReassocScenario) {
+	if (hddstactx->hdd_reassoc_scenario) {
 		hdd_err("Roaming in progress, cannot process the request");
 		return -EBUSY;
 	}
@@ -3946,7 +3946,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		return 0;
 	}
 
-	if (true == sta_ctx->hdd_ReassocScenario) {
+	if (sta_ctx->hdd_reassoc_scenario) {
 		hdd_debug("Roaming is in progress, cannot continue with this request");
 		/*
 		 * supplicant reports very low rssi to upper layer
@@ -4631,7 +4631,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	if (hdd_ctx->config->fEnableSNRMonitoring == 0)
 		return -ENONET;
 
-	if (sta_ctx->hdd_ReassocScenario) {
+	if (sta_ctx->hdd_reassoc_scenario) {
 		hdd_info("Roaming in progress, hence return");
 		return -ENONET;
 	}

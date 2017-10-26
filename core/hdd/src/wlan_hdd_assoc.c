@@ -2327,7 +2327,7 @@ static int hdd_change_sta_state_authenticated(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	timeout = hddstactx->hdd_ReassocScenario ?
+	timeout = hddstactx->hdd_reassoc_scenario ?
 		AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE :
 		hdd_ctx->config->auto_bmps_timer_val * 1000;
 
@@ -4433,9 +4433,9 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info, uint32_t roamId,
 			hdd_dis_connect_handler(adapter, roam_info, roamId,
 						roamStatus, roamResult);
 		sta_ctx->ft_carrier_on = false;
-		sta_ctx->hdd_ReassocScenario = false;
-		hdd_debug("hdd_ReassocScenario set to: %d, ReAssoc Failed, session: %d",
-			 sta_ctx->hdd_ReassocScenario, adapter->sessionId);
+		sta_ctx->hdd_reassoc_scenario = false;
+		hdd_debug("hdd_reassoc_scenario set to: %d, ReAssoc Failed, session: %d",
+			  sta_ctx->hdd_reassoc_scenario, adapter->sessionId);
 		break;
 
 	case eCSR_ROAM_FT_START:
@@ -4459,9 +4459,9 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info, uint32_t roamId,
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		sta_ctx->ft_carrier_on = true;
-		sta_ctx->hdd_ReassocScenario = true;
-		hdd_debug("hdd_ReassocScenario set to: %d, due to eCSR_ROAM_FT_START, session: %d",
-			 sta_ctx->hdd_ReassocScenario, adapter->sessionId);
+		sta_ctx->hdd_reassoc_scenario = true;
+		hdd_debug("hdd_reassoc_scenario set to: %d, due to eCSR_ROAM_FT_START, session: %d",
+			  sta_ctx->hdd_reassoc_scenario, adapter->sessionId);
 		break;
 	case eCSR_ROAM_NAPI_OFF:
 		hdd_debug("After Roam Synch Comp: NAPI Serialize OFF");
@@ -4573,10 +4573,10 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info, uint32_t roamId,
 							  roamId, roamStatus,
 							  roamResult);
 		if (eCSR_ROAM_RESULT_AUTHENTICATED == roamResult) {
-			sta_ctx->hdd_ReassocScenario = false;
-			hdd_debug("hdd_ReassocScenario set to: %d, set key complete, session: %d",
-			       sta_ctx->hdd_ReassocScenario,
-			       adapter->sessionId);
+			sta_ctx->hdd_reassoc_scenario = false;
+			hdd_debug("hdd_reassoc_scenario set to: %d, set key complete, session: %d",
+				  sta_ctx->hdd_reassoc_scenario,
+				  adapter->sessionId);
 		}
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
