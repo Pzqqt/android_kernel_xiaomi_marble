@@ -782,8 +782,11 @@ EXPORT_SYMBOL(dispatcher_deinit);
 
 QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
-	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_open(psoc))
+	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_psoc_open(psoc))
 		goto out;
+
+	if (QDF_STATUS_SUCCESS != ucfg_scan_psoc_open(psoc))
+		goto scan_psoc_open_fail;
 
 	if (QDF_STATUS_SUCCESS != p2p_psoc_open(psoc))
 		goto p2p_psoc_open_fail;
@@ -821,6 +824,8 @@ tdls_psoc_open_fail:
 	p2p_psoc_close(psoc);
 p2p_psoc_open_fail:
 	ucfg_scan_psoc_close(psoc);
+scan_psoc_open_fail:
+	wlan_mgmt_txrx_psoc_close(psoc);
 
 out:
 	return QDF_STATUS_E_FAILURE;
@@ -844,6 +849,8 @@ QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 	QDF_BUG(QDF_STATUS_SUCCESS == p2p_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == ucfg_scan_psoc_close(psoc));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_psoc_close(psoc));
 
 	return QDF_STATUS_SUCCESS;
 }

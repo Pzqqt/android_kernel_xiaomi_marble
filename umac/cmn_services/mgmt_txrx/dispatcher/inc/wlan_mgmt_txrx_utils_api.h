@@ -777,4 +777,19 @@ QDF_STATUS wlan_mgmt_txrx_deregister_rx_cb(
 			struct mgmt_txrx_mgmt_frame_cb_info *frm_cb_info,
 			uint8_t num_entries);
 
+/**
+ * wlan_mgmt_txrx_psoc_open() - mgmt txrx module psoc open API
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_psoc_open(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mgmt_txrx_psoc_close() - mgmt txrx module psoc close API
+ * @psoc: psoc context
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_psoc_close(struct wlan_objmgr_psoc *psoc);
 #endif

@@ -518,3 +518,49 @@ QDF_STATUS wlan_mgmt_txrx_deregister_rx_cb(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS wlan_mgmt_txrx_psoc_open(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mgmt_txrx_psoc_close(struct wlan_objmgr_psoc *psoc)
+{
+	struct mgmt_txrx_priv_context *mgmt_txrx_ctx;
+	struct mgmt_txrx_desc_elem_t *mgmt_desc;
+	uint8_t i;
+	uint32_t pool_size;
+
+	if (!psoc) {
+		mgmt_txrx_err("psoc context is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	mgmt_txrx_ctx = (struct mgmt_txrx_priv_context *)
+			wlan_objmgr_psoc_get_comp_private_obj(psoc,
+				WLAN_UMAC_COMP_MGMT_TXRX);
+	if (!mgmt_txrx_ctx) {
+		mgmt_txrx_err("mgmt txrx context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pool_size = mgmt_txrx_ctx->mgmt_desc_pool.free_list.max_size;
+	if (!pool_size) {
+		mgmt_txrx_err("pool size is 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < pool_size; i++) {
+		if (mgmt_txrx_ctx->mgmt_desc_pool.pool[i].in_use) {
+			mgmt_txrx_info("mgmt descriptor with desc id: %d not in freelist",
+				       i);
+			mgmt_desc = &mgmt_txrx_ctx->mgmt_desc_pool.pool[i];
+			qdf_nbuf_free(mgmt_desc->nbuf);
+			wlan_objmgr_peer_release_ref(mgmt_desc->peer,
+						     WLAN_MGMT_SB_ID);
+			wlan_mgmt_txrx_desc_put(mgmt_txrx_ctx, i);
+		}
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
