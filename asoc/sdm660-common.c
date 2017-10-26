@@ -17,6 +17,7 @@
 #include <linux/of_device.h>
 #include <sound/pcm_params.h>
 #include <dsp/q6afe-v2.h>
+#include <dsp/audio_notifier.h>
 #include "msm-pcm-routing-v2.h"
 #include "sdm660-common.h"
 #include "sdm660-internal.h"
@@ -3370,6 +3371,10 @@ static int msm_asoc_machine_remove(struct platform_device *pdev)
 	gpio_free(pdata->us_euro_gpio);
 	gpio_free(pdata->hph_en1_gpio);
 	gpio_free(pdata->hph_en0_gpio);
+
+	if (pdata->snd_card_val != INT_SND_CARD)
+		audio_notifier_deregister("sdm660");
+
 	snd_soc_unregister_card(card);
 	return 0;
 }
