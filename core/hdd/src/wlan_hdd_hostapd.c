@@ -666,14 +666,15 @@ static void hdd_clear_all_sta(struct hdd_adapter *adapter,
 	uint8_t staId = 0;
 	struct net_device *dev;
 	struct tagCsrDelStaParams del_sta_params;
+	struct hdd_ap_ctx *ap_ctx;
 
 	dev = (struct net_device *)usrDataForCallback;
 
 	hdd_debug("Clearing all the STA entry....");
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
 		if (adapter->sta_info[staId].in_use &&
-		    (staId !=
-		     (WLAN_HDD_GET_AP_CTX_PTR(adapter))->uBCStaId)) {
+		    (staId != ap_ctx->broadcast_sta_id)) {
 			wlansap_populate_del_sta_params(
 				&adapter->sta_info[staId].sta_mac.
 				bytes[0], eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
@@ -1496,7 +1497,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		} else {
 			sme_ch_avoid_update_req(hdd_ctx->hHal);
 
-			ap_ctx->uBCStaId =
+			ap_ctx->broadcast_sta_id =
 				pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
 
 			hdd_register_tx_flow_control(adapter,
@@ -1521,7 +1522,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
 			status = hdd_ipa_wlan_evt(adapter,
-					ap_ctx->uBCStaId,
+					ap_ctx->broadcast_sta_id,
 					HDD_IPA_AP_CONNECT,
 					adapter->dev->dev_addr);
 			if (status) {
@@ -1673,7 +1674,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		ap_ctx->operatingChannel = 0;
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
 			status = hdd_ipa_wlan_evt(adapter,
-					ap_ctx->uBCStaId,
+					ap_ctx->broadcast_sta_id,
 					HDD_IPA_AP_DISCONNECT,
 					adapter->dev->dev_addr);
 			if (status) {
@@ -2080,7 +2081,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			if (adapter->sta_info[i].in_use
 			    && i !=
 			    (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-			    uBCStaId) {
+			    broadcast_sta_id) {
 				ap_ctx->bApActive = true;
 				break;
 			}
@@ -5134,7 +5135,7 @@ static int hdd_softap_get_sta_info(struct hdd_adapter *adapter,
 
 	ENTER();
 
-	bc_sta_id = WLAN_HDD_GET_AP_CTX_PTR(adapter)->uBCStaId;
+	bc_sta_id = WLAN_HDD_GET_AP_CTX_PTR(adapter)->broadcast_sta_id;
 
 	written = scnprintf(buf, size, "\nstaId staAddress\n");
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {

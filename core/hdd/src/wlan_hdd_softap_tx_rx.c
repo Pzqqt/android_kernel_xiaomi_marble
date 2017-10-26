@@ -338,7 +338,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 		 * starting phase.  SAP will return the station ID
 		 * used for BC/MC traffic.
 		 */
-		STAId = ap_ctx->uBCStaId;
+		STAId = ap_ctx->broadcast_sta_id;
 	} else {
 		if (QDF_STATUS_SUCCESS !=
 			 hdd_softap_get_sta_id(adapter,
@@ -1005,11 +1005,11 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 	hdd_ctx->sta_to_adapter[WLAN_RX_BCMC_STA_ID] = adapter;
-	hdd_ctx->sta_to_adapter[ap_ctx->uBCStaId] = adapter;
+	hdd_ctx->sta_to_adapter[ap_ctx->broadcast_sta_id] = adapter;
 	qdf_status =
 		hdd_softap_register_sta(adapter, false, fPrivacyBit,
-					(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-					uBCStaId, 0, 1, &broadcastMacAddr, 0);
+					ap_ctx->broadcast_sta_id,
+					0, 1, &broadcastMacAddr, 0);
 
 	return qdf_status;
 }
@@ -1022,9 +1022,10 @@ QDF_STATUS hdd_softap_register_bc_sta(struct hdd_adapter *adapter,
  */
 QDF_STATUS hdd_softap_deregister_bc_sta(struct hdd_adapter *adapter)
 {
-	return hdd_softap_deregister_sta(adapter,
-					 (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-					 uBCStaId);
+	struct hdd_ap_ctx *ap_ctx;
+
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+	return hdd_softap_deregister_sta(adapter, ap_ctx->broadcast_sta_id);
 }
 
 /**
@@ -1048,8 +1049,11 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 	qdf_status = hdd_softap_deregister_bc_sta(adapter);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		struct hdd_ap_ctx *ap_ctx;
+
+		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 		hdd_err("Failed to deregister BC sta Id %d",
-			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->uBCStaId);
+			ap_ctx->broadcast_sta_id);
 	}
 
 	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
