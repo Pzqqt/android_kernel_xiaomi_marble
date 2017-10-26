@@ -140,8 +140,7 @@ void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
  * for a given type of management frame.
  */
 void
-ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev,
-		       uint8_t type,
+ol_txrx_mgmt_tx_cb_set(struct cdp_pdev *ppdev, uint8_t type,
 		       ol_txrx_mgmt_tx_cb download_cb,
 		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt);
 
