@@ -640,7 +640,7 @@ struct hdd_mon_set_ch_info {
  *    @ibss_enc_key_installed is %true)
  * @ibss_peer_info: information about the ibss peer
  * @hdd_reassoc_scenario: is station in the middle of reassociation?
- * @staDebugState: STA context debug variable
+ * @sta_debug_state: STA context debug variable
  * @broadcast_staid: STA ID assigned for broadcast frames
  * @ch_info: monitor mode channel information
  * @ndp_ctx: NAN data path context
@@ -659,7 +659,7 @@ struct hdd_station_ctx {
 	tCsrRoamSetKey ibss_enc_key;
 	tSirPeerInfoRspParams ibss_peer_info;
 	bool hdd_reassoc_scenario;
-	int staDebugState;
+	int sta_debug_state;
 	uint8_t broadcast_staid;
 	struct hdd_mon_set_ch_info ch_info;
 #if defined(WLAN_FEATURE_NAN_DATAPATH) && !defined(WLAN_FEATURE_NAN_CONVERGENCE)
