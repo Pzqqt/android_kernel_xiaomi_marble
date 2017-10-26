@@ -346,7 +346,7 @@ int msm_audio_ion_mmap(struct audio_buffer *ab,
 				vma, (unsigned int)addr, len,
 				(unsigned int)vma->vm_start,
 				(unsigned int)vma->vm_end,
-				(unsigned long)vma->vm_page_prot.pgprot);
+				(unsigned long)pgprot_val(vma->vm_page_prot));
 			remap_pfn_range(vma, addr, page_to_pfn(page), len,
 					vma->vm_page_prot);
 			addr += len;
@@ -369,7 +369,7 @@ int msm_audio_ion_mmap(struct audio_buffer *ab,
 		pr_debug("vma=%pK, vm_start=%x vm_end=%x vm_pgoff=%ld vm_page_prot=%lu\n",
 			vma, (unsigned int)vma->vm_start,
 			(unsigned int)vma->vm_end, vma->vm_pgoff,
-			(unsigned long)vma->vm_page_prot.pgprot);
+			(unsigned long)pgprot_val(vma->vm_page_prot));
 		va_len = vma->vm_end - vma->vm_start;
 		if ((offset > phys_len) || (va_len > phys_len-offset)) {
 			pr_err("wrong offset size %ld, lens= %zd, va_len=%zd\n",
