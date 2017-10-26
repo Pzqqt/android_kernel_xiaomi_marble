@@ -2563,14 +2563,14 @@ static int __hdd_open(struct net_device *dev)
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
 		adapter->sessionId, adapter->device_mode));
 
-	if (!hdd_wait_for_recovery_completion()) {
-		hdd_err("Recovery failed");
-		return -EIO;
-	}
-
 	/* Nothing to be done if device is unloading */
 	if (cds_is_driver_unloading()) {
 		hdd_err("Driver is unloading can not open the hdd");
+		return -EBUSY;
+	}
+
+	if (cds_is_driver_recovering()) {
+		hdd_err("WLAN is currently recovering; Please try again.");
 		return -EBUSY;
 	}
 
