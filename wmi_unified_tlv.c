@@ -19863,6 +19863,75 @@ send_cmd:
 	return status;
 }
 
+/**
+ * send_pdev_caldata_version_check_cmd_tlv() - send caldata check cmd to fw
+ * @wmi_handle: wmi handle
+ * @param:	reserved param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_pdev_caldata_version_check_cmd_tlv(wmi_unified_t wmi_handle,
+						uint32_t param)
+{
+	wmi_pdev_check_cal_version_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(wmi_pdev_check_cal_version_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_pdev_check_cal_version_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN
+			(wmi_pdev_check_cal_version_cmd_fixed_param));
+	cmd->pdev_id = param; /* set to 0x0 as expected from FW */
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_PDEV_CHECK_CAL_VERSION_CMDID)) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_pdev_caldata_version_check_ev_param_tlv() - extract caldata from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold peer caldata version data
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_pdev_caldata_version_check_ev_param_tlv(
+			wmi_unified_t wmi_handle,
+			void *evt_buf,
+			wmi_host_pdev_check_cal_version_event *param)
+{
+	WMI_PDEV_CHECK_CAL_VERSION_EVENTID_param_tlvs *param_tlvs;
+	wmi_pdev_check_cal_version_event_fixed_param *event;
+
+	param_tlvs = (WMI_PDEV_CHECK_CAL_VERSION_EVENTID_param_tlvs *) evt_buf;
+	if (!param_tlvs) {
+		WMI_LOGE("invalid cal version event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+	event =  param_tlvs->fixed_param;
+	if (event->board_mcn_detail[WMI_BOARD_MCN_STRING_MAX_SIZE] != '\0')
+		event->board_mcn_detail[WMI_BOARD_MCN_STRING_MAX_SIZE] = '\0';
+	WMI_HOST_IF_MSG_COPY_CHAR_ARRAY(param->board_mcn_detail,
+			event->board_mcn_detail, WMI_BOARD_MCN_STRING_BUF_SIZE);
+
+	param->software_cal_version = event->software_cal_version;
+	param->board_cal_version = event->board_cal_version;
+	param->cal_ok  = event->cal_status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -20264,6 +20333,10 @@ struct wmi_ops tlv_ops =  {
 		send_limit_off_chan_cmd_tlv,
 	.extract_reg_ch_avoid_event =
 		extract_reg_ch_avoid_event_tlv,
+	.send_pdev_caldata_version_check_cmd =
+			send_pdev_caldata_version_check_cmd_tlv,
+	.extract_pdev_caldata_version_check_ev_param =
+			extract_pdev_caldata_version_check_ev_param_tlv,
 	.send_set_arp_stats_req_cmd = send_set_arp_stats_req_cmd_tlv,
 	.send_get_arp_stats_req_cmd = send_get_arp_stats_req_cmd_tlv,
 	.send_set_del_pmkid_cache_cmd = send_set_del_pmkid_cache_cmd_tlv,
@@ -20507,6 +20580,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_service_available_event_id] =
 						WMI_SERVICE_AVAILABLE_EVENTID;
 	event_ids[wmi_update_rcpi_event_id] = WMI_UPDATE_RCPI_EVENTID;
+	event_ids[wmi_pdev_check_cal_version_event_id] = WMI_PDEV_CHECK_CAL_VERSION_EVENTID;
 }
 
 #ifndef CONFIG_MCL
