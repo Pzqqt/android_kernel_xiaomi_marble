@@ -6731,11 +6731,12 @@ typedef struct {
 #define WMI_HEOPS_BSSCOLORDISABLE_GET(he_ops) WMI_GET_BITS(he_ops, 30, 1)
 #define WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, value) WMI_SET_BITS(he_ops, 30, 1, value)
 
+/**--- HEOPS_DUALBEACON: DO NOT USE - DEPRECATED ---*/
 /* When set to 1 HE AP transmits beacons using two PHY formats,
  * one in non-HE format and other in an HE_EXT_SU PHY format
  */
-#define WMI_HEOPS_DUALBEACON_GET(he_ops) WMI_GET_BITS(he_ops, 30, 1)
-#define WMI_HEOPS_DUALBEACON_SET(he_ops, value) WMI_SET_BITS(he_ops, 30, 1, value)
+#define WMI_HEOPS_DUALBEACON_GET(he_ops) (0)
+#define WMI_HEOPS_DUALBEACON_SET(he_ops, value) {;}
 
 #define WMI_MAX_HECAP_PHY_SIZE                 (3)
 
@@ -6796,9 +6797,11 @@ typedef struct {
 #define WMI_HECAP_PHY_LTFGIFORHE_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 14, 1, value)
 
 /*
- * bit 15: reserved
- * bit 16: reserved
+ * When the Doppler Rx subfield is 1, indicates the maximum number of space-
+ * time streams supported for reception when midamble is used in the Data field.
  */
+#define WMI_HECAP_PHY_MIDAMBLERXMAXNSTS_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[0], 15, 2)
+#define WMI_HECAP_PHY_MIDAMBLERXMAXNSTS_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[0], 15, 2, value)
 
 /*
  * B0: For a transmitting STA acting as beamformee, it indicates support of
@@ -7023,7 +7026,40 @@ typedef struct {
 #define WMI_HECAP_PHY_ERSU4X800NSECGI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 0, 1)
 #define WMI_HECAP_PHY_ERSU4X800NSECGI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 0, 1, value)
 
+/*
+ * Indicates support of 26-, 52-, and 106-tone mapping for a 20 MHz operating non-AP HE STA that is the
+ * receiver of a 40 MHz HE MU PPDU in 2.4 GHz band, or the transmitter of a 40 MHz HE TB PPDU in 2.4GHz band.
+ */
+#define WMI_HECAP_PHY_HEPPDU20IN40MHZ2G_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 1, 1)
+#define WMI_HECAP_PHY_HEPPDU20IN40MHZ2G_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 1, 1, value)
 
+/*
+ * Indicates support of 26-, 52-, and 106-tone mapping for a 20 MHz operating non-AP HE STA that is the
+ * receiver of a 80+80 MHz or a 160 MHz HE MU PPDU, or the transmitter of a 80+80 MHz or 160 MHz HE TB PPDU.
+ */
+#define WMI_HECAP_PHY_HEPPDU20IN160OR80P80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 2, 1)
+#define WMI_HECAP_PHY_HEPPDU20IN160OR80P80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 2, 1, value)
+
+/*
+ * Indicates supports of 160 MHz OFDMA for a non-AP HE STA that sets bit B1 of Channel Width Set to 1, and
+ * sets B2 and B3 of Channel Width Set each to 0, when operating with 80 MHz channel width. The capability
+ * bit is applicable while receiving a 80+80 MHz or a 160 MHz HE MU PPDU, or transmitting a 80+80 MHz or a
+ * 160 MHz HE TB PPDU.
+ */
+#define WMI_HECAP_PHY_HEPPDU80IN160OR80P80MHZ_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 3, 1)
+#define WMI_HECAP_PHY_HEPPDU80IN160OR80P80MHZ_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 3, 1, value)
+
+/* Indicates support for the reception of an HE ER SU PPDU with 1x LTF and 0.8 us guard interval duration */
+#define WMI_HECAP_PHY_ERSU1X800NSECGI_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 4, 1)
+#define WMI_HECAP_PHY_ERSU1X800NSECGI_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 4, 1, value)
+
+/*
+ * When the Doppler Rx subfield is 1, indicates support for receiving midambles with 2x HE-LTF, 1x HE-LTF
+ * in HE SU PPDU if the HE SU PPDU With 1x HE-LTF And 0.8 s GI subfield is set to 1, and 1x HE-LTF in
+ * HE ER SU PPDU if the HE ER SU PPDU With 1x HELTF And 0.8 s GI subfield is set to 1.
+ */
+#define WMI_HECAP_PHY_MIDAMBLERX2XAND1XHELTF_GET(he_cap_phy) WMI_GET_BITS(he_cap_phy[2], 5, 1)
+#define WMI_HECAP_PHY_MIDAMBLERX2XAND1XHELTF_SET(he_cap_phy, value) WMI_SET_BITS(he_cap_phy[2], 5, 1, value)
 
 /*HTC + HE Support  Set to 1 if STA supports reception of HE Variant HT control Field*/
 #define WMI_HECAP_MAC_HECTRL_GET(he_cap) WMI_GET_BITS(he_cap, 0, 1)
@@ -7065,9 +7101,19 @@ typedef struct {
 #define WMI_HECAP_MAC_MTID_GET(he_cap) WMI_GET_BITS(he_cap, 12, 3)
 #define WMI_HECAP_MAC_MTID_SET(he_cap, value) WMI_SET_BITS(he_cap, 12, 3, value)
 
+/*
+ * Indicates support by a STA to receive an ack-enabled A-MPDU in which an A-MSDU is carried in
+ * a QoS Data frame for which no block ack agreement exists.
+ */
+#define WMI_HECAP_MAC_AMSDUINAMPDU_GET(he_cap) (hecap, 15, 1)
+#define WMI_HECAP_MAC_AMSDUINAMPDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 15, 1, value)
+
+/*--- HECAP_MAC_HELKAD: DO NOT USE - DEPRECATED ---*/
 /*0=No Feedback,2=Unsolicited,3=Both*/
-#define WMI_HECAP_MAC_HELKAD_GET(he_cap) WMI_GET_BITS(he_cap, 15, 2)
-#define WMI_HECAP_MAC_HELKAD_SET(he_cap, value) WMI_SET_BITS(he_cap, 15, 2, value)
+#define WMI_HECAP_MAC_HELKAD_GET(he_cap) (0)
+#define WMI_HECAP_MAC_HELKAD_SET(he_cap, value) {;}
+
+/* bit 16 reserved. */
 
 /*Set to 1 for reception of AllAck support*/
 #define WMI_HECAP_MAC_AACK_GET(he_cap) WMI_GET_BITS(he_cap, 17, 1)
@@ -7160,7 +7206,6 @@ typedef struct {
  */
 #define WMI_HECAP_MAC_OPS_GET(he_cap) (0)
 #define WMI_HECAP_MAC_OPS_SET(he_cap, value) {;}
-
 
 /* Indicates support for a non-AP STA to follow the NDP feedback report procedure and respond to
  * the NDP Feedback Report Poll Trigger frame.
@@ -19619,17 +19664,15 @@ typedef struct {
     /*HE capability info field of 802.11ax, WMI_HE_CAP defines */
     A_UINT32 he_cap_info_2G;
     /* HE Supported MCS Set field Rx/Tx same
-     * - 3 bits are used for each NSS chain.Max of 8 NSS can be encoded with
-     *    bit 2-0 indicating max HE MCS of NSS1
-     *    bit 5-3 indicating max HE MCS of NSS2 and so on
-     * - The max HE-MCS for n SS subfield (where n = 1,...,8) is encoded as follows
+     * - 2 bits are used for each NSS chain.Max of 8 NSS can be encoded with
+     *     bit 2-0 indicating max HE MCS of NSS1
+     *     bit 5-3 indicating max HE MCS of NSS2 and so on
+     * - The max HE-MCS for n SS subfield (where n = 1,...,8) in case of
+     *     HE BW less than or equal to 80MHZ is encoded as follows
      * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
-     * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
-     * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
-     * - 3 indicates support for VHT-MCS 0-10 for n spatial streams
-     * - 4 indicates support for VHT-MCS 0-11 for n spatial streams
-     * - 5-6 reserved
-     * - 7 indicates that n spatial streams is not supported
+     * - 1 indicates support for VHT-MCS 0-9 for n spatial streams
+     * - 2 indicates support for VHT-MCS 0-11 for n spatial streams
+     * - 3 indicates that n spatial streams is not supported
      * - WMI_HE_MAX_MCS_4_SS_MASK macro can be used for encoding this info
      */
     A_UINT32 he_supp_mcs_2G;
@@ -19653,18 +19696,20 @@ typedef struct {
     /*HE capability info field of 802.11ax, WMI_HE_CAP defines */
     A_UINT32 he_cap_info_5G;
     /* HE Supported MCS Set field Rx/Tx same
-     * - 3 bits are used for each NSS chain.Max of 8 NSS can be encoded with
-     *    bit 2-0 indicating max HE MCS of NSS1
-     *    bit 5-3 indicating max HE MCS of NSS2 and so on
-     * - The max HE-MCS for n SS subfield (where n = 1,...,8) is encoded as follows
+     * - 2 bits are used for each NSS chain.Max of 8 NSS can be encoded with
+     *     bit 2-0 indicating max HE MCS of NSS1
+     *     bit 5-3 indicating max HE MCS of NSS2 and so on
+     * - The max HE-MCS for n SS subfield (where n = 1,...,8) in case of
+     *     HE BW less than or equal to 80MHZ is encoded as follows
      * - 0 indicates support for VHT-MCS 0-7 for n spatial streams
-     * - 1 indicates support for VHT-MCS 0-8 for n spatial streams
-     * - 2 indicates support for VHT-MCS 0-9 for n spatial streams
-     * - 3 indicates support for VHT-MCS 0-10 for n spatial streams
-     * - 4 indicates support for VHT-MCS 0-11 for n spatial streams
-     * - 5-6 reserved
-     * - 7 indicates that n spatial streams is not supported
+     * - 1 indicates support for VHT-MCS 0-9 for n spatial streams
+     * - 2 indicates support for VHT-MCS 0-11 for n spatial streams
+     * - 3 indicates that n spatial streams is not supported
      * - WMI_HE_MAX_MCS_4_SS_MASK macro can be used for encoding this info
+     * - The max HE-MCS for n SS subfield (where n = 1,...,8) in case of
+     *     HE BW equal to 80+80 or 160 MHZ encoding is same as above just the
+     *     lower 16 bits are used for lower 80MHz NSS-MCS supported combo and
+     *     upper 16 bits are used for upper 80MHz NSS-MCS supported combo
      */
     A_UINT32 he_supp_mcs_5G;
     /* Valid Transmit chain mask */
