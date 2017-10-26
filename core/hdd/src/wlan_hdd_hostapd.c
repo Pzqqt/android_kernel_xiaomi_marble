@@ -660,15 +660,11 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 	EXIT();
 }
 
-static void hdd_clear_all_sta(struct hdd_adapter *adapter,
-			      void *usrDataForCallback)
+static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 {
 	uint8_t staId = 0;
-	struct net_device *dev;
 	struct tagCsrDelStaParams del_sta_params;
 	struct hdd_ap_ctx *ap_ctx;
-
-	dev = (struct net_device *)usrDataForCallback;
 
 	hdd_debug("Clearing all the STA entry....");
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
@@ -2247,8 +2243,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_DISCONNECT_ALL_P2P_CLIENT:
-		hdd_debug(" Disconnecting all the P2P Clients....");
-		hdd_clear_all_sta(adapter, usrDataForCallback);
+		hdd_clear_all_sta(adapter);
 		return QDF_STATUS_SUCCESS;
 
 	case eSAP_MAC_TRIG_STOP_BSS_EVENT:
