@@ -136,6 +136,8 @@
  * @vht_flags: VHT flags, only present for VHT frames.
  * @vht_flag_values1-5: Contains corresponding data for flags field
  * @he_flags: HE (11ax) flags, only present in HE frames
+ * @he_mu_flags: HE-MU (11ax) flags, only present in HE frames
+ * @he_mu_other_flags: HE-MU-OTHER (11ax) flags, only present in HE frames
  * @he_sig_A1_known: HE (11ax) sig A1 known field
  * @he_sig_A2_known: HE (11ax) sig A2 known field
  * @he_sig_b_common: HE (11ax) sig B common field
@@ -158,6 +160,18 @@
  * @first_data_seq_ctrl: Sequence ctrl field of first data frame
  * @ast_index: AST table hash index
  * @tid: QoS traffic tid number
+ * @he_per_user_1: HE per user info1
+ * @he_per_user_2: HE per user info2
+ * @he_per_user_position: HE per user position info
+ * @he_per_user_known: HE per user known info
+ * @he_flags1: HE flags
+ * @he_flags2: HE flags
+ * @he_RU[4]: HE RU assignment index
+ * @he_data1: HE property of received frame
+ * @he_data2: HE property of received frame
+ * @he_data3: HE property of received frame
+ * @he_data4: HE property of received frame
+ * @he_data5: HE property of received frame
  *
  */
 struct mon_rx_status {
@@ -174,6 +188,8 @@ struct mon_rx_status {
 	uint16_t vht_flags;
 	uint16_t vht_flag_values6;
 	uint16_t he_flags;
+	uint16_t he_mu_flags;
+	uint16_t he_mu_other_flags;
 	uint16_t he_sig_A1_known;
 	uint16_t he_sig_A2_known;
 	uint16_t he_sig_b_common;
@@ -204,6 +220,20 @@ struct mon_rx_status {
 	int16_t first_data_seq_ctrl;
 	uint32_t ast_index;
 	uint32_t tid;
+	/* New HE radiotap fields */
+	uint16_t he_per_user_1;
+	uint16_t he_per_user_2;
+	uint8_t he_per_user_position;
+	uint8_t he_per_user_known;
+	uint16_t he_flags1;
+	uint16_t he_flags2;
+	uint8_t he_RU[4];
+	uint16_t he_data1;
+	uint16_t he_data2;
+	uint16_t he_data3;
+	uint16_t he_data4;
+	uint16_t he_data5;
+	uint16_t he_data6;
 };
 
 /* Masks for HE SIG known fields in mon_rx_status structure */

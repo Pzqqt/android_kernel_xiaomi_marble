@@ -3042,8 +3042,8 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 /**
  * qdf_nbuf_update_radiotap_he_flags() - Update radiotap header from rx_status
  * @rx_status: Pointer to rx_status.
- * @nbuf:      nbuf pointer to which radiotap has to be updated
- * @headroom_sz: Available headroom size.
+ * @rtap_buf: buffer to which radiotap has to be updated
+ * @rtap_len: radiotap length
  *
  * API update high-efficiency (11ax) fields in the radiotap header
  *
@@ -3054,58 +3054,127 @@ qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
 				     int8_t *rtap_buf, uint32_t rtap_len)
 {
 	/*
-	 * IEEE80211_RADIOTAP_HE u32, u32, u32, u32 u16, u16, u16, u16, u8[4]
-	 * Enable all "known" radiotap flags for now
+	 * IEEE80211_RADIOTAP_HE u16, u16, u16, u16, u16, u16
+	 * Enable all "known" HE radiotap flags for now
 	 */
+	put_unaligned_le16(rx_status->he_data1, &rtap_buf[rtap_len]);
+	rtap_len += 2;
 
-	/* HE-MU-COMMON fields */
+	put_unaligned_le16(rx_status->he_data2, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data3, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data4, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data5, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data6, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	return rtap_len;
+}
+
+
+/**
+ * qdf_nbuf_update_radiotap_he_mu_flags() - update he-mu radiotap flags
+ * @rx_status: Pointer to rx_status.
+ * @rtap_buf: buffer to which radiotap has to be updated
+ * @rtap_len: radiotap length
+ *
+ * API update HE-MU fields in the radiotap header
+ *
+ * Return: length of rtap_len updated.
+ */
+static unsigned int
+qdf_nbuf_update_radiotap_he_mu_flags(struct mon_rx_status *rx_status,
+				     int8_t *rtap_buf, uint32_t rtap_len)
+{
+	/*
+	 * IEEE80211_RADIOTAP_HE_MU u16, u16, u8[4]
+	 * Enable all "known" he-mu radiotap flags for now
+	 */
 	if (rx_status->he_sig_b_common_known &
 			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0) {
-		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[0];
+		rtap_buf[rtap_len] = rx_status->he_RU[0];
 		rtap_len += 1;
 	}
 
 	if (rx_status->he_sig_b_common_known &
 			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU1) {
-		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[1];
+		rtap_buf[rtap_len] = rx_status->he_RU[1];
 		rtap_len += 1;
 	}
 	if (rx_status->he_sig_b_common_known &
 			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU2) {
-		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[2];
+		rtap_buf[rtap_len] = rx_status->he_RU[2];
 		rtap_len += 1;
 	}
 	if (rx_status->he_sig_b_common_known &
 			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU3) {
-		rtap_buf[rtap_len] = rx_status->he_sig_b_common_RU[3];
+		rtap_buf[rtap_len] = rx_status->he_RU[3];
 		rtap_len += 1;
 	}
 
-	put_unaligned_le16(rx_status->he_sig_b_common, &rtap_buf[rtap_len]);
+	put_unaligned_le16(rx_status->he_flags1, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 
-	put_unaligned_le16(
-		rx_status->he_sig_b_common_known, &rtap_buf[rtap_len]);
+	put_unaligned_le16(rx_status->he_flags2, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 
-	/* HE-MU-USER fields */
-	put_unaligned_le32(rx_status->he_sig_b_user, &rtap_buf[rtap_len]);
-	rtap_len += 4;
+	return rtap_len;
+}
 
-	put_unaligned_le32(rx_status->he_sig_b_user_known, &rtap_buf[rtap_len]);
-	rtap_len += 4;
+/**
+ * qdf_nbuf_update_radiotap_he_mu_other_flags() - update he_mu_other flags
+ * @rx_status: Pointer to rx_status.
+ * @rtap_buf: buffer to which radiotap has to be updated
+ * @rtap_len: radiotap length
+ *
+ * API update he-mu-other fields in the radiotap header
+ *
+ * Return: length of rtap_len updated.
+ */
+static unsigned int
+qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
+				     int8_t *rtap_buf, uint32_t rtap_len)
+{
+	/*
+	 * IEEE80211_RADIOTAP_HE-MU-OTHER u16, u16, u8, u8
+	 * Enable all "known" he-mu-other radiotap flags for now
+	 */
+	put_unaligned_le16(rx_status->he_per_user_1, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_per_user_2, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	rtap_buf[rtap_len] = rx_status->he_per_user_position;
+	rtap_len += 1;
+
+	rtap_buf[rtap_len] = rx_status->he_per_user_known;
+	rtap_len += 1;
 
 	/* HE fields */
-	put_unaligned_le32(rx_status->he_sig_A1, &rtap_buf[rtap_len]);
-	rtap_len += 4;
-
-	put_unaligned_le32(rx_status->he_sig_A2, &rtap_buf[rtap_len]);
-	rtap_len += 4;
-
-	put_unaligned_le16(rx_status->he_sig_A1_known, &rtap_buf[rtap_len]);
+	put_unaligned_le16(rx_status->he_data1, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 
-	put_unaligned_le16(rx_status->he_sig_A2_known, &rtap_buf[rtap_len]);
+	put_unaligned_le16(rx_status->he_data2, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data3, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data4, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data5, &rtap_buf[rtap_len]);
+	rtap_len += 2;
+
+	put_unaligned_le16(rx_status->he_data6, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 
 	return rtap_len;
@@ -3122,6 +3191,8 @@ qdf_nbuf_update_radiotap_he_flags(struct mon_rx_status *rx_status,
 #define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + 100)
 
 #define IEEE80211_RADIOTAP_HE 22
+#define IEEE80211_RADIOTAP_HE_MU	23
+#define IEEE80211_RADIOTAP_HE_MU_OTHER	24
 
 /**
  * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
@@ -3151,7 +3222,8 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	rtap_len += 1;
 
 	/* IEEE80211_RADIOTAP_RATE  u8           500kb/s */
-	if (!rx_status->ht_flags && !rx_status->vht_flags) {
+	if (!rx_status->ht_flags && !rx_status->vht_flags &&
+	    !rx_status->he_flags) {
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_RATE);
 		rtap_buf[rtap_len] = rx_status->rate * RATE_MULTIPLIER;
 	} else
@@ -3215,6 +3287,24 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 		/* IEEE80211_RADIOTAP_HE */
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE);
 		rtap_len = qdf_nbuf_update_radiotap_he_flags(rx_status,
+								rtap_buf,
+								rtap_len);
+	}
+
+	if (rx_status->he_mu_flags) {
+		/* IEEE80211_RADIOTAP_HE-MU */
+		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_HE_MU);
+		rtap_len = qdf_nbuf_update_radiotap_he_mu_flags(rx_status,
+								rtap_buf,
+								rtap_len);
+	}
+
+	if (rx_status->he_mu_other_flags) {
+		/* IEEE80211_RADIOTAP_HE-MU-OTHER */
+		rthdr->it_present |=
+			cpu_to_le32(1 << IEEE80211_RADIOTAP_HE_MU_OTHER);
+		rtap_len =
+			qdf_nbuf_update_radiotap_he_mu_other_flags(rx_status,
 								rtap_buf,
 								rtap_len);
 	}
