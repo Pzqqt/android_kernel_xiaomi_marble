@@ -7460,18 +7460,21 @@ QDF_STATUS sme_config_fast_roaming(tHalHandle hal, uint8_t session_id,
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	QDF_STATUS status;
 
-	/* do_not_roam flag is set in wlan_hdd_cfg80211_connect_start
-	 * when supplicant initiate connect request with BSSID.
-	 * This flag reset when supplicant sends vendor command to enable
-	 * roaming after association.
+	/*
+	 * supplicant_disabled_roaming flag is set to true in
+	 * wlan_hdd_cfg80211_connect_start when supplicant initiate connect
+	 * request with BSSID. This flag is reset when supplicant sends
+	 * vendor command to enable roaming after association.
 	 *
 	 * This request from wpa_supplicant will be skipped in this function
-	 * if roaming is disabled using driver command or INI and do_not_roam
-	 * flag remains set. So make sure to set do_not_roam flag as per
-	 * wpa_supplicant even if roam request from wpa_supplicant ignored.
+	 * if roaming is disabled using driver command or INI and
+	 * supplicant_disabled_roaming flag remains set. So make sure to set
+	 * supplicant_disabled_roaming flag as per wpa_supplicant even if roam
+	 * request from wpa_supplicant ignored.
 	 */
 	if (session && session->pCurRoamProfile)
-		session->pCurRoamProfile->do_not_roam = !is_fast_roam_enabled;
+		session->pCurRoamProfile->supplicant_disabled_roaming =
+			!is_fast_roam_enabled;
 
 	if (!mac_ctx->roam.configParam.isFastRoamIniFeatureEnabled) {
 		sme_debug("Fast roam is disabled through ini");
@@ -7539,10 +7542,19 @@ QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 	tSirRoamOffloadScanReq *req;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	tpCsrNeighborRoamControlInfo roam_info;
+	struct csr_roam_session *session;
 
 	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
 		sme_err("incorrect session/vdev ID");
 		return QDF_STATUS_E_INVAL;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (session->pCurRoamProfile &&
+		!session->pCurRoamProfile->roaming_allowed_on_iface) {
+		sme_debug("Roaming was never started on session %d",
+				session_id);
+		return QDF_STATUS_SUCCESS;
 	}
 	roam_info = &mac_ctx->roam.neighborRoamInfo[session_id];
 	req = qdf_mem_malloc(sizeof(*req));
