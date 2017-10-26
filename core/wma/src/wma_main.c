@@ -2337,6 +2337,7 @@ static int wma_flush_complete_evt_handler(void *handle,
 		if (status != QDF_STATUS_SUCCESS)
 			WMA_LOGE("Failed to stop the log completion timeout");
 		cds_logging_set_fw_flush_complete();
+		return QDF_STATUS_SUCCESS;
 	} else if (reason_code && cds_is_log_report_in_progress() == false) {
 		/* Asynchronous flush event for fatal events */
 		status = cds_set_log_completion(WLAN_LOG_TYPE_FATAL,
