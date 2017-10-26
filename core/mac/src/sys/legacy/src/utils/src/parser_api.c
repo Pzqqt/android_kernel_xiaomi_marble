@@ -4298,7 +4298,7 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 static void sir_update_auth_frame2_struct_fils_conf(tDot11fAuthentication *auth,
 				tpSirMacAuthFrameBody auth_frame)
 {
-	if (auth->AuthAlgo.algo != eSIR_FILS_SK_WITHOUT_PFS)
+	if (auth->AuthAlgo.algo != SIR_FILS_SK_WITHOUT_PFS)
 		return;
 
 	if (auth->fils_assoc_delay_info.present)

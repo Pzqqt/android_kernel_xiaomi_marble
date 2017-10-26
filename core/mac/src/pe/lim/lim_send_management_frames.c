@@ -2397,7 +2397,7 @@ alloc_packet:
 					SIR_MDIE_SIZE);
 			}
 		} else if (auth_frame->authAlgoNumber ==
-				eSIR_FILS_SK_WITHOUT_PFS) {
+				SIR_FILS_SK_WITHOUT_PFS) {
 			/* TODO MDIE */
 			pe_debug("appending fils Auth data");
 			lim_add_fils_data_to_auth_frame(session, body);
