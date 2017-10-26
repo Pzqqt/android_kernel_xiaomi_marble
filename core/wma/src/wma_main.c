@@ -4304,6 +4304,12 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 			wh->wmi_service_ext_bitmap,
 			WMI_SERVICE_FILS_SUPPORT))
 		cfg->is_fils_roaming_supported = true;
+
+	if (WMI_SERVICE_EXT_IS_ENABLED(wh->wmi_service_bitmap,
+				       wh->wmi_service_ext_bitmap,
+				       WMI_SERVICE_MAWC_SUPPORT))
+		cfg->is_fw_mawc_capable = true;
+
 }
 
 /**

@@ -45,6 +45,7 @@
  * @en_tdls_uapsd_sleep_sta: enable sta tdls uapsd sleep
  * @en_roam_offload: enable roam offload
  * @en_11ax: enable 11ax
+ * @is_fw_mawc_capable: Motion Aided Wireless Connectivity feature
  */
 struct wma_tgt_services {
 	uint32_t sta_power_save;
@@ -71,6 +72,7 @@ struct wma_tgt_services {
 	bool en_11ax;
 	bool get_peer_info_enabled;
 	bool is_fils_roaming_supported;
+	bool is_fw_mawc_capable;
 };
 
 /**

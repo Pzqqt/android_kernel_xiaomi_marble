@@ -1960,10 +1960,17 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 						   roam_req->sessionId);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
-		qdf_status = wma_roam_scan_mawc_params(wma_handle, roam_req);
-		if (qdf_status != QDF_STATUS_SUCCESS) {
-			WMA_LOGE("Sending roaming MAWC params failed");
-			break;
+		if (WMI_SERVICE_EXT_IS_ENABLED(wma_handle->wmi_service_bitmap,
+					wma_handle->wmi_service_ext_bitmap,
+					WMI_SERVICE_MAWC_SUPPORT)) {
+			qdf_status =
+				wma_roam_scan_mawc_params(wma_handle, roam_req);
+			if (qdf_status != QDF_STATUS_SUCCESS) {
+				WMA_LOGE("Sending roaming MAWC params failed");
+				break;
+			}
+		} else {
+			WMA_LOGD("MAWC roaming not supported by firmware");
 		}
 		qdf_status = wma_roam_scan_filter(wma_handle, roam_req);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
