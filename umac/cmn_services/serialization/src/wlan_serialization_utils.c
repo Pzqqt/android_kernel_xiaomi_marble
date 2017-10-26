@@ -192,7 +192,7 @@ wlan_serialization_stop_timer(struct wlan_serialization_timer *ser_timer)
 	QDF_STATUS status;
 
 	state = qdf_mc_timer_get_current_state(&ser_timer->timer);
-	if (QDF_TIMER_STATE_RUNNING != state ||
+	if (QDF_TIMER_STATE_RUNNING != state &&
 			QDF_TIMER_STATE_STARTING != state) {
 		serialization_debug("nothing to stop");
 		wlan_serialization_timer_destroy(ser_timer);
@@ -207,6 +207,8 @@ wlan_serialization_stop_timer(struct wlan_serialization_timer *ser_timer)
 	}
 	wlan_serialization_timer_destroy(ser_timer);
 	status = QDF_STATUS_SUCCESS;
+
+	return status;
 }
 
 QDF_STATUS wlan_serialization_cleanup_all_timers(
