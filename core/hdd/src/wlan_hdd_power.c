@@ -1288,6 +1288,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	if (hdd_ctx->is_scheduler_suspended) {
 		scheduler_resume();
 		hdd_ctx->is_scheduler_suspended = false;
+		hdd_ctx->isWiphySuspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
 	if (true == hdd_ctx->is_ol_rx_thread_suspended) {
