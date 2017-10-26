@@ -790,6 +790,14 @@ struct hdd_fw_txrx_stats {
  * @max_mcs_idx: Max supported mcs index of the station
  * @rx_mcs_map: VHT Rx mcs map
  * @tx_mcs_map: VHT Tx mcs map
+ * @freq : Frequency of the current station
+ * @dot11_mode: 802.11 Mode of the connection
+ * @ht_present: HT caps present or not in the current station
+ * @vht_present: VHT caps present or not in the current station
+ * @ht_caps: HT capabilities of current station
+ * @vht_caps: VHT capabilities of current station
+ * @reason_code: Disconnection reason code for current station
+ * @rssi: RSSI of the current station reported from F/W
  */
 struct hdd_station_info {
 	bool in_use;
@@ -823,6 +831,7 @@ struct hdd_station_info {
 	uint8_t rx_mcs_map;
 	uint8_t tx_mcs_map;
 	uint32_t freq;
+	uint8_t dot11_mode;
 	bool ht_present;
 	bool vht_present;
 	struct ieee80211_ht_cap ht_caps;

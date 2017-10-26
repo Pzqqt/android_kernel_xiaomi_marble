@@ -5266,7 +5266,7 @@ static int hdd_get_cached_station_remote(struct hdd_context *hdd_ctx,
 
 	nl_buf_len += hdd_add_link_standard_info_sap_get_len() +
 			hdd_add_ap_standard_info_sap_get_len(stainfo) +
-			(sizeof(stainfo->mode) + NLA_HDRLEN) +
+			(sizeof(stainfo->dot11_mode) + NLA_HDRLEN) +
 			(sizeof(stainfo->ch_width) + NLA_HDRLEN) +
 			(sizeof(stainfo->tx_rate) + NLA_HDRLEN) +
 			(sizeof(stainfo->rx_rate) + NLA_HDRLEN);

@@ -1397,6 +1397,55 @@ static int calcuate_max_phy_rate(int mode, int nss, int ch_width,
 }
 
 /**
+ * hdd_convert_dot11mode_from_phymode() - get dot11 mode from phymode
+ * @phymode: phymode of sta associated to SAP
+ *
+ * The function is to convert the phymode to corresponding dot11 mode
+ *
+ * Return: dot11mode.
+ */
+
+
+static int hdd_convert_dot11mode_from_phymode(int phymode)
+{
+
+	switch (phymode) {
+
+	case MODE_11A:
+		return QCA_WLAN_802_11_MODE_11A;
+
+	case MODE_11B:
+		return QCA_WLAN_802_11_MODE_11B;
+
+	case MODE_11G:
+	case MODE_11GONLY:
+		return QCA_WLAN_802_11_MODE_11G;
+
+	case MODE_11NA_HT20:
+	case MODE_11NG_HT20:
+	case MODE_11NA_HT40:
+	case MODE_11NG_HT40:
+		return QCA_WLAN_802_11_MODE_11N;
+
+	case MODE_11AC_VHT20:
+	case MODE_11AC_VHT40:
+	case MODE_11AC_VHT80:
+	case MODE_11AC_VHT20_2G:
+	case MODE_11AC_VHT40_2G:
+	case MODE_11AC_VHT80_2G:
+#ifdef CONFIG_160MHZ_SUPPORT
+	case MODE_11AC_VHT80_80:
+	case MODE_11AC_VHT160:
+#endif
+		return QCA_WLAN_802_11_MODE_11AC;
+
+	default:
+		return QCA_WLAN_802_11_MODE_INVALID;
+	}
+
+}
+
+/**
  * hdd_fill_station_info() - fill stainfo once connected
  * @stainfo: peer stainfo associate to SAP
  * @event: associate/reassociate event received
@@ -1425,6 +1474,9 @@ static void hdd_fill_station_info(struct hdd_adapter *adapter,
 
 	stainfo->freq = cds_chan_to_freq(event->chan_info.chan_id);
 	stainfo->sta_type = event->staType;
+	stainfo->dot11_mode =
+		hdd_convert_dot11mode_from_phymode(event->chan_info.info);
+
 	stainfo->nss = event->chan_info.nss;
 	stainfo->rate_flags = event->chan_info.rate_flags;
 	stainfo->ampdu = event->ampdu;
