@@ -223,9 +223,7 @@ void hdd_disable_lro_in_concurrency(bool disable)
 	if (disable) {
 		if (hdd_ctx->en_tcp_delack_no_lro) {
 			hdd_info("Enable TCP delack as LRO disabled in concurrency");
-			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
-				WLAN_SVC_WLAN_TP_IND, &hdd_ctx->cur_rx_level,
-				sizeof(hdd_ctx->cur_rx_level));
+			hdd_send_wlan_tp_ind(hdd_ctx);
 			hdd_ctx->en_tcp_delack_no_lro = 1;
 		}
 		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);

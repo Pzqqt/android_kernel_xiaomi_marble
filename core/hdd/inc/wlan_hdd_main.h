@@ -1986,6 +1986,16 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx);
  * Return: None.
  */
 void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_send_wlan_tp_ind() - Send throughput indication
+ * @hdd_ctx: HDD context
+ *
+ * Send throughput indication
+ *
+ * Return: None.
+ */
+void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx);
 #else
 
 static inline
@@ -2021,6 +2031,11 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
 
 static inline
 void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx)
 {
 }
 #endif
