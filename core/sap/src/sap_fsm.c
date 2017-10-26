@@ -1726,7 +1726,10 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
-			if (con_ch) {
+			if (con_ch && !(wlan_reg_is_dfs_ch(mac_ctx->pdev,
+						con_ch) &&
+			sap_context->cc_switch_mode ==
+	QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Override ch %d to %d due to CC Intf",
