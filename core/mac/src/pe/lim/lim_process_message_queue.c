@@ -898,6 +898,8 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 	tpPESession psessionEntry = NULL;
 	uint8_t sessionId;
 	bool isFrmFt = false;
+	uint8_t channel;
+	bool is_hw_sbs_capable = false;
 
 	*pDeferMsg = false;
 	lim_get_b_dfrom_rx_packet(pMac, limMsg->bodyptr,
@@ -905,9 +907,15 @@ lim_handle80211_frames(tpAniSirGlobal pMac, struct scheduler_msg *limMsg,
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	isFrmFt = WMA_GET_RX_FT_DONE(pRxPacketInfo);
+	channel = WMA_GET_RX_CH(pRxPacketInfo);
 	fc = pHdr->fc;
 
-	if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
+	is_hw_sbs_capable =
+		policy_mgr_is_hw_sbs_capable(pMac->psoc);
+	if (IS_5G_CH(channel) &&
+	   (!is_hw_sbs_capable ||
+	   (is_hw_sbs_capable && wlan_reg_is_dfs_ch(pMac->pdev, channel))) &&
+	    pMac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
 		psessionEntry = pe_find_session_by_bssid(pMac,
 					pHdr->bssId, &sessionId);
 		if (psessionEntry &&
