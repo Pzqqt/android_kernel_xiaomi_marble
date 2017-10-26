@@ -2210,7 +2210,7 @@ skip_ch_avoid_ind:
 					cbk_list[ctr].arg);
 	}
 	qdf_mem_free(cur_chan_list);
-	if (!avoid_freq_ind)
+	if (avoid_freq_ind)
 		qdf_mem_free(avoid_freq_ind);
 }
 
