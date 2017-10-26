@@ -1390,21 +1390,6 @@ QDF_STATUS (*send_limit_off_chan_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_limit_off_chan_param *limit_off_chan_param);
 };
 
-struct target_abi_version {
-	A_UINT32 abi_version_0;
-	/** WMI Major and Minor versions */
-	A_UINT32 abi_version_1;
-	/** WMI change revision */
-	A_UINT32 abi_version_ns_0;
-	/** ABI version namespace first four dwords */
-	A_UINT32 abi_version_ns_1;
-	/** ABI version namespace second four dwords */
-	A_UINT32 abi_version_ns_2;
-	/** ABI version namespace third four dwords */
-	A_UINT32 abi_version_ns_3;
-	/** ABI version namespace fourth four dwords */
-};
-
 /* Forward declartion for psoc*/
 struct wlan_objmgr_psoc;
 
@@ -1416,6 +1401,23 @@ struct wlan_objmgr_psoc;
 struct wmi_cmd_init {
 	wmi_buf_t buf;
 	uint32_t buf_len;
+};
+
+/**
+ * @abi_version_0: WMI Major and Minor versions
+ * @abi_version_1: WMI change revision
+ * @abi_version_ns_0: ABI version namespace first four dwords
+ * @abi_version_ns_1: ABI version namespace second four dwords
+ * @abi_version_ns_2: ABI version namespace third four dwords
+ * @abi_version_ns_3: ABI version namespace fourth four dwords
+ */
+struct wmi_host_abi_version {
+	uint32_t abi_version_0;
+	uint32_t abi_version_1;
+	uint32_t abi_version_ns_0;
+	uint32_t abi_version_ns_1;
+	uint32_t abi_version_ns_2;
+	uint32_t abi_version_ns_3;
 };
 
 struct wmi_unified {
@@ -1433,10 +1435,8 @@ struct wmi_unified {
 	qdf_work_t rx_event_work;
 	qdf_workqueue_t *wmi_rx_work_queue;
 	int wmi_stop_in_progress;
-#ifdef CONFIG_MCL
-	struct _wmi_abi_version fw_abi_version;
-	struct _wmi_abi_version final_abi_vers;
-#endif
+	struct wmi_host_abi_version fw_abi_version;
+	struct wmi_host_abi_version final_abi_vers;
 	struct wmi_cmd_init saved_wmi_init_cmd;
 	uint32_t num_of_diag_events_logs;
 	uint32_t *events_logs_list;
