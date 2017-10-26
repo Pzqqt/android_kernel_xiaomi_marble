@@ -77,41 +77,78 @@ wlan_serialization_add_cmd_to_given_queue(qdf_list_t *queue,
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 
-	if (is_cmd_for_active_queue) {
-		/*
-		 * command is already pushed to active queue above
-		 * now start the timer and notify requestor
-		 */
-		wlan_serialization_find_and_start_timer(psoc,
-							&cmd_list->cmd);
-		if (cmd_list->cmd.cmd_cb) {
-			/*
-			 * Remember that serialization module may send
-			 * this callback in same context through which it
-			 * received the serialization request. Due to which
-			 * it is caller's responsibility to ensure acquiring
-			 * and releasing its own lock appropriately.
-			 */
-			qdf_status = cmd_list->cmd.cmd_cb(&cmd_list->cmd,
-						WLAN_SER_CB_ACTIVATE_CMD);
-			if (qdf_status != QDF_STATUS_SUCCESS) {
-				wlan_serialization_find_and_stop_timer(psoc,
-								&cmd_list->cmd);
-				cmd_list->cmd.cmd_cb(&cmd_list->cmd,
-						WLAN_SER_CB_RELEASE_MEM_CMD);
-				wlan_serialization_put_back_to_global_list(
-						queue, ser_pdev_obj, cmd_list);
-				wlan_serialization_move_pending_to_active(
-						cmd_list->cmd.cmd_type,
-						ser_pdev_obj);
-			}
-		}
+	if (is_cmd_for_active_queue)
 		status = WLAN_SER_CMD_ACTIVE;
-	} else {
+	else
 		status = WLAN_SER_CMD_PENDING;
-	}
 
 	return status;
+}
+
+void wlan_serialization_activate_cmd(enum wlan_serialization_cmd_type cmd_type,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	qdf_list_t *queue = NULL;
+	qdf_list_node_t *nnode = NULL;
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	if (cmd_type < WLAN_SER_CMD_NONSCAN)
+		queue = &ser_pdev_obj->active_scan_list;
+	else
+		queue = &ser_pdev_obj->active_list;
+	if (qdf_list_empty(queue)) {
+		serialization_err("nothing in active queue");
+		QDF_ASSERT(0);
+		return;
+	}
+	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(queue, &nnode)) {
+		serialization_err("can't read from active queue");
+		serialization_debug("cmd_type - %d", cmd_type);
+		return;
+	}
+	cmd_list = qdf_container_of(nnode,
+			struct wlan_serialization_command_list, node);
+
+	/*
+	 * command is already pushed to active queue above
+	 * now start the timer and notify requestor
+	 */
+	wlan_serialization_find_and_start_timer(psoc,
+							&cmd_list->cmd);
+	if (cmd_list && cmd_list->cmd.cmd_cb) {
+		if (cmd_list->cmd.vdev) {
+			psoc = wlan_vdev_get_psoc(cmd_list->cmd.vdev);
+			if (psoc == NULL) {
+				serialization_err("invalid psoc");
+				return;
+			}
+		} else {
+			serialization_err("invalid cmd.vdev");
+			return;
+		}
+		/*
+		 * Remember that serialization module may send
+		 * this callback in same context through which it
+		 * received the serialization request. Due to which
+		 * it is caller's responsibility to ensure acquiring
+		 * and releasing its own lock appropriately.
+		 */
+		qdf_status = cmd_list->cmd.cmd_cb(&cmd_list->cmd,
+				WLAN_SER_CB_ACTIVATE_CMD);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			wlan_serialization_find_and_stop_timer(psoc,
+					&cmd_list->cmd);
+			cmd_list->cmd.cmd_cb(&cmd_list->cmd,
+					WLAN_SER_CB_RELEASE_MEM_CMD);
+			wlan_serialization_put_back_to_global_list(
+					queue, ser_pdev_obj, cmd_list);
+			wlan_serialization_move_pending_to_active(
+					cmd_list->cmd.cmd_type,
+					ser_pdev_obj);
+		}
+	}
 }
 
 enum wlan_serialization_status

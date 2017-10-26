@@ -73,9 +73,11 @@ void wlan_serialization_move_pending_to_active(
 		serialization_err("Can't move cmd to activeQ id-%d type-%d",
 				cmd_list->cmd.cmd_id, cmd_list->cmd.cmd_type);
 		return;
-	}
-	wlan_serialization_put_back_to_global_list(pending_queue,
+	} else {
+		wlan_serialization_put_back_to_global_list(pending_queue,
 				ser_pdev_obj, cmd_list);
+		wlan_serialization_activate_cmd(cmd_type, ser_pdev_obj);
+	}
 
 	return;
 }
