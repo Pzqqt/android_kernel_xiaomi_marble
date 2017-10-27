@@ -1805,6 +1805,10 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		WMA_LOGD("Release set key wake lock");
 		wma_release_wakelock(&iface->vdev_set_key_wakelock);
 	}
+
+	/* install key was requested */
+	iface->is_waiting_for_key = false;
+
 end:
 	qdf_mem_free(params.key_rsc_counter);
 	return status;
