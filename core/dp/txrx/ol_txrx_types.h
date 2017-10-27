@@ -620,7 +620,7 @@ struct ol_txrx_pdev_t {
 #if !defined(REMOVE_PKT_LOG) && !defined(QVIT)
 	bool pkt_log_init;
 	/* Pktlog pdev */
-	struct ol_pktlog_dev_t *pl_dev;
+	struct pktlog_dev_t *pl_dev;
 #endif /* #ifndef REMOVE_PKT_LOG */
 
 	enum ol_sec_type sec_types[htt_num_sec_types];

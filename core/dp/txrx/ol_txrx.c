@@ -1292,7 +1292,7 @@ void htt_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 			!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
-		ol_pl_sethandle(&handle->pl_dev, scn);
+		pktlog_sethandle(&handle->pl_dev, scn);
 		if (pktlogmod_init(scn))
 			qdf_print("%s: pktlogmod_init failed", __func__);
 		else

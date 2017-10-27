@@ -1123,6 +1123,10 @@ ifeq ($(CONFIG_IPA_OFFLOAD), 1)
 DP_OBJS +=     $(DP_SRC)/dp_ipa.o
 endif
 
+ifeq ($(CONFIG_WDI_EVENT_ENABLE), 1)
+DP_OBJS +=     $(DP_SRC)/dp_wdi_event.o
+endif
+
 ############ CFG ############
 WCFG_DIR := wlan_cfg
 WCFG_INC := -I$(WLAN_COMMON_INC)/$(WCFG_DIR)

@@ -70,7 +70,7 @@ wdi_event_iter_sub(struct ol_txrx_pdev_t *pdev,
 
 	if (wdi_sub) {
 		do {
-			wdi_sub->callback(pdev, event, data);
+			wdi_sub->callback(pdev, event, data, 0, 0);
 		} while ((wdi_sub = wdi_event_next_sub(wdi_sub)));
 	}
 }

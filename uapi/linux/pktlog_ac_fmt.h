@@ -69,9 +69,7 @@ struct ath_pktlog_hdr {
 #endif
 	uint16_t size;
 	uint32_t timestamp;
-#ifdef HELIUMPLUS
 	uint32_t type_specific_data;
-#endif
 } __ATTRIB_PACK;
 
 /**
@@ -149,6 +147,13 @@ enum {
 #define ATH_PKTLOG_PROMISC  0x000000080
 #define ATH_PKTLOG_SW_EVENT 0x000000100
 
+/* WIN defns */
+#define ATH_PKTLOG_H_INFO   0x000000200
+#define ATH_PKTLOG_STEERING 0x000000400
+#define ATH_PKTLOG_REMOTE_LOGGING_ENABLE  0x000000800
+#define ATH_PKTLOG_TX_CAPTURE_ENABLE  0x000001000
+#define ATH_PKTLOG_LITE_T2H  0x000002000
+#define ATH_PKTLOG_LITE_RX   0x000004000
 
 /* Types of packet log events */
 #define PKTLOG_TYPE_TX_CTRL      1
@@ -162,7 +167,10 @@ enum {
 #define PKTLOG_TYPE_SMART_ANTENNA 9
 #define PKTLOG_TYPE_SW_EVENT     10
 #define PKTLOG_TYPE_PKT_DUMP     11
-#define PKTLOG_TYPE_MAX          12
+/* From WIN definations */
+#define PKTLOG_TYPE_LITE_T2H     23
+#define PKTLOG_TYPE_LITE_RX      24
+#define PKTLOG_TYPE_MAX          25
 
 #define PKTLOG_MAX_TXCTL_WORDS 57       /* +2 words for bitmap */
 #define PKTLOG_MAX_TXSTATUS_WORDS 32
