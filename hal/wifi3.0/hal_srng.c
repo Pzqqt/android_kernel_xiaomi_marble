@@ -993,7 +993,7 @@ void hal_srng_dst_init_hp(struct hal_srng *srng,
 	*(srng->u.dst_ring.hp_addr) = srng->u.dst_ring.cached_hp;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		"hp_addr=%p, cached_hp=%d, hp=%d\n",
+		"hp_addr=%pK, cached_hp=%d, hp=%d\n",
 		(void *)srng->u.dst_ring.hp_addr, srng->u.dst_ring.cached_hp,
 		*(srng->u.dst_ring.hp_addr));
 }
