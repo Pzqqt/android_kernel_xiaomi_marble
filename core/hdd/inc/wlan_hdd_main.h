@@ -812,12 +812,14 @@ struct hdd_station_info {
  * @disable_intrabss_fwd: Prevent forwarding between stations
  * @broadcast_sta_id: Station ID assigned after BSS starts
  * @privacy: The privacy bits of configuration
+ * @encryption_type: The encryption being used
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
 	bool disable_intrabss_fwd;
 	uint8_t broadcast_sta_id;
 	uint8_t privacy;
+	eCsrEncryptionType encryption_type;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 
@@ -825,12 +827,10 @@ struct hdd_ap_ctx {
 
 	struct semaphore semWpsPBCOverlapInd;
 
-
 	qdf_mc_timer_t hdd_ap_inactivity_timer;
 
 	uint8_t operatingChannel;
 
-	eCsrEncryptionType ucEncryptType;
 
 	/* This will point to group key data,
 	 * if it is received before start bss

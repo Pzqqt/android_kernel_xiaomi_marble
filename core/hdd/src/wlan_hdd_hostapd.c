@@ -1876,11 +1876,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
 
-		if ((eCSR_ENCRYPT_TYPE_NONE == ap_ctx->ucEncryptType) ||
+		if ((eCSR_ENCRYPT_TYPE_NONE == ap_ctx->encryption_type) ||
 		    (eCSR_ENCRYPT_TYPE_WEP40_STATICKEY ==
-		     ap_ctx->ucEncryptType)
+		     ap_ctx->encryption_type)
 		    || (eCSR_ENCRYPT_TYPE_WEP104_STATICKEY ==
-			ap_ctx->ucEncryptType)) {
+			ap_ctx->encryption_type)) {
 			bAuthRequired = false;
 		}
 
@@ -7761,7 +7761,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	pConfig->RSNEncryptType = eCSR_ENCRYPT_TYPE_NONE;
 	pConfig->mcRSNEncryptType = eCSR_ENCRYPT_TYPE_NONE;
-	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->ucEncryptType =
+	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->encryption_type =
 		eCSR_ENCRYPT_TYPE_NONE;
 
 	pConfig->RSNWPAReqIELength = 0;
@@ -7796,7 +7796,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			pConfig->RSNEncryptType = RSNEncryptType;
 			pConfig->mcRSNEncryptType = mcRSNEncryptType;
 			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-			ucEncryptType = RSNEncryptType;
+			encryption_type = RSNEncryptType;
 			hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 			       RSNAuthType, RSNEncryptType, mcRSNEncryptType);
 		}
@@ -7842,7 +7842,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 				pConfig->RSNEncryptType = RSNEncryptType;
 				pConfig->mcRSNEncryptType = mcRSNEncryptType;
 				(WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-				ucEncryptType = RSNEncryptType;
+				encryption_type = RSNEncryptType;
 				hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 				       RSNAuthType, RSNEncryptType,
 				       mcRSNEncryptType);
