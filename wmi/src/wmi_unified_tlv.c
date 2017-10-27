@@ -8915,6 +8915,93 @@ send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * send_wow_timer_pattern_cmd_tlv() - set timer pattern tlv, so that firmware
+ * will wake up host after specified time is elapsed
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @cookie: value to identify reason why host set up wake call.
+ * @time: time in ms
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS send_wow_timer_pattern_cmd_tlv(wmi_unified_t wmi_handle,
+				uint8_t vdev_id, uint32_t cookie, uint32_t time)
+{
+	WMI_WOW_ADD_PATTERN_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t len;
+	int ret;
+
+	len = sizeof(WMI_WOW_ADD_PATTERN_CMD_fixed_param) +
+		WMI_TLV_HDR_SIZE + 0 * sizeof(WOW_BITMAP_PATTERN_T) +
+		WMI_TLV_HDR_SIZE + 0 * sizeof(WOW_IPV4_SYNC_PATTERN_T) +
+		WMI_TLV_HDR_SIZE + 0 * sizeof(WOW_IPV6_SYNC_PATTERN_T) +
+		WMI_TLV_HDR_SIZE + 0 * sizeof(WOW_MAGIC_PATTERN_CMD) +
+		WMI_TLV_HDR_SIZE + 1 * sizeof(A_UINT32) +
+		WMI_TLV_HDR_SIZE + 1 * sizeof(A_UINT32);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_WOW_ADD_PATTERN_CMD_fixed_param *) wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) cmd;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_WMI_WOW_ADD_PATTERN_CMD_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			(WMI_WOW_ADD_PATTERN_CMD_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->pattern_id = cookie,
+	cmd->pattern_type = WOW_TIMER_PATTERN;
+	buf_ptr += sizeof(WMI_WOW_ADD_PATTERN_CMD_fixed_param);
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_BITMAP_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_IPV4_SYNC_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_IPV6_SYNC_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_MAGIC_PATTERN_CMD but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for pattern_info_timeout, and time value */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, sizeof(A_UINT32));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	*((A_UINT32 *) buf_ptr) = time;
+	buf_ptr += sizeof(A_UINT32);
+
+	/* Fill TLV for ra_ratelimit_interval. with dummy 0 value */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, sizeof(A_UINT32));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	*((A_UINT32 *) buf_ptr) = 0;
+
+	WMI_LOGD("%s: send wake timer pattern with time[%d] to fw vdev = %d",
+		__func__, time, vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WOW_ADD_WAKE_PATTERN_CMDID);
+	if (ret) {
+		WMI_LOGE("%s: Failed to send wake timer pattern to fw",
+			__func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #if !defined(REMOVE_PKT_LOG)
 /**
  * send_pktlog_wmi_send_cmd_tlv() - send pktlog enable/disable command to target
@@ -19981,6 +20068,7 @@ struct wmi_ops tlv_ops =  {
 #if defined(WLAN_FEATURE_FILS_SK)
 	.send_roam_scan_hlp_cmd = send_roam_scan_send_hlp_cmd_tlv,
 #endif
+	.send_wow_timer_pattern_cmd = send_wow_timer_pattern_cmd_tlv,
 };
 
 /**

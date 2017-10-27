@@ -1388,6 +1388,9 @@ QDF_STATUS (*send_user_country_code_cmd)(wmi_unified_t wmi_handle,
 		uint8_t pdev_id, struct cc_regdmn_s *rd);
 QDF_STATUS (*send_limit_off_chan_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_limit_off_chan_param *limit_off_chan_param);
+
+QDF_STATUS (*send_wow_timer_pattern_cmd)(wmi_unified_t wmi_handle,
+			uint8_t vdev_id, uint32_t cookie, uint32_t time);
 };
 
 /* Forward declartion for psoc*/
