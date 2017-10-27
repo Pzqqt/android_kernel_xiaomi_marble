@@ -22,7 +22,7 @@
  * send suspend / resume related cmd and process event.
  */
 
-
+#include "wma.h"
 #include "target_if.h"
 #include "target_if_pmo.h"
 #include "wmi_unified_api.h"
@@ -142,6 +142,7 @@ QDF_STATUS target_if_pmo_psoc_send_wow_enable_req(
 		struct wlan_objmgr_psoc *psoc,
 		struct pmo_wow_cmd_params *param)
 {
+	wma_check_and_set_wake_timer(SIR_INSTALL_KEY_TIMEOUT_MS);
 	return wmi_unified_wow_enable_send(GET_WMI_HDL_FROM_PSOC(psoc),
 			(struct wow_cmd_params *)param,
 			TGT_WILDCARD_PDEV_ID);
