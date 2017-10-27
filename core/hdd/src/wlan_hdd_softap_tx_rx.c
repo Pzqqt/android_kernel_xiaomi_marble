@@ -964,7 +964,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 						OL_TXRX_PEER_STATE_AUTH, false);
 
 		adapter->sta_info[staId].peer_state = OL_TXRX_PEER_STATE_AUTH;
-		adapter->sessionCtx.ap.uIsAuthenticated = true;
 	} else {
 
 		hdd_info("ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
@@ -973,9 +972,6 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 		qdf_status = hdd_change_peer_state(adapter, staDesc.sta_id,
 						OL_TXRX_PEER_STATE_CONN, false);
 		adapter->sta_info[staId].peer_state = OL_TXRX_PEER_STATE_CONN;
-
-		adapter->sessionCtx.ap.uIsAuthenticated = false;
-
 	}
 
 	hdd_debug("Enabling queues");

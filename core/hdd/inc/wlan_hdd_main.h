@@ -829,8 +829,6 @@ struct hdd_ap_ctx {
 
 	uint8_t operatingChannel;
 
-	bool uIsAuthenticated;
-
 	eCsrEncryptionType ucEncryptType;
 
 	/* This will point to group key data,
