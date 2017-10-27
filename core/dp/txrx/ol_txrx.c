@@ -3411,7 +3411,7 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 		}
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			   "[%s][%d]: Deleting peer %p (%pM) peer->ref_cnt = %d %s",
+			   "[%s][%d]: Deleting peer %pK (%pM) peer->ref_cnt = %d %s",
 			   fname, line, peer, peer->mac_addr.raw,
 			   qdf_atomic_read(&peer->ref_cnt),
 			   qdf_atomic_read(&peer->fw_create_pending) == 1 ?
@@ -3446,7 +3446,7 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "[%s][%d]: ref delete peer %p peer->ref_cnt = %d",
+			  "[%s][%d]: ref delete peer %pK peer->ref_cnt = %d",
 			  fname, line, peer, rc);
 	}
 
