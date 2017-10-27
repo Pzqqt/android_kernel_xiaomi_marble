@@ -82,14 +82,12 @@ static int pktlog_attach(struct hif_opaque_softc *sc);
 static void pktlog_detach(struct ol_txrx_pdev_t *handle);
 static int pktlog_open(struct inode *i, struct file *f);
 static int pktlog_release(struct inode *i, struct file *f);
-static int pktlog_mmap(struct file *f, struct vm_area_struct *vma);
 static ssize_t pktlog_read(struct file *file, char *buf, size_t nbytes,
 			   loff_t *ppos);
 
 static struct file_operations pktlog_fops = {
 	open:  pktlog_open,
 	release:pktlog_release,
-	mmap : pktlog_mmap,
 	read : pktlog_read,
 };
 
@@ -1013,106 +1011,6 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	ret = __pktlog_read(file, buf, nbytes, ppos);
 	mutex_unlock(&pl_info->pktlog_mutex);
 	cds_ssr_unprotect(__func__);
-	return ret;
-}
-
-#ifndef VMALLOC_VMADDR
-#define VMALLOC_VMADDR(x) ((unsigned long)(x))
-#endif
-
-/* vma operations for mapping vmalloced area to user space */
-static void pktlog_vopen(struct vm_area_struct *vma)
-{
-	PKTLOG_MOD_INC_USE_COUNT;
-}
-
-static void pktlog_vclose(struct vm_area_struct *vma)
-{
-	PKTLOG_MOD_DEC_USE_COUNT;
-}
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
-static inline unsigned long pktlog_get_fault_address(struct vm_fault *vmf)
-{
-	return (unsigned long)vmf->virtual_address;
-}
-#else
-static inline unsigned long pktlog_get_fault_address(struct vm_fault *vmf)
-{
-	return vmf->address;
-}
-#endif /* KERNEL_VERSION(4, 10, 0) */
-
-static int
-pktlog_fault_handler(struct vm_area_struct *vma, struct vm_fault *vmf)
-{
-	unsigned long address = pktlog_get_fault_address(vmf);
-
-	if (address == 0UL)
-		return VM_FAULT_NOPAGE;
-
-	if (vmf->pgoff > vma->vm_end)
-		return VM_FAULT_SIGBUS;
-
-	get_page(virt_to_page((void *)address));
-	vmf->page = virt_to_page((void *)address);
-	return 0;
-}
-
-#if LINUX_VERSION_CODE < KERNEL_VERSION(4, 10, 0)
-static int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
-{
-	return pktlog_fault_handler(vma, vmf);
-}
-#else
-static int pktlog_fault(struct vm_fault *vmf)
-{
-	return pktlog_fault_handler(vmf->vma, vmf);
-}
-#endif
-
-static struct vm_operations_struct pktlog_vmops = {
-	open: pktlog_vopen,
-	close:pktlog_vclose,
-	fault:pktlog_fault,
-};
-
-static int __pktlog_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	struct ath_pktlog_info *pl_info;
-
-	pl_info = (struct ath_pktlog_info *)
-					PDE_DATA(file->f_path.dentry->d_inode);
-
-	if (vma->vm_pgoff != 0) {
-		/* Entire buffer should be mapped */
-		return -EINVAL;
-	}
-
-	if (!pl_info->buf) {
-		printk(PKTLOG_TAG "%s: Log buffer unavailable\n", __func__);
-		return -ENOMEM;
-	}
-
-	if (cds_is_module_state_transitioning()) {
-		pr_info("%s: module transition in progress", __func__);
-		return -EAGAIN;
-	}
-
-	vma->vm_flags |= VM_LOCKED;
-	vma->vm_ops = &pktlog_vmops;
-	pktlog_vopen(vma);
-	return 0;
-}
-
-static int pktlog_mmap(struct file *file, struct vm_area_struct *vma)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __pktlog_mmap(file, vma);
-	cds_ssr_unprotect(__func__);
-
 	return ret;
 }
 
