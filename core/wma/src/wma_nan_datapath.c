@@ -1214,5 +1214,9 @@ send_del_rsp:
 		WMA_LOGD(FL("Sending del rsp to umac (status: %d)"),
 				del_sta->status);
 		wma_send_msg_high_priority(wma, WMA_DELETE_STA_RSP, del_sta, 0);
+	} else {
+		WMA_LOGD(FL("NDI Del Sta resp not needed"));
+		qdf_mem_free(del_sta);
 	}
+
 }

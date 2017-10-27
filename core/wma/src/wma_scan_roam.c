@@ -2474,7 +2474,6 @@ static void wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, IEEE80211_ADDR_LEN);
 	qdf_mem_free(del_bss_params);
-	qdf_mem_free(del_sta_params);
 	qdf_mem_free(set_link_params);
 	qdf_mem_free(add_sta_params);
 }

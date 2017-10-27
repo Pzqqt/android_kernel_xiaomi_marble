@@ -4897,8 +4897,12 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
 		wma_delete_sta_req_sta_mode(wma, del_sta);
-		if (wma_is_roam_synch_in_progress(wma, smesession_id))
+		if (wma_is_roam_synch_in_progress(wma, smesession_id)) {
+			WMA_LOGD(FL("LFR3: Del STA on vdev_id %d"),
+				 del_sta->smesessionId);
+			qdf_mem_free(del_sta);
 			return;
+		}
 		if (!rsp_requested) {
 			WMA_LOGD(FL("vdev_id %d status %d"),
 				 del_sta->smesessionId, del_sta->status);
@@ -4927,6 +4931,9 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	case BSS_OPERATIONAL_MODE_NDI:
 		wma_delete_sta_req_ndi_mode(wma, del_sta);
 		break;
+	default:
+		WMA_LOGE(FL("Incorrect oper mode %d"), oper_mode);
+		qdf_mem_free(del_sta);
 	}
 
 #ifdef QCA_IBSS_SUPPORT
