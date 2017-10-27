@@ -2227,6 +2227,28 @@ QDF_STATUS wmi_unified_fw_profiling_data_cmd(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_wow_timer_pattern_cmd() - set timer pattern tlv, so that firmware
+ * will wake up host after specified time is elapsed
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @cookie: value to identify reason why host set up wake call.
+ * @time: time in ms
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wmi_unified_wow_timer_pattern_cmd(void *wmi_hdl, uint8_t vdev_id,
+					     uint32_t cookie, uint32_t time)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_wow_timer_pattern_cmd)
+		return wmi_handle->ops->send_wow_timer_pattern_cmd(wmi_handle,
+							vdev_id, cookie, time);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_nat_keepalive_en_cmd() - enable NAT keepalive filter
  * @wmi_handle: wmi handle
  * @vdev_id: vdev id
