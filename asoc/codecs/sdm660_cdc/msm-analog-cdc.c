@@ -4208,7 +4208,7 @@ static int msm_anlg_cdc_enable_static_supplies_to_optimum(
 				struct sdm660_cdc_pdata *pdata)
 {
 	int i;
-	int ret = 0;
+	int ret = 0, rc = 0;
 
 	for (i = 0; i < sdm660_cdc->num_of_supplies; i++) {
 		if (pdata->regulator[i].ondemand)
@@ -4217,6 +4217,12 @@ static int msm_anlg_cdc_enable_static_supplies_to_optimum(
 				sdm660_cdc->supplies[i].consumer) <= 0)
 			continue;
 
+		rc = regulator_enable(sdm660_cdc->supplies[i].consumer);
+		if (rc) {
+			dev_err(sdm660_cdc->dev, "Failed to enable %s: %d\n",
+			       sdm660_cdc->supplies[i].supply, rc);
+			break;
+		}
 		ret = regulator_set_voltage(
 				sdm660_cdc->supplies[i].consumer,
 				pdata->regulator[i].min_uv,
@@ -4233,7 +4239,10 @@ static int msm_anlg_cdc_enable_static_supplies_to_optimum(
 			 sdm660_cdc->supplies[i].supply);
 	}
 
-	return ret;
+	while (rc && i--)
+		if (!pdata->regulator[i].ondemand)
+			regulator_disable(sdm660_cdc->supplies[i].consumer);
+	return rc;
 }
 
 static int msm_anlg_cdc_disable_static_supplies_to_optimum(
@@ -4252,7 +4261,12 @@ static int msm_anlg_cdc_disable_static_supplies_to_optimum(
 		regulator_set_voltage(sdm660_cdc->supplies[i].consumer, 0,
 				pdata->regulator[i].max_uv);
 		regulator_set_load(sdm660_cdc->supplies[i].consumer, 0);
-		dev_dbg(sdm660_cdc->dev, "Regulator %s set optimum mode\n",
+		ret = regulator_disable(sdm660_cdc->supplies[i].consumer);
+		if (ret)
+			dev_err(sdm660_cdc->dev, "Failed to disable %s: %d\n",
+			       sdm660_cdc->supplies[i].supply, ret);
+
+		dev_dbg(sdm660_cdc->dev, "Regulator %s disable\n",
 				 sdm660_cdc->supplies[i].supply);
 	}
 
@@ -4421,7 +4435,7 @@ static int msm_anlg_cdc_enable_static_supplies(
 				 sdm660_cdc->supplies[i].supply);
 	}
 
-	while (ret && --i)
+	while (ret && i--)
 		if (!pdata->regulator[i].ondemand)
 			regulator_disable(sdm660_cdc->supplies[i].consumer);
 	return ret;
