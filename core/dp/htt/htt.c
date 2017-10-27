@@ -109,13 +109,16 @@ void htt_htc_pkt_pool_free(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt_union *pkt, *next;
 
+	HTT_TX_MUTEX_ACQUIRE(&pdev->htt_tx_mutex);
 	pkt = pdev->htt_htc_pkt_freelist;
+	pdev->htt_htc_pkt_freelist = NULL;
+	HTT_TX_MUTEX_RELEASE(&pdev->htt_tx_mutex);
+
 	while (pkt) {
 		next = pkt->u.next;
 		qdf_mem_free(pkt);
 		pkt = next;
 	}
-	pdev->htt_htc_pkt_freelist = NULL;
 }
 
 #ifdef ATH_11AC_TXCOMPACT
@@ -175,12 +178,16 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
 	struct htt_htc_pkt_union *pkt, *next;
 	qdf_nbuf_t netbuf;
 
+	HTT_TX_MUTEX_ACQUIRE(&pdev->htt_tx_mutex);
 	pkt = pdev->htt_htc_pkt_misclist;
+	pdev->htt_htc_pkt_misclist = NULL;
+	HTT_TX_MUTEX_RELEASE(&pdev->htt_tx_mutex);
 
 	while (pkt) {
 		next = pkt->u.next;
 		if (htc_packet_get_magic_cookie(&(pkt->u.pkt.htc_pkt)) !=
 				HTC_PACKET_MAGIC_COOKIE) {
+			QDF_ASSERT(0);
 			pkt = next;
 			continue;
 		}
@@ -191,7 +198,6 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
 		qdf_mem_free(pkt);
 		pkt = next;
 	}
-	pdev->htt_htc_pkt_misclist = NULL;
 }
 #endif
 
