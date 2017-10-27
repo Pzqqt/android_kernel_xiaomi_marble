@@ -660,27 +660,36 @@ static void hdd_hostapd_inactivity_timer_cb(void *context)
 	EXIT();
 }
 
+static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
+{
+	struct hdd_ap_ctx *ap_ctx;
+	struct hdd_station_info *sta_info;
+	struct tagCsrDelStaParams del_sta_params;
+
+	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+
+	if (sta_id == ap_ctx->broadcast_sta_id)
+		return;
+
+	sta_info = &adapter->sta_info[sta_id];
+	if (!sta_info->in_use)
+		return;
+
+	wlansap_populate_del_sta_params(sta_info->sta_mac.bytes,
+					eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
+					(SIR_MAC_MGMT_DISASSOC >> 4),
+					&del_sta_params);
+
+	hdd_softap_sta_disassoc(adapter, &del_sta_params);
+}
+
 static void hdd_clear_all_sta(struct hdd_adapter *adapter)
 {
-	uint8_t staId = 0;
-	struct tagCsrDelStaParams del_sta_params;
-	struct hdd_ap_ctx *ap_ctx;
+	uint8_t sta_id;
 
-	hdd_debug("Clearing all the STA entry....");
-	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	for (staId = 0; staId < WLAN_MAX_STA_COUNT; staId++) {
-		if (adapter->sta_info[staId].in_use &&
-		    (staId != ap_ctx->broadcast_sta_id)) {
-			wlansap_populate_del_sta_params(
-				&adapter->sta_info[staId].sta_mac.
-				bytes[0], eSIR_MAC_DEAUTH_LEAVING_BSS_REASON,
-				(SIR_MAC_MGMT_DISASSOC >> 4), &del_sta_params);
-
-			/* Disconnect all the stations */
-			hdd_softap_sta_disassoc(adapter,
-						&del_sta_params);
-		}
-	}
+	ENTER_DEV(adapter->dev);
+	for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++)
+		hdd_clear_sta(adapter, sta_id);
 }
 
 static int hdd_stop_bss_link(struct hdd_adapter *adapter,
