@@ -7677,30 +7677,30 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 QDF_STATUS lim_send_he_caps_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 			       uint8_t vdev_id)
 {
-	uint8_t he_caps[DOT11F_IE_HE_CAP_MIN_LEN + 2];
+	uint8_t he_caps[DOT11F_IE_HE_CAP_MIN_LEN + 3];
 	struct he_capability_info *he_cap;
 	QDF_STATUS status_5g, status_2g;
 
 	/* Sending only minimal info(no PPET) to FW now, update if required */
-	qdf_mem_zero(he_caps, DOT11F_IE_HE_CAP_MIN_LEN + 2);
+	qdf_mem_zero(he_caps, DOT11F_IE_HE_CAP_MIN_LEN + 3);
 	he_caps[0] = DOT11F_EID_HE_CAP;
 	he_caps[1] = DOT11F_IE_HE_CAP_MIN_LEN;
 	qdf_mem_copy(&he_caps[2], HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE);
 	lim_set_he_caps(mac_ctx, session, he_caps,
-			DOT11F_IE_HE_CAP_MIN_LEN + 2);
+			DOT11F_IE_HE_CAP_MIN_LEN + 3);
 	he_cap = (struct he_capability_info *) (&he_caps[2 + HE_CAP_OUI_SIZE]);
 	he_cap->ppet_present = 0;
 
 	status_5g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_5GHZ, &he_caps[2],
-			DOT11F_IE_HE_CAP_MIN_LEN);
+			DOT11F_IE_HE_CAP_MIN_LEN + 1);
 	if (QDF_IS_STATUS_ERROR(status_5g))
 		pe_err("Unable send HE Cap IE for 5GHZ band, status: %d",
 			status_5g);
 
 	status_2g = lim_send_ie(mac_ctx, vdev_id, DOT11F_EID_HE_CAP,
 			CDS_BAND_2GHZ, &he_caps[2],
-			DOT11F_IE_HE_CAP_MIN_LEN);
+			DOT11F_IE_HE_CAP_MIN_LEN + 1);
 	if (QDF_IS_STATUS_ERROR(status_2g))
 		pe_err("Unable send HE Cap IE for 2GHZ band, status: %d",
 			status_2g);
