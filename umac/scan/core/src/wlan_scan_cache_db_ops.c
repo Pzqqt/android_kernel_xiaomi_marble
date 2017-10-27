@@ -590,7 +590,7 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 
 		if (scm_is_cipher_match(rsn.akm_suites,
 		   rsn.akm_suite_count,
-		   WLAN_RSN_SEL(WLAN_AKM_FT_IEEE8021X))) {
+		   WLAN_RSN_SEL(WLAN_AKM_FT_PSK))) {
 			if (WLAN_AUTH_TYPE_FT_RSN_PSK ==
 			   filter->auth_type[i]) {
 				neg_auth = WLAN_AUTH_TYPE_FT_RSN_PSK;

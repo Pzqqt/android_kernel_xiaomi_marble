@@ -159,7 +159,6 @@ int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 			HIF_WARN("%s: bad IRQ value for CE %d: %d",
 				 __func__, i, napii->irq);
 
-		qdf_spinlock_create(&napii->lro_unloading_lock);
 		init_dummy_netdev(&(napii->netdev));
 
 		NAPI_DEBUG("adding napi=%pK to netdev=%pK (poll=%pK, bdgt=%d)",
@@ -286,7 +285,6 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 				   napii->netdev.napi_list.prev,
 				   napii->netdev.napi_list.next);
 
-			qdf_spinlock_destroy(&napii->lro_unloading_lock);
 			qdf_lro_deinit(napii->lro_ctx);
 			netif_napi_del(&(napii->napi));
 
@@ -769,14 +767,11 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 	hif_record_ce_desc_event(hif, NAPI_ID2PIPE(napi_info->id),
 				 NAPI_POLL_ENTER, NULL, NULL, cpu);
 
-	qdf_spin_lock_bh(&napi_info->lro_unloading_lock);
-
 	rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
 	NAPI_DEBUG("%s: ce_per_engine_service processed %d msgs",
 		    __func__, rc);
 
 	qdf_lro_flush(napi_info->lro_ctx);
-	qdf_spin_unlock_bh(&napi_info->lro_unloading_lock);
 
 	/* do not return 0, if there was some work done,
 	 * even if it is below the scale

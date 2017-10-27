@@ -90,6 +90,7 @@
 #define WLAN_SVC_WLAN_AUTO_SHUTDOWN_CANCEL_IND 0x10C
 #define WLAN_SVC_WLAN_RADIO_INDEX 0x10D
 #define WLAN_SVC_FW_SHUTDOWN_IND  0x10E
+#define WLAN_SVC_CORE_MINFREQ     0x10F
 #define WLAN_SVC_MAX_SSID_LEN    32
 #define WLAN_SVC_MAX_BSSID_LEN   6
 #define WLAN_SVC_MAX_STR_LEN     16
@@ -223,6 +224,30 @@ enum wlan_tp_level {
 	WLAN_SVC_TP_LOW,
 	WLAN_SVC_TP_MEDIUM,
 	WLAN_SVC_TP_HIGH,
+};
+
+/**
+ * struct wlan_core_minfreq - msg to [re]set the min freq of a set of cores
+ * @magic:            signature token: 0xBABA
+ * @reserved:         unused for now
+ * @coremask:         bitmap of cores (16 bits) bit0=CORE0, bit1=CORE1, ...
+ *                     coremask is ONLY valid for set command
+ *                     valid values: 0xf0, or 0x0f
+ * @freq:             frequency in KH
+ *                     >  0: "set to the given frequency"
+ *                     == 0: "free; remove the lock"
+ *
+ * Msg structure passed by the driver to cnss-daemon.
+ *
+ * Semantical Alert:
+ *   There can be only one outstanding lock, even for different masks.
+ */
+#define WLAN_CORE_MINFREQ_MAGIC 0xBABA
+struct wlan_core_minfreq {
+	uint16_t magic;
+	uint16_t reserved;
+	uint16_t coremask;
+	uint16_t freq;
 };
 
 #endif /* WLAN_NLINK_COMMON_H__ */

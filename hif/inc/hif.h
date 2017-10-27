@@ -228,7 +228,6 @@ struct qca_napi_info {
 	/* will only be present for data rx CE's */
 	void (*lro_flush_cb)(void *);
 	qdf_lro_ctx_t        lro_ctx;
-	qdf_spinlock_t lro_unloading_lock;
 };
 
 enum qca_napi_tput_state {
