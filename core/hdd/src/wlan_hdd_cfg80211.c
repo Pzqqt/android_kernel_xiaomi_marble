@@ -13740,14 +13740,14 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	 * want to update this parameter
 	 */
 	if (-1 != params->ap_isolate) {
-		adapter->sessionCtx.ap.apDisableIntraBssFwd =
+		adapter->sessionCtx.ap.disable_intrabss_fwd =
 			!!params->ap_isolate;
 
 		qdf_ret_status = sme_ap_disable_intra_bss_fwd(hdd_ctx->hHal,
 							      adapter->sessionId,
 							      adapter->sessionCtx.
 							      ap.
-							      apDisableIntraBssFwd);
+							      disable_intrabss_fwd);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status))
 			ret = -EINVAL;
 	}
