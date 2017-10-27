@@ -1513,7 +1513,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			/* @@@ need wep logic here to set privacy bit */
 			qdf_status =
 				hdd_softap_register_bc_sta(adapter,
-							   ap_ctx->uPrivacy);
+							   ap_ctx->privacy);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hdd_warn("Failed to register BC STA %d",
 				       qdf_status);
@@ -1888,7 +1888,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			qdf_status = hdd_softap_register_sta(
 						adapter,
 						true,
-						ap_ctx->uPrivacy,
+						ap_ctx->privacy,
 						event->staId, 0, 0,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
@@ -1901,7 +1901,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			qdf_status = hdd_softap_register_sta(
 						adapter,
 						false,
-						ap_ctx->uPrivacy,
+						ap_ctx->privacy,
 						event->staId, 0, 0,
 						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
@@ -7729,7 +7729,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	pConfig->privacy = (pMgmt_frame->u.beacon.capab_info &
 			    WLAN_CAPABILITY_PRIVACY) ? true : false;
 
-	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->uPrivacy = pConfig->privacy;
+	(WLAN_HDD_GET_AP_CTX_PTR(adapter))->privacy = pConfig->privacy;
 
 	/*Set wps station to configured */
 	pIe = wlan_hdd_get_wps_ie_ptr(pBeacon->tail, pBeacon->tail_len);

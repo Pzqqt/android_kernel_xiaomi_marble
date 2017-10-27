@@ -810,12 +810,12 @@ struct hdd_station_info {
  * struct hdd_ap_ctx - SAP/P2PGO specific information
  * @hostapd_state: state control information
  * @broadcast_sta_id: Station ID assigned after BSS starts
+ * @privacy: The privacy bits of configuration
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
 	uint8_t broadcast_sta_id;
-
-	uint8_t uPrivacy;       /* The privacy bits of configuration */
+	uint8_t privacy;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 
