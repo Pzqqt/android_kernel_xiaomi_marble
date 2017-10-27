@@ -1393,7 +1393,10 @@ static void dp_process_ppdu_stats_user_common_tlv(
 	} else {
 		ppdu_user_desc->mpdu_tried_ucast =
 		HTT_PPDU_STATS_USER_COMMON_TLV_MPDUS_TRIED_GET(*tag_buf);
-}
+	}
+
+	tag_buf++;
+
 	ppdu_user_desc->qos_ctrl =
 		HTT_PPDU_STATS_USER_COMMON_TLV_QOS_CTRL_GET(*tag_buf);
 	ppdu_user_desc->frame_ctrl =
@@ -1438,7 +1441,12 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	qdf_mem_copy(ppdu_user_desc->mac_addr, peer->mac_addr.raw,
 			DP_MAC_ADDR_LEN);
 
-	tag_buf += 5;
+	tag_buf += 4;
+
+	ppdu_user_desc->ppdu_type =
+		HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(*tag_buf);
+
+	tag_buf++;
 
 	ppdu_user_desc->ltf_size =
 		HTT_PPDU_STATS_USER_RATE_TLV_LTF_SIZE_GET(*tag_buf);
@@ -1457,8 +1465,6 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	ppdu_user_desc->gi = HTT_PPDU_STATS_USER_RATE_TLV_GI_GET(*tag_buf);
 	ppdu_user_desc->dcm = HTT_PPDU_STATS_USER_RATE_TLV_DCM_GET(*tag_buf);
 	ppdu_user_desc->ldpc = HTT_PPDU_STATS_USER_RATE_TLV_LDPC_GET(*tag_buf);
-	ppdu_user_desc->ppdu_type =
-		HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(*tag_buf);
 }
 
 /*
@@ -1728,7 +1734,7 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 	ppdu_user_desc->peer_id = peer_id;
 
-	tag_buf += 2;
+	tag_buf++;
 	ppdu_user_desc->num_mpdu =
 	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_NUM_MPDU_GET(*tag_buf);
 
