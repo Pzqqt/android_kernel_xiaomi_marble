@@ -669,10 +669,13 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 	uint16_t peer_id;
 	int32_t peer_id_ref_cnt;
 	int32_t num_deleted_maps = 0;
+	uint16_t save_peer_ids[MAX_NUM_PEER_ID_PER_PEER];
+	uint16_t save_peer_id_ref_cnt[MAX_NUM_PEER_ID_PER_PEER];
 
 	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 		peer_id = peer->peer_ids[i];
+		save_peer_ids[i] = HTT_INVALID_PEER;
 		if (peer_id == HTT_INVALID_PEER ||
 			pdev->peer_id_to_obj_map[peer_id].peer == NULL) {
 			/* unused peer_id, or object is already dereferenced */
@@ -687,9 +690,9 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 		peer_id_ref_cnt = qdf_atomic_read(
 					&pdev->peer_id_to_obj_map[peer_id].
 						peer_id_ref_cnt);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
-			  FL("peer_id = %d, peer_id_ref_cnt = %d, index = %d"),
-			  peer_id, peer_id_ref_cnt, i);
+		save_peer_ids[i] = peer_id;
+		save_peer_id_ref_cnt[i] = peer_id_ref_cnt;
+
 		/*
 		 * Transfer peer_id_ref_cnt into del_peer_id_ref_cnt so that
 		 * OL_TXRX_PEER_UNREF_DELETE will decrement del_peer_id_ref_cnt
@@ -708,6 +711,15 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 	}
 	qdf_spin_unlock_bh(&pdev->peer_map_unmap_lock);
+
+	/* Debug print the information after releasing bh spinlock */
+	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
+		if (save_peer_ids[i] == HTT_INVALID_PEER)
+			continue;
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
+			  FL("peer_id = %d, peer_id_ref_cnt = %d, index = %d"),
+			  save_peer_ids[i], save_peer_id_ref_cnt[i], i);
+	}
 
 	while (num_deleted_maps-- > 0)
 		OL_TXRX_PEER_UNREF_DELETE(peer);
