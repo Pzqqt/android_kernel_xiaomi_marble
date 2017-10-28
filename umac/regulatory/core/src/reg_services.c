@@ -2471,14 +2471,15 @@ static void reg_propagate_mas_chan_list_to_pdev(struct wlan_objmgr_psoc *psoc,
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
 	reg_tx_ops = reg_get_psoc_tx_ops(psoc);
-	if (reg_tx_ops->fill_umac_legacy_chanlist)
+	if (reg_tx_ops->fill_umac_legacy_chanlist) {
 		reg_tx_ops->fill_umac_legacy_chanlist(pdev,
 				pdev_priv_obj->cur_chan_list);
-
-	if (*dir == NORTHBOUND)
-		reg_send_scheduler_msg_nb(psoc, pdev);
-	else
-		reg_send_scheduler_msg_sb(psoc, pdev);
+	} else {
+		if (*dir == NORTHBOUND)
+			reg_send_scheduler_msg_nb(psoc, pdev);
+		else
+			reg_send_scheduler_msg_sb(psoc, pdev);
+	}
 }
 
 static void reg_run_11d_state_machine(struct wlan_objmgr_psoc *psoc)
