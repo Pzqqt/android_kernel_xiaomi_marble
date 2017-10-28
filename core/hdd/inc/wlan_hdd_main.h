@@ -1085,7 +1085,7 @@ struct hdd_adapter {
 	struct completion ibss_peer_info_comp;
 
 	/* Track whether the linkup handling is needed  */
-	bool isLinkUpSvcNeeded;
+	bool is_link_up_service_needed;
 
 	/* Mgmt Frames TX completion status code */
 	uint32_t mgmtTxCompletionStatus;

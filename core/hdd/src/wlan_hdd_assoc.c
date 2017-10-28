@@ -2680,7 +2680,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			 * Enable Linkup Event Servicing which allows the net
 			 * device notifier to set the linkup event variable.
 			 */
-			adapter->isLinkUpSvcNeeded = true;
+			adapter->is_link_up_service_needed = true;
 
 			/* Switch on the Carrier to activate the device */
 			wlan_hdd_netif_queue_control(adapter,
@@ -2702,7 +2702,7 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 			 * Disable Linkup Event Servicing - no more service
 			 * required from the net device notifier call.
 			 */
-			adapter->isLinkUpSvcNeeded = false;
+			adapter->is_link_up_service_needed = false;
 		} else {
 			sta_ctx->ft_carrier_on = false;
 			ft_carrier_on = true;

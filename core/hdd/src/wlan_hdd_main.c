@@ -539,7 +539,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		break;
 
 	case NETDEV_CHANGE:
-		if (true == adapter->isLinkUpSvcNeeded)
+		if (adapter->is_link_up_service_needed)
 			complete(&adapter->linkup_event_var);
 		break;
 
@@ -3167,7 +3167,7 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		init_completion(&adapter->lfr_fw_status.disable_lfr_event);
 
 		adapter->offloads_configured = false;
-		adapter->isLinkUpSvcNeeded = false;
+		adapter->is_link_up_service_needed = false;
 		adapter->higherDtimTransition = true;
 		/* Init the net_device structure */
 		strlcpy(pWlanDev->name, name, IFNAMSIZ);
@@ -5183,7 +5183,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 
 			hdd_init_station_mode(adapter);
 			/* Open the gates for HDD to receive Wext commands */
-			adapter->isLinkUpSvcNeeded = false;
+			adapter->is_link_up_service_needed = false;
 
 			/* Indicate disconnect event to supplicant
 			 * if associated previously
