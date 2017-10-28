@@ -2886,7 +2886,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	if (0 != ret)
 		return ret;
 
-	memcpy(&adapter->macAddressCurrent, psta_mac_addr->sa_data, ETH_ALEN);
+	memcpy(&adapter->mac_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 
 	EXIT();
@@ -3174,7 +3174,7 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 
 		qdf_mem_copy(pWlanDev->dev_addr, (void *)macAddr,
 			     sizeof(tSirMacAddr));
-		qdf_mem_copy(adapter->macAddressCurrent.bytes, macAddr,
+		qdf_mem_copy(adapter->mac_addr.bytes, macAddr,
 			     sizeof(tSirMacAddr));
 		pWlanDev->watchdog_timeo = HDD_TX_TIMEOUT;
 
@@ -3390,7 +3390,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	/* Open a SME session (prepare vdev in firmware via legacy API) */
 	INIT_COMPLETION(adapter->session_open_comp_var);
 	status = sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback, adapter,
-				  (uint8_t *)&adapter->macAddressCurrent,
+				  (uint8_t *)&adapter->mac_addr,
 				  adapter->sessionId, type, sub_type);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to open sme session: %d", status);
@@ -3641,7 +3641,7 @@ static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = adapterNode->adapter;
 		if (adapter
-		    && !qdf_mem_cmp(adapter->macAddressCurrent.bytes,
+		    && !qdf_mem_cmp(adapter->mac_addr.bytes,
 				       macAddr, sizeof(tSirMacAddr))) {
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -4126,7 +4126,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	return adapter;
 
 err_free_netdev:
-	wlan_hdd_release_intf_addr(hdd_ctx, adapter->macAddressCurrent.bytes);
+	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	free_netdev(adapter->dev);
 
 	return NULL;
@@ -4209,7 +4209,7 @@ QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 		status = hdd_remove_front_adapter(hdd_ctx, &pHddAdapterNode);
 		if (pHddAdapterNode && QDF_STATUS_SUCCESS == status) {
 			wlan_hdd_release_intf_addr(hdd_ctx,
-			pHddAdapterNode->adapter->macAddressCurrent.bytes);
+			pHddAdapterNode->adapter->mac_addr.bytes);
 			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->adapter,
 					    rtnl_held);
 			qdf_mem_free(pHddAdapterNode);
@@ -4242,7 +4242,7 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 	case QDF_P2P_GO_MODE:
 	case QDF_IBSS_MODE:
 	{
-		bssid = &adapter->macAddressCurrent;
+		bssid = &adapter->mac_addr;
 		break;
 	}
 	case QDF_FTM_MODE:
@@ -4428,7 +4428,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 						adapter->sessionId);
 
 			qdf_copy_macaddr(&updateIE.bssid,
-					 &adapter->macAddressCurrent);
+					 &adapter->mac_addr);
 			updateIE.smeSessionId = adapter->sessionId;
 			updateIE.ieBufferlength = 0;
 			updateIE.pAdditionIEBuffer = NULL;
@@ -5356,7 +5356,7 @@ struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 		adapter = adapterNode->adapter;
 
 		if (adapter
-		    && !qdf_mem_cmp(adapter->macAddressCurrent.bytes,
+		    && !qdf_mem_cmp(adapter->mac_addr.bytes,
 				       macAddr, sizeof(tSirMacAddr)))
 			return adapter;
 
@@ -12397,7 +12397,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				&& (false ==
 				hdd_sta_ctx->conn_info.uIsAuthenticated)) {
 				sta_mac = (uint8_t *)
-					&(adapter->macAddressCurrent.bytes[0]);
+					&(adapter->mac_addr.bytes[0]);
 				hdd_debug("client " MAC_ADDRESS_STR
 					" is in middle of WPS/EAPOL exchange.",
 					MAC_ADDR_ARRAY(sta_mac));

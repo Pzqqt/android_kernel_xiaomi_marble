@@ -240,7 +240,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	qdf_status = cdp_peer_register_ocb_peer(soc,
-				adapter->macAddressCurrent.bytes,
+				adapter->mac_addr.bytes,
 				&peer_id);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Error registering OCB Self Peer!");
@@ -276,7 +276,7 @@ static int hdd_ocb_register_sta(struct hdd_adapter *adapter)
 
 	sta_ctx->conn_info.staId[0] = peer_id;
 	qdf_copy_macaddr(&sta_ctx->conn_info.peerMacAddress[0],
-			 &adapter->macAddressCurrent);
+			 &adapter->mac_addr);
 
 	return 0;
 }
@@ -537,7 +537,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 		 */
 		if (i == 0) {
 			qdf_copy_macaddr(&curr_chan->mac_address,
-				     &adapter->macAddressCurrent);
+				     &adapter->mac_addr);
 		} else {
 			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
 			if (mac_addr == NULL) {
@@ -888,7 +888,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	for (i = 0; i < config->channel_count; i++) {
 		if (i == 0) {
 			qdf_copy_macaddr(&config->channels[i].mac_address,
-				&adapter->macAddressCurrent);
+				&adapter->mac_addr);
 		} else {
 			mac_addr = wlan_hdd_get_intf_addr(hdd_ctx);
 			if (mac_addr == NULL) {
@@ -1145,7 +1145,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 
 	timing_advert->template_length =
 		sme_ocb_gen_timing_advert_frame(hdd_ctx->hHal,
-			*(tSirMacAddr *)&adapter->macAddressCurrent.bytes,
+			*(tSirMacAddr *)&adapter->mac_addr.bytes,
 			&timing_advert->template_value,
 			&timing_advert->timestamp_offset,
 			&timing_advert->time_value_offset);

@@ -10593,7 +10593,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	roam_profile.ch_params.ch_width = bandwidth;
 	hdd_select_cbmode(adapter, chan, &roam_profile.ch_params);
 
-	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
+	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = bandwidth;

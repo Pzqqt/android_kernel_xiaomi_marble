@@ -490,7 +490,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 
 	pInfo->mode = hdd_map_device_to_ll_iface_mode(adapter->device_mode);
 
-	qdf_copy_macaddr(&pInfo->macAddr, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&pInfo->macAddr, &adapter->mac_addr);
 
 	if (((QDF_STA_MODE == adapter->device_mode) ||
 	     (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
@@ -510,7 +510,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		     sta_ctx->conn_info.connState)
 		    && (false == sta_ctx->conn_info.uIsAuthenticated)) {
 			staMac =
-				(uint8_t *) &(adapter->macAddressCurrent.
+				(uint8_t *) &(adapter->mac_addr.
 					      bytes[0]);
 			hdd_err("client " MAC_ADDRESS_STR
 				" is in the middle of WPS/EAPOL exchange.",

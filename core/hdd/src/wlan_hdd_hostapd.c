@@ -252,8 +252,8 @@ hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
 		goto error;
 	}
 	status = wlansap_start(sap_ctx, adapter->device_mode,
-			adapter->macAddressCurrent.bytes,
-			adapter->sessionId);
+			       adapter->mac_addr.bytes,
+			       adapter->sessionId);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("wlansap_start failed!! status: %d", status);
 		adapter->sessionCtx.ap.sap_context = NULL;
@@ -1123,7 +1123,7 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 	}
 
 	wlan_hdd_release_intf_addr(hdd_ctx,
-				   adapter->macAddressCurrent.bytes);
+				   adapter->mac_addr.bytes);
 	hdd_stop_adapter(hdd_ctx, adapter, true);
 	hdd_close_adapter(hdd_ctx, adapter, false);
 }
@@ -1174,7 +1174,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 
 	cds_ssr_protect(__func__);
 	wlan_hdd_release_intf_addr(hdd_ctx,
-				   adapter->macAddressCurrent.bytes);
+				   adapter->mac_addr.bytes);
 	hdd_stop_adapter(hdd_ctx, adapter, true);
 	hdd_close_adapter(hdd_ctx, adapter, false);
 	cds_ssr_unprotect(__func__);
@@ -3371,7 +3371,7 @@ static __iw_softap_setparam(struct net_device *dev,
 
 		hdd_debug("MC Target rate %d", set_value);
 		qdf_copy_macaddr(&rateUpdate.bssid,
-				 &adapter->macAddressCurrent);
+				 &adapter->mac_addr);
 		rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
 		rateUpdate.dev_mode = adapter->device_mode;
 		rateUpdate.mcastDataRate24GHz = set_value;
@@ -4435,8 +4435,8 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 		return ret;
 
 	/* Assign correct self MAC address */
-	qdf_copy_macaddr(&bssid, &adapter->macAddressCurrent);
-	qdf_copy_macaddr(&selfMac, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&bssid, &adapter->mac_addr);
+	qdf_copy_macaddr(&selfMac, &adapter->mac_addr);
 
 	set_value = value[0];
 	if (QDF_STATUS_SUCCESS !=
@@ -4526,7 +4526,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	qdf_copy_macaddr(&bssid, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&bssid, &adapter->mac_addr);
 
 	set_value = value[0];
 	if (QDF_STATUS_SUCCESS !=
@@ -6369,7 +6369,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 
 	qdf_mem_copy(dev->dev_addr, (void *)macAddr,
 		     sizeof(tSirMacAddr));
-	qdf_mem_copy(adapter->macAddressCurrent.bytes,
+	qdf_mem_copy(adapter->mac_addr.bytes,
 		     (void *)macAddr, sizeof(tSirMacAddr));
 
 	adapter->offloads_configured = false;
@@ -7033,7 +7033,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 
 	wlan_hdd_add_sap_obss_scan_ie(adapter, genie, &total_ielen);
 
-	qdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&updateIE.bssid, &adapter->mac_addr);
 	updateIE.smeSessionId = adapter->sessionId;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
@@ -7849,7 +7849,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	}
 
 	qdf_mem_copy(pConfig->self_macaddr.bytes,
-		     adapter->macAddressCurrent.bytes,
+		     adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	/* default value */
@@ -8032,7 +8032,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 #endif
 
 	hdd_debug("SOftAP macaddress : " MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(adapter->macAddressCurrent.bytes));
+	       MAC_ADDR_ARRAY(adapter->mac_addr.bytes));
 	hdd_debug("ssid =%s, beaconint=%d, channel=%d",
 	       pConfig->SSIDinfo.ssid.ssId, (int)pConfig->beacon_int,
 	       (int)pConfig->channel);
@@ -8323,7 +8323,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	qdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&updateIE.bssid, &adapter->mac_addr);
 	updateIE.smeSessionId = adapter->sessionId;
 	updateIE.ieBufferlength = 0;
 	updateIE.pAdditionIEBuffer = NULL;

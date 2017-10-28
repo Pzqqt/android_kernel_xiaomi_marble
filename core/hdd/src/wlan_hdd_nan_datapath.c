@@ -252,7 +252,7 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->BSSType = eCSR_BSS_TYPE_NDI;
 	roam_profile->BSSIDs.numOfBSSIDs = 1;
 	qdf_mem_copy((void *)(roam_profile->BSSIDs.bssid),
-		&adapter->macAddressCurrent.bytes[0],
+		&adapter->mac_addr.bytes[0],
 		QDF_MAC_ADDR_SIZE);
 
 	roam_profile->AuthType.numEntries = 1;
@@ -592,7 +592,7 @@ static int hdd_ndp_initiator_req_handler(struct hdd_context *hdd_ctx,
 		nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID]);
 
 	qdf_mem_copy(req.self_ndi_mac_addr.bytes,
-		     adapter->macAddressCurrent.bytes, QDF_MAC_ADDR_SIZE);
+		     adapter->mac_addr.bytes, QDF_MAC_ADDR_SIZE);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR]) {
 		hdd_err("NDI peer discovery mac addr is unavailable");

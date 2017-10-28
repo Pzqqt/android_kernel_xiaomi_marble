@@ -1874,7 +1874,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 	acs_event_callback = hdd_hostapd_sap_event_cb;
 
 	qdf_mem_copy(sap_config->self_macaddr.bytes,
-		adapter->macAddressCurrent.bytes, sizeof(struct qdf_mac_addr));
+		adapter->mac_addr.bytes, sizeof(struct qdf_mac_addr));
 	hdd_notice("ACS Started for %s", adapter->dev->name);
 	status = wlansap_acs_chselect(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
@@ -7114,7 +7114,7 @@ wlan_hdd_add_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 			MAC_ADDR_ARRAY(add_req->mac_address.bytes));
 
 	if (!qdf_is_macaddr_equal(&add_req->mac_address,
-				  &adapter->macAddressCurrent)) {
+				  &adapter->mac_addr)) {
 		hdd_err("input src mac address and connected ap bssid are different");
 		goto fail;
 	}
@@ -7227,7 +7227,7 @@ wlan_hdd_del_tx_ptrn(struct hdd_adapter *adapter, struct hdd_context *hdd_ctx,
 		return -ENOMEM;
 	}
 
-	qdf_copy_macaddr(&del_req->mac_address, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&del_req->mac_address, &adapter->mac_addr);
 	hdd_debug(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->mac_address.bytes));
 	del_req->ucPtrnId = pattern_id;
 	hdd_debug("Request Id: %u Pattern id: %d",
@@ -13983,7 +13983,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 				ndev->dev_addr[1] = 0x1A;
 				ndev->dev_addr[2] = 0x11;
 				ndev->dev_addr[3] |= 0xF0;
-				memcpy(adapter->macAddressCurrent.
+				memcpy(adapter->mac_addr.
 				       bytes, ndev->dev_addr,
 				       QDF_MAC_ADDR_SIZE);
 				pr_info("wlan: Generated HotSpot BSSID "
@@ -18114,7 +18114,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	/* Clearing add IE of beacon */
-	qdf_mem_copy(updateIE.bssid.bytes, adapter->macAddressCurrent.bytes,
+	qdf_mem_copy(updateIE.bssid.bytes, adapter->mac_addr.bytes,
 		     sizeof(tSirMacAddr));
 	updateIE.smeSessionId = adapter->sessionId;
 	updateIE.ieBufferlength = 0;
@@ -19935,7 +19935,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	roam_profile.ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);
 	hdd_select_cbmode(adapter, chan_num, &roam_profile.ch_params);
 
-	qdf_mem_copy(bssid.bytes, adapter->macAddressCurrent.bytes,
+	qdf_mem_copy(bssid.bytes, adapter->mac_addr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	ch_params.ch_width = hdd_map_nl_chan_width(chandef->width);

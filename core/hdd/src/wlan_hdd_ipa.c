@@ -1431,7 +1431,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			    QDF_STATUS_SUCCESS) {
 				p2pChannel = hdd_ap_ctx->operating_channel;
 				qdf_copy_macaddr(&p2pBssid,
-						 &adapter->macAddressCurrent);
+						 &adapter->mac_addr);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = p2pChannel;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
@@ -1446,7 +1446,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			    QDF_STATUS_SUCCESS) {
 				apChannel = hdd_ap_ctx->operating_channel;
 				qdf_copy_macaddr(&apBssid,
-						&adapter->macAddressCurrent);
+						&adapter->mac_addr);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = apChannel;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */

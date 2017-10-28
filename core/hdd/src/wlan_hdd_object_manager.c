@@ -168,7 +168,7 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	struct wlan_vdev_create_params vdev_params;
 
 	vdev_params.opmode = adapter->device_mode;
-	qdf_mem_copy(vdev_params.macaddr, adapter->macAddressCurrent.bytes,
+	qdf_mem_copy(vdev_params.macaddr, adapter->mac_addr.bytes,
 						QDF_NET_MAC_ADDR_MAX_LEN);
 	if (!pdev) {
 		hdd_err("pdev NULL");

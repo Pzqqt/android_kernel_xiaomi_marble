@@ -489,7 +489,7 @@ bool hdd_enter_wowl(struct hdd_adapter *adapter,
 	wowParams.sessionId = adapter->sessionId;
 	if (enable_mp) {
 		qdf_copy_macaddr(&wowParams.magic_ptrn,
-				 &adapter->macAddressCurrent);
+				 &adapter->mac_addr);
 	}
 #ifdef WLAN_WAKEUP_EVENTS
 	wowParams.ucWoWEAPIDRequestEnable = true;

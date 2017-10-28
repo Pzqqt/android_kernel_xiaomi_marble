@@ -1271,7 +1271,7 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		pr_info("wlan: " MAC_ADDRESS_STR " connected to "
 			MAC_ADDRESS_STR "\n",
-			MAC_ADDR_ARRAY(adapter->macAddressCurrent.bytes),
+			MAC_ADDR_ARRAY(adapter->mac_addr.bytes),
 			MAC_ADDR_ARRAY(wrqu.ap_addr.sa_data));
 		hdd_send_update_beacon_ies_event(adapter, pCsrRoamInfo);
 
