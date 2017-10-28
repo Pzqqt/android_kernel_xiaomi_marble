@@ -1110,6 +1110,8 @@ struct scan_user_cfg {
 	enum scan_dwelltime_adaptive_mode scan_dwell_time_mode;
 	struct pno_user_cfg pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
+	uint32_t usr_cfg_probe_rpt_time;
+	uint32_t usr_cfg_num_probes;
 	bool is_bssid_hint_priority;
 };
 
