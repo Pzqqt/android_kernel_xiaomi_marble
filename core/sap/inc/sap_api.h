@@ -147,8 +147,6 @@ typedef enum {
 	eSAP_STA_MIC_FAILURE_EVENT,
 	/* Event sent when user called wlansap_get_assoc_stations */
 	eSAP_ASSOC_STA_CALLBACK_EVENT,
-	/* Event send when user call  wlansap_get_wps_session_overlap */
-	eSAP_GET_WPSPBC_SESSION_EVENT,
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
