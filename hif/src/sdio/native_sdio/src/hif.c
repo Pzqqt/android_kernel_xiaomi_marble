@@ -858,7 +858,7 @@ static inline void sdio_card_state(struct mmc_card *card)
  *
  * Return: 0 on success, error number otherwise.
  */
-QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
+static QDF_STATUS reinit_sdio(struct hif_sdio_dev *device)
 {
 	int32_t err = 0;
 	struct mmc_host *host;
@@ -1029,7 +1029,7 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
  *
  * Return: 0 on success, error number otherwise.
  */
-QDF_STATUS
+static QDF_STATUS
 power_state_change_notify(struct hif_sdio_dev *device,
 			enum HIF_DEVICE_POWER_CHANGE_TYPE config)
 {
@@ -2592,7 +2592,7 @@ static void reset_all_cards(void)
 {
 }
 
-void hif_release_device(struct hif_opaque_softc *hif_ctx)
+static void hif_release_device(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
 	struct hif_sdio_dev *hif_device = scn->hif_handle;

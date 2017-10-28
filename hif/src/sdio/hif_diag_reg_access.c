@@ -271,7 +271,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn,
  *
  * Return: QDF_STATUS_SUCCESS for success.
  */
-QDF_STATUS hif_ar6k_read_target_register(struct hif_sdio_dev *hif_device,
+static QDF_STATUS hif_ar6k_read_target_register(struct hif_sdio_dev *hif_device,
 					 int regsel, uint32_t *regval)
 {
 	QDF_STATUS status;
@@ -315,7 +315,7 @@ QDF_STATUS hif_ar6k_read_target_register(struct hif_sdio_dev *hif_device,
  *
  * Return: None
  */
-void hif_ar6k_fetch_target_regs(struct hif_sdio_dev *hif_device,
+static void hif_ar6k_fetch_target_regs(struct hif_sdio_dev *hif_device,
 		 uint32_t *targregs)
 {
 	int i;
