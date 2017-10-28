@@ -884,14 +884,14 @@ struct hdd_ap_ctx {
 /**
  * struct hdd_scan_info - Per-adapter scan information
  * @mScanPending: is a scan pending on this adapter?
- * @scanAddIE: Additional IE for scan
+ * @scan_add_ie: Additional IE for scan
  * @default_scan_ies: Default scan IEs
  * @default_scan_ies_len: Length of @default_scan_ies
  * @scan_mode: Scan mode
  */
 struct hdd_scan_info {
 	uint32_t mScanPending;
-	tSirAddie scanAddIE;
+	tSirAddie scan_add_ie;
 	uint8_t *default_scan_ies;
 	uint16_t default_scan_ies_len;
 	tSirScanType scan_mode;

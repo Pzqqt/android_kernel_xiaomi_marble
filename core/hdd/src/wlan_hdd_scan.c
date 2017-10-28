@@ -612,21 +612,21 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	/* Store the Scan IE's in Adapter*/
 	if (request->ie_len) {
 		/* save this for future association (join requires this) */
-		memset(&scan_info->scanAddIE, 0, sizeof(scan_info->scanAddIE));
-		memcpy(scan_info->scanAddIE.addIEdata, request->ie,
+		memset(&scan_info->scan_add_ie, 0, sizeof(scan_info->scan_add_ie));
+		memcpy(scan_info->scan_add_ie.addIEdata, request->ie,
 		       request->ie_len);
-		scan_info->scanAddIE.length = request->ie_len;
+		scan_info->scan_add_ie.length = request->ie_len;
 
 		wlan_hdd_update_scan_ies(adapter, scan_info,
-				scan_info->scanAddIE.addIEdata,
-				&scan_info->scanAddIE.length);
+				scan_info->scan_add_ie.addIEdata,
+				&scan_info->scan_add_ie.length);
 	} else {
 		if (scan_info->default_scan_ies &&
 		    scan_info->default_scan_ies_len) {
-			qdf_mem_copy(scan_info->scanAddIE.addIEdata,
+			qdf_mem_copy(scan_info->scan_add_ie.addIEdata,
 				     scan_info->default_scan_ies,
 				     scan_info->default_scan_ies_len);
-			scan_info->scanAddIE.length =
+			scan_info->scan_add_ie.length =
 				scan_info->default_scan_ies_len;
 			params.default_ie.ptr =
 				qdf_mem_malloc(scan_info->default_scan_ies_len);
@@ -644,9 +644,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
 	    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 		pwextBuf->roamProfile.pAddIEScan =
-			scan_info->scanAddIE.addIEdata;
+			scan_info->scan_add_ie.addIEdata;
 		pwextBuf->roamProfile.nAddIEScanLength =
-			scan_info->scanAddIE.length;
+			scan_info->scan_add_ie.length;
 	}
 
 	if ((request->n_ssids == 1) && (request->ssids != NULL) &&
@@ -820,8 +820,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		}
 	}
 
-	scan_req.uIEFieldLen = scan_info->scanAddIE.length;
-	scan_req.pIEField = scan_info->scanAddIE.addIEdata;
+	scan_req.uIEFieldLen = scan_info->scan_add_ie.length;
+	scan_req.pIEField = scan_info->scan_add_ie.addIEdata;
 
 	/* acquire the wakelock to avoid the apps suspend during the scan. To
 	 * address the following issues.

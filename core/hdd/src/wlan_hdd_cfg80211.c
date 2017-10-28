@@ -13811,9 +13811,9 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	memset(&adapter->sessionCtx, 0, sizeof(adapter->sessionCtx));
 	hdd_set_station_ops(adapter->dev);
 	wext = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
-	wext->roamProfile.pAddIEScan = adapter->scan_info.scanAddIE.addIEdata;
+	wext->roamProfile.pAddIEScan = adapter->scan_info.scan_add_ie.addIEdata;
 	wext->roamProfile.nAddIEScanLength =
-		adapter->scan_info.scanAddIE.length;
+		adapter->scan_info.scan_add_ie.length;
 	if (type == NL80211_IFTYPE_ADHOC) {
 		status = hdd_init_station_mode(adapter);
 		wext->roamProfile.BSSType = eCSR_BSS_TYPE_START_IBSS;
@@ -15898,9 +15898,9 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		if ((adapter->device_mode == QDF_P2P_CLIENT_MODE) &&
 		    (!roam_profile->pAddIEScan)) {
 			roam_profile->pAddIEScan =
-				&adapter->scan_info.scanAddIE.addIEdata[0];
+				&adapter->scan_info.scan_add_ie.addIEdata[0];
 			roam_profile->nAddIEScanLength =
-				adapter->scan_info.scanAddIE.length;
+				adapter->scan_info.scan_add_ie.length;
 		}
 
 		if ((policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc) == true)
