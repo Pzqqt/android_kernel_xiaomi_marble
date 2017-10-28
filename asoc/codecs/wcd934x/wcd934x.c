@@ -115,6 +115,7 @@ static const struct snd_kcontrol_new name##_mux = \
 #define WCD934X_AMIC_PWR_LEVEL_LP 0
 #define WCD934X_AMIC_PWR_LEVEL_DEFAULT 1
 #define WCD934X_AMIC_PWR_LEVEL_HP 2
+#define WCD934X_AMIC_PWR_LEVEL_HYBRID 3
 #define WCD934X_AMIC_PWR_LVL_MASK 0x60
 #define WCD934X_AMIC_PWR_LVL_SHIFT 0x5
 
@@ -122,6 +123,7 @@ static const struct snd_kcontrol_new name##_mux = \
 #define WCD934X_DEC_PWR_LVL_LP 0x02
 #define WCD934X_DEC_PWR_LVL_HP 0x04
 #define WCD934X_DEC_PWR_LVL_DF 0x00
+#define WCD934X_DEC_PWR_LVL_HYBRID WCD934X_DEC_PWR_LVL_DF
 #define WCD934X_STRING_LEN 100
 
 #define WCD934X_CDC_SIDETONE_IIR_COEFF_MAX 5
@@ -4014,6 +4016,7 @@ static int tavil_codec_enable_dec(struct snd_soc_dapm_widget *w,
 						    WCD934X_DEC_PWR_LVL_HP);
 				break;
 			case WCD934X_AMIC_PWR_LEVEL_DEFAULT:
+			case WCD934X_AMIC_PWR_LEVEL_HYBRID:
 			default:
 				snd_soc_update_bits(codec, dec_cfg_reg,
 						    WCD934X_DEC_PWR_LVL_MASK,
@@ -5707,7 +5710,7 @@ static const char * const rx_cf_text[] = {
 };
 
 static const char * const amic_pwr_lvl_text[] = {
-	"LOW_PWR", "DEFAULT", "HIGH_PERF"
+	"LOW_PWR", "DEFAULT", "HIGH_PERF", "HYBRID"
 };
 
 static const char * const hph_idle_detect_text[] = {
