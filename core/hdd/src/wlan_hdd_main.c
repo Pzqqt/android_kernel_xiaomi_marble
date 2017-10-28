@@ -3976,7 +3976,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		 * Workqueue which gets scheduled in IPv4 notification
 		 * callback
 		 */
-		INIT_WORK(&adapter->ipv4NotifierWorkQueue,
+		INIT_WORK(&adapter->ipv4_notifier_work,
 			  hdd_ipv4_notifier_work_queue);
 
 #ifdef WLAN_NS_OFFLOAD
@@ -3984,7 +3984,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		 * Workqueue which gets scheduled in IPv6
 		 * notification callback.
 		 */
-		INIT_WORK(&adapter->ipv6NotifierWorkQueue,
+		INIT_WORK(&adapter->ipv6_notifier_work,
 			  hdd_ipv6_notifier_work_queue);
 #endif
 		status = hdd_register_interface(adapter, rtnl_held);
@@ -4039,7 +4039,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		 * Workqueue which gets scheduled in IPv4 notification
 		 * callback
 		 */
-		INIT_WORK(&adapter->ipv4NotifierWorkQueue,
+		INIT_WORK(&adapter->ipv4_notifier_work,
 			  hdd_ipv4_notifier_work_queue);
 
 #ifdef WLAN_NS_OFFLOAD
@@ -4047,7 +4047,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		 * Workqueue which gets scheduled in IPv6
 		 * notification callback.
 		 */
-		INIT_WORK(&adapter->ipv6NotifierWorkQueue,
+		INIT_WORK(&adapter->ipv6_notifier_work,
 			  hdd_ipv6_notifier_work_queue);
 #endif
 		break;
@@ -4347,14 +4347,14 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		hdd_clear_fils_connection_info(adapter);
 
 #ifdef WLAN_OPEN_SOURCE
-		cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
+		cancel_work_sync(&adapter->ipv4_notifier_work);
 #endif
 
 		hdd_deregister_tx_flow_control(adapter);
 
 #ifdef WLAN_NS_OFFLOAD
 #ifdef WLAN_OPEN_SOURCE
-		cancel_work_sync(&adapter->ipv6NotifierWorkQueue);
+		cancel_work_sync(&adapter->ipv6_notifier_work);
 #endif
 #endif
 
@@ -4463,12 +4463,12 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		mutex_unlock(&hdd_ctx->sap_lock);
 
 #ifdef WLAN_OPEN_SOURCE
-		cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
+		cancel_work_sync(&adapter->ipv4_notifier_work);
 #endif
 
 #ifdef WLAN_NS_OFFLOAD
 #ifdef WLAN_OPEN_SOURCE
-		cancel_work_sync(&adapter->ipv6NotifierWorkQueue);
+		cancel_work_sync(&adapter->ipv6_notifier_work);
 #endif
 #endif
 		break;

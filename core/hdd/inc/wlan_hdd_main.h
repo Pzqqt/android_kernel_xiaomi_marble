@@ -1017,10 +1017,10 @@ struct hdd_adapter {
 	enum tQDF_ADAPTER_MODE device_mode;
 
 	/** IPv4 notifier callback for handling ARP offload on change in IP */
-	struct work_struct ipv4NotifierWorkQueue;
+	struct work_struct ipv4_notifier_work;
 #ifdef WLAN_NS_OFFLOAD
 	/** IPv6 notifier callback for handling NS offload on change in IP */
-	struct work_struct ipv6NotifierWorkQueue;
+	struct work_struct ipv6_notifier_work;
 #endif
 
 	/* TODO Move this to sta Ctx */

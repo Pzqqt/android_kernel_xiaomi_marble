@@ -229,7 +229,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 
 		hdd_debug("invoking sme_dhcp_done_ind");
 		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->sessionId);
-		schedule_work(&adapter->ipv6NotifierWorkQueue);
+		schedule_work(&adapter->ipv6_notifier_work);
 	}
 
 exit:
@@ -471,7 +471,7 @@ static void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 
 	ENTER();
 
-	adapter = container_of(work, struct hdd_adapter, ipv6NotifierWorkQueue);
+	adapter = container_of(work, struct hdd_adapter, ipv6_notifier_work);
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		goto exit;
@@ -734,7 +734,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	ENTER();
 
-	adapter = container_of(work, struct hdd_adapter, ipv4NotifierWorkQueue);
+	adapter = container_of(work, struct hdd_adapter, ipv4_notifier_work);
 	errno = hdd_validate_adapter(adapter);
 	if (errno)
 		goto exit;
@@ -831,7 +831,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 
 		ifa = hdd_lookup_ifaddr(adapter);
 		if (ifa && ifa->ifa_local)
-			schedule_work(&adapter->ipv4NotifierWorkQueue);
+			schedule_work(&adapter->ipv4_notifier_work);
 	}
 
 exit:
