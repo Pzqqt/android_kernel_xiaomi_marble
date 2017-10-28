@@ -689,10 +689,13 @@ struct hdd_hostapd_state {
  *  to maintain SCC mode with the STA role on the same card.
  *  this usually happens when STA is connected to an external
  *  AP that runs on a different channel
+ * @BSS_STOP_DUE_TO_VENDOR_CONFIG_CHAN: BSS stopped due to
+ *  vendor subcmd set sap config channel
  */
 enum bss_stop_reason {
 	BSS_STOP_REASON_INVALID = 0,
 	BSS_STOP_DUE_TO_MCC_SCC_SWITCH = 1,
+	BSS_STOP_DUE_TO_VENDOR_CONFIG_CHAN = 2,
 };
 
 /**
