@@ -2298,34 +2298,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		break;
 
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:
-	{
-		static const char *message =
-			"MLMEWPSPBCPROBEREQ.indication";
-		union iwreq_data wreq;
-
-		down(&ap_ctx->semWpsPBCOverlapInd);
-		ap_ctx->WPSPBCProbeReq.probeReqIELen =
-			pSapEvent->sapevt.sapPBCProbeReqEvent.
-			WPSPBCProbeReq.probeReqIELen;
-
-		qdf_mem_copy(ap_ctx->WPSPBCProbeReq.probeReqIE,
-			     pSapEvent->sapevt.sapPBCProbeReqEvent.
-			     WPSPBCProbeReq.probeReqIE,
-			     ap_ctx->WPSPBCProbeReq.probeReqIELen);
-
-		qdf_copy_macaddr(&ap_ctx->WPSPBCProbeReq.peer_macaddr,
-			     &pSapEvent->sapevt.sapPBCProbeReqEvent.
-			     WPSPBCProbeReq.peer_macaddr);
-		hdd_debug("WPS PBC probe req " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(ap_ctx->WPSPBCProbeReq.
-				      peer_macaddr.bytes));
-		memset(&wreq, 0, sizeof(wreq));
-		wreq.data.length = strlen(message);
-		wireless_send_event(dev, IWEVCUSTOM, &wreq,
-				    (char *)message);
-
+		hdd_debug("WPS PBC probe req");
 		return QDF_STATUS_SUCCESS;
-	}
+
 	case eSAP_ASSOC_STA_CALLBACK_EVENT:
 		pAssocStasArray =
 			pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas;
@@ -5010,66 +4985,6 @@ int iw_get_genie(struct net_device *dev,
 	return ret;
 }
 
-static
-int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
-				  struct iw_request_info *info,
-				  union iwreq_data *wrqu, char *extra)
-{
-	struct hdd_adapter *adapter = (netdev_priv(dev));
-	struct sap_wpspbc_probe_reqies WPSPBCProbeReqIEs;
-	struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	struct hdd_context *hdd_ctx;
-	int ret;
-
-	ENTER_DEV(dev);
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret)
-		return ret;
-
-	ret = hdd_check_private_wext_control(hdd_ctx, info);
-	if (0 != ret)
-		return ret;
-
-	hdd_debug("get_WPSPBCProbeReqIEs ioctl");
-	memset((void *)&WPSPBCProbeReqIEs, 0, sizeof(WPSPBCProbeReqIEs));
-
-	WPSPBCProbeReqIEs.probeReqIELen =
-		ap_ctx->WPSPBCProbeReq.probeReqIELen;
-	qdf_mem_copy(&WPSPBCProbeReqIEs.probeReqIE,
-		     ap_ctx->WPSPBCProbeReq.probeReqIE,
-		     WPSPBCProbeReqIEs.probeReqIELen);
-	qdf_copy_macaddr(&WPSPBCProbeReqIEs.macaddr,
-			 &ap_ctx->WPSPBCProbeReq.peer_macaddr);
-	if (copy_to_user(wrqu->data.pointer,
-			 (void *)&WPSPBCProbeReqIEs,
-			 sizeof(WPSPBCProbeReqIEs))) {
-		hdd_err("failed to copy data to user buffer");
-		return -EFAULT;
-	}
-	wrqu->data.length = 12 + WPSPBCProbeReqIEs.probeReqIELen;
-	hdd_debug("Macaddress : " MAC_ADDRESS_STR,
-	       MAC_ADDR_ARRAY(WPSPBCProbeReqIEs.macaddr.bytes));
-	up(&ap_ctx->semWpsPBCOverlapInd);
-	EXIT();
-	return 0;
-}
-
-static
-int iw_get_wpspbc_probe_req_ies(struct net_device *dev,
-				struct iw_request_info *info,
-				union iwreq_data *wrqu, char *extra)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __iw_get_wpspbc_probe_req_ies(dev, info, wrqu, extra);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
 /**
  * __iw_get_ap_freq() - get ap frequency
  * @dev - Pointer to the net device.
@@ -5951,12 +5866,6 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCSAP_IOCTL_GET_STA_INFO, 0,
 		IW_PRIV_TYPE_CHAR | WE_SAP_MAX_STA_INFO, "get_sta_info"
 	}, {
-		QCSAP_IOCTL_GET_WPS_PBC_PROBE_REQ_IES,
-		IW_PRIV_TYPE_BYTE |
-		sizeof(struct sap_wpspbc_probe_reqies) |
-		IW_PRIV_SIZE_FIXED, 0, "getProbeReqIEs"
-	}
-	, {
 		QCSAP_IOCTL_GET_CHANNEL, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getchannel"
 	}
@@ -6171,8 +6080,6 @@ static const iw_handler hostapd_private[] = {
 	[QCSAP_IOCTL_STOPBSS - SIOCIWFIRSTPRIV] = iw_softap_stopbss,
 	/* get driver version */
 	[QCSAP_IOCTL_VERSION - SIOCIWFIRSTPRIV] = iw_softap_version,
-	[QCSAP_IOCTL_GET_WPS_PBC_PROBE_REQ_IES - SIOCIWFIRSTPRIV] =
-		iw_get_wpspbc_probe_req_ies,
 	[QCSAP_IOCTL_GET_CHANNEL - SIOCIWFIRSTPRIV] =
 		iw_softap_getchannel,
 	[QCSAP_IOCTL_ASSOC_STA_MACADDR - SIOCIWFIRSTPRIV] =
@@ -6313,8 +6220,6 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	init_completion(&adapter->session_close_comp_var);
 	init_completion(&adapter->session_open_comp_var);
-
-	sema_init(&(WLAN_HDD_GET_AP_CTX_PTR(adapter))->semWpsPBCOverlapInd, 1);
 
 	/* Register as a wireless device */
 	dev->wireless_handlers = (struct iw_handler_def *)&hostapd_handler_def;

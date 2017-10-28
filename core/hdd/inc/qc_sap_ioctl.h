@@ -66,15 +66,6 @@ struct sQcSapreq_wscie {
 };
 
 /*
- * Retrieve the WPS PBC Probe Request IEs.
- */
-struct sap_wpspbc_probe_reqies {
-	struct qdf_mac_addr macaddr;
-	uint16_t probeReqIELen;
-	uint8_t probeReqIE[512];
-};
-
-/*
  * Channel List Info
  */
 
@@ -99,7 +90,7 @@ struct channel_list_info {
 #define QCSAP_IOCTL_GET_STAWPAIE      (SIOCIWFIRSTPRIV + 4)
 #define QCSAP_IOCTL_STOPBSS           (SIOCIWFIRSTPRIV + 6)
 #define QCSAP_IOCTL_VERSION           (SIOCIWFIRSTPRIV + 7)
-#define QCSAP_IOCTL_GET_WPS_PBC_PROBE_REQ_IES       (SIOCIWFIRSTPRIV + 8)
+/* (SIOCIWFIRSTPRIV + 8) is unused */
 #define QCSAP_IOCTL_GET_CHANNEL       (SIOCIWFIRSTPRIV + 9)
 #define QCSAP_IOCTL_ASSOC_STA_MACADDR (SIOCIWFIRSTPRIV + 10)
 #define QCSAP_IOCTL_DISASSOC_STA      (SIOCIWFIRSTPRIV + 11)

@@ -855,10 +855,6 @@ struct hdd_ap_ctx {
 	bool vendor_acs_timer_initialized;
 	enum bss_stop_reason bss_stop_reason;
 	struct hdd_fw_txrx_stats txrx_stats;
-
-	tSirWPSPBCProbeReq WPSPBCProbeReq;
-
-	struct semaphore semWpsPBCOverlapInd;
 };
 
 /**
