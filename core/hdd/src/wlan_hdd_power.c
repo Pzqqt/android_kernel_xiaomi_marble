@@ -1758,7 +1758,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
-	struct hdd_scan_info *pScanInfo;
+	struct hdd_scan_info *scan_info;
 	QDF_STATUS status;
 	int rc;
 
@@ -1829,7 +1829,7 @@ next_adapter:
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = pAdapterNode->adapter;
-		pScanInfo = &adapter->scan_info;
+		scan_info = &adapter->scan_info;
 
 		if (sme_neighbor_middle_of_roaming
 			    (hdd_ctx->hHal, adapter->sessionId)) {

@@ -1533,7 +1533,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t we_custom_start_event[64];
 	char *startBssEvent;
 	struct hdd_context *hdd_ctx;
-	struct hdd_scan_info *pScanInfo = NULL;
+	struct hdd_scan_info *scan_info = NULL;
 	struct iw_michaelmicfailure msg;
 	uint8_t ignoreCAC = 0;
 	struct hdd_config *cfg = NULL;
@@ -2135,9 +2135,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 			qdf_mem_free(sta_info);
 		}
-		pScanInfo = &adapter->scan_info;
+		scan_info = &adapter->scan_info;
 		/* Lets abort scan to ensure smooth authentication for client */
-		if ((pScanInfo != NULL) && pScanInfo->mScanPending) {
+		if ((scan_info != NULL) && scan_info->mScanPending) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->sessionId, INVALID_SCAN_ID, false);
 		}
@@ -8182,7 +8182,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct hdd_scan_info *pScanInfo = NULL;
+	struct hdd_scan_info *scan_info = NULL;
 	struct hdd_adapter *staAdapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -8244,9 +8244,9 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		if (QDF_STA_MODE == staAdapter->device_mode ||
 		    (QDF_P2P_CLIENT_MODE == staAdapter->device_mode) ||
 		    (QDF_P2P_GO_MODE == staAdapter->device_mode)) {
-			pScanInfo = &staAdapter->scan_info;
+			scan_info = &staAdapter->scan_info;
 
-			if (pScanInfo && pScanInfo->mScanPending) {
+			if (scan_info && scan_info->mScanPending) {
 				hdd_debug("Aborting pending scan for device mode:%d",
 				       staAdapter->device_mode);
 				wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
