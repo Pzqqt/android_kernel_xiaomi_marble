@@ -1546,7 +1546,7 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 
 	sap_config = &adapter->sessionCtx.ap.sap_config;
 	con_sap_config = &con_sap_adapter->sessionCtx.ap.sap_config;
-	con_ch = con_sap_adapter->sessionCtx.ap.operatingChannel;
+	con_ch = con_sap_adapter->sessionCtx.ap.operating_channel;
 
 	if (!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_ch))
 		return 0;
@@ -4145,7 +4145,7 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 			 */
 			if (CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
 						hdd_ctx->hdd_pdev,
-						ap_ctx->operatingChannel)) {
+						ap_ctx->operating_channel)) {
 				hdd_err("SAP running on DFS channel");
 				return true;
 			}
@@ -8017,7 +8017,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 		nss = adapter->sta_info[sta_id].nss;
 		freq = cds_chan_to_freq(
-			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operatingChannel);
+			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operating_channel);
 		rate_flags = adapter->sta_info[sta_id].rate_flags;
 	} else {
 		hdd_err("Not Associated! with mac "MAC_ADDRESS_STR,
@@ -9443,15 +9443,15 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	}
 
 	if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-				hdd_ap_ctx->operatingChannel)) {
+				hdd_ap_ctx->operating_channel)) {
 		hdd_err("SAP is already on DFS channel:%d",
-			hdd_ap_ctx->operatingChannel);
+			hdd_ap_ctx->operating_channel);
 		return -EINVAL;
 	}
 
-	if (!WLAN_REG_IS_24GHZ_CH(hdd_ap_ctx->operatingChannel)) {
+	if (!WLAN_REG_IS_24GHZ_CH(hdd_ap_ctx->operating_channel)) {
 		hdd_err("pre CAC alllowed only when SAP is in 2.4GHz:%d",
-			hdd_ap_ctx->operatingChannel);
+			hdd_ap_ctx->operating_channel);
 		return -EINVAL;
 	}
 
@@ -9605,7 +9605,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	}
 
 	ret = wlan_hdd_set_chan_before_pre_cac(ap_adapter,
-				hdd_ap_ctx->operatingChannel);
+				hdd_ap_ctx->operating_channel);
 	if (0 != ret) {
 		hdd_err("failed to set channel before pre cac");
 		goto stop_close_pre_cac_adapter;
@@ -9801,7 +9801,7 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 			adapter_node = next;
 			continue;
 		}
-		operating_channel = adapter->sessionCtx.ap.operatingChannel;
+		operating_channel = adapter->sessionCtx.ap.operating_channel;
 		if (IS_24G_CH(operating_channel))
 			sap_operating_band = eCSR_BAND_24;
 		else if (IS_5G_CH(operating_channel))
@@ -15561,7 +15561,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 
 	/* sap is on non-dfs channel, nothing to handle */
 	if (!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-				hdd_ap_ctx->operatingChannel)) {
+				hdd_ap_ctx->operating_channel)) {
 		hdd_info("sap is on non-dfs channel, sta is allowed");
 		return true;
 	}

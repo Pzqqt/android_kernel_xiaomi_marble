@@ -1429,7 +1429,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			if (hostapd_state->bssState == BSS_START
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
-				p2pChannel = hdd_ap_ctx->operatingChannel;
+				p2pChannel = hdd_ap_ctx->operating_channel;
 				qdf_copy_macaddr(&p2pBssid,
 						 &adapter->macAddressCurrent);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -1444,7 +1444,7 @@ void hdd_ipa_set_tx_flow_info(void)
 			if (hostapd_state->bssState == BSS_START
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
-				apChannel = hdd_ap_ctx->operatingChannel;
+				apChannel = hdd_ap_ctx->operating_channel;
 				qdf_copy_macaddr(&apBssid,
 						&adapter->macAddressCurrent);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL

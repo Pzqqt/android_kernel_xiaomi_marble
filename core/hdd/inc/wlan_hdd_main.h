@@ -815,6 +815,7 @@ struct hdd_station_info {
 /**
  * struct hdd_ap_ctx - SAP/P2PGO specific information
  * @hostapd_state: state control information
+ * @dfs_cac_block_tx: Is data tramsmission blocked due to DFS CAC?
  * @ap_active: Are any stations active?
  * @hdd_ap_inactivity_timer: Timer used to shutdown the AP if it is
  *     inactive for an extended amount of time.
@@ -827,9 +828,16 @@ struct hdd_station_info {
  * @wep_def_key_idx: WEP default key index
  * @sap_context: Pointer to context maintained by SAP (opaque to HDD)
  * @sap_config: SAP configuration
+ * @operating_channel: channel upon which the SAP is operating
+ * @beacon: Beacon information
+ * @vendor_acs_timer: Timer for ACS
+ * @vendor_acs_timer_initialized: Is @vendor_acs_timer initialized?
+ * @bss_stop_reason: Reason why the BSS was stopped
+ * @txrx_stats: TX RX statistics from firmware
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
+	bool dfs_cac_block_tx;
 	bool ap_active;
 	qdf_mc_timer_t hdd_ap_inactivity_timer;
 	bool disable_intrabss_fwd;
@@ -841,24 +849,16 @@ struct hdd_ap_ctx {
 	uint8_t wep_def_key_idx;
 	struct sap_context *sap_context;
 	tsap_Config_t sap_config;
+	uint8_t operating_channel;
+	struct hdd_beacon_data *beacon;
+	qdf_mc_timer_t vendor_acs_timer;
+	bool vendor_acs_timer_initialized;
+	enum bss_stop_reason bss_stop_reason;
+	struct hdd_fw_txrx_stats txrx_stats;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 
 	struct semaphore semWpsPBCOverlapInd;
-
-
-	uint8_t operatingChannel;
-
-	struct hdd_beacon_data *beacon;
-
-	bool dfs_cac_block_tx;
-	qdf_mc_timer_t vendor_acs_timer;
-	bool vendor_acs_timer_initialized;
-
-	enum bss_stop_reason bss_stop_reason;
-
-	/* Fw txrx stats info */
-	struct hdd_fw_txrx_stats txrx_stats;
 };
 
 /**

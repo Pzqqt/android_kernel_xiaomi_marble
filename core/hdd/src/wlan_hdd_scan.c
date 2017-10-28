@@ -523,7 +523,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		con_dfs_ch = con_sap_adapter->sessionCtx.ap.sap_config.channel;
 		if (con_dfs_ch == AUTO_CHANNEL_SELECT)
 			con_dfs_ch =
-				con_sap_adapter->sessionCtx.ap.operatingChannel;
+				con_sap_adapter->sessionCtx.ap.operating_channel;
 
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc) &&
 			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_dfs_ch)) {

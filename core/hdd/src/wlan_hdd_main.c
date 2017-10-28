@@ -1862,7 +1862,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 		if ((QDF_SAP_MODE == adapter->device_mode ||
 		    QDF_P2P_GO_MODE == adapter->device_mode) &&
 		    (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-		     ap_ctx->operatingChannel))) {
+		     ap_ctx->operating_channel))) {
 			WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx =
 				true;
 			hdd_info("tx blocked for session: %d",
@@ -5541,7 +5541,7 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 					    &adapter->event_flags))
 					operatingChannel =
 						(WLAN_HDD_GET_AP_CTX_PTR
-						(adapter))->operatingChannel;
+						(adapter))->operating_channel;
 				break;
 			default:
 				break;
@@ -7241,18 +7241,18 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 
 		found = false;
 		for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
-			if (adapter_temp->sessionCtx.ap.operatingChannel ==
+			if (adapter_temp->sessionCtx.ap.operating_channel ==
 				hdd_ctxt->unsafe_channel_list[i]) {
 				found = true;
 				hdd_debug("operating ch:%d is unsafe",
-				  adapter_temp->sessionCtx.ap.operatingChannel);
+				  adapter_temp->sessionCtx.ap.operating_channel);
 				break;
 			}
 		}
 
 		if (!found) {
 			hdd_debug("ch:%d is safe. no need to change channel",
-				adapter_temp->sessionCtx.ap.operatingChannel);
+				adapter_temp->sessionCtx.ap.operating_channel);
 			goto next_adapater;
 		}
 
@@ -10748,13 +10748,13 @@ wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
 	if (QDF_STATUS_SUCCESS == status) {
 		if ((QDF_SAP_MODE == device_mode) &&
 			(channel_id < SIR_11A_CHANNEL_BEGIN)) {
-			if (hdd_ap_ctx->operatingChannel != channel_id) {
+			if (hdd_ap_ctx->operating_channel != channel_id) {
 				*concurrent_chnl_same = false;
 				hdd_debug("channels are different");
 			}
 		} else if ((QDF_P2P_GO_MODE == device_mode) &&
 				(channel_id >= SIR_11A_CHANNEL_BEGIN)) {
-			if (hdd_ap_ctx->operatingChannel != channel_id) {
+			if (hdd_ap_ctx->operating_channel != channel_id) {
 				*concurrent_chnl_same = false;
 				hdd_debug("channels are different");
 			}
@@ -12557,7 +12557,7 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 	if (ap_adapter != NULL && test_bit(SOFTAP_BSS_STARTED,
 			&ap_adapter->event_flags) &&
 			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
-				ap_adapter->sessionCtx.ap.operatingChannel)) {
+				ap_adapter->sessionCtx.ap.operating_channel)) {
 
 		hdd_warn("STA-AP Mode DFS not supported. Restart SAP with Non DFS ACS");
 		ap_adapter->sessionCtx.ap.sap_config.channel =

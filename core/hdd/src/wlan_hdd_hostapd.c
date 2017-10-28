@@ -1586,7 +1586,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	dfs_info.channel = ap_ctx->operatingChannel;
+	dfs_info.channel = ap_ctx->operating_channel;
 	sme_get_country_code(hdd_ctx->hHal, dfs_info.country_code, &cc_len);
 
 	switch (sapEvent) {
@@ -1610,7 +1610,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		/* DFS requirement: DO NOT transmit during CAC. */
 		if ((CHANNEL_STATE_DFS !=
 			wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
-				ap_ctx->operatingChannel))
+				ap_ctx->operating_channel))
 			|| ignoreCAC
 			|| hdd_ctx->dev_dfs_cac_status == DFS_CAC_ALREADY_DONE)
 			ap_ctx->dfs_cac_block_tx = false;
@@ -1702,12 +1702,11 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(hdd_ctx, true);
 #endif
-		ap_ctx->operatingChannel =
+		ap_ctx->operating_channel =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.operatingChannel;
 
 		hdd_hostapd_channel_prevent_suspend(adapter,
-						    ap_ctx->
-						    operatingChannel);
+						    ap_ctx->operating_channel);
 
 		hostapd_state->bssState = BSS_START;
 
@@ -1744,17 +1743,17 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		if ((CHANNEL_STATE_DFS == wlan_reg_get_channel_state(
 						hdd_ctx->hdd_pdev,
-						ap_ctx->operatingChannel))
+						ap_ctx->operating_channel))
 		    && (hdd_ctx->config->IsSapDfsChSifsBurstEnabled == 0)) {
 
 			hdd_debug("Set SIFS Burst disable for DFS channel %d",
-			       ap_ctx->operatingChannel);
+			       ap_ctx->operating_channel);
 
 			if (wma_cli_set_command(adapter->sessionId,
 						WMI_PDEV_PARAM_BURST_ENABLE,
 						0, PDEV_CMD)) {
 				hdd_err("Failed to Set SIFS Burst channel: %d",
-				       ap_ctx->operatingChannel);
+				       ap_ctx->operating_channel);
 			}
 		}
 		/* Fill the params for sending IWEVCUSTOM Event
@@ -1802,10 +1801,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		       status ? "eSAP_STATUS_FAILURE" : "eSAP_STATUS_SUCCESS");
 
 		hdd_hostapd_channel_allow_suspend(adapter,
-						  ap_ctx->operatingChannel);
+						  ap_ctx->operating_channel);
 
 		/* Invalidate the channel info. */
-		ap_ctx->operatingChannel = 0;
+		ap_ctx->operating_channel = 0;
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
 			status = hdd_ipa_wlan_evt(adapter,
 					ap_ctx->broadcast_sta_id,
@@ -2405,7 +2404,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				pSapEvent->sapevt.sap_ch_selected.pri_ch);
 			/* Allow suspend for old channel */
 			hdd_hostapd_channel_allow_suspend(adapter,
-				ap_ctx->operatingChannel);
+				ap_ctx->operating_channel);
 		}
 		/* SME/PE is already updated for new operation
 		 * channel. So update HDD layer also here. This
@@ -2415,7 +2414,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 * this case if AP2 is started it needs current
 		 * operation channel for MCC DFS restriction
 		 */
-		ap_ctx->operatingChannel =
+		ap_ctx->operating_channel =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
 		ap_ctx->sap_config.acs_cfg.pri_ch =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
@@ -3791,8 +3790,8 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_RADAR_CMD:
 	{
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-		uint8_t ch = (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
-				operatingChannel;
+		struct hdd_ap_ctx *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
+		uint8_t ch = ap_ctx->operating_channel;
 		struct wlan_objmgr_pdev *pdev;
 		struct radar_found_info radar;
 
@@ -4413,7 +4412,7 @@ static __iw_softap_getchannel(struct net_device *dev,
 	*value = 0;
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags))
 		*value = (WLAN_HDD_GET_AP_CTX_PTR(
-					adapter))->operatingChannel;
+					adapter))->operating_channel;
 	EXIT();
 	return 0;
 }
@@ -5121,7 +5120,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 			fwrq->e = MHZ;
 		}
 	} else {
-		channel = ap_ctx->operatingChannel;
+		channel = ap_ctx->operating_channel;
 		status = hdd_wlan_get_freq(channel, &freq);
 		if (true == status) {
 			/* Set Exponent parameter as 6 (MHZ) in struct iw_freq
