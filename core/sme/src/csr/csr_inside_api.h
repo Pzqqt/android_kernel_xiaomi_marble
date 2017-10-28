@@ -1028,22 +1028,6 @@ QDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 						   void *pfnSapEventCallback,
 						   uint8_t *pAssocStasBuf);
 
-/*
- * csr_roam_get_wps_session_overlap() -
- * csr function that HDD calls to get WPS PBC session overlap information
- *
- * sessionId - session Id for Soft AP
- * pUsrContext - Opaque HDD context
- * pfnSapEventCallback - Sap event callback in HDD
- * pRemoveMac - pointer to MAC address of session to be removed
- * Return QDF_STATUS
- */
-QDF_STATUS csr_roam_get_wps_session_overlap(tpAniSirGlobal pMac,
-					uint32_t sessionId,
-					    void *pUsrContext,
-					    void *pfnSapEventCallback,
-					    struct qdf_mac_addr pRemoveMac);
-
 QDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
 					   uint32_t sessionId,
 					   struct qdf_mac_addr bssId,

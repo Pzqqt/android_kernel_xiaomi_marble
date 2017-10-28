@@ -4139,35 +4139,6 @@ csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-QDF_STATUS
-csr_roam_get_wps_session_overlap(tpAniSirGlobal pMac, uint32_t sessionId,
-				 void *pUsrContext, void *pfnSapEventCallback,
-				 struct qdf_mac_addr pRemoveMac)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct qdf_mac_addr bssId = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	if (!pSession) {
-		sme_err("csr_roam_get_wps_session_overlap:CSR Session not found");
-		return status;
-	}
-	if (pSession->pConnectBssDesc) {
-		qdf_mem_copy(bssId.bytes, pSession->pConnectBssDesc->bssId,
-			     sizeof(struct qdf_mac_addr));
-	} else {
-		sme_err("csr_roam_get_wps_session_overlap:Connected BSS Description in CSR Session not found");
-		return status;
-	}
-	sme_debug("CSR getting WPS Session Overlap for Bssid: " MAC_ADDRESS_STR,
-		  MAC_ADDR_ARRAY(bssId.bytes));
-
-	status = csr_send_mb_get_wpspbc_sessions(pMac, sessionId, bssId,
-				pUsrContext, pfnSapEventCallback, pRemoveMac);
-
-	return status;
-}
-
 static
 QDF_STATUS csr_roam_issue_deauth(tpAniSirGlobal pMac, uint32_t sessionId,
 				 enum csr_roam_substate NewSubstate)
