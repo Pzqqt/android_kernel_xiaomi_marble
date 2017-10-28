@@ -823,6 +823,7 @@ struct hdd_station_info {
  * @wep_key: WEP key array
  * @wep_def_key_idx: WEP default key index
  * @sap_context: Pointer to context maintained by SAP (opaque to HDD)
+ * @sap_config: SAP configuration
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
@@ -834,10 +835,9 @@ struct hdd_ap_ctx {
 	tCsrRoamSetKey wep_key[CSR_MAX_NUM_KEY];
 	uint8_t wep_def_key_idx;
 	struct sap_context *sap_context;
+	tsap_Config_t sap_config;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
-
-	tsap_Config_t sapConfig;
 
 	struct semaphore semWpsPBCOverlapInd;
 

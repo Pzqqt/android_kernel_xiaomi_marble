@@ -1899,7 +1899,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	{
 		int i;
 		tsap_Config_t *sap_config =
-				&adapter->sessionCtx.ap.sapConfig;
+				&adapter->sessionCtx.ap.sap_config;
 
 		hdd_dfs_indicate_radar(hdd_ctx);
 		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
@@ -2417,15 +2417,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		 */
 		ap_ctx->operatingChannel =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
-		ap_ctx->sapConfig.acs_cfg.pri_ch =
+		ap_ctx->sap_config.acs_cfg.pri_ch =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
-		ap_ctx->sapConfig.acs_cfg.ht_sec_ch =
+		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
 			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
-		ap_ctx->sapConfig.acs_cfg.vht_seg0_center_ch =
+		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
 			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
-		ap_ctx->sapConfig.acs_cfg.vht_seg1_center_ch =
+		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
 			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
-		ap_ctx->sapConfig.acs_cfg.ch_width =
+		ap_ctx->sap_config.acs_cfg.ch_width =
 			pSapEvent->sapevt.sap_ch_selected.ch_width;
 
 		/* Indicate operating channel change to hostapd
@@ -2515,15 +2515,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					adapter->dev->ifindex);
 		clear_bit(ACS_PENDING, &adapter->event_flags);
 		clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
-		ap_ctx->sapConfig.acs_cfg.pri_ch =
+		ap_ctx->sap_config.acs_cfg.pri_ch =
 			pSapEvent->sapevt.sap_ch_selected.pri_ch;
-		ap_ctx->sapConfig.acs_cfg.ht_sec_ch =
+		ap_ctx->sap_config.acs_cfg.ht_sec_ch =
 			pSapEvent->sapevt.sap_ch_selected.ht_sec_ch;
-		ap_ctx->sapConfig.acs_cfg.vht_seg0_center_ch =
+		ap_ctx->sap_config.acs_cfg.vht_seg0_center_ch =
 			pSapEvent->sapevt.sap_ch_selected.vht_seg0_center_ch;
-		ap_ctx->sapConfig.acs_cfg.vht_seg1_center_ch =
+		ap_ctx->sap_config.acs_cfg.vht_seg1_center_ch =
 			pSapEvent->sapevt.sap_ch_selected.vht_seg1_center_ch;
-		ap_ctx->sapConfig.acs_cfg.ch_width =
+		ap_ctx->sap_config.acs_cfg.ch_width =
 			pSapEvent->sapevt.sap_ch_selected.ch_width;
 		/* send vendor event to hostapd only for hostapd based acs*/
 		if (!hdd_ctx->config->force_sap_acs)
@@ -2952,23 +2952,23 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	}
 
 	hdd_info("SAP restart orig chan: %d, new chan: %d",
-		 hdd_ap_ctx->sapConfig.channel, intf_ch);
-	hdd_ap_ctx->sapConfig.channel = intf_ch;
-	hdd_ap_ctx->sapConfig.ch_params.ch_width =
-		hdd_ap_ctx->sapConfig.ch_width_orig;
+		 hdd_ap_ctx->sap_config.channel, intf_ch);
+	hdd_ap_ctx->sap_config.channel = intf_ch;
+	hdd_ap_ctx->sap_config.ch_params.ch_width =
+		hdd_ap_ctx->sap_config.ch_width_orig;
 	hdd_ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_MCC_SCC_SWITCH;
 
 	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
-			hdd_ap_ctx->sapConfig.channel,
-			hdd_ap_ctx->sapConfig.sec_ch,
-			&hdd_ap_ctx->sapConfig.ch_params);
-	*channel = hdd_ap_ctx->sapConfig.channel;
-	*sec_ch = hdd_ap_ctx->sapConfig.sec_ch;
+			hdd_ap_ctx->sap_config.channel,
+			hdd_ap_ctx->sap_config.sec_ch,
+			&hdd_ap_ctx->sap_config.ch_params);
+	*channel = hdd_ap_ctx->sap_config.channel;
+	*sec_ch = hdd_ap_ctx->sap_config.sec_ch;
 
 	hdd_info("SAP channel change with CSA/ECSA");
 	hdd_sap_restart_chan_switch_cb(psoc, vdev_id,
-		hdd_ap_ctx->sapConfig.channel,
-		hdd_ap_ctx->sapConfig.ch_params.ch_width);
+		hdd_ap_ctx->sap_config.channel,
+		hdd_ap_ctx->sap_config.ch_params.ch_width);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3546,7 +3546,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		uint8_t preamble = 0, nss = 0, rix = 0;
 		tsap_Config_t *pConfig =
-			&adapter->sessionCtx.ap.sapConfig;
+			&adapter->sessionCtx.ap.sap_config;
 
 		hdd_debug("SET_HT_RATE val %d", set_value);
 
@@ -3609,7 +3609,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	{
 		uint8_t preamble = 0, nss = 0, rix = 0;
 		tsap_Config_t *pConfig =
-			&adapter->sessionCtx.ap.sapConfig;
+			&adapter->sessionCtx.ap.sap_config;
 
 		if (pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac &&
 		    pConfig->SapHw_mode != eCSR_DOT11_MODE_11ac_ONLY) {
@@ -3927,7 +3927,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	case QCASAP_SET_11AX_RATE:
 		ret = hdd_set_11ax_rate(adapter, set_value,
 					&adapter->sessionCtx.ap.
-					sapConfig);
+					sap_config);
 		break;
 	case QCASAP_SET_PEER_RATE:
 		ret = hdd_set_peer_rate(adapter, set_value);
@@ -6270,10 +6270,10 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	}
 	if (!reinit) {
 		adapter->sessionCtx.ap.sap_context = sapContext;
-		adapter->sessionCtx.ap.sapConfig.channel =
+		adapter->sessionCtx.ap.sap_config.channel =
 			hdd_ctx->acs_policy.acs_channel;
 		acs_dfs_mode = hdd_ctx->acs_policy.acs_dfs_mode;
-		adapter->sessionCtx.ap.sapConfig.acs_dfs_mode =
+		adapter->sessionCtx.ap.sap_config.acs_dfs_mode =
 			wlan_hdd_get_dfs_mode(acs_dfs_mode);
 	}
 
@@ -6343,9 +6343,9 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 		hdd_err("WMI_PDEV_PARAM_BURST_ENABLE set failed: %d", ret);
 
 	if (!reinit) {
-		adapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
-		qdf_mem_free(adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
-		qdf_mem_zero(&adapter->sessionCtx.ap.sapConfig.acs_cfg,
+		adapter->sessionCtx.ap.sap_config.acs_cfg.acs_mode = false;
+		qdf_mem_free(adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list);
+		qdf_mem_zero(&adapter->sessionCtx.ap.sap_config.acs_cfg,
 			     sizeof(struct sap_acs_cfg));
 	}
 
@@ -6664,7 +6664,7 @@ int wlan_hdd_set_channel(struct wiphy *wiphy,
 	} else if ((adapter->device_mode == QDF_SAP_MODE)
 		   || (adapter->device_mode == QDF_P2P_GO_MODE)
 		   ) {
-		sap_config = &((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sapConfig);
+		sap_config = &((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config);
 		if (QDF_P2P_GO_MODE == adapter->device_mode) {
 			if (QDF_STATUS_SUCCESS !=
 			    wlan_hdd_validate_operation_channel(adapter,
@@ -7100,7 +7100,7 @@ int wlan_hdd_cfg80211_update_apies(struct hdd_adapter *adapter)
 	uint16_t proberesp_ies_len;
 	uint8_t *proberesp_ies = NULL;
 
-	pConfig = &adapter->sessionCtx.ap.sapConfig;
+	pConfig = &adapter->sessionCtx.ap.sap_config;
 	beacon = adapter->sessionCtx.ap.beacon;
 
 	genie = qdf_mem_malloc(MAX_GENIE_LEN);
@@ -7231,7 +7231,7 @@ done:
  */
 static void wlan_hdd_set_sap_hwmode(struct hdd_adapter *adapter)
 {
-	tsap_Config_t *pConfig = &adapter->sessionCtx.ap.sapConfig;
+	tsap_Config_t *pConfig = &adapter->sessionCtx.ap.sap_config;
 	struct hdd_beacon_data *pBeacon = adapter->sessionCtx.ap.beacon;
 	struct ieee80211_mgmt *pMgmt_frame =
 		(struct ieee80211_mgmt *)pBeacon->head;
@@ -7299,7 +7299,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
 	tHalHandle hal;
 
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
 	ini_config = hdd_ctx->config;
 
 	sap_config->enOverLapCh = !!hdd_ctx->config->gEnableOverLapCh;
@@ -7315,7 +7315,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
 
 		if (con_sap_adapter)
 			con_sap_config =
-				&con_sap_adapter->sessionCtx.ap.sapConfig;
+				&con_sap_adapter->sessionCtx.ap.sap_config;
 
 		sap_config->acs_cfg.skip_scan_status = eSAP_DO_NEW_ACS_SCAN;
 
@@ -7426,7 +7426,7 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx, struct hdd_adapter *
  */
 static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 {
-	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sapConfig;
+	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 
 	/* Fixed channel 11AC override:
@@ -7497,7 +7497,7 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
  */
 static int wlan_hdd_setup_acs_overrides(struct hdd_adapter *ap_adapter)
 {
-	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sapConfig;
+	tsap_Config_t *sap_cfg = &ap_adapter->sessionCtx.ap.sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 
 	hdd_debug("** Driver force ACS override **");
@@ -7672,7 +7672,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	clear_bit(ACS_PENDING, &adapter->event_flags);
 	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
 
-	pConfig = &adapter->sessionCtx.ap.sapConfig;
+	pConfig = &adapter->sessionCtx.ap.sap_config;
 
 	pBeacon = adapter->sessionCtx.ap.beacon;
 
@@ -8234,10 +8234,10 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 error:
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
-	if (adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
-		qdf_mem_free(adapter->sessionCtx.ap.sapConfig.
+	if (adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list) {
+		qdf_mem_free(adapter->sessionCtx.ap.sap_config.
 			acs_cfg.ch_list);
-		adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list = NULL;
+		adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list = NULL;
 	}
 
 free:
@@ -8372,9 +8372,9 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		hdd_ctx->is_sap_restart_required = false;
 		qdf_spin_unlock(&hdd_ctx->sap_update_info_lock);
 	}
-	adapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
+	adapter->sessionCtx.ap.sap_config.acs_cfg.acs_mode = false;
 	wlan_hdd_undo_acs(adapter);
-	qdf_mem_zero(&adapter->sessionCtx.ap.sapConfig.acs_cfg,
+	qdf_mem_zero(&adapter->sessionCtx.ap.sap_config.acs_cfg,
 						sizeof(struct sap_acs_cfg));
 	hdd_debug("Disabling queues");
 	wlan_hdd_netif_queue_control(adapter,
@@ -8549,7 +8549,7 @@ static uint16_t hdd_get_data_rate_from_rate_mask(struct wiphy *wiphy,
  * @params: Pointet to cfg80211_ap_settings
  *
  * This function updates the beacon tx rate which is provided
- * as part of cfg80211_ap_settions in to the sapConfig
+ * as part of cfg80211_ap_settions in to the sap_config
  * structure
  *
  * Return: none
@@ -8564,12 +8564,12 @@ static void hdd_update_beacon_rate(struct hdd_adapter *adapter,
 	band = params->chandef.chan->band;
 	beacon_rate_mask = &params->beacon_rate;
 	if (beacon_rate_mask->control[band].legacy) {
-		adapter->sessionCtx.ap.sapConfig.beacon_tx_rate =
+		adapter->sessionCtx.ap.sap_config.beacon_tx_rate =
 			hdd_get_data_rate_from_rate_mask(wiphy, band,
 					beacon_rate_mask);
 		hdd_debug("beacon mask value %u, rate %hu",
 			  params->beacon_rate.control[0].legacy,
-			  adapter->sessionCtx.ap.sapConfig.beacon_tx_rate);
+			  adapter->sessionCtx.ap.sap_config.beacon_tx_rate);
 	}
 }
 #else
@@ -8647,7 +8647,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;
 		enum phy_ch_width sub_20_ch_width = CH_WIDTH_INVALID;
-		tsap_Config_t *sap_cfg = &adapter->sessionCtx.ap.sapConfig;
+		tsap_Config_t *sap_cfg = &adapter->sessionCtx.ap.sap_config;
 
 		/* Avoid ACS/DFS, and overwrite ch wd to 20 */
 		if (channel == 0) {
@@ -8733,7 +8733,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		struct hdd_beacon_data *old, *new;
 		enum nl80211_channel_type channel_type;
 		tsap_Config_t *sap_config =
-			&((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sapConfig);
+			&((WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config);
 
 		old = adapter->sessionCtx.ap.beacon;
 
@@ -8767,18 +8767,18 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		/* set authentication type */
 		switch (params->auth_type) {
 		case NL80211_AUTHTYPE_OPEN_SYSTEM:
-			adapter->sessionCtx.ap.sapConfig.authType =
+			adapter->sessionCtx.ap.sap_config.authType =
 				eSAP_OPEN_SYSTEM;
 			break;
 		case NL80211_AUTHTYPE_SHARED_KEY:
-			adapter->sessionCtx.ap.sapConfig.authType =
+			adapter->sessionCtx.ap.sap_config.authType =
 				eSAP_SHARED_KEY;
 			break;
 		default:
-			adapter->sessionCtx.ap.sapConfig.authType =
+			adapter->sessionCtx.ap.sap_config.authType =
 				eSAP_AUTO_SWITCH;
 		}
-		adapter->sessionCtx.ap.sapConfig.ch_width_orig =
+		adapter->sessionCtx.ap.sap_config.ch_width_orig =
 						params->chandef.width;
 		status =
 			wlan_hdd_cfg80211_start_bss(adapter,

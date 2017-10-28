@@ -1544,8 +1544,8 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 	if (!con_sap_adapter)
 		return 0;
 
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
-	con_sap_config = &con_sap_adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
+	con_sap_config = &con_sap_adapter->sessionCtx.ap.sap_config;
 	con_ch = con_sap_adapter->sessionCtx.ap.operatingChannel;
 
 	if (!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_ch))
@@ -1817,7 +1817,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
 	if (hdd_ctx->acs_policy.acs_channel)
 		sap_config->channel = hdd_ctx->acs_policy.acs_channel;
 	else
@@ -1972,7 +1972,7 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 	struct ch_params ch_params = {0};
 	uint8_t bw_offset = 0, chan = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tsap_Config_t *sap_config = &adapter->sessionCtx.ap.sapConfig;
+	tsap_Config_t *sap_config = &adapter->sessionCtx.ap.sap_config;
 
 	/* memory allocation */
 	sap_config->channel_info = qdf_mem_malloc(
@@ -2242,7 +2242,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	}
 
 	ENTER();
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
 	/* When first 2 connections are on the same frequency band,
 	 * then PCL would include only channels from the other
 	 * frequency band on which no connections are active
@@ -2270,7 +2270,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		}
 	}
 
-	hdd_get_scan_band(hdd_ctx, &adapter->sessionCtx.ap.sapConfig, &band);
+	hdd_get_scan_band(hdd_ctx, &adapter->sessionCtx.ap.sap_config, &band);
 
 	if (sap_config->acs_cfg.ch_list) {
 		/* Copy INI or hostapd provided ACS channel range*/
@@ -2288,7 +2288,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
 	hdd_get_freq_list(channel_list, freq_list, channel_count);
 	/* Get phymode */
-	phy_mode = adapter->sessionCtx.ap.sapConfig.acs_cfg.hw_mode;
+	phy_mode = adapter->sessionCtx.ap.sap_config.acs_cfg.hw_mode;
 
 	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 			&(adapter->wdev),
@@ -2525,7 +2525,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
 	status = hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data, data_len,
@@ -2793,9 +2793,9 @@ void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
 	if (adapter == NULL)
 		return;
-	if (adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list) {
-		qdf_mem_free(adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
-		adapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list = NULL;
+	if (adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list) {
+		qdf_mem_free(adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list);
+		adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list = NULL;
 	}
 }
 
@@ -2834,7 +2834,7 @@ static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work)
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tsap_Config_t *sap_cfg = &(WLAN_HDD_GET_AP_CTX_PTR(adapter))->sapConfig;
+	tsap_Config_t *sap_cfg = &(WLAN_HDD_GET_AP_CTX_PTR(adapter))->sap_config;
 	struct sk_buff *vendor_event;
 	int ret_val;
 	struct hdd_adapter *con_sap_adapter;
@@ -9268,7 +9268,7 @@ int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 	uint8_t i;
 	QDF_STATUS status;
 
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
 
 	status =
 		policy_mgr_get_valid_chans(hdd_ctx->hdd_psoc,
@@ -9524,22 +9524,22 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	qdf_mem_copy(pre_cac_adapter->sessionCtx.ap.beacon,
 			ap_adapter->sessionCtx.ap.beacon,
 			sizeof(*pre_cac_adapter->sessionCtx.ap.beacon));
-	pre_cac_adapter->sessionCtx.ap.sapConfig.ch_width_orig =
-			ap_adapter->sessionCtx.ap.sapConfig.ch_width_orig;
-	pre_cac_adapter->sessionCtx.ap.sapConfig.authType =
-			ap_adapter->sessionCtx.ap.sapConfig.authType;
+	pre_cac_adapter->sessionCtx.ap.sap_config.ch_width_orig =
+			ap_adapter->sessionCtx.ap.sap_config.ch_width_orig;
+	pre_cac_adapter->sessionCtx.ap.sap_config.authType =
+			ap_adapter->sessionCtx.ap.sap_config.authType;
 
 	/* Premise is that on moving from 2.4GHz to 5GHz, the SAP will continue
 	 * to operate on the same bandwidth as that of the 2.4GHz operations.
 	 * Only bandwidths 20MHz/40MHz are possible on 2.4GHz band.
 	 */
-	switch (ap_adapter->sessionCtx.ap.sapConfig.ch_width_orig) {
+	switch (ap_adapter->sessionCtx.ap.sap_config.ch_width_orig) {
 	case CH_WIDTH_20MHZ:
 		channel_type = NL80211_CHAN_HT20;
 		break;
 	case CH_WIDTH_40MHZ:
-		if (ap_adapter->sessionCtx.ap.sapConfig.sec_ch >
-				ap_adapter->sessionCtx.ap.sapConfig.channel)
+		if (ap_adapter->sessionCtx.ap.sap_config.sec_ch >
+				ap_adapter->sessionCtx.ap.sap_config.channel)
 			channel_type = NL80211_CHAN_HT40PLUS;
 		else
 			channel_type = NL80211_CHAN_HT40MINUS;
@@ -9559,7 +9559,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	cfg80211_chandef_create(&chandef, chan, channel_type);
 
 	hdd_debug("orig width:%d channel_type:%d freq:%d",
-		ap_adapter->sessionCtx.ap.sapConfig.ch_width_orig,
+		ap_adapter->sessionCtx.ap.sap_config.ch_width_orig,
 		channel_type, freq);
 	/*
 	 * Doing update after opening and starting pre-cac adapter will make
@@ -10088,15 +10088,15 @@ __wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		}
 
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(hostapd_adapter);
-		ap_ctx->sapConfig.channel = config_channel;
-		ap_ctx->sapConfig.ch_params.ch_width =
-					ap_ctx->sapConfig.ch_width_orig;
+		ap_ctx->sap_config.channel = config_channel;
+		ap_ctx->sap_config.ch_params.ch_width =
+					ap_ctx->sap_config.ch_width_orig;
 		ap_ctx->bss_stop_reason = BSS_STOP_DUE_TO_VENDOR_CONFIG_CHAN;
 
 		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
-				ap_ctx->sapConfig.channel,
-				ap_ctx->sapConfig.sec_ch,
-				&ap_ctx->sapConfig.ch_params);
+				ap_ctx->sap_config.channel,
+				ap_ctx->sap_config.sec_ch,
+				&ap_ctx->sap_config.ch_params);
 
 		hdd_restart_sap(hostapd_adapter);
 	}
@@ -10630,7 +10630,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	sap_config = &adapter->sessionCtx.ap.sapConfig;
+	sap_config = &adapter->sessionCtx.ap.sap_config;
 
 	if (QDF_TIMER_STATE_RUNNING ==
 	    qdf_mc_timer_get_current_state(&adapter->sessionCtx.
@@ -10670,7 +10670,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	case QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX:
 		sap_config->acs_cfg.pri_ch = channel_list->pri_ch;
 		sap_config->acs_cfg.ch_width = channel_list->chan_width;
-		hdd_ap_ctx->sapConfig.ch_width_orig =
+		hdd_ap_ctx->sap_config.ch_width_orig =
 				channel_list->chan_width;
 		hdd_switch_sap_channel(adapter, sap_config->acs_cfg.pri_ch);
 		break;
@@ -15596,7 +15596,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	qdf_event_reset(&hostapd_state->qdf_event);
 	status = wlansap_set_channel_change_with_csa(
 			WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter), channel,
-			hdd_ap_ctx->sapConfig.ch_width_orig, false);
+			hdd_ap_ctx->sap_config.ch_width_orig, false);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Set channel with CSA IE failed, can't allow STA");
@@ -19363,7 +19363,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_SET_MAC_ACL,
 			 adapter->sessionId, adapter->device_mode));
 	if (QDF_SAP_MODE == adapter->device_mode) {
-		pConfig = &adapter->sessionCtx.ap.sapConfig;
+		pConfig = &adapter->sessionCtx.ap.sap_config;
 
 		/* default value */
 		pConfig->num_accept_mac = 0;

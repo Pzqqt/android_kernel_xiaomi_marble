@@ -7071,16 +7071,16 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 		hdd_debug("pcl length is zero!");
 
 	hdd_debug("start:%d end:%d",
-		adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch,
-		adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch);
+		adapter->sessionCtx.ap.sap_config.acs_cfg.start_ch,
+		adapter->sessionCtx.ap.sap_config.acs_cfg.end_ch);
 
 	/* PCL already takes unsafe channel into account */
 	for (i = 0; i < pcl.pcl_len; i++) {
 		hdd_debug("chan[%d]:%d", i, pcl.pcl_list[i]);
 		if ((pcl.pcl_list[i] >=
-		   adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch) &&
+		   adapter->sessionCtx.ap.sap_config.acs_cfg.start_ch) &&
 		   (pcl.pcl_list[i] <=
-		   adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch)) {
+		   adapter->sessionCtx.ap.sap_config.acs_cfg.end_ch)) {
 			hdd_debug("found PCL safe chan:%d", pcl.pcl_list[i]);
 			return pcl.pcl_list[i];
 		}
@@ -7113,9 +7113,9 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 			continue;
 
 		if ((pcl.pcl_list[i] >=
-		   adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch) &&
+		   adapter->sessionCtx.ap.sap_config.acs_cfg.start_ch) &&
 		   (pcl.pcl_list[i] <=
-		   adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch)) {
+		   adapter->sessionCtx.ap.sap_config.acs_cfg.end_ch)) {
 			hdd_debug("found safe chan:%d", pcl.pcl_list[i]);
 			return pcl.pcl_list[i];
 		}
@@ -7155,21 +7155,21 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel)
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	hdd_ap_ctx->sapConfig.channel = channel;
-	hdd_ap_ctx->sapConfig.ch_params.ch_width =
-		hdd_ap_ctx->sapConfig.ch_width_orig;
+	hdd_ap_ctx->sap_config.channel = channel;
+	hdd_ap_ctx->sap_config.ch_params.ch_width =
+		hdd_ap_ctx->sap_config.ch_width_orig;
 
 	hdd_debug("chan:%d width:%d",
-		channel, hdd_ap_ctx->sapConfig.ch_width_orig);
+		channel, hdd_ap_ctx->sap_config.ch_width_orig);
 
 	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev,
-			hdd_ap_ctx->sapConfig.channel,
-			hdd_ap_ctx->sapConfig.sec_ch,
-			&hdd_ap_ctx->sapConfig.ch_params);
+			hdd_ap_ctx->sap_config.channel,
+			hdd_ap_ctx->sap_config.sec_ch,
+			&hdd_ap_ctx->sap_config.ch_params);
 
 	policy_mgr_change_sap_channel_with_csa(hdd_ctx->hdd_psoc,
 		adapter->sessionId, channel,
-		hdd_ap_ctx->sapConfig.ch_width_orig);
+		hdd_ap_ctx->sap_config.ch_width_orig);
 }
 
 int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
@@ -7231,10 +7231,10 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 		}
 
 		if (!((adapter_temp->device_mode == QDF_SAP_MODE) &&
-		   (adapter_temp->sessionCtx.ap.sapConfig.acs_cfg.acs_mode))) {
+		   (adapter_temp->sessionCtx.ap.sap_config.acs_cfg.acs_mode))) {
 			hdd_debug("skip device mode:%d acs:%d",
 				adapter_temp->device_mode,
-				adapter_temp->sessionCtx.ap.sapConfig.
+				adapter_temp->sessionCtx.ap.sap_config.
 				acs_cfg.acs_mode);
 			goto next_adapater;
 		}
@@ -7276,7 +7276,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			 * the ACS while restart.
 			 */
 			hdd_ctxt->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
-			adapter_temp->sessionCtx.ap.sapConfig.channel =
+			adapter_temp->sessionCtx.ap.sap_config.channel =
 							AUTO_CHANNEL_SELECT;
 			hdd_debug("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
@@ -7347,7 +7347,7 @@ static void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
 	 * the ACS while restart.
 	 */
 	hdd_ctx->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
-	adapter->sessionCtx.ap.sapConfig.channel = AUTO_CHANNEL_SELECT;
+	adapter->sessionCtx.ap.sap_config.channel = AUTO_CHANNEL_SELECT;
 
 	hdd_debug("sending coex indication");
 
@@ -10855,7 +10855,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 	hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
-	sap_config = &ap_adapter->sessionCtx.ap.sapConfig;
+	sap_config = &ap_adapter->sessionCtx.ap.sap_config;
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags))
@@ -10869,7 +10869,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 
 	qdf_event_reset(&hostapd_state->qdf_event);
 	if (wlansap_start_bss(hdd_ap_ctx->sap_context, hdd_hostapd_sap_event_cb,
-			      &hdd_ap_ctx->sapConfig,
+			      &hdd_ap_ctx->sap_config,
 			      ap_adapter->dev)
 			      != QDF_STATUS_SUCCESS)
 		goto end;
@@ -12459,7 +12459,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 	void *sap_ctx;
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
-	sap_config = &hdd_ap_ctx->sapConfig;
+	sap_config = &hdd_ap_ctx->sap_config;
 	sap_ctx = hdd_ap_ctx->sap_context;
 
 	mutex_lock(&hdd_ctx->sap_lock);
@@ -12560,9 +12560,9 @@ void hdd_check_and_restart_sap_with_non_dfs_acs(void)
 				ap_adapter->sessionCtx.ap.operatingChannel)) {
 
 		hdd_warn("STA-AP Mode DFS not supported. Restart SAP with Non DFS ACS");
-		ap_adapter->sessionCtx.ap.sapConfig.channel =
+		ap_adapter->sessionCtx.ap.sap_config.channel =
 			AUTO_CHANNEL_SELECT;
-		ap_adapter->sessionCtx.ap.sapConfig.
+		ap_adapter->sessionCtx.ap.sap_config.
 			acs_cfg.acs_mode = true;
 
 		hdd_restart_sap(ap_adapter);

@@ -520,7 +520,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	/* Block All Scan during DFS operation and send null scan result */
 	con_sap_adapter = hdd_get_con_sap_adapter(adapter, true);
 	if (con_sap_adapter) {
-		con_dfs_ch = con_sap_adapter->sessionCtx.ap.sapConfig.channel;
+		con_dfs_ch = con_sap_adapter->sessionCtx.ap.sap_config.channel;
 		if (con_dfs_ch == AUTO_CHANNEL_SELECT)
 			con_dfs_ch =
 				con_sap_adapter->sessionCtx.ap.operatingChannel;
