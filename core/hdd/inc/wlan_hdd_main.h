@@ -813,6 +813,7 @@ struct hdd_station_info {
  * @broadcast_sta_id: Station ID assigned after BSS starts
  * @privacy: The privacy bits of configuration
  * @encryption_type: The encryption being used
+ * @group_key: Group Encryption Key
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
@@ -820,6 +821,7 @@ struct hdd_ap_ctx {
 	uint8_t broadcast_sta_id;
 	uint8_t privacy;
 	eCsrEncryptionType encryption_type;
+	tCsrRoamSetKey group_key;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 
@@ -831,11 +833,6 @@ struct hdd_ap_ctx {
 
 	uint8_t operatingChannel;
 
-
-	/* This will point to group key data,
-	 * if it is received before start bss
-	 */
-	tCsrRoamSetKey groupKey;
 	/* This will have WEP key data, if it is received before start bss */
 	tCsrRoamSetKey wepKey[CSR_MAX_NUM_KEY];
 

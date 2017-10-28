@@ -14409,14 +14409,14 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			}
 		}
 
-		/* Save the key in ap ctx for use on START_BASS and restart */
+		/* Save the key in ap ctx for use on START_BSS and restart */
 		if (pairwise ||
 			eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == setKey.encType ||
 			eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == setKey.encType)
 			qdf_mem_copy(&ap_ctx->wepKey[key_index], &setKey,
 				     sizeof(tCsrRoamSetKey));
 		else
-			qdf_mem_copy(&ap_ctx->groupKey, &setKey,
+			qdf_mem_copy(&ap_ctx->group_key, &setKey,
 				     sizeof(tCsrRoamSetKey));
 
 	} else if ((adapter->device_mode == QDF_STA_MODE) ||

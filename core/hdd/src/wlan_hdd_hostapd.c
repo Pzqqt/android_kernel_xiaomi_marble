@@ -1589,10 +1589,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			ap_ctx->wep_def_key_idx);
 
 		/* Set group key / WEP key every time when BSS is restarted */
-		if (ap_ctx->groupKey.keyLength) {
+		if (ap_ctx->group_key.keyLength) {
 			status = wlansap_set_key_sta(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-				&ap_ctx->groupKey);
+				&ap_ctx->group_key);
 			if (!QDF_IS_STATUS_SUCCESS(status))
 				hdd_err("wlansap_set_key_sta failed");
 		} else {
@@ -1703,7 +1703,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			 * should not be cleared due to hostapd will not
 			 * repopulate the original keys
 			 */
-			ap_ctx->groupKey.keyLength = 0;
+			ap_ctx->group_key.keyLength = 0;
 			for (i = 0; i < CSR_MAX_NUM_KEY; i++)
 				ap_ctx->wepKey[i].keyLength = 0;
 		}
