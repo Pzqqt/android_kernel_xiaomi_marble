@@ -887,7 +887,6 @@ struct hdd_scan_info {
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 struct hdd_multicast_addr_list {
-	uint8_t isFilterApplied;
 	uint8_t mc_cnt;
 	uint8_t addr[WLAN_HDD_MAX_MC_ADDR_LIST][ETH_ALEN];
 };
