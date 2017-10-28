@@ -1175,7 +1175,7 @@ struct hdd_adapter {
 	enum sme_qos_wmmuptype hddWmmDscpToUpMap[WLAN_HDD_MAX_DSCP + 1];
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
-	bool isLinkLayerStatsSet;
+	bool is_link_layer_stats_set;
 #endif
 	uint8_t linkStatus;
 

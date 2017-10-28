@@ -1259,7 +1259,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	adapter->isLinkLayerStatsSet = 1;
+	adapter->is_link_layer_stats_set = true;
 	EXIT();
 	return 0;
 }
@@ -1358,9 +1358,9 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 		return -EBUSY;
 	}
 
-	if (!adapter->isLinkLayerStatsSet)
-		hdd_info("isLinkLayerStatsSet: %d; STATs will be all zero",
-			adapter->isLinkLayerStatsSet);
+	if (!adapter->is_link_layer_stats_set)
+		hdd_info("is_link_layer_stats_set: %d; STATs will be all zero",
+			adapter->is_link_layer_stats_set);
 
 	get_req.reqId = req_id;
 	get_req.paramIdMask = req_mask;
@@ -1412,9 +1412,9 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	if (0 != ret)
 		return -EINVAL;
 
-	if (!adapter->isLinkLayerStatsSet) {
-		hdd_warn("isLinkLayerStatsSet: %d",
-			 adapter->isLinkLayerStatsSet);
+	if (!adapter->is_link_layer_stats_set) {
+		hdd_warn("is_link_layer_stats_set: %d",
+			 adapter->is_link_layer_stats_set);
 		return -EINVAL;
 	}
 
@@ -1533,9 +1533,9 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 	if (0 != status)
 		return -EINVAL;
 
-	if (!adapter->isLinkLayerStatsSet) {
-		hdd_warn("isLinkLayerStatsSet : %d",
-			  adapter->isLinkLayerStatsSet);
+	if (!adapter->is_link_layer_stats_set) {
+		hdd_warn("is_link_layer_stats_set : %d",
+			  adapter->is_link_layer_stats_set);
 		return -EINVAL;
 	}
 
@@ -1595,7 +1595,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 			/* If the ask is to stop the stats collection
 			 * as part of clear (stopReq = 1), ensure
 			 * that no further requests of get go to the
-			 * firmware by having isLinkLayerStatsSet set
+			 * firmware by having is_link_layer_stats_set set
 			 * to 0.  However it the stopReq as part of
 			 * the clear request is 0, the request to get
 			 * the statistics are honoured as in this case
@@ -1603,7 +1603,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 			 * statistics.
 			 */
 			if (stopReq == 1)
-				adapter->isLinkLayerStatsSet = 0;
+				adapter->is_link_layer_stats_set = false;
 
 			return cfg80211_vendor_cmd_reply(temp_skbuff);
 		}
