@@ -172,7 +172,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit);
 void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 		struct hdd_adapter *adapter,
 		bool rtnl_held);
-void hdd_set_ap_ops(struct net_device *pWlanHostapdDev);
+void hdd_set_ap_ops(struct net_device *dev);
 int hdd_hostapd_stop(struct net_device *dev);
 int hdd_sap_context_init(struct hdd_context *hdd_ctx);
 void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);

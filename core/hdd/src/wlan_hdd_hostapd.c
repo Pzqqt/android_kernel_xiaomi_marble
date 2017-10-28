@@ -6144,9 +6144,9 @@ const struct net_device_ops net_ops_struct = {
 	.ndo_select_queue = hdd_hostapd_select_queue,
 };
 
-void hdd_set_ap_ops(struct net_device *pWlanHostapdDev)
+void hdd_set_ap_ops(struct net_device *dev)
 {
-	pWlanHostapdDev->netdev_ops = &net_ops_struct;
+	dev->netdev_ops = &net_ops_struct;
 }
 
 QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
@@ -6324,73 +6324,70 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 				      unsigned char name_assign_type,
 				      uint8_t *iface_name)
 {
-	struct net_device *pWlanHostapdDev = NULL;
-	struct hdd_adapter *adapter = NULL;
+	struct net_device *dev;
+	struct hdd_adapter *adapter;
 
 	hdd_debug("iface_name = %s", iface_name);
 
-	pWlanHostapdDev = alloc_netdev_mq(sizeof(struct hdd_adapter), iface_name,
+	dev = alloc_netdev_mq(sizeof(struct hdd_adapter), iface_name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
 					  name_assign_type,
 #endif
 					  ether_setup, NUM_TX_QUEUES);
 
-	if (pWlanHostapdDev != NULL) {
-		adapter = netdev_priv(pWlanHostapdDev);
+	if (!dev)
+		return NULL;
 
-		/* Init the net_device structure */
-		ether_setup(pWlanHostapdDev);
+	adapter = netdev_priv(dev);
 
-		/* Initialize the adapter context to zeros. */
-		qdf_mem_zero(adapter, sizeof(struct hdd_adapter));
-		adapter->dev = pWlanHostapdDev;
-		adapter->hdd_ctx = hdd_ctx;
-		adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
-		adapter->sessionId = HDD_SESSION_ID_INVALID;
+	/* Init the net_device structure */
+	ether_setup(dev);
 
-		hdd_debug("pWlanHostapdDev = %pK, adapter = %pK, concurrency_mode=0x%x",
-			pWlanHostapdDev,
-			adapter,
-			(int)policy_mgr_get_concurrency_mode(
-			hdd_ctx->hdd_psoc));
+	/* Initialize the adapter context to zeros. */
+	qdf_mem_zero(adapter, sizeof(struct hdd_adapter));
+	adapter->dev = dev;
+	adapter->hdd_ctx = hdd_ctx;
+	adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
+	adapter->sessionId = HDD_SESSION_ID_INVALID;
 
-		/* Init the net_device structure */
-		strlcpy(pWlanHostapdDev->name, (const char *)iface_name,
-			IFNAMSIZ);
+	hdd_debug("dev = %pK, adapter = %pK, concurrency_mode=0x%x",
+		dev, adapter,
+		(int)policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc));
 
-		hdd_set_ap_ops(adapter->dev);
+	/* Init the net_device structure */
+	strlcpy(dev->name, (const char *)iface_name, IFNAMSIZ);
 
-		pWlanHostapdDev->watchdog_timeo = HDD_TX_TIMEOUT;
-		pWlanHostapdDev->mtu = HDD_DEFAULT_MTU;
-		pWlanHostapdDev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
+	hdd_set_ap_ops(dev);
 
-		if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
-			pWlanHostapdDev->features |=
-				NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-		pWlanHostapdDev->features |= NETIF_F_RXCSUM;
+	dev->watchdog_timeo = HDD_TX_TIMEOUT;
+	dev->mtu = HDD_DEFAULT_MTU;
+	dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
-		qdf_mem_copy(pWlanHostapdDev->dev_addr, (void *)macAddr,
-			     sizeof(tSirMacAddr));
-		qdf_mem_copy(adapter->macAddressCurrent.bytes,
-			     (void *)macAddr, sizeof(tSirMacAddr));
+	if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
+		dev->features |= NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
+	dev->features |= NETIF_F_RXCSUM;
 
-		adapter->offloads_configured = false;
-		hdd_dev_setup_destructor(pWlanHostapdDev);
-		pWlanHostapdDev->ieee80211_ptr = &adapter->wdev;
-		adapter->wdev.wiphy = hdd_ctx->wiphy;
-		adapter->wdev.netdev = pWlanHostapdDev;
-		hdd_set_tso_flags(hdd_ctx, pWlanHostapdDev);
-		init_completion(&adapter->tx_action_cnf_event);
-		init_completion(&adapter->cancel_rem_on_chan_var);
-		init_completion(&adapter->rem_on_chan_ready_event);
-		init_completion(&adapter->sta_authorized_event);
-		init_completion(&adapter->offchannel_tx_event);
+	qdf_mem_copy(dev->dev_addr, (void *)macAddr,
+		     sizeof(tSirMacAddr));
+	qdf_mem_copy(adapter->macAddressCurrent.bytes,
+		     (void *)macAddr, sizeof(tSirMacAddr));
 
-		SET_NETDEV_DEV(pWlanHostapdDev, hdd_ctx->parent_dev);
-		spin_lock_init(&adapter->pause_map_lock);
-		adapter->start_time =
-			adapter->last_time = qdf_system_ticks();
-	}
+	adapter->offloads_configured = false;
+	hdd_dev_setup_destructor(dev);
+	dev->ieee80211_ptr = &adapter->wdev;
+	adapter->wdev.wiphy = hdd_ctx->wiphy;
+	adapter->wdev.netdev = dev;
+	hdd_set_tso_flags(hdd_ctx, dev);
+	init_completion(&adapter->tx_action_cnf_event);
+	init_completion(&adapter->cancel_rem_on_chan_var);
+	init_completion(&adapter->rem_on_chan_ready_event);
+	init_completion(&adapter->sta_authorized_event);
+	init_completion(&adapter->offchannel_tx_event);
+
+	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
+	spin_lock_init(&adapter->pause_map_lock);
+	adapter->start_time = adapter->last_time = qdf_system_ticks();
+
 	return adapter;
 }
 
