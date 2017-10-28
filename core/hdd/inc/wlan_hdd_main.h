@@ -1087,24 +1087,14 @@ struct hdd_adapter {
 	/* Track whether the linkup handling is needed  */
 	bool is_link_up_service_needed;
 
-	/* Mgmt Frames TX completion status code */
-	uint32_t mgmtTxCompletionStatus;
-
 	/* WMM Status */
 	struct hdd_wmm_status hddWmmStatus;
-/*************************************************************
- */
-/*************************************************************
- * TODO - Remove it later
- */
+
 	/** Multiple station supports */
 	/** Per-station structure */
 	spinlock_t sta_info_lock;        /* To protect access to station Info */
 	struct hdd_station_info sta_info[WLAN_MAX_STA_COUNT];
-	/* uint8_t uNumActiveStation; */
 
-/*************************************************************
- */
 
 #ifdef FEATURE_WLAN_WAPI
 	struct hdd_wapi_info wapi_info;
@@ -1118,9 +1108,7 @@ struct hdd_adapter {
 
 	uint8_t snr;
 
-	struct work_struct monTxWorkQueue;
 	struct work_struct  sap_stop_bss_work;
-	struct sk_buff *skb_to_tx;
 
 	union {
 		struct hdd_station_ctx station;
