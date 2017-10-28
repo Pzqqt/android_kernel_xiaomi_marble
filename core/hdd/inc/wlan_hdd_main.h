@@ -868,8 +868,6 @@ struct hdd_ap_ctx {
 /**
  * struct hdd_scan_info - Per-adapter scan information
  * @mScanPending: is a scan pending on this adapter?
- * @mScanPendingCounter: Counter for @mScanPending so that the scan
- *    pending error log is not printed excessively
  * @scanAddIE: Additional IE for scan
  * @default_scan_ies: Default scan IEs
  * @default_scan_ies_len: Length of @default_scan_ies
@@ -878,7 +876,6 @@ struct hdd_ap_ctx {
  */
 struct hdd_scan_info {
 	uint32_t mScanPending;
-	uint32_t mScanPendingCounter;
 	tSirAddie scanAddIE;
 	uint8_t *default_scan_ies;
 	uint16_t default_scan_ies_len;
