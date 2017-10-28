@@ -10805,7 +10805,7 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 		hdd_debug("Now doing SAP STOPBSS");
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
-							sapContext)) {
+							sap_context)) {
 			qdf_status = qdf_wait_single_event(&hostapd_state->
 					qdf_stop_bss_event,
 					SME_CMD_TIMEOUT_VALUE);
@@ -10868,7 +10868,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 	}
 
 	qdf_event_reset(&hostapd_state->qdf_event);
-	if (wlansap_start_bss(hdd_ap_ctx->sapContext, hdd_hostapd_sap_event_cb,
+	if (wlansap_start_bss(hdd_ap_ctx->sap_context, hdd_hostapd_sap_event_cb,
 			      &hdd_ap_ctx->sapConfig,
 			      ap_adapter->dev)
 			      != QDF_STATUS_SUCCESS)
@@ -12460,7 +12460,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	sap_config = &hdd_ap_ctx->sapConfig;
-	sap_ctx = hdd_ap_ctx->sapContext;
+	sap_ctx = hdd_ap_ctx->sap_context;
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {

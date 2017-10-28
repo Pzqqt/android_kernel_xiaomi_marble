@@ -822,6 +822,7 @@ struct hdd_station_info {
  * @group_key: Group Encryption Key
  * @wep_key: WEP key array
  * @wep_def_key_idx: WEP default key index
+ * @sap_context: Pointer to context maintained by SAP (opaque to HDD)
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
@@ -832,6 +833,7 @@ struct hdd_ap_ctx {
 	tCsrRoamSetKey group_key;
 	tCsrRoamSetKey wep_key[CSR_MAX_NUM_KEY];
 	uint8_t wep_def_key_idx;
+	struct sap_context *sap_context;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 
@@ -846,9 +848,6 @@ struct hdd_ap_ctx {
 	struct hdd_beacon_data *beacon;
 
 	bool bApActive;
-
-	/* SAP Context */
-	struct sap_context *sapContext;
 
 	bool dfs_cac_block_tx;
 	qdf_mc_timer_t vendor_acs_timer;
@@ -1233,7 +1232,7 @@ struct hdd_adapter {
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
 				(&(adapter)->sessionCtx.ap.hostapd_state)
-#define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->sessionCtx.ap.sapContext)
+#define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->sessionCtx.ap.sap_context)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE

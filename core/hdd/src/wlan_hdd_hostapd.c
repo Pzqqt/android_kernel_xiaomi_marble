@@ -234,7 +234,7 @@ hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (reinit)
-		sap_ctx = adapter->sessionCtx.ap.sapContext;
+		sap_ctx = adapter->sessionCtx.ap.sap_context;
 	else
 		sap_ctx = wlansap_open();
 
@@ -256,7 +256,7 @@ hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
 			adapter->sessionId);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("wlansap_start failed!! status: %d", status);
-		adapter->sessionCtx.ap.sapContext = NULL;
+		adapter->sessionCtx.ap.sap_context = NULL;
 
 		/*
 		 * In this case, we need to cleanup in the same order as create.
@@ -303,7 +303,7 @@ int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 		hdd_err("Error closing the sap session");
 		status = -EINVAL;
 	}
-	adapter->sessionCtx.ap.sapContext = NULL;
+	adapter->sessionCtx.ap.sap_context = NULL;
 
 	if (!wlan_hdd_validate_session_id(adapter->sessionId)) {
 		if (hdd_objmgr_release_vdev(adapter)) {
@@ -2930,7 +2930,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	 * supported, return from here if DBS is not supported.
 	 * Need to take care of 3 port cases with 2 STA iface in future.
 	 */
-	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
+	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sap_context);
 	hdd_info("intf_ch: %d", intf_ch);
 	if (QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION !=
 		hdd_ctx->config->WlanMccToSccSwitchMode) {
@@ -6257,9 +6257,9 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	hdd_info("SSR in progress: %d", reinit);
 
-	if (adapter->sessionCtx.ap.sapContext) {
+	if (adapter->sessionCtx.ap.sap_context) {
 		hdd_debug("sap context is not NULL, %pK",
-			  adapter->sessionCtx.ap.sapContext);
+			  adapter->sessionCtx.ap.sap_context);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -6269,7 +6269,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 		return QDF_STATUS_E_FAULT;
 	}
 	if (!reinit) {
-		adapter->sessionCtx.ap.sapContext = sapContext;
+		adapter->sessionCtx.ap.sap_context = sapContext;
 		adapter->sessionCtx.ap.sapConfig.channel =
 			hdd_ctx->acs_policy.acs_channel;
 		acs_dfs_mode = hdd_ctx->acs_policy.acs_dfs_mode;
