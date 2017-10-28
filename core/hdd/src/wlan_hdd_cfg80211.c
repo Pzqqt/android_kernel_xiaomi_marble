@@ -14413,7 +14413,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		if (pairwise ||
 			eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == setKey.encType ||
 			eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == setKey.encType)
-			qdf_mem_copy(&ap_ctx->wepKey[key_index], &setKey,
+			qdf_mem_copy(&ap_ctx->wep_key[key_index], &setKey,
 				     sizeof(tCsrRoamSetKey));
 		else
 			qdf_mem_copy(&ap_ctx->group_key, &setKey,
@@ -14835,7 +14835,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			/* Saving key direction for default key index to TX default */
 			struct hdd_ap_ctx *pAPCtx =
 				WLAN_HDD_GET_AP_CTX_PTR(adapter);
-			pAPCtx->wepKey[key_index].keyDirection =
+			pAPCtx->wep_key[key_index].keyDirection =
 				eSIR_TX_DEFAULT;
 			hdd_debug("WEP default key index set to SAP context %d",
 				key_index);

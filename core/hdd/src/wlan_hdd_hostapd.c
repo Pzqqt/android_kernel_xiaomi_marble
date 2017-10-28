@@ -1597,13 +1597,13 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				hdd_err("wlansap_set_key_sta failed");
 		} else {
 			for (i = 0; i < CSR_MAX_NUM_KEY; i++) {
-				if (!ap_ctx->wepKey[i].keyLength)
+				if (!ap_ctx->wep_key[i].keyLength)
 					continue;
 
 				status = wlansap_set_key_sta(
 					WLAN_HDD_GET_SAP_CTX_PTR
 						(adapter),
-					&ap_ctx->wepKey[i]);
+					&ap_ctx->wep_key[i]);
 				if (!QDF_IS_STATUS_SUCCESS(status))
 					hdd_err("set_key failed idx: %d", i);
 			}
@@ -1705,7 +1705,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			 */
 			ap_ctx->group_key.keyLength = 0;
 			for (i = 0; i < CSR_MAX_NUM_KEY; i++)
-				ap_ctx->wepKey[i].keyLength = 0;
+				ap_ctx->wep_key[i].keyLength = 0;
 		}
 
 		/* clear the reason code in case BSS is stopped

@@ -814,6 +814,8 @@ struct hdd_station_info {
  * @privacy: The privacy bits of configuration
  * @encryption_type: The encryption being used
  * @group_key: Group Encryption Key
+ * @wep_key: WEP key array
+ * @wep_def_key_idx: WEP default key index
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
@@ -822,6 +824,8 @@ struct hdd_ap_ctx {
 	uint8_t privacy;
 	eCsrEncryptionType encryption_type;
 	tCsrRoamSetKey group_key;
+	tCsrRoamSetKey wep_key[CSR_MAX_NUM_KEY];
+	uint8_t wep_def_key_idx;
 
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 
@@ -832,12 +836,6 @@ struct hdd_ap_ctx {
 	qdf_mc_timer_t hdd_ap_inactivity_timer;
 
 	uint8_t operatingChannel;
-
-	/* This will have WEP key data, if it is received before start bss */
-	tCsrRoamSetKey wepKey[CSR_MAX_NUM_KEY];
-
-	/* WEP default key index */
-	uint8_t wep_def_key_idx;
 
 	struct hdd_beacon_data *beacon;
 
