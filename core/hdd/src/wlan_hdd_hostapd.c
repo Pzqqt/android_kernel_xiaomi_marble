@@ -6385,8 +6385,6 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 		init_completion(&adapter->rem_on_chan_ready_event);
 		init_completion(&adapter->sta_authorized_event);
 		init_completion(&adapter->offchannel_tx_event);
-		init_completion(&adapter->scan_info.
-				abortscan_event_var);
 
 		SET_NETDEV_DEV(pWlanHostapdDev, hdd_ctx->parent_dev);
 		spin_lock_init(&adapter->pause_map_lock);

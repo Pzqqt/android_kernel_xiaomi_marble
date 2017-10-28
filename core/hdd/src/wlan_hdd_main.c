@@ -3164,9 +3164,6 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		init_completion(&adapter->tx_action_cnf_event);
 		init_completion(&adapter->ibss_peer_info_comp);
 		init_completion(&adapter->change_country_code);
-
-
-		init_completion(&adapter->scan_info.abortscan_event_var);
 		init_completion(&adapter->lfr_fw_status.disable_lfr_event);
 
 		adapter->offloads_configured = false;

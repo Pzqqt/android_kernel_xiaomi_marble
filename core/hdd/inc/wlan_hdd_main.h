@@ -887,7 +887,6 @@ struct hdd_ap_ctx {
  * @default_scan_ies: Default scan IEs
  * @default_scan_ies_len: Length of @default_scan_ies
  * @scan_mode: Scan mode
- * @abortscan_event_var: completion variable for abortscan
  */
 struct hdd_scan_info {
 	uint32_t mScanPending;
@@ -895,7 +894,6 @@ struct hdd_scan_info {
 	uint8_t *default_scan_ies;
 	uint16_t default_scan_ies_len;
 	tSirScanType scan_mode;
-	struct completion abortscan_event_var;
 };
 
 #define WLAN_HDD_MAX_MC_ADDR_LIST CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES
