@@ -1144,9 +1144,9 @@ struct hdd_adapter {
 	struct hdd_scan_info scan_info;
 
 	/* Flag to ensure PSB is configured through framework */
-	uint8_t psbChanged;
+	uint8_t psb_changed;
 	/* UAPSD psb value configured through framework */
-	uint8_t configuredPsb;
+	uint8_t configured_psb;
 #ifdef IPA_OFFLOAD
 	void *ipa_context;
 #endif

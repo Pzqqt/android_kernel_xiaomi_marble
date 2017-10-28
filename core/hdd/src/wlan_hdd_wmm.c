@@ -975,8 +975,8 @@ int hdd_wmmps_helper(struct hdd_adapter *adapter, uint8_t *ptr)
 		return -EINVAL;
 	}
 	/* convert ASCII to integer */
-	adapter->configuredPsb = ptr[9] - '0';
-	adapter->psbChanged = HDD_PSB_CHANGED;
+	adapter->configured_psb = ptr[9] - '0';
+	adapter->psb_changed = HDD_PSB_CHANGED;
 
 	return 0;
 }
@@ -1031,13 +1031,13 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 
 	memset(&qosInfo, 0, sizeof(qosInfo));
 
-	qosInfo.ts_info.psb = adapter->configuredPsb;
+	qosInfo.ts_info.psb = adapter->configured_psb;
 
 	switch (acType) {
 	case SME_AC_VO:
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_VO;
 		/* Check if there is any valid configuration from framework */
-		if (HDD_PSB_CFG_INVALID == adapter->configuredPsb) {
+		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			qosInfo.ts_info.psb =
 				((WLAN_HDD_GET_CTX(adapter))->config->
 				 UapsdMask & SME_QOS_UAPSD_VO) ? 1 : 0;
@@ -1062,7 +1062,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	case SME_AC_VI:
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_VI;
 		/* Check if there is any valid configuration from framework */
-		if (HDD_PSB_CFG_INVALID == adapter->configuredPsb) {
+		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			qosInfo.ts_info.psb =
 				((WLAN_HDD_GET_CTX(adapter))->config->
 				 UapsdMask & SME_QOS_UAPSD_VI) ? 1 : 0;
@@ -1088,7 +1088,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	case SME_AC_BE:
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_BE;
 		/* Check if there is any valid configuration from framework */
-		if (HDD_PSB_CFG_INVALID == adapter->configuredPsb) {
+		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			qosInfo.ts_info.psb =
 				((WLAN_HDD_GET_CTX(adapter))->config->
 				 UapsdMask & SME_QOS_UAPSD_BE) ? 1 : 0;
@@ -1113,7 +1113,7 @@ static void __hdd_wmm_do_implicit_qos(struct work_struct *work)
 	case SME_AC_BK:
 		qosInfo.ts_info.up = SME_QOS_WMM_UP_BK;
 		/* Check if there is any valid configuration from framework */
-		if (HDD_PSB_CFG_INVALID == adapter->configuredPsb) {
+		if (HDD_PSB_CFG_INVALID == adapter->configured_psb) {
 			qosInfo.ts_info.psb =
 				((WLAN_HDD_GET_CTX(adapter))->config->
 				 UapsdMask & SME_QOS_UAPSD_BK) ? 1 : 0;
@@ -1308,7 +1308,7 @@ QDF_STATUS hdd_wmm_adapter_init(struct hdd_adapter *adapter)
 	/* Invalid value(0xff) to indicate psb not configured through
 	 * framework initially.
 	 */
-	adapter->configuredPsb = HDD_PSB_CFG_INVALID;
+	adapter->configured_psb = HDD_PSB_CFG_INVALID;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1650,19 +1650,19 @@ void hdd_wmm_acquire_access_required(struct hdd_adapter *adapter,
 	switch (acType) {
 	case SME_AC_BK:
 		/* clear first bit */
-		adapter->psbChanged &= ~SME_QOS_UAPSD_CFG_BK_CHANGED_MASK;
+		adapter->psb_changed &= ~SME_QOS_UAPSD_CFG_BK_CHANGED_MASK;
 		break;
 	case SME_AC_BE:
 		/* clear second bit */
-		adapter->psbChanged &= ~SME_QOS_UAPSD_CFG_BE_CHANGED_MASK;
+		adapter->psb_changed &= ~SME_QOS_UAPSD_CFG_BE_CHANGED_MASK;
 		break;
 	case SME_AC_VI:
 		/* clear third bit */
-		adapter->psbChanged &= ~SME_QOS_UAPSD_CFG_VI_CHANGED_MASK;
+		adapter->psb_changed &= ~SME_QOS_UAPSD_CFG_VI_CHANGED_MASK;
 		break;
 	case SME_AC_VO:
 		/* clear fourth bit */
-		adapter->psbChanged &= ~SME_QOS_UAPSD_CFG_VO_CHANGED_MASK;
+		adapter->psb_changed &= ~SME_QOS_UAPSD_CFG_VO_CHANGED_MASK;
 		break;
 	default:
 		hdd_err("Invalid AC Type");

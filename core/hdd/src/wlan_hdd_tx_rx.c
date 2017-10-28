@@ -635,7 +635,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		  "%s: Classified as ac %d up %d", __func__, ac, up);
 #endif /* HDD_WMM_DEBUG */
 
-	if (HDD_PSB_CHANGED == adapter->psbChanged) {
+	if (HDD_PSB_CHANGED == adapter->psb_changed) {
 		/*
 		 * Function which will determine acquire admittance for a
 		 * WMM AC is required or not based on psb configuration done
@@ -649,7 +649,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * can have artifically boosted higher qos priority.
 	 */
 
-	if (((adapter->psbChanged & (1 << ac)) &&
+	if (((adapter->psb_changed & (1 << ac)) &&
 		likely(adapter->hddWmmStatus.wmmAcStatus[ac].
 			wmmAcAccessAllowed)) ||
 		((sta_ctx->conn_info.uIsAuthenticated == false) &&
@@ -660,7 +660,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		granted = true;
 	} else {
 		status = hdd_wmm_acquire_access(adapter, ac, &granted);
-		adapter->psbChanged |= (1 << ac);
+		adapter->psb_changed |= (1 << ac);
 	}
 
 	if (!granted) {
