@@ -3087,88 +3087,6 @@ lim_assoc_sta_end:
 }
 
 /**
- * lim_process_sme_get_wpspbc_sessions - process sme get wpspbc req
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @msg_buf: pointer to WPS PBC overlap query message
- *
- * This function parses get WPS PBC overlap information
- * message and call callback to pass WPS PBC overlap
- * information back to hdd.
- *
- * Return: None
- */
-static void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
-						uint32_t *msg_buf)
-{
-	tSirSmeGetWPSPBCSessionsReq get_wps_pbc_sessions_req;
-	tpPESession session_entry = NULL;
-	tSap_Event sap_event;
-	tpWLAN_SAPEventCB sap_event_cb = NULL;
-	uint8_t session_id = CSR_SESSION_ID_INVALID;
-	tSap_GetWPSPBCSessionEvent *sap_get_wpspbc_event;
-
-	if (msg_buf == NULL) {
-		pe_err("Buffer is Pointing to NULL");
-		return;
-	}
-
-	sap_get_wpspbc_event = &sap_event.sapevt.sapGetWPSPBCSessionEvent;
-	sap_get_wpspbc_event->status = QDF_STATUS_E_FAULT;
-
-	qdf_mem_copy(&get_wps_pbc_sessions_req, msg_buf,
-			sizeof(struct sSirSmeGetWPSPBCSessionsReq));
-	/*
-	 * Get Associated stations from PE
-	 * Find PE session Entry
-	 */
-	session_entry = pe_find_session_by_bssid(mac_ctx,
-			get_wps_pbc_sessions_req.bssid.bytes, &session_id);
-	if (session_entry == NULL) {
-		pe_err("session does not exist for given bssId");
-		goto lim_get_wpspbc_sessions_end;
-	}
-
-	if (!LIM_IS_AP_ROLE(session_entry)) {
-		pe_err("Received unexpected message in role %X",
-			GET_LIM_SYSTEM_ROLE(session_entry));
-		goto lim_get_wpspbc_sessions_end;
-	}
-	/*
-	 * Call hdd callback with sap event to send the
-	 * WPS PBC overlap information
-	 */
-	sap_event.sapHddEventCode = eSAP_GET_WPSPBC_SESSION_EVENT;
-	sap_get_wpspbc_event->module = QDF_MODULE_ID_PE;
-
-	if (qdf_is_macaddr_zero(&get_wps_pbc_sessions_req.remove_mac)) {
-		lim_get_wpspbc_sessions(mac_ctx,
-				sap_get_wpspbc_event->addr,
-				sap_get_wpspbc_event->UUID_E,
-				&sap_get_wpspbc_event->wpsPBCOverlap,
-				session_entry);
-	} else {
-		lim_remove_pbc_sessions(mac_ctx,
-				get_wps_pbc_sessions_req.remove_mac,
-				session_entry);
-		/* don't have to inform the HDD/Host */
-		return;
-	}
-
-	pe_debug("wpsPBCOverlap %d", sap_get_wpspbc_event->wpsPBCOverlap);
-	lim_print_mac_addr(mac_ctx,
-				sap_get_wpspbc_event->addr.bytes, LOGD);
-
-	sap_get_wpspbc_event->status = QDF_STATUS_SUCCESS;
-
-lim_get_wpspbc_sessions_end:
-	sap_event_cb =
-		(tpWLAN_SAPEventCB)get_wps_pbc_sessions_req.pSapEventCallback;
-	if (NULL != sap_event_cb)
-		sap_event_cb(&sap_event, get_wps_pbc_sessions_req.pUsrContext);
-}
-
-/**
  * __lim_counter_measures()
  *
  * FUNCTION:
@@ -4981,9 +4899,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_REQ:
 		__lim_process_roam_scan_offload_req(pMac, pMsgBuf);
 		bufConsumed = false;
-		break;
-	case eWNI_SME_GET_WPSPBC_SESSION_REQ:
-		lim_process_sme_get_wpspbc_sessions(pMac, pMsgBuf);
 		break;
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
 		/* Update the beaconInterval */
