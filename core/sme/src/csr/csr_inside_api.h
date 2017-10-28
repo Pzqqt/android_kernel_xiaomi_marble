@@ -1028,13 +1028,6 @@ QDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 						   void *pfnSapEventCallback,
 						   uint8_t *pAssocStasBuf);
 
-QDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
-					   uint32_t sessionId,
-					   struct qdf_mac_addr bssId,
-					   void *pUsrContext,
-					   void *pfnSapEventCallback,
-					   struct qdf_mac_addr pRemoveMac);
-
 /*
  * csr_send_chng_mcc_beacon_interval() -
  *   csr function that HDD calls to send Update beacon interval

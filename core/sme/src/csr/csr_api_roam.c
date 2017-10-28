@@ -15495,36 +15495,6 @@ csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-QDF_STATUS
-csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
-				struct qdf_mac_addr bssid, void *pUsrContext,
-				void *pfnSapEventCallback,
-				struct qdf_mac_addr remove_mac)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSirSmeGetWPSPBCSessionsReq *pMsg;
-
-	do {
-		pMsg = qdf_mem_malloc(sizeof(tSirSmeGetWPSPBCSessionsReq));
-		if (NULL == pMsg)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-		if (!QDF_IS_STATUS_SUCCESS(status))
-			break;
-		qdf_mem_set(pMsg, sizeof(tSirSmeGetWPSPBCSessionsReq), 0);
-		pMsg->messageType = eWNI_SME_GET_WPSPBC_SESSION_REQ;
-		qdf_mem_copy(pMsg->pUsrContext, pUsrContext, sizeof(void *));
-		qdf_mem_copy(pMsg->pSapEventCallback, pfnSapEventCallback,
-			     sizeof(void *));
-		qdf_copy_macaddr(&pMsg->bssid, &bssid);
-		qdf_copy_macaddr(&pMsg->remove_mac, &remove_mac);
-		pMsg->length = sizeof(struct sSirSmeGetWPSPBCSessionsReq);
-		status = umac_send_mb_message_to_mac(pMsg);
-	} while (0);
-	return status;
-}
-
 QDF_STATUS csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac,
 						uint32_t sessionId)
 {
