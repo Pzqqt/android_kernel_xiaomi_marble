@@ -127,18 +127,18 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 }
 
 /**
- * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
- *			      (WBM), following error handling
+ * dp_rx_link_desc_return_by_addr - Return a MPDU link descriptor to
+ *					(WBM) by address
  *
  * @soc: core DP main context
- * @ring_desc: opaque pointer to the REO error ring descriptor
+ * @link_desc_addr: link descriptor addr
  *
  * Return: QDF_STATUS
  */
 QDF_STATUS
-dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
+dp_rx_link_desc_return_by_addr(struct dp_soc *soc, void *link_desc_addr,
+					uint8_t bm_action)
 {
-	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
 	struct dp_srng *wbm_desc_rel_ring = &soc->wbm_desc_rel_ring;
 	void *wbm_rel_srng = wbm_desc_rel_ring->hal_srng;
 	void *hal_soc = soc->hal_soc;
@@ -168,7 +168,7 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
 	if (qdf_likely(src_srng_desc)) {
 		/* Return link descriptor through WBM ring (SW2WBM)*/
 		hal_rx_msdu_link_desc_set(hal_soc,
-				src_srng_desc, buf_addr_info, bm_action);
+				src_srng_desc, link_desc_addr, bm_action);
 		status = QDF_STATUS_SUCCESS;
 	} else {
 		struct hal_srng *srng = (struct hal_srng *)wbm_rel_srng;
@@ -182,6 +182,23 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
 done:
 	hal_srng_access_end(hal_soc, wbm_rel_srng);
 	return status;
+
+}
+
+/**
+ * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW
+ *				(WBM), following error handling
+ *
+ * @soc: core DP main context
+ * @ring_desc: opaque pointer to the REO error ring descriptor
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
+{
+	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
+	return dp_rx_link_desc_return_by_addr(soc, buf_addr_info, bm_action);
 }
 
 /**

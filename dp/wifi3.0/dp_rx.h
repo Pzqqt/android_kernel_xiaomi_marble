@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -700,6 +700,18 @@ dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action);
 QDF_STATUS
 dp_rx_link_desc_buf_return(struct dp_soc *soc, struct dp_srng *dp_rxdma_srng,
 				void *buf_addr_info, uint8_t bm_action);
+/**
+ * dp_rx_link_desc_return_by_addr - Return a MPDU link descriptor to
+ *					(WBM) by address
+ *
+ * @soc: core DP main context
+ * @link_desc_addr: link descriptor addr
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS
+dp_rx_link_desc_return_by_addr(struct dp_soc *soc, void *link_desc_addr,
+					uint8_t bm_action);
 
 uint32_t
 dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id,
