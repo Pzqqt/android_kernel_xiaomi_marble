@@ -10883,7 +10883,7 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 	}
 	hdd_info("SAP Start Success");
 	set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-	if (hostapd_state->bssState == BSS_START)
+	if (hostapd_state->bss_state == BSS_START)
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					ap_adapter->device_mode,
 					ap_adapter->sessionId);
@@ -12512,7 +12512,7 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		}
 		hdd_err("SAP Start Success");
 		set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		if (hostapd_state->bssState == BSS_START)
+		if (hostapd_state->bss_state == BSS_START)
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 						ap_adapter->device_mode,
 						ap_adapter->sessionId);

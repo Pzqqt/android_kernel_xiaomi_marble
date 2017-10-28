@@ -338,12 +338,12 @@ static void hdd_hostapd_channel_allow_suspend(struct hdd_adapter *adapter,
 	struct hdd_hostapd_state *hostapd_state =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	hdd_debug("bssState: %d, channel: %d, dfs_ref_cnt: %d",
-	       hostapd_state->bssState, channel,
+	hdd_debug("bss_state: %d, channel: %d, dfs_ref_cnt: %d",
+	       hostapd_state->bss_state, channel,
 	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
 
 	/* Return if BSS is already stopped */
-	if (hostapd_state->bssState == BSS_STOP)
+	if (hostapd_state->bss_state == BSS_STOP)
 		return;
 
 	if (CHANNEL_STATE_DFS != wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
@@ -376,12 +376,12 @@ static void hdd_hostapd_channel_prevent_suspend(struct hdd_adapter *adapter,
 	struct hdd_hostapd_state *hostapd_state =
 		WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	hdd_debug("bssState: %d, channel: %d, dfs_ref_cnt: %d",
-	       hostapd_state->bssState, channel,
+	hdd_debug("bss_state: %d, channel: %d, dfs_ref_cnt: %d",
+	       hostapd_state->bss_state, channel,
 	       atomic_read(&hdd_ctx->sap_dfs_ref_cnt));
 
 	/* Return if BSS is already started && wakelock is acquired */
-	if ((hostapd_state->bssState == BSS_START) &&
+	if ((hostapd_state->bss_state == BSS_START) &&
 		(atomic_read(&hdd_ctx->sap_dfs_ref_cnt) >= 1))
 		return;
 
@@ -1629,7 +1629,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			 * wait till 10 secs and no other connection will
 			 * go through before that.
 			 */
-			hostapd_state->bssState = BSS_STOP;
+			hostapd_state->bss_state = BSS_STOP;
 			qdf_event_set(&hostapd_state->qdf_event);
 			goto stopbss;
 		} else {
@@ -1708,7 +1708,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hdd_hostapd_channel_prevent_suspend(adapter,
 						    ap_ctx->operating_channel);
 
-		hostapd_state->bssState = BSS_START;
+		hostapd_state->bss_state = BSS_START;
 
 		/* Set default key index */
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
@@ -2373,7 +2373,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	case eSAP_CHANNEL_CHANGE_EVENT:
 		hdd_debug("Received eSAP_CHANNEL_CHANGE_EVENT event");
-		if (hostapd_state->bssState != BSS_STOP) {
+		if (hostapd_state->bss_state != BSS_STOP) {
 			/* Prevent suspend for new channel */
 			hdd_hostapd_channel_prevent_suspend(adapter,
 				pSapEvent->sapevt.sap_ch_selected.pri_ch);
@@ -2551,7 +2551,7 @@ stopbss:
 		 * things down, we don't want interfaces to become
 		 * re-enabled
 		 */
-		hostapd_state->bssState = BSS_STOP;
+		hostapd_state->bss_state = BSS_STOP;
 
 		if (0 !=
 		    (WLAN_HDD_GET_CTX(adapter))->config->
@@ -3014,7 +3014,7 @@ static int hdd_sap_get_chan_width(struct hdd_adapter *adapter, int *value)
 	ENTER();
 	hostapdstate = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 
-	if (hostapdstate->bssState != BSS_START) {
+	if (hostapdstate->bss_state != BSS_START) {
 		*value = -EINVAL;
 		return -EINVAL;
 	}
@@ -5019,7 +5019,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 	hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 
-	if (hostapd_state->bssState == BSS_STOP) {
+	if (hostapd_state->bss_state == BSS_STOP) {
 		if (sme_cfg_get_int(hHal, WNI_CFG_CURRENT_CHANNEL, &channel)
 		    != QDF_STATUS_SUCCESS) {
 			return -EIO;
@@ -8116,7 +8116,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	set_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 	/* Initialize WMM configuation */
 	hdd_wmm_init(adapter);
-	if (hostapd_state->bssState == BSS_START)
+	if (hostapd_state->bss_state == BSS_START)
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					adapter->device_mode,
 					adapter->sessionId);

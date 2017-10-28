@@ -1426,7 +1426,7 @@ void hdd_ipa_set_tx_flow_info(void)
 		case QDF_P2P_GO_MODE:
 			hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 			hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-			if (hostapd_state->bssState == BSS_START
+			if (hostapd_state->bss_state == BSS_START
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
 				p2pChannel = hdd_ap_ctx->operating_channel;
@@ -1441,7 +1441,7 @@ void hdd_ipa_set_tx_flow_info(void)
 		case QDF_SAP_MODE:
 			hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 			hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-			if (hostapd_state->bssState == BSS_START
+			if (hostapd_state->bss_state == BSS_START
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
 				apChannel = hdd_ap_ctx->operating_channel;

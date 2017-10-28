@@ -14409,7 +14409,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
 	    (adapter->device_mode == QDF_P2P_GO_MODE)) {
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-		if (hostapd_state->bssState == BSS_START) {
+		if (hostapd_state->bss_state == BSS_START) {
 			status = wlansap_set_key_sta(
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter), &setKey);
 			if (status != QDF_STATUS_SUCCESS) {

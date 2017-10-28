@@ -671,10 +671,33 @@ struct hdd_station_ctx {
 	bool ap_supports_immediate_power_save;
 };
 
-#define BSS_STOP    0
-#define BSS_START   1
+/**
+ * enum bss_state - current state of the BSS
+ * @BSS_STOP: BSS is stopped
+ * @BSS_START: BSS is started
+ */
+enum bss_state {
+	BSS_STOP,
+	BSS_START,
+};
+
+/**
+ * struct hdd_hostapd_state - hostapd-related state information
+ * @bss_state: Current state of the BSS
+ * @qdf_event: Event to synchronize actions between hostapd thread and
+ *    internal callback threads
+ * @qdf_stop_bss_event: Event to synchronize Stop BSS. When Stop BSS
+ *    is issued userspace thread can wait on this event. The event will
+ *    be set when the Stop BSS processing in UMAC has completed.
+ * @qdf_sta_disassoc_event: Event to synchronize STA
+ *    Disassociation. When a STA is disassociated userspace thread can
+ *    wait on this event. The event will * be set when the STA
+ *    Disassociation processing in UMAC has completed.
+ * @qdf_status: Used to communicate state from other threads to the
+ *    userspace thread.
+ */
 struct hdd_hostapd_state {
-	int bssState;
+	enum bss_state bss_state;
 	qdf_event_t qdf_event;
 	qdf_event_t qdf_stop_bss_event;
 	qdf_event_t qdf_sta_disassoc_event;

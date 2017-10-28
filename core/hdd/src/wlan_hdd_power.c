@@ -1796,7 +1796,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 		if (QDF_SAP_MODE == adapter->device_mode) {
 			if (BSS_START ==
-			    WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter)->bssState &&
+			    WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter)->bss_state &&
 			    true ==
 			    WLAN_HDD_GET_AP_CTX_PTR(adapter)->
 			    dfs_cac_block_tx) {
