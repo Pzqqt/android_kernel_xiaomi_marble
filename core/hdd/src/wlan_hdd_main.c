@@ -3168,7 +3168,6 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 
 		adapter->offloads_configured = false;
 		adapter->is_link_up_service_needed = false;
-		adapter->higherDtimTransition = true;
 		/* Init the net_device structure */
 		strlcpy(pWlanDev->name, name, IFNAMSIZ);
 

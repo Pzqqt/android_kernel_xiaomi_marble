@@ -209,7 +209,7 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_SET_MAX_TX_POWER  7
-#define WE_SET_HIGHER_DTIM_TRANSITION   8
+/* 8 is unused */
 #define WE_SET_TM_LEVEL      9
 /*
  * <ioctl>
@@ -5807,23 +5807,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 		break;
 	}
-	case WE_SET_HIGHER_DTIM_TRANSITION:
-	{
-		if (!((set_value == false) || (set_value == true))) {
-			hdd_err("Dynamic DTIM Incorrect data:%d",
-			       set_value);
-			ret = -EINVAL;
-		} else {
-			if (adapter->higherDtimTransition != set_value) {
-				adapter->higherDtimTransition =
-					set_value;
-				hdd_debug("higherDtimTransition set to :%d",
-				       adapter->higherDtimTransition);
-			}
-		}
-
-		break;
-	}
 
 	case WE_SET_TM_LEVEL:
 	{
@@ -10992,16 +10975,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "setTxMaxPower"},
-
-	/* set Higher DTIM Transition (DTIM1 to DTIM3)
-	 * 1 = enable and 0 = disable
-	 */
-	{
-		WE_SET_HIGHER_DTIM_TRANSITION,
-		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-		0,
-		"setHDtimTransn"
-	},
 
 	{WE_SET_TM_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,

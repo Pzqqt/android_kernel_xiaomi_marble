@@ -1138,7 +1138,6 @@ struct hdd_adapter {
 #endif
 	uint8_t addr_filter_pattern;
 
-	bool higherDtimTransition;
 	bool survey_idx;
 
 	struct hdd_scan_info scan_info;
