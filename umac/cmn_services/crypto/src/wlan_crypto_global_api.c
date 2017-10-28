@@ -596,8 +596,9 @@ QDF_STATUS wlan_crypto_getkey(struct wlan_objmgr_vdev *vdev,
 					macaddr,
 					WLAN_CRYPTO_ID);
 		if (peer == NULL) {
-			qdf_print("%s[%d] peer NULL\n", __func__, __LINE__);
-			return QDF_STATUS_E_INVAL;
+			QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
+				"%s[%d] peer NULL\n", __func__, __LINE__);
+			return QDF_STATUS_E_NOENT;
 		}
 		crypto_params = wlan_crypto_peer_get_comp_params(peer,
 								&crypto_priv);
