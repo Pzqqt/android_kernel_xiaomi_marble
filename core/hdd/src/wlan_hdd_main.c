@@ -6496,7 +6496,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 
 		if ((adapter->device_mode == QDF_SAP_MODE ||
 		     adapter->device_mode == QDF_P2P_GO_MODE) &&
-		    WLAN_HDD_GET_AP_CTX_PTR(adapter)->bApActive == false) {
+		    WLAN_HDD_GET_AP_CTX_PTR(adapter)->ap_active == false) {
 
 			continue;
 		}
@@ -10518,7 +10518,7 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 			if (adapter
 			    && adapter->device_mode == QDF_SAP_MODE) {
 				if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->
-				    bApActive == true) {
+				    ap_active == true) {
 					ap_connected = true;
 					break;
 				}
@@ -10611,7 +10611,7 @@ static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
 
 		if (adapter &&
 		    hdd_adapter_is_ap(adapter) &&
-		    WLAN_HDD_GET_AP_CTX_PTR(adapter)->bApActive) {
+		    WLAN_HDD_GET_AP_CTX_PTR(adapter)->ap_active) {
 			return true;
 		}
 

@@ -2071,7 +2071,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 #ifdef MSM_PLATFORM
 		/* start timer in sap/p2p_go */
-		if (ap_ctx->bApActive == false) {
+		if (ap_ctx->ap_active == false) {
 			spin_lock_bh(&hdd_ctx->bus_bw_lock);
 			adapter->prev_tx_packets =
 				adapter->stats.tx_packets;
@@ -2088,7 +2088,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_bus_bw_compute_timer_start(hdd_ctx);
 		}
 #endif
-		ap_ctx->bApActive = true;
+		ap_ctx->ap_active = true;
 		/* Stop AP inactivity timer */
 		if (ap_ctx->hdd_ap_inactivity_timer.state ==
 		    QDF_TIMER_STATE_RUNNING) {
@@ -2213,14 +2213,14 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		hdd_softap_deregister_sta(adapter, staId);
 
-		ap_ctx->bApActive = false;
+		ap_ctx->ap_active = false;
 		spin_lock_bh(&adapter->sta_info_lock);
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 			if (adapter->sta_info[i].in_use
 			    && i !=
 			    (WLAN_HDD_GET_AP_CTX_PTR(adapter))->
 			    broadcast_sta_id) {
-				ap_ctx->bApActive = true;
+				ap_ctx->ap_active = true;
 				break;
 			}
 		}
@@ -2230,7 +2230,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if ((0 !=
 		     (WLAN_HDD_GET_CTX(adapter))->config->
 		     nAPAutoShutOff)) {
-			if (ap_ctx->bApActive == false) {
+			if (ap_ctx->ap_active == false) {
 				if (ap_ctx->hdd_ap_inactivity_timer.state ==
 				    QDF_TIMER_STATE_STOPPED) {
 					qdf_status =
@@ -2285,7 +2285,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		}
 #ifdef MSM_PLATFORM
 		/*stop timer in sap/p2p_go */
-		if (ap_ctx->bApActive == false) {
+		if (ap_ctx->ap_active == false) {
 			spin_lock_bh(&hdd_ctx->bus_bw_lock);
 			adapter->prev_tx_packets = 0;
 			adapter->prev_rx_packets = 0;

@@ -815,6 +815,9 @@ struct hdd_station_info {
 /**
  * struct hdd_ap_ctx - SAP/P2PGO specific information
  * @hostapd_state: state control information
+ * @ap_active: Are any stations active?
+ * @hdd_ap_inactivity_timer: Timer used to shutdown the AP if it is
+ *     inactive for an extended amount of time.
  * @disable_intrabss_fwd: Prevent forwarding between stations
  * @broadcast_sta_id: Station ID assigned after BSS starts
  * @privacy: The privacy bits of configuration
@@ -827,6 +830,8 @@ struct hdd_station_info {
  */
 struct hdd_ap_ctx {
 	struct hdd_hostapd_state hostapd_state;
+	bool ap_active;
+	qdf_mc_timer_t hdd_ap_inactivity_timer;
 	bool disable_intrabss_fwd;
 	uint8_t broadcast_sta_id;
 	uint8_t privacy;
@@ -841,13 +846,10 @@ struct hdd_ap_ctx {
 
 	struct semaphore semWpsPBCOverlapInd;
 
-	qdf_mc_timer_t hdd_ap_inactivity_timer;
 
 	uint8_t operatingChannel;
 
 	struct hdd_beacon_data *beacon;
-
-	bool bApActive;
 
 	bool dfs_cac_block_tx;
 	qdf_mc_timer_t vendor_acs_timer;
