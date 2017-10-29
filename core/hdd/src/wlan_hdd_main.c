@@ -544,7 +544,8 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		break;
 
 	case NETDEV_GOING_DOWN:
-		if (adapter->scan_info.mScanPending != false) {
+		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, true);
 		} else {
@@ -5171,8 +5172,6 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			goto get_adapter;
 
 		hdd_wmm_init(adapter);
-
-		adapter->scan_info.mScanPending = false;
 
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:

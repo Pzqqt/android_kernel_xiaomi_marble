@@ -562,7 +562,6 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = NULL;
-	struct hdd_scan_info *scan_info = NULL;
 	int ret;
 	uint8_t session_type;
 
@@ -598,8 +597,8 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	if ((adapter != NULL) &&
 		!(wlan_hdd_validate_session_id(adapter->session_id))) {
-		scan_info = &adapter->scan_info;
-		if (scan_info->mScanPending) {
+		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
 			hdd_debug("Abort Scan while adding virtual interface");

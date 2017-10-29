@@ -17665,7 +17665,6 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 	    (sta_ctx->conn_info.connState == eConnectionState_Connecting)) {
 		eCsrRoamDisconnectReason reasonCode =
 			eCSR_DISCONNECT_REASON_UNSPECIFIED;
-		struct hdd_scan_info *scan_info;
 
 		switch (reason) {
 		case WLAN_REASON_MIC_FAILURE:
@@ -17700,8 +17699,8 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 			reasonCode = eCSR_DISCONNECT_REASON_UNSPECIFIED;
 			break;
 		}
-		scan_info = &adapter->scan_info;
-		if (scan_info->mScanPending) {
+		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+				SCAN_NOT_IN_PROGRESS) {
 			hdd_debug("Disconnect is in progress, Aborting Scan");
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);

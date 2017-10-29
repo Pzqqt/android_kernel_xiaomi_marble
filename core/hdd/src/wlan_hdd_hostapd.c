@@ -1533,7 +1533,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	uint8_t we_custom_start_event[64];
 	char *startBssEvent;
 	struct hdd_context *hdd_ctx;
-	struct hdd_scan_info *scan_info = NULL;
 	struct iw_michaelmicfailure msg;
 	uint8_t ignoreCAC = 0;
 	struct hdd_config *cfg = NULL;
@@ -2135,9 +2134,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 			qdf_mem_free(sta_info);
 		}
-		scan_info = &adapter->scan_info;
 		/* Lets abort scan to ensure smooth authentication for client */
-		if ((scan_info != NULL) && scan_info->mScanPending) {
+		if (ucfg_scan_get_vdev_status(adapter->hdd_vdev) !=
+				SCAN_NOT_IN_PROGRESS) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
 		}
@@ -8182,15 +8181,11 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct hdd_scan_info *scan_info = NULL;
-	struct hdd_adapter *staAdapter = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tSirUpdateIE updateIE;
 	struct hdd_beacon_data *old;
 	int ret;
-	hdd_adapter_list_node_t *pAdapterNode = NULL;
-	hdd_adapter_list_node_t *pNext = NULL;
 
 	ENTER();
 
@@ -8237,26 +8232,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		hdd_green_ap_stop_bss(hdd_ctx);
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		staAdapter = pAdapterNode->adapter;
-
-		if (QDF_STA_MODE == staAdapter->device_mode ||
-		    (QDF_P2P_CLIENT_MODE == staAdapter->device_mode) ||
-		    (QDF_P2P_GO_MODE == staAdapter->device_mode)) {
-			scan_info = &staAdapter->scan_info;
-
-			if (scan_info && scan_info->mScanPending) {
-				hdd_debug("Aborting pending scan for device mode:%d",
-				       staAdapter->device_mode);
-				wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-					staAdapter->session_id, INVALID_SCAN_ID, true);
-			}
-		}
-
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
-	}
 	cds_flush_work(&adapter->sap_stop_bss_work);
 	/*
 	 * When ever stop ap adapter gets called, we need to check
