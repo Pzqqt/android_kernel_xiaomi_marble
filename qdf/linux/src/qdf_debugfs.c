@@ -313,7 +313,7 @@ qdf_dentry_t qdf_debugfs_create_file(const char *name, uint16_t mode,
 
 	if (IS_ERR_OR_NULL(file)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s creation failed %p", name, file);
+			  "%s creation failed 0x%pK", name, file);
 		file = NULL;
 	}
 
