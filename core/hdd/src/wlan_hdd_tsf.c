@@ -275,18 +275,19 @@ static enum hdd_tsf_op_result hdd_indicate_tsf_internal(
 #ifdef WLAN_FEATURE_TSF_PLUS
 /* unit for target time: us;  host time: ns */
 #define HOST_TO_TARGET_TIME_RATIO NSEC_PER_USEC
-#define MAX_ALLOWED_DEVIATION_NS (20 * NSEC_PER_MSEC)
+#define MAX_ALLOWED_DEVIATION_NS (100 * NSEC_PER_USEC)
 #define MAX_CONTINUOUS_ERROR_CNT 3
 
 /* to distinguish 32-bit overflow case, this inverval should:
  * equal or less than (1/2 * OVERFLOW_INDICATOR32 us)
  */
-#define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 500
+#define WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC 10
 #define WLAN_HDD_CAPTURE_TSF_INIT_INTERVAL_MS 100
 #define NORMAL_INTERVAL_TARGET \
 	((int64_t)((int64_t)WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC * \
 		NSEC_PER_SEC / HOST_TO_TARGET_TIME_RATIO))
 #define OVERFLOW_INDICATOR32 (((int64_t)0x1) << 32)
+#define CAP_TSF_TIMER_FIX_SEC 1
 
 /**
  * TS_STATUS - timestamp status
@@ -467,8 +468,21 @@ static void hdd_update_timestamp(struct hdd_adapter *adapter,
 		hdd_info("ts-pair updated: target: %llu; host: %llu",
 			 adapter->last_target_time,
 			 adapter->last_host_time);
-		interval = WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC *
-			MSEC_PER_SEC;
+
+		/*
+		 * TSF-HOST need to be updated in at most
+		 * WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC, it couldn't be achieved
+		 * if the timer interval is also
+		 * WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC, due to processing or
+		 * schedule delay. So deduct several seconds from
+		 * WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC.
+		 * Without this change, hdd_get_hosttime_from_targettime() will
+		 * get wrong host time when it's longer than
+		 * WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC from last
+		 * TSF-HOST update.
+		 */
+		interval = (WLAN_HDD_CAPTURE_TSF_INTERVAL_SEC -
+			    CAP_TSF_TIMER_FIX_SEC) * MSEC_PER_SEC;
 		adapter->continuous_error_count = 0;
 		break;
 	case HDD_TS_STATUS_WAITING:
