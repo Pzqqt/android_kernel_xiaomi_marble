@@ -443,11 +443,6 @@ err_hdd_deinit:
 	return check_for_probe_defer(ret);
 }
 
-static inline void hdd_pld_driver_unloading(struct device *dev)
-{
-	pld_set_driver_status(dev, PLD_LOAD_UNLOAD);
-}
-
 /**
  * wlan_hdd_remove() - wlan_hdd_remove
  *
@@ -466,8 +461,6 @@ static void wlan_hdd_remove(struct device *dev)
 
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_warn("External threads are still active attempting driver unload anyway");
-
-	hdd_pld_driver_unloading(dev);
 
 	if (QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		epping_disable();

@@ -144,10 +144,6 @@ pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 static inline void pld_pcie_link_down(struct device *dev)
 {
 }
-static inline int pld_pcie_shadow_control(bool enable)
-{
-	return 0;
-}
 static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
 					uint32_t memtype, uint32_t datalen,
 					uint8_t *output)
@@ -194,10 +190,7 @@ static inline int pld_pcie_get_soc_info(struct device *dev,
 {
 	return 0;
 }
-static inline void pld_pcie_set_driver_status(enum pld_driver_status status)
-{
-}
-static inline int pld_pcie_auto_suspend(void)
+static inline int pld_pcie_auto_suspend(struct device *dev)
 {
 	return 0;
 }
@@ -246,7 +239,6 @@ int pld_pcie_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
 int pld_pcie_get_platform_cap(struct pld_platform_cap *cap);
 int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info);
-void pld_pcie_set_driver_status(enum pld_driver_status status);
 void pld_pcie_schedule_recovery_work(struct device *dev,
 				     enum pld_recovery_reason reason);
 void pld_pcie_device_self_recovery(struct device *dev,
@@ -255,10 +247,6 @@ void pld_pcie_device_self_recovery(struct device *dev,
 static inline void pld_pcie_link_down(struct device *dev)
 {
 	cnss_pci_link_down(dev);
-}
-static inline int pld_pcie_shadow_control(bool enable)
-{
-	return 0;
 }
 static inline int pld_pcie_athdiag_read(struct device *dev, uint32_t offset,
 					uint32_t memtype, uint32_t datalen,

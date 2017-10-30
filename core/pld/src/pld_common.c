@@ -513,36 +513,6 @@ void pld_is_pci_link_down(struct device *dev)
 }
 
 /**
- * pld_shadow_control() - Control pci shadow registers
- * @dev: device
- * @enable: 0 for disable, 1 for enable
- *
- * This function is for suspend/resume. It can control if we
- * use pci shadow registers (for saving config space) or not.
- * During suspend we disable it to avoid config space corruption.
- *
- * Return: 0 for success
- *         Non zero failure code for errors
- */
-int pld_shadow_control(struct device *dev, bool enable)
-{
-	int ret = 0;
-
-	switch (pld_get_bus_type(dev)) {
-	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_shadow_control(enable);
-		break;
-	case PLD_BUS_TYPE_SNOC:
-		break;
-	default:
-		ret = -EINVAL;
-		break;
-	}
-
-	return ret;
-}
-
-/**
  * pld_schedule_recovery_work() - Schedule recovery work
  * @dev: device
  * @reason: recovery reason
@@ -811,29 +781,6 @@ int pld_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 	}
 
 	return ret;
-}
-
-/**
- * pld_set_driver_status() - Set driver status
- * @dev: device
- * @status: driver status
- *
- * Return: void
- */
-void pld_set_driver_status(struct device *dev, enum pld_driver_status status)
-{
-	switch (pld_get_bus_type(dev)) {
-	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_set_driver_status(status);
-		break;
-	case PLD_BUS_TYPE_SNOC:
-		break;
-	case PLD_BUS_TYPE_SDIO:
-		break;
-	default:
-		pr_err("Invalid device type\n");
-		break;
-	}
 }
 
 /**

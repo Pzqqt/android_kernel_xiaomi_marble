@@ -128,18 +128,6 @@ struct pld_platform_cap {
 };
 
 /**
- * enum pld_driver_status - WLAN driver status
- * @PLD_UNINITIALIZED: driver is uninitialized
- * @PLD_INITIALIZED: driver is initialized
- * @PLD_LOAD_UNLOADL: driver is in load-unload status
- */
-enum pld_driver_status {
-	PLD_UNINITIALIZED,
-	PLD_INITIALIZED,
-	PLD_LOAD_UNLOAD,
-};
-
-/**
  * enum pld_uevent - WLAN FW status
  * @PLD_RECOVERY: driver is recovering
  * @PLD_FW_DOWN: FW is down
@@ -530,7 +518,6 @@ void pld_request_pm_qos(struct device *dev, u32 qos_val);
 void pld_remove_pm_qos(struct device *dev);
 int pld_request_bus_bandwidth(struct device *dev, int bandwidth);
 int pld_get_platform_cap(struct device *dev, struct pld_platform_cap *cap);
-void pld_set_driver_status(struct device *dev, enum pld_driver_status status);
 int pld_get_sha_hash(struct device *dev, const u8 *data,
 		     u32 data_len, u8 *hash_idx, u8 *out);
 void *pld_get_fw_ptr(struct device *dev);

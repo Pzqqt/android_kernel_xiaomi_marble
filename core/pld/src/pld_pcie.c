@@ -700,30 +700,6 @@ int pld_pcie_get_soc_info(struct device *dev, struct pld_soc_info *info)
 }
 
 /**
- * pld_pcie_set_driver_status() - Set driver status
- * @status: driver status
- *
- * Return: void
- */
-void pld_pcie_set_driver_status(enum pld_driver_status status)
-{
-	enum cnss_driver_status cnss_status;
-
-	switch (status) {
-	case PLD_UNINITIALIZED:
-		cnss_status = CNSS_UNINITIALIZED;
-		break;
-	case PLD_INITIALIZED:
-		cnss_status = CNSS_INITIALIZED;
-		break;
-	default:
-		cnss_status = CNSS_LOAD_UNLOAD;
-		break;
-	}
-	cnss_set_driver_status(cnss_status);
-}
-
-/**
  * pld_pcie_schedule_recovery_work() - schedule recovery work
  * @dev: device
  * @reason: recovery reason
