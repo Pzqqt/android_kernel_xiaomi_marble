@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -2176,12 +2176,12 @@ static snd_pcm_uframes_t msm_lsm_pcm_pointer(
 }
 
 static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
-	snd_pcm_uframes_t hwoff, void __user *buf, snd_pcm_uframes_t frames)
+	unsigned long hwoff, void __user *buf, unsigned long fbytes)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct lsm_priv *prtd = runtime->private_data;
 	char *pcm_buf = NULL;
-	int fbytes = 0, rc = 0;
+	int rc = 0;
 	struct snd_soc_pcm_runtime *rtd;
 
 	if (!substream->private_data) {
@@ -2196,7 +2196,6 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 		return -EINVAL;
 	}
 
-	fbytes = frames_to_bytes(runtime, frames);
 	if (runtime->status->state == SNDRV_PCM_STATE_XRUN ||
 	    runtime->status->state == SNDRV_PCM_STATE_PREPARED) {
 		dev_err(rtd->dev,
@@ -2221,12 +2220,12 @@ static int msm_lsm_pcm_copy(struct snd_pcm_substream *substream, int ch,
 		prtd->lsm_client->hw_params.period_count;
 	pcm_buf = prtd->lsm_client->lab_buffer[prtd->appl_cnt].data;
 	dev_dbg(rtd->dev,
-		"%s: copy the pcm data size %d\n",
+		"%s: copy the pcm data size %lu\n",
 		__func__, fbytes);
 	if (pcm_buf) {
 		if (copy_to_user(buf, pcm_buf, fbytes)) {
 			dev_err(rtd->dev,
-				"%s: failed to copy bytes %d\n",
+				"%s: failed to copy bytes %lu\n",
 				__func__, fbytes);
 			return -EINVAL;
 		}
@@ -2341,7 +2340,7 @@ static const struct snd_pcm_ops msm_lsm_ops = {
 	.prepare	= msm_lsm_prepare,
 	.compat_ioctl   = msm_lsm_ioctl_compat,
 	.hw_params      = msm_lsm_hw_params,
-	.copy           = msm_lsm_pcm_copy,
+	.copy_user      = msm_lsm_pcm_copy,
 	.pointer        = msm_lsm_pcm_pointer,
 };
 

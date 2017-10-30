@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1088,8 +1088,8 @@ done:
 }
 
 static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
-				 snd_pcm_uframes_t hwoff, void __user *buf,
-				 snd_pcm_uframes_t frames)
+				 unsigned long hwoff, void __user *buf,
+				 unsigned long fbytes)
 {
 	int ret = 0;
 	struct hpcm_buf_node *buf_node = NULL;
@@ -1097,8 +1097,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 	struct hpcm_drv *prtd = runtime->private_data;
 	struct dai_data *dai_data = hpcm_get_dai_data(substream->pcm->id, prtd);
 	unsigned long dsp_flags;
-
-	int count = frames_to_bytes(runtime, frames);
 
 	if (dai_data == NULL) {
 		pr_err("%s, dai_data is null\n", __func__);
@@ -1112,7 +1110,7 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 				dai_data->state == HPCM_STOPPED),
 				1 * HZ);
 	if (ret > 0) {
-		if (count <= HPCM_MAX_VOC_PKT_SIZE) {
+		if (fbytes <= HPCM_MAX_VOC_PKT_SIZE) {
 			spin_lock_irqsave(&dai_data->dsp_lock, dsp_flags);
 			buf_node =
 				list_first_entry(&dai_data->free_queue,
@@ -1120,14 +1118,14 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 			list_del(&buf_node->list);
 			spin_unlock_irqrestore(&dai_data->dsp_lock, dsp_flags);
 			ret = copy_from_user(&buf_node->frame.voc_pkt, buf,
-					     count);
-			buf_node->frame.len = count;
+					     fbytes);
+			buf_node->frame.len = fbytes;
 			spin_lock_irqsave(&dai_data->dsp_lock, dsp_flags);
 			list_add_tail(&buf_node->list, &dai_data->filled_queue);
 			spin_unlock_irqrestore(&dai_data->dsp_lock, dsp_flags);
 		} else {
-			pr_err("%s: Write cnt %d is > HPCM_MAX_VOC_PKT_SIZE\n",
-				__func__, count);
+			pr_err("%s: Write cnt %lu is > HPCM_MAX_VOC_PKT_SIZE\n",
+				__func__, fbytes);
 			ret = -ENOMEM;
 		}
 	} else if (ret == 0) {
@@ -1142,11 +1140,10 @@ done:
 }
 
 static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
-				int channel, snd_pcm_uframes_t hwoff,
-				void __user *buf, snd_pcm_uframes_t frames)
+				int channel, unsigned long hwoff,
+				void __user *buf, unsigned long fbytes)
 {
 	int ret = 0;
-	int count = 0;
 	struct hpcm_buf_node *buf_node = NULL;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct hpcm_drv *prtd = runtime->private_data;
@@ -1160,15 +1157,13 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		goto done;
 	}
 
-	count = frames_to_bytes(runtime, frames);
-
 	ret = wait_event_interruptible_timeout(dai_data->queue_wait,
 				(!list_empty(&dai_data->filled_queue) ||
 				dai_data->state == HPCM_STOPPED),
 				1 * HZ);
 
 	if (ret > 0) {
-		if (count <= HPCM_MAX_VOC_PKT_SIZE) {
+		if (fbytes <= HPCM_MAX_VOC_PKT_SIZE) {
 			spin_lock_irqsave(&dai_data->dsp_lock, dsp_flags);
 			buf_node = list_first_entry(&dai_data->filled_queue,
 					struct hpcm_buf_node, list);
@@ -1186,8 +1181,8 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 			spin_unlock_irqrestore(&dai_data->dsp_lock, dsp_flags);
 
 		} else {
-			pr_err("%s: Read count %d > HPCM_MAX_VOC_PKT_SIZE\n",
-				__func__, count);
+			pr_err("%s: Read count %lu > HPCM_MAX_VOC_PKT_SIZE\n",
+				__func__, fbytes);
 			ret = -ENOMEM;
 		}
 
@@ -1204,17 +1199,17 @@ done:
 }
 
 static int msm_pcm_copy(struct snd_pcm_substream *substream, int channel,
-			snd_pcm_uframes_t hwoff, void __user *buf,
-			snd_pcm_uframes_t frames)
+			unsigned long hwoff, void __user *buf,
+			unsigned long fbytes)
 {
 	int ret = 0;
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		ret = msm_pcm_playback_copy(substream, channel,
-					    hwoff, buf, frames);
+					    hwoff, buf, fbytes);
 	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		ret = msm_pcm_capture_copy(substream, channel,
-					   hwoff, buf, frames);
+					   hwoff, buf, fbytes);
 
 	return ret;
 }
@@ -1446,7 +1441,7 @@ static const struct snd_pcm_ops msm_pcm_ops = {
 	.prepare        = msm_pcm_prepare,
 	.trigger        = msm_pcm_trigger,
 	.pointer        = msm_pcm_pointer,
-	.copy           = msm_pcm_copy,
+	.copy_user      = msm_pcm_copy,
 	.close          = msm_pcm_close,
 };
 

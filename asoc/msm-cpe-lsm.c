@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -3132,7 +3132,7 @@ static snd_pcm_uframes_t msm_cpe_lsm_pointer(
 }
 
 static int msm_cpe_lsm_copy(struct snd_pcm_substream *substream, int a,
-	 snd_pcm_uframes_t hwoff, void __user *buf, snd_pcm_uframes_t frames)
+	 unsigned long hwoff, void __user *buf, unsigned long fbytes)
 {
 	struct cpe_lsm_data *lsm_d = cpe_get_lsm_data(substream);
 	struct snd_soc_pcm_runtime *rtd = substream->private_data;
@@ -3140,10 +3140,8 @@ static int msm_cpe_lsm_copy(struct snd_pcm_substream *substream, int a,
 	struct cpe_lsm_session *session;
 	struct cpe_lsm_lab *lab_d = &lsm_d->lab;
 	char *pcm_buf;
-	int fbytes = 0;
 	int rc = 0;
 
-	fbytes = frames_to_bytes(runtime, frames);
 	if (runtime->status->state == SNDRV_PCM_STATE_XRUN ||
 	   runtime->status->state == SNDRV_PCM_STATE_PREPARED) {
 		pr_err("%s: XRUN ignore for now\n", __func__);
@@ -3286,7 +3284,7 @@ static const struct snd_pcm_ops msm_cpe_lsm_ops = {
 	.prepare = msm_cpe_lsm_prepare,
 	.trigger = msm_cpe_lsm_trigger,
 	.pointer = msm_cpe_lsm_pointer,
-	.copy = msm_cpe_lsm_copy,
+	.copy_user = msm_cpe_lsm_copy,
 	.hw_params = msm_cpe_lsm_hwparams,
 	.compat_ioctl = msm_cpe_lsm_ioctl_compat,
 };
