@@ -2023,6 +2023,89 @@ reg_modify_chan_list_for_unsafe_ch(struct wlan_regulatory_pdev_priv_obj
 	}
 }
 
+/**
+ * reg_find_low_limit_chan_enum() - Find low limit 2G and 5G channel enums.
+ * @chan_list: Pointer to regulatory channel list.
+ * @low_freq: low limit frequency.
+ * @low_limit: pointer to output low limit enum.
+ *
+ * Return: None
+ */
+static void reg_find_low_limit_chan_enum(struct regulatory_channel *chan_list,
+		uint32_t low_freq,
+		uint32_t *low_limit)
+{
+	enum channel_enum chan_enum;
+	uint16_t min_bw;
+	uint16_t max_bw;
+	uint32_t center_freq;
+
+	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+		min_bw = chan_list[chan_enum].min_bw;
+		max_bw = chan_list[chan_enum].max_bw;
+		center_freq = chan_list[chan_enum].center_freq;
+
+		if ((center_freq - min_bw/2) >= low_freq) {
+			if ((center_freq - max_bw/2) < low_freq) {
+				max_bw = ((center_freq - low_freq) * 2);
+				if (max_bw < min_bw)
+					max_bw = min_bw;
+				chan_list[chan_enum].max_bw = max_bw;
+			}
+			*low_limit = chan_enum;
+			break;
+		}
+	}
+}
+
+/**
+ * reg_find_high_limit_chan_enum() - Find high limit 2G and 5G channel enums.
+ * @chan_list: Pointer to regulatory channel list.
+ * @high_freq: high limit frequency.
+ * @high_limit: pointer to output high limit enum.
+ *
+ * Return: None
+ */
+static void reg_find_high_limit_chan_enum(struct regulatory_channel *chan_list,
+		uint32_t high_freq,
+		uint32_t *high_limit)
+{
+	enum channel_enum chan_enum;
+	uint16_t min_bw;
+	uint16_t max_bw;
+	uint32_t center_freq;
+
+	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
+		min_bw = chan_list[chan_enum].min_bw;
+		max_bw = chan_list[chan_enum].max_bw;
+		center_freq = chan_list[chan_enum].center_freq;
+
+		if (center_freq + min_bw/2 <= high_freq) {
+			if ((center_freq + max_bw/2) > high_freq) {
+				max_bw = ((high_freq - center_freq) * 2);
+				if (max_bw < min_bw)
+					max_bw = min_bw;
+				chan_list[chan_enum].max_bw = max_bw;
+			}
+			*high_limit = chan_enum;
+			break;
+		}
+		if (chan_enum == 0)
+			break;
+	}
+}
+
+/**
+ * reg_modify_chan_list_for_freq_range() - Modify channel list for the given low
+ * and high frequency range.
+ * @chan_list: Pointer to regulatory channel list.
+ * @low_freq_2g: Low frequency 2G.
+ * @high_freq_2g: High frequency 2G.
+ * @low_freq_5g: Low frequency 5G.
+ * @high_freq_5g: High frequency 5G.
+ *
+ * Return: None
+ */
 static void
 reg_modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
 				uint32_t low_freq_2g,
@@ -2037,37 +2120,10 @@ reg_modify_chan_list_for_freq_range(struct regulatory_channel *chan_list,
 	enum channel_enum chan_enum;
 	bool chan_in_range;
 
-	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-		if ((chan_list[chan_enum].center_freq - 10) >= low_freq_2g) {
-			low_limit_2g = chan_enum;
-			break;
-		}
-	}
-
-	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-		if ((chan_list[chan_enum].center_freq - 10) >= low_freq_5g) {
-			low_limit_5g = chan_enum;
-			break;
-		}
-	}
-
-	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
-		if (chan_list[chan_enum].center_freq + 10 <= high_freq_2g) {
-			high_limit_2g = chan_enum;
-			break;
-		}
-		if (chan_enum == 0)
-			break;
-	}
-
-	for (chan_enum = NUM_CHANNELS - 1; chan_enum >= 0; chan_enum--) {
-		if (chan_list[chan_enum].center_freq + 10 <= high_freq_5g) {
-			high_limit_5g = chan_enum;
-			break;
-		}
-		if (chan_enum == 0)
-			break;
-	}
+	reg_find_low_limit_chan_enum(chan_list, low_freq_2g, &low_limit_2g);
+	reg_find_low_limit_chan_enum(chan_list, low_freq_5g, &low_limit_5g);
+	reg_find_high_limit_chan_enum(chan_list, high_freq_2g, &high_limit_2g);
+	reg_find_high_limit_chan_enum(chan_list, high_freq_5g, &high_limit_5g);
 
 	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
 		chan_in_range = false;
