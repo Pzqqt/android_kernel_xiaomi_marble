@@ -469,18 +469,21 @@ int pld_get_fw_files_for_target(struct device *dev,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_get_fw_files_for_target(pfw_files,
-				       target_type, target_version);
+		ret = pld_pcie_get_fw_files_for_target(dev, pfw_files,
+						       target_type,
+						       target_version);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
 	case PLD_BUS_TYPE_SDIO:
 		ret = pld_sdio_get_fw_files_for_target(pfw_files,
-				       target_type, target_version);
+						       target_type,
+						       target_version);
 		break;
 	case PLD_BUS_TYPE_USB:
 	ret = pld_usb_get_fw_files_for_target(pfw_files,
-				target_type, target_version);
+					      target_type,
+					      target_version);
 	break;
 	default:
 		ret = -EINVAL;
@@ -554,7 +557,7 @@ int pld_wlan_pm_control(struct device *dev, bool vote)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_wlan_pm_control(vote);
+		ret = pld_pcie_wlan_pm_control(dev, vote);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -581,7 +584,7 @@ void *pld_get_virt_ramdump_mem(struct device *dev, unsigned long *size)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		mem = pld_pcie_get_virt_ramdump_mem(size);
+		mem = pld_pcie_get_virt_ramdump_mem(dev, size);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -609,7 +612,7 @@ void pld_device_crashed(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_device_crashed();
+		pld_pcie_device_crashed(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -659,7 +662,7 @@ void pld_intr_notify_q6(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_intr_notify_q6();
+		pld_pcie_intr_notify_q6(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -682,7 +685,7 @@ void pld_request_pm_qos(struct device *dev, u32 qos_val)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_request_pm_qos(qos_val);
+		pld_pcie_request_pm_qos(dev, qos_val);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -709,7 +712,7 @@ void pld_remove_pm_qos(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_remove_pm_qos();
+		pld_pcie_remove_pm_qos(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -738,7 +741,7 @@ int pld_request_bus_bandwidth(struct device *dev, int bandwidth)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_request_bus_bandwidth(bandwidth);
+		ret = pld_pcie_request_bus_bandwidth(dev, bandwidth);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -769,7 +772,7 @@ int pld_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_get_platform_cap(cap);
+		ret = pld_pcie_get_platform_cap(dev, cap);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -803,7 +806,7 @@ int pld_get_sha_hash(struct device *dev, const u8 *data,
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_get_sha_hash(data, data_len,
+		ret = pld_pcie_get_sha_hash(dev, data, data_len,
 					    hash_idx, out);
 		break;
 	case PLD_BUS_TYPE_SNOC:
@@ -830,7 +833,7 @@ void *pld_get_fw_ptr(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ptr = pld_pcie_get_fw_ptr();
+		ptr = pld_pcie_get_fw_ptr(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -857,7 +860,7 @@ int pld_auto_suspend(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_auto_suspend();
+		ret = pld_pcie_auto_suspend(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -884,7 +887,7 @@ int pld_auto_resume(struct device *dev)
 
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_auto_resume();
+		ret = pld_pcie_auto_resume(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1051,7 +1054,7 @@ int pld_get_ce_id(struct device *dev, int irq)
 		ret = pld_snoc_get_ce_id(dev, irq);
 		break;
 	case PLD_BUS_TYPE_PCIE:
-		ret = pld_pcie_get_ce_id(irq);
+		ret = pld_pcie_get_ce_id(dev, irq);
 		break;
 	default:
 		ret = -EINVAL;
@@ -1095,7 +1098,7 @@ void pld_lock_pm_sem(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_lock_pm_sem();
+		pld_pcie_lock_pm_sem(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
@@ -1119,7 +1122,7 @@ void pld_release_pm_sem(struct device *dev)
 {
 	switch (pld_get_bus_type(dev)) {
 	case PLD_BUS_TYPE_PCIE:
-		pld_pcie_release_pm_sem();
+		pld_pcie_release_pm_sem(dev);
 		break;
 	case PLD_BUS_TYPE_SNOC:
 		break;
