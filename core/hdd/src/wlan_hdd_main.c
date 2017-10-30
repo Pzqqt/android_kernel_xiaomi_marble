@@ -2698,7 +2698,10 @@ static int __hdd_stop(struct net_device *dev)
 	 * Disable TX on the interface, after this hard_start_xmit() will not
 	 * be called on that interface
 	 */
-	hdd_notice("Disabling queues");
+	hdd_notice("Disabling queues, adapter device mode: %s(%d)",
+		 hdd_device_mode_to_string(adapter->device_mode),
+		 adapter->device_mode);
+
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
