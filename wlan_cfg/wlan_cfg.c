@@ -77,7 +77,7 @@
 /* Interrupt Mitigation - Timer threshold in us */
 #define WLAN_CFG_INT_TIMER_THRESHOLD_TX 1000
 #define WLAN_CFG_INT_TIMER_THRESHOLD_RX 500
-#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 8
+#define WLAN_CFG_INT_TIMER_THRESHOLD_OTHER 1000
 
 #define WLAN_CFG_TX_RING_SIZE 512
 
@@ -158,6 +158,11 @@
 #define WLAN_CFG_RXDMA2HOST_RING_MASK_1 0x2
 #define WLAN_CFG_RXDMA2HOST_RING_MASK_2 0x4
 #define WLAN_CFG_RXDMA2HOST_RING_MASK_3 0x0
+
+#define WLAN_CFG_HOST2RXDMA_RING_MASK_0 0x1
+#define WLAN_CFG_HOST2RXDMA_RING_MASK_1 0x2
+#define WLAN_CFG_HOST2RXDMA_RING_MASK_2 0x4
+#define WLAN_CFG_HOST2RXDMA_RING_MASK_3 0x0
 
 #define WLAN_CFG_DP_TX_NUM_POOLS 3
 /* Change this to a lower value to enforce scattered idle list mode */
@@ -254,6 +259,12 @@ static const int rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
 					WLAN_CFG_RXDMA2HOST_RING_MASK_2,
 					WLAN_CFG_RXDMA2HOST_RING_MASK_3};
 
+static const int host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
+					WLAN_CFG_HOST2RXDMA_RING_MASK_0,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_1,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_2,
+					WLAN_CFG_HOST2RXDMA_RING_MASK_3};
+
 /**
  * struct wlan_cfg_dp_pdev_ctxt - Configuration parameters for pdev (radio)
  * @rx_dma_buf_ring_size - Size of RxDMA buffer ring
@@ -322,6 +333,8 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 					reo_status_ring_mask[i];
 		wlan_cfg_ctx->int_rxdma2host_ring_mask[i] =
 			rxdma2host_ring_mask[i];
+		wlan_cfg_ctx->int_host2rxdma_ring_mask[i] =
+			host2rxdma_ring_mask[i];
 	}
 
 	/* This is default mapping and can be overridden by HW config
@@ -402,6 +415,18 @@ int wlan_cfg_get_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 	int context)
 {
 	return cfg->int_rxdma2host_ring_mask[context];
+}
+
+void wlan_cfg_set_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context, int mask)
+{
+	cfg->int_host2rxdma_ring_mask[context] = mask;
+}
+
+int wlan_cfg_get_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context)
+{
+	return cfg->int_host2rxdma_ring_mask[context];
 }
 
 void wlan_cfg_set_hw_macid(struct wlan_cfg_dp_soc_ctxt *cfg, int pdev_idx,

@@ -992,7 +992,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
+						QDF_TRACE_LEVEL_DEBUG,
 						"REO error %d detected",
 						reo_error_code);
 				}
@@ -1029,13 +1029,13 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 				case HAL_RXDMA_ERR_DECRYPT:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
+						QDF_TRACE_LEVEL_DEBUG,
 					"Packet received with Decrypt error");
 					break;
 
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-							QDF_TRACE_LEVEL_ERROR,
+							QDF_TRACE_LEVEL_DEBUG,
 							"RXDMA error %d",
 							rxdma_error_code);
 				}

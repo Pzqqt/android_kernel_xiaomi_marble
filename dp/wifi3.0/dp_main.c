@@ -339,8 +339,11 @@ static int dp_srng_calculate_msi_group(struct dp_soc *soc,
 		grp_mask = &soc->wlan_cfg_ctx->int_rxdma2host_ring_mask[0];
 	break;
 
-	case RXDMA_MONITOR_BUF:
 	case RXDMA_BUF:
+		grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_ring_mask[0];
+	break;
+
+	case RXDMA_MONITOR_BUF:
 		/* TODO: support low_thresh interrupt */
 		return -QDF_STATUS_E_NOENT;
 	break;
@@ -490,6 +493,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	num_entries = (num_entries > max_entries) ? max_entries : num_entries;
 	srng->hal_srng = NULL;
 	srng->alloc_size = (num_entries * entry_size) + ring_base_align - 1;
+	srng->num_entries = num_entries;
 	srng->base_vaddr_unaligned = qdf_mem_alloc_consistent(
 		soc->osdev, soc->osdev->dev, srng->alloc_size,
 		&(srng->base_paddr_unaligned));
@@ -608,6 +612,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint8_t rx_wbm_rel_mask = int_ctx->rx_wbm_rel_ring_mask;
 	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
 	uint32_t remaining_quota = dp_budget;
+	struct dp_pdev *pdev = NULL;
 
 	/* Process Tx completion interrupts first to return back buffers */
 	while (tx_mask) {
@@ -689,11 +694,14 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 
 	/* Process LMAC interrupts */
 	for  (ring = 0 ; ring < MAX_PDEV_CNT; ring++) {
-		if (soc->pdev_list[ring] == NULL)
+		pdev = soc->pdev_list[ring];
+		if (pdev == NULL)
 			continue;
 		if (int_ctx->rx_mon_ring_mask & (1 << ring)) {
 			work_done = dp_mon_process(soc, ring, remaining_quota);
 			budget -= work_done;
+			if (budget <= 0)
+				goto budget_done;
 			remaining_quota = budget;
 		}
 
@@ -701,6 +709,22 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			work_done = dp_rxdma_err_process(soc, ring,
 						remaining_quota);
 			budget -=  work_done;
+			if (budget <= 0)
+				goto budget_done;
+			remaining_quota = budget;
+		}
+
+		if (int_ctx->host2rxdma_ring_mask & (1 << ring)) {
+			union dp_rx_desc_list_elem_t *desc_list = NULL;
+			union dp_rx_desc_list_elem_t *tail = NULL;
+			struct dp_srng *rx_refill_buf_ring =
+				&pdev->rx_refill_buf_ring;
+
+			DP_STATS_INC(pdev, replenish.low_thresh_intrs, 1);
+			dp_rx_buffers_replenish(soc, ring,
+				rx_refill_buf_ring,
+				&soc->rx_desc_buf[ring], 0,
+				&desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
 		}
 	}
 
@@ -758,6 +782,7 @@ static QDF_STATUS dp_soc_interrupt_attach_poll(void *txrx_soc)
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0x1;
 		soc->intr_ctx[i].reo_status_ring_mask = 0x1;
 		soc->intr_ctx[i].rxdma2host_ring_mask = 0x1;
+		soc->intr_ctx[i].host2rxdma_ring_mask = 0x1;
 		soc->intr_ctx[i].soc = soc;
 		soc->intr_ctx[i].lro_ctx = qdf_lro_init();
 	}
@@ -825,6 +850,8 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 					soc->wlan_cfg_ctx, intr_ctx_num);
 	int rxdma2host_ring_mask = wlan_cfg_get_rxdma2host_ring_mask(
 					soc->wlan_cfg_ctx, intr_ctx_num);
+	int host2rxdma_ring_mask = wlan_cfg_get_host2rxdma_ring_mask(
+					soc->wlan_cfg_ctx, intr_ctx_num);
 
 	for (j = 0; j < HIF_MAX_GRP_IRQ; j++) {
 
@@ -841,6 +868,12 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 		if (rxdma2host_ring_mask & (1 << j)) {
 			irq_id_map[num_irq++] =
 				rxdma2host_destination_ring_mac1 -
+				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+		}
+
+		if (host2rxdma_ring_mask & (1 << j)) {
+			irq_id_map[num_irq++] =
+				host2rxdma_host_buf_ring_mac1 -
 				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
 		}
 
@@ -953,6 +986,9 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 			wlan_cfg_get_reo_status_ring_mask(soc->wlan_cfg_ctx, i);
 		int rxdma2host_ring_mask =
 			wlan_cfg_get_rxdma2host_ring_mask(soc->wlan_cfg_ctx, i);
+		int host2rxdma_ring_mask =
+			wlan_cfg_get_host2rxdma_ring_mask(soc->wlan_cfg_ctx, i);
+
 
 		soc->intr_ctx[i].dp_intr_id = i;
 		soc->intr_ctx[i].tx_ring_mask = tx_mask;
@@ -960,6 +996,7 @@ static QDF_STATUS dp_soc_interrupt_attach(void *txrx_soc)
 		soc->intr_ctx[i].rx_mon_ring_mask = rx_mon_mask;
 		soc->intr_ctx[i].rx_err_ring_mask = rx_err_ring_mask;
 		soc->intr_ctx[i].rxdma2host_ring_mask = rxdma2host_ring_mask;
+		soc->intr_ctx[i].host2rxdma_ring_mask = host2rxdma_ring_mask;
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = rx_wbm_rel_ring_mask;
 		soc->intr_ctx[i].reo_status_ring_mask = reo_status_ring_mask;
 
@@ -1015,6 +1052,7 @@ static void dp_soc_interrupt_detach(void *txrx_soc)
 		soc->intr_ctx[i].rx_wbm_rel_ring_mask = 0;
 		soc->intr_ctx[i].reo_status_ring_mask = 0;
 		soc->intr_ctx[i].rxdma2host_ring_mask = 0;
+		soc->intr_ctx[i].host2rxdma_ring_mask = 0;
 
 		qdf_lro_deinit(soc->intr_ctx[i].lro_ctx);
 	}
@@ -1344,7 +1382,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define REO_CMD_RING_SIZE 32
 #define REO_STATUS_RING_SIZE 32
 #define RXDMA_BUF_RING_SIZE 1024
-#define RXDMA_REFILL_RING_SIZE 2048
+#define RXDMA_REFILL_RING_SIZE 4096
 #define RXDMA_MONITOR_BUF_RING_SIZE 4096
 #define RXDMA_MONITOR_DST_RING_SIZE 2048
 #define RXDMA_MONITOR_STATUS_RING_SIZE 1024
@@ -1489,6 +1527,7 @@ static uint8_t dp_soc_ring_if_nss_offloaded(struct dp_soc *soc, enum hal_ring_ty
 	switch (ring_type) {
 	case WBM2SW_RELEASE:
 	case REO_DST:
+	case RXDMA_BUF:
 		status = ((nss_config) & (1 << ring_num));
 		break;
 	default:
@@ -1530,7 +1569,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
 		if (group_number < 0) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					FL("ring not part of an group; ring_type: %d,ring_num %d"),
+					FL("ring not part of any group; ring_type: %d,ring_num %d"),
 					WBM2SW_RELEASE, j);
 			return;
 		}
@@ -1565,7 +1604,7 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
 		if (group_number < 0) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					FL("ring not part of an group; ring_type: %d,ring_num %d"),
+					FL("ring not part of any group; ring_type: %d,ring_num %d"),
 					REO_DST, j);
 			return;
 		}
@@ -1578,6 +1617,40 @@ static void dp_soc_reset_intr_mask(struct dp_soc *soc)
 		 * set the interrupt mask to zero for rx offloaded radio.
 		 */
 		wlan_cfg_set_rx_ring_mask(soc->wlan_cfg_ctx, group_number, mask);
+	}
+
+	/*
+	 * group mask for Rx buffer refill ring
+	 */
+	grp_mask = &soc->wlan_cfg_ctx->int_host2rxdma_ring_mask[0];
+
+	/* loop and reset the mask for only offloaded ring */
+	for (j = 0; j < MAX_PDEV_CNT; j++) {
+		if (!dp_soc_ring_if_nss_offloaded(soc, RXDMA_BUF, j)) {
+			continue;
+		}
+
+		/*
+		 * Group number corresponding to rx offloaded ring.
+		 */
+		group_number = dp_srng_find_ring_in_mask(j, grp_mask);
+		if (group_number < 0) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+					FL("ring not part of any group; ring_type: %d,ring_num %d"),
+					REO_DST, j);
+			return;
+		}
+
+		/* set the interrupt mask for offloaded ring */
+		mask =  wlan_cfg_get_host2rxdma_ring_mask(soc->wlan_cfg_ctx,
+				group_number);
+		mask &= (~(1 << j));
+
+		/*
+		 * set the interrupt mask to zero for rx offloaded radio.
+		 */
+		wlan_cfg_set_host2rxdma_ring_mask(soc->wlan_cfg_ctx,
+			group_number, mask);
 	}
 }
 
@@ -3857,6 +3930,8 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 			pdev->stats.replenish.pkts.bytes);
 	DP_PRINT_STATS("	Buffers Added To Freelist = %d",
 			pdev->stats.buf_freelist);
+	DP_PRINT_STATS("	Low threshold intr = %d",
+			pdev->stats.replenish.low_thresh_intrs);
 	DP_PRINT_STATS("Dropped:");
 	DP_PRINT_STATS("	msdu_not_done = %d",
 			pdev->stats.dropped.msdu_not_done);

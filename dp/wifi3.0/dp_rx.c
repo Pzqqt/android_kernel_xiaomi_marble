@@ -107,6 +107,29 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"requested %d buffers for replenish", num_req_buffers);
 
+	hal_srng_access_start(dp_soc->hal_soc, rxdma_srng);
+	num_entries_avail = hal_srng_src_num_avail(dp_soc->hal_soc,
+						   rxdma_srng,
+						   sync_hw_ptr);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+		"no of availble entries in rxdma ring: %d",
+		num_entries_avail);
+
+	if (!(*desc_list) && (num_entries_avail >
+		((dp_rxdma_srng->num_entries * 3) / 4))) {
+		num_req_buffers = num_entries_avail;
+	} else if (num_entries_avail < num_req_buffers) {
+		num_desc_to_free = num_req_buffers - num_entries_avail;
+		num_req_buffers = num_entries_avail;
+	}
+
+	if (qdf_unlikely(!num_req_buffers)) {
+		num_desc_to_free = num_req_buffers;
+		hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
+		goto free_descs;
+	}
+
 	/*
 	 * if desc_list is NULL, allocate the descs from freelist
 	 */
@@ -122,6 +145,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				"no free rx_descs in freelist");
 			DP_STATS_INC(dp_pdev, err.desc_alloc_fail,
 					num_req_buffers);
+			hal_srng_access_end(dp_soc->hal_soc, rxdma_srng);
 			return QDF_STATUS_E_NOMEM;
 		}
 
@@ -130,19 +154,6 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		num_req_buffers = num_alloc_desc;
 	}
 
-	hal_srng_access_start(dp_soc->hal_soc, rxdma_srng);
-	num_entries_avail = hal_srng_src_num_avail(dp_soc->hal_soc,
-						   rxdma_srng,
-						   sync_hw_ptr);
-
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-		"no of availble entries in rxdma ring: %d",
-		num_entries_avail);
-
-	if (num_entries_avail < num_req_buffers) {
-		num_desc_to_free = num_req_buffers - num_entries_avail;
-		num_req_buffers = num_entries_avail;
-	}
 
 	count = 0;
 
@@ -208,10 +219,11 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 		"%d rx desc added back to free list", num_desc_to_free);
 
-	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
 	DP_STATS_INC_PKT(dp_pdev, replenish.pkts, num_req_buffers,
 			(RX_BUFFER_SIZE * num_req_buffers));
 
+free_descs:
+	DP_STATS_INC(dp_pdev, buf_freelist, num_desc_to_free);
 	/*
 	 * add any available free desc back to the free list
 	 */
@@ -1449,7 +1461,7 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
 	dp_rxdma_srng = &pdev->rx_refill_buf_ring;
 	dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng, rx_desc_pool,
-		rxdma_entries, &desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
+		0, &desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
 
 	return QDF_STATUS_SUCCESS;
 }
