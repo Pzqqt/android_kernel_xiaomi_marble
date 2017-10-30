@@ -308,16 +308,9 @@ struct wlan_lmac_if_sptrl_tx_ops {
 	void (*sptrlto_stop_spectral_scan)(struct wlan_objmgr_pdev *pdev);
 	bool (*sptrlto_is_spectral_active)(struct wlan_objmgr_pdev *pdev);
 	bool (*sptrlto_is_spectral_enabled)(struct wlan_objmgr_pdev *pdev);
-	int (*sptrlto_set_icm_active)(struct wlan_objmgr_pdev *pdev,
-				      bool isactive);
-	bool (*sptrlto_get_icm_active)(struct wlan_objmgr_pdev *pdev);
-	int16_t (*sptrlto_get_nominal_nf)(struct wlan_objmgr_pdev *pdev);
 	int (*sptrlto_set_debug_level)(struct wlan_objmgr_pdev *pdev,
 				       u_int32_t debug_level);
 	u_int32_t (*sptrlto_get_debug_level)(struct wlan_objmgr_pdev *pdev);
-	void (*sptrlto_get_chaninfo)(struct wlan_objmgr_pdev *pdev,
-				     void *outdata);
-	void (*sptrlto_clear_chaninfo)(struct wlan_objmgr_pdev *pdev);
 	void (*sptrlto_get_spectral_capinfo)(struct wlan_objmgr_pdev *pdev,
 					     void *outdata);
 	void (*sptrlto_get_spectral_diagstats)(struct wlan_objmgr_pdev *pdev,

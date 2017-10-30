@@ -1847,7 +1847,7 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 {
 
 	tp_wma_handle wma = (tp_wma_handle) scn;
-	wmitlv_cmd_param_info *param_buf;
+	WMI_DIAG_EVENTID_param_tlvs *param_buf;
 	uint8_t *datap;
 	uint32_t len = 0;
 	uint32_t *buffer;
@@ -1862,22 +1862,37 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		len = datalen;
 		wma->is_fw_assert = 0;
 	} else {
-		param_buf = (wmitlv_cmd_param_info *) data;
+		param_buf = (WMI_DIAG_EVENTID_param_tlvs *) data;
 		if (!param_buf) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("Get NULL point message from FW\n"));
 			return A_ERROR;
 		}
 
-		param_buf = (wmitlv_cmd_param_info *) data;
-		datap = param_buf->tlv_ptr;
-		len = param_buf->num_elements;
+		datap = param_buf->bufp;
+		len = param_buf->num_bufp;
+
 		if (!get_version) {
+			if (len < 2*(sizeof(uint32_t))) {
+				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+						("len is less than expected\n"));
+				return A_ERROR;
+			}
 			buffer = (uint32_t *) datap;
 			buffer++;       /* skip offset */
 			if (WLAN_DIAG_TYPE_CONFIG == DIAG_GET_TYPE(*buffer)) {
+				if (len < 3*(sizeof(uint32_t))) {
+					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+							("len is less than expected\n"));
+					return A_ERROR;
+				}
 				buffer++;       /* skip  */
 				if (DIAG_VERSION_INFO == DIAG_GET_ID(*buffer)) {
+					if (len < 4*(sizeof(uint32_t))) {
+						AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+								("len is less than expected\n"));
+						return A_ERROR;
+					}
 					buffer++;       /* skip  */
 					/* get payload */
 					get_version = *buffer;

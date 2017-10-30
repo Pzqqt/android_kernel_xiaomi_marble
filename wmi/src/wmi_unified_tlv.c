@@ -20654,6 +20654,7 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 				 WMI_VDEV_PARAM_HE_RANGE_EXT;
 	vdev_param[wmi_vdev_param_he_bss_color] = WMI_VDEV_PARAM_BSS_COLOR;
 	vdev_param[wmi_vdev_param_set_hemu_mode] = WMI_VDEV_PARAM_SET_HEMU_MODE;
+	vdev_param[wmi_vdev_param_set_heop]      = WMI_VDEV_PARAM_HEOPS_0_31;
 	vdev_param[wmi_vdev_param_sensor_ap] = WMI_VDEV_PARAM_SENSOR_AP;
 	vdev_param[wmi_vdev_param_dtim_enable_cts] =
 					WMI_VDEV_PARAM_DTIM_ENABLE_CTS;

@@ -365,6 +365,7 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 	uint32_t num_chan;
 	struct wlan_objmgr_psoc *psoc;
 	uint32_t scan_dbs_policy = SCAN_DBS_POLICY_FORCE_NONDBS;
+	uint32_t conn_cnt;
 
 	psoc = wlan_vdev_get_psoc(req->vdev);
 
@@ -372,8 +373,23 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
 		goto end;
 
-	if (!qdf_is_macaddr_zero(&req->scan_req.bssid_list[0]))
+	conn_cnt = policy_mgr_get_connection_count(psoc);
+	if (conn_cnt > 0) {
+		scm_debug("%d active connections, go for DBS scan",
+				conn_cnt);
+		scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
 		goto end;
+	}
+
+	if (req->scan_req.num_ssids) {
+		scm_debug("directed SSID");
+		goto end;
+	}
+
+	if (req->scan_req.num_bssid) {
+		scm_debug("directed BSSID");
+		goto end;
+	}
 
 	num_chan = req->scan_req.num_chan;
 
