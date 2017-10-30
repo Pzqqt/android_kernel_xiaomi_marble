@@ -4028,5 +4028,10 @@ bool reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev)
 	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 
 	pdev_priv_obj = reg_get_pdev_obj(pdev);
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return false;
+	}
+
 	return pdev_priv_obj->en_chan_144;
 }
