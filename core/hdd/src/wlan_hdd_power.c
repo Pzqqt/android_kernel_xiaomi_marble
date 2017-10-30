@@ -1508,7 +1508,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 	 */
 	if (allow_power_save &&
 	    adapter->device_mode == QDF_STA_MODE &&
-	    !adapter->sessionCtx.station.ap_supports_immediate_power_save) {
+	    !adapter->session.station.ap_supports_immediate_power_save) {
 		/* override user's requested flag */
 		allow_power_save = false;
 		timeout = AUTO_PS_DEFER_TIMEOUT_MS;

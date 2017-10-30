@@ -690,10 +690,10 @@ enum bss_state {
  * @qdf_stop_bss_event: Event to synchronize Stop BSS. When Stop BSS
  *    is issued userspace thread can wait on this event. The event will
  *    be set when the Stop BSS processing in UMAC has completed.
- * @qdf_sta_disassoc_event: Event to synchronize STA
- *    Disassociation. When a STA is disassociated userspace thread can
- *    wait on this event. The event will * be set when the STA
- *    Disassociation processing in UMAC has completed.
+ * @qdf_sta_disassoc_event: Event to synchronize STA Disassociation.
+ *    When a STA is disassociated userspace thread can wait on this
+ *    event. The event will be set when the STA Disassociation
+ *    processing in UMAC has completed.
  * @qdf_status: Used to communicate state from other threads to the
  *    userspace thread.
  */
@@ -945,9 +945,9 @@ struct hdd_chan_change_params {
 
 /**
  * struct hdd_runtime_pm_context - context to prevent/allow runtime pm
- * @scan: scan context to prvent/allow runtime pm
+ * @dfs: dfs context to prevent/allow runtime pm
  *
- * Prevent Runtime PM for scan
+ * Runtime PM control for underlying activities
  */
 struct hdd_runtime_pm_context {
 	qdf_runtime_lock_t dfs;
@@ -1001,7 +1001,7 @@ struct hdd_context;
 struct hdd_adapter {
 	/* Magic cookie for adapter sanity verification.  Note that this
 	 * needs to be at the beginning of the private data structure so
-	 * that it will exists at the beginning of dev->priv and hence
+	 * that it will exist at the beginning of dev->priv and hence
 	 * will always be in mapped memory
 	 */
 	uint32_t magic;
@@ -1113,7 +1113,7 @@ struct hdd_adapter {
 	union {
 		struct hdd_station_ctx station;
 		struct hdd_ap_ctx ap;
-	} sessionCtx;
+	} session;
 
 #ifdef WLAN_FEATURE_TSF
 	/* tsf value received from firmware */
@@ -1231,20 +1231,20 @@ struct hdd_adapter {
 	struct rcpi_info rcpi;
 };
 
-#define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->sessionCtx.station)
-#define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->sessionCtx.ap)
+#define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)
+#define WLAN_HDD_GET_AP_CTX_PTR(adapter) (&(adapter)->session.ap)
 #define WLAN_HDD_GET_WEXT_STATE_PTR(adapter) \
-				(&(adapter)->sessionCtx.station.wext_state)
+				(&(adapter)->session.station.wext_state)
 #define WLAN_HDD_GET_CTX(adapter) ((adapter)->hdd_ctx)
 #define WLAN_HDD_GET_HAL_CTX(adapter)  ((adapter)->hdd_ctx->hHal)
 #define WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter) \
-				(&(adapter)->sessionCtx.ap.hostapd_state)
-#define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->sessionCtx.ap.sap_context)
+				(&(adapter)->session.ap.hostapd_state)
+#define WLAN_HDD_GET_SAP_CTX_PTR(adapter) ((adapter)->session.ap.sap_context)
 
 #ifdef WLAN_FEATURE_NAN_DATAPATH
 #ifndef WLAN_FEATURE_NAN_CONVERGENCE
 #define WLAN_HDD_GET_NDP_CTX_PTR(adapter) \
-		(&(adapter)->sessionCtx.station.ndp_ctx)
+		(&(adapter)->session.station.ndp_ctx)
 #endif /* WLAN_FEATURE_NAN_CONVERGENCE */
 #define WLAN_HDD_IS_NDP_ENABLED(hdd_ctx) ((hdd_ctx)->nan_datapath_enabled)
 #else

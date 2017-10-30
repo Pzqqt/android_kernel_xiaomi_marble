@@ -44,7 +44,7 @@ struct wireless_dev;
 
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) ( \
 	eConnectionState_NdiConnected ==\
-		(adapter)->sessionCtx.station.conn_info.connState)
+		(adapter)->session.station.conn_info.connState)
 #else
 #define WLAN_HDD_IS_NDI(adapter)	(false)
 #define WLAN_HDD_IS_NDI_CONNECTED(adapter) (false)

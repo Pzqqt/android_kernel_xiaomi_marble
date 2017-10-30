@@ -8417,14 +8417,14 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		tSirMacAddr bssid;
 		uint32_t roamId = INVALID_ROAM_ID;
 		uint8_t operating_ch =
-			adapter->sessionCtx.station.conn_info.operationChannel;
+			adapter->session.station.conn_info.operationChannel;
 		tCsrRoamModifyProfileFields modProfileFields;
 
 		sme_get_modify_profile_fields(hHal, adapter->sessionId,
 					      &modProfileFields);
 		if (roaming_offload_enabled(hdd_ctx)) {
 			qdf_mem_copy(bssid,
-				&adapter->sessionCtx.station.conn_info.bssId,
+				&adapter->session.station.conn_info.bssId,
 				sizeof(bssid));
 			hdd_wma_send_fastreassoc_cmd(adapter,
 						     bssid, operating_ch);

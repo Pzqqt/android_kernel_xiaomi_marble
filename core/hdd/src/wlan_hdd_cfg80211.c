@@ -1544,9 +1544,9 @@ int wlan_hdd_sap_cfg_dfs_override(struct hdd_adapter *adapter)
 	if (!con_sap_adapter)
 		return 0;
 
-	sap_config = &adapter->sessionCtx.ap.sap_config;
-	con_sap_config = &con_sap_adapter->sessionCtx.ap.sap_config;
-	con_ch = con_sap_adapter->sessionCtx.ap.operating_channel;
+	sap_config = &adapter->session.ap.sap_config;
+	con_sap_config = &con_sap_adapter->session.ap.sap_config;
+	con_ch = con_sap_adapter->session.ap.operating_channel;
 
 	if (!wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_ch))
 		return 0;
@@ -1817,7 +1817,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	sap_config = &adapter->sessionCtx.ap.sap_config;
+	sap_config = &adapter->session.ap.sap_config;
 	if (hdd_ctx->acs_policy.acs_channel)
 		sap_config->channel = hdd_ctx->acs_policy.acs_channel;
 	else
@@ -1972,7 +1972,7 @@ static int hdd_update_reg_chan_info(struct hdd_adapter *adapter,
 	struct ch_params ch_params = {0};
 	uint8_t bw_offset = 0, chan = 0;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	tsap_Config_t *sap_config = &adapter->sessionCtx.ap.sap_config;
+	tsap_Config_t *sap_config = &adapter->session.ap.sap_config;
 
 	/* memory allocation */
 	sap_config->channel_info = qdf_mem_malloc(
@@ -2242,7 +2242,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	}
 
 	ENTER();
-	sap_config = &adapter->sessionCtx.ap.sap_config;
+	sap_config = &adapter->session.ap.sap_config;
 	/* When first 2 connections are on the same frequency band,
 	 * then PCL would include only channels from the other
 	 * frequency band on which no connections are active
@@ -2270,7 +2270,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		}
 	}
 
-	hdd_get_scan_band(hdd_ctx, &adapter->sessionCtx.ap.sap_config, &band);
+	hdd_get_scan_band(hdd_ctx, &adapter->session.ap.sap_config, &band);
 
 	if (sap_config->acs_cfg.ch_list) {
 		/* Copy INI or hostapd provided ACS channel range*/
@@ -2288,7 +2288,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	hdd_update_reg_chan_info(adapter, channel_count, channel_list);
 	hdd_get_freq_list(channel_list, freq_list, channel_count);
 	/* Get phymode */
-	phy_mode = adapter->sessionCtx.ap.sap_config.acs_cfg.hw_mode;
+	phy_mode = adapter->session.ap.sap_config.acs_cfg.hw_mode;
 
 	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 			&(adapter->wdev),
@@ -2404,7 +2404,7 @@ static int hdd_create_acs_timer(struct hdd_adapter *adapter)
 	struct hdd_external_acs_timer_context *timer_context;
 	QDF_STATUS status;
 
-	if (adapter->sessionCtx.ap.vendor_acs_timer_initialized)
+	if (adapter->session.ap.vendor_acs_timer_initialized)
 		return 0;
 
 	hdd_debug("Starting vendor app based ACS");
@@ -2416,14 +2416,14 @@ static int hdd_create_acs_timer(struct hdd_adapter *adapter)
 	timer_context->adapter = adapter;
 
 	set_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
-	status = qdf_mc_timer_init(&adapter->sessionCtx.ap.vendor_acs_timer,
+	status = qdf_mc_timer_init(&adapter->session.ap.vendor_acs_timer,
 		  QDF_TIMER_TYPE_SW,
 		  hdd_acs_response_timeout_handler, timer_context);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to initialize acs response timeout timer");
 		return -EFAULT;
 	}
-	adapter->sessionCtx.ap.vendor_acs_timer_initialized = true;
+	adapter->session.ap.vendor_acs_timer_initialized = true;
 	return 0;
 }
 
@@ -2525,7 +2525,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 
-	sap_config = &adapter->sessionCtx.ap.sap_config;
+	sap_config = &adapter->session.ap.sap_config;
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
 	status = hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data, data_len,
@@ -2793,9 +2793,9 @@ void wlan_hdd_undo_acs(struct hdd_adapter *adapter)
 {
 	if (adapter == NULL)
 		return;
-	if (adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list) {
-		qdf_mem_free(adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list);
-		adapter->sessionCtx.ap.sap_config.acs_cfg.ch_list = NULL;
+	if (adapter->session.ap.sap_config.acs_cfg.ch_list) {
+		qdf_mem_free(adapter->session.ap.sap_config.acs_cfg.ch_list);
+		adapter->session.ap.sap_config.acs_cfg.ch_list = NULL;
 	}
 }
 
@@ -9268,7 +9268,7 @@ int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 	uint8_t i;
 	QDF_STATUS status;
 
-	sap_config = &adapter->sessionCtx.ap.sap_config;
+	sap_config = &adapter->session.ap.sap_config;
 
 	status =
 		policy_mgr_get_valid_chans(hdd_ctx->hdd_psoc,
@@ -9515,31 +9515,31 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	 * other active SAP interface. In regular scenarios, these IEs would
 	 * come from the user space entity
 	 */
-	pre_cac_adapter->sessionCtx.ap.beacon = qdf_mem_malloc(
-			sizeof(*ap_adapter->sessionCtx.ap.beacon));
-	if (!pre_cac_adapter->sessionCtx.ap.beacon) {
+	pre_cac_adapter->session.ap.beacon = qdf_mem_malloc(
+			sizeof(*ap_adapter->session.ap.beacon));
+	if (!pre_cac_adapter->session.ap.beacon) {
 		hdd_err("failed to alloc mem for beacon");
 		goto stop_close_pre_cac_adapter;
 	}
-	qdf_mem_copy(pre_cac_adapter->sessionCtx.ap.beacon,
-			ap_adapter->sessionCtx.ap.beacon,
-			sizeof(*pre_cac_adapter->sessionCtx.ap.beacon));
-	pre_cac_adapter->sessionCtx.ap.sap_config.ch_width_orig =
-			ap_adapter->sessionCtx.ap.sap_config.ch_width_orig;
-	pre_cac_adapter->sessionCtx.ap.sap_config.authType =
-			ap_adapter->sessionCtx.ap.sap_config.authType;
+	qdf_mem_copy(pre_cac_adapter->session.ap.beacon,
+			ap_adapter->session.ap.beacon,
+			sizeof(*pre_cac_adapter->session.ap.beacon));
+	pre_cac_adapter->session.ap.sap_config.ch_width_orig =
+			ap_adapter->session.ap.sap_config.ch_width_orig;
+	pre_cac_adapter->session.ap.sap_config.authType =
+			ap_adapter->session.ap.sap_config.authType;
 
 	/* Premise is that on moving from 2.4GHz to 5GHz, the SAP will continue
 	 * to operate on the same bandwidth as that of the 2.4GHz operations.
 	 * Only bandwidths 20MHz/40MHz are possible on 2.4GHz band.
 	 */
-	switch (ap_adapter->sessionCtx.ap.sap_config.ch_width_orig) {
+	switch (ap_adapter->session.ap.sap_config.ch_width_orig) {
 	case CH_WIDTH_20MHZ:
 		channel_type = NL80211_CHAN_HT20;
 		break;
 	case CH_WIDTH_40MHZ:
-		if (ap_adapter->sessionCtx.ap.sap_config.sec_ch >
-				ap_adapter->sessionCtx.ap.sap_config.channel)
+		if (ap_adapter->session.ap.sap_config.sec_ch >
+				ap_adapter->session.ap.sap_config.channel)
 			channel_type = NL80211_CHAN_HT40PLUS;
 		else
 			channel_type = NL80211_CHAN_HT40MINUS;
@@ -9559,7 +9559,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	cfg80211_chandef_create(&chandef, chan, channel_type);
 
 	hdd_debug("orig width:%d channel_type:%d freq:%d",
-		ap_adapter->sessionCtx.ap.sap_config.ch_width_orig,
+		ap_adapter->session.ap.sap_config.ch_width_orig,
 		channel_type, freq);
 	/*
 	 * Doing update after opening and starting pre-cac adapter will make
@@ -9617,8 +9617,8 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 
 stop_close_pre_cac_adapter:
 	hdd_stop_adapter(hdd_ctx, pre_cac_adapter, true);
-	qdf_mem_free(pre_cac_adapter->sessionCtx.ap.beacon);
-	pre_cac_adapter->sessionCtx.ap.beacon = NULL;
+	qdf_mem_free(pre_cac_adapter->session.ap.beacon);
+	pre_cac_adapter->session.ap.beacon = NULL;
 close_pre_cac_adapter:
 	hdd_close_adapter(hdd_ctx, pre_cac_adapter, false);
 release_intf_addr_and_return_failure:
@@ -9801,7 +9801,7 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 			adapter_node = next;
 			continue;
 		}
-		operating_channel = adapter->sessionCtx.ap.operating_channel;
+		operating_channel = adapter->session.ap.operating_channel;
 		if (IS_24G_CH(operating_channel))
 			sap_operating_band = eCSR_BAND_24;
 		else if (IS_5G_CH(operating_channel))
@@ -10630,12 +10630,12 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
-	sap_config = &adapter->sessionCtx.ap.sap_config;
+	sap_config = &adapter->session.ap.sap_config;
 
 	if (QDF_TIMER_STATE_RUNNING ==
-	    qdf_mc_timer_get_current_state(&adapter->sessionCtx.
+	    qdf_mc_timer_get_current_state(&adapter->session.
 					ap.vendor_acs_timer)) {
-		qdf_mc_timer_stop(&adapter->sessionCtx.ap.vendor_acs_timer);
+		qdf_mc_timer_stop(&adapter->session.ap.vendor_acs_timer);
 	}
 
 	if (channel_list && channel_list->pri_ch == 0) {
@@ -13749,12 +13749,12 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	 * want to update this parameter
 	 */
 	if (-1 != params->ap_isolate) {
-		adapter->sessionCtx.ap.disable_intrabss_fwd =
+		adapter->session.ap.disable_intrabss_fwd =
 			!!params->ap_isolate;
 
 		qdf_ret_status = sme_ap_disable_intra_bss_fwd(hdd_ctx->hHal,
 							      adapter->sessionId,
-							      adapter->sessionCtx.
+							      adapter->session.
 							      ap.
 							      disable_intrabss_fwd);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status))
@@ -13808,7 +13808,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 			(type == NL80211_IFTYPE_STATION) ?
 			QDF_STA_MODE : QDF_P2P_CLIENT_MODE;
 	}
-	memset(&adapter->sessionCtx, 0, sizeof(adapter->sessionCtx));
+	memset(&adapter->session, 0, sizeof(adapter->session));
 	hdd_set_station_ops(adapter->dev);
 	wext = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	wext->roamProfile.pAddIEScan = adapter->scan_info.scan_add_ie.addIEdata;
@@ -13961,8 +13961,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 			hdd_stop_adapter(hdd_ctx, adapter, true);
 			/* De-init the adapter */
 			hdd_deinit_adapter(hdd_ctx, adapter, true);
-			memset(&adapter->sessionCtx, 0,
-			       sizeof(adapter->sessionCtx));
+			memset(&adapter->session, 0,
+			       sizeof(adapter->session));
 			adapter->device_mode =
 				(type ==
 				 NL80211_IFTYPE_AP) ? QDF_SAP_MODE :
@@ -14383,7 +14383,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	}
 	if ((QDF_IBSS_MODE == adapter->device_mode) && !pairwise) {
 		/* if a key is already installed, block all subsequent ones */
-		if (adapter->sessionCtx.station.ibss_enc_key_installed) {
+		if (adapter->session.station.ibss_enc_key_installed) {
 			hdd_debug("IBSS key installed already");
 			return 0;
 		}
@@ -14400,10 +14400,10 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		/* Save the keys here and call sme_roam_set_key for setting
 		 * the PTK after peer joins the IBSS network
 		 */
-		qdf_mem_copy(&adapter->sessionCtx.station.ibss_enc_key,
+		qdf_mem_copy(&adapter->session.station.ibss_enc_key,
 			     &setKey, sizeof(tCsrRoamSetKey));
 
-		adapter->sessionCtx.station.ibss_enc_key_installed = 1;
+		adapter->session.station.ibss_enc_key_installed = 1;
 		return status;
 	}
 	if ((adapter->device_mode == QDF_SAP_MODE) ||
@@ -19363,7 +19363,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_SET_MAC_ACL,
 			 adapter->sessionId, adapter->device_mode));
 	if (QDF_SAP_MODE == adapter->device_mode) {
-		pConfig = &adapter->sessionCtx.ap.sap_config;
+		pConfig = &adapter->session.ap.sap_config;
 
 		/* default value */
 		pConfig->num_accept_mac = 0;

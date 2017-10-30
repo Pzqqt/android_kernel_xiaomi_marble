@@ -569,7 +569,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool granted;
 	uint8_t STAId;
-	struct hdd_station_ctx *sta_ctx = &adapter->sessionCtx.station;
+	struct hdd_station_ctx *sta_ctx = &adapter->session.station;
 	struct qdf_mac_addr *mac_addr;
 	bool pkt_proto_logged = false;
 #ifdef QCA_PKT_PROTO_TRACE

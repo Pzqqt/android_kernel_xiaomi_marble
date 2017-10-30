@@ -520,10 +520,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	/* Block All Scan during DFS operation and send null scan result */
 	con_sap_adapter = hdd_get_con_sap_adapter(adapter, true);
 	if (con_sap_adapter) {
-		con_dfs_ch = con_sap_adapter->sessionCtx.ap.sap_config.channel;
+		con_dfs_ch = con_sap_adapter->session.ap.sap_config.channel;
 		if (con_dfs_ch == AUTO_CHANNEL_SELECT)
 			con_dfs_ch =
-				con_sap_adapter->sessionCtx.ap.operating_channel;
+				con_sap_adapter->session.ap.operating_channel;
 
 		if (!policy_mgr_is_hw_dbs_capable(hdd_ctx->hdd_psoc) &&
 			wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev, con_dfs_ch)) {
@@ -1040,9 +1040,9 @@ static void hdd_process_vendor_acs_response(struct hdd_adapter *adapter)
 {
 	if (test_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags)) {
 		if (QDF_TIMER_STATE_RUNNING ==
-		    qdf_mc_timer_get_current_state(&adapter->sessionCtx.
+		    qdf_mc_timer_get_current_state(&adapter->session.
 					ap.vendor_acs_timer)) {
-			qdf_mc_timer_stop(&adapter->sessionCtx.
+			qdf_mc_timer_stop(&adapter->session.
 					ap.vendor_acs_timer);
 		}
 	}
