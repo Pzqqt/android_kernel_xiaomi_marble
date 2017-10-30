@@ -1522,6 +1522,7 @@ int ol_txrx_mgmt_send_frame(
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	struct ol_tx_frms_queue_t *txq;
+	int status = 1;
 
 	/*
 	 * 1.  Look up the peer and queue the frame in the peer's mgmt queue.
@@ -1535,11 +1536,7 @@ int ol_txrx_mgmt_send_frame(
 		qdf_atomic_inc(&pdev->tx_queue.rsrc_cnt);
 		ol_tx_desc_frame_free_nonstd(vdev->pdev, tx_desc,
 					     1 /* error */);
-		if (tx_msdu_info->peer) {
-			/* remove the peer reference added above */
-			OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info->peer);
-		}
-		return 1; /* can't accept the tx mgmt frame */
+		goto out; /* can't accept the tx mgmt frame */
 	}
 	/* Initialize the HTT tx desc l2 header offset field.
 	 * Even though tx encap does not apply to mgmt frames,
@@ -1555,18 +1552,20 @@ int ol_txrx_mgmt_send_frame(
 			ol_tx_desc_id(pdev, tx_desc),
 			tx_mgmt_frm,
 			&tx_msdu_info->htt, &tx_msdu_info->tso_info, NULL, 0)))
-		return 1;
+		goto out;
 	htt_tx_desc_display(tx_desc->htt_tx_desc);
 	htt_tx_desc_set_chanfreq(tx_desc->htt_tx_desc, chanfreq);
 
 	ol_tx_enqueue(vdev->pdev, txq, tx_desc, tx_msdu_info);
+	ol_tx_sched(vdev->pdev);
+	status = 0;
+out:
 	if (tx_msdu_info->peer) {
 		/* remove the peer reference added above */
 		OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info->peer);
 	}
-	ol_tx_sched(vdev->pdev);
 
-	return 0;
+	return status;
 }
 
 #else
