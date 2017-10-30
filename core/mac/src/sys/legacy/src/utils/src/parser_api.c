@@ -2351,6 +2351,24 @@ void update_fils_data(struct sir_fils_indication *fils_ind,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+static void update_bss_color_change_ie_from_probe_rsp(
+		tDot11fProbeResponse *prb_frm,
+		tpSirProbeRespBeacon prb_rsp_struct)
+{
+	if (prb_frm->bss_color_change.present) {
+		pe_debug("11AX: HE BSS color change present");
+		qdf_mem_copy(&prb_rsp_struct->vendor_he_bss_color_change,
+			     &prb_frm->bss_color_change,
+			     sizeof(tDot11fIEbss_color_change));
+	}
+}
+#else
+static inline void update_bss_color_change_ie_from_probe_rsp(
+		tDot11fProbeResponse *prb_frm,
+		tpSirProbeRespBeacon prb_rsp_struct)
+{}
+#endif
 tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 					      uint8_t *pFrame,
 					      uint32_t nFrame,
@@ -2623,6 +2641,8 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pProbeResp->he_op, &pr->he_op,
 			     sizeof(tDot11fIEhe_op));
 	}
+
+	update_bss_color_change_ie_from_probe_rsp(pr, pProbeResp);
 
 	qdf_mem_free(pr);
 	return eSIR_SUCCESS;
@@ -3150,6 +3170,11 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		pe_debug("11AX: HE Operation IE present");
 		qdf_mem_copy(&pAssocRsp->he_op, &ar->he_op,
 			     sizeof(tDot11fIEhe_op));
+		pe_debug("bss_clr %d def_pe %d part_bss_clr %d bss_col_dis %d",
+				pAssocRsp->he_op.bss_color,
+				pAssocRsp->he_op.default_pe,
+				pAssocRsp->he_op.partial_bss_col,
+				pAssocRsp->he_op.bss_col_disabled);
 	}
 
 	if (ar->MBO_IE.present && ar->MBO_IE.rssi_assoc_rej.present) {
@@ -3624,6 +3649,23 @@ err_bcnrep:
 
 #endif /* FEATURE_WLAN_ESE */
 
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+static void update_bss_color_change_from_beacon_ies(tDot11fBeaconIEs *bcn_ies,
+		tpSirProbeRespBeacon bcn_struct)
+{
+	if (bcn_ies->bss_color_change.present) {
+		qdf_mem_copy(&bcn_struct->vendor_he_bss_color_change,
+			     &bcn_ies->bss_color_change,
+			     sizeof(tDot11fIEbss_color_change));
+	}
+}
+#else
+static inline void update_bss_color_change_from_beacon_ies(
+		tDot11fBeaconIEs *bcn_ies,
+		tpSirProbeRespBeacon bcn_struct)
+{}
+#endif
+
 tSirRetStatus
 sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		    tpSirProbeRespBeacon pBeaconStruct,
@@ -3904,19 +3946,36 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 	}
 
 	if (pBies->he_cap.present) {
-		qdf_mem_copy(&pBeaconStruct->he_cap,
-			     &pBies->he_cap,
+		qdf_mem_copy(&pBeaconStruct->he_cap, &pBies->he_cap,
 			     sizeof(tDot11fIEhe_cap));
 	}
 	if (pBies->he_op.present) {
-		qdf_mem_copy(&pBeaconStruct->he_op,
-			     &pBies->he_op,
+		qdf_mem_copy(&pBeaconStruct->he_op, &pBies->he_op,
 			     sizeof(tDot11fIEhe_op));
 	}
+
+	update_bss_color_change_from_beacon_ies(pBies, pBeaconStruct);
 
 	qdf_mem_free(pBies);
 	return eSIR_SUCCESS;
 } /* End sir_parse_beacon_ie. */
+
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+static void convert_bcon_bss_color_change_ie(tDot11fBeacon *bcn_frm,
+		tpSirProbeRespBeacon bcn_struct)
+{
+	if (bcn_frm->bss_color_change.present) {
+		pe_debug("11AX: HE BSS color change present");
+		qdf_mem_copy(&bcn_struct->vendor_he_bss_color_change,
+			     &bcn_frm->bss_color_change,
+			     sizeof(tDot11fIEbss_color_change));
+	}
+}
+#else
+static inline void convert_bcon_bss_color_change_ie(tDot11fBeacon *bcn_frm,
+		tpSirProbeRespBeacon bcn_struct)
+{}
+#endif
 
 tSirRetStatus
 sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
@@ -4281,6 +4340,8 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 			     &pBeacon->he_op,
 			     sizeof(tDot11fIEhe_op));
 	}
+
+	convert_bcon_bss_color_change_ie(pBeacon, pBeaconStruct);
 
 	qdf_mem_free(pBeacon);
 	return eSIR_SUCCESS;

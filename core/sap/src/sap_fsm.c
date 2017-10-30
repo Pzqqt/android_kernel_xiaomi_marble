@@ -1726,7 +1726,10 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
 					sap_context->cc_switch_mode);
-			if (con_ch) {
+			if (con_ch && !(wlan_reg_is_dfs_ch(mac_ctx->pdev,
+						con_ch) &&
+			sap_context->cc_switch_mode ==
+	QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_ERROR,
 					"%s: Override ch %d to %d due to CC Intf",
@@ -4290,10 +4293,10 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx)
 		return sap_ctx->chan_before_pre_cac;
 	}
 
-	if (sap_ctx->vendor_acs_enabled && (QDF_STATUS_SUCCESS ==
+	if (sap_ctx->vendor_acs_dfs_lte_enabled && (QDF_STATUS_SUCCESS ==
 	    sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NEXT_CHANNEL_REQ,
 	    (void *) eSAP_STATUS_SUCCESS)))
-			return 0;
+		return 0;
 
 	target_channel = sap_random_channel_sel(sap_ctx);
 	if (!target_channel)

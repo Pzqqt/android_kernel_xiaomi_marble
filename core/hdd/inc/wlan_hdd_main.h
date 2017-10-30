@@ -1719,6 +1719,7 @@ struct hdd_context {
 	int user_configured_pkt_filter_rules;
 	bool is_fils_roaming_supported;
 	qdf_atomic_t disable_lro_in_concurrency;
+	qdf_atomic_t disable_lro_in_low_tput;
 	bool en_tcp_delack_no_lro;
 };
 
@@ -1985,6 +1986,16 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx);
  * Return: None.
  */
 void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_send_wlan_tp_ind() - Send throughput indication
+ * @hdd_ctx: HDD context
+ *
+ * Send throughput indication
+ *
+ * Return: None.
+ */
+void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx);
 #else
 
 static inline
@@ -2020,6 +2031,11 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
 
 static inline
 void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx)
 {
 }
 #endif
@@ -2107,6 +2123,17 @@ static inline bool hdd_scan_random_mac_addr_supported(void)
 }
 #endif
 
+/**
+ * hdd_start_vendor_acs(): Start vendor ACS procedure
+ * @adapter: pointer to SAP adapter struct
+ *
+ * This function sends the ACS config to the ACS daemon and
+ * starts the vendor ACS timer to wait for the next command.
+ *
+ * Return: Status of vendor ACS procedure
+ */
+int hdd_start_vendor_acs(struct hdd_adapter *adapter);
+
 void hdd_get_fw_version(struct hdd_context *hdd_ctx,
 			uint32_t *major_spid, uint32_t *minor_spid,
 			uint32_t *siid, uint32_t *crmid);
@@ -2134,10 +2161,10 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter);
  * @adapter: hdd adapter
  * @reason: channel change reason
  *
- * Return: none
+ * Return: 0 for success else error code
  */
-void hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
-				    uint8_t reason);
+int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
+				   uint8_t reason);
 /**
  * hdd_update_acs_timer_reason() - update acs timer start reason
  * @adapter: hdd adapter

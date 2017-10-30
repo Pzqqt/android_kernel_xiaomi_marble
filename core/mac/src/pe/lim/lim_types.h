@@ -497,6 +497,21 @@ static inline void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		tLimMlmReassocReq *reassoc_req, tpPESession pe_session)
 {}
 #endif
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+/**
+ * lim_process_set_he_bss_color() - process the set he bss color request
+ *
+ * @mac_ctx: global mac context pointer
+ * @msg_buf: message buffer pointer
+ *
+ * Return: void
+ */
+void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf);
+#else
+static inline void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx,
+		uint32_t *msg_buf)
+{}
+#endif
 void lim_send_delts_req_action_frame(tpAniSirGlobal pMac, tSirMacAddr peer,
 				     uint8_t wmmTspecPresent,
 				     tSirMacTSInfo * pTsinfo,

@@ -2199,6 +2199,7 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_11AX),y)
 CDEFINES += -DWLAN_FEATURE_11AX
+CDEFINES += -DWLAN_FEATURE_11AX_BSS_COLOR
 endif
 
 # Dummy flag for WIN/MCL converged data path compilation

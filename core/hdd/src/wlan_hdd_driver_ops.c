@@ -1455,6 +1455,8 @@ static void wlan_hdd_purge_notifier(void)
 static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
+
+	hdd_info("pld event %d", uevent->uevent);
 	switch (uevent->uevent) {
 	case PLD_RECOVERY:
 		cds_set_recovery_in_progress(true);

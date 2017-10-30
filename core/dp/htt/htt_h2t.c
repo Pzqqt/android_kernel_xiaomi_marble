@@ -1284,6 +1284,10 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 	else if (!uc_active && !is_tx)
 		active_target = HTT_WDI_IPA_OPCODE_RX_SUSPEND;
 
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO,
+			"%s: HTT_H2T_MSG_TYPE_WDI_IPA_OP_REQ (%d)\n",
+			__func__, active_target);
+
 	HTT_WDI_IPA_OP_REQUEST_OP_CODE_SET(*msg_word, active_target);
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_WDI_IPA_OP_REQ);
 

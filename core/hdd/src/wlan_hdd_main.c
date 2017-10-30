@@ -1075,6 +1075,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 	config->isRoamOffloadEnabled &= cfg->en_roam_offload;
 #endif
 	config->sap_get_peer_info &= cfg->get_peer_info_enabled;
+	config->MAWCEnabled &= cfg->is_fw_mawc_capable;
 	sme_update_tgt_services(hdd_ctx->hHal, cfg);
 
 }
@@ -4410,6 +4411,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 	case QDF_SAP_MODE:
 		/* Flush IPA exception path packets */
 		hdd_ipa_flush(hdd_ctx);
+
 	case QDF_P2P_GO_MODE:
 		if (QDF_SAP_MODE == adapter->device_mode) {
 			if (test_bit(ACS_PENDING, &adapter->event_flags)) {
@@ -4419,7 +4421,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 			}
 		}
 		cds_flush_work(&adapter->sap_stop_bss_work);
+
 		/* Any softap specific cleanup here... */
+		wlan_hdd_undo_acs(adapter);
 		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
@@ -6406,6 +6410,11 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 
 	hdd_ctx->prev_rx = rx_packets;
 
+	if (temp_rx < hdd_ctx->config->busBandwidthLowThreshold)
+		hdd_disable_lro_for_low_tput(hdd_ctx, true);
+	else
+		hdd_disable_lro_for_low_tput(hdd_ctx, false);
+
 	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh) {
 		if ((hdd_ctx->cur_rx_level != WLAN_SVC_TP_HIGH) &&
 		   (++hdd_ctx->rx_high_ind_cnt == delack_timer_cnt)) {
@@ -6647,6 +6656,13 @@ void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
 {
 	if (hdd_ctx)
 		cancel_work_sync(&hdd_ctx->bus_bw_work);
+}
+
+void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx)
+{
+	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+			WLAN_SVC_WLAN_TP_IND, &hdd_ctx->cur_rx_level,
+			sizeof(hdd_ctx->cur_rx_level));
 }
 #endif
 
@@ -7183,6 +7199,8 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel)
 int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 {
 	struct hdd_external_acs_timer_context *timer_context;
+	int status;
+	QDF_STATUS qdf_status;
 
 	set_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
 
@@ -7194,13 +7212,18 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 	timer_context = (struct hdd_external_acs_timer_context *)
 			adapter->sessionCtx.ap.vendor_acs_timer.user_data;
 	timer_context->reason = reason;
-	/* Update config to application and start the timer */
-	hdd_cfg80211_update_acs_config(adapter, reason);
-	qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
-		WLAN_VENDOR_ACS_WAIT_TIME);
+	qdf_status =
+		qdf_mc_timer_start(&adapter->sessionCtx.ap.vendor_acs_timer,
+				   WLAN_VENDOR_ACS_WAIT_TIME);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed to start external acs timer");
+		return -ENOSPC;
+	}
+	/* Update config to application */
+	status = hdd_cfg80211_update_acs_config(adapter, reason);
 	hdd_notice("Updated ACS config to nl with reason %d", reason);
 
-	return 0;
+	return status;
 }
 
 /**
@@ -10419,6 +10442,7 @@ void wlan_hdd_send_svc_nlink_msg(int radio, int type, void *data, int len)
 	case WLAN_SVC_WLAN_TP_IND:
 	case WLAN_SVC_WLAN_TP_TX_IND:
 	case WLAN_SVC_RPS_ENABLE_IND:
+	case WLAN_SVC_CORE_MINFREQ:
 		ani_hdr->length = len;
 		nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + len));
 		nl_data = (char *)ani_hdr + sizeof(tAniMsgHdr);
@@ -12116,6 +12140,8 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.rssi_cat_gap = cfg->nRssiCatGap;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
+	scan_cfg.usr_cfg_probe_rpt_time = cfg->scan_probe_repeat_time ;
+	scan_cfg.usr_cfg_num_probes = cfg->scan_num_probes ;
 	scan_cfg.is_bssid_hint_priority = cfg->is_bssid_hint_priority;
 
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);

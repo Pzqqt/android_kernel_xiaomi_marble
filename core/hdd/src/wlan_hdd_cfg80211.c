@@ -1610,6 +1610,8 @@ static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
 	bool is_dfs_mode_enabled = false;
 	uint32_t i, num_channels = 0;
 	uint8_t channels[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	eCsrPhyMode hw_mode;
+	tSirMacHTChannelWidth ch_width;
 
 	if (hdd_ctx->config->force_sap_acs_st_ch >
 			hdd_ctx->config->force_sap_acs_end_ch) {
@@ -1646,6 +1648,62 @@ static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
 	qdf_mem_copy(sap_config->acs_cfg.ch_list, channels, num_channels);
 	sap_config->acs_cfg.ch_list_count = num_channels;
 
+	/* Derive ACS HW mode */
+	hw_mode = hdd_cfg_xlate_to_csr_phy_mode(hdd_ctx->config->dot11Mode);
+	if (hw_mode == eCSR_DOT11_MODE_AUTO) {
+		if (sme_is_feature_supported_by_fw(DOT11AX))
+			hw_mode = eCSR_DOT11_MODE_11ax;
+		else
+			hw_mode = eCSR_DOT11_MODE_11ac;
+	}
+
+	if (hdd_ctx->config->sap_force_11n_for_11ac) {
+		if (hw_mode == eCSR_DOT11_MODE_11ac ||
+		    hw_mode == eCSR_DOT11_MODE_11ac_ONLY)
+			hw_mode = eCSR_DOT11_MODE_11n;
+	}
+
+	if ((hw_mode == eCSR_DOT11_MODE_11b ||
+	     hw_mode == eCSR_DOT11_MODE_11g ||
+	     hw_mode == eCSR_DOT11_MODE_11g_ONLY) &&
+			sap_config->acs_cfg.start_ch > 14) {
+		hdd_err("Invalid ACS HW Mode %d + CH range <%d - %d>",
+			hw_mode, sap_config->acs_cfg.start_ch,
+			sap_config->acs_cfg.end_ch);
+		return -EINVAL;
+	}
+	sap_config->acs_cfg.hw_mode = hw_mode;
+
+	/* Derive ACS BW */
+	ch_width = eHT_CHANNEL_WIDTH_20MHZ;
+	if (hw_mode == eCSR_DOT11_MODE_11ac ||
+	    hw_mode == eCSR_DOT11_MODE_11ac_ONLY ||
+	    hw_mode == eCSR_DOT11_MODE_11ax ||
+	    hw_mode == eCSR_DOT11_MODE_11ax_ONLY) {
+		ch_width = hdd_ctx->config->vhtChannelWidth;
+		/* VHT in 2.4G depends on gChannelBondingMode24GHz INI param */
+		if (sap_config->acs_cfg.end_ch <= 14)
+			ch_width =
+				hdd_ctx->config->nChannelBondingMode24GHz ?
+				eHT_CHANNEL_WIDTH_40MHZ :
+				eHT_CHANNEL_WIDTH_20MHZ;
+	}
+
+	if (hw_mode == eCSR_DOT11_MODE_11n ||
+	    hw_mode == eCSR_DOT11_MODE_11n_ONLY) {
+		if (sap_config->acs_cfg.end_ch <= 14)
+			ch_width =
+				hdd_ctx->config->nChannelBondingMode24GHz ?
+				eHT_CHANNEL_WIDTH_40MHZ :
+				eHT_CHANNEL_WIDTH_20MHZ;
+		else
+			ch_width =
+				hdd_ctx->config->nChannelBondingMode5GHz ?
+				eHT_CHANNEL_WIDTH_40MHZ :
+				eHT_CHANNEL_WIDTH_20MHZ;
+	}
+	sap_config->acs_cfg.ch_width = ch_width;
+
 	return 0;
 }
 
@@ -1656,9 +1714,9 @@ static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
  * This function sets the default ACS start and end channel for the given band
  * and also parses the given ACS channel list.
  *
- * Return: None
+ * Return: status
  */
-static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
+static int wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 							bool vht_enabled)
 {
 	int i;
@@ -1689,7 +1747,7 @@ static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 
 	/* Parse ACS Chan list from hostapd */
 	if (!sap_cfg->acs_cfg.ch_list)
-		return;
+		return -EINVAL;
 
 	sap_cfg->acs_cfg.start_ch = sap_cfg->acs_cfg.ch_list[0];
 	sap_cfg->acs_cfg.end_ch =
@@ -1702,6 +1760,8 @@ static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 		if (sap_cfg->acs_cfg.end_ch < sap_cfg->acs_cfg.ch_list[i])
 			sap_cfg->acs_cfg.end_ch = sap_cfg->acs_cfg.ch_list[i];
 	}
+
+	return 0;
 }
 
 
@@ -2158,12 +2218,12 @@ static void hdd_get_freq_list(uint8_t *channel_list, uint32_t *freq_list,
 		freq_list[count] = cds_chan_to_freq(channel_list[count]);
 }
 
-void hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
-				    uint8_t reason)
+int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
+				   uint8_t reason)
 {
 	struct sk_buff *skb;
 	tsap_Config_t *sap_config;
-	uint32_t channel_count = 0, status;
+	uint32_t channel_count = 0, status = -EINVAL;
 	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
 	uint32_t freq_list[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t vendor_pcl_list[QDF_MAX_NUM_CHAN] = {0};
@@ -2178,7 +2238,7 @@ void hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
-		return;
+		return -EINVAL;
 	}
 
 	ENTER();
@@ -2238,7 +2298,7 @@ void hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 
 	if (!skb) {
 		hdd_err("cfg80211_vendor_event_alloc failed");
-		return;
+		return -ENOMEM;
 	}
 	/*
 	 * Application expects pcl to be a subset of channel list
@@ -2324,27 +2384,45 @@ void hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 		goto fail;
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
-	return;
+	return 0;
 fail:
 	if (skb)
 		kfree_skb(skb);
+	return status;
 }
 
+/**
+ * hdd_create_acs_timer(): Initialize vendor ACS timer
+ * @adapter: pointer to SAP adapter struct
+ *
+ * This function initializes the vendor ACS timer.
+ *
+ * Return: Status of create vendor ACS timer
+ */
 static int hdd_create_acs_timer(struct hdd_adapter *adapter)
 {
 	struct hdd_external_acs_timer_context *timer_context;
+	QDF_STATUS status;
 
 	if (adapter->sessionCtx.ap.vendor_acs_timer_initialized)
 		return 0;
 
-	hdd_notice("Starting vendor app based ACS");
+	hdd_debug("Starting vendor app based ACS");
 	timer_context = qdf_mem_malloc(sizeof(*timer_context));
+	if (!timer_context) {
+		hdd_err("Could not allocate for timer_context");
+		return -ENOMEM;
+	}
 	timer_context->adapter = adapter;
 
 	set_bit(VENDOR_ACS_RESPONSE_PENDING, &adapter->event_flags);
-	qdf_mc_timer_init(&adapter->sessionCtx.ap.vendor_acs_timer,
+	status = qdf_mc_timer_init(&adapter->sessionCtx.ap.vendor_acs_timer,
 		  QDF_TIMER_TYPE_SW,
 		  hdd_acs_response_timeout_handler, timer_context);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Failed to initialize acs response timeout timer");
+		return -EFAULT;
+	}
 	adapter->sessionCtx.ap.vendor_acs_timer_initialized = true;
 	return 0;
 }
@@ -2360,6 +2438,35 @@ wlan_hdd_cfg80211_do_acs_policy[QCA_WLAN_VENDOR_ATTR_ACS_MAX+1] = {
 	[QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST] = { .type = NLA_UNSPEC },
 };
 
+int hdd_start_vendor_acs(struct hdd_adapter *adapter)
+{
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	int status;
+
+	status = hdd_create_acs_timer(adapter);
+	if (status != 0) {
+		hdd_err("failed to create acs timer");
+		return status;
+	}
+	status = hdd_update_acs_timer_reason(adapter,
+		QCA_WLAN_VENDOR_ACS_SELECT_REASON_INIT);
+	if (status != 0) {
+		hdd_err("failed to update acs timer reason");
+		return status;
+	}
+
+	if (hdd_ctx->config->acs_support_for_dfs_ltecoex)
+		status = qdf_status_to_os_return(wlan_sap_set_vendor_acs(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+				true));
+	else
+		status = qdf_status_to_os_return(wlan_sap_set_vendor_acs(
+				WLAN_HDD_GET_SAP_CTX_PTR(adapter),
+				false));
+
+	return status;
+}
+
 /**
  * __wlan_hdd_cfg80211_do_acs(): CFG80211 handler function for DO_ACS Vendor CMD
  * @wiphy:  Linux wiphy struct pointer
@@ -2372,7 +2479,6 @@ wlan_hdd_cfg80211_do_acs_policy[QCA_WLAN_VENDOR_ATTR_ACS_MAX+1] = {
  *
  * Return: ACS procedure start status
  */
-
 static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					struct wireless_dev *wdev,
 					const void *data, int data_len)
@@ -2431,6 +2537,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE]) {
 		hdd_err("Attr hw_mode failed");
+		status = -EINVAL;
 		goto out;
 	}
 	hw_mode = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE]);
@@ -2504,8 +2611,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 					sizeof(uint8_t) *
 					sap_config->acs_cfg.ch_list_count);
-			if (sap_config->acs_cfg.ch_list == NULL)
+			if (!sap_config->acs_cfg.ch_list) {
+				hdd_err("ACS config alloc fail");
+				status = -ENOMEM;
 				goto out;
+			}
 
 			qdf_mem_copy(sap_config->acs_cfg.ch_list, tmp,
 					sap_config->acs_cfg.ch_list_count);
@@ -2519,7 +2629,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		if (sap_config->acs_cfg.ch_list_count) {
 			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count);
-			if (sap_config->acs_cfg.ch_list == NULL) {
+			if (!sap_config->acs_cfg.ch_list) {
 				hdd_err("ACS config alloc fail");
 				status = -ENOMEM;
 				goto out;
@@ -2540,7 +2650,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				&sap_config->acs_cfg.pcl_ch_count,
 				sap_config->acs_cfg.pcl_channels_weight_list,
 				QDF_MAX_NUM_CHAN);
-	if (QDF_STATUS_SUCCESS != qdf_status)
+	if (qdf_status != QDF_STATUS_SUCCESS)
 		hdd_err("Get PCL failed");
 
 	if (sap_config->acs_cfg.pcl_ch_count) {
@@ -2554,14 +2664,20 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				  pcl_channels_weight_list[i]);
 	}
 
-	wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
+	status = wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
+	if (status) {
+		hdd_err("set acs channel range failed");
+		goto out;
+	}
 
 	if (hdd_ctx->config->force_sap_acs) {
 		hdd_debug("forcing SAP acs start and end channel");
 		status = wlan_hdd_reset_force_acs_chan_range(hdd_ctx,
 						sap_config);
-		if (status != 0)
+		if (status) {
+			hdd_err("reset force acs channel range failed");
 			goto out;
+		}
 	}
 
 	sap_config->acs_cfg.band = hw_mode;
@@ -2618,20 +2734,9 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		status = 0;
 	} else {
 		/* Check if vendor specific acs is enabled */
-		if (hdd_ctx->config->vendor_acs_support) {
-			hdd_create_acs_timer(adapter);
-			hdd_update_acs_timer_reason(adapter,
-				QCA_WLAN_VENDOR_ACS_SELECT_REASON_INIT);
-			if (hdd_ctx->config->acs_support_for_dfs_ltecoex)
-				wlan_sap_set_vendor_acs(
-					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-					true);
-			else
-				wlan_sap_set_vendor_acs(
-					WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-					false);
-
-		} else
+		if (hdd_ctx->config->vendor_acs_support)
+			status = hdd_start_vendor_acs(adapter);
+		else
 			status = wlan_hdd_cfg80211_start_acs(adapter);
 	}
 

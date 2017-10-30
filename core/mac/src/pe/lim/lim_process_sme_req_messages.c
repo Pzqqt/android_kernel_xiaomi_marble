@@ -6046,3 +6046,59 @@ static void lim_process_set_ie_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		pe_err("Unable to send ExtCap to FW");
 
 }
+
+#ifdef WLAN_FEATURE_11AX_BSS_COLOR
+void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
+{
+	struct sir_set_he_bss_color *bss_color;
+	tpPESession session_entry = NULL;
+	tUpdateBeaconParams beacon_params;
+
+	if (!msg_buf) {
+		pe_err("Buffer is Pointing to NULL");
+		return;
+	}
+
+	bss_color = (struct sir_set_he_bss_color *)msg_buf;
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
+				bss_color->session_id);
+	if (!session_entry) {
+		pe_err("Session not found for given session_id %d",
+			bss_color->session_id);
+		return;
+	}
+
+	if (session_entry->valid && !LIM_IS_AP_ROLE(session_entry)) {
+		pe_err("Invalid SystemRole %d",
+			GET_LIM_SYSTEM_ROLE(session_entry));
+		return;
+	}
+
+	if (bss_color->bss_color == session_entry->he_op.bss_color) {
+		pe_err("No change in  BSS color, current BSS color %d",
+			bss_color->bss_color);
+		return;
+	}
+	qdf_mem_zero(&beacon_params, sizeof(beacon_params));
+	beacon_params.paramChangeBitmap |= PARAM_BSS_COLOR_CHANGED;
+	session_entry->he_op.bss_col_disabled = 1;
+	session_entry->he_bss_color_change.countdown =
+		BSS_COLOR_SWITCH_COUNTDOWN;
+	session_entry->he_bss_color_change.new_color = bss_color->bss_color;
+	session_entry->he_op.bss_color =
+		session_entry->he_bss_color_change.new_color;
+	WMI_HEOPS_COLOR_SET(beacon_params.he_ops,
+			session_entry->he_op.bss_color);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(beacon_params.he_ops,
+			session_entry->he_op.bss_col_disabled);
+	session_entry->bss_color_changing = 1;
+
+	if (sch_set_fixed_beacon_fields(mac_ctx, session_entry) !=
+			eSIR_SUCCESS) {
+		pe_err("Unable to set op mode IE in beacon");
+		return;
+	}
+
+	lim_send_beacon_params(mac_ctx, &beacon_params, session_entry);
+}
+#endif

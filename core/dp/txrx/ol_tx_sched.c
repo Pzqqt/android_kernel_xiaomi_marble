@@ -936,7 +936,7 @@ ol_tx_sched_txq_deactivate_wrr_adv(
 		category->state.active = 0;
 }
 
-ol_tx_frms_queue_list *
+static ol_tx_frms_queue_list *
 ol_tx_sched_category_tx_queues_wrr_adv(struct ol_txrx_pdev_t *pdev, int cat)
 {
 	struct ol_tx_sched_wrr_adv_t *scheduler = pdev->tx_sched.scheduler;
@@ -946,7 +946,7 @@ ol_tx_sched_category_tx_queues_wrr_adv(struct ol_txrx_pdev_t *pdev, int cat)
 	return &category->state.head;
 }
 
-int
+static int
 ol_tx_sched_discard_select_category_wrr_adv(struct ol_txrx_pdev_t *pdev)
 {
 	struct ol_tx_sched_wrr_adv_t *scheduler;
@@ -974,7 +974,7 @@ ol_tx_sched_discard_select_category_wrr_adv(struct ol_txrx_pdev_t *pdev)
 	return cat;
 }
 
-void
+static void
 ol_tx_sched_txq_discard_wrr_adv(
 	struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_frms_queue_t *txq,
@@ -996,7 +996,7 @@ ol_tx_sched_txq_discard_wrr_adv(
 		category->state.active = 0;
 }
 
-void
+static void
 ol_tx_sched_category_info_wrr_adv(
 	struct ol_txrx_pdev_t *pdev,
 	int cat, int *active,
@@ -1077,7 +1077,7 @@ void ol_tx_sched_wrr_param_update(struct ol_txrx_pdev_t *pdev,
 	}
 }
 
-void *
+static void *
 ol_tx_sched_init_wrr_adv(
 		struct ol_txrx_pdev_t *pdev)
 {
@@ -1228,7 +1228,7 @@ void ol_tx_sched_stats_clear(struct ol_txrx_pdev_t *pdev)
 
 /*--- congestion control discard --------------------------------------------*/
 
-struct ol_tx_frms_queue_t *
+static struct ol_tx_frms_queue_t *
 ol_tx_sched_discard_select_txq(
 		struct ol_txrx_pdev_t *pdev,
 		ol_tx_frms_queue_list *tx_queues)
@@ -1370,7 +1370,7 @@ ol_tx_sched_notify(
 
 #define OL_TX_MSDU_ID_STORAGE_ERR(ptr) (NULL == ptr)
 
-void
+static void
 ol_tx_sched_dispatch(
 	struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_sched_ctx *sctx)
