@@ -34,13 +34,13 @@
 #include "wlan_pmo_hw_filter_public_struct.h"
 
 /**
- * pmo_ucfg_is_ap_mode_supports_arp_ns() - Check ap mode support arp&ns offload
+ * ucfg_pmo_is_ap_mode_supports_arp_ns() - Check ap mode support arp&ns offload
  * @psoc: objmgr psoc
  * @vdev_opmode: vdev opmode
  *
  * Return: true in case support else false
  */
-bool pmo_ucfg_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
+bool ucfg_pmo_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
 	enum tQDF_ADAPTER_MODE vdev_opmode);
 
 /**
