@@ -537,7 +537,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 		goto out;
 	}
 
-	if (!pmo_ucfg_is_vdev_connected(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_connected(adapter->hdd_vdev)) {
 		hdd_info("vdev is not connected");
 		goto out;
 	}
@@ -564,7 +564,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 			goto out;
 	}
 
-	if (!pmo_ucfg_is_vdev_connected(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_connected(adapter->hdd_vdev)) {
 		hdd_info("vdev is not connected");
 		goto out;
 	}
