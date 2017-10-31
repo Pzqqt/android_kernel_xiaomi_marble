@@ -44,12 +44,12 @@ bool ucfg_pmo_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
 	enum tQDF_ADAPTER_MODE vdev_opmode);
 
 /**
- * pmo_ucfg_is_vdev_connected() -  to check whether peer is associated or not
+ * ucfg_pmo_is_vdev_connected() -  to check whether peer is associated or not
  * @vdev: objmgr vdev
  *
  * Return: true in case success else false
  */
-bool pmo_ucfg_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
+bool ucfg_pmo_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
 
 /**
  * pmo_ucfg_is_vdev_supports_offload() - check offload is supported on vdev
