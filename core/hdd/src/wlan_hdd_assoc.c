@@ -2449,8 +2449,6 @@ static void hdd_change_peer_state_after_set_key(struct hdd_adapter *adapter,
 		hdd_sta_ctx->conn_info.gtk_installed = false;
 		hdd_sta_ctx->conn_info.ptk_installed = false;
 	}
-
-	hdd_sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
 }
 
 /**
@@ -2494,12 +2492,6 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(struct hdd_adapter *adapter,
 	if (fConnected) {
 		hdd_change_peer_state_after_set_key(adapter, roam_info,
 						    roamResult);
-	} else {
-		/*
-		 * possible disassoc after issuing set key and waiting
-		 * set key complete.
-		 */
-		sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
 	}
 
 	EXIT();

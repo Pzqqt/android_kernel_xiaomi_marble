@@ -13544,11 +13544,11 @@ void wlan_hdd_cfg80211_deregister_frames(struct hdd_adapter *adapter)
 }
 
 #ifdef FEATURE_WLAN_WAPI
-void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter, uint8_t key_index,
+void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
+				    uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len)
 {
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	tCsrRoamSetKey setKey;
 	bool isConnected = true;
 	int status = 0;
@@ -13575,14 +13575,11 @@ void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter, uint8_t key_ind
 
 	hdd_debug("WAPI KEY LENGTH:0x%04x", key_Len);
 
-	sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 	if (isConnected) {
 		status = sme_roam_set_key(WLAN_HDD_GET_HAL_CTX(adapter),
 					  adapter->sessionId, &setKey, &roamId);
-	}
-	if (status != 0) {
-		hdd_err("sme_roam_set_key failed status: %d", status);
-		sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
+		if (status != 0)
+			hdd_err("sme_roam_set_key failed status: %d", status);
 	}
 }
 #endif /* FEATURE_WLAN_WAPI */
@@ -14452,8 +14449,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			     KeyMaterial[key_index][0], params->key,
 			     params->key_len);
 
-		sta_ctx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
-
 		hdd_debug("Set key for peerMac "MAC_ADDRESS_STR" direction %d",
 		       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
 		       setKey.keyDirection);
@@ -14478,8 +14473,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		if (0 != status) {
 			hdd_err("sme_roam_set_key failed, status: %d", status);
-			sta_ctx->roam_info.roamingState =
-				HDD_ROAM_STATE_NONE;
 			return -EINVAL;
 		}
 
@@ -14513,8 +14506,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 			if (0 != status) {
 				hdd_err("sme_roam_set_key failed for group key (IBSS), returned %d", status);
-				sta_ctx->roam_info.roamingState =
-					HDD_ROAM_STATE_NONE;
 				return -EINVAL;
 			}
 		}

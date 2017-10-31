@@ -509,22 +509,8 @@ struct hdd_stats {
 #endif
 };
 
-enum hdd_roam_state {
-	HDD_ROAM_STATE_NONE,
-
-	/* Issuing a disconnect due to transition into low power states */
-	HDD_ROAM_STATE_DISCONNECTING_POWER,
-
-	/* Move to this state when HDD sets a key with SME/CSR.  Note this is
-	 * an important state to get right because we will get calls into our
-	 * SME callback routine for SetKey activity that we did not initiate!
-	 */
-	HDD_ROAM_STATE_SETTING_KEY,
-};
-
 /**
  * struct hdd_roaming_info - HDD Internal Roaming Information
- * @roamingState: Current state of roaming
  * @bssid: BSSID to which we are connected
  * @peerMac: Peer MAC address for IBSS connection
  * @roamId: Unique identifier for a roaming instance
@@ -533,7 +519,6 @@ enum hdd_roam_state {
  *
  */
 struct hdd_roaming_info {
-	enum hdd_roam_state roamingState;
 	tSirMacAddr bssid;
 	tSirMacAddr peerMac;
 	uint32_t roamId;
