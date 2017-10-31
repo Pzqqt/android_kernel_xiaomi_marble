@@ -706,6 +706,7 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	if (LIM_IS_AP_ROLE(session)) {
 		qdf_mc_timer_stop(&session->protection_fields_reset_timer);
 		qdf_mc_timer_destroy(&session->protection_fields_reset_timer);
+		lim_del_pmf_sa_query_timer(mac_ctx, session);
 	}
 
 	/* Delete FT related information */
