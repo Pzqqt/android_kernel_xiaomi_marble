@@ -803,7 +803,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		 */
 		qdf_net_buf_debug_release_skb(skb);
 		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
-			!hdd_ctx->enableRxThread)
+			!hdd_ctx->enable_rxthread)
 			rxstat = netif_receive_skb(skb);
 		else
 			rxstat = netif_rx_ni(skb);

@@ -7187,7 +7187,7 @@ static void hdd_set_rx_mode_value(struct hdd_context *hdd_ctx)
 	}
 
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RX_THREAD)
-		hdd_ctx->enableRxThread = true;
+		hdd_ctx->enable_rxthread = true;
 
 	if (hdd_ctx->config->rx_mode & CFG_ENABLE_RPS)
 		hdd_ctx->rps = true;

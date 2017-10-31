@@ -8273,7 +8273,7 @@ static int hdd_update_cds_config(struct hdd_context *hdd_ctx)
 
 	cds_cfg->ip_tcp_udp_checksum_offload =
 		hdd_ctx->config->enable_ip_tcp_udp_checksum_offload;
-	cds_cfg->enable_rxthread = hdd_ctx->enableRxThread;
+	cds_cfg->enable_rxthread = hdd_ctx->enable_rxthread;
 	cds_cfg->ce_classify_enabled =
 		hdd_ctx->config->ce_classify_enabled;
 	cds_cfg->bpf_packet_filter_enable =
