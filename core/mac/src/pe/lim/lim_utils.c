@@ -7860,12 +7860,12 @@ QDF_STATUS lim_populate_he_mcs_set(tpAniSirGlobal mac_ctx,
 		WNI_CFG_HE_RX_MCS_MAP_80_80, WNI_CFG_HE_TX_MCS_MAP_80_80);
 	if (!support_2x2) {
 		/* disable 2 and higher NSS MCS sets */
-		rates->rx_he_mcs_map_lt_80 |= 0xFFFD;
-		rates->tx_he_mcs_map_lt_80 |= 0xFFFD;
-		rates->rx_he_mcs_map_160 |= 0xFFFD;
-		rates->tx_he_mcs_map_160 |= 0xFFFD;
-		rates->rx_he_mcs_map_80_80 |= 0xFFFD;
-		rates->tx_he_mcs_map_80_80 |= 0xFFFD;
+		rates->rx_he_mcs_map_lt_80 |= HE_MCS_INV_MSK_4_NSS(1);
+		rates->tx_he_mcs_map_lt_80 |= HE_MCS_INV_MSK_4_NSS(1);
+		rates->rx_he_mcs_map_160 |= HE_MCS_INV_MSK_4_NSS(1);
+		rates->tx_he_mcs_map_160 |= HE_MCS_INV_MSK_4_NSS(1);
+		rates->rx_he_mcs_map_80_80 |= HE_MCS_INV_MSK_4_NSS(1);
+		rates->tx_he_mcs_map_80_80 |= HE_MCS_INV_MSK_4_NSS(1);
 	}
 
 	pe_debug("enable2x2 - %d nss %d",

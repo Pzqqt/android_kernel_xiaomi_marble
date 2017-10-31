@@ -7668,7 +7668,7 @@ struct he_capability {
 #define HE_GET_NSS(mcs, nss)                                         \
 	do {                                                         \
 		(nss) = 0;                                           \
-		while ((((mcs) >> ((nss)*2)) & 3) != 3 && nss <= 8)  \
+		while ((((mcs) >> ((nss)*2)) & 3) != 3 && nss < 8)   \
 			(nss)++;                                     \
 	} while (0)
 

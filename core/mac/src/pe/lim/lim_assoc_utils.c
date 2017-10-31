@@ -1638,6 +1638,26 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 }
 
+#ifdef WLAN_FEATURE_11AX
+/**
+ * lim_calculate_he_nss() - function to calculate new nss from he rates
+ * @rates: supported rtes struct object
+ * @session: pe session entry
+ * This function calculates nss from rx_he_mcs_map_lt_80 within rates struct
+ * object and assigns new value to nss within pe_session
+ *
+ * Return: None
+ */
+static void lim_calculate_he_nss(tpSirSupportedRates rates, tpPESession session)
+{
+	HE_GET_NSS(rates->rx_he_mcs_map_lt_80, session->nss);
+}
+#else
+static void lim_calculate_he_nss(tpSirSupportedRates rates, tpPESession session)
+{
+}
+#endif
+
 tSirRetStatus
 lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 		tpSirSupportedRates pRates, uint8_t *pSupportedMCSSet,
@@ -1778,7 +1798,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			psessionEntry, psessionEntry->nss);
 
 	if (IS_DOT11_MODE_HE(psessionEntry->dot11mode) && he_caps) {
-		HE_GET_NSS(he_caps->rx_he_mcs_map_lt_80, psessionEntry->nss);
+		lim_calculate_he_nss(pRates, psessionEntry);
 	} else if (IS_DOT11_MODE_VHT(psessionEntry->dot11mode)) {
 		if ((pRates->vhtRxMCSMap & MCSMAPMASK2x2) == MCSMAPMASK2x2)
 			psessionEntry->nss = NSS_1x1_MODE;
