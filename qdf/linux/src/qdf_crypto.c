@@ -208,7 +208,7 @@ int qdf_aes_s2v(const uint8_t *key, unsigned int key_len, const uint8_t *s[],
 		/* len(Sn) < 128 */
 		/* T = qdf_update_dbl(D) xor pad(Sn) */
 		qdf_update_dbl(d);
-		qdf_mem_set(buf, 0, AES_BLOCK_SIZE);
+		qdf_mem_set(buf, AES_BLOCK_SIZE, 0);
 		qdf_mem_copy(buf, s[i], s_len[i]);
 		buf[s_len[i]] = 0x80;
 		xor(d, s[i], AES_BLOCK_SIZE);

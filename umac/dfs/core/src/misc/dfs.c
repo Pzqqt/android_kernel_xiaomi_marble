@@ -582,7 +582,7 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 			    (rs_ext != NULL))) {
 			struct wlan_dfs_phyerr_param pe;
 
-			qdf_mem_set(&pe, '\0', sizeof(pe));
+			qdf_mem_set(&pe, sizeof(pe), '\0');
 
 			if (index_pri != dfs->dfs_curchan_radindex)
 				dfs_reset_alldelaylines(dfs);

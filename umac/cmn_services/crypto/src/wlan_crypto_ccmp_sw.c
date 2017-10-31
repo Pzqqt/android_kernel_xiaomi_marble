@@ -96,7 +96,7 @@ uint8_t *wlan_crypto_ccmp_decrypt(const uint8_t *tk,
 
 	mlen = data_len - 8 - 8;
 
-	qdf_mem_set(aad, 0, sizeof(aad));
+	qdf_mem_set(aad, sizeof(aad), 0);
 	ccmp_aad_nonce(hdr, data, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP nonce", nonce, 13);
@@ -155,7 +155,7 @@ uint8_t *wlan_crypto_ccmp_encrypt(const uint8_t *tk, uint8_t *frame,
 	hdr->frame_control |= qdf_cpu_to_le16(WLAN_FC_ISWEP);
 	pos = crypt + hdrlen + 8;
 
-	qdf_mem_set(aad, 0, sizeof(aad));
+	qdf_mem_set(aad, sizeof(aad), 0);
 	ccmp_aad_nonce(hdr, crypt + hdrlen, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP nonce", nonce, 13);
@@ -194,7 +194,7 @@ uint8_t *wlan_crypto_ccmp_256_decrypt(const uint8_t *tk,
 
 	mlen = data_len - 8 - 16;
 
-	qdf_mem_set(aad, 0, sizeof(aad));
+	qdf_mem_set(aad, sizeof(aad), 0);
 	ccmp_aad_nonce(hdr, data, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 nonce", nonce, 13);
@@ -250,7 +250,7 @@ uint8_t *wlan_crypto_ccmp_256_encrypt(const uint8_t *tk, uint8_t *frame,
 	*pos++ = pn[1]; /* PN4 */
 	*pos++ = pn[0]; /* PN5 */
 
-	qdf_mem_set(aad, 0, sizeof(aad));
+	qdf_mem_set(aad, sizeof(aad), 0);
 	ccmp_aad_nonce(hdr, crypt + hdrlen, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "CCMP-256 nonce", nonce, 13);

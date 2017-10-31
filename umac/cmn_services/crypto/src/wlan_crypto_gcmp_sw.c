@@ -92,7 +92,7 @@ uint8_t *wlan_crypto_gcmp_decrypt(const uint8_t *tk, size_t tk_len,
 	m = data + 8;
 	mlen = data_len - 8 - 16;
 
-	qdf_mem_set(aad, 0, sizeof(aad));
+	qdf_mem_set(aad, sizeof(aad), 0);
 	gcmp_aad_nonce(hdr, data, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "GCMP AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "GCMP nonce", nonce, sizeof(nonce));
@@ -146,7 +146,7 @@ uint8_t *wlan_crypto_gcmp_encrypt(const uint8_t *tk, size_t tk_len,
 	*pos++ = pn[1]; /* PN4 */
 	*pos++ = pn[0]; /* PN5 */
 
-	qdf_mem_set(aad, 0, sizeof(aad));
+	qdf_mem_set(aad, sizeof(aad), 0);
 	gcmp_aad_nonce(hdr, crypt + hdrlen, aad, &aad_len, nonce);
 	wpa_hexdump(MSG_EXCESSIVE, "GCMP AAD", aad, aad_len);
 	wpa_hexdump(MSG_EXCESSIVE, "GCMP nonce", nonce, sizeof(nonce));

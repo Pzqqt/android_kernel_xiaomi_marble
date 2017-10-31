@@ -184,7 +184,7 @@ static void *aes_gcm_init_hash_subkey(const uint8_t *key, size_t key_len,
 		return NULL;
 
 	/* Generate hash subkey H = AES_K(0^128) */
-	qdf_mem_set(H, 0, AES_BLOCK_SIZE);
+	qdf_mem_set(H, AES_BLOCK_SIZE, 0);
 	wlan_crypto_aes_encrypt(aes, H, H);
 	wpa_hexdump_key(MSG_EXCESSIVE, "Hash subkey H for GHASH",
 			H, AES_BLOCK_SIZE);
@@ -199,7 +199,7 @@ static void aes_gcm_prepare_j0(const uint8_t *iv, size_t iv_len,
 	if (iv_len == 12) {
 		/* Prepare block J_0 = IV || 0^31 || 1 [len(IV) = 96] */
 		qdf_mem_copy(J0, iv, iv_len);
-		qdf_mem_set(J0 + iv_len, 0, AES_BLOCK_SIZE - iv_len);
+		qdf_mem_set(J0 + iv_len, AES_BLOCK_SIZE - iv_len, 0);
 		J0[AES_BLOCK_SIZE - 1] = 0x01;
 	} else {
 		/*

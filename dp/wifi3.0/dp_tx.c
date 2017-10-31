@@ -1436,7 +1436,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
 
-	qdf_mem_set(meta_data, 0, sizeof(struct htt_tx_msdu_desc_ext2_t));
+	qdf_mem_set(meta_data, sizeof(struct htt_tx_msdu_desc_ext2_t), 0);
 
 	meta_data->host_tx_desc_pool = 1;
 

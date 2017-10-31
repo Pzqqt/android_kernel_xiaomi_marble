@@ -670,7 +670,7 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 	dfs_radar_summary_print(dfs, &rs);
 
 	/* Populate dfs_phy_err from rs. */
-	qdf_mem_set(e, 0, sizeof(*e));
+	qdf_mem_set(e, sizeof(*e), 0);
 	e->rssi = rs.rssi;
 	e->dur = rs.pulse_duration;
 	e->is_pri = 1; /* Always PRI for now */

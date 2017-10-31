@@ -141,7 +141,7 @@ int dfs_process_phyerr_owl(struct wlan_dfs *dfs,
 	return 0;
 
 	/* Fill out dfs_phy_err with the information we have at hand. */
-	qdf_mem_set(e, 0, sizeof(*e));
+	qdf_mem_set(e, sizeof(*e), 0);
 	e->rssi = rssi;
 	e->dur = dur;
 	e->is_pri = 1;
@@ -279,7 +279,7 @@ int dfs_process_phyerr_sowl(struct wlan_dfs *dfs,
 		rssi = ext_rssi;
 
 	/* Fill out the rssi/duration fields from above. */
-	qdf_mem_set(e, 0, sizeof(*e));
+	qdf_mem_set(e, sizeof(*e), 0);
 	e->rssi = rssi;
 	e->dur = dur;
 	e->is_pri = pri_found;
@@ -591,7 +591,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	if (r_ext_rssi & 0x80)
 		r_ext_rssi = 0;
 
-	qdf_mem_set(&e, 0, sizeof(e));
+	qdf_mem_set(&e, sizeof(e), 0);
 
 	/*
 	 * This is a bit evil - instead of just passing in the chip version, the
