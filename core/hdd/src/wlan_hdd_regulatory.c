@@ -713,7 +713,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		return;
 	}
 
-	if (hdd_ctx->isWiphySuspended == true) {
+	if (hdd_ctx->is_wiphy_suspended == true) {
 		hdd_err("%s: system/cfg80211 is already suspend", __func__);
 		return;
 	}

@@ -6464,7 +6464,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return;
 
-	if (hdd_ctx->isWiphySuspended)
+	if (hdd_ctx->is_wiphy_suspended)
 		goto restart_timer;
 
 	for (status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
@@ -9512,9 +9512,9 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	cds_set_module_stop_in_progress(true);
 
 	active_threads = cds_return_external_threads_count();
-	if (active_threads > 0 || hdd_ctx->isWiphySuspended) {
+	if (active_threads > 0 || hdd_ctx->is_wiphy_suspended) {
 		hdd_warn("External threads %d wiphy suspend %d",
-			 active_threads, hdd_ctx->isWiphySuspended);
+			 active_threads, hdd_ctx->is_wiphy_suspended);
 
 		cds_print_external_threads();
 
@@ -9683,7 +9683,7 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 	hdd_debug("size of buffer: %d", *size);
 
 	len += scnprintf(buf + len, *size - len,
-		"\n isWiphySuspended %d", hdd_ctx->isWiphySuspended);
+		"\n is_wiphy_suspended %d", hdd_ctx->is_wiphy_suspended);
 	len += scnprintf(buf + len, *size - len,
 		"\n is_scheduler_suspended %d",
 		hdd_ctx->is_scheduler_suspended);

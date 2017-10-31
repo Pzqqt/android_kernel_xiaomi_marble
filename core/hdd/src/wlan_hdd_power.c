@@ -1288,7 +1288,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	if (hdd_ctx->is_scheduler_suspended) {
 		scheduler_resume();
 		hdd_ctx->is_scheduler_suspended = false;
-		hdd_ctx->isWiphySuspended = false;
+		hdd_ctx->is_wiphy_suspended = false;
 	}
 #ifdef QCA_CONFIG_SMP
 	if (true == hdd_ctx->is_ol_rx_thread_suspended) {
@@ -1656,9 +1656,9 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
-			 NO_SESSION, hdd_ctx->isWiphySuspended));
+			 NO_SESSION, hdd_ctx->is_wiphy_suspended));
 	qdf_spin_lock(&hdd_ctx->sched_scan_lock);
-	hdd_ctx->isWiphySuspended = false;
+	hdd_ctx->is_wiphy_suspended = false;
 	if (true != hdd_ctx->isSchedScanUpdatePending) {
 		qdf_spin_unlock(&hdd_ctx->sched_scan_lock);
 		hdd_debug("Return resume is not due to PNO indication");
@@ -1903,8 +1903,8 @@ next_adapter:
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
-			 NO_SESSION, hdd_ctx->isWiphySuspended));
-	hdd_ctx->isWiphySuspended = true;
+			 NO_SESSION, hdd_ctx->is_wiphy_suspended));
+	hdd_ctx->is_wiphy_suspended = true;
 
 	pld_request_bus_bandwidth(hdd_ctx->parent_dev, PLD_BUS_WIDTH_NONE);
 

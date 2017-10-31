@@ -1534,7 +1534,7 @@ struct hdd_context {
 	qdf_spinlock_t sched_scan_lock;
 
 	/* Flag keeps track of wiphy suspend/resume */
-	bool isWiphySuspended;
+	bool is_wiphy_suspended;
 
 	/* Indicates about pending sched_scan results */
 	bool isSchedScanUpdatePending;
