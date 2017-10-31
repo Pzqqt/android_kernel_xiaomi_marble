@@ -191,7 +191,6 @@ struct sap_context {
 
 	uint8_t *channelList;
 	uint8_t num_of_channel;
-	tSapChannelListInfo SapChnlList;
 	uint16_t ch_width_orig;
 	struct ch_params ch_params;
 

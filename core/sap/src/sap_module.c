@@ -382,16 +382,19 @@ QDF_STATUS wlansap_stop(struct sap_context *sap_ctx)
 			  FL("sap session can't be closed"));
 		return QDF_STATUS_E_FAULT;
 	}
+	qdf_event_destroy(&sap_ctx->sap_session_opened_evt);
 	ucfg_scan_unregister_requester(pmac->psoc, sap_ctx->req_id);
 	sap_free_roam_profile(&sap_ctx->csr_roamProfile);
+	if (sap_ctx->sessionId != CSR_SESSION_ID_INVALID) {
+		/* empty queues/lists/pkts if any */
+		sap_clear_session_param(hal, sap_ctx, sap_ctx->sessionId);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlansap_close(struct sap_context *sap_ctx)
 {
-	tHalHandle hal;
-
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_close invoked");
 
@@ -402,14 +405,6 @@ QDF_STATUS wlansap_close(struct sap_context *sap_ctx)
 	}
 	/* Cleanup SAP control block */
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
-	sap_cleanup_channel_list(sap_ctx);
-	hal = CDS_GET_HAL_CB();
-	if (!hal)
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("hal is NULL, so lets skip global sap cleanup"));
-	else if (sap_ctx->sessionId != CSR_SESSION_ID_INVALID)
-		/* empty queues/lists/pkts if any */
-		sap_clear_session_param(hal, sap_ctx, sap_ctx->sessionId);
 	/*
 	 * wlansap_context_put will release actual sap_ctx memory
 	 * allocated during wlansap_open

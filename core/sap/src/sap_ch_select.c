@@ -481,31 +481,6 @@ void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *sap_ctx)
 
 #endif /* FEATURE_WLAN_CH_AVOID */
 
-void sap_cleanup_channel_list(struct sap_context *sap_ctx)
-{
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
-		  "Cleaning up the channel list structure");
-
-	if (NULL == sap_ctx) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  "SAP Context is NULL");
-		return;
-	}
-
-	sap_ctx->SapChnlList.numChannel = 0;
-	if (sap_ctx->SapChnlList.channelList) {
-		qdf_mem_free(sap_ctx->SapChnlList.channelList);
-		sap_ctx->SapChnlList.channelList = NULL;
-	}
-
-	sap_ctx->SapAllChnlList.numChannel = 0;
-	if (sap_ctx->SapAllChnlList.channelList) {
-		qdf_mem_free(sap_ctx->SapAllChnlList.channelList);
-		sap_ctx->SapAllChnlList.channelList = NULL;
-	}
-}
-
 /**
  * sap_channel_in_acs_channel_list() - check if channel in acs channel list
  * @channel_num: channel to check
