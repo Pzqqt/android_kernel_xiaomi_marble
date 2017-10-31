@@ -5273,7 +5273,7 @@ QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_peek_front(&hdd_ctx->hddAdapters,
+	status = qdf_list_peek_front(&hdd_ctx->hdd_adapters,
 				     (qdf_list_node_t **) padapterNode);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -5286,7 +5286,7 @@ QDF_STATUS hdd_get_next_adapter(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_peek_next(&hdd_ctx->hddAdapters,
+	status = qdf_list_peek_next(&hdd_ctx->hdd_adapters,
 				    (qdf_list_node_t *) adapterNode,
 				    (qdf_list_node_t **) pNextAdapterNode);
 
@@ -5300,7 +5300,7 @@ QDF_STATUS hdd_remove_adapter(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_remove_node(&hdd_ctx->hddAdapters,
+	status = qdf_list_remove_node(&hdd_ctx->hdd_adapters,
 				      &adapterNode->node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -5312,7 +5312,7 @@ QDF_STATUS hdd_remove_front_adapter(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_remove_front(&hdd_ctx->hddAdapters,
+	status = qdf_list_remove_front(&hdd_ctx->hdd_adapters,
 				       (qdf_list_node_t **) padapterNode);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -5324,7 +5324,7 @@ QDF_STATUS hdd_add_adapter_back(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_insert_back(&hdd_ctx->hddAdapters,
+	status = qdf_list_insert_back(&hdd_ctx->hdd_adapters,
 				      (qdf_list_node_t *) adapterNode);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -5336,7 +5336,7 @@ QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_insert_front(&hdd_ctx->hddAdapters,
+	status = qdf_list_insert_front(&hdd_ctx->hdd_adapters,
 				       (qdf_list_node_t *) adapterNode);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -5883,7 +5883,7 @@ static int hdd_context_deinit(struct hdd_context *hdd_ctx)
 
 	hdd_scan_context_destroy(hdd_ctx);
 
-	qdf_list_destroy(&hdd_ctx->hddAdapters);
+	qdf_list_destroy(&hdd_ctx->hdd_adapters);
 
 	return 0;
 }
@@ -7703,7 +7703,7 @@ static int hdd_context_init(struct hdd_context *hdd_ctx)
 	qdf_spinlock_create(&hdd_ctx->sta_update_info_lock);
 	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
 
-	qdf_list_create(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
+	qdf_list_create(&hdd_ctx->hdd_adapters, MAX_NUMBER_OF_ADAPTERS);
 
 	init_completion(&hdd_ctx->set_antenna_mode_cmpl);
 
@@ -7735,7 +7735,7 @@ scan_destroy:
 	hdd_scan_context_destroy(hdd_ctx);
 	hdd_rx_wake_lock_destroy(hdd_ctx);
 list_destroy:
-	qdf_list_destroy(&hdd_ctx->hddAdapters);
+	qdf_list_destroy(&hdd_ctx->hdd_adapters);
 
 	return ret;
 }

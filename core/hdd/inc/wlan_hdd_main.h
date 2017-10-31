@@ -1475,7 +1475,7 @@ struct hdd_context {
 	/* TODO Remove this from here. */
 
 	qdf_spinlock_t hdd_adapter_lock;
-	qdf_list_t hddAdapters; /* List of adapters */
+	qdf_list_t hdd_adapters; /* List of adapters */
 
 	struct hdd_adapter *sta_to_adapter[HDD_MAX_ADAPTERS];
 
