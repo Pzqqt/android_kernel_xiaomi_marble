@@ -228,7 +228,7 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 		}
 
 		hdd_debug("invoking sme_dhcp_done_ind");
-		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->sessionId);
+		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->session_id);
 		schedule_work(&adapter->ipv6_notifier_work);
 	}
 
@@ -386,7 +386,7 @@ void hdd_enable_ns_offload(struct hdd_adapter *adapter,
 	}
 
 	ns_req->psoc = psoc;
-	ns_req->vdev_id = adapter->sessionId;
+	ns_req->vdev_id = adapter->session_id;
 	ns_req->trigger = trigger;
 	ns_req->count = 0;
 
@@ -696,7 +696,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 
 	qdf_copy_macaddr(&req.bssid, &sta_ctx->conn_info.bssId);
 	req.timePeriod = hdd_ctx->config->infraStaKeepAlivePeriod;
-	req.sessionId = adapter->sessionId;
+	req.sessionId = adapter->session_id;
 
 	hdd_debug("Setting gratuitous ARP keepalive; ipv4_addr:%u.%u.%u.%u",
 		 req.hostIpv4Addr[0], req.hostIpv4Addr[1],
@@ -756,7 +756,7 @@ static void __hdd_ipv4_notifier_work_queue(struct work_struct *work)
 
 	ifa = hdd_lookup_ifaddr(adapter);
 	if (ifa && hdd_ctx->is_fils_roaming_supported)
-		sme_send_hlp_ie_info(hdd_ctx->hHal, adapter->sessionId,
+		sme_send_hlp_ie_info(hdd_ctx->hHal, adapter->session_id,
 				     roam_profile, ifa->ifa_local);
 exit:
 	EXIT();
@@ -821,7 +821,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			goto exit;
 		}
 		hdd_debug("invoking sme_dhcp_done_ind");
-		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->sessionId);
+		sme_dhcp_done_ind(hdd_ctx->hHal, adapter->session_id);
 
 		if (!hdd_ctx->config->fhostArpOffload) {
 			hdd_debug("Offload not enabled ARPOffload=%d",
@@ -911,7 +911,7 @@ void hdd_enable_arp_offload(struct hdd_adapter *adapter,
 	}
 
 	arp_req->psoc = psoc;
-	arp_req->vdev_id = adapter->sessionId;
+	arp_req->vdev_id = adapter->session_id;
 	arp_req->trigger = trigger;
 
 	ifa = hdd_get_ipv4_local_interface(adapter);
@@ -975,7 +975,7 @@ void hdd_enable_mc_addr_filtering(struct hdd_adapter *adapter,
 		goto out;
 
 	status = pmo_ucfg_enable_mc_addr_filtering_in_fwr(psoc,
-				adapter->sessionId, trigger);
+				adapter->session_id, trigger);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("failed to enable mc list status %d", status);
 out:
@@ -995,7 +995,7 @@ void hdd_disable_mc_addr_filtering(struct hdd_adapter *adapter,
 		goto out;
 
 	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
-				adapter->sessionId, trigger);
+				adapter->session_id, trigger);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("failed to disable mc list status %d", status);
 out:
@@ -1030,12 +1030,12 @@ void hdd_disable_and_flush_mc_addr_list(struct hdd_adapter *adapter,
 	ENTER();
 	/* disable mc list first */
 	status = pmo_ucfg_disable_mc_addr_filtering_in_fwr(psoc,
-			adapter->sessionId, trigger);
+			adapter->session_id, trigger);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("fail to disable mc list");
 
 	/* flush mc list */
-	status = pmo_ucfg_flush_mc_addr_list(psoc, adapter->sessionId);
+	status = pmo_ucfg_flush_mc_addr_list(psoc, adapter->session_id);
 	if (status != QDF_STATUS_SUCCESS)
 		hdd_info("fail to flush mc list status %d", status);
 	EXIT();
@@ -1064,7 +1064,7 @@ static void hdd_update_conn_state_mask(struct hdd_adapter *adapter,
 
 	if (connState == eConnectionState_Associated ||
 			connState == eConnectionState_IbssConnected)
-		*conn_state_mask |= (1 << adapter->sessionId);
+		*conn_state_mask |= (1 << adapter->session_id);
 }
 
 /**
@@ -1101,8 +1101,8 @@ hdd_suspend_wlan(void)
 	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = pAdapterNode->adapter;
-		if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-			hdd_err("invalid session id: %d", adapter->sessionId);
+		if (wlan_hdd_validate_session_id(adapter->session_id)) {
+			hdd_err("invalid session id: %d", adapter->session_id);
 			goto next_adapter;
 		}
 
@@ -1168,8 +1168,8 @@ static int hdd_resume_wlan(void)
 
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = pAdapterNode->adapter;
-		if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-			hdd_err("invalid session id: %d", adapter->sessionId);
+		if (wlan_hdd_validate_session_id(adapter->session_id)) {
+			hdd_err("invalid session id: %d", adapter->session_id);
 			goto next_adapter;
 		}
 		/* Disable supported OffLoads */
@@ -1362,7 +1362,7 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 		    (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE)) {
 			sme_set_default_scan_ie(hdd_ctx->hHal,
-				      adapter->sessionId,
+				      adapter->session_id,
 				      adapter->scan_info.default_scan_ies,
 				      adapter->scan_info.default_scan_ies_len);
 		}
@@ -1521,7 +1521,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 			hdd_debug("Disabling Auto Power save timer");
 			sme_ps_disable_auto_ps_timer(
 				WLAN_HDD_GET_HAL_CTX(adapter),
-				adapter->sessionId);
+				adapter->session_id);
 		}
 
 		if (hdd_ctx->config && hdd_ctx->config->is_ps_enabled) {
@@ -1531,7 +1531,7 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 			 * Enter Power Save command received from GUI
 			 * this means DHCP is completed
 			 */
-			sme_ps_enable_disable(hal, adapter->sessionId,
+			sme_ps_enable_disable(hal, adapter->session_id,
 					SME_PS_ENABLE);
 		} else {
 			hdd_debug("Power Save is not enabled in the cfg");
@@ -1544,10 +1544,10 @@ int wlan_hdd_set_powersave(struct hdd_adapter *adapter,
 		 * this means we are disconnected
 		 */
 		sme_ps_disable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
-			adapter->sessionId);
-		sme_ps_enable_disable(hal, adapter->sessionId, SME_PS_DISABLE);
+			adapter->session_id);
+		sme_ps_enable_disable(hal, adapter->session_id, SME_PS_DISABLE);
 		sme_ps_enable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
-			adapter->sessionId, timeout);
+			adapter->session_id, timeout);
 	}
 
 	return 0;
@@ -1789,8 +1789,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = pAdapterNode->adapter;
 
-		if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-			hdd_err("invalid session id: %d", adapter->sessionId);
+		if (wlan_hdd_validate_session_id(adapter->session_id)) {
+			hdd_err("invalid session id: %d", adapter->session_id);
 			goto next_adapter;
 		}
 
@@ -1832,7 +1832,7 @@ next_adapter:
 		scan_info = &adapter->scan_info;
 
 		if (sme_neighbor_middle_of_roaming
-			    (hdd_ctx->hHal, adapter->sessionId)) {
+			    (hdd_ctx->hHal, adapter->session_id)) {
 			hdd_err("Roaming in progress, do not allow suspend");
 			wlan_hdd_inc_suspend_stats(hdd_ctx,
 						   SUSPEND_FAIL_ROAM);
@@ -1840,7 +1840,7 @@ next_adapter:
 		}
 
 		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->sessionId, INVALID_SCAN_ID, false);
+				adapter->session_id, INVALID_SCAN_ID, false);
 
 		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
@@ -1851,7 +1851,7 @@ next_adapter:
 	while (pAdapterNode && QDF_IS_STATUS_SUCCESS(status)) {
 		adapter = pAdapterNode->adapter;
 
-		sme_ps_timer_flush_sync(hdd_ctx->hHal, adapter->sessionId);
+		sme_ps_timer_flush_sync(hdd_ctx->hHal, adapter->session_id);
 
 		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode,
 					      &pAdapterNode);
@@ -1962,7 +1962,7 @@ static void hdd_stop_dhcp_ind(struct hdd_adapter *adapter)
 	hdd_debug("DHCP stop indicated through power save");
 	sme_dhcp_stop_ind(hdd_ctx->hHal, adapter->device_mode,
 			  adapter->mac_addr.bytes,
-			  adapter->sessionId);
+			  adapter->session_id);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	qdf_runtime_pm_allow_suspend(&adapter->connect_rpm_ctx.connect);
 }
@@ -1986,7 +1986,7 @@ static void hdd_start_dhcp_ind(struct hdd_adapter *adapter)
 				    WIFI_POWER_EVENT_WAKELOCK_DHCP);
 	sme_dhcp_start_ind(hdd_ctx->hHal, adapter->device_mode,
 			   adapter->mac_addr.bytes,
-			   adapter->sessionId);
+			   adapter->session_id);
 }
 
 /**
@@ -2020,14 +2020,14 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT,
-			 adapter->sessionId, timeout));
+			 adapter->session_id, timeout));
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = wlan_hdd_validate_context(hdd_ctx);
@@ -2205,8 +2205,8 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	}
 
 	/* Validate adapter sessionId */
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -2229,7 +2229,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
-			 adapter->sessionId, adapter->device_mode));
+			 adapter->session_id, adapter->device_mode));
 	wlan_hdd_get_class_astats(adapter);
 	*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
 
@@ -2293,7 +2293,7 @@ int hdd_set_qpower_config(struct hdd_context *hddctx,
 			qpower = PS_LEGACY_DEEPSLEEP;
 		hdd_info("Qpower disabled, %d", qpower);
 	}
-	status = wma_set_qpower_config(adapter->sessionId, qpower);
+	status = wma_set_qpower_config(adapter->session_id, qpower);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("failed to configure qpower: %d", status);
 		return -EINVAL;

@@ -503,7 +503,7 @@ bool hdd_get_interface_info(struct hdd_adapter *adapter,
 		if (eConnectionState_Connecting ==
 		    sta_ctx->conn_info.connState) {
 			hdd_err("Session ID %d, Connection is in progress",
-				adapter->sessionId);
+				adapter->session_id);
 			pInfo->state = WIFI_ASSOCIATING;
 		}
 		if ((eConnectionState_Associated ==
@@ -1246,7 +1246,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 		nla_get_u32(tb_vendor
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_AGGRESSIVE_STATS_GATHERING]);
 
-	LinkLayerStatsSetReq.staId = adapter->sessionId;
+	LinkLayerStatsSetReq.staId = adapter->session_id;
 
 	hdd_debug("LL_STATS_SET reqId = %d, staId = %d, mpduSizeThreshold = %d, Statistics Gathering = %d",
 		LinkLayerStatsSetReq.reqId, LinkLayerStatsSetReq.staId,
@@ -1364,14 +1364,14 @@ int wlan_hdd_ll_stats_get(struct hdd_adapter *adapter, uint32_t req_id,
 
 	get_req.reqId = req_id;
 	get_req.paramIdMask = req_mask;
-	get_req.staId = adapter->sessionId;
+	get_req.staId = adapter->session_id;
 
 	rtnl_lock();
 	ret = wlan_hdd_send_ll_stats_req(hdd_ctx, &get_req);
 	rtnl_unlock();
 	if (0 != ret)
 		hdd_err("Send LL stats req failed, id:%u, mask:%d, session:%d",
-			req_id, req_mask, adapter->sessionId);
+			req_id, req_mask, adapter->session_id);
 
 	EXIT();
 	return ret;
@@ -1447,10 +1447,10 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		nla_get_u32(tb_vendor
 			    [QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK]);
 
-	LinkLayerStatsGetReq.staId = adapter->sessionId;
+	LinkLayerStatsGetReq.staId = adapter->session_id;
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -1565,7 +1565,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 	 */
 	LinkLayerStatsClearReq.reqId = 1;
 
-	LinkLayerStatsClearReq.staId = adapter->sessionId;
+	LinkLayerStatsClearReq.staId = adapter->session_id;
 
 	hdd_debug("LL_STATS_CLEAR reqId = %d, staId = %d, statsClearReqMask = 0x%X, stopReq = %d",
 		LinkLayerStatsClearReq.reqId,
@@ -2734,7 +2734,7 @@ set_thresh:
 
 set_period:
 	hdd_info("send period to target");
-	status = wma_cli_set_command(adapter->sessionId,
+	status = wma_cli_set_command(adapter->session_id,
 				     WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD,
 				     period, PDEV_CMD);
 	if (status) {
@@ -2805,7 +2805,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	stats_ext_req.request_data_len = data_len;
 	stats_ext_req.request_data = (void *)data;
 
-	status = sme_stats_ext_request(adapter->sessionId, &stats_ext_req);
+	status = sme_stats_ext_request(adapter->session_id, &stats_ext_req);
 
 	if (QDF_STATUS_SUCCESS != status)
 		ret_val = -EINVAL;
@@ -3933,8 +3933,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -4374,7 +4374,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			sinfo->signal_avg = sinfo->chain_signal_avg[i];
 
 		hdd_debug("RSSI for chain %d, vdev_id %d is %d",
-			i, adapter->sessionId, sinfo->chain_signal_avg[i]);
+			i, adapter->session_id, sinfo->chain_signal_avg[i]);
 
 		if (!rssi_stats_valid && sinfo->chain_signal_avg[i])
 			rssi_stats_valid = true;
@@ -4393,7 +4393,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
-			 adapter->sessionId, maxRate));
+			 adapter->session_id, maxRate));
 
 	EXIT();
 
@@ -4571,7 +4571,7 @@ static bool wlan_hdd_update_survey_info(struct wiphy *wiphy,
 	struct hdd_context *hdd_ctx;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	sme_get_operation_channel(hdd_ctx->hHal, &channel, adapter->sessionId);
+	sme_get_operation_channel(hdd_ctx->hHal, &channel, adapter->session_id);
 	hdd_wlan_get_freq(channel, &opfreq);
 
 	mutex_lock(&hdd_ctx->chan_info_lock);
@@ -4894,7 +4894,7 @@ static int __wlan_hdd_get_rcpi(struct hdd_adapter *adapter,
 	cookie = hdd_request_cookie(request);
 
 	rcpi_req->mac_addr = mac_addr;
-	rcpi_req->session_id = adapter->sessionId;
+	rcpi_req->session_id = adapter->session_id;
 	rcpi_req->measurement_type = measurement_type;
 	rcpi_req->rcpi_callback = wlan_hdd_get_rcpi_cb;
 	rcpi_req->rcpi_context = cookie;

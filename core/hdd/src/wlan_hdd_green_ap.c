@@ -124,7 +124,7 @@ static int hdd_green_ap_enable(struct hdd_adapter *adapter, uint8_t enable)
 
 	hdd_debug("Set Green-AP val: %d", enable);
 
-	ret = wma_cli_set_command(adapter->sessionId,
+	ret = wma_cli_set_command(adapter->session_id,
 				  WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID,
 				  enable, DBG_CMD);
 

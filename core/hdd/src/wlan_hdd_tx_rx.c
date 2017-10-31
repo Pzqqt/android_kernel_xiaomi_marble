@@ -262,7 +262,7 @@ void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 		adapter->tx_flow_timer_initialized = true;
 	}
 	cdp_fc_register(cds_get_context(QDF_MODULE_ID_SOC),
-		adapter->sessionId, flow_control_fp, adapter,
+		adapter->session_id, flow_control_fp, adapter,
 		flow_control_is_pause_fp);
 }
 
@@ -275,7 +275,7 @@ void hdd_register_tx_flow_control(struct hdd_adapter *adapter,
 void hdd_deregister_tx_flow_control(struct hdd_adapter *adapter)
 {
 	cdp_fc_deregister(cds_get_context(QDF_MODULE_ID_SOC),
-			adapter->sessionId);
+			adapter->session_id);
 	if (adapter->tx_flow_timer_initialized == true) {
 		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
 		qdf_mc_timer_destroy(&adapter->tx_flow_control_timer);
@@ -724,7 +724,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		++adapter->stats.tx_packets;
 
 	hdd_event_eapol_log(skb, QDF_TX);
-	pkt_proto_logged = qdf_dp_trace_log_pkt(adapter->sessionId,
+	pkt_proto_logged = qdf_dp_trace_log_pkt(adapter->session_id,
 						skb, QDF_TX,
 						QDF_TRACE_DEFAULT_PDEV_ID);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
@@ -1273,7 +1273,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 
 		hdd_event_eapol_log(skb, QDF_RX);
-		proto_pkt_logged = qdf_dp_trace_log_pkt(adapter->sessionId,
+		proto_pkt_logged = qdf_dp_trace_log_pkt(adapter->session_id,
 						skb, QDF_RX,
 						QDF_TRACE_DEFAULT_PDEV_ID);
 
@@ -1743,7 +1743,7 @@ int hdd_set_mon_rx_cb(struct net_device *dev)
 	hdd_monitor_set_rx_monitor_cb(&txrx_ops, hdd_rx_monitor_callback);
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->sessionId),
+		(struct cdp_pdev *)pdev, adapter->session_id),
 		adapter, &txrx_ops);
 	/* peer is created wma_vdev_attach->wma_create_peer */
 	qdf_status = cdp_peer_register(soc,

@@ -227,7 +227,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 		return -ENOMEM;
 	}
 
-	tdlsParams->vdev_id = adapter->sessionId;
+	tdlsParams->vdev_id = adapter->session_id;
 	tdlsParams->tdls_state = config->tdls;
 	tdlsParams->notification_interval_ms = config->tx_period_t;
 	tdlsParams->tx_discovery_threshold = config->tx_packet_n;
@@ -641,14 +641,14 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_TDLS_MGMT,
-			 adapter->sessionId, action_code));
+			 adapter->session_id, action_code));
 
 	if (wlan_hdd_validate_context(hdd_ctx))
 		return -EINVAL;
@@ -817,14 +817,14 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_TDLS_OPER,
-			 adapter->sessionId, oper));
+			 adapter->session_id, oper));
 	if (NULL == peer) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid arguments", __func__);

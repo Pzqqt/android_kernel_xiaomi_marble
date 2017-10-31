@@ -135,5 +135,5 @@ int hdd_enable_monitor_mode(struct net_device *dev)
 
 	return cdp_set_monitor_mode(soc,
 			(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-			(struct cdp_pdev *)pdev, adapter->sessionId), false);
+			(struct cdp_pdev *)pdev, adapter->session_id), false);
 }

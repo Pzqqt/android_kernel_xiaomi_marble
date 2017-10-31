@@ -183,7 +183,7 @@ static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
 		return -EINVAL;
 	}
 
-	encrypt_decrypt_params->vdev_id = adapter->sessionId;
+	encrypt_decrypt_params->vdev_id = adapter->session_id;
 	hdd_debug("vdev_id: %d", encrypt_decrypt_params->vdev_id);
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION]) {

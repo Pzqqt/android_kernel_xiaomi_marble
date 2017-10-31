@@ -1680,7 +1680,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	pReqMsg->requestId =
 		nla_get_u32(tb
 		 [QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 	hdd_debug("Req Id %d Session Id %d",
 		pReqMsg->requestId, pReqMsg->sessionId);
 
@@ -1816,7 +1816,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	}
 
 	pReqMsg->requestId = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 
 	/* Parse and fetch flush parameter */
 	if (!tb[PARAM_FLUSH]) {
@@ -1983,7 +1983,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 			pReqMsg->numAp, WLAN_EXTSCAN_MAX_HOTLIST_APS);
 		goto fail;
 	}
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 	hdd_debug("Number of AP %d Session Id %d",
 		pReqMsg->numAp, pReqMsg->sessionId);
 
@@ -2236,7 +2236,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 	hdd_debug("Number of AP %d Session Id %d",
 		pReqMsg->numAp, pReqMsg->sessionId);
 
@@ -3176,7 +3176,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	}
 
 	pReqMsg->requestId = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 
 	/* Parse and fetch base period */
 	if (!tb[PARAM_BASE_PERIOD]) {
@@ -3390,7 +3390,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	}
 
 	pReqMsg->requestId = nla_get_u32(tb[PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 	hdd_debug("Req Id %d Session Id %d",
 		pReqMsg->requestId, pReqMsg->sessionId);
 
@@ -3523,7 +3523,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	pReqMsg->requestId =
 		nla_get_u32(tb
 		 [QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 	hdd_debug("Req Id %d Session Id %d",
 		pReqMsg->requestId, pReqMsg->sessionId);
 
@@ -3653,7 +3653,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	pReqMsg->requestId =
 		nla_get_u32(tb
 		 [QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
-	pReqMsg->sessionId = adapter->sessionId;
+	pReqMsg->sessionId = adapter->session_id;
 	hdd_debug("Req Id %d Session Id %d",
 		pReqMsg->requestId, pReqMsg->sessionId);
 
@@ -3903,7 +3903,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	    tb[QCA_WLAN_VENDOR_ATTR_PNO_CONFIG_REQUEST_ID]);
 	hdd_debug("Req Id %u", req_msg->request_id);
 
-	req_msg->session_id = adapter->sessionId;
+	req_msg->session_id = adapter->session_id;
 	hdd_debug("Session Id %d", req_msg->session_id);
 
 	if (num_networks) {
@@ -4197,7 +4197,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	req_msg->request_id = nla_get_u32(
 	    tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
 
-	req_msg->session_id = adapter->sessionId;
+	req_msg->session_id = adapter->session_id;
 	hdd_debug("Req Id %u Session Id %d", req_msg->request_id,
 			req_msg->session_id);
 
@@ -4301,7 +4301,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	req_msg->request_id = nla_get_u32(
 	    tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_REQUEST_ID]);
 
-	req_msg->session_id = adapter->sessionId;
+	req_msg->session_id = adapter->session_id;
 	hdd_debug("Req Id %u Session Id %d",
 			req_msg->request_id, req_msg->session_id);
 

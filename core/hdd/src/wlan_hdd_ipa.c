@@ -1483,7 +1483,7 @@ void hdd_ipa_set_tx_flow_info(void)
 				adapter->tx_flow_high_watermark_offset =
 				   hdd_ctx->config->TxFlowHighWaterMarkOffset;
 				cdp_fc_ll_set_tx_pause_q_depth(soc,
-					adapter->sessionId,
+					adapter->session_id,
 					hdd_ctx->config->TxFlowMaxQueueDepth);
 				hdd_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
 				    adapter->device_mode,
@@ -1508,7 +1508,7 @@ void hdd_ipa_set_tx_flow_info(void)
 					adapter->
 					tx_flow_high_watermark_offset = 0;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
-						adapter->sessionId,
+						adapter->session_id,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
@@ -1534,7 +1534,7 @@ void hdd_ipa_set_tx_flow_info(void)
 					preAdapterContext->
 					tx_flow_high_watermark_offset = 0;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
-						preAdapterContext->sessionId,
+						preAdapterContext->session_id,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
 					hdd_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
@@ -1584,7 +1584,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						hdd_ctx->config->
 						TxHbwFlowHighWaterMarkOffset;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
-						adapter5->sessionId,
+						adapter5->session_id,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
 					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
@@ -1612,7 +1612,7 @@ void hdd_ipa_set_tx_flow_info(void)
 						hdd_ctx->config->
 						TxLbwFlowHighWaterMarkOffset;
 					cdp_fc_ll_set_tx_pause_q_depth(soc,
-						adapter2_4->sessionId,
+						adapter2_4->session_id,
 						hdd_ctx->config->
 						TxLbwFlowMaxQueueDepth);
 					hdd_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
@@ -1724,7 +1724,7 @@ static void __hdd_ipa_uc_stat_request(struct hdd_adapter *adapter,
 		hdd_ipa->stat_req_reason = reason;
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 		sme_ipa_uc_stat_request(WLAN_HDD_GET_HAL_CTX(adapter),
-			adapter->sessionId,
+			adapter->session_id,
 			WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID,
 			0, VDEV_CMD);
 	} else {
@@ -1775,7 +1775,7 @@ void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 	if (false == hdd_ipa->resource_loading) {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 		wma_cli_set_command(
-			(int)adapter->sessionId,
+			(int)adapter->session_id,
 			(int)WMA_VDEV_TXRX_GET_IPA_UC_SHARING_STATS_CMDID,
 			reset_stats, VDEV_CMD);
 	} else {
@@ -1814,7 +1814,7 @@ void hdd_ipa_uc_set_quota(struct hdd_adapter *adapter, uint8_t set_quota,
 	if (false == hdd_ipa->resource_loading) {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 		wma_cli_set2_command(
-			(int)adapter->sessionId,
+			(int)adapter->session_id,
 			(int)WMA_VDEV_TXRX_SET_IPA_UC_QUOTA_CMDID,
 			(set_quota ? quota_bytes&0xffffffff : 0),
 			(set_quota ? quota_bytes>>32 : 0),
@@ -2345,7 +2345,7 @@ static void hdd_ipa_print_session_info(struct hdd_ipa_priv *hdd_ipa)
 		if (!iface_context || !iface_context->adapter)
 			continue;
 
-		session_id = iface_context->adapter->sessionId;
+		session_id = iface_context->adapter->session_id;
 		if (session_id >= CSR_ROAM_SESSION_MAX)
 			continue;
 
@@ -2788,7 +2788,7 @@ static void hdd_ipa_uc_offload_enable_disable(struct hdd_adapter *adapter,
 		return;
 
 	iface_context = adapter->ipa_context;
-	session_id = adapter->sessionId;
+	session_id = adapter->session_id;
 
 	if (!iface_context) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
@@ -2813,10 +2813,10 @@ static void hdd_ipa_uc_offload_enable_disable(struct hdd_adapter *adapter,
 		return;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"invalid session id: %d, offload_type=%d, enable=%d",
-			adapter->sessionId, offload_type, enable);
+			adapter->session_id, offload_type, enable);
 		return;
 	}
 
@@ -2834,7 +2834,7 @@ static void hdd_ipa_uc_offload_enable_disable(struct hdd_adapter *adapter,
 
 	if (QDF_STATUS_SUCCESS !=
 		sme_ipa_offload_enable_disable(WLAN_HDD_GET_HAL_CTX(adapter),
-			adapter->sessionId, &ipa_offload_enable_disable)) {
+			adapter->session_id, &ipa_offload_enable_disable)) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"Failure to enable IPA offload (offload_type=%d, vdev_id=%d, enable=%d)",
 			ipa_offload_enable_disable.offload_type,
@@ -4216,7 +4216,7 @@ static enum hdd_ipa_forward_type hdd_ipa_intrabss_forward(
 		if (!ol_txrx_fwd_desc_thresh_check(
 			(struct ol_txrx_vdev_t *)cdp_get_vdev_from_vdev_id(soc,
 						(struct cdp_pdev *)pdev,
-						adapter->sessionId))) {
+						adapter->session_id))) {
 			/* Drop the packet*/
 			hdd_ipa->stats.num_tx_fwd_err++;
 			kfree_skb(skb);
@@ -5093,7 +5093,7 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 				  adapter->dev->name, adapter->dev->dev_addr,
 				  iface_context->prod_client,
 				  iface_context->cons_client,
-				  adapter->sessionId,
+				  adapter->session_id,
 				  hdd_ipa_is_ipv6_enabled(hdd_ipa->hdd_ctx));
 	if (ret)
 		goto end;
@@ -5374,7 +5374,7 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 			qdf_mutex_acquire(&hdd_ipa->event_lock);
 		}
 
-		hdd_ipa->vdev_to_iface[adapter->sessionId] =
+		hdd_ipa->vdev_to_iface[adapter->session_id] =
 			((struct hdd_ipa_iface_context *)
 			(adapter->ipa_context))->iface_id;
 
@@ -5415,7 +5415,7 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 			qdf_mutex_acquire(&hdd_ipa->event_lock);
 		}
 
-		hdd_ipa->vdev_to_iface[adapter->sessionId] =
+		hdd_ipa->vdev_to_iface[adapter->session_id] =
 			((struct hdd_ipa_iface_context *)
 			(adapter->ipa_context))->iface_id;
 
@@ -5452,7 +5452,7 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_STA_RX_DATA_OFFLOAD, false);
 			qdf_mutex_acquire(&hdd_ipa->event_lock);
-			hdd_ipa->vdev_to_iface[adapter->sessionId] =
+			hdd_ipa->vdev_to_iface[adapter->session_id] =
 				CSR_ROAM_SESSION_MAX;
 		}
 
@@ -5503,7 +5503,7 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_AP_RX_DATA_OFFLOAD, false);
 			qdf_mutex_acquire(&hdd_ipa->event_lock);
-			hdd_ipa->vdev_to_iface[adapter->sessionId] =
+			hdd_ipa->vdev_to_iface[adapter->session_id] =
 				CSR_ROAM_SESSION_MAX;
 		}
 

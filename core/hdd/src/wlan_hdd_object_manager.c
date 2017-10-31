@@ -207,7 +207,7 @@ int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 	wlan_objmgr_vdev_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
 
 	adapter->hdd_vdev = vdev;
-	adapter->sessionId = wlan_vdev_get_id(vdev);
+	adapter->session_id = wlan_vdev_get_id(vdev);
 
 	return 0;
 }
@@ -242,7 +242,7 @@ int hdd_objmgr_release_vdev(struct hdd_adapter *adapter)
 	wlan_objmgr_vdev_release_ref(adapter->hdd_vdev, WLAN_HDD_ID_OBJ_MGR);
 
 	adapter->hdd_vdev = NULL;
-	adapter->sessionId = HDD_SESSION_ID_INVALID;
+	adapter->session_id = HDD_SESSION_ID_INVALID;
 
 	return 0;
 }

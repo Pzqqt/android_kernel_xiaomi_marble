@@ -261,10 +261,10 @@ static int hdd_ndi_start_bss(struct hdd_adapter *adapter,
 	roam_profile->EncryptionType.encryptionType[0] = eCSR_ENCRYPT_TYPE_NONE;
 
 	ret = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(adapter),
-		adapter->sessionId, roam_profile, &roam_id);
+		adapter->session_id, roam_profile, &roam_id);
 	if (QDF_STATUS_SUCCESS != ret) {
 		hdd_err("NDI sme_RoamConnect session %d failed with status %d -> NotConnected",
-			adapter->sessionId, ret);
+			adapter->session_id, ret);
 		/* change back to NotConnected */
 		hdd_conn_set_connection_state(adapter,
 			eConnectionState_NotConnected);
@@ -567,7 +567,7 @@ static int hdd_ndp_initiator_req_handler(struct hdd_context *hdd_ctx,
 		return -EINVAL;
 	}
 
-	req.vdev_id = adapter->sessionId;
+	req.vdev_id = adapter->session_id;
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
 		hdd_err("Transaction ID is unavailable");
@@ -715,7 +715,7 @@ static int hdd_ndp_responder_req_handler(struct hdd_context *hdd_ctx,
 		return -EAGAIN;
 	}
 
-	req.vdev_id = adapter->sessionId;
+	req.vdev_id = adapter->session_id;
 
 	if (!tb[QCA_WLAN_VENDOR_ATTR_NDP_TRANSACTION_ID]) {
 		hdd_err("Transaction ID is unavailable");
@@ -1271,7 +1271,7 @@ static void hdd_ndp_new_peer_ind_handler(struct hdd_adapter *adapter,
 
 	/* this function is called for each new peer */
 	ndp_ctx->active_ndp_peers++;
-	hdd_info("vdev_id: %d, num_peers: %d", adapter->sessionId,
+	hdd_info("vdev_id: %d, num_peers: %d", adapter->session_id,
 		 ndp_ctx->active_ndp_peers);
 
 	hdd_roam_register_sta(adapter, roam_info, new_peer_ind->sta_id,
@@ -1361,7 +1361,7 @@ static void hdd_ndp_confirm_ind_handler(struct hdd_adapter *adapter,
 	idx = hdd_get_peer_idx(sta_ctx, &ndp_confirm->peer_ndi_mac_addr);
 	if (idx == INVALID_PEER_IDX)
 		hdd_err("can't find addr: %pM in vdev_id: %d, peer table.",
-			&ndp_confirm->peer_ndi_mac_addr, adapter->sessionId);
+			&ndp_confirm->peer_ndi_mac_addr, adapter->session_id);
 	else if (ndp_confirm->rsp_code == NDP_RESPONSE_ACCEPT)
 		ndp_ctx->active_ndp_sessions[idx]++;
 
@@ -1910,7 +1910,7 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 					NAN_DATAPATH_RSP_STATUS_SUCCESS);
 			hdd_debug("posting ndi create status: %d to umac",
 				success);
-			os_if_nan_post_ndi_create_rsp(psoc, adapter->sessionId,
+			os_if_nan_post_ndi_create_rsp(psoc, adapter->session_id,
 							success);
 			return;
 		case eCSR_ROAM_RESULT_NDI_DELETE_RSP:
@@ -1918,7 +1918,7 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 					NAN_DATAPATH_RSP_STATUS_SUCCESS);
 			hdd_debug("posting ndi delete status: %d to umac",
 				success);
-			os_if_nan_post_ndi_delete_rsp(psoc, adapter->sessionId,
+			os_if_nan_post_ndi_delete_rsp(psoc, adapter->session_id,
 							success);
 			return;
 		default:
@@ -2121,7 +2121,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	/* Configure self HT/VHT capabilities */
 	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
 	sme_set_pdev_ht_vht_ies(hdd_ctx->hHal, hdd_ctx->config->enable2x2);
-	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->sessionId);
+	sme_set_vdev_ies_per_band(hdd_ctx->hHal, adapter->session_id);
 
 	/* Register wireless extensions */
 	ret_val = hdd_register_wext(wlan_dev);
@@ -2150,7 +2150,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 
 	set_bit(WMM_INIT_DONE, &adapter->event_flags);
 
-	ret_val = wma_cli_set_command((int)adapter->sessionId,
+	ret_val = wma_cli_set_command((int)adapter->session_id,
 			(int)WMI_PDEV_PARAM_BURST_ENABLE,
 			(int)hdd_ctx->config->enableSifsBurst,
 			PDEV_CMD);

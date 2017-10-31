@@ -1035,7 +1035,7 @@ struct hdd_adapter {
 	/* estimated link speed */
 	uint32_t estimated_linkspeed;
 
-	uint8_t sessionId;
+	uint8_t session_id;
 
 	/* Completion variable for session close */
 	struct completion session_close_comp_var;

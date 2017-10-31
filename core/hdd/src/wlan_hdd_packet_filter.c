@@ -51,7 +51,7 @@ int hdd_enable_default_pkt_filters(struct hdd_adapter *adapter)
 			packet_filter_default_rules[i].filter_id = filter_id;
 			wlan_hdd_set_filter(hdd_ctx,
 					    &packet_filter_default_rules[i],
-					    adapter->sessionId);
+					    adapter->session_id);
 			filter_id++;
 		}
 		filters = filters >> 1;
@@ -90,7 +90,7 @@ int hdd_disable_default_pkt_filters(struct hdd_adapter *adapter)
 			packet_filter_default_rules.filter_id = filter_id;
 			wlan_hdd_set_filter(hdd_ctx,
 					    &packet_filter_default_rules,
-					    adapter->sessionId);
+					    adapter->session_id);
 			filter_id++;
 		}
 		filters = filters >> 1;

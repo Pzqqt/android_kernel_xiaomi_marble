@@ -434,7 +434,7 @@ static int __hdd_softap_hard_start_xmit(struct sk_buff *skb,
 	adapter->sta_info[STAId].last_tx_rx_ts = qdf_system_ticks();
 
 	hdd_event_eapol_log(skb, QDF_TX);
-	qdf_dp_trace_log_pkt(adapter->sessionId, skb, QDF_TX,
+	qdf_dp_trace_log_pkt(adapter->session_id, skb, QDF_TX,
 			QDF_TRACE_DEFAULT_PDEV_ID);
 	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
 	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
@@ -761,7 +761,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 		}
 	}
 		hdd_event_eapol_log(skb, QDF_RX);
-		proto_pkt_logged = qdf_dp_trace_log_pkt(adapter->sessionId,
+		proto_pkt_logged = qdf_dp_trace_log_pkt(adapter->session_id,
 						skb, QDF_RX,
 						QDF_TRACE_DEFAULT_PDEV_ID);
 		DPTRACE(qdf_dp_trace(skb,
@@ -929,11 +929,11 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 	txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
 	cdp_vdev_register(soc,
 		(struct cdp_vdev *)cdp_get_vdev_from_vdev_id(soc,
-		(struct cdp_pdev *)pdev, adapter->sessionId),
+		(struct cdp_pdev *)pdev, adapter->session_id),
 		adapter, &txrx_ops);
 	adapter->txrx_vdev = (void *)cdp_get_vdev_from_vdev_id(soc,
 					(struct cdp_pdev *)pdev,
-					adapter->sessionId);
+					adapter->session_id);
 	adapter->tx_fn = txrx_ops.tx.tx;
 
 	qdf_status = cdp_peer_register(soc,

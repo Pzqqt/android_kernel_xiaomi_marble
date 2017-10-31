@@ -109,7 +109,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	QDF_STATUS qdf_ret_status;
 	const char *temp;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	uint8_t sessionId = adapter->sessionId;
+	uint8_t sessionId = adapter->session_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	len = find_ptrn_len(ptrn);
@@ -269,7 +269,7 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	bool patternFound = false;
 	QDF_STATUS qdf_ret_status;
-	uint8_t sessionId = adapter->sessionId;
+	uint8_t sessionId = adapter->session_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* Detect pattern */
@@ -320,7 +320,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	struct wow_add_pattern localPattern;
 	QDF_STATUS qdf_ret_status;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
-	uint8_t session_id = adapter->sessionId;
+	uint8_t session_id = adapter->session_id;
 	uint16_t pattern_len, mask_len, i;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
@@ -432,7 +432,7 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 	struct wow_delete_pattern delPattern;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	QDF_STATUS qdf_ret_status;
-	uint8_t sessionId = adapter->sessionId;
+	uint8_t sessionId = adapter->session_id;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
 		hdd_err("WoW pattern index %d is not in the range (0 ~ %d).",
@@ -486,7 +486,7 @@ bool hdd_enter_wowl(struct hdd_adapter *adapter,
 
 	wowParams.ucPatternFilteringEnable = enable_pbm;
 	wowParams.ucMagicPktEnable = enable_mp;
-	wowParams.sessionId = adapter->sessionId;
+	wowParams.sessionId = adapter->session_id;
 	if (enable_mp) {
 		qdf_copy_macaddr(&wowParams.magic_ptrn,
 				 &adapter->mac_addr);
@@ -505,7 +505,7 @@ bool hdd_enter_wowl(struct hdd_adapter *adapter,
 					hdd_wowl_wake_indication_callback,
 					adapter,
 #endif /* WLAN_WAKEUP_EVENTS */
-					&wowParams, adapter->sessionId);
+					&wowParams, adapter->session_id);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		if (QDF_STATUS_PMC_PENDING != qdf_ret_status) {
@@ -530,7 +530,7 @@ bool hdd_exit_wowl(struct hdd_adapter *adapter)
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	QDF_STATUS qdf_ret_status;
 
-	wowParams.sessionId = adapter->sessionId;
+	wowParams.sessionId = adapter->session_id;
 
 	qdf_ret_status = sme_exit_wowl(hHal, &wowParams);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {

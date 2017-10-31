@@ -146,8 +146,8 @@ static int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -191,8 +191,8 @@ __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -234,8 +234,8 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -292,8 +292,8 @@ static int __wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -382,7 +382,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	}
 	noa.interval = MS_TO_TU_MUS(interval);
 	noa.count = count;
-	noa.vdev_id = adapter->sessionId;
+	noa.vdev_id = adapter->session_id;
 
 	hdd_debug("P2P_PS_ATTR:oppPS %d ctWindow %d duration %d "
 		  "interval %d count %d single noa duration %d "
@@ -493,7 +493,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 		noa.interval = 0;
 		noa.count = 0;
 		noa.ps_selection = P2P_POWER_SAVE_TYPE_OPPORTUNISTIC;
-		noa.vdev_id = adapter->sessionId;
+		noa.vdev_id = adapter->session_id;
 
 		hdd_debug("P2P_PS_ATTR: oppPS %d ctWindow %d duration %d interval %d count %d single noa duration %d PsSelection %x",
 			noa.opp_ps, noa.ct_window,
@@ -520,7 +520,7 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 	noa.count = pappnoa->count;
 	noa.single_noa_duration = pappnoa->single_noa_duration;
 	noa.ps_selection = pappnoa->psSelection;
-	noa.vdev_id = adapter->sessionId;
+	noa.vdev_id = adapter->session_id;
 
 	return wlan_hdd_set_power_save(adapter, &noa);
 }
@@ -597,11 +597,11 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 
 	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
 	if ((adapter != NULL) &&
-		!(wlan_hdd_validate_session_id(adapter->sessionId))) {
+		!(wlan_hdd_validate_session_id(adapter->session_id))) {
 		scan_info = &adapter->scan_info;
 		if (scan_info->mScanPending) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
-				adapter->sessionId, INVALID_SCAN_ID, false);
+				adapter->session_id, INVALID_SCAN_ID, false);
 			hdd_debug("Abort Scan while adding virtual interface");
 		}
 	}
@@ -776,7 +776,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
-			 pVirtAdapter->sessionId, pVirtAdapter->device_mode));
+			 pVirtAdapter->session_id, pVirtAdapter->device_mode));
 	hdd_debug("Device_mode %s(%d)",
 		   hdd_device_mode_to_string(pVirtAdapter->device_mode),
 		   pVirtAdapter->device_mode);
@@ -910,7 +910,7 @@ void __hdd_indicate_mgmt_frame(struct hdd_adapter *adapter,
 
 	/* Indicate Frame Over Normal Interface */
 	hdd_debug("Indicate Frame over NL80211 sessionid : %d, idx :%d",
-		   adapter->sessionId, adapter->dev->ifindex);
+		   adapter->session_id, adapter->dev->ifindex);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
 	cfg80211_rx_mgmt(adapter->dev->ieee80211_ptr,
@@ -1010,7 +1010,7 @@ int wlan_hdd_listen_offload_stop(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 
-	vdev_id = (uint32_t)adapter->sessionId;
+	vdev_id = (uint32_t)adapter->session_id;
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	psoc = hdd_ctx->hdd_psoc;
 	if (!psoc) {
@@ -1268,7 +1268,7 @@ int wlan_hdd_set_mcc_p2p_quota(struct hdd_adapter *adapter,
 
 
 		set_value = set_second_connection_operating_channel(
-			hdd_ctx, set_value, adapter->sessionId);
+			hdd_ctx, set_value, adapter->session_id);
 
 
 		ret = wlan_hdd_send_p2p_quota(adapter, set_value);

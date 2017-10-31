@@ -114,8 +114,8 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 		return -EINVAL;
 	}
 
-	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
-		hdd_err("invalid session id: %d", adapter->sessionId);
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
 	}
 
@@ -137,7 +137,7 @@ static int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 
 	sme_get_country_code(hdd_ctx->hHal, data->country_code, &buflen);
 	data->is_on = is_on;
-	data->vdev_id = adapter->sessionId;
+	data->vdev_id = adapter->session_id;
 	data->vdev_mode = adapter->device_mode;
 	if (sta_ctx) {
 		data->is_connected = is_connected;

@@ -146,7 +146,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 
 	req.max_retries = 3;
 	req.timeout = 100;   /* in milliseconds */
-	req.session_id = adapter->sessionId;
+	req.session_id = adapter->session_id;
 
 	hdd_info("**** Gateway Parameters: ****");
 	hdd_info("session id: %d", req.session_id);
