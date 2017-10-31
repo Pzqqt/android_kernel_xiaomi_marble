@@ -2130,4 +2130,19 @@ void policy_mgr_set_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc,
  */
 uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc);
 
+/**
+ * policy_mgr_set_weight_of_dfs_passive_channels_to_zero() - set weight of dfs
+ * and passive channels to 0
+ * @psoc: pointer to soc
+ * @pcl_channels: preferred channel list
+ * @len: length of preferred channel list
+ * @weight_list: preferred channel weight list
+ * @weight_len: length of weight list
+ * This function set the weight of dfs and passive channels to 0
+ *
+ * Return: None
+ */
+void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
+		struct wlan_objmgr_psoc *psoc, uint8_t *pcl_channels,
+		uint32_t *len, uint8_t *weight_list, uint32_t weight_len);
 #endif /* __WLAN_POLICY_MGR_API_H */
