@@ -1133,11 +1133,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_assert(rx_msdu_link_desc);
 
-		num_msdus = (msdu_cnt > HAL_RX_NUM_MSDU_DESC)?
-				HAL_RX_NUM_MSDU_DESC:msdu_cnt;
-
 		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
-		msdu_cnt -= num_msdus;
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			/* if the msdus belongs to NSS offloaded radio &&
@@ -1184,7 +1180,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		dp_rx_link_desc_return(soc, p_last_buf_addr_info, bm_action);
 		p_last_buf_addr_info = p_buf_addr_info;
 
-	} while (buf_info.paddr && msdu_cnt);
+	} while (buf_info.paddr);
 
 	DP_STATS_INC(soc, rx.err.rxdma_error[rxdma_error_code], 1);
 
