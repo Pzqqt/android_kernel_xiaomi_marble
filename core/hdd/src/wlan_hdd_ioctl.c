@@ -2433,7 +2433,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 		} else {
 			/* update the adapter with the fresh results */
 			priv = hdd_request_priv(request);
-			adapter->linkStatus = priv->link_status;
+			adapter->link_status = priv->link_status;
 		}
 	}
 
@@ -2445,7 +2445,7 @@ static int wlan_hdd_get_link_status(struct hdd_adapter *adapter)
 	hdd_request_put(request);
 
 	/* either callback updated adapter stats or it has cached data */
-	return adapter->linkStatus;
+	return adapter->link_status;
 }
 
 static void hdd_tx_fail_ind_callback(uint8_t *MacAddr, uint8_t seqNo)
