@@ -122,10 +122,56 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 			 bool *pMFPCapable,
 			 bool *pMFPRequired,
 			 uint16_t gen_ie_len, uint8_t *gen_ie);
+/**
+ * hdd_hostapd_deinit_sap_session() - To de-init the sap session completely
+ * @adapter: SAP/GO adapter
+ *
+ * This API will do
+ * 1) wlansap_stop(), wlansap_close()
+ * 2) destroys and releases the vdev objects
+ *
+ * Return: 0 if success else non-zero value.
+ */
+int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter);
+
+/**
+ * hdd_hostapd_init_sap_session() - To init the sap session completely
+ * @adapter: SAP/GO adapter
+ *
+ * This API will do
+ * 1) wlansap_open(), wlansap_start()
+ * 2) creates and stores the vdev objects
+ *
+ * Return: 0 if success else non-zero value.
+ */
+struct sap_context *
+hdd_hostapd_init_sap_session(struct hdd_adapter *adapter, bool reinit);
 
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *usrDataForCallback);
+/**
+ * hdd_init_ap_mode() - to init the AP adaptor
+ * @adapter: SAP/GO adapter
+ * @rtnl_held: flag to indicate if RTNL lock needs to be aquired
+ *
+ * This API can be called to open the SAP session as well as
+ * to create and store the vdev object. It also initializes necessary
+ * SAP adapter related params.
+ */
 QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit);
+/**
+ * hdd_deinit_ap_mode() - to deinit the AP adaptor
+ * @hdd_ctx: pointer to hdd_ctx
+ * @adapter: SAP/GO adapter
+ * @rtnl_held: flag to indicate if RTNL lock needs to be aquired
+ *
+ * This API can be called to close the SAP session as well as
+ * release the vdev object completely. It also deinitializes necessary
+ * SAP adapter related params.
+ */
+void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
+		struct hdd_adapter *adapter,
+		bool rtnl_held);
 void hdd_set_ap_ops(struct net_device *pWlanHostapdDev);
 int hdd_hostapd_stop(struct net_device *dev);
 int hdd_sap_context_init(struct hdd_context *hdd_ctx);
@@ -134,7 +180,6 @@ void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_set_sap_ht2040_mode(struct hdd_adapter *adapter,
 				   uint8_t channel_type);
 #endif
-
 
 int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			      struct net_device *dev);

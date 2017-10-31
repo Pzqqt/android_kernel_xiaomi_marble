@@ -798,7 +798,7 @@ int hdd_validate_adapter(struct hdd_adapter *adapter)
 		return -EAGAIN;
 	}
 
-	if (adapter->sessionId == HDD_SESSION_ID_INVALID) {
+	if (wlan_hdd_validate_session_id(adapter->sessionId)) {
 		hdd_info("adapter session is not open");
 		return -EAGAIN;
 	}
@@ -3359,7 +3359,6 @@ release_vdev:
 		hdd_err("failed to release objmgr vdev: %d", errno);
 		return errno;
 	}
-
 	hdd_info("vdev destroyed successfully");
 
 	return 0;
@@ -3399,7 +3398,7 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to open sme session: %d", status);
 		errno = qdf_status_to_os_return(status);
-		goto objmgr_vdev_destroy;
+		goto objmgr_vdev_destroy_procedure;
 	}
 
 	/* block on a completion variable until sme session is opened */
@@ -3410,14 +3409,14 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		hdd_err("timed out waiting for open sme session: %ld", rc);
 		errno = -ETIMEDOUT;
 		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		goto hdd_vdev_destroy;
+		goto hdd_vdev_destroy_procedure;
 	}
 
 	/* firmware ready for component communication, raise vdev_ready event */
 	errno = hdd_vdev_ready(adapter);
 	if (errno) {
 		hdd_err("failed to dispatch vdev ready event: %d", errno);
-		goto hdd_vdev_destroy;
+		goto hdd_vdev_destroy_procedure;
 	}
 
 	hdd_info("vdev %d created successfully", adapter->sessionId);
@@ -3429,12 +3428,12 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 	 * create. So, split error handling into 2 cases to accommodate.
 	 */
 
-objmgr_vdev_destroy:
+objmgr_vdev_destroy_procedure:
 	QDF_BUG(!hdd_objmgr_release_and_destroy_vdev(adapter));
 
 	return errno;
 
-hdd_vdev_destroy:
+hdd_vdev_destroy_procedure:
 	QDF_BUG(!hdd_vdev_destroy(adapter));
 
 	return errno;
@@ -3522,13 +3521,8 @@ error_register_wext:
 	return status;
 }
 
-void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
-{
-	hdd_debug("Cleanup action frame");
-}
-
 /**
- * hdd_station_adapter_deinit() - De-initialize the station adapter
+ * hdd_deinit_station_mode() - De-initialize the station adapter
  * @hdd_ctx: global hdd context
  * @adapter: HDD adapter
  * @rtnl_held: Used to indicate whether or not the caller is holding
@@ -3538,7 +3532,7 @@ void hdd_cleanup_actionframe(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
  *
  * Return: None.
  */
-static void hdd_station_adapter_deinit(struct hdd_context *hdd_ctx,
+static void hdd_deinit_station_mode(struct hdd_context *hdd_ctx,
 				       struct hdd_adapter *adapter,
 				       bool rtnl_held)
 {
@@ -3564,36 +3558,6 @@ static void hdd_station_adapter_deinit(struct hdd_context *hdd_ctx,
 		clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 	}
 
-	hdd_cleanup_actionframe(hdd_ctx, adapter);
-
-	EXIT();
-}
-
-/**
- * hdd_ap_adapter_deinit() - De-initialize the ap adapter
- * @hdd_ctx: global hdd context
- * @adapter: HDD adapter
- * @rtnl_held: the rtnl lock hold flag
- * This function De-initializes the AP/P2PGo adapter.
- *
- * Return: None.
- */
-static void hdd_ap_adapter_deinit(struct hdd_context *hdd_ctx,
-				  struct hdd_adapter *adapter,
-				  bool rtnl_held)
-{
-	ENTER_DEV(adapter->dev);
-
-	if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
-		hdd_wmm_adapter_close(adapter);
-		clear_bit(WMM_INIT_DONE, &adapter->event_flags);
-	}
-	wlan_hdd_undo_acs(adapter);
-
-	hdd_cleanup_actionframe(hdd_ctx, adapter);
-
-	hdd_unregister_hostapd(adapter, rtnl_held);
-
 	EXIT();
 }
 
@@ -3607,15 +3571,14 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
 	{
-		hdd_station_adapter_deinit(hdd_ctx, adapter, rtnl_held);
+		hdd_deinit_station_mode(hdd_ctx, adapter, rtnl_held);
 		break;
 	}
 
 	case QDF_SAP_MODE:
 	case QDF_P2P_GO_MODE:
 	{
-
-		hdd_ap_adapter_deinit(hdd_ctx, adapter, rtnl_held);
+		hdd_deinit_ap_mode(hdd_ctx, adapter, rtnl_held);
 		break;
 	}
 
@@ -4608,7 +4571,6 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 			if (test_bit(SOFTAP_BSS_STARTED,
 						&adapter->event_flags)) {
 				hdd_sap_indicate_disconnect_for_sta(adapter);
-				hdd_cleanup_actionframe(hdd_ctx, adapter);
 				hdd_sap_destroy_events(adapter);
 			}
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
@@ -10838,7 +10800,6 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
 		wlan_hdd_del_station(ap_adapter);
-		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		hdd_debug("Now doing SAP STOPBSS");
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
@@ -12503,7 +12464,6 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
 		wlan_hdd_del_station(ap_adapter);
-		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
