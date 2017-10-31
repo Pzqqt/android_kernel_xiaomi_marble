@@ -1073,7 +1073,7 @@ struct hdd_adapter {
 	bool is_link_up_service_needed;
 
 	/* WMM Status */
-	struct hdd_wmm_status hddWmmStatus;
+	struct hdd_wmm_status hdd_wmm_status;
 
 	/** Multiple station supports */
 	/** Per-station structure */

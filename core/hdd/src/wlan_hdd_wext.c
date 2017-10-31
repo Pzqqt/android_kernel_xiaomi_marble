@@ -8015,36 +8015,36 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			 "|BE |  %d  |  %3s   |  %d  |\n"
 			 "|BK |  %d  |  %3s   |  %d  |\n"
 			 "|------------------------|\n",
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_VO].wmmAcAccessRequired,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_VO].
 			 wmmAcAccessAllowed ? "YES" : "NO",
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_VO].wmmAcTspecInfo.
 			 ts_info.direction,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_VI].wmmAcAccessRequired,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_VI].
 			 wmmAcAccessAllowed ? "YES" : "NO",
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_VI].wmmAcTspecInfo.
 			 ts_info.direction,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_BE].wmmAcAccessRequired,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_BE].
 			 wmmAcAccessAllowed ? "YES" : "NO",
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_BE].wmmAcTspecInfo.
 			 ts_info.direction,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_BK].wmmAcAccessRequired,
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_BK].
 			 wmmAcAccessAllowed ? "YES" : "NO",
-			 adapter->hddWmmStatus.
+			 adapter->hdd_wmm_status.
 			 wmmAcStatus[SME_AC_BK].wmmAcTspecInfo.
 			 ts_info.direction);
 

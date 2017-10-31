@@ -650,7 +650,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 */
 
 	if (((adapter->psb_changed & (1 << ac)) &&
-		likely(adapter->hddWmmStatus.wmmAcStatus[ac].
+		likely(adapter->hdd_wmm_status.wmmAcStatus[ac].
 			wmmAcAccessAllowed)) ||
 		((sta_ctx->conn_info.uIsAuthenticated == false) &&
 		 (QDF_NBUF_CB_PACKET_TYPE_EAPOL ==
@@ -671,7 +671,7 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		 * Access category until ADDTS negotiation completes.
 		 */
 		while (!likely
-			       (adapter->hddWmmStatus.wmmAcStatus[ac].
+			       (adapter->hdd_wmm_status.wmmAcStatus[ac].
 			       wmmAcAccessAllowed)) {
 			switch (ac) {
 			case SME_AC_VO:
