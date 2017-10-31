@@ -1675,6 +1675,68 @@ QDF_STATUS policy_mgr_get_connection_channels(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * policy_mgr_set_weight_of_dfs_passive_channels_to_zero() - set weight of dfs
+ * and passive channels to 0
+ * @psoc: pointer to soc
+ * @pcl_channels: preferred channel list
+ * @len: length of preferred channel list
+ * @weight_list: preferred channel weight list
+ * @weight_len: length of weight list
+ * This function set the weight of dfs and passive channels to 0
+ *
+ * Return: None
+ */
+void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
+		struct wlan_objmgr_psoc *psoc, uint8_t *pcl_channels,
+		uint32_t *len, uint8_t *weight_list, uint32_t weight_len)
+{
+	uint8_t i;
+	uint32_t orig_channel_count = 0;
+	bool mcc_to_scc_mode;
+	uint32_t sap_count;
+	enum channel_state channel_state;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
+
+	mcc_to_scc_mode = policy_mgr_is_force_scc(psoc);
+	sap_count = policy_mgr_mode_specific_connection_count(psoc,
+			PM_SAP_MODE, NULL);
+	policy_mgr_debug("mcc_to_scc_mode %u, sap_count %u", mcc_to_scc_mode,
+			sap_count);
+
+	if (!mcc_to_scc_mode || !sap_count)
+		return;
+
+	if (len)
+		orig_channel_count = QDF_MIN(*len, QDF_MAX_NUM_CHAN);
+	else {
+		policy_mgr_err("invalid number of channel length");
+		return;
+	}
+
+	policy_mgr_debug("Set weight of DFS/passive channels to 0");
+
+	for (i = 0; i < orig_channel_count; i++) {
+		channel_state = reg_get_channel_state(pm_ctx->pdev,
+				pcl_channels[i]);
+		if ((channel_state == CHANNEL_STATE_DISABLE) ||
+				(channel_state == CHANNEL_STATE_INVALID))
+			/* Set weight of inactive channels to 0 */
+			weight_list[i] = 0;
+
+		policy_mgr_debug("chan[%d] - %d, weight[%d] - %d",
+				i, pcl_channels[i], i, weight_list[i]);
+	}
+
+	return;
+}
+
+/**
  * policy_mgr_get_channel_list() - provides the channel list
  * suggestion for new connection
  * @pcl:	The preferred channel list enum
@@ -2119,6 +2181,8 @@ QDF_STATUS policy_mgr_get_channel_list(struct wlan_objmgr_psoc *psoc,
 	policy_mgr_update_with_safe_channel_list(psoc, pcl_channels, len,
 				pcl_weights, weight_len);
 
+	policy_mgr_set_weight_of_dfs_passive_channels_to_zero(psoc,
+			pcl_channels, len, pcl_weights, weight_len);
 	return status;
 }
 
