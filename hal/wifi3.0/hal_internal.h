@@ -82,6 +82,10 @@
 #include "pld_common.h"
 #include "rx_msdu_link.h"
 
+#ifdef FEATURE_PERPKT_INFO
+#include "rx_header.h"
+#endif /* FEATURE_PERPKT_INFO */
+
 /* TBD: This should be movded to shared HW header file */
 enum hal_srng_ring_id {
 	/* UMAC rings */

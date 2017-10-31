@@ -534,10 +534,10 @@ struct cdp_soc_t {
 /*
  * cdp_pdev_param_type: different types of parameters
  *			to set values in pdev
- * @CDP_ENABLE_TX_CAPTURE: Enable Tx capture feature
+ * @CDP_CONFIG_DEBUG_SNIFFER: Enable debug sniffer feature
  */
 enum cdp_pdev_param_type {
-	CDP_CONFIG_TX_CAPTURE,
+	CDP_CONFIG_DEBUG_SNIFFER,
 };
 
 /*

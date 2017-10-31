@@ -168,6 +168,47 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 #endif
 
 /**
+* dp_rx_handle_am_copy_mode() - Allocate and deliver first MSDU payload
+* @soc: core txrx main context
+* @pdev: pdev strcuture
+* @ppdu_info: structure for rx ppdu ring
+*
+* Return: QDF_STATUS_SUCCESS - If nbuf to be freed by caller
+*         QDF_STATUS_E_ALREADY - If nbuf not to be freed by caller
+*/
+#ifdef FEATURE_PERPKT_INFO
+static inline QDF_STATUS
+dp_rx_handle_am_copy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf)
+{
+	uint8_t size = 0;
+
+	if (ppdu_info->first_msdu_payload == NULL)
+		return QDF_STATUS_SUCCESS;
+
+	if (pdev->am_copy_id.rx_ppdu_id == ppdu_info->com_info.ppdu_id)
+		return QDF_STATUS_SUCCESS;
+
+	pdev->am_copy_id.rx_ppdu_id = ppdu_info->com_info.ppdu_id;
+
+	size = ppdu_info->first_msdu_payload - qdf_nbuf_data(nbuf);
+	ppdu_info->first_msdu_payload = NULL;
+	qdf_nbuf_pull_head(nbuf, size);
+	dp_wdi_event_handler(WDI_EVENT_RX_DATA, soc,
+			nbuf, HTT_INVALID_PEER, WDI_NO_VAL, pdev->pdev_id);
+	return QDF_STATUS_E_ALREADY;
+}
+#else
+static inline QDF_STATUS
+dp_rx_handle_am_copy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+
+/**
 * dp_rx_handle_ppdu_stats() - Allocate and deliver ppdu stats to cdp layer
 * @soc: core txrx main context
 * @pdev: pdev strcuture
@@ -228,6 +269,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t *rx_tlv;
 	uint8_t *rx_tlv_start;
 	uint32_t tlv_status = HAL_TLV_STATUS_BUF_DONE;
+	QDF_STATUS am_copy_status = QDF_STATUS_SUCCESS;
 
 	ppdu_info = &pdev->ppdu_info;
 
@@ -239,14 +281,14 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		status_nbuf = qdf_nbuf_queue_remove(&pdev->rx_status_q);
 		rx_tlv = qdf_nbuf_data(status_nbuf);
 		rx_tlv_start = rx_tlv;
-
 #if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
 #ifndef REMOVE_PKT_LOG
 		dp_wdi_event_handler(WDI_EVENT_RX_DESC, soc,
 			status_nbuf, HTT_INVALID_PEER, WDI_NO_VAL, mac_id);
 #endif
 #endif
-		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en)) {
+		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en)
+			|| (pdev->am_copy_mode)) {
 
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
@@ -258,11 +300,20 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 			} while (tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE);
 		}
-		qdf_nbuf_free(status_nbuf);
+
+		if (pdev->am_copy_mode) {
+			am_copy_status = dp_rx_handle_am_copy_mode(soc,
+						pdev, ppdu_info, status_nbuf);
+			if (am_copy_status == QDF_STATUS_SUCCESS)
+				qdf_nbuf_free(status_nbuf);
+		} else {
+			qdf_nbuf_free(status_nbuf);
+		}
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			if (pdev->enhanced_stats_en)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
+
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
 			dp_rx_mon_dest_process(soc, mac_id, quota);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;

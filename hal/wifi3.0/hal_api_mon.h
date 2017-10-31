@@ -428,6 +428,7 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_common_info com_info;
 	struct hal_rx_ppdu_user_info user_info[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_status rx_status;
+	uint8_t *first_msdu_payload;
 };
 
 static inline uint32_t
@@ -466,7 +467,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 	tlv_len = HAL_RX_GET_USER_TLV32_LEN(rx_tlv);
 
 	rx_tlv = (uint8_t *) rx_tlv + HAL_RX_TLV32_HDR_SIZE;
-
 	switch (tlv_tag) {
 
 	case WIFIRX_PPDU_START_E:
@@ -773,6 +773,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			"RSSI_EXT80_HIGH20_CHAIN0: %d\n", value);
 		break;
 	}
+	case WIFIRX_HEADER_E:
+		ppdu_info->first_msdu_payload = rx_tlv;
 	case 0:
 		return HAL_TLV_STATUS_PPDU_DONE;
 

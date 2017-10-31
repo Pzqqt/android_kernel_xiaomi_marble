@@ -1793,7 +1793,7 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 	struct tx_capture_hdr *ppdu_hdr;
 	struct dp_peer *peer = NULL;
 
-	if (qdf_unlikely(!pdev->tx_sniffer_enable || !pdev->am_copy_mode))
+	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->am_copy_mode))
 		return QDF_STATUS_E_NOSUPPORT;
 
 	peer = (peer_id == HTT_INVALID_PEER) ? NULL :

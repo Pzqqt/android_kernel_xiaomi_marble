@@ -4635,14 +4635,14 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 }
 
 /*
- * dp_config_tx_capture()- API to enable/disable tx capture
+ * dp_config_debug_sniffer()- API to enable/disable debug sniffer
  * @pdev_handle: DP_PDEV handle
  * @val: user provided value
  *
  * Return: void
  */
 static void
-dp_config_tx_capture(struct cdp_pdev *pdev_handle, int val)
+dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
@@ -4650,6 +4650,7 @@ dp_config_tx_capture(struct cdp_pdev *pdev_handle, int val)
 	case 0:
 		pdev->tx_sniffer_enable = 0;
 		pdev->am_copy_mode = 0;
+		pdev->soc->process_tx_status = 0;
 
 		if (!pdev->enhanced_stats_en)
 			dp_h2t_cfg_stats_msg_send(pdev, 0);
@@ -4658,11 +4659,14 @@ dp_config_tx_capture(struct cdp_pdev *pdev_handle, int val)
 	case 1:
 		pdev->tx_sniffer_enable = 1;
 		pdev->am_copy_mode = 0;
+		pdev->soc->process_tx_status = 1;
 		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ALL);
 		break;
 	case 2:
 		pdev->am_copy_mode = 1;
 		pdev->tx_sniffer_enable = 0;
+		pdev->soc->process_tx_status = 1;
+		dp_ppdu_ring_cfg(pdev);
 		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ALL);
 		break;
 	default:
@@ -4762,8 +4766,8 @@ static void dp_set_pdev_param(struct cdp_pdev *pdev_handle,
 		enum cdp_pdev_param_type param, uint8_t val)
 {
 	switch (param) {
-	case CDP_CONFIG_TX_CAPTURE:
-		dp_config_tx_capture(pdev_handle, val);
+	case CDP_CONFIG_DEBUG_SNIFFER:
+		dp_config_debug_sniffer(pdev_handle, val);
 		break;
 	default:
 		break;
