@@ -861,6 +861,13 @@ QDF_STATUS hdd_softap_deregister_sta(struct hdd_adapter *adapter,
 			adapter->sta_info[staId].sta_mac.bytes);
 
 	if (adapter->sta_info[staId].in_use) {
+		if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
+			hdd_ipa_wlan_evt(adapter,
+					 adapter->sta_info[staId].sta_id,
+					 HDD_IPA_CLIENT_DISCONNECT,
+					 adapter->sta_info[staId].sta_mac.
+					 bytes);
+		}
 		spin_lock_bh(&adapter->sta_info_lock);
 		qdf_mem_zero(&adapter->sta_info[staId],
 			     sizeof(struct hdd_station_info));
