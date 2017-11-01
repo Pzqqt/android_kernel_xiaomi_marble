@@ -957,9 +957,8 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	 * them in per vdev queue.
 	 * Process the received pkts in a different per vdev loop.
 	 */
-	while (qdf_likely((ring_desc =
-				hal_srng_dst_get_next(hal_soc, hal_ring))
-				&& quota)) {
+	while (qdf_likely(quota && (ring_desc =
+				hal_srng_dst_get_next(hal_soc, hal_ring)))) {
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
 		ring_id = hal_srng_ring_id_get(hal_ring);
