@@ -14434,7 +14434,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		if (!pairwise) {
 			/* set group key */
-			if (sta_ctx->roam_info.deferKeyComplete) {
+			if (sta_ctx->roam_info.defer_key_complete) {
 				hdd_debug("Perform Set key Complete");
 				hdd_perform_roam_set_key_complete(adapter);
 			}

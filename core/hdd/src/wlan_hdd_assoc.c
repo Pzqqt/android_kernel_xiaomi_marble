@@ -2514,18 +2514,18 @@ void hdd_perform_roam_set_key_complete(struct hdd_adapter *adapter)
 	qdf_mem_copy(roamInfo.bssid.bytes,
 		     sta_ctx->roam_info.bssid, QDF_MAC_ADDR_SIZE);
 	qdf_mem_copy(roamInfo.peerMac.bytes,
-		     sta_ctx->roam_info.peerMac, QDF_MAC_ADDR_SIZE);
+		     sta_ctx->roam_info.peer_mac, QDF_MAC_ADDR_SIZE);
 
 	qdf_ret_status =
 			hdd_roam_set_key_complete_handler(adapter,
 					   &roamInfo,
-					   sta_ctx->roam_info.roamId,
-					   sta_ctx->roam_info.roamStatus,
+					   sta_ctx->roam_info.roam_id,
+					   sta_ctx->roam_info.roam_status,
 					   eCSR_ROAM_RESULT_AUTHENTICATED);
 	if (qdf_ret_status != QDF_STATUS_SUCCESS)
 		hdd_err("Set Key complete failure");
 
-	sta_ctx->roam_info.deferKeyComplete = false;
+	sta_ctx->roam_info.defer_key_complete = false;
 }
 
 #if defined(WLAN_FEATURE_FILS_SK) && \
@@ -2931,15 +2931,15 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 							     roam_info->bssid.bytes,
 							     QDF_MAC_ADDR_SIZE);
 						qdf_mem_copy(sta_ctx->
-							     roam_info.peerMac,
+							     roam_info.peer_mac,
 							     roam_info->peerMac.bytes,
 							     QDF_MAC_ADDR_SIZE);
-						sta_ctx->roam_info.roamId =
+						sta_ctx->roam_info.roam_id =
 							roamId;
+						sta_ctx->roam_info.roam_status =
+							roamStatus;
 						sta_ctx->roam_info.
-						roamStatus = roamStatus;
-						sta_ctx->roam_info.
-						deferKeyComplete = true;
+						defer_key_complete = true;
 					}
 				} else if (!hddDisconInProgress) {
 					hdd_debug("ft_carrier_on is %d, sending connect indication",

@@ -512,18 +512,18 @@ struct hdd_stats {
 /**
  * struct hdd_roaming_info - HDD Internal Roaming Information
  * @bssid: BSSID to which we are connected
- * @peerMac: Peer MAC address for IBSS connection
- * @roamId: Unique identifier for a roaming instance
- * @roamStatus: Current roam command status
- * @deferKeyComplete: Should key complete be deferred?
+ * @peer_mac: Peer MAC address for IBSS connection
+ * @roam_id: Unique identifier for a roaming instance
+ * @roam_status: Current roam command status
+ * @defer_key_complete: Should key complete be deferred?
  *
  */
 struct hdd_roaming_info {
 	tSirMacAddr bssid;
-	tSirMacAddr peerMac;
-	uint32_t roamId;
-	eRoamCmdStatus roamStatus;
-	bool deferKeyComplete;
+	tSirMacAddr peer_mac;
+	uint32_t roam_id;
+	eRoamCmdStatus roam_status;
+	bool defer_key_complete;
 
 };
 
