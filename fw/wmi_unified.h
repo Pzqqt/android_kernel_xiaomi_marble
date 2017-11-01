@@ -7105,7 +7105,7 @@ typedef struct {
  * Indicates support by a STA to receive an ack-enabled A-MPDU in which an A-MSDU is carried in
  * a QoS Data frame for which no block ack agreement exists.
  */
-#define WMI_HECAP_MAC_AMSDUINAMPDU_GET(he_cap) (hecap, 15, 1)
+#define WMI_HECAP_MAC_AMSDUINAMPDU_GET(he_cap) WMI_GET_BITS(hecap, 15, 1)
 #define WMI_HECAP_MAC_AMSDUINAMPDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 15, 1, value)
 
 /*--- HECAP_MAC_HELKAD: DO NOT USE - DEPRECATED ---*/
@@ -20951,11 +20951,36 @@ typedef enum {
     WMI_CALIBRATION_NOT_OK,         /* The calibration status is NOT OK */
 } WMI_CALIBRATION_STATUS;
 
+#define WMI_BOARD_MCN_STRING_MAX_SIZE 19
+
+/**
+ * WMI_BOARD_MCN_STRING_BUF_SIZE : represents the number of elements in board_mcn_detail.
+ * Since board_mcn_detail is of type A_UINT8, the value of WMI_BOARD_MCN_STRING_BUF_SIZE
+ * should be multiple of 4 for alignement reason. And the last byte byte is reserved for
+ * null-terminator
+ */
+#define WMI_BOARD_MCN_STRING_BUF_SIZE (WMI_BOARD_MCN_STRING_MAX_SIZE+1) /* null-terminator */
+
 typedef struct {
     A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_check_cal_version_event_fixed_param  */
     A_UINT32 software_cal_version;  /* Current software level calibration data version */
     A_UINT32 board_cal_version;     /* Calibration data version programmed on chip */
     A_UINT32 cal_status;            /* filled with WMI_CALIBRATION_STATUS enum value */
+
+    /* board_mcn_detail:
+     * Provides board's MCN (Material Control Number) information for the host
+     * to display. This is used to track the Hardware level revisions/versions.
+     * This array carries the ASCII values of the MCN to the host. And host
+     * would just print this in a string format whenever user requests.
+     * Note: On a big-endian host, the 4 bytes within each A_UINT32 portion
+     * of a WMI message will be automatically byteswapped by the copy engine
+     * as the messages are transferred between host and target, to convert
+     * between the target's little-endianness and the host's big-endianness.
+     * Consequently, a big-endian host will have to manually unswap the bytes
+     * within the board_mcn_detail string buffer to get the bytes back into
+     * the desired natural order.
+     */
+    A_UINT8 board_mcn_detail[WMI_BOARD_MCN_STRING_BUF_SIZE];
     /** pdev_id for identifying the MAC
      * See macros starting with WMI_PDEV_ID_ for values.
      */
