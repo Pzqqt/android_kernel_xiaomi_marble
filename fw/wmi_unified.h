@@ -7435,6 +7435,10 @@ typedef struct {
     A_UINT32 key_txmic_len;
     /** key rx mic length */
     A_UINT32 key_rxmic_len;
+    /** specifies if the group_key_ix is valid, filled by the sender */
+    A_UINT32 is_group_key_ix_valid;
+    /** Multi group key ID */
+    A_UINT32 group_key_ix;
 /*
  * Following this struct are this TLV.
  *     A_UINT8  key_data[]; <-- actual key data; contains key followed by tx mic followed by rx mic
