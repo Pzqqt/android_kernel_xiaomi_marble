@@ -809,6 +809,8 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			event->re_total_gain = e.total_gain;
 			event->re_mb_gain = e.mb_gain;
 			event->re_relpwr_db = e.relpwr_db;
+			event->re_delta_diff = e.pulse_delta_diff;
+			event->re_delta_peak = e.pulse_delta_peak;
 			/* Handle chirp flags. */
 			if (e.do_check_chirp) {
 				event->re_flags |= DFS_EVENT_CHECKCHIRP;

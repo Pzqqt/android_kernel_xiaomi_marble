@@ -25,13 +25,16 @@ void dfs_print_delayline(struct wlan_dfs *dfs, struct dfs_delayline *dl)
 	int i = 0, index;
 	struct dfs_delayelem *de;
 
-	index = dl->dl_lastelem;
+	index = dl->dl_firstelem;
 	for (i = 0; i < dl->dl_numelems; i++) {
 		de = &dl->dl_elems[index];
 		dfs_debug(dfs, WLAN_DEBUG_DFS2,
-			"Elem %d: ts = %u (0x%x) dur=%u",
-			i, de->de_time, de->de_time, de->de_dur);
-		index = (index - 1) & DFS_MAX_DL_MASK;
+				"Elem %u: ts=%llu diff_ts=%u (0x%x) dur=%u, seg_id=%d sidx=%d delta_peak=%d seq_num=%d",
+				i, de->de_ts, de->de_time, de->de_time,
+				de->de_dur, de->de_seg_id, de->de_sidx,
+				de->de_delta_peak, de->de_seq_num);
+
+		index = (index + 1) & DFS_MAX_DL_MASK;
 	}
 }
 

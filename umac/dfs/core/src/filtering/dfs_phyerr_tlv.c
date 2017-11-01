@@ -702,6 +702,8 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 	e->total_gain = rs.agc_total_gain;
 	e->mb_gain = rs.agc_mb_gain;
 	e->relpwr_db = rsfr.relpwr_db;
+	e->pulse_delta_peak = rs.delta_peak;
+	e->pulse_delta_diff = rs.delta_diff;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_PHYERR_SUM,
 		"fbin=%d, freq=%d.%d MHz, raw tsf=%u, offset=%d, cooked tsf=%u, rssi=%d, dur=%d, is_chirp=%d, fulltsf=%llu, freq=%d.%d MHz, freq_lo=%d.%dMHz, freq_hi=%d.%d MHz",
@@ -714,12 +716,14 @@ int dfs_process_phyerr_bb_tlv(struct wlan_dfs *dfs,
 		(int) abs(e->freq_hi) % 1000);
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS_FALSE_DET,
-		"ts=%u, dur=%d, rssi=%d, freq_offset=%d.%dMHz, is_chirp=%d, seg_id=%d, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d",
+		"ts=%u, dur=%d, rssi=%d, freq_offset=%d.%dMHz, is_chirp=%d, seg_id=%d, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_peak=%d, delta_diff=%d",
 		e->rs_tstamp, rs.pulse_duration, rs.rssi,
 		(int)e->freq_offset_khz / 1000,
 		(int)abs(e->freq_offset_khz) % 1000, (int)rs.is_chirp,
 		rsfr.seg_id, rsfr.peak_mag, rs.agc_total_gain, rs.agc_mb_gain,
-		rsfr.relpwr_db);
+		rsfr.relpwr_db,
+		rs.delta_peak,
+		rs.delta_diff);
 
 	return 1;
 }
