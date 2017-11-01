@@ -22,6 +22,7 @@
 #include "wlan_lmac_if_api.h"
 #include "wlan_mgmt_txrx_tgt_api.h"
 #include "wlan_scan_tgt_api.h"
+#include <wlan_reg_services_api.h>
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_tgt_api.h"
 #endif

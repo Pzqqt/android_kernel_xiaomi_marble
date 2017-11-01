@@ -25,6 +25,8 @@
 #ifndef _WLAN_DFS_TGT_API_H_
 #define _WLAN_DFS_TGT_API_H_
 
+#include <wlan_dfs_public_struct.h>
+
 /* Max number arguments for DFS unit test command */
 #define DFS_MAX_NUM_UNIT_TEST_ARGS 3
 
