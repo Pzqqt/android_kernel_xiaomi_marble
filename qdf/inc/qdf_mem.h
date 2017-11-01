@@ -96,9 +96,36 @@ void qdf_mem_init(void);
 void qdf_mem_exit(void);
 
 #ifdef MEMORY_DEBUG
+/**
+ * qdf_mem_malloc_debug() - debug version of QDF memory allocation API
+ * @size: Number of bytes of memory to allocate.
+ * @file: File name of the call site
+ * @line: Line number of the call site
+ *
+ * This function will dynamicallly allocate the specified number of bytes of
+ * memory and add it to the qdf tracking list to check for memory leaks and
+ * corruptions
+ *
+ * Return: A valid memory location on success, or NULL on failure
+ */
+void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line);
+
 #define qdf_mem_malloc(size) \
 	qdf_mem_malloc_debug(size, __FILE__, __LINE__)
-void *qdf_mem_malloc_debug(size_t size, char *file_name, uint32_t line_num);
+
+/**
+ * qdf_mem_free_debug() - debug version of qdf_mem_free
+ * @ptr: Pointer to the starting address of the memory to be freed.
+ *
+ * This function will free the memory pointed to by 'ptr'. It also checks for
+ * memory corruption, underrun, overrun, double free, domain mismatch, etc.
+ *
+ * Return: none
+ */
+void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line);
+
+#define qdf_mem_free(ptr) \
+	qdf_mem_free_debug(ptr, __FILE__, __LINE__)
 
 /**
  * qdf_mem_check_for_leaks() - Assert that the current memory domain is empty
@@ -133,19 +160,19 @@ void *qdf_mem_malloc_debug(size_t size, char *file_name, uint32_t line_num);
 void qdf_mem_check_for_leaks(void);
 #else
 void *qdf_mem_malloc(qdf_size_t size);
+
+/**
+ * qdf_mem_free() - free QDF memory
+ * @ptr: Pointer to the starting address of the memory to be freed.
+ *
+ * Return: None
+ */
+void qdf_mem_free(void *ptr);
+
 static inline void qdf_mem_check_for_leaks(void) { }
 #endif /* MEMORY_DEBUG */
 
 void *qdf_mem_alloc_outline(qdf_device_t osdev, qdf_size_t size);
-
-/**
- * qdf_mem_free() - free QDF memory
- * @ptr: Pointer to the starting address of the memory to be free'd.
- * This function will free the memory pointed to by 'ptr'.
- * Return:
- * None
- */
-void qdf_mem_free(void *ptr);
 
 void qdf_mem_set(void *ptr, uint32_t num_bytes, uint32_t value);
 
