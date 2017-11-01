@@ -6015,6 +6015,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		hdd_abort_sched_scan_all_adapters(hdd_ctx);
 		hdd_stop_all_adapters(hdd_ctx, true);
+		hdd_deinit_all_adapters(hdd_ctx, false);
 	}
 
 	/*
