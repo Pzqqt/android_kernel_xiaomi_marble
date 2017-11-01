@@ -250,4 +250,20 @@ struct wlan_core_minfreq {
 	uint16_t freq;
 };
 
+/* Indication to enable TCP delayed ack in TPUT indication */
+#define TCP_DEL_ACK_IND	(1 << 0)
+/* Indication to enable TCP advance window scaling in TPUT indication */
+#define TCP_ADV_WIN_SCL	(1 << 1)
+
+/**
+ * struct wlan_rx_tp_data - msg to TCP delayed ack and advance window scaling
+ * @level:            Throughput level.
+ * @rx_tp_flags:      Bit map of flags, for which this indcation will take
+ *                    effect, bit map for TCP_ADV_WIN_SCL and TCP_DEL_ACK_IND.
+ */
+struct wlan_rx_tp_data {
+	enum wlan_tp_level level;
+	uint16_t rx_tp_flags;
+};
+
 #endif /* WLAN_NLINK_COMMON_H__ */

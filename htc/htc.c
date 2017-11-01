@@ -317,6 +317,9 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 		hif_post_init(target->hif_dev, target, &htcCallbacks);
 		hif_get_default_pipe(target->hif_dev, &pEndpoint->UL_PipeID,
 				     &pEndpoint->DL_PipeID);
+		hif_set_initial_wakeup_cb(target->hif_dev,
+					  pInfo->target_initial_wakeup_cb,
+					  pInfo->target_psoc);
 
 	} while (false);
 

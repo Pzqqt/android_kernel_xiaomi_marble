@@ -167,6 +167,10 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 				macaddr[3], macaddr[4], macaddr[5]);
 		return NULL;
 	}
+	qdf_atomic_init(&peer->peer_objmgr.ref_cnt);
+	for (id = 0; id < WLAN_REF_ID_MAX; id++)
+		qdf_atomic_init(&peer->peer_objmgr.ref_id_dbg[id]);
+	wlan_objmgr_peer_get_ref(peer, WLAN_OBJMGR_ID);
 	/* set vdev to peer */
 	wlan_peer_set_vdev(peer, vdev);
 	/* set peer type */
@@ -176,7 +180,6 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 	/* initialize peer state */
 	wlan_peer_mlme_set_state(peer, WLAN_INIT_STATE);
 	wlan_peer_mlme_reset_seq_num(peer);
-	qdf_atomic_init(&peer->peer_objmgr.ref_cnt);
 	peer->peer_objmgr.print_cnt = 0;
 	/* Attach peer to psoc, psoc maintains the node table for the device */
 	if (wlan_objmgr_psoc_peer_attach(psoc, peer) !=
@@ -201,7 +204,6 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 		return NULL;
 	}
 	qdf_spinlock_create(&peer->peer_lock);
-	wlan_objmgr_peer_get_ref(peer, WLAN_OBJMGR_ID);
 	/* Increment ref count for BSS peer, so that BSS peer deletes last*/
 	if ((type == WLAN_PEER_STA) || (type == WLAN_PEER_STA_TEMP)
 				    || (type == WLAN_PEER_P2P_CLI))

@@ -922,4 +922,16 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx);
 
 void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle);
 
+/**
+ * hif_set_initial_wakeup_cb() - set the initial wakeup event handler function
+ * @hif_ctx - the HIF context to assign the callback to
+ * @callback - the callback to assign
+ * @priv - the private data to pass to the callback when invoked
+ *
+ * Return: None
+ */
+void hif_set_initial_wakeup_cb(struct hif_opaque_softc *hif_ctx,
+			       void (*callback)(void *),
+			       void *priv);
+
 #endif /* _HIF_H_ */

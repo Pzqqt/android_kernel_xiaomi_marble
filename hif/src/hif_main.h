@@ -169,6 +169,8 @@ struct hif_softc {
 	struct hif_ut_suspend_context ut_suspend_ctx;
 	uint32_t hif_attribute;
 	int wake_irq;
+	void (*initial_wakeup_cb)(void *);
+	void *initial_wakeup_priv;
 };
 
 static inline void *hif_get_hal_handle(void *hif_hdl)

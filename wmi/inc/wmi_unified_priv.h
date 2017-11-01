@@ -1368,6 +1368,13 @@ QDF_STATUS (*extract_chainmask_tables)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wlan_psoc_host_chainmask_table *chainmask_table);
 
+QDF_STATUS (*send_get_rcpi_cmd)(wmi_unified_t wmi_handle,
+				struct rcpi_req *get_rcpi_param);
+
+QDF_STATUS (*extract_rcpi_response_event)(wmi_unified_t wmi_handle,
+					  void *evt_buf,
+					  struct rcpi_res *res);
+
 #ifdef DFS_COMPONENT_ENABLE
 QDF_STATUS (*extract_dfs_cac_complete_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
