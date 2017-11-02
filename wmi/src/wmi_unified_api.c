@@ -2755,51 +2755,6 @@ QDF_STATUS wmi_unified_process_set_ie_info_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-#ifdef CONFIG_MCL
-/**
- * wmi_unified_send_init_cmd() - wmi init command
- * @wmi_handle:      pointer to wmi handle
- * @res_cfg:         resource config
- * @num_mem_chunks:  no of mem chunck
- * @mem_chunk:       pointer to mem chunck structure
- *
- * This function sends IE information to firmware
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- *
- */
-QDF_STATUS wmi_unified_send_init_cmd(void *wmi_hdl,
-		wmi_resource_config *res_cfg,
-		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunk,
-		bool action)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_init_cmd)
-		return wmi_handle->ops->send_init_cmd(wmi_handle,
-			    res_cfg, num_mem_chunks, mem_chunk, action);
-
-	return QDF_STATUS_E_FAILURE;
-}
-#endif
-/**
- * wmi_unified_send_saved_init_cmd() - wmi init command
- * @wmi_handle:      pointer to wmi handle
- *
- * This function sends IE information to firmware
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- *
- */
-QDF_STATUS wmi_unified_send_saved_init_cmd(void *wmi_hdl)
-{
-	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
-
-	if (wmi_handle->ops->send_saved_init_cmd)
-		return wmi_handle->ops->send_saved_init_cmd(wmi_handle);
-
-	return QDF_STATUS_E_FAILURE;
-}
 
 /**
  * wmi_unified_save_fw_version_cmd() - save fw version

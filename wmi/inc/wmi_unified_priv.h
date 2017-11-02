@@ -680,18 +680,9 @@ QDF_STATUS (*send_process_fw_mem_dump_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_process_set_ie_info_cmd)(wmi_unified_t wmi_handle,
 				   struct vdev_ie_info_param *ie_info);
 
-#ifdef CONFIG_MCL
-QDF_STATUS (*send_init_cmd)(wmi_unified_t wmi_handle,
-		wmi_resource_config *res_cfg,
-		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunk,
-		bool action);
-#endif
-
 QDF_STATUS (*save_fw_version_cmd)(wmi_unified_t wmi_handle, void *evt_buf);
 
 QDF_STATUS (*check_and_update_fw_version_cmd)(wmi_unified_t wmi_hdl, void *ev);
-
-QDF_STATUS (*send_saved_init_cmd)(wmi_unified_t wmi_handle);
 
 QDF_STATUS (*send_set_base_macaddr_indicate_cmd)(wmi_unified_t wmi_handle,
 					 uint8_t *custom_addr);
@@ -1444,7 +1435,6 @@ struct wmi_unified {
 	int wmi_stop_in_progress;
 	struct wmi_host_abi_version fw_abi_version;
 	struct wmi_host_abi_version final_abi_vers;
-	struct wmi_cmd_init saved_wmi_init_cmd;
 	uint32_t num_of_diag_events_logs;
 	uint32_t *events_logs_list;
 #ifdef WLAN_OPEN_SOURCE
