@@ -1946,8 +1946,8 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 
 #ifdef FEATURE_WLAN_WAPI
 	hdd_debug("WAPI STA Registered: %d",
-		   adapter->wapi_info.fIsWapiSta);
-	if (adapter->wapi_info.fIsWapiSta)
+		   adapter->wapi_info.is_wapi_sta);
+	if (adapter->wapi_info.is_wapi_sta)
 		staDesc.is_wapi_supported = 1;
 	else
 		staDesc.is_wapi_supported = 0;
@@ -2628,9 +2628,9 @@ hdd_association_completion_handler(struct hdd_adapter *adapter,
 		    eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE
 		    || roam_info->u.pConnectedProfile->AuthType ==
 		    eCSR_AUTH_TYPE_WAPI_WAI_PSK) {
-			adapter->wapi_info.fIsWapiSta = 1;
+			adapter->wapi_info.is_wapi_sta = true;
 		} else {
-			adapter->wapi_info.fIsWapiSta = 0;
+			adapter->wapi_info.is_wapi_sta = false;
 		}
 #endif /* FEATURE_WLAN_WAPI */
 		hdd_debug("bss_descr[%d] devicemode[%d]", !!roam_info->pBssDesc,

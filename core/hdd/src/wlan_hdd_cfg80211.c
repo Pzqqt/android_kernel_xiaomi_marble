@@ -15796,13 +15796,13 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			hdd_set_csr_auth_type(adapter, RSNAuthType);
 		}
 #ifdef FEATURE_WLAN_WAPI
-		if (adapter->wapi_info.nWapiMode) {
+		if (adapter->wapi_info.wapi_mode) {
 			hdd_debug("Setting WAPI AUTH Type and Encryption Mode values");
-			switch (adapter->wapi_info.wapiAuthMode) {
+			switch (adapter->wapi_info.wapi_auth_mode) {
 			case WAPI_AUTH_MODE_PSK:
 			{
 				hdd_debug("WAPI AUTH TYPE: PSK: %d",
-				       adapter->wapi_info.wapiAuthMode);
+				       adapter->wapi_info.wapi_auth_mode);
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WAPI_WAI_PSK;
 				break;
@@ -15810,15 +15810,17 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			case WAPI_AUTH_MODE_CERT:
 			{
 				hdd_debug("WAPI AUTH TYPE: CERT: %d",
-				       adapter->wapi_info.wapiAuthMode);
+				       adapter->wapi_info.wapi_auth_mode);
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE;
 				break;
 			}
+			default:
+				break;
 			} /* End of switch */
-			if (adapter->wapi_info.wapiAuthMode ==
+			if (adapter->wapi_info.wapi_auth_mode ==
 			    WAPI_AUTH_MODE_PSK
-			    || adapter->wapi_info.wapiAuthMode ==
+			    || adapter->wapi_info.wapi_auth_mode ==
 			    WAPI_AUTH_MODE_CERT) {
 				hdd_debug("WAPI PAIRWISE/GROUP ENCRYPTION: WPI");
 				roam_profile->AuthType.numEntries = 1;
@@ -16811,8 +16813,8 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 #ifdef FEATURE_WLAN_WAPI
 		case WLAN_EID_WAPI:
 			/* Setting WAPI Mode to ON=1 */
-			adapter->wapi_info.nWapiMode = 1;
-			hdd_debug("WAPI MODE IS %u", adapter->wapi_info.nWapiMode);
+			adapter->wapi_info.wapi_mode = true;
+			hdd_debug("WAPI MODE IS %u", adapter->wapi_info.wapi_mode);
 			tmp = (u16 *) ie;
 			tmp = tmp + 2;  /* Skip element Id and Len, Version */
 			akmsuiteCount = WPA_GET_LE16(tmp);
@@ -16829,12 +16831,12 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 
 			if (WAPI_PSK_AKM_SUITE == akmsuite[0]) {
 				hdd_debug("WAPI AUTH MODE SET TO PSK");
-				adapter->wapi_info.wapiAuthMode =
+				adapter->wapi_info.wapi_auth_mode =
 					WAPI_AUTH_MODE_PSK;
 			}
 			if (WAPI_CERT_AKM_SUITE == akmsuite[0]) {
 				hdd_debug("WAPI AUTH MODE SET TO CERTIFICATE");
-				adapter->wapi_info.wapiAuthMode =
+				adapter->wapi_info.wapi_auth_mode =
 					WAPI_AUTH_MODE_CERT;
 			}
 			break;

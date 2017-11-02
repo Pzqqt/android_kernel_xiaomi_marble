@@ -547,14 +547,14 @@ enum wapi_auth_mode {
 
 /**
  * struct hdd_wapi_info - WAPI Information structure definition
- * @nWapiMode: Is WAPI enabled on this adapter?
- * @fIsWapiSta: Is the STA associated with WAPI?
- * @wapiAuthMode: WAPI authentication mode used by this adapter
+ * @wapi_mode: Is WAPI enabled on this adapter?
+ * @is_wapi_sta: Is the STA associated with WAPI?
+ * @wapi_auth_mode: WAPI authentication mode used by this adapter
  */
 struct hdd_wapi_info {
-	uint32_t nWapiMode;
-	bool fIsWapiSta;
-	uint8_t wapiAuthMode;
+	bool wapi_mode;
+	bool is_wapi_sta;
+	enum wapi_auth_mode wapi_auth_mode;
 };
 #endif /* FEATURE_WLAN_WAPI */
 

@@ -4195,8 +4195,8 @@ void hdd_clear_roam_profile_ie(struct hdd_adapter *adapter)
 	qdf_mem_zero(pWextState->roamProfile.Keys.KeyLength, CSR_MAX_NUM_KEY);
 
 #ifdef FEATURE_WLAN_WAPI
-	adapter->wapi_info.wapiAuthMode = WAPI_AUTH_MODE_OPEN;
-	adapter->wapi_info.nWapiMode = 0;
+	adapter->wapi_info.wapi_auth_mode = WAPI_AUTH_MODE_OPEN;
+	adapter->wapi_info.wapi_mode = false;
 #endif
 
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
