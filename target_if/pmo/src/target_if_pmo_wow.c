@@ -112,3 +112,29 @@ QDF_STATUS target_if_pmo_send_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 	return status;
 }
 
+QDF_STATUS target_if_pmo_del_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
+		uint8_t ptrn_id)
+{
+	uint8_t vdev_id;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+
+	if (!vdev) {
+		target_if_err("vdev ptr passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	vdev_id = wlan_vdev_get_id(vdev);
+	if (!psoc) {
+		target_if_err("psoc handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_wow_delete_pattern_cmd(
+				GET_WMI_HDL_FROM_PSOC(psoc), ptrn_id,
+				vdev_id);
+
+	return status;
+}
+

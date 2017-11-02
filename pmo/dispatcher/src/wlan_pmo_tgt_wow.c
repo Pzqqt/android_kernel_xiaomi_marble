@@ -107,12 +107,45 @@ QDF_STATUS pmo_tgt_send_wow_patterns_to_fw(
 	if (status != QDF_STATUS_SUCCESS) {
 		if (!user)
 			pmo_decrement_wow_default_ptrn(vdev_ctx);
-		pmo_err("Failed to sen wow pattern event");
+		pmo_err("Failed to send wow pattern event");
 		goto out;
 	}
 
 	if (user)
 		pmo_increment_wow_user_ptrn(vdev_ctx);
+out:
+	PMO_EXIT();
+
+	return status;
+}
+
+QDF_STATUS pmo_tgt_del_wow_pattern(
+		struct wlan_objmgr_vdev *vdev, uint8_t ptrn_id,
+		bool user)
+{
+	QDF_STATUS status;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_pmo_tx_ops pmo_tx_ops;
+
+	PMO_ENTER();
+	psoc = pmo_vdev_get_psoc(vdev);
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
+	if (!pmo_tx_ops.del_wow_pattern) {
+		pmo_err("del_wow_pattern is null");
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto out;
+	}
+	status = pmo_tx_ops.del_wow_pattern(vdev, ptrn_id);
+	if (status) {
+		status = QDF_STATUS_E_FAILURE;
+		goto out;
+	}
+
+	if (user)
+		pmo_decrement_wow_user_ptrn(vdev_ctx);
 out:
 	PMO_EXIT();
 

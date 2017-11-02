@@ -298,6 +298,18 @@ QDF_STATUS pmo_ucfg_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
 	return pmo_core_psoc_suspend_target(psoc, disable_target_intr);
 }
 
+QDF_STATUS pmo_ucfg_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+		struct pmo_wow_add_pattern *ptrn)
+{
+	return pmo_core_add_wow_user_pattern(vdev, ptrn);
+}
+
+QDF_STATUS pmo_ucfg_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+		uint8_t pattern_id)
+{
+	return pmo_core_del_wow_user_pattern(vdev, pattern_id);
+}
+
 QDF_STATUS pmo_ucfg_psoc_bus_resume_req(struct wlan_objmgr_psoc *psoc,
 		enum qdf_suspend_type type)
 {

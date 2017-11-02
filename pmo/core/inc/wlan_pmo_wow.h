@@ -176,6 +176,54 @@ static inline void pmo_decrement_wow_default_ptrn(
 }
 
 /**
+ * pmo_get_wow_default_ptrn() -Get wow default ptrn
+ * @vdev_ctx: pmo vdev priv ctx
+ *
+ * API to get wow default ptrn
+ *
+ * Return: current wow default ptrn count
+ */
+static inline uint8_t pmo_get_wow_default_ptrn(
+		struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	uint8_t count;
+
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		count = vdev_ctx->num_wow_default_patterns;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		count = vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_def;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
+
+	return count;
+}
+
+/**
+ * pmo_get_wow_default_ptrn() -Set wow default ptrn
+ * @vdev_ctx: pmo vdev priv ctx
+ *
+ * API to set wow default ptrn
+ *
+ * Return: Set wow default ptrn count
+ */
+static inline void pmo_set_wow_default_ptrn(
+		struct pmo_vdev_priv_obj *vdev_ctx, uint8_t value)
+{
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		vdev_ctx->num_wow_default_patterns = value;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_def = value;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
+}
+
+/**
  * pmo_increment_wow_user_ptrn() -increment wow user ptrn
  * @vdev_ctx: pmo vdev priv ctx
  *
@@ -219,6 +267,32 @@ static inline void pmo_decrement_wow_user_ptrn(
 	}
 }
 
+/**
+ * pmo_get_wow_user_ptrn() -Get wow user ptrn
+ * @vdev_ctx: pmo vdev priv ctx
+ *
+ * API to Get wow user ptrn
+ *
+ * Return: None
+ */
+static inline uint8_t pmo_get_wow_user_ptrn(
+		struct pmo_vdev_priv_obj *vdev_ctx)
+{
+	uint8_t count;
+
+	if (vdev_ctx->pmo_psoc_ctx->psoc_cfg.ptrn_id_per_vdev) {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_vdev_lock);
+		count = vdev_ctx->num_wow_user_patterns;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_vdev_lock);
+	} else {
+		qdf_spin_lock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+		count = vdev_ctx->pmo_psoc_ctx->wow.ptrn_id_usr;
+		qdf_spin_unlock_bh(&vdev_ctx->pmo_psoc_ctx->lock);
+	}
+
+	return count;
+}
+
 void pmo_dump_wow_ptrn(struct pmo_wow_add_pattern *ptrn);
 
 /**
@@ -229,18 +303,18 @@ void pmo_dump_wow_ptrn(struct pmo_wow_add_pattern *ptrn);
  *
  * Return: false if any errors encountered, QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS pmo_core_add_wow_pattern(struct wlan_objmgr_vdev *vdev,
-		const char *ptrn);
+QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+			struct pmo_wow_add_pattern *ptrn);
 
 /**
  * pmo_core_del_wow_pattern() - Function which will delete the WoWL pattern
  * @vdev: pointer to the vdev
- * @ptrn: pointer to the pattern string to be added
+ * @ptrn: pointer to the pattern string to be delete
  *
  * Return: error if any errors encountered, QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev,
-		const char *ptrn);
+QDF_STATUS pmo_core_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+			uint8_t pattern_id);
 
 /**
  * pmo_core_wow_enter() - store enable/disable status for pattern

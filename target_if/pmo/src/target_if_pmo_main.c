@@ -43,6 +43,8 @@ void target_if_pmo_register_tx_ops(struct wlan_pmo_tx_ops *pmo_tx_ops)
 		target_if_pmo_disable_wow_wakeup_event;
 	pmo_tx_ops->send_add_wow_pattern =
 		target_if_pmo_send_wow_patterns_to_fw;
+	pmo_tx_ops->del_wow_pattern =
+		target_if_pmo_del_wow_patterns_to_fw;
 	pmo_tx_ops->send_enhance_mc_offload_req =
 		target_if_pmo_send_enhance_mc_offload_req;
 	pmo_tx_ops->send_set_mc_filter_req =
