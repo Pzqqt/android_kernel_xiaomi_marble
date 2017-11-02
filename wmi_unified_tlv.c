@@ -12459,9 +12459,17 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->bpf_instruction_size = tgt_res_cfg->bpf_instruction_size;
 	resource_cfg->max_bssid_rx_filters = tgt_res_cfg->max_bssid_rx_filters;
 	resource_cfg->use_pdev_id = tgt_res_cfg->use_pdev_id;
+	resource_cfg->max_num_dbs_scan_duty_cycle =
+		tgt_res_cfg->max_num_dbs_scan_duty_cycle;
 
-	WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1,
-						tgt_res_cfg->atf_config);
+	if (tgt_res_cfg->atf_config)
+		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
+	if (tgt_res_cfg->mgmt_comp_evt_bundle_support)
+		WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_SET(
+			resource_cfg->flag1, 1);
+	if (tgt_res_cfg->tx_msdu_new_partition_id_support)
+		WMI_RSRC_CFG_FLAG_TX_MSDU_ID_NEW_PARTITION_SUPPORT_SET(
+			resource_cfg->flag1, 1);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -12558,131 +12566,6 @@ static inline void copy_fw_abi_version_tlv(wmi_unified_t wmi_handle,
 	 */
 	qdf_mem_copy(&wmi_handle->final_abi_vers, &cmd->host_abi_vers,
 			sizeof(wmi_abi_version));
-}
-
-#ifdef CONFIG_MCL
-/**
- * send_init_cmd_tlv() - wmi init command
- * @wmi_handle:      pointer to wmi handle
- * @res_cfg:         resource config
- * @num_mem_chunks:  no of mem chunck
- * @mem_chunk:       pointer to mem chunck structure
- *
- * This function sends IE information to firmware
- *
- * Return: QDF_STATUS_SUCCESS for success otherwise failure
- *
- */
-static QDF_STATUS send_init_cmd_tlv(wmi_unified_t wmi_handle,
-		wmi_resource_config *tgt_res_cfg,
-		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunks,
-		bool action)
-{
-	wmi_buf_t buf;
-	wmi_init_cmd_fixed_param *cmd;
-	uint8_t *buf_ptr;
-	wmi_resource_config *resource_cfg;
-	wlan_host_memory_chunk *host_mem_chunks;
-	uint32_t mem_chunk_len = 0;
-	uint16_t idx;
-	int len;
-	int ret;
-
-	len = sizeof(*cmd) + sizeof(wmi_resource_config) + WMI_TLV_HDR_SIZE;
-	mem_chunk_len = (sizeof(wlan_host_memory_chunk) * MAX_MEM_CHUNKS);
-	buf = wmi_buf_alloc(wmi_handle, len + mem_chunk_len);
-	if (!buf) {
-		WMI_LOGD("%s: wmi_buf_alloc failed\n", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_init_cmd_fixed_param *) buf_ptr;
-	resource_cfg = (wmi_resource_config *) (buf_ptr + sizeof(*cmd));
-
-	host_mem_chunks = (wlan_host_memory_chunk *)
-		(buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)
-		 + WMI_TLV_HDR_SIZE);
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-			WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param,
-			WMITLV_GET_STRUCT_TLVLEN(wmi_init_cmd_fixed_param));
-
-	qdf_mem_copy(resource_cfg, tgt_res_cfg, sizeof(wmi_resource_config));
-	WMITLV_SET_HDR(&resource_cfg->tlv_header,
-			WMITLV_TAG_STRUC_wmi_resource_config,
-			WMITLV_GET_STRUCT_TLVLEN(wmi_resource_config));
-
-	for (idx = 0; idx < num_mem_chunks; ++idx) {
-		WMITLV_SET_HDR(&(host_mem_chunks[idx].tlv_header),
-				WMITLV_TAG_STRUC_wlan_host_memory_chunk,
-				WMITLV_GET_STRUCT_TLVLEN
-				(wlan_host_memory_chunk));
-		host_mem_chunks[idx].ptr = mem_chunks[idx].paddr;
-		host_mem_chunks[idx].size = mem_chunks[idx].len;
-		host_mem_chunks[idx].req_id = mem_chunks[idx].req_id;
-		WMI_LOGD("chunk %d len %d requested ,ptr  0x%x ",
-				idx, host_mem_chunks[idx].size,
-				host_mem_chunks[idx].ptr);
-	}
-	cmd->num_host_mem_chunks = num_mem_chunks;
-	len += (num_mem_chunks * sizeof(wlan_host_memory_chunk));
-	WMITLV_SET_HDR((buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)),
-			WMITLV_TAG_ARRAY_STRUC,
-			(sizeof(wlan_host_memory_chunk) *
-			 num_mem_chunks));
-
-	/* Fill fw_abi_vers */
-	copy_fw_abi_version_tlv(wmi_handle, cmd);
-
-	if (action) {
-		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				 WMI_INIT_CMDID);
-		if (ret) {
-			WMI_LOGE(FL("Failed to send set WMI INIT command ret = %d"), ret);
-			wmi_buf_free(buf);
-			return QDF_STATUS_E_FAILURE;
-		}
-	} else {
-		wmi_handle->saved_wmi_init_cmd.buf = buf;
-		wmi_handle->saved_wmi_init_cmd.buf_len = len;
-	}
-
-	return QDF_STATUS_SUCCESS;
-
-}
-#endif
-/**
- * send_saved_init_cmd_tlv() - wmi init command
- * @wmi_handle:      pointer to wmi handle
- *
- * This function sends IE information to firmware
- *
- * Return: QDF_STATUS_SUCCESS for success otherwise failure
- *
- */
-static QDF_STATUS send_saved_init_cmd_tlv(wmi_unified_t wmi_handle)
-{
-	int status;
-
-	if (!wmi_handle->saved_wmi_init_cmd.buf ||
-			!wmi_handle->saved_wmi_init_cmd.buf_len) {
-		WMI_LOGP("Service ready ext event w/o WMI_SERVICE_EXT_MSG!");
-		return QDF_STATUS_E_FAILURE;
-	}
-	status = wmi_unified_cmd_send(wmi_handle,
-				wmi_handle->saved_wmi_init_cmd.buf,
-				wmi_handle->saved_wmi_init_cmd.buf_len,
-				WMI_INIT_CMDID);
-	if (status) {
-		WMI_LOGE(FL("Failed to send set WMI INIT command ret = %d"), status);
-		wmi_buf_free(wmi_handle->saved_wmi_init_cmd.buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-	wmi_handle->saved_wmi_init_cmd.buf = NULL;
-	wmi_handle->saved_wmi_init_cmd.buf_len = 0;
-
-	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS save_fw_version_cmd_tlv(wmi_unified_t wmi_handle, void *evt_buf)
@@ -19809,13 +19692,9 @@ struct wmi_ops tlv_ops =  {
 	.send_update_tdls_peer_state_cmd = send_update_tdls_peer_state_cmd_tlv,
 	.send_process_fw_mem_dump_cmd = send_process_fw_mem_dump_cmd_tlv,
 	.send_process_set_ie_info_cmd = send_process_set_ie_info_cmd_tlv,
-#ifdef CONFIG_MCL
-	.send_init_cmd = send_init_cmd_tlv,
-#endif
 	.save_fw_version_cmd = save_fw_version_cmd_tlv,
 	.check_and_update_fw_version =
 		 check_and_update_fw_version_cmd_tlv,
-	.send_saved_init_cmd = send_saved_init_cmd_tlv,
 	.send_set_base_macaddr_indicate_cmd =
 		 send_set_base_macaddr_indicate_cmd_tlv,
 	.send_log_supported_evt_cmd = send_log_supported_evt_cmd_tlv,
