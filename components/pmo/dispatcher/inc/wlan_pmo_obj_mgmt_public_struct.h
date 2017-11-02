@@ -74,6 +74,7 @@ int (*pmo_pld_auto_resume_cb)(void);
  * @send_enable_wakeup_event_req: fp to send enable wow wakeup events req
  * @send_disable_wakeup_event_req: fp to send disable wow wakeup events req
  * @send_add_wow_pattern: fp to send wow pattern request
+ * @del_wow_pattern: fp to delete wow pattern from firmware
  * @send_enhance_mc_offload_req: fp to send enhanced multicast offload request
  * @send_set_mc_filter_req: fp to send set mc filter request
  * @send_clear_mc_filter_req: fp to send clear mc filter request
@@ -128,6 +129,8 @@ struct wlan_pmo_tx_ops {
 			uint8_t ptrn_id, const uint8_t *ptrn, uint8_t ptrn_len,
 			uint8_t ptrn_offset, const uint8_t *mask,
 			uint8_t mask_len, bool user);
+	QDF_STATUS (*del_wow_pattern)(
+			struct wlan_objmgr_vdev *vdev, uint8_t ptrn_id);
 	QDF_STATUS (*send_enhance_mc_offload_req)(
 			struct wlan_objmgr_vdev *vdev, bool enable);
 	QDF_STATUS (*send_set_mc_filter_req)(

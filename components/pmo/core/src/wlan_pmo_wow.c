@@ -27,29 +27,104 @@
 #include "wlan_pmo_static_config.h"
 #include "wlan_reg_services_api.h"
 
-static inline int pmo_find_wow_ptrn_len(const char *ptrn)
+QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+		struct pmo_wow_add_pattern *ptrn)
 {
-	int len = 0;
+	QDF_STATUS status;
+	uint8_t id;
+	uint8_t bit_to_check, pos;
+	uint8_t new_mask[PMO_WOWL_BCAST_PATTERN_MAX_SIZE];
+	struct pmo_vdev_priv_obj *vdev_ctx;
 
-	while (*ptrn != '\0' && *ptrn != PMO_WOW_INTER_PTRN_TOKENIZER) {
-		len++;
-		ptrn++;
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+
+	/* clear all default patterns cofigured by pmo */
+	for (id = 0; id < pmo_get_wow_default_ptrn(vdev_ctx); id++)
+		pmo_tgt_del_wow_pattern(vdev, id, false);
+
+	pmo_set_wow_default_ptrn(vdev_ctx, 0);
+
+	pmo_debug("Add user passed wow pattern id %d vdev id %d",
+		ptrn->pattern_id, ptrn->session_id);
+	/*
+	 * Convert received pattern mask value from bit representation
+	 * to byte representation.
+	 *
+	 * For example, received value from umac,
+	 *
+	 *      Mask value    : A1 (equivalent binary is "1010 0001")
+	 *      Pattern value : 12:00:13:00:00:00:00:44
+	 *
+	 * The value which goes to FW after the conversion from this
+	 * function (1 in mask value will become FF and 0 will
+	 * become 00),
+	 *
+	 *      Mask value    : FF:00:FF:00:0:00:00:FF
+	 *      Pattern value : 12:00:13:00:00:00:00:44
+	 */
+	qdf_mem_zero(new_mask, sizeof(new_mask));
+	for (pos = 0; pos < ptrn->pattern_size; pos++) {
+		bit_to_check = (PMO_NUM_BITS_IN_BYTE - 1) -
+			       (pos % PMO_NUM_BITS_IN_BYTE);
+		bit_to_check = 0x1 << bit_to_check;
+		if (ptrn->pattern_mask[pos / PMO_NUM_BITS_IN_BYTE] &
+							bit_to_check)
+			new_mask[pos] = PMO_WOW_PTRN_MASK_VALID;
 	}
 
-	return len;
+	status = pmo_tgt_send_wow_patterns_to_fw(vdev,
+			ptrn->pattern_id,
+			ptrn->pattern, ptrn->pattern_size,
+			ptrn->pattern_byte_offset, new_mask,
+			ptrn->pattern_size, true);
+	if (status != QDF_STATUS_SUCCESS)
+		pmo_err("Failed to add wow pattern %d", ptrn->pattern_id);
+
+	pmo_vdev_put_ref(vdev);
+out:
+	PMO_EXIT();
+
+	return status;
 }
 
-QDF_STATUS pmo_core_add_wow_pattern(struct wlan_objmgr_vdev *vdev,
-		const char *ptrn)
+QDF_STATUS pmo_core_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+		uint8_t pattern_id)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+	struct pmo_vdev_priv_obj *vdev_ctx;
+
+	status = pmo_vdev_get_ref(vdev);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto out;
+
+	vdev_ctx = pmo_vdev_get_priv(vdev);
+	if (pmo_get_wow_user_ptrn(vdev_ctx) <= 0) {
+		pmo_err("No valid user pattern. Num user pattern %u",
+			pmo_get_wow_user_ptrn(vdev_ctx));
+		status = QDF_STATUS_E_INVAL;
+		goto rel_ref;
+	}
+
+	pmo_debug("Delete user passed wow pattern id %d total user pattern %d",
+		pattern_id, pmo_get_wow_user_ptrn(vdev_ctx));
+
+	pmo_tgt_del_wow_pattern(vdev, pattern_id, true);
+
+	/* configure default patterns once all user patterns are deleted */
+	if (!pmo_get_wow_user_ptrn(vdev_ctx))
+		pmo_register_wow_default_patterns(vdev);
+rel_ref:
+	pmo_vdev_put_ref(vdev);
+out:
+	PMO_EXIT();
+
+	return status;
 }
 
-QDF_STATUS pmo_core_del_wow_pattern(struct wlan_objmgr_vdev *vdev,
-		const char *ptrn)
-{
-	return QDF_STATUS_SUCCESS;
-}
 
 QDF_STATUS pmo_core_wow_enter(struct wlan_objmgr_vdev *vdev,
 		struct pmo_wow_enter_params *wow_enter_param)

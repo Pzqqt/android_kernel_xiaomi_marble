@@ -2847,43 +2847,6 @@ static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
 }
 
 /**
- * wma_wow_add_pattern() - add wow pattern in target
- * @wma: wma handle
- * @ptrn: wow pattern
- *
- * This function does following:
- * 1) Delete all default patterns of the vdev
- * 2) Add received wow patterns for given vdev in target.
- *
- * Target is responsible for caching wow patterns accross multiple
- * suspend/resumes until the pattern is deleted by user
- *
- * Return: QDF status
- */
-QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma, struct wow_add_pattern *ptrn)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * wma_wow_delete_user_pattern() - delete user configured wow pattern in target
- * @wma: wma handle
- * @ptrn: wow pattern
- *
- * This function does following:
- * 1) Deletes a particular user configured wow pattern in target
- * 2) After deleting all user wow patterns add default wow patterns
- *    specific to that vdev.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
-					struct wow_delete_pattern *pattern)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_wow_enter() - store enable/disable status for pattern
  * @wma: wma handle
  * @info: wow parameters

@@ -412,11 +412,6 @@ static inline void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
 
 #endif
 
-extern QDF_STATUS sme_wow_add_pattern(tHalHandle hHal,
-		struct wow_add_pattern *pattern, uint8_t sessionId);
-extern QDF_STATUS sme_wow_delete_pattern(tHalHandle hHal,
-		struct wow_delete_pattern *pattern, uint8_t sessionId);
-
 void sme_register_ftm_msg_processor(tHalHandle hal,
 				    hdd_ftm_msg_processor callback);
 

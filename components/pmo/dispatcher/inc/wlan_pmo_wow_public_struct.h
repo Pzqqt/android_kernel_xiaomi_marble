@@ -36,6 +36,9 @@
 #define PMO_WOW_INTER_PTRN_TOKENIZER   ';'
 #define PMO_WOW_INTRA_PTRN_TOKENIZER   ':'
 
+#define PMO_WOW_PTRN_MASK_VALID     0xFF
+#define PMO_NUM_BITS_IN_BYTE           8
+
 
 /* Action frame categories */
 

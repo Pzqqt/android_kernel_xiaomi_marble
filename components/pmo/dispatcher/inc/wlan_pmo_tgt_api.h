@@ -150,6 +150,10 @@ QDF_STATUS pmo_tgt_send_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 		uint8_t ptrn_offset, const uint8_t *mask,
 		uint8_t mask_len, bool user);
 
+QDF_STATUS pmo_tgt_del_wow_pattern(
+		struct wlan_objmgr_vdev *vdev, uint8_t ptrn_id,
+		bool user);
+
 /**
  * pmo_tgt_set_mc_filter_req() - Set mcast filter command to fw
  * @vdev: objmgr vdev

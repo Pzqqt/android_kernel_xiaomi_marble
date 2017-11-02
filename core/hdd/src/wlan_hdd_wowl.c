@@ -35,6 +35,7 @@
 
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wowl.h>
+#include <wlan_pmo_wow_public_struct.h>
 
 /* Preprocessor Definitions and Constants */
 #define WOWL_INTER_PTRN_TOKENIZER   ';'
@@ -78,7 +79,7 @@ static void hdd_wowl_wake_indication_callback(void *pContext,
  *
  * Return: none
  */
-static void dump_hdd_wowl_ptrn(struct wow_add_pattern *ptrn)
+static void dump_hdd_wowl_ptrn(struct pmo_wow_add_pattern *ptrn)
 {
 	int i;
 
@@ -104,11 +105,10 @@ static void dump_hdd_wowl_ptrn(struct wow_add_pattern *ptrn)
  */
 bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
-	struct wow_add_pattern localPattern;
+	struct pmo_wow_add_pattern localPattern;
 	int i, first_empty_slot, len, offset;
 	QDF_STATUS qdf_ret_status;
 	const char *temp;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	uint8_t sessionId = adapter->session_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -166,7 +166,7 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 			(hex_to_bin(ptrn[3]) * 0x10) +
 						hex_to_bin(ptrn[4]);
 
-		if (localPattern.pattern_size > SIR_WOWL_BCAST_PATTERN_MAX_SIZE
+		if (localPattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE
 		    || localPattern.pattern_mask_size >
 		    WOWL_PTRN_MASK_MAX_SIZE) {
 			hdd_err("Invalid length specified. Skip!");
@@ -229,9 +229,8 @@ bool hdd_add_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 		localPattern.session_id = sessionId;
 
 		/* Register the pattern downstream */
-		qdf_ret_status =
-			sme_wow_add_pattern(hHal, &localPattern,
-						   sessionId);
+		qdf_ret_status = pmo_ucfg_add_wow_user_pattern(
+					adapter->hdd_vdev, &localPattern);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			/* Add failed, so invalidate the local storage */
 			hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d)",
@@ -264,12 +263,9 @@ next_ptrn:
  */
 bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 {
-	struct wow_delete_pattern delPattern;
 	unsigned char id;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	bool patternFound = false;
 	QDF_STATUS qdf_ret_status;
-	uint8_t sessionId = adapter->session_id;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/* Detect pattern */
@@ -284,11 +280,8 @@ bool hdd_del_wowl_ptrn(struct hdd_adapter *adapter, const char *ptrn)
 
 	/* If pattern present, remove it from downstream */
 	if (patternFound) {
-		delPattern.pattern_id = id;
-		delPattern.session_id = sessionId;
-		qdf_ret_status =
-			sme_wow_delete_pattern(hHal, &delPattern,
-						   sessionId);
+		qdf_ret_status = pmo_ucfg_del_wow_user_pattern(
+					adapter->hdd_vdev, id);
 		if (QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			/* Remove from local storage as well */
 			hdd_err("Deleted pattern with id %d [%s]", id,
@@ -317,9 +310,8 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 			       uint8_t pattern_offset, char *pattern_buf,
 			       char *pattern_mask)
 {
-	struct wow_add_pattern localPattern;
+	struct pmo_wow_add_pattern localPattern;
 	QDF_STATUS qdf_ret_status;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	uint8_t session_id = adapter->session_id;
 	uint16_t pattern_len, mask_len, i;
 
@@ -352,10 +344,10 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	localPattern.pattern_size = pattern_len;
 	localPattern.session_id = session_id;
 
-	if (localPattern.pattern_size > SIR_WOWL_BCAST_PATTERN_MAX_SIZE) {
+	if (localPattern.pattern_size > PMO_WOWL_BCAST_PATTERN_MAX_SIZE) {
 		hdd_err("WoW pattern size (%d) greater than max (%d)",
 			localPattern.pattern_size,
-			SIR_WOWL_BCAST_PATTERN_MAX_SIZE);
+			PMO_WOWL_BCAST_PATTERN_MAX_SIZE);
 		return false;
 	}
 	/* Extract the pattern */
@@ -397,11 +389,10 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 	}
 
 	/* Register the pattern downstream */
-	qdf_ret_status =
-		sme_wow_add_pattern(hHal, &localPattern, session_id);
-
+	qdf_ret_status = pmo_ucfg_add_wow_user_pattern(
+				adapter->hdd_vdev, &localPattern);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
-		hdd_err("sme_wowl_add_bcast_pattern failed with error code (%d).",
+		hdd_err("pmo_wow_user_pattern failed with error code (%d).",
 			  qdf_ret_status);
 
 		return false;
@@ -429,10 +420,7 @@ bool hdd_add_wowl_ptrn_debugfs(struct hdd_adapter *adapter, uint8_t pattern_idx,
 bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 			       uint8_t pattern_idx)
 {
-	struct wow_delete_pattern delPattern;
-	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	QDF_STATUS qdf_ret_status;
-	uint8_t sessionId = adapter->session_id;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
 		hdd_err("WoW pattern index %d is not in the range (0 ~ %d).",
@@ -448,11 +436,8 @@ bool hdd_del_wowl_ptrn_debugfs(struct hdd_adapter *adapter,
 		return false;
 	}
 
-	delPattern.pattern_id = pattern_idx;
-	delPattern.session_id = sessionId;
-	qdf_ret_status = sme_wow_delete_pattern(hHal, &delPattern,
-						    sessionId);
-
+	qdf_ret_status = pmo_ucfg_del_wow_user_pattern(
+				adapter->hdd_vdev, pattern_idx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hdd_err("sme_wowl_del_bcast_pattern failed with error code (%d).",
 			 qdf_ret_status);

@@ -529,6 +529,12 @@ QDF_STATUS pmo_ucfg_psoc_bus_runtime_resume(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_ucfg_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
 		int disable_target_intr);
 
+QDF_STATUS pmo_ucfg_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+		struct pmo_wow_add_pattern *ptrn);
+
+QDF_STATUS pmo_ucfg_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
+		uint8_t pattern_id);
+
 /**
  * pmo_ucfg_psoc_bus_resume() -handle bus resume request for psoc
  * @psoc: objmgr psoc handle

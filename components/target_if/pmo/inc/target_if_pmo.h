@@ -69,6 +69,9 @@ QDF_STATUS target_if_pmo_send_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
 		uint8_t ptrn_offset, const uint8_t *mask,
 		uint8_t mask_len, bool user);
 
+QDF_STATUS target_if_pmo_del_wow_patterns_to_fw(struct wlan_objmgr_vdev *vdev,
+		uint8_t ptrn_id);
+
 /**
  * target_if_pmo_send_enhance_mc_offload_req() - send enhance mc offload req
  * @vdev: objmgr vdev

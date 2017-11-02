@@ -7437,16 +7437,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_aggr_qos_req(wma_handle, (tAggrAddTsParams *) msg->bodyptr);
 		break;
 
-	case WMA_WOW_ADD_PTRN:
-		wma_wow_add_pattern(wma_handle,
-				    (struct wow_add_pattern *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_WOW_DEL_PTRN:
-		wma_wow_delete_user_pattern(wma_handle,
-				    (struct wow_delete_pattern *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_WOWL_ENTER_REQ:
 		wma_wow_enter(wma_handle,
 			      (tpSirHalWowlEnterParams) msg->bodyptr);

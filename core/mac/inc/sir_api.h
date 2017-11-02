@@ -2384,40 +2384,6 @@ typedef struct sSmeCsaOffloadInd {
 	struct qdf_mac_addr bssid;      /* BSSID */
 } tSmeCsaOffloadInd, *tpSmeCsaOffloadInd;
 
-/* WOW related structures */
-#define SIR_WOWL_BCAST_PATTERN_MAX_SIZE 146
-
-/**
- * struct wow_add_pattern - wow pattern add structure
- * @pattern_id: pattern id
- * @pattern_byte_offset: pattern byte offset from beginning of the 802.11
- *			 packet to start of the wake-up pattern
- * @pattern_size: pattern size
- * @pattern: pattern byte stream
- * @pattern_mask_size: pattern mask size
- * @pattern_mask: pattern mask
- * @session_id: session id
- */
-struct wow_add_pattern {
-	uint8_t pattern_id;
-	uint8_t pattern_byte_offset;
-	uint8_t pattern_size;
-	uint8_t pattern[SIR_WOWL_BCAST_PATTERN_MAX_SIZE];
-	uint8_t pattern_mask_size;
-	uint8_t pattern_mask[SIR_WOWL_BCAST_PATTERN_MAX_SIZE];
-	uint8_t session_id;
-};
-
-/**
- * struct wow_delete_patern - wow pattern delete structure
- * @pattern_id: pattern id of wake up pattern to be deleted
- * @session_id: session id
- */
-struct wow_delete_pattern {
-	uint8_t pattern_id;
-	uint8_t session_id;
-};
-
 /* SME->PE: Enter WOWLAN parameters */
 typedef struct sSirSmeWowlEnterParams {
 	uint8_t sessionId;
