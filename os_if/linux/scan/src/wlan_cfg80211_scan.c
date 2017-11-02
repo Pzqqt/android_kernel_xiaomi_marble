@@ -1047,12 +1047,13 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 
+	wlan_cfg80211_cleanup_scan_queue(pdev);
 	scan_priv = osif_priv->osif_scan;
-	osif_priv->osif_scan = NULL;
 	ucfg_scan_unregister_requester(psoc, scan_priv->req_id);
 	qdf_list_destroy(&scan_priv->scan_req_q);
 	qdf_mutex_destroy(&scan_priv->scan_req_q_lock);
 	qdf_mem_free(scan_priv);
+	osif_priv->osif_scan = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
