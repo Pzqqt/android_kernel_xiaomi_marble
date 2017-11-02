@@ -1353,22 +1353,8 @@ static void hdd_send_association_event(struct net_device *dev,
 				adapter->session_id);
 		memcpy(wrqu.ap_addr.sa_data, sta_ctx->conn_info.bssId.bytes,
 				ETH_ALEN);
-		hdd_debug("wlan: new IBSS connection to " MAC_ADDRESS_STR,
+		hdd_debug("wlan: new IBSS peer connection to BSSID " MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(sta_ctx->conn_info.bssId.bytes));
-
-		ret = hdd_objmgr_add_peer_object(adapter->hdd_vdev,
-						 QDF_IBSS_MODE,
-						 pCsrRoamInfo->bssid.bytes,
-						 false);
-		if (ret)
-			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
-				MAC_ADDR_ARRAY(pCsrRoamInfo->bssid.bytes));
-		ret = hdd_objmgr_set_peer_mlme_state(adapter->hdd_vdev,
-						     WLAN_ASSOC_STATE);
-		if (ret)
-			hdd_err("Peer object %pM fail to set associated state",
-					peerMacAddr.bytes);
-
 	} else {                /* Not Associated */
 		hdd_debug("wlan: disconnected");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
@@ -1390,13 +1376,12 @@ static void hdd_send_association_event(struct net_device *dev,
 							adapter->session_id,
 							NULL,
 							adapter->device_mode);
-		}
-
-		ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
-						    peerMacAddr.bytes);
-		if (ret)
-			hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
+			ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
+							    peerMacAddr.bytes);
+			if (ret)
+				hdd_err("Peer obj "MAC_ADDRESS_STR" delete fails",
 					MAC_ADDR_ARRAY(peerMacAddr.bytes));
+		}
 
 		hdd_lpass_notify_disconnect(adapter);
 		/* Update tdls module about the disconnection event */
@@ -1480,7 +1465,7 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 	QDF_STATUS qdf_status;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int ret = 0;
-	uint8_t *peer_mac = NULL;
+	struct qdf_mac_addr *peer_mac = NULL;
 	struct qdf_mac_addr broadcastMacAddr =
 				QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	if (eConnectionState_IbssDisconnected ==
@@ -1500,16 +1485,20 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 	}
 
 	if (adapter->device_mode == QDF_STA_MODE) {
-		peer_mac = sta_ctx->conn_info.bssId.bytes;
+		peer_mac = &sta_ctx->conn_info.bssId;
 	} else if (adapter->device_mode == QDF_IBSS_MODE) {
 		if (sta_ctx->broadcast_staid == staid)
-			peer_mac = broadcastMacAddr.bytes;
+			peer_mac = &broadcastMacAddr;
 		else
-			peer_mac = sta_ctx->conn_info.
-					peerMacAddress[staid].bytes;
+			peer_mac =
+			  hdd_wlan_get_ibss_mac_addr_from_staid(adapter, staid);
 	}
-
-	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev, peer_mac);
+	if (!peer_mac) {
+		hdd_err("Coudnt find peer MAC for staid %d, delete fails",
+			staid);
+		return QDF_STATUS_E_FAILURE;
+	}
+	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev, peer_mac->bytes);
 	if (ret) {
 		hdd_err("Peer obj %pM delete fails", peer_mac);
 		return QDF_STATUS_E_FAILURE;
@@ -3270,6 +3259,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		struct qdf_mac_addr broadcastMacAddr =
 			QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+		int ret;
 
 		if (NULL == roam_info) {
 			QDF_ASSERT(0);
@@ -3293,10 +3283,18 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 				adapter;
 		else
 			hdd_debug("invalid sta id %d", roam_info->staId);
+
 		hdd_roam_register_sta(adapter, roam_info,
 				      roam_info->staId,
 				      &broadcastMacAddr,
 				      roam_info->pBssDesc);
+		ret = hdd_objmgr_add_peer_object(adapter->hdd_vdev,
+						 QDF_IBSS_MODE,
+						 broadcastMacAddr.bytes,
+						 false);
+		if (ret)
+			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
+				MAC_ADDR_ARRAY(roam_info->peerMac.bytes));
 
 		if (roam_info->pBssDesc) {
 			struct cfg80211_bss *bss;
@@ -3591,6 +3589,7 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS qdf_status;
+	int ret;
 
 	switch (roamResult) {
 	case eCSR_ROAM_RESULT_IBSS_NEW_PEER:
@@ -3633,6 +3632,13 @@ roam_roam_connect_status_update_handler(struct hdd_adapter *adapter,
 			hdd_err("Cannot register STA with TL for IBSS. qdf_status: %d [%08X]",
 				qdf_status, qdf_status);
 		}
+		ret = hdd_objmgr_add_peer_object(adapter->hdd_vdev,
+						 QDF_IBSS_MODE,
+						 roam_info->peerMac.bytes,
+						 false);
+		if (ret)
+			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
+				MAC_ADDR_ARRAY(roam_info->peerMac.bytes));
 		sta_ctx->ibss_sta_generation++;
 		stainfo = qdf_mem_malloc(sizeof(*stainfo));
 		if (stainfo == NULL) {
