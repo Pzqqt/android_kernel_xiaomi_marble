@@ -4505,6 +4505,7 @@ struct mcast_group_update_params {
 struct periodic_chan_stats_params {
 	uint32_t stats_period;
 	bool enable;
+	uint32_t pdev_id;
 };
 
 /**
