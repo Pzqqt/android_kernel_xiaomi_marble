@@ -281,7 +281,7 @@ QDF_STATUS csr_scan_handle_failed_lostlink2(tpAniSirGlobal pMac,
 					    uint32_t sessionId);
 QDF_STATUS csr_scan_handle_failed_lostlink3(tpAniSirGlobal pMac,
 					    uint32_t sessionId);
-struct tag_csrscan_result *csr_scan_append_bss_description(tpAniSirGlobal pMac,
+bool csr_scan_append_bss_description(tpAniSirGlobal pMac,
 						tSirBssDescription *
 						pSirBssDescription,
 						tDot11fBeaconIEs *pIes,

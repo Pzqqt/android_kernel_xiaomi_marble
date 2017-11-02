@@ -6803,7 +6803,6 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	tSirBssDescription *bss_desc = NULL;
 	struct csr_roam_info roam_info;
 	tSirSmeStartBssRsp *start_bss_rsp = NULL;
-	struct tag_csrscan_result *scan_res = NULL;
 	eRoamCmdStatus roam_status;
 	eCsrRoamResult roam_result;
 	tDot11fBeaconIEs *ies_ptr = NULL;
@@ -6869,8 +6868,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		}
 	}
 	if (!CSR_IS_INFRA_AP(profile) && !CSR_IS_NDI(profile)) {
-		scan_res =
-			csr_scan_append_bss_description(mac_ctx,
+		csr_scan_append_bss_description(mac_ctx,
 					bss_desc, ies_ptr, false,
 					session_id);
 	}

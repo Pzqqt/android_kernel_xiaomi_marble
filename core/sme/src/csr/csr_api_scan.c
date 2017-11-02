@@ -1344,6 +1344,7 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 	if (!buf) {
 		sme_err("Failed to allocate wbuf for mgmt rx len (%u)",
 			buf_len);
+		csr_free_scan_result_entry(mac_ctx, pResult);
 		return;
 	}
 	qdf_nbuf_put_tail(buf, buf_len);
@@ -1368,6 +1369,7 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 		GET_IE_LEN_IN_BSS(bss_desc->length));
 	tgt_scan_bcn_probe_rx_callback(mac_ctx->psoc, NULL, buf, &rx_param,
 		frm_type);
+	csr_free_scan_result_entry(mac_ctx, pResult);
 }
 
 /*
@@ -1659,7 +1661,7 @@ static bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
 
 #endif
 
-static struct tag_csrscan_result *csr_scan_save_bss_description(tpAniSirGlobal
+static bool csr_scan_save_bss_description(tpAniSirGlobal
 							pMac,
 						     tSirBssDescription *
 						     pBSSDescription,
@@ -1678,41 +1680,34 @@ static struct tag_csrscan_result *csr_scan_save_bss_description(tpAniSirGlobal
 	cbAllocated = sizeof(struct tag_csrscan_result) + cbBSSDesc;
 
 	pCsrBssDescription = qdf_mem_malloc(cbAllocated);
-	if (NULL != pCsrBssDescription) {
-		pCsrBssDescription->AgingCount =
-			(int32_t) pMac->roam.configParam.agingCount;
-		sme_debug(
-			"Set Aging Count = %d for BSS " MAC_ADDRESS_STR " ",
-			pCsrBssDescription->AgingCount,
-			MAC_ADDR_ARRAY(pCsrBssDescription->Result.BssDescriptor.
-				       bssId));
-		qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
-			     pBSSDescription, cbBSSDesc);
-#if defined(QDF_ENSBALED)
-		if (NULL != pCsrBssDescription->Result.pvIes) {
-			QDF_ASSERT(pCsrBssDescription->Result.pvIes == NULL);
-			return NULL;
-		}
-#endif
-		csr_scan_add_result(pMac, pCsrBssDescription, pIes, sessionId);
+	if (!pCsrBssDescription) {
+		sme_err(" Failed to allocate memory for pCsrBssDescription");
+		return false;
 	}
 
-	return pCsrBssDescription;
+	pCsrBssDescription->AgingCount =
+		(int32_t) pMac->roam.configParam.agingCount;
+	sme_debug(
+		"Set Aging Count = %d for BSS " MAC_ADDRESS_STR " ",
+		pCsrBssDescription->AgingCount,
+		MAC_ADDR_ARRAY(pCsrBssDescription->Result.BssDescriptor.
+			       bssId));
+	qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
+		     pBSSDescription, cbBSSDesc);
+	csr_scan_add_result(pMac, pCsrBssDescription, pIes, sessionId);
+
+	return true;
 }
 
 /* Append a Bss Description... */
-struct tag_csrscan_result *csr_scan_append_bss_description(tpAniSirGlobal pMac,
+bool csr_scan_append_bss_description(tpAniSirGlobal pMac,
 						tSirBssDescription *
 						pSirBssDescription,
 						tDot11fBeaconIEs *pIes,
 						bool fForced, uint8_t sessionId)
 {
-	struct tag_csrscan_result *pCsrBssDescription = NULL;
-
-	pCsrBssDescription = csr_scan_save_bss_description(pMac,
+	return csr_scan_save_bss_description(pMac,
 					pSirBssDescription, pIes, sessionId);
-
-	return pCsrBssDescription;
 }
 
 static void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList
@@ -4772,7 +4767,7 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 	qdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
 			sizeof(tSirMacAddr));
 	pNewBssDescriptor->channelId = channel;
-	if (NULL == csr_scan_append_bss_description(pMac, pNewBssDescriptor,
+	if (!csr_scan_append_bss_description(pMac, pNewBssDescriptor,
 						pNewIes, true, sessionId)) {
 		sme_err("csr_scan_append_bss_description failed");
 		status = QDF_STATUS_E_FAILURE;
