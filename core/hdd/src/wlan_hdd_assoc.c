@@ -1486,18 +1486,23 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 
 	if (adapter->device_mode == QDF_STA_MODE) {
 		peer_mac = &sta_ctx->conn_info.bssId;
-	} else if (adapter->device_mode == QDF_IBSS_MODE) {
+	} else if (adapter->device_mode == QDF_IBSS_MODE ||
+		adapter->device_mode == QDF_NDI_MODE) {
 		if (sta_ctx->broadcast_staid == staid)
 			peer_mac = &broadcastMacAddr;
 		else
 			peer_mac =
 			  hdd_wlan_get_ibss_mac_addr_from_staid(adapter, staid);
 	}
+
 	if (!peer_mac) {
 		hdd_err("Coudnt find peer MAC for staid %d, delete fails",
 			staid);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	hdd_debug("peer_mac_addr: "MAC_ADDRESS_STR,
+		  MAC_ADDR_ARRAY(peer_mac->bytes));
 	ret = hdd_objmgr_remove_peer_object(adapter->hdd_vdev, peer_mac->bytes);
 	if (ret) {
 		hdd_err("Peer obj %pM delete fails", peer_mac);

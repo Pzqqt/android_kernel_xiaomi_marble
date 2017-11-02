@@ -278,6 +278,8 @@ int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
 		}
 	} else if (adapter_mode == QDF_IBSS_MODE) {
 		peer_type = WLAN_PEER_IBSS;
+	} else if (adapter_mode == QDF_NDI_MODE) {
+		peer_type = WLAN_PEER_NDP;
 	} else {
 		hdd_err("Unsupported device mode %d", adapter_mode);
 		return -EINVAL;
