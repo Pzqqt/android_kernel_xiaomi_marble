@@ -134,6 +134,7 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 
 	if (!context) {
 		p2p_err("invalid context");
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
 	tx_ctx = (struct tx_action_context *)context;
@@ -142,12 +143,14 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 	tx_conf_event = qdf_mem_malloc(sizeof(*tx_conf_event));
 	if (!tx_conf_event) {
 		p2p_err("Failed to allocate tx cnf event");
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	tx_cnf = qdf_mem_malloc(sizeof(*tx_cnf));
 	if (!tx_cnf) {
 		p2p_err("Failed to allocate tx cnf");
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -195,6 +198,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 			WLAN_UMAC_COMP_P2P);
 	if (!p2p_soc_obj) {
 		p2p_err("p2p ctx is NULL, drop this frame");
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -202,6 +206,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 		roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
 		if (!roc_ctx) {
 			p2p_err("current roc ctx is null, can't get vdev id");
+			qdf_nbuf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		} else {
 			vdev_id = roc_ctx->vdev_id;
@@ -210,6 +215,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 		vdev = wlan_peer_get_vdev(peer);
 		if (!vdev) {
 			p2p_err("vdev is NULL in peer, drop this frame");
+			qdf_nbuf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
 		vdev_id = wlan_vdev_get_id(vdev);
@@ -218,6 +224,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	rx_mgmt_event = qdf_mem_malloc(sizeof(*rx_mgmt_event));
 	if (!rx_mgmt_event) {
 		p2p_err("Failed to allocate rx mgmt event");
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -225,6 +232,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 			mgmt_rx_params->buf_len);
 	if (!rx_mgmt) {
 		p2p_err("Failed to allocate rx mgmt frame");
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_NOMEM;
 	}
 
