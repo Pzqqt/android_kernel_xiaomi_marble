@@ -5845,6 +5845,7 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 		.len = QDF_MAC_ADDR_SIZE},
 	[RX_BLOCKSIZE_WINLIMIT] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_LISTEN_INTERVAL] = {.type = NLA_U32 },
+	[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO] = {.type = NLA_U8 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_ENA] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_CHAIN] = {.type = NLA_U32 },
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_ANT_DIV_SELFTEST] = {.type = NLA_U32 },
@@ -6235,6 +6236,13 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 		if (status != QDF_STATUS_SUCCESS)
 			ret_val = -EPERM;
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO]) {
+		enable_flag = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_LRO]);
+		ret_val = hdd_lro_set_reset(hdd_ctx, adapter,
+							 enable_flag);
+	}
+
 	if (tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]) {
 		enable_flag =
 			nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_CONFIG_SCAN_ENABLE]);

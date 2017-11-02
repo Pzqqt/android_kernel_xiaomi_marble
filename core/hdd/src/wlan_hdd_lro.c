@@ -210,6 +210,41 @@ void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
 	hdd_debug("LRO stats is broken, will fix it");
 }
 
+QDF_STATUS
+hdd_lro_set_reset(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
+			       uint8_t enable_flag)
+{
+	if (!hdd_ctx->config->lro_enable ||
+		 QDF_STA_MODE != adapter->device_mode) {
+		hdd_debug("LRO is already Disabled");
+		return 0;
+	}
+
+	if (enable_flag) {
+		qdf_atomic_set(&hdd_ctx->vendor_disable_lro_flag, 0);
+		adapter->dev->features |= NETIF_F_LRO;
+	} else {
+		/* Disable LRO, Enable tcpdelack*/
+		qdf_atomic_set(&hdd_ctx->vendor_disable_lro_flag, 1);
+		adapter->dev->features &= ~NETIF_F_LRO;
+		hdd_debug("LRO Disabled");
+
+		if (hdd_ctx->en_tcp_delack_no_lro) {
+			struct wlan_rx_tp_data rx_tp_data;
+
+			hdd_debug("Enable TCP delack as LRO is disabled");
+			rx_tp_data.rx_tp_flags = TCP_DEL_ACK_IND;
+			rx_tp_data.level = hdd_ctx->cur_rx_level;
+			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+						WLAN_SVC_WLAN_TP_IND,
+						&rx_tp_data,
+						sizeof(rx_tp_data));
+			hdd_ctx->en_tcp_delack_no_lro = 1;
+		}
+	}
+	return 0;
+}
+
 /**
  * hdd_disable_lro_in_concurrency() - Disable LRO due to concurrency
  * @disable: bool value

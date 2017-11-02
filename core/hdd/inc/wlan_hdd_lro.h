@@ -50,6 +50,18 @@ int hdd_lro_init(struct hdd_context *hdd_ctx);
 enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
 	 struct hdd_adapter *adapter, struct sk_buff *skb);
 void hdd_lro_display_stats(struct hdd_context *hdd_ctx);
+
+/**
+ * hdd_lro_set_reset() - vendor command for Disable/Enable LRO
+ * @hdd_ctx: hdd context
+ * @hdd_adapter_t: adapter
+ * @enable_flag: enable or disable LRO.
+ *
+ * Return: none
+ */
+QDF_STATUS hdd_lro_set_reset(struct hdd_context *hdd_ctx,
+					  struct hdd_adapter *adapter,
+					  uint8_t enable_flag);
 void hdd_disable_lro_in_concurrency(bool);
 /**
  * hdd_disable_lro_for_low_tput() - enable/disable LRO based on tput
@@ -77,6 +89,12 @@ static inline void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
 {
 }
 
+static inline QDF_STATUS hdd_lro_set_reset(struct hdd_context *hdd_ctx,
+					  struct hdd_adapter *adapter,
+					  uint8_t enable_flag)
+{
+	return 0;
+}
 static inline void hdd_disable_lro_in_concurrency(bool disable)
 {
 }
