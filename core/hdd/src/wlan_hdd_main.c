@@ -5987,6 +5987,8 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 * Disable Idle Power Save Mode
 	 */
 	hdd_set_idle_ps_config(hdd_ctx, false);
+	/* clear the scan queue in all the scenarios */
+	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
 
 	if (driver_status != DRIVER_MODULES_CLOSED) {
 		hdd_unregister_wext_all_adapters(hdd_ctx);
@@ -6007,7 +6009,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		 * the expectation is that by the time Request Full Power has
 		 * completed, all scans will be cancelled
 		 */
-		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		hdd_abort_sched_scan_all_adapters(hdd_ctx);
 		hdd_stop_all_adapters(hdd_ctx, true);
