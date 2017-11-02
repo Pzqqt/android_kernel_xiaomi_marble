@@ -11568,6 +11568,53 @@ static QDF_STATUS send_phyerr_enable_cmd_tlv(wmi_unified_t wmi_handle)
 }
 
 /**
+ * send_periodic_chan_stats_config_cmd_tlv() - send periodic chan stats cmd
+ * to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold periodic chan stats param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_periodic_chan_stats_config_cmd_tlv(wmi_unified_t wmi_handle,
+				struct periodic_chan_stats_params *param)
+{
+	wmi_set_periodic_channel_stats_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	QDF_STATUS ret;
+	int32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_set_periodic_channel_stats_config_fixed_param *)
+					wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_set_periodic_channel_stats_config_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		wmi_set_periodic_channel_stats_config_fixed_param));
+	cmd->enable = param->enable;
+	cmd->stats_period = param->stats_period;
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+						param->pdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, sizeof(*cmd),
+			WMI_SET_PERIODIC_CHANNEL_STATS_CONFIG_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE("Sending periodic chan stats config failed");
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  * send_nf_dbr_dbm_info_get_cmd_tlv() - send request to get nf to fw
  * @wmi_handle: wmi handle
  *
@@ -19815,6 +19862,8 @@ struct wmi_ops tlv_ops =  {
 	.send_gpio_output_cmd = send_gpio_output_cmd_tlv,
 	.send_phyerr_disable_cmd = send_phyerr_disable_cmd_tlv,
 	.send_phyerr_enable_cmd = send_phyerr_enable_cmd_tlv,
+	.send_periodic_chan_stats_config_cmd =
+		send_periodic_chan_stats_config_cmd_tlv,
 	.send_nf_dbr_dbm_info_get_cmd = send_nf_dbr_dbm_info_get_cmd_tlv,
 	.send_set_ht_ie_cmd = send_set_ht_ie_cmd_tlv,
 	.send_set_vht_ie_cmd = send_set_vht_ie_cmd_tlv,
@@ -20320,7 +20369,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_peer_stats] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_mesh_11s] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_periodic_chan_stat_support] =
-			WMI_SERVICE_UNAVAILABLE;
+			WMI_SERVICE_PERIODIC_CHAN_STAT_SUPPORT;
 	wmi_service[wmi_service_tx_mode_push_only] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_tx_mode_push_pull] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_tx_mode_dynamic] = WMI_SERVICE_UNAVAILABLE;
