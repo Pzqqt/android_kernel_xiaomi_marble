@@ -1375,7 +1375,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * This structure is global wma context
  * It contains global wma module parameters and
  * handle of other modules.
- * @saved_wmi_init_cmd: Saved WMI INIT command
  * @bpf_packet_filter_enable: BPF filter enabled or not
  * @active_uc_bpf_mode: Setting that determines how BPF is applied in active
  * mode for uc packets
@@ -1427,7 +1426,7 @@ typedef struct {
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
 	uint32_t wmi_service_ext_offset;
 	uint32_t wmi_service_ext_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
-	wmi_resource_config wlan_resource_config;
+	target_resource_config wlan_resource_config;
 	uint32_t frameTransRequired;
 	tBssSystemRole wmaGlobalSystemRole;
 	wma_tx_dwnld_comp_callback tx_frm_download_comp_cb;
@@ -1600,7 +1599,7 @@ struct wma_target_cap {
 	/* wmi services bitmap received from Target */
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
 	/* default resource config,the os shim can overwrite it */
-	wmi_resource_config wlan_resource_config;
+	target_resource_config wlan_resource_config;
 };
 
 /**

@@ -231,50 +231,59 @@ static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported)
 static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 {
 	uint8_t no_of_peers_supported;
-	wmi_resource_config tgt_cfg = {
-		0,              /* Filling zero for TLV Tag and Length fields */
-		CFG_TGT_NUM_VDEV,
-		CFG_TGT_NUM_PEERS + CFG_TGT_NUM_VDEV + 2,
-		CFG_TGT_NUM_OFFLOAD_PEERS,
-		CFG_TGT_NUM_OFFLOAD_REORDER_BUFFS,
-		CFG_TGT_NUM_PEER_KEYS,
-		CFG_TGT_NUM_TIDS,
-		CFG_TGT_AST_SKID_LIMIT,
-		CFG_TGT_DEFAULT_TX_CHAIN_MASK,
-		CFG_TGT_DEFAULT_RX_CHAIN_MASK,
-		{CFG_TGT_RX_TIMEOUT_LO_PRI, CFG_TGT_RX_TIMEOUT_LO_PRI,
-		 CFG_TGT_RX_TIMEOUT_LO_PRI, CFG_TGT_RX_TIMEOUT_HI_PRI},
-		CFG_TGT_RX_DECAP_MODE,
-		CFG_TGT_DEFAULT_SCAN_MAX_REQS,
-		CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV,
-		CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV,
-		CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_PROFILES,
-		CFG_TGT_DEFAULT_NUM_MCAST_GROUPS,
-		CFG_TGT_DEFAULT_NUM_MCAST_TABLE_ELEMS,
-		CFG_TGT_DEFAULT_MCAST2UCAST_MODE,
-		CFG_TGT_DEFAULT_TX_DBG_LOG_SIZE,
-		CFG_TGT_WDS_ENTRIES,
-		CFG_TGT_DEFAULT_DMA_BURST_SIZE,
-		CFG_TGT_DEFAULT_MAC_AGGR_DELIM,
+	target_resource_config tgt_cfg;
+
+	qdf_mem_zero(&tgt_cfg, sizeof(tgt_cfg));
+	tgt_cfg.num_vdevs = CFG_TGT_NUM_VDEV;
+	tgt_cfg.num_peers = CFG_TGT_NUM_PEERS + CFG_TGT_NUM_VDEV + 2;
+	tgt_cfg.num_offload_peers = CFG_TGT_NUM_OFFLOAD_PEERS;
+	tgt_cfg.num_offload_reorder_buffs = CFG_TGT_NUM_OFFLOAD_REORDER_BUFFS;
+	tgt_cfg.num_peer_keys = CFG_TGT_NUM_PEER_KEYS;
+	tgt_cfg.num_tids = CFG_TGT_NUM_TIDS;
+	tgt_cfg.ast_skid_limit = CFG_TGT_AST_SKID_LIMIT;
+	tgt_cfg.tx_chain_mask = CFG_TGT_DEFAULT_TX_CHAIN_MASK;
+	tgt_cfg.rx_chain_mask = CFG_TGT_DEFAULT_RX_CHAIN_MASK;
+	tgt_cfg.rx_timeout_pri[0] = CFG_TGT_RX_TIMEOUT_LO_PRI;
+	tgt_cfg.rx_timeout_pri[1] = CFG_TGT_RX_TIMEOUT_LO_PRI;
+	tgt_cfg.rx_timeout_pri[2] = CFG_TGT_RX_TIMEOUT_LO_PRI;
+	tgt_cfg.rx_timeout_pri[3] = CFG_TGT_RX_TIMEOUT_HI_PRI;
+	tgt_cfg.rx_decap_mode = CFG_TGT_RX_DECAP_MODE;
+	tgt_cfg.scan_max_pending_req = CFG_TGT_DEFAULT_SCAN_MAX_REQS;
+	tgt_cfg.bmiss_offload_max_vdev = CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV;
+	tgt_cfg.roam_offload_max_vdev = CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV;
+	tgt_cfg.roam_offload_max_ap_profiles =
+		CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_PROFILES;
+	tgt_cfg.num_mcast_groups = CFG_TGT_DEFAULT_NUM_MCAST_GROUPS;
+	tgt_cfg.num_mcast_table_elems = CFG_TGT_DEFAULT_NUM_MCAST_TABLE_ELEMS;
+	tgt_cfg.mcast2ucast_mode = CFG_TGT_DEFAULT_MCAST2UCAST_MODE;
+	tgt_cfg.tx_dbg_log_size = CFG_TGT_DEFAULT_TX_DBG_LOG_SIZE;
+	tgt_cfg.num_wds_entries = CFG_TGT_WDS_ENTRIES;
+	tgt_cfg.dma_burst_size = CFG_TGT_DEFAULT_DMA_BURST_SIZE;
+	tgt_cfg.mac_aggr_delim = CFG_TGT_DEFAULT_MAC_AGGR_DELIM;
+	tgt_cfg.rx_skip_defrag_timeout_dup_detection_check =
 		CFG_TGT_DEFAULT_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK,
-		CFG_TGT_DEFAULT_VOW_CONFIG,
-		CFG_TGT_DEFAULT_GTK_OFFLOAD_MAX_VDEV,
-		CFG_TGT_NUM_MSDU_DESC,
-		CFG_TGT_MAX_FRAG_TABLE_ENTRIES,
-		CFG_TGT_NUM_TDLS_VDEVS,
-		CFG_TGT_NUM_TDLS_CONN_TABLE_ENTRIES,
-		CFG_TGT_DEFAULT_BEACON_TX_OFFLOAD_MAX_VDEV,
-		CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES,
-		0,
-		0,
-		0,
-		CFG_TGT_NUM_TDLS_CONC_SLEEP_STAS,
-		CFG_TGT_NUM_TDLS_CONC_BUFFER_STAS,
-		0,
-		CFG_TGT_NUM_OCB_VDEVS,
-		CFG_TGT_NUM_OCB_CHANNELS,
-		CFG_TGT_NUM_OCB_SCHEDULES,
-	};
+	tgt_cfg.vow_config = CFG_TGT_DEFAULT_VOW_CONFIG;
+	tgt_cfg.gtk_offload_max_vdev = CFG_TGT_DEFAULT_GTK_OFFLOAD_MAX_VDEV;
+	tgt_cfg.num_msdu_desc = CFG_TGT_NUM_MSDU_DESC;
+	tgt_cfg.max_frag_entries = CFG_TGT_MAX_FRAG_TABLE_ENTRIES;
+	tgt_cfg.num_tdls_vdevs = CFG_TGT_NUM_TDLS_VDEVS;
+	tgt_cfg.num_tdls_conn_table_entries =
+		CFG_TGT_NUM_TDLS_CONN_TABLE_ENTRIES;
+	tgt_cfg.beacon_tx_offload_max_vdev =
+		CFG_TGT_DEFAULT_BEACON_TX_OFFLOAD_MAX_VDEV;
+	tgt_cfg.num_multicast_filter_entries =
+		CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES;
+	tgt_cfg.num_wow_filters = 0;
+	tgt_cfg.num_keep_alive_pattern = 0;
+	tgt_cfg.keep_alive_pattern_size = 0;
+	tgt_cfg.max_tdls_concurrent_sleep_sta =
+		CFG_TGT_NUM_TDLS_CONC_SLEEP_STAS;
+	tgt_cfg.max_tdls_concurrent_buffer_sta =
+		CFG_TGT_NUM_TDLS_CONC_BUFFER_STAS;
+	tgt_cfg.wmi_send_separate = 0;
+	tgt_cfg.num_ocb_vdevs = CFG_TGT_NUM_OCB_VDEVS;
+	tgt_cfg.num_ocb_channels = CFG_TGT_NUM_OCB_CHANNELS;
+	tgt_cfg.num_ocb_schedules = CFG_TGT_NUM_OCB_SCHEDULES;
 
 	no_of_peers_supported = wma_get_number_of_peers_supported(wma_handle);
 	tgt_cfg.num_peers = no_of_peers_supported + CFG_TGT_NUM_VDEV + 2;
@@ -282,13 +291,9 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 				no_of_peers_supported);
 	tgt_cfg.scan_max_pending_req = wma_handle->max_scan;
 
-	WMI_RSRC_CFG_FLAG_MGMT_COMP_EVT_BUNDLE_SUPPORT_SET(tgt_cfg.flag1, 1);
-	WMI_RSRC_CFG_FLAG_TX_MSDU_ID_NEW_PARTITION_SUPPORT_SET(tgt_cfg.flag1,
-							       1);
+	tgt_cfg.mgmt_comp_evt_bundle_support = true;
+	tgt_cfg.tx_msdu_new_partition_id_support = true;
 
-	WMITLV_SET_HDR(&tgt_cfg.tlv_header,
-		       WMITLV_TAG_STRUC_wmi_resource_config,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_resource_config));
 	/* reduce the peer/vdev if CFG_TGT_NUM_MSDU_DESC exceeds 1000 */
 #ifdef PERE_IP_HDR_ALIGNMENT_WAR
 	if (scn->host_80211_enable) {
@@ -5319,27 +5324,19 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		/* No service extended message support.
 		 * Send INIT command immediately
 		 */
+		struct wmi_init_cmd_param init_param = {0};
+		init_param.res_cfg = &wma_handle->wlan_resource_config;
+		init_param.num_mem_chunks = wma_handle->num_mem_chunks;
+		init_param.mem_chunks = wma_handle->mem_chunks;
+		init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
 		WMA_LOGA("WMA --> WMI_INIT_CMDID");
-		status = wmi_unified_send_init_cmd(wma_handle->wmi_handle,
-				&wma_handle->wlan_resource_config,
-				wma_handle->num_mem_chunks,
-				wma_handle->mem_chunks, 1);
+		status = wmi_unified_init_cmd_send(wma_handle->wmi_handle,
+			&init_param);
 		if (status != EOK) {
 			WMA_LOGE("Failed to send WMI_INIT_CMDID command");
 			return -EINVAL;
 		}
 	} else {
-		status = wmi_unified_send_init_cmd(wma_handle->wmi_handle,
-				&wma_handle->wlan_resource_config,
-				wma_handle->num_mem_chunks,
-				wma_handle->mem_chunks, 0);
-		if (status != EOK) {
-			WMA_LOGE("Failed to save WMI_INIT_CMDID command parameter");
-			return -EINVAL;
-		}
-		/* The saved 'buf' will be freed after sending INIT command or
-		 * in other cases as required
-		 */
 		ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
 				WMA_SERVICE_READY_EXT_TIMEOUT);
 		if (!QDF_IS_STATUS_SUCCESS(ret))
@@ -6035,6 +6032,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	wmi_service_ready_ext_event_fixed_param *ev;
 	int status;
 	QDF_STATUS ret;
+	struct wmi_init_cmd_param init_param = {0};
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -6075,7 +6073,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	}
 
 	WMA_LOGD("WMA --> WMI_INIT_CMDID");
-	status = wmi_unified_send_saved_init_cmd(wma_handle->wmi_handle);
+
+	init_param.res_cfg = &wma_handle->wlan_resource_config;
+	init_param.num_mem_chunks = wma_handle->num_mem_chunks;
+	init_param.mem_chunks = wma_handle->mem_chunks;
+	init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
+	status = wmi_unified_init_cmd_send(wma_handle->wmi_handle, &init_param);
 	if (status != EOK)
 		/* In success case, WMI layer will free after getting copy
 		 * engine TX complete interrupt
