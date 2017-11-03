@@ -106,7 +106,7 @@ QDF_STATUS wma_fips_register_event_handlers(WMA_HANDLE handle)
 	tp_wma_handle wma_handle = handle;
 
 	return wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						  WMI_PDEV_FIPS_EVENTID,
+						  wmi_pdev_fips_event_id,
 						  wma_fips_event_handler,
 						  WMA_RX_WORK_CTX);
 }

@@ -3877,7 +3877,7 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void)
 #endif
 
 	if (wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-						 WMI_MGMT_RX_EVENTID) != 0) {
+						 wmi_mgmt_rx_event_id) != 0) {
 		WMA_LOGE("Failed to Unregister rx mgmt handler with wmi");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3936,7 +3936,7 @@ QDF_STATUS wma_register_mgmt_frm_client(void)
 	}
 
 	if (wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					       WMI_MGMT_RX_EVENTID,
+					       wmi_mgmt_rx_event_id,
 					       wma_mgmt_rx_process,
 					       WMA_RX_WORK_CTX) != 0) {
 		WMA_LOGE("Failed to register rx mgmt handler with wmi");

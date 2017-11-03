@@ -1884,27 +1884,27 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_IFACE_LINK_STATS_EVENTID,
+				wmi_iface_link_stats_event_id,
 				wma_unified_link_iface_stats_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_PEER_LINK_STATS_EVENTID,
+				wmi_peer_link_stats_event_id,
 				wma_unified_link_peer_stats_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_RADIO_LINK_STATS_EVENTID,
+				wmi_radio_link_stats_link,
 				wma_unified_link_radio_stats_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID,
+			wmi_radio_tx_power_level_stats_event_id,
 			wma_unified_radio_tx_power_level_stats_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_STA_PS_STATECHG_EVENTID,
+					   wmi_peer_sta_ps_statechg_event_id,
 					   wma_peer_ps_evt_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_REPORT_STATS_EVENTID,
+					   wmi_report_stats_event_id,
 					   wma_ll_stats_evt_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
@@ -4190,7 +4190,7 @@ void wma_utf_detach(tp_wma_handle wma_handle)
 		wma_handle->utf_event_info.data = NULL;
 		wma_handle->utf_event_info.length = 0;
 		wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-						     WMI_PDEV_UTF_EVENTID);
+						     wmi_pdev_utf_event_id);
 	}
 }
 
@@ -4209,7 +4209,7 @@ void wma_utf_attach(tp_wma_handle wma_handle)
 	wma_handle->utf_event_info.length = 0;
 
 	ret = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						 WMI_PDEV_UTF_EVENTID,
+						 wmi_pdev_utf_event_id,
 						 wma_process_utf_event,
 						 WMA_RX_SERIALIZER_CTX);
 

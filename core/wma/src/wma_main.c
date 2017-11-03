@@ -2568,19 +2568,19 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wlan_psoc_obj_unlock(psoc);
 
 	wmi_unified_register_event_handler(wmi_handle,
-					   WMI_SERVICE_AVAILABLE_EVENTID,
+					   wmi_service_available_event_id,
 					   wma_rx_service_available_event,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wmi_handle,
-					   WMI_SERVICE_READY_EVENTID,
+					   wmi_service_ready_event_id,
 					   init_deinit_service_ready_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wmi_handle,
-					   WMI_SERVICE_READY_EXT_EVENTID,
+					   wmi_service_ready_ext_event_id,
 					   init_deinit_service_ext_ready_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wmi_handle,
-					   WMI_READY_EVENTID,
+					   wmi_ready_event_id,
 					   wma_rx_ready_event,
 					   WMA_RX_SERIALIZER_CTX);
 	/* Save the WMI & HTC handle */
@@ -2658,12 +2658,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* Register the debug print event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					WMI_DEBUG_PRINT_EVENTID,
+					wmi_debug_print_event_id,
 					wma_unified_debug_print_event_handler,
 					WMA_RX_SERIALIZER_CTX);
 	/* Register profiling event Handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					WMI_WLAN_PROFILE_DATA_EVENTID,
+					wmi_wlan_profile_data_event_id,
 					wma_profile_data_report_event_handler,
 					WMA_RX_SERIALIZER_CTX);
 
@@ -2749,64 +2749,64 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* Register vdev start response event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_VDEV_START_RESP_EVENTID,
+					   wmi_vdev_start_resp_event_id,
 					   wma_vdev_start_resp_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* Register vdev stop response event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_VDEV_STOPPED_EVENTID,
+					   wmi_vdev_stopped_event_id,
 					   wma_vdev_stop_resp_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* register for STA kickout function */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_STA_KICKOUT_EVENTID,
+					   wmi_peer_sta_kickout_event_id,
 					   wma_peer_sta_kickout_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* register for stats response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_UPDATE_STATS_EVENTID,
+					   wmi_update_stats_event_id,
 					   wma_stats_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* register for stats response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_VDEV_GET_ARP_STAT_EVENTID,
+					   wmi_get_arp_stats_req_id,
 					   wma_get_arp_stats_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	/* register for peer info response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_STATS_INFO_EVENTID,
+					   wmi_peer_stats_info_event_id,
 					   wma_peer_info_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 #ifdef WLAN_POWER_DEBUGFS
 	/* register for Chip Power stats event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_PDEV_CHIP_POWER_STATS_EVENTID,
+				wmi_pdev_chip_power_stats_event_id,
 				wma_unified_power_debug_stats_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 #endif
 
 	/* register for linkspeed response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_ESTIMATED_LINKSPEED_EVENTID,
+					   wmi_peer_estimated_linkspeed_event_id,
 					   wma_link_speed_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_OEM_RESPONSE_EVENTID,
+					   wmi_oem_response_event_id,
 					   wma_oem_data_response_handler,
 					   WMA_RX_SERIALIZER_CTX);
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 
 	/* Register peer change event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_STATE_EVENTID,
+					   wmi_peer_state_event_id,
 					   wma_peer_state_change_event_handler,
 					   WMA_RX_WORK_CTX);
 
@@ -2814,12 +2814,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	 * for sending channel switch announcement frames
 	 */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					WMI_OFFLOAD_BCN_TX_STATUS_EVENTID,
+					wmi_offload_bcn_tx_status_event_id,
 					wma_unified_bcntx_status_event_handler,
 					WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_UPDATE_VDEV_RATE_STATS_EVENTID,
+					   wmi_update_vdev_rate_stats_event_id,
 					   wma_link_status_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -2835,7 +2835,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	 * copy complete indication
 	 */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_UPDATE_FW_MEM_DUMP_EVENTID,
+			wmi_update_fw_mem_dump_event_id,
 			wma_fw_mem_dump_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 
@@ -2875,13 +2875,13 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* register for install key completion event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID,
+				wmi_vdev_install_key_complete_event_id,
 				wma_vdev_install_key_complete_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 #ifdef WLAN_FEATURE_NAN
 	/* register for nan response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_NAN_EVENTID,
+					   wmi_nan_event_id,
 					   wma_nan_rsp_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 #endif /* WLAN_FEATURE_NAN */
@@ -2889,7 +2889,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 #ifdef WLAN_FEATURE_STATS_EXT
 	/* register for extended stats event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_STATS_EXT_EVENTID,
+					   wmi_stats_ext_event_id,
 					   wma_stats_ext_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 #endif /* WLAN_FEATURE_STATS_EXT */
@@ -2901,16 +2901,16 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_ROAM_SYNCH_EVENTID,
+					   wmi_roam_synch_event_id,
 					   wma_roam_synch_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				   WMI_ROAM_SYNCH_FRAME_EVENTID,
+				   wmi_roam_synch_frame_event_id,
 				   wma_roam_synch_frame_event_handler,
 				   WMA_RX_SERIALIZER_CTX);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_RSSI_BREACH_EVENTID,
+				wmi_rssi_breach_event_id,
 				wma_rssi_breached_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
@@ -2920,35 +2920,35 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* Register peer assoc conf event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_ASSOC_CONF_EVENTID,
+					   wmi_peer_assoc_conf_event_id,
 					   wma_peer_assoc_conf_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_VDEV_DELETE_RESP_EVENTID,
+					   wmi_vdev_delete_resp_event_id,
 					   wma_vdev_delete_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_DELETE_RESP_EVENTID,
+					   wmi_peer_delete_response_event_id,
 					   wma_peer_delete_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_BPF_CAPABILIY_INFO_EVENTID,
+					   wmi_bpf_capability_info_event_id,
 					   wma_get_bpf_caps_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID,
+				wmi_vdev_encrypt_decrypt_data_rsp_event_id,
 				wma_encrypt_decrypt_msg_handler,
 				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_CHAN_INFO_EVENTID,
+					   wmi_chan_info_event_id,
 					   wma_chan_info_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID,
+				wmi_dbg_mesg_flush_complete_event_id,
 				wma_flush_complete_evt_handler,
 				WMA_RX_WORK_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_REPORT_RX_AGGR_FAILURE_EVENTID,
+				wmi_report_rx_aggr_failure_event_id,
 				wma_rx_aggr_failure_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
@@ -2959,14 +2959,14 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	if (cds_cfg->auto_power_save_fail_mode ==
 	    PMO_FW_TO_SEND_WOW_IND_ON_PWR_FAILURE) {
 		wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID,
+			wmi_pdev_chip_pwr_save_failure_detect_event_id,
 			wma_chip_power_save_failure_detected_handler,
 			WMA_RX_WORK_CTX);
 	}
 
 	wma_ndp_register_all_event_handlers(wma_handle);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_PEER_ANTDIV_INFO_EVENTID,
+				wmi_peer_antdiv_info_event_id,
 				wma_peer_ant_info_evt_handler,
 				WMA_RX_WORK_CTX);
 
@@ -2987,7 +2987,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_PHYERR_EVENTID,
+			wmi_phyerr_event_id,
 			wma_unified_phyerr_rx_event_handler,
 			WMA_RX_WORK_CTX);
 
@@ -3000,7 +3000,7 @@ err_dbglog_init:
 	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
 err_event_init:
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-					     WMI_DEBUG_PRINT_EVENTID);
+					     wmi_debug_print_event_id);
 
 	for (i = 0; i < wma_handle->max_bssid; ++i)
 		wma_vdev_deinit(&wma_handle->interfaces[i]);
@@ -3514,7 +3514,7 @@ QDF_STATUS wma_start(void)
 	}
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_ROAM_EVENTID,
+						    wmi_roam_event_id,
 						    wma_roam_event_callback,
 						    WMA_RX_SERIALIZER_CTX);
 	if (0 != status) {
@@ -3524,7 +3524,7 @@ QDF_STATUS wma_start(void)
 	}
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_WOW_WAKEUP_HOST_EVENTID,
+						    wmi_wow_wakeup_host_event_id,
 						    wma_wow_wakeup_host_event,
 						    WMA_RX_TASKLET_CTX);
 	if (status) {
@@ -3549,7 +3549,7 @@ QDF_STATUS wma_start(void)
 	}
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_PDEV_RESUME_EVENTID,
+				wmi_pdev_resume_event_id,
 				wma_pdev_resume_event_handler,
 				WMA_RX_TASKLET_CTX);
 	if (status) {
@@ -3562,7 +3562,7 @@ QDF_STATUS wma_start(void)
 	defined(QCA_LL_TX_FLOW_CONTROL_V2) || defined(CONFIG_HL_SUPPORT)
 	WMA_LOGD("MCC TX Pause Event Handler register");
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					WMI_TX_PAUSE_EVENTID,
+					wmi_tx_pause_event_id,
 					wma_mcc_vdev_tx_pause_evt_handler,
 					WMA_RX_TASKLET_CTX);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
@@ -3570,7 +3570,7 @@ QDF_STATUS wma_start(void)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	WMA_LOGD("Registering auto shutdown handler");
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_HOST_AUTO_SHUTDOWN_EVENTID,
+						wmi_host_auto_shutdown_event_id,
 						wma_auto_shutdown_event_handler,
 						WMA_RX_SERIALIZER_CTX);
 	if (status) {
@@ -3580,7 +3580,7 @@ QDF_STATUS wma_start(void)
 	}
 #endif /* FEATURE_WLAN_AUTO_SHUTDOWN */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_THERMAL_MGMT_EVENTID,
+						wmi_thermal_mgmt_event_id,
 						wma_thermal_mgmt_evt_handler,
 						WMA_RX_SERIALIZER_CTX);
 	if (status) {
@@ -3614,7 +3614,7 @@ QDF_STATUS wma_start(void)
 
 		status = wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
-					WMI_PEER_INFO_EVENTID,
+					wmi_peer_info_event_id,
 					wma_ibss_peer_info_event_handler,
 					WMA_RX_SERIALIZER_CTX);
 		if (status) {
@@ -3624,7 +3624,7 @@ QDF_STATUS wma_start(void)
 		}
 		status = wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
-					WMI_PEER_TX_FAIL_CNT_THR_EVENTID,
+					wmi_peer_tx_fail_cnt_thr_event_id,
 					wma_fast_tx_fail_event_handler,
 					WMA_RX_SERIALIZER_CTX);
 		if (status) {
@@ -3661,7 +3661,7 @@ QDF_STATUS wma_start(void)
 
 	/* Initialize the get temperature event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					WMI_PDEV_TEMPERATURE_EVENTID,
+					wmi_pdev_temperature_event_id,
 					wma_pdev_temperature_evt_handler,
 					WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3671,7 +3671,7 @@ QDF_STATUS wma_start(void)
 	}
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						WMI_VDEV_TSF_REPORT_EVENTID,
+						wmi_vdev_tsf_report_event_id,
 						wma_vdev_tsf_handler,
 						WMA_RX_SERIALIZER_CTX);
 	if (0 != status) {
@@ -3682,7 +3682,7 @@ QDF_STATUS wma_start(void)
 
 	/* Initialize the wma_pdev_set_hw_mode_resp_evt_handler event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_PDEV_SET_HW_MODE_RESP_EVENTID,
+			wmi_pdev_set_hw_mode_rsp_event_id,
 			wma_pdev_set_hw_mode_resp_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3693,7 +3693,7 @@ QDF_STATUS wma_start(void)
 
 	/* Initialize the WMI_SOC_HW_MODE_TRANSITION_EVENTID event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_PDEV_HW_MODE_TRANSITION_EVENTID,
+			wmi_pdev_hw_mode_transition_event_id,
 			wma_pdev_hw_mode_transition_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3704,7 +3704,7 @@ QDF_STATUS wma_start(void)
 
 	/* Initialize the set dual mac configuration event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID,
+			wmi_pdev_set_mac_config_resp_event_id,
 			wma_pdev_set_dual_mode_config_resp_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -3714,7 +3714,7 @@ QDF_STATUS wma_start(void)
 	}
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_WLAN_COEX_BT_ACTIVITY_EVENTID,
+			wmi_coex_bt_activity_event_id,
 			wma_wlan_bt_activity_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -5180,7 +5180,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	cdp_set_desc_global_pool_size(soc, ev->num_msdu_desc);
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_HOST_SWBA_EVENTID,
+						    wmi_host_swba_event_id,
 						    wma_beacon_swba_handler,
 						    WMA_RX_SERIALIZER_CTX);
 	if (status) {
@@ -5210,7 +5210,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGD("%s: FW support CSA offload capability", __func__);
 		status = wmi_unified_register_event_handler(
 						wma_handle->wmi_handle,
-						WMI_CSA_HANDLING_EVENTID,
+						wmi_csa_handling_event_id,
 						wma_csa_offload_handler,
 						WMA_RX_SERIALIZER_CTX);
 		if (status) {
@@ -5228,7 +5228,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		 */
 		status = wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
-					WMI_MGMT_TX_COMPLETION_EVENTID,
+					wmi_mgmt_tx_completion_event_id,
 					wma_mgmt_tx_completion_handler,
 					WMA_RX_SERIALIZER_CTX);
 		if (status) {
@@ -5238,7 +5238,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 		status = wmi_unified_register_event_handler(
 				wma_handle->wmi_handle,
-				WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID,
+				wmi_mgmt_tx_bundle_completion_event_id,
 				wma_mgmt_tx_bundle_completion_handler,
 				WMA_RX_SERIALIZER_CTX);
 		if (status) {
@@ -5255,7 +5255,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		status =
 			wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
-					WMI_GTK_OFFLOAD_STATUS_EVENTID,
+					wmi_gtk_offload_status_event_id,
 					target_if_pmo_gtk_offload_status_event,
 					WMA_RX_WORK_CTX);
 		if (status) {
@@ -5272,7 +5272,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		wma_handle->fw_mem_dump_enabled = false;
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_TBTTOFFSET_UPDATE_EVENTID,
+				wmi_tbttoffset_update_event_id,
 				wma_tbttoffset_update_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 	if (status) {
@@ -5285,7 +5285,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		/* register for rcpi response event */
 		status = wmi_unified_register_event_handler(
 							wma_handle->wmi_handle,
-							WMI_UPDATE_RCPI_EVENTID,
+							wmi_update_rcpi_event_id,
 							wma_rcpi_event_handler,
 							WMA_RX_SERIALIZER_CTX);
 		if (status) {
@@ -5317,7 +5317,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	/* Initialize the log supported event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID,
+			wmi_diag_event_id_log_supported_event_id,
 			wma_log_supported_evt_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {

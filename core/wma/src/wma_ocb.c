@@ -717,7 +717,7 @@ int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 
 	/* Initialize the members in WMA used by wma_ocb */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_OCB_SET_CONFIG_RESP_EVENTID,
+			wmi_ocb_set_config_resp_event_id,
 			wma_ocb_set_config_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status)
@@ -725,7 +725,7 @@ int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 
 	status = wmi_unified_register_event_handler(
 			wma_handle->wmi_handle,
-			WMI_OCB_GET_TSF_TIMER_RESP_EVENTID,
+			wmi_ocb_get_tsf_timer_resp_event_id,
 			wma_ocb_get_tsf_timer_resp_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status)
@@ -733,7 +733,7 @@ int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 
 	status = wmi_unified_register_event_handler(
 			wma_handle->wmi_handle,
-			WMI_DCC_GET_STATS_RESP_EVENTID,
+			wmi_dcc_get_stats_resp_event_id,
 			wma_dcc_get_stats_resp_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status)
@@ -741,14 +741,14 @@ int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 
 	status = wmi_unified_register_event_handler(
 			wma_handle->wmi_handle,
-			WMI_DCC_UPDATE_NDL_RESP_EVENTID,
+			wmi_dcc_update_ndl_resp_event_id,
 			wma_dcc_update_ndl_resp_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status)
 		return status;
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_DCC_STATS_EVENTID,
+			wmi_dcc_stats_event_id,
 			wma_dcc_stats_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 	if (status)
