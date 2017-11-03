@@ -686,7 +686,7 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!dfs || !psoc) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"dfs %p, psoc %p", dfs, psoc);
+				"dfs %pK, psoc %pK", dfs, psoc);
 		return;
 	}
 
