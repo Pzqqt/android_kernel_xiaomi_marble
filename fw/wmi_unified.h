@@ -2246,6 +2246,15 @@ typedef struct {
      * are provided in the subsequent mac_addr_list TLV
      */
     A_UINT32 num_extra_mac_addr;
+    /* Total number of peers allocated by FW
+     * Host sends param_tlv->resource_config->num_peers as 'number of peers' +
+     * 'number of bss peers' (vdevs)
+     * Firmware adds number of self peers and/or other FW only peers.
+     * Peer ID can be up to num_total_peers.
+     * If 0, then Host can use param_tlv->resource_config->num_peers as
+     * total number of peers.
+     */
+    A_UINT32 num_total_peers;
 /*
  * This fixed_param TLV is followed by these additional TLVs:
  * mac_addr_list[num_extra_mac_addr];
