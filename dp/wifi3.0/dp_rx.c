@@ -1048,7 +1048,6 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
 		DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
 
-		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);
 		amsdu_flag = ((msdu_desc_info.msdu_flags &
 				HAL_MSDU_F_FIRST_MSDU_IN_MPDU) &&
 				(msdu_desc_info.msdu_flags &
