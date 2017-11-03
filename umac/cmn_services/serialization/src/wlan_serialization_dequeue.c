@@ -134,10 +134,8 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 		 */
 		if (is_active_queue) {
 			if (!psoc || !cmd_list) {
-			    serialization_err("Can't find cmd psoc:0x%p",
-					      psoc);
-			    serialization_err("Can't find cmd cmd_list:0x%p",
-					      cmd_list);
+				serialization_err("psoc:0x%pK, cmd_list:0x%pK",
+						  psoc, cmd_list);
 				status = WLAN_SER_CMD_NOT_FOUND;
 				break;
 			}
