@@ -214,7 +214,7 @@ wmi_unified_register_event(wmi_unified_t wmi_handle,
  */
 int
 wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
-				   uint32_t event_id,
+				   wmi_conv_event_id event_id,
 				   wmi_unified_event_handler handler_func,
 				   uint8_t rx_ctx);
 
@@ -238,7 +238,7 @@ wmi_unified_unregister_event(wmi_unified_t wmi_handle,
  */
 int
 wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
-					 uint32_t event_id);
+					 wmi_conv_event_id event_id);
 
 /**
  * request wmi to connet its htc service.
