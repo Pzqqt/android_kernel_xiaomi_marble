@@ -1025,8 +1025,11 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 				hif_dev_process_recv_header(pdev, packet,
 							    look_aheads,
 							    &num_look_aheads);
-			if (QDF_IS_STATUS_ERROR(status))
+			if (QDF_IS_STATUS_ERROR(status)) {
+				HTC_PACKET_ENQUEUE_TO_HEAD(&sync_completed_pkts_queue,
+					packet);
 				break;
+			}
 
 			netbuf = (qdf_nbuf_t) packet->pNetBufContext;
 			/* set data length */
@@ -1044,8 +1047,13 @@ QDF_STATUS hif_dev_recv_message_pending_handler(struct hif_sdio_device *pdev,
 								pipeid);
 			}
 		}
-		if (QDF_IS_STATUS_ERROR(status))
+
+		if (QDF_IS_STATUS_ERROR(status)) {
+			if (!HTC_QUEUE_EMPTY(&sync_completed_pkts_queue))
+				hif_dev_free_recv_pkt_queue(
+						&sync_completed_pkts_queue);
 			break;
+		}
 
 		if (num_look_aheads == 0) {
 			/* no more look aheads */
