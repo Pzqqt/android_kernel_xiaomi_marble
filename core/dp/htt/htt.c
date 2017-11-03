@@ -666,7 +666,6 @@ void htt_detach(htt_pdev_handle pdev)
 	HTT_TX_MUTEX_DESTROY(&pdev->credit_mutex);
 	HTT_TX_MUTEX_DESTROY(&pdev->htt_tx_mutex);
 	HTT_TX_NBUF_QUEUE_MUTEX_DESTROY(pdev);
-	htt_rx_dbg_rxbuf_deinit(pdev);
 }
 
 /**

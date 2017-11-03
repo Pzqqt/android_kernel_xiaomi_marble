@@ -689,6 +689,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 {
 	qdf_timer_stop(&pdev->rx_ring.refill_retry_timer);
 	qdf_timer_free(&pdev->rx_ring.refill_retry_timer);
+	htt_rx_dbg_rxbuf_deinit(pdev);
 
 	if (pdev->cfg.is_full_reorder_offload) {
 		qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
