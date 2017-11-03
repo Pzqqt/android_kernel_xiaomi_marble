@@ -230,6 +230,7 @@ enum wifi_traffic_ac {
  * @WLAN_PEER_NAWDS:    NAWDS Peer
  * @WLAN_PEER_STA_TEMP: STA Peer Temp (its host only node)
  * @WLAN_PEER_IBSS:     IBSS Peer
+ * @WLAN_PEER_NDP:      NDP Peer
  */
 enum wlan_peer_type {
 	WLAN_PEER_SELF     = 1,
@@ -241,6 +242,7 @@ enum wlan_peer_type {
 	WLAN_PEER_NAWDS    = 7,
 	WLAN_PEER_STA_TEMP = 8,
 	WLAN_PEER_IBSS     = 9,
+	WLAN_PEER_NDP      = 10,
 };
 
 /**
