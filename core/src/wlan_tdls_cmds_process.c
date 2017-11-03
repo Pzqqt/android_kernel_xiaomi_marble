@@ -1148,7 +1148,7 @@ QDF_STATUS tdls_process_del_peer(struct tdls_oper_request *req)
 	soc_obj = wlan_vdev_get_tdls_soc_obj(vdev);
 
 	if (!vdev_obj || !soc_obj) {
-		tdls_err("tdls vdev_obj: %p soc_obj: %p", vdev_obj, soc_obj);
+		tdls_err("tdls vdev_obj: %pK soc_obj: %pK", vdev_obj, soc_obj);
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
 	}
