@@ -556,6 +556,27 @@ struct probe_req_whitelist_attr {
 };
 
 /**
+ * struct chan_info - channel information
+ * @freq: frequency to scan
+ * @phymode: phymode in which @frequency should be scanned
+ */
+struct chan_info {
+	uint32_t freq;
+	uint32_t phymode;
+};
+
+/**
+ * struct chan_list - list of frequencies to be scanned
+ *  and their phymode
+ * @num_chan: number of channels to scan
+ * @chan: channel parameters used for this scan
+ */
+struct chan_list {
+	uint32_t num_chan;
+	struct chan_info chan[WLAN_SCAN_MAX_NUM_CHANNELS];
+};
+
+/**
  * struct scan_req_params - start scan request parameter
  * @scan_id: scan id
  * @scan_req_id: scan requester id
@@ -610,11 +631,10 @@ struct probe_req_whitelist_attr {
  * @scan_f_forced: force scan even in presence of data traffic
  * @scan_f_2ghz: scan 2.4 GHz channels
  * @scan_f_5ghz: scan 5 GHz channels
- * @scan_f_80mhz: scan in 80 MHz channel width mode
+ * @scan_f_wide_band: scan in 40 MHz or higher bandwidth
  * @scan_flags: variable to read and set scan_f_* flags in one shot
  *              can be used to dump all scan_f_* flags for debug
  * @burst_duration: burst duration
- * @num_chan: no of channel
  * @num_bssid: no of bssid
  * @num_ssids: no of ssid
  * @n_probes: no of probe
@@ -688,17 +708,16 @@ struct scan_req_params {
 				 scan_f_forced:1,
 				 scan_f_2ghz:1,
 				 scan_f_5ghz:1,
-				 scan_f_80mhz:1;
+				 scan_f_wide_band:1;
 		};
 		uint32_t scan_flags;
 	};
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	uint32_t burst_duration;
-	uint32_t num_chan;
 	uint32_t num_bssid;
 	uint32_t num_ssids;
 	uint32_t n_probes;
-	uint32_t chan_list[WLAN_SCAN_MAX_NUM_CHANNELS];
+	struct chan_list chan_list;
 	struct wlan_ssid ssid[WLAN_SCAN_MAX_NUM_SSID];
 	struct qdf_mac_addr bssid_list[WLAN_SCAN_MAX_NUM_BSSID];
 	struct scan_random_attr scan_random;

@@ -1271,7 +1271,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 			}
 #endif
 			len += snprintf(chl + len, 5, "%d ", channel);
-			req->scan_req.chan_list[num_chan] =
+			req->scan_req.chan_list.chan[num_chan].freq =
 				wlan_chan_to_freq(channel);
 			num_chan++;
 		}
@@ -1284,7 +1284,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		status = -EINVAL;
 		goto end;
 	}
-	req->scan_req.num_chan = num_chan;
+	req->scan_req.chan_list.num_chan = num_chan;
 
 	/* P2P increase the scan priority */
 	if (is_p2p_scan)

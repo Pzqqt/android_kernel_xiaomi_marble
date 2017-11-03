@@ -167,10 +167,11 @@ struct scan_requester_info {
 
 /**
  * struct pdev_scan_info - defines per pdev scan info
+ * @wide_band_scan: wide band scan capability
  * @last_scan_time: time of last scan start on this pdev
  */
-
 struct pdev_scan_info {
+	bool wide_band_scan;
 	qdf_time_t last_scan_time;
 };
 
@@ -261,6 +262,10 @@ struct pno_def_config {
  * @scan_f_add_spoofed_mac_in_probe: use random mac address for TA in probe
  * @scan_f_add_rand_seq_in_probe: use random sequence number in probe
  * @scan_f_en_ie_whitelist_in_probe: enable ie whitelist in probe
+ * @scan_f_forced: force scan even in presence of data traffic
+ * @scan_f_2ghz: scan 2.4 GHz channels
+ * @scan_f_5ghz: scan 5 GHz channels
+ * @scan_f_wide_band: scan in 40 MHz or higher bandwidth
  * @scan_flags: variable to read and set scan_f_* flags in one shot
  *              can be used to dump all scan_f_* flags for debug
  * @scan_ev_started: notify scan started event
@@ -337,7 +342,7 @@ struct scan_default_params {
 				scan_f_forced:1,
 				scan_f_2ghz:1,
 				scan_f_5ghz:1,
-				scan_f_80mhz:1;
+				scan_f_wide_band:1;
 		};
 		uint32_t scan_flags;
 	};

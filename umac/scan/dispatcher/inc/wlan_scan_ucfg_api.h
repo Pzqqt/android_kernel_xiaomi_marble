@@ -190,6 +190,25 @@ QDF_STATUS ucfg_scan_set_enable(struct wlan_objmgr_psoc *psoc, bool enable);
 bool ucfg_scan_get_enable(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_scan_set_wide_band_scan() - Public API to disable/enable wide band scan
+ * @pdev: psoc on which scans need to be disabled
+ * @enable: enable wide band scan if @enable is true, disable otherwise
+ *
+ * Return: QDF_STATUS.
+ */
+QDF_STATUS ucfg_scan_set_wide_band_scan(
+		struct wlan_objmgr_pdev *pdev, bool enable);
+
+/**
+ * ucfg_scan_get_wide_band_scan() - Public API to check if
+ * wide band scan is enabled or disabled
+ * @pdev: psoc on which scans status need to be checked
+ *
+ * Return: true if enabled else false.
+ */
+bool ucfg_scan_get_wide_band_scan(struct wlan_objmgr_pdev *pdev);
+
+/**
  * ucfg_scan_cancel() - Public API to stop a scan
  * @req: stop scan request params
  *
@@ -368,14 +387,15 @@ ucfg_scan_init_bssid_params(struct scan_start_request *scan_req,
 /**
  * ucfg_scan_init_chanlist_params() - initialize scan request channel list
  * @scan_req: scan request object
- * @num_ssid: number of channels in channel list
- * @bssid_list: channel list
+ * @num_chans: number of channels in channel list
+ * @chan_list: channel list
+ * @phymode: phymode in which scan shall be done
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 QDF_STATUS
 ucfg_scan_init_chanlist_params(struct scan_start_request *scan_req,
-	uint32_t num_chans, uint32_t *chan_list);
+	uint32_t num_chans, uint32_t *chan_list, uint32_t *phymode);
 
 /**
  * ucfg_scan_get_vdev_status() - API to check vdev scan status
