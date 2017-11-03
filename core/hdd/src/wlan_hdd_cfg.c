@@ -7463,19 +7463,6 @@ static QDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
 					   array_max_len, true);
 }
 
-/**
- * hdd_string_to_u8_array() - used to convert decimal string into u8 array
- * @str: Decimal string
- * @hex_array: Array where converted value is stored
- * @len: Length of the populated array
- * @array_max_len: Maximum length of the array
- *
- * This API is called to convert decimal string (each byte separated by
- * a comma) into an u8 array
- *
- * Return: QDF_STATUS
- */
-
 QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
 				  uint8_t *len, uint8_t array_max_len)
 {

@@ -14288,8 +14288,21 @@ void hdd_get_pmkid_modes(struct hdd_context *hdd_ctx,
 
 void hdd_update_tgt_cfg(void *context, void *param);
 
-QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
-				  uint8_t intArrayMaxLen);
+/**
+ * hdd_string_to_u8_array() - used to convert decimal string into u8 array
+ * @str: Decimal string
+ * @array: Array where converted value is stored
+ * @len: Length of the populated array
+ * @array_max_len: Maximum length of the array
+ *
+ * This API is called to convert decimal string (each byte separated by
+ * a comma) into an u8 array
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
+				  uint8_t *len, uint8_t array_max_len);
+
 QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 				uint8_t *len, uint8_t int_array_max_len);
 
