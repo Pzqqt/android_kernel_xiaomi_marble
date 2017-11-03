@@ -2277,13 +2277,14 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mac_addr *bssid;
 	int len = sizeof(*cmd);
 	uint8_t extraie_len_with_pad = 0;
+	uint8_t phymode_roundup = 0;
 	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
 	/* calculate the length of buffer required */
-	if (params->num_chan)
-		len += params->num_chan * sizeof(uint32_t);
+	if (params->chan_list.num_chan)
+		len += params->chan_list.num_chan * sizeof(uint32_t);
 
 	/* Length TLV placeholder for array of wmi_ssid structures */
 	len += WMI_TLV_HDR_SIZE;
@@ -2305,6 +2306,13 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	len += WMI_TLV_HDR_SIZE; /* Length of TLV for array of wmi_vendor_oui */
 	if (ie_whitelist->num_vendor_oui)
 		len += ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui);
+
+	len += WMI_TLV_HDR_SIZE; /* Length of TLV for array of scan phymode */
+	if (params->scan_f_wide_band)
+		phymode_roundup =
+			qdf_roundup(params->chan_list.num_chan * sizeof(uint8_t),
+					sizeof(uint32_t));
+	len += phymode_roundup;
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2337,7 +2345,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->max_scan_time = params->max_scan_time;
 	cmd->probe_delay = params->probe_delay;
 	cmd->burst_duration = params->burst_duration;
-	cmd->num_chan = params->num_chan;
+	cmd->num_chan = params->chan_list.num_chan;
 	cmd->num_bssid = params->num_bssid;
 	cmd->num_ssids = params->num_ssids;
 	cmd->ie_len = params->extraie.len;
@@ -2359,13 +2367,15 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	for (i = 0; i < params->num_chan; ++i)
-		tmp_ptr[i] = params->chan_list[i];
+	for (i = 0; i < params->chan_list.num_chan; ++i)
+		tmp_ptr[i] = params->chan_list.chan[i].freq;
 
 	WMITLV_SET_HDR(buf_ptr,
 		       WMITLV_TAG_ARRAY_UINT32,
-		       (params->num_chan * sizeof(uint32_t)));
-	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_chan * sizeof(uint32_t));
+		       (params->chan_list.num_chan * sizeof(uint32_t)));
+	buf_ptr += WMI_TLV_HDR_SIZE +
+			(params->chan_list.num_chan * sizeof(uint32_t));
+
 	if (params->num_ssids > WMI_SCAN_MAX_NUM_SSID) {
 		WMI_LOGE("Invalid value for numSsid");
 		goto error;
@@ -2417,6 +2427,19 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_fill_vendor_oui(buf_ptr, cmd->num_vendor_oui,
 				    ie_whitelist->voui);
 		buf_ptr += cmd->num_vendor_oui * sizeof(wmi_vendor_oui);
+	}
+
+	/* Add phy mode TLV if it's a wide band scan */
+	if (params->scan_f_wide_band) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, phymode_roundup);
+		buf_ptr = (uint8_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+		for (i = 0; i < params->chan_list.num_chan; ++i)
+			buf_ptr[i] =
+				WMI_SCAN_CHAN_SET_MODE(params->chan_list.chan[i].phymode);
+		buf_ptr += phymode_roundup;
+	} else {
+		/* Add ZERO legth phy mode TLV */
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, 0);
 	}
 
 	ret = wmi_unified_cmd_send(
@@ -20314,6 +20337,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_CHAN_LOAD_INFO;
 	wmi_service[wmi_service_extended_nss_support] =
 				WMI_SERVICE_EXTENDED_NSS_SUPPORT;
+	wmi_service[wmi_service_widebw_scan] = WMI_SERVICE_SCAN_PHYMODE_SUPPORT;
 }
 
 /**

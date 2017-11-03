@@ -1871,8 +1871,8 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 #ifdef TEST_CODE
 	len += sizeof(wmi_chan_list) + 3 * sizeof(A_UINT32);
 #else
-	if (param->num_chan) {
-		len += sizeof(wmi_chan_list) + (param->num_chan - 1)
+	if (param->chan_list.num_chan) {
+		len += sizeof(wmi_chan_list) + (param->chan_list.num_chan - 1)
 		    * sizeof(A_UINT32);
 	}
 #endif
@@ -1994,13 +1994,14 @@ static QDF_STATUS send_scan_start_cmd_non_tlv(wmi_unified_t wmi_handle,
 	 tmp_ptr +=  (2 + chan_list->num_chan); /* increase by words */-
 #else
 #define FREQUENCY_THRESH 1000
-	if (param->num_chan) {
+	if (param->chan_list.num_chan) {
 		chan_list  = (wmi_chan_list *) tmp_ptr;
 		chan_list->tag = WMI_CHAN_LIST_TAG;
-		chan_list->num_chan = param->num_chan;
-		qdf_mem_copy(chan_list->channel_list, param->chan_list,
-				((param->num_chan) * sizeof(uint32_t)));
-		tmp_ptr +=  (2 + param->num_chan); /* increase by words */
+		chan_list->num_chan = param->chan_list.num_chan;
+		for (i = 0; i < param->chan_list.num_chan; ++i)
+			chan_list->channel_list[i] =
+				param->chan_list.chan[i].freq;
+		tmp_ptr += (2 + param->chan_list.num_chan);
 	}
 #endif
 	if (param->num_ssids) {
@@ -8535,6 +8536,7 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_offchan_tx_wmi] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_ack_timeout] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_widebw_scan] = WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
