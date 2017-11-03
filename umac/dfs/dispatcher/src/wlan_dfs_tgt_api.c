@@ -360,7 +360,7 @@ QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 				dfs_unit_test);
 	else
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
-				"dfs_tx_ops=%p", dfs_tx_ops);
+				"dfs_tx_ops=%pK", dfs_tx_ops);
 
 	return QDF_STATUS_E_FAILURE;
 }
