@@ -18484,6 +18484,11 @@ static void csr_update_fils_params_rso(tpAniSirGlobal mac,
 	if (!fils_info || !req_buffer)
 		return;
 
+	if ((!fils_info->keyname_nai) || (!fils_info->key_nai_length)) {
+		sme_debug("key_nai_length is NULL");
+		return;
+	}
+
 	roam_fils_params = &req_buffer->roam_fils_params;
 	if ((fils_info->key_nai_length > FILS_MAX_KEYNAME_NAI_LENGTH) ||
 			(fils_info->r_rk_length > FILS_MAX_RRK_LENGTH)) {
