@@ -2998,10 +2998,10 @@ static void lim_process_switch_channel_join_req(
 	lim_apply_configuration(mac_ctx, session_entry);
 
 	/*
-	* If sendDeauthBeforeCon is enabled, Send Deauth first to AP if last
+	* If send_deauth_before_con is enabled, Send Deauth first to AP if last
 	* disconnection was caused by HB failure.
 	*/
-	if (mac_ctx->roam.configParam.sendDeauthBeforeCon) {
+	if (mac_ctx->roam.configParam.send_deauth_before_con) {
 		int apCount;
 
 		for (apCount = 0; apCount < 2; apCount++) {

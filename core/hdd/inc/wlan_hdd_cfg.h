@@ -13870,7 +13870,7 @@ struct hdd_config {
 	bool ignore_peer_erp_info;
 	uint8_t multicast_host_fw_msgs;
 	uint8_t conc_system_pref;
-	bool sendDeauthBeforeCon;
+	bool send_deauth_before_con;
 	bool tso_enable;
 	bool lro_enable;
 	bool flow_steering_enable;

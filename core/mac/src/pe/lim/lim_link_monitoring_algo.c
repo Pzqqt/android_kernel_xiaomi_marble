@@ -392,13 +392,13 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 			     pStaDs->staAddr, sizeof(tSirMacAddr));
 
 	/*
-	* if sendDeauthBeforeCon is enabled and reasoncode is
+	* if send_deauth_before_con is enabled and reasoncode is
 	* Beacon Missed Store the MAC of AP in the flip flop
 	* buffer. This MAC will be used to send Deauth before
 	* connection, if we connect to same AP after HB failure.
 	*/
-	if (pMac->roam.configParam.sendDeauthBeforeCon &&
-		eSIR_BEACON_MISSED == reasonCode) {
+	if (pMac->roam.configParam.send_deauth_before_con &&
+	    eSIR_BEACON_MISSED == reasonCode) {
 		int apCount = pMac->lim.gLimHeartBeatApMacIndex;
 
 		if (pMac->lim.gLimHeartBeatApMacIndex)

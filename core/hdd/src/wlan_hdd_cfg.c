@@ -3545,7 +3545,7 @@ struct reg_table_entry g_registry_table[] = {
 #endif /* DHCP_SERVER_OFFLOAD */
 
 	REG_VARIABLE(CFG_ENABLE_DEAUTH_BEFORE_CONNECTION, WLAN_PARAM_Integer,
-		struct hdd_config, sendDeauthBeforeCon,
+		struct hdd_config, send_deauth_before_con,
 		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_DEFAULT,
 		CFG_ENABLE_DEAUTH_BEFORE_CONNECTION_MIN,
@@ -8716,7 +8716,8 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
 
-	smeConfig->csrConfig.sendDeauthBeforeCon = pConfig->sendDeauthBeforeCon;
+	smeConfig->csrConfig.send_deauth_before_con =
+		pConfig->send_deauth_before_con;
 
 	smeConfig->csrConfig.max_scan_count =
 			hdd_ctx->config->max_scan_count;

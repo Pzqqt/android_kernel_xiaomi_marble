@@ -2804,8 +2804,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->conc_custom_rule2;
 		pMac->roam.configParam.is_sta_connection_in_5gz_enabled =
 			pParam->is_sta_connection_in_5gz_enabled;
-		pMac->roam.configParam.sendDeauthBeforeCon =
-			pParam->sendDeauthBeforeCon;
+		pMac->roam.configParam.send_deauth_before_con =
+			pParam->send_deauth_before_con;
 
 		pMac->enable_dot11p = pParam->enable_dot11p;
 		pMac->roam.configParam.early_stop_scan_enable =
@@ -3117,8 +3117,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
 		cfg_params->is_sta_connection_in_5gz_enabled;
-	pParam->sendDeauthBeforeCon =
-		cfg_params->sendDeauthBeforeCon;
+	pParam->send_deauth_before_con =
+		cfg_params->send_deauth_before_con;
 	pParam->max_scan_count = pMac->scan.max_scan_count;
 	pParam->first_scan_bucket_threshold =
 		pMac->first_scan_bucket_threshold;

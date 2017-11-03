@@ -1285,7 +1285,7 @@ typedef struct tagCsrConfigParam {
 	uint8_t conc_custom_rule1;
 	uint8_t conc_custom_rule2;
 	uint8_t is_sta_connection_in_5gz_enabled;
-	bool sendDeauthBeforeCon;
+	bool send_deauth_before_con;
 
 	/* 802.11p enable */
 	bool enable_dot11p;
