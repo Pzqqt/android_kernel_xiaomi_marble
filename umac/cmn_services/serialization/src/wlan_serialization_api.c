@@ -209,6 +209,7 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	union wlan_serialization_rules_info info;
 	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
+	struct wlan_serialization_command_list *cmd_list = NULL;
 
 	serialization_enter();
 	if (!cmd) {
@@ -256,9 +257,9 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 
 	is_active_cmd_allowed = wlan_serialization_is_active_cmd_allowed(cmd);
 	serialization_status = wlan_serialization_enqueue_cmd(
-				cmd, is_active_cmd_allowed);
+				cmd, is_active_cmd_allowed, &cmd_list);
 	if (WLAN_SER_CMD_ACTIVE == serialization_status)
-		wlan_serialization_activate_cmd(cmd->cmd_type, ser_pdev_obj);
+		wlan_serialization_activate_cmd(cmd_list, ser_pdev_obj);
 	return serialization_status;
 }
 

@@ -216,12 +216,14 @@ wlan_serialization_find_and_cancel_cmd(
  * wlan_serialization_enqueue_cmd() - Enqueue the cmd to pending/active Queue
  * @cmd: Command information
  * @is_cmd_for_active_queue: whether command is for active queue
- *
+ * @cmd_list: command which needs to be inserted in active queue
  * Return: Status of the serialization request
  */
 enum wlan_serialization_status
-wlan_serialization_enqueue_cmd(struct wlan_serialization_command *cmd,
-			       uint8_t is_cmd_for_active_queue);
+wlan_serialization_enqueue_cmd(
+		struct wlan_serialization_command *cmd,
+		uint8_t is_cmd_for_active_queue,
+		struct wlan_serialization_command_list **pcmd_list);
 
 /**
  * wlan_serialization_dequeue_cmd() - dequeue the cmd to pending/active Queue
@@ -400,12 +402,13 @@ bool wlan_serialization_is_cmd_present_queue(
 			uint8_t is_active_queue);
 
 /**
- * wlan_serialization_activate_cmd() - activate first cmd in active queue
- * @cmd_type: Command Type
+ * wlan_serialization_activate_cmd() - activate cmd in active queue
+ * @cmd_list: Command needs to be activated
  * @ser_pdev_obj: Serialization private pdev object
  *
  * Return: None
  */
-void wlan_serialization_activate_cmd(enum wlan_serialization_cmd_type cmd_type,
+void wlan_serialization_activate_cmd(
+			struct wlan_serialization_command_list *cmd_list,
 			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
 #endif
