@@ -1514,7 +1514,7 @@ int wmi_unified_register_event(wmi_unified_t wmi_handle,
  * Return: 0 on success
  */
 int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
-				       uint32_t event_id,
+				       wmi_conv_event_id event_id,
 				       wmi_unified_event_handler handler_func,
 				       uint8_t rx_ctx)
 {
@@ -1522,7 +1522,6 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	uint32_t evt_id;
 	struct wmi_soc *soc = wmi_handle->soc;
 
-#ifndef CONFIG_MCL
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
 		qdf_print("%s: Event id %d is unavailable\n",
@@ -1530,9 +1529,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
-#else
-	evt_id = event_id;
-#endif
+
 	if (wmi_unified_get_event_handler_ix(wmi_handle, evt_id) != -1) {
 		qdf_print("%s : event handler already registered 0x%x\n",
 		       __func__, evt_id);
@@ -1603,13 +1600,12 @@ int wmi_unified_unregister_event(wmi_unified_t wmi_handle,
  * Return: 0 on success
  */
 int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
-					 uint32_t event_id)
+					 wmi_conv_event_id event_id)
 {
 	uint32_t idx = 0;
 	uint32_t evt_id;
 	struct wmi_soc *soc = wmi_handle->soc;
 
-#ifndef CONFIG_MCL
 	if (event_id >= wmi_events_max ||
 		wmi_handle->wmi_events[event_id] == WMI_EVENT_ID_INVALID) {
 		qdf_print("%s: Event id %d is unavailable\n",
@@ -1617,9 +1613,6 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 	evt_id = wmi_handle->wmi_events[event_id];
-#else
-	evt_id = event_id;
-#endif
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, evt_id);
 	if (idx == -1) {
@@ -2112,16 +2105,10 @@ void *wmi_unified_attach(void *scn_handle,
 				sizeof(struct wmi_soc));
 		return NULL;
 	}
-#ifdef CONFIG_MCL
-	wmi_handle =
-		(struct wmi_unified *)os_malloc(NULL,
-				sizeof(struct wmi_unified),
-				GFP_ATOMIC);
-#else
+
 	wmi_handle =
 		(struct wmi_unified *) qdf_mem_malloc(
 			sizeof(struct wmi_unified));
-#endif
 	if (wmi_handle == NULL) {
 		qdf_mem_free(soc);
 		qdf_print("allocation of wmi handle failed %zu\n",

@@ -347,7 +347,7 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					WMI_OEM_RESPONSE_EVENTID,
+					wmi_oem_response_event_id,
 					target_if_wifi_pos_oem_rsp_ev_handler,
 					WMI_RX_WORK_CTX);
 	if (ret) {
@@ -393,7 +393,7 @@ QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					WMI_OEM_RESPONSE_EVENTID);
+					wmi_oem_response_event_id);
 	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
 					wmi_oem_cap_event_id);
 	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),

@@ -20581,6 +20581,46 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 						WMI_SERVICE_AVAILABLE_EVENTID;
 	event_ids[wmi_update_rcpi_event_id] = WMI_UPDATE_RCPI_EVENTID;
 	event_ids[wmi_pdev_check_cal_version_event_id] = WMI_PDEV_CHECK_CAL_VERSION_EVENTID;
+	/* NDP events */
+	event_ids[wmi_ndp_initiator_rsp_event_id] =
+		WMI_NDP_INITIATOR_RSP_EVENTID;
+	event_ids[wmi_ndp_indication_event_id] = WMI_NDP_INDICATION_EVENTID;
+	event_ids[wmi_ndp_confirm_event_id] = WMI_NDP_CONFIRM_EVENTID;
+	event_ids[wmi_ndp_responder_rsp_event_id] =
+		WMI_NDP_RESPONDER_RSP_EVENTID;
+	event_ids[wmi_ndp_end_indication_event_id] =
+		WMI_NDP_END_INDICATION_EVENTID;
+	event_ids[wmi_ndp_end_rsp_event_id] = WMI_NDP_END_RSP_EVENTID;
+
+	event_ids[wmi_oem_response_event_id] = WMI_OEM_RESPONSE_EVENTID;
+	event_ids[wmi_peer_stats_info_event_id] = WMI_PEER_STATS_INFO_EVENTID;
+	event_ids[wmi_pdev_chip_power_stats_event_id] =
+		WMI_PDEV_CHIP_POWER_STATS_EVENTID;
+	event_ids[wmi_ap_ps_egap_info_event_id] = WMI_AP_PS_EGAP_INFO_EVENTID;
+	event_ids[wmi_peer_assoc_conf_event_id] = WMI_PEER_ASSOC_CONF_EVENTID;
+	event_ids[wmi_vdev_delete_resp_event_id] = WMI_VDEV_DELETE_RESP_EVENTID;
+	event_ids[wmi_bpf_capability_info_event_id] =
+		WMI_BPF_CAPABILIY_INFO_EVENTID;
+	event_ids[wmi_vdev_encrypt_decrypt_data_rsp_event_id] =
+		WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID;
+	event_ids[wmi_report_rx_aggr_failure_event_id] =
+		WMI_REPORT_RX_AGGR_FAILURE_EVENTID;
+	event_ids[wmi_pdev_chip_pwr_save_failure_detect_event_id] =
+		WMI_PDEV_CHIP_POWER_SAVE_FAILURE_DETECTED_EVENTID;
+	event_ids[wmi_peer_antdiv_info_event_id] = WMI_PEER_ANTDIV_INFO_EVENTID;
+	event_ids[wmi_pdev_set_hw_mode_rsp_event_id] =
+		WMI_PDEV_SET_HW_MODE_RESP_EVENTID;
+	event_ids[wmi_pdev_hw_mode_transition_event_id] =
+		WMI_PDEV_HW_MODE_TRANSITION_EVENTID;
+	event_ids[wmi_pdev_set_mac_config_resp_event_id] =
+		WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID;
+	event_ids[wmi_coex_bt_activity_event_id] =
+		WMI_WLAN_COEX_BT_ACTIVITY_EVENTID;
+	event_ids[wmi_mgmt_tx_bundle_completion_event_id] =
+		WMI_MGMT_TX_BUNDLE_COMPLETION_EVENTID;
+	event_ids[wmi_radio_tx_power_level_stats_event_id] =
+		WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID;
+	event_ids[wmi_report_stats_event_id] = WMI_REPORT_STATS_EVENTID;
 }
 
 #ifndef CONFIG_MCL

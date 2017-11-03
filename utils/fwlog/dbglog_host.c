@@ -4482,7 +4482,7 @@ int dbglog_init(wmi_unified_t wmi_handle)
 	/* Register handler for F3 or debug messages */
 	res =
 		wmi_unified_register_event_handler(wmi_handle,
-						   WMI_DEBUG_MESG_EVENTID,
+						   wmi_dbg_msg_event_id,
 						   dbglog_parse_debug_logs,
 						   WMA_RX_WORK_CTX);
 	if (res != 0)
@@ -4490,14 +4490,14 @@ int dbglog_init(wmi_unified_t wmi_handle)
 
 	/* Register handler for FW diag events */
 	res = wmi_unified_register_event_handler(wmi_handle,
-						 WMI_DIAG_DATA_CONTAINER_EVENTID,
+						 wmi_diag_container_event_id,
 						 fw_diag_data_event_handler,
 						 WMA_RX_WORK_CTX);
 	if (res != 0)
 		return res;
 
 	/* Register handler for new FW diag  Event, LOG, MSG combined */
-	res = wmi_unified_register_event_handler(wmi_handle, WMI_DIAG_EVENTID,
+	res = wmi_unified_register_event_handler(wmi_handle, wmi_diag_event_id,
 						 diag_fw_handler,
 						 WMA_RX_WORK_CTX);
 	if (res != 0)
@@ -4530,7 +4530,7 @@ int dbglog_deinit(wmi_unified_t wmi_handle)
 	tgt_assert_enable = 0;
 	res =
 		wmi_unified_unregister_event_handler(wmi_handle,
-						     WMI_DEBUG_MESG_EVENTID);
+						     wmi_dbg_msg_event_id);
 	if (res != 0)
 		return res;
 
