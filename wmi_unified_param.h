@@ -5814,6 +5814,7 @@ typedef enum {
 	wmi_service_chan_load_info,
 	wmi_service_extended_nss_support,
 	wmi_service_ack_timeout,
+	wmi_service_widebw_scan,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
