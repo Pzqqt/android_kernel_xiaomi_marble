@@ -1570,7 +1570,7 @@ struct hdd_context {
 
 	uint8_t dev_dfs_cac_status;
 
-	bool btCoexModeSet;
+	bool bt_coex_mode_set;
 #ifdef FEATURE_GREEN_AP
 	struct hdd_green_ap_ctx *green_ap_ctx;
 #endif

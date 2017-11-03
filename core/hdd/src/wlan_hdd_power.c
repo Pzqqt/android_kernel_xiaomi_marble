@@ -1443,7 +1443,7 @@ QDF_STATUS hdd_wlan_re_init(void)
 
 	hdd_set_roaming_in_progress(false);
 	complete(&adapter->roaming_comp_var);
-	hdd_ctx->btCoexModeSet = false;
+	hdd_ctx->bt_coex_mode_set = false;
 
 	/* Allow the phone to go to sleep */
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_REINIT);
