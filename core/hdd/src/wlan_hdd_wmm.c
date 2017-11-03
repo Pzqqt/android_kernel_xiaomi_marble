@@ -1256,7 +1256,7 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
  */
 QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
 {
-	enum sme_qos_wmmuptype *hddWmmDscpToUpMap = adapter->hddWmmDscpToUpMap;
+	enum sme_qos_wmmuptype *dscp_to_up_map = adapter->dscp_to_up_map;
 	uint8_t dscp;
 
 	ENTER();
@@ -1265,10 +1265,10 @@ QDF_STATUS hdd_wmm_init(struct hdd_adapter *adapter)
 	 * By default use the 3 Precedence bits of DSCP as the User Priority
 	 */
 	for (dscp = 0; dscp <= WLAN_HDD_MAX_DSCP; dscp++)
-		hddWmmDscpToUpMap[dscp] = dscp >> 3;
+		dscp_to_up_map[dscp] = dscp >> 3;
 
 	/* Special case for Expedited Forwarding (DSCP 46) */
-	hddWmmDscpToUpMap[46] = SME_QOS_WMM_UP_VO;
+	dscp_to_up_map[46] = SME_QOS_WMM_UP_VO;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1494,7 +1494,7 @@ void hdd_wmm_classify_pkt(struct hdd_adapter *adapter,
 	}
 
 	dscp = (tos >> 2) & 0x3f;
-	*user_pri = adapter->hddWmmDscpToUpMap[dscp];
+	*user_pri = adapter->dscp_to_up_map[dscp];
 
 #ifdef HDD_WMM_DEBUG
 	hdd_debug("tos is %d, dscp is %d, up is %d", tos, dscp, *user_pri);
@@ -1884,7 +1884,7 @@ QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
 	}
 
 	status = sme_update_dsc_pto_up_mapping(hdd_ctx->hHal,
-					       adapter->hddWmmDscpToUpMap,
+					       adapter->dscp_to_up_map,
 					       adapter->session_id);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
