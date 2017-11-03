@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,15 +108,15 @@ target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 		struct scan_cancel_param *req);
 
 /**
- * target_if_register_scan_tx_ops() - lmac handler to register scan tx_ops
+ * target_if_scan_tx_ops_register() - lmac handler to register scan tx_ops
  * callback functions
- * @scan: wlan_lmac_if_scan_tx_ops object
+ * @tx_ops: wlan_lmac_if_tx_ops object
  *
  * Return: QDF_STATUS
  */
 
 QDF_STATUS
-target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan);
+target_if_scan_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops);
 
 /**
  * target_if_scan_set_max_active_scans() - lmac handler to set max active scans

@@ -45,6 +45,10 @@ wlan_vdev_get_scan_txops(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		scm_err("NULL psoc");
+		return NULL;
+	}
 
 	return wlan_psoc_get_scan_txops(psoc);
 }
@@ -55,6 +59,10 @@ wlan_vdev_get_scan_rxops(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc) {
+		scm_err("NULL psoc");
+		return NULL;
+	}
 
 	return &((psoc->soc_cb.rx_ops.scan));
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -342,8 +342,16 @@ target_if_scan_cancel(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS
-target_if_register_scan_tx_ops(struct wlan_lmac_if_scan_tx_ops *scan)
+target_if_scan_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
 {
+	struct wlan_lmac_if_scan_tx_ops *scan;
+
+	scan = &tx_ops->scan;
+	if (!scan) {
+		target_if_err("Scan txops NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	scan->scan_start = target_if_scan_start;
 	scan->scan_cancel = target_if_scan_cancel;
 	scan->pno_start = target_if_pno_start;
