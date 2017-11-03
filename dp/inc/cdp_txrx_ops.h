@@ -430,6 +430,9 @@ struct cdp_ctrl_ops {
 
 	void (*txrx_set_pdev_param)(struct cdp_pdev *pdev,
 			enum cdp_pdev_param_type type, uint8_t val);
+	int (*txrx_wdi_event_handler)(struct cdp_pdev *pdev,
+					uint32_t event, void *evt_data);
+	void * (*txrx_get_pldev)(struct cdp_pdev *pdev);
 };
 
 struct cdp_me_ops {

@@ -48,6 +48,11 @@ typedef struct ol_pktlog_dev_t *ol_pktlog_dev_handle;
 struct hif_opaque_softc;
 typedef struct hif_opaque_softc *hif_opaque_softc_handle;
 
+enum pktlog_callback_regtype {
+	PKTLOG_DEFAULT_CALLBACK_REGISTRATION,
+	PKTLOG_LITE_CALLBACK_REGISTRATION
+};
+
 /**
  * @typedef net_device_handle
  * @brief opaque handle linux phy device object
@@ -55,8 +60,15 @@ typedef struct hif_opaque_softc *hif_opaque_softc_handle;
 struct net_device;
 typedef struct net_device *net_device_handle;
 
-void ol_pl_sethandle(ol_pktlog_dev_handle *pl_handle,
+struct pktlog_dev_t;
+
+void pktlog_sethandle(struct pktlog_dev_t **pl_handle,
 		     hif_opaque_softc_handle scn);
+
+void *get_txrx_context(void);
+
+struct pktlog_dev_t *get_pktlog_handle(void);
+void pktlog_set_callback_regtype(enum pktlog_callback_regtype callback_type);
 
 /* Packet log state information */
 #ifndef _PKTLOG_INFO
@@ -126,8 +138,8 @@ struct ath_pktlog_info {
 };
 #endif /* _PKTLOG_INFO */
 #else                           /* REMOVE_PKT_LOG */
-typedef void *ol_pktlog_dev_handle;
-#define ol_pl_sethandle(pl_handle, scn)	\
+typedef void *pktlog_dev_handle;
+#define pktlog_sethandle(pl_handle, scn)	\
 	do {				\
 		(void)pl_handle;	\
 		(void)scn;		\

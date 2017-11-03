@@ -42,7 +42,6 @@
 #include <linux/proc_fs.h>
 #include <pktlog_ac_i.h>
 #include <pktlog_ac_fmt.h>
-#include <pktlog_ac.h>
 #include "i_host_diag_core_log.h"
 #include "host_diag_core_log.h"
 #include "ani_global.h"
@@ -78,8 +77,8 @@ static struct ath_pktlog_info *g_pktlog_info;
 
 static struct proc_dir_entry *g_pktlog_pde;
 
-static int pktlog_attach(struct hif_opaque_softc *sc);
-static void pktlog_detach(struct ol_txrx_pdev_t *handle);
+static int pktlog_attach(struct hif_opaque_softc *scn);
+static void pktlog_detach(struct hif_opaque_softc *scn);
 static int pktlog_open(struct inode *i, struct file *f);
 static int pktlog_release(struct inode *i, struct file *f);
 static ssize_t pktlog_read(struct file *file, char *buf, size_t nbytes,
@@ -91,31 +90,9 @@ static struct file_operations pktlog_fops = {
 	read : pktlog_read,
 };
 
-/*
- * Linux implementation of helper functions
- */
-static struct ol_pktlog_dev_t *cds_get_pl_handle(void)
-{
-	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
-	if (!pdev_txrx_handle) {
-		QDF_ASSERT(0);
-		return NULL;
-	}
-	return pdev_txrx_handle->pl_dev;
-}
-
-static struct ol_pktlog_dev_t *ol_get_pl_handle(
-		ol_txrx_pdev_handle pdev_txrx_handle)
-{
-	if (!pdev_txrx_handle)
-		return NULL;
-	return pdev_txrx_handle->pl_dev;
-}
-
 void pktlog_disable_adapter_logging(struct hif_opaque_softc *scn)
 {
-	struct ol_pktlog_dev_t *pl_dev = cds_get_pl_handle();
+	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
 	if (pl_dev)
 		pl_dev->pl_info->log_state = 0;
 }
@@ -125,12 +102,13 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	uint32_t page_cnt;
 	unsigned long vaddr;
 	struct page *vpg;
+	struct pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 	struct ath_pktlog_buf *buffer;
-	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	if (!pdev_txrx_handle || !pdev_txrx_handle->pl_dev) {
+	pl_dev = get_pktlog_handle();
+
+	if (!pl_dev) {
 		printk(PKTLOG_TAG
 		       "%s: Unable to allocate buffer "
 		       "scn or scn->pdev_txrx_handle->pl_dev is null\n",
@@ -138,7 +116,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 		return -EINVAL;
 	}
 
-	pl_info = pdev_txrx_handle->pl_dev->pl_info;
+	pl_info = pl_dev->pl_info;
 
 	page_cnt = (sizeof(*(pl_info->buf)) + pl_info->buf_size) / PAGE_SIZE;
 
@@ -171,29 +149,33 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 
 	spin_lock_bh(&pl_info->log_lock);
 	if (pl_info->buf != NULL)
-		pktlog_release_buf(pdev_txrx_handle);
+		pktlog_release_buf(scn);
 
 	pl_info->buf =  buffer;
 	spin_unlock_bh(&pl_info->log_lock);
 	return 0;
 }
 
-void pktlog_release_buf(ol_txrx_pdev_handle pdev_txrx_handle)
+void pktlog_release_buf(struct hif_opaque_softc *scn)
 {
 	unsigned long page_cnt;
 	unsigned long vaddr;
 	struct page *vpg;
+	struct pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 
-	if (!pdev_txrx_handle || !pdev_txrx_handle->pl_dev) {
-		printk(PKTLOG_TAG
-		       "%s: Unable to allocate buffer"
-		       "scn or scn->pdev_txrx_handle->pl_dev is null\n",
-		       __func__);
+	pl_dev = get_pktlog_handle();
+	pl_info = pl_dev->pl_info;
+
+	if (!pl_dev) {
+		qdf_print("%s: invalid pl_dev handle", __func__);
 		return;
 	}
 
-	pl_info = pdev_txrx_handle->pl_dev->pl_info;
+	if (!pl_dev->pl_info) {
+		qdf_print("%s: invalid pl_dev handle", __func__);
+		return;
+	}
 
 	page_cnt = ((sizeof(*(pl_info->buf)) + pl_info->buf_size) /
 		    PAGE_SIZE) + 1;
@@ -222,7 +204,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 {
 	int ret, enable;
 	ol_ath_generic_softc_handle scn;
-	struct ol_pktlog_dev_t *pl_dev;
+	struct pktlog_dev_t *pl_dev;
 
 	scn = (ol_ath_generic_softc_handle) ctl->extra1;
 
@@ -232,7 +214,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 		return -EINVAL;
 	}
 
-	pl_dev = cds_get_pl_handle();
+	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog context\n", __func__);
@@ -269,7 +251,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 	return ret;
 }
 
-static int get_pktlog_bufsize(struct ol_pktlog_dev_t *pl_dev)
+static int get_pktlog_bufsize(struct pktlog_dev_t *pl_dev)
 {
 	return pl_dev->pl_info->buf_size;
 }
@@ -280,7 +262,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 {
 	int ret, size;
 	ol_ath_generic_softc_handle scn;
-	struct ol_pktlog_dev_t *pl_dev;
+	struct pktlog_dev_t *pl_dev;
 
 	scn = (ol_ath_generic_softc_handle) ctl->extra1;
 
@@ -290,7 +272,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 		return -EINVAL;
 	}
 
-	pl_dev = cds_get_pl_handle();
+	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog handle\n", __func__);
@@ -322,7 +304,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 /* Register sysctl table */
 static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
 {
-	struct ol_pktlog_dev_t *pl_dev = cds_get_pl_handle();
+	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
 	struct ath_pktlog_info_lnx *pl_info_lnx;
 	char *proc_name;
 
@@ -426,23 +408,27 @@ static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
  */
 static int pktlog_attach(struct hif_opaque_softc *scn)
 {
-	struct ol_pktlog_dev_t *pl_dev;
+	struct pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info_lnx *pl_info_lnx;
 	char *proc_name;
 	struct proc_dir_entry *proc_entry;
 
-	pl_dev = cds_get_pl_handle();
+	/* Allocate pktlog dev for later use */
+	pl_dev = get_pktlog_handle();
 
 	if (pl_dev != NULL) {
 		pl_info_lnx = kmalloc(sizeof(*pl_info_lnx), GFP_KERNEL);
 		if (pl_info_lnx == NULL) {
-			printk(PKTLOG_TAG "%s:allocation failed for pl_info\n",
-			       __func__);
-			return -ENOMEM;
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+				 "%s: Allocation failed for pl_info\n",
+				 __func__);
+			goto attach_fail1;
 		}
+
 		pl_dev->pl_info = &pl_info_lnx->info;
 		pl_dev->name = WLANDEV_BASENAME;
 		proc_name = pl_dev->name;
+
 		if (!pl_dev->pl_funcs)
 			pl_dev->pl_funcs = &ol_pl_funcs;
 
@@ -459,17 +445,16 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 	 * might be good to move to pktlog_init
 	 */
 	/* pl_dev->tgt_pktlog_alloced = false; */
-	pl_dev->vendor_cmd_send = false;
 	pl_info_lnx->proc_entry = NULL;
 	pl_info_lnx->sysctl_header = NULL;
 
 	proc_entry = proc_create_data(proc_name, PKTLOG_PROC_PERM,
-				      g_pktlog_pde, &pktlog_fops,
-				      &pl_info_lnx->info);
+			g_pktlog_pde, &pktlog_fops,
+			&pl_info_lnx->info);
 
 	if (proc_entry == NULL) {
 		printk(PKTLOG_TAG "%s: create_proc_entry failed for %s\n",
-		       __func__, proc_name);
+				__func__, proc_name);
 		goto attach_fail1;
 	}
 
@@ -477,9 +462,10 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 
 	if (pktlog_sysctl_register(scn)) {
 		printk(PKTLOG_TAG "%s: sysctl register failed for %s\n",
-		       __func__, proc_name);
+				__func__, proc_name);
 		goto attach_fail2;
 	}
+
 	return 0;
 
 attach_fail2:
@@ -488,10 +474,11 @@ attach_fail2:
 attach_fail1:
 	if (pl_dev)
 		kfree(pl_dev->pl_info);
+
 	return -EINVAL;
 }
 
-static void pktlog_sysctl_unregister(struct ol_pktlog_dev_t *pl_dev)
+static void pktlog_sysctl_unregister(struct pktlog_dev_t *pl_dev)
 {
 	struct ath_pktlog_info_lnx *pl_info_lnx;
 
@@ -510,20 +497,11 @@ static void pktlog_sysctl_unregister(struct ol_pktlog_dev_t *pl_dev)
 	}
 }
 
-static void pktlog_detach(struct ol_txrx_pdev_t *handle)
+static void pktlog_detach(struct hif_opaque_softc *scn)
 {
-	struct ol_txrx_pdev_t *txrx_pdev;
-	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
+	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
 
-	txrx_pdev = handle;
-	if (!txrx_pdev) {
-		printk("%s: Invalid txrx_pdev context\n", __func__);
-		ASSERT(0);
-		return;
-	}
-
-	pl_dev = txrx_pdev->pl_dev;
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog context\n", __func__);
 		ASSERT(0);
@@ -537,7 +515,7 @@ static void pktlog_detach(struct ol_txrx_pdev_t *handle)
 	spin_lock_bh(&pl_info->log_lock);
 
 	if (pl_info->buf) {
-		pktlog_release_buf(txrx_pdev);
+		pktlog_release_buf(scn);
 		pl_dev->tgt_pktlog_alloced = false;
 	}
 	spin_unlock_bh(&pl_info->log_lock);
@@ -552,7 +530,7 @@ static void pktlog_detach(struct ol_txrx_pdev_t *handle)
 static int __pktlog_open(struct inode *i, struct file *f)
 {
 	struct hif_opaque_softc *scn;
-	struct ol_pktlog_dev_t *pl_dev;
+	struct pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 	int ret = 0;
 
@@ -585,7 +563,7 @@ static int __pktlog_open(struct inode *i, struct file *f)
 		return -EINVAL;
 	}
 
-	pl_dev = cds_get_pl_handle();
+	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
@@ -625,7 +603,7 @@ static int pktlog_open(struct inode *i, struct file *f)
 static int __pktlog_release(struct inode *i, struct file *f)
 {
 	struct hif_opaque_softc *scn;
-	struct ol_pktlog_dev_t *pl_dev;
+	struct pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 	int ret = 0;
 
@@ -650,7 +628,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 		return -EINVAL;
 	}
 
-	pl_dev = cds_get_pl_handle();
+	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
 		pl_info->curr_pkt_state = PKTLOG_OPR_NOT_IN_PROGRESS;
@@ -669,6 +647,7 @@ static int __pktlog_release(struct inode *i, struct file *f)
 	ret = pl_dev->pl_funcs->pktlog_enable(
 			(struct hif_opaque_softc *)scn, pl_info->log_state,
 			cds_is_packet_log_enabled(), 0, 1);
+
 	if (ret != 0)
 		pr_warn("%s: pktlog cannot be enabled. ret value %d\n",
 			__func__, ret);
@@ -893,6 +872,7 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	bufhdr_size = sizeof(log_buf->bufhdr);
 
 	/* copy valid log entries from circular buffer into user space */
+
 	rem_len = nbytes;
 	count = 0;
 
@@ -900,8 +880,9 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 		count = QDF_MIN((bufhdr_size - *ppos), rem_len);
 		spin_unlock_bh(&pl_info->log_lock);
 		if (copy_to_user(buf, ((char *)&log_buf->bufhdr) + *ppos,
-				 count))
+				 count)) {
 			return -EFAULT;
+		}
 		rem_len -= count;
 		ret_val += count;
 		spin_lock_bh(&pl_info->log_lock);
@@ -947,9 +928,12 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 
 		count = QDF_MIN(rem_len, (end_offset - ppos_data + 1));
 		spin_unlock_bh(&pl_info->log_lock);
+
 		if (copy_to_user(buf + ret_val,
-				 log_buf->log_data + ppos_data, count))
+				 log_buf->log_data + ppos_data, count)) {
 			return -EFAULT;
+		}
+
 		ret_val += count;
 		rem_len -= count;
 		spin_lock_bh(&pl_info->log_lock);
@@ -958,8 +942,10 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 			count = QDF_MIN(rem_len, (fold_offset - ppos_data + 1));
 			spin_unlock_bh(&pl_info->log_lock);
 			if (copy_to_user(buf + ret_val,
-					 log_buf->log_data + ppos_data, count))
+					 log_buf->log_data + ppos_data,
+					 count)) {
 				return -EFAULT;
+			}
 			ret_val += count;
 			rem_len -= count;
 			spin_lock_bh(&pl_info->log_lock);
@@ -976,8 +962,10 @@ __pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 			count = QDF_MIN(rem_len, (end_offset - ppos_data + 1));
 			spin_unlock_bh(&pl_info->log_lock);
 			if (copy_to_user(buf + ret_val,
-					 log_buf->log_data + ppos_data, count))
+					 log_buf->log_data + ppos_data,
+					 count)) {
 				return -EFAULT;
+			}
 			ret_val += count;
 			rem_len -= count;
 			spin_lock_bh(&pl_info->log_lock);
@@ -1002,7 +990,7 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	struct ath_pktlog_info *pl_info;
 
 	pl_info = (struct ath_pktlog_info *)
-					PDE_DATA(file->f_path.dentry->d_inode);
+			PDE_DATA(file->f_path.dentry->d_inode);
 	if (!pl_info)
 		return 0;
 
@@ -1029,6 +1017,7 @@ int pktlogmod_init(void *context)
 	/* Attach packet log */
 	ret = pktlog_attach((struct hif_opaque_softc *)context);
 
+	/* If packet log init failed */
 	if (ret)
 		goto attach_fail;
 
@@ -1037,19 +1026,17 @@ int pktlogmod_init(void *context)
 attach_fail:
 	remove_proc_entry(PKTLOG_PROC_DIR, NULL);
 	g_pktlog_pde = NULL;
+
 	return ret;
 }
 
-void pktlogmod_exit(struct ol_txrx_pdev_t *handle)
+void pktlogmod_exit(void *context)
 {
-	struct ol_pktlog_dev_t *pl_dev;
-
-	pl_dev = ol_get_pl_handle(handle);
-
-	if (!pl_dev || g_pktlog_pde == NULL)
+	if (g_pktlog_pde == NULL)
 		return;
 
-	pktlog_detach(handle);
+	pktlog_detach((struct hif_opaque_softc *)context);
+
 	/*
 	 *  pdev kill needs to be implemented
 	 */

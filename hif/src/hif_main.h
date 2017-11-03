@@ -171,6 +171,10 @@ struct hif_softc {
 	int wake_irq;
 	void (*initial_wakeup_cb)(void *);
 	void *initial_wakeup_priv;
+#ifdef REMOVE_PKT_LOG
+	/* Handle to pktlog device */
+	void *pktlog_dev;
+#endif
 };
 
 static inline void *hif_get_hal_handle(void *hif_hdl)
