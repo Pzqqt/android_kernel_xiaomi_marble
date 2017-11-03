@@ -1504,7 +1504,7 @@ struct hdd_context {
 	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
 
 	/** P2P Device MAC Address for the adapter  */
-	struct qdf_mac_addr p2pDeviceAddress;
+	struct qdf_mac_addr p2p_device_address;
 
 	qdf_wake_lock_t rx_wake_lock;
 	qdf_wake_lock_t sap_wake_lock;

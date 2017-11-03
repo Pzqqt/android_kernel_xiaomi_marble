@@ -613,12 +613,12 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		 * Generate the P2P Interface Address. this address must be
 		 * different from the P2P Device Address.
 		 */
-		struct qdf_mac_addr p2pDeviceAddress =
-						hdd_ctx->p2pDeviceAddress;
-		p2pDeviceAddress.bytes[4] ^= 0x80;
+		struct qdf_mac_addr p2p_device_address =
+						hdd_ctx->p2p_device_address;
+		p2p_device_address.bytes[4] ^= 0x80;
 		adapter = hdd_open_adapter(hdd_ctx,
 					    session_type,
-					    name, p2pDeviceAddress.bytes,
+					    name, p2p_device_address.bytes,
 					    name_assign_type,
 					    true);
 	} else {

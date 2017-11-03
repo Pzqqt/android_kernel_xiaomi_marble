@@ -7896,7 +7896,7 @@ static int hdd_open_p2p_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 
 	if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
 	    !(hdd_ctx->config->intfMacAddr[0].bytes[0] & 0x02)) {
-		qdf_mem_copy(hdd_ctx->p2pDeviceAddress.bytes,
+		qdf_mem_copy(hdd_ctx->p2p_device_address.bytes,
 			     hdd_ctx->config->intfMacAddr[0].bytes,
 			     sizeof(tSirMacAddr));
 
@@ -7905,7 +7905,7 @@ static int hdd_open_p2p_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 		 * the device's primary MAC address with the locally
 		 * administered bit set.
 		 */
-		hdd_ctx->p2pDeviceAddress.bytes[0] |= 0x02;
+		hdd_ctx->p2p_device_address.bytes[0] |= 0x02;
 	} else {
 		p2p_dev_addr = wlan_hdd_get_intf_addr(hdd_ctx);
 		if (p2p_dev_addr == NULL) {
@@ -7913,12 +7913,12 @@ static int hdd_open_p2p_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 			return -ENOSPC;
 		}
 
-		qdf_mem_copy(&hdd_ctx->p2pDeviceAddress.bytes[0], p2p_dev_addr,
-			     QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(&hdd_ctx->p2p_device_address.bytes[0],
+			     p2p_dev_addr, QDF_MAC_ADDR_SIZE);
 	}
 
 	adapter = hdd_open_adapter(hdd_ctx, QDF_P2P_DEVICE_MODE, "p2p%d",
-				   &hdd_ctx->p2pDeviceAddress.bytes[0],
+				   &hdd_ctx->p2p_device_address.bytes[0],
 				   NET_NAME_UNKNOWN, rtnl_held);
 
 	if (NULL == adapter) {
