@@ -345,6 +345,7 @@ enum extn_element_ie {
 #define WLAN_CCKM_ASE_UNSPEC 0
 #define WLAN_WPA_CCKM_AKM 0x00964000
 #define WLAN_RSN_CCKM_AKM 0x00964000
+#define WLAN_RSN_DPP_AKM 0x029A6F50
 
 #define RSN_VERSION 1
 #define WLAN_RSN_SEL(x) (((x) << 24) | WLAN_RSN_OUI)
