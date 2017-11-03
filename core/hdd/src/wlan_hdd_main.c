@@ -3099,15 +3099,15 @@ static const struct net_device_ops wlan_mon_drv_ops = {
 
 /**
  * hdd_set_station_ops() - update net_device ops for monitor mode
- * @pWlanDev: Handle to struct net_device to be updated.
+ * @dev: Handle to struct net_device to be updated.
  * Return: None
  */
-void hdd_set_station_ops(struct net_device *pWlanDev)
+void hdd_set_station_ops(struct net_device *dev)
 {
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
-		pWlanDev->netdev_ops = &wlan_mon_drv_ops;
+		dev->netdev_ops = &wlan_mon_drv_ops;
 	else
-		pWlanDev->netdev_ops = &wlan_drv_ops;
+		dev->netdev_ops = &wlan_drv_ops;
 }
 
 /**
@@ -3126,13 +3126,13 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 						unsigned char name_assign_type,
 						const char *name)
 {
-	struct net_device *pWlanDev = NULL;
+	struct net_device *dev = NULL;
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_station_ctx *sta_ctx;
 	/*
 	 * cfg80211 initialization and registration....
 	 */
-	pWlanDev = alloc_netdev_mq(sizeof(struct hdd_adapter), name,
+	dev = alloc_netdev_mq(sizeof(struct hdd_adapter), name,
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
 				   name_assign_type,
 #endif
@@ -3140,17 +3140,17 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 				hdd_mon_mode_ether_setup : ether_setup),
 				NUM_TX_QUEUES);
 
-	if (pWlanDev != NULL) {
+	if (dev != NULL) {
 
 		/* Save the pointer to the net_device in the HDD adapter */
-		adapter = (struct hdd_adapter *) netdev_priv(pWlanDev);
+		adapter = (struct hdd_adapter *) netdev_priv(dev);
 
 		qdf_mem_zero(adapter, sizeof(struct hdd_adapter));
 		sta_ctx = &adapter->session.station;
 		qdf_mem_set(sta_ctx->conn_info.staId,
 			sizeof(sta_ctx->conn_info.staId),
 			HDD_WLAN_INVALID_STA_ID);
-		adapter->dev = pWlanDev;
+		adapter->dev = dev;
 		adapter->hdd_ctx = hdd_ctx;
 		adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
 		adapter->session_id = HDD_SESSION_ID_INVALID;
@@ -3172,30 +3172,30 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		adapter->offloads_configured = false;
 		adapter->is_link_up_service_needed = false;
 		/* Init the net_device structure */
-		strlcpy(pWlanDev->name, name, IFNAMSIZ);
+		strlcpy(dev->name, name, IFNAMSIZ);
 
-		qdf_mem_copy(pWlanDev->dev_addr, (void *)macAddr,
+		qdf_mem_copy(dev->dev_addr, (void *)macAddr,
 			     sizeof(tSirMacAddr));
 		qdf_mem_copy(adapter->mac_addr.bytes, macAddr,
 			     sizeof(tSirMacAddr));
-		pWlanDev->watchdog_timeo = HDD_TX_TIMEOUT;
+		dev->watchdog_timeo = HDD_TX_TIMEOUT;
 
 		if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
-			pWlanDev->features |=
+			dev->features |=
 				NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
-		pWlanDev->features |= NETIF_F_RXCSUM;
+		dev->features |= NETIF_F_RXCSUM;
 
-		hdd_set_tso_flags(hdd_ctx, pWlanDev);
+		hdd_set_tso_flags(hdd_ctx, dev);
 
 		hdd_set_station_ops(adapter->dev);
 
-		hdd_dev_setup_destructor(pWlanDev);
-		pWlanDev->ieee80211_ptr = &adapter->wdev;
-		pWlanDev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
+		hdd_dev_setup_destructor(dev);
+		dev->ieee80211_ptr = &adapter->wdev;
+		dev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 		adapter->wdev.wiphy = hdd_ctx->wiphy;
-		adapter->wdev.netdev = pWlanDev;
-		/* set pWlanDev's parent to underlying device */
-		SET_NETDEV_DEV(pWlanDev, hdd_ctx->parent_dev);
+		adapter->wdev.netdev = dev;
+		/* set dev's parent to underlying device */
+		SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
 		hdd_wmm_init(adapter);
 		hdd_adapter_runtime_suspend_init(adapter);
 		spin_lock_init(&adapter->pause_map_lock);
@@ -3591,10 +3591,10 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter
 static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 				bool rtnl_held)
 {
-	struct net_device *pWlanDev = NULL;
+	struct net_device *dev = NULL;
 
 	if (adapter)
-		pWlanDev = adapter->dev;
+		dev = adapter->dev;
 	else {
 		hdd_err("adapter is Null");
 		return;
@@ -3622,9 +3622,9 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 
 	if (test_bit(NET_DEVICE_REGISTERED, &adapter->event_flags)) {
 		if (rtnl_held)
-			unregister_netdevice(pWlanDev);
+			unregister_netdevice(dev);
 		else
-			unregister_netdev(pWlanDev);
+			unregister_netdev(dev);
 		/*
 		 * Note that the adapter is no longer valid at this point
 		 * since the memory has been reclaimed
