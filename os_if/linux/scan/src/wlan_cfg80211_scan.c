@@ -81,6 +81,7 @@ static void wlan_fill_scan_rand_attrs(struct wlan_objmgr_vdev *vdev,
 				      uint8_t *addr,
 				      uint8_t *mask)
 {
+	*randomize = false;
 	if (!(flags & NL80211_SCAN_FLAG_RANDOM_ADDR))
 		return;
 
@@ -531,8 +532,8 @@ int wlan_cfg80211_sched_scan_start(struct wlan_objmgr_pdev *pdev,
 	cfg80211_notice("Number of hidden networks being Configured = %d",
 		  request->n_ssids);
 
-	wlan_pno_scan_rand_attr(vdev, request, req);
-
+	if (req->scan_random.randomize)
+		wlan_pno_scan_rand_attr(vdev, request, req);
 	/*
 	 * Before Kernel 4.4
 	 *   Driver gets only one time interval which is hard coded in
@@ -1314,7 +1315,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	}
 
 	if (!is_p2p_scan) {
-		wlan_scan_rand_attrs(vdev, request, req);
+		if (req->scan_req.scan_random.randomize)
+			wlan_scan_rand_attrs(vdev, request, req);
 		if (ucfg_ie_whitelist_enabled(psoc, vdev) &&
 		    ucfg_copy_ie_whitelist_attrs(psoc,
 					&req->scan_req.ie_whitelist))
