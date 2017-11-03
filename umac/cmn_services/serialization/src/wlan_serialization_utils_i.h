@@ -398,4 +398,14 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 bool wlan_serialization_is_cmd_present_queue(
 			struct wlan_serialization_command *cmd,
 			uint8_t is_active_queue);
+
+/**
+ * wlan_serialization_activate_cmd() - activate first cmd in active queue
+ * @cmd_type: Command Type
+ * @ser_pdev_obj: Serialization private pdev object
+ *
+ * Return: None
+ */
+void wlan_serialization_activate_cmd(enum wlan_serialization_cmd_type cmd_type,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
 #endif

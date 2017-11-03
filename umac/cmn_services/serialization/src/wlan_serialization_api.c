@@ -203,9 +203,12 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 {
 	bool is_active_cmd_allowed;
 	QDF_STATUS status;
+	enum wlan_serialization_status serialization_status;
 	uint8_t comp_id;
 	struct wlan_serialization_psoc_priv_obj *ser_soc_obj;
 	union wlan_serialization_rules_info info;
+	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj = NULL;
+	struct wlan_objmgr_pdev *pdev = NULL;
 
 	serialization_enter();
 	if (!cmd) {
@@ -224,6 +227,18 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
 	}
 
+	pdev = wlan_serialization_get_pdev_from_cmd(cmd);
+	if (!pdev) {
+		serialization_err("pdev is invalid");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
+
+	ser_pdev_obj = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+			WLAN_UMAC_COMP_SERIALIZATION);
+	if (!ser_pdev_obj) {
+		serialization_err("Invalid ser_pdev_obj");
+		return WLAN_SER_CMD_DENIED_UNSPECIFIED;
+	}
 	/*
 	 * Get Component Info callback by calling
 	 * each registered module
@@ -240,7 +255,11 @@ wlan_serialization_request(struct wlan_serialization_command *cmd)
 	}
 
 	is_active_cmd_allowed = wlan_serialization_is_active_cmd_allowed(cmd);
-	return wlan_serialization_enqueue_cmd(cmd, is_active_cmd_allowed);
+	serialization_status = wlan_serialization_enqueue_cmd(
+				cmd, is_active_cmd_allowed);
+	if (WLAN_SER_CMD_ACTIVE == serialization_status)
+		wlan_serialization_activate_cmd(cmd->cmd_type, ser_pdev_obj);
+	return serialization_status;
 }
 
 enum wlan_serialization_cmd_status
