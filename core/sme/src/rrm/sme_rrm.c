@@ -792,10 +792,8 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		rrm_scan_timer = (uint64_t)qdf_mc_timer_get_system_time();
 
 		/* set requestType to full scan */
-
-
-		req->scan_req.num_chan = 1;
-		req->scan_req.chan_list[0] =
+		req->scan_req.chan_list.num_chan = 1;
+		req->scan_req.chan_list.chan[0].freq =
 			sme_rrm_ctx->channelList.ChannelList[
 						sme_rrm_ctx->currentIndex];
 		sme_debug("Duration %d On channel %d ",

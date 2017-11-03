@@ -1825,9 +1825,9 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 		if (num_of_channels != 0) {
 #endif
 
-		req->scan_req.num_chan = num_of_channels;
+		req->scan_req.chan_list.num_chan = num_of_channels;
 		for (i = 0; i < num_of_channels; i++)
-			req->scan_req.chan_list[i] =
+			req->scan_req.chan_list.chan[i].freq =
 				wlan_chan_to_freq(channel_list[i]);
 		sap_context->channelList = channel_list;
 		sap_context->num_of_channel = num_of_channels;

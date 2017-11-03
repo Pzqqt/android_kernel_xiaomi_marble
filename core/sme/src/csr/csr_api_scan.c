@@ -4115,12 +4115,12 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			if (csr_roam_is_valid_channel(mac_ctx,
 				profile->ChannelInfo.ChannelList[i])) {
 				chan = profile->ChannelInfo.ChannelList[i];
-				req->scan_req.chan_list[num_chan] =
+				req->scan_req.chan_list.chan[num_chan].freq =
 						wlan_chan_to_freq(chan);
 				num_chan++;
 			}
 		}
-		req->scan_req.num_chan = num_chan;
+		req->scan_req.chan_list.num_chan = num_chan;
 	}
 
 	/* Extend it for multiple SSID */

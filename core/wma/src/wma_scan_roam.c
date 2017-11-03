@@ -456,9 +456,9 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 
 	WMA_LOGD("Num Probes in each ch scan %d", cmd->n_probes);
 	if (scan_req->channelList.numChannels) {
-		cmd->num_chan = scan_req->channelList.numChannels;
+		cmd->chan_list.num_chan = scan_req->channelList.numChannels;
 		for (i = 0; i < scan_req->channelList.numChannels; ++i) {
-			cmd->chan_list[i] =
+			cmd->chan_list.chan[i].freq =
 				cds_chan_to_freq(scan_req->channelList.
 						 channelNumber[i]);
 		}
@@ -563,7 +563,7 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	scan_id = cmd.scan_id;
 	WMA_LOGD("ActiveDwell %d, PassiveDwell %d, ScanFlags 0x%x NumChan %d",
 		 cmd.dwell_time_active, cmd.dwell_time_passive,
-		 cmd.scan_flags, cmd.num_chan);
+		 cmd.scan_flags, cmd.chan_list.num_chan);
 
 	/* Call the wmi api to request the scan */
 	qdf_status = wmi_unified_scan_start_cmd_send(wma_handle->wmi_handle,
@@ -578,8 +578,6 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	return QDF_STATUS_SUCCESS;
 
 error1:
-	if (NULL != cmd.chan_list)
-		qdf_mem_free(cmd.chan_list);
 
 	/* Send completion event for only for start scan request */
 	if (msg_type == WMA_START_SCAN_OFFLOAD_REQ) {
