@@ -51,6 +51,11 @@
 #define MAX_BW 4
 #define MAX_RETRIES 4
 #define MAX_RECEPTION_TYPES 4
+
+#ifndef REMOVE_PKT_LOG
+#include <pktlog.h>
+#endif
+
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3
 #define DP_VO_TID 6
@@ -761,6 +766,8 @@ struct dp_soc {
 	qdf_timer_t wds_aging_timer;
 
 	/*interrupt timer*/
+	qdf_timer_t mon_reap_timer;
+	uint8_t reap_timer_init;
 	qdf_timer_t int_timer;
 	uint8_t intr_mode;
 
@@ -959,10 +966,11 @@ struct dp_pdev {
 	/* PDEV transmit lock */
 	qdf_spinlock_t tx_lock;
 
-#ifdef notyet
+#ifndef REMOVE_PKT_LOG
+	bool pkt_log_init;
 	/* Pktlog pdev */
-	ol_pktlog_dev_t *pl_dev;
-#endif
+	struct pktlog_dev_t *pl_dev;
+#endif /* #ifndef REMOVE_PKT_LOG */
 
 	/* Monitor mode interface and status storage */
 	struct dp_vdev *monitor_vdev;

@@ -20,9 +20,12 @@
 #include "dp_internal.h"
 #include "qdf_mem.h"   /* qdf_mem_malloc,free */
 
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
-
-
+#ifdef WDI_EVENT_ENABLE
+void *dp_get_pldev(struct cdp_pdev *txrx_pdev)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
+	return pdev->pl_dev;
+}
 /*
  * dp_wdi_event_next_sub() - Return handle for Next WDI event
  * @wdi_sub: WDI Event handle

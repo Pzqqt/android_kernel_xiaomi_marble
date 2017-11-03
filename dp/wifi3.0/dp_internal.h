@@ -312,9 +312,10 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 int dp_get_ring_id_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+#ifdef WDI_EVENT_ENABLE
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
-		                uint32_t stats_type_upload_mask);
+				uint32_t stats_type_upload_mask,
+				uint8_t mac_id);
 
 int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
 	void *event_cb_sub_handle,
@@ -332,6 +333,9 @@ int dp_wdi_event_attach(struct dp_pdev *txrx_pdev);
 int dp_wdi_event_detach(struct dp_pdev *txrx_pdev);
 int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	bool enable);
+void *dp_get_pldev(struct cdp_pdev *txrx_pdev);
+void dp_pkt_log_init(struct cdp_pdev *ppdev, void *scn);
+
 static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
 	QDF_STATUS (*callback)(void *, qdf_nbuf_t, uint8_t), uint8_t pipe_id)
 {
@@ -348,6 +352,7 @@ static inline void dp_hif_update_pipe_callback(void *soc, void *cb_context,
 	hif_update_pipe_callback(dp_soc->hif_handle,
 		DP_HTT_T2H_HP_PIPE, &hif_pipe_callbacks);
 }
+
 #else
 static inline int dp_wdi_event_unsub(struct cdp_pdev *txrx_pdev_handle,
 	void *event_cb_sub_handle,
@@ -385,7 +390,7 @@ static inline int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 	return 0;
 }
 static inline QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
-		uint32_t stats_type_upload_mask)
+		uint32_t stats_type_upload_mask, uint8_t mac_id);
 {
 	return 0;
 }

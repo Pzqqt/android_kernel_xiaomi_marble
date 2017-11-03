@@ -2098,7 +2098,7 @@ static QDF_STATUS dp_htt_process_tlv(struct dp_pdev *pdev,
  *
  * return:void
  */
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+#if defined(WDI_EVENT_ENABLE)
 #ifdef FEATURE_PERPKT_INFO
 static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 		uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
@@ -2179,6 +2179,7 @@ static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 		uint8_t pdev_id, qdf_nbuf_t htt_t2h_msg)
 {
+
 }
 #endif
 #endif
@@ -2261,6 +2262,71 @@ int htt_soc_attach_target(void *htt_soc)
 }
 
 
+#if defined(WDI_EVENT_ENABLE) && !defined(REMOVE_PKT_LOG)
+/*
+ * dp_ppdu_stats_ind_handler() - PPDU stats msg handler
+ * @htt_soc:	 HTT SOC handle
+ * @msg_word:    Pointer to payload
+ * @htt_t2h_msg: HTT msg nbuf
+ *
+ * Return: None
+ */
+static void
+dp_ppdu_stats_ind_handler(struct htt_soc *soc,
+				uint32_t *msg_word,
+				qdf_nbuf_t htt_t2h_msg)
+{
+	u_int8_t pdev_id;
+	qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND\n");
+	pdev_id = HTT_T2H_PPDU_STATS_MAC_ID_GET(*msg_word);
+	pdev_id = DP_HW2SW_MACID(pdev_id);
+	dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
+				  htt_t2h_msg);
+	dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
+		htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
+		pdev_id);
+}
+#else
+dp_ppdu_stats_ind_handler(struct htt_soc *soc,
+				qdf_nbuf_t htt_t2h_msg)
+{
+}
+#endif
+
+#if defined(WDI_EVENT_ENABLE) && \
+		!defined(REMOVE_PKT_LOG) && defined(CONFIG_WIN)
+/*
+ * dp_pktlog_msg_handler() - Pktlog msg handler
+ * @htt_soc:	 HTT SOC handle
+ * @msg_word:    Pointer to payload
+ *
+ * Return: None
+ */
+static void
+dp_pktlog_msg_handler(struct htt_soc *soc,
+				uint32_t *msg_word)
+{
+	uint8_t pdev_id;
+	uint32_t *pl_hdr;
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
+		"received HTT_T2H_MSG_TYPE_PKTLOG\n");
+	pdev_id = HTT_T2H_PKTLOG_MAC_ID_GET(*msg_word);
+	pdev_id = DP_HW2SW_MACID(pdev_id);
+	pl_hdr = (msg_word + 1);
+	dp_wdi_event_handler(WDI_EVENT_OFFLOAD_ALL, soc->dp_soc,
+		pl_hdr, HTT_INVALID_PEER, WDI_NO_VAL,
+		pdev_id);
+}
+#else
+static void
+dp_pktlog_msg_handler(struct htt_soc *soc,
+				uint32_t *msg_word)
+{
+}
+#endif
+
 /*
  * dp_htt_t2h_msg_handler() - Generic Target to host Msg/event handler
  * @context:	Opaque context (HTT SOC handle)
@@ -2335,39 +2401,19 @@ static void dp_htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 				msg_word, msg_word + 2);
 			break;
 		}
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
-#ifndef REMOVE_PKT_LOG
+
 	case HTT_T2H_MSG_TYPE_PPDU_STATS_IND:
 		{
-			u_int8_t pdev_id;
-			qdf_nbuf_set_pktlen(htt_t2h_msg, HTT_T2H_MAX_MSG_SIZE);
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-				"received HTT_T2H_MSG_TYPE_PPDU_STATS_IND\n");
-			pdev_id = HTT_T2H_PPDU_STATS_MAC_ID_GET(*msg_word);
-			pdev_id = DP_HW2SW_MACID(pdev_id);
-			dp_txrx_ppdu_stats_handler(soc->dp_soc, pdev_id,
-					htt_t2h_msg);
-			dp_wdi_event_handler(WDI_EVENT_LITE_T2H, soc->dp_soc,
-				htt_t2h_msg, HTT_INVALID_PEER, WDI_NO_VAL,
-				pdev_id);
+			dp_ppdu_stats_ind_handler(soc, msg_word, htt_t2h_msg);
 			break;
 		}
+
 	case HTT_T2H_MSG_TYPE_PKTLOG:
 		{
-			uint8_t pdev_id;
-			uint32_t *pl_hdr;
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-				"received HTT_T2H_MSG_TYPE_PKTLOG\n");
-			pdev_id = HTT_T2H_PKTLOG_MAC_ID_GET(*msg_word);
-			pdev_id = DP_HW2SW_MACID(pdev_id);
-			pl_hdr = (msg_word + 1);
-			dp_wdi_event_handler(WDI_EVENT_OFFLOAD_ALL, soc->dp_soc,
-				pl_hdr, HTT_INVALID_PEER, WDI_NO_VAL,
-				pdev_id);
+			dp_pktlog_msg_handler(soc, msg_word);
 			break;
 		}
-#endif
-#endif
+
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
 		{
 			htc_pm_runtime_put(soc->htc_soc);
@@ -2739,16 +2785,17 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 /* This macro will revert once proper HTT header will define for
  * HTT_H2T_MSG_TYPE_PPDU_STATS_CFG in htt.h file
  * */
-#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+#if defined(WDI_EVENT_ENABLE)
 /**
  * dp_h2t_cfg_stats_msg_send(): function to construct HTT message to pass to FW
  * @pdev: DP PDEV handle
  * @stats_type_upload_mask: stats type requested by user
+ * @mac_id: Mac id number
  *
  * return: QDF STATUS
  */
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
-		uint32_t stats_type_upload_mask)
+		uint32_t stats_type_upload_mask, uint8_t mac_id)
 {
 	struct htt_soc *soc = pdev->soc->htt_handle;
 	struct dp_htt_htc_pkt *pkt;
@@ -2774,7 +2821,7 @@ QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 	 * Bit 2: Pdev stats for pdev id 1
 	 * Bit 3: Pdev stats for pdev id 2
 	 */
-	pdev_mask = 1 << DP_SW2HW_MACID(pdev->pdev_id);
+	pdev_mask = 1 << DP_SW2HW_MACID(mac_id);
 
 	/*
 	 * Set the length of the message.
