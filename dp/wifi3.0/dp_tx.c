@@ -520,8 +520,6 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	/* Allocate software Tx descriptor */
 	tx_desc = dp_tx_desc_alloc(soc, desc_pool_id);
 	if (qdf_unlikely(!tx_desc)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s Tx Desc Alloc Failed\n", __func__);
 		DP_STATS_INC(vdev, tx_i.dropped.desc_na, 1);
 		return NULL;
 	}
@@ -1149,10 +1147,6 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				tx_q->desc_pool_id);
 
 		if (!tx_desc) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "%s Tx_desc prepare Fail vdev %pK queue %d\n",
-				  __func__, vdev, tx_q->desc_pool_id);
-
 			if (msdu_info->frm_type == dp_tx_frm_me) {
 				dp_tx_me_free_buf(pdev,
 					(void *)(msdu_info->u.sg_info
@@ -1531,9 +1525,6 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 				qdf_nbuf_len(nbuf));
 
 		if (dp_tx_prepare_tso(vdev, nbuf, &msdu_info)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					"%s tso_prepare fail vdev_id:%d\n",
-					__func__, vdev->vdev_id);
 			DP_STATS_INC(vdev, tx_i.tso.dropped_host, 1);
 			return nbuf;
 		}
