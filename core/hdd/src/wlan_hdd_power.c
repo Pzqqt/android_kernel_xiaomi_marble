@@ -1599,8 +1599,6 @@ hdd_sched_scan_results(struct wiphy *wiphy, uint64_t reqid)
 static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	struct hdd_adapter *adapter;
-	hdd_adapter_list_node_t *pAdapterNode, *pNext;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int exit_code;
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
@@ -1657,47 +1655,8 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
 			 NO_SESSION, hdd_ctx->is_wiphy_suspended));
-	qdf_spin_lock(&hdd_ctx->sched_scan_lock);
 	hdd_ctx->is_wiphy_suspended = false;
-	if (true != hdd_ctx->isSchedScanUpdatePending) {
-		qdf_spin_unlock(&hdd_ctx->sched_scan_lock);
-		hdd_debug("Return resume is not due to PNO indication");
-		goto exit_with_success;
-	}
-	/* Reset flag to avoid updatating cfg80211 data old results again */
-	hdd_ctx->isSchedScanUpdatePending = false;
-	qdf_spin_unlock(&hdd_ctx->sched_scan_lock);
 
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = pAdapterNode->adapter;
-		if ((NULL != adapter) &&
-		    (QDF_STA_MODE == adapter->device_mode)) {
-			if (0 !=
-			    wlan_hdd_cfg80211_update_bss(hdd_ctx->wiphy,
-							 adapter, 0)) {
-				hdd_warn("NO SCAN result");
-			} else {
-				/* Acquire wakelock to handle the case where
-				 * APP's tries to suspend immediately after
-				 * updating the scan results. Whis results in
-				 * app's is in suspended state and not able to
-				 * process the connect request to AP
-				 */
-				hdd_prevent_suspend_timeout(
-					HDD_WAKELOCK_TIMEOUT_RESUME,
-					WIFI_POWER_EVENT_WAKELOCK_RESUME_WLAN);
-				hdd_sched_scan_results(hdd_ctx->wiphy, 0);
-			}
-
-			hdd_debug("cfg80211 scan result database updated");
-			goto exit_with_success;
-		}
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
-	}
-
-exit_with_success:
 	hdd_ctx->suspend_resume_stats.resumes++;
 	exit_code = 0;
 

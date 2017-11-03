@@ -1706,7 +1706,6 @@ void wlan_hdd_cfg80211_abort_scan(struct wiphy *wiphy,
  */
 void hdd_scan_context_destroy(struct hdd_context *hdd_ctx)
 {
-	qdf_spinlock_destroy(&hdd_ctx->sched_scan_lock);
 }
 
 /**
@@ -1719,6 +1718,5 @@ void hdd_scan_context_destroy(struct hdd_context *hdd_ctx)
  */
 int hdd_scan_context_init(struct hdd_context *hdd_ctx)
 {
-	qdf_spinlock_create(&hdd_ctx->sched_scan_lock);
 	return 0;
 }

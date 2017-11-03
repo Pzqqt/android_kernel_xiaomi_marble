@@ -1513,16 +1513,8 @@ struct hdd_context {
 
 	void *hdd_ipa;
 
-	/* Use below lock to protect access to isSchedScanUpdatePending
-	 * since it will be accessed in two different contexts.
-	 */
-	qdf_spinlock_t sched_scan_lock;
-
 	/* Flag keeps track of wiphy suspend/resume */
 	bool is_wiphy_suspended;
-
-	/* Indicates about pending sched_scan results */
-	bool isSchedScanUpdatePending;
 
 #ifdef MSM_PLATFORM
 	/* DDR bus bandwidth compute timer
