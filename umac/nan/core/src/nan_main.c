@@ -60,15 +60,15 @@ struct nan_psoc_priv_obj *nan_get_psoc_priv_obj(
 	return obj;
 }
 
-void nan_release_cmd(void *in_req, uint32_t req_type)
+void nan_release_cmd(void *in_req, uint32_t cmdtype)
 {
 	struct wlan_objmgr_vdev *vdev = NULL;
 
 	if (!in_req)
 		return;
 
-	switch (req_type) {
-	case NDP_INITIATOR_REQ: {
+	switch (cmdtype) {
+	case WLAN_SER_CMD_NDP_INIT_REQ: {
 		struct nan_datapath_initiator_req *req = in_req;
 		vdev = req->vdev;
 		qdf_mem_free(req->pmk.pmk);
@@ -78,7 +78,7 @@ void nan_release_cmd(void *in_req, uint32_t req_type)
 		qdf_mem_free(req->service_name.service_name);
 		break;
 	}
-	case NDP_RESPONDER_REQ: {
+	case WLAN_SER_CMD_NDP_RESP_REQ: {
 		struct nan_datapath_responder_req *req = in_req;
 		vdev = req->vdev;
 		qdf_mem_free(req->pmk.pmk);
@@ -88,14 +88,14 @@ void nan_release_cmd(void *in_req, uint32_t req_type)
 		qdf_mem_free(req->service_name.service_name);
 		break;
 	}
-	case NDP_END_REQ: {
+	case WLAN_SER_CMD_NDP_DATA_END_INIT_REQ: {
 		struct nan_datapath_end_req *req = in_req;
 		vdev = req->vdev;
 		qdf_mem_free(req->ndp_ids);
 		break;
 	}
 	default:
-		nan_err("invalid req type: %d", req_type);
+		nan_err("invalid req type: %d", cmdtype);
 		break;
 	}
 
@@ -245,6 +245,7 @@ QDF_STATUS nan_scheduled_msg_handler(struct scheduler_msg *msg)
 	cmd.source = WLAN_UMAC_COMP_NAN;
 	cmd.is_high_priority = false;
 	cmd.cmd_timeout_duration = 30000 /* 30 sec for now. TBD */;
+	nan_debug("cmd_type: %d", cmd.cmd_type);
 
 	status = wlan_serialization_request(&cmd);
 	/* following is TBD */
