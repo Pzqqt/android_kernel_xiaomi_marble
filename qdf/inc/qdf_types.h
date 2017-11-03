@@ -452,7 +452,7 @@ typedef enum {
 } QDF_TRACE_LEVEL;
 
 /**
- * enum tQDF_ADAPTER_MODE - Concurrency role.
+ * enum QDF_OPMODE - vdev operating mode
  * @QDF_STA_MODE: STA mode
  * @QDF_SAP_MODE: SAP mode
  * @QDF_P2P_CLIENT_MODE: P2P client mode
@@ -473,7 +473,7 @@ typedef enum {
  * These are generic IDs that identify the various roles
  * in the software system
  */
-enum tQDF_ADAPTER_MODE {
+enum QDF_OPMODE {
 	QDF_STA_MODE,
 	QDF_SAP_MODE,
 	QDF_P2P_CLIENT_MODE,
@@ -491,6 +491,9 @@ enum tQDF_ADAPTER_MODE {
 	QDF_AHDEMO_MODE,
 	QDF_MAX_NO_OF_MODE
 };
+
+/* for backward compatability with the legacy definition */
+#define tQDF_ADAPTER_MODE QDF_OPMODE
 
 /**
  * enum tQDF_GLOBAL_CON_MODE - global config mode when
