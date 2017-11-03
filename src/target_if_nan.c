@@ -1112,7 +1112,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	ret = wmi_unified_register_event_handler(handle,
-		WMI_NDP_INITIATOR_RSP_EVENTID,
+		wmi_ndp_initiator_rsp_event_id,
 		target_if_ndp_initiator_rsp_handler,
 		WMI_RX_UMAC_CTX);
 	if (ret) {
@@ -1121,7 +1121,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_register_event_handler(handle,
-		WMI_NDP_INDICATION_EVENTID,
+		wmi_ndp_indication_event_id,
 		target_if_ndp_ind_handler,
 		WMI_RX_UMAC_CTX);
 	if (ret) {
@@ -1131,7 +1131,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_register_event_handler(handle,
-		WMI_NDP_CONFIRM_EVENTID,
+		wmi_ndp_confirm_event_id,
 		target_if_ndp_confirm_handler,
 		WMI_RX_UMAC_CTX);
 	if (ret) {
@@ -1141,7 +1141,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_register_event_handler(handle,
-		WMI_NDP_RESPONDER_RSP_EVENTID,
+		wmi_ndp_responder_rsp_event_id,
 		target_if_ndp_responder_rsp_handler,
 		WMI_RX_UMAC_CTX);
 	if (ret) {
@@ -1151,7 +1151,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_register_event_handler(handle,
-		WMI_NDP_END_INDICATION_EVENTID,
+		wmi_ndp_end_indication_event_id,
 		target_if_ndp_end_ind_handler,
 		WMI_RX_UMAC_CTX);
 	if (ret) {
@@ -1161,7 +1161,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_register_event_handler(handle,
-		WMI_NDP_END_RSP_EVENTID,
+		wmi_ndp_end_rsp_event_id,
 		target_if_ndp_end_rsp_handler,
 		WMI_RX_UMAC_CTX);
 	if (ret) {
@@ -1179,42 +1179,42 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				WMI_NDP_INITIATOR_RSP_EVENTID);
+				wmi_ndp_initiator_rsp_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
 	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				WMI_NDP_INDICATION_EVENTID);
+				wmi_ndp_indication_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
 	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				WMI_NDP_CONFIRM_EVENTID);
+				wmi_ndp_confirm_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
 	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				WMI_NDP_RESPONDER_RSP_EVENTID);
+				wmi_ndp_responder_rsp_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
 	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				WMI_NDP_END_INDICATION_EVENTID);
+				wmi_ndp_end_indication_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
 	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				WMI_NDP_END_RSP_EVENTID);
+				wmi_ndp_end_rsp_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
