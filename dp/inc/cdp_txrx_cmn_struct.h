@@ -744,6 +744,10 @@ struct cdp_tx_stats {
 	struct cdp_pkt_info ucast;
 	/* Multicast Packet Count */
 	struct cdp_pkt_info mcast;
+	/*NAWDS  Multicast Packet Count */
+	struct cdp_pkt_info nawds_mcast;
+	/*NAWDS  Multicast Drop Count */
+	uint32_t nawds_mcast_drop;
 	/* Successful Tx Packets */
 	struct cdp_pkt_info tx_success;
 	/* Total Tx failure */
@@ -809,6 +813,8 @@ struct cdp_rx_stats {
 	struct cdp_pkt_info wds;
 	/* Raw Pakets received */
 	struct cdp_pkt_info raw;
+	/* Total multicast packets */
+	struct cdp_pkt_info nawds_mcast_drop;
 
 	struct {
 	/* Intra BSS packets received */
@@ -863,6 +869,8 @@ struct cdp_tx_ingress_stats {
 	struct cdp_pkt_info reinject_pkts;
 	/*  Total packets passed to inspect handler */
 	struct cdp_pkt_info inspect_pkts;
+	/*NAWDS  Multicast Packet Count */
+	struct cdp_pkt_info nawds_mcast;
 
 	struct {
 		/* Total Raw packets */

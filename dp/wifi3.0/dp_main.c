@@ -3765,6 +3765,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss.pkts);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss.fail);
 			DP_STATS_AGGR_PKT(pdev, vdev, rx.raw);
+			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.nawds_mcast);
 
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.rcvd);
 			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.processed);
@@ -3900,6 +3901,11 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx_i.inspect_pkts.num);
 	DP_PRINT_STATS("	Bytes = %d",
 			pdev->stats.tx_i.inspect_pkts.bytes);
+	DP_PRINT_STATS("Nawds Multicast:");
+	DP_PRINT_STATS("	Packets = %d",
+			pdev->stats.tx_i.nawds_mcast.num);
+	DP_PRINT_STATS("	Bytes = %d",
+			pdev->stats.tx_i.nawds_mcast.bytes);
 }
 
 /**
@@ -4330,6 +4336,13 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.dropped.fw_rem_notx);
 	DP_PRINT_STATS("Dropped : Age Out = %d",
 			peer->stats.tx.dropped.age_out);
+	DP_PRINT_STATS("NAWDS : ");
+	DP_PRINT_STATS("	Nawds multicast Drop Tx Packet = %d",
+			peer->stats.tx.nawds_mcast_drop);
+	DP_PRINT_STATS("	Nawds multicast  Tx Packet Count = %d",
+			peer->stats.tx.nawds_mcast.num);
+	DP_PRINT_STATS("	Nawds multicast  Tx Packet Bytes = %d",
+			peer->stats.tx.nawds_mcast.bytes);
 
 	DP_PRINT_STATS("Rate Info:");
 
@@ -4406,6 +4419,11 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.non_amsdu_cnt);
 	DP_PRINT_STATS("MSDUs Received As Part of Amsdu = %d",
 			peer->stats.rx.amsdu_cnt);
+	DP_PRINT_STATS("NAWDS : ");
+	DP_PRINT_STATS("	Nawds multicast Drop Rx Packet = %d",
+			peer->stats.rx.nawds_mcast_drop.num);
+	DP_PRINT_STATS("	Nawds multicast Drop Rx Packet Bytes = %d",
+			peer->stats.rx.nawds_mcast_drop.bytes);
 	DP_PRINT_STATS("SGI ="
 			" 0.8us %d"
 			" 0.4us %d"

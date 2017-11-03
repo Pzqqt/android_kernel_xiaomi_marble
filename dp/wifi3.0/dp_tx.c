@@ -52,6 +52,9 @@
 /* disable TQM_BYPASS */
 #define TQM_BYPASS_WAR 0
 
+/* invalid peer id for reinject*/
+#define DP_INVALID_PEER 0XFFFE
+
 /**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
  * @vdev: DP Virtual device handle
@@ -1060,7 +1063,10 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		goto fail_return;
 	}
 
-	if (qdf_unlikely(peer_id != HTT_INVALID_PEER)) {
+	if (qdf_unlikely(peer_id == DP_INVALID_PEER)) {
+		htt_tcl_metadata = vdev->htt_tcl_metadata;
+		HTT_TX_TCL_METADATA_HOST_INSPECTED_SET(htt_tcl_metadata, 1);
+	} else if (qdf_unlikely(peer_id != HTT_INVALID_PEER)) {
 		HTT_TX_TCL_METADATA_TYPE_SET(htt_tcl_metadata,
 				HTT_TCL_METADATA_TYPE_PEER_BASED);
 		HTT_TX_TCL_METADATA_PEER_ID_SET(htt_tcl_metadata,
@@ -1395,6 +1401,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 #endif
 
+#ifdef DP_FEATURE_NAWDS_TX
 /**
  * dp_tx_prepare_nawds(): Tramit NAWDS frames
  * @vdev: dp_vdev handle
@@ -1407,14 +1414,36 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  * return: NULL on success nbuf on failure
  */
 static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint8_t tid, struct dp_tx_queue *tx_q, uint32_t *meta_data,
-		uint32_t peer_id)
+		uint8_t tid, struct dp_tx_queue *tx_q, uint32_t *meta_data)
 {
 	struct dp_peer *peer = NULL;
+	struct dp_soc *soc = vdev->pdev->soc;
+	struct dp_ast_entry *ast_entry = NULL;
+	struct ether_header *eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+	uint16_t peer_id = HTT_INVALID_PEER;
+
+	struct dp_peer *sa_peer = NULL;
 	qdf_nbuf_t nbuf_copy;
+
+	qdf_spin_lock_bh(&(soc->ast_lock));
+	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost), 0);
+	if (ast_entry)
+		sa_peer = ast_entry->peer;
+
+	qdf_spin_unlock_bh(&(soc->ast_lock));
+
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		if ((peer->peer_ids[0] != HTT_INVALID_PEER) &&
-				(peer->nawds_enabled || peer->bss_peer)) {
+				(peer->nawds_enabled)) {
+			if (sa_peer == peer) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_DEBUG,
+						" %s: broadcast multicast packet",
+						 __func__);
+				DP_STATS_INC(peer, tx.nawds_mcast_drop, 1);
+				continue;
+			}
+
 			nbuf_copy = qdf_nbuf_copy(nbuf);
 			if (!nbuf_copy) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
@@ -1426,17 +1455,19 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			nbuf_copy = dp_tx_send_msdu_single(vdev, nbuf_copy, tid,
 					tx_q, meta_data, peer_id);
 			if (nbuf_copy != NULL) {
-				qdf_nbuf_free(nbuf);
-				return nbuf_copy;
+				qdf_nbuf_free(nbuf_copy);
+				continue;
 			}
+			DP_STATS_INC_PKT(peer, tx.nawds_mcast,
+						1, qdf_nbuf_len(nbuf));
 		}
 	}
 	if (peer_id == HTT_INVALID_PEER)
 		return nbuf;
 
-	qdf_nbuf_free(nbuf);
 	return NULL;
 }
+#endif
 
 /**
  * dp_tx_send() - Transmit a frame on a given VAP
@@ -1578,16 +1609,6 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 
 	}
 
-	if (vdev->nawds_enabled) {
-		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
-		if (DP_FRAME_IS_MULTICAST((eh)->ether_dhost)) {
-			nbuf = dp_tx_prepare_nawds(vdev, nbuf, msdu_info.tid,
-					&msdu_info.tx_queue,
-					msdu_info.meta_data, peer_id);
-			return nbuf;
-		}
-	}
-
 	/*  Single linear frame */
 	/*
 	 * If nbuf is a simple linear frame, use send_single function to
@@ -1624,8 +1645,13 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	qdf_nbuf_t nbuf = tx_desc->nbuf;
 	qdf_nbuf_t nbuf_copy = NULL;
 	struct dp_tx_msdu_info_s msdu_info;
+	struct dp_peer *sa_peer = NULL;
+	struct dp_ast_entry *ast_entry = NULL;
+	struct dp_soc *soc = NULL;
+	struct ether_header *eh = (struct ether_header *)qdf_nbuf_data(nbuf);
 
 	vdev = tx_desc->vdev;
+	soc = vdev->pdev->soc;
 
 	qdf_assert(vdev);
 
@@ -1639,21 +1665,41 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	DP_STATS_INC_PKT(vdev, tx_i.reinject_pkts, 1,
 			qdf_nbuf_len(tx_desc->nbuf));
 
-	if (!vdev->osif_proxy_arp) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"function pointer to proxy arp not present\n");
-		return;
-	}
+
+	qdf_spin_lock_bh(&(soc->ast_lock));
+
+	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost), 0);
+	if (ast_entry)
+		sa_peer = ast_entry->peer;
+
+	qdf_spin_unlock_bh(&(soc->ast_lock));
 
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		DP_TX_FREE_SINGLE_BUF(vdev->pdev->soc, tx_desc->nbuf);
 	} else {
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 			if ((peer->peer_ids[0] != HTT_INVALID_PEER) &&
-					(peer->bss_peer || peer->nawds_enabled)
-					&& !(vdev->osif_proxy_arp(
-							vdev->osif_vdev,
-							nbuf))) {
+					((peer->bss_peer &&
+					!(vdev->osif_proxy_arp(
+						vdev->osif_vdev,
+						nbuf))) ||
+					peer->nawds_enabled)) {
+				peer_id = DP_INVALID_PEER;
+
+				if (peer->nawds_enabled) {
+					peer_id = peer->peer_ids[0];
+					if (sa_peer == peer) {
+						QDF_TRACE(
+							QDF_MODULE_ID_DP,
+							QDF_TRACE_LEVEL_DEBUG,
+							" %s: multicast packet",
+							__func__);
+						DP_STATS_INC(peer,
+							tx.nawds_mcast_drop, 1);
+						continue;
+					}
+				}
+
 				nbuf_copy = qdf_nbuf_copy(nbuf);
 
 				if (!nbuf_copy) {
@@ -1663,27 +1709,48 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 					break;
 				}
 
-				if (peer->nawds_enabled)
-					peer_id = peer->peer_ids[0];
-				else
-					peer_id = HTT_INVALID_PEER;
-
 				nbuf_copy = dp_tx_send_msdu_single(vdev,
-						nbuf_copy, msdu_info.tid,
+						nbuf_copy,
+						msdu_info.tid,
 						&msdu_info.tx_queue,
-						msdu_info.meta_data, peer_id);
+						msdu_info.meta_data,
+						peer_id);
 
 				if (nbuf_copy) {
 					QDF_TRACE(QDF_MODULE_ID_DP,
-							QDF_TRACE_LEVEL_DEBUG,
-							FL("pkt send failed"));
+						QDF_TRACE_LEVEL_DEBUG,
+						FL("pkt send failed"));
 					qdf_nbuf_free(nbuf_copy);
+				} else {
+					if (peer_id != DP_INVALID_PEER)
+						DP_STATS_INC_PKT(peer,
+							tx.nawds_mcast,
+							1, qdf_nbuf_len(nbuf));
 				}
 			}
 		}
 	}
 
-	qdf_nbuf_free(nbuf);
+	if (vdev->nawds_enabled) {
+		peer_id = DP_INVALID_PEER;
+
+		DP_STATS_INC_PKT(vdev, tx_i.nawds_mcast,
+					1, qdf_nbuf_len(nbuf));
+
+		nbuf = dp_tx_send_msdu_single(vdev,
+				nbuf, msdu_info.tid,
+				&msdu_info.tx_queue,
+				msdu_info.meta_data, peer_id);
+
+		if (nbuf) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_DEBUG,
+				FL("pkt send failed"));
+			qdf_nbuf_free(nbuf);
+		}
+	} else
+		qdf_nbuf_free(nbuf);
+
 	dp_tx_desc_release(tx_desc, tx_desc->pool_id);
 }
 

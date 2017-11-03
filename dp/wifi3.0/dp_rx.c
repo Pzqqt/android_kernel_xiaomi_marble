@@ -376,6 +376,7 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	 * and also check if the source peer and destination peer
 	 * belong to the same vap and destination peer is not bss peer.
 	 */
+
 	if ((hal_rx_msdu_end_da_is_valid_get(rx_tlv_hdr) &&
 	   !hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
 		da_idx = hal_rx_msdu_end_da_idx_get(rx_tlv_hdr);
@@ -1190,6 +1191,17 @@ done:
 		}
 
 		pdev = vdev->pdev;
+
+		if (qdf_unlikely((peer->nawds_enabled == true) &&
+			(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr)) &&
+			(hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) == false))) {
+			DP_STATS_INC_PKT(peer, rx.nawds_mcast_drop, 1,
+				qdf_nbuf_len(nbuf));
+			qdf_nbuf_free(nbuf);
+			nbuf = next;
+			continue;
+		}
+
 		if (qdf_likely(
 			!hal_rx_attn_tcp_udp_cksum_fail_get(rx_tlv_hdr)
 			&&
@@ -1343,8 +1355,7 @@ done:
 						nbuf);
 
 			/* Intrabss-fwd */
-			if (dp_rx_check_ap_bridge(vdev) &&
-				!vdev->nawds_enabled)
+			if (dp_rx_check_ap_bridge(vdev))
 				if (dp_rx_intrabss_fwd(soc,
 							peer,
 							rx_tlv_hdr,

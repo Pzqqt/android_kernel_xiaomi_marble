@@ -475,6 +475,20 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	qdf_spin_unlock_bh(&soc->ast_lock);
 
 skip_mec_check:
+
+	if (qdf_unlikely((peer->nawds_enabled == true) &&
+			hal_rx_msdu_end_da_is_mcbc_get(rx_desc->rx_buf_start)
+			)) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_DEBUG,
+					"%s free buffer for multicast packet",
+					 __func__);
+		DP_STATS_INC_PKT(peer, rx.nawds_mcast_drop,
+					1, qdf_nbuf_len(nbuf));
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
 	/* WDS Source Port Learning */
 	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
 		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);
