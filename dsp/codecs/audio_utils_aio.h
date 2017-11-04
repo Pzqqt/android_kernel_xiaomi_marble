@@ -1,6 +1,6 @@
 /* Copyright (C) 2008 Google, Inc.
  * Copyright (C) 2008 HTC Corporation
- * Copyright (c) 2009-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2009-2018, The Linux Foundation. All rights reserved.
  *
  * This software is licensed under the terms of the GNU General Public
  * License version 2, as published by the Free Software Foundation, and
@@ -119,7 +119,7 @@ struct ws_mgr {
 
 struct audio_aio_ion_region {
 	struct list_head list;
-	struct ion_handle *handle;
+	struct dma_buf *dma_buf;
 	int fd;
 	void *vaddr;
 	phys_addr_t paddr;
@@ -182,7 +182,6 @@ struct q6audio_aio {
 	struct list_head free_event_queue;
 	struct list_head event_queue;
 	struct list_head ion_region_queue;     /* protected by lock */
-	struct ion_client *client;
 	struct audio_aio_drv_operations drv_ops;
 	union msm_audio_event_payload eos_write_payload;
 	uint32_t device_events;

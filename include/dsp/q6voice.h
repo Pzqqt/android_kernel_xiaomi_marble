@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -156,8 +156,7 @@ struct mem_buffer {
 };
 
 struct share_mem_buf {
-	struct ion_handle	*handle;
-	struct ion_client	*client;
+	struct dma_buf		*dma_buf;
 	struct mem_buffer	buf[NUM_OF_BUFFERS];
 };
 
@@ -165,8 +164,7 @@ struct mem_map_table {
 	dma_addr_t		phys;
 	void			*data;
 	size_t			size; /* size of buffer */
-	struct ion_handle	*handle;
-	struct ion_client	*client;
+	struct dma_buf		*dma_buf;
 };
 
 /* Common */
@@ -1874,12 +1872,6 @@ struct voice_data {
 	struct voice_rec_route_state rec_route_state;
 };
 
-struct cal_mem {
-	struct ion_handle *handle;
-	uint32_t phy;
-	void *buf;
-};
-
 #define MAX_VOC_SESSIONS 8
 
 struct common_data {
@@ -1908,9 +1900,6 @@ struct common_data {
 	uint32_t rtac_mem_handle;
 
 	uint32_t voice_host_pcm_mem_handle;
-
-	struct cal_mem cvp_cal;
-	struct cal_mem cvs_cal;
 
 	struct mutex common_lock;
 
