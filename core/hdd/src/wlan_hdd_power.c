@@ -1763,7 +1763,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				wlan_hdd_inc_suspend_stats(hdd_ctx,
 							   SUSPEND_FAIL_RADAR);
 				return -EAGAIN;
-			} else if (!hdd_ctx->config->enableSapSuspend) {
+			} else if (!hdd_ctx->config->enable_sap_suspend) {
 				/* return -EOPNOTSUPP if SAP does not support
 				 * suspend
 				 */
@@ -1771,7 +1771,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				return -EOPNOTSUPP;
 			}
 		} else if (QDF_P2P_GO_MODE == adapter->device_mode) {
-			if (!hdd_ctx->config->enableSapSuspend) {
+			if (!hdd_ctx->config->enable_sap_suspend) {
 				/* return -EOPNOTSUPP if GO does not support
 				 * suspend
 				 */

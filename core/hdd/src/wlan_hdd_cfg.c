@@ -3434,7 +3434,7 @@ struct reg_table_entry g_registry_table[] = {
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
 	REG_VARIABLE(CFG_ENABLE_SAP_SUSPEND, WLAN_PARAM_Integer,
-		     struct hdd_config, enableSapSuspend,
+		     struct hdd_config, enable_sap_suspend,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_ENABLE_SAP_SUSPEND_DEFAULT,
 		     CFG_ENABLE_SAP_SUSPEND_MIN,
@@ -6540,7 +6540,7 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->enableSelfRecovery);
 
 	hdd_debug("Name = [gEnableSapSuspend] Value = [%u]",
-		  hdd_ctx->config->enableSapSuspend);
+		  hdd_ctx->config->enable_sap_suspend);
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	hdd_debug("Name = [gExtWoWgotoSuspend] Value = [%u]",

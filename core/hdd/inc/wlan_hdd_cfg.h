@@ -13878,7 +13878,7 @@ struct hdd_config {
 	uint8_t SapSccChanAvoidance;
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
-	bool enableSapSuspend;
+	bool enable_sap_suspend;
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	uint8_t extWowGotoSuspend;
