@@ -536,24 +536,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	tx_desc->vdev = vdev;
 	tx_desc->pdev = pdev;
 	tx_desc->msdu_ext_desc = NULL;
-
-	/**
-	 * For non-scatter regular frames, buffer pointer is directly
-	 * programmed in TCL input descriptor instead of using an MSDU
-	 * extension descriptor.For this cass, HW requirement is that
-	 * descriptor should always point to a 8-byte aligned address.
-	 *
-	 * So we add alignment pad to start of buffer, and specify the actual
-	 * start of data through pkt_offset
-	 */
-	align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
-	if (qdf_nbuf_push_head(nbuf, align_pad) == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_push_head failed\n");
-		goto failure;
-	}
-
-	tx_desc->pkt_offset = align_pad;
+	tx_desc->pkt_offset = 0;
 
 	/*
 	 * For special modes (vdev_type == ocb or mesh), data frames should be
@@ -562,8 +545,10 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 * These are filled in HTT MSDU descriptor and sent in frame pre-header.
 	 * These frames are sent as exception packets to firmware.
 	 *
+	 * HW requirement is that metadata should always point to a
+	 * 8-byte aligned address. So we add alignment pad to start of buffer.
 	 *  HTT Metadata should be ensured to be multiple of 8-bytes,
-	 *  to get 8-byte aligned start address along with align_pad added above
+	 *  to get 8-byte aligned start address along with align_pad added
 	 *
 	 *  |-----------------------------|
 	 *  |                             |
@@ -586,11 +571,18 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 */
 	if (qdf_unlikely(vdev->mesh_vdev ||
 				(vdev->opmode == wlan_op_mode_ocb))) {
+		align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
+		if (qdf_nbuf_push_head(nbuf, align_pad) == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"qdf_nbuf_push_head failed\n");
+			goto failure;
+		}
+
 		htt_hdr_size = dp_tx_prepare_htt_metadata(vdev, nbuf,
 				meta_data);
 		if (htt_hdr_size == 0)
 			goto failure;
-		tx_desc->pkt_offset += htt_hdr_size;
+		tx_desc->pkt_offset = align_pad + htt_hdr_size;
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 		is_exception = 1;
 	}
