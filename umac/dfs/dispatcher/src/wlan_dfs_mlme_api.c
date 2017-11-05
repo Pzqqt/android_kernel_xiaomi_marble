@@ -141,40 +141,6 @@ void dfs_mlme_get_dfs_ch_nchans(struct wlan_objmgr_pdev *pdev,
 				nchans);
 }
 
-void dfs_mlme_get_dfs_ch_no_weather_radar_chan(struct wlan_objmgr_pdev *pdev,
-		uint8_t *no_wradar)
-{
-	if (global_dfs_to_mlme.mlme_get_dfs_ch_no_weather_radar_chan != NULL)
-		global_dfs_to_mlme.mlme_get_dfs_ch_no_weather_radar_chan(
-				pdev,
-				no_wradar);
-}
-
-int dfs_mlme_find_alternate_mode_channel(struct wlan_objmgr_pdev *pdev,
-		uint32_t alt_chan_mode,
-		int chan_count)
-{
-	int ret_val = 0;
-
-	if (global_dfs_to_mlme.mlme_find_alternate_mode_channel != NULL)
-		global_dfs_to_mlme.mlme_find_alternate_mode_channel(
-				pdev,
-				alt_chan_mode, chan_count, &ret_val);
-
-	return ret_val;
-}
-
-void dfs_mlme_find_any_valid_channel(struct wlan_objmgr_pdev *pdev,
-		uint32_t chan_mode,
-		int *ret_val)
-{
-	if (global_dfs_to_mlme.mlme_find_any_valid_channel != NULL)
-		global_dfs_to_mlme.mlme_find_any_valid_channel(
-				pdev,
-				chan_mode,
-				ret_val);
-}
-
 QDF_STATUS dfs_mlme_get_extchan(struct wlan_objmgr_pdev *pdev,
 		uint16_t *dfs_ch_freq,
 		uint64_t *dfs_ch_flags,

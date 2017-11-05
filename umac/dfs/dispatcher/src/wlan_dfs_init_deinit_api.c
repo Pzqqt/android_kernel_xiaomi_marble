@@ -65,12 +65,6 @@ void register_dfs_callbacks(void)
 	tmp_dfs_to_mlme->mlme_deliver_event_up_afrer_cac =
 		mlme_dfs_deliver_event_up_afrer_cac;
 	tmp_dfs_to_mlme->mlme_get_dfs_ch_nchans = mlme_dfs_get_dfs_ch_nchans;
-	tmp_dfs_to_mlme->mlme_get_dfs_ch_no_weather_radar_chan =
-		mlme_dfs_get_dfs_ch_no_weather_radar_chan;
-	tmp_dfs_to_mlme->mlme_find_alternate_mode_channel =
-		mlme_dfs_find_alternate_mode_channel;
-	tmp_dfs_to_mlme->mlme_find_any_valid_channel =
-		mlme_dfs_find_any_valid_channel;
 	tmp_dfs_to_mlme->mlme_get_extchan = mlme_dfs_get_extchan;
 	tmp_dfs_to_mlme->mlme_set_no_chans_available =
 		mlme_dfs_set_no_chans_available;

@@ -30,7 +30,8 @@
 #include <qdf_mc_timer.h>
 
 /**
- * dfs_populate_80mhz_available_channels()- Populate channels for 80MHz uing bitmap
+ * dfs_populate_80mhz_available_channels()- Populate channels for 80MHz using
+ *                                          bitmap
  * @bitmap: bitmap
  * @avail_chnl: prepared channel list
  *
@@ -60,13 +61,16 @@ static uint8_t dfs_populate_80mhz_available_channels(
 				(DFS_NEXT_5GHZ_CHANNEL * 3);
 		}
 	}
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "channel count %d", chnl_count);
+
+	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"channel count %d", chnl_count);
 
 	return chnl_count;
 }
 
 /**
- * dfs_populate_40mhz_available_channels()- Populate channels for 40MHz uing bitmap
+ * dfs_populate_40mhz_available_channels()- Populate channels for 40MHz using
+ *                                          bitmap
  * @bitmap: bitmap
  * @avail_chnl: prepared channel list
  *
@@ -99,13 +103,15 @@ static uint8_t dfs_populate_40mhz_available_channels(
 				(DFS_NEXT_5GHZ_CHANNEL * 3);
 		}
 	}
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "channel count %d", chnl_count);
+	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"channel count %d", chnl_count);
 
 	return chnl_count;
 }
 
 /**
- * dfs_populate_available_channels()- Populate channels based on width and bitmap
+ * dfs_populate_available_channels()- Populate channels based on width and
+ *                                    bitmap
  * @bitmap: bitmap
  * @ch_width: channel width
  * @avail_chnl: prepared channel list
@@ -168,6 +174,7 @@ static uint8_t dfs_get_rand_from_lst(uint8_t *ch_lst, uint8_t num_ch)
 /**
  * dfs_random_channel_sel_set_bitmap()- Set channel bit in bitmap based
  * on given channel number
+ * @dfs: Pointer to DFS structure.
  * @bitmap: bitmap
  * @channel: channel number
  *
@@ -176,8 +183,9 @@ static uint8_t dfs_get_rand_from_lst(uint8_t *ch_lst, uint8_t num_ch)
  * Return: None
  */
 static void dfs_random_channel_sel_set_bitmap(
-	struct chan_bonding_bitmap *bitmap,
-	uint8_t channel)
+		struct wlan_dfs *dfs,
+		struct chan_bonding_bitmap *bitmap,
+		uint8_t channel)
 {
 	int i = 0;
 	int start_chan = 0;
@@ -192,12 +200,13 @@ static void dfs_random_channel_sel_set_bitmap(
 		}
 	}
 
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"Channel=%d is not in the bitmap", channel);
 }
 
 /**
  * dfs_find_ch_with_fallback()- find random channel
+ * @dfs: Pointer to DFS structure.
  * @ch_wd: channel width
  * @center_freq_seg1: center frequency of secondary segment.
  * @ch_lst: list of available channels.
@@ -208,10 +217,12 @@ static void dfs_random_channel_sel_set_bitmap(
  *
  * Return: channel number
  */
-static uint8_t dfs_find_ch_with_fallback(uint8_t *ch_wd,
-	uint8_t *center_freq_seg1,
-	uint8_t *ch_lst,
-	uint32_t num_ch)
+static uint8_t dfs_find_ch_with_fallback(
+		struct wlan_dfs *dfs,
+		uint8_t *ch_wd,
+		uint8_t *center_freq_seg1,
+		uint8_t *ch_lst,
+		uint32_t num_ch)
 {
 	bool flag = false;
 	uint32_t rand_byte = 0;
@@ -229,9 +240,9 @@ static uint8_t dfs_find_ch_with_fallback(uint8_t *ch_wd,
 	ch_map.chan_bonding_set[5].start_chan = 149;
 
 	for (i = 0; i < num_ch; i++) {
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"channel = %d added to bitmap", ch_lst[i]);
-		dfs_random_channel_sel_set_bitmap(&ch_map, ch_lst[i]);
+		dfs_random_channel_sel_set_bitmap(dfs, &ch_map, ch_lst[i]);
 	}
 
 	/* populate available channel list from bitmap */
@@ -242,11 +253,12 @@ static uint8_t dfs_find_ch_with_fallback(uint8_t *ch_wd,
 		if ((*ch_wd == DFS_CH_WIDTH_160MHZ) ||
 		    (*ch_wd == DFS_CH_WIDTH_80P80MHZ) ||
 		    (*ch_wd == DFS_CH_WIDTH_80MHZ)) {
-			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 					"from [%d] to 40Mhz", *ch_wd);
 			*ch_wd = DFS_CH_WIDTH_40MHZ;
 		} else if (*ch_wd == DFS_CH_WIDTH_40MHZ) {
-			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "from 40Mhz to 20MHz");
+			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"from 40Mhz to 20MHz");
 			*ch_wd = DFS_CH_WIDTH_20MHZ;
 		}
 		return 0;
@@ -256,7 +268,7 @@ static uint8_t dfs_find_ch_with_fallback(uint8_t *ch_wd,
 	if (((*ch_wd == DFS_CH_WIDTH_160MHZ) ||
 	     (*ch_wd == DFS_CH_WIDTH_80P80MHZ)) &&
 	     (final_cnt < DFS_MAX_20M_SUB_CH)) {
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 				"from [%d] to 80Mhz", *ch_wd);
 		*ch_wd = DFS_CH_WIDTH_80MHZ;
 		return 0;
@@ -285,7 +297,7 @@ static uint8_t dfs_find_ch_with_fallback(uint8_t *ch_wd,
 	}
 
 	if ((flag == false) && (*ch_wd > DFS_CH_WIDTH_80MHZ)) {
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 				"from [%d] to 80Mhz", *ch_wd);
 		*ch_wd = DFS_CH_WIDTH_80MHZ;
 		return 0;
@@ -327,12 +339,12 @@ static uint8_t dfs_find_ch_with_fallback(uint8_t *ch_wd,
 			*ch_wd = DFS_CH_WIDTH_80MHZ;
 
 		*center_freq_seg1 = sec_seg_ch;
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 				"Center frequency seg1 = %d", sec_seg_ch);
 	} else {
 		target_channel = dfs_get_rand_from_lst(final_lst, final_cnt);
 	}
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
 			"target channel = %d", target_channel);
 
 	return target_channel;
@@ -380,7 +392,7 @@ static bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
 	nol = dfs->dfs_nol;
 	while (nol) {
 		if (freq == nol->nol_freq) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"%d is in nol", freq);
 			return true;
 		}
@@ -415,7 +427,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	struct dfs_acs_info *acs_info)
 {
 	struct dfs_ieee80211_channel *chan;
-	uint16_t flag_no_wheather = 0;
+	uint16_t flag_no_weather = 0;
 	uint16_t flag_no_lower_5g = 0;
 	uint16_t flag_no_upper_5g = 0;
 	uint16_t flag_no_dfs_chan = 0;
@@ -423,8 +435,8 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	uint16_t flag_no_5g_chan  = 0;
 	int i;
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "flags %d", flags);
-	flag_no_wheather = (dfs_region == DFS_ETSI_REGION_VAL) ?
+	dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "flags %d", flags);
+	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
 		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
 
 	flag_no_lower_5g = (dfs_region == DFS_MKK_REGION_VAL) ?
@@ -442,15 +454,27 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 
 		if ((chan->dfs_ch_ieee == 0) ||
 				(chan->dfs_ch_ieee > MAX_CHANNEL_NUM)) {
-			dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "invalid channel %d",
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+					"invalid channel %d",
 					chan->dfs_ch_ieee);
 			continue;
+		}
+
+		if (flags & DFS_RANDOM_CH_FLAG_NO_CURR_OPE_CH) {
+			/* TODO : Skip all HT20 channels in the given mode */
+			if (chan->dfs_ch_ieee ==
+					dfs->dfs_curchan->dfs_ch_ieee) {
+				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+						"skip %d current operating channel\n",
+						chan->dfs_ch_ieee);
+				continue;
+			}
 		}
 
 		if (acs_info && (acs_info->acs_mode == 1) &&
 		    ((chan->dfs_ch_ieee < acs_info->start_ch) ||
 		    (chan->dfs_ch_ieee > acs_info->end_ch))) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"skip ch %d not in acs range (%d-%d)",
 				    chan->dfs_ch_ieee, acs_info->start_ch,
 				   acs_info->end_ch);
@@ -460,7 +484,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 
 		if (flag_no_2g_chan &&
 				chan->dfs_ch_ieee <= DFS_MAX_24GHZ_CHANNEL) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"skip 2.4 GHz channel=%d",
 				    chan->dfs_ch_ieee);
 			continue;
@@ -468,59 +492,48 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 
 		if (flag_no_5g_chan &&
 				chan->dfs_ch_ieee > DFS_MAX_24GHZ_CHANNEL) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"skip 5 GHz channel=%d",
 				    chan->dfs_ch_ieee);
 			continue;
 		}
 
-		if (flag_no_wheather) {
-			/*
-			 * We should also avoid this channel in HT40 mode as
-			 * extension channel will be on 5600.
-			 */
-			/* TODO check if reg updating chan->dfs_ch_flags for
-			 * IEEE80211_CHAN_11NA_HT40PLUS
-			 */
+		if (flag_no_weather) {
 			if (DFS_IS_CHANNEL_WEATHER_RADAR(chan->dfs_ch_freq)) {
-				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 						"skip weather channel=%d",
 						chan->dfs_ch_ieee);
-				continue;
-			} else if (DFS_ADJACENT_WEATHER_RADAR_CHANNEL ==
-				   chan->dfs_ch_freq && (chan->dfs_ch_flags &
-				   IEEE80211_CHAN_11NA_HT40PLUS)) {
-				dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-						"skip weather adjacent ch=%d",
-					    chan->dfs_ch_ieee);
 				continue;
 			}
 		}
 
 		if (flag_no_lower_5g &&
-		    DFS_IS_CHAN_JAPAN_INDOOR(chan->dfs_ch_freq)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		    DFS_IS_CHAN_JAPAN_INDOOR(chan->dfs_ch_ieee)) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"skip indoor channel=%d",
 					chan->dfs_ch_ieee);
 			continue;
 		}
 
 		if (flag_no_upper_5g &&
-		    DFS_IS_CHAN_JAPAN_OUTDOOR(chan->dfs_ch_freq)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "skip outdoor channel=%d",
+		    DFS_IS_CHAN_JAPAN_OUTDOOR(chan->dfs_ch_ieee)) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+					"skip outdoor channel=%d",
 				    chan->dfs_ch_ieee);
 			continue;
 		}
 
 		if (flag_no_dfs_chan &&
 		    (chan->dfs_ch_flagext & IEEE80211_CHAN_DFS)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "skip dfs channel=%d",
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+					"skip dfs channel=%d",
 				    chan->dfs_ch_ieee);
 			continue;
 		}
 
 		if (dfs_freq_is_in_nol(dfs, chan->dfs_ch_freq)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "skip nol channel=%d",
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+					"skip nol channel=%d",
 				    chan->dfs_ch_ieee);
 			continue;
 		}
@@ -542,6 +555,7 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	uint8_t target_ch = 0;
 	uint8_t *random_chan_list = NULL;
 	uint32_t random_chan_cnt = 0;
+	uint16_t flag_no_weather = 0;
 
 	if (!ch_list || !ch_cnt) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
@@ -569,6 +583,9 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	dfs_apply_rules(dfs, flags, random_chan_list, &random_chan_cnt,
 		    ch_list, ch_cnt, dfs_region, acs_info);
 
+	flag_no_weather = (dfs_region == DFS_ETSI_REGION_VAL) ?
+		flags & DFS_RANDOM_CH_FLAG_NO_WEATHER_CH : 0;
+
 	do {
 		if (*ch_wd == DFS_CH_WIDTH_20MHZ) {
 			target_ch = dfs_get_rand_from_lst(
@@ -576,10 +593,26 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 			break;
 		}
 
-		target_ch = dfs_find_ch_with_fallback(ch_wd,
+		target_ch = dfs_find_ch_with_fallback(dfs, ch_wd,
 				&cur_chan->dfs_ch_vhtop_ch_freq_seg2,
 				random_chan_list,
 				random_chan_cnt);
+
+		/*
+		 * When flag_no_weather is set, avoid usage of Adjacent
+		 * weather radar channel in HT40 mode as extension channel
+		 * will be on 5600.
+		 */
+		if (flag_no_weather &&
+				(target_ch ==
+				 DFS_ADJACENT_WEATHER_RADAR_CHANNEL_NUM) &&
+				(*ch_wd == DFS_CH_WIDTH_40MHZ)) {
+			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+					"skip weather adjacent ch=%d\n",
+					target_ch);
+			continue;
+		}
+
 		if (target_ch)
 			break;
 	} while (true);

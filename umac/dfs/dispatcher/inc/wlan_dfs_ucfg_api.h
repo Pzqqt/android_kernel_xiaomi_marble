@@ -42,10 +42,6 @@
  *                                     space
  * @mlme_get_dfs_ch_nchans:            Get number of channels in the channel
  *                                     list.
- * @mlme_get_dfs_ch_no_weather_radar_chan: Checks is the channel is weather
- *					   radar channel.
- * @mlme_find_alternate_mode_channel:  Finds the channel.
- * @mlme_find_any_valid_channel:       Find the valid channeil.
  * @mlme_get_extchan:                  Gets the extension channel.
  * @mlme_set_no_chans_available:       Sets no_chans_available flag.
  * @mlme_ieee2mhz:                     Gets Channel freq from ieee number.
@@ -86,18 +82,6 @@ struct dfs_to_mlme {
 			struct wlan_objmgr_pdev *pdev);
 	QDF_STATUS (*mlme_get_dfs_ch_nchans)(struct wlan_objmgr_pdev *pdev,
 			int *nchans);
-	QDF_STATUS (*mlme_get_dfs_ch_no_weather_radar_chan)(
-			struct wlan_objmgr_pdev *pdev,
-			uint8_t *no_wradar);
-	QDF_STATUS (*mlme_find_alternate_mode_channel)(
-			struct wlan_objmgr_pdev *pdev,
-			uint32_t alt_chan_mode,
-			int chan_count,
-			int *ret_val);
-	QDF_STATUS (*mlme_find_any_valid_channel)(
-			struct wlan_objmgr_pdev *pdev,
-			uint32_t chan_mode,
-			int *ret_val);
 	QDF_STATUS (*mlme_get_extchan)(struct wlan_objmgr_pdev *pdev,
 			uint16_t *dfs_ch_freq,
 			uint64_t *dfs_ch_flags,

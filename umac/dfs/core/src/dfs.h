@@ -887,6 +887,7 @@ struct wlan_dfs {
  * @WLAN_DEBUG_DFS_BIN5_FFT:    BIN5 FFT check.
  * @WLAN_DEBUG_DFS_BIN5_PULSE:  BIN5 pulse check.
  * @WLAN_DEBUG_DFS_FALSE_DET:   False detection debug related prints.
+ * @WLAN_DEBUG_DFS_RANDOM_CHAN: Random channel selection.
  */
 enum {
 	WLAN_DEBUG_DFS  = 0x00000100,
@@ -901,6 +902,7 @@ enum {
 	WLAN_DEBUG_DFS_BIN5_FFT   = 0x00020000,
 	WLAN_DEBUG_DFS_BIN5_PULSE = 0x00040000,
 	WLAN_DEBUG_DFS_FALSE_DET  = 0x00080000,
+	WLAN_DEBUG_DFS_RANDOM_CHAN = 0x00100000,
 	WLAN_DEBUG_DFS_MAX        = 0x80000000,
 	WLAN_DEBUG_DFS_ALWAYS     = WLAN_DEBUG_DFS_MAX
 };
@@ -1474,18 +1476,6 @@ int dfs_create_object(struct wlan_dfs **dfs);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_destroy_object(struct wlan_dfs *dfs);
-
-/**
- * dfs_random_channel() - Function to choose the random channel from the current
- *                        channel list.
- * @dfs: Pointer to wlan_dfs structure.
- * @is_select_nondfs: Select NON-DFS chan or both NON-DFS and DFS.
- * @skip_curchan: Select the next channel post radar detecr and skip the
- *                curchan.
- */
-int dfs_random_channel(struct wlan_dfs *dfs,
-		uint8_t is_select_nondfs,
-		uint8_t skip_curchan);
 
 /**
  * dfs_detach() - Wrapper function to free dfs variables.

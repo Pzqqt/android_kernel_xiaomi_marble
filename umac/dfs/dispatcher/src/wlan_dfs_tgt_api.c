@@ -219,7 +219,7 @@ QDF_STATUS tgt_dfs_process_radar_ind(struct wlan_objmgr_pdev *pdev,
 	struct wlan_dfs *dfs;
 
 	if (!pdev) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
 		return QDF_STATUS_E_FAILURE;
 	}
 

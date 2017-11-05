@@ -677,28 +677,8 @@ int dfs_control(struct wlan_dfs *dfs,
 
 	qdf_mem_zero(&dfs_unit_test, sizeof(dfs_unit_test));
 
-	/* dfs is dereferenced (dfs->dfs_ignore_dfs) when dfs is NULL */
 	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
-		/*
-		 * Enable/Disable DFS can be done prior to attach,
-		 * So handle here.
-		 */
-		switch (id) {
-		case DFS_DISABLE_DETECT:
-			dfs->dfs_ignore_dfs = 1;
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "enable detects, ignore_dfs %d",
-					dfs->dfs_ignore_dfs ? 1:0);
-			break;
-		case DFS_ENABLE_DETECT:
-			dfs->dfs_ignore_dfs = 0;
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "enable detects, ignore_dfs %d",
-					dfs->dfs_ignore_dfs ? 1:0);
-			break;
-		default:
-			error = -EINVAL;
-			break;
-		}
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		goto bad;
 	}
 

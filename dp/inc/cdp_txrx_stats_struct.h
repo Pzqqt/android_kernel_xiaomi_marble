@@ -501,6 +501,7 @@ enum _ol_ath_param_t {
 	OL_ATH_PARAM_ICM_ACTIVE = 357,
 	OL_ATH_PARAM_NOMINAL_NOISEFLOOR = 358,
 	OL_ATH_PARAM_CHAN_INFO = 359,
+	OL_ATH_PARAM_ACS_RANK = 360,
 };
 
 /* Enumeration of PDEV Configuration parameter */
