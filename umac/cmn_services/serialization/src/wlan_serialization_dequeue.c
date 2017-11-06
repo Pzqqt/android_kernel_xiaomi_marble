@@ -34,6 +34,7 @@ void wlan_serialization_move_pending_to_active(
 {
 	qdf_list_t *pending_queue;
 	struct wlan_serialization_command_list *cmd_list;
+	struct wlan_serialization_command_list *active_cmd_list = NULL;
 	enum wlan_serialization_status status;
 	qdf_list_node_t *nnode = NULL;
 
@@ -68,7 +69,9 @@ void wlan_serialization_move_pending_to_active(
 	 * By doing this way, we will make sure that command will be removed
 	 * from pending queue only when it was able to make it to active queue
 	 */
-	status = wlan_serialization_enqueue_cmd(&cmd_list->cmd, true);
+	status = wlan_serialization_enqueue_cmd(&cmd_list->cmd,
+						true,
+						&active_cmd_list);
 	if (WLAN_SER_CMD_ACTIVE != status) {
 		serialization_err("Can't move cmd to activeQ id-%d type-%d",
 				cmd_list->cmd.cmd_id, cmd_list->cmd.cmd_type);
@@ -76,7 +79,8 @@ void wlan_serialization_move_pending_to_active(
 	} else {
 		wlan_serialization_put_back_to_global_list(pending_queue,
 				ser_pdev_obj, cmd_list);
-		wlan_serialization_activate_cmd(cmd_type, ser_pdev_obj);
+		wlan_serialization_activate_cmd(active_cmd_list,
+						ser_pdev_obj);
 	}
 
 	return;
