@@ -451,6 +451,9 @@
 
 #define SIR_MAC_OUI_VERSION_1         1
 
+/* OWE DH Parameter element https://tools.ietf.org/html/rfc8110 */
+#define SIR_DH_PARAMETER_ELEMENT_EXT_EID 32
+
 /* OUI and type definition for WPA IE in network byte order */
 #define SIR_MAC_WPA_OUI             0x01F25000
 #define SIR_MAC_WME_OUI             0x02F25000

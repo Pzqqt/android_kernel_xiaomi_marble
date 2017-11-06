@@ -114,6 +114,8 @@ struct hdd_context;
 #define WLAN_AKM_SUITE_DPP_RSN 0x506f9a02
 #endif
 
+#define WLAN_AKM_SUITE_OWE 0x000FAC12
+
 #ifdef FEATURE_WLAN_TDLS
 #define WLAN_IS_TDLS_SETUP_ACTION(action) \
 	((SIR_MAC_TDLS_SETUP_REQ <= action) && \

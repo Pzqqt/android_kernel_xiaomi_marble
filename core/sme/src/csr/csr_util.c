@@ -116,6 +116,9 @@ uint8_t csr_rsn_oui[][CSR_RSN_OUI_SIZE] = {
 #define ENUM_DPP_RSN 15
 	/* DPP RSN */
 	{0x50, 0x6F, 0x9A, 0x02},
+#define ENUM_OWE 16
+	/* OWE https://tools.ietf.org/html/rfc8110 */
+	{0x00, 0x0F, 0xAC, 0x12},
 	/* define new oui here, update #define CSR_OUI_***_INDEX  */
 };
 
@@ -2425,6 +2428,10 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 		fRSNProfile = true;
 		break;
 
+	case eCSR_AUTH_TYPE_OWE:
+		fRSNProfile = true;
+		break;
+
 	default:
 		fRSNProfile = false;
 		break;
@@ -3202,6 +3209,23 @@ static bool csr_is_auth_dpp_rsn(tpAniSirGlobal mac,
 				csr_rsn_oui[ENUM_DPP_RSN], oui);
 }
 
+/*
+ * csr_is_auth_wpa_owe() - check whether oui is OWE
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is SAE, false otherwise
+ */
+static bool csr_is_auth_wpa_owe(tpAniSirGlobal mac,
+			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+			       uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match
+		(mac, all_suites, suite_count, csr_rsn_oui[ENUM_OWE], oui);
+}
+
 static bool csr_is_auth_wpa(tpAniSirGlobal pMac,
 			    uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 			    uint8_t cAllSuites, uint8_t Oui[])
@@ -3462,6 +3486,12 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 				neg_authtype = eCSR_AUTH_TYPE_RSN_8021X_SHA256;
 		}
 #endif
+		if ((neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+				csr_is_auth_wpa_owe(mac_ctx, authsuites,
+					c_auth_suites, authentication)) {
+			if (eCSR_AUTH_TYPE_OWE == auth_type->authType[i])
+				neg_authtype = eCSR_AUTH_TYPE_OWE;
+		}
 
 		/*
 		 * The 1st auth type in the APs RSN IE, to match stations

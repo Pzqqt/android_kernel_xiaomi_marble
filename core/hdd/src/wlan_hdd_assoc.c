@@ -124,6 +124,9 @@ uint8_t ccp_rsn_oui_11[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x11};
 #endif
 uint8_t ccp_rsn_oui_12[HDD_RSN_OUI_SIZE] = {0x50, 0x6F, 0x9A, 0x02};
 
+/* OWE https://tools.ietf.org/html/rfc8110 */
+uint8_t ccp_rsn_oui_18[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x12};
+
 /* Offset where the EID-Len-IE, start. */
 #define FT_ASSOC_RSP_IES_OFFSET 6  /* Capability(2) + AID(2) + Status Code(2) */
 #define FT_ASSOC_REQ_IES_OFFSET 4  /* Capability(2) + LI(2) */
@@ -4792,6 +4795,8 @@ eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 		auth_type = eCSR_AUTH_TYPE_RSN_PSK_SHA256;
 	} else if (memcmp(auth_suite, ccp_rsn_oui08, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_RSN_8021X_SHA256;
+	} else if (memcmp(auth_suite, ccp_rsn_oui_18, 4) == 0) {
+		auth_type = eCSR_AUTH_TYPE_OWE;
 	} else
 #endif
 	if (memcmp(auth_suite, ccp_rsn_oui_12, 4) == 0) {
@@ -5160,8 +5165,9 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	roam_profile->AuthType.numEntries = 1;
-	hdd_debug("sta_ctx->conn_info.authType = %d",
-		 sta_ctx->conn_info.authType);
+	hdd_debug("authType = %d RSNAuthType %d wpa_versions %d",
+		  sta_ctx->conn_info.authType, RSNAuthType,
+		  sta_ctx->wpa_versions);
 
 	switch (sta_ctx->conn_info.authType) {
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
@@ -5252,6 +5258,13 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 				hdd_debug("updated profile authtype as %d",
 					RSNAuthType);
 
+			} else if ((RSNAuthType == eCSR_AUTH_TYPE_OWE) &&
+				  ((pWextState->
+				  authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
+				  == IW_AUTH_KEY_MGMT_802_1X)) {
+				/* OWE case */
+				roam_profile->AuthType.authType[0] =
+					eCSR_AUTH_TYPE_OWE;
 			} else if ((pWextState->
 			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			    == IW_AUTH_KEY_MGMT_802_1X) {
