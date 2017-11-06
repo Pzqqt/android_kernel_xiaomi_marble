@@ -1144,7 +1144,7 @@ static bool hdd_is_arp_local(struct sk_buff *skb)
 			arp_ptr += (skb->dev->addr_len + 4 +
 					skb->dev->addr_len);
 			memcpy(&tip, arp_ptr, 4);
-			hdd_info("ARP packet: local IP: %x dest IP: %x",
+			hdd_debug("ARP packet: local IP: %x dest IP: %x",
 				ifa->ifa_local, tip);
 			if (ifa->ifa_local == tip)
 				return true;
