@@ -85,7 +85,13 @@ typedef  enum  {
     WMI_SERVICE_BATCH_SCAN=44,              /* Service to support batch scan */
     WMI_SERVICE_QPOWER=45,                  /* QPower service */
     WMI_SERVICE_PLMREQ=46,
-    WMI_SERVICE_THERMAL_MGMT=47,            /* thermal throttling support */
+    WMI_SERVICE_THERMAL_MGMT=47,            /* thermal throttling support,
+                                             * compared with
+                                             * WMI_SERVICE_THERM_THROT,
+                                             * this service only reports
+                                             * current temperature to host,
+                                             * and host will do the thermal
+                                             * throttling. */
     WMI_SERVICE_RMC=48,                     /* RMC support */
     WMI_SERVICE_MHF_OFFLOAD=49,             /* multi-hop forwarding offload */
     WMI_SERVICE_COEX_SAR=50,                /* target support SAR tx limit from WMI_PDEV_PARAM_TXPOWER_LIMITxG */
@@ -219,6 +225,14 @@ typedef  enum  {
     WMI_SERVICE_PKTLOG_SUPPORT_OVER_HTT=137, /* upload pktlog data over HTT communication channel */
     WMI_SERVICE_VDEV_MULTI_GROUP_KEY_SUPPORT=138, /* Support for vdev level multi group key */
     WMI_SERVICE_SCAN_PHYMODE_SUPPORT=139, /* Support for phymode also with channel in offchan WMI_START_SCAN_CMDID */
+    WMI_SERVICE_THERM_THROT = 140, /* Support thermal cfg and indication on AP.
+                                    * Compared with WMI_SERVICE_THERMAL_MGMT,
+                                    * this service is to allow thermal tool to
+                                    * configure thermal throttling threshold
+                                    * for different levels and pass down duty
+                                    * cycle value. FW will also report thermal
+                                    * throttling status to host through this
+                                    * service. */
 
     /******* ADD NEW SERVICES HERE *******/
 
