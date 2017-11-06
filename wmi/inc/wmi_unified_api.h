@@ -1474,6 +1474,9 @@ QDF_STATUS wmi_extract_vdev_stats(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 		uint32_t index, wmi_host_vdev_extd_stats *vdev_extd_stats);
 
+QDF_STATUS wmi_extract_bcn_stats(void *wmi_hdl, void *evt_buf,
+		uint32_t index, wmi_host_bcn_stats *vdev_bcn_stats);
+
 QDF_STATUS wmi_unified_send_power_dbg_cmd(void *wmi_hdl,
 				struct wmi_power_dbg_params *param);
 

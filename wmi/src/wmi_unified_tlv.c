@@ -17677,6 +17677,10 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 		stats_param->stats_id = WMI_HOST_REQUEST_VDEV_RATE_STAT;
 		break;
 
+	case WMI_REQUEST_BCN_STAT:
+		stats_param->stats_id |= WMI_HOST_REQUEST_BCN_STAT;
+		break;
+
 	default:
 		stats_param->stats_id = 0;
 		break;
@@ -17689,6 +17693,7 @@ static QDF_STATUS extract_all_stats_counts_tlv(wmi_unified_t wmi_handle,
 	stats_param->num_peer_stats = ev->num_peer_stats;
 	stats_param->num_bcnflt_stats = ev->num_bcnflt_stats;
 	stats_param->num_chan_stats = ev->num_chan_stats;
+	stats_param->num_bcn_stats = ev->num_bcn_stats;
 	stats_param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
 							ev->pdev_id);
 
@@ -17858,6 +17863,43 @@ static QDF_STATUS extract_vdev_stats_tlv(wmi_unified_t wmi_handle,
 		OS_MEMCPY(vdev_stats->bcn_rssi_history, ev->bcn_rssi_history,
 			sizeof(ev->bcn_rssi_history));
 
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_bcn_stats_tlv() - extract bcn stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param index: Index into vdev stats
+ * @param bcn_stats: Pointer to hold bcn stats
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_bcn_stats_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, uint32_t index, wmi_host_bcn_stats *bcn_stats)
+{
+	WMI_UPDATE_STATS_EVENTID_param_tlvs *param_buf;
+	wmi_stats_event_fixed_param *ev_param;
+	uint8_t *data;
+
+	param_buf = (WMI_UPDATE_STATS_EVENTID_param_tlvs *) evt_buf;
+	ev_param = (wmi_stats_event_fixed_param *) param_buf->fixed_param;
+	data = (uint8_t *) param_buf->data;
+
+	if (index < ev_param->num_bcn_stats) {
+		wmi_bcn_stats *ev = (wmi_bcn_stats *) ((data) +
+			((ev_param->num_pdev_stats) * sizeof(wmi_pdev_stats)) +
+			((ev_param->num_vdev_stats) * sizeof(wmi_vdev_stats)) +
+			((ev_param->num_peer_stats) * sizeof(wmi_peer_stats)) +
+			((ev_param->num_chan_stats) * sizeof(wmi_chan_stats)) +
+			((ev_param->num_mib_stats) * sizeof(wmi_mib_stats)) +
+			(index * sizeof(wmi_bcn_stats)));
+
+		bcn_stats->vdev_id = ev->vdev_id;
+		bcn_stats->tx_bcn_succ_cnt = ev->tx_bcn_succ_cnt;
+		bcn_stats->tx_bcn_outage_cnt = ev->tx_bcn_outage_cnt;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -20071,6 +20113,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_ext_stats = extract_pdev_ext_stats_tlv,
 	.extract_vdev_stats = extract_vdev_stats_tlv,
 	.extract_peer_stats = extract_peer_stats_tlv,
+	.extract_bcn_stats = extract_bcn_stats_tlv,
 	.extract_bcnflt_stats = extract_bcnflt_stats_tlv,
 	.extract_peer_extd_stats = extract_peer_extd_stats_tlv,
 	.extract_chan_stats = extract_chan_stats_tlv,

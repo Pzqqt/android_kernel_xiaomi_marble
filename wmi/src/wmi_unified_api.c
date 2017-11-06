@@ -6408,6 +6408,26 @@ QDF_STATUS wmi_extract_vdev_extd_stats(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_bcn_stats() - extract beacon stats from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @index: Index into beacon stats
+ * @vdev_bcn_stats: Pointer to hold beacon stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_bcn_stats(void *wmi_hdl, void *evt_buf,
+		uint32_t index, wmi_host_bcn_stats *vdev_bcn_stats)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_bcn_stats)
+		return wmi_handle->ops->extract_bcn_stats(wmi_handle,
+				evt_buf, index, vdev_bcn_stats);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_send_adapt_dwelltime_params_cmd() - send wmi cmd of
  * adaptive dwelltime configuration params
  * @wma_handle:  wma handler
