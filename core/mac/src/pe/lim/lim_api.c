@@ -1112,6 +1112,7 @@ static QDF_STATUS pe_drop_pending_rx_mgmt_frames(tpAniSirGlobal mac_ctx,
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
+ #define ERROR_LOG_RATE_LIMIT     16
 static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 			struct wlan_objmgr_peer *peer, qdf_nbuf_t buf,
 			struct mgmt_rx_event_params *mgmt_rx_params,
@@ -1141,7 +1142,7 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 
 	ret = wma_form_rx_packet(buf, mgmt_rx_params, pVosPkt);
 	if (ret) {
-		pe_err("Failed to fill cds packet from event buffer");
+		pe_err_rate_limited(ERROR_LOG_RATE_LIMIT, "Failed to fill cds packet from event buffer");
 		return QDF_STATUS_E_FAILURE;
 	}
 
