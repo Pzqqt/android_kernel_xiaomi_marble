@@ -1888,6 +1888,7 @@ lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	if (NULL == session) {
 		pe_err("session does not exist for given sessionId %d",
 			mlm_deauth_req->sessionId);
+		qdf_mem_free(mlm_deauth_req);
 		return;
 	}
 	lim_process_mlm_deauth_req_ntf(mac_ctx, QDF_STATUS_SUCCESS,
