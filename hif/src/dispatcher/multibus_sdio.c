@@ -64,6 +64,7 @@ QDF_STATUS hif_initialize_sdio_ops(struct hif_softc *hif_sc)
 		&hif_dummy_enable_power_management;
 	bus_ops->hif_disable_power_management =
 		&hif_dummy_disable_power_management;
+	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
 
 	return QDF_STATUS_SUCCESS;
 }

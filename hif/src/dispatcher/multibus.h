@@ -87,6 +87,7 @@ struct hif_bus_ops {
 					int rx_bundle_cnt);
 	int (*hif_bus_reset_resume)(struct hif_softc *hif_ctx);
 	int (*hif_map_ce_to_irq)(struct hif_softc *hif_sc, int ce_id);
+	int (*hif_addr_in_boundary)(struct hif_softc *scn, uint32_t offset);
 };
 
 #ifdef HIF_SNOC
