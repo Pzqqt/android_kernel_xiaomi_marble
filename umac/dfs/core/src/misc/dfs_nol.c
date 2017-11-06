@@ -34,7 +34,6 @@
 #include <wlan_dfs_mlme_api.h>
 #include <wlan_dfs_utils_api.h>
 #include <wlan_reg_services_api.h>
-#include <dfs_ioctl.h>
 
 /**
  * dfs_nol_timeout() - NOL timeout function.

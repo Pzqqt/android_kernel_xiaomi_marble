@@ -30,7 +30,7 @@
 #include <qdf_time.h>
 #include <qdf_timer.h>
 
-#include <dfs_ioctl.h>
+#include <wlan_dfs_ioctl.h>
 #include "dfs_structs.h"
 #include "dfs_channel.h"
 #include "dfs_ioctl_private.h"
@@ -923,7 +923,7 @@ struct wlan_dfs {
 	int wlan_dfs_nol_timeout;
 	bool update_nol;
 	uint32_t dfs_seq_num;
-	int dfs_nol_event[IEEE80211_CHAN_MAX];
+	int dfs_nol_event[DFS_CHAN_MAX];
 	os_timer_t dfs_nol_timer;
 	os_timer_t dfs_cac_timer;
 	os_timer_t dfs_cac_valid_timer;

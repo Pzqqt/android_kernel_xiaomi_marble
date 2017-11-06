@@ -59,8 +59,8 @@
  */
 #define DFS_LAST_IOCTL 26
 
-#ifndef IEEE80211_CHAN_MAX
-#define IEEE80211_CHAN_MAX 1023
+#ifndef DFS_CHAN_MAX
+#define DFS_CHAN_MAX 1023
 #endif
 
 /**
@@ -80,7 +80,7 @@ struct dfsreq_nolelem {
 
 struct dfsreq_nolinfo {
 	uint32_t  dfs_ch_nchans;
-	struct dfsreq_nolelem dfs_nol[IEEE80211_CHAN_MAX];
+	struct dfsreq_nolelem dfs_nol[DFS_CHAN_MAX];
 };
 
 /*

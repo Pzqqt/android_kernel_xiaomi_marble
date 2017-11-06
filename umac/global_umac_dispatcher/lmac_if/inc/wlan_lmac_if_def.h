@@ -47,6 +47,7 @@
 #endif
 
 #include <wlan_dfs_tgt_api.h>
+#include <wlan_dfs_ioctl.h>
 
 /* Number of dev type: Direct attach and Offload */
 #define MAX_DEV_TYPE 2
