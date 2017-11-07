@@ -1067,7 +1067,13 @@ QDF_STATUS p2p_process_lo_stop(
 		p2p_err("invalid lo stop event");
 		return QDF_STATUS_E_INVAL;
 	}
+
 	lo_evt = lo_stop_event->lo_event;
+	if (!lo_evt) {
+		p2p_err("invalid lo event");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	p2p_soc_obj = lo_stop_event->p2p_soc_obj;
 
 	p2p_debug("vdev_id %d, reason %d",
@@ -1075,6 +1081,7 @@ QDF_STATUS p2p_process_lo_stop(
 
 	if (!p2p_soc_obj || !(p2p_soc_obj->start_param)) {
 		p2p_err("Invalid p2p soc object or start parameters");
+		qdf_mem_free(lo_evt);
 		return QDF_STATUS_E_INVAL;
 	}
 	start_param = p2p_soc_obj->start_param;
