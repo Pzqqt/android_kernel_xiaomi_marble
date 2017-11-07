@@ -4167,6 +4167,12 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 
 	/* Extend it for multiple SSID */
 	if (profile->SSIDs.numOfSSIDs) {
+		if (profile->SSIDs.SSIDList[0].SSID.length > MAX_SSID_LEN) {
+			sme_debug("wrong ssid length = %d",
+					profile->SSIDs.SSIDList[0].SSID.length);
+			status = QDF_STATUS_E_INVAL;
+			goto error;
+		}
 		req->scan_req.num_ssids = 1;
 		qdf_mem_copy(&req->scan_req.ssid[0].ssid,
 				&profile->SSIDs.SSIDList[0].SSID.ssId,
