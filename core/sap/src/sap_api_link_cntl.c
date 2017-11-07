@@ -418,7 +418,7 @@ close_session:
 static void
 wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 				      struct sap_context *sap_ctx,
-				      tCsrRoamInfo *csr_roam_info,
+				      struct csr_roam_info *csr_roam_info,
 				      QDF_STATUS *ret_status)
 {
 	tWLAN_SAPEvent sap_event;
@@ -790,7 +790,7 @@ wlansap_roam_process_dfs_radar_found(tpAniSirGlobal mac_ctx,
 static void
 wlansap_roam_process_infra_assoc_ind(struct sap_context *sap_ctx,
 				     eCsrRoamResult roam_result,
-				     tCsrRoamInfo *csr_roam_info,
+				     struct csr_roam_info *csr_roam_info,
 				     QDF_STATUS *ret_status)
 {
 	QDF_STATUS qdf_status;
@@ -880,7 +880,7 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 /**
  * wlansap_roam_callback() - Callback for Roam (connection status) Events
  * @ctx             : pContext passed in with the roam request
- * @csr_roam_info   : Pointer to a tCsrRoamInfo
+ * @csr_roam_info   : Pointer to a struct csr_roam_info
  * @roamId          : to identify the callback related roam request.
  *                    0 means unsolicit
  * @roam_status     : Flag indicating the status of the callback
@@ -892,7 +892,8 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
  * Return: Status of operation
  */
 QDF_STATUS
-wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
+wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
+		      uint32_t roamId,
 		      eRoamCmdStatus roam_status, eCsrRoamResult roam_result)
 {
 	/* sap_ctx value */

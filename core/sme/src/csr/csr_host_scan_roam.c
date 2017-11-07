@@ -584,7 +584,7 @@ tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
 void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 		uint8_t session_id)
 {
-	tCsrRoamInfo roam_info;
+	struct csr_roam_info roam_info;
 	tpCsrNeighborRoamControlInfo neighbor_roam_info =
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	tCsrNeighborRoamBSSInfo handoff_node;
@@ -612,11 +612,11 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 		  FL("HANDOFF CANDIDATE BSSID "MAC_ADDRESS_STR),
 		  MAC_ADDR_ARRAY(handoff_node.pBssDescription->bssId));
 
-	qdf_mem_zero(&roam_info, sizeof(tCsrRoamInfo));
+	qdf_mem_zero(&roam_info, sizeof(struct csr_roam_info));
 	csr_roam_call_callback(mac_ctx, session_id, &roam_info, roamid,
 			       eCSR_ROAM_FT_START, eCSR_ROAM_RESULT_SUCCESS);
 
-	qdf_mem_zero(&roam_info, sizeof(tCsrRoamInfo));
+	qdf_mem_zero(&roam_info, sizeof(struct csr_roam_info));
 	csr_neighbor_roam_state_transition(mac_ctx,
 			eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING, session_id);
 

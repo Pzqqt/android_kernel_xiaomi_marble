@@ -5580,8 +5580,9 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
  *
  * Return: zero on success, error code on failure
  */
-static int wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
-						    tCsrRoamInfo *roam_info)
+static int
+wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
+					 struct csr_roam_info *roam_info)
 {
 	if (roam_info->pmk_len &&
 	    nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PMK,
@@ -5610,9 +5611,9 @@ static int wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
 	return 0;
 }
 #else
-static inline int wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
-							   tCsrRoamInfo
-							   *roam_info)
+static inline int
+wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
+					 struct csr_roam_info *roam_info)
 {
 	return 0;
 }
@@ -5648,7 +5649,7 @@ static inline int wlan_hdd_add_fils_params_roam_auth_event(struct sk_buff *skb,
  */
 int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		uint8_t *req_rsn_ie, uint32_t req_rsn_len, uint8_t *rsp_rsn_ie,
-		uint32_t rsp_rsn_len, tCsrRoamInfo *roam_info_ptr)
+		uint32_t rsp_rsn_len, struct csr_roam_info *roam_info_ptr)
 {
 	struct hdd_context *hdd_ctx_ptr = WLAN_HDD_GET_CTX(adapter);
 	struct sk_buff *skb = NULL;
@@ -15137,8 +15138,9 @@ wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
  *
  * Return: struct cfg80211_bss pointer
  */
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
-						     tCsrRoamInfo *roam_info)
+struct cfg80211_bss *
+wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
+				struct csr_roam_info *roam_info)
 {
 	tCsrRoamConnectedProfile roamProfile;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
@@ -15274,7 +15276,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
-					     tCsrRoamInfo *roam_info,
+					     struct csr_roam_info *roam_info,
 					     int index, bool preauth)
 {
 	struct net_device *dev = adapter->dev;
@@ -15306,8 +15308,9 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
  * Return: QDF status
  */
 #define MAX_LFR_METRICS_EVENT_LENGTH 100
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
-						  tCsrRoamInfo *roam_info)
+QDF_STATUS
+wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
+				       struct csr_roam_info *roam_info)
 {
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;
@@ -15349,7 +15352,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
  */
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
-					      tCsrRoamInfo *roam_info,
+					      struct csr_roam_info *roam_info,
 					      bool preauth_status)
 {
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
@@ -15397,8 +15400,9 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
  *
  * Return: QDF status
  */
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
-						   tCsrRoamInfo *roam_info)
+QDF_STATUS
+wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
+					struct csr_roam_info *roam_info)
 {
 	unsigned char metrics_notification[MAX_LFR_METRICS_EVENT_LENGTH + 1];
 	union iwreq_data wrqu;

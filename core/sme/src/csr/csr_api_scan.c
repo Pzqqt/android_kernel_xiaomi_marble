@@ -1229,9 +1229,9 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 	}
 	/* Only indicate assoc_completion if we indicate assoc_start. */
 	if (session->bRefAssocStartCnt > 0) {
-		tCsrRoamInfo *roam_info = NULL, roamInfo;
+		struct csr_roam_info *roam_info = NULL, roamInfo;
 
-		qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
+		qdf_mem_set(&roamInfo, sizeof(struct csr_roam_info), 0);
 		roam_info = &roamInfo;
 		if (session->scan_info.roambssentry) {
 			struct tag_csrscan_result *pScanResult = GET_BASE_ADDR(
@@ -1402,8 +1402,8 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	tSirMbMsg *pMsg = (tSirMbMsg *) pMsgBuf;
 	struct csr_roam_session *pSession;
 	tSirSmeAssocIndToUpperLayerCnf *pUpperLayerAssocCnf;
-	tCsrRoamInfo roamInfo;
-	tCsrRoamInfo *roam_info = NULL;
+	struct csr_roam_info roamInfo;
+	struct csr_roam_info *roam_info = NULL;
 	uint32_t sessionId;
 
 	if (eWNI_SME_SCAN_RSP == pMsg->type)
@@ -1426,7 +1426,7 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	}
 
 	sme_debug("Scanning: ASSOC cnf can be given to upper layer");
-	qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
+	qdf_mem_set(&roamInfo, sizeof(struct csr_roam_info), 0);
 	roam_info = &roamInfo;
 	pUpperLayerAssocCnf = (tSirSmeAssocIndToUpperLayerCnf *) pMsgBuf;
 	status = csr_roam_get_session_id_from_bssid(pMac,

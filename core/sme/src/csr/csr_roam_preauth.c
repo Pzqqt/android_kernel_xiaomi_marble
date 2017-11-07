@@ -629,7 +629,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hal,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo roam_info;
+	struct csr_roam_info roam_info;
 	eCsrAuthType conn_Auth_type;
 	uint32_t session_id = preauth_rsp->smeSessionId;
 	struct csr_roam_session *csr_session = CSR_GET_SESSION(mac_ctx,

@@ -324,7 +324,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 QDF_STATUS
 wlansap_roam_callback
 	(void *pContext,
-	tCsrRoamInfo *pCsrRoamInfo,
+	struct csr_roam_info *pCsrRoamInfo,
 	uint32_t roamId,
 	eRoamCmdStatus roamStatus, eCsrRoamResult roamResult);
 
@@ -336,7 +336,7 @@ uint8_t sap_select_channel(tHalHandle halHandle, struct sap_context *sap_ctx,
 
 QDF_STATUS
 sap_signal_hdd_event(struct sap_context *sapContext,
-		  tCsrRoamInfo *pCsrRoamInfo,
+		  struct csr_roam_info *pCsrRoamInfo,
 		  eSapHddEvent sapHddevent, void *);
 
 QDF_STATUS sap_fsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent);

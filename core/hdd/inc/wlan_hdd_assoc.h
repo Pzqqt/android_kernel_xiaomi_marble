@@ -249,7 +249,8 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx);
  *
  * Return: QDF_STATUS enumeration
  */
-QDF_STATUS hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *roam_info,
+QDF_STATUS hdd_sme_roam_callback(void *pContext,
+				 struct csr_roam_info *roam_info,
 				 uint32_t roamId,
 				 eRoamCmdStatus roamStatus,
 				 eCsrRoamResult roamResult);
@@ -328,9 +329,9 @@ QDF_STATUS hdd_change_peer_state(struct hdd_adapter *adapter,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo);
+bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo);
 #else
-static inline bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
+static inline bool hdd_is_roam_sync_in_progress(struct csr_roam_info *roaminfo)
 {
 	return false;
 }
@@ -364,14 +365,14 @@ void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
  * Return: None
  */
 void hdd_save_gtk_params(struct hdd_adapter *adapter,
-			 tCsrRoamInfo *csr_roam_info, bool is_reassoc);
+			 struct csr_roam_info *csr_roam_info, bool is_reassoc);
 #else
 static inline void hdd_wma_send_fastreassoc_cmd(struct hdd_adapter *adapter,
 		const tSirMacAddr bssid, int channel)
 {
 }
 static inline void hdd_save_gtk_params(struct hdd_adapter *adapter,
-				       tCsrRoamInfo *csr_roam_info,
+				       struct csr_roam_info *csr_roam_info,
 				       bool is_reassoc)
 {
 }

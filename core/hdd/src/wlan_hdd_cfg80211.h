@@ -211,29 +211,32 @@ typedef enum {
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
 
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
-						tCsrRoamInfo *roam_info);
+struct cfg80211_bss *
+wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
+				struct csr_roam_info *roam_info);
 
 int wlan_hdd_cfg80211_pmksa_candidate_notify(struct hdd_adapter *adapter,
-					tCsrRoamInfo *roam_info,
+					struct csr_roam_info *roam_info,
 					int index, bool preauth);
 
 #ifdef FEATURE_WLAN_LFR_METRICS
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
-						tCsrRoamInfo *roam_info);
+QDF_STATUS
+wlan_hdd_cfg80211_roam_metrics_preauth(struct hdd_adapter *adapter,
+				       struct csr_roam_info *roam_info);
 
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *
-							 adapter,
-							 tCsrRoamInfo *
-							 roam_info,
-							 bool preauth_status);
+QDF_STATUS
+wlan_hdd_cfg80211_roam_metrics_preauth_status(struct hdd_adapter *adapter,
+					      struct csr_roam_info *roam_info,
+					      bool preauth_status);
 
-QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
-						   tCsrRoamInfo *roam_info);
+QDF_STATUS
+wlan_hdd_cfg80211_roam_metrics_handover(struct hdd_adapter *adapter,
+					struct csr_roam_info *roam_info);
 #endif
 
 #ifdef FEATURE_WLAN_WAPI
-void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter, uint8_t key_index,
+void wlan_hdd_cfg80211_set_key_wapi(struct hdd_adapter *adapter,
+				    uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len);
 #endif
@@ -333,9 +336,11 @@ int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
  *
  * Return: 0 on success or failure reason
  */
-int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx, uint32_t reason);
+int wlan_hdd_send_hang_reason_event(struct hdd_context *hdd_ctx,
+				    uint32_t reason);
 
-int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx, uint8_t op_chan);
+int wlan_hdd_send_avoid_freq_for_dnbs(struct hdd_context *hdd_ctx,
+				      uint8_t op_chan);
 
 #ifdef FEATURE_WLAN_EXTSCAN
 void wlan_hdd_cfg80211_extscan_callback(void *ctx,
@@ -357,25 +362,26 @@ void wlan_hdd_rso_cmd_status_cb(void *ctx, struct rso_cmd_status *rso_status);
 void hdd_rssi_threshold_breached(void *hddctx,
 				 struct rssi_breach_event *data);
 
-struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *adapter,
-						tSirMacAddr bssid);
+struct cfg80211_bss *
+wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *adapter,
+				  tSirMacAddr bssid);
 
 int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
-						struct hdd_adapter *adapter,
-						uint32_t scan_timestamp);
+				 struct hdd_adapter *adapter,
+				 uint32_t scan_timestamp);
 
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 		uint8_t *req_rsn_ie, uint32_t req_rsn_length, uint8_t
-		*rsp_rsn_ie, uint32_t rsp_rsn_length, tCsrRoamInfo
+		*rsp_rsn_ie, uint32_t rsp_rsn_length, struct csr_roam_info
 		*roam_info_ptr);
 #else
 static inline int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter,
 		uint8_t *bssid, uint8_t *req_rsn_ie, uint32_t req_rsn_length,
-		uint8_t *rsp_rsn_ie, uint32_t rsp_rsn_length, tCsrRoamInfo
-		*roam_info_ptr)
+		uint8_t *rsp_rsn_ie, uint32_t rsp_rsn_length,
+		struct csr_roam_info *roam_info_ptr)
 {
 	return 0;
 }
@@ -391,7 +397,8 @@ enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 				  bool enable_dfs_channels);
 
-int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wiphy,
+int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
+				  struct wiphy *wiphy,
 				  eCsrBand eBand);
 
 /**

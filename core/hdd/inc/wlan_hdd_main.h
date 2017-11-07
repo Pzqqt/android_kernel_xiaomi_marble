@@ -2436,7 +2436,7 @@ struct cfg80211_bss *hdd_cfg80211_get_bss(struct wiphy *wiphy,
 	const u8 *ssid, size_t ssid_len);
 
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
-			tCsrRoamInfo *roam_info, const u8 *req_ie,
+			struct csr_roam_info *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout,
@@ -2763,12 +2763,13 @@ void hdd_clear_fils_connection_info(struct hdd_adapter *adapter);
  *
  * Return: None
  */
-void hdd_update_hlp_info(struct net_device *dev, tCsrRoamInfo *roam_info);
+void hdd_update_hlp_info(struct net_device *dev,
+			 struct csr_roam_info *roam_info);
 #else
 static inline void hdd_clear_fils_connection_info(struct hdd_adapter *adapter)
 { }
 static inline void hdd_update_hlp_info(struct net_device *dev,
-				       tCsrRoamInfo *roam_info)
+				       struct csr_roam_info *roam_info)
 {}
 #endif
 

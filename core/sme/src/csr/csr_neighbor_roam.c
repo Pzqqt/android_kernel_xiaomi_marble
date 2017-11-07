@@ -109,9 +109,9 @@ void csr_neighbor_roam_send_lfr_metric_event(
 				tSirMacAddr bssid,
 				eRoamCmdStatus status)
 {
-	tCsrRoamInfo *roam_info;
+	struct csr_roam_info *roam_info;
 
-	roam_info = qdf_mem_malloc(sizeof(tCsrRoamInfo));
+	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
 	if (NULL == roam_info) {
 		sme_err("Memory allocation failed!");
 	} else {
@@ -1090,7 +1090,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		&pMac->roam.neighborRoamInfo[session_id];
 	struct csr_roam_session *session = &pMac->roam.roamSession[session_id];
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	tCsrRoamInfo roamInfo;
+	struct csr_roam_info roamInfo;
 	tpSirSetActiveModeSetBncFilterReq msg;
 #endif
 	QDF_STATUS status = QDF_STATUS_SUCCESS;

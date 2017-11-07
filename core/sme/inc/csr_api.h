@@ -540,10 +540,10 @@ typedef enum {
 	eCSR_ROAM_RESULT_SUCCESS = eCSR_ROAM_RESULT_NONE,
 	/*
 	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION,
-	 * tCsrRoamInfo's pBssDesc may pass back
+	 * struct csr_roam_info's pBssDesc may pass back
 	 */
 	eCSR_ROAM_RESULT_FAILURE,
-	/* Pass back pointer to tCsrRoamInfo */
+	/* Pass back pointer to struct csr_roam_info */
 	eCSR_ROAM_RESULT_ASSOCIATED,
 	eCSR_ROAM_RESULT_NOT_ASSOCIATED,
 	eCSR_ROAM_RESULT_MIC_FAILURE,
@@ -552,7 +552,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_DEAUTH_IND,
 	eCSR_ROAM_RESULT_CAP_CHANGED,
 	/*
-	 * This means we starts an IBSS tCsrRoamInfo's
+	 * This means we starts an IBSS struct csr_roam_info's
 	 * pBssDesc may pass back
 	 */
 	eCSR_ROAM_RESULT_IBSS_STARTED,
@@ -562,11 +562,11 @@ typedef enum {
 	eCSR_ROAM_RESULT_IBSS_CONNECT,
 	eCSR_ROAM_RESULT_IBSS_INACTIVE,
 	/*
-	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION
-	 * tCsrRoamInfo's pBssDesc may pass back and the peer's MAC address
-	 * in peerMacOrBssid. If roamStatus is eCSR_ROAM_IBSS_IND,
-	 * the peer's MAC address in peerMacOrBssid and a beacon frame
-	 * of the IBSS in pbFrames
+	 * If roamStatus is eCSR_ROAM_ASSOCIATION_COMPLETION struct
+	 * csr_roam_info's pBssDesc may pass back and the peer's MAC
+	 * address in peerMacOrBssid. If roamStatus is
+	 * eCSR_ROAM_IBSS_IND, the peer's MAC address in
+	 * peerMacOrBssid and a beacon frame of the IBSS in pbFrames
 	 */
 	eCSR_ROAM_RESULT_IBSS_NEW_PEER,
 	/*
@@ -1374,7 +1374,7 @@ typedef struct tagCsrUpdateConfigParam {
 #define CSR_ROAM_AUTH_STATUS_AUTHENTICATED  0x2
 #endif
 
-typedef struct csr_roam_info {
+struct csr_roam_info {
 	tCsrRoamProfile *pProfile;
 	tSirBssDescription *pBssDesc;
 	uint32_t nBeaconLength;
@@ -1507,7 +1507,7 @@ typedef struct csr_roam_info {
 	uint16_t fils_seq_num;
 	struct fils_join_rsp_params *fils_join_rsp;
 #endif
-} tCsrRoamInfo;
+};
 
 typedef struct tagCsrFreqScanInfo {
 	uint32_t nStartFreq;    /* in unit of MHz */
@@ -1712,7 +1712,7 @@ typedef QDF_STATUS (*csr_scan_completeCallback)(tHalHandle, void *p2,
 						uint32_t scanID,
 						eCsrScanStatus status);
 typedef QDF_STATUS (*csr_roam_completeCallback)(void *pContext,
-						tCsrRoamInfo * pParam,
+						struct csr_roam_info *pParam,
 						uint32_t roamId,
 						eRoamCmdStatus roamStatus,
 						eCsrRoamResult roamResult);
@@ -1778,11 +1778,13 @@ typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);
 #endif
 typedef void (*tCsrLinkStatusCallback)(uint8_t status, void *pContext);
 #ifdef FEATURE_WLAN_TDLS
-void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
-				tpSirSmeJoinRsp join_rsp);
+void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx,
+			     struct csr_roam_info *roam_info,
+			     tpSirSmeJoinRsp join_rsp);
 #else
-static inline void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx, tCsrRoamInfo *roam_info,
-				tpSirSmeJoinRsp join_rsp)
+static inline void csr_roam_fill_tdls_info(tpAniSirGlobal mac_ctx,
+					   struct csr_roam_info *roam_info,
+					   tpSirSmeJoinRsp join_rsp)
 {}
 #endif
 void csr_packetdump_timer_stop(void);

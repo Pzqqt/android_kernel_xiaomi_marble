@@ -1341,7 +1341,7 @@ static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
 		struct scheduler_msg *msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo roam_info = { 0 };
+	struct csr_roam_info roam_info = { 0 };
 	tSirSmeCSAIeTxCompleteRsp *csa_ie_tx_complete_rsp;
 	uint32_t session_id = 0;
 	eRoamCmdStatus roam_status;
@@ -1408,7 +1408,7 @@ QDF_STATUS sme_unprotected_mgmt_frm_ind(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo roam_info = { 0 };
+	struct csr_roam_info roam_info = { 0 };
 	uint32_t SessionId = pSmeMgmtFrm->sessionId;
 
 	roam_info.nFrameLength = pSmeMgmtFrm->frameLen;
@@ -1427,7 +1427,7 @@ QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	tCsrRoamInfo *roamInfo;
+	struct csr_roam_info *roamInfo;
 	eRoamCmdStatus roamStatus;
 	eCsrRoamResult roamResult;
 
@@ -1465,7 +1465,7 @@ static QDF_STATUS sme_extended_change_channel_ind(tpAniSirGlobal mac_ctx,
 	struct sir_sme_ext_cng_chan_ind *ext_chan_ind;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t session_id = 0;
-	tCsrRoamInfo roamInfo = {0};
+	struct csr_roam_info roamInfo = {0};
 	eRoamCmdStatus roam_status;
 	eCsrRoamResult roam_result;
 
@@ -1668,7 +1668,7 @@ static QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo roam_info = { 0 };
+	struct csr_roam_info roam_info = { 0 };
 	uint32_t SessionId = pSmeTsmIeInd->sessionId;
 
 	roam_info.tsmIe.tsid = pSmeTsmIeInd->tsmIe.tsid;
@@ -7023,7 +7023,7 @@ void sme_send_hlp_ie_info(tHalHandle hal, uint8_t session_id,
 	sme_release_global_lock(&mac->sme);
 }
 
-void sme_free_join_rsp_fils_params(tCsrRoamInfo *roam_info)
+void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
 {
 	struct fils_join_rsp_params *roam_fils_params;
 
@@ -10629,7 +10629,7 @@ static QDF_STATUS sme_process_channel_change_resp(tpAniSirGlobal pMac,
 					   uint16_t msg_type, void *pMsgBuf)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo proam_info = { 0 };
+	struct csr_roam_info proam_info = { 0 };
 	eCsrRoamResult roamResult;
 	tpSwitchChannelParams pChnlParams = (tpSwitchChannelParams) pMsgBuf;
 	uint32_t SessionId = pChnlParams->peSessionId;
@@ -15033,7 +15033,7 @@ QDF_STATUS sme_set_lost_link_info_cb(tHalHandle hal,
 }
 
 #ifdef FEATURE_WLAN_ESE
-bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info)
+bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
 {
 	return roam_info->isESEAssoc;
 }

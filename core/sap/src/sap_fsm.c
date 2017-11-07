@@ -2299,7 +2299,7 @@ static void sap_handle_acs_scan_event(struct sap_context *sap_context,
  * Return: QDF_STATUS
  */
 QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
-		tCsrRoamInfo *csr_roaminfo, eSapHddEvent sap_hddevent,
+		struct csr_roam_info *csr_roaminfo, eSapHddEvent sap_hddevent,
 		void *context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -2894,7 +2894,8 @@ static QDF_STATUS wlansap_update_pre_cac_end(struct sap_context *sap_context,
 
    SIDE EFFECTS
    ============================================================================*/
-static QDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
+static QDF_STATUS sap_cac_end_notify(tHalHandle hHal,
+				     struct csr_roam_info *roamInfo)
 {
 	uint8_t intf;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -3244,7 +3245,8 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
-	tCsrRoamInfo *roam_info = (tCsrRoamInfo *) (sap_event->params);
+	struct csr_roam_info *roam_info =
+		(struct csr_roam_info *) (sap_event->params);
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_DFS_CHANNEL_CAC_START) {
@@ -3350,7 +3352,8 @@ static QDF_STATUS sap_fsm_state_starting(struct sap_context *sap_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
-	tCsrRoamInfo *roam_info = (tCsrRoamInfo *) (sap_event->params);
+	struct csr_roam_info *roam_info =
+		(struct csr_roam_info *) (sap_event->params);
 	tSapDfsInfo *sap_dfs_info;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t is_dfs = false;

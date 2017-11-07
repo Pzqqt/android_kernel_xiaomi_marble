@@ -133,7 +133,7 @@ QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
-	tCsrRoamInfo RoamInfo;
+	struct csr_roam_info RoamInfo;
 	struct sir_roc_rsp *rsp =  (struct sir_roc_rsp *)pMsg;
 
 	csr_get_active_scan_entry(pMac, rsp->scan_id, &pEntry);

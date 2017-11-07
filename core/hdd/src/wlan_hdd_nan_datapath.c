@@ -881,7 +881,7 @@ static void hdd_ndp_iface_create_rsp_handler(struct hdd_adapter *adapter,
 	uint32_t create_reason = NDP_NAN_DATA_IFACE_CREATE_FAILED;
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	tCsrRoamInfo *roam_info;
+	struct csr_roam_info *roam_info;
 	struct bss_description tmp_bss_descp = {0};
 
 	ENTER();
@@ -1242,7 +1242,7 @@ static void hdd_ndp_new_peer_ind_handler(struct hdd_adapter *adapter,
 	struct sme_ndp_peer_ind *new_peer_ind = ind_params;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct bss_description tmp_bss_descp = {0};
-	tCsrRoamInfo *roam_info;
+	struct csr_roam_info *roam_info;
 	struct nan_datapath_ctx *ndp_ctx = WLAN_HDD_GET_NDP_CTX_PTR(adapter);
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
@@ -1843,8 +1843,9 @@ ndp_end_ind_nla_failed:
  * Return: none
  */
 void hdd_ndp_event_handler(struct hdd_adapter *adapter,
-	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
-	eCsrRoamResult roam_result)
+			   struct csr_roam_info *roam_info,
+			   uint32_t roam_id, eRoamCmdStatus roam_status,
+			   eCsrRoamResult roam_result)
 {
 	if (roam_status == eCSR_ROAM_NDP_STATUS_UPDATE) {
 		switch (roam_result) {
@@ -1897,8 +1898,9 @@ void hdd_ndp_event_handler(struct hdd_adapter *adapter,
 }
 #else
 void hdd_ndp_event_handler(struct hdd_adapter *adapter,
-	tCsrRoamInfo *roam_info, uint32_t roam_id, eRoamCmdStatus roam_status,
-	eCsrRoamResult roam_result)
+			   struct csr_roam_info *roam_info,
+			   uint32_t roam_id, eRoamCmdStatus roam_status,
+			   eCsrRoamResult roam_result)
 {
 	bool success;
 	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(adapter->hdd_vdev);
@@ -2281,7 +2283,7 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 				struct nan_datapath_inf_create_rsp *ndi_rsp)
 {
-	tCsrRoamInfo roam_info = {0};
+	struct csr_roam_info roam_info = {0};
 	struct bss_description tmp_bss_descp = {0};
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
@@ -2356,7 +2358,7 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	struct bss_description tmp_bss_descp = {0};
-	tCsrRoamInfo roam_info = {0};
+	struct csr_roam_info roam_info = {0};
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER();

@@ -402,7 +402,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
 					uint32_t *roam_result,
-					tCsrRoamInfo *roam_info)
+					struct csr_roam_info *roam_info)
 {
 
 	switch (result) {
@@ -602,7 +602,7 @@ QDF_STATUS csr_process_ndp_data_end_request(tpAniSirGlobal mac_ctx,
  */
 void sme_ndp_msg_processor(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg)
 {
-	tCsrRoamInfo roam_info = {0};
+	struct csr_roam_info roam_info = {0};
 	eCsrRoamResult result;
 	uint32_t session_id;
 	tListElem *entry = NULL;

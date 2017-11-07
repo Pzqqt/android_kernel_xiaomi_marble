@@ -1795,7 +1795,8 @@ QDF_STATUS hdd_wmm_acquire_access(struct hdd_adapter *adapter,
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_assoc(struct hdd_adapter *adapter,
-			 tCsrRoamInfo *roam_info, eCsrRoamBssType eBssType)
+			 struct csr_roam_info *roam_info,
+			 eCsrRoamBssType eBssType)
 {
 	uint8_t uapsdMask;
 	QDF_STATUS status;
@@ -1913,7 +1914,8 @@ static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
  * Return: QDF_STATUS enumeration
  */
 QDF_STATUS hdd_wmm_connect(struct hdd_adapter *adapter,
-			   tCsrRoamInfo *roam_info, eCsrRoamBssType eBssType)
+			   struct csr_roam_info *roam_info,
+			   eCsrRoamBssType eBssType)
 {
 	int ac;
 	bool qap;

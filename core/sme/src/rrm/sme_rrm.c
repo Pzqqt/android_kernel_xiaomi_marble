@@ -283,7 +283,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	uint8_t bss_counter = 0;
 	tCsrScanResultInfo *cur_result = NULL;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
-	tCsrRoamInfo roam_info;
+	struct csr_roam_info roam_info;
 	tSirEseBcnReportRsp bcn_rpt_rsp;
 	tpSirEseBcnReportRsp bcn_report = &bcn_rpt_rsp;
 	tpCsrEseBeaconReqParams cur_meas_req = NULL;
@@ -423,7 +423,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	uint8_t counter = 0;
 	tpRrmSMEContext rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
-	tCsrRoamInfo *roam_info;
+	struct csr_roam_info *roam_info;
 
 	qdf_mem_zero(&filter, sizeof(filter));
 	qdf_mem_zero(scanresults_arr,

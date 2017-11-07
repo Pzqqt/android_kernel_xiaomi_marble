@@ -1357,9 +1357,9 @@ QDF_STATUS sme_update_long_retry_limit_threshold(tHalHandle hal_handle,
  * Return: true if ESE Association, false otherwise.
  */
 #ifdef FEATURE_WLAN_ESE
-bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info);
+bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info);
 #else
-static inline bool sme_roam_is_ese_assoc(tCsrRoamInfo *roam_info)
+static inline bool sme_roam_is_ese_assoc(struct csr_roam_info *roam_info)
 {
 	return false;
 }
@@ -1842,7 +1842,7 @@ QDF_STATUS sme_update_fils_config(tHalHandle hal, uint8_t session_id,
  *
  * Return: void
  */
-void sme_free_join_rsp_fils_params(tCsrRoamInfo *roam_info);
+void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info);
 #else
 static inline QDF_STATUS sme_update_fils_config(tHalHandle hal,
 				uint8_t session_id,
@@ -1851,7 +1851,8 @@ static inline QDF_STATUS sme_update_fils_config(tHalHandle hal,
 	return QDF_STATUS_SUCCESS;
 }
 
-static inline void sme_free_join_rsp_fils_params(tCsrRoamInfo *roam_info)
+static inline
+void sme_free_join_rsp_fils_params(struct csr_roam_info *roam_info)
 {}
 
 #endif

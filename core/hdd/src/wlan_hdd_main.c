@@ -4881,7 +4881,8 @@ static inline void hdd_populate_fils_params(struct cfg80211_connect_resp_params
 { }
 #endif
 
-void hdd_update_hlp_info(struct net_device *dev, tCsrRoamInfo *roam_info)
+void hdd_update_hlp_info(struct net_device *dev,
+			 struct csr_roam_info *roam_info)
 {
 	struct sk_buff *skb;
 	uint16_t skb_len;
@@ -4965,7 +4966,8 @@ void hdd_update_hlp_info(struct net_device *dev, tCsrRoamInfo *roam_info)
  * Return: None
  */
 static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
-			     struct cfg80211_bss *bss, tCsrRoamInfo *roam_info,
+			     struct cfg80211_bss *bss,
+			     struct csr_roam_info *roam_info,
 			     const u8 *req_ie, size_t req_ie_len,
 			     const u8 *resp_ie, size_t resp_ie_len, u16 status,
 			     gfp_t gfp, bool connect_timeout,
@@ -5016,7 +5018,7 @@ static void hdd_connect_done(struct net_device *dev, const u8 *bssid,
 #else
 static inline void
 hdd_connect_done(struct net_device *dev, const u8 *bssid,
-		 struct cfg80211_bss *bss, tCsrRoamInfo *roam_info,
+		 struct cfg80211_bss *bss, struct csr_roam_info *roam_info,
 		 const u8 *req_ie, size_t req_ie_len,
 		 const u8 *resp_ie, size_t resp_ie_len, u16 status,
 		 gfp_t gfp, bool connect_timeout,
@@ -5051,7 +5053,7 @@ hdd_connect_done(struct net_device *dev, const u8 *bssid,
 static int hdd_fils_update_connect_results(struct net_device *dev,
 			const u8 *bssid,
 			struct cfg80211_bss *bss,
-			tCsrRoamInfo *roam_info, const u8 *req_ie,
+			struct csr_roam_info *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout,
@@ -5070,7 +5072,7 @@ static int hdd_fils_update_connect_results(struct net_device *dev,
 static inline int hdd_fils_update_connect_results(struct net_device *dev,
 			const u8 *bssid,
 			struct cfg80211_bss *bss,
-			tCsrRoamInfo *roam_info, const u8 *req_ie,
+			struct csr_roam_info *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout,
@@ -5100,7 +5102,7 @@ static inline int hdd_fils_update_connect_results(struct net_device *dev,
  * Return: Void
  */
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
-			tCsrRoamInfo *roam_info, const u8 *req_ie,
+			struct csr_roam_info *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout,
@@ -5141,7 +5143,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 }
 #else
 void hdd_connect_result(struct net_device *dev, const u8 *bssid,
-			tCsrRoamInfo *roam_info, const u8 *req_ie,
+			struct csr_roam_info *roam_info, const u8 *req_ie,
 			size_t req_ie_len, const u8 *resp_ie,
 			size_t resp_ie_len, u16 status, gfp_t gfp,
 			bool connect_timeout,
