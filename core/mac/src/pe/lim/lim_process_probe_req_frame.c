@@ -665,6 +665,13 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 
 	MTRACE(mac_trace(pMac, TRACE_CODE_TX_SME_MSG,
 				psessionEntry->peSessionId, msgQ.type));
+
+	if (ProbeReqIELen > sizeof(pSirSmeProbeReqInd->WPSPBCProbeReq.
+	    probeReqIE)) {
+		ProbeReqIELen = sizeof(pSirSmeProbeReqInd->WPSPBCProbeReq.
+				       probeReqIE);
+	}
+
 	pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIELen =
 		(uint16_t) ProbeReqIELen;
 	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIE, pProbeReqIE,
