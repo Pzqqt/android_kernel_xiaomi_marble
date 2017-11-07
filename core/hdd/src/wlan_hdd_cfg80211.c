@@ -18391,7 +18391,7 @@ static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 static
 int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				    struct net_device *dev,
-				    struct tagCsrDelStaParams *pDelStaParams)
+				    struct csr_del_sta_params *pDelStaParams)
 {
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct hdd_context *hdd_ctx;
@@ -18607,7 +18607,7 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 #endif
 {
 	int ret;
-	struct tagCsrDelStaParams delStaParams;
+	struct csr_del_sta_params delStaParams;
 
 	cds_ssr_protect(__func__);
 #if defined(USE_CFG80211_DEL_STA_V2)

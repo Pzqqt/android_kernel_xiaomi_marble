@@ -4039,7 +4039,7 @@ QDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
  */
 QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
-					       struct tagCsrDelStaParams
+					       struct csr_del_sta_params
 					       *p_del_sta_params)
 
 {
@@ -4080,7 +4080,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
  */
 QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 		uint32_t sessionId,
-		struct tagCsrDelStaParams *pDelStaParams)
+		struct csr_del_sta_params *pDelStaParams)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeCmd *pCommand;

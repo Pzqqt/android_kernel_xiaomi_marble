@@ -1015,7 +1015,7 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
  *         QDF_STATUS_SUCCESS:  Success
  */
 QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
-				struct tagCsrDelStaParams *p_del_sta_params);
+				struct csr_del_sta_params *p_del_sta_params);
 
 /**
  * wlansap_deauth_sta() - Ap App/HDD initiated deauthentication of station
@@ -1028,7 +1028,7 @@ QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
  * Return: The QDF_STATUS code associated with performing the operation
  */
 QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
-			      struct tagCsrDelStaParams *pDelStaParams);
+			      struct csr_del_sta_params *pDelStaParams);
 
 /**
  * wlansap_set_channel_change_with_csa() - Set channel change with CSA
@@ -1329,7 +1329,7 @@ QDF_STATUS wlan_sap_set_vendor_acs(struct sap_context *sap_context,
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,
 		uint8_t subtype,
-		struct tagCsrDelStaParams *pDelStaParams);
+		struct csr_del_sta_params *pDelStaParams);
 
 /**
  * wlansap_acs_chselect() - Initiates acs channel selection

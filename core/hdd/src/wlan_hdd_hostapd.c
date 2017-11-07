@@ -797,7 +797,7 @@ static void hdd_clear_sta(struct hdd_adapter *adapter, uint8_t sta_id)
 {
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_info *sta_info;
-	struct tagCsrDelStaParams del_sta_params;
+	struct csr_del_sta_params del_sta_params;
 
 	ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
@@ -4659,7 +4659,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	struct hdd_context *hdd_ctx;
 	uint8_t *peerMacAddr;
 	int ret;
-	struct tagCsrDelStaParams del_sta_params;
+	struct csr_del_sta_params del_sta_params;
 
 	ENTER_DEV(dev);
 

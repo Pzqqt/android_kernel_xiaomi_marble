@@ -112,9 +112,9 @@ eCsrEncryptionType
 hdd_translate_wpa_to_csr_encryption_type(uint8_t cipher_suite[4]);
 
 QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
-		struct tagCsrDelStaParams *pDelStaParams);
+		struct csr_del_sta_params *pDelStaParams);
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
-			     struct tagCsrDelStaParams *pDelStaParams);
+			     struct csr_del_sta_params *pDelStaParams);
 int hdd_softap_unpack_ie(tHalHandle halHandle,
 			 eCsrEncryptionType *pEncryptType,
 			 eCsrEncryptionType *mcEncryptType,

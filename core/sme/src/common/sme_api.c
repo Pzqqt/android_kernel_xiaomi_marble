@@ -3439,7 +3439,7 @@ QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId)
  *         be called to indicate actual result.
  */
 QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
-				   struct tagCsrDelStaParams *p_del_sta_params)
+				   struct csr_del_sta_params *p_del_sta_params)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -3475,7 +3475,7 @@ QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
  *         result
  */
 QDF_STATUS sme_roam_deauth_sta(tHalHandle hHal, uint8_t sessionId,
-			       struct tagCsrDelStaParams *pDelStaParams)
+			       struct csr_del_sta_params *pDelStaParams)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

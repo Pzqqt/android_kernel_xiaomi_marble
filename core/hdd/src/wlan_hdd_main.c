@@ -10202,7 +10202,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
  * Return: None
  */
 QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
-				 struct tagCsrDelStaParams *pDelStaParams)
+				 struct csr_del_sta_params *pDelStaParams)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
@@ -10230,7 +10230,7 @@ QDF_STATUS hdd_softap_sta_deauth(struct hdd_adapter *adapter,
  * Return: None
  */
 void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
-			     struct tagCsrDelStaParams *pDelStaParams)
+			     struct csr_del_sta_params *pDelStaParams)
 {
 	ENTER();
 

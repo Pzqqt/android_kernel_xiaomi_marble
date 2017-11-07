@@ -1684,7 +1684,7 @@ typedef struct tagCsrEseBeaconReq {
 } tCsrEseBeaconReq, *tpCsrEseBeaconReq;
 #endif /* FEATURE_WLAN_ESE */
 
-struct tagCsrDelStaParams {
+struct csr_del_sta_params {
 	struct qdf_mac_addr peerMacAddr;
 	uint16_t reason_code;
 	uint8_t subtype;

@@ -1011,7 +1011,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 		} else if (cmd == DELETE_STA_FROM_ACL) {
 			if (sta_white_list) {
 
-				struct tagCsrDelStaParams delStaParams;
+				struct csr_del_sta_params delStaParams;
 
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO,
@@ -1048,7 +1048,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 	case eSAP_BLACK_LIST:
 
 		if (cmd == ADD_STA_TO_ACL) {
-			struct tagCsrDelStaParams delStaParams;
+			struct csr_del_sta_params delStaParams;
 			/* error check */
 			/* if list is already at max, return failure */
 			if (sap_ctx->nDenyMac == MAX_ACL_MAC_ADDRESS) {
@@ -1140,7 +1140,7 @@ QDF_STATUS wlansap_modify_acl(struct sap_context *sap_ctx,
 }
 
 QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
-				struct tagCsrDelStaParams *p_del_sta_params)
+				struct csr_del_sta_params *p_del_sta_params)
 {
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1155,7 +1155,7 @@ QDF_STATUS wlansap_disassoc_sta(struct sap_context *sap_ctx,
 }
 
 QDF_STATUS wlansap_deauth_sta(struct sap_context *sap_ctx,
-			      struct tagCsrDelStaParams *pDelStaParams)
+			      struct csr_del_sta_params *pDelStaParams)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
@@ -2487,7 +2487,7 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 				     uint16_t reason_code,
 				     uint8_t subtype,
-				     struct tagCsrDelStaParams *pDelStaParams)
+				     struct csr_del_sta_params *pDelStaParams)
 {
 	if (NULL == mac)
 		qdf_set_macaddr_broadcast(&pDelStaParams->peerMacAddr);
