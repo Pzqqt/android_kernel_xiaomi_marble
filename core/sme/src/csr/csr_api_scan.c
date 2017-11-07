@@ -2414,6 +2414,8 @@ csr_diag_scan_complete(tpAniSirGlobal mac_ctx,
 		sme_err("get scan result failed");
 		WLAN_HOST_DIAG_LOG_REPORT(pScanLog);
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+		if (list)
+			ucfg_scan_purge_results(list);
 		return;
 	}
 
