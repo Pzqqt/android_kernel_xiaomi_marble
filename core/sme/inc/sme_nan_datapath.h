@@ -166,7 +166,7 @@ void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
 					uint32_t *roam_result,
-					struct tagCsrRoamInfo *roam_info);
+					struct csr_roam_info *roam_info);
 
 #else
 /* Start NDI BSS */
@@ -188,7 +188,7 @@ static inline void csr_roam_update_ndp_return_params(tpAniSirGlobal mac_ctx,
 					uint32_t result,
 					uint32_t *roam_status,
 					uint32_t *roam_result,
-					struct tagCsrRoamInfo *roam_info)
+					struct csr_roam_info *roam_info)
 {
 }
 

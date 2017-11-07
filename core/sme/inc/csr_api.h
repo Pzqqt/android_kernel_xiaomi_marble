@@ -1374,7 +1374,7 @@ typedef struct tagCsrUpdateConfigParam {
 #define CSR_ROAM_AUTH_STATUS_AUTHENTICATED  0x2
 #endif
 
-typedef struct tagCsrRoamInfo {
+typedef struct csr_roam_info {
 	tCsrRoamProfile *pProfile;
 	tSirBssDescription *pBssDesc;
 	uint32_t nBeaconLength;
