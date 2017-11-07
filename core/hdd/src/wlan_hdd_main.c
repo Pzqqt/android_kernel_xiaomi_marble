@@ -12125,8 +12125,8 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.rssi_cat_gap = cfg->nRssiCatGap;
 	scan_cfg.scan_dwell_time_mode = cfg->scan_adaptive_dwell_mode;
 	scan_cfg.is_snr_monitoring_enabled = cfg->fEnableSNRMonitoring;
-	scan_cfg.usr_cfg_probe_rpt_time = cfg->scan_probe_repeat_time ;
-	scan_cfg.usr_cfg_num_probes = cfg->scan_num_probes ;
+	scan_cfg.usr_cfg_probe_rpt_time = cfg->scan_probe_repeat_time;
+	scan_cfg.usr_cfg_num_probes = cfg->scan_num_probes;
 	scan_cfg.is_bssid_hint_priority = cfg->is_bssid_hint_priority;
 	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
 
