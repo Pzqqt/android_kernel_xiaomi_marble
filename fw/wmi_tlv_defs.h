@@ -864,6 +864,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_fd_send_from_host_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_enable_fils_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_host_swfda_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_bcn_offload_ctrl_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1211,6 +1212,7 @@ typedef enum {
     OP(WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID) \
     OP(WMI_PDEV_SEND_FD_CMDID) \
     OP(WMI_ENABLE_FILS_CMDID) \
+    OP(WMI_BCN_OFFLOAD_CTRL_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -2073,7 +2075,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_KEEPALIVE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_get_keepalive_cmd_fixed_param, wmi_vdev_get_keepalive_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_GET_KEEPALIVE_CMDID);
 
-/*FWTEST Set TBTT mode Cmd*/
+/* Vdev cmd to enable/disable fw offloaded beacons. */
+#define WMITLV_TABLE_WMI_BCN_OFFLOAD_CTRL_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_bcn_offload_ctrl_cmd_fixed_param, wmi_bcn_offload_ctrl_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_BCN_OFFLOAD_CTRL_CMDID);
+
+/* FWTEST Set TBTT mode Cmd */
 #define WMITLV_TABLE_WMI_FWTEST_VDEV_MCC_SET_TBTT_MODE_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_mcc_set_tbtt_mode_cmd_fixed_param, wmi_vdev_mcc_set_tbtt_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_FWTEST_VDEV_MCC_SET_TBTT_MODE_CMDID);

@@ -233,6 +233,8 @@ typedef  enum  {
                                     * cycle value. FW will also report thermal
                                     * throttling status to host through this
                                     * service. */
+    WMI_SERVICE_BCN_OFFLOAD_START_STOP_SUPPORT=141, /* support dynamically enabling / disabling beacon tx offload */
+
 
     /******* ADD NEW SERVICES HERE *******/
 
