@@ -913,7 +913,7 @@ typedef struct tagCsrRoamModifyProfileFields {
 	uint16_t listen_interval;
 } tCsrRoamModifyProfileFields;
 
-typedef struct tagCsrRoamProfile {
+typedef struct csr_roam_profile {
 	tCsrSSIDs SSIDs;
 	tCsrBSSIDs BSSIDs;
 	/* this is bit mask of all the needed phy mode defined in eCsrPhyMode */

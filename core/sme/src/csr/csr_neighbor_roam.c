@@ -961,7 +961,7 @@ static void csr_neighbor_roam_info_ctx_init(
 	tpCsrNeighborRoamControlInfo ngbr_roam_info =
 		&pMac->roam.neighborRoamInfo[session_id];
 	struct csr_roam_session *session = &pMac->roam.roamSession[session_id];
-	struct tagCsrRoamProfile *roam_profile = session->pCurRoamProfile;
+	struct csr_roam_profile *roam_profile = session->pCurRoamProfile;
 	int init_ft_flag = false;
 
 	/*
