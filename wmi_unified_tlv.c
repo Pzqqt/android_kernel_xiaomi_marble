@@ -16304,6 +16304,10 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
 			ev->wmi_service_segment_bitmap,
 			(WMI_SERVICE_SEGMENT_BM_SIZE32 * sizeof(uint32_t)));
 
+	WMI_LOGD("wmi_ext_service_bitmap 0:0x%x, 1:0x%x, 2:0x%x, 3:0x%x\n",
+			soc->wmi_ext_service_bitmap[0], soc->wmi_ext_service_bitmap[1],
+			soc->wmi_ext_service_bitmap[2], soc->wmi_ext_service_bitmap[3]);
+
 	if (bitmap_buf)
 		qdf_mem_copy(bitmap_buf,
 			soc->wmi_ext_service_bitmap,
@@ -20359,7 +20363,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_smart_antenna_hw_support] =
 				WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_enhanced_proxy_sta] = WMI_SERVICE_UNAVAILABLE;
-	wmi_service[wmi_service_tt] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_tt] = WMI_SERVICE_THERM_THROT;
 	wmi_service[wmi_service_atf] = WMI_SERVICE_ATF;
 	wmi_service[wmi_service_peer_caching] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_coex_gpio] = WMI_SERVICE_UNAVAILABLE;
