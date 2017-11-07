@@ -136,7 +136,7 @@ struct htt_host_rx_desc_base {
 
 #ifdef DEBUG_RX_RING_BUFFER
 #define NBUF_MAP_ID(skb) \
-	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.map_index)
+	(((struct qdf_nbuf_cb *)((skb)->cb))->u.rx.dev.priv_cb_m.map_index)
 
 #ifdef MSM_PLATFORM
 #define HTT_ADDRESS_MASK   0xfffffffffffffffe
@@ -265,7 +265,7 @@ static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 			rx_desc->msdu_start.ipv6_proto;
 		QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
 			rx_desc->msdu_start.l4_offset;
-		QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
+		QDF_NBUF_CB_RX_FLOW_ID(msdu) =
 			rx_desc->msdu_start.flow_id_toeplitz;
 	}
 }
