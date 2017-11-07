@@ -4035,7 +4035,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	uint32_t num_ssid = profile->SSIDs.numOfSSIDs;
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
-	uint8_t i, chan, num_chan = 0, str[MAX_SSID_LEN];
+	uint8_t i, chan, num_chan = 0;
 	wlan_scan_id scan_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
@@ -4129,10 +4129,8 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 				profile->SSIDs.SSIDList[0].SSID.length);
 		req->scan_req.ssid[0].length =
 				profile->SSIDs.SSIDList[0].SSID.length;
-		qdf_mem_copy(str, req->scan_req.ssid[0].ssid,
-			req->scan_req.ssid[0].length);
-		str[req->scan_req.ssid[0].length] = 0;
-		sme_debug("scan for SSID = %s", str);
+		sme_debug("scan for SSID = %.*s", req->scan_req.ssid[0].length,
+			  req->scan_req.ssid[0].ssid);
 	}
 	status = ucfg_scan_start(req);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
