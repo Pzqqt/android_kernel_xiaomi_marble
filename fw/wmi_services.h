@@ -234,7 +234,7 @@ typedef  enum  {
                                     * throttling status to host through this
                                     * service. */
     WMI_SERVICE_BCN_OFFLOAD_START_STOP_SUPPORT=141, /* support dynamically enabling / disabling beacon tx offload */
-
+    WMI_SERVICE_WOW_WAKEUP_BY_TIMER_PATTERN=142, /* fw to support waking up host from wow pattern timer */
 
     /******* ADD NEW SERVICES HERE *******/
 
