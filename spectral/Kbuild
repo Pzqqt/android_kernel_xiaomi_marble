@@ -1,0 +1,205 @@
+ifeq ($(obj),)
+obj := .
+endif
+
+DEPTH := ../..
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+export QCA_PARTNER_MAKE_F_INC=1
+endif
+
+include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
+
+INCS += -I$(HAL) -I$(HAL)/$(OS) -I$(ATH) -I$(ATH_RATE) -I$(ATH_PKTLOG) -I$(WLAN) -I$(IF_WLAN) -I$(ATH_SPECTRAL) -I$(ATHEROSPATH) -I$(obj)/$(DEPTH)/../../apps/spectral/common
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/scheduler/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/global_lmac_if/inc
+INCS += -I$(obj)/$(DEPTH)/umac/scan
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/umac/son/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
+
+ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
+endif
+
+#Start of offload related deifines
+HOST_CMN_CONVG_SRC := $(DEPTH)/cmn_dev
+HOST_CMN_CONVG_HIF_SRC := $(DEPTH)/cmn_dev/hif/src
+HOST_CMN_CONVG_HIF_INC1 := $(DEPTH)/cmn_dev/hif
+HOST_CMN_CONVG_HTC_INC := $(DEPTH)/cmn_dev/htc
+HOST_CMN_CONVG_DP_INC := $(DEPTH)/cmn_dev/dp/wifi3.0
+HOST_CMN_CONVG_CFG_INC := $(DEPTH)/cmn_dev/wlan_cfg
+HOST_CMN_CONVG_HAL_INC := $(DEPTH)/cmn_dev/hal/inc
+HOST_CMN_CONVG_HAL_WIFI_INC := $(DEPTH)/cmn_dev/hal/wifi3.0
+
+INCS += -I$(obj)/$(DEPTH)/include -I$(obj)/$(DEPTH)/umac/include \
+        -I$(obj)/$(DEPTH)/umac/if_lmac -I$(obj)/$(DEPTH)/umac/crypto \
+        -I$(obj)/$(DEPTH)/umac/scan -I$(obj)/$(DEPTH)/umac/resmgr \
+        -I$(obj)/$(DEPTH)/umac/pm -I$(obj)/$(DEPTH)/umac/txrx \
+        -I$(obj)/$(DEPTH)/umac/acs -I$(obj)/$(DEPTH)/umac/txbf \
+        -I$(obj)/$(DEPTH)/umac/wnm \
+        -I$(obj)/$(DEPTH)/umac/tdls \
+        -I$(obj)/$(DEPTH)/umac/rpt_placement \
+        -I$(obj)/$(DEPTH)/umac/wifipos \
+        -I$(obj)/$(DEPTH)/umac/wds -I$(obj)/$(DEPTH)/umac/ique \
+        -I$(obj)/$(DEPTH)/hal -I$(obj)/$(DEPTH)/lmac/ath_dev \
+        -I$(obj)/$(DEPTH)/hal/$(OS) \
+        -I$(obj)/$(DEPTH)/umac/vi_dbg \
+        -I$(obj)/$(DEPTH)/umac/smart_antenna \
+        -I$(obj)/$(DEPTH)/umac/smart_ant \
+        -I$(obj)/$(DEPTH)/umac/ald \
+        -I$(obj)/$(DEPTH)/lmac/ath_pktlog \
+        -I$(obj)/$(DEPTH)/lmac/ratectrl \
+        -I$(obj)/$(DEPTH)/os/linux/mem/ \
+        -I$(obj)/$(DEPTH)/umac/base \
+        -I$(obj)/$(DEPTH)/qca_ol \
+        -I$(obj)/$(DEPTH)/cmn_dev/qdf/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/qdf/linux/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/ce \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/pcie \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/snoc \
+        -I$(obj)/$(DEPTH)/cmn_dev/hif/src/dispatcher \
+        -I$(obj)/$(DEPTH)/cmn_dev/pld_stub/inc  \
+        -I$(obj)/$(DEPTH)/cmn_dev/hal/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/hal/wifi3.0 \
+        -I$(obj)/$(DEPTH)/cmn_dev/dp/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/dp/wifi3.0 \
+        -I$(obj)/$(DEPTH)/cmn_dev/wlan_cfg \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/htc \
+        -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/scheduler/inc \
+        -I$(obj)/$(HOST_CMN_CONVG_SRC)/init_deinit/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/init_deinit/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/global_lmac_if/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/core/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/umac/scan \
+        -I$(obj)/$(DEPTH)/cmn_dev/ol_if \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/scan/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/serialization/core/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc \
+        -I$(obj)/$(DEPTH)/cmn_dev/target_if/regulatory/inc \
+
+PERF_PWR_OFFLOAD_INC += -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/ath_pktlog/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/htt/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/txrx/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/hif/pci \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/hif/pci/linux   \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/os/linux/include \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/regdmn \
+ -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/lmac_offload_if \
+ -I$(HOST_CMN_CONVG_HIF_INC1)/inc \
+ -I$(HOST_CMN_CONVG_HIF_INC1)/src \
+ -I$(HOST_CMN_CONVG_HIF_INC1)/src/pcie \
+ -I$(HOST_CMN_CONVG_HIF_INC1)/src/snoc \
+ -I$(HOST_CMN_CONVG_SRC)/pld_stub/inc \
+ -I$(HOST_CMN_CONVG_HIF_SRC)/ce \
+ -I$(HOST_CMN_CONVG_HTC_INC) \
+ -I$(HOST_CMN_CONVG_CFG_INC) \
+ -I$(HOST_CMN_CONVG_DP_INC) \
+ -I$(HOST_CMN_CONVG_HAL_INC) \
+ -I$(HOST_CMN_CONVG_HAL_WIFI_INC) \
+ -I$(PERF_PWR_OFFLOAD_WMI_SRC)/inc \
+ -I$(obj)/$(DEPTH)/offload/extra_include
+
+INCS += $(PERF_PWR_OFFLOAD_INC)
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/spectral
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc
+INCS += -I$(PERF_PWR_OFFLOAD_DIR_PATH)/hw/include
+#end of offload related defines
+
+#Start of Legacy spectral related defines
+INCS += -I$(HAL) -I$(HAL)/$(OS) -I$(ATH) -I$(ATH_RATE) -I$(ATH_PKTLOG) -I$(WLAN) -I$(IF_WLAN) -I$(ATH_SPECTRAL) -I$(ATHEROSPATH) -I$(obj)/$(DEPTH)/../../apps/spectral/common
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/scheduler/inc
+INCS += -I$(obj)/$(DEPTH)/umac/scan
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
+
+SPECTRAL_DA_OBJS := $(DEPTH)/lmac/spectral/spectral.o \
+                    $(DEPTH)/lmac/spectral/spectral_netlink.o \
+                    $(DEPTH)/lmac/spectral/spectral_cmds.o \
+                    $(DEPTH)/lmac/spectral/spectral_process_data.o \
+                    $(DEPTH)/lmac/spectral/spectral_phyerr.o
+#End of legacy spectral defines
+
+ifeq ($(QCA_AIRTIME_FAIRNESS), 1)
+ccflags-y+= -DWLAN_ATF_ENABLE
+INCS += -I$(obj)/$(DEPTH)/umac/airtime_fairness/dispatcher/inc
+endif
+
+ifeq ($(UNIFIED_SMARTANTENNA), 1)
+ccflags-y+= -DWLAN_SA_API_ENABLE
+INCS += -I$(obj)/$(DEPTH)/umac/sa_api/dispatcher/inc
+endif
+
+ifeq ($(strip ${QCA_DFS_COMPONENT_ENABLE}),1)
+ccflags-y+= -DDFS_COMPONENT_ENABLE
+endif
+
+obj-m += qca_spectral.o
+
+ccflags-y+= $(INCS) $(COPTS) -DSPECTRAL_USE_NETLINK_SOCKETS=1 -DWLAN_SPECTRAL_ENABLE=1
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+MOD_CFLAGS = -D"KBUILD_STR(s)=\#s" -D"KBUILD_BASENAME=KBUILD_STR(qca_spectral.mod)"  -D"KBUILD_MODNAME=KBUILD_STR(qca_spectral)"
+endif
+
+INCS += -I$(obj)/$(DEPTH)/spectral/dispatcher/inc
+
+SPECTRAL_TIF_OBJS +=  $(DEPTH)/cmn_dev/target_if/spectral/target_if_spectral.o \
+                      $(DEPTH)/cmn_dev/target_if/spectral/target_if_spectral_netlink.o \
+                      $(DEPTH)/cmn_dev/target_if/spectral/target_if_spectral_phyerr.o \
+                      $(DEPTH)/cmn_dev/target_if/spectral/target_if_spectral_sim.o
+
+SPECTRAL_CMN_OBJS +=  core/spectral_direct_attach.o \
+                      core/spectral_offload.o \
+                      core/spectral_common.o \
+                      dispatcher/src/wlan_spectral_utils_api.o \
+                      dispatcher/src/wlan_spectral_ucfg_api.o \
+                      dispatcher/src/wlan_spectral_tgt_api.o \
+                      core/spectral_module.o
+
+qca_spectral-objs +=  ${SPECTRAL_CMN_OBJS} \
+                      ${SPECTRAL_TIF_OBJS} \
+                      ${SPECTRAL_DA_OBJS}
+
+ifeq ($(strip ${QCA_PARTNER_MAKE_F_SUPPORT}),1)
+all: qca_spectral.ko
+
+qca_spectral.mod.o: qca_spectral.mod.c
+	${CC} -c -o $@ ${ccflags-y} ${MOD_CFLAGS} $<
+
+qca_spectral.o: ${qca_spectral-objs}
+	$(LD) -m elf32btsmip -r -o qca_spectral.o $(qca_spectral-objs)
+	$(KERNELPATH)/scripts/mod/modpost qca_spectral.o
+
+qca_spectral.ko: qca_spectral.o qca_spectral.mod.o
+	$(LD) $(LDOPTS) -o qca_spectral.ko qca_spectral.o qca_spectral.mod.o
+
+%.o: %.c
+	${CC} -c -o $@ ${ccflags-y} $<
+endif
