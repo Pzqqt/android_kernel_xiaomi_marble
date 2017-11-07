@@ -1048,6 +1048,8 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	session = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (NULL == session) {
 		pe_err("SessionId:%d does not exist", session_id);
+		qdf_mem_free(msg);
+		mac_ctx->lim.gpLimMlmAuthReq = NULL;
 		return;
 	}
 
@@ -1930,6 +1932,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				mlm_set_keys_req->sessionId);
 	if (NULL == session) {
 		pe_err("session does not exist for given sessionId");
+		qdf_mem_free(mlm_set_keys_req);
+		mac_ctx->lim.gpLimMlmSetKeysReq = NULL;
 		return;
 	}
 
