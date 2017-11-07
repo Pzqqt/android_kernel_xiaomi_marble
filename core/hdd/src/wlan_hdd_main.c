@@ -9945,6 +9945,7 @@ err_wiphy_unregister:
 
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
+	hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 
 err_hdd_free_psoc:
 	if (DRIVER_MODULES_CLOSED == hdd_ctx->driver_status) {
