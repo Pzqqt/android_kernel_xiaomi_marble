@@ -1305,38 +1305,6 @@ QDF_STATUS sme_start(tHalHandle hHal)
 	return status;
 }
 
-/**
- * sme_handle_scan_req() - Scan request handler
- * @mac_ctx: MAC global context
- * @msg: message buffer
- *
- * Scan request message from upper layer is handled as
- * part of this API
- *
- * Return: QDF_STATUS
- */
-static QDF_STATUS sme_handle_scan_req(tpAniSirGlobal mac_ctx,
-					void *msg)
-{
-	struct ani_scan_req *scan_msg;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	uint16_t session_id;
-	csr_scan_completeCallback callback;
-
-	scan_msg = msg;
-	session_id = scan_msg->session_id;
-	callback = scan_msg->callback;
-	status = csr_scan_request(mac_ctx, session_id,
-		scan_msg->scan_param,
-		callback, scan_msg->ctx);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("Scan request failed. session_id: %d", session_id);
-
-	csr_scan_free_request(mac_ctx, scan_msg->scan_param);
-	qdf_mem_free(scan_msg->scan_param);
-	return status;
-}
-
 static QDF_STATUS dfs_msg_processor(tpAniSirGlobal mac,
 		struct scheduler_msg *msg)
 {
@@ -2142,14 +2110,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 			sme_err("Empty message for: %d", pMsg->type);
 		}
 		break;
-	case eWNI_SME_SCAN_CMD:
-		if (pMsg->bodyptr) {
-			status = sme_handle_scan_req(pMac, pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
-		} else {
-			sme_err("Empty message for: %d", pMsg->type);
-		}
-		break;
+
 #ifdef WLAN_FEATURE_11W
 	case eWNI_SME_UNPROT_MGMT_FRM_IND:
 		if (pMsg->bodyptr) {
