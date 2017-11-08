@@ -31,13 +31,13 @@
 #include "wlan_pmo_pkt_filter.h"
 #include "wlan_pmo_hw_filter.h"
 
-QDF_STATUS pmo_ucfg_get_psoc_config(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg)
 {
 	return pmo_core_get_psoc_config(psoc, psoc_cfg);
 }
 
-QDF_STATUS pmo_ucfg_update_psoc_config(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg)
 {
 	return pmo_core_update_psoc_config(psoc, psoc_cfg);

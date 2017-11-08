@@ -12041,7 +12041,7 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	hdd_ra_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_nan_populate_pmo_config(&psoc_cfg, hdd_ctx);
 	hdd_lpass_populate_pmo_config(&psoc_cfg, hdd_ctx);
-	status = pmo_ucfg_update_psoc_config(psoc, &psoc_cfg);
+	status = ucfg_pmo_update_psoc_config(psoc, &psoc_cfg);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("failed pmo psoc configuration");
 		return -EINVAL;
