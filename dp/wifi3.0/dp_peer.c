@@ -353,7 +353,8 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	uint8_t vdev_id)
 {
 	struct dp_ast_entry *ast_entry;
-	enum cdp_txrx_ast_entry_type peer_type = CDP_TXRX_AST_TYPE_NONE;
+	enum cdp_txrx_ast_entry_type peer_type = CDP_TXRX_AST_TYPE_STATIC;
+	bool ast_entry_found = FALSE;
 
 	if (!peer) {
 		return;
@@ -373,20 +374,23 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 			soc->ast_table[hw_peer_id] = ast_entry;
 			ast_entry->is_active = TRUE;
 			peer_type = ast_entry->type;
-			qdf_spin_unlock_bh(&soc->ast_lock);
-			if (soc->cdp_soc.ol_ops->peer_map_event) {
-				soc->cdp_soc.ol_ops->peer_map_event(
-				soc->osif_soc, peer->peer_ids[0],
-				hw_peer_id, vdev_id,
-				mac_addr, peer_type);
-			}
-			return;
+			ast_entry_found = TRUE;
 		}
 	}
-	qdf_spin_unlock_bh(&soc->ast_lock);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+	if (ast_entry_found || (peer->vdev && peer->vdev->proxysta_vdev)) {
+		if (soc->cdp_soc.ol_ops->peer_map_event) {
+			soc->cdp_soc.ol_ops->peer_map_event(
+			soc->osif_soc, peer->peer_ids[0],
+			hw_peer_id, vdev_id,
+			mac_addr, peer_type);
+		}
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"AST entry not found\n");
+	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
 	return;
 }
 
