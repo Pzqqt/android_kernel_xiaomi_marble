@@ -48,7 +48,7 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 
 	dfs_reset(dfs);
 	dfs_nol_update(dfs);
-	dfs_init_precac_list(dfs);
+	dfs_reset_precaclists(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
