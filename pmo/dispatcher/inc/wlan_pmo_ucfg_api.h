@@ -60,17 +60,17 @@ bool ucfg_pmo_is_vdev_connected(struct wlan_objmgr_vdev *vdev);
 bool pmo_ucfg_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev);
 
 /**
- * pmo_ucfg_get_psoc_config(): API to get the psoc user configurations of pmo
+ * ucfg_pmo_get_psoc_config(): API to get the psoc user configurations of pmo
  * @psoc: objmgr psoc handle
  * @psoc_cfg: fill the current psoc user configurations.
  *
  * Return pmo psoc configurations
  */
-QDF_STATUS pmo_ucfg_get_psoc_config(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_get_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg);
 
 /**
- * pmo_ucfg_update_psoc_config(): API to update the psoc user configurations
+ * ucfg_pmo_update_psoc_config(): API to update the psoc user configurations
  * @psoc: objmgr psoc handle
  * @psoc_cfg: pmo psoc configurations
  *
@@ -80,7 +80,7 @@ QDF_STATUS pmo_ucfg_get_psoc_config(struct wlan_objmgr_psoc *psoc,
  *
  * Return QDF_STATUS -in case of success else return error
  */
-QDF_STATUS pmo_ucfg_update_psoc_config(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS ucfg_pmo_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 		struct pmo_psoc_cfg *psoc_cfg);
 
 /**
