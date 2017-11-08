@@ -10886,6 +10886,76 @@ static QDF_STATUS send_vdev_config_ratemask_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * copy_custom_aggr_bitmap() - copies host side bitmap using FW APIs
+ * @param: param sent from the host side
+ * @cmd: param to be sent to the fw side
+ */
+static inline void copy_custom_aggr_bitmap(
+		struct set_custom_aggr_size_params *param,
+		wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd)
+{
+	WMI_VDEV_CUSTOM_AGGR_AC_SET(cmd->enable_bitmap,
+				    param->ac);
+	WMI_VDEV_CUSTOM_AGGR_TYPE_SET(cmd->enable_bitmap,
+				      param->aggr_type);
+	WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_SET(cmd->enable_bitmap,
+					   param->tx_aggr_size_disable);
+	WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_SET(cmd->enable_bitmap,
+					   param->rx_aggr_size_disable);
+	WMI_VDEV_CUSTOM_TX_AC_EN_SET(cmd->enable_bitmap,
+				     param->tx_ac_enable);
+}
+
+/**
+ * send_vdev_set_custom_aggr_size_cmd_tlv() - custom aggr size param in fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold custom aggr size params
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_vdev_set_custom_aggr_size_cmd_tlv(
+			wmi_unified_t wmi_handle,
+			struct set_custom_aggr_size_params *param)
+{
+	wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_vdev_set_custom_aggr_size_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		wmi_vdev_set_custom_aggr_size_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->tx_aggr_size = param->tx_aggr_size;
+	cmd->rx_aggr_size = param->rx_aggr_size;
+	copy_custom_aggr_bitmap(param, cmd);
+
+	WMI_LOGD("Set custom aggr: vdev id=0x%X, tx aggr size=0x%X "
+		"rx_aggr_size=0x%X access category=0x%X, agg_type=0x%X "
+		"tx_aggr_size_disable=0x%X, rx_aggr_size_disable=0x%X "
+		"tx_ac_enable=0x%X\n",
+		param->vdev_id, param->tx_aggr_size, param->rx_aggr_size,
+		param->ac, param->aggr_type, param->tx_aggr_size_disable,
+		param->rx_aggr_size_disable, param->tx_ac_enable);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID)) {
+		WMI_LOGE("Seting custom aggregation size failed\n");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_set_vap_dscp_tid_map_cmd_tlv() - send vap dscp tid map cmd to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold vap dscp tid map param
@@ -19756,6 +19826,8 @@ struct wmi_ops tlv_ops =  {
 	.send_set_mimogain_table_cmd = send_set_mimogain_table_cmd_tlv,
 	.send_packet_power_info_get_cmd = send_packet_power_info_get_cmd_tlv,
 	.send_vdev_config_ratemask_cmd = send_vdev_config_ratemask_cmd_tlv,
+	.send_vdev_set_custom_aggr_size_cmd =
+		send_vdev_set_custom_aggr_size_cmd_tlv,
 	.send_set_vap_dscp_tid_map_cmd = send_set_vap_dscp_tid_map_cmd_tlv,
 	.send_vdev_set_neighbour_rx_cmd = send_vdev_set_neighbour_rx_cmd_tlv,
 	.send_smart_ant_set_tx_ant_cmd = send_smart_ant_set_tx_ant_cmd_tlv,
@@ -20741,6 +20813,8 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_bw_nss_ratemask] =
 					WMI_VDEV_PARAM_BW_NSS_RATEMASK;
 	vdev_param[wmi_vdev_param_set_he_ltf] = WMI_VDEV_PARAM_HE_LTF;
+	vdev_param[wmi_vdev_param_rate_dropdown_bmap] =
+					WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP;
 }
 #endif
 
