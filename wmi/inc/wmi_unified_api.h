@@ -1622,4 +1622,14 @@ QDF_STATUS wmi_unified_set_arp_stats_req(void *wmi_hdl,
 					 struct set_arp_stats *req_buf);
 QDF_STATUS wmi_unified_get_arp_stats_req(void *wmi_hdl,
 					 struct get_arp_stats *req_buf);
+
+/**
+ * wmi_send_bcn_offload_control_cmd - send beacon ofload control cmd to fw
+ * @wmi_hdl: wmi handle
+ * @bcn_ctrl_param: pointer to bcn_offload_control param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_send_bcn_offload_control_cmd(void *wmi_hdl,
+			struct bcn_offload_control *bcn_ctrl_param);
 #endif /* _WMI_UNIFIED_API_H_ */

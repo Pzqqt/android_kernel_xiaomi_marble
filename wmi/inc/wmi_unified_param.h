@@ -5848,6 +5848,7 @@ typedef enum {
 	wmi_service_extended_nss_support,
 	wmi_service_ack_timeout,
 	wmi_service_widebw_scan,
+	wmi_service_bcn_offload_start_stop_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
@@ -7951,4 +7952,15 @@ struct wmi_host_ready_ev_param {
 	uint32_t num_total_peer;
 	bool agile_capability;
 };
+
+/**
+ * struct bcn_offload_control - Beacon offload control params
+ * @vdev_id: vdev identifer of VAP to control beacon tx
+ * @bcn_tx_enable: Enable or Disable beacon TX in offload mode
+ */
+struct bcn_offload_control {
+	uint32_t vdev_id;
+	bool bcn_tx_enable;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
