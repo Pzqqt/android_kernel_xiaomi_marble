@@ -48,7 +48,9 @@ enum hdd_lro_rx_status {
 int hdd_lro_init(struct hdd_context *hdd_ctx);
 
 enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
-	 struct hdd_adapter *adapter, struct sk_buff *skb);
+				  struct hdd_adapter *adapter,
+				  struct sk_buff *skb);
+
 void hdd_lro_display_stats(struct hdd_context *hdd_ctx);
 
 /**
@@ -60,9 +62,11 @@ void hdd_lro_display_stats(struct hdd_context *hdd_ctx);
  * Return: none
  */
 QDF_STATUS hdd_lro_set_reset(struct hdd_context *hdd_ctx,
-					  struct hdd_adapter *adapter,
-					  uint8_t enable_flag);
-void hdd_disable_lro_in_concurrency(bool);
+			     struct hdd_adapter *adapter,
+			     uint8_t enable_flag);
+
+void hdd_disable_lro_in_concurrency(bool disable);
+
 /**
  * hdd_disable_lro_for_low_tput() - enable/disable LRO based on tput
  * hdd_ctx: hdd context
@@ -80,7 +84,8 @@ static inline int hdd_lro_init(struct hdd_context *hdd_ctx)
 }
 
 static inline enum hdd_lro_rx_status hdd_lro_rx(struct hdd_context *hdd_ctx,
-	 struct hdd_adapter *adapter, struct sk_buff *skb)
+						struct hdd_adapter *adapter,
+						struct sk_buff *skb)
 {
 	return HDD_LRO_NO_RX;
 }
@@ -90,11 +95,12 @@ static inline void hdd_lro_display_stats(struct hdd_context *hdd_ctx)
 }
 
 static inline QDF_STATUS hdd_lro_set_reset(struct hdd_context *hdd_ctx,
-					  struct hdd_adapter *adapter,
-					  uint8_t enable_flag)
+					   struct hdd_adapter *adapter,
+					   uint8_t enable_flag)
 {
 	return 0;
 }
+
 static inline void hdd_disable_lro_in_concurrency(bool disable)
 {
 }
