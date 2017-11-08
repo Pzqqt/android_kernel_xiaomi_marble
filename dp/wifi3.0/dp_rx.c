@@ -778,7 +778,7 @@ static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 			 HAL_RX_TLV_GET_IPV6(rx_tlv);
 	QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
 			 HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv);
-	QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
+	QDF_NBUF_CB_RX_FLOW_ID(msdu) =
 			 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
 	QDF_NBUF_CB_RX_LRO_CTX(msdu) = (unsigned char *)ctx;
 
