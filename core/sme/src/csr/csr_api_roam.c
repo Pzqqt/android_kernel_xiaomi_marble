@@ -20606,10 +20606,6 @@ void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command)
 	struct sir_beacon_tx_complete_rsp *param;
 	struct csr_roam_session *session;
 
-	if (!command) {
-		sme_err("nss update param is NULL");
-		goto fail;
-	}
 
 	if (!CSR_IS_SESSION_VALID(mac, command->sessionId)) {
 		sme_err("Invalid session id %d", command->sessionId);
