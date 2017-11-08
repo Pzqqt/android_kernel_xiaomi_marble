@@ -16291,6 +16291,54 @@ static QDF_STATUS init_cmd_send_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_bcn_offload_control_cmd_tlv - send beacon ofload control cmd to fw
+ * @wmi_handle: wmi handle
+ * @bcn_ctrl_param: pointer to bcn_offload_control param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static
+QDF_STATUS send_bcn_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
+			struct bcn_offload_control *bcn_ctrl_param)
+{
+	wmi_buf_t buf;
+	wmi_bcn_offload_ctrl_cmd_fixed_param *cmd;
+	QDF_STATUS ret;
+	uint32_t len;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		qdf_print("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_bcn_offload_ctrl_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+			WMITLV_TAG_STRUC_wmi_bcn_offload_ctrl_cmd_fixed_param,
+			WMITLV_GET_STRUCT_TLVLEN
+			(wmi_bcn_offload_ctrl_cmd_fixed_param));
+	cmd->vdev_id = bcn_ctrl_param->vdev_id;
+	if (bcn_ctrl_param->bcn_tx_enable)
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_ENABLE;
+	else
+		cmd->bcn_ctrl_op = WMI_BEACON_CTRL_TX_DISABLE;
+
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			WMI_BCN_OFFLOAD_CTRL_CMDID);
+
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("WMI_BCN_OFFLOAD_CTRL_CMDID send returned Error %d",
+				ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  * save_service_bitmap_tlv() - save service bitmap
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -19977,6 +20025,7 @@ struct wmi_ops tlv_ops =  {
 				 send_process_update_edca_param_cmd_tlv,
 	.send_coex_config_cmd = send_coex_config_cmd_tlv,
 	.send_set_country_cmd = send_set_country_cmd_tlv,
+	.send_bcn_offload_control_cmd = send_bcn_offload_control_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,
@@ -20527,6 +20576,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_extended_nss_support] =
 				WMI_SERVICE_EXTENDED_NSS_SUPPORT;
 	wmi_service[wmi_service_widebw_scan] = WMI_SERVICE_SCAN_PHYMODE_SUPPORT;
+	wmi_service[wmi_service_bcn_offload_start_stop_support] =
+				WMI_SERVICE_BCN_OFFLOAD_START_STOP_SUPPORT;
 }
 
 /**

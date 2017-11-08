@@ -6889,3 +6889,22 @@ QDF_STATUS wmi_unified_send_limit_off_chan_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_send_bcn_offload_control_cmd - send beacon ofload control cmd to fw
+ * @wmi_hdl: wmi handle
+ * @bcn_ctrl_param: pointer to bcn_offload_control param
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS wmi_send_bcn_offload_control_cmd(void *wmi_hdl,
+			struct bcn_offload_control *bcn_ctrl_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_bcn_offload_control_cmd)
+		return wmi_handle->ops->send_bcn_offload_control_cmd(wmi_handle,
+				bcn_ctrl_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
