@@ -876,7 +876,7 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_opmode_from_psoc(
 			enum QDF_OPMODE opmode,
 			wlan_objmgr_ref_dbgid dbg_id)
 {
-	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_vdev *vdev = NULL;
 	int vdev_cnt = 0;
 
 	/* if PSOC is NULL, return */
@@ -895,8 +895,10 @@ struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_opmode_from_psoc(
 		if (vdev->vdev_mlme.vdev_opmode == opmode) {
 			wlan_vdev_obj_unlock(vdev);
 			if (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) !=
-							QDF_STATUS_SUCCESS)
+							QDF_STATUS_SUCCESS) {
 				vdev = NULL;
+				continue;
+			}
 			break;
 		}
 		wlan_vdev_obj_unlock(vdev);
