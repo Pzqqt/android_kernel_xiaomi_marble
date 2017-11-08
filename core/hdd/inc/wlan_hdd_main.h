@@ -361,6 +361,8 @@
 #define WLAN_NUD_STATS_LEN 800
 /* ARP packet type for NUD debug stats */
 #define WLAN_NUD_STATS_ARP_PKT_TYPE 1
+/* Assigned size of driver memory dump is 4096 bytes */
+#define DRIVER_MEM_DUMP_SIZE    4096
 
 /*
  * Generic asynchronous request/response support
@@ -1614,14 +1616,7 @@ struct hdd_context {
 	struct hdd_offloaded_packets_ctx op_ctx;
 #endif
 	bool mcc_mode;
-#ifdef WLAN_FEATURE_MEMDUMP
-	uint8_t *fw_dump_loc;
-	uint32_t dump_loc_paddr;
-	qdf_mc_timer_t memdump_cleanup_timer;
 	struct mutex memdump_lock;
-	bool memdump_in_progress;
-	bool memdump_init_done;
-#endif /* WLAN_FEATURE_MEMDUMP */
 	uint16_t driver_dump_size;
 	uint8_t *driver_dump_mem;
 
@@ -1700,7 +1695,6 @@ struct hdd_context {
 	uint8_t bt_vo_active:1;
 	struct hdd_nud_stats_context nud_stats_context;
 	enum band_info curr_band;
-	bool fw_mem_dump_enabled;
 	bool imps_enabled;
 	int user_configured_pkt_filter_rules;
 	bool is_fils_roaming_supported;
@@ -2174,25 +2168,6 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason);
  * Return: None
  */
 void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel);
-#ifdef WLAN_FEATURE_MEMDUMP
-/**
- * hdd_is_memdump_supported() - to check if memdump feature support
- *
- * This function is used to check if memdump feature is supported in
- * the host driver
- *
- * Return: true if supported and false otherwise
- */
-static inline bool hdd_is_memdump_supported(struct hdd_context *hdd_ctx)
-{
-	return hdd_ctx->fw_mem_dump_enabled;
-}
-#else
-static inline bool hdd_is_memdump_supported(struct hdd_context *hdd_ctx)
-{
-	return false;
-}
-#endif /* WLAN_FEATURE_MEMDUMP */
 
 void hdd_update_macaddr(struct hdd_config *config,
 			struct qdf_mac_addr hw_macaddr);
@@ -2865,5 +2840,8 @@ void hdd_pld_ipa_uc_shutdown_pipes(void);
  * Return: per_index_score within the max limit
  */
 uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score);
+
+int hdd_driver_memdump_init(void);
+void hdd_driver_memdump_deinit(void);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

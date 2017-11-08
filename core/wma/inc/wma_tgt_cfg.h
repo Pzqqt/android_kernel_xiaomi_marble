@@ -159,7 +159,6 @@ struct wma_dfs_radar_ind {
  * @dfs_cac_offload: dfs and cac timer offloaded
  * @tx_bfee_8ss_enabled: Tx Beamformee support for 8x8
  * @rcpi_enabled: for checking rcpi support
- * @fw_mem_dump_enabled: Fw memory dump support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -195,6 +194,5 @@ struct wma_tgt_cfg {
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;
 	bool rcpi_enabled;
-	bool fw_mem_dump_enabled;
 };
 #endif /* WMA_TGT_CFG_H */

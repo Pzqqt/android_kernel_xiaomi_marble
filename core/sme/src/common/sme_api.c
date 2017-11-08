@@ -1420,35 +1420,6 @@ static QDF_STATUS sme_extended_change_channel_ind(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-/**
- * sme_process_fw_mem_dump_rsp - process fw memory dump response from WMA
- *
- * @mac_ctx: pointer to MAC handle.
- * @msg: pointer to received SME msg.
- *
- * This function process the received SME message and calls the corresponding
- * callback which was already registered with SME.
- *
- * Return: None
- */
-#ifdef WLAN_FEATURE_MEMDUMP
-static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg)
-{
-	if (msg->bodyptr) {
-		if (mac_ctx->sme.fw_dump_callback)
-			mac_ctx->sme.fw_dump_callback(mac_ctx->hHdd,
-				(struct fw_dump_rsp *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-	}
-}
-#else
-static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx,
-					struct scheduler_msg *msg)
-{
-}
-#endif
-
 #ifdef FEATURE_WLAN_ESE
 /**
  * sme_update_is_ese_feature_enabled() - enable/disable ESE support at runtime
@@ -2260,9 +2231,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 #endif
-	case eWNI_SME_FW_DUMP_IND:
-		sme_process_fw_mem_dump_rsp(pMac, pMsg);
-		break;
 	case eWNI_SME_SET_HW_MODE_RESP:
 		if (pMsg->bodyptr) {
 			status = sme_process_set_hw_mode_resp(pMac,
@@ -12196,75 +12164,6 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 }
 #endif
 
-/**
- * sme_fw_mem_dump_register_cb() - Register fw memory dump callback
- *
- * @hal - MAC global handle
- * @callback_routine - callback routine from HDD
- *
- * This API is invoked by HDD to register its callback in SME
- *
- * Return: QDF_STATUS
- */
-#ifdef WLAN_FEATURE_MEMDUMP
-QDF_STATUS sme_fw_mem_dump_register_cb(tHalHandle hal,
-		void (*callback_routine)(void *cb_context,
-					 struct fw_dump_rsp *rsp))
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
-
-	status = sme_acquire_global_lock(&pmac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		pmac->sme.fw_dump_callback = callback_routine;
-		sme_release_global_lock(&pmac->sme);
-	} else
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("sme_acquire_global_lock error"));
-
-	return status;
-}
-#else
-QDF_STATUS sme_fw_mem_dump_register_cb(tHalHandle hal,
-		void (*callback_routine)(void *cb_context,
-					 struct fw_dump_rsp *rsp))
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_MEMDUMP */
-
-/**
- * sme_fw_mem_dump_unregister_cb() - Unregister fw memory dump callback
- *
- * @hHal - MAC global handle
- *
- * This API is invoked by HDD to unregister its callback in SME
- *
- * Return: QDF_STATUS
- */
-#ifdef WLAN_FEATURE_MEMDUMP
-QDF_STATUS sme_fw_mem_dump_unregister_cb(tHalHandle hal)
-{
-	QDF_STATUS status;
-	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
-
-	status = sme_acquire_global_lock(&pmac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		pmac->sme.fw_dump_callback = NULL;
-		sme_release_global_lock(&pmac->sme);
-	} else
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("sme_acquire_global_lock error"));
-
-	return status;
-}
-#else
-QDF_STATUS sme_fw_mem_dump_unregister_cb(tHalHandle hal)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_MEMDUMP */
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*
  * sme_update_roam_offload_enabled() - enable/disable roam offload feaure
@@ -13260,83 +13159,6 @@ QDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 
 	return status;
 }
-
-/**
- * sme_fw_mem_dump() - Get FW memory dump
- * @hHal: hal handle
- * @recvd_req: received memory dump request.
- *
- * This API is invoked by HDD to indicate FW to start
- * dumping firmware memory.
- *
- * Return: QDF_STATUS
- */
-#ifdef WLAN_FEATURE_MEMDUMP
-QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	struct scheduler_msg msg = {0};
-	struct fw_dump_req *send_req;
-	struct fw_dump_seg_req seg_req;
-	int loop;
-
-	send_req = qdf_mem_malloc(sizeof(*send_req));
-	if (!send_req) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Memory allocation failed for WDA_FW_MEM_DUMP"));
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_mem_copy(send_req, recvd_req, sizeof(*send_req));
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL("request_id:%d num_seg:%d"),
-		  send_req->request_id, send_req->num_seg);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-		  FL("Segment Information"));
-	for (loop = 0; loop < send_req->num_seg; loop++) {
-		seg_req = send_req->segment[loop];
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  FL("seg_number:%d"), loop);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  FL("seg_id:%d start_addr_lo:0x%x start_addr_hi:0x%x"),
-			  seg_req.seg_id, seg_req.seg_start_addr_lo,
-			  seg_req.seg_start_addr_hi);
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			  FL("seg_length:%d dst_addr_lo:0x%x dst_addr_hi:0x%x"),
-			  seg_req.seg_length, seg_req.dst_addr_lo,
-			  seg_req.dst_addr_hi);
-	}
-
-	if (QDF_STATUS_SUCCESS == sme_acquire_global_lock(&pMac->sme)) {
-		msg.bodyptr = send_req;
-		msg.type = WMA_FW_MEM_DUMP_REQ;
-		msg.reserved = 0;
-
-		qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
-		if (QDF_STATUS_SUCCESS != qdf_status) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				  FL("Not able to post WMA_FW_MEM_DUMP"));
-			qdf_mem_free(send_req);
-			status = QDF_STATUS_E_FAILURE;
-		}
-		sme_release_global_lock(&pMac->sme);
-	} else {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Failed to acquire SME Global Lock"));
-		qdf_mem_free(send_req);
-		status = QDF_STATUS_E_FAILURE;
-	}
-
-	return status;
-}
-#else
-QDF_STATUS sme_fw_mem_dump(tHalHandle hHal, void *recvd_req)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* WLAN_FEATURE_MEMDUMP */
 
 /*
  * sme_pdev_set_pcl() - Send WMI_PDEV_SET_PCL_CMDID to the WMA

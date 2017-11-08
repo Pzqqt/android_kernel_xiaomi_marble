@@ -71,10 +71,6 @@ config WLAN_OFFLOAD_PACKETS
 	bool "Enable offload packets feature"
 	default n
 
-config WLAN_FEATURE_MEMDUMP
-	bool "Enable MEMDUMP feature"
-	default n
-
 config FEATURE_TSO
 	bool "Enable TCP Segmentation Offload"
 	depends on HELIUMPLUS

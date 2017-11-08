@@ -1400,7 +1400,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @dfs_cac_offload: dfs and cac timer offload
  * @bandcapability: band capability configured through ini
  * @ito_repeat_count: Indicates ito repeated count
- * @fw_mem_dump_enabled: Fw memory dump support
  * @critical_events_in_flight: number of suspend preventing events in flight
  */
 typedef struct {
@@ -1599,7 +1598,6 @@ typedef struct {
 	bool tx_bfee_8ss_enabled;
 	bool in_imps;
 	uint8_t  ito_repeat_count;
-	bool fw_mem_dump_enabled;
 	qdf_atomic_t critical_events_in_flight;
 } t_wma_handle, *tp_wma_handle;
 

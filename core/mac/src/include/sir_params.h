@@ -596,7 +596,8 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_DCC_CLEAR_STATS_CMD         (SIR_HAL_ITC_MSG_TYPES_BEGIN + 325)
 #define SIR_HAL_DCC_UPDATE_NDL_CMD          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 326)
 
-#define SIR_HAL_FW_MEM_DUMP_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 327)
+/* FW Memory Dump feature is deprecated */
+
 #define SIR_HAL_START_STOP_LOGGING           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 328)
 #define SIR_HAL_PDEV_SET_HW_MODE             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 329)
 #define SIR_HAL_PDEV_SET_HW_MODE_RESP        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 330)

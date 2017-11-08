@@ -176,9 +176,6 @@ ifeq ($(KERNEL_BUILD), 0)
 	endif
 
 ifneq ($(CONFIG_ROME_IF),sdio)
-	#Flag to enable memdump feature
-	CONFIG_WLAN_FEATURE_MEMDUMP := y
-
 	#Flag to enable DISA
 	CONFIG_WLAN_FEATURE_DISA := y
 
@@ -433,6 +430,7 @@ HDD_OBJS := 	$(HDD_SRC_DIR)/wlan_hdd_assoc.o \
 		$(HDD_SRC_DIR)/wlan_hdd_ioctl.o \
 		$(HDD_SRC_DIR)/wlan_hdd_main.o \
 		$(HDD_SRC_DIR)/wlan_hdd_object_manager.o \
+		$(HDD_SRC_DIR)/wlan_hdd_memdump.o \
 		$(HDD_SRC_DIR)/wlan_hdd_oemdata.o \
 		$(HDD_SRC_DIR)/wlan_hdd_packet_filter.o \
 		$(HDD_SRC_DIR)/wlan_hdd_power.o \
@@ -505,10 +503,6 @@ endif
 
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_conc_ut.o
-endif
-
-ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
-HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_memdump.o
 endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
@@ -2219,10 +2213,6 @@ endif
 
 ifeq ($(CONFIG_WLAN_OFFLOAD_PACKETS),y)
 CDEFINES += -DWLAN_FEATURE_OFFLOAD_PACKETS
-endif
-
-ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
-CDEFINES += -DWLAN_FEATURE_MEMDUMP
 endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
