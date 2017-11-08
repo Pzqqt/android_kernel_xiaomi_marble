@@ -56,6 +56,7 @@ struct hif_exec_context {
 	uint32_t irq[HIF_MAX_GRP_IRQ];
 	uint32_t os_irq[HIF_MAX_GRP_IRQ];
 	uint32_t grp_id;
+	uint32_t scale_bin_shift;
 	const char *context_name;
 	void *context;
 	ext_intr_handler handler;

@@ -20,6 +20,15 @@
 #include <ce_main.h>
 #include <hif_irq_affinity.h>
 
+/* mapping NAPI budget 0 to internal budget 0
+ * NAPI budget 1 to internal budget [1,scaler -1]
+ * NAPI budget 2 to internal budget [scaler, 2 * scaler - 1], etc
+ */
+#define NAPI_BUDGET_TO_INTERNAL_BUDGET(n, s) \
+	(((n) << (s)) - 1)
+#define INTERNAL_BUDGET_TO_NAPI_BUDGET(n, s) \
+	(((n) >> (s)) + 1)
+
 static struct hif_exec_context *hif_exec_tasklet_create(void);
 
 /**
@@ -102,11 +111,16 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	struct hif_exec_context *hif_ext_group = &exec_ctx->exec_ctx;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ext_group->hif);
 	int work_done;
+	int normalized_budget = 0;
+	int shift = hif_ext_group->scale_bin_shift;
 	int cpu = smp_processor_id();
 
-	work_done = hif_ext_group->handler(hif_ext_group->context, budget);
+	if (budget)
+		normalized_budget = NAPI_BUDGET_TO_INTERNAL_BUDGET(budget, shift);
+	work_done = hif_ext_group->handler(hif_ext_group->context,
+							normalized_budget);
 
-	if (work_done < budget) {
+	if (work_done < normalized_budget) {
 		napi_complete(napi);
 		qdf_atomic_dec(&scn->active_grp_tasklet_cnt);
 		hif_ext_group->irq_enable(hif_ext_group);
@@ -114,11 +128,15 @@ static int hif_exec_poll(struct napi_struct *napi, int budget)
 	} else {
 		/* if the ext_group supports time based yield, claim full work
 		 * done anyways */
-		work_done = budget;
+		work_done = normalized_budget;
 	}
 
 	hif_ext_group->stats[cpu].napi_polls++;
 	hif_ext_group->stats[cpu].napi_workdone += work_done;
+
+	/* map internal budget to NAPI budget */
+	if (work_done)
+		work_done = INTERNAL_BUDGET_TO_NAPI_BUDGET(work_done, shift);
 
 	return work_done;
 }
@@ -163,8 +181,10 @@ struct hif_execution_ops napi_sched_ops = {
 #ifdef FEATURE_NAPI
 /**
  * hif_exec_napi_create() - allocate and initialize a napi exec context
+ * @scale: a binary shift factor to map NAPI budget from\to internal
+ *         budget
  */
-static struct hif_exec_context *hif_exec_napi_create(uint32_t budget)
+static struct hif_exec_context *hif_exec_napi_create(uint32_t scale)
 {
 	struct hif_napi_exec_context *ctx;
 
@@ -174,15 +194,16 @@ static struct hif_exec_context *hif_exec_napi_create(uint32_t budget)
 
 	ctx->exec_ctx.sched_ops = &napi_sched_ops;
 	ctx->exec_ctx.inited = true;
+	ctx->exec_ctx.scale_bin_shift = scale;
 	init_dummy_netdev(&(ctx->netdev));
 	netif_napi_add(&(ctx->netdev), &(ctx->napi), hif_exec_poll,
-		       budget);
+		       QCA_NAPI_BUDGET);
 	napi_enable(&ctx->napi);
 
 	return &ctx->exec_ctx;
 }
 #else
-static struct hif_exec_context *hif_exec_napi_create(uint32_t budget)
+static struct hif_exec_context *hif_exec_napi_create(uint32_t scale)
 {
 	HIF_WARN("%s: FEATURE_NAPI not defined, making tasklet");
 	return hif_exec_tasklet_create();
@@ -396,7 +417,7 @@ struct hif_exec_context *hif_exec_create(enum hif_exec_type type,
 
 	switch (type) {
 	case HIF_EXEC_NAPI_TYPE:
-		return hif_exec_napi_create(QCA_NAPI_BUDGET * scale);
+		return hif_exec_napi_create(scale);
 
 	case HIF_EXEC_TASKLET_TYPE:
 		return hif_exec_tasklet_create();

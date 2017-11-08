@@ -167,16 +167,20 @@ struct CE_state;
 
 #ifndef NAPI_YIELD_BUDGET_BASED
 #ifdef HIF_CONFIG_SLUB_DEBUG_ON
-#define QCA_NAPI_BUDGET    64
-#define QCA_NAPI_DEF_SCALE  2
+#define QCA_NAPI_DEF_SCALE_BIN_SHIFT 1
 #else  /* PERF build */
-#define QCA_NAPI_BUDGET    64
-#define QCA_NAPI_DEF_SCALE 16
+#ifdef CONFIG_WIN
+#define QCA_NAPI_DEF_SCALE_BIN_SHIFT 1
+#else
+#define QCA_NAPI_DEF_SCALE_BIN_SHIFT 4
+#endif /* CONFIG_WIN */
 #endif /* SLUB_DEBUG_ON */
-#else /* NAPI_YIELD_BUDGET_BASED */
+#else  /* NAPI_YIELD_BUDGET_BASED */
+#define QCA_NAPI_DEF_SCALE_BIN_SHIFT 2
+#endif /* NAPI_YIELD_BUDGET_BASED */
 #define QCA_NAPI_BUDGET    64
-#define QCA_NAPI_DEF_SCALE 4
-#endif
+#define QCA_NAPI_DEF_SCALE  \
+	(1 << QCA_NAPI_DEF_SCALE_BIN_SHIFT)
 
 #define HIF_NAPI_MAX_RECEIVES (QCA_NAPI_BUDGET * QCA_NAPI_DEF_SCALE)
 /* NOTE: "napi->scale" can be changed,
