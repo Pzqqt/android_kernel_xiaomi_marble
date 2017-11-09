@@ -126,6 +126,7 @@ uint16_t dp_rx_get_free_desc_list(struct dp_soc *soc, uint32_t pool_id,
 			return count;
 		}
 	}
+	(*tail)->next = NULL;
 	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
 	return count;
 }
@@ -152,7 +153,7 @@ void dp_rx_add_desc_list_to_free_list(struct dp_soc *soc,
 
 
 	temp_list = rx_desc_pool->freelist;
-	qdf_print(
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 	"temp_list: %pK, *local_desc_list: %pK, *tail: %pK (*tail)->next: %pK\n",
 	temp_list, *local_desc_list, *tail, (*tail)->next);
 	rx_desc_pool->freelist = *local_desc_list;

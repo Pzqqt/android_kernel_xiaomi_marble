@@ -774,9 +774,9 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		goto done;
 	}
 
-	while (qdf_likely((ring_desc =
-				hal_srng_dst_get_next(hal_soc, hal_ring))
-				&& quota--)) {
+	while (qdf_likely(quota-- && (ring_desc =
+				hal_srng_dst_get_next(hal_soc, hal_ring)))) {
+
 		DP_STATS_INC(soc, rx.err_ring_pkts, 1);
 
 		error = HAL_RX_ERROR_STATUS_GET(ring_desc);
@@ -843,6 +843,7 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		/* Return link descriptor through WBM ring (SW2WBM)*/
 		dp_rx_link_desc_return(soc, ring_desc,
 					HAL_BM_ACTION_PUT_IN_IDLE_LIST);
+
 	}
 
 done:
@@ -913,9 +914,8 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		goto done;
 	}
 
-	while (qdf_likely((ring_desc =
-				hal_srng_dst_get_next(hal_soc, hal_ring))
-				&& quota--)) {
+	while (qdf_likely(quota-- && (ring_desc =
+				hal_srng_dst_get_next(hal_soc, hal_ring)))) {
 
 		/* XXX */
 		wbm_err_src = HAL_RX_WBM_ERR_SRC_GET(ring_desc);
@@ -992,7 +992,7 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
+						QDF_TRACE_LEVEL_DEBUG,
 						"REO error %d detected",
 						reo_error_code);
 				}
@@ -1029,13 +1029,13 @@ dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 
 				case HAL_RXDMA_ERR_DECRYPT:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
+						QDF_TRACE_LEVEL_DEBUG,
 					"Packet received with Decrypt error");
 					break;
 
 				default:
 					QDF_TRACE(QDF_MODULE_ID_DP,
-							QDF_TRACE_LEVEL_ERROR,
+							QDF_TRACE_LEVEL_DEBUG,
 							"RXDMA error %d",
 							rxdma_error_code);
 				}
@@ -1133,11 +1133,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		qdf_assert(rx_msdu_link_desc);
 
-		num_msdus = (msdu_cnt > HAL_RX_NUM_MSDU_DESC)?
-				HAL_RX_NUM_MSDU_DESC:msdu_cnt;
-
 		hal_rx_msdu_list_get(rx_msdu_link_desc, &msdu_list, &num_msdus);
-		msdu_cnt -= num_msdus;
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			/* if the msdus belongs to NSS offloaded radio &&
@@ -1184,7 +1180,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		dp_rx_link_desc_return(soc, p_last_buf_addr_info, bm_action);
 		p_last_buf_addr_info = p_buf_addr_info;
 
-	} while (buf_info.paddr && msdu_cnt);
+	} while (buf_info.paddr);
 
 	DP_STATS_INC(soc, rx.err.rxdma_error[rxdma_error_code], 1);
 
@@ -1248,8 +1244,8 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		return 0;
 	}
 
-	while (qdf_likely((rxdma_dst_ring_desc =
-		hal_srng_dst_get_next(hal_soc, err_dst_srng)) && quota--)) {
+	while (qdf_likely(quota-- && (rxdma_dst_ring_desc =
+		hal_srng_dst_get_next(hal_soc, err_dst_srng)))) {
 
 			rx_bufs_used += dp_rx_err_mpdu_pop(soc, mac_id,
 						rxdma_dst_ring_desc,

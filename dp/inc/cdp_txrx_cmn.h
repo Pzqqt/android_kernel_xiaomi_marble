@@ -157,10 +157,10 @@ static inline void cdp_peer_teardown
 }
 
 static inline void
-cdp_peer_delete(ol_txrx_soc_handle soc, void *peer)
+cdp_peer_delete(ol_txrx_soc_handle soc, void *peer, uint32_t bitmap)
 {
 	if (soc->ops->cmn_drv_ops->txrx_peer_delete)
-		return soc->ops->cmn_drv_ops->txrx_peer_delete(peer);
+		return soc->ops->cmn_drv_ops->txrx_peer_delete(peer, bitmap);
 	return;
 }
 

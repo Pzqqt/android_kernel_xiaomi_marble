@@ -36,6 +36,12 @@
 #include <linux/ipa.h>
 #endif
 
+/**
+ * bitmap values to indicate special handling of peer_delete
+ */
+#define CDP_PEER_DELETE_NO_SPECIAL             0
+#define CDP_PEER_DO_NOT_START_UNMAP_TIMER      1
+
 /******************************************************************************
  *
  * Control Interface (A Interface)
@@ -75,7 +81,7 @@ struct cdp_cmn_ops {
 	void (*txrx_peer_teardown)
 		(struct cdp_vdev *vdev_hdl, void *peer_hdl);
 
-	void (*txrx_peer_delete)(void *peer);
+	void (*txrx_peer_delete)(void *peer, uint32_t bitmap);
 
 	int (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
 			uint8_t smart_monitor);

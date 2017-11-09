@@ -991,6 +991,8 @@ struct cdp_pdev_stats {
 		uint32_t map_err;
 		/* x86 failures */
 		uint32_t x86_fail;
+		/* low threshold interrupts */
+		uint32_t low_thresh_intrs;
 	} replenish;
 
 	/* Rx Raw Packets */

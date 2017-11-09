@@ -128,6 +128,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int int_rx_wbm_rel_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_reo_status_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int int_rxdma2host_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
+	int int_host2rxdma_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS];
 	int hw_macid[MAX_PDEV_CNT];
 	int base_hw_macid;
 	bool lro_enabled;
@@ -266,6 +267,27 @@ void wlan_cfg_set_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
  * Return: int_rxdma2host_ring_mask[context]
  */
 int wlan_cfg_get_rxdma2host_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context);
+
+/**
+ * wlan_cfg_set_host2rxdma_ring_mask() - Set host2rxdma ring interrupt mask
+ *				   for the given interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ */
+void wlan_cfg_set_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
+	int context, int mask);
+
+/**
+ * wlan_cfg_get_host2rxdma_ring_mask() - Return host2rxdma ring interrupt mask
+ *				   mapped to an interrupt context
+ * @wlan_cfg_ctx - Configuration Handle
+ * @context - Numerical ID identifying the Interrupt/NAPI context
+ *
+ * Return: int_host2rxdma_ring_mask[context]
+ */
+int wlan_cfg_get_host2rxdma_ring_mask(struct wlan_cfg_dp_soc_ctxt *cfg,
 	int context);
 
 /**

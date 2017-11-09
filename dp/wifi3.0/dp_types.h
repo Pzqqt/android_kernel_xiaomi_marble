@@ -358,6 +358,7 @@ struct dp_srng {
 	qdf_dma_addr_t base_paddr_unaligned;
 	uint32_t alloc_size;
 	int irq;
+	uint32_t num_entries;
 };
 
 struct dp_rx_reorder_array_elem {
@@ -427,6 +428,7 @@ struct dp_intr {
 	uint8_t rx_wbm_rel_ring_mask; /* WBM2SW Rx Release Ring */
 	uint8_t reo_status_ring_mask; /* REO command response ring */
 	uint8_t rxdma2host_ring_mask; /* RXDMA to host destination ring */
+	uint8_t host2rxdma_ring_mask; /* Host to RXDMA buffer ring */
 	struct dp_soc *soc;    /* Reference to SoC structure ,
 				to get DMA ring handles */
 	qdf_lro_ctx_t lro_ctx;
@@ -797,7 +799,8 @@ struct dp_soc {
 		qdf_dma_addr_t ipa_wbm_tp_paddr;
 
 		/* TX buffers populated into the WBM ring */
-		void **tx_buf_pool_vaddr;
+		void **tx_buf_pool_vaddr_unaligned;
+		qdf_dma_addr_t *tx_buf_pool_paddr_unaligned;
 	} ipa_uc_tx_rsc;
 
 	/* IPA uC datapath offload Wlan Rx resources */

@@ -29,6 +29,9 @@
 #include "dp_tx.h"
 #include "dp_ipa.h"
 
+/* Hard coded config parameters until dp_ops_cfg.cfg_attach implemented */
+#define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
+
 /**
  * dp_tx_ipa_uc_detach - Free autonomy TX resources
  * @soc: data path instance
@@ -41,16 +44,37 @@
 static void dp_tx_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 {
 	int idx;
+	uint32_t ring_base_align = 8;
+	/*
+	 * Uncomment when dp_ops_cfg.cfg_attach is implemented
+	 * unsigned int uc_tx_buf_sz =
+	 *		dp_cfg_ipa_uc_tx_buf_size(pdev->osif_pdev);
+	 */
+	unsigned int uc_tx_buf_sz = CFG_IPA_UC_TX_BUF_SIZE_DEFAULT;
+	unsigned int alloc_size = uc_tx_buf_sz + ring_base_align - 1;
 
 	for (idx = 0; idx < soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
-		if (soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[idx]) {
-			qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[idx]);
-			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[idx] = NULL;
+		if (soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx]) {
+			qdf_mem_free_consistent(
+				soc->osdev, soc->osdev->dev,
+				alloc_size,
+				soc->ipa_uc_tx_rsc.
+					tx_buf_pool_vaddr_unaligned[idx],
+				soc->ipa_uc_tx_rsc.
+					tx_buf_pool_paddr_unaligned[idx],
+				0);
+
+			soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[idx] =
+							(void *)NULL;
+			soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned[idx] =
+							(qdf_dma_addr_t)NULL;
 		}
 	}
 
-	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr);
-	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr = NULL;
+	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
+	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
+	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned);
+	soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned = NULL;
 }
 
 /**
@@ -77,9 +101,6 @@ int dp_ipa_uc_detach(struct dp_soc *soc, struct dp_pdev *pdev)
 
 	return QDF_STATUS_SUCCESS;	/* success */
 }
-
-/* Hard coded config parameters until dp_ops_cfg.cfg_attach implemented */
-#define CFG_IPA_UC_TX_BUF_SIZE_DEFAULT            (2048)
 
 /**
  * dp_tx_ipa_uc_attach - Allocate autonomy TX resources
@@ -118,15 +139,28 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	hal_get_srng_params(soc->hal_soc, (void *)wbm_srng, &srng_params);
 	num_entries = srng_params.num_entries;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		  "requested %d buffers to be posted to wbm ring",
-		   num_entries);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		  "%s: requested %d buffers to be posted to wbm ring",
+		   __func__, num_entries);
 
-	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr = qdf_mem_malloc(num_entries *
-			sizeof(*soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr));
-	if (!soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr) {
+	soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned =
+		qdf_mem_malloc(num_entries *
+		sizeof(*soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned));
+	if (!soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "%s: IPA WBM Ring mem_info alloc fail", __func__);
+			  "%s: IPA WBM Ring Tx buf pool vaddr alloc fail",
+			  __func__);
+		return -ENOMEM;
+	}
+
+	soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned =
+		qdf_mem_malloc(num_entries *
+		sizeof(*soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned));
+	if (!soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: IPA WBM Ring Tx buf pool paddr alloc fail",
+			  __func__);
+		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
 		return -ENOMEM;
 	}
 
@@ -148,12 +182,13 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		ring_entry = hal_srng_dst_get_next_hp(soc->hal_soc,
 				(void *)wbm_srng);
 		if (!ring_entry) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				  "Failed to get WBM ring entry\n");
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				  "%s: Failed to get WBM ring entry\n",
+				  __func__);
 			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 				alloc_size, buffer_vaddr_unaligned,
 				buffer_paddr_unaligned, 0);
-			goto fail;
+			break;
 		}
 
 		buffer_vaddr = (void *)qdf_align((unsigned long)
@@ -167,23 +202,31 @@ static int dp_tx_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 		HAL_WBM_PADDR_LO_SET(ring_entry, paddr_lo);
 		HAL_WBM_PADDR_HI_SET(ring_entry, paddr_hi);
 
-		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr[tx_buffer_count] =
-			buffer_vaddr;
+		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned[tx_buffer_count]
+			= buffer_vaddr_unaligned;
+		soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned[tx_buffer_count]
+			= buffer_paddr_unaligned;
 	}
 
 	hal_srng_access_end(soc->hal_soc, wbm_srng);
 
 	soc->ipa_uc_tx_rsc.alloc_tx_buf_cnt = tx_buffer_count;
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-		  "IPA WDI TX buffer: %d allocated\n",
-		  tx_buffer_count);
+	if (tx_buffer_count) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			  "%s: IPA WDI TX buffer: %d allocated\n",
+			  __func__, tx_buffer_count);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: No IPA WDI TX buffer allocated\n",
+			  __func__);
+		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned);
+		soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr_unaligned = NULL;
+		qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned);
+		soc->ipa_uc_tx_rsc.tx_buf_pool_paddr_unaligned = NULL;
+		retval = -ENOMEM;
+	}
 
-	return retval;
-
-fail:
-	hal_srng_access_end(soc->hal_soc, wbm_srng);
-	qdf_mem_free(soc->ipa_uc_tx_rsc.tx_buf_pool_vaddr);
 	return retval;
 }
 
@@ -211,7 +254,8 @@ int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	error = dp_tx_ipa_uc_attach(soc, pdev);
 	if (error) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "DP IPA UC TX attach fail code %d\n", error);
+			  "%s: DP IPA UC TX attach fail code %d\n",
+			  __func__, error);
 		return error;
 	}
 
@@ -219,7 +263,8 @@ int dp_ipa_uc_attach(struct dp_soc *soc, struct dp_pdev *pdev)
 	error = dp_rx_ipa_uc_attach(soc, pdev);
 	if (error) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			  "DP IPA UC RX attach fail code %d\n", error);
+			  "%s: DP IPA UC RX attach fail code %d\n",
+			  __func__, error);
 		dp_tx_ipa_uc_detach(soc, pdev);
 		return error;
 	}
@@ -471,7 +516,7 @@ qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 	ret = dp_tx_send((struct dp_vdev_t *)vdev, skb);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "Failed to tx");
+			  "%s: Failed to tx", __func__);
 		return ret;
 	}
 
@@ -643,23 +688,25 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	ret = ipa_wdi3_conn_pipes(&pipe_in, &pipe_out);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			  "ipa_wdi3_conn_pipes: IPA pipe setup failed: ret=%d",
-			  ret);
+			  "%s: ipa_wdi3_conn_pipes: IPA pipe setup failed: ret=%d",
+			  __func__, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* IPA uC Doorbell registers */
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		"Tx DB PA=0x%x, Rx DB PA=0x%x",
-		(unsigned int)pipe_out.tx_uc_db_pa,
-		(unsigned int)pipe_out.rx_uc_db_pa);
+		  "%s: Tx DB PA=0x%x, Rx DB PA=0x%x",
+		  __func__,
+		  (unsigned int)pipe_out.tx_uc_db_pa,
+		  (unsigned int)pipe_out.rx_uc_db_pa);
 
 	ipa_res->tx_comp_doorbell_paddr = pipe_out.tx_uc_db_pa;
 	ipa_res->tx_comp_doorbell_vaddr = pipe_out.tx_uc_db_va;
 	ipa_res->rx_ready_doorbell_paddr = pipe_out.rx_uc_db_pa;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
+		  "%s: Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
+		  __func__,
 		  "transfer_ring_base_pa",
 		  (void *)pipe_in.tx.transfer_ring_base_pa,
 		  "transfer_ring_size",
@@ -678,7 +725,8 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 		  (void *)ipa_res->tx_comp_doorbell_paddr);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "Rx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
+		  "%s: Rx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
+		  __func__,
 		  "transfer_ring_base_pa",
 		  (void *)pipe_in.rx.transfer_ring_base_pa,
 		  "transfer_ring_size",
@@ -713,8 +761,8 @@ QDF_STATUS dp_ipa_cleanup(uint32_t tx_pipe_handle, uint32_t rx_pipe_handle)
 	ret = ipa_wdi3_disconn_pipes();
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		    "ipa_wdi3_disconn_pipes: IPA pipe cleanup failed: ret=%d",
-		    ret);
+		    "%s: ipa_wdi3_disconn_pipes: IPA pipe cleanup failed: ret=%d",
+		    __func__, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -743,8 +791,8 @@ QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 	int ret = -EINVAL;
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-		  "Add Partial hdr: %s, %pM",
-		  ifname, mac_addr);
+		  "%s: Add Partial hdr: %s, %pM",
+		  __func__, ifname, mac_addr);
 
 	qdf_mem_zero(&hdr_info, sizeof(struct ipa_wdi3_hdr_info));
 	qdf_ether_addr_copy(uc_tx_hdr.eth.h_source, mac_addr);
@@ -773,8 +821,8 @@ QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 	ret = ipa_wdi3_reg_intf(&in);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		    "ipa_wdi3_reg_intf: register IPA interface falied: ret=%d",
-		    ret);
+		    "%s: ipa_wdi3_reg_intf: register IPA interface falied: ret=%d",
+		    __func__, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -795,8 +843,8 @@ QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
 	ret = ipa_wdi3_dereg_intf(ifname);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-		  "ipa_wdi3_dereg_intf: IPA pipe deregistration failed: ret=%d",
-		  ret);
+			  "%s: ipa_wdi3_dereg_intf: IPA pipe deregistration failed: ret=%d",
+			  __func__, ret);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -816,8 +864,8 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *ppdev)
 	result = ipa_wdi3_enable_pipes();
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Enable WDI PIPE fail, code %d",
-				__func__, result);
+			  "%s: Enable WDI PIPE fail, code %d",
+			  __func__, result);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -837,8 +885,8 @@ QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *ppdev)
 	result = ipa_wdi3_disable_pipes();
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: Disable WDI PIPE fail, code %d",
-				__func__, result);
+			  "%s: Disable WDI PIPE fail, code %d",
+			  __func__, result);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -863,8 +911,8 @@ QDF_STATUS dp_ipa_set_perf_level(int client, uint32_t max_supported_bw_mbps)
 	result = ipa_wdi3_set_perf_profile(&profile);
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s: ipa_wdi3_set_perf_profile fail, code %d",
-				__func__, result);
+			  "%s: ipa_wdi3_set_perf_profile fail, code %d",
+			  __func__, result);
 		return QDF_STATUS_E_FAILURE;
 	}
 

@@ -5664,6 +5664,7 @@ typedef enum {
 	wmi_vdev_param_set_hemu_mode,
 	wmi_vdev_param_set_he_ltf,
 	wmi_vdev_param_set_heop,
+	wmi_vdev_param_disable_cabq,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
@@ -5900,6 +5901,8 @@ struct wmi_host_fw_abi_ver {
  * @rx_batchmode: RX batch mode
  * @tt_support: Thermal throttling support
  * @atf_config: ATF config
+ * @mgmt_comp_evt_bundle_support: bundle support required for mgmt complete evt
+ * @tx_msdu_new_partition_id_support: new partiition id support for tx msdu
  * @iphdr_pad_config: ipheader pad config
  * @qwrap_config: Qwrap configuration
  * @alloc_frag_desc_for_data_pkt: Frag desc for data
@@ -5921,6 +5924,7 @@ struct wmi_host_fw_abi_ver {
  * @bpf_instruction_size:
  * @max_bssid_rx_filters:
  * @use_pdev_id:
+ * @max_num_dbs_scan_duty_cycle: max dbs can duty cycle value
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -5962,7 +5966,9 @@ typedef struct {
 	uint32_t VO_Minfree;
 	uint32_t rx_batchmode;
 	uint32_t tt_support;
-	uint32_t atf_config;
+	uint32_t atf_config:1,
+		 mgmt_comp_evt_bundle_support:1,
+		 tx_msdu_new_partition_id_support:1;
 	uint32_t iphdr_pad_config;
 	uint32_t
 		qwrap_config:16,
@@ -5986,6 +5992,7 @@ typedef struct {
 	uint32_t bpf_instruction_size;
 	uint32_t max_bssid_rx_filters;
 	uint32_t use_pdev_id;
+	uint32_t max_num_dbs_scan_duty_cycle;
 } target_resource_config;
 
 /**

@@ -188,61 +188,25 @@ static inline void restore_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 
 }
 
-static void do_send_completion(HTC_ENDPOINT *pEndpoint,
-			       HTC_PACKET_QUEUE *pQueueToIndicate)
-{
-	do {
-
-		if (HTC_QUEUE_EMPTY(pQueueToIndicate)) {
-			/* nothing to indicate */
-			break;
-		}
-
-		if (pEndpoint->EpCallBacks.EpTxCompleteMultiple != NULL) {
-			AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
-					("HTC calling ep %d, send complete multiple callback (%d pkts)\n",
-					 pEndpoint->Id,
-					 HTC_PACKET_QUEUE_DEPTH
-						 (pQueueToIndicate)));
-			/* a multiple send complete handler is being used, pass
-			 * the queue to the handler
-			 */
-			pEndpoint->EpCallBacks.EpTxCompleteMultiple(
-						pEndpoint->EpCallBacks.pContext,
-						pQueueToIndicate);
-			/* all packets are now owned by the callback, reset
-			 * queue to be safe
-			 */
-			INIT_HTC_PACKET_QUEUE(pQueueToIndicate);
-		} else {
-			HTC_PACKET *pPacket;
-			/* using legacy EpTxComplete */
-			do {
-				pPacket = htc_packet_dequeue(pQueueToIndicate);
-				AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
-						("HTC calling ep %d send complete callback on packet %pK\n",
-						 pEndpoint->Id, pPacket));
-				pEndpoint->EpCallBacks.EpTxComplete(pEndpoint->
-								    EpCallBacks.
-								    pContext,
-								    pPacket);
-			} while (!HTC_QUEUE_EMPTY(pQueueToIndicate));
-		}
-
-	} while (false);
-
-}
-
 static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
 	HTC_ENDPOINT *pEndpoint = &target->endpoint[pPacket->Endpoint];
-	HTC_PACKET_QUEUE container;
+	HTC_EP_SEND_PKT_COMPLETE EpTxComplete;
 
 	restore_tx_packet(target, pPacket);
-	INIT_HTC_PACKET_QUEUE_AND_ADD(&container, pPacket);
 
 	/* do completion */
-	do_send_completion(pEndpoint, &container);
+	AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
+			("HTC calling ep %d send complete callback on packet %pK\n",
+			 pEndpoint->Id, pPacket));
+
+	EpTxComplete = pEndpoint->EpCallBacks.EpTxComplete;
+	if (EpTxComplete != NULL)
+		EpTxComplete(pEndpoint->EpCallBacks.pContext, pPacket);
+	else
+		qdf_nbuf_free(pPacket->pPktContext);
+
+
 }
 
 void htc_send_complete_check_cleanup(void *context)
@@ -1535,20 +1499,15 @@ QDF_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle,
 #endif
 
 	/* do completion on any packets that couldn't get in */
-	if (!HTC_QUEUE_EMPTY(pPktQueue)) {
+	while (!HTC_QUEUE_EMPTY(pPktQueue)) {
+		pPacket = htc_packet_dequeue(pPktQueue);
 
-		HTC_PACKET_QUEUE_ITERATE_ALLOW_REMOVE(pPktQueue, pPacket) {
-			/* remove the headroom reserved for HTC_FRAME_HDR */
-			restore_tx_packet(target, pPacket);
+		if (HTC_STOPPING(target))
+			pPacket->Status = QDF_STATUS_E_CANCELED;
+		else
+			pPacket->Status = QDF_STATUS_E_RESOURCES;
 
-			if (HTC_STOPPING(target))
-				pPacket->Status = QDF_STATUS_E_CANCELED;
-			else
-				pPacket->Status = QDF_STATUS_E_RESOURCES;
-		}
-		HTC_PACKET_QUEUE_ITERATE_END;
-
-		do_send_completion(pEndpoint, pPktQueue);
+		send_packet_completion(target, pPacket);
 	}
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-htc_send_pkts_multiple\n"));
