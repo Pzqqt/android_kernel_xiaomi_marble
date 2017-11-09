@@ -818,7 +818,7 @@ QDF_STATUS cds_pre_enable(void)
 		 * fail gracefully if FW is down allowing re-probing from
 		 * from the platform driver
 		 */
-		if (!cds_is_fw_down())
+		if ((!cds_is_fw_down()) && (!cds_is_self_recovery_enabled()))
 			QDF_BUG(0);
 
 		htc_stop(gp_cds_context->htc_ctx);
