@@ -48,9 +48,7 @@
 #include <cdp_txrx_misc.h>
 #include <wlan_hdd_object_manager.h>
 #include "wlan_p2p_ucfg_api.h"
-#ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
-#endif
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
