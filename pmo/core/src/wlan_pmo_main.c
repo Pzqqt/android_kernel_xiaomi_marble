@@ -63,7 +63,7 @@ struct wlan_pmo_ctx *pmo_get_context(void)
 	return gp_pmo_ctx;
 }
 
-bool pmo_is_vdev_in_beaconning_mode(enum tQDF_ADAPTER_MODE vdev_opmode)
+bool pmo_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode)
 {
 	switch (vdev_opmode) {
 	case QDF_SAP_MODE:
@@ -100,7 +100,7 @@ QDF_STATUS pmo_get_vdev_bss_peer_mac_addr(struct wlan_objmgr_vdev *vdev,
 }
 
 bool pmo_core_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
-	enum tQDF_ADAPTER_MODE vdev_opmode)
+	enum QDF_OPMODE vdev_opmode)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
@@ -140,7 +140,7 @@ bool pmo_core_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 
 bool pmo_core_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 	bool val;
 
 	opmode = pmo_get_vdev_opmode(vdev);

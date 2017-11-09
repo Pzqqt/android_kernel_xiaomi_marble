@@ -212,7 +212,7 @@ bool pmo_is_beaconing_vdev_up(struct wlan_objmgr_psoc *psoc)
 {
 	int vdev_id;
 	struct wlan_objmgr_vdev *vdev;
-	enum tQDF_ADAPTER_MODE vdev_opmode;
+	enum QDF_OPMODE vdev_opmode;
 	bool is_beaconing;
 	QDF_STATUS status;
 

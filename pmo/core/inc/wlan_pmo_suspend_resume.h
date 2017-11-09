@@ -357,7 +357,7 @@ uint16_t pmo_core_vdev_get_pause_bitmap(struct pmo_psoc_priv_obj *psoc_ctx,
 static inline
 bool pmo_is_vdev_in_ap_mode(struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	mode = pmo_get_vdev_opmode(vdev);
 
@@ -378,7 +378,7 @@ bool pmo_is_vdev_in_ap_mode(struct wlan_objmgr_vdev *vdev)
 static inline
 bool pmo_is_vdev_in_ibss_mode(struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	mode = pmo_get_vdev_opmode(vdev);
 

@@ -48,10 +48,10 @@
 #define PMO_VDEV_IN_STA_MODE(mode) \
 	((mode) == QDF_STA_MODE || (mode) == QDF_P2P_CLIENT_MODE ? 1 : 0)
 
-static inline enum tQDF_ADAPTER_MODE pmo_get_vdev_opmode(
+static inline enum QDF_OPMODE pmo_get_vdev_opmode(
 			struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 
 	opmode = wlan_vdev_mlme_get_opmode(vdev);
 
@@ -106,7 +106,7 @@ QDF_STATUS pmo_get_vdev_bss_peer_mac_addr(struct wlan_objmgr_vdev *vdev,
  *
  * Return: True if vdev needs to beacon.
  */
-bool pmo_is_vdev_in_beaconning_mode(enum tQDF_ADAPTER_MODE vdev_opmode);
+bool pmo_is_vdev_in_beaconning_mode(enum QDF_OPMODE vdev_opmode);
 
 /**
  * pmo_core_is_ap_mode_supports_arp_ns() - To check ap mode supports arp/ns
@@ -118,7 +118,7 @@ bool pmo_is_vdev_in_beaconning_mode(enum tQDF_ADAPTER_MODE vdev_opmode);
  */
 
 bool pmo_core_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
-	enum tQDF_ADAPTER_MODE vdev_opmode);
+	enum QDF_OPMODE vdev_opmode);
 
 /**
  * pmo_core_is_vdev_connected() -  to check whether peer is associated or not
@@ -169,10 +169,10 @@ QDF_STATUS pmo_core_update_psoc_config(struct wlan_objmgr_psoc *psoc,
  *
  * Return QDF_MAX_NO_OF_MODE - in case of error else return vdev opmode
  */
-static inline enum tQDF_ADAPTER_MODE pmo_core_get_vdev_op_mode(
+static inline enum QDF_OPMODE pmo_core_get_vdev_op_mode(
 					struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE op_mode = QDF_MAX_NO_OF_MODE;
+	enum QDF_OPMODE op_mode = QDF_MAX_NO_OF_MODE;
 
 	if (!vdev)
 		return op_mode;

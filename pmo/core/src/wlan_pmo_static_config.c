@@ -35,7 +35,7 @@ void pmo_register_wow_wakeup_events(struct wlan_objmgr_vdev *vdev)
 {
 	uint32_t event_bitmap[PMO_WOW_MAX_EVENT_BM_LEN] = {0};
 	uint8_t vdev_id;
-	enum tQDF_ADAPTER_MODE  vdev_opmode;
+	enum QDF_OPMODE  vdev_opmode;
 	const char *iface_type;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 	pmo_is_device_in_low_pwr_mode is_low_pwr_mode;
@@ -320,7 +320,7 @@ static QDF_STATUS pmo_configure_wow_sta(struct wlan_objmgr_vdev *vdev)
 
 void pmo_register_wow_default_patterns(struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE  vdev_opmode = QDF_MAX_NO_OF_MODE;
+	enum QDF_OPMODE  vdev_opmode = QDF_MAX_NO_OF_MODE;
 	struct pmo_vdev_priv_obj *vdev_ctx;
 	uint8_t vdev_id;
 	struct pmo_psoc_priv_obj *psoc_ctx;
