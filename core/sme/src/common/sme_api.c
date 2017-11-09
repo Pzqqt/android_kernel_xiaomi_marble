@@ -8598,53 +8598,6 @@ bool sme_is_feature_supported_by_fw(enum cap_bitmap feature)
 	return IS_FEATURE_SUPPORTED_BY_FW(feature);
 }
 
-#ifdef FEATURE_WLAN_TDLS
-/*
- * sme_update_fw_tdls_state() -
- *  SME will send message to WMA to set TDLS state in f/w
- *
- * hHal - The handle returned by mac_open
- * psmeTdlsParams - TDLS state info to update in f/w
- * useSmeLock - Need to acquire SME Global Lock before state update or not
- * Return QDF_STATUS
- */
-QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
-				    bool useSmeLock)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = NULL;
-	struct scheduler_msg message = {0};
-
-	pMac = PMAC_STRUCT(hHal);
-	if (NULL == pMac) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("pMac is Null"));
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	/* only acquire sme global lock before state update if asked to */
-	if (useSmeLock) {
-		status = sme_acquire_global_lock(&pMac->sme);
-		if (QDF_STATUS_SUCCESS != status)
-			return status;
-	}
-
-	/* serialize the req through MC thread */
-	message.bodyptr = psmeTdlsParams;
-	message.type = WMA_UPDATE_FW_TDLS_STATE;
-	qdf_status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		status = QDF_STATUS_E_FAILURE;
-
-	/* release the lock if it was acquired */
-	if (useSmeLock)
-		sme_release_global_lock(&pMac->sme);
-
-	return status;
-}
-#endif /* FEATURE_WLAN_TDLS */
-
 QDF_STATUS sme_get_link_speed(tHalHandle hHal, tSirLinkSpeedInfo *lsReq,
 			      void *plsContext,
 			      void (*pCallbackfn)(tSirLinkSpeedInfo *indParam,

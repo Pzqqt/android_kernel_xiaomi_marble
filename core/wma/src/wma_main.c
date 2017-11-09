@@ -7467,10 +7467,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 
 #ifdef FEATURE_WLAN_TDLS
-	case WMA_UPDATE_FW_TDLS_STATE:
-		wma_update_fw_tdls_state(wma_handle,
-					 (t_wma_tdls_params *) msg->bodyptr);
-		break;
 	case WMA_UPDATE_TDLS_PEER_STATE:
 		wma_update_tdls_peer_state(wma_handle,
 				(tTdlsPeerStateParams *) msg->bodyptr);

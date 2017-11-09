@@ -2218,44 +2218,8 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 
 #define WE_MAC_PWR_DEBUG_CMD 4
 
-#ifdef FEATURE_WLAN_TDLS
-/*
- * <ioctl>
- * setTdlsConfig - Set TDLS configuration parameters.
- *
- * @INPUT: 11 TDLS configuration parameters
- *	@args[0]: tdls: [0..2]
- *	@args[1]: tx_period_t: [1000..4294967295UL]
- *	@args[2]: tx_packet_n: [0..4294967295UL]
- *	@args[3]: [discovery_period is not used anymore]
- *	@args[4]: discovery_tries_n: [1..100]
- *	@args[5]: [idle_timeout is not used anymore]
- *	@args[6]: idle_packet_n: [0..40000]
- *	@args[7]: [rssi_hysteresis is not used anymore]
- *	@args[8]: rssi_trigger_threshold: [-120..0]
- *	@args[9]: rssi_teardown_threshold: [-120..0]
- *	@args[10]: rssi_delta: [-30..0]
- *
- * @OUTPUT: None
- *
- * This IOCTL is used to set the TDLS configuration parameters.
- *
- * @E.g: iwpriv wlan0 setTdlsConfig tdls tx_period_t tx_packet_n
- *		discovery_period discovery_tries_n idle_timeout
- *		idle_packet_n rssi_hysteresis rssi_trigger_threshold
- *		rssi_teardown_threshold rssi_delta
- * iwpriv wlan0 setTdlsConfig 1 1500 40 1 5 1 5 0 -70 -70 -10
- *
- * Supported Feature: TDLS
- *
- * Usage: Internal/External
- *
- * </ioctl>
- */
+/* subcommand 5 is unused */
 
-
-#define WE_TDLS_CONFIG_PARAMS   5
-#endif
 /*
  * <ioctl>
  * ibssPeerInfo - Print the ibss peers's MAC, rate and RSSI
@@ -8767,28 +8731,6 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 
-
-#ifdef FEATURE_WLAN_TDLS
-	case WE_TDLS_CONFIG_PARAMS:
-	{
-		struct hdd_tdls_config_params tdlsParams;
-
-		tdlsParams.tdls = apps_args[0];
-		tdlsParams.tx_period_t = apps_args[1];
-		tdlsParams.tx_packet_n = apps_args[2];
-		/* ignore args[3] as discovery_period is not used anymore */
-		tdlsParams.discovery_tries_n = apps_args[4];
-		/* ignore args[5] as idle_timeout is not used anymore */
-		tdlsParams.idle_packet_n = apps_args[6];
-		/* ignore args[7] as rssi_hysteresis is not used anymore */
-		tdlsParams.rssi_trigger_threshold = apps_args[8];
-		tdlsParams.rssi_teardown_threshold = apps_args[9];
-		tdlsParams.rssi_delta = apps_args[10];
-
-		wlan_hdd_tdls_set_params(dev, &tdlsParams);
-	}
-	break;
-#endif
 	case WE_UNIT_TEST_CMD:
 	{
 		QDF_STATUS status;
@@ -11855,15 +11797,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "pm_set_hw_mode"},
-#endif
-#ifdef FEATURE_WLAN_TDLS
-	/* handlers for sub ioctl */
-	{
-		WE_TDLS_CONFIG_PARAMS,
-		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
-		0,
-		"setTdlsConfig"
-	},
 #endif
 	{
 		WE_UNIT_TEST_CMD,
