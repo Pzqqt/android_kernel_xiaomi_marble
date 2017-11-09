@@ -3037,7 +3037,7 @@ QDF_STATUS reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev)
 	struct wlan_objmgr_pdev *parent_pdev;
 	struct wlan_objmgr_psoc *parent_psoc;
 	uint32_t vdev_id;
-	enum tQDF_ADAPTER_MODE op_mode;
+	enum QDF_OPMODE op_mode;
 	uint8_t i;
 
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
@@ -3096,7 +3096,7 @@ QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
 	struct wlan_objmgr_pdev *parent_pdev;
 	struct wlan_objmgr_psoc *parent_psoc;
-	enum tQDF_ADAPTER_MODE op_mode;
+	enum QDF_OPMODE op_mode;
 	uint32_t vdev_id;
 	uint8_t i;
 

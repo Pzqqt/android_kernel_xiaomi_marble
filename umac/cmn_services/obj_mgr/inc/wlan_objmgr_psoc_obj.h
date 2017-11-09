@@ -707,7 +707,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_get_pdev_by_macaddr_no_state(
  */
 struct wlan_objmgr_vdev *wlan_objmgr_get_vdev_by_opmode_from_psoc(
 			struct wlan_objmgr_psoc *psoc,
-			enum tQDF_ADAPTER_MODE opmode,
+			enum QDF_OPMODE opmode,
 			wlan_objmgr_ref_dbgid dbg_id);
 
 /**

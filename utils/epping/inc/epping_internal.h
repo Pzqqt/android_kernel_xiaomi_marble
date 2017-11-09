@@ -135,7 +135,7 @@ typedef enum {
 
 typedef struct epping_adapter_s {
 	epping_context_t *pEpping_ctx;
-	enum tQDF_ADAPTER_MODE device_mode;
+	enum QDF_OPMODE device_mode;
 	/** Handle to the network device */
 	struct net_device *dev;
 	struct qdf_mac_addr macAddressCurrent;
@@ -186,7 +186,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint);
 /* epping_txrx signatures */
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     enum tQDF_ADAPTER_MODE device_mode);
+				     enum QDF_OPMODE device_mode);
 void epping_destroy_adapter(epping_adapter_t *adapter);
 int epping_connect_service(epping_context_t *pEpping_ctx);
 #ifdef HIF_PCI

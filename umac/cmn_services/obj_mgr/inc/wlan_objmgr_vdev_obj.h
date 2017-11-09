@@ -248,7 +248,7 @@ enum wlan_vdev_state {
  * @mataddr[]:   MAT address
  */
 struct wlan_vdev_create_params {
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 	uint8_t macaddr[WLAN_MACADDR_LEN];
 	uint32_t flags;
 	struct vdev_osif_priv *osifp;
@@ -284,7 +284,7 @@ struct wlan_channel {
  * @mataddr[]:          MAT address
  */
 struct wlan_objmgr_vdev_mlme {
-	enum tQDF_ADAPTER_MODE vdev_opmode;
+	enum QDF_OPMODE vdev_opmode;
 	char ssid[WLAN_SSID_MAX_LEN+1];
 	uint8_t ssid_len;
 	struct wlan_channel  *bss_chan;   /* Define wlan_channel */
@@ -627,7 +627,7 @@ static inline struct wlan_objmgr_psoc *wlan_vdev_get_psoc(
  * Return: void
  */
 static inline void wlan_vdev_mlme_set_opmode(struct wlan_objmgr_vdev *vdev,
-				enum tQDF_ADAPTER_MODE mode)
+				enum QDF_OPMODE mode)
 {
 	vdev->vdev_mlme.vdev_opmode = mode;
 }
@@ -641,7 +641,7 @@ static inline void wlan_vdev_mlme_set_opmode(struct wlan_objmgr_vdev *vdev,
  * Return:
  * @mode: VDEV op mode
  */
-static inline enum tQDF_ADAPTER_MODE wlan_vdev_mlme_get_opmode(
+static inline enum QDF_OPMODE wlan_vdev_mlme_get_opmode(
 					struct wlan_objmgr_vdev *vdev)
 {
 	return vdev->vdev_mlme.vdev_opmode;
