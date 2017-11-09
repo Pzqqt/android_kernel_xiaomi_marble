@@ -2336,7 +2336,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		if (!reinit && !unint) {
 			ret = pld_power_on(qdf_dev->dev);
 			if (ret) {
-				hdd_err("Failed to Powerup the device: %d", ret);
+				hdd_err("Failed to Powerup the device; errno: %d",
+					ret);
 				goto release_lock;
 			}
 		}
@@ -2349,25 +2350,29 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 				   (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
 				   HIF_ENABLE_TYPE_PROBE);
 		if (ret) {
-			hdd_err("Failed to open hif: %d", ret);
+			hdd_err("Failed to open hif; errno: %d", ret);
 			goto power_down;
 		}
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 		if (!hif_ctx) {
 			hdd_err("hif context is null!!");
+			ret = -EINVAL;
 			goto power_down;
 		}
 
 		status = ol_cds_init(qdf_dev, hif_ctx);
 		if (status != QDF_STATUS_SUCCESS) {
-			hdd_err("No Memory to Create BMI Context :%d", status);
+			hdd_err("No Memory to Create BMI Context; status: %d",
+				status);
+			ret = qdf_status_to_os_return(status);
 			goto hif_close;
 		}
 
 		ret = hdd_update_config(hdd_ctx);
 		if (ret) {
-			hdd_err("Failed to update configuration :%d", ret);
+			hdd_err("Failed to update configuration; errno: %d",
+				ret);
 			goto cds_free;
 		}
 
@@ -2375,7 +2380,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 		status = cds_open(hdd_ctx->hdd_psoc);
 		if (QDF_IS_STATUS_ERROR(status)) {
-			hdd_err("Failed to Open CDS: %d", status);
+			hdd_err("Failed to Open CDS; status: %d", status);
 			ret = qdf_status_to_os_return(status);
 			goto deinit_config;
 		}
@@ -2383,13 +2388,15 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		/* initalize components configurations  after psoc open */
 		ret = hdd_update_components_config(hdd_ctx);
 		if (ret) {
-			hdd_err("Failed to update components configs :%d",
+			hdd_err("Failed to update component configs; errno: %d",
 				ret);
 			goto close;
 		}
 		status = cds_dp_open(hdd_ctx->hdd_psoc);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Failed to Open cds post open: %d", status);
+			hdd_err("Failed to Open cds post open; status: %d",
+				status);
+			ret = qdf_status_to_os_return(status);
 			goto close;
 		}
 
@@ -2404,8 +2411,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 		status = cds_pre_enable();
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			hdd_err("Failed to pre-enable CDS: %d", status);
-			ret = (status == QDF_STATUS_E_NOMEM) ? -ENOMEM : -EINVAL;
+			hdd_err("Failed to pre-enable CDS; status: %d", status);
+			ret = qdf_status_to_os_return(status);
 			goto cds_txrx_free;
 		}
 
@@ -2426,8 +2433,10 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		}
 
 		if (reinit) {
-			if (hdd_ipa_uc_ssr_reinit(hdd_ctx)) {
-				hdd_err("HDD IPA UC reinit failed");
+			ret = hdd_ipa_uc_ssr_reinit(hdd_ctx);
+			if (ret) {
+				hdd_err("HDD IPA UC reinit failed; errno: %d",
+					ret);
 				goto post_disable;
 			}
 		}
@@ -2436,16 +2445,21 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 	case DRIVER_MODULES_OPENED:
 		if (!adapter) {
 			hdd_alert("adapter is Null");
+			ret = -EINVAL;
 			goto post_disable;
 		}
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			hdd_err("in ftm mode, no need to configure cds modules");
+			ret = -EINVAL;
 			break;
 		}
-		if (hdd_configure_cds(hdd_ctx, adapter)) {
-			hdd_err("Failed to Enable cds modules");
+
+		ret = hdd_configure_cds(hdd_ctx, adapter);
+		if (ret) {
+			hdd_err("Failed to Enable cds modules; errno: %d", ret);
 			goto post_disable;
 		}
+
 		hdd_enable_power_management();
 		hdd_info("Driver Modules Successfully Enabled");
 		hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
@@ -2456,6 +2470,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 	default:
 		hdd_err("WLAN start invoked in wrong state! :%d\n",
 				hdd_ctx->driver_status);
+		ret = -EINVAL;
 		goto release_lock;
 	}
 	hdd_ctx->start_modules_in_progress = false;
