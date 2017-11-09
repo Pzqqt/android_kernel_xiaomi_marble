@@ -152,6 +152,7 @@ void qdf_cpuhp_unregister(struct qdf_cpuhp_handler **out_handler)
 	qdf_list_remove_node(&qdf_cpuhp_handlers, &handler->node);
 	qdf_mutex_release(&qdf_cpuhp_lock);
 
+	qdf_mem_free(handler);
 	*out_handler = NULL;
 }
 
