@@ -9901,6 +9901,11 @@ enum dot11p_mode {
 #define CFG_SAP_FORCE_11N_FOR_11AC_MAX     (1)
 #define CFG_SAP_FORCE_11N_FOR_11AC_DEFAULT (0)
 
+#define CFG_GO_FORCE_11N_FOR_11AC_NAME    "gGoForce11NFor11AC"
+#define CFG_GO_FORCE_11N_FOR_11AC_MIN     (0)
+#define CFG_GO_FORCE_11N_FOR_11AC_MAX     (1)
+#define CFG_GO_FORCE_11N_FOR_11AC_DEFAULT (0)
+
 /*
  * sap tx leakage threshold
  * customer can set this value from 100 to 1000 which means
@@ -14257,6 +14262,7 @@ struct hdd_config {
 	bool indoor_channel_support;
 	/* parameter to force sap into 11n */
 	bool sap_force_11n_for_11ac;
+	bool go_force_11n_for_11ac;
 	uint16_t sap_tx_leakage_threshold;
 	bool multicast_replay_filter;
 	/* parameter for indicating sifs burst duration to fw */
