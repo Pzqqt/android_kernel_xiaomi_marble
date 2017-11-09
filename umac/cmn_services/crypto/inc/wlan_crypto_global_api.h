@@ -283,26 +283,26 @@ QDF_STATUS wlan_crypto_rsnie_check(struct wlan_crypto_params *, uint8_t *frm);
 /**
  * wlan_crypto_build_wpaie - called by mlme to build wpaie
  *
- * @crypto params: crypto params
+ * @vdev: vdev
  * @iebuf: ie buffer
  *
- * This function gets called by mlme to build wpaie from given crypto params
+ * This function gets called by mlme to build wpaie from given vdev
  *
  * Return: end of buffer
  */
-uint8_t *wlan_crypto_build_wpaie(struct wlan_crypto_params *,
+uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 					uint8_t *iebuf);
 /**
  * wlan_crypto_build_rsnie - called by mlme to build rsnie
  *
- * @crypto params: crypto params
+ * @vdev: vdev
  * @iebuf: ie buffer
  *
- * This function gets called by mlme to build rsnie from given crypto params
+ * This function gets called by mlme to build rsnie from given vdev
  *
  * Return: end of buffer
  */
-uint8_t *wlan_crypto_build_rsnie(struct wlan_crypto_params *,
+uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 					uint8_t *iebuf);
 
 /**
