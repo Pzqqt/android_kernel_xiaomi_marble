@@ -409,7 +409,7 @@ typedef struct tagCsrScanResultFilter {
 	uint8_t scan_filter_for_roam;
 	struct sCsrChannel_ pcl_channels;
 	struct qdf_mac_addr bssid_hint;
-	enum tQDF_ADAPTER_MODE csrPersona;
+	enum QDF_OPMODE csrPersona;
 	bool realm_check;
 	uint8_t fils_realm[2];
 } tCsrScanResultFilter;
@@ -990,7 +990,7 @@ typedef struct csr_roam_profile {
 	uint16_t cfg_protection;
 	uint8_t wps_state;
 	tCsrMobilityDomainInfo MDID;
-	enum tQDF_ADAPTER_MODE csrPersona;
+	enum QDF_OPMODE csrPersona;
 	uint8_t disableDFSChSwitch;
 	/* addIe params */
 	tSirAddIeParams addIeParams;

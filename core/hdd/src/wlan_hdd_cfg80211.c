@@ -4117,7 +4117,7 @@ wlan_hdd_set_no_dfs_flag_config_policy[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX
  *  Return:         bool
  */
 static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
-				enum tQDF_ADAPTER_MODE device_mode)
+				enum QDF_OPMODE device_mode)
 {
 	struct hdd_adapter *adapter;
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
@@ -5958,7 +5958,7 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 						   u8 restrict_offchan)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	enum tQDF_ADAPTER_MODE dev_mode = adapter->device_mode;
+	enum QDF_OPMODE dev_mode = adapter->device_mode;
 	int ret_val = 0;
 
 	if (!(dev_mode == QDF_SAP_MODE || dev_mode == QDF_P2P_GO_MODE)) {

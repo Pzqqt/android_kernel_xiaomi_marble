@@ -322,7 +322,7 @@ struct csr_roamstart_bssparams {
 	uint8_t ApUapsdEnable;
 	uint8_t ssidHidden;
 	uint8_t wps_state;
-	enum tQDF_ADAPTER_MODE bssPersona;
+	enum QDF_OPMODE bssPersona;
 	uint16_t nRSNIELength;  /* If 0, pRSNIE is ignored. */
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
@@ -410,7 +410,7 @@ struct wmstatus_changecmd {
 struct addstafor_sessioncmd {
 	/* Session self mac addr */
 	tSirMacAddr selfMacAddr;
-	enum tQDF_ADAPTER_MODE currDeviceMode;
+	enum QDF_OPMODE currDeviceMode;
 	uint32_t type;
 	uint32_t subType;
 	uint8_t sessionId;
@@ -1517,8 +1517,8 @@ void purge_sme_session_active_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
 		uint32_t session_id);
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
-enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
-						uint32_t session_id);
+enum QDF_OPMODE csr_get_session_persona(tpAniSirGlobal pmac,
+					uint32_t session_id);
 void csr_roam_substate_change(
 			tpAniSirGlobal pMac, enum csr_roam_substate
 					NewSubstate, uint32_t sessionId);

@@ -252,7 +252,7 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		uint8_t session_id, uint32_t type,
 		uint32_t subType);
 void sme_set_curr_device_mode(tHalHandle hHal,
-		enum tQDF_ADAPTER_MODE currDeviceMode);
+		enum QDF_OPMODE currDeviceMode);
 QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		csr_roamSessionCloseCallback callback,
 		void *pContext);
@@ -535,7 +535,7 @@ QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
 QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t db);
 QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 		struct qdf_mac_addr bssid,
-		enum tQDF_ADAPTER_MODE dev_mode, int power);
+		enum QDF_OPMODE dev_mode, int power);
 QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
 QDF_STATUS sme_hide_ssid(tHalHandle hHal, uint8_t sessionId,
 		uint8_t ssidHidden);
@@ -1250,8 +1250,8 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
 				       struct sir_mac_pwr_dbg_cmd*
 				       dbg_args);
 
-void sme_get_vdev_type_nss(enum tQDF_ADAPTER_MODE dev_mode,
-		uint8_t *nss_2g, uint8_t *nss_5g);
+void sme_get_vdev_type_nss(enum QDF_OPMODE dev_mode,
+			   uint8_t *nss_2g, uint8_t *nss_5g);
 QDF_STATUS sme_roam_set_default_key_index(tHalHandle hal, uint8_t session_id,
 					  uint8_t default_idx);
 void sme_send_disassoc_req_frame(tHalHandle hal, uint8_t session_id, uint8_t

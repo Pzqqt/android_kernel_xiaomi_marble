@@ -100,8 +100,8 @@ enum cds_fw_state {
  */
 struct cds_sme_cbacks {
 	QDF_STATUS (*sme_get_valid_channels)(void*, uint8_t *, uint32_t *);
-	void (*sme_get_nss_for_vdev)(void*, enum tQDF_ADAPTER_MODE,
-		uint8_t *, uint8_t *);
+	void (*sme_get_nss_for_vdev)(void*, enum QDF_OPMODE,
+				     uint8_t *, uint8_t *);
 };
 
 void cds_set_driver_state(enum cds_driver_state);
@@ -441,7 +441,7 @@ QDF_STATUS cds_free_context(QDF_MODULE_ID moduleID, void *pModuleContext);
 
 QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context);
 
-QDF_STATUS cds_get_vdev_types(enum tQDF_ADAPTER_MODE mode, uint32_t *type,
+QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint32_t *type,
 			      uint32_t *subType);
 
 void cds_flush_work(void *work);

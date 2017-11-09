@@ -176,7 +176,7 @@ typedef struct tagSmeStruct {
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **pSmeCmdBufAddr;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
-	enum tQDF_ADAPTER_MODE currDeviceMode;
+	enum QDF_OPMODE currDeviceMode;
 	tSmePeerInfoHddCbkInfo peerInfoParams;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	host_event_wlan_status_payload_type eventPayload;

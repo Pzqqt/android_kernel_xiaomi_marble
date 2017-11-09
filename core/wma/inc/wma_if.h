@@ -1149,7 +1149,7 @@ typedef struct sMaxTxPowerParams {
 	 * power == tx power used for management frames.
 	 */
 	int8_t power;
-	enum tQDF_ADAPTER_MODE dev_mode;
+	enum QDF_OPMODE dev_mode;
 } tMaxTxPowerParams, *tpMaxTxPowerParams;
 
 /**
@@ -1180,7 +1180,7 @@ typedef struct sMaxTxPowerPerBandParams {
  */
 struct add_sta_self_params {
 	tSirMacAddr self_mac_addr;
-	enum tQDF_ADAPTER_MODE curr_device_mode;
+	enum QDF_OPMODE curr_device_mode;
 	uint32_t type;
 	uint32_t sub_type;
 	uint8_t session_id;

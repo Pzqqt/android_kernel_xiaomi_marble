@@ -2015,7 +2015,7 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 {
 
 	int ret;
-	enum tQDF_ADAPTER_MODE device_mode = adapter->device_mode;
+	enum QDF_OPMODE device_mode = adapter->device_mode;
 
 	ENTER_DEV(adapter->dev);
 	hdd_debug("Start_adapter for mode : %d", adapter->device_mode);
@@ -5478,7 +5478,7 @@ struct hdd_adapter *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
  * Return: pointer to adapter or null
  */
 struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
-			enum tQDF_ADAPTER_MODE mode)
+			enum QDF_OPMODE mode)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
@@ -5516,7 +5516,7 @@ struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
  *	   not connected.
  */
 uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
-			enum tQDF_ADAPTER_MODE mode)
+			enum QDF_OPMODE mode)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
@@ -10747,7 +10747,7 @@ wlan_hdd_check_custom_con_channel_rules(struct hdd_adapter *sta_adapter,
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	uint8_t channel_id;
 	QDF_STATUS status;
-	enum tQDF_ADAPTER_MODE device_mode = ap_adapter->device_mode;
+	enum QDF_OPMODE device_mode = ap_adapter->device_mode;
 	*concurrent_chnl_same = true;
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
@@ -11519,7 +11519,7 @@ static bool is_con_mode_valid(enum tQDF_GLOBAL_CON_MODE mode)
  *
  * Return: adapter mode
  */
-static enum tQDF_ADAPTER_MODE hdd_get_adpter_mode(
+static enum QDF_OPMODE hdd_get_adpter_mode(
 					enum tQDF_GLOBAL_CON_MODE mode)
 {
 
@@ -11658,7 +11658,7 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 	int ret;
 	struct hdd_adapter *adapter;
 	enum tQDF_GLOBAL_CON_MODE curr_mode;
-	enum tQDF_ADAPTER_MODE adapter_mode;
+	enum QDF_OPMODE adapter_mode;
 
 	hdd_info("con_mode handler: %s", kmessage);
 

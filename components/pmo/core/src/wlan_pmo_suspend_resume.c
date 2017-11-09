@@ -110,7 +110,7 @@ static void pmo_core_set_vdev_suspend_dtim(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS ret;
 	uint8_t vdev_id;
 	enum pmo_power_save_qpower_mode qpower_config;
-	enum tQDF_ADAPTER_MODE opmode = pmo_core_get_vdev_op_mode(vdev);
+	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
 
 	qpower_config = pmo_core_psoc_get_qpower_config(psoc);
 	vdev_id = pmo_vdev_get_id(vdev);
@@ -367,7 +367,7 @@ static void pmo_core_set_vdev_resume_dtim(struct wlan_objmgr_psoc *psoc,
 	enum pmo_power_save_qpower_mode qpower_config;
 	QDF_STATUS ret;
 	uint8_t vdev_id;
-	enum tQDF_ADAPTER_MODE opmode = pmo_core_get_vdev_op_mode(vdev);
+	enum QDF_OPMODE opmode = pmo_core_get_vdev_op_mode(vdev);
 	uint32_t cfg_data_val = 0;
 
 	qpower_config = pmo_core_psoc_get_qpower_config(psoc);

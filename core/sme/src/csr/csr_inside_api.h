@@ -673,7 +673,7 @@ bool csr_is_profile_wapi(tCsrRoamProfile *pProfile);
 #endif /* FEATURE_WLAN_WAPI */
 
 void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
-		enum tQDF_ADAPTER_MODE dev_mode,
+		enum QDF_OPMODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR

@@ -41,7 +41,7 @@
  * Return: true in case support else false
  */
 bool ucfg_pmo_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
-	enum tQDF_ADAPTER_MODE vdev_opmode);
+	enum QDF_OPMODE vdev_opmode);
 
 /**
  * ucfg_pmo_is_vdev_connected() -  to check whether peer is associated or not

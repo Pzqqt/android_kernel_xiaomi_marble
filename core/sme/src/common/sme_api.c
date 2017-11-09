@@ -6422,7 +6422,7 @@ QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
  */
 QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 			   struct qdf_mac_addr pBSSId,
-			   enum tQDF_ADAPTER_MODE dev_mode, int dBm)
+			   enum QDF_OPMODE dev_mode, int dBm)
 {
 	struct scheduler_msg msg = {0};
 	tpMaxTxPowerParams pTxParams = NULL;
@@ -8795,7 +8795,7 @@ ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value)
  * currDeviceMode - Current operating device mode.
  */
 void sme_set_curr_device_mode(tHalHandle hHal,
-				enum tQDF_ADAPTER_MODE currDeviceMode)
+				enum QDF_OPMODE currDeviceMode)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -14677,8 +14677,8 @@ QDF_STATUS sme_process_mac_pwr_dbg_cmd(tHalHandle hal, uint32_t session_id,
  *
  * Return: None
  */
-void sme_get_vdev_type_nss(enum tQDF_ADAPTER_MODE dev_mode,
-		uint8_t *nss_2g, uint8_t *nss_5g)
+void sme_get_vdev_type_nss(enum QDF_OPMODE dev_mode,
+			   uint8_t *nss_2g, uint8_t *nss_5g)
 {
 	tpAniSirGlobal mac_ctx = sme_get_mac_context();
 

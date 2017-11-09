@@ -282,7 +282,7 @@ struct sap_context *wlansap_open(void)
 } /* wlansap_open */
 
 QDF_STATUS wlansap_start(struct sap_context *sap_ctx,
-			 enum tQDF_ADAPTER_MODE mode,
+			 enum QDF_OPMODE mode,
 			 uint8_t *addr, uint32_t session_id)
 {
 	QDF_STATUS qdf_ret_status;

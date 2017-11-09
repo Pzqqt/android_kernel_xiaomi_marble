@@ -1145,7 +1145,7 @@ done:
  */
 static uint32_t set_first_connection_operating_channel(
 		struct hdd_context *hdd_ctx, uint32_t set_value,
-		enum tQDF_ADAPTER_MODE dev_mode)
+		enum QDF_OPMODE dev_mode)
 {
 	uint8_t operating_channel;
 

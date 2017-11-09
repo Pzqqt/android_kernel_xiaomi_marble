@@ -44,7 +44,7 @@ QDF_STATUS ucfg_pmo_update_psoc_config(struct wlan_objmgr_psoc *psoc,
 }
 
 bool ucfg_pmo_is_ap_mode_supports_arp_ns(struct wlan_objmgr_psoc *psoc,
-	enum tQDF_ADAPTER_MODE vdev_opmode)
+	enum QDF_OPMODE vdev_opmode)
 {
 	return pmo_core_is_ap_mode_supports_arp_ns(psoc, vdev_opmode);
 }

@@ -281,7 +281,7 @@ tListElem *csr_roam_find_in_pe_stats_req_list(
 static QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac);
 static uint32_t csr_find_ibss_session(tpAniSirGlobal pMac);
 static uint32_t csr_find_session_by_type(tpAniSirGlobal,
-					enum tQDF_ADAPTER_MODE);
+					enum QDF_OPMODE);
 static bool csr_is_conn_allow_2g_band(tpAniSirGlobal pMac,
 						uint32_t chnl);
 static bool csr_is_conn_allow_5g_band(tpAniSirGlobal pMac,
@@ -16190,7 +16190,7 @@ QDF_STATUS csr_process_add_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
  * Return: None
  */
 void csr_get_vdev_type_nss(tpAniSirGlobal mac_ctx,
-		enum tQDF_ADAPTER_MODE dev_mode,
+		enum QDF_OPMODE dev_mode,
 		uint8_t *nss_2g, uint8_t *nss_5g)
 {
 	switch (dev_mode) {
@@ -20089,7 +20089,7 @@ static void csr_init_operating_classes(tHalHandle hHal)
  * Return: session id for give session type.
  **/
 static uint32_t
-csr_find_session_by_type(tpAniSirGlobal mac_ctx, enum tQDF_ADAPTER_MODE type)
+csr_find_session_by_type(tpAniSirGlobal mac_ctx, enum QDF_OPMODE type)
 {
 	uint32_t i, session_id = CSR_SESSION_ID_INVALID;
 	struct csr_roam_session *session_ptr;

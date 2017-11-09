@@ -290,7 +290,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint32_t lim11hEnable;
 
 	int8_t maxTxPower;   /* MIN (Regulatory and local power constraint) */
-	enum tQDF_ADAPTER_MODE pePersona;
+	enum QDF_OPMODE pePersona;
 	int8_t txMgmtPower;
 	bool is11Rconnection;
 

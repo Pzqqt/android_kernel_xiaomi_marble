@@ -997,7 +997,7 @@ struct hdd_adapter {
 	/** Handle to the network device */
 	struct net_device *dev;
 
-	enum tQDF_ADAPTER_MODE device_mode;
+	enum QDF_OPMODE device_mode;
 
 	/** IPv4 notifier callback for handling ARP offload on change in IP */
 	struct work_struct ipv4_notifier_work;
@@ -1850,7 +1850,7 @@ int hdd_vdev_ready(struct hdd_adapter *adapter);
 
 QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter);
 struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
-			enum tQDF_ADAPTER_MODE mode);
+			enum QDF_OPMODE mode);
 void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter,
 			bool rtnl_held);
@@ -1862,7 +1862,7 @@ uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx);
 void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
 				uint8_t *releaseAddr);
 uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
-			enum tQDF_ADAPTER_MODE mode);
+			enum QDF_OPMODE mode);
 
 void hdd_set_conparam(uint32_t con_param);
 enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void);
@@ -2587,7 +2587,7 @@ static inline void hdd_send_peer_status_ind_to_app(
 					uint8_t peer_timing_meas_cap,
 					uint8_t sessionId,
 					tSirSmeChanInfo *chan_info,
-					enum tQDF_ADAPTER_MODE dev_mode)
+					enum QDF_OPMODE dev_mode)
 {
 	struct wifi_pos_ch_info ch_info;
 
@@ -2620,7 +2620,7 @@ static inline void hdd_send_peer_status_ind_to_app(
 					uint8_t peer_timing_meas_cap,
 					uint8_t sessionId,
 					tSirSmeChanInfo *chan_info,
-					enum tQDF_ADAPTER_MODE dev_mode)
+					enum QDF_OPMODE dev_mode)
 {
 	hdd_send_peer_status_ind_to_oem_app(peer_mac, peer_status,
 			peer_timing_meas_cap, sessionId, chan_info, dev_mode);

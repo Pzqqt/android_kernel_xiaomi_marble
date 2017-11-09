@@ -170,7 +170,7 @@ QDF_STATUS pmo_core_cache_gtk_offload_req(struct wlan_objmgr_vdev *vdev,
 		struct pmo_gtk_req *gtk_req)
 {
 	QDF_STATUS status;
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 	uint8_t vdev_id;
 
 	PMO_ENTER();
@@ -211,7 +211,7 @@ out:
 
 QDF_STATUS pmo_core_flush_gtk_offload_req(struct wlan_objmgr_vdev *vdev)
 {
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 	uint8_t vdev_id;
 	QDF_STATUS status;
 

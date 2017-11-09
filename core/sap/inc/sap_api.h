@@ -588,7 +588,7 @@ typedef struct sap_Config {
 	uint32_t ap_table_max_size;
 	uint32_t ap_table_expiration_time;
 	uint32_t ht_op_mode_fixed;
-	enum tQDF_ADAPTER_MODE persona; /* Tells us which persona, GO or AP */
+	enum QDF_OPMODE persona; /* Tells us which persona, GO or AP */
 	uint8_t disableDFSChSwitch;
 	bool enOverLapCh;
 #ifdef WLAN_FEATURE_11W
@@ -730,7 +730,7 @@ typedef struct sSapDfsInfo {
 typedef struct tagSapCtxList {
 	uint8_t sessionID;
 	void *pSapContext;
-	enum tQDF_ADAPTER_MODE sapPersona;
+	enum QDF_OPMODE sapPersona;
 } tSapCtxList, tpSapCtxList;
 
 typedef struct tagSapStruct {
@@ -833,7 +833,7 @@ QDF_STATUS wlansap_close(struct sap_context *sap_ctx);
  *         QDF_STATUS_SUCCESS: Success
  */
 QDF_STATUS wlansap_start(struct sap_context *sap_ctx,
-			 enum tQDF_ADAPTER_MODE mode,
+			 enum QDF_OPMODE mode,
 			 uint8_t *addr, uint32_t session_id);
 
 /**

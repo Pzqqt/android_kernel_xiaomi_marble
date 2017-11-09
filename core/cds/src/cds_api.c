@@ -1674,7 +1674,7 @@ void cds_wma_complete_cback(void)
  *
  * Return: WMI vdev type
  */
-QDF_STATUS cds_get_vdev_types(enum tQDF_ADAPTER_MODE mode, uint32_t *type,
+QDF_STATUS cds_get_vdev_types(enum QDF_OPMODE mode, uint32_t *type,
 			      uint32_t *sub_type)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;

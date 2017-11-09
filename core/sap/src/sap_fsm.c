@@ -3524,7 +3524,7 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 			}
 		}
 	} else if (eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START == msg) {
-		enum tQDF_ADAPTER_MODE persona;
+		enum QDF_OPMODE persona;
 
 		if (!sap_ctx) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

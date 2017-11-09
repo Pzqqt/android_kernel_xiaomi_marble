@@ -169,7 +169,7 @@ int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter);
  * Return: 0 for success, negative error code for failure
  */
 int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
-			       enum tQDF_ADAPTER_MODE adapter_mode,
+			       enum QDF_OPMODE adapter_mode,
 			       uint8_t *mac_addr,
 			       bool is_p2p_type);
 

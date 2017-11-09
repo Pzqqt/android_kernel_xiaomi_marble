@@ -927,7 +927,7 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
 {
 	struct csr_roam_session *session = NULL;
 	uint8_t i = 0;
-	enum tQDF_ADAPTER_MODE persona;
+	enum QDF_OPMODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
@@ -1371,7 +1371,7 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 {
 	uint32_t i;
 	struct csr_roam_session *pSession = NULL;
-	enum tQDF_ADAPTER_MODE persona;
+	enum QDF_OPMODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (!CSR_IS_SESSION_VALID(pMac, i))
@@ -2789,7 +2789,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal mac_ctx,
 					uint8_t chnl_id,
 					uint16_t *bcn_interval,
 					uint32_t cur_session_id,
-					enum tQDF_ADAPTER_MODE cur_bss_persona)
+					enum QDF_OPMODE cur_bss_persona)
 {
 	uint32_t session_id = 0;
 	QDF_STATUS status;
@@ -6694,10 +6694,10 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
  *
  * This function is to return the persona of a session
  *
- * Reture: enum tQDF_ADAPTER_MODE persona
+ * Reture: enum QDF_OPMODE persona
  */
-enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
-						uint32_t session_id)
+enum QDF_OPMODE csr_get_session_persona(tpAniSirGlobal pmac,
+					uint32_t session_id)
 {
 	struct csr_roam_session *session = NULL;
 

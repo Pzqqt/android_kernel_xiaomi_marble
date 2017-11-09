@@ -709,7 +709,7 @@ typedef struct sSirSmeStartBssReq {
 	uint32_t dtimPeriod;
 	uint8_t wps_state;
 	uint8_t isCoalesingInIBSSAllowed;       /* Coalesing on/off knob */
-	enum tQDF_ADAPTER_MODE bssPersona;
+	enum QDF_OPMODE bssPersona;
 
 	uint8_t txLdpcIniFeatureEnabled;
 
@@ -1186,7 +1186,7 @@ typedef struct sSirSmeJoinReq {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	enum tQDF_ADAPTER_MODE staPersona;       /* Persona */
+	enum QDF_OPMODE staPersona;       /* Persona */
 	bool wps_registration;
 	ePhyChanBondState cbMode;       /* Pass CB mode value in Join. */
 
@@ -4029,7 +4029,7 @@ typedef struct {
 typedef struct sSirRateUpdateInd {
 	uint8_t nss;            /* 0: 1x1, 1: 2x2 */
 	struct qdf_mac_addr bssid;
-	enum tQDF_ADAPTER_MODE dev_mode;
+	enum QDF_OPMODE dev_mode;
 	int32_t bcastDataRate;  /* bcast rate unit Mbpsx10, -1:not used */
 	/*
 	 * 0 implies RA, positive value implies fixed rate, -1 implies ignore
