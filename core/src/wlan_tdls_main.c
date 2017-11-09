@@ -420,7 +420,7 @@ QDF_STATUS tdls_get_vdev_objects(struct wlan_objmgr_vdev *vdev,
 				   struct tdls_vdev_priv_obj **tdls_vdev_obj,
 				   struct tdls_soc_priv_obj **tdls_soc_obj)
 {
-	enum tQDF_ADAPTER_MODE device_mode;
+	enum QDF_OPMODE device_mode;
 
 	if (NULL == vdev)
 		return QDF_STATUS_E_FAILURE;
@@ -1275,7 +1275,7 @@ void tdls_scan_complete_event_handler(struct wlan_objmgr_vdev *vdev,
 			struct scan_event *event,
 			void *arg)
 {
-	enum tQDF_ADAPTER_MODE device_mode;
+	enum QDF_OPMODE device_mode;
 	struct tdls_soc_priv_obj *tdls_soc;
 
 	if (!vdev || !event || !arg)
