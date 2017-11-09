@@ -68,7 +68,7 @@ typedef const enum policy_mgr_conc_next_action
  * Return: NONE
  */
 void policy_mgr_set_concurrency_mode(struct wlan_objmgr_psoc *psoc,
-				     enum tQDF_ADAPTER_MODE mode);
+				     enum QDF_OPMODE mode);
 
 /**
  * policy_mgr_clear_concurrency_mode() - To clear concurrency mode
@@ -80,7 +80,7 @@ void policy_mgr_set_concurrency_mode(struct wlan_objmgr_psoc *psoc,
  * Return: NONE
  */
 void policy_mgr_clear_concurrency_mode(struct wlan_objmgr_psoc *psoc,
-				       enum tQDF_ADAPTER_MODE mode);
+				       enum QDF_OPMODE mode);
 
 /**
  * policy_mgr_get_connection_count() - provides the count of
@@ -192,7 +192,7 @@ bool policy_mgr_is_mcc_in_24G(struct wlan_objmgr_psoc *psoc);
  */
 QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 		struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id, enum tQDF_ADAPTER_MODE dev_mode);
+		uint8_t vdev_id, enum QDF_OPMODE dev_mode);
 
 #if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH)
 /**
@@ -233,7 +233,7 @@ static inline void policy_mgr_change_sap_channel_with_csa(
  * Return: None
  */
 void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
-		enum tQDF_ADAPTER_MODE mode, uint8_t sessionId);
+		enum QDF_OPMODE mode, uint8_t session_id);
 
 /**
  * policy_mgr_decr_active_session() - decrements the number of active sessions
@@ -248,7 +248,7 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
-		enum tQDF_ADAPTER_MODE mode, uint8_t sessionId);
+		enum QDF_OPMODE mode, uint8_t session_id);
 
 /**
  * policy_mgr_decr_session_set_pcl() - Decrement session count and set PCL
@@ -262,7 +262,7 @@ QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
  * Return: None
  */
 void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
-		enum tQDF_ADAPTER_MODE mode, uint8_t session_id);
+		enum QDF_OPMODE mode, uint8_t session_id);
 
 /**
  * policy_mgr_get_channel() - provide channel number of given mode and vdevid
@@ -666,7 +666,7 @@ static inline QDF_STATUS policy_mgr_decr_connection_count_utfw(
  * Return: policy_mgr_con_mode enum
  */
 enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
-		enum tQDF_ADAPTER_MODE device_mode);
+		enum QDF_OPMODE device_mode);
 
 /**
  * policy_mgr_pdev_set_hw_mode() - Set HW mode command to FW
@@ -748,9 +748,9 @@ typedef void (*policy_mgr_nss_update_cback)(struct wlan_objmgr_psoc *psoc,
  */
 struct policy_mgr_sme_cbacks {
 	QDF_STATUS (*sme_get_valid_channels)(uint8_t *chan_list,
-		uint32_t *list_len);
-	void (*sme_get_nss_for_vdev)(enum tQDF_ADAPTER_MODE,
-		uint8_t *nss_2g, uint8_t *nss_5g);
+					     uint32_t *list_len);
+	void (*sme_get_nss_for_vdev)(enum QDF_OPMODE,
+				     uint8_t *nss_2g, uint8_t *nss_5g);
 	QDF_STATUS (*sme_soc_set_dual_mac_config)(
 		struct policy_mgr_dual_mac_config msg);
 	QDF_STATUS (*sme_pdev_set_hw_mode)(struct policy_mgr_hw_mode msg);
@@ -923,8 +923,8 @@ void policy_mgr_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
  *
  * Return: true or false
  */
-bool policy_mgr_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
-		enum policy_mgr_con_mode *new_mode);
+bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
+				     enum policy_mgr_con_mode *new_mode);
 
 /**
  * policy_mgr_get_channel_from_scan_result() - to get channel from scan result
