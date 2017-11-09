@@ -166,18 +166,18 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (!entry) {
 		sme_err("No cmd found in active list");
-		return QDF_STATUS_E_FAILURE;
+		goto error_path;
 	}
 
 	command = GET_BASE_ADDR(entry, tSmeCmd, Link);
 	if (!command) {
 		sme_err("Base address is NULL");
-		return QDF_STATUS_E_FAILURE;
+		goto error_path;
 	}
 
 	if (e_sme_command_set_hw_mode != command->command) {
 		sme_err("Command mismatch!");
-		return QDF_STATUS_E_FAILURE;
+		goto error_path;
 	}
 
 	callback = command->u.set_hw_mode_cmd.set_hw_mode_cb;
@@ -239,6 +239,11 @@ end:
 		csr_release_command(mac, command);
 
 	return QDF_STATUS_SUCCESS;
+
+error_path:
+	wlan_objmgr_vdev_release_ref(command->u.set_hw_mode_cmd.vdev,
+		WLAN_LEGACY_SME_ID);
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
