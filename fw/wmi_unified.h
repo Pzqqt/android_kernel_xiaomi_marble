@@ -2626,6 +2626,14 @@ typedef struct {
 
     /** Maximum number of Multi group key to support */
     A_UINT32 max_num_group_keys;
+
+    /**
+     * HTT peer map/unmap V2 format support
+     * 0 -> host doesn't support HTT peer map/unmap v2 format.
+     * 1 -> host supports HTT peer map/unmap v2 format; the target is
+     *      allowed but not required to use peer map/unmap v2 format.
+     */
+    A_UINT32 peer_map_unmap_v2_support;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
