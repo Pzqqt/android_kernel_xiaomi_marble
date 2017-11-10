@@ -6246,6 +6246,29 @@ uint32_t dot11f_unpack_ie_bss_color_change(tpAniSirGlobal pCtx,
 #define SigIebss_color_change (0x007d)
 
 
+uint32_t dot11f_unpack_ie_dh_parameter_element(tpAniSirGlobal pCtx,
+					       uint8_t *pBuf,
+					       uint8_t ielen,
+					       tDot11fIEdh_parameter_element *pDst,
+					       bool append_ie)
+{
+	uint32_t status = DOT11F_PARSE_SUCCESS;
+	(void) pBuf; (void)ielen; /* Shutup the compiler */
+	if (pDst->present)
+		status = DOT11F_DUPLICATE_IE;
+	pDst->present = 1;
+	DOT11F_MEMCPY(pCtx, pDst->group, pBuf, 2);
+	pBuf += 2;
+	ielen -= (uint8_t)2;
+	pDst->num_public_key = (uint8_t)(ielen);
+	DOT11F_MEMCPY(pCtx, pDst->public_key, pBuf, (ielen));
+	(void)pCtx;
+	return status;
+} /* End dot11f_unpack_ie_dh_parameter_element. */
+
+#define SigIedh_parameter_element (0x007e)
+
+
 uint32_t dot11f_unpack_ie_esp_information(tpAniSirGlobal pCtx,
 					  uint8_t *pBuf,
 					  uint8_t ielen,
@@ -6268,7 +6291,7 @@ uint32_t dot11f_unpack_ie_esp_information(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_esp_information. */
 
-#define SigIeesp_information (0x007e)
+#define SigIeesp_information (0x007f)
 
 
 uint32_t dot11f_unpack_ie_ext_chan_switch_ann(tpAniSirGlobal pCtx,
@@ -6296,7 +6319,7 @@ uint32_t dot11f_unpack_ie_ext_chan_switch_ann(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_ext_chan_switch_ann. */
 
-#define SigIeext_chan_switch_ann (0x007f)
+#define SigIeext_chan_switch_ann (0x0080)
 
 
 uint32_t dot11f_unpack_ie_fils_assoc_delay_info(tpAniSirGlobal pCtx,
@@ -6315,7 +6338,7 @@ uint32_t dot11f_unpack_ie_fils_assoc_delay_info(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_assoc_delay_info. */
 
-#define SigIefils_assoc_delay_info (0x0080)
+#define SigIefils_assoc_delay_info (0x0081)
 
 
 uint32_t dot11f_unpack_ie_fils_hlp_container(tpAniSirGlobal pCtx,
@@ -6341,7 +6364,7 @@ uint32_t dot11f_unpack_ie_fils_hlp_container(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_hlp_container. */
 
-#define SigIefils_hlp_container (0x0081)
+#define SigIefils_hlp_container (0x0082)
 
 
 uint32_t dot11f_unpack_ie_fils_indication(tpAniSirGlobal pCtx,
@@ -6374,7 +6397,7 @@ uint32_t dot11f_unpack_ie_fils_indication(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_indication. */
 
-#define SigIefils_indication (0x0082)
+#define SigIefils_indication (0x0083)
 
 
 uint32_t dot11f_unpack_ie_fils_kde(tpAniSirGlobal pCtx,
@@ -6397,7 +6420,7 @@ uint32_t dot11f_unpack_ie_fils_kde(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_kde. */
 
-#define SigIefils_kde (0x0083)
+#define SigIefils_kde (0x0084)
 
 
 uint32_t dot11f_unpack_ie_fils_key_confirmation(tpAniSirGlobal pCtx,
@@ -6417,7 +6440,7 @@ uint32_t dot11f_unpack_ie_fils_key_confirmation(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_key_confirmation. */
 
-#define SigIefils_key_confirmation (0x0084)
+#define SigIefils_key_confirmation (0x0085)
 
 
 uint32_t dot11f_unpack_ie_fils_nonce(tpAniSirGlobal pCtx,
@@ -6436,7 +6459,7 @@ uint32_t dot11f_unpack_ie_fils_nonce(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_nonce. */
 
-#define SigIefils_nonce (0x0085)
+#define SigIefils_nonce (0x0086)
 
 
 uint32_t dot11f_unpack_ie_fils_public_key(tpAniSirGlobal pCtx,
@@ -6459,7 +6482,7 @@ uint32_t dot11f_unpack_ie_fils_public_key(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_public_key. */
 
-#define SigIefils_public_key (0x0086)
+#define SigIefils_public_key (0x0087)
 
 
 uint32_t dot11f_unpack_ie_fils_session(tpAniSirGlobal pCtx,
@@ -6478,7 +6501,7 @@ uint32_t dot11f_unpack_ie_fils_session(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_session. */
 
-#define SigIefils_session (0x0087)
+#define SigIefils_session (0x0088)
 
 
 uint32_t dot11f_unpack_ie_fils_wrapped_data(tpAniSirGlobal pCtx,
@@ -6498,7 +6521,7 @@ uint32_t dot11f_unpack_ie_fils_wrapped_data(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fils_wrapped_data. */
 
-#define SigIefils_wrapped_data (0x0088)
+#define SigIefils_wrapped_data (0x0089)
 
 
 uint32_t dot11f_unpack_ie_fragment_ie(tpAniSirGlobal pCtx,
@@ -6518,7 +6541,7 @@ uint32_t dot11f_unpack_ie_fragment_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_fragment_ie. */
 
-#define SigIefragment_ie (0x0089)
+#define SigIefragment_ie (0x008a)
 
 
 static const tFFDefn FFS_he_cap[] = {
@@ -6692,7 +6715,7 @@ uint32_t dot11f_unpack_ie_he_cap(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_he_cap. */
 
-#define SigIehe_cap (0x008a)
+#define SigIehe_cap (0x008b)
 
 
 uint32_t dot11f_unpack_ie_he_op(tpAniSirGlobal pCtx,
@@ -6748,7 +6771,7 @@ uint32_t dot11f_unpack_ie_he_op(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_he_op. */
 
-#define SigIehe_op (0x008b)
+#define SigIehe_op (0x008c)
 
 
 uint32_t dot11f_unpack_ie_hs20vendor_ie(tpAniSirGlobal pCtx,
@@ -6790,7 +6813,7 @@ uint32_t dot11f_unpack_ie_hs20vendor_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_hs20vendor_ie. */
 
-#define SigIehs20vendor_ie (0x008c)
+#define SigIehs20vendor_ie (0x008d)
 
 
 uint32_t dot11f_unpack_ie_ht2040_bss_coexistence(tpAniSirGlobal pCtx,
@@ -6816,7 +6839,7 @@ uint32_t dot11f_unpack_ie_ht2040_bss_coexistence(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_ht2040_bss_coexistence. */
 
-#define SigIeht2040_bss_coexistence (0x008d)
+#define SigIeht2040_bss_coexistence (0x008e)
 
 
 uint32_t dot11f_unpack_ie_ht2040_bss_intolerant_report(tpAniSirGlobal pCtx,
@@ -6844,7 +6867,7 @@ uint32_t dot11f_unpack_ie_ht2040_bss_intolerant_report(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_ht2040_bss_intolerant_report. */
 
-#define SigIeht2040_bss_intolerant_report (0x008e)
+#define SigIeht2040_bss_intolerant_report (0x008f)
 
 
 uint32_t dot11f_unpack_ie_mu_edca_param_set(tpAniSirGlobal pCtx,
@@ -6931,7 +6954,7 @@ uint32_t dot11f_unpack_ie_mu_edca_param_set(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_mu_edca_param_set. */
 
-#define SigIemu_edca_param_set (0x008f)
+#define SigIemu_edca_param_set (0x0090)
 
 
 uint32_t dot11f_unpack_ie_osen_ie(tpAniSirGlobal pCtx,
@@ -6951,7 +6974,7 @@ uint32_t dot11f_unpack_ie_osen_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_osen_ie. */
 
-#define SigIeosen_ie (0x0090)
+#define SigIeosen_ie (0x0091)
 
 
 uint32_t dot11f_unpack_ie_sec_chan_offset_ele(tpAniSirGlobal pCtx,
@@ -6970,7 +6993,7 @@ uint32_t dot11f_unpack_ie_sec_chan_offset_ele(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_sec_chan_offset_ele. */
 
-#define SigIesec_chan_offset_ele (0x0091)
+#define SigIesec_chan_offset_ele (0x0092)
 
 
 static const tFFDefn FFS_vendor_vht_ie[] = {
@@ -7014,7 +7037,7 @@ uint32_t dot11f_unpack_ie_vendor_vht_ie(tpAniSirGlobal pCtx,
 	return status;
 } /* End dot11f_unpack_ie_vendor_vht_ie. */
 
-#define SigIevendor_vht_ie (0x0092)
+#define SigIevendor_vht_ie (0x0093)
 
 
 static const tFFDefn FFS_AddTSRequest[] = {
@@ -7226,6 +7249,10 @@ static const tIEDefn IES_AssocRequest[] = {
 	offsetof(tDot11fIEfragment_ie, present), 0, "fragment_ie",
 	0, 2, 257, SigIefragment_ie, {0, 0, 0, 0, 0},
 	0, DOT11F_EID_FRAGMENT_IE, 0, 0, },
+	{ offsetof(tDot11fAssocRequest, dh_parameter_element),
+	offsetof(tDot11fIEdh_parameter_element, present), 0,
+	"dh_parameter_element", 0, 4, 259, SigIedh_parameter_element,
+	{0, 0, 0, 0, 0}, 0, DOT11F_EID_DH_PARAMETER_ELEMENT, 32, 0, },
 	{ offsetof(tDot11fAssocRequest, WPAOpaque), offsetof(tDot11fIEWPAOpaque,
 	present), 0, "WPAOpaque", 0, 8, 255, SigIeWPAOpaque, {0, 80, 242, 1, 0},
 	4, DOT11F_EID_WPAOPAQUE, 0, 0, },
@@ -11821,6 +11848,16 @@ static uint32_t unpack_core(tpAniSirGlobal pCtx,
 						    countOffset),
 						    append_ie);
 					break;
+				case SigIedh_parameter_element:
+					status |=
+						dot11f_unpack_ie_dh_parameter_element(
+						    pCtx, pBufRemaining, len,
+						    (tDot11fIEdh_parameter_element *)
+						    (pFrm + pIe->offset +
+						    sizeof(tDot11fIEdh_parameter_element) *
+						    countOffset),
+						    append_ie);
+					break;
 				case SigIeesp_information:
 					status |=
 						dot11f_unpack_ie_esp_information(
@@ -14881,6 +14918,15 @@ static uint32_t get_packed_size_core(tpAniSirGlobal pCtx,
 					offset = sizeof(tDot11fIEbss_color_change);
 					byteCount = 2;
 					pIePresent = ((tDot11fIEbss_color_change *)
+					  (pFrm + pIe->offset + offset * i))->
+					  present;
+					break;
+				case SigIedh_parameter_element:
+					offset = sizeof(tDot11fIEdh_parameter_element);
+					byteCount = ((tDot11fIEdh_parameter_element *)
+					  (pFrm + pIe->offset + offset * i))->
+					  num_public_key + 2;
+					pIePresent = ((tDot11fIEdh_parameter_element *)
 					  (pFrm + pIe->offset + offset * i))->
 					  present;
 					break;
@@ -22904,6 +22950,40 @@ uint32_t dot11f_pack_ie_bss_color_change(tpAniSirGlobal pCtx,
 	return DOT11F_PARSE_SUCCESS;
 } /* End dot11f_pack_ie_bss_color_change. */
 
+uint32_t dot11f_pack_ie_dh_parameter_element(tpAniSirGlobal pCtx,
+					     tDot11fIEdh_parameter_element *pSrc,
+					     uint8_t *pBuf,
+					     uint32_t nBuf,
+					     uint32_t *pnConsumed)
+{
+	uint8_t *pIeLen = 0;
+	uint32_t nConsumedOnEntry = *pnConsumed;
+	uint32_t nNeeded = 0U;
+	nNeeded  +=  (pSrc->num_public_key + 2);
+	while (pSrc->present) {
+		if (nNeeded > nBuf)
+			return DOT11F_BUFFER_OVERFLOW;
+		*pBuf = 255;
+		++pBuf; ++(*pnConsumed);
+		pIeLen = pBuf;
+		++pBuf; ++(*pnConsumed);
+		*pBuf = 32;
+		++pBuf; ++(*pnConsumed);
+		DOT11F_MEMCPY(pCtx, pBuf, pSrc->group, 2);
+		*pnConsumed += 2;
+		pBuf += 2;
+		DOT11F_MEMCPY(pCtx, pBuf, &(pSrc->public_key), pSrc->num_public_key);
+		*pnConsumed += pSrc->num_public_key;
+		/* fieldsEndFlag = 1 */
+		break;
+	}
+	(void)pCtx;
+	if (pIeLen) {
+		*pIeLen = *pnConsumed - nConsumedOnEntry - 2;
+	}
+	return DOT11F_PARSE_SUCCESS;
+} /* End dot11f_pack_ie_dh_parameter_element. */
+
 uint32_t dot11f_pack_ie_esp_information(tpAniSirGlobal pCtx,
 					tDot11fIEesp_information *pSrc,
 					uint8_t *pBuf,
@@ -25929,6 +26009,14 @@ static uint32_t pack_core(tpAniSirGlobal pCtx,
 				pCtx, (tDot11fIEbss_color_change *)
 				(pSrc + pIe->offset +
 				sizeof(tDot11fIEbss_color_change) * i),
+				pBufRemaining, nBufRemaining, &len);
+			break;
+			case SigIedh_parameter_element:
+			status |=
+				dot11f_pack_ie_dh_parameter_element(
+				pCtx, (tDot11fIEdh_parameter_element *)
+				(pSrc + pIe->offset +
+				sizeof(tDot11fIEdh_parameter_element) * i),
 				pBufRemaining, nBufRemaining, &len);
 			break;
 			case SigIeesp_information:
