@@ -45,14 +45,18 @@ static inline void
 cdp_cfg_set_rx_fwd_disabled(ol_txrx_soc_handle soc, struct cdp_cfg *cfg_pdev,
 		uint8_t disable_rx_fwd)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->set_cfg_rx_fwd_disabled)
-		return soc->ops->cfg_ops->set_cfg_rx_fwd_disabled(cfg_pdev,
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->set_cfg_rx_fwd_disabled)
+		return;
+
+	soc->ops->cfg_ops->set_cfg_rx_fwd_disabled(cfg_pdev,
 			disable_rx_fwd);
 }
 
@@ -70,14 +74,18 @@ static inline void
 cdp_cfg_set_packet_log_enabled(ol_txrx_soc_handle soc,
 		struct cdp_cfg *cfg_pdev, uint8_t val)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->set_cfg_packet_log_enabled)
-		return soc->ops->cfg_ops->set_cfg_packet_log_enabled(cfg_pdev,
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->set_cfg_packet_log_enabled)
+		return;
+
+	soc->ops->cfg_ops->set_cfg_packet_log_enabled(cfg_pdev,
 				val);
 }
 
@@ -95,16 +103,18 @@ static inline struct cdp_cfg
 *cdp_cfg_attach(ol_txrx_soc_handle soc,
 		qdf_device_t osdev, void *cfg_param)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return NULL;
 	}
 
-	if (soc->ops->cfg_ops->cfg_attach)
-		return soc->ops->cfg_ops->cfg_attach(osdev, cfg_param);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->cfg_attach)
+		return NULL;
 
-	return NULL;
+	return soc->ops->cfg_ops->cfg_attach(osdev, cfg_param);
 }
 
 /**
@@ -121,14 +131,18 @@ static inline void
 cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc,
 		struct cdp_vdev *vdev, bool val)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd)
-		return soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd(vdev, val);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd)
+		return;
+
+	soc->ops->cfg_ops->vdev_rx_set_intrabss_fwd(vdev, val);
 }
 
 /**
@@ -144,15 +158,19 @@ cdp_cfg_vdev_rx_set_intrabss_fwd(ol_txrx_soc_handle soc,
 static inline uint8_t
 cdp_cfg_is_rx_fwd_disabled(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->cfg_ops->is_rx_fwd_disabled)
-		return soc->ops->cfg_ops->is_rx_fwd_disabled(vdev);
-	return 0;
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->is_rx_fwd_disabled)
+		return 0;
+
+	return soc->ops->cfg_ops->is_rx_fwd_disabled(vdev);
+
 }
 
 /**
@@ -168,15 +186,18 @@ static inline void
 cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(ol_txrx_soc_handle soc,
 		uint8_t value)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->tx_set_is_mgmt_over_wmi_enabled)
-		return soc->ops->cfg_ops->tx_set_is_mgmt_over_wmi_enabled(
-			value);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->tx_set_is_mgmt_over_wmi_enabled)
+		return;
+
+	soc->ops->cfg_ops->tx_set_is_mgmt_over_wmi_enabled(value);
 }
 
 /**
@@ -192,16 +213,18 @@ cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(ol_txrx_soc_handle soc,
 static inline int
 cdp_cfg_is_high_latency(ol_txrx_soc_handle soc, struct cdp_cfg *cfg_pdev)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return 0;
 	}
 
-	if (soc->ops->cfg_ops->is_high_latency)
-		return soc->ops->cfg_ops->is_high_latency(cfg_pdev);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->is_high_latency)
+		return 0;
 
-	return 0;
+	return soc->ops->cfg_ops->is_high_latency(cfg_pdev);
 }
 
 /**
@@ -218,17 +241,19 @@ static inline void
 cdp_cfg_set_flow_control_parameters(ol_txrx_soc_handle soc,
 		struct cdp_cfg *cfg_pdev, void *param)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->set_flow_control_parameters)
-		return soc->ops->cfg_ops->set_flow_control_parameters(cfg_pdev,
-				param);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->set_flow_control_parameters)
+		return;
 
-	return;
+	soc->ops->cfg_ops->set_flow_control_parameters(cfg_pdev,
+						       param);
 }
 
 /**
@@ -243,16 +268,18 @@ cdp_cfg_set_flow_control_parameters(ol_txrx_soc_handle soc,
 static inline void cdp_cfg_set_flow_steering(ol_txrx_soc_handle soc,
 		struct cdp_cfg *cfg_pdev, uint8_t val)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->set_flow_steering)
-		return soc->ops->cfg_ops->set_flow_steering(cfg_pdev, val);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->set_flow_steering)
+		return;
 
-	return;
+	soc->ops->cfg_ops->set_flow_steering(cfg_pdev, val);
 }
 
 static inline void cdp_cfg_get_max_peer_id(ol_txrx_soc_handle soc,
@@ -274,14 +301,17 @@ static inline void
 cdp_cfg_set_ptp_rx_opt_enabled(ol_txrx_soc_handle soc,
 			       struct cdp_cfg *cfg_pdev, uint8_t val)
 {
-	if (!soc || !soc->ops || !soc->ops->cfg_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			  "%s invalid instance", __func__);
+		QDF_BUG(0);
 		return;
 	}
 
-	if (soc->ops->cfg_ops->set_ptp_rx_opt_enabled)
-		return soc->ops->cfg_ops->set_ptp_rx_opt_enabled(cfg_pdev,
-								 val);
+	if (!soc->ops->cfg_ops ||
+	    !soc->ops->cfg_ops->set_ptp_rx_opt_enabled)
+		return;
+
+	soc->ops->cfg_ops->set_ptp_rx_opt_enabled(cfg_pdev, val);
 }
 #endif /* _CDP_TXRX_CFG_H_ */
