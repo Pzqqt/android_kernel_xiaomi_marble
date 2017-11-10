@@ -930,9 +930,8 @@ struct tdls_event_notify {
  * @dialog: dialog token used in the frame.
  * @status_code: status to be incuded in the frame
  * @responder: Tdls request type
- * @len: lenght of additional Ies
  * @peer_capability: peer cpabilities
- * @len: lenght of additional Ies
+ * @len: length of additional Ies
  * @buf: additional IEs to be included
  */
 struct tdls_send_mgmt {
@@ -944,7 +943,7 @@ struct tdls_send_mgmt {
 	uint32_t peer_capability;
 	uint8_t len;
 	/* Variable length, do not add anything after this */
-	uint8_t *buf;
+	uint8_t buf[];
 };
 
 /**
@@ -975,6 +974,9 @@ struct tdls_validate_action_req {
  * @chk_frame: frame validation structure
  * @session_id: session id
  * @vdev_id: vdev id
+ * @cmd_buf: cmd buffer
+ * @len: length of the frame
+ * @use_default_ac: access category
  * @tdls_mgmt: tdls managment
  */
 struct tdls_action_frame_request {
@@ -984,8 +986,9 @@ struct tdls_action_frame_request {
 	uint8_t vdev_id;
 	const uint8_t *cmd_buf;
 	uint8_t len;
-	struct tdls_send_mgmt tdls_mgmt;
 	bool use_default_ac;
+	/* Variable length, do not add anything after this */
+	struct tdls_send_mgmt tdls_mgmt;
 };
 
 /**
