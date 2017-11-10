@@ -980,32 +980,6 @@ static void sme_update_scan_roam_params(tpAniSirGlobal mac_ctx)
 
 	scan_params.num_bssid_avoid_list =
 		roam_params_src->num_bssid_avoid_list;
-	scan_params.num_bssid_favored =
-		roam_params_src->num_bssid_favored;
-	scan_params.raise_rssi_thresh_5g =
-		roam_params_src->raise_rssi_thresh_5g;
-	scan_params.drop_rssi_thresh_5g =
-		roam_params_src->drop_rssi_thresh_5g;
-	scan_params.raise_factor_5g =
-		roam_params_src->raise_factor_5g;
-	scan_params.drop_factor_5g =
-		roam_params_src->drop_factor_5g;
-	scan_params.max_raise_rssi_5g =
-		roam_params_src->max_raise_rssi_5g;
-	scan_params.max_drop_rssi_5g =
-		roam_params_src->max_drop_rssi_5g;
-	scan_params.is_5g_pref_enabled =
-		roam_params_src->is_5g_pref_enabled;
-
-	if (scan_params.num_bssid_favored > MAX_FAVORED_BSSID)
-		scan_params.num_bssid_favored = MAX_FAVORED_BSSID;
-
-	for (i = 0; i < scan_params.num_bssid_favored; i++) {
-		qdf_copy_macaddr(&scan_params.bssid_favored[i],
-				&roam_params_src->bssid_favored[i]);
-		scan_params.bssid_favored_factor[i] =
-			roam_params_src->bssid_favored_factor[i];
-	}
 
 	if (scan_params.num_bssid_avoid_list >
 	   MAX_AVOID_LIST_BSSID)
