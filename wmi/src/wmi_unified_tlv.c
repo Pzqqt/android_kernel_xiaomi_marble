@@ -16720,6 +16720,33 @@ static wmi_host_mac_addr *ready_extract_mac_addr_list_tlv(wmi_unified_t wmi_hamd
 }
 
 /**
+ * extract_ready_params_tlv() - Extract data from ready event apart from
+ *                     status, macaddr and version.
+ * @wmi_handle: Pointer to WMI handle.
+ * @evt_buf: Pointer to Ready event buffer.
+ * @ev_param: Pointer to host defined struct to copy the data from event.
+ *
+ * Return: QDF_STATUS_SUCCESS on success.
+ */
+static QDF_STATUS extract_ready_event_params_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, struct wmi_host_ready_ev_param *ev_param)
+{
+	WMI_READY_EVENTID_param_tlvs *param_buf = NULL;
+	wmi_ready_event_fixed_param *ev = NULL;
+
+	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
+	ev = param_buf->fixed_param;
+
+	ev_param->num_dscp_table = ev->num_dscp_table;
+	ev_param->num_extra_mac_addr = ev->num_extra_mac_addr;
+	ev_param->num_total_peer = ev->num_total_peers;
+	/* Agile_cap in ready event is not supported in TLV target */
+	ev_param->agile_capability = false;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_dbglog_data_len_tlv() - extract debuglog data length
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -19960,6 +19987,7 @@ struct wmi_ops tlv_ops =  {
 	.ready_extract_init_status = ready_extract_init_status_tlv,
 	.ready_extract_mac_addr = ready_extract_mac_addr_tlv,
 	.ready_extract_mac_addr_list = ready_extract_mac_addr_list_tlv,
+	.extract_ready_event_params = extract_ready_event_params_tlv,
 	.extract_dbglog_data_len = extract_dbglog_data_len_tlv,
 	.extract_vdev_start_resp = extract_vdev_start_resp_tlv,
 	.extract_tbttoffset_update_params =

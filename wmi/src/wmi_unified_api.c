@@ -4718,6 +4718,27 @@ wmi_host_mac_addr *wmi_ready_extract_mac_addr_list(void *wmi_hdl, void *ev,
 }
 
 /**
+ * wmi_extract_ready_params() - Extract data from ready event apart from
+ *                     status, macaddr and version.
+ * @wmi_handle: Pointer to WMI handle.
+ * @evt_buf: Pointer to Ready event buffer.
+ * @ev_param: Pointer to host defined struct to copy the data from event.
+ *
+ * Return: QDF_STATUS_SUCCESS on success.
+ */
+QDF_STATUS wmi_extract_ready_event_params(void *wmi_hdl,
+		void *evt_buf, struct wmi_host_ready_ev_param *ev_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_ready_event_params)
+		return wmi_handle->ops->extract_ready_event_params(wmi_handle,
+			evt_buf, ev_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_extract_dbglog_data_len() - extract debuglog data length
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
