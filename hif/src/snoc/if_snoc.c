@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -45,6 +45,7 @@
 #ifdef IPA_OFFLOAD
 #include <uapi/linux/msm_ipa.h>
 #endif
+#include "target_type.h"
 
 /**
  * hif_disable_isr(): disable isr

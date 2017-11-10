@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,6 +32,7 @@
 #include <targaddrs.h>
 #include "hif_io32.h"
 #include <hif.h>
+#include <target_type.h>
 #include "regtable.h"
 #define ATH_MODULE_NAME hif
 #include <a_debug.h>

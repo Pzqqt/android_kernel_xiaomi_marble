@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,6 +41,7 @@
 #endif
 #include "hif_debug.h"
 #include "pld_common.h"
+#include "target_type.h"
 
 #define PROCFS_NAME             "athdiagpfs"
 #ifdef MULTI_IF_NAME

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,7 +29,7 @@
 #include <linux/usb/hcd.h>
 #include "if_usb.h"
 #include "hif_usb_internal.h"
-#include "bmi_msg.h"		/* TARGET_TYPE_ */
+#include "target_type.h"		/* TARGET_TYPE_ */
 #include "regtable_usb.h"
 #include "ol_fw.h"
 #include "hif_debug.h"

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,6 +41,7 @@
 #include "ce_bmi.h"
 #include "qdf_trace.h"
 #include "hif_debug.h"
+#include "bmi_msg.h"
 
 /* Track a BMI transaction that is in progress */
 #ifndef BIT
@@ -281,4 +282,35 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	A_TARGET_ACCESS_UNLIKELY(scn);
 	qdf_mem_free(transaction);
 	return status;
+}
+
+#ifdef BMI_RSP_POLLING
+#define BMI_RSP_CB_REGISTER 0
+#else
+#define BMI_RSP_CB_REGISTER 1
+#endif
+
+/**
+ * hif_register_bmi_callbacks() - register bmi callbacks
+ * @hif_sc: hif context
+ *
+ * Bmi phase uses different copy complete callbacks than mission mode.
+ */
+void hif_register_bmi_callbacks(struct hif_softc *hif_sc)
+{
+	struct HIF_CE_pipe_info *pipe_info;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
+
+	/*
+	 * Initially, establish CE completion handlers for use with BMI.
+	 * These are overwritten with generic handlers after we exit BMI phase.
+	 */
+	pipe_info = &hif_state->pipe_info[BMI_CE_NUM_TO_TARG];
+	ce_send_cb_register(pipe_info->ce_hdl, hif_bmi_send_done, pipe_info, 0);
+
+	if (BMI_RSP_CB_REGISTER) {
+		pipe_info = &hif_state->pipe_info[BMI_CE_NUM_TO_HOST];
+		ce_recv_cb_register(
+			pipe_info->ce_hdl, hif_bmi_recv_data, pipe_info, 0);
+	}
 }

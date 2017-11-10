@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -19,6 +19,7 @@
 
 #include <wlan_tgt_def_config.h>
 #include <hif.h>
+#include <target_type.h>
 #include <hif_hw_version.h>
 #include <wmi_unified_api.h>
 #include <target_if_spectral.h>

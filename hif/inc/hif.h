@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -69,45 +69,6 @@ typedef void *hif_handle_t;
 #define HIF_TYPE_QCA9888 14
 #define HIF_TYPE_QCA8074 15
 #define HIF_TYPE_QCA6290 16
-
-/* TARGET definition needs to be abstracted in fw common
- * header files, below is the placeholder till WIN codebase
- * moved to latest copy of fw common header files.
- */
-#ifdef CONFIG_WIN
-#if ENABLE_10_4_FW_HDR
-#define TARGET_TYPE_UNKNOWN   0
-#define TARGET_TYPE_AR6001    1
-#define TARGET_TYPE_AR6002    2
-#define TARGET_TYPE_AR6003    3
-#define TARGET_TYPE_AR6004    5
-#define TARGET_TYPE_AR6006    6
-#define TARGET_TYPE_AR9888    7
-#define TARGET_TYPE_AR6320    8
-#define TARGET_TYPE_AR900B    9
-#define TARGET_TYPE_QCA9984   10
-#define TARGET_TYPE_IPQ4019   11
-#define TARGET_TYPE_QCA9888   12
-/* For attach Peregrine 2.0 board target_reg_tbl only */
-#define TARGET_TYPE_AR9888V2  13
-/* For attach Rome1.0 target_reg_tbl only*/
-#define TARGET_TYPE_AR6320V1    14
-/* For Rome2.0/2.1 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V2    15
-/* For Rome3.0 target_reg_tbl ID*/
-#define TARGET_TYPE_AR6320V3    16
-/* For Tufello1.0 target_reg_tbl ID*/
-#define TARGET_TYPE_QCA9377V1   17
-#endif /* ENABLE_10_4_FW_HDR */
-#endif /* CONFIG_WIN */
-/* For Adrastea target */
-#define TARGET_TYPE_ADRASTEA  19
-#ifndef TARGET_TYPE_QCA8074
-#define TARGET_TYPE_QCA8074   20
-#endif
-#ifndef TARGET_TYPE_QCA6290
-#define TARGET_TYPE_QCA6290   21
-#endif
 
 #ifdef IPA_OFFLOAD
 #define DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE   37
@@ -494,7 +455,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 				uint8_t *pSendMessage, uint32_t Length,
 				uint8_t *pResponseMessage,
 				uint32_t *pResponseLength, uint32_t TimeoutMS);
-
+void hif_register_bmi_callbacks(struct hif_softc *hif_sc);
 /*
  * APIs to handle HIF specific diagnostic read accesses. These APIs are
  * synchronous and only allowed to be called from a context that

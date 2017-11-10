@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,6 +26,7 @@
  */
 
 #include "targcfg.h"
+#include "target_type.h"
 #include "qdf_lock.h"
 #include "qdf_status.h"
 #include "qdf_status.h"

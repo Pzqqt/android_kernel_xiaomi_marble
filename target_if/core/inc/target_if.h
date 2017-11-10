@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,11 +59,12 @@
 #define GET_WMI_HDL_FROM_PDEV(pdev) ((pdev)->tgt_if_handle)
 #endif
 
-
+#ifdef CONFIG_MCL
 #define TARGET_TYPE_AR900B    9
 #define TARGET_TYPE_QCA9984   15 /* cascade */
 #define TARGET_TYPE_IPQ4019   16 /* dakota */
 #define TARGET_TYPE_QCA9888   17 /* besra */
+#endif
 
 typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(
 			void *scn_handle);

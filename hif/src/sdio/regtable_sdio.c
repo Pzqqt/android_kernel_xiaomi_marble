@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#include "bmi_msg.h"
+#include "target_type.h"
 #include "cepci.h"
 
 #define MISSING 0
