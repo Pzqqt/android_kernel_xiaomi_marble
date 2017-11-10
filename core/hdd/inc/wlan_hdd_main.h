@@ -1970,16 +1970,7 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx);
  */
 void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx);
 
-/**
- * hdd_send_wlan_tp_ind() - Send throughput indication
- * @hdd_ctx: HDD context
- *
- * Send throughput indication
- *
- * Return: None.
- */
-void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx);
-
+#define GET_CUR_RX_LVL(config) ((config)->cur_rx_level)
 #define GET_BW_COMPUTE_INTV(config) ((config)->busBandwidthComputeInterval)
 
 #else
@@ -2020,11 +2011,7 @@ void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
 {
 }
 
-static inline
-void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx)
-{
-}
-
+#define GET_CUR_RX_LVL(config) 0
 #define GET_BW_COMPUTE_INTV(config) 0
 
 #endif

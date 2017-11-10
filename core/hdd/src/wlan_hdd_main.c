@@ -6656,14 +6656,6 @@ void hdd_bus_bw_cancel_work(struct hdd_context *hdd_ctx)
 		cancel_work_sync(&hdd_ctx->bus_bw_work);
 }
 
-void hdd_send_wlan_tp_ind(struct hdd_context *hdd_ctx)
-{
-	struct wlan_rx_tp_data rx_tp_data = {0};
-
-	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
-			WLAN_SVC_WLAN_TP_IND, &rx_tp_data,
-			sizeof(rx_tp_data));
-}
 #endif
 
 /**

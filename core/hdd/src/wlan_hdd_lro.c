@@ -234,7 +234,7 @@ hdd_lro_set_reset(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 
 			hdd_debug("Enable TCP delack as LRO is disabled");
 			rx_tp_data.rx_tp_flags = TCP_DEL_ACK_IND;
-			rx_tp_data.level = hdd_ctx->cur_rx_level;
+			rx_tp_data.level = GET_CUR_RX_LVL(hdd_ctx);
 			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 						WLAN_SVC_WLAN_TP_IND,
 						&rx_tp_data,
@@ -257,8 +257,15 @@ void hdd_disable_lro_in_concurrency(bool disable)
 
 	if (disable) {
 		if (hdd_ctx->en_tcp_delack_no_lro) {
+			struct wlan_rx_tp_data rx_tp_data;
+
 			hdd_info("Enable TCP delack as LRO disabled in concurrency");
-			hdd_send_wlan_tp_ind(hdd_ctx);
+			rx_tp_data.rx_tp_flags = TCP_DEL_ACK_IND;
+			rx_tp_data.level = GET_CUR_RX_LVL(hdd_ctx);
+			wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
+						WLAN_SVC_WLAN_TP_IND,
+						&rx_tp_data,
+						sizeof(rx_tp_data));
 			hdd_ctx->en_tcp_delack_no_lro = 1;
 		}
 		qdf_atomic_set(&hdd_ctx->disable_lro_in_concurrency, 1);
