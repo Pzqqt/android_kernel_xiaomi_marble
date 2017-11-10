@@ -1451,7 +1451,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 					DP_STATS_INC(soc, ast.aged_out, 1);
 
 					soc->cdp_soc.ol_ops->peer_del_wds_entry(
-							pdev->osif_pdev,
+							vdev->osif_vdev,
 							ase->mac_addr.raw);
 
 					dp_peer_del_ast(soc, ase);
@@ -5579,7 +5579,7 @@ static inline void dp_peer_delete_ast_entries(struct dp_soc *soc,
 	DP_PEER_ITERATE_ASE_LIST(peer, ast_entry, temp_ast_entry) {
 		if (ast_entry->next_hop) {
 			soc->cdp_soc.ol_ops->peer_del_wds_entry(
-					peer->vdev->pdev->osif_pdev,
+					peer->vdev->osif_vdev,
 					ast_entry->mac_addr.raw);
 		}
 

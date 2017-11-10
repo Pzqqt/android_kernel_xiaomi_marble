@@ -368,7 +368,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		if (!dp_peer_add_ast(soc, ta_peer, wds_src_mac,
 							dp_ast_type_wds)) {
 			ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
-					ta_peer->vdev->pdev->osif_pdev,
+					ta_peer->vdev->osif_vdev,
 					wds_src_mac,
 					ta_peer->mac_addr.raw,
 					flags);
@@ -393,7 +393,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 
 		if (sa_sw_peer_id != ta_peer->peer_ids[0]) {
 			ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
-					ta_peer->vdev->pdev->osif_pdev,
+					ta_peer->vdev->osif_vdev,
 					wds_src_mac,
 					ta_peer->mac_addr.raw,
 					flags);
