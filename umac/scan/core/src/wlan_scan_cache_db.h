@@ -33,36 +33,7 @@
 #define SCAN_GET_HASH(addr) \
 	(((const uint8_t *)(addr))[QDF_MAC_ADDR_SIZE - 1] % SCAN_HASH_SIZE)
 
-#define RSSI_THRESHOLD_5GHZ -70
-#define BEST_CANDIDATE_RSSI_WEIGHT 50
-#define MIN_RSSI (-100)
-#define MAX_RSSI 0
-#define ROAM_MAX_CHANNEL_WEIGHT 100
-#define MAX_CHANNEL_UTILIZATION 100
-#define NSS_1X1_WEIGHTAGE 3
-#define MAX_ESTIMATED_AIR_TIME_FRACTION 255
-#define MAX_AP_LOAD 255
-
-#define LOW_CHANNEL_CONGESTION_WEIGHT 500
-#define MODERATE_CHANNEL_CONGESTION_WEIGHT 370
-#define CONSIDERABLE_CHANNEL_CONGESTION_WEIGHT 250
-#define HIGH_CHANNEL_CONGESTION_WEIGHT 120
-
-#define LOW_CHANNEL_CONGESTION 0
-#define MODERATE_CHANNEL_CONGESTION 25
-#define CONSIDERABLE_CHANNEL_CONGESTION 50
-#define HIGH_CHANNEL_CONGESTION 75
-#define EXTREME_CHANNEL_CONGESTION 100
-
-#define EXCELLENT_RSSI -55
-#define BAD_RSSI  -80
-#define EXCELLENT_RSSI_WEIGHT 100
-#define RSSI_BUCKET 5
-#define RSSI_WEIGHT_BUCKET 250
-
-#define BEST_CANDIDATE_80MHZ 100
-#define BEST_CANDIDATE_40MHZ 70
-#define BEST_CANDIDATE_20MHZ 30
+#define SCM_PCL_RSSI_THRESHOLD -75
 #define BEST_CANDIDATE_MAX_BSS_SCORE 10000
 
 /**
@@ -213,4 +184,13 @@ QDF_STATUS scm_db_init(struct wlan_objmgr_psoc *psoc);
  * Return: QDF_STATUS
  */
 QDF_STATUS scm_db_deinit(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * scm_validate_scoring_config() - validate score config
+ * @score_cfg: config to be validated
+ *
+ * Return: void
+ */
+void scm_validate_scoring_config(
+			struct scoring_config *score_cfg);
 #endif

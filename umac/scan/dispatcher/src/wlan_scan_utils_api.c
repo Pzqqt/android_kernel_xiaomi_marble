@@ -417,6 +417,8 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		 * hence copy data just after version byte
 		 */
 		scan_params->ie_list.bwnss_map = (((uint8_t *)ie) + 8);
+	} else if (is_mbo_oce_oui((uint8_t *)ie)) {
+		scan_params->ie_list.mbo_oce = (uint8_t *)ie;
 	}
 }
 
@@ -727,6 +729,7 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	QDF_STATUS status;
 	struct ie_ssid *ssid;
 	struct scan_cache_entry *scan_entry = NULL;
+	struct qbss_load_ie *qbss_load;
 
 	scan_entry = qdf_mem_malloc(sizeof(*scan_entry));
 	if (!scan_entry) {
@@ -832,6 +835,10 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 
 	scan_entry->nss = util_scan_scm_calc_nss_supported_by_ap(scan_entry);
 	util_scan_scm_update_bss_with_esp_data(scan_entry);
+	qbss_load = (struct qbss_load_ie *)
+			util_scan_entry_qbssload(scan_entry);
+	if (qbss_load)
+		scan_entry->qbss_chan_load = qbss_load->qbss_chan_load;
 
 	/* TODO calculate channel struct */
 	return scan_entry;

@@ -1313,8 +1313,14 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 			scan_cfg->scan_bucket_threshold,
 			scan_cfg->rssi_cat_gap);
 
-	return ucfg_scan_update_pno_config(&scan_obj->pno_cfg,
+	ucfg_scan_update_pno_config(&scan_obj->pno_cfg,
 		&scan_cfg->pno_cfg);
+
+	qdf_mem_copy(&scan_def->score_config, &scan_cfg->score_config,
+		sizeof(struct scoring_config));
+	scm_validate_scoring_config(&scan_def->score_config);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS ucfg_scan_update_roam_params(struct wlan_objmgr_psoc *psoc,

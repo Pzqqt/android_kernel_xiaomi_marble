@@ -365,6 +365,7 @@ struct scan_default_params {
 		uint32_t scan_events;
 	};
 	struct roam_filter_params roam_params;
+	struct scoring_config score_config;
 };
 
 /**

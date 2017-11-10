@@ -53,37 +53,11 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 bool scm_is_better_bss(struct scan_default_params *params,
 	struct scan_cache_entry *bss1,
 	struct scan_cache_entry *bss2);
-/**
- * scm_derive_prefer_value_from_rssi() - to derive prefer value
- * @params: scan params
- * @filter: filter
- * @rssi: RSSI of the BSS
- *
- * This routine will derive preferred value from given rssi
- *
- * Return: value between 0 to 14
- */
-static inline int
-scm_derive_prefer_value_from_rssi(struct scan_default_params *params,
-	int rssi)
-{
-	int i = SCM_NUM_RSSI_CAT - 1, pref_val = 0;
-
-	while (i >= 0) {
-		if (rssi >= params->rssi_cat[i]) {
-			pref_val = params->bss_prefer_val[i];
-			break;
-		}
-		i--;
-	};
-
-	return pref_val;
-}
 
 /**
  * scm_calculate_bss_score() - calculate BSS score used to get
  * the preference
- * psoc: psoc ptr;
+ * @psoc: psoc ptr;
  * @params: scan params
  * @entry: scan entry for which score needs to be calculated
  * @pcl_chan_weight: weight for pcl channel

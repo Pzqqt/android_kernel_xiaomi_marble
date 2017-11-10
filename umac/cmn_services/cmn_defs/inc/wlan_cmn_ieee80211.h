@@ -31,6 +31,10 @@
 #define P2P_WFA_VER 0x09
 
 #define WSC_OUI 0x0050f204
+#define MBO_OCE_OUI 0x506f9a16
+#define MBO_OCE_OUI_SIZE 4
+#define REDUCED_WAN_METRICS_ATTR 103
+
 /* WCN IE */
 /* Microsoft OUI */
 #define WCN_OUI 0xf25000
@@ -997,6 +1001,17 @@ struct wlan_esp_ie {
 	struct wlan_esp_info esp_info_AC_VI;
 	struct wlan_esp_info esp_info_AC_VO;
 } qdf_packed;
+
+/**
+ * struct oce_reduced_wan_metrics: struct for oce wan metrics
+ * @downlink_av_cap: Download available capacity
+ * @uplink_av_cap: Upload available capacity
+ */
+struct oce_reduced_wan_metrics {
+	uint8_t downlink_av_cap:4;
+	uint8_t uplink_av_cap:4;
+};
+
 /**
  * is_wpa_oui() - If vendor IE is WPA type
  * @frm: vendor IE pointer
@@ -1024,6 +1039,20 @@ static inline bool
 is_wps_oui(const uint8_t *frm)
 {
 	return frm[1] > 3 && BE_READ_4(frm + 2) == WSC_OUI;
+}
+
+/**
+ * is_mbo_oce_oui() - If vendor IE is MBO/OCE type
+ * @frm: vendor IE pointer
+ *
+ * API to check if vendor IE is MBO/OCE
+ *
+ * Return: true if its MBO/OCE IE
+ */
+static inline bool
+is_mbo_oce_oui(const uint8_t *frm)
+{
+	return frm[1] > 3 && BE_READ_4(frm + 2) == MBO_OCE_OUI;
 }
 
 /**
@@ -1472,6 +1501,55 @@ static inline void wlan_parse_wapi_ie(uint8_t *wapi_ie,
 
 	if (len >= WLAN_OUI_SIZE)
 		wapi->mc_cipher_suite = LE_READ_4(ie);
+}
+
+/**
+ * wlan_parse_oce_reduced_wan_metrics_ie() - parse oce wan metrics
+ * @mbo_oce_ie: MBO/OCE ie ptr
+ * @wan_metrics: out structure for the reduced wan metric
+ *
+ * API, function to parse reduced wan metric
+ *
+ * Return: true if oce wan metrics is present
+ */
+static inline bool
+wlan_parse_oce_reduced_wan_metrics_ie(uint8_t *mbo_oce_ie,
+	struct oce_reduced_wan_metrics *wan_metrics)
+{
+	uint8_t len, attribute_len, attribute_id;
+	uint8_t *ie;
+
+	if (!mbo_oce_ie)
+		return false;
+
+	ie = mbo_oce_ie;
+	len = ie[1];
+	ie += 2;
+
+	if (len <= MBO_OCE_OUI_SIZE)
+		return false;
+
+	ie += MBO_OCE_OUI_SIZE;
+	len -= MBO_OCE_OUI_SIZE;
+
+	while (len > 2) {
+		attribute_id = ie[0];
+		attribute_len = ie[1];
+		len -= 2;
+		if (attribute_len > len)
+			return false;
+
+		if (attribute_id == REDUCED_WAN_METRICS_ATTR) {
+			wan_metrics->downlink_av_cap = ie[2] & 0xff;
+			wan_metrics->uplink_av_cap = ie[2] >> 4;
+			return true;
+		}
+
+		ie += (attribute_len + 2);
+		len -= attribute_len;
+	}
+
+	return false;
 }
 
 #endif /* _WLAN_CMN_IEEE80211_DEFS_H_ */

@@ -652,6 +652,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->fils_indication = conv_ptr(ie_lst->fils_indication,
 					   old_ptr, new_ptr);
 	ie_lst->esp = conv_ptr(ie_lst->esp, old_ptr, new_ptr);
+	ie_lst->mbo_oce = conv_ptr(ie_lst->mbo_oce, old_ptr, new_ptr);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1367,6 +1368,20 @@ static inline uint8_t *
 util_scan_entry_esp_info(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.esp;
+}
+
+/**
+ * util_scan_entry_mbo_oce() - function to read MBO/OCE ie
+ * @scan_entry: scan entry
+ *
+ * API, function to read MBO/OCE ie
+ *
+ * Return: MBO/OCE ie
+ */
+static inline uint8_t *
+util_scan_entry_mbo_oce(struct scan_cache_entry *scan_entry)
+{
+	return scan_entry->ie_list.mbo_oce;
 }
 
 /**
