@@ -346,19 +346,10 @@ void sme_release_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd)
 			   LL_ACCESS_LOCK);
 }
 
-static void purge_sme_cmd_list(tpAniSirGlobal pMac)
-{
-	/* purge all command lists */
-	sme_debug("Purging all queues");
-	wlan_serialization_purge_cmd_list(pMac->psoc, NULL,
-			false, false, false, false, true);
-}
-
 static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	purge_sme_cmd_list(pMac);
 	csr_ll_close(&pMac->sme.smeCmdFreeList);
 
 	status = qdf_mutex_acquire(&pMac->sme.lkSmeGlobalLock);
@@ -2570,7 +2561,6 @@ QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType)
 		sme_err("csr_stop failed with status: %d", status);
 		fail_status = status;
 	}
-	purge_sme_cmd_list(pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(fail_status))
 		status = fail_status;

@@ -4562,6 +4562,32 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
+				     struct hdd_adapter *adapter)
+{
+	switch (adapter->device_mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_IBSS_MODE:
+	case QDF_P2P_DEVICE_MODE:
+	case QDF_NDI_MODE:
+		wlan_hdd_scan_abort(adapter);
+		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
+		if (adapter->device_mode == QDF_STA_MODE)
+			wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev,
+							adapter->dev);
+		break;
+	case QDF_P2P_GO_MODE:
+		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
+		break;
+	case QDF_SAP_MODE:
+		wlan_hdd_undo_acs(adapter);
+		break;
+	default:
+		break;
+	}
+}
+
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -4603,6 +4629,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 					   WLAN_CONTROL_PATH);
 		}
 
+		hdd_reset_scan_operation(hdd_ctx, adapter);
 		adapter->session.station.hdd_reassoc_scenario = false;
 
 		hdd_deinit_tx_rx(adapter);
