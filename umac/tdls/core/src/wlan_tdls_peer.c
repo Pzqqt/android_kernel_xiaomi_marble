@@ -384,7 +384,7 @@ static void tdls_determine_channel_opclass(struct tdls_soc_priv_obj *soc_obj,
 					   uint32_t *channel, uint32_t *opclass)
 {
 	uint32_t vdev_id;
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 	/*
 	 * If tdls offchannel is not enabled then we provide base channel
 	 * and in that case pass opclass as 0 since opclass is mainly needed

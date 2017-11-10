@@ -191,7 +191,7 @@ static QDF_STATUS p2p_vdev_obj_create_notification(
 {
 	struct p2p_vdev_priv_obj *p2p_vdev_obj;
 	QDF_STATUS status;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	if (!vdev) {
 		p2p_err("vdev context passed is NULL");
@@ -246,7 +246,7 @@ static QDF_STATUS p2p_vdev_obj_destroy_notification(
 {
 	struct p2p_vdev_priv_obj *p2p_vdev_obj;
 	QDF_STATUS status;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	if (!vdev) {
 		p2p_err("vdev context passed is NULL");
@@ -302,7 +302,7 @@ static QDF_STATUS p2p_peer_obj_create_notification(
 {
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_vdev_priv_obj *p2p_vdev_obj;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 	enum wlan_peer_type peer_type;
 
 	if (!peer) {
@@ -344,7 +344,7 @@ static QDF_STATUS p2p_peer_obj_destroy_notification(
 	struct wlan_objmgr_vdev *vdev;
 	struct p2p_vdev_priv_obj *p2p_vdev_obj;
 	struct wlan_objmgr_psoc *psoc;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 	enum wlan_peer_type peer_type;
 	uint8_t vdev_id;
 
@@ -471,7 +471,7 @@ static QDF_STATUS process_peer_for_noa(struct wlan_objmgr_vdev *vdev,
 				struct wlan_objmgr_peer *peer)
 {
 	struct p2p_vdev_priv_obj *p2p_vdev_obj = NULL;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 	enum wlan_peer_type peer_type;
 	bool disable_noa;
 	uint8_t vdev_id;
@@ -1104,7 +1104,7 @@ QDF_STATUS p2p_process_noa(struct p2p_noa_event *noa_event)
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *psoc;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	if (!noa_event) {
 		p2p_err("invalid noa event");
@@ -1217,7 +1217,7 @@ get_p2p_soc_obj_by_vdev(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS p2p_status_scan(struct wlan_objmgr_vdev *vdev)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
 	if (!p2p_soc_obj) {
@@ -1258,7 +1258,7 @@ QDF_STATUS p2p_status_scan(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
 	if (!p2p_soc_obj) {
@@ -1300,7 +1300,7 @@ QDF_STATUS p2p_status_connect(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
 	if (!p2p_soc_obj) {
@@ -1335,7 +1335,7 @@ QDF_STATUS p2p_status_disconnect(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS p2p_status_start_bss(struct wlan_objmgr_vdev *vdev)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
 	if (!p2p_soc_obj) {
@@ -1371,7 +1371,7 @@ QDF_STATUS p2p_status_start_bss(struct wlan_objmgr_vdev *vdev)
 QDF_STATUS p2p_status_stop_bss(struct wlan_objmgr_vdev *vdev)
 {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 
 	p2p_soc_obj = get_p2p_soc_obj_by_vdev(vdev);
 	if (!p2p_soc_obj) {

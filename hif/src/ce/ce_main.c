@@ -2346,6 +2346,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 		scn->ce_count = QCA_6290_CE_COUNT;
 		break;
 	}
+	QDF_BUG(scn->ce_count <= CE_COUNT_MAX);
 }
 
 /**

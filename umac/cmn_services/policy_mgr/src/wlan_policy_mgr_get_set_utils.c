@@ -1030,7 +1030,7 @@ bool policy_mgr_current_concurrency_is_mcc(struct wlan_objmgr_psoc *psoc)
  * Return: NONE
  */
 void policy_mgr_set_concurrency_mode(struct wlan_objmgr_psoc *psoc,
-				     enum tQDF_ADAPTER_MODE mode)
+				     enum QDF_OPMODE mode)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -1069,7 +1069,7 @@ void policy_mgr_set_concurrency_mode(struct wlan_objmgr_psoc *psoc,
  * Return: NONE
  */
 void policy_mgr_clear_concurrency_mode(struct wlan_objmgr_psoc *psoc,
-				       enum tQDF_ADAPTER_MODE mode)
+				       enum QDF_OPMODE mode)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -1099,7 +1099,7 @@ void policy_mgr_clear_concurrency_mode(struct wlan_objmgr_psoc *psoc,
 }
 
 void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
-				enum tQDF_ADAPTER_MODE mode,
+				enum QDF_OPMODE mode,
 				uint8_t session_id)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1181,7 +1181,7 @@ void policy_mgr_incr_active_session(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS policy_mgr_decr_active_session(struct wlan_objmgr_psoc *psoc,
-				enum tQDF_ADAPTER_MODE mode,
+				enum QDF_OPMODE mode,
 				uint8_t session_id)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -1375,8 +1375,8 @@ QDF_STATUS policy_mgr_decr_connection_count(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-bool policy_mgr_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
-		enum policy_mgr_con_mode *new_mode)
+bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
+				     enum policy_mgr_con_mode *new_mode)
 {
 	bool status = true;
 
@@ -1985,7 +1985,7 @@ bool policy_mgr_is_mcc_adaptive_scheduler_enabled(
  */
 QDF_STATUS policy_mgr_change_mcc_go_beacon_interval(
 		struct wlan_objmgr_psoc *psoc,
-		uint8_t vdev_id, enum tQDF_ADAPTER_MODE dev_mode)
+		uint8_t vdev_id, enum QDF_OPMODE dev_mode)
 {
 	QDF_STATUS status;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
@@ -2026,7 +2026,7 @@ struct policy_mgr_conc_connection_info *policy_mgr_get_conn_info(uint32_t *len)
 }
 
 enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
-			enum tQDF_ADAPTER_MODE device_mode)
+			enum QDF_OPMODE device_mode)
 {
 	enum policy_mgr_con_mode mode = PM_MAX_NUM_OF_MODE;
 	switch (device_mode) {
@@ -2200,7 +2200,7 @@ QDF_STATUS policy_mgr_get_nss_for_vdev(struct wlan_objmgr_psoc *psoc,
 				enum policy_mgr_con_mode mode,
 				uint8_t *nss_2g, uint8_t *nss_5g)
 {
-	enum tQDF_ADAPTER_MODE dev_mode;
+	enum QDF_OPMODE dev_mode;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
 	switch (mode) {

@@ -1138,7 +1138,7 @@ void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc)
  * Return: None
  */
 void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
-				enum tQDF_ADAPTER_MODE mode)
+				enum QDF_OPMODE mode)
 {
 	QDF_STATUS status;
 	enum policy_mgr_con_mode con_mode;
@@ -1205,7 +1205,7 @@ void policy_mgr_set_pcl_for_existing_combo(
 {
 	struct policy_mgr_conc_connection_info
 			info[MAX_NUMBER_OF_CONC_CONNECTIONS] = { {0} };
-	enum tQDF_ADAPTER_MODE pcl_mode;
+	enum QDF_OPMODE pcl_mode;
 	uint8_t num_cxn_del = 0;
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 

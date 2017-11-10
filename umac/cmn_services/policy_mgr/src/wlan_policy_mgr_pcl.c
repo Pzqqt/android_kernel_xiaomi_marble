@@ -105,7 +105,7 @@ QDF_STATUS policy_mgr_get_pcl_for_existing_conn(struct wlan_objmgr_psoc *psoc,
 }
 
 void policy_mgr_decr_session_set_pcl(struct wlan_objmgr_psoc *psoc,
-						enum tQDF_ADAPTER_MODE mode,
+						enum QDF_OPMODE mode,
 						uint8_t session_id)
 {
 	QDF_STATUS qdf_status;

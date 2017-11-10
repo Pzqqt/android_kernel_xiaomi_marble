@@ -1347,6 +1347,8 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	qdf_mem_set(meta_data, 0, sizeof(struct htt_tx_msdu_desc_ext2_t));
 
+	meta_data->host_tx_desc_pool = 1;
+
 	if (!(mhdr->flags & METAHDR_FLAG_AUTO_RATE)) {
 		meta_data->power = mhdr->power;
 

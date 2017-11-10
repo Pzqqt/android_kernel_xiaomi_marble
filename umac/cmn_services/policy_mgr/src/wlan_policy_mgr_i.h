@@ -372,7 +372,7 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 				void *context);
 void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc);
 void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
-				enum tQDF_ADAPTER_MODE mode);
+				enum QDF_OPMODE mode);
 void policy_mgr_set_pcl_for_existing_combo(
 		struct wlan_objmgr_psoc *psoc, enum policy_mgr_con_mode mode);
 void pm_dbs_opportunistic_timer_handler(void *data);

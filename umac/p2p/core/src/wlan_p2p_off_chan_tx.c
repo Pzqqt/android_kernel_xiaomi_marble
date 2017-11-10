@@ -80,7 +80,7 @@ static QDF_STATUS p2p_tx_context_check_valid(struct tx_action_context *tx_ctx)
  */
 static QDF_STATUS p2p_vdev_check_valid(struct tx_action_context *tx_ctx)
 {
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *psoc;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
@@ -263,7 +263,7 @@ static struct p2p_noa_info *p2p_get_vdev_noa_info(
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *psoc;
-	enum tQDF_ADAPTER_MODE mode;
+	enum QDF_OPMODE mode;
 	struct p2p_noa_info *noa_info = NULL;
 
 	p2p_soc_obj = tx_ctx->p2p_soc_obj;

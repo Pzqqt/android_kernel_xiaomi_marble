@@ -315,7 +315,7 @@ enum htc_send_full_action epping_tx_queue_full(void *Context,
 	return HTC_SEND_FULL_KEEP;
 }
 #endif /* HIF_SDIO */
-void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
+void epping_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 {
 	epping_context_t *pEpping_ctx = (epping_context_t *) ctx;
 	epping_adapter_t *adapter = pEpping_ctx->epping_adapter;
@@ -326,68 +326,64 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 	struct epping_cookie *cookie;
 	A_BOOL flushing = false;
 	qdf_nbuf_queue_t skb_queue;
-	HTC_PACKET *htc_pkt;
+
+	if (htc_pkt == NULL)
+		return;
 
 	qdf_nbuf_queue_init(&skb_queue);
 
 	qdf_spin_lock_bh(&adapter->data_lock);
 
-	while (!HTC_QUEUE_EMPTY(pPacketQueue)) {
-		htc_pkt = htc_packet_dequeue(pPacketQueue);
-		if (htc_pkt == NULL)
-			break;
-		status = htc_pkt->Status;
-		eid = htc_pkt->Endpoint;
-		pktSkb = GET_HTC_PACKET_NET_BUF_CONTEXT(htc_pkt);
-		cookie = htc_pkt->pPktContext;
+	status = htc_pkt->Status;
+	eid = htc_pkt->Endpoint;
+	pktSkb = GET_HTC_PACKET_NET_BUF_CONTEXT(htc_pkt);
+	cookie = htc_pkt->pPktContext;
 
-		if (!pktSkb) {
+	if (!pktSkb) {
+		EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
+			   "%s: NULL skb from hc packet", __func__);
+		QDF_BUG(0);
+	} else {
+		if (htc_pkt->pBuffer != qdf_nbuf_data(pktSkb)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
-				 "%s: NULL skb from hc packet", __func__);
+				   "%s: htc_pkt buffer not equal to skb->data",
+				   __func__);
 			QDF_BUG(0);
-		} else {
-			if (htc_pkt->pBuffer != qdf_nbuf_data(pktSkb)) {
+		}
+		/* add this to the list, use faster non-lock API */
+		qdf_nbuf_queue_add(&skb_queue, pktSkb);
+
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			if (htc_pkt->ActualLength !=
+				qdf_nbuf_len(pktSkb)) {
 				EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
-				  "%s: htc_pkt buffer not equal to skb->data",
-				  __func__);
+					   "%s: htc_pkt length not equal to skb->len",
+					   __func__);
 				QDF_BUG(0);
 			}
-			/* add this to the list, use faster non-lock API */
-			qdf_nbuf_queue_add(&skb_queue, pktSkb);
-
-			if (QDF_IS_STATUS_SUCCESS(status)) {
-				if (htc_pkt->ActualLength !=
-						qdf_nbuf_len(pktSkb)) {
-					EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
-					  "%s: htc_pkt length not equal to skb->len",
-					  __func__);
-					QDF_BUG(0);
-				}
-			}
 		}
-
-		EPPING_LOG(QDF_TRACE_LEVEL_INFO,
-			   "%s skb=%pK data=%pK len=0x%x eid=%d ",
-			   __func__, pktSkb, htc_pkt->pBuffer,
-			   htc_pkt->ActualLength, eid);
-
-		if (QDF_IS_STATUS_ERROR(status)) {
-			if (status == QDF_STATUS_E_CANCELED) {
-				/* a packet was flushed  */
-				flushing = true;
-			}
-			if (status != QDF_STATUS_E_RESOURCES) {
-				printk("%s() -TX ERROR, status: 0x%x\n",
-				       __func__, status);
-			}
-		} else {
-			EPPING_LOG(QDF_TRACE_LEVEL_INFO, "%s: OK\n", __func__);
-			flushing = false;
-		}
-
-		epping_free_cookie(adapter->pEpping_ctx, cookie);
 	}
 
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO,
+		   "%s skb=%pK data=%pK len=0x%x eid=%d ",
+		   __func__, pktSkb, htc_pkt->pBuffer,
+		   htc_pkt->ActualLength, eid);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		if (status == QDF_STATUS_E_CANCELED) {
+			/* a packet was flushed  */
+			flushing = true;
+		}
+		if (status != QDF_STATUS_E_RESOURCES) {
+			printk("%s() -TX ERROR, status: 0x%x\n",
+			       __func__, status);
+		}
+	} else {
+		EPPING_LOG(QDF_TRACE_LEVEL_INFO, "%s: OK\n", __func__);
+		flushing = false;
+	}
+
+	epping_free_cookie(adapter->pEpping_ctx, cookie);
 	qdf_spin_unlock_bh(&adapter->data_lock);
 
 	/* free all skbs in our local list */

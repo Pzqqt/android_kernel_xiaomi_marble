@@ -275,7 +275,7 @@ QDF_STATUS wlan_crypto_setkey(struct wlan_objmgr_vdev *vdev,
 	const struct wlan_crypto_cipher *cipher;
 	uint8_t macaddr[WLAN_ALEN] = {0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
 	bool isbcast;
-	enum tQDF_ADAPTER_MODE vdev_mode;
+	enum QDF_OPMODE vdev_mode;
 
 	if (!vdev || !req_key || req_key->keylen > (sizeof(req_key->keydata))) {
 		qdf_print("%s[%d] Invalid params vdev%pK, req_key%pK\n",
@@ -2422,7 +2422,7 @@ QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_peer *peer;
 	int i;
-	enum tQDF_ADAPTER_MODE opmode;
+	enum QDF_OPMODE opmode;
 
 	if (!vdev)
 		return QDF_STATUS_E_NULL_VALUE;

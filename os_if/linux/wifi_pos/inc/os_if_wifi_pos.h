@@ -75,7 +75,7 @@ void os_if_wifi_pos_send_peer_status(struct qdf_mac_addr *peer_mac,
 				uint8_t peer_timing_meas_cap,
 				uint8_t session_id,
 				struct wifi_pos_ch_info *chan_info,
-				enum tQDF_ADAPTER_MODE dev_mode);
+				enum QDF_OPMODE dev_mode);
 
 /**
  * os_if_wifi_pos_populate_caps() - populate oem capabilities
@@ -103,7 +103,7 @@ static inline void os_if_wifi_pos_send_peer_status(
 		uint8_t peer_timing_meas_cap,
 		uint8_t session_id,
 		struct wifi_pos_ch_info *chan_info,
-		enum tQDF_ADAPTER_MODE dev_mode)
+		enum QDF_OPMODE dev_mode)
 {
 }
 
