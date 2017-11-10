@@ -309,6 +309,9 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 	struct cdp_peer *peer_handle, enum cdp_sec_type sec_type,
 	 uint32_t *rx_pn);
 
+void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
+int dp_get_ring_id_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
+
 #if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
 		                uint32_t stats_type_upload_mask);

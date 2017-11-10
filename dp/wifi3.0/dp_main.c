@@ -687,6 +687,12 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				remaining_quota = budget;
 			}
 		}
+		for (ring = 0; ring < MAX_RX_MAC_RINGS; ring++) {
+			/* Need to check on this, why is required */
+			work_done = dp_rxdma_err_process(soc, ring,
+						remaining_quota);
+			budget -= work_done;
+		}
 	}
 
 	if (reo_status_mask)
@@ -1843,6 +1849,21 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		soc->num_reo_dest_rings = 0;
 	}
 
+	/* LMAC RxDMA to SW Rings configuration */
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
+		/* Only valid for MCL */
+		struct dp_pdev *pdev = soc->pdev_list[0];
+
+		for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
+			if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring[i],
+				RXDMA_DST, 0, i, RXDMA_ERR_DST_RING_SIZE)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_ERROR,
+					FL("dp_srng_setup failed for rxdma_err_dst_ring"));
+				goto fail1;
+			}
+		}
+	}
 	/* TBD: call dp_rx_init to setup Rx SW descriptors */
 
 	/* REO reinjection ring */
@@ -2191,11 +2212,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
-	if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring, RXDMA_DST, 0,
-		pdev_id, RXDMA_ERR_DST_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed for rxdma_mon_dst_ring"));
-		goto fail1;
+	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
+		if (dp_srng_setup(soc, &pdev->rxdma_err_dst_ring[0], RXDMA_DST,
+				  0, pdev_id, RXDMA_ERR_DST_RING_SIZE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_srng_setup failed for rxdma_err_dst_ring"));
+			goto fail1;
+		}
 	}
 
 	/* Setup second Rx refill buffer ring */
@@ -2357,7 +2380,15 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	dp_srng_cleanup(soc, &pdev->rxdma_mon_desc_ring,
 		RXDMA_MONITOR_DESC, 0);
 
-	dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring, RXDMA_DST, 0);
+	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
+		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[0], RXDMA_DST, 0);
+	} else {
+		int i;
+
+		for (i = 0; i < MAX_RX_MAC_RINGS; i++)
+			dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[i],
+				RXDMA_DST, 0);
+	}
 
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
@@ -2553,6 +2584,10 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 					 pdev->rx_mac_buf_ring[j]
 						.hal_srng,
 					 RXDMA_BUF);
+				htt_srng_setup(soc->htt_handle, mac_id,
+					pdev->rxdma_err_dst_ring[j]
+						.hal_srng,
+					RXDMA_DST);
 				mac_id++;
 			}
 
@@ -2572,10 +2607,6 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rxdma_mon_desc_ring.hal_srng,
 				RXDMA_MONITOR_DESC);
-
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_err_dst_ring.hal_srng,
-					RXDMA_DST);
 		}
 	}
 }
@@ -2588,6 +2619,8 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
 		if (pdev) {
+			int ring_idx = dp_get_ring_id_for_mac_id(soc, i);
+
 			htt_srng_setup(soc->htt_handle, i,
 				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
 
@@ -2604,8 +2637,8 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 				pdev->rxdma_mon_desc_ring.hal_srng,
 				RXDMA_MONITOR_DESC);
 			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_err_dst_ring.hal_srng,
-					RXDMA_DST);
+				pdev->rxdma_err_dst_ring[ring_idx].hal_srng,
+				RXDMA_DST);
 		}
 	}
 }
@@ -4134,9 +4167,14 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 	dp_print_ring_stat_from_hal(pdev->soc,
 			&pdev->rxdma_mon_desc_ring,
 			"Rxdma mon desc Ring");
-	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rxdma_err_dst_ring,
-			"Rxdma err dst ring");
+
+	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
+		snprintf(ring_name, STR_MAXLEN, "Rxdma err dst ring %d", i);
+		dp_print_ring_stat_from_hal(pdev->soc,
+			&pdev->rxdma_err_dst_ring[i],
+			ring_name);
+	}
+
 	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
 		snprintf(ring_name, STR_MAXLEN, "Rx mac buf ring %d", i);
 		dp_print_ring_stat_from_hal(pdev->soc,
@@ -5653,6 +5691,43 @@ fail0:
 	return NULL;
 }
 
+/*
+ * dp_get_pdev_for_mac_id() -  Return pdev for mac_id
+ *
+ * @soc: handle to DP soc
+ * @mac_id: MAC id
+ *
+ * Return: Return pdev corresponding to MAC
+ */
+void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
+{
+	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+		return soc->pdev_list[mac_id];
+
+	/* Typically for MCL as there only 1 PDEV*/
+	return soc->pdev_list[0];
+}
+
+/*
+ * dp_get_ring_id_for_mac_id() -  Return pdev for mac_id
+ *
+ * @soc: handle to DP soc
+ * @mac_id: MAC id
+ *
+ * Return: ring id
+ */
+int dp_get_ring_id_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
+{
+	/*
+	 * Single pdev using both MACs will operate on both MAC rings,
+	 * which is the case for MCL.
+	 */
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+		return mac_id;
+
+	/* For WIN each PDEV will operate one ring, so index is zero. */
+	return 0;
+}
 #if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
 /*
 * dp_set_pktlog_wifi3() - attach txrx vdev

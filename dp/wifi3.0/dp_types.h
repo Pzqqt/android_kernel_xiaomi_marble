@@ -921,7 +921,7 @@ struct dp_pdev {
 	struct dp_srng rxdma_mon_desc_ring;
 
 	/* RXDMA error destination ring */
-	struct dp_srng rxdma_err_dst_ring;
+	struct dp_srng rxdma_err_dst_ring[MAX_RX_MAC_RINGS];
 
 	/* Link descriptor memory banks */
 	struct {

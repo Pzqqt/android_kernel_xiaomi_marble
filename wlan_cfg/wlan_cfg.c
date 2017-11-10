@@ -34,6 +34,7 @@
 
 #ifdef CONFIG_MCL
 #define WLAN_CFG_PER_PDEV_RX_RING 0
+#define WLAN_CFG_PER_PDEV_LMAC_RING 0
 #define NUM_RXDMA_RINGS_PER_PDEV 2
 #define WLAN_LRO_ENABLE 1
 #ifdef IPA_OFFLOAD
@@ -61,6 +62,7 @@
 
 #ifdef CONFIG_WIN
 #define WLAN_CFG_PER_PDEV_RX_RING 0
+#define WLAN_CFG_PER_PDEV_LMAC_RING 1
 #define NUM_RXDMA_RINGS_PER_PDEV 1
 #define WLAN_LRO_ENABLE 0
 
@@ -302,6 +304,7 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 	wlan_cfg_ctx->per_pdev_tx_ring = WLAN_CFG_PER_PDEV_TX_RING;
 	wlan_cfg_ctx->num_tcl_data_rings = WLAN_CFG_NUM_TCL_DATA_RINGS;
 	wlan_cfg_ctx->per_pdev_rx_ring = WLAN_CFG_PER_PDEV_RX_RING;
+	wlan_cfg_ctx->per_pdev_lmac_ring = WLAN_CFG_PER_PDEV_LMAC_RING;
 	wlan_cfg_ctx->num_reo_dest_rings = WLAN_CFG_NUM_REO_DEST_RING;
 	wlan_cfg_ctx->num_tx_desc_pool = MAX_TXDESC_POOLS;
 	wlan_cfg_ctx->num_tx_ext_desc_pool = WLAN_CFG_NUM_TXEXT_DESC_POOL;
@@ -534,6 +537,11 @@ uint32_t wlan_cfg_max_alloc_size(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_per_pdev_tx_ring(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->per_pdev_tx_ring;
+}
+
+int wlan_cfg_per_pdev_lmac_ring(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->per_pdev_lmac_ring;
 }
 
 int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *cfg)

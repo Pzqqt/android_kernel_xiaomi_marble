@@ -1235,7 +1235,8 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 uint32_t
 dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
-	struct dp_pdev *pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	int ring_idx = dp_get_ring_id_for_mac_id(soc, mac_id);
 	uint8_t pdev_id;
 	void *hal_soc;
 	void *rxdma_dst_ring_desc;
@@ -1252,7 +1253,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		return 0;
 #endif
 	pdev_id = pdev->pdev_id;
-	err_dst_srng = pdev->rxdma_err_dst_ring.hal_srng;
+	err_dst_srng = pdev->rxdma_err_dst_ring[ring_idx].hal_srng;
 
 	if (!err_dst_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

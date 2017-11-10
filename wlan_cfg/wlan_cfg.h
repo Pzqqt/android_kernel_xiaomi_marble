@@ -105,6 +105,7 @@ struct wlan_cfg_dp_soc_ctxt {
 	int per_pdev_tx_ring;
 	int num_tcl_data_rings;
 	int per_pdev_rx_ring;
+	int per_pdev_lmac_ring;
 	int num_reo_dest_rings;
 	int num_tx_desc_pool;
 	int num_tx_ext_desc_pool;
@@ -409,6 +410,15 @@ int wlan_cfg_num_tcl_data_rings(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  * Return: per_pdev_rx_ring
  */
 int wlan_cfg_per_pdev_rx_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/*
+ * wlan_cfg_per_pdev_lmac_ring() - Return true if error rings are mapped as
+ *                              one per radio
+ * @wlan_cfg_ctx
+ *
+ * Return: return 1 if per pdev error ring else 0
+ */
+int wlan_cfg_per_pdev_lmac_ring(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
  * wlan_cfg_num_reo_dest_rings() - Number of REO Data rings supported by device
