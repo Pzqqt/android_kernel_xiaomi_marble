@@ -10997,7 +10997,6 @@ enum hdd_wext_control {
  * @Default: 1
  *
  * This ini is used to enable/disable broadcast probe response.
- * This is set only if g_is_fils_enabled is set to 1
  * If this is disabled then OCE ini oce_sta_enable will also be
  * disabled and OCE IE will not be sent in frames.
  *
