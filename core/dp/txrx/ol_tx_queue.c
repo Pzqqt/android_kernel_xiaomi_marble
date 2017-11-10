@@ -111,7 +111,9 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 			for (i = 0; i < OL_TX_NUM_TIDS; i++) {
 				txq = &peer->txqs[i];
 				if (txq->frms) {
-					OL_TXRX_PEER_INC_REF_CNT(peer);
+					ol_txrx_peer_get_ref
+						(peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 					peers[peer_count++] = peer;
 					break;
 				}
@@ -129,7 +131,8 @@ ol_tx_queue_vdev_flush(struct ol_txrx_pdev_t *pdev, struct ol_txrx_vdev_t *vdev)
 			}
 			ol_txrx_info(
 				   "%s: Delete Peer %pK\n", __func__, peer);
-			OL_TXRX_PEER_UNREF_DELETE(peers[i]);
+			ol_txrx_peer_release_ref(peers[i],
+						 PEER_DEBUG_ID_OL_INTERNAL);
 		}
 	} while (peer_count >= PEER_ARRAY_COUNT);
 }

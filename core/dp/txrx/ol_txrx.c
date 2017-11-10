@@ -319,7 +319,7 @@ ol_txrx_find_peer_by_addr_and_vdev(struct cdp_pdev *ppdev,
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
-	OL_TXRX_PEER_UNREF_DELETE(peer);
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 	return peer;
 }
 
@@ -385,16 +385,17 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 
-	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_addr, 0, 1);
+	peer = ol_txrx_peer_find_hash_find_get_ref(pdev, peer_addr, 0, 1,
+						   PEER_DEBUG_ID_OL_INTERNAL);
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
-	OL_TXRX_PEER_UNREF_DELETE(peer);
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 	return peer;
 }
 
 /**
- * ol_txrx_find_peer_by_addr_inc_ref() - find peer via peer mac addr and peer_id
+ * ol_txrx_peer_get_ref_by_addr() - get peer ref via peer mac addr and peer_id
  * @pdev: pointer of type ol_txrx_pdev_handle
  * @peer_addr: peer mac addr
  * @peer_id: pointer to fill in the value of peer->local_id for caller
@@ -402,28 +403,30 @@ void *ol_txrx_find_peer_by_addr(struct cdp_pdev *ppdev,
  * This function finds the peer with given mac address and returns its peer_id.
  * Note that this function increments the peer->ref_cnt.
  * This makes sure that peer will be valid. This also means the caller needs to
- * call the corresponding API - OL_TXRX_PEER_UNREF_DELETE to delete the peer
+ * call the corresponding API - ol_txrx_peer_release_ref to delete the peer
  * reference.
  * Sample usage:
  *    {
  *      //the API call below increments the peer->ref_cnt
- *      peer = ol_txrx_find_peer_by_addr_inc_ref(pdev, peer_addr, peer_id);
+ *      peer = ol_txrx_peer_get_ref_by_addr(pdev, peer_addr, peer_id, dbg_id);
  *
  *      // Once peer usage is done
  *
  *      //the API call below decrements the peer->ref_cnt
- *       OL_TXRX_PEER_UNREF_DELETE(peer);
+ *       ol_txrx_peer_release_ref(peer, dbg_id);
  *    }
  *
  * Return: peer handle if the peer is found, NULL if peer is not found.
  */
-ol_txrx_peer_handle ol_txrx_find_peer_by_addr_inc_ref(ol_txrx_pdev_handle pdev,
-						uint8_t *peer_addr,
-						uint8_t *peer_id)
+ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
+						 u8 *peer_addr,
+						 u8 *peer_id,
+						 enum peer_debug_id_type dbg_id)
 {
 	struct ol_txrx_peer_t *peer;
 
-	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_addr, 0, 1);
+	peer = ol_txrx_peer_find_hash_find_get_ref(pdev, peer_addr, 0, 1,
+						   dbg_id);
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
@@ -2644,10 +2647,13 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 
 	qdf_atomic_init(&peer->delete_in_progress);
 	qdf_atomic_init(&peer->flush_in_progress);
-
 	qdf_atomic_init(&peer->ref_cnt);
+
+	for (i = 0; i < PEER_DEBUG_ID_MAX; i++)
+		qdf_atomic_init(&peer->access_list[i]);
+
 	/* keep one reference for attach */
-	OL_TXRX_PEER_INC_REF_CNT(peer);
+	ol_txrx_peer_get_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 
 	/* Set a flag to indicate peer create is pending in firmware */
 	qdf_atomic_init(&peer->fw_create_pending);
@@ -3073,7 +3079,8 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	peer =  ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_mac, 0, 1);
+	peer =  ol_txrx_peer_find_hash_find_get_ref(pdev, peer_mac, 0, 1,
+						    PEER_DEBUG_ID_OL_INTERNAL);
 	if (NULL == peer) {
 		ol_txrx_err(
 			   "%s: peer is null for peer_mac 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n",
@@ -3091,7 +3098,9 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 			   "%s: no state change, returns directly\n",
 			   __func__);
 #endif
-		peer_ref_cnt = OL_TXRX_PEER_UNREF_DELETE(peer);
+		peer_ref_cnt = ol_txrx_peer_release_ref
+						(peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -3121,9 +3130,10 @@ QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *ppdev,
 				ol_txrx_peer_tid_unpause(peer, tid);
 		}
 	}
-	peer_ref_cnt = OL_TXRX_PEER_UNREF_DELETE(peer);
+	peer_ref_cnt = ol_txrx_peer_release_ref(peer,
+						PEER_DEBUG_ID_OL_INTERNAL);
 	/*
-	 * after OL_TXRX_PEER_UNREF_DELETE, peer object cannot be accessed
+	 * after ol_txrx_peer_release_ref, peer object cannot be accessed
 	 * if the return code was 0
 	 */
 	if (peer_ref_cnt > 0)
@@ -3148,9 +3158,9 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 		    enum ol_txrx_peer_update_select_t select)
 {
 	struct ol_txrx_peer_t *peer;
-	int    peer_ref_cnt;
 
-	peer = ol_txrx_peer_find_hash_find_inc_ref(vdev->pdev, peer_mac, 0, 1);
+	peer = ol_txrx_peer_find_hash_find_get_ref(vdev->pdev, peer_mac, 0, 1,
+						   PEER_DEBUG_ID_OL_INTERNAL);
 	if (!peer) {
 		ol_txrx_dbg("%s: peer is null",
 			   __func__);
@@ -3231,7 +3241,7 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 		break;
 	}
 	} /* switch */
-	peer_ref_cnt = OL_TXRX_PEER_UNREF_DELETE(peer);
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 }
 
 uint8_t
@@ -3257,14 +3267,71 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id)
 	return 0;
 }
 
-int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
-					const char *fname,
-					int line)
+/**
+ * ol_txrx_dump_peer_access_list() - dump peer access list
+ * @peer: peer handle
+ *
+ * This function will dump if any peer debug ids are still accessing peer
+ *
+ * Return: None
+ */
+static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
+{
+	u32 i;
+	u32 pending_ref;
+
+	for (i = 0; i < PEER_DEBUG_ID_MAX; i++) {
+		pending_ref = qdf_atomic_read(&peer->access_list[i]);
+		if (pending_ref)
+			ol_txrx_info_high("id %d pending refs %d",
+					  i, pending_ref);
+	}
+}
+
+/**
+ * ol_txrx_peer_free_tids() - free tids for the peer
+ * @peer: peer handle
+ *
+ * Return: None
+ */
+static inline void ol_txrx_peer_free_tids(ol_txrx_peer_handle peer)
+{
+	int i = 0;
+	/*
+	 * 'array' is allocated in addba handler and is supposed to be
+	 * freed in delba handler. There is the case (for example, in
+	 * SSR) where delba handler is not called. Because array points
+	 * to address of 'base' by default and is reallocated in addba
+	 * handler later, only free the memory when the array does not
+	 * point to base.
+	 */
+	for (i = 0; i < OL_TXRX_NUM_EXT_TIDS; i++) {
+		if (peer->tids_rx_reorder[i].array !=
+		    &peer->tids_rx_reorder[i].base) {
+			ol_txrx_dbg(
+				   "%s, delete reorder arr, tid:%d\n",
+				   __func__, i);
+			qdf_mem_free(peer->tids_rx_reorder[i].array);
+			ol_rx_reorder_init(&peer->tids_rx_reorder[i],
+					   (uint8_t)i);
+		}
+	}
+}
+
+/**
+ * ol_txrx_peer_release_ref() - release peer reference
+ * @peer: peer handle
+ *
+ * Release peer reference and delete peer if refcount is 0
+ *
+ * Return: None
+ */
+int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
+			     enum peer_debug_id_type debug_id)
 {
 	int    rc;
 	struct ol_txrx_vdev_t *vdev;
 	struct ol_txrx_pdev_t *pdev;
-	int i;
 
 	/* preconditions */
 	TXRX_ASSERT2(peer);
@@ -3280,6 +3347,11 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 	if (NULL == pdev) {
 		ol_txrx_dbg(
 			   "The pdev is not present anymore\n");
+		return -EINVAL;
+	}
+
+	if (debug_id >= PEER_DEBUG_ID_MAX || debug_id < 0) {
+		ol_txrx_err("incorrect debug_id %d ", debug_id);
 		return -EINVAL;
 	}
 
@@ -3323,14 +3395,19 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 	 */
 	rc--;
 
+	if (!qdf_atomic_read(&peer->access_list[debug_id])) {
+		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+		ol_txrx_err("peer %p ref was not taken by %d",
+			    peer, debug_id);
+		ol_txrx_dump_peer_access_list(peer);
+		QDF_BUG(0);
+		return -EACCES;
+	}
+
+	qdf_atomic_dec(&peer->access_list[debug_id]);
+
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
-		u_int16_t peer_id;
-
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
-			   "[%s][%d]: Deleting peer %pK (%pM) ref_cnt %d\n",
-			   fname, line, peer, peer->mac_addr.raw,
-			   qdf_atomic_read(&peer->ref_cnt));
-
+		u16 peer_id;
 		wlan_roam_debug_log(vdev->vdev_id,
 				    DEBUG_DELETING_PEER_OBJ,
 				    DEBUG_INVALID_PEER_ID,
@@ -3410,46 +3487,31 @@ int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
 			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		}
 
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			   "[%s][%d]: Deleting peer %pK (%pM) peer->ref_cnt = %d %s",
-			   fname, line, peer, peer->mac_addr.raw,
-			   qdf_atomic_read(&peer->ref_cnt),
-			   qdf_atomic_read(&peer->fw_create_pending) == 1 ?
-			   "(No Maps received)" : "");
+		ol_txrx_info_high("[%d][%d]: Deleting peer %p ref_cnt -> %d %s",
+				  debug_id,
+				  qdf_atomic_read(&peer->access_list[debug_id]),
+				  peer, rc,
+				  qdf_atomic_read(&peer->fw_create_pending)
+									== 1 ?
+				  "(No Maps received)" : "");
 
 		ol_txrx_peer_tx_queue_free(pdev, peer);
 
 		/* Remove mappings from peer_id to peer object */
 		ol_txrx_peer_clear_map_peer(pdev, peer);
 
-		/*
-		 * 'array' is allocated in addba handler and is supposed to be
-		 * freed in delba handler. There is the case (for example, in
-		 * SSR) where delba handler is not called. Because array points
-		 * to address of 'base' by default and is reallocated in addba
-		 * handler later, only free the memory when the array does not
-		 * point to base.
-		 */
-		for (i = 0; i < OL_TXRX_NUM_EXT_TIDS; i++) {
-			if (peer->tids_rx_reorder[i].array !=
-			    &peer->tids_rx_reorder[i].base) {
-				ol_txrx_dbg(
-					   "%s, delete reorder arr, tid:%d\n",
-					   __func__, i);
-				qdf_mem_free(peer->tids_rx_reorder[i].array);
-				ol_rx_reorder_init(&peer->tids_rx_reorder[i],
-						   (uint8_t) i);
-			}
-		}
+		ol_txrx_peer_free_tids(peer);
+
+		ol_txrx_dump_peer_access_list(peer);
 
 		qdf_mem_free(peer);
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
-			  "[%s][%d]: ref delete peer %pK peer->ref_cnt = %d",
-			  fname, line, peer, rc);
+		ol_txrx_info_high("[%d][%d]: ref delete peer %p ref_cnt -> %d",
+				  debug_id,
+				  qdf_atomic_read(&peer->access_list[debug_id]),
+				  peer, rc);
 	}
-
 	return rc;
 }
 
@@ -3612,12 +3674,10 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 		if (vdev->opmode == wlan_op_mode_sta) {
 			qdf_timer_start(&peer->peer_unmap_timer,
 					OL_TXRX_PEER_UNMAP_TIMEOUT);
-			ol_txrx_info_high("%s: started peer_unmap_timer for peer %pK",
-				__func__, peer);
+			ol_txrx_info_high
+				("started peer_unmap_timer for peer %pK",
+				  peer);
 		}
-	} else {
-		ol_txrx_err("%s unmap timer not started as PEER_DELETE not sent to FW",
-			__func__);
 	}
 
 	/*
@@ -3626,7 +3686,7 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 	 * PEER_UNMAP message arrives to remove the other
 	 * reference, added by the PEER_MAP message.
 	 */
-	OL_TXRX_PEER_UNREF_DELETE(peer);
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 }
 
 /**
@@ -3651,21 +3711,6 @@ static void ol_txrx_peer_detach_force_delete(void *ppeer)
 	/* Clear the peer_id_to_obj map entries */
 	ol_txrx_peer_remove_obj_map_entries(pdev, peer);
 	ol_txrx_peer_detach(peer, CDP_PEER_DELETE_NO_SPECIAL);
-}
-
-ol_txrx_peer_handle
-ol_txrx_peer_find_by_addr(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac_addr)
-{
-	struct ol_txrx_peer_t *peer;
-
-	peer = ol_txrx_peer_find_hash_find_inc_ref(pdev, peer_mac_addr, 0, 0);
-	if (peer) {
-		ol_txrx_info_high(
-			   "%s: Delete extra reference %pK", __func__, peer);
-		/* release the extra reference */
-		OL_TXRX_PEER_UNREF_DELETE(peer);
-	}
-	return peer;
 }
 
 /**
@@ -4315,14 +4360,15 @@ static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 		qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 		peer = pdev->local_peer_ids.map[i];
 		if (peer)
-			OL_TXRX_PEER_INC_REF_CNT(peer);
+			ol_txrx_peer_get_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
 		qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
 
 		if (peer) {
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 				"stats: peer 0x%pK local peer id %d", peer, i);
 			ol_txrx_disp_peer_cached_bufq_stats(peer);
-			OL_TXRX_PEER_UNREF_DELETE(peer);
+			ol_txrx_peer_release_ref(peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 		}
 	}
 }
@@ -5591,6 +5637,39 @@ static void *ol_txrx_wrapper_find_peer_by_addr(struct cdp_pdev *pdev,
 }
 
 /**
+ * ol_txrx_wrapper_peer_get_ref_by_addr() - get peer reference by address
+ * @pdev: pdev handle
+ * @peer_addr: peer address we want to find
+ * @peer_id: peer id
+ * @debug_id: peer debug id for tracking
+ *
+ * Return: peer instance pointer
+ */
+static void *
+ol_txrx_wrapper_peer_get_ref_by_addr(struct cdp_pdev *pdev,
+				     u8 *peer_addr, uint8_t *peer_id,
+				     enum peer_debug_id_type debug_id)
+{
+	return ol_txrx_peer_get_ref_by_addr((ol_txrx_pdev_handle)pdev,
+					    peer_addr, peer_id, debug_id);
+}
+
+/**
+ * ol_txrx_wrapper_peer_release_ref() - release peer reference
+ * @peer: peer handle
+ * @debug_id: peer debug id for tracking
+ *
+ * Release peer ref acquired by peer get ref api
+ *
+ * Return: void
+ */
+static void ol_txrx_wrapper_peer_release_ref(void *peer,
+					     enum peer_debug_id_type debug_id)
+{
+	ol_txrx_peer_release_ref(peer, debug_id);
+}
+
+/**
  * ol_txrx_wrapper_set_flow_control_parameters() - set flow control parameters
  * @cfg_ctx: cfg context
  * @cfg_param: cfg parameters
@@ -5749,6 +5828,8 @@ static struct cdp_cfg_ops ol_ops_cfg = {
 static struct cdp_peer_ops ol_ops_peer = {
 	.register_peer = ol_txrx_wrapper_register_peer,
 	.clear_peer = ol_txrx_clear_peer,
+	.peer_get_ref_by_addr = ol_txrx_wrapper_peer_get_ref_by_addr,
+	.peer_release_ref = ol_txrx_wrapper_peer_release_ref,
 	.find_peer_by_addr = ol_txrx_wrapper_find_peer_by_addr,
 	.find_peer_by_addr_and_vdev = ol_txrx_find_peer_by_addr_and_vdev,
 	.local_peer_id = ol_txrx_local_peer_id,

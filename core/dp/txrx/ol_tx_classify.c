@@ -357,7 +357,8 @@ struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 			peer = NULL;
 		} else {
 			if (peer)
-				OL_TXRX_PEER_INC_REF_CNT(peer);
+				ol_txrx_peer_get_ref(peer,
+						     PEER_DEBUG_ID_OL_INTERNAL);
 		}
 	}
 	if (!peer)
@@ -464,9 +465,11 @@ ol_tx_classify(
 			 * classify_extension function can check whether to
 			 * encrypt multicast / broadcast frames.
 			 */
-			peer = ol_txrx_peer_find_hash_find_inc_ref(pdev,
-							vdev->mac_addr.raw,
-							0, 1);
+			peer = ol_txrx_peer_find_hash_find_get_ref
+						(pdev,
+						 vdev->mac_addr.raw,
+						 0, 1,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 			if (!peer) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -523,9 +526,10 @@ ol_tx_classify(
 			 */
 			peer = ol_tx_tdls_peer_find(pdev, vdev, &peer_id);
 		} else {
-			peer = ol_txrx_peer_find_hash_find_inc_ref(pdev,
-								dest_addr,
-								0, 1);
+			peer = ol_txrx_peer_find_hash_find_get_ref(pdev,
+								   dest_addr,
+								   0, 1,
+						PEER_DEBUG_ID_OL_INTERNAL);
 		}
 		tx_msdu_info->htt.info.is_unicast = true;
 		if (!peer) {
@@ -583,7 +587,9 @@ ol_tx_classify(
 					   "%s: remove the peer for invalid peer_id %pK\n",
 					   __func__, peer);
 				/* remove the peer reference added above */
-				OL_TXRX_PEER_UNREF_DELETE(peer);
+				ol_txrx_peer_release_ref
+						(peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 				tx_msdu_info->peer = NULL;
 			}
 			return NULL;
@@ -606,7 +612,8 @@ ol_tx_classify(
 			   "%s: remove the peer reference %pK\n",
 			   __func__, peer);
 		/* remove the peer reference added above */
-		OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info->peer);
+		ol_txrx_peer_release_ref(tx_msdu_info->peer,
+					 PEER_DEBUG_ID_OL_INTERNAL);
 		/* Making peer NULL in case if multicast non STA mode */
 		tx_msdu_info->peer = NULL;
 	}
@@ -680,24 +687,26 @@ ol_tx_classify_mgmt(
 			 * frame to vdev queue.
 			 */
 			if (peer) {
-				int rcnt;
 
 				qdf_mem_copy(
 					&local_mac_addr_aligned.raw[0],
 					dest_addr, OL_TXRX_MAC_ADDR_LEN);
 				mac_addr = &local_mac_addr_aligned;
-				if (ol_txrx_peer_find_mac_addr_cmp(
-							mac_addr,
-							&peer->mac_addr) != 0) {
-					rcnt = OL_TXRX_PEER_UNREF_DELETE(peer);
+				if (ol_txrx_peer_find_mac_addr_cmp
+						(mac_addr,
+						 &peer->mac_addr) != 0) {
+					ol_txrx_peer_release_ref
+						(peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 					peer = NULL;
 				}
 			}
 		} else {
 			/* find the peer and increment its reference count */
-			peer = ol_txrx_peer_find_hash_find_inc_ref(pdev,
-								dest_addr,
-								0, 1);
+			peer = ol_txrx_peer_find_hash_find_get_ref(pdev,
+								   dest_addr,
+								   0, 1,
+						PEER_DEBUG_ID_OL_INTERNAL);
 		}
 		tx_msdu_info->peer = peer;
 		if (!peer) {

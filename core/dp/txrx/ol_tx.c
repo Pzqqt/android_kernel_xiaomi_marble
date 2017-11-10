@@ -1370,7 +1370,8 @@ static inline int ol_tx_encap_wrapper(struct ol_txrx_pdev_t *pdev,
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, 1);
 		if (tx_msdu_info->peer) {
 			/* remove the peer reference added above */
-			OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info->peer);
+			ol_txrx_peer_release_ref(tx_msdu_info->peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 		}
 		return -EINVAL;
 	}
@@ -1571,7 +1572,8 @@ int ol_txrx_mgmt_send_frame(
 out:
 	if (tx_msdu_info->peer) {
 		/* remove the peer reference added above */
-		OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info->peer);
+		ol_txrx_peer_release_ref(tx_msdu_info->peer,
+					 PEER_DEBUG_ID_OL_INTERNAL);
 	}
 
 	return status;
@@ -1760,8 +1762,9 @@ ol_tx_hl_base(
 				if (tx_msdu_info.peer) {
 					/* remove the peer reference
 					 * added above */
-					OL_TXRX_PEER_UNREF_DELETE(
-							tx_msdu_info.peer);
+					ol_txrx_peer_release_ref(
+						tx_msdu_info.peer,
+						PEER_DEBUG_ID_OL_INTERNAL);
 				}
 				goto MSDU_LOOP_BOTTOM;
 			}
@@ -1778,8 +1781,9 @@ ol_tx_hl_base(
 					ol_tx_desc_frame_free_nonstd(pdev,
 								     tx_desc,
 								     1);
-					OL_TXRX_PEER_UNREF_DELETE(
-							tx_msdu_info.peer);
+					ol_txrx_peer_release_ref(
+						tx_msdu_info.peer,
+						PEER_DEBUG_ID_OL_INTERNAL);
 					msdu = next;
 					continue;
 				} else if (tx_msdu_info.peer->state !=
@@ -1794,8 +1798,9 @@ ol_tx_hl_base(
 						ol_tx_desc_frame_free_nonstd(
 								pdev,
 								tx_desc, 1);
-						OL_TXRX_PEER_UNREF_DELETE(
-							tx_msdu_info.peer);
+						ol_txrx_peer_release_ref(
+						 tx_msdu_info.peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 						msdu = next;
 						continue;
 					}
@@ -1843,7 +1848,9 @@ ol_tx_hl_base(
 				OL_TX_PEER_STATS_UPDATE(tx_msdu_info.peer,
 							msdu);
 				/* remove the peer reference added above */
-				OL_TXRX_PEER_UNREF_DELETE(tx_msdu_info.peer);
+				ol_txrx_peer_release_ref
+						(tx_msdu_info.peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 			}
 MSDU_LOOP_BOTTOM:
 			msdu = next;

@@ -39,16 +39,16 @@
  * only for forwarding path.
  */
 #define OL_TX_NON_FWD_RESERVE	100
-#define OL_TXRX_PEER_UNREF_DELETE(peer) \
-	ol_txrx_peer_unref_delete(peer, __func__, __LINE__);
 
-int ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer,
-					      const char *fname,
-					      int line);
+ol_txrx_peer_handle ol_txrx_peer_get_ref_by_addr(ol_txrx_pdev_handle pdev,
+						 u8 *peer_addr,
+						 u8 *peer_id,
+						 enum peer_debug_id_type
+									dbg_id);
 
-ol_txrx_peer_handle ol_txrx_find_peer_by_addr_inc_ref(ol_txrx_pdev_handle pdev,
-						uint8_t *peer_addr,
-						uint8_t *peer_id);
+int  ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
+			      enum peer_debug_id_type dbg_id);
+
 /**
  * ol_tx_desc_pool_size_hl() - allocate tx descriptor pool size for HL systems
  * @ctrl_pdev: the control pdev handle

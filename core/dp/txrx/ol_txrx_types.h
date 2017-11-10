@@ -1207,6 +1207,7 @@ struct ol_txrx_peer_t {
 	struct ol_txrx_vdev_t *vdev;
 
 	qdf_atomic_t ref_cnt;
+	qdf_atomic_t access_list[PEER_DEBUG_ID_MAX];
 	qdf_atomic_t delete_in_progress;
 	qdf_atomic_t flush_in_progress;
 
