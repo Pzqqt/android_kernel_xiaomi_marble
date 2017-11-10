@@ -1431,7 +1431,13 @@ QDF_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	AR_DEBUG_ASSERT(pPacket->Endpoint < ENDPOINT_MAX);
+	if ((pPacket->Endpoint >= ENDPOINT_MAX) ||
+	    (pPacket->Endpoint <= ENDPOINT_UNUSED)) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
+			("%s endpoint is invalid\n", __func__));
+		AR_DEBUG_ASSERT(0);
+		return QDF_STATUS_E_INVAL;
+	}
 	pEndpoint = &target->endpoint[pPacket->Endpoint];
 
 	if (!pEndpoint->service_id) {
@@ -1633,7 +1639,13 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	uint32_t data_attr = 0;
 
 	if (pPacket) {
-		AR_DEBUG_ASSERT(pPacket->Endpoint < ENDPOINT_MAX);
+		if ((pPacket->Endpoint >= ENDPOINT_MAX) ||
+		   (pPacket->Endpoint <= ENDPOINT_UNUSED)) {
+			AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
+				("%s endpoint is invalid\n", __func__));
+			AR_DEBUG_ASSERT(0);
+			return QDF_STATUS_E_INVAL;
+		}
 		pEndpoint = &target->endpoint[pPacket->Endpoint];
 
 		/* add HTC_FRAME_HDR in the initial fragment */
