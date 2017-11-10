@@ -235,6 +235,7 @@
 
 #define DFS_FAST_CLOCK_MULTIPLIER    (800/11)
 #define DFS_NO_FAST_CLOCK_MULTIPLIER (80)
+#define DFS_BIG_SIDX 10000
 
 /**
  * Software use: channel interference used for as AR as well as RADAR
@@ -284,11 +285,19 @@
  * @p_time:        Time for start of pulse in usecs.
  * @p_dur:         Duration of pulse in usecs.
  * @p_rssi:        RSSI of pulse.
+ * @p_seg_id:      Segment id.
+ * @p_sidx:        Sidx value.
+ * @p_delta_peak:  Delta peak value.
+ * @p_seq_num:     Sequence number.
  */
 struct dfs_pulseparams {
 	uint64_t p_time;
-	uint8_t p_dur;
-	uint8_t p_rssi;
+	uint8_t  p_dur;
+	uint8_t  p_rssi;
+	uint8_t  p_seg_id;
+	int16_t  p_sidx;
+	int8_t   p_delta_peak;
+	uint32_t p_seq_num;
 } qdf_packed;
 
 /**
@@ -340,6 +349,8 @@ struct dfs_pulseline {
  * @re_total_gain:       Total gain.
  * @re_mb_gain:          Mb gain.
  * @re_relpwr_db:        Relpower in db.
+ * @re_delta_diff:       Delta diff.
+ * @re_delta_peak:       Delta peak.
  * @re_list:             List of radar events.
  */
 struct dfs_event {
@@ -352,13 +363,15 @@ struct dfs_event {
 	uint32_t  re_freq;
 	uint32_t  re_freq_lo;
 	uint32_t  re_freq_hi;
-	u_int     re_seg_id;
+	uint8_t   re_seg_id;
 	int       re_sidx;
 	u_int     re_freq_offset_khz;
 	int       re_peak_mag;
 	int       re_total_gain;
 	int       re_mb_gain;
 	int       re_relpwr_db;
+	uint8_t   re_delta_diff;
+	int8_t    re_delta_peak;
 
 	STAILQ_ENTRY(dfs_event) re_list;
 } qdf_packed;
@@ -376,6 +389,9 @@ struct dfs_event {
 #define DFS_MAX_NUM_RADAR_FILTERS 10
 /* Number of different radar types */
 #define DFS_MAX_RADAR_TYPES  32
+
+/* RADAR filter pattern type 1*/
+#define WLAN_DFS_RF_PATTERN_TYPE_1 1
 
 /**
  * struct dfs_ar_state - DFS AR state structure.
@@ -401,16 +417,24 @@ struct dfs_ar_state {
 
 /**
  * struct dfs_delayelem - Delay Element.
- * @de_time:  Current "filter" time for start of pulse in usecs.
- * @de_dur:   Duration of pulse in usecs.
- * @de_rssi:  Rssi of pulse in dB.
- * @de_ts:    Time stamp for this delay element.
+ * @de_time:       Current "filter" time for start of pulse in usecs.
+ * @de_dur:        Duration of pulse in usecs.
+ * @de_rssi:       Rssi of pulse in dB.
+ * @de_ts:         Time stamp for this delay element.
+ * @de_seg_id:     Segment id for HT80_80/HT160 use.
+ * @de_sidx:       Sidx value.
+ * @de_delta_peak: Delta peak.
+ * @de_seq_num:    Sequence number.
  */
 struct dfs_delayelem {
 	uint32_t de_time;
 	uint8_t  de_dur;
 	uint8_t  de_rssi;
 	uint64_t de_ts;
+	uint8_t  de_seg_id;
+	int16_t  de_sidx;
+	int8_t   de_delta_peak;
+	uint32_t de_seq_num;
 } qdf_packed;
 
 /**
@@ -420,6 +444,25 @@ struct dfs_delayelem {
  * @dl_firstelem:  Index of the first element.
  * @dl_lastelem:   Index of the last element.
  * @dl_numelems:   Number of elements in the delay line.
+ * The following is to handle fractional PRI pulses that can cause false
+ * detection.
+ * @dl_seq_num_start: Sequence number of first pulse that was part of
+ *                    threshold match.
+ * @dl_seq_num_stop:  Sequence number of last pulse that was part of threshold
+ *                    match.
+ * The following is required because the first pulse may or may not be in the
+ * delay line but we will find it iin the pulse line using dl_seq_num_second's
+ * diff_ts value.
+ * @dl_seq_num_second: Sequence number of second pulse that was part of
+ *                     threshold match.
+ * @dl_search_pri:     We need final search PRI to identify possible fractional
+ *                     PRI issue.
+ * @dl_min_sidx:       Minimum sidx value of pulses used to match thershold.
+ *                     Used for sidx spread check.
+ * @dl_max_sidx:       Maximum sidx value of pulses used to match thershold.
+ *                     Used for sidx spread check.
+ * @dl_delta_peak_match_count: Number of pulse in the delay line that had valid
+ *                             delta peak value.
  */
 struct dfs_delayline {
 	struct dfs_delayelem dl_elems[DFS_MAX_DL_SIZE];
@@ -427,6 +470,13 @@ struct dfs_delayline {
 	uint32_t dl_firstelem;
 	uint32_t dl_lastelem;
 	uint32_t dl_numelems;
+	uint32_t dl_seq_num_start;
+	uint32_t dl_seq_num_stop;
+	uint32_t dl_seq_num_second;
+	uint32_t dl_search_pri;
+	int16_t  dl_min_sidx;
+	int8_t   dl_max_sidx;
+	uint8_t  dl_delta_peak_match_count;
 } qdf_packed;
 
 /**
@@ -443,6 +493,12 @@ struct dfs_delayline {
  * @rf_maxdur:          Max duration for this radar filter.
  * @rf_ignore_pri_window: Ignore pri window.
  * @rf_pulseid:         Unique ID corresponding to the original filter ID.
+ * To reduce false detection, look at frequency spread. For now we will use
+ * sidx spread. But for HT160 frequency spread will be a better measure.
+ * @rf_sidx_spread:     Maximum SIDX value spread in a matched sequence
+ *                      excluding FCC Bin 5.
+ * @rf_check_delta_peak: Minimum allowed delta_peak value for a pulse to be
+ *                       considetred for this filter's match.
  */
 struct dfs_filter {
 	struct dfs_delayline rf_dl;
@@ -457,6 +513,8 @@ struct dfs_filter {
 	uint32_t  rf_maxdur;
 	uint32_t  rf_ignore_pri_window;
 	uint32_t  rf_pulseid;
+	uint16_t  rf_sidx_spread;
+	int8_t    rf_check_delta_peak;
 } qdf_packed;
 
 /**
@@ -652,6 +710,8 @@ struct dfs_stats {
  * @total_gain:       Total gain.
  * @mb_gain:          Mb gain.
  * @relpwr_db:        Relpower in db.
+ * @delta_diff:       Delta diff.
+ * @delta_peak:       Delta peak.
  */
 
 struct dfs_event_log {
@@ -660,13 +720,15 @@ struct dfs_event_log {
 	uint8_t   rssi;
 	uint8_t   dur;
 	int       is_chirp;
-	u_int     seg_id;
+	uint8_t   seg_id;
 	int       sidx;
 	u_int     freq_offset_khz;
 	int       peak_mag;
 	int       total_gain;
 	int       mb_gain;
 	int       relpwr_db;
+	uint8_t   delta_diff;
+	int8_t    delta_peak;
 };
 
 #define WLAN_DFS_RESET_TIME_S 7
@@ -761,6 +823,7 @@ struct dfs_event_log {
  *                         the radar type.
  * @wlan_dfs_nol_timeout:   NOL timeout.
  * @update_nol:            Update NOL.
+ * @dfs_seq_num:           Sequence number.
  * @dfs_nol_event[]:       NOL event.
  * @dfs_nol_timer:         NOL list processing.
  * @dfs_cac_timer:         CAC timer.
@@ -849,6 +912,7 @@ struct wlan_dfs {
 	int dfs_pri_multiplier;
 	int wlan_dfs_nol_timeout;
 	bool update_nol;
+	uint32_t dfs_seq_num;
 	int dfs_nol_event[IEEE80211_CHAN_MAX];
 	os_timer_t dfs_nol_timer;
 	os_timer_t dfs_cac_timer;
@@ -887,6 +951,8 @@ struct wlan_dfs {
  * @WLAN_DEBUG_DFS_BIN5_FFT:    BIN5 FFT check.
  * @WLAN_DEBUG_DFS_BIN5_PULSE:  BIN5 pulse check.
  * @WLAN_DEBUG_DFS_FALSE_DET:   False detection debug related prints.
+ * @WLAN_DEBUG_DFS_FALSE_DET2:  Second level check to confirm poisitive
+ *                              detection.
  * @WLAN_DEBUG_DFS_RANDOM_CHAN: Random channel selection.
  */
 enum {
@@ -902,7 +968,8 @@ enum {
 	WLAN_DEBUG_DFS_BIN5_FFT   = 0x00020000,
 	WLAN_DEBUG_DFS_BIN5_PULSE = 0x00040000,
 	WLAN_DEBUG_DFS_FALSE_DET  = 0x00080000,
-	WLAN_DEBUG_DFS_RANDOM_CHAN = 0x00100000,
+	WLAN_DEBUG_DFS_FALSE_DET2 = 0x00100000,
+	WLAN_DEBUG_DFS_RANDOM_CHAN = 0x00200000,
 	WLAN_DEBUG_DFS_MAX        = 0x80000000,
 	WLAN_DEBUG_DFS_ALWAYS     = WLAN_DEBUG_DFS_MAX
 };
@@ -930,6 +997,8 @@ enum {
  * @total_gain:          Total gain.
  * @mb_gain:             Mb gain.
  * @relpwr_db:           Relpower in DB.
+ * @pulse_delta_diff:    Pulse delta diff.
+ * @pulse_delta_peak:    Pulse delta peak.
  *
  * Chirp notes!
  *
@@ -990,13 +1059,15 @@ struct dfs_phy_err {
 	uint32_t freq_hi;
 	uint8_t  rssi;
 	uint8_t  dur;
-	u_int    seg_id;
+	uint8_t  seg_id;
 	int      sidx;
 	u_int    freq_offset_khz;
 	int      peak_mag;
 	int      total_gain;
 	int      mb_gain;
 	int      relpwr_db;
+	uint8_t  pulse_delta_diff;
+	int8_t   pulse_delta_peak;
 };
 
 /**
@@ -1886,7 +1957,8 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 		struct dfs_filtertype *ft,
 		struct dfs_event *re,
 		uint64_t this_ts,
-		int *found);
+		int *found,
+		int *false_radar_found);
 
 /**
  * bin5_rules_check_internal() - This is a extension of dfs_bin5_check().

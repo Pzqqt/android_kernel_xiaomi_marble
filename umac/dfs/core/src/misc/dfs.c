@@ -888,22 +888,25 @@ int dfs_control(struct wlan_dfs *dfs,
 
 		for (i = 0; (i < DFS_EVENT_LOG_SIZE) &&
 				(i < dfs->dfs_event_log_count); i++) {
+#define FREQ_OFFSET1 ((int)dfs->radar_log[i].freq_offset_khz / 1000)
+#define FREQ_OFFSET2 ((int)abs(dfs->radar_log[i].freq_offset_khz) % 1000)
 			dfs_debug(dfs, WLAN_DEBUG_DFS,
-			    "ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d",
-			    dfs->radar_log[i].ts,
-			    dfs->radar_log[i].diff_ts,
-			    dfs->radar_log[i].rssi,
-			    dfs->radar_log[i].dur,
-			    dfs->radar_log[i].is_chirp,
-			    dfs->radar_log[i].seg_id,
-			    dfs->radar_log[i].sidx,
-			    ((int)dfs->radar_log[i].freq_offset_khz/1000),
-			    ((int)abs
-			     (dfs->radar_log[i].freq_offset_khz)%1000),
-			    dfs->radar_log[i].peak_mag,
-			    dfs->radar_log[i].total_gain,
-			    dfs->radar_log[i].mb_gain,
-			    dfs->radar_log[i].relpwr_db);
+					"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_diff=%d, delta_peak=%d\n",
+					dfs->radar_log[i].ts,
+					dfs->radar_log[i].diff_ts,
+					dfs->radar_log[i].rssi,
+					dfs->radar_log[i].dur,
+					dfs->radar_log[i].is_chirp,
+					dfs->radar_log[i].seg_id,
+					dfs->radar_log[i].sidx,
+					FREQ_OFFSET1,
+					FREQ_OFFSET2,
+					dfs->radar_log[i].peak_mag,
+					dfs->radar_log[i].total_gain,
+					dfs->radar_log[i].mb_gain,
+					dfs->radar_log[i].relpwr_db,
+					dfs->radar_log[i].delta_diff,
+					dfs->radar_log[i].delta_peak);
 		}
 		dfs->dfs_event_log_count = 0;
 		dfs->dfs_phyerr_count = 0;

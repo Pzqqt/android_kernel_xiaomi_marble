@@ -31,6 +31,10 @@
 #define DFS_MAX_FREQ_SPREAD            (1375 * 1)
 #define DFS_LARGE_PRI_MULTIPLIER       4
 #define DFS_W53_DEFAULT_PRI_MULTIPLIER 2
+#define DFS_INVALID_PRI_LIMIT 100  /* should we use 135? */
+#define DFS_BIG_SIDX          10000
+
+#define FRAC_PRI_SCORE_ARRAY_SIZE 40
 
 static char debug_dup[33];
 static int debug_dup_cnt;
@@ -104,7 +108,7 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 	for (i = 0; (i < DFS_EVENT_LOG_SIZE) && (i < dfs->dfs_event_log_count);
 			i++) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d",
+			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_diff=%d, delta_peak=%d",
 			dfs->radar_log[i].ts, dfs->radar_log[i].diff_ts,
 			dfs->radar_log[i].rssi, dfs->radar_log[i].dur,
 			dfs->radar_log[i].is_chirp, dfs->radar_log[i].seg_id,
@@ -114,7 +118,9 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 			dfs->radar_log[i].peak_mag,
 			dfs->radar_log[i].total_gain,
 			dfs->radar_log[i].mb_gain,
-			dfs->radar_log[i].relpwr_db);
+			dfs->radar_log[i].relpwr_db,
+			dfs->radar_log[i].delta_diff,
+			dfs->radar_log[i].delta_peak);
 	}
 	dfs->dfs_event_log_count = 0;
 	dfs->dfs_phyerr_count = 0;
@@ -122,6 +128,163 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 	dfs->dfs_phyerr_queued_count = 0;
 	dfs->dfs_phyerr_freq_min = 0x7fffffff;
 	dfs->dfs_phyerr_freq_max = 0;
+}
+
+/**
+ * dfs_confirm_radar() - This function checks for fractional PRI and jitter in
+ * sidx index to determine if the radar is real or not.
+ * @dfs: Pointer to dfs structure.
+ * @rf: Pointer to dfs_filter structure.
+ * @ext_chan_flag: ext chan flags.
+ */
+static int dfs_confirm_radar(struct wlan_dfs *dfs,
+		struct dfs_filter *rf,
+		int ext_chan_flag)
+{
+	int i = 0;
+	int index;
+	struct dfs_delayline *dl = &rf->rf_dl;
+	struct dfs_delayelem *de;
+	uint64_t target_ts = 0;
+	struct dfs_pulseline *pl;
+	int start_index = 0, current_index, next_index;
+	unsigned char scores[FRAC_PRI_SCORE_ARRAY_SIZE];
+	uint32_t pri_margin;
+	uint64_t this_diff_ts;
+	uint32_t search_bin;
+
+	unsigned char max_score = 0;
+	int max_score_index = 0;
+
+	pl = dfs->pulses;
+
+	OS_MEMZERO(scores, sizeof(scores));
+	scores[0] = rf->rf_threshold;
+
+	pri_margin = dfs_get_pri_margin(dfs, ext_chan_flag,
+			(rf->rf_patterntype == 1));
+
+	/*
+	 * Look for the entry that matches dl_seq_num_second.
+	 * we need the time stamp and diff_ts from there.
+	 */
+
+	for (i = 0; i < dl->dl_numelems; i++) {
+		index = (dl->dl_firstelem + i) & DFS_MAX_DL_MASK;
+		de = &dl->dl_elems[index];
+		if (dl->dl_seq_num_second == de->de_seq_num)
+			target_ts = de->de_ts - de->de_time;
+	}
+
+	if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS2) {
+		dfs_print_delayline(dfs, &rf->rf_dl);
+
+		/* print pulse line */
+		dfs_debug(dfs, WLAN_DEBUG_DFS2,
+			"%s: Pulse Line\n", __func__);
+		for (i = 0; i < pl->pl_numelems; i++) {
+			index =  (pl->pl_firstelem + i) &
+				DFS_MAX_PULSE_BUFFER_MASK;
+			dfs_debug(dfs, WLAN_DEBUG_DFS2,
+					"Elem %u: ts=%llu dur=%u, seq_num=%d, delta_peak=%d\n",
+					i, pl->pl_elems[index].p_time,
+					pl->pl_elems[index].p_dur,
+					pl->pl_elems[index].p_seq_num,
+					pl->pl_elems[index].p_delta_peak);
+		}
+	}
+
+	/*
+	 * Walk through the pulse line and find pulse with target_ts.
+	 * Then continue until we find entry with seq_number dl_seq_num_stop.
+	 */
+
+	for (i = 0; i < pl->pl_numelems; i++) {
+		index =  (pl->pl_firstelem + i) & DFS_MAX_PULSE_BUFFER_MASK;
+		if (pl->pl_elems[index].p_time == target_ts) {
+			dl->dl_seq_num_start = pl->pl_elems[index].p_seq_num;
+			start_index = index; /* save for future use */
+		}
+	}
+
+	dfs_debug(dfs, WLAN_DEBUG_DFS2,
+			"%s: target_ts=%llu, dl_seq_num_start=%d, dl_seq_num_second=%d, dl_seq_num_stop=%d\n",
+			__func__, target_ts, dl->dl_seq_num_start,
+			dl->dl_seq_num_second, dl->dl_seq_num_stop);
+
+	current_index = start_index;
+	while (pl->pl_elems[current_index].p_seq_num < dl->dl_seq_num_stop) {
+		next_index = (current_index + 1) & DFS_MAX_PULSE_BUFFER_MASK;
+		this_diff_ts = pl->pl_elems[next_index].p_time -
+			pl->pl_elems[current_index].p_time;
+
+		/* Now update the score for this diff_ts */
+		for (i = 1; i < FRAC_PRI_SCORE_ARRAY_SIZE; i++) {
+			search_bin = dl->dl_search_pri / (i + 1);
+
+			/*
+			 * We do not give score to PRI that is lower then the
+			 * limit.
+			 */
+			if (search_bin < DFS_INVALID_PRI_LIMIT)
+				break;
+
+			/*
+			 * Increment the score if this_diff_ts belongs to this
+			 * search_bin +/- margin.
+			 */
+			if ((this_diff_ts >= (search_bin - pri_margin)) &&
+					(this_diff_ts <=
+					 (search_bin + pri_margin))) {
+				/*increment score */
+				scores[i]++;
+			}
+		}
+		current_index = next_index;
+	}
+
+	for (i = 0; i < FRAC_PRI_SCORE_ARRAY_SIZE; i++)
+		if (scores[i] > max_score) {
+			max_score = scores[i];
+			max_score_index = i;
+		}
+
+	if (max_score_index != 0) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"%s: Rejecting Radar since Fractional PRI detected: searchpri=%d, threshold=%d, fractional PRI=%d, Fractional PRI score=%d\n",
+				__func__, dl->dl_search_pri, scores[0],
+				dl->dl_search_pri/(max_score_index + 1),
+				max_score);
+		return 0;
+	}
+
+
+	/* Check for frequency spread */
+	if (dl->dl_min_sidx > pl->pl_elems[start_index].p_sidx)
+		dl->dl_min_sidx = pl->pl_elems[start_index].p_sidx;
+
+	if (dl->dl_max_sidx < pl->pl_elems[start_index].p_sidx)
+		dl->dl_max_sidx = pl->pl_elems[start_index].p_sidx;
+
+	if ((dl->dl_max_sidx - dl->dl_min_sidx) > rf->rf_sidx_spread) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"%s: Rejecting Radar since frequency spread is too large : min_sidx=%d, max_sidx=%d, rf_sidx_spread=%d\n",
+				__func__, dl->dl_min_sidx, dl->dl_max_sidx,
+				rf->rf_sidx_spread);
+		return 0;
+	}
+
+	if ((rf->rf_check_delta_peak) &&
+			((dl->dl_delta_peak_match_count) <
+			 rf->rf_threshold)) {
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"%s: Rejecting Radar since delta peak values are invalid : dl_delta_peak_match_count=%d, rf_threshold=%d\n",
+				__func__, dl->dl_delta_peak_match_count,
+				rf->rf_threshold);
+		return 0;
+	}
+
+	return 1;
 }
 
 /*
@@ -182,11 +345,36 @@ static inline bool dfs_reject_on_pri(
 	return 0;
 }
 
+/**
+ * dfs_confirm_radar_check() - Do additioal check to conirm radar except for
+ * the staggered, chirp FCC Bin 5, frequency hopping indicated by
+ * rf_patterntype == 1.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @rf: Pointer to dfs_filter structure.
+ * @ext_chan_event_flag: Extension channel event flag
+ * @found: Pointer to radar found flag (return value).
+ * @false_radar_found: Pointer to false radar found (return value).
+ */
+
+static inline void dfs_confirm_radar_check(
+		struct wlan_dfs *dfs,
+		struct dfs_filter *rf,
+		int ext_chan_event_flag,
+		int *found,
+		int *false_radar_found)
+{
+	if (rf->rf_patterntype != 1) {
+		*found = dfs_confirm_radar(dfs, rf, ext_chan_event_flag);
+		*false_radar_found = (*found == 1) ? 0 : 1;
+	}
+}
+
 void __dfs_process_radarevent(struct wlan_dfs *dfs,
 		struct dfs_filtertype *ft,
 		struct dfs_event *re,
 		uint64_t this_ts,
-		int *found)
+		int *found,
+		int *false_radar_found)
 {
 	int p;
 	uint64_t deltaT = 0;
@@ -194,7 +382,7 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 	struct dfs_filter *rf = NULL;
 
 	for (p = 0, *found = 0; (p < ft->ft_numfilters) &&
-			(!(*found)); p++) {
+			(!(*found)) && !(*false_radar_found); p++) {
 		rf = &(ft->ft_filters[p]);
 		if ((re->re_dur >= rf->rf_mindur) &&
 				(re->re_dur <= rf->rf_maxdur)) {
@@ -223,9 +411,18 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 				*found = dfs_bin_check(dfs, rf,
 					(uint32_t) deltaT, re->re_dur,
 					ext_chan_event_flag);
+
+				if (*found)
+					dfs_confirm_radar_check(dfs,
+							rf, ext_chan_event_flag,
+							found,
+							false_radar_found);
 			}
+
 			if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS2)
-				dfs_print_delayline(dfs, &rf->rf_dl);
+				if (rf->rf_patterntype !=
+						WLAN_DFS_RF_PATTERN_TYPE_1)
+					dfs_print_delayline(dfs, &rf->rf_dl);
 
 			rf->rf_dl.dl_last_ts = this_ts;
 		}
@@ -300,6 +497,7 @@ static inline void dfs_radarfound_reset_vars(
 	dfs->dfs_phyerr_freq_min = 0x7fffffff;
 	dfs->dfs_phyerr_freq_max = 0;
 	dfs->dfs_phyerr_w53_counter = 0;
+
 	if (seg_id == SEG_ID_SECONDARY) {
 		dfs->wlan_dfs_stats.num_seg_two_radar_detects++;
 		dfs->is_radar_found_on_secondary_seg = 1;
@@ -494,14 +692,17 @@ static inline void dfs_return_event_to_eventq(
  * @re:  Pointer to dfs_event re
  * @this_ts: Current time stamp 64bit
  * @diff_ts: Difference between 2 timestamps 32bit
+ * @index: Index value.
  */
 static inline void dfs_log_event(
 		struct wlan_dfs *dfs,
 		struct dfs_event *re,
 		uint64_t this_ts,
-		uint32_t diff_ts)
+		uint32_t diff_ts,
+		uint32_t index)
 {
 	uint8_t i;
+	struct dfs_pulseline *pl = dfs->pulses;
 
 	if (dfs->dfs_event_log_on) {
 		i = dfs->dfs_event_log_count % DFS_EVENT_LOG_SIZE;
@@ -517,10 +718,15 @@ static inline void dfs_log_event(
 		dfs->radar_log[i].total_gain = (*re).re_total_gain;
 		dfs->radar_log[i].mb_gain = (*re).re_mb_gain;
 		dfs->radar_log[i].relpwr_db = (*re).re_relpwr_db;
+		dfs->radar_log[i].delta_diff = (*re).re_delta_diff;
+		dfs->radar_log[i].delta_peak = (*re).re_delta_peak;
 		dfs->radar_log[i].is_chirp = DFS_EVENT_NOTCHIRP(re) ?
 			0 : 1;
 		dfs->dfs_event_log_count++;
 	}
+
+	dfs->dfs_seq_num++;
+	pl->pl_elems[index].p_seq_num = dfs->dfs_seq_num;
 }
 
 /**
@@ -532,6 +738,7 @@ static inline void dfs_log_event(
  * @diff_ts: Difference between 2 timestamps 32bit
  * @found: Pointer to found. If radar found or not.
  * @retval: Pointer to retval(return value).
+ * @false_radar_found: Pointer to false_radar_found(return value).
  */
 static inline void dfs_check_if_nonbin5(
 	struct wlan_dfs *dfs,
@@ -540,7 +747,8 @@ static inline void dfs_check_if_nonbin5(
 	uint64_t this_ts,
 	uint32_t diff_ts,
 	int *found,
-	int *retval)
+	int *retval,
+	int *false_radar_found)
 {
 
 	uint32_t tabledepth = 0;
@@ -554,7 +762,7 @@ static inline void dfs_check_if_nonbin5(
 
 	while ((tabledepth < DFS_MAX_RADAR_OVERLAP) &&
 			((dfs->dfs_ftindextable[(*re).re_dur])[tabledepth] !=
-			 -1) && (!*retval)) {
+			 -1) && (!*retval) && !(*false_radar_found)) {
 		ft = dfs->dfs_radarf[((dfs->dfs_ftindextable[(*re).re_dur])
 				[tabledepth])];
 		dfs_debug(dfs, WLAN_DEBUG_DFS2,
@@ -590,7 +798,8 @@ static inline void dfs_check_if_nonbin5(
 			continue;
 		}
 
-		__dfs_process_radarevent(dfs, ft, re, this_ts, found);
+		__dfs_process_radarevent(dfs, ft, re, this_ts, found,
+				false_radar_found);
 
 		ft->ft_last_ts = this_ts;
 		*retval |= *found;
@@ -813,16 +1022,18 @@ static inline void  dfs_calculate_timestamps(
  * add it as pulse in the pulseline
  * @dfs: Pointer to wlan_dfs structure.
  * @re:  Pointer to re(radar event)
- * @this_ts : Pointer to  this_ts (this timestamp)
+ * @this_ts: Pointer to  this_ts (this timestamp)
+ * @diff_ts: Diff ts.
+ * @index: Pointer to get index value.
  */
 static inline void dfs_add_to_pulseline(
 	struct wlan_dfs *dfs,
 	struct dfs_event *re,
 	uint64_t *this_ts,
 	uint32_t *test_ts,
-	uint32_t *diff_ts)
+	uint32_t *diff_ts,
+	uint32_t *index)
 {
-	uint32_t index;
 	struct dfs_pulseline *pl;
 
 	/*
@@ -854,7 +1065,7 @@ static inline void dfs_add_to_pulseline(
 
 	pl = dfs->pulses;
 	/* Save the pulse parameters in the pulse buffer(pulse line). */
-	index = (pl->pl_lastelem + 1) & DFS_MAX_PULSE_BUFFER_MASK;
+	*index = (pl->pl_lastelem + 1) & DFS_MAX_PULSE_BUFFER_MASK;
 
 	if (pl->pl_numelems == DFS_MAX_PULSE_BUFFER_SIZE)
 		pl->pl_firstelem = (pl->pl_firstelem+1) &
@@ -862,10 +1073,12 @@ static inline void dfs_add_to_pulseline(
 	else
 		pl->pl_numelems++;
 
-	pl->pl_lastelem = index;
-	pl->pl_elems[index].p_time = *this_ts;
-	pl->pl_elems[index].p_dur = (*re).re_dur;
-	pl->pl_elems[index].p_rssi = (*re).re_rssi;
+	pl->pl_lastelem = *index;
+	pl->pl_elems[*index].p_time = *this_ts;
+	pl->pl_elems[*index].p_dur = (*re).re_dur;
+	pl->pl_elems[*index].p_rssi = (*re).re_rssi;
+	pl->pl_elems[*index].p_sidx = (*re).re_sidx;
+	pl->pl_elems[*index].p_delta_peak = (*re).re_delta_peak;
 	*diff_ts = (uint32_t)*this_ts - *test_ts;
 	*test_ts = (uint32_t)*this_ts;
 
@@ -873,19 +1086,26 @@ static inline void dfs_add_to_pulseline(
 			"ts%u %u %u diff %u pl->pl_lastelem.p_time=%llu",
 			(uint32_t)*this_ts, (*re).re_dur,
 			(*re).re_rssi, *diff_ts,
-			(uint64_t)pl->pl_elems[index].p_time);
+			(uint64_t)pl->pl_elems[*index].p_time);
 }
 
 /**
  * dfs_conditional_clear_delaylines - Clear delay lines to remove  the
  * false pulses.
  * @dfs: Pointer to wlan_dfs structure.
- * @diff_ts: diff between timerstamps
+ * @diff_ts: diff between timerstamps.
+ * @this_ts: this timestamp value.
+ * @re: Pointer to dfs_event structure.
  */
 static inline void dfs_conditional_clear_delaylines(
 	struct wlan_dfs *dfs,
-	uint32_t diff_ts)
+	uint32_t diff_ts,
+	uint64_t this_ts,
+	struct dfs_event re)
 {
+	struct dfs_pulseline *pl = dfs->pulses;
+	uint32_t index;
+
 	/* If diff_ts is very small, we might be getting false pulse
 	 * detects due to heavy interference. We might be getting
 	 * spectral splatter from adjacent channel. In order to prevent
@@ -894,15 +1114,39 @@ static inline void dfs_conditional_clear_delaylines(
 	 * false detects.
 	 */
 
-	if (diff_ts < 100) {
+	if (diff_ts < DFS_INVALID_PRI_LIMIT) {
+		dfs->dfs_seq_num = 0;
 		dfs_reset_alldelaylines(dfs);
 		dfs_reset_radarq(dfs);
+
+		index = (pl->pl_lastelem + 1) & DFS_MAX_PULSE_BUFFER_MASK;
+		if (pl->pl_numelems == DFS_MAX_PULSE_BUFFER_SIZE)
+			pl->pl_firstelem = (pl->pl_firstelem+1) &
+				DFS_MAX_PULSE_BUFFER_MASK;
+		else
+			pl->pl_numelems++;
+
+		pl->pl_lastelem = index;
+		pl->pl_elems[index].p_time = this_ts;
+		pl->pl_elems[index].p_dur = re.re_dur;
+		pl->pl_elems[index].p_rssi = re.re_rssi;
+		pl->pl_elems[index].p_sidx = re.re_sidx;
+		pl->pl_elems[index].p_delta_peak = re.re_delta_peak;
+		dfs->dfs_seq_num++;
+		pl->pl_elems[index].p_seq_num = dfs->dfs_seq_num;
 	}
 }
+
 /**
  * dfs_process_each_radarevent - remove each event from the dfs radar queue
  * and process it.
  * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Pointer to DFS current channel.
+ * @rs: Pointer to dfs_state structure.
+ * @seg_id: segment id.
+ * @retval: pointer to retval.
+ * @false_radar_found: pointer to false radar found.
+ *
  * Return: If radar found then return 1 else return 0.
  */
 static inline int dfs_process_each_radarevent(
@@ -910,18 +1154,21 @@ static inline int dfs_process_each_radarevent(
 	struct dfs_ieee80211_channel *chan,
 	struct dfs_state **rs,
 	uint8_t *seg_id,
-	int *retval)
+	int *retval,
+	int *false_radar_found)
 {
 	struct dfs_event re, *event;
 	int found, empty;
 	int events_processed = 0;
 	uint64_t this_ts;
-	static uint32_t  test_ts;
-	static uint32_t  diff_ts;
+	static uint32_t test_ts;
+	static uint32_t diff_ts;
+	uint32_t index;
 
 	dfs_is_radarq_empty(dfs, &empty);
 
-	while ((!empty) && (!*retval) && (events_processed < MAX_EVENTS)) {
+	while ((!empty) && (!*retval) && !(*false_radar_found) &&
+			(events_processed < MAX_EVENTS)) {
 		dfs_remove_event_from_radarq(dfs, &event);
 		if (!event) {
 			empty = 1;
@@ -943,11 +1190,12 @@ static inline int dfs_process_each_radarevent(
 
 		re.re_dur = dfs_process_pulse_dur(dfs, re.re_dur);
 
-		dfs_add_to_pulseline(dfs, &re, &this_ts, &test_ts, &diff_ts);
+		dfs_add_to_pulseline(dfs, &re, &this_ts, &test_ts, &diff_ts,
+				&index);
 
-		dfs_log_event(dfs, &re, this_ts, diff_ts);
+		dfs_log_event(dfs, &re, this_ts, diff_ts, index);
 
-		dfs_conditional_clear_delaylines(dfs, diff_ts);
+		dfs_conditional_clear_delaylines(dfs, diff_ts, this_ts, re);
 
 		found = 0;
 		dfs_check_if_bin5(dfs, &re, this_ts, diff_ts, &found);
@@ -957,12 +1205,28 @@ static inline int dfs_process_each_radarevent(
 		}
 
 		dfs_check_if_nonbin5(dfs, &re, rs, this_ts, diff_ts, &found,
-				retval);
+				retval, false_radar_found);
 
 		dfs_is_radarq_empty(dfs, &empty);
 	}
 
 	return 0;
+}
+
+/**
+ * dfs_false_radarfound_reset_vars () - Reset dfs variables after false radar
+ *                                      found.
+ * @dfs: Pointer to wlan_dfs structure.
+ */
+static inline void dfs_false_radarfound_reset_vars(
+	struct wlan_dfs *dfs)
+{
+	dfs->dfs_seq_num = 0;
+	dfs_reset_radarq(dfs);
+	dfs_reset_alldelaylines(dfs);
+	dfs->dfs_phyerr_freq_min     = 0x7fffffff;
+	dfs->dfs_phyerr_freq_max     = 0;
+	dfs->dfs_phyerr_w53_counter  = 0;
 }
 
 int dfs_process_radarevent(
@@ -972,6 +1236,7 @@ int dfs_process_radarevent(
 	struct dfs_state *rs = NULL;
 	uint8_t   seg_id = 0;
 	int retval = 0;
+	int false_radar_found = 0;
 
 	if (!dfs_radarevent_basic_sanity(dfs, chan))
 		return 0;
@@ -985,11 +1250,15 @@ int dfs_process_radarevent(
 	if (!dfs_handle_missing_pulses(dfs, chan))
 		return 0;
 
-	dfs_process_each_radarevent(dfs, chan, &rs, &seg_id, &retval);
+	dfs_process_each_radarevent(dfs, chan, &rs, &seg_id, &retval,
+			&false_radar_found);
 
 dfsfound:
 	if (retval)
 		dfs_radarfound_reset_vars(dfs, rs, chan, seg_id);
+
+	if (false_radar_found)
+		dfs_false_radarfound_reset_vars(dfs);
 
 	return retval;
 }

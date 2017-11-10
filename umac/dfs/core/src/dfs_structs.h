@@ -93,6 +93,16 @@ struct wlan_dfs_caps {
  *                        rssi 3dBm. lower than in non TURBO mode. This
  *                        will be used to offset that diff.
  * @rp_ignore_pri_window: Ignore PRI window.
+ * @rp_sidx_spread:       To reduce false detection use sidx spread. For HT160,
+ *                        for consistency, push all pulses at center of the
+ *                        channel to 80MHz ext when both segments are DFS.
+ *                        Maximum SIDX value spread in a matched sequence
+ *                        excluding FCC Bin 5.
+ * @rp_check_delta_peak:  This is mainly used for ETSI Type 4 5MHz chirp pulses
+ *                        which HW cnanot identify.
+ *                        Reliably as chirping but can correctly characterize
+ *                        these with delta_peak non-zero.
+ *                        Is delta_peak check required for this filter.
  * @rp_pulseid:           Unique ID for identifying filter.
  */
 struct dfs_pulse {
@@ -109,7 +119,9 @@ struct dfs_pulse {
 	uint32_t  rp_meanoffset;
 	int32_t   rp_rssimargin;
 	uint32_t  rp_ignore_pri_window;
-	uint32_t  rp_pulseid;
+	uint16_t  rp_sidx_spread;
+	int8_t    rp_check_delta_peak;
+	uint16_t  rp_pulseid;
 };
 
 /**
