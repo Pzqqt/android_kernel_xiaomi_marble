@@ -212,8 +212,6 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 		break;
 
 	case WNI_CFG_GET_REQ:
-	case WNI_CFG_SET_REQ:
-	case WNI_CFG_SET_REQ_NO_RSP:
 	case eWNI_SME_SYS_READY_IND:
 		/* Forward this message to the PE module */
 		targetMQ = QDF_MODULE_ID_PE;

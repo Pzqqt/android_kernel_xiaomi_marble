@@ -397,8 +397,6 @@ enum ewni_tdls_connection_tracker_notification {
 /*---------------------------------------------------------------------*/
 #define WNI_CFG_DNLD_RSP               (WNI_CFG_MSG_TYPES_BEGIN | 0x80)
 #define WNI_CFG_GET_REQ                (WNI_CFG_MSG_TYPES_BEGIN | 0x81)
-#define WNI_CFG_SET_REQ                (WNI_CFG_MSG_TYPES_BEGIN | 0x82)
-#define WNI_CFG_SET_REQ_NO_RSP         (WNI_CFG_MSG_TYPES_BEGIN | 0x83) /* No RSP for this set */
 
 /* Shall be removed after stats integration */
 

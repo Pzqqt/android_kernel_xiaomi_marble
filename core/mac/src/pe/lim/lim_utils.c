@@ -406,10 +406,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "WNI_CFG_DNLD_RSP";
 	case WNI_CFG_GET_REQ:
 		return "WNI_CFG_GET_REQ";
-	case WNI_CFG_SET_REQ:
-		return "WNI_CFG_SET_REQ";
-	case WNI_CFG_SET_REQ_NO_RSP:
-		return "WNI_CFG_SET_REQ_NO_RSP";
 	case eWNI_PMC_ENTER_IMPS_RSP:
 		return "eWNI_PMC_ENTER_IMPS_RSP";
 	case eWNI_PMC_EXIT_IMPS_RSP:

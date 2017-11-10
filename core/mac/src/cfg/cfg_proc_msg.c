@@ -1740,20 +1740,16 @@ cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING] = {
 /*--------------------------------------------------------------------*/
 static void proc_dnld_rsp(tpAniSirGlobal, uint16_t, uint32_t *);
 static void proc_get_req(tpAniSirGlobal, uint16_t, uint32_t *);
-static void proc_set_req(tpAniSirGlobal, uint16_t, uint32_t *);
-static void proc_set_req_no_rsp(tpAniSirGlobal, uint16_t, uint32_t *);
 
 static uint8_t check_param(tpAniSirGlobal, uint16_t, uint32_t, uint32_t,
 			   uint32_t *);
-static void get_str_value(uint8_t *, uint8_t *, uint32_t);
-
 /*--------------------------------------------------------------------*/
 /* Module global variables                                            */
 /*--------------------------------------------------------------------*/
 
 /* CFG function table */
 void (*g_cfg_func[])(tpAniSirGlobal, uint16_t, uint32_t *) = {
-	proc_dnld_rsp, proc_get_req, proc_set_req, proc_set_req_no_rsp
+	proc_dnld_rsp, proc_get_req
 };
 
 /**---------------------------------------------------------------------
@@ -2101,175 +2097,6 @@ static void proc_get_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
 } /*** end procGetReq() ***/
 
 /**---------------------------------------------------------------------
- * proc_set_req_internal()
- *
- * FUNCTION:
- * This function processes CFG_SET_REQ message from host.
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- * - The message content is coded in TLV format.
- * - For string parameter, the length field is byte accurate.  However,
- *   the next TLV set will begin on the next word boundary.
- *
- * NOTE:
- * - For every parameter ID specified on the list, CFG will send a separate
- * CFG_SET_RSP back to host.
- *
- * @param length:  message length
- * @param pParam:  parameter list pointer
- * @param fRsp: whether to send response to host. true means sending.
- * @return None
- *
- */
-static void
-proc_set_req_internal(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam,
-		      bool fRsp)
-{
-	uint16_t cfgId, valueLen, valueLenRoundedUp4;
-	uint32_t value, result;
-
-	pe_debug("Rcvd cfg set request %d bytes", length);
-
-	if (!pMac->cfg.gCfgStatus) {
-		cfgId = (uint16_t) sir_read_u32_n((uint8_t *) pParam);
-		pe_debug("CFG not ready, param %d", cfgId);
-		pMac->cfg.gParamList[WNI_CFG_SET_CNF_RES] =
-			WNI_CFG_NOT_READY;
-		pMac->cfg.gParamList[WNI_CFG_SET_CNF_PID] = cfgId;
-		if (fRsp) {
-			cfg_send_host_msg(pMac, WNI_CFG_SET_CNF,
-					  WNI_CFG_SET_CNF_LEN, WNI_CFG_SET_CNF_NUM,
-					  pMac->cfg.gParamList, 0, 0);
-		}
-	} else {
-		/* Process all TLVs in buffer */
-		while (length >= (sizeof(uint32_t) * 2)) {
-			cfgId = (uint16_t) *pParam++;
-			valueLen = (uint16_t) *pParam++;
-			length -= (sizeof(uint32_t) * 2);
-			/* value length rounded up to a 4 byte multiple */
-			valueLenRoundedUp4 = (((valueLen + 3) >> 2) << 2);
-
-			/* Check for valid request before proceeding */
-			if (check_param
-				    (pMac, cfgId, CFG_CTL_WE, WNI_CFG_RO_PARAM,
-				    &result)) {
-				/* Process integer parameter */
-				if ((pMac->cfg.gCfgEntry[cfgId].
-				     control & CFG_CTL_INT) != 0) {
-					/* Set VALUE */
-					if (valueLen != sizeof(uint32_t)) {
-						pe_debug("Invalid value length: %d in set param: %d (tot: %d)",
-							       valueLen, cfgId,
-							       length);
-						result =
-							WNI_CFG_INVALID_LEN;
-					} else {
-						value = *pParam;
-						pe_debug("Cfg set int: %d len: %d(%d) val: %d",
-							       cfgId, valueLen,
-							       valueLenRoundedUp4,
-							       value);
-						result =
-							(cfg_set_int
-								 (pMac, cfgId,
-								 value) ==
-							 eSIR_SUCCESS ?
-							 WNI_CFG_SUCCESS :
-							 WNI_CFG_OTHER_ERROR);
-						if (result == WNI_CFG_SUCCESS) {
-							if (cfg_need_restart
-								    (pMac, cfgId)) {
-								result =
-									WNI_CFG_NEED_RESTART;
-							} else
-							if (cfg_need_reload
-								    (pMac, cfgId)) {
-								result =
-									WNI_CFG_NEED_RELOAD;
-							}
-						}
-					}
-				}
-				/* Process string parameter */
-				else {
-					if (valueLenRoundedUp4 > length) {
-						pe_debug("Invalid string length: %d in set param: %d (tot: %d)",
-							       valueLen, cfgId,
-							       length);
-						result =
-							WNI_CFG_INVALID_LEN;
-					} else {
-						get_str_value((uint8_t *) pParam,
-							      pMac->cfg.gSBuffer,
-							      valueLen);
-						pe_debug("Cfg set str: %d len: %d(%d) bytes",
-							       cfgId, valueLen,
-							       valueLenRoundedUp4);
-						result =
-							(cfg_set_str
-								 (pMac, cfgId,
-								 pMac->cfg.gSBuffer,
-								 valueLen) ==
-							 eSIR_SUCCESS ?
-							 WNI_CFG_SUCCESS :
-							 WNI_CFG_OTHER_ERROR);
-						if (result == WNI_CFG_SUCCESS) {
-							if (cfg_need_restart
-								    (pMac, cfgId)) {
-								result =
-									WNI_CFG_NEED_RESTART;
-							} else
-							if (cfg_need_reload
-								    (pMac, cfgId)) {
-								result =
-									WNI_CFG_NEED_RELOAD;
-							}
-						}
-					}
-				}
-			} else {
-				pe_debug("Check param failed, param CFGID: %d",
-						cfgId);
-				result = WNI_CFG_INVALID_LEN;
-			}
-
-			/* Send confirm message to host */
-			pMac->cfg.gParamList[WNI_CFG_SET_CNF_RES] = result;
-			pMac->cfg.gParamList[WNI_CFG_SET_CNF_PID] = cfgId;
-			if (fRsp) {
-				cfg_send_host_msg(pMac, WNI_CFG_SET_CNF,
-						  WNI_CFG_SET_CNF_LEN,
-						  WNI_CFG_SET_CNF_NUM,
-						  pMac->cfg.gParamList, 0, 0);
-			} else {
-				pe_debug("CFGID: %d no rsp", cfgId);
-			}
-
-			if (valueLenRoundedUp4 > length)
-				length = 0;
-			else {
-				length -= valueLenRoundedUp4;
-				pParam += (valueLenRoundedUp4 >> 2);
-			}
-		}
-	}
-}
-
-static void proc_set_req(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
-{
-	proc_set_req_internal(pMac, length, pParam, true);
-}
-
-static void
-proc_set_req_no_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam)
-{
-	proc_set_req_internal(pMac, length, pParam, false);
-}
-
-/**---------------------------------------------------------------------
  * check_param()
  *
  * FUNCTION:
@@ -2321,34 +2148,6 @@ check_param(tpAniSirGlobal pMac, uint16_t cfgId, uint32_t flag,
 	return false;
 
 } /*** cfgParamCheck() ***/
-
-/**---------------------------------------------------------------------
- * get_str_value()
- *
- * FUNCTION:
- * This function copies a string value from the specified buffer.
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param pBuf:    input data buffer
- * @param pValue:  address where data is returned
- * @param length:  number of bytes to copy
- *
- * @return None
- *
- */
-static void get_str_value(uint8_t *pBuf, uint8_t *pValue, uint32_t length)
-{
-	uint8_t *pEnd;
-
-	pEnd = pValue + length;
-	while (pValue < pEnd)
-		*pValue++ = *pBuf++;
-} /*** end get_str_value() ***/
 
 /**---------------------------------------------------------------------
  * process_cfg_download_req()
