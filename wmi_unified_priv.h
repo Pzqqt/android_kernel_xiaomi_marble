@@ -988,6 +988,8 @@ QDF_STATUS (*ready_extract_mac_addr)(wmi_unified_t wmi_hdl, void *ev,
 		uint8_t *macaddr);
 wmi_host_mac_addr * (*ready_extract_mac_addr_list)(wmi_unified_t wmi_hdl,
 					void *ev, uint8_t *num_mac_addr);
+QDF_STATUS (*extract_ready_event_params)(wmi_unified_t wmi_handle,
+		void *evt_buf, struct wmi_host_ready_ev_param *ev_param);
 
 QDF_STATUS (*check_and_update_fw_version)(wmi_unified_t wmi_hdl, void *ev);
 uint8_t* (*extract_dbglog_data_len)(wmi_unified_t wmi_handle, void *evt_buf,
