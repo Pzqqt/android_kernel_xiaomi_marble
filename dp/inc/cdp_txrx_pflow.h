@@ -40,9 +40,18 @@ static inline uint32_t cdp_pflow_update_pdev_params
 	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
 	enum _ol_ath_param_t param, uint32_t val, void *ctx)
 {
-	if (soc->ops->pflow_ops->pflow_update_pdev_params)
-		return soc->ops->pflow_ops->pflow_update_pdev_params
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->pflow_ops ||
+	    !soc->ops->pflow_ops->pflow_update_pdev_params)
+		return 0;
+
+	return soc->ops->pflow_ops->pflow_update_pdev_params
 			(pdev, param, val, ctx);
-	return 0;
 }
 #endif

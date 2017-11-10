@@ -36,57 +36,125 @@
 static inline void cdp_monitor_set_filter_ucast_data
 	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, u_int8_t val)
 {
-	if (soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data)
-		return soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data)
+		return;
+
+	soc->ops->mon_ops->txrx_monitor_set_filter_ucast_data
 			(pdev, val);
-	return;
 }
+
 static inline void cdp_monitor_set_filter_mcast_data
 	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, u_int8_t val)
 {
-	if (soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data)
-		return soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data)
+		return;
+
+	soc->ops->mon_ops->txrx_monitor_set_filter_mcast_data
 			(pdev, val);
-	return;
 }
+
 static inline void cdp_monitor_set_filter_non_data
 	(ol_txrx_soc_handle soc, struct cdp_pdev *pdev, u_int8_t val)
 {
-	if (soc->ops->mon_ops->txrx_monitor_set_filter_non_data)
-		return soc->ops->mon_ops->txrx_monitor_set_filter_non_data
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_set_filter_non_data)
+		return;
+
+	soc->ops->mon_ops->txrx_monitor_set_filter_non_data
 			(pdev, val);
-	return;
 }
 
 static inline u_int8_t cdp_monitor_get_filter_ucast_data(ol_txrx_soc_handle soc,
 			struct cdp_vdev *vdev_txrx_handle)
 {
-	if (soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data)
-		return soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data)
+		return 0;
+
+	return soc->ops->mon_ops->txrx_monitor_get_filter_ucast_data
 			(vdev_txrx_handle);
-	return 0;
 }
+
 static inline u_int8_t cdp_monitor_get_filter_mcast_data(ol_txrx_soc_handle soc,
 				struct cdp_vdev *vdev_txrx_handle)
 {
-	if (soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data)
-		return soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data)
+		return 0;
+
+	return soc->ops->mon_ops->txrx_monitor_get_filter_mcast_data
 			(vdev_txrx_handle);
-	return 0;
 }
+
 static inline u_int8_t cdp_monitor_get_filter_non_data(ol_txrx_soc_handle soc,
 				struct cdp_vdev *vdev_txrx_handle)
 {
-	if (soc->ops->mon_ops->txrx_monitor_get_filter_non_data)
-		return soc->ops->mon_ops->txrx_monitor_get_filter_non_data
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_monitor_get_filter_non_data)
+		return 0;
+
+	return soc->ops->mon_ops->txrx_monitor_get_filter_non_data
 			(vdev_txrx_handle);
-	return 0;
 }
+
 static inline int cdp_reset_monitor_mode
 (ol_txrx_soc_handle soc, struct cdp_pdev *pdev)
 {
-	if (soc->ops->mon_ops->txrx_reset_monitor_mode)
-		return soc->ops->mon_ops->txrx_reset_monitor_mode(pdev);
-	return 0;
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (!soc->ops->mon_ops ||
+	    !soc->ops->mon_ops->txrx_reset_monitor_mode)
+		return 0;
+
+	return soc->ops->mon_ops->txrx_reset_monitor_mode(pdev);
 }
 #endif
