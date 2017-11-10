@@ -43,12 +43,9 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_ptt_sock_svc.h"
 
-#ifdef UMAC_REG_COMPONENT
-/* enable this when regulatory component gets merged */
 #include "wlan_reg_services_api.h"
 /* forward declartion */
 struct regulatory_channel;
-#endif
 
 /*
  * obj mgr api to iterate over vdevs does not provide a direct array or vdevs,
@@ -198,6 +195,7 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	uint8_t *buf;
 	uint32_t len;
 	uint8_t *channels = req->buf;
+	struct wlan_objmgr_pdev *pdev;
 	uint32_t num_ch = req->buf_len;
 	struct wifi_pos_ch_info_rsp *ch_info;
 	struct wifi_pos_psoc_priv_obj *wifi_pos_obj =
@@ -206,10 +204,18 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	wifi_pos_debug("Received ch info req pid(%d), len(%d)",
 			req->pid, req->buf_len);
 
+	/* get first pdev since we need that only for freq and dfs state */
+	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_WIFI_POS_ID);
+	if (!pdev) {
+		wifi_pos_err("pdev get API failed");
+		return -EINVAL;
+	}
+
 	len = sizeof(uint8_t) + sizeof(struct wifi_pos_ch_info_rsp) * num_ch;
 	buf = qdf_mem_malloc(len);
 	if (!buf) {
 		wifi_pos_alert("malloc failed");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_ID);
 		return -ENOMEM;
 	}
 
@@ -219,27 +225,13 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	for (idx = 0; idx < num_ch; idx++) {
 		ch_info[idx].chan_id = channels[idx];
 		ch_info[idx].reserved0 = 0;
-#ifdef UMAC_REG_COMPONENT
-		/*
-		 * please note that this is feature macro temp and will go away
-		 * once regulatory component gets merged:
-		 * identify regulatory API to get following information
-		 */
-		ch_info[idx].mhz = cds_chan_to_freq(channels[idx]);
+		ch_info[idx].mhz = wlan_reg_get_channel_freq(pdev,
+							channels[idx]);
 		ch_info[idx].band_center_freq1 = ch_info[idx].mhz;
-#endif
 		ch_info[idx].band_center_freq2 = 0;
 		ch_info[idx].info = 0;
-#ifdef UMAC_REG_COMPONENT
-		/*
-		 * please note that this is feature macro temp and will go away
-		 * once regulatory component gets merged:
-		 * identify regulatory API to replace update_channel_bw_info
-		 * and to get following information
-		 */
-		if (CHANNEL_STATE_DFS == cds_get_channel_state(channels[idx]))
-			WMI_SET_CHANNEL_FLAG(&ch_info[idx], WMI_CHAN_FLAG_DFS);
-#endif
+		if (wlan_reg_is_dfs_ch(pdev, channels[idx]))
+			WIFI_POS_SET_DFS(ch_info[idx].info);
 		ch_info[idx].reg_info_1 = 0;
 		ch_info[idx].reg_info_2 = 0;
 	}
@@ -248,11 +240,12 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 					ANI_MSG_CHANNEL_INFO_RSP,
 					len, buf);
 	qdf_mem_free(buf);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_ID);
 	return 0;
 }
 
-static void wifi_pos_populate_vdev_info(struct wlan_objmgr_psoc *psoc,
-					void *vdev, void *arg)
+static void wifi_pos_vdev_iterator(struct wlan_objmgr_psoc *psoc,
+				   void *vdev, void *arg)
 {
 	struct app_reg_rsp_vdev_info *vdev_info = arg;
 
@@ -294,8 +287,8 @@ static int wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 
 	vdev_idx = 0;
 	wlan_objmgr_iterate_obj_list(psoc, WLAN_VDEV_OP,
-				     wifi_pos_populate_vdev_info,
-				     vdevs_info, 1, WLAN_WIFI_POS_ID);
+				     wifi_pos_vdev_iterator,
+				     vdevs_info, true, WLAN_WIFI_POS_ID);
 	rsp_len = (sizeof(struct app_reg_rsp_vdev_info) * vdev_idx)
 			+ sizeof(uint8_t);
 	app_reg_rsp = qdf_mem_malloc(rsp_len);
@@ -512,36 +505,50 @@ int wifi_pos_oem_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	return 0;
 }
 
-#ifdef UMAC_REG_COMPONENT
-/* enable this when regulatory component gets merged */
-static void get_ch_info(struct wlan_objmgr_psoc *psoc,
-			struct wifi_pos_driver_caps *caps)
+static void wifi_pos_pdev_iterator(struct wlan_objmgr_psoc *psoc,
+				   void *obj, void *arg)
 {
+	uint32_t i;
 	QDF_STATUS status;
-	uint32_t i, num_ch = 0;
-	struct regulatory_channel ch_lst[OEM_CAP_MAX_NUM_CHANNELS];
-	struct reg_freq_range freq_range;
+	struct wlan_objmgr_pdev *pdev = obj;
+	struct regulatory_channel *psoc_ch_lst = arg;
+	struct regulatory_channel pdev_ch_lst[NUM_CHANNELS];
 
-	freq_range.low_freq = WLAN_REG_CH_TO_FREQ(MIN_24GHZ_CHANNEL);
-	freq_range.high_freq = WLAN_REG_CH_TO_FREQ(MAX_5GHZ_CHANNEL);
-	status = wlan_reg_get_current_chan_list_by_range(psoc, ch_lst, &num_ch);
+	status = wlan_reg_get_current_chan_list(pdev, pdev_ch_lst);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		wifi_pos_err("wlan_reg_get_current_chan_list_by_range failed");
 		return;
 	}
 
-	if (num_ch > OEM_CAP_MAX_NUM_CHANNELS) {
-		wifi_pos_err("num channels: %d more than MAX: %d",
-			num_ch, OEM_CAP_MAX_NUM_CHANNELS);
-		return;
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		if (pdev_ch_lst[i].state != CHANNEL_STATE_DISABLE &&
+			pdev_ch_lst[i].state != CHANNEL_STATE_INVALID)
+			psoc_ch_lst[i] = pdev_ch_lst[i];
+	}
+}
+
+static void wifi_pos_get_ch_info(struct wlan_objmgr_psoc *psoc,
+				 struct wifi_pos_driver_caps *caps)
+{
+	uint32_t i, num_ch = 0;
+	struct regulatory_channel ch_lst[NUM_CHANNELS];
+
+	wlan_objmgr_iterate_obj_list(psoc, WLAN_PDEV_OP,
+				     wifi_pos_pdev_iterator,
+				     ch_lst, true, WLAN_WIFI_POS_ID);
+
+	for (i = 0; i < NUM_CHANNELS && num_ch < OEM_CAP_MAX_NUM_CHANNELS;
+	     i++) {
+		if (ch_lst[i].state != CHANNEL_STATE_DISABLE &&
+		    ch_lst[i].state != CHANNEL_STATE_INVALID) {
+			num_ch++;
+			caps->channel_list[i] = ch_lst[i].chan_num;
+		}
 	}
 
-	for (i = 0; i < num_ch; i++)
-		caps->channel_list[i] = ch_lst[i].chan_num;
-
 	caps->num_channels = num_ch;
+	wifi_pos_err("num channels: %d", num_ch);
 }
-#endif
 
 QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
 			   struct wifi_pos_driver_caps *caps)
@@ -569,12 +576,6 @@ QDF_STATUS wifi_pos_populate_caps(struct wlan_objmgr_psoc *psoc,
 	caps->curr_dwell_time_min = wifi_pos_obj->current_dwell_time_min;
 	caps->curr_dwell_time_max = wifi_pos_obj->current_dwell_time_max;
 	caps->supported_bands = wlan_objmgr_psoc_get_band_capability(psoc);
-	/*
-	 * wifi_pos_populate_caps does not have alternate definition.
-	 * following #ifdef will be removed once regulatory comp gets merged
-	 */
-#ifdef UMAC_REG_COMPONENT
-	get_ch_info(psoc, caps);
-#endif
+	wifi_pos_get_ch_info(psoc, caps);
 	return QDF_STATUS_SUCCESS;
 }
