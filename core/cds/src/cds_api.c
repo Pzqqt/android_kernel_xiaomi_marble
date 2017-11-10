@@ -67,6 +67,7 @@
 #include <dispatcher_init_deinit.h>
 #include <cdp_txrx_handle.h>
 #include "qdf_cpuhp.h"
+#include "target_type.h"
 
 /* Preprocessor Definitions and Constants */
 
