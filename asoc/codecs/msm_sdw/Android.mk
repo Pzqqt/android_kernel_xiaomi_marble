@@ -4,7 +4,7 @@
 
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform,sdm670),true)
+ifeq ($(call is-board-platform-in-list,sdm670 qcs605),true)
 AUDIO_SELECT  := CONFIG_SND_SOC_SDM670=m
 
 LOCAL_PATH := $(call my-dir)
