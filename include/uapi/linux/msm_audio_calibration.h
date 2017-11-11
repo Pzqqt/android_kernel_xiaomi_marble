@@ -108,6 +108,7 @@ enum {
 #define AFE_SIDETONE_IIR_CAL_TYPE AFE_SIDETONE_IIR_CAL_TYPE
 
 #define TOPOLOGY_SPECIFIC_CHANNEL_INFO
+#define MSM_SPKR_PROT_SPV3
 
 enum {
 	VERSION_0_0,
@@ -301,6 +302,10 @@ struct audio_cal_info_spk_prot_cfg {
 	 * 1 - Start calib
 	 * 2 - Disable spk prot
 	 */
+#ifdef MSM_SPKR_PROT_SPV3
+	uint32_t	sp_version;
+	int32_t	limiter_th[SP_V2_NUM_MAX_SPKRS];
+#endif
 };
 
 struct audio_cal_info_sp_th_vi_ftm_cfg {
