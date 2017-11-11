@@ -248,6 +248,10 @@
  * @QCA_NL80211_VENDOR_SUBCMD_HTT_STATS: Request the firmware
  *     DP stats for a particualr stats type for response evnet
  *     it carries the stats data sent from the FW
+ * @QCA_NL80211_VENDOR_SUBCMD_GET_RROP_INFO: Get vendor specific Representative
+ *     RF Operating Parameter (RROP) information. The attributes for this
+ *     information are defined in enum qca_wlan_vendor_attr_rrop_info. This is
+ *     intended for use by external Auto Channel Selection applications.
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -448,6 +452,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_CAP_INFO = 160,
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_STATUS = 161,
 	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS = 162,
+	QCA_NL80211_VENDOR_SUBCMD_GET_RROP_INFO = 163,
 };
 
 enum qca_wlan_vendor_tos {
@@ -3479,6 +3484,9 @@ enum qca_wlan_vendor_external_acs_event_chan_info_attr {
  * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_POLICY:External ACS policy such as
  * PCL mandatory, PCL preferred, etc.It uses values defined in enum
  * qca_wlan_vendor_attr_external_acs_policy.
+ * @QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_RROPAVAIL_INFO: Reference RF
+ * Operating Parameter (RROP) availability information (u16). It uses values
+ * defined in enum qca_wlan_vendor_attr_rropavail_info.
  */
 enum qca_wlan_vendor_attr_external_acs_event {
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_INVALID = 0,
@@ -3495,6 +3503,7 @@ enum qca_wlan_vendor_attr_external_acs_event {
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_PCL = 11,
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_CHAN_INFO = 12,
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_POLICY = 13,
+	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_RROPAVAIL_INFO = 14,
 
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_EXTERNAL_ACS_EVENT_LAST,
@@ -5273,6 +5282,77 @@ enum qca_wlan_vendor_attr_spectral_scan_request_type {
 	QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_REQUEST_TYPE_SCAN_AND_CONFIG,
 	QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_REQUEST_TYPE_SCAN,
 	QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_REQUEST_TYPE_CONFIG,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_rropavail_info - Specifies whether Representative
+ * RF Operating Parameter (RROP) information is available, and if so, at which
+ * point in the application-driver interaction sequence it can be retrieved by
+ * the application from the driver. This point may vary by architecture and
+ * other factors. This is a u16 value.
+ */
+enum qca_wlan_vendor_attr_rropavail_info {
+	/* RROP information is unavailable. */
+	QCA_WLAN_VENDOR_ATTR_RROPAVAIL_INFO_UNAVAILABLE,
+	/* RROP information is available and the application can retrieve the
+	 * information after receiving an QCA_NL80211_VENDOR_SUBCMD_EXTERNAL_ACS
+	 * event from the driver.
+	 */
+	QCA_WLAN_VENDOR_ATTR_RROPAVAIL_INFO_EXTERNAL_ACS_START,
+	/* RROP information is available only after a vendor specific scan
+	 * (requested using QCA_NL80211_VENDOR_SUBCMD_TRIGGER_SCAN) has
+	 * successfully completed. The application can retrieve the information
+	 * after receiving the QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE event from
+	 * the driver.
+	 */
+	QCA_WLAN_VENDOR_ATTR_RROPAVAIL_INFO_VSCAN_END,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_rrop_info - Specifies vendor specific
+ * Representative RF Operating Parameter (RROP) information. It is sent for the
+ * vendor command QCA_NL80211_VENDOR_SUBCMD_GET_RROP_INFO. This information is
+ * intended for use by external Auto Channel Selection applications. It provides
+ * guidance values for some RF parameters that are used by the system during
+ * operation. These values could vary by channel, band, radio, and so on.
+ */
+enum qca_wlan_vendor_attr_rrop_info {
+	QCA_WLAN_VENDOR_ATTR_RROP_INFO_INVALID = 0,
+
+	/* Representative Tx Power List (RTPL) which has an array of nested
+	 * values as per attributes in enum qca_wlan_vendor_attr_rtplinst.
+	 */
+	QCA_WLAN_VENDOR_ATTR_RROP_INFO_RTPL = 1,
+
+	QCA_WLAN_VENDOR_ATTR_RROP_INFO_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_RROP_INFO_MAX =
+	QCA_WLAN_VENDOR_ATTR_RROP_INFO_AFTER_LAST - 1
+};
+
+/**
+ * enum qca_wlan_vendor_attr_rtplinst - Specifies attributes for individual list
+ * entry instances in the Representative Tx Power List (RTPL). It provides
+ * simplified power values intended for helping external Auto channel Selection
+ * applications compare potential Tx power performance between channels, other
+ * operating conditions remaining identical. These values are not necessarily
+ * the actual Tx power values that will be used by the system. They are also not
+ * necessarily the max or average values that will be used. Instead, they are
+ * relative, summarized keys for algorithmic use computed by the driver or
+ * underlying firmware considering a number of vendor specific factors.
+ */
+enum qca_wlan_vendor_attr_rtplinst {
+	QCA_WLAN_VENDOR_ATTR_RTPLINST_INVALID = 0,
+
+	/* Primary channel number (u8) */
+	QCA_WLAN_VENDOR_ATTR_RTPLINST_PRIMARY = 1,
+	/* Representative Tx power in dBm (s32) with emphasis on throughput. */
+	QCA_WLAN_VENDOR_ATTR_RTPLINST_TXPOWER_THROUGHPUT = 2,
+	/* Representative Tx power in dBm (s32) with emphasis on range. */
+	QCA_WLAN_VENDOR_ATTR_RTPLINST_TXPOWER_RANGE = 3,
+
+	QCA_WLAN_VENDOR_ATTR_RTPLINST_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_RTPLINST_MAX =
+		QCA_WLAN_VENDOR_ATTR_RTPLINST_AFTER_LAST - 1,
 };
 
 #if !(defined (SUPPORT_WDEV_CFG80211_VENDOR_EVENT_ALLOC)) &&	\
