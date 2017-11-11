@@ -3199,6 +3199,7 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 	}
 
 	wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
+	wma_remove_req(wma, 0, WMA_PDEV_SET_HW_MODE_RESP);
 
 	hw_mode_resp = qdf_mem_malloc(sizeof(*hw_mode_resp));
 	if (!hw_mode_resp) {

@@ -166,18 +166,18 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	entry = csr_nonscan_active_ll_peek_head(mac, LL_ACCESS_LOCK);
 	if (!entry) {
 		sme_err("No cmd found in active list");
-		goto error_path;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	command = GET_BASE_ADDR(entry, tSmeCmd, Link);
 	if (!command) {
 		sme_err("Base address is NULL");
-		goto error_path;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (e_sme_command_set_hw_mode != command->command) {
 		sme_err("Command mismatch!");
-		goto error_path;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	callback = command->u.set_hw_mode_cmd.set_hw_mode_cb;
@@ -229,9 +229,6 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	}
 
 end:
-	wlan_objmgr_vdev_release_ref(command->u.set_hw_mode_cmd.vdev,
-		WLAN_LEGACY_SME_ID);
-
 	found = csr_nonscan_active_ll_remove_entry(mac, entry,
 			LL_ACCESS_LOCK);
 	if (found)
@@ -239,11 +236,6 @@ end:
 		csr_release_command(mac, command);
 
 	return QDF_STATUS_SUCCESS;
-
-error_path:
-	wlan_objmgr_vdev_release_ref(command->u.set_hw_mode_cmd.vdev,
-		WLAN_LEGACY_SME_ID);
-	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -13424,7 +13416,6 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd = NULL;
-	struct wlan_objmgr_vdev *vdev = NULL;
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -13432,19 +13423,9 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(mac->psoc, msg.session_id,
-		WLAN_LEGACY_SME_ID);
-	if (!vdev) {
-		sme_err("vdev is NULL for sme_session, no need to proceed with cmd Qing:%d",
-		msg.session_id);
-		sme_release_global_lock(&mac->sme);
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-
 	cmd = csr_get_command_buffer(mac);
 	if (!cmd) {
 		sme_err("Get command buffer failed");
-		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 		sme_release_global_lock(&mac->sme);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -13455,7 +13436,6 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	cmd->u.set_hw_mode_cmd.set_hw_mode_cb = msg.set_hw_mode_cb;
 	cmd->u.set_hw_mode_cmd.reason = msg.reason;
 	cmd->u.set_hw_mode_cmd.session_id = msg.session_id;
-	cmd->u.set_hw_mode_cmd.vdev = vdev;
 	cmd->u.set_hw_mode_cmd.context = msg.context;
 
 	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d",
