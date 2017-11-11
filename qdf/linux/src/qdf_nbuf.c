@@ -1627,9 +1627,9 @@ void qdf_net_buf_debug_exit(void)
 			p_prev = p_node;
 			p_node = p_node->p_next;
 			count++;
-			qdf_print("SKB buf memory Leak@ File %s, @Line %d, size %zu\n",
+			qdf_print("SKB buf memory Leak@ File %s, @Line %d, size %zu, nbuf %pK\n",
 				  p_prev->file_name, p_prev->line_num,
-				  p_prev->size);
+				  p_prev->size, p_prev->net_buf);
 			qdf_nbuf_track_free(p_prev);
 		}
 		spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
