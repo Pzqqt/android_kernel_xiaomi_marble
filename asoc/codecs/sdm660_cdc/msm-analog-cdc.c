@@ -1579,43 +1579,6 @@ static int msm_anlg_cdc_ear_pa_boost_set(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-static int msm_anlg_cdc_loopback_mode_get(struct snd_kcontrol *kcontrol,
-					  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct msm_asoc_mach_data *pdata = NULL;
-
-	pdata = snd_soc_card_get_drvdata(codec->component.card);
-	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-
-	return pdata->lb_mode;
-}
-
-static int msm_anlg_cdc_loopback_mode_put(struct snd_kcontrol *kcontrol,
-					  struct snd_ctl_elem_value *ucontrol)
-{
-	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct msm_asoc_mach_data *pdata = NULL;
-
-	pdata = snd_soc_card_get_drvdata(codec->component.card);
-	dev_dbg(codec->dev, "%s: ucontrol->value.integer.value[0] = %ld\n",
-		__func__, ucontrol->value.integer.value[0]);
-
-	switch (ucontrol->value.integer.value[0]) {
-	case 0:
-		pdata->lb_mode = false;
-		break;
-	case 1:
-		pdata->lb_mode = true;
-		break;
-	default:
-		return -EINVAL;
-	}
-
-	return 0;
-}
-
 static int msm_anlg_cdc_pa_gain_get(struct snd_kcontrol *kcontrol,
 				    struct snd_ctl_elem_value *ucontrol)
 {
@@ -1910,13 +1873,6 @@ static int msm_anlg_cdc_ext_spk_boost_set(struct snd_kcontrol *kcontrol,
 	return 0;
 }
 
-
-static const char * const msm_anlg_cdc_loopback_mode_ctrl_text[] = {
-		"DISABLE", "ENABLE"};
-static const struct soc_enum msm_anlg_cdc_loopback_mode_ctl_enum[] = {
-		SOC_ENUM_SINGLE_EXT(2, msm_anlg_cdc_loopback_mode_ctrl_text),
-};
-
 static const char * const msm_anlg_cdc_ear_pa_boost_ctrl_text[] = {
 		"DISABLE", "ENABLE"};
 static const struct soc_enum msm_anlg_cdc_ear_pa_boost_ctl_enum[] = {
@@ -1980,8 +1936,6 @@ static const struct snd_kcontrol_new msm_anlg_cdc_snd_controls[] = {
 	SOC_ENUM_EXT("Ext Spk Boost", msm_anlg_cdc_ext_spk_boost_ctl_enum[0],
 		msm_anlg_cdc_ext_spk_boost_get, msm_anlg_cdc_ext_spk_boost_set),
 
-	SOC_ENUM_EXT("LOOPBACK Mode", msm_anlg_cdc_loopback_mode_ctl_enum[0],
-		msm_anlg_cdc_loopback_mode_get, msm_anlg_cdc_loopback_mode_put),
 	SOC_SINGLE_TLV("ADC1 Volume", MSM89XX_PMIC_ANALOG_TX_1_EN, 3,
 					8, 0, analog_gain),
 	SOC_SINGLE_TLV("ADC2 Volume", MSM89XX_PMIC_ANALOG_TX_2_EN, 3,
