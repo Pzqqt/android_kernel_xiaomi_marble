@@ -170,7 +170,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		ret = qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
 				    QDF_DMA_BIDIRECTIONAL);
-		if (ret == QDF_STATUS_E_FAILURE) {
+		if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
+			qdf_nbuf_free(rx_netbuf);
 			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
 			continue;
 		}
