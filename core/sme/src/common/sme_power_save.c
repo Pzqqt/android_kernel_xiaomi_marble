@@ -481,6 +481,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
  * sme_enable_sta_ps_check(): Checks if it is ok to enable power save or not.
  * @mac_ctx: global mac context
  * @session_id: session id
+ * @command: power save cmd of type enum sme_ps_cmd
  *
  *Pre Condition for enabling sta mode power save
  *1) Sta Mode Ps should be enabled in ini file.
@@ -488,7 +489,8 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id)
+QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id,
+				   enum sme_ps_cmd command)
 {
 	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
 
@@ -498,10 +500,14 @@ QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/* Check whether the given session is Infra and in Connected State */
-	if (!csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
+	/* Check whether the given session is Infra and in Connected State
+	 * also if command is power save disable  there is not need to check
+	 * for connected state as firmware can handle this
+	 */
+	if ((command != SME_PS_DISABLE) &&
+	    !csr_is_conn_state_connected_infra(mac_ctx, session_id)) {
 		sme_debug("STA not infra/connected state Session_id: %d",
-				session_id);
+			  session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -522,7 +528,7 @@ QDF_STATUS sme_ps_enable_disable(tHalHandle hal_ctx, uint32_t session_id,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 
-	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
+	status =  sme_enable_sta_ps_check(mac_ctx, session_id, command);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 	status = sme_ps_process_command(mac_ctx, session_id, command);
@@ -539,7 +545,7 @@ QDF_STATUS sme_ps_timer_flush_sync(tHalHandle hal, uint8_t session_id)
 	struct sEnablePsParams *req;
 	t_wma_handle *wma;
 
-	status = sme_enable_sta_ps_check(mac_ctx, session_id);
+	status = sme_enable_sta_ps_check(mac_ctx, session_id, SME_PS_ENABLE);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		sme_debug("Power save not allowed for vdev id %d", session_id);
 		return QDF_STATUS_SUCCESS;
@@ -599,7 +605,8 @@ QDF_STATUS sme_ps_uapsd_enable(tHalHandle hal_ctx, uint32_t session_id)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 
-	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
+	status =  sme_enable_sta_ps_check(mac_ctx, session_id,
+					  SME_PS_UAPSD_ENABLE);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 	status = sme_ps_process_command(mac_ctx, session_id,
@@ -623,7 +630,8 @@ QDF_STATUS sme_ps_uapsd_disable(tHalHandle hal_ctx, uint32_t session_id)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 
-	status =  sme_enable_sta_ps_check(mac_ctx, session_id);
+	status =  sme_enable_sta_ps_check(mac_ctx, session_id,
+					  SME_PS_UAPSD_DISABLE);
 	if (status != QDF_STATUS_SUCCESS)
 		return status;
 	status = sme_ps_process_command(mac_ctx, session_id,
@@ -982,7 +990,7 @@ void sme_auto_ps_entry_timer_expired(void *data)
 	session_id = ps_params->session_id;
 	sme_debug("auto_ps_timer expired, enabling powersave");
 
-	status = sme_enable_sta_ps_check(mac_ctx, session_id);
+	status = sme_enable_sta_ps_check(mac_ctx, session_id, SME_PS_ENABLE);
 	if (QDF_STATUS_SUCCESS == status)
 		sme_ps_enable_disable((tHalHandle)mac_ctx, session_id,
 				SME_PS_ENABLE);

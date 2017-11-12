@@ -453,6 +453,9 @@ wlan_hdd_latency_opt(struct hdd_adapter *adapter, struct sk_buff *skb)
 				QDF_NBUF_CB_PACKET_TYPE_ICMP) {
 		wlan_hdd_set_powersave(adapter, false,
 				hdd_ctx->config->icmp_disable_ps_val);
+		sme_ps_enable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX(adapter),
+					  adapter->session_id,
+					  hdd_ctx->config->icmp_disable_ps_val);
 	}
 }
 #else
