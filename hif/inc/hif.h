@@ -52,6 +52,8 @@ extern "C" {
 typedef void __iomem *A_target_id_t;
 typedef void *hif_handle_t;
 
+#define HIF_DBG_PRINT_RATE 1000
+
 #define HIF_TYPE_AR6002   2
 #define HIF_TYPE_AR6003   3
 #define HIF_TYPE_AR6004   5
