@@ -2277,13 +2277,14 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	wmi_mac_addr *bssid;
 	int len = sizeof(*cmd);
 	uint8_t extraie_len_with_pad = 0;
+	uint8_t phymode_roundup = 0;
 	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
 	/* calculate the length of buffer required */
-	if (params->num_chan)
-		len += params->num_chan * sizeof(uint32_t);
+	if (params->chan_list.num_chan)
+		len += params->chan_list.num_chan * sizeof(uint32_t);
 
 	/* Length TLV placeholder for array of wmi_ssid structures */
 	len += WMI_TLV_HDR_SIZE;
@@ -2305,6 +2306,13 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	len += WMI_TLV_HDR_SIZE; /* Length of TLV for array of wmi_vendor_oui */
 	if (ie_whitelist->num_vendor_oui)
 		len += ie_whitelist->num_vendor_oui * sizeof(wmi_vendor_oui);
+
+	len += WMI_TLV_HDR_SIZE; /* Length of TLV for array of scan phymode */
+	if (params->scan_f_wide_band)
+		phymode_roundup =
+			qdf_roundup(params->chan_list.num_chan * sizeof(uint8_t),
+					sizeof(uint32_t));
+	len += phymode_roundup;
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2337,7 +2345,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->max_scan_time = params->max_scan_time;
 	cmd->probe_delay = params->probe_delay;
 	cmd->burst_duration = params->burst_duration;
-	cmd->num_chan = params->num_chan;
+	cmd->num_chan = params->chan_list.num_chan;
 	cmd->num_bssid = params->num_bssid;
 	cmd->num_ssids = params->num_ssids;
 	cmd->ie_len = params->extraie.len;
@@ -2359,13 +2367,15 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 
 	buf_ptr += sizeof(*cmd);
 	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	for (i = 0; i < params->num_chan; ++i)
-		tmp_ptr[i] = params->chan_list[i];
+	for (i = 0; i < params->chan_list.num_chan; ++i)
+		tmp_ptr[i] = params->chan_list.chan[i].freq;
 
 	WMITLV_SET_HDR(buf_ptr,
 		       WMITLV_TAG_ARRAY_UINT32,
-		       (params->num_chan * sizeof(uint32_t)));
-	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_chan * sizeof(uint32_t));
+		       (params->chan_list.num_chan * sizeof(uint32_t)));
+	buf_ptr += WMI_TLV_HDR_SIZE +
+			(params->chan_list.num_chan * sizeof(uint32_t));
+
 	if (params->num_ssids > WMI_SCAN_MAX_NUM_SSID) {
 		WMI_LOGE("Invalid value for numSsid");
 		goto error;
@@ -2417,6 +2427,19 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_fill_vendor_oui(buf_ptr, cmd->num_vendor_oui,
 				    ie_whitelist->voui);
 		buf_ptr += cmd->num_vendor_oui * sizeof(wmi_vendor_oui);
+	}
+
+	/* Add phy mode TLV if it's a wide band scan */
+	if (params->scan_f_wide_band) {
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, phymode_roundup);
+		buf_ptr = (uint8_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+		for (i = 0; i < params->chan_list.num_chan; ++i)
+			buf_ptr[i] =
+				WMI_SCAN_CHAN_SET_MODE(params->chan_list.chan[i].phymode);
+		buf_ptr += phymode_roundup;
+	} else {
+		/* Add ZERO legth phy mode TLV */
+		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, 0);
 	}
 
 	ret = wmi_unified_cmd_send(
@@ -10857,6 +10880,76 @@ static QDF_STATUS send_vdev_config_ratemask_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_LOGE("Seting vdev ratemask failed\n");
 			wmi_buf_free(buf);
 			return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * copy_custom_aggr_bitmap() - copies host side bitmap using FW APIs
+ * @param: param sent from the host side
+ * @cmd: param to be sent to the fw side
+ */
+static inline void copy_custom_aggr_bitmap(
+		struct set_custom_aggr_size_params *param,
+		wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd)
+{
+	WMI_VDEV_CUSTOM_AGGR_AC_SET(cmd->enable_bitmap,
+				    param->ac);
+	WMI_VDEV_CUSTOM_AGGR_TYPE_SET(cmd->enable_bitmap,
+				      param->aggr_type);
+	WMI_VDEV_CUSTOM_TX_AGGR_SZ_DIS_SET(cmd->enable_bitmap,
+					   param->tx_aggr_size_disable);
+	WMI_VDEV_CUSTOM_RX_AGGR_SZ_DIS_SET(cmd->enable_bitmap,
+					   param->rx_aggr_size_disable);
+	WMI_VDEV_CUSTOM_TX_AC_EN_SET(cmd->enable_bitmap,
+				     param->tx_ac_enable);
+}
+
+/**
+ * send_vdev_set_custom_aggr_size_cmd_tlv() - custom aggr size param in fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to hold custom aggr size params
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+static QDF_STATUS send_vdev_set_custom_aggr_size_cmd_tlv(
+			wmi_unified_t wmi_handle,
+			struct set_custom_aggr_size_params *param)
+{
+	wmi_vdev_set_custom_aggr_size_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_vdev_set_custom_aggr_size_cmd_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_set_custom_aggr_size_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		wmi_vdev_set_custom_aggr_size_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->tx_aggr_size = param->tx_aggr_size;
+	cmd->rx_aggr_size = param->rx_aggr_size;
+	copy_custom_aggr_bitmap(param, cmd);
+
+	WMI_LOGD("Set custom aggr: vdev id=0x%X, tx aggr size=0x%X "
+		"rx_aggr_size=0x%X access category=0x%X, agg_type=0x%X "
+		"tx_aggr_size_disable=0x%X, rx_aggr_size_disable=0x%X "
+		"tx_ac_enable=0x%X\n",
+		param->vdev_id, param->tx_aggr_size, param->rx_aggr_size,
+		param->ac, param->aggr_type, param->tx_aggr_size_disable,
+		param->rx_aggr_size_disable, param->tx_ac_enable);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_VDEV_SET_CUSTOM_AGGR_SIZE_CMDID)) {
+		WMI_LOGE("Seting custom aggregation size failed\n");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -19733,6 +19826,8 @@ struct wmi_ops tlv_ops =  {
 	.send_set_mimogain_table_cmd = send_set_mimogain_table_cmd_tlv,
 	.send_packet_power_info_get_cmd = send_packet_power_info_get_cmd_tlv,
 	.send_vdev_config_ratemask_cmd = send_vdev_config_ratemask_cmd_tlv,
+	.send_vdev_set_custom_aggr_size_cmd =
+		send_vdev_set_custom_aggr_size_cmd_tlv,
 	.send_set_vap_dscp_tid_map_cmd = send_set_vap_dscp_tid_map_cmd_tlv,
 	.send_vdev_set_neighbour_rx_cmd = send_vdev_set_neighbour_rx_cmd_tlv,
 	.send_smart_ant_set_tx_ant_cmd = send_smart_ant_set_tx_ant_cmd_tlv,
@@ -19951,6 +20046,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_profile_match] = WMI_PROFILE_MATCH;
 
 	event_ids[wmi_roam_synch_event_id] = WMI_ROAM_SYNCH_EVENTID;
+	event_ids[wmi_roam_synch_frame_event_id] = WMI_ROAM_SYNCH_FRAME_EVENTID;
 
 	event_ids[wmi_p2p_disc_event_id] = WMI_P2P_DISC_EVENTID;
 
@@ -20314,6 +20410,7 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_CHAN_LOAD_INFO;
 	wmi_service[wmi_service_extended_nss_support] =
 				WMI_SERVICE_EXTENDED_NSS_SUPPORT;
+	wmi_service[wmi_service_widebw_scan] = WMI_SERVICE_SCAN_PHYMODE_SUPPORT;
 }
 
 /**
@@ -20716,6 +20813,8 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 	vdev_param[wmi_vdev_param_bw_nss_ratemask] =
 					WMI_VDEV_PARAM_BW_NSS_RATEMASK;
 	vdev_param[wmi_vdev_param_set_he_ltf] = WMI_VDEV_PARAM_HE_LTF;
+	vdev_param[wmi_vdev_param_rate_dropdown_bmap] =
+					WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP;
 }
 #endif
 

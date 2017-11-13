@@ -32,8 +32,7 @@
 #define _CDP_TXRX_IPA_H_
 
 #ifdef IPA_OFFLOAD
-
-#include <linux/ipa.h>
+#include <qdf_ipa.h>
 #include <cdp_txrx_mob_def.h>
 #include "cdp_txrx_handle.h"
 
@@ -419,8 +418,8 @@ cdp_ipa_cleanup(ol_txrx_soc_handle soc, uint32_t tx_pipe_handle,
  */
 static inline QDF_STATUS
 cdp_ipa_setup_iface(ol_txrx_soc_handle soc, char *ifname, uint8_t *mac_addr,
-		    enum ipa_client_type prod_client,
-		    enum ipa_client_type cons_client,
+		    qdf_ipa_client_type_t prod_client,
+		    qdf_ipa_client_type_t cons_client,
 		    uint8_t session_id, bool is_ipv6_enabled)
 {
 	if (!soc || !soc->ops || !soc->ops->ipa_ops) {

@@ -48,7 +48,7 @@ QDF_STATUS utils_dfs_reset(struct wlan_objmgr_pdev *pdev)
 
 	dfs_reset(dfs);
 	dfs_nol_update(dfs);
-	dfs_init_precac_list(dfs);
+	dfs_reset_precaclists(dfs);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -686,7 +686,7 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!dfs || !psoc) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"dfs %p, psoc %p", dfs, psoc);
+				"dfs %pK, psoc %pK", dfs, psoc);
 		return;
 	}
 

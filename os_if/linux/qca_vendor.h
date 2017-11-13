@@ -3224,6 +3224,20 @@ enum qca_wlan_vendor_attr_config {
 	/* 8-bit unsigned value to set the total beacon miss count */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_TOTAL_BEACON_MISS_COUNT = 52,
 
+	/*
+	 * Unsigned 32-bit value to configure the number of continuous
+	 * Beacon Miss which shall be used by the firmware to penalize
+	 * the RSSI for BTC.
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_PENALIZE_AFTER_NCONS_BEACON_MISS_BTC = 53,
+
+	/*
+	 * 8-bit unsigned value to configure the driver and below layers to
+	 * enable/disable all fils features.
+	 * 0-enable, 1-disable
+	 */
+	QCA_WLAN_VENDOR_ATTR_CONFIG_DISABLE_FILS = 54,
+
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_CONFIG_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_CONFIG_MAX =

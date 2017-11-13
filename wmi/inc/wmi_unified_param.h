@@ -3748,6 +3748,37 @@ struct set_fwtest_params {
 };
 
 /**
+ * struct set_custom_aggr_size_params - custom aggr size params
+ * @vdev_id      : vdev id
+ * @tx_aggr_size : TX aggr size
+ * @rx_aggr_size : RX aggr size
+ * @enable_bitmap: Bitmap for aggr size check
+ */
+struct set_custom_aggr_size_params {
+	uint32_t  vdev_id;
+	uint32_t tx_aggr_size;
+	uint32_t rx_aggr_size;
+	uint32_t ac:2,
+		 aggr_type:1,
+		 tx_aggr_size_disable:1,
+		 rx_aggr_size_disable:1,
+		 tx_ac_enable:1,
+		 reserved:26;
+};
+
+/**
+ * enum wmi_host_custom_aggr_type_t: custon aggregate type
+ * @WMI_HOST_CUSTOM_AGGR_TYPE_AMPDU: A-MPDU aggregation
+ * @WMI_HOST_CUSTOM_AGGR_TYPE_AMSDU: A-MSDU aggregation
+ * @WMI_HOST_CUSTOM_AGGR_TYPE_MAX: Max type
+ */
+enum wmi_host_custom_aggr_type_t {
+	WMI_HOST_CUSTOM_AGGR_TYPE_AMPDU = 0,
+	WMI_HOST_CUSTOM_AGGR_TYPE_AMSDU = 1,
+	WMI_HOST_CUSTOM_AGGR_TYPE_MAX,
+};
+
+/**
  * struct config_ratemask_params - ratemask config parameters
  * @vdev_id: vdev id
  * @type: Type
@@ -5335,6 +5366,7 @@ typedef enum {
 	wmi_ba_rsp_ssn_event_id,
 	wmi_aggr_state_trig_event_id,
 	wmi_roam_synch_event_id,
+	wmi_roam_synch_frame_event_id,
 	wmi_p2p_disc_event_id,
 	wmi_p2p_noa_event_id,
 	wmi_p2p_lo_stop_event_id,
@@ -5667,6 +5699,7 @@ typedef enum {
 	wmi_vdev_param_set_heop,
 	wmi_vdev_param_disable_cabq,
 
+	wmi_vdev_param_rate_dropdown_bmap,
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
 
@@ -5814,6 +5847,7 @@ typedef enum {
 	wmi_service_chan_load_info,
 	wmi_service_extended_nss_support,
 	wmi_service_ack_timeout,
+	wmi_service_widebw_scan,
 
 	wmi_services_max,
 } wmi_conv_service_ids;

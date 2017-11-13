@@ -318,7 +318,7 @@ QDF_STATUS tgt_dfs_reg_ev_handler(struct wlan_objmgr_psoc *psoc,
 		status = dfs_tx_ops->dfs_reg_ev_handler(pdev, dfs_offload);
 	else
 		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
-				"dfs_tx_ops=%p", dfs_tx_ops);
+				"dfs_tx_ops=%pK", dfs_tx_ops);
 
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_DFS_ID);
 

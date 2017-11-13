@@ -1096,6 +1096,16 @@ QDF_STATUS wmi_unified_vdev_set_fwtest_param_cmd_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_config_ratemask_cmd_send(void *wmi_hdl,
 				struct config_ratemask_params *param);
 
+/**
+ *  wmi_unified_vdev_set_custom_aggr_size_cmd_send() - WMI set custom aggr
+ *						       size command
+ *  @param wmi_hdl      : handle to WMI.
+ *  @param param        : pointer to hold custom aggr size param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_vdev_set_custom_aggr_size_cmd_send(void *wmi_hdl,
+				struct set_custom_aggr_size_params *param);
 
 QDF_STATUS wmi_unified_pdev_set_regdomain_cmd_send(void *wmi_hdl,
 				struct pdev_set_regdomain_params *param);

@@ -27,6 +27,7 @@
 #include <wlan_serialization_api.h>
 #include <wlan_scan_tgt_api.h>
 #include <wlan_reg_services_api.h>
+#include <wlan_utility.h>
 #include "../../core/src/wlan_scan_main.h"
 #include "../../core/src/wlan_scan_manager.h"
 #include "../../core/src/wlan_scan_cache_db.h"
@@ -391,7 +392,7 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 		goto end;
 	}
 
-	num_chan = req->scan_req.num_chan;
+	num_chan = req->scan_req.chan_list.num_chan;
 
 	/* num_chan=0 means all channels */
 	if (!num_chan)
@@ -402,8 +403,8 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 
 	while (num_chan > 1) {
 		if (!WLAN_REG_IS_SAME_BAND_CHANNELS(
-					req->scan_req.chan_list[0],
-					req->scan_req.chan_list[num_chan-1])) {
+			req->scan_req.chan_list.chan[0].freq,
+			req->scan_req.chan_list.chan[num_chan-1].freq)) {
 			scan_dbs_policy = SCAN_DBS_POLICY_DEFAULT;
 			break;
 		}
@@ -430,6 +431,7 @@ ucfg_scan_start(struct scan_start_request *req)
 	struct scheduler_msg msg = {0};
 	QDF_STATUS status;
 	struct wlan_scan_obj *scan_obj;
+	struct wlan_objmgr_pdev *pdev;
 
 	if (!req || !req->vdev) {
 		scm_err("vdev: %pK, req: %pK", req->vdev, req);
@@ -438,7 +440,14 @@ ucfg_scan_start(struct scan_start_request *req)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	scan_obj = wlan_pdev_get_scan_obj(wlan_vdev_get_pdev(req->vdev));
+	pdev = wlan_vdev_get_pdev(req->vdev);
+	if (!pdev) {
+		scm_err("Failed to get pdev object");
+		scm_scan_free_scan_request_mem(req);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	scan_obj = wlan_pdev_get_scan_obj(pdev);
 	if (!scan_obj) {
 		scm_err("Failed to get scan object");
 		scm_scan_free_scan_request_mem(req);
@@ -450,9 +459,17 @@ ucfg_scan_start(struct scan_start_request *req)
 		scm_scan_free_scan_request_mem(req);
 		return QDF_STATUS_E_AGAIN;
 	}
-	scm_info("reqid: %d, scanid: %d, vdevid: %d",
+
+	scm_debug("reqid: %d, scanid: %d, vdevid: %d",
 		req->scan_req.scan_req_id, req->scan_req.scan_id,
 		req->scan_req.vdev_id);
+
+	/* Overwrite scan parameters as required */
+	if (!ucfg_scan_get_wide_band_scan(pdev)) {
+		scm_debug("wide_band_scan not supported, Scan 20 MHz");
+		req->scan_req.scan_f_wide_band = false;
+	}
+
 	if (scan_obj->scan_def.usr_cfg_probe_rpt_time) {
 		req->scan_req.repeat_probe_time =
 			scan_obj->scan_def.usr_cfg_probe_rpt_time;
@@ -521,6 +538,39 @@ bool ucfg_scan_get_enable(struct wlan_objmgr_psoc *psoc)
 	return scan_obj->enable_scan;
 }
 
+QDF_STATUS
+ucfg_scan_set_wide_band_scan(struct wlan_objmgr_pdev *pdev, bool enable)
+{
+	uint8_t pdev_id;
+	struct wlan_scan_obj *scan_obj;
+
+	if (!pdev) {
+		scm_warn("null vdev");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	scan_obj = wlan_pdev_get_scan_obj(pdev);
+
+	scm_debug("set wide_band_scan to %d", enable);
+	scan_obj->pdev_info[pdev_id].wide_band_scan = enable;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_scan_get_wide_band_scan(struct wlan_objmgr_pdev *pdev)
+{
+	uint8_t pdev_id;
+	struct wlan_scan_obj *scan_obj;
+
+	if (!pdev) {
+		scm_warn("null vdev");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+	scan_obj = wlan_pdev_get_scan_obj(pdev);
+
+	return scan_obj->pdev_info[pdev_id].wide_band_scan;
+}
 
 QDF_STATUS
 ucfg_scan_cancel(struct scan_cancel_request *req)
@@ -1078,20 +1128,20 @@ ucfg_scan_init_bssid_params(struct scan_start_request *req,
 
 QDF_STATUS
 ucfg_scan_init_chanlist_params(struct scan_start_request *req,
-		uint32_t num_chans, uint32_t *chan_list)
+		uint32_t num_chans, uint32_t *chan_list, uint32_t *phymode)
 {
-
-	uint32_t max_chans = sizeof(req->scan_req.chan_list) /
-				sizeof(req->scan_req.chan_list[0]);
+	uint32_t idx;
+	uint32_t max_chans = sizeof(req->scan_req.chan_list.chan) /
+				sizeof(req->scan_req.chan_list.chan[0]);
 	if (!req) {
 		scm_err("null request");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	if (!num_chans) {
 		/* empty channel list provided */
-		req->scan_req.num_chan = 0;
-		qdf_mem_zero(&req->scan_req.chan_list[0],
+		qdf_mem_zero(&req->scan_req.chan_list,
 			sizeof(req->scan_req.chan_list));
+		req->scan_req.chan_list.num_chan = 0;
 		return QDF_STATUS_SUCCESS;
 	}
 	if (!chan_list) {
@@ -1109,9 +1159,21 @@ ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 	if (max_chans > num_chans)
 		max_chans = num_chans;
 
-	req->scan_req.num_chan = max_chans;
-	qdf_mem_copy(&req->scan_req.chan_list[0], chan_list,
-		req->scan_req.num_chan * sizeof(req->scan_req.chan_list[0]));
+	req->scan_req.chan_list.num_chan = max_chans;
+	for (idx = 0; idx < max_chans; idx++) {
+		req->scan_req.chan_list.chan[idx].freq =
+			(chan_list[idx] > WLAN_24_GHZ_BASE_FREQ) ?
+			chan_list[idx] : wlan_chan_to_freq(chan_list[idx]);
+		req->scan_req.chan_list.chan[idx].phymode =
+			(phymode ? phymode[idx] : 0);
+	}
+
+	/* Enable wide band scan by default if phymode list is provided.
+	 * This flag will be cleared in @ucfg_scan_start() if underlying
+	 * phy doesn't support wide band scan.
+	 */
+	if (phymode)
+		req->scan_req.scan_f_wide_band = true;
 
 	return QDF_STATUS_SUCCESS;
 }

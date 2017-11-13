@@ -16,7 +16,7 @@
 
 #ifdef IPA_OFFLOAD
 
-#include <linux/ipa_wdi3.h>
+#include <qdf_ipa_wdi3.h>
 #include <qdf_types.h>
 #include <qdf_lock.h>
 #include <hal_api.h>
@@ -605,10 +605,10 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	struct dp_pdev *pdev = (struct dp_pdev *)ppdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_ipa_resources *ipa_res = &pdev->ipa_resource;
-	struct ipa_wdi3_setup_info tx;
-	struct ipa_wdi3_setup_info rx;
-	struct ipa_wdi3_conn_in_params pipe_in;
-	struct ipa_wdi3_conn_out_params pipe_out;
+	qdf_ipa_wdi3_setup_info_t *tx;
+	qdf_ipa_wdi3_setup_info_t *rx;
+	qdf_ipa_wdi3_conn_in_params_t pipe_in;
+	qdf_ipa_wdi3_conn_out_params_t pipe_out;
 	struct tcl_data_cmd *tcl_desc_ptr;
 	uint8_t *desc_addr;
 	uint32_t desc_size;
@@ -616,8 +616,8 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 
 	qdf_mem_zero(&tx, sizeof(struct ipa_wdi3_setup_info));
 	qdf_mem_zero(&rx, sizeof(struct ipa_wdi3_setup_info));
-	qdf_mem_zero(&pipe_in, sizeof(struct ipa_wdi3_conn_in_params));
-	qdf_mem_zero(&pipe_out, sizeof(struct ipa_wdi3_conn_out_params));
+	qdf_mem_zero(&pipe_in, sizeof(pipe_in));
+	qdf_mem_zero(&pipe_out, sizeof(pipe_out));
 
 	/* TX PIPE */
 	/**
@@ -626,30 +626,39 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	 * Event Ring: TCL ring
 	 * Event Ring Doorbell PA: TCL Head Pointer Address
 	 */
-	tx.ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
-	tx.ipa_ep_cfg.hdr.hdr_len = DP_IPA_UC_WLAN_TX_HDR_LEN;
-	tx.ipa_ep_cfg.hdr.hdr_ofst_pkt_size_valid = 0;
-	tx.ipa_ep_cfg.hdr.hdr_ofst_pkt_size = 0;
-	tx.ipa_ep_cfg.hdr.hdr_additional_const_len = 0;
-	tx.ipa_ep_cfg.mode.mode = IPA_BASIC;
-	tx.ipa_ep_cfg.hdr_ext.hdr_little_endian = true;
-	tx.client = IPA_CLIENT_WLAN1_CONS;
-	tx.transfer_ring_base_pa = ipa_res->tx_comp_ring_base_paddr;
-	tx.transfer_ring_size = ipa_res->tx_comp_ring_size;
-	tx.transfer_ring_doorbell_pa = /* WBM Tail Pointer Address */
+	tx = &QDF_IPA_WDI3_CONN_IN_PARAMS_TX(&pipe_in);
+	QDF_IPA_WDI3_SETUP_INFO_NAT_EN(tx) = IPA_BYPASS_NAT;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_LEN(tx) = DP_IPA_UC_WLAN_TX_HDR_LEN;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_OFST_PKT_SIZE_VALID(tx) = 0;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_OFST_PKT_SIZE(tx) = 0;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_ADDITIONAL_CONST_LEN(tx) = 0;
+	QDF_IPA_WDI3_SETUP_INFO_MODE(tx) = IPA_BASIC;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_LITTLE_ENDIAN(tx) = true;
+	QDF_IPA_WDI3_SETUP_INFO_CLIENT(tx) = IPA_CLIENT_WLAN1_CONS;
+	QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_BASE_PA(tx) =
+		ipa_res->tx_comp_ring_base_paddr;
+	QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_SIZE(tx) =
+		ipa_res->tx_comp_ring_size;
+	/* WBM Tail Pointer Address */
+	QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(tx) =
 		soc->ipa_uc_tx_rsc.ipa_wbm_tp_paddr;
-	tx.event_ring_base_pa = ipa_res->tx_ring_base_paddr;
-	tx.event_ring_size = ipa_res->tx_ring_size;
-	tx.event_ring_doorbell_pa = /* TCL Head Pointer Address */
+	QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_BASE_PA(tx) =
+		ipa_res->tx_ring_base_paddr;
+	QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_SIZE(tx) = ipa_res->tx_ring_size;
+	/* TCL Head Pointer Address */
+	QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx) =
 		soc->ipa_uc_tx_rsc.ipa_tcl_hp_paddr;
-	tx.num_pkt_buffers = ipa_res->tx_num_alloc_buffer;
-	tx.pkt_offset = 0;
+	QDF_IPA_WDI3_SETUP_INFO_NUM_PKT_BUFFERS(tx) =
+		ipa_res->tx_num_alloc_buffer;
+	QDF_IPA_WDI3_SETUP_INFO_PKT_OFFSET(tx) = 0;
 
 	/* Preprogram TCL descriptor */
-	desc_addr = (uint8_t *)(tx.desc_format_template);
+	desc_addr =
+		(uint8_t *)QDF_IPA_WDI3_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx);
 	desc_size = sizeof(struct tcl_data_cmd);
 	HAL_TX_DESC_SET_TLV_HDR(desc_addr, HAL_TX_TCL_DATA_TAG, desc_size);
-	tcl_desc_ptr = (struct tcl_data_cmd *)(tx.desc_format_template+1);
+	tcl_desc_ptr = (struct tcl_data_cmd *)
+		(QDF_IPA_WDI3_SETUP_INFO_DESC_FORMAT_TEMPLATE(tx) + 1);
 	tcl_desc_ptr->buf_addr_info.return_buffer_manager =
 						HAL_RX_BUF_RBM_SW2_BM;
 	tcl_desc_ptr->addrx_en = 1;	/* Address X search enable in ASE */
@@ -663,29 +672,28 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	 * Event Ring: FW ring
 	 * Event Ring Doorbell PA: FW Head Pointer Address
 	 */
-	rx.ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
-	rx.ipa_ep_cfg.hdr.hdr_len = DP_IPA_UC_WLAN_RX_HDR_LEN;
-	rx.ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 0;
-	rx.ipa_ep_cfg.hdr.hdr_metadata_reg_valid = 1;
-	rx.ipa_ep_cfg.mode.mode = IPA_BASIC;
-	rx.client = IPA_CLIENT_WLAN1_PROD;
-	rx.transfer_ring_base_pa = ipa_res->rx_rdy_ring_base_paddr;
-	rx.transfer_ring_size = ipa_res->rx_rdy_ring_size;
-	rx.transfer_ring_doorbell_pa = /* REO Tail Pointer Address */
+	rx = &QDF_IPA_WDI3_CONN_IN_PARAMS_RX(&pipe_in);
+	QDF_IPA_WDI3_SETUP_INFO_NAT_EN(rx) = IPA_BYPASS_NAT;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_LEN(rx) = DP_IPA_UC_WLAN_TX_HDR_LEN;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_OFST_METADATA_VALID(rx) = 0;
+	QDF_IPA_WDI3_SETUP_INFO_HDR_METADATA_REG_VALID(rx) = 1;
+	QDF_IPA_WDI3_SETUP_INFO_MODE(rx) = IPA_BASIC;
+	QDF_IPA_WDI3_SETUP_INFO_CLIENT(rx) = IPA_CLIENT_WLAN1_PROD;
+	QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_BASE_PA(rx) = ipa_res->rx_rdy_ring_base_paddr;
+	QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_SIZE(rx) = ipa_res->rx_rdy_ring_size;
+	QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx) = /* REO Tail Pointer Address */
 		soc->ipa_uc_rx_rsc.ipa_reo_tp_paddr;
-	rx.event_ring_base_pa = ipa_res->rx_refill_ring_base_paddr;
-	rx.event_ring_size = ipa_res->rx_refill_ring_size;
-	rx.event_ring_doorbell_pa = /* FW Head Pointer Address */
+	QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_BASE_PA(rx) = ipa_res->rx_refill_ring_base_paddr;
+	QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_SIZE(rx) = ipa_res->rx_refill_ring_size;
+	QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx) = /* FW Head Pointer Address */
 		soc->ipa_uc_rx_rsc.ipa_rx_refill_buf_hp_paddr;
-	rx.pkt_offset = RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
+	QDF_IPA_WDI3_SETUP_INFO_PKT_OFFSET(rx) = RX_PKT_TLVS_LEN + L3_HEADER_PADDING;
 
-	pipe_in.notify = ipa_w2i_cb;
-	pipe_in.priv = ipa_priv;
-	memcpy(&pipe_in.tx, &tx, sizeof(struct ipa_wdi3_setup_info));
-	memcpy(&pipe_in.rx, &rx, sizeof(struct ipa_wdi3_setup_info));
+	QDF_IPA_WDI3_CONN_IN_PARAMS_NOTIFY(&pipe_in) = ipa_w2i_cb;
+	QDF_IPA_WDI3_CONN_IN_PARAMS_PRIV(&pipe_in) = ipa_priv;
 
 	/* Connect WDI IPA PIPE */
-	ret = ipa_wdi3_conn_pipes(&pipe_in, &pipe_out);
+	ret = qdf_ipa_wdi3_conn_pipes(&pipe_in, &pipe_out);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ipa_wdi3_conn_pipes: IPA pipe setup failed: ret=%d",
@@ -697,30 +705,33 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Tx DB PA=0x%x, Rx DB PA=0x%x",
 		  __func__,
-		  (unsigned int)pipe_out.tx_uc_db_pa,
-		  (unsigned int)pipe_out.rx_uc_db_pa);
+		(unsigned int)QDF_IPA_WDI3_CONN_OUT_PARAMS_TX_UC_DB_PA(&pipe_out),
+		(unsigned int)QDF_IPA_WDI3_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out));
 
-	ipa_res->tx_comp_doorbell_paddr = pipe_out.tx_uc_db_pa;
-	ipa_res->tx_comp_doorbell_vaddr = pipe_out.tx_uc_db_va;
-	ipa_res->rx_ready_doorbell_paddr = pipe_out.rx_uc_db_pa;
+	ipa_res->tx_comp_doorbell_paddr =
+		QDF_IPA_WDI3_CONN_OUT_PARAMS_TX_UC_DB_PA(&pipe_out);
+	ipa_res->tx_comp_doorbell_vaddr =
+		QDF_IPA_WDI3_CONN_OUT_PARAMS_TX_UC_DB_VA(&pipe_out);
+	ipa_res->rx_ready_doorbell_paddr =
+		QDF_IPA_WDI3_CONN_OUT_PARAMS_RX_UC_DB_PA(&pipe_out);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Tx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
 		  __func__,
 		  "transfer_ring_base_pa",
-		  (void *)pipe_in.tx.transfer_ring_base_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_BASE_PA(tx),
 		  "transfer_ring_size",
-		  pipe_in.tx.transfer_ring_size,
+		  QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_SIZE(tx),
 		  "transfer_ring_doorbell_pa",
-		  (void *)pipe_in.tx.transfer_ring_doorbell_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(tx),
 		  "event_ring_base_pa",
-		  (void *)pipe_in.tx.event_ring_base_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_BASE_PA(tx),
 		  "event_ring_size",
-		  pipe_in.tx.event_ring_size,
+		  QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_SIZE(tx),
 		  "event_ring_doorbell_pa",
-		  (void *)pipe_in.tx.event_ring_doorbell_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_DOORBELL_PA(tx),
 		  "num_pkt_buffers",
-		  pipe_in.tx.num_pkt_buffers,
+		  QDF_IPA_WDI3_SETUP_INFO_NUM_PKT_BUFFERS(tx),
 		  "tx_comp_doorbell_paddr",
 		  (void *)ipa_res->tx_comp_doorbell_paddr);
 
@@ -728,19 +739,19 @@ QDF_STATUS dp_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 		  "%s: Rx: %s=%pK, %s=%d, %s=%pK, %s=%pK, %s=%d, %s=%pK, %s=%d, %s=%pK",
 		  __func__,
 		  "transfer_ring_base_pa",
-		  (void *)pipe_in.rx.transfer_ring_base_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_BASE_PA(rx),
 		  "transfer_ring_size",
-		  pipe_in.rx.transfer_ring_size,
+		  QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_SIZE(rx),
 		  "transfer_ring_doorbell_pa",
-		  (void *)pipe_in.rx.transfer_ring_doorbell_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_TRANSFER_RING_DOORBELL_PA(rx),
 		  "event_ring_base_pa",
-		  (void *)pipe_in.rx.event_ring_base_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_BASE_PA(rx),
 		  "event_ring_size",
-		  pipe_in.rx.event_ring_size,
+		  QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_SIZE(rx),
 		  "event_ring_doorbell_pa",
-		  (void *)pipe_in.rx.event_ring_doorbell_pa,
+		  (void *)QDF_IPA_WDI3_SETUP_INFO_EVENT_RING_DOORBELL_PA(rx),
 		  "num_pkt_buffers",
-		  pipe_in.rx.num_pkt_buffers,
+		  QDF_IPA_WDI3_SETUP_INFO_NUM_PKT_BUFFERS(rx),
 		  "tx_comp_doorbell_paddr",
 		  (void *)ipa_res->rx_ready_doorbell_paddr);
 
@@ -758,7 +769,7 @@ QDF_STATUS dp_ipa_cleanup(uint32_t tx_pipe_handle, uint32_t rx_pipe_handle)
 {
 	int ret;
 
-	ret = ipa_wdi3_disconn_pipes();
+	ret = qdf_ipa_wdi3_disconn_pipes();
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		    "%s: ipa_wdi3_disconn_pipes: IPA pipe cleanup failed: ret=%d",
@@ -781,12 +792,12 @@ QDF_STATUS dp_ipa_cleanup(uint32_t tx_pipe_handle, uint32_t rx_pipe_handle)
  * Return: QDF_STATUS
  */
 QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
-			      enum ipa_client_type prod_client,
-			      enum ipa_client_type cons_client,
+			      qdf_ipa_client_type_t prod_client,
+			      qdf_ipa_client_type_t cons_client,
 			      uint8_t session_id, bool is_ipv6_enabled)
 {
-	struct ipa_wdi3_reg_intf_in_params in;
-	struct ipa_wdi3_hdr_info hdr_info;
+	qdf_ipa_wdi3_reg_intf_in_params_t in;
+	qdf_ipa_wdi3_hdr_info_t hdr_info;
 	struct dp_ipa_uc_tx_hdr uc_tx_hdr;
 	int ret = -EINVAL;
 
@@ -794,31 +805,34 @@ QDF_STATUS dp_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
 		  "%s: Add Partial hdr: %s, %pM",
 		  __func__, ifname, mac_addr);
 
-	qdf_mem_zero(&hdr_info, sizeof(struct ipa_wdi3_hdr_info));
+	qdf_mem_zero(&hdr_info, sizeof(qdf_ipa_wdi3_hdr_info_t));
 	qdf_ether_addr_copy(uc_tx_hdr.eth.h_source, mac_addr);
 
 	/* IPV4 header */
 	uc_tx_hdr.eth.h_proto = qdf_htons(ETH_P_IP);
 
-	hdr_info.hdr = (uint8_t *)&uc_tx_hdr;
-	hdr_info.hdr_len = DP_IPA_UC_WLAN_TX_HDR_LEN;
-	hdr_info.hdr_type = IPA_HDR_L2_ETHERNET_II;
-	hdr_info.dst_mac_addr_offset = DP_IPA_UC_WLAN_HDR_DES_MAC_OFFSET;
+	QDF_IPA_WDI3_HDR_INFO_HDR(&hdr_info) = (uint8_t *)&uc_tx_hdr;
+	QDF_IPA_WDI3_HDR_INFO_HDR_LEN(&hdr_info) = DP_IPA_UC_WLAN_TX_HDR_LEN;
+	QDF_IPA_WDI3_HDR_INFO_HDR_TYPE(&hdr_info) = IPA_HDR_L2_ETHERNET_II;
+	QDF_IPA_WDI3_HDR_INFO_DST_MAC_ADDR_OFFSET(&hdr_info) =
+		DP_IPA_UC_WLAN_HDR_DES_MAC_OFFSET;
 
-	in.netdev_name = ifname;
-	memcpy(&(in.hdr_info[0]), &hdr_info, sizeof(struct ipa_wdi3_hdr_info));
-	in.is_meta_data_valid = 1;
-	in.meta_data = htonl(session_id << 16);
-	in.meta_data_mask = htonl(0x00FF0000);
+	QDF_IPA_WDI3_REG_INTF_IN_PARAMS_NETDEV_NAME(&in) = ifname;
+	memcpy(&(QDF_IPA_WDI3_REG_INTF_IN_PARAMS_HDR_INFO(&in)[0]), &hdr_info,
+		sizeof(qdf_ipa_wdi3_hdr_info_t));
+	QDF_IPA_WDI3_REG_INTF_IN_PARAMS_IS_META_DATA_VALID(&in) = 1;
+	QDF_IPA_WDI3_REG_INTF_IN_PARAMS_META_DATA(&in) =
+		htonl(session_id << 16);
+	QDF_IPA_WDI3_REG_INTF_IN_PARAMS_META_DATA_MASK(&in) = htonl(0x00FF0000);
 
 	/* IPV6 header */
 	if (is_ipv6_enabled) {
 		uc_tx_hdr.eth.h_proto = qdf_htons(ETH_P_IPV6);
-		memcpy(&(in.hdr_info[1]), &hdr_info,
-				sizeof(struct ipa_wdi3_hdr_info));
+		memcpy(&(QDF_IPA_WDI3_REG_INTF_IN_PARAMS_HDR_INFO(&in)[1]),
+			&hdr_info, sizeof(qdf_ipa_wdi3_hdr_info_t));
 	}
 
-	ret = ipa_wdi3_reg_intf(&in);
+	ret = qdf_ipa_wdi3_reg_intf(&in);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		    "%s: ipa_wdi3_reg_intf: register IPA interface falied: ret=%d",
@@ -840,7 +854,7 @@ QDF_STATUS dp_ipa_cleanup_iface(char *ifname, bool is_ipv6_enabled)
 {
 	int ret;
 
-	ret = ipa_wdi3_dereg_intf(ifname);
+	ret = qdf_ipa_wdi3_dereg_intf(ifname);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ipa_wdi3_dereg_intf: IPA pipe deregistration failed: ret=%d",
@@ -861,7 +875,7 @@ QDF_STATUS dp_ipa_enable_pipes(struct cdp_pdev *ppdev)
 {
 	QDF_STATUS result;
 
-	result = ipa_wdi3_enable_pipes();
+	result = qdf_ipa_wdi3_enable_pipes();
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Enable WDI PIPE fail, code %d",
@@ -882,7 +896,7 @@ QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *ppdev)
 {
 	QDF_STATUS result;
 
-	result = ipa_wdi3_disable_pipes();
+	result = qdf_ipa_wdi3_disable_pipes();
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Disable WDI PIPE fail, code %d",
@@ -902,13 +916,13 @@ QDF_STATUS dp_ipa_disable_pipes(struct cdp_pdev *ppdev)
  */
 QDF_STATUS dp_ipa_set_perf_level(int client, uint32_t max_supported_bw_mbps)
 {
-	struct ipa_wdi3_perf_profile profile;
+	qdf_ipa_wdi3_perf_profile_t profile;
 	QDF_STATUS result;
 
 	profile.client = client;
 	profile.max_supported_bw_mbps = max_supported_bw_mbps;
 
-	result = ipa_wdi3_set_perf_profile(&profile);
+	result = qdf_ipa_wdi3_set_perf_profile(&profile);
 	if (result) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ipa_wdi3_set_perf_profile fail, code %d",

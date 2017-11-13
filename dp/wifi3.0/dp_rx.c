@@ -22,7 +22,6 @@
 #include "hal_rx.h"
 #include "hal_api.h"
 #include "qdf_nbuf.h"
-#include <linux/ieee80211.h>
 #ifdef MESH_MODE_SUPPORT
 #include "if_meta_hdr.h"
 #endif
