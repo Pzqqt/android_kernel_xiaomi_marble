@@ -1728,17 +1728,15 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 #ifdef FEATURE_PERPKT_INFO
 static QDF_STATUS
 dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_tx_desc_s *desc,
-				uint16_t peer_id, uint16_t ppdu_id)
+				uint16_t peer_id, uint32_t ppdu_id)
 {
 	struct tx_capture_hdr *ppdu_hdr;
-	struct ethhdr *eh;
 	struct dp_peer *peer = NULL;
 	qdf_nbuf_t netbuf = desc->nbuf;
 
 	if (!desc->pdev->tx_sniffer_enable)
 		return QDF_STATUS_E_NOSUPPORT;
 
-	eh = (struct ethhdr *)(netbuf->data);
 	peer = (peer_id == HTT_INVALID_PEER) ? NULL :
 			dp_peer_find_by_id(soc, peer_id);
 
@@ -1755,7 +1753,7 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_tx_desc_s *desc,
 	}
 
 	ppdu_hdr = (struct tx_capture_hdr *)qdf_nbuf_data(netbuf);
-	qdf_mem_copy(ppdu_hdr->ta, (eh->h_dest), IEEE80211_ADDR_LEN);
+	qdf_mem_copy(ppdu_hdr->ta, desc->vdev->mac_addr.raw, IEEE80211_ADDR_LEN);
 	ppdu_hdr->ppdu_id = ppdu_id;
 	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
 			IEEE80211_ADDR_LEN);
@@ -1769,7 +1767,7 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_tx_desc_s *desc,
 #else
 static QDF_STATUS
 dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_tx_desc_s *desc,
-				uint16_t peer_id, uint16_t ppdu_id)
+				uint16_t peer_id, uint32_t ppdu_id)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
