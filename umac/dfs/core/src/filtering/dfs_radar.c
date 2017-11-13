@@ -511,103 +511,11 @@ void dfs_get_radars(struct wlan_dfs *dfs)
 	}
 }
 
-void dfs_radar_found_action(struct wlan_dfs *dfs)
+void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs)
 {
-	bool wait_for_csa = false;
-
-	if (dfs->dfs_use_nol == 1) {
-		/*
-		 * If precac is running and the radar found in secondary
-		 * VHT80 mark the channel as radar and add to NOL list.
-		 * Otherwise random channel selection can choose this
-		 * channel.
-		 */
-		dfs_debug(dfs, WLAN_DEBUG_DFS,
-				"found_on_second = %d is_pre = %d",
-				dfs->is_radar_found_on_secondary_seg,
-				dfs_is_precac_timer_running(dfs));
-
-		if (dfs->is_radar_found_on_secondary_seg &&
-				dfs_is_precac_timer_running(dfs)) {
-			/* Get a VHT80 channel and mark it */
-			struct dfs_ieee80211_channel ichan;
-
-			dfs_find_precac_secondary_vht80_chan(dfs, &ichan);
-
-			dfs_mlme_channel_mark_radar(dfs->dfs_pdev_obj,
-					ichan.dfs_ch_freq,
-					ichan.dfs_ch_vhtop_ch_freq_seg2,
-					ichan.dfs_ch_flags);
-		} else {
-			dfs_mlme_channel_mark_radar(dfs->dfs_pdev_obj,
-					dfs->dfs_curchan->dfs_ch_freq,
-					dfs->dfs_curchan->
-					dfs_ch_vhtop_ch_freq_seg2,
-					dfs->dfs_curchan->dfs_ch_flags);
-		}
-	}
-
-	/*
-	 * Even if radar found on primary, we need to move the channel
-	 * from precac-required-list and precac-done-list to
-	 * precac-nol-list.
-	 */
-	if (dfs->dfs_use_nol == 1) {
-		dfs_mark_precac_dfs(dfs,
-				dfs->is_radar_found_on_secondary_seg);
-	}
-
-	if (dfs->is_radar_found_on_secondary_seg) {
-		dfs_second_segment_radar_disable(dfs);
-		dfs->is_radar_found_on_secondary_seg = 0;
-		if (dfs->is_radar_during_precac) {
-			dfs->is_radar_during_precac = 0;
-			goto radar_process_end;
-		}
-	}
-
-	/*
-	 * This calls into the umac DFS code, which sets the umac
-	 * related radar flags and begins the channel change
-	 * machinery.
-	 * XXX TODO: the umac NOL code isn't used, but
-	 * IEEE80211_CHAN_DFS_RADAR still gets set. Since the umac
-	 * NOL code isn't used, that flag is never cleared. This
-	 * needs to be fixed. See EV 105776.
-	 */
-	if (dfs->dfs_use_nol == 1)  {
-		dfs_mlme_start_rcsa(dfs->dfs_pdev_obj,
-				&wait_for_csa);
-		if (wait_for_csa)
-			return;
-
-		dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
-				dfs->dfs_curchan->dfs_ch_ieee,
-				dfs->dfs_curchan->dfs_ch_freq,
-				dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
-				dfs->dfs_curchan->dfs_ch_flags);
-		/*
-		 * EV 129487 : We have detected radar in the channel,
-		 * stop processing PHY error data as this can cause
-		 * false detect in the new channel while channel
-		 * change is in progress.
-		 */
-		dfs_radar_disable(dfs);
-		dfs_second_segment_radar_disable(dfs);
-	} else if (dfs->dfs_use_nol == 0) {
-		/*
-		 * For the test mode, don't do a CSA here; but setup
-		 * the test timer so we get a CSA _back_ to the
-		 * original channel.
-		 */
-		qdf_timer_stop(&dfs->wlan_dfstesttimer);
-		dfs->wlan_dfstest = 1;
-		dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
-		dfs->wlan_dfstesttime = 1;   /* 1ms */
-		qdf_timer_mod(&dfs->wlan_dfstesttimer,
-				dfs->wlan_dfstesttime);
-	}
-
-radar_process_end:
-	return;
+	qdf_timer_stop(&dfs->wlan_dfstesttimer);
+	dfs->wlan_dfstest = 1;
+	dfs->wlan_dfstest_ieeechan = dfs->dfs_curchan->dfs_ch_ieee;
+	dfs->wlan_dfstesttime = 1;   /* 1ms */
+	qdf_timer_mod(&dfs->wlan_dfstesttimer, dfs->wlan_dfstesttime);
 }

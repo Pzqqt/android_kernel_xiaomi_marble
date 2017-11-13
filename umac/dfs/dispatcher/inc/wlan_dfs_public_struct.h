@@ -24,19 +24,20 @@
 #ifndef __WLAN_DFS_PUBLIC_STRUCT_H_
 #define __WLAN_DFS_PUBLIC_STRUCT_H_
 
+/* TODO: This structure has many redundant variables, needs cleanup */
 /**
  * struct radar_found_info - radar found info
- * @pdev_id: pdev id.
- * @detection_mode: In-service mode or O-CAC mod.
- * @freq_offset: frequency offset.
- * @chan_width: channel width.
- * @detector_id: detector id.
- * @segment_id: segment id.
- * @timestamp: timestamp.
- * @is_chirp: is chirp or not.
- * @chan_freq: channel frequency.
- * @radar_freq: radar frequency.
- * @sidx: sidx value.
+ * @pdev_id:        pdev id.
+ * @detection_mode: 0 indicates RADAR detected, non-zero indicates debug mode.
+ * @freq_offset:    frequency offset.
+ * @chan_width:     channel width.
+ * @detector_id:    detector id for full-offload.
+ * @segment_id:     segment id (same as detector_id) for partial-offload.
+ * @timestamp:      timestamp (Time when filter match is found in Firmware).
+ * @is_chirp:       is chirp or not.
+ * @chan_freq:      channel frequency (Primary channel frequency).
+ * @radar_freq:     radar frequency (Is it same as '@chan_freq'?).
+ * @sidx:           sidx value (same as freq_offset).
  */
 struct radar_found_info {
 	uint32_t pdev_id;

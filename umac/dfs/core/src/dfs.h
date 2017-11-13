@@ -1133,26 +1133,22 @@ struct rx_search_fft_report {
 };
 
 /**
- * dfs_radar_found_action() - It marks the channel as radar, adds it to NOL and
- *                            indicates to mlme to choose a random channel.
- * @dfs: Pointer to wlan_dfs structure.
- */
-void dfs_radar_found_action(struct wlan_dfs *dfs);
-
-/**
  * dfs_process_radarevent() - process the radar event generated for a pulse.
  * @dfs: Pointer to wlan_dfs structure.
  * @chan: Current channel.
  *
  * There is currently no way to specify that a radar event has occurred on
  * a specific channel, so the current methodology is to mark both the pri
- * and ext channels as being unavailable.  This should be fixed for 802.11ac
+ * and ext channels as being unavailable. This should be fixed for 802.11ac
  * or we'll quickly run out of valid channels to use.
  *
- * Return: If a radar event found on non-DFS channel return 0.
- * Otherwise, return 1.
+ * If Radar found, this marks the channel (and the extension channel, if HT40)
+ * as having seen a radar event. It marks CHAN_INTERFERENCE and will add it to
+ * the local NOL implementation. This is only done for 'usenol=1', as the other
+ * two modes don't do radar notification or CAC/CSA/NOL; it just notes there
+ * was a radar.
  */
-int dfs_process_radarevent(struct wlan_dfs *dfs,
+void  dfs_process_radarevent(struct wlan_dfs *dfs,
 		struct dfs_ieee80211_channel *chan);
 
 /**
@@ -2022,4 +2018,24 @@ void dfs_stop(struct wlan_dfs *dfs);
 void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,
 		uint64_t flags,
 		uint16_t flagext);
+
+/**
+ * dfs_send_csa_to_current_chan() - Send CSA to current channel
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * For the test mode(usenol = 0), don't do a CSA; but setup the test timer so
+ * we get a CSA _back_ to the current operating channel.
+ */
+void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs);
+
+/**
+ * dfs_radarevent_basic_sanity - Check basic sanity of the radar event
+ * @dfs: Pointer to wlan_dfs structure.
+ * @chan: Current channel.
+ *
+ * Return: If a radar event found on NON-DFS channel  return 0.  Otherwise,
+ * return 1.
+ */
+int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
+		struct dfs_ieee80211_channel *chan);
 #endif  /* _DFS_H_ */

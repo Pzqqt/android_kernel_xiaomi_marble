@@ -815,6 +815,9 @@ uint8_t utils_dfs_freq_to_chan(uint32_t freq)
 {
 	uint8_t chan;
 
+	if (freq == 0)
+		return 0;
+
 	if (freq > DFS_24_GHZ_BASE_FREQ && freq < DFS_CHAN_14_FREQ)
 		chan = ((freq - DFS_24_GHZ_BASE_FREQ) / DFS_CHAN_SPACING_5MHZ);
 	else if (freq == DFS_CHAN_14_FREQ)
@@ -831,6 +834,9 @@ EXPORT_SYMBOL(utils_dfs_freq_to_chan);
 
 uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 {
+	if (chan == 0)
+		return 0;
+
 	if (chan < DFS_24_GHZ_CHANNEL_14)
 		return DFS_24_GHZ_BASE_FREQ + (chan * DFS_CHAN_SPACING_5MHZ);
 	else if (chan == DFS_24_GHZ_CHANNEL_14)

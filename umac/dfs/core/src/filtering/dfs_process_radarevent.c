@@ -24,6 +24,7 @@
 #include "../dfs.h"
 #include "../dfs_channel.h"
 #include "../dfs_internal.h"
+#include "../dfs_process_radar_found_ind.h"
 
 #define FREQ_5500_MHZ  5500
 #define FREQ_5500_MHZ       5500
@@ -443,12 +444,13 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
  * @dfs: Pointer to wlan_dfs structure.
  * @rs: Pointer to dfs_state.
  * @chan: Current  channel.
+ * @seg_id: Segment id.
  */
 static inline void dfs_radarfound_reset_vars(
 		struct wlan_dfs *dfs,
 		struct dfs_state *rs,
 		struct dfs_ieee80211_channel *chan,
-		uint8_t   seg_id)
+		uint8_t seg_id)
 {
 	struct dfs_ieee80211_channel *thischan;
 
@@ -504,28 +506,19 @@ static inline void dfs_radarfound_reset_vars(
 	}
 }
 
-/**
- * dfs_radarevent_basic_sanity - Check basic sanity of the radar event
- * @dfs: Pointer to wlan_dfs structure.
- * @chan: Current channel.
- * Return: If a radar event found on NON-DFS channel  return 0.  Otherwise,
- * return 1.
- */
-static inline int dfs_radarevent_basic_sanity(
-	struct wlan_dfs *dfs,
+int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
 	struct dfs_ieee80211_channel *chan)
 {
 	if (!(dfs->dfs_second_segment_bangradar ||
 				dfs_is_precac_timer_running(dfs)))
-		if (!(IEEE80211_IS_CHAN_DFS(chan) ||
-			    ((IEEE80211_IS_CHAN_11AC_VHT160(chan) ||
-			      IEEE80211_IS_CHAN_11AC_VHT80_80(chan)) &&
-			     IEEE80211_IS_CHAN_DFS_CFREQ2(chan)))) {
+		if (!(IEEE80211_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS2,
-				"radar event on non-DFS chan");
-			dfs_reset_radarq(dfs);
-			dfs_reset_alldelaylines(dfs);
-			dfs->dfs_bangradar = 0;
+					"radar event on non-DFS chan");
+			if (!(dfs->dfs_is_offload_enabled)) {
+				dfs_reset_radarq(dfs);
+				dfs_reset_alldelaylines(dfs);
+				dfs->dfs_bangradar = 0;
+			}
 			return 0;
 		}
 
@@ -1229,7 +1222,7 @@ static inline void dfs_false_radarfound_reset_vars(
 	dfs->dfs_phyerr_w53_counter  = 0;
 }
 
-int dfs_process_radarevent(
+void dfs_process_radarevent(
 	struct wlan_dfs *dfs,
 	struct dfs_ieee80211_channel *chan)
 {
@@ -1239,7 +1232,7 @@ int dfs_process_radarevent(
 	int false_radar_found = 0;
 
 	if (!dfs_radarevent_basic_sanity(dfs, chan))
-		return 0;
+		return;
 	/*
 	 * TEST : Simulate radar bang, make sure we add the channel to NOL
 	 * (bug 29968)
@@ -1248,17 +1241,33 @@ int dfs_process_radarevent(
 		goto dfsfound;
 
 	if (!dfs_handle_missing_pulses(dfs, chan))
-		return 0;
+		return;
 
 	dfs_process_each_radarevent(dfs, chan, &rs, &seg_id, &retval,
 			&false_radar_found);
 
 dfsfound:
-	if (retval)
+	if (retval) {
+		struct radar_found_info *radar_found;
+
 		dfs_radarfound_reset_vars(dfs, rs, chan, seg_id);
+
+		radar_found = qdf_mem_malloc(sizeof(*radar_found));
+		if (!radar_found) {
+			dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+					"radar_found allocation failed");
+			return;
+		}
+
+		qdf_mem_zero(radar_found, sizeof(*radar_found));
+		radar_found->segment_id = seg_id;
+		radar_found->pdev_id =
+			wlan_objmgr_pdev_get_pdev_id(dfs->dfs_pdev_obj);
+
+		dfs_process_radar_ind(dfs, radar_found);
+		qdf_mem_free(radar_found);
+	}
 
 	if (false_radar_found)
 		dfs_false_radarfound_reset_vars(dfs);
-
-	return retval;
 }

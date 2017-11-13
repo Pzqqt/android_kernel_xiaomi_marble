@@ -38,13 +38,7 @@
 static int usenol = 1;
 
 /**
- * dfs_task() - The main function to process the radar pulse.
- *
- * If Radar found, this marks the channel (and the extension channel, if HT40)
- * as having seen a radar event. It marks CHAN_INTERFERENCE and will add it to
- * the local NOL implementation. This is only done for 'usenol=1', as the other
- * two modes don't do radar notification or CAC/CSA/NOL; it just notes there
- * was a radar.
+ * dfs_task() - The timer function to process the radar pulses.
  */
 static os_timer_func(dfs_task)
 {
@@ -57,8 +51,7 @@ static os_timer_func(dfs_task)
 		return;
 	}
 
-	if (dfs_process_radarevent(dfs, dfs->dfs_curchan))
-		dfs_radar_found_action(dfs);
+	dfs_process_radarevent(dfs, dfs->dfs_curchan);
 
 	dfs->wlan_radar_tasksched = 0;
 }

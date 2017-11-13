@@ -58,18 +58,27 @@
 
 /* Frequency offset to sidx */
 #define DFS_FREQ_OFFSET_TO_SIDX(_f)  ((32 * (_f)) / 10)
-/* sidx offset boundry */
+/* sidx offset boundary */
 #define DFS_BOUNDRY_SIDX  32
 /* freq offset for chirp */
 #define DFS_CHIRP_OFFSET  10
 /* second segment freq offset */
 #define DFS_160MHZ_SECOND_SEG_OFFSET  40
 
+/* Frequency offset indices */
+#define CENTER_CH 0
+#define LEFT_CH   1
+#define RIGHT_CH  2
+
 /**
- * struct freqs_offsets - frequency and offset informat
+ * struct freqs_offsets - frequency and offset information
  * @chan_num: channel number.
  * @freq: channel frequency in mhz.
  * @offset: offset from center frequency.
+ *
+ * Index 0 - Center channel affected by RADAR.
+ * Index 1 - Left of Center channel affected by RADAR.
+ * Index 2 - Right of Center channel affected by RADAR.
  *
  * This information is needed to find and mark radar infected
  * channels in NOL and regulatory database.
@@ -91,4 +100,16 @@ struct freqs_offsets {
  * Return: None
  */
 void dfs_process_radar_found_indication(struct wlan_dfs *dfs,
+		struct radar_found_info *radar_found);
+
+/**
+ * dfs_process_radar_ind() - Process radar indication event
+ * @dfs: Pointer to wlan_dfs structure.
+ * @radar_found: Pointer to radar_found_info structure.
+ *
+ * Wrapper function of dfs_process_radar_found_indication().
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		struct radar_found_info *radar_found);
