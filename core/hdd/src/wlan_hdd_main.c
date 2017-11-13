@@ -339,12 +339,11 @@ void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
  * crash debugger can extract them from driver debug symbol and crashdump for
  * post processing
  */
+#ifdef BUILD_TAG
+uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR "; " BUILD_TAG;
+#else
 uint8_t g_wlan_driver_version[] = QWLAN_VERSIONSTR;
-
-#ifndef BUILD_TIMESTAMP
-#define BUILD_TIMESTAMP ""
 #endif
-uint8_t g_wlan_driver_timestamp[] = BUILD_TIMESTAMP;
 
 /**
  * hdd_device_mode_to_string() - return string conversion of device mode
@@ -11249,10 +11248,9 @@ static int __hdd_module_init(void)
 {
 	int ret = 0;
 
-	pr_err("%s: Loading driver v%s (%s)%s\n",
+	pr_err("%s: Loading driver v%s (%s)\n",
 	       WLAN_MODULE_NAME,
-	       QWLAN_VERSIONSTR,
-	       g_wlan_driver_timestamp,
+	       g_wlan_driver_version,
 	       TIMER_MANAGER_STR MEMORY_DEBUG_STR);
 
 	ret = wlan_hdd_state_ctrl_param_create();
