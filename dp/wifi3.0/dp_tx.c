@@ -868,6 +868,68 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+
+/**
+ * dp_cce_classify() - Classify the frame based on CCE rules
+ * @vdev: DP vdev handle
+ * @nbuf: skb
+ *
+ * Classify frames based on CCE rules
+ * Return: bool( true if classified,
+ *               else false)
+ */
+static bool dp_cce_classify(qdf_nbuf_t nbuf)
+{
+	struct ether_header *eh = NULL;
+	uint16_t   ether_type;
+	qdf_llc_t *llcHdr;
+	qdf_nbuf_t nbuf_clone = NULL;
+
+	eh = (struct ether_header *) qdf_nbuf_data(nbuf);
+	ether_type = eh->ether_type;
+
+	llcHdr = (qdf_llc_t *)(nbuf->data + sizeof(struct ether_header));
+
+	if (qdf_unlikely(DP_FRAME_IS_SNAP(llcHdr))) {
+		ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN +
+				sizeof(*llcHdr));
+		nbuf_clone = qdf_nbuf_clone(nbuf);
+		qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr));
+
+		if (ether_type == htons(ETHERTYPE_8021Q)) {
+			qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr)
+						+sizeof(qdf_net_vlanhdr_t));
+		}
+	} else {
+		if (ether_type == htons(ETHERTYPE_8021Q)) {
+			nbuf_clone = qdf_nbuf_clone(nbuf);
+			qdf_nbuf_pull_head(nbuf_clone,
+					sizeof(qdf_net_vlanhdr_t));
+		}
+	}
+
+	if (qdf_unlikely(nbuf_clone))
+		nbuf = nbuf_clone;
+
+	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf)
+		|| qdf_nbuf_is_ipv4_arp_pkt(nbuf)
+		|| qdf_nbuf_is_ipv4_wapi_pkt(nbuf)
+		|| qdf_nbuf_is_ipv4_tdls_pkt(nbuf)
+		|| (qdf_nbuf_is_ipv4_pkt(nbuf)
+			&& qdf_nbuf_is_ipv4_dhcp_pkt(nbuf))
+		|| (qdf_nbuf_is_ipv6_pkt(nbuf) &&
+			qdf_nbuf_is_ipv6_dhcp_pkt(nbuf)))) {
+		if (qdf_unlikely(nbuf_clone != NULL))
+			qdf_nbuf_free(nbuf_clone);
+		return true;
+	}
+
+	if (qdf_unlikely(nbuf_clone != NULL))
+		qdf_nbuf_free(nbuf_clone);
+
+	return false;
+}
+
 /**
  * dp_tx_classify_tid() - Obtain TID to be used for this frame
  * @vdev: DP vdev handle
@@ -928,7 +990,6 @@ static void dp_tx_classify_tid(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			L3datap = hdr_ptr + sizeof(struct ether_header) +
 				sizeof(*llcHdr);
 		}
-
 	} else {
 		if (ether_type == htons(ETHERTYPE_8021Q)) {
 			evh = (qdf_ethervlan_header_t *) eh;
@@ -1068,6 +1129,14 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		return nbuf;
 	}
 
+	if (qdf_unlikely(soc->cce_disable)) {
+		if (dp_cce_classify(nbuf) == true) {
+			DP_STATS_INC(vdev, tx_i.cce_classified, 1);
+			tid = DP_VO_TID;
+			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
+		}
+	}
+
 	dp_tx_update_tdls_flags(tx_desc);
 
 	if (qdf_unlikely(hal_srng_access_start(soc->hal_soc, hal_srng))) {
@@ -1138,6 +1207,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc;
+	bool is_cce_classified = false;
 	QDF_STATUS status;
 
 	struct dp_tx_queue *tx_q = &msdu_info->tx_queue;
@@ -1149,6 +1219,14 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				__func__, __LINE__, hal_srng);
 		DP_STATS_INC(vdev, tx_i.dropped.ring_full, 1);
 		return nbuf;
+	}
+
+	if (qdf_unlikely(soc->cce_disable)) {
+		is_cce_classified = dp_cce_classify(nbuf);
+		if (is_cce_classified) {
+			DP_STATS_INC(vdev, tx_i.cce_classified, 1);
+			msdu_info->tid = DP_VO_TID;
+		}
 	}
 
 	if (msdu_info->frm_type == dp_tx_frm_me)
@@ -1182,6 +1260,9 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 				msdu_info->u.sg_info.curr_seg->frags[0].vaddr;
 			tx_desc->flags |= DP_TX_DESC_FLAG_ME;
 		}
+
+		if (is_cce_classified)
+			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 
 		/*
 		 * Enqueue the Tx MSDU descriptor to HW for transmit

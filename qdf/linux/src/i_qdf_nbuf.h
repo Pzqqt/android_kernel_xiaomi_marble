@@ -626,6 +626,7 @@ QDF_STATUS __qdf_nbuf_frag_map(
 void qdf_nbuf_classify_pkt(struct sk_buff *skb);
 
 bool __qdf_nbuf_is_ipv4_wapi_pkt(struct sk_buff *skb);
+bool __qdf_nbuf_is_ipv4_tdls_pkt(struct sk_buff *skb);
 bool __qdf_nbuf_data_is_ipv4_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_mcast_pkt(uint8_t *data);
@@ -637,6 +638,7 @@ bool __qdf_nbuf_data_is_ipv4_tcp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv6_udp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data);
+bool __qdf_nbuf_data_is_ipv6_dhcp_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_eapol_pkt(uint8_t *data);
 bool __qdf_nbuf_data_is_ipv4_arp_pkt(uint8_t *data);
 enum qdf_proto_subtype  __qdf_nbuf_data_get_dhcp_subtype(uint8_t *data);
