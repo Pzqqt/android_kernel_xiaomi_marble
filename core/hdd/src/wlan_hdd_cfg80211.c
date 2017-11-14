@@ -16208,9 +16208,9 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		req->fils_erp_next_seq_num, req->auth_type,
 		req->fils_erp_username_len, req->fils_erp_rrk_len,
 		req->fils_erp_realm_len);
-	if (req->fils_erp_rrk_len > WMI_FILS_MAX_RRK_LENGTH ||
-		req->fils_erp_realm_len > WMI_FILS_MAX_REALM_LENGTH ||
-		req->fils_erp_username_len > WMI_FILS_MAX_USERNAME_LENGTH) {
+	if (req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH ||
+		req->fils_erp_realm_len > FILS_MAX_REALM_LEN ||
+		req->fils_erp_username_len > FILS_MAX_KEYNAME_NAI_LENGTH) {
 		hdd_err("FILS info length limit exceeded");
 		goto fils_conn_fail;
 	}
