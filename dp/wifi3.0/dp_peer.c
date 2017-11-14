@@ -190,6 +190,7 @@ void dp_peer_find_hash_add(struct dp_soc *soc, struct dp_peer *peer)
 	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 }
 
+#ifdef FEATURE_WDS
 /*
  * dp_peer_ast_hash_attach() - Allocate and initialize AST Hash Table
  * @soc: SoC handle
@@ -490,6 +491,41 @@ void dp_peer_del_ast(struct dp_soc *soc,
 	dp_peer_ast_hash_remove(soc, ast_entry);
 	qdf_mem_free(ast_entry);
 }
+#else
+int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
+		uint8_t *mac_addr, uint8_t is_self)
+{
+	return 1;
+}
+
+void dp_peer_del_ast(struct dp_soc *soc,
+		struct dp_ast_entry *ast_entry)
+{
+}
+
+
+struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
+	uint8_t *ast_mac_addr, int mac_addr_is_aligned)
+{
+	return NULL;
+}
+
+static int dp_peer_ast_hash_attach(struct dp_soc *soc)
+{
+	return 0;
+}
+
+static inline void dp_peer_map_ast(struct dp_soc *soc,
+	struct dp_peer *peer, uint8_t *mac_addr, uint16_t hw_peer_id,
+	uint8_t vdev_id)
+{
+	return;
+}
+
+static void dp_peer_ast_hash_detach(struct dp_soc *soc)
+{
+}
+#endif
 
 #if ATH_SUPPORT_WRAP
 static struct dp_peer *dp_peer_find_hash_find(struct dp_soc *soc,
