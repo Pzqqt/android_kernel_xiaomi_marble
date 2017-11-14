@@ -7932,4 +7932,23 @@ struct get_arp_stats {
 	uint32_t vdev_id;
 };
 
+/**
+ * struct wmi_host_ready_ev_param - Data revieved in ready event
+ * @num_dscp_table: Number of DSCP table supported in FW
+ * @num_extra_mac_addr: Extra mac address present in ready event. Used
+ *                  in DBDC mode to provide multiple mac per pdev.
+ * @num_total_peer: Total number of peers FW could allocate. Zero means
+ *                  FW could  allocate num peers requested by host in init.
+ *                  Otherwise, host need update it max_peer to this value.
+ * @agile_capability: Boolean specification of whether the target supports
+ *                  agile DFS, by means of using one 80 MHz radio chain for
+ *                  radar detection, concurrently with using another radio
+ *                  chain for non-160 MHz regular operation.
+ */
+struct wmi_host_ready_ev_param {
+	uint32_t num_dscp_table;
+	uint32_t num_extra_mac_addr;
+	uint32_t num_total_peer;
+	bool agile_capability;
+};
 #endif /* _WMI_UNIFIED_PARAM_H_ */
