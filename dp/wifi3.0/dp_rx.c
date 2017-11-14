@@ -157,7 +157,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	count = 0;
 
 	while (count < num_req_buffers) {
-		rx_netbuf = qdf_nbuf_alloc(dp_pdev->osif_pdev,
+		rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
 					RX_BUFFER_SIZE,
 					RX_BUFFER_RESERVATION,
 					RX_BUFFER_ALIGNMENT,

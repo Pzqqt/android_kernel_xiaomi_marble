@@ -184,7 +184,7 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 	struct dp_peer *peer;
 	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
 
-	ppdu_nbuf = qdf_nbuf_alloc(pdev->osif_pdev,
+	ppdu_nbuf = qdf_nbuf_alloc(soc->osdev,
 			sizeof(struct hal_rx_ppdu_info), 0, 0, FALSE);
 	if (ppdu_nbuf) {
 		dp_rx_populate_cdp_indication_ppdu(soc, ppdu_info, ppdu_nbuf);
@@ -384,7 +384,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 		}
 
 		/* Allocate a new skb */
-		status_nbuf = qdf_nbuf_alloc(pdev->osif_pdev, RX_BUFFER_SIZE,
+		status_nbuf = qdf_nbuf_alloc(soc->osdev, RX_BUFFER_SIZE,
 			RX_BUFFER_RESERVATION, RX_BUFFER_ALIGNMENT, FALSE);
 
 		status_buf = qdf_nbuf_data(status_nbuf);

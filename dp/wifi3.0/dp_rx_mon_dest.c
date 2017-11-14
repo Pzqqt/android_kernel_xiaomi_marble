@@ -327,7 +327,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	uint32_t mac_id, qdf_nbuf_t head_msdu, qdf_nbuf_t last_msdu,
 	struct cdp_mon_status *rx_status)
 {
-	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
 	qdf_nbuf_t msdu, mpdu_buf, prev_buf, msdu_orig, head_frag_list;
 	uint32_t decap_format, wifi_hdr_len, sec_hdr_len, msdu_llc_len,
 		mpdu_buf_len, decap_hdr_pull_bytes, frag_list_sum_len, dir,
@@ -477,7 +476,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	 * accomodating any radio-tap /prism like PHY header
 	 */
 #define MAX_MONITOR_HEADER (512)
-	mpdu_buf = qdf_nbuf_alloc(dp_pdev->osif_pdev,
+	mpdu_buf = qdf_nbuf_alloc(soc->osdev,
 			MAX_MONITOR_HEADER + mpdu_buf_len,
 			MAX_MONITOR_HEADER, 4, FALSE);
 
