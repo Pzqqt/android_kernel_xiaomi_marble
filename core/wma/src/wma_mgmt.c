@@ -2351,14 +2351,11 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 				   uint8_t vdev_id,
 				   tpSendProbeRespParams probe_rsp_info)
 {
-	uint8_t *frm;
 	uint64_t adjusted_tsf_le;
 	struct ieee80211_frame *wh;
 	struct wmi_probe_resp_params params;
 
 	WMA_LOGD(FL("Send probe response template for vdev %d"), vdev_id);
-
-	frm = probe_rsp_info->pProbeRespTemplate;
 
 	/*
 	 * Make the TSF offset negative so probe response in the same
@@ -2367,19 +2364,14 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 	adjusted_tsf_le = cpu_to_le64(0ULL -
 				      wma->interfaces[vdev_id].tsfadjust);
 	/* Update the timstamp in the probe response buffer with adjusted TSF */
-	wh = (struct ieee80211_frame *)frm;
+	wh = (struct ieee80211_frame *)probe_rsp_info->pProbeRespTemplate;
 	A_MEMCPY(&wh[1], &adjusted_tsf_le, sizeof(adjusted_tsf_le));
 
-	params.pProbeRespTemplate = probe_rsp_info->pProbeRespTemplate;
-	params.probeRespTemplateLen = probe_rsp_info->probeRespTemplateLen;
-	qdf_mem_copy(params.bssId, probe_rsp_info->bssId,
-		     IEEE80211_ADDR_LEN);
-	qdf_mem_copy(params.ucProxyProbeReqValidIEBmap,
-		probe_rsp_info->ucProxyProbeReqValidIEBmap,
-		8 * sizeof(uint32_t));
+	params.prb_rsp_template_len = probe_rsp_info->probeRespTemplateLen;
+	params.prb_rsp_template_frm = probe_rsp_info->pProbeRespTemplate;
 
 	return wmi_unified_probe_rsp_tmpl_send_cmd(wma->wmi_handle, vdev_id,
-					&params, frm);
+						   &params);
 }
 
 /**
