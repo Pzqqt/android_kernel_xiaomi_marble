@@ -4887,8 +4887,7 @@ fail:
  */
 static QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 				   uint8_t vdev_id,
-				   struct wmi_probe_resp_params *probe_rsp_info,
-				   uint8_t *frm)
+				   struct wmi_probe_resp_params *probe_rsp_info)
 {
 	wmi_prb_tmpl_cmd_fixed_param *cmd;
 	wmi_bcn_prb_info *bcn_prb_info;
@@ -4899,7 +4898,7 @@ static QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD(FL("Send probe response template for vdev %d"), vdev_id);
 
-	tmpl_len = probe_rsp_info->probeRespTemplateLen;
+	tmpl_len = probe_rsp_info->prb_rsp_template_len;
 	tmpl_len_aligned = roundup(tmpl_len, sizeof(A_UINT32));
 
 	wmi_buf_len = sizeof(wmi_prb_tmpl_cmd_fixed_param) +
@@ -4938,7 +4937,7 @@ static QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, tmpl_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, frm, tmpl_len);
+	qdf_mem_copy(buf_ptr, probe_rsp_info->prb_rsp_template_frm, tmpl_len);
 
 	ret = wmi_unified_cmd_send(wmi_handle,
 				   wmi_buf, wmi_buf_len, WMI_PRB_TMPL_CMDID);

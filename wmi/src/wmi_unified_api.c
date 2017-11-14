@@ -1490,15 +1490,13 @@ QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_probe_rsp_tmpl_send_cmd(void *wmi_hdl,
 				uint8_t vdev_id,
-				struct wmi_probe_resp_params *probe_rsp_info,
-				uint8_t *frm)
+				struct wmi_probe_resp_params *probe_rsp_info)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_probe_rsp_tmpl_send_cmd)
 		return wmi_handle->ops->send_probe_rsp_tmpl_send_cmd(wmi_handle,
-						 vdev_id, probe_rsp_info,
-						 frm);
+						 vdev_id, probe_rsp_info);
 
 	return QDF_STATUS_E_FAILURE;
 }

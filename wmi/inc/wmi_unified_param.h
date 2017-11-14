@@ -1799,16 +1799,12 @@ struct wmi_gtx_config {
 
 /**
  * struct wmi_probe_resp_params - send probe response parameters
- * @bssId: BSSID
- * @pProbeRespTemplate: probe response template
- * @probeRespTemplateLen: probe response template length
- * @ucProxyProbeReqValidIEBmap: valid IE bitmap
+ * @prb_rsp_template_frm: pointer to template probe response template
+ * @prb_rsp_template_len: length of probe response template
  */
 struct wmi_probe_resp_params {
-	uint8_t  bssId[IEEE80211_ADDR_LEN];
-	uint8_t *pProbeRespTemplate;
-	uint32_t probeRespTemplateLen;
-	uint32_t ucProxyProbeReqValidIEBmap[8];
+	uint8_t *prb_rsp_template_frm;
+	uint32_t prb_rsp_template_len;
 };
 
 /* struct set_key_params: structure containing

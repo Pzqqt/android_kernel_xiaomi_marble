@@ -385,8 +385,7 @@ QDF_STATUS (*send_p2p_go_set_beacon_ie_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_probe_rsp_tmpl_send_cmd)(wmi_unified_t wmi_handle,
 			     uint8_t vdev_id,
-			     struct wmi_probe_resp_params *probe_rsp_info,
-			     uint8_t *frm);
+			     struct wmi_probe_resp_params *probe_rsp_info);
 
 QDF_STATUS (*send_setup_install_key_cmd)(wmi_unified_t wmi_handle,
 				struct set_key_params *key_params);
