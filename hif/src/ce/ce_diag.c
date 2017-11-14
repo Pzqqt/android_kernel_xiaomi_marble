@@ -173,6 +173,8 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *hif_ctx,
 		HIF_ERROR("%s: DIAG CE not present", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
+	/* not supporting diag ce on srng based systems, therefore we know this
+	 * isn't an srng based system */
 
 	transaction_id = (mux_id & MUX_ID_MASK) |
 		 (transaction_id & TRANSACTION_ID_MASK);
@@ -377,6 +379,8 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 		HIF_ERROR("%s: DIAG CE not present", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
+	/* not supporting diag ce on srng based systems, therefore we know this
+	 * isn't an srng based system */
 
 	transaction_id = (mux_id & MUX_ID_MASK) |
 		(transaction_id & TRANSACTION_ID_MASK);

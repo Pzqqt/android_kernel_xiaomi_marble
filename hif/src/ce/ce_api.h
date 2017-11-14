@@ -495,7 +495,7 @@ struct CE_ring_state;
 
 struct ce_ops {
 	uint32_t (*ce_get_desc_size)(uint8_t ring_type);
-	void (*ce_ring_setup)(struct hif_softc *scn, uint8_t ring_type,
+	int (*ce_ring_setup)(struct hif_softc *scn, uint8_t ring_type,
 		uint32_t ce_id, struct CE_ring_state *ring,
 		struct CE_attr *attr);
 	int (*ce_send_nolock)(struct CE_handle *copyeng,

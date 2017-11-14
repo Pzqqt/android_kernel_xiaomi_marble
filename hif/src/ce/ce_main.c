@@ -786,13 +786,13 @@ static struct CE_ring_state *ce_alloc_ring_state(struct CE_state *CE_state,
 	return ce_ring;
 }
 
-static void ce_ring_setup(struct hif_softc *scn, uint8_t ring_type,
+static int ce_ring_setup(struct hif_softc *scn, uint8_t ring_type,
 			uint32_t ce_id, struct CE_ring_state *ring,
 			struct CE_attr *attr)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
-	hif_state->ce_services->ce_ring_setup(scn, ring_type, ce_id,
+	return hif_state->ce_services->ce_ring_setup(scn, ring_type, ce_id,
 					      ring, attr);
 }
 
@@ -897,6 +897,7 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	unsigned int nentries;
 	bool malloc_CE_state = false;
 	bool malloc_src_ring = false;
+	int status;
 
 	QDF_ASSERT(CE_id < scn->ce_count);
 	ctrl_addr = CE_BASE_ADDRESS(CE_id);
@@ -982,13 +983,11 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				CE_DESC_RING_ALIGN - 1) &
 				 ~(CE_DESC_RING_ALIGN - 1));
 
-			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+			status = ce_ring_setup(scn, CE_RING_SRC, CE_id,
+					       src_ring, attr);
+			if (status < 0)
 				goto error_target_access;
 
-			ce_ring_setup(scn, CE_RING_SRC, CE_id, src_ring, attr);
-
-			if (Q_TARGET_ACCESS_END(scn) < 0)
-				goto error_target_access;
 			ce_ring_test_initial_indexes(CE_id, src_ring,
 						     "src_ring");
 		}
@@ -1017,13 +1016,9 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				goto error_no_dma_mem;
 			}
 
-			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-				goto error_target_access;
-
-			ce_ring_setup(scn, CE_RING_DEST, CE_id,
+			status = ce_ring_setup(scn, CE_RING_DEST, CE_id,
 				      dest_ring, attr);
-
-			if (Q_TARGET_ACCESS_END(scn) < 0)
+			if (status < 0)
 				goto error_target_access;
 
 			ce_ring_test_initial_indexes(CE_id, dest_ring,
@@ -1054,13 +1049,11 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 
 					return NULL;
 				}
-				if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-					goto error_target_access;
 
-				ce_ring_setup(scn, CE_RING_STATUS, CE_id,
-						CE_state->status_ring, attr);
-
-				if (Q_TARGET_ACCESS_END(scn) < 0)
+				status = ce_ring_setup(scn, CE_RING_STATUS,
+					       CE_id, CE_state->status_ring,
+					       attr);
+				if (status < 0)
 					goto error_target_access;
 
 			}
@@ -3105,6 +3098,8 @@ void hif_set_attribute(struct hif_opaque_softc *osc, uint8_t hif_attrib)
 	scn->hif_attribute = hif_attrib;
 }
 
+
+/* disable interrupts (only applicable for legacy copy engine currently */
 void hif_disable_interrupt(struct hif_opaque_softc *osc, uint32_t pipe_num)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(osc);
@@ -3144,6 +3139,8 @@ static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
  *
  * Called from the PCI interrupt handler when a
  * firmware-generated interrupt to the Host.
+ *
+ * only registered for legacy ce devices
  *
  * Return: status of handled irq
  */

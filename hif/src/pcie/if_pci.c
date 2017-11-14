@@ -159,7 +159,7 @@ static void pci_dispatch_interrupt(struct hif_softc *scn)
 	}
 }
 
-irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
+irqreturn_t hif_pci_legacy_ce_interrupt_handler(int irq, void *arg)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
@@ -602,6 +602,7 @@ static void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 }
 
 #ifndef QCA_WIFI_3_0
+/* only applicable to legacy ce */
 int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -2436,7 +2437,7 @@ static int hif_configure_msi(struct hif_pci_softc *sc)
 			tasklet_init(&sc->intr_tq,
 				wlan_tasklet, (unsigned long)sc);
 			ret = request_irq(sc->pdev->irq,
-					  hif_pci_interrupt_handler,
+					 hif_pci_legacy_ce_interrupt_handler,
 					  IRQF_SHARED, "wlan_pci", sc);
 			if (ret) {
 				HIF_ERROR("%s: request_irq failed", __func__);
@@ -2458,8 +2459,8 @@ static int hif_configure_msi(struct hif_pci_softc *sc)
 		sc->num_msi_intrs = 1;
 		tasklet_init(&sc->intr_tq, wlan_tasklet, (unsigned long)sc);
 		ret = request_irq(sc->pdev->irq,
-				  hif_pci_interrupt_handler, IRQF_SHARED,
-				  "wlan_pci", sc);
+				  hif_pci_legacy_ce_interrupt_handler,
+				  IRQF_SHARED, "wlan_pci", sc);
 		if (ret) {
 			HIF_ERROR("%s: request_irq failed", __func__);
 			goto err_intr;
@@ -2495,7 +2496,7 @@ static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 	/* do notn support MSI or MSI IRQ failed */
 	tasklet_init(&sc->intr_tq, wlan_tasklet, (unsigned long)sc);
 	ret = request_irq(sc->pdev->irq,
-			  hif_pci_interrupt_handler, IRQF_SHARED,
+			  hif_pci_legacy_ce_interrupt_handler, IRQF_SHARED,
 			  "wlan_pci", sc);
 	if (ret) {
 		HIF_ERROR("%s: request_irq failed, ret = %d", __func__, ret);
@@ -3118,6 +3119,8 @@ bus_resume:
  * ensure that the fastpath write index register is up to date
  * since runtime pm may cause ce_send_fast to skip the register
  * write.
+ *
+ * fastpath only applicable to legacy copy engine
  */
 void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx)
 {
@@ -3980,6 +3983,8 @@ void hif_pci_irq_enable(struct hif_softc *scn, int ce_id)
  * hif_pci_irq_disable() - ce_irq_disable
  * @scn: hif_softc
  * @ce_id: ce_id
+ *
+ * only applicable to legacy copy engine...
  *
  * Return: void
  */
