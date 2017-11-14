@@ -7798,6 +7798,33 @@ static int ie_whitelist_attrs_init(struct hdd_context *hdd_ctx)
 	return ret;
 }
 
+
+/**
+ * hdd_iface_change_callback() - Function invoked when stop modules expires
+ * @priv: pointer to hdd context
+ *
+ * This function is invoked when the timer waiting for the interface change
+ * expires, it shall cut-down the power to wlan and stop all the modules.
+ *
+ * Return: void
+ */
+static void hdd_iface_change_callback(void *priv)
+{
+	struct hdd_context *hdd_ctx = (struct hdd_context *) priv;
+	int ret;
+	int status = wlan_hdd_validate_context(hdd_ctx);
+
+	if (status)
+		return;
+
+	ENTER();
+	hdd_debug("Interface change timer expired close the modules!");
+	ret = hdd_wlan_stop_modules(hdd_ctx, false);
+	if (ret)
+		hdd_err("Failed to stop modules");
+	EXIT();
+}
+
 /**
  * hdd_context_create() - Allocate and inialize HDD context.
  * @dev:	Device Pointer to the underlying device
@@ -7820,6 +7847,11 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 		ret = -ENOMEM;
 		goto err_out;
 	}
+
+	qdf_mc_timer_init(&hdd_ctx->iface_change_timer, QDF_TIMER_TYPE_SW,
+			  hdd_iface_change_callback, (void *)hdd_ctx);
+
+	mutex_init(&hdd_ctx->iface_change_lock);
 
 	hdd_ctx->parent_dev = dev;
 	hdd_ctx->last_scan_reject_session_id = 0xFF;
@@ -7898,6 +7930,8 @@ err_free_config:
 
 err_free_hdd_context:
 	wiphy_free(hdd_ctx->wiphy);
+	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
+	mutex_destroy(&hdd_ctx->iface_change_lock);
 
 err_out:
 	return ERR_PTR(ret);
@@ -9660,31 +9694,6 @@ done:
 
 }
 
-/**
- * hdd_iface_change_callback() - Function invoked when stop modules expires
- * @priv: pointer to hdd context
- *
- * This function is invoked when the timer waiting for the interface change
- * expires, it shall cut-down the power to wlan and stop all the modules.
- *
- * Return: void
- */
-static void hdd_iface_change_callback(void *priv)
-{
-	struct hdd_context *hdd_ctx = (struct hdd_context *) priv;
-	int ret;
-	int status = wlan_hdd_validate_context(hdd_ctx);
-
-	if (status)
-		return;
-
-	ENTER();
-	hdd_debug("Interface change timer expired close the modules!");
-	ret = hdd_wlan_stop_modules(hdd_ctx, false);
-	if (ret)
-		hdd_err("Failed to stop modules");
-	EXIT();
-}
 
 /**
  * hdd_state_info_dump() - prints state information of hdd layer
@@ -9850,12 +9859,8 @@ int hdd_wlan_startup(struct device *dev)
 		goto err_hdd_free_context;
 	}
 
-	qdf_mc_timer_init(&hdd_ctx->iface_change_timer, QDF_TIMER_TYPE_SW,
-			  hdd_iface_change_callback, (void *)hdd_ctx);
 
 	qdf_nbuf_init_replenish_timer();
-
-	mutex_init(&hdd_ctx->iface_change_lock);
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_init(&hdd_ctx->avoid_freq_lock);
 #endif
@@ -9992,8 +9997,6 @@ err_hdd_free_context:
 		hdd_start_complete(ret);
 
 	qdf_nbuf_deinit_replenish_timer();
-	qdf_mc_timer_destroy(&hdd_ctx->iface_change_timer);
-	mutex_destroy(&hdd_ctx->iface_change_lock);
 	hdd_context_destroy(hdd_ctx);
 	return ret;
 
