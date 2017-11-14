@@ -2269,12 +2269,22 @@ endif
 
 # inject some build related information
 ifeq ($(CONFIG_BUILD_TAG), y)
-CLD_ID = $(shell cd "$(WLAN_ROOT)" && \
-	git log -1 | sed -nE 's/.*Change-Id: (I[0-f]{10}).*/\1/p')
-CMN_ID = $(shell cd "$(WLAN_COMMON_INC)" && \
-	git log -1 | sed -nE 's/.*Change-Id: (I[0-f]{10}).*/\1/p')
+CLD_CHECKOUT = $(shell cd "$(WLAN_ROOT)" && \
+	git reflog | grep -vm1 cherry-pick | grep -oE ^[0-f]+)
+CLD_IDS = $(shell cd "$(WLAN_ROOT)" && \
+	git log $(CLD_CHECKOUT)~..HEAD | \
+		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
+		paste -sd "," -)
+
+CMN_CHECKOUT = $(shell cd "$(WLAN_COMMON_INC)" && \
+	git reflog | grep -vm1 cherry-pick | grep -oE ^[0-f]+)
+CMN_IDS = $(shell cd "$(WLAN_COMMON_INC)" && \
+	git log $(CMN_CHECKOUT)~..HEAD | \
+		sed -nE 's/^\s*Change-Id: (I[0-f]{10})[0-f]{30}\s*$$/\1/p' | \
+		paste -sd "," -)
+
 TIMESTAMP = $(shell date -u +'%Y-%m-%dT%H:%M:%SZ')
-BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_ID); cmn:$(CMN_ID);"
+BUILD_TAG = "$(TIMESTAMP); cld:$(CLD_IDS); cmn:$(CMN_IDS);"
 CDEFINES += -DBUILD_TAG=\"$(BUILD_TAG)\"
 endif
 
