@@ -409,7 +409,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
  *         1 if entry already exists or if allocation has failed
  */
 int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, uint8_t is_self)
+		uint8_t *mac_addr, enum dp_ast_type is_self)
 {
 	struct dp_ast_entry *ast_entry;
 
@@ -445,15 +445,15 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	ast_entry->peer = peer;
 
 	switch (is_self) {
-	case 1:
+	case dp_ast_type_static:
 		peer->self_ast_entry = ast_entry;
 		ast_entry->type = CDP_TXRX_AST_TYPE_STATIC;
 		break;
-	case 0:
+	case dp_ast_type_wds:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
 		break;
-	case 2:
+	case dp_ast_type_mec:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
 		break;
@@ -493,7 +493,7 @@ void dp_peer_del_ast(struct dp_soc *soc,
 }
 #else
 int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, uint8_t is_self)
+		uint8_t *mac_addr, enum dp_ast_type is_self)
 {
 	return 1;
 }

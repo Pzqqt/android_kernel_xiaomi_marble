@@ -56,7 +56,7 @@ uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 
 
 int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, uint8_t is_self);
+		uint8_t *mac_addr, enum dp_ast_type is_self);
 void dp_peer_del_ast(struct dp_soc *soc,
 		struct dp_ast_entry *ast_entry);
 struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,

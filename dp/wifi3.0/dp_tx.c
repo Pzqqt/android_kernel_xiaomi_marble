@@ -2073,7 +2073,7 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 					status[(DP_MAC_ADDR_LEN - 2) + i];
 
 	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, DP_MAC_ADDR_LEN) &&
-		!dp_peer_add_ast(soc, peer, mac_addr, 2)) {
+		!dp_peer_add_ast(soc, peer, mac_addr, dp_ast_type_mec)) {
 			soc->cdp_soc.ol_ops->peer_add_wds_entry(
 				vdev->pdev->osif_pdev,
 				mac_addr,

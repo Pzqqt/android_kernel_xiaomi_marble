@@ -365,7 +365,8 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 		IEEE80211_ADDR_LEN);
 
 	if (qdf_unlikely(!hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr))) {
-		if (!dp_peer_add_ast(soc, ta_peer, wds_src_mac, 0)) {
+		if (!dp_peer_add_ast(soc, ta_peer, wds_src_mac,
+							dp_ast_type_wds)) {
 			ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
 					ta_peer->vdev->pdev->osif_pdev,
 					wds_src_mac,

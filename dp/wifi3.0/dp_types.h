@@ -181,6 +181,18 @@ enum dp_tx_frm_type {
 };
 
 /**
+ * enum dp_ast_type
+ * @dp_ast_type_wds: WDS peer AST type
+ * @dp_ast_type_static: static ast entry type
+ * @dp_ast_type_mec: Multicast echo ast entry type
+ */
+enum dp_ast_type {
+	dp_ast_type_wds = 0,
+	dp_ast_type_static,
+	dp_ast_type_mec,
+};
+
+/**
  * struct rx_desc_pool
  * @pool_size: number of RX descriptor in the pool
  * @array: pointer to array of RX descriptor

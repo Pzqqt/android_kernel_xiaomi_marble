@@ -2949,7 +2949,7 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	/* store provided params */
 	peer->vdev = vdev;
 
-	dp_peer_add_ast(soc, peer, peer_mac_addr, 1);
+	dp_peer_add_ast(soc, peer, peer_mac_addr, dp_ast_type_static);
 
 	qdf_spinlock_create(&peer->peer_info_lock);
 
