@@ -1071,6 +1071,9 @@ QDF_STATUS
 (*send_coex_config_cmd)(wmi_unified_t wmi_handle,
 			struct coex_config_params *param);
 
+QDF_STATUS (*send_bcn_offload_control_cmd)(wmi_unified_t wmi_handle,
+			struct bcn_offload_control *bcn_ctrl_param);
+
 QDF_STATUS (*extract_wds_addr_event)(wmi_unified_t wmi_handle,
 	void *evt_buf, uint16_t len, wds_addr_event_t *wds_ev);
 
