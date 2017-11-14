@@ -2789,7 +2789,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		 * @ Discrete : Target Download Complete
 		 */
 		qdf_status =
-			qdf_wait_single_event(&wma_handle->
+			qdf_wait_for_event_completion(&wma_handle->
 					      tx_frm_download_comp_event,
 					      WMA_TX_FRAME_COMPLETE_TIMEOUT);
 

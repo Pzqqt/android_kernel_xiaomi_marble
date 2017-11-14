@@ -620,7 +620,7 @@ QDF_STATUS pmo_core_enable_wow_in_fw(struct wlan_objmgr_psoc *psoc,
 
 	pmo_tgt_update_target_suspend_flag(psoc, true);
 
-	if (qdf_wait_single_event(&psoc_ctx->wow.target_suspend,
+	if (qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
 				  PMO_TGT_SUSPEND_COMPLETE_TIMEOUT)
 	    != QDF_STATUS_SUCCESS) {
 		pmo_err("Failed to receive WoW Enable Ack from FW");
@@ -678,7 +678,7 @@ QDF_STATUS pmo_core_psoc_suspend_target(struct wlan_objmgr_psoc *psoc,
 
 	pmo_tgt_update_target_suspend_flag(psoc, true);
 
-	if (qdf_wait_single_event(&psoc_ctx->wow.target_suspend,
+	if (qdf_wait_for_event_completion(&psoc_ctx->wow.target_suspend,
 				  PMO_TGT_SUSPEND_COMPLETE_TIMEOUT)
 	    != QDF_STATUS_SUCCESS) {
 		status = QDF_STATUS_E_TIMEOUT;
@@ -935,7 +935,7 @@ QDF_STATUS pmo_core_psoc_send_host_wakeup_ind_to_fw(
 	}
 	pmo_debug("Host wakeup indication sent to fw");
 
-	status = qdf_wait_single_event(&psoc_ctx->wow.target_resume,
+	status = qdf_wait_for_event_completion(&psoc_ctx->wow.target_resume,
 					PMO_RESUME_TIMEOUT);
 	if (status != QDF_STATUS_SUCCESS) {
 		pmo_err("Timeout waiting for resume event from FW");

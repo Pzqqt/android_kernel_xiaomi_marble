@@ -171,6 +171,7 @@ QDF_STATUS cds_init(void)
 	qdf_lock_stats_init();
 	qdf_mem_init();
 	qdf_mc_timer_manager_init();
+	qdf_event_list_init();
 	qdf_cpuhp_init();
 	qdf_register_self_recovery_callback(cds_trigger_recovery);
 
@@ -223,6 +224,7 @@ void cds_deinit(void)
 	qdf_mem_exit();
 	qdf_lock_stats_deinit();
 	qdf_debugfs_exit();
+	qdf_event_list_destroy();
 
 	gp_cds_context->qdf_ctx = NULL;
 	gp_cds_context = NULL;
@@ -796,8 +798,9 @@ QDF_STATUS cds_pre_enable(void)
 	}
 
 	/* Need to update time out of complete */
-	qdf_status = qdf_wait_single_event(&gp_cds_context->wmaCompleteEvent,
-					   CDS_WMA_TIMEOUT);
+	qdf_status = qdf_wait_for_event_completion(
+					&gp_cds_context->wmaCompleteEvent,
+					CDS_WMA_TIMEOUT);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		if (qdf_status == QDF_STATUS_E_TIMEOUT) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -962,8 +965,9 @@ err_wma_stop:
 		wma_setneedshutdown();
 	} else {
 		qdf_status =
-			qdf_wait_single_event(&(gp_cds_context->wmaCompleteEvent),
-					      CDS_WMA_TIMEOUT);
+			qdf_wait_for_event_completion(
+					&gp_cds_context->wmaCompleteEvent,
+					CDS_WMA_TIMEOUT);
 		if (qdf_status != QDF_STATUS_SUCCESS) {
 			if (qdf_status == QDF_STATUS_E_TIMEOUT) {
 				QDF_TRACE(QDF_MODULE_ID_QDF,
@@ -1810,7 +1814,7 @@ static QDF_STATUS cds_force_assert_target_via_wmi(qdf_device_t qdf)
 		return status;
 	}
 
-	status = qdf_wait_single_event(&wma->recovery_event,
+	status = qdf_wait_for_event_completion(&wma->recovery_event,
 				       WMA_CRASH_INJECT_TIMEOUT);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cds_err("Failed target force assert wait; status %d", status);
