@@ -972,7 +972,7 @@ static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter)
 	qdf_runtime_lock_init(&ctx->connect);
 }
 
-static void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter)
+static void hdd_adapter_runtime_suspend_deinit(struct hdd_adapter *adapter)
 {
 	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
 
@@ -982,7 +982,7 @@ static void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter)
 static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx) {}
 static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx) {}
 static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter) {}
-static void hdd_adapter_runtime_suspend_denit(struct hdd_adapter *adapter) {}
+static void hdd_adapter_runtime_suspend_deinit(struct hdd_adapter *adapter) {}
 #endif /* FEATURE_RUNTIME_PM */
 
 #define INTF_MACADDR_MASK       0x7
@@ -3630,7 +3630,7 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 		adapter->scan_info.default_scan_ies = NULL;
 	}
 
-	hdd_adapter_runtime_suspend_denit(adapter);
+	hdd_adapter_runtime_suspend_deinit(adapter);
 
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
@@ -4015,7 +4015,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
-			goto err_free_netdev;
+			goto err_deinit_adapter_runtime_pm;
 		}
 
 		/* Stop the Interface TX queue. */
@@ -4028,7 +4028,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		if (QDF_NDI_MODE == session_type) {
 			status = hdd_init_nan_data_mode(adapter);
 			if (QDF_STATUS_SUCCESS != status)
-				goto err_free_netdev;
+				goto err_deinit_adapter_runtime_pm;
 		}
 
 		break;
@@ -4089,7 +4089,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status) {
 			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
-			goto err_free_netdev;
+			goto err_deinit_adapter_runtime_pm;
 		}
 		/* Stop the Interface TX queue. */
 		hdd_debug("Disabling queues");
@@ -4150,6 +4150,12 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	return adapter;
 
+err_deinit_adapter_runtime_pm:
+	/*
+	 * For certain error cases that hdd_alloc_station_adapter()
+	 * is used to allocate the adapter.
+	 */
+	hdd_adapter_runtime_suspend_deinit(adapter);
 err_free_netdev:
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	free_netdev(adapter->dev);
