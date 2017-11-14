@@ -592,8 +592,7 @@ QDF_STATUS wmi_unified_process_update_edca_param(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_probe_rsp_tmpl_send_cmd(void *wmi_hdl,
 		   uint8_t vdev_id,
-		   struct wmi_probe_resp_params *probe_rsp_info,
-		   uint8_t *frm);
+		   struct wmi_probe_resp_params *probe_rsp_info);
 
 QDF_STATUS wmi_unified_setup_install_key_cmd(void *wmi_hdl,
 			struct set_key_params *key_params);
