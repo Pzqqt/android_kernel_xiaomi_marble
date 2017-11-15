@@ -753,24 +753,13 @@ void policy_mgr_update_hw_mode_conn_info(struct wlan_objmgr_psoc *psoc,
 	policy_mgr_dump_connection_status_info(psoc);
 }
 
-/**
- * policy_mgr_pdev_set_hw_mode_cb() - Callback for set hw mode
- * @status: Status
- * @cfgd_hw_mode_index: Configured HW mode index
- * @num_vdev_mac_entries: Number of vdev-mac id mapping that follows
- * @vdev_mac_map: vdev-mac id map. This memory will be freed by the caller.
- * So, make local copy if needed.
- *
- * Provides the status and configured hw mode index set
- * by the FW
- *
- * Return: None
- */
 void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 				uint32_t cfgd_hw_mode_index,
 				uint32_t num_vdev_mac_entries,
 				struct policy_mgr_vdev_mac_map *vdev_mac_map,
-				void *context)
+				uint8_t next_action,
+				enum policy_mgr_conn_update_reason reason,
+				uint32_t session_id, void *context)
 {
 	QDF_STATUS ret;
 	struct policy_mgr_hw_mode_params hw_mode;
@@ -818,6 +807,12 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	ret = policy_mgr_set_connection_update(context);
 	if (!QDF_IS_STATUS_SUCCESS(ret))
 		policy_mgr_err("ERROR: set connection_update_done event failed");
+
+	if (PM_NOP != next_action)
+		policy_mgr_next_actions(context, session_id,
+			next_action, reason);
+	else
+		policy_mgr_debug("No action needed right now");
 
 	return;
 }
@@ -2404,26 +2399,9 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 	return;
 }
 
-/**
- * policy_mgr_complete_action() - initiates actions needed on
- * current connections once channel has been decided for the new
- * connection
- * @new_nss: the new nss value
- * @next_action: next action to happen at policy mgr after
- *		beacon update
- * @reason: Reason for connection update
- * @session_id: Session id
- *
- * This function initiates initiates actions
- * needed on current connections once channel has been decided
- * for the new connection. Notifies UMAC & FW as well
- *
- * Return: QDF_STATUS enum
- */
-QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
-				uint8_t  new_nss, uint8_t next_action,
-				enum policy_mgr_conn_update_reason reason,
-				uint32_t session_id)
+QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
+		uint8_t  new_nss, uint8_t next_action,
+		enum policy_mgr_conn_update_reason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t index, count;
@@ -2439,16 +2417,6 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 		return status;
 	}
 
-	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
-		policy_mgr_err("driver isn't dbs capable, no further action needed");
-		return QDF_STATUS_E_NOSUPPORT;
-	}
-
-	/* policy_mgr_complete_action() is called by policy_mgr_next_actions().
-	 * All other callers of policy_mgr_next_actions() have taken mutex
-     * protection. So, not taking any lock inside
-     * policy_mgr_complete_action() during pm_conc_connection_list access.
-	 */
 	count = policy_mgr_mode_specific_connection_count(psoc,
 			PM_P2P_GO_MODE, list);
 	for (index = 0; index < count; index++) {
@@ -2503,6 +2471,44 @@ QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
 			}
 		}
 	}
+
+	return status;
+}
+
+/**
+ * policy_mgr_complete_action() - initiates actions needed on
+ * current connections once channel has been decided for the new
+ * connection
+ * @new_nss: the new nss value
+ * @next_action: next action to happen at policy mgr after
+ *		beacon update
+ * @reason: Reason for connection update
+ * @session_id: Session id
+ *
+ * This function initiates initiates actions
+ * needed on current connections once channel has been decided
+ * for the new connection. Notifies UMAC & FW as well
+ *
+ * Return: QDF_STATUS enum
+ */
+QDF_STATUS policy_mgr_complete_action(struct wlan_objmgr_psoc *psoc,
+				uint8_t  new_nss, uint8_t next_action,
+				enum policy_mgr_conn_update_reason reason,
+				uint32_t session_id)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
+		policy_mgr_err("driver isn't dbs capable, no further action needed");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	/* policy_mgr_complete_action() is called by policy_mgr_next_actions().
+	 * All other callers of policy_mgr_next_actions() have taken mutex
+	 * protection. So, not taking any lock inside
+	 * policy_mgr_complete_action() during pm_conc_connection_list access.
+	 */
+	status = policy_mgr_nss_update(psoc, new_nss, next_action, reason);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		status = policy_mgr_next_actions(psoc, session_id,
 						next_action, reason);

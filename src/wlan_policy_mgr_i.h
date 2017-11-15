@@ -369,7 +369,9 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 				uint32_t cfgd_hw_mode_index,
 				uint32_t num_vdev_mac_entries,
 				struct policy_mgr_vdev_mac_map *vdev_mac_map,
-				void *context);
+				uint8_t next_action,
+				enum policy_mgr_conn_update_reason reason,
+				uint32_t session_id, void *context);
 void policy_mgr_dump_current_concurrency(struct wlan_objmgr_psoc *psoc);
 void policy_mgr_pdev_set_pcl(struct wlan_objmgr_psoc *psoc,
 				enum QDF_OPMODE mode);
@@ -441,4 +443,8 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		struct regulatory_channel *chan_list,
 		struct avoid_freq_ind_data *avoid_freq_ind,
 		void *arg);
+
+QDF_STATUS policy_mgr_nss_update(struct wlan_objmgr_psoc *psoc,
+		uint8_t  new_nss, uint8_t next_action,
+		enum policy_mgr_conn_update_reason reason);
 #endif

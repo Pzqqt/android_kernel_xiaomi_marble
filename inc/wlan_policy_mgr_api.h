@@ -680,6 +680,8 @@ enum policy_mgr_con_mode policy_mgr_convert_device_mode_to_qdf_type(
  * @dfs: HW Agile DFS capability
  * @sbs: HW SBS capability
  * @reason: Reason for connection update
+ * @next_action: next action to happen at policy mgr after
+ *		HW mode change
  *
  * Sends the set hw mode request to FW
  *
@@ -710,7 +712,34 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
-		enum policy_mgr_conn_update_reason reason);
+		enum policy_mgr_conn_update_reason reason,
+		uint8_t next_action);
+
+/**
+ * policy_mgr_pdev_set_hw_mode_cback() - callback invoked by
+ * other component to provide set HW mode request status
+ * @status: status of the request
+ * @cfgd_hw_mode_index: new HW mode index
+ * @num_vdev_mac_entries: Number of mac entries
+ * @vdev_mac_map: The table of vdev to mac mapping
+ * @next_action: next action to happen at policy mgr after
+ *		beacon update
+ * @reason: Reason for set HW mode
+ * @session_id: vdev id on which the request was made
+ * @context: PSOC object information
+ *
+ * This function is the callback registered with SME at set HW
+ * mode request time
+ *
+ * Return: None
+ */
+typedef void (*policy_mgr_pdev_set_hw_mode_cback)(uint32_t status,
+				uint32_t cfgd_hw_mode_index,
+				uint32_t num_vdev_mac_entries,
+				struct policy_mgr_vdev_mac_map *vdev_mac_map,
+				uint8_t next_action,
+				enum policy_mgr_conn_update_reason reason,
+				uint32_t session_id, void *context);
 
 /**
  * policy_mgr_nss_update_cback() - callback invoked by other
