@@ -1348,7 +1348,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
 
 	ppdu_desc->ppdu_start_timestamp = dp_stats_buf->ppdu_start_tstmp_us;
-	ppdu_desc->ppdu_end_timestamp = 0; /*TODO: value to be provided by FW */
+	ppdu_desc->ppdu_end_timestamp = dp_stats_buf->ppdu_sch_end_tstmp_us;
 	tag_buf += 6;
 	ppdu_desc->channel = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
