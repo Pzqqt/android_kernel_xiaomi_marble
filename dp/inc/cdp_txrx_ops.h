@@ -644,6 +644,7 @@ struct ol_if_ops {
 
 	void (*rx_mic_error)(void *ol_soc_handle,
 			 uint16_t vdev_id, void *wh);
+	uint8_t (*freq_to_channel)(void *ol_soc_handle,  uint16_t vdev_id);
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

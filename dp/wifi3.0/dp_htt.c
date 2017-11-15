@@ -1359,6 +1359,8 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 		uint32_t *tag_buf)
 {
 	uint16_t frame_type;
+	uint16_t freq;
+	struct dp_soc *soc = NULL;
 	struct cdp_tx_completion_ppdu *ppdu_desc;
 	htt_ppdu_stats_common_tlv *dp_stats_buf =
 		(htt_ppdu_stats_common_tlv *)tag_buf;
@@ -1382,7 +1384,14 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	ppdu_desc->ppdu_start_timestamp = dp_stats_buf->ppdu_start_tstmp_us;
 	ppdu_desc->ppdu_end_timestamp = dp_stats_buf->ppdu_sch_end_tstmp_us;
 	tag_buf += 6;
-	ppdu_desc->channel = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
+	freq = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
+	if (freq != ppdu_desc->channel) {
+		soc = pdev->soc;
+		ppdu_desc->channel = freq;
+		if (soc && soc->cdp_soc.ol_ops->freq_to_channel)
+			pdev->operating_channel =
+		soc->cdp_soc.ol_ops->freq_to_channel(pdev->osif_pdev, freq);
+	}
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
 }
 
