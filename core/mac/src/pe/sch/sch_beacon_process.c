@@ -989,10 +989,9 @@ static void sch_check_bss_color_ie(tpAniSirGlobal mac_ctx,
 								ap_session);
 			ap_session->he_op.bss_color = ap_session->
 						he_bss_color_change.new_color;
-			WMI_HEOPS_COLOR_SET(bcn_prm->he_ops,
-						ap_session->he_op.bss_color);
-			WMI_HEOPS_BSSCOLORDISABLE_SET(bcn_prm->he_ops,
-					ap_session->he_op.bss_col_disabled);
+			bcn_prm->bss_color = ap_session->he_op.bss_color;
+			bcn_prm->bss_color_disabled =
+					ap_session->he_op.bss_col_disabled;
 			ap_session->bss_color_changing = 1;
 		} else {
 			/* update info for the bss color */

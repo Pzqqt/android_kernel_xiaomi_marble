@@ -1285,22 +1285,30 @@ void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
 }
 
 QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
-					   uint32_t he_ops)
+				tDot11fIEhe_op *he_op)
 {
 	QDF_STATUS ret;
+	uint32_t dword_he_op = 0;
 
 	if (!wma) {
 		WMA_LOGE(FL("wrong wma_handle...."));
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	WMI_HEOPS_COLOR_SET(dword_he_op, he_op->bss_color);
+	WMI_HEOPS_DEFPE_SET(dword_he_op, he_op->default_pe);
+	WMI_HEOPS_TWT_SET(dword_he_op, he_op->twt_required);
+	WMI_HEOPS_RTSTHLD_SET(dword_he_op, he_op->rts_threshold);
+	WMI_HEOPS_PARTBSSCOLOR_SET(dword_he_op, he_op->partial_bss_col);
+	WMI_HEOPS_TXBSSID_SET(dword_he_op, he_op->tx_bssid_ind);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(dword_he_op, he_op->bss_col_disabled);
+
+	WMA_LOGD("vdev_id: %d HE_OPs: 0x%x", vdev_id, dword_he_op);
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-			WMI_VDEV_PARAM_HEOPS_0_31, he_ops);
+			WMI_VDEV_PARAM_HEOPS_0_31, dword_he_op);
 
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE(FL("Failed to set HE OPs"));
-	else
-		WMA_LOGD(FL("Succesfully send he_ops[0x%x]"), he_ops);
 
 	return ret;
 }

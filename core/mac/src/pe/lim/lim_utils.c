@@ -5870,30 +5870,15 @@ bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac, tpPESession psessionEntry
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
 bool lim_send_he_ie_update(tpAniSirGlobal mac_ctx, tpPESession pe_session)
 {
-	uint32_t he_ops = 0;
-	tDot11fIEhe_op *he_op = &pe_session->he_op;
 	QDF_STATUS status;
 
-	WMI_HEOPS_COLOR_SET(he_ops, he_op->bss_color);
-	WMI_HEOPS_DEFPE_SET(he_ops, he_op->default_pe);
-	WMI_HEOPS_TWT_SET(he_ops, he_op->twt_required);
-	WMI_HEOPS_RTSTHLD_SET(he_ops, he_op->rts_threshold);
-	WMI_HEOPS_PARTBSSCOLOR_SET(he_ops, he_op->partial_bss_col);
-	WMI_HEOPS_TXBSSID_SET(he_ops, he_op->tx_bssid_ind);
-	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
 	status = wma_update_he_ops_ie(cds_get_context(QDF_MODULE_ID_WMA),
-				      pe_session->smeSessionId, he_ops);
-	if (status != QDF_STATUS_SUCCESS)  {
-		pe_err("Can't send for vdev_id[%d] he_ops[0x%x]",
-			pe_session->smeSessionId, he_ops);
+				      pe_session->smeSessionId,
+				      &pe_session->he_op);
+	if (QDF_IS_STATUS_ERROR(status))
 		return false;
-	} else {
-		pe_debug("successfully sent for vdev_id[%d] he_ops[0x%x]",
-			pe_session->smeSessionId, he_ops);
-	}
 
 	return true;
-
 }
 #endif
 

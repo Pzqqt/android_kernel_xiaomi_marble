@@ -1452,23 +1452,24 @@ wma_update_beacon_interval(tp_wma_handle wma, uint8_t vdev_id,
  */
 static void
 wma_update_bss_color(tp_wma_handle wma, uint8_t vdev_id,
-			   uint32_t he_ops)
+		     tUpdateBeaconParams *bcn_params)
 {
 	QDF_STATUS ret;
+	uint32_t dword_he_ops = 0;
 
+	WMI_HEOPS_COLOR_SET(dword_he_ops, bcn_params->bss_color);
+	WMI_HEOPS_BSSCOLORDISABLE_SET(dword_he_ops,
+				bcn_params->bss_color_disabled);
+	WMA_LOGD("vdev: %d, update bss color, HE_OPS: 0x%x",
+		vdev_id, dword_he_ops);
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
-					      WMI_VDEV_PARAM_BSS_COLOR,
-					      he_ops);
-
+			      WMI_VDEV_PARAM_BSS_COLOR, dword_he_ops);
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to update HE operations");
-	else
-		WMA_LOGI("Updated HE operations %x for vdev %d",
-			 he_ops, vdev_id);
 }
 #else
 static void wma_update_bss_color(tp_wma_handle wma, uint8_t vdev_id,
-			   uint32_t he_ops)
+			   tUpdateBeaconParams *bcn_params)
 {
 }
 #endif
@@ -1505,7 +1506,7 @@ wma_process_update_beacon_params(tp_wma_handle wma,
 
 	if (bcn_params->paramChangeBitmap & PARAM_BSS_COLOR_CHANGED)
 		wma_update_bss_color(wma, bcn_params->smeSessionId,
-					   bcn_params->he_ops);
+				     bcn_params);
 }
 
 /**

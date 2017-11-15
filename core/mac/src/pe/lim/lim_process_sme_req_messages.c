@@ -5990,10 +5990,9 @@ void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	session_entry->he_bss_color_change.new_color = bss_color->bss_color;
 	session_entry->he_op.bss_color =
 		session_entry->he_bss_color_change.new_color;
-	WMI_HEOPS_COLOR_SET(beacon_params.he_ops,
-			session_entry->he_op.bss_color);
-	WMI_HEOPS_BSSCOLORDISABLE_SET(beacon_params.he_ops,
-			session_entry->he_op.bss_col_disabled);
+	beacon_params.bss_color = session_entry->he_op.bss_color;
+	beacon_params.bss_color_disabled =
+		session_entry->he_op.bss_col_disabled;
 	session_entry->bss_color_changing = 1;
 
 	if (sch_set_fixed_beacon_fields(mac_ctx, session_entry) !=

@@ -193,7 +193,7 @@ void wma_update_vdev_he_capable(struct wma_vdev_start_req *req,
  * Return: QDF_STATUS
  */
 QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma, uint8_t vdev_id,
-					   uint32_t he_ops);
+				tDot11fIEhe_op *he_ops);
 
 /**
  * wma_get_he_capabilities() - Get HE capabilities from WMA
@@ -282,7 +282,7 @@ static inline void wma_copy_vdev_start_he_ops(struct vdev_start_params *params,
 }
 
 static inline  QDF_STATUS wma_update_he_ops_ie(tp_wma_handle wma,
-			uint8_t vdev_id, uint32_t he_ops)
+			uint8_t vdev_id, tDot11fIEhe_op *he_ops)
 {
 	return QDF_STATUS_SUCCESS;
 }
