@@ -82,8 +82,27 @@ enum qca_wlan_vendor_tdls_trigger_mode_hdd_map {
 int wlan_hdd_tdls_get_all_peers(struct hdd_adapter *adapter,
 				char *buf, int buflen)
 {
-	/* TODO */
-	return 0;
+	int len;
+	struct hdd_context *hdd_ctx;
+
+	ENTER();
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (0 != (wlan_hdd_validate_context(hdd_ctx))) {
+		len = scnprintf(buf, buflen,
+				"\nHDD context is not valid\n");
+		return len;
+	}
+
+	if ((QDF_STA_MODE != adapter->device_mode) &&
+	    (QDF_P2P_CLIENT_MODE != adapter->device_mode)) {
+		len = scnprintf(buf, buflen,
+				"\nNo TDLS support for this adapter\n");
+		return len;
+	}
+
+	return wlan_cfg80211_tdls_get_all_peers(adapter->hdd_vdev,
+						buf, buflen);
 }
 
 #ifdef FEATURE_WLAN_TDLS
