@@ -690,7 +690,8 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
 	if (status != QDF_STATUS_SUCCESS) {
-		sme_err("Invalid sme Session ID");
+		sme_err("sme session ID not found for bssid= "MAC_ADDRESS_STR,
+			MAC_ADDR_ARRAY(sme_rrm_ctx->sessionBssId.bytes));
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -955,6 +956,13 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
 
 	status = sme_rrm_issue_scan_req(pMac);
+
+	if (status != QDF_STATUS_SUCCESS) {
+		if (pSmeRrmContext->channelList.ChannelList) {
+			qdf_mem_free(pSmeRrmContext->channelList.ChannelList);
+			pSmeRrmContext->channelList.ChannelList = NULL;
+		}
+	}
 
 	return status;
 }
