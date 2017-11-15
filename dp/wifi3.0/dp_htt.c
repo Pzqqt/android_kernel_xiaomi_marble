@@ -60,6 +60,12 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		struct cdp_tx_completion_ppdu_user *ppdu, uint32_t ack_rssi)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
+	uint8_t preamble, mcs;
+	uint16_t num_msdu;
+
+	preamble = ppdu->preamble;
+	mcs = ppdu->mcs;
+	num_msdu = ppdu->num_msdu;
 
 	/* If the peer statistics are already processed as part of
 	 * per-MSDU completion handler, do not process these again in per-PPDU
@@ -68,12 +74,8 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		return;
 
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
-			(ppdu->success_msdus + ppdu->retry_msdus +
-			 ppdu->failed_msdus),
-			ppdu->success_bytes);
+			num_msdu, ppdu->success_bytes);
 	DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
-	DP_STATS_INC(peer,
-		tx.pkt_type[ppdu->preamble].mcs_count[ppdu->mcs], 1);
 	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], 1);
 	DP_STATS_INC(peer, tx.bw[ppdu->bw], 1);
 	DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
@@ -84,6 +86,36 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 			ppdu->success_bytes);
 	DP_STATS_INC(peer, tx.retries,
 			(ppdu->long_retries + ppdu->short_retries));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11A) && (preamble == DOT11_A)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11A) && (preamble == DOT11_A)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11B) && (preamble == DOT11_B)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < (MAX_MCS_11B)) && (preamble == DOT11_B)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11A) && (preamble == DOT11_N)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11A) && (preamble == DOT11_N)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= MAX_MCS_11AC) && (preamble == DOT11_AC)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < MAX_MCS_11AC) && (preamble == DOT11_AC)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			((mcs >= (MAX_MCS - 1)) && (preamble == DOT11_AX)));
+	DP_STATS_INCC(peer,
+			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
+			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
@@ -2004,8 +2036,12 @@ static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 
 			ppdu_desc->num_mpdu += ppdu_desc->user[i].num_mpdu;
 			ppdu_desc->num_msdu += ppdu_desc->user[i].num_msdu;
-			dp_tx_stats_update(soc, peer, &ppdu_desc->user[i],
-					ppdu_desc->ack_rssi);
+
+			if (ppdu_desc->frame_type == CDP_PPDU_FTYPE_DATA) {
+				dp_tx_stats_update(soc, peer,
+						&ppdu_desc->user[i],
+						ppdu_desc->ack_rssi);
+			}
 		}
 
 		dp_wdi_event_handler(WDI_EVENT_TX_PPDU_DESC, soc,

@@ -52,7 +52,7 @@
 #define MAX_MCS (12 + 1)
 #define MAX_MCS_11A 8
 #define MAX_MCS_11B 7
-#define MAX_MCS_11AC 10
+#define MAX_MCS_11AC 12
 /* 1 additional GI is for invalid values */
 #define MAX_GI (4 + 1)
 #define SS_COUNT 8
@@ -849,6 +849,8 @@ struct cdp_rx_stats {
 	uint32_t amsdu_cnt;
 	/* Number of bar received */
 	uint32_t bar_recv_cnt;
+	/* RSSI of received signal */
+	uint32_t rssi;
 };
 
 /* Tx ingress Stats */
@@ -1199,7 +1201,11 @@ struct cdp_tx_completion_msdu {
  * @ppdu_id: PPDU Id
  * @is_ampdu: mpdu aggregate or non-aggregate?
  * @num_mpdu: Number of MPDUs in PPDU
+ * @reserved: Reserved bits for future use
  * @num_msdu: Number of MSDUs in PPDU
+ * @udp_msdu_count: Number of UDP MSDUs in PPDU
+ * @tcp_msdu_count: Number of TCP MSDUs in PPDU
+ * @other_msdu_count: Number of MSDUs other than UDP and TCP MSDUs in PPDU
  * @duration: PPDU duration
  * @tid: TID number
  * @peer_id: Peer ID
@@ -1232,9 +1238,13 @@ struct cdp_tx_completion_msdu {
  */
 struct cdp_rx_indication_ppdu {
 	uint32_t ppdu_id;
-	uint32_t is_ampdu:1,
+	uint16_t is_ampdu:1,
 		 num_mpdu:9,
-		 num_msdu:16;
+		 reserved:6;
+	uint32_t num_msdu;
+	uint16_t udp_msdu_count;
+	uint16_t tcp_msdu_count;
+	uint16_t other_msdu_count;
 	uint16_t duration;
 	uint32_t tid:8,
 		 peer_id:16;
