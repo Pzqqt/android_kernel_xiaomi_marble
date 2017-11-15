@@ -771,8 +771,8 @@ static tSirLLStatsResults *wma_get_ll_stats_ext_buf(uint32_t *len,
 			excess_data = true;
 			break;
 		}
-		if (peer_num > (WMI_SVC_MSG_MAX_SIZE - total_peer_len) /
-				sizeof(struct sir_wifi_ll_ext_peer_stats)) {
+		if (peer_num > WMI_SVC_MSG_MAX_SIZE / (total_peer_len +
+		    sizeof(struct sir_wifi_ll_ext_peer_stats))) {
 			excess_data = true;
 			break;
 		} else {
