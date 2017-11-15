@@ -5571,7 +5571,7 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx, rx_hash);
 
 	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
-		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc,
+		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->osif_soc,
 				CDP_CFG_MAX_PEER_ID);
 
 		if (ret != -EINVAL) {
