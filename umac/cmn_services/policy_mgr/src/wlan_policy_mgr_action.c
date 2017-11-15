@@ -98,7 +98,8 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum hw_mode_sbs_capab sbs,
-		enum policy_mgr_conn_update_reason reason)
+		enum policy_mgr_conn_update_reason reason,
+		uint8_t next_action)
 {
 	int8_t hw_mode_index;
 	struct policy_mgr_hw_mode msg;
@@ -135,6 +136,7 @@ QDF_STATUS policy_mgr_pdev_set_hw_mode(struct wlan_objmgr_psoc *psoc,
 	msg.set_hw_mode_cb = (void *)policy_mgr_pdev_set_hw_mode_cb;
 	msg.reason = reason;
 	msg.session_id = session_id;
+	msg.next_action = next_action;
 	msg.context = psoc;
 
 	policy_mgr_debug("set hw mode to sme: hw_mode_index: %d session:%d reason:%d",
@@ -488,7 +490,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						     HW_MODE_DBS,
 						     HW_MODE_AGILE_DFS_NONE,
 						     HW_MODE_SBS_NONE,
-						     reason);
+						     reason, PM_NOP);
 		break;
 	case PM_SINGLE_MAC_UPGRADE:
 		/*
@@ -501,14 +503,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason);
-		/*
-		* check if we have a beaconing entity that advertised 2x2
-		* intially. If yes, update the beacon template & notify FW.
-		* Once FW confirms beacon updated, send the HW mode change req
-		*/
-		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_2,
-					PM_SINGLE_MAC, reason, session_id);
+						reason, PM_UPGRADE);
 		break;
 	case PM_SINGLE_MAC:
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
@@ -518,7 +513,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_DBS_NONE,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason);
+						reason, PM_NOP);
 		break;
 	case PM_DBS_UPGRADE:
 		status = policy_mgr_pdev_set_hw_mode(psoc, session_id,
@@ -528,10 +523,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS_NONE,
-						reason);
-
-		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_2,
-					PM_DBS, reason, session_id);
+						reason, PM_UPGRADE);
 		break;
 	case PM_SBS_DOWNGRADE:
 		status = policy_mgr_complete_action(psoc, POLICY_MGR_RX_NSS_1,
@@ -545,7 +537,23 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 						HW_MODE_DBS,
 						HW_MODE_AGILE_DFS_NONE,
 						HW_MODE_SBS,
-						reason);
+						reason, PM_NOP);
+		break;
+	case PM_DOWNGRADE:
+		/*
+		 * check if we have a beaconing entity that advertised 2x2
+		 * intially. If yes, update the beacon template & notify FW.
+		 */
+		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_1,
+					PM_NOP, reason);
+		break;
+	case PM_UPGRADE:
+		/*
+		 * check if we have a beaconing entity that advertised 2x2
+		 * intially. If yes, update the beacon template & notify FW.
+		 */
+		status = policy_mgr_nss_update(psoc, POLICY_MGR_RX_NSS_2,
+					PM_NOP, reason);
 		break;
 	default:
 		policy_mgr_err("unexpected action value %d", action);

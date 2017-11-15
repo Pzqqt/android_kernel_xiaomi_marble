@@ -668,6 +668,8 @@ enum policy_mgr_two_connection_mode {
  * @PM_SINGLE_MAC_UPGRADE: switch to MCC/SCC mode & upgrade to 2x2
  * @PM_SBS: switch to SBS mode
  * @PM_SBS_DOWNGRADE: switch to SBS mode & downgrade to 1x1
+ * @PM_DOWNGRADE: downgrade to 1x1
+ * @PM_UPGRADE: upgrade to 2x2
  * @PM_MAX_CONC_PRIORITY_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -682,6 +684,8 @@ enum policy_mgr_conc_next_action {
 	PM_SINGLE_MAC_UPGRADE,
 	PM_SBS,
 	PM_SBS_DOWNGRADE,
+	PM_DOWNGRADE,
+	PM_UPGRADE,
 
 	PM_MAX_CONC_NEXT_ACTION
 };
@@ -889,6 +893,7 @@ struct policy_mgr_dual_mac_config {
  * @set_hw_mode_cb: HDD set HW mode callback
  * @reason: Reason for HW mode change
  * @session_id: Session id
+ * @next_action: next action to happen at policy mgr
  * @context: psoc context
  */
 struct policy_mgr_hw_mode {
@@ -896,7 +901,7 @@ struct policy_mgr_hw_mode {
 	void *set_hw_mode_cb;
 	enum policy_mgr_conn_update_reason reason;
 	uint32_t session_id;
-	struct wlan_objmgr_vdev *vdev;
+	uint8_t next_action;
 	struct wlan_objmgr_psoc *context;
 };
 
