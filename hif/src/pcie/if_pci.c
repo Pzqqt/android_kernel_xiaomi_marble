@@ -4393,9 +4393,11 @@ int hif_runtime_lock_init(qdf_runtime_lock_t *lock, const char *name)
 {
 	struct hif_pm_runtime_lock *context;
 
+	HIF_INFO("Initializing Runtime PM wakelock %s", name);
+
 	context = qdf_mem_malloc(sizeof(*context));
 	if (!context) {
-		HIF_ERROR("%s: No memory for Runtime PM wakelock context\n",
+		HIF_ERROR("%s: No memory for Runtime PM wakelock context",
 			  __func__);
 		return -ENOMEM;
 	}
@@ -4418,8 +4420,13 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 	struct hif_pm_runtime_lock *context = data;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (!context)
+	if (!context) {
+		HIF_ERROR("Runtime PM wakelock context is NULL");
 		return;
+	}
+
+	HIF_INFO("Deinitializing Runtime PM wakelock %s", context->name);
+
 	/*
 	 * Ensure to delete the context list entry and reduce the usage count
 	 * before freeing the context if context is active.
@@ -4429,6 +4436,7 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 		__hif_pm_runtime_allow_suspend(sc, context);
 		spin_unlock_bh(&sc->runtime_lock);
 	}
+
 	qdf_mem_free(context);
 }
 #endif /* FEATURE_RUNTIME_PM */
