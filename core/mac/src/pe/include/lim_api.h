@@ -363,25 +363,5 @@ static inline void lim_fill_join_rsp_ht_caps(tpPESession session,
 QDF_STATUS lim_update_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	uint8_t *ie_data, uint8_t *local_ie_buf, uint16_t *local_ie_len);
 
-#ifdef WLAN_FEATURE_11AX
-#define LIM_HE_SU_BEAMFORMER_BYTE_IDX 8
-#define LIM_HE_SU_BEAMFORMEE_BYTE_IDX 9
-#define LIM_HE_MU_BEAMFORMER_BYTE_IDX 9
-#define LIM_HE_SU_BEAMFORMER_BIT_POS 8
-#define LIM_HE_SU_BEAMFORMEE_BIT_POS 1
-#define LIM_HE_MU_BEAMFORMER_BIT_POS 2
-
-#define LIM_GET_BIT_VALUE(arr, byte, bit) ((arr[byte-1] >> (bit - 1)) & 0x01)
-#define LIM_GET_SU_BEAMFORMER(he_cap) \
-	LIM_GET_BIT_VALUE(he_cap, LIM_HE_SU_BEAMFORMER_BYTE_IDX, \
-			  LIM_HE_SU_BEAMFORMER_BIT_POS)
-#define LIM_GET_SU_BEAMFORMEE(he_cap) \
-	LIM_GET_BIT_VALUE(he_cap, LIM_HE_SU_BEAMFORMEE_BYTE_IDX, \
-			  LIM_HE_SU_BEAMFORMEE_BIT_POS)
-#define LIM_GET_MU_BEAMFORMER(he_cap) \
-	LIM_GET_BIT_VALUE(he_cap, LIM_HE_MU_BEAMFORMER_BYTE_IDX, \
-			  LIM_HE_MU_BEAMFORMER_BIT_POS)
-#endif
-
 /************************************************************/
 #endif /* __LIM_API_H */

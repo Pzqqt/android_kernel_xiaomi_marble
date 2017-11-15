@@ -6262,16 +6262,7 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
 			tpPESession session, tDot11fIEhe_op *he_op)
 {
-	he_op->present = 1;
-
-	he_op->bss_color = session->he_op.bss_color;
-	he_op->default_pe = session->he_op.default_pe;
-	he_op->twt_required = session->he_op.twt_required;
-	he_op->rts_threshold = session->he_op.rts_threshold;
-	he_op->partial_bss_col = session->he_op.partial_bss_col;
-	he_op->mbssid_ap = session->he_op.mbssid_ap;
-	he_op->tx_bssid_ind = session->he_op.tx_bssid_ind;
-	he_op->bss_col_disabled = session->he_op.bss_col_disabled;
+	qdf_mem_copy(he_op, &session->he_op, sizeof(*he_op));
 
 	he_op->vht_oper_present = 1;
 	if (session->ch_width > CH_WIDTH_40MHZ) {

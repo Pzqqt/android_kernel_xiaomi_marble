@@ -7291,9 +7291,9 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 {
 	const uint8_t *vendor_ie;
-	const uint8_t *he_cap_data;
 	tSirAddIeParams *add_ie = &session->addIeParams;
 	tDot11fIEhe_cap *he_cap = &session->he_config;
+	struct he_cap_network_endian *he_cap_from_ie;
 
 	vendor_ie = wlan_get_ext_ie_ptr_from_ext_id(
 			HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
@@ -7304,16 +7304,18 @@ void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 		return;
 	}
 
-	he_cap_data = vendor_ie + HE_OP_OUI_SIZE + 2;
-
 	pe_debug("Before update: su_beamformer: %d, su_beamformee: %d, mu_beamformer: %d",
 		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
-	if (he_cap->su_beamformer)
-		he_cap->su_beamformer = LIM_GET_SU_BEAMFORMER(he_cap_data);
-	if (he_cap->su_beamformee)
-		he_cap->su_beamformee = LIM_GET_SU_BEAMFORMEE(he_cap_data);
-	if (he_cap->mu_beamformer)
-		he_cap->mu_beamformer = LIM_GET_MU_BEAMFORMER(he_cap_data);
+
+	he_cap_from_ie =
+		(struct he_cap_network_endian *)&vendor_ie[HE_OP_OUI_SIZE + 2];
+
+	he_cap->su_beamformer =
+		he_cap->su_beamformer & he_cap_from_ie->su_beamformer;
+	he_cap->su_beamformee =
+		he_cap->su_beamformee & he_cap_from_ie->su_beamformee;
+	he_cap->mu_beamformer =
+		he_cap->mu_beamformer & he_cap_from_ie->mu_beamformer;
 
 	pe_debug("After update: su_beamformer: %d, su_beamformee: %d, mu_beamformer: %d",
 		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
@@ -7322,8 +7324,9 @@ void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		      tpPESession session)
 {
+	uint32_t val;
 	const uint8_t *vendor_ie;
-	uint32_t he_op;
+	struct he_ops_network_endian *he_ops_from_ie;
 	tDot11fIEhe_op *he_ops = &add_bss->he_op;
 	tSirAddIeParams *add_ie = &session->addIeParams;
 
@@ -7336,30 +7339,34 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		return;
 	}
 
-	qdf_mem_copy(&he_op, &vendor_ie[HE_OP_OUI_SIZE + 2], sizeof(uint32_t));
+	he_ops_from_ie =
+		(struct he_ops_network_endian *)&vendor_ie[HE_OP_OUI_SIZE + 2];
 
-	he_ops->bss_color = HE_OP_BSS_COLOR_GET(he_op);
-	he_ops->default_pe = HE_OP_DEF_PE_DUR_GET(he_op);
-	he_ops->twt_required = HE_OP_TWT_REQ_GET(he_op);
-	he_ops->rts_threshold = HE_OP_RTS_THRES_GET(he_op);
-	he_ops->partial_bss_col = HE_OP_PART_BSS_COLOR_GET(he_op);
-	he_ops->tx_bssid_ind = HE_OP_TX_BSSIX_IND_GET(he_op);
-	he_ops->bss_col_disabled = HE_OP_BSS_COLOR_DIS_GET(he_op);
+	he_ops->bss_color = he_ops_from_ie->bss_color;
+	he_ops->default_pe = he_ops_from_ie->default_pe;
+	he_ops->twt_required = he_ops_from_ie->twt_required;
+	he_ops->rts_threshold = he_ops_from_ie->rts_threshold;
+	he_ops->partial_bss_col = he_ops_from_ie->partial_bss_col;
+	he_ops->tx_bssid_ind = he_ops_from_ie->tx_bssid_ind;
+	he_ops->bss_col_disabled = he_ops_from_ie->bss_col_disabled;
 
-	session->he_op.bss_color = he_ops->bss_color;
-	session->he_op.default_pe = he_ops->default_pe;
-	session->he_op.twt_required = he_ops->twt_required;
-	session->he_op.rts_threshold = he_ops->rts_threshold;
-	session->he_op.partial_bss_col = he_ops->partial_bss_col;
-	session->he_op.tx_bssid_ind = he_ops->tx_bssid_ind;
-	session->he_op.bss_col_disabled = he_ops->bss_col_disabled;
+	if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx,
+			WNI_CFG_HE_OPS_BASIC_MCS_NSS, &val))
+		val = WNI_CFG_HE_OPS_BASIC_MCS_NSS_DEF;
+	*((uint16_t *)he_ops->basic_mcs_nss) = (uint16_t)val;
 
-	pe_debug("HE Operation: bss_color: %0x, default_pe_duration: %0x, twt_required: %0x, rts_threshold: %0x",
-		he_ops->bss_color, he_ops->default_pe,
+	qdf_mem_copy(&session->he_op, he_ops, sizeof(*he_ops));
+
+	pe_debug("HE Op: bss_color: 0x%0x, default_pe_duration: 0x%0x",
+		he_ops->bss_color, he_ops->default_pe);
+	pe_debug("He Op: twt_required: 0x%0x, rts_threshold: 0x%0x",
 		he_ops->twt_required, he_ops->rts_threshold);
-	pe_debug("partial_bss_color: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x",
-		he_ops->partial_bss_col, he_ops->tx_bssid_ind,
+	pe_debug("HE Op: partial_bss_color: 0x%0x, Tx BSSID Indicator: 0x%0x",
+		he_ops->partial_bss_col, he_ops->tx_bssid_ind);
+	pe_debug("HE Op: BSS color disabled: 0x%0x",
 		he_ops->bss_col_disabled);
+	pe_debug("HE Op: Basic MCS NSS: 0x%04x",
+		*((uint16_t *)he_ops->basic_mcs_nss));
 }
 
 void lim_copy_bss_he_cap(tpPESession session,
@@ -7549,6 +7556,9 @@ void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEhe_op *he_ops)
 	pe_debug("\tpartial_bss_color: %0x, MBSSID AP: %0x, Tx BSSID Indicator: %0x, BSS color disabled: %0x",
 		he_ops->partial_bss_col, he_ops->mbssid_ap,
 		he_ops->tx_bssid_ind, he_ops->bss_col_disabled);
+
+	pe_debug("he basic mcs nss: 0x%04x",
+		*((uint16_t *)he_ops->basic_mcs_nss));
 
 	if (he_ops->vht_oper_present)
 		pe_debug("VHT Info not present in HE Operation");

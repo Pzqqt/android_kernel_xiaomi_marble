@@ -2108,6 +2108,119 @@ typedef struct sSirMacRadioMeasureReport {
 } tSirMacRadioMeasureReport, *tpSirMacRadioMeasureReport;
 
 #ifdef WLAN_FEATURE_11AX
+struct he_cap_network_endian {
+	uint32_t htc_he:1;
+	uint32_t twt_request:1;
+	uint32_t twt_responder:1;
+	uint32_t fragmentation:2;
+	uint32_t max_num_frag_msdu:3;
+	uint32_t min_frag_size:2;
+	uint32_t trigger_frm_mac_pad:2;
+	uint32_t multi_tid_aggr:3;
+	uint32_t he_link_adaptation:2;
+	uint32_t all_ack:1;
+	uint32_t ul_mu_rsp_sched:1;
+	uint32_t a_bsr:1;
+	uint32_t broadcast_twt:1;
+	uint32_t ba_32bit_bitmap:1;
+	uint32_t mu_cascade:1;
+	uint32_t ack_enabled_multitid:1;
+	uint32_t dl_mu_ba:1;
+	uint32_t omi_a_ctrl:1;
+	uint32_t ofdma_ra:1;
+	uint32_t max_ampdu_len:2;
+	uint32_t amsdu_frag:1;
+	uint32_t flex_twt_sched:1;
+	uint32_t rx_ctrl_frame:1;
+
+	uint8_t bsrp_ampdu_aggr:1;
+	uint8_t qtp:1;
+	uint8_t a_bqr:1;
+	uint8_t sr_responder:1;
+	uint8_t ndp_feedback_supp:1;
+	uint8_t ops_supp:1;
+	uint8_t amsdu_in_ampdu:1;
+	uint8_t reserved1:1;
+
+	uint32_t dual_band:1;
+	uint32_t chan_width:7;
+	uint32_t rx_pream_puncturing:4;
+	uint32_t device_class:1;
+	uint32_t ldpc_coding:1;
+	uint32_t he_1x_ltf_800_gi_ppdu:1;
+	uint32_t midamble_rx_max_nsts:2;
+	uint32_t he_4x_ltf_3200_gi_ndp:1;
+	uint32_t stbc_lt_80mhz:2;
+	uint32_t doppler:2;
+	uint32_t ul_mu:2;
+	uint32_t dcm_enc_tx:3;
+	uint32_t dcm_enc_rx:3;
+	uint32_t ul_he_mu:1;
+	uint32_t su_beamformer:1;
+
+	uint32_t su_beamformee:1;
+	uint32_t mu_beamformer:1;
+	uint32_t bfee_sts_lt_80:3;
+	uint32_t bfee_sts_gt_80:3;
+	uint32_t num_sounding_lt_80:3;
+	uint32_t num_sounding_gt_80:3;
+	uint32_t su_feedback_tone16:1;
+	uint32_t mu_feedback_tone16:1;
+	uint32_t codebook_su:1;
+	uint32_t codebook_mu:1;
+	uint32_t beamforming_feedback:3;
+	uint32_t he_er_su_ppdu:1;
+	uint32_t dl_mu_mimo_part_bw:1;
+	uint32_t ppet_present:1;
+	uint32_t srp:1;
+	uint32_t power_boost:1;
+	uint32_t he_ltf_800_gi_4x:1;
+	uint32_t max_nc:3;
+	uint32_t stbc_gt_80mhz:2;
+
+	uint8_t er_he_ltf_800_gi_4x:1;
+	uint8_t he_ppdu_20_in_40Mhz_2G:1;
+	uint8_t he_ppdu_20_in_160_80p80Mhz:1;
+	uint8_t he_ppdu_80_in_160_80p80Mhz:1;
+	uint8_t er_1x_he_ltf_gi:1;
+	uint8_t midamble_rx_1x_he_ltf:1;
+	uint8_t reserved2:2;
+
+	uint16_t rx_he_mcs_map_lt_80;
+	uint16_t tx_he_mcs_map_lt_80;
+	uint16_t rx_he_mcs_map_160;
+	uint16_t tx_he_mcs_map_160;
+	uint16_t rx_he_mcs_map_80_80;
+	uint16_t tx_he_mcs_map_80_80;
+} qdf_packed;
+
+struct he_ops_network_endian {
+	uint32_t            bss_color:6;
+	uint32_t           default_pe:3;
+	uint32_t         twt_required:1;
+	uint32_t        rts_threshold:10;
+	uint32_t      partial_bss_col:1;
+	uint32_t     vht_oper_present:1;
+	uint32_t            reserved1:6;
+	uint32_t            mbssid_ap:1;
+	uint32_t         tx_bssid_ind:1;
+	uint32_t     bss_col_disabled:1;
+	uint32_t            reserved2:1;
+	uint8_t             basic_mcs_nss[2];
+	union {
+		struct {
+			uint8_t chan_width;
+			uint8_t center_freq_seg0;
+			uint8_t center_freq_seg1;
+		} info; /* vht_oper_present = 1 */
+	} vht_oper;
+	union {
+		struct {
+			uint8_t data;
+		} info; /* mbssid_ap = 1 */
+	} maxbssid_ind;
+} qdf_packed;
+
 /* HE Capabilities Info */
 struct he_capability_info {
 #ifndef ANI_LITTLE_BIT_ENDIAN

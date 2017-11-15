@@ -7491,29 +7491,6 @@ struct wow_enable_params {
 #define HE_OP_OUI_TYPE "\x24"
 #define HE_OP_OUI_SIZE 1
 
-/* HE Op Mask is based on the HE Operation definition in the D1.0 spec */
-#define HE_OP_BSS_COLOR_MASK (0x3F << 0)
-#define HE_OP_DEF_PE_DUR_MASK (0x07 << 6)
-#define HE_OP_TWT_REQ_MASK (0x01 << 9)
-#define HE_OP_RTS_THRES_MASK (0x3FF << 10)
-#define HE_OP_PART_BSS_COLOR_MASK (0x01 << 20)
-#define HE_OP_MAXBSSID_IND_MASK (0xFF << 21)
-#define HE_OP_TX_BSSIX_IND_MASK (0x01 << 29)
-#define HE_OP_BSS_COLOR_DIS_MASK (0x01 << 30)
-#define HE_OP_DUAL_BEACON_MASK (0x01 << 31)
-
-#define HE_OP_BSS_COLOR_GET(he_op) ((he_op & HE_OP_BSS_COLOR_MASK) >> 0)
-#define HE_OP_DEF_PE_DUR_GET(he_op) ((he_op & HE_OP_DEF_PE_DUR_MASK) >> 6)
-#define HE_OP_TWT_REQ_GET(he_op) ((he_op & HE_OP_TWT_REQ_MASK) >> 9)
-#define HE_OP_RTS_THRES_GET(he_op) ((he_op & HE_OP_RTS_THRES_MASK) >> 10)
-#define HE_OP_PART_BSS_COLOR_GET(he_op) ((he_op & HE_OP_PART_BSS_COLOR_MASK) \
-						>> 20)
-#define HE_OP_MAXBSSID_IND_GET(he_op) ((he_op & HE_OP_MAXBSSID_IND_MASK) >> 21)
-#define HE_OP_TX_BSSIX_IND_GET(he_op) ((he_op & HE_OP_TX_BSSIX_IND_MASK) >> 29)
-#define HE_OP_BSS_COLOR_DIS_GET(he_op) ((he_op & HE_OP_BSS_COLOR_DIS_MASK) \
-						>> 30)
-#define HE_OP_DUAL_BEACON_GET(he_op) ((he_op & HE_OP_DUAL_BEACON_MASK) >> 31)
-
 #define HE_RU_ALLOC_INDX0_MASK (0x01 << 0)
 #define HE_RU_ALLOC_INDX1_MASK (0x01 << 1)
 #define HE_RU_ALLOC_INDX2_MASK (0x01 << 2)
