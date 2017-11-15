@@ -574,6 +574,16 @@ QDF_STATUS tdls_notify_sta_connect(struct tdls_sta_notify_params *notify);
  */
 QDF_STATUS tdls_notify_sta_disconnect(struct tdls_sta_notify_params *notify);
 
+
+/**
+ * tdls_get_all_peers_from_list() - get all the tdls peers from the list
+ * @get_tdls_peers: get_tdls_peers object
+ *
+ * Return: None
+ */
+void tdls_get_all_peers_from_list(
+		struct tdls_get_all_peers *get_tdls_peers);
+
 /**
  * tdls_notify_reset_adapter() - notify reset adapter
  * @vdev: vdev object manager

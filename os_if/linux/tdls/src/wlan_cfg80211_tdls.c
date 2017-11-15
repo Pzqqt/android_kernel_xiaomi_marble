@@ -67,6 +67,7 @@ QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 	init_completion(&tdls_priv->tdls_mgmt_comp);
 	init_completion(&tdls_priv->tdls_link_establish_req_comp);
 	init_completion(&tdls_priv->tdls_teardown_comp);
+	init_completion(&tdls_priv->tdls_user_cmd_comp);
 
 	osif_priv->osif_tdls = tdls_priv;
 
@@ -636,6 +637,56 @@ fail:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 }
 
+int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
+				char *buf, int buflen)
+{
+	struct vdev_osif_priv *osif_priv;
+	struct osif_tdls_vdev *tdls_priv;
+	int32_t len;
+	QDF_STATUS status;
+	unsigned long rc;
+
+	if (wlan_objmgr_vdev_try_get_ref(vdev, WLAN_OSIF_ID) !=
+							QDF_STATUS_SUCCESS) {
+		len = scnprintf(buf, buflen,
+				"\nNo TDLS VDEV is null\n");
+		return len;
+	}
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	tdls_priv = osif_priv->osif_tdls;
+
+	reinit_completion(&tdls_priv->tdls_user_cmd_comp);
+	status = ucfg_tdls_get_all_peers(vdev, buf, buflen);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cfg80211_err("ucfg_tdls_get_all_peers failed err %d", status);
+		len = scnprintf(buf, buflen,
+				"\nucfg_tdls_send_mgmt failed\n");
+		goto error_get_tdls_peers;
+	}
+
+	cfg80211_info("Wait for tdls_user_cmd_comp. Timeout %u ms",
+		WAIT_TIME_FOR_TDLS_USER_CMD);
+
+	rc = wait_for_completion_timeout(
+		&tdls_priv->tdls_user_cmd_comp,
+		msecs_to_jiffies(WAIT_TIME_FOR_TDLS_USER_CMD));
+
+	if (0 == rc) {
+		cfg80211_err("TDLS user cmd get all peers timed out rc %ld",
+			     rc);
+		len = scnprintf(buf, buflen,
+				"\nTDLS user cmd get all peers timed out\n");
+		goto error_get_tdls_peers;
+	}
+
+	len = tdls_priv->tdls_user_cmd_len;
+
+error_get_tdls_peers:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	return len;
+}
+
 int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 				struct net_device *dev, const uint8_t *peer_mac,
 				uint8_t action_code, uint8_t dialog_token,
@@ -840,6 +891,11 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 	case TDLS_EVENT_TEARDOWN_LINKS_DONE:
 		complete(&tdls_priv->tdls_teardown_comp);
 		break;
+	case TDLS_EVENT_USER_CMD:
+		tdls_priv->tdls_user_cmd_len = ind->status;
+		complete(&tdls_priv->tdls_user_cmd_comp);
+		break;
+
 	default:
 		break;
 	}

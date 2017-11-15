@@ -120,6 +120,17 @@ QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 			  const uint8_t *macaddr, enum tdls_command_type cmd);
 
 /**
+ * ucfg_tdls_get_all_peers() - get all tdls peers from the list
+ * @vdev: vdev object
+ * @buf: output buffer
+ * @buflen: length of written data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
+				   char *buf, int buflen);
+
+/**
  * ucfg_tdls_send_mgmt_frame() - send TDLS mgmt frame
  * @mgmt_req: pointer to TDLS action frame request struct
  *
