@@ -44,8 +44,11 @@
  * @tdls_mgmt_comp: Completion to send tdls mgmt packets
  * @tdls_link_establish_req_comp: Completion to establish link, sync to
  * send establish params to firmware, not used today.
+ * @tdls_teardown_comp: tdls teardown completion event
+ * @tdls_user_cmd_comp: tdls user command completion event
  * @tdls_add_peer_status: Peer status after add peer
  * @mgmt_tx_completion_status: Tdls mgmt frames TX completion status code
+ * @tdls_user_cmd_len: tdls user command written buffer length
  */
 struct osif_tdls_vdev {
 	struct completion tdls_add_peer_comp;
@@ -53,8 +56,10 @@ struct osif_tdls_vdev {
 	struct completion tdls_mgmt_comp;
 	struct completion tdls_link_establish_req_comp;
 	struct completion tdls_teardown_comp;
+	struct completion tdls_user_cmd_comp;
 	QDF_STATUS tdls_add_peer_status;
 	uint32_t mgmt_tx_completion_status;
+	uint32_t tdls_user_cmd_len;
 };
 
 /**
@@ -145,6 +150,17 @@ int wlan_cfg80211_tdls_oper(struct wlan_objmgr_pdev *pdev,
 			    struct net_device *dev,
 			    const uint8_t *peer,
 			    enum nl80211_tdls_operation oper);
+
+/**
+ * wlan_cfg80211_tdls_get_all_peers() - get all the TDLS peers from the list
+ * @vdev: vdev object
+ * @buf: output buffer
+ * @buflen: valid length of the output error
+ *
+ * Return: length of the output buffer
+ */
+int wlan_cfg80211_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
+				char *buf, int buflen);
 
 /**
  * wlan_cfg80211_tdls_mgmt() - process tdls management frames from the supplicant
