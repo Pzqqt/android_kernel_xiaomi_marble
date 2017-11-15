@@ -485,6 +485,35 @@ error:
 	return status;
 }
 
+QDF_STATUS ucfg_tdls_get_all_peers(struct wlan_objmgr_vdev *vdev,
+				   char *buf, int buflen)
+{
+	struct scheduler_msg msg = {0, };
+	struct tdls_get_all_peers *tdls_peers;
+	QDF_STATUS status;
+
+	tdls_peers = qdf_mem_malloc(sizeof(*tdls_peers));
+
+	if (!tdls_peers) {
+		tdls_err("mem allocate fail");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	tdls_peers->vdev = vdev;
+	tdls_peers->buf_len = buflen;
+	tdls_peers->buf = buf;
+
+	msg.bodyptr = tdls_peers;
+	msg.callback = tdls_process_cmd;
+	msg.type = TDLS_CMD_GET_ALL_PEERS;
+	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
+
+	if (status != QDF_STATUS_SUCCESS)
+		qdf_mem_free(tdls_peers);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS ucfg_tdls_send_mgmt_frame(
 				struct tdls_action_frame_request *req)
 {

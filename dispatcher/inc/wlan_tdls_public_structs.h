@@ -62,6 +62,9 @@
 /** Maximum time(ms) to wait for tdls mgmt to complete **/
 #define WAIT_TIME_FOR_TDLS_MGMT         11000
 
+/** Maximum time(ms) to wait for tdls mgmt to complete **/
+#define WAIT_TIME_FOR_TDLS_USER_CMD     11000
+
 /** Maximum waittime for TDLS teardown links **/
 #define WAIT_TIME_FOR_TDLS_TEARDOWN_LINKS 10000
 
@@ -181,6 +184,7 @@ enum tdls_feature_mode {
  * @TDLS_CMD_SESSION_DECREMENT: notify session decrement
  * @TDLS_CMD_TEARDOWN_LINKS: notify teardown
  * @TDLS_NOTIFY_RESET_ADAPTERS: notify adapater reset
+ * @TDLS_CMD_GET_ALL_PEERS: get all the tdls peers from the list
  */
 enum tdls_command_type {
 	TDLS_CMD_TX_ACTION = 1,
@@ -201,6 +205,7 @@ enum tdls_command_type {
 	TDLS_CMD_SESSION_DECREMENT,
 	TDLS_CMD_TEARDOWN_LINKS,
 	TDLS_NOTIFY_RESET_ADAPTERS,
+	TDLS_CMD_GET_ALL_PEERS,
 };
 
 /**
@@ -213,6 +218,8 @@ enum tdls_command_type {
  * @TDLS_EVENT_DISCOVERY_REQ: dicovery request
  * @TDLS_EVENT_TEARDOWN_REQ: teardown request
  * @TDLS_EVENT_SETUP_REQ: setup request
+ * @TDLS_EVENT_TEARDOWN_LINKS_DONE: teardown completion event
+ * @TDLS_EVENT_USER_CMD: tdls user command
  */
 enum tdls_event_type {
 	TDLS_EVENT_VDEV_STATE_CHANGE = 0,
@@ -224,6 +231,7 @@ enum tdls_event_type {
 	TDLS_EVENT_TEARDOWN_REQ,
 	TDLS_EVENT_SETUP_REQ,
 	TDLS_EVENT_TEARDOWN_LINKS_DONE,
+	TDLS_EVENT_USER_CMD,
 };
 
 /**
@@ -966,6 +974,18 @@ struct tdls_validate_action_req {
 	size_t len;
 	int responder;
 	int max_sta_failed;
+};
+
+/**
+ * struct tdls_get_all_peers - get all peers from the list
+ * @vdev: vdev object
+ * @buf: output string buffer to hold the peer info
+ * @buf_len: the size of output string buffer
+ */
+struct tdls_get_all_peers {
+	struct wlan_objmgr_vdev *vdev;
+	char *buf;
+	int buf_len;
 };
 
 /**

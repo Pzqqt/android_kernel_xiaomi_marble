@@ -293,6 +293,9 @@ QDF_STATUS tdls_process_cmd(struct scheduler_msg *msg)
 	case TDLS_NOTIFY_RESET_ADAPTERS:
 		tdls_notify_reset_adapter(msg->bodyptr);
 		break;
+	case TDLS_CMD_GET_ALL_PEERS:
+		tdls_get_all_peers_from_list(msg->bodyptr);
+		break;
 	default:
 		break;
 	}
@@ -999,6 +1002,97 @@ static void tdls_process_reset_adapter(struct wlan_objmgr_vdev *vdev)
 	if (!tdls_vdev)
 		return;
 	tdls_timers_stop(tdls_vdev);
+}
+
+static int __tdls_get_all_peers_from_list(
+			struct tdls_get_all_peers *get_tdls_peers)
+{
+	int i;
+	int len, init_len;
+	qdf_list_t *head;
+	qdf_list_node_t *p_node;
+	struct tdls_peer *curr_peer;
+	char *buf;
+	int buf_len;
+	struct tdls_vdev_priv_obj *tdls_vdev;
+	QDF_STATUS status;
+
+	tdls_notice("Enter ");
+
+	buf = get_tdls_peers->buf;
+	buf_len = get_tdls_peers->buf_len;
+
+	if (!tdls_is_vdev_connected(get_tdls_peers->vdev)) {
+		len = qdf_scnprintf(buf, buf_len,
+				"\nSTA is not associated\n");
+		return len;
+	}
+
+	tdls_vdev = wlan_vdev_get_tdls_vdev_obj(get_tdls_peers->vdev);
+
+	if (!tdls_vdev) {
+		len = qdf_scnprintf(buf, buf_len, "TDLS not enabled\n");
+		return len;
+	}
+
+	init_len = buf_len;
+	len = qdf_scnprintf(buf, buf_len,
+			"\n%-18s%-3s%-4s%-3s%-5s\n",
+			"MAC", "Id", "cap", "up", "RSSI");
+	buf += len;
+	buf_len -= len;
+	len = qdf_scnprintf(buf, buf_len,
+			    "---------------------------------\n");
+	buf += len;
+	buf_len -= len;
+
+	for (i = 0; i < WLAN_TDLS_PEER_LIST_SIZE; i++) {
+		head = &tdls_vdev->peer_list[i];
+		status = qdf_list_peek_front(head, &p_node);
+		while (QDF_IS_STATUS_SUCCESS(status)) {
+			curr_peer = qdf_container_of(p_node,
+						     struct tdls_peer, node);
+			if (buf_len < 32 + 1)
+				break;
+			len = qdf_scnprintf(buf, buf_len,
+				QDF_MAC_ADDRESS_STR "%3d%4s%3s%5d\n",
+				QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
+				curr_peer->sta_id,
+				(curr_peer->tdls_support ==
+				 TDLS_CAP_SUPPORTED) ? "Y" : "N",
+				TDLS_IS_LINK_CONNECTED(curr_peer) ? "Y" :
+				"N", curr_peer->rssi);
+			buf += len;
+			buf_len -= len;
+			status = qdf_list_peek_next(head, p_node, &p_node);
+		}
+	}
+
+	tdls_notice("Exit ");
+	return init_len - buf_len;
+}
+
+void tdls_get_all_peers_from_list(
+			struct tdls_get_all_peers *get_tdls_peers)
+{
+	int32_t len;
+	struct tdls_soc_priv_obj *tdls_soc_obj;
+	struct tdls_osif_indication indication;
+
+	if (!get_tdls_peers->vdev)
+		qdf_mem_free(get_tdls_peers);
+
+	len = __tdls_get_all_peers_from_list(get_tdls_peers);
+
+	indication.status = len;
+	indication.vdev = get_tdls_peers->vdev;
+
+	tdls_soc_obj = wlan_vdev_get_tdls_soc_obj(get_tdls_peers->vdev);
+	if (tdls_soc_obj && tdls_soc_obj->tdls_event_cb)
+		tdls_soc_obj->tdls_event_cb(tdls_soc_obj->tdls_evt_cb_data,
+			TDLS_EVENT_USER_CMD, &indication);
+
+	qdf_mem_free(get_tdls_peers);
 }
 
 void tdls_notify_reset_adapter(struct wlan_objmgr_vdev *vdev)
