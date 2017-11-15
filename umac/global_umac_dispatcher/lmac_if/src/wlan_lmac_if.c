@@ -51,10 +51,12 @@
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_dfs_utils_api.h>
 #endif
+
 #ifdef WLAN_SUPPORT_GREEN_AP
 #include <wlan_green_ap_api.h>
 #include <wlan_green_ap_ucfg_api.h>
 #endif
+#include <wlan_ftm_ucfg_api.h>
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -324,6 +326,18 @@ wlan_lmac_if_umac_green_ap_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+static QDF_STATUS
+wlan_lmac_if_umac_ftm_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	struct wlan_lmac_if_ftm_rx_ops *ftm_rx_ops;
+
+	ftm_rx_ops = &rx_ops->ftm_rx_ops;
+
+	ftm_rx_ops->ftm_ev_handler = wlan_ftm_process_utf_event;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -388,6 +402,9 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 	wlan_lmac_if_umac_dfs_rx_ops_register(rx_ops);
 
 	wlan_lmac_if_umac_green_ap_rx_ops_register(rx_ops);
+
+	/* FTM rx_ops */
+	wlan_lmac_if_umac_ftm_rx_ops_register(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

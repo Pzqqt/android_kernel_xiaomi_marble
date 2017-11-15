@@ -22,6 +22,7 @@
 #include <dispatcher_init_deinit.h>
 #include <scheduler_api.h>
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_ftm_init_deinit_api.h>
 #include <wlan_mgmt_txrx_utils_api.h>
 #include <wlan_serialization_api.h>
 #ifdef WLAN_POLICY_MGR_ENABLE
@@ -774,6 +775,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_green_ap_init())
 		goto green_ap_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_ftm_init())
+		goto ftm_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -785,6 +789,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_ftm_deinit();
+ftm_init_fail:
 	dispatcher_green_ap_deinit();
 green_ap_init_fail:
 	dispatcher_spectral_deinit();
@@ -831,6 +837,8 @@ EXPORT_SYMBOL(dispatcher_init);
 QDF_STATUS dispatcher_deinit(void)
 {
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_ftm_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_green_ap_deinit());
 
@@ -921,7 +929,13 @@ QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 	if (QDF_STATUS_SUCCESS != son_psoc_open(psoc))
 		goto psoc_son_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_ftm_psoc_open(psoc))
+		goto ftm_psoc_open_fail;
+
 	return QDF_STATUS_SUCCESS;
+
+ftm_psoc_open_fail:
+	son_psoc_close(psoc);
 psoc_son_fail:
 	regulatory_psoc_close(psoc);
 regulatory_psoc_open_fail:
@@ -946,6 +960,8 @@ EXPORT_SYMBOL(dispatcher_psoc_open);
 
 QDF_STATUS dispatcher_psoc_close(struct wlan_objmgr_psoc *psoc)
 {
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_ftm_psoc_close(psoc));
+
 	QDF_BUG(QDF_STATUS_SUCCESS == son_psoc_close(psoc));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_psoc_close(psoc));

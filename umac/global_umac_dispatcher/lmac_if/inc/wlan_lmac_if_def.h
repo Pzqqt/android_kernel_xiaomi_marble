@@ -112,6 +112,21 @@ struct wlan_lmac_if_scan_tx_ops {
 	QDF_STATUS (*set_chan_list)(struct wlan_objmgr_pdev *pdev, void *arg);
 };
 
+/**
+ * struct wlan_lmac_if_ftm_tx_ops - south bound tx function pointers for ftm
+ * @ftm_attach: function to register event handlers with FW
+ * @ftm_detach: function to de-register event handlers with FW
+ * @ftm_cmd_send: function to send FTM commands to FW
+ *
+ * ftm module uses these functions to avail ol/da lmac services
+ */
+struct wlan_lmac_if_ftm_tx_ops {
+	QDF_STATUS (*ftm_attach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*ftm_detach)(struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*ftm_cmd_send)(struct wlan_objmgr_pdev *pdev,
+				uint8_t *buf, uint32_t len, uint8_t mac_id);
+};
+
 
 struct wlan_lmac_if_mlme_tx_ops {
 	void (*scan_sta_power_events)(struct wlan_objmgr_pdev *pdev,
@@ -420,6 +435,17 @@ struct wlan_lmac_if_nan_tx_ops {
 #endif
 
 /**
+ * struct wlan_lmac_if_ftm_rx_ops  - south bound rx function pointers for FTM
+ * @ftm_ev_handler: function to handle FTM event
+ *
+ * lmac modules uses this API to post FTM events to FTM module
+ */
+struct wlan_lmac_if_ftm_rx_ops {
+	QDF_STATUS (*ftm_ev_handler)(struct wlan_objmgr_pdev *pdev,
+					uint8_t *event_buf, uint32_t len);
+};
+
+/**
  * struct wlan_lmac_reg_if_tx_ops - structure of tx function
  *                  pointers for regulatory component
  * @register_master_handler: pointer to register event handler
@@ -614,15 +640,20 @@ struct wlan_lmac_if_tx_ops {
 #endif
 	 struct wlan_lmac_if_mlme_tx_ops mops;
 	 struct wlan_lmac_if_target_tx_ops target_tx_ops;
+
 #ifdef WLAN_OFFCHAN_TXRX_ENABLE
 	struct wlan_lmac_if_offchan_txrx_ops offchan_txrx_ops;
 #endif
+
 #ifdef DIRECT_BUF_RX_ENABLE
 	struct wlan_lmac_if_direct_buf_rx_tx_ops dbr_tx_ops;
 #endif
+
 #ifdef WLAN_SUPPORT_GREEN_AP
 	 struct wlan_lmac_if_green_ap_tx_ops green_ap_tx_ops;
 #endif
+
+	struct wlan_lmac_if_ftm_tx_ops ftm_tx_ops;
 };
 
 /**
@@ -1066,9 +1097,12 @@ struct wlan_lmac_if_rx_ops {
 	struct wlan_lmac_if_tdls_rx_ops tdls_rx_ops;
 #endif
 	struct wlan_lmac_if_mlme_rx_ops mops;
+
 #ifdef WLAN_SUPPORT_GREEN_AP
 	struct wlan_lmac_if_green_ap_rx_ops green_ap_rx_ops;
 #endif
+
+	struct wlan_lmac_if_ftm_rx_ops ftm_rx_ops;
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.

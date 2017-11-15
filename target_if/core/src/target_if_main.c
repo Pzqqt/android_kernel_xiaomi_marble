@@ -34,6 +34,7 @@
 #endif
 #include <target_if_reg.h>
 #include <target_if_scan.h>
+#include <target_if_ftm.h>
 #ifdef DFS_COMPONENT_ENABLE
 #include <target_if_dfs.h>
 #endif
@@ -302,6 +303,12 @@ static void target_if_target_tx_ops_register(
 }
 
 static
+void target_if_ftm_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_ftm_register_tx_ops(tx_ops);
+}
+
+static
 QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	/* call regulatory callback to register tx ops */
@@ -332,6 +339,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_offchan_txrx_ops_register(tx_ops);
 
 	target_if_green_ap_tx_ops_register(tx_ops);
+
+	target_if_ftm_tx_ops_register(tx_ops);
 
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
