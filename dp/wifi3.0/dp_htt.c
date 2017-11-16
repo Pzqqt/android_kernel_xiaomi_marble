@@ -2002,7 +2002,8 @@ static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 	int status;
 	int i;
 
-	if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable)
+	if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable &&
+			!pdev->am_copy_mode)
 		return;
 
 	if (!pdev->tx_ppdu_info.buf) {

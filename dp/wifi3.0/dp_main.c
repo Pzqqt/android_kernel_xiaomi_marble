@@ -74,6 +74,8 @@ bool rx_hash = 1;
 qdf_declare_param(rx_hash, bool);
 
 #define STR_MAXLEN	64
+
+#define DP_PPDU_STATS_CFG_ALL 0xffff
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -4644,16 +4646,30 @@ dp_config_tx_capture(struct cdp_pdev *pdev_handle, int val)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 
-	if (val) {
-		pdev->tx_sniffer_enable = 1;
-		dp_h2t_cfg_stats_msg_send(pdev, 0xffff);
-	} else {
+	switch (val) {
+	case 0:
 		pdev->tx_sniffer_enable = 0;
+		pdev->am_copy_mode = 0;
 
 		if (!pdev->enhanced_stats_en)
 			dp_h2t_cfg_stats_msg_send(pdev, 0);
-	}
+		break;
 
+	case 1:
+		pdev->tx_sniffer_enable = 1;
+		pdev->am_copy_mode = 0;
+		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ALL);
+		break;
+	case 2:
+		pdev->am_copy_mode = 1;
+		pdev->tx_sniffer_enable = 0;
+		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ALL);
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"Invalid value\n");
+		break;
+	}
 }
 
 /*
@@ -4685,7 +4701,7 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 
 	pdev->enhanced_stats_en = 0;
 
-	if (!pdev->tx_sniffer_enable)
+	if (!pdev->tx_sniffer_enable && !pdev->am_copy_mode)
 		dp_h2t_cfg_stats_msg_send(pdev, 0);
 }
 

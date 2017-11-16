@@ -1050,6 +1050,7 @@ struct dp_pdev {
 	} tx_ppdu_info;
 
 	bool tx_sniffer_enable;
+	bool am_copy_mode;
 };
 
 struct dp_peer;
