@@ -271,6 +271,7 @@ QDF_STATUS ucfg_p2p_mgmt_tx(struct wlan_objmgr_psoc *soc,
 		return QDF_STATUS_E_NOMEM;
 	}
 	qdf_mem_copy(tx_action->buf, mgmt_frm->buf, tx_action->buf_len);
+	tx_action->nbuf = NULL;
 	msg.type = P2P_MGMT_TX;
 	msg.bodyptr = tx_action;
 	msg.callback = p2p_process_cmd;

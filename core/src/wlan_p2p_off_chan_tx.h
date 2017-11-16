@@ -173,6 +173,7 @@ struct tx_action_context {
 	uint32_t duration;
 	qdf_mc_timer_t tx_timer;
 	struct p2p_frame_info frame_info;
+	void *nbuf;
 };
 
 /**
@@ -254,5 +255,17 @@ QDF_STATUS p2p_process_mgmt_tx_ack_cnf(
  */
 QDF_STATUS p2p_process_rx_mgmt(
 	struct p2p_rx_mgmt_event *rx_mgmt_event);
+
+/**
+ * p2p_find_tx_ctx_by_nbuf() - find tx context by nbuf
+ * @p2p_soc_obj:        p2p soc object
+ * @nbuf:               pointer to nbuf
+ *
+ * This function finds out tx context by nbuf.
+ *
+ * Return: pointer to tx context
+ */
+struct tx_action_context *p2p_find_tx_ctx_by_nbuf(
+	struct p2p_soc_priv_obj *p2p_soc_obj, void *nbuf);
 
 #endif /* _WLAN_P2P_OFF_CHAN_TX_H_ */

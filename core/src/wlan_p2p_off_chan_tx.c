@@ -932,9 +932,10 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 		mgmt_param.frm_len, mgmt_param.vdev_id,
 		mgmt_param.chanfreq, tx_ctx->no_ack);
 
-	status = wlan_mgmt_txrx_mgmt_frame_tx(peer, tx_ctx,
-			(qdf_nbuf_t)packet,
-			tx_comp_cb, tx_ota_comp_cb,
+	tx_ctx->nbuf = packet;
+
+	status = wlan_mgmt_txrx_mgmt_frame_tx(peer, tx_ctx->p2p_soc_obj,
+			(qdf_nbuf_t)packet, tx_comp_cb, tx_ota_comp_cb,
 			WLAN_UMAC_COMP_P2P, &mgmt_param);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_P2P_ID);
@@ -1138,7 +1139,6 @@ static QDF_STATUS p2p_move_tx_context_to_ack_queue(
 				&tx_ctx->node);
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Failed to insert off chan tx context to wait ack req queue");
-
 	p2p_debug("insert tx context to wait for roc queue, status:%d",
 		status);
 
@@ -1286,8 +1286,8 @@ static void p2p_tx_timeout(void *pdata)
 
 	p2p_debug("pdata:%pK", pdata);
 
-	if (!tx_ctx) {
-		p2p_err("invalid tx context");
+	if (!tx_ctx || !(tx_ctx->p2p_soc_obj)) {
+		p2p_err("invalid tx context or p2p soc object");
 		return;
 	}
 
@@ -1454,6 +1454,37 @@ static QDF_STATUS p2p_execute_tx_action_frame(
 	}
 
 	return status;
+}
+
+struct tx_action_context *p2p_find_tx_ctx_by_nbuf(
+	struct p2p_soc_priv_obj *p2p_soc_obj, void *nbuf)
+{
+	struct tx_action_context *cur_tx_ctx;
+	qdf_list_node_t *p_node;
+	QDF_STATUS status;
+
+	if (!p2p_soc_obj) {
+		p2p_err("invalid p2p soc object");
+		return NULL;
+	}
+
+	status = qdf_list_peek_front(&p2p_soc_obj->tx_q_ack, &p_node);
+	while (QDF_IS_STATUS_SUCCESS(status)) {
+		cur_tx_ctx =
+			qdf_container_of(p_node, struct tx_action_context, node);
+		if (cur_tx_ctx->nbuf == nbuf) {
+			p2p_debug("find tx ctx, nbuf:%pK", nbuf);
+			status = qdf_mc_timer_stop(&cur_tx_ctx->tx_timer);
+			if (status != QDF_STATUS_SUCCESS)
+				p2p_err("Failed to stop tx timer, status:%d",
+					status);
+			return cur_tx_ctx;
+		}
+		status = qdf_list_peek_next(&p2p_soc_obj->tx_q_ack,
+						p_node, &p_node);
+	}
+
+	return NULL;
 }
 
 void p2p_dump_tx_queue(struct p2p_soc_priv_obj *p2p_soc_obj)

@@ -137,8 +137,13 @@ QDF_STATUS tgt_p2p_mgmt_ota_comp_cb(void *context, qdf_nbuf_t buf,
 		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_INVAL;
 	}
-	tx_ctx = (struct tx_action_context *)context;
-	p2p_soc_obj = tx_ctx->p2p_soc_obj;
+	p2p_soc_obj = (struct p2p_soc_priv_obj *)context;
+	tx_ctx = p2p_find_tx_ctx_by_nbuf(p2p_soc_obj, buf);
+	if (!tx_ctx) {
+		p2p_err("can't find tx_ctx, tx ack comes late");
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAULT;
+	}
 
 	tx_conf_event = qdf_mem_malloc(sizeof(*tx_conf_event));
 	if (!tx_conf_event) {
