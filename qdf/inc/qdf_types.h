@@ -42,6 +42,7 @@
 
 /* Include Files */
 #include <i_qdf_types.h>
+#include <stdarg.h>
 
 /* Preprocessor definitions and constants */
 #define QDF_MAX_SGLIST 4
@@ -543,17 +544,45 @@ enum tQDF_GLOBAL_CON_MODE {
  */
 void __printf(3, 4) qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		   char *str_format, ...);
+/**
+ * qdf_vtrace_msg() - the va_list version of qdf_trace_msg
+ * @module: the calling module's Id
+ * @level: the logging level to log using
+ * @str_format: the log format string
+ * @val: the va_list containing the values to format according to str_format
+ *
+ * Return: None
+ */
+void qdf_vtrace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
+		    char *str_format, va_list val);
 
 #ifdef CONFIG_MCL
 #define qdf_print(args...) \
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 
-#define qdf_debug(args...) \
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG, ## args)
+#define qdf_logfl(level, format, args...) \
+	QDF_TRACE(QDF_MODULE_ID_QDF, level, FL(format), ## args)
 
-#else
-#define qdf_debug printk
+#define qdf_alert(format, args...) \
+	qdf_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+#define qdf_err(format, args...) \
+	qdf_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+#define qdf_warn(format, args...) \
+	qdf_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+#define qdf_info(format, args...) \
+	qdf_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+#define qdf_debug(format, args...) \
+	qdf_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+
+#else /* CONFIG_MCL */
+
 #define qdf_print printk
+#define qdf_alert printk
+#define qdf_err printk
+#define qdf_warn printk
+#define qdf_info printk
+#define qdf_debug printk
+
 #endif /* CONFIG_MCL */
 
 #define qdf_vprint    __qdf_vprint
