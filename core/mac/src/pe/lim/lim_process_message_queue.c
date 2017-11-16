@@ -1766,10 +1766,12 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		msg->bodyptr = NULL;
 		break;
 	case WMA_DISASSOC_TX_COMP:
-		lim_disassoc_tx_complete_cnf(mac_ctx, NULL, msg->bodyval, NULL);
+		lim_disassoc_tx_complete_cnf(mac_ctx, msg->bodyval,
+					     msg->bodyptr);
 		break;
 	case WMA_DEAUTH_TX_COMP:
-		lim_deauth_tx_complete_cnf(mac_ctx, NULL, msg->bodyval, NULL);
+		lim_deauth_tx_complete_cnf(mac_ctx, msg->bodyval,
+					   msg->bodyptr);
 		break;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	case WMA_UPDATE_Q2Q_IE_IND:
