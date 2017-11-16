@@ -964,7 +964,7 @@ static void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
  * @peer: Macaddress of the peer requesting the radio measurement
  * @session_entry: session entry
  * @curr_req: Pointer to RRM request
- * @report: Pointer to radio measurement report
+ * @radiomes_report: Pointer to radio measurement report
  * @rrm_req: Array of Measurement request IEs
  * @num_report: No.of reports
  * @index: Index for Measurement request
@@ -977,27 +977,29 @@ static void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
 static
 tSirRetStatus rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
 			     tpPESession session_entry, tpRRMReq curr_req,
-			     tpSirMacRadioMeasureReport report,
+			     tpSirMacRadioMeasureReport *radiomes_report,
 			     tDot11fRadioMeasurementRequest *rrm_req,
 			     uint8_t *num_report, int index)
 {
 	tRrmRetStatus rrm_status = eRRM_SUCCESS;
+	tpSirMacRadioMeasureReport report;
 
 	if (curr_req) {
-		if (report == NULL) {
+		if (*radiomes_report == NULL) {
 			/*
 			 * Allocate memory to send reports for
 			 * any subsequent requests.
 			 */
-			report = qdf_mem_malloc(sizeof(*report) *
+			*radiomes_report = qdf_mem_malloc(sizeof(*report) *
 				(rrm_req->num_MeasurementRequest - index));
-			if (NULL == report) {
+			if (NULL == *radiomes_report) {
 				pe_err("Unable to allocate memory during RRM Req processing");
 				return eSIR_MEM_ALLOC_FAILED;
 			}
 			pe_debug("rrm beacon type refused of %d report in beacon table",
 				*num_report);
 		}
+		report = *radiomes_report;
 		report[*num_report].refused = 1;
 		report[*num_report].type = SIR_MAC_RRM_BEACON_TYPE;
 		report[*num_report].token =
@@ -1008,7 +1010,7 @@ tSirRetStatus rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
 		curr_req = qdf_mem_malloc(sizeof(*curr_req));
 		if (NULL == curr_req) {
 			pe_err("Unable to allocate memory during RRM Req processing");
-				qdf_mem_free(report);
+				qdf_mem_free(*radiomes_report);
 			return eSIR_MEM_ALLOC_FAILED;
 		}
 		pe_debug("Processing Beacon Report request");
@@ -1132,7 +1134,7 @@ rrm_process_radio_measurement_request(tpAniSirGlobal mac_ctx,
 		case SIR_MAC_RRM_BEACON_TYPE:
 			/* Process beacon request. */
 			status = rrm_process_beacon_req(mac_ctx, peer,
-				 session_entry, curr_req, report, rrm_req,
+				 session_entry, curr_req, &report, rrm_req,
 				 &num_report, i);
 			if (eSIR_SUCCESS != status)
 				return status;
