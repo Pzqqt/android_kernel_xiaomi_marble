@@ -8794,6 +8794,68 @@ static QDF_STATUS send_oem_dma_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 #endif
 
 /**
+ * send_dbr_cfg_cmd_tlv() - configure DMA rings for Direct Buf RX
+ * @wmi_handle: wmi handle
+ * @data_len: len of dma cfg req
+ * @data: dma cfg req
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+static QDF_STATUS send_dbr_cfg_cmd_tlv(wmi_unified_t wmi_handle,
+				struct direct_buf_rx_cfg_req *cfg)
+{
+	wmi_buf_t buf;
+	wmi_dma_ring_cfg_req_fixed_param *cmd;
+	QDF_STATUS ret;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMI_LOGE(FL("wmi_buf_alloc failed"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_dma_ring_cfg_req_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_dma_ring_cfg_req_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_dma_ring_cfg_req_fixed_param));
+
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
+						cfg->pdev_id);
+	cmd->mod_id = cfg->mod_id;
+	cmd->base_paddr_lo = cfg->base_paddr_lo;
+	cmd->base_paddr_hi = cfg->base_paddr_hi;
+	cmd->head_idx_paddr_lo = cfg->head_idx_paddr_lo;
+	cmd->head_idx_paddr_hi = cfg->head_idx_paddr_hi;
+	cmd->tail_idx_paddr_lo = cfg->tail_idx_paddr_lo;
+	cmd->tail_idx_paddr_hi = cfg->tail_idx_paddr_hi;
+	cmd->num_elems = cfg->num_elems;
+	cmd->buf_size = cfg->buf_size;
+	cmd->num_resp_per_event = cfg->num_resp_per_event;
+	cmd->event_timeout_ms = cfg->event_timeout_ms;
+
+	WMI_LOGD("%s: wmi_dma_ring_cfg_req_fixed_param pdev id %d mod id %d"
+		  "base paddr lo %x base paddr hi %x head idx paddr lo %x"
+		  "head idx paddr hi %x tail idx paddr lo %x"
+		  "tail idx addr hi %x num elems %d buf size %d num resp %d"
+		  "event timeout %d\n", __func__, cmd->pdev_id,
+		  cmd->mod_id, cmd->base_paddr_lo, cmd->base_paddr_hi,
+		  cmd->head_idx_paddr_lo, cmd->head_idx_paddr_hi,
+		  cmd->tail_idx_paddr_lo, cmd->tail_idx_paddr_hi,
+		  cmd->num_elems, cmd->buf_size, cmd->num_resp_per_event,
+		  cmd->event_timeout_ms);
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_PDEV_DMA_RING_CFG_REQ_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE(FL(":wmi cmd send failed"));
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  * send_start_11d_scan_cmd_tlv() - start 11d scan request
  * @wmi_handle: wmi handle
  * @start_11d_scan: 11d scan start request parameters
@@ -18428,6 +18490,7 @@ static QDF_STATUS extract_service_ready_ext_tlv(wmi_unified_t wmi_handle,
 	param->mpdu_density = ev->mpdu_density;
 	param->max_bssid_rx_filters = ev->max_bssid_rx_filters;
 	param->fw_build_vers_ext = ev->fw_build_vers_ext;
+	param->num_dbr_ring_caps = param_buf->num_dma_ring_caps;
 	qdf_mem_copy(&param->ppet, &ev->ppet, sizeof(param->ppet));
 
 	hw_caps = param_buf->soc_hw_mode_caps;
@@ -18654,6 +18717,79 @@ static QDF_STATUS extract_reg_cap_service_ready_ext_tlv(
 	param->high_2ghz_chan = ext_reg_cap->high_2ghz_chan;
 	param->low_5ghz_chan = ext_reg_cap->low_5ghz_chan;
 	param->high_5ghz_chan = ext_reg_cap->high_5ghz_chan;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS extract_dbr_ring_cap_service_ready_ext_tlv(
+			wmi_unified_t wmi_handle,
+			uint8_t *event, uint8_t idx,
+			struct wlan_psoc_host_dbr_ring_caps *param)
+{
+	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
+	WMI_DMA_RING_CAPABILITIES *dbr_ring_caps;
+
+	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	dbr_ring_caps = &param_buf->dma_ring_caps[idx];
+
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+				dbr_ring_caps->pdev_id);
+	param->mod_id = dbr_ring_caps->mod_id;
+	param->ring_elems_min = dbr_ring_caps->ring_elems_min;
+	param->min_buf_size = dbr_ring_caps->min_buf_size;
+	param->min_buf_align = dbr_ring_caps->min_buf_align;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS extract_dbr_buf_release_fixed_tlv(wmi_unified_t wmi_handle,
+		uint8_t *event, struct direct_buf_rx_rsp *param)
+{
+	WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID_param_tlvs *param_buf;
+	wmi_dma_buf_release_fixed_param *ev;
+
+	param_buf = (WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	ev = param_buf->fixed_param;
+	if (!ev)
+		return QDF_STATUS_E_INVAL;
+
+	param->pdev_id = wmi_handle->ops->convert_pdev_id_target_to_host(
+								ev->pdev_id);
+	param->mod_id = ev->mod_id;
+	param->num_buf_release_entry = ev->num_buf_release_entry;
+	WMI_LOGD("%s:pdev id %d mod id %d num buf release entry %d\n", __func__,
+		 param->pdev_id, param->mod_id, param->num_buf_release_entry);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS extract_dbr_buf_release_entry_tlv(wmi_unified_t wmi_handle,
+		uint8_t *event, uint8_t idx, struct direct_buf_rx_entry *param)
+{
+	WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID_param_tlvs *param_buf;
+	wmi_dma_buf_release_entry *entry;
+
+	param_buf = (WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID_param_tlvs *)event;
+	if (!param_buf)
+		return QDF_STATUS_E_INVAL;
+
+	entry = &param_buf->entries[idx];
+
+	if (!entry) {
+		WMI_LOGE("%s: Entry is NULL\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	WMI_LOGD("%s: paddr_lo[%d] = %x\n", __func__, idx, entry->paddr_lo);
+
+	param->paddr_lo = entry->paddr_lo;
+	param->paddr_hi = entry->paddr_hi;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -20229,6 +20365,7 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_FEATURE_CIF_CFR
 	.send_oem_dma_cfg_cmd = send_oem_dma_cfg_cmd_tlv,
 #endif
+	.send_dbr_cfg_cmd = send_dbr_cfg_cmd_tlv,
 	.send_dfs_phyerr_filter_offload_en_cmd =
 		 send_dfs_phyerr_filter_offload_en_cmd_tlv,
 	.send_wow_delete_pattern_cmd = send_wow_delete_pattern_cmd_tlv,
@@ -20408,6 +20545,10 @@ struct wmi_ops tlv_ops =  {
 				extract_mac_phy_cap_service_ready_ext_tlv,
 	.extract_reg_cap_service_ready_ext =
 				extract_reg_cap_service_ready_ext_tlv,
+	.extract_dbr_ring_cap_service_ready_ext =
+				extract_dbr_ring_cap_service_ready_ext_tlv,
+	.extract_dbr_buf_release_fixed = extract_dbr_buf_release_fixed_tlv,
+	.extract_dbr_buf_release_entry = extract_dbr_buf_release_entry_tlv,
 	.extract_pdev_utf_event = extract_pdev_utf_event_tlv,
 	.wmi_set_htc_tx_tag = wmi_set_htc_tx_tag_tlv,
 	.extract_dcs_interference_type = extract_dcs_interference_type_tlv,
@@ -20744,6 +20885,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_radio_tx_power_level_stats_event_id] =
 		WMI_RADIO_TX_POWER_LEVEL_STATS_EVENTID;
 	event_ids[wmi_report_stats_event_id] = WMI_REPORT_STATS_EVENTID;
+	event_ids[wmi_dma_buf_release_event_id] =
+					WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID;
 }
 
 #ifndef CONFIG_MCL
@@ -20942,6 +21085,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_BCN_OFFLOAD_START_STOP_SUPPORT;
 	wmi_service[wmi_service_offchan_data_tid_support] =
 				WMI_SERVICE_OFFCHAN_DATA_TID_SUPPORT;
+	wmi_service[wmi_service_support_dma] =
+				WMI_SERVICE_SUPPORT_DIRECT_DMA;
 }
 
 /**

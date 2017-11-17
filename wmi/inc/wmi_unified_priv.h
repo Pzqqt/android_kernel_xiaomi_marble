@@ -628,6 +628,9 @@ QDF_STATUS (*send_oem_dma_cfg_cmd)(wmi_unified_t wmi_handle,
 				   wmi_oem_dma_ring_cfg_req_fixed_param *cfg);
 #endif
 
+QDF_STATUS (*send_dbr_cfg_cmd)(wmi_unified_t wmi_handle,
+				   struct direct_buf_rx_cfg_req *cfg);
+
 QDF_STATUS (*send_start_oem_data_cmd)(wmi_unified_t wmi_handle,
 			  uint32_t data_len,
 			  uint8_t *data);
@@ -1353,6 +1356,21 @@ QDF_STATUS (*extract_reg_cap_service_ready_ext)(
 			wmi_unified_t wmi_handle,
 			uint8_t *evt_buf, uint8_t phy_idx,
 			struct wlan_psoc_host_hal_reg_capabilities_ext *param);
+
+QDF_STATUS (*extract_dbr_ring_cap_service_ready_ext)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint8_t idx,
+			struct wlan_psoc_host_dbr_ring_caps *param);
+
+QDF_STATUS (*extract_dbr_buf_release_fixed)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf,
+			struct direct_buf_rx_rsp *param);
+
+QDF_STATUS (*extract_dbr_buf_release_entry)(
+			wmi_unified_t wmi_handle,
+			uint8_t *evt_buf, uint8_t idx,
+			struct direct_buf_rx_entry *param);
 
 QDF_STATUS (*extract_pdev_utf_event)(wmi_unified_t wmi_hdl,
 				     uint8_t *evt_buf,

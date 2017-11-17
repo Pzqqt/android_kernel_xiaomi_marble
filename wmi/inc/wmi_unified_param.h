@@ -5614,6 +5614,7 @@ typedef enum {
 	wmi_mgmt_tx_bundle_completion_event_id,
 	wmi_radio_tx_power_level_stats_event_id,
 	wmi_report_stats_event_id,
+	wmi_dma_buf_release_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -6025,6 +6026,7 @@ typedef enum {
 	wmi_service_widebw_scan,
 	wmi_service_bcn_offload_start_stop_support,
 	wmi_service_offchan_data_tid_support,
+	wmi_service_support_dma,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
@@ -8166,6 +8168,103 @@ struct wdsentry {
 	u_int8_t peer_mac[IEEE80211_ADDR_LEN];
 	u_int8_t wds_mac[IEEE80211_ADDR_LEN];
 	A_UINT32 flags;
+};
+
+#define WMI_HOST_DBR_RING_ADDR_LO_S 0
+#define WMI_HOST_DBR_RING_ADDR_LO 0xffffffff
+
+#define WMI_HOST_DBR_RING_ADDR_LO_GET(dword) \
+			WMI_HOST_F_MS(dword, WMI_HOST_DBR_RING_ADDR_LO)
+#define WMI_HOST_DBR_RING_ADDR_LO_SET(dword, val) \
+			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_RING_ADDR_LO)
+
+#define WMI_HOST_DBR_RING_ADDR_HI_S 0
+#define WMI_HOST_DBR_RING_ADDR_HI 0xf
+
+#define WMI_HOST_DBR_RING_ADDR_HI_GET(dword) \
+			WMI_HOST_F_MS(dword, WMI_HOST_DBR_RING_ADDR_HI)
+#define WMI_HOST_DBR_RING_ADDR_HI_SET(dword, val) \
+			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_RING_ADDR_HI)
+
+#define WMI_HOST_DBR_DATA_ADDR_LO_S 0
+#define WMI_HOST_DBR_DATA_ADDR_LO 0xffffffff
+
+#define WMI_HOST_DBR_DATA_ADDR_LO_GET(dword) \
+			WMI_HOST_F_MS(dword, WMI_HOST_DBR_DATA_ADDR_LO)
+#define WMI_HOST_DBR_DATA_ADDR_LO_SET(dword, val) \
+			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_DATA_ADDR_LO)
+
+#define WMI_HOST_DBR_DATA_ADDR_HI_S 0
+#define WMI_HOST_DBR_DATA_ADDR_HI 0xf
+
+#define WMI_HOST_DBR_DATA_ADDR_HI_GET(dword) \
+			WMI_HOST_F_MS(dword, WMI_HOST_DBR_DATA_ADDR_HI)
+#define WMI_HOST_DBR_DATA_ADDR_HI_SET(dword, val) \
+			WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_DATA_ADDR_HI)
+
+#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_S 12
+#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA 0xfffff
+
+#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_GET(dword) \
+		WMI_HOST_F_MS(dword, WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA)
+#define WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA_SET(dword, val) \
+		WMI_HOST_F_RMW(dword, val, WMI_HOST_DBR_DATA_ADDR_HI_HOST_DATA)
+
+/**
+ * struct direct_buf_rx_entry: direct buffer rx release entry structure
+ *
+ * @addr_lo: LSB 32-bits of the buffer
+ * @addr_hi: MSB 32-bits of the buffer
+ * @len: Length of the buffer
+ */
+struct direct_buf_rx_entry {
+	uint32_t paddr_lo;
+	uint32_t paddr_hi;
+	uint32_t len;
+};
+
+/**
+ * struct direct_buf_rx_rsp: direct buffer rx response structure
+ *
+ * @pdev_id: Index of the pdev for which response is received
+ * @mod_mod: Index of the module for which respone is received
+ * @num_buf_release_entry: Number of buffers released through event
+ * @dbr_entries: Pointer to direct buffer rx entry struct
+ */
+struct direct_buf_rx_rsp {
+	uint32_t pdev_id;
+	uint32_t mod_id;
+	uint32_t num_buf_release_entry;
+	struct direct_buf_rx_entry *dbr_entries;
+};
+
+/**
+ * struct direct_buf_rx_cfg_req: direct buffer rx config request structure
+ *
+ * @pdev_id: Index of the pdev for which response is received
+ * @mod_id: Index of the module for which respone is received
+ * @base_paddr_lo: Lower 32bits of ring base address
+ * @base_paddr_hi: Higher 32bits of ring base address
+ * @head_idx_paddr_lo: Lower 32bits of head idx register address
+ * @head_idx_paddr_hi: Higher 32bits of head idx register address
+ * @tail_idx_paddr_lo: Lower 32bits of tail idx register address
+ * @tail_idx_paddr_hi: Higher 32bits of tail idx register address
+ * @buf_size: Size of the buffer for each pointer in the ring
+ * @num_elems: Number of pointers allocated and part of the source ring
+ */
+struct direct_buf_rx_cfg_req {
+	uint32_t pdev_id;
+	uint32_t mod_id;
+	uint32_t base_paddr_lo;
+	uint32_t base_paddr_hi;
+	uint32_t head_idx_paddr_lo;
+	uint32_t head_idx_paddr_hi;
+	uint32_t tail_idx_paddr_hi;
+	uint32_t tail_idx_paddr_lo;
+	uint32_t buf_size;
+	uint32_t num_elems;
+	uint32_t event_timeout_ms;
+	uint32_t num_resp_per_event;
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
