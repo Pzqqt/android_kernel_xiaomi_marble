@@ -54,7 +54,7 @@ bool ucfg_pmo_is_vdev_connected(struct wlan_objmgr_vdev *vdev)
 	return pmo_core_is_vdev_connected(vdev);
 }
 
-bool pmo_ucfg_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
+bool ucfg_pmo_is_vdev_supports_offload(struct wlan_objmgr_vdev *vdev)
 {
 	return pmo_core_is_vdev_supports_offload(vdev);
 }
