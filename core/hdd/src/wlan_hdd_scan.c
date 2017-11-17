@@ -921,9 +921,9 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	struct cfg80211_scan_request *request = NULL;
 	struct nlattr *attr;
 	enum nl80211_band band;
-	uint8_t n_channels = 0, n_ssid = 0, ie_len = 0;
+	uint8_t n_channels = 0, n_ssid = 0;
 	uint32_t tmp, count, j;
-	unsigned int len;
+	size_t len, ie_len;
 	struct ieee80211_channel *chan;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(wdev->netdev);
