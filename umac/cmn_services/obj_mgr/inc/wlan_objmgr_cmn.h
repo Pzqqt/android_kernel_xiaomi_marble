@@ -237,6 +237,7 @@ typedef enum {
 	WLAN_SPECTRAL_ID      = 27,
 	WLAN_SPLITMAC_ID      = 28,
 	WLAN_DEBUG_ID         = 29,
+	WLAN_DIRECT_BUF_RX_ID = 30,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -280,6 +281,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_SPECTRAL_ID",
 					"WLAN_SPLITMAC_ID",
 					"WLAN_DEBUG_ID",
+					"WLAN_DIRECT_BUF_RX_ID",
 					"WLAN_REF_ID_MAX" };
 
 	return (char *)strings[id];

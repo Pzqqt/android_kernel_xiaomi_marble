@@ -254,6 +254,23 @@ struct wlan_psoc_host_hw_mode_caps {
 };
 
 /**
+ * struct wlan_psoc_host_dbr_ring_caps - Direct buffer rx module ring
+ *                                       capability maintained by PSOC
+ * @pdev_id: Pdev id of the pdev
+ * @mod_id: Module id
+ * @ring_elems_min: Minimum number of pointers in the ring
+ * @min_buf_size: Minimum size of each buffer entry in the ring
+ * @min_buf_align: Minimum alignment of the addresses in the ring
+ */
+struct wlan_psoc_host_dbr_ring_caps {
+	uint32_t pdev_id;
+	uint32_t mod_id;
+	uint32_t ring_elems_min;
+	uint32_t min_buf_size;
+	uint32_t min_buf_align;
+};
+
+/**
  * struct wlan_psoc_host_chainmask_capabilities - chain mask capabilities list
  * @supports_chan_width_20: channel width 20 support for this chain mask.
  * @supports_chan_width_40: channel width 40 support for this chain mask.
@@ -309,6 +326,7 @@ struct wlan_psoc_host_chainmask_table {
  * @num_hw_modes: Number of HW modes in event
  * @num_phy: Number of Phy mode.
  * @num_chainmask_tables: Number of chain mask tables.
+ * @num_dbr_ring_caps: Number of direct buf rx ring capabilities
  * @chainmask_table: Available chain mask tables.
  */
 struct wlan_psoc_host_service_ext_param {
@@ -322,6 +340,7 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t num_hw_modes;
 	uint32_t num_phy;
 	uint32_t num_chainmask_tables;
+	uint32_t num_dbr_ring_caps;
 	struct wlan_psoc_host_chainmask_table chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
 };
 
@@ -331,6 +350,7 @@ struct wlan_psoc_host_service_ext_param {
  * @hw_mode_caps: hw mode caps
  * @mac_phy_cap: mac phy cap
  * @reg_cap: regulatory capability
+ * @dbr_ring_cap: pointer to direct buf rx ring capability
  */
 struct wlan_objmgr_psoc_ext_service_ready_param {
 	struct wlan_psoc_host_service_ext_param service_ext_param;
@@ -339,6 +359,7 @@ struct wlan_objmgr_psoc_ext_service_ready_param {
 			mac_phy_cap[PSOC_MAX_MAC_PHY_CAP];
 	struct wlan_psoc_host_hal_reg_capabilities_ext
 			reg_cap[PSOC_MAX_PHY_REG_CAP];
+	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
 };
 
 /**

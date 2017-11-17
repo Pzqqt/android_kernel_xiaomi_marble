@@ -239,6 +239,49 @@ return_exit:
 	return qdf_status_to_os_return(status);
 }
 
+static int populate_dbr_ring_capability(void *handle, uint8_t *event,
+		struct wlan_objmgr_psoc_ext_service_ready_param *service_param)
+{
+	uint8_t cap_idx;
+	uint32_t num_dbr_ring_caps;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	num_dbr_ring_caps = service_param->service_ext_param.num_dbr_ring_caps;
+
+	WMI_LOGE("Num DMA Capabilities = %d", num_dbr_ring_caps);
+
+	if (!num_dbr_ring_caps) {
+		return 0;
+	}
+
+	service_param->dbr_ring_cap = qdf_mem_malloc(
+				sizeof(struct wlan_psoc_host_dbr_ring_caps) *
+				num_dbr_ring_caps);
+
+	if (!service_param->dbr_ring_cap) {
+		WMI_LOGE("Mem alloc for DMA cap failed");
+		return -EINVAL;
+	}
+
+	for (cap_idx = 0; cap_idx < num_dbr_ring_caps; cap_idx++) {
+		status = wmi_extract_dbr_ring_cap_service_ready_ext(handle,
+				event, cap_idx,
+				&(service_param->dbr_ring_cap[cap_idx]));
+		if (QDF_IS_STATUS_ERROR(status)) {
+			WMI_LOGE("Extraction of DMA cap failed");
+			goto free_and_return;
+		}
+	}
+
+	return 0;
+
+free_and_return:
+	qdf_mem_free(service_param->dbr_ring_cap);
+	service_param->dbr_ring_cap = NULL;
+
+	return qdf_status_to_os_return(status);
+}
+
 static int populate_phy_reg_capability(void *handle, uint8_t *event,
 		struct wlan_objmgr_psoc_ext_service_ready_param *service_param)
 {
@@ -320,6 +363,12 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		if (err_code)
 			goto free_param_and_exit;
 	}
+
+	err_code = populate_dbr_ring_capability(wmi_handle,
+						event, service_param);
+
+	if (err_code)
+		goto free_param_and_exit;
 
 	wlan_objmgr_populate_ext_service_ready_data(psoc, service_param);
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();

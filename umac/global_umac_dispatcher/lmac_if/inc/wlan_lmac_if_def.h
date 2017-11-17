@@ -58,6 +58,11 @@ struct oem_data_req;
 struct oem_data_rsp;
 #endif /* WIFI_POS_CONVERGED */
 
+#ifdef DIRECT_BUF_RX_ENABLE
+/* forward declarations for direct buf rx */
+struct direct_buf_rx_data;
+#endif
+
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 struct scheduler_msg;
 #endif
@@ -335,6 +340,20 @@ struct wlan_lmac_if_wifi_pos_tx_ops {
 };
 #endif
 
+#ifdef DIRECT_BUF_RX_ENABLE
+/**
+ * struct wlan_lmac_if_direct_buf_rx_tx_ops - structire of direct buf rx txops
+ * @direct_buf_rx_module_register: Registration API callback for modules
+ *                                 to register with direct buf rx framework
+ */
+struct wlan_lmac_if_direct_buf_rx_tx_ops {
+	QDF_STATUS (*direct_buf_rx_module_register)(
+			struct wlan_objmgr_pdev *pdev, uint8_t mod_id,
+			int (*dbr_rsp_handler)(struct wlan_objmgr_pdev *pdev,
+				struct direct_buf_rx_data *dbr_data));
+};
+#endif
+
 #ifdef CONVERGED_TDLS_ENABLE
 /* fwd declarations for tdls tx ops */
 struct tdls_info;
@@ -565,6 +584,9 @@ struct wlan_lmac_if_tx_ops {
 	 struct wlan_lmac_if_target_tx_ops target_tx_ops;
 #ifdef WLAN_OFFCHAN_TXRX_ENABLE
 	struct wlan_lmac_if_offchan_txrx_ops offchan_txrx_ops;
+#endif
+#ifdef DIRECT_BUF_RX_ENABLE
+	struct wlan_lmac_if_direct_buf_rx_tx_ops dbr_tx_ops;
 #endif
 };
 

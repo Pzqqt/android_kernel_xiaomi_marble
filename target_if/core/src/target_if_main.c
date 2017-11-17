@@ -58,6 +58,10 @@
 #include <target_if_offchan_txrx_api.h>
 #endif
 
+#ifdef DIRECT_BUF_RX_ENABLE
+#include <target_if_direct_buf_rx_api.h>
+#endif
+
 static struct target_if_ctx *g_target_if_ctx;
 
 struct target_if_ctx *target_if_get_ctx()
@@ -215,6 +219,19 @@ static void target_if_sptrl_tx_ops_register(
 }
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+#ifdef DIRECT_BUF_RX_ENABLE
+static void target_if_direct_buf_rx_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	target_if_direct_buf_rx_register_tx_ops(tx_ops);
+}
+#else
+static void target_if_direct_buf_rx_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* DIRECT_BUF_RX_ENABLE */
+
 static void target_if_target_tx_ops_register(
 		struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -281,6 +298,9 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 
 	/* Components parallel to UMAC to register their TX-ops here */
 	target_if_sptrl_tx_ops_register(tx_ops);
+
+	/* Register direct buffer rx component tx ops here */
+	target_if_direct_buf_rx_tx_ops_register(tx_ops);
 
 #ifdef CONVERGED_P2P_ENABLE
 	/* Converged UMAC components to register P2P TX-ops */
