@@ -2347,6 +2347,17 @@ QDF_STATUS wmi_unified_oem_dma_ring_cfg(void *wmi_hdl,
 }
 #endif
 
+QDF_STATUS wmi_unified_dbr_ring_cfg(void *wmi_hdl,
+				struct direct_buf_rx_cfg_req *cfg)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_dbr_cfg_cmd)
+		return wmi_handle->ops->send_dbr_cfg_cmd(wmi_handle, cfg);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /**
  * wmi_unified_start_oem_data_cmd() - start OEM data request to target
  * @wmi_handle: wmi handle
@@ -6755,6 +6766,51 @@ QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
 		return wmi_handle->ops->extract_reg_cap_service_ready_ext(
 				wmi_handle,
 				evt_buf, phy_idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_dbr_ring_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct wlan_psoc_host_dbr_ring_caps *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_dbr_ring_cap_service_ready_ext)
+		return wmi_handle->ops->extract_dbr_ring_cap_service_ready_ext(
+				wmi_handle,
+				evt_buf, idx, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_dbr_buf_release_fixed(
+			void *wmi_hdl,
+			uint8_t *evt_buf,
+			struct direct_buf_rx_rsp *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_dbr_buf_release_fixed)
+		return wmi_handle->ops->extract_dbr_buf_release_fixed(
+				wmi_handle,
+				evt_buf, param);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_dbr_buf_release_entry(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct direct_buf_rx_entry *param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_dbr_buf_release_entry)
+		return wmi_handle->ops->extract_dbr_buf_release_entry(
+				wmi_handle,
+				evt_buf, idx, param);
 
 	return QDF_STATUS_E_FAILURE;
 }

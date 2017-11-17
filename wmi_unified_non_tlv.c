@@ -8630,6 +8630,8 @@ static void populate_non_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_chan_load_info] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_ack_timeout] = WMI_SERVICE_UNAVAILABLE;
 	wmi_service[wmi_service_widebw_scan] = WMI_SERVICE_UNAVAILABLE;
+	wmi_service[wmi_service_support_dma] =
+				WMI_SERVICE_UNAVAILABLE;
 }
 
 /**
