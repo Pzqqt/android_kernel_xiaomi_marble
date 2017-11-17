@@ -416,6 +416,12 @@ QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_green_ap_ps_send(void *wmi_hdl,
 						uint32_t value, uint8_t mac_id);
 
+#ifdef FEATURE_WLAN_D0WOW
+QDF_STATUS wmi_unified_d0wow_enable_send(void *wmi_hdl,
+				uint8_t mac_id);
+QDF_STATUS wmi_unified_d0wow_disable_send(void *wmi_hdl,
+				uint8_t mac_id);
+#endif
 
 QDF_STATUS wmi_unified_wow_enable_send(void *wmi_hdl,
 				struct wow_cmd_params *param,
