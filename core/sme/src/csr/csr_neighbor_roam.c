@@ -490,17 +490,17 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 	return QDF_STATUS_SUCCESS;
 }
 
-tSirRFBand csr_get_rf_band(uint8_t channel)
+enum band_info csr_get_rf_band(uint8_t channel)
 {
 	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
 	    (channel <= SIR_11A_CHANNEL_END))
-		return SIR_BAND_5_GHZ;
+		return BAND_5G;
 
 	if ((channel >= SIR_11B_CHANNEL_BEGIN) &&
 	    (channel <= SIR_11B_CHANNEL_END))
-		return SIR_BAND_2_4_GHZ;
+		return BAND_2G;
 
-	return SIR_BAND_UNKNOWN;
+	return BAND_UNKNOWN;
 }
 
 /**

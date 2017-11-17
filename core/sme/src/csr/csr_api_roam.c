@@ -260,9 +260,11 @@ static QDF_STATUS csr_send_mb_stats_req_msg(tpAniSirGlobal pMac,
 /* pStaEntry is no longer invalid upon the return of this function. */
 static void csr_roam_remove_stat_list_entry(tpAniSirGlobal pMac,
 							tListElem *pEntry);
-static enum csr_cfgdot11mode csr_roam_get_phy_mode_band_for_bss(
-tpAniSirGlobal pMac, tCsrRoamProfile *pProfile, uint8_t operationChn,
-							   eCsrBand *pBand);
+static enum csr_cfgdot11mode
+csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal pMac,
+				   tCsrRoamProfile *pProfile,
+				   uint8_t operationChn,
+				   enum band_info *pBand);
 static QDF_STATUS csr_roam_get_qos_info_from_bss(
 tpAniSirGlobal pMac, tSirBssDescription *pBssDesc);
 struct csr_statsclient_reqinfo *csr_roam_insert_entry_into_list(
@@ -875,10 +877,10 @@ QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 				if ((is_unsafe_chan) &&
 				    ((WLAN_REG_IS_24GHZ_CH(channel) &&
 				      roam_policy->sap_operating_band ==
-					eCSR_BAND_24) ||
+					BAND_2G) ||
 					(WLAN_REG_IS_5GHZ_CH(channel) &&
 					 roam_policy->sap_operating_band ==
-					eCSR_BAND_5G))) {
+					BAND_5G))) {
 					QDF_TRACE(QDF_MODULE_ID_SME,
 					QDF_TRACE_LEVEL_DEBUG,
 					FL("ignoring unsafe channel %d"),
@@ -1442,7 +1444,7 @@ static void init_config_param(tpAniSirGlobal pMac)
 		WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
 
 	pMac->roam.configParam.phyMode = eCSR_DOT11_MODE_AUTO;
-	pMac->roam.configParam.eBand = eCSR_BAND_ALL;
+	pMac->roam.configParam.eBand = BAND_ALL;
 	pMac->roam.configParam.uCfgDot11Mode = eCSR_CFG_DOT11_MODE_AUTO;
 	pMac->roam.configParam.FragmentationThreshold =
 		eCSR_DOT11_FRAG_THRESH_DEFAULT;
@@ -1560,7 +1562,7 @@ static void init_config_param(tpAniSirGlobal pMac)
 		channel_congestion_weightage = CHANNEL_CONGESTION_WEIGHTAGE;
 }
 
-eCsrBand csr_get_current_band(tHalHandle hHal)
+enum band_info csr_get_current_band(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -1642,7 +1644,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 					     uint8_t sessionId,
 					     uint8_t *pChannelList,
 					     uint8_t numChannels,
-					     const eCsrBand eBand)
+					     const enum band_info eBand)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -1674,14 +1676,14 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 						&mergedOutputNumOfChannels);
 		inNumChannels = mergedOutputNumOfChannels;
 	}
-	if (eCSR_BAND_24 == eBand) {
+	if (BAND_2G == eBand) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (WLAN_REG_IS_24GHZ_CH(inPtr[i])
 			    && csr_roam_is_channel_valid(pMac, inPtr[i])) {
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
 		}
-	} else if (eCSR_BAND_5G == eBand) {
+	} else if (BAND_5G == eBand) {
 		for (i = 0; i < inNumChannels; i++) {
 			/* Add 5G Non-DFS channel */
 			if (WLAN_REG_IS_5GHZ_CH(inPtr[i]) &&
@@ -1690,7 +1692,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 				ChannelList[outNumChannels++] = inPtr[i];
 			}
 		}
-	} else if (eCSR_BAND_ALL == eBand) {
+	} else if (BAND_ALL == eBand) {
 		for (i = 0; i < inNumChannels; i++) {
 			if (csr_roam_is_channel_valid(pMac, inPtr[i]) &&
 			    !wlan_reg_is_dfs_ch(pMac->pdev, inPtr[i])) {
@@ -1710,7 +1712,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 	 * E.g., if band capability is only 2.4G then all the channels in the
 	 * list are already filtered for 2.4G channels, hence ignore this check
 	 */
-	if ((eCSR_BAND_ALL == eBand) && CSR_IS_ROAM_INTRA_BAND_ENABLED(pMac)) {
+	if ((BAND_ALL == eBand) && CSR_IS_ROAM_INTRA_BAND_ENABLED(pMac)) {
 		csr_neighbor_roam_channels_filter_by_current_band(pMac,
 								sessionId,
 								ChannelList,
@@ -2049,12 +2051,13 @@ bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal mac_ctx)
 	return mac_ctx->roam.configParam.isRoamOffloadScanEnabled;
 }
 
-QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand)
+QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId,
+			enum band_info eBand)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (CSR_IS_PHY_MODE_A_ONLY(pMac) && (eBand == eCSR_BAND_24)) {
+	if (CSR_IS_PHY_MODE_A_ONLY(pMac) && (eBand == BAND_2G)) {
 		/* DOT11 mode configured to 11a only and received
 		 * request to change the band to 2.4 GHz
 		 */
@@ -2064,7 +2067,7 @@ QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand)
 		return QDF_STATUS_E_INVAL;
 	}
 	if ((CSR_IS_PHY_MODE_B_ONLY(pMac) ||
-	     CSR_IS_PHY_MODE_G_ONLY(pMac)) && (eBand == eCSR_BAND_5G)) {
+	     CSR_IS_PHY_MODE_G_ONLY(pMac)) && (eBand == BAND_5G)) {
 		/* DOT11 mode configured to 11b/11g only and received
 		 * request to change the band to 5 GHz
 		 */
@@ -3235,21 +3238,21 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode, eCsrBand eBand,
-			    bool *pfRestartNeeded)
+QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode,
+			    enum band_info eBand, bool *pfRestartNeeded)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	bool fRestartNeeded = false;
 	eCsrPhyMode newPhyMode = eCSR_DOT11_MODE_AUTO;
 
-	if (eCSR_BAND_24 == eBand) {
+	if (BAND_2G == eBand) {
 		if (CSR_IS_RADIO_A_ONLY(pMac))
 			goto end;
 		if (eCSR_DOT11_MODE_11a & phyMode)
 			goto end;
 	}
-	if (eCSR_BAND_5G == eBand) {
+	if (BAND_5G == eBand) {
 		if (CSR_IS_RADIO_BG_ONLY(pMac))
 			goto end;
 		if ((eCSR_DOT11_MODE_11b & phyMode)
@@ -3269,17 +3272,17 @@ QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode, eCsrBand eBand,
 		} else if (eCSR_DOT11_MODE_11g_ONLY & phyMode) {
 			if (eCSR_DOT11_MODE_11g_ONLY != phyMode)
 				goto end;
-			if (eCSR_BAND_5G == eBand)
+			if (BAND_5G == eBand)
 				goto end;
 			newPhyMode = eCSR_DOT11_MODE_11g_ONLY;
-			eBand = eCSR_BAND_24;
+			eBand = BAND_2G;
 		} else if (eCSR_DOT11_MODE_11b_ONLY & phyMode) {
 			if (eCSR_DOT11_MODE_11b_ONLY != phyMode)
 				goto end;
-			if (eCSR_BAND_5G == eBand)
+			if (BAND_5G == eBand)
 				goto end;
 			newPhyMode = eCSR_DOT11_MODE_11b_ONLY;
-			eBand = eCSR_BAND_24;
+			eBand = BAND_2G;
 		} else if (eCSR_DOT11_MODE_11n & phyMode) {
 			newPhyMode = eCSR_DOT11_MODE_11n;
 		} else if (eCSR_DOT11_MODE_abg & phyMode) {
@@ -3287,20 +3290,20 @@ QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode, eCsrBand eBand,
 		} else if (eCSR_DOT11_MODE_11a & phyMode) {
 			if ((eCSR_DOT11_MODE_11g & phyMode)
 				|| (eCSR_DOT11_MODE_11b & phyMode)) {
-				if (eCSR_BAND_ALL == eBand)
+				if (BAND_ALL == eBand)
 					newPhyMode = eCSR_DOT11_MODE_abg;
 				else
 					goto end;
 			} else {
 				newPhyMode = eCSR_DOT11_MODE_11a;
-				eBand = eCSR_BAND_5G;
+				eBand = BAND_5G;
 			}
 		} else if (eCSR_DOT11_MODE_11g & phyMode) {
 			newPhyMode = eCSR_DOT11_MODE_11g;
-			eBand = eCSR_BAND_24;
+			eBand = BAND_2G;
 		} else if (eCSR_DOT11_MODE_11b & phyMode) {
 			newPhyMode = eCSR_DOT11_MODE_11b;
-			eBand = eCSR_BAND_24;
+			eBand = BAND_2G;
 		} else {
 			sme_err("can't recognize phymode 0x%08X", phyMode);
 			newPhyMode = eCSR_DOT11_MODE_AUTO;
@@ -4281,9 +4284,9 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 		}
 	}
 	if (WLAN_REG_IS_5GHZ_CH(pBssDesc->channelId))
-		pBssConfig->eBand = eCSR_BAND_5G;
+		pBssConfig->eBand = BAND_5G;
 	else
-		pBssConfig->eBand = eCSR_BAND_24;
+		pBssConfig->eBand = BAND_2G;
 		/* phymode */
 	if (csr_is_phy_mode_match(pMac, pProfile->phyMode, pBssDesc,
 				  pProfile, &cfgDot11Mode, pIes)) {
@@ -4291,7 +4294,7 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 	} else {
 		sme_warn("Can not find match phy mode");
 		/* force it */
-		if (eCSR_BAND_24 == pBssConfig->eBand)
+		if (BAND_2G == pBssConfig->eBand)
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11G;
 		else
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
@@ -4488,7 +4491,7 @@ QDF_STATUS csr_roam_prepare_bss_config_from_profile(
 	pBssConfig->f11hSupport = false;
 	pBssConfig->uPowerLimit = 0;
 	/* heartbeat */
-	if (eCSR_BAND_5G == pBssConfig->eBand) {
+	if (BAND_5G == pBssConfig->eBand) {
 		pBssConfig->uHeartBeatThresh =
 			pMac->roam.configParam.HeartbeatThresh50;
 	} else {
@@ -4948,7 +4951,7 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 							  SIR_MAC_RATE_96,
 							  SIR_MAC_RATE_108} };
 	enum csr_cfgdot11mode cfgDot11Mode;
-	eCsrBand eBand;
+	enum band_info eBand;
 	/* leave enough room for the max number of rates */
 	uint8_t OperationalRates[CSR_DOT11_SUPPORTED_RATES_MAX];
 	uint32_t OperationalRatesLength = 0;
@@ -4973,7 +4976,7 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 	 * into our Operational Rate set (including the basic rates, which we
 	 * have already verified are supported earlier in the roaming decision).
 	 */
-	if (eCSR_BAND_5G == eBand) {
+	if (BAND_5G == eBand) {
 		/* 11a rates into the Operational Rate Set. */
 		OperationalRatesLength =
 			DefaultSupportedRates11a.supportedRateSet.numRates *
@@ -12744,7 +12747,7 @@ void csr_roam_process_wm_status_change_command(
 static void
 csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			  enum csr_cfgdot11mode *dot11_mode,
-			  eCsrBand *band,
+			  enum band_info *band,
 			  uint8_t opr_ch)
 {
 	bool vht_24_ghz = mac_ctx->roam.configParam.enableVhtFor24GHz;
@@ -12752,15 +12755,15 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 	switch (mac_ctx->roam.configParam.uCfgDot11Mode) {
 	case eCSR_CFG_DOT11_MODE_11A:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
-		*band = eCSR_BAND_5G;
+		*band = BAND_5G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11B:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
-		*band = eCSR_BAND_24;
+		*band = BAND_2G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11G:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11G;
-		*band = eCSR_BAND_24;
+		*band = BAND_2G;
 		break;
 	case eCSR_CFG_DOT11_MODE_11N:
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
@@ -12844,7 +12847,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 		 */
 		if (eCSR_OPERATING_CHANNEL_AUTO == opr_ch) {
 			*band = mac_ctx->roam.configParam.eBand;
-			if (eCSR_BAND_24 == *band) {
+			if (BAND_2G == *band) {
 				/*
 				 * See reason in else if ( WLAN_REG_IS_24GHZ_CH
 				 * (opr_ch) ) to pick 11B
@@ -12852,7 +12855,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
 			} else {
 				/* prefer 5GHz */
-				*band = eCSR_BAND_5G;
+				*band = BAND_5G;
 				*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
 			}
 		} else if (WLAN_REG_IS_24GHZ_CH(opr_ch)) {
@@ -12874,11 +12877,11 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 			 * to force it.
 			 */
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11B;
-			*band = eCSR_BAND_24;
+			*band = BAND_2G;
 		} else {
 			/* else, it's a 5.0GHz channel.  Set mode to 11a. */
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11A;
-			*band = eCSR_BAND_5G;
+			*band = BAND_5G;
 		}
 		break;
 	} /* switch */
@@ -12903,9 +12906,9 @@ static enum csr_cfgdot11mode
 csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 				   tCsrRoamProfile *profile,
 				   uint8_t opr_chn,
-				   eCsrBand *p_band)
+				   enum band_info *p_band)
 {
-	eCsrBand band;
+	enum band_info band;
 enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 	enum csr_cfgdot11mode cfg_dot11_mode =
 		csr_get_cfg_dot11_mode_from_csr_phy_mode(profile,
@@ -12929,9 +12932,9 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 		if (eCSR_OPERATING_CHANNEL_AUTO == opr_chn) {
 			/* channel is Auto also. */
 			band = mac_ctx->roam.configParam.eBand;
-			if (eCSR_BAND_ALL == band) {
+			if (BAND_ALL == band) {
 				/* prefer 5GHz */
-				band = eCSR_BAND_5G;
+				band = BAND_5G;
 			}
 		} else{
 			band = CSR_GET_BAND(opr_chn);
@@ -13485,7 +13488,8 @@ csr_populate_basic_rates(tSirMacRateSet *rate_set, bool is_ofdm_rates,
  * Return: tSirNwType
  */
 static tSirNwType
-csr_convert_mode_to_nw_type(enum csr_cfgdot11mode dot11_mode, eCsrBand band)
+csr_convert_mode_to_nw_type(enum csr_cfgdot11mode dot11_mode,
+			    enum band_info band)
 {
 	switch (dot11_mode) {
 	case eCSR_CFG_DOT11_MODE_11G:
@@ -13500,7 +13504,7 @@ csr_convert_mode_to_nw_type(enum csr_cfgdot11mode dot11_mode, eCsrBand band)
 		 * Because LIM only verifies it against 11a, 11b or 11g, set
 		 * only 11g or 11a here
 		 */
-		if (eCSR_BAND_24 == band)
+		if (BAND_2G == band)
 			return eSIR_11G_NW_TYPE;
 		else
 			return eSIR_11A_NW_TYPE;
@@ -13573,7 +13577,7 @@ csr_roam_get_bss_start_parms(tpAniSirGlobal pMac,
 			     struct csr_roamstart_bssparams *pParam,
 			     bool skip_hostapd_rate)
 {
-	eCsrBand band;
+	enum band_info band;
 	uint8_t opr_ch = 0;
 	tSirNwType nw_type;
 	uint8_t tmp_opr_ch = 0;
@@ -13768,7 +13772,7 @@ QDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 					uint32_t roamId)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	eCsrBand eBand;
+	enum band_info eBand;
 	/* Set the roaming substate to 'Start BSS attempt'... */
 	csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_START_BSS_REQ,
 				 sessionId);
@@ -17409,15 +17413,15 @@ csr_update_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
  * Return: bool if match else false
  */
 static bool
-csr_check_band_channel_match(eCsrBand band, uint8_t channel)
+csr_check_band_channel_match(enum band_info band, uint8_t channel)
 {
-	if (eCSR_BAND_ALL == band)
+	if (BAND_ALL == band)
 		return true;
 
-	if (eCSR_BAND_24 == band && WLAN_REG_IS_24GHZ_CH(channel))
+	if (BAND_2G == band && WLAN_REG_IS_24GHZ_CH(channel))
 		return true;
 
-	if (eCSR_BAND_5G == band && WLAN_REG_IS_5GHZ_CH(channel))
+	if (BAND_5G == band && WLAN_REG_IS_5GHZ_CH(channel))
 		return true;
 
 	return false;
@@ -17437,7 +17441,7 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 			  tpCsrNeighborRoamControlInfo roam_info,
 			  tSirRoamOffloadScanReq *req_buf)
 {
-	eCsrBand band;
+	enum band_info band;
 	uint8_t i = 0;
 	uint8_t num_channels = 0;
 	uint8_t *ch_lst = roam_info->cfgParams.channelInfo.ChannelList;
@@ -17461,8 +17465,8 @@ csr_fetch_ch_lst_from_ini(tpAniSirGlobal mac_ctx,
 	 * that is supported.
 	 */
 	band = mac_ctx->roam.configParam.bandCapability;
-	if ((eCSR_BAND_24 != band) && (eCSR_BAND_5G != band)
-	    && (eCSR_BAND_ALL != band)) {
+	if ((BAND_2G != band) && (BAND_5G != band)
+	    && (BAND_ALL != band)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			 "Invalid band(%d), roam scan offload req aborted",
 			  band);
@@ -17636,7 +17640,7 @@ csr_fetch_valid_ch_lst(tpAniSirGlobal mac_ctx,
 	uint16_t  cnt = 0;
 	bool      is_unsafe_chan;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	eCsrBand band = eCSR_BAND_ALL;
+	enum band_info band = BAND_ALL;
 
 	if (!qdf_ctx) {
 		cds_err("qdf_ctx is NULL");

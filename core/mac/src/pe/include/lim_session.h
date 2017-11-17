@@ -147,7 +147,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t htRecommendedTxWidthSet;
 	/* Identifies the 40 MHz extension channel */
 	ePhyChanBondState htSecondaryChannelOffset;
-	tSirRFBand limRFBand;
+	enum band_info limRFBand;
 	uint8_t limIbssActive;  /* TO SUPPORT CONCURRENCY */
 
 	/* These global varibales moved to session Table to support BT-AMP : Oct 9th review */

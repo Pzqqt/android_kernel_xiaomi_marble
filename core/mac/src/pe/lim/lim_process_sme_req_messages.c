@@ -1085,7 +1085,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->lim11hEnable = 0;
 		if (mlm_start_req->bssType != eSIR_IBSS_MODE &&
 		    (CHAN_HOP_ALL_BANDS_ENABLE ||
-		     SIR_BAND_5_GHZ == session->limRFBand)) {
+		     BAND_5G == session->limRFBand)) {
 			if (wlan_cfg_get_int(mac_ctx,
 				WNI_CFG_11H_ENABLED, &val) != eSIR_SUCCESS)
 				pe_err("Fail to get WNI_CFG_11H_ENABLED");
@@ -1922,7 +1922,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			lim_get_rf_band(session->currentOperChannel);
 
 		/* Initialize 11h Enable Flag */
-		if (SIR_BAND_5_GHZ == session->limRFBand) {
+		if (BAND_5G == session->limRFBand) {
 			if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED,
 				&val) != eSIR_SUCCESS) {
 				pe_err("Fail to get WNI_CFG_11H_ENABLED");
@@ -5151,7 +5151,7 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 		lim_get_rf_band(session_entry->currentOperChannel);
 	/* Initialize 11h Enable Flag */
 	if (CHAN_HOP_ALL_BANDS_ENABLE ||
-	    SIR_BAND_5_GHZ == session_entry->limRFBand) {
+	    BAND_5G == session_entry->limRFBand) {
 		if (wlan_cfg_get_int(mac_ctx, WNI_CFG_11H_ENABLED, &val) !=
 				eSIR_SUCCESS)
 			pe_err("Fail to get WNI_CFG_11H_ENABLED");

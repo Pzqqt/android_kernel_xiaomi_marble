@@ -409,10 +409,10 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			   (uint8_t *) frame, (bytes + ft_ies_length));
 
 	if ((NULL != pe_session->ftPEContext.pFTPreAuthReq) &&
-	    (SIR_BAND_5_GHZ == lim_get_rf_band(
+	    (BAND_5G == lim_get_rf_band(
 	     pe_session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if ((SIR_BAND_5_GHZ ==
+	else if ((BAND_5G ==
 		  lim_get_rf_band(pe_session->currentOperChannel))
 		 || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
 		 || (pe_session->pePersona == QDF_P2P_GO_MODE))
@@ -760,7 +760,7 @@ void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		psessionEntry->assocReqLen = nPayload;
 	}
 
-	if ((SIR_BAND_5_GHZ ==
+	if ((BAND_5G ==
 		lim_get_rf_band(psessionEntry->currentOperChannel))
 			|| (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 			(psessionEntry->pePersona == QDF_P2P_GO_MODE))

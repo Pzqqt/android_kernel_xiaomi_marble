@@ -1013,7 +1013,7 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 {
 	uint32_t phy_mode;
 	tHalBitVal erp_enabled = eHAL_CLEAR;
-	tSirRFBand rf_band = SIR_BAND_UNKNOWN;
+	enum band_info rf_band = BAND_UNKNOWN;
 	uint32_t i;
 
 	if (NULL == sta_ds)
@@ -1023,7 +1023,7 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
 	erp_enabled = sta_ds->erpEnabled;
 
-	if ((SIR_BAND_5_GHZ == rf_band) &&
+	if ((BAND_5G == rf_band) &&
 		(true == session_entry->htCapability) &&
 		(session_entry->beaconParams.llaCoexist) &&
 		(false == sta_ds->mlmStaContext.htCapability)) {
@@ -1055,7 +1055,7 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 	}
 
 	/* we are HT or 11G and 11B station is getting deleted */
-	if ((SIR_BAND_2_4_GHZ == rf_band) &&
+	if ((BAND_2G == rf_band) &&
 		(phy_mode == WNI_CFG_PHY_MODE_11G ||
 		session_entry->htCapability) &&
 		(erp_enabled == eHAL_CLEAR)) {
@@ -1085,7 +1085,7 @@ lim_decide_ap_protection_on_delete(tpAniSirGlobal mac_ctx,
 	 * we are HT AP and non-11B station is leaving.
 	 * 11g station is leaving
 	 */
-	if ((SIR_BAND_2_4_GHZ == rf_band) &&
+	if ((BAND_2G == rf_band) &&
 		session_entry->htCapability &&
 		!sta_ds->mlmStaContext.htCapability) {
 		pe_debug("(%d) A 11g STA is disassociated. Addr is %pM",

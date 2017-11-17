@@ -1228,7 +1228,7 @@ lim_decide_ap_protection(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 {
 	uint16_t tmpAid;
 	tpDphHashNode pStaDs;
-	tSirRFBand rfBand = SIR_BAND_UNKNOWN;
+	enum band_info rfBand = BAND_UNKNOWN;
 	uint32_t phyMode;
 	tLimProtStaCacheType protStaCacheType =
 		eLIM_PROT_STA_CACHE_TYPE_INVALID;
@@ -1245,7 +1245,7 @@ lim_decide_ap_protection(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 	}
 	lim_get_rf_band_new(pMac, &rfBand, psessionEntry);
 	/* if we are in 5 GHZ band */
-	if (SIR_BAND_5_GHZ == rfBand) {
+	if (BAND_5G == rfBand) {
 		/* We are 11N. we need to protect from 11A and Ht20. we don't need any other protection in 5 GHZ. */
 		/* HT20 case is common between both the bands and handled down as common code. */
 		if (true == psessionEntry->htCapability) {
@@ -1258,7 +1258,7 @@ lim_decide_ap_protection(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 				return;
 			}
 		}
-	} else if (SIR_BAND_2_4_GHZ == rfBand) {
+	} else if (BAND_2G == rfBand) {
 		lim_get_phy_mode(pMac, &phyMode, psessionEntry);
 
 		/* We are 11G. Check if we need protection from 11b Stations. */
@@ -1611,13 +1611,13 @@ lim_decide_sta_protection_on_assoc(tpAniSirGlobal pMac,
 				   tpSchBeaconStruct pBeaconStruct,
 				   tpPESession psessionEntry)
 {
-	tSirRFBand rfBand = SIR_BAND_UNKNOWN;
+	enum band_info rfBand = BAND_UNKNOWN;
 	uint32_t phyMode = WNI_CFG_PHY_MODE_NONE;
 
 	lim_get_rf_band_new(pMac, &rfBand, psessionEntry);
 	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
 
-	if (SIR_BAND_5_GHZ == rfBand) {
+	if (BAND_5G == rfBand) {
 		if ((eSIR_HT_OP_MODE_MIXED == pBeaconStruct->HTInfo.opMode) ||
 		    (eSIR_HT_OP_MODE_OVERLAP_LEGACY ==
 		     pBeaconStruct->HTInfo.opMode)) {
@@ -1629,7 +1629,7 @@ lim_decide_sta_protection_on_assoc(tpAniSirGlobal pMac,
 				psessionEntry->beaconParams.ht20Coexist = true;
 		}
 
-	} else if (SIR_BAND_2_4_GHZ == rfBand) {
+	} else if (BAND_2G == rfBand) {
 		/* spec 7.3.2.13 */
 		/* UseProtection will be set when nonERP STA is associated. */
 		/* NonERPPresent bit will be set when: */
@@ -1846,13 +1846,13 @@ lim_decide_sta_protection(tpAniSirGlobal mac_ctx,
 				tpPESession psession_entry)
 {
 
-	tSirRFBand rfband = SIR_BAND_UNKNOWN;
+	enum band_info rfband = BAND_UNKNOWN;
 	uint32_t phy_mode = WNI_CFG_PHY_MODE_NONE;
 
 	lim_get_rf_band_new(mac_ctx, &rfband, psession_entry);
 	lim_get_phy_mode(mac_ctx, &phy_mode, psession_entry);
 
-	if ((SIR_BAND_5_GHZ == rfband) &&
+	if ((BAND_5G == rfband) &&
 		/* we are HT capable. */
 		(true == psession_entry->htCapability) &&
 		(beacon_struct->HTInfo.present)) {
@@ -1888,7 +1888,7 @@ lim_decide_sta_protection(tpAniSirGlobal mac_ctx,
 						false, beaconparams,
 						psession_entry);
 		}
-	} else if (SIR_BAND_2_4_GHZ == rfband) {
+	} else if (BAND_2G == rfband) {
 		lim_decide_sta_11bg_protection(mac_ctx, beacon_struct,
 					beaconparams, psession_entry, phy_mode);
 	}

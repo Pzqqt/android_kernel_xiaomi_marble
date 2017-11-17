@@ -5106,7 +5106,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 	uint32_t vhtchanwidth;
 	eCsrPhyMode phymode = -EIO, old_phymode;
 	enum hdd_dot11_mode hdd_dot11mode = phddctx->config->dot11Mode;
-	eCsrBand curr_band = eCSR_BAND_ALL;
+	enum band_info curr_band = BAND_ALL;
 	int retval = 0;
 
 	old_phymode = sme_get_phy_mode(hal);
@@ -5121,11 +5121,11 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 						   nChannelBondingMode5GHz))
 		ch_bond5g = true;
 
-	if (phddctx->config->nBandCapability == eCSR_BAND_ALL)
+	if (phddctx->config->nBandCapability == BAND_ALL)
 		band_24 = band_5g = true;
-	else if (phddctx->config->nBandCapability == eCSR_BAND_24)
+	else if (phddctx->config->nBandCapability == BAND_2G)
 		band_24 = true;
-	else if (phddctx->config->nBandCapability == eCSR_BAND_5G)
+	else if (phddctx->config->nBandCapability == BAND_5G)
 		band_5g = true;
 
 	vhtchanwidth = phddctx->config->vhtChannelWidth;
@@ -5139,7 +5139,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_AUTO;
 			hdd_dot11mode = eHDD_DOT11_MODE_AUTO;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-			curr_band = eCSR_BAND_ALL;
+			curr_band = BAND_ALL;
 			vhtchanwidth = eHT_CHANNEL_WIDTH_80MHZ;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
@@ -5152,7 +5152,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11a;
 			hdd_dot11mode = eHDD_DOT11_MODE_11a;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-			curr_band = eCSR_BAND_5G;
+			curr_band = BAND_5G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5164,7 +5164,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11b;
 			hdd_dot11mode = eHDD_DOT11_MODE_11b;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-			curr_band = eCSR_BAND_24;
+			curr_band = BAND_2G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5176,7 +5176,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11g;
 			hdd_dot11mode = eHDD_DOT11_MODE_11g;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-			curr_band = eCSR_BAND_24;
+			curr_band = BAND_2G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5192,7 +5192,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11n;
 			hdd_dot11mode = eHDD_DOT11_MODE_11n;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-			curr_band = eCSR_BAND_5G;
+			curr_band = BAND_5G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5204,7 +5204,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11n;
 			hdd_dot11mode = eHDD_DOT11_MODE_11n;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-			curr_band = eCSR_BAND_5G;
+			curr_band = BAND_5G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5216,7 +5216,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11n;
 			hdd_dot11mode = eHDD_DOT11_MODE_11n;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-			curr_band = eCSR_BAND_24;
+			curr_band = BAND_2G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5228,7 +5228,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11n;
 			hdd_dot11mode = eHDD_DOT11_MODE_11n;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-			curr_band = eCSR_BAND_24;
+			curr_band = BAND_2G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5242,7 +5242,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11ac;
 			hdd_dot11mode = eHDD_DOT11_MODE_11ac;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-			curr_band = eCSR_BAND_5G;
+			curr_band = BAND_5G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5254,7 +5254,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_AUTO;
 			hdd_dot11mode = eHDD_DOT11_MODE_AUTO;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-			curr_band = eCSR_BAND_24;
+			curr_band = BAND_2G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5267,7 +5267,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			hdd_dot11mode = eHDD_DOT11_MODE_AUTO;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
 			vhtchanwidth = eHT_CHANNEL_WIDTH_80MHZ;
-			curr_band = eCSR_BAND_5G;
+			curr_band = BAND_5G;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5279,7 +5279,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			phymode = eCSR_DOT11_MODE_11n;
 			hdd_dot11mode = eHDD_DOT11_MODE_11n;
 			chwidth = WNI_CFG_CHANNEL_BONDING_MODE_ENABLE;
-			curr_band = eCSR_BAND_ALL;
+			curr_band = BAND_ALL;
 		} else {
 			sme_set_phy_mode(hal, old_phymode);
 			return -EIO;
@@ -5341,14 +5341,14 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 #endif
 		sme_config->csrConfig.eBand = curr_band;
 		sme_config->csrConfig.bandCapability = curr_band;
-		if (curr_band == eCSR_BAND_24)
+		if (curr_band == BAND_2G)
 			sme_config->csrConfig.Is11hSupportEnabled = 0;
 		else
 			sme_config->csrConfig.Is11hSupportEnabled =
 				phddctx->config->Is11hSupportEnabled;
-		if (curr_band == eCSR_BAND_24)
+		if (curr_band == BAND_2G)
 			sme_config->csrConfig.channelBondingMode24GHz = chwidth;
-		else if (curr_band == eCSR_BAND_24)
+		else if (curr_band == BAND_2G)
 			sme_config->csrConfig.channelBondingMode5GHz = chwidth;
 		else {
 			sme_config->csrConfig.channelBondingMode24GHz = chwidth;
@@ -5752,7 +5752,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		hdd_debug("Setting maximum tx power %d dBm for 2.4 GHz band",
 			   set_value);
-		if (sme_set_max_tx_power_per_band(eCSR_BAND_24, set_value) !=
+		if (sme_set_max_tx_power_per_band(BAND_2G, set_value) !=
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("Setting max tx power failed for 2.4 GHz band");
 			ret = -EIO;
@@ -5765,7 +5765,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		hdd_debug("Setting maximum tx power %d dBm for 5.0 GHz band",
 			   set_value);
-		if (sme_set_max_tx_power_per_band(eCSR_BAND_5G, set_value) !=
+		if (sme_set_max_tx_power_per_band(BAND_5G, set_value) !=
 		    QDF_STATUS_SUCCESS) {
 			hdd_err("Setting max tx power failed for 5.0 GHz band");
 			ret = -EIO;
@@ -8142,7 +8142,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		struct hdd_context *hddctx = WLAN_HDD_GET_CTX(adapter);
 		tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 		eCsrPhyMode phymode;
-		eCsrBand currBand;
+		enum band_info currBand;
 		tSmeConfigParams *sme_config;
 
 		sme_config = qdf_mem_malloc(sizeof(*sme_config));
@@ -8176,14 +8176,14 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			break;
 		case eCSR_DOT11_MODE_11n:
 		case eCSR_DOT11_MODE_11n_ONLY:
-			if (currBand == eCSR_BAND_24) {
+			if (currBand == BAND_2G) {
 				if (ch_bond24)
 					snprintf(extra, WE_MAX_STR_LEN,
 						 "11NGHT40");
 				else
 					snprintf(extra, WE_MAX_STR_LEN,
 						 "11NGHT20");
-			} else if (currBand == eCSR_BAND_5G) {
+			} else if (currBand == BAND_5G) {
 				if (ch_bond5g)
 					snprintf(extra, WE_MAX_STR_LEN,
 						 "11NAHT40");

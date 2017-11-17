@@ -1644,9 +1644,9 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT2G:
 			wma->pdevconfig.txpow2g = privcmd->param_value;
 			if ((pMac->roam.configParam.bandCapability ==
-			     eCSR_BAND_ALL) ||
+			     BAND_ALL) ||
 			    (pMac->roam.configParam.bandCapability ==
-			     eCSR_BAND_24)) {
+			     BAND_2G)) {
 				if (cfg_set_int(pMac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
 						privcmd->param_value) !=
@@ -1660,9 +1660,9 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			wma->pdevconfig.txpow5g = privcmd->param_value;
 			if ((pMac->roam.configParam.bandCapability ==
-			     eCSR_BAND_ALL) ||
+			     BAND_ALL) ||
 			    (pMac->roam.configParam.bandCapability ==
-			     eCSR_BAND_5G)) {
+			     BAND_5G)) {
 				if (cfg_set_int(pMac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
 						privcmd->param_value) !=
@@ -4840,17 +4840,17 @@ static void wma_update_hdd_band_cap(WMI_PHY_CAPABILITY supported_band,
 	switch (supported_band) {
 	case WMI_11G_CAPABILITY:
 	case WMI_11NG_CAPABILITY:
-		tgt_cfg->band_cap = eCSR_BAND_24;
+		tgt_cfg->band_cap = BAND_2G;
 		break;
 	case WMI_11A_CAPABILITY:
 	case WMI_11NA_CAPABILITY:
 	case WMI_11AC_CAPABILITY:
-		tgt_cfg->band_cap = eCSR_BAND_5G;
+		tgt_cfg->band_cap = BAND_5G;
 		break;
 	case WMI_11AG_CAPABILITY:
 	case WMI_11NAG_CAPABILITY:
 	default:
-		tgt_cfg->band_cap = eCSR_BAND_ALL;
+		tgt_cfg->band_cap = BAND_ALL;
 	}
 }
 
@@ -8140,7 +8140,7 @@ QDF_STATUS wma_send_pdev_set_pcl_cmd(tp_wma_handle wma_handle,
 		msg->weighed_valid_list[i] =
 			wma_map_pcl_weights(msg->weighed_valid_list[i]);
 		/* Dont allow roaming on 2G when 5G_ONLY configured */
-		if ((wma_handle->bandcapability == eCSR_BAND_5G) &&
+		if ((wma_handle->bandcapability == BAND_5G) &&
 			(msg->saved_chan_list[i] <= MAX_24GHZ_CHANNEL)) {
 			msg->weighed_valid_list[i] =
 				WEIGHT_OF_DISALLOWED_CHANNELS;

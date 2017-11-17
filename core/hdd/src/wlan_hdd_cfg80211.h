@@ -404,7 +404,7 @@ int wlan_hdd_enable_dfs_chan_scan(struct hdd_context *hdd_ctx,
 
 int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx,
 				  struct wiphy *wiphy,
-				  eCsrBand eBand);
+				  enum band_info eBand);
 
 /**
  * wlan_hdd_try_disconnect() - try disconnnect from previous connection

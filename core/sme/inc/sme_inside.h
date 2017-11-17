@@ -253,7 +253,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 		uint8_t sessionId,
 		uint8_t *pChannelList,
 		uint8_t numChannels,
-		const eCsrBand eBand);
+		const enum band_info eBand);
 #endif
 
 QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,

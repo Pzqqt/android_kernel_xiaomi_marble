@@ -240,16 +240,16 @@ ap_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		  tpUpdateBeaconParams bcn_prm, tpPESession session)
 {
 	uint32_t phy_mode;
-	tSirRFBand rf_band = SIR_BAND_UNKNOWN;
+	enum band_info rf_band = BAND_UNKNOWN;
 	/* Get RF band from session */
 	rf_band = session->limRFBand;
 
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
 
-	if (SIR_BAND_5_GHZ == rf_band)
+	if (BAND_5G == rf_band)
 		ap_beacon_process_5_ghz(mac_ctx, rx_pkt_info, bcn_struct,
 					bcn_prm, session, phy_mode);
-	else if (SIR_BAND_2_4_GHZ == rf_band)
+	else if (BAND_2G == rf_band)
 		ap_beacon_process_24_ghz(mac_ctx, rx_pkt_info, bcn_struct,
 					 bcn_prm, session, phy_mode);
 }

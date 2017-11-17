@@ -100,9 +100,9 @@ static void lim_convert_supported_channels(tpAniSirGlobal mac_ctx,
 		if (chn_count <= 1)
 			continue;
 		next_ch_no = first_ch_no;
-		if (SIR_BAND_5_GHZ == lim_get_rf_band(first_ch_no))
+		if (BAND_5G == lim_get_rf_band(first_ch_no))
 			channel_offset =  SIR_11A_FREQUENCY_OFFSET;
-		else if (SIR_BAND_2_4_GHZ == lim_get_rf_band(first_ch_no))
+		else if (BAND_2G == lim_get_rf_band(first_ch_no))
 			channel_offset = SIR_11B_FREQUENCY_OFFSET;
 		else
 			continue;
@@ -2081,7 +2081,7 @@ static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
 {
 	uint8_t chan;
 
-	if (session_entry->limRFBand == SIR_BAND_2_4_GHZ) {
+	if (session_entry->limRFBand == BAND_2G) {
 		if (session_entry->vhtCapability && assoc_req->VHTCaps.present)
 			assoc_ind->chan_info.info = MODE_11AC_VHT20_2G;
 		else if (session_entry->htCapability

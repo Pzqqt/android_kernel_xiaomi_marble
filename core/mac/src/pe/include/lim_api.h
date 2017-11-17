@@ -287,10 +287,11 @@ static inline void lim_get_phy_mode(tpAniSirGlobal pMac, uint32_t *phyMode,
 }
 
 /* ----------------------------------------------------------------------- */
-static inline void lim_get_rf_band_new(tpAniSirGlobal pMac, tSirRFBand *band,
-					    tpPESession psessionEntry)
+static inline void lim_get_rf_band_new(tpAniSirGlobal pMac,
+				       enum band_info *band,
+				       tpPESession psessionEntry)
 {
-	*band = psessionEntry ? psessionEntry->limRFBand : SIR_BAND_UNKNOWN;
+	*band = psessionEntry ? psessionEntry->limRFBand : BAND_UNKNOWN;
 }
 
 /*--------------------------------------------------------------------------
