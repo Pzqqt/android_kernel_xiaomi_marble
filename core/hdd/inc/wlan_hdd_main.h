@@ -1035,11 +1035,11 @@ struct hdd_adapter {
 
 	uint8_t session_id;
 
-	/* Completion variable for session close */
-	struct completion session_close_comp_var;
+	/* QDF event for session close */
+	qdf_event_t qdf_session_close_event;
 
-	/* Completion variable for session open */
-	struct completion session_open_comp_var;
+	/* QDF event for session open */
+	qdf_event_t qdf_session_open_event;
 
 	/* TODO: move these to sta ctx. These may not be used in AP */
 	/** completion variable for disconnect callback */

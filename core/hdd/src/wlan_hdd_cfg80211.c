@@ -13932,6 +13932,11 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
+	if (cds_is_fw_down()) {
+		hdd_err("Ignore if FW is already down");
+		return -EINVAL;
+	}
+
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_IFACE,
 			 adapter->session_id, type));

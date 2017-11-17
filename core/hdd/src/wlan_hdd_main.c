@@ -3145,6 +3145,7 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 	struct net_device *dev = NULL;
 	struct hdd_adapter *adapter = NULL;
 	struct hdd_station_ctx *sta_ctx;
+	QDF_STATUS qdf_status;
 	/*
 	 * cfg80211 initialization and registration....
 	 */
@@ -3171,8 +3172,22 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		adapter->magic = WLAN_HDD_ADAPTER_MAGIC;
 		adapter->session_id = HDD_SESSION_ID_INVALID;
 
-		init_completion(&adapter->session_open_comp_var);
-		init_completion(&adapter->session_close_comp_var);
+		qdf_status = qdf_event_create(
+				&adapter->qdf_session_open_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("Session open QDF event init failed!");
+			free_netdev(adapter->dev);
+			return NULL;
+		}
+
+		qdf_status = qdf_event_create(
+				&adapter->qdf_session_close_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hdd_err("Session close QDF event init failed!");
+			free_netdev(adapter->dev);
+			return NULL;
+		}
+
 		init_completion(&adapter->disconnect_comp_var);
 		init_completion(&adapter->roaming_comp_var);
 		init_completion(&adapter->linkup_event_var);
@@ -3278,7 +3293,7 @@ QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id)
 		return QDF_STATUS_E_INVAL;
 	}
 	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-	complete(&adapter->session_open_comp_var);
+	qdf_event_set(&adapter->qdf_session_open_event);
 	hdd_debug("session %d opened", adapter->session_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -3323,7 +3338,7 @@ QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id)
 	 * valid, before signaling completion
 	 */
 	if (WLAN_HDD_ADAPTER_MAGIC == adapter->magic)
-		complete(&adapter->session_close_comp_var);
+		qdf_event_set(&adapter->qdf_session_close_event);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3353,7 +3368,6 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int errno;
 	struct hdd_context *hdd_ctx;
-	unsigned long rc;
 	uint8_t vdev_id;
 
 	vdev_id = adapter->session_id;
@@ -3377,7 +3391,7 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
-	INIT_COMPLETION(adapter->session_close_comp_var);
+	qdf_event_reset(&adapter->qdf_session_close_event);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	status = sme_close_session(hdd_ctx->hHal, adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -3386,15 +3400,24 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 	/* block on a completion variable until sme session is closed */
-	rc = wait_for_completion_timeout(
-		&adapter->session_close_comp_var,
-		msecs_to_jiffies(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
-	if (!rc) {
-		hdd_err("timed out waiting for close sme session: %ld", rc);
+	status = qdf_wait_for_event_completion(
+			&adapter->qdf_session_close_event,
+			WLAN_WAIT_TIME_SESSIONOPENCLOSE);
+	if (QDF_STATUS_SUCCESS != status) {
 		if (adapter->device_mode == QDF_NDI_MODE)
 			hdd_ndp_session_end_handler(adapter);
 		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		return -ETIMEDOUT;
+		adapter->session_id = HDD_SESSION_ID_INVALID;
+		if (QDF_STATUS_E_TIMEOUT != status) {
+			hdd_err("timed out waiting for close sme session: %u", status);
+			return -ETIMEDOUT;
+		} else if (adapter->qdf_session_close_event.force_set) {
+			hdd_err("Session close evt focefully set, SSR/PDR has occurred");
+			return -EINVAL;
+		} else {
+			hdd_err("Failed to close sme session (%u)", status);
+			return -EINVAL;
+		}
 	}
 release_vdev:
 	/* do vdev logical destroy via objmgr */
@@ -3449,7 +3472,6 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 	int errno;
 	struct hdd_context *hdd_ctx;
 	struct sme_session_params sme_session_params = {0};
-	unsigned long rc;
 
 	hdd_info("creating new vdev");
 
@@ -3462,7 +3484,11 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 	}
 
 	/* Open a SME session (prepare vdev in firmware via legacy API) */
-	INIT_COMPLETION(adapter->session_open_comp_var);
+	status = qdf_event_reset(&adapter->qdf_session_open_event);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("failed to reinit session open event");
+		return -EINVAL;
+	}
 	errno = hdd_set_sme_session_param(adapter, &sme_session_params,
 					  callback, ctx);
 	if (errno) {
@@ -3478,14 +3504,27 @@ int hdd_vdev_create(struct hdd_adapter *adapter,
 	}
 
 	/* block on a completion variable until sme session is opened */
-	rc = wait_for_completion_timeout(
-		&adapter->session_open_comp_var,
-		msecs_to_jiffies(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
-	if (!rc) {
-		hdd_err("timed out waiting for open sme session: %ld", rc);
-		errno = -ETIMEDOUT;
-		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		goto hdd_vdev_destroy_procedure;
+	status = qdf_wait_for_event_completion(&adapter->qdf_session_open_event,
+			WLAN_WAIT_TIME_SESSIONOPENCLOSE);
+	if (QDF_STATUS_SUCCESS != status) {
+		if (adapter->qdf_session_open_event.force_set) {
+			/*
+			 * SSR/PDR has caused shutdown, which has forcefully
+			 * set the event. Return without the closing session.
+			 */
+			adapter->session_id = HDD_SESSION_ID_INVALID;
+			hdd_err("Session open event forcefully set");
+			return -EINVAL;
+		} else {
+			if (QDF_STATUS_E_TIMEOUT == status)
+				hdd_err("Session failed to open within timeout period");
+			else
+				hdd_err("Failed to wait for session open event(status-%d)",
+					status);
+			errno = -ETIMEDOUT;
+			set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+			goto hdd_vdev_destroy_procedure;
+		}
 	}
 
 	/* firmware ready for component communication, raise vdev_ready event */

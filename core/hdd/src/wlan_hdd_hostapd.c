@@ -6298,6 +6298,7 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 {
 	struct net_device *dev;
 	struct hdd_adapter *adapter;
+	QDF_STATUS qdf_status;
 
 	hdd_debug("iface_name = %s", iface_name);
 
@@ -6350,8 +6351,23 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	adapter->wdev.wiphy = hdd_ctx->wiphy;
 	adapter->wdev.netdev = dev;
 	hdd_set_tso_flags(hdd_ctx, dev);
-	init_completion(&adapter->session_close_comp_var);
-	init_completion(&adapter->session_open_comp_var);
+
+	qdf_status = qdf_event_create(
+			&adapter->qdf_session_open_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("failed to create session open QDF event!");
+		free_netdev(adapter->dev);
+		return NULL;
+	}
+
+	qdf_status = qdf_event_create(
+			&adapter->qdf_session_close_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_err("failed to create session close QDF event!");
+		free_netdev(adapter->dev);
+		return NULL;
+	}
+
 	init_completion(&adapter->tx_action_cnf_event);
 	init_completion(&adapter->cancel_rem_on_chan_var);
 	init_completion(&adapter->rem_on_chan_ready_event);
