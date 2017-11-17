@@ -305,24 +305,30 @@ void hdd_hif_close(struct hdd_context *hdd_ctx, void *hif_ctx)
  * @bus_type: Underlying bus type
  * @bid: Bus id passed by platform driver
  *
- * Return: void
+ * Return: 0 - success, < 0 - failure
  */
-static void hdd_init_qdf_ctx(struct device *dev, void *bdev,
-			     enum qdf_bus_type bus_type,
-			     const struct hif_bus_id *bid)
+static int hdd_init_qdf_ctx(struct device *dev, void *bdev,
+			    enum qdf_bus_type bus_type,
+			    const struct hif_bus_id *bid)
 {
 	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	if (!qdf_dev) {
 		hdd_err("Invalid QDF device");
-		return;
+		return -EINVAL;
 	}
 
 	qdf_dev->dev = dev;
 	qdf_dev->drv_hdl = bdev;
 	qdf_dev->bus_type = bus_type;
 	qdf_dev->bid = bid;
-	cds_smmu_mem_map_setup(qdf_dev);
+	if (cds_smmu_mem_map_setup(qdf_dev) !=
+		QDF_STATUS_SUCCESS) {
+		hdd_err("cds_smmu_mem_map_setup() failed");
+		return -EFAULT;
+	}
+
+	return 0;
 }
 
 /**
@@ -390,7 +396,10 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 	else
 		cds_set_load_in_progress(true);
 
-	hdd_init_qdf_ctx(dev, bdev, bus_type, (const struct hif_bus_id *)bid);
+	ret = hdd_init_qdf_ctx(dev, bdev, bus_type,
+			       (const struct hif_bus_id *)bid);
+	if (ret < 0)
+		goto err_init_qdf_ctx;
 
 	if (reinit) {
 		ret = hdd_wlan_re_init();
@@ -437,6 +446,7 @@ err_hdd_deinit:
 	} else
 		cds_set_load_in_progress(false);
 
+err_init_qdf_ctx:
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos(dev);
 

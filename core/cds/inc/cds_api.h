@@ -602,9 +602,9 @@ void cds_incr_arp_stats_tx_tgt_acked(void);
  * This API checks if SMMU S1 translation is enabled in
  * platform driver or not and sets it accordingly in driver.
  *
- * Return: none
+ * Return: QDF_STATUS
  */
-void cds_smmu_mem_map_setup(qdf_device_t osdev);
+QDF_STATUS cds_smmu_mem_map_setup(qdf_device_t osdev);
 
 /**
  * cds_smmu_map_unmap() - Map / Unmap DMA buffer to IPA UC
