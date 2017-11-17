@@ -196,7 +196,7 @@ void wlan_roam_debug_dump_table(void)
 			  wlan_roam_debug_string(dbg_rec->operation),
 			  (int8_t) dbg_rec->vdev_id, dbg_rec->mac_addr.bytes);
 		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
-			  "peer obj = 0x%p peer_id = %-4d",
+			  "peer obj = 0x%pK peer_id = %-4d",
 			  dbg_rec->peer_obj, (int8_t) dbg_rec->peer_id);
 		QDF_TRACE(QDF_MODULE_ID_ROAM_DEBUG, QDF_TRACE_LEVEL_ERROR,
 			  "arg1 = 0x%-8x arg2 = 0x%-8x",
