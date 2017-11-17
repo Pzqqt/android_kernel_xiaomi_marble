@@ -864,7 +864,7 @@ void
 lim_reject_association(tpAniSirGlobal mac_ctx, tSirMacAddr peer_addr,
 			uint8_t sub_type, uint8_t add_pre_auth_context,
 			tAniAuthType auth_type, uint16_t sta_id,
-			uint8_t delete_sta, tSirResultCodes result_code,
+			uint8_t delete_sta, enum eSirMacStatusCodes result_code,
 			tpPESession session_entry)
 {
 	tpDphHashNode sta_ds;
@@ -2993,7 +2993,6 @@ void lim_handle_cnf_wait_timeout(tpAniSirGlobal pMac, uint16_t staId)
 					       true,
 					       pStaDs->mlmStaContext.authType,
 					       pStaDs->assocId, true,
-					       (tSirResultCodes)
 					       eSIR_MAC_UNSPEC_FAILURE_STATUS,
 					       psessionEntry);
 		}
