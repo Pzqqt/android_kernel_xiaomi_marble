@@ -39,6 +39,8 @@
 	(IEEE80211_FC0_TYPE_MASK | IEEE80211_FC0_SUBTYPE_QOS)) == \
 	(IEEE80211_FC0_TYPE_DATA | IEEE80211_FC0_SUBTYPE_QOS))
 
+#define UNI_DESC_OWNER_SW 0x1
+#define UNI_DESC_BUF_TYPE_RX_MSDU_LINK 0x6
 /**
  * struct dp_rx_defrag_cipher: structure to indicate cipher header
  * @ic_name: Name
@@ -125,7 +127,16 @@ uint8_t dp_rx_frag_get_more_frag_bit(uint8_t *rx_desc_info)
 	struct ieee80211_frame *mac_hdr;
 	mac_hdr = dp_rx_frag_get_mac_hdr(rx_desc_info);
 
-	return mac_hdr->i_fc[1] & IEEE80211_FC1_MORE_FRAG;
+	return (mac_hdr->i_fc[1] & IEEE80211_FC1_MORE_FRAG) >> 2;
+}
+
+static inline
+uint8_t dp_rx_get_pkt_dir(uint8_t *rx_desc_info)
+{
+	struct ieee80211_frame *mac_hdr;
+	mac_hdr = dp_rx_frag_get_mac_hdr(rx_desc_info);
+
+	return mac_hdr->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 }
 
 #endif /* _DP_RX_DEFRAG_H */

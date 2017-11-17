@@ -56,7 +56,7 @@ static inline bool dp_rx_desc_check_magic(struct dp_rx_desc *rx_desc)
  *
  * Return: QDF_STATUS
  */
-	static QDF_STATUS
+QDF_STATUS
 dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action)
 {
 	void *buf_addr_info = HAL_RX_REO_BUF_ADDR_INFO_GET(ring_desc);
@@ -840,7 +840,10 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 		link_desc_va = dp_rx_cookie_2_link_desc_va(soc, &hbi);
 		hal_rx_msdu_list_get(link_desc_va, &msdu_list, &num_msdus);
 
-		if (qdf_unlikely(msdu_list.rbm[0] != HAL_RX_BUF_RBM_SW3_BM)) {
+		if (qdf_unlikely((msdu_list.rbm[0] !=
+						HAL_RX_BUF_RBM_SW3_BM) &&
+				(msdu_list.rbm[0] !=
+					HAL_RX_BUF_RBM_WBM_IDLE_DESC_LIST))) {
 			/* TODO */
 			/* Call appropriate handler */
 			DP_STATS_INC(soc, rx.err.invalid_rbm, 1);

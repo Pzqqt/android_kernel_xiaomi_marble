@@ -433,12 +433,8 @@ struct dp_rx_tid {
 	/* only used for defrag right now */
 	TAILQ_ENTRY(dp_rx_tid) defrag_waitlist_elem;
 
-	/* MSDU link pointers used for reinjection */
-	struct hal_rx_msdu_link_ptr_info
-		transcap_msdu_link_ptr[HAL_RX_MAX_SAVED_RING_DESC];
-
-	struct hal_rx_mpdu_desc_info transcap_rx_mpdu_desc_info;
-	uint8_t curr_ring_desc_idx;
+	/* Store dst desc for reinjection */
+	void *dst_ring_desc;
 
 	/* Sequence and fragments that are being processed currently */
 	uint32_t curr_seq_num;

@@ -648,6 +648,9 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
  * Return: QDF_STATUS
  */
 QDF_STATUS
+dp_rx_link_desc_return(struct dp_soc *soc, void *ring_desc, uint8_t bm_action);
+
+QDF_STATUS
 dp_rx_link_desc_buf_return(struct dp_soc *soc, struct dp_srng *dp_rxdma_srng,
 				void *buf_addr_info, uint8_t bm_action);
 
