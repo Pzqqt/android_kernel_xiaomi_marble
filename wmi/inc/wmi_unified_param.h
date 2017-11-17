@@ -5920,6 +5920,7 @@ typedef enum {
 	wmi_service_ack_timeout,
 	wmi_service_widebw_scan,
 	wmi_service_bcn_offload_start_stop_support,
+	wmi_service_offchan_data_tid_support,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
