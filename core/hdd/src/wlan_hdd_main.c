@@ -9605,6 +9605,9 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	hdd_info("Present Driver Status: %d", hdd_ctx->driver_status);
 
+	/* free user wowl patterns */
+	hdd_free_user_wowl_ptrns();
+
 	switch (hdd_ctx->driver_status) {
 	case DRIVER_MODULES_UNINITIALIZED:
 		hdd_info("Modules not initialized just return");
@@ -11097,7 +11100,6 @@ err_out:
  */
 void hdd_deinit(void)
 {
-	hdd_deinit_wowl();
 	qdf_timer_free(&hdd_drv_ops_inactivity_timer);
 
 	wlan_destroy_bug_report_lock();
