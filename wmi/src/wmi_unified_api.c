@@ -398,6 +398,46 @@ QDF_STATUS wmi_unified_resume_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef FEATURE_WLAN_D0WOW
+/**
+ *  wmi_unified_d0wow_enable_send() - WMI d0 wow enable function
+ *  @param wmi_handle: handle to WMI.
+ *  @mac_id: radio context
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_d0wow_enable_send(void *wmi_hdl,
+				uint8_t mac_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_d0wow_enable_cmd)
+		return wmi_handle->ops->send_d0wow_enable_cmd(
+					wmi_handle, mac_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ *  wmi_unified_d0wow_disable_send() - WMI d0 wow disable function
+ *  @param wmi_handle: handle to WMI.
+ *  @mac_id: radio context
+ *
+ *  Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_d0wow_disable_send(void *wmi_hdl,
+				uint8_t mac_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_d0wow_disable_cmd)
+		return wmi_handle->ops->send_d0wow_disable_cmd(
+					wmi_handle, mac_id);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  *  wmi_unified_wow_enable_send() - WMI wow enable function
  *  @param wmi_handle      : handle to WMI.

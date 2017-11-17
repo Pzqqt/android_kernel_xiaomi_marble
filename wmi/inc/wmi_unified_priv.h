@@ -234,6 +234,13 @@ QDF_STATUS (*send_suspend_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_resume_cmd)(wmi_unified_t wmi_handle,
 				uint8_t mac_id);
 
+#ifdef FEATURE_WLAN_D0WOW
+QDF_STATUS (*send_d0wow_enable_cmd)(wmi_unified_t wmi_handle,
+				uint8_t mac_id);
+QDF_STATUS (*send_d0wow_disable_cmd)(wmi_unified_t wmi_handle,
+				uint8_t mac_id);
+#endif
+
 QDF_STATUS (*send_wow_enable_cmd)(wmi_unified_t wmi_handle,
 				struct wow_cmd_params *param,
 				uint8_t mac_id);
