@@ -838,6 +838,45 @@ static int wdsp_ssr_handler(struct wdsp_mgr_priv *wdsp, void *arg,
 	return 0;
 }
 
+#ifdef CONFIG_DEBUG_FS
+static int wdsp_debug_dump_handler(struct wdsp_mgr_priv *wdsp, void *arg)
+{
+	struct wdsp_err_signal_arg *err_data;
+	int ret = 0;
+
+	WDSP_MGR_MUTEX_LOCK(wdsp, wdsp->ssr_mutex);
+	/* If there is no SSR, set the SSR type to collect ramdumps */
+	if (wdsp->ssr_type == WDSP_SSR_TYPE_NO_SSR) {
+		wdsp->ssr_type = WDSP_SSR_TYPE_WDSP_DOWN;
+	} else {
+		WDSP_DBG(wdsp, "SSR handling is running, skip debug ramdump");
+		ret = 0;
+		WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
+		goto done;
+	}
+	if (arg) {
+		err_data = (struct wdsp_err_signal_arg *) arg;
+		memcpy(&wdsp->dump_data.err_data, err_data,
+		       sizeof(*err_data));
+	} else {
+		WDSP_DBG(wdsp, "Invalid input, arg is NULL");
+		ret = -EINVAL;
+		WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
+		goto done;
+	}
+	wdsp_collect_ramdumps(wdsp);
+	wdsp->ssr_type = WDSP_SSR_TYPE_NO_SSR;
+	WDSP_MGR_MUTEX_UNLOCK(wdsp, wdsp->ssr_mutex);
+done:
+	return ret;
+}
+#else
+static int wdsp_debug_dump_handler(struct wdsp_mgr_priv *wdsp, void *arg)
+{
+	return 0;
+}
+#endif
+
 static int wdsp_signal_handler(struct device *wdsp_dev,
 			       enum wdsp_signal signal, void *arg)
 {
@@ -865,6 +904,9 @@ static int wdsp_signal_handler(struct device *wdsp_dev,
 		break;
 	case WDSP_CDC_UP_SIGNAL:
 		ret = wdsp_ssr_handler(wdsp, arg, WDSP_SSR_TYPE_CDC_UP);
+		break;
+	case WDSP_DEBUG_DUMP:
+		ret = wdsp_debug_dump_handler(wdsp, arg);
 		break;
 	default:
 		ret = -EINVAL;

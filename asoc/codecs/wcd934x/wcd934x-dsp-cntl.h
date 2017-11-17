@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -109,6 +109,10 @@ struct wcd_dsp_cntl {
 	/* Misc device related */
 	char miscdev_name[256];
 	struct miscdevice miscdev;
+#ifdef CONFIG_DEBUG_FS
+	/* Debug dump related */
+	atomic_t err_irq_flag;
+#endif
 };
 
 void wcd_dsp_cntl_init(struct snd_soc_codec *codec,
