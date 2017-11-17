@@ -188,6 +188,26 @@ enum ol_tx_spec {
 };
 
 /**
+ * @enum peer_debug_id_type: debug ids to track peer get_ref and release_ref
+ * @brief Unique peer debug IDs to track the callers. Each new usage can add to
+ *        this enum list to create a new "PEER_DEBUG_ID_".
+ * @PEER_DEBUG_ID_OL_INTERNAL: debug id for OL internal usage
+ * @PEER_DEBUG_ID_WMA_PKT_DROP: debug id for wma_is_pkt_drop_candidate API
+ * @PEER_DEBUG_ID_WMA_ADDBA_REQ: debug id for ADDBA request
+ * @PEER_DEBUG_ID_WMA_DELBA_REQ: debug id for DELBA request
+ * @PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP: debug id for send ADDBA response
+ * @PEER_DEBUG_ID_MAX: debug id MAX
+ */
+enum peer_debug_id_type {
+	PEER_DEBUG_ID_OL_INTERNAL = 0,
+	PEER_DEBUG_ID_WMA_PKT_DROP = 1,
+	PEER_DEBUG_ID_WMA_ADDBA_REQ = 2,
+	PEER_DEBUG_ID_WMA_DELBA_REQ = 3,
+	PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP = 4,
+	PEER_DEBUG_ID_MAX
+};
+
+/**
  * struct ol_txrx_desc_type - txrx descriptor type
  * @sta_id: sta id
  * @is_qos_enabled: is station qos enabled

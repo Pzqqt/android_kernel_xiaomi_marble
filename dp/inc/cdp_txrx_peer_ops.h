@@ -146,6 +146,59 @@ cdp_peer_remove_for_vdev(ol_txrx_soc_handle soc,
 }
 
 /**
+ * cdp_peer_get_ref_by_addr() - Find peer by peer mac address and inc peer ref
+ * @soc - data path soc handle
+ * @pdev - data path device instance
+ * @peer_addr - peer mac address
+ * @peer_id - local peer id with target mac address
+ * @debug_id - debug_id to track caller
+ *
+ * To release the peer ref, cdp_peer_release_ref needs to be called.
+ *
+ * Return: peer instance void pointer
+ *         NULL cannot find target peer
+ */
+static inline void
+*cdp_peer_get_ref_by_addr(ol_txrx_soc_handle soc, struct cdp_pdev *pdev,
+			  u8 *peer_addr, u8 *peer_id,
+			  enum peer_debug_id_type debug_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return NULL;
+	}
+
+	if (soc->ops->peer_ops->peer_get_ref_by_addr)
+		return soc->ops->peer_ops->peer_get_ref_by_addr(
+			pdev, peer_addr, peer_id, debug_id);
+
+	return NULL;
+}
+
+/**
+ * cdp_peer_release_ref() - Release peer reference
+ * @soc - data path soc handle
+ * @peer - peer pointer
+ * @debug_id - debug_id to track caller
+ *
+ * Return:void
+ */
+static inline void
+cdp_peer_release_ref(ol_txrx_soc_handle soc, void *peer,
+		     enum peer_debug_id_type debug_id)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->peer_release_ref)
+		soc->ops->peer_ops->peer_release_ref(peer, debug_id);
+}
+
+/**
  * cdp_peer_find_by_addr() - Find peer by peer mac address
  * @soc - data path soc handle
  * @pdev - data path device instance

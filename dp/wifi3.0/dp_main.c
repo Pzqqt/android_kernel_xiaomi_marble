@@ -5642,11 +5642,37 @@ static struct cdp_cfg_ops dp_ops_cfg = {
 	/* WIFI 3.0 DP NOT IMPLEMENTED YET */
 };
 
+/*
+ * dp_wrapper_peer_get_ref_by_addr - wrapper function to get to peer
+ * @dev: physical device instance
+ * @peer_mac_addr: peer mac address
+ * @local_id: local id for the peer
+ * @debug_id: to track enum peer access
+
+ * Return: peer instance pointer
+ */
+static inline void *
+dp_wrapper_peer_get_ref_by_addr(struct cdp_pdev *dev, u8 *peer_mac_addr,
+				u8 *local_id,
+				enum peer_debug_id_type debug_id)
+{
+	/*
+	 * Currently this function does not implement the "get ref"
+	 * functionality and is mapped to dp_find_peer_by_addr which does not
+	 * increment the peer ref count. So the peer state is uncertain after
+	 * calling this API. The functionality needs to be implemented.
+	 * Accordingly the corresponding release_ref function is NULL.
+	 */
+	return dp_find_peer_by_addr(dev, peer_mac_addr, local_id);
+}
+
 static struct cdp_peer_ops dp_ops_peer = {
 	.register_peer = dp_register_peer,
 	.clear_peer = dp_clear_peer,
 	.find_peer_by_addr = dp_find_peer_by_addr,
 	.find_peer_by_addr_and_vdev = dp_find_peer_by_addr_and_vdev,
+	.peer_get_ref_by_addr = dp_wrapper_peer_get_ref_by_addr,
+	.peer_release_ref = NULL,
 	.local_peer_id = dp_local_peer_id,
 	.peer_find_by_local_id = dp_peer_find_by_local_id,
 	.peer_state_update = dp_peer_state_update,
