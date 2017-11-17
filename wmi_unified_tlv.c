@@ -20865,6 +20865,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_widebw_scan] = WMI_SERVICE_SCAN_PHYMODE_SUPPORT;
 	wmi_service[wmi_service_bcn_offload_start_stop_support] =
 				WMI_SERVICE_BCN_OFFLOAD_START_STOP_SUPPORT;
+	wmi_service[wmi_service_offchan_data_tid_support] =
+				WMI_SERVICE_OFFCHAN_DATA_TID_SUPPORT;
 }
 
 /**
