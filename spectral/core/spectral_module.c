@@ -22,6 +22,8 @@
 #include <qdf_types.h>
 #include<wlan_global_lmac_if_api.h>
 
+MODULE_LICENSE("Dual BSD/GPL");
+
 /**
  * spectral_init_module() - Initialize Spectral module
  *

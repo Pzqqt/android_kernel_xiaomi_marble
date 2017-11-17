@@ -25,6 +25,7 @@
 #include <osif_private.h>
 #include <wlan_spectral_public_structs.h>
 #include <wlan_mlme_dispatcher.h>
+#include <wlan_cfg80211_spectral.h>
 
 /**
  * spectral_get_vdev() - Get pointer to vdev to be used for Spectral
@@ -62,6 +63,34 @@ spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
 	}
 
 	return vdev;
+}
+
+static void spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
+{
+	wlan_cfg80211_register_spectral_cmd_handler(
+			pdev,
+			SPECTRAL_SCAN_START_HANDLER_IDX,
+			wlan_cfg80211_spectral_scan_config_and_start);
+	wlan_cfg80211_register_spectral_cmd_handler(
+			pdev,
+			SPECTRAL_SCAN_STOP_HANDLER_IDX,
+			wlan_cfg80211_spectral_scan_stop);
+	wlan_cfg80211_register_spectral_cmd_handler(
+			pdev,
+			SPECTRAL_SCAN_GET_CONFIG_HANDLER_IDX,
+			wlan_cfg80211_spectral_scan_get_config);
+	wlan_cfg80211_register_spectral_cmd_handler(
+			pdev,
+			SPECTRAL_SCAN_GET_DIAG_STATS_HANDLER_IDX,
+			wlan_cfg80211_spectral_scan_get_diag_stats);
+	wlan_cfg80211_register_spectral_cmd_handler(
+			pdev,
+			SPECTRAL_SCAN_GET_CAP_HANDLER_IDX,
+			wlan_cfg80211_spectral_scan_get_cap);
+	wlan_cfg80211_register_spectral_cmd_handler(
+			pdev,
+			SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX,
+			wlan_cfg80211_spectral_scan_get_status);
 }
 
 int spectral_control_cmn(
@@ -348,6 +377,18 @@ int spectral_control_cmn(
 	}
 	break;
 
+case SPECTRAL_GET_DEBUG_LEVEL:
+	{
+		if (!outdata || !outsize || *outsize < sizeof(u_int32_t)) {
+			error = -EINVAL;
+			break;
+		}
+		*outsize = sizeof(u_int32_t);
+		*((u_int32_t *)outdata) =
+			(u_int32_t)sc->sptrlc_get_debug_level(pdev);
+	}
+	break;
+
 	case SPECTRAL_ACTIVATE_SCAN:
 	{
 		sc->sptrlc_start_spectral_scan(pdev);
@@ -511,6 +552,8 @@ wlan_spectral_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 
 	qdf_mem_zero(ps, sizeof(struct pdev_spectral));
 	ps->psptrl_pdev = pdev;
+
+	spectral_register_cfg80211_handlers(pdev);
 	if (sc->sptrlc_pdev_spectral_init) {
 		target_handle = sc->sptrlc_pdev_spectral_init(pdev);
 		if (!target_handle) {

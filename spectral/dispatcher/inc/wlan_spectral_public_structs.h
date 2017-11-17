@@ -124,6 +124,16 @@
 #define SPECTRAL_SCAN_SHORT_REPORT_DEFAULT     (1)
 #define SPECTRAL_SCAN_FFT_PERIOD_DEFAULT       (1)
 
+enum wlan_cfg80211_spectral_vendorcmd_handler_idx {
+	SPECTRAL_SCAN_START_HANDLER_IDX,
+	SPECTRAL_SCAN_STOP_HANDLER_IDX,
+	SPECTRAL_SCAN_GET_CONFIG_HANDLER_IDX,
+	SPECTRAL_SCAN_GET_DIAG_STATS_HANDLER_IDX,
+	SPECTRAL_SCAN_GET_CAP_HANDLER_IDX,
+	SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX,
+	SPECTRAL_SCAN_VENDOR_CMD_HANDLER_MAX,
+};
+
 /**
  * enum spectral_debug - Spectral debug level
  * @ATH_DEBUG_SPECTRAL:  Minimal SPECTRAL debug
@@ -296,12 +306,15 @@ struct spectral_config {
 };
 
 /**
- * struct spectral_caps - Spectral capabilities structure
- * @phydiag_cap:         Phydiag capability
- * @radar_cap:           Radar detection capability
- * @spectral_cap:        Spectral capability
- * @advncd_spectral_cap: Advanced spectral capability
+ * struct spectral_scan_state - State of spectral scan
+ * @is_active:  Is spectral scan active
+ * @is_enabled: Is spectral scan enabled
  */
+struct spectral_scan_state {
+	uint8_t is_active;
+	uint8_t is_enabled;
+};
+
 typedef enum _dcs_int_type {
 	SPECTRAL_DCS_INT_NONE,
 	SPECTRAL_DCS_INT_CW,

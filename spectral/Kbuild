@@ -23,6 +23,8 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/mgmt_txrx/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/regulatory/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/umac/son/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/spectral/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/scan/inc
 
 ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
@@ -181,7 +183,8 @@ SPECTRAL_CMN_OBJS +=  core/spectral_direct_attach.o \
                       dispatcher/src/wlan_spectral_utils_api.o \
                       dispatcher/src/wlan_spectral_ucfg_api.o \
                       dispatcher/src/wlan_spectral_tgt_api.o \
-                      core/spectral_module.o
+                      core/spectral_module.o \
+                      $(DEPTH)/cmn_dev/os_if/linux/spectral/src/wlan_cfg80211_spectral.o
 
 qca_spectral-objs +=  ${SPECTRAL_CMN_OBJS} \
                       ${SPECTRAL_TIF_OBJS} \

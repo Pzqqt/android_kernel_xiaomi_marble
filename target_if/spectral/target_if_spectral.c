@@ -2363,8 +2363,7 @@ static int target_if_set_debug_level(struct wlan_objmgr_pdev *pdev,
  */
 static u_int32_t target_if_get_debug_level(struct wlan_objmgr_pdev *pdev)
 {
-	qdf_print("target_if_get_debug_level is unimplemented\n");
-	return 0;
+	return spectral_debug_level;
 }
 
 /**
