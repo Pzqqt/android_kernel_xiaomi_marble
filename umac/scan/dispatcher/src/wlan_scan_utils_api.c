@@ -987,3 +987,22 @@ util_scan_entry_update_mlme_info(struct wlan_objmgr_pdev *pdev,
 
 	return scm_update_scan_mlme_info(pdev, scan_entry);
 }
+
+bool util_is_scan_completed(struct scan_event *event, bool *success)
+{
+	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) ||
+	    (event->type == SCAN_EVENT_TYPE_DEQUEUED) ||
+	    (event->type == SCAN_EVENT_TYPE_START_FAILED)) {
+		if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
+		    (event->reason == SCAN_REASON_COMPLETED))
+			*success = true;
+		else
+			*success = false;
+
+		return true;
+	}
+
+	*success = false;
+	return false;
+}
+

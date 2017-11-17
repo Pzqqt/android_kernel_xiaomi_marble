@@ -1467,4 +1467,16 @@ enum wlan_band util_scan_scm_chan_to_band(uint32_t chan);
  * Return: Band information as per frequency
  */
 enum wlan_band util_scan_scm_freq_to_band(uint16_t freq);
+
+/**
+ * util_is_scan_completed() - function to get scan complete status
+ * @event: scan event
+ * @success: true if scan complete success, false otherwise
+ *
+ * API, function to get the scan result
+ *
+ * Return: true if scan complete, false otherwise
+ */
+bool util_is_scan_completed(struct scan_event *event, bool *success);
+
 #endif

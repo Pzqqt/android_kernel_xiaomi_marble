@@ -903,7 +903,7 @@ static void wlan_cfg80211_scan_done_callback(
 					void *args)
 {
 	struct cfg80211_scan_request *req = NULL;
-	bool aborted = false;
+	bool success = false;
 	uint32_t scan_id = event->scan_id;
 	uint8_t source = NL_SCAN;
 	struct wlan_objmgr_pdev *pdev;
@@ -911,9 +911,7 @@ static void wlan_cfg80211_scan_done_callback(
 	struct net_device *netdev = NULL;
 	QDF_STATUS status;
 
-	if ((event->type != SCAN_EVENT_TYPE_COMPLETED) &&
-	    (event->type != SCAN_EVENT_TYPE_DEQUEUED) &&
-	    (event->type != SCAN_EVENT_TYPE_START_FAILED))
+	if (!util_is_scan_completed(event, &success))
 		return;
 
 	cfg80211_info("scan ID = %d vdev id = %d, event type %s(%d) reason = %s(%d)",
@@ -922,28 +920,6 @@ static void wlan_cfg80211_scan_done_callback(
 		event->type,
 		util_scan_get_ev_reason_name(event->reason),
 		event->reason);
-
-	/*
-	 * cfg80211_scan_done informing NL80211 about completion
-	 * of scanning
-	 */
-	if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-	    ((event->reason == SCAN_REASON_CANCELLED) ||
-	     (event->reason == SCAN_REASON_TIMEDOUT) ||
-	     (event->reason == SCAN_REASON_INTERNAL_FAILURE))) {
-		aborted = true;
-	} else if ((event->type == SCAN_EVENT_TYPE_COMPLETED) &&
-		   (event->reason == SCAN_REASON_COMPLETED))
-		aborted = false;
-	else if ((event->type == SCAN_EVENT_TYPE_DEQUEUED) &&
-		 (event->reason == SCAN_REASON_CANCELLED))
-		aborted = true;
-	else if ((event->type == SCAN_EVENT_TYPE_START_FAILED) &&
-		 (event->reason == SCAN_REASON_COMPLETED))
-		aborted = true;
-	else
-		/* cfg80211 is not interested on all other scan events */
-		return;
 
 	pdev = wlan_vdev_get_pdev(vdev);
 	status = wlan_scan_request_dequeue(
@@ -975,9 +951,9 @@ static void wlan_cfg80211_scan_done_callback(
 	 * scan done event will be posted
 	 */
 	if (NL_SCAN == source)
-		wlan_cfg80211_scan_done(netdev, req, aborted);
+		wlan_cfg80211_scan_done(netdev, req, !success);
 	else
-		wlan_vendor_scan_callback(req, aborted);
+		wlan_vendor_scan_callback(req, !success);
 
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 allow_suspend:
