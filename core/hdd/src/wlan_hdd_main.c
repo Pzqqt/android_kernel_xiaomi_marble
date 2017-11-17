@@ -12152,6 +12152,7 @@ static inline void hdd_ra_populate_pmo_config(
 {
 }
 #endif
+
 /**
  * hdd_update_pmo_config - API to update pmo configuration parameters
  * @hdd_ctx: HDD context
@@ -12190,6 +12191,7 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 	psoc_cfg.active_mode_offload =
 		hdd_ctx->config->active_mode_offload;
 	psoc_cfg.ap_arpns_support = hdd_ctx->ap_arpns_support;
+	psoc_cfg.d0_wow_supported = wma_d0_wow_is_supported();
 	psoc_cfg.max_wow_filters = hdd_ctx->config->maxWoWFilters;
 	psoc_cfg.sta_dynamic_dtim = hdd_ctx->config->enableDynamicDTIM;
 	psoc_cfg.sta_mod_dtim = hdd_ctx->config->enableModulatedDTIM;

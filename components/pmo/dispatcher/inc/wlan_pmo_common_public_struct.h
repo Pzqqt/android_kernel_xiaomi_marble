@@ -271,6 +271,7 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @enable_mc_list: true if psoc supports mc addr list else false
  * @active_mode_offload: true if psoc supports active mode offload else false
  * @ap_arpns_support: true if psoc supports arp ns for ap mode
+ * @d0_wow_supported: true if psoc supports D0 wow command
  * @max_wow_filters: maximum number of wow filter supported
  * @ra_ratelimit_enable: true when ra filtering ins eanbled else false
  * @ra_ratelimit_interval: ra packets interval
@@ -298,6 +299,7 @@ struct pmo_psoc_cfg {
 	bool enable_mc_list;
 	bool active_mode_offload;
 	bool ap_arpns_support;
+	bool d0_wow_supported;
 	uint8_t max_wow_filters;
 	bool ra_ratelimit_enable;
 	uint16_t ra_ratelimit_interval;

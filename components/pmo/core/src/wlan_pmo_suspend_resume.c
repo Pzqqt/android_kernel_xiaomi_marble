@@ -1110,6 +1110,7 @@ void pmo_core_psoc_wakeup_host_event_received(struct wlan_objmgr_psoc *psoc)
 	}
 
 	psoc_ctx = pmo_psoc_get_priv(psoc);
+	psoc_ctx->wow.wow_state = pmo_wow_state_none;
 	qdf_event_set(&psoc_ctx->wow.target_resume);
 out:
 	PMO_EXIT();

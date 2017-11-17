@@ -301,6 +301,19 @@ QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
 
 bool wma_is_service_enabled(WMI_SERVICE service_type);
 
+#ifdef FEATURE_WLAN_D0WOW
+static inline bool wma_d0_wow_is_supported(void)
+{
+	return wma_is_service_enabled(WMI_SERVICE_D0WOW) &&
+	       (!wma_is_service_enabled(WMI_SERVICE_UNIFIED_WOW_CAPABILITY));
+}
+#else
+static inline bool wma_d0_wow_is_supported(void)
+{
+	return false;
+}
+#endif
+
 /**
  * wma_store_pdev() - store pdev
  * @wma_ctx:	wma context

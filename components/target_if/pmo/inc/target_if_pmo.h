@@ -433,6 +433,24 @@ QDF_STATUS target_if_pmo_psoc_send_target_resume_req(
 		struct wlan_objmgr_psoc *psoc);
 
 /**
+ * target_if_pmo_psoc_send_d0wow_enable_req() - send d0 wow enable request
+ * @psoc: objmgr psoc
+ *
+ * Return: return QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS target_if_pmo_psoc_send_d0wow_enable_req(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_pmo_psoc_send_d0wow_disable_req() - send d0 wow disable request
+ * @psoc: objmgr psoc
+ *
+ * Return: return QDF_STATUS_SUCCESS on success else error code
+ */
+QDF_STATUS target_if_pmo_psoc_send_d0wow_disable_req(
+		struct wlan_objmgr_psoc *psoc);
+
+/**
  * target_if_pmo_register_tx_ops() - Register PMO component TX OPS
  * @tx_ops: PMO if transmit ops
  *

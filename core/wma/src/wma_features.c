@@ -2803,6 +2803,46 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 	return errno;
 }
 
+#ifdef FEATURE_WLAN_D0WOW
+/**
+ * wma_d0_wow_disable_ack_event() - wakeup host event handler
+ * @handle: wma handle
+ * @event: event data
+ * @len: buffer length
+ *
+ * Handler to catch D0-WOW disable ACK event.  This event will have
+ * reason why the firmware has woken the host.
+ * This is for backward compatible with cld2.0.
+ *
+ * Return: 0 for success or error
+ */
+int wma_d0_wow_disable_ack_event(void *handle, uint8_t *event, uint32_t len)
+{
+	tp_wma_handle wma = (tp_wma_handle)handle;
+	WMI_D0_WOW_DISABLE_ACK_EVENTID_param_tlvs *param_buf;
+	wmi_d0_wow_disable_ack_event_fixed_param *resp_data;
+
+	param_buf = (WMI_D0_WOW_DISABLE_ACK_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		WMA_LOGE("Invalid D0-WOW disable ACK event buffer!");
+		return -EINVAL;
+	}
+
+	resp_data = param_buf->fixed_param;
+
+	pmo_ucfg_psoc_wakeup_host_event_received(wma->psoc);
+
+	WMA_LOGD("Received D0-WOW disable ACK");
+
+	return 0;
+}
+#else
+int wma_d0_wow_disable_ack_event(void *handle, uint8_t *event, uint32_t len)
+{
+	return 0;
+}
+#endif
+
 /**
  * wma_pdev_resume_event_handler() - PDEV resume event handler
  * @handle: wma handle

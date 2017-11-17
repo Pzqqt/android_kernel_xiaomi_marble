@@ -3534,6 +3534,20 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
+	if (wma_d0_wow_is_supported()) {
+		status = wmi_unified_register_event_handler(
+				wma_handle->wmi_handle,
+				WMI_D0_WOW_DISABLE_ACK_EVENTID,
+				wma_d0_wow_disable_ack_event,
+				WMA_RX_TASKLET_CTX);
+		if (status) {
+			WMA_LOGE("%s: Failed to register d0wow disable ack"
+				 " event handler", __func__);
+			qdf_status = QDF_STATUS_E_FAILURE;
+			goto end;
+		}
+	}
+
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_PDEV_RESUME_EVENTID,
 				wma_pdev_resume_event_handler,

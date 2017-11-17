@@ -133,14 +133,28 @@ void pmo_tgt_update_target_suspend_flag(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS pmo_tgt_psoc_send_wow_enable_req(struct wlan_objmgr_psoc *psoc,
 	struct pmo_wow_cmd_params *param)
 {
+	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
+
+	if (psoc_ctx->psoc_cfg.d0_wow_supported && !param->can_suspend_link) {
+		if (!pmo_tx_ops.psoc_send_d0wow_enable_req) {
+			pmo_err("psoc_send_d0wow_enable_req is null");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+		psoc_ctx->wow.wow_state = pmo_wow_state_legacy_d0;
+		pmo_debug("Sending D0WOW enable command...");
+		return pmo_tx_ops.psoc_send_d0wow_enable_req(psoc);
+	}
+
 	if (!pmo_tx_ops.psoc_send_wow_enable_req) {
 		pmo_err("psoc_send_wow_enable_req is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
+	psoc_ctx->wow.wow_state = param->can_suspend_link ?
+		pmo_wow_state_unified_d3 : pmo_wow_state_unified_d0;
 	return pmo_tx_ops.psoc_send_wow_enable_req(psoc, param);
 }
 
@@ -189,14 +203,26 @@ bool pmo_tgt_psoc_get_runtime_pm_in_progress(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS pmo_tgt_psoc_send_host_wakeup_ind(struct wlan_objmgr_psoc *psoc)
 {
+	struct pmo_psoc_priv_obj *psoc_ctx;
 	struct wlan_pmo_tx_ops pmo_tx_ops;
 
+	psoc_ctx = pmo_psoc_get_priv(psoc);
 	pmo_tx_ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
+
+	if (psoc_ctx->psoc_cfg.d0_wow_supported &&
+	    psoc_ctx->wow.wow_state == pmo_wow_state_legacy_d0) {
+		if (!pmo_tx_ops.psoc_send_d0wow_disable_req) {
+			pmo_err("psoc_send_d0wow_disable_req is null");
+			return QDF_STATUS_E_NULL_VALUE;
+		}
+		pmo_debug("Sending D0WOW disable command...");
+		return pmo_tx_ops.psoc_send_d0wow_disable_req(psoc);
+	}
+
 	if (!pmo_tx_ops.psoc_send_host_wakeup_ind) {
 		pmo_err("psoc_send_host_wakeup_ind is null");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-
 	return pmo_tx_ops.psoc_send_host_wakeup_ind(psoc);
 }
 

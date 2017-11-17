@@ -183,3 +183,30 @@ QDF_STATUS target_if_pmo_psoc_send_target_resume_req(
 					TGT_WILDCARD_PDEV_ID);
 }
 
+#ifdef FEATURE_WLAN_D0WOW
+QDF_STATUS target_if_pmo_psoc_send_d0wow_enable_req(
+		struct wlan_objmgr_psoc *psoc)
+{
+	return wmi_unified_d0wow_enable_send(GET_WMI_HDL_FROM_PSOC(psoc),
+			TGT_WILDCARD_PDEV_ID);
+}
+
+QDF_STATUS target_if_pmo_psoc_send_d0wow_disable_req(
+		struct wlan_objmgr_psoc *psoc)
+{
+	return wmi_unified_d0wow_disable_send(GET_WMI_HDL_FROM_PSOC(psoc),
+			TGT_WILDCARD_PDEV_ID);
+}
+#else
+QDF_STATUS target_if_pmo_psoc_send_d0wow_enable_req(
+		struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_E_INVAL;
+}
+
+QDF_STATUS target_if_pmo_psoc_send_d0wow_disable_req(
+		struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_E_INVAL;
+}
+#endif

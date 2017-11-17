@@ -102,6 +102,8 @@ int (*pmo_pld_auto_resume_cb)(void);
  * @psoc_get_runtime_pm_in_progress: fp to get runtime pm is in progress status
  * @psoc_send_host_wakeup_ind: fp tp send host wake indication to fwr
  * @psoc_send_target_resume_req: fp to send target resume request
+ * @psoc_send_d0wow_enable_req: fp to send D0 WOW enable request
+ * @psoc_send_d0wow_disable_req: fp to send D0 WOW disable request
  */
 struct wlan_pmo_tx_ops {
 	QDF_STATUS (*send_arp_offload_req)(struct wlan_objmgr_vdev *vdev,
@@ -195,6 +197,10 @@ struct wlan_pmo_tx_ops {
 	bool (*psoc_get_runtime_pm_in_progress)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*psoc_send_host_wakeup_ind)(struct wlan_objmgr_psoc *psoc);
 	QDF_STATUS (*psoc_send_target_resume_req)(
+			struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*psoc_send_d0wow_enable_req)(
+			struct wlan_objmgr_psoc *psoc);
+	QDF_STATUS (*psoc_send_d0wow_disable_req)(
 			struct wlan_objmgr_psoc *psoc);
 
 };
