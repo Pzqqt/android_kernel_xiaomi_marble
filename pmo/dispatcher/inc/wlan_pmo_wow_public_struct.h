@@ -174,10 +174,25 @@ enum pmo_wow_action_wakeup_opertion {
 };
 
 /**
+ * enum pmo_wow_state: enumeration of wow state
+ * @pmo_wow_state_none: not in wow state
+ * @pmo_wow_state_legacy_d0: in d0 wow state trigger by legacy d0 wow command
+ * @pmo_wow_state_unified_d0: in d0 wow state trigger by unified wow command
+ * @pmo_wow_state_unified_d3: in d3 wow state trigger by unified wow command
+ */
+enum pmo_wow_state {
+	pmo_wow_state_none = 0,
+	pmo_wow_state_legacy_d0,
+	pmo_wow_state_unified_d0,
+	pmo_wow_state_unified_d3,
+};
+
+/**
  * struct pmo_wow - store wow patterns
  * @wow_enable: wow enable/disable
  * @wow_enable_cmd_sent: is wow enable command sent to fw
  * @is_wow_bus_suspended: true if bus is suspended
+ * @wow_state: state of wow
  * @target_suspend: target suspend event
  * @target_resume: target resume event
  * @wow_nack: wow negative ack flag
@@ -197,6 +212,7 @@ struct pmo_wow {
 	bool wow_enable;
 	bool wow_enable_cmd_sent;
 	bool is_wow_bus_suspended;
+	enum pmo_wow_state wow_state;
 	qdf_event_t target_suspend;
 	qdf_event_t target_resume;
 	int wow_nack;
