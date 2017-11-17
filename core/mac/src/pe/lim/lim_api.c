@@ -557,9 +557,6 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 
 	rrm_initialize(pMac);
 
-	qdf_mutex_create(&pMac->lim.lim_frame_register_lock);
-	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
-
 	/* Initialize the configurations needed by PE */
 	if (eSIR_FAILURE == __lim_init_config(pMac)) {
 		/* We need to undo everything in lim_start */
@@ -599,26 +596,9 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 void lim_cleanup(tpAniSirGlobal pMac)
 {
 	uint8_t i;
-	/*
-	 * Before destroying the list making sure all the nodes have been
-	 * deleted Which should be the normal case, but a memory leak has been
-	 * reported
-	 */
-
-	struct mgmt_frm_reg_info *pLimMgmtRegistration = NULL;
 
 	pe_deregister_mgmt_rx_frm_callback(pMac);
 
-	qdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
-	while (qdf_list_remove_front(
-			&pMac->lim.gLimMgmtFrameRegistratinQueue,
-			(qdf_list_node_t **) &pLimMgmtRegistration) ==
-			QDF_STATUS_SUCCESS) {
-		qdf_mem_free(pLimMgmtRegistration);
-	}
-	qdf_mutex_release(&pMac->lim.lim_frame_register_lock);
-	qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
-	qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
 	qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
 	pMac->lim.gpLimRemainOnChanReq = NULL;
 	lim_cleanup_mlm(pMac);
@@ -815,10 +795,20 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(&pMac->lim.lkPeGlobalLock))) {
 		pe_err("pe lock init failed!");
 		status = eSIR_FAILURE;
-		goto pe_open_lock_fail;
+		goto pe_open_lock_1_fail;
 	}
 	pMac->lim.deauthMsgCnt = 0;
 	pMac->lim.disassocMsgCnt = 0;
+
+	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
+				&pMac->lim.lim_frame_register_lock))) {
+		pe_err("pe lock init failed!");
+		status = eSIR_FAILURE;
+		goto pe_open_lock_2_fail;
+	}
+
+	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
+
 	pMac->lim.retry_packet_cnt = 0;
 	pMac->lim.ibss_retry_cnt = 0;
 
@@ -840,7 +830,9 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 
 	return status; /* status here will be eSIR_SUCCESS */
 
-pe_open_lock_fail:
+pe_open_lock_2_fail:
+	qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock);
+pe_open_lock_1_fail:
 	qdf_mem_free(pMac->lim.gpSession);
 	pMac->lim.gpSession = NULL;
 pe_open_psession_fail:
@@ -860,9 +852,22 @@ pe_open_psession_fail:
 tSirRetStatus pe_close(tpAniSirGlobal pMac)
 {
 	uint8_t i;
+	qdf_list_node_t *lst_node;
 
 	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG)
 		return eSIR_SUCCESS;
+
+	/*
+	 * Before destroying the list making sure all the nodes have been
+	 * deleted
+	 */
+	while (qdf_list_remove_front(
+			&pMac->lim.gLimMgmtFrameRegistratinQueue,
+			&lst_node) == QDF_STATUS_SUCCESS) {
+		qdf_mem_free(lst_node);
+	}
+	qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
+	qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
 
 	qdf_spinlock_destroy(&pMac->sys.bbt_mgmt_lock);
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
