@@ -767,6 +767,16 @@ QDF_STATUS wmi_unified_oem_dma_ring_cfg(void *wmi_hdl,
 				wmi_oem_dma_ring_cfg_req_fixed_param *cfg);
 #endif
 
+/**
+ * wmi_unified_dbr_ring_cfg: Configure direct buffer rx rings
+ * @wmi_hdl: WMI handle
+ * @cfg: pointer to direct buffer rx config request
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_unified_dbr_ring_cfg(void *wmi_hdl,
+				struct direct_buf_rx_cfg_req *cfg);
+
 QDF_STATUS wmi_unified_start_oem_data_cmd(void *wmi_hdl,
 			  uint32_t data_len,
 			  uint8_t *data);
@@ -1543,6 +1553,51 @@ QDF_STATUS wmi_extract_reg_cap_service_ready_ext(
 			void *wmi_hdl,
 			uint8_t *evt_buf, uint8_t phy_idx,
 			struct wlan_psoc_host_hal_reg_capabilities_ext *param);
+
+/**
+ * wmi_extract_dbr_ring_cap_service_ready_ext: Extract direct buffer rx
+ *                                             capability received through
+ *                                             extended service ready event
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Event buffer
+ * @idx: Index of the module for which capability is received
+ * @param: Pointer to direct buffer rx ring cap struct
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_extract_dbr_ring_cap_service_ready_ext(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct wlan_psoc_host_dbr_ring_caps *param);
+
+/**
+ * wmi_extract_dbr_buf_release_fixed : Extract direct buffer rx fixed param
+ *                                     from buffer release event
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Event buffer
+ * @param: Pointer to direct buffer rx response struct
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_extract_dbr_buf_release_fixed(
+			void *wmi_hdl,
+			uint8_t *evt_buf,
+			struct direct_buf_rx_rsp *param);
+
+/**
+ * wmi_extract_dbr_buf_release_entry: Extract direct buffer rx buffer tlv
+ *
+ * @wmi_hdl: WMI handle
+ * @evt_buf: Event buffer
+ * @idx: Index of the module for which capability is received
+ * @param: Pointer to direct buffer rx entry
+ *
+ * Return: QDF status of operation
+ */
+QDF_STATUS wmi_extract_dbr_buf_release_entry(
+			void *wmi_hdl,
+			uint8_t *evt_buf, uint8_t idx,
+			struct direct_buf_rx_entry *param);
 QDF_STATUS wmi_extract_pdev_utf_event(void *wmi_hdl,
 				      uint8_t *evt_buf,
 				      struct wmi_host_pdev_utf_event *param);
