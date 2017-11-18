@@ -5720,6 +5720,8 @@ typedef struct {
     A_UINT32 contention_time_avg;
     /** num of data pkts used for contention statistics */
     A_UINT32 contention_num_samples;
+    /** number of pending pkts */
+    A_UINT32 tx_pending_msdu;
 } wmi_wmm_ac_stats;
 
 /* interface statistics */
@@ -7152,7 +7154,7 @@ typedef struct {
  * Indicates support by a STA to receive an ack-enabled A-MPDU in which an A-MSDU is carried in
  * a QoS Data frame for which no block ack agreement exists.
  */
-#define WMI_HECAP_MAC_AMSDUINAMPDU_GET(he_cap) WMI_GET_BITS(hecap, 15, 1)
+#define WMI_HECAP_MAC_AMSDUINAMPDU_GET(he_cap) WMI_GET_BITS(he_cap, 15, 1)
 #define WMI_HECAP_MAC_AMSDUINAMPDU_SET(he_cap, value) WMI_SET_BITS(he_cap, 15, 1, value)
 
 /*--- HECAP_MAC_HELKAD: DO NOT USE - DEPRECATED ---*/
