@@ -1432,6 +1432,7 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 	int dir = OUT, ret = 0;
 	struct audio_client *ac = prtd->audio_client;
 	uint32_t stream_index;
+	uint32_t enc_cfg_id = ENC_CFG_ID_NONE;
 
 	switch (prtd->codec_param.codec.format) {
 	case SNDRV_PCM_FORMAT_S24_LE:
@@ -1450,6 +1451,9 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 	default:
 		bits_per_sample = 16;
 		sample_word_size = 16;
+		if (prtd->codec == FORMAT_BESPOKE)
+			enc_cfg_id =
+			prtd->codec_param.codec.options.generic.reserved[0];
 		break;
 	}
 
@@ -1457,11 +1461,11 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 			__func__, ac->stream_id, bits_per_sample);
 
 	if (prtd->codec_param.codec.flags & COMPRESSED_TIMESTAMP_FLAG) {
-		ret = q6asm_open_read_v4(prtd->audio_client, FORMAT_LINEAR_PCM,
-			bits_per_sample, true);
+		ret = q6asm_open_read_v4(prtd->audio_client, prtd->codec,
+			bits_per_sample, true, enc_cfg_id);
 	} else {
-		ret = q6asm_open_read_v4(prtd->audio_client, FORMAT_LINEAR_PCM,
-			bits_per_sample, false);
+		ret = q6asm_open_read_v4(prtd->audio_client, prtd->codec,
+			bits_per_sample, false, enc_cfg_id);
 	}
 	if (ret < 0) {
 		pr_err("%s: q6asm_open_read failed:%d\n", __func__, ret);
@@ -1521,10 +1525,20 @@ static int msm_compr_configure_dsp_for_capture(struct snd_compr_stream *cstream)
 	pr_debug("%s: sample_rate = %d channels = %d bps = %d sample_word_size = %d\n",
 			__func__, prtd->sample_rate, prtd->num_channels,
 					 bits_per_sample, sample_word_size);
-	ret = q6asm_enc_cfg_blk_pcm_format_support_v4(prtd->audio_client,
+	if (prtd->codec == FORMAT_BESPOKE) {
+		/*
+		 * For BESPOKE codec, encoder specific config params are
+		 * included as part of generic.
+		 */
+		ret = q6asm_enc_cfg_blk_custom(prtd->audio_client, prtd->sample_rate,
+			prtd->num_channels, prtd->codec,
+			(void *)&prtd->codec_param.codec.options.generic);
+	} else {
+		ret = q6asm_enc_cfg_blk_pcm_format_support_v4(prtd->audio_client,
 					prtd->sample_rate, prtd->num_channels,
 					bits_per_sample, sample_word_size,
 					ASM_LITTLE_ENDIAN, DEFAULT_QF);
+	}
 
 	return ret;
 }
@@ -2040,6 +2054,12 @@ static int msm_compr_set_params(struct snd_compr_stream *cstream,
 	case SND_AUDIOCODEC_APTX: {
 		pr_debug("%s: SND_AUDIOCODEC_APTX\n", __func__);
 		prtd->codec = FORMAT_APTX;
+		break;
+	}
+
+	case SND_AUDIOCODEC_BESPOKE: {
+		pr_debug("%s: SND_AUDIOCODEC_BESPOKE\n", __func__);
+		prtd->codec = FORMAT_BESPOKE;
 		break;
 	}
 
