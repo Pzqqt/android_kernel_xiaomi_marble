@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2011, 2016-2017 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2011, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -74,6 +74,7 @@ int apr_tal_close(struct apr_svc_ch_dev *apr_ch);
 int apr_tal_rx_intents_config(struct apr_svc_ch_dev *apr_ch,
 		int num_of_intents, uint32_t size);
 int apr_tal_init(void);
+void apr_tal_exit(void);
 int apr_tal_start_rx_rt(struct apr_svc_ch_dev *apr_ch);
 int apr_tal_end_rx_rt(struct apr_svc_ch_dev *apr_ch);
 

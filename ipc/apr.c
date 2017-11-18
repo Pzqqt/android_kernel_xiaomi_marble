@@ -1,4 +1,4 @@
-/* Copyright (c) 2010-2014, 2016-2017 The Linux Foundation. All rights reserved.
+/* Copyright (c) 2010-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1133,6 +1133,7 @@ void __exit apr_exit(void)
 {
 	subsys_notif_deregister("apr_modem");
 	subsys_notif_deregister("apr_adsp");
+	apr_tal_exit();
 }
 module_exit(apr_exit);
 MODULE_DESCRIPTION("APR module");

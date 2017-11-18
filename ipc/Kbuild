@@ -67,16 +67,16 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ############ IPC ############
 
-ifdef CONFIG_MSM_QDSP6_APRV2_GLINK
+ifdef CONFIG_MSM_QDSP6_APRV2_RPMSG
 APRV_GLINK += apr.o
 APRV_GLINK += apr_v2.o
-APRV_GLINK += apr_tal_glink.o
+APRV_GLINK += apr_tal_rpmsg.o
 endif
 
-ifdef CONFIG_MSM_QDSP6_APRV3_GLINK
+ifdef CONFIG_MSM_QDSP6_APRV3_RPMSG
 APRV_GLINK += apr.o
 APRV_GLINK += apr_v3.o
-APRV_GLINK += apr_tal_glink.o
+APRV_GLINK += apr_tal_rpmsg.o
 endif
 
 ifdef CONFIG_WCD_DSP_GLINK
@@ -162,8 +162,8 @@ CDEFINES += -DMULTI_IF_NAME=\"$(CHIP_NAME)\"
 endif
 
 # Module information used by KBuild framework
-obj-$(CONFIG_MSM_QDSP6_APRV2_GLINK) += apr_dlkm.o
-obj-$(CONFIG_MSM_QDSP6_APRV3_GLINK) += apr_dlkm.o
+obj-$(CONFIG_MSM_QDSP6_APRV2_RPMSG) += apr_dlkm.o
+obj-$(CONFIG_MSM_QDSP6_APRV3_RPMSG) += apr_dlkm.o
 apr_dlkm-y := $(APRV_GLINK)
 
 obj-$(CONFIG_WCD_DSP_GLINK) += wglink_dlkm.o
