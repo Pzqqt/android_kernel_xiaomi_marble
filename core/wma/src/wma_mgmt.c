@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2812,7 +2812,7 @@ static const char *wma_get_status_str(uint32_t status)
 static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 					  uint32_t desc_id, uint32_t status)
 {
-	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
 	qdf_nbuf_t buf = NULL;
 	uint8_t vdev_id = 0;
 	QDF_STATUS ret;
@@ -2826,14 +2826,14 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 	WMA_LOGD("%s: status: %s wmi_desc_id: %d", __func__,
 		wma_get_status_str(status), desc_id);
 
-	psoc = wma_handle->psoc;
-	if (psoc == NULL) {
+	pdev = wma_handle->pdev;
+	if (pdev == NULL) {
 		WMA_LOGE("%s: psoc ptr is NULL", __func__);
 		return -EINVAL;
 	}
 
-	buf = mgmt_txrx_get_nbuf(psoc, desc_id);
-	vdev_id = mgmt_txrx_get_vdev_id(psoc, desc_id);
+	buf = mgmt_txrx_get_nbuf(pdev, desc_id);
+	vdev_id = mgmt_txrx_get_vdev_id(pdev, desc_id);
 
 	if (buf)
 		qdf_nbuf_unmap_single(wma_handle->qdf_dev, buf,
@@ -2844,7 +2844,7 @@ static int wma_process_mgmt_tx_completion(tp_wma_handle wma_handle,
 		packetdump_cb(buf, QDF_STATUS_SUCCESS,
 			vdev_id, TX_MGMT_PKT);
 
-	ret = mgmt_txrx_tx_completion_handler(psoc, desc_id, status, NULL);
+	ret = mgmt_txrx_tx_completion_handler(pdev, desc_id, status, NULL);
 
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to process mgmt tx completion", __func__);

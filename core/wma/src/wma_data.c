@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1352,13 +1352,13 @@ static void
 wma_mgmt_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
-	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)
-					wma_handle->psoc;
+	struct wlan_objmgr_pdev *pdev = (struct wlan_objmgr_pdev *)
+					wma_handle->pdev;
 	uint16_t desc_id;
 
 	desc_id = QDF_NBUF_CB_MGMT_TXRX_DESC_ID(netbuf);
 
-	mgmt_txrx_tx_completion_handler(psoc, desc_id, status, NULL);
+	mgmt_txrx_tx_completion_handler(pdev, desc_id, status, NULL);
 }
 
 /**
