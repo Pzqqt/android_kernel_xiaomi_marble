@@ -180,9 +180,9 @@ static bool hdd_is_world_regdomain(uint32_t reg_domain)
  * hdd_update_regulatory_info() - update regulatory info
  * @hdd_ctx: hdd context
  *
- * Return: void
+ * Return: Error Code
  */
-static void hdd_update_regulatory_info(struct hdd_context *hdd_ctx)
+static int hdd_update_regulatory_info(struct hdd_context *hdd_ctx)
 {
 	uint32_t country_code;
 
@@ -191,7 +191,7 @@ static void hdd_update_regulatory_info(struct hdd_context *hdd_ctx)
 	hdd_ctx->reg.reg_domain = CTRY_FLAG;
 	hdd_ctx->reg.reg_domain |= country_code;
 
-	cds_fill_some_regulatory_info(&hdd_ctx->reg);
+	return cds_fill_some_regulatory_info(&hdd_ctx->reg);
 
 }
 
@@ -689,6 +689,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 	bool reset = false;
 	enum dfs_reg dfs_reg;
 	struct reg_config_vars config_vars;
+	int ret_val;
 
 	hdd_debug("country: %c%c, initiator %d, dfs_region: %d",
 		  request->alpha2[0],
@@ -769,7 +770,11 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		hdd_ctx->reg.alpha2[0] = request->alpha2[0];
 		hdd_ctx->reg.alpha2[1] = request->alpha2[1];
 
-		hdd_update_regulatory_info(hdd_ctx);
+		ret_val = hdd_update_regulatory_info(hdd_ctx);
+		if (ret_val) {
+			hdd_err("invalid reg info, do not process");
+			return;
+		}
 
 		hdd_process_regulatory_data(hdd_ctx, wiphy, reset);
 

@@ -685,6 +685,11 @@ void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 		return;
 	}
 
+	if (!reg->regpair) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  FL("no regpair is found, can not proceed"));
+		return;
+	}
 	regpair = reg->regpair;
 	reg_dmn_2g = get_reg_dmn(regpair->reg_dmn_2ghz);
 	if (!reg_dmn_2g) {
