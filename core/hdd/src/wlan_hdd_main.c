@@ -8103,6 +8103,22 @@ int hdd_start_ftm_adapter(struct hdd_adapter *adapter)
 	EXIT();
 }
 
+static int hdd_open_concurrent_interface(struct hdd_context *hdd_ctx,
+								bool rtnl_held)
+{
+	struct hdd_adapter *adapter;
+
+	adapter = hdd_open_adapter(hdd_ctx, QDF_STA_MODE,
+				       hdd_ctx->config->enableConcurrentSTA,
+				       wlan_hdd_get_intf_addr(hdd_ctx),
+				       NET_NAME_UNKNOWN, rtnl_held);
+
+	if (!adapter)
+		return -ENOSPC;
+
+	return 0;
+}
+
 /**
  * hdd_open_interfaces - Open all required interfaces
  * hdd_ctx:	HDD context
@@ -8142,6 +8158,12 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 
 	/* fast roaming is allowed only on first STA, i.e. wlan adapter */
 	adapter->fast_roaming_allowed = true;
+
+	if (strlen(hdd_ctx->config->enableConcurrentSTA) != 0) {
+		ret = hdd_open_concurrent_interface(hdd_ctx, rtnl_held);
+		if (ret)
+			hdd_err("Cannot create concurrent STA interface");
+	}
 
 	ret = hdd_open_p2p_interface(hdd_ctx, rtnl_held);
 	if (ret)

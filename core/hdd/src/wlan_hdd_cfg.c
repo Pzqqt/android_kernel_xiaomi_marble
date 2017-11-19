@@ -3272,6 +3272,11 @@ struct reg_table_entry g_registry_table[] = {
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_ENABLE_FW_MODULE_LOG_DEFAULT),
 
+	REG_VARIABLE_STRING(CFG_ENABLE_CONCURRENT_STA, WLAN_PARAM_String,
+			    struct hdd_config, enableConcurrentSTA,
+			    VAR_FLAGS_NONE,
+			    (void *)CFG_ENABLE_CONCURRENT_STA_DEFAULT),
+
 #ifdef WLAN_FEATURE_11W
 	REG_VARIABLE(CFG_PMF_SA_QUERY_MAX_RETRIES_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, pmfSaQueryMaxRetries,
