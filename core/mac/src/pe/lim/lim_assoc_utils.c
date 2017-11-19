@@ -3089,7 +3089,11 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 					       session_entry);
 		}
 #ifdef WLAN_FEATURE_11W
-		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
+		if (sta_ds->rmfEnabled) {
+			pe_debug("delete pmf timer sta-idx:%d assoc-id:%d",
+				 sta_ds->staIndex, sta_ds->assocId);
+			tx_timer_delete(&sta_ds->pmfSaQueryTimer);
+		}
 #endif
 	}
 
