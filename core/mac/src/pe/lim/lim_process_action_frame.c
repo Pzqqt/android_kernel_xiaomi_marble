@@ -1676,7 +1676,8 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			status, frame_len);
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, mac_hdr->sa, &peer_id);
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa, &peer_id,
+					PEER_DEBUG_ID_WMA_ADDBA_REQ);
 	if (!peer) {
 		pe_err("PEER [%pM] not found", mac_hdr->sa);
 		goto error;
@@ -1688,6 +1689,8 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			addba_req->ba_timeout.timeout,
 			addba_req->addba_param_set.buff_size,
 			addba_req->ba_start_seq_ctrl.ssn);
+
+	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_ADDBA_REQ);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		lim_send_addba_response_frame(mac_ctx, mac_hdr->sa,
@@ -1755,7 +1758,8 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			status, frame_len);
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, mac_hdr->sa, &peer_id);
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, mac_hdr->sa, &peer_id,
+					PEER_DEBUG_ID_WMA_DELBA_REQ);
 	if (!peer) {
 		pe_err("PEER [%pM] not found", mac_hdr->sa);
 		goto error;
@@ -1763,6 +1767,8 @@ static void lim_process_delba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	qdf_status = cdp_delba_process(soc, peer,
 			delba_req->delba_param_set.tid, delba_req->Reason.code);
+
+	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_DELBA_REQ);
 
 	if (QDF_STATUS_SUCCESS != qdf_status)
 		pe_err("Failed to process delba request");

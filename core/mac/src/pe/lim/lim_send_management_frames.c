@@ -4691,7 +4691,8 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev, peer_mac, &peer_id);
+	peer = cdp_peer_get_ref_by_addr(soc, pdev, peer_mac, &peer_id,
+					PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
 	if (!peer) {
 		pe_err("PEER [%pM] not found", peer_mac);
 		return QDF_STATUS_E_FAILURE;
@@ -4700,6 +4701,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	cdp_addba_responsesetup(soc, peer, tid, &dialog_token,
 		&status_code, &buff_size, &batimeout);
 
+	cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP);
 	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 	frm.Category.category = SIR_MAC_ACTION_BLKACK;
 	frm.Action.action = SIR_MAC_ADDBA_RSP;

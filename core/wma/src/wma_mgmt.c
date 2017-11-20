@@ -3447,7 +3447,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				      uint8_t *peer_addr, uint8_t *bssid,
 				      uint8_t subtype)
 {
-	void *peer;
+	void *peer = NULL;
 	struct cdp_pdev *pdev_ctx;
 	uint8_t peer_id;
 	bool should_drop = false;
@@ -3481,8 +3481,8 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 		goto end;
 	}
 
-	peer = cdp_peer_find_by_addr(soc, pdev_ctx,
-				peer_addr, &peer_id);
+	peer = cdp_peer_get_ref_by_addr(soc, pdev_ctx, peer_addr, &peer_id,
+					PEER_DEBUG_ID_WMA_PKT_DROP);
 	if (!peer) {
 		if (IEEE80211_FC0_SUBTYPE_ASSOC_REQ != subtype) {
 			WMA_LOGI(
@@ -3547,6 +3547,9 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 	}
 
 end:
+	if (peer)
+		cdp_peer_release_ref(soc, peer, PEER_DEBUG_ID_WMA_PKT_DROP);
+
 	return should_drop;
 }
 
