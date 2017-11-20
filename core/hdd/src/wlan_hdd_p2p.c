@@ -605,6 +605,23 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		}
 	}
 
+	if (session_type == QDF_SAP_MODE) {
+		adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
+		if (adapter && test_bit(NET_DEVICE_REGISTERED,
+					 &adapter->event_flags)) {
+			hdd_debug("iface already registered");
+			if (adapter->session.ap.beacon) {
+				qdf_mem_free(adapter->session.ap.beacon);
+				adapter->session.ap.beacon = NULL;
+			}
+			if (adapter->dev && adapter->dev->ieee80211_ptr)
+				return adapter->dev->ieee80211_ptr;
+
+			hdd_err("ieee80211_ptr points to NULL");
+			return ERR_PTR(-EINVAL);
+		}
+	}
+
 	adapter = NULL;
 	if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
 	    ((NL80211_IFTYPE_P2P_GO == type) ||
@@ -772,6 +789,12 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
 	}
+
+	/*
+	 * Clear SOFTAP_INIT_DONE flag to mark SAP unload, so that we do
+	 * not restart SAP after SSR as SAP is already stopped from user space.
+	 */
+	clear_bit(SOFTAP_INIT_DONE, &pVirtAdapter->event_flags);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
