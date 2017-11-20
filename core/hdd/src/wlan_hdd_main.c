@@ -9822,9 +9822,12 @@ void hdd_dp_trace_init(struct hdd_config *config)
 
 	/* calculating, num bw timer intervals in a second (1000ms) */
 	bw_compute_interval = GET_BW_COMPUTE_INTV(config);
-	if (bw_compute_interval)
+	if (bw_compute_interval <= 1000 && bw_compute_interval > 0)
 		thresh_time_limit = 1000 / bw_compute_interval;
-	else
+	else if (bw_compute_interval > 1000) {
+		hdd_err("busBandwidthComputeInterval > 1000, using 1000");
+		thresh_time_limit = 1;
+	} else
 		hdd_err("busBandwidthComputeInterval is 0, using defaults");
 
 	switch (num_entries) {
