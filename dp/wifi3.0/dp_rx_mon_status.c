@@ -123,28 +123,29 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	if (soc->process_rx_status)
 		return;
 	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
-	DP_STATS_INC(peer, rx.sgi_count[ppdu->u.gi], 1);
+	DP_STATS_INC(peer, rx.sgi_count[ppdu->u.gi], num_msdu);
 	DP_STATS_INC(peer, rx.bw[ppdu->u.bw], num_msdu);
-	DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ppdu->is_ampdu);
-	DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ppdu->is_ampdu));
+	DP_STATS_INCC(peer, rx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
+	DP_STATS_INCC(peer, rx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
+	DP_STATS_UPD(peer, rx.rx_rate, mcs);
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_A)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
-			((mcs < MAX_MCS_11A) &&	(preamble == DOT11_A)));
+			((mcs < MAX_MCS_11A) && (preamble == DOT11_A)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
 			((mcs >= MAX_MCS_11B) && (preamble == DOT11_B)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
-			((mcs < MAX_MCS_11B) &&	(preamble == DOT11_B)));
+			((mcs < MAX_MCS_11B) && (preamble == DOT11_B)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_N)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
-			((mcs < MAX_MCS_11A) &&	(preamble == DOT11_N)));
+			((mcs < MAX_MCS_11A) && (preamble == DOT11_N)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
 			((mcs >= MAX_MCS_11AC) && (preamble == DOT11_AC)));
@@ -157,7 +158,7 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
-	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], 1);
+	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,

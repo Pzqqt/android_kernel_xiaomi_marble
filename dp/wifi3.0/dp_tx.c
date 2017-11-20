@@ -2329,10 +2329,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 		length = qdf_nbuf_len(desc->nbuf);
 
-		/* Process Tx status in descriptor */
-		if (soc->process_tx_status ||
-				(desc->vdev && desc->vdev->mesh_vdev))
-			dp_tx_comp_process_tx_status(desc, length);
+		dp_tx_comp_process_tx_status(desc, length);
 
 		dp_tx_comp_free_buf(soc, desc);
 
@@ -2464,7 +2461,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 
 			/* Collect hw completion contents */
 			hal_tx_comp_desc_sync(tx_comp_hal_desc,
-					&tx_desc->comp, soc->process_tx_status);
+					&tx_desc->comp, 1);
 
 		}
 

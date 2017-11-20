@@ -767,6 +767,8 @@ struct cdp_tx_stats {
 	uint32_t non_amsdu_cnt;
 	/* Number of MSDUs part of AMSDU*/
 	uint32_t amsdu_cnt;
+	/* Tx Rate */
+	uint32_t tx_rate;
 
 	/* RSSI of last packet */
 	uint32_t last_ack_rssi;
@@ -782,6 +784,9 @@ struct cdp_tx_stats {
 
 	/* Packet Count for different bandwidths */
 	uint32_t bw[MAX_BW];
+
+	/* Excess Retry Count */
+	uint32_t excess_retries[WME_AC_MAX];
 
 	/* Wireless Multimedia type Count */
 	uint32_t wme_ac_type[WME_AC_MAX];
@@ -860,6 +865,8 @@ struct cdp_rx_stats {
 	uint32_t bar_recv_cnt;
 	/* RSSI of received signal */
 	uint32_t rssi;
+	/*Rx rate */
+	uint32_t rx_rate;
 };
 
 /* Tx ingress Stats */
@@ -1074,8 +1081,8 @@ struct cdp_pdev_stats {
  * @ba_bitmap: Block Ack bitmap
  * @start_seqa: Sequence number of first MPDU
  * @enq_bitmap: Enqueue MPDU bitmap
- * @tx_duration: PPDU airtime
  * @is_mcast: MCAST or UCAST
+ * @tx_rate: Transmission Rate
  */
 struct cdp_tx_completion_ppdu_user {
 	uint32_t completion_status:8,
@@ -1119,6 +1126,7 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t tx_duration;
 	uint16_t ru_tones;
 	bool is_mcast;
+	uint32_t tx_rate;
 };
 
 /**
@@ -1131,6 +1139,7 @@ struct cdp_tx_completion_ppdu_user {
  * @num_msdu: Number of MSDUs in PPDU
  * @channel: Channel informartion
  * @ack_rssi: RSSI value of last ack packet (units=dB above noise floor)
+ * @tx_duration: PPDU airtime
  * @ppdu_start_timestamp: TSF at PPDU start
  * @ppdu_end_timestamp: TSF at PPDU end
  * @ack_timestamp: TSF at the reception of ACK
@@ -1146,6 +1155,7 @@ struct cdp_tx_completion_ppdu {
 	uint16_t channel;
 	uint16_t phy_mode;
 	uint32_t ack_rssi;
+	uint32_t tx_duration;
 	uint32_t ppdu_start_timestamp;
 	uint32_t ppdu_end_timestamp;
 	uint32_t ack_timestamp;
