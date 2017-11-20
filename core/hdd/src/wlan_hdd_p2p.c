@@ -797,6 +797,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 		wlan_hdd_release_intf_addr(hdd_ctx,
 					 pVirtAdapter->mac_addr.bytes);
 		hdd_stop_adapter(hdd_ctx, pVirtAdapter, true);
+		hdd_deinit_adapter(hdd_ctx, pVirtAdapter, true);
 		hdd_close_adapter(hdd_ctx, pVirtAdapter, true);
 	}
 

@@ -521,11 +521,6 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 		return ret;
 
 	/*
-	 * No need to do hdd_stop_adapter() here, as stop_ap would
-	 * have been come as part of ifconfig down operation. In-case
-	 * in future if it is required then we can add hdd_stop_adapter()
-	 * operation to match __hdd_stop() APIs.
-	 *
 	 * Some tests requires to do "ifconfig down" only to bring
 	 * down the SAP/GO without killing hostapd/wpa_supplicant.
 	 * In such case, user will do "ifconfig up" to bring-back
@@ -533,6 +528,7 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 	 * needs to de-init the sap session here and re-init when
 	 * __hdd_hostapd_open() API
 	 */
+	hdd_stop_adapter(hdd_ctx, adapter, true);
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	/* Stop all tx queues */
@@ -6149,7 +6145,12 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	hdd_info("SSR in progress: %d", reinit);
 
-	if (adapter->session.ap.sap_context) {
+	/*
+	 * check if adapter is already open then most likely
+	 * SAP session is already initialized, no need to do anything
+	 * further
+	 */
+	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 		hdd_debug("sap context is not NULL, %pK",
 			  adapter->session.ap.sap_context);
 		return QDF_STATUS_SUCCESS;
