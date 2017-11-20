@@ -653,9 +653,11 @@ static inline void dp_print_tx_peer_rate_stats_tlv(uint32_t *tag_buf)
 	index = 0;
 	qdf_mem_set(str_buf, DP_MAX_STRING_LEN, 0x0);
 	for (i = 0; i <  DP_HTT_TX_NSS_LEN; i++) {
+		/* 0 stands for NSS 1, 1 stands for NSS 2, etc. */
 		index += qdf_snprint(&str_buf[index],
 				DP_MAX_STRING_LEN - index,
-				" %d:%d,", i, dp_stats_buf->tx_nss[i]);
+				" %d:%d,", (i + 1),
+				dp_stats_buf->tx_nss[i]);
 	}
 	DP_TRACE_STATS(FATAL, "tx_nss = %s ", str_buf);
 	index = 0;
@@ -752,9 +754,11 @@ static inline void dp_print_rx_peer_rate_stats_tlv(uint32_t *tag_buf)
 	index = 0;
 	qdf_mem_set(str_buf, DP_MAX_STRING_LEN, 0x0);
 	for (i = 0; i <  DP_HTT_RX_NSS_LEN; i++) {
+		/* 0 stands for NSS 1, 1 stands for NSS 2, etc. */
 		index += qdf_snprint(&str_buf[index],
 				DP_MAX_STRING_LEN - index,
-				" %d:%d,", i, dp_stats_buf->rx_nss[i]);
+				" %d:%d,", (i + 1),
+				dp_stats_buf->rx_nss[i]);
 	}
 	DP_TRACE_STATS(FATAL, "rx_nss = %s ", str_buf);
 
@@ -2172,9 +2176,11 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 	index = 0;
 	qdf_mem_set(str_buf, DP_MAX_STRING_LEN, 0x0);
 	for (i = 0; i <  DP_HTT_TX_NSS_LEN; i++) {
+		/* 0 stands for NSS 1, 1 stands for NSS 2, etc. */
 		index += qdf_snprint(&str_buf[index],
 				DP_MAX_STRING_LEN - index,
-				" %d:%d,", i, dp_stats_buf->tx_nss[i]);
+				" %d:%d,", (i + 1),
+				dp_stats_buf->tx_nss[i]);
 	}
 	DP_TRACE_STATS(FATAL, "tx_nss = %s ", str_buf);
 
@@ -2277,9 +2283,11 @@ static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 	index = 0;
 	qdf_mem_set(str_buf, DP_MAX_STRING_LEN, 0x0);
 	for (i = 0; i <  DP_HTT_RX_NSS_LEN; i++) {
+		/* 0 stands for NSS 1, 1 stands for NSS 2, etc. */
 		index += qdf_snprint(&str_buf[index],
 				DP_MAX_STRING_LEN - index,
-				" %d:%d,", i, dp_stats_buf->rx_nss[i]);
+				" %d:%d,", (i + 1),
+				dp_stats_buf->rx_nss[i]);
 	}
 	DP_TRACE_STATS(FATAL, "rx_nss = %s ", str_buf);
 
