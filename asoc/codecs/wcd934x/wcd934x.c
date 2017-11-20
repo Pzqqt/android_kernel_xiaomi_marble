@@ -9216,13 +9216,13 @@ static int tavil_device_down(struct wcd9xxx *wcd9xxx)
 
 	codec = (struct snd_soc_codec *)(wcd9xxx->ssr_priv);
 	priv = snd_soc_codec_get_drvdata(codec);
+	for (count = 0; count < NUM_CODEC_DAIS; count++)
+		priv->dai[count].bus_down_in_recovery = true;
 	if (priv->swr.ctrl_data)
 		swrm_wcd_notify(priv->swr.ctrl_data[0].swr_pdev,
 				SWR_DEVICE_DOWN, NULL);
 	tavil_dsd_reset(priv->dsd_config);
 	snd_soc_card_change_online_state(codec->component.card, 0);
-	for (count = 0; count < NUM_CODEC_DAIS; count++)
-		priv->dai[count].bus_down_in_recovery = true;
 	wcd_dsp_ssr_event(priv->wdsp_cntl, WCD_CDC_DOWN_EVENT);
 	wcd_resmgr_set_sido_input_src_locked(priv->resmgr,
 					     SIDO_SOURCE_INTERNAL);
