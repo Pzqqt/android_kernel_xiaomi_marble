@@ -102,6 +102,7 @@ struct msm_compr_pdata {
 	bool use_legacy_api; /* indicates use older asm apis*/
 	struct msm_compr_dec_params *dec_params[MSM_FRONTEND_DAI_MAX];
 	struct msm_compr_ch_map *ch_map[MSM_FRONTEND_DAI_MAX];
+	bool is_in_use[MSM_FRONTEND_DAI_MAX];
 };
 
 struct msm_compr_audio {
@@ -1531,11 +1532,16 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 {
 	struct snd_compr_runtime *runtime = cstream->runtime;
 	struct snd_soc_pcm_runtime *rtd = cstream->private_data;
-	struct msm_compr_audio *prtd;
+	struct msm_compr_audio *prtd = NULL;
 	struct msm_compr_pdata *pdata =
 			snd_soc_platform_get_drvdata(rtd->platform);
 
 	pr_debug("%s\n", __func__);
+	if (pdata->is_in_use[rtd->dai_link->id] == true) {
+		pr_err("%s: %s is already in use, err: %d\n",
+			__func__, rtd->dai_link->cpu_dai_name, -EBUSY);
+		return -EBUSY;
+	}
 	prtd = kzalloc(sizeof(struct msm_compr_audio), GFP_KERNEL);
 	if (prtd == NULL) {
 		pr_err("Failed to allocate memory for msm_compr_audio\n");
@@ -1547,7 +1553,7 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 	pdata->cstream[rtd->dai_link->id] = cstream;
 	pdata->audio_effects[rtd->dai_link->id] =
 		 kzalloc(sizeof(struct msm_compr_audio_effects), GFP_KERNEL);
-	if (!pdata->audio_effects[rtd->dai_link->id]) {
+	if (pdata->audio_effects[rtd->dai_link->id] == NULL) {
 		pr_err("%s: Could not allocate memory for effects\n", __func__);
 		pdata->cstream[rtd->dai_link->id] = NULL;
 		kfree(prtd);
@@ -1555,10 +1561,11 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 	}
 	pdata->dec_params[rtd->dai_link->id] =
 		 kzalloc(sizeof(struct msm_compr_dec_params), GFP_KERNEL);
-	if (!pdata->dec_params[rtd->dai_link->id]) {
+	if (pdata->dec_params[rtd->dai_link->id] == NULL) {
 		pr_err("%s: Could not allocate memory for dec params\n",
 			__func__);
 		kfree(pdata->audio_effects[rtd->dai_link->id]);
+		pdata->audio_effects[rtd->dai_link->id] = NULL;
 		pdata->cstream[rtd->dai_link->id] = NULL;
 		kfree(prtd);
 		return -ENOMEM;
@@ -1603,20 +1610,22 @@ static int msm_compr_playback_open(struct snd_compr_stream *cstream)
 	populate_codec_list(prtd);
 	prtd->audio_client = q6asm_audio_client_alloc(
 				(app_cb)compr_event_handler, prtd);
-	if (!prtd->audio_client) {
+	if (prtd->audio_client == NULL) {
 		pr_err("%s: Could not allocate memory for client\n", __func__);
 		kfree(pdata->audio_effects[rtd->dai_link->id]);
+		pdata->audio_effects[rtd->dai_link->id] = NULL;
 		kfree(pdata->dec_params[rtd->dai_link->id]);
+		pdata->dec_params[rtd->dai_link->id] = NULL;
 		pdata->cstream[rtd->dai_link->id] = NULL;
-		runtime->private_data = NULL;
 		kfree(prtd);
+		runtime->private_data = NULL;
 		return -ENOMEM;
 	}
 	pr_debug("%s: session ID %d\n", __func__, prtd->audio_client->session);
 	prtd->audio_client->perf_mode = false;
 	prtd->session_id = prtd->audio_client->session;
 	msm_adsp_init_mixer_ctl_pp_event_queue(rtd);
-
+	pdata->is_in_use[rtd->dai_link->id] = true;
 	return 0;
 }
 
@@ -1772,10 +1781,15 @@ static int msm_compr_playback_free(struct snd_compr_stream *cstream)
 
 	q6asm_audio_client_free(ac);
 	msm_adsp_clean_mixer_ctl_pp_event_queue(soc_prtd);
-	kfree(pdata->audio_effects[soc_prtd->dai_link->id]);
-	pdata->audio_effects[soc_prtd->dai_link->id] = NULL;
-	kfree(pdata->dec_params[soc_prtd->dai_link->id]);
-	pdata->dec_params[soc_prtd->dai_link->id] = NULL;
+	if (pdata->audio_effects[soc_prtd->dai_link->id] != NULL) {
+		kfree(pdata->audio_effects[soc_prtd->dai_link->id]);
+		pdata->audio_effects[soc_prtd->dai_link->id] = NULL;
+	}
+	if (pdata->dec_params[soc_prtd->dai_link->id] != NULL) {
+		kfree(pdata->dec_params[soc_prtd->dai_link->id]);
+		pdata->dec_params[soc_prtd->dai_link->id] = NULL;
+	}
+	pdata->is_in_use[soc_prtd->dai_link->id] = false;
 	kfree(prtd);
 	runtime->private_data = NULL;
 
@@ -3842,6 +3856,7 @@ static int msm_compr_probe(struct snd_soc_platform *platform)
 		pdata->dec_params[i] = NULL;
 		pdata->cstream[i] = NULL;
 		pdata->ch_map[i] = NULL;
+		pdata->is_in_use[i] = false;
 	}
 
 	snd_soc_add_platform_controls(platform, msm_compr_gapless_controls,
