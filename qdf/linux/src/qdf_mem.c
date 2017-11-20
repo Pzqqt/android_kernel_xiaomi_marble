@@ -1616,7 +1616,9 @@ void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
 	if (alloc_mem == NULL)
 		qdf_print("%s Warning: unable to alloc consistent memory of size %zu!\n",
 			__func__, size);
-	qdf_mem_dma_inc(size);
+	else
+		qdf_mem_dma_inc(size);
+
 	return alloc_mem;
 }
 

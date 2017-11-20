@@ -461,7 +461,7 @@ void dp_tx_tso_num_seg_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	c_element = soc->tx_tso_num_seg[pool_id].freelist;
 
 	if (!c_element) {
-		TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+		TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("Desc Pool Corrupt %d"), pool_id);
 			return;
