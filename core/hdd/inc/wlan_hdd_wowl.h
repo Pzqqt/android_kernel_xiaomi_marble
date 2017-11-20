@@ -174,10 +174,10 @@ bool hdd_enter_wowl(struct hdd_adapter *adapter,
 bool hdd_exit_wowl(struct hdd_adapter *adapter);
 
 /**
- * hdd_deinit_wowl() - Deinit function to cleanup WoWL allocated memory
+ * hdd_free_user_wowl_ptrns() - Deinit function to cleanup WoWL allocated memory
  *
  * Return: None
  */
-void hdd_deinit_wowl(void);
+void hdd_free_user_wowl_ptrns(void);
 
 #endif /* #ifndef _WLAN_HDD_WOWL_H */

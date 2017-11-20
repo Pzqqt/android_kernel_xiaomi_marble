@@ -527,7 +527,7 @@ bool hdd_exit_wowl(struct hdd_adapter *adapter)
 	return true;
 }
 
-void hdd_deinit_wowl(void)
+void hdd_free_user_wowl_ptrns(void)
 {
 	int i;
 
