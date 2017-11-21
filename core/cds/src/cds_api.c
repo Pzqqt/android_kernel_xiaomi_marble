@@ -520,7 +520,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	hdd_enable_fastpath(hdd_ctx->config, scn);
-	hdd_wlan_update_target_info(hdd_ctx, scn);
 
 	/* Initialize BMI and Download firmware */
 	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
@@ -530,6 +529,9 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 			  "BMI FIALED status:%d", status);
 		goto err_bmi_close;
 	}
+
+	hdd_wlan_update_target_info(hdd_ctx, scn);
+
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete =
