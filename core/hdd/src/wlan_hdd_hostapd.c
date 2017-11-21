@@ -236,7 +236,7 @@ hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
 	if (reinit)
 		sap_ctx = adapter->session.ap.sap_context;
 	else
-		sap_ctx = wlansap_open();
+		sap_ctx = sap_create_ctx();
 
 	if (!sap_ctx) {
 		hdd_err("can't allocate the sap_ctx");
@@ -251,7 +251,7 @@ hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
 		hdd_err("failed to create objmgr vdev");
 		goto error;
 	}
-	status = wlansap_start(sap_ctx, adapter->device_mode,
+	status = sap_init_ctx(sap_ctx, adapter->device_mode,
 			       adapter->mac_addr.bytes,
 			       adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
@@ -291,7 +291,7 @@ int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 		return 0;
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(wlansap_stop(sap_ctx))) {
+	if (!QDF_IS_STATUS_SUCCESS(sap_deinit_ctx(sap_ctx))) {
 		hdd_err("Error stopping the sap session");
 		status = -EINVAL;
 	}
@@ -299,7 +299,7 @@ int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 		hdd_err("objmgr vdev destroy failed");
 		status = -EINVAL;
 	}
-	if (!QDF_IS_STATUS_SUCCESS(wlansap_close(sap_ctx))) {
+	if (!QDF_IS_STATUS_SUCCESS(sap_destroy_ctx(sap_ctx))) {
 		hdd_err("Error closing the sap session");
 		status = -EINVAL;
 	}
@@ -6129,6 +6129,25 @@ const struct net_device_ops net_ops_struct = {
 void hdd_set_ap_ops(struct net_device *dev)
 {
 	dev->netdev_ops = &net_ops_struct;
+}
+
+bool hdd_sap_create_ctx(struct hdd_adapter *adapter)
+{
+	hdd_debug("creating sap context");
+	adapter->session.ap.sap_context = sap_create_ctx();
+	if (adapter->session.ap.sap_context)
+		return true;
+
+	return false;
+}
+
+bool hdd_sap_destroy_ctx(struct hdd_adapter *adapter)
+{
+	hdd_debug("destroying sap context");
+	sap_destroy_ctx(adapter->session.ap.sap_context);
+	adapter->session.ap.sap_context = NULL;
+
+	return true;
 }
 
 QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
