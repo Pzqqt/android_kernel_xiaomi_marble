@@ -182,8 +182,8 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 			goto fail;
 		}
 		mac_ctx->sys.gSysBbtPostedToLim++;
-	} else if (type == SIR_MAC_DATA_FRAME) {
 #ifdef FEATURE_WLAN_ESE
+	} else if (type == SIR_MAC_DATA_FRAME) {
 		pe_debug("IAPP Frame...");
 		/* Post the message to PE Queue */
 		ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
