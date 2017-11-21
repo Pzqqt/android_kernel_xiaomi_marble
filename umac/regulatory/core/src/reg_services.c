@@ -3156,6 +3156,10 @@ QDF_STATUS reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 	uint32_t vdev_id;
 	uint8_t i;
 
+	if (!vdev) {
+		reg_err("vdev is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	op_mode = wlan_vdev_mlme_get_opmode(vdev);
 
 	parent_pdev = wlan_vdev_get_pdev(vdev);
