@@ -238,6 +238,26 @@ struct sme_5g_band_pref_params {
 	uint8_t     max_rssi_penalize_5g;
 };
 
+/**
+ * struct sme_session_params: Session creation params passed by HDD layer
+ * @session_open_cb: callback to be registered with SME for opening the session
+ * @session_close_cb: callback to be registered with SME for closing the session
+ * @self_mac_addr: Self mac address
+ * @sme_session_id: SME session id
+ * @type_of_persona: person type
+ * @subtype_of_persona: sub type of persona
+ */
+struct sme_session_params {
+	csr_session_open_cb  session_open_cb;
+	csr_session_close_cb session_close_cb;
+	csr_roam_completeCallback callback;
+	void *callback_ctx;
+	uint8_t *self_mac_addr;
+	uint8_t sme_session_id;
+	uint32_t type_of_persona;
+	uint32_t subtype_of_persona;
+};
+
 /*-------------------------------------------------------------------------
   Function declarations and documenation
   ------------------------------------------------------------------------*/
@@ -247,15 +267,38 @@ QDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
 QDF_STATUS sme_close(tHalHandle hHal);
 QDF_STATUS sme_start(tHalHandle hHal);
 QDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType);
-QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
-		void *pContext, uint8_t *pSelfMacAddr,
-		uint8_t session_id, uint32_t type,
-		uint32_t subType);
+/*
+ * sme_open_session() - Open a session for given persona
+ *
+ * This is a synchronous API. For any protocol stack related activity
+ * requires session to be opened. This API needs to be called to open
+ * the session in SME module.
+ *
+ * hal: The handle returned by mac_open.
+ * params: to initialize the session open params
+ *
+ * Return:
+ * QDF_STATUS_SUCCESS - session is opened.
+ * Other status means SME is failed to open the session.
+ */
+QDF_STATUS sme_open_session(tHalHandle hal, struct sme_session_params *params);
+
+/*
+ * sme_close_session() - Close a session for given persona
+ *
+ * This is a synchronous API. This API needs to be called to close the session
+ * in SME module before terminating the session completely.
+ *
+ * hal: The handle returned by mac_open.
+ * session_id: A previous opened session's ID.
+ *
+ * Return:
+ * QDF_STATUS_SUCCESS - session is closed.
+ * Other status means SME is failed to open the session.
+ */
+QDF_STATUS sme_close_session(tHalHandle hal, uint8_t sessionId);
 void sme_set_curr_device_mode(tHalHandle hHal,
 		enum QDF_OPMODE currDeviceMode);
-QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
-		csr_roamSessionCloseCallback callback,
-		void *pContext);
 QDF_STATUS sme_update_roam_params(tHalHandle hHal, uint8_t session_id,
 		struct roam_ext_params *roam_params_src, int update_param);
 QDF_STATUS sme_update_config(tHalHandle hHal,

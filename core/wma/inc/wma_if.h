@@ -1323,7 +1323,7 @@ struct del_sta_self_params {
 	tSirMacAddr self_mac_addr;
 	uint8_t session_id;
 	uint32_t status;
-	QDF_STATUS (*sme_callback)(void *sme_ctx);
+	csr_session_close_cb sme_callback;
 	void *sme_ctx;
 };
 

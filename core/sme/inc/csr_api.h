@@ -1720,7 +1720,8 @@ typedef QDF_STATUS (*csr_roam_completeCallback)(void *pContext,
 						uint32_t roamId,
 						eRoamCmdStatus roamStatus,
 						eCsrRoamResult roamResult);
-typedef QDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
+typedef QDF_STATUS (*csr_session_open_cb)(uint8_t session_id);
+typedef QDF_STATUS (*csr_session_close_cb)(uint8_t session_id);
 
 #define CSR_IS_START_IBSS(pProfile) (eCSR_BSS_TYPE_START_IBSS == \
 				     (pProfile)->BSSType)
