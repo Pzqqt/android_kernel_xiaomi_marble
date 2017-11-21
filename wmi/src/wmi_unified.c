@@ -1883,7 +1883,11 @@ static inline void wmi_workqueue_watchdog_warn(uint16_t msg_type_id)
 #ifdef CONFIG_SLUB_DEBUG_ON
 static void wmi_workqueue_watchdog_bite(void *arg)
 {
-	wmi_workqueue_watchdog_warn(*(uint16_t *)arg);
+	struct wmi_wq_dbg_info *info = arg;
+
+	wmi_workqueue_watchdog_warn(info->wd_msg_type_id);
+	qdf_print_thread_trace(info->task);
+
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "%s: Going down for WMI WQ Watchdog Bite!", __func__);
 	QDF_BUG(0);
@@ -1891,7 +1895,9 @@ static void wmi_workqueue_watchdog_bite(void *arg)
 #else
 static inline void wmi_workqueue_watchdog_bite(void *arg)
 {
-	wmi_workqueue_watchdog_warn(*(uint16_t *)arg);
+	struct wmi_wq_dbg_info *info = arg;
+
+	wmi_workqueue_watchdog_warn(info->wd_msg_type_id);
 }
 #endif
 
@@ -1908,18 +1914,20 @@ static void wmi_rx_event_work(void *arg)
 	wmi_buf_t buf;
 	struct wmi_unified *wmi = arg;
 	qdf_timer_t wd_timer;
-	uint16_t wd_msg_type_id;
+	struct wmi_wq_dbg_info info;
 
 	/* initialize WMI workqueue watchdog timer */
 	qdf_timer_init(NULL, &wd_timer, &wmi_workqueue_watchdog_bite,
-			&wd_msg_type_id, QDF_TIMER_TYPE_SW);
+			&info, QDF_TIMER_TYPE_SW);
 	qdf_spin_lock_bh(&wmi->eventq_lock);
 	buf = qdf_nbuf_queue_remove(&wmi->event_queue);
 	qdf_spin_unlock_bh(&wmi->eventq_lock);
 	while (buf) {
 		qdf_timer_start(&wd_timer, WMI_WQ_WD_TIMEOUT);
-		wd_msg_type_id =
+		info.wd_msg_type_id =
 		   WMI_GET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID);
+		info.wmi_wq = wmi->wmi_rx_work_queue;
+		info.task = qdf_get_current_task();
 		__wmi_control_rx(wmi, buf);
 		qdf_timer_stop(&wd_timer);
 		qdf_spin_lock_bh(&wmi->eventq_lock);

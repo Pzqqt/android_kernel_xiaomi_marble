@@ -81,4 +81,10 @@ int qdf_wake_up_process(qdf_thread_t *thread);
  */
 void qdf_print_thread_trace(qdf_thread_t *thread);
 
+/**
+ * qdf_get_current_task() - get current task struct
+ *
+ * Return: pointer to task struct
+ */
+qdf_thread_t *qdf_get_current_task(void);
 #endif /* __QDF_THREADS_H */
