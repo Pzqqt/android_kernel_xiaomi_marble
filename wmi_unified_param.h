@@ -6033,6 +6033,7 @@ struct wmi_host_fw_abi_ver {
  * @max_bssid_rx_filters:
  * @use_pdev_id:
  * @max_num_dbs_scan_duty_cycle: max dbs can duty cycle value
+ * @cce_disable: disable cce component
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -6101,6 +6102,7 @@ typedef struct {
 	uint32_t max_bssid_rx_filters;
 	uint32_t use_pdev_id;
 	uint32_t max_num_dbs_scan_duty_cycle;
+	bool cce_disable;
 } target_resource_config;
 
 /**
