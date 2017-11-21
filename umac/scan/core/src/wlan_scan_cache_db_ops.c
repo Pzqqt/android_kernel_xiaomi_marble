@@ -471,7 +471,7 @@ scm_check_pmf_match(struct scan_filter *filter,
 
 	if (rsn->cap & RSN_CAP_MFP_CAPABLE)
 		ap_pmf_cap = WLAN_PMF_CAPABLE;
-	if (rsn->cap & RSN_CAP_MFP_CAPABLE)
+	if (rsn->cap & RSN_CAP_MFP_REQUIRED)
 		ap_pmf_cap = WLAN_PMF_REQUIRED;
 
 	if ((filter->pmf_cap == WLAN_PMF_REQUIRED) &&
