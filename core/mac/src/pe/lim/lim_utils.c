@@ -6577,9 +6577,14 @@ void lim_del_pmf_sa_query_timer(tpAniSirGlobal mac_ctx, tpPESession pe_session)
 				&pe_session->dph.dphHashTable);
 		if (NULL == sta_ds)
 			continue;
+		if (!sta_ds->rmfEnabled) {
+			pe_debug("no PMF timer for sta-idx:%d assoc-id:%d",
+				 sta_ds->staIndex, sta_ds->assocId);
+			continue;
+		}
 
-		pe_err("Deleting pmfSaQueryTimer for staid: %d",
-			sta_ds->staIndex);
+		pe_debug("Deleting pmfSaQueryTimer for sta-idx:%d assoc-id:%d",
+			sta_ds->staIndex, sta_ds->assocId);
 		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
 		tx_timer_delete(&sta_ds->pmfSaQueryTimer);
 	}

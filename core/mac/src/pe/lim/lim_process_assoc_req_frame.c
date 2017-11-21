@@ -1506,7 +1506,8 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	if (WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STAMIN > retry_interval) {
 		retry_interval = WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STADEF;
 	}
-	if (tx_timer_create(mac_ctx, &sta_ds->pmfSaQueryTimer,
+	if (sta_ds->rmfEnabled &&
+		tx_timer_create(mac_ctx, &sta_ds->pmfSaQueryTimer,
 			"PMF SA Query timer", lim_pmf_sa_query_timer_handler,
 			timer_id.value,
 			SYS_MS_TO_TICKS((retry_interval * 1024) / 1000),
@@ -1518,6 +1519,9 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			session);
 		return false;
 	}
+	if (sta_ds->rmfEnabled)
+	    pe_debug("Created pmf timer sta-idx:%d assoc-id:%d",
+		     sta_ds->staIndex, sta_ds->assocId);
 #endif
 
 	if (assoc_req->ExtCap.present) {
