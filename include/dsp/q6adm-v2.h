@@ -32,6 +32,7 @@
 enum {
 	ADM_CUSTOM_TOP_CAL = 0,
 	ADM_AUDPROC_CAL,
+	ADM_LSM_AUDPROC_CAL,
 	ADM_AUDVOL_CAL,
 	ADM_RTAC_INFO_CAL,
 	ADM_RTAC_APR_CAL,
@@ -186,4 +187,5 @@ int adm_programable_channel_mixer(int port_id, int copp_idx, int session_id,
 			int channel_index);
 void msm_dts_srs_acquire_lock(void);
 void msm_dts_srs_release_lock(void);
+void adm_set_lsm_port_id(int port_id);
 #endif /* __Q6_ADM_V2_H__ */
