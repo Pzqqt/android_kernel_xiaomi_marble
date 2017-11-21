@@ -2187,4 +2187,15 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
 		struct wlan_objmgr_psoc *psoc, uint8_t *pcl_channels,
 		uint32_t *len, uint8_t *weight_list, uint32_t weight_len);
+
+/**
+ * policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan() - check if sta+sap scc
+ * allowed on dfs chan
+ * @psoc: pointer to soc
+ * This function is used to check if sta+sap scc allowed on dfs channel
+ *
+ * Return: true if sta+sap scc is allowed on dfs channel, otherwise false
+ */
+bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+		struct wlan_objmgr_psoc *psoc);
 #endif /* __WLAN_POLICY_MGR_API_H */

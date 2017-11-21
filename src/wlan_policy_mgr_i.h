@@ -271,6 +271,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint16_t unsafe_channel_count;
 	struct sta_ap_intf_check_work_ctx *sta_ap_intf_check_work_info;
 	uint8_t cur_conc_system_pref;
+	uint8_t sta_sap_scc_on_dfs_chan_allowed;
 };
 
 /**

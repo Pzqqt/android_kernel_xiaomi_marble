@@ -1017,6 +1017,7 @@ struct policy_mgr_user_cfg {
 	bool enable2x2;
 	uint32_t mcc_to_scc_switch_mode;
 	bool sub_20_mhz_enabled;
+	bool is_sta_sap_scc_allowed_on_dfs_chan;
 };
 
 /**
