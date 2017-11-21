@@ -120,19 +120,6 @@ static void csr_reinit_preauth_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *command)
 }
 
 /**
- * csr_release_command_preauth() - Release the preauth command
- * @mac_ctx: Global MAC context
- * @command: Command to be released
- *
- * Return: None
- */
-void csr_release_command_preauth(tpAniSirGlobal mac_ctx, tSmeCmd *command)
-{
-	csr_reinit_preauth_cmd(mac_ctx, command);
-	csr_release_command(mac_ctx, command);
-}
-
-/**
  * csr_roam_enqueue_preauth() - Put the preauth command in the queue
  * @mac_ctx: Global MAC Context
  * @session_id: SME Session ID
@@ -161,10 +148,11 @@ QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal mac_ctx,
 			command->u.roamCmd.pLastRoamBss = bss_desc;
 			status = csr_queue_sme_command(mac_ctx, command,
 					immediate);
-			if (!QDF_IS_STATUS_SUCCESS(status))
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sme_err("fail to queue preauth,status: %d",
 					status);
 				csr_reinit_preauth_cmd(mac_ctx, command);
+			}
 		} else {
 			status = QDF_STATUS_E_RESOURCES;
 		}

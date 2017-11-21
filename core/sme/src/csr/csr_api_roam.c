@@ -8257,7 +8257,7 @@ QDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac,
 				pCommand->u.roamCmd.roamReason);
 			if (csr_nonscan_active_ll_remove_entry(pMac, pEntry,
 				    LL_ACCESS_LOCK)) {
-				csr_release_command_preauth(pMac, pCommand);
+				csr_release_command(pMac, pCommand);
 			}
 		} else if ((eSmeCommandRoam == pCommand->command) &&
 			   (eCsrSmeIssuedFTReassoc == reason)) {

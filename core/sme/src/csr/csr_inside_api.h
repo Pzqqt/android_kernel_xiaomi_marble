@@ -1033,13 +1033,9 @@ csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessionId);
 #ifdef WLAN_FEATURE_HOST_ROAM
 void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 		tpSirFTPreAuthRsp pFTPreAuthRsp);
-void csr_release_command_preauth(tpAniSirGlobal mac_ctx, tSmeCmd *command);
 #else
 static inline void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 		tpSirFTPreAuthRsp pFTPreAuthRsp)
-{}
-static inline void csr_release_command_preauth(tpAniSirGlobal mac_ctx,
-		tSmeCmd *command)
 {}
 #endif
 

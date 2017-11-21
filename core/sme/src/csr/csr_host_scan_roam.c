@@ -76,6 +76,7 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
 	bool fHighPriority = true;
 	bool fRemoveCmd = false;
 	tListElem *pEntry;
+	tSmeCmd *tmp_command;
 
 	pEntry = csr_nonscan_active_ll_peek_head(pMac, LL_ACCESS_LOCK);
 	if (pEntry) {
@@ -102,6 +103,31 @@ QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_RESOURCES;
 	}
 	do {
+		/*
+		 * Get a new sme command to save the necessary info for
+		 * the following roaming process, such as BSS list and
+		 * roam profile. Or those info will be freed in function
+		 * csr_reinit_roam_cmd when releasing the current command.
+		 */
+		tmp_command = csr_get_command_buffer(pMac);
+		if (tmp_command == NULL) {
+			sme_err("fail to get cmd buf!");
+			csr_release_command(pMac, pCommand);
+			return QDF_STATUS_E_RESOURCES;
+		}
+		qdf_mem_copy(tmp_command, pCommand, sizeof(*pCommand));
+		pCommand->u.roamCmd.fReleaseBssList = false;
+		pCommand->u.roamCmd.hBSSList = CSR_INVALID_SCANRESULT_HANDLE;
+		pCommand->u.roamCmd.fReleaseProfile = false;
+		/*
+		 * Invoking csr_release_command to release the current command
+		 * or the following command will be stuck in pending queue.
+		 * Because the API csr_nonscan_active_ll_remove_entry does
+		 * not remove the current command from active queue.
+		 */
+		csr_release_command(pMac, pCommand);
+
+		pCommand = tmp_command;
 		/* Change the substate in case it is wait-for-key */
 		if (CSR_IS_WAIT_FOR_KEY(pMac, sessionId)) {
 			csr_roam_stop_wait_for_key_timer(pMac);
