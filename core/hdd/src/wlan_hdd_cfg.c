@@ -8326,8 +8326,9 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	user_cfg->mcc_to_scc_switch_mode =
 		hdd_ctx->config->WlanMccToSccSwitchMode;
 	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
+	user_cfg->is_sta_sap_scc_allowed_on_dfs_chan =
+		hdd_ctx->config->sta_sap_scc_on_dfs_chan;
 	status = policy_mgr_set_user_cfg(hdd_ctx->hdd_psoc, user_cfg);
-
 	qdf_mem_free(user_cfg);
 
 	return status;
