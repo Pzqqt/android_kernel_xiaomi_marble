@@ -69,6 +69,8 @@ struct hdd_context;
 #define MAX_PRB_REQ_VENDOR_OUI_INI_LEN 160
 #define VENDOR_SPECIFIC_IE_BITMAP 0x20000000
 
+#define CFG_CONCURRENT_IFACE_MAX_LEN 16
+
 /* Defines for all of the things we read from the configuration (registry). */
 /*
  * <ini>
@@ -5569,6 +5571,24 @@ enum hdd_link_speed_rpt_type {
  */
 #define CFG_ENABLE_FW_MODULE_LOG_LEVEL    "gFwDebugModuleLoglevel"
 #define CFG_ENABLE_FW_MODULE_LOG_DEFAULT  "2,1,3,1,5,1,9,1,13,1,14,1,18,1,19,1,26,1,28,1,29,1,31,1,36,1,38,1,46,1,47,1,50,1,52,1,53,1,56,1,60,1,61,1,4,1"
+
+/*
+ * <ini>
+ * gEnableConcurrentSTA - This will control the creation of concurrent STA
+ * interface
+ * @Default: NULL
+ *
+ * This ini is used for providing control to create a concurrent STA session
+ * along with the creation of wlan0 and p2p0. The name of the interface is
+ * specified as the parameter
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_ENABLE_CONCURRENT_STA           "gEnableConcurrentSTA"
+#define CFG_ENABLE_CONCURRENT_STA_DEFAULT   ""
 
 /*
  * <ini>
@@ -13709,6 +13729,8 @@ struct hdd_config {
 	uint16_t InfraSbaAcBk;
 
 	uint32_t DelayedTriggerFrmInt;
+
+	char enableConcurrentSTA[CFG_CONCURRENT_IFACE_MAX_LEN];
 
 	/* Wowl pattern */
 	char wowlPattern[1024];
