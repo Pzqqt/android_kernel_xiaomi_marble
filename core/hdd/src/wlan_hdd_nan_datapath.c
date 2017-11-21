@@ -2114,7 +2114,7 @@ int hdd_init_nan_data_mode(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	int32_t ret_val = 0;
 
-	ret_val = hdd_vdev_create(adapter);
+	ret_val = hdd_vdev_create(adapter, hdd_sme_roam_callback, adapter);
 	if (ret_val) {
 		hdd_err("failed to create vdev: %d", ret_val);
 		return ret_val;

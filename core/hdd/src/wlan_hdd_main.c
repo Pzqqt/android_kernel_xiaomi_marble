@@ -3257,10 +3257,41 @@ static QDF_STATUS hdd_register_interface(struct hdd_adapter *adapter, bool rtnl_
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS hdd_sme_close_session_callback(void *pContext)
+QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id)
 {
-	struct hdd_adapter *adapter = pContext;
+	struct hdd_adapter *adapter;
+	struct hdd_context *hdd_ctx;
 
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("Invalid HDD_CTX");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
+	if (NULL == adapter) {
+		hdd_err("NULL adapter");
+		return QDF_STATUS_E_INVAL;
+	}
+	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
+	complete(&adapter->session_open_comp_var);
+	hdd_debug("session %d opened", adapter->session_id);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id)
+{
+	struct hdd_adapter *adapter;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("Invalid HDD_CTX");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
 	if (NULL == adapter) {
 		hdd_err("NULL adapter");
 		return QDF_STATUS_E_INVAL;
@@ -3332,14 +3363,17 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	 * In SSR case, there is no need to destroy vdev in firmware since
 	 * it has already asserted. vdev can be released directly.
 	 */
-	if (cds_is_driver_recovering())
+	if (cds_is_driver_recovering()) {
+		hdd_debug("SSR: silently release the vdev for session-id: %d",
+			  adapter->session_id);
+		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 		goto release_vdev;
+	}
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	INIT_COMPLETION(adapter->session_close_comp_var);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	status = sme_close_session(hdd_ctx->hHal, adapter->session_id,
-				   hdd_sme_close_session_callback, adapter);
+	status = sme_close_session(hdd_ctx->hHal, adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to close sme session: %d", status);
 		return qdf_status_to_os_return(status);
@@ -3375,16 +3409,14 @@ release_vdev:
 	return 0;
 }
 
-int hdd_vdev_create(struct hdd_adapter *adapter)
+static int hdd_set_sme_session_param(struct hdd_adapter *adapter,
+			struct sme_session_params *session_param,
+			csr_roam_completeCallback callback,
+			void *callback_ctx)
 {
-	QDF_STATUS status;
-	int errno;
-	struct hdd_context *hdd_ctx;
 	uint32_t type;
 	uint32_t sub_type;
-	unsigned long rc;
-
-	hdd_info("creating new vdev");
+	QDF_STATUS status;
 
 	/* determine vdev (sub)type */
 	status = cds_get_vdev_types(adapter->device_mode, &type, &sub_type);
@@ -3392,6 +3424,28 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 		hdd_err("failed to get vdev type: %d", status);
 		return qdf_status_to_os_return(status);
 	}
+	session_param->sme_session_id = adapter->session_id;
+	session_param->self_mac_addr = (uint8_t *)&adapter->mac_addr;
+	session_param->type_of_persona = type;
+	session_param->subtype_of_persona = sub_type;
+	session_param->session_open_cb = hdd_sme_open_session_callback;
+	session_param->session_close_cb = hdd_sme_close_session_callback;
+	session_param->callback = callback;
+	session_param->callback_ctx = callback_ctx;
+
+	return 0;
+}
+
+int hdd_vdev_create(struct hdd_adapter *adapter,
+		    csr_roam_completeCallback callback, void *ctx)
+{
+	QDF_STATUS status;
+	int errno;
+	struct hdd_context *hdd_ctx;
+	struct sme_session_params sme_session_params = {0};
+	unsigned long rc;
+
+	hdd_info("creating new vdev");
 
 	/* do vdev create via objmgr */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -3403,9 +3457,14 @@ int hdd_vdev_create(struct hdd_adapter *adapter)
 
 	/* Open a SME session (prepare vdev in firmware via legacy API) */
 	INIT_COMPLETION(adapter->session_open_comp_var);
-	status = sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback, adapter,
-				  (uint8_t *)&adapter->mac_addr,
-				  adapter->session_id, type, sub_type);
+	errno = hdd_set_sme_session_param(adapter, &sme_session_params,
+					  callback, ctx);
+	if (errno) {
+		hdd_err("failed to populating SME params");
+		goto objmgr_vdev_destroy_procedure;
+	}
+
+	status = sme_open_session(hdd_ctx->hHal, &sme_session_params);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to open sme session: %d", status);
 		errno = qdf_status_to_os_return(status);
@@ -3456,12 +3515,6 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 	int ret_val;
-
-	ret_val = hdd_vdev_create(adapter);
-	if (ret_val) {
-		hdd_err("failed to create vdev: %d", ret_val);
-		return QDF_STATUS_E_FAILURE;
-	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_set_curr_device_mode(hdd_ctx->hHal, adapter->device_mode);
@@ -3575,10 +3628,12 @@ static void hdd_deinit_station_mode(struct hdd_context *hdd_ctx,
 		clear_bit(WMM_INIT_DONE, &adapter->event_flags);
 	}
 
+
 	EXIT();
 }
 
-void hdd_deinit_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
+void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
+			struct hdd_adapter *adapter,
 			bool rtnl_held)
 {
 	ENTER();
@@ -3587,6 +3642,8 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
 	case QDF_P2P_DEVICE_MODE:
+	case QDF_IBSS_MODE:
+	case QDF_NDI_MODE:
 	{
 		hdd_deinit_station_mode(hdd_ctx, adapter, rtnl_held);
 		break;
@@ -4008,10 +4065,8 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 			  hdd_ipv6_notifier_work_queue);
 #endif
 		status = hdd_register_interface(adapter, rtnl_held);
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
+		if (QDF_STATUS_SUCCESS != status)
 			goto err_deinit_adapter_runtime_pm;
-		}
 
 		/* Stop the Interface TX queue. */
 		hdd_debug("Disabling queues");
@@ -4046,10 +4101,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		adapter->device_mode = session_type;
 
 		status = hdd_register_interface(adapter, rtnl_held);
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
+		if (QDF_STATUS_SUCCESS != status)
 			goto err_free_netdev;
-		}
+
 		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
 					WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
@@ -4082,10 +4136,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		adapter->wdev.iftype = NL80211_IFTYPE_STATION;
 		adapter->device_mode = session_type;
 		status = hdd_register_interface(adapter, rtnl_held);
-		if (QDF_STATUS_SUCCESS != status) {
-			hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
+		if (QDF_STATUS_SUCCESS != status)
 			goto err_deinit_adapter_runtime_pm;
-		}
+
 		/* Stop the Interface TX queue. */
 		hdd_debug("Disabling queues");
 		wlan_hdd_netif_queue_control(adapter,
@@ -4396,6 +4449,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 				hdd_err("Error: Can't disconnect adapter");
 				return QDF_STATUS_E_FAILURE;
 			}
+			hdd_debug("Destroying adapter: %d",
+				  adapter->session_id);
 			hdd_vdev_destroy(adapter);
 		}
 		break;
@@ -4484,10 +4539,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		if (policy_mgr_is_dnsc_set(adapter->hdd_vdev))
 			wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0);
 
-		if (true == bCloseSession)
-			hdd_vdev_destroy(adapter);
-		mutex_unlock(&hdd_ctx->sap_lock);
-
 #ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv4_notifier_work);
 #endif
@@ -4497,6 +4548,12 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		cancel_work_sync(&adapter->ipv6_notifier_work);
 #endif
 #endif
+		if (true == bCloseSession) {
+			hdd_debug("Destroying adapter: %d",
+				  adapter->session_id);
+			hdd_vdev_destroy(adapter);
+		}
+		mutex_unlock(&hdd_ctx->sap_lock);
 		break;
 	case QDF_OCB_MODE:
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
@@ -4618,10 +4675,8 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 						     WLAN_STOP_ALL_NETIF_QUEUE,
 						     WLAN_CONTROL_PATH);
 			if (test_bit(SOFTAP_BSS_STARTED,
-						&adapter->event_flags)) {
+						&adapter->event_flags))
 				hdd_sap_indicate_disconnect_for_sta(adapter);
-				hdd_sap_destroy_events(adapter);
-			}
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 		} else {
 			wlan_hdd_netif_queue_control(adapter,
@@ -5234,7 +5289,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 			connState = (WLAN_HDD_GET_STATION_CTX_PTR(adapter))
 					->conn_info.connState;
 
-			hdd_init_station_mode(adapter);
+			hdd_start_station_adapter(adapter);
 			/* Open the gates for HDD to receive Wext commands */
 			adapter->is_link_up_service_needed = false;
 
@@ -5280,7 +5335,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 
 		case QDF_SAP_MODE:
 			if (hdd_ctx->config->sap_internal_restart)
-				hdd_init_ap_mode(adapter, true);
+				hdd_start_ap_adapter(adapter);
 
 			break;
 
@@ -5297,7 +5352,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 #endif
 			break;
 		case QDF_MONITOR_MODE:
-			hdd_init_station_mode(adapter);
+			hdd_start_station_adapter(adapter);
 			hdd_set_mon_rx_cb(adapter->dev);
 			wlan_hdd_set_mon_chan(adapter, adapter->mon_chan,
 					      adapter->mon_bandwidth);
@@ -8029,9 +8084,20 @@ static int hdd_open_ocb_interface(struct hdd_context *hdd_ctx, bool rtnl_held)
 int hdd_start_station_adapter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
+	int ret;
 
 	ENTER_DEV(adapter->dev);
+	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+		hdd_err("session is already opened, %d",
+			adapter->session_id);
+		return qdf_status_to_os_return(QDF_STATUS_SUCCESS);
+	}
 
+	ret = hdd_vdev_create(adapter, hdd_sme_roam_callback, adapter);
+	if (ret) {
+		hdd_err("failed to create vdev: %d", ret);
+		return ret;
+	}
 	status = hdd_init_station_mode(adapter);
 
 	if (QDF_STATUS_SUCCESS != status) {
@@ -8059,9 +8125,33 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
+	int ret;
 
 	ENTER();
 
+	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+		hdd_err("session is already opened, %d",
+			adapter->session_id);
+		return qdf_status_to_os_return(QDF_STATUS_SUCCESS);
+	}
+	/*
+	 * create sap context first and then create vdev as
+	 * while creating the vdev, driver needs to register
+	 * SAP callback and that callback uses sap context
+	 */
+	if (!adapter->session.ap.sap_context &&
+	    !hdd_sap_create_ctx(adapter)) {
+		hdd_err("sap creation failed");
+		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
+	}
+
+	ret = hdd_vdev_create(adapter, wlansap_roam_callback,
+			      adapter->session.ap.sap_context);
+	if (ret) {
+		hdd_err("failed to create vdev, status:%d", ret);
+		hdd_sap_destroy_ctx(adapter);
+		return ret;
+	}
 	status = hdd_init_ap_mode(adapter, false);
 
 	if (QDF_STATUS_SUCCESS != status) {

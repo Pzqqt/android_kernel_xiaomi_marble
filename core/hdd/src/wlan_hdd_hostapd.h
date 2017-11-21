@@ -122,30 +122,6 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 			 bool *pMFPCapable,
 			 bool *pMFPRequired,
 			 uint16_t gen_ie_len, uint8_t *gen_ie);
-/**
- * hdd_hostapd_deinit_sap_session() - To de-init the sap session completely
- * @adapter: SAP/GO adapter
- *
- * This API will do
- * 1) wlansap_stop(), wlansap_close()
- * 2) destroys and releases the vdev objects
- *
- * Return: 0 if success else non-zero value.
- */
-int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter);
-
-/**
- * hdd_hostapd_init_sap_session() - To init the sap session completely
- * @adapter: SAP/GO adapter
- *
- * This API will do
- * 1) sap_create_ctx(), wlansap_start()
- * 2) creates and stores the vdev objects
- *
- * Return: 0 if success else non-zero value.
- */
-struct sap_context *
-hdd_hostapd_init_sap_session(struct hdd_adapter *adapter, bool reinit);
 
 QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				    void *usrDataForCallback);
@@ -170,8 +146,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit);
  * SAP adapter related params.
  */
 void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
-		struct hdd_adapter *adapter,
-		bool rtnl_held);
+			struct hdd_adapter *adapter, bool rtnl_held);
 void hdd_set_ap_ops(struct net_device *dev);
 /**
  * hdd_sap_create_ctx() - Wrapper API to create SAP context
@@ -231,5 +206,4 @@ QDF_STATUS wlan_hdd_config_acs(struct hdd_context *hdd_ctx,
 			       struct hdd_adapter *adapter);
 
 void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter);
-void hdd_sap_destroy_events(struct hdd_adapter *adapter);
 #endif /* end #if !defined(WLAN_HDD_HOSTAPD_H) */
