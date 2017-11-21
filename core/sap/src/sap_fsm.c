@@ -2056,62 +2056,6 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-/**
- * sap_open_session() - Opens a SAP session
- * @hHal: Hal handle
- * @sapContext:  Sap Context value
- * @session_id: Pointer to the session id
- *
- * Function for opening SME and SAP sessions when system is in SoftAP role
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sap_open_session(tHalHandle hHal, struct sap_context *sapContext,
-			    uint32_t session_id)
-{
-	uint32_t type, subType;
-	QDF_STATUS qdf_ret_status;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	if (sapContext->csr_roamProfile.csrPersona == QDF_P2P_GO_MODE)
-		status = cds_get_vdev_types(QDF_P2P_GO_MODE, &type, &subType);
-	else
-		status = cds_get_vdev_types(QDF_SAP_MODE, &type, &subType);
-
-	if (QDF_STATUS_SUCCESS != status) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-			  "failed to get vdev type");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	qdf_event_reset(&sapContext->sap_session_opened_evt);
-	/* Open SME Session for Softap */
-	qdf_ret_status = sme_open_session(hHal,
-					  &wlansap_roam_callback,
-					  sapContext,
-					  sapContext->self_mac_addr,
-					  session_id, type, subType);
-
-	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "Error: In %s calling sme_roam_connect status = %d",
-			  __func__, qdf_ret_status);
-
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	status = qdf_wait_single_event(&sapContext->sap_session_opened_evt,
-					SME_CMD_TIMEOUT_VALUE);
-
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"wait for sap open session event timed out");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 /*==========================================================================
    FUNCTION    sapGotoStarting
 
@@ -2733,28 +2677,6 @@ static struct sap_context *sap_find_cac_wait_session(tHalHandle handle)
 	}
 
 	return NULL;
-}
-
-/**
- * sap_close_session() - API to close SAP/SME sesssion
- * @hal: pointer hal
- * @sapctx: pointer to sap context
- * @callback: callback to be called up on operation completion
- * @valid: flag to check if sap context to be passed
- *
- * This API is used to close the SME session opened for SAP persona
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sap_close_session(tHalHandle hal, struct sap_context *sapctx,
-			     csr_roamSessionCloseCallback callback, bool valid)
-{
-	if (false == valid)
-		return sme_close_session(hal, sapctx->sessionId,
-					 callback, NULL);
-	else
-		return sme_close_session(hal, sapctx->sessionId,
-					 callback, sapctx);
 }
 
 /*==========================================================================

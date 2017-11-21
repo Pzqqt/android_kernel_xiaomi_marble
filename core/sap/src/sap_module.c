@@ -318,7 +318,6 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 	sap_ctx->csr_roamProfile.BSSIDs.bssid = &sap_ctx->bssid;
 	sap_ctx->csr_roamProfile.csrPersona = mode;
 	qdf_mem_copy(sap_ctx->self_mac_addr, addr, QDF_MAC_ADDR_SIZE);
-	qdf_event_create(&sap_ctx->sap_session_opened_evt);
 
 	/* Now configure the auth type in the roaming profile. To open. */
 	sap_ctx->csr_roamProfile.negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;        /* open is the default */
@@ -330,17 +329,6 @@ QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 		return QDF_STATUS_E_INVAL;
 	}
 	pmac = PMAC_STRUCT(hal);
-	/*
-	 * Anytime when you call sap_open_session, please call
-	 * sap_set_session_param to fill sap context parameters
-	 */
-	qdf_ret_status = sap_open_session(hal, sap_ctx, session_id);
-	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			"Error: In %s calling sap_open_session status = %d",
-			__func__, qdf_ret_status);
-		return QDF_STATUS_E_FAILURE;
-	}
 	qdf_ret_status = sap_set_session_param(hal, sap_ctx, session_id);
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -376,13 +364,6 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 			  "%s: Invalid MAC context", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	if (QDF_STATUS_SUCCESS !=
-			sap_close_session(hal, sap_ctx, NULL, false)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("sap session can't be closed"));
-		return QDF_STATUS_E_FAULT;
-	}
-	qdf_event_destroy(&sap_ctx->sap_session_opened_evt);
 	ucfg_scan_unregister_requester(pmac->psoc, sap_ctx->req_id);
 	sap_free_roam_profile(&sap_ctx->csr_roamProfile);
 	if (sap_ctx->sessionId != CSR_SESSION_ID_INVALID) {
@@ -396,7 +377,7 @@ QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx)
 {
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "wlansap_close invoked");
+		  "sap_destroy_ctx invoked");
 
 	if (NULL == sap_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -413,7 +394,7 @@ QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx)
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));
 
 	return QDF_STATUS_SUCCESS;
-} /* wlansap_close */
+} /* sap_destroy_ctx */
 
 bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 				    uint8_t channelNumber,

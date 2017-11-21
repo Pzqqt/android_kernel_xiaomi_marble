@@ -878,20 +878,6 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 	}
 }
 
-/**
- * wlansap_roam_callback() - Callback for Roam (connection status) Events
- * @ctx             : pContext passed in with the roam request
- * @csr_roam_info   : Pointer to a struct csr_roam_info
- * @roamId          : to identify the callback related roam request.
- *                    0 means unsolicit
- * @roam_status     : Flag indicating the status of the callback
- * @roam_result     : Result
- *
- * This function finds dot11 mode based on current mode, operating channel and
- * fw supported modes.
- *
- * Return: Status of operation
- */
 QDF_STATUS
 wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 		      uint32_t roamId,
@@ -923,12 +909,6 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Before switch on roam_status = %d"), roam_status);
 	switch (roam_status) {
-	case eCSR_ROAM_SESSION_OPENED:
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("Session %d opened successfully"),
-			  sap_ctx->sessionId);
-		qdf_event_set(&sap_ctx->sap_session_opened_evt);
-		break;
 	case eCSR_ROAM_INFRA_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("CSR roam_status = eCSR_ROAM_INFRA_IND (%d)"),

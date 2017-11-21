@@ -242,8 +242,6 @@ struct sap_context {
 	eSapHddEvent sap_state;
 	eSapStatus sap_status;
 	uint32_t roc_ind_scan_id;
-
-	qdf_event_t sap_session_opened_evt;
 	bool is_pre_cac_on;
 	bool pre_cac_complete;
 	bool vendor_acs_dfs_lte_enabled;
@@ -321,13 +319,6 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 						   uint8_t sessionid,
 						   uint32_t scanid,
 						   eCsrScanStatus scan_status);
-
-QDF_STATUS
-wlansap_roam_callback
-	(void *pContext,
-	struct csr_roam_info *pCsrRoamInfo,
-	uint32_t roamId,
-	eRoamCmdStatus roamStatus, eCsrRoamResult roamResult);
 
 QDF_STATUS SapFsm(struct sap_context *sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
@@ -423,11 +414,6 @@ void sap_config_acs_result(tHalHandle hal, struct sap_context *sap_ctx,
  */
 bool
 sap_check_in_avoid_ch_list(struct sap_context *sap_ctx, uint8_t channel);
-QDF_STATUS sap_open_session(tHalHandle hHal, struct sap_context *sapContext,
-				uint32_t session_id);
-QDF_STATUS sap_close_session(tHalHandle hHal,
-			     struct sap_context *sapContext,
-			     csr_roamSessionCloseCallback callback, bool valid);
 /**
  * sap_set_session_param() - set sap related param to sap context and global var
  * @hal: pointer to hardware abstraction layer
