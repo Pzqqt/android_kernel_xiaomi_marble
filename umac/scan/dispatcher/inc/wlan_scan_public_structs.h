@@ -787,6 +787,8 @@ enum p2p_scan_type {
  * @idle_time: idle time
  * @max_scan_time: max scan time
  * @probe_delay: probe delay
+ * @scan_offset_time: Support split scanning on the
+ *                    same channel for CBS feature.
  * @scan_f_passive: passively scan all channels including active channels
  * @scan_f_bcast_probe: add wild card ssid prbreq even if ssid_list is specified
  * @scan_f_cck_rates: add cck rates to rates/xrates ie in prb req
@@ -863,6 +865,7 @@ struct scan_req_params {
 	uint32_t idle_time;
 	uint32_t max_scan_time;
 	uint32_t probe_delay;
+	uint32_t scan_offset_time;
 	union {
 		struct {
 			uint32_t scan_f_passive:1,
