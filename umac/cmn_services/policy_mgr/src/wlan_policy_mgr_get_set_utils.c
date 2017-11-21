@@ -2721,3 +2721,22 @@ bool policy_mgr_is_force_scc(struct wlan_objmgr_psoc *psoc)
 		(pm_ctx->user_cfg.mcc_to_scc_switch_mode ==
 		QDF_MCC_TO_SCC_SWITCH_FORCE_PREFERRED_WITHOUT_DISCONNECTION));
 }
+
+bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
+		struct wlan_objmgr_psoc *psoc)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	bool status = false;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return status;
+	}
+
+	if (policy_mgr_is_force_scc(psoc) &&
+		pm_ctx->user_cfg.is_sta_sap_scc_allowed_on_dfs_chan)
+		status = true;
+
+	return status;
+}

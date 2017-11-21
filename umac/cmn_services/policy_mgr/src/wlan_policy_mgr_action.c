@@ -747,13 +747,15 @@ static bool policy_mgr_valid_sta_channel_check(struct wlan_objmgr_psoc *psoc,
 		return false;
 	}
 
-	if (wlan_reg_is_dfs_ch(pm_ctx->pdev, sta_channel) ||
+	if ((wlan_reg_is_dfs_ch(pm_ctx->pdev, sta_channel) &&
+		(!policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(psoc))) ||
 		wlan_reg_is_passive_or_disable_ch(pm_ctx->pdev, sta_channel) ||
-		!policy_mgr_is_safe_channel(psoc, sta_channel))
+		!policy_mgr_is_safe_channel(psoc, sta_channel)) {
 		if (policy_mgr_is_hw_dbs_capable(psoc))
 			return true;
 		else
 			return false;
+	}
 	else
 		return true;
 }
