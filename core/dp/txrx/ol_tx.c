@@ -292,6 +292,8 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 	qdf_nbuf_t ret;
 
 	if (qdf_unlikely(!pdev)) {
+		qdf_net_buf_debug_acquire_skb(skb, __FILE__, __LINE__);
+
 		ol_txrx_err("%s: pdev is NULL", __func__);
 		return skb;
 	}
@@ -303,6 +305,13 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb)
 
 	/* Terminate the (single-element) list of tx frames */
 	qdf_nbuf_set_next(skb, NULL);
+
+	/*
+	 * Add SKB to internal tracking table before further processing
+	 * in WLAN driver.
+	 */
+	qdf_net_buf_debug_acquire_skb(skb, __FILE__, __LINE__);
+
 	ret = OL_TX_SEND((struct ol_txrx_vdev_t *)vdev, skb);
 	if (ret) {
 		ol_txrx_dbg("%s: Failed to tx", __func__);
