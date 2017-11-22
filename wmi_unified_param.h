@@ -5454,6 +5454,7 @@ typedef enum {
 	wmi_get_arp_stats_req_id,
 	wmi_service_available_event_id,
 	wmi_update_rcpi_event_id,
+	wmi_pdev_wds_entry_list_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -7976,6 +7977,18 @@ struct wmi_host_ready_ev_param {
 struct bcn_offload_control {
 	uint32_t vdev_id;
 	bool bcn_tx_enable;
+};
+
+/**
+ * struct wds_entry - WDS entry structure
+ * @peer_mac: peer mac
+ * @wds_mac: wds mac address
+ * @flags: flags
+ */
+struct wdsentry {
+	u_int8_t peer_mac[IEEE80211_ADDR_LEN];
+	u_int8_t wds_mac[IEEE80211_ADDR_LEN];
+	A_UINT32 flags;
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
