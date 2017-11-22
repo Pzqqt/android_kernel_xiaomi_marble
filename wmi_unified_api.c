@@ -6968,3 +6968,45 @@ QDF_STATUS wmi_send_bcn_offload_control_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_send_wds_entry_list_cmd() - WMI function to get list of
+ *  wds entries from FW
+ * @wmi_handle: wmi handle
+ *
+ * Send WMI_PDEV_WDS_ENTRY_LIST_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
+ */
+QDF_STATUS wmi_unified_send_dump_wds_table_cmd(void *wmi_hdl)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_wds_entry_list_cmd)
+		return wmi_handle->ops->send_wds_entry_list_cmd(wmi_handle);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_wds_entry - api to extract wds entry
+ * @wmi_handle: wma handle
+ * @evt_buf: pointer to event buffer
+ * @wds_entry: wds entry
+ * @idx: index to point wds entry in event buffer
+ *
+ * Return: QDF_STATUS_SUCCESS for successful event parse
+ *         else QDF_STATUS_E_INVAL or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wmi_extract_wds_entry(void *wmi_hdl, uint8_t *evt_buf,
+			struct wdsentry *wds_entry,
+			u_int32_t idx)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_wds_entry)
+		return wmi_handle->ops->extract_wds_entry(wmi_handle,
+						evt_buf, wds_entry, idx);
+
+	return QDF_STATUS_E_FAILURE;
+}
