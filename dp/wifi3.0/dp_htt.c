@@ -1131,6 +1131,45 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
+					struct dp_soc *soc, qdf_nbuf_t htt_msg)
+
+{
+	uint32_t pdev_id;
+	uint32_t *msg_word = NULL;
+	uint32_t msg_remain_len = 0;
+
+	msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
+
+	/*COOKIE MSB*/
+	pdev_id = *(msg_word + 2);
+
+	/* stats message length + 16 size of HTT header*/
+	msg_remain_len = qdf_min(htt_stats->msg_len + 16,
+				(uint32_t)DP_EXT_MSG_LENGTH);
+
+	dp_wdi_event_handler(WDI_EVENT_HTT_STATS, soc,
+			msg_word,  msg_remain_len,
+			WDI_NO_VAL, pdev_id);
+
+	if (htt_stats->msg_len >= DP_EXT_MSG_LENGTH) {
+		htt_stats->msg_len -= DP_EXT_MSG_LENGTH;
+	}
+	/* Need to be freed here as WDI handler will
+	 * make a copy of pkt to send data to application
+	 */
+	qdf_nbuf_free(htt_msg);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
+					struct dp_soc *soc, qdf_nbuf_t htt_msg)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
  * @htt_stats: htt stats info
@@ -1151,7 +1190,8 @@ fail0:
  *
  * return: void
  */
-static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats)
+static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
+					struct dp_soc *soc)
 {
 	htt_tlv_tag_t tlv_type = 0xff;
 	qdf_nbuf_t htt_msg = NULL;
@@ -1161,11 +1201,19 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats)
 	uint32_t msg_remain_len = 0;
 	uint32_t tlv_remain_len = 0;
 	uint32_t *tlv_start;
+	int cookie_val;
 
 	/* Process node in the HTT message queue */
 	while ((htt_msg = qdf_nbuf_queue_remove(&htt_stats->msg))
 		!= NULL) {
 		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
+		cookie_val = *(msg_word + 1);
+		if (cookie_val) {
+			if (dp_send_htt_stat_resp(htt_stats, soc, htt_msg)
+					== QDF_STATUS_SUCCESS) {
+				continue;
+			}
+		}
 		/* read 5th word */
 		msg_word = msg_word + 4;
 		msg_remain_len = qdf_min(htt_stats->msg_len,
@@ -1315,8 +1363,7 @@ void htt_t2h_stats_handler(void *context)
 	rem_stats = --soc->htt_stats.num_stats;
 	qdf_spin_unlock_bh(&soc->htt_stats.lock);
 
-	dp_process_htt_stat_msg(&htt_stats);
-
+	dp_process_htt_stat_msg(&htt_stats, soc);
 	/* If there are more stats to process, schedule stats work again */
 	if (rem_stats)
 		qdf_sched_work(0, &soc->htt_stats.work);
@@ -2583,7 +2630,7 @@ htt_soc_detach(void *htt_soc)
 QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask, uint32_t config_param_0,
 		uint32_t config_param_1, uint32_t config_param_2,
-		uint32_t config_param_3)
+		uint32_t config_param_3, int cookie_val)
 {
 	struct htt_soc *soc = pdev->soc->htt_handle;
 	struct dp_htt_htc_pkt *pkt;
@@ -2620,6 +2667,13 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		"-----%s:%d----\n cookie <-> %d\n config_param_0 %u\n"
+		"config_param_1 %u\n config_param_2 %u\n"
+		"config_param_4 %u\n -------------\n",
+		__func__, __LINE__, cookie_val, config_param_0,
+		config_param_1, config_param_2,	config_param_3);
+
 	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
@@ -2649,6 +2703,20 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, config_param_3);
 
 	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, 0);
+
+	/* word 5 */
+	msg_word++;
+
+	/* word 6 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, cookie_val);
+
+	/* word 7 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, pdev->pdev_id);
+
 	pkt = htt_htc_pkt_alloc(soc);
 	if (!pkt) {
 		qdf_nbuf_free(msg);
