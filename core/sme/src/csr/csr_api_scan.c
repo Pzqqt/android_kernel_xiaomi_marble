@@ -400,7 +400,7 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	tmp_rq.BSSType = eCSR_BSS_TYPE_ANY;
 	tmp_rq.scan_id = scan_11d_cmd->u.scanCmd.scanID;
 
-	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
+	status = qdf_mc_timer_init(&scan_11d_cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, scan_11d_cmd);
 
