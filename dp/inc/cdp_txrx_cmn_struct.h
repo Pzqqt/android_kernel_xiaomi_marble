@@ -1111,6 +1111,7 @@ struct cdp_tx_completion_ppdu_user {
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint32_t tx_duration;
+	uint16_t ru_tones;
 	bool is_mcast;
 };
 

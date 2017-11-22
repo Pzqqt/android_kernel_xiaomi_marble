@@ -1482,7 +1482,12 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 	qdf_mem_copy(ppdu_user_desc->mac_addr, peer->mac_addr.raw,
 			DP_MAC_ADDR_LEN);
 
-	tag_buf += 4;
+	tag_buf += 2;
+
+	ppdu_user_desc->ru_tones = (HTT_PPDU_STATS_USER_RATE_TLV_RU_END_GET(*tag_buf) -
+			HTT_PPDU_STATS_USER_RATE_TLV_RU_START_GET(*tag_buf)) + 1;
+
+	tag_buf += 2;
 
 	ppdu_user_desc->ppdu_type =
 		HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(*tag_buf);
