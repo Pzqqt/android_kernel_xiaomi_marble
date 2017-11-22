@@ -368,9 +368,14 @@ struct dp_tx_ext_desc_elem_s *dp_tx_ext_desc_alloc(struct dp_soc *soc,
 	struct dp_tx_ext_desc_elem_s *c_elem;
 
 	TX_DESC_LOCK_LOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	if (soc->tx_ext_desc[desc_pool_id].num_free <= 0) {
+		TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+		return NULL;
+	}
 	c_elem = soc->tx_ext_desc[desc_pool_id].freelist;
 	soc->tx_ext_desc[desc_pool_id].freelist =
 		soc->tx_ext_desc[desc_pool_id].freelist->next;
+	soc->tx_ext_desc[desc_pool_id].num_free--;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
 	return c_elem;
 }
@@ -389,6 +394,7 @@ static inline void dp_tx_ext_desc_free(struct dp_soc *soc,
 	TX_DESC_LOCK_LOCK(&soc->tx_ext_desc[desc_pool_id].lock);
 	elem->next = soc->tx_ext_desc[desc_pool_id].freelist;
 	soc->tx_ext_desc[desc_pool_id].freelist = elem;
+	soc->tx_ext_desc[desc_pool_id].num_free++;
 	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
 	return;
 }
