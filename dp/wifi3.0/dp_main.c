@@ -4651,6 +4651,7 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 		uint32_t cap)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	int i;
 	uint32_t config_param0 = 0;
 	uint32_t config_param1 = 0;
 	uint32_t config_param2 = 0;
@@ -4659,7 +4660,9 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 	HTT_DBG_EXT_STATS_PEER_INFO_IS_MAC_ADDR_SET(config_param0, 1);
 	config_param0 |= (1 << (cap + 1));
 
-	config_param1 = 0x8f;
+	for (i = 0; i < HTT_PEER_STATS_MAX_TLV; i++) {
+		config_param1 |= (1 << i);
+	}
 
 	config_param2 |= (mac_addr[0] & 0x000000ff);
 	config_param2 |= ((mac_addr[1] << 8) & 0x0000ff00);
