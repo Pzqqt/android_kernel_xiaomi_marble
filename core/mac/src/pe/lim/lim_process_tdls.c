@@ -2614,32 +2614,34 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 /*
  * Del STA, after Link is teardown or discovery response sent on direct link
  */
-static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac,
+static tSirRetStatus lim_tdls_del_sta(tpAniSirGlobal pMac,
 				      struct qdf_mac_addr peerMac,
 				      tpPESession psessionEntry,
 				      bool resp_reqd)
 {
-	tSirRetStatus status = eSIR_SUCCESS;
+	tSirRetStatus status = eSIR_FAILURE;
 	uint16_t peerIdx = 0;
-	tpDphHashNode pStaDs = NULL;
+	tpDphHashNode pStaDs;
 
 	pStaDs = dph_lookup_hash_entry(pMac, peerMac.bytes, &peerIdx,
 				       &psessionEntry->dph.dphHashTable);
 
 	if (pStaDs) {
-
 		pe_debug("DEL STA peer MAC: "MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(pStaDs->staAddr));
+			 MAC_ADDR_ARRAY(pStaDs->staAddr));
 
 		pe_debug("STA type: %x, sta idx: %x resp_reqd: %d",
-		       pStaDs->staType,
-		       pStaDs->staIndex,
-		       resp_reqd);
+			 pStaDs->staType,
+			 pStaDs->staIndex,
+			 resp_reqd);
 
 		status = lim_del_sta(pMac, pStaDs, resp_reqd, psessionEntry);
+	} else {
+		pe_debug("DEL STA peer MAC: "MAC_ADDRESS_STR" not found",
+			 MAC_ADDR_ARRAY(peerMac.bytes));
 	}
 
-	return pStaDs;
+	return status;
 }
 
 /*
@@ -3023,6 +3025,7 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 	tSirTdlsDelStaReq *pDelStaReq = (tSirTdlsDelStaReq *) pMsgBuf;
 	tpPESession psessionEntry;
 	uint8_t sessionId;
+	tSirRetStatus status = eSIR_FAILURE;
 
 	pe_debug("TDLS Delete STA Request Recieved");
 	psessionEntry =
@@ -3065,14 +3068,16 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 		goto lim_tdls_del_sta_error;
 	}
 
-	lim_tdls_del_sta(pMac, pDelStaReq->peermac, psessionEntry, true);
-	return eSIR_SUCCESS;
+	status = lim_tdls_del_sta(pMac, pDelStaReq->peermac,
+				  psessionEntry, true);
+	if (status == eSIR_SUCCESS)
+		return status;
 
 lim_tdls_del_sta_error:
 	lim_send_sme_tdls_del_sta_rsp(pMac, psessionEntry->smeSessionId,
 				      pDelStaReq->peermac, NULL, eSIR_FAILURE);
 
-	return eSIR_SUCCESS;
+	return status;
 }
 
 /**
@@ -3091,6 +3096,7 @@ static void lim_check_aid_and_delete_peer(tpAniSirGlobal p_mac,
 	int i, aid;
 	size_t aid_bitmap_size = sizeof(session_entry->peerAIDBitmap);
 	struct qdf_mac_addr mac_addr;
+	tSirRetStatus status;
 
 	/*
 	 * Check all the set bit in peerAIDBitmap and delete the peer
@@ -3121,8 +3127,11 @@ static void lim_check_aid_and_delete_peer(tpAniSirGlobal p_mac,
 				qdf_mem_copy(mac_addr.bytes, stads->staAddr,
 					     QDF_MAC_ADDR_SIZE);
 
-				lim_tdls_del_sta(p_mac, mac_addr,
-						 session_entry, false);
+				status = lim_tdls_del_sta(p_mac, mac_addr,
+							 session_entry, false);
+				if (status != eSIR_SUCCESS)
+					pe_debug("peer "MAC_ADDRESS_STR" not found",
+						MAC_ADDR_ARRAY(stads->staAddr));
 			}
 
 			dph_delete_hash_entry(p_mac,
