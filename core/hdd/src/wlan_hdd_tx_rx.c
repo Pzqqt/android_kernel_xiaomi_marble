@@ -1902,7 +1902,6 @@ void hdd_reset_tcp_delack(struct hdd_context *hdd_ctx)
 	struct wlan_rx_tp_data rx_tp_data = {0};
 
 	rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
-	rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
 	rx_tp_data.level = next_level;
 	hdd_ctx->rx_high_ind_cnt = 0;
 	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index, WLAN_SVC_WLAN_TP_IND,
