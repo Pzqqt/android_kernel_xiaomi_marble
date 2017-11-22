@@ -8091,6 +8091,38 @@ static QDF_STATUS extract_pdev_qvit_event_non_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_wds_entry_non_tlv() - extract wds entry from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @wds_entry: wds entry
+ * @idx: index to point wds entry in event buffer
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_wds_entry_non_tlv(wmi_unified_t wmi_handle,
+			u_int8_t *evt_buf,
+			struct wdsentry *wds_entry,
+			u_int32_t idx)
+{
+	wmi_pdev_wds_entry_dump_event *wds_entry_dump_event =
+			(wmi_pdev_wds_entry_dump_event *)evt_buf;
+
+	if (idx >= wds_entry_dump_event->num_entries)
+		return QDF_STATUS_E_INVAL;
+	qdf_mem_zero(wds_entry, sizeof(struct wdsentry));
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(
+			&(wds_entry_dump_event->wds_entry[idx].peer_macaddr),
+			wds_entry->peer_mac);
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(
+			&(wds_entry_dump_event->wds_entry[idx].wds_macaddr),
+			wds_entry->wds_mac);
+	wds_entry->flags = wds_entry_dump_event->wds_entry[idx].flags;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
 static bool is_management_record_non_tlv(uint32_t cmd_id)
 {
 	if ((cmd_id == WMI_BCN_TX_CMDID) ||
@@ -8149,6 +8181,36 @@ static QDF_STATUS send_dfs_phyerr_offload_dis_cmd_non_tlv(
 {
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ *  send_wds_entry_list_cmd_non_tlv() - WMI function to get list of
+ *  wds entries from FW
+ *
+ *  @param wmi_handle	  : handle to WMI.
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+QDF_STATUS send_wds_entry_list_cmd_non_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_buf_t buf;
+
+	/*
+	 * Passing a NULL pointer to wmi_unified_cmd_send() panics it,
+	 * so let's just use a 32 byte fake array for now.
+	 */
+	buf = wmi_buf_alloc(wmi_handle, 32);
+	if (buf == NULL)
+		return QDF_STATUS_E_NOMEM;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, 32,
+	  WMI_PDEV_WDS_ENTRY_LIST_CMDID) != QDF_STATUS_SUCCESS) {
+		qdf_print("%s: send failed\n", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 
 struct wmi_ops non_tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_non_tlv,
@@ -8373,6 +8435,8 @@ struct wmi_ops non_tlv_ops =  {
 		send_dfs_phyerr_offload_en_cmd_non_tlv,
 	.send_dfs_phyerr_offload_dis_cmd =
 		send_dfs_phyerr_offload_dis_cmd_non_tlv,
+	.send_wds_entry_list_cmd = send_wds_entry_list_cmd_non_tlv,
+	.extract_wds_entry = extract_wds_entry_non_tlv,
 };
 
 /**
@@ -8660,6 +8724,8 @@ static void populate_non_tlv_events_id(uint32_t *event_ids)
 					WMI_PDEV_CHECK_CAL_VERSION_EVENTID;
 	event_ids[wmi_atf_peer_stats_event_id] =
 					WMI_ATF_PEER_STATS_EVENTID;
+	event_ids[wmi_pdev_wds_entry_list_event_id] =
+					WMI_PDEV_WDS_ENTRY_LIST_EVENTID;
 }
 
 /**

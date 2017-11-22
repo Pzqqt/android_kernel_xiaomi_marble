@@ -1406,6 +1406,11 @@ QDF_STATUS (*send_limit_off_chan_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_wow_timer_pattern_cmd)(wmi_unified_t wmi_handle,
 			uint8_t vdev_id, uint32_t cookie, uint32_t time);
+QDF_STATUS (*send_wds_entry_list_cmd)(wmi_unified_t wmi_handle);
+QDF_STATUS (*extract_wds_entry)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wdsentry *wds_entry,
+		u_int32_t idx);
 };
 
 /* Forward declartion for psoc*/
