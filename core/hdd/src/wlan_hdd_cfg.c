@@ -9053,6 +9053,15 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP);
 	smeConfig->csrConfig.oce_feature_bitmap = val;
 
+	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_thres =
+		hdd_ctx->config->mbo_candidate_rssi_thres;
+	smeConfig->csrConfig.mbo_thresholds.mbo_current_rssi_thres =
+		hdd_ctx->config->mbo_current_rssi_thres;
+	smeConfig->csrConfig.mbo_thresholds.mbo_current_rssi_mcc_thres =
+		hdd_ctx->config->mbo_current_rssi_mcc_thres;
+	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_btc_thres =
+		hdd_ctx->config->mbo_candidate_rssi_btc_thres;
+
 	hdd_update_bss_score_params(hdd_ctx->config,
 			&smeConfig->csrConfig.bss_score_params);
 

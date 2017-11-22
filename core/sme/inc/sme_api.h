@@ -258,6 +258,35 @@ struct sme_session_params {
 	uint32_t subtype_of_persona;
 };
 
+#define MAX_CANDIDATE_INFO 10
+
+/**
+ * struct bss_candidate_info - Candidate bss information
+ *
+ * @bssid : BSSID of candidate bss
+ * @status : status code for candidate bss
+ */
+struct bss_candidate_info {
+	struct qdf_mac_addr bssid;
+	uint32_t status;
+};
+
+/*
+ * MBO transition reason codes
+ */
+enum {
+	MBO_TRANSITION_REASON_UNSPECIFIED,
+	MBO_TRANSITION_REASON_EXCESSIVE_FRAME_LOSS_RATE,
+	MBO_TRANSITION_REASON_EXCESSIVE_DELAY_FOR_CURRENT_TRAFFIC,
+	MBO_TRANSITION_REASON_INSUFFICIENT_BANDWIDTH_FOR_CURRENT_TRAFFIC,
+	MBO_TRANSITION_REASON_LOAD_BALANCING,
+	MBO_TRANSITION_REASON_LOW_RSSI,
+	MBO_TRANSITION_REASON_RECEIVED_EXCESSIVE_RETRANSMISSIONS,
+	MBO_TRANSITION_REASON_HIGH_INTERFERENCE,
+	MBO_TRANSITION_REASON_GRAY_ZONE,
+	MBO_TRANSITION_REASON_TRANSITIONING_TO_PREMIUM_AP,
+};
+
 /*-------------------------------------------------------------------------
   Function declarations and documenation
   ------------------------------------------------------------------------*/
@@ -1934,4 +1963,36 @@ static inline QDF_STATUS sme_set_he_bss_color(tHalHandle hal,
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * sme_scan_get_result_for_bssid - gets the scan result from scan cache for the
+ * bssid specified
+ * @hal: handle returned by mac_open
+ * @bssid: bssid to get the scan result for
+ * @res: pointer to tCsrScanResultInfo allocated from caller
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_scan_get_result_for_bssid(tHalHandle hal_handle,
+					 struct qdf_mac_addr *bssid,
+					 tCsrScanResultInfo *res);
+
+/**
+ * sme_get_bss_transition_status() - get bss transition status all cadidates
+ * @hal: handle returned by mac_open
+ * @transition_reason : Transition reason
+ * @bssid: bssid to get BSS transition status
+ * @info : bss candidate information
+ * @n_candidates : number of candidates
+ * @is_bt_in_progress: bt activity indicator
+ *
+ * Return : 0 on success otherwise errno
+ */
+int sme_get_bss_transition_status(tHalHandle hal,
+		uint8_t transition_reason,
+		struct qdf_mac_addr *bssid,
+		struct bss_candidate_info *info,
+		uint16_t n_candidates,
+		bool is_bt_in_progress);
+
 #endif /* #if !defined( __SME_API_H ) */

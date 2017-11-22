@@ -6752,3 +6752,43 @@ bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id)
 
 	return eCSR_CONNECT_STATE_TYPE_NDI_STARTED == session->connectState;
 }
+
+bool csr_is_mcc_channel(tHalHandle hal, uint8_t channel)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+	enum QDF_OPMODE oper_mode;
+	uint8_t oper_channel = 0;
+	uint8_t session_id;
+
+	if (channel == 0)
+		return false;
+
+	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
+		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+			session = CSR_GET_SESSION(mac_ctx, session_id);
+			if (NULL == session->pCurRoamProfile)
+				continue;
+			oper_mode = session->pCurRoamProfile->csrPersona;
+			if ((((oper_mode == QDF_STA_MODE) ||
+			    (oper_mode == QDF_P2P_CLIENT_MODE)) &&
+			    (session->connectState ==
+			    eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) ||
+			    (((oper_mode == QDF_P2P_GO_MODE) ||
+			    (oper_mode == QDF_SAP_MODE))
+			    && (session->connectState !=
+			    eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
+				oper_channel = session->connectedProfile.
+					operationChannel;
+
+			if (oper_channel && channel != oper_channel &&
+			    (!policy_mgr_is_hw_dbs_capable(mac_ctx->psoc) ||
+			    WLAN_REG_IS_SAME_BAND_CHANNELS(channel,
+						 oper_channel)))
+				return true;
+		}
+	}
+
+	return false;
+}
+

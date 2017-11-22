@@ -2976,6 +2976,19 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.oce_feature_bitmap =
 			pParam->oce_feature_bitmap;
 
+		pMac->roam.configParam.mbo_thresholds.
+			mbo_candidate_rssi_thres =
+			pParam->mbo_thresholds.mbo_candidate_rssi_thres;
+		pMac->roam.configParam.mbo_thresholds.
+			mbo_current_rssi_thres =
+			pParam->mbo_thresholds.mbo_current_rssi_thres;
+		pMac->roam.configParam.mbo_thresholds.
+			mbo_current_rssi_mcc_thres =
+			pParam->mbo_thresholds.mbo_current_rssi_mcc_thres;
+		pMac->roam.configParam.mbo_thresholds.
+			mbo_candidate_rssi_btc_thres =
+			pParam->mbo_thresholds.mbo_candidate_rssi_btc_thres;
+
 		qdf_mem_copy(&pMac->roam.configParam.bss_score_params,
 			     &pParam->bss_score_params,
 			     sizeof(struct sir_score_config));
@@ -3248,6 +3261,19 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	qdf_mem_copy(&pParam->bss_score_params,
 		     &pMac->roam.configParam.bss_score_params,
 		     sizeof(struct sir_score_config));
+
+	pParam->mbo_thresholds.mbo_candidate_rssi_thres =
+		pMac->roam.configParam.mbo_thresholds.
+		mbo_candidate_rssi_thres;
+	pParam->mbo_thresholds.mbo_current_rssi_thres =
+		pMac->roam.configParam.mbo_thresholds.
+		mbo_current_rssi_thres;
+	pParam->mbo_thresholds.mbo_current_rssi_mcc_thres =
+		pMac->roam.configParam.mbo_thresholds.
+		mbo_current_rssi_mcc_thres;
+	pParam->mbo_thresholds.mbo_candidate_rssi_btc_thres =
+		pMac->roam.configParam.mbo_thresholds.
+		mbo_candidate_rssi_btc_thres;
 
 	csr_get_he_config_param(pParam, pMac);
 

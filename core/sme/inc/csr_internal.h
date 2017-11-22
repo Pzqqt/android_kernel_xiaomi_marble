@@ -636,6 +636,7 @@ struct csr_config {
 	uint32_t wlm_latency_flags[CSR_NUM_WLM_LATENCY_LEVEL];
 	struct sir_score_config bss_score_params;
 	uint8_t oce_feature_bitmap;
+	struct csr_mbo_thresholds mbo_thresholds;
 };
 
 struct csr_channel_powerinfo {
@@ -1542,5 +1543,14 @@ bool csr_is_ndi_started(tpAniSirGlobal mac_ctx, uint32_t session_id);
 QDF_STATUS csr_roam_update_config(
 			tpAniSirGlobal mac_ctx, uint8_t session_id,
 				  uint16_t capab, uint32_t value);
+
+/**
+ * csr_is_mcc_channel() - check if using the channel results into MCC
+ * @hal: pointer to HAL
+ * @channel : channel number to check for MCC scenario
+ *
+ * Return : true if channel causes MCC, else false
+ */
+bool csr_is_mcc_channel(tHalHandle hal, uint8_t channel);
 
 #endif

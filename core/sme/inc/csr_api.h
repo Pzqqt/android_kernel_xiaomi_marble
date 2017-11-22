@@ -1122,6 +1122,20 @@ struct csr_sta_roam_policy_params {
 	uint8_t sap_operating_band;
 };
 
+/**
+ * struct csr_mbo_thresholds - mbo related thresholds
+ * @mbo_candidate_rssi_thres - Candidate RSSI threshold
+ * @mbo_current_rssi_thres - Current RSSI threshold
+ * @mbo_current_rssi_mcc_thres - Current RSSI MCC threshold
+ * mbo_candidate_rssi_btc_thres - Candidate RSSI BTC threshold
+ */
+struct csr_mbo_thresholds {
+	int8_t mbo_candidate_rssi_thres;
+	int8_t mbo_current_rssi_thres;
+	int8_t mbo_current_rssi_mcc_thres;
+	int8_t mbo_candidate_rssi_btc_thres;
+};
+
 typedef struct tagCsrConfigParam {
 	uint32_t FragmentationThreshold;
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
@@ -1354,6 +1368,7 @@ typedef struct tagCsrConfigParam {
 	uint32_t num_disallowed_aps;
 	struct sir_score_config bss_score_params;
 	uint8_t oce_feature_bitmap;
+	struct csr_mbo_thresholds mbo_thresholds;
 } tCsrConfigParam;
 
 /* Tush */

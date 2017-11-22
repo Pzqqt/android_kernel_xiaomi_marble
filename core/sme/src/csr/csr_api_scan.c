@@ -5710,8 +5710,8 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal mac_ctx,
 	ret_list->pCurEntry = NULL;
 	status = csr_parse_scan_list(mac_ctx,
 		ret_list, list);
-	sme_debug("return %d BSS status %d",
-			csr_ll_count(&ret_list->List), status);
+	sme_debug("status: %d No of BSS: %d",
+		  status, csr_ll_count(&ret_list->List));
 	if (QDF_IS_STATUS_ERROR(status) || !results)
 		/* Fail or No one wants the result. */
 		csr_scan_result_purge(mac_ctx, (tScanResultHandle) ret_list);
@@ -5733,6 +5733,70 @@ error:
 		ucfg_scan_purge_results(list);
 	if (pdev)
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
+
+	return status;
+}
+
+QDF_STATUS csr_scan_get_result_for_bssid(tpAniSirGlobal mac_ctx,
+					struct qdf_mac_addr *bssid,
+					tCsrScanResultInfo *res)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tCsrScanResultFilter *scan_filter = NULL;
+	tScanResultHandle filtered_scan_result = NULL;
+	tCsrScanResultInfo *scan_result;
+
+	if (!mac_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				FL("mac_ctx is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	if (!scan_filter) {
+		sme_err("Failed to allocated memory for scan_filter");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	scan_filter->BSSIDs.bssid = qdf_mem_malloc(sizeof(bssid));
+	if (!scan_filter->BSSIDs.bssid) {
+		sme_err("Failed to allocate memory for BSSIDs");
+		status = QDF_STATUS_E_FAILURE;
+		goto free_filter;
+	}
+
+	scan_filter->BSSIDs.numOfBSSIDs = 1;
+	qdf_mem_copy(scan_filter->BSSIDs.bssid, bssid, sizeof(bssid));
+
+	status = csr_scan_get_result(mac_ctx, scan_filter,
+				&filtered_scan_result);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Failed to get scan result");
+		goto free_filter;
+	}
+
+	scan_result = csr_scan_result_get_first(mac_ctx, filtered_scan_result);
+
+	if (scan_result) {
+		res->pvIes = NULL;
+		res->ssId.length = scan_result->ssId.length;
+		qdf_mem_copy(&res->ssId.ssId, &scan_result->ssId.ssId,
+			res->ssId.length);
+		res->timer = scan_result->timer;
+		qdf_mem_copy(&res->BssDescriptor, &scan_result->BssDescriptor,
+			sizeof(tSirBssDescription));
+		status = QDF_STATUS_SUCCESS;
+	} else {
+		status = QDF_STATUS_E_FAILURE;
+	}
+
+	csr_scan_result_purge(mac_ctx, filtered_scan_result);
+
+free_filter:
+	csr_free_scan_filter(mac_ctx, scan_filter);
+	if (scan_filter)
+		qdf_mem_free(scan_filter);
 
 	return status;
 }

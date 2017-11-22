@@ -63,6 +63,8 @@
 #include "wlan_reg_ucfg_api.h"
 #include "ol_txrx.h"
 #include "wifi_pos_api.h"
+#include "net/cfg80211.h"
+#include <qca_vendor.h>
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -2627,6 +2629,22 @@ QDF_STATUS sme_scan_get_result(tHalHandle hHal, uint8_t sessionId,
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_scan_get_result(hHal, pFilter, phResult);
 		sme_release_global_lock(&pMac->sme);
+	}
+
+	return status;
+}
+
+QDF_STATUS sme_scan_get_result_for_bssid(tHalHandle hal_handle,
+					 struct qdf_mac_addr *bssid,
+					 tCsrScanResultInfo *res)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+	QDF_STATUS status;
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = csr_scan_get_result_for_bssid(hal_handle, bssid, res);
+		sme_release_global_lock(&mac_ctx->sme);
 	}
 
 	return status;
@@ -15661,3 +15679,184 @@ QDF_STATUS sme_send_limit_off_channel_params(tHalHandle hal, uint8_t vdev_id,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * sme_get_status_for_candidate() - Get bss transition status for candidate
+ * @hal: Handle for HAL
+ * @conn_bss_desc: connected bss descriptor
+ * @bss_desc: candidate bss descriptor
+ * @info: candiadate bss information
+ * @trans_reason: transition reason code
+ * @is_bt_in_progress: bt activity indicator
+ *
+ * Return : true if candidate is rejected and reject reason is filled
+ * @info->status. Otherwise returns false.
+ */
+static bool sme_get_status_for_candidate(tHalHandle *hal,
+					tSirBssDescription *conn_bss_desc,
+					tSirBssDescription *bss_desc,
+					struct bss_candidate_info *info,
+					uint8_t trans_reason,
+					bool is_bt_in_progress)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	/*
+	 * Low RSSI based rejection
+	 * If candidate rssi is less than mbo_candidate_rssi_thres and connected
+	 * bss rssi is greater than mbo_current_rssi_thres, then reject the
+	 * candidate with MBO reason code 4.
+	 */
+	if ((bss_desc->rssi < mac_ctx->roam.configParam.mbo_thresholds.
+	    mbo_candidate_rssi_thres) &&
+	    (conn_bss_desc->rssi > mac_ctx->roam.configParam.mbo_thresholds.
+	    mbo_current_rssi_thres)) {
+		sme_err("Candidate BSS "MAC_ADDRESS_STR" has LOW RSSI(%d), hence reject",
+			MAC_ADDR_ARRAY(bss_desc->bssId), bss_desc->rssi);
+		info->status = QCA_STATUS_REJECT_LOW_RSSI;
+		return true;
+	}
+
+	if (trans_reason == MBO_TRANSITION_REASON_LOAD_BALANCING ||
+	    trans_reason == MBO_TRANSITION_REASON_TRANSITIONING_TO_PREMIUM_AP) {
+		/*
+		 * MCC rejection
+		 * If moving to candidate's channel will result in MCC scenario
+		 * and the rssi of connected bss is greater than
+		 * mbo_current_rssi_mss_thres, then reject the candidate with
+		 * MBO reason code 3.
+		 */
+		if ((conn_bss_desc->rssi >
+		    mac_ctx->roam.configParam.mbo_thresholds.
+		    mbo_current_rssi_mcc_thres) &&
+		    csr_is_mcc_channel(hal, bss_desc->channelId)) {
+			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes MCC, hence reject",
+				MAC_ADDR_ARRAY(bss_desc->bssId));
+			info->status =
+				QCA_STATUS_REJECT_INSUFFICIENT_QOS_CAPACITY;
+			return true;
+		}
+
+		/*
+		 * BT coex rejection
+		 * If AP is trying to move the client from 5G to 2.4G and moving
+		 * to 2.4G will result in BT coex and candidate channel rssi is
+		 * less than mbo_candidate_rssi_btc_thres, then reject the
+		 * candidate with MBO reason code 2.
+		 */
+		if (WLAN_REG_IS_5GHZ_CH(conn_bss_desc->channelId) &&
+		    WLAN_REG_IS_24GHZ_CH(bss_desc->channelId) &&
+		    is_bt_in_progress &&
+		    (bss_desc->rssi <
+		    mac_ctx->roam.configParam.mbo_thresholds.
+		    mbo_candidate_rssi_btc_thres)) {
+			sme_err("Candidate BSS "MAC_ADDRESS_STR" causes BT coex, hence reject",
+				MAC_ADDR_ARRAY(bss_desc->bssId));
+			info->status =
+				QCA_STATUS_REJECT_EXCESSIVE_DELAY_EXPECTED;
+			return true;
+		}
+
+		/*
+		 * LTE coex rejection
+		 * If moving to candidate's channel can cause LTE coex, then
+		 * reject the candidate with MBO reason code 5.
+		 */
+		if (policy_mgr_is_safe_channel(mac_ctx->psoc,
+		    conn_bss_desc->channelId) &&
+		    !(policy_mgr_is_safe_channel(mac_ctx->psoc,
+		    bss_desc->channelId))) {
+			sme_err("High interference expected if transitioned to BSS "
+				MAC_ADDRESS_STR" hence reject",
+				MAC_ADDR_ARRAY(bss_desc->bssId));
+			info->status =
+				QCA_STATUS_REJECT_HIGH_INTERFERENCE;
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/**
+ * wlan_hdd_get_bss_transition_status() - get bss transition status all cadidates
+ * @adapter : Pointer to adapter
+ * @transition_reason : Transition reason
+ * @info : bss candidate information
+ * @n_candidates : number of candidates
+ *
+ * Return : 0 on success otherwise errno
+ */
+int sme_get_bss_transition_status(tHalHandle hal,
+					uint8_t transition_reason,
+					struct qdf_mac_addr *bssid,
+					struct bss_candidate_info *info,
+					uint16_t n_candidates,
+					bool is_bt_in_progress)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tSirBssDescription *bss_desc, *conn_bss_desc;
+	tCsrScanResultInfo *res, *conn_res;
+	uint16_t i;
+
+	if (!n_candidates || !info) {
+		sme_err("No candidate info available");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	conn_res = qdf_mem_malloc(sizeof(tCsrScanResultInfo));
+	if (!conn_res) {
+		sme_err("Failed to allocate memory for conn_res");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	res = qdf_mem_malloc(sizeof(tCsrScanResultInfo));
+	if (!res) {
+		sme_err("Failed to allocate memory for conn_res");
+		status = QDF_STATUS_E_NOMEM;
+		goto free;
+	}
+
+	/* Get the connected BSS descriptor */
+	status = sme_scan_get_result_for_bssid(hal, bssid, conn_res);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sme_err("Failed to find connected BSS in scan list");
+		goto free;
+	}
+	conn_bss_desc = &conn_res->BssDescriptor;
+
+	for (i = 0; i < n_candidates; i++) {
+		/* Get candidate BSS descriptors */
+		status = sme_scan_get_result_for_bssid(hal, &info[i].bssid,
+						       res);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			sme_err("BSS "MAC_ADDRESS_STR" not present in scan list",
+				MAC_ADDR_ARRAY(info[i].bssid.bytes));
+			info[i].status = QCA_STATUS_REJECT_UNKNOWN;
+			continue;
+		}
+
+		bss_desc = &res->BssDescriptor;
+		if (!sme_get_status_for_candidate(hal, conn_bss_desc, bss_desc,
+		    &info[i], transition_reason, is_bt_in_progress)) {
+			/*
+			 * If status is not over written, it means it is a
+			 * candidate for accept.
+			 */
+			info[i].status = QCA_STATUS_ACCEPT;
+		}
+	}
+
+	/* success */
+	status = QDF_STATUS_SUCCESS;
+
+free:
+	/* free allocated memory */
+	if (conn_res)
+		qdf_mem_free(conn_res);
+	if (res)
+		qdf_mem_free(res);
+
+	return status;
+}
+

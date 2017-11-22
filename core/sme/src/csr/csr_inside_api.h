@@ -560,6 +560,19 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 QDF_STATUS csr_scan_get_result(tpAniSirGlobal pMac, tCsrScanResultFilter
 				*pFilter, tScanResultHandle *phResult);
 
+/**
+ * csr_scan_get_result_for_bssid - gets the scan result from scan cache for the
+ *      bssid specified
+ * @mac_ctx: mac context
+ * @bssid: bssid to get the scan result for
+ * @res: pointer to tCsrScanResultInfo
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS csr_scan_get_result_for_bssid(tpAniSirGlobal mac_ctx,
+					 struct qdf_mac_addr *bssid,
+					 tCsrScanResultInfo *res);
+
 /*
  * csr_scan_flush_result() -
  * Clear scan results.
