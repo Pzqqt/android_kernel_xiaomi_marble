@@ -3416,16 +3416,6 @@ struct sir_hw_mode_params {
 };
 
 /**
- * struct sir_vdev_mac_map - vdev id-mac id map
- * @vdev_id: VDEV id
- * @mac_id: MAC id
- */
-struct sir_vdev_mac_map {
-	uint32_t vdev_id;
-	uint32_t mac_id;
-};
-
-/**
  * struct sir_set_hw_mode_resp - HW mode response
  * @status: Status
  * @cfgd_hw_mode_index: Configured HW mode index
@@ -3436,7 +3426,7 @@ struct sir_set_hw_mode_resp {
 	uint32_t status;
 	uint32_t cfgd_hw_mode_index;
 	uint32_t num_vdev_mac_entries;
-	struct sir_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
+	struct policy_mgr_vdev_mac_map vdev_mac_map[MAX_VDEV_SUPPORTED];
 };
 
 /**
@@ -6154,14 +6144,10 @@ struct send_extcap_ie {
 	uint8_t session_id;
 };
 
-typedef void (*hw_mode_cb)(uint32_t status, uint32_t cfgd_hw_mode_index,
-		uint32_t num_vdev_mac_entries,
-		struct sir_vdev_mac_map *vdev_mac_map,
-		struct wlan_objmgr_psoc *context);
 typedef void (*hw_mode_transition_cb)(uint32_t old_hw_mode_index,
 		uint32_t new_hw_mode_index,
 		uint32_t num_vdev_mac_entries,
-		struct sir_vdev_mac_map *vdev_mac_map);
+		struct policy_mgr_vdev_mac_map *vdev_mac_map);
 typedef void (*dual_mac_cb)(uint32_t status, uint32_t scan_config,
 		uint32_t fw_mode_config);
 typedef void (*antenna_mode_cb)(uint32_t status);
@@ -6190,9 +6176,6 @@ struct sir_beacon_tx_complete_rsp {
 	uint8_t session_id;
 	uint8_t tx_status;
 };
-
-typedef void (*nss_update_cb)(void *context, uint8_t tx_status, uint8_t vdev_id,
-		uint8_t next_action, enum sir_conn_update_reason reason);
 
 /**
  * OCB structures

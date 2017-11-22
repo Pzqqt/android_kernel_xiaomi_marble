@@ -149,7 +149,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	tListElem *entry;
 	tSmeCmd *command = NULL;
 	bool found;
-	hw_mode_cb callback = NULL;
+	policy_mgr_pdev_set_hw_mode_cback callback = NULL;
 	struct sir_set_hw_mode_resp *param;
 	enum sir_conn_update_reason reason;
 	struct csr_roam_session *session;
@@ -207,6 +207,9 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			param->cfgd_hw_mode_index,
 			param->num_vdev_mac_entries,
 			param->vdev_mac_map,
+			command->u.set_hw_mode_cmd.next_action,
+			command->u.set_hw_mode_cmd.reason,
+			command->u.set_hw_mode_cmd.session_id,
 			command->u.set_hw_mode_cmd.context);
 	session = CSR_GET_SESSION(mac, session_id);
 	if (reason == SIR_UPDATE_REASON_HIDDEN_STA) {
@@ -2470,7 +2473,7 @@ static QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 	tListElem *entry = NULL;
 	tSmeCmd *command = NULL;
 	bool found;
-	nss_update_cb callback = NULL;
+	policy_mgr_nss_update_cback callback = NULL;
 	struct sir_beacon_tx_complete_rsp *param;
 
 	param = (struct sir_beacon_tx_complete_rsp *)msg;
@@ -13426,6 +13429,7 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	cmd->u.set_hw_mode_cmd.set_hw_mode_cb = msg.set_hw_mode_cb;
 	cmd->u.set_hw_mode_cmd.reason = msg.reason;
 	cmd->u.set_hw_mode_cmd.session_id = msg.session_id;
+	cmd->u.set_hw_mode_cmd.next_action = msg.next_action;
 	cmd->u.set_hw_mode_cmd.context = msg.context;
 
 	sme_debug("Queuing set hw mode to CSR, session: %d reason: %d",
