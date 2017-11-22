@@ -369,8 +369,15 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channel
 bool csr_is_profile11r(tCsrRoamProfile *pProfile);
 bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent);
 #ifdef FEATURE_WLAN_ESE
-bool csr_is_auth_type_ese(eCsrAuthType AuthType);
 bool csr_is_profile_ese(tCsrRoamProfile *pProfile);
 #endif
+
+/**
+ * csr_is_auth_type_ese() - Checks whether Auth type is ESE or not
+ * @AuthType: Authentication type
+ *
+ * Return: true, if auth type is ese, false otherwise
+ */
+bool csr_is_auth_type_ese(eCsrAuthType AuthType);
 
 #endif
