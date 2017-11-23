@@ -1782,6 +1782,8 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		HTT_TX_DESC_FRM_LEN_SET(local_word1, qdf_nbuf_len(msdu));
 	}
 
+	QDF_BUG(HTT_TX_DESC_FRM_LEN_GET(local_word1) != 0);
+
 	HTT_TX_DESC_FRM_ID_SET(local_word1, msdu_id);
 	*word1 = local_word1;
 
