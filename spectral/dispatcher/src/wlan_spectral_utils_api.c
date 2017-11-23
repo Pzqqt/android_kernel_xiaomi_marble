@@ -82,13 +82,64 @@ QDF_STATUS wlan_spectral_deinit(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
+		struct spectral_legacy_cbacks *legacy_cbacks)
+{
+	struct spectral_context *sc;
+
+	sc = spectral_get_spectral_ctx_from_psoc(psoc);
+	if (!sc) {
+		spectral_err("Invalid Context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sc->legacy_cbacks.vdev_get_chan_freq =
+		legacy_cbacks->vdev_get_chan_freq;
+	sc->legacy_cbacks.vdev_get_ch_width =
+		legacy_cbacks->vdev_get_ch_width;
+	sc->legacy_cbacks.vdev_get_sec20chan_freq_mhz =
+		legacy_cbacks->vdev_get_sec20chan_freq_mhz;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(spectral_register_legacy_cb);
+
+int16_t spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
+{
+	struct spectral_context *sc;
+
+	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	return sc->legacy_cbacks.vdev_get_chan_freq(vdev);
+}
+
+enum phy_ch_width spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
+{
+	struct spectral_context *sc;
+
+	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	return sc->legacy_cbacks.vdev_get_ch_width(vdev);
+}
+
+int spectral_vdev_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
+		uint16_t *sec20chan_freq)
+{
+	struct spectral_context *sc;
+
+	sc = spectral_get_spectral_ctx_from_vdev(vdev);
+	return sc->legacy_cbacks.vdev_get_sec20chan_freq_mhz(vdev, sec20chan_freq);
+}
+
 void wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	struct wlan_lmac_if_sptrl_rx_ops *sptrl_rx_ops = &rx_ops->sptrl_rx_ops;
 
 	/* Spectral rx ops */
 	sptrl_rx_ops->sptrlro_send_phydata = tgt_send_phydata;
-	sptrl_rx_ops->sptrlro_get_target_handle = tgt_get_target_handle;
+	sptrl_rx_ops->sptrlro_get_target_handle  = tgt_get_target_handle;
+	sptrl_rx_ops->sptrlro_vdev_get_chan_freq = spectral_vdev_get_chan_freq;
+	sptrl_rx_ops->sptrlro_vdev_get_ch_width  = spectral_vdev_get_ch_width;
+	sptrl_rx_ops->sptrlro_vdev_get_sec20chan_freq_mhz =
+		spectral_vdev_get_sec20chan_freq_mhz;
 }
 
 void wlan_register_wmi_spectral_cmd_ops(

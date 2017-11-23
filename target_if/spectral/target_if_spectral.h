@@ -939,6 +939,40 @@ struct target_if_spectral *get_target_if_spectral_handle_from_pdev(
 	return spectral;
 }
 
+static inline
+int16_t target_if_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_chan_freq(
+		vdev);
+}
+
+static inline
+enum phy_ch_width target_if_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	return psoc->soc_cb.rx_ops.sptrl_rx_ops.sptrlro_vdev_get_ch_width(
+		vdev);
+}
+
+static inline
+int target_if_vdev_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
+		uint16_t *sec20chan_freq)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	return psoc->soc_cb.rx_ops.sptrl_rx_ops.
+		sptrlro_vdev_get_sec20chan_freq_mhz(vdev, sec20chan_freq);
+}
+
 /**
  * target_if_spectral_set_rxchainmask() - Set Spectral Rx chainmask
  * @pdev: Pointer to pdev

@@ -760,6 +760,12 @@ struct wlan_lmac_if_sptrl_rx_ops {
 	int (*sptrlro_send_phydata)(struct wlan_objmgr_pdev *pdev,
 				    struct sock *sock, qdf_nbuf_t nbuf);
 	void * (*sptrlro_get_target_handle)(struct wlan_objmgr_pdev *pdev);
+	int16_t (*sptrlro_vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
+	enum phy_ch_width (*sptrlro_vdev_get_ch_width)(
+			struct wlan_objmgr_vdev *vdev);
+	int (*sptrlro_vdev_get_sec20chan_freq_mhz)(
+			struct wlan_objmgr_vdev *vdev,
+			uint16_t *sec20chan_freq);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 

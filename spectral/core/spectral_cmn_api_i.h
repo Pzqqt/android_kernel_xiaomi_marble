@@ -131,5 +131,56 @@ struct spectral_context *spectral_get_spectral_ctx_from_pdev(
 	return sc;
 }
 
+/**
+ * spectral_get_spectral_ctx_from_pscoc() - API to get spectral context object
+ *                                         from psoc
+ * @psoc : Reference to psoc global object
+ *
+ * This API used to get spectral context object from global psoc reference.
+ * Null check should be done before invoking this inline function.
+ *
+ * Return : Reference to spectral_context object
+ */
+static inline
+struct spectral_context *spectral_get_spectral_ctx_from_psoc(
+	struct wlan_objmgr_psoc *psoc)
+{
+	struct spectral_context *sc = NULL;
+
+	if (psoc) {
+		sc = wlan_objmgr_psoc_get_comp_private_obj(
+			psoc,
+			WLAN_UMAC_COMP_SPECTRAL);
+	}
+
+	return sc;
+}
+
+/**
+ * spectral_get_spectral_ctx_from_vdev() - API to get spectral context object
+ *                                         from vdev
+ * @vdev : Reference to vdev global object
+ *
+ * This API used to get spectral context object from global vdev reference.
+ * Null check should be done before invoking this inline function.
+ *
+ * Return : Reference to spectral_context object
+ */
+static inline
+struct spectral_context *spectral_get_spectral_ctx_from_vdev(
+	struct wlan_objmgr_vdev *vdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct spectral_context *sc = NULL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (psoc) {
+		sc = wlan_objmgr_psoc_get_comp_private_obj(
+			psoc,
+			WLAN_UMAC_COMP_SPECTRAL);
+	}
+
+	return sc;
+}
 #endif /* _SPECTRAL_CMN_API_I_H_*/
 

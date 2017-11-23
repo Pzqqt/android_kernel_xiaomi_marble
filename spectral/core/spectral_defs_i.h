@@ -24,10 +24,12 @@
 #include <wlan_objmgr_global_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include <qdf_list.h>
 #include <qdf_timer.h>
 #include <qdf_util.h>
 #include <wlan_spectral_public_structs.h>
+#include <wlan_spectral_utils_api.h>
 #include <if_athioctl.h>
 #include <spectral_ioctl.h>
 
@@ -84,6 +86,7 @@ struct wmi_spectral_cmd_ops;
  */
 struct spectral_context {
 	struct wlan_objmgr_psoc *psoc_obj;
+	struct spectral_legacy_cbacks legacy_cbacks;
 	int (*sptrlc_spectral_control)(struct wlan_objmgr_pdev *pdev, u_int id,
 				       void *indata, u_int32_t insize,
 		void *outdata, u_int32_t *outsize);

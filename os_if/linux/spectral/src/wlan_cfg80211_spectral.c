@@ -28,9 +28,6 @@
 #include <wlan_cfg80211.h>
 #include <wlan_osif_priv.h>
 #include <qdf_mem.h>
-#ifdef WLAN_POLICY_MGR_ENABLE
-#include <wlan_policy_mgr_api.h>
-#endif
 #include <wlan_spectral_ucfg_api.h>
 #include <wlan_cfg80211_spectral.h>
 #include <spectral_ioctl.h>
@@ -105,7 +102,7 @@ static void wlan_spectral_intit_config(struct spectral_config *config_req)
 	config_req->ss_pwr_format =      SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_rpt_mode =        SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_bin_scale =       SPECTRAL_PHYERR_PARAM_NOVAL;
-	config_req->ss_dBm_adj =         SPECTRAL_PHYERR_PARAM_NOVAL;
+	config_req->ss_dbm_adj =         SPECTRAL_PHYERR_PARAM_NOVAL;
 	config_req->ss_chn_mask =        SPECTRAL_PHYERR_PARAM_NOVAL;
 }
 
@@ -378,7 +375,7 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_BIN_SCALE]);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DBM_ADJ])
-		config_req.ss_dBm_adj = nla_get_u32(tb
+		config_req.ss_dbm_adj = nla_get_u32(tb
 		   [QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DBM_ADJ]);
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_CHN_MASK])
@@ -521,7 +518,7 @@ int wlan_cfg80211_spectral_scan_get_config(struct wiphy *wiphy,
 			config_buf.ss_bin_scale) ||
 	    nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_DBM_ADJ,
-			config_buf.ss_dBm_adj) ||
+			config_buf.ss_dbm_adj) ||
 	    nla_put_u32(skb,
 			QCA_WLAN_VENDOR_ATTR_SPECTRAL_SCAN_CONFIG_CHN_MASK,
 			config_buf.ss_chn_mask) ||

@@ -940,7 +940,7 @@ u_int32_t target_if_spectral_get_extension_channel(void *arg)
 	if (!vdev)
 		return 0;
 
-	if (wlan_vdev_get_sec20chan_freq_mhz(vdev, &sec20chan_freq) < 0) {
+	if (target_if_vdev_get_sec20chan_freq_mhz(vdev, &sec20chan_freq) < 0) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 		return 0;
 	}
@@ -974,7 +974,7 @@ u_int32_t target_if_spectral_get_current_channel(void *arg)
 	if (!vdev)
 		return 0;
 
-	chan_freq = wlan_vdev_get_chan_freq(vdev);
+	chan_freq = target_if_vdev_get_chan_freq(vdev);
 	if (chan_freq < 0) {
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 		return 0;
@@ -1967,7 +1967,7 @@ static int target_if_spectral_scan_enable_params(
 	if (!vdev)
 		return 1;
 
-	spectral->ch_width  = wlan_vdev_get_ch_width(vdev);
+	spectral->ch_width  = target_if_vdev_get_ch_width(vdev);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 
 	if (spectral->ch_width == CH_WIDTH_INVALID)

@@ -65,6 +65,7 @@ spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
 	return vdev;
 }
 
+#ifndef CONFIG_MCL
 static void spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
 {
 	wlan_cfg80211_register_spectral_cmd_handler(
@@ -92,6 +93,11 @@ static void spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
 			SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX,
 			wlan_cfg80211_spectral_scan_get_status);
 }
+#else
+static void spectral_register_cfg80211_handlers(struct wlan_objmgr_pdev *pdev)
+{
+}
+#endif
 
 int spectral_control_cmn(
 	struct wlan_objmgr_pdev *pdev,
@@ -433,7 +439,7 @@ case SPECTRAL_GET_DEBUG_LEVEL:
 		if (!vdev)
 			return -ENOENT;
 
-		chan_width = wlan_vdev_get_ch_width(vdev);
+		chan_width = spectral_vdev_get_ch_width(vdev);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_SPECTRAL_ID);
 
 		if (!outdata || !outsize ||

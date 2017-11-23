@@ -67,4 +67,23 @@ void wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
 void wlan_register_wmi_spectral_cmd_ops(
 		struct wlan_objmgr_pdev *pdev,
 		struct wmi_spectral_cmd_ops *cmd_ops);
+
+/**
+ * struct spectral_legacy_cbacks - Spectral legacy callbacks
+ * @vdev_get_chan_freq:          Get channel frequency
+ * @vdev_get_ch_width:           Get channel width
+ * @vdev_get_sec20chan_freq_mhz: Get seconadry 20 frequency
+ */
+struct spectral_legacy_cbacks {
+	int16_t (*vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
+	enum phy_ch_width (*vdev_get_ch_width)(struct wlan_objmgr_vdev *vdev);
+	int (*vdev_get_sec20chan_freq_mhz)(struct wlan_objmgr_vdev *vdev,
+					     uint16_t *sec20chan_freq);
+};
+
+QDF_STATUS spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
+		struct spectral_legacy_cbacks *legacy_cbacks);
+
+enum phy_ch_width spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
+
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/

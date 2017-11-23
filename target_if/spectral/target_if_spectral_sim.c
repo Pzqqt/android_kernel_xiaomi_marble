@@ -848,7 +848,7 @@ u_int32_t tif_spectral_sim_configure_params(
 		return 0;
 	}
 
-	bw = wlan_vdev_get_ch_width(vdev);
+	bw = target_if_vdev_get_ch_width(vdev);
 
 	switch (bw) {
 	case CH_WIDTH_20MHZ:
