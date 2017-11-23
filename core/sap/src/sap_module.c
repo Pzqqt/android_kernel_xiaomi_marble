@@ -251,7 +251,7 @@ void wlansap_context_put(struct sap_context *ctx)
 	qdf_mutex_release(&sap_context_lock);
 }
 
-struct sap_context *wlansap_open(void)
+struct sap_context *sap_create_ctx(void)
 {
 	struct sap_context *sap_ctx;
 	QDF_STATUS status;
@@ -279,9 +279,9 @@ struct sap_context *wlansap_open(void)
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));
 
 	return sap_ctx;
-} /* wlansap_open */
+} /* sap_create_ctx */
 
-QDF_STATUS wlansap_start(struct sap_context *sap_ctx,
+QDF_STATUS sap_init_ctx(struct sap_context *sap_ctx,
 			 enum QDF_OPMODE mode,
 			 uint8_t *addr, uint32_t session_id)
 {
@@ -355,7 +355,7 @@ QDF_STATUS wlansap_start(struct sap_context *sap_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlansap_stop(struct sap_context *sap_ctx)
+QDF_STATUS sap_deinit_ctx(struct sap_context *sap_ctx)
 {
 	tHalHandle hal;
 	tpAniSirGlobal pmac;
@@ -393,7 +393,7 @@ QDF_STATUS wlansap_stop(struct sap_context *sap_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
-QDF_STATUS wlansap_close(struct sap_context *sap_ctx)
+QDF_STATUS sap_destroy_ctx(struct sap_context *sap_ctx)
 {
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_close invoked");
@@ -407,7 +407,7 @@ QDF_STATUS wlansap_close(struct sap_context *sap_ctx)
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Enter"));
 	/*
 	 * wlansap_context_put will release actual sap_ctx memory
-	 * allocated during wlansap_open
+	 * allocated during sap_create_ctx
 	 */
 	wlansap_context_put(sap_ctx);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, FL("Exit"));

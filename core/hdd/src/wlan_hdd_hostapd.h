@@ -139,7 +139,7 @@ int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter);
  * @adapter: SAP/GO adapter
  *
  * This API will do
- * 1) wlansap_open(), wlansap_start()
+ * 1) sap_create_ctx(), wlansap_start()
  * 2) creates and stores the vdev objects
  *
  * Return: 0 if success else non-zero value.
@@ -173,6 +173,26 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 		struct hdd_adapter *adapter,
 		bool rtnl_held);
 void hdd_set_ap_ops(struct net_device *dev);
+/**
+ * hdd_sap_create_ctx() - Wrapper API to create SAP context
+ * @adapter: pointer to adapter
+ *
+ * This wrapper API can be called to create the sap context. It will
+ * eventually calls SAP API to create the sap context
+ *
+ * Return: true or false based on overall success or failure
+ */
+bool hdd_sap_create_ctx(struct hdd_adapter *adapter);
+/**
+ * hdd_sap_destroy_ctx() - Wrapper API to destroy SAP context
+ * @adapter: pointer to adapter
+ *
+ * This wrapper API can be called to destroy the sap context. It will
+ * eventually calls SAP API to destroy the sap context
+ *
+ * Return: true or false based on overall success or failure
+ */
+bool hdd_sap_destroy_ctx(struct hdd_adapter *adapter);
 int hdd_hostapd_stop(struct net_device *dev);
 int hdd_sap_context_init(struct hdd_context *hdd_ctx);
 void hdd_sap_context_destroy(struct hdd_context *hdd_ctx);
