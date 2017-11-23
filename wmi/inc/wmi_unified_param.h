@@ -7947,6 +7947,68 @@ struct wmi_debug_fatal_events {
 	uint32_t num_events;
 	struct wmi_fatal_condition_event event[FATAL_EVENTS_MAX];
 };
+
+/**
+ * enum wmi_host_fatal_condition_type - Values that 'type' can take in
+ * wmi_fatal_condition_event
+ * @WMI_HOST_FATAL_CONDITION_EVENT_COMPLETION: Fatal condition event completion
+ * @WMI_HOST_FATAL_CONDITION_CE_FAILURE: CE failure
+ * @WMI_HOST_FATAL_CONDITION_TIMEOUTS: Communication timeouts
+ * @WMI_HOST_FATAL_CONDITION_CONNECTION_ISSUE: Connection issue
+ * @WMI_HOST_FATAL_CONDITION_PACKET_LOG_CONFIG: Configuration for FW initiated
+ * packetlog
+ */
+enum wmi_host_fatal_condition_type {
+	WMI_HOST_FATAL_CONDITION_EVENT_COMPLETION,
+	WMI_HOST_FATAL_CONDITION_CE_FAILURE,
+	WMI_HOST_FATAL_CONDITION_TIMEOUTS,
+	WMI_HOST_FATAL_CONDITION_CONNECTION_ISSUE,
+	WMI_HOST_FATAL_CONDITION_PACKET_LOG_CONFIG,
+};
+
+/**
+ * enum wmi_host_fatal_condition_subtype_timeouts - Possible subtypes for
+ * WMI_HOST_FATAL_CONDITION_TIMEOUTS
+ * @WMI_HOST_FATAL_SUBTYPE_TX_TIMEOUT: Tx timeout
+ * @WMI_HOST_FATAL_SUBTYPE_RX_TIMEOUT: Rx timeout
+ */
+enum wmi_host_fatal_condition_subtype_timeouts {
+	WMI_HOST_FATAL_SUBTYPE_TX_TIMEOUT,
+	WMI_HOST_FATAL_SUBTYPE_RX_TIMEOUT,
+};
+
+/**
+ * enum wmi_host_fatal_condition_subtype_connection_issue - Possible subtypes
+ * for WMI_HOST_FATAL_CONDITION_CONNECTION_ISSUE
+ * @WMI_HOST_FATAL_SUBTYPE_STA_KICKOUT: STA Kickout
+ * @WMI_HOST_FATAL_SUBTYPE_P1_PING_FAILURE_START_DEBUG: Start debugging for P1
+ * ping failure
+ * @WMI_HOST_FATAL_SUBTYPE_P1_PING_FAILURE_STOP_DEBUG: Stop debugging for P1
+ * ping failure
+ * @WMI_HOST_FATAL_SUBTYPE_CONNECTION_FAILURE_START_DEBUG: Start debugging for
+ * connection failure
+ * @WMI_HOST_FATAL_SUBTYPE_CONNECTION_FAILURE_STOP_DEBUG: Stop debugging for
+ * connection failure
+ */
+enum wmi_host_fatal_condition_subtype_connection_issue {
+	WMI_HOST_FATAL_SUBTYPE_STA_KICKOUT,
+	WMI_HOST_FATAL_SUBTYPE_P1_PING_FAILURE_START_DEBUG,
+	WMI_HOST_FATAL_SUBTYPE_P1_PING_FAILURE_STOP_DEBUG,
+	WMI_HOST_FATAL_SUBTYPE_CONNECTION_FAILURE_START_DEBUG,
+	WMI_HOST_FATAL_SUBTYPE_CONNECTION_FAILURE_STOP_DEBUG,
+};
+
+/**
+ * enum wmi_host_fatal_condition_subtype_packet_log_config - Possible subtypes
+ * for WMI_HOST_FATAL_CONDITION_PACKET_LOG_CONFIG
+ * @WMI_HOST_FATAL_SUBTYPE_PACKET_LOG_CONFIG_START: Start FW initiated packetlog
+ * @WMI_HOST_FATAL_SUBTYPE_PACKET_LOG_CONFIG_STOP: Stop FW initiated packetlog
+ */
+enum wmi_host_fatal_condition_subtype_packet_log_config {
+	WMI_HOST_FATAL_SUBTYPE_PACKET_LOG_CONFIG_START,
+	WMI_HOST_FATAL_SUBTYPE_PACKET_LOG_CONFIG_STOP,
+};
+
 #endif /* OL_ATH_SMART_LOGGING */
 
 /**
