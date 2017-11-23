@@ -387,9 +387,9 @@ HAVE_CFG80211 := 0
 endif
 endif
 
-# enable unit-test suspend for SLUB debug builds
 ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
 	CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
+	CONFIG_LEAK_DETECTION := 1
 endif
 
 # enable unit-test suspend for napier builds
@@ -809,6 +809,10 @@ endif
 ifeq ($(CONFIG_SMP),y)
 	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_cpuhp.o
 	QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_cpuhp.o
+endif
+
+ifdef CONFIG_LEAK_DETECTION
+	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_debug_domain.o
 endif
 
 ##########OS_IF #######
@@ -1738,6 +1742,10 @@ ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
 CDEFINES += -DTIMER_MANAGER
 CDEFINES += -DMEMORY_DEBUG
 CDEFINES += -DCONFIG_HALT_KMEMLEAK
+endif
+
+ifdef CONFIG_LEAK_DETECTION
+	CDEFINES += -DCONFIG_LEAK_DETECTION
 endif
 
 ifeq ($(HAVE_CFG80211),1)
