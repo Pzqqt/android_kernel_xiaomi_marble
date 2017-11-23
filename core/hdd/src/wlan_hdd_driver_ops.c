@@ -367,6 +367,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 		reinit ? "re-" : "", QWLAN_VERSIONSTR);
 
 	mutex_lock(&hdd_init_deinit_lock);
+	cds_set_driver_in_bad_state(false);
 	if (!reinit)
 		hdd_start_driver_ops_timer(eHDD_DRV_OP_PROBE);
 	else
@@ -413,7 +414,6 @@ static int wlan_hdd_probe(struct device *dev, void *bdev,
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos(dev);
 	cds_set_fw_down(false);
-	cds_set_driver_in_bad_state(false);
 	probe_fail_cnt = 0;
 	re_init_fail_cnt = 0;
 	hdd_stop_driver_ops_timer();
