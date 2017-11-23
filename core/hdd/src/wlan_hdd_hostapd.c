@@ -219,37 +219,31 @@ int hdd_sap_context_init(struct hdd_context *hdd_ctx)
 	return 0;
 }
 
-struct sap_context *
-hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
-			     bool reinit)
+/**
+ * hdd_hostapd_init_sap_session() - To init the sap session completely
+ * @adapter: SAP/GO adapter
+ *
+ * This API will do
+ * 1) sap_init_ctx()
+ *
+ * Return: 0 if success else non-zero value.
+ */
+static struct sap_context *
+hdd_hostapd_init_sap_session(struct hdd_adapter *adapter)
 {
 	struct sap_context *sap_ctx;
-	struct hdd_context *hdd_ctx;
 	QDF_STATUS status;
 
 	if (!adapter) {
 		hdd_err("invalid adapter");
 		return NULL;
 	}
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (reinit)
-		sap_ctx = adapter->session.ap.sap_context;
-	else
-		sap_ctx = sap_create_ctx();
+	sap_ctx = adapter->session.ap.sap_context;
 
 	if (!sap_ctx) {
 		hdd_err("can't allocate the sap_ctx");
 		return NULL;
-	}
-
-	/*
-	 * This is a special case of hdd_vdev_create(). In phase 4 convergence,
-	 * this special case will be properly addressed.
-	 */
-	if (hdd_objmgr_create_and_store_vdev(hdd_ctx->hdd_pdev, adapter)) {
-		hdd_err("failed to create objmgr vdev");
-		goto error;
 	}
 	status = sap_init_ctx(sap_ctx, adapter->device_mode,
 			       adapter->mac_addr.bytes,
@@ -257,15 +251,8 @@ hdd_hostapd_init_sap_session(struct hdd_adapter *adapter,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("wlansap_start failed!! status: %d", status);
 		adapter->session.ap.sap_context = NULL;
-
-		/*
-		 * In this case, we need to cleanup in the same order as create.
-		 * See hdd_vdev_create() for more details.
-		 */
-		QDF_BUG(!hdd_objmgr_release_and_destroy_vdev(adapter));
 		goto error;
 	}
-
 	return sap_ctx;
 error:
 	wlansap_context_put(sap_ctx);
@@ -275,7 +262,17 @@ error:
 	return NULL;
 }
 
-int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
+/**
+ * hdd_hostapd_deinit_sap_session() - To de-init the sap session completely
+ * @adapter: SAP/GO adapter
+ *
+ * This API will do
+ * 1) sap_init_ctx()
+ * 2) sap_destroy_ctx()
+ *
+ * Return: 0 if success else non-zero value.
+ */
+static int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 {
 	struct sap_context *sap_ctx;
 	int status = 0;
@@ -295,22 +292,12 @@ int hdd_hostapd_deinit_sap_session(struct hdd_adapter *adapter)
 		hdd_err("Error stopping the sap session");
 		status = -EINVAL;
 	}
-	if (hdd_objmgr_destroy_vdev(adapter)) {
-		hdd_err("objmgr vdev destroy failed");
-		status = -EINVAL;
-	}
+
 	if (!QDF_IS_STATUS_SUCCESS(sap_destroy_ctx(sap_ctx))) {
 		hdd_err("Error closing the sap session");
 		status = -EINVAL;
 	}
 	adapter->session.ap.sap_context = NULL;
-
-	if (!wlan_hdd_validate_session_id(adapter->session_id)) {
-		if (hdd_objmgr_release_vdev(adapter)) {
-			hdd_err("objmgr vdev release failed");
-			status = -EINVAL;
-		}
-	}
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_debug("sap has issue closing the session");
@@ -6164,38 +6151,18 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	hdd_info("SSR in progress: %d", reinit);
 
-	/*
-	 * check if adapter is already open then most likely
-	 * SAP session is already initialized, no need to do anything
-	 * further
-	 */
-	if (test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-		hdd_debug("sap context is not NULL, %pK",
-			  adapter->session.ap.sap_context);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	sapContext = hdd_hostapd_init_sap_session(adapter, reinit);
+	sapContext = hdd_hostapd_init_sap_session(adapter);
 	if (!sapContext) {
 		hdd_err("Invalid sap_ctx");
-		return QDF_STATUS_E_FAULT;
+		goto error_release_vdev;
 	}
+
 	if (!reinit) {
-		adapter->session.ap.sap_context = sapContext;
 		adapter->session.ap.sap_config.channel =
 			hdd_ctx->acs_policy.acs_channel;
 		acs_dfs_mode = hdd_ctx->acs_policy.acs_dfs_mode;
 		adapter->session.ap.sap_config.acs_dfs_mode =
 			wlan_hdd_get_dfs_mode(acs_dfs_mode);
-	}
-
-	/* set SME_SESSION_OPENED since sap session started */
-	set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-
-	ret = hdd_vdev_ready(adapter);
-	if (ret) {
-		hdd_err("failed to raise vdev ready event: %d", ret);
-		goto error_init_ap_mode;
 	}
 
 	/* Allocate the Wireless Extensions state structure */
@@ -6209,37 +6176,37 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 	status = qdf_event_create(&phostapdBuf->qdf_event);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Hostapd HDD qdf event init failed!!");
-		goto error_init_ap_mode;
+		goto error_release_sap_session;
 	}
 
 	status = qdf_event_create(&phostapdBuf->qdf_stop_bss_event);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Hostapd HDD stop bss event init failed!!");
-		goto error_init_ap_mode;
+		goto error_release_sap_session;
 	}
 
 	status = qdf_event_create(&phostapdBuf->qdf_sta_disassoc_event);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Hostapd HDD sta disassoc event init failed!!");
-		goto error_init_ap_mode;
+		goto error_release_sap_session;
 	}
 
-	init_completion(&adapter->session_close_comp_var);
-	init_completion(&adapter->session_open_comp_var);
 
 	/* Register as a wireless device */
 	dev->wireless_handlers = (struct iw_handler_def *)&hostapd_handler_def;
 
 	/* Initialize the data path module */
 	status = hdd_softap_init_tx_rx(adapter);
-	if (!QDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hdd_softap_init_tx_rx failed");
+		goto error_release_sap_session;
+	}
 
 	status = hdd_wmm_adapter_init(adapter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hdd_wmm_adapter_init() failed code: %08d [x%08x]",
 		       status, status);
-		goto error_wmm_init;
+		goto error_release_wmm;
 	}
 
 	set_bit(WMM_INIT_DONE, &adapter->event_flags);
@@ -6266,12 +6233,12 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	return status;
 
-error_wmm_init:
+error_release_wmm:
 	hdd_softap_deinit_tx_rx(adapter);
-
-error_init_ap_mode:
+error_release_sap_session:
 	hdd_hostapd_deinit_sap_session(adapter);
-	QDF_BUG(!hdd_objmgr_release_vdev(adapter));
+error_release_vdev:
+	QDF_BUG(!hdd_vdev_destroy(adapter));
 
 	EXIT();
 	return status;
@@ -6306,7 +6273,6 @@ void hdd_deinit_ap_mode(struct hdd_context *hdd_ctx,
 	}
 	if (hdd_hostapd_deinit_sap_session(adapter))
 		hdd_err("Failed:hdd_hostapd_deinit_sap_session");
-	clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
 
 	EXIT();
 }
@@ -6384,6 +6350,8 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	adapter->wdev.wiphy = hdd_ctx->wiphy;
 	adapter->wdev.netdev = dev;
 	hdd_set_tso_flags(hdd_ctx, dev);
+	init_completion(&adapter->session_close_comp_var);
+	init_completion(&adapter->session_open_comp_var);
 	init_completion(&adapter->tx_action_cnf_event);
 	init_completion(&adapter->cancel_rem_on_chan_var);
 	init_completion(&adapter->rem_on_chan_ready_event);
@@ -8873,27 +8841,6 @@ void hdd_sap_indicate_disconnect_for_sta(struct hdd_adapter *adapter)
 		}
 	}
 
-	EXIT();
-}
-
-/**
- * hdd_sap_destroy_events() - Destroy sap evets
- * @adapter: sap adapter context
- *
- * Return:   nothing
- */
-void hdd_sap_destroy_events(struct hdd_adapter *adapter)
-{
-	struct sap_context *sap_ctx;
-
-	ENTER();
-	sap_ctx = WLAN_HDD_GET_SAP_CTX_PTR(adapter);
-	if (!sap_ctx) {
-		hdd_err("invalid sap context");
-		return;
-	}
-
-	qdf_event_destroy(&sap_ctx->sap_session_opened_evt);
 	EXIT();
 }
 

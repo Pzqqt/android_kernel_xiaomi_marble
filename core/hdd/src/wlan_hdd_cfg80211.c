@@ -13839,7 +13839,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	wext->roamProfile.nAddIEScanLength =
 		adapter->scan_info.scan_add_ie.length;
 	if (type == NL80211_IFTYPE_ADHOC) {
-		status = hdd_init_station_mode(adapter);
+		status = hdd_start_station_adapter(adapter);
 		wext->roamProfile.BSSType = eCSR_BSS_TYPE_START_IBSS;
 		wext->roamProfile.phyMode =
 			hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);

@@ -4423,12 +4423,6 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 				 adapter->session_id, roamStatus));
 
 	switch (roamStatus) {
-	case eCSR_ROAM_SESSION_OPENED:
-		set_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		complete(&adapter->session_open_comp_var);
-		hdd_debug("session %d opened", adapter->session_id);
-		break;
-
 	/*
 	 * We did pre-auth,then we attempted a 11r or ese reassoc.
 	 * reassoc failed due to failure, timeout, reject from ap

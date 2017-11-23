@@ -1844,7 +1844,8 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr);
 
-int hdd_vdev_create(struct hdd_adapter *adapter);
+int hdd_vdev_create(struct hdd_adapter *adapter,
+		    csr_roam_completeCallback callback, void *ctx);
 int hdd_vdev_destroy(struct hdd_adapter *adapter);
 int hdd_vdev_ready(struct hdd_adapter *adapter);
 
@@ -2376,7 +2377,8 @@ static inline int wlan_hdd_nl_init(struct hdd_context *hdd_ctx)
 	return nl_srv_init(hdd_ctx->wiphy);
 }
 #endif
-QDF_STATUS hdd_sme_close_session_callback(void *pContext);
+QDF_STATUS hdd_sme_open_session_callback(uint8_t session_id);
+QDF_STATUS hdd_sme_close_session_callback(uint8_t session_id);
 
 int hdd_reassoc(struct hdd_adapter *adapter, const uint8_t *bssid,
 		uint8_t channel, const handoff_src src);
