@@ -510,15 +510,9 @@ bool csr_match_country_code(tpAniSirGlobal pMac, uint8_t *pCountry,
 QDF_STATUS csr_roam_set_key(tpAniSirGlobal pMac, uint32_t sessionId,
 			    tCsrRoamSetKey *pSetKey, uint32_t roamId);
 QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
-				 csr_roam_completeCallback callback,
-				 void *pContext, uint8_t *pSelfMacAddr,
-				 uint8_t session_id, uint32_t type,
-				 uint32_t subType);
-/* fSync: true means cleanupneeds to handle synchronously. */
-QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
-				  bool fSync,
-				  csr_roamSessionCloseCallback callback,
-				  void *pContext);
+				 struct sme_session_params *session_param);
+QDF_STATUS csr_roam_close_session(tpAniSirGlobal mac_ctx,
+				  uint32_t session_id, bool sync);
 void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId);
 QDF_STATUS csr_roam_get_session_id_from_bssid(tpAniSirGlobal pMac,
 						struct qdf_mac_addr *bssid,

@@ -1016,7 +1016,7 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 	uint32_t sessionId;
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
-		csr_roam_close_session(pMac, sessionId, true, NULL, NULL);
+		csr_roam_close_session(pMac, sessionId, true);
 
 	csr_scan_disable(pMac);
 	pMac->scan.fCancelIdleScan = false;
@@ -1174,7 +1174,7 @@ static QDF_STATUS csr_roam_close(tpAniSirGlobal pMac)
 	uint32_t sessionId;
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
-		csr_roam_close_session(pMac, sessionId, true, NULL, NULL);
+		csr_roam_close_session(pMac, sessionId, true);
 
 	qdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
 	qdf_mc_timer_destroy(&pMac->roam.hTimerWaitForKey);
@@ -3840,9 +3840,16 @@ QDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 		 */
 		pSession->bRefAssocStartCnt--;
 	} else if (u1 == eCSR_ROAM_SET_CHANNEL_RSP && u2 ==
-				eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS)
+				eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS) {
 		pSession->connectedProfile.operationChannel =
 			roam_info->channelChangeRespEvent->newChannelNumber;
+	} else if ((u1 == eCSR_ROAM_SESSION_OPENED) &&
+			(u2 == eCSR_ROAM_RESULT_NONE)) {
+		if (pSession->session_open_cb)
+			pSession->session_open_cb(sessionId);
+		else
+			sme_err("session_open_cb is not registered");
+	}
 
 	if (NULL != pSession->callback) {
 		if (roam_info) {
@@ -16300,11 +16307,7 @@ QDF_STATUS csr_issue_add_sta_for_session_req(tpAniSirGlobal pMac,
 }
 
 QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
-				 csr_roam_completeCallback callback,
-				 void *pContext,
-				 uint8_t *pSelfMacAddr,
-				 uint8_t session_id,
-				 uint32_t type, uint32_t subType)
+				 struct sme_session_params *session_param)
 {
 	QDF_STATUS status;
 	uint32_t existing_session_id;
@@ -16317,39 +16320,42 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 
 	/* check to see if the mac address already belongs to a session */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-					(struct qdf_mac_addr *)pSelfMacAddr,
-					&existing_session_id);
+			(struct qdf_mac_addr *)session_param->self_mac_addr,
+			&existing_session_id);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Session %d exists with mac address "
-			   MAC_ADDRESS_STR,
-			existing_session_id, MAC_ADDR_ARRAY(pSelfMacAddr));
+		sme_err("Session %d exists with mac address " MAC_ADDRESS_STR,
+			existing_session_id,
+			MAC_ADDR_ARRAY(session_param->self_mac_addr));
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* attempt to retrieve session for Id */
-	session = CSR_GET_SESSION(mac_ctx, session_id);
+	session = CSR_GET_SESSION(mac_ctx, session_param->sme_session_id);
 	if (!session) {
 		sme_err("Session does not exist for interface %d",
-			session_id);
+			session_param->sme_session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* check to see if the session is already active */
 	if (session->sessionActive) {
 		sme_err("Cannot re-open active session with Id %d",
-			session_id);
+			session_param->sme_session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	session->sessionActive = true;
-	session->sessionId = session_id;
+	session->sessionId = session_param->sme_session_id;
 
 	/* Initialize FT related data structures only in STA mode */
 	sme_ft_open(mac_ctx, session->sessionId);
 
-	session->callback = callback;
-	session->pContext = pContext;
-	qdf_mem_copy(&session->selfMacAddr, pSelfMacAddr,
+	session->session_open_cb = session_param->session_open_cb;
+	session->session_close_cb = session_param->session_close_cb;
+	session->callback = session_param->callback;
+	session->pContext = session_param->callback_ctx;
+
+	qdf_mem_copy(&session->selfMacAddr, session_param->self_mac_addr,
 		     sizeof(struct qdf_mac_addr));
 	status = qdf_mc_timer_init(&session->hTimerRoaming,
 				   QDF_TIMER_TYPE_SW,
@@ -16471,8 +16477,11 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal mac_ctx,
 
 	csr_update_session_he_cap(mac_ctx, session);
 
-	return csr_issue_add_sta_for_session_req(mac_ctx, session_id,
-						 pSelfMacAddr, type, subType);
+	return csr_issue_add_sta_for_session_req(mac_ctx,
+				session_param->sme_session_id,
+				session_param->self_mac_addr,
+				session_param->type_of_persona,
+				session_param->subtype_of_persona);
 }
 
 QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
@@ -16495,7 +16504,7 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			sme_debug("Failed to Release Lock");
 		else {
-			rsp->sme_callback(rsp->sme_ctx);
+			rsp->sme_callback(rsp->session_id);
 			status = sme_acquire_global_lock(&pMac->sme);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sme_debug("Failed to get Lock");
@@ -16511,7 +16520,7 @@ QDF_STATUS csr_process_del_sta_session_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 static QDF_STATUS
 csr_issue_del_sta_for_session_req(tpAniSirGlobal pMac, uint32_t sessionId,
 				  tSirMacAddr sessionMacAddr,
-				  csr_roamSessionCloseCallback callback,
+				  csr_session_close_cb callback,
 				  void *pContext)
 {
 	struct del_sta_self_params *del_sta_self_req;
@@ -16569,38 +16578,36 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 	}
 }
 
-QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac,
-				uint32_t sessionId,
-				  bool fSync,
-				  csr_roamSessionCloseCallback callback,
-				  void *pContext)
+QDF_STATUS csr_roam_close_session(tpAniSirGlobal mac_ctx,
+				  uint32_t session_id, bool sync)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct csr_roam_session *pSession;
+	struct csr_roam_session *session;
 
-	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		sme_err("session %d not found", sessionId);
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("session %d not found", session_id);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pSession = CSR_GET_SESSION(pMac, sessionId);
+	session = CSR_GET_SESSION(mac_ctx, session_id);
 	/* Vdev going down stop roaming */
-	pSession->fCancelRoaming = true;
-	if (fSync) {
-		csr_cleanup_session(pMac, sessionId);
+	session->fCancelRoaming = true;
+	if (sync) {
+		csr_cleanup_session(mac_ctx, session_id);
 		return status;
 	}
 
-	purge_sme_session_pending_cmd_list(pMac, sessionId);
-	purge_sme_session_active_cmd_list(pMac, sessionId);
-	purge_sme_session_pending_scan_cmd_list(pMac,
-			sessionId);
-	purge_sme_session_active_scan_cmd_list(pMac,
-			sessionId);
-	status = csr_issue_del_sta_for_session_req(pMac,
-			sessionId,
-			pSession->selfMacAddr.bytes,
-			callback, pContext);
+	purge_sme_session_pending_cmd_list(mac_ctx, session_id);
+	purge_sme_session_active_cmd_list(mac_ctx, session_id);
+	purge_sme_session_pending_scan_cmd_list(mac_ctx, session_id);
+	purge_sme_session_active_scan_cmd_list(mac_ctx, session_id);
+	if (!session->session_close_cb) {
+		sme_err("no close session callback registered");
+		return QDF_STATUS_E_FAILURE;
+	}
+	status = csr_issue_del_sta_for_session_req(mac_ctx,
+			session_id, session->selfMacAddr.bytes,
+			session->session_close_cb, NULL);
 	return status;
 }
 

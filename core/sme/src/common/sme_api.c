@@ -5135,30 +5135,10 @@ QDF_STATUS sme_oem_data_req(tHalHandle hal, struct oem_data_req *hdd_oem_req)
 }
 #endif /*FEATURE_OEM_DATA_SUPPORT */
 
-/*
- * sme_open_session() - Open a session for scan/roam operation.
- *
- *  This is a synchronous API.
- *
- * hHal - The handle returned by mac_open.
- * callback - A pointer to the function caller specifies for
- *		     roam/connect status indication
- * pContext - The context passed with callback
- * pSelfMacAddr - Caller allocated memory filled with self MAC address
- *			 (6 bytes)
- * pbSessionId - pointer to a caller allocated buffer for returned session ID
- *
- * Return QDF_STATUS_SUCCESS - session is opened. sessionId returned.
- *
- *		Other status means SME is failed to open the session.
- *		QDF_STATUS_E_RESOURCES - no more session available.
- */
-QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
-			    void *pContext, uint8_t *pSelfMacAddr,
-			    uint8_t session_id, uint32_t type, uint32_t subType)
+QDF_STATUS sme_open_session(tHalHandle hal, struct sme_session_params *params)
 {
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct cdp_pdev *pdev;
 	ol_txrx_peer_handle peer;
 	uint8_t peer_id;
@@ -5166,7 +5146,9 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: type=%d, session_id %d subType=%d addr:%pM",
-		  __func__, type, session_id, subType, pSelfMacAddr);
+		  __func__, params->type_of_persona,
+		  params->sme_session_id, params->subtype_of_persona,
+		  params->self_mac_addr);
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -5176,53 +5158,38 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		return status;
 	}
 
-	status = sme_acquire_global_lock(&pMac->sme);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_ERROR(status))
 		return status;
 
-	peer = cdp_peer_find_by_addr(soc, pdev, pSelfMacAddr, &peer_id);
+	peer = cdp_peer_find_by_addr(soc, pdev, params->self_mac_addr,
+				     &peer_id);
 	if (peer) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Peer=%d exist with same MAC",
 			  __func__, peer_id);
 		status = QDF_STATUS_E_INVAL;
 	} else {
-		status = csr_roam_open_session(pMac, callback, pContext,
-				pSelfMacAddr, session_id, type, subType);
+		status = csr_roam_open_session(mac_ctx, params);
 	}
-	sme_release_global_lock(&pMac->sme);
+	sme_release_global_lock(&mac_ctx->sme);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME, TRACE_CODE_SME_RX_HDD_OPEN_SESSION,
-			 session_id, 0));
+			 params->sme_session_id, 0));
 
 	return status;
 }
 
-/*
- * sme_close_session() - Open a session for scan/roam operation.
- *
- *  This is a synchronous API.
- *
- * hHal - The handle returned by mac_open.
- * sessionId - A previous opened session's ID.
- * Return QDF_STATUS_SUCCESS - session is closed.
- * Other status means SME is failed to open the session.
- *	QDF_STATUS_E_INVAL - session is not opened.
- */
-QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
-			     csr_roamSessionCloseCallback callback,
-			     void *pContext)
+QDF_STATUS sme_close_session(tHalHandle hal, uint8_t session_id)
 {
 	QDF_STATUS status;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
-			 TRACE_CODE_SME_RX_HDD_CLOSE_SESSION, sessionId, 0));
+			 TRACE_CODE_SME_RX_HDD_CLOSE_SESSION, session_id, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_close_session(pMac, sessionId, false,
-						callback, pContext);
-
+		status = csr_roam_close_session(pMac, session_id, false);
 		sme_release_global_lock(&pMac->sme);
 	}
 
