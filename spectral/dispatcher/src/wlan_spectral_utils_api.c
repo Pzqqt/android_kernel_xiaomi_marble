@@ -21,6 +21,7 @@
 #include <qdf_module.h>
 #include "../../core/spectral_cmn_api_i.h"
 #include <wlan_spectral_tgt_api.h>
+#include <linux/export.h>
 
 QDF_STATUS wlan_spectral_init(void)
 {
@@ -89,3 +90,23 @@ void wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	sptrl_rx_ops->sptrlro_send_phydata = tgt_send_phydata;
 	sptrl_rx_ops->sptrlro_get_target_handle = tgt_get_target_handle;
 }
+
+void wlan_register_wmi_spectral_cmd_ops(
+		struct wlan_objmgr_pdev *pdev,
+		struct wmi_spectral_cmd_ops *cmd_ops)
+{
+	struct spectral_context *sc;
+
+	if (!pdev)
+		spectral_err("PDEV is NULL!\n");
+
+	sc = spectral_get_spectral_ctx_from_pdev(pdev);
+	if (!sc)
+		spectral_err("spectral context is NULL!\n");
+
+	return sc->sptrlc_register_wmi_spectral_cmd_ops(
+		pdev,
+		cmd_ops
+		);
+}
+EXPORT_SYMBOL(wlan_register_wmi_spectral_cmd_ops);

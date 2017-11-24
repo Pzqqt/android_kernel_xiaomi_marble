@@ -579,6 +579,23 @@ struct target_if_spectral_param_state_info {
 };
 #endif /* ATH_PERF_PWR_OFFLOAD */
 
+struct vdev_spectral_configure_params;
+struct vdev_spectral_enable_params;
+/**
+* struct wmi_spectral_cmd_ops - structure used holding the operations
+* related to wmi commands on spectral parameters.
+* @wmi_spectral_configure_cmd_send:
+* @wmi_spectral_enable_cmd_send:
+*/
+struct wmi_spectral_cmd_ops {
+	QDF_STATUS (*wmi_spectral_configure_cmd_send)(
+		void *wmi_hdl,
+		struct vdev_spectral_configure_params *param);
+	QDF_STATUS (*wmi_spectral_enable_cmd_send)(
+		void *wmi_hdl,
+		struct vdev_spectral_enable_params *param);
+};
+
 /**
  * struct target_if_spectral - main spectral structure
  * @pdev: Pointer to pdev
@@ -762,6 +779,7 @@ struct target_if_spectral {
 	u_int8_t                                tag_sscan_summary_exp;
 	u_int8_t                                tag_sscan_fft_exp;
 	u_int8_t                                tlvhdr_size;
+	struct wmi_spectral_cmd_ops param_wmi_cmd_ops;
 };
 
 /**

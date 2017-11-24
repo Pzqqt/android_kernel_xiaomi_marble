@@ -79,18 +79,17 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 }
 
 /**
- * wmi_send_vdev_spectral_configure_cmd() - Send WMI command to configure
+ * target_if_send_vdev_spectral_configure_cmd() - Send WMI command to configure
  * Spectral parameters
  * @spectral: Pointer to Spectral target_if internal private data
  * @param: Pointer to spectral_config giving the Spectral configuration
  *
  * Return: QDF_STATUS_SUCCESS on success, negative error code on failure
  */
-int wmi_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
-					 struct spectral_config *param)
+int target_if_send_vdev_spectral_configure_cmd(
+	struct target_if_spectral *spectral,
+	struct spectral_config *param)
 {
-	struct ol_ath_softc_net80211 *scn = NULL;
-	struct pdev_osif_priv *osif_priv = NULL;
 	struct vdev_spectral_configure_params sparam;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_objmgr_vdev *vdev = NULL;
@@ -100,9 +99,6 @@ int wmi_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 	pdev = spectral->pdev_obj;
 
 	qdf_assert_always(pdev);
-
-	osif_priv = wlan_pdev_get_ospriv(pdev);
-	scn = (struct ol_ath_softc_net80211 *)osif_priv->legacy_osif_priv;
 
 	vdev = target_if_spectral_get_vdev(spectral);
 	if (!vdev)
@@ -129,15 +125,16 @@ int wmi_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 	sparam.pwr_format = param->ss_pwr_format;
 	sparam.rpt_mode = param->ss_rpt_mode;
 	sparam.bin_scale = param->ss_bin_scale;
-	sparam.dBm_adj = param->ss_dBm_adj;
+	sparam.dBm_adj = param->ss_dbm_adj;
 	sparam.chn_mask = param->ss_chn_mask;
 
-	return scn->wmi_spectral_configure_cmd_send(scn->wmi_handle, &sparam);
+	return spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send(
+		(wmi_unified_t)pdev->tgt_if_handle, &sparam);
 }
 
 /**
- * wmi_send_vdev_spectral_enable_cmd() - Send WMI command to enable/disable
- * Spectral
+ * target_if_send_vdev_spectral_enable_cmd() - Send WMI command to
+ * enable/disable Spectral
  * @spectral: Pointer to Spectral target_if internal private data
  * @is_spectral_active_valid: Flag to indicate if spectral activate (trigger) is
  * valid
@@ -147,15 +144,14 @@ int wmi_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
  *
  * Return: QDF_STATUS_SUCCESS on success, negative error code on failure
  */
-int wmi_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
-				      u_int8_t is_spectral_active_valid,
-				      u_int8_t is_spectral_active,
-				      u_int8_t is_spectral_enabled_valid,
-				      u_int8_t is_spectral_enabled)
+int target_if_send_vdev_spectral_enable_cmd(
+	struct target_if_spectral *spectral,
+	u_int8_t is_spectral_active_valid,
+	u_int8_t is_spectral_active,
+	u_int8_t is_spectral_enabled_valid,
+	u_int8_t is_spectral_enabled)
 {
 	struct vdev_spectral_enable_params param;
-	struct ol_ath_softc_net80211 *scn = NULL;
-	struct pdev_osif_priv *osif_priv = NULL;
 	struct wlan_objmgr_pdev *pdev = NULL;
 	struct wlan_objmgr_vdev *vdev = NULL;
 
@@ -165,8 +161,6 @@ int wmi_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
 
 	qdf_assert_always(pdev);
 
-	osif_priv = wlan_pdev_get_ospriv(pdev);
-	scn = (struct ol_ath_softc_net80211 *)osif_priv->legacy_osif_priv;
 
 	vdev = target_if_spectral_get_vdev(spectral);
 	if (!vdev)
@@ -182,7 +176,8 @@ int wmi_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
 	param.active = is_spectral_active;
 	param.enabled = is_spectral_enabled;
 
-	return scn->wmi_spectral_enable_cmd_send(scn->wmi_handle, &param);
+	return spectral->param_wmi_cmd_ops.wmi_spectral_enable_cmd_send(
+		(wmi_unified_t)pdev->tgt_if_handle, &param);
 }
 
 /**
@@ -257,7 +252,7 @@ int target_if_spectral_info_init_defaults(struct target_if_spectral *spectral)
 	info->osps_cache.osc_params.ss_bin_scale =
 	SPECTRAL_SCAN_BIN_SCALE_DEFAULT;
 
-	info->osps_cache.osc_params.ss_dBm_adj =
+	info->osps_cache.osc_params.ss_dbm_adj =
 	SPECTRAL_SCAN_DBM_ADJ_DEFAULT;
 
 	vdev = target_if_spectral_get_vdev(spectral);
@@ -388,7 +383,7 @@ int ol_spectral_info_read(struct target_if_spectral *spectral,
 						"ss_pwr_format = %u\n"
 						"ss_rpt_mode = %u\n"
 						"ss_bin_scale = %u\n"
-						"ss_dBm_adj = %u\n"
+						"ss_dbm_adj = %u\n"
 						"ss_chn_mask = %u\n\n",
 						__func__,
 						pparam->ss_count,
@@ -407,7 +402,7 @@ int ol_spectral_info_read(struct target_if_spectral *spectral,
 						pparam->ss_pwr_format,
 						pparam->ss_rpt_mode,
 						pparam->ss_bin_scale,
-						pparam->ss_dBm_adj,
+						pparam->ss_dbm_adj,
 						pparam->ss_chn_mask);
 			}
 #endif /* OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS */
@@ -491,7 +486,7 @@ int ol_spectral_info_read(struct target_if_spectral *spectral,
 				"ss_pwr_format = %u\n"
 				"ss_rpt_mode = %u\n"
 				"ss_bin_scale = %u\n"
-				"ss_dBm_adj = %u\n"
+				"ss_dbm_adj = %u\n"
 				"ss_chn_mask = %u\n\n",
 				__func__,
 				pparam->ss_count,
@@ -510,7 +505,7 @@ int ol_spectral_info_read(struct target_if_spectral *spectral,
 				pparam->ss_pwr_format,
 				pparam->ss_rpt_mode,
 				pparam->ss_bin_scale,
-				pparam->ss_dBm_adj,
+				pparam->ss_dbm_adj,
 				pparam->ss_chn_mask);
 		}
 #endif /* OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS */
@@ -560,7 +555,7 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 			pval = (u_int8_t *)input;
 
 			qdf_spin_lock(&info->osps_lock);
-			ret = wmi_send_vdev_spectral_enable_cmd(
+			ret = target_if_send_vdev_spectral_enable_cmd(
 				spectral,
 				 1,
 				 *pval,
@@ -577,7 +572,7 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 
 			if (ret < 0) {
 				qdf_print(
-				  "%s: wmi_send_vdev_spectral_enable_cmd "
+				  "%s: target_if_send_vdev_spectral_enable_cmd "
 				  "failed with error=%d\n",
 				  __func__,
 				  ret);
@@ -597,7 +592,7 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 			pval = (u_int8_t *)input;
 
 			qdf_spin_lock(&info->osps_lock);
-			ret = wmi_send_vdev_spectral_enable_cmd(
+			ret = target_if_send_vdev_spectral_enable_cmd(
 				spectral,
 				 0,
 				 0,
@@ -614,7 +609,7 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 
 			if (ret < 0) {
 				qdf_print(
-				  "%s: wmi_send_vdev_spectral_enable_cmd "
+				  "%s: target_if_send_vdev_spectral_enable_cmd "
 				  "failed with error=%d\n",
 				  __func__,
 				  ret);
@@ -633,7 +628,7 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 			param = (struct spectral_config *)input;
 
 			qdf_spin_lock(&info->osps_lock);
-			ret = wmi_send_vdev_spectral_configure_cmd(
+			ret = target_if_send_vdev_spectral_configure_cmd(
 				spectral,
 				 param);
 
@@ -656,7 +651,7 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 					"ss_pwr_format = %u\n"
 					"ss_rpt_mode = %u\n"
 					"ss_bin_scale = %u\n"
-					"ss_dBm_adj = %u\n"
+					"ss_dbm_adj = %u\n"
 					"ss_chn_mask = %u\n"
 					"status = %d\n\n",
 					__func__,
@@ -676,14 +671,15 @@ int ol_spectral_info_write(struct target_if_spectral *spectral,
 					param->ss_pwr_format,
 					param->ss_rpt_mode,
 					param->ss_bin_scale,
-					param->ss_dBm_adj,
+					param->ss_dbm_adj,
 					param->ss_chn_mask,
 					ret);
 #endif /* OL_SPECTRAL_DEBUG_CONFIG_INTERACTIONS */
 
 			if (ret < 0) {
 				qdf_print(
-				  "%s: wmi_send_vdev_spectral_configure_cmd "
+				  "%s: "
+				  "target_if_send_vdev_spectral_configure_cmd "
 				  "failed with error=%d\n",
 				  __func__,
 				  ret);
@@ -1532,7 +1528,8 @@ int target_if_spectral_check_hw_capability(struct target_if_spectral *spectral)
 }
 
 /**
- * target_if_pdev_spectral_init() - Initialize Spectral parameter defaults
+ * target_if_spectral_init_param_defaults() - Initialize Spectral
+ * parameter defaults
  * @spectral: Pointer to Spectral target_if internal private data
  *
  * It is the caller's responsibility to ensure that the Spectral parameters
@@ -1562,7 +1559,7 @@ static void target_if_spectral_init_param_defaults(
 	params->ss_pwr_format = SPECTRAL_SCAN_PWR_FORMAT_DEFAULT;
 	params->ss_rpt_mode = SPECTRAL_SCAN_RPT_MODE_DEFAULT;
 	params->ss_bin_scale = SPECTRAL_SCAN_BIN_SCALE_DEFAULT;
-	params->ss_dBm_adj = SPECTRAL_SCAN_DBM_ADJ_DEFAULT;
+	params->ss_dbm_adj = SPECTRAL_SCAN_DBM_ADJ_DEFAULT;
 	/*
 	 * XXX
 	 * SPECTRAL_SCAN_CHN_MASK_DEFAULT (0x1) specifies that chain 0 is to be
@@ -1730,7 +1727,7 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 }
 
 /**
- * target_if_pdev_spectral_init() - De-initialize target_if Spectral
+ * target_if_pdev_spectral_deinit() - De-initialize target_if Spectral
  * functionality for the given pdev
  * @pdev: Pointer to pdev object
  *
@@ -1829,7 +1826,7 @@ static int target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 		spectral->params.ss_bin_scale = value;
 		break;
 	case SPECTRAL_PARAM_DBM_ADJ:
-		spectral->params.ss_dBm_adj = !!value;
+		spectral->params.ss_dbm_adj = !!value;
 		break;
 	case SPECTRAL_PARAM_CHN_MASK:
 		spectral->params.ss_chn_mask = value;
@@ -1945,13 +1942,7 @@ static int target_if_spectral_scan_enable_params(
 	int extension_channel   = 0;
 	int current_channel     = 0;
 	struct target_if_spectral_ops *p_sops    = NULL;
-	struct ol_ath_softc_net80211 *scn = NULL;
-	struct pdev_osif_priv *osif_priv = NULL;
-	struct wlan_objmgr_pdev *pdev = spectral->pdev_obj;
 	struct wlan_objmgr_vdev *vdev = NULL;
-
-	osif_priv = wlan_pdev_get_ospriv(pdev);
-	scn = (struct ol_ath_softc_net80211 *)osif_priv->legacy_osif_priv;
 
 	if (!spectral) {
 		qdf_print("SPECTRAL : Spectral is NULL\n");
@@ -2411,6 +2402,19 @@ static void target_if_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
 		     sizeof(struct spectral_diag_stats));
 }
 
+void target_if_register_wmi_spectral_cmd_ops(
+	struct wlan_objmgr_pdev *pdev,
+	struct wmi_spectral_cmd_ops *cmd_ops)
+{
+	struct target_if_spectral *spectral = NULL;
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send =
+		cmd_ops->wmi_spectral_configure_cmd_send;
+	spectral->param_wmi_cmd_ops.wmi_spectral_enable_cmd_send =
+		cmd_ops->wmi_spectral_enable_cmd_send;
+}
+
 /**
  * target_if_sptrl_register_tx_ops() - Register Spectral target_if Tx Ops
  * @tx_ops: Tx Ops
@@ -2443,16 +2447,10 @@ void target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 		target_if_get_spectral_capinfo;
 	tx_ops->sptrl_tx_ops.sptrlto_get_spectral_diagstats =
 		target_if_get_spectral_diagstats;
+	tx_ops->sptrl_tx_ops.sptrlto_register_wmi_spectral_cmd_ops =
+		target_if_register_wmi_spectral_cmd_ops;
 }
 EXPORT_SYMBOL(target_if_sptrl_register_tx_ops);
-
-#ifdef HOST_OFFLOAD
-extern void
-atd_spectral_msg_send(
-	struct net_device *dev,
-	 SPECTRAL_SAMP_MSG * msg,
-	 uint16_t msg_len);
-#endif
 
 /**
  * target_if_spectral_send_intf_found_msg() - Send message to application layer
@@ -2485,23 +2483,6 @@ void target_if_spectral_send_intf_found_msg(
 		msg->signature = SPECTRAL_SIGNATURE;
 		p_sops->get_mac_address(spectral, msg->macaddr);
 		target_if_spectral_bcast_msg(spectral);
-	}
-#endif
-#ifdef HOST_OFFLOAD
-	{
-	SPECTRAL_SAMP_MSG *buf = NULL;
-
-	buf = (SPECTRAL_SAMP_MSG *)OS_MALLOC(spectral->ic->ic_osdev,
-					     sizeof(struct ath_spectral),
-					     GFP_KERNEL);
-	buf->int_type = cw_int ? SPECTRAL_DCS_INT_CW : SPECTRAL_DCS_INT_WIFI;
-	buf->dcs_enabled = dcs_enabled;
-	buf->signature = SPECTRAL_SIGNATURE;
-	p_sops->get_mac_address(spectral, buf->macaddr);
-	atd_spectral_msg_send(spectral->ic->ic_osdev->netdev,
-			      buf,
-					sizeof(SPECTRAL_SAMP_MSG));
-	OS_FREE(buf);
 	}
 #endif
 }

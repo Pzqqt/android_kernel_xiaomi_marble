@@ -61,6 +61,7 @@ struct pdev_spectral {
 	void                       *psptrl_target_handle;
 };
 
+struct wmi_spectral_cmd_ops;
 /**
  * struct spectral_context : spectral global context
  *
@@ -107,6 +108,9 @@ struct spectral_context {
 					    void *outdata);
 	void (*sptrlc_get_spectral_diagstats)(struct wlan_objmgr_pdev *pdev,
 					      void *outdata);
+	void (*sptrlc_register_wmi_spectral_cmd_ops)(
+		struct wlan_objmgr_pdev *pdev,
+		struct wmi_spectral_cmd_ops *cmd_ops);
 };
 
 #endif /* _SPECTRAL_DEFS_I_H_ */

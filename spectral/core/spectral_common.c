@@ -244,11 +244,11 @@ int spectral_control_cmn(
 				error = -EINVAL;
 		}
 
-		if (sp_in->ss_dBm_adj != SPECTRAL_PHYERR_PARAM_NOVAL) {
+		if (sp_in->ss_dbm_adj != SPECTRAL_PHYERR_PARAM_NOVAL) {
 			if (!sc->sptrlc_set_spectral_config(
 				pdev,
 				SPECTRAL_PARAM_DBM_ADJ,
-				sp_in->ss_dBm_adj))
+				sp_in->ss_dbm_adj))
 				error = -EINVAL;
 		}
 
@@ -308,7 +308,7 @@ int spectral_control_cmn(
 		spectralparams->ss_pwr_format      = sp_out.ss_pwr_format;
 		spectralparams->ss_rpt_mode        = sp_out.ss_rpt_mode;
 		spectralparams->ss_bin_scale       = sp_out.ss_bin_scale;
-		spectralparams->ss_dBm_adj         = sp_out.ss_dBm_adj;
+		spectralparams->ss_dbm_adj         = sp_out.ss_dbm_adj;
 		spectralparams->ss_chn_mask        = sp_out.ss_chn_mask;
 	}
 	break;

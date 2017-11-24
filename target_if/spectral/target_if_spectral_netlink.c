@@ -26,14 +26,6 @@
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
 
-#ifdef HOST_OFFLOAD
-extern void
-atd_spectral_msg_send(
-	struct net_device *dev,
-	 SPECTRAL_SAMP_MSG *msg,
-	 uint16_t msg_len);
-#endif
-
 #ifdef SPECTRAL_USE_NETLINK_SOCKETS
 struct sock *target_if_spectral_nl_sock;
 static atomic_t spectral_nl_users = ATOMIC_INIT(0);
@@ -441,12 +433,6 @@ void target_if_spectral_create_samp_msg(
 	qdf_print("No buffer\n");
 	}
 #endif  /* SPECTRAL_USE_NETLINK_SOCKETS */
-
-#ifdef HOST_OFFLOAD
-	atd_spectral_msg_send(spectral->ic->ic_osdev->netdev,
-			      &spec_samp_msg,
-		sizeof(SPECTRAL_SAMP_MSG));
-#endif
 
 	if (spectral->sc_spectral_noise_pwr_cal)
 	spectral_process_noise_pwr_report(spectral, &spec_samp_msg);

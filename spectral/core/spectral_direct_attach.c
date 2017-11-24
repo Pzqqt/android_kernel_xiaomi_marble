@@ -186,6 +186,23 @@ static void get_spectral_diagstats_da(struct wlan_objmgr_pdev *pdev,
 		 outdata);
 }
 
+static void register_wmi_spectral_cmd_ops_da(
+		struct wlan_objmgr_pdev *pdev,
+		struct wmi_spectral_cmd_ops *cmd_ops)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_register_wmi_spectral_cmd_ops(
+		pdev,
+		cmd_ops);
+}
+
+
 void spectral_ctx_init_da(struct spectral_context *sc)
 {
 	if (!sc) {
@@ -205,5 +222,7 @@ void spectral_ctx_init_da(struct spectral_context *sc)
 	sc->sptrlc_get_debug_level        = get_debug_level_da;
 	sc->sptrlc_get_spectral_capinfo   = get_spectral_capinfo_da;
 	sc->sptrlc_get_spectral_diagstats = get_spectral_diagstats_da;
+	sc->sptrlc_register_wmi_spectral_cmd_ops =
+		register_wmi_spectral_cmd_ops_da;
 }
 

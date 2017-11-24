@@ -799,7 +799,7 @@ u_int32_t tif_spectral_sim_configure_params(
 			"ss_pwr_format=%hu\n"
 			"ss_rpt_mode=%hu\n"
 			"ss_bin_scale=%hu\n"
-			"ss_dBm_adj=%hu\n"
+			"ss_dbm_adj=%hu\n"
 			"ss_chn_mask=%hu\n"
 			"ss_nf_temp_data=%d\n",
 			params->ss_fft_period,
@@ -821,7 +821,7 @@ u_int32_t tif_spectral_sim_configure_params(
 			params->ss_pwr_format,
 			params->ss_rpt_mode,
 			params->ss_bin_scale,
-			params->ss_dBm_adj,
+			params->ss_dbm_adj,
 			params->ss_chn_mask,
 			params->ss_nf_temp_data);
 

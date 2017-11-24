@@ -258,7 +258,7 @@ struct spectral_caps {
  *                        3: 2-dword summary + 2x-oversampled bins (all) per FFT
  * @ss_bin_scale:         Number of LSBs to shift out to scale the FFT bins
  *                        for spectral scan triggered FFTs
- * @ss_dBm_adj:           Set (with ss_pwr_format=1), to report bin
+ * @ss_dbm_adj:           Set (with ss_pwr_format=1), to report bin
  *                        magnitudes
  *                        converted to dBm power using the noisefloor
  *                        calibration results
@@ -288,7 +288,7 @@ struct spectral_config {
 	u_int16_t   ss_pwr_format;
 	u_int16_t   ss_rpt_mode;
 	u_int16_t   ss_bin_scale;
-	u_int16_t   ss_dBm_adj;
+	u_int16_t   ss_dbm_adj;
 	u_int16_t   ss_chn_mask;
 	int8_t      ss_nf_cal[AH_MAX_CHAINS * 2];
 	int8_t      ss_nf_pwr[AH_MAX_CHAINS * 2];

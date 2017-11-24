@@ -98,14 +98,6 @@ int target_if_spectral_dump_fft(u_int8_t *pfft, int fftlen)
  *
  */
 
-#ifdef HOST_OFFLOAD
-extern void
-atd_spectral_msg_send(
-	struct net_device *dev,
-	 SPECTRAL_SAMP_MSG *msg,
-	 uint16_t msg_len);
-#endif
-
 int target_if_spectral_send_tlv_to_host(
 	struct target_if_spectral *spectral,
 	 u_int8_t *data,
@@ -122,11 +114,6 @@ int target_if_spectral_send_tlv_to_host(
 	} else {
 		status = false;
 	}
-#ifdef HOST_OFFLOAD
-	atd_spectral_msg_send(spectral->ic->ic_osdev->netdev,
-			      data,
-		datalen);
-#endif
 	return status;
 }
 
@@ -313,7 +300,7 @@ int dump_summary_report_gen2(
 
 	recent_rfsat = ((ss_summary_A >> 8) & 0x1);
 	sscan_gidx = (ss_summary_A & 0xff);
-	printf("sscan_gidx=%d, is_recent_rfsat=%d\n",
+	qdf_print("sscan_gidx=%d, is_recent_rfsat=%d\n",
 	       sscan_gidx, recent_rfsat);
 
 	/* First segment */
@@ -326,9 +313,9 @@ int dump_summary_report_gen2(
 		peak_inx = peak_inx - 4096;
 	peak_mag = ((ss_summary_C >> 12) & 0x3ff);
 
-	printf("agc_total_gain_segid0 = 0x%.2x, agc_mb_gain_segid0=%d\n",
+	qdf_print("agc_total_gain_segid0 = 0x%.2x, agc_mb_gain_segid0=%d\n",
 	       agc_total_gain, agc_mb_gain);
-	printf("nb_mask_segid0 = 0x%.2x, ob_flag_segid0=%d, "
+	qdf_print("nb_mask_segid0 = 0x%.2x, ob_flag_segid0=%d, "
 	       "peak_index_segid0=%d, peak_mag_segid0=%d\n",
 	       nb_mask, ob_flag, peak_inx, peak_mag);
 
@@ -342,9 +329,9 @@ int dump_summary_report_gen2(
 		peak_inx = peak_inx - 4096;
 	peak_mag = ((ss_summary_E >> 12) & 0x3ff);
 
-	printf("agc_total_gain_segid1 = 0x%.2x, agc_mb_gain_segid1=%d\n",
+	qdf_print("agc_total_gain_segid1 = 0x%.2x, agc_mb_gain_segid1=%d\n",
 	       agc_total_gain, agc_mb_gain);
-	printf("nb_mask_segid1 = 0x%.2x, ob_flag_segid1=%d, "
+	qdf_print("nb_mask_segid1 = 0x%.2x, ob_flag_segid1=%d, "
 	       "peak_index_segid1=%d, peak_mag_segid1=%d\n",
 	       nb_mask, ob_flag, peak_inx, peak_mag);
 	} else {

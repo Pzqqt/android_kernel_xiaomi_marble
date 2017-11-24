@@ -275,6 +275,7 @@ struct wlan_lmac_if_sa_api_tx_ops {
 #endif
 
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
+struct wmi_spectral_cmd_ops;
 /**
  * struct wlan_lmac_if_sptrl_tx_ops - Spectral south bound Tx operations
  * @sptrlto_spectral_init:          Initialize LMAC/target_if Spectral
@@ -316,6 +317,9 @@ struct wlan_lmac_if_sptrl_tx_ops {
 					     void *outdata);
 	void (*sptrlto_get_spectral_diagstats)(struct wlan_objmgr_pdev *pdev,
 					       void *outdata);
+	void (*sptrlto_register_wmi_spectral_cmd_ops)(
+		struct wlan_objmgr_pdev *pdev,
+		struct wmi_spectral_cmd_ops *cmd_ops);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 

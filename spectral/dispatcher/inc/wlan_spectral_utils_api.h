@@ -55,4 +55,16 @@ QDF_STATUS wlan_spectral_deinit(void);
  */
 void wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
 
+/**
+* wlan_register_wmi_spectral_cmd_ops(): Register operations related to wmi
+					commands on spectral parameters
+* @pdev    - the physical device object
+* @cmd_ops - pointer to the structure holding the operations
+*	     related to wmi commands on spectral parameters
+*
+* Return: None
+*/
+void wlan_register_wmi_spectral_cmd_ops(
+		struct wlan_objmgr_pdev *pdev,
+		struct wmi_spectral_cmd_ops *cmd_ops);
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/
