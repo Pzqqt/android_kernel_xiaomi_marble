@@ -5242,6 +5242,27 @@ QDF_STATUS wmi_extract_vdev_start_resp(void *wmi_hdl, void *evt_buf,
 }
 
 /**
+ * wmi_extract_vdev_delete_resp() - extract vdev delete response
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param delete_rsp: Pointer to hold vdev delete response
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_vdev_delete_resp(void *wmi_hdl, void *evt_buf,
+	struct wmi_host_vdev_delete_resp *delete_rsp)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_vdev_delete_resp)
+		return wmi_handle->ops->extract_vdev_delete_resp(wmi_handle,
+				evt_buf, delete_rsp);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+
+/**
  * wmi_extract_tbttoffset_num_vdevs() - extract tbtt offset num vdev
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer

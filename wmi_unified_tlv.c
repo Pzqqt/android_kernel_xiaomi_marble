@@ -16951,6 +16951,39 @@ static QDF_STATUS extract_vdev_start_resp_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * extract_vdev_delete_resp_tlv() - extract vdev delete response
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param delete_rsp: Pointer to hold vdev delete response
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static QDF_STATUS extract_vdev_delete_resp_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, struct wmi_host_vdev_delete_resp *delete_rsp)
+{
+	WMI_VDEV_DELETE_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_delete_resp_event_fixed_param *ev;
+
+	param_buf = (WMI_VDEV_DELETE_RESP_EVENTID_param_tlvs *) evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid vdev delete response event buffer\n");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ev = param_buf->fixed_param;
+	if (!ev) {
+		WMI_LOGE("Invalid vdev delete response event\n");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_mem_zero(delete_rsp, sizeof(*delete_rsp));
+	delete_rsp->vdev_id = ev->vdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/**
  * extract_tbttoffset_num_vdevs_tlv() - extract tbtt offset num vdev
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -20282,6 +20315,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_ready_event_params = extract_ready_event_params_tlv,
 	.extract_dbglog_data_len = extract_dbglog_data_len_tlv,
 	.extract_vdev_start_resp = extract_vdev_start_resp_tlv,
+	.extract_vdev_delete_resp = extract_vdev_delete_resp_tlv,
 	.extract_tbttoffset_update_params =
 				extract_tbttoffset_update_params_tlv,
 	.extract_ext_tbttoffset_update_params =
