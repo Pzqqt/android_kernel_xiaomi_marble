@@ -647,7 +647,7 @@ QDF_STATUS utils_dfs_get_random_channel(
 
 	ch_params->center_freq_seg0 = cur_chan.dfs_ch_vhtop_ch_freq_seg1;
 	ch_params->center_freq_seg1 = cur_chan.dfs_ch_vhtop_ch_freq_seg2;
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"input width=%d", ch_params->ch_width);
 
 	if (*target_chan) {
@@ -657,7 +657,7 @@ QDF_STATUS utils_dfs_get_random_channel(
 		status = QDF_STATUS_SUCCESS;
 	}
 
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"ch=%d, seg0=%d, seg1=%d, width=%d",
 			*target_chan, ch_params->center_freq_seg0,
 			ch_params->center_freq_seg1, ch_params->ch_width);

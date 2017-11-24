@@ -464,16 +464,8 @@ static inline void dfs_radarfound_reset_vars(
 	dfs->wlan_dfs_stats.num_radar_detects++;
 	thischan = &rs->rs_chan;
 	if ((seg_id == SEG_ID_SECONDARY) &&
-			(dfs_is_precac_timer_running(dfs))) {
+			(dfs_is_precac_timer_running(dfs)))
 		dfs->is_radar_during_precac = 1;
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"Radar found on second segment VHT80 freq=%d MHz",
-				dfs->dfs_precac_secondary_freq);
-	} else {
-		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
-				"Radar found on channel %d (%d MHz)",
-				thischan->dfs_ch_ieee, thischan->dfs_ch_freq);
-	}
 
 	/*
 	 * If event log is on then dump the radar event queue on

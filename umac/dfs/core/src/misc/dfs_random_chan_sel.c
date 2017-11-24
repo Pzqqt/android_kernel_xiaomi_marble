@@ -32,6 +32,7 @@
 /**
  * dfs_populate_80mhz_available_channels()- Populate channels for 80MHz using
  *                                          bitmap
+ * @dfs: Pointer to DFS structure.
  * @bitmap: bitmap
  * @avail_chnl: prepared channel list
  *
@@ -40,8 +41,9 @@
  * Return: channel count
  */
 static uint8_t dfs_populate_80mhz_available_channels(
-	struct chan_bonding_bitmap *bitmap,
-	uint8_t *avail_chnl)
+		struct wlan_dfs *dfs,
+		struct chan_bonding_bitmap *bitmap,
+		uint8_t *avail_chnl)
 {
 	uint8_t i = 0;
 	uint8_t chnl_count = 0;
@@ -62,7 +64,7 @@ static uint8_t dfs_populate_80mhz_available_channels(
 		}
 	}
 
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"channel count %d", chnl_count);
 
 	return chnl_count;
@@ -71,6 +73,7 @@ static uint8_t dfs_populate_80mhz_available_channels(
 /**
  * dfs_populate_40mhz_available_channels()- Populate channels for 40MHz using
  *                                          bitmap
+ * @dfs: Pointer to DFS structure.
  * @bitmap: bitmap
  * @avail_chnl: prepared channel list
  *
@@ -79,8 +82,9 @@ static uint8_t dfs_populate_80mhz_available_channels(
  * Return: channel count
  */
 static uint8_t dfs_populate_40mhz_available_channels(
-	struct chan_bonding_bitmap *bitmap,
-	uint8_t *avail_chnl)
+		struct wlan_dfs *dfs,
+		struct chan_bonding_bitmap *bitmap,
+		uint8_t *avail_chnl)
 {
 	uint8_t i = 0;
 	uint8_t chnl_count = 0;
@@ -103,7 +107,8 @@ static uint8_t dfs_populate_40mhz_available_channels(
 				(DFS_NEXT_5GHZ_CHANNEL * 3);
 		}
 	}
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"channel count %d", chnl_count);
 
 	return chnl_count;
@@ -112,6 +117,7 @@ static uint8_t dfs_populate_40mhz_available_channels(
 /**
  * dfs_populate_available_channels()- Populate channels based on width and
  *                                    bitmap
+ * @dfs: Pointer to DFS structure.
  * @bitmap: bitmap
  * @ch_width: channel width
  * @avail_chnl: prepared channel list
@@ -121,21 +127,22 @@ static uint8_t dfs_populate_40mhz_available_channels(
  * Return: channel count
  */
 static uint8_t dfs_populate_available_channels(
-	struct chan_bonding_bitmap *bitmap,
-	uint8_t ch_width,
-	uint8_t *avail_chnl)
+		struct wlan_dfs *dfs,
+		struct chan_bonding_bitmap *bitmap,
+		uint8_t ch_width,
+		uint8_t *avail_chnl)
 {
 	switch (ch_width) {
 	case DFS_CH_WIDTH_160MHZ:
 	case DFS_CH_WIDTH_80P80MHZ:
 	case DFS_CH_WIDTH_80MHZ:
 		return dfs_populate_80mhz_available_channels(
-			bitmap, avail_chnl);
+			dfs, bitmap, avail_chnl);
 	case DFS_CH_WIDTH_40MHZ:
 		return dfs_populate_40mhz_available_channels(
-			bitmap, avail_chnl);
+			dfs, bitmap, avail_chnl);
 	default:
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_err(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"Invalid ch_width %d", ch_width);
 		break;
 	}
@@ -145,6 +152,7 @@ static uint8_t dfs_populate_available_channels(
 
 /**
  * dfs_get_rand_from_lst()- Get random channel from a given channel list
+ * @dfs: Pointer to DFS structure.
  * @ch_lst: channel list
  * @num_ch: number of channels
  *
@@ -152,7 +160,10 @@ static uint8_t dfs_populate_available_channels(
  *
  * Return: channel number
  */
-static uint8_t dfs_get_rand_from_lst(uint8_t *ch_lst, uint8_t num_ch)
+static uint8_t dfs_get_rand_from_lst(
+		struct wlan_dfs *dfs,
+		uint8_t *ch_lst,
+		uint8_t num_ch)
 {
 	uint8_t i;
 	uint32_t rand_byte = 0;
@@ -167,7 +178,8 @@ static uint8_t dfs_get_rand_from_lst(uint8_t *ch_lst, uint8_t num_ch)
 	get_random_bytes((uint8_t *)&rand_byte, 1);
 	i = (rand_byte + qdf_mc_timer_get_system_ticks()) % num_ch;
 
-	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "random channel %d", ch_lst[i]);
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
+			"random channel %d", ch_lst[i]);
 	return ch_lst[i];
 }
 
@@ -246,18 +258,19 @@ static uint8_t dfs_find_ch_with_fallback(
 	}
 
 	/* populate available channel list from bitmap */
-	final_cnt = dfs_populate_available_channels(&ch_map, *ch_wd, final_lst);
+	final_cnt = dfs_populate_available_channels(dfs, &ch_map,
+			*ch_wd, final_lst);
 
 	/* If no valid ch bonding found, fallback */
 	if (final_cnt == 0) {
 		if ((*ch_wd == DFS_CH_WIDTH_160MHZ) ||
 		    (*ch_wd == DFS_CH_WIDTH_80P80MHZ) ||
 		    (*ch_wd == DFS_CH_WIDTH_80MHZ)) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"from [%d] to 40Mhz", *ch_wd);
 			*ch_wd = DFS_CH_WIDTH_40MHZ;
 		} else if (*ch_wd == DFS_CH_WIDTH_40MHZ) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"from 40Mhz to 20MHz");
 			*ch_wd = DFS_CH_WIDTH_20MHZ;
 		}
@@ -268,7 +281,7 @@ static uint8_t dfs_find_ch_with_fallback(
 	if (((*ch_wd == DFS_CH_WIDTH_160MHZ) ||
 	     (*ch_wd == DFS_CH_WIDTH_80P80MHZ)) &&
 	     (final_cnt < DFS_MAX_20M_SUB_CH)) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"from [%d] to 80Mhz", *ch_wd);
 		*ch_wd = DFS_CH_WIDTH_80MHZ;
 		return 0;
@@ -297,7 +310,7 @@ static uint8_t dfs_find_ch_with_fallback(
 	}
 
 	if ((flag == false) && (*ch_wd > DFS_CH_WIDTH_80MHZ)) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"from [%d] to 80Mhz", *ch_wd);
 		*ch_wd = DFS_CH_WIDTH_80MHZ;
 		return 0;
@@ -339,12 +352,13 @@ static uint8_t dfs_find_ch_with_fallback(
 			*ch_wd = DFS_CH_WIDTH_80MHZ;
 
 		*center_freq_seg1 = sec_seg_ch;
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"Center frequency seg1 = %d", sec_seg_ch);
 	} else {
-		target_channel = dfs_get_rand_from_lst(final_lst, final_cnt);
+		target_channel = dfs_get_rand_from_lst(dfs,
+				final_lst, final_cnt);
 	}
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"target channel = %d", target_channel);
 
 	return target_channel;
@@ -385,7 +399,7 @@ static bool dfs_freq_is_in_nol(struct wlan_dfs *dfs, uint32_t freq)
 	struct dfs_nolelem *nol;
 
 	if (!dfs) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		dfs_err(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,  "null dfs");
 		return false;
 	}
 
@@ -558,21 +572,21 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	uint16_t flag_no_weather = 0;
 
 	if (!ch_list || !ch_cnt) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"Invalid params %pK, ch_cnt=%d",
 				ch_list, ch_cnt);
 		return 0;
 	}
 
 	if (*ch_wd < DFS_CH_WIDTH_20MHZ || *ch_wd > DFS_CH_WIDTH_80P80MHZ) {
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"Invalid ch_wd %d", *ch_wd);
 		return 0;
 	}
 
 	random_chan_list = qdf_mem_malloc(ch_cnt * sizeof(*random_chan_list));
 	if (!random_chan_list) {
-		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_alert(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 				"Memory allocation failed");
 		return 0;
 	}
@@ -589,7 +603,7 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	do {
 		if (*ch_wd == DFS_CH_WIDTH_20MHZ) {
 			target_ch = dfs_get_rand_from_lst(
-				random_chan_list, random_chan_cnt);
+				dfs, random_chan_list, random_chan_cnt);
 			break;
 		}
 
@@ -618,7 +632,7 @@ uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
 	} while (true);
 
 	qdf_mem_free(random_chan_list);
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "target_ch = %d", target_ch);
+	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN, "target_ch = %d", target_ch);
 
 	return target_ch;
 }
