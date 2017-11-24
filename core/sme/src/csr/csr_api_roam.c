@@ -13855,6 +13855,7 @@ void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 	uint8_t Channel;
 	ePhyChanBondState cbMode = PHY_SINGLE_CHANNEL_CENTERED;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
+	bool skip_hostapd_rate = !pProfile->chan_switch_hostapd_rate_enabled;
 
 	if (!pSession) {
 		sme_err("session %d not found", sessionId);
@@ -13870,7 +13871,8 @@ void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 	} else {
 		csr_roam_get_bss_start_parms(pMac, pProfile,
-					     &pSession->bssParams, false);
+					     &pSession->bssParams,
+					     skip_hostapd_rate);
 		/* Use the first SSID */
 		if (pProfile->SSIDs.numOfSSIDs)
 			qdf_mem_copy(&pSession->bssParams.ssId,
