@@ -17,7 +17,7 @@
  */
 
 /*
- * DOC: contains scan cache internal api
+ * DOC: contains scan internal api
  */
 
 #ifndef _WLAN_SCAN_CACHE_DB_I_H_
