@@ -15653,7 +15653,7 @@ static bool wlan_hdd_handle_sap_sta_dfs_conc(struct hdd_adapter *adapter,
 	 * machine from disconnected to started and set this event.
 	 * wait for 10 secs to finish this.
 	 */
-	status = qdf_wait_single_event(&hostapd_state->qdf_event, 10000);
+	status = qdf_wait_for_event_completion(&hostapd_state->qdf_event, 10000);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("wait for qdf_event failed, STA not allowed!!");
 		return false;
@@ -18515,7 +18515,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						adapter->sta_info[i].
 						is_deauth_in_progress = true;
 						qdf_status =
-							qdf_wait_single_event(
+							qdf_wait_for_event_completion(
 							 &hapd_state->
 							 qdf_sta_disassoc_event,
 							 SME_CMD_TIMEOUT_VALUE);
@@ -18580,7 +18580,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				       MAC_ADDR_ARRAY(mac));
 				return -ENOENT;
 			}
-			qdf_status = qdf_wait_single_event(
+			qdf_status = qdf_wait_for_event_completion(
 					&hapd_state->
 					qdf_sta_disassoc_event,
 					SME_CMD_TIMEOUT_VALUE);

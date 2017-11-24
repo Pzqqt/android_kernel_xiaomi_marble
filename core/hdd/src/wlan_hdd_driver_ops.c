@@ -1455,6 +1455,7 @@ static void wlan_hdd_pld_uevent(struct device *dev,
 		break;
 	case PLD_FW_DOWN:
 		cds_set_fw_state(CDS_FW_STATE_DOWN);
+		qdf_complete_wait_events();
 		cds_set_target_ready(false);
 		break;
 	case PLD_FW_READY:
