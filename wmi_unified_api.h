@@ -1288,6 +1288,19 @@ QDF_STATUS wmi_extract_fips_event_data(void *wmi_hdl, void *evt_buf,
 QDF_STATUS wmi_extract_vdev_start_resp(void *wmi_hdl, void *evt_buf,
 		wmi_host_vdev_start_resp *vdev_rsp);
 
+/**
+ * wmi_extract_vdev_delete_resp - api to extract vdev delete
+ * response event params
+ * @wmi_handle: wma handle
+ * @evt_buf: pointer to event buffer
+ * @delele_rsp: pointer to hold delete response from firmware
+ *
+ * Return: QDF_STATUS_SUCCESS for successful event parse
+ *         else QDF_STATUS_E_INVAL or QDF_STATUS_E_FAILURE
+ */
+QDF_STATUS wmi_extract_vdev_delete_resp(void *wmi_hdl, void *evt_buf,
+		struct wmi_host_vdev_delete_resp *delele_rsp);
+
 QDF_STATUS wmi_extract_tbttoffset_update_params(void *wmi_hdl, void *evt_buf,
 		uint8_t idx, struct tbttoffset_params *tbtt_param);
 
