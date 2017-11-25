@@ -12245,6 +12245,163 @@ void hdd_update_ie_whitelist_attr(struct probe_req_whitelist_attr *ie_whitelist,
 		ie_whitelist->voui[i] = cfg->probe_req_voui[i];
 }
 
+uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score)
+{
+	uint8_t i, score;
+
+	for (i = 0; i < MAX_INDEX_PER_INI; i++) {
+		score = WLAN_GET_SCORE_PERCENTAGE(per_index_score, i);
+		if (score > MAX_INDEX_SCORE)
+			WLAN_SET_SCORE_PERCENTAGE(per_index_score,
+				MAX_INDEX_SCORE, i);
+	}
+
+	return per_index_score;
+}
+
+/**
+ * hdd_update_score_config - API to update candidate scoring related params
+ * configuration parameters
+ * @score_config: score config to update
+ * @cfg: config params
+ *
+ * Return: 0 if success else err
+ */
+static void hdd_update_score_config(
+	struct scoring_config *score_config, struct hdd_config *cfg)
+{
+	int total_weight;
+
+	score_config->weight_cfg.rssi_weightage = cfg->rssi_weightage;
+	score_config->weight_cfg.ht_caps_weightage = cfg->ht_caps_weightage;
+	score_config->weight_cfg.vht_caps_weightage =
+					cfg->vht_caps_weightage;
+	score_config->weight_cfg.he_caps_weightage =
+					cfg->he_caps_weightage;
+	score_config->weight_cfg.chan_width_weightage =
+		cfg->chan_width_weightage;
+	score_config->weight_cfg.chan_band_weightage =
+		cfg->chan_band_weightage;
+	score_config->weight_cfg.nss_weightage = cfg->nss_weightage;
+	score_config->weight_cfg.beamforming_cap_weightage =
+		cfg->beamforming_cap_weightage;
+	score_config->weight_cfg.pcl_weightage = cfg->pcl_weightage;
+	score_config->weight_cfg.channel_congestion_weightage =
+			cfg->channel_congestion_weightage;
+	score_config->weight_cfg.oce_wan_weightage = cfg->oce_wan_weightage;
+
+	total_weight = score_config->weight_cfg.rssi_weightage +
+		       score_config->weight_cfg.ht_caps_weightage +
+		       score_config->weight_cfg.vht_caps_weightage +
+		       score_config->weight_cfg.he_caps_weightage +
+		       score_config->weight_cfg.chan_width_weightage +
+		       score_config->weight_cfg.chan_band_weightage +
+		       score_config->weight_cfg.nss_weightage +
+		       score_config->weight_cfg.beamforming_cap_weightage +
+		       score_config->weight_cfg.pcl_weightage +
+		       score_config->weight_cfg.channel_congestion_weightage +
+		       score_config->weight_cfg.oce_wan_weightage;
+
+	if (total_weight > BEST_CANDIDATE_MAX_WEIGHT) {
+		hdd_err("total weight is greater than %d fallback to default values",
+			BEST_CANDIDATE_MAX_WEIGHT);
+
+		score_config->weight_cfg.rssi_weightage = RSSI_WEIGHTAGE;
+		score_config->weight_cfg.ht_caps_weightage =
+			HT_CAPABILITY_WEIGHTAGE;
+		score_config->weight_cfg.vht_caps_weightage = VHT_CAP_WEIGHTAGE;
+		score_config->weight_cfg.he_caps_weightage = HE_CAP_WEIGHTAGE;
+		score_config->weight_cfg.chan_width_weightage =
+			CHAN_WIDTH_WEIGHTAGE;
+		score_config->weight_cfg.chan_band_weightage =
+			CHAN_BAND_WEIGHTAGE;
+		score_config->weight_cfg.nss_weightage = NSS_WEIGHTAGE;
+		score_config->weight_cfg.beamforming_cap_weightage =
+			BEAMFORMING_CAP_WEIGHTAGE;
+		score_config->weight_cfg.pcl_weightage = PCL_WEIGHT;
+		score_config->weight_cfg.channel_congestion_weightage =
+			CHANNEL_CONGESTION_WEIGHTAGE;
+		score_config->weight_cfg.oce_wan_weightage = OCE_WAN_WEIGHTAGE;
+	}
+
+	score_config->bandwidth_weight_per_index =
+		hdd_limit_max_per_index_score(
+			cfg->bandwidth_weight_per_index);
+	score_config->nss_weight_per_index =
+		hdd_limit_max_per_index_score(cfg->nss_weight_per_index);
+	score_config->band_weight_per_index =
+		hdd_limit_max_per_index_score(cfg->band_weight_per_index);
+
+	score_config->rssi_score.best_rssi_threshold =
+				cfg->best_rssi_threshold;
+	score_config->rssi_score.good_rssi_threshold =
+				cfg->good_rssi_threshold;
+	score_config->rssi_score.bad_rssi_threshold =
+				cfg->bad_rssi_threshold;
+	score_config->rssi_score.good_rssi_pcnt = cfg->good_rssi_pcnt;
+	score_config->rssi_score.bad_rssi_pcnt = cfg->bad_rssi_pcnt;
+	score_config->rssi_score.good_rssi_bucket_size =
+		cfg->good_rssi_bucket_size;
+	score_config->rssi_score.bad_rssi_bucket_size =
+		cfg->bad_rssi_bucket_size;
+	score_config->rssi_score.rssi_pref_5g_rssi_thresh =
+		cfg->rssi_pref_5g_rssi_thresh;
+
+	score_config->esp_qbss_scoring.num_slot = cfg->num_esp_qbss_slots;
+	score_config->esp_qbss_scoring.score_pcnt3_to_0 =
+		hdd_limit_max_per_index_score(
+			cfg->esp_qbss_score_slots3_to_0);
+	score_config->esp_qbss_scoring.score_pcnt7_to_4 =
+		hdd_limit_max_per_index_score(
+			cfg->esp_qbss_score_slots7_to_4);
+	score_config->esp_qbss_scoring.score_pcnt11_to_8 =
+		hdd_limit_max_per_index_score(
+			cfg->esp_qbss_score_slots11_to_8);
+	score_config->esp_qbss_scoring.score_pcnt15_to_12 =
+		hdd_limit_max_per_index_score(
+			cfg->esp_qbss_score_slots15_to_12);
+
+	score_config->oce_wan_scoring.num_slot = cfg->num_oce_wan_slots;
+	score_config->oce_wan_scoring.score_pcnt3_to_0 =
+		hdd_limit_max_per_index_score(
+			cfg->oce_wan_score_slots3_to_0);
+	score_config->oce_wan_scoring.score_pcnt7_to_4 =
+		hdd_limit_max_per_index_score(
+			cfg->oce_wan_score_slots7_to_4);
+	score_config->oce_wan_scoring.score_pcnt11_to_8 =
+		hdd_limit_max_per_index_score(
+			cfg->oce_wan_score_slots11_to_8);
+	score_config->oce_wan_scoring.score_pcnt15_to_12 =
+		hdd_limit_max_per_index_score(
+			cfg->oce_wan_score_slots15_to_12);
+
+
+	score_config->cb_mode_24G = cfg->nChannelBondingMode24GHz;
+	score_config->cb_mode_5G = cfg->nChannelBondingMode5GHz;
+	score_config->nss = cfg->enable2x2 ? 2 : 1;
+
+	if (cfg->dot11Mode == eHDD_DOT11_MODE_AUTO ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11ax_ONLY)
+		score_config->he_cap = 1;
+
+	if (score_config->he_cap ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11ac ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY)
+		score_config->vht_cap = 1;
+
+	if (score_config->vht_cap || cfg->dot11Mode == eHDD_DOT11_MODE_11n ||
+	    cfg->dot11Mode == eHDD_DOT11_MODE_11n_ONLY)
+		score_config->ht_cap = 1;
+
+	if (score_config->vht_cap && cfg->enableVhtFor24GHzBand)
+		score_config->vht_24G_cap = 1;
+
+	if (cfg->enableTxBF)
+		score_config->beamformee_cap = 1;
+
+}
+
 /**
  * hdd_update_scan_config - API to update scan configuration parameters
  * @hdd_ctx: HDD context
@@ -12281,6 +12438,7 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);
+	hdd_update_score_config(&scan_cfg.score_config, cfg);
 
 	status = ucfg_scan_update_user_config(psoc, &scan_cfg);
 	if (status != QDF_STATUS_SUCCESS) {

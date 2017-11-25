@@ -8355,28 +8355,6 @@ hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode)
 }
 
 /**
- * hdd_limit_max_per_index_score() -check if per index score doesnt exceed 100%
- * (0x64). If it exceed make it 100%
- *
- * @per_index_score: per_index_score as input
- *
- * Return: per_index_score within the max limit
- */
-static uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score)
-{
-	uint8_t i, score;
-
-	for (i = 0; i < MAX_INDEX_PER_INI; i++) {
-		score = WLAN_GET_SCORE_PERCENTAGE(per_index_score, i);
-		if (score > MAX_INDEX_SCORE)
-			WLAN_SET_SCORE_PERCENTAGE(per_index_score,
-				MAX_INDEX_SCORE, i);
-	}
-
-	return per_index_score;
-}
-
-/**
  * hdd_update_score_params() -initializes the sme config for bss score params
  *
  * @config: pointer to config

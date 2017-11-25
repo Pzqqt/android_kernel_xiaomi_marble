@@ -5341,8 +5341,6 @@ static QDF_STATUS csr_fill_bss_from_scan_entry(tpAniSirGlobal mac_ctx,
 
 	bss->AgingCount =
 		(int32_t) mac_ctx->roam.configParam.agingCount;
-	bss->preferValue = scan_entry->prefer_value;
-	bss->capValue = scan_entry->cap_val;
 	bss->ucEncryptionType =
 		csr_covert_enc_type_old(scan_entry->neg_sec_info.uc_enc);
 	bss->mcEncryptionType =
