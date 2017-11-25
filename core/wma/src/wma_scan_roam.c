@@ -4220,6 +4220,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 	wmi_extscan_wlan_descriptor *src_hotlist;
 	uint32_t numap;
 	int j, ap_found = 0;
+	uint32_t buf_len;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
@@ -4249,6 +4250,16 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 			__func__, numap);
 		numap = WMA_EXTSCAN_MAX_HOTLIST_ENTRIES;
 	}
+
+	buf_len = sizeof(wmi_extscan_hotlist_match_event_fixed_param) +
+		  (4 * sizeof(uint32_t)) +
+		  (numap * sizeof(wmi_extscan_wlan_descriptor));
+
+	if (buf_len > len) {
+		WMA_LOGE("Invalid buf len from FW %d numap %d", len, numap);
+		return -EINVAL;
+	}
+
 	dest_hotlist = qdf_mem_malloc(sizeof(*dest_hotlist) +
 				      sizeof(*dest_ap) * numap);
 	if (!dest_hotlist) {
