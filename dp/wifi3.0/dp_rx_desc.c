@@ -80,8 +80,12 @@ void dp_rx_desc_pool_free(struct dp_soc *soc, uint32_t pool_id,
 
 	qdf_spin_lock_bh(&soc->rx_desc_mutex[pool_id]);
 	for (i = 0; i < rx_desc_pool->pool_size; i++) {
-		if (rx_desc_pool->array[i].rx_desc.in_use)
+		if (rx_desc_pool->array[i].rx_desc.in_use) {
+			qdf_nbuf_unmap_single(soc->osdev,
+					rx_desc_pool->array[i].rx_desc.nbuf,
+					QDF_DMA_BIDIRECTIONAL);
 			qdf_nbuf_free(rx_desc_pool->array[i].rx_desc.nbuf);
+		}
 	}
 	qdf_mem_free(rx_desc_pool->array);
 	qdf_spin_unlock_bh(&soc->rx_desc_mutex[pool_id]);
