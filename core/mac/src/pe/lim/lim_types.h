@@ -898,7 +898,6 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac);
 /**
  * lim_disassoc_tx_complete_cnf() - callback to indicate Tx completion
  * @context: pointer to mac structure
- * @buf: buffer
  * @txCompleteSuccess: indicates tx success/failure
  * @params: tx completion params
  *
@@ -907,14 +906,12 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac);
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
 QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
-					qdf_nbuf_t buf,
 					uint32_t txCompleteSuccess,
 					void *params);
 
 /**
  * lim_deauth_tx_complete_cnf() - callback to indicate Tx completion
  * @context: pointer to mac structure
- * @buf: buffer
  * @txCompleteSuccess: indicates tx success/failure
  * @params: tx completion params
  *
@@ -923,7 +920,6 @@ QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
  * return: success: QDF_STATUS_SUCCESS failure: QDF_STATUS_E_FAILURE
  */
 QDF_STATUS lim_deauth_tx_complete_cnf(void *context,
-				      qdf_nbuf_t buf,
 				      uint32_t txCompleteSuccess,
 				      void *params);
 

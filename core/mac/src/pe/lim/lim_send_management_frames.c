@@ -2453,90 +2453,91 @@ alloc_packet:
 	return;
 }
 
-QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
+QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal mac_ctx)
 {
 	uint16_t aid;
-	tpDphHashNode pStaDs;
-	tLimMlmDeauthReq *pMlmDeauthReq;
-	tLimMlmDeauthCnf mlmDeauthCnf;
-	tpPESession psessionEntry;
+	tpDphHashNode sta_ds;
+	tLimMlmDeauthReq *deauth_req;
+	tLimMlmDeauthCnf deauth_cnf;
+	tpPESession session_entry;
 
-	pMlmDeauthReq = pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
-	if (pMlmDeauthReq) {
-		if (tx_timer_running(&pMac->lim.limTimers.gLimDeauthAckTimer)) {
-			lim_deactivate_and_change_timer(pMac,
+	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
+	if (deauth_req) {
+		if (tx_timer_running(
+			&mac_ctx->lim.limTimers.gLimDeauthAckTimer))
+			lim_deactivate_and_change_timer(mac_ctx,
 							eLIM_DEAUTH_ACK_TIMER);
-		}
 
-		psessionEntry = pe_find_session_by_session_id(pMac,
-				pMlmDeauthReq->sessionId);
-		if (psessionEntry == NULL) {
+		session_entry = pe_find_session_by_session_id(mac_ctx,
+					deauth_req->sessionId);
+		if (session_entry == NULL) {
 			pe_err("session does not exist for given sessionId");
-			mlmDeauthCnf.resultCode =
+			deauth_cnf.resultCode =
 				eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
 
-		pStaDs =
-			dph_lookup_hash_entry(pMac,
-					      pMlmDeauthReq->peer_macaddr.bytes,
+		sta_ds =
+			dph_lookup_hash_entry(mac_ctx,
+					      deauth_req->peer_macaddr.bytes,
 					      &aid,
-					      &psessionEntry->dph.dphHashTable);
-		if (pStaDs == NULL) {
-			mlmDeauthCnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
+					      &session_entry->dph.dphHashTable);
+		if (sta_ds == NULL) {
+			deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 			goto end;
 		}
 
 		/* / Receive path cleanup with dummy packet */
-		lim_ft_cleanup_pre_auth_info(pMac, psessionEntry);
-		lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
-		if ((psessionEntry->limSystemRole == eLIM_STA_ROLE) &&
-				(
+		lim_ft_cleanup_pre_auth_info(mac_ctx, session_entry);
+		lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry);
+		if ((session_entry->limSystemRole == eLIM_STA_ROLE) &&
+		    (
 #ifdef FEATURE_WLAN_ESE
-				 (psessionEntry->isESEconnection) ||
+		    (session_entry->isESEconnection) ||
 #endif
-				 (psessionEntry->isFastRoamIniFeatureEnabled) ||
-				 (psessionEntry->is11Rconnection))) {
+		    (session_entry->isFastRoamIniFeatureEnabled) ||
+		    (session_entry->is11Rconnection))) {
 			pe_debug("FT Preauth (%pK,%d) Deauth rc %d src = %d",
-					psessionEntry,
-					psessionEntry->peSessionId,
-					pMlmDeauthReq->reasonCode,
-					pMlmDeauthReq->deauthTrigger);
-			lim_ft_cleanup(pMac, psessionEntry);
+				 session_entry,
+				 session_entry->peSessionId,
+				 deauth_req->reasonCode,
+				 deauth_req->deauthTrigger);
+			lim_ft_cleanup(mac_ctx, session_entry);
 		} else {
 			pe_debug("No FT Preauth Session Cleanup in role %d"
 #ifdef FEATURE_WLAN_ESE
-				" isESE %d"
+				 " isESE %d"
 #endif
-				" isLFR %d"
-				" is11r %d, Deauth reason %d Trigger = %d",
-				psessionEntry->limSystemRole,
+				 " isLFR %d"
+				 " is11r %d, Deauth reason %d Trigger = %d",
+				 session_entry->limSystemRole,
 #ifdef FEATURE_WLAN_ESE
-				psessionEntry->isESEconnection,
+				 session_entry->isESEconnection,
 #endif
-				psessionEntry->isFastRoamIniFeatureEnabled,
-				psessionEntry->is11Rconnection,
-				pMlmDeauthReq->reasonCode,
-				pMlmDeauthReq->deauthTrigger);
+				 session_entry->isFastRoamIniFeatureEnabled,
+				 session_entry->is11Rconnection,
+				 deauth_req->reasonCode,
+				 deauth_req->deauthTrigger);
 		}
 		/* Free up buffer allocated for mlmDeauthReq */
-		qdf_mem_free(pMlmDeauthReq);
-		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
+		qdf_mem_free(deauth_req);
+		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
 	}
 	return QDF_STATUS_SUCCESS;
 end:
-	qdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr,
-			 &pMlmDeauthReq->peer_macaddr);
-	mlmDeauthCnf.deauthTrigger = pMlmDeauthReq->deauthTrigger;
-	mlmDeauthCnf.aid = pMlmDeauthReq->aid;
-	mlmDeauthCnf.sessionId = pMlmDeauthReq->sessionId;
+	qdf_copy_macaddr(&deauth_cnf.peer_macaddr,
+			 &deauth_req->peer_macaddr);
+	deauth_cnf.deauthTrigger = deauth_req->deauthTrigger;
+	deauth_cnf.aid = deauth_req->aid;
+	deauth_cnf.sessionId = deauth_req->sessionId;
 
 	/* Free up buffer allocated */
 	/* for mlmDeauthReq */
-	qdf_mem_free(pMlmDeauthReq);
+	qdf_mem_free(deauth_req);
+	mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
 
-	lim_post_sme_message(pMac,
-			     LIM_MLM_DEAUTH_CNF, (uint32_t *) &mlmDeauthCnf);
+	lim_post_sme_message(mac_ctx,
+			     LIM_MLM_DEAUTH_CNF, (uint32_t *) &deauth_cnf);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2592,10 +2593,10 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 			goto end;
 		}
 		if (LIM_IS_STA_ROLE(pe_session) &&
-			(disassoc_req->reasonCode !=
-				eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
+		    (disassoc_req->reasonCode !=
+		    eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
 			pe_debug("FT Preauth Session (%pK %d) Clean up",
-					pe_session, pe_session->peSessionId);
+				 pe_session, pe_session->peSessionId);
 
 			/* Delete FT session if there exists one */
 			lim_ft_cleanup_pre_auth_info(mac_ctx, pe_session);
@@ -2629,33 +2630,73 @@ end:
 }
 
 QDF_STATUS lim_disassoc_tx_complete_cnf(void *context,
-					qdf_nbuf_t buf,
-					uint32_t txCompleteSuccess,
+					uint32_t tx_success,
 					void *params)
 {
-	tpAniSirGlobal pMac = (tpAniSirGlobal)context;
+	tpAniSirGlobal max_ctx = (tpAniSirGlobal)context;
 
-	pe_debug("txCompleteSuccess: %d", txCompleteSuccess);
+	pe_debug("tx_success: %d", tx_success);
+
+	return lim_send_disassoc_cnf(max_ctx);
+}
+
+static QDF_STATUS lim_disassoc_tx_complete_cnf_handler(void *context,
+						       qdf_nbuf_t buf,
+						       uint32_t tx_success,
+						       void *params)
+{
+	tpAniSirGlobal max_ctx = (tpAniSirGlobal)context;
+	QDF_STATUS status_code;
+	struct scheduler_msg msg = {0};
+
+	pe_debug("tx_success: %d", tx_success);
 
 	if (buf)
 		qdf_nbuf_free(buf);
+	msg.type = (uint16_t) WMA_DISASSOC_TX_COMP;
+	msg.bodyptr = params;
+	msg.bodyval = tx_success;
 
-	return lim_send_disassoc_cnf(pMac);
+	status_code = lim_post_msg_high_priority(max_ctx, &msg);
+	if (status_code != QDF_STATUS_SUCCESS)
+		pe_err("posting message: %X to LIM failed, reason: %d",
+		       msg.type, status_code);
+	return status_code;
 }
 
 QDF_STATUS lim_deauth_tx_complete_cnf(void *context,
-				      qdf_nbuf_t buf,
-				      uint32_t txCompleteSuccess,
+				      uint32_t tx_success,
 				      void *params)
 {
-	tpAniSirGlobal pMac = (tpAniSirGlobal)context;
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
 
-	pe_debug("txCompleteSuccess: %d", txCompleteSuccess);
+	pe_debug("tx_success: %d", tx_success);
+
+	return lim_send_deauth_cnf(mac_ctx);
+}
+
+static QDF_STATUS lim_deauth_tx_complete_cnf_handler(void *context,
+						     qdf_nbuf_t buf,
+						     uint32_t tx_success,
+						     void *params)
+{
+	tpAniSirGlobal mac_ctx = (tpAniSirGlobal)context;
+	QDF_STATUS status_code;
+	struct scheduler_msg msg = {0};
+
+	pe_debug("tx_success: %d", tx_success);
 
 	if (buf)
 		qdf_nbuf_free(buf);
+	msg.type = (uint16_t) WMA_DEAUTH_TX_COMP;
+	msg.bodyptr = params;
+	msg.bodyval = tx_success;
 
-	return lim_send_deauth_cnf(pMac);
+	status_code = lim_post_msg_high_priority(mac_ctx, &msg);
+	if (status_code != QDF_STATUS_SUCCESS)
+		pe_err("posting message: %X to LIM failed, reason: %d",
+		       msg.type, status_code);
+	return status_code;
 }
 
 /**
@@ -2784,7 +2825,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
-					 pFrame, lim_disassoc_tx_complete_cnf,
+					 pFrame, lim_disassoc_tx_complete_cnf_handler,
 					 txFlag, smeSessionId, false, 0,
 					 RATEID_DEFAULT);
 		MTRACE(qdf_trace
@@ -2960,7 +3001,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
-					 pFrame, lim_deauth_tx_complete_cnf,
+					 pFrame, lim_deauth_tx_complete_cnf_handler,
 					 txFlag, smeSessionId, false, 0,
 					 RATEID_DEFAULT);
 		MTRACE(qdf_trace
