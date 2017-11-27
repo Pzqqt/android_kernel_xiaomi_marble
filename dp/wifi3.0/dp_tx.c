@@ -504,8 +504,8 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 		break;
 	}
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			cached_ext_desc, HAL_TX_EXT_DESC_WITH_META_DATA);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			   cached_ext_desc, HAL_TX_EXT_DESC_WITH_META_DATA);
 
 	hal_tx_ext_desc_sync(&cached_ext_desc[0],
 			msdu_ext_desc->vaddr);
@@ -2242,7 +2242,7 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_peer *peer = NULL;
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"-------------------- \n"
 				"Tx Completion Stats: \n"
 				"-------------------- \n"
