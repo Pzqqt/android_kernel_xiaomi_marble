@@ -6216,6 +6216,26 @@ typedef struct
      */
 } wmi_peer_ac_rx_stats;
 
+typedef struct
+{
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_stats_period */
+    /*
+     * This struct provides the timestamps from a low-frequency timer
+     * for the start and end of a stats period.
+     * Each timestamp is reported twice, with different units.
+     * The _msec timestamp is in millisecond units.
+     * The _count timestamp is in clock tick units.
+     * The timestamp is reported in clock ticks as well as in milliseconds
+     * so that if the stats start and end times fall within the same
+     * millisecond, the clock tick timestamps can still be used to
+     * determine what fraction of a millisecond the stats period occupied.
+     */
+    A_UINT32 start_low_freq_msec;
+    A_UINT32 start_low_freq_count;
+    A_UINT32 end_low_freq_msec;
+    A_UINT32 end_low_freq_count;
+} wmi_stats_period;
+
 typedef enum {
     /** Periodic timer timed out, based on the period specified
      *  by WMI_PDEV_PARAM_STATS_OBSERVATION_PERIOD
@@ -6288,6 +6308,8 @@ typedef struct {
     /** Array size of rx_mcs[] which is histogram of encoding rate.
      *  The array indicates number of PPDUs received at a specific rate */
     A_UINT32 rx_mcs_array_len;
+    /** Array size of stats_period[] which contains several stats periods. */
+    A_UINT32 stats_period_array_len;
 
     /**
      * This TLV is followed by TLVs below:
@@ -6309,6 +6331,7 @@ typedef struct {
      *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mpdu_aggr_array_len + A-MPDU aggregation index
      *    A_UINT32                 rx_mcs[][][];             Array length is (num_peer_ac_rx_stats * WLAN_MAX_AC) * rx_mcs_array_len,
      *                                                       array index is (peer_index * WLAN_MAX_AC + ac_index) * rx_mcs_array_len + MCS index
+     *    wmi_stats_period         stats_period[];           Array length is specified by stats_period_array_len
      **/
 } wmi_report_stats_event_fixed_param;
 
