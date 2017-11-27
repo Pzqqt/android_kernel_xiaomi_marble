@@ -6021,7 +6021,7 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	{
 		QCASAP_PARAM_RANGE_EXT,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-		0, "enable_range_ext"
+		0, "range_ext"
 	}
 	,
 	{	QCSAP_SET_DEFAULT_AMPDU,

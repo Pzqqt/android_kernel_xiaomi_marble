@@ -1077,7 +1077,7 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 
 /*
  * <ioctl>
- * enable_range_ext - enable Range extension
+ * range_ext - enable Range extension
  *
  * @INPUT: 0/1
  *
@@ -1085,7 +1085,7 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  *
  * This IOCTL enables/disables Range extension.
  *
- * @E.g: iwpriv wlan0 enable_range_ext <0/1>
+ * @E.g: iwpriv wlan0 range_ext <1/0>
  *
  * Supported Feature: STA/SAP
  *
@@ -11981,7 +11981,7 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_SET_RANGE_EXT,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
-	 "enable_range_ext"}
+	 "range_ext"}
 	,
 
 	{WLAN_PRIV_SET_FTIES,
