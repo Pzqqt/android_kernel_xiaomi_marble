@@ -123,6 +123,7 @@
 #include "os_if_nan.h"
 #include "nan_public_structs.h"
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_dfs_ucfg_api.h"
 #include "wlan_hdd_rx_monitor.h"
 #include "sme_power_save_api.h"
 #include "enet.h"
@@ -12786,6 +12787,29 @@ static void hdd_update_score_config(
 }
 
 /**
+ * hdd_update_dfs_config() - API to update dfs configuration parameters.
+ * @hdd_ctx: HDD context
+ *
+ * Return: 0 if success else err
+ */
+static int hdd_update_dfs_config(struct hdd_context *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct hdd_config *cfg = hdd_ctx->config;
+	struct dfs_user_config dfs_cfg;
+	QDF_STATUS status;
+
+	dfs_cfg.dfs_is_phyerr_filter_offload = !!cfg->fDfsPhyerrFilterOffload;
+	status = ucfg_dfs_update_config(psoc, &dfs_cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("failed dfs psoc configuration");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
  * hdd_update_scan_config - API to update scan configuration parameters
  * @hdd_ctx: HDD context
  *
@@ -12849,6 +12873,10 @@ int hdd_update_components_config(struct hdd_context *hdd_ctx)
 		return ret;
 
 	ret = hdd_update_dp_config(hdd_ctx);
+	if (ret)
+		return ret;
+
+	ret = hdd_update_dfs_config(hdd_ctx);
 
 	return ret;
 }
