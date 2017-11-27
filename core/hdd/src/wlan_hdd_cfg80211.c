@@ -11581,6 +11581,11 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		return err;
 	}
 
+	if (adapter->session_id == HDD_SESSION_ID_INVALID) {
+		hdd_err("Invalid session id");
+		return -EINVAL;
+	}
+
 	if (tb[STATS_SET_START]) {
 		if (!tb[STATS_GW_IPV4]) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
