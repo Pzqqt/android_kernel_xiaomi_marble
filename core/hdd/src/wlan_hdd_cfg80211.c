@@ -5549,8 +5549,14 @@ void wlan_hdd_save_gtk_offload_params(struct hdd_adapter *adapter,
 	if (kck_ptr)
 		qdf_mem_copy(gtk_req->kck, kck_ptr, NL80211_KCK_LEN);
 
-	if (kek_ptr)
+	if (kek_ptr) {
+		/* paranoia */
+		if (kek_len > sizeof(gtk_req->kek)) {
+			kek_len = sizeof(gtk_req->kek);
+			QDF_ASSERT(0);
+		}
 		qdf_mem_copy(gtk_req->kek, kek_ptr, kek_len);
+	}
 
 	qdf_copy_macaddr(&gtk_req->bssid, &hdd_sta_ctx->conn_info.bssId);
 
