@@ -2250,15 +2250,23 @@ typedef struct {
      * are provided in the subsequent mac_addr_list TLV
      */
     A_UINT32 num_extra_mac_addr;
-    /* Total number of peers allocated by FW
-     * Host sends param_tlv->resource_config->num_peers as 'number of peers' +
-     * 'number of bss peers' (vdevs)
-     * Firmware adds number of self peers and/or other FW only peers.
-     * Peer ID can be up to num_total_peers.
+    /*
+     * Total number of "real" peers (remote peers of an AP vdev,
+     * BSS peer of a STA vdev, TDLS peer of a STA vdev) that FW supports.
      * If 0, then Host can use param_tlv->resource_config->num_peers as
      * total number of peers.
      */
     A_UINT32 num_total_peers;
+    /*
+     * Number of extra peers that Firmware adds.
+     * These are self peers and/or other FW only peers that don't represent
+     * a 802.11 transceiver, but instead are used for convenience, e.g. to
+     * provide a pseudo-peer object for an AP vdev's bcast/mcast tx queues,
+     * to allow each tx queue to belong to a peer object.
+     * Peer ID can be up to num_total_peers + num_extra_peers.
+     */
+    A_UINT32 num_extra_peers;
+
 /*
  * This fixed_param TLV is followed by these additional TLVs:
  * mac_addr_list[num_extra_mac_addr];
