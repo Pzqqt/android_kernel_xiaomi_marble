@@ -5818,11 +5818,34 @@ QDF_STATUS sme_get_cfg_valid_channels(uint8_t *aValidChannels,
 	return status;
 }
 
+static uint8_t *sme_reg_hint_to_str(const enum country_src src)
+{
+	switch (src) {
+	case SOURCE_CORE:
+		return "WORLD MODE";
+
+	case SOURCE_DRIVER:
+		return "BDF file";
+
+	case SOURCE_USERSPACE:
+		return "user-space";
+
+	case SOURCE_11D:
+		return "802.11D IEs in beacons";
+
+	default:
+		return "unknown";
+	}
+}
+
 void sme_set_cc_src(tHalHandle hHal, enum country_src cc_src)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
 
 	mac_ctx->reg_hint_src = cc_src;
+
+	sme_debug("Country source is %s",
+		  sme_reg_hint_to_str(cc_src));
 }
 /*
  * sme_handle_change_country_code() -
