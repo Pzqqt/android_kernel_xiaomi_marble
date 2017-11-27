@@ -588,11 +588,11 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 		req->cancel_req.requester, req->cancel_req.scan_id,
 		req->cancel_req.vdev_id, req->cancel_req.req_type);
 
-	/* Get vdev reference unconditionally.
-	 * Reference will be released once scan cancel is
-	 * posted to FW.
-	 */
-	wlan_objmgr_vdev_get_ref(req->vdev, WLAN_SCAN_ID);
+	status = wlan_objmgr_vdev_try_get_ref(req->vdev, WLAN_SCAN_ID);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_info("Failed to get vdev ref; status:%d", status);
+		goto req_free;
+	}
 
 	msg.bodyptr = req;
 	msg.callback = scm_scan_cancel_req;
@@ -601,9 +601,16 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		scm_err("failed to post to QDF_MODULE_ID_OS_IF");
-		wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
-		qdf_mem_free(req);
+		goto vdev_put;
 	}
+
+	return QDF_STATUS_SUCCESS;
+
+vdev_put:
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
+
+req_free:
+	qdf_mem_free(req);
 
 	return status;
 }
