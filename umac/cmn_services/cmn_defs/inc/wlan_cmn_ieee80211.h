@@ -878,11 +878,17 @@ struct wlan_tim_ie {
 
 /**
  * struct rsn_mdie: mobility domain IE
+ * @rsn_id: RSN IE id
+ * @rsn_len: RSN IE len
  * @mobility_domain: mobility domain info
  * @ft_capab: ft capability
+ *
+ * Reference 9.4.2.47 Mobility Domain element (MDE) of 802.11-2016
  */
 struct rsn_mdie {
-	uint8_t mobility_domain[3];
+	uint8_t rsn_id;
+	uint8_t rsn_len;
+	uint8_t mobility_domain[2];
 	uint8_t ft_capab;
 } qdf_packed;
 
