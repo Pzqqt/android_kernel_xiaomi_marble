@@ -8141,6 +8141,7 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
+	bool is_ssr = false;
 	int ret;
 
 	ENTER();
@@ -8151,12 +8152,14 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		return qdf_status_to_os_return(QDF_STATUS_SUCCESS);
 	}
 	/*
-	 * create sap context first and then create vdev as
-	 * while creating the vdev, driver needs to register
-	 * SAP callback and that callback uses sap context
+	 * In SSR case no need to create new sap context.
+	 * Otherwise create sap context first and then create
+	 * vdev as while creating the vdev, driver needs to
+	 * register SAP callback and that callback uses sap context
 	 */
-	if (!adapter->session.ap.sap_context &&
-	    !hdd_sap_create_ctx(adapter)) {
+	if (adapter->session.ap.sap_context) {
+		is_ssr = true;
+	} else if (!hdd_sap_create_ctx(adapter)) {
 		hdd_err("sap creation failed");
 		return qdf_status_to_os_return(QDF_STATUS_E_FAILURE);
 	}
@@ -8168,7 +8171,7 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		hdd_sap_destroy_ctx(adapter);
 		return ret;
 	}
-	status = hdd_init_ap_mode(adapter, false);
+	status = hdd_init_ap_mode(adapter, is_ssr);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Error Initializing the AP mode: %d", status);
