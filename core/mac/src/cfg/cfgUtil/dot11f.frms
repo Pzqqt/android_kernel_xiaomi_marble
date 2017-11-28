@@ -2838,7 +2838,8 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       sr_responder:1;
       ndp_feedback_supp:1;
       ops_supp:1;
-      reserved1:2;
+      amsdu_in_ampdu:1;
+      reserved1:1;
     }
     {
       dual_band:1;
@@ -2853,7 +2854,7 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
       device_class:1;
       ldpc_coding:1;
       he_1x_ltf_800_gi_ppdu:1;
-      reserved:2;
+      midamble_rx_max_nsts:2;
       he_4x_ltf_3200_gi_ndp:1;
       stbc_lt_80mhz:2;
       doppler:2;
@@ -2886,7 +2887,12 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
     }
     {
       er_he_ltf_800_gi_4x:1;
-      reserved2:7;
+      he_ppdu_20_in_40Mhz_2G:1;
+      he_ppdu_20_in_160_80p80Mhz:1;
+      he_ppdu_80_in_160_80p80Mhz:1;
+      er_1x_he_ltf_gi:1;
+      midamble_rx_1x_he_ltf:1;
+      reserved2:2;
     }
     rx_he_mcs_map_lt_80, 2;
     tx_he_mcs_map_lt_80, 2;
