@@ -4358,6 +4358,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
 	unsigned long rc;
+	tsap_Config_t *sap_config;
 
 	ENTER();
 
@@ -4462,6 +4463,10 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 
 	case QDF_SAP_MODE:
 		/* Flush IPA exception path packets */
+		sap_config = &adapter->session.ap.sap_config;
+		if (sap_config)
+			wlansap_reset_sap_config_add_ie(sap_config,
+							eUPDATE_IE_ALL);
 		hdd_ipa_flush(hdd_ctx);
 
 	case QDF_P2P_GO_MODE:
