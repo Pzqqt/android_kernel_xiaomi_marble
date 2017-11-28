@@ -3620,6 +3620,10 @@ static int msm_routing_ec_ref_rx_put(struct snd_kcontrol *kcontrol,
 		msm_route_ec_ref_rx = 22;
 		ec_ref_port_id = AFE_PORT_ID_INT3_MI2S_TX;
 		break;
+	case 23:
+		msm_route_ec_ref_rx = 23;
+		ec_ref_port_id = AFE_PORT_ID_HDMI_OVER_DP_RX;
+		break;
 	default:
 		msm_route_ec_ref_rx = 0; /* NONE */
 		pr_err("%s EC ref rx %ld not valid\n",
@@ -3642,7 +3646,7 @@ static const char *const ec_ref_rx[] = { "None", "SLIM_RX", "I2S_RX",
 	"SLIM_5_RX", "SLIM_1_TX", "QUAT_TDM_TX_1",
 	"QUAT_TDM_RX_0", "QUAT_TDM_RX_1", "QUAT_TDM_RX_2", "SLIM_6_RX",
 	"TERT_MI2S_RX", "QUAT_MI2S_RX", "TERT_TDM_TX_0", "USB_AUDIO_RX",
-	"INT0_MI2S_RX", "INT4_MI2S_RX", "INT3_MI2S_TX"};
+	"INT0_MI2S_RX", "INT4_MI2S_RX", "INT3_MI2S_TX", "DISPLAY_PORT"};
 
 static const struct soc_enum msm_route_ec_ref_rx_enum[] = {
 	SOC_ENUM_SINGLE_EXT(ARRAY_SIZE(ec_ref_rx), ec_ref_rx),
@@ -8087,6 +8091,33 @@ static const struct snd_kcontrol_new usb_audio_rx_voice_mixer_controls[] = {
 	MSM_FRONTEND_DAI_VOICEMMODE1, 1, 0, msm_routing_get_voice_mixer,
 	msm_routing_put_voice_mixer),
 	SOC_SINGLE_EXT("VoiceMMode2", MSM_BACKEND_DAI_USB_RX,
+	MSM_FRONTEND_DAI_VOICEMMODE2, 1, 0, msm_routing_get_voice_mixer,
+	msm_routing_put_voice_mixer),
+};
+
+static const struct snd_kcontrol_new display_port_rx_voice_mixer_controls[] = {
+	SOC_SINGLE_EXT("Voip", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_VOIP, 1, 0, msm_routing_get_voice_mixer,
+	msm_routing_put_voice_mixer),
+	SOC_SINGLE_EXT("Voice Stub", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_VOICE_STUB, 1, 0, msm_routing_get_voice_stub_mixer,
+	msm_routing_put_voice_stub_mixer),
+	SOC_SINGLE_EXT("Voice2 Stub", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_VOICE2_STUB, 1, 0, msm_routing_get_voice_stub_mixer,
+	msm_routing_put_voice_stub_mixer),
+	SOC_SINGLE_EXT("VoLTE Stub", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_VOLTE_STUB, 1, 0, msm_routing_get_voice_stub_mixer,
+	msm_routing_put_voice_stub_mixer),
+	SOC_SINGLE_EXT("DTMF", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_DTMF_RX, 1, 0, msm_routing_get_voice_mixer,
+	msm_routing_put_voice_mixer),
+	SOC_SINGLE_EXT("QCHAT", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_QCHAT, 1, 0, msm_routing_get_voice_mixer,
+	msm_routing_put_voice_mixer),
+	SOC_SINGLE_EXT("VoiceMMode1", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
+	MSM_FRONTEND_DAI_VOICEMMODE1, 1, 0, msm_routing_get_voice_mixer,
+	msm_routing_put_voice_mixer),
+	SOC_SINGLE_EXT("VoiceMMode2", MSM_BACKEND_DAI_DISPLAY_PORT_RX,
 	MSM_FRONTEND_DAI_VOICEMMODE2, 1, 0, msm_routing_get_voice_mixer,
 	msm_routing_put_voice_mixer),
 };
@@ -13552,6 +13583,9 @@ static const struct snd_soc_dapm_widget msm_qdsp6_widgets[] = {
 	SND_SOC_DAPM_MIXER("USB_AUDIO_RX Port Mixer",
 	SND_SOC_NOPM, 0, 0, usb_rx_port_mixer_controls,
 	ARRAY_SIZE(usb_rx_port_mixer_controls)),
+	SND_SOC_DAPM_MIXER("DISPLAY_PORT_RX_Voice Mixer",
+	SND_SOC_NOPM, 0, 0, display_port_rx_voice_mixer_controls,
+	ARRAY_SIZE(display_port_rx_voice_mixer_controls)),
 	/* lsm mixer definitions */
 	SND_SOC_DAPM_MIXER("LSM1 Mixer", SND_SOC_NOPM, 0, 0,
 	lsm1_mixer_controls, ARRAY_SIZE(lsm1_mixer_controls)),
@@ -15028,6 +15062,16 @@ static const struct snd_soc_dapm_route intercon[] = {
 	{"USB_AUDIO_RX_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
 	{"USB_AUDIO_RX_Voice Mixer", "VoiceMMode2", "VOICEMMODE2_DL"},
 	{"USB_AUDIO_RX", NULL, "USB_AUDIO_RX_Voice Mixer"},
+
+	{"DISPLAY_PORT_RX_Voice Mixer", "Voip", "VOIP_DL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "DTMF", "DTMF_DL_HL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "Voice Stub", "VOICE_STUB_DL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "Voice2 Stub", "VOICE2_STUB_DL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "VoLTE Stub", "VOLTE_STUB_DL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "QCHAT", "QCHAT_DL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "VoiceMMode1", "VOICEMMODE1_DL"},
+	{"DISPLAY_PORT_RX_Voice Mixer", "VoiceMMode2", "VOICEMMODE2_DL"},
+	{"DISPLAY_PORT", NULL, "DISPLAY_PORT_RX_Voice Mixer"},
 
 	{"INTERNAL_BT_SCO_RX_Voice Mixer", "Voip", "VOIP_DL"},
 	{"INTERNAL_BT_SCO_RX_Voice Mixer", "DTMF", "DTMF_DL_HL"},
