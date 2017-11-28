@@ -191,6 +191,7 @@ struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
 				struct wlan_objmgr_psoc *psoc, char *ifname,
 				wlan_objmgr_ref_dbgid ref_id)
 {
+	QDF_STATUS status;
 	struct wlan_find_vdev_filter filter = {0};
 
 	filter.ifname = ifname;
@@ -198,8 +199,12 @@ struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
 				     wlan_util_get_vdev_by_ifname_cb,
 				     &filter, 0, ref_id);
 
-	if (filter.found_vdev)
-		wlan_objmgr_vdev_get_ref(filter.found_vdev, ref_id);
+	if (!filter.found_vdev)
+		return NULL;
+
+	status = wlan_objmgr_vdev_try_get_ref(filter.found_vdev, ref_id);
+	if (QDF_IS_STATUS_ERROR(status))
+		return NULL;
 
 	return filter.found_vdev;
 }
