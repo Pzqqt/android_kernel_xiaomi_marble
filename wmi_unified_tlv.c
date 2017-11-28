@@ -16867,9 +16867,11 @@ static QDF_STATUS extract_ready_event_params_tlv(wmi_unified_t wmi_handle,
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
 	ev = param_buf->fixed_param;
 
+	ev_param->status = ev->status;
 	ev_param->num_dscp_table = ev->num_dscp_table;
 	ev_param->num_extra_mac_addr = ev->num_extra_mac_addr;
 	ev_param->num_total_peer = ev->num_total_peers;
+	ev_param->num_extra_peer = ev->num_extra_peers;
 	/* Agile_cap in ready event is not supported in TLV target */
 	ev_param->agile_capability = false;
 
