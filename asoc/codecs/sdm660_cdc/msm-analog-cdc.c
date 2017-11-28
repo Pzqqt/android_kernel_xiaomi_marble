@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -4396,7 +4396,7 @@ static int msm_anlg_cdc_init_supplies(struct sdm660_cdc_priv *sdm660_cdc,
 	return ret;
 
 err_supplies:
-	kfree(sdm660_cdc->supplies);
+	devm_kfree(sdm660_cdc->dev, sdm660_cdc->supplies);
 err:
 	return ret;
 }
@@ -4442,9 +4442,6 @@ static void msm_anlg_cdc_disable_supplies(struct sdm660_cdc_priv *sdm660_cdc,
 				pdata->regulator[i].max_uv);
 		regulator_set_load(sdm660_cdc->supplies[i].consumer, 0);
 	}
-	regulator_bulk_free(sdm660_cdc->num_of_supplies,
-			    sdm660_cdc->supplies);
-	kfree(sdm660_cdc->supplies);
 }
 
 static const struct of_device_id sdm660_codec_of_match[] = {
@@ -4531,6 +4528,7 @@ static void msm_anlg_add_child_devices(struct work_struct *work)
 				__func__);
 			pdata->dig_ctrl_data = dig_ctrl_data;
 		}
+		pdata->pdev_child_devices[pdata->child_count++] = pdev;
 	}
 
 	return;
@@ -4639,9 +4637,16 @@ static int msm_anlg_cdc_remove(struct platform_device *pdev)
 {
 	struct sdm660_cdc_priv *sdm660_cdc = dev_get_drvdata(&pdev->dev);
 	struct sdm660_cdc_pdata *pdata = sdm660_cdc->dev->platform_data;
+	int count;
 
+	for (count = 0; count < sdm660_cdc->child_count &&
+				count < ANLG_CDC_CHILD_DEVICES_MAX; count++)
+		platform_device_unregister(
+				sdm660_cdc->pdev_child_devices[count]);
 	snd_soc_unregister_codec(&pdev->dev);
 	msm_anlg_cdc_disable_supplies(sdm660_cdc, pdata);
+	wcd9xxx_spmi_irq_exit();
+	devm_kfree(&pdev->dev, sdm660_cdc);
 	return 0;
 }
 

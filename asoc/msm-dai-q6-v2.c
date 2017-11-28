@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -8978,6 +8978,7 @@ fail:
 
 void msm_dai_q6_exit(void)
 {
+	platform_driver_unregister(&msm_dai_tdm_q6);
 	platform_driver_unregister(&msm_dai_q6_tdm_driver);
 	platform_driver_unregister(&msm_dai_q6_spdif_driver);
 	platform_driver_unregister(&msm_dai_mi2s_q6);
