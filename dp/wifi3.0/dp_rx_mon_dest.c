@@ -979,7 +979,7 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 fail:
 	for (i = 0; i < MAX_MON_LINK_DESC_BANKS; i++) {
 		if (dp_pdev->link_desc_banks[i].base_vaddr_unaligned) {
-			qdf_mem_free_consistent(soc->osdev, NULL,
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 			dp_pdev->link_desc_banks[i].size,
 			dp_pdev->link_desc_banks[i].base_vaddr_unaligned,
 			dp_pdev->link_desc_banks[i].base_paddr_unaligned, 0);
@@ -998,7 +998,7 @@ static void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 
 	for (i = 0; i < MAX_MON_LINK_DESC_BANKS; i++) {
 		if (dp_pdev->link_desc_banks[i].base_vaddr_unaligned) {
-			qdf_mem_free_consistent(soc->osdev, NULL,
+			qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
 			dp_pdev->link_desc_banks[i].size,
 			dp_pdev->link_desc_banks[i].base_vaddr_unaligned,
 			dp_pdev->link_desc_banks[i].base_paddr_unaligned, 0);
