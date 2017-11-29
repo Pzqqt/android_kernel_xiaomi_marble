@@ -183,7 +183,7 @@ struct fwdebug {
  * @ task - WMI workqueue task struct
  */
 struct wmi_wq_dbg_info {
-	uint16_t wd_msg_type_id;
+	uint32_t wd_msg_type_id;
 	qdf_workqueue_t *wmi_wq;
 	qdf_thread_t *task;
 };

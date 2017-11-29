@@ -1873,7 +1873,7 @@ end:
 
 #define WMI_WQ_WD_TIMEOUT (10 * 1000) /* 10s */
 
-static inline void wmi_workqueue_watchdog_warn(uint16_t msg_type_id)
+static inline void wmi_workqueue_watchdog_warn(uint32_t msg_type_id)
 {
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "%s: Message type %x has exceeded its alloted time of %ds",
