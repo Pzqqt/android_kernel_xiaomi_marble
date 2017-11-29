@@ -600,7 +600,7 @@ void tdls_set_ct_mode(struct wlan_objmgr_psoc *psoc)
 set_state:
 	tdls_soc_obj->enable_tdls_connection_tracker = state;
 
-	tdls_notice("enable_tdls_connection_tracker %d",
+	tdls_debug("enable_tdls_connection_tracker %d",
 		 tdls_soc_obj->enable_tdls_connection_tracker);
 }
 
