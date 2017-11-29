@@ -1627,21 +1627,6 @@ QDF_STATUS policy_mgr_get_valid_chan_weights(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!weight->pcl_list) {
-		policy_mgr_err("Invalid pcl");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!weight->saved_chan_list) {
-		policy_mgr_err("Invalid valid channel list");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!weight->weighed_valid_list) {
-		policy_mgr_err("Invalid weighed valid channel list");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	qdf_mem_set(weight->weighed_valid_list, QDF_MAX_NUM_CHAN,
 		    WEIGHT_OF_DISALLOWED_CHANNELS);
 	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
