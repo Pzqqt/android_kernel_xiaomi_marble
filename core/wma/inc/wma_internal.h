@@ -972,6 +972,9 @@ QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 
 int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				     uint32_t len);
+
+int wma_d0_wow_disable_ack_event(void *handle, uint8_t *event, uint32_t len);
+
 int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 
 QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
