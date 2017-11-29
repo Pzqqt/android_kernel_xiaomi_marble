@@ -543,7 +543,7 @@ QDF_STATUS ucfg_tdls_send_mgmt_frame(
 		mgmt_req->tdls_mgmt.len = 0;
 	}
 
-	tdls_notice("vdev id: %d, session id : %d", mgmt_req->vdev_id,
+	tdls_debug("vdev id: %d, session id : %d", mgmt_req->vdev_id,
 		    mgmt_req->session_id);
 	msg.bodyptr = mgmt_req;
 	msg.callback = tdls_process_cmd;
@@ -589,14 +589,14 @@ QDF_STATUS ucfg_tdls_teardown_links(struct wlan_objmgr_vdev *vdev)
 		tdls_err("vdev is NULL ");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	tdls_notice("Enter ");
+	tdls_debug("Enter ");
 
 	msg.bodyptr = vdev;
 	msg.callback = tdls_process_cmd;
 	msg.type = TDLS_CMD_TEARDOWN_LINKS;
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 
-	tdls_notice("Exit ");
+	tdls_debug("Exit ");
 	return status;
 }
 
@@ -628,7 +628,7 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 				notify_info->vdev, notify_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	tdls_notice("Enter ");
+	tdls_debug("Enter ");
 
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify)
@@ -645,7 +645,7 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 	msg.type = TDLS_NOTIFY_STA_CONNECTION;
 	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 
-	tdls_notice("Exit ");
+	tdls_debug("Exit ");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -661,7 +661,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	tdls_notice("Enter ");
+	tdls_debug("Enter ");
 
 	notify = qdf_mem_malloc(sizeof(*notify));
 	if (!notify)
@@ -679,7 +679,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 	msg.type = TDLS_NOTIFY_STA_DISCONNECTION;
 	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 
-	tdls_notice("Exit ");
+	tdls_debug("Exit ");
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -696,7 +696,7 @@ QDF_STATUS ucfg_tdls_set_operating_mode(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	tdls_notice("Enter ");
+	tdls_debug("Enter ");
 
 	set_mode = qdf_mem_malloc(sizeof(*set_mode));
 	if (!set_mode)
@@ -712,7 +712,7 @@ QDF_STATUS ucfg_tdls_set_operating_mode(
 	msg.type = TDLS_CMD_SET_TDLS_MODE;
 	scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 
-	tdls_notice("Exit ");
+	tdls_debug("Exit ");
 
 	return QDF_STATUS_SUCCESS;
 }
