@@ -38,11 +38,11 @@
 /**
  * dfs_nol_timeout() - NOL timeout function.
  *
- * Clears the IEEE80211_CHAN_DFS_RADAR_FOUND flag for the NOL timeout channel.
+ * Clears the WLAN_CHAN_DFS_RADAR_FOUND flag for the NOL timeout channel.
  */
 static os_timer_func(dfs_nol_timeout)
 {
-	struct dfs_ieee80211_channel *c = NULL, lc;
+	struct dfs_channel *c = NULL, lc;
 	unsigned long oldest, now;
 	struct wlan_dfs *dfs = NULL;
 	int i;
@@ -63,14 +63,14 @@ static os_timer_func(dfs_nol_timeout)
 				&(c->dfs_ch_vhtop_ch_freq_seg1),
 				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
-		if (IEEE80211_IS_CHAN_RADAR(c)) {
+		if (WLAN_IS_CHAN_RADAR(c)) {
 			if (qdf_system_time_after_eq(now,
 						dfs->dfs_nol_event[i] +
 						dfs_get_nol_timeout(dfs))) {
 				c->dfs_ch_flagext &=
-					~IEEE80211_CHAN_DFS_RADAR_FOUND;
+					~WLAN_CHAN_DFS_RADAR_FOUND;
 				if (c->dfs_ch_flags &
-						IEEE80211_CHAN_DFS_RADAR) {
+						WLAN_CHAN_DFS_RADAR) {
 					/*
 					 * NB: do this here so we get only one
 					 * msg instead of one for every channel
@@ -227,7 +227,7 @@ void dfs_print_nol(struct wlan_dfs *dfs)
 
 void dfs_print_nolhistory(struct wlan_dfs *dfs)
 {
-	struct dfs_ieee80211_channel *c, lc;
+	struct dfs_channel *c, lc;
 	int i, j = 0;
 	int nchans = 0;
 
@@ -248,7 +248,7 @@ void dfs_print_nolhistory(struct wlan_dfs *dfs)
 				&(c->dfs_ch_vhtop_ch_freq_seg1),
 				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
-		if (IEEE80211_IS_CHAN_HISTORY_RADAR(c)) {
+		if (WLAN_IS_CHAN_HISTORY_RADAR(c)) {
 			dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
 				"nolhistory:%d channel=%d MHz Flags=%llx",
 				j, c->dfs_ch_freq, c->dfs_ch_flags);
@@ -287,7 +287,7 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 {
 #define TIME_IN_MS 1000
 	uint32_t nol_time_left_ms;
-	struct dfs_ieee80211_channel chan;
+	struct dfs_channel chan;
 	int i;
 
 	if (!dfs) {
@@ -506,7 +506,7 @@ void dfs_getnol(struct wlan_dfs *dfs, void *dfs_nolinfo)
 void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 {
 	/* We should have a dfs_clear_nolhistory API from Regdomain. */
-	struct dfs_ieee80211_channel *c, lc;
+	struct dfs_channel *c, lc;
 	int i;
 	int nchans = 0;
 
@@ -521,6 +521,6 @@ void dfs_clear_nolhistory(struct wlan_dfs *dfs)
 				&(c->dfs_ch_vhtop_ch_freq_seg1),
 				&(c->dfs_ch_vhtop_ch_freq_seg2),
 				i);
-		IEEE80211_CHAN_CLR_HISTORY_RADAR(c);
+		WLAN_CHAN_CLR_HISTORY_RADAR(c);
 	}
 }

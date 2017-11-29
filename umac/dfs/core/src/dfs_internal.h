@@ -49,12 +49,14 @@ enum DFS_DOMAIN {
 };
 
 /* CAPABILITY: the device support STA DFS */
-#define IEEE80211_CEXT_STADFS 0x00000040
+#define WLAN_CEXT_STADFS 0x00000040
 
 /**
- * dfs_ieee80211_chan2freq() - Convert channel to frequency value.
- * @chan: Pointer to dfs_ieee80211_channel structure.
+ * dfs_chan2freq() - Convert channel to frequency value.
+ * @chan: Pointer to dfs_channel structure.
+ *
+ * Return: Channel frequency.
  */
-u_int dfs_ieee80211_chan2freq(struct dfs_ieee80211_channel *chan);
+uint16_t dfs_chan2freq(struct dfs_channel *chan);
 
 #endif /*  _DFS_INTERNAL_H_ */

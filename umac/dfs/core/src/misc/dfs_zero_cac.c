@@ -185,7 +185,7 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 	if (!TAILQ_EMPTY(&dfs->dfs_precac_done_list)) {
 		bool primary_found = 0;
 		/* Check if primary is DFS then search */
-		if (IEEE80211_IS_CHAN_DFS(dfs->dfs_curchan)) {
+		if (WLAN_IS_CHAN_DFS(dfs->dfs_curchan)) {
 			TAILQ_FOREACH(precac_entry,
 					&dfs->dfs_precac_done_list,
 					pe_list) {
@@ -200,7 +200,7 @@ bool dfs_is_ht80_80_chan_in_precac_done_list(struct wlan_dfs *dfs)
 		}
 
 		/* Check if secondary DFS then search */
-		if (IEEE80211_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan) &&
+		if (WLAN_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan) &&
 				primary_found) {
 			TAILQ_FOREACH(precac_entry,
 					&dfs->dfs_precac_done_list,
@@ -232,12 +232,12 @@ bool dfs_is_precac_done(struct wlan_dfs *dfs)
 {
 	bool ret_val = 0;
 
-	if (IEEE80211_IS_CHAN_11AC_VHT20(dfs->dfs_curchan) ||
-			IEEE80211_IS_CHAN_11AC_VHT40(dfs->dfs_curchan) ||
-			IEEE80211_IS_CHAN_11AC_VHT80(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_11AC_VHT20(dfs->dfs_curchan) ||
+			WLAN_IS_CHAN_11AC_VHT40(dfs->dfs_curchan) ||
+			WLAN_IS_CHAN_11AC_VHT80(dfs->dfs_curchan)) {
 		ret_val = dfs_is_ht20_40_80_chan_in_precac_done_list(dfs);
-	} else if (IEEE80211_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan) ||
-			IEEE80211_IS_CHAN_11AC_VHT160(dfs->dfs_curchan)) {
+	} else if (WLAN_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan) ||
+			WLAN_IS_CHAN_11AC_VHT160(dfs->dfs_curchan)) {
 		ret_val = dfs_is_ht80_80_chan_in_precac_done_list(dfs);
 	}
 
@@ -366,7 +366,7 @@ bool dfs_is_precac_timer_running(struct wlan_dfs *dfs)
 
 #define VHT80_IEEE_FREQ_OFFSET 6
 void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan)
+		struct dfs_channel *chan)
 {
 	uint8_t first_primary_dfs_ch_ieee;
 
@@ -375,7 +375,7 @@ void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
 
 	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
 			first_primary_dfs_ch_ieee, 0,
-			IEEE80211_MODE_11AC_VHT80,
+			WLAN_PHYMODE_11AC_VHT80,
 			&(chan->dfs_ch_freq),
 			&(chan->dfs_ch_flags),
 			&(chan->dfs_ch_flagext),
@@ -504,7 +504,7 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 	PRECAC_LIST_LOCK(dfs);
 	/* Fill the  precac-required-list with unique elements */
 	for (i = 0; i < nchans; i++) {
-		struct dfs_ieee80211_channel *ichan = NULL, lc;
+		struct dfs_channel *ichan = NULL, lc;
 
 		ichan = &lc;
 		dfs_mlme_get_dfs_ch_channels(dfs->dfs_pdev_obj,
@@ -516,8 +516,8 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 				&(ichan->dfs_ch_vhtop_ch_freq_seg2),
 				i);
 
-		if (IEEE80211_IS_CHAN_11AC_VHT80(ichan) &&
-				IEEE80211_IS_CHAN_DFS(ichan)) {
+		if (WLAN_IS_CHAN_11AC_VHT80(ichan) &&
+				WLAN_IS_CHAN_DFS(ichan)) {
 			found = 0;
 			TAILQ_FOREACH(tmp_precac_entry,
 					&dfs->dfs_precac_required_list,
@@ -648,7 +648,7 @@ void dfs_cancel_precac_timer(struct wlan_dfs *dfs)
 
 void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 {
-	struct dfs_ieee80211_channel *ichan, lc;
+	struct dfs_channel *ichan, lc;
 	uint8_t first_primary_dfs_ch_ieee;
 	int primary_cac_timeout;
 	int secondary_cac_timeout;
@@ -671,7 +671,7 @@ void dfs_start_precac_timer(struct wlan_dfs *dfs, uint8_t precac_chan)
 	ichan = &lc;
 	dfs_mlme_find_dot11_channel(dfs->dfs_pdev_obj,
 			first_primary_dfs_ch_ieee, 0,
-			IEEE80211_MODE_11AC_VHT80,
+			WLAN_PHYMODE_11AC_VHT80,
 			&(ichan->dfs_ch_freq),
 			&(ichan->dfs_ch_flags),
 			&(ichan->dfs_ch_flagext),
@@ -785,7 +785,7 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 	tx_ops = &(psoc->soc_cb.tx_ops.target_tx_ops);
 	target_type = lmac_get_target_type(dfs->dfs_pdev_obj);
 
-	if (chan_mode == IEEE80211_MODE_11AC_VHT80) {
+	if (chan_mode == WLAN_PHYMODE_11AC_VHT80) {
 		/*
 		 * If
 		 * 1) The chip is CASCADE
@@ -844,26 +844,26 @@ void dfs_find_vht80_chan_for_precac(struct wlan_dfs *dfs,
 
 					ieee_160_cfreq =
 						(ieee_freq + ch_freq_seg1)/2;
-					chan_mode = IEEE80211_MODE_11AC_VHT160;
+					chan_mode = WLAN_PHYMODE_11AC_VHT160;
 					*cfreq1 = dfs_mlme_ieee2mhz(
 							dfs->dfs_pdev_obj,
 							ch_freq_seg1,
-							IEEE80211_CHAN_5GHZ);
+							WLAN_CHAN_5GHZ);
 					*cfreq2 = dfs_mlme_ieee2mhz(
 							dfs->dfs_pdev_obj,
 							ieee_160_cfreq,
-							IEEE80211_CHAN_5GHZ);
+							WLAN_CHAN_5GHZ);
 				} else {
 					/*
 					 * Override the HW channel mode to
 					 * VHT80_80.
 					 */
 					chan_mode =
-						IEEE80211_MODE_11AC_VHT80_80;
+						WLAN_PHYMODE_11AC_VHT80_80;
 					*cfreq2 = dfs_mlme_ieee2mhz(
 							dfs->dfs_pdev_obj,
 							ieee_freq,
-							IEEE80211_CHAN_5GHZ);
+							WLAN_CHAN_5GHZ);
 				}
 				*phy_mode = lmac_get_phymode_info(
 						dfs->dfs_pdev_obj, chan_mode);

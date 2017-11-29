@@ -160,6 +160,7 @@ static QDF_STATUS dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 			nollist, num_ch, DFS_NOL_SET);
 	dfs_nol_update(dfs);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -276,7 +277,7 @@ static void dfs_find_radar_affected_subchans(
 	int i;
 	uint32_t freq_center, flag;
 	int32_t sidx;
-	struct dfs_ieee80211_channel *curchan = dfs->dfs_curchan;
+	struct dfs_channel *curchan = dfs->dfs_curchan;
 
 	qdf_mem_set(freq_offset, sizeof(*freq_offset), 0);
 	flag = curchan->dfs_ch_flags;
@@ -296,7 +297,7 @@ static void dfs_find_radar_affected_subchans(
 		} else {
 			freq_center = utils_dfs_chan_to_freq(
 					curchan->dfs_ch_vhtop_ch_freq_seg2);
-			if (flag & IEEE80211_CHAN_VHT160)
+			if (flag & WLAN_CHAN_VHT160)
 				freq_center += DFS_160MHZ_SECOND_SEG_OFFSET;
 		}
 	}
@@ -307,23 +308,23 @@ static void dfs_find_radar_affected_subchans(
 			radar_found->freq_offset, radar_found->is_chirp,
 			flag, freq_center);
 
-	if ((IEEE80211_IS_CHAN_A(curchan))         ||
-			IEEE80211_IS_CHAN_MODE_20(curchan)) {
+	if ((WLAN_IS_CHAN_A(curchan))         ||
+			WLAN_IS_CHAN_MODE_20(curchan)) {
 		if (radar_found->is_chirp ||
 		   (sidx && !(abs(sidx) % DFS_BOUNDRY_SIDX))) {
 			freq_offset->offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
 			freq_offset->offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
 		}
 		dfs_radar_chan_for_20(freq_offset, freq_center);
-	} else if (IEEE80211_IS_CHAN_MODE_40(curchan)) {
+	} else if (WLAN_IS_CHAN_MODE_40(curchan)) {
 		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDRY_SIDX)) {
 			freq_offset->offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
 			freq_offset->offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
 		}
 		dfs_radar_chan_for_40(freq_offset, freq_center);
-	} else if (IEEE80211_IS_CHAN_MODE_80(curchan) ||
-			IEEE80211_IS_CHAN_MODE_160(curchan) ||
-			IEEE80211_IS_CHAN_MODE_80_80(curchan)) {
+	} else if (WLAN_IS_CHAN_MODE_80(curchan) ||
+			WLAN_IS_CHAN_MODE_160(curchan) ||
+			WLAN_IS_CHAN_MODE_80_80(curchan)) {
 		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDRY_SIDX)) {
 			freq_offset->offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
 			freq_offset->offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
@@ -421,7 +422,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * related radar flags and begins the channel change
 	 * machinery.
 	 * XXX TODO: the umac NOL code isn't used, but
-	 * IEEE80211_CHAN_DFS_RADAR still gets set. Since the umac
+	 * WLAN_CHAN_DFS_RADAR still gets set. Since the umac
 	 * NOL code isn't used, that flag is never cleared. This
 	 * needs to be fixed. See EV 105776.
 	 */

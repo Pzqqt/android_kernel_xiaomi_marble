@@ -69,7 +69,7 @@ extern struct dfs_to_mlme global_dfs_to_mlme;
 
 /**
  * tgt_dfs_set_current_channel() - Fill dfs channel structure from
- *                                 dfs_ieee80211_channel structure.
+ *                                 dfs_channel structure.
  * @pdev: Pointer to DFS pdev object.
  * @dfs_ch_freq: Frequency in Mhz.
  * @dfs_ch_flags: Channel flags.

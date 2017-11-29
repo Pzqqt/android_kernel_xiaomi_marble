@@ -107,7 +107,7 @@ int dfs_get_pri_margin(struct wlan_dfs *dfs,
 	else
 		pri_margin = DFS_DEFAULT_PRI_MARGIN;
 
-	if (IEEE80211_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
 		ext_chan_busy = lmac_get_ext_busy(dfs->dfs_pdev_obj);
 		if (ext_chan_busy >= 0) {
 			dfs->dfs_rinfo.ext_chan_busy_ts =
@@ -133,7 +133,7 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
 
 	thresh = rf->rf_threshold;
 
-	if (IEEE80211_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
 		ext_chan_busy = lmac_get_ext_busy(dfs->dfs_pdev_obj);
 		if (ext_chan_busy >= 0) {
 			dfs->dfs_rinfo.ext_chan_busy_ts =

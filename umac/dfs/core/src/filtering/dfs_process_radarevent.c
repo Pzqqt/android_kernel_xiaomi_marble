@@ -449,10 +449,10 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 static inline void dfs_radarfound_reset_vars(
 		struct wlan_dfs *dfs,
 		struct dfs_state *rs,
-		struct dfs_ieee80211_channel *chan,
+		struct dfs_channel *chan,
 		uint8_t seg_id)
 {
-	struct dfs_ieee80211_channel *thischan;
+	struct dfs_channel *thischan;
 
 	/*
 	 * TODO: Instead of discarding the radar, create a workqueue
@@ -499,11 +499,11 @@ static inline void dfs_radarfound_reset_vars(
 }
 
 int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
-	struct dfs_ieee80211_channel *chan)
+	struct dfs_channel *chan)
 {
 	if (!(dfs->dfs_second_segment_bangradar ||
 				dfs_is_precac_timer_running(dfs)))
-		if (!(IEEE80211_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
+		if (!(WLAN_IS_PRIMARY_OR_SECONDARY_CHAN_DFS(chan))) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS2,
 					"radar event on non-DFS chan");
 			if (!(dfs->dfs_is_offload_enabled)) {
@@ -526,7 +526,7 @@ int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
  */
 static inline int dfs_handle_bangradar(
 	struct wlan_dfs *dfs,
-	struct dfs_ieee80211_channel *chan,
+	struct dfs_channel *chan,
 	struct dfs_state **rs,
 	uint8_t *seg_id,
 	int *retval)
@@ -546,8 +546,8 @@ static inline int dfs_handle_bangradar(
 
 	if (dfs->dfs_second_segment_bangradar) {
 		if (dfs_is_precac_timer_running(dfs) ||
-				IEEE80211_IS_CHAN_11AC_VHT160(chan) ||
-				IEEE80211_IS_CHAN_11AC_VHT80_80(chan)) {
+				WLAN_IS_CHAN_11AC_VHT160(chan) ||
+				WLAN_IS_CHAN_11AC_VHT80_80(chan)) {
 			dfs->is_radar_found_on_secondary_seg = 1;
 			*rs = &dfs->dfs_radar[dfs->dfs_curchan_radindex];
 			dfs_debug(dfs, WLAN_DEBUG_DFS,
@@ -604,7 +604,7 @@ static inline void dfs_process_w53_pulses(
  */
 static inline int dfs_handle_missing_pulses(
 		struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan)
+		struct dfs_channel *chan)
 {
 	if ((dfs->dfsdomain  == DFS_MKK4_DOMAIN) &&
 			(dfs->dfs_caps.wlan_chip_is_bb_tlv) &&
@@ -1136,7 +1136,7 @@ static inline void dfs_conditional_clear_delaylines(
  */
 static inline int dfs_process_each_radarevent(
 	struct wlan_dfs *dfs,
-	struct dfs_ieee80211_channel *chan,
+	struct dfs_channel *chan,
 	struct dfs_state **rs,
 	uint8_t *seg_id,
 	int *retval,
@@ -1216,7 +1216,7 @@ static inline void dfs_false_radarfound_reset_vars(
 
 void dfs_process_radarevent(
 	struct wlan_dfs *dfs,
-	struct dfs_ieee80211_channel *chan)
+	struct dfs_channel *chan)
 {
 	struct dfs_state *rs = NULL;
 	uint8_t   seg_id = 0;

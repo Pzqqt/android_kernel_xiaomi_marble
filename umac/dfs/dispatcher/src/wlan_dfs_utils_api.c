@@ -412,7 +412,7 @@ static void utils_dfs_get_max_sup_width(struct wlan_objmgr_pdev *pdev,
  */
 #ifndef QCA_DFS_USE_POLICY_MANAGER
 static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
-	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
+	struct dfs_channel *chan_list, uint32_t *num_chan)
 {
 	int i = 0, j = 0;
 	enum channel_state state;
@@ -447,7 +447,7 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
 			chan_list[j].dfs_ch_freq = cur_chan_list[i].center_freq;
 			if (state == CHANNEL_STATE_DFS)
 				chan_list[j].dfs_ch_flagext =
-					IEEE80211_CHAN_DFS;
+					WLAN_CHAN_DFS;
 			j++;
 		}
 	}
@@ -470,9 +470,9 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  * channel.
  */
 static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
-	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
+	struct dfs_channel *chan_list, uint32_t *num_chan)
 {
-	struct dfs_ieee80211_channel *tmp_chan_list = NULL;
+	struct dfs_channel *tmp_chan_list = NULL;
 	struct wlan_dfs *dfs;
 	bool is_curchan_5g;
 	bool is_curchan_24g;
@@ -533,7 +533,7 @@ static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
 #else
 
 static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
-	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
+	struct dfs_channel *chan_list, uint32_t *num_chan)
 {
 	uint8_t pcl_ch[NUM_CHANNELS];
 	uint8_t weight_list[NUM_CHANNELS];
@@ -586,7 +586,7 @@ static void utils_dfs_get_chan_list(struct wlan_objmgr_pdev *pdev,
  * @num_chan: number of channels.
  */
 static void utils_dfs_get_channel_list(struct wlan_objmgr_pdev *pdev,
-	struct dfs_ieee80211_channel *chan_list, uint32_t *num_chan)
+	struct dfs_channel *chan_list, uint32_t *num_chan)
 {
 	utils_dfs_get_chan_list(pdev, chan_list, num_chan);
 }
@@ -604,8 +604,8 @@ QDF_STATUS utils_dfs_get_random_channel(
 	uint32_t num_chan = NUM_CHANNELS;
 	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_psoc *psoc;
-	struct dfs_ieee80211_channel *chan_list = NULL;
-	struct dfs_ieee80211_channel cur_chan;
+	struct dfs_channel *chan_list = NULL;
+	struct dfs_channel cur_chan;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	*target_chan = 0;

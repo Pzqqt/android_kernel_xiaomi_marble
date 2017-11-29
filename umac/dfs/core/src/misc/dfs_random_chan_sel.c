@@ -180,6 +180,7 @@ static uint8_t dfs_get_rand_from_lst(
 
 	dfs_info(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 			"random channel %d", ch_lst[i]);
+
 	return ch_lst[i];
 }
 
@@ -376,10 +377,10 @@ static uint8_t dfs_find_ch_with_fallback(
  * Return: channel number
  */
 static void dfs_remove_cur_ch_from_list(
-	struct dfs_ieee80211_channel *ch_list,
+	struct dfs_channel *ch_list,
 	uint32_t *ch_cnt,
 	uint8_t *ch_wd,
-	struct dfs_ieee80211_channel *cur_chan)
+	struct dfs_channel *cur_chan)
 {
 	/* TODO */
 	return;
@@ -435,12 +436,12 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 	uint32_t flags,
 	uint8_t *random_chan_list,
 	uint32_t *random_chan_cnt,
-	struct dfs_ieee80211_channel *ch_list,
+	struct dfs_channel *ch_list,
 	uint32_t ch_cnt,
 	uint8_t dfs_region,
 	struct dfs_acs_info *acs_info)
 {
-	struct dfs_ieee80211_channel *chan;
+	struct dfs_channel *chan;
 	uint16_t flag_no_weather = 0;
 	uint16_t flag_no_lower_5g = 0;
 	uint16_t flag_no_upper_5g = 0;
@@ -538,7 +539,7 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 		}
 
 		if (flag_no_dfs_chan &&
-		    (chan->dfs_ch_flagext & IEEE80211_CHAN_DFS)) {
+		    (chan->dfs_ch_flagext & WLAN_CHAN_DFS)) {
 			dfs_debug(dfs, WLAN_DEBUG_DFS_RANDOM_CHAN,
 					"skip dfs channel=%d",
 				    chan->dfs_ch_ieee);
@@ -558,11 +559,11 @@ static void dfs_apply_rules(struct wlan_dfs *dfs,
 }
 
 uint8_t dfs_prepare_random_channel(struct wlan_dfs *dfs,
-	struct dfs_ieee80211_channel *ch_list,
+	struct dfs_channel *ch_list,
 	uint32_t ch_cnt,
 	uint32_t flags,
 	uint8_t *ch_wd,
-	struct dfs_ieee80211_channel *cur_chan,
+	struct dfs_channel *cur_chan,
 	uint8_t dfs_region,
 	struct dfs_acs_info *acs_info)
 {
