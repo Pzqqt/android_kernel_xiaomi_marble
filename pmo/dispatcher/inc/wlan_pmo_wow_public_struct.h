@@ -116,6 +116,12 @@
 
 #define ALLOWED_ACTION_FRAME_MAP_WORDS (PMO_MAC_ACTION_MAX / 32)
 
+/* Public Action for 20/40 BSS Coexistence */
+#define PMO_MAC_ACTION_MEASUREMENT_PILOT    7
+
+#define DROP_PUBLIC_ACTION_FRAME_BITMAP \
+		(1 << PMO_MAC_ACTION_MEASUREMENT_PILOT)
+
 #ifndef ANI_SUPPORT_11H
 /*
  * DROP_SPEC_MGMT_ACTION_FRAME_BITMAP
@@ -127,7 +133,7 @@
  *         Type                      | Bit | Drop |
  * ----------------------------------+-----+------+
  * SIR_MAC_ACTION_MEASURE_REQUEST_ID    0     1
- * SIR_MAC_ACTION_TPC_REQUEST_ID        1     1
+ * SIR_MAC_ACTION_TPC_REQUEST_ID        2     1
  * ----------------------------------+-----+------+
  */
 #define DROP_SPEC_MGMT_ACTION_FRAME_BITMAP \
