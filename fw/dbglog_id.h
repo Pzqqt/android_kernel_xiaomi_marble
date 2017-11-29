@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2017 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -766,7 +766,9 @@ extern "C" {
 #define WAL_DBGID_TX_ARP                            90
 #define WAL_DBGID_TX_DHCP                           91
 #define WAL_DBGID_DEV_WMM_PARAM                     92
-#define WAL_DBGID_DEFINITION_END                    93
+#define WAL_DBGID_CE_SYNC_SEND                      93
+#define WAL_DBGID_CE_FAKE_HANG                      94
+#define WAL_DBGID_DEFINITION_END                    95
 
 #define ANI_DBGID_POLL                               0
 #define ANI_DBGID_CONTROL                            1
@@ -1170,7 +1172,25 @@ extern "C" {
 #define WLAN_HB_DBGID_CHKSUM_ERR                        12
 #define WLAN_HB_DBGID_UDP_TX                            13
 #define WLAN_HB_DBGID_TCP_TX                            14
-#define WLAN_HB_DBGID_DEFINITION_END                    15
+/* WLAN DHCP Renew DBGIDs */
+#define WLAN_HB_DBGID_DHCP_RENEW_ALLOC_SESS_FAIL        15
+#define WLAN_HB_DBGID_DHCP_RENEW_CTX_NULL               16
+#define WLAN_HB_DBGID_DHCP_RENEW_CHKSUM_ERR             17
+#define WLAN_HB_DBGID_DHCP_RENEW_BSS_PEER_NULL          18
+#define WLAN_HB_DBGID_DHCP_RENEW_TCP_GET_TXBUF_FAIL     19
+#define WLAN_HB_DBGID_DHCP_RENEW_UDP_SEND_FAIL          20
+/* WLAN OIC Ping DBGIDs */
+#define WLAN_HB_DBGID_OIC_PING_INIT                     21
+#define WLAN_HB_DBGID_OIC_PING_HOST_WAKEUP              22
+#define WLAN_HB_DBGID_OIC_PING_INVALID_PARAM            23
+#define WLAN_HB_DBGID_OIC_PING_WMI_CMD_PARAM            24
+#define WLAN_HB_DBGID_OIC_PING_ALLOC_SESS_FAIL          25
+#define WLAN_HB_DBGID_OIC_PING_WOW_NOT_ENTERED          26
+#define WLAN_HB_DBGID_OIC_PING_TCP_TIMEOUT              27
+#define WLAN_HB_DBGID_OIC_PING_TLS_ERROR                28
+#define WLAN_HB_DBGID_OIC_PING_ENABLE                   29
+
+#define WLAN_HB_DBGID_DEFINITION_END                    30
 
 /* Thermal Manager DBGIDs*/
 #define THERMAL_MGR_DBGID_DEFINITION_START   0
