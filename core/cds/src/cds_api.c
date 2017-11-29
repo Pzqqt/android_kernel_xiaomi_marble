@@ -1122,6 +1122,11 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS qdf_status;
 
+	qdf_status = cds_sched_close();
+	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		cds_err("Failed to close CDS Scheduler");
+
 	dispatcher_psoc_close(psoc);
 
 	qdf_status = wma_wmi_work_close();
