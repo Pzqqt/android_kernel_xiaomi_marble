@@ -2730,7 +2730,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		roam_synch_data_len += sizeof(roam_offload_synch_ind);
 	}
 
-	WMA_LOGI("synch payload: LEN bcn:%d, req:%d, rsp:%d",
+	WMA_LOGD("synch payload: LEN bcn:%d, req:%d, rsp:%d",
 			bcn_probe_rsp_len,
 			reassoc_req_len,
 			reassoc_rsp_len);

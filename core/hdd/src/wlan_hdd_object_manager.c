@@ -316,7 +316,7 @@ int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,
 	if (!peer)
 		return -ENOMEM;
 
-	hdd_info("Peer object "MAC_ADDRESS_STR" add success! Type: %d",
+	hdd_debug("Peer object "MAC_ADDRESS_STR" add success! Type: %d",
 		 MAC_ADDR_ARRAY(mac_addr), peer_type);
 
 	return 0;
