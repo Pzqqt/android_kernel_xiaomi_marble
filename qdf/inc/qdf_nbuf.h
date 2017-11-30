@@ -36,8 +36,8 @@
 #include <qdf_util.h>
 #include <qdf_types.h>
 #include <qdf_lock.h>
-#include <i_qdf_nbuf.h>
 #include <i_qdf_trace.h>
+#include <i_qdf_nbuf.h>
 #include <qdf_net_types.h>
 
 #define IPA_NBUF_OWNER_ID			0xaa55aa55
@@ -541,33 +541,6 @@ static inline int qdf_nbuf_get_frag_is_wordstream(qdf_nbuf_t buf, int frag_num)
 	return __qdf_nbuf_get_frag_is_wordstream(buf, frag_num);
 }
 
-static inline int qdf_nbuf_ipa_owned_get(qdf_nbuf_t buf)
-{
-	return __qdf_nbuf_ipa_owned_get(buf);
-}
-
-static inline void qdf_nbuf_ipa_owned_set(qdf_nbuf_t buf)
-{
-	__qdf_nbuf_ipa_owned_set(buf);
-}
-
-static inline void qdf_nbuf_ipa_owned_clear(qdf_nbuf_t buf)
-{
-	__qdf_nbuf_ipa_owned_clear(buf);
-}
-
-static inline int qdf_nbuf_ipa_priv_get(qdf_nbuf_t buf)
-{
-	return __qdf_nbuf_ipa_priv_get(buf);
-}
-
-static inline void qdf_nbuf_ipa_priv_set(qdf_nbuf_t buf, uint32_t priv)
-{
-
-	QDF_BUG(!(priv & QDF_NBUF_IPA_CHECK_MASK));
-	__qdf_nbuf_ipa_priv_set(buf, priv);
-}
-
 /**
  * qdf_nbuf_set_frag_is_wordstream() - set fragment wordstream
  * @buf: Network buffer
@@ -591,22 +564,18 @@ qdf_nbuf_set_vdev_ctx(qdf_nbuf_t buf, uint8_t vdev_id)
 }
 
 static inline void
-qdf_nbuf_set_ftype(qdf_nbuf_t buf, uint8_t type)
+qdf_nbuf_set_tx_ftype(qdf_nbuf_t buf, uint8_t type)
 {
-	__qdf_nbuf_set_ftype(buf, type);
+	__qdf_nbuf_set_tx_ftype(buf, type);
 }
 
 static inline void
-qdf_nbuf_set_ext_cb(qdf_nbuf_t buf, void *ref)
+qdf_nbuf_set_rx_ftype(qdf_nbuf_t buf, uint8_t type)
 {
-	__qdf_nbuf_set_ext_cb(buf, ref);
+	__qdf_nbuf_set_rx_ftype(buf, type);
 }
 
-static inline void
-qdf_nbuf_set_fctx_type(qdf_nbuf_t buf, void *ctx, uint8_t type)
-{
-	__qdf_nbuf_set_fctx_type(buf, ctx, type);
-}
+
 
 static inline uint8_t
 qdf_nbuf_get_vdev_ctx(qdf_nbuf_t buf)
@@ -614,21 +583,16 @@ qdf_nbuf_get_vdev_ctx(qdf_nbuf_t buf)
 	return  __qdf_nbuf_get_vdev_ctx(buf);
 }
 
-static inline void *qdf_nbuf_get_fctx(qdf_nbuf_t buf)
+static inline uint8_t qdf_nbuf_get_tx_ftype(qdf_nbuf_t buf)
 {
-	return  __qdf_nbuf_get_fctx(buf);
+	return  __qdf_nbuf_get_tx_ftype(buf);
 }
 
-static inline uint8_t qdf_nbuf_get_ftype(qdf_nbuf_t buf)
+static inline uint8_t qdf_nbuf_get_rx_ftype(qdf_nbuf_t buf)
 {
-	return  __qdf_nbuf_get_ftype(buf);
+	return  __qdf_nbuf_get_rx_ftype(buf);
 }
 
-static inline void *
-qdf_nbuf_get_ext_cb(qdf_nbuf_t buf)
-{
-	return  __qdf_nbuf_get_ext_cb(buf);
-}
 
 static inline qdf_dma_addr_t
 qdf_nbuf_mapped_paddr_get(qdf_nbuf_t buf)
@@ -653,74 +617,145 @@ qdf_nbuf_frag_push_head(qdf_nbuf_t buf,
 #define qdf_nbuf_num_frags_init(_nbuf) __qdf_nbuf_num_frags_init((_nbuf))
 
 /**
- * qdf_nbuf_set_chfrag_start() - set msdu start bit
+ * qdf_nbuf_set_rx_chfrag_start() - set msdu start bit
  * @buf: Network buffer
  * @val: 0/1
  *
  * Return: void
  */
 static inline void
-qdf_nbuf_set_chfrag_start(qdf_nbuf_t buf, uint8_t val)
+qdf_nbuf_set_rx_chfrag_start(qdf_nbuf_t buf, uint8_t val)
 {
-	__qdf_nbuf_set_chfrag_start(buf, val);
+	__qdf_nbuf_set_rx_chfrag_start(buf, val);
 }
 
 /**
- * qdf_nbuf_is_chfrag_start() - get msdu start bit
+ * qdf_nbuf_is_rx_chfrag_start() - get msdu start bit
  * @buf: Network buffer
  *
  * Return: integer value - 0/1
  */
-static inline int qdf_nbuf_is_chfrag_start(qdf_nbuf_t buf)
+static inline int qdf_nbuf_is_rx_chfrag_start(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_chfrag_start(buf);
+	return __qdf_nbuf_is_rx_chfrag_start(buf);
 }
 
 /**
- * qdf_nbuf_set_chfrag_cont() - set msdu continuation bit
+ * qdf_nbuf_set_rx_chfrag_cont() - set msdu continuation bit
  * @buf: Network buffer
  * @val: 0/1
  *
  * Return: void
  */
 static inline void
-qdf_nbuf_set_chfrag_cont(qdf_nbuf_t buf, uint8_t val)
+qdf_nbuf_set_rx_chfrag_cont(qdf_nbuf_t buf, uint8_t val)
 {
-	__qdf_nbuf_set_chfrag_cont(buf, val);
+	__qdf_nbuf_set_rx_chfrag_cont(buf, val);
 }
 
 /**
- * qdf_nbuf_is_chfrag_cont() - get msdu continuation bit
+ * qdf_nbuf_is_rx_chfrag_cont() - get msdu continuation bit
  * @buf: Network buffer
  *
  * Return: integer value - 0/1
  */
-static inline int qdf_nbuf_is_chfrag_cont(qdf_nbuf_t buf)
+static inline int qdf_nbuf_is_rx_chfrag_cont(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_chfrag_cont(buf);
+	return __qdf_nbuf_is_rx_chfrag_cont(buf);
 }
 
 /**
- * qdf_nbuf_set_chfrag_end() - set msdu end bit
+ * qdf_nbuf_set_rx_chfrag_end() - set msdu end bit
  * @buf: Network buffer
  * @val: 0/1
  *
  * Return: void
  */
-static inline void qdf_nbuf_set_chfrag_end(qdf_nbuf_t buf, uint8_t val)
+static inline void qdf_nbuf_set_rx_chfrag_end(qdf_nbuf_t buf, uint8_t val)
 {
-	__qdf_nbuf_set_chfrag_end(buf, val);
+	__qdf_nbuf_set_rx_chfrag_end(buf, val);
 }
 
 /**
- * qdf_nbuf_is_chfrag_end() - set msdu end bit
+ * qdf_nbuf_is_rx_chfrag_end() - set msdu end bit
  * @buf: Network buffer
  *
  * Return: integer value - 0/1
  */
-static inline int qdf_nbuf_is_chfrag_end(qdf_nbuf_t buf)
+static inline int qdf_nbuf_is_rx_chfrag_end(qdf_nbuf_t buf)
 {
-	return __qdf_nbuf_is_chfrag_end(buf);
+	return __qdf_nbuf_is_rx_chfrag_end(buf);
+}
+
+/**
+ * qdf_nbuf_set_tx_chfrag_start() - set msdu start bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_set_tx_chfrag_start(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_tx_chfrag_start(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_tx_chfrag_start() - get msdu start bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_tx_chfrag_start(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_tx_chfrag_start(buf);
+}
+
+/**
+ * qdf_nbuf_set_tx_chfrag_cont() - set msdu continuation bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void
+qdf_nbuf_set_tx_chfrag_cont(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_tx_chfrag_cont(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_tx_chfrag_cont() - get msdu continuation bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_tx_chfrag_cont(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_tx_chfrag_cont(buf);
+}
+
+/**
+ * qdf_nbuf_set_tx_chfrag_end() - set msdu end bit
+ * @buf: Network buffer
+ * @val: 0/1
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_set_tx_chfrag_end(qdf_nbuf_t buf, uint8_t val)
+{
+	__qdf_nbuf_set_tx_chfrag_end(buf, val);
+}
+
+/**
+ * qdf_nbuf_is_tx_chfrag_end() - set msdu end bit
+ * @buf: Network buffer
+ *
+ * Return: integer value - 0/1
+ */
+static inline int qdf_nbuf_is_tx_chfrag_end(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_tx_chfrag_end(buf);
 }
 
 static inline void
@@ -2429,36 +2464,9 @@ qdf_nbuf_get_timedelta_us(struct sk_buff *skb)
 	return __qdf_nbuf_get_timedelta_us(skb);
 }
 
-#ifdef CONFIG_MCL
-/**
- * qdf_nbuf_init_replenish_timer - Initialize the alloc replenish timer
- *
- * This function initializes the nbuf alloc fail replenish timer.
- *
- * Return: void
- */
-static inline void
-qdf_nbuf_init_replenish_timer(void)
-{
-	__qdf_nbuf_init_replenish_timer();
-}
-
-/**
- * qdf_nbuf_deinit_replenish_timer - Deinitialize the alloc replenish timer
- *
- * This function deinitializes the nbuf alloc fail replenish timer.
- *
- * Return: void
- */
-static inline void
-qdf_nbuf_deinit_replenish_timer(void)
-{
-	__qdf_nbuf_deinit_replenish_timer();
-}
+#ifdef CONFIG_WIN
+#include <i_qdf_nbuf_api_w.h>
 #else
-
-static inline void qdf_nbuf_init_replenish_timer(void) {}
-static inline void qdf_nbuf_deinit_replenish_timer(void) {}
-#endif /* CONFIG_MCL */
-
+#include <i_qdf_nbuf_api_m.h>
+#endif
 #endif /* _QDF_NBUF_H */
