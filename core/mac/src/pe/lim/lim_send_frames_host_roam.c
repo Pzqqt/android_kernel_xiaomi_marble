@@ -798,3 +798,44 @@ end:
 
 }
 
+void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
+				 struct scan_event *event,
+				 void *arg)
+{
+	tpAniSirGlobal mac_ctx;
+	enum sir_scan_event_type event_type;
+
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+		  "event: %u, id: 0x%x, requestor: 0x%x, freq: %u, reason: %u",
+		  event->type, event->scan_id, event->requester,
+		  event->chan_freq, event->reason);
+
+	mac_ctx = (tpAniSirGlobal)arg;
+	event_type = 0x1 << event->type;
+
+	switch (event_type) {
+	case SIR_SCAN_EVENT_STARTED:
+		break;
+	case SIR_SCAN_EVENT_COMPLETED:
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			  "No.of beacons and probe response received per scan %d",
+			  mac_ctx->lim.beacon_probe_rsp_cnt_per_scan);
+	/* Fall through */
+	case SIR_SCAN_EVENT_FOREIGN_CHANNEL:
+	case SIR_SCAN_EVENT_START_FAILED:
+		if ((mac_ctx->lim.req_id | PREAUTH_REQUESTOR_ID) ==
+		    event->requester)
+			lim_preauth_scan_event_handler(mac_ctx,
+						       event_type,
+						       event->vdev_id,
+						       event->scan_id);
+		break;
+	case SIR_SCAN_EVENT_BSS_CHANNEL:
+	case SIR_SCAN_EVENT_DEQUEUED:
+	case SIR_SCAN_EVENT_PREEMPTED:
+	default:
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+			  "Received unhandled scan event %u",
+			  event_type);
+	}
+}

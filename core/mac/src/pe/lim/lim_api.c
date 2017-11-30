@@ -75,6 +75,7 @@
 #include "wlan_mgmt_txrx_utils_api.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "os_if_nan.h"
+#include <wlan_scan_ucfg_api.h>
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -513,6 +514,11 @@ tSirRetStatus lim_start(tpAniSirGlobal pMac)
 		retCode = eSIR_FAILURE;
 	}
 
+	pMac->lim.req_id =
+		ucfg_scan_register_requester(pMac->psoc,
+					     "LIM",
+					     lim_process_rx_scan_handler,
+					     pMac);
 	return retCode;
 }
 
@@ -647,6 +653,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	lim_ft_cleanup_all_ft_sessions(pMac);
 
+	ucfg_scan_unregister_requester(pMac->psoc, pMac->lim.req_id);
 } /*** end lim_cleanup() ***/
 
 /**

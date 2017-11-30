@@ -71,7 +71,7 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 				uint8_t session_id,
 				uint32_t scan_id);
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
-		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
+		tpPESession session_entry, tSirFTPreAuthReq *ft_preauth_req);
 #else
 static inline void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
 		tpPESession psessionEntry)
@@ -114,7 +114,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac, uint8_t updateEntry,
 		tpPESession pftSessionEntry,
 		tpSirBssDescription bssDescription);
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
-		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
+		tpPESession session_entry, tSirFTPreAuthReq *ft_preauth_req);
 #else
 static inline void lim_fill_ft_session(tpAniSirGlobal pMac,
 		tpSirBssDescription pbssDescription,

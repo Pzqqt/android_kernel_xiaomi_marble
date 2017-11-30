@@ -33,6 +33,7 @@
 #include <lim_session.h>
 #include <lim_session_utils.h>
 #include <lim_admit_control.h>
+#include <wlan_scan_ucfg_api.h>
 #include "wma.h"
 
 /**
@@ -197,8 +198,8 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx,
 		/* Need to suspend link only if the channels are different */
 		pe_debug("Performing pre-auth on diff channel(session %pK)",
 			session);
-		lim_send_preauth_scan_offload(mac_ctx, session->peSessionId,
-				session->ftPEContext.pFTPreAuthReq);
+		lim_send_preauth_scan_offload(mac_ctx, session,
+					session->ftPEContext.pFTPreAuthReq);
 	} else {
 		pe_debug("Performing pre-auth on same channel (session %pK)",
 			session);
@@ -653,69 +654,83 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
  * lim_send_preauth_scan_offload() - Send scan command to handle preauth.
  *
  * @mac_ctx: Pointer to Global MAC structure
- * @session_id: pe session id
+ * @session_entry: pe session
  * @ft_preauth_req: Preauth request with parameters
  *
- * Builds a single channel scan request and sends it to WMA.
+ * Builds a single channel scan request and sends it to scan module.
  * Scan dwell time is the time allocated to go to preauth candidate
  * channel for auth frame exchange.
  *
- * Return: Status of sending message to WMA.
+ * Return: Status of sending message to scan module.
  */
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
-			uint8_t session_id,
-			tSirFTPreAuthReq *ft_preauth_req)
+					 tpPESession session_entry,
+					 tSirFTPreAuthReq *ft_preauth_req)
 {
-	tSirScanOffloadReq *scan_offload_req;
-	tSirRetStatus rc = eSIR_SUCCESS;
-	struct scheduler_msg msg = {0};
+	struct scan_start_request *req;
+	struct wlan_objmgr_vdev *vdev;
+	uint8_t session_id;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	scan_offload_req = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
-	if (NULL == scan_offload_req) {
-		pe_err("Memory allocation failed for pScanOffloadReq");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
-	msg.bodyptr = scan_offload_req;
-	msg.bodyval = 0;
-
-	qdf_mem_copy((uint8_t *) &scan_offload_req->selfMacAddr.bytes,
-		     (uint8_t *) ft_preauth_req->self_mac_addr,
-		     sizeof(tSirMacAddr));
-
-	qdf_mem_copy((uint8_t *) &scan_offload_req->bssId.bytes,
-		     (uint8_t *) ft_preauth_req->currbssId,
-		     sizeof(tSirMacAddr));
-	scan_offload_req->scanType = eSIR_PASSIVE_SCAN;
-	/*
-	 * P2P_SCAN_TYPE_LISTEN tells firmware to allow mgt frames to/from
-	 * mac address that is not of connected AP.
-	 */
-	scan_offload_req->p2pScanType = P2P_SCAN_TYPE_LISTEN;
-	scan_offload_req->restTime = 0;
-	scan_offload_req->minChannelTime = LIM_FT_PREAUTH_SCAN_TIME;
-	scan_offload_req->maxChannelTime = LIM_FT_PREAUTH_SCAN_TIME;
-	scan_offload_req->sessionId = session_id;
-	scan_offload_req->channelList.numChannels = 1;
-	scan_offload_req->channelList.channelNumber[0] =
-		ft_preauth_req->preAuthchannelNum;
-	wma_get_scan_id(&ft_preauth_req->scan_id);
-	scan_offload_req->scan_id = ft_preauth_req->scan_id;
-	scan_offload_req->scan_requestor_id = PREAUTH_REQUESTOR_ID;
-
-	pe_debug("Scan request: duration %u, session %hu, chan %hu",
-		scan_offload_req->maxChannelTime, session_id,
-		ft_preauth_req->preAuthchannelNum);
-
-	rc = wma_post_ctrl_msg(mac_ctx, &msg);
-	if (rc != eSIR_SUCCESS) {
-		pe_err("START_SCAN_OFFLOAD failed %u", rc);
-		qdf_mem_free(scan_offload_req);
+	if (session_entry == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("Session entry is NULL"));
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	session_id = session_entry->smeSessionId;
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("Failed to allocate memory"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	qdf_mem_zero(req, sizeof(*req));
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+						    session_id, WLAN_OSIF_ID);
+	if (vdev == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("vdev object is NULL"));
+		qdf_mem_free(req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ucfg_scan_init_default_params(vdev, req);
+
+	qdf_mem_copy(req->scan_req.bssid_list,
+		     (uint8_t *)ft_preauth_req->currbssId,
+		     QDF_MAC_ADDR_SIZE);
+
+	req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
+	if (!req->scan_req.scan_id) {
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+		qdf_mem_free(req);
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid scan ID"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	req->scan_req.vdev_id = session_id;
+	req->scan_req.scan_req_id = mac_ctx->lim.req_id | PREAUTH_REQUESTOR_ID;
+	req->scan_req.scan_priority = WMI_SCAN_PRIORITY_VERY_HIGH;
+	req->scan_req.scan_f_passive = true;
+
+	req->scan_req.chan_list.num_chan = 1;
+	req->scan_req.chan_list.chan[0].freq =
+			cds_chan_to_freq(ft_preauth_req->preAuthchannelNum);
+
+	req->scan_req.dwell_time_active = LIM_FT_PREAUTH_SCAN_TIME;
+	req->scan_req.dwell_time_passive = LIM_FT_PREAUTH_SCAN_TIME;
+
+	status = ucfg_scan_start(req);
+	if (status != QDF_STATUS_SUCCESS)
+		/* Don't free req here, ucfg_scan_start will do free */
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Issue scan req failed"));
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+	return status;
 }
 
 /**

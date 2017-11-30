@@ -3691,21 +3691,6 @@ typedef struct sAniHandoffReq {
 	uint8_t handoff_src;
 } tAniHandoffReq, *tpAniHandoffReq;
 
-/*
- * @scan_id:
- * @scan_requestor_id:
- *     Scan id and scan requestor id are used by firmware to track each scan
- *     request. A new scan id is generated for each request. Requestor id
- *     shows the purpose of scan.
- *
- * @USER_SCAN_REQUESTOR_ID: Normal scan request from supplicant to HDD/SME.
- * @PREAUTH_REQUESTOR_ID: Used by LIM for preauth operation.
- *
- */
-
-#define USER_SCAN_REQUESTOR_ID  0xA000
-#define PREAUTH_REQUESTOR_ID    0xC000
-
 typedef struct sSirScanOffloadReq {
 	uint8_t sessionId;
 	struct qdf_mac_addr bssId;

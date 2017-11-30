@@ -488,6 +488,17 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal pMac,
 		tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry);
 void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmReassocReq *,
 				     tpPESession);
+/**
+ * lim_process_rx_scan_handler() -
+ *	process the event for scan which is issued by LIM
+ * @vdev: wlan objmgr vdev pointer
+ * @event: scan event
+ * @arg: global mac context pointer
+ *
+ * Return: void
+ */
+void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
+				 struct scan_event *event, void *arg);
 #else
 static inline void lim_send_reassoc_req_with_ft_ies_mgmt_frame(
 		tpAniSirGlobal pMac, tLimMlmReassocReq *pMlmReassocReq,
@@ -495,6 +506,9 @@ static inline void lim_send_reassoc_req_with_ft_ies_mgmt_frame(
 {}
 static inline void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		tLimMlmReassocReq *reassoc_req, tpPESession pe_session)
+{}
+static inline void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
+				 struct scan_event *event, void *arg)
 {}
 #endif
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
