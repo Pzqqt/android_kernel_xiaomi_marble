@@ -52,7 +52,15 @@
 #define WLAN_MAX_REQUESTORS     200
 #define WLAN_SCAN_ID_MASK 0x00000FFF
 #define WLAN_HOST_SCAN_REQ_ID_PREFIX 0x0000A000
+/*
+ * For the requestor id:
+ *     bit  0~12 is used for real requestor id.
+ *     bit 13~15 is used for requestor prefix.
+ *     bit 16~19 is used by specific user to aware it is issued by himself.
+ *     bit 20~31 is reserved.
+ */
 #define WLAN_SCAN_REQUESTER_ID_PREFIX 0x0000A000
+#define WLAN_SCAN_REQUESTER_ID_MASK 0x00001FFF
 
 #define SCM_NUM_RSSI_CAT        15
 

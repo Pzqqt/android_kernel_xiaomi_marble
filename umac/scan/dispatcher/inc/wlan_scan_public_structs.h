@@ -42,6 +42,9 @@ typedef uint32_t wlan_scan_id;
 #define INVAL_VDEV_ID        0xFFFFFFFF
 #define INVAL_PDEV_ID        0xFFFFFFFF
 
+#define USER_SCAN_REQUESTOR_ID  0xA0000
+#define PREAUTH_REQUESTOR_ID    0xC0000
+
 #define BURST_SCAN_MAX_NUM_OFFCHANNELS 3
 #define P2P_SCAN_MAX_BURST_DURATION 180
 /* Increase dwell time for P2P search in ms */

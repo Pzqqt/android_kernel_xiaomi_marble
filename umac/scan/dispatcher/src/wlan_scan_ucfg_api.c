@@ -727,9 +727,14 @@ void
 ucfg_scan_unregister_requester(struct wlan_objmgr_psoc *psoc,
 	wlan_scan_requester requester)
 {
-	int idx = requester & ~WLAN_SCAN_REQUESTER_ID_PREFIX;
+	int idx = requester & WLAN_SCAN_REQUESTER_ID_MASK;
 	struct wlan_scan_obj *scan;
 	struct scan_requester_info *requesters;
+
+	if (idx >= WLAN_MAX_REQUESTORS) {
+		scm_err("requester id invalid");
+		return;
+	}
 
 	if (!psoc) {
 		scm_err("null psoc");
@@ -751,7 +756,7 @@ uint8_t*
 ucfg_get_scan_requester_name(struct wlan_objmgr_psoc *psoc,
 	wlan_scan_requester requester)
 {
-	int idx = requester & ~WLAN_SCAN_REQUESTER_ID_PREFIX;
+	int idx = requester & WLAN_SCAN_REQUESTER_ID_MASK;
 	struct wlan_scan_obj *scan;
 	struct scan_requester_info *requesters;
 

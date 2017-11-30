@@ -97,18 +97,31 @@ scm_scan_get_requester_event_handler(struct scan_event_listeners *listeners,
 		struct scan_requester_info *requesters,
 		wlan_scan_requester requester_id)
 {
-	uint32_t idx = requester_id & ~WLAN_SCAN_REQUESTER_ID_PREFIX;
-	struct cb_handler *ev_handler = &(requesters[idx].ev_handler);
+	uint32_t idx;
+	struct cb_handler *ev_handler;
 
-	if (ev_handler->func) {
-		if (listeners->count < MAX_SCAN_EVENT_LISTENERS) {
-			listeners->cb[listeners->count].func = ev_handler->func;
-			listeners->cb[listeners->count].arg = ev_handler->arg;
-			listeners->count++;
+	idx = requester_id & WLAN_SCAN_REQUESTER_ID_PREFIX;
+	if (idx != WLAN_SCAN_REQUESTER_ID_PREFIX)
+		return QDF_STATUS_SUCCESS;
+
+	idx = requester_id & WLAN_SCAN_REQUESTER_ID_MASK;
+	if (idx < WLAN_MAX_REQUESTORS) {
+		ev_handler = &(requesters[idx].ev_handler);
+		if (ev_handler->func) {
+			if (listeners->count < MAX_SCAN_EVENT_LISTENERS) {
+				listeners->cb[listeners->count].func =
+							     ev_handler->func;
+				listeners->cb[listeners->count].arg =
+							     ev_handler->arg;
+				listeners->count++;
+			}
 		}
+		return QDF_STATUS_SUCCESS;
+	} else {
+		scm_err("invalid requester id");
+		return QDF_STATUS_E_INVAL;
 	}
 
-	return QDF_STATUS_SUCCESS;
 }
 
 static void scm_scan_post_event(struct wlan_objmgr_vdev *vdev,
