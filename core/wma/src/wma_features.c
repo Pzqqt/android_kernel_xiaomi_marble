@@ -1145,7 +1145,7 @@ void wma_register_egap_event_handle(WMA_HANDLE handle)
 				   WMI_SERVICE_EGAP)) {
 		status = wmi_unified_register_event_handler(
 						   wma_handle->wmi_handle,
-						   WMI_AP_PS_EGAP_INFO_EVENTID,
+						   wmi_ap_ps_egap_info_event_id,
 						   wma_egap_info_status_event,
 						   WMA_RX_SERIALIZER_CTX);
 		if (QDF_IS_STATUS_ERROR(status)) {

@@ -782,37 +782,37 @@ void wma_ndp_register_all_event_handlers(tp_wma_handle wma_handle)
 {
 	WMA_LOGD(FL("Register WMI_NDP_INITIATOR_RSP_EVENTID"));
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_INITIATOR_RSP_EVENTID,
+		wmi_ndp_initiator_rsp_event_id,
 		wma_ndp_initiator_rsp_event_handler,
 		WMA_RX_SERIALIZER_CTX);
 
 	WMA_LOGD(FL("Register WMI_NDP_RESPONDER_RSP_EVENTID"));
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_RESPONDER_RSP_EVENTID,
+		wmi_ndp_responder_rsp_event_id,
 		wma_ndp_responder_rsp_event_handler,
 		WMA_RX_SERIALIZER_CTX);
 
 	WMA_LOGD(FL("Register WMI_NDP_END_RSP_EVENTID"));
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_END_RSP_EVENTID,
+		wmi_ndp_end_rsp_event_id,
 		wma_ndp_end_response_event_handler,
 		WMA_RX_SERIALIZER_CTX);
 
 	WMA_LOGD(FL("Register WMI_NDP_INDICATION_EVENTID"));
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_INDICATION_EVENTID,
+		wmi_ndp_indication_event_id,
 		wma_ndp_indication_event_handler,
 		WMA_RX_SERIALIZER_CTX);
 
 	WMA_LOGD(FL("Register WMI_NDP_CONFIRM_EVENTID"));
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_CONFIRM_EVENTID,
+		wmi_ndp_confirm_event_id,
 		wma_ndp_confirm_event_handler,
 		WMA_RX_SERIALIZER_CTX);
 
 	WMA_LOGD(FL("Register WMI_NDP_END_INDICATION_EVENTID"));
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_END_INDICATION_EVENTID,
+		wmi_ndp_end_indication_event_id,
 		wma_ndp_end_indication_event_handler,
 		WMA_RX_SERIALIZER_CTX);
 }
@@ -829,27 +829,27 @@ void wma_ndp_unregister_all_event_handlers(tp_wma_handle wma_handle)
 {
 	WMA_LOGD(FL("Unregister WMI_NDP_INITIATOR_RSP_EVENTID"));
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_INITIATOR_RSP_EVENTID);
+		wmi_ndp_initiator_rsp_event_id);
 
 	WMA_LOGD(FL("Unregister WMI_NDP_RESPONDER_RSP_EVENTID"));
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_RESPONDER_RSP_EVENTID);
+		wmi_ndp_responder_rsp_event_id);
 
 	WMA_LOGD(FL("Unregister WMI_NDP_END_RSP_EVENTID"));
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_END_RSP_EVENTID);
+		wmi_ndp_end_rsp_event_id);
 
 	WMA_LOGD(FL("Unregister WMI_NDP_INDICATION_EVENTID"));
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_INDICATION_EVENTID);
+		wmi_ndp_indication_event_id);
 
 	WMA_LOGD(FL("Unregister WMI_NDP_CONFIRM_EVENTID"));
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_CONFIRM_EVENTID);
+		wmi_ndp_confirm_event_id);
 
 	WMA_LOGD(FL("Unregister WMI_NDP_END_INDICATION_EVENTID"));
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
-		WMI_NDP_END_INDICATION_EVENTID);
+		wmi_ndp_end_indication_event_id);
 }
 
 /**

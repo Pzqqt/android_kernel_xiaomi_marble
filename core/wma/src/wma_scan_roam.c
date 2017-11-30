@@ -3786,41 +3786,41 @@ void wma_register_extscan_event_handler(tp_wma_handle wma_handle)
 		return;
 	}
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_START_STOP_EVENTID,
+					   wmi_extscan_start_stop_event_id,
 					   wma_extscan_start_stop_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					WMI_EXTSCAN_CAPABILITIES_EVENTID,
+					wmi_extscan_capabilities_event_id,
 					wma_extscan_capabilities_event_handler,
 					WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_EXTSCAN_HOTLIST_MATCH_EVENTID,
+				wmi_extscan_hotlist_match_event_id,
 				wma_extscan_hotlist_match_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_EXTSCAN_WLAN_CHANGE_RESULTS_EVENTID,
+				wmi_extscan_wlan_change_results_event_id,
 				wma_extscan_change_results_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_EXTSCAN_OPERATION_EVENTID,
+				wmi_extscan_operation_event_id,
 				wma_extscan_operations_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_EXTSCAN_TABLE_USAGE_EVENTID,
+				wmi_extscan_table_usage_event_id,
 				wma_extscan_table_usage_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				WMI_EXTSCAN_CACHED_RESULTS_EVENTID,
+				wmi_extscan_cached_results_event_id,
 				wma_extscan_cached_results_event_handler,
 				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-			WMI_PASSPOINT_MATCH_EVENTID,
+			wmi_passpoint_match_event_id,
 			wma_passpoint_match_event_handler,
 			WMA_RX_SERIALIZER_CTX);
 }
