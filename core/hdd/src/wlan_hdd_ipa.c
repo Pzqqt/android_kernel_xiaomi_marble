@@ -4859,29 +4859,19 @@ static int hdd_ipa_alloc_tx_desc_list(struct hdd_ipa_priv *hdd_ipa)
 	return 0;
 }
 
+#ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
- * hdd_ipa_setup_sys_pipe() - Setup all IPA Sys pipes
+ * hdd_ipa_setup_tx_sys_pipe() - Setup IPA Tx system pipes
  * @hdd_ipa: Global HDD IPA context
+ * @desc_fifo_sz: Number of descriptors
  *
  * Return: 0 on success, negative errno on error
  */
-static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
+static int hdd_ipa_setup_tx_sys_pipe(struct hdd_ipa_priv *hdd_ipa,
+				     int32_t desc_fifo_sz)
 {
 	int i, ret = 0;
 	qdf_ipa_sys_connect_params_t *ipa;
-	uint32_t desc_fifo_sz;
-
-	/* The maximum number of descriptors that can be provided to a BAM at
-	 * once is one less than the total number of descriptors that the buffer
-	 * can contain.
-	 * If max_num_of_descriptors = (BAM_PIPE_DESCRIPTOR_FIFO_SIZE / sizeof
-	 * (SPS_DESCRIPTOR)), then (max_num_of_descriptors - 1) descriptors can
-	 * be provided at once.
-	 * Because of above requirement, one extra descriptor will be added to
-	 * make sure hardware always has one descriptor.
-	 */
-	desc_fifo_sz = hdd_ipa->hdd_ctx->config->IpaDescSize
-		       + sizeof(struct sps_iovec);
 
 	/*setup TX pipes */
 	for (i = 0; i < HDD_IPA_MAX_IFACE; i++) {
@@ -4914,41 +4904,115 @@ static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 		if (ret) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "Failed for pipe %d ret: %d", i, ret);
-			goto setup_sys_pipe_fail;
+			return ret;
 		}
 		hdd_ipa->sys_pipe[i].conn_hdl_valid = 1;
 	}
 
+	return ret;
+}
+#else
+/**
+ * hdd_ipa_setup_tx_sys_pipe() - Setup IPA Tx system pipes
+ * @hdd_ipa: Global HDD IPA context
+ * @desc_fifo_sz: Number of descriptors
+ *
+ * Return: 0 on success, negative errno on error
+ */
+static int hdd_ipa_setup_tx_sys_pipe(struct hdd_ipa_priv *hdd_ipa,
+				     int32_t desc_fifo_sz)
+{
+	/*
+	 * The Tx system pipes are not needed for MCC when TX_FLOW_CONTROL_V2
+	 * is enabled, where per vdev descriptors are supported in firmware.
+	 */
+	return 0;
+}
+#endif
+
+/**
+ * hdd_ipa_setup_rx_sys_pipe() - Setup IPA Rx system pipes
+ * @hdd_ipa: Global HDD IPA context
+ * @desc_fifo_sz: Number of descriptors
+ *
+ * Return: 0 on success, negative errno on error
+ */
+static int hdd_ipa_setup_rx_sys_pipe(struct hdd_ipa_priv *hdd_ipa,
+				     int32_t desc_fifo_sz)
+{
+	int ret = 0;
+	qdf_ipa_sys_connect_params_t *ipa;
+
+	/*
+	 * Hard code it here, this can be extended if in case
+	 * PROD pipe is also per interface.
+	 * Right now there is no advantage of doing this.
+	 */
+	ipa = &hdd_ipa->sys_pipe[HDD_IPA_RX_PIPE].ipa_sys_params;
+
+	ipa->client = IPA_CLIENT_WLAN1_PROD;
+
+	ipa->desc_fifo_sz = desc_fifo_sz;
+	ipa->priv = hdd_ipa;
+	ipa->notify = hdd_ipa_w2i_cb;
+
+	ipa->ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
+	ipa->ipa_ep_cfg.hdr.hdr_len = HDD_IPA_WLAN_RX_HDR_LEN;
+	ipa->ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 1;
+	ipa->ipa_ep_cfg.mode.mode = IPA_BASIC;
+
+	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
+		ipa->keep_ipa_awake = 1;
+
+	ret = qdf_ipa_setup_sys_pipe(ipa,
+			&hdd_ipa->sys_pipe[HDD_IPA_RX_PIPE].conn_hdl);
+	if (ret) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+				"Failed for RX pipe: %d", ret);
+		return ret;
+	}
+	hdd_ipa->sys_pipe[HDD_IPA_RX_PIPE].conn_hdl_valid = 1;
+
+	return ret;
+}
+
+/**
+ * hdd_ipa_setup_sys_pipe() - Setup all IPA system pipes
+ * @hdd_ipa: Global HDD IPA context
+ *
+ * Return: 0 on success, negative errno on error
+ */
+static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
+{
+	int i = HDD_IPA_MAX_IFACE, ret = 0;
+	uint32_t desc_fifo_sz;
+
+	/* The maximum number of descriptors that can be provided to a BAM at
+	 * once is one less than the total number of descriptors that the buffer
+	 * can contain.
+	 * If max_num_of_descriptors = (BAM_PIPE_DESCRIPTOR_FIFO_SIZE / sizeof
+	 * (SPS_DESCRIPTOR)), then (max_num_of_descriptors - 1) descriptors can
+	 * be provided at once.
+	 * Because of above requirement, one extra descriptor will be added to
+	 * make sure hardware always has one descriptor.
+	 */
+	desc_fifo_sz = hdd_ipa->hdd_ctx->config->IpaDescSize
+		       + sizeof(struct sps_iovec);
+
+	ret = hdd_ipa_setup_tx_sys_pipe(hdd_ipa, desc_fifo_sz);
+	if (ret) {
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
+			    "Failed for TX pipe: %d", ret);
+		goto setup_sys_pipe_fail;
+	}
+
 	if (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
-		/*
-		 * Hard code it here, this can be extended if in case
-		 * PROD pipe is also per interface.
-		 * Right now there is no advantage of doing this.
-		 */
-		ipa = &hdd_ipa->sys_pipe[HDD_IPA_RX_PIPE].ipa_sys_params;
-
-		ipa->client = IPA_CLIENT_WLAN1_PROD;
-
-		ipa->desc_fifo_sz = desc_fifo_sz;
-		ipa->priv = hdd_ipa;
-		ipa->notify = hdd_ipa_w2i_cb;
-
-		ipa->ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
-		ipa->ipa_ep_cfg.hdr.hdr_len = HDD_IPA_WLAN_RX_HDR_LEN;
-		ipa->ipa_ep_cfg.hdr.hdr_ofst_metadata_valid = 1;
-		ipa->ipa_ep_cfg.mode.mode = IPA_BASIC;
-
-		if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
-			ipa->keep_ipa_awake = 1;
-
-		ret = qdf_ipa_setup_sys_pipe(ipa,
-			&hdd_ipa->sys_pipe[i].conn_hdl);
+		ret = hdd_ipa_setup_rx_sys_pipe(hdd_ipa, desc_fifo_sz);
 		if (ret) {
 			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
-					"Failed for RX pipe: %d", ret);
+				    "Failed for RX pipe: %d", ret);
 			goto setup_sys_pipe_fail;
 		}
-		hdd_ipa->sys_pipe[HDD_IPA_RX_PIPE].conn_hdl_valid = 1;
 	}
 
        /* Allocate free Tx desc list */
@@ -4960,8 +5024,10 @@ static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 
 setup_sys_pipe_fail:
 
-	while (--i >= 0) {
-		ipa_teardown_sys_pipe(hdd_ipa->sys_pipe[i].conn_hdl);
+	for (i = 0; i < HDD_IPA_MAX_SYSBAM_PIPE; i++) {
+		if (hdd_ipa->sys_pipe[i].conn_hdl_valid)
+			qdf_ipa_teardown_sys_pipe(
+				hdd_ipa->sys_pipe[i].conn_hdl);
 		qdf_mem_zero(&hdd_ipa->sys_pipe[i],
 			     sizeof(struct hdd_ipa_sys_pipe));
 	}
@@ -4984,8 +5050,8 @@ static void hdd_ipa_teardown_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 
 	for (i = 0; i < HDD_IPA_MAX_SYSBAM_PIPE; i++) {
 		if (hdd_ipa->sys_pipe[i].conn_hdl_valid) {
-			ret = ipa_teardown_sys_pipe(hdd_ipa->sys_pipe[i].
-						    conn_hdl);
+			ret = qdf_ipa_teardown_sys_pipe(
+				hdd_ipa->sys_pipe[i].conn_hdl);
 			if (ret)
 				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Failed: %d",
 					    ret);
@@ -5869,6 +5935,10 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 	if (ret)
 		goto fail_setup_rm;
 
+	for (i = 0; i < HDD_IPA_MAX_SYSBAM_PIPE; i++)
+		qdf_mem_zero(&hdd_ipa->sys_pipe[i],
+			     sizeof(struct hdd_ipa_sys_pipe));
+
 	if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 		hdd_ipa_uc_rt_debug_init(hdd_ctx);
 		qdf_mem_zero(&hdd_ipa->stats, sizeof(hdd_ipa->stats));
@@ -5882,7 +5952,7 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 		hdd_ipa->sta_connected = 0;
 		hdd_ipa->ipa_pipes_down = true;
 		hdd_ipa->wdi_enabled = false;
-		/* Setup IPA sys_pipe for MCC */
+		/* Setup IPA system pipes */
 		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
 			ret = hdd_ipa_setup_sys_pipe(hdd_ipa);
 			if (ret)
