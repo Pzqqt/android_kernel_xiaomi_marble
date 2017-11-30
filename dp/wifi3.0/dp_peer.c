@@ -728,6 +728,12 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 		queue_status->msdu_frms_cnt, queue_status->total_cnt,
 		queue_status->late_recv_mpdu_cnt, queue_status->win_jump_2k,
 		queue_status->hole_cnt);
+
+	DP_PRINT_STATS("Num of Addba Req = %d\n", rx_tid->num_of_addba_req);
+	DP_PRINT_STATS("Num of Addba Resp = %d\n", rx_tid->num_of_addba_resp);
+	DP_PRINT_STATS("Num of Delba Req = %d\n", rx_tid->num_of_delba_req);
+	DP_PRINT_STATS("BA window size   = %d\n", rx_tid->ba_win_size);
+	DP_PRINT_STATS("Pn size = %d\n", rx_tid->pn_size);
 }
 
 static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
@@ -1038,7 +1044,9 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	if (rx_tid->hw_qdesc_vaddr_unaligned != NULL)
 		return dp_rx_tid_update_wifi3(peer, tid, ba_window_size,
 			start_seq);
-
+	rx_tid->num_of_addba_req = 0;
+	rx_tid->num_of_delba_req = 0;
+	rx_tid->num_of_addba_resp = 0;
 #ifdef notyet
 	hw_qdesc_size = hal_get_reo_qdesc_size(soc->hal_soc, ba_window_size);
 #else
@@ -1388,6 +1396,7 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 	rx_tid->dialogtoken = dialogtoken;
 	rx_tid->statuscode = QDF_STATUS_SUCCESS;
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
+	rx_tid->num_of_addba_req++;
 
 	return 0;
 }
@@ -1409,6 +1418,7 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
+	rx_tid->num_of_addba_resp++;
 	/* setup ADDBA response paramters */
 	*dialogtoken = rx_tid->dialogtoken;
 	*statuscode = rx_tid->statuscode;
@@ -1437,6 +1447,7 @@ int dp_delba_process_wifi3(void *peer_handle,
 	 * replace with a new one without queue extenstion descript to save
 	 * memory
 	 */
+	rx_tid->num_of_delba_req++;
 	dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 
 	rx_tid->ba_status = DP_RX_BA_INACTIVE;
@@ -1481,6 +1492,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 	struct dp_pdev *pdev;
 	struct dp_soc *soc;
 	int i;
+	uint8_t pn_size;
 	struct hal_reo_cmd_params params;
 
 	/* preconditions */
@@ -1508,10 +1520,12 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 	case cdp_sec_type_aes_gcmp_256:
 		params.u.upd_queue_params.pn_check_needed = 1;
 		params.u.upd_queue_params.pn_size = 48;
+		pn_size = 48;
 		break;
 	case cdp_sec_type_wapi:
 		params.u.upd_queue_params.pn_check_needed = 1;
 		params.u.upd_queue_params.pn_size = 128;
+		pn_size = 128;
 		if (vdev->opmode == wlan_op_mode_ap) {
 			params.u.upd_queue_params.pn_even = 1;
 			params.u.upd_queue_params.update_pn_even = 1;
@@ -1522,6 +1536,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 		break;
 	default:
 		params.u.upd_queue_params.pn_check_needed = 0;
+		pn_size = 0;
 		break;
 	}
 
@@ -1548,6 +1563,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 				params.u.upd_queue_params.pn_95_64 = rx_pn[2];
 				params.u.upd_queue_params.pn_127_96 = rx_pn[3];
 			}
+			rx_tid->pn_size = pn_size;
 			dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params,
 				dp_rx_tid_update_cb, rx_tid);
 		} else {

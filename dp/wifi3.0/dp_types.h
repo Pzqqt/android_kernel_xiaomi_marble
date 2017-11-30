@@ -402,6 +402,17 @@ struct dp_rx_tid {
 	/* TID */
 	int tid;
 
+	/* Num of addba requests */
+	uint32_t num_of_addba_req;
+
+	/* Num of addba responses */
+	uint32_t num_of_addba_resp;
+
+	/* Num of delba requests */
+	uint32_t num_of_delba_req;
+
+	/* pn size */
+	uint8_t pn_size;
 	/* REO TID queue descriptors */
 	void *hw_qdesc_vaddr_unaligned;
 	qdf_dma_addr_t hw_qdesc_paddr_unaligned;
