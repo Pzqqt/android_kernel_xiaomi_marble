@@ -2724,8 +2724,9 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *msg)
 {
 	uint8_t resp_reqd = 1;
-	tLimMlmSetKeysCnf mlm_set_key_cnf;
+	struct sLimMlmSetKeysCnf mlm_set_key_cnf;
 	uint8_t session_id = 0;
+	uint8_t sme_session_id;
 	tpPESession session_entry;
 	uint16_t key_len;
 	uint16_t result_status;
@@ -2737,11 +2738,16 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	session_id = ((tpSetStaKeyParams) msg->bodyptr)->sessionId;
+	sme_session_id = ((tpSetBssKeyParams) msg->bodyptr)->smesessionId;
 	session_entry = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (session_entry == NULL) {
 		pe_err("session does not exist for given session_id");
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
+		lim_send_sme_set_context_rsp(mac_ctx,
+					     mlm_set_key_cnf.peer_macaddr,
+					     0, eSIR_SME_INVALID_SESSION, NULL,
+					     sme_session_id, 0);
 		return;
 	}
 	if (eLIM_MLM_WT_SET_STA_KEY_STATE != session_entry->limMlmState) {
@@ -2802,9 +2808,10 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 	struct scheduler_msg *msg)
 {
-	tLimMlmSetKeysCnf set_key_cnf;
+	struct sLimMlmSetKeysCnf set_key_cnf;
 	uint16_t result_status;
 	uint8_t session_id = 0;
+	uint8_t sme_session_id;
 	tpPESession session_entry;
 	tpLimMlmSetKeysReq set_key_req;
 	uint16_t key_len;
@@ -2816,12 +2823,16 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	session_id = ((tpSetBssKeyParams) msg->bodyptr)->sessionId;
+	sme_session_id = ((tpSetBssKeyParams) msg->bodyptr)->smesessionId;
 	session_entry = pe_find_session_by_session_id(mac_ctx, session_id);
 	if (session_entry == NULL) {
 		pe_err("session does not exist for given sessionId [%d]",
 			session_id);
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
+		lim_send_sme_set_context_rsp(mac_ctx, set_key_cnf.peer_macaddr,
+					     0, eSIR_SME_INVALID_SESSION, NULL,
+					     sme_session_id, 0);
 		return;
 	}
 	if (eLIM_MLM_WT_SET_BSS_KEY_STATE == session_entry->limMlmState) {
