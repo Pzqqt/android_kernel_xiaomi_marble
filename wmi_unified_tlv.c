@@ -12719,6 +12719,7 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	resource_cfg->use_pdev_id = tgt_res_cfg->use_pdev_id;
 	resource_cfg->max_num_dbs_scan_duty_cycle =
 		tgt_res_cfg->max_num_dbs_scan_duty_cycle;
+	resource_cfg->sched_params = tgt_res_cfg->scheduler_params;
 
 	if (tgt_res_cfg->atf_config)
 		WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(resource_cfg->flag1, 1);
