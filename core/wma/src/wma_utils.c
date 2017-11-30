@@ -1706,12 +1706,17 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	rs_results->onTimePnoScan = radio_stats->on_time_pno_scan;
 	rs_results->onTimeHs20 = radio_stats->on_time_hs20;
 	rs_results->total_num_tx_power_levels = 0;
-	rs_results->tx_time_per_power_level = NULL;
+	if (rs_results->tx_time_per_power_level) {
+		qdf_mem_free(rs_results->tx_time_per_power_level);
+		rs_results->tx_time_per_power_level = NULL;
+	}
+	if (rs_results->channels) {
+		qdf_mem_free(rs_results->channels);
+		rs_results->channels = NULL;
+	}
 	rs_results->numChannels = radio_stats->num_channels;
 	rs_results->on_time_host_scan = radio_stats->on_time_host_scan;
 	rs_results->on_time_lpi_scan = radio_stats->on_time_lpi_scan;
-	rs_results->channels = NULL;
-
 	if (rs_results->numChannels) {
 		rs_results->channels = (tSirWifiChannelStats *) qdf_mem_malloc(
 					radio_stats->num_channels *
