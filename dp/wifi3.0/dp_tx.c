@@ -1883,7 +1883,7 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 }
 
 #ifdef FEATURE_PERPKT_INFO
-static QDF_STATUS
+QDF_STATUS
 dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 		      uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf)
 {

@@ -175,6 +175,13 @@ static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
 #endif
 
+
+#ifdef FEATURE_PERPKT_INFO
+QDF_STATUS
+dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
+		      uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf);
+#endif
+
 /* TODO TX_FEATURE_NOT_YET */
 static inline void dp_tx_comp_process_exception(struct dp_tx_desc_s *tx_desc)
 {
