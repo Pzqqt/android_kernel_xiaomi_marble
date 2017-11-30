@@ -1895,31 +1895,18 @@ QDF_STATUS wlan_crypto_rsnie_check(struct wlan_crypto_params *crypto_params,
 /**
  * wlan_crypto_build_wpaie - called by mlme to build wpaie
  *
- * @vdev: vdev
+ * @crypto params: crypto params
  * @iebuf: ie buffer
  *
- * This function gets called by mlme to build wpaie from given vdev
+ * This function gets called by mlme to build wpaie from given crypto params
  *
  * Return: end of buffer
  */
-uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
-					uint8_t *iebuf){
+uint8_t *wlan_crypto_build_wpaie(struct wlan_crypto_params *crypto_params,
+				uint8_t *iebuf){
 	uint8_t *frm = iebuf;
 	uint8_t *selcnt;
-	struct wlan_crypto_comp_priv *crypto_priv;
-	struct wlan_crypto_params *crypto_params;
-
-	if (!frm) {
-		qdf_print("%s[%d] ie buffer NULL\n", __func__, __LINE__);
-		return NULL;
-	}
-
-	crypto_params = wlan_crypto_vdev_get_comp_params(vdev, &crypto_priv);
-
-	if (!crypto_params) {
-		qdf_print("%s[%d] crypto_params NULL\n", __func__, __LINE__);
-		return NULL;
-	}
+	uint32_t mcastcipher;
 
 	*frm++ = WLAN_ELEMID_VENDOR;
 	*frm++ = 0;
@@ -1928,17 +1915,11 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 
 
 	/* multicast cipher */
-	if (MCIPHER_IS_TKIP(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_wpa_cipher_to_suite(
-						WLAN_CRYPTO_CIPHER_TKIP));
-	} else if (MCIPHER_IS_CCMP128(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_wpa_cipher_to_suite(
-						WLAN_CRYPTO_CIPHER_AES_CCM));
-	}
-	/* unicast cipher list */
+	mcastcipher = wlan_crypto_get_mcastcipher(crypto_params);
+	WLAN_CRYPTO_ADDSELECTOR(frm,
+				wlan_crypto_wpa_cipher_to_suite(mcastcipher));
 
+	/* unicast cipher list */
 	selcnt = frm;
 	WLAN_CRYPTO_ADDSHORT(frm, 0);
 	/* do not use CCMP unicast cipher in WPA mode */
@@ -1949,6 +1930,12 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 						WLAN_CRYPTO_CIPHER_TKIP));
 	}
 	if (UCIPHER_IS_CCMP128(crypto_params)) {
+		selcnt[0]++;
+		WLAN_CRYPTO_ADDSELECTOR(frm,
+			wlan_crypto_wpa_cipher_to_suite(
+						WLAN_CRYPTO_CIPHER_AES_CCM));
+	}
+	if (UCIPHER_IS_CLEAR(crypto_params)) {
 		selcnt[0]++;
 		WLAN_CRYPTO_ADDSELECTOR(frm,
 			wlan_crypto_wpa_cipher_to_suite(
@@ -1990,31 +1977,18 @@ uint8_t *wlan_crypto_build_wpaie(struct wlan_objmgr_vdev *vdev,
 /**
  * wlan_crypto_build_rsnie - called by mlme to build rsnie
  *
- * @vdev: vdev
+ * @crypto params: crypto params
  * @iebuf: ie buffer
  *
- * This function gets called by mlme to build rsnie from given vdev
+ * This function gets called by mlme to build rsnie from given crypto params
  *
  * Return: end of buffer
  */
-uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
-				 uint8_t *iebuf){
+uint8_t *wlan_crypto_build_rsnie(struct wlan_crypto_params *crypto_params,
+				uint8_t *iebuf){
 	uint8_t *frm = iebuf;
 	uint8_t *selcnt;
-	struct wlan_crypto_comp_priv *crypto_priv;
-	struct wlan_crypto_params *crypto_params;
-
-	if (!frm) {
-		qdf_print("%s[%d] ie buffer NULL\n", __func__, __LINE__);
-		return NULL;
-	}
-
-	crypto_params = wlan_crypto_vdev_get_comp_params(vdev, &crypto_priv);
-
-	if (!crypto_params) {
-		qdf_print("%s[%d] crypto_params NULL\n", __func__, __LINE__);
-		return NULL;
-	}
+	uint32_t mcastcipher;
 
 	*frm++ = WLAN_ELEMID_RSN;
 	*frm++ = 0;
@@ -2022,27 +1996,9 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 
 
 	/* multicast cipher */
-	if (MCIPHER_IS_TKIP(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
-					WLAN_CRYPTO_CIPHER_TKIP));
-	} else if (MCIPHER_IS_CCMP128(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
-					WLAN_CRYPTO_CIPHER_AES_CCM));
-	} else if (MCIPHER_IS_CCMP256(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
-					WLAN_CRYPTO_CIPHER_AES_CCM_256));
-	} else if (MCIPHER_IS_GCMP128(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
-					WLAN_CRYPTO_CIPHER_AES_GCM));
-	} else if (MCIPHER_IS_GCMP256(crypto_params)) {
-		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
-					WLAN_CRYPTO_CIPHER_AES_GCM_256));
-	}
+	mcastcipher = wlan_crypto_get_mcastcipher(crypto_params);
+	WLAN_CRYPTO_ADDSELECTOR(frm,
+				wlan_crypto_rsn_cipher_to_suite(mcastcipher));
 
 	/* unicast cipher list */
 	selcnt = frm;
@@ -2051,13 +2007,13 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 	if (UCIPHER_IS_TKIP(crypto_params)) {
 		selcnt[0]++;
 		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
+			 wlan_crypto_rsn_cipher_to_suite(
 						WLAN_CRYPTO_CIPHER_TKIP));
 	}
 	if (UCIPHER_IS_CCMP128(crypto_params)) {
 		selcnt[0]++;
 		WLAN_CRYPTO_ADDSELECTOR(frm,
-					wlan_crypto_rsn_cipher_to_suite(
+			wlan_crypto_rsn_cipher_to_suite(
 						WLAN_CRYPTO_CIPHER_AES_CCM));
 	}
 	if (UCIPHER_IS_CCMP256(crypto_params)) {
@@ -2078,6 +2034,12 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 		WLAN_CRYPTO_ADDSELECTOR(frm,
 			wlan_crypto_rsn_cipher_to_suite(
 					WLAN_CRYPTO_CIPHER_AES_GCM_256));
+	}
+	if (UCIPHER_IS_CLEAR(crypto_params)) {
+		selcnt[0]++;
+		WLAN_CRYPTO_ADDSELECTOR(frm,
+			wlan_crypto_rsn_cipher_to_suite(
+					WLAN_CRYPTO_CIPHER_AES_CCM));
 	}
 
 
@@ -2138,10 +2100,11 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 		}
 	}
 
-	WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);
 	/* optional capabilities */
 	if (crypto_params->rsn_caps != 0 &&
 		crypto_params->rsn_caps != WLAN_CRYPTO_RSN_CAP_PREAUTH){
+
+		WLAN_CRYPTO_ADDSHORT(frm, crypto_params->rsn_caps);
 
 		if (HAS_MGMT_CIPHER(crypto_params,
 						WLAN_CRYPTO_CIPHER_AES_CMAC)) {
@@ -2173,7 +2136,6 @@ uint8_t *wlan_crypto_build_rsnie(struct wlan_objmgr_vdev *vdev,
 					WLAN_CRYPTO_CIPHER_AES_GMAC_256));
 		}
 	}
-
 	/* calculate element length */
 	iebuf[1] = frm - iebuf - 2;
 
