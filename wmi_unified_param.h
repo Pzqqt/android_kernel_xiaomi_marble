@@ -6129,6 +6129,7 @@ typedef struct {
 	uint32_t gtk_offload_max_vdev;
 	uint32_t num_msdu_desc; /* Number of msdu desc */
 	uint32_t max_frag_entries;
+	uint32_t scheduler_params;
 	/* End common */
 
 	/* Added for Beeliner */
