@@ -254,8 +254,8 @@ static
 bool pmo_support_wow_for_beaconing(struct wlan_objmgr_psoc *psoc)
 {
 	/*
-	 * if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-	 *			WMI_SERVICE_BEACON_OFFLOAD))
+	 * if (wmi_service_enabled(wma->wmi_handle,
+	 *			wmi_service_beacon_offload))
 	 */
 	return pmo_is_beaconing_vdev_up(psoc);
 }
