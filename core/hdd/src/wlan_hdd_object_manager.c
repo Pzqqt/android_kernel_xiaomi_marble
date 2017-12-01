@@ -243,10 +243,13 @@ int hdd_objmgr_destroy_vdev(struct hdd_adapter *adapter)
 		return -EINVAL;
 
 	osif_priv = wlan_vdev_get_ospriv(vdev);
-	wlan_vdev_reset_ospriv(vdev);
-	wlan_cfg80211_tdls_priv_deinit(osif_priv);
 
+	if (!osif_priv)
+		return -EINVAL;
+
+	wlan_cfg80211_tdls_priv_deinit(osif_priv);
 	qdf_mem_free(osif_priv);
+	wlan_vdev_reset_ospriv(vdev);
 
 	if (hdd_objmgr_remove_peer_object(vdev,
 					  wlan_vdev_mlme_get_macaddr(vdev))) {
