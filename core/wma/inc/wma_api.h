@@ -284,7 +284,7 @@ QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
  */
 QDF_STATUS wma_set_qpower_config(uint8_t vdev_id, uint8_t qpower);
 
-bool wma_is_service_enabled(WMI_SERVICE service_type);
+bool wma_is_service_enabled(uint32_t service_type);
 
 #ifdef FEATURE_WLAN_D0WOW
 static inline bool wma_d0_wow_is_supported(void)

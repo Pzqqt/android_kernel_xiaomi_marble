@@ -4211,8 +4211,8 @@ bool wma_is_csa_offload_enabled(void)
 	if (!wma)
 		return false;
 
-	return WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_CSA_OFFLOAD);
+	return wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_csa_offload);
 }
 /**
  * wma_config_debug_module_cmd - set debug log config
@@ -4250,12 +4250,12 @@ wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
  */
 bool wma_is_p2p_lo_capable(void)
 {
-	return wma_is_service_enabled(WMI_SERVICE_P2P_LISTEN_OFFLOAD_SUPPORT);
+	return wma_is_service_enabled(wmi_service_p2p_listen_offload_support);
 }
 
 bool wma_capability_enhanced_mcast_filter(void)
 {
-	return wma_is_service_enabled(WMI_SERVICE_ENHANCED_MCAST_FILTER);
+	return wma_is_service_enabled(wmi_service_enhanced_mcast_filter);
 }
 
 
@@ -4444,7 +4444,7 @@ int wma_rcpi_event_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
-bool wma_is_service_enabled(WMI_SERVICE service_type)
+bool wma_is_service_enabled(uint32_t service_type)
 {
 	tp_wma_handle wma;
 
@@ -4459,7 +4459,7 @@ bool wma_is_service_enabled(WMI_SERVICE service_type)
 		return false;
 	}
 
-	return WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap, service_type);
+	return wmi_service_enabled(wma->wmi_handle, service_type);
 }
 
 QDF_STATUS wma_send_vdev_up_to_fw(t_wma_handle *wma,

@@ -2004,9 +2004,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 						   roam_req->sessionId);
 		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
-		if (WMI_SERVICE_EXT_IS_ENABLED(wma_handle->wmi_service_bitmap,
-					wma_handle->wmi_service_ext_bitmap,
-					WMI_SERVICE_MAWC_SUPPORT)) {
+		if (wmi_service_enabled(wma_handle->wmi_handle,
+					wmi_service_mawc_support)) {
 			qdf_status =
 				wma_roam_scan_mawc_params(wma_handle, roam_req);
 			if (qdf_status != QDF_STATUS_SUCCESS) {
@@ -5199,8 +5198,8 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 			 __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan feature bit not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5288,8 +5287,8 @@ QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, cannot issue cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5409,8 +5408,8 @@ QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 		WMA_LOGE("%s: Invalid reset hotlist buffer", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5577,8 +5576,8 @@ QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_extscan)) {
 		WMA_LOGE("%s: ext scan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5609,8 +5608,8 @@ QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, cannot issue cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5642,8 +5641,8 @@ QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5670,10 +5669,10 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+	if (!wmi_service_enabled(wma->wmi_handle,
 			((ipa_offload->offload_type == AP_RX_DATA_OFFLOAD) ?
-			WMI_SERVICE_HSOFFLOAD :
-			WMI_SERVICE_STA_RX_IPA_OFFLOAD_SUPPORT))) {
+			wmi_service_hsoffload :
+			wmi_service_sta_rx_ipa_offload_support))) {
 		WMA_LOGE("%s: %s not supported", __func__,
 			((ipa_offload->offload_type == AP_RX_DATA_OFFLOAD) ?
 			"WMI_SERVICE_HSOFFLOAD" :
@@ -5751,8 +5750,8 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-			WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+			wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
@@ -5828,8 +5827,8 @@ QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-			WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+			wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
@@ -5894,8 +5893,8 @@ QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-			WMI_SERVICE_EXTSCAN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+			wmi_service_extscan)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
 		return QDF_STATUS_E_NOSUPPORT;
 	}

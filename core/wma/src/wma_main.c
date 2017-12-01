@@ -2786,6 +2786,12 @@ static int wma_rx_service_available_event(void *handle, uint8_t *cmd_param_info,
 				&ev->wmi_service_segment_bitmap[0],
 				WMI_SERVICE_EXT_BM_SIZE32 * sizeof(A_UINT32));
 
+	if (wmi_save_ext_service_bitmap(wma_handle->wmi_handle,
+				cmd_param_info, NULL)
+			!= QDF_STATUS_SUCCESS)
+		qdf_print("Failed to save ext service bitmap\n");
+
+
 	return 0;
 }
 
@@ -3304,7 +3310,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	pmo_register_is_device_in_low_pwr_mode(wma_handle->psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
 	wma_cbacks.wma_get_connection_info = wma_get_connection_info;
-	wma_cbacks.wma_is_service_enabled = wma_is_service_enabled;
 	qdf_status = policy_mgr_register_wma_cb(wma_handle->psoc, &wma_cbacks);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Failed to register wma cb with Policy Manager");
@@ -3947,8 +3952,8 @@ QDF_STATUS wma_start(void)
 		goto end;
 #endif /* QCA_WIFI_FTM */
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_RMC)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_rmc)) {
 
 		WMA_LOGD("FW supports cesium network, registering event handlers");
 
@@ -4483,8 +4488,8 @@ static void wma_update_fw_config(tp_wma_handle wma_handle,
 		tgt_cap->wlan_resource_config.max_frag_entries;
 
 	/* Update no. of maxWoWFilters depending on BPF service */
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_BPF_OFFLOAD))
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_bpf_offload))
 		tgt_cap->wlan_resource_config.num_wow_filters =
 					WMA_STA_WOW_DEFAULT_PTRN_MAX;
 }
@@ -4607,20 +4612,20 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 					      struct wma_tgt_services *cfg)
 {
 	/* STA power save */
-	cfg->sta_power_save = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-						     WMI_SERVICE_STA_PWRSAVE);
+	cfg->sta_power_save = wmi_service_enabled(wh->wmi_handle,
+						     wmi_service_sta_pwrsave);
 
 	/* Enable UAPSD */
-	cfg->uapsd = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-					    WMI_SERVICE_AP_UAPSD);
+	cfg->uapsd = wmi_service_enabled(wh->wmi_handle,
+					    wmi_service_ap_uapsd);
 
 	/* Update AP DFS service */
-	cfg->ap_dfs = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-					     WMI_SERVICE_AP_DFS);
+	cfg->ap_dfs = wmi_service_enabled(wh->wmi_handle,
+					     wmi_service_ap_dfs);
 
 	/* Enable 11AC */
-	cfg->en_11ac = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-					      WMI_SERVICE_11AC);
+	cfg->en_11ac = wmi_service_enabled(wh->wmi_handle,
+					      wmi_service_11ac);
 	if (cfg->en_11ac)
 		g_fw_wlan_feat_caps |= (1 << DOT11AC);
 
@@ -4631,65 +4636,65 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	g_fw_wlan_feat_caps |= (1 << WOW);
 
 	/* ARP offload */
-	cfg->arp_offload = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-						  WMI_SERVICE_ARPNS_OFFLOAD);
+	cfg->arp_offload = wmi_service_enabled(wh->wmi_handle,
+						  wmi_service_arpns_offload);
 
 	/* Adaptive early-rx */
-	cfg->early_rx = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-					       WMI_SERVICE_EARLY_RX);
+	cfg->early_rx = wmi_service_enabled(wh->wmi_handle,
+					       wmi_service_early_rx);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap, WMI_SERVICE_NLO))
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_nlo))
 		cfg->pno_offload = true;
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
 #ifdef FEATURE_WLAN_EXTSCAN
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap, WMI_SERVICE_EXTSCAN))
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_extscan))
 		g_fw_wlan_feat_caps |= (1 << EXTENDED_SCAN);
 #endif /* FEATURE_WLAN_EXTSCAN */
-	cfg->lte_coex_ant_share = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-					WMI_SERVICE_LTE_ANT_SHARE_SUPPORT);
+	cfg->lte_coex_ant_share = wmi_service_enabled(wh->wmi_handle,
+					wmi_service_lte_ant_share_support);
 #ifdef FEATURE_WLAN_TDLS
 	/* Enable TDLS */
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap, WMI_SERVICE_TDLS)) {
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_tdls)) {
 		cfg->en_tdls = 1;
 		g_fw_wlan_feat_caps |= (1 << TDLS);
 	}
 	/* Enable advanced TDLS features */
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-				   WMI_SERVICE_TDLS_OFFCHAN)) {
+	if (wmi_service_enabled(wh->wmi_handle,
+				   wmi_service_tdls_offchan)) {
 		cfg->en_tdls_offchan = 1;
 		g_fw_wlan_feat_caps |= (1 << TDLS_OFF_CHANNEL);
 	}
 
 	cfg->en_tdls_uapsd_buf_sta =
-		WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-				       WMI_SERVICE_TDLS_UAPSD_BUFFER_STA);
+		wmi_service_enabled(wh->wmi_handle,
+				       wmi_service_tdls_uapsd_buffer_sta);
 	cfg->en_tdls_uapsd_sleep_sta =
-		WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-				       WMI_SERVICE_TDLS_UAPSD_SLEEP_STA);
+		wmi_service_enabled(wh->wmi_handle,
+				       wmi_service_tdls_uapsd_sleep_sta);
 #endif /* FEATURE_WLAN_TDLS */
-	if (WMI_SERVICE_IS_ENABLED
-		    (wh->wmi_service_bitmap, WMI_SERVICE_BEACON_OFFLOAD))
+	if (wmi_service_enabled
+		    (wh->wmi_handle, wmi_service_beacon_offload))
 		cfg->beacon_offload = true;
-	if (WMI_SERVICE_IS_ENABLED
-		    (wh->wmi_service_bitmap, WMI_SERVICE_STA_PMF_OFFLOAD))
+	if (wmi_service_enabled
+		    (wh->wmi_handle, wmi_service_sta_pmf_offload))
 		cfg->pmf_offload = true;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	/* Enable Roam Offload */
-	cfg->en_roam_offload = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-					      WMI_SERVICE_ROAM_HO_OFFLOAD);
+	cfg->en_roam_offload = wmi_service_enabled(wh->wmi_handle,
+					      wmi_service_roam_ho_offload);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 #ifdef WLAN_FEATURE_NAN
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap, WMI_SERVICE_NAN))
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_nan))
 		g_fw_wlan_feat_caps |= (1 << NAN);
 #endif /* WLAN_FEATURE_NAN */
 
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap, WMI_SERVICE_RTT))
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_rtt))
 		g_fw_wlan_feat_caps |= (1 << RTT);
 
-	if (WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-			WMI_SERVICE_TX_MSDU_ID_NEW_PARTITION_SUPPORT)) {
+	if (wmi_service_enabled(wh->wmi_handle,
+			wmi_service_tx_msdu_id_new_partition_support)) {
 		wma_set_tx_partition_base(HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 	} else {
 		wma_set_tx_partition_base(HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
@@ -4698,16 +4703,14 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	wma_he_update_tgt_services(wh, cfg);
 
 	cfg->get_peer_info_enabled =
-		WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
-				       WMI_SERVICE_PEER_STATS_INFO);
-	if (WMI_SERVICE_EXT_IS_ENABLED(wh->wmi_service_bitmap,
-			wh->wmi_service_ext_bitmap,
-			WMI_SERVICE_FILS_SUPPORT))
+		wmi_service_enabled(wh->wmi_handle,
+				       wmi_service_peer_stats_info);
+	if (wmi_service_enabled(wh->wmi_handle,
+			wmi_service_fils_support))
 		cfg->is_fils_roaming_supported = true;
 
-	if (WMI_SERVICE_EXT_IS_ENABLED(wh->wmi_service_bitmap,
-				       wh->wmi_service_ext_bitmap,
-				       WMI_SERVICE_MAWC_SUPPORT))
+	if (wmi_service_enabled(wh->wmi_handle,
+				       wmi_service_mawc_support))
 		cfg->is_fw_mawc_capable = true;
 
 }
@@ -5540,8 +5543,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		     sizeof(wma_handle->wmi_service_bitmap));
 
 	cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(soc,
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				       WMI_SERVICE_MGMT_TX_WMI));
+		wmi_service_enabled(wma_handle->wmi_handle,
+				       wmi_service_mgmt_tx_wmi));
 	cdp_set_desc_global_pool_size(soc, ev->num_msdu_desc);
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -5554,8 +5557,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	}
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->lpss_support =
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				       WMI_SERVICE_LPASS);
+		wmi_service_enabled(wma_handle->wmi_handle,
+				       wmi_service_lpass);
 #endif /* WLAN_FEATURE_LPSS */
 
 	/*
@@ -5563,15 +5566,15 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 * support for LL/HL targets
 	 */
 	wma_handle->ap_arpns_support =
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_AP_ARPNS_OFFLOAD);
+		wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ap_arpns_offload);
 
 	wma_handle->bpf_enabled = (wma_handle->bpf_packet_filter_enable &&
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_BPF_OFFLOAD));
+		wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_bpf_offload));
 	wma_update_ra_limit(wma_handle);
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_CSA_OFFLOAD)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_csa_offload)) {
 		WMA_LOGD("%s: FW support CSA offload capability", __func__);
 		status = wmi_unified_register_event_handler(
 						wma_handle->wmi_handle,
@@ -5584,8 +5587,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		}
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_MGMT_TX_WMI)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_mgmt_tx_wmi)) {
 		WMA_LOGD("Firmware supports management TX over WMI,use WMI interface instead of HTT for management Tx");
 		/*
 		 * Register Tx completion event handler for MGMT Tx over WMI
@@ -5615,8 +5618,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("FW doesnot support WMI_SERVICE_MGMT_TX_WMI, Use HTT interface for Management Tx");
 	}
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_GTK_OFFLOAD)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_gtk_offload)) {
 		status =
 			wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
@@ -5639,8 +5642,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_RCPI_SUPPORT)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_rcpi_support)) {
 		/* register for rcpi response event */
 		status = wmi_unified_register_event_handler(
 							wma_handle->wmi_handle,
@@ -5662,8 +5665,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 * service is not set, then host shall not expect MAC ID from FW in
 	 * VDEV START RESPONSE event and host shall use PDEV ID.
 	 */
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-			WMI_SERVICE_DEPRECATED_REPLACE))
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+			wmi_service_deprecated_replace))
 		wma_handle->wlan_resource_config.use_pdev_id = true;
 	else
 		wma_handle->wlan_resource_config.use_pdev_id = false;
@@ -5685,14 +5688,14 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	}
 
 	cdp_mark_first_wakeup_packet(soc,
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-			WMI_SERVICE_MARK_FIRST_WAKEUP_PACKET));
+		wmi_service_enabled(wma_handle->wmi_handle,
+			wmi_service_mark_first_wakeup_packet));
 	wma_handle->dfs_cac_offload =
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-			WMI_SERVICE_DFS_PHYERR_OFFLOAD);
+		wmi_service_enabled(wma_handle->wmi_handle,
+			wmi_service_dfs_phyerr_offload);
 	wma_handle->nan_datapath_enabled =
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-			WMI_SERVICE_NAN_DATA);
+		wmi_service_enabled(wma_handle->wmi_handle,
+			wmi_service_nan_data);
 	qdf_mem_copy(target_cap.wmi_service_bitmap,
 		     param_buf->wmi_service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
@@ -5721,8 +5724,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 * this flag is set, then hold off on sending the WMI_INIT message until
 	 * WMI_SERVICE_READY_EXT_EVENTID is received.
 	 */
-	if (!WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_EXT_MSG)) {
+	if (!wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_ext_msg)) {
 		/* No service extended message support.
 		 * Send INIT command immediately
 		 */
@@ -5748,8 +5751,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 				__func__);
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_8SS_TX_BFEE))
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_8ss_tx_bfee))
 		wma_handle->tx_bfee_8ss_enabled = true;
 	else
 		wma_handle->tx_bfee_8ss_enabled = false;
@@ -6541,8 +6544,8 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	 * event was received
 	 */
 	wma_handle->sub_20_support =
-		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_HALF_RATE_QUARTER_RATE_SUPPORT);
+		wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_half_rate_quarter_rate_support);
 	wma_handle->wmi_ready = true;
 	wma_handle->wlan_init_status = ev->status;
 

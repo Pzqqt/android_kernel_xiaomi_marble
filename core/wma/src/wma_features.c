@@ -764,8 +764,8 @@ QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
 			 __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	if (!WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				    WMI_SERVICE_ESTIMATE_LINKSPEED)) {
+	if (!wmi_service_enabled(wma_handle->wmi_handle,
+				    wmi_service_estimate_linkspeed)) {
 		WMA_LOGE("%s: Linkspeed feature bit not enabled Sending value 0 as link speed.",
 			__func__);
 		wma_send_link_speed(0);
@@ -1116,8 +1116,8 @@ void wma_register_egap_event_handle(WMA_HANDLE handle)
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	QDF_STATUS status;
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_EGAP)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_egap)) {
 		status = wmi_unified_register_event_handler(
 						   wma_handle->wmi_handle,
 						   wmi_ap_ps_egap_info_event_id,
@@ -1210,9 +1210,8 @@ void wma_check_and_set_wake_timer(uint32_t time)
 		return;
 	}
 
-	if (!WMI_SERVICE_EXT_IS_ENABLED(wma->wmi_service_bitmap,
-		wma->wmi_service_ext_bitmap,
-		WMI_SERVICE_WOW_WAKEUP_BY_TIMER_PATTERN)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+		wmi_service_wow_wakeup_by_timer_pattern)) {
 		WMA_LOGD("TIME_PATTERN is not enabled");
 		return;
 	}
@@ -4333,8 +4332,8 @@ QDF_STATUS wma_get_bpf_capabilities(tp_wma_handle wma)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-		WMI_SERVICE_BPF_OFFLOAD)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+		wmi_service_bpf_offload)) {
 		WMA_LOGE(FL("BPF cababilities feature bit not enabled"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -4383,8 +4382,8 @@ QDF_STATUS wma_set_bpf_instructions(tp_wma_handle wma,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-		WMI_SERVICE_BPF_OFFLOAD)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+		wmi_service_bpf_offload)) {
 		WMA_LOGE(FL("BPF offload feature Disabled"));
 		return QDF_STATUS_E_NOSUPPORT;
 	}

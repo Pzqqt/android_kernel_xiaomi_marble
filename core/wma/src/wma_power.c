@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1058,10 +1058,10 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 		 trigger_uapsd_params->delay_interval,
 		 trigger_uapsd_params->suspend_interval);
 
-	if (!WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				    WMI_STA_UAPSD_BASIC_AUTO_TRIG) ||
-	    !WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				    WMI_STA_UAPSD_VAR_AUTO_TRIG)) {
+	if (!wmi_service_enabled(wma_handle->wmi_handle,
+				    wmi_sta_uapsd_basic_auto_trig) ||
+	    !wmi_service_enabled(wma_handle->wmi_handle,
+				    wmi_sta_uapsd_var_auto_trig)) {
 		WMA_LOGD("Trigger uapsd is not supported vdev id %d", vdev_id);
 		return QDF_STATUS_SUCCESS;
 	}

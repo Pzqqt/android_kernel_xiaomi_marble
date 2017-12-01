@@ -2652,8 +2652,8 @@ void wma_send_probe_rsp_tmpl(tp_wma_handle wma,
 		return;
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_BEACON_OFFLOAD)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_beacon_offload)) {
 		WMA_LOGD("Beacon Offload Enabled Sending Unified command");
 		if (wmi_unified_probe_rsp_tmpl_send(wma, vdev_id,
 						    probe_rsp_info) < 0) {
@@ -2689,8 +2689,8 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		return;
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_BEACON_OFFLOAD)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_beacon_offload)) {
 		WMA_LOGD("Beacon Offload Enabled Sending Unified command");
 		status = wma_unified_bcn_tmpl_send(wma, vdev_id, bcn_info, 4);
 		if (QDF_IS_STATUS_ERROR(status)) {
@@ -3316,8 +3316,8 @@ int wma_process_bip(tp_wma_handle wma_handle,
 
 	switch (iface->key.key_cipher) {
 	case WMI_CIPHER_AES_CMAC:
-		if ((WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-		   WMI_SERVICE_STA_PMF_OFFLOAD))) {
+		if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_sta_pmf_offload)) {
 			/*
 			 * if 11w offload is enabled then mmie validation is
 			 * performed in firmware, host just need to trim the
@@ -4067,8 +4067,8 @@ QDF_STATUS wma_mgmt_unified_cmd_send(struct wlan_objmgr_vdev *vdev,
 
 	txrx_vdev = wma_handle->interfaces[mgmt_params->vdev_id].handle;
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_MGMT_TX_WMI)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_mgmt_tx_wmi)) {
 		status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
 						   mgmt_params);
 	} else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,8 +91,10 @@ QDF_STATUS target_if_pmo_clear_mc_filter_req(
 bool target_if_pmo_get_multiple_mc_filter_support(
 		struct wlan_objmgr_psoc *psoc)
 {
-	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
-				      WMI_SERVICE_MULTIPLE_MCAST_FILTER_SET);
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+
+	return wmi_service_enabled(wmi_handle,
+				      wmi_service_multiple_mcast_filter_set);
 }
 
 QDF_STATUS target_if_pmo_set_multiple_mc_filter_req(

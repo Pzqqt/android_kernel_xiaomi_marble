@@ -456,8 +456,8 @@ static void wma_vdev_detach_callback(void *ctx)
 	iface->del_staself_req = NULL;
 	WMA_LOGD("%s: sending eWNI_SME_DEL_STA_SELF_RSP for vdev %d",
 		 __func__, param->session_id);
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_sync_delete_cmds)) {
 		req_msg = wma_find_vdev_req(wma, param->session_id,
 					    WMA_TARGET_REQ_TYPE_VDEV_DEL,
 					    true);
@@ -530,8 +530,8 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 			del_sta_self_req_param->self_mac_addr,
 			vdev_id, peer, false);
 
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_SYNC_DELETE_CMDS)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_sync_delete_cmds)) {
 		sta_self_wmi_rsp =
 			qdf_mem_malloc(sizeof(struct del_sta_self_rsp_params));
 		if (sta_self_wmi_rsp == NULL) {
@@ -608,8 +608,8 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	}
 
 	/* Acquire wake lock only when you expect a response from firmware */
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				   WMI_SERVICE_SYNC_DELETE_CMDS)) {
+	if (wmi_service_enabled(wma_handle->wmi_handle,
+				   wmi_service_sync_delete_cmds)) {
 		wma_acquire_wakelock(&wma_handle->wmi_cmd_rsp_wake_lock,
 				     WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
 	}
@@ -620,8 +620,8 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	 * send the response immediately if WMI_SERVICE_SYNC_DELETE_CMDS
 	 * service is not supported by firmware
 	 */
-	if (!WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				    WMI_SERVICE_SYNC_DELETE_CMDS))
+	if (!wmi_service_enabled(wma_handle->wmi_handle,
+				    wmi_service_sync_delete_cmds))
 		wma_vdev_detach_callback(iface);
 	return status;
 out:
@@ -713,8 +713,8 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	    (iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) {
 		wma_self_peer_remove(wma_handle, pdel_sta_self_req_param,
 					generateRsp);
-		if (!WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_SYNC_DELETE_CMDS))
+		if (!wmi_service_enabled(wma_handle->wmi_handle,
+				wmi_service_sync_delete_cmds))
 			status = wma_handle_vdev_detach(wma_handle,
 				pdel_sta_self_req_param, generateRsp);
 	} else {  /* other than P2P */
@@ -1644,9 +1644,9 @@ static int wma_remove_bss_peer(tp_wma_handle wma, void *pdev,
 	}
 
 	wma_remove_peer(wma, mac_addr, vdev_id, peer, false);
-	if (WMI_SERVICE_IS_ENABLED(
-	   wma->wmi_service_bitmap,
-	   WMI_SERVICE_SYNC_DELETE_CMDS)) {
+	if (wmi_service_enabled(
+	   wma->wmi_handle,
+	   wmi_service_sync_delete_cmds)) {
 		WMA_LOGD(FL("Wait for the peer delete. vdev_id %d"),
 				 req_msg->vdev_id);
 		del_req = wma_fill_hold_req(wma,
@@ -1936,9 +1936,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		if (status != 0)
 			goto free_req_msg;
 
-		if (WMI_SERVICE_IS_ENABLED(
-		   wma->wmi_service_bitmap,
-		   WMI_SERVICE_SYNC_DELETE_CMDS))
+		if (wmi_service_enabled(
+		   wma->wmi_handle,
+		   wmi_service_sync_delete_cmds))
 			goto free_req_msg;
 
 		wma_send_del_bss_response(wma, req_msg, resp_event->vdev_id);
@@ -1952,8 +1952,8 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				 params->bssid, req_msg->vdev_id);
 			wma_remove_peer(wma, params->bssid, req_msg->vdev_id,
 				peer, false);
-			if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
+			if (wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_sync_delete_cmds)) {
 				WMA_LOGI(FL("Wait for the peer delete. vdev_id %d"),
 						 req_msg->vdev_id);
 				del_req = wma_fill_hold_req(wma,
@@ -2128,8 +2128,8 @@ struct cdp_vdev *wma_vdev_attach(tp_wma_handle wma_handle,
 				       cfg_val, NULL, NULL, NULL);
 
 		/* offload STA SA query related params to fwr */
-		if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-			WMI_SERVICE_STA_PMF_OFFLOAD)) {
+		if (wmi_service_enabled(wma_handle->wmi_handle,
+			wmi_service_sta_pmf_offload)) {
 			wma_set_sta_sa_query_param(wma_handle,
 						   self_sta_req->session_id);
 		}
@@ -3180,9 +3180,9 @@ void wma_vdev_resp_timer(void *data)
 		if (status != 0)
 			goto free_tgt_req;
 
-		if (WMI_SERVICE_IS_ENABLED(
-		   wma->wmi_service_bitmap,
-		   WMI_SERVICE_SYNC_DELETE_CMDS))
+		if (wmi_service_enabled(
+		   wma->wmi_handle,
+		   wmi_service_sync_delete_cmds))
 			goto free_tgt_req;
 
 		if (wma_send_vdev_down_to_fw(wma, tgt_req->vdev_id) !=
@@ -3235,8 +3235,8 @@ void wma_vdev_resp_timer(void *data)
 		struct del_sta_self_params *params =
 			(struct del_sta_self_params *) iface->del_staself_req;
 
-		if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-					   WMI_SERVICE_SYNC_DELETE_CMDS)) {
+		if (wmi_service_enabled(wma->wmi_handle,
+					   wmi_service_sync_delete_cmds)) {
 			wma_release_wakelock(&wma->wmi_cmd_rsp_wake_lock);
 		}
 		params->status = QDF_STATUS_E_TIMEOUT;
@@ -3684,8 +3684,8 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	 * If IBSS Power Save is supported by firmware
 	 * set the IBSS power save params to firmware.
 	 */
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_IBSS_PWRSAVE)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_ibss_pwrsave)) {
 		status = wma_set_ibss_pwrsave_params(wma, vdev_id);
 		if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s: Failed to Set IBSS Power Save Params to firmware",
@@ -4014,8 +4014,8 @@ send_bss_resp:
 	qdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
 		     sizeof(add_bss->staContext.staMac));
 
-	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_PEER_ASSOC_CONF)) {
+	if (!wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_peer_assoc_conf)) {
 		WMA_LOGE(FL("WMI_SERVICE_PEER_ASSOC_CONF not enabled"));
 		goto send_final_rsp;
 	}
@@ -4227,8 +4227,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		}
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_PEER_ASSOC_CONF)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_peer_assoc_conf)) {
 		peer_assoc_cnf = true;
 		msg = wma_fill_hold_req(wma, add_sta->smesessionId,
 				   WMA_ADD_STA_REQ, WMA_PEER_ASSOC_CNF_START,
@@ -4263,8 +4263,8 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	 * firmware.
 	 */
 	if (wma_is_vdev_in_ibss_mode(wma, add_sta->smesessionId) &&
-	    WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_IBSS_PWRSAVE)) {
+	    wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_ibss_pwrsave)) {
 		/*
 		 * If ATIM Window is present in the peer
 		 * beacon then send it to firmware else
@@ -4438,8 +4438,8 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			goto send_rsp;
 		}
 
-		if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-					    WMI_SERVICE_PEER_ASSOC_CONF)) {
+		if (wmi_service_enabled(wma->wmi_handle,
+					    wmi_service_peer_assoc_conf)) {
 			WMA_LOGE(FL("WMI_SERVICE_PEER_ASSOC_CONF is enabled"));
 			peer_assoc_cnf = true;
 			msg = wma_fill_hold_req(wma, add_sta->smesessionId,
@@ -4593,8 +4593,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		}
 		wmi_unified_send_txbf(wma, params);
 
-		if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-					    WMI_SERVICE_PEER_ASSOC_CONF)) {
+		if (wmi_service_enabled(wma->wmi_handle,
+					    wmi_service_peer_assoc_conf)) {
 			WMA_LOGD(FL("WMI_SERVICE_PEER_ASSOC_CONF is enabled"));
 			peer_assoc_cnf = true;
 			msg = wma_fill_hold_req(wma, params->smesessionId,
@@ -4643,8 +4643,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 				iface->llbCoexist, maxTxPower);
 
 	params->csaOffloadEnable = 0;
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_CSA_OFFLOAD)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_csa_offload)) {
 		params->csaOffloadEnable = 1;
 		if (wma_unified_csa_offload_enable(wma, params->smesessionId) <
 		    0) {
@@ -4653,8 +4653,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		}
 	}
 
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				   WMI_SERVICE_FILTER_IPSEC_NATKEEPALIVE)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				   wmi_service_filter_ipsec_natkeepalive)) {
 		if (wmi_unified_nat_keepalive_enable(wma, params->smesessionId)
 		    < 0) {
 			WMA_LOGE("Unable to enable NAT keepalive for vdev_id:%d",
@@ -4765,8 +4765,8 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 			false);
 	del_sta->status = QDF_STATUS_SUCCESS;
 
-	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
+	if (wmi_service_enabled(wma->wmi_handle,
+				    wmi_service_sync_delete_cmds)) {
 		msg = wma_fill_hold_req(wma, del_sta->smesessionId,
 				   WMA_DELETE_STA_REQ,
 				   WMA_DELETE_STA_RSP_START, del_sta,
@@ -4842,8 +4842,8 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	}
 
 	if (del_sta->respReqd &&
-			WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				WMI_SERVICE_SYNC_DELETE_CMDS)) {
+			wmi_service_enabled(wma->wmi_handle,
+				wmi_service_sync_delete_cmds)) {
 		del_sta->status = QDF_STATUS_SUCCESS;
 		msg = wma_fill_hold_req(wma,
 				del_sta->smesessionId,
@@ -5004,8 +5004,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		wma_delete_sta_req_ap_mode(wma, del_sta);
 		/* free the memory here only if sync feature is not enabled */
 		if (!rsp_requested &&
-		    !WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-				WMI_SERVICE_SYNC_DELETE_CMDS)) {
+		    !wmi_service_enabled(wma->wmi_handle,
+				wmi_service_sync_delete_cmds)) {
 			WMA_LOGD(FL("vdev_id %d status %d"),
 				 del_sta->smesessionId, del_sta->status);
 			qdf_mem_free(del_sta);
