@@ -348,6 +348,8 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 		wlan_cfg_set_hw_macid(wlan_cfg_ctx, 2, 2);
 
 	wlan_cfg_ctx->base_hw_macid = 1;
+	/*Enable checksum offload by default*/
+	wlan_cfg_ctx->tcp_udp_checksumoffload = 1;
 
 	return wlan_cfg_ctx;
 }
@@ -689,6 +691,11 @@ int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
 int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->int_timer_threshold_other;
+}
+
+int wlan_cfg_get_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->tcp_udp_checksumoffload;
 }
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**

@@ -627,6 +627,14 @@ int wlan_cfg_get_int_batch_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
 int wlan_cfg_get_int_timer_threshold_other(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 /*
+ * wlan_cfg_get_checksum_offload - Get checksum offload enable or disable status
+ * @wlan_cfg_soc_ctx
+ *
+ * Return: Checksum offload enable or disable
+ */
+int wlan_cfg_get_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+/*
  * wlan_cfg_tx_ring_size - Get Tx DMA ring size (TCL Data Ring)
  * @wlan_cfg_soc_ctx
  *
