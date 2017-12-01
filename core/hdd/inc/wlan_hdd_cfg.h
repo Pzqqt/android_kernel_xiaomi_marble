@@ -8012,6 +8012,25 @@ enum hdd_link_speed_rpt_type {
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_DEFAULT (100)
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MIN     (0)
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MAX     (10000)
+/*
+ * <ini>
+ * gTcpAdvWinScaleEnable - Control to enable  TCP adv window scaling
+ * @Min: -0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable dynamic configuration of TCP adv window scaling system parameter.
+ *
+ * Supported Feature: Tcp Advance Window Scaling
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_TCP_ADV_WIN_SCALE                      "gTcpAdvWinScaleEnable"
+#define CFG_ENABLE_TCP_ADV_WIN_SCALE_DEFAULT              (1)
+#define CFG_ENABLE_TCP_ADV_WIN_SCALE_MIN                  (0)
+#define CFG_ENABLE_TCP_ADV_WIN_SCALE_MAX                  (1)
 
 /*
  * <ini>
@@ -14040,6 +14059,7 @@ struct hdd_config {
 	uint32_t busBandwidthLowThreshold;
 	uint32_t busBandwidthComputeInterval;
 	uint32_t enable_tcp_delack;
+	uint32_t enable_tcp_adv_win_scale;
 	uint32_t tcpDelackThresholdHigh;
 	uint32_t tcpDelackThresholdLow;
 	uint32_t tcp_tx_high_tput_thres;

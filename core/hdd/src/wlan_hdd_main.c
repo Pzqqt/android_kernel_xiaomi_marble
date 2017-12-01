@@ -6508,7 +6508,9 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 		if (hdd_ctx->config->enable_tcp_delack)
 			rx_tp_data.rx_tp_flags |= TCP_DEL_ACK_IND;
 
-		rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+		if (hdd_ctx->config->enable_tcp_adv_win_scale)
+			rx_tp_data.rx_tp_flags |= TCP_ADV_WIN_SCL;
+
 		rx_tp_data.level = next_rx_level;
 		wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 				WLAN_SVC_WLAN_TP_IND, &rx_tp_data,
