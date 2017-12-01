@@ -53,6 +53,9 @@
 #define sched_debug(format, args...) \
 	sched_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
+#define sched_enter() sched_debug("Enter")
+#define sched_exit() sched_debug("Exit")
+
 /**
  * struct scheduler_mq_type -  scheduler message queue
  * @mq_lock: message queue lock
