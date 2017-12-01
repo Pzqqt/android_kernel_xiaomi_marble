@@ -660,6 +660,8 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 						("%s nbuf Map Fail Endpnt %pK\n",
 						__func__, pEndpoint));
+					HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue,
+								   pPacket);
 					status = QDF_STATUS_E_FAILURE;
 					break;
 				}
@@ -706,6 +708,9 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 						("hif_send Failed status:%d\n",
 						 status));
 			}
+			qdf_nbuf_unmap(target->osdev,
+				GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
+				QDF_DMA_TO_DEVICE);
 			if (!pEndpoint->async_update) {
 				LOCK_HTC_TX(target);
 			}
