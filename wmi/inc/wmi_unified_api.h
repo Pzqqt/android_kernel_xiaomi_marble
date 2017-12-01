@@ -126,19 +126,32 @@ enum wmi_rx_exec_ctx {
 };
 
 /**
- * attach for unified WMI
- *
- *  @param scn_handle      : handle to SCN.
+ * struct wmi_unified_attach_params - wmi init parameters
+ *  @param osdev            : NIC device
  *  @param target_type      : type of supported wmi command
  *  @param use_cookie       : flag to indicate cookie based allocation
  *  @param ops              : handle to wmi ops
  *  @psoc                   : objmgr psoc
- *  @return opaque handle.
+ *  @max_commands           : max commands
+ */
+struct wmi_unified_attach_params {
+	osdev_t osdev;
+	enum wmi_target_type target_type;
+	bool use_cookie;
+	struct wmi_rx_ops *rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+	uint16_t max_commands;
+};
+
+/**
+ * attach for unified WMI
+ *
+ *  @param scn_handle      : handle to SCN.
+ *  @param params          : attach params for WMI
+ *
  */
 void *wmi_unified_attach(void *scn_handle,
-			 osdev_t osdev, enum wmi_target_type target_type,
-			 bool use_cookie, struct wmi_rx_ops *ops,
-			 struct wlan_objmgr_psoc *psoc);
+			 struct wmi_unified_attach_params *params);
 
 
 

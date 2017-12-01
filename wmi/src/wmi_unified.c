@@ -1399,7 +1399,8 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	WMI_SET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
 
 	qdf_atomic_inc(&wmi_handle->pending_cmds);
-	if (qdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
+	if (qdf_atomic_read(&wmi_handle->pending_cmds) >=
+			wmi_handle->wmi_max_cmds) {
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 		    "\n%s: hostcredits = %d", __func__,
 		wmi_get_host_credits(wmi_handle));
@@ -1407,7 +1408,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 			"%s: MAX %d WMI Pending cmds reached.", __func__,
-			WMI_MAX_CMDS);
+			wmi_handle->wmi_max_cmds);
 		QDF_BUG(0);
 		return QDF_STATUS_E_BUSY;
 	}
@@ -2099,6 +2100,7 @@ void *wmi_unified_get_pdev_handle(struct wmi_soc *soc, uint32_t pdev_idx)
 		qdf_atomic_init(&wmi_handle->pending_cmds);
 		qdf_atomic_init(&wmi_handle->is_target_suspended);
 		wmi_handle->target_type = soc->target_type;
+		wmi_handle->wmi_max_cmds = soc->wmi_max_cmds;
 		wmi_handle->soc = soc;
 
 		soc->wmi_pdev[pdev_idx] = wmi_handle;
@@ -2143,9 +2145,7 @@ qdf_export_symbol(wmi_unified_register_module);
  * @Return: wmi handle.
  */
 void *wmi_unified_attach(void *scn_handle,
-			 osdev_t osdev, enum wmi_target_type target_type,
-			 bool use_cookie, struct wmi_rx_ops *rx_ops,
-			 struct wlan_objmgr_psoc *psoc)
+			 struct wmi_unified_attach_params *param)
 {
 	struct wmi_unified *wmi_handle;
 	struct wmi_soc *soc;
@@ -2190,21 +2190,23 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_interface_logging_init(wmi_handle);
 	/* Attach mc_thread context processing function */
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk =
-				rx_ops->wma_process_fw_event_handler_cbk;
-	wmi_handle->target_type = target_type;
-	soc->target_type = target_type;
-	if (wmi_attach_register[target_type]) {
-		wmi_attach_register[target_type](wmi_handle);
+				param->rx_ops->wma_process_fw_event_handler_cbk;
+	wmi_handle->target_type = param->target_type;
+	soc->target_type = param->target_type;
+	if (wmi_attach_register[param->target_type]) {
+		wmi_attach_register[param->target_type](wmi_handle);
 	} else {
 		WMI_LOGE("wmi attach is not registered");
 		goto error;
 	}
 	/* Assign target cookie capablity */
-	wmi_handle->use_cookie = use_cookie;
-	wmi_handle->osdev = osdev;
+	wmi_handle->use_cookie = param->use_cookie;
+	wmi_handle->osdev = param->osdev;
 	wmi_handle->wmi_stopinprogress = 0;
+	wmi_handle->wmi_max_cmds = param->max_commands;
+	soc->wmi_max_cmds = param->max_commands;
 	/* Increase the ref count once refcount infra is present */
-	soc->wmi_psoc = psoc;
+	soc->wmi_psoc = param->psoc;
 	qdf_spinlock_create(&soc->ctx_lock);
 
 	soc->ops = wmi_handle->ops;

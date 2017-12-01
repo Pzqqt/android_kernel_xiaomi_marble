@@ -1641,6 +1641,7 @@ struct wmi_unified {
 #endif
 	uint32_t *services;
 	struct wmi_soc *soc;
+	uint16_t wmi_max_cmds;
 };
 
 #define WMI_MAX_RADIOS 3
@@ -1669,6 +1670,7 @@ struct wmi_soc {
 	uint32_t vdev_param[wmi_vdev_param_max];
 #endif
 	uint32_t services[wmi_services_max];
+	uint16_t wmi_max_cmds;
 
 };
 
