@@ -127,6 +127,7 @@
 #include "sme_power_save_api.h"
 #include "enet.h"
 #include <cdp_txrx_cmn_struct.h>
+#include "wlan_hdd_sysfs.h"
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -2490,6 +2491,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 		hdd_register_policy_manager_callback(
 			hdd_ctx->hdd_psoc);
+
+		hdd_sysfs_create_version_interface(hdd_ctx->hdd_psoc);
 
 		hdd_update_hw_sw_info(hdd_ctx);
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
@@ -11608,6 +11611,9 @@ static void __hdd_module_exit(void)
 	component_deinit();
 
 	dispatcher_deinit();
+
+	hdd_sysfs_destroy_version_interface();
+
 	hdd_deinit();
 	pld_deinit();
 
