@@ -162,54 +162,75 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
 				     struct hdd_adapter *adapter)
 {
+	QDF_STATUS status;
+	int errno;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_peer *peer;
 	struct vdev_osif_priv *osif_priv;
-	struct wlan_vdev_create_params vdev_params;
+	struct wlan_vdev_create_params vdev_params = {0};
 
-	vdev_params.opmode = adapter->device_mode;
-	qdf_mem_copy(vdev_params.macaddr, adapter->mac_addr.bytes,
-						QDF_NET_MAC_ADDR_MAX_LEN);
+	QDF_BUG(pdev);
 	if (!pdev) {
-		hdd_err("pdev NULL");
+		hdd_err("pdev is null");
 		return -EINVAL;
 	}
 
 	osif_priv = qdf_mem_malloc(sizeof(*osif_priv));
 	if (!osif_priv) {
-		hdd_err("vdev os obj create failed");
+		hdd_err("Failed to allocate osif_priv; out of memory");
 		return -ENOMEM;
 	}
-
 	hdd_init_vdev_os_priv(adapter, osif_priv);
+
+	vdev_params.opmode = adapter->device_mode;
 	vdev_params.osifp = osif_priv;
+	qdf_mem_copy(vdev_params.macaddr,
+		     adapter->mac_addr.bytes,
+		     QDF_NET_MAC_ADDR_MAX_LEN);
 
 	vdev = wlan_objmgr_vdev_obj_create(pdev, &vdev_params);
 	if (!vdev) {
-		hdd_err("vdev obj create fails");
-		return -ENOMEM;
-	}
-
-	peer = wlan_objmgr_peer_obj_create(vdev, WLAN_PEER_SELF,
-					vdev_params.macaddr);
-	if (!peer) {
-		hdd_err("obj manager self peer create fails for adapter %d",
-			adapter->device_mode);
-		wlan_objmgr_vdev_obj_delete(vdev);
-		return -ENOMEM;
+		hdd_err("Failed to create vdev object");
+		errno = -ENOMEM;
+		goto osif_priv_free;
 	}
 
 	/*
 	 * To enable legacy use cases, we need to delay physical vdev destroy
 	 * until after the sme session has been closed. We accomplish this by
-	 * getting an additional reference here.
+	 * getting a reference here.
 	 */
-	wlan_objmgr_vdev_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+	status = wlan_objmgr_vdev_try_get_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to acquire vdev ref; status:%d", status);
+		errno = qdf_status_to_os_return(status);
+		goto vdev_destroy;
+	}
+
+	peer = wlan_objmgr_peer_obj_create(vdev, WLAN_PEER_SELF,
+					   vdev_params.macaddr);
+	if (!peer) {
+		hdd_err("Failed to create self peer for adapter mode %d",
+			adapter->device_mode);
+		errno = -ENOMEM;
+		goto vdev_put_ref;
+	}
 
 	adapter->hdd_vdev = vdev;
 	adapter->session_id = wlan_vdev_get_id(vdev);
 
 	return 0;
+
+vdev_put_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+
+vdev_destroy:
+	wlan_objmgr_vdev_obj_delete(vdev);
+
+osif_priv_free:
+	qdf_mem_free(osif_priv);
+
+	return errno;
 }
 
 int hdd_objmgr_destroy_vdev(struct hdd_adapter *adapter)
