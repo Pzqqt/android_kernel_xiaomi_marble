@@ -9415,13 +9415,14 @@ static int __iw_set_host_offload(struct net_device *dev,
 		}
 	}
 
-	/* Execute offload request. The reason that we can copy the
-	 * request information from the ioctl structure to the SME
-	 * structure is that they are laid out exactly the same.
-	 * Otherwise, each piece of information would have to be
-	 * copied individually.
-	 */
-	memcpy(&offloadRequest, pRequest, wrqu->data.length);
+	qdf_mem_zero(&offloadRequest, sizeof(offloadRequest));
+	offloadRequest.offloadType = pRequest->offloadType;
+	offloadRequest.enableOrDisable = pRequest->enableOrDisable;
+	qdf_mem_copy(&offloadRequest.params, &pRequest->params,
+		     sizeof(pRequest->params));
+	qdf_mem_copy(&offloadRequest.bssid, &pRequest->bssId.bytes,
+		     QDF_MAC_ADDR_SIZE);
+
 	if (QDF_STATUS_SUCCESS !=
 	    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(adapter),
 				 adapter->session_id, &offloadRequest)) {
