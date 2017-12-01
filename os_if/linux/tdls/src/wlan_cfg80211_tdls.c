@@ -78,6 +78,10 @@ QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 void wlan_cfg80211_tdls_priv_deinit(struct vdev_osif_priv *osif_priv)
 {
 	cfg80211_debug("deinitialize tdls os if layer private structure");
+	if (!osif_priv) {
+		cfg80211_err("OS private structure of vdev is null ");
+		return;
+	}
 	if (osif_priv->osif_tdls)
 		qdf_mem_free(osif_priv->osif_tdls);
 	osif_priv->osif_tdls = NULL;
