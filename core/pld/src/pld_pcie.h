@@ -133,17 +133,10 @@ static inline int pld_pcie_wlan_pm_control(struct device *dev, bool vote)
 	return 0;
 }
 #else
-#ifdef CNSS_API_WITH_DEV
 static inline int pld_pcie_wlan_pm_control(struct device *dev, bool vote)
 {
 	return cnss_wlan_pm_control(dev, vote);
 }
-#else
-static inline int pld_pcie_wlan_pm_control(struct device *dev, bool vote)
-{
-	return cnss_wlan_pm_control(vote);
-}
-#endif
 #endif
 
 #ifndef CONFIG_PLD_PCIE_CNSS
@@ -304,7 +297,6 @@ static inline int pld_pcie_athdiag_write(struct device *dev, uint32_t offset,
 	return cnss_athdiag_write(dev, offset, memtype, datalen, input);
 }
 
-#ifdef CNSS_API_WITH_DEV
 static inline void *pld_pcie_get_virt_ramdump_mem(struct device *dev,
 						  unsigned long *size)
 {
@@ -351,54 +343,6 @@ static inline void pld_pcie_release_pm_sem(struct device *dev)
 {
 	cnss_release_pm_sem(dev);
 }
-#else
-static inline void *pld_pcie_get_virt_ramdump_mem(struct device *dev,
-						  unsigned long *size)
-{
-	return cnss_get_virt_ramdump_mem(size);
-}
-
-static inline void pld_pcie_device_crashed(struct device *dev)
-{
-	cnss_device_crashed();
-}
-
-static inline void pld_pcie_request_pm_qos(struct device *dev, u32 qos_val)
-{
-	cnss_request_pm_qos(qos_val);
-}
-
-static inline void pld_pcie_remove_pm_qos(struct device *dev)
-{
-	cnss_remove_pm_qos();
-}
-
-static inline int pld_pcie_request_bus_bandwidth(struct device *dev,
-						 int bandwidth)
-{
-	return cnss_request_bus_bandwidth(bandwidth);
-}
-
-static inline int pld_pcie_auto_suspend(struct device *dev)
-{
-	return cnss_auto_suspend();
-}
-
-static inline int pld_pcie_auto_resume(struct device *dev)
-{
-	return cnss_auto_resume();
-}
-
-static inline void pld_pcie_lock_pm_sem(struct device *dev)
-{
-	cnss_lock_pm_sem();
-}
-
-static inline void pld_pcie_release_pm_sem(struct device *dev)
-{
-	cnss_release_pm_sem();
-}
-#endif
 
 static inline int pld_pcie_power_on(struct device *dev)
 {

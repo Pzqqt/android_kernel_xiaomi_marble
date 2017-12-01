@@ -618,7 +618,6 @@ int pld_pcie_wlan_disable(struct device *dev, enum pld_driver_mode mode)
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-#ifdef CNSS_API_WITH_DEV
 int pld_pcie_get_fw_files_for_target(struct device *dev,
 				     struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version)
@@ -653,42 +652,6 @@ int pld_pcie_get_fw_files_for_target(struct device *dev,
 
 	return 0;
 }
-#else
-int pld_pcie_get_fw_files_for_target(struct device *dev,
-				     struct pld_fw_files *pfw_files,
-				     u32 target_type, u32 target_version)
-{
-	int ret = 0;
-	struct cnss_fw_files cnss_fw_files;
-
-	if (pfw_files == NULL)
-		return -ENODEV;
-
-	memset(pfw_files, 0, sizeof(*pfw_files));
-
-	ret = cnss_get_fw_files_for_target(&cnss_fw_files,
-					   target_type, target_version);
-	if (ret)
-		return ret;
-
-	strlcpy(pfw_files->image_file, cnss_fw_files.image_file,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->board_data, cnss_fw_files.board_data,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->otp_data, cnss_fw_files.otp_data,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->utf_file, cnss_fw_files.utf_file,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->utf_board_data, cnss_fw_files.utf_board_data,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->epping_file, cnss_fw_files.epping_file,
-		PLD_MAX_FILE_NAME);
-	strlcpy(pfw_files->evicted_data, cnss_fw_files.evicted_data,
-		PLD_MAX_FILE_NAME);
-
-	return 0;
-}
-#endif
 
 /**
  * pld_pcie_get_platform_cap() - Get platform capabilities
@@ -700,7 +663,6 @@ int pld_pcie_get_fw_files_for_target(struct device *dev,
  * Return: 0 for success
  *         Non zero failure code for errors
  */
-#ifdef CNSS_API_WITH_DEV
 int pld_pcie_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 {
 	int ret = 0;
@@ -716,23 +678,6 @@ int pld_pcie_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
 	memcpy(cap, &cnss_cap, sizeof(*cap));
 	return 0;
 }
-#else
-int pld_pcie_get_platform_cap(struct device *dev, struct pld_platform_cap *cap)
-{
-	int ret = 0;
-	struct cnss_platform_cap cnss_cap;
-
-	if (cap == NULL)
-		return -ENODEV;
-
-	ret = cnss_get_platform_cap(&cnss_cap);
-	if (ret)
-		return ret;
-
-	memcpy(cap, &cnss_cap, sizeof(*cap));
-	return 0;
-}
-#endif
 
 /**
  * pld_pcie_get_soc_info() - Get SOC information
