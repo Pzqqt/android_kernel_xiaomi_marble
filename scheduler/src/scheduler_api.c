@@ -53,30 +53,31 @@ static void scheduler_flush_mqs(struct scheduler_ctx *sched_ctx)
 
 static QDF_STATUS scheduler_close(struct scheduler_ctx *sched_ctx)
 {
-	sched_enter();
+	sched_info("Closing Scheduler");
 
-	QDF_ASSERT(sched_ctx);
+	QDF_BUG(sched_ctx);
 	if (!sched_ctx) {
 		sched_err("sched_ctx is NULL");
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_INVAL;
 	}
 
-	/* shut down scheduler thread */
+	/* send shutdown signal to scheduler thread */
 	qdf_atomic_set_bit(MC_SHUTDOWN_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_atomic_set_bit(MC_POST_EVENT_MASK, &sched_ctx->sch_event_flag);
 	qdf_wake_up_interruptible(&sched_ctx->sch_wait_queue);
 
-	/* Wait for scheduler thread to exit */
+	/* wait for scheduler thread to shutdown */
 	qdf_wait_single_event(&sched_ctx->sch_shutdown, 0);
 	sched_ctx->sch_thread = NULL;
 
-	/* Clean up message queues of MC thread */
+	/* flush any unprocessed scheduler messages */
 	scheduler_flush_mqs(sched_ctx);
 
-	/* Deinit all the queues */
-	scheduler_queues_deinit(sched_ctx);
-
 	qdf_timer_free(&sched_ctx->watchdog_timer);
+	qdf_spinlock_destroy(&sched_ctx->sch_thread_lock);
+	qdf_event_destroy(&sched_ctx->resume_sch_event);
+	qdf_event_destroy(&sched_ctx->sch_shutdown);
+	qdf_event_destroy(&sched_ctx->sch_start_event);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -118,19 +119,35 @@ static void scheduler_watchdog_timeout(void *arg)
 
 static QDF_STATUS scheduler_open(struct scheduler_ctx *sched_ctx)
 {
-	sched_info("Opening the QDF Scheduler");
+	QDF_STATUS status;
+
+	sched_info("Opening Scheduler");
 
 	/* Sanity checks */
-	QDF_ASSERT(sched_ctx);
+	QDF_BUG(sched_ctx);
 	if (!sched_ctx) {
 		sched_err("sched_ctx is null");
-		return QDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_INVAL;
 	}
 
-	/* Initialize the helper events and event queues */
-	qdf_event_create(&sched_ctx->sch_start_event);
-	qdf_event_create(&sched_ctx->sch_shutdown);
-	qdf_event_create(&sched_ctx->resume_sch_event);
+	status = qdf_event_create(&sched_ctx->sch_start_event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sched_err("Failed to create start event; status:%d", status);
+		return status;
+	}
+
+	status = qdf_event_create(&sched_ctx->sch_shutdown);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sched_err("Failed to create shutdown event; status:%d", status);
+		goto start_event_destroy;
+	}
+
+	status = qdf_event_create(&sched_ctx->resume_sch_event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		sched_err("Failed to create resume event; status:%d", status);
+		goto shutdown_event_destroy;
+	}
+
 	qdf_spinlock_create(&sched_ctx->sch_thread_lock);
 	qdf_init_waitqueue_head(&sched_ctx->sch_wait_queue);
 	sched_ctx->sch_event_flag = 0;
@@ -140,29 +157,37 @@ static QDF_STATUS scheduler_open(struct scheduler_ctx *sched_ctx)
 		       sched_ctx,
 		       QDF_TIMER_TYPE_SW);
 
-	/* Create the Scheduler Main Controller thread */
+	/* create the scheduler thread */
 	sched_ctx->sch_thread = qdf_create_thread(scheduler_thread,
 					sched_ctx, "scheduler_thread");
 	if (IS_ERR(sched_ctx->sch_thread)) {
-		sched_err("Could not Create QDF Main Thread Controller");
-		scheduler_queues_deinit(sched_ctx);
-		return QDF_STATUS_E_RESOURCES;
+		sched_err("Failed to create scheduler thread");
+		status = QDF_STATUS_E_RESOURCES;
+		goto wd_timer_destroy;
 	}
 
-	/* start the thread here */
-	qdf_wake_up_process(sched_ctx->sch_thread);
-	sched_info("QDF Main Controller thread Created");
+	sched_info("Scheduler thread created");
 
-	/*
-	 * Now make sure all threads have started before we exit.
-	 * Each thread should normally ACK back when it starts.
-	 */
+	/* wait for the scheduler thread to startup */
+	qdf_wake_up_process(sched_ctx->sch_thread);
 	qdf_wait_single_event(&sched_ctx->sch_start_event, 0);
 
-	/* We're good now: Let's get the ball rolling!!! */
-	sched_info("Scheduler thread has started");
+	sched_info("Scheduler thread started");
 
 	return QDF_STATUS_SUCCESS;
+
+wd_timer_destroy:
+	qdf_timer_free(&sched_ctx->watchdog_timer);
+	qdf_spinlock_destroy(&sched_ctx->sch_thread_lock);
+	qdf_event_destroy(&sched_ctx->resume_sch_event);
+
+shutdown_event_destroy:
+	qdf_event_destroy(&sched_ctx->sch_shutdown);
+
+start_event_destroy:
+	qdf_event_destroy(&sched_ctx->sch_start_event);
+
+	return status;
 }
 
 QDF_STATUS scheduler_init(void)
@@ -170,7 +195,7 @@ QDF_STATUS scheduler_init(void)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_ctx *sched_ctx;
 
-	sched_info("Opening Scheduler");
+	sched_info("Initializing Scheduler");
 
 	status = scheduler_create_ctx();
 	if (QDF_STATUS_SUCCESS != status) {
@@ -179,24 +204,36 @@ QDF_STATUS scheduler_init(void)
 	}
 
 	sched_ctx = scheduler_get_context();
+	QDF_BUG(sched_ctx);
+	if (!sched_ctx) {
+		sched_err("sched_ctx is null");
+		status = QDF_STATUS_E_FAILURE;
+		goto ctx_destroy;
+	}
+
 	status = scheduler_queues_init(sched_ctx);
-	if (QDF_STATUS_SUCCESS != status) {
-		QDF_ASSERT(0);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sched_err("Queue init failed");
-		scheduler_destroy_ctx();
-		return status;
+		goto ctx_destroy;
 	}
 
 	status = scheduler_open(sched_ctx);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		/* Critical Error ...  Cannot proceed further */
+	if (QDF_IS_STATUS_ERROR(status)) {
 		sched_err("Failed to open QDF Scheduler");
-		QDF_ASSERT(0);
-		scheduler_queues_deinit(sched_ctx);
-		scheduler_destroy_ctx();
+		goto queues_deinit;
 	}
+
 	qdf_register_mc_timer_callback(scheduler_mc_timer_callback);
+
 	return QDF_STATUS_SUCCESS;
+
+queues_deinit:
+	scheduler_queues_deinit(sched_ctx);
+
+ctx_destroy:
+	scheduler_destroy_ctx();
+
+	return status;
 }
 
 QDF_STATUS scheduler_deinit(void)
@@ -204,13 +241,15 @@ QDF_STATUS scheduler_deinit(void)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_ctx *sched_ctx = scheduler_get_context();
 
-	sched_info("Closing Scheduler");
+	sched_info("Deinitializing Scheduler");
 
 	status = scheduler_close(sched_ctx);
 	if (QDF_STATUS_SUCCESS != status) {
 		sched_err("Scheduler close failed");
 		return status;
 	}
+
+	scheduler_queues_deinit(sched_ctx);
 
 	return scheduler_destroy_ctx();
 }
