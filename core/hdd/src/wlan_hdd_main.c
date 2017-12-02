@@ -9074,7 +9074,6 @@ static int hdd_pre_enable_configure(struct hdd_context *hdd_ctx)
 		goto out;
 	}
 
-
 	status = hdd_set_sme_chan_list(hdd_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("Failed to init channel list: %d", status);
