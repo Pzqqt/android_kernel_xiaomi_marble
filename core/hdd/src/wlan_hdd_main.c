@@ -3354,8 +3354,10 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	int errno;
 	struct hdd_context *hdd_ctx;
 	unsigned long rc;
+	uint8_t vdev_id;
 
-	hdd_info("destroying vdev %d", adapter->session_id);
+	vdev_id = adapter->session_id;
+	hdd_info("destroying vdev %d", vdev_id);
 
 	/* vdev created sanity check */
 	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
@@ -3408,7 +3410,7 @@ release_vdev:
 		hdd_err("failed to release objmgr vdev: %d", errno);
 		return errno;
 	}
-	hdd_info("vdev destroyed successfully");
+	hdd_info("vdev %d destroyed successfully", vdev_id);
 
 	return 0;
 }
@@ -4472,6 +4474,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 			wlansap_reset_sap_config_add_ie(sap_config,
 							eUPDATE_IE_ALL);
 		hdd_ipa_flush(hdd_ctx);
+		cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	case QDF_P2P_GO_MODE:
 		if (QDF_SAP_MODE == adapter->device_mode) {
