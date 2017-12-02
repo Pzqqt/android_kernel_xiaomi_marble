@@ -107,6 +107,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->ndp_feedback_supp);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_OPS_SUPP,
 			   he_cap->ops_supp);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_AMSDU_IN_AMPDU,
+			   he_cap->amsdu_in_ampdu);
 
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DUAL_BAND, he_cap->dual_band);
 	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
@@ -122,6 +124,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LDPC, he_cap->ldpc_coding);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_PPDU,
 			   he_cap->he_1x_ltf_800_gi_ppdu);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MIDAMBLE_RX_MAX_NSTS,
+			   he_cap->midamble_rx_max_nsts);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_NDP,
 			   he_cap->he_4x_ltf_3200_gi_ndp);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STBC_LT80,
@@ -171,7 +175,16 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->stbc_gt_80mhz);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_ER_4x_LTF_GI,
 			   he_cap->er_he_ltf_800_gi_4x);
-
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_PPDU_20_IN_40MHZ_2G,
+			   he_cap->he_ppdu_20_in_40Mhz_2G);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_PPDU_20_IN_160_80P80MHZ,
+			   he_cap->he_ppdu_20_in_160_80p80Mhz);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_PPDU_80_IN_160_80P80MHZ,
+			   he_cap->he_ppdu_80_in_160_80p80Mhz);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_ER_1X_HE_LTF_GI,
+			   he_cap->er_1x_he_ltf_gi);
+	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MIDAMBLE_RX_1X_HE_LTF,
+			   he_cap->midamble_rx_1x_he_ltf);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80,
 			he_cap->rx_he_mcs_map_lt_80);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80,

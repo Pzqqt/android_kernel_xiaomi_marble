@@ -7459,6 +7459,7 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tSR Reponder support: 0x%01x", he_cap->sr_responder);
 	pe_debug("\tNDP Feedback support: 0x%01x", he_cap->ndp_feedback_supp);
 	pe_debug("\tOPS support: 0x%01x", he_cap->ops_supp);
+	pe_debug("\tOPS support: 0x%01x", he_cap->amsdu_in_ampdu);
 
 	/* HE PHY capabilities */
 	pe_debug("\tDual band support: 0x%01x", he_cap->dual_band);
@@ -7475,6 +7476,8 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 			he_cap->ldpc_coding);
 	pe_debug("\tLTF and GI for HE PPDUs: 0x%02x",
 			he_cap->he_1x_ltf_800_gi_ppdu);
+	pe_debug("\tMidamble Rx MAX NSTS: 0x%02x",
+			he_cap->midamble_rx_max_nsts);
 	pe_debug("\tLTF and GI for NDP: 0x%02x",
 			he_cap->he_4x_ltf_3200_gi_ndp);
 	pe_debug("\tSTBC Tx & Rx support (<= 80MHz): 0x%02x",
@@ -7518,7 +7521,16 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 		 he_cap->stbc_gt_80mhz);
 	pe_debug("\tMax Nc: 0x%03x", he_cap->max_nc);
 	pe_debug("\tER 4x HE LTF support: 0x%01x", he_cap->er_he_ltf_800_gi_4x);
-
+	pe_debug("\tER 4x HE LTF support: 0x%01x",
+		 he_cap->he_ppdu_20_in_40Mhz_2G);
+	pe_debug("\tER 4x HE LTF support: 0x%01x",
+		 he_cap->he_ppdu_20_in_160_80p80Mhz);
+	pe_debug("\tER 4x HE LTF support: 0x%01x",
+		 he_cap->he_ppdu_80_in_160_80p80Mhz);
+	pe_debug("\tER 4x HE LTF support: 0x%01x",
+		 he_cap->er_1x_he_ltf_gi);
+	pe_debug("\tER 4x HE LTF support: 0x%01x",
+		 he_cap->midamble_rx_1x_he_ltf);
 	pe_debug("\tRx MCS map for <= 80 Mhz: 0x%04x",
 		he_cap->rx_he_mcs_map_lt_80);
 	pe_debug("\tTx MCS map for <= 80 Mhz: 0x%04x",
@@ -7651,6 +7663,7 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->sr_responder = dot11_cap.sr_responder;
 		he_cap->ops_supp = dot11_cap.ops_supp;
 		he_cap->ndp_feedback_supp = dot11_cap.ndp_feedback_supp;
+		he_cap->amsdu_in_ampdu = dot11_cap.amsdu_in_ampdu;
 		he_cap->reserved1 = dot11_cap.reserved1;
 
 		he_cap->dual_band = dot11_cap.dual_band;
@@ -7664,6 +7677,7 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->device_class = dot11_cap.device_class;
 		he_cap->ldpc_coding = dot11_cap.ldpc_coding;
 		he_cap->he_1x_ltf_800_gi_ppdu = dot11_cap.he_1x_ltf_800_gi_ppdu;
+		he_cap->midamble_rx_max_nsts = dot11_cap.midamble_rx_max_nsts;
 		he_cap->he_4x_ltf_3200_gi_ndp = dot11_cap.he_4x_ltf_3200_gi_ndp;
 		he_cap->stbc_lt_80mhz = dot11_cap.stbc_lt_80mhz;
 		he_cap->stbc_gt_80mhz = dot11_cap.stbc_gt_80mhz;
@@ -7694,6 +7708,16 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->he_ltf_800_gi_4x = dot11_cap.he_ltf_800_gi_4x;
 		he_cap->max_nc = dot11_cap.max_nc;
 		he_cap->er_he_ltf_800_gi_4x = dot11_cap.er_he_ltf_800_gi_4x;
+		he_cap->he_ppdu_20_in_40Mhz_2G =
+					dot11_cap.he_ppdu_20_in_40Mhz_2G;
+		he_cap->he_ppdu_20_in_160_80p80Mhz =
+					dot11_cap.he_ppdu_20_in_160_80p80Mhz;
+		he_cap->he_ppdu_80_in_160_80p80Mhz =
+					dot11_cap.he_ppdu_80_in_160_80p80Mhz;
+		he_cap->er_1x_he_ltf_gi =
+					dot11_cap.er_1x_he_ltf_gi;
+		he_cap->midamble_rx_1x_he_ltf =
+					dot11_cap.midamble_rx_1x_he_ltf;
 		he_cap->reserved2 = dot11_cap.reserved2;
 
 		he_cap->rx_he_mcs_map_lt_80 = dot11_cap.rx_he_mcs_map_lt_80;
