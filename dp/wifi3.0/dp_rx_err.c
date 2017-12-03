@@ -279,7 +279,7 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
 
 	if (hal_rx_msdu_end_first_msdu_get(rx_desc->rx_buf_start)) {
-		qdf_nbuf_set_chfrag_start(rx_desc->nbuf, 1);
+		qdf_nbuf_set_rx_chfrag_start(rx_desc->nbuf, 1);
 		dp_pdev->invalid_peer_head_msdu = NULL;
 		dp_pdev->invalid_peer_tail_msdu = NULL;
 
@@ -289,7 +289,7 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf,
 	}
 
 	if (hal_rx_msdu_end_last_msdu_get(rx_desc->rx_buf_start)) {
-		qdf_nbuf_set_chfrag_end(rx_desc->nbuf, 1);
+		qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
 		mpdu_done = true;
 	}
 
@@ -644,8 +644,8 @@ dp_rx_err_deliver(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	 */
 	qdf_nbuf_pull_head(nbuf, (l2_hdr_offset + RX_PKT_TLVS_LEN));
 
-	qdf_nbuf_set_chfrag_start(nbuf, 1);
-	qdf_nbuf_set_chfrag_end(nbuf, 1);
+	qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
+	qdf_nbuf_set_rx_chfrag_end(nbuf, 1);
 	if (dp_rx_filter_mesh_packets(vdev, nbuf,
 				rx_desc->rx_buf_start)
 			== QDF_STATUS_SUCCESS) {

@@ -357,7 +357,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 	uint8_t wds_src_mac[IEEE80211_ADDR_LEN];
 
 	/* Do wds source port learning only if it is a 4-address mpdu */
-	if (!(qdf_nbuf_is_chfrag_start(nbuf) &&
+	if (!(qdf_nbuf_is_rx_chfrag_start(nbuf) &&
 		hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr)))
 		return;
 

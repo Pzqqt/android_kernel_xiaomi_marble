@@ -341,7 +341,7 @@ bool qdf_lro_get_info(qdf_lro_ctx_t lro_ctx, qdf_nbuf_t nbuf,
 	iph = (struct iphdr *)info->iph;
 	tcph = (struct tcphdr *)info->tcph;
 	if (0 != qdf_lro_desc_find(lro_ctx, nbuf, iph, tcph,
-		 QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(nbuf),
+		 QDF_NBUF_CB_RX_FLOW_ID(nbuf),
 		 (struct net_lro_desc **)plro_desc)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			 "finding the LRO desc failed");

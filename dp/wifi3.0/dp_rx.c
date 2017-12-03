@@ -265,10 +265,10 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 		 * as this is a non-amsdu pkt and RAW mode simulation expects
 		 * these bit s to be 0 for non-amsdu pkt.
 		 */
-		if (qdf_nbuf_is_chfrag_start(nbuf) &&
-			 qdf_nbuf_is_chfrag_end(nbuf)) {
-			qdf_nbuf_set_chfrag_start(nbuf, 0);
-			qdf_nbuf_set_chfrag_end(nbuf, 0);
+		if (qdf_nbuf_is_rx_chfrag_start(nbuf) &&
+			 qdf_nbuf_is_rx_chfrag_end(nbuf)) {
+			qdf_nbuf_set_rx_chfrag_start(nbuf, 0);
+			qdf_nbuf_set_rx_chfrag_end(nbuf, 0);
 		}
 
 		nbuf = next;
@@ -471,10 +471,10 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	rx_info->rs_flags = MESH_RXHDR_VER1;
-	if (qdf_nbuf_is_chfrag_start(nbuf))
+	if (qdf_nbuf_is_rx_chfrag_start(nbuf))
 		rx_info->rs_flags |= MESH_RX_FIRST_MSDU;
 
-	if (qdf_nbuf_is_chfrag_end(nbuf))
+	if (qdf_nbuf_is_rx_chfrag_end(nbuf))
 		rx_info->rs_flags |= MESH_RX_LAST_MSDU;
 
 	if (hal_rx_attn_msdu_get_is_decrypted(rx_tlv_hdr)) {
@@ -496,7 +496,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	rx_info->rs_ratephy1 = rate_mcs | (nss << 0x8) | (pkt_type << 16) |
 				(bw << 24);
 
-	qdf_nbuf_set_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
+	qdf_nbuf_set_rx_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 		FL("Mesh rx stats: flags %x, rssi %x, chn %x, rate %x, kix %x"),
@@ -778,7 +778,7 @@ static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 			 HAL_RX_TLV_GET_IPV6(rx_tlv);
 	QDF_NBUF_CB_RX_TCP_OFFSET(msdu) =
 			 HAL_RX_TLV_GET_TCP_OFFSET(rx_tlv);
-	QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
+	QDF_NBUF_CB_RX_FLOW_ID(msdu) =
 			 HAL_RX_TLV_GET_FLOW_ID_TOEPLITZ(rx_tlv);
 	QDF_NBUF_CB_RX_LRO_CTX(msdu) = (unsigned char *)ctx;
 
@@ -821,10 +821,10 @@ void dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 			uint16_t *frag_list_len, qdf_nbuf_t *head_frag_nbuf,
 			qdf_nbuf_t *frag_list_head, qdf_nbuf_t *frag_list_tail)
 {
-	if (qdf_unlikely(qdf_nbuf_is_chfrag_cont(nbuf))) {
+	if (qdf_unlikely(qdf_nbuf_is_rx_chfrag_cont(nbuf))) {
 		if (!(*is_first_frag)) {
 			*is_first_frag = 1;
-			qdf_nbuf_set_chfrag_start(nbuf, 1);
+			qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
 			*mpdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
 
 			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
@@ -840,7 +840,7 @@ void dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 		}
 	} else {
 		if (qdf_unlikely(*is_first_frag)) {
-			qdf_nbuf_set_chfrag_start(nbuf, 0);
+			qdf_nbuf_set_rx_chfrag_start(nbuf, 0);
 			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
 			qdf_nbuf_pull_head(nbuf,
 					RX_PKT_TLVS_LEN);
@@ -1033,13 +1033,13 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		 * nbuf->cb
 		 */
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_FIRST_MSDU_IN_MPDU)
-			qdf_nbuf_set_chfrag_start(rx_desc->nbuf, 1);
+			qdf_nbuf_set_rx_chfrag_start(rx_desc->nbuf, 1);
 
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_MSDU_CONTINUATION)
-			qdf_nbuf_set_chfrag_cont(rx_desc->nbuf, 1);
+			qdf_nbuf_set_rx_chfrag_cont(rx_desc->nbuf, 1);
 
 		if (msdu_desc_info.msdu_flags & HAL_MSDU_F_LAST_MSDU_IN_MPDU)
-			qdf_nbuf_set_chfrag_end(rx_desc->nbuf, 1);
+			qdf_nbuf_set_rx_chfrag_end(rx_desc->nbuf, 1);
 
 		DP_STATS_INC_PKT(peer, rx.rcvd_reo[ring_id], 1,
 				qdf_nbuf_len(rx_desc->nbuf));
@@ -1068,7 +1068,7 @@ fail:
 		 * across multiple buffers, let us not decrement quota
 		 * till we reap all buffers of that MSDU.
 		 */
-		if (qdf_likely(!qdf_nbuf_is_chfrag_cont(rx_desc->nbuf)))
+		if (qdf_likely(!qdf_nbuf_is_rx_chfrag_cont(rx_desc->nbuf)))
 			quota -= 1;
 
 
