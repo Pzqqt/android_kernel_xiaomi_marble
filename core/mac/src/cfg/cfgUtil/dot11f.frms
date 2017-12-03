@@ -2926,7 +2926,7 @@ IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)
         bss_col_disabled: 1;
         reserved2: 1;
     }
-    basic_mcs_nss[3];
+    basic_mcs_nss[2];
     OPTIONAL UNION vht_oper (DISCRIMINATOR vht_oper_present)
     {
         info (vht_oper_present IS 1)
