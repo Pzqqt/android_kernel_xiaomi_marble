@@ -6108,6 +6108,10 @@ typedef enum {
 	wmi_service_bcn_offload_start_stop_support,
 	wmi_service_offchan_data_tid_support,
 	wmi_service_support_dma,
+	wmi_service_8ss_tx_bfee,
+	wmi_service_fils_support,
+	wmi_service_mawc_support,
+	wmi_service_wow_wakeup_by_timer_pattern,
 
 	wmi_services_max,
 } wmi_conv_service_ids;
