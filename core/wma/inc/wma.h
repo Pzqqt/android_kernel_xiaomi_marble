@@ -1145,6 +1145,7 @@ struct wma_txrx_node {
 	qdf_wake_lock_t vdev_stop_wakelock;
 	qdf_wake_lock_t vdev_set_key_wakelock;
 	struct roam_synch_frame_ind roam_synch_frame_ind;
+	bool is_waiting_for_key;
 };
 
 #if defined(QCA_WIFI_FTM)
@@ -2659,4 +2660,13 @@ QDF_STATUS wma_get_chain_rssi(tp_wma_handle wma_handle,
 QDF_STATUS wma_config_bmiss_bcnt_params(uint32_t vdev_id, uint32_t first_cnt,
 		uint32_t final_cnt);
 
+/**
+ * wma_check_and_set_wake_timer(): checks all interfaces and if any interface
+ * has install_key pending, sets timer pattern in fw to wake up host after
+ * specified time has elapsed.
+ * @time: time after which host wants to be awaken.
+ *
+ * Return: None
+ */
+void wma_check_and_set_wake_timer(uint32_t time);
 #endif

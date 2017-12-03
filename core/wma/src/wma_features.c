@@ -1186,6 +1186,69 @@ QDF_STATUS wma_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
 }
 
 /**
+ * wma_wow_set_wake_time() - set timer pattern tlv, so that firmware will wake
+ * up host after specified time is elapsed
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ * @cookie: value to identify reason why host set up wake call.
+ * @time: time in ms
+ *
+ * Return: QDF status
+ */
+static QDF_STATUS wma_wow_set_wake_time(WMA_HANDLE wma_handle, uint8_t vdev_id,
+					uint32_t cookie, uint32_t time)
+{
+	int ret;
+	tp_wma_handle wma = (tp_wma_handle)wma_handle;
+
+	WMA_LOGD(FL("send timer patter with time: %d and vdev = %d to fw"),
+		    time, vdev_id);
+	ret = wmi_unified_wow_timer_pattern_cmd(wma->wmi_handle, vdev_id,
+						cookie, time);
+	if (ret) {
+		WMA_LOGE(FL("Failed to send timer patter to fw"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_check_and_set_wake_timer(): checks all interfaces and if any interface
+ * has install_key pending, sets timer pattern in fw to wake up host after
+ * specified time has elapsed.
+ * @wma: wma handle
+ * @time: time after which host wants to be awaken.
+ *
+ * Return: None
+ */
+void wma_check_and_set_wake_timer(uint32_t time)
+{
+	int i;
+	struct wma_txrx_node *iface;
+	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!WMI_SERVICE_EXT_IS_ENABLED(wma->wmi_service_bitmap,
+		wma->wmi_service_ext_bitmap,
+		WMI_SERVICE_WOW_WAKEUP_BY_TIMER_PATTERN)) {
+		WMA_LOGD("TIME_PATTERN is not enabled");
+		return;
+	}
+
+	for (i = 0; i < wma->max_bssid; i++) {
+		iface = &wma->interfaces[i];
+		if (iface->is_vdev_valid && iface->is_waiting_for_key) {
+			/*
+			 * right now cookie is dont care, since FW disregards
+			 * that.
+			 */
+			wma_wow_set_wake_time((WMA_HANDLE)wma, i, 0, time);
+			break;
+		}
+	}
+}
+
+/**
  * wmi_unified_nat_keepalive_enable() - enable NAT keepalive filter
  * @wma: wma handle
  * @vdev_id: vdev id
@@ -2721,6 +2784,17 @@ static int wma_wake_event_piggybacked(
 		errno = wma_tdls_event_handler(wma, pb_event, pb_event_len);
 		break;
 #endif
+
+	case WOW_REASON_TIMER_INTR_RECV:
+		/*
+		 * Right now firmware is not returning any cookie host has
+		 * programmed. So do not check for cookie.
+		 */
+		WMA_LOGE("WOW_REASON_TIMER_INTR_RECV received, indicating key exchange did not finish. Initiate disconnect");
+		errno = wma_peer_sta_kickout_event_handler(wma, pb_event,
+							   pb_event_len);
+		break;
+
 	default:
 		WMA_LOGE("Wake reason %s(%u) is not a piggybacked event",
 			 wma_wow_wake_reason_str(wake_reason), wake_reason);

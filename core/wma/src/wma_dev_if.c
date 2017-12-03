@@ -3896,6 +3896,8 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 				pps_val, status);
 		wma_send_peer_assoc(wma, add_bss->nwType,
 					    &add_bss->staContext);
+		/* we just had peer assoc, so install key will be done later */
+		iface->is_waiting_for_key = true;
 		peer_assoc_sent = true;
 
 		if (add_bss->rmfEnabled)
