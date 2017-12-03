@@ -4649,7 +4649,6 @@ QDF_STATUS wmi_check_and_update_fw_version(void *wmi_hdl, void *evt_buf)
  *
  * Return: 1 enabled, 0 disabled
  */
-#ifndef CONFIG_MCL
 bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
@@ -4663,9 +4662,9 @@ bool wmi_service_enabled(void *wmi_hdl, uint32_t service_id)
 	} else {
 		qdf_print("Support not added yet for Service %d\n", service_id);
 	}
+
 	return false;
 }
-#endif
 
 /**
  * wmi_get_target_cap_from_service_ready() - extract service ready event
