@@ -11836,6 +11836,9 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 		goto reset_flags;
 	}
 
+	if (!cds_wait_for_external_threads_completion(__func__))
+		hdd_warn("Waiting for monitor mode: External threads are active");
+
 	/* ensure adapters are stopped */
 	hdd_stop_present_mode(hdd_ctx, curr_mode);
 
