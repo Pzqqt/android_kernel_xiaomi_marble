@@ -15482,7 +15482,7 @@ QDF_STATUS sme_get_rcpi(tHalHandle hal, struct sme_rcpi_req *rcpi)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
-	struct scheduler_msg msg;
+	struct scheduler_msg msg = {0};
 	struct sme_rcpi_req *rcpi_req;
 
 	rcpi_req = qdf_mem_malloc(sizeof(*rcpi_req));
