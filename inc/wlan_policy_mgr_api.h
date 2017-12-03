@@ -857,13 +857,10 @@ struct policy_mgr_dp_cbacks {
  * from policy manager
  * @wma_get_connection_info: Get the connection related info
  *                         from wma table
- * @wma_is_service_enabled: check if certain service is enabled
- *                        by FW
  */
 struct policy_mgr_wma_cbacks {
 	QDF_STATUS (*wma_get_connection_info)(uint8_t vdev_id,
 		struct policy_mgr_vdev_entry_info *conn_table_entry);
-	bool (*wma_is_service_enabled)(WMI_SERVICE service_type);
 };
 
 /**
