@@ -1595,8 +1595,8 @@ struct wmi_unified {
 #ifndef CONFIG_MCL
 	uint32_t *pdev_param;
 	uint32_t *vdev_param;
-	uint32_t *services;
 #endif
+	uint32_t *services;
 	struct wmi_soc *soc;
 };
 
@@ -1623,8 +1623,9 @@ struct wmi_soc {
 #ifndef CONFIG_MCL
 	uint32_t pdev_param[wmi_pdev_param_max];
 	uint32_t vdev_param[wmi_vdev_param_max];
-	uint32_t services[wmi_services_max];
 #endif
+	uint32_t services[wmi_services_max];
+
 };
 
 #ifdef WMI_NON_TLV_SUPPORT

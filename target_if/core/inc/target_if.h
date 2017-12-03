@@ -49,9 +49,6 @@
 #define TARGET_IF_ENTER() target_if_logfl(QDF_TRACE_LEVEL_INFO, "enter")
 #define TARGET_IF_EXIT() target_if_logfl(QDF_TRACE_LEVEL_INFO, "exit")
 
-#define GET_WMI_HDL_FROM_PSOC(psoc) \
-		(((struct target_psoc_info *)(psoc->tgt_if_handle))->wmi_handle)
-
 #ifdef CONFIG_MCL
 #define GET_WMI_HDL_FROM_PDEV(pdev) \
 		(((struct target_psoc_info *)(pdev->tgt_if_handle))->wmi_handle)
@@ -173,6 +170,23 @@ QDF_STATUS target_if_register_legacy_service_ready_cb(
 	wmi_legacy_service_ready_callback service_ready_cb);
 
 void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc);
+
+static inline void *GET_WMI_HDL_FROM_PSOC(struct wlan_objmgr_psoc *psoc)
+{
+	void *tgt_if_handle;
+
+	if (psoc) {
+		tgt_if_handle = psoc->tgt_if_handle;
+
+		if (tgt_if_handle)
+			return ((struct target_psoc_info *)
+						tgt_if_handle)->wmi_handle;
+		else
+			return NULL;
+	}
+
+	return NULL;
+}
 
 /**
  * target_is_tgt_type_ar900b() - Check if the target type is AR900B

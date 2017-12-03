@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -30,29 +30,11 @@
 #include <target_if_reg.h>
 #include <wmi_unified_reg_api.h>
 
-#ifdef CONFIG_MCL
-static bool tgt_if_regulatory_is_11d_offloaded(struct wlan_objmgr_psoc
-					       *psoc)
+static inline uint32_t get_chan_list_cc_event_id(void)
 {
-	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
-				      WMI_SERVICE_11D_OFFLOAD);
+	return wmi_reg_chan_list_cc_event_id;
 }
 
-static bool tgt_if_regulatory_is_regdb_offloaded(struct wlan_objmgr_psoc
-						 *psoc)
-{
-	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
-				      WMI_SERVICE_REGULATORY_DB);
-}
-
-static bool tgt_if_regulatory_is_there_serv_ready_extn(struct wlan_objmgr_psoc
-						       *psoc)
-{
-	return WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
-				      WMI_SERVICE_EXT_MSG);
-}
-
-#else
 static bool tgt_if_regulatory_is_11d_offloaded(struct wlan_objmgr_psoc
 					       *psoc)
 {
@@ -79,8 +61,6 @@ static bool tgt_if_regulatory_is_there_serv_ready_extn(struct wlan_objmgr_psoc
 	return wmi_service_enabled(wmi_handle,
 				   wmi_service_ext_msg);
 }
-
-#endif
 
 static inline struct wlan_lmac_if_reg_rx_ops *
 target_if_regulatory_get_rx_ops(struct wlan_objmgr_psoc *psoc)

@@ -17598,7 +17598,6 @@ QDF_STATUS save_ext_service_bitmap_tlv(wmi_unified_t wmi_handle, void *evt_buf,
  *
  * Return: 1 enabled, 0 disabled
  */
-#ifndef CONFIG_MCL
 static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 		uint32_t service_id)
 {
@@ -17609,8 +17608,8 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 		return false;
 	}
 
-	/* if WMI_EXTENDED_SERVICE_AVAILABLE was received with extended bitmap,
-	 * use WMI_SERVICE_EXT_ENABLE to check the services.
+	/* if wmi_service_enabled was received with extended bitmap,
+	 * use WMI_SERVICE_EXT_IS_ENABLED to check the services.
 	 */
 	if (soc->wmi_ext_service_bitmap)
 		return WMI_SERVICE_EXT_IS_ENABLED(soc->wmi_service_bitmap,
@@ -17620,13 +17619,6 @@ static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
 	return WMI_SERVICE_IS_ENABLED(soc->wmi_service_bitmap,
 				service_id);
 }
-#else
-static bool is_service_enabled_tlv(wmi_unified_t wmi_handle,
-		uint32_t service_id)
-{
-	return false;
-}
-#endif
 
 static inline void copy_ht_cap_info(uint32_t ev_target_cap,
 		struct wlan_psoc_target_capability_info *cap)
@@ -22050,7 +22042,6 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_sar_get_limits_event_id] = WMI_SAR_GET_LIMITS_EVENTID;
 }
 
-#ifndef CONFIG_MCL
 /**
  * populate_tlv_service() - populates wmi services
  *
@@ -22248,7 +22239,13 @@ static void populate_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_OFFCHAN_DATA_TID_SUPPORT;
 	wmi_service[wmi_service_support_dma] =
 				WMI_SERVICE_SUPPORT_DIRECT_DMA;
+	wmi_service[wmi_service_8ss_tx_bfee] = WMI_SERVICE_8SS_TX_BFEE;
+	wmi_service[wmi_service_fils_support] = WMI_SERVICE_FILS_SUPPORT;
+	wmi_service[wmi_service_mawc_support] = WMI_SERVICE_MAWC_SUPPORT;
+
 }
+
+#ifndef CONFIG_MCL
 
 /**
  * populate_pdev_param_tlv() - populates pdev params
@@ -22664,7 +22661,6 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 #ifndef CONFIG_MCL
 static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
 {
-	populate_tlv_service(wmi_handle->services);
 	populate_pdev_param_tlv(wmi_handle->pdev_param);
 	populate_vdev_param_tlv(wmi_handle->vdev_param);
 }
@@ -22748,5 +22744,6 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	wmi_handle->log_info.buf_offset_event = 4;
 #endif
 	populate_tlv_events_id(wmi_handle->wmi_events);
+	populate_tlv_service(wmi_handle->services);
 	populate_target_defines_tlv(wmi_handle);
 }

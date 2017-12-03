@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -610,8 +610,6 @@ QDF_STATUS policy_mgr_register_wma_cb(struct wlan_objmgr_psoc *psoc,
 
 	pm_ctx->wma_cbacks.wma_get_connection_info =
 		wma_cbacks->wma_get_connection_info;
-	pm_ctx->wma_cbacks.wma_is_service_enabled =
-		wma_cbacks->wma_is_service_enabled;
 
 	return QDF_STATUS_SUCCESS;
 }

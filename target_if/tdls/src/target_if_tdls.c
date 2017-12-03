@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -122,11 +122,12 @@ target_if_tdls_set_uapsd(struct wlan_objmgr_psoc *psoc,
 			 struct sta_uapsd_trig_params *params)
 {
 	QDF_STATUS ret;
+	wmi_unified_t wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
-	if (!WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
-				    WMI_STA_UAPSD_BASIC_AUTO_TRIG) ||
-	    !WMI_SERVICE_IS_ENABLED(psoc->service_param.service_bitmap,
-				    WMI_STA_UAPSD_VAR_AUTO_TRIG)) {
+	if (!wmi_service_enabled(wmi_handle,
+				    wmi_sta_uapsd_basic_auto_trig) ||
+	    !wmi_service_enabled(wmi_handle,
+				    wmi_sta_uapsd_var_auto_trig)) {
 		target_if_debug("Trigger uapsd is not supported vdev id %d",
 				params->vdevid);
 		return QDF_STATUS_SUCCESS;
