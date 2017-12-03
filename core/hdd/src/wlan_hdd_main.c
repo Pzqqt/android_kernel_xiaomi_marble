@@ -9781,16 +9781,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		QDF_ASSERT(0);
 	}
 
-	/*
-	 * Close the scheduler before calling cds_close to make sure
-	 * no thread is scheduled after the each module close is
-	 * is called i.e after all the data structures are freed.
-	 */
-	qdf_status = cds_sched_close();
-	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	if (QDF_IS_STATUS_ERROR(qdf_status))
-		hdd_alert("Failed to close CDS Scheduler");
-
 	qdf_status = cds_close(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS: %d", qdf_status);
