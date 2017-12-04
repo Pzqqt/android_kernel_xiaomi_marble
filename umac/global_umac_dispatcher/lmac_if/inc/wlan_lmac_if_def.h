@@ -497,6 +497,18 @@ struct wlan_lmac_if_target_tx_ops {
 	bool (*tgt_is_tgt_type_qca9888)(uint32_t);
 };
 
+#ifdef WLAN_OFFCHAN_TXRX_ENABLE
+/**
+ * struct wlan_lmac_if_offchan_txrx_ops - Function pointers to check target
+ *                                     capabilities related to offchan txrx.
+ * @offchan_data_tid_support: To check if target supports seperate tid for
+ *                                     offchan data tx.
+ */
+struct wlan_lmac_if_offchan_txrx_ops {
+	bool (*offchan_data_tid_support)(struct wlan_objmgr_pdev *pdev);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
@@ -551,6 +563,9 @@ struct wlan_lmac_if_tx_ops {
 #endif
 	 struct wlan_lmac_if_mlme_tx_ops mops;
 	 struct wlan_lmac_if_target_tx_ops target_tx_ops;
+#ifdef WLAN_OFFCHAN_TXRX_ENABLE
+	struct wlan_lmac_if_offchan_txrx_ops offchan_txrx_ops;
+#endif
 };
 
 /**

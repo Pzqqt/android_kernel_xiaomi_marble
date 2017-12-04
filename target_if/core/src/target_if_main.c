@@ -54,6 +54,9 @@
 #ifdef QCA_SUPPORT_SON
 #include <target_if_son.h>
 #endif
+#ifdef WLAN_OFFCHAN_TXRX_ENABLE
+#include <target_if_offchan_txrx_api.h>
+#endif
 
 static struct target_if_ctx *g_target_if_ctx;
 
@@ -115,6 +118,13 @@ QDF_STATUS target_if_close(void)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifndef WLAN_OFFCHAN_TXRX_ENABLE
+static void target_if_offchan_txrx_ops_register(
+					struct wlan_lmac_if_tx_ops *tx_ops)
+{
+}
+#endif /* WLAN_OFFCHAN_TXRX_ENABLE */
 
 #ifndef WLAN_ATF_ENABLE
 static void target_if_atf_tx_ops_register(struct wlan_lmac_if_tx_ops *tx_ops)
@@ -257,6 +267,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_tdls_tx_ops_register(tx_ops);
 
 	target_if_target_tx_ops_register(tx_ops);
+
+	target_if_offchan_txrx_ops_register(tx_ops);
 
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;
