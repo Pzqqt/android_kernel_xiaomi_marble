@@ -1145,7 +1145,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
-static bool wma_is_vdev_valid(uint32_t vdev_id)
+bool wma_is_vdev_valid(uint32_t vdev_id)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
