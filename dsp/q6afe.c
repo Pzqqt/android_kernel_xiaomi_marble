@@ -7576,7 +7576,7 @@ int __init afe_init(void)
 	return 0;
 }
 
-void __exit afe_exit(void)
+void afe_exit(void)
 {
 	afe_delete_cal_data();
 

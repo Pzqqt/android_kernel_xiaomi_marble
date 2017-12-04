@@ -917,7 +917,7 @@ int __init msm_audio_ion_init(void)
 	return platform_driver_register(&msm_audio_ion_driver);
 }
 
-void __exit msm_audio_ion_exit(void)
+void msm_audio_ion_exit(void)
 {
 	platform_driver_unregister(&msm_audio_ion_driver);
 }

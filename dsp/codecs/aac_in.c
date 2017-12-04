@@ -707,7 +707,7 @@ int __init aac_in_init(void)
 	return misc_register(&audio_aac_in_misc);
 }
 
-void __exit aac_in_exit(void)
+void aac_in_exit(void)
 {
 	misc_deregister(&audio_aac_in_misc);
 }

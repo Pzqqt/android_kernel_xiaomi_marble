@@ -407,7 +407,7 @@ int __init qcelp_in_init(void)
 	return misc_register(&audio_qcelp_in_misc);
 }
 
-void __exit qcelp_in_exit(void)
+void qcelp_in_exit(void)
 {
 	misc_deregister(&audio_qcelp_in_misc);
 }

@@ -1542,7 +1542,7 @@ int __init msm_voice_host_init(void)
 	return platform_driver_register(&msm_pcm_driver);
 }
 
-void __exit msm_voice_host_exit(void)
+void msm_voice_host_exit(void)
 {
 	platform_driver_unregister(&msm_pcm_driver);
 }

@@ -535,7 +535,7 @@ error_platform_driver:
 	return rc;
 }
 
-void __exit avtimer_exit(void)
+void avtimer_exit(void)
 {
 	platform_driver_unregister(&dev_avtimer_driver);
 }

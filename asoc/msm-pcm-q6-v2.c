@@ -1873,7 +1873,7 @@ int __init msm_pcm_dsp_init(void)
 	return platform_driver_register(&msm_pcm_driver);
 }
 
-void __exit msm_pcm_dsp_exit(void)
+void msm_pcm_dsp_exit(void)
 {
 	platform_driver_unregister(&msm_pcm_driver);
 }

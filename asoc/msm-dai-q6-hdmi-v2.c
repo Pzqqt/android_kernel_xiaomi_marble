@@ -543,7 +543,7 @@ int __init msm_dai_q6_hdmi_init(void)
 	return platform_driver_register(&msm_dai_q6_hdmi_driver);
 }
 
-void __exit msm_dai_q6_hdmi_exit(void)
+void msm_dai_q6_hdmi_exit(void)
 {
 	platform_driver_unregister(&msm_dai_q6_hdmi_driver);
 }

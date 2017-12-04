@@ -399,7 +399,7 @@ int __init amrnb_in_init(void)
 	return misc_register(&audio_amrnb_in_misc);
 }
 
-void __exit amrnb_in_exit(void)
+void amrnb_in_exit(void)
 {
 	misc_deregister(&audio_amrnb_in_misc);
 }

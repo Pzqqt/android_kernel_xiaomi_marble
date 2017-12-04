@@ -4546,7 +4546,7 @@ int __init msm_compress_dsp_init(void)
 	return platform_driver_register(&msm_compr_driver);
 }
 
-void __exit msm_compress_dsp_exit(void)
+void msm_compress_dsp_exit(void)
 {
 	platform_driver_unregister(&msm_compr_driver);
 }

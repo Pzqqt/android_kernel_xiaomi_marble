@@ -1,21 +1,31 @@
 # We can build either as part of a standalone Kernel build or as
 # an external module.  Determine which mechanism is being used
-KERNEL_BUILD := 0
+ifeq ($(MODNAME), )
+	KERNEL_BUILD := 1
+else
+	KERNEL_BUILD := 0
+endif
 
-
-ifeq ($(KERNEL_BUILD), 0)
+ifeq ($(KERNEL_BUILD), 1)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
+	AUDIO_BLD_DIR := $(ANDROID_BUILD_TOP)/kernel/msm-4.9
+	AUDIO_ROOT := $(AUDIO_BLD_DIR)/techpack/audio
+endif
+
+ifeq ($(KERNEL_BUILD), 0)
 	ifeq ($(CONFIG_ARCH_SDM845), y)
 		include $(AUDIO_ROOT)/config/sdm845auto.conf
 		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm845autoconf.h
+
 	endif
 	ifeq ($(CONFIG_ARCH_SDM670), y)
 		include $(AUDIO_ROOT)/config/sdm670auto.conf
 		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
 	endif
 endif
-
 
 # As per target team, build is done as follows:
 # Defconfig : build with default flags
@@ -43,7 +53,7 @@ COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ############ Native Enc/Dec ############
 
-ifeq ($(CONFIG_MSM_QDSP6V2_CODECS), m)
+ifdef CONFIG_MSM_QDSP6V2_CODECS
 	NATIVE_OBJS += q6audio_v2.o q6audio_v2_aio.o
 	NATIVE_OBJS += audio_utils_aio.o
 	NATIVE_OBJS += audio_utils.o
@@ -74,15 +84,8 @@ endif
 
 LINUX_INC +=	-Iinclude/linux
 
-INCS :=		$(COMMON_INC) \
+INCS +=		$(COMMON_INC) \
 		$(UAPI_INC)
-
-ifeq ($(CONFIG_ARCH_SDM845), y)
-INCS    +=  -include $(AUDIO_ROOT)/config/sdm845autoconf.h
-endif
-ifeq ($(CONFIG_ARCH_SDM670), y)
-INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
-endif
 
 EXTRA_CFLAGS += $(INCS)
 
@@ -112,17 +115,9 @@ ifeq ($(call cc-option-yn, -Wheader-guard),y)
 EXTRA_CFLAGS += -Wheader-guard
 endif
 
+ifeq ($(KERNEL_BUILD), 0)
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/Module.symvers
-# If the module name is not "wlan", then the define MULTI_IF_NAME to be the
-# same a the QCA CHIP name. The host driver will then append MULTI_IF_NAME to
-# any string that must be unique for all instances of the driver on the system.
-# This allows multiple instances of the driver with different module names.
-# If the module name is wlan, leave MULTI_IF_NAME undefined and the code will
-# treat the driver as the primary driver.
-ifneq ($(MODNAME), qdsp6v2)
-CHIP_NAME ?= $(MODNAME)
-CDEFINES += -DMULTI_IF_NAME=\"$(CHIP_NAME)\"
 endif
 
 # Module information used by KBuild framework

@@ -9606,7 +9606,7 @@ int __init voice_init(void)
 }
 
 
-void __exit voice_exit(void)
+void voice_exit(void)
 {
 	voice_delete_cal_data();
 	free_cal_map_table();

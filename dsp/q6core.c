@@ -1105,7 +1105,7 @@ int __init core_init(void)
 	return 0;
 }
 
-void __exit core_exit(void)
+void core_exit(void)
 {
 	mutex_destroy(&q6core_lcl.cmd_lock);
 	mutex_destroy(&q6core_lcl.ver_lock);

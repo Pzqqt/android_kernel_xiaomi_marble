@@ -2376,7 +2376,7 @@ int __init q6lsm_init(void)
 	return 0;
 }
 
-void __exit q6lsm_exit(void)
+void q6lsm_exit(void)
 {
 	lsm_delete_cal_data();
 }

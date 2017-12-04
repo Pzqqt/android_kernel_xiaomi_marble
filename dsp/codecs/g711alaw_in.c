@@ -379,7 +379,7 @@ int __init g711alaw_in_init(void)
 	return misc_register(&audio_g711alaw_in_misc);
 }
 
-void __exit g711alaw_in_exit(void)
+void g711alaw_in_exit(void)
 {
 	misc_deregister(&audio_g711alaw_in_misc);
 }

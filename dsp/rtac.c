@@ -1949,7 +1949,7 @@ nomem:
 	return -ENOMEM;
 }
 
-void __exit rtac_exit(void)
+void rtac_exit(void)
 {
 	kzfree(rtac_adm_buffer);
 	kzfree(rtac_asm_buffer);

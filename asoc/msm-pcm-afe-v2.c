@@ -910,7 +910,7 @@ int __init msm_pcm_afe_init(void)
 	return platform_driver_register(&msm_afe_driver);
 }
 
-void __exit msm_pcm_afe_exit(void)
+void msm_pcm_afe_exit(void)
 {
 	pr_debug("%s\n", __func__);
 	platform_driver_unregister(&msm_afe_driver);

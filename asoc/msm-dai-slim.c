@@ -653,7 +653,7 @@ int __init msm_dai_slim_init(void)
 	return rc;
 }
 
-void __exit msm_dai_slim_exit(void)
+void msm_dai_slim_exit(void)
 {
 	slim_driver_unregister(&msm_dai_slim_driver);
 }

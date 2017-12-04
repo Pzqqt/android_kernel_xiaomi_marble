@@ -2576,7 +2576,7 @@ int __init msm_fe_dai_init(void)
 	return platform_driver_register(&msm_fe_dai_driver);
 }
 
-void __exit msm_fe_dai_exit(void)
+void msm_fe_dai_exit(void)
 {
 	platform_driver_unregister(&msm_fe_dai_driver);
 }

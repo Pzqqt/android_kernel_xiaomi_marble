@@ -223,7 +223,7 @@ int __init audio_amrnb_init(void)
 	return ret;
 }
 
-void __exit audio_amrnb_exit(void)
+void audio_amrnb_exit(void)
 {
 	mutex_destroy(&audio_amrnb_ws_mgr.ws_lock);
 	misc_deregister(&audio_amrnb_misc);

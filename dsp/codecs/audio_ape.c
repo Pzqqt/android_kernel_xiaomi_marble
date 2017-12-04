@@ -356,7 +356,7 @@ int __init audio_ape_init(void)
 	return ret;
 }
 
-void __exit audio_ape_exit(void)
+void audio_ape_exit(void)
 {
 	mutex_destroy(&audio_ape_ws_mgr.ws_lock);
 	misc_deregister(&audio_ape_misc);

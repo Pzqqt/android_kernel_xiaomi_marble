@@ -185,7 +185,7 @@ int __init audio_mp3_init(void)
 	return ret;
 }
 
-void __exit audio_mp3_exit(void)
+void audio_mp3_exit(void)
 {
 	mutex_destroy(&audio_mp3_ws_mgr.ws_lock);
 	misc_deregister(&audio_mp3_misc);

@@ -415,7 +415,7 @@ int __init audio_wmapro_init(void)
 	return ret;
 }
 
-void __exit audio_wmapro_exit(void)
+void audio_wmapro_exit(void)
 {
 	mutex_destroy(&audio_wmapro_ws_mgr.ws_lock);
 	misc_deregister(&audio_wmapro_misc);
