@@ -923,6 +923,8 @@ lim_send_sme_disassoc_ntf(tpAniSirGlobal pMac,
 				sta_ds = dph_lookup_hash_entry(pMac,
 						peerMacAddr, &assoc_id,
 						&session->dph.dphHashTable);
+				if (sta_ds)
+					break;
 			}
 		}
 		if (sta_ds
