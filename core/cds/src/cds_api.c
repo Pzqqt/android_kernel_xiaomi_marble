@@ -492,16 +492,21 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 		goto err_wma_complete_event;
 	}
 
+	status = dispatcher_enable();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		cds_err("Failed to enable dispatcher; status:%d", status);
+		goto err_wma_complete_event;
+	}
+
 	/* Now Open the CDS Scheduler */
 	status = cds_sched_open(gp_cds_context,
 				&gp_cds_context->qdf_sched,
 				sizeof(cds_sched_context));
-
 	if (QDF_IS_STATUS_ERROR(status)) {
 		/* Critical Error ...  Cannot proceed further */
 		cds_alert("Failed to open CDS Scheduler");
 		QDF_ASSERT(0);
-		goto err_wma_complete_event;
+		goto err_dispatcher_disable;
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
@@ -686,6 +691,10 @@ err_sched_close:
 		cds_err("Failed to close CDS Scheduler");
 		QDF_ASSERT(false);
 	}
+
+err_dispatcher_disable:
+	if (QDF_IS_STATUS_ERROR(dispatcher_disable()))
+		cds_err("Failed to disable dispatcher");
 
 err_wma_complete_event:
 	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
@@ -1127,6 +1136,11 @@ QDF_STATUS cds_close(struct wlan_objmgr_psoc *psoc)
 	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	if (QDF_IS_STATUS_ERROR(qdf_status))
 		cds_err("Failed to close CDS Scheduler");
+
+	qdf_status = dispatcher_disable();
+	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		cds_err("Failed to disable dispatcher; status:%d", qdf_status);
 
 	dispatcher_psoc_close(psoc);
 
