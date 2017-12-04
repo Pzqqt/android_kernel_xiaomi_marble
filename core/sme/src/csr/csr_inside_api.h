@@ -99,9 +99,9 @@
 #endif
 /* ***************************************************************************
  * The MAX BSSID Count should be lower than the command timeout value and it
- * can be of a fraction of 3/4 to 1/2 of the total command timeout value.
+ * can be of a fraction of 1/3 to 1/2 of the total command timeout value.
  * ***************************************************************************/
-#define CSR_MAX_BSSID_COUNT     (SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE/2000)
+#define CSR_MAX_BSSID_COUNT     (SME_ACTIVE_LIST_CMD_TIMEOUT_VALUE/3000) - 2
 #define CSR_CUSTOM_CONC_GO_BI    100
 extern uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE];
 bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId);
