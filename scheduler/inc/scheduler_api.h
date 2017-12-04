@@ -107,6 +107,27 @@ QDF_STATUS scheduler_init(void);
 QDF_STATUS scheduler_deinit(void);
 
 /**
+ * scheduler_enable() - start the scheduler module
+ *
+ * Ready the scheduler module to service requests, and start the scheduler's
+ * message processing thread. Must only be called after scheduler_init().
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scheduler_enable(void);
+
+/**
+ * scheduler_disable() - stop the scheduler module
+ *
+ * Stop the scheduler module from servicing requests, and terminate the
+ * scheduler's message processing thread. Must be called before
+ * scheduler_deinit().
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS scheduler_disable(void);
+
+/**
  * scheduler_register_module() - register input module/queue id
  * @qid: queue id to get registered
  * @callback: queue message to be called when a message is posted

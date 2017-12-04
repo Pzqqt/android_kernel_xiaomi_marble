@@ -684,11 +684,6 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_splitmac_init())
 		goto splitmac_init_fail;
 
-	/*
-	 * scheduler INIT has to be the last as each component's
-	 * initialization has to happen first and then at the end
-	 * scheduler needs to start accepting the service.
-	 */
 	if (QDF_STATUS_SUCCESS != scheduler_init())
 		goto scheduler_init_fail;
 
@@ -736,10 +731,6 @@ EXPORT_SYMBOL(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
-	/*
-	 * schduler service should be the first one to stop offering
-	 * services up on dispatcher deinit sequence
-	 */
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_splitmac_deinit());
@@ -782,12 +773,18 @@ EXPORT_SYMBOL(dispatcher_deinit);
 
 QDF_STATUS dispatcher_enable(void)
 {
-	return QDF_STATUS_SUCCESS;
+	QDF_STATUS status;
+
+	status = scheduler_enable();
+
+	return status;
 }
 EXPORT_SYMBOL(dispatcher_enable);
 
 QDF_STATUS dispatcher_disable(void)
 {
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(scheduler_disable()));
+
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(dispatcher_disable);
