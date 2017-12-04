@@ -498,6 +498,8 @@ typedef enum {
     WMI_PEER_ANTDIV_INFO_REQ_CMDID,
     /** Peer operating mode change indication sent to host to update stats */
     WMI_PEER_OPER_MODE_CHANGE_EVENTID,
+    /** Peer/Tid/Msduq threshold update */
+    WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID,
 
     /* beacon/management specific commands */
 
@@ -14317,6 +14319,62 @@ typedef struct {
     A_INT32 chain_rssi[8];
 } wmi_peer_antdiv_info;
 
+typedef struct {
+    A_UINT32    tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_msduq_qdepth_thresh_update */
+
+    /** tid_number */
+    A_UINT32 tid_num;
+
+    /** msduq_mask to set the value
+     * bit 0 - HI-PRI msdu flowq qdepth threshold need to update if set
+     * bit 1 - LOW-PRI msdu flowq qdepth threshold need to update if set
+     * bit 2 - UDP msdu flowq qdepth threshold need to update if set
+     * bit 3 - NON-UDP msdu flowq qdepth threshold need to update if set
+     * rest of bits are reserved and set to 0.
+     */
+    A_UINT32 msduq_update_mask;
+
+    /** Qdepth threshold value
+     * If number of msdus in a queue excess over qdepth_thresh_value value
+     * while queuing msdu's then we drop new msdus.
+     * (Though dropping older (stale) data rather than newer data might be
+     * preferable, the dropping is performed by MAC HW, and there’s no option
+     * to configure the HW to do head dropping rather than tail dropping.)
+     */
+    A_UINT32 qdepth_thresh_value;
+} wmi_msduq_qdepth_thresh_update;
+
+/** WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID
+ *   Request FW to update msduq qdepth threshold per TID per peer */
+typedef struct {
+    /** TLV tag and len; tag equals
+     *  WMITLV_TAG_STRUC_wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param
+     */
+    A_UINT32 tlv_header;
+
+    /** pdev id
+     * The pdev_id can be determined from the vdev_id, but the pdev_id
+     * is explicitly provided so it can be used for sanity checking.
+     */
+    A_UINT32 pdev_id;
+
+    /** vdev id */
+    A_UINT32 vdev_id;
+
+    /**
+     * To set the peer msduq qdepth threshold update for a single peer,
+     * the host shall send mac address for which peer need to be updated.
+     */
+    wmi_mac_addr peer_mac_address;
+
+    /** number of payload update tlvs */
+    A_UINT32 num_of_msduq_updates;
+
+    /** Followed by the variable length TLV msduq_qdepth_updates:
+     *  wmi_msduq_qdepth_th_update msduq_qdepth_thshd_update_list[]
+     */
+} wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param;
+
 typedef enum {
     WMI_PEER_IND_SMPS = 0x0, /* spatial multiplexing power save */
     WMI_PEER_IND_OMN,        /* operating mode notification */
@@ -20763,6 +20821,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SEND_FD_CMDID);
         WMI_RETURN_STRING(WMI_ENABLE_FILS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID);
+        WMI_RETURN_STRING(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
     }
 
     return "Invalid WMI cmd";
