@@ -1600,6 +1600,7 @@ typedef enum {
 #define WMI_SSID_LIST_TAG                0x2
 #define WMI_BSSID_LIST_TAG               0x3
 #define WMI_IE_TAG                       0x4
+#define WMI_SCAN_START_OFFSET_TAG        0x5
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_channel */
@@ -2812,6 +2813,15 @@ typedef struct {
     A_UINT32 num_ssids;
     wmi_ssid ssids[1];
 } wmi_ssid_list;
+
+typedef struct {
+    /** WMI_SCAN_START_OFFSET_TAG */
+    A_UINT32     tag;
+    /** Number of start TSF offsets */
+    A_UINT32     num_offset;
+    /** Array of start TSF offsets provided in milliseconds */
+    A_UINT32     start_tsf_offset[1];
+} wmi_scan_start_offset;
 
 /**
  * WLAN_SCAN_CHAN_MODE Macros defined for A_UINT8 phymode_list[]
