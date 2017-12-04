@@ -38,11 +38,11 @@
 /* (30 Mins) */
 #define MIN_TIME_REQUIRED_FOR_NEXT_BUG_REPORT (30 * 60 * 1000)
 
-/* HDD Scan inactivity timeout set to 10 seconds
- * more than the CSR CMD Timeout
+/* HDD Scan inactivity timeout set to double
+ * of the CSR CMD Timeout.
  */
 #define HDD_SCAN_INACTIVITY_TIMEOUT \
-	(CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT + (10*1000))
+	(CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT * 2)
 
 int hdd_scan_context_init(struct hdd_context *hdd_ctx);
 void hdd_scan_context_destroy(struct hdd_context *hdd_ctx);
