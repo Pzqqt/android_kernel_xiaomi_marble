@@ -699,7 +699,8 @@ dp_rx_process_mic_error(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	struct ieee80211_frame *wh;
 	uint8_t *rx_pkt_hdr;
 	uint8_t *rx_tlv_hdr;
-	uint8_t i;
+	struct dp_peer *peer;
+	uint16_t peer_id;
 
 	nbuf = rx_desc->nbuf;
 	qdf_nbuf_unmap_single(soc->osdev, nbuf, QDF_DMA_BIDIRECTIONAL);
@@ -711,29 +712,28 @@ dp_rx_process_mic_error(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(nbuf));
 	wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
-	for (i = 0; i < MAX_PDEV_CNT; i++) {
-		pdev = soc->pdev_list[i];
-		if (!pdev) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-					"PDEV not found");
-			continue;
-		}
-
-		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
-						DP_MAC_ADDR_LEN) == 0) {
-				goto out;
-			}
-		}
+	peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
+	peer = dp_peer_find_by_id(soc, peer_id);
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"peer not found");
+		goto fail;
 	}
 
+	vdev = peer->vdev;
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"VDEV not found");
 		goto fail;
 	}
 
-out:
+	pdev = vdev->pdev;
+	if (!pdev) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"PDEV not found");
+		goto fail;
+	}
+
 	tops = pdev->soc->cdp_soc.ol_ops;
 	if (tops->rx_mic_error)
 		tops->rx_mic_error(pdev->osif_pdev, vdev->vdev_id, wh);
