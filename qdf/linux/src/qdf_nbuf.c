@@ -400,7 +400,8 @@ struct sk_buff *__qdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 	skb = pld_nbuf_pre_alloc(size);
 
 	if (!skb) {
-		pr_info("ERROR:NBUF alloc failed\n");
+		pr_err_ratelimited("ERROR:NBUF alloc failed, size = %zu\n",
+				   size);
 		__qdf_nbuf_start_replenish_timer();
 		return NULL;
 	} else {

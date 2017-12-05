@@ -212,4 +212,14 @@ void ucfg_tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 void ucfg_tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 				 struct qdf_mac_addr *mac_addr);
 
+/**
+ * ucfg_tdls_antenna_switch() - tdls antenna switch
+ * @vdev: tdls vdev object
+ * @mode: antenna mode
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev,
+				    uint32_t mode);
+
 #endif

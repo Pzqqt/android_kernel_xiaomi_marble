@@ -29,6 +29,7 @@
 #include "wlan_tdls_mgmt.h"
 #include "wlan_tdls_cmds_process.h"
 #include "wlan_tdls_tgt_api.h"
+#include "wlan_policy_mgr_api.h"
 
 static uint16_t tdls_get_connected_peer(struct tdls_soc_priv_obj *soc_obj)
 {
@@ -567,7 +568,7 @@ void tdls_reset_nss(struct tdls_soc_priv_obj *tdls_soc,
 		return;
 
 	if (TDLS_TEARDOWN != action_code ||
-		tdls_soc->tdls_nss_switch_in_progress)
+	    !tdls_soc->tdls_nss_switch_in_progress)
 		return;
 
 	if (tdls_soc->tdls_teardown_peers_cnt != 0)
@@ -589,6 +590,8 @@ void tdls_reset_nss(struct tdls_soc_priv_obj *tdls_soc,
 			tdls_notice("teardown done & NSS switch in progress");
 			tdls_soc->tdls_nss_teardown_complete = true;
 		}
+		tdls_soc->tdls_nss_transition_mode =
+			TDLS_NSS_TRANSITION_S_UNKNOWN;
 	}
 
 }
@@ -2182,3 +2185,147 @@ int tdls_set_responder(struct tdls_set_responder_req *set_req)
 	return status;
 }
 
+static int tdls_teardown_links(struct tdls_soc_priv_obj *soc_obj, uint32_t mode)
+{
+	uint8_t staidx;
+	struct tdls_peer *curr_peer;
+	struct tdls_conn_info *conn_rec;
+	int ret = 0;
+
+	conn_rec = soc_obj->tdls_conn_info;
+	for (staidx = 0; staidx < soc_obj->max_num_tdls_sta; staidx++) {
+		if (conn_rec[staidx].sta_id == 0)
+			continue;
+
+		curr_peer = tdls_find_all_peer(soc_obj,
+					       conn_rec[staidx].peer_mac.bytes);
+		if (!curr_peer)
+			continue;
+
+		/* if supported only 1x1, skip it */
+		if (curr_peer->spatial_streams == HW_MODE_SS_1x1)
+			continue;
+
+		tdls_debug("Indicate TDLS teardown (staId %d)",
+			   curr_peer->sta_id);
+		tdls_indicate_teardown(curr_peer->vdev_priv, curr_peer,
+				       TDLS_TEARDOWN_PEER_UNSPEC_REASON);
+
+		soc_obj->tdls_teardown_peers_cnt++;
+	}
+
+	if (soc_obj->tdls_teardown_peers_cnt >= 1) {
+		soc_obj->tdls_nss_switch_in_progress = true;
+		tdls_debug("TDLS peers to be torn down = %d",
+			   soc_obj->tdls_teardown_peers_cnt);
+
+		/* set the antenna switch transition mode */
+		if (mode == HW_MODE_SS_1x1) {
+			soc_obj->tdls_nss_transition_mode =
+				TDLS_NSS_TRANSITION_S_2x2_to_1x1;
+			ret = -EAGAIN;
+		} else {
+			soc_obj->tdls_nss_transition_mode =
+				TDLS_NSS_TRANSITION_S_1x1_to_2x2;
+			ret = 0;
+		}
+		tdls_debug("TDLS teardown for antenna switch operation starts");
+	}
+
+	return ret;
+}
+
+QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
+{
+	QDF_STATUS status;
+	struct tdls_soc_priv_obj *soc_obj;
+	struct tdls_vdev_priv_obj *vdev_obj;
+	struct wlan_objmgr_vdev *vdev = NULL;
+	uint32_t vdev_nss;
+	int ant_switch_state = 0;
+	uint32_t vdev_id;
+	enum QDF_OPMODE opmode;
+	uint8_t channel;
+	struct tdls_osif_indication ind;
+
+	if (!req || !req->vdev) {
+		tdls_err("req: %p", req);
+		status = QDF_STATUS_E_INVAL;
+		goto error;
+	}
+
+	vdev = req->vdev;
+	status = tdls_get_vdev_objects(vdev, &vdev_obj, &soc_obj);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		tdls_err("can't get vdev_obj & soc_obj");
+		goto error;
+	}
+
+	if (soc_obj->connected_peer_count == 0)
+		goto ant_sw_done;
+
+	if (soc_obj->tdls_nss_switch_in_progress) {
+		if (!soc_obj->tdls_nss_teardown_complete) {
+			tdls_err("TDLS antenna switch is in progress");
+			goto error;
+		} else {
+			goto ant_sw_done;
+		}
+	}
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	opmode = wlan_vdev_mlme_get_opmode(vdev);
+	channel = policy_mgr_get_channel(soc_obj->soc, opmode, &vdev_id);
+
+	/* Check supported nss for TDLS, if is 1x1, no need to teardown links */
+	if (WLAN_REG_IS_24GHZ_CH(channel))
+		vdev_nss = soc_obj->tdls_configs.tdls_vdev_nss_2g;
+	else
+		vdev_nss = soc_obj->tdls_configs.tdls_vdev_nss_5g;
+
+	if (vdev_nss == HW_MODE_SS_1x1) {
+		tdls_debug("Supported NSS is 1x1, no need to teardown TDLS links");
+		goto ant_sw_done;
+	}
+
+	if (tdls_teardown_links(soc_obj, req->mode) == 0)
+		goto ant_sw_done;
+
+error:
+	ant_switch_state = -EAGAIN;
+ant_sw_done:
+	if (soc_obj->tdls_event_cb) {
+		ind.vdev = vdev;
+		ind.status = ant_switch_state;
+		soc_obj->tdls_event_cb(soc_obj->tdls_evt_cb_data,
+				       TDLS_EVENT_ANTENNA_SWITCH, &ind);
+	}
+
+	if (soc_obj->tdls_nss_switch_in_progress &&
+	    soc_obj->tdls_nss_teardown_complete) {
+		soc_obj->tdls_nss_switch_in_progress = false;
+		soc_obj->tdls_nss_teardown_complete = false;
+	}
+	tdls_debug("tdls_nss_switch_in_progress: %d tdls_nss_teardown_complete: %d",
+		   soc_obj->tdls_nss_switch_in_progress,
+		   soc_obj->tdls_nss_teardown_complete);
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
+	qdf_mem_free(req);
+	return status;
+}
+
+QDF_STATUS tdls_antenna_switch_flush_callback(struct scheduler_msg *msg)
+{
+	struct tdls_antenna_switch_request *req;
+
+	if (!msg || !msg->bodyptr) {
+		tdls_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	req = msg->bodyptr;
+	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_TDLS_NB_ID);
+	qdf_mem_free(req);
+
+	return QDF_STATUS_SUCCESS;
+}

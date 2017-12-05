@@ -190,8 +190,10 @@ HTC_PACKET *hif_dev_alloc_rx_buffer(struct hif_sdio_device *pdev)
 	headsize = sizeof(HTC_PACKET);
 	netbuf = qdf_nbuf_alloc(NULL, bufsize + headsize, 0, 4, false);
 	if (netbuf == NULL) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("(%s)Allocate netbuf failed\n", __func__));
+		QDF_TRACE_RATE_LIMITED(HIF_DBG_PRINT_RATE, QDF_MODULE_ID_HIF,
+				       QDF_TRACE_LEVEL_ERROR,
+				       "(%s)Allocate netbuf failed\n",
+				       __func__);
 		return NULL;
 	}
 	packet = (HTC_PACKET *) qdf_nbuf_data(netbuf);

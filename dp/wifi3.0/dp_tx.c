@@ -55,6 +55,22 @@
 /* invalid peer id for reinject*/
 #define DP_INVALID_PEER 0XFFFE
 
+/*mapping between hal encrypt type and cdp_sec_type*/
+#define MAX_CDP_SEC_TYPE 12
+static const uint8_t sec_type_map[MAX_CDP_SEC_TYPE] = {
+					HAL_TX_ENCRYPT_TYPE_NO_CIPHER,
+					HAL_TX_ENCRYPT_TYPE_WEP_128,
+					HAL_TX_ENCRYPT_TYPE_WEP_104,
+					HAL_TX_ENCRYPT_TYPE_WEP_40,
+					HAL_TX_ENCRYPT_TYPE_TKIP_WITH_MIC,
+					HAL_TX_ENCRYPT_TYPE_TKIP_NO_MIC,
+					HAL_TX_ENCRYPT_TYPE_AES_CCMP_128,
+					HAL_TX_ENCRYPT_TYPE_WAPI,
+					HAL_TX_ENCRYPT_TYPE_AES_CCMP_256,
+					HAL_TX_ENCRYPT_TYPE_AES_GCMP_128,
+					HAL_TX_ENCRYPT_TYPE_AES_GCMP_256,
+					HAL_TX_ENCRYPT_TYPE_WAPI_GCM_SM4};
+
 /**
  * dp_tx_get_queue() - Returns Tx queue IDs to be used for this Tx frame
  * @vdev: DP Virtual device handle
@@ -716,10 +732,8 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	DP_STATS_INC_PKT(vdev, tx_i.raw.raw_pkt, 1, qdf_nbuf_len(nbuf));
 
 	/* SWAR for HW: Enable WEP bit in the AMSDU frames for RAW mode */
-	if ((qos_wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
-			&& (qos_wh->i_qos[0] & IEEE80211_QOS_AMSDU)) {
+	if (qos_wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
 		qos_wh->i_fc[1] |= IEEE80211_FC1_WEP;
-	}
 
 	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
 				QDF_DMA_TO_DEVICE)) {
@@ -800,6 +814,8 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
 	hal_tx_desc_set_encap_type(hal_tx_desc_cached, tx_desc->tx_encap_type);
 	hal_tx_desc_set_dscp_tid_table_id(hal_tx_desc_cached,
 			vdev->dscp_tid_map_id);
+	hal_tx_desc_set_encrypt_type(hal_tx_desc_cached,
+			sec_type_map[vdev->sec_type]);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s length:%d , type = %d, dma_addr %llx, offset %d desc id %u",

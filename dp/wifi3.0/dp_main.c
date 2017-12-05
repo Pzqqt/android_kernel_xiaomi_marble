@@ -2726,6 +2726,7 @@ static struct cdp_vdev *dp_vdev_attach_wifi3(struct cdp_pdev *txrx_pdev,
 	vdev->delete.pending = 0;
 	vdev->safemode = 0;
 	vdev->drop_unenc = 1;
+	vdev->sec_type = cdp_sec_type_none;
 #ifdef notyet
 	vdev->filters_num = 0;
 #endif
@@ -4816,6 +4817,9 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 			vdev->ap_bridge_enabled = val;
 		else
 			vdev->ap_bridge_enabled = false;
+		break;
+	case CDP_ENABLE_CIPHER:
+		vdev->sec_type = val;
 		break;
 	default:
 		break;

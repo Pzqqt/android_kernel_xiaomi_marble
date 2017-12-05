@@ -68,6 +68,7 @@ QDF_STATUS wlan_cfg80211_tdls_priv_init(struct vdev_osif_priv *osif_priv)
 	init_completion(&tdls_priv->tdls_link_establish_req_comp);
 	init_completion(&tdls_priv->tdls_teardown_comp);
 	init_completion(&tdls_priv->tdls_user_cmd_comp);
+	init_completion(&tdls_priv->tdls_antenna_switch_comp);
 
 	osif_priv->osif_tdls = tdls_priv;
 
@@ -814,6 +815,47 @@ error_mgmt_req:
 	return status;
 }
 
+int wlan_tdls_antenna_switch(struct wlan_objmgr_vdev *vdev, uint32_t mode)
+{
+	struct vdev_osif_priv *osif_priv;
+	struct osif_tdls_vdev *tdls_priv;
+	int ret;
+	unsigned long rc;
+
+	if (!vdev) {
+		cfg80211_err("vdev is NULL");
+		return -EAGAIN;
+	}
+	wlan_objmgr_vdev_get_ref(vdev, WLAN_OSIF_ID);
+
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	tdls_priv = osif_priv->osif_tdls;
+
+	reinit_completion(&tdls_priv->tdls_antenna_switch_comp);
+	ret = ucfg_tdls_antenna_switch(vdev, mode);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		cfg80211_err("ucfg_tdls_antenna_switch failed err %d", ret);
+		ret = -EAGAIN;
+		goto error;
+	}
+
+	rc = wait_for_completion_timeout(
+		&tdls_priv->tdls_antenna_switch_comp,
+		msecs_to_jiffies(WAIT_TIME_FOR_TDLS_ANTENNA_SWITCH));
+	if (!rc) {
+		cfg80211_err("timeout for tdls antenna switch %ld", rc);
+		ret = -EAGAIN;
+		goto error;
+	}
+
+	ret = tdls_priv->tdls_antenna_switch_status;
+	cfg80211_debug("tdls antenna switch status:%d", ret);
+error:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
+
+	return ret;
+}
+
 static void
 wlan_cfg80211_tdls_indicate_discovery(struct tdls_osif_indication *ind)
 {
@@ -896,6 +938,9 @@ void wlan_cfg80211_tdls_event_callback(void *user_data,
 		complete(&tdls_priv->tdls_user_cmd_comp);
 		break;
 
+	case TDLS_EVENT_ANTENNA_SWITCH:
+		tdls_priv->tdls_antenna_switch_status = ind->status;
+		complete(&tdls_priv->tdls_antenna_switch_comp);
 	default:
 		break;
 	}
