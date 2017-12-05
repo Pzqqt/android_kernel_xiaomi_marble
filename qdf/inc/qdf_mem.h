@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -158,6 +158,47 @@ void qdf_mem_free_debug(void *ptr, const char *file, uint32_t line);
  * Return: None
  */
 void qdf_mem_check_for_leaks(void);
+
+/**
+ * qdf_mem_alloc_consistent_debug() - allocates consistent qdf memory
+ * @osdev: OS device handle
+ * @dev: Pointer to device handle
+ * @size: Size to be allocated
+ * @paddr: Physical address
+ * @file: file name of the call site
+ * @line: line numbe rof the call site
+ *
+ * Return: pointer of allocated memory or null if memory alloc fails
+ */
+void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
+				     qdf_size_t size, qdf_dma_addr_t *paddr,
+				     const char *file, uint32_t line);
+
+#define qdf_mem_alloc_consistent(osdev, dev, size, paddr) \
+	qdf_mem_alloc_consistent_debug(osdev, dev, size, paddr, \
+				       __FILE__, __LINE__)
+
+/**
+ * qdf_mem_free_consistent_debug() - free consistent qdf memory
+ * @osdev: OS device handle
+ * @size: Size to be allocated
+ * @vaddr: virtual address
+ * @paddr: Physical address
+ * @memctx: Pointer to DMA context
+ * @file: file name of the call site
+ * @line: line numbe rof the call site
+ *
+ * Return: none
+ */
+void qdf_mem_free_consistent_debug(qdf_device_t osdev, void *dev,
+				   qdf_size_t size, void *vaddr,
+				   qdf_dma_addr_t paddr,
+				   qdf_dma_context_t memctx,
+				   const char *file, uint32_t line);
+
+#define qdf_mem_free_consistent(osdev, dev, size, vaddr, paddr, memctx) \
+	qdf_mem_free_consistent_debug(osdev, dev, size, vaddr, paddr, memctx, \
+				  __FILE__, __LINE__)
 #else
 void *qdf_mem_malloc(qdf_size_t size);
 
@@ -170,6 +211,14 @@ void *qdf_mem_malloc(qdf_size_t size);
 void qdf_mem_free(void *ptr);
 
 static inline void qdf_mem_check_for_leaks(void) { }
+
+void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev,
+			       qdf_size_t size, qdf_dma_addr_t *paddr);
+
+void qdf_mem_free_consistent(qdf_device_t osdev, void *dev,
+			     qdf_size_t size, void *vaddr,
+			     qdf_dma_addr_t paddr, qdf_dma_context_t memctx);
+
 #endif /* MEMORY_DEBUG */
 
 void *qdf_mem_alloc_outline(qdf_device_t osdev, qdf_size_t size);
@@ -183,13 +232,6 @@ void qdf_mem_copy(void *dst_addr, const void *src_addr, uint32_t num_bytes);
 void qdf_mem_move(void *dst_addr, const void *src_addr, uint32_t num_bytes);
 
 void qdf_mem_free_outline(void *buf);
-
-void *qdf_mem_alloc_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
-			       qdf_dma_addr_t *paddr);
-
-void qdf_mem_free_consistent(qdf_device_t osdev, void *dev, qdf_size_t size,
-			     void *vaddr, qdf_dma_addr_t paddr,
-			     qdf_dma_context_t memctx);
 
 void qdf_mem_zero_outline(void *buf, qdf_size_t size);
 
