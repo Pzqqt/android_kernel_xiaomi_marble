@@ -1100,7 +1100,10 @@ done:
 					HAL_RX_BUF_RBM_SW3_BM);
 	}
 
-	vdev = NULL;
+	/* Peer can be NULL is case of LFR */
+	if (qdf_likely(peer != NULL))
+		vdev = NULL;
+
 	nbuf = nbuf_head;
 	while (nbuf) {
 		next = nbuf->next;
@@ -1110,12 +1113,14 @@ done:
 		peer_id = DP_PEER_METADATA_PEER_ID_GET(peer_mdata);
 		peer = dp_peer_find_by_id(soc, peer_id);
 
-		if (deliver_list_head && (vdev != peer->vdev)) {
+		if (deliver_list_head && peer && (vdev != peer->vdev)) {
 			dp_rx_deliver_to_stack(vdev, peer, deliver_list_head);
 			deliver_list_head = NULL;
 			deliver_list_tail = NULL;
 		}
-		vdev = peer->vdev;
+
+		if (qdf_likely(peer != NULL))
+			vdev = peer->vdev;
 
 		/*
 		 * Check if DMA completed -- msdu_done is the last bit
@@ -1177,7 +1182,7 @@ done:
 		 */
 		dp_rx_peer_validity_check(peer);
 
-		if (qdf_unlikely(peer->bss_peer)) {
+		if (qdf_unlikely(peer && peer->bss_peer)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_ERROR,
 				FL("received pkt with same src MAC"));
@@ -1192,7 +1197,7 @@ done:
 
 		pdev = vdev->pdev;
 
-		if (qdf_unlikely((peer->nawds_enabled == true) &&
+		if (qdf_unlikely(peer && (peer->nawds_enabled == true) &&
 			(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr)) &&
 			(hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) == false))) {
 			DP_STATS_INC_PKT(peer, rx.nawds_mcast_drop, 1,
