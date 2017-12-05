@@ -2941,6 +2941,9 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 	/* TODO: See if hash based search is required */
 	dp_peer_find_hash_add(soc, peer);
 
+	/* Initialize the peer state */
+	peer->state = OL_TXRX_PEER_STATE_DISC;
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 		"vdev %pK created peer %pK (%pM) ref_cnt: %d",
 		vdev, peer, peer->mac_addr.raw,
