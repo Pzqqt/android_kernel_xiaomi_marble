@@ -153,7 +153,7 @@ enum hdd_wlan_wmm_ts_info_ack_policy {
 };
 
 /** Maximum Length of WPA/RSN IE */
-#define MAX_WPA_RSN_IE_LEN 40
+#define MAX_WPA_RSN_IE_LEN 255
 
 /** Enable 11d */
 #define ENABLE_11D  1

@@ -16889,6 +16889,11 @@ static int wlan_hdd_cfg80211_set_ie(struct hdd_adapter *adapter,
 			break;
 		case DOT11F_EID_RSN:
 			hdd_debug("Set RSN IE(len %d)", eLen + 2);
+			if (eLen > (MAX_WPA_RSN_IE_LEN - 2)) {
+				hdd_err("%s: Invalid WPA RSN IE length[%d]",
+					__func__, eLen);
+				return -EINVAL;
+			}
 			memset(pWextState->WPARSNIE, 0, MAX_WPA_RSN_IE_LEN);
 			memcpy(pWextState->WPARSNIE, genie - 2,
 			       (eLen + 2));
