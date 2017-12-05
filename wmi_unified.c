@@ -1871,8 +1871,6 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
 #endif
-	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_DEBUG,
-			"Calling handler for WMI Event ID:%x\n", id);
 	/* Call the WMI registered event handler */
 	if (wmi_handle->target_type == WMI_TLV_TARGET)
 		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
