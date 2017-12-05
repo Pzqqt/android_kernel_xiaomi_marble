@@ -165,6 +165,17 @@ void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
 void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_set_htc_hdl() - set htc handle
+ * @psoc: pointer to psoc
+ * @htc_hdl: HTC handle
+ *
+ * API to set htc handle
+ *
+ * Return: void
+ */
+void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc, void *htc_hdl);
+
+/**
  * ucfg_get_hif_hdl() - get hif handle
  * @psoc: pointer to psoc
  *
@@ -183,4 +194,24 @@ void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
  * Return: wmi handle
  */
 void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_get_psoc_feature_ptr() - get feature pointer
+ * @psoc: pointer to psoc
+ *
+ * API to get legacy pointer
+ *
+ * Return: feature pointer
+ */
+void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_pdev_feature_ptr() - get feature pointer
+ * @pdev: pointer to pdev
+ *
+ * API to get legacy pointer
+ *
+ * Return: pdev feature pointer
+ */
+void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev);
 #endif /* _INIT_DEINIT_UCFG_H_ */

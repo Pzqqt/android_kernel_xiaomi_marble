@@ -591,8 +591,8 @@ struct dp_soc {
 	/* Common base structure - Should be the first member */
 	struct cdp_soc_t cdp_soc;
 
-	/* SoC/softc handle from OSIF layer */
-	void *osif_soc;
+	/* SoC Obj */
+	void *ctrl_psoc;
 
 	/* OS device abstraction */
 	qdf_device_t osdev;
@@ -795,8 +795,6 @@ struct dp_soc {
 	qdf_list_t reo_desc_freelist;
 	qdf_spinlock_t reo_desc_freelist_lock;
 
-	/* Obj Mgr SoC */
-	struct wlan_objmgr_psoc *psoc;
 #ifdef QCA_SUPPORT_SON
 	/* The timer to check station's inactivity status */
 	os_timer_t pdev_bs_inact_timer;

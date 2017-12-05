@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -62,7 +62,7 @@ struct dp_htt_htc_pkt_union {
 };
 
 struct htt_soc {
-	void *osif_soc;
+	void *ctrl_psoc;
 	void *dp_soc;
 	void *hal_soc;
 	HTC_HANDLE htc_soc;
@@ -135,7 +135,7 @@ struct htt_rx_ring_tlv_filter {
 };
 
 void *
-htt_soc_attach(void *txrx_soc, void *osif_soc, HTC_HANDLE htc_soc,
+htt_soc_attach(void *txrx_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
 	void *hal_soc, qdf_device_t osdev);
 
 void htt_soc_detach(void *soc);

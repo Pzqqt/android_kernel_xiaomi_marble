@@ -2764,7 +2764,7 @@ htt_htc_soc_attach(struct htt_soc *soc)
 /*
  * htt_soc_attach() - SOC level HTT initialization
  * @dp_soc:	Opaque Data path SOC handle
- * @osif_soc:	Opaque OSIF SOC handle
+ * @ctrl_psoc:	Opaque ctrl SOC handle
  * @htc_soc:	SOC level HTC handle
  * @hal_soc:	Opaque HAL SOC handle
  * @osdev:	QDF device
@@ -2772,7 +2772,7 @@ htt_htc_soc_attach(struct htt_soc *soc)
  * Return: HTT handle on success; NULL on failure
  */
 void *
-htt_soc_attach(void *dp_soc, void *osif_soc, HTC_HANDLE htc_soc,
+htt_soc_attach(void *dp_soc, void *ctrl_psoc, HTC_HANDLE htc_soc,
 	void *hal_soc, qdf_device_t osdev)
 {
 	struct htt_soc *soc;
@@ -2784,7 +2784,7 @@ htt_soc_attach(void *dp_soc, void *osif_soc, HTC_HANDLE htc_soc,
 		goto fail1;
 
 	soc->osdev = osdev;
-	soc->osif_soc = osif_soc;
+	soc->ctrl_psoc = ctrl_psoc;
 	soc->dp_soc = dp_soc;
 	soc->htc_soc = htc_soc;
 	soc->hal_soc = hal_soc;

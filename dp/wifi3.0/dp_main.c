@@ -2080,7 +2080,7 @@ static void dp_lro_hash_setup(struct dp_soc *soc)
 
 	if (soc->cdp_soc.ol_ops->lro_hash_config)
 		(void)soc->cdp_soc.ol_ops->lro_hash_config
-			(soc->osif_soc, &lro_hash);
+			(soc->ctrl_psoc, &lro_hash);
 }
 
 /*
@@ -2248,7 +2248,7 @@ void dp_mark_peer_inact(void *peer, bool inactive)
 
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
-* @osif_pdev: Opaque PDEV handle from OSIF/HDD
+* @ctrl_pdev: Opaque PDEV object
 * @txrx_soc: Datapath SOC handle
 * @htc_handle: HTC handle for host-target interface
 * @qdf_osdev: QDF OS device
@@ -2760,7 +2760,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 			if (soc->cdp_soc.ol_ops->
 				is_hw_dbs_2x2_capable) {
 				dbs_enable = soc->cdp_soc.ol_ops->
-					is_hw_dbs_2x2_capable(soc->psoc);
+					is_hw_dbs_2x2_capable(soc->ctrl_psoc);
 			}
 
 			if (dbs_enable) {
@@ -6411,7 +6411,7 @@ static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
 
 /*
  * dp_soc_attach_wifi3() - Attach txrx SOC
- * @osif_soc:		Opaque SOC handle from OSIF/HDD
+ * @ctrl_psoc:	Opaque SOC handle from control plane
  * @htc_handle:	Opaque HTC handle
  * @hif_handle:	Opaque HIF handle
  * @qdf_osdev:	QDF device
@@ -6423,12 +6423,12 @@ static void dp_soc_set_txrx_ring_map(struct dp_soc *soc)
  * -Wmissing-prototypes. A more correct solution, namely to expose
  * a prototype in an appropriate header file, will come later.
  */
-void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
+void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops, struct wlan_objmgr_psoc *psoc);
-void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
+	struct ol_if_ops *ol_ops);
+void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	HTC_HANDLE htc_handle, qdf_device_t qdf_osdev,
-	struct ol_if_ops *ol_ops, struct wlan_objmgr_psoc *psoc)
+	struct ol_if_ops *ol_ops)
 {
 	struct dp_soc *soc = qdf_mem_malloc(sizeof(*soc));
 
@@ -6440,13 +6440,12 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 
 	soc->cdp_soc.ops = &dp_txrx_ops;
 	soc->cdp_soc.ol_ops = ol_ops;
-	soc->osif_soc = osif_soc;
+	soc->ctrl_psoc = ctrl_psoc;
 	soc->osdev = qdf_osdev;
 	soc->hif_handle = hif_handle;
-	soc->psoc = psoc;
 
 	soc->hal_soc = hif_get_hal_handle(hif_handle);
-	soc->htt_handle = htt_soc_attach(soc, osif_soc, htc_handle,
+	soc->htt_handle = htt_soc_attach(soc, ctrl_psoc, htc_handle,
 		soc->hal_soc, qdf_osdev);
 	if (!soc->htt_handle) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -6465,14 +6464,14 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	soc->cce_disable = false;
 
 	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
-		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->osif_soc,
+		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->ctrl_psoc,
 				CDP_CFG_MAX_PEER_ID);
 
 		if (ret != -EINVAL) {
 			wlan_cfg_set_max_peer_id(soc->wlan_cfg_ctx, ret);
 		}
 
-		ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->osif_soc,
+		ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->ctrl_psoc,
 				CDP_CFG_CCE_DISABLE);
 		if (ret)
 			soc->cce_disable = true;
@@ -6552,7 +6551,7 @@ void dp_is_hw_dbs_enable(struct dp_soc *soc,
 	bool dbs_enable = false;
 	if (soc->cdp_soc.ol_ops->is_hw_dbs_2x2_capable)
 		dbs_enable = soc->cdp_soc.ol_ops->
-		is_hw_dbs_2x2_capable(soc->psoc);
+		is_hw_dbs_2x2_capable(soc->ctrl_psoc);
 
 	*max_mac_rings = (dbs_enable)?(*max_mac_rings):1;
 }

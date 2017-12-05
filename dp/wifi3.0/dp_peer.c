@@ -382,7 +382,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 	if (ast_entry_found || (peer->vdev && peer->vdev->proxysta_vdev)) {
 		if (soc->cdp_soc.ol_ops->peer_map_event) {
 			soc->cdp_soc.ol_ops->peer_map_event(
-			soc->osif_soc, peer->peer_ids[0],
+			soc->ctrl_psoc, peer->peer_ids[0],
 			hw_peer_id, vdev_id,
 			mac_addr, peer_type);
 		}
@@ -856,7 +856,7 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 	}
 
 	if (soc->cdp_soc.ol_ops->peer_unmap_event) {
-		soc->cdp_soc.ol_ops->peer_unmap_event(soc->osif_soc,
+		soc->cdp_soc.ol_ops->peer_unmap_event(soc->ctrl_psoc,
 				peer_id);
 	}
 
