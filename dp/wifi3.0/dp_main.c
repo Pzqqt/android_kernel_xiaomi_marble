@@ -5154,7 +5154,8 @@ static void dp_txrx_path_stats(struct dp_soc *soc)
  * dp_txrx_dump_stats() -  Dump statistics
  * @value - Statistics option
  */
-static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value)
+static QDF_STATUS dp_txrx_dump_stats(void *psoc, uint16_t value,
+				     enum qdf_stats_verbosity_level level)
 {
 	struct dp_soc *soc =
 		(struct dp_soc *)psoc;

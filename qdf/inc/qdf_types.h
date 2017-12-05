@@ -897,4 +897,14 @@ enum qdf_hang_reason {
 	QDF_RESUME_TIMEOUT = 9,
 };
 
+/*
+ * Verbosity levels for stats for which want to have different levels
+ * @QDF_STATS_VERBOSITY_LEVEL_LOW: Stats verbosity level low
+ * @QDF_STATS_VERBOSITY_LEVEL_HIGH: Stats verbosity level high
+ */
+enum qdf_stats_verbosity_level {
+	QDF_STATS_VERBOSITY_LEVEL_LOW,
+	QDF_STATS_VERBOSITY_LEVEL_HIGH
+};
+
 #endif /* __QDF_TYPES_H */
