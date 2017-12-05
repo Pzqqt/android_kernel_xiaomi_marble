@@ -125,7 +125,7 @@ ol_rx_defrag_mic(ol_txrx_pdev_handle pdev,
 void
 ol_rx_reorder_flush_frag(htt_pdev_handle htt_pdev,
 			 struct ol_txrx_peer_t *peer,
-			 unsigned int tid, int seq_num);
+			 unsigned int tid, uint16_t seq_num);
 
 static inline void xor_block(uint8_t *b, const uint8_t *a, qdf_size_t len)
 {
