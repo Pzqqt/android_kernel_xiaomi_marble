@@ -150,7 +150,9 @@ static const char *const int_mi2s_tx_ch_text[] = {"One", "Two",
 						"Three", "Four"};
 static char const *bit_format_text[] = {"S16_LE", "S24_LE", "S24_3LE"};
 static const char *const loopback_mclk_text[] = {"DISABLE", "ENABLE"};
-static char const *bt_sample_rate_text[] = {"KHZ_8", "KHZ_16", "KHZ_48"};
+static char const *bt_sample_rate_text[] = {"KHZ_8", "KHZ_16",
+					"KHZ_44P1", "KHZ_48",
+					"KHZ_88P2", "KHZ_96"};
 
 static SOC_ENUM_SINGLE_EXT_DECL(int0_mi2s_rx_sample_rate, int_mi2s_rate_text);
 static SOC_ENUM_SINGLE_EXT_DECL(int0_mi2s_rx_chs, int_mi2s_ch_text);
@@ -835,7 +837,16 @@ static int msm_bt_sample_rate_get(struct snd_kcontrol *kcontrol,
 	 * value.
 	 */
 	switch (bt_fm_cfg[BT_SLIM7].sample_rate) {
+	case SAMPLING_RATE_96KHZ:
+		ucontrol->value.integer.value[0] = 5;
+		break;
+	case SAMPLING_RATE_88P2KHZ:
+		ucontrol->value.integer.value[0] = 4;
+		break;
 	case SAMPLING_RATE_48KHZ:
+		ucontrol->value.integer.value[0] = 3;
+		break;
+	case SAMPLING_RATE_44P1KHZ:
 		ucontrol->value.integer.value[0] = 2;
 		break;
 	case SAMPLING_RATE_16KHZ:
@@ -860,7 +871,16 @@ static int msm_bt_sample_rate_put(struct snd_kcontrol *kcontrol,
 		bt_fm_cfg[BT_SLIM7].sample_rate = SAMPLING_RATE_16KHZ;
 		break;
 	case 2:
+		bt_fm_cfg[BT_SLIM7].sample_rate = SAMPLING_RATE_44P1KHZ;
+		break;
+	case 3:
 		bt_fm_cfg[BT_SLIM7].sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	case 4:
+		bt_fm_cfg[BT_SLIM7].sample_rate = SAMPLING_RATE_88P2KHZ;
+		break;
+	case 5:
+		bt_fm_cfg[BT_SLIM7].sample_rate = SAMPLING_RATE_96KHZ;
 		break;
 	case 0:
 	default:
