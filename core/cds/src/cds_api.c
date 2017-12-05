@@ -1030,17 +1030,8 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 		cds_err("Invalid PE context return!");
 		return QDF_STATUS_E_INVAL;
 	}
-	qdf_status = sme_stop(handle, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		cds_err("Failed to stop SME: %d", qdf_status);
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
-	qdf_status = mac_stop(handle, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		cds_err("Failed to stop MAC");
-		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
-	}
+	umac_stop();
 
 	return qdf_status;
 }

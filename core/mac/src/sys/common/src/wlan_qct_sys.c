@@ -37,22 +37,97 @@
 #include "mac_init_api.h"
 #include "qdf_trace.h"
 
+/*
+ * Cookie for SYS messages.  Note that anyone posting a SYS Message
+ * has to write the COOKIE in the reserved field of the message.  The
+ * SYS Module relies on this COOKIE
+ */
+#define SYS_MSG_COOKIE      0xFACE
+
+/* SYS stop timeout 30 seconds */
+#define SYS_STOP_TIMEOUT (30000)
+static qdf_event_t g_stop_evt;
+
 /**
  * sys_build_message_header() - to build the sys message header
- * @sysMsgId: message id
+ * @umac_stop_msgId: message id
  * @pMsg: pointer to message context
  *
  * This API is used to build the sys message header.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
-				    struct scheduler_msg *pMsg)
+QDF_STATUS sys_build_message_header(SYS_MSG_ID umac_stop_msg_id,
+				    struct scheduler_msg *msg)
 {
-	pMsg->type = sysMsgId;
-	pMsg->reserved = SYS_MSG_COOKIE;
+	msg->type = umac_stop_msg_id;
+	msg->reserved = SYS_MSG_COOKIE;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * umac_stop_complete_cb() - a callback when system stop completes
+ * @user_data: pointer to user provided data context
+ *
+ * this callback is used once system stop is completed.
+ *
+ * Return: none
+ */
+#ifdef QDF_ENABLE_TRACING
+static void umac_stop_complete_cb(void *user_data)
+{
+	qdf_event_t *stop_evt = (qdf_event_t *) user_data;
+	QDF_STATUS qdf_status = qdf_event_set(stop_evt);
+
+	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+
+}
+#else
+static void umac_stop_complete_cb(void *user_data)
+{
+	return;
+}
+#endif
+
+/**
+ * umac_stop() - To post stop message to system module
+ *
+ * This API is used post a stop message to system module
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS umac_stop(void)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct scheduler_msg umac_stop_msg;
+
+	/* Initialize the stop event */
+	qdf_status = qdf_event_create(&g_stop_evt);
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
+
+	/* post a message to SYS module in MC to stop SME and MAC */
+	sys_build_message_header(SYS_MSG_ID_UMAC_STOP, &umac_stop_msg);
+
+	/* Save the user callback and user data */
+	umac_stop_msg.callback = umac_stop_complete_cb;
+	umac_stop_msg.bodyptr = (void *)&g_stop_evt;
+
+	/* post the message.. */
+	qdf_status = scheduler_post_msg(QDF_MODULE_ID_SYS, &umac_stop_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		qdf_status = QDF_STATUS_E_BADMSG;
+
+	qdf_status = qdf_wait_for_event_completion(&g_stop_evt,
+			SYS_STOP_TIMEOUT);
+	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+
+	qdf_status = qdf_event_destroy(&g_stop_evt);
+	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+
+	return qdf_status;
 }
 
 /**
@@ -88,6 +163,25 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 	if (SYS_MSG_COOKIE == pMsg->reserved) {
 		/* Process all the new SYS messages.. */
 		switch (pMsg->type) {
+		case SYS_MSG_ID_UMAC_STOP:
+			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
+				"Processing SYS MC STOP");
+			hHal = cds_get_context(QDF_MODULE_ID_PE);
+			if (NULL == hHal) {
+				QDF_TRACE(QDF_MODULE_ID_SYS,
+					QDF_TRACE_LEVEL_ERROR,
+					"%s: Invalid hHal", __func__);
+				break;
+			}
+			qdf_status = sme_stop(hHal,
+					      HAL_STOP_TYPE_SYS_DEEP_SLEEP);
+			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+			qdf_status = mac_stop(hHal,
+					      HAL_STOP_TYPE_SYS_DEEP_SLEEP);
+			QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+			((sys_rsp_cb) pMsg->callback)(pMsg->bodyptr);
+			qdf_status = QDF_STATUS_SUCCESS;
+			break;
 		case SYS_MSG_ID_MC_THR_PROBE:
 			/*
 			 * Process MC thread probe.  Just callback to the

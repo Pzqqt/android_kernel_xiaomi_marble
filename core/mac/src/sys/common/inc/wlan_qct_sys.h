@@ -53,22 +53,16 @@
    Type declarations
    -------------------------------------------------------------------------*/
 
-/*----------------------------------------------------------------------------
-
-   \brief sysResponseCback() - SYS async resonse callback
-
-   This is a protype for the callback function that SYS makes to various
-   modules in the system.
-
-   \param  pUserData - user data that is passed to the Callback function
-   when it is invoked.
-
-   \return Nothing
-
-   \sa sysMcStart(), sysMcThreadProbe(), sysTxThreadProbe()
-
-   --------------------------------------------------------------------------*/
-typedef void (*sysResponseCback)(void *pUserData);
+/**
+ * sys_rsp_cb() - SYS async resonse callback
+ * @user_data: context data for callback
+ *
+ * This is a protype for the callback function that SYS makes to various
+ * modules in the system.
+ *
+ * Return: None
+ */
+typedef void (*sys_rsp_cb)(void *user_data);
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -104,6 +98,13 @@ typedef void (*sysResponseCback)(void *pUserData);
    --------------------------------------------------------------------------*/
 QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId,
 				    struct scheduler_msg *pMsg);
+/**
+ * umac_stop() - send schedule message to mc thread to stop umac (sme and mac)
+ * @p_cds_context: cds context
+ *
+ * Return: status of operation
+ */
+QDF_STATUS umac_stop(void);
 
 QDF_STATUS sys_mc_process_handler(struct scheduler_msg *msg);
 
