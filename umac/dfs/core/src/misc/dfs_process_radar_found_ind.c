@@ -126,7 +126,7 @@
  *
  * Return: None
  */
-static void dfs_radar_add_to_nol(struct wlan_dfs *dfs,
+static QDF_STATUS dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 		struct freqs_offsets *freq_offset)
 {
 	int i;
@@ -140,8 +140,8 @@ static void dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 			continue;
 		if (!utils_is_dfs_ch(dfs->dfs_pdev_obj,
 		     freq_offset->chan_num[i])) {
-			dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-					"ch=%d is not dfs skip",
+			dfs_info(dfs, WLAN_DEBUG_DFS,
+					"ch=%d is not dfs, skip",
 					freq_offset->chan_num[i]);
 			continue;
 		}
@@ -149,13 +149,18 @@ static void dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 		dfs_nol_addchan(dfs, (uint16_t)freq_offset->freq[i],
 				dfs->wlan_dfs_nol_timeout);
 		nollist[num_ch++] = last_chan;
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_info(dfs, WLAN_DEBUG_DFS,
 				"ch = %d Added to NOL", last_chan);
 	}
+
+	if (!num_ch)
+		return QDF_STATUS_E_FAILURE;
+
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
 			nollist, num_ch, DFS_NOL_SET);
 	dfs_nol_update(dfs);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -325,7 +330,7 @@ static void dfs_find_radar_affected_subchans(
 		}
 		dfs_radar_chan_for_80(freq_offset, freq_center);
 	} else {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_err(dfs, WLAN_DEBUG_DFS,
 				"channel flag(%d) is invalid", flag);
 		return;
 	}
@@ -333,7 +338,7 @@ static void dfs_find_radar_affected_subchans(
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
 		freq_offset->chan_num[i] = utils_dfs_freq_to_chan(
 				freq_offset->freq[i]);
-		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "offset = %d, channel = %d",
+		dfs_info(dfs, WLAN_DEBUG_DFS, "offset = %d, channel = %d",
 			    i, freq_offset->chan_num[i]);
 	}
 }
@@ -343,6 +348,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 {
 	struct freqs_offsets freq_offset;
 	bool wait_for_csa = false;
+	QDF_STATUS status;
 
 	if (!dfs->dfs_curchan) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs->dfs_curchan is NULL");
@@ -351,7 +357,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 	/* Check if the current channel is a non DFS channel */
 	if (!dfs_radarevent_basic_sanity(dfs, dfs->dfs_curchan)) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+		dfs_err(dfs, WLAN_DEBUG_DFS,
 				"radar event on a non-DFS channel");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -363,7 +369,22 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 
 	dfs_find_radar_affected_subchans(dfs, radar_found, &freq_offset);
 
-	dfs_radar_add_to_nol(dfs, &freq_offset);
+	status = dfs_radar_add_to_nol(dfs, &freq_offset);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS,
+				"radar event received on invalid channel");
+		return status;
+	}
+
+	if (radar_found->segment_id == SEG_ID_SECONDARY)
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Radar found on second segment VHT80 freq=%d MHz",
+				dfs->dfs_precac_secondary_freq);
+	else
+		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
+				"Radar found on channel %d (%d MHz)",
+				dfs->dfs_curchan->dfs_ch_ieee,
+				dfs->dfs_curchan->dfs_ch_freq);
 
 	/*
 	 * If precac is running and the radar found in secondary
