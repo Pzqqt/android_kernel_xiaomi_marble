@@ -2220,6 +2220,19 @@ void
 wma_indicate_err(enum ol_rx_err_type err_type,
 	 struct ol_error_info *err_info);
 
+/**
+ * wma_rx_mic_error_ind() - indicate mic error to the protocol stack
+ * @scn_handle: pdev handle from osif layer
+ * @vdev_id: vdev id
+ * @wh: pointer to ieee80211_frame structure
+ *
+ * This function indicates TKIP MIC errors encountered in the RX data path
+ * to the protocol stack
+ *
+ * Return: none
+ */
+void wma_rx_mic_error_ind(void *scn_handle, uint16_t vdev_id, void *wh);
+
 QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma_handle,
 				int32_t vdev_id);
 

@@ -82,7 +82,8 @@ static struct ol_if_ops  dp_ol_if_ops = {
 	.peer_rx_reorder_queue_setup = wma_peer_rx_reorder_queue_setup,
 	.peer_rx_reorder_queue_remove = wma_peer_rx_reorder_queue_remove,
 	.is_hw_dbs_2x2_capable = policy_mgr_is_hw_dbs_2x2_capable,
-	.lro_hash_config = wma_lro_config_cmd
+	.lro_hash_config = wma_lro_config_cmd,
+	.rx_mic_error = wma_rx_mic_error_ind
     /* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 
