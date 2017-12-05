@@ -5736,13 +5736,15 @@ int wlan_hdd_send_roam_auth_event(struct hdd_adapter *adapter, uint8_t *bssid,
 			hdd_err("failed to send replay counter");
 			goto nla_put_failure;
 		}
-		if (nla_put(skb,
+		if (roam_info_ptr->kek_len > SIR_KEK_KEY_LEN_FILS ||
+		    nla_put(skb,
 			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK,
 			SIR_KCK_KEY_LEN, roam_info_ptr->kck) ||
 		    nla_put(skb,
 			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK,
 			roam_info_ptr->kek_len, roam_info_ptr->kek)) {
-			hdd_err("nla put fail");
+			hdd_err("nla put fail, kek_len %d",
+				roam_info_ptr->kek_len);
 			goto nla_put_failure;
 		}
 
