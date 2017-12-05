@@ -3251,6 +3251,12 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_DEFAULT,
 		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MIN,
 		     CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MAX),
+	REG_VARIABLE(CFG_PERIODIC_STATS_DISPLAY_TIME_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, periodic_stats_disp_time,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PERIODIC_STATS_DISPLAY_TIME_DEFAULT,
+		     CFG_PERIODIC_STATS_DISPLAY_TIME_MIN,
+		     CFG_PERIODIC_STATS_DISPLAY_TIME_MAX),
 #endif
 
 	REG_VARIABLE(CFG_ENABLE_FW_LOG_TYPE, WLAN_PARAM_Integer,
@@ -6594,7 +6600,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%u] ",
 		  CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME,
 		  hdd_ctx->config->tcp_tx_high_tput_thres);
-
+	hdd_debug("Name = [%s] Value = [%u] ",
+		  CFG_PERIODIC_STATS_DISPLAY_TIME_NAME,
+		  hdd_ctx->config->periodic_stats_disp_time);
 #endif
 
 	hdd_debug("Name = [gIgnoreCAC] Value = [%u] ",

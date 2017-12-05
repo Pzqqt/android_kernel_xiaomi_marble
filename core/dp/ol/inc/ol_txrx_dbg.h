@@ -73,8 +73,15 @@ void ol_txrx_peer_display(ol_txrx_peer_handle peer, int indent);
 
 /*--- txrx stats display debug functions ---*/
 
-
-void ol_txrx_stats_display(ol_txrx_pdev_handle pdev);
+/**
+ * ol_txrx_stats_display() - display tx rx stats
+ * @pdev: pdev handle
+ * @level: verbosity level for logs
+ *
+ * Return: none
+ */
+void ol_txrx_stats_display(ol_txrx_pdev_handle pdev,
+			   enum qdf_stats_verbosity_level level);
 
 void ol_txrx_stats_clear(ol_txrx_pdev_handle pdev);
 
