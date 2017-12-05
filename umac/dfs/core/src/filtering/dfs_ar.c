@@ -44,7 +44,7 @@
 	} while (0)
 
 void dfs_process_ar_event(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan)
+		struct dfs_channel *chan)
 {
 	struct dfs_ar_state *ar;
 	struct dfs_event *re = NULL;

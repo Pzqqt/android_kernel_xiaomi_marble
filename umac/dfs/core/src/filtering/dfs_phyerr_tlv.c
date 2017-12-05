@@ -437,7 +437,7 @@ static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
 		 * For now, the only 11ac channel with freq1/freq2 setup is
 		 * VHT80. Should have a flag macro to check this!
 		 */
-	} else if (IEEE80211_IS_CHAN_11AC_VHT80(dfs->dfs_curchan)) {
+	} else if (WLAN_IS_CHAN_11AC_VHT80(dfs->dfs_curchan)) {
 		/*
 		 * 11AC, so cfreq1/cfreq2 are setup.
 		 * If it's 80+80 this won't work - need to use seg
@@ -455,16 +455,16 @@ static int dfs_tlv_calc_freq_info(struct wlan_dfs *dfs,
 		chan_width = 20;
 
 		/* Grab default channel centre. */
-		chan_centre = dfs_ieee80211_chan2freq(dfs->dfs_curchan);
+		chan_centre = dfs_chan2freq(dfs->dfs_curchan);
 
 		/* Calculate offset based on HT40U/HT40D and VHT40U/VHT40D. */
-		if (IEEE80211_IS_CHAN_11N_HT40PLUS(dfs->dfs_curchan) ||
+		if (WLAN_IS_CHAN_11N_HT40PLUS(dfs->dfs_curchan) ||
 			dfs->dfs_curchan->dfs_ch_flags &
-			IEEE80211_CHAN_VHT40PLUS)
+			WLAN_CHAN_VHT40PLUS)
 			chan_offset = chan_width;
-		else if (IEEE80211_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan) ||
+		else if (WLAN_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan) ||
 			dfs->dfs_curchan->dfs_ch_flags &
-			IEEE80211_CHAN_VHT40MINUS)
+			WLAN_CHAN_VHT40MINUS)
 			chan_offset = -chan_width;
 		else
 			chan_offset = 0;

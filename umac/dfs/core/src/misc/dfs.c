@@ -141,8 +141,8 @@ int dfs_create_object(struct wlan_dfs **dfs)
 
 	qdf_mem_zero(*dfs, sizeof(**dfs));
 
-	(*dfs)->dfs_curchan = (struct dfs_ieee80211_channel *)qdf_mem_malloc(
-			sizeof(struct dfs_ieee80211_channel));
+	(*dfs)->dfs_curchan = (struct dfs_channel *)qdf_mem_malloc(
+			sizeof(struct dfs_channel));
 
 	if (!((*dfs)->dfs_curchan)) {
 		dfs_alert(*dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_curchan allocation failed");
@@ -462,7 +462,7 @@ struct dfs_state *dfs_getchanstate(struct wlan_dfs *dfs, uint8_t *index,
 		int ext_chan_flag)
 {
 	struct dfs_state *rs = NULL;
-	struct dfs_ieee80211_channel *cmp_ch, cmp_ch1;
+	struct dfs_channel *cmp_ch, cmp_ch1;
 	int i;
 	QDF_STATUS err;
 
@@ -532,7 +532,7 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 {
 	int is_ext_ch;
 	int is_fastclk = 0;
-	struct dfs_ieee80211_channel *ext_ch, extchan;
+	struct dfs_channel *ext_ch, extchan;
 	QDF_STATUS err = QDF_STATUS_E_FAILURE;
 
 	if (!dfs) {
@@ -540,7 +540,7 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 		return;
 	}
 
-	is_ext_ch = IEEE80211_IS_CHAN_11N_HT40(dfs->dfs_curchan);
+	is_ext_ch = WLAN_IS_CHAN_11N_HT40(dfs->dfs_curchan);
 	lmac_dfs_disable(dfs->dfs_pdev_obj, no_cac);
 
 	/*
@@ -548,10 +548,10 @@ void dfs_radar_enable(struct wlan_dfs *dfs, int no_cac, uint32_t opmode)
 	 * enable radar detection. In HT80_80, we can have
 	 * primary non-DFS 80MHz with extension 80MHz DFS.
 	 */
-	if ((IEEE80211_IS_CHAN_DFS(dfs->dfs_curchan) ||
-			((IEEE80211_IS_CHAN_11AC_VHT160(dfs->dfs_curchan) ||
-		  IEEE80211_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) &&
-		 IEEE80211_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan))) ||
+	if ((WLAN_IS_CHAN_DFS(dfs->dfs_curchan) ||
+			((WLAN_IS_CHAN_11AC_VHT160(dfs->dfs_curchan) ||
+		  WLAN_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) &&
+		 WLAN_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan))) ||
 			(dfs_is_precac_timer_running(dfs))) {
 		struct dfs_state *rs_pri = NULL, *rs_ext = NULL;
 		uint8_t index_pri, index_ext;
@@ -1059,13 +1059,13 @@ void dfs_set_current_channel(struct wlan_dfs *dfs,
 	dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2 = dfs_ch_vhtop_ch_freq_seg2;
 }
 
-u_int dfs_ieee80211_chan2freq(struct dfs_ieee80211_channel *chan)
+uint16_t dfs_chan2freq(struct dfs_channel *chan)
 {
 	if (!chan)
 		return 0;
 
-	return chan == IEEE80211_CHAN_ANYC ?
-		IEEE80211_CHAN_ANY : chan->dfs_ch_freq;
+	return chan == WLAN_CHAN_ANYC ?
+		WLAN_CHAN_ANY : chan->dfs_ch_freq;
 }
 
 void dfs_update_cur_chan_flags(struct wlan_dfs *dfs,

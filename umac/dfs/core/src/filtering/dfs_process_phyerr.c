@@ -81,9 +81,9 @@ static inline uint16_t dfs_get_event_freqcentre(struct wlan_dfs *dfs,
 	 */
 	chan_width = dfs_get_event_freqwidth(dfs);
 
-	if (IEEE80211_IS_CHAN_11N_HT40PLUS(dfs->dfs_curchan))
+	if (WLAN_IS_CHAN_11N_HT40PLUS(dfs->dfs_curchan))
 		chan_offset = chan_width;
-	else if (IEEE80211_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan))
+	else if (WLAN_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan))
 		chan_offset = -chan_width;
 	else
 		chan_offset = 0;
@@ -94,7 +94,7 @@ static inline uint16_t dfs_get_event_freqcentre(struct wlan_dfs *dfs,
 	 */
 	if (is_dc) {
 		/* XXX TODO: Should DC events be considered 40MHz wide here? */
-		return dfs_ieee80211_chan2freq(
+		return dfs_chan2freq(
 				dfs->dfs_curchan) + (chan_offset / 2);
 	}
 
@@ -103,12 +103,12 @@ static inline uint16_t dfs_get_event_freqcentre(struct wlan_dfs *dfs,
 	 * The centre frequency for pri events is still dfs_ch_freq.
 	 */
 	if (is_pri)
-		return dfs_ieee80211_chan2freq(dfs->dfs_curchan);
+		return dfs_chan2freq(dfs->dfs_curchan);
 
 	if (is_ext)
-		return dfs_ieee80211_chan2freq(dfs->dfs_curchan) + chan_width;
+		return dfs_chan2freq(dfs->dfs_curchan) + chan_width;
 
-	return dfs_ieee80211_chan2freq(dfs->dfs_curchan);
+	return dfs_chan2freq(dfs->dfs_curchan);
 }
 
 int dfs_process_phyerr_owl(struct wlan_dfs *dfs,
@@ -571,7 +571,7 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 	if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS_PHYERR_PKT)
 		dfs_dump_phyerr_contents(buf, datalen);
 
-	if (IEEE80211_IS_CHAN_RADAR(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_RADAR(dfs->dfs_curchan)) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS1,
 			"Radar already found in the channel, do not queue radar data");
 		return;
@@ -761,10 +761,10 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 		STAILQ_INSERT_TAIL(&(dfs->dfs_arq), event, re_list);
 		WLAN_ARQ_UNLOCK(dfs);
 	} else {
-		if ((IEEE80211_IS_CHAN_DFS(dfs->dfs_curchan) ||
-		    ((IEEE80211_IS_CHAN_11AC_VHT160(dfs->dfs_curchan) ||
-		      IEEE80211_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) &&
-		     IEEE80211_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan))) ||
+		if ((WLAN_IS_CHAN_DFS(dfs->dfs_curchan) ||
+		    ((WLAN_IS_CHAN_11AC_VHT160(dfs->dfs_curchan) ||
+		      WLAN_IS_CHAN_11AC_VHT80_80(dfs->dfs_curchan)) &&
+		     WLAN_IS_CHAN_DFS_CFREQ2(dfs->dfs_curchan))) ||
 			(dfs_is_precac_timer_running(dfs))) {
 
 			int retval = 0;

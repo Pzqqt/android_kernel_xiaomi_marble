@@ -557,7 +557,7 @@ struct dfs_filtertype {
 };
 
 /**
- * struct dfs_ieee80211_channel - Channel structure for dfs component.
+ * struct dfs_channel - Channel structure for dfs component.
  * @dfs_ch_freq:                Frequency in Mhz.
  * @dfs_ch_flags:               Channel flags.
  * @dfs_ch_flagext:             Extended channel flags.
@@ -566,7 +566,7 @@ struct dfs_filtertype {
  * @dfs_ch_vhtop_ch_freq_seg2:  Channel Center frequency applicable for 80+80MHz
  *                          mode of operation.
  */
-struct dfs_ieee80211_channel {
+struct dfs_channel {
 	uint16_t       dfs_ch_freq;
 	uint64_t       dfs_ch_flags;
 	uint16_t       dfs_ch_flagext;
@@ -583,7 +583,7 @@ struct dfs_ieee80211_channel {
  * @rs_param:           Phy param.
  */
 struct dfs_state {
-	struct dfs_ieee80211_channel rs_chan;
+	struct dfs_channel rs_chan;
 	uint8_t  rs_chanindex;
 	uint32_t rs_numradarevents;
 	struct wlan_dfs_phyerr_param rs_param;
@@ -773,7 +773,6 @@ struct dfs_event_log {
  * @dfs_extchan_radindex:  Extension channel radar index.
  * @dfsdomain:             cur. DFS domain.
  * @dfs_proc_phyerr:       Flags for Phy Errs to process.
- * @ic:                    pointer to ieee80211com structure.
  * @dfs_eventq:            Q of free dfs event objects.
  * @dfs_eventqlock:        Lock for free dfs event list.
  * @dfs_radarq:            Q of radar events.
@@ -861,7 +860,6 @@ struct wlan_dfs {
 	int16_t   dfs_extchan_radindex;
 	uint32_t  dfsdomain;
 	uint32_t  dfs_proc_phyerr;
-	struct ieee80211com *ic;
 
 	STAILQ_HEAD(, dfs_event) dfs_eventq;
 	spinlock_t dfs_eventqlock;
@@ -941,7 +939,7 @@ struct wlan_dfs {
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_required_list;
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_done_list;
 	TAILQ_HEAD(, dfs_precac_entry) dfs_precac_nol_list;
-	struct dfs_ieee80211_channel *dfs_curchan;
+	struct dfs_channel *dfs_curchan;
 	struct wlan_objmgr_pdev *dfs_pdev_obj;
 	bool dfs_is_offload_enabled;
 	int dfs_use_nol;
@@ -1149,7 +1147,7 @@ struct rx_search_fft_report {
  * was a radar.
  */
 void  dfs_process_radarevent(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan);
+		struct dfs_channel *chan);
 
 /**
  * dfs_nol_addchan() - Add channel to NOL.
@@ -1449,7 +1447,7 @@ int dfs_get_filter_threshold(struct wlan_dfs *dfs,
  * @chan: Current channel structure.
  */
 void dfs_process_ar_event(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan);
+		struct dfs_channel *chan);
 
 /**
  * dfs_reset_ar() - resets the ar state.
@@ -1667,7 +1665,7 @@ int dfs_override_cac_timeout(struct wlan_dfs *dfs,
 		int cac_timeout);
 
 /**
- * dfs_clear_nolhistory() - unmarks IEEE80211_CHAN_CLR_HISTORY_RADAR flag for
+ * dfs_clear_nolhistory() - unmarks WLAN_CHAN_CLR_HISTORY_RADAR flag for
  *                          all the channels in dfs_ch_channels.
  * @dfs: Pointer to wlan_dfs structure.
  */
@@ -1796,7 +1794,7 @@ void dfs_stacac_stop(struct wlan_dfs *dfs);
  * @chan: Pointer to dfs channel structure.
  */
 void dfs_find_precac_secondary_vht80_chan(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan);
+		struct dfs_channel *chan);
 
 /**
  * dfs_phyerr_param_copy() - Function to copy src buf to dest buf.
@@ -2037,5 +2035,5 @@ void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs);
  * return 1.
  */
 int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
-		struct dfs_ieee80211_channel *chan);
+		struct dfs_channel *chan);
 #endif  /* _DFS_H_ */

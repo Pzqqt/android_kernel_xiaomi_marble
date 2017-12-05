@@ -541,7 +541,7 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 	int same_sign;
 	int temp;
 
-	if (IEEE80211_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
+	if (WLAN_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
 		num_fft_bytes = NUM_FFT_BYTES_HT40;
 		num_bin_bytes = NUM_BIN_BYTES_HT40;
 		num_subchan_bins = NUM_SUBCHAN_BINS_HT40;
@@ -553,7 +553,7 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 		upper_mag_byte = UPPER_MAG_BYTE_HT40;
 
 		/* If we are in HT40MINUS then swap primary and extension. */
-		if (IEEE80211_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan)) {
+		if (WLAN_IS_CHAN_11N_HT40MINUS(dfs->dfs_curchan)) {
 			temp = is_ctl;
 			is_ctl = is_ext;
 			is_ext = temp;
@@ -600,7 +600,7 @@ static int dfs_check_chirping_merlin(struct wlan_dfs *dfs,
 		max_index_upper[i] = (ptr[fft_start + upper_index_byte] >> 2) +
 			num_subchan_bins;
 
-		if (!IEEE80211_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
+		if (!WLAN_IS_CHAN_11N_HT40(dfs->dfs_curchan)) {
 			/* For HT20 mode indices are 6 bit signed number. */
 			max_index_lower[i] ^= 0x20;
 			max_index_upper[i] = 0;
