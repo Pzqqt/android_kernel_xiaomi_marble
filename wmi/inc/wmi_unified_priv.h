@@ -1099,6 +1099,9 @@ QDF_STATUS (*extract_fips_event_data)(wmi_unified_t wmi_handle,
 QDF_STATUS (*extract_vdev_start_resp)(wmi_unified_t wmi_handle, void *evt_buf,
 	wmi_host_vdev_start_resp *vdev_rsp);
 
+QDF_STATUS (*extract_vdev_delete_resp)(wmi_unified_t wmi_handle, void *evt_buf,
+	struct wmi_host_vdev_delete_resp *delete_rsp);
+
 QDF_STATUS (*extract_tbttoffset_update_params)(void *wmi_hdl, void *evt_buf,
 	uint8_t idx, struct tbttoffset_params *tbtt_param);
 
