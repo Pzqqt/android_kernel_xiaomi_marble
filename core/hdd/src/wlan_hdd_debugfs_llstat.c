@@ -51,8 +51,13 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 	uint8_t *buffer;
 
 	ENTER();
-	iface_stat = data;
 
+	if (!ll_stats.result) {
+		hdd_err("LL statistics buffer is NULL");
+		return;
+	}
+
+	iface_stat = data;
 	buffer = ll_stats.result;
 	buffer += ll_stats.len;
 	len = scnprintf(buffer, DEBUGFS_LLSTATS_BUF_SIZE - ll_stats.len,
