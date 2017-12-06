@@ -1345,6 +1345,12 @@ static QDF_STATUS lim_parse_kde_elements(tpAniSirGlobal mac_ctx,
 		elem_len = *temp_ie++;
 		rem_len -= 2;
 
+		if (rem_len < elem_len || elem_len > kde_list_len) {
+			pe_err("Invalid elem_len %d rem_len %d list_len %d",
+				elem_len, rem_len, kde_list_len);
+			return QDF_STATUS_E_FAILURE;
+		}
+
 		if (lim_check_if_vendor_oui_match(mac_ctx, KDE_OUI_TYPE,
 				KDE_OUI_TYPE_SIZE, current_ie, elem_len)) {
 
