@@ -1191,6 +1191,41 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
+/**
+ * csr_handle_fils_scan_for_ssid_failure() - Checks and fills FILS seq number
+ * in roam_info structure to send to hdd
+ *
+ * @roam_profile: Pointer to current roam_profile structure
+ * @roam_info: Pointer to roam_info strucure to be filled
+ *
+ * Return: true for FILS connection else false
+ */
+#ifdef WLAN_FEATURE_FILS_SK
+static
+bool csr_handle_fils_scan_for_ssid_failure(tCsrRoamProfile *roam_profile,
+					   struct csr_roam_info *roam_info)
+{
+	if (roam_profile && roam_profile->fils_con_info &&
+	    roam_profile->fils_con_info->is_fils_connection) {
+		sme_debug("send roam_info for FILS connection failure, seq %d",
+			  roam_profile->fils_con_info->sequence_number);
+		roam_info->is_fils_connection = true;
+		roam_info->fils_seq_num =
+				roam_profile->fils_con_info->sequence_number;
+		return true;
+	}
+
+	return false;
+}
+#else
+static
+bool csr_handle_fils_scan_for_ssid_failure(tCsrRoamProfile *roam_profile,
+					   struct csr_roam_info *roam_info)
+{
+	return false;
+}
+#endif
+
 QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 						  uint32_t session_id)
 {
@@ -1198,6 +1233,8 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 	tCsrRoamProfile *profile;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 	eCsrRoamResult roam_result;
+	struct csr_roam_info *roam_info = NULL;
+	struct tag_csrscan_result *scan_result;
 
 	if (!session) {
 		sme_err("session %d not found", session_id);
@@ -1227,32 +1264,42 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac_ctx,
 		roam_result = eCSR_ROAM_RESULT_IBSS_START_FAILED;
 		goto roam_completion;
 	}
+
+	roam_info = qdf_mem_malloc(sizeof(struct csr_roam_info));
+	if (!roam_info) {
+		sme_err("Failed to allocate memory for roam_info");
+		goto roam_completion;
+	}
+
+	if (session->scan_info.roambssentry) {
+		scan_result = GET_BASE_ADDR(session->scan_info.roambssentry,
+				struct tag_csrscan_result, Link);
+		roam_info->pBssDesc = &scan_result->Result.BssDescriptor;
+	}
+	roam_info->statusCode = session->joinFailStatusCode.statusCode;
+	roam_info->reasonCode = session->joinFailStatusCode.reasonCode;
+
 	/* Only indicate assoc_completion if we indicate assoc_start. */
 	if (session->bRefAssocStartCnt > 0) {
-		struct csr_roam_info *roam_info = NULL, roamInfo;
-
-		qdf_mem_set(&roamInfo, sizeof(struct csr_roam_info), 0);
-		roam_info = &roamInfo;
-		if (session->scan_info.roambssentry) {
-			struct tag_csrscan_result *pScanResult = GET_BASE_ADDR(
-				session->scan_info.roambssentry,
-				struct tag_csrscan_result, Link);
-			roamInfo.pBssDesc = &pScanResult->Result.BssDescriptor;
-		}
-
-		roamInfo.statusCode = session->joinFailStatusCode.statusCode;
-		roamInfo.reasonCode = session->joinFailStatusCode.reasonCode;
 		session->bRefAssocStartCnt--;
 		csr_roam_call_callback(mac_ctx, session_id, roam_info,
 				       session->scan_info.roam_id,
 				       eCSR_ROAM_ASSOCIATION_COMPLETION,
 				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
 	} else {
-		csr_roam_call_callback(mac_ctx, session_id, NULL,
+		if (!csr_handle_fils_scan_for_ssid_failure(
+		    profile, roam_info)) {
+			qdf_mem_free(roam_info);
+			roam_info = NULL;
+		}
+		csr_roam_call_callback(mac_ctx, session_id, roam_info,
 				       session->scan_info.roam_id,
 				       eCSR_ROAM_ASSOCIATION_FAILURE,
 				       eCSR_ROAM_RESULT_SCAN_FOR_SSID_FAILURE);
 	}
+
+	if (roam_info)
+		qdf_mem_free(roam_info);
 roam_completion:
 	csr_roam_completion(mac_ctx, session_id, NULL, NULL, roam_result,
 			    false);
