@@ -3121,3 +3121,31 @@ wma_indicate_err(
 	}
 	}
 }
+
+void wma_rx_mic_error_ind(void *scn_handle, uint16_t vdev_id, void *wh)
+{
+	struct ieee80211_frame *w = (struct ieee80211_frame *)wh;
+	struct ol_error_info err_info;
+
+	err_info.u.mic_err.vdev_id = vdev_id;
+	qdf_mem_copy(err_info.u.mic_err.da, w->i_addr1, OL_TXRX_MAC_ADDR_LEN);
+	qdf_mem_copy(err_info.u.mic_err.ta, w->i_addr2, OL_TXRX_MAC_ADDR_LEN);
+
+	WMA_LOGD("MIC vdev_id %d\n", vdev_id);
+	WMA_LOGD("MIC DA: %02x:%02x:%02x:%02x:%02x:%02x\n",
+						err_info.u.mic_err.da[0],
+						err_info.u.mic_err.da[1],
+						err_info.u.mic_err.da[2],
+						err_info.u.mic_err.da[3],
+						err_info.u.mic_err.da[4],
+						err_info.u.mic_err.da[5]);
+	WMA_LOGD("MIC TA: %02x:%02x:%02x:%02x:%02x:%02x\n",
+						err_info.u.mic_err.ta[0],
+						err_info.u.mic_err.ta[1],
+						err_info.u.mic_err.ta[2],
+						err_info.u.mic_err.ta[3],
+						err_info.u.mic_err.ta[4],
+						err_info.u.mic_err.ta[5]);
+
+	wma_indicate_err(OL_RX_ERR_TKIP_MIC, &err_info);
+}
