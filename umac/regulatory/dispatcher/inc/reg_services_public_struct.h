@@ -740,11 +740,13 @@ struct cur_regulatory_info {
  * @BAND_ALL:all bands
  * @BAND_2G: 2G band
  * @BAND_5G: 5G band
+ * @BAND_UNKNOWN: Unsupported band
  */
 enum band_info {
 	BAND_ALL,
 	BAND_2G,
 	BAND_5G,
+	BAND_UNKNOWN
 };
 
 /**
