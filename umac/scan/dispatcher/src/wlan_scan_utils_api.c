@@ -719,7 +719,7 @@ static int util_scan_scm_calc_nss_supported_by_ap(
 	return 1;
 }
 
-struct scan_cache_entry *
+qdf_list_t *
 util_scan_unpack_beacon_frame(uint8_t *frame,
 	qdf_size_t frame_len, uint32_t frm_subtype,
 	struct mgmt_rx_event_params *rx_param)
@@ -728,12 +728,22 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	struct wlan_bcn_frame *bcn;
 	QDF_STATUS status;
 	struct ie_ssid *ssid;
-	struct scan_cache_entry *scan_entry = NULL;
+	struct scan_cache_entry *scan_entry;
 	struct qbss_load_ie *qbss_load;
+	qdf_list_t *scan_list;
+	struct scan_cache_node *scan_node;
+
+	scan_list = qdf_mem_malloc(sizeof(*scan_list));
+	if (!scan_list) {
+		scm_err("failed to allocate scan_list");
+		return NULL;
+	}
+	qdf_list_create(scan_list, MAX_SCAN_CACHE_SIZE);
 
 	scan_entry = qdf_mem_malloc(sizeof(*scan_entry));
 	if (!scan_entry) {
 		scm_err("failed to allocate memory for scan_entry");
+		qdf_mem_free(scan_list);
 		return NULL;
 	}
 	scan_entry->raw_frame.ptr =
@@ -741,6 +751,7 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	if (!scan_entry->raw_frame.ptr) {
 		scm_err("failed to allocate memory for frame");
 		qdf_mem_free(scan_entry);
+		qdf_mem_free(scan_list);
 		return NULL;
 	}
 
@@ -788,12 +799,14 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 		scm_err("failed to parse beacon IE");
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
+		qdf_mem_free(scan_list);
 		return NULL;
 	}
 
 	if (!scan_entry->ie_list.rates) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
+		qdf_mem_free(scan_list);
 		return NULL;
 	}
 
@@ -803,6 +816,7 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	if (ssid && (ssid->ssid_len > WLAN_SSID_MAX_LEN)) {
 		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
+		qdf_mem_free(scan_list);
 		return NULL;
 	}
 
@@ -840,8 +854,18 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	if (qbss_load)
 		scan_entry->qbss_chan_load = qbss_load->qbss_chan_load;
 
+	scan_node = qdf_mem_malloc(sizeof(*scan_node));
+	if (!scan_node) {
+		qdf_mem_free(scan_entry);
+		qdf_mem_free(scan_list);
+		return NULL;
+	}
+
+	scan_node->entry = scan_entry;
+	qdf_list_insert_front(scan_list, &scan_node->node);
+
 	/* TODO calculate channel struct */
-	return scan_entry;
+	return scan_list;
 }
 
 QDF_STATUS

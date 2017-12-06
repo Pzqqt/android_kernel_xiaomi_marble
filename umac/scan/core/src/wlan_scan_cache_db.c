@@ -587,10 +587,13 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 	struct scan_cache_entry *scan_entry;
 	struct wlan_scan_obj *scan_obj;
 	struct scan_dbs *scan_db;
-	QDF_STATUS status;
+	qdf_list_t *scan_list = NULL;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t list_count, i;
+	qdf_list_node_t *next_node = NULL;
+	struct scan_cache_node *scan_node;
 
 	bcn = msg->bodyptr;
-
 	if (!bcn) {
 		scm_err("bcn is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -635,36 +638,54 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 		goto free_nbuf;
 	}
 
-	scan_entry =
+	scan_list =
 		 util_scan_unpack_beacon_frame(qdf_nbuf_data(bcn->buf),
 			qdf_nbuf_len(bcn->buf), bcn->frm_type,
 			bcn->rx_data);
-	if (!scan_entry) {
+	if (!scan_list || qdf_list_empty(scan_list)) {
 		scm_err("failed to unpack frame");
 		status = QDF_STATUS_E_INVAL;
 		goto free_nbuf;
 	}
-	scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x "
-		"ssid:%.*s, rssi: %d",
-		(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
-		"Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
-		scan_entry->tsf_delta, scan_entry->seq_num,
-		scan_entry->ssid.length, scan_entry->ssid.ssid, scan_entry->rssi_raw);
 
-	if (scan_obj->cb.update_beacon)
-		scan_obj->cb.update_beacon(pdev, scan_entry);
+	list_count = qdf_list_size(scan_list);
+	for (i = 0; i < list_count; i++) {
+		status = qdf_list_remove_front(scan_list, &next_node);
+		if (QDF_IS_STATUS_ERROR(status) || next_node == NULL) {
+			scm_err("failed to unpack frame");
+			status = QDF_STATUS_E_INVAL;
+			goto free_nbuf;
+		}
 
-	if (scan_obj->cb.inform_beacon)
-		scan_obj->cb.inform_beacon(pdev, scan_entry);
+		scan_node = qdf_container_of(next_node,
+			struct scan_cache_node, node);
 
-	status = scm_add_update_entry(scan_db, scan_entry);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		util_scan_free_cache_entry(scan_entry);
-		scm_err("failed to add entry");
-		goto free_nbuf;
+		scan_entry = scan_node->entry;
+		scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x "
+			"ssid:%.*s, rssi: %d",
+			(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
+			"Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
+			scan_entry->tsf_delta, scan_entry->seq_num,
+			scan_entry->ssid.length, scan_entry->ssid.ssid,
+			scan_entry->rssi_raw);
+
+		if (scan_obj->cb.update_beacon)
+			scan_obj->cb.update_beacon(pdev, scan_entry);
+
+		if (scan_obj->cb.inform_beacon)
+			scan_obj->cb.inform_beacon(pdev, scan_entry);
+
+		status = scm_add_update_entry(scan_db, scan_entry);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			util_scan_free_cache_entry(scan_entry);
+			scm_err("failed to add entry");
+		}
+		qdf_mem_free(scan_node);
 	}
 
 free_nbuf:
+	if (scan_list)
+		qdf_mem_free(scan_list);
 	if (bcn->psoc)
 		wlan_objmgr_psoc_release_ref(bcn->psoc, WLAN_SCAN_ID);
 	if (pdev)

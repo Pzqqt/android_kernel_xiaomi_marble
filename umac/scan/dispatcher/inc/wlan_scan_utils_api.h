@@ -54,9 +54,9 @@ bool util_is_scan_entry_match(
  *
  * get the defaults scan params
  *
- * Return: unpacked scan entry.
+ * Return: unpacked list of scan entries.
  */
-struct scan_cache_entry *util_scan_unpack_beacon_frame(
+qdf_list_t *util_scan_unpack_beacon_frame(
 	uint8_t *frame, qdf_size_t frame_len, uint32_t frm_subtype,
 	struct mgmt_rx_event_params *rx_param);
 
