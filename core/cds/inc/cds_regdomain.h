@@ -441,6 +441,7 @@ enum reg_domain {
 
 	WORLD = 0x0199,
 	FCCA = 0x0A10,
+	FCCB = 0x0B90,
 	MKKA = 0x0A40,
 	MKKC = 0x0A50,
 	ETSIC = 0x0C30,
