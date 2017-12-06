@@ -40,6 +40,9 @@
 #define TARGET_OEM_CONFIGURE_WRU        0x80
 #define TARGET_OEM_CONFIGURE_FTMRR      0x81
 
+#define WIFI_POS_FLAG_DFS               10
+#define WIFI_POS_SET_DFS(info)          (info |=  (1 << WIFI_POS_FLAG_DFS))
+
 struct wifi_pos_field {
 	uint32_t id;
 	uint32_t offset;
