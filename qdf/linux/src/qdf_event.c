@@ -380,6 +380,8 @@ QDF_STATUS qdf_wait_for_event_completion(qdf_event_t *event, uint32_t timeout)
 		goto err_list_add;
 	}
 
+	/* update the timeout if its on a emaulation platform */
+	timeout *= qdf_timer_get_multiplier();
 	if (timeout) {
 		long ret;
 

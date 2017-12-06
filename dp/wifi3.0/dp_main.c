@@ -3830,6 +3830,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
 			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na);
 			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
+			DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
 
 			pdev->stats.tx_i.dropped.dropped_pkt.num =
 				pdev->stats.tx_i.dropped.dma_error +
@@ -3944,6 +3945,9 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx_i.nawds_mcast.num);
 	DP_PRINT_STATS("	Bytes = %d",
 			pdev->stats.tx_i.nawds_mcast.bytes);
+	DP_PRINT_STATS("CCE Classified:");
+	DP_TRACE(FATAL, "	CCE Classified Packets: %u",
+			pdev->stats.tx_i.cce_classified);
 }
 
 /**
@@ -5686,6 +5690,7 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 	}
 
 	wlan_cfg_set_rx_hash(soc->wlan_cfg_ctx, rx_hash);
+	soc->cce_disable = false;
 
 	if (soc->cdp_soc.ol_ops->get_dp_cfg_param) {
 		int ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->osif_soc,
@@ -5694,6 +5699,11 @@ void *dp_soc_attach_wifi3(void *osif_soc, void *hif_handle,
 		if (ret != -EINVAL) {
 			wlan_cfg_set_max_peer_id(soc->wlan_cfg_ctx, ret);
 		}
+
+		ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->osif_soc,
+				CDP_CFG_CCE_DISABLE);
+		if (ret)
+			soc->cce_disable = true;
 	}
 
 	qdf_spinlock_create(&soc->peer_ref_mutex);

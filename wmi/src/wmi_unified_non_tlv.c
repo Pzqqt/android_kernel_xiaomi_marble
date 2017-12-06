@@ -5847,6 +5847,7 @@ static QDF_STATUS extract_ready_event_params_non_tlv(wmi_unified_t wmi_handle,
 {
 	wmi_ready_event *ev = (wmi_ready_event *) evt_buf;
 
+	ev_param->status = ev->status;
 	ev_param->num_dscp_table = ev->num_dscp_table;
 	if (ev->agile_capability)
 		ev_param->agile_capability = true;
@@ -5855,6 +5856,7 @@ static QDF_STATUS extract_ready_event_params_non_tlv(wmi_unified_t wmi_handle,
 	/* Following params not present in non-TLV target. Set Defaults */
 	ev_param->num_extra_mac_addr = 0;
 	ev_param->num_total_peer = 0;
+	ev_param->num_extra_peer = 0;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -60,6 +60,7 @@
 #define QDF_NBUF_TRAC_EAPOL_ETH_TYPE		0x888E
 #define QDF_NBUF_TRAC_WAPI_ETH_TYPE		0x88b4
 #define QDF_NBUF_TRAC_ARP_ETH_TYPE		0x0806
+#define QDF_NBUF_TRAC_TDLS_ETH_TYPE		0x890D
 #define QDF_NBUF_TRAC_IPV4_ETH_TYPE     0x0800
 #define QDF_NBUF_TRAC_IPV6_ETH_TYPE     0x86dd
 #define QDF_NBUF_DEST_MAC_OFFSET		0
@@ -71,10 +72,14 @@
 #define QDF_NBUF_TRAC_IPV4_ADDR_BCAST_MASK    0xF0000000
 #define QDF_NBUF_TRAC_IPV6_DEST_ADDR_OFFSET   38
 #define QDF_NBUF_TRAC_IPV6_DEST_ADDR          0xFF00
+#define QDF_NBUF_TRAC_IPV6_OFFSET		14
+#define QDF_NBUF_TRAC_IPV6_HEADER_SIZE   40
 #define QDF_NBUF_TRAC_ICMP_TYPE         1
 #define QDF_NBUF_TRAC_TCP_TYPE          6
 #define QDF_NBUF_TRAC_UDP_TYPE          17
 #define QDF_NBUF_TRAC_ICMPV6_TYPE       0x3a
+#define QDF_NBUF_TRAC_DHCP6_SRV_PORT		547
+#define QDF_NBUF_TRAC_DHCP6_CLI_PORT		546
 
 /* EAPOL Related MASK */
 #define EAPOL_PACKET_TYPE_OFFSET		15
@@ -1770,6 +1775,21 @@ bool qdf_nbuf_data_is_ipv4_dhcp_pkt(uint8_t *data)
 }
 
 /**
+ * qdf_nbuf_data_is_ipv6_dhcp_pkt() - check if it is DHCP packet.
+ * @data: Pointer to DHCP packet data buffer
+ *
+ * This func. checks whether it is a DHCP packet or not.
+ *
+ * Return: true if it is a DHCP packet
+ *         false if not
+ */
+static inline
+bool qdf_nbuf_is_ipv6_dhcp_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_data_is_ipv6_dhcp_pkt(qdf_nbuf_data(buf));
+}
+
+/**
  * qdf_nbuf_is_ipv4_eapol_pkt() - check if packet is a eapol packet or not
  * @buf:  buffer
  *
@@ -1810,6 +1830,20 @@ static inline
 bool qdf_nbuf_is_ipv4_wapi_pkt(qdf_nbuf_t buf)
 {
 	return __qdf_nbuf_is_ipv4_wapi_pkt(buf);
+}
+
+/**
+ * qdf_nbuf_is_ipv4_tdls_pkt() - check if packet is a tdls packet or not
+ * @buf:  buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is TDLS packet
+ */
+static inline
+bool qdf_nbuf_is_ipv4_tdls_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_ipv4_tdls_pkt(buf);
 }
 
 /**

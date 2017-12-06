@@ -6033,6 +6033,7 @@ struct wmi_host_fw_abi_ver {
  * @max_bssid_rx_filters:
  * @use_pdev_id:
  * @max_num_dbs_scan_duty_cycle: max dbs can duty cycle value
+ * @cce_disable: disable cce component
  */
 typedef struct {
 	uint32_t num_vdevs;
@@ -6101,6 +6102,7 @@ typedef struct {
 	uint32_t max_bssid_rx_filters;
 	uint32_t use_pdev_id;
 	uint32_t max_num_dbs_scan_duty_cycle;
+	bool cce_disable;
 } target_resource_config;
 
 /**
@@ -8007,21 +8009,27 @@ struct get_arp_stats {
 
 /**
  * struct wmi_host_ready_ev_param - Data revieved in ready event
+ * @status:         FW init status. Success or Failure.
  * @num_dscp_table: Number of DSCP table supported in FW
  * @num_extra_mac_addr: Extra mac address present in ready event. Used
  *                  in DBDC mode to provide multiple mac per pdev.
  * @num_total_peer: Total number of peers FW could allocate. Zero means
  *                  FW could  allocate num peers requested by host in init.
  *                  Otherwise, host need update it max_peer to this value.
+ * @num_extra_peer: Number of extra peers created and used within FW. Host
+ *                  should expect peer_id can be num_total_peer + num_extra_peer
+ *                  but it can create only upto num_total_peer.
  * @agile_capability: Boolean specification of whether the target supports
  *                  agile DFS, by means of using one 80 MHz radio chain for
  *                  radar detection, concurrently with using another radio
  *                  chain for non-160 MHz regular operation.
  */
 struct wmi_host_ready_ev_param {
+	uint32_t status;
 	uint32_t num_dscp_table;
 	uint32_t num_extra_mac_addr;
 	uint32_t num_total_peer;
+	uint32_t num_extra_peer;
 	bool agile_capability;
 };
 

@@ -1033,6 +1033,30 @@ bool __qdf_nbuf_is_ipv4_wapi_pkt(struct sk_buff *skb)
 	else
 		return false;
 }
+EXPORT_SYMBOL(__qdf_nbuf_is_ipv4_wapi_pkt);
+
+/**
+ * __qdf_nbuf_is_ipv4_tdls_pkt() - check if skb data is a tdls packet
+ * @skb: Pointer to network buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: true if packet is tdls packet
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_is_ipv4_tdls_pkt(struct sk_buff *skb)
+{
+	uint16_t ether_type;
+
+	ether_type = *(uint16_t *)(skb->data +
+				QDF_NBUF_TRAC_ETH_TYPE_OFFSET);
+
+	if (ether_type == QDF_SWAP_U16(QDF_NBUF_TRAC_TDLS_ETH_TYPE))
+		return true;
+	else
+		return false;
+}
+EXPORT_SYMBOL(__qdf_nbuf_is_ipv4_tdls_pkt);
 
 /**
  * __qdf_nbuf_data_is_ipv4_arp_pkt() - check if skb data is a arp packet
@@ -1079,6 +1103,36 @@ bool __qdf_nbuf_data_is_ipv6_pkt(uint8_t *data)
 		return false;
 }
 EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv6_pkt);
+
+/**
+ * __qdf_nbuf_data_is_ipv6_dhcp_pkt() - check if skb data is a dhcp packet
+ * @data: Pointer to network data buffer
+ *
+ * This api is for ipv6 packet.
+ *
+ * Return: true if packet is DHCP packet
+ *	   false otherwise
+ */
+bool __qdf_nbuf_data_is_ipv6_dhcp_pkt(uint8_t *data)
+{
+	uint16_t sport;
+	uint16_t dport;
+
+	sport = *(uint16_t *)(data + QDF_NBUF_TRAC_IPV6_OFFSET +
+				QDF_NBUF_TRAC_IPV6_HEADER_SIZE);
+	dport = *(uint16_t *)(data + QDF_NBUF_TRAC_IPV6_OFFSET +
+					QDF_NBUF_TRAC_IPV6_HEADER_SIZE +
+					sizeof(uint16_t));
+
+	if (((sport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP6_SRV_PORT)) &&
+	     (dport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP6_CLI_PORT))) ||
+	    ((sport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP6_CLI_PORT)) &&
+	     (dport == QDF_SWAP_U16(QDF_NBUF_TRAC_DHCP6_SRV_PORT))))
+		return true;
+	else
+		return false;
+}
+EXPORT_SYMBOL(__qdf_nbuf_data_is_ipv6_dhcp_pkt);
 
 /**
  * __qdf_nbuf_data_is_ipv4_mcast_pkt() - check if it is IPV4 multicast packet.

@@ -125,6 +125,9 @@ union dp_rx_desc_list_elem_t;
      (_a)[4] == 0xff &&                         \
      (_a)[5] == 0xff)
 #define IS_LLC_PRESENT(typeorlen) ((typeorlen) >= 0x600)
+#define DP_FRAME_IS_SNAP(_llc) ((_llc)->llc_dsap == 0xaa && \
+		(_llc)->llc_ssap == 0xaa && \
+		(_llc)->llc_un.type_snap.control == 0x3)
 #define DP_FRAME_FC0_TYPE_MASK 0x0c
 #define DP_FRAME_FC0_TYPE_DATA 0x08
 #define DP_FRAME_IS_DATA(_frame) \
@@ -584,6 +587,9 @@ struct dp_soc {
 
 	/* Number of PDEVs */
 	uint8_t pdev_count;
+
+	/*cce disable*/
+	bool cce_disable;
 
 	/* Link descriptor memory banks */
 	struct {

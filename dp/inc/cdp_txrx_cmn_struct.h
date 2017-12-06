@@ -108,6 +108,7 @@
  */
 enum cdp_cfg_param_type {
 	CDP_CFG_MAX_PEER_ID,
+	CDP_CFG_CCE_DISABLE,
 	CDP_CFG_NUM_PARAMS
 };
 
@@ -938,6 +939,9 @@ struct cdp_tx_ingress_stats {
 		/* Resource Full: Congestion Control */
 		uint32_t res_full;
 	} dropped;
+
+	/*Number of packets classified by CCE*/
+	uint32_t cce_classified;
 };
 
 struct cdp_vdev_stats {

@@ -12728,6 +12728,8 @@ void wmi_copy_resource_config(wmi_resource_config *resource_cfg,
 	if (tgt_res_cfg->tx_msdu_new_partition_id_support)
 		WMI_RSRC_CFG_FLAG_TX_MSDU_ID_NEW_PARTITION_SUPPORT_SET(
 			resource_cfg->flag1, 1);
+	if (tgt_res_cfg->cce_disable)
+		WMI_RSRC_CFG_FLAG_TCL_CCE_DISABLE_SET(resource_cfg->flag1, 1);
 }
 
 /* copy_hw_mode_id_in_init_cmd() - Helper routine to copy hw_mode in init cmd
@@ -16867,9 +16869,11 @@ static QDF_STATUS extract_ready_event_params_tlv(wmi_unified_t wmi_handle,
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) evt_buf;
 	ev = param_buf->fixed_param;
 
+	ev_param->status = ev->status;
 	ev_param->num_dscp_table = ev->num_dscp_table;
 	ev_param->num_extra_mac_addr = ev->num_extra_mac_addr;
 	ev_param->num_total_peer = ev->num_total_peers;
+	ev_param->num_extra_peer = ev->num_extra_peers;
 	/* Agile_cap in ready event is not supported in TLV target */
 	ev_param->agile_capability = false;
 
