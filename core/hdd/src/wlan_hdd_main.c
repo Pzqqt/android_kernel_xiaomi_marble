@@ -57,6 +57,7 @@
 #include "wlan_hdd_request_manager.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#include "qdf_debug_domain.h"
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
 #include <cdp_txrx_stats.h>
@@ -2285,6 +2286,10 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 }
 #endif
 
+static void hdd_check_for_leaks(void)
+{
+}
+
 /**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
@@ -2333,6 +2338,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		unint = true;
 		/* Fall through dont add break here */
 	case DRIVER_MODULES_CLOSED:
+		qdf_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
+
 		if (!reinit && !unint) {
 			ret = pld_power_on(qdf_dev->dev);
 			if (ret) {
@@ -2500,6 +2507,12 @@ power_down:
 release_lock:
 	hdd_ctx->start_modules_in_progress = false;
 	mutex_unlock(&hdd_ctx->iface_change_lock);
+
+	/* many adapter resources are not freed by design in SSR case */
+	if (!reinit)
+		hdd_check_for_leaks();
+	qdf_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
+
 	EXIT();
 
 	return ret;
@@ -9869,8 +9882,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	qdf_device_t qdf_ctx;
 	QDF_STATUS qdf_status;
 	int ret = 0;
-	bool is_idle_stop = !cds_is_driver_unloading() &&
-		!cds_is_driver_recovering();
+	bool is_recovery_stop = cds_is_driver_recovering();
+	bool is_idle_stop = !cds_is_driver_unloading() && !is_recovery_stop;
 	int active_threads;
 
 	ENTER();
@@ -10001,6 +10014,11 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 				ret);
 	}
 
+	/* many adapter resources are not freed by design in SSR case */
+	if (!is_recovery_stop)
+		hdd_check_for_leaks();
+	qdf_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
+
 	/* Once the firmware sequence is completed reset this flag */
 	hdd_ctx->imps_enabled = false;
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
@@ -10011,10 +10029,10 @@ done:
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 	hdd_alert("stop WLAN module: exit driver status=%d",
 		  hdd_ctx->driver_status);
+
 	EXIT();
 
 	return ret;
-
 }
 
 
