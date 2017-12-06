@@ -1437,6 +1437,59 @@ static void wlan_hdd_purge_notifier(void)
 }
 
 /**
+ * wlan_hdd_set_the_pld_uevent() - set the pld event
+ * @uevent: uevent status
+ *
+ * Return: void
+ */
+static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
+{
+	switch (uevent->uevent) {
+	case PLD_RECOVERY:
+		cds_set_recovery_in_progress(true);
+		break;
+	case PLD_FW_DOWN:
+		cds_set_fw_state(CDS_FW_STATE_DOWN);
+		break;
+	case PLD_FW_READY:
+		cds_set_target_ready(true);
+		break;
+	}
+}
+
+/**
+ * wlan_hdd_handle_the_pld_uevent() - handle the pld event
+ * @uevent: uevent status
+ *
+ * Return: void
+ */
+static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
+{
+	enum cds_driver_state driver_state;
+
+	driver_state = cds_get_driver_state();
+
+	if (driver_state == CDS_DRIVER_STATE_UNINITIALIZED)
+		return;
+
+	if (cds_is_driver_loading())
+		return;
+
+	switch (uevent->uevent) {
+	case PLD_RECOVERY:
+		hdd_pld_ipa_uc_shutdown_pipes();
+		break;
+	case PLD_FW_DOWN:
+		qdf_complete_wait_events();
+		cds_set_target_ready(false);
+		break;
+	case PLD_FW_READY:
+	default:
+		break;
+	}
+}
+
+/**
  * wlan_hdd_pld_uevent() - update driver status
  * @dev: device
  * @uevent: uevent status
@@ -1446,24 +1499,16 @@ static void wlan_hdd_purge_notifier(void)
 static void wlan_hdd_pld_uevent(struct device *dev,
 				struct pld_uevent_data *uevent)
 {
-
+	ENTER();
 	hdd_info("pld event %d", uevent->uevent);
-	switch (uevent->uevent) {
-	case PLD_RECOVERY:
-		cds_set_recovery_in_progress(true);
-		hdd_pld_ipa_uc_shutdown_pipes();
-		break;
-	case PLD_FW_DOWN:
-		cds_set_fw_state(CDS_FW_STATE_DOWN);
-		qdf_complete_wait_events();
-		cds_set_target_ready(false);
-		break;
-	case PLD_FW_READY:
-		cds_set_target_ready(true);
-		break;
-	}
+
+	mutex_lock(&hdd_init_deinit_lock);
+	wlan_hdd_set_the_pld_uevent(uevent);
+	wlan_hdd_handle_the_pld_uevent(uevent);
+	mutex_unlock(&hdd_init_deinit_lock);
 
 	wlan_hdd_purge_notifier();
+	EXIT();
 }
 
 #ifdef FEATURE_RUNTIME_PM
