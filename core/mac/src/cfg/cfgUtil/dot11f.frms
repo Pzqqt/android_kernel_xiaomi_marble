@@ -2653,6 +2653,12 @@ IE fragment_ie (EID_FRAGMENT_IE)
     data[0..255];
 }
 
+IE dh_parameter_element (EID_EXTN_ID_ELEMENT) OUI ( 0x20 )
+{
+    group[2];
+    public_key[0..255];
+}
+
 const EID_RRM_BEACON_REPORTING     = 1;
 const EID_RRM_BCN_REPORTING_DETAIL = 2;
 
@@ -3615,6 +3621,7 @@ FRAME AssocRequest                        // 7.2.3.4
     OPTIE  fils_key_confirmation;
     OPTIE  fils_hlp_container;
     OPTIE  fragment_ie;
+    OPTIE  dh_parameter_element;
     OPTIE  WPAOpaque;
     OPTIE  WMMCaps;
     OPTIE  WMMInfoStation;
