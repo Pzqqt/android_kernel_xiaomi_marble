@@ -1035,6 +1035,75 @@ void hdd_update_macaddr(struct hdd_config *config,
 	}
 }
 
+static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
+{
+	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
+	struct tdls_start_params tdls_cfg;
+	struct tdls_user_config *config = &tdls_cfg.config;
+	struct hdd_config *cfg = hdd_ctx->config;
+	QDF_STATUS status;
+
+	config->tdls_tx_states_period = cfg->fTDLSTxStatsPeriod;
+	config->tdls_tx_pkt_threshold = cfg->fTDLSTxPacketThreshold;
+	config->tdls_rx_pkt_threshold = cfg->fTDLSRxFrameThreshold;
+	config->tdls_max_discovery_attempt = cfg->fTDLSMaxDiscoveryAttempt;
+	config->tdls_idle_timeout = cfg->tdls_idle_timeout;
+	config->tdls_idle_pkt_threshold = cfg->fTDLSIdlePacketThreshold;
+	config->tdls_rssi_trigger_threshold = cfg->fTDLSRSSITriggerThreshold;
+	config->tdls_rssi_teardown_threshold = cfg->fTDLSRSSITeardownThreshold;
+	config->tdls_rssi_delta = cfg->fTDLSRSSIDelta;
+	config->tdls_uapsd_mask = cfg->fTDLSUapsdMask;
+	config->tdls_uapsd_inactivity_time = cfg->fTDLSPuapsdInactivityTimer;
+	config->tdls_uapsd_pti_window = cfg->fTDLSPuapsdPTIWindow;
+	config->tdls_uapsd_ptr_timeout = cfg->fTDLSPuapsdPTRTimeout;
+	config->tdls_pre_off_chan_num = cfg->fTDLSPrefOffChanNum;
+	config->tdls_pre_off_chan_bw = cfg->fTDLSPrefOffChanBandwidth;
+	config->tdls_peer_kickout_threshold = cfg->tdls_peer_kickout_threshold;
+	config->delayed_trig_framint = cfg->DelayedTriggerFrmInt;
+	config->tdls_feature_flags = ((cfg->fEnableTDLSOffChannel ?
+				     1 << TDLS_FEATURE_OFF_CHANNEL : 0) |
+		(cfg->fEnableTDLSWmmMode ? 1 << TDLS_FEATURE_WMM : 0) |
+		(cfg->fEnableTDLSBufferSta ? 1 << TDLS_FEATURE_BUFFER_STA : 0) |
+		(cfg->fEnableTDLSSleepSta ? 1 << TDLS_FEATURE_SLEEP_STA : 0) |
+		(cfg->enable_tdls_scan ? 1 << TDLS_FEATURE_SCAN : 0) |
+		(cfg->fEnableTDLSSupport ? 1 << TDLS_FEATURE_ENABLE : 0) |
+		(cfg->fEnableTDLSImplicitTrigger ?
+		 1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
+		(cfg->fTDLSExternalControl ?
+		 1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
+	config->tdls_vdev_nss_2g = CFG_TDLS_NSS(cfg->vdev_type_nss_2g);
+	config->tdls_vdev_nss_5g = CFG_TDLS_NSS(cfg->vdev_type_nss_5g);
+
+	tdls_cfg.tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
+	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
+	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
+	tdls_cfg.tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
+	tdls_cfg.tdls_del_all_peers = eWNI_SME_DEL_ALL_TDLS_PEERS;
+	tdls_cfg.tdls_update_dp_vdev_flags = CDP_UPDATE_TDLS_FLAGS;
+	tdls_cfg.tdls_event_cb = wlan_cfg80211_tdls_event_callback;
+	tdls_cfg.tdls_evt_cb_data = psoc;
+	tdls_cfg.tdls_tl_peer_data = hdd_ctx;
+	tdls_cfg.tdls_reg_tl_peer = hdd_tdls_register_tdls_peer;
+	tdls_cfg.tdls_dereg_tl_peer = hdd_tdls_deregister_tdl_peer;
+	tdls_cfg.tdls_wmm_cb = hdd_wmm_is_acm_allowed;
+	tdls_cfg.tdls_wmm_cb_data = psoc;
+	tdls_cfg.tdls_rx_cb = wlan_cfg80211_tdls_rx_callback;
+	tdls_cfg.tdls_rx_cb_data = psoc;
+	tdls_cfg.tdls_dp_vdev_update = hdd_update_dp_vdev_flags;
+
+	status = ucfg_tdls_update_config(psoc, &tdls_cfg);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed pmo psoc configuration");
+		return -EINVAL;
+	}
+
+	hdd_ctx->tdls_umac_comp_active = true;
+	/* enable napier specific tdls data path */
+	hdd_ctx->tdls_nap_active = true;
+
+	return 0;
+}
+
 static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
@@ -1078,6 +1147,7 @@ static void hdd_update_tgt_services(struct hdd_context *hdd_ctx,
 #endif
 	config->sap_get_peer_info &= cfg->get_peer_info_enabled;
 	config->MAWCEnabled &= cfg->is_fw_mawc_capable;
+	hdd_update_tdls_config(hdd_ctx);
 	sme_update_tgt_services(hdd_ctx->hHal, cfg);
 
 }
@@ -12540,75 +12610,6 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 		hdd_err("failed pmo psoc configuration");
 		return -EINVAL;
 	}
-
-	return 0;
-}
-
-static int hdd_update_tdls_config(struct hdd_context *hdd_ctx)
-{
-	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
-	struct tdls_start_params tdls_cfg;
-	struct tdls_user_config *config = &tdls_cfg.config;
-	struct hdd_config *cfg = hdd_ctx->config;
-	QDF_STATUS status;
-
-	config->tdls_tx_states_period = cfg->fTDLSTxStatsPeriod;
-	config->tdls_tx_pkt_threshold = cfg->fTDLSTxPacketThreshold;
-	config->tdls_rx_pkt_threshold = cfg->fTDLSRxFrameThreshold;
-	config->tdls_max_discovery_attempt = cfg->fTDLSMaxDiscoveryAttempt;
-	config->tdls_idle_timeout = cfg->tdls_idle_timeout;
-	config->tdls_idle_pkt_threshold = cfg->fTDLSIdlePacketThreshold;
-	config->tdls_rssi_trigger_threshold = cfg->fTDLSRSSITriggerThreshold;
-	config->tdls_rssi_teardown_threshold = cfg->fTDLSRSSITeardownThreshold;
-	config->tdls_rssi_delta = cfg->fTDLSRSSIDelta;
-	config->tdls_uapsd_mask = cfg->fTDLSUapsdMask;
-	config->tdls_uapsd_inactivity_time = cfg->fTDLSPuapsdInactivityTimer;
-	config->tdls_uapsd_pti_window = cfg->fTDLSPuapsdPTIWindow;
-	config->tdls_uapsd_ptr_timeout = cfg->fTDLSPuapsdPTRTimeout;
-	config->tdls_pre_off_chan_num = cfg->fTDLSPrefOffChanNum;
-	config->tdls_pre_off_chan_bw = cfg->fTDLSPrefOffChanBandwidth;
-	config->tdls_peer_kickout_threshold = cfg->tdls_peer_kickout_threshold;
-	config->delayed_trig_framint = cfg->DelayedTriggerFrmInt;
-	config->tdls_feature_flags = ((cfg->fEnableTDLSOffChannel ?
-				     1 << TDLS_FEATURE_OFF_CHANNEL : 0) |
-		(cfg->fEnableTDLSWmmMode ? 1 << TDLS_FEATURE_WMM : 0) |
-		(cfg->fEnableTDLSBufferSta ? 1 << TDLS_FEATURE_BUFFER_STA : 0) |
-		(cfg->fEnableTDLSSleepSta ? 1 << TDLS_FEATURE_SLEEP_STA : 0) |
-		(cfg->enable_tdls_scan ? 1 << TDLS_FEATURE_SCAN : 0) |
-		(cfg->fEnableTDLSSupport ? 1 << TDLS_FEATURE_ENABLE : 0) |
-		(cfg->fEnableTDLSImplicitTrigger ?
-		 1 << TDLS_FEAUTRE_IMPLICIT_TRIGGER : 0) |
-		(cfg->fTDLSExternalControl ?
-		 1 << TDLS_FEATURE_EXTERNAL_CONTROL : 0));
-	config->tdls_vdev_nss_2g = CFG_TDLS_NSS(cfg->vdev_type_nss_2g);
-	config->tdls_vdev_nss_5g = CFG_TDLS_NSS(cfg->vdev_type_nss_5g);
-
-	tdls_cfg.tdls_send_mgmt_req = eWNI_SME_TDLS_SEND_MGMT_REQ;
-	tdls_cfg.tdls_add_sta_req = eWNI_SME_TDLS_ADD_STA_REQ;
-	tdls_cfg.tdls_del_sta_req = eWNI_SME_TDLS_DEL_STA_REQ;
-	tdls_cfg.tdls_update_peer_state = WMA_UPDATE_TDLS_PEER_STATE;
-	tdls_cfg.tdls_del_all_peers = eWNI_SME_DEL_ALL_TDLS_PEERS;
-	tdls_cfg.tdls_update_dp_vdev_flags = CDP_UPDATE_TDLS_FLAGS;
-	tdls_cfg.tdls_event_cb = wlan_cfg80211_tdls_event_callback;
-	tdls_cfg.tdls_evt_cb_data = psoc;
-	tdls_cfg.tdls_tl_peer_data = hdd_ctx;
-	tdls_cfg.tdls_reg_tl_peer = hdd_tdls_register_tdls_peer;
-	tdls_cfg.tdls_dereg_tl_peer = hdd_tdls_deregister_tdl_peer;
-	tdls_cfg.tdls_wmm_cb = hdd_wmm_is_acm_allowed;
-	tdls_cfg.tdls_wmm_cb_data = psoc;
-	tdls_cfg.tdls_rx_cb = wlan_cfg80211_tdls_rx_callback;
-	tdls_cfg.tdls_rx_cb_data = psoc;
-	tdls_cfg.tdls_dp_vdev_update = hdd_update_dp_vdev_flags;
-
-	status = ucfg_tdls_update_config(psoc, &tdls_cfg);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("failed pmo psoc configuration");
-		return -EINVAL;
-	}
-
-	hdd_ctx->tdls_umac_comp_active = true;
-	/* enable napier specific tdls data path */
-	hdd_ctx->tdls_nap_active = true;
 
 	return 0;
 }
