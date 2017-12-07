@@ -4297,8 +4297,9 @@ QDF_STATUS csr_roam_prepare_bss_config(tpAniSirGlobal pMac,
 			pBssConfig->uCfgDot11Mode = eCSR_CFG_DOT11_MODE_11A;
 	}
 
-	sme_debug("phyMode=%d, uCfgDot11Mode=%d",
-			pProfile->phyMode, pBssConfig->uCfgDot11Mode);
+	sme_debug("phyMode=%d, uCfgDot11Mode=%d negotiatedAuthType %d",
+		   pProfile->phyMode, pBssConfig->uCfgDot11Mode,
+		   pProfile->negotiatedAuthType);
 
 	/* Qos */
 	if ((pBssConfig->uCfgDot11Mode != eCSR_CFG_DOT11_MODE_11N) &&
