@@ -82,6 +82,7 @@
 #include "scheduler_api.h"
 #include "cds_utils.h"
 #include "wlan_hdd_packet_filter_api.h"
+#include "wlan_cfg80211_scan.h"
 
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -1272,7 +1273,6 @@ QDF_STATUS hdd_wlan_shutdown(void)
 
 	hdd_debug("Invoking packetdump deregistration API");
 	wlan_deregister_txrx_packetdump();
-	wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
 	hdd_reset_all_adapters(hdd_ctx);
 
 	/* Flush cached rx frame queue */
