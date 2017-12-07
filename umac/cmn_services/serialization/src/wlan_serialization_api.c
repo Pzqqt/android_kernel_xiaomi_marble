@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -313,4 +313,70 @@ wlan_serialization_pdev_scan_status(struct wlan_objmgr_pdev *pdev)
 
 	return wlan_serialization_is_cmd_in_active_pending(
 			cmd_in_active, cmd_in_pending);
+}
+
+struct wlan_serialization_command*
+wlan_serialization_get_scan_cmd_using_scan_id(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id, uint16_t scan_id,
+		uint8_t is_scan_cmd_from_active_queue)
+{
+	uint32_t qlen;
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_serialization_pdev_priv_obj *ser_pdev_obj;
+	struct wlan_serialization_command_list *cmd_list = NULL;
+	struct wlan_serialization_command *cmd = NULL;
+	qdf_list_node_t *nnode = NULL;
+	qdf_list_t *queue;
+
+	if (!psoc) {
+		serialization_err("invalid psoc");
+		return cmd;
+	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc, vdev_id,
+						WLAN_SERIALIZATION_ID);
+	if (!vdev) {
+		serialization_err("invalid vdev");
+		return cmd;
+	}
+
+	pdev = wlan_vdev_get_pdev(vdev);
+	if (!pdev) {
+		serialization_err("invalid pdev");
+		goto release_vdev_ref;
+	}
+
+	ser_pdev_obj = wlan_serialization_get_pdev_priv_obj(pdev);
+	if (!ser_pdev_obj) {
+		serialization_err("invalid ser_pdev_obj");
+		goto release_vdev_ref;
+	}
+	if (is_scan_cmd_from_active_queue)
+		queue = &ser_pdev_obj->active_scan_list;
+	else
+		queue = &ser_pdev_obj->pending_scan_list;
+	qlen = qdf_list_size(queue);
+	if (!qlen) {
+		serialization_err("Empty Queue");
+		goto release_vdev_ref;
+	}
+	while (qlen--) {
+		if (QDF_STATUS_SUCCESS != wlan_serialization_get_cmd_from_queue(
+							queue, &nnode)) {
+			serialization_err("unsuccessful attempt");
+			break;
+		}
+		cmd_list = qdf_container_of(nnode,
+				struct wlan_serialization_command_list, node);
+		if ((cmd_list->cmd.cmd_id == scan_id) &&
+				(cmd_list->cmd.vdev == vdev)) {
+			serialization_debug("cmd_id[%d] matched", scan_id);
+			cmd = &cmd_list->cmd;
+			break;
+		}
+	}
+release_vdev_ref:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_SERIALIZATION_ID);
+	return cmd;
 }

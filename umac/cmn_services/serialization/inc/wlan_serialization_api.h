@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -486,4 +486,25 @@ bool wlan_serialization_is_cmd_present_in_pending_queue(
 bool wlan_serialization_is_cmd_present_in_active_queue(
 		struct wlan_objmgr_psoc *psoc,
 		struct wlan_serialization_command *cmd);
+
+/**
+ * wlan_serialization_get_scan_cmd_using_scan_id() - Return command which
+ *					matches vdev_id and scan_id
+ * @psoc: pointer to soc
+ * @vdev_id: vdev id to pull vdev object
+ * @scan_id: scan id to match
+ * @is_scan_cmd_from_active_queue: to indicate active or pending queue
+ *
+ * This API fetches vdev/pdev object based on vdev_id, loops through scan
+ * command queue and find the command which matches scan id as well as vdev
+ * object.
+ *
+ * Return: pointer to serialization command
+ */
+struct wlan_serialization_command*
+wlan_serialization_get_scan_cmd_using_scan_id(
+		struct wlan_objmgr_psoc *psoc,
+		uint8_t vdev_id, uint16_t scan_id,
+		uint8_t is_scan_cmd_from_active_queue);
+
 #endif
