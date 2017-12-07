@@ -522,6 +522,96 @@ qdf_nbuf_set_send_complete_flag(qdf_nbuf_t buf, bool flag)
 	__qdf_nbuf_set_send_complete_flag(buf, flag);
 }
 
+#ifdef MEMORY_DEBUG
+/**
+ * qdf_nbuf_map_check_for_leaks() - check for nbut map leaks
+ *
+ * Check for net buffers that have been mapped, but never unmapped.
+ *
+ * Returns: None
+ */
+void qdf_nbuf_map_check_for_leaks(void);
+
+QDF_STATUS qdf_nbuf_map_debug(qdf_device_t osdev,
+			      qdf_nbuf_t buf,
+			      qdf_dma_dir_t dir,
+			      const char *file,
+			      uint32_t line);
+
+#define qdf_nbuf_map(osdev, buf, dir) \
+	qdf_nbuf_map_debug(osdev, buf, dir, __FILE__, __LINE__)
+
+void qdf_nbuf_unmap_debug(qdf_device_t osdev,
+			  qdf_nbuf_t buf,
+			  qdf_dma_dir_t dir,
+			  const char *file,
+			  uint32_t line);
+
+#define qdf_nbuf_unmap(osdev, buf, dir) \
+	qdf_nbuf_unmap_debug(osdev, buf, dir, __FILE__, __LINE__)
+
+QDF_STATUS qdf_nbuf_map_single_debug(qdf_device_t osdev,
+				     qdf_nbuf_t buf,
+				     qdf_dma_dir_t dir,
+				     const char *file,
+				     uint32_t line);
+
+#define qdf_nbuf_map_single(osdev, buf, dir) \
+	qdf_nbuf_map_single_debug(osdev, buf, dir, __FILE__, __LINE__)
+
+void qdf_nbuf_unmap_single_debug(qdf_device_t osdev,
+				 qdf_nbuf_t buf,
+				 qdf_dma_dir_t dir,
+				 const char *file,
+				 uint32_t line);
+
+#define qdf_nbuf_unmap_single(osdev, buf, dir) \
+	qdf_nbuf_unmap_single_debug(osdev, buf, dir, __FILE__, __LINE__)
+
+QDF_STATUS qdf_nbuf_map_nbytes_debug(qdf_device_t osdev,
+				     qdf_nbuf_t buf,
+				     qdf_dma_dir_t dir,
+				     int nbytes,
+				     const char *file,
+				     uint32_t line);
+
+#define qdf_nbuf_map_nbytes(osdev, buf, dir, nbytes) \
+	qdf_nbuf_map_nbytes_debug(osdev, buf, dir, nbytes, __FILE__, __LINE__)
+
+void qdf_nbuf_unmap_nbytes_debug(qdf_device_t osdev,
+				 qdf_nbuf_t buf,
+				 qdf_dma_dir_t dir,
+				 int nbytes,
+				 const char *file,
+				 uint32_t line);
+
+#define qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes) \
+	qdf_nbuf_unmap_nbytes_debug(osdev, buf, dir, nbytes, __FILE__, __LINE__)
+
+QDF_STATUS qdf_nbuf_map_nbytes_single_debug(qdf_device_t osdev,
+					    qdf_nbuf_t buf,
+					    qdf_dma_dir_t dir,
+					    int nbytes,
+					    const char *file,
+					    uint32_t line);
+
+#define qdf_nbuf_map_nbytes_single(osdev, buf, dir, nbytes) \
+	qdf_nbuf_map_nbytes_single_debug(osdev, buf, dir, nbytes, \
+					 __FILE__, __LINE__)
+
+void qdf_nbuf_unmap_nbytes_single_debug(qdf_device_t osdev,
+					qdf_nbuf_t buf,
+					qdf_dma_dir_t dir,
+					int nbytes,
+					const char *file,
+					uint32_t line);
+
+#define qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes) \
+	qdf_nbuf_unmap_nbytes_single_debug(osdev, buf, dir, nbytes, \
+					   __FILE__, __LINE__)
+
+#else /* MEMORY_DEBUG */
+
 static inline QDF_STATUS
 qdf_nbuf_map(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
@@ -532,6 +622,18 @@ static inline void
 qdf_nbuf_unmap(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	__qdf_nbuf_unmap(osdev, buf, dir);
+}
+
+static inline QDF_STATUS
+qdf_nbuf_map_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
+{
+	return __qdf_nbuf_map_single(osdev, buf, dir);
+}
+
+static inline void
+qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
+{
+	__qdf_nbuf_unmap_single(osdev, buf, dir);
 }
 
 static inline QDF_STATUS
@@ -548,18 +650,6 @@ qdf_nbuf_unmap_nbytes(qdf_device_t osdev,
 	__qdf_nbuf_unmap_nbytes(osdev, buf, dir, nbytes);
 }
 
-static inline void
-qdf_nbuf_sync_for_cpu(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
-{
-	__qdf_nbuf_sync_for_cpu(osdev, buf, dir);
-}
-
-static inline QDF_STATUS
-qdf_nbuf_map_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
-{
-	return __qdf_nbuf_map_single(osdev, buf, dir);
-}
-
 static inline QDF_STATUS
 qdf_nbuf_map_nbytes_single(
 	qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir, int nbytes)
@@ -568,16 +658,17 @@ qdf_nbuf_map_nbytes_single(
 }
 
 static inline void
-qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
-{
-	__qdf_nbuf_unmap_single(osdev, buf, dir);
-}
-
-static inline void
 qdf_nbuf_unmap_nbytes_single(
 	qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir, int nbytes)
 {
 	return __qdf_nbuf_unmap_nbytes_single(osdev, buf, dir, nbytes);
+}
+#endif /* MEMORY_DEBUG */
+
+static inline void
+qdf_nbuf_sync_for_cpu(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
+{
+	__qdf_nbuf_sync_for_cpu(osdev, buf, dir);
 }
 
 static inline int qdf_nbuf_get_num_frags(qdf_nbuf_t buf)
