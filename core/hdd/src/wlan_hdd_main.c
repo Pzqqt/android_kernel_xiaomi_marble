@@ -1831,6 +1831,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	/* Configure NAN datapath features */
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
+	hdd_ctx->lte_coex_ant_share = cfg->services.lte_coex_ant_share;
 }
 
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
@@ -3882,6 +3883,107 @@ static void hdd_set_fw_log_params(struct hdd_context *hdd_ctx,
 #endif
 
 /**
+ * hdd_configure_chain_mask() - programs chain mask to firmware
+ * @adapter: HDD adapter
+ *
+ * Return: 0 on success or errno on failure
+ */
+static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
+{
+	int ret_val;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	hdd_debug("enable2x2: %d, lte_coex: %d, ChainMask1x1: tx: %d rx: %d",
+		  hdd_ctx->config->enable2x2, hdd_ctx->lte_coex_ant_share,
+		  hdd_ctx->config->txchainmask1x1,
+		  hdd_ctx->config->rxchainmask1x1);
+	hdd_debug("disable_DBS: %d, tx_chain_mask_2g: %d, rx_chain_mask_2g: %d",
+		  hdd_ctx->config->dual_mac_feature_disable,
+		  hdd_ctx->config->tx_chain_mask_2g,
+		  hdd_ctx->config->rx_chain_mask_2g);
+	hdd_debug("tx_chain_mask_5g: %d, rx_chain_mask_5g: %d",
+		  hdd_ctx->config->tx_chain_mask_5g,
+		  hdd_ctx->config->rx_chain_mask_5g);
+
+	if (hdd_ctx->config->enable2x2) {
+		hdd_info("2x2 enabled. skip chain mask programming");
+		return 0;
+	}
+
+	if (hdd_ctx->config->txchainmask1x1) {
+		ret_val = sme_cli_set_command(adapter->session_id,
+					      WMI_PDEV_PARAM_TX_CHAIN_MASK,
+					      hdd_ctx->config->txchainmask1x1,
+					      PDEV_CMD);
+		if (ret_val)
+			goto error;
+	}
+
+	if (hdd_ctx->config->rxchainmask1x1) {
+		ret_val = sme_cli_set_command(adapter->session_id,
+					      WMI_PDEV_PARAM_RX_CHAIN_MASK,
+					      hdd_ctx->config->rxchainmask1x1,
+					      PDEV_CMD);
+		if (ret_val)
+			goto error;
+	}
+
+	if (hdd_ctx->lte_coex_ant_share) {
+		hdd_info("lte ant sharing enabled. skip per band chain mask");
+		return 0;
+	}
+
+	if (hdd_ctx->config->txchainmask1x1 ||
+	    hdd_ctx->config->rxchainmask1x1) {
+		hdd_info("band agnostic tx/rx chain mask set. skip per band chain mask");
+		return 0;
+	}
+
+	if (!hdd_ctx->config->dual_mac_feature_disable) {
+		hdd_info("DBS enabled. skip per band chain mask");
+		return 0;
+	}
+
+	if (hdd_ctx->config->tx_chain_mask_2g) {
+		ret_val = sme_cli_set_command(adapter->session_id,
+				WMI_PDEV_PARAM_TX_CHAIN_MASK_2G,
+				hdd_ctx->config->tx_chain_mask_2g, PDEV_CMD);
+		if (0 != ret_val)
+			goto error;
+	}
+
+	if (hdd_ctx->config->rx_chain_mask_2g) {
+		ret_val = sme_cli_set_command(adapter->session_id,
+				WMI_PDEV_PARAM_RX_CHAIN_MASK_2G,
+				hdd_ctx->config->rx_chain_mask_2g, PDEV_CMD);
+		if (0 != ret_val)
+			goto error;
+	}
+
+	if (hdd_ctx->config->tx_chain_mask_5g) {
+		ret_val = sme_cli_set_command(adapter->session_id,
+				WMI_PDEV_PARAM_TX_CHAIN_MASK_5G,
+				hdd_ctx->config->tx_chain_mask_5g, PDEV_CMD);
+		if (0 != ret_val)
+			goto error;
+	}
+
+	if (hdd_ctx->config->rx_chain_mask_5g) {
+		ret_val = sme_cli_set_command(adapter->session_id,
+				WMI_PDEV_PARAM_RX_CHAIN_MASK_5G,
+				hdd_ctx->config->rx_chain_mask_5g, PDEV_CMD);
+		if (0 != ret_val)
+			goto error;
+	}
+
+	return 0;
+
+error:
+	hdd_err("WMI PDEV set param failed %d", ret_val);
+	return -EINVAL;
+}
+
+/**
  * hdd_set_fw_params() - Set parameters to firmware
  * @adapter: HDD adapter
  *
@@ -3961,27 +4063,11 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 			goto error;
 		}
 
-		ret = sme_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_TX_CHAIN_MASK,
-					  hdd_ctx->config->txchainmask1x1,
-					  PDEV_CMD);
-		if (ret) {
-			hdd_err("WMI_PDEV_PARAM_TX_CHAIN_MASK set failed %d",
-				ret);
-			goto error;
-		}
-
-		ret = sme_cli_set_command(adapter->session_id,
-					  WMI_PDEV_PARAM_RX_CHAIN_MASK,
-					  hdd_ctx->config->rxchainmask1x1,
-					  PDEV_CMD);
-		if (ret) {
-			hdd_err("WMI_PDEV_PARAM_RX_CHAIN_MASK set failed %d",
-				ret);
-			goto error;
-		}
 #undef HDD_DTIM_1CHAIN_RX_ID
 #undef HDD_SMPS_PARAM_VALUE_S
+
+		if (hdd_configure_chain_mask(adapter))
+			goto error;
 	}
 
 	ret = sme_cli_set_command(adapter->session_id,

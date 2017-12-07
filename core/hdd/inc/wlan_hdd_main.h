@@ -1707,6 +1707,7 @@ struct hdd_context {
 	qdf_atomic_t disable_lro_in_low_tput;
 	bool en_tcp_delack_no_lro;
 	qdf_wake_lock_t monitor_mode_wakelock;
+	bool lte_coex_ant_share;
 };
 
 /**

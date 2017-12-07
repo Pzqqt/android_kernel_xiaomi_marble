@@ -5311,7 +5311,7 @@ enum hdd_link_speed_rpt_type {
  */
 
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK         "gSetTxChainmask1x1"
-#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MIN     (1)
+#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MIN     (0)
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MAX     (2)
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_DEFAULT (1)
 
@@ -5339,7 +5339,7 @@ enum hdd_link_speed_rpt_type {
  */
 
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK         "gSetRxChainmask1x1"
-#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MIN     (1)
+#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MIN     (0)
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MAX     (2)
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_DEFAULT (1)
 
@@ -13782,6 +13782,129 @@ enum hdd_external_acs_freq_band {
 #define CFG_ENABLE_ESP_FEATURE_DEFAULT (0)
 
 /*
+ * <ini>
+ * tx_chain_mask_2g - tx chain mask for 2g
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini will set tx chain mask for 2g. To use the ini, make sure:
+ * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
+ * gDualMacFeatureDisable = 1
+ * gEnable2x2 = 0
+ *
+ * tx_chain_mask_2g=0 : don't care
+ * tx_chain_mask_2g=1 : for 2g tx use chain 0
+ * tx_chain_mask_2g=2 : for 2g tx use chain 1
+ * tx_chain_mask_2g=3 : for 2g tx can use either chain
+ *
+ * Related: None
+ *
+ * Supported Feature: All profiles
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TX_CHAIN_MASK_2G_NAME    "tx_chain_mask_2g"
+#define CFG_TX_CHAIN_MASK_2G_MIN     (0)
+#define CFG_TX_CHAIN_MASK_2G_MAX     (3)
+#define CFG_TX_CHAIN_MASK_2G_DEFAULT (0)
+
+
+/*
+ * <ini>
+ * tx_chain_mask_5g - tx chain mask for 5g
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini will set tx chain mask for 5g. To use the ini, make sure:
+ * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
+ * gDualMacFeatureDisable = 1
+ * gEnable2x2 = 0
+ *
+ * tx_chain_mask_5g=0 : don't care
+ * tx_chain_mask_5g=1 : for 5g tx use chain 0
+ * tx_chain_mask_5g=2 : for 5g tx use chain 1
+ * tx_chain_mask_5g=3 : for 5g tx can use either chain
+ *
+ * Related: None
+ *
+ * Supported Feature: All profiles
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_TX_CHAIN_MASK_5G_NAME    "tx_chain_mask_5g"
+#define CFG_TX_CHAIN_MASK_5G_MIN     (0)
+#define CFG_TX_CHAIN_MASK_5G_MAX     (3)
+#define CFG_TX_CHAIN_MASK_5G_DEFAULT (0)
+
+
+/*
+ * <ini>
+ * rx_chain_mask_2g - rx chain mask for 2g
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini will set rx chain mask for 2g. To use the ini, make sure:
+ * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
+ * gDualMacFeatureDisable = 1
+ * gEnable2x2 = 0
+ *
+ * rx_chain_mask_2g=0 : don't care
+ * rx_chain_mask_2g=1 : for 2g rx use chain 0
+ * rx_chain_mask_2g=2 : for 2g rx use chain 1
+ * rx_chain_mask_2g=3 : for 2g rx can use either chain
+ *
+ * Related: None
+ *
+ * Supported Feature: All profiles
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_RX_CHAIN_MASK_2G_NAME    "rx_chain_mask_2g"
+#define CFG_RX_CHAIN_MASK_2G_MIN     (0)
+#define CFG_RX_CHAIN_MASK_2G_MAX     (3)
+#define CFG_RX_CHAIN_MASK_2G_DEFAULT (0)
+
+
+/*
+ * <ini>
+ * rx_chain_mask_5g - rx chain mask for 5g
+ * @Min: 0
+ * @Max: 3
+ * @Default: 0
+ *
+ * This ini will set rx chain mask for 5g. To use the ini, make sure:
+ * gSetTxChainmask1x1/gSetRxChainmask1x1 = 0,
+ * gDualMacFeatureDisable = 1
+ * gEnable2x2 = 0
+ *
+ * rx_chain_mask_5g=0 : don't care
+ * rx_chain_mask_5g=1 : for 5g rx use chain 0
+ * rx_chain_mask_5g=2 : for 5g rx use chain 1
+ * rx_chain_mask_5g=3 : for 5g rx can use either chain
+ *
+ * Related: None
+ *
+ * Supported Feature: All profiles
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_RX_CHAIN_MASK_5G_NAME    "rx_chain_mask_5g"
+#define CFG_RX_CHAIN_MASK_5G_MIN     (0)
+#define CFG_RX_CHAIN_MASK_5G_MAX     (3)
+#define CFG_RX_CHAIN_MASK_5G_DEFAULT (0)
+
+/*
  * Type declarations
  */
 
@@ -14667,6 +14790,10 @@ struct hdd_config {
 	bool probe_req_deferral_enabled;
 	bool fils_discovery_sap_enabled;
 	bool esp_for_roam_enabled;
+	uint8_t tx_chain_mask_2g;
+	uint8_t rx_chain_mask_2g;
+	uint8_t tx_chain_mask_5g;
+	uint8_t rx_chain_mask_5g;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
