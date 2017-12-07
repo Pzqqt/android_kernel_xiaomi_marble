@@ -66,7 +66,7 @@ struct qdf_mc_timer_s;
 typedef struct qdf_mc_timer_node_s {
 	qdf_list_node_t node;
 	char *file_name;
-	unsigned int line_num;
+	uint32_t line_num;
 	struct qdf_mc_timer_s *qdf_timer;
 } qdf_mc_timer_node_t;
 #endif
@@ -90,6 +90,7 @@ void qdf_try_allowing_sleep(QDF_TIMER_TYPE type);
 #ifdef TIMER_MANAGER
 void qdf_mc_timer_manager_init(void);
 void qdf_mc_timer_manager_exit(void);
+void qdf_mc_timer_check_for_leaks(void);
 #else
 /**
  * qdf_mc_timer_manager_init() - initialize QDF debug timer manager
@@ -110,6 +111,15 @@ static inline void qdf_mc_timer_manager_init(void)
 static inline void qdf_mc_timer_manager_exit(void)
 {
 }
+
+/**
+ * qdf_mc_timer_check_for_leaks() - Assert there are no active mc timers
+ *
+ * If there are active timers, this API prints them and panics.
+ *
+ * Return: None
+ */
+static inline void qdf_mc_timer_check_for_leaks(void) { }
 #endif
 /**
  * qdf_mc_timer_get_current_state() - get the current state of the timer
