@@ -514,6 +514,10 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		 */
 		txctl_log.priv.frm_hdr = frm_hdr;
 		qdf_assert(txctl_log.priv.txdesc_ctl);
+		qdf_assert(pl_hdr.size < sizeof(txctl_log.priv.txdesc_ctl));
+		pl_hdr.size = (pl_hdr.size > sizeof(txctl_log.priv.txdesc_ctl))
+			       ? sizeof(txctl_log.priv.txdesc_ctl) :
+			       pl_hdr.size;
 		qdf_mem_copy((void *)&txctl_log.priv.txdesc_ctl,
 			     ((void *)data + sizeof(struct ath_pktlog_hdr)),
 			     pl_hdr.size);
