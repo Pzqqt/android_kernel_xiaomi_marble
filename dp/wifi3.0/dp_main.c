@@ -4008,6 +4008,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na);
 			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
 			DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
+			DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
 
 			pdev->stats.tx_i.dropped.dropped_pkt.num =
 				pdev->stats.tx_i.dropped.dma_error +
@@ -4125,6 +4126,8 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("CCE Classified:");
 	DP_TRACE(FATAL, "	CCE Classified Packets: %u",
 			pdev->stats.tx_i.cce_classified);
+	DP_TRACE(FATAL, "	RAW CCE Classified Packets: %u",
+			pdev->stats.tx_i.cce_classified_raw);
 }
 
 /**

@@ -65,6 +65,11 @@ typedef __in6_addr_t in6_addr_t;
 
 #define QDF_ETH_TYPE_IPV4              0x0800  /* IPV4 */
 #define QDF_ETH_TYPE_IPV6              0x86dd  /* IPV6 */
+#define QDF_IEEE80211_4ADDR_HDR_LEN     30
+#define QDF_IEEE80211_3ADDR_HDR_LEN     24
+#define QDF_IEEE80211_FC0_SUBTYPE_QOS   0x80
+#define QDF_IEEE80211_FC1_TODS          0x01
+#define QDF_IEEE80211_FC1_FROMDS        0x02
 
 typedef struct qdf_net_ethaddr {
 	uint8_t addr[QDF_NET_ETH_LEN];

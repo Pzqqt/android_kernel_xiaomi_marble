@@ -998,6 +998,9 @@ struct cdp_tx_ingress_stats {
 
 	/*Number of packets classified by CCE*/
 	uint32_t cce_classified;
+
+	/*Number of raw packets classified by CCE*/
+	uint32_t cce_classified_raw;
 };
 
 struct cdp_vdev_stats {

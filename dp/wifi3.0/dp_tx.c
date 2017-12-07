@@ -878,27 +878,67 @@ static QDF_STATUS dp_tx_hw_enqueue(struct dp_soc *soc, struct dp_vdev *vdev,
  * Return: bool( true if classified,
  *               else false)
  */
-static bool dp_cce_classify(qdf_nbuf_t nbuf)
+static bool dp_cce_classify(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
 	struct ether_header *eh = NULL;
 	uint16_t   ether_type;
 	qdf_llc_t *llcHdr;
 	qdf_nbuf_t nbuf_clone = NULL;
+	qdf_dot3_qosframe_t *qos_wh = NULL;
 
-	eh = (struct ether_header *) qdf_nbuf_data(nbuf);
-	ether_type = eh->ether_type;
+	/* for mesh packets don't do any classification */
+	if (qdf_unlikely(vdev->mesh_vdev))
+		return false;
 
-	llcHdr = (qdf_llc_t *)(nbuf->data + sizeof(struct ether_header));
+	if (qdf_likely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
+		eh = (struct ether_header *) qdf_nbuf_data(nbuf);
+		ether_type = eh->ether_type;
+		llcHdr = (qdf_llc_t *)(nbuf->data +
+					sizeof(struct ether_header));
+	} else {
+		qos_wh = (qdf_dot3_qosframe_t *) nbuf->data;
+
+		if (qdf_unlikely(qos_wh->i_fc[0] & QDF_IEEE80211_FC0_SUBTYPE_QOS)) {
+			if (qdf_unlikely(
+				qos_wh->i_fc[1] & QDF_IEEE80211_FC1_TODS &&
+				qos_wh->i_fc[1] & QDF_IEEE80211_FC1_FROMDS)) {
+
+				ether_type = *(uint16_t *)(nbuf->data
+						+ QDF_IEEE80211_4ADDR_HDR_LEN
+						+ sizeof(qdf_llc_t)
+						- sizeof(ether_type));
+				llcHdr = (qdf_llc_t *)(nbuf->data +
+						QDF_IEEE80211_4ADDR_HDR_LEN);
+			} else {
+				ether_type = *(uint16_t *)(nbuf->data
+						+ QDF_IEEE80211_3ADDR_HDR_LEN
+						+ sizeof(qdf_llc_t)
+						- sizeof(ether_type));
+				llcHdr = (qdf_llc_t *)(nbuf->data +
+					QDF_IEEE80211_3ADDR_HDR_LEN);
+			}
+
+			if (qdf_unlikely(DP_FRAME_IS_SNAP(llcHdr)
+				&& (ether_type ==
+				qdf_htons(QDF_NBUF_TRAC_EAPOL_ETH_TYPE)))) {
+
+				DP_STATS_INC(vdev, tx_i.cce_classified_raw, 1);
+				return true;
+			}
+		}
+
+		return false;
+	}
 
 	if (qdf_unlikely(DP_FRAME_IS_SNAP(llcHdr))) {
-		ether_type = (uint16_t)*(nbuf->data + 2*ETHER_ADDR_LEN +
+		ether_type = *(uint16_t *)(nbuf->data + 2*ETHER_ADDR_LEN +
 				sizeof(*llcHdr));
 		nbuf_clone = qdf_nbuf_clone(nbuf);
 		qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr));
 
 		if (ether_type == htons(ETHERTYPE_8021Q)) {
-			qdf_nbuf_pull_head(nbuf_clone, sizeof(*llcHdr)
-						+sizeof(qdf_net_vlanhdr_t));
+			qdf_nbuf_pull_head(nbuf_clone,
+						sizeof(qdf_net_vlanhdr_t));
 		}
 	} else {
 		if (ether_type == htons(ETHERTYPE_8021Q)) {
@@ -910,6 +950,7 @@ static bool dp_cce_classify(qdf_nbuf_t nbuf)
 
 	if (qdf_unlikely(nbuf_clone))
 		nbuf = nbuf_clone;
+
 
 	if (qdf_unlikely(qdf_nbuf_is_ipv4_eapol_pkt(nbuf)
 		|| qdf_nbuf_is_ipv4_arp_pkt(nbuf)
@@ -1130,7 +1171,7 @@ static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	if (qdf_unlikely(soc->cce_disable)) {
-		if (dp_cce_classify(nbuf) == true) {
+		if (dp_cce_classify(vdev, nbuf) == true) {
 			DP_STATS_INC(vdev, tx_i.cce_classified, 1);
 			tid = DP_VO_TID;
 			tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
@@ -1222,7 +1263,7 @@ qdf_nbuf_t dp_tx_send_msdu_multiple(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	if (qdf_unlikely(soc->cce_disable)) {
-		is_cce_classified = dp_cce_classify(nbuf);
+		is_cce_classified = dp_cce_classify(vdev, nbuf);
 		if (is_cce_classified) {
 			DP_STATS_INC(vdev, tx_i.cce_classified, 1);
 			msdu_info->tid = DP_VO_TID;
