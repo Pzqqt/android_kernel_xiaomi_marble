@@ -195,6 +195,8 @@ static void htt_ipa_op_response(struct htt_pdev_t *pdev, uint32_t *msg_word)
 }
 #endif
 
+#define MAX_TARGET_TX_CREDIT    204800
+
 /* Target to host Msg/event  handler  for low priority messages*/
 static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 				   bool free_msg_buf)
@@ -450,12 +452,23 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	{
 		uint32_t htt_credit_delta_abs;
 		int32_t htt_credit_delta;
-		int sign;
+		int sign, old_credit;
 
 		htt_credit_delta_abs =
 			HTT_TX_CREDIT_DELTA_ABS_GET(*msg_word);
 		sign = HTT_TX_CREDIT_SIGN_BIT_GET(*msg_word) ? -1 : 1;
 		htt_credit_delta = sign * htt_credit_delta_abs;
+
+		old_credit = qdf_atomic_read(&pdev->htt_tx_credit.target_delta);
+		if (((old_credit + htt_credit_delta) > MAX_TARGET_TX_CREDIT) ||
+			((old_credit + htt_credit_delta) < -MAX_TARGET_TX_CREDIT)) {
+			qdf_print("%s: invalid credit update,old_credit=%d,"
+				"htt_credit_delta=%d\n",
+				__func__,
+				old_credit,
+				htt_credit_delta);
+			break;
+		}
 
 		if (pdev->cfg.is_high_latency &&
 		    !pdev->cfg.default_tx_comp_req) {
@@ -657,6 +670,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	}
 	case HTT_T2H_MSG_TYPE_TX_COMPL_IND:
 	{
+		int old_credit;
 		int num_msdus;
 		enum htt_tx_status status;
 
@@ -683,24 +697,35 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		}
 
 		if (pdev->cfg.is_high_latency) {
-			if (!pdev->cfg.default_tx_comp_req) {
-				int credit_delta;
-
-				HTT_TX_MUTEX_ACQUIRE(&pdev->credit_mutex);
-				qdf_atomic_add(num_msdus,
-					       &pdev->htt_tx_credit.
-								target_delta);
-				credit_delta = htt_tx_credit_update(pdev);
-				HTT_TX_MUTEX_RELEASE(&pdev->credit_mutex);
-
-				if (credit_delta) {
-					ol_tx_target_credit_update(
-							pdev->txrx_pdev,
-							credit_delta);
-				}
+			old_credit = qdf_atomic_read(
+						&pdev->htt_tx_credit.target_delta);
+			if (((old_credit + num_msdus) > MAX_TARGET_TX_CREDIT) ||
+				((old_credit + num_msdus) < -MAX_TARGET_TX_CREDIT)) {
+				qdf_print("%s: invalid credit update,old_credit=%d,"
+					"num_msdus=%d\n",
+					__func__,
+					old_credit,
+					num_msdus);
 			} else {
-				ol_tx_target_credit_update(pdev->txrx_pdev,
-							   num_msdus);
+				if (!pdev->cfg.default_tx_comp_req) {
+					int credit_delta;
+
+					HTT_TX_MUTEX_ACQUIRE(&pdev->credit_mutex);
+					qdf_atomic_add(num_msdus,
+						       &pdev->htt_tx_credit.
+							target_delta);
+					credit_delta = htt_tx_credit_update(pdev);
+					HTT_TX_MUTEX_RELEASE(&pdev->credit_mutex);
+
+					if (credit_delta) {
+						ol_tx_target_credit_update(
+								pdev->txrx_pdev,
+								credit_delta);
+					}
+				} else {
+					ol_tx_target_credit_update(pdev->txrx_pdev,
+								   num_msdus);
+				}
 			}
 		}
 
