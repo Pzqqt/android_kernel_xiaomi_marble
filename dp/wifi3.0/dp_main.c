@@ -2365,6 +2365,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
+	qdf_nbuf_t curr_nbuf, next_nbuf;
 
 	dp_wdi_event_detach(pdev);
 
@@ -2418,6 +2419,13 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 		for (i = 0; i < MAX_RX_MAC_RINGS; i++)
 			dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[i],
 				RXDMA_DST, 0);
+	}
+
+	curr_nbuf = pdev->invalid_peer_head_msdu;
+	while (curr_nbuf) {
+		next_nbuf = qdf_nbuf_next(curr_nbuf);
+		qdf_nbuf_free(curr_nbuf);
+		curr_nbuf = next_nbuf;
 	}
 
 	soc->pdev_list[pdev->pdev_id] = NULL;

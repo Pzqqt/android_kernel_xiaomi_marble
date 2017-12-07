@@ -22,6 +22,29 @@
 #include <hal_internal.h>
 
 /**
+ * struct hal_wbm_err_desc_info: structure to hold wbm error codes and reasons
+ *
+ * @reo_psh_rsn:	REO push reason
+ * @reo_err_code:	REO Error code
+ * @rxdma_psh_rsn:	RXDMA push reason
+ * @rxdma_err_code:	RXDMA Error code
+ * @reserved_1:		Reserved bits
+ * @wbm_err_src:	WBM error source
+ * @pool_id:		pool ID, indicates which rxdma pool
+ * @reserved_2:		Reserved bits
+ */
+struct hal_wbm_err_desc_info {
+	uint16_t reo_psh_rsn:2,
+		 reo_err_code:5,
+		 rxdma_psh_rsn:2,
+		 rxdma_err_code:5,
+		 reserved_1:2;
+	uint8_t wbm_err_src:3,
+		pool_id:2,
+		reserved_2:3;
+};
+
+/**
  * enum hal_reo_error_code: Enum which encapsulates "reo_push_reason"
  *
  * @ HAL_REO_ERROR_DETECTED: Packets arrived because of an error detected
@@ -629,6 +652,13 @@ static inline uint8_t
 
 	return pkt_tlvs->pkt_hdr_tlv.rx_pkt_hdr;
 
+}
+
+static inline uint8_t
+*hal_rx_padding0_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	return pkt_tlvs->rx_padding0;
 }
 
 /*
@@ -3350,12 +3380,11 @@ uint8_t hal_rx_reo_ent_rxdma_push_reason_get(void *reo_ent_desc)
 		REO_ENTRANCE_RING_6_RXDMA_PUSH_REASON_LSB);
 }
 
-/*
+/**
  * hal_rx_reo_ent_rxdma_error_code_get(): Retrieves RXDMA error code from
  *	reo_entrance_ring descriptor
- *
  * @reo_ent_desc: reo_entrance_ring descriptor
- * Returns: value of rxdma_error_code
+ * Return: value of rxdma_error_code
  */
 static inline
 uint8_t hal_rx_reo_ent_rxdma_error_code_get(void *reo_ent_desc)
@@ -3364,6 +3393,55 @@ uint8_t hal_rx_reo_ent_rxdma_error_code_get(void *reo_ent_desc)
 		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_OFFSET)),
 		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_MASK,
 		REO_ENTRANCE_RING_6_RXDMA_ERROR_CODE_LSB);
+}
+
+/**
+ * hal_rx_wbm_err_info_get(): Retrieves WBM error code and reason and
+ *	save it to hal_wbm_err_desc_info structure passed by caller
+ * @wbm_desc: wbm ring descriptor
+ * @wbm_er_info: hal_wbm_err_desc_info structure, output parameter.
+ * Return: void
+ */
+static inline void hal_rx_wbm_err_info_get(void *wbm_desc,
+				struct hal_wbm_err_desc_info *wbm_er_info)
+{
+	wbm_er_info->wbm_err_src = HAL_RX_WBM_ERR_SRC_GET(wbm_desc);
+	wbm_er_info->reo_psh_rsn = HAL_RX_WBM_REO_PUSH_REASON_GET(wbm_desc);
+	wbm_er_info->reo_err_code = HAL_RX_WBM_REO_ERROR_CODE_GET(wbm_desc);
+	wbm_er_info->rxdma_psh_rsn = HAL_RX_WBM_RXDMA_PUSH_REASON_GET(wbm_desc);
+	wbm_er_info->rxdma_err_code = HAL_RX_WBM_RXDMA_ERROR_CODE_GET(wbm_desc);
+}
+
+/**
+ * hal_rx_wbm_err_info_set_in_tlv(): Save the wbm error codes and reason to
+ *	the reserved bytes of rx_tlv_hdr
+ * @buf: start of rx_tlv_hdr
+ * @wbm_er_info: hal_wbm_err_desc_info structure
+ * Return: void
+ */
+static inline void hal_rx_wbm_err_info_set_in_tlv(uint8_t *buf,
+				struct hal_wbm_err_desc_info *wbm_er_info)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	qdf_mem_copy(pkt_tlvs->rx_padding0, wbm_er_info,
+		    sizeof(struct hal_wbm_err_desc_info));
+}
+
+/**
+ * hal_rx_wbm_err_info_get_from_tlv(): retrieve wbm error codes and reason from
+ *	the reserved bytes of rx_tlv_hdr.
+ * @buf: start of rx_tlv_hdr
+ * @wbm_er_info: hal_wbm_err_desc_info structure, output parameter.
+ * Return: void
+ */
+static inline void hal_rx_wbm_err_info_get_from_tlv(uint8_t *buf,
+				struct hal_wbm_err_desc_info *wbm_er_info)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+
+	qdf_mem_copy(wbm_er_info, pkt_tlvs->rx_padding0,
+		    sizeof(struct hal_wbm_err_desc_info));
 }
 
 #endif /* _HAL_RX_H */
