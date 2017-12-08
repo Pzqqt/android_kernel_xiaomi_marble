@@ -9086,6 +9086,35 @@ QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId)
 	return status;
 }
 
+QDF_STATUS sme_set_wlm_latency_level(tHalHandle hal, uint16_t session_id,
+				     uint16_t latency_level)
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct wlm_latency_level_param params;
+	void *wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!mac_ctx->roam.configParam.wlm_latency_enable) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: WLM latency level setting is disabled",
+			   __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	params.wlm_latency_level = latency_level;
+	params.wlm_latency_flags =
+		mac_ctx->roam.configParam.wlm_latency_flags[latency_level];
+	params.vdev_id = session_id;
+
+	status = wma_set_wlm_latency_level(wma, &params);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: failed to set latency level",
+			  __func__);
+
+	return status;
+}
+
 void sme_get_command_q_status(tHalHandle hHal)
 {
 	tSmeCmd *pTempCmd = NULL;

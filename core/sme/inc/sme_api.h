@@ -735,6 +735,17 @@ QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
 	pIbssPeerInfoCb peerInfoCbk, bool allPeerInfoReqd, uint8_t staIdx);
 QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId);
 
+/**
+ * sme_set_wlm_latency_level_ind() - Used to set the latency level to fw
+ * @hal
+ * @session_id
+ * @latency_level
+ *
+ * Return QDF_STATUS
+ */
+QDF_STATUS sme_set_wlm_latency_level(tHalHandle hal,
+				     uint16_t session_id,
+				     uint16_t latency_level);
 /*
  * SME API to enable/disable idle mode powersave
  * This should be called only if powersave offload

@@ -2478,6 +2478,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 					   tCsrConfigParam *pParam)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int i;
 
 	if (pParam) {
 		pMac->roam.configParam.pkt_err_disconn_th =
@@ -2962,6 +2963,14 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->rssi_channel_penalization;
 		pMac->roam.configParam.num_disallowed_aps =
 			pParam->num_disallowed_aps;
+		pMac->roam.configParam.wlm_latency_enable =
+			pParam->wlm_latency_enable;
+		pMac->roam.configParam.wlm_latency_level =
+			pParam->wlm_latency_level;
+		for (i = 0; i < CSR_NUM_WLM_LATENCY_LEVEL; i++) {
+			pMac->roam.configParam.wlm_latency_flags[i] =
+				pParam->wlm_latency_flags[i];
+		}
 		pMac->roam.configParam.oce_feature_bitmap =
 			pParam->oce_feature_bitmap;
 
