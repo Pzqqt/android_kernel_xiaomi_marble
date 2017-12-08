@@ -972,6 +972,7 @@ static QDF_STATUS p2p_roc_req_for_tx_action(
 	roc_ctx->duration = tx_ctx->duration;
 	roc_ctx->roc_state = ROC_STATE_IDLE;
 	roc_ctx->roc_type = OFF_CHANNEL_TX;
+	roc_ctx->tx_ctx = tx_ctx;
 	tx_ctx->roc_cookie = (uintptr_t)roc_ctx;
 
 	p2p_debug("create roc request for off channel tx, tx ctx:%pK, roc ctx:%pK",
@@ -1667,6 +1668,7 @@ QDF_STATUS p2p_process_mgmt_tx(struct tx_action_context *tx_ctx)
 			ROC_STATE_CANCEL_IN_PROG) {
 			p2p_adjust_tx_wait(tx_ctx);
 			status = p2p_restart_roc_timer(curr_roc_ctx);
+			curr_roc_ctx->tx_ctx = tx_ctx;
 			if (status != QDF_STATUS_SUCCESS) {
 				p2p_err("restart roc timer fail");
 				goto fail;
@@ -1702,6 +1704,7 @@ QDF_STATUS p2p_process_mgmt_tx_cancel(
 	bool is_roc_q = false;
 	bool is_ack_q = false;
 	struct tx_action_context *cur_tx_ctx;
+	struct p2p_roc_context *cur_roc_ctx;
 	struct cancel_roc_context cancel_roc;
 
 	p2p_debug("cookie:0x%llx", cancel_tx->cookie);
@@ -1724,6 +1727,19 @@ QDF_STATUS p2p_process_mgmt_tx_cancel(
 	} else {
 		p2p_debug("Failed to find tx ctx by cookie, cookie %llx",
 			cancel_tx->cookie);
+
+		cur_roc_ctx = p2p_find_roc_by_tx_ctx(cancel_tx->p2p_soc_obj,
+					cancel_tx->cookie);
+		if (cur_roc_ctx) {
+			p2p_debug("tx ctx:%llx, roc:%pK",
+				cancel_tx->cookie, cur_roc_ctx);
+			cancel_roc.p2p_soc_obj =
+					cancel_tx->p2p_soc_obj;
+			cancel_roc.cookie = (uintptr_t) cur_roc_ctx;
+			return p2p_process_cancel_roc_req(&cancel_roc);
+		}
+
+		p2p_debug("Failed to find roc by tx ctx");
 		return QDF_STATUS_E_INVAL;
 	}
 
