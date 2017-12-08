@@ -393,10 +393,11 @@ struct wlan_crypto_mmie {
 
 struct wlan_crypto_comp_priv {
 	struct wlan_crypto_params crypto_params;
-	struct wlan_crypto_key *key[4];
-	struct wlan_crypto_key *igtk_key;
+	struct wlan_crypto_key *key[WLAN_CRYPTO_MAXKEYIDX];
+	struct wlan_crypto_key *igtk_key[WLAN_CRYPTO_MAXIGTKKEYIDX];
 	uint32_t igtk_key_type;
 	uint8_t def_tx_keyid;
+	uint8_t def_igtk_tx_keyid;
 };
 
 

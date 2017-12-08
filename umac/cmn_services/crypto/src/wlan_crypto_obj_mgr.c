@@ -204,9 +204,11 @@ static void wlan_crypto_free_key(struct wlan_crypto_comp_priv *crypto_priv)
 		}
 	}
 
-	if (crypto_priv->igtk_key) {
-		qdf_mem_free(crypto_priv->igtk_key);
-		crypto_priv->igtk_key = NULL;
+	for (i = 0; i < WLAN_CRYPTO_MAXIGTKKEYIDX; i++) {
+		if (crypto_priv->igtk_key[i]) {
+			qdf_mem_free(crypto_priv->igtk_key[i]);
+			crypto_priv->igtk_key[i] = NULL;
+		}
 	}
 
 }
