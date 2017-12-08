@@ -459,6 +459,8 @@ QDF_STATUS (*send_start_extscan_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_plm_stop_cmd)(wmi_unified_t wmi_handle,
 		 const struct plm_req_params *plm);
 
+QDF_STATUS (*send_wlm_latency_level_cmd)(wmi_unified_t wmi_handle,
+				struct wlm_latency_level_param *param);
 
 QDF_STATUS (*send_plm_start_cmd)(wmi_unified_t wmi_handle,
 		  const struct plm_req_params *plm,
