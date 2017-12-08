@@ -1350,17 +1350,16 @@ HIF_SDIO_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/if_sdio.o
 
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus.o
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/dummy.o
+HIF_OBJS += $(HIF_COMMON_OBJS)
 
 ifeq ($(CONFIG_HIF_PCI), 1)
 HIF_OBJS += $(HIF_PCIE_OBJS)
-HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(HIF_CE_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_pci.o
 endif
 
 ifeq ($(CONFIG_HIF_SNOC), 1)
 HIF_OBJS += $(HIF_SNOC_OBJS)
-HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(HIF_CE_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_snoc.o
 endif
@@ -1368,13 +1367,11 @@ endif
 ifeq ($(CONFIG_HIF_SDIO), 1)
 HIF_OBJS += $(HIF_SDIO_OBJS)
 HIF_OBJS += $(HIF_SDIO_NATIVE_OBJS)
-HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_sdio.o
 endif
 
 ifeq ($(CONFIG_HIF_USB), 1)
 HIF_OBJS += $(HIF_USB_OBJS)
-HIF_OBJS += $(HIF_COMMON_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_usb.o
 endif
 
@@ -2328,3 +2325,12 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_QCA_CLD_WLAN) += $(MODNAME).o
 $(MODNAME)-y := $(OBJS)
+OBJS_DIRS := $(dir $(OBJS)) \
+	     $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ \
+	     $(QDF_OBJ_DIR)/ \
+	     $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/ \
+	     $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/ \
+	     $(WLAN_COMMON_ROOT)/$(HIF_SDIO_DIR)/
+CLEAN_DIRS := $(addsuffix *.o,$(sort $(OBJS_DIRS))) \
+	      $(addsuffix .*.o.cmd,$(sort $(OBJS_DIRS)))
+clean-files := $(CLEAN_DIRS)
