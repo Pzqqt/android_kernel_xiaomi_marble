@@ -7926,13 +7926,27 @@ struct wmi_host_pdev_band_to_mac {
 /**
  * struct wmi_fatal_condition_event - Fatal condition event param
  * @type: Type of event
- * @subtype: subtype of event
- * @reserved0: reserved
+ * @subtype: Subtype of event
+ * @type_subtype_specific_data: Data specific to combination of type and
+ * subtype. This is held in a union with the original "reserved0" for backward
+ * compatibility with any code that might refer to it. The previously-reserved
+ * field now holds data under some conditions. The kind of data depends on the
+ * above "type" and "subtype" fields. The interpretation of the
+ * type_subtype_specific_data field based on different type + subtype values is
+ * shown below:
+ * 1. type == WMI_HOST_FATAL_CONDITION_PACKET_LOG_CONFIG + subtype
+ * == WMI_HOST_FATAL_SUBTYPE_PACKET_LOG_CONFIG_START ->
+ * type_subtype_specific_data = WMI_HOST_PKTLOG_EVENT
+ * For any type+subtype combinations not listed above, the recipient is expected
+ * to ignore the type_subtype_specific_data field.
  */
 struct wmi_fatal_condition_event {
 	uint32_t type;
 	uint32_t subtype;
-	uint32_t reserved0;
+	union {
+		uint32_t reserved0;
+		uint32_t type_subtype_specific_data;
+	};
 };
 
 /*Currently the Max fatal events is 3 */
