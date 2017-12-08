@@ -3261,7 +3261,8 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 			    t_sap_ctx != NULL &&
 			    t_sap_ctx->sapsMachine != eSAP_DISCONNECTED) {
 				profile = &t_sap_ctx->csr_roamProfile;
-				if (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
+				if (!wlan_reg_is_passive_or_disable_ch(
+						mac_ctx->pdev,
 						profile->operationChannel))
 					continue;
 				/* SAP to be moved to DISCONNECTING state */
@@ -3274,10 +3275,6 @@ static QDF_STATUS sap_fsm_state_dfs_cac_wait(struct sap_context *sap_ctx,
 				 * Send the Channel change message to SME/PE.
 				 * sap_radar_found_status is set to 1
 				 */
-				sap_signal_hdd_event(t_sap_ctx, NULL,
-					eSAP_DFS_RADAR_DETECT,
-					(void *)eSAP_STATUS_SUCCESS);
-
 				wlansap_channel_change_request(
 					t_sap_ctx,
 					mac_ctx->sap.SapDfsInfo.target_channel);
@@ -3490,7 +3487,8 @@ static QDF_STATUS sap_fsm_state_started(struct sap_context *sap_ctx,
 				 * no need to move them
 				 */
 				profile = &temp_sap_ctx->csr_roamProfile;
-				if (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
+				if (!wlan_reg_is_passive_or_disable_ch(
+						mac_ctx->pdev,
 						profile->operationChannel))
 					continue;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
