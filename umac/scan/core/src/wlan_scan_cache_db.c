@@ -107,11 +107,12 @@ static void scm_scan_entry_get_ref(struct scan_cache_node *scan_node)
  * @scan_db: scan database
  * @scan_node: scan node
  * @lock_needed: if scan_db_lock is needed
+ * @delete: logically delete the entry
  *
  * Return: void
  */
 static void scm_scan_entry_put_ref(struct scan_dbs *scan_db,
-	struct scan_cache_node *scan_node, bool lock_needed)
+	struct scan_cache_node *scan_node, bool lock_needed, bool delete)
 {
 
 	if (!scan_node) {
@@ -120,15 +121,24 @@ static void scm_scan_entry_put_ref(struct scan_dbs *scan_db,
 		return;
 	}
 
+	if (lock_needed)
+		qdf_spin_lock_bh(&scan_db->scan_db_lock);
+
 	if (!qdf_atomic_read(&scan_node->ref_cnt)) {
+		if (lock_needed)
+			qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 		scm_err("scan_node ref cnt is 0");
 		QDF_ASSERT(0);
 		return;
 	}
 
-	if (lock_needed)
-		qdf_spin_lock_bh(&scan_db->scan_db_lock);
-
+	if (delete) {
+		if (!scan_node->active) {
+			scm_err("node is already deleted");
+			QDF_ASSERT(0);
+		}
+		scan_node->active = false;
+	}
 	/* Decrement ref count, free scan_node, if ref count == 0 */
 	if (qdf_atomic_dec_and_test(&scan_node->ref_cnt))
 		scm_del_scan_node_from_db(scan_db, scan_node);
@@ -154,6 +164,7 @@ static void scm_add_scan_node(struct scan_dbs *scan_db,
 
 	qdf_spin_lock_bh(&scan_db->scan_db_lock);
 	qdf_atomic_init(&scan_node->ref_cnt);
+	scan_node->active = true;
 	scm_scan_entry_get_ref(scan_node);
 	qdf_list_insert_back(&scan_db->scan_hash_tbl[hash_idx],
 			&scan_node->node);
@@ -163,10 +174,53 @@ static void scm_add_scan_node(struct scan_dbs *scan_db,
 
 
 /**
- * scm_get_next_node() - API get the next scan node from
+ * scm_get_next_valid_node() - API get the next valid scan node from
  * the list
  * @list: hash list
- * @scan_node: node to be removed
+ * @cur_node: current node pointer
+ *
+ * API to get next active node from the list. If cur_node is NULL
+ * it will return first node of the list.
+ * Call must be protected by scan_db->scan_db_lock
+ *
+ * Return: next scan node
+ */
+static qdf_list_node_t *
+scm_get_next_valid_node(qdf_list_t *list,
+	qdf_list_node_t *cur_node)
+{
+	qdf_list_node_t *next_node = NULL;
+	qdf_list_node_t *temp_node = NULL;
+	struct scan_cache_node *scan_node;
+
+	if (cur_node)
+		qdf_list_peek_next(list, cur_node, &next_node);
+	else
+		qdf_list_peek_front(list, &next_node);
+
+	while (next_node) {
+		scan_node = qdf_container_of(next_node,
+			struct scan_cache_node, node);
+		if (scan_node->active)
+			return next_node;
+		/*
+		 * If node is not valid check for next entry
+		 * to get next valid node.
+		 */
+		qdf_list_peek_next(list, next_node, &temp_node);
+		next_node = temp_node;
+		temp_node = NULL;
+	}
+
+	return next_node;
+}
+
+/**
+ * scm_get_next_node() - API get the next scan node from
+ * the list
+ * @scan_db: scan data base
+ * @list: hash list
+ * @cur_node: current node pointer
  *
  * API get the next node from the list. If cur_node is NULL
  * it will return first node of the list
@@ -175,21 +229,19 @@ static void scm_add_scan_node(struct scan_dbs *scan_db,
  */
 static struct scan_cache_node *
 scm_get_next_node(struct scan_dbs *scan_db,
-	qdf_list_t *list,
-	struct scan_cache_node *cur_node)
+	qdf_list_t *list, struct scan_cache_node *cur_node)
 {
 	struct scan_cache_node *next_node = NULL;
 	qdf_list_node_t *next_list = NULL;
 
 	qdf_spin_lock_bh(&scan_db->scan_db_lock);
 	if (cur_node) {
-		qdf_list_peek_next(list,
-			&cur_node->node, &next_list);
+		next_list = scm_get_next_valid_node(list, &cur_node->node);
 		/* Decrement the ref count of the previous node */
 		scm_scan_entry_put_ref(scan_db,
-			cur_node, false);
+			cur_node, false, false);
 	} else {
-		qdf_list_peek_front(list, &next_list);
+		next_list = scm_get_next_valid_node(list, NULL);
 	}
 	/* Increase the ref count of the obtained node */
 	if (next_list) {
@@ -219,7 +271,7 @@ static void scm_check_and_age_out(struct scan_dbs *scan_db,
 		scm_info("Aging out BSSID: %pM with age %d ms",
 			node->entry->bssid.bytes,
 			util_scan_entry_age(node->entry));
-		scm_scan_entry_put_ref(scan_db, node, true);
+		scm_scan_entry_put_ref(scan_db, node, true, true);
 	}
 }
 
@@ -258,16 +310,16 @@ static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
 	int i;
 	struct scan_cache_node *oldest_node = NULL;
 	struct scan_cache_node *cur_node;
-	qdf_list_node_t *cur_list = NULL;
+	qdf_list_node_t *cur_list;
 
 	qdf_spin_lock_bh(&scan_db->scan_db_lock);
 	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
-		cur_node = NULL;
-		qdf_list_peek_front(&scan_db->scan_hash_tbl[i],
-				&cur_list);
+		/* Get the first valid node for the hash */
+		cur_list = scm_get_next_valid_node(&scan_db->scan_hash_tbl[i],
+						   NULL);
 		/*
-		 * Check only the first node if present as new
-		 * entry are added to tail and thus first
+		 * Check only the first valid node if present as new
+		 * entry are added to tail and thus first valid
 		 * node is the oldest
 		 */
 		if (cur_list) {
@@ -279,7 +331,10 @@ static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
 				oldest_node = cur_node;
 		}
 	}
-	scm_scan_entry_put_ref(scan_db, oldest_node, false);
+	scm_debug("Flush oldest BSSID: %pM with age %d ms",
+			oldest_node->entry->bssid.bytes,
+			util_scan_entry_age(oldest_node->entry));
+	scm_scan_entry_put_ref(scan_db, oldest_node, false, true);
 	qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 
 	return QDF_STATUS_SUCCESS;
@@ -452,7 +507,7 @@ static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
 	scm_update_mlme_info(scan_entry, scan_params);
 
 	/* Mark delete the duplicate node */
-	scm_scan_entry_put_ref(scan_db, scan_node, true);
+	scm_scan_entry_put_ref(scan_db, scan_node, true, true);
 }
 
 /**
@@ -482,7 +537,7 @@ scm_find_duplicate_and_del(struct scan_dbs *scan_db,
 			scm_delete_duplicate_entry(scan_db,
 				entry, cur_node);
 			scm_scan_entry_put_ref(scan_db,
-				cur_node, true);
+				cur_node, true, false);
 			return true;
 		}
 		next_node = scm_get_next_node(scan_db,
@@ -881,7 +936,7 @@ scm_iterate_db_and_call_func(struct scan_dbs *scan_db,
 			status = func(arg, cur_node->entry);
 			if (QDF_IS_STATUS_ERROR(status)) {
 				scm_scan_entry_put_ref(scan_db,
-					cur_node, true);
+					cur_node, true, false);
 				return status;
 			}
 			next_node = scm_get_next_node(scan_db,
@@ -956,7 +1011,7 @@ scm_scan_apply_filter_flush_entry(struct wlan_objmgr_psoc *psoc,
 	if (!match)
 		return QDF_STATUS_SUCCESS;
 
-	scm_scan_entry_put_ref(scan_db, db_node, true);
+	scm_scan_entry_put_ref(scan_db, db_node, true, true);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1044,7 +1099,7 @@ static void scm_filter_channels(struct scan_dbs *scan_db,
 	}
 
 	if (!match)
-		scm_scan_entry_put_ref(scan_db, db_node, true);
+		scm_scan_entry_put_ref(scan_db, db_node, true, true);
 
 }
 
@@ -1200,7 +1255,7 @@ QDF_STATUS scm_update_scan_mlme_info(struct wlan_objmgr_pdev *pdev,
 			scm_update_mlme_info(entry, cur_node->entry);
 			qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 			scm_scan_entry_put_ref(scan_db,
-					cur_node, true);
+					cur_node, true, false);
 			return QDF_STATUS_SUCCESS;
 		}
 		next_node = scm_get_next_node(scan_db,

@@ -228,11 +228,13 @@ struct bss_info {
  * struct scan_cache_node - Scan cache entry node
  * @node: node pointers
  * @ref_cnt: ref count if in use
+ * @active: if entry is logically active
  * @entry: scan entry pointer
  */
 struct scan_cache_node {
 	qdf_list_node_t node;
 	qdf_atomic_t ref_cnt;
+	bool active;
 	struct scan_cache_entry *entry;
 };
 
