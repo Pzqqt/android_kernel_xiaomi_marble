@@ -8641,6 +8641,39 @@ static QDF_STATUS send_fw_profiling_cmd_tlv(wmi_unified_t wmi_handle,
 	return 0;
 }
 
+static QDF_STATUS send_wlm_latency_level_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wlm_latency_level_param *params)
+{
+	wmi_wlm_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len = sizeof(*cmd);
+	static uint32_t ll[4] = {100, 60, 40, 20};
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_wlm_config_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_wlm_config_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_wlm_config_cmd_fixed_param));
+	cmd->vdev_id = params->vdev_id;
+	cmd->latency_level = params->wlm_latency_level;
+	cmd->ul_latency = ll[params->wlm_latency_level];
+	cmd->dl_latency = ll[params->wlm_latency_level];
+	cmd->flags = params->wlm_latency_flags;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_WLM_CONFIG_CMDID)) {
+		WMI_LOGE("%s: Failed to send setting latency config command",
+			 __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return 0;
+}
 /**
  * send_nat_keepalive_en_cmd_tlv() - enable NAT keepalive filter
  * @wmi_handle: wmi handle
@@ -20189,6 +20222,7 @@ struct wmi_ops tlv_ops =  {
 	.send_fw_profiling_cmd = send_fw_profiling_cmd_tlv,
 	.send_csa_offload_enable_cmd = send_csa_offload_enable_cmd_tlv,
 	.send_nat_keepalive_en_cmd = send_nat_keepalive_en_cmd_tlv,
+	.send_wlm_latency_level_cmd = send_wlm_latency_level_cmd_tlv,
 	.send_start_oem_data_cmd = send_start_oem_data_cmd_tlv,
 #ifdef WLAN_FEATURE_CIF_CFR
 	.send_oem_dma_cfg_cmd = send_oem_dma_cfg_cmd_tlv,
