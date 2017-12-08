@@ -2474,6 +2474,7 @@ static void hdd_check_for_leaks(void)
 	/* DO NOT REMOVE these checks; for false positives, read above first */
 
 	qdf_mc_timer_check_for_leaks();
+	qdf_nbuf_map_check_for_leaks();
 	qdf_mem_check_for_leaks();
 }
 
