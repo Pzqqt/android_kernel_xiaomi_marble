@@ -59,6 +59,33 @@ cdp_set_wds_rx_policy(ol_txrx_soc_handle soc,
 }
 
 /**
+ * @brief set the wds rx filter policy of the device
+ * @details
+ *  This flag sets the wds rx policy on the vdev. Rx frames not compliant
+ *  with the policy will be dropped.
+ *
+ * @param vdev - the data virtual device object
+ * @param val - the wds rx policy bitmask
+ * @return - void
+ */
+static inline void
+cdp_set_wds_tx_policy_update(ol_txrx_soc_handle soc,
+	struct cdp_peer *peer,
+	int wds_tx_ucast, int wds_tx_mcast)
+{
+	if (!soc || !soc->ops || !soc->ops->wds_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->wds_ops->txrx_wds_peer_tx_policy_update)
+		return soc->ops->wds_ops->txrx_wds_peer_tx_policy_update(
+				peer, wds_tx_ucast, wds_tx_mcast);
+	return;
+}
+
+/**
  * cdp_vdev_set_wds() - Set/unset wds_enable flag in vdev
  * @soc - data path soc handle
  * @vdev - data path vap handle

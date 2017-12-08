@@ -817,7 +817,7 @@ static inline void dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
  *
  */
 void dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
-			uint16_t *mpdu_len, bool *is_first_frag,
+		uint16_t *mpdu_len, bool *is_first_frag,
 			uint16_t *frag_list_len, qdf_nbuf_t *head_frag_nbuf,
 			qdf_nbuf_t *frag_list_head, qdf_nbuf_t *frag_list_tail)
 {
@@ -887,6 +887,98 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 		vdev->osif_rx(vdev->osif_vdev, nbuf_list);
 
 }
+
+#ifdef WDS_VENDOR_EXTENSION
+int dp_wds_rx_policy_check(
+		uint8_t *rx_tlv_hdr,
+		struct dp_vdev *vdev,
+		struct dp_peer *peer,
+		int rx_mcast
+		)
+{
+	struct dp_peer *bss_peer;
+	int fr_ds, to_ds, rx_3addr, rx_4addr;
+	int rx_policy_ucast, rx_policy_mcast;
+
+	if (vdev->opmode == wlan_op_mode_ap) {
+		TAILQ_FOREACH(bss_peer, &vdev->peer_list, peer_list_elem) {
+			if (bss_peer->bss_peer) {
+				/* if wds policy check is not enabled on this vdev, accept all frames */
+				if (!bss_peer->wds_ecm.wds_rx_filter) {
+					return 1;
+				}
+				break;
+			}
+		}
+		rx_policy_ucast = bss_peer->wds_ecm.wds_rx_ucast_4addr;
+		rx_policy_mcast = bss_peer->wds_ecm.wds_rx_mcast_4addr;
+	} else {             /* sta mode */
+		if (!peer->wds_ecm.wds_rx_filter) {
+			return 1;
+		}
+		rx_policy_ucast = peer->wds_ecm.wds_rx_ucast_4addr;
+		rx_policy_mcast = peer->wds_ecm.wds_rx_mcast_4addr;
+	}
+
+	/* ------------------------------------------------
+	 *                       self
+	 * peer-             rx  rx-
+	 * wds  ucast mcast dir policy accept note
+	 * ------------------------------------------------
+	 * 1     1     0     11  x1     1      AP configured to accept ds-to-ds Rx ucast from wds peers, constraint met; so, accept
+	 * 1     1     0     01  x1     0      AP configured to accept ds-to-ds Rx ucast from wds peers, constraint not met; so, drop
+	 * 1     1     0     10  x1     0      AP configured to accept ds-to-ds Rx ucast from wds peers, constraint not met; so, drop
+	 * 1     1     0     00  x1     0      bad frame, won't see it
+	 * 1     0     1     11  1x     1      AP configured to accept ds-to-ds Rx mcast from wds peers, constraint met; so, accept
+	 * 1     0     1     01  1x     0      AP configured to accept ds-to-ds Rx mcast from wds peers, constraint not met; so, drop
+	 * 1     0     1     10  1x     0      AP configured to accept ds-to-ds Rx mcast from wds peers, constraint not met; so, drop
+	 * 1     0     1     00  1x     0      bad frame, won't see it
+	 * 1     1     0     11  x0     0      AP configured to accept from-ds Rx ucast from wds peers, constraint not met; so, drop
+	 * 1     1     0     01  x0     0      AP configured to accept from-ds Rx ucast from wds peers, constraint not met; so, drop
+	 * 1     1     0     10  x0     1      AP configured to accept from-ds Rx ucast from wds peers, constraint met; so, accept
+	 * 1     1     0     00  x0     0      bad frame, won't see it
+	 * 1     0     1     11  0x     0      AP configured to accept from-ds Rx mcast from wds peers, constraint not met; so, drop
+	 * 1     0     1     01  0x     0      AP configured to accept from-ds Rx mcast from wds peers, constraint not met; so, drop
+	 * 1     0     1     10  0x     1      AP configured to accept from-ds Rx mcast from wds peers, constraint met; so, accept
+	 * 1     0     1     00  0x     0      bad frame, won't see it
+	 *
+	 * 0     x     x     11  xx     0      we only accept td-ds Rx frames from non-wds peers in mode.
+	 * 0     x     x     01  xx     1
+	 * 0     x     x     10  xx     0
+	 * 0     x     x     00  xx     0      bad frame, won't see it
+	 * ------------------------------------------------
+	 */
+
+	fr_ds = hal_rx_mpdu_get_fr_ds(rx_tlv_hdr);
+	to_ds = hal_rx_mpdu_get_to_ds(rx_tlv_hdr);
+	rx_3addr = fr_ds ^ to_ds;
+	rx_4addr = fr_ds & to_ds;
+
+	if (vdev->opmode == wlan_op_mode_ap) {
+		if ((!peer->wds_enabled && rx_3addr && to_ds) ||
+				(peer->wds_enabled && !rx_mcast && (rx_4addr == rx_policy_ucast)) ||
+				(peer->wds_enabled && rx_mcast && (rx_4addr == rx_policy_mcast))) {
+			return 1;
+		}
+	} else {           /* sta mode */
+		if ((!rx_mcast && (rx_4addr == rx_policy_ucast)) ||
+				(rx_mcast && (rx_4addr == rx_policy_mcast))) {
+			return 1;
+		}
+	}
+	return 0;
+}
+#else
+int dp_wds_rx_policy_check(
+		uint8_t *rx_tlv_hdr,
+		struct dp_vdev *vdev,
+		struct dp_peer *peer,
+		int rx_mcast
+		)
+{
+	return 1;
+}
+#endif
 
 /**
  * dp_rx_process() - Brain of the Rx processing functionality
@@ -1181,6 +1273,18 @@ done:
 		 * Do nothing for LFR case.
 		 */
 		dp_rx_peer_validity_check(peer);
+
+		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer,
+					hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_ERROR,
+					FL("Policy Check Drop pkt"));
+			/* Drop & free packet */
+			qdf_nbuf_free(nbuf);
+			/* Statistics */
+			nbuf = next;
+			continue;
+		}
 
 		if (qdf_unlikely(peer && peer->bss_peer)) {
 			QDF_TRACE(QDF_MODULE_ID_DP,

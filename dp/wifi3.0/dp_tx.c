@@ -1746,6 +1746,12 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	struct dp_ast_entry *ast_entry = NULL;
 	struct dp_soc *soc = NULL;
 	struct ether_header *eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+#ifdef WDS_VENDOR_EXTENSION
+	int is_mcast = 0, is_ucast = 0;
+	int num_peers_3addr = 0;
+	struct ether_header *eth_hdr = (struct ether_header *)(qdf_nbuf_data(nbuf));
+	struct ieee80211_frame_addr4 *wh = (struct ieee80211_frame_addr4 *)(qdf_nbuf_data(nbuf));
+#endif
 
 	vdev = tx_desc->vdev;
 	soc = vdev->pdev->soc;
@@ -1762,7 +1768,6 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 	DP_STATS_INC_PKT(vdev, tx_i.reinject_pkts, 1,
 			qdf_nbuf_len(tx_desc->nbuf));
 
-
 	qdf_spin_lock_bh(&(soc->ast_lock));
 
 	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost), 0);
@@ -1771,16 +1776,53 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 	qdf_spin_unlock_bh(&(soc->ast_lock));
 
+#ifdef WDS_VENDOR_EXTENSION
+	if (qdf_unlikely(vdev->tx_encap_type != htt_cmn_pkt_type_raw)) {
+		is_mcast = (IS_MULTICAST(wh->i_addr1)) ? 1 : 0;
+	} else {
+		is_mcast = (IS_MULTICAST(eth_hdr->ether_dhost)) ? 1 : 0;
+	}
+	is_ucast = !is_mcast;
+
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if (peer->bss_peer)
+			continue;
+
+		/* Detect wds peers that use 3-addr framing for mcast.
+		 * if there are any, the bss_peer is used to send the
+		 * the mcast frame using 3-addr format. all wds enabled
+		 * peers that use 4-addr framing for mcast frames will
+		 * be duplicated and sent as 4-addr frames below.
+		 */
+		if (!peer->wds_enabled || !peer->wds_ecm.wds_tx_mcast_4addr) {
+			num_peers_3addr = 1;
+			break;
+		}
+	}
+#endif
+
 	if (qdf_unlikely(vdev->mesh_vdev)) {
 		DP_TX_FREE_SINGLE_BUF(vdev->pdev->soc, tx_desc->nbuf);
 	} else {
 		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 			if ((peer->peer_ids[0] != HTT_INVALID_PEER) &&
-					((peer->bss_peer &&
-					!(vdev->osif_proxy_arp(
-						vdev->osif_vdev,
-						nbuf))) ||
-					peer->nawds_enabled)) {
+#ifdef WDS_VENDOR_EXTENSION
+			/*
+			 * . if 3-addr STA, then send on BSS Peer
+			 * . if Peer WDS enabled and accept 4-addr mcast,
+			 * send mcast on that peer only
+			 * . if Peer WDS enabled and accept 4-addr ucast,
+			 * send ucast on that peer only
+			 */
+			((peer->bss_peer && num_peers_3addr && is_mcast) ||
+			 (peer->wds_enabled &&
+				  ((is_mcast && peer->wds_ecm.wds_tx_mcast_4addr) ||
+				   (is_ucast && peer->wds_ecm.wds_tx_ucast_4addr))))) {
+#else
+			((peer->bss_peer &&
+			  !(vdev->osif_proxy_arp(vdev->osif_vdev, nbuf))) ||
+				 peer->nawds_enabled)) {
+#endif
 				peer_id = DP_INVALID_PEER;
 
 				if (peer->nawds_enabled) {

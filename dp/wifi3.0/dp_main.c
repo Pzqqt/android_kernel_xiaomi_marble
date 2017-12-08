@@ -5328,8 +5328,81 @@ QDF_STATUS dp_update_config_parameters(struct cdp_soc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_txrx_set_wds_rx_policy() - API to store datapath
+ *                            config parameters
+ * @vdev_handle - datapath vdev handle
+ * @cfg: ini parameter handle
+ *
+ * Return: status
+ */
+#ifdef WDS_VENDOR_EXTENSION
+void
+dp_txrx_set_wds_rx_policy(
+		struct cdp_vdev *vdev_handle,
+		u_int32_t val)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_peer *peer;
+	if (vdev->opmode == wlan_op_mode_ap) {
+		/* for ap, set it on bss_peer */
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (peer->bss_peer) {
+				peer->wds_ecm.wds_rx_filter = 1;
+				peer->wds_ecm.wds_rx_ucast_4addr = (val & WDS_POLICY_RX_UCAST_4ADDR) ? 1:0;
+				peer->wds_ecm.wds_rx_mcast_4addr = (val & WDS_POLICY_RX_MCAST_4ADDR) ? 1:0;
+				break;
+			}
+		}
+	} else if (vdev->opmode == wlan_op_mode_sta) {
+		peer = TAILQ_FIRST(&vdev->peer_list);
+		peer->wds_ecm.wds_rx_filter = 1;
+		peer->wds_ecm.wds_rx_ucast_4addr = (val & WDS_POLICY_RX_UCAST_4ADDR) ? 1:0;
+		peer->wds_ecm.wds_rx_mcast_4addr = (val & WDS_POLICY_RX_MCAST_4ADDR) ? 1:0;
+	}
+}
+
+/**
+ * dp_txrx_peer_wds_tx_policy_update() - API to set tx wds policy
+ *
+ * @peer_handle - datapath peer handle
+ * @wds_tx_ucast: policy for unicast transmission
+ * @wds_tx_mcast: policy for multicast transmission
+ *
+ * Return: void
+ */
+void
+dp_txrx_peer_wds_tx_policy_update(struct cdp_peer *peer_handle,
+		int wds_tx_ucast, int wds_tx_mcast)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	if (wds_tx_ucast || wds_tx_mcast) {
+		peer->wds_enabled = 1;
+		peer->wds_ecm.wds_tx_ucast_4addr = wds_tx_ucast;
+		peer->wds_ecm.wds_tx_mcast_4addr = wds_tx_mcast;
+	} else {
+		peer->wds_enabled = 0;
+		peer->wds_ecm.wds_tx_ucast_4addr = 0;
+		peer->wds_ecm.wds_tx_mcast_4addr = 0;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+			FL("Policy Update set to :\
+				peer->wds_enabled %d\
+				peer->wds_ecm.wds_tx_ucast_4addr %d\
+				peer->wds_ecm.wds_tx_mcast_4addr %d\n"),
+				peer->wds_enabled, peer->wds_ecm.wds_tx_ucast_4addr,
+				peer->wds_ecm.wds_tx_mcast_4addr);
+	return;
+}
+#endif
+
 static struct cdp_wds_ops dp_ops_wds = {
 	.vdev_set_wds = dp_vdev_set_wds,
+#ifdef WDS_VENDOR_EXTENSION
+	.txrx_set_wds_rx_policy = dp_txrx_set_wds_rx_policy,
+	.txrx_wds_peer_tx_policy_update = dp_txrx_peer_wds_tx_policy_update,
+#endif
 };
 
 /*

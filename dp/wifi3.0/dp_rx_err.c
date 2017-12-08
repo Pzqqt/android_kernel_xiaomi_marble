@@ -494,6 +494,16 @@ skip_mec_check:
 		goto fail;
 	}
 
+	if (!dp_wds_rx_policy_check(rx_desc->rx_buf_start, vdev, peer,
+				hal_rx_msdu_end_da_is_mcbc_get(rx_desc->rx_buf_start))) {
+		QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_ERROR,
+				FL("mcast Policy Check Drop pkt"));
+		/* Drop & free packet */
+		qdf_nbuf_free(nbuf);
+		goto fail;
+	}
+
 	/* WDS Source Port Learning */
 	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
 		dp_rx_wds_srcport_learn(soc, rx_desc->rx_buf_start, peer, nbuf);

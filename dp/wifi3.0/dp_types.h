@@ -1217,6 +1217,17 @@ enum {
 	dp_sec_ucast
 };
 
+#ifdef WDS_VENDOR_EXTENSION
+typedef struct {
+	uint8_t	wds_tx_mcast_4addr:1,
+		wds_tx_ucast_4addr:1,
+		wds_rx_filter:1,      /* enforce rx filter */
+		wds_rx_ucast_4addr:1, /* when set, accept 4addr unicast frames    */
+		wds_rx_mcast_4addr:1;  /* when set, accept 4addr multicast frames  */
+
+} dp_ecm_policy;
+#endif
+
 /* Peer structure for data path state */
 struct dp_peer {
 	/* VDEV to which this peer is associated */
@@ -1265,7 +1276,8 @@ struct dp_peer {
 	/* NAWDS Flag and Bss Peer bit */
 	uint8_t nawds_enabled:1,
 				bss_peer:1,
-				wapi:1;
+				wapi:1,
+				wds_enabled:1;
 
 	/* MCL specific peer local id */
 	uint16_t local_id;
@@ -1280,6 +1292,10 @@ struct dp_peer {
 
 	TAILQ_HEAD(, dp_ast_entry) ast_entry_list;
 	/* TBD */
+
+#ifdef WDS_VENDOR_EXTENSION
+	dp_ecm_policy wds_ecm;
+#endif
 };
 
 #ifdef CONFIG_WIN

@@ -571,6 +571,9 @@ struct cdp_wds_ops {
 	void
 		(*txrx_set_wds_rx_policy)(struct cdp_vdev *vdev,
 				u_int32_t val);
+	void
+		(*txrx_wds_peer_tx_policy_update)(struct cdp_peer *peer,
+				int wds_tx_ucast, int wds_tx_mcast);
 	int (*vdev_set_wds)(void *vdev, uint32_t val);
 };
 
