@@ -665,6 +665,15 @@ extern int
 		   uint32_t *msdu_count);
 
 /**
+ * @brief Return the maximum number of available msdus currently
+ *
+ * @param pdev - the HTT instance the rx data was received on
+ */
+extern int
+(*htt_rx_offload_msdu_cnt)(
+    htt_pdev_handle pdev);
+
+/**
  * @brief Return a linked list of buffers holding one MSDU
  *  In some systems the buffers are delivered along with offload delivery
  *  indication message itself, while in other systems the buffers are uploaded

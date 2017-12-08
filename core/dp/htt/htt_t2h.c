@@ -254,7 +254,7 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	}
 	case HTT_T2H_MSG_TYPE_RX_OFFLOAD_DELIVER_IND:
 	{
-		int msdu_cnt;
+		uint16_t msdu_cnt;
 
 		msdu_cnt =
 			HTT_RX_OFFLOAD_DELIVER_IND_MSDU_CNT_GET(*msg_word);

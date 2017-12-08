@@ -920,13 +920,24 @@ ol_rx_inspect(struct ol_txrx_vdev_t *vdev,
 
 void
 ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
-				  qdf_nbuf_t msg, int msdu_cnt)
+				  qdf_nbuf_t msg, uint16_t msdu_cnt)
 {
 	int vdev_id, peer_id, tid;
 	qdf_nbuf_t head_buf, tail_buf, buf;
 	struct ol_txrx_peer_t *peer;
 	uint8_t fw_desc;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
+
+	if (msdu_cnt > htt_rx_offload_msdu_cnt(htt_pdev)) {
+		ol_txrx_err("%s: invalid msdu_cnt=%u\n",
+			__func__,
+			msdu_cnt);
+
+		if (pdev->cfg.is_high_latency)
+			htt_rx_desc_frame_free(htt_pdev, msg);
+
+		return;
+	}
 
 	while (msdu_cnt) {
 		if (!htt_rx_offload_msdu_pop(htt_pdev, msg, &vdev_id, &peer_id,
