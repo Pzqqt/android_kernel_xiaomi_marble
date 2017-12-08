@@ -77,7 +77,7 @@ enum roc_state {
  * @p2p_soc_obj: Pointer to SoC global p2p private object
  * @vdev_id:     Vdev id on which this request has come
  * @scan_id:     Scan id given by scan component for this roc req
- * @cookie:      Cookie which is given to supplicant for this roc req
+ * @tx_ctx:      TX context if this ROC is for tx MGMT
  * @chan:        Chan for which this RoC has been requested
  * @phy_mode:    PHY mode
  * @duration:    Duration for the RoC
@@ -90,7 +90,7 @@ struct p2p_roc_context {
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	uint32_t vdev_id;
 	uint32_t scan_id;
-	uint64_t cookie;
+	void *tx_ctx;
 	uint8_t chan;
 	uint8_t phy_mode;
 	uint32_t duration;
@@ -134,6 +134,20 @@ QDF_STATUS p2p_mgmt_rx_action_ops(struct wlan_objmgr_psoc *psoc,
  */
 struct p2p_roc_context *p2p_find_current_roc_ctx(
 	struct p2p_soc_priv_obj *p2p_soc_obj);
+
+/**
+ * p2p_find_roc_by_tx_ctx() - Find out roc context by tx context
+ * @p2p_soc_obj: p2p psoc private object
+ * @cookie: cookie is the key to find out roc context
+ *
+ * This function find out roc context by tx context from p2p psoc
+ * private object
+ *
+ * Return: Pointer to roc context - success
+ *         NULL                   - failure
+ */
+struct p2p_roc_context *p2p_find_roc_by_tx_ctx(
+	struct p2p_soc_priv_obj *p2p_soc_obj, uint64_t cookie);
 
 /**
  * p2p_restart_roc_timer() - Restarts roc timer
