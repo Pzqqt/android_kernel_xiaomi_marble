@@ -412,6 +412,7 @@ dp_rx_wds_srcport_learn(struct dp_soc *soc,
 #endif
 
 uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t nbuf);
+void dp_rx_process_mic_error(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr);
 
 #define DP_RX_LIST_APPEND(head, tail, elem) \
 	do {                                                \

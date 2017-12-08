@@ -673,7 +673,7 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
  *
  * return: void
  */
-static void
+void
 dp_rx_process_mic_error(struct dp_soc *soc,
 			qdf_nbuf_t nbuf,
 			uint8_t *rx_tlv_hdr)
