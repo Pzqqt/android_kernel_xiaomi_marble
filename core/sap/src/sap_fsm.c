@@ -1428,12 +1428,25 @@ void sap_dfs_set_current_channel(void *ctx)
 		return;
 	}
 
+	if (WLAN_REG_IS_24GHZ_CH(sap_ctx->channel))
+		ic_flags |= IEEE80211_CHAN_2GHZ;
+	else
+		ic_flags |= IEEE80211_CHAN_5GHZ;
+
+	if (wlan_reg_is_dfs_ch(pdev, sap_ctx->channel))
+		ic_flagext |= IEEE80211_CHAN_DFS;
+
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-		  FL("freq=%d, channel=%d, seg0=%d, seg1=%d, flags=%d"),
-		  ic_freq, ic_ieee, vht_seg0, vht_seg1, ic_flags);
+		  FL("freq=%d, channel=%d, seg0=%d, seg1=%d, flags=0x%x, ext flags=0x%x"),
+		  ic_freq, ic_ieee, vht_seg0, vht_seg1, ic_flags, ic_flagext);
 
 	tgt_dfs_set_current_channel(pdev, ic_freq, ic_flags,
 			ic_flagext, ic_ieee, vht_seg0, vht_seg1);
+
+	if (wlan_reg_is_dfs_ch(pdev, sap_ctx->channel)) {
+		tgt_dfs_get_radars(pdev);
+		tgt_dfs_radar_enable(pdev, 0, 0);
+	}
 }
 
 /*
