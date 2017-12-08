@@ -74,7 +74,8 @@ int apr_tal_close(struct apr_svc_ch_dev *apr_ch);
 int apr_tal_rx_intents_config(struct apr_svc_ch_dev *apr_ch,
 		int num_of_intents, uint32_t size);
 int apr_tal_init(void);
-
+int apr_tal_start_rx_rt(struct apr_svc_ch_dev *apr_ch);
+int apr_tal_end_rx_rt(struct apr_svc_ch_dev *apr_ch);
 
 struct apr_svc_ch_dev {
 	void               *handle;
