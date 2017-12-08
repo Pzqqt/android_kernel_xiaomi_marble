@@ -1082,7 +1082,7 @@ static int wma_egap_info_status_event(void *handle, u_int8_t *event,
 	buf_ptr = (uint8_t *)egap_info_event;
 	buf_ptr += sizeof(wmi_ap_ps_egap_info_event_fixed_param);
 	chainmask_event = (wmi_ap_ps_egap_info_chainmask_list *)buf_ptr;
-	WMA_LOGI("mac_id: %d, status: %d, tx_mask: %x, rx_mask: %d",
+	WMA_LOGD("mac_id: %d, status: %d, tx_mask: %x, rx_mask: %d",
 		 chainmask_event->mac_id,
 		 egap_info_event->status,
 		 chainmask_event->tx_chainmask,
