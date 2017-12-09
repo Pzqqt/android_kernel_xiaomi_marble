@@ -1676,22 +1676,13 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 	uint8_t antenna_mode;
 
-	/* Reuse same pdev for module start/stop or SSR */
-	if (((hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) ||
-		(hdd_get_conparam() == QDF_GLOBAL_MONITOR_MODE) ||
-	    !cds_is_driver_loading()) && (hdd_ctx->hdd_pdev != NULL)) {
-		hdd_debug("Reuse pdev for module start/stop or SSR pdev_id = %u",
-			hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
-		/* Restore pdev to MAC/WMA contexts */
-		sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
+	ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to create pdev; errno:%d", ret);
+		QDF_BUG(0);
 	} else {
-		ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
-		if (ret) {
-			hdd_err("pdev creation fails!");
-			QDF_BUG(0);
-		} else
-			hdd_debug("New pdev has been created with pdev_id = %u",
-				hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
+		hdd_debug("New pdev has been created with pdev_id = %u",
+			hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
 	}
 
 	if (cds_cfg) {
@@ -2479,6 +2470,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 post_disable:
 	cds_post_disable();
+	hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 
 cds_txrx_free:
 	cds_dp_close(hdd_ctx->hdd_psoc);
@@ -6172,10 +6164,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 #ifdef FEATURE_WLAN_CH_AVOID
 	mutex_destroy(&hdd_ctx->avoid_freq_lock);
 #endif
-
-	driver_status = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
-	if (driver_status)
-		hdd_err("Pdev delete failed");
 
 	driver_status = hdd_objmgr_release_and_destroy_psoc(hdd_ctx);
 	if (driver_status)
@@ -9916,6 +9904,19 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		QDF_ASSERT(0);
 	}
 
+	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to destroy pdev; errno:%d", ret);
+		QDF_ASSERT(0);
+	}
+
+	/*
+	 * Reset total mac phy during module stop such that during
+	 * next module start same psoc is used to populate new service
+	 * ready data
+	 */
+	hdd_ctx->hdd_psoc->total_mac_phy = 0;
+
 	qdf_status = cds_dp_close(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS DP: %d", qdf_status);
@@ -9957,12 +9958,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	/* Once the firmware sequence is completed reset this flag */
 	hdd_ctx->imps_enabled = false;
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
-	/*
-	 * Reset total mac phy during module stop such that during
-	 * next module start same psoc is used to populate new service
-	 * ready data
-	 */
-	hdd_ctx->hdd_psoc->total_mac_phy = 0;
 
 done:
 	hdd_ctx->stop_modules_in_progress = false;
@@ -10257,7 +10252,6 @@ err_wiphy_unregister:
 
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
-	hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 
 err_hdd_free_psoc:
 	hdd_green_ap_deinit(hdd_ctx);
