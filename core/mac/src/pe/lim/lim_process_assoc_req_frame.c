@@ -943,7 +943,7 @@ static bool lim_process_assoc_req_no_sta_ctx(tpAniSirGlobal mac_ctx,
 				mac_ctx->lim.maxStation);
 		lim_reject_association(mac_ctx, hdr->sa, sub_type, false,
 			(tAniAuthType) 0, 0, false,
-			(tSirResultCodes) eSIR_MAC_UNSPEC_FAILURE_STATUS,
+			eSIR_MAC_UNSPEC_FAILURE_STATUS,
 			session);
 		return false;
 	}
@@ -1414,7 +1414,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 
 		lim_reject_association(mac_ctx, hdr->sa,
 			sub_type, true, auth_type, peer_idx, false,
-			(tSirResultCodes)eSIR_MAC_UNSPEC_FAILURE_STATUS,
+			eSIR_MAC_UNSPEC_FAILURE_STATUS,
 			session);
 		pe_err("Delete dph hash entry");
 		if (dph_delete_hash_entry(mac_ctx, hdr->sa, sta_ds->assocId,
@@ -1499,7 +1499,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		pe_err("Couldn't get PMF SA Query retry interval value");
 		lim_reject_association(mac_ctx, hdr->sa, sub_type, true,
 			auth_type, peer_idx, false,
-			(tSirResultCodes) eSIR_MAC_UNSPEC_FAILURE_STATUS,
+			eSIR_MAC_UNSPEC_FAILURE_STATUS,
 			session);
 		return false;
 	}
@@ -1515,7 +1515,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		pe_err("could not create PMF SA Query timer");
 		lim_reject_association(mac_ctx, hdr->sa, sub_type,
 			true, auth_type, peer_idx, false,
-			(tSirResultCodes)eSIR_MAC_UNSPEC_FAILURE_STATUS,
+			eSIR_MAC_UNSPEC_FAILURE_STATUS,
 			session);
 		return false;
 	}
@@ -1576,7 +1576,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, tpPESession session,
 				sta_ds->mlmStaContext.subType, true,
 				sta_ds->mlmStaContext.authType,
 				sta_ds->assocId, true,
-				(tSirResultCodes)eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				eSIR_MAC_UNSPEC_FAILURE_STATUS,
 				session);
 
 			if (session->parsedAssocReq)
@@ -1607,8 +1607,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, tpPESession session,
 					sta_ds->mlmStaContext.subType, true,
 					sta_ds->mlmStaContext.authType,
 					sta_ds->assocId, true,
-					(tSirResultCodes)
-						eSIR_MAC_UNSPEC_FAILURE_STATUS,
+					eSIR_MAC_UNSPEC_FAILURE_STATUS,
 					session);
 
 				/* Restoring the state back. */
@@ -1630,8 +1629,7 @@ static bool lim_update_sta_ctx(tpAniSirGlobal mac_ctx, tpPESession session,
 					sta_ds->mlmStaContext.subType, true,
 					sta_ds->mlmStaContext.authType,
 					sta_ds->assocId, true,
-					(tSirResultCodes)
-						eSIR_MAC_WME_REFUSED_STATUS,
+					eSIR_MAC_WME_REFUSED_STATUS,
 					session);
 
 				/* Restoring the state back. */
@@ -1968,7 +1966,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		pe_err("PeerIdx not avaialble. Reject associaton");
 		lim_reject_association(mac_ctx, hdr->sa, sub_type,
 				true, auth_type, peer_idx, false,
-				(tSirResultCodes)eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				eSIR_MAC_UNSPEC_FAILURE_STATUS,
 				session);
 		goto error;
 	}
@@ -1988,7 +1986,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		lim_reject_association(mac_ctx, hdr->sa, sub_type,
 			true, auth_type, peer_idx, false,
-			(tSirResultCodes) eSIR_MAC_UNSPEC_FAILURE_STATUS,
+			eSIR_MAC_UNSPEC_FAILURE_STATUS,
 			session);
 		goto error;
 	}
