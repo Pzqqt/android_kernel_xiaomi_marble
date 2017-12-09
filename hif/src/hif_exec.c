@@ -27,7 +27,7 @@
 #define NAPI_BUDGET_TO_INTERNAL_BUDGET(n, s) \
 	(((n) << (s)) - 1)
 #define INTERNAL_BUDGET_TO_NAPI_BUDGET(n, s) \
-	(((n) >> (s)) + 1)
+	(((n) + 1) >> (s))
 
 static struct hif_exec_context *hif_exec_tasklet_create(void);
 
