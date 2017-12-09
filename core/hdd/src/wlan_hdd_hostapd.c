@@ -7609,6 +7609,12 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 		pIe = wlan_get_ie_ptr_from_eid(WLAN_EID_COUNTRY,
 					pBeacon->tail, pBeacon->tail_len);
 		if (pIe) {
+			if (pIe[1] < IEEE80211_COUNTRY_IE_MIN_LEN) {
+				hdd_err("Invalid Country IE len: %d", pIe[1]);
+				ret = -EINVAL;
+				goto error;
+			}
+
 			pConfig->ieee80211d = 1;
 			qdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
 			status = ucfg_reg_set_country(hdd_ctx->hdd_pdev,
