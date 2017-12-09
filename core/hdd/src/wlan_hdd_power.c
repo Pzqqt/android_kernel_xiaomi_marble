@@ -531,7 +531,7 @@ void hdd_enable_host_offloads(struct hdd_adapter *adapter,
 {
 	ENTER();
 
-	if (!pmo_ucfg_is_vdev_supports_offload(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_supports_offload(adapter->hdd_vdev)) {
 		hdd_info("offload is not supported on this vdev opmode: %d",
 			 adapter->device_mode);
 		goto out;
@@ -558,7 +558,7 @@ void hdd_disable_host_offloads(struct hdd_adapter *adapter,
 {
 	ENTER();
 
-	if (!pmo_ucfg_is_vdev_supports_offload(adapter->hdd_vdev)) {
+	if (!ucfg_pmo_is_vdev_supports_offload(adapter->hdd_vdev)) {
 		hdd_info("offload is not supported on this vdev opmode: %d",
 				adapter->device_mode);
 			goto out;
