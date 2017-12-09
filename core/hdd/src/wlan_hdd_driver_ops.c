@@ -1466,6 +1466,7 @@ static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
 static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 {
 	enum cds_driver_state driver_state;
+	struct hdd_context *hdd_ctx;
 
 	driver_state = cds_get_driver_state();
 
@@ -1482,6 +1483,10 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 	case PLD_FW_DOWN:
 		qdf_complete_wait_events();
 		cds_set_target_ready(false);
+		hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+		if (hdd_ctx != NULL)
+			wlan_cfg80211_cleanup_scan_queue(
+					hdd_ctx->hdd_pdev);
 		break;
 	case PLD_FW_READY:
 	default:
