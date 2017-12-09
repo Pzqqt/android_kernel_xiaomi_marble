@@ -263,8 +263,8 @@ bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx)
  * hdd_conn_get_connected_band() - get current connection radio band
  * @sta_ctx:    pointer to global HDD Station context
  *
- * Return: eCSR_BAND_24 or eCSR_BAND_5G based on current AP connection
- *	eCSR_BAND_ALL if not connected
+ * Return: BAND_2G or BAND_5G based on current AP connection
+ *	BAND_ALL if not connected
  */
 enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 {
@@ -277,7 +277,7 @@ enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx)
 		return BAND_2G;
 	else if (staChannel >= 36 && staChannel <= 184)
 		return BAND_5G;
-	else   /* If station is not connected return as eCSR_BAND_ALL */
+	else   /* If station is not connected return as BAND_ALL */
 		return BAND_ALL;
 }
 

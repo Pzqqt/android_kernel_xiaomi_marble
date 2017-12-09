@@ -241,9 +241,9 @@ static void populate_dot11f_tdls_offchannel_params(
 	}
 
 	if (IS_5G_CH(psessionEntry->currentOperChannel))
-		band = eCSR_BAND_5G;
+		band = BAND_5G;
 	else
-		band = eCSR_BAND_24;
+		band = BAND_2G;
 
 	nss_5g = QDF_MIN(pMac->vdev_type_nss_5g.tdls,
 			 pMac->user_configured_nss);
@@ -252,7 +252,7 @@ static void populate_dot11f_tdls_offchannel_params(
 
 	/* validating the channel list for DFS and 2G channels */
 	for (i = 0U; i < numChans; i++) {
-		if ((band == eCSR_BAND_5G) &&
+		if ((band == BAND_5G) &&
 		    (NSS_2x2_MODE == nss_5g) &&
 		    (NSS_1x1_MODE == nss_2g) &&
 		    (wlan_reg_is_dfs_ch(pMac->pdev, validChan[i]))) {
@@ -883,7 +883,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 						       &tdlsDisRsp.SuppChannels,
 						       &tdlsDisRsp.
 						       SuppOperatingClasses);
-		if (pMac->roam.configParam.bandCapability != eCSR_BAND_24) {
+		if (pMac->roam.configParam.bandCapability != BAND_2G) {
 			tdlsDisRsp.ht2040_bss_coexistence.present = 1;
 			tdlsDisRsp.ht2040_bss_coexistence.info_request = 1;
 		}
@@ -1248,7 +1248,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 						     &tdlsSetupReq.SuppChannels,
 						     &tdlsSetupReq.
 						     SuppOperatingClasses);
-		if (pMac->roam.configParam.bandCapability != eCSR_BAND_24) {
+		if (pMac->roam.configParam.bandCapability != BAND_2G) {
 			tdlsSetupReq.ht2040_bss_coexistence.present = 1;
 			tdlsSetupReq.ht2040_bss_coexistence.info_request = 1;
 		}
@@ -1694,7 +1694,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 						    &tdlsSetupRsp.SuppChannels,
 						    &tdlsSetupRsp.
 						    SuppOperatingClasses);
-		if (pMac->roam.configParam.bandCapability != eCSR_BAND_24) {
+		if (pMac->roam.configParam.bandCapability != BAND_2G) {
 			tdlsSetupRsp.ht2040_bss_coexistence.present = 1;
 			tdlsSetupRsp.ht2040_bss_coexistence.info_request = 1;
 		}

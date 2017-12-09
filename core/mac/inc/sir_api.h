@@ -420,12 +420,6 @@ typedef struct sSirSupportedRates {
 #endif
 } tSirSupportedRates, *tpSirSupportedRates;
 
-typedef enum eSirRFBand {
-	SIR_BAND_UNKNOWN,
-	SIR_BAND_2_4_GHZ,
-	SIR_BAND_5_GHZ,
-} tSirRFBand;
-
 typedef struct sSirRemainOnChnReq {
 	uint16_t messageType;
 	uint16_t length;

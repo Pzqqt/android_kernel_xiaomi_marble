@@ -1769,20 +1769,20 @@ static void wlan_hdd_cfg80211_start_pending_acs(struct work_struct *work);
 
 
 static void hdd_update_acs_channel_list(tsap_Config_t *sap_config,
-					eCsrBand band)
+					enum band_info band)
 {
 	int i, temp_count = 0;
 	int acs_list_count = sap_config->acs_cfg.ch_list_count;
 
 	for (i = 0; i < acs_list_count; i++) {
-		if (eCSR_BAND_24 == band) {
+		if (BAND_2G == band) {
 			if (WLAN_REG_IS_24GHZ_CH(
 				sap_config->acs_cfg.ch_list[i])) {
 				sap_config->acs_cfg.ch_list[temp_count] =
 					sap_config->acs_cfg.ch_list[i];
 				temp_count++;
 			}
-		} else if (eCSR_BAND_5G == band) {
+		} else if (BAND_5G == band) {
 			if (WLAN_REG_IS_5GHZ_CH(
 				sap_config->acs_cfg.ch_list[i])) {
 				sap_config->acs_cfg.ch_list[temp_count] =
@@ -1856,12 +1856,12 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 				sap_config->acs_cfg.band =
 					QCA_ACS_MODE_IEEE80211A;
 				hdd_update_acs_channel_list(sap_config,
-					eCSR_BAND_5G);
+					BAND_5G);
 			} else {
 				sap_config->acs_cfg.band =
 					QCA_ACS_MODE_IEEE80211G;
 				hdd_update_acs_channel_list(sap_config,
-					eCSR_BAND_24);
+					BAND_2G);
 			}
 		}
 	}
@@ -2178,25 +2178,25 @@ fail:
 
 static void hdd_get_scan_band(struct hdd_context *hdd_ctx,
 			      tsap_Config_t *sap_config,
-			      eCsrBand *band)
+			      enum band_info *band)
 {
 	/* Get scan band */
 	if ((sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211B) ||
 	   (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211G)) {
-		*band = eCSR_BAND_24;
+		*band = BAND_2G;
 	} else if (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211A) {
-		*band = eCSR_BAND_5G;
+		*band = BAND_5G;
 	} else if (sap_config->acs_cfg.band == QCA_ACS_MODE_IEEE80211ANY) {
-		*band = eCSR_BAND_ALL;
+		*band = BAND_ALL;
 	}
 	/* Auto is not supported currently */
-	if (!((*band == eCSR_BAND_24) || (eCSR_BAND_5G == *band))) {
+	if (!((*band == BAND_2G) || (BAND_5G == *band))) {
 		hdd_err("invalid band");
 		if (HDD_EXTERNAL_ACS_FREQ_BAND_24GHZ ==
 			hdd_ctx->config->external_acs_freq_band)
-			hdd_update_acs_channel_list(sap_config, eCSR_BAND_24);
+			hdd_update_acs_channel_list(sap_config, BAND_2G);
 		else
-			hdd_update_acs_channel_list(sap_config, eCSR_BAND_5G);
+			hdd_update_acs_channel_list(sap_config, BAND_5G);
 	}
 }
 
@@ -2230,7 +2230,7 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 	uint8_t vendor_weight_list[QDF_MAX_NUM_CHAN] = {0};
 	struct hdd_vendor_acs_chan_params acs_chan_params;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	eCsrBand band = eCSR_BAND_24;
+	enum band_info band = BAND_2G;
 	eCsrPhyMode phy_mode;
 	enum qca_wlan_vendor_attr_external_acs_policy acs_policy;
 	uint32_t i;
@@ -2260,12 +2260,12 @@ int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 				sap_config->acs_cfg.band =
 					QCA_ACS_MODE_IEEE80211A;
 				hdd_update_acs_channel_list(sap_config,
-					eCSR_BAND_5G);
+					BAND_5G);
 			} else {
 				sap_config->acs_cfg.band =
 					QCA_ACS_MODE_IEEE80211G;
 				hdd_update_acs_channel_list(sap_config,
-					eCSR_BAND_24);
+					BAND_2G);
 			}
 		}
 	}
@@ -9300,7 +9300,7 @@ static void wlan_hdd_get_chanlist_without_nol(struct hdd_adapter *adapter,
 int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 				       uint32_t *channel_count,
 				       uint8_t *channel_list,
-				       eCsrBand band)
+				       enum band_info band)
 {
 	tsap_Config_t *sap_config;
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -9322,11 +9322,11 @@ int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 
 	for (i = 0; i < chan_count; i++) {
 		if (*channel_count < QDF_MAX_NUM_CHAN) {
-			if ((eCSR_BAND_24 == band) &&
+			if ((BAND_2G == band) &&
 			    (WLAN_REG_IS_24GHZ_CH(tmp_chan_list[i]))) {
 				channel_list[*channel_count] = tmp_chan_list[i];
 				*channel_count += 1;
-			} else if ((eCSR_BAND_5G == band) &&
+			} else if ((BAND_5G == band) &&
 				(WLAN_REG_IS_5GHZ_CH(tmp_chan_list[i]))) {
 				channel_list[*channel_count] = tmp_chan_list[i];
 				*channel_count += 1;
@@ -9844,11 +9844,11 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 		}
 		operating_channel = adapter->session.ap.operating_channel;
 		if (IS_24G_CH(operating_channel))
-			sap_operating_band = eCSR_BAND_24;
+			sap_operating_band = BAND_2G;
 		else if (IS_5G_CH(operating_channel))
-			sap_operating_band = eCSR_BAND_5G;
+			sap_operating_band = BAND_5G;
 		else
-			sap_operating_band = eCSR_BAND_ALL;
+			sap_operating_band = BAND_ALL;
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node,
 				&next);
 		adapter_node = next;
@@ -12944,7 +12944,7 @@ struct hdd_context *hdd_cfg80211_wiphy_alloc(int priv_size)
  * private ioctl to change the band value
  */
 int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wiphy,
-		eCsrBand eBand)
+		enum band_info eBand)
 {
 	int i, j;
 	enum channel_state channelEnabledState;
@@ -12964,7 +12964,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 					band->channels[j].hw_value);
 
 			if (HDD_NL80211_BAND_2GHZ == i &&
-				eCSR_BAND_5G == eBand) {
+				BAND_5G == eBand) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 				/* Enable Social channels for P2P */
@@ -12980,7 +12980,7 @@ int wlan_hdd_cfg80211_update_band(struct hdd_context *hdd_ctx, struct wiphy *wip
 					IEEE80211_CHAN_DISABLED;
 				continue;
 			} else if (HDD_NL80211_BAND_5GHZ == i &&
-					eCSR_BAND_24 == eBand) {
+					BAND_2G == eBand) {
 				/* 2G only */
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;
@@ -13221,7 +13221,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			struct ieee80211_supported_band *band = wiphy->bands[i];
 
 			if (HDD_NL80211_BAND_2GHZ == i &&
-				eCSR_BAND_5G == pCfg->nBandCapability) {
+				BAND_5G == pCfg->nBandCapability) {
 				/* 5G only */
 #ifdef WLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 				/* Enable social channels for P2P */
@@ -13235,7 +13235,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 					IEEE80211_CHAN_DISABLED;
 				continue;
 			} else if (HDD_NL80211_BAND_5GHZ == i &&
-					eCSR_BAND_24 == pCfg->nBandCapability) {
+					BAND_2G == pCfg->nBandCapability) {
 				/* 2G only */
 				band->channels[j].flags |=
 					IEEE80211_CHAN_DISABLED;

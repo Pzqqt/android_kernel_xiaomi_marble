@@ -439,7 +439,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.
 	 */
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(channel))
+	if ((BAND_5G == lim_get_rf_band(channel))
 	    || ((mac_ctx->lim.gpLimMlmScanReq != NULL) &&
 		mac_ctx->lim.gpLimMlmScanReq->p2pSearch)
 		/*
@@ -855,7 +855,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(pe_session->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (pe_session->pePersona == QDF_P2P_GO_MODE)
 	    )
@@ -1066,7 +1066,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 	pe_debug("Sending an Add TS Request frame to");
 	lim_print_mac_addr(pMac, peerMacAddr, LOGD);
 
-	if ((SIR_BAND_5_GHZ ==
+	if ((BAND_5G ==
 	     lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE)
 	    || (psessionEntry->pePersona == QDF_P2P_GO_MODE)
@@ -1417,7 +1417,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     &add_ie[0], addn_ie_len);
 
-	if ((SIR_BAND_5_GHZ ==
+	if ((BAND_5G ==
 		lim_get_rf_band(pe_session->currentOperChannel)) ||
 			(pe_session->pePersona == QDF_P2P_CLIENT_MODE) ||
 			(pe_session->pePersona == QDF_P2P_GO_MODE))
@@ -1563,7 +1563,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 	pe_debug("Sending DELTS REQ (size %d) to ", nBytes);
 	lim_print_mac_addr(pMac, pMacHdr->da, LOGD);
 
-	if ((SIR_BAND_5_GHZ ==
+	if ((BAND_5G ==
 	     lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE)
 	    || (psessionEntry->pePersona == QDF_P2P_GO_MODE)
@@ -2039,7 +2039,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session->assocReqLen = payload;
 	}
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(pe_session->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(pe_session->currentOperChannel))
 	    || (pe_session->pePersona == QDF_P2P_CLIENT_MODE)
 	    || (pe_session->pePersona == QDF_P2P_GO_MODE)
 	    )
@@ -2416,10 +2416,10 @@ alloc_packet:
 			   frame, frame_len);
 
 	if ((NULL != session->ftPEContext.pFTPreAuthReq) &&
-	    (SIR_BAND_5_GHZ == lim_get_rf_band(
+	    (BAND_5G == lim_get_rf_band(
 	     session->ftPEContext.pFTPreAuthReq->preAuthchannelNum)))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	else if ((SIR_BAND_5_GHZ ==
+	else if ((BAND_5G ==
 		  lim_get_rf_band(session->currentOperChannel))
 		  || (session->pePersona == QDF_P2P_CLIENT_MODE)
 		  || (session->pePersona == QDF_P2P_GO_MODE))
@@ -2806,7 +2806,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		waitForAck, MAC_ADDR_ARRAY(pMacHdr->da),
 		MAC_ADDR_ARRAY(psessionEntry->selfMacAddr));
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
 	    ) {
@@ -2978,7 +2978,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(pMacHdr->da),
 		MAC_ADDR_ARRAY(psessionEntry->selfMacAddr));
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
 	    ) {
@@ -3503,7 +3503,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 			nStatus);
 	}
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
 	    ) {
@@ -3622,7 +3622,7 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 		 status);
 	}
 
-	if ((SIR_BAND_5_GHZ ==
+	if ((BAND_5G ==
 		lim_get_rf_band(session_entry->currentOperChannel)) ||
 		(session_entry->pePersona == QDF_P2P_CLIENT_MODE) ||
 		(session_entry->pePersona == QDF_P2P_GO_MODE)) {
@@ -3774,7 +3774,7 @@ lim_p2p_oper_chan_change_confirm_action_frame(tpAniSirGlobal mac_ctx,
 		 status);
 	}
 
-	if ((SIR_BAND_5_GHZ ==
+	if ((BAND_5G ==
 		lim_get_rf_band(session_entry->currentOperChannel)) ||
 		(session_entry->pePersona == QDF_P2P_CLIENT_MODE) ||
 		(session_entry->pePersona == QDF_P2P_GO_MODE)) {
@@ -3882,7 +3882,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 		pe_warn("There were warnings while packing a Operating Mode (0x%08x)",
 			nStatus);
 	}
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
 	    ) {
@@ -4015,7 +4015,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 	pe_debug("Sending a Neighbor Report Request to");
 	lim_print_mac_addr(pMac, peer, LOGD);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
 	    ) {
@@ -4163,7 +4163,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 	pe_warn("Sending a Link Report to");
 	lim_print_mac_addr(pMac, peer, LOGW);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) {
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
@@ -4349,7 +4349,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 	pe_warn("Sending a Radio Measure Report to");
 	lim_print_mac_addr(pMac, peer, LOGW);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
 	    ) {
@@ -4484,7 +4484,7 @@ tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *tran
 	pe_debug("Sending an SA Query Request from ");
 	lim_print_mac_addr(pMac, psessionEntry->selfMacAddr, LOGD);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
@@ -4615,7 +4615,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	pe_debug("Sending a SA Query Response to");
 	lim_print_mac_addr(pMac, peer, LOGD);
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(psessionEntry->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
 	    || (psessionEntry->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)
@@ -4761,7 +4761,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	}
 
 
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(session->currentOperChannel))
+	if ((BAND_5G == lim_get_rf_band(session->currentOperChannel))
 #ifdef WLAN_FEATURE_P2P
 	    || (session->pePersona == QDF_P2P_CLIENT_MODE) ||
 	    (session->pePersona == QDF_P2P_GO_MODE)

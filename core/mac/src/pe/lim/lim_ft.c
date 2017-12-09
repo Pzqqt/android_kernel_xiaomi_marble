@@ -595,7 +595,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->limRFBand = lim_get_rf_band(
 				pftSessionEntry->currentOperChannel);
 
-	if (pftSessionEntry->limRFBand == SIR_BAND_2_4_GHZ) {
+	if (pftSessionEntry->limRFBand == BAND_2G) {
 		cbEnabledMode = pMac->roam.configParam.channelBondingMode24GHz;
 	} else {
 		cbEnabledMode = pMac->roam.configParam.channelBondingMode5GHz;
@@ -721,7 +721,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_11W
 	pftSessionEntry->limRmfEnabled = psessionEntry->limRmfEnabled;
 #endif
-	if ((pftSessionEntry->limRFBand == SIR_BAND_2_4_GHZ) &&
+	if ((pftSessionEntry->limRFBand == BAND_2G) &&
 		(pftSessionEntry->htSupportedChannelWidthSet ==
 		eHT_CHANNEL_WIDTH_40MHZ))
 		lim_init_obss_params(pMac, pftSessionEntry);

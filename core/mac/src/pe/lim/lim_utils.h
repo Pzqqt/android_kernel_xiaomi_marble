@@ -279,17 +279,17 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 struct csr_roam_session *lim_get_session_by_macaddr(tpAniSirGlobal mac_ctx,
 		tSirMacAddr self_mac);
 
-static inline tSirRFBand lim_get_rf_band(uint8_t channel)
+static inline enum band_info lim_get_rf_band(uint8_t channel)
 {
 	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&
 			(channel <= SIR_11A_CHANNEL_END))
-		return SIR_BAND_5_GHZ;
+		return BAND_5G;
 
 	if ((channel >= SIR_11B_CHANNEL_BEGIN) &&
 			(channel <= SIR_11B_CHANNEL_END))
-		return SIR_BAND_2_4_GHZ;
+		return BAND_2G;
 
-	return SIR_BAND_UNKNOWN;
+	return BAND_UNKNOWN;
 }
 
 static inline tSirRetStatus

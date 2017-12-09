@@ -226,7 +226,7 @@ QDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 	if (pRemainChlCmd == NULL)
 		return QDF_STATUS_E_FAILURE;
 
-	if (SIR_BAND_5_GHZ == csr_get_rf_band(channel))
+	if (BAND_5G == csr_get_rf_band(channel))
 		phyMode = WNI_CFG_PHY_MODE_11A;
 	else
 		phyMode = WNI_CFG_PHY_MODE_11G;

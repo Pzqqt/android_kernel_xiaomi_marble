@@ -1699,7 +1699,7 @@ struct hdd_context {
 	uint8_t bt_a2dp_active:1;
 	uint8_t bt_vo_active:1;
 	struct hdd_nud_stats_context nud_stats_context;
-	eCsrBand curr_band;
+	enum band_info curr_band;
 	bool fw_mem_dump_enabled;
 	bool imps_enabled;
 	int user_configured_pkt_filter_rules;
@@ -2526,7 +2526,7 @@ bool hdd_set_connection_in_progress(bool value);
 int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 				       uint32_t *channel_count,
 				       uint8_t *channel_list,
-				       eCsrBand band);
+				       enum band_info band);
 /**
  * wlan_hdd_init_chan_info() - initialize channel info variables
  * @hdd_ctx: hdd ctx

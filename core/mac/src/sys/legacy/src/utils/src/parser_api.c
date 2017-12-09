@@ -355,12 +355,12 @@ populate_dot11f_country(tpAniSirGlobal pMac,
 	uint32_t len, maxlen;
 	uint16_t item;
 	tSirRetStatus nSirStatus;
-	tSirRFBand rfBand;
+	enum band_info rfBand;
 	uint8_t temp[CFG_MAX_STR_LEN], code[3];
 
 	if (psessionEntry->lim11dEnabled) {
 		lim_get_rf_band_new(pMac, &rfBand, psessionEntry);
-		if (rfBand == SIR_BAND_5_GHZ) {
+		if (rfBand == BAND_5G) {
 			item = WNI_CFG_MAX_TX_POWER_5;
 			maxlen = WNI_CFG_MAX_TX_POWER_5_LEN;
 		} else {
@@ -496,10 +496,10 @@ populate_dot11f_erp_info(tpAniSirGlobal pMac,
 {
 	tSirRetStatus nSirStatus;
 	uint32_t val;
-	tSirRFBand rfBand = SIR_BAND_UNKNOWN;
+	enum band_info rfBand = BAND_UNKNOWN;
 
 	lim_get_rf_band_new(pMac, &rfBand, psessionEntry);
-	if (SIR_BAND_2_4_GHZ == rfBand) {
+	if (BAND_2G == rfBand) {
 		pDot11f->present = 1;
 
 		val = psessionEntry->cfgProtection.fromllb;
