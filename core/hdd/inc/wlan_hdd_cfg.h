@@ -7460,8 +7460,8 @@ enum hdd_link_speed_rpt_type {
 
 #define CFG_SAP_MAX_NO_PEERS                       "gSoftApMaxPeers"
 #define CFG_SAP_MAX_NO_PEERS_MIN                   (1)
-#define CFG_SAP_MAX_NO_PEERS_MAX                   (32)
-#define CFG_SAP_MAX_NO_PEERS_DEFAULT               (32)
+#define CFG_SAP_MAX_NO_PEERS_MAX                   (SIR_SAP_MAX_NUM_PEERS)
+#define CFG_SAP_MAX_NO_PEERS_DEFAULT               (SIR_SAP_MAX_NUM_PEERS)
 
 /*
  * <ini>

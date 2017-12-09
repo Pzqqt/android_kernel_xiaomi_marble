@@ -59,6 +59,8 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include <dot11f.h>
 #include "wlan_policy_mgr_api.h"
 
+#define SIR_MAX_SUPPORTED_BSS 5
+
 #define OFFSET_OF(structType, fldName)   (&((structType *)0)->fldName)
 
 /* / Max supported channel list */
@@ -129,6 +131,9 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 
 /* Maximum peer station number query one time */
 #define MAX_PEER_STA 12
+
+/* Maximum number of peers for SAP */
+#define SIR_SAP_MAX_NUM_PEERS 32
 
 /**
  * enum sir_conn_update_reason: Reason for conc connection update
