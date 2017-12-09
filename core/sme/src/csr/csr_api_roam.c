@@ -1036,7 +1036,8 @@ QDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
 		csr_roam_state_change(pMac, eCSR_ROAMING_STATE_STOP, sessionId);
-		pMac->roam.curSubState[sessionId] = eCSR_ROAM_SUBSTATE_NONE;
+		csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_NONE,
+					 sessionId);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -1168,6 +1169,7 @@ static QDF_STATUS csr_roam_open(tpAniSirGlobal pMac)
 			sme_err("cannot allocate memory for packetdump timer");
 			break;
 		}
+		spin_lock_init(&pMac->roam.roam_state_lock);
 	} while (0);
 	return status;
 }
@@ -1386,8 +1388,9 @@ void csr_roam_substate_change(tpAniSirGlobal pMac,
 		curSubState[sessionId]));
 	if (pMac->roam.curSubState[sessionId] == NewSubstate)
 		return;
-
+	spin_lock(&pMac->roam.roam_state_lock);
 	pMac->roam.curSubState[sessionId] = NewSubstate;
+	spin_unlock(&pMac->roam.roam_state_lock);
 }
 
 enum csr_roam_state csr_roam_state_change(tpAniSirGlobal pMac,
@@ -12416,8 +12419,14 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 						   neighborRoamState),
 		mac_trace_getcsr_roam_sub_state(pMac->roam.
 						curSubState[pInfo->sessionId]));
-
+	spin_lock(&pMac->roam.roam_state_lock);
 	if (CSR_IS_WAIT_FOR_KEY(pMac, pInfo->sessionId)) {
+		/* Change the substate so command queue is unblocked. */
+		if (CSR_ROAM_SESSION_MAX > pInfo->sessionId)
+			pMac->roam.curSubState[pInfo->sessionId] =
+						eCSR_ROAM_SUBSTATE_NONE;
+		spin_unlock(&pMac->roam.roam_state_lock);
+
 		if (csr_neighbor_roam_is_handoff_in_progress(pMac,
 						pInfo->sessionId)) {
 			/*
@@ -12431,12 +12440,6 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 		}
 		sme_debug("SME pre-auth state timeout");
 
-		/* Change the substate so command queue is unblocked. */
-		if (CSR_ROAM_SESSION_MAX > pInfo->sessionId) {
-			csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_NONE,
-						 pInfo->sessionId);
-		}
-
 		if (csr_is_conn_state_connected_infra(pMac, pInfo->sessionId)) {
 			csr_roam_link_up(pMac,
 					 pSession->connectedProfile.bssid);
@@ -12449,6 +12452,8 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 		} else {
 			sme_err("session not found");
 		}
+	} else {
+		spin_unlock(&pMac->roam.roam_state_lock);
 	}
 
 }
