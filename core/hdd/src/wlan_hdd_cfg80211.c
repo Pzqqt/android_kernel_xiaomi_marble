@@ -16170,6 +16170,26 @@ static enum eAniAuthType wlan_hdd_get_fils_auth_type(
 	}
 }
 
+static bool wlan_hdd_fils_data_in_limits(struct cfg80211_connect_params *req)
+{
+	hdd_debug("seq=%d auth=%d lengths: user=%zu rrk=%zu realm=%zu",
+		  req->fils_erp_next_seq_num, req->auth_type,
+		  req->fils_erp_username_len, req->fils_erp_rrk_len,
+		  req->fils_erp_realm_len);
+	if (!req->fils_erp_rrk_len || !req->fils_erp_realm_len ||
+	    !req->fils_erp_username_len ||
+	    req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH ||
+	    req->fils_erp_realm_len > FILS_MAX_REALM_LEN ||
+	    req->fils_erp_username_len > FILS_MAX_KEYNAME_NAI_LENGTH) {
+		hdd_err("length incorrect, user=%zu rrk=%zu realm=%zu",
+			req->fils_erp_username_len, req->fils_erp_rrk_len,
+			req->fils_erp_realm_len);
+		return false;
+	}
+
+	return true;
+}
+
 /**
  * wlan_hdd_cfg80211_set_fils_config() - set fils config params during connect
  * @adapter: Pointer to adapter
@@ -16206,7 +16226,8 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 	 * auth type. Hence we need to allow the connection to go
 	 * through in that case as well. Below is_fils_connection
 	 * flag is propagated down to CSR and PE sessions through
-	 * the JOIN request.
+	 * the JOIN request. As the flag is used, do not free the
+	 * memory allocated to fils_con_info and return success.
 	 */
 	if (req->auth_type != NL80211_AUTHTYPE_FILS_SK) {
 		roam_profile->fils_con_info->is_fils_connection = false;
@@ -16224,17 +16245,8 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 		hdd_err("invalid auth type for fils %d", req->auth_type);
 		goto fils_conn_fail;
 	}
-
-	hdd_debug("seq=%d auth=%d lengths: user=%zu rrk=%zu realm=%zu",
-		req->fils_erp_next_seq_num, req->auth_type,
-		req->fils_erp_username_len, req->fils_erp_rrk_len,
-		req->fils_erp_realm_len);
-	if (req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH ||
-		req->fils_erp_realm_len > FILS_MAX_REALM_LEN ||
-		req->fils_erp_username_len > FILS_MAX_KEYNAME_NAI_LENGTH) {
-		hdd_err("FILS info length limit exceeded");
-		goto fils_conn_fail;
-	}
+	if (!wlan_hdd_fils_data_in_limits(req))
+	    goto fils_conn_fail;
 
 	roam_profile->fils_con_info->is_fils_connection = true;
 	roam_profile->fils_con_info->sequence_number =
@@ -16265,17 +16277,11 @@ static int wlan_hdd_cfg80211_set_fils_config(struct hdd_adapter *adapter,
 			roam_profile->fils_con_info->key_nai_length);
 		goto fils_conn_fail;
 	}
-	if (req->fils_erp_username_len) {
-		buf = roam_profile->fils_con_info->keyname_nai;
-		qdf_mem_copy(buf,
-			req->fils_erp_username,
-			req->fils_erp_username_len);
-		buf += req->fils_erp_username_len;
-		qdf_mem_copy(buf, "@", sizeof(char));
-		buf += sizeof(char);
-		qdf_mem_copy(buf, req->fils_erp_realm,
-			req->fils_erp_realm_len);
-	}
+	buf = roam_profile->fils_con_info->keyname_nai;
+	qdf_mem_copy(buf, req->fils_erp_username, req->fils_erp_username_len);
+	buf += req->fils_erp_username_len;
+	*buf++ = '@';
+	qdf_mem_copy(buf, req->fils_erp_realm, req->fils_erp_realm_len);
 
 	return 0;
 
@@ -20189,17 +20195,8 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 		fils_info->is_fils_connection = true;
 
 	if (changed & UPDATE_FILS_ERP_INFO) {
-		if ((req->fils_erp_username_len >
-		     FILS_MAX_KEYNAME_NAI_LENGTH) ||
-		    (req->fils_erp_rrk_len > FILS_MAX_RRK_LENGTH) ||
-		    (req->fils_erp_realm_len > FILS_MAX_REALM_LEN)) {
-			hdd_err("Invalid length: username len %zd, rrk len %zd realm len %zd",
-				req->fils_erp_username_len,
-				req->fils_erp_rrk_len,
-				req->fils_erp_realm_len);
-			return -EINVAL;
-		}
-
+		if (!wlan_hdd_fils_data_in_limits(req))
+		    return -EINVAL;
 		fils_info->key_nai_length = req->fils_erp_username_len +
 					    sizeof(char) +
 					    req->fils_erp_realm_len;
@@ -20237,12 +20234,9 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 		roam_profile->fils_con_info->auth_type = auth_type;
 	}
 
-	hdd_debug("fils conn update: changed %x is_fils %d seq=%d auth=%d user_len=%zu rrk_len=%zu realm_len=%zu keyname nai len %d",
-			changed, roam_profile->fils_con_info->
-			is_fils_connection, req->fils_erp_next_seq_num,
-			req->auth_type, req->fils_erp_username_len,
-			req->fils_erp_rrk_len, req->fils_erp_realm_len,
-			roam_profile->fils_con_info->key_nai_length);
+	hdd_debug("fils conn update: changed %x is_fils %d keyname nai len %d",
+		  changed, roam_profile->fils_con_info->is_fils_connection,
+		  roam_profile->fils_con_info->key_nai_length);
 
 	if (!adapter->fast_roaming_allowed ||
 	    !hdd_ctx->is_fils_roaming_supported) {
