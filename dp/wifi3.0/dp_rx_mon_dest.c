@@ -341,7 +341,6 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	/* The nbuf has been pulled just beyond the status and points to the
 	   * payload
 	*/
-
 	msdu_orig = head_msdu;
 
 	rx_desc = qdf_nbuf_data(msdu_orig);

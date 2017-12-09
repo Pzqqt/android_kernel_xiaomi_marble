@@ -504,8 +504,8 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 		break;
 	}
 
-	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			cached_ext_desc, HAL_TX_EXT_DESC_WITH_META_DATA);
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			   cached_ext_desc, HAL_TX_EXT_DESC_WITH_META_DATA);
 
 	hal_tx_ext_desc_sync(&cached_ext_desc[0],
 			msdu_ext_desc->vaddr);
@@ -2242,7 +2242,7 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_peer *peer = NULL;
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"-------------------- \n"
 				"Tx Completion Stats: \n"
 				"-------------------- \n"
@@ -2329,10 +2329,7 @@ static void dp_tx_comp_process_desc(struct dp_soc *soc,
 		peer = dp_peer_find_by_id(soc, ts.peer_id);
 		length = qdf_nbuf_len(desc->nbuf);
 
-		/* Process Tx status in descriptor */
-		if (soc->process_tx_status ||
-				(desc->vdev && desc->vdev->mesh_vdev))
-			dp_tx_comp_process_tx_status(desc, length);
+		dp_tx_comp_process_tx_status(desc, length);
 
 		dp_tx_comp_free_buf(soc, desc);
 
@@ -2464,7 +2461,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 
 			/* Collect hw completion contents */
 			hal_tx_comp_desc_sync(tx_comp_hal_desc,
-					&tx_desc->comp, soc->process_tx_status);
+					&tx_desc->comp, 1);
 
 		}
 

@@ -257,7 +257,6 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 	uint8_t valid_mac_entries;
 	struct tdls_conn_tracker_mac_table *mac_table;
 
-	tdls_debug("enter ");
 	if (QDF_STATUS_SUCCESS != tdls_get_vdev_objects(vdev, &tdls_vdev_obj,
 						   &tdls_soc_obj))
 		return;
@@ -296,7 +295,6 @@ void tdls_update_rx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 
 rx_cnt_return:
 	qdf_spin_unlock_bh(&tdls_soc_obj->tdls_ct_spinlock);
-	tdls_debug("exit: rx pkt count %d ", mac_table[mac_cnt].rx_packet_cnt);
 	return;
 }
 
@@ -309,7 +307,6 @@ void tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 	uint8_t valid_mac_entries;
 	struct tdls_conn_tracker_mac_table *mac_table;
 
-	tdls_debug("enter ");
 	if (QDF_STATUS_SUCCESS != tdls_get_vdev_objects(vdev, &tdls_vdev_obj,
 						   &tdls_soc_obj))
 		return;
@@ -349,7 +346,6 @@ void tdls_update_tx_pkt_cnt(struct wlan_objmgr_vdev *vdev,
 
 tx_cnt_return:
 	qdf_spin_unlock_bh(&tdls_soc_obj->tdls_ct_spinlock);
-	tdls_debug("exit: tx pkt count %d", mac_table[mac_cnt].tx_packet_cnt);
 	return;
 }
 

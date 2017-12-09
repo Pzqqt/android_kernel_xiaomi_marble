@@ -494,12 +494,11 @@ enum QDF_OPMODE {
 	QDF_MAX_NO_OF_MODE
 };
 
-/* for backward compatability with the legacy definition */
+/* for backward compatibility with the legacy definition */
 #define tQDF_ADAPTER_MODE QDF_OPMODE
 
 /**
- * enum tQDF_GLOBAL_CON_MODE - global config mode when
- * driver is loaded.
+ * enum QDF_GLOBAL_MODE - global mode when driver is loaded.
  *
  * @QDF_GLOBAL_MISSION_MODE: mission mode (STA, SAP...)
  * @QDF_GLOBAL_MONITOR_MODE: Monitor Mode
@@ -509,7 +508,7 @@ enum QDF_OPMODE {
  * @QDF_GLOBAL_QVIT_MODE: QVIT global mode
  * @QDF_GLOBAL_MAX_MODE: Max place holder
  */
-enum tQDF_GLOBAL_CON_MODE {
+enum QDF_GLOBAL_MODE {
 	QDF_GLOBAL_MISSION_MODE,
 	QDF_GLOBAL_MONITOR_MODE = 4,
 	QDF_GLOBAL_FTM_MODE = 5,
@@ -519,6 +518,9 @@ enum tQDF_GLOBAL_CON_MODE {
 	QDF_GLOBAL_QVIT_MODE = 9,
 	QDF_GLOBAL_MAX_MODE
 };
+
+/* for backward compatibility with the legacy definition */
+#define tQDF_GLOBAL_CON_MODE QDF_GLOBAL_MODE
 
 #define  QDF_IS_EPPING_ENABLED(mode) (mode == QDF_GLOBAL_EPPING_MODE)
 

@@ -49,6 +49,7 @@
 #include "hal_rx.h"
 
 #define MAX_BW 4
+#define MAX_RETRIES 4
 #define MAX_RECEPTION_TYPES 4
 #define REPT_MU_MIMO 1
 #define REPT_MU_OFDMA_MIMO 3

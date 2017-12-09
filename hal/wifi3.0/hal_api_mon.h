@@ -386,7 +386,9 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
 	rs->sgi = sgi_hw_to_cdp[reg_value];
+#if !defined(QCA_WIFI_QCA6290_11AX)
 	rs->nr_ant = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, NSS);
+#endif
 
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, PKT_TYPE);
 	switch (reg_value) {
@@ -400,8 +402,12 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 		reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
 			RECEIVE_BANDWIDTH);
 		rs->vht_flag_values2 = reg_value;
+#if !defined(QCA_WIFI_QCA6290_11AX)
 		nss = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, NSS);
 		nss = nss + 1;
+#else
+		nss = 0;
+#endif
 		rs->vht_flag_values3[0] = (rs->mcs << 4) | nss ;
 		break;
 	case HAL_RX_PKT_TYPE_11AX:
@@ -729,7 +735,13 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.rssi_comb = HAL_RX_GET(rssi_info_tlv,
 			PHYRX_RSSI_LEGACY_35, RSSI_COMB);
 		ppdu_info->rx_status.bw = HAL_RX_GET(rssi_info_tlv,
+#if !defined(QCA_WIFI_QCA6290_11AX)
 			PHYRX_RSSI_LEGACY_35, RECEIVE_BANDWIDTH);
+#else
+			PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
+#endif
+		ppdu_info->rx_status.preamble_type = HAL_RX_GET(rssi_info_tlv,
+			PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
 		ppdu_info->rx_status.he_re = 0;
 
 		value = HAL_RX_GET(rssi_info_tlv,

@@ -1693,7 +1693,7 @@ void *dp_find_peer_by_addr_and_vdev(struct cdp_pdev *pdev_handle,
 		return NULL;
 
 	*local_id = peer->local_id;
-	DP_TRACE(INFO, "peer %pK vdev %pK lcoal id %d", peer, vdev, *local_id);
+	DP_TRACE(INFO, "peer %pK vdev %pK local id %d", peer, vdev, *local_id);
 
 	/* ref_cnt is incremented inside dp_peer_find_hash_find().
 	 * Decrement it here.
@@ -1734,8 +1734,7 @@ void *dp_peer_find_by_local_id(struct cdp_pdev *pdev_handle, uint8_t local_id)
 	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 	peer = pdev->local_peer_ids.map[local_id];
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
-	DP_TRACE(INFO, "peer %pK lcoal id %d",
-			peer, local_id);
+	DP_TRACE(DEBUG, "peer %pK local id %d", peer, local_id);
 	return peer;
 }
 
@@ -1868,7 +1867,7 @@ int dp_get_peer_state(void *peer_handle)
 {
 	struct dp_peer *peer = peer_handle;
 
-	DP_TRACE(INFO, "peer %pK stats %d", peer, peer->state);
+	DP_TRACE(DEBUG, "peer %pK stats %d", peer, peer->state);
 	return peer->state;
 }
 

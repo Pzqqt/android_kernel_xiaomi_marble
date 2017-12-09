@@ -367,16 +367,16 @@ struct dp_tx_ext_desc_elem_s *dp_tx_ext_desc_alloc(struct dp_soc *soc,
 {
 	struct dp_tx_ext_desc_elem_s *c_elem;
 
-	TX_DESC_LOCK_LOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 	if (soc->tx_ext_desc[desc_pool_id].num_free <= 0) {
-		TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+		qdf_spin_unlock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 		return NULL;
 	}
 	c_elem = soc->tx_ext_desc[desc_pool_id].freelist;
 	soc->tx_ext_desc[desc_pool_id].freelist =
 		soc->tx_ext_desc[desc_pool_id].freelist->next;
 	soc->tx_ext_desc[desc_pool_id].num_free--;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 	return c_elem;
 }
 
@@ -391,11 +391,11 @@ struct dp_tx_ext_desc_elem_s *dp_tx_ext_desc_alloc(struct dp_soc *soc,
 static inline void dp_tx_ext_desc_free(struct dp_soc *soc,
 	struct dp_tx_ext_desc_elem_s *elem, uint8_t desc_pool_id)
 {
-	TX_DESC_LOCK_LOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 	elem->next = soc->tx_ext_desc[desc_pool_id].freelist;
 	soc->tx_ext_desc[desc_pool_id].freelist = elem;
 	soc->tx_ext_desc[desc_pool_id].num_free++;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 	return;
 }
 
@@ -431,11 +431,11 @@ static inline void dp_tx_ext_desc_free_multiple(struct dp_soc *soc,
 	/* caller should always guarantee atleast list of num_free nodes */
 	qdf_assert_always(tail);
 
-	TX_DESC_LOCK_LOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 	tail->next = soc->tx_ext_desc[desc_pool_id].freelist;
 	soc->tx_ext_desc[desc_pool_id].freelist = head;
 	soc->tx_ext_desc[desc_pool_id].num_free += num_free;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_ext_desc[desc_pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_ext_desc[desc_pool_id].lock);
 
 	return;
 }
@@ -456,14 +456,14 @@ static inline struct qdf_tso_seg_elem_t *dp_tx_tso_desc_alloc(
 {
 	struct qdf_tso_seg_elem_t *tso_seg = NULL;
 
-	TX_DESC_LOCK_LOCK(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_tso_desc[pool_id].lock);
 	if (soc->tx_tso_desc[pool_id].freelist) {
 		soc->tx_tso_desc[pool_id].num_free--;
 		tso_seg = soc->tx_tso_desc[pool_id].freelist;
 		soc->tx_tso_desc[pool_id].freelist =
 			soc->tx_tso_desc[pool_id].freelist->next;
 	}
-	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_tso_desc[pool_id].lock);
 
 	return tso_seg;
 }
@@ -482,11 +482,11 @@ static inline struct qdf_tso_seg_elem_t *dp_tx_tso_desc_alloc(
 static inline void dp_tx_tso_desc_free(struct dp_soc *soc,
 		uint8_t pool_id, struct qdf_tso_seg_elem_t *tso_seg)
 {
-	TX_DESC_LOCK_LOCK(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_tso_desc[pool_id].lock);
 	tso_seg->next = soc->tx_tso_desc[pool_id].freelist;
 	soc->tx_tso_desc[pool_id].freelist = tso_seg;
 	soc->tx_tso_desc[pool_id].num_free++;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_tso_desc[pool_id].lock);
 }
 
 static inline
@@ -495,14 +495,14 @@ struct qdf_tso_num_seg_elem_t  *dp_tso_num_seg_alloc(struct dp_soc *soc,
 {
 	struct qdf_tso_num_seg_elem_t *tso_num_seg = NULL;
 
-	TX_DESC_LOCK_LOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_tso_num_seg[pool_id].lock);
 	if (soc->tx_tso_num_seg[pool_id].freelist) {
 		soc->tx_tso_num_seg[pool_id].num_free--;
 		tso_num_seg = soc->tx_tso_num_seg[pool_id].freelist;
 		soc->tx_tso_num_seg[pool_id].freelist =
 			soc->tx_tso_num_seg[pool_id].freelist->next;
 	}
-	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_tso_num_seg[pool_id].lock);
 
 	return tso_num_seg;
 }
@@ -511,11 +511,11 @@ static inline
 void dp_tso_num_seg_free(struct dp_soc *soc,
 		uint8_t pool_id, struct qdf_tso_num_seg_elem_t *tso_num_seg)
 {
-	TX_DESC_LOCK_LOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_tso_num_seg[pool_id].lock);
 	tso_num_seg->next = soc->tx_tso_num_seg[pool_id].freelist;
 	soc->tx_tso_num_seg[pool_id].freelist = tso_num_seg;
 	soc->tx_tso_num_seg[pool_id].num_free++;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_tso_num_seg[pool_id].lock);
 }
 #endif
 

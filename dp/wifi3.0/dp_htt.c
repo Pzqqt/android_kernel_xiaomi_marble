@@ -74,16 +74,28 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		return;
 
 	DP_STATS_INC_PKT(peer, tx.comp_pkt,
-			num_msdu, ppdu->success_bytes);
+			num_msdu, (ppdu->success_bytes +
+				ppdu->retry_bytes + ppdu->failed_bytes));
 	DP_STATS_INC(peer, tx.tx_failed, ppdu->failed_msdus);
-	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], 1);
-	DP_STATS_INC(peer, tx.bw[ppdu->bw], 1);
+	DP_STATS_UPD(peer, tx.tx_rate, ppdu->tx_rate);
+	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], num_msdu);
+	DP_STATS_INC(peer, tx.bw[ppdu->bw], num_msdu);
 	DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
-	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], 1);
-	DP_STATS_INC(peer, tx.stbc, ppdu->stbc);
-	DP_STATS_INC(peer, tx.ldpc, ppdu->ldpc);
+	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
+	DP_STATS_INCC(peer, tx.stbc, num_msdu, ppdu->stbc);
+	DP_STATS_INCC(peer, tx.ldpc, num_msdu, ppdu->ldpc);
 	DP_STATS_INC_PKT(peer, tx.tx_success, ppdu->success_msdus,
 			ppdu->success_bytes);
+	if (ppdu->is_mcast) {
+		DP_STATS_INC_PKT(peer, tx.mcast, num_msdu, (ppdu->success_bytes
+					+ ppdu->retry_bytes +
+					ppdu->failed_bytes));
+	} else {
+		DP_STATS_INC_PKT(peer, tx.ucast, num_msdu, (ppdu->success_bytes
+					+ ppdu->retry_bytes +
+					ppdu->failed_bytes));
+	}
+
 	DP_STATS_INC(peer, tx.retries,
 			(ppdu->long_retries + ppdu->short_retries));
 	DP_STATS_INCC(peer,
@@ -1119,6 +1131,45 @@ fail0:
 	return QDF_STATUS_E_FAILURE;
 }
 
+#if defined(CONFIG_WIN) && WDI_EVENT_ENABLE
+static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
+					struct dp_soc *soc, qdf_nbuf_t htt_msg)
+
+{
+	uint32_t pdev_id;
+	uint32_t *msg_word = NULL;
+	uint32_t msg_remain_len = 0;
+
+	msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
+
+	/*COOKIE MSB*/
+	pdev_id = *(msg_word + 2);
+
+	/* stats message length + 16 size of HTT header*/
+	msg_remain_len = qdf_min(htt_stats->msg_len + 16,
+				(uint32_t)DP_EXT_MSG_LENGTH);
+
+	dp_wdi_event_handler(WDI_EVENT_HTT_STATS, soc,
+			msg_word,  msg_remain_len,
+			WDI_NO_VAL, pdev_id);
+
+	if (htt_stats->msg_len >= DP_EXT_MSG_LENGTH) {
+		htt_stats->msg_len -= DP_EXT_MSG_LENGTH;
+	}
+	/* Need to be freed here as WDI handler will
+	 * make a copy of pkt to send data to application
+	 */
+	qdf_nbuf_free(htt_msg);
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_stats,
+					struct dp_soc *soc, qdf_nbuf_t htt_msg)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
 /**
  * dp_process_htt_stat_msg(): Process the list of buffers of HTT EXT stats
  * @htt_stats: htt stats info
@@ -1139,7 +1190,8 @@ fail0:
  *
  * return: void
  */
-static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats)
+static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
+					struct dp_soc *soc)
 {
 	htt_tlv_tag_t tlv_type = 0xff;
 	qdf_nbuf_t htt_msg = NULL;
@@ -1149,11 +1201,19 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats)
 	uint32_t msg_remain_len = 0;
 	uint32_t tlv_remain_len = 0;
 	uint32_t *tlv_start;
+	int cookie_val;
 
 	/* Process node in the HTT message queue */
 	while ((htt_msg = qdf_nbuf_queue_remove(&htt_stats->msg))
 		!= NULL) {
 		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
+		cookie_val = *(msg_word + 1);
+		if (cookie_val) {
+			if (dp_send_htt_stat_resp(htt_stats, soc, htt_msg)
+					== QDF_STATUS_SUCCESS) {
+				continue;
+			}
+		}
 		/* read 5th word */
 		msg_word = msg_word + 4;
 		msg_remain_len = qdf_min(htt_stats->msg_len,
@@ -1303,8 +1363,7 @@ void htt_t2h_stats_handler(void *context)
 	rem_stats = --soc->htt_stats.num_stats;
 	qdf_spin_unlock_bh(&soc->htt_stats.lock);
 
-	dp_process_htt_stat_msg(&htt_stats);
-
+	dp_process_htt_stat_msg(&htt_stats, soc);
 	/* If there are more stats to process, schedule stats work again */
 	if (rem_stats)
 		qdf_sched_work(0, &soc->htt_stats.work);
@@ -1381,9 +1440,13 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 	else
 		ppdu_desc->frame_type = CDP_PPDU_FTYPE_CTRL;
 
-	ppdu_desc->ppdu_start_timestamp = dp_stats_buf->ppdu_start_tstmp_us;
-	ppdu_desc->ppdu_end_timestamp = dp_stats_buf->ppdu_sch_end_tstmp_us;
-	tag_buf += 6;
+	tag_buf += 2;
+	ppdu_desc->tx_duration = *tag_buf;
+	tag_buf += 3;
+	ppdu_desc->ppdu_start_timestamp = *tag_buf;
+	ppdu_desc->ppdu_end_timestamp = 0; /*TODO: value to be provided by FW */
+	tag_buf++;
+
 	freq = HTT_PPDU_STATS_COMMON_TLV_CHAN_MHZ_GET(*tag_buf);
 	if (freq != ppdu_desc->channel) {
 		soc = pdev->soc;
@@ -1392,6 +1455,7 @@ static void dp_process_ppdu_stats_common_tlv(struct dp_pdev *pdev,
 			pdev->operating_channel =
 		soc->cdp_soc.ol_ops->freq_to_channel(pdev->osif_pdev, freq);
 	}
+
 	ppdu_desc->phy_mode = HTT_PPDU_STATS_COMMON_TLV_PHY_MODE_GET(*tag_buf);
 }
 
@@ -1493,6 +1557,7 @@ static void dp_process_ppdu_stats_user_rate_tlv(struct dp_pdev *pdev,
 		HTT_PPDU_STATS_USER_RATE_TLV_PPDU_TYPE_GET(*tag_buf);
 
 	tag_buf++;
+	ppdu_user_desc->tx_rate = *tag_buf;
 
 	ppdu_user_desc->ltf_size =
 		HTT_PPDU_STATS_USER_RATE_TLV_LTF_SIZE_GET(*tag_buf);
@@ -1656,6 +1721,8 @@ static void dp_process_ppdu_stats_user_cmpltn_common_tlv(
 
 	ppdu_user_desc->short_retries =
 	HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_SHORT_RETRY_GET(*tag_buf);
+	ppdu_user_desc->retry_msdus =
+		ppdu_user_desc->long_retries + ppdu_user_desc->short_retries;
 
 	ppdu_user_desc->is_ampdu =
 		HTT_PPDU_STATS_USER_CMPLTN_COMMON_TLV_IS_AMPDU_GET(*tag_buf);
@@ -1786,6 +1853,12 @@ static void dp_process_ppdu_stats_user_compltn_ack_ba_status_tlv(
 
 	ppdu_user_desc->num_msdu =
 	HTT_PPDU_STATS_USER_CMPLTN_ACK_BA_STATUS_TLV_NUM_MSDU_GET(*tag_buf);
+
+	ppdu_user_desc->success_msdus = ppdu_user_desc->num_msdu;
+
+	tag_buf += 2;
+	ppdu_user_desc->success_bytes = *tag_buf;
+
 }
 
 /*
@@ -1809,9 +1882,9 @@ static void dp_process_ppdu_stats_user_common_array_tlv(struct dp_pdev *pdev,
 	ppdu_desc =
 	(struct cdp_tx_completion_ppdu *)qdf_nbuf_data(pdev->tx_ppdu_info.buf);
 
-	tag_buf += 2;
+	tag_buf++;
 	dp_stats_buf = (struct htt_tx_ppdu_stats_info *)tag_buf;
-	tag_buf += 4;
+	tag_buf += 3;
 	peer_id =
 		HTT_PPDU_STATS_ARRAY_ITEM_TLV_PEERID_GET(*tag_buf);
 
@@ -1827,11 +1900,11 @@ static void dp_process_ppdu_stats_user_common_array_tlv(struct dp_pdev *pdev,
 
 	ppdu_user_desc = &ppdu_desc->user[curr_user_index];
 
-	ppdu_user_desc->success_bytes = dp_stats_buf->tx_success_bytes;
 	ppdu_user_desc->retry_bytes = dp_stats_buf->tx_retry_bytes;
 	ppdu_user_desc->failed_bytes = dp_stats_buf->tx_failed_bytes;
 
 	tag_buf++;
+
 	ppdu_user_desc->success_msdus =
 		HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_SUCC_MSDUS_GET(*tag_buf);
 	ppdu_user_desc->retry_bytes =
@@ -1839,8 +1912,45 @@ static void dp_process_ppdu_stats_user_common_array_tlv(struct dp_pdev *pdev,
 	tag_buf++;
 	ppdu_user_desc->failed_msdus =
 		HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_FAILED_MSDUS_GET(*tag_buf);
-	ppdu_user_desc->tx_duration =
-		HTT_PPDU_STATS_ARRAY_ITEM_TLV_TX_DUR_GET(*tag_buf);
+}
+
+/*
+ * dp_process_ppdu_stats_flush_tlv: Process
+ * htt_ppdu_stats_flush_tlv
+ * @pdev: DP PDEV handle
+ * @tag_buf: buffer containing the htt_ppdu_stats_flush_tlv
+ *
+ * return:void
+ */
+static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
+						uint32_t *tag_buf)
+{
+	uint32_t peer_id;
+	uint32_t drop_reason;
+	uint8_t tid;
+	uint32_t num_msdu;
+	struct dp_peer *peer;
+
+	tag_buf++;
+	drop_reason = *tag_buf;
+
+	tag_buf++;
+	num_msdu = HTT_PPDU_STATS_FLUSH_TLV_NUM_MSDU_GET(*tag_buf);
+
+	tag_buf++;
+	peer_id =
+		HTT_PPDU_STATS_FLUSH_TLV_SW_PEER_ID_GET(*tag_buf);
+
+	peer = dp_peer_find_by_id(pdev->soc, peer_id);
+	if (!peer)
+		return;
+
+	tid = HTT_PPDU_STATS_FLUSH_TLV_TID_NUM_GET(*tag_buf);
+
+	if (drop_reason == HTT_FLUSH_EXCESS_RETRIES) {
+		DP_STATS_INC(peer, tx.excess_retries[TID_TO_WME_AC(tid)],
+					num_msdu);
+	}
 }
 
 /*
@@ -1890,7 +2000,6 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 		uint32_t tlv_len)
 {
 	uint32_t tlv_type = HTT_STATS_TLV_TAG_GET(*tag_buf);
-
 	switch (tlv_type) {
 	case HTT_PPDU_STATS_COMMON_TLV:
 		dp_process_ppdu_stats_common_tlv(pdev, tag_buf);
@@ -1928,6 +2037,10 @@ static void dp_process_ppdu_tag(struct dp_pdev *pdev, uint32_t *tag_buf,
 		dp_process_ppdu_stats_user_common_array_tlv(pdev,
 							tag_buf);
 		break;
+	case HTT_PPDU_STATS_USR_COMPLTN_FLUSH_TLV:
+		dp_process_ppdu_stats_user_compltn_flush_tlv(pdev,
+								tag_buf);
+		break;
 	case HTT_PPDU_STATS_TX_MGMTCTRL_PAYLOAD_TLV:
 		dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(pdev,
 							tag_buf, tlv_len);
@@ -1955,15 +2068,10 @@ static QDF_STATUS dp_htt_process_tlv(struct dp_pdev *pdev,
 	ppdu_id = HTT_T2H_PPDU_STATS_PPDU_ID_GET(*msg_word);
 
 	msg_word = msg_word + 3;
-
 	while (length > 0) {
 		tlv_buf = (uint8_t *)msg_word;
 		tlv_type = HTT_STATS_TLV_TAG_GET(*msg_word);
 		tlv_length = HTT_STATS_TLV_LENGTH_GET(*msg_word);
-
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
-				"HTT PPDU Tag %d, Length %d", tlv_type,
-				tlv_length);
 
 		if (tlv_length == 0)
 			break;
@@ -1974,10 +2082,10 @@ static QDF_STATUS dp_htt_process_tlv(struct dp_pdev *pdev,
 		tlv_length += HTT_TLV_HDR_LEN;
 		dp_process_ppdu_tag(pdev, msg_word, tlv_length);
 
+
 		msg_word = (uint32_t *)((uint8_t *)tlv_buf + tlv_length);
 		length -= (tlv_length);
 	}
-
 	return status;
 }
 #endif /* FEATURE_PERPKT_INFO */
@@ -2522,7 +2630,7 @@ htt_soc_detach(void *htt_soc)
 QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask, uint32_t config_param_0,
 		uint32_t config_param_1, uint32_t config_param_2,
-		uint32_t config_param_3)
+		uint32_t config_param_3, int cookie_val)
 {
 	struct htt_soc *soc = pdev->soc->htt_handle;
 	struct dp_htt_htc_pkt *pkt;
@@ -2559,6 +2667,13 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+		"-----%s:%d----\n cookie <-> %d\n config_param_0 %u\n"
+		"config_param_1 %u\n config_param_2 %u\n"
+		"config_param_4 %u\n -------------\n",
+		__func__, __LINE__, cookie_val, config_param_0,
+		config_param_1, config_param_2,	config_param_3);
+
 	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
@@ -2588,6 +2703,20 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, config_param_3);
 
 	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, 0);
+
+	/* word 5 */
+	msg_word++;
+
+	/* word 6 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, cookie_val);
+
+	/* word 7 */
+	msg_word++;
+	*msg_word = 0;
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, pdev->pdev_id);
+
 	pkt = htt_htc_pkt_alloc(soc);
 	if (!pkt) {
 		qdf_nbuf_free(msg);

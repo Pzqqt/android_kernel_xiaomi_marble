@@ -62,6 +62,26 @@ QDF_STATUS dispatcher_init(void);
 QDF_STATUS dispatcher_deinit(void);
 
 /**
+ * dispatcher_enable(): global (above psoc) level component start
+ *
+ * Prepare components to service requests. Must only be called after
+ * dispatcher_init().
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dispatcher_enable(void);
+
+/**
+ * dispatcher_disable(): global (above psoc) level component stop
+ *
+ * Stop components from servicing requests. Must be called before
+ * scheduler_deinit().
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dispatcher_disable(void);
+
+/**
  * dispatcher_psoc_open(): API to trigger PSOC open for all new components
  * @psoc: psoc context
  *

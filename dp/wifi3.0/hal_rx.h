@@ -1394,6 +1394,7 @@ hal_rx_msdu_start_get_pkt_type(uint8_t *buf)
  * Return: uint32_t(nss)
  */
 
+#if !defined(QCA_WIFI_QCA6290_11AX)
 static inline uint32_t
 hal_rx_msdu_start_nss_get(uint8_t *buf)
 {
@@ -1405,6 +1406,13 @@ hal_rx_msdu_start_nss_get(uint8_t *buf)
 	nss = HAL_RX_MSDU_START_NSS_GET(msdu_start);
 	return nss;
 }
+#else
+static inline uint32_t
+hal_rx_msdu_start_nss_get(uint8_t *buf)
+{
+	return 0;
+}
+#endif
 
 #define HAL_RX_MPDU_GET_TODS(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
@@ -2556,7 +2564,6 @@ static void hal_rx_dump_msdu_start_tlv(struct rx_msdu_start *msdu_start,
 			"ip_frag: %d\n"
 			"tcp_only_ack: %d\n"
 			"da_is_bcast_mcast: %d\n"
-			"toeplitz_hash: %d\n"
 			"ip4_protocol_ip6_next_header: %d\n"
 			"toeplitz_hash_2_or_4: %d\n"
 			"flow_id_toeplitz: %d\n"
@@ -2567,7 +2574,10 @@ static void hal_rx_dump_msdu_start_tlv(struct rx_msdu_start *msdu_start,
 			"rate_mcs: %d\n"
 			"receive_bandwidth: %d\n"
 			"reception_type: %d\n"
+#if !defined(QCA_WIFI_QCA6290_11AX)
+			"toeplitz_hash: %d\n"
 			"nss: %d\n"
+#endif
 			"ppdu_start_timestamp: %d\n"
 			"sw_phy_meta_data: %d\n",
 		msdu_start->rxpcu_mpdu_filter_in_category,
@@ -2587,7 +2597,6 @@ static void hal_rx_dump_msdu_start_tlv(struct rx_msdu_start *msdu_start,
 		msdu_start->ip_frag,
 		msdu_start->tcp_only_ack,
 		msdu_start->da_is_bcast_mcast,
-		msdu_start->toeplitz_hash,
 		msdu_start->ip4_protocol_ip6_next_header,
 		msdu_start->toeplitz_hash_2_or_4,
 		msdu_start->flow_id_toeplitz,
@@ -2598,7 +2607,10 @@ static void hal_rx_dump_msdu_start_tlv(struct rx_msdu_start *msdu_start,
 		msdu_start->rate_mcs,
 		msdu_start->receive_bandwidth,
 		msdu_start->reception_type,
+#if !defined(QCA_WIFI_QCA6290_11AX)
+		msdu_start->toeplitz_hash,
 		msdu_start->nss,
+#endif
 		msdu_start->ppdu_start_timestamp,
 		msdu_start->sw_phy_meta_data);
 }

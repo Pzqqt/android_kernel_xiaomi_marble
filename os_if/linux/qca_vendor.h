@@ -245,6 +245,9 @@
  * @QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_STATUS: Get the current
  *     status of spectral scan. The status values are specified
  *     by enum qca_wlan_vendor_attr_spectral_scan_status.
+ * @QCA_NL80211_VENDOR_SUBCMD_HTT_STATS: Request the firmware
+ *     DP stats for a particualr stats type for response evnet
+ *     it carries the stats data sent from the FW
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -444,6 +447,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_DIAG_STATS = 159,
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_CAP_INFO = 160,
 	QCA_NL80211_VENDOR_SUBCMD_SPECTRAL_SCAN_GET_STATUS = 161,
+	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS = 162,
 };
 
 enum qca_wlan_vendor_tos {
@@ -863,6 +867,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_PWR_SAVE_FAIL_DETECTED_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS_INDEX,
 };
 
 /**

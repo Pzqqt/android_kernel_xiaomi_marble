@@ -4757,10 +4757,41 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 
 	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 			config_param0, config_param1, config_param2,
-			config_param3);
+			config_param3, 0);
 
 }
 
+/* This struct definition will be removed from here
+ * once it get added in FW headers*/
+struct httstats_cmd_req {
+    uint32_t    config_param0;
+    uint32_t    config_param1;
+    uint32_t    config_param2;
+    uint32_t    config_param3;
+    int cookie;
+    u_int8_t    stats_id;
+};
+
+/*
+ * dp_get_htt_stats: function to process the httstas request
+ * @pdev_handle: DP pdev handle
+ * @data: pointer to request data
+ * @data_len: length for request data
+ *
+ * return: void
+ */
+static void
+dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct httstats_cmd_req *req = (struct httstats_cmd_req *)data;
+
+	QDF_ASSERT(data_len == sizeof(struct httstats_cmd_req));
+	dp_h2t_ext_stats_msg_send(pdev, req->stats_id,
+				req->config_param0, req->config_param1,
+				req->config_param2, req->config_param3,
+				req->cookie);
+}
 /*
  * dp_set_pdev_param: function to set parameters in pdev
  * @pdev_handle: DP pdev handle
@@ -4903,7 +4934,7 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 	pdev = vdev->pdev;
 
 	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
-				req->param1, req->param2, req->param3);
+				req->param1, req->param2, req->param3, 0);
 }
 
 /**
@@ -5420,6 +5451,7 @@ static struct cdp_mon_ops dp_ops_mon = {
 static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.txrx_per_peer_stats = dp_get_host_peer_stats,
 	.get_fw_peer_stats = dp_get_fw_peer_stats,
+	.get_htt_stats = dp_get_htt_stats,
 	.txrx_enable_enhanced_stats = dp_enable_enhanced_stats,
 	.txrx_disable_enhanced_stats = dp_disable_enhanced_stats,
 	/* TODO */

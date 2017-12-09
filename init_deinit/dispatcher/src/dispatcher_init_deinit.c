@@ -780,6 +780,18 @@ QDF_STATUS dispatcher_deinit(void)
 }
 EXPORT_SYMBOL(dispatcher_deinit);
 
+QDF_STATUS dispatcher_enable(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(dispatcher_enable);
+
+QDF_STATUS dispatcher_disable(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(dispatcher_disable);
+
 QDF_STATUS dispatcher_psoc_open(struct wlan_objmgr_psoc *psoc)
 {
 	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_psoc_open(psoc))

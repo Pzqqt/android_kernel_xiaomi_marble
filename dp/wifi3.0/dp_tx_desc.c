@@ -246,7 +246,7 @@ QDF_STATUS dp_tx_ext_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	}
 
 	soc->tx_ext_desc[pool_id].num_free = num_elem;
-	TX_DESC_LOCK_CREATE(&soc->tx_ext_desc[pool_id].lock);
+	qdf_spinlock_create(&soc->tx_ext_desc[pool_id].lock);
 	return QDF_STATUS_SUCCESS;
 
 free_ext_link_desc_page:
@@ -281,7 +281,7 @@ QDF_STATUS dp_tx_ext_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 		qdf_get_dma_mem_context((&soc->tx_ext_desc[pool_id]), memctx),
 		false);
 
-	TX_DESC_LOCK_DESTROY(&soc->tx_ext_desc[pool_id].lock);
+	qdf_spinlock_destroy(&soc->tx_ext_desc[pool_id].lock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -331,7 +331,7 @@ QDF_STATUS dp_tx_tso_desc_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	TSO_DEBUG("Number of free descriptors: %u\n",
 			soc->tx_tso_desc[pool_id].num_free);
 	soc->tx_tso_desc[pool_id].pool_size = num_elem;
-	TX_DESC_LOCK_CREATE(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spinlock_create(&soc->tx_tso_desc[pool_id].lock);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -359,11 +359,11 @@ void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	struct qdf_tso_seg_elem_t *c_element;
 	struct qdf_tso_seg_elem_t *temp;
 
-	TX_DESC_LOCK_LOCK(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_tso_desc[pool_id].lock);
 	c_element = soc->tx_tso_desc[pool_id].freelist;
 
 	if (!c_element) {
-		TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
+		qdf_spin_unlock_bh(&soc->tx_tso_desc[pool_id].lock);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("Desc Pool Corrupt %d"), pool_id);
 			return;
@@ -380,8 +380,8 @@ void dp_tx_tso_desc_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	soc->tx_tso_desc[pool_id].freelist = NULL;
 	soc->tx_tso_desc[pool_id].num_free = 0;
 	soc->tx_tso_desc[pool_id].pool_size = 0;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_desc[pool_id].lock);
-	TX_DESC_LOCK_DESTROY(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_tso_desc[pool_id].lock);
+	qdf_spinlock_destroy(&soc->tx_tso_desc[pool_id].lock);
 	return;
 }
 /**
@@ -429,7 +429,7 @@ QDF_STATUS dp_tx_tso_num_seg_pool_alloc(struct dp_soc *soc, uint8_t pool_id,
 	}
 
 	soc->tx_tso_num_seg[pool_id].num_seg_pool_size = num_elem;
-	TX_DESC_LOCK_CREATE(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spinlock_create(&soc->tx_tso_num_seg[pool_id].lock);
 
 	return QDF_STATUS_SUCCESS;
 
@@ -457,11 +457,11 @@ void dp_tx_tso_num_seg_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	struct qdf_tso_num_seg_elem_t *c_element;
 	struct qdf_tso_num_seg_elem_t *temp;
 
-	TX_DESC_LOCK_LOCK(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spin_lock_bh(&soc->tx_tso_num_seg[pool_id].lock);
 	c_element = soc->tx_tso_num_seg[pool_id].freelist;
 
 	if (!c_element) {
-		TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
+		qdf_spin_unlock_bh(&soc->tx_tso_num_seg[pool_id].lock);
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			FL("Desc Pool Corrupt %d"), pool_id);
 			return;
@@ -478,8 +478,8 @@ void dp_tx_tso_num_seg_pool_free(struct dp_soc *soc, uint8_t pool_id)
 	soc->tx_tso_num_seg[pool_id].freelist = NULL;
 	soc->tx_tso_num_seg[pool_id].num_free = 0;
 	soc->tx_tso_num_seg[pool_id].num_seg_pool_size = 0;
-	TX_DESC_LOCK_UNLOCK(&soc->tx_tso_num_seg[pool_id].lock);
-	TX_DESC_LOCK_DESTROY(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spin_unlock_bh(&soc->tx_tso_num_seg[pool_id].lock);
+	qdf_spinlock_destroy(&soc->tx_tso_num_seg[pool_id].lock);
 	return;
 }
 
