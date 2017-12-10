@@ -4125,7 +4125,6 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 	int result;
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	unsigned int cpu_index;
-	uint32_t enabled;
 
 	if (!adapter || adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Invalid adapter: 0x%pK",
@@ -4140,14 +4139,6 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 		kfree_skb(skb);
 		return;
 	}
-
-	/*
-	 * Set PF_WAKE_UP_IDLE flag in the task structure
-	 * This task and any task woken by this will be waken to idle CPU
-	 */
-	enabled = sched_get_wake_up_idle(current);
-	if (!enabled)
-		sched_set_wake_up_idle(current, true);
 
 	skb->destructor = hdd_ipa_uc_rt_debug_destructor;
 	skb->dev = adapter->dev;
@@ -4164,12 +4155,6 @@ static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 		++adapter->hdd_stats.tx_rx_stats.rx_refused[cpu_index];
 
 	hdd_ipa->ipa_rx_net_send_count++;
-
-	/*
-	 * Restore PF_WAKE_UP_IDLE flag in the task structure
-	 */
-	if (!enabled)
-		sched_set_wake_up_idle(current, false);
 }
 
 /**
