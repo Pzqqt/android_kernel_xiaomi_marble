@@ -2526,6 +2526,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	}
 
 	sap_config = &adapter->session.ap.sap_config;
+	if (sap_config->acs_cfg.ch_list)
+		qdf_mem_free(sap_config->acs_cfg.ch_list);
 	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
 	status = hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data, data_len,
