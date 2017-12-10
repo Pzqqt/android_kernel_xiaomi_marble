@@ -1350,6 +1350,12 @@ static void sap_get_cac_dur_dfs_region(struct sap_context *sap_ctx,
 	}
 	*cac_duration_ms = DEFAULT_CAC_TIMEOUT;
 
+	if (*dfs_region != DFS_ETSI_REG) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			 FL("sapdfs: defult cac duration"));
+		return;
+	}
+
 	if (sap_is_channel_bonding_etsi_weather_channel(sap_ctx)) {
 		*cac_duration_ms = ETSI_WEATHER_CH_CAC_TIMEOUT;
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
