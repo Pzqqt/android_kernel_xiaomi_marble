@@ -230,6 +230,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	bool extracted_ext_cap_flag = false;
 	tDot11fIEExtCap extracted_ext_cap;
 	tSirRetStatus sir_status;
+	const uint8_t *qcn_ie = NULL;
 
 	/* The probe req should not send 11ac capabilieties if band is 2.4GHz,
 	 * unless enableVhtFor24GHz is enabled in INI. So if enableVhtFor24GHz
@@ -350,9 +351,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &pr.ExtCap,
 			pesession);
 
-	if (mac_ctx->roam.configParam.qcn_ie_support)
-		populate_dot11f_qcn_ie(&pr.QCN_IE);
-
 	if (IS_DOT11_MODE_HE(dot11mode) && NULL != pesession)
 		lim_update_session_he_capable(mac_ctx, pesession);
 
@@ -380,7 +378,13 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			extracted_ext_cap_flag =
 				(extracted_ext_cap.num_bytes > 0);
 		}
+		qcn_ie = wlan_get_vendor_ie_ptr_from_oui(SIR_MAC_QCN_OUI_TYPE,
+				SIR_MAC_QCN_OUI_TYPE_SIZE,
+				additional_ie, addn_ielen);
 	}
+	/* Add qcn_ie only if qcn ie is not present in additional_ie */
+	if (mac_ctx->roam.configParam.qcn_ie_support && !qcn_ie)
+		populate_dot11f_qcn_ie(&pr.QCN_IE);
 
 	/*
 	 * Extcap IE now support variable length, merge Extcap IE from addn_ie
