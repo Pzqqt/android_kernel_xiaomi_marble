@@ -6187,6 +6187,9 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
+	memdump_deinit();
+	hdd_driver_memdump_deinit();
+
 	qdf_nbuf_deinit_replenish_timer();
 
 	qdf_spinlock_destroy(&hdd_ctx->hdd_adapter_lock);
@@ -6243,9 +6246,6 @@ void __hdd_wlan_exit(void)
 		EXIT();
 		return;
 	}
-
-	memdump_deinit();
-	hdd_driver_memdump_deinit();
 
 	/* Do all the cleanup before deregistering the driver */
 	hdd_wlan_exit(hdd_ctx);
@@ -10211,10 +10211,13 @@ int hdd_wlan_startup(struct device *dev)
 	hdd_request_manager_init();
 	hdd_green_ap_init(hdd_ctx);
 
+	memdump_init();
+	hdd_driver_memdump_init();
+
 	ret = hdd_wlan_start_modules(hdd_ctx, NULL, false);
 	if (ret) {
 		hdd_err("Failed to start modules: %d", ret);
-		goto err_hdd_free_psoc;
+		goto err_memdump_deinit;
 	}
 
 	wlan_hdd_update_wiphy(hdd_ctx);
@@ -10280,9 +10283,6 @@ int hdd_wlan_startup(struct device *dev)
 	if (QDF_IS_STATUS_ERROR(status))
 		goto err_close_adapters;
 
-	memdump_init();
-	hdd_driver_memdump_init();
-
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
 	else
@@ -10317,7 +10317,10 @@ err_wiphy_unregister:
 err_stop_modules:
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
-err_hdd_free_psoc:
+err_memdump_deinit:
+	hdd_driver_memdump_deinit();
+	memdump_deinit();
+
 	hdd_green_ap_deinit(hdd_ctx);
 	hdd_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
