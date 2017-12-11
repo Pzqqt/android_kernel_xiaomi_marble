@@ -144,6 +144,43 @@ static uint8_t lim_get_nss_supported_by_beacon(tpSchBeaconStruct bcn,
 }
 
 /**
+ * lim_dump_vendor_ies() - Dumps all the vendor IEs
+ * @ie:         ie buffer
+ * @ie_len:     length of ie buffer
+ *
+ * This function dumps the vendor IEs present in the AP's IE buffer
+ *
+ * Return: none
+ */
+static
+void lim_dump_vendor_ies(uint8_t *ie, uint16_t ie_len)
+{
+	int32_t left = ie_len;
+	uint8_t *ptr = ie;
+	uint8_t elem_id, elem_len;
+
+	while (left >= 2) {
+		elem_id  = ptr[0];
+		elem_len = ptr[1];
+		left -= 2;
+		if (elem_len > left) {
+			pe_err("Invalid IEs eid: %d elem_len: %d left: %d",
+					elem_id, elem_len, left);
+			return;
+		}
+		if (SIR_MAC_EID_VENDOR == elem_id) {
+			pe_debug("Dumping Vendor IE of len %d", elem_len);
+			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE,
+					   QDF_TRACE_LEVEL_DEBUG,
+					   &ptr[2], elem_len);
+		}
+
+		left -= elem_len;
+		ptr += (elem_len + 2);
+	}
+}
+
+/**
  * lim_check_vendor_ap_present() - checks if the Vendor OUIs are present
  * in the IE buffer
  *
@@ -168,6 +205,7 @@ lim_check_vendor_ap_present(uint8_t *ie, uint16_t ie_len,
 	uint8_t elem_data[SIR_MAC_VENDOR_AP_2_DATA_LEN];
 
 	nss = lim_get_nss_supported_by_beacon(beacon_struct, session);
+	lim_dump_vendor_ies(ie, ie_len);
 	/*
 	 * for SIR_MAC_VENDOR_AP_1_OUI, check for Vendor OUI and if it is 2x2
 	 */
