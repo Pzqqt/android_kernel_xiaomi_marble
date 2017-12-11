@@ -1197,6 +1197,7 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	struct hal_reo_cmd_params params;
 	struct reo_desc_list_node *freedesc =
 		qdf_mem_malloc(sizeof(*freedesc));
+
 	if (!freedesc) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: malloc failed for freedesc: tid %d\n",
@@ -1222,14 +1223,31 @@ static int dp_rx_tid_delete_wifi3(struct dp_peer *peer, int tid)
 	params.std.addr_lo = rx_tid->hw_qdesc_paddr & 0xffffffff;
 	params.std.addr_hi = (uint64_t)(rx_tid->hw_qdesc_paddr) >> 32;
 
-	dp_reo_send_cmd(soc, CMD_FLUSH_CACHE, &params, dp_rx_tid_delete_cb,
-		(void *)freedesc);
-
 	rx_tid->hw_qdesc_vaddr_unaligned = NULL;
 	rx_tid->hw_qdesc_alloc_size = 0;
 	rx_tid->hw_qdesc_paddr = 0;
 
-	return 0;
+	if (QDF_STATUS_SUCCESS != dp_reo_send_cmd(soc,
+						  CMD_FLUSH_CACHE,
+						  &params,
+						  dp_rx_tid_delete_cb,
+						  (void *)freedesc)) {
+		/*
+		 * If dp_reo_send_cmd return failure, related TID queue desc
+		 * should be unmapped. Also locally reo_desc, together with
+		 * TID queue desc also need to be freed accordingly.
+		 *
+		 * Here invoke desc_free function directly to do clean up.
+		 */
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: fail to send REO cmd to flush cache: tid %d\n",
+			__func__, tid);
+		dp_reo_desc_free(soc, freedesc);
+
+		return -EBUSY;
+	} else {
+		return 0;
+	}
 }
 
 #ifdef DP_LFR
