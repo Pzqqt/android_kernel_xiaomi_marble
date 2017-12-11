@@ -351,6 +351,11 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc, struct dp_rx_desc *rx_desc,
 
 	pool_id = rx_desc->pool_id;
 
+	qdf_nbuf_set_rx_chfrag_start(nbuf,
+			hal_rx_msdu_end_first_msdu_get(rx_desc->rx_buf_start));
+	qdf_nbuf_set_rx_chfrag_end(nbuf,
+			hal_rx_msdu_end_last_msdu_get(rx_desc->rx_buf_start));
+
 	l2_hdr_offset =
 		hal_rx_msdu_end_l3_hdr_padding_get(rx_desc->rx_buf_start);
 
