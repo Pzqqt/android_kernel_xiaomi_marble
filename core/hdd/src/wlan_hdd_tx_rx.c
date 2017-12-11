@@ -546,7 +546,7 @@ static inline bool hdd_is_tx_allowed(struct sk_buff *skb, uint8_t peer_id)
 	if (OL_TXRX_PEER_STATE_CONN == peer_state &&
 	    ntohs(skb->protocol) == HDD_ETHERTYPE_802_1_X)
 		return true;
-	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Invalid peer state for Tx: %d"), peer_state);
 	return false;
 }
