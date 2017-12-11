@@ -196,14 +196,14 @@ void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle,
 
 static inline void restore_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
-	if (pPacket->PktInfo.AsTx.Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
-		qdf_nbuf_t netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
+	qdf_nbuf_t netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
 
+	if (pPacket->PktInfo.AsTx.Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
 		qdf_nbuf_unmap(target->osdev, netbuf, QDF_DMA_TO_DEVICE);
-		qdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
 		pPacket->PktInfo.AsTx.Flags &= ~HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 	}
 
+	qdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
 }
 
 static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
@@ -646,25 +646,21 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			 * Now that the HTC frame header has been added, the
 			 * netbuf can be mapped.  This only applies to non-data
 			 * frames, since data frames were already mapped as they
-			 * entered into the driver. Check the "FIXUP_NETBUF"
-			 * flag to see whether this is a data netbuf that is
-			 * already mapped, or a non-data netbuf that needs to be
-			 * mapped.
+			 * entered into the driver.
 			 */
-			if (pPacket->PktInfo.AsTx.
-			    Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
-				ret = qdf_nbuf_map(target->osdev,
-					GET_HTC_PACKET_NET_BUF_CONTEXT
-						(pPacket), QDF_DMA_TO_DEVICE);
-				if (ret != QDF_STATUS_SUCCESS) {
-					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-						("%s nbuf Map Fail Endpnt %pK\n",
-						__func__, pEndpoint));
-					HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue,
-								   pPacket);
-					status = QDF_STATUS_E_FAILURE;
-					break;
-				}
+			pPacket->PktInfo.AsTx.Flags |=
+				HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
+
+			ret = qdf_nbuf_map(target->osdev,
+				GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
+				QDF_DMA_TO_DEVICE);
+			if (ret != QDF_STATUS_SUCCESS) {
+				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+					("%s nbuf Map Fail Endpnt %pK\n",
+					__func__, pEndpoint));
+				HTC_PACKET_ENQUEUE_TO_HEAD(pPktQueue, pPacket);
+				status = QDF_STATUS_E_FAILURE;
+				break;
 			}
 		}
 
@@ -1496,15 +1492,14 @@ static inline QDF_STATUS __htc_send_pkt(HTC_HANDLE HTCHandle,
 		       HTC_FRAME_HDR_CONTROLBYTES1));
 
 	UNLOCK_HTC_TX(target);
+
 	/*
-	 * Now that the HTC frame header has been added, the netbuf can
-	 * be mapped.  This only applies to non-data frames, since data
-	 * frames were already mapped as they entered into the driver.
 	 * For flow control enabled endpoints mapping is done in
 	 * htc_issue_packets and for non flow control enabled endpoints
 	 * its done here.
 	 */
 	if (!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) {
+		pPacket->PktInfo.AsTx.Flags |= HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 		status = qdf_nbuf_map(target->osdev,
 				      GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
 				      QDF_DMA_TO_DEVICE);
@@ -1515,8 +1510,6 @@ static inline QDF_STATUS __htc_send_pkt(HTC_HANDLE HTCHandle,
 			return status;
 		}
 	}
-
-	pPacket->PktInfo.AsTx.Flags |= HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 
 	INIT_HTC_PACKET_QUEUE_AND_ADD(&pPktQueue, pPacket);
 #ifdef USB_HIF_SINGLE_PIPE_DATA_SCHED
