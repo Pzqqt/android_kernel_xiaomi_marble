@@ -556,6 +556,19 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static void
+wma_cdp_vdev_detach(ol_txrx_soc_handle soc,
+			tp_wma_handle wma_handle,
+			uint8_t vdev_id)
+{
+	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
+
+	cdp_vdev_detach(soc,
+		iface->handle, NULL, NULL);
+	iface->handle = NULL;
+	iface->is_vdev_valid = false;
+}
+
 static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 			struct del_sta_self_params *del_sta_self_req_param,
 			uint8_t generate_rsp)
@@ -575,20 +588,12 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	status = wmi_unified_vdev_delete_send(wma_handle->wmi_handle, vdev_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Unable to remove an interface");
-		cdp_vdev_detach(soc,
-			iface->handle, NULL, NULL);
-		iface->handle = NULL;
-		wma_handle->interfaces[vdev_id].is_vdev_valid = false;
 		goto out;
 	}
 
 	WMA_LOGD("vdev_id:%hu vdev_hdl:%pK", vdev_id, iface->handle);
 	if (!generate_rsp) {
 		WMA_LOGE("Call txrx detach w/o callback for vdev %d", vdev_id);
-		cdp_vdev_detach(soc,
-			iface->handle, NULL, NULL);
-		iface->handle = NULL;
-		wma_handle->interfaces[vdev_id].is_vdev_valid = false;
 		goto out;
 	}
 
@@ -609,10 +614,7 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 				     WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION);
 	}
 	WMA_LOGD("Call txrx detach with callback for vdev %d", vdev_id);
-	cdp_vdev_detach(soc,
-		iface->handle, NULL, NULL);
-	iface->handle = NULL;
-	wma_handle->interfaces[vdev_id].is_vdev_valid = false;
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 
 	/*
 	 * send the response immediately if WMI_SERVICE_SYNC_DELETE_CMDS
@@ -623,6 +625,10 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 		wma_vdev_detach_callback(iface);
 	return status;
 out:
+	WMA_LOGE("Call txrx detach callback for vdev %d, generate_rsp %u",
+		vdev_id, generate_rsp);
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+
 	if (iface->addBssStaContext)
 		qdf_mem_free(iface->addBssStaContext);
 	if (iface->staKeyParams)
