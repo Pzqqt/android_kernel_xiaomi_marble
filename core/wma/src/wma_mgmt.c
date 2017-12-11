@@ -1807,7 +1807,8 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	}
 
 	/* install key was requested */
-	iface->is_waiting_for_key = false;
+	if (iface)
+		iface->is_waiting_for_key = false;
 
 end:
 	qdf_mem_free(params.key_rsc_counter);
