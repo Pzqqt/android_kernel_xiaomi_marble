@@ -266,13 +266,8 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 
 static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
 {
-	uint32_t val;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val)
-		!= eSIR_SUCCESS)
-		pe_err("cfg get assoc sta limit failed");
-	pMac->lim.gLimAssocStaLimit = val;
-	pMac->lim.gLimIbssStaLimit = val;
+	pMac->lim.gLimAssocStaLimit = 0;
+	pMac->lim.gLimIbssStaLimit = 0;
 	/* Place holder for current authentication request */
 	/* being handled */
 	pMac->lim.gpLimMlmAuthReq = NULL;
@@ -342,6 +337,14 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	 * and they will be used throughout when there is no session
 	 */
 
+	if (wlan_cfg_get_int(pMac, WNI_CFG_ASSOC_STA_LIMIT, &val1)
+		!= eSIR_SUCCESS){
+		pe_err("cfg get assoc sta limit failed");
+		return eSIR_FAILURE;
+	}
+
+	pMac->lim.gLimAssocStaLimit = val1;
+	pMac->lim.gLimIbssStaLimit = val1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &val1) != eSIR_SUCCESS) {
 		pe_err("could not retrieve HT Cap CFG");
 		return eSIR_FAILURE;
@@ -546,6 +549,20 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 
+	pMac->lim.mgmtFrameSessionId = NO_SESSION;
+	pMac->lim.tdls_frm_session_id = NO_SESSION;
+	pMac->lim.deferredMsgCnt = 0;
+	pMac->lim.retry_packet_cnt = 0;
+	pMac->lim.ibss_retry_cnt = 0;
+	pMac->lim.deauthMsgCnt = 0;
+	pMac->lim.disassocMsgCnt = 0;
+
+	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
+			&pMac->lim.lkPeGlobalLock))) {
+		pe_err("lim lock init failed!");
+		return eSIR_FAILURE;
+	}
+
 	__lim_init_assoc_vars(pMac);
 	__lim_init_vars(pMac);
 	__lim_init_states(pMac);
@@ -554,27 +571,24 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 	__lim_init_scan_vars(pMac);
 	__lim_init_ht_vars(pMac);
 
-	status = lim_start(pMac);
-	if (eSIR_SUCCESS != status) {
-		return status;
-	}
 	/* Initializations for maintaining peers in IBSS */
 	lim_ibss_init(pMac);
 
 	rrm_initialize(pMac);
 
-	/* Initialize the configurations needed by PE */
-	if (eSIR_FAILURE == __lim_init_config(pMac)) {
-		/* We need to undo everything in lim_start */
-		lim_cleanup_mlm(pMac);
+	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
+		&pMac->lim.lim_frame_register_lock))) {
+		pe_err("lim lock init failed!");
+		qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock);
 		return eSIR_FAILURE;
 	}
+
+	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
+
 	/* initialize the TSPEC admission control table. */
 	/* Note that this was initially done after resume notification from HAL. */
 	/* Now, DAL is started before PE so this can be done here */
 	lim_admit_control_init(pMac);
-	lim_register_hal_ind_call_back(pMac);
-
 	return status;
 
 } /*** end lim_initialize() ***/
@@ -602,12 +616,24 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 void lim_cleanup(tpAniSirGlobal pMac)
 {
 	uint8_t i;
+	qdf_list_node_t *lst_node;
+
+	/*
+	 * Before destroying the list making sure all the nodes have been
+	 * deleted
+	 */
+	while (qdf_list_remove_front(
+			&pMac->lim.gLimMgmtFrameRegistratinQueue,
+			&lst_node) == QDF_STATUS_SUCCESS) {
+		qdf_mem_free(lst_node);
+	}
+	qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
+	qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
 
 	pe_deregister_mgmt_rx_frm_callback(pMac);
 
 	qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
 	pMac->lim.gpLimRemainOnChanReq = NULL;
-	lim_cleanup_mlm(pMac);
 
 	/* free up preAuth table */
 	if (pMac->lim.gLimPreAuthTimerTable.pTable != NULL) {
@@ -795,29 +821,12 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 		goto pe_open_psession_fail;
 	}
 
-	pMac->lim.mgmtFrameSessionId = 0xff;
-	pMac->lim.tdls_frm_session_id = NO_SESSION;
-	pMac->lim.deferredMsgCnt = 0;
-
-	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(&pMac->lim.lkPeGlobalLock))) {
-		pe_err("pe lock init failed!");
+	status = lim_initialize(pMac);
+	if (eSIR_SUCCESS != status) {
+		pe_err("lim_initialize failed!");
 		status = eSIR_FAILURE;
-		goto pe_open_lock_1_fail;
+		goto  pe_open_lock_fail;
 	}
-	pMac->lim.deauthMsgCnt = 0;
-	pMac->lim.disassocMsgCnt = 0;
-
-	if (QDF_IS_STATUS_ERROR(qdf_mutex_create(
-				&pMac->lim.lim_frame_register_lock))) {
-		pe_err("pe lock init failed!");
-		status = eSIR_FAILURE;
-		goto pe_open_lock_2_fail;
-	}
-
-	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
-
-	pMac->lim.retry_packet_cnt = 0;
-	pMac->lim.ibss_retry_cnt = 0;
 
 	/*
 	 * pe_open is successful by now, so it is right time to initialize
@@ -837,9 +846,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 
 	return status; /* status here will be eSIR_SUCCESS */
 
-pe_open_lock_2_fail:
-	qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock);
-pe_open_lock_1_fail:
+pe_open_lock_fail:
 	qdf_mem_free(pMac->lim.gpSession);
 	pMac->lim.gpSession = NULL;
 pe_open_psession_fail:
@@ -859,22 +866,11 @@ pe_open_psession_fail:
 tSirRetStatus pe_close(tpAniSirGlobal pMac)
 {
 	uint8_t i;
-	qdf_list_node_t *lst_node;
 
 	if (ANI_DRIVER_TYPE(pMac) == QDF_DRIVER_TYPE_MFG)
 		return eSIR_SUCCESS;
 
-	/*
-	 * Before destroying the list making sure all the nodes have been
-	 * deleted
-	 */
-	while (qdf_list_remove_front(
-			&pMac->lim.gLimMgmtFrameRegistratinQueue,
-			&lst_node) == QDF_STATUS_SUCCESS) {
-		qdf_mem_free(lst_node);
-	}
-	qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
-	qdf_mutex_destroy(&pMac->lim.lim_frame_register_lock);
+	lim_cleanup(pMac);
 
 	if (pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq) {
 		qdf_mem_free(pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq);
@@ -908,8 +904,20 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 tSirRetStatus pe_start(tpAniSirGlobal pMac)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
-
-	status = lim_initialize(pMac);
+	status = lim_start(pMac);
+	if (eSIR_SUCCESS != status) {
+		pe_err("lim_start failed!");
+		return status;
+	}
+	/* Initialize the configurations needed by PE */
+	if (eSIR_FAILURE == __lim_init_config(pMac)) {
+		pe_err("lim init config failed!");
+		/* We need to undo everything in lim_start */
+		lim_cleanup_mlm(pMac);
+		return eSIR_FAILURE;
+	}
+	/* Initialize the configurations needed by PE */
+	lim_register_hal_ind_call_back(pMac);
 	return status;
 }
 
@@ -922,7 +930,7 @@ tSirRetStatus pe_start(tpAniSirGlobal pMac)
 
 void pe_stop(tpAniSirGlobal pMac)
 {
-	lim_cleanup(pMac);
+	lim_cleanup_mlm(pMac);
 	SET_LIM_MLM_STATE(pMac, eLIM_MLM_OFFLINE_STATE);
 	return;
 }
