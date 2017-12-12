@@ -381,6 +381,8 @@ typedef enum {
     WMI_PDEV_CONFIG_VENDOR_OUI_ACTION_CMDID,
     /** enable/disable per-AC tx queue optimizations */
     WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID,
+    /** enable/disable rx promiscuous mode */
+    WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID,
 
     /* VDEV (virtual device) specific commands */
     /** vdev create */
@@ -12719,6 +12721,16 @@ typedef struct {
     A_UINT32 ac_tx_queue_optimize_enable;
 } wmi_pdev_set_ac_tx_queue_optimized_cmd_fixed_param;
 
+typedef struct {
+    A_UINT32 tlv_header; /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
+    /** Enable/disable rx filter promiscuous */
+    A_UINT32 rx_filter_promiscuous_enable;
+} wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param;
+
 typedef enum {
     WMI_BEACON_INFO_PRESENCE_OUI_EXT            = 1 <<  0,
     WMI_BEACON_INFO_PRESENCE_MAC_ADDRESS        = 1 <<  1,
@@ -14338,7 +14350,7 @@ typedef struct {
      * If number of msdus in a queue excess over qdepth_thresh_value value
      * while queuing msdu's then we drop new msdus.
      * (Though dropping older (stale) data rather than newer data might be
-     * preferable, the dropping is performed by MAC HW, and there’s no option
+     * preferable, the dropping is performed by MAC HW, and theres no option
      * to configure the HW to do head dropping rather than tail dropping.)
      */
     A_UINT32 qdepth_thresh_value;
@@ -20822,6 +20834,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_ENABLE_FILS_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
+        WMI_RETURN_STRING(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID);
     }
 
     return "Invalid WMI cmd";

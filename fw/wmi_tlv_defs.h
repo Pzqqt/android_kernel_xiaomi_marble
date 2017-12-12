@@ -870,6 +870,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_ndl_schedule_update_fixed_param,
     WMITLV_TAG_STRUC_wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_msduq_qdepth_thresh_update,
+    WMITLV_TAG_STRUC_wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1220,6 +1221,7 @@ typedef enum {
     OP(WMI_BCN_OFFLOAD_CTRL_CMDID) \
     OP(WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID) \
     OP(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID) \
+    OP(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3503,6 +3505,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID);
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param, wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_msduq_qdepth_thresh_update, msduq_qdepth_thresh_update, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
+
+/* Pdev Set RX filter promiscuous Cmd */
+#define WMITLV_TABLE_WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID(id,op,buf,len) \
+  WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param, wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/
