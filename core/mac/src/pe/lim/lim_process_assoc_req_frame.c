@@ -513,6 +513,94 @@ static bool lim_chk_11ac_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 }
 
 /**
+ * lim_chk_11ax_only() - checks for non 11ax STA
+ * @mac_ctx: pointer to Global MAC structure
+ * @hdr: pointer to the MAC head
+ * @session: pointer to pe session entry
+ * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
+ *
+ * Checks for non 11ax STA
+ *
+ * Return: true of no error, false otherwise
+ */
+#ifdef WLAN_FEATURE_11AX
+static bool lim_chk_11ax_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+			      tpPESession session, tpSirAssocReq assoc_req,
+			      uint8_t sub_type)
+{
+	if (LIM_IS_AP_ROLE(session) &&
+		(session->dot11mode == WNI_CFG_DOT11_MODE_11AX_ONLY) &&
+		 !assoc_req->he_cap.present) {
+		lim_send_assoc_rsp_mgmt_frame(mac_ctx,
+			eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
+			1, hdr->sa, sub_type, 0, session);
+		pe_err("SOFTAP was in 11AX only mode, reject");
+		return false;
+	}
+	return true;
+}
+
+/**
+ * lim_check_11ax_basic_mcs() - checks for 11ax basic MCS rates
+ * @mac_ctx: pointer to Global MAC structure
+ * @hdr: pointer to the MAC head
+ * @session: pointer to pe session entry
+ * @assoc_req: pointer to ASSOC/REASSOC Request frame
+ * @sub_type: Assoc(=0) or Reassoc(=1) Requestframe
+ *
+ * Checks for non 11ax STA
+ *
+ * Return: true of no error, false otherwise
+ */
+static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
+				     tpSirMacMgmtHdr hdr,
+				     tpPESession session,
+				     tpSirAssocReq assoc_req,
+				     uint8_t sub_type)
+{
+	uint32_t val;
+	uint16_t basic_mcs, sta_mcs, rx_mcs, tx_mcs, final_mcs;
+
+	if (LIM_IS_AP_ROLE(session) &&
+	    assoc_req->he_cap.present) {
+		rx_mcs = assoc_req->he_cap.rx_he_mcs_map_lt_80;
+		tx_mcs = assoc_req->he_cap.tx_he_mcs_map_lt_80;
+		sta_mcs = HE_INTERSECT_MCS(rx_mcs, tx_mcs);
+		if (eSIR_SUCCESS != wlan_cfg_get_int(mac_ctx,
+				WNI_CFG_HE_OPS_BASIC_MCS_NSS, &val))
+			val = WNI_CFG_HE_OPS_BASIC_MCS_NSS_DEF;
+		basic_mcs = (uint16_t)val;
+		final_mcs = HE_INTERSECT_MCS(sta_mcs, basic_mcs);
+		if (final_mcs != basic_mcs) {
+			lim_send_assoc_rsp_mgmt_frame(mac_ctx,
+				eSIR_MAC_CAPABILITIES_NOT_SUPPORTED_STATUS,
+				1, hdr->sa, sub_type, 0, session);
+			pe_err("STA did not suport basic MCS required by SAP");
+			return false;
+		}
+	}
+	return true;
+}
+#else
+static bool lim_chk_11ax_only(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
+			      tpPESession session, tpSirAssocReq assoc_req,
+			      uint8_t sub_type)
+{
+	return true;
+}
+
+static bool lim_check_11ax_basic_mcs(tpAniSirGlobal mac_ctx,
+				     tpSirMacMgmtHdr hdr,
+				     tpPESession session,
+				     tpSirAssocReq assoc_req,
+				     uint8_t sub_type)
+{
+	return true;
+}
+#endif
+
+/**
  * lim_process_for_spectrum_mgmt() - process assoc req for spectrum mgmt
  * @mac_ctx: pointer to Global MAC structure
  * @hdr: pointer to the MAC head
@@ -1899,6 +1987,14 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	if (false == lim_chk_11ac_only(mac_ctx, hdr, session, assoc_req,
 				sub_type))
+		goto error;
+
+	if (false == lim_chk_11ax_only(mac_ctx, hdr, session, assoc_req,
+				       sub_type))
+		goto error;
+
+	if (false == lim_check_11ax_basic_mcs(mac_ctx, hdr, session, assoc_req,
+					      sub_type))
 		goto error;
 
 	/* Spectrum Management (11h) specific checks */
