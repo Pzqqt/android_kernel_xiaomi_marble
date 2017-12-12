@@ -787,6 +787,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 	}
 	case WIFIRX_HEADER_E:
 		ppdu_info->first_msdu_payload = rx_tlv;
+		break;
 	case 0:
 		return HAL_TLV_STATUS_PPDU_DONE;
 
