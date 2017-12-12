@@ -2727,11 +2727,11 @@ inline void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump,
  * Return the connection mode parameter set by insmod or set during statically
  * linked driver
  *
- * Return: enum tQDF_GLOBAL_CON_MODE
+ * Return: enum QDF_GLOBAL_MODE
  */
-enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void)
+enum QDF_GLOBAL_MODE cds_get_conparam(void)
 {
-	enum tQDF_GLOBAL_CON_MODE con_mode;
+	enum QDF_GLOBAL_MODE con_mode;
 
 	con_mode = hdd_get_conparam();
 

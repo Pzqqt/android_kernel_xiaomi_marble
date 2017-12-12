@@ -1876,7 +1876,7 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 			enum QDF_OPMODE mode);
 
 void hdd_set_conparam(uint32_t con_param);
-enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void);
+enum QDF_GLOBAL_MODE hdd_get_conparam(void);
 void crda_regulatory_entry_default(uint8_t *countryCode, int domain_id);
 void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter);
 void hdd_prevent_suspend(uint32_t reason);

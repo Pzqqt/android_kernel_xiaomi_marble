@@ -11795,7 +11795,7 @@ static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
  *
  * Return: TRUE on success FALSE on failure
  */
-static bool is_con_mode_valid(enum tQDF_GLOBAL_CON_MODE mode)
+static bool is_con_mode_valid(enum QDF_GLOBAL_MODE mode)
 {
 	switch (mode) {
 	case QDF_GLOBAL_MONITOR_MODE:
@@ -11815,7 +11815,7 @@ static bool is_con_mode_valid(enum tQDF_GLOBAL_CON_MODE mode)
  * Return: adapter mode
  */
 static enum QDF_OPMODE hdd_get_adpter_mode(
-					enum tQDF_GLOBAL_CON_MODE mode)
+					enum QDF_GLOBAL_MODE mode)
 {
 
 	switch (mode) {
@@ -11835,7 +11835,7 @@ static enum QDF_OPMODE hdd_get_adpter_mode(
 }
 
 static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
-				  enum tQDF_GLOBAL_CON_MODE curr_mode)
+				  enum QDF_GLOBAL_MODE curr_mode)
 {
 	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED)
 		return;
@@ -11859,7 +11859,7 @@ static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 }
 
 static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
-				    enum tQDF_GLOBAL_CON_MODE curr_mode)
+				    enum QDF_GLOBAL_MODE curr_mode)
 {
 	int driver_status;
 
@@ -11882,7 +11882,7 @@ static void hdd_cleanup_present_mode(struct hdd_context *hdd_ctx,
 }
 
 static int hdd_register_req_mode(struct hdd_context *hdd_ctx,
-				 enum tQDF_GLOBAL_CON_MODE mode)
+				 enum QDF_GLOBAL_MODE mode)
 {
 	struct hdd_adapter *adapter;
 	int ret = 0;
@@ -11955,7 +11955,7 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 {
 	int ret;
 	struct hdd_adapter *adapter;
-	enum tQDF_GLOBAL_CON_MODE curr_mode;
+	enum QDF_GLOBAL_MODE curr_mode;
 	enum QDF_OPMODE adapter_mode;
 
 	hdd_info("con_mode handler: %s", kmessage);
@@ -12107,11 +12107,11 @@ static int con_mode_handler_monitor(const char *kmessage,
  *
  * This is the driver exit point (invoked when module is unloaded using rmmod)
  *
- * Return: enum tQDF_GLOBAL_CON_MODE
+ * Return: enum QDF_GLOBAL_MODE
  */
-enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void)
+enum QDF_GLOBAL_MODE hdd_get_conparam(void)
 {
-	return (enum tQDF_GLOBAL_CON_MODE) curr_con_mode;
+	return (enum QDF_GLOBAL_MODE) curr_con_mode;
 }
 
 void hdd_set_conparam(uint32_t con_param)
