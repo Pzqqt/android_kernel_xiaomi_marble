@@ -688,7 +688,11 @@ correct_plug_type:
 	if (!wrk_complete && mbhc->btn_press_intr) {
 		pr_debug("%s: Can be slow insertion of headphone\n", __func__);
 		wcd_cancel_btn_work(mbhc);
-		plug_type = MBHC_PLUG_TYPE_HEADPHONE;
+		/* Report as headphone only if previously
+		 * not reported as lineout
+		 */
+		if (!mbhc->force_linein)
+			plug_type = MBHC_PLUG_TYPE_HEADPHONE;
 	}
 	/*
 	 * If plug_tye is headset, we might have already reported either in

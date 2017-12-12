@@ -605,6 +605,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 		hphrocp_off_report(mbhc, SND_JACK_OC_HPHR);
 		hphlocp_off_report(mbhc, SND_JACK_OC_HPHL);
 		mbhc->current_plug = MBHC_PLUG_TYPE_NONE;
+		mbhc->force_linein = false;
 	} else {
 		/*
 		 * Report removal of current jack type.
@@ -657,6 +658,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 						SND_JACK_LINEOUT |
 						SND_JACK_ANC_HEADPHONE |
 						SND_JACK_UNSUPPORTED);
+			mbhc->force_linein = false;
 		}
 
 		if (mbhc->current_plug == MBHC_PLUG_TYPE_HEADSET &&
@@ -699,6 +701,7 @@ void wcd_mbhc_report_plug(struct wcd_mbhc *mbhc, int insertion,
 				 mbhc->zr < MAX_IMPED) &&
 				(jack_type == SND_JACK_HEADPHONE)) {
 				jack_type = SND_JACK_LINEOUT;
+				mbhc->force_linein = true;
 				mbhc->current_plug = MBHC_PLUG_TYPE_HIGH_HPH;
 				if (mbhc->hph_status) {
 					mbhc->hph_status &= ~(SND_JACK_HEADSET |
