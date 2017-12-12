@@ -5246,7 +5246,7 @@ int __init adm_init(void)
 	return 0;
 }
 
-void __exit adm_exit(void)
+void adm_exit(void)
 {
 	mutex_destroy(&dts_srs_lock);
 	adm_delete_cal_data();

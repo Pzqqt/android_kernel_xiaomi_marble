@@ -1,21 +1,30 @@
 # We can build either as part of a standalone Kernel build or as
 # an external module.  Determine which mechanism is being used
-KERNEL_BUILD := 0
+ifeq ($(MODNAME),)
+	KERNEL_BUILD := 1
+else
+	KERNEL_BUILD := 0
+endif
 
-
-ifeq ($(KERNEL_BUILD), 0)
+ifeq ($(KERNEL_BUILD), 1)
 	# These are configurable via Kconfig for kernel-based builds
 	# Need to explicitly configure for Android-based builds
+	AUDIO_BLD_DIR := $(ANDROID_BUILD_TOP)/kernel/msm-4.9
+	AUDIO_ROOT := $(AUDIO_BLD_DIR)/techpack/audio
+endif
+
+ifeq ($(KERNEL_BUILD), 0)
 	ifeq ($(CONFIG_ARCH_SDM845), y)
 		include $(AUDIO_ROOT)/config/sdm845auto.conf
 		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm845autoconf.h
 	endif
 	ifeq ($(CONFIG_ARCH_SDM670), y)
 		include $(AUDIO_ROOT)/config/sdm670auto.conf
 		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
 	endif
 endif
-
 
 # As per target team, build is done as follows:
 # Defconfig : build with default flags
@@ -42,7 +51,7 @@ COMMON_DIR :=	include
 COMMON_INC :=	-I$(AUDIO_ROOT)/$(COMMON_DIR)
 
 ############ ASoC Codecs ############
-ifeq ($(CONFIG_WCD9XXX_CODEC_CORE), m)
+ifdef CONFIG_WCD9XXX_CODEC_CORE
 	CORE_OBJS += wcd9xxx-rst.o
 	CORE_OBJS += wcd9xxx-core-init.o
 	CORE_OBJS += wcd9xxx-core.o
@@ -57,7 +66,7 @@ ifeq ($(CONFIG_WCD9XXX_CODEC_CORE), m)
 	CORE_OBJS += wcd934x/wcd934x-tables.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WCD9XXX_V2), m)
+ifdef CONFIG_SND_SOC_WCD9XXX_V2
 	WCD9XXX_OBJS += wcd9xxx-common-v2.o
 	WCD9XXX_OBJS += wcd9xxx-resmgr-v2.o
 	WCD9XXX_OBJS += wcdcal-hwdep.o
@@ -67,56 +76,50 @@ ifeq ($(CONFIG_SND_SOC_WCD9XXX_V2), m)
 	WCD9XXX_OBJS += audio-ext-clk-up.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WCD9335), m)
+ifdef CONFIG_SND_SOC_WCD9335
 	WCD9335_OBJS += wcd9335.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WSA881X), m)
+ifdef CONFIG_SND_SOC_WSA881X
 	WSA881X_OBJS += wsa881x.o
 	WSA881X_OBJS += wsa881x-tables.o
 	WSA881X_OBJS += wsa881x-regmap.o
 	WSA881X_OBJS += wsa881x-temp-sensor.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_MSM_STUB), m)
+ifdef CONFIG_SND_SOC_MSM_STUB
 	STUB_OBJS += msm_stub.o
 endif
-ifeq ($(CONFIG_SND_SOC_WCD_SPI), m)
+ifdef CONFIG_SND_SOC_WCD_SPI
 	SPI_OBJS += wcd-spi.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WCD_CPE), m)
+ifdef CONFIG_SND_SOC_WCD_CPE
 	WCD_CPE_OBJS += wcd_cpe_core.o
 	WCD_CPE_OBJS += wcd_cpe_services.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WCD_MBHC), m)
+ifdef CONFIG_SND_SOC_WCD_MBHC
 	MBHC_OBJS += wcd-mbhc-v2.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WCD_MBHC_ADC), m)
+ifdef CONFIG_SND_SOC_WCD_MBHC_ADC
 	MBHC_OBJS += wcd-mbhc-adc.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_WCD_MBHC_LEGACY), m)
+ifdef CONFIG_SND_SOC_WCD_MBHC_LEGACY
 	MBHC_OBJS += wcd-mbhc-legacy.o
 endif
 
-ifeq ($(CONFIG_SND_SOC_MSM_HDMI_CODEC_RX), m)
+ifdef CONFIG_SND_SOC_MSM_HDMI_CODEC_RX
 	HDMICODEC_OBJS += msm_hdmi_codec_rx.o
 endif
 
 LINUX_INC +=	-Iinclude/linux
 
-INCS :=		$(COMMON_INC) \
+INCS +=		$(COMMON_INC) \
 		$(UAPI_INC)
 
-ifeq ($(CONFIG_ARCH_SDM845), y)
-INCS    +=  -include $(AUDIO_ROOT)/config/sdm845autoconf.h
-endif
-ifeq ($(CONFIG_ARCH_SDM670), y)
-INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
-endif
 
 EXTRA_CFLAGS += $(INCS)
 
@@ -147,8 +150,16 @@ EXTRA_CFLAGS += -Wheader-guard
 endif
 
 
+ifeq ($(KERNEL_BUILD), 0)
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module.symvers
 KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/soc/Module.symvers
+endif
+
+ifeq ($(KERNEL_BUILD), 1)
+	obj-y	+= wcd934x/
+	obj-y	+= sdm660_cdc/
+	obj-y	+= msm_sdw/
+endif
 # Module information used by KBuild framework
 obj-$(CONFIG_WCD9XXX_CODEC_CORE) += wcd_core_dlkm.o
 wcd_core_dlkm-y := $(CORE_OBJS)

@@ -397,7 +397,7 @@ int __init amrwb_in_init(void)
 	return misc_register(&audio_amrwb_in_misc);
 }
 
-void __exit amrwb_in_exit(void)
+void amrwb_in_exit(void)
 {
 	misc_deregister(&audio_amrwb_in_misc);
 }

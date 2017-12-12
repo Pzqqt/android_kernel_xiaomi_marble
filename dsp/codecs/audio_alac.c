@@ -432,7 +432,7 @@ int __init audio_alac_init(void)
 	return ret;
 }
 
-void __exit audio_alac_exit(void)
+void audio_alac_exit(void)
 {
 	mutex_destroy(&audio_alac_ws_mgr.ws_lock);
 	misc_deregister(&audio_alac_misc);

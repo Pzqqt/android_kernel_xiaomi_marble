@@ -520,7 +520,7 @@ int __init audio_multiaac_init(void)
 	return ret;
 }
 
-void __exit audio_multiaac_exit(void)
+void audio_multiaac_exit(void)
 {
 	mutex_destroy(&audio_multiaac_ws_mgr.ws_lock);
 	misc_deregister(&audio_multiaac_misc);

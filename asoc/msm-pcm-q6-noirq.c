@@ -1273,7 +1273,7 @@ int __init msm_pcm_noirq_init(void)
 	return platform_driver_register(&msm_pcm_driver_noirq);
 }
 
-void __exit msm_pcm_noirq_exit(void)
+void msm_pcm_noirq_exit(void)
 {
 	platform_driver_unregister(&msm_pcm_driver_noirq);
 }

@@ -167,7 +167,7 @@ int __init adsp_err_init(void) { return 0; }
 
 #endif
 
-void __exit adsp_err_exit(void)
+void adsp_err_exit(void)
 {
 	return;
 }

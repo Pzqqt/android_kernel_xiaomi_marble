@@ -10284,7 +10284,7 @@ int __init q6asm_init(void)
 	return 0;
 }
 
-void __exit q6asm_exit(void)
+void q6asm_exit(void)
 {
 	q6asm_delete_cal_data();
 }

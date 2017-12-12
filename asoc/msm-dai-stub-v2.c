@@ -379,7 +379,7 @@ fail:
 	return rc;
 }
 
-void __exit msm_dai_stub_exit(void)
+void msm_dai_stub_exit(void)
 {
 	pr_debug("%s:\n", __func__);
 

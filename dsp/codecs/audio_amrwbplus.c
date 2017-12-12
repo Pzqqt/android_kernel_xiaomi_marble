@@ -394,7 +394,7 @@ int __init audio_amrwbplus_init(void)
 	return ret;
 }
 
-void __exit audio_amrwbplus_exit(void)
+void audio_amrwbplus_exit(void)
 {
 	mutex_destroy(&audio_amrwbplus_ws_mgr.ws_lock);
 	misc_deregister(&audio_amrwbplus_misc);

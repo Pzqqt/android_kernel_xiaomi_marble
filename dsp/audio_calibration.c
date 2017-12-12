@@ -609,7 +609,7 @@ int __init audio_cal_init(void)
 	return misc_register(&audio_cal_misc);
 }
 
-void __exit audio_cal_exit(void)
+void audio_cal_exit(void)
 {
 	int i = 0;
 	struct list_head *ptr, *next;

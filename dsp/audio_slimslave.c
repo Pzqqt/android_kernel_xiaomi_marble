@@ -1,4 +1,4 @@
-/* Copyright (c) 2013-2014, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2013-2014, 2017 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -165,7 +165,7 @@ int __init audio_slimslave_init(void)
 	return slim_driver_register(&audio_slimslave_driver);
 }
 
-void __exit audio_slimslave_exit(void)
+void audio_slimslave_exit(void)
 {
 
 }

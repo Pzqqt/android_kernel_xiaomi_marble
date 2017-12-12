@@ -181,7 +181,7 @@ int __init audio_evrc_init(void)
 	return ret;
 }
 
-void __exit audio_evrc_exit(void)
+void audio_evrc_exit(void)
 {
 	mutex_destroy(&audio_evrc_ws_mgr.ws_lock);
 	misc_deregister(&audio_evrc_misc);

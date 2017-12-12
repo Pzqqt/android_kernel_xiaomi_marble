@@ -2406,7 +2406,7 @@ int __init msm_lsm_client_init(void)
 	return platform_driver_register(&msm_lsm_driver);
 }
 
-void __exit msm_lsm_client_exit(void)
+void msm_lsm_client_exit(void)
 {
 	platform_driver_unregister(&msm_lsm_driver);
 }

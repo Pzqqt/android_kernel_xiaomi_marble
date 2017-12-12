@@ -958,7 +958,7 @@ int __init msm_transcode_loopback_init(void)
 	return platform_driver_register(&msm_transcode_loopback_driver);
 }
 
-void __exit msm_transcode_loopback_exit(void)
+void msm_transcode_loopback_exit(void)
 {
 	mutex_destroy(&transcode_info.lock);
 	platform_driver_unregister(&msm_transcode_loopback_driver);

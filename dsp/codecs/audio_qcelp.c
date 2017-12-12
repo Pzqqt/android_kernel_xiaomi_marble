@@ -188,7 +188,7 @@ int audio_qcelp_init(void)
 	return ret;
 }
 
-void __exit audio_qcelp_exit(void)
+void audio_qcelp_exit(void)
 {
 	mutex_destroy(&audio_qcelp_ws_mgr.ws_lock);
 	misc_deregister(&audio_qcelp_misc);

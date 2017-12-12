@@ -8928,7 +8928,7 @@ fail:
 	return rc;
 }
 
-void __exit msm_dai_q6_exit(void)
+void msm_dai_q6_exit(void)
 {
 	platform_driver_unregister(&msm_dai_q6_tdm_driver);
 	platform_driver_unregister(&msm_dai_q6_spdif_driver);

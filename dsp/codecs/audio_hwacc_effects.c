@@ -772,7 +772,7 @@ int __init audio_effects_init(void)
 	return misc_register(&audio_effects_misc);
 }
 
-void __exit audio_effects_exit(void)
+void audio_effects_exit(void)
 {
 	misc_deregister(&audio_effects_misc);
 }
