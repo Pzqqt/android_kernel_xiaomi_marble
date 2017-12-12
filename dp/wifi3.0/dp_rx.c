@@ -97,8 +97,8 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 	rxdma_srng = dp_rxdma_srng->hal_srng;
 
 	if (!rxdma_srng) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"rxdma srng not initialized");
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				  "rxdma srng not initialized");
 		DP_STATS_INC(dp_pdev, replenish.rxdma_err, num_req_buffers);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -201,7 +201,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 		(*desc_list)->rx_desc.in_use = 1;
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				"rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d\n",
+				"rx_netbuf=%pK, buf=%pK, paddr=0x%llx, cookie=%d",
 			rx_netbuf, qdf_nbuf_data(rx_netbuf),
 			(unsigned long long)paddr, (*desc_list)->rx_desc.cookie);
 

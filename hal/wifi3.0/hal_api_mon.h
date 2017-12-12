@@ -486,8 +486,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 	switch (tlv_tag) {
 
 	case WIFIRX_PPDU_START_E:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"[%s][%d] ppdu_start_e len=%d\n",
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				  "[%s][%d] ppdu_start_e len=%d",
 					__func__, __LINE__, tlv_len);
 		ppdu_info->com_info.ppdu_id =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_0,
@@ -505,9 +505,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		break;
 
 	case WIFIRX_PPDU_END_E:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-			"[%s][%d] ppdu_end_e len=%d\n",
-				__func__, __LINE__, tlv_len);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				  "[%s][%d] ppdu_end_e len=%d",
+				  __func__, __LINE__, tlv_len);
 		/* This is followed by sub-TLVs of PPDU_END */
 
 		ppdu_info->rx_status.duration =
@@ -988,9 +988,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		break;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-		"%s TLV type: %d, TLV len:%d\n",
-		__func__, tlv_tag, tlv_len);
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s TLV type: %d, TLV len:%d",
+			  __func__, tlv_tag, tlv_len);
 
 	return HAL_TLV_STATUS_PPDU_NOT_DONE;
 }

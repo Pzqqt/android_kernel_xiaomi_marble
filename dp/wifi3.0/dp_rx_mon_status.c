@@ -403,7 +403,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
 
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"%s %d : HAL Monitor Destination Ring Init Failed -- %pK\n",
+			"%s %d : HAL Monitor Status Ring Init Failed -- %pK\n",
 			__func__, __LINE__, mon_status_srng);
 		return work_done;
 	}

@@ -938,13 +938,13 @@ static QDF_STATUS dp_soc_interrupt_attach_wrapper(void *txrx_soc)
 
 	if (!(soc->wlan_cfg_ctx->napi_enabled) ||
 	     con_mode_monitor == QDF_GLOBAL_MONITOR_MODE) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Poll mode", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				  "%s: Poll mode", __func__);
 		return dp_soc_interrupt_attach_poll(txrx_soc);
 	} else {
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s: Interrupt  mode", __func__);
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				  "%s: Interrupt  mode", __func__);
 		return dp_soc_interrupt_attach(txrx_soc);
 	}
 }
