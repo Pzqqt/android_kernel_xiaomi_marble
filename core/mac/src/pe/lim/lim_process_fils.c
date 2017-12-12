@@ -1075,10 +1075,12 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 	if (rx_auth_frm_body->authAlgoNumber != SIR_FILS_SK_WITHOUT_PFS)
 		return false;
 
-	dot11f_unpack_ie_rsn(mac_ctx,
+	if (dot11f_unpack_ie_rsn(mac_ctx,
 				&rx_auth_frm_body->rsn_ie.info[0],
 				rx_auth_frm_body->rsn_ie.length,
-				&dot11f_ie_rsn, 0);
+				&dot11f_ie_rsn, 0) != DOT11F_PARSE_SUCCESS) {
+		return false;
+	}
 
 	for (i = 0; i < dot11f_ie_rsn.pmkid_count; i++) {
 		if (qdf_mem_cmp(dot11f_ie_rsn.pmkid[i],
