@@ -30,7 +30,7 @@
 #include "../../core/src/dfs_zero_cac.h"
 #include "../../core/src/dfs_process_radar_found_ind.h"
 
-static inline struct wlan_lmac_if_dfs_tx_ops *
+struct wlan_lmac_if_dfs_tx_ops *
 wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc)
 {
 	return &((psoc->soc_cb.tx_ops.dfs_tx_ops));

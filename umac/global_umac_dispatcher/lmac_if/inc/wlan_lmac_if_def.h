@@ -467,6 +467,7 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_get_phymode_info:               Get phymode info.
  * @dfs_reg_ev_handler:                 Register dfs event handler.
  * @dfs_process_emulate_bang_radar_cmd: Process emulate bang radar test command.
+ * @dfs_is_pdev_5ghz:                   Check if the given pdev is 5GHz.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -499,6 +500,8 @@ struct wlan_lmac_if_dfs_tx_ops {
 	QDF_STATUS (*dfs_process_emulate_bang_radar_cmd)(
 			struct wlan_objmgr_pdev *pdev,
 			struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
+	QDF_STATUS (*dfs_is_pdev_5ghz)(struct wlan_objmgr_pdev *pdev,
+			bool *is_5ghz);
 };
 
 /**

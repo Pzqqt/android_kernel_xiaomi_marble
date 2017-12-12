@@ -146,10 +146,40 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 {
 	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	uint8_t pdev_id;
+	QDF_STATUS status;
+	bool is_5ghz = false;
 
 	if (!pdev) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (!(dfs_tx_ops && dfs_tx_ops->dfs_is_pdev_5ghz)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_tx_ops is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = dfs_tx_ops->dfs_is_pdev_5ghz(pdev, &is_5ghz);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "Failed to get is_5ghz value");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!is_5ghz) {
+		pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Do not allocate DFS object for 2G, pdev_id = %d",
+				pdev_id);
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (dfs_create_object(&dfs) == 1) {
@@ -160,11 +190,6 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	global_dfs_to_mlme.pdev_component_obj_attach(pdev,
 		WLAN_UMAC_COMP_DFS, (void *)dfs, QDF_STATUS_SUCCESS);
 	dfs->dfs_pdev_obj = pdev;
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null psoc");
-		return QDF_STATUS_E_FAILURE;
-	}
 	dfs->dfs_is_offload_enabled =
 		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
 	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,

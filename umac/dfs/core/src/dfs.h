@@ -2036,4 +2036,13 @@ void dfs_send_csa_to_current_chan(struct wlan_dfs *dfs);
  */
 int dfs_radarevent_basic_sanity(struct wlan_dfs *dfs,
 		struct dfs_channel *chan);
+
+/**
+ * wlan_psoc_get_dfs_txops() - Get dfs_tx_ops pointer
+ * @psoc: Pointer to psoc structure.
+ *
+ * Return: Pointer to dfs_tx_ops.
+ */
+struct wlan_lmac_if_dfs_tx_ops *
+wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc);
 #endif  /* _DFS_H_ */
