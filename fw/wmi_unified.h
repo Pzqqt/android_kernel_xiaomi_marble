@@ -15452,15 +15452,14 @@ typedef struct {
     A_UINT32 num_active_ndps_on_peer;
     /** Number of channels on this peer */
     A_UINT32 num_ndp_channels;
-    /** Number of spatial streams associated */
-    A_UINT32 nss_2g;
-    A_UINT32 nss_5g;
     /**
      * TLV (tag length value) parameters follow the ndp_confirm
      * structure. The TLV's are:
      * A_UINT8 ndp_cfg[];
      * A_UINT8 ndp_app_info[];
      * wmi_channel ndp_channel_list[];
+     * A_UINT32 nss_list[]; // Nss indexing should match with channel indexing,
+     *                      // since Nss is associated with the channel
      */
 } wmi_ndp_confirm_event_fixed_param_PROTOTYPE;
 
@@ -15501,9 +15500,6 @@ typedef struct
     *  Bits  2-31 -> Reserved
     */
     A_UINT32 flags;
-    /** num spatial streams associated */
-    A_UINT32 nss_2g;
-    A_UINT32 nss_5g;
     /** num of channels */
     A_UINT32 num_channels;
     /** num of ndp instances */
@@ -15513,6 +15509,8 @@ typedef struct
      * structure. The TLV's are:
      * A_UINT32 ndp_instance_list[];
      * wmi_channel ndl_channel_list[];
+     * A_UINT32 nss_list[]; // Nss indexing should match with channel indexing,
+     *                      // since Nss is associate with a channel
      */
 } wmi_ndl_schedule_update_fixed_param_PROTOTYPE;
 
