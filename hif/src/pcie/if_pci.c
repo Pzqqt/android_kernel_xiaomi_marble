@@ -4474,6 +4474,19 @@ int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id)
 int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct hif_target_info *tgt_info;
+
+	tgt_info = hif_get_target_info_handle(GET_HIF_OPAQUE_HDL(scn));
+
+	if (tgt_info->target_type == TARGET_TYPE_QCA6290 ||
+	    tgt_info->target_type == TARGET_TYPE_QCA8074) {
+		/*
+		 * Need to consider offset's memtype for QCA6290/QCA8074,
+		 * also mem_len and DRAM_BASE_ADDRESS/DRAM_SIZE need to be
+		 * well initialized/defined.
+		 */
+		return 0;
+	}
 
 	if ((offset >= DRAM_BASE_ADDRESS && offset <= DRAM_BASE_ADDRESS + DRAM_SIZE)
 		 || (offset + sizeof(unsigned int) <= sc->mem_len)) {
