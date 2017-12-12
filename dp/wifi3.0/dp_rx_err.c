@@ -458,8 +458,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 		FL("peer is NULL"));
 
 		mpdu_done = dp_rx_chain_msdus(soc, nbuf, rx_tlv_hdr, pool_id);
-		if (mpdu_done)
-			dp_rx_process_invalid_peer(soc, nbuf);
+		/* Trigger invalid peer handler wrapper */
+		dp_rx_process_invalid_peer_wrapper(soc, nbuf, mpdu_done);
 
 		return;
 	}

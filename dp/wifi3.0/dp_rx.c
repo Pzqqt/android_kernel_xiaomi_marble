@@ -701,10 +701,63 @@ out:
 
 	return 0;
 }
+
+/**
+ * dp_rx_process_invalid_peer_wrapper(): Function to wrap invalid peer handler
+ * @soc: DP SOC handle
+ * @mpdu: mpdu for which peer is invalid
+ * @mpdu_done: if an mpdu is completed
+ *
+ * return: integer type
+ */
+void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
+					qdf_nbuf_t mpdu, bool mpdu_done)
+{
+	/* Only trigger the process when mpdu is completed */
+	if (mpdu_done)
+		dp_rx_process_invalid_peer(soc, mpdu);
+}
 #else
 uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 {
+	qdf_nbuf_t curr_nbuf, next_nbuf;
+	struct dp_pdev *pdev;
+	uint8_t i;
+
+	curr_nbuf = mpdu;
+	while (curr_nbuf) {
+		next_nbuf = qdf_nbuf_next(curr_nbuf);
+		/* Drop and free packet */
+		DP_STATS_INC_PKT(soc, rx.err.rx_invalid_peer, 1,
+				qdf_nbuf_len(curr_nbuf));
+		qdf_nbuf_free(curr_nbuf);
+		curr_nbuf = next_nbuf;
+	}
+
+	/* reset the head and tail pointers */
+	for (i = 0; i < MAX_PDEV_CNT; i++) {
+		pdev = soc->pdev_list[i];
+		if (!pdev) {
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_ERROR,
+				"PDEV not found");
+			continue;
+		}
+
+		pdev->invalid_peer_head_msdu = NULL;
+		pdev->invalid_peer_tail_msdu = NULL;
+	}
 	return 0;
+}
+
+void dp_rx_process_invalid_peer_wrapper(struct dp_soc *soc,
+					qdf_nbuf_t mpdu, bool mpdu_done)
+{
+	/* To avoid compiler warning */
+	mpdu_done = mpdu_done;
+
+	/* Process the nbuf */
+	dp_rx_process_invalid_peer(soc, mpdu);
 }
 #endif
 
