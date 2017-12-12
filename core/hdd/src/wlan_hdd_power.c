@@ -1329,7 +1329,8 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (hdd_is_interface_up(adapter) &&
 		    (adapter->device_mode == QDF_STA_MODE ||
-		    adapter->device_mode == QDF_P2P_DEVICE_MODE)) {
+		    adapter->device_mode == QDF_P2P_DEVICE_MODE) &&
+		    adapter->scan_info.default_scan_ies) {
 			sme_set_default_scan_ie(hdd_ctx->hHal,
 				      adapter->session_id,
 				      adapter->scan_info.default_scan_ies,
