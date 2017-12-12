@@ -13397,7 +13397,7 @@ enum hdd_external_acs_freq_band {
  *
  * @Min: 0
  * @Max: 1
- * @Default: 0
+ * @Default: 1
  *
  * This ini is used to enable/disable scoring logic in FW for candidate
  * selection during roaming.
@@ -13410,7 +13410,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_ENABLE_SCORING_FOR_ROAM_NAME     "enable_scoring_for_roam"
-#define CFG_ENABLE_SCORING_FOR_ROAM_DEFAULT  (0)
+#define CFG_ENABLE_SCORING_FOR_ROAM_DEFAULT  (1)
 #define CFG_ENABLE_SCORING_FOR_ROAM_MIN      (0)
 #define CFG_ENABLE_SCORING_FOR_ROAM_MAX      (1)
 
