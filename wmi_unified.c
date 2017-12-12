@@ -745,6 +745,7 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 			&wmi_handle->log_info.wmi_##func_base##_buf_info;\
 		int pos, nread, outlen;					\
 		int i;							\
+		uint64_t secs, usecs;					\
 									\
 		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
 		if (!wmi_log->length) {					\
@@ -773,6 +774,11 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 			&(((struct wmi_command_debug *)wmi_log->buf)[pos]);\
 			outlen += wmi_bp_seq_printf(m, "CMD ID = %x\n",	\
 				(wmi_record->command));			\
+			qdf_log_timestamp_to_secs(wmi_record->time, &secs,\
+				&usecs);				\
+			outlen +=					\
+			wmi_bp_seq_printf(m, "CMD TIME = [%llu.%06llu]\n",\
+				secs, usecs);				\
 			outlen += wmi_bp_seq_printf(m, "CMD = ");	\
 			for (i = 0; i < (wmi_record_max_length/		\
 					sizeof(uint32_t)); i++)		\
@@ -797,6 +803,7 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 			&wmi_handle->log_info.wmi_##func_base##_buf_info;\
 		int pos, nread, outlen;					\
 		int i;							\
+		uint64_t secs, usecs;					\
 									\
 		qdf_spin_lock(&wmi_handle->log_info.wmi_record_lock);	\
 		if (!wmi_log->length) {					\
@@ -823,8 +830,13 @@ const int8_t * const debugfs_dir[MAX_WMI_INSTANCES] = {"WMI0", "WMI1", "WMI2"};
 									\
 			wmi_record = (struct wmi_event_debug *)		\
 			&(((struct wmi_event_debug *)wmi_log->buf)[pos]);\
+			qdf_log_timestamp_to_secs(wmi_record->time, &secs,\
+				&usecs);				\
 			outlen += wmi_bp_seq_printf(m, "Event ID = %x\n",\
 				(wmi_record->event));			\
+			outlen +=					\
+			wmi_bp_seq_printf(m, "Event TIME = [%llu.%06llu]\n",\
+				secs, usecs);				\
 			outlen += wmi_bp_seq_printf(m, "CMD = ");	\
 			for (i = 0; i < (wmi_record_max_length/		\
 					sizeof(uint32_t)); i++)		\
