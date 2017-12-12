@@ -833,6 +833,7 @@ OS_IF_DIR := $(WLAN_COMMON_ROOT)/os_if
 OS_IF_INC := -I$(WLAN_COMMON_INC)/os_if/linux \
             -I$(WLAN_COMMON_INC)/os_if/linux/scan/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/p2p/inc \
+            -I$(WLAN_COMMON_INC)/os_if/linux/spectral/inc \
             -I$(WLAN_COMMON_INC)/os_if/linux/tdls/inc
 
 OS_IF_OBJ := $(OS_IF_DIR)/linux/p2p/src/wlan_cfg80211_p2p.o
@@ -866,6 +867,26 @@ UMAC_SCAN_OBJS := $(UMAC_SCAN_CORE_DIR)/wlan_scan_cache_db.o \
 		$(WLAN_COMMON_ROOT)/os_if/linux/scan/src/wlan_cfg80211_scan.o \
 		$(WLAN_COMMON_ROOT)/os_if/linux/wlan_cfg80211.o \
 		$(WLAN_COMMON_ROOT)/target_if/scan/src/target_if_scan.o
+
+############# UMAC_SPECTRAL_SCAN ############
+UMAC_SPECTRAL_DIR := spectral
+UMAC_SPECTRAL_DISP_INC_DIR := $(UMAC_SPECTRAL_DIR)/dispatcher/inc
+UMAC_SPECTRAL_CORE_INC_DIR := $(UMAC_SPECTRAL_DIR)/core
+UMAC_SPECTRAL_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SPECTRAL_DIR)/core
+UMAC_SPECTRAL_DISP_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SPECTRAL_DIR)/dispatcher/src
+UMAC_TARGET_SPECTRAL_INC := -I$(WLAN_COMMON_INC)/target_if/spectral
+
+UMAC_SPECTRAL_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SPECTRAL_DISP_INC_DIR)
+UMAC_SPECTRAL_OBJS := $(UMAC_SPECTRAL_CORE_DIR)/spectral_offload.o \
+		$(UMAC_SPECTRAL_CORE_DIR)/spectral_common.o \
+		$(UMAC_SPECTRAL_DISP_DIR)/wlan_spectral_ucfg_api.o \
+		$(UMAC_SPECTRAL_DISP_DIR)/wlan_spectral_utils_api.o \
+		$(UMAC_SPECTRAL_DISP_DIR)/wlan_spectral_tgt_api.o \
+		$(WLAN_COMMON_ROOT)/os_if/linux/spectral/src/wlan_cfg80211_spectral.o \
+		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_netlink.o \
+		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_phyerr.o \
+		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral.o \
+		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_sim.o
 
 ############# UMAC_CMN_SERVICES ############
 UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc \
@@ -1539,6 +1560,8 @@ INCS +=		$(UMAC_DISP_INC)
 INCS +=		$(UMAC_SCAN_INC)
 INCS +=		$(UMAC_TARGET_SCAN_INC)
 INCS +=		$(UMAC_COMMON_INC)
+INCS +=		$(UMAC_SPECTRAL_INC)
+INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
 
 OBJS :=		$(HDD_OBJS) \
 		$(EPPING_OBJS) \
@@ -1598,6 +1621,7 @@ OBJS +=		$(UMAC_DISP_OBJS)
 OBJS +=		$(UMAC_SCAN_OBJS)
 OBJS +=		$(UMAC_COMMON_OBJS)
 OBJS +=		$(WCFG_OBJS)
+OBJS +=		$(UMAC_SPECTRAL_OBJS)
 
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS +=		$(DP_OBJS)
@@ -1645,6 +1669,9 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DSUPPORT_11AX \
 		-DCONFIG_HDD_INIT_WITH_RTNL_LOCK \
 		-DCONVERGED_TDLS_ENABLE \
+		-DWLAN_CONV_SPECTRAL_ENABLE \
+		-DSPECTRAL_USE_NETLINK_SOCKETS \
+		-DWLAN_SPECTRAL_ENABLE \
 		-DWMI_CMD_STRINGS
 
 
