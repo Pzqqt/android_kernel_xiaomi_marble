@@ -3011,6 +3011,11 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	if (status)
 		goto out;
 
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("%s: Driver module is closed", __func__);
+		return;
+	}
+
 	mc_list_request = qdf_mem_malloc(sizeof(*mc_list_request));
 	if (!mc_list_request) {
 		hdd_err("Cannot allocate mc_list_request");
