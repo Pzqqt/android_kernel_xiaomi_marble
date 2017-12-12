@@ -1164,6 +1164,13 @@ bool wma_is_vdev_valid(uint32_t vdev_id)
 		return false;
 	}
 
+	/* No of interface are allocated based on max_bssid value */
+	if (vdev_id >= wma_handle->max_bssid) {
+		WMA_LOGD("%s: vdev_id: %d is invalid, max_bssid: %d",
+				__func__, vdev_id, wma_handle->max_bssid);
+		return false;
+	}
+
 	WMA_LOGD("%s: vdev_id: %d, vdev_active: %d, is_vdev_valid %d",
 		 __func__, vdev_id, wma_handle->interfaces[vdev_id].vdev_active,
 		 wma_handle->interfaces[vdev_id].is_vdev_valid);

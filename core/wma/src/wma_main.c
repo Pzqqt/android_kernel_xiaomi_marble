@@ -7820,6 +7820,8 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_config_guard_time(wma_handle,
 				      (struct sir_guard_time_request *)
 				      msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case WMA_IPA_OFFLOAD_ENABLE_DISABLE:
 		wma_ipa_offload_enable_disable(wma_handle,
 			(struct sir_ipa_offload_enable_disable *)msg->bodyptr);
