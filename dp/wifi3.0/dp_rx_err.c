@@ -485,6 +485,16 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 		qdf_nbuf_free(nbuf);
 		return;
 	}
+	/*
+	 * In qwrap mode if the received packet matches with any of the vdev
+	 * mac addresses, drop it. Donot receive multicast packets originated
+	 * from any proxysta.
+	 */
+	if (check_qwrap_multicast_loopback(vdev, nbuf)) {
+		qdf_nbuf_free(nbuf);
+		return;
+	}
+
 
 	if (qdf_unlikely((peer->nawds_enabled == true) &&
 			hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr))) {

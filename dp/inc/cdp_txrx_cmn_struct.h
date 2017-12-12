@@ -600,6 +600,7 @@ enum cdp_pdev_param_type {
  * @CDP_UPDATE_TDLS_FLAGS: tdls link flags
  * @CDP_ENABLE_AP_BRIDGE: set ap_bridging enable/disable
  * @CDP_ENABLE_CIPHER : set cipher type based on security
+ * @CDP_ENABLE_QWRAP_ISOLATION: qwrap isolation mode
  */
 enum cdp_vdev_param_type {
 	CDP_ENABLE_NAWDS,
@@ -609,7 +610,8 @@ enum cdp_vdev_param_type {
 	CDP_UPDATE_TDLS_FLAGS,
 	CDP_CFG_WDS_AGING_TIMER,
 	CDP_ENABLE_AP_BRIDGE,
-	CDP_ENABLE_CIPHER
+	CDP_ENABLE_CIPHER,
+	CDP_ENABLE_QWRAP_ISOLATION
 };
 
 #define TXRX_FW_STATS_TXSTATS                     1

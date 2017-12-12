@@ -1227,6 +1227,8 @@ struct dp_vdev {
 
 	/* Is this a proxySTA VAP */
 	bool proxysta_vdev;
+	/* Is isolation mode enabled */
+	bool isolation_vdev;
 
 	/* Address search flags to be configured in HAL descriptor */
 	uint8_t hal_desc_addr_search_flags;

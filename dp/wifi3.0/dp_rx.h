@@ -614,6 +614,50 @@ static inline QDF_STATUS dp_rx_ast_set_active(struct dp_soc *soc, uint16_t sa_id
 #endif
 
 /*
+ * check_qwrap_multicast_loopback() - Check if rx packet is a loopback packet.
+ *					In qwrap mode, packets originated from
+ *					any vdev should not loopback and
+ *					should be dropped.
+ * @vdev: vdev on which rx packet is received
+ * @nbuf: rx pkt
+ *
+ */
+#if ATH_SUPPORT_WRAP
+static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
+						qdf_nbuf_t nbuf)
+{
+	struct dp_vdev *psta_vdev;
+	struct dp_pdev *pdev = vdev->pdev;
+	uint8_t *data = qdf_nbuf_data(nbuf);
+
+	if (qdf_unlikely(vdev->proxysta_vdev)) {
+		/* In qwrap isolation mode, allow loopback packets as all
+		 * packets go to RootAP and Loopback on the mpsta.
+		 */
+		if (vdev->isolation_vdev)
+			return false;
+		TAILQ_FOREACH(psta_vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (qdf_unlikely(psta_vdev->proxysta_vdev &&
+				!qdf_mem_cmp(psta_vdev->mac_addr.raw,
+				&data[DP_MAC_ADDR_LEN], DP_MAC_ADDR_LEN))) {
+				/* Drop packet if source address is equal to
+				 * any of the vdev addresses.
+				 */
+				return true;
+			}
+		}
+	}
+	return false;
+}
+#else
+static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
+						qdf_nbuf_t nbuf)
+{
+	return false;
+}
+#endif
+
+/*
  * dp_rx_buffers_replenish() - replenish rxdma ring with rx nbufs
  *			       called during dp rx initialization
  *			       and at the end of dp_rx_process.

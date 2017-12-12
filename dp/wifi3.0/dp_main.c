@@ -5089,6 +5089,9 @@ static void dp_set_vdev_param(struct cdp_vdev *vdev_handle,
 	case CDP_ENABLE_CIPHER:
 		vdev->sec_type = val;
 		break;
+	case CDP_ENABLE_QWRAP_ISOLATION:
+		vdev->isolation_vdev = val;
+		break;
 	default:
 		break;
 	}
