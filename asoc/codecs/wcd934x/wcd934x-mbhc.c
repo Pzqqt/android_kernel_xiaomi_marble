@@ -1043,6 +1043,7 @@ int tavil_mbhc_post_ssr_init(struct wcd934x_mbhc *mbhc,
 		return -EINVAL;
 	}
 
+	tavil_mbhc_hs_detect_exit(codec);
 	wcd_mbhc_deinit(wcd_mbhc);
 	ret = wcd_mbhc_init(wcd_mbhc, codec, &mbhc_cb, &intr_ids,
 			    wcd_mbhc_registers, TAVIL_ZDET_SUPPORTED);
