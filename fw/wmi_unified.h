@@ -1482,6 +1482,9 @@ typedef enum {
     /* WMI UNIT TEST event */
     WMI_UNIT_TEST_EVENTID,
 
+    /** event to report result of host configure SAR2 */
+    WMI_SAR2_RESULT_EVENTID,
+
     /* GPIO Event */
     WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
     /** upload H_CV info WMI event
@@ -13029,6 +13032,19 @@ typedef struct {
  */
 } wmi_avoid_freq_ranges_event_fixed_param;
 
+enum {
+    WMI_SAR2_SUCCESS                = 0,
+    WMI_SAR2_INVALID_ANTENNA_INDEX  = 1,
+    WMI_SAR2_INVALID_TABLE_INDEX    = 2,
+    WMI_SAR2_STATE_ERROR            = 4,
+    WMI_SAR2_BDF_NO_TABLE           = 8,
+};
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar2_result_event_fixed_param  */
+    A_UINT32 result; /* refer to the above WMI_SAR2_ result definitions */
+} wmi_sar2_result_event_fixed_param;
+
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_gtk_rekey_fail_event_fixed_param  */
     /** Reserved for future use */
@@ -15622,6 +15638,7 @@ enum wmi_sar_feature_state_flags {
     WMI_SAR_FEATURE_ON_SET_4,
     WMI_SAR_FEATURE_NO_CHANGE,
     WMI_SAR_FEATURE_ON_USER_DEFINED,
+    WMI_SAR_FEATURE_ON_SAR_V2_0,
 };
 
 typedef struct {
@@ -15637,8 +15654,22 @@ typedef struct {
     /** Current values: WMI_SAR_MOD_CCK, WMI_SAR_MOD_OFDM */
     A_UINT32 mod_id;
 
-    /** actual power limit value, in steps of 0.5 dBm */
-    A_UINT32 limit_value;
+    /**
+     * To be backwards-compatible with older code use a union with
+     * limit_value & limit_index as alternate names / interpretations
+     * of the same message information element.
+     * The older code still uses limit_value, while the new code will
+     * use limit_index.
+     * The interpretation of the field as value or index depends on
+     * WMI_SAR_FEATURE_ON_*
+     * WMI_SAR_FEATURE_ON_SAR_V2_0 will use it as index, other case
+     * still use it as value.
+     */
+    union {
+        /** actual power limit value, in steps of 0.5 dBm */
+        A_UINT32 limit_value;
+        A_UINT32 limit_index;
+    };
 
     /** in case the OEM doesn't care about one of the qualifiers from above,
      * the bit for that qualifier within the validity_bitmap can be set to 0
@@ -20090,6 +20121,12 @@ typedef struct {
     A_UINT32 min_buf_align;
     /* Minimum alignment in bytes of each buffer in the OEM DMA ring */
 } WMI_OEM_DMA_RING_CAPABILITIES;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_WMI_SAR_CAPABILITIES*/
+    /* sar version in bdf */
+    A_UINT32 active_version;
+} WMI_SAR_CAPABILITIES;
 
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_scan_adaptive_dwell_parameters_tlv */
