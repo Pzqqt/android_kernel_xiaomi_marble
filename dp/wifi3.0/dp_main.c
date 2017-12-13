@@ -5205,7 +5205,8 @@ static void dp_print_napi_stats(struct dp_soc *soc)
  */
 static void dp_print_per_ring_stats(struct dp_soc *soc)
 {
-	uint8_t core, ring;
+	uint8_t ring;
+	uint16_t core;
 	uint64_t total_packets;
 
 	DP_TRACE(FATAL, "Reo packets per ring:");
