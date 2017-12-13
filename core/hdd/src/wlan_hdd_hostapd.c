@@ -7365,10 +7365,11 @@ static int wlan_hdd_sap_p2p_11ac_overrides(struct hdd_adapter *ap_adapter)
 				sap_cfg->ch_width_orig =
 					eHT_CHANNEL_WIDTH_20MHZ;
 		}
-		sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
-		wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, sap_cfg->channel,
-					sap_cfg->sec_ch, &sap_cfg->ch_params);
 	}
+
+	sap_cfg->ch_params.ch_width = sap_cfg->ch_width_orig;
+	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, sap_cfg->channel,
+				sap_cfg->sec_ch, &sap_cfg->ch_params);
 
 	return 0;
 }
