@@ -214,4 +214,15 @@ void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc);
  * Return: pdev feature pointer
  */
 void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_get_num_radios() - get number of radios
+ * @psoc: pointer to psoc
+ *
+ * API to get number of radios
+ *
+ * Return: number of radios
+ */
+uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc);
+
 #endif /* _INIT_DEINIT_UCFG_H_ */

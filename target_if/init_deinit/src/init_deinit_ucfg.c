@@ -330,6 +330,23 @@ void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
 	return target_pdev_get_wmi_handle(tgt_hdl);
 }
 
+uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_hdl;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return 0;
+	}
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return 0;
+	}
+
+	return target_psoc_get_num_radios(tgt_hdl);
+}
+
 void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
@@ -338,7 +355,7 @@ void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc)
 		target_if_err("psoc is null");
 		return NULL;
 	}
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return NULL;
@@ -355,7 +372,7 @@ void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
 		target_if_err("pdev is null");
 		return NULL;
 	}
-	tgt_hdl = (struct target_pdev_info *)wlan_pdev_get_tgt_if_handle(pdev);
+	tgt_hdl = wlan_pdev_get_tgt_if_handle(pdev);
 	if (!tgt_hdl) {
 		target_if_err("target_pdev_info is null");
 		return NULL;
