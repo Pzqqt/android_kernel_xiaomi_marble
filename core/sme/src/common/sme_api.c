@@ -8581,7 +8581,7 @@ QDF_STATUS sme_get_peer_info(tHalHandle hal, struct sir_peer_info_req req,
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -8627,7 +8627,7 @@ QDF_STATUS sme_get_peer_info_ext(tHalHandle hal,
 	QDF_STATUS status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_STATUS_SUCCESS == status) {
@@ -12087,7 +12087,7 @@ QDF_STATUS sme_ll_stats_set_thresh(tHalHandle hal,
 {
 	QDF_STATUS status;
 	tpAniSirGlobal mac;
-	struct scheduler_msg message;
+	struct scheduler_msg message = {0};
 	struct sir_ll_ext_stats_threshold *thresh;
 
 	if (!threshold) {
