@@ -6865,13 +6865,18 @@ static int hdd_drv_cmd_process(struct hdd_adapter *adapter,
 	const int cmd_num_total = ARRAY_SIZE(hdd_drv_cmds);
 	uint8_t *cmd_i = NULL;
 	hdd_drv_cmd_handler_t handler = NULL;
-	int len = 0;
+	int len = 0, cmd_len = 0;
+	uint8_t *ptr;
 	bool args;
 
 	if (!adapter || !cmd || !priv_data) {
 		hdd_err("at least 1 param is NULL");
 		return -EINVAL;
 	}
+
+	/* Calculate length of the first word */
+	ptr = strchrnul(cmd, ' ');
+	cmd_len = ptr - cmd;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
@@ -6887,7 +6892,7 @@ static int hdd_drv_cmd_process(struct hdd_adapter *adapter,
 			return -EINVAL;
 		}
 
-		if (strncasecmp(cmd, cmd_i, len) == 0) {
+		if (len == cmd_len && strncasecmp(cmd, cmd_i, len) == 0) {
 			if (args && drv_cmd_validate(cmd, len))
 				return -EINVAL;
 
