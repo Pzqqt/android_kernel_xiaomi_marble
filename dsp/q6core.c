@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -236,12 +236,16 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 		pr_debug("%s: Received AVCS_CMDRSP_GET_FWK_VERSION\n",
 			 __func__);
 		payload1 = data->payload;
-		q6core_lcl.q6core_avcs_ver_info.status = VER_QUERY_SUPPORTED;
 		q6core_lcl.avcs_fwk_ver_resp_received = 1;
 		ret = parse_fwk_version_info(payload1);
-		if (ret < 0)
+		if (ret < 0) {
+			q6core_lcl.adsp_status = ret;
 			pr_err("%s: Failed to parse payload:%d\n",
 			       __func__, ret);
+		} else {
+			q6core_lcl.q6core_avcs_ver_info.status =
+						VER_QUERY_SUPPORTED;
+		}
 		wake_up(&q6core_lcl.avcs_fwk_ver_req_wait);
 		break;
 	default:
