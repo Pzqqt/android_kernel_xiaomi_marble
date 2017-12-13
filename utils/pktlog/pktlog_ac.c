@@ -424,12 +424,13 @@ int pktlog_disable(struct hif_opaque_softc *scn)
 	struct cdp_pdev *txrx_pdev = get_txrx_context();
 
 	pl_dev = get_pktlog_handle();
-	pl_info = pl_dev->pl_info;
 
 	if (!pl_dev) {
 		qdf_print("Invalid pl_dev");
 		return -EINVAL;
 	}
+
+	pl_info = pl_dev->pl_info;
 
 	if (!pl_dev->pl_info) {
 		qdf_print("Invalid pl_info");
@@ -654,16 +655,18 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 	int err;
 
 	pl_dev = get_pktlog_handle();
-	pl_info = pl_dev->pl_info;
 
 	if (!pl_dev) {
 		qdf_print("%s: invalid pl_dev handle", __func__);
 		return -EINVAL;
 	}
 
-	if (!pl_info)
-		return 0;
+	pl_info = pl_dev->pl_info;
 
+	if (!pl_info) {
+		qdf_print("%s: invalid pl_info handle", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&pl_info->pktlog_mutex);
 	err = __pktlog_enable(scn, log_state, ini_triggered,
@@ -682,18 +685,20 @@ static int __pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	struct cdp_pdev *pdev;
 
 	pl_dev = get_pktlog_handle();
-	pl_info = pl_dev->pl_info;
-	pdev = get_txrx_context();
 
 	if (!pl_dev) {
 		qdf_print("%s: invalid pl_dev handle", __func__);
 		return -EINVAL;
 	}
 
-	if (!pl_dev->pl_info) {
+	pl_info = pl_dev->pl_info;
+
+	if (!pl_info) {
 		qdf_print("%s: invalid pl_dev handle", __func__);
 		return -EINVAL;
 	}
+
+	pdev = get_txrx_context();
 
 	if (!pdev) {
 		qdf_print("%s: invalid pdev handle", __func__);
@@ -762,7 +767,18 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 	int status;
 
 	pl_dev = get_pktlog_handle();
+
+	if (!pl_dev) {
+		qdf_print("%s: invalid pl_dev handle", __func__);
+		return -EINVAL;
+	}
+
 	pl_info = pl_dev->pl_info;
+
+	if (!pl_info) {
+		qdf_print("%s: invalid pl_dev handle", __func__);
+		return -EINVAL;
+	}
 
 	mutex_lock(&pl_info->pktlog_mutex);
 	status = __pktlog_setsize(scn, size);
@@ -778,14 +794,15 @@ int pktlog_clearbuff(struct hif_opaque_softc *scn, bool clear_buff)
 	uint8_t save_pktlog_state;
 
 	pl_dev = get_pktlog_handle();
-	pl_info = pl_dev->pl_info;
 
 	if (!pl_dev) {
 		qdf_print("%s: invalid pl_dev handle", __func__);
 		return -EINVAL;
 	}
 
-	if (!pl_dev->pl_info) {
+	pl_info = pl_dev->pl_info;
+
+	if (!pl_info) {
 		qdf_print("%s: invalid pl_dev handle", __func__);
 		return -EINVAL;
 	}
