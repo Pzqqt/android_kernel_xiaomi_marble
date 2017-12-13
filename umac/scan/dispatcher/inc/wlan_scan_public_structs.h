@@ -858,11 +858,13 @@ struct scan_cancel_param {
 /**
  * struct scan_cancel_request - stop scan cmd
  * @vdev: vdev object
+ * @wait_tgt_cancel: wait for target to cancel scan
  * @cancel_req: stop scan cmd parameter
  */
 struct scan_cancel_request {
 	/* Extra parameters consumed by scan module or serialization */
 	struct wlan_objmgr_vdev *vdev;
+	bool wait_tgt_cancel;
 	/* Actual scan cancel request parameters */
 	struct scan_cancel_param cancel_req;
 };

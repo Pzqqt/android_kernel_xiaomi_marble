@@ -445,6 +445,7 @@ QDF_STATUS
 scm_scan_cancel_req(struct scheduler_msg *msg)
 {
 	struct wlan_serialization_queued_cmd_info cmd = {0,};
+	struct wlan_serialization_command ser_cmd = {0,};
 	enum wlan_serialization_cmd_status ser_cmd_status;
 	struct scan_cancel_request *req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -455,17 +456,42 @@ scm_scan_cancel_req(struct scheduler_msg *msg)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	req = msg->bodyptr;
-	cmd.requestor = 0;
-	cmd.cmd_type = WLAN_SER_CMD_SCAN;
-	cmd.cmd_id = req->cancel_req.scan_id;
-	cmd.vdev = req->vdev;
-	cmd.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE |
-		WLAN_SERIALIZATION_PENDING_QUEUE;
-	cmd.req_type = get_serialization_cancel_type(req->cancel_req.req_type);
+	/*
+	 * If requester wants to wait for target scan cancel event
+	 * instead of internally generated cancel event, just check
+	 * which queue this scan request belongs to and send scan
+	 * cancel request to FW accordingly.
+	 * Else generate internal scan cancel event and notify
+	 * handlers and free scan request resources.
+	 */
+	if (req->wait_tgt_cancel &&
+			(req->cancel_req.req_type == WLAN_SCAN_CANCEL_SINGLE)) {
+		ser_cmd.cmd_type = WLAN_SER_CMD_SCAN;
+		ser_cmd.cmd_id = req->cancel_req.scan_id;
+		ser_cmd.cmd_cb = NULL;
+		ser_cmd.umac_cmd = NULL;
+		ser_cmd.source = WLAN_UMAC_COMP_SCAN;
+		ser_cmd.is_high_priority = false;
+		ser_cmd.vdev = req->vdev;
+		if (wlan_serialization_is_cmd_present_in_active_queue(NULL, &ser_cmd))
+			ser_cmd_status = WLAN_SER_CMD_IN_ACTIVE_LIST;
+		else if (wlan_serialization_is_cmd_present_in_pending_queue(NULL, &ser_cmd))
+			ser_cmd_status = WLAN_SER_CMD_IN_PENDING_LIST;
+		else
+			ser_cmd_status = WLAN_SER_CMD_NOT_FOUND;
+	} else {
+		cmd.requestor = 0;
+		cmd.cmd_type = WLAN_SER_CMD_SCAN;
+		cmd.cmd_id = req->cancel_req.scan_id;
+		cmd.vdev = req->vdev;
+		cmd.queue_type = WLAN_SERIALIZATION_ACTIVE_QUEUE |
+			WLAN_SERIALIZATION_PENDING_QUEUE;
+		cmd.req_type = get_serialization_cancel_type(req->cancel_req.req_type);
 
-	ser_cmd_status = wlan_serialization_cancel_request(&cmd);
+		ser_cmd_status = wlan_serialization_cancel_request(&cmd);
+	}
 
-	scm_info("status: %d, reqid: %d, scanid: %d, vdevid: %d, type: %d",
+	scm_debug("status: %d, reqid: %d, scanid: %d, vdevid: %d, type: %d",
 		ser_cmd_status, req->cancel_req.requester,
 		req->cancel_req.scan_id, req->cancel_req.vdev_id,
 		req->cancel_req.req_type);
