@@ -202,6 +202,12 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (scan_req->uIEFieldLen > WLAN_SCAN_PARAMS_MAX_IE_LEN) {
+		WMA_LOGD(FL("scan_ie_len (%d) greater than max (%d)"),
+			scan_req->uIEFieldLen, WLAN_SCAN_PARAMS_MAX_IE_LEN);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	cmd->vdev_id = scan_req->sessionId;
 	/*
 	 * host cycles through the lower 12 bits for scan id generation
