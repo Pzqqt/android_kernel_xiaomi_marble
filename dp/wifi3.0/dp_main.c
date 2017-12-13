@@ -4606,8 +4606,8 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.sgi_count[2],
 			peer->stats.tx.sgi_count[3]);
 	DP_PRINT_STATS("BW Counts = 20MHZ %d 40MHZ %d 80MHZ %d 160MHZ %d\n",
-			peer->stats.tx.bw[0], peer->stats.tx.bw[1],
-			peer->stats.tx.bw[2], peer->stats.tx.bw[3]);
+			peer->stats.tx.bw[2], peer->stats.tx.bw[3],
+			peer->stats.tx.bw[4], peer->stats.tx.bw[5]);
 
 	DP_PRINT_STATS("Aggregation:");
 	DP_PRINT_STATS("	Number of Msdu's Part of Amsdu = %d",

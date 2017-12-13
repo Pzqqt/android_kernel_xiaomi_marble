@@ -48,7 +48,7 @@
 #include <hal_api_mon.h>
 #include "hal_rx.h"
 
-#define MAX_BW 4
+#define MAX_BW 7
 #define MAX_RETRIES 4
 #define MAX_RECEPTION_TYPES 4
 

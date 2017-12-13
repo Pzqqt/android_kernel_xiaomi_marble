@@ -538,7 +538,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 						MCS);
 		ppdu_info->rx_status.tcp_msdu_count =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_9,
-						TCP_MSDU_COUNT);
+					TCP_MSDU_COUNT) +
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_10,
+					TCP_ACK_MSDU_COUNT);
 		ppdu_info->rx_status.udp_msdu_count =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_9,
 						UDP_MSDU_COUNT);

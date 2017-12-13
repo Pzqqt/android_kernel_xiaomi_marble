@@ -56,7 +56,7 @@
 /* 1 additional GI is for invalid values */
 #define MAX_GI (4 + 1)
 #define SS_COUNT 8
-#define MAX_BW 4
+#define MAX_BW 7
 #define MAX_RECEPTION_TYPES 4
 
 /* Options for Dump Statistics */
@@ -1117,10 +1117,10 @@ struct cdp_pdev_stats {
  * @he_re: he_re (range extension)
  * @txbf: txbf
  * @bw: Transmission bandwidth
- *       <enum 0 transmit_bw_20_MHz>
- *       <enum 1 transmit_bw_40_MHz>
- *       <enum 2 transmit_bw_80_MHz>
- *       <enum 3 transmit_bw_160_MHz>
+ *       <enum 2 transmit_bw_20_MHz>
+ *       <enum 3 transmit_bw_40_MHz>
+ *       <enum 4 transmit_bw_80_MHz>
+ *       <enum 5 transmit_bw_160_MHz>
  * @nss: NSS 1,2, ...8
  * @mcs: MCS index
  * @preamble: preamble
@@ -1217,10 +1217,10 @@ struct cdp_tx_completion_ppdu {
 /**
  * struct cdp_rate_stats - Tx/Rx Rate statistics
  * @bw: Indicates the BW of the upcoming transmission -
- *       <enum 0 transmit_bw_20_MHz>
- *       <enum 1 transmit_bw_40_MHz>
- *       <enum 2 transmit_bw_80_MHz>
- *       <enum 3 transmit_bw_160_MHz>
+ *       <enum 2 transmit_bw_20_MHz>
+ *       <enum 3 transmit_bw_40_MHz>
+ *       <enum 4 transmit_bw_80_MHz>
+ *       <enum 5 transmit_bw_160_MHz>
  * @pkt_type: Transmit Packet Type
  * @stbc: When set, STBC transmission rate was used
  * @ldpc: When set, use LDPC transmission rates
