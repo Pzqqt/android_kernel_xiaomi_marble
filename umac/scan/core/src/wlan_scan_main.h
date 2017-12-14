@@ -130,7 +130,8 @@
  */
 #define SCAN_FLAG_EXT_FILTER_PUBLIC_ACTION_FRAME 0x4
 
-
+/* Passive dwell time if bt_a2dp is enabled. Time in msecs*/
+#define PASSIVE_DWELL_TIME_BT_A2DP_ENABLED 28
 
 /**
  * struct cb_handler - defines scan event handler
@@ -413,6 +414,7 @@ struct wlan_scan_obj {
 	struct pdev_scan_info pdev_info[WLAN_UMAC_MAX_PDEVS];
 	struct pno_def_config pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
+	bool bt_a2dp_enabled;
 };
 
 /**

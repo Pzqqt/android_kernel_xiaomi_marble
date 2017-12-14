@@ -527,4 +527,21 @@ bool ucfg_ie_whitelist_enabled(struct wlan_objmgr_psoc *psoc,
  */
 bool ucfg_copy_ie_whitelist_attrs(struct wlan_objmgr_psoc *psoc,
 				struct probe_req_whitelist_attr *ie_whitelist);
+
+/**
+ * ucfg_scan_set_bt_activity() - API to set bt activity
+ * @psoc: pointer to psoc object
+ * @bt_a2dp_active: bt activiy value
+ *
+ * Return: None
+ */
+void ucfg_scan_set_bt_activity(struct wlan_objmgr_psoc *psoc,
+			       bool bt_a2dp_active);
+/**
+ * ucfg_scan_get_bt_activity() - API to get bt activity
+ * @psoc: pointer to psoc object
+ *
+ * Return: true if enabled else false.
+ */
+bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc);
 #endif

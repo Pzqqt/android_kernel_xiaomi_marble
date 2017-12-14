@@ -2198,4 +2198,11 @@ void policy_mgr_set_weight_of_dfs_passive_channels_to_zero(
  */
 bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
 		struct wlan_objmgr_psoc *psoc);
+/**
+ * policy_mgr_is_sta_connected_2g() - check if sta connected in 2g
+ * @psoc: pointer to soc
+ *
+ * Return: true if sta is connected in 2g else false
+ */
+bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
 #endif /* __WLAN_POLICY_MGR_API_H */

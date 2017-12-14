@@ -1015,9 +1015,34 @@ static void ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	if (ap_or_go_present)
 		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
 }
+
+/**
+ * ucfg_update_passive_dwell_time() - update dwell passive time
+ * @vdev: vdev object
+ * @dwell_time: pointer to passive dwell time
+ *
+ * Return: None
+ */
+static void ucfg_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
+					   uint32_t *dwell_time)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc)
+		return;
+
+	if (policy_mgr_is_sta_connected_2g(psoc) &&
+	    !policy_mgr_is_hw_dbs_capable(psoc) &&
+	    ucfg_scan_get_bt_activity(psoc))
+		*dwell_time = PASSIVE_DWELL_TIME_BT_A2DP_ENABLED;
+}
 #else
 static inline void ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
 	struct scan_start_request *req){}
+static inline void ucfg_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
+						  uint32_t *dwell_time){}
 #endif
 
 
@@ -1056,6 +1081,7 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.scan_events = def->scan_events;
 	req->scan_req.scan_random.randomize = def->enable_mac_spoofing;
 	ucfg_scan_req_update_params(vdev, req);
+	ucfg_update_passive_dwell_time(vdev, &req->scan_req.dwell_time_passive);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1607,4 +1633,30 @@ bool ucfg_ie_whitelist_enabled(struct wlan_objmgr_psoc *psoc,
 		return false;
 
 	return true;
+}
+
+void ucfg_scan_set_bt_activity(struct wlan_objmgr_psoc *psoc,
+			       bool bt_a2dp_active)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return;
+	}
+	scan_obj->bt_a2dp_enabled = bt_a2dp_active;
+}
+
+bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return false;
+	}
+
+	return scan_obj->bt_a2dp_enabled;
 }
