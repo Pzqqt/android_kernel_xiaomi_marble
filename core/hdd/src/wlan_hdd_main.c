@@ -4481,6 +4481,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		break;
 
 	case QDF_SAP_MODE:
+		wlan_hdd_scan_abort(adapter);
 		/* Flush IPA exception path packets */
 		sap_config = &adapter->session.ap.sap_config;
 		if (sap_config)
