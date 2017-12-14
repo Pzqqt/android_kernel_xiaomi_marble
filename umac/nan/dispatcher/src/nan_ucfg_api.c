@@ -302,224 +302,10 @@ inline QDF_STATUS ucfg_nan_get_callbacks(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
-static struct nan_datapath_initiator_req *ucfg_nan_copy_intiator_req(
-			struct wlan_objmgr_vdev *vdev,
-			struct nan_datapath_initiator_req *in_req)
-{
-	struct nan_datapath_initiator_req *out_req;
-
-	out_req = qdf_mem_malloc(sizeof(*out_req));
-	if (!out_req) {
-		nan_alert("malloc failed");
-		return NULL;
-	}
-
-	qdf_mem_copy(out_req, in_req, sizeof(*out_req));
-	if (in_req->ndp_config.ndp_cfg_len) {
-		out_req->ndp_config.ndp_cfg =
-			qdf_mem_malloc(in_req->ndp_config.ndp_cfg_len);
-		if (!out_req->ndp_config.ndp_cfg) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(out_req->ndp_config.ndp_cfg,
-			     in_req->ndp_config.ndp_cfg,
-			     in_req->ndp_config.ndp_cfg_len);
-	}
-
-	if (in_req->ndp_info.ndp_app_info_len) {
-		out_req->ndp_info.ndp_app_info =
-			qdf_mem_malloc(in_req->ndp_info.ndp_app_info_len);
-		if (!out_req->ndp_info.ndp_app_info) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(out_req->ndp_info.ndp_app_info,
-			     in_req->ndp_info.ndp_app_info,
-			     in_req->ndp_info.ndp_app_info_len);
-	}
-
-	if (in_req->pmk.pmk_len) {
-		out_req->pmk.pmk = qdf_mem_malloc(in_req->pmk.pmk_len);
-		if (!out_req->pmk.pmk) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(out_req->pmk.pmk, in_req->pmk.pmk,
-			     in_req->pmk.pmk_len);
-	}
-
-	if (in_req->passphrase.passphrase_len) {
-		out_req->passphrase.passphrase =
-			qdf_mem_malloc(in_req->passphrase.passphrase_len);
-		if (NULL == out_req->passphrase.passphrase) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(out_req->passphrase.passphrase,
-			     in_req->passphrase.passphrase,
-			     in_req->passphrase.passphrase_len);
-	}
-
-	if (in_req->service_name.service_name_len) {
-		out_req->service_name.service_name =
-		    qdf_mem_malloc(in_req->service_name.service_name_len);
-		if (NULL == out_req->service_name.service_name) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(out_req->service_name.service_name,
-			     in_req->service_name.service_name,
-			     in_req->service_name.service_name_len);
-	}
-
-	nan_debug("pmk_len: %d, passphrase_len: %d, service_name_len: %d",
-		  out_req->pmk.pmk_len,
-		  out_req->passphrase.passphrase_len,
-		  out_req->service_name.service_name_len);
-
-	/* do not get ref here, rather take ref when request is activated */
-	out_req->vdev = vdev;
-	return out_req;
-
-free_resources:
-	qdf_mem_free(out_req->passphrase.passphrase);
-	qdf_mem_free(out_req->service_name.service_name);
-	qdf_mem_free(out_req->pmk.pmk);
-	qdf_mem_free(out_req->ndp_info.ndp_app_info);
-	qdf_mem_free(out_req->ndp_config.ndp_cfg);
-	qdf_mem_free(out_req);
-	return NULL;
-}
-
-static struct nan_datapath_responder_req *ucfg_nan_copy_responder_req(
-				struct wlan_objmgr_vdev *vdev,
-				struct nan_datapath_responder_req *in_req)
-{
-	struct nan_datapath_responder_req *req;
-
-	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		nan_alert("malloc failed");
-		return NULL;
-	}
-
-	qdf_mem_copy(req, in_req, sizeof(*req));
-	if (in_req->ndp_config.ndp_cfg_len) {
-		req->ndp_config.ndp_cfg =
-			qdf_mem_malloc(in_req->ndp_config.ndp_cfg_len);
-		if (!req->ndp_config.ndp_cfg) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(req->ndp_config.ndp_cfg,
-			     in_req->ndp_config.ndp_cfg,
-			     in_req->ndp_config.ndp_cfg_len);
-	}
-
-	if (in_req->ndp_info.ndp_app_info_len) {
-		req->ndp_info.ndp_app_info =
-			qdf_mem_malloc(in_req->ndp_info.ndp_app_info_len);
-		if (!req->ndp_info.ndp_app_info) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(req->ndp_info.ndp_app_info,
-			     in_req->ndp_info.ndp_app_info,
-			     in_req->ndp_info.ndp_app_info_len);
-	}
-
-	if (in_req->pmk.pmk_len) {
-		req->pmk.pmk = qdf_mem_malloc(in_req->pmk.pmk_len);
-		if (!req->pmk.pmk) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(req->pmk.pmk, in_req->pmk.pmk,
-				in_req->pmk.pmk_len);
-	}
-
-	if (in_req->passphrase.passphrase_len) {
-		req->passphrase.passphrase =
-			qdf_mem_malloc(in_req->passphrase.passphrase_len);
-		if (NULL == req->passphrase.passphrase) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(req->passphrase.passphrase,
-			     in_req->passphrase.passphrase,
-			     in_req->passphrase.passphrase_len);
-	}
-
-	if (in_req->service_name.service_name_len) {
-		req->service_name.service_name =
-		    qdf_mem_malloc(in_req->service_name.service_name_len);
-		if (NULL == req->service_name.service_name) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(req->service_name.service_name,
-			     in_req->service_name.service_name,
-			     in_req->service_name.service_name_len);
-	}
-
-	nan_debug("pmk_len: %d, passphrase_len: %d, service_name_len: %d",
-		  req->pmk.pmk_len,
-		  req->passphrase.passphrase_len,
-		  req->service_name.service_name_len);
-
-	/* do not get ref here, rather take ref when request is activated */
-	req->vdev = vdev;
-	return req;
-
-free_resources:
-	qdf_mem_free(req->passphrase.passphrase);
-	qdf_mem_free(req->service_name.service_name);
-	qdf_mem_free(req->pmk.pmk);
-	qdf_mem_free(req->ndp_info.ndp_app_info);
-	qdf_mem_free(req->ndp_config.ndp_cfg);
-	qdf_mem_free(req);
-	return NULL;
-}
-
-static struct nan_datapath_end_req *ucfg_nan_copy_end_req(
-			struct wlan_objmgr_vdev *vdev,
-			struct nan_datapath_end_req *in_req)
-{
-	struct nan_datapath_end_req *req;
-
-	req = qdf_mem_malloc(sizeof(*req));
-	if (!req) {
-		nan_alert("malloc failed");
-		return NULL;
-	}
-
-	qdf_mem_copy(req, in_req, sizeof(*req));
-	if (in_req->num_ndp_instances) {
-		req->ndp_ids = qdf_mem_malloc(sizeof(uint32_t) *
-						in_req->num_ndp_instances);
-		if (!req->ndp_ids) {
-			nan_alert("malloc failed");
-			goto free_resources;
-		}
-		qdf_mem_copy(req->ndp_ids, in_req->ndp_ids,
-			     sizeof(uint32_t) * in_req->num_ndp_instances);
-	}
-
-	/* do not get ref here, rather take ref when request is activated */
-	req->vdev = vdev;
-	return req;
-
-free_resources:
-	qdf_mem_free(req->ndp_ids);
-	qdf_mem_free(req);
-	return NULL;
-}
-
 QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 				  void *in_req, uint32_t req_type)
 {
-	void *req;
+	uint32_t len;
 	QDF_STATUS status;
 	struct scheduler_msg msg = {0};
 
@@ -530,26 +316,26 @@ QDF_STATUS ucfg_nan_req_processor(struct wlan_objmgr_vdev *vdev,
 
 	switch (req_type) {
 	case NDP_INITIATOR_REQ:
-		req = ucfg_nan_copy_intiator_req(vdev, in_req);
+		len = sizeof(struct nan_datapath_initiator_req);
 		break;
 	case NDP_RESPONDER_REQ:
-		req = ucfg_nan_copy_responder_req(vdev, in_req);
+		len = sizeof(struct nan_datapath_responder_req);
 		break;
 	case NDP_END_REQ:
-		req = ucfg_nan_copy_end_req(vdev, in_req);
+		len = sizeof(struct nan_datapath_end_req);
 		break;
 	default:
 		nan_err("in correct message req type: %d", req_type);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (!req) {
-		nan_err("failed to create local copy");
-		return QDF_STATUS_E_INVAL;
+	msg.bodyptr = qdf_mem_malloc(len);
+	if (!msg.bodyptr) {
+		nan_err("malloc failed");
+		return QDF_STATUS_E_NOMEM;
 	}
-
+	qdf_mem_copy(msg.bodyptr, in_req, len);
 	msg.type = req_type;
-	msg.bodyptr = req;
 	msg.callback = nan_scheduled_msg_handler;
 	status = scheduler_post_msg(QDF_MODULE_ID_OS_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {

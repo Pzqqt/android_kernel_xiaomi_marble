@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -7113,3 +7113,101 @@ QDF_STATUS wmi_extract_wds_entry(void *wmi_hdl, uint8_t *evt_buf,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
+					struct nan_datapath_initiator_req *req)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->send_ndp_initiator_req_cmd)
+		return wmi_handle->ops->send_ndp_initiator_req_cmd(wmi_handle,
+								    req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_ndp_responder_req_cmd_send(void *wmi_hdl,
+				struct nan_datapath_responder_req *req)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->send_ndp_responder_req_cmd)
+		return wmi_handle->ops->send_ndp_responder_req_cmd(wmi_handle,
+								    req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_ndp_end_req_cmd_send(void *wmi_hdl,
+					    struct nan_datapath_end_req *req)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->send_ndp_end_req_cmd)
+		return wmi_handle->ops->send_ndp_end_req_cmd(wmi_handle,
+								    req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
+			uint8_t *data, struct nan_datapath_initiator_rsp **rsp)
+{
+	if (wmi_handle->ops->extract_ndp_initiator_rsp)
+		return wmi_handle->ops->extract_ndp_initiator_rsp(wmi_handle,
+								data, rsp);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
+			       struct nan_datapath_indication_event **ind)
+{
+	if (wmi_handle->ops->extract_ndp_ind)
+		return wmi_handle->ops->extract_ndp_ind(wmi_handle,
+							data, ind);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
+				   struct nan_datapath_confirm_event **ev)
+{
+	if (wmi_handle->ops->extract_ndp_confirm)
+		return wmi_handle->ops->extract_ndp_confirm(wmi_handle,
+							    data, ev);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
+			uint8_t *data, struct nan_datapath_responder_rsp **rsp)
+{
+	if (wmi_handle->ops->extract_ndp_responder_rsp)
+		return wmi_handle->ops->extract_ndp_responder_rsp(wmi_handle,
+								  data, rsp);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_ndp_end_rsp(wmi_unified_t wmi_handle, uint8_t *data,
+				   struct nan_datapath_end_rsp_event **rsp)
+{
+	if (wmi_handle->ops->extract_ndp_end_rsp)
+		return wmi_handle->ops->extract_ndp_end_rsp(wmi_handle,
+							    data, rsp);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
+				struct nan_datapath_end_indication_event **ind)
+{
+	if (wmi_handle->ops->extract_ndp_end_ind)
+		return wmi_handle->ops->extract_ndp_end_ind(wmi_handle,
+							    data, ind);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,15 +31,6 @@ struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
-
-#define NDP_QOS_INFO_LEN 255
-#define NDP_APP_INFO_LEN 255
-#define NDP_PMK_LEN 32
-#define NDP_SCID_BUF_LEN 256
-#define NDP_NUM_INSTANCE_ID 255
-#define NAN_MAX_SERVICE_NAME_LEN 255
-#define NAN_PASSPHRASE_MIN_LEN 8
-#define NAN_PASSPHRASE_MAX_LEN 63
 
 /**
  * enum qca_wlan_vendor_attr_ndp_params - vendor attribute parameters

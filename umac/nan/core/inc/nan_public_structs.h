@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,15 @@ struct wlan_objmgr_psoc;
 struct wlan_objmgr_vdev;
 
 #define IFACE_NAME_SIZE 64
+#define NDP_QOS_INFO_LEN 255
+#define NDP_APP_INFO_LEN 255
+#define NDP_PMK_LEN 32
+#define NDP_SCID_BUF_LEN 256
+#define NDP_NUM_INSTANCE_ID 255
+#define NAN_MAX_SERVICE_NAME_LEN 255
+#define NAN_PASSPHRASE_MIN_LEN 8
+#define NAN_PASSPHRASE_MAX_LEN 63
+
 
 #define NAN_DATAPATH_INF_CREATE_REQ                     0
 #define NAN_DATAPATH_INF_CREATE_RSP                     1
@@ -193,7 +202,7 @@ enum nan_datapath_state {
  */
 struct nan_datapath_app_info {
 	uint32_t ndp_app_info_len;
-	uint8_t *ndp_app_info;
+	uint8_t ndp_app_info[NDP_APP_INFO_LEN];
 };
 
 /**
@@ -204,7 +213,7 @@ struct nan_datapath_app_info {
  */
 struct nan_datapath_cfg {
 	uint32_t ndp_cfg_len;
-	uint8_t *ndp_cfg;
+	uint8_t ndp_cfg[NDP_QOS_INFO_LEN];
 };
 
 /**
@@ -215,7 +224,7 @@ struct nan_datapath_cfg {
  */
 struct nan_datapath_pmk {
 	uint32_t pmk_len;
-	uint8_t *pmk;
+	uint8_t pmk[NDP_PMK_LEN];
 };
 
 /**
@@ -226,7 +235,7 @@ struct nan_datapath_pmk {
  */
 struct nan_datapath_scid {
 	uint32_t scid_len;
-	uint8_t *scid;
+	uint8_t scid[NDP_SCID_BUF_LEN];
 };
 
 /**
@@ -237,7 +246,7 @@ struct nan_datapath_scid {
  */
 struct ndp_passphrase {
 	uint32_t passphrase_len;
-	uint8_t *passphrase;
+	uint8_t passphrase[NAN_PASSPHRASE_MAX_LEN];
 };
 
 /**
@@ -248,7 +257,7 @@ struct ndp_passphrase {
  */
 struct ndp_service_name {
 	uint32_t service_name_len;
-	uint8_t *service_name;
+	uint8_t service_name[NAN_MAX_SERVICE_NAME_LEN];
 };
 
 /**
@@ -306,8 +315,8 @@ struct nan_datapath_inf_delete_rsp {
 
 /**
  * struct nan_datapath_initiator_req - ndp initiator request params
+ * @vdev: pointer to vdev object
  * @transaction_id: unique identifier
- * @vdev_id: session id of the interface over which ndp is being created
  * @channel: suggested channel for ndp creation
  * @channel_cfg: channel config, 0=no channel, 1=optional, 2=mandatory
  * @service_instance_id: Service identifier
@@ -338,8 +347,8 @@ struct nan_datapath_initiator_req {
 
 /**
  * struct nan_datapath_initiator_rsp - response event from FW
+ * @vdev: pointer to vdev object
  * @transaction_id: unique identifier
- * @vdev_id: session id of the interface over which ndp is being created
  * @ndp_instance_id: locally created NDP instance ID
  * @status: status of the ndp request
  * @reason: reason for failure if any
@@ -356,8 +365,8 @@ struct nan_datapath_initiator_rsp {
 /**
  * struct nan_datapath_responder_req - responder's response to ndp create
  * request
+ * @vdev: pointer to vdev object
  * @transaction_id: unique identifier
- * @vdev_id: session id of the interface over which ndp is being created
  * @ndp_instance_id: locally created NDP instance ID
  * @ndp_rsp: response to the ndp create request
  * @ndp_config: ndp configuration params
@@ -383,8 +392,8 @@ struct nan_datapath_responder_req {
 
 /**
  * struct nan_datapath_responder_rsp - response to responder's request
+ * @vdev: pointer to vdev object
  * @transaction_id: unique identifier
- * @vdev_id: session id of the interface over which ndp is being created
  * @status: command status
  * @reason: reason for failure if any
  * @peer_mac_addr: Peer's mac address
@@ -401,20 +410,22 @@ struct nan_datapath_responder_rsp {
 
 /**
  * struct nan_datapath_end_req - ndp end request
+ * @vdev: pointer to vdev object
  * @transaction_id: unique transaction identifier
  * @num_ndp_instances: number of ndp instances to be terminated
- * @ndp_ids: pointer to array of ndp_instance_id to be terminated
+ * @ndp_ids: array of ndp_instance_id to be terminated
  *
  */
 struct nan_datapath_end_req {
 	struct wlan_objmgr_vdev *vdev;
 	uint32_t transaction_id;
 	uint32_t num_ndp_instances;
-	uint32_t *ndp_ids;
+	uint32_t ndp_ids[NDP_NUM_INSTANCE_ID];
 };
 
 /**
  * struct nan_datapath_end_rsp_event  - firmware response to ndp end request
+ * @vdev: pointer to vdev object
  * @transaction_id: unique identifier for the request
  * @status: status of operation
  * @reason: reason(opaque to host driver)
@@ -430,6 +441,7 @@ struct nan_datapath_end_rsp_event {
 /**
  * struct nan_datapath_end_indication_event - ndp termination notification from
  * FW
+ * @vdev: pointer to vdev object
  * @num_ndp_ids: number of NDP ids
  * @ndp_map: mapping of NDP instances to peer and vdev
  *
@@ -442,7 +454,7 @@ struct nan_datapath_end_indication_event {
 
 /**
  * struct nan_datapath_confirm_event - ndp confirmation event from FW
- * @vdev_id: session id of the interface over which ndp is being created
+ * @vdev: pointer to vdev object
  * @ndp_instance_id: ndp instance id for which confirm is being generated
  * @reason_code : reason code(opaque to driver)
  * @num_active_ndps_on_peer: number of ndp instances on peer
@@ -463,7 +475,7 @@ struct nan_datapath_confirm_event {
 
 /**
  * struct nan_datapath_indication_event - create ndp indication on the responder
- * @vdev_id: session id of the interface over which ndp is being created
+ * @vdev: pointer to vdev object
  * @service_instance_id: Service identifier
  * @peer_discovery_mac_addr: Peer's discovery mac address
  * @peer_mac_addr: Peer's NDI mac address

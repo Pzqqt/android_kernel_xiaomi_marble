@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -71,27 +71,16 @@ void nan_release_cmd(void *in_req, uint32_t cmdtype)
 	case WLAN_SER_CMD_NDP_INIT_REQ: {
 		struct nan_datapath_initiator_req *req = in_req;
 		vdev = req->vdev;
-		qdf_mem_free(req->pmk.pmk);
-		qdf_mem_free(req->ndp_info.ndp_app_info);
-		qdf_mem_free(req->ndp_config.ndp_cfg);
-		qdf_mem_free(req->passphrase.passphrase);
-		qdf_mem_free(req->service_name.service_name);
 		break;
 	}
 	case WLAN_SER_CMD_NDP_RESP_REQ: {
 		struct nan_datapath_responder_req *req = in_req;
 		vdev = req->vdev;
-		qdf_mem_free(req->pmk.pmk);
-		qdf_mem_free(req->ndp_info.ndp_app_info);
-		qdf_mem_free(req->ndp_config.ndp_cfg);
-		qdf_mem_free(req->passphrase.passphrase);
-		qdf_mem_free(req->service_name.service_name);
 		break;
 	}
 	case WLAN_SER_CMD_NDP_DATA_END_INIT_REQ: {
 		struct nan_datapath_end_req *req = in_req;
 		vdev = req->vdev;
-		qdf_mem_free(req->ndp_ids);
 		break;
 	}
 	default:
@@ -261,7 +250,6 @@ static QDF_STATUS nan_handle_confirm(
 				struct nan_datapath_confirm_event *confirm)
 {
 	uint8_t vdev_id;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wlan_objmgr_psoc *psoc;
 	struct nan_psoc_priv_obj *psoc_nan_obj;
 
@@ -269,15 +257,13 @@ static QDF_STATUS nan_handle_confirm(
 	psoc = wlan_vdev_get_psoc(confirm->vdev);
 	if (!psoc) {
 		nan_err("psoc is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto free_resource;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
 	if (!psoc_nan_obj) {
 		nan_err("psoc_nan_obj is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto free_resource;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	if (confirm->rsp_code != NAN_DATAPATH_RESPONSE_ACCEPT &&
@@ -295,10 +281,7 @@ static QDF_STATUS nan_handle_confirm(
 	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, confirm->vdev,
 						 NDP_CONFIRM, confirm);
 
-free_resource:
-	qdf_mem_free(confirm->ndp_info.ndp_app_info);
-
-	return status;
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS nan_handle_initiator_rsp(
@@ -339,15 +322,13 @@ static QDF_STATUS nan_handle_ndp_ind(
 	psoc = wlan_vdev_get_psoc(ndp_ind->vdev);
 	if (!psoc) {
 		nan_err("psoc is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto ndp_indication_failed;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
 	if (!psoc_nan_obj) {
 		nan_err("psoc_nan_obj is null");
-		status = QDF_STATUS_E_NULL_VALUE;
-		goto ndp_indication_failed;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	nan_debug("role: %d, vdev: %d, csid: %d, peer_mac_addr "
@@ -363,16 +344,12 @@ static QDF_STATUS nan_handle_ndp_ind(
 		if (QDF_IS_STATUS_ERROR(status)) {
 			nan_err("Couldn't add ndi peer, ndp_role: %d",
 				ndp_ind->role);
-			goto ndp_indication_failed;
+			return status;
 		}
 	}
 	if (NAN_DATAPATH_ROLE_RESPONDER == ndp_ind->role)
 		psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ndp_ind->vdev,
 						NDP_INDICATION, ndp_ind);
-ndp_indication_failed:
-	qdf_mem_free(ndp_ind->ndp_config.ndp_cfg);
-	qdf_mem_free(ndp_ind->ndp_info.ndp_app_info);
-	qdf_mem_free(ndp_ind->scid.scid);
 
 	return status;
 }
