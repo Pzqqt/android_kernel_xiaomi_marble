@@ -3244,17 +3244,22 @@ static void csr_update_bss_with_fils_data(tpAniSirGlobal mac_ctx,
 					  struct scan_cache_entry *scan_entry,
 					  tSirBssDescription *bss_descr)
 {
+	int ret;
 	tDot11fIEfils_indication fils_indication = {0};
 	struct sir_fils_indication fils_ind;
 
 	if (!scan_entry->ie_list.fils_indication)
 		return;
 
-	dot11f_unpack_ie_fils_indication(mac_ctx,
+	ret = dot11f_unpack_ie_fils_indication(mac_ctx,
 				scan_entry->ie_list.fils_indication +
 				SIR_FILS_IND_ELEM_OFFSET,
 				*(scan_entry->ie_list.fils_indication + 1),
 				&fils_indication, false);
+	 if (DOT11F_FAILED(ret)) {
+		sme_err("unpack failed ret: 0x%x", ret);
+		return;
+	}
 
 	update_fils_data(&fils_ind, &fils_indication);
 	if (fils_ind.realm_identifier.realm_cnt > SIR_MAX_REALM_COUNT)

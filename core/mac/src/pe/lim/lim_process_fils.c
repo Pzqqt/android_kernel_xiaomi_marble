@@ -1064,8 +1064,9 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 		tpPESession pe_session,
 		tSirMacAuthFrameBody *rx_auth_frm_body)
 {
-	bool pmkid_found = false;
 	int i;
+	uint32_t ret;
+	bool pmkid_found = false;
 	tDot11fIERSN dot11f_ie_rsn = {0};
 
 	if (!pe_session->fils_info)
@@ -1074,10 +1075,11 @@ bool lim_process_fils_auth_frame2(tpAniSirGlobal mac_ctx,
 	if (rx_auth_frm_body->authAlgoNumber != SIR_FILS_SK_WITHOUT_PFS)
 		return false;
 
-	if (dot11f_unpack_ie_rsn(mac_ctx,
-				&rx_auth_frm_body->rsn_ie.info[0],
+	ret = dot11f_unpack_ie_rsn(mac_ctx, &rx_auth_frm_body->rsn_ie.info[0],
 				rx_auth_frm_body->rsn_ie.length,
-				&dot11f_ie_rsn, 0) != DOT11F_PARSE_SUCCESS) {
+				&dot11f_ie_rsn, 0);
+	if (!DOT11F_SUCCEEDED(ret)) {
+		pe_err("unpack failed, ret: %d", ret);
 		return false;
 	}
 

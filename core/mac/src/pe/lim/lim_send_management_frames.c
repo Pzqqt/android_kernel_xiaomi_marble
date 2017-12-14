@@ -1636,6 +1636,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			      tLimMlmAssocReq *mlm_assoc_req,
 			      tpPESession pe_session)
 {
+	int ret;
 	tDot11fAssocRequest *frm;
 	uint16_t caps;
 	uint8_t *frame;
@@ -1966,9 +1967,14 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * before packing the frm structure. In this way, the IE ordering
 	 * which the latest 802.11 spec mandates is maintained.
 	 */
-	if (add_ie_len)
-		dot11f_unpack_assoc_request(mac_ctx, add_ie,
+	if (add_ie_len) {
+		ret = dot11f_unpack_assoc_request(mac_ctx, add_ie,
 					    add_ie_len, frm, true);
+		if (DOT11F_FAILED(ret)) {
+			pe_err("unpack failed, ret: 0x%x", ret);
+			goto end;
+		}
+	}
 
 	status = dot11f_get_packed_assoc_request_size(mac_ctx, frm, &payload);
 	if (DOT11F_FAILED(status)) {
