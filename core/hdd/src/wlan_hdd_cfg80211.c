@@ -11915,6 +11915,7 @@ void hdd_bt_activity_cb(void *context, uint32_t bt_activity)
 	else
 		return;
 
+	ucfg_scan_set_bt_activity(hdd_ctx->hdd_psoc, hdd_ctx->bt_a2dp_active);
 	hdd_debug("a2dp_active: %d vo_active: %d", hdd_ctx->bt_a2dp_active,
 		 hdd_ctx->bt_vo_active);
 }
