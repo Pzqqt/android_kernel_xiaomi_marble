@@ -2322,9 +2322,12 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 	switch (hdd_ctx->driver_status) {
 	case DRIVER_MODULES_UNINITIALIZED:
+		hdd_info("Wlan transitioning (UNINITIALIZED -> CLOSED)");
 		unint = true;
 		/* Fall through dont add break here */
 	case DRIVER_MODULES_CLOSED:
+		hdd_info("Wlan transitioning (CLOSED -> OPENED)");
+
 		qdf_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
 
 		if (!reinit && !unint) {
@@ -2415,6 +2418,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 		hdd_update_hw_sw_info(hdd_ctx);
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
+		hdd_info("Wlan transitioned (now OPENED)");
 
 		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 			sme_register_ftm_msg_processor(hdd_ctx->hHal,
@@ -2437,6 +2441,8 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 	/* Fall through dont add break here */
 	case DRIVER_MODULES_OPENED:
+		hdd_info("Wlan transitioning (OPENED -> ENABLED)");
+
 		if (!adapter) {
 			hdd_alert("adapter is Null");
 			ret = -EINVAL;
@@ -2455,18 +2461,24 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		}
 
 		hdd_enable_power_management();
-		hdd_info("Driver Modules Successfully Enabled");
+
 		hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
+		hdd_info("Wlan transitioned (now ENABLED)");
+
 		break;
+
 	default:
 		hdd_err("WLAN start invoked in wrong state! :%d\n",
 				hdd_ctx->driver_status);
 		ret = -EINVAL;
 		goto release_lock;
 	}
+
 	hdd_ctx->start_modules_in_progress = false;
 	mutex_unlock(&hdd_ctx->iface_change_lock);
+
 	EXIT();
+
 	return 0;
 
 post_disable:
@@ -2475,8 +2487,11 @@ post_disable:
 
 cds_txrx_free:
 	cds_dp_close(hdd_ctx->hdd_psoc);
+
 close:
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
+	hdd_info("Wlan transition aborted (now CLOSED)");
+
 	cds_close(hdd_ctx->hdd_psoc);
 
 deinit_config:
@@ -9752,6 +9767,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		hdd_info("Modules already closed");
 		goto done;
 	case DRIVER_MODULES_ENABLED:
+		hdd_info("Wlan transitioning (OPENED <- ENABLED)");
+
 		hdd_disable_power_management();
 		if (hdd_deconfigure_cds(hdd_ctx)) {
 			hdd_err("Failed to de-configure CDS");
@@ -9759,10 +9776,13 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 			ret = -EINVAL;
 		}
 		hdd_debug("successfully Disabled the CDS modules!");
+
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
-		break;
+		hdd_info("Wlan transitioned (now OPENED)");
+
+		/* fall through */
 	case DRIVER_MODULES_OPENED:
-		hdd_debug("Closing CDS modules!");
+		hdd_info("Wlan transitioning (CLOSED <- OPENED)");
 		break;
 	default:
 		hdd_err("Trying to stop wlan in a wrong state: %d",
@@ -9772,6 +9792,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		goto done;
 	}
 
+	hdd_debug("Closing CDS modules!");
 	qdf_status = cds_post_disable();
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Failed to process post CDS disable Modules! :%d",
@@ -9839,6 +9860,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	/* Once the firmware sequence is completed reset this flag */
 	hdd_ctx->imps_enabled = false;
 	hdd_ctx->driver_status = DRIVER_MODULES_CLOSED;
+	hdd_info("Wlan transitioned (now CLOSED)");
 
 done:
 	hdd_ctx->stop_modules_in_progress = false;
