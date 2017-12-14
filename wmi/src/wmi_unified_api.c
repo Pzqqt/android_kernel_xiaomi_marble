@@ -6629,13 +6629,6 @@ QDF_STATUS wmi_unified_send_multiple_vdev_restart_req_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-/**
- * wmi_unified_send_sar_limit_cmd() - send sar limit cmd to fw
- * @wmi_hdl: wmi handle
- * @params: sar limit command params
- *
- * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
- */
 QDF_STATUS wmi_unified_send_sar_limit_cmd(void *wmi_hdl,
 				struct sar_limit_cmd_params *params)
 {
@@ -6647,6 +6640,31 @@ QDF_STATUS wmi_unified_send_sar_limit_cmd(void *wmi_hdl,
 						params);
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_get_sar_limit_cmd(void *wmi_hdl)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->get_sar_limit_cmd)
+		return wmi_handle->ops->get_sar_limit_cmd(wmi_handle);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_extract_sar_limit_event(void *wmi_hdl,
+					       uint8_t *evt_buf,
+					       struct sar_limit_event *event)
+{
+	wmi_unified_t wmi_handle = wmi_hdl;
+
+	if (wmi_handle->ops->extract_sar_limit_event)
+		return wmi_handle->ops->extract_sar_limit_event(wmi_handle,
+								evt_buf,
+								event);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 
 #ifdef WLAN_FEATURE_DISA
 QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
