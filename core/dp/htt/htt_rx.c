@@ -1752,7 +1752,7 @@ static unsigned char htt_rx_get_rate(uint32_t l_sig_rate_select,
 					uint32_t l_sig_rate, uint8_t *preamble)
 {
 	char ret = 0x0;
-	*preamble = LONG_PREAMBLE;
+	*preamble = SHORT_PREAMBLE;
 	if (l_sig_rate_select == 0) {
 		switch (l_sig_rate) {
 		case 0x8:
@@ -1802,14 +1802,12 @@ static unsigned char htt_rx_get_rate(uint32_t l_sig_rate_select,
 			break;
 		case 0x5:
 			ret = 0x4;
-			*preamble = SHORT_PREAMBLE;
 			break;
 		case 0x6:
 			ret = 0xB;
 			break;
 		case 0x7:
 			ret = 0x16;
-			*preamble = SHORT_PREAMBLE;
 			break;
 		default:
 			break;
