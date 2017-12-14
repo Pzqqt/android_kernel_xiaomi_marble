@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,6 +49,10 @@
 #include <wlan_dfs_public_struct.h>
 #endif
 #include <qdf_threads.h>
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "nan_public_structs.h"
+#endif
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
 #define WMI_MAX_CMDS 1024
@@ -1452,6 +1456,29 @@ QDF_STATUS (*extract_wds_entry)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct wdsentry *wds_entry,
 		u_int32_t idx);
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+QDF_STATUS (*send_ndp_initiator_req_cmd)(wmi_unified_t wmi_handle,
+				struct nan_datapath_initiator_req *req);
+QDF_STATUS (*send_ndp_responder_req_cmd)(wmi_unified_t wmi_handle,
+				struct nan_datapath_responder_req *req);
+QDF_STATUS (*send_ndp_end_req_cmd)(wmi_unified_t wmi_handle,
+				struct nan_datapath_end_req *req);
+
+QDF_STATUS (*extract_ndp_initiator_rsp)(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_initiator_rsp **rsp);
+QDF_STATUS (*extract_ndp_ind)(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_indication_event **ind);
+QDF_STATUS (*extract_ndp_confirm)(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_confirm_event **ev);
+QDF_STATUS (*extract_ndp_responder_rsp)(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_responder_rsp **rsp);
+QDF_STATUS (*extract_ndp_end_rsp)(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_end_rsp_event **rsp);
+QDF_STATUS (*extract_ndp_end_ind)(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_end_indication_event **ind);
+
+#endif
 };
 
 /* Forward declartion for psoc*/

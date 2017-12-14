@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,6 +48,10 @@
 #include "wlan_p2p_public_struct.h"
 #endif
 #include "wlan_scan_public_structs.h"
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+#include "nan_public_structs.h"
+#endif
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -1756,4 +1760,103 @@ QDF_STATUS wmi_unified_send_dump_wds_table_cmd(void *wmi_hdl);
 
 QDF_STATUS wmi_extract_wds_entry(void *wmi_hdl, uint8_t *evt_buf,
 			struct wdsentry *wds_entry, u_int32_t idx);
+
+#ifdef WLAN_FEATURE_NAN_CONVERGENCE
+/**
+ * wmi_unified_ndp_initiator_req_cmd_send - api to send initiator request to FW
+ * @wmi_hdl: wma handle
+ * @req: pointer to request buffer
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_unified_ndp_initiator_req_cmd_send(void *wmi_hdl,
+				struct nan_datapath_initiator_req *req);
+
+/**
+ * wmi_unified_ndp_responder_req_cmd_send - api to send responder request to FW
+ * @wmi_hdl: wma handle
+ * @req: pointer to request buffer
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_unified_ndp_responder_req_cmd_send(void *wmi_hdl,
+				struct nan_datapath_responder_req *req);
+
+/**
+ * wmi_unified_ndp_end_req_cmd_send - api to send end request to FW
+ * @wmi_hdl: wma handle
+ * @req: pointer to request buffer
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_unified_ndp_end_req_cmd_send(void *wmi_hdl,
+				struct nan_datapath_end_req *req);
+
+/**
+ * wmi_extract_ndp_initiator_rsp - api to extract initiator rsp from even buffer
+ * @wmi_hdl: wma handle
+ * @data: event buffer
+ * @rsp: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
+			uint8_t *data, struct nan_datapath_initiator_rsp **rsp);
+
+/**
+ * wmi_extract_ndp_ind - api to extract ndp indication struct from even buffer
+ * @wmi_hdl: wma handle
+ * @data: event buffer
+ * @ind: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
+			struct nan_datapath_indication_event **ind);
+
+/**
+ * wmi_extract_ndp_confirm - api to extract ndp confim struct from even buffer
+ * @wmi_hdl: wma handle
+ * @data: event buffer
+ * @ev: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
+			struct nan_datapath_confirm_event **ev);
+
+/**
+ * wmi_extract_ndp_responder_rsp - api to extract responder rsp from even buffer
+ * @wmi_hdl: wma handle
+ * @data: event buffer
+ * @rsp: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
+			uint8_t *data, struct nan_datapath_responder_rsp **rsp);
+
+/**
+ * wmi_extract_ndp_end_rsp - api to extract ndp end rsp from even buffer
+ * @wmi_hdl: wma handle
+ * @data: event buffer
+ * @rsp: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_ndp_end_rsp(wmi_unified_t wmi_handle, uint8_t *data,
+			struct nan_datapath_end_rsp_event **rsp);
+
+/**
+ * wmi_extract_ndp_end_ind - api to extract ndp end indication from even buffer
+ * @wmi_hdl: wma handle
+ * @data: event buffer
+ * @ind: buffer to populate
+ *
+ * Return: status of operation
+ */
+QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
+			struct nan_datapath_end_indication_event **ind);
+
+#endif
 #endif /* _WMI_UNIFIED_API_H_ */
