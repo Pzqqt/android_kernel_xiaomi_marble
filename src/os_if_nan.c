@@ -206,10 +206,10 @@ static int os_if_nan_parse_security_params(struct nlattr **tb,
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]) {
-		pmk->pmk_len =
-			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
-		pmk->pmk =
-			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		pmk->pmk_len = nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]);
+		qdf_mem_copy(pmk->pmk,
+			     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PMK]),
+			     pmk->pmk_len);
 		cfg80211_err("pmk len: %d", pmk->pmk_len);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				   pmk->pmk, pmk->pmk_len);
@@ -218,8 +218,9 @@ static int os_if_nan_parse_security_params(struct nlattr **tb,
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]) {
 		passphrase->passphrase_len =
 			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]);
-		passphrase->passphrase =
-			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]);
+		qdf_mem_copy(passphrase->passphrase,
+			     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_PASSPHRASE]),
+			     passphrase->passphrase_len);
 		cfg80211_err("passphrase len: %d", passphrase->passphrase_len);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			passphrase->passphrase, passphrase->passphrase_len);
@@ -228,8 +229,9 @@ static int os_if_nan_parse_security_params(struct nlattr **tb,
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]) {
 		service_name->service_name_len =
 			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]);
-		service_name->service_name =
-			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]);
+		qdf_mem_copy(service_name->service_name,
+			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_NAME]),
+			service_name->service_name_len);
 		cfg80211_err("service_name len: %d",
 			     service_name->service_name_len);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
@@ -267,7 +269,6 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 	int ret = 0;
 	char *iface_name;
 	QDF_STATUS status;
-	uint32_t ndp_qos_cfg;
 	enum nan_datapath_state state;
 	struct wlan_objmgr_vdev *nan_vdev;
 	struct nan_datapath_initiator_req req = {0};
@@ -343,15 +344,15 @@ static int os_if_nan_process_ndp_initiator_req(struct wlan_objmgr_psoc *psoc,
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]) {
 		req.ndp_info.ndp_app_info_len =
 			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
-		req.ndp_info.ndp_app_info =
-			nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
+		qdf_mem_copy(req.ndp_info.ndp_app_info,
+			     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]),
+			     req.ndp_info.ndp_app_info_len);
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]) {
 		/* at present ndp config stores 4 bytes QOS info only */
 		req.ndp_config.ndp_cfg_len = 4;
-		req.ndp_config.ndp_cfg = (uint8_t *)&ndp_qos_cfg;
-		ndp_qos_cfg =
+		*((uint32_t *)req.ndp_config.ndp_cfg) =
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]);
 	}
 
@@ -400,7 +401,6 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 	int ret = 0;
 	char *iface_name;
 	QDF_STATUS status;
-	uint32_t ndp_qos_cfg;
 	enum nan_datapath_state state;
 	struct wlan_objmgr_vdev *nan_vdev;
 	struct nan_datapath_responder_req req = {0};
@@ -461,19 +461,18 @@ static int os_if_nan_process_ndp_responder_req(struct wlan_objmgr_psoc *psoc,
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]) {
 		req.ndp_info.ndp_app_info_len =
 			nla_len(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
-		if (req.ndp_info.ndp_app_info_len) {
-			req.ndp_info.ndp_app_info =
-				nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]);
-		}
+		qdf_mem_copy(req.ndp_info.ndp_app_info,
+			     nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO]),
+			     req.ndp_info.ndp_app_info_len);
 	} else {
 		cfg80211_debug("NDP app info is unavailable");
 	}
+
 	if (tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]) {
 		/* at present ndp config stores 4 bytes QOS info only */
 		req.ndp_config.ndp_cfg_len = 4;
-		ndp_qos_cfg =
+		*((uint32_t *)req.ndp_config.ndp_cfg) =
 			nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS]);
-		req.ndp_config.ndp_cfg = (uint8_t *)&ndp_qos_cfg;
 	} else {
 		cfg80211_debug("NDP config data is unavailable");
 	}
@@ -537,7 +536,9 @@ static int os_if_nan_process_ndp_end_req(struct wlan_objmgr_psoc *psoc,
 		cfg80211_err("Num NDP instances is 0");
 		return -EINVAL;
 	}
-	req.ndp_ids = nla_data(tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY]);
+	qdf_mem_copy(req.ndp_ids,
+		     tb[QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY],
+		     req.num_ndp_instances * sizeof(uint32_t));
 
 	cfg80211_debug("sending ndp_end_req to SME, transaction_id: %d",
 		req.transaction_id);
