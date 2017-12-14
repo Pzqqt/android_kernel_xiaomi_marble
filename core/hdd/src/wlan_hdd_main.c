@@ -300,17 +300,9 @@ void hdd_start_complete(int ret)
 static void hdd_set_rps_cpu_mask(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
-	hdd_adapter_list_node_t *adapter_node, *next;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-		if (NULL != adapter)
-			hdd_send_rps_ind(adapter);
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
-	}
+	hdd_for_each_adapter(hdd_ctx, adapter)
+		hdd_send_rps_ind(adapter);
 }
 
 /**
@@ -1843,9 +1835,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS status;
 	struct hdd_ap_ctx *ap_ctx;
 
 	if (!hdd_ctx || hdd_ctx->config->disableDFSChSwitch) {
@@ -1854,9 +1844,7 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 		return true;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 
 		if ((QDF_SAP_MODE == adapter->device_mode ||
@@ -1868,8 +1856,6 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 			hdd_info("tx blocked for session: %d",
 				adapter->session_id);
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	return true;
@@ -3774,21 +3760,15 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 static QDF_STATUS hdd_check_for_existing_macaddr(struct hdd_context *hdd_ctx,
 						 tSirMacAddr macAddr)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS status;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-		if (adapter
-		    && !qdf_mem_cmp(adapter->mac_addr.bytes,
-				       macAddr, sizeof(tSirMacAddr))) {
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (!qdf_mem_cmp(adapter->mac_addr.bytes,
+				 macAddr, sizeof(tSirMacAddr))) {
 			return QDF_STATUS_E_FAILURE;
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4053,7 +4033,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 				bool rtnl_held)
 {
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *pHddAdapterNode = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (hdd_ctx->current_intf_count >= hdd_ctx->max_intf_count) {
@@ -4219,14 +4198,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Add it to the hdd's session list. */
-		pHddAdapterNode =
-			qdf_mem_malloc(sizeof(hdd_adapter_list_node_t));
-		if (NULL == pHddAdapterNode) {
-			status = QDF_STATUS_E_NOMEM;
-		} else {
-			pHddAdapterNode->adapter = adapter;
-			status = hdd_add_adapter_back(hdd_ctx, pHddAdapterNode);
-		}
+		status = hdd_add_adapter_back(hdd_ctx, adapter);
 	}
 
 	if (QDF_STATUS_SUCCESS != status) {
@@ -4234,8 +4206,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 			hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
 			adapter = NULL;
 		}
-		if (NULL != pHddAdapterNode)
-			qdf_mem_free(pHddAdapterNode);
 
 		return NULL;
 	}
@@ -4278,58 +4248,34 @@ err_free_netdev:
 QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 			     bool rtnl_held)
 {
-	hdd_adapter_list_node_t *adapterNode, *pCurrent, *pNext;
-	QDF_STATUS status;
+	/*
+	 * Here we are stopping global bus_bw timer & work per adapter.
+	 *
+	 * The reason is to fix one race condition between
+	 * bus bandwidth work and cleaning up an adapter.
+	 * Under some conditions, it is possible for the bus bandwidth
+	 * work to access a particularly destroyed adapter, leading to
+	 * use-after-free.
+	 */
+	hdd_debug("wait for bus bw work to flush");
+	hdd_bus_bw_compute_timer_stop(hdd_ctx);
+	hdd_bus_bw_cancel_work(hdd_ctx);
 
-	status = hdd_get_front_adapter(hdd_ctx, &pCurrent);
-	if (QDF_STATUS_SUCCESS != status) {
-		hdd_warn("adapter list empty %d",
-		       status);
-		return status;
-	}
+	/* cleanup adapter */
+	policy_mgr_clear_concurrency_mode(hdd_ctx->hdd_psoc,
+					  adapter->device_mode);
+	hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
+	hdd_remove_adapter(hdd_ctx, adapter);
 
-	while (pCurrent->adapter != adapter) {
-		status = hdd_get_next_adapter(hdd_ctx, pCurrent, &pNext);
-		if (QDF_STATUS_SUCCESS != status)
-			break;
+	/* conditionally restart the bw timer */
+	hdd_bus_bw_compute_timer_try_start(hdd_ctx);
 
-		pCurrent = pNext;
-	}
-	adapterNode = pCurrent;
-	if (QDF_STATUS_SUCCESS == status) {
-		/*
-		 * Here we are stopping global bus_bw timer & work per adapter.
-		 *
-		 * The reason is to fix one race condition between
-		 * bus bandwidth work and cleaning up an adapter.
-		 * Under some conditions, it is possible for the bus bandwidth
-		 * work to access a particularly destroyed adapter, leading to
-		 * use-after-free.
-		 */
-		hdd_debug("wait for bus bw work to flush");
-		hdd_bus_bw_compute_timer_stop(hdd_ctx);
-		hdd_bus_bw_cancel_work(hdd_ctx);
+	/* Adapter removed. Decrement vdev count */
+	if (hdd_ctx->current_intf_count != 0)
+		hdd_ctx->current_intf_count--;
 
-		/* cleanup adapter */
-		policy_mgr_clear_concurrency_mode(hdd_ctx->hdd_psoc,
-			adapter->device_mode);
-		hdd_cleanup_adapter(hdd_ctx, adapterNode->adapter, rtnl_held);
-		hdd_remove_adapter(hdd_ctx, adapterNode);
-		qdf_mem_free(adapterNode);
-		adapterNode = NULL;
-
-		/* conditionally restart the bw timer */
-		hdd_bus_bw_compute_timer_try_start(hdd_ctx);
-
-		/* Adapter removed. Decrement vdev count */
-		if (hdd_ctx->current_intf_count != 0)
-			hdd_ctx->current_intf_count--;
-
-		/* Fw will take care incase of concurrency */
-		return QDF_STATUS_SUCCESS;
-	}
-
-	return QDF_STATUS_E_FAILURE;
+	/* Fw will take care incase of concurrency */
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -4343,24 +4289,23 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
  */
 QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
-	hdd_adapter_list_node_t *pHddAdapterNode;
+	struct hdd_adapter *adapter;
 	QDF_STATUS status;
 
 	ENTER();
 
 	do {
-		status = hdd_remove_front_adapter(hdd_ctx, &pHddAdapterNode);
-		if (pHddAdapterNode && QDF_STATUS_SUCCESS == status) {
+		status = hdd_remove_front_adapter(hdd_ctx, &adapter);
+		if (QDF_IS_STATUS_SUCCESS(status)) {
 			wlan_hdd_release_intf_addr(hdd_ctx,
-			pHddAdapterNode->adapter->mac_addr.bytes);
-			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->adapter,
-					    rtnl_held);
-			qdf_mem_free(pHddAdapterNode);
+						   adapter->mac_addr.bytes);
+			hdd_cleanup_adapter(hdd_ctx, adapter, rtnl_held);
+
 			/* Adapter removed. Decrement vdev count */
 			if (hdd_ctx->current_intf_count != 0)
 				hdd_ctx->current_intf_count--;
 		}
-	} while (NULL != pHddAdapterNode && QDF_STATUS_E_EMPTY != status);
+	} while (QDF_IS_STATUS_SUCCESS(status));
 
 	EXIT();
 
@@ -4651,20 +4596,12 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
  */
 void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 
 	ENTER();
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter)
 		hdd_deinit_adapter(hdd_ctx, adapter, rtnl_held);
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
-	}
 
 	EXIT();
 }
@@ -4672,22 +4609,14 @@ void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
 				 bool close_session)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 
 	ENTER();
 
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter)
 		hdd_stop_adapter(hdd_ctx, adapter, close_session);
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
-	}
 
 	EXIT();
 
@@ -4722,8 +4651,6 @@ static void hdd_reset_scan_operation(struct hdd_context *hdd_ctx,
 
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct qdf_mac_addr peerMacAddr;
@@ -4732,10 +4659,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_notice("Disabling queues for adapter type: %d",
 			   adapter->device_mode);
 
@@ -4798,9 +4722,6 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 		/* Destroy vdev which will be recreated during reinit. */
 		hdd_vdev_destroy(adapter);
-
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	EXIT();
@@ -4810,8 +4731,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
+	struct hdd_adapter *adapter;
 	bool close_modules = true;
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
@@ -4819,18 +4739,13 @@ bool hdd_check_for_opened_interfaces(struct hdd_context *hdd_ctx)
 		return false;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while ((NULL != adapter_node) && (QDF_STATUS_SUCCESS == status)) {
-		if (test_bit(DEVICE_IFACE_OPENED,
-		    &adapter_node->adapter->event_flags) ||
-		    test_bit(SME_SESSION_OPENED,
-			     &adapter_node->adapter->event_flags)) {
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags) ||
+		    test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
 			hdd_debug("Still other ifaces are up cannot close modules");
 			close_modules = false;
 			break;
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 
 	return close_modules;
@@ -5337,8 +5252,6 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 
 QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 #ifndef MSM_PLATFORM
 	struct qdf_mac_addr bcastMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
@@ -5347,12 +5260,9 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 
 	ENTER();
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (!hdd_is_interface_up(adapter))
-			goto get_adapter;
+			continue;
 
 		hdd_wmm_init(adapter);
 
@@ -5440,10 +5350,6 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 		 * applicable to all interfaces
 		 */
 		wlan_hdd_cfg80211_register_frames(adapter);
-
-get_adapter:
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	EXIT();
@@ -5452,123 +5358,126 @@ get_adapter:
 }
 
 QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
-				 hdd_adapter_list_node_t **padapterNode)
+				 struct hdd_adapter **out_adapter)
 {
 	QDF_STATUS status;
+	qdf_list_node_t *node;
+
+	*out_adapter = NULL;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_peek_front(&hdd_ctx->hdd_adapters,
-				     (qdf_list_node_t **) padapterNode);
+	status = qdf_list_peek_front(&hdd_ctx->hdd_adapters, &node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
-	return status;
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	*out_adapter = qdf_container_of(node, struct hdd_adapter, node);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS hdd_get_next_adapter(struct hdd_context *hdd_ctx,
-				hdd_adapter_list_node_t *adapterNode,
-				hdd_adapter_list_node_t **pNextAdapterNode)
+				struct hdd_adapter *current_adapter,
+				struct hdd_adapter **out_adapter)
 {
 	QDF_STATUS status;
+	qdf_list_node_t *node;
+
+	*out_adapter = NULL;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_peek_next(&hdd_ctx->hdd_adapters,
-				    (qdf_list_node_t *) adapterNode,
-				    (qdf_list_node_t **) pNextAdapterNode);
-
+				    &current_adapter->node,
+				    &node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	*out_adapter = qdf_container_of(node, struct hdd_adapter, node);
+
 	return status;
 }
 
 QDF_STATUS hdd_remove_adapter(struct hdd_context *hdd_ctx,
-			      hdd_adapter_list_node_t *adapterNode)
+			      struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_remove_node(&hdd_ctx->hdd_adapters,
-				      &adapterNode->node);
+	status = qdf_list_remove_node(&hdd_ctx->hdd_adapters, &adapter->node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
+
 	return status;
 }
 
 QDF_STATUS hdd_remove_front_adapter(struct hdd_context *hdd_ctx,
-				    hdd_adapter_list_node_t **padapterNode)
+				    struct hdd_adapter **out_adapter)
 {
 	QDF_STATUS status;
+	qdf_list_node_t *node;
+
+	*out_adapter = NULL;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_remove_front(&hdd_ctx->hdd_adapters,
-				       (qdf_list_node_t **) padapterNode);
+	status = qdf_list_remove_front(&hdd_ctx->hdd_adapters, &node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
+
+	*out_adapter = qdf_container_of(node, struct hdd_adapter, node);
+
 	return status;
 }
 
 QDF_STATUS hdd_add_adapter_back(struct hdd_context *hdd_ctx,
-				hdd_adapter_list_node_t *adapterNode)
+				struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_insert_back(&hdd_ctx->hdd_adapters,
-				      (qdf_list_node_t *) adapterNode);
+	status = qdf_list_insert_back(&hdd_ctx->hdd_adapters, &adapter->node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
+
 	return status;
 }
 
 QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
-				 hdd_adapter_list_node_t *adapterNode)
+				 struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
 
 	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
-	status = qdf_list_insert_front(&hdd_ctx->hdd_adapters,
-				       (qdf_list_node_t *) adapterNode);
+	status = qdf_list_insert_front(&hdd_ctx->hdd_adapters, &adapter->node);
 	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
+
 	return status;
 }
 
 struct hdd_adapter *hdd_get_adapter_by_macaddr(struct hdd_context *hdd_ctx,
 					  tSirMacAddr macAddr)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS status;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-
-		if (adapter
-		    && !qdf_mem_cmp(adapter->mac_addr.bytes,
-				       macAddr, sizeof(tSirMacAddr)))
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (!qdf_mem_cmp(adapter->mac_addr.bytes,
+				 macAddr, sizeof(tSirMacAddr)))
 			return adapter;
-
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	return NULL;
-
 }
 
 struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 				       uint32_t vdev_id)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS qdf_status;
 
-	qdf_status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while ((NULL != adapterNode) && (QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapterNode->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->session_id == vdev_id)
 			return adapter;
-
-		qdf_status =
-			hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	hdd_err("vdev_id %d does not exist with host", vdev_id);
@@ -5591,51 +5500,26 @@ struct hdd_adapter *
 hdd_get_adapter_by_sme_session_id(struct hdd_context *hdd_ctx,
 				  uint32_t sme_session_id)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS qdf_status;
 
-
-	qdf_status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-
-	while ((NULL != adapter_node) &&
-			(QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapter_node->adapter;
-
-		if (adapter &&
-			 adapter->session_id == sme_session_id)
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->session_id == sme_session_id)
 			return adapter;
-
-		qdf_status =
-			hdd_get_next_adapter(hdd_ctx,
-				 adapter_node, &next);
-		adapter_node = next;
 	}
+
 	return NULL;
 }
 
 struct hdd_adapter *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
 					     const char *iface_name)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS qdf_status;
 
-	qdf_status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-
-	while ((NULL != adapter_node) &&
-			(QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapter_node->adapter;
-
-		if (adapter &&
-			 !qdf_str_cmp(adapter->dev->name, iface_name))
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (!qdf_str_cmp(adapter->dev->name, iface_name))
 			return adapter;
-
-		qdf_status =
-			hdd_get_next_adapter(hdd_ctx,
-				 adapter_node, &next);
-		adapter_node = next;
 	}
+
 	return NULL;
 }
 
@@ -5652,24 +5536,14 @@ struct hdd_adapter *hdd_get_adapter_by_iface_name(struct hdd_context *hdd_ctx,
 struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 			enum QDF_OPMODE mode)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
-	QDF_STATUS status;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-
-		if (adapter && (mode == adapter->device_mode))
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == mode)
 			return adapter;
-
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	return NULL;
-
 }
 
 /**
@@ -5690,16 +5564,10 @@ struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 			enum QDF_OPMODE mode)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	uint8_t operatingChannel = 0;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (mode == adapter->device_mode) {
 			switch (adapter->device_mode) {
 			case QDF_STA_MODE:
@@ -5730,37 +5598,28 @@ uint8_t hdd_get_operating_channel(struct hdd_context *hdd_ctx,
 			/* Found the device of interest. break the loop */
 			break;
 		}
-
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
+
 	return operatingChannel;
 }
 
 static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *
 							  hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 
 	ENTER();
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-		if ((adapter->device_mode == QDF_STA_MODE) ||
-		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
-		    (adapter->device_mode == QDF_IBSS_MODE) ||
-		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
-		    (adapter->device_mode == QDF_SAP_MODE) ||
-		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		    adapter->device_mode == QDF_IBSS_MODE ||
+		    adapter->device_mode == QDF_P2P_DEVICE_MODE ||
+		    adapter->device_mode == QDF_SAP_MODE ||
+		    adapter->device_mode == QDF_P2P_GO_MODE) {
 			wlan_hdd_cfg80211_deregister_frames(adapter);
 			hdd_unregister_wext(adapter->dev);
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	EXIT();
@@ -5770,28 +5629,21 @@ static inline QDF_STATUS hdd_unregister_wext_all_adapters(struct hdd_context *
 
 QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 
 	ENTER();
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
-		if ((adapter->device_mode == QDF_STA_MODE) ||
-		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
-		    (adapter->device_mode == QDF_IBSS_MODE) ||
-		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
-		    (adapter->device_mode == QDF_SAP_MODE) ||
-		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		    adapter->device_mode == QDF_IBSS_MODE ||
+		    adapter->device_mode == QDF_P2P_DEVICE_MODE ||
+		    adapter->device_mode == QDF_SAP_MODE ||
+		    adapter->device_mode == QDF_P2P_GO_MODE) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 					adapter->session_id, INVALID_SCAN_ID,
 					false);
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	EXIT();
@@ -5808,30 +5660,22 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
  */
 static QDF_STATUS hdd_abort_sched_scan_all_adapters(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next_node = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	int err;
 
 	ENTER();
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-		if ((adapter->device_mode == QDF_STA_MODE) ||
-		    (adapter->device_mode == QDF_P2P_CLIENT_MODE) ||
-		    (adapter->device_mode == QDF_IBSS_MODE) ||
-		    (adapter->device_mode == QDF_P2P_DEVICE_MODE) ||
-		    (adapter->device_mode == QDF_SAP_MODE) ||
-		    (adapter->device_mode == QDF_P2P_GO_MODE)) {
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		    adapter->device_mode == QDF_IBSS_MODE ||
+		    adapter->device_mode == QDF_P2P_DEVICE_MODE ||
+		    adapter->device_mode == QDF_SAP_MODE ||
+		    adapter->device_mode == QDF_P2P_GO_MODE) {
 			err = wlan_hdd_sched_scan_stop(adapter->dev);
 			if (err)
 				hdd_err("Unable to stop scheduled scan");
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node,
-					      &next_node);
-		adapter_node = next_node;
 	}
 
 	EXIT();
@@ -6673,8 +6517,6 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	uint64_t fwd_tx_packets = 0, fwd_rx_packets = 0;
 	uint64_t fwd_tx_packets_diff = 0, fwd_rx_packets_diff = 0;
 	uint64_t total_tx = 0, total_rx = 0;
-	hdd_adapter_list_node_t *adapterNode = NULL;
-	QDF_STATUS status = 0;
 	A_STATUS ret;
 	bool connected = false;
 	uint32_t ipa_tx_packets = 0, ipa_rx_packets = 0;
@@ -6685,14 +6527,7 @@ static void hdd_bus_bw_work_handler(struct work_struct *work)
 	if (hdd_ctx->is_wiphy_suspended)
 		goto restart_timer;
 
-	for (status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	     NULL != adapterNode && QDF_STATUS_SUCCESS == status;
-	     status =
-		     hdd_get_next_adapter(hdd_ctx, adapterNode, &adapterNode)) {
-
-		if (adapterNode->adapter == NULL)
-			continue;
-		adapter = adapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		/*
 		 * Validate magic so we don't end up accessing
 		 * an invalid adapter.
@@ -6980,18 +6815,14 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 	int bytes_written;
 	u32 tbytes;
 	qdf_time_t total, pause, unpause, curr_time, delta;
-	QDF_STATUS status;
 	char temp_str[20 * WLAN_REASON_TYPE_MAX];
 	char comb_log_str[(ADAP_NETIFQ_LOG_LEN * MAX_NUMBER_OF_ADAPTERS) + 1];
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 
 	bytes_written = 0;
 	qdf_mem_set(comb_log_str, 0, sizeof(comb_log_str));
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
 
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		curr_time = qdf_system_ticks();
 		total = curr_time - adapter->start_time;
 		delta = curr_time - adapter->last_time;
@@ -7034,8 +6865,6 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 			qdf_system_ticks_to_msecs(total),
 			temp_str);
 
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 		adapter_num++;
 	}
 
@@ -7059,8 +6888,6 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 {
 
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	int i;
 	qdf_time_t total, pause, unpause, curr_time, delta;
 
@@ -7069,10 +6896,7 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 		return;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_debug("Netif queue operation statistics:");
 		hdd_debug("Session_id %d device mode %d",
 			adapter->session_id, adapter->device_mode);
@@ -7130,9 +6954,6 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 				adapter->queue_oper_history[i].netif_reason),
 				adapter->queue_oper_history[i].pause_map);
 		}
-
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 }
 
@@ -7145,13 +6966,8 @@ wlan_hdd_display_netif_queue_history(struct hdd_context *hdd_ctx,
 void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		qdf_mem_zero(adapter->queue_oper_stats,
 					sizeof(adapter->queue_oper_stats));
 		qdf_mem_zero(adapter->queue_oper_history,
@@ -7160,8 +6976,6 @@ void wlan_hdd_clear_netif_queue_history(struct hdd_context *hdd_ctx)
 		adapter->start_time = adapter->last_time = qdf_system_ticks();
 		adapter->total_pause_time = 0;
 		adapter->total_unpause_time = 0;
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 }
 
@@ -7510,57 +7324,47 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
  */
 void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 {
-	QDF_STATUS status;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	struct hdd_adapter *adapter_temp;
+	struct hdd_adapter *adapter;
 	uint32_t i;
 	bool found = false;
 	uint8_t restart_chan;
 
-	status = hdd_get_front_adapter(hdd_ctxt, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter_temp = adapter_node->adapter;
-
-		if (!adapter_temp) {
-			hdd_err("adapter is NULL, moving to next one");
-			goto next_adapater;
-		}
-
-		if (!((adapter_temp->device_mode == QDF_SAP_MODE) &&
-		   (adapter_temp->session.ap.sap_config.acs_cfg.acs_mode))) {
+	hdd_for_each_adapter(hdd_ctxt, adapter) {
+		if (!(adapter->device_mode == QDF_SAP_MODE &&
+		    adapter->session.ap.sap_config.acs_cfg.acs_mode)) {
 			hdd_debug("skip device mode:%d acs:%d",
-				adapter_temp->device_mode,
-				adapter_temp->session.ap.sap_config.
-				acs_cfg.acs_mode);
-			goto next_adapater;
+				  adapter->device_mode,
+				  adapter->session.ap.sap_config.
+				  acs_cfg.acs_mode);
+			continue;
 		}
 
 		found = false;
 		for (i = 0; i < hdd_ctxt->unsafe_channel_count; i++) {
-			if (adapter_temp->session.ap.operating_channel ==
+			if (adapter->session.ap.operating_channel ==
 				hdd_ctxt->unsafe_channel_list[i]) {
 				found = true;
 				hdd_debug("operating ch:%d is unsafe",
-				  adapter_temp->session.ap.operating_channel);
+					 adapter->session.ap.operating_channel);
 				break;
 			}
 		}
 
 		if (!found) {
 			hdd_debug("ch:%d is safe. no need to change channel",
-				adapter_temp->session.ap.operating_channel);
-			goto next_adapater;
+				  adapter->session.ap.operating_channel);
+			continue;
 		}
 
 		if (hdd_ctxt->config->vendor_acs_support &&
 		    hdd_ctxt->config->acs_support_for_dfs_ltecoex) {
-			hdd_update_acs_timer_reason(adapter_temp,
+			hdd_update_acs_timer_reason(adapter,
 				QCA_WLAN_VENDOR_ACS_SELECT_REASON_LTE_COEX);
-			goto next_adapater;
+			continue;
 		} else
 			restart_chan =
 				hdd_get_safe_channel_from_pcl_and_acs_range(
-					adapter_temp);
+					adapter);
 		if (!restart_chan) {
 			hdd_err("fail to restart SAP");
 		} else {
@@ -7572,7 +7376,7 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			 * the ACS while restart.
 			 */
 			hdd_ctxt->acs_policy.acs_channel = AUTO_CHANNEL_SELECT;
-			adapter_temp->session.ap.sap_config.channel =
+			adapter->session.ap.sap_config.channel =
 							AUTO_CHANNEL_SELECT;
 			hdd_debug("sending coex indication");
 			wlan_hdd_send_svc_nlink_msg(hdd_ctxt->radio_index,
@@ -7580,14 +7384,10 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			hdd_debug("driver to start sap: %d",
 				hdd_ctxt->config->sap_internal_restart);
 			if (hdd_ctxt->config->sap_internal_restart)
-				hdd_switch_sap_channel(adapter_temp, restart_chan);
+				hdd_switch_sap_channel(adapter, restart_chan);
 			else
 				return;
 		}
-
-next_adapater:
-		status = hdd_get_next_adapter(hdd_ctxt, adapter_node, &next);
-		adapter_node = next;
 	}
 }
 
@@ -10065,8 +9865,6 @@ done:
 static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 {
 	struct hdd_context *hdd_ctx;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	struct hdd_station_ctx *hdd_sta_ctx;
 	struct hdd_adapter *adapter;
 	uint16_t len = 0;
@@ -10086,10 +9884,7 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 		"\n is_scheduler_suspended %d",
 		hdd_ctx->is_scheduler_suspended);
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->dev)
 			len += scnprintf(buf + len, *size - len,
 				"\n device name: %s", adapter->dev->name);
@@ -10107,8 +9902,6 @@ static void hdd_state_info_dump(char **buf_ptr, uint16_t *size)
 		default:
 			break;
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 
 	*size -= len;
@@ -10651,9 +10444,6 @@ void wlan_hdd_disable_roaming(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_adapter *adapterIdx = NULL;
-	hdd_adapter_list_node_t *adapterNode = NULL;
-	hdd_adapter_list_node_t *pNext = NULL;
-	QDF_STATUS status;
 
 	if (hdd_ctx->config->isFastRoamIniFeatureEnabled &&
 		hdd_ctx->config->isRoamOffloadScanEnabled &&
@@ -10666,11 +10456,7 @@ void wlan_hdd_disable_roaming(struct hdd_adapter *adapter)
 		 * Loop through adapter and disable roaming for each STA device
 		 * mode except the input adapter.
 		 */
-		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapterIdx = adapterNode->adapter;
-
+		hdd_for_each_adapter(hdd_ctx, adapterIdx) {
 			if (QDF_STA_MODE == adapterIdx->device_mode &&
 			    adapter->session_id != adapterIdx->session_id) {
 				hdd_debug("Disable Roaming on session Id(%d)",
@@ -10679,11 +10465,6 @@ void wlan_hdd_disable_roaming(struct hdd_adapter *adapter)
 							 (adapterIdx),
 						 adapterIdx->session_id, 0);
 			}
-
-			status = hdd_get_next_adapter(hdd_ctx,
-						      adapterNode,
-						      &pNext);
-			adapterNode = pNext;
 		}
 	}
 }
@@ -10703,9 +10484,6 @@ void wlan_hdd_enable_roaming(struct hdd_adapter *adapter)
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_adapter *adapterIdx = NULL;
-	hdd_adapter_list_node_t *adapterNode = NULL;
-	hdd_adapter_list_node_t *pNext = NULL;
-	QDF_STATUS status;
 
 	if (hdd_ctx->config->isFastRoamIniFeatureEnabled &&
 		hdd_ctx->config->isRoamOffloadScanEnabled &&
@@ -10718,11 +10496,7 @@ void wlan_hdd_enable_roaming(struct hdd_adapter *adapter)
 		 * Loop through adapter and enable roaming for each STA device
 		 * mode except the input adapter.
 		 */
-		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapterIdx = adapterNode->adapter;
-
+		hdd_for_each_adapter(hdd_ctx, adapterIdx) {
 			if (QDF_STA_MODE == adapterIdx->device_mode &&
 			    adapter->session_id != adapterIdx->session_id) {
 				hdd_debug("Enabling Roaming on session Id(%d)",
@@ -10732,11 +10506,6 @@ void wlan_hdd_enable_roaming(struct hdd_adapter *adapter)
 						  adapterIdx->session_id,
 						  REASON_CONNECT);
 			}
-
-			status = hdd_get_next_adapter(hdd_ctx,
-						      adapterNode,
-						      &pNext);
-			adapterNode = pNext;
 		}
 	}
 }
@@ -10860,8 +10629,6 @@ void wlan_hdd_auto_shutdown_cb(void)
 
 void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	bool ap_connected = false, sta_connected = false;
 	tHalHandle hal_handle;
@@ -10884,15 +10651,9 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 	}
 
 	/* To enable shutdown timer check conncurrency */
-	if (policy_mgr_concurrent_open_sessions_running(
-		hdd_ctx->hdd_psoc)) {
-		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-
-		while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-			adapter = adapterNode->adapter;
-			if (adapter
-			    && adapter->device_mode ==
-			    QDF_STA_MODE) {
+	if (policy_mgr_concurrent_open_sessions_running(hdd_ctx->hdd_psoc)) {
+		hdd_for_each_adapter(hdd_ctx, adapter) {
+			if (adapter->device_mode == QDF_STA_MODE) {
 				if (WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
 				    conn_info.connState ==
 				    eConnectionState_Associated) {
@@ -10900,18 +10661,14 @@ void wlan_hdd_auto_shutdown_enable(struct hdd_context *hdd_ctx, bool enable)
 					break;
 				}
 			}
-			if (adapter
-			    && adapter->device_mode == QDF_SAP_MODE) {
+
+			if (adapter->device_mode == QDF_SAP_MODE) {
 				if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->
 				    ap_active == true) {
 					ap_connected = true;
 					break;
 				}
 			}
-			status = hdd_get_next_adapter(hdd_ctx,
-						      adapterNode,
-						      &pNext);
-			adapterNode = pNext;
 		}
 	}
 
@@ -10936,14 +10693,10 @@ hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
 {
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(this_sap_adapter);
 	struct hdd_adapter *adapter, *con_sap_adapter;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 
 	con_sap_adapter = NULL;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter && ((adapter->device_mode == QDF_SAP_MODE) ||
 				(adapter->device_mode == QDF_P2P_GO_MODE)) &&
 						adapter != this_sap_adapter) {
@@ -10958,8 +10711,6 @@ hdd_get_con_sap_adapter(struct hdd_adapter *this_sap_adapter,
 				break;
 			}
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
 
 	return con_sap_adapter;
@@ -10980,27 +10731,19 @@ static inline bool hdd_adapter_is_ap(struct hdd_adapter *adapter)
 
 static bool hdd_any_adapter_is_assoc(struct hdd_context *hdd_ctx)
 {
-	QDF_STATUS status;
-	hdd_adapter_list_node_t *node;
+	struct hdd_adapter *adapter;
 
-	status = hdd_get_front_adapter(hdd_ctx, &node);
-	while (QDF_IS_STATUS_SUCCESS(status) && node) {
-		struct hdd_adapter *adapter = node->adapter;
-
-		if (adapter &&
-		    hdd_adapter_is_sta(adapter) &&
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (hdd_adapter_is_sta(adapter) &&
 		    WLAN_HDD_GET_STATION_CTX_PTR(adapter)->
 			conn_info.connState == eConnectionState_Associated) {
 			return true;
 		}
 
-		if (adapter &&
-		    hdd_adapter_is_ap(adapter) &&
+		if (hdd_adapter_is_ap(adapter) &&
 		    WLAN_HDD_GET_AP_CTX_PTR(adapter)->ap_active) {
 			return true;
 		}
-
-		status = hdd_get_next_adapter(hdd_ctx, node, &node);
 	}
 
 	return false;
@@ -12893,10 +12636,8 @@ bool hdd_is_roaming_in_progress(struct hdd_adapter *adapter)
 bool hdd_is_connection_in_progress(uint8_t *session_id,
 				enum scan_reject_states *reason)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_station_ctx *hdd_sta_ctx = NULL;
 	struct hdd_adapter *adapter = NULL;
-	QDF_STATUS status = 0;
 	uint8_t sta_id = 0;
 	uint8_t *sta_mac = NULL;
 	struct hdd_context *hdd_ctx;
@@ -12907,12 +12648,7 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 		return false;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-		if (!adapter)
-			goto end;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hdd_info("Adapter with device mode %s(%d) exists",
 			hdd_device_mode_to_string(adapter->device_mode),
 			adapter->device_mode);
@@ -12995,10 +12731,8 @@ bool hdd_is_connection_in_progress(uint8_t *session_id,
 				return true;
 			}
 		}
-end:
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
+
 	return false;
 }
 

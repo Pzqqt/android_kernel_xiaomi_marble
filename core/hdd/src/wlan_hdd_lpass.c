@@ -283,29 +283,20 @@ static void wlan_hdd_send_version_pkg(uint32_t fw_version,
 static void wlan_hdd_send_all_scan_intf_info(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *node = NULL, *next = NULL;
 	bool scan_intf_found = false;
-	QDF_STATUS status;
 
 	if (!hdd_ctx) {
 		hdd_err("NULL pointer for hdd_ctx");
 		return;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &node);
-	while (NULL != node && QDF_STATUS_SUCCESS == status) {
-		adapter = node->adapter;
-		if (adapter) {
-			if (adapter->device_mode == QDF_STA_MODE
-			    || adapter->device_mode == QDF_P2P_CLIENT_MODE
-			    || adapter->device_mode ==
-			    QDF_P2P_DEVICE_MODE) {
-				scan_intf_found = true;
-				wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
-			}
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_STA_MODE ||
+		    adapter->device_mode == QDF_P2P_CLIENT_MODE ||
+		    adapter->device_mode == QDF_P2P_DEVICE_MODE) {
+			scan_intf_found = true;
+			wlan_hdd_send_status_pkg(adapter, NULL, 1, 0);
 		}
-		status = hdd_get_next_adapter(hdd_ctx, node, &next);
-		node = next;
 	}
 
 	if (!scan_intf_found)

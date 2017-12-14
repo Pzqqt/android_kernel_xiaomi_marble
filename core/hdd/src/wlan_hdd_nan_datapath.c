@@ -168,15 +168,8 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
-	QDF_STATUS status;
-	hdd_adapter_list_node_t *curr = NULL, *next = NULL;
 
-	status = hdd_get_front_adapter(hdd_ctx, &curr);
-	while (QDF_STATUS_SUCCESS == status) {
-		adapter = curr->adapter;
-		if (!adapter)
-			goto next_adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		switch (adapter->device_mode) {
 		case QDF_P2P_GO_MODE:
 		case QDF_SAP_MODE:
@@ -194,9 +187,6 @@ static bool hdd_is_ndp_allowed(struct hdd_context *hdd_ctx)
 		default:
 			break;
 		}
-next_adapter:
-		status = hdd_get_next_adapter(hdd_ctx, curr, &next);
-		curr = next;
 	}
 
 	return true;

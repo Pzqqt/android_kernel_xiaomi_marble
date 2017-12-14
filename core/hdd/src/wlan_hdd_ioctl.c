@@ -5671,13 +5671,10 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 	int ret = 0;
 	int status;
 	int txPower;
-	QDF_STATUS qdf_status;
 	QDF_STATUS smeStatus;
 	uint8_t *value = command;
 	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	hdd_adapter_list_node_t *pAdapterNode = NULL;
-	hdd_adapter_list_node_t *pNext = NULL;
 
 	status = hdd_parse_setmaxtxpower_command(value, &txPower);
 	if (status) {
@@ -5686,10 +5683,7 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 		goto exit;
 	}
 
-	qdf_status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode
-	       && QDF_STATUS_SUCCESS == qdf_status) {
-		adapter = pAdapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		/* Assign correct self MAC address */
 		qdf_copy_macaddr(&bssid,
 				 &adapter->mac_addr);
@@ -5710,9 +5704,6 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 			goto exit;
 		}
 		hdd_debug("Set max tx power success");
-		qdf_status = hdd_get_next_adapter(hdd_ctx, pAdapterNode,
-						  &pNext);
-		pAdapterNode = pNext;
 	}
 
 exit:

@@ -989,6 +989,9 @@ struct hdd_adapter {
 	 */
 	uint32_t magic;
 
+	/* list node for membership in the adapter list */
+	qdf_list_node_t node;
+
 	struct hdd_context *hdd_ctx;
 	struct wlan_objmgr_vdev *hdd_vdev;
 
@@ -1244,11 +1247,6 @@ struct hdd_adapter {
 
 #define HDD_DEFAULT_MCC_P2P_QUOTA    70
 #define HDD_RESET_MCC_P2P_QUOTA      50
-
-typedef struct hdd_adapter_list_node {
-	qdf_list_node_t node;   /* MUST be first element */
-	struct hdd_adapter *adapter;
-} hdd_adapter_list_node_t;
 
 /*
  * struct hdd_priv_data - driver ioctl private data payload
@@ -1808,23 +1806,33 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 const char *hdd_device_mode_to_string(uint8_t device_mode);
 
 QDF_STATUS hdd_get_front_adapter(struct hdd_context *hdd_ctx,
-				 hdd_adapter_list_node_t **ppAdapterNode);
+				 struct hdd_adapter **out_adapter);
 
 QDF_STATUS hdd_get_next_adapter(struct hdd_context *hdd_ctx,
-				hdd_adapter_list_node_t *pAdapterNode,
-				hdd_adapter_list_node_t **pNextAdapterNode);
+				struct hdd_adapter *current_adapter,
+				struct hdd_adapter **out_adapter);
 
 QDF_STATUS hdd_remove_adapter(struct hdd_context *hdd_ctx,
-			      hdd_adapter_list_node_t *pAdapterNode);
+			      struct hdd_adapter *adapter);
 
 QDF_STATUS hdd_remove_front_adapter(struct hdd_context *hdd_ctx,
-				    hdd_adapter_list_node_t **ppAdapterNode);
+				    struct hdd_adapter **out_adapter);
 
 QDF_STATUS hdd_add_adapter_back(struct hdd_context *hdd_ctx,
-				hdd_adapter_list_node_t *pAdapterNode);
+				struct hdd_adapter *adapter);
 
 QDF_STATUS hdd_add_adapter_front(struct hdd_context *hdd_ctx,
-				 hdd_adapter_list_node_t *pAdapterNode);
+				 struct hdd_adapter *adapter);
+
+/**
+ * hdd_for_each_adapter - adapter iterator macro
+ * @hdd_ctx: the global HDD context
+ * @adapter: an hdd_adapter pointer to use as a cursor
+ */
+#define hdd_for_each_adapter(hdd_ctx, adapter) \
+	for (hdd_get_front_adapter(hdd_ctx, &adapter); \
+	     adapter; \
+	     hdd_get_next_adapter(hdd_ctx, adapter, &adapter))
 
 struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx,
 				     uint8_t session_type,

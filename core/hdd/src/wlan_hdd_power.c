@@ -1079,10 +1079,8 @@ static int
 hdd_suspend_wlan(void)
 {
 	struct hdd_context *hdd_ctx;
-
 	QDF_STATUS status;
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	uint32_t conn_state_mask = 0;
 
 	hdd_info("WLAN being suspended by OS");
@@ -1099,12 +1097,10 @@ hdd_suspend_wlan(void)
 		return -EINVAL;
 	}
 
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = pAdapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (wlan_hdd_validate_session_id(adapter->session_id)) {
 			hdd_err("invalid session id: %d", adapter->session_id);
-			goto next_adapter;
+			continue;
 		}
 
 		/* stop all TX queues before suspend */
@@ -1119,9 +1115,6 @@ hdd_suspend_wlan(void)
 		/* Configure supported OffLoads */
 		hdd_enable_host_offloads(adapter, pmo_apps_suspend);
 		hdd_update_conn_state_mask(adapter, &conn_state_mask);
-next_adapter:
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
 	}
 
 	status = pmo_ucfg_psoc_user_space_suspend_req(hdd_ctx->hdd_psoc,
@@ -1144,7 +1137,6 @@ static int hdd_resume_wlan(void)
 {
 	struct hdd_context *hdd_ctx;
 	struct hdd_adapter *adapter = NULL;
-	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	QDF_STATUS status;
 
 	hdd_info("WLAN being resumed by OS");
@@ -1165,13 +1157,10 @@ static int hdd_resume_wlan(void)
 	hdd_wlan_suspend_resume_event(HDD_WLAN_EARLY_RESUME);
 
 	/*loop through all adapters. Concurrency */
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = pAdapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (wlan_hdd_validate_session_id(adapter->session_id)) {
 			hdd_err("invalid session id: %d", adapter->session_id);
-			goto next_adapter;
+			continue;
 		}
 		/* Disable supported OffLoads */
 		hdd_disable_host_offloads(adapter, pmo_apps_resume);
@@ -1184,11 +1173,8 @@ static int hdd_resume_wlan(void)
 
 		if (adapter->device_mode == QDF_STA_MODE)
 			status = hdd_disable_default_pkt_filters(adapter);
-
-next_adapter:
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
 	}
+
 	hdd_ipa_resume(hdd_ctx);
 	status = pmo_ucfg_psoc_user_space_resume_req(hdd_ctx->hdd_psoc,
 			QDF_SYSTEM_SUSPEND);
@@ -1224,23 +1210,17 @@ void hdd_svc_fw_shutdown_ind(struct device *dev)
  */
 static void hdd_ssr_restart_sap(struct hdd_context *hdd_ctx)
 {
-	QDF_STATUS  status;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_adapter *adapter;
 
 	ENTER();
 
-	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-		if (adapter && adapter->device_mode == QDF_SAP_MODE) {
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_SAP_MODE) {
 			if (test_bit(SOFTAP_INIT_DONE, &adapter->event_flags)) {
 				hdd_debug("Restart prev SAP session");
 				wlan_hdd_start_sap(adapter, true);
 			}
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 
 	EXIT();
@@ -1344,13 +1324,9 @@ static inline void hdd_wlan_ssr_reinit_event(void)
  */
 static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapter_node, *next;
 	struct hdd_adapter *adapter;
-	QDF_STATUS status;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (hdd_is_interface_up(adapter) &&
 		    (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_DEVICE_MODE)) {
@@ -1359,9 +1335,6 @@ static void hdd_send_default_scan_ies(struct hdd_context *hdd_ctx)
 				      adapter->scan_info.default_scan_ies,
 				      adapter->scan_info.default_scan_ies_len);
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node,
-					      &next);
-		adapter_node = next;
 	}
 }
 
@@ -1709,10 +1682,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 #endif
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
-	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	struct hdd_adapter *adapter;
 	struct hdd_scan_info *scan_info;
-	QDF_STATUS status;
 	int rc;
 
 	ENTER();
@@ -1738,13 +1709,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * "dfs_cac_block_tx" is set to true when RADAR is found and stay true
 	 * until CAC is done for a SoftAP which is in started state.
 	 */
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = pAdapterNode->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (wlan_hdd_validate_session_id(adapter->session_id)) {
 			hdd_err("invalid session id: %d", adapter->session_id);
-			goto next_adapter;
+			continue;
 		}
 
 		if (QDF_SAP_MODE == adapter->device_mode) {
@@ -1773,15 +1741,10 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 				return -EOPNOTSUPP;
 			}
 		}
-next_adapter:
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
 	}
 
 	/* Stop ongoing scan on each interface */
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = pAdapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		scan_info = &adapter->scan_info;
 
 		if (sme_neighbor_middle_of_roaming
@@ -1794,21 +1757,11 @@ next_adapter:
 
 		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
-
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
 	}
 
 	/* flush any pending powersave timers */
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (pAdapterNode && QDF_IS_STATUS_SUCCESS(status)) {
-		adapter = pAdapterNode->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter)
 		sme_ps_timer_flush_sync(hdd_ctx->hHal, adapter->session_id);
-
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode,
-					      &pAdapterNode);
-	}
 
 	/*
 	 * Suspend IPA early before proceeding to suspend other entities like

@@ -10333,16 +10333,12 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	enum band_info band;
-
 	QDF_STATUS status;
 	struct hdd_context *hdd_ctx;
-	hdd_adapter_list_node_t *pAdapterNode, *pNext;
 	enum band_info currBand;
 	enum band_info connectedBand;
 	long lrc;
 
-	pAdapterNode = NULL;
-	pNext = NULL;
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	switch (ui_band) {
@@ -10394,9 +10390,7 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 	hdd_debug("Current band value = %u, new setting %u ",
 			currBand, band);
 
-	status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
-	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = pAdapterNode->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 		wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 				adapter->session_id, INVALID_SCAN_ID, false);
@@ -10445,15 +10439,10 @@ int hdd_reg_set_band(struct net_device *dev, u8 ui_band)
 		}
 
 		sme_scan_flush_result(hHal);
-
-		status = hdd_get_next_adapter(hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
 	}
 
-	if (QDF_STATUS_SUCCESS !=
-			ucfg_reg_set_band(hdd_ctx->hdd_pdev, band)) {
-		hdd_err("Failed to set the band value to %u",
-				band);
+	if (QDF_IS_STATUS_ERROR(ucfg_reg_set_band(hdd_ctx->hdd_pdev, band))) {
+		hdd_err("Failed to set the band value to %u", band);
 		return -EINVAL;
 	}
 

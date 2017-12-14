@@ -183,10 +183,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	uint8_t *numInterfaces;
 	uint8_t *deviceMode;
 	uint8_t *vdevId;
-	hdd_adapter_list_node_t *pAdapterNode = NULL;
-	hdd_adapter_list_node_t *pNext = NULL;
-	struct hdd_adapter *adapter = NULL;
-	QDF_STATUS status = 0;
+	struct hdd_adapter *adapter;
 
 	/* OEM msg is always to a specific process & cannot be a broadcast */
 	if (p_hdd_ctx->oem_pid == 0) {
@@ -217,21 +214,15 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	*numInterfaces = 0;
 
 	/* Iterate through each adapter and fill device mode and vdev id */
-	status = hdd_get_front_adapter(p_hdd_ctx, &pAdapterNode);
-	while ((QDF_STATUS_SUCCESS == status) && pAdapterNode) {
-		adapter = pAdapterNode->adapter;
-		if (adapter) {
-			deviceMode = buf++;
-			vdevId = buf++;
-			*deviceMode = adapter->device_mode;
-			*vdevId = adapter->session_id;
-			(*numInterfaces)++;
-			hdd_debug("numInterfaces: %d, deviceMode: %d, vdevId: %d",
-				   *numInterfaces, *deviceMode,
-				   *vdevId);
-		}
-		status = hdd_get_next_adapter(p_hdd_ctx, pAdapterNode, &pNext);
-		pAdapterNode = pNext;
+	hdd_for_each_adapter(p_hdd_ctx, adapter) {
+		deviceMode = buf++;
+		vdevId = buf++;
+		*deviceMode = adapter->device_mode;
+		*vdevId = adapter->session_id;
+		(*numInterfaces)++;
+		hdd_debug("numInterfaces: %d, deviceMode: %d, vdevId: %d",
+			  *numInterfaces, *deviceMode,
+			  *vdevId);
 	}
 
 	aniHdr->length =

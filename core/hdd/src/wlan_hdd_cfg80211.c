@@ -4131,17 +4131,10 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 				enum QDF_OPMODE device_mode)
 {
 	struct hdd_adapter *adapter;
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	struct hdd_ap_ctx *ap_ctx;
 	struct hdd_station_ctx *sta_ctx;
-	QDF_STATUS qdf_status;
 
-	qdf_status = hdd_get_front_adapter(hdd_ctx,
-					   &adapter_node);
-	while ((NULL != adapter_node) &&
-	       (QDF_STATUS_SUCCESS == qdf_status)) {
-		adapter = adapter_node->adapter;
-
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if ((device_mode == adapter->device_mode) &&
 		    (device_mode == QDF_SAP_MODE)) {
 			ap_ctx =
@@ -4179,11 +4172,6 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(struct hdd_context *hdd_ctx,
 				return true;
 			}
 		}
-
-		qdf_status = hdd_get_next_adapter(hdd_ctx,
-						  adapter_node,
-						  &next);
-		adapter_node = next;
 	}
 
 	return false;
@@ -9857,22 +9845,14 @@ static enum sta_roam_policy_dfs_mode wlan_hdd_get_sta_roam_dfs_mode(
  */
 uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	uint8_t  operating_channel = 0;
 	uint8_t sap_operating_band = 0;
 
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
-
-		if (!(adapter && (QDF_SAP_MODE == adapter->device_mode))) {
-			status = hdd_get_next_adapter(hdd_ctx, adapter_node,
-					&next);
-			adapter_node = next;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode != QDF_SAP_MODE)
 			continue;
-		}
+
 		operating_channel = adapter->session.ap.operating_channel;
 		if (IS_24G_CH(operating_channel))
 			sap_operating_band = BAND_2G;
@@ -9880,10 +9860,8 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx)
 			sap_operating_band = BAND_5G;
 		else
 			sap_operating_band = BAND_ALL;
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node,
-				&next);
-		adapter_node = next;
 	}
+
 	return sap_operating_band;
 }
 

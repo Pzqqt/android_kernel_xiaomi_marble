@@ -1350,8 +1350,6 @@ void hdd_ipa_dump_info(struct hdd_context *hdd_ctx)
  */
 void hdd_ipa_set_tx_flow_info(void)
 {
-	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_ap_ctx *hdd_ap_ctx;
@@ -1388,9 +1386,8 @@ void hdd_ipa_set_tx_flow_info(void)
 	}
 
 	psoc = hdd_ctx->hdd_psoc;
-	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
-	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
-		adapter = adapterNode->adapter;
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		switch (adapter->device_mode) {
 		case QDF_STA_MODE:
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -1630,9 +1627,8 @@ void hdd_ipa_set_tx_flow_info(void)
 		}
 		targetChannel = 0;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-		status = hdd_get_next_adapter(hdd_ctx, adapterNode, &pNext);
-		adapterNode = pNext;
 	}
+
 	hdd_ctx->mcc_mode = policy_mgr_current_concurrency_is_mcc(psoc);
 }
 
@@ -3424,24 +3420,16 @@ static int hdd_ipa_uc_disconnect_sta(struct hdd_adapter *adapter)
  */
 static int hdd_ipa_uc_disconnect(struct hdd_context *hdd_ctx)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	int ret = 0;
 
-	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-		adapter = adapter_node->adapter;
+	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (adapter->device_mode == QDF_SAP_MODE) {
 			hdd_ipa_uc_disconnect_client(adapter);
 			hdd_ipa_uc_disconnect_ap(adapter);
 		} else if (adapter->device_mode == QDF_STA_MODE) {
 			hdd_ipa_uc_disconnect_sta(adapter);
 		}
-
-		status = hdd_get_next_adapter(
-				hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 
 	return ret;
@@ -5206,8 +5194,6 @@ end:
 static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx,
 				      bool mcc_mode)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 	qdf_ipa_msg_meta_t meta;
 	qdf_ipa_wlan_msg_t *msg;
@@ -5222,18 +5208,13 @@ static int __hdd_ipa_send_mcc_scc_msg(struct hdd_context *hdd_ctx,
 
 	if (!hdd_ctx->mcc_mode) {
 		/* Flush TxRx queue for each adapter before switch to SCC */
-		status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
-		while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
-			adapter = adapter_node->adapter;
+		hdd_for_each_adapter(hdd_ctx, adapter) {
 			if (adapter->device_mode == QDF_STA_MODE ||
 			    adapter->device_mode == QDF_SAP_MODE) {
 				hdd_debug("MCC->SCC: Flush TxRx queue(d_mode=%d)",
 					 adapter->device_mode);
 				hdd_deinit_tx_rx(adapter);
 			}
-			status = hdd_get_next_adapter(
-					hdd_ctx, adapter_node, &next);
-			adapter_node = next;
 		}
 	}
 

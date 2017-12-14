@@ -553,15 +553,12 @@ static bool
 wlan_hdd_allow_sap_add(struct hdd_context *hdd_ctx, const char *name,
 		       struct wireless_dev **sap_dev)
 {
-	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
-	QDF_STATUS status;
 	struct hdd_adapter *adapter;
 
 	*sap_dev = NULL;
-	status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
-	while (adapter_node && QDF_IS_STATUS_SUCCESS(status)) {
-		adapter = adapter_node->adapter;
-		if (adapter && adapter->device_mode == QDF_SAP_MODE &&
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter->device_mode == QDF_SAP_MODE &&
 		    test_bit(NET_DEVICE_REGISTERED, &adapter->event_flags) &&
 		    !strncmp(adapter->dev->name, name, IFNAMSIZ)) {
 			struct hdd_beacon_data *beacon =
@@ -580,8 +577,6 @@ wlan_hdd_allow_sap_add(struct hdd_context *hdd_ctx, const char *name,
 			hdd_err("ieee80211_ptr points to NULL");
 			return false;
 		}
-		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
-		adapter_node = next;
 	}
 
 	return true;
