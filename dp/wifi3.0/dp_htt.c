@@ -1404,7 +1404,8 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 				goto error;
 			}
 
-			tlv_remain_len += HTT_TLV_HDR_LEN;
+			if (!tlv_buf_head)
+				tlv_remain_len += HTT_TLV_HDR_LEN;
 
 			if ((tlv_remain_len <= msg_remain_len)) {
 				/* Case 3 */
@@ -1454,7 +1455,6 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 						msg_remain_len);
 				tlv_remain_len -= msg_remain_len;
 				tlv_buf_tail += msg_remain_len;
-				msg_remain_len = 0;
 			}
 		}
 
