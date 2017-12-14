@@ -120,7 +120,7 @@ void hdd_sysfs_create_version_interface(struct wlan_objmgr_psoc *psoc)
 	uint32_t psoc_id;
 	char buf[MAX_PSOC_ID_SIZE];
 
-	wlan_kobject = kobject_create_and_add("wlan", kernel_kobj);
+	wlan_kobject = kobject_create_and_add("wifi", kernel_kobj);
 	if (!wlan_kobject) {
 		hdd_err("could not allocate wlan kobject");
 		return;
