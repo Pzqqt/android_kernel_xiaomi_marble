@@ -144,7 +144,12 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 {
 	struct ol_rx_remote_data data;
 
-	if (!pktlog_bit)
+	/**
+	 * pktlog is meant to log rx_desc information which is
+	 * already overwritten by radio header when monitor mode is ON.
+	 * Therefore, Do not log pktlog event when monitor mode is ON.
+	 */
+	if (!pktlog_bit || (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE))
 		return;
 
 	data.msdu = msdu;
@@ -160,6 +165,14 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 	struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, uint8_t pktlog_bit)
 {
 	struct ol_rx_remote_data data;
+
+	/**
+	 * pktlog is meant to log rx_desc information which is
+	 * already overwritten by radio header when monitor mode is ON.
+	 * Therefore, Do not log pktlog event when monitor mode is ON.
+	 */
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		return;
 
 	data.msdu = msdu;
 	if (peer)
