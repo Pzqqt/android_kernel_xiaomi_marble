@@ -1025,6 +1025,7 @@ typedef enum {
     /* enable/disable AP Authentication offload */
     WMI_SAP_OFL_ENABLE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_SAP_OFL),
     WMI_SAP_SET_BLACKLIST_PARAM_CMDID,
+    WMI_SAP_OBSS_DETECTION_CFG_CMDID,
 
     /** Out-of-context-of-BSS (OCB) commands */
     WMI_OCB_SET_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_OCB),
@@ -1550,6 +1551,7 @@ typedef enum {
     /* SAP Authentication offload events */
     WMI_SAP_OFL_ADD_STA_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SAP_OFL),
     WMI_SAP_OFL_DEL_STA_EVENTID,
+    WMI_SAP_OBSS_DETECTION_REPORT_EVENTID,
 
     /** Out-of-context-of-bss (OCB) events */
     WMI_OCB_SET_CONFIG_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_OCB),
@@ -11336,6 +11338,7 @@ typedef enum event_type_e {
     WOW_CRITICAL_LOG_EVENT,
     WOW_CHIP_POWER_FAILURE_DETECT_EVENT,
     WOW_11D_SCAN_EVENT,
+    WOW_SAP_OBSS_DETECTION_EVENT,
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -11392,6 +11395,7 @@ typedef enum wake_reason_e {
     WOW_REASON_THERMAL_CHANGE,
     WOW_REASON_OIC_PING_OFFLOAD,
     WOW_REASON_WLAN_DHCP_RENEW,
+    WOW_REASON_SAP_OBSS_DETECTION,
 
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
@@ -17100,6 +17104,63 @@ typedef struct {
      */
 } wmi_apfind_event_hdr;
 
+/* SAP obss detection offload types */
+typedef enum {
+    WMI_SAP_OBSS_DETECTION_MODE_DISABLED = 0, /* fw to disable the detection */
+    WMI_SAP_OBSS_DETECTION_MODE_PRESENT_NOTIFY = 1, /* if the matching beacon is present, notify host immediately */
+    WMI_SAP_OBSS_DETECTION_MODE_ABSENT_TIMEOUT_NOTIFY = 2,/* if the matching beacon is absent for the timeout period, notify host */
+} WMI_SAP_OBSS_DETECTION_MODE;
+
+typedef struct wmi_sap_obss_detection_cfg_cmd_s {
+    A_UINT32 tlv_header; /* tag = WMITLV_TAG_STRUC_wmi_sap_obss_detection_cfg_cmd_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 detect_period_ms;
+
+    /* detect whether there is 11b ap/ibss */
+    A_UINT32 b_ap_detect_mode;  /* refer WMI_SAP_OBSS_DETECTION_MODE */
+
+    /* detect whether there is 11b sta connected with other APs */
+    A_UINT32 b_sta_detect_mode;
+
+    /* detect whether there is 11g AP */
+    A_UINT32 g_ap_detect_mode;
+
+    /* detect whether there is legacy 11a traffic */
+    A_UINT32 a_detect_mode;
+
+    /* detect whether there is ap which is ht legacy mode  */
+    A_UINT32 ht_legacy_detect_mode;
+
+    /* detect whether there is ap which is ht mixed mode : has 11b/11g sta */
+    A_UINT32 ht_mixed_detect_mode;
+
+    /* detect whether there is ap which has 20M only station */
+    A_UINT32 ht_20mhz_detect_mode;
+
+} wmi_sap_obss_detection_cfg_cmd_fixed_param;
+
+typedef enum {
+    WMI_SAP_OBSS_DETECTION_EVENT_REASON_NOT_SUPPORT = 0,
+    WMI_SAP_OBSS_DETECTION_EVENT_REASON_PRESENT_NOTIFY,
+    WMI_SAP_OBSS_DETECTION_EVENT_REASON_ABSENT_TIMEOUT,
+} WMI_SAP_OBSS_DETECTION_EVENT_REASON;
+
+/* WMI_SAP_OBSS_DETECTION_MATCH_MASK is one or more of the following shift bits */
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_11B_AP_S       0
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_11B_STA_S      1
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_11G_AP_S       2
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_11A_S          3
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_HT_LEGACY_S    4
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_HT_MIXED_S     5
+#define WMI_SAP_OBSS_DETECTION_MATCH_BIT_HT_20MHZ_S     6
+
+typedef struct wmi_sap_obss_detection_info_evt_s {
+    A_UINT32 tlv_header; /* tag = WMITLV_TAG_STRUC_wmi_sap_obss_detection_info_evt_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 reason;   /* refer WMI_SAP_OBSS_DETECTION_EVENT_REASON */
+    A_UINT32 matched_detection_masks;  /* bit(s) from WMI_SAP_OBSS_DETECTION_MATCH_MASK */
+    wmi_mac_addr matched_bssid_addr;  /* valid when reason is WMI_SAP_OBSS_DETECTION_EVENT_REASON_PRESENT_NOTIFY */
+} wmi_sap_obss_detection_info_evt_fixed_param;
 
 /**
  * OCB DCC types and structures.
@@ -20870,6 +20931,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_AC_TX_QUEUE_OPTIMIZED_CMDID);
         WMI_RETURN_STRING(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID);
+        WMI_RETURN_STRING(WMI_SAP_OBSS_DETECTION_CFG_CMDID);
     }
 
     return "Invalid WMI cmd";
