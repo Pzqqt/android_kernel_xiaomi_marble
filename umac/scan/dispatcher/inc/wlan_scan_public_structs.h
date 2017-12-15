@@ -948,7 +948,6 @@ enum scan_completion_reason {
 	SCAN_REASON_MAX,
 };
 
-
 /**
  * struct scan_event - scan event definition
  * @vdev_id: vdev where scan was run
@@ -958,6 +957,7 @@ enum scan_completion_reason {
  * @requester: requester id
  * @scan_id: scan id
  * @timestamp: timestamp in microsec recorded by target for the scan event
+ * @scan_start_req: scan request object used to start this scan
  */
 struct scan_event {
 	uint32_t vdev_id;
@@ -967,6 +967,7 @@ struct scan_event {
 	uint32_t requester;
 	uint32_t scan_id;
 	uint32_t timestamp;
+	struct scan_start_request *scan_start_req;
 };
 
 /**

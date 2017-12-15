@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -219,7 +219,8 @@ scm_post_internal_scan_complete_event(struct scan_start_request *req,
 	event.vdev_id =  req->scan_req.vdev_id;
 	event.requester = req->scan_req.scan_req_id;
 	event.scan_id = req->scan_req.scan_id;
-
+	/* Fill scan_start_request used to trigger this scan */
+	event.scan_start_req = req;
 	/* post scan event to registered handlers */
 	scm_scan_post_event(req->vdev, &event);
 
@@ -255,7 +256,7 @@ scm_activate_scan_request(struct scan_start_request *req)
 
 	status = tgt_scan_start(req);
 	if (status != QDF_STATUS_SUCCESS) {
-		scm_info("tgt_scan_start failed, status: %d", status);
+		scm_err("tgt_scan_start failed, status: %d", status);
 		/* scan could not be started and hence
 		 * we will not receive any completions.
 		 * post scan cancelled
@@ -609,6 +610,8 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	struct scan_event *event;
 	struct scan_event_info *event_info;
 	struct wlan_serialization_command cmd = {0,};
+	struct wlan_serialization_command *queued_cmd;
+	struct scan_start_request *scan_start_req;
 
 	if (!msg || !msg->bodyptr) {
 		scm_err("msg: %pK, bodyptr: %pK", msg, msg->bodyptr);
@@ -650,6 +653,33 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 		goto exit;
 	}
 
+	/* Fill scan_start_request used to trigger this scan */
+	queued_cmd = wlan_serialization_get_scan_cmd_using_scan_id(
+			wlan_vdev_get_psoc(vdev), wlan_vdev_get_id(vdev),
+			event->scan_id, true);
+
+	if (!queued_cmd) {
+		scm_err("NULL queued_cmd");
+		goto exit;
+	}
+	if (!queued_cmd->umac_cmd) {
+		scm_err("NULL umac_cmd");
+		goto exit;
+	}
+
+	scan_start_req = queued_cmd->umac_cmd;
+	if (scan_start_req->scan_req.scan_req_id != event->requester) {
+		scm_err("req ID mismatch, scan_req_id:%d, event_req_id:%d",
+				scan_start_req->scan_req.scan_req_id,
+				event->requester);
+		goto exit;
+	}
+
+	event->scan_start_req = scan_start_req;
+
+	/* Notify all interested parties */
+	scm_scan_post_event(vdev, event);
+
 	switch (event->type) {
 	case SCAN_EVENT_TYPE_COMPLETED:
 	case SCAN_EVENT_TYPE_START_FAILED:
@@ -660,8 +690,6 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 		break;
 	}
 
-	/* Notify all interested parties */
-	scm_scan_post_event(vdev, event);
 exit:
 	/* free event info memory */
 	qdf_mem_free(event_info);
