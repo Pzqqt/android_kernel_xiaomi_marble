@@ -461,6 +461,11 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	ENTER();
 
+	if (cds_is_fw_down()) {
+		hdd_err("firmware is down, scan cmd cannot be processed");
+		return -EINVAL;
+	}
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EINVAL;
