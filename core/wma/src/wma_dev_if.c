@@ -2477,14 +2477,14 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 				     temp_ssid_len);
 		}
 
-		params.hidden_ssid = req->hidden_ssid;
 		params.pmf_enabled = req->pmf_enabled;
-		if (req->hidden_ssid)
-			temp_flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
-
 		if (req->pmf_enabled)
 			temp_flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
 	}
+
+	params.hidden_ssid = req->hidden_ssid;
+	if (req->hidden_ssid)
+		temp_flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
 
 	params.num_noa_descriptors = 0;
 	params.preferred_rx_streams = req->preferred_rx_streams;

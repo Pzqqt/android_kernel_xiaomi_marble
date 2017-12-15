@@ -3482,8 +3482,10 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	 * true
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, req.vdev_id) == true) ||
-		(params->restart_on_chan_switch == true))
+	    (params->restart_on_chan_switch == true)) {
 		wma->interfaces[req.vdev_id].is_channel_switch = true;
+		req.hidden_ssid = intr[vdev_id].vdev_restart_params.ssidHidden;
+	    }
 
 	if (params->restart_on_chan_switch == true &&
 			wma->interfaces[req.vdev_id].beacon_filter_enabled)
