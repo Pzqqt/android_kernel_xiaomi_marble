@@ -1214,12 +1214,14 @@ static qdf_list_t
 		if (WLAN_ADDR_EQ(wlan_peer_get_macaddr(peer), macaddr)
 			== QDF_STATUS_SUCCESS) {
 			/*
-			 *  BSSID match is requested by caller, check BSSID
+			 *  if BSSID not NULL,
+			 *  then match is requested by caller, check BSSID
 			 *  (vdev mac == bssid) --  return peer
 			 *  (vdev mac != bssid) --  perform next iteration
 			 */
-			if (wlan_peer_bssid_match(peer, bssid) ==
-							QDF_STATUS_SUCCESS) {
+			if ((bssid == NULL) ||
+				(wlan_peer_bssid_match(peer, bssid) ==
+				 QDF_STATUS_SUCCESS)) {
 				/* Return peer in logically deleted state */
 				if ((peer->obj_state ==
 					WLAN_OBJ_STATE_LOGICALLY_DELETED) &&
@@ -1573,7 +1575,7 @@ EXPORT_SYMBOL(wlan_objmgr_get_peer_by_mac_n_vdev);
  *                                                           self mac
  * @psoc: PSOC object
  * @macaddr: MAC address
- * @bssid: BSSID address
+ * @bssid: BSSID address. NULL mac means search all.
  * @dbg_id: id of the caller
  *
  * API to finds peer object pointer by MAC addr and BSSID from
