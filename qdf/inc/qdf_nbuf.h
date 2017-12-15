@@ -718,7 +718,8 @@ qdf_nbuf_get_frag_vaddr_always(qdf_nbuf_t buf)
 }
 
 /**
- * qdf_nbuf_get_frag_paddr() - get fragment physical address
+ * qdf_nbuf_get_frag_paddr() - get physical address for skb linear buffer
+ *                              or skb fragment, based on frag_num passed
  * @buf: Network buffer
  * @frag_num: Fragment number
  *
@@ -729,6 +730,19 @@ static inline qdf_dma_addr_t qdf_nbuf_get_frag_paddr(qdf_nbuf_t buf,
 {
 	QDF_BUG(!(frag_num >= QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS));
 	return __qdf_nbuf_get_frag_paddr(buf, frag_num);
+}
+
+/**
+ * qdf_nbuf_get_tx_frag_paddr() - get physical address for skb fragments only
+ * @buf: Network buffer
+ *
+ * Return: Fragment physical address
+ * Usage guideline: Use “qdf_nbuf_frag_map()” to dma map the specific
+ *                  skb fragment , followed by “qdf_nbuf_get_tx_frag_paddr”
+ */
+static inline qdf_dma_addr_t qdf_nbuf_get_tx_frag_paddr(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_get_tx_frag_paddr(buf);
 }
 
 /**

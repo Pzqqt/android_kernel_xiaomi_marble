@@ -464,6 +464,8 @@ typedef void (*qdf_nbuf_free_t)(__qdf_nbuf_t);
 	 /* assume that the OS only provides a single fragment */	\
 	 QDF_NBUF_CB_PADDR(skb))
 
+#define __qdf_nbuf_get_tx_frag_paddr(skb) QDF_NBUF_CB_TX_EXTRA_FRAG_PADDR(skb)
+
 #define __qdf_nbuf_get_frag_len(skb, frag_num)			\
 	((frag_num < QDF_NBUF_CB_TX_NUM_EXTRA_FRAGS(skb)) ?		\
 	 QDF_NBUF_CB_TX_EXTRA_FRAG_LEN(skb) : (skb)->len)
