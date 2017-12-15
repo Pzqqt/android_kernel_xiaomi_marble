@@ -30,7 +30,9 @@
 #include <qdf_util.h>
 #include <wlan_spectral_public_structs.h>
 #include <wlan_spectral_utils_api.h>
+#ifdef CONFIG_WIN
 #include <if_athioctl.h>
+#endif /*CONFIG_WIN*/
 #include <spectral_ioctl.h>
 
 #define spectral_log(level, args...) \
@@ -91,7 +93,7 @@ struct spectral_context {
 				       void *indata, u_int32_t insize,
 		void *outdata, u_int32_t *outsize);
 	int (*sptrlc_ucfg_phyerr_config)(struct wlan_objmgr_pdev *pdev,
-					 struct ath_diag *ad);
+					 void *ad);
 	void * (*sptrlc_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
 	void (*sptrlc_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
 	int (*sptrlc_set_spectral_config)(

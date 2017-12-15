@@ -18,6 +18,7 @@
  */
 
 #include "spectral_cmn_api_i.h"
+#include "spectral_ol_api_i.h"
 
 int spectral_control_ol(
 	struct wlan_objmgr_pdev *pdev,

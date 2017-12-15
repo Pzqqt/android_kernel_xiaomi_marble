@@ -17,7 +17,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-#if QCA_SUPPORT_SPECTRAL_SIMULATION
+#ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 #include "target_if_spectral.h"
 #include "target_if_spectral_sim.h"
 #include "target_if_spectral_sim_int.h"

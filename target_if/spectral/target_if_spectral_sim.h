@@ -20,7 +20,7 @@
 #ifndef _SPECTRAL_SIM_H_
 #define _SPECTRAL_SIM_H_
 
-#if QCA_SUPPORT_SPECTRAL_SIMULATION
+#ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 #include "target_if_spectral.h"
 
 /**

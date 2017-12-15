@@ -25,6 +25,8 @@
 #include <target_if_spectral.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
+#include <reg_services_public_struct.h>
+
 
 #ifdef SPECTRAL_USE_NETLINK_SOCKETS
 struct sock *target_if_spectral_nl_sock;
@@ -247,7 +249,7 @@ void target_if_spectral_create_samp_msg(
 	temp_samp_msg_len   = sizeof(SPECTRAL_SAMP_MSG) -
 			      (MAX_NUM_BINS * sizeof(u_int8_t));
 	temp_samp_msg_len  += (params->pwr_count * sizeof(u_int8_t));
-	if (spectral->ch_width == IEEE80211_CWM_WIDTH160)
+	if (spectral->ch_width == CH_WIDTH_160MHZ)
 		temp_samp_msg_len  +=
 			(params->pwr_count_sec80 * sizeof(u_int8_t));
 	bin_pwr_data        = params->bin_pwr_data;
@@ -337,7 +339,7 @@ void target_if_spectral_create_samp_msg(
 	spec_samp_msg.vhtop_ch_freq_seg2            =
 		params->vhtop_ch_freq_seg2;
 
-	if (spectral->ch_width == IEEE80211_CWM_WIDTH160) {
+	if (spectral->ch_width == CH_WIDTH_160MHZ) {
 	spec_samp_msg.samp_data.spectral_rssi_sec80 = params->rssi_sec80;
 	spec_samp_msg.samp_data.noise_floor_sec80 = params->noise_floor_sec80;
 

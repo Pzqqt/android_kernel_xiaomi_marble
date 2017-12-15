@@ -22,9 +22,11 @@
 #include "spectral_ol_api_i.h"
 #include <qdf_mem.h>
 #include <qdf_types.h>
+#ifdef CONFIG_WIN
 #include <osif_private.h>
-#include <wlan_spectral_public_structs.h>
 #include <wlan_mlme_dispatcher.h>
+#endif /*CONFIG_WIN*/
+#include <wlan_spectral_public_structs.h>
 #include <wlan_cfg80211_spectral.h>
 
 /**
@@ -48,7 +50,7 @@
  *
  * Return: Pointer to vdev on success, NULL on failure
  */
-struct wlan_objmgr_vdev*
+static struct wlan_objmgr_vdev*
 spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_vdev *vdev = NULL;
@@ -497,10 +499,12 @@ wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	}
 	qdf_mem_zero(sc, sizeof(struct spectral_context));
 	sc->psoc_obj = psoc;
-	if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_DA)
-		spectral_ctx_init_da(sc);
-	else if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_OL)
+	if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_OL)
 		spectral_ctx_init_ol(sc);
+#ifdef CONFIG_WIN
+	else if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_DA)
+		spectral_ctx_init_da(sc);
+#endif
 	wlan_objmgr_psoc_component_obj_attach(psoc, WLAN_UMAC_COMP_SPECTRAL,
 					      (void *)sc, QDF_STATUS_SUCCESS);
 

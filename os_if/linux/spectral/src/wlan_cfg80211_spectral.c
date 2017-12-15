@@ -296,7 +296,7 @@ int wlan_cfg80211_spectral_scan_config_and_start(struct wiphy *wiphy,
 	uint64_t cookie;
 	struct sk_buff *skb;
 	uint32_t spectral_dbg_level;
-	uint32_t scan_req_type;
+	uint32_t scan_req_type = 0;
 
 	if (wlan_cfg80211_nla_parse(
 			tb,
@@ -636,7 +636,7 @@ int wlan_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 					   const void *data,
 					   int data_len)
 {
-	struct spectral_scan_state sscan_state;
+	struct spectral_scan_state sscan_state = { 0 };
 	struct sk_buff *skb;
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, 2 * sizeof(u32) +

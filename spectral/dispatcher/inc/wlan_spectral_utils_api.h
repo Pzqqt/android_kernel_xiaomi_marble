@@ -81,9 +81,41 @@ struct spectral_legacy_cbacks {
 					     uint16_t *sec20chan_freq);
 };
 
+/**
+ * spectral_register_legacy_cb - Register legacy callbacks
+ * @psoc:          psoc object
+ * @legacy_cbacks:        legacy callback structure
+ *
+ * Return: SUCCESS,
+ *         Failure
+ */
 QDF_STATUS spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
 		struct spectral_legacy_cbacks *legacy_cbacks);
 
+/**
+ * spectral_vdev_get_chan_freq - Get vdev channel frequency
+ * @vdev:          vdev object
+ *
+ * Return: vdev operating frequency
+ */
+int16_t spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * spectral_vdev_get_ch_width - Get vdev channel band width
+ * @vdev:   vdev object
+ *
+ * Return: phy channel width
+ */
 enum phy_ch_width spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * spectral_vdev_get_sec20chan_freq_mhz - Get vdev secondary channel frequncy
+ * @vdev:   vdev object
+ * @sec20chan_freq: secondary channel frequency
+ *
+ * Return: secondary channel freq
+ */
+int spectral_vdev_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
+					uint16_t *sec20chan_freq);
 
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/

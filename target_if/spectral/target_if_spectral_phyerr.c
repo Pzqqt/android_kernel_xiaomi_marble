@@ -26,7 +26,12 @@
 #include <target_if_spectral.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
+#ifdef CONFIG_WIN
 #include <osif_rawmode_sim.h>
+#endif /*CONFIG_WIN*/
+#include <reg_services_public_struct.h>
+extern int spectral_debug_level;
+
 /* START of spectral GEN II HW specific function declarations */
 static int dump_summary_report_gen2(
 	SPECTRAL_PHYERR_TLV_GEN2 *ptlv,
@@ -206,16 +211,16 @@ uint32_t target_if_get_offset_swar_sec80(uint32_t channel_width)
 	uint32_t offset = 0;
 
 	switch (channel_width) {
-	case IEEE80211_CWM_WIDTH20:
+	case CH_WIDTH_20MHZ:
 		offset = OFFSET_CH_WIDTH_20;
 		break;
-	case IEEE80211_CWM_WIDTH40:
+	case CH_WIDTH_40MHZ:
 		offset = OFFSET_CH_WIDTH_40;
 		break;
-	case IEEE80211_CWM_WIDTH80:
+	case CH_WIDTH_80MHZ:
 		offset = OFFSET_CH_WIDTH_80;
 		break;
-	case IEEE80211_CWM_WIDTH160:
+	case CH_WIDTH_160MHZ:
 		offset = OFFSET_CH_WIDTH_160;
 		break;
 	default:
@@ -890,7 +895,7 @@ int spectral_process_phyerr_gen2(
 	acs_stats->nfc_ext_rssi        = extension_rssi;
 
 	if (spectral->is_160_format &&
-	    spectral->ch_width == IEEE80211_CWM_WIDTH160) {
+	    spectral->ch_width == CH_WIDTH_160MHZ) {
 		/* We expect to see one more Search FFT report, and it should
 		 * be equal in size to the current one.
 		 */
@@ -1293,7 +1298,7 @@ int spectral_dump_fft_report_gen3(
 	return 0;
 }
 
-int consume_searchfft_report_gen3(
+static int consume_searchfft_report_gen3(
 	struct target_if_spectral *spectral,
 	 struct phyerr_info *pinfo)
 {
@@ -1469,7 +1474,7 @@ int consume_searchfft_report_gen3(
 	acs_stats->nfc_ctl_rssi        = control_rssi;
 	acs_stats->nfc_ext_rssi        = extension_rssi;
 
-	if (spectral->ch_width == IEEE80211_CWM_WIDTH160) {
+	if (spectral->ch_width == CH_WIDTH_160MHZ) {
 	/* We expect to see one more Search FFT report, and it should be
 	 * equal in size to the current one.
 	 */
@@ -1595,7 +1600,9 @@ int spectral_process_phyerr_gen3(
 			  "purpose\n");
 		qdf_print("Dalalength of buffer = 0x%x(%d)\n",
 			  datalen, datalen);
+#ifdef CONFIG_WIN
 		RAWSIM_PKT_HEXDUMP(data, datalen);
+#endif
 	}
 
 	/* Peek into the data to figure out whether

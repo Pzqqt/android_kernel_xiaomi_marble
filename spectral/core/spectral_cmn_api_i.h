@@ -105,6 +105,25 @@ int spectral_control_cmn(
 	void *outdata, u_int32_t *outsize);
 
 /**
+ * spectral_control_ol(): Offload handler for demultiplexing requests from
+ *                         higher layer
+ * @pdev:    reference to global pdev object
+ * @id:      spectral config command id
+ * @indata:  reference to input data
+ * @insize:  input data size
+ * @outdata: reference to output data
+ * @outsize: reference to output data size
+ *
+ * This function processes the spectral config command
+ * and appropriate handlers are invoked.
+ *
+ * Return: 0 success else failure
+ */
+int spectral_control_ol(
+	struct wlan_objmgr_pdev *pdev, u_int id,
+	void *indata, u_int32_t insize, void *outdata, u_int32_t *outsize);
+
+/**
  * spectral_get_spectral_ctx_from_pdev() - API to get spectral context object
  *                                         from pdev
  * @pdev : Reference to pdev global object

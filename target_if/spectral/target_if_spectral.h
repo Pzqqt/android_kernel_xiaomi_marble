@@ -23,11 +23,10 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_objmgr_vdev_obj.h>
 #include <qdf_lock.h>
 #include <wlan_spectral_public_structs.h>
 #include <reg_services_public_struct.h>
-
-extern int spectral_debug_level;
 
 #ifdef WIN32
 #pragma pack(push, target_if_spectral, 1)
@@ -771,7 +770,7 @@ struct target_if_spectral {
 	bool                                    is_lb_edge_extrabins_format;
 	bool                                    is_rb_edge_extrabins_format;
 	bool                                    is_sec80_rssi_war_required;
-#if QCA_SUPPORT_SPECTRAL_SIMULATION
+#ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 	void                                    *simctx;
 #endif
 	enum spectral_gen                       spectral_gen;
@@ -842,6 +841,15 @@ struct target_if_samp_msg_params {
 	void spectral_nl_data_ready(struct sk_buff *skb);
 #endif /* VERSION CHECK */
 #endif /* SPECTRAL_USE_NETLINK_SOCKETS defined */
+
+#if (KERNEL_VERSION(2, 6, 31) > LINUX_VERSION_CODE)
+void target_if_spectral_nl_data_ready(struct sock *sk, int len);
+#else
+void target_if_spectral_nl_data_ready(struct sk_buff *skb);
+#endif
+int target_if_spectral_dump_fft(u_int8_t *pfft, int fftlen);
+void target_if_dbg_print_SAMP_param(struct target_if_samp_msg_params *p);
+uint32_t target_if_get_offset_swar_sec80(uint32_t channel_width);
 
 void target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 extern struct net init_net;
@@ -1023,6 +1031,315 @@ void target_if_spectral_process_phyerr(
 					p_rfqual, p_chaninfo,
 					tsf64, acs_stats);
 }
+
+/**
+ * tgt_if_is_spectral_enabled() - Get whether Spectral is enabled
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Return: True if Spectral is enabled, false if Spectral is not enabled
+ */
+u_int32_t tgt_if_is_spectral_enabled(void *arg);
+
+/**
+ * tgt_if_is_spectral_active() - Get whether Spectral is active
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Return: True if Spectral is active, false if Spectral is not active
+ */
+u_int32_t tgt_if_is_spectral_active(void *arg);
+
+/**
+ * tgt_if_start_spectral_scan() - Start Spectral scan
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Return: 1 on success, 0 on failure
+ */
+u_int32_t tgt_if_start_spectral_scan(void *arg);
+
+/**
+ * tgt_if_stop_spectral_scan() - Stop Spectral scan
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Return: 1 on success, 0 on failure
+ */
+u_int32_t tgt_if_stop_spectral_scan(void *arg);
+
+/**
+ * target_if_spectral_get_extension_channel() - Get the current Extension
+ *                                              channel (in MHz)
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Return: Current Extension channel (in MHz) on success, 0 on failure or if
+ * extension channel is not present.
+ */
+u_int32_t target_if_spectral_get_extension_channel(void *arg);
+
+/**
+ * target_if_spectral_get_current_channel() - Get the current channel (in MHz)
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Return: Current channel (in MHz) on success, 0 on failure
+ */
+u_int32_t target_if_spectral_get_current_channel(void *arg);
+
+
+/**
+ * target_if_spectral_reset_hw() - Reset the hardware
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * This is only a placeholder since it is not currently required in the offload
+ * case.
+ *
+ * Return: 0
+ */
+u_int32_t target_if_spectral_reset_hw(void *arg);
+
+/**
+ * target_if_spectral_get_chain_noise_floor() - Get the Chain noise floor from
+ * Noisefloor history buffer
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ * @nf_buf: Pointer to buffer into which chain Noise Floor data should be copied
+ *
+ * This is only a placeholder since it is not currently required in the offload
+ * case.
+ *
+ * Return: 0
+ */
+u_int32_t target_if_spectral_get_chain_noise_floor(void *arg, int16_t *nf_buf);
+
+/**
+ * target_if_spectral_get_ext_noisefloor() - Get the extension channel
+ * noisefloor
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * This is only a placeholder since it is not currently required in the offload
+ * case.
+ *
+ * Return: 0
+ */
+int8_t target_if_spectral_get_ext_noisefloor(void *arg);
+
+/**
+ * target_if_spectral_get_ctl_noisefloor() - Get the control channel noisefloor
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * This is only a placeholder since it is not currently required in the offload
+ * case.
+ *
+ * Return: 0
+ */
+int8_t target_if_spectral_get_ctl_noisefloor(void *arg);
+
+/**
+ * target_if_spectral_get_capability() - Get whether a given Spectral hardware
+ * capability is available
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ * @type: Spectral hardware capability type
+ *
+ * Return: True if the capability is available, false if the capability is not
+ * available
+ */
+u_int32_t target_if_spectral_get_capability(
+					void *arg, SPECTRAL_CAPABILITY_TYPE type);
+
+/**
+ * target_if_spectral_set_rxfilter() - Set the RX Filter before Spectral start
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ * @rxfilter: Rx filter to be used
+ *
+ * Note: This is only a placeholder function. It is not currently required since
+ * FW should be taking care of setting the required filters.
+ *
+ * Return: 0
+ */
+u_int32_t target_if_spectral_set_rxfilter(void *arg, int rxfilter);
+
+/**
+ * target_if_spectral_configure_params() - Configure user supplied Spectral
+ *                                         parameters
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ * @params: Spectral parameters
+ *
+ * Return: 1 on success, 0 on failure.
+ */
+u_int32_t target_if_spectral_configure_params(
+				void *arg, struct spectral_config *params);
+
+/**
+ * target_if_spectral_get_rxfilter() - Get the current RX Filter settings
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ *
+ * Note: This is only a placeholder function. It is not currently required since
+ * FW should be taking care of setting the required filters.
+ *
+ * Return: 0
+ */
+u_int32_t target_if_spectral_get_rxfilter(void *arg);
+
+/**
+ * target_if_pdev_spectral_deinit() - De-initialize target_if Spectral
+ * functionality for the given pdev
+ * @pdev: Pointer to pdev object
+ *
+ * Return: None
+ */
+void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_set_spectral_config() - Set spectral config
+ * @pdev:       Pointer to pdev object
+ * @threshtype: config type
+ * @value:      config value
+ *
+ * API to set spectral configurations
+ *
+ * Return: 1 on success, 0 on failure
+ */
+int target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
+					const u_int32_t threshtype,
+					const u_int32_t value);
+
+/**
+ * target_if_pdev_spectral_init() - Initialize target_if Spectral
+ * functionality for the given pdev
+ * @pdev: Pointer to pdev object
+ *
+ * Return: On success, pointer to Spectral target_if internal private data, on
+ * failure, NULL
+ */
+void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_spectral_get_params() - Get user configured Spectral parameters
+ * @arg: Pointer to handle for Spectral target_if internal private data
+ * @params: Pointer to buffer into which Spectral parameters should be copied
+ *
+ * Return: 1 on success, 0 on failure.
+ */
+u_int32_t target_if_spectral_get_params(
+			void *arg, struct spectral_config *params);
+
+/**
+ * init_spectral_capability() - Initialize Spectral capability
+ * @spectral: Pointer to Spectral target_if internal private data
+ *
+ * This is a workaround.
+ *
+ * Return: None
+ */
+void init_spectral_capability(
+			struct target_if_spectral *spectral);
+
+/**
+ * target_if_start_spectral_scan() - Start spectral scan
+ * @pdev: Pointer to pdev object
+ *
+ * API to start spectral scan
+ *
+ * Return: 0 in case of success, -1 on failure
+ */
+int target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev);
+/**
+ * target_if_get_spectral_config() - Get spectral configuration
+ * @pdev: Pointer to pdev object
+ * @param: Pointer to spectral_config structure in which the configuration
+ * should be returned
+ *
+ * API to get the current spectral configuration
+ *
+ * Return: 1 on success, 0 on failure.
+ */
+void target_if_get_spectral_config(struct wlan_objmgr_pdev *pdev,
+					  struct spectral_config *param);
+
+/**
+ * target_if_spectral_scan_enable_params() - Enable use of desired Spectral
+ *                                           parameters
+ * @spectral: Pointer to Spectral target_if internal private data
+ * @spectral_params: Pointer to Spectral parameters
+ *
+ * Enable use of desired Spectral parameters by configuring them into HW, and
+ * starting Spectral scan
+ *
+ * Return: 0 on success, 1 on failure
+ */
+int target_if_spectral_scan_enable_params(
+		struct target_if_spectral *spectral, struct spectral_config *spectral_params);
+
+/**
+ * target_if_is_spectral_active() - Get whether Spectral is active
+ * @pdev: Pointer to pdev object
+ *
+ * Return: True if Spectral is active, false if Spectral is not active
+ */
+bool target_if_is_spectral_active(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_is_spectral_enabled() - Get whether Spectral is enabled
+ * @pdev: Pointer to pdev object
+ *
+ * Return: True if Spectral is enabled, false if Spectral is not enabled
+ */
+bool target_if_is_spectral_enabled(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_set_debug_level() - Set debug level for Spectral
+ * @pdev: Pointer to pdev object
+ * @debug_level: Debug level
+ *
+ * Return: 0 in case of success
+ */
+int target_if_set_debug_level(struct wlan_objmgr_pdev *pdev,
+				     u_int32_t debug_level);
+
+/**
+ * target_if_get_debug_level() - Get debug level for Spectral
+ * @pdev: Pointer to pdev object
+ *
+ * Return: Current debug level
+ */
+u_int32_t target_if_get_debug_level(struct wlan_objmgr_pdev *pdev);
+
+
+/**
+ * target_if_get_spectral_capinfo() - Get Spectral capability information
+ * @pdev: Pointer to pdev object
+ * @outdata: Buffer into which data should be copied
+ *
+ * Return: void
+ */
+void target_if_get_spectral_capinfo(
+	struct wlan_objmgr_pdev *pdev,
+	 void *outdata);
+
+
+/**
+ * target_if_get_spectral_diagstats() - Get Spectral diagnostic statistics
+ * @pdev:  Pointer to pdev object
+ * @outdata: Buffer into which data should be copied
+ *
+ * Return: void
+ */
+void target_if_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
+					     void *outdata);
+
+/*
+ * target_if_spectral_send_tlv_to_host - target_if_spectral_send_tlv_to_host
+ * @spectral: Send the TLV information to Host
+ * @data: Pointer to the TLV
+ * @datalen: tlv length
+ *
+ * Return: Success/Failure
+ *
+ */
+int target_if_spectral_send_tlv_to_host(
+	struct target_if_spectral *spectral,
+	 u_int8_t *data, u_int32_t datalen);
+
+void target_if_register_wmi_spectral_cmd_ops(
+	struct wlan_objmgr_pdev *pdev,
+	struct wmi_spectral_cmd_ops *cmd_ops);
+
 
 #ifdef WIN32
 #pragma pack(pop, target_if_spectral)

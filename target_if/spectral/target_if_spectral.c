@@ -25,7 +25,10 @@
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
 #include <reg_services_public_struct.h>
+#ifdef CONFIG_WIN
 #include <wlan_mlme_dispatcher.h>
+#endif /*CONFIG_WIN*/
+#include <reg_services_public_struct.h>
 #include <target_if_spectral_sim.h>
 
 /**
@@ -35,6 +38,7 @@
  * module.
  */
 struct target_if_spectral_ops spectral_ops;
+int spectral_debug_level = ATH_DEBUG_SPECTRAL;
 
 /**
  * target_if_spectral_get_vdev() - Get pointer to vdev to be used for Spectral
@@ -86,7 +90,7 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
  *
  * Return: QDF_STATUS_SUCCESS on success, negative error code on failure
  */
-int target_if_send_vdev_spectral_configure_cmd(
+static int target_if_send_vdev_spectral_configure_cmd(
 	struct target_if_spectral *spectral,
 	struct spectral_config *param)
 {
@@ -144,7 +148,7 @@ int target_if_send_vdev_spectral_configure_cmd(
  *
  * Return: QDF_STATUS_SUCCESS on success, negative error code on failure
  */
-int target_if_send_vdev_spectral_enable_cmd(
+static int target_if_send_vdev_spectral_enable_cmd(
 	struct target_if_spectral *spectral,
 	u_int8_t is_spectral_active_valid,
 	u_int8_t is_spectral_active,
@@ -191,7 +195,7 @@ int target_if_send_vdev_spectral_enable_cmd(
  *
  * Return: QDF_STATUS_SUCCESS on success, negative error code on failure
  */
-int target_if_spectral_info_init_defaults(struct target_if_spectral *spectral)
+static int target_if_spectral_info_init_defaults(struct target_if_spectral *spectral)
 {
 	struct target_if_spectral_param_state_info *info = &spectral->ol_info;
 	struct wlan_objmgr_vdev *vdev = NULL;
@@ -280,7 +284,7 @@ int target_if_spectral_info_init_defaults(struct target_if_spectral *spectral)
  *
  * Return: 0 on success, negative error code on failure
  */
-int ol_spectral_info_read(struct target_if_spectral *spectral,
+static int ol_spectral_info_read(struct target_if_spectral *spectral,
 			  enum ol_spectral_info_spec specifier,
 				void *output,
 				int output_len)
@@ -533,7 +537,7 @@ int ol_spectral_info_read(struct target_if_spectral *spectral,
  *
  * Return: 0 on success, negative error code on failure
  */
-int ol_spectral_info_write(struct target_if_spectral *spectral,
+static int ol_spectral_info_write(struct target_if_spectral *spectral,
 			   enum ol_spectral_info_spec specifier,
 				void *input,
 				int input_len)
@@ -1163,7 +1167,7 @@ void init_spectral_capability(struct target_if_spectral *spectral)
  *
  * Return: None
  */
-void target_if_init_spectral_ops_common(void)
+static void target_if_init_spectral_ops_common(void)
 {
 	struct target_if_spectral_ops *p_sops = &spectral_ops;
 
@@ -1171,7 +1175,7 @@ void target_if_init_spectral_ops_common(void)
 	p_sops->get_capability          = target_if_spectral_get_capability;
 	p_sops->set_rxfilter            = target_if_spectral_set_rxfilter;
 	p_sops->get_rxfilter            = target_if_spectral_get_rxfilter;
-#if QCA_SUPPORT_SPECTRAL_SIMULATION
+#ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 	/* Spectral simulation is currently intended for platform transitions
 	 * where underlying HW support may not be available for some time.
 	 * Hence, we do not currently provide a runtime switch to turn the
@@ -1217,7 +1221,7 @@ void target_if_init_spectral_ops_common(void)
  *
  * Return: None
  */
-void target_if_init_spectral_ops_gen2(void)
+static void target_if_init_spectral_ops_gen2(void)
 {
 	struct target_if_spectral_ops *p_sops = &spectral_ops;
 
@@ -1230,7 +1234,7 @@ void target_if_init_spectral_ops_gen2(void)
  *
  * Return: None
  */
-void target_if_init_spectral_ops_gen3(void)
+static void target_if_init_spectral_ops_gen3(void)
 {
 	struct target_if_spectral_ops *p_sops = &spectral_ops;
 
@@ -1244,7 +1248,7 @@ void target_if_init_spectral_ops_gen3(void)
  *
  * Return: None
  */
-void target_if_init_spectral_ops(struct target_if_spectral *spectral)
+static void target_if_init_spectral_ops(struct target_if_spectral *spectral)
 {
 	target_if_init_spectral_ops_common();
 	if (spectral->spectral_gen == SPECTRAL_GEN2)
@@ -1401,7 +1405,7 @@ static int null_spectral_process_phyerr(
  *
  * Return: None
  */
-void target_if_spectral_init_dummy_function_table(
+static void target_if_spectral_init_dummy_function_table(
 	struct target_if_spectral *ps)
 {
 	struct target_if_spectral_ops *p_sops = GET_TIF_SPECTRAL_OPS(ps);
@@ -1435,7 +1439,7 @@ void target_if_spectral_init_dummy_function_table(
  *
  * Return: None
  */
-void target_if_spectral_register_funcs(
+static void target_if_spectral_register_funcs(
 	struct target_if_spectral *spectral,
 	 struct target_if_spectral_ops *p)
 {
@@ -1468,7 +1472,7 @@ void target_if_spectral_register_funcs(
  *
  * Return: None
  */
-void target_if_spectral_clear_stats(struct target_if_spectral *spectral)
+static void target_if_spectral_clear_stats(struct target_if_spectral *spectral)
 {
 	struct target_if_spectral_ops *p_sops = GET_TIF_SPECTRAL_OPS(spectral);
 
@@ -1485,7 +1489,8 @@ void target_if_spectral_clear_stats(struct target_if_spectral *spectral)
  *
  * Return: True if HW supports Spectral, false if HW does not support Spectral
  */
-int target_if_spectral_check_hw_capability(struct target_if_spectral *spectral)
+static int target_if_spectral_check_hw_capability(
+			struct target_if_spectral *spectral)
 {
 	struct target_if_spectral_ops *p_sops = NULL;
 	struct spectral_caps *pcap  = NULL;
@@ -1586,7 +1591,7 @@ static void target_if_spectral_detach(struct target_if_spectral *spectral)
 	qdf_print("spectral detach\n");
 	qdf_spinlock_destroy(&spectral->ol_info.osps_lock);
 
-#if QCA_SUPPORT_SPECTRAL_SIMULATION
+#ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 	target_if_spectral_sim_detach(spectral);
 #endif /* QCA_SUPPORT_SPECTRAL_SIMULATION */
 
@@ -1615,16 +1620,19 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_if_spectral_ops *p_sops = NULL;
 	struct target_if_spectral *spectral = NULL;
+#ifdef CONFIG_WIN
 	struct ol_ath_softc_net80211 *scn = NULL;
+#endif
 	struct pdev_osif_priv *osif_priv = NULL;
 
 	osif_priv = wlan_pdev_get_ospriv(pdev);
+#ifdef CONFIG_WIN
 	scn = (struct ol_ath_softc_net80211 *)osif_priv->legacy_osif_priv;
 	if (!scn) {
 		qdf_print("%s: scn is NULL!\n", __func__);
 		return NULL;
 	}
-
+#endif
 	spectral = (struct target_if_spectral *)qdf_mem_malloc(
 			sizeof(struct target_if_spectral));
 	if (!spectral) {
@@ -1666,7 +1674,7 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 
 	/* Set the default values for spectral parameters */
 	target_if_spectral_init_param_defaults(spectral);
-
+#ifdef CONFIG_WIN
 	if ((scn->soc->target_type == TARGET_TYPE_QCA8074) || (
 		scn->soc->target_type == TARGET_TYPE_QCA6290)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
@@ -1683,8 +1691,15 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		 spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN2;
 		 spectral->tlvhdr_size = sizeof(SPECTRAL_PHYERR_TLV_GEN2);
 	}
-
-#if QCA_SUPPORT_SPECTRAL_SIMULATION
+#else
+	spectral->spectral_gen = SPECTRAL_GEN3;
+	spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
+	spectral->tag_sscan_summary_exp =
+		TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3;
+	spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
+	spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
+#endif
+#ifdef QCA_SUPPORT_SPECTRAL_SIMULATION
 	if (target_if_spectral_sim_attach(spectral)) {
 		qdf_mem_free(spectral);
 		return NULL;
@@ -1707,7 +1722,7 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->is_160_format = false;
 		spectral->is_lb_edge_extrabins_format = false;
 		spectral->is_rb_edge_extrabins_format = false;
-
+#ifdef CONFIG_WIN
 		if (scn->soc->target_type == TARGET_TYPE_QCA9984 ||
 		    scn->soc->target_type == TARGET_TYPE_QCA9888) {
 			spectral->is_160_format = true;
@@ -1721,6 +1736,11 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		if (scn->soc->target_type == TARGET_TYPE_QCA9984 ||
 		    scn->soc->target_type == TARGET_TYPE_QCA9888)
 			spectral->is_sec80_rssi_war_required = true;
+#else
+	spectral->is_160_format = true;
+	spectral->is_lb_edge_extrabins_format = true;
+	spectral->is_rb_edge_extrabins_format = true;
+#endif
 	}
 
 	return spectral;
@@ -1733,7 +1753,7 @@ void *target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
  *
  * Return: None
  */
-static void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
+void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_if_spectral *spectral = NULL;
 
@@ -1743,6 +1763,8 @@ static void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 	target_if_spectral_detach(spectral);
+
+	return;
 }
 
 /**
@@ -1755,7 +1777,7 @@ static void target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
  *
  * Return: 1 on success, 0 on failure
  */
-static int target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
+int target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 					 const u_int32_t threshtype,
 						const u_int32_t value)
 {
@@ -1911,7 +1933,7 @@ static void init_upper_lower_flags(struct target_if_spectral *spectral)
  *
  * Return: 1 on success, 0 on failure.
  */
-static void target_if_get_spectral_config(struct wlan_objmgr_pdev *pdev,
+void target_if_get_spectral_config(struct wlan_objmgr_pdev *pdev,
 					  struct spectral_config *param)
 {
 	struct target_if_spectral_ops *p_sops = NULL;
@@ -1935,7 +1957,7 @@ static void target_if_get_spectral_config(struct wlan_objmgr_pdev *pdev,
  *
  * Return: 0 on success, 1 on failure
  */
-static int target_if_spectral_scan_enable_params(
+int target_if_spectral_scan_enable_params(
 	struct target_if_spectral *spectral,
 	struct spectral_config *spectral_params)
 {
@@ -1987,7 +2009,7 @@ static int target_if_spectral_scan_enable_params(
 			spectral->rb_edge_extrabins = 4;
 		}
 
-		if (spectral->ch_width == IEEE80211_CWM_WIDTH20) {
+		if (spectral->ch_width == CH_WIDTH_20MHZ) {
 			/* qdf_print("SPECTRAL : (11AC) 20MHz Channel Width
 			 * (Channel = %d)\n", current_channel);
 			 */
@@ -2006,7 +2028,7 @@ static int target_if_spectral_scan_enable_params(
 				current_channel;
 			spectral->classifier_params.upper_chan_in_mhz = 0;
 
-		} else if (spectral->ch_width == IEEE80211_CWM_WIDTH40) {
+		} else if (spectral->ch_width == CH_WIDTH_40MHZ) {
 			/* qdf_print("SPECTRAL : (11AC) 40MHz Channel Width
 			 * (Channel = %d)\n", current_channel);
 			 */
@@ -2034,7 +2056,7 @@ static int target_if_spectral_scan_enable_params(
 					extension_channel;
 			}
 
-		} else if (spectral->ch_width == IEEE80211_CWM_WIDTH80) {
+		} else if (spectral->ch_width == CH_WIDTH_80MHZ) {
 			/* qdf_print("SPECTRAL : (11AC) 80MHz Channel Width
 			 * (Channel = %d)\n", current_channel);
 			 */
@@ -2070,7 +2092,7 @@ static int target_if_spectral_scan_enable_params(
 					extension_channel;
 			}
 
-		} else if (spectral->ch_width == IEEE80211_CWM_WIDTH160) {
+		} else if (spectral->ch_width == CH_WIDTH_160MHZ) {
 			/* qdf_print("SPECTRAL : (11AC) 160MHz Channel Width
 			 * (Channel = %d)\n", current_channel);
 			 */
@@ -2243,7 +2265,7 @@ static int target_if_spectral_scan_enable_params(
  *
  * Return: 0 in case of success, -1 on failure
  */
-static int target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev)
+int target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_if_spectral_ops *p_sops = NULL;
 	struct target_if_spectral *spectral = NULL;
@@ -2315,7 +2337,7 @@ void target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev)
  *
  * Return: True if Spectral is active, false if Spectral is not active
  */
-static bool target_if_is_spectral_active(struct wlan_objmgr_pdev *pdev)
+bool target_if_is_spectral_active(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_if_spectral *spectral = NULL;
 	struct target_if_spectral_ops *p_sops = NULL;
@@ -2331,7 +2353,7 @@ static bool target_if_is_spectral_active(struct wlan_objmgr_pdev *pdev)
  *
  * Return: True if Spectral is enabled, false if Spectral is not enabled
  */
-static bool target_if_is_spectral_enabled(struct wlan_objmgr_pdev *pdev)
+bool target_if_is_spectral_enabled(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_if_spectral *spectral = NULL;
 	struct target_if_spectral_ops *p_sops = NULL;
@@ -2348,7 +2370,7 @@ static bool target_if_is_spectral_enabled(struct wlan_objmgr_pdev *pdev)
  *
  * Return: 0 in case of success
  */
-static int target_if_set_debug_level(struct wlan_objmgr_pdev *pdev,
+int target_if_set_debug_level(struct wlan_objmgr_pdev *pdev,
 				     u_int32_t debug_level)
 {
 	spectral_debug_level = (ATH_DEBUG_SPECTRAL << debug_level);
@@ -2361,7 +2383,7 @@ static int target_if_set_debug_level(struct wlan_objmgr_pdev *pdev,
  *
  * Return: Current debug level
  */
-static u_int32_t target_if_get_debug_level(struct wlan_objmgr_pdev *pdev)
+u_int32_t target_if_get_debug_level(struct wlan_objmgr_pdev *pdev)
 {
 	return spectral_debug_level;
 }
@@ -2373,7 +2395,7 @@ static u_int32_t target_if_get_debug_level(struct wlan_objmgr_pdev *pdev)
  *
  * Return: void
  */
-static void target_if_get_spectral_capinfo(
+void target_if_get_spectral_capinfo(
 	struct wlan_objmgr_pdev *pdev,
 	 void *outdata)
 {
@@ -2391,7 +2413,7 @@ static void target_if_get_spectral_capinfo(
  *
  * Return: void
  */
-static void target_if_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
+void target_if_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev,
 					     void *outdata)
 {
 	struct target_if_spectral *spectral = NULL;
