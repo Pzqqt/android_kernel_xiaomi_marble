@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,6 +24,7 @@
  */
 
 #include "wlan_hdd_disa.h"
+#include "wlan_disa_ucfg_api.h"
 #include "wlan_hdd_request_manager.h"
 #include "sme_api.h"
 #include <qca_vendor.h>
@@ -40,26 +41,26 @@
  */
 struct hdd_encrypt_decrypt_msg_context {
 	int status;
-	struct encrypt_decrypt_req_params request;
-	struct sir_encrypt_decrypt_rsp_params response;
+	struct disa_encrypt_decrypt_req_params request;
+	struct disa_encrypt_decrypt_resp_params response;
 };
 
 /**
  * hdd_encrypt_decrypt_msg_cb () - encrypt/decrypt response message handler
  * @cookie: hdd request cookie
- * @encrypt_decrypt_rsp_params: encrypt/decrypt response parameters
+ * @resp: encrypt/decrypt response parameters
  *
  * Return: none
  */
 static void hdd_encrypt_decrypt_msg_cb(void *cookie,
-	struct sir_encrypt_decrypt_rsp_params *encrypt_decrypt_rsp_params)
+	struct disa_encrypt_decrypt_resp_params *resp)
 {
 	struct hdd_request *request;
 	struct hdd_encrypt_decrypt_msg_context *context;
 
 	ENTER();
 
-	if (!encrypt_decrypt_rsp_params) {
+	if (!resp) {
 		hdd_err("rsp params is NULL");
 		return;
 	}
@@ -72,28 +73,28 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 
 	print_hex_dump(KERN_INFO, "Data in hdd_encrypt_decrypt_msg_cb: ",
 		DUMP_PREFIX_NONE, 16, 1,
-		encrypt_decrypt_rsp_params->data,
-		encrypt_decrypt_rsp_params->data_length, 0);
+		resp->data,
+		resp->data_len, 0);
 
 	hdd_debug("vdev_id: %d status:%d data_length: %d",
-		encrypt_decrypt_rsp_params->vdev_id,
-		encrypt_decrypt_rsp_params->status,
-		encrypt_decrypt_rsp_params->data_length);
+		resp->vdev_id,
+		resp->status,
+		resp->data_len);
 
 	context = hdd_request_priv(request);
-	context->response = *encrypt_decrypt_rsp_params;
+	context->response = *resp;
 	context->status = 0;
-	if (encrypt_decrypt_rsp_params->data_length) {
+	if (resp->data_len) {
 		context->response.data =
 			qdf_mem_malloc(sizeof(uint8_t) *
-				encrypt_decrypt_rsp_params->data_length);
+				resp->data_len);
 		if (!context->response.data) {
 			hdd_err("memory allocation failed");
 			context->status = -ENOMEM;
 		} else {
 			qdf_mem_copy(context->response.data,
-				     encrypt_decrypt_rsp_params->data,
-				     encrypt_decrypt_rsp_params->data_length);
+				     resp->data,
+				     resp->data_len);
 		}
 	} else {
 		/* make sure we don't have a rogue pointer */
@@ -105,7 +106,6 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
 	EXIT();
 }
 
-
 /**
  * hdd_post_encrypt_decrypt_msg_rsp () - send encrypt/decrypt data to user space
  * @encrypt_decrypt_rsp_params: encrypt/decrypt response parameters
@@ -113,14 +113,14 @@ static void hdd_encrypt_decrypt_msg_cb(void *cookie,
  * Return: none
  */
 static int hdd_post_encrypt_decrypt_msg_rsp(struct hdd_context *hdd_ctx,
-	struct sir_encrypt_decrypt_rsp_params *encrypt_decrypt_rsp_params)
+	struct disa_encrypt_decrypt_resp_params *resp)
 {
 	struct sk_buff *skb;
 	uint32_t nl_buf_len;
 
 	ENTER();
 
-	nl_buf_len = encrypt_decrypt_rsp_params->data_length + NLA_HDRLEN;
+	nl_buf_len = resp->data_len + NLA_HDRLEN;
 
 	skb = cfg80211_vendor_cmd_alloc_reply_skb(hdd_ctx->wiphy, nl_buf_len);
 	if (!skb) {
@@ -128,10 +128,9 @@ static int hdd_post_encrypt_decrypt_msg_rsp(struct hdd_context *hdd_ctx,
 		return -ENOMEM;
 	}
 
-	if (encrypt_decrypt_rsp_params->data_length) {
+	if (resp->data_len) {
 		if (nla_put(skb, QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_DATA,
-				encrypt_decrypt_rsp_params->data_length,
-				encrypt_decrypt_rsp_params->data)) {
+				resp->data_len, resp->data)) {
 			hdd_err("put fail");
 			goto nla_put_failure;
 		}
@@ -150,10 +149,10 @@ static const struct nla_policy
 encrypt_decrypt_policy[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_NEEDS_DECRYPTION] = {
 		.type = NLA_FLAG},
-	[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_KEYID] = {
-		.type = NLA_U8},
 	[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_CIPHER] = {
 		.type = NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_KEYID] = {
+		.type = NLA_U8},
 };
 
 /**
@@ -166,11 +165,12 @@ encrypt_decrypt_policy[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX + 1] = {
  *
  Return: 0 on success, negative errno on failure
  */
-static int hdd_fill_encrypt_decrypt_params(struct encrypt_decrypt_req_params
-						*encrypt_decrypt_params,
-						struct hdd_adapter *adapter,
-						const void *data,
-						int data_len)
+static int
+hdd_fill_encrypt_decrypt_params(struct disa_encrypt_decrypt_req_params
+				*encrypt_decrypt_params,
+				struct hdd_adapter *adapter,
+				const void *data,
+				int data_len)
 {
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX + 1];
 	uint8_t len, mac_hdr_len;
@@ -381,11 +381,11 @@ static int hdd_encrypt_decrypt_msg(struct hdd_adapter *adapter,
 		goto cleanup;
 
 	cookie = hdd_request_cookie(request);
-	qdf_status = sme_encrypt_decrypt_msg(hdd_ctx->hHal,
-					     &context->request,
-					     hdd_encrypt_decrypt_msg_cb,
-					     cookie);
 
+	qdf_status = ucfg_disa_encrypt_decrypt_req(hdd_ctx->hdd_psoc,
+				&context->request,
+				hdd_encrypt_decrypt_msg_cb,
+				cookie);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_err("Unable to post encrypt/decrypt message");

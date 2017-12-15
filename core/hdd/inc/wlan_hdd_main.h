@@ -2880,6 +2880,20 @@ uint32_t hdd_limit_max_per_index_score(uint32_t per_index_score);
 struct hdd_station_info *hdd_get_stainfo(struct hdd_station_info *astainfo,
 					 struct qdf_mac_addr mac_addr);
 
+/**
+ * hdd_component_psoc_enable() - Trigger psoc enable for CLD Components
+ *
+ * Return: None
+ */
+void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * hdd_component_psoc_disable() - Trigger psoc disable for CLD Components
+ *
+ * Return: None
+ */
+void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
 int hdd_driver_memdump_init(void);
 void hdd_driver_memdump_deinit(void);
 

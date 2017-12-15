@@ -130,6 +130,10 @@
 #include <cdp_txrx_cmn_struct.h>
 #include "wlan_hdd_sysfs.h"
 
+#ifdef WLAN_FEATURE_DISA
+#include "wlan_disa_ucfg_api.h"
+#endif
+
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
 #endif
@@ -11538,6 +11542,9 @@ static void wlan_hdd_state_ctrl_param_destroy(void)
 static void component_init(void)
 {
 	pmo_init();
+#ifdef WLAN_FEATURE_DISA
+	disa_init();
+#endif
 }
 
 /**
@@ -11548,6 +11555,23 @@ static void component_init(void)
 static void component_deinit(void)
 {
 	pmo_deinit();
+#ifdef WLAN_FEATURE_DISA
+	disa_deinit();
+#endif
+}
+
+void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+#ifdef WLAN_FEATURE_DISA
+	disa_psoc_enable(psoc);
+#endif
+}
+
+void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+#ifdef WLAN_FEATURE_DISA
+	disa_psoc_disable(psoc);
+#endif
 }
 
 /**

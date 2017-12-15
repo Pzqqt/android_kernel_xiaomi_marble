@@ -955,6 +955,9 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 
 	dispatcher_psoc_enable(psoc);
 
+	/* Trigger psoc enable for CLD components */
+	hdd_component_psoc_enable(psoc);
+
 	return QDF_STATUS_SUCCESS;
 
 err_soc_target_detach:
@@ -1016,8 +1019,11 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 	 * wma_stop() does target PDEV suspend.
 	 */
 
-	if (psoc)
+	/* Trigger psoc disable for CLD components */
+	if (psoc) {
+		hdd_component_psoc_disable(psoc);
 		dispatcher_psoc_disable(psoc);
+	}
 
 	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
 

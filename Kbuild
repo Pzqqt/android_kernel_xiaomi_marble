@@ -506,7 +506,7 @@ ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_conc_ut.o
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
+ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_disa.o
 endif
 
@@ -963,6 +963,19 @@ PMO_OBJS :=     $(PMO_DIR)/core/src/wlan_pmo_main.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_hw_filter.o \
 		$(PMO_DIR)/dispatcher/src/wlan_pmo_tgt_pkt_filter.o
 
+########## DISA (ENCRYPTION TEST) ##########
+
+DISA_DIR :=	components/disa
+DISA_INC :=	-I$(WLAN_ROOT)/$(DISA_DIR)/core/inc \
+		-I$(WLAN_ROOT)/$(DISA_DIR)/dispatcher/inc
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
+DISA_OBJS :=	$(DISA_DIR)/core/src/wlan_disa_main.o \
+		$(DISA_DIR)/dispatcher/src/wlan_disa_obj_mgmt_api.o \
+		$(DISA_DIR)/dispatcher/src/wlan_disa_tgt_api.o \
+		$(DISA_DIR)/dispatcher/src/wlan_disa_ucfg_api.o
+endif
+
 ########## CLD TARGET_IF #######
 CLD_TARGET_IF_DIR := components/target_if
 
@@ -980,6 +993,11 @@ CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
+CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/disa/inc
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/disa/src/target_if_disa.o
+endif
 
 ############## UMAC P2P ###########
 P2P_DIR := umac/p2p
@@ -1551,6 +1569,10 @@ ifeq ($(BUILD_DIAG_VERSION), 1)
 INCS +=		$(HOST_DIAG_LOG_INC)
 endif
 
+ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
+INCS +=		$(DISA_INC)
+endif
+
 INCS +=		$(UMAC_DISP_INC)
 INCS +=		$(UMAC_SCAN_INC)
 INCS +=		$(UMAC_TARGET_SCAN_INC)
@@ -1610,6 +1632,10 @@ endif
 
 ifeq ($(BUILD_DIAG_VERSION), 1)
 OBJS +=		$(HOST_DIAG_LOG_OBJS)
+endif
+
+ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
+OBJS +=		$(DISA_OBJS)
 endif
 
 OBJS +=		$(UMAC_DISP_OBJS)
@@ -2216,7 +2242,7 @@ ifeq ($(CONFIG_WLAN_OFFLOAD_PACKETS),y)
 CDEFINES += -DWLAN_FEATURE_OFFLOAD_PACKETS
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_DISA),y)
+ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
 CDEFINES += -DWLAN_FEATURE_DISA
 endif
 
