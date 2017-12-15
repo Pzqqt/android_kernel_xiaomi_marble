@@ -48,6 +48,9 @@
 #include "wlan_p2p_public_struct.h"
 #endif
 #include "wlan_scan_public_structs.h"
+#ifdef WLAN_FEATURE_DISA
+#include "wlan_disa_public_struct.h"
+#endif
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
