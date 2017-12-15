@@ -172,17 +172,17 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 #endif
 
 /**
- * dp_rx_handle_am_copy_mode() - Allocate and deliver first MSDU payload
+ * dp_rx_handle_mcopy_mode() - Allocate and deliver first MSDU payload
  * @soc: core txrx main context
  * @pdev: pdev strcuture
  * @ppdu_info: structure for rx ppdu ring
  *
  * Return: QDF_STATUS_SUCCESS - If nbuf to be freed by caller
  *         QDF_STATUS_E_ALREADY - If nbuf not to be freed by caller
-*/
+ */
 #ifdef FEATURE_PERPKT_INFO
 static inline QDF_STATUS
-dp_rx_handle_am_copy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf)
 {
 	uint8_t size = 0;
@@ -197,14 +197,17 @@ dp_rx_handle_am_copy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 
 	size = ppdu_info->first_msdu_payload - qdf_nbuf_data(nbuf);
 	ppdu_info->first_msdu_payload = NULL;
-	qdf_nbuf_pull_head(nbuf, size);
+
+	if (qdf_nbuf_pull_head(nbuf, size) == NULL)
+		return QDF_STATUS_SUCCESS;
+
 	dp_wdi_event_handler(WDI_EVENT_RX_DATA, soc,
 			nbuf, HTT_INVALID_PEER, WDI_NO_VAL, pdev->pdev_id);
 	return QDF_STATUS_E_ALREADY;
 }
 #else
 static inline QDF_STATUS
-dp_rx_handle_am_copy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
+dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 			struct hal_rx_ppdu_info *ppdu_info, qdf_nbuf_t nbuf)
 {
 	return QDF_STATUS_SUCCESS;
@@ -292,8 +295,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			status_nbuf, HTT_INVALID_PEER, WDI_NO_VAL, mac_id);
 #endif
 #endif
-		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en)
-			|| (pdev->am_copy_mode)) {
+		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en)) {
 
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
@@ -306,8 +308,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			} while (tlv_status == HAL_TLV_STATUS_PPDU_NOT_DONE);
 		}
 
-		if (pdev->am_copy_mode) {
-			am_copy_status = dp_rx_handle_am_copy_mode(soc,
+		if (pdev->mcopy_mode) {
+			am_copy_status = dp_rx_handle_mcopy_mode(soc,
 						pdev, ppdu_info, status_nbuf);
 			if (am_copy_status == QDF_STATUS_SUCCESS)
 				qdf_nbuf_free(status_nbuf);
@@ -317,7 +319,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
 			if (pdev->enhanced_stats_en ||
-					pdev->am_copy_mode)
+					pdev->mcopy_mode)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
 
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;

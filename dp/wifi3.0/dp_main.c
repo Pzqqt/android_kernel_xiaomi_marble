@@ -4807,6 +4807,25 @@ dp_get_host_peer_stats(struct cdp_pdev *pdev_handle, char *mac_addr)
 }
 
 /*
+ * dp_ppdu_ring_reset()- Reset PPDU Stats ring
+ * @pdev: DP_PDEV handle
+ *
+ * Return: void
+ */
+static void
+dp_ppdu_ring_reset(struct dp_pdev *pdev)
+{
+	struct htt_rx_ring_tlv_filter htt_tlv_filter;
+
+	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
+
+	htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, pdev->pdev_id,
+		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
+		RX_BUFFER_SIZE, &htt_tlv_filter);
+
+}
+
+/*
  * dp_ppdu_ring_cfg()- Configure PPDU Stats ring
  * @pdev: DP_PDEV handle
  *
@@ -4859,27 +4878,30 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 	switch (val) {
 	case 0:
 		pdev->tx_sniffer_enable = 0;
-		pdev->am_copy_mode = 0;
-		pdev->soc->process_tx_status = 0;
+		pdev->mcopy_mode = 0;
 
-		if (!pdev->enhanced_stats_en)
+		if (!pdev->enhanced_stats_en) {
 			dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
+			dp_ppdu_ring_reset(pdev);
+		}
 		break;
 
 	case 1:
 		pdev->tx_sniffer_enable = 1;
-		pdev->am_copy_mode = 0;
-		pdev->soc->process_tx_status = 1;
-		dp_h2t_cfg_stats_msg_send(pdev,
+		pdev->mcopy_mode = 0;
+
+		if (!pdev->enhanced_stats_en)
+			dp_h2t_cfg_stats_msg_send(pdev,
 				DP_PPDU_STATS_CFG_ALL, pdev->pdev_id);
 		break;
 	case 2:
-		pdev->am_copy_mode = 1;
+		pdev->mcopy_mode = 1;
 		pdev->tx_sniffer_enable = 0;
-		pdev->soc->process_tx_status = 1;
-		dp_ppdu_ring_cfg(pdev);
-		dp_h2t_cfg_stats_msg_send(pdev,
+		if (!pdev->enhanced_stats_en) {
+			dp_ppdu_ring_cfg(pdev);
+			dp_h2t_cfg_stats_msg_send(pdev,
 				DP_PPDU_STATS_CFG_ALL, pdev->pdev_id);
+		}
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -4900,8 +4922,11 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	pdev->enhanced_stats_en = 1;
 
-	dp_ppdu_ring_cfg(pdev);
-	dp_h2t_cfg_stats_msg_send(pdev, 0xffff, pdev->pdev_id);
+	if (!pdev->mcopy_mode)
+		dp_ppdu_ring_cfg(pdev);
+
+	if (!pdev->tx_sniffer_enable && !pdev->mcopy_mode)
+		dp_h2t_cfg_stats_msg_send(pdev, 0xffff, pdev->pdev_id);
 }
 
 /*
@@ -4917,8 +4942,11 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 
 	pdev->enhanced_stats_en = 0;
 
-	if (!pdev->tx_sniffer_enable && !pdev->am_copy_mode)
+	if (!pdev->tx_sniffer_enable && !pdev->mcopy_mode)
 		dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
+
+	if (!pdev->mcopy_mode)
+		dp_ppdu_ring_reset(pdev);
 }
 
 /*

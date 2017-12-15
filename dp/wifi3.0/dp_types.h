@@ -1093,7 +1093,8 @@ struct dp_pdev {
 	} tx_ppdu_info;
 
 	bool tx_sniffer_enable;
-	bool am_copy_mode;
+	/* mirror copy mode */
+	bool mcopy_mode;
 
 	struct {
 		uint16_t tx_ppdu_id;

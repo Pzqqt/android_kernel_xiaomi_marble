@@ -1992,7 +1992,7 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 	struct tx_capture_hdr *ppdu_hdr;
 	struct dp_peer *peer = NULL;
 
-	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->am_copy_mode))
+	if (qdf_unlikely(!pdev->tx_sniffer_enable && !pdev->mcopy_mode))
 		return QDF_STATUS_E_NOSUPPORT;
 
 	peer = (peer_id == HTT_INVALID_PEER) ? NULL :
@@ -2004,7 +2004,7 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	if (pdev->am_copy_mode) {
+	if (pdev->mcopy_mode) {
 		if ((pdev->am_copy_id.tx_ppdu_id == ppdu_id) &&
 			(pdev->am_copy_id.tx_peer_id == peer_id)) {
 			return QDF_STATUS_E_INVAL;
