@@ -2052,8 +2052,13 @@ struct snd_soc_card *populate_snd_card_dailinks(struct device *dev,
 
 	if (strnstr(card->name, "tasha", strlen(card->name))) {
 		codec_ver = tasha_codec_ver();
-		if (codec_ver == WCD9326)
-			card->name = "sdm660-tashalite-snd-card";
+		if (codec_ver == WCD9326) {
+			card->name = "sdm670-tashalite-snd-card";
+		} else if (codec_ver == WCD9XXX) {
+			dev_err(dev, "%s: Invalid codec version %d\n",
+				__func__, codec_ver);
+			return NULL;
+		}
 
 		len1 = ARRAY_SIZE(msm_ext_common_fe_dai);
 		len2 = len1 + ARRAY_SIZE(msm_ext_tasha_fe_dai);
