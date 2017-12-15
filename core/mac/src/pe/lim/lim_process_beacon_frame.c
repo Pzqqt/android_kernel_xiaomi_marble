@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -113,8 +113,6 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		qdf_mem_copy((uint8_t *)&session->lastBeaconTimeStamp,
 			(uint8_t *) bcn_ptr->timeStamp,
 			sizeof(uint64_t));
-		session->lastBeaconDtimCount =
-				bcn_ptr->tim.dtimCount;
 		session->currentBssBeaconCnt++;
 	}
 	MTRACE(mac_trace(mac_ctx,

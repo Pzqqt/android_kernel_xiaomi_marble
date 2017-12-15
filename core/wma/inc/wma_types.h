@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -239,7 +239,6 @@
 
 #define WMA_SET_MAX_TX_POWER_REQ       SIR_HAL_SET_MAX_TX_POWER_REQ
 #define WMA_SET_MAX_TX_POWER_RSP       SIR_HAL_SET_MAX_TX_POWER_RSP
-#define WMA_SET_DTIM_PERIOD            SIR_HAL_SET_DTIM_PERIOD
 
 #define WMA_SET_MAX_TX_POWER_PER_BAND_REQ \
 	SIR_HAL_SET_MAX_TX_POWER_PER_BAND_REQ
