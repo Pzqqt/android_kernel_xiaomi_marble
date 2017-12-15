@@ -725,6 +725,7 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	uint16_t total_len = 0;
 	qdf_dma_addr_t paddr;
 	int32_t i;
+	int32_t mapped_buf_num = 0;
 
 	struct dp_tx_sg_info_s *sg_info = &msdu_info->u.sg_info;
 	qdf_dot3_qosframe_t *qos_wh = (qdf_dot3_qosframe_t *) nbuf->data;
@@ -735,16 +736,18 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (qos_wh->i_fc[0] & IEEE80211_FC0_SUBTYPE_QOS)
 		qos_wh->i_fc[1] |= IEEE80211_FC1_WEP;
 
-	if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, nbuf,
-				QDF_DMA_TO_DEVICE)) {
-		qdf_print("dma map error\n");
-		DP_STATS_INC(vdev, tx_i.raw.dma_map_error, 1);
-		qdf_nbuf_free(nbuf);
-		return NULL;
-	}
-
 	for (curr_nbuf = nbuf, i = 0; curr_nbuf;
-				curr_nbuf = qdf_nbuf_next(curr_nbuf), i++) {
+			curr_nbuf = qdf_nbuf_next(curr_nbuf), i++) {
+
+		if (QDF_STATUS_SUCCESS != qdf_nbuf_map(vdev->osdev, curr_nbuf,
+					QDF_DMA_TO_DEVICE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s dma map error \n", __func__);
+			DP_STATS_INC(vdev, tx_i.raw.dma_map_error, 1);
+			mapped_buf_num = i;
+			goto error;
+		}
+
 		paddr = qdf_nbuf_get_frag_paddr(curr_nbuf, 0);
 		seg_info->frags[i].paddr_lo = paddr;
 		seg_info->frags[i].paddr_hi = ((uint64_t)paddr >> 32);
@@ -763,6 +766,20 @@ static qdf_nbuf_t dp_tx_prepare_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	msdu_info->num_seg = 1;
 
 	return nbuf;
+
+error:
+	i = 0;
+	while (nbuf) {
+		curr_nbuf = nbuf;
+		if (i < mapped_buf_num) {
+			qdf_nbuf_unmap(vdev->osdev, curr_nbuf, QDF_DMA_TO_DEVICE);
+			i++;
+		}
+		nbuf = qdf_nbuf_next(nbuf);
+		qdf_nbuf_free(curr_nbuf);
+	}
+	return NULL;
+
 }
 
 /**
