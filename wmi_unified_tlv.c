@@ -305,9 +305,16 @@ static inline void copy_channel_info(
 	if (req->channel.dfs_set_cfreq2)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS_CFREQ2);
 
-	/* FIXME: Find out min, max and regulatory power levels */
+	/* According to firmware both reg power and max tx power
+	 * on set channel power is used and set it to max reg
+	 * power from regulatory.
+	 */
+	WMI_SET_CHANNEL_MIN_POWER(chan, req->channel.minpower);
+	WMI_SET_CHANNEL_MAX_POWER(chan, req->channel.maxpower);
 	WMI_SET_CHANNEL_REG_POWER(chan, req->channel.maxregpower);
-	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->channel.maxpower);
+	WMI_SET_CHANNEL_ANTENNA_MAX(chan, req->channel.antennamax);
+	WMI_SET_CHANNEL_REG_CLASSID(chan, req->channel.reg_class_id);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->channel.maxregpower);
 
 }
 #endif
@@ -2876,6 +2883,8 @@ static QDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 				tchan_info->antennamax);
 		WMI_SET_CHANNEL_REG_CLASSID(chan_info,
 				tchan_info->reg_class_id);
+		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info,
+				tchan_info->maxregpower);
 
 		WMI_LOGD("chan[%d] = %u", i, chan_info->mhz);
 
@@ -16527,6 +16536,7 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	WMI_SET_CHANNEL_REG_POWER(chan_info, tchan_info->maxregpower);
 	WMI_SET_CHANNEL_ANTENNA_MAX(chan_info, tchan_info->antennamax);
 	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
 
 	qdf_status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
