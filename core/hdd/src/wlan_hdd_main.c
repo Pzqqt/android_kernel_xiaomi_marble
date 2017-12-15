@@ -3742,11 +3742,6 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 
 	hdd_debugfs_exit(adapter);
 
-	if (adapter->scan_info.default_scan_ies) {
-		qdf_mem_free(adapter->scan_info.default_scan_ies);
-		adapter->scan_info.default_scan_ies = NULL;
-	}
-
 	hdd_adapter_runtime_suspend_deinit(adapter);
 
 	/*
@@ -4599,7 +4594,13 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		break;
 	}
 
+	if (adapter->scan_info.default_scan_ies) {
+		qdf_mem_free(adapter->scan_info.default_scan_ies);
+		adapter->scan_info.default_scan_ies = NULL;
+	}
+
 	EXIT();
+
 	return QDF_STATUS_SUCCESS;
 }
 
