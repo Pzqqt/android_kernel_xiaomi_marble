@@ -1336,21 +1336,23 @@ done:
 		pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 		DP_STATS_INC(vdev->pdev,
 				rx.reception_type[reception_type], 1);
+
 		DP_STATS_INCC(vdev->pdev, rx.nss[nss], 1,
 				((reception_type == REPT_MU_MIMO) ||
 				 (reception_type == REPT_MU_OFDMA_MIMO))
 				);
+
 		DP_STATS_INCC(peer, rx.err.mic_err, 1,
 				hal_rx_mpdu_end_mic_err_get(
 					rx_tlv_hdr));
+
 		DP_STATS_INCC(peer, rx.err.decrypt_err, 1,
 				hal_rx_mpdu_end_decrypt_err_get(
 					rx_tlv_hdr));
 
-		DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(tid)],
-				1);
 		DP_STATS_INC(peer, rx.reception_type[reception_type],
 				1);
+
 		if (soc->process_rx_status) {
 			ampdu_flag = (mpdu_desc_info.mpdu_flags &
 					HAL_MPDU_F_AMPDU_FLAG);
@@ -1400,6 +1402,9 @@ done:
 					mcs_count[mcs], 1,
 					((mcs < (MAX_MCS - 1)) &&
 					 (pkt_type == DOT11_AX)));
+
+			DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(tid)],
+					1);
 		}
 
 		/*
@@ -1489,7 +1494,7 @@ done:
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 				pkt_len);
 
-		if ((pdev->enhanced_stats_en) && likely(peer) &&
+		if ((soc->process_rx_status) && likely(peer) &&
 			hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
 			if (soc->cdp_soc.ol_ops->update_dp_stats) {
 				soc->cdp_soc.ol_ops->update_dp_stats(
@@ -1497,14 +1502,6 @@ done:
 						&peer->stats,
 						peer_id,
 						UPDATE_PEER_STATS);
-
-				dp_aggregate_vdev_stats(peer->vdev);
-
-				soc->cdp_soc.ol_ops->update_dp_stats(
-						vdev->pdev->osif_pdev,
-						&peer->vdev->stats,
-						peer->vdev->vdev_id,
-						UPDATE_VDEV_STATS);
 			}
 		}
 		nbuf = next;

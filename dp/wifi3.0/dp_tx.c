@@ -2254,7 +2254,6 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	if (!ts->release_src == HAL_TX_COMP_RELEASE_SOURCE_TQM)
 		return;
 
-
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 			(ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
@@ -2269,7 +2268,9 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 
 	if (!ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
 		return;
+
 	DP_STATS_INCC(peer, tx.ofdma, 1, ts->ofdma);
+
 	DP_STATS_INCC(peer, tx.amsdu_cnt, 1, ts->msdu_part_of_amsdu);
 
 	if (!(soc->process_tx_status))

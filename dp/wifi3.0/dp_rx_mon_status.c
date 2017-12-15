@@ -122,6 +122,7 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 
 	if (soc->process_rx_status)
 		return;
+
 	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
 	DP_STATS_INC(peer, rx.sgi_count[ppdu->u.gi], num_msdu);
 	DP_STATS_INC(peer, rx.bw[ppdu->u.bw], num_msdu);
@@ -164,18 +165,20 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
 				&peer->stats, ppdu->peer_id,
 				UPDATE_PEER_STATS);
+
+		dp_aggregate_vdev_stats(peer->vdev);
 	}
 }
 #endif
 
 /**
-* dp_rx_handle_am_copy_mode() - Allocate and deliver first MSDU payload
-* @soc: core txrx main context
-* @pdev: pdev strcuture
-* @ppdu_info: structure for rx ppdu ring
-*
-* Return: QDF_STATUS_SUCCESS - If nbuf to be freed by caller
-*         QDF_STATUS_E_ALREADY - If nbuf not to be freed by caller
+ * dp_rx_handle_am_copy_mode() - Allocate and deliver first MSDU payload
+ * @soc: core txrx main context
+ * @pdev: pdev strcuture
+ * @ppdu_info: structure for rx ppdu ring
+ *
+ * Return: QDF_STATUS_SUCCESS - If nbuf to be freed by caller
+ *         QDF_STATUS_E_ALREADY - If nbuf not to be freed by caller
 */
 #ifdef FEATURE_PERPKT_INFO
 static inline QDF_STATUS

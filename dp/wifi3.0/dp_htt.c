@@ -86,8 +86,10 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INCC(peer, tx.ldpc, num_msdu, ppdu->ldpc);
 	DP_STATS_INC_PKT(peer, tx.tx_success, ppdu->success_msdus,
 			ppdu->success_bytes);
+
 	if (ppdu->is_mcast) {
-		DP_STATS_INC_PKT(peer, tx.mcast, num_msdu, (ppdu->success_bytes
+		DP_STATS_INC_PKT(peer, tx.mcast, ppdu->mpdu_tried_mcast,
+					(ppdu->success_bytes
 					+ ppdu->retry_bytes +
 					ppdu->failed_bytes));
 	} else {
@@ -133,6 +135,8 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
 				&peer->stats, ppdu->peer_id,
 				UPDATE_PEER_STATS);
+
+		dp_aggregate_vdev_stats(peer->vdev);
 	}
 }
 #endif
@@ -2131,6 +2135,7 @@ static void dp_process_ppdu_stats_tx_mgmtctrl_payload_tlv(
 	qdf_nbuf_t nbuf = NULL;
 
 	uint32_t payload_size = length - HTT_MGMT_CTRL_TLV_RESERVERD_LEN;
+
 
 	nbuf = qdf_nbuf_alloc(pdev->soc->osdev, payload_size, 0, 4, true);
 

@@ -4549,6 +4549,14 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.tx_success.num);
 	DP_PRINT_STATS("Success Bytes = %d",
 			peer->stats.tx.tx_success.bytes);
+	DP_PRINT_STATS("Unicast Success Packets = %d",
+			peer->stats.tx.ucast.num);
+	DP_PRINT_STATS("Unicast Success Bytes = %d",
+			peer->stats.tx.ucast.bytes);
+	DP_PRINT_STATS("Multicast Success Packets = %d",
+			peer->stats.tx.mcast.num);
+	DP_PRINT_STATS("Multicast Success Bytes = %d",
+			peer->stats.tx.mcast.bytes);
 	DP_PRINT_STATS("Packets Failed = %d",
 			peer->stats.tx.tx_failed);
 	DP_PRINT_STATS("Packets In OFDMA = %d",
@@ -4621,9 +4629,10 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 	DP_PRINT_STATS("Bytes Sent To Stack = %d",
 			peer->stats.rx.to_stack.bytes);
 	for (i = 0; i <  CDP_MAX_RX_RINGS; i++) {
-		DP_PRINT_STATS("Packets Received = %d",
+		DP_PRINT_STATS("Ring Id = %d", i);
+		DP_PRINT_STATS("	Packets Received = %d",
 				peer->stats.rx.rcvd_reo[i].num);
-		DP_PRINT_STATS("Bytes Received = %d",
+		DP_PRINT_STATS("	Bytes Received = %d",
 				peer->stats.rx.rcvd_reo[i].bytes);
 	}
 	DP_PRINT_STATS("Multicast Packets Received = %d",
