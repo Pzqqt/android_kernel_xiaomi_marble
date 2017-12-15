@@ -595,6 +595,8 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 	uint32_t dfs_master_cap_enabled;
 	bool include_dfs_ch = true;
 	uint8_t chan_num;
+	bool sta_sap_scc_on_dfs_chan =
+		policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(pMac->psoc);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH, "In %s",
 		  __func__);
@@ -654,13 +656,14 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 			continue;
 		}
 
-		if (include_dfs_ch == false) {
+		if (!include_dfs_ch || sta_sap_scc_on_dfs_chan) {
 			if (wlan_reg_is_dfs_ch(pMac->pdev, *pChans)) {
 				chSafe = false;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
 					  QDF_TRACE_LEVEL_INFO_HIGH,
-					  "In %s, DFS Ch %d not considered for ACS",
-					  __func__, *pChans);
+					  "In %s, DFS Ch %d not considered for ACS. include_dfs_ch %u, sta_sap_scc_on_dfs_chan %d",
+					  __func__, *pChans, include_dfs_ch,
+					  sta_sap_scc_on_dfs_chan);
 				continue;
 			}
 		}
