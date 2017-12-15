@@ -6608,6 +6608,7 @@ QDF_STATUS wmi_unified_send_sar_limit_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef WLAN_FEATURE_DISA
 /**
  * wmi_unified_encrypt_decrypt_send_cmd() - send encryptdecrypt cmd to fw
  * @wmi_hdl: wmi handle
@@ -6626,6 +6627,7 @@ QDF_STATUS wmi_unified_encrypt_decrypt_send_cmd(void *wmi_hdl,
 						params);
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 /*
  * wmi_unified_send_btcoex_wlan_priority_cmd() - send btcoex priority commands
