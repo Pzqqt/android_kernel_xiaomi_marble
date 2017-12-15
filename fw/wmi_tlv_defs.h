@@ -875,6 +875,11 @@ typedef enum {
     WMITLV_TAG_STRUC_WMI_SAR_CAPABILITIES,
     WMITLV_TAG_STRUC_wmi_sap_obss_detection_cfg_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_sap_obss_detection_info_evt_fixed_param,
+    WMITLV_TAG_STRUC_WMI_DMA_RING_CAPABILITIES,
+    WMITLV_TAG_STRUC_wmi_dma_ring_cfg_req_fixed_param,
+    WMITLV_TAG_STRUC_wmi_dma_ring_cfg_rsp_fixed_param,
+    WMITLV_TAG_STRUC_wmi_dma_buf_release_fixed_param,
+    WMITLV_TAG_STRUC_wmi_dma_buf_release_entry,
 } WMITLV_TAG_ID;
 
 /*
@@ -1227,6 +1232,7 @@ typedef enum {
     OP(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID) \
     OP(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID) \
     OP(WMI_SAP_OBSS_DETECTION_CFG_CMDID) \
+    OP(WMI_PDEV_DMA_RING_CFG_REQ_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1420,6 +1426,8 @@ typedef enum {
     OP(WMI_HOST_SWFDA_EVENTID) \
     OP(WMI_NDL_SCHEDULE_UPDATE_EVENTID) \
     OP(WMI_SAP_OBSS_DETECTION_REPORT_EVENTID) \
+    OP(WMI_PDEV_DMA_RING_CFG_RSP_EVENTID) \
+    OP(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2080,6 +2088,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_QVIT_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_SET_WAKEUP_CONFIG_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_PDEV_SET_WAKEUP_CONFIG_CMDID_fixed_param, WMI_PDEV_SET_WAKEUP_CONFIG_CMDID_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_WAKEUP_CONFIG_CMDID);
+
+#define WMITLV_TABLE_WMI_PDEV_DMA_RING_CFG_REQ_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_dma_ring_cfg_req_fixed_param, wmi_dma_ring_cfg_req_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_CFG_REQ_CMDID);
 
 /* Vdev Set keep alive Cmd  */
 #define WMITLV_TABLE_WMI_VDEV_SET_KEEPALIVE_CMDID(id,op,buf,len) \
@@ -3554,7 +3566,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_AVAILABLE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_MAC_PHY_CHAINMASK_COMBO, mac_phy_chainmask_combo, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_MAC_PHY_CHAINMASK_CAPABILITY, mac_phy_chainmask_caps, WMITLV_SIZE_VAR) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_OEM_DMA_RING_CAPABILITIES, oem_dma_ring_caps, WMITLV_SIZE_VAR) \
-    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_SAR_CAPABILITIES, WMI_SAR_CAPABILITIES, sar_caps, WMITLV_SIZE_FIX)
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_WMI_SAR_CAPABILITIES, WMI_SAR_CAPABILITIES, sar_caps, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, WMI_DMA_RING_CAPABILITIES, dma_ring_caps, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SERVICE_READY_EXT_EVENTID);
 
 /* Ready event */
@@ -4707,6 +4720,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_COEX_BT_ACTIVITY_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_therm_throt_stats_event_fixed_param, wmi_therm_throt_stats_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_therm_throt_level_stats_info, therm_throt_level_stats_info, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_THERM_THROT_STATS_EVENTID);
+
+#define WMITLV_TABLE_WMI_PDEV_DMA_RING_CFG_RSP_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_dma_ring_cfg_rsp_fixed_param, wmi_dma_ring_cfg_rsp_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_CFG_RSP_EVENTID);
+
+/* dma buffer release event */
+#define WMITLV_TABLE_WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_dma_buf_release_fixed_param, wmi_dma_buf_release_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_dma_buf_release_entry, entries, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID);
 
 
 /* UNIT-TEST Event */
