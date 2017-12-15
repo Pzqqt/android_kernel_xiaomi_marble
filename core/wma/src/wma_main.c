@@ -3539,7 +3539,7 @@ QDF_STATUS wma_start(void)
 	if (wma_d0_wow_is_supported()) {
 		status = wmi_unified_register_event_handler(
 				wma_handle->wmi_handle,
-				WMI_D0_WOW_DISABLE_ACK_EVENTID,
+				wmi_d0_wow_disable_ack_event_id,
 				wma_d0_wow_disable_ack_event,
 				WMA_RX_TASKLET_CTX);
 		if (status) {
