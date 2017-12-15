@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,8 +199,10 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_REGULATORY_NB_ID:      NB regulatory operations
  * @WLAN_POLICY_MGR_ID:         Policy Manager operations
  * @WLAN_SPECTRAL_ID:           Spectral operations
- * @WLAN_SPLITMAC_ID            SplitMac
- * @WLAN_DEBUG_ID               Debug operations
+ * @WLAN_SPLITMAC_ID:           SplitMac
+ * @WLAN_DEBUG_ID:              Debug operations
+ * @WLAN_DIRECT_BUF_RX_ID:      Direct Buffer Receive operations
+ * @WLAN_DISA_ID:               DISA (encryption test) operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -238,6 +240,7 @@ typedef enum {
 	WLAN_SPLITMAC_ID      = 28,
 	WLAN_DEBUG_ID         = 29,
 	WLAN_DIRECT_BUF_RX_ID = 30,
+	WLAN_DISA_ID          = 31,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -282,6 +285,7 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_SPLITMAC_ID",
 					"WLAN_DEBUG_ID",
 					"WLAN_DIRECT_BUF_RX_ID",
+					"WLAN_DISA_ID",
 					"WLAN_REF_ID_MAX" };
 
 	return (char *)strings[id];

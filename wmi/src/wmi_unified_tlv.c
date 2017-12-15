@@ -5145,6 +5145,7 @@ end:
 	return qdf_status;
 }
 
+#ifdef WLAN_FEATURE_DISA
 /**
  * send_encrypt_decrypt_send_cmd() - send encrypt/decrypt cmd to fw
  * @wmi_handle: wmi handle
@@ -5226,7 +5227,7 @@ QDF_STATUS send_encrypt_decrypt_send_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
-
+#endif
 
 
 /**

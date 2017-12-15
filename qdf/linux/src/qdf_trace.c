@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2117,6 +2117,7 @@ struct category_name_info g_qdf_category_name[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_NSS] = {"NSS"},
 	[QDF_MODULE_ID_ROAM_DEBUG] = {"roam debug"},
 	[QDF_MODULE_ID_DIRECT_BUF_RX] = {"DIRECT_BUF_RX"},
+	[QDF_MODULE_ID_DISA] = {"disa"},
 	[QDF_MODULE_ID_ANY] = {"ANY"},
 };
 EXPORT_SYMBOL(g_qdf_category_name);

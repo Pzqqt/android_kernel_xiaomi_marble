@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -321,6 +321,9 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_NAN: NAN module ID
  * @QDF_MODULE_ID_SPECTRAL: Spectral module ID
  * @QDF_MODULE_ID_ROAM_DEBUG: Roam Debug logging
+ * @QDF_MODULE_ID_CDP: Converged Data Path module ID
+ * @QDF_MODULE_ID_DIRECT_BUF_RX: Direct Buffer Receive module ID
+ * @QDF_MODULE_ID_DISA: DISA (encryption test) module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -416,6 +419,7 @@ typedef enum {
 	QDF_MODULE_ID_ROAM_DEBUG,
 	QDF_MODULE_ID_CDP,
 	QDF_MODULE_ID_DIRECT_BUF_RX,
+	QDF_MODULE_ID_DISA,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

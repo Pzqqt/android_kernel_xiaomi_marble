@@ -1331,8 +1331,10 @@ QDF_STATUS (*send_dbs_scan_sel_params_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
 			       struct set_fwtest_params *wmi_fwtest);
 
+#ifdef WLAN_FEATURE_DISA
 QDF_STATUS (*send_encrypt_decrypt_send_cmd)(wmi_unified_t wmi_handle,
 				struct encrypt_decrypt_req_params *params);
+#endif
 
 QDF_STATUS (*send_sar_limit_cmd)(wmi_unified_t wmi_handle,
 				struct sar_limit_cmd_params *params);
