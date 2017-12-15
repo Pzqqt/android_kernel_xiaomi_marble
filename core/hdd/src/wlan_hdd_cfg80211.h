@@ -216,6 +216,21 @@ typedef enum {
 #define CFG_PROPAGATION_DELAY_BASE             (64)
 #define CFG_AGG_RETRY_MIN                      (5)
 
+/**
+ * hdd_is_ie_valid() - Determine if an IE sequence is valid
+ * @ie: Pointer to the IE buffer
+ * @ie_len: Length of the IE buffer @ie
+ *
+ * This function validates that the IE sequence is valid by verifying
+ * that the sum of the lengths of the embedded elements match the
+ * length of the sequence.
+ *
+ * Note well that a 0-length IE sequence is considered valid.
+ *
+ * Return: true if the IE sequence is valid, false if it is invalid
+ */
+bool hdd_is_ie_valid(const uint8_t *ie, size_t ie_len);
+
 struct cfg80211_bss *
 wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 				struct csr_roam_info *roam_info);
