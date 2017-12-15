@@ -483,20 +483,6 @@ typedef struct ipa_ioc_rx_intf_prop __qdf_ipa_ioc_rx_intf_prop_t;
 typedef struct ipa_wlan_hdr_attrib_val __qdf_ipa_wlan_hdr_attrib_val_t;
 
 /*
- * Connect / Disconnect
- */
-static inline int __qdf_ipa_connect(const struct ipa_connect_params *in,
-		__qdf_ipa_sps_params_t *sps,	u32 *clnt_hdl)
-{
-	return ipa_connect(in, sps, clnt_hdl);
-}
-
-static inline int __qdf_ipa_disconnect(u32 clnt_hdl)
-{
-	return ipa_disconnect(clnt_hdl);
-}
-
-/*
  * Resume / Suspend
  */
 static inline int __qdf_ipa_reset_endpoint(u32 clnt_hdl)

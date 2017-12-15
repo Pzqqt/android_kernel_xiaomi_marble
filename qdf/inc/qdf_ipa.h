@@ -201,20 +201,6 @@ typedef int (*qdf_ipa_msg_pull_fn)(void *buff, u32 len, u32 type);
 typedef void (*qdf_ipa_ready_cb)(void *user_data);
 
 /*
- * Connect / Disconnect
- */
-static inline int qdf_ipa_connect(const __qdf_ipa_connect_params_t *in,
-		qdf_ipa_sps_params_t *sps,	u32 *clnt_hdl)
-{
-	return __qdf_ipa_connect(in, sps, clnt_hdl);
-}
-
-static inline int qdf_ipa_disconnect(u32 clnt_hdl)
-{
-	return __qdf_ipa_disconnect(clnt_hdl);
-}
-
-/*
  * Resume / Suspend
  */
 static inline int qdf_ipa_reset_endpoint(u32 clnt_hdl)
