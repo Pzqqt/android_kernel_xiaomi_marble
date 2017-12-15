@@ -1232,6 +1232,8 @@ struct ap_ps_params {
 #define WMI_HOST_SCAN_CHAN_MODE_SHIFT	16
 #define WMI_HOST_SCAN_CHAN_MODE_MASK	0xff
 
+#define WMI_HOST_MAX_CHANS_PER_WMI_CMD  58
+
 /**
  * struct scan_chan_list_params  - scan channel list cmd parameter
  * @num_scan_chans: no of scan channels
@@ -1267,11 +1269,13 @@ struct scan_chan_list_params {
  * @pdev_id: pdev_id
  * @num_chan: no of scan channels
  * @nallchans: nall chans
+ * @append: append to existing chan list
  * @ch_param: pointer to channel_paramw
  */
 struct scan_chan_list_params {
 	uint32_t pdev_id;
 	uint16_t nallchans;
+	bool append;
 	struct channel_param ch_param[1];
 };
 #endif
