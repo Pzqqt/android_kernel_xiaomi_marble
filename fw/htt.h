@@ -159,11 +159,13 @@
  * 3.43 Add HTT_STATS_RX_PDEV_FW_STATS_PHY_ERR defs
  * 3.44 Add htt_tx_wbm_completion_v2
  * 3.45 Add host_tx_desc_pool flag in htt_tx_msdu_desc_ext2_t
- * 3.46 Add MAC ID and payload size fields to HTT_MSG_TYPE_PACKETLOG header
+ * 3.46 Add MAC ID and payload size fields to HTT_T2H_MSG_TYPE_PKTLOG header
  * 3.47 Add HTT_T2H PEER_MAP_V2 and PEER_UNMAP_V2
+ * 3.48 Add pdev ID field to HTT_T2H_MSG_TYPE_PPDU_STATS_IND and
+ *      HTT_T2H_MSG_TYPE_PKTLOG
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 47
+#define HTT_CURRENT_VERSION_MINOR 48
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -8399,20 +8401,26 @@ typedef struct {
  * The message consists of a 4-octet header,followed by a variable number
  * of 32-bit character values.
  *
- * |31                         16|15   10|9    8|7            0|
- * |-----------------------------------------------------------|
- * |        payload_size         | rsvd  |mac_id|   msg type   |
- * |-----------------------------------------------------------|
- * |                        payload                            |
- * |-----------------------------------------------------------|
+ * |31                         16|15  12|11   10|9    8|7            0|
+ * |------------------------------------------------------------------|
+ * |        payload_size         | rsvd |pdev_id|mac_id|   msg type   |
+ * |------------------------------------------------------------------|
+ * |                              payload                             |
+ * |------------------------------------------------------------------|
  *   - MSG_TYPE
  *     Bits 7:0
  *     Purpose: identifies this as a pktlog message
- *     Value: HTT_MSG_TYPE_PACKETLOG
+ *     Value: HTT_T2H_MSG_TYPE_PKTLOG
  *   - mac_id
  *     Bits 9:8
  *     Purpose: identifies which MAC/PHY instance generated this pktlog info
  *     Value: 0-3
+ *   - pdev_id
+ *     Bits 11:10
+ *     Purpose: pdev_id
+ *     Value: 0-3
+ *     0 (for rings at SOC level),
+ *     1/2/3 PDEV -> 0/1/2
  *   - payload_size
  *     Bits 31:16
  *     Purpose: explicitly specify the payload size
@@ -8426,6 +8434,9 @@ PREPACK struct htt_pktlog_msg {
 #define HTT_T2H_PKTLOG_MAC_ID_M           0x00000300
 #define HTT_T2H_PKTLOG_MAC_ID_S           8
 
+#define HTT_T2H_PKTLOG_PDEV_ID_M          0x00000C00
+#define HTT_T2H_PKTLOG_PDEV_ID_S          10
+
 #define HTT_T2H_PKTLOG_PAYLOAD_SIZE_M     0xFFFF0000
 #define HTT_T2H_PKTLOG_PAYLOAD_SIZE_S     16
 
@@ -8437,6 +8448,15 @@ PREPACK struct htt_pktlog_msg {
 #define HTT_T2H_PKTLOG_MAC_ID_GET(word) \
     (((word) & HTT_T2H_PKTLOG_MAC_ID_M) >> \
     HTT_T2H_PKTLOG_MAC_ID_S)
+
+#define HTT_T2H_PKTLOG_PDEV_ID_SET(word, value)            \
+    do {                                                   \
+        HTT_CHECK_SET_VAL(HTT_T2H_PKTLOG_PDEV_ID, value);  \
+        (word) |= (value)  << HTT_T2H_PKTLOG_PDEV_ID_S;    \
+    } while (0)
+#define HTT_T2H_PKTLOG_PDEV_ID_GET(word) \
+    (((word) & HTT_T2H_PKTLOG_PDEV_ID_M) >> \
+    HTT_T2H_PKTLOG_PDEV_ID_S)
 
 #define HTT_T2H_PKTLOG_PAYLOAD_SIZE_SET(word, value)             \
     do {                                                         \
@@ -10072,9 +10092,9 @@ enum htt_dbg_ext_stats_status {
  * to host ppdu stats indication message.
  *
  *
- * |31                         16|15           10|9      8|7            0 |
+ * |31                         16|15   12|11   10|9      8|7            0 |
  * |----------------------------------------------------------------------|
- * |    payload_size             |    rsvd bits  |mac_id  |    msg type   |
+ * |    payload_size             | rsvd  |pdev_id|mac_id  |    msg type   |
  * |----------------------------------------------------------------------|
  * |                          ppdu_id                                     |
  * |----------------------------------------------------------------------|
@@ -10092,9 +10112,15 @@ enum htt_dbg_ext_stats_status {
  *             message.
  *    Value: 0x1d
  *  - mac_id
- *    Bits 2
+ *    Bits 9:8
  *    Purpose: mac_id of this ppdu_id
  *    Value: 0-3
+ *  - pdev_id
+ *    Bits 11:10
+ *    Purpose: pdev_id of this ppdu_id
+ *    Value: 0-3
+ *     0 (for rings at SOC level),
+ *     1/2/3 PDEV -> 0/1/2
  *  - payload_size
  *    Bits 31:16
  *    Purpose: total tlv size
@@ -10104,6 +10130,9 @@ enum htt_dbg_ext_stats_status {
 
 #define HTT_T2H_PPDU_STATS_MAC_ID_M           0x00000300
 #define HTT_T2H_PPDU_STATS_MAC_ID_S           8
+
+#define HTT_T2H_PPDU_STATS_PDEV_ID_M          0x00000C00
+#define HTT_T2H_PPDU_STATS_PDEV_ID_S          10
 
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_M     0xFFFF0000
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_S     16
@@ -10119,6 +10148,15 @@ enum htt_dbg_ext_stats_status {
 #define HTT_T2H_PPDU_STATS_MAC_ID_GET(word) \
     (((word) & HTT_T2H_PPDU_STATS_MAC_ID_M) >> \
     HTT_T2H_PPDU_STATS_MAC_ID_S)
+
+#define HTT_T2H_PPDU_STATS_PDEV_ID_SET(word, value)             \
+    do {                                                        \
+        HTT_CHECK_SET_VAL(HTT_T2H_PPDU_STATS_PDEV_ID, value);   \
+        (word) |= (value)  << HTT_T2H_PPDU_STATS_PDEV_ID_S;     \
+    } while (0)
+#define HTT_T2H_PPDU_STATS_PDEV_ID_GET(word) \
+    (((word) & HTT_T2H_PPDU_STATS_PDEV_ID_M) >> \
+    HTT_T2H_PPDU_STATS_PDEV_ID_S)
 
 #define HTT_T2H_PPDU_STATS_PAYLOAD_SIZE_SET(word, value)             \
     do {                                                         \
