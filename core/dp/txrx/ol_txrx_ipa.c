@@ -386,7 +386,7 @@ QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *ppdev, void *ipa_i2w_cb,
 	QDF_IPA_PIPE_IN_MODE(&pipe_in) = IPA_BASIC;
 	QDF_IPA_PIPE_IN_CLIENT(&pipe_in) = IPA_CLIENT_WLAN1_PROD;
 	QDF_IPA_PIPE_IN_DESC_FIFO_SZ(&pipe_in) =
-		ipa_desc_size + sizeof(struct sps_iovec);
+		ipa_desc_size + SPS_DESC_SIZE;
 	QDF_IPA_PIPE_IN_NOTIFY(&pipe_in) = ipa_w2i_cb;
 	if (!is_rm_enabled) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,

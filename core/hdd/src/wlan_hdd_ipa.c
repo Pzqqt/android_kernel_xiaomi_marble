@@ -4992,7 +4992,7 @@ static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 	 * make sure hardware always has one descriptor.
 	 */
 	desc_fifo_sz = hdd_ipa->hdd_ctx->config->IpaDescSize
-		       + sizeof(struct sps_iovec);
+		       + SPS_DESC_SIZE;
 
 	ret = hdd_ipa_setup_tx_sys_pipe(hdd_ipa, desc_fifo_sz);
 	if (ret) {

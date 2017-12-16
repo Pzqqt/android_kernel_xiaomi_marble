@@ -1325,4 +1325,6 @@ struct ol_rx_remote_data {
 
 #define INVALID_REORDER_INDEX 0xFFFF
 
+#define SPS_DESC_SIZE 8
+
 #endif /* _OL_TXRX_TYPES__H_ */
