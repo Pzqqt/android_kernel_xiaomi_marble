@@ -111,7 +111,14 @@ static long audio_ioctl_shared(struct file *file, unsigned int cmd,
 			pr_err("cmd media format block failed\n");
 			break;
 		}
-		rc = q6asm_set_encdec_chan_map(audio->ac, 2);
+
+		/* Fall back to the default number of channels
+		 * if aac_cfg.ch_cfg is not between 1-6
+		 */
+		if ((aac_cfg.ch_cfg == 0) || (aac_cfg.ch_cfg > 6))
+			aac_cfg.ch_cfg = 2;
+
+		rc = q6asm_set_encdec_chan_map(audio->ac, aac_cfg.ch_cfg);
 		if (rc < 0) {
 			pr_err("%s: cmd set encdec_chan_map failed\n",
 				__func__);
