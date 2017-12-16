@@ -2973,7 +2973,7 @@ static int q6afe_send_enc_config(u16 port_id,
 	pr_debug("%s:update DSP for enc format = %d\n", __func__, format);
 	if (format != ASM_MEDIA_FMT_SBC && format != ASM_MEDIA_FMT_AAC_V2 &&
 	    format != ASM_MEDIA_FMT_APTX && format != ASM_MEDIA_FMT_APTX_HD &&
-	    format != ASM_MEDIA_FMT_CELT) {
+	    format != ASM_MEDIA_FMT_CELT && format != ASM_MEDIA_FMT_LDAC) {
 		pr_err("%s:Unsuppported format Ignore AFE config\n", __func__);
 		return 0;
 	}
@@ -3081,7 +3081,15 @@ static int q6afe_send_enc_config(u16 port_id,
 	config.pdata.module_id = AFE_MODULE_PORT;
 	config.pdata.param_id = AFE_PARAM_ID_PORT_MEDIA_TYPE;
 	config.port.media_type.minor_version = AFE_API_VERSION_PORT_MEDIA_TYPE;
-	config.port.media_type.sample_rate = afe_config.slim_sch.sample_rate;
+	if (format == ASM_MEDIA_FMT_LDAC) {
+		config.port.media_type.sample_rate =
+			config.port.enc_blk_param.enc_blk_config.ldac_config.
+				custom_config.sample_rate;
+	} else {
+		config.port.media_type.sample_rate =
+			afe_config.slim_sch.sample_rate;
+	}
+
 	if (afe_in_bit_width)
 		config.port.media_type.bit_width = afe_in_bit_width;
 	else
