@@ -36,6 +36,7 @@
 #define CMD_STATUS_FAIL 1
 #define NUM_CHANNELS_MONO 1
 #define NUM_CHANNELS_STEREO 2
+#define NUM_CHANNELS_THREE 3
 #define NUM_CHANNELS_QUAD 4
 #define CVP_VERSION_2 2
 #define GAIN_Q14_FORMAT(a) (a << 14)
@@ -8639,6 +8640,11 @@ int voice_set_topology_specific_info(struct voice_data *v,
 							NUM_CHANNELS_STEREO) {
 				v->dev_tx.channel_mapping[0] = PCM_CHANNEL_FL;
 				v->dev_tx.channel_mapping[1] = PCM_CHANNEL_FR;
+			} else if (v->dev_tx.no_of_channels ==
+							NUM_CHANNELS_THREE) {
+				v->dev_tx.channel_mapping[0] = PCM_CHANNEL_FL;
+				v->dev_tx.channel_mapping[1] = PCM_CHANNEL_FR;
+				v->dev_tx.channel_mapping[2] = PCM_CHANNEL_FC;
 			} else if (v->dev_tx.no_of_channels ==
 							NUM_CHANNELS_QUAD) {
 				v->dev_tx.channel_mapping[0] = PCM_CHANNEL_FL;
