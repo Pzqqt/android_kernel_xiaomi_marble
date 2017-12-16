@@ -64,7 +64,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TWT_RESPONDER,
 			   he_cap->twt_responder);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_FRAGMENTATION,
-			   he_cap->fragmentation);
+			QDF_MIN(he_cap->fragmentation,
+				hdd_ctx->config->he_dynamic_frag_support));
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MAX_FRAG_MSDU,
 			   he_cap->max_num_frag_msdu);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MIN_FRAG_SIZE,
@@ -224,6 +225,8 @@ void hdd_he_print_ini_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->enable_ul_ofdma);
 	hdd_info("Name = [%s] Value = [%d]", CFG_HE_STA_OBSSPD_NAME,
 		hdd_ctx->config->he_sta_obsspd);
+	hdd_info("Name = [%s] Value = [%d]", CFG_HE_DYNAMIC_FRAGMENTATION_NAME,
+		hdd_ctx->config->he_dynamic_frag_support);
 }
 
 int hdd_update_he_cap_in_cfg(struct hdd_context *hdd_ctx)

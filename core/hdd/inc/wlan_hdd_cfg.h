@@ -11446,6 +11446,29 @@ enum hdd_wext_control {
 /* 11AX related INI configuration */
 /*
  * <ini>
+ * he_dynamic_frag_support - configure dynamic fragmentation
+ * @Min: 0
+ * @Max: 3
+ * @Default: 1
+ *
+ * This ini is used to configure dynamic fragmentation.
+ *
+ * Related: NA
+ *
+ * Supported Feature: 11AX
+ *
+ * Usage: Internal/External
+ *
+ * </ini>
+ */
+
+#define CFG_HE_DYNAMIC_FRAGMENTATION_NAME    "he_dynamic_frag_support"
+#define CFG_HE_DYNAMIC_FRAGMENTATION_MIN     (0)
+#define CFG_HE_DYNAMIC_FRAGMENTATION_MAX     (3)
+#define CFG_HE_DYNAMIC_FRAGMENTATION_DEFAULT (1)
+
+/*
+ * <ini>
  * enable_ul_mimo- Enable UL MIMO.
  * @Min: 0
  * @Max: 1
@@ -14668,6 +14691,7 @@ struct hdd_config {
 	bool enable_ul_mimo;
 	bool enable_ul_ofdma;
 	uint32_t he_sta_obsspd;
+	uint8_t he_dynamic_frag_support;
 #endif
 	enum l1ss_sleep_allowed l1ss_sleep_allowed;
 	uint32_t arp_ac_category;
