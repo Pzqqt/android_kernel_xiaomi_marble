@@ -427,9 +427,9 @@ static char const *tdm_sample_rate_text[] = {"KHZ_8", "KHZ_16", "KHZ_32",
 					     "KHZ_48", "KHZ_176P4",
 					     "KHZ_352P8"};
 static const char *const auxpcm_rate_text[] = {"KHZ_8", "KHZ_16"};
-static char const *mi2s_rate_text[] = {"KHZ_8", "KHZ_16",
-				      "KHZ_32", "KHZ_44P1", "KHZ_48",
-				      "KHZ_96", "KHZ_192"};
+static char const *mi2s_rate_text[] = {"KHZ_8", "KHZ_11P025", "KHZ_16",
+				      "KHZ_22P05", "KHZ_32", "KHZ_44P1",
+				      "KHZ_48", "KHZ_96", "KHZ_192"};
 static const char *const mi2s_ch_text[] = {"One", "Two", "Three", "Four",
 					   "Five", "Six", "Seven",
 					   "Eight"};
@@ -2207,26 +2207,32 @@ static int mi2s_get_sample_rate_val(int sample_rate)
 	case SAMPLING_RATE_8KHZ:
 		sample_rate_val = 0;
 		break;
-	case SAMPLING_RATE_16KHZ:
+	case SAMPLING_RATE_11P025KHZ:
 		sample_rate_val = 1;
 		break;
-	case SAMPLING_RATE_32KHZ:
+	case SAMPLING_RATE_16KHZ:
 		sample_rate_val = 2;
 		break;
-	case SAMPLING_RATE_44P1KHZ:
+	case SAMPLING_RATE_22P05KHZ:
 		sample_rate_val = 3;
 		break;
-	case SAMPLING_RATE_48KHZ:
+	case SAMPLING_RATE_32KHZ:
 		sample_rate_val = 4;
 		break;
-	case SAMPLING_RATE_96KHZ:
+	case SAMPLING_RATE_44P1KHZ:
 		sample_rate_val = 5;
 		break;
-	case SAMPLING_RATE_192KHZ:
+	case SAMPLING_RATE_48KHZ:
 		sample_rate_val = 6;
 		break;
+	case SAMPLING_RATE_96KHZ:
+		sample_rate_val = 7;
+		break;
+	case SAMPLING_RATE_192KHZ:
+		sample_rate_val = 8;
+		break;
 	default:
-		sample_rate_val = 4;
+		sample_rate_val = 6;
 		break;
 	}
 	return sample_rate_val;
@@ -2241,21 +2247,27 @@ static int mi2s_get_sample_rate(int value)
 		sample_rate = SAMPLING_RATE_8KHZ;
 		break;
 	case 1:
-		sample_rate = SAMPLING_RATE_16KHZ;
+		sample_rate = SAMPLING_RATE_11P025KHZ;
 		break;
 	case 2:
-		sample_rate = SAMPLING_RATE_32KHZ;
+		sample_rate = SAMPLING_RATE_16KHZ;
 		break;
 	case 3:
-		sample_rate = SAMPLING_RATE_44P1KHZ;
+		sample_rate = SAMPLING_RATE_22P05KHZ;
 		break;
 	case 4:
-		sample_rate = SAMPLING_RATE_48KHZ;
+		sample_rate = SAMPLING_RATE_32KHZ;
 		break;
 	case 5:
-		sample_rate = SAMPLING_RATE_96KHZ;
+		sample_rate = SAMPLING_RATE_44P1KHZ;
 		break;
 	case 6:
+		sample_rate = SAMPLING_RATE_48KHZ;
+		break;
+	case 7:
+		sample_rate = SAMPLING_RATE_96KHZ;
+		break;
+	case 8:
 		sample_rate = SAMPLING_RATE_192KHZ;
 		break;
 	default:
