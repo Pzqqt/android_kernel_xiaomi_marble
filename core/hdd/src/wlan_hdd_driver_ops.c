@@ -708,7 +708,7 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 	void *dp_pdev;
 	struct pmo_wow_enable_params pmo_params;
 
-	hdd_debug("starting bus suspend");
+	hdd_info("starting bus suspend");
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	err = wlan_hdd_validate_context(hdd_ctx);
@@ -763,7 +763,7 @@ static int __wlan_hdd_bus_suspend(struct wow_enable_params wow_params)
 		goto resume_pmo;
 	}
 
-	hdd_debug("bus suspend succeeded");
+	hdd_info("bus suspend succeeded");
 	return 0;
 
 resume_pmo:
@@ -824,6 +824,7 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 	int errno;
 	uint32_t pending_events;
 
+	hdd_info("start bus_suspend_noirq");
 	errno = wlan_hdd_validate_context(hdd_ctx);
 	if (errno) {
 		hdd_err("Invalid HDD context: errno %d", errno);
@@ -864,8 +865,7 @@ static int __wlan_hdd_bus_suspend_noirq(void)
 
 	hdd_ctx->suspend_resume_stats.suspends++;
 
-	hdd_debug("suspend_noirq done");
-
+	hdd_info("bus_suspend_noirq done");
 	return 0;
 
 resume_hif_noirq:
@@ -913,7 +913,7 @@ static int __wlan_hdd_bus_resume(void)
 	if (cds_is_driver_recovering())
 		return 0;
 
-	hdd_debug("starting bus resume");
+	hdd_info("starting bus resume");
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (status) {
@@ -961,7 +961,7 @@ static int __wlan_hdd_bus_resume(void)
 		goto out;
 	}
 
-	hdd_debug("bus resume succeeded");
+	hdd_info("bus resume succeeded");
 	return 0;
 
 out:
@@ -1000,6 +1000,7 @@ static int __wlan_hdd_bus_resume_noirq(void)
 	int status;
 	QDF_STATUS qdf_status;
 
+	hdd_info("starting bus_resume_noirq");
 	if (cds_is_driver_recovering())
 		return 0;
 
@@ -1024,7 +1025,7 @@ static int __wlan_hdd_bus_resume_noirq(void)
 	status = hif_bus_resume_noirq(hif_ctx);
 	QDF_BUG(!status);
 
-	hdd_debug("resume_noirq done");
+	hdd_info("bus_resume_noirq done");
 	return status;
 }
 
