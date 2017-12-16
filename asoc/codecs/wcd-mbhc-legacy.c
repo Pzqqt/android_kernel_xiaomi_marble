@@ -498,7 +498,7 @@ static void wcd_correct_swch_plug(struct work_struct *work)
 	do {
 		cross_conn = wcd_check_cross_conn(mbhc);
 		try++;
-	} while (try < GND_MIC_SWAP_THRESHOLD);
+	} while (try < mbhc->swap_thr);
 
 	/*
 	 * Check for cross connection 4 times.
@@ -599,10 +599,10 @@ correct_plug_type:
 				pt_gnd_mic_swap_cnt++;
 				no_gnd_mic_swap_cnt = 0;
 				if (pt_gnd_mic_swap_cnt <
-						GND_MIC_SWAP_THRESHOLD) {
+						mbhc->swap_thr) {
 					continue;
 				} else if (pt_gnd_mic_swap_cnt >
-						GND_MIC_SWAP_THRESHOLD) {
+						mbhc->swap_thr) {
 					/*
 					 * This is due to GND/MIC switch didn't
 					 * work,  Report unsupported plug.
@@ -626,7 +626,7 @@ correct_plug_type:
 					no_gnd_mic_swap_cnt = 0;
 				}
 			}
-			if ((pt_gnd_mic_swap_cnt == GND_MIC_SWAP_THRESHOLD) &&
+			if ((pt_gnd_mic_swap_cnt == mbhc->swap_thr) &&
 				(plug_type == MBHC_PLUG_TYPE_GND_MIC_SWAP)) {
 				/*
 				 * if switch is toggled, check again,
