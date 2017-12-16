@@ -1531,7 +1531,8 @@ typedef struct {
 		enum sir_roam_op_code reason);
 	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
-		tpSirBssDescription  bss_desc_ptr);
+		tpSirBssDescription  bss_desc_ptr,
+		enum sir_roam_op_code reason);
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	uint32_t fine_time_measurement_cap;

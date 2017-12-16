@@ -2080,6 +2080,7 @@ static inline void lim_copy_and_free_hlp_data_from_session(
  * @mac_ctx: MAC Context
  * @roam_sync_ind_ptr: Roam synch indication buffer pointer
  * @bss_desc: BSS Descriptor pointer
+ * @reason: Reason for calling callback which decides the action to be taken.
  *
  * This is a PE level callback called from WMA to complete the roam synch
  * propagation at PE level and also fill the BSS descriptor which will be
@@ -2089,7 +2090,7 @@ static inline void lim_copy_and_free_hlp_data_from_session(
  */
 QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_offload_synch_ind *roam_sync_ind_ptr,
-	tpSirBssDescription  bss_desc)
+	tpSirBssDescription  bss_desc, enum sir_roam_op_code reason)
 {
 	tpPESession session_ptr;
 	tpPESession ft_session_ptr;
@@ -2104,20 +2105,54 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		pe_err("LFR3:roam_sync_ind_ptr is NULL");
 		return status;
 	}
-	pe_debug("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND LFR3:auth: %d vdevId: %d",
-		roam_sync_ind_ptr->authStatus, roam_sync_ind_ptr->roamedVdevId);
-	lim_print_mac_addr(mac_ctx, roam_sync_ind_ptr->bssid.bytes,
-			QDF_TRACE_LEVEL_DEBUG);
 	session_ptr = pe_find_session_by_sme_session_id(mac_ctx,
 				roam_sync_ind_ptr->roamedVdevId);
 	if (session_ptr == NULL) {
 		pe_err("LFR3:Unable to find session");
 		return status;
 	}
+
 	if (!LIM_IS_STA_ROLE(session_ptr)) {
 		pe_err("LFR3:session is not in STA mode");
 		return status;
 	}
+
+	pe_debug("LFR3: PE callback reason: %d", reason);
+	switch (reason) {
+	case SIR_ROAMING_START:
+		session_ptr->fw_roaming_started = true;
+		return QDF_STATUS_SUCCESS;
+	case SIR_ROAMING_ABORT:
+		session_ptr->fw_roaming_started = false;
+		/*
+		 * If there was a disassoc or deauth that was received
+		 * during roaming and it was not honored, then we have
+		 * to internally initiate a disconnect because with
+		 * ROAM_ABORT we come back to original AP.
+		 */
+		if (session_ptr->recvd_deauth_while_roaming)
+			lim_perform_deauth(mac_ctx, session_ptr,
+					   session_ptr->deauth_disassoc_rc,
+					   session_ptr->bssId, 0);
+		if (session_ptr->recvd_disassoc_while_roaming) {
+			lim_disassoc_tdls_peers(mac_ctx, session_ptr,
+						session_ptr->bssId);
+			lim_perform_disassoc(mac_ctx, 0,
+					     session_ptr->deauth_disassoc_rc,
+					     session_ptr, session_ptr->bssId);
+		}
+		return QDF_STATUS_SUCCESS;
+	case SIR_ROAM_SYNCH_PROPAGATION:
+		session_ptr->fw_roaming_started = false;
+		break;
+	default:
+		return status;
+	}
+
+	pe_debug("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND LFR3:auth: %d vdevId: %d",
+		roam_sync_ind_ptr->authStatus, roam_sync_ind_ptr->roamedVdevId);
+	lim_print_mac_addr(mac_ctx, roam_sync_ind_ptr->bssid.bytes,
+			QDF_TRACE_LEVEL_DEBUG);
 	/*
 	 * If deauth from AP already in progress, ignore Roam Synch Indication
 	 * from firmware.

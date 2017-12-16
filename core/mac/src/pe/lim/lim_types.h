@@ -471,7 +471,50 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 
 void lim_process_assoc_rsp_frame(tpAniSirGlobal, uint8_t *, uint8_t, tpPESession);
 void lim_process_disassoc_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+/*
+ * lim_perform_disassoc() - Actual action taken after receiving disassoc
+ * @mac_ctx: Global MAC context
+ * @frame_rssi: RSSI of the frame
+ * @rc: Reason code of the deauth
+ * @pe_session: PE session entry pointer
+ * @addr: BSSID from which the disassoc is received
+ *
+ * Return: None
+ */
+void lim_perform_disassoc(tpAniSirGlobal mac_ctx, int32_t frame_rssi,
+			  uint16_t rc, tpPESession pe_session,
+			  tSirMacAddr addr);
+/*
+ * lim_disassoc_tdls_peers() - Disassoc action for tdls peers
+ * @mac_ctx: Global MAC context
+ * @pe_session: PE session entry pointer
+ * @addr: BSSID from which the disassoc is received
+ *
+ * Return: None
+ */
+#ifdef FEATURE_WLAN_TDLS
+void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
+				    tpPESession pe_session, tSirMacAddr addr);
+#else
+void lim_disassoc_tdls_peers(tpAniSirGlobal mac_ctx,
+				    tpPESession pe_session, tSirMacAddr addr)
+{
+	return;
+}
+#endif
 void lim_process_deauth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
+/*
+ * lim_perform_deauth() - Actual action taken after receiving deauth
+ * @mac_ctx: Global MAC context
+ * @pe_session: PE session entry pointer
+ * @rc: Reason code of the deauth
+ * @addr: BSSID from which the deauth is received
+ * @frame_rssi: RSSI of the frame
+ *
+ * Return: None
+ */
+void lim_perform_deauth(tpAniSirGlobal mac_ctx, tpPESession pe_session,
+			uint16_t rc, tSirMacAddr addr, int32_t frame_rssi);
 void lim_process_action_frame(tpAniSirGlobal, uint8_t *, tpPESession);
 void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxMetaInfo);
 

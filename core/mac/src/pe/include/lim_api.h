@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -242,11 +242,11 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
-	tpSirBssDescription  bss_desc_ptr);
+	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason);
 #else
 static inline QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
-	tpSirBssDescription  bss_desc_ptr)
+	tpSirBssDescription  bss_desc_ptr, enum sir_roam_op_code reason)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }

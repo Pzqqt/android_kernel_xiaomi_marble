@@ -2830,7 +2830,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	qdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
 	if (QDF_IS_STATUS_ERROR(wma->pe_roam_synch_cb(
 			(tpAniSirGlobal)wma->mac_context,
-			roam_synch_ind_ptr, bss_desc_ptr))) {
+			roam_synch_ind_ptr, bss_desc_ptr,
+			SIR_ROAM_SYNCH_PROPAGATION))) {
 		WMA_LOGE("LFR3: PE roam synch cb failed");
 		status = -EBUSY;
 		goto cleanup_label;
@@ -6138,6 +6139,9 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
 		if (wmi_event->notif == WMI_ROAM_NOTIF_ROAM_ABORT)
 			op_code = SIR_ROAMING_ABORT;
 		roam_synch_data->roamedVdevId = wmi_event->vdev_id;
+		wma_handle->pe_roam_synch_cb(
+				(tpAniSirGlobal)wma_handle->mac_context,
+				roam_synch_data, NULL, op_code);
 		wma_handle->csr_roam_synch_cb(
 				(tpAniSirGlobal)wma_handle->mac_context,
 				roam_synch_data, NULL, op_code);

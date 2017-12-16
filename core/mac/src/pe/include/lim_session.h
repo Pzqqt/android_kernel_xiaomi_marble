@@ -551,6 +551,10 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool is_session_obss_offload_enabled;
 	bool is_obss_reset_timer_initialized;
 	bool sae_pmk_cached;
+	bool fw_roaming_started;
+	bool recvd_deauth_while_roaming;
+	bool recvd_disassoc_while_roaming;
+	bool deauth_disassoc_rc;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------
