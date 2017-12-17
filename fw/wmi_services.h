@@ -240,6 +240,7 @@ typedef  enum  {
     WMI_SERVICE_RX_PROMISC_ENABLE_SUPPORT=145, /* Support enabling/disabling rx promiscuous mode as directed by a WMI message from the host */
     WMI_SERVICE_SUPPORT_DIRECT_DMA=146, /* indicates target supports direct DMA,
                                          * host will rely on WMI_DMA_RING_CAPABILITIES to get supported modules */
+    WMI_SERVICE_AP_OBSS_DETECTION_OFFLOAD=147, /* Support SAP mode OBSS detection offload */
 
 
     /******* ADD NEW SERVICES HERE *******/

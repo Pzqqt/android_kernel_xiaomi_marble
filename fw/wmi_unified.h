@@ -979,6 +979,7 @@ typedef enum {
     WMI_CHAN_AVOID_RPT_ALLOW_CMDID,
     WMI_COEX_GET_ANTENNA_ISOLATION_CMDID,
     WMI_SAR_LIMITS_CMDID,
+    WMI_SAR_GET_LIMITS_CMDID,
 
     /**
      *  OBSS scan offload enable/disable commands
@@ -1536,6 +1537,7 @@ typedef enum {
 
     /* Coex Event */
     WMI_COEX_REPORT_ANTENNA_ISOLATION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_COEX),
+    WMI_SAR_GET_LIMITS_EVENTID,
 
     /* LPI Event */
     WMI_LPI_RESULT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_LPI),
@@ -15727,6 +15729,51 @@ enum wmi_sar_mod_id_flags {
     WMI_SAR_MOD_OFDM
 };
 
+/**
+ * This message is sent from FW to WLAN host to inform the host of the
+ * updated Specific Absorption Rate (SAR) limits currently in use.
+ */
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_get_limits_event_param */
+    A_UINT32 tlv_header;
+
+    /** when set to WMI_SAR_FEATURE_ON_*, SAR feature is enabled
+     *  with BDF (SET_0 to 4) or WMI
+     * if set to WMI_SAR_FEATURE_OFF, feature is disabled;
+     */
+    A_UINT32 sar_enable;
+
+    /**
+     * number of items in sar_limits[].
+     *  used when sar_enable == WMI_SAR_FEATURE_ON_USER_DEFINED.
+     *  Should be zero if any of the BDF sets is activated.
+     */
+    A_UINT32 num_limit_rows;
+
+    /**
+     * TLV (tag length value) parameters follow the sar_get_limit_event_row
+     * structure. The TLV's are:
+     * wmi_sar_get_limit_event_row sar_limits[num_limit_rows];
+     */
+} wmi_sar_get_limits_event_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_get_limit_event_row */
+
+    /** Current values: WMI_SAR_2G_ID, WMI_SAR_5G_ID. Can be extended by adding
+     * new band_id values .
+     */
+    A_UINT32 band_id;
+
+    A_UINT32 chain_id;
+
+    /** Current values: WMI_SAR_MOD_CCK, WMI_SAR_MOD_OFDM */
+    A_UINT32 mod_id;
+
+    /** actual power limit value, in steps of 0.5 dBm */
+    A_UINT32 limit_value;
+} wmi_sar_get_limit_event_row;
+
 #define WMI_SAR_BAND_ID_VALID_MASK      (0x1)
 #define WMI_SAR_CHAIN_ID_VALID_MASK     (0x2)
 #define WMI_SAR_MOD_ID_VALID_MASK       (0x4)
@@ -15738,6 +15785,19 @@ enum wmi_sar_mod_id_flags {
 #define WMI_IS_SAR_BAND_ID_VALID(bitmap)     ((bitmap) & WMI_SAR_BAND_ID_VALID_MASK)
 #define WMI_IS_SAR_CHAIN_ID_VALID(bitmap)    ((bitmap) & WMI_SAR_CHAIN_ID_VALID_MASK)
 #define WMI_IS_SAR_MOD_ID_VALID(bitmap)      ((bitmap) & WMI_SAR_MOD_ID_VALID_MASK)
+
+/**
+ * This command is sent from WLAN host driver to firmware to
+ * get current Specific Absorption Rate (SAR) limits status from firmware.
+ * The command does not require any parameters as of now.
+ */
+typedef struct {
+    /** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_sar_get_limits_cmd_param */
+    A_UINT32 tlv_header;
+    /** currently no parameters are required. Reserved bit field for future use added */
+    /*  All bits need to be set to 0 while it is a reserved field. */
+    A_UINT32 reserved;
+} wmi_sar_get_limits_cmd_fixed_param;
 
 #define WMI_ROAM_AUTH_STATUS_CONNECTED       0x1 /** connected, but not authenticated */
 #define WMI_ROAM_AUTH_STATUS_AUTHENTICATED   0x2 /** connected and authenticated */

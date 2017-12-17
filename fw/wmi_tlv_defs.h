@@ -880,6 +880,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_dma_ring_cfg_rsp_fixed_param,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_fixed_param,
     WMITLV_TAG_STRUC_wmi_dma_buf_release_entry,
+    WMITLV_TAG_STRUC_wmi_sar_get_limits_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_sar_get_limits_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_sar_get_limits_event_row,
 } WMITLV_TAG_ID;
 
 /*
@@ -1233,6 +1236,7 @@ typedef enum {
     OP(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID) \
     OP(WMI_SAP_OBSS_DETECTION_CFG_CMDID) \
     OP(WMI_PDEV_DMA_RING_CFG_REQ_CMDID) \
+    OP(WMI_SAR_GET_LIMITS_CMDID)\
     /* add new CMD_LIST elements above this line */
 
 
@@ -1428,6 +1432,7 @@ typedef enum {
     OP(WMI_SAP_OBSS_DETECTION_REPORT_EVENTID) \
     OP(WMI_PDEV_DMA_RING_CFG_RSP_EVENTID) \
     OP(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID) \
+    OP(WMI_SAR_GET_LIMITS_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -2898,6 +2903,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_MODEM_POWER_STATE_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_sar_limit_cmd_row, sar_limits, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAR_LIMITS_CMDID);
 
+/* SAR limit request cmd */
+#define WMITLV_TABLE_WMI_SAR_GET_LIMITS_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sar_get_limits_cmd_fixed_param, wmi_sar_get_limits_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_SAR_GET_LIMITS_CMDID);
+
 #define WMITLV_TABLE_WMI_SAR2_RESULT_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sar2_result_event_fixed_param, wmi_sar2_result_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAR2_RESULT_EVENTID);
@@ -4029,6 +4039,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_QVIT_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_avoid_freq_ranges_event_fixed_param, wmi_avoid_freq_ranges_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_avoid_freq_range_desc, avd_freq_range, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_FREQ_AVOID_EVENTID);
+
+/* WLAN SAR LIMITS GET response Event */
+#define WMITLV_TABLE_WMI_SAR_GET_LIMITS_EVENTID(id,op,buf,len)\
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sar_get_limits_event_fixed_param, wmi_sar_get_limits_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_sar_get_limit_event_row, sar_get_limits, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_SAR_GET_LIMITS_EVENTID);
 
 /* GTK rekey fail Event */
 #define WMITLV_TABLE_WMI_GTK_REKEY_FAIL_EVENTID(id,op,buf,len)                                                                                                 \
