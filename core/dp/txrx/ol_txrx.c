@@ -2964,12 +2964,12 @@ ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 	temp = NULL;
 	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t,
 			      peer_list_elem) {
+		if (qdf_atomic_read(&peer->delete_in_progress))
+			continue;
 		if (temp) {
 			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
-				callback(callback_context, temp->mac_addr.raw,
-					vdev->vdev_id, temp, false);
-			}
+			callback(callback_context, temp->mac_addr.raw,
+				vdev->vdev_id, temp, false);
 			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 		}
 		/* self peer is deleted last */
