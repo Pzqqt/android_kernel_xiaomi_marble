@@ -168,14 +168,6 @@ static void pe_reset_protection_callback(void *ptr)
 	pe_session_entry->beaconParams.fLsigTXOPProtectionFullSupport = 0;
 	pe_session_entry->beaconParams.gHTObssMode = 0;
 
-	qdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
-		     sizeof(mac_ctx->lim.gLimOverlap11gParams));
-	qdf_mem_zero(&mac_ctx->lim.gLimOverlap11aParams,
-		     sizeof(mac_ctx->lim.gLimOverlap11aParams));
-	qdf_mem_zero(&mac_ctx->lim.gLimOverlapHt20Params,
-		     sizeof(mac_ctx->lim.gLimOverlapHt20Params));
-	qdf_mem_zero(&mac_ctx->lim.gLimOverlapNonGfParams,
-		     sizeof(mac_ctx->lim.gLimOverlapNonGfParams));
 
 	old_op_mode = pe_session_entry->htOperMode;
 	pe_session_entry->htOperMode = eSIR_HT_OP_MODE_PURE;

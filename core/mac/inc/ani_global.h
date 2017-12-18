@@ -564,13 +564,6 @@ typedef struct sAniSirLim {
 	/* Number of STAs that do not support short slot time */
 	tLimNoShortSlotParams gLimNoShortSlotParams;
 
-	/* OLBC parameters */
-	tLimProtStaParams gLimOverlap11gParams;
-
-	tLimProtStaParams gLimOverlap11aParams;
-	tLimProtStaParams gLimOverlapHt20Params;
-	tLimProtStaParams gLimOverlapNonGfParams;
-
 	/* */
 	/* ---------------- DPH ----------------------- */
 	/* these used to live in DPH but are now moved here (where they belong) */

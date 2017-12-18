@@ -198,14 +198,6 @@ static void __lim_init_states(tpAniSirGlobal pMac)
 	 * when SME_START_BSS_REQ is received.
 	 */
 
-	qdf_mem_set(&pMac->lim.gLimOverlap11gParams, sizeof(tLimProtStaParams),
-		    0);
-	qdf_mem_set(&pMac->lim.gLimOverlap11aParams, sizeof(tLimProtStaParams),
-		    0);
-	qdf_mem_set(&pMac->lim.gLimOverlapHt20Params, sizeof(tLimProtStaParams),
-		    0);
-	qdf_mem_set(&pMac->lim.gLimOverlapNonGfParams,
-		    sizeof(tLimProtStaParams), 0);
 	qdf_mem_set(&pMac->lim.gLimNoShortParams, sizeof(tLimNoShortParams), 0);
 	qdf_mem_set(&pMac->lim.gLimNoShortSlotParams,
 		    sizeof(tLimNoShortSlotParams), 0);

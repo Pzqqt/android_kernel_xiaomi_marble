@@ -86,10 +86,10 @@ ap_beacon_process_5_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	    || (eSIR_HT_OP_MODE_MIXED == bcn_struct->HTInfo.opMode)
 	    || (eSIR_HT_OP_MODE_OVERLAP_LEGACY == bcn_struct->HTInfo.opMode)) {
 		lim_update_overlap_sta_param(mac_ctx, mac_hdr->bssId,
-					&(mac_ctx->lim.gLimOverlap11aParams));
+					&(session->gLimOverlap11aParams));
 
-		if (mac_ctx->lim.gLimOverlap11aParams.numSta
-		    && !mac_ctx->lim.gLimOverlap11aParams.protectionEnabled) {
+		if (session->gLimOverlap11aParams.numSta
+		    && !session->gLimOverlap11aParams.protectionEnabled) {
 			lim_update_11a_protection(mac_ctx, true, true,
 						 bcn_prm, session);
 		}
@@ -100,10 +100,10 @@ ap_beacon_process_5_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		return;
 
 	lim_update_overlap_sta_param(mac_ctx, mac_hdr->bssId,
-				     &(mac_ctx->lim.gLimOverlapHt20Params));
+				     &(session->gLimOverlapHt20Params));
 
-	if (mac_ctx->lim.gLimOverlapHt20Params.numSta
-	    && !mac_ctx->lim.gLimOverlapHt20Params.protectionEnabled)
+	if (session->gLimOverlapHt20Params.numSta
+	    && !session->gLimOverlapHt20Params.protectionEnabled)
 		lim_enable_ht20_protection(mac_ctx, true, true,
 					   bcn_prm, session);
 }

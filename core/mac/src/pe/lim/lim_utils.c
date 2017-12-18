@@ -2966,7 +2966,7 @@ lim_enable_11a_protection(tpAniSirGlobal mac_ctx,
 	 */
 	if (LIM_IS_AP_ROLE(pe_session) && (true == pe_session->htCapability)) {
 		if (overlap) {
-			mac_ctx->lim.gLimOverlap11aParams.protectionEnabled =
+			pe_session->gLimOverlap11aParams.protectionEnabled =
 				true;
 			if ((eSIR_HT_OP_MODE_OVERLAP_LEGACY !=
 			    mac_ctx->lim.gHTOperMode)
@@ -3039,7 +3039,7 @@ lim_disable_11a_protection(tpAniSirGlobal mac_ctx,
 	 */
 	if (overlap) {
 		/* Overlap Legacy protection disabled. */
-		mac_ctx->lim.gLimOverlap11aParams.protectionEnabled = false;
+		pe_session->gLimOverlap11aParams.protectionEnabled = false;
 
 		/*
 		 * We need to take care of HT OP mode iff we are HT AP.
@@ -3047,9 +3047,9 @@ lim_disable_11a_protection(tpAniSirGlobal mac_ctx,
 		 * protection enabled.
 		 */
 		if (!pe_session->htCapability ||
-		     (mac_ctx->lim.gLimOverlap11aParams.protectionEnabled
-		     || mac_ctx->lim.gLimOverlapHt20Params.protectionEnabled
-		     || mac_ctx->lim.gLimOverlapNonGfParams.protectionEnabled))
+		     (pe_session->gLimOverlap11aParams.protectionEnabled
+		     || pe_session->gLimOverlapHt20Params.protectionEnabled
+		     || pe_session->gLimOverlapNonGfParams.protectionEnabled))
 			goto disable_11a_end;
 
 		/* Check if there is a need to change HT OP mode. */
@@ -3078,9 +3078,9 @@ lim_disable_11a_protection(tpAniSirGlobal mac_ctx,
 		 */
 
 		/* Change HT OP mode to 01 if any overlap protection enabled */
-		if (mac_ctx->lim.gLimOverlap11aParams.protectionEnabled
-		    || mac_ctx->lim.gLimOverlapHt20Params.protectionEnabled
-		    || mac_ctx->lim.gLimOverlapNonGfParams.protectionEnabled) {
+		if (pe_session->gLimOverlap11aParams.protectionEnabled
+		    || pe_session->gLimOverlapHt20Params.protectionEnabled
+		    || pe_session->gLimOverlapNonGfParams.protectionEnabled) {
 			mac_ctx->lim.gHTOperMode =
 				eSIR_HT_OP_MODE_OVERLAP_LEGACY;
 			pe_session->htOperMode = eSIR_HT_OP_MODE_OVERLAP_LEGACY;
@@ -3102,7 +3102,7 @@ lim_disable_11a_protection(tpAniSirGlobal mac_ctx,
 	}
 
 disable_11a_end:
-	if (!mac_ctx->lim.gLimOverlap11aParams.protectionEnabled &&
+	if (!pe_session->gLimOverlap11aParams.protectionEnabled &&
 	    !pe_session->gLim11aParams.protectionEnabled) {
 		pe_warn("===> Protection from 11A Disabled");
 		bcn_prms->llaCoexist = false;
@@ -6215,15 +6215,6 @@ bool lim_validate_received_frame_a1_addr(tpAniSirGlobal mac_ctx,
 void lim_check_and_reset_protection_params(tpAniSirGlobal mac_ctx)
 {
 	if (!pe_get_active_session_count(mac_ctx)) {
-		qdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
-			sizeof(mac_ctx->lim.gLimOverlap11gParams));
-		qdf_mem_zero(&mac_ctx->lim.gLimOverlap11aParams,
-			sizeof(mac_ctx->lim.gLimOverlap11aParams));
-		qdf_mem_zero(&mac_ctx->lim.gLimOverlapHt20Params,
-			sizeof(mac_ctx->lim.gLimOverlapHt20Params));
-		qdf_mem_zero(&mac_ctx->lim.gLimOverlapNonGfParams,
-			sizeof(mac_ctx->lim.gLimOverlapNonGfParams));
-
 		mac_ctx->lim.gHTOperMode = eSIR_HT_OP_MODE_PURE;
 	}
 }
