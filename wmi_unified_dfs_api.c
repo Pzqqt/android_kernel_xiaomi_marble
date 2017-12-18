@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -54,3 +54,19 @@ QDF_STATUS wmi_extract_dfs_radar_detection_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef QCA_MCL_DFS_SUPPORT
+QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
+		uint8_t *evt_buf,
+		struct radar_event_info *wlan_radar_event,
+		uint32_t len)
+{
+	struct wmi_unified *wmi_handle = (struct wmi_unified *)wmi_hdl;
+
+	if (wmi_handle->ops->extract_wlan_radar_event_info)
+		return wmi_handle->ops->extract_wlan_radar_event_info(
+				wmi_handle, evt_buf, wlan_radar_event, len);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
