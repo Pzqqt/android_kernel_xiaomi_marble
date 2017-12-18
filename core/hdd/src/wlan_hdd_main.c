@@ -183,6 +183,7 @@ static struct attribute *attrs[] = {
 #define MAX_OPS_NAME_STRING_SIZE 20
 
 static qdf_timer_t hdd_drv_ops_inactivity_timer;
+static struct task_struct *hdd_drv_ops_task;
 static char drv_ops_string[MAX_OPS_NAME_STRING_SIZE];
 
 /* the Android framework expects this param even though we don't use it */
@@ -13215,6 +13216,7 @@ void hdd_start_driver_ops_timer(int drv_op)
 		break;
 	}
 
+	hdd_drv_ops_task = current;
 	qdf_timer_start(&hdd_drv_ops_inactivity_timer,
 		HDD_OPS_INACTIVITY_TIMEOUT);
 }
@@ -13239,6 +13241,13 @@ void hdd_drv_ops_inactivity_handler(void)
 {
 	hdd_err("%s: %d Sec timer expired while in .%s",
 		__func__, HDD_OPS_INACTIVITY_TIMEOUT/1000, drv_ops_string);
+
+	if (hdd_drv_ops_task) {
+		printk("Call stack for \"%s\"\n", hdd_drv_ops_task->comm);
+		qdf_print_thread_trace(hdd_drv_ops_task);
+	} else {
+		hdd_err("hdd_drv_ops_task is null");
+	}
 
 	/* Driver shutdown is stuck, no recovery possible at this point */
 	if (0 == qdf_mem_cmp(&drv_ops_string[0], "shutdown",
