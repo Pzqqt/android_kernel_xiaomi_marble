@@ -1462,6 +1462,10 @@ QDF_STATUS (*extract_dfs_radar_detection_event)(wmi_unified_t wmi_handle,
 		uint8_t *evt_buf,
 		struct radar_found_info *radar_found,
 		uint32_t len);
+QDF_STATUS (*extract_wlan_radar_event_info)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct radar_event_info *wlan_radar_event,
+		uint32_t len);
 #endif
 QDF_STATUS (*send_set_country_cmd)(wmi_unified_t wmi_handle,
 				struct set_country *param);
