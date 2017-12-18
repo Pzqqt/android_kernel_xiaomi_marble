@@ -2299,10 +2299,18 @@ static int get_cal_path(int path)
 		return TX_DEVICE;
 }
 
+/*
+ * Command to set LSM port ID
+ * which is used to send LSM cal
+ *
+ * @port_id: Port ID number to be set
+ *
+ */
 void adm_set_lsm_port_id(int port_id)
 {
 	this_adm.lsm_port_id = port_id;
 }
+EXPORT_SYMBOL(adm_set_lsm_port_id);
 
 static void send_adm_cal(int port_id, int copp_idx, int path, int perf_mode,
 			 int app_type, int acdb_id, int sample_rate)
