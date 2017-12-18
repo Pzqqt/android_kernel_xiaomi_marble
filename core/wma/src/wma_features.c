@@ -4832,6 +4832,98 @@ QDF_STATUS wma_enable_disable_caevent_ind(tp_wma_handle wma, uint8_t val)
 	return QDF_STATUS_SUCCESS;
 }
 
+static wma_sar_cb sar_callback;
+static void *sar_context;
+
+static int wma_sar_event_handler(void *handle, uint8_t *evt_buf, uint32_t len)
+{
+	tp_wma_handle wma_handle;
+	wmi_unified_t wmi_handle;
+	struct sar_limit_event event;
+	wma_sar_cb callback;
+	QDF_STATUS status;
+
+	WMA_LOGI(FL("handle:%pK event:%pK len:%u"), handle, evt_buf, len);
+
+	wma_handle = handle;
+	if (!wma_handle) {
+		WMA_LOGE(FL("NULL wma_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE(FL("NULL wmi_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_extract_sar_limit_event(wmi_handle,
+						     evt_buf, &event);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE(FL("Event extract failure: %d"), status);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	callback = sar_callback;
+	sar_callback = NULL;
+	if (callback)
+		callback(sar_context, &event);
+
+	return 0;
+}
+
+QDF_STATUS wma_sar_register_event_handlers(WMA_HANDLE handle)
+{
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+
+	if (!wma_handle) {
+		WMA_LOGE(FL("NULL wma_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE(FL("NULL wmi_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return wmi_unified_register_event_handler(wmi_handle,
+						  wmi_sar_get_limits_event_id,
+						  wma_sar_event_handler,
+						  WMA_RX_WORK_CTX);
+}
+
+QDF_STATUS wma_get_sar_limit(WMA_HANDLE handle,
+			     wma_sar_cb callback, void *context)
+{
+	tp_wma_handle wma_handle = handle;
+	wmi_unified_t wmi_handle;
+	QDF_STATUS status;
+
+	if (!wma_handle) {
+		WMA_LOGE(FL("NULL wma_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wmi_handle = wma_handle->wmi_handle;
+	if (!wmi_handle) {
+		WMA_LOGE(FL("NULL wmi_handle"));
+		return QDF_STATUS_E_INVAL;
+	}
+
+	sar_callback = callback;
+	sar_context = context;
+	status = wmi_unified_get_sar_limit_cmd(wmi_handle);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE(FL("wmi_unified_get_sar_limit_cmd() error: %u"),
+			 status);
+		sar_callback = NULL;
+	}
+
+	return status;
+}
+
 QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
 		struct sar_limit_cmd_params *sar_limit_params)
 {

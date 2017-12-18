@@ -45,6 +45,7 @@
 #include "sme_internal.h"
 #include "wma_tgt_cfg.h"
 #include "wma_fips_public_structs.h"
+#include "wma_sar_public_structs.h"
 
 #include "sme_rrm_internal.h"
 #include "sir_types.h"
@@ -1466,6 +1467,19 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
 				(struct  power_stats_response *response,
 				void *context), void *power_stats_context);
 #endif
+
+/**
+ * sme_get_sar_power_limits() - get SAR limits
+ * @hal: HAL handle
+ * @callback: Callback function to invoke with the results
+ * @context: Opaque context to pass back to caller in the callback
+ *
+ * Return: QDF_STATUS_SUCCESS if the request is successfully sent
+ * to firmware for processing, otherwise an error status.
+ */
+QDF_STATUS sme_get_sar_power_limits(tHalHandle hal,
+				    wma_sar_cb callback, void *context);
+
 /**
  * sme_set_sar_power_limits() - set sar limits
  * @hal: HAL handle
@@ -1475,6 +1489,7 @@ QDF_STATUS sme_power_debug_stats_req(tHalHandle hal, void (*callback_fn)
  */
 QDF_STATUS sme_set_sar_power_limits(tHalHandle hal,
 		struct sar_limit_cmd_params *sar_limit_cmd);
+
 void sme_set_cc_src(tHalHandle hal_handle, enum country_src);
 
 

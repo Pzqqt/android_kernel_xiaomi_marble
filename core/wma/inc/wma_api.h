@@ -40,6 +40,7 @@
 #include "cds_utils.h"
 #include "scheduler_api.h"
 #include "wlan_policy_mgr_api.h"
+#include "wma_sar_public_structs.h"
 #include <cdp_txrx_ops.h>
 
 typedef void *WMA_HANDLE;
@@ -248,6 +249,20 @@ QDF_STATUS wma_set_cts2self_for_p2p_go(void *wma_handle,
 		uint32_t cts2self_for_p2p_go);
 QDF_STATUS wma_set_tx_rx_aggregation_size
 	(struct sir_set_tx_rx_aggregation_size *tx_rx_aggregation_size);
+
+/**
+ * wma_get_sar_limit() - get SAR limits from the target
+ * @handle: wma handle
+ * @callback: Callback function to invoke with the results
+ * @context: Opaque context to pass back to caller in the callback
+ *
+ *  This function sends WMI command to get SAR limits.
+ *
+ *  Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wma_get_sar_limit(WMA_HANDLE handle,
+			     wma_sar_cb callback, void *context);
+
 /**
  * wma_set_sar_limit() - set sar limits in the target
  * @handle: wma handle
@@ -259,6 +274,7 @@ QDF_STATUS wma_set_tx_rx_aggregation_size
  */
 QDF_STATUS wma_set_sar_limit(WMA_HANDLE handle,
 		struct sar_limit_cmd_params *sar_limit_params);
+
 /**
  * wma_set_qpower_config() - update qpower config in wma
  * @vdev_id:	the Id of the vdev to configure
