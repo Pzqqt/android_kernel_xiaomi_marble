@@ -33,13 +33,13 @@ tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 	struct pdev_spectral *ps;
 
 	if (!pdev) {
-		spectral_err("PDEV is NULL!\n");
+		spectral_err("PDEV is NULL!");
 		return NULL;
 	}
 	ps = wlan_objmgr_pdev_get_comp_private_obj(pdev,
 						   WLAN_UMAC_COMP_SPECTRAL);
 	if (!ps) {
-		spectral_err("PDEV SPECTRAL object is NULL!\n");
+		spectral_err("PDEV SPECTRAL object is NULL!");
 		return NULL;
 	}
 	return ps->psptrl_target_handle;

@@ -35,14 +35,14 @@ static atomic_t spectral_nl_users = ATOMIC_INIT(0);
 void
 target_if_spectral_nl_data_ready(struct sock *sk, int len)
 {
-	qdf_print("%s %d\n", __func__, __LINE__);
+	spectral_debug("%d", __LINE__);
 }
 
 #else
 void
 target_if_spectral_nl_data_ready(struct sk_buff *skb)
 {
-	qdf_print("%s %d\n", __func__, __LINE__);
+	spectral_debug("%d", __LINE__);
 }
 #endif				/* VERSION */
 
@@ -141,7 +141,7 @@ target_if_spectral_init_netlink(struct target_if_spectral *spectral)
 	target_if_spectral_init_nl_cfg(&cfg);
 
 	if (!spectral) {
-		qdf_print("%s: sc_spectral is NULL\n", __func__);
+		spectral_err("sc_spectral is NULL");
 		return -EIO;
 	}
 
@@ -151,8 +151,7 @@ target_if_spectral_init_netlink(struct target_if_spectral *spectral)
 		target_if_spectral_create_nl_sock(&cfg);
 
 		if (!target_if_spectral_nl_sock) {
-			qdf_print("%s NETLINK_KERNEL_CREATE FAILED\n",
-				  __func__);
+			spectral_err("NETLINK_KERNEL_CREATE FAILED");
 			return -ENODEV;
 		}
 	}
@@ -160,12 +159,13 @@ target_if_spectral_init_netlink(struct target_if_spectral *spectral)
 	spectral->spectral_sock = target_if_spectral_nl_sock;
 
 	if ((!spectral) || (!spectral->spectral_sock)) {
-		qdf_print("%s NULL pointers (spectral=%d) (sock=%d)\n",
-			  __func__, (!spectral), (!spectral->spectral_sock));
+		spectral_err("NULL pointers (spectral=%d) (sock=%d)",
+			     (!spectral),
+			     (!spectral->spectral_sock));
 		return -ENODEV;
 	}
 	if (!spectral->spectral_skb)
-		qdf_print(KERN_ERR "%s %d NULL SKB\n", __func__, __LINE__);
+		spectral_err("%d NULL SKB", __LINE__);
 
 	return 0;
 }
@@ -252,7 +252,7 @@ target_if_spectral_init_interf_list(
 {
 	if (params->interf_list.count)
 		OS_MEMCPY(&data->interf_list,
-			  &params->interf_list, sizeof(struct INTERF_SRC_RSP));
+			  &params->interf_list, sizeof(struct interf_src_rsp));
 	else
 		data->interf_list.count = 0;
 }
@@ -466,7 +466,7 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		OS_FREE(msg);
 		msg = NULL;
 	} else {
-		qdf_print("No buffer\n");
+		spectral_err("No buffer");
 	}
 #endif				/* SPECTRAL_USE_NETLINK_SOCKETS */
 
@@ -541,12 +541,12 @@ void
 target_if_spectral_unicast_msg(struct target_if_spectral *spectral)
 {
 	if (!spectral) {
-		qdf_print("%s Spectral is NULL\n", __func__);
+		spectral_err("Spectral is NULL");
 		return;
 	}
 
 	if (!spectral->spectral_sock) {
-		qdf_print("%s Spectral Socket is invalid\n", __func__);
+		spectral_err("Spectral Socket is invalid");
 		dev_kfree_skb(spectral->spectral_skb);
 		spectral->spectral_skb = NULL;
 		return;

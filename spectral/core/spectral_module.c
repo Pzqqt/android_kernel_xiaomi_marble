@@ -21,6 +21,7 @@
 #include <wlan_spectral_utils_api.h>
 #include <qdf_types.h>
 #include<wlan_global_lmac_if_api.h>
+#include "spectral_defs_i.h"
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -32,7 +33,7 @@ MODULE_LICENSE("Dual BSD/GPL");
 static int __init
 spectral_init_module(void)
 {
-	qdf_print("qca_spectral module loaded\n");
+	spectral_info("qca_spectral module loaded");
 	wlan_spectral_init();
 	/* register spectral rxops */
 	wlan_lmac_if_sptrl_set_rx_ops_register_cb
@@ -49,7 +50,7 @@ static void __exit
 spectral_exit_module(void)
 {
 	wlan_spectral_deinit();
-	qdf_print("qca_spectral module unloaded\n");
+	spectral_info("qca_spectral module unloaded");
 }
 
 module_init(spectral_init_module);

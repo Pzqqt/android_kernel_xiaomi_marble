@@ -60,7 +60,7 @@ spectral_get_vdev(struct wlan_objmgr_pdev *pdev)
 	vdev = wlan_objmgr_get_vdev_by_id_from_pdev(pdev, 0, WLAN_SPECTRAL_ID);
 
 	if (!vdev) {
-		qdf_print("%s: Unable to get first vdev of pdev.\n", __func__);
+		spectral_warn("Unable to get first vdev of pdev");
 		return NULL;
 	}
 
@@ -128,13 +128,13 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 	uint8_t vdev_rxchainmask = 0;
 
 	if (!pdev) {
-		spectral_err("PDEV is NULL!\n");
+		spectral_err("PDEV is NULL!");
 		error = -EINVAL;
 		goto bad;
 	}
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
-		spectral_err("atf context is NULL!\n");
+		spectral_err("atf context is NULL!");
 		error = -EINVAL;
 		goto bad;
 	}
@@ -331,10 +331,7 @@ spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
 							     WLAN_SPECTRAL_ID);
 
 				if (!(sp_in->ss_chn_mask & vdev_rxchainmask)) {
-					qdf_print
-					    ("Invalid Spectral Chainmask - "
-					     "Inactive Rx antenna chain cannot "
-					     "be an active spectral chain\n");
+					spectral_err("Invalid Spectral Chainmask - Inactive Rx antenna chain cannot be an active spectral chain");
 					error = -EINVAL;
 					break;
 				} else if (sc->sptrlc_set_spectral_config(
@@ -532,13 +529,13 @@ wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc, void *arg)
 	struct spectral_context *sc = NULL;
 
 	if (!psoc) {
-		spectral_err("PSOC is NULL\n");
+		spectral_err("PSOC is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	sc = (struct spectral_context *)
 	    qdf_mem_malloc(sizeof(struct spectral_context));
 	if (!sc) {
-		spectral_err("Failed to allocate spectral_ctx object\n");
+		spectral_err("Failed to allocate spectral_ctx object");
 		return QDF_STATUS_E_NOMEM;
 	}
 	qdf_mem_zero(sc, sizeof(struct spectral_context));
@@ -562,7 +559,7 @@ wlan_spectral_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc,
 	struct spectral_context *sc = NULL;
 
 	if (!psoc) {
-		spectral_err("PSOC is NULL\n");
+		spectral_err("PSOC is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	sc = wlan_objmgr_psoc_get_comp_private_obj(psoc,
@@ -587,18 +584,18 @@ wlan_spectral_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	void *target_handle = NULL;
 
 	if (!pdev) {
-		spectral_err("PDEV is NULL\n");
+		spectral_err("PDEV is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	ps = (struct pdev_spectral *)
 	    qdf_mem_malloc(sizeof(struct pdev_spectral));
 	if (!ps) {
-		spectral_err("Failed to allocate pdev_spectral object\n");
+		spectral_err("Failed to allocate pdev_spectral object");
 		return QDF_STATUS_E_NOMEM;
 	}
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
-		spectral_err("Spectral context is NULL!\n");
+		spectral_err("Spectral context is NULL!");
 		goto cleanup;
 	}
 
@@ -609,7 +606,7 @@ wlan_spectral_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev, void *arg)
 	if (sc->sptrlc_pdev_spectral_init) {
 		target_handle = sc->sptrlc_pdev_spectral_init(pdev);
 		if (!target_handle) {
-			spectral_err("Spectral lmac object is NULL!\n");
+			spectral_err("Spectral lmac object is NULL!");
 			goto cleanup;
 		}
 		ps->psptrl_target_handle = target_handle;
@@ -631,12 +628,12 @@ wlan_spectral_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 	struct spectral_context *sc = NULL;
 
 	if (!pdev) {
-		spectral_err("PDEV is NULL\n");
+		spectral_err("PDEV is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
-		spectral_err("Spectral context is NULL!\n");
+		spectral_err("Spectral context is NULL!");
 		return QDF_STATUS_E_FAILURE;
 	}
 	ps = wlan_objmgr_pdev_get_comp_private_obj(pdev,

@@ -30,12 +30,12 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 	struct spectral_context *sc;
 
 	if (!pdev) {
-		spectral_err("PDEV is NULL!\n");
+		spectral_err("PDEV is NULL!");
 		return -EPERM;
 	}
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
-		spectral_err("spectral context is NULL!\n");
+		spectral_err("spectral context is NULL!");
 		return -EPERM;
 	}
 

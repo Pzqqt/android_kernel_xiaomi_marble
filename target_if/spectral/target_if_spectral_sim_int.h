@@ -126,8 +126,7 @@ struct spectralsim_context {
 		qdf_mem_malloc(sizeof(struct spectralsim_reportset));        \
 									  \
 	if ((reportset) == NULL) {                                        \
-		qdf_print("Spectral simulation: Could not allocate memory " \
-			  "for report set\n"); \
+		spectral_err("Spectral simulation: Could not allocate memory for report set"); \
 		target_if_depopulate_simdata((simctx));                     \
 		return -EPERM;                                              \
 	}                                                                 \

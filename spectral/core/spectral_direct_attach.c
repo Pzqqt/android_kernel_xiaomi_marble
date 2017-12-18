@@ -41,12 +41,12 @@ spectral_control_da(struct wlan_objmgr_pdev *pdev, u_int id, void *indata,
 	int error = 0;
 
 	if (!pdev) {
-		spectral_err("PDEV is NULL!\n");
+		spectral_err("PDEV is NULL!");
 		return -EPERM;
 	}
 	sc = spectral_get_spectral_ctx_from_pdev(pdev);
 	if (!sc) {
-		spectral_err("spectral context is NULL!\n");
+		spectral_err("spectral context is NULL!");
 		return -EPERM;
 	}
 
@@ -325,7 +325,7 @@ void
 spectral_ctx_init_da(struct spectral_context *sc)
 {
 	if (!sc) {
-		spectral_err("spectral context is null!\n");
+		spectral_err("spectral context is null!");
 		return;
 	}
 	sc->sptrlc_spectral_control = spectral_control_da;

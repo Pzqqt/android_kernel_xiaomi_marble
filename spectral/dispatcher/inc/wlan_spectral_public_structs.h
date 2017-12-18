@@ -344,7 +344,7 @@ enum dcs_int_type {
 };
 
 /**
- * struct INTERF_RSP - Interference record
+ * struct interf_rsp - Interference record
  * @interf_type:         eINTERF_TYPE giving type of interference
  * @interf_min_freq:     Minimum frequency in MHz at which interference has been
  * found
@@ -352,20 +352,20 @@ enum dcs_int_type {
  * found
  * @advncd_spectral_cap: Advanced spectral capability
  */
-struct INTERF_RSP {
+struct interf_rsp {
 	uint8_t interf_type;
 	uint16_t interf_min_freq;
 	uint16_t interf_max_freq;
 } __ATTRIB_PACKED;
 
 /**
- * struct INTERF_SRC_RSP - List of interference sources
+ * struct interf_src_rsp - List of interference sources
  * @count: Number of interference records
  * @interf: Array of interference records
  */
-struct INTERF_SRC_RSP {
+struct interf_src_rsp {
 	uint16_t count;
-	struct INTERF_RSP interf[MAX_INTERF];
+	struct interf_rsp interf[MAX_INTERF];
 } __ATTRIB_PACKED;
 
 /**
@@ -472,7 +472,7 @@ struct spectral_samp_data {
 	uint16_t bin_pwr_count_sec80;
 	uint8_t bin_pwr[MAX_NUM_BINS];
 	uint8_t bin_pwr_sec80[MAX_NUM_BINS];
-	struct INTERF_SRC_RSP interf_list;
+	struct interf_src_rsp interf_list;
 	int16_t noise_floor;
 	int16_t noise_floor_sec80;
 	uint32_t ch_width;

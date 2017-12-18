@@ -85,9 +85,7 @@ target_if_populate_report_static_gen2(
 		    qdf_mem_malloc(sizeof(reportdata_20_gen2));
 
 		if (!report->data) {
-			qdf_print
-			    ("Spectral simulation: Could not allocate memory "
-			     "for report data\n");
+			spectral_err("Spectral simulation: Could not allocate memory for report data");
 			goto bad;
 		}
 
@@ -108,9 +106,7 @@ target_if_populate_report_static_gen2(
 		    qdf_mem_malloc(sizeof(reportdata_40_gen2));
 
 		if (!report->data) {
-			qdf_print
-			    ("Spectral simulation: Could not allocate memory "
-			     "for report data\n");
+			spectral_err("Spectral simulation: Could not allocate memory for report data");
 			goto bad;
 		}
 
@@ -131,9 +127,7 @@ target_if_populate_report_static_gen2(
 		    qdf_mem_malloc(sizeof(reportdata_80_gen2));
 
 		if (!report->data) {
-			qdf_print
-			    ("Spectral simulation: Could not allocate memory "
-			     "for report data\n");
+			spectral_err("Spectral simulation: Could not allocate memory for report data");
 			goto bad;
 		}
 
@@ -155,9 +149,7 @@ target_if_populate_report_static_gen2(
 			    qdf_mem_malloc(sizeof(reportdata_80_80_gen2));
 
 			if (!report->data) {
-				qdf_print
-				    ("Spectral simulation: Could not allocate "
-				     "memory for report data\n");
+				spectral_err("Spectral simulation: Could not allocate memory for report data");
 				goto bad;
 			}
 
@@ -179,9 +171,7 @@ target_if_populate_report_static_gen2(
 			    qdf_mem_malloc(sizeof(reportdata_160_gen2));
 
 			if (!report->data) {
-				qdf_print
-				    ("Spectral simulation: Could not allocate "
-				     "memory for report data\n");
+				spectral_err("Spectral simulation: Could not allocate memory for report data");
 				goto bad;
 			}
 
@@ -198,7 +188,7 @@ target_if_populate_report_static_gen2(
 		}
 		break;
 	default:
-		qdf_print("Unhandled width. Please correct. Asserting\n");
+		spectral_err("Unhandled width. Please correct. Asserting");
 		qdf_assert_always(0);
 	}
 
@@ -233,8 +223,7 @@ target_if_populate_report_static_gen3(
 		    qdf_mem_malloc(sizeof(reportdata_20_gen3));
 
 		if (!report->data) {
-			qdf_print("Spectral simulation: Could not allocate "
-				  "memory for report data\n");
+			spectral_err("Spectral simulation: Could not allocate memory for report data");
 			goto bad;
 		}
 
@@ -255,8 +244,7 @@ target_if_populate_report_static_gen3(
 		    qdf_mem_malloc(sizeof(reportdata_40_gen3));
 
 		if (!report->data) {
-			qdf_print("Spectral simulation: Could not allocate "
-				  "memory for report data\n");
+			spectral_err("Spectral simulation: Could not allocate memory for report data");
 			goto bad;
 		}
 
@@ -277,9 +265,7 @@ target_if_populate_report_static_gen3(
 		    qdf_mem_malloc(sizeof(reportdata_80_gen3));
 
 		if (!report->data) {
-			qdf_print
-			    ("Spectral simulation: Could not allocate memory "
-			     "for report data\n");
+			spectral_err("Spectral simulation: Could not allocate memory for report data");
 			goto bad;
 		}
 
@@ -301,9 +287,7 @@ target_if_populate_report_static_gen3(
 			    qdf_mem_malloc(sizeof(reportdata_80_80_gen3));
 
 			if (!report->data) {
-				qdf_print
-				    ("Spectral simulation: Could not allocate "
-				     "memory for report data\n");
+				spectral_err("Spectral simulation: Could not allocate memory for report data");
 				goto bad;
 			}
 
@@ -325,9 +309,7 @@ target_if_populate_report_static_gen3(
 			    qdf_mem_malloc(sizeof(reportdata_160_gen3));
 
 			if (!report->data) {
-				qdf_print
-				    ("Spectral simulation: Could not allocate "
-				     "memory for report data\n");
+				spectral_err("Spectral simulation: Could not allocate memory for report data");
 				goto bad;
 			}
 
@@ -344,7 +326,7 @@ target_if_populate_report_static_gen3(
 		}
 		break;
 	default:
-		qdf_print("Unhandled width. Please correct. Asserting\n");
+		spectral_err("Unhandled width. Please correct. Asserting");
 		qdf_assert_always(0);
 	}
 
@@ -408,8 +390,7 @@ target_if_populate_reportset_static(
 	    qdf_mem_malloc(sizeof(struct spectralsim_report));
 
 	if (!report) {
-		qdf_print("Spectral simulation: Could not allocate memory "
-			  "for report.\n");
+		spectral_err("Spectral simulation: Could not allocate memory for report.");
 		goto bad;
 	}
 
@@ -478,7 +459,7 @@ target_if_populate_reportset_static(
 		}
 		break;
 	default:
-		qdf_print("Unhandled width. Please rectify.\n");
+		spectral_err("Unhandled width. Please rectify.");
 		qdf_assert_always(0);
 	};
 
@@ -679,8 +660,7 @@ target_if_spectral_sim_attach(struct target_if_spectral *spectral)
 	    qdf_mem_malloc(sizeof(struct spectralsim_context));
 
 	if (!simctx) {
-		qdf_print("Spectral simulation: Could not allocate memory for "
-			  "context\n");
+		spectral_err("Spectral simulation: Could not allocate memory for context");
 		return -EPERM;
 	}
 
@@ -698,7 +678,7 @@ target_if_spectral_sim_attach(struct target_if_spectral *spectral)
 	if (target_if_populate_simdata(simctx) != 0) {
 		qdf_mem_free(simctx);
 		spectral->simctx = NULL;
-		qdf_print("Spectral simulation attach failed\n");
+		spectral_err("Spectral simulation attach failed");
 		return -EPERM;
 	}
 
@@ -707,7 +687,7 @@ target_if_spectral_sim_attach(struct target_if_spectral *spectral)
 		       target_if_spectral_sim_phyerrdelivery_handler,
 		       (void *)(spectral), QDF_TIMER_TYPE_WAKE_APPS);
 
-	qdf_print("Spectral simulation attached\n");
+	spectral_info("Spectral simulation attached");
 
 	return 0;
 }
@@ -728,7 +708,7 @@ target_if_spectral_sim_detach(struct target_if_spectral *spectral)
 	qdf_mem_free(simctx);
 	spectral->simctx = NULL;
 
-	qdf_print("Spectral simulation detached\n");
+	spectral_info("Spectral simulation detached");
 }
 
 uint32_t
@@ -776,16 +756,12 @@ target_if_spectral_sops_sim_start_scan(void *arg)
 	qdf_assert_always(simctx);
 
 	if (!simctx->curr_reportset) {
-		qdf_print("Spectral simulation: No current report set "
-			  "configured  - unable to start simulated Spectral "
-			  "scan\n");
+		spectral_err("Spectral simulation: No current report set configured  - unable to start simulated Spectral scan");
 		return 0;
 	}
 
 	if (!simctx->curr_reportset->curr_report) {
-		qdf_print("Spectral simulation: No report data instances "
-			  "populated - unable to start simulated Spectral "
-			  "scan\n");
+		spectral_err("Spectral simulation: No report data instances populated - unable to start simulated Spectral scan");
 		return 0;
 	}
 
@@ -846,60 +822,38 @@ target_if_log_sim_spectral_params(struct spectral_config *params)
 {
 	int i = 0;
 
-	qdf_print("\n");
+	spectral_debug("\n");
 
-	qdf_print("Spectral simulation: Param data dump:\n"
-		  "ss_fft_period=%hu\n"
-		  "ss_period=%hu\n"
-		  "ss_count=%hu\n"
-		  "ss_short_report=%hu\n"
-		  "radar_bin_thresh_sel=%hhu\n"
-		  "ss_spectral_pri=%hu\n"
-		  "ss_fft_size=%hu\n"
-		  "ss_gc_ena=%hu\n"
-		  "ss_restart_ena=%hu\n"
-		  "ss_noise_floor_ref=%hu\n"
-		  "ss_init_delay=%hu\n"
-		  "ss_nb_tone_thr=%hu\n"
-		  "ss_str_bin_thr=%hu\n"
-		  "ss_wb_rpt_mode=%hu\n"
-		  "ss_rssi_rpt_mode=%hu\n"
-		  "ss_rssi_thr=%hu\n"
-		  "ss_pwr_format=%hu\n"
-		  "ss_rpt_mode=%hu\n"
-		  "ss_bin_scale=%hu\n"
-		  "ss_dbm_adj=%hu\n"
-		  "ss_chn_mask=%hu\n"
-		  "ss_nf_temp_data=%d\n",
-		  params->ss_fft_period,
-		  params->ss_period,
-		  params->ss_count,
-		  params->ss_short_report,
-		  params->radar_bin_thresh_sel,
-		  params->ss_spectral_pri,
-		  params->ss_fft_size,
-		  params->ss_gc_ena,
-		  params->ss_restart_ena,
-		  params->ss_noise_floor_ref,
-		  params->ss_init_delay,
-		  params->ss_nb_tone_thr,
-		  params->ss_str_bin_thr,
-		  params->ss_wb_rpt_mode,
-		  params->ss_rssi_rpt_mode,
-		  params->ss_rssi_thr,
-		  params->ss_pwr_format,
-		  params->ss_rpt_mode,
-		  params->ss_bin_scale,
-		  params->ss_dbm_adj,
-		  params->ss_chn_mask, params->ss_nf_temp_data);
+	spectral_debug("Spectral simulation: Param data dump:\nss_fft_period=%hu\nss_period=%hu\nss_count=%hu\nss_short_report=%hu\nradar_bin_thresh_sel=%hhu\nss_spectral_pri=%hu\nss_fft_size=%hu\nss_gc_ena=%hu\nss_restart_ena=%hu\nss_noise_floor_ref=%hu\nss_init_delay=%hu\nss_nb_tone_thr=%hu\nss_str_bin_thr=%hu\nss_wb_rpt_mode=%hu\nss_rssi_rpt_mode=%hu\nss_rssi_thr=%hu\nss_pwr_format=%hu\nss_rpt_mode=%hu\nss_bin_scale=%hu\nss_dbm_adj=%hu\nss_chn_mask=%hu\nss_nf_temp_data=%d",
+		       params->ss_fft_period,
+		       params->ss_period,
+		       params->ss_count,
+		       params->ss_short_report,
+		       params->radar_bin_thresh_sel,
+		       params->ss_spectral_pri,
+		       params->ss_fft_size,
+		       params->ss_gc_ena,
+		       params->ss_restart_ena,
+		       params->ss_noise_floor_ref,
+		       params->ss_init_delay,
+		       params->ss_nb_tone_thr,
+		       params->ss_str_bin_thr,
+		       params->ss_wb_rpt_mode,
+		       params->ss_rssi_rpt_mode,
+		       params->ss_rssi_thr,
+		       params->ss_pwr_format,
+		       params->ss_rpt_mode,
+		       params->ss_bin_scale,
+		       params->ss_dbm_adj,
+		       params->ss_chn_mask, params->ss_nf_temp_data);
 
 	for (i = 0; i < AH_MAX_CHAINS * 2; i++)
-		qdf_print("ss_nf_cal[%d]=%hhd\n", i, params->ss_nf_cal[i]);
+		spectral_debug("ss_nf_cal[%d]=%hhd", i, params->ss_nf_cal[i]);
 
 	for (i = 0; i < AH_MAX_CHAINS * 2; i++)
-		qdf_print("ss_nf_pwr[%d]=%hhd\n", i, params->ss_nf_pwr[i]);
+		spectral_debug("ss_nf_pwr[%d]=%hhd", i, params->ss_nf_pwr[i]);
 
-	qdf_print("\n");
+	spectral_info("\n");
 }
 #else
 
@@ -933,8 +887,7 @@ target_if_spectral_sops_sim_configure_params(
 
 	vdev = target_if_spectral_get_vdev(spectral);
 	if (!vdev) {
-		qdf_print("Spectral simulation: No VAPs found - not proceeding"
-			  " with param config.\n");
+		spectral_warn("Spectral simulation: No VAPs found - not proceeding with param config.");
 		return 0;
 	}
 
@@ -957,20 +910,18 @@ target_if_spectral_sops_sim_configure_params(
 		} else if (phymode == WLAN_PHYMODE_11AC_VHT80_80) {
 			des_headreportset = simctx->bw80_80_headreportset;
 		} else {
-			qdf_print("Spectral simulation: Unexpected PHY mode %u"
-				  " found for width 160 MHz...asserting.\n",
-				  phymode);
+			spectral_err("Spectral simulation: Unexpected PHY mode %u found for width 160 MHz...asserting.",
+				     phymode);
 			qdf_assert_always(0);
 		}
 		break;
 
 	case IEEE80211_CWM_WIDTHINVALID:
-		qdf_print("Spectral simulation: Invalid width configured - not"
-			  " proceeding with param config.\n");
+		spectral_err("Spectral simulation: Invalid width configured - not proceeding with param config.");
 		is_invalid_width = true;
 	default:
-		qdf_print("Spectral simulation: Unknown width %u...asserting\n",
-			  bw);
+		spectral_err("Spectral simulation: Unknown width %u...asserting",
+			     bw);
 		qdf_assert_always(0);
 		break;
 	}
@@ -981,9 +932,7 @@ target_if_spectral_sops_sim_configure_params(
 		return 0;
 
 	if (!des_headreportset) {
-		qdf_print("Spectral simulation: No simulation data present for"
-			  " configured bandwidth/PHY mode - unable to proceed "
-			  " with param config.\n");
+		spectral_warn("Spectral simulation: No simulation data present for configured bandwidth/PHY mode - unable to proceed  with param config.");
 		return 0;
 	}
 
@@ -1002,16 +951,12 @@ target_if_spectral_sops_sim_configure_params(
 	}
 
 	if (!simctx->curr_reportset) {
-		qdf_print("Spectral simulation: No simulation data present for"
-			  " desired Spectral configuration - unable to proceed"
-			  " with param config.\n");
+		spectral_warn("Spectral simulation: No simulation data present for desired Spectral configuration - unable to proceed with param config.");
 		return 0;
 	}
 
 	if (!simctx->curr_reportset->curr_report) {
-		qdf_print("Spectral simulation: No report data instances "
-			  "populated for desired Spectral configuration - "
-			  "unable to proceed with param config\n");
+		spectral_warn("Spectral simulation: No report data instances populated for desired Spectral configuration - unable to proceed with param config");
 		return 0;
 	}
 
@@ -1035,8 +980,7 @@ target_if_spectral_sops_sim_get_params(
 	qdf_assert_always(simctx);
 
 	if (!simctx->curr_reportset) {
-		qdf_print
-		    ("Spectral simulation: No configured reportset found.\n");
+		spectral_warn("Spectral simulation: No configured reportset found.");
 		return 0;
 	}
 

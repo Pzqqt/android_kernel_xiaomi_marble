@@ -54,7 +54,7 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 
 	if (wlan_objmgr_pdev_try_get_ref(pdev, WLAN_SPECTRAL_ID) !=
 	    QDF_STATUS_SUCCESS) {
-		qdf_print("%s: Unable to get pdev reference.\n", __func__);
+		spectral_err("Unable to get pdev reference.");
 		return NULL;
 	}
 
@@ -63,7 +63,7 @@ target_if_spectral_get_vdev(struct target_if_spectral *spectral)
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_SPECTRAL_ID);
 
 	if (!vdev) {
-		qdf_print("%s: Unable to get first vdev of pdev.\n", __func__);
+		spectral_warn("Unable to get first vdev of pdev.");
 		return NULL;
 	}
 
@@ -117,7 +117,7 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 	sparam.pwr_format = param->ss_pwr_format;
 	sparam.rpt_mode = param->ss_rpt_mode;
 	sparam.bin_scale = param->ss_bin_scale;
-	sparam.dBm_adj = param->ss_dbm_adj;
+	sparam.dbm_adj = param->ss_dbm_adj;
 	sparam.chn_mask = param->ss_chn_mask;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send(
@@ -272,9 +272,8 @@ target_if_log_read_spectral_active(
 	const char *function_name,
 	unsigned char output)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_ACTIVE. "
-		  "Returning val=%u\n",
-		  function_name, output);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_ACTIVE. Returning val=%u",
+		       function_name, output);
 }
 
 /**
@@ -292,9 +291,8 @@ target_if_log_read_spectral_enabled(
 	const char *function_name,
 	unsigned char output)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_ENABLED. "
-		  "Returning val=%u\n",
-		  function_name, output);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_ENABLED. Returning val=%u",
+		       function_name, output);
 }
 
 /**
@@ -312,45 +310,26 @@ target_if_log_read_spectral_params(
 	const char *function_name,
 	struct spectral_config *pparam)
 {
-	qdf_print
-	    ("%s: TARGET_IF_SPECTRAL_INFO_PARAMS. "
-	     "Returning following params:\n"
-	     "ss_count = %u\n"
-	     "ss_period = %u\n"
-	     "ss_spectral_pri = %u\n"
-	     "ss_fft_size = %u\n"
-	     "ss_gc_ena = %u\n"
-	     "ss_restart_ena = %u\n"
-	     "ss_noise_floor_ref = %d\n"
-	     "ss_init_delay = %u\n"
-	     "ss_nb_tone_thr = %u\n"
-	     "ss_str_bin_thr = %u\n"
-	     "ss_wb_rpt_mode = %u\n"
-	     "ss_rssi_rpt_mode = %u\n"
-	     "ss_rssi_thr = %d\n"
-	     "ss_pwr_format = %u\n"
-	     "ss_rpt_mode = %u\n"
-	     "ss_bin_scale = %u\n"
-	     "ss_dbm_adj = %u\n"
-	     "ss_chn_mask = %u\n\n", function_name,
-	     pparam->ss_count,
-	     pparam->ss_period,
-	     pparam->ss_spectral_pri,
-	     pparam->ss_fft_size,
-	     pparam->ss_gc_ena,
-	     pparam->ss_restart_ena,
-	     (int8_t)pparam->ss_noise_floor_ref,
-	     pparam->ss_init_delay,
-	     pparam->ss_nb_tone_thr,
-	     pparam->ss_str_bin_thr,
-	     pparam->ss_wb_rpt_mode,
-	     pparam->ss_rssi_rpt_mode,
-	     (int8_t)pparam->ss_rssi_thr,
-	     pparam->ss_pwr_format,
-	     pparam->ss_rpt_mode,
-	     pparam->ss_bin_scale,
-	     pparam->ss_dbm_adj,
-	     pparam->ss_chn_mask);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_PARAMS. Returning following params:\nss_count = %u\nss_period = %u\nss_spectral_pri = %u\nss_fft_size = %u\nss_gc_ena = %u\nss_restart_ena = %u\nss_noise_floor_ref = %d\nss_init_delay = %u\nss_nb_tone_thr = %u\nss_str_bin_thr = %u\nss_wb_rpt_mode = %u\nss_rssi_rpt_mode = %u\nss_rssi_thr = %d\nss_pwr_format = %u\nss_rpt_mode = %u\nss_bin_scale = %u\nss_dbm_adj = %u\nss_chn_mask = %u\n",
+		       function_name,
+		       pparam->ss_count,
+		       pparam->ss_period,
+		       pparam->ss_spectral_pri,
+		       pparam->ss_fft_size,
+		       pparam->ss_gc_ena,
+		       pparam->ss_restart_ena,
+		       (int8_t)pparam->ss_noise_floor_ref,
+		       pparam->ss_init_delay,
+		       pparam->ss_nb_tone_thr,
+		       pparam->ss_str_bin_thr,
+		       pparam->ss_wb_rpt_mode,
+		       pparam->ss_rssi_rpt_mode,
+		       (int8_t)pparam->ss_rssi_thr,
+		       pparam->ss_pwr_format,
+		       pparam->ss_rpt_mode,
+		       pparam->ss_bin_scale,
+		       pparam->ss_dbm_adj,
+		       pparam->ss_chn_mask);
 }
 
 /**
@@ -368,10 +347,8 @@ target_if_log_read_spectral_active_catch_validate(
 	const char *function_name,
 	unsigned char output)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_ACTIVE on "
-		  "initial cache validation\n"
-		  "Returning val=%u\n",
-		  function_name, output);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_ACTIVE on initial cache validation\nReturning val=%u",
+		       function_name, output);
 }
 
 /**
@@ -389,10 +366,8 @@ target_if_log_read_spectral_enabled_catch_validate(
 	const char *function_name,
 	unsigned char output)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_ENABLED on "
-		  "initial cache validation\n"
-		  "Returning val=%u\n",
-		  function_name, output);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_ENABLED on initial cache validation\nReturning val=%u\n",
+		       function_name, output);
 }
 
 /**
@@ -410,45 +385,25 @@ target_if_log_read_spectral_params_catch_validate(
 	const char *function_name,
 	struct spectral_config *pparam)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_PARAMS on "
-		  "initial cache validation\n"
-		  "Returning following params:\n"
-		  "ss_count = %u\n"
-		  "ss_period = %u\n"
-		  "ss_spectral_pri = %u\n"
-		  "ss_fft_size = %u\n"
-		  "ss_gc_ena = %u\n"
-		  "ss_restart_ena = %u\n"
-		  "ss_noise_floor_ref = %d\n"
-		  "ss_init_delay = %u\n"
-		  "ss_nb_tone_thr = %u\n"
-		  "ss_str_bin_thr = %u\n"
-		  "ss_wb_rpt_mode = %u\n"
-		  "ss_rssi_rpt_mode = %u\n"
-		  "ss_rssi_thr = %d\n"
-		  "ss_pwr_format = %u\n"
-		  "ss_rpt_mode = %u\n"
-		  "ss_bin_scale = %u\n"
-		  "ss_dbm_adj = %u\n"
-		  "ss_chn_mask = %u\n\n",
-		  function_name,
-		  pparam->ss_count,
-		  pparam->ss_period,
-		  pparam->ss_spectral_pri,
-		  pparam->ss_fft_size,
-		  pparam->ss_gc_ena,
-		  pparam->ss_restart_ena,
-		  (int8_t)pparam->ss_noise_floor_ref,
-		  pparam->ss_init_delay,
-		  pparam->ss_nb_tone_thr,
-		  pparam->ss_str_bin_thr,
-		  pparam->ss_wb_rpt_mode,
-		  pparam->ss_rssi_rpt_mode,
-		  (int8_t)pparam->ss_rssi_thr,
-		  pparam->ss_pwr_format,
-		  pparam->ss_rpt_mode,
-		  pparam->ss_bin_scale,
-		  pparam->ss_dbm_adj, pparam->ss_chn_mask);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_PARAMS on initial cache validation\nReturning following params:\nss_count = %u\nss_period = %u\nss_spectral_pri = %u\nss_fft_size = %u\nss_gc_ena = %u\nss_restart_ena = %u\nss_noise_floor_ref = %d\nss_init_delay = %u\nss_nb_tone_thr = %u\nss_str_bin_thr = %u\nss_wb_rpt_mode = %u\nss_rssi_rpt_mode = %u\nss_rssi_thr = %d\nss_pwr_format = %u\nss_rpt_mode = %u\nss_bin_scale = %u\nss_dbm_adj = %u\nss_chn_mask = %u",
+		       function_name,
+		       pparam->ss_count,
+		       pparam->ss_period,
+		       pparam->ss_spectral_pri,
+		       pparam->ss_fft_size,
+		       pparam->ss_gc_ena,
+		       pparam->ss_restart_ena,
+		       (int8_t)pparam->ss_noise_floor_ref,
+		       pparam->ss_init_delay,
+		       pparam->ss_nb_tone_thr,
+		       pparam->ss_str_bin_thr,
+		       pparam->ss_wb_rpt_mode,
+		       pparam->ss_rssi_rpt_mode,
+		       (int8_t)pparam->ss_rssi_thr,
+		       pparam->ss_pwr_format,
+		       pparam->ss_rpt_mode,
+		       pparam->ss_bin_scale,
+		       pparam->ss_dbm_adj, pparam->ss_chn_mask);
 }
 
 #else
@@ -546,8 +501,7 @@ target_if_spectral_info_read(
 		break;
 
 	default:
-		qdf_print("%s: Unknown target_if_spectral_info specifier\n",
-			  __func__);
+		spectral_err("Unknown target_if_spectral_info specifier");
 		return -EINVAL;
 	}
 
@@ -673,9 +627,8 @@ target_if_log_write_spectral_active(
 	uint8_t pval,
 	int ret)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_ACTIVE with "
-		  "val=%u status=%d\n",
-		  function_name, pval, ret);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_ACTIVE with val=%u status=%d",
+		       function_name, pval, ret);
 }
 
 /**
@@ -694,9 +647,8 @@ target_if_log_write_spectral_enabled(
 	uint8_t pval,
 	int ret)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_ENABLED with "
-		  "val=%u status=%d\n",
-		  function_name, pval, ret);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_ENABLED with val=%u status=%d",
+		       function_name, pval, ret);
 }
 
 /**
@@ -715,45 +667,25 @@ target_if_log_write_spectral_params(
 	const char *function_name,
 	int ret)
 {
-	qdf_print("%s: TARGET_IF_SPECTRAL_INFO_PARAMS. "
-		  "Params:\n"
-		  "ss_count = %u\n"
-		  "ss_period = %u\n"
-		  "ss_spectral_pri = %u\n"
-		  "ss_fft_size = %u\n"
-		  "ss_gc_ena = %u\n"
-		  "ss_restart_ena = %u\n"
-		  "ss_noise_floor_ref = %d\n"
-		  "ss_init_delay = %u\n"
-		  "ss_nb_tone_thr = %u\n"
-		  "ss_str_bin_thr = %u\n"
-		  "ss_wb_rpt_mode = %u\n"
-		  "ss_rssi_rpt_mode = %u\n"
-		  "ss_rssi_thr = %d\n"
-		  "ss_pwr_format = %u\n"
-		  "ss_rpt_mode = %u\n"
-		  "ss_bin_scale = %u\n"
-		  "ss_dbm_adj = %u\n"
-		  "ss_chn_mask = %u\n"
-		  "status = %d\n\n",
-		  function_name,
-		  param->ss_count,
-		  param->ss_period,
-		  param->ss_spectral_pri,
-		  param->ss_fft_size,
-		  param->ss_gc_ena,
-		  param->ss_restart_ena,
-		  (int8_t)param->ss_noise_floor_ref,
-		  param->ss_init_delay,
-		  param->ss_nb_tone_thr,
-		  param->ss_str_bin_thr,
-		  param->ss_wb_rpt_mode,
-		  param->ss_rssi_rpt_mode,
-		  (int8_t)param->ss_rssi_thr,
-		  param->ss_pwr_format,
-		  param->ss_rpt_mode,
-		  param->ss_bin_scale,
-		  param->ss_dbm_adj, param->ss_chn_mask, ret);
+	spectral_debug("%s: TARGET_IF_SPECTRAL_INFO_PARAMS. Params:\nss_count = %u\nss_period = %u\nss_spectral_pri = %u\nss_fft_size = %u\nss_gc_ena = %u\nss_restart_ena = %u\nss_noise_floor_ref = %d\nss_init_delay = %u\nss_nb_tone_thr = %u\nss_str_bin_thr = %u\nss_wb_rpt_mode = %u\nss_rssi_rpt_mode = %u\nss_rssi_thr = %d\nss_pwr_format = %u\nss_rpt_mode = %u\nss_bin_scale = %u\nss_dbm_adj = %u\nss_chn_mask = %u\nstatus = %d",
+		       function_name,
+		       param->ss_count,
+		       param->ss_period,
+		       param->ss_spectral_pri,
+		       param->ss_fft_size,
+		       param->ss_gc_ena,
+		       param->ss_restart_ena,
+		       (int8_t)param->ss_noise_floor_ref,
+		       param->ss_init_delay,
+		       param->ss_nb_tone_thr,
+		       param->ss_str_bin_thr,
+		       param->ss_wb_rpt_mode,
+		       param->ss_rssi_rpt_mode,
+		       (int8_t)param->ss_rssi_thr,
+		       param->ss_pwr_format,
+		       param->ss_rpt_mode,
+		       param->ss_bin_scale,
+		       param->ss_dbm_adj, param->ss_chn_mask, ret);
 }
 #else
 static void
@@ -828,8 +760,8 @@ target_if_spectral_info_write(
 			ret);
 
 		if (ret < 0) {
-			qdf_print("%s: target_if_send_vdev_spectral_enable_cmd "
-				  "failed with error=%d\n", __func__, ret);
+			spectral_err("target_if_send_vdev_spectral_enable_cmd failed with error=%d",
+				     ret);
 			qdf_spin_unlock(&info->osps_lock);
 			return ret;
 		}
@@ -854,8 +786,8 @@ target_if_spectral_info_write(
 			ret);
 
 		if (ret < 0) {
-			qdf_print("%s: target_if_send_vdev_spectral_enable_cmd "
-				  "failed with error=%d\n", __func__, ret);
+			spectral_err("target_if_send_vdev_spectral_enable_cmd failed with error=%d",
+				     ret);
 			qdf_spin_unlock(&info->osps_lock);
 			return ret;
 		}
@@ -880,9 +812,8 @@ target_if_spectral_info_write(
 			ret);
 
 		if (ret < 0) {
-			qdf_print("%s: "
-				  "target_if_send_vdev_spectral_configure_cmd "
-				  "failed with error=%d\n", __func__, ret);
+			spectral_err("target_if_send_vdev_spectral_configure_cmd failed with error=%d",
+				     ret);
 			qdf_spin_unlock(&info->osps_lock);
 			return ret;
 		}
@@ -893,8 +824,7 @@ target_if_spectral_info_write(
 		break;
 
 	default:
-		qdf_print("%s: Unknown target_if_spectral_info "
-			  "specifier\n", __func__);
+		spectral_err("Unknown target_if_spectral_info specifier");
 		return -EINVAL;
 	}
 
@@ -1524,7 +1454,7 @@ target_if_init_spectral_ops(struct target_if_spectral *spectral)
 	else if (spectral->spectral_gen == SPECTRAL_GEN3)
 		target_if_init_spectral_ops_gen3();
 	else
-		qdf_print("Invalid spetral generation\n");
+		spectral_err("Invalid Spectral generation");
 }
 
 /*
@@ -1792,14 +1722,14 @@ target_if_spectral_check_hw_capability(struct target_if_spectral *spectral)
 
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_PHYDIAG) == false) {
 		is_spectral_supported = false;
-		qdf_print("SPECTRAL : No PHYDIAG support\n");
+		spectral_info("SPECTRAL : No PHYDIAG support");
 		return is_spectral_supported;
 	}
 	pcap->phydiag_cap = 1;
 
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_RADAR) == false) {
 		is_spectral_supported = false;
-		qdf_print("SPECTRAL : No RADAR support\n");
+		spectral_info("SPECTRAL : No RADAR support");
 		return is_spectral_supported;
 	}
 	pcap->radar_cap = 1;
@@ -1807,14 +1737,14 @@ target_if_spectral_check_hw_capability(struct target_if_spectral *spectral)
 	if (p_sops->get_capability(spectral,
 				   SPECTRAL_CAP_SPECTRAL_SCAN) == false) {
 		is_spectral_supported = false;
-		qdf_print("SPECTRAL : No SPECTRAL SUPPORT\n");
+		spectral_info("SPECTRAL : No SPECTRAL SUPPORT");
 		return is_spectral_supported;
 	}
 	pcap->spectral_cap = 1;
 
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_ADVNCD_SPECTRAL_SCAN)
 	    == false) {
-		qdf_print("SPECTRAL : No ADVANCED SPECTRAL SUPPORT\n");
+		spectral_info("SPECTRAL : No ADVANCED SPECTRAL SUPPORT");
 	} else {
 		pcap->advncd_spectral_cap = 1;
 	}
@@ -1904,7 +1834,7 @@ target_if_spectral_detach_simulation(struct target_if_spectral *spectral)
 static void
 target_if_spectral_detach(struct target_if_spectral *spectral)
 {
-	qdf_print("spectral detach\n");
+	spectral_info("spectral detach");
 	qdf_spinlock_destroy(&spectral->param_info.osps_lock);
 
 	target_if_spectral_detach_simulation(spectral);
@@ -1973,13 +1903,13 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 #endif
 
 	if (!pdev) {
-		qdf_print("SPECTRAL: pdev is NULL!\n");
+		spectral_err("SPECTRAL: pdev is NULL!");
 		return NULL;
 	}
 	spectral = (struct target_if_spectral *)qdf_mem_malloc(
 			sizeof(struct target_if_spectral));
 	if (!spectral) {
-		qdf_print("SPECTRAL : Memory allocation failed\n");
+		spectral_err("SPECTRAL : Memory allocation failed");
 		return spectral;
 	}
 	qdf_mem_zero(spectral, sizeof(struct target_if_spectral));
@@ -2013,16 +1943,16 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 	/* TODO : Should this be called here of after ath_attach ? */
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_PHYDIAG))
-		qdf_print(KERN_INFO "HAL_CAP_PHYDIAG : Capable\n");
+		spectral_info("HAL_CAP_PHYDIAG : Capable");
 
 	SPECTRAL_TODO("Need to fix the capablity check for RADAR");
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_RADAR))
-		qdf_print(KERN_INFO "HAL_CAP_RADAR   : Capable\n");
+		spectral_info("HAL_CAP_RADAR   : Capable");
 
 	SPECTRAL_TODO("Need to fix the capablity check for SPECTRAL\n");
 	/* TODO : Should this be called here of after ath_attach ? */
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_SPECTRAL_SCAN))
-		qdf_print(KERN_INFO "HAL_CAP_SPECTRAL_SCAN : Capable\n");
+		spectral_info("HAL_CAP_SPECTRAL_SCAN : Capable");
 
 	qdf_spinlock_create(&spectral->spectral_lock);
 	qdf_spinlock_create(&spectral->noise_pwr_reports_lock);
@@ -2125,7 +2055,7 @@ target_if_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev)
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
-		qdf_print("SPECTRAL : Module doesn't exist\n");
+		spectral_err("SPECTRAL : Module doesn't exist");
 		return;
 	}
 	target_if_spectral_detach(spectral);
@@ -2154,7 +2084,7 @@ target_if_set_spectral_config(struct wlan_objmgr_pdev *pdev,
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 	if (!spectral) {
-		qdf_print("%s: spectral object is NULL\n", __func__);
+		spectral_err("spectral object is NULL");
 		return -EPERM;
 	}
 
@@ -2356,14 +2286,14 @@ target_if_spectral_scan_enable_params(struct target_if_spectral *spectral,
 	struct wlan_objmgr_vdev *vdev = NULL;
 
 	if (!spectral) {
-		qdf_print("SPECTRAL : Spectral is NULL\n");
+		spectral_err("SPECTRAL : Spectral is NULL");
 		return 1;
 	}
 
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 
 	if (!p_sops) {
-		qdf_print("SPECTRAL : p_sops is NULL\n");
+		spectral_err("SPECTRAL : p_sops is NULL");
 		return 1;
 	}
 
@@ -2649,8 +2579,7 @@ target_if_start_spectral_scan(struct wlan_objmgr_pdev *pdev)
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
-		qdf_print("SPECTRAL : Spectral LMAC object is NUll  (%s)\n",
-			  __func__);
+		spectral_err("SPECTRAL : Spectral LMAC object is NUll");
 		return -EPERM;
 	}
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
@@ -2670,8 +2599,7 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev)
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
 	if (!spectral) {
-		qdf_print("SPECTRAL : Spectral LMAC object is NUll  (%s)\n",
-			  __func__);
+		spectral_err("SPECTRAL : Spectral LMAC object is NUll ");
 		return;
 	}
 	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);

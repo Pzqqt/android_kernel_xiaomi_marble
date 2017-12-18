@@ -4004,7 +4004,7 @@ struct smart_ant_enable_tx_feedback_params {
  * @pwr_format: Power format
  * @rpt_mode: Report mdoe
  * @bin_scale: BIN scale
- * @dBm_adj: DBM adjust
+ * @dbm_adj: DBM adjust
  * @chn_mask: chain mask
  */
 struct vdev_spectral_configure_params {
@@ -4025,7 +4025,7 @@ struct vdev_spectral_configure_params {
 	uint16_t pwr_format;
 	uint16_t rpt_mode;
 	uint16_t bin_scale;
-	uint16_t dBm_adj;
+	uint16_t dbm_adj;
 	uint16_t chn_mask;
 };
 

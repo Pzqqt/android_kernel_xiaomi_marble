@@ -56,16 +56,20 @@ QDF_PRINT_INFO(QDF_PRINT_IDX_SHARED, QDF_MODULE_ID_SPECTRAL, level, ## args)
 
 #define STATUS_PASS       1
 #define STATUS_FAIL       0
-#define line()   \
-	qdf_print("----------------------------------------------------\n")
+#undef spectral_dbg_line
+#define spectral_dbg_line() \
+	spectral_debug("----------------------------------------------------\n")
+#undef SPECTRAL_TODO
 #define SPECTRAL_TODO(str) \
-	qdf_print(KERN_INFO "SPECTRAL : %s (%s : %d)\n", \
-		  (str), __func__, __LINE__)
+	spectral_info("SPECTRAL : %s (%s : %d)\n", \
+		      (str), __func__, __LINE__)
+#undef spectral_ops_not_registered
 #define spectral_ops_not_registered(str) \
-	qdf_print(KERN_INFO "SPECTRAL : %s not registered\n", (str))
+	spectral_info("SPECTRAL : %s not registered\n", (str))
+#undef not_yet_implemented
 #define not_yet_implemented() \
-	qdf_print("SPECTRAL : %s : %d Not yet implemented\n", \
-		  __func__, __LINE__)
+	spectral_info("SPECTRAL : %s : %d Not yet implemented\n", \
+		      __func__, __LINE__)
 
 #define SPECTRAL_HT20_NUM_BINS               56
 #define SPECTRAL_HT20_FFT_LEN                56
@@ -863,7 +867,7 @@ struct target_if_samp_msg_params {
 	uint16_t   freq_loading;
 	int16_t     noise_floor;
 	int16_t     noise_floor_sec80;
-	struct INTERF_SRC_RSP interf_list;
+	struct interf_src_rsp interf_list;
 	struct spectral_classifier_params classifier_params;
 	struct ath_softc *sc;
 };
