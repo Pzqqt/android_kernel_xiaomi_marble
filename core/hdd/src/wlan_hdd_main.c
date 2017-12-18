@@ -9971,6 +9971,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		QDF_ASSERT(0);
 	}
 
+	hdd_runtime_suspend_context_deinit(hdd_ctx);
+
 	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to destroy pdev; errno:%d", ret);
@@ -10003,8 +10005,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		hdd_err("Hif context is Null");
 		ret = -EINVAL;
 	}
-
-	hdd_runtime_suspend_context_deinit(hdd_ctx);
 
 	if (hdd_ctx->target_hw_name) {
 		qdf_mem_free(hdd_ctx->target_hw_name);

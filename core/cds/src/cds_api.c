@@ -1217,10 +1217,10 @@ QDF_STATUS cds_dp_close(struct wlan_objmgr_psoc *psoc)
 	cdp_txrx_intr_detach(gp_cds_context->dp_soc);
 
 	ctx = cds_get_context(QDF_MODULE_ID_TXRX);
-	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
-	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
 	cdp_pdev_detach(cds_get_context(QDF_MODULE_ID_SOC),
 		       (struct cdp_pdev *)ctx, 1);
+	cds_set_context(QDF_MODULE_ID_TXRX, NULL);
+	pmo_ucfg_psoc_set_txrx_handle(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
 }
