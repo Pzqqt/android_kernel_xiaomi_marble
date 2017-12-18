@@ -46,7 +46,6 @@ extern "C" {
 #define TARGET_TYPE_AR6004    5
 #define TARGET_TYPE_AR6006    6
 #define TARGET_TYPE_AR9888    7
-#define TARGET_TYPE_AR6320    8
 #define TARGET_TYPE_AR900B    9
 #define TARGET_TYPE_QCA9984   10
 #define TARGET_TYPE_IPQ4019   11
@@ -62,6 +61,7 @@ extern "C" {
 /* For Tufello1.0 target_reg_tbl ID*/
 #define TARGET_TYPE_QCA9377V1   17
 #endif /* CONFIG_WIN */
+#define TARGET_TYPE_AR6320    8
 /* For Adrastea target */
 #define TARGET_TYPE_ADRASTEA  19
 #ifndef TARGET_TYPE_QCA8074
