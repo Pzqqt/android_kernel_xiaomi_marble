@@ -1323,45 +1323,35 @@ done:
 			qdf_nbuf_set_rx_cksum(nbuf, &cksum);
 		}
 
-		tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
+		if (soc->process_rx_status) {
+			sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
+			mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
+			tid = hal_rx_mpdu_start_tid_get(rx_tlv_hdr);
 
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s: %d, SGI: %d, tid: %d",
-			__func__, __LINE__, sgi, tid);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: %d, SGI: %d, tid: %d",
+				__func__, __LINE__, sgi, tid);
 
-		bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
-		reception_type = hal_rx_msdu_start_reception_type_get(
-				rx_tlv_hdr);
-		nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
-		pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
-		DP_STATS_INC(vdev->pdev,
-				rx.reception_type[reception_type], 1);
+			bw = hal_rx_msdu_start_bw_get(rx_tlv_hdr);
+			reception_type = hal_rx_msdu_start_reception_type_get(
+					rx_tlv_hdr);
+			nss = hal_rx_msdu_start_nss_get(rx_tlv_hdr);
+			pkt_type = hal_rx_msdu_start_get_pkt_type(rx_tlv_hdr);
 
-		DP_STATS_INCC(vdev->pdev, rx.nss[nss], 1,
-				((reception_type == REPT_MU_MIMO) ||
-				 (reception_type == REPT_MU_OFDMA_MIMO))
-				);
+			DP_STATS_INC(peer, rx.nss[nss], 1);
 
-		DP_STATS_INCC(peer, rx.err.mic_err, 1,
+			DP_STATS_INCC(peer, rx.err.mic_err, 1,
 				hal_rx_mpdu_end_mic_err_get(
 					rx_tlv_hdr));
 
-		DP_STATS_INCC(peer, rx.err.decrypt_err, 1,
+			DP_STATS_INCC(peer, rx.err.decrypt_err, 1,
 				hal_rx_mpdu_end_decrypt_err_get(
 					rx_tlv_hdr));
 
-		DP_STATS_INC(peer, rx.reception_type[reception_type],
-				1);
-
-		if (soc->process_rx_status) {
-			ampdu_flag = (mpdu_desc_info.mpdu_flags &
-					HAL_MPDU_F_AMPDU_FLAG);
-			sgi = hal_rx_msdu_start_sgi_get(rx_tlv_hdr);
-			mcs = hal_rx_msdu_start_rate_mcs_get(rx_tlv_hdr);
+			DP_STATS_INC(peer, rx.reception_type[reception_type],
+					1);
 			DP_STATS_INC(peer, rx.bw[bw], 1);
 			DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
-			DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
-			DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
 					mcs_count[MAX_MCS], 1,
 					((mcs >= MAX_MCS_11A) &&
