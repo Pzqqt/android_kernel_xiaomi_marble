@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -61,6 +61,8 @@
 #include <crypto/aes.h>
 
 #include "cds_ieee80211_common.h"
+#include <qdf_crypto.h>
+
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
  * -------------------------------------------------------------------------*/
@@ -68,6 +70,7 @@
 #define IV_SIZE_AES_128 16
 #define CMAC_IPN_LEN 6
 #define CMAC_TLEN 8             /* CMAC TLen = 64 bits (8 octets) */
+#define GMAC_NONCE_LEN 12
 
 /*----------------------------------------------------------------------------
  * Type Declarations
@@ -564,6 +567,135 @@ err_tfm:
 
 	return !ret ? true : false;
 }
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+uint8_t cds_get_gmac_mmie_size(void)
+{
+	return sizeof(struct ieee80211_mmie_16);
+}
+#else
+uint8_t cds_get_gmac_mmie_size(void)
+{
+	return 0;
+}
+#endif
+
+/**
+ * ipn_swap: Swaps ipn
+ * @d: destination pointer
+ * @s: source pointer
+ *
+ * Return: None
+ */
+static inline void ipn_swap(u8 *d, const u8 *s)
+{
+	*d++ = s[5];
+	*d++ = s[4];
+	*d++ = s[3];
+	*d++ = s[2];
+	*d++ = s[1];
+	*d = s[0];
+}
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
+			    uint8_t *efrm, uint16_t key_length)
+{
+	struct ieee80211_mmie_16 *mmie;
+	struct ieee80211_frame *wh;
+	uint8_t rx_ipn[6], aad[AAD_LEN], mic[IEEE80211_MMIE_GMAC_MICLEN];
+	uint16_t data_len;
+	uint8_t gmac_nonce[GMAC_NONCE_LEN];
+	uint8_t iv[AES_BLOCK_SIZE] = {0};
+	int ret;
+
+	/* Check if frame is invalid length */
+	if ((efrm < frm) || ((efrm - frm) < sizeof(*wh))) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Invalid frame length");
+		return false;
+	}
+
+	mmie = (struct ieee80211_mmie_16 *)(efrm - sizeof(*mmie));
+
+	/* Check Element ID */
+	if ((mmie->element_id != IEEE80211_ELEMID_MMIE) ||
+	    (mmie->length != (sizeof(*mmie) - 2))) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "IE is not Mgmt MIC IE or Invalid length");
+		/* IE is not Mgmt MIC IE or invalid length */
+		return false;
+	}
+
+	/* Validate IPN */
+	ipn_swap(rx_ipn, mmie->sequence_number);
+	if (qdf_mem_cmp(rx_ipn, ipn, IEEE80211_MMIE_IPNLEN) <= 0) {
+		/* Replay error */
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+			  "Replay error mmie ipn %02X %02X %02X %02X %02X %02X"
+			  " drvr ipn %02X %02X %02X %02X %02X %02X",
+			  rx_ipn[0], rx_ipn[1], rx_ipn[2], rx_ipn[3], rx_ipn[4],
+			  rx_ipn[5], ipn[0], ipn[1], ipn[2], ipn[3], ipn[4],
+			  ipn[5]);
+		return false;
+	}
+
+	/* Construct AAD */
+	wh = (struct ieee80211_frame *)frm;
+
+	/* Generate AAD: FC(masked) || A1 || A2 || A3 */
+	/* FC type/subtype */
+	aad[0] = wh->i_fc[0];
+	/* Mask FC Retry, PwrMgt, MoreData flags to zero */
+	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
+				 IEEE80211_FC1_MORE_DATA);
+	/* A1 || A2 || A3 */
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+
+	data_len = efrm - (uint8_t *) (wh + 1) - IEEE80211_MMIE_GMAC_MICLEN;
+
+	/* IV */
+	qdf_mem_copy(gmac_nonce, wh->i_addr2, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(gmac_nonce + IEEE80211_ADDR_LEN, rx_ipn,
+		     IEEE80211_MMIE_IPNLEN);
+	qdf_mem_copy(iv, gmac_nonce, GMAC_NONCE_LEN);
+	iv[AES_BLOCK_SIZE - 1] = 0x01;
+
+	ret = qdf_crypto_aes_gmac(igtk, key_length, iv, aad,
+				     (uint8_t *) (wh + 1), data_len, mic);
+	if (ret) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			"qdf_crypto_aes_gmac failed %d", ret);
+		return false;
+	}
+
+	if (qdf_mem_cmp(mic, mmie->mic, IEEE80211_MMIE_GMAC_MICLEN) != 0) {
+		/* MMIE MIC mismatch */
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
+			  "BC/MC MGMT frame MMIE MIC check Failed"
+			  " rmic %02X %02X %02X %02X %02X %02X %02X %02X"
+			  " %02X %02X %02X %02X %02X %02X %02X %02X",
+			  mmie->mic[0], mmie->mic[1], mmie->mic[2],
+			  mmie->mic[3], mmie->mic[4], mmie->mic[5],
+			  mmie->mic[6], mmie->mic[7], mmie->mic[8],
+			  mmie->mic[9], mmie->mic[10], mmie->mic[11],
+			  mmie->mic[12], mmie->mic[13], mmie->mic[14],
+			  mmie->mic[15]);
+		return false;
+	}
+
+	/* Update IPN */
+	qdf_mem_copy(ipn, rx_ipn, IEEE80211_MMIE_IPNLEN);
+
+	return true;
+}
+#else
+bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
+			    uint8_t *efrm, uint16_t key_length)
+{
+	return false;
+}
+#endif
 
 #endif /* WLAN_FEATURE_11W */
 

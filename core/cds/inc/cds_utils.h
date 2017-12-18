@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -142,6 +142,26 @@ bool cds_is_mmie_valid(uint8_t *key, uint8_t *ipn,
 bool cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 		     uint8_t *frm, uint8_t *efrm, uint16_t frmLen);
 uint8_t cds_get_mmie_size(void);
+/**
+ * cds_is_gmac_mmie_valid: Validates GMAC MIC
+ * @igtk: integrity group temporal key
+ * @ipn: IGTK packet number
+ * @frm: IEEE 802.11 frame
+ * @efrm: End of frame
+ * @key_length: Length of IGTK
+ *
+ * Return: True if MIC validation is successful, false otherwise
+ */
+bool cds_is_gmac_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm,
+			    uint8_t *efrm, uint16_t key_length);
+
+/**
+ * cds_get_gmac_mmie_size: Gives length of GMAC MMIE size
+ *
+ * Return: Size of MMIE for GMAC
+ */
+uint8_t cds_get_gmac_mmie_size(void);
+
 #endif /* WLAN_FEATURE_11W */
 QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal pMac);
 static inline void cds_host_diag_log_work(qdf_wake_lock_t *lock, uint32_t msec,

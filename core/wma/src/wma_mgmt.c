@@ -77,6 +77,7 @@
 #include "wlan_lmac_if_api.h"
 #include <cdp_txrx_handle.h>
 #include "wma_he.h"
+#include <qdf_crypto.h>
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -1779,6 +1780,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		iface = &wma_handle->interfaces[key_params->vdev_id];
 		if (iface) {
 			iface->key.key_length = key_params->key_len;
+			iface->key.key_cipher = params.key_cipher;
 			qdf_mem_copy(iface->key.key,
 				     (const void *)key_params->key_data,
 				     iface->key.key_length);
@@ -3286,32 +3288,65 @@ int wma_process_bip(tp_wma_handle wma_handle,
 	uint8_t *efrm;
 
 	efrm = qdf_nbuf_data(wbuf) + qdf_nbuf_len(wbuf);
-	key_id = (uint16_t)*(efrm - cds_get_mmie_size() + 2);
+
+	if (iface->key.key_cipher == WMI_CIPHER_AES_CMAC) {
+		key_id = (uint16_t)*(efrm - cds_get_mmie_size() + 2);
+	} else if (iface->key.key_cipher == WMI_CIPHER_AES_GMAC) {
+		key_id = (uint16_t)*(efrm - cds_get_gmac_mmie_size() + 2);
+	} else {
+		WMA_LOGE(FL("Invalid key cipher %d"), iface->key.key_cipher);
+		return -EINVAL;
+	}
 
 	if (!((key_id == WMA_IGTK_KEY_INDEX_4)
 	     || (key_id == WMA_IGTK_KEY_INDEX_5))) {
 		WMA_LOGE(FL("Invalid KeyID(%d) dropping the frame"), key_id);
 		return -EINVAL;
 	}
-	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
-				WMI_SERVICE_STA_PMF_OFFLOAD)) {
-		/*
-		 * if 11w offload is enabled then mmie validation is performed
-		 * in firmware, host just need to trim the mmie.
-		 */
-		qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
-	} else {
-		if (cds_is_mmie_valid(iface->key.key,
-			iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
-			(uint8_t *) wh, efrm)) {
-			WMA_LOGE(FL("Protected BC/MC frame MMIE validation successful"));
-			/* Remove MMIE */
+
+	switch (iface->key.key_cipher) {
+	case WMI_CIPHER_AES_CMAC:
+		if ((WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+		   WMI_SERVICE_STA_PMF_OFFLOAD))) {
+			/*
+			 * if 11w offload is enabled then mmie validation is
+			 * performed in firmware, host just need to trim the
+			 * mmie.
+			 */
 			qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
 		} else {
-			WMA_LOGE(FL("BC/MC MIC error or MMIE not present, dropping the frame"));
+			if (cds_is_mmie_valid(iface->key.key,
+			   iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
+			   (uint8_t *) wh, efrm)) {
+				WMA_LOGD(FL("Protected BC/MC frame MMIE validation successful"));
+				/* Remove MMIE */
+				qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
+			} else {
+				WMA_LOGD(FL("BC/MC MIC error or MMIE not present, dropping the frame"));
+				return -EINVAL;
+			}
+		}
+		break;
+
+	case WMI_CIPHER_AES_GMAC:
+		if (cds_is_gmac_mmie_valid(iface->key.key,
+		   iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
+		   (uint8_t *) wh, efrm, iface->key.key_length)) {
+			WMA_LOGD(FL("Protected BC/MC frame GMAC MMIE validation successful"));
+			/* Remove MMIE */
+			qdf_nbuf_trim_tail(wbuf, cds_get_gmac_mmie_size());
+		} else {
+			WMA_LOGD(FL("BC/MC GMAC MIC error or MMIE not present, dropping the frame"));
 			return -EINVAL;
 		}
+		break;
+
+	default:
+		WMA_LOGE(FL("Unsupported key cipher %d"),
+			iface->key.key_cipher);
 	}
+
+
 	return 0;
 }
 

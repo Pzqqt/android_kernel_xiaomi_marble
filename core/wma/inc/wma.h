@@ -948,13 +948,14 @@ typedef struct {
  */
 typedef struct {
 	uint16_t key_length;
-	uint8_t key[CSR_AES_KEY_LEN];
+	uint8_t key[CSR_AES_GMAC_256_KEY_LEN];
 
 	/* IPN is maintained per iGTK keyID
 	 * 0th index for iGTK keyID = 4;
 	 * 1st index for iGTK KeyID = 5
 	 */
 	wma_igtk_ipn_t key_id[2];
+	uint32_t key_cipher;
 } wma_igtk_key_t;
 #endif
 
