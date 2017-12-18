@@ -12753,7 +12753,7 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->spectral_scan_pwr_format = param->pwr_format;
 	cmd->spectral_scan_rpt_mode = param->rpt_mode;
 	cmd->spectral_scan_bin_scale = param->bin_scale;
-	cmd->spectral_scan_dBm_adj = param->dBm_adj;
+	cmd->spectral_scan_dBm_adj = param->dbm_adj;
 	cmd->spectral_scan_chn_mask = param->chn_mask;
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -12803,7 +12803,7 @@ static QDF_STATUS send_vdev_spectral_configure_cmd_tlv(wmi_unified_t wmi_handle,
 		 param->pwr_format,
 		 param->rpt_mode,
 		 param->bin_scale,
-		 param->dBm_adj,
+		 param->dbm_adj,
 		 param->chn_mask);
 	WMI_LOGI("%s: Status: %d\n\n", __func__, ret);
 
