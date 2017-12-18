@@ -345,6 +345,13 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 
 	nBytes += nPayload + sizeof(tSirMacMgmtHdr);
 
+	/* Make sure we are not exceeding allocated len */
+	if (nBytes > SCH_MAX_PROBE_RESP_SIZE) {
+		pe_err("nBytes %d greater than max size", nBytes);
+		qdf_mem_free(addIE);
+		return eSIR_FAILURE;
+	}
+
 	/* Paranoia: */
 	qdf_mem_set(pFrame2Hal, nBytes, 0);
 
