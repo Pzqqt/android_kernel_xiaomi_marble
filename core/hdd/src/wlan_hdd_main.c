@@ -2102,6 +2102,8 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 		ret = hdd_start_ftm_adapter(adapter);
 		if (ret)
 			goto err_start_adapter;
+		else
+			goto ftm_complete;
 	break;
 	default:
 		hdd_err("Invalid session type %d", device_mode);
@@ -2121,6 +2123,7 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 		goto err_start_adapter;
 	}
 
+ftm_complete:
 	EXIT();
 	return 0;
 err_start_adapter:
@@ -4337,7 +4340,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	case QDF_FTM_MODE:
 		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
 						    name_assign_type,
-						    "wlan0");
+						    iface_name);
 		if (NULL == adapter) {
 			hdd_err("Failed to allocate adapter for FTM mode");
 			return NULL;
@@ -8422,14 +8425,19 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 	int ret;
 
 	/* open monitor mode adapter if con_mode is monitor mode */
-	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
-		adapter = hdd_open_adapter(hdd_ctx, QDF_MONITOR_MODE, "wlan%d",
-				wlan_hdd_get_intf_addr(hdd_ctx),
-				NET_NAME_UNKNOWN, rtnl_held);
+	if (con_mode == QDF_GLOBAL_MONITOR_MODE ||
+	    con_mode == QDF_GLOBAL_FTM_MODE) {
+		uint8_t session_type = (con_mode == QDF_GLOBAL_MONITOR_MODE) ?
+						QDF_MONITOR_MODE : QDF_FTM_MODE;
+
+		adapter = hdd_open_adapter(hdd_ctx, session_type, "wlan%d",
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   NET_NAME_UNKNOWN, rtnl_held);
 		if (!adapter) {
 			hdd_err("open adapter failed");
 			return -ENOSPC;
 		}
+
 		return 0;
 	}
 
