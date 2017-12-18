@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -96,6 +96,7 @@ enum channel_state wlan_reg_get_channel_state(struct wlan_objmgr_pdev *pdev,
 
 /**
  * wlan_reg_get_5g_bonded_channel_state() - Get 5G bonded channel state
+ * @pdev: The physical dev to program country code or regdomain
  * @ch: channel number.
  * @bw: channel band width
  *
@@ -107,7 +108,9 @@ enum channel_state wlan_reg_get_5g_bonded_channel_state(
 
 /**
  * wlan_reg_get_2g_bonded_channel_state() - Get 2G bonded channel state
+ * @pdev: The physical dev to program country code or regdomain
  * @ch: channel number.
+ * @sec_ch: Secondary channel.
  * @bw: channel band width
  *
  * Return: channel state
@@ -118,7 +121,9 @@ enum channel_state wlan_reg_get_2g_bonded_channel_state(
 
 /**
  * wlan_reg_set_channel_params () - Sets channel parameteres for given bandwidth
+ * @pdev: The physical dev to program country code or regdomain
  * @ch: channel number.
+ * @sec_ch_2g: Secondary channel.
  * @ch_params: pointer to the channel parameters.
  *
  * Return: None
@@ -325,6 +330,7 @@ bool wlan_reg_is_disable_ch(struct wlan_objmgr_pdev *pdev, uint32_t chan);
 
 /**
  * wlan_reg_freq_to_chan () - convert channel freq to channel number
+ * @pdev: The physical dev to set current country for
  * @freq: frequency
  *
  * Return: true or false

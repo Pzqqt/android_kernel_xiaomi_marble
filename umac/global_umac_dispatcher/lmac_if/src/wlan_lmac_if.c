@@ -23,6 +23,7 @@
 #include "wlan_mgmt_txrx_tgt_api.h"
 #include "wlan_scan_tgt_api.h"
 #include <wlan_reg_services_api.h>
+#include <wlan_reg_ucfg_api.h>
 #ifdef WLAN_ATF_ENABLE
 #include "wlan_atf_tgt_api.h"
 #endif
@@ -219,6 +220,18 @@ static void wlan_lmac_if_umac_reg_rx_ops_register(
 
 	rx_ops->reg_rx_ops.reg_freq_to_chan =
 		wlan_reg_freq_to_chan;
+
+	rx_ops->reg_rx_ops.reg_set_chan_144 =
+		ucfg_reg_modify_chan_144;
+
+	rx_ops->reg_rx_ops.reg_get_chan_144 =
+		ucfg_reg_get_en_chan_144;
+
+	rx_ops->reg_rx_ops.reg_program_default_cc =
+		ucfg_reg_program_default_cc;
+
+	rx_ops->reg_rx_ops.reg_get_current_regdomain =
+		wlan_reg_get_curr_regdomain;
 }
 
 #ifdef CONVERGED_P2P_ENABLE

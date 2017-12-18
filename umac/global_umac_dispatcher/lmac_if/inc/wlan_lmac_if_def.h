@@ -672,6 +672,13 @@ struct wlan_lmac_if_reg_rx_ops {
 			struct ch_avoid_ind_type *ch_avoid_ind);
 	uint32_t (*reg_freq_to_chan)(struct wlan_objmgr_pdev *pdev,
 			uint32_t freq);
+	QDF_STATUS (*reg_set_chan_144)(struct wlan_objmgr_pdev *pdev,
+			bool enable_ch_144);
+	bool (*reg_get_chan_144)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*reg_program_default_cc)(struct wlan_objmgr_pdev *pdev,
+			uint16_t regdmn);
+	QDF_STATUS (*reg_get_current_regdomain)(struct wlan_objmgr_pdev *pdev,
+			struct cur_regdmn_info *cur_regdmn);
 };
 
 #ifdef CONVERGED_P2P_ENABLE
