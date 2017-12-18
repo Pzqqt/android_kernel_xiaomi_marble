@@ -742,7 +742,8 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 		uint8_t igtk_idx = key_idx - WLAN_CRYPTO_MAXKEYIDX;
 		key = crypto_priv->igtk_key[igtk_idx];
 		crypto_priv->igtk_key[igtk_idx] = NULL;
-		key->valid = 0;
+		if (key)
+			key->valid = 0;
 	} else {
 		key = crypto_priv->key[key_idx];
 		crypto_priv->key[key_idx] = NULL;
