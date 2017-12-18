@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -28,6 +28,8 @@
 #include <crypto/hash.h>
 #include <crypto/aes.h>
 #include <crypto/skcipher.h>
+#include <crypto/aead.h>
+#include <linux/ieee80211.h>
 
 /* Function Definitions and Documentation */
 #define MAX_HMAC_ELEMENT_CNT 10
@@ -348,6 +350,87 @@ int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 #else
 int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 		const uint8_t *src, size_t src_len, uint8_t *dest, bool enc)
+{
+	return -EINVAL;
+}
+#endif
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+int qdf_crypto_aes_gmac(uint8_t *key, uint16_t key_length,
+			uint8_t *iv, uint8_t *aad, uint8_t *data,
+			uint16_t data_len, uint8_t *mic)
+{
+	struct crypto_aead *tfm;
+	int ret = 0;
+	struct scatterlist sg[4];
+	uint16_t req_size;
+	struct aead_request *req = NULL;
+	uint8_t *aad_ptr, *input;
+
+	tfm = crypto_alloc_aead("gcm(aes)", 0, CRYPTO_ALG_ASYNC);
+	if (IS_ERR(tfm)) {
+		ret = PTR_ERR(tfm);
+		tfm = NULL;
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "%s: crypto_alloc_aead failed (%d)", __func__, ret);
+		goto err_tfm;
+	}
+
+	ret = crypto_aead_setkey(tfm, key, key_length);
+	if (ret) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "crypto_aead_setkey failed (%d)", ret);
+		goto err_tfm;
+	}
+
+	ret = crypto_aead_setauthsize(tfm, IEEE80211_MMIE_GMAC_MICLEN);
+	if (ret) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "crypto_aead_setauthsize failed (%d)", ret);
+		goto err_tfm;
+	}
+
+	/* Prepare aead request */
+	req_size = sizeof(*req) + crypto_aead_reqsize(tfm) +
+			IEEE80211_MMIE_GMAC_MICLEN + AAD_LEN;
+	req = qdf_mem_malloc(req_size);
+	if (!req) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
+			  "Memory allocation failed");
+		ret = -ENOMEM;
+		goto err_tfm;
+	}
+
+	input = (uint8_t *)req + sizeof(*req) + crypto_aead_reqsize(tfm);
+	aad_ptr = input + IEEE80211_MMIE_GMAC_MICLEN;
+	qdf_mem_copy(aad_ptr, aad, AAD_LEN);
+
+	/* Scatter list operations */
+	sg_init_table(sg, 4);
+	sg_set_buf(&sg[0], aad_ptr, AAD_LEN);
+	sg_set_buf(&sg[1], data, data_len);
+	sg_set_buf(&sg[2], input, IEEE80211_MMIE_GMAC_MICLEN);
+	sg_set_buf(&sg[3], mic, IEEE80211_MMIE_GMAC_MICLEN);
+
+	aead_request_set_tfm(req, tfm);
+	aead_request_set_crypt(req, sg, sg, 0, iv);
+	aead_request_set_ad(req,
+			    AAD_LEN + data_len + IEEE80211_MMIE_GMAC_MICLEN);
+	crypto_aead_encrypt(req);
+
+err_tfm:
+	if (tfm)
+		crypto_free_aead(tfm);
+
+	if (req)
+		qdf_mem_free(req);
+
+	return ret;
+}
+#else
+int qdf_crypto_aes_gmac(uint8_t *key, uint16_t key_length,
+			uint8_t *iv, uint8_t *aad, uint8_t *data,
+			uint16_t data_len, uint8_t *mic)
 {
 	return -EINVAL;
 }

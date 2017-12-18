@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,6 +46,9 @@ extern "C" {
 
 #define FIXED_PARAM_OFFSET_ASSOC_REQ 4
 #define FIXED_PARAM_OFFSET_ASSOC_RSP 6
+
+#define AAD_LEN 20
+#define IEEE80211_MMIE_GMAC_MICLEN  16
 
 #define IS_VALID_CTR_KEY_LEN(len) ((((len) == 16) || ((len) == 32) || \
 	((len) == 48)) ? 1 : 0)
@@ -136,6 +139,23 @@ int qdf_aes_s2v(const uint8_t *key, unsigned int key_len, const uint8_t *s[],
  */
 int qdf_aes_ctr(const uint8_t *key, unsigned int key_len, uint8_t *siv,
 		const uint8_t *src, size_t src_len, uint8_t *dest, bool enc);
+
+/**
+ * qdf_crypto_aes_gmac: This API calculates MIC for GMAC
+ * @key: key used for operation
+ * @key_length: key length
+ * @iv: Initialization vector
+ * @aad: Additional authentication data
+ * @data: Pointer to data
+ * @data_len: Length of data
+ * @mic: Pointer to MIC
+ *
+ * Return: 0 if success else Error number
+ */
+int qdf_crypto_aes_gmac(uint8_t *key, uint16_t key_length,
+			uint8_t *iv, uint8_t *aad, uint8_t *data,
+			uint16_t data_len, uint8_t *mic);
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
