@@ -20637,6 +20637,55 @@ static QDF_STATUS extract_dfs_radar_detection_event_tlv(
 
 	return QDF_STATUS_SUCCESS;
 }
+
+#ifdef QCA_MCL_DFS_SUPPORT
+/**
+ * extract_wlan_radar_event_info_tlv() - extract radar pulse event
+ * @wmi_handle: wma handle
+ * @evt_buf: event buffer
+ * @wlan_radar_event: Pointer to struct radar_event_info
+ * @len: length of buffer
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_wlan_radar_event_info_tlv(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct radar_event_info *wlan_radar_event,
+		uint32_t len)
+{
+	WMI_DFS_RADAR_EVENTID_param_tlvs *param_tlv;
+	wmi_dfs_radar_event_fixed_param *radar_event;
+
+	param_tlv = (WMI_DFS_RADAR_EVENTID_param_tlvs *)evt_buf;
+	if (!param_tlv) {
+		WMI_LOGE("invalid wlan radar event buf");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	radar_event = param_tlv->fixed_param;
+	wlan_radar_event->pulse_is_chirp = radar_event->pulse_is_chirp;
+	wlan_radar_event->pulse_center_freq = radar_event->pulse_center_freq;
+	wlan_radar_event->pulse_duration = radar_event->pulse_duration;
+	wlan_radar_event->rssi = radar_event->rssi;
+	wlan_radar_event->pulse_detect_ts = radar_event->pulse_detect_ts;
+	wlan_radar_event->upload_fullts_high = radar_event->upload_fullts_high;
+	wlan_radar_event->upload_fullts_low = radar_event->upload_fullts_low;
+	wlan_radar_event->peak_sidx = radar_event->peak_sidx;
+	wlan_radar_event->pdev_id = radar_event->pdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS extract_wlan_radar_event_info_tlv(
+		wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct radar_event_info *wlan_radar_event,
+		uint32_t len)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #endif
 
 /**
@@ -21875,6 +21924,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_dfs_cac_complete_event = extract_dfs_cac_complete_event_tlv,
 	.extract_dfs_radar_detection_event =
 		extract_dfs_radar_detection_event_tlv,
+	.extract_wlan_radar_event_info = extract_wlan_radar_event_info_tlv,
 #endif
 	.convert_pdev_id_host_to_target =
 		convert_host_pdev_id_to_target_pdev_id_legacy,
