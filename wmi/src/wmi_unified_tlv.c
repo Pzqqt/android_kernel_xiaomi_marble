@@ -20537,7 +20537,7 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_P2P_LISTEN_OFFLOAD_STOPPED_EVENTID;
 	event_ids[wmi_pdev_resume_event_id] = WMI_PDEV_RESUME_EVENTID;
 	event_ids[wmi_wow_wakeup_host_event_id] = WMI_WOW_WAKEUP_HOST_EVENTID;
-	event_ids[wmi_do_wow_disable_ack_event_id] =
+	event_ids[wmi_d0_wow_disable_ack_event_id] =
 				WMI_D0_WOW_DISABLE_ACK_EVENTID;
 	event_ids[wmi_wow_initial_wakeup_event_id] =
 				WMI_WOW_INITIAL_WAKEUP_EVENTID;

@@ -5516,7 +5516,7 @@ typedef enum {
 	wmi_p2p_noa_event_id,
 	wmi_p2p_lo_stop_event_id,
 	wmi_pdev_resume_event_id,
-	wmi_do_wow_disable_ack_event_id,
+	wmi_d0_wow_disable_ack_event_id,
 	wmi_wow_initial_wakeup_event_id,
 	wmi_stats_ext_event_id,
 	wmi_iface_link_stats_event_id,
