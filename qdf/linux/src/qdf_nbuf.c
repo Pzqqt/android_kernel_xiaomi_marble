@@ -66,8 +66,6 @@
 #define qdf_nbuf_users_read refcount_read
 #endif /* KERNEL_VERSION(4, 13, 0) */
 
-#define RATE_MULTIPLIER		2
-
 #define IEEE80211_RADIOTAP_VHT_BW_20	0
 #define IEEE80211_RADIOTAP_VHT_BW_40	1
 #define IEEE80211_RADIOTAP_VHT_BW_80	2
@@ -2992,7 +2990,8 @@ static unsigned int qdf_nbuf_update_radiotap_vht_flags(
 		IEEE80211_RADIOTAP_VHT_KNOWN_GI |
 		IEEE80211_RADIOTAP_VHT_KNOWN_LDPC_EXTRA_OFDM_SYM |
 		IEEE80211_RADIOTAP_VHT_KNOWN_BEAMFORMED |
-		IEEE80211_RADIOTAP_VHT_KNOWN_BANDWIDTH;
+		IEEE80211_RADIOTAP_VHT_KNOWN_BANDWIDTH |
+		IEEE80211_RADIOTAP_VHT_KNOWN_GROUP_ID;
 	put_unaligned_le16(vht_flags, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 
@@ -3225,7 +3224,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	if (!rx_status->ht_flags && !rx_status->vht_flags &&
 	    !rx_status->he_flags) {
 		rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_RATE);
-		rtap_buf[rtap_len] = rx_status->rate * RATE_MULTIPLIER;
+		rtap_buf[rtap_len] = rx_status->rate;
 	} else
 		rtap_buf[rtap_len] = 0;
 	rtap_len += 1;

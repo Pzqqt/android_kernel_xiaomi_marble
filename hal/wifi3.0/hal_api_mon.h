@@ -86,22 +86,25 @@
 #define HAL_RX_RECEPTION_TYPE_OFDMA	2
 #define HAL_RX_RECEPTION_TYPE_MU_OFDMA	3
 
-#define HAL_11B_RATE_0MCS	11
-#define HAL_11B_RATE_1MCS	5.5
-#define HAL_11B_RATE_2MCS	2
-#define HAL_11B_RATE_3MCS	1
-#define HAL_11B_RATE_4MCS	11
-#define HAL_11B_RATE_5MCS	5.5
-#define HAL_11B_RATE_6MCS	2
+/* Multiply rate by 2 to avoid float point
+ * and get rate in units of 500kbps
+ */
+#define HAL_11B_RATE_0MCS	11*2
+#define HAL_11B_RATE_1MCS	5.5*2
+#define HAL_11B_RATE_2MCS	2*2
+#define HAL_11B_RATE_3MCS	1*2
+#define HAL_11B_RATE_4MCS	11*2
+#define HAL_11B_RATE_5MCS	5.5*2
+#define HAL_11B_RATE_6MCS	2*2
 
-#define HAL_11A_RATE_0MCS	48
-#define HAL_11A_RATE_1MCS	24
-#define HAL_11A_RATE_2MCS	12
-#define HAL_11A_RATE_3MCS	6
-#define HAL_11A_RATE_4MCS	54
-#define HAL_11A_RATE_5MCS	36
-#define HAL_11A_RATE_6MCS	18
-#define HAL_11A_RATE_7MCS	9
+#define HAL_11A_RATE_0MCS	48*2
+#define HAL_11A_RATE_1MCS	24*2
+#define HAL_11A_RATE_2MCS	12*2
+#define HAL_11A_RATE_3MCS	6*2
+#define HAL_11A_RATE_4MCS	54*2
+#define HAL_11A_RATE_5MCS	36*2
+#define HAL_11A_RATE_6MCS	18*2
+#define HAL_11A_RATE_7MCS	9*2
 
 #define HE_GI_0_8 0
 #define HE_GI_1_6 1
