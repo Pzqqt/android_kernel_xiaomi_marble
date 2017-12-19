@@ -51,6 +51,15 @@
 #define MAX_REO_DEST_RINGS 4
 #define MAX_RX_MAC_RINGS 2
 
+/* DP process status */
+#ifdef CONFIG_MCL
+#define CONFIG_PROCESS_RX_STATUS 1
+#define CONFIG_PROCESS_TX_STATUS 1
+#else
+#define CONFIG_PROCESS_RX_STATUS 0
+#define CONFIG_PROCESS_TX_STATUS 0
+#endif
+
 /* Miscellaneous configuration */
 #define MAX_IDLE_SCATTER_BUFS 16
 #define DP_MAX_IRQ_PER_CONTEXT 12

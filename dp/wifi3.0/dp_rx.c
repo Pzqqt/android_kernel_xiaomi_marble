@@ -1571,7 +1571,7 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	qdf_spinlock_create(&soc->rx_desc_mutex[pdev_id]);
 	pdev = soc->pdev_list[pdev_id];
 	rxdma_srng = pdev->rx_refill_buf_ring;
-	soc->process_rx_status = 0;
+	soc->process_rx_status = CONFIG_PROCESS_RX_STATUS;
 	rxdma_entries = rxdma_srng.alloc_size/hal_srng_get_entrysize(
 						     soc->hal_soc, RXDMA_BUF);
 
