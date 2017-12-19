@@ -4247,6 +4247,7 @@ FRAME ext_channel_switch_action_frame
     FF     Category;
     FF     Action;
     FF     ext_chan_switch_ann_action;
+    OPTIE  WiderBWChanSwitchAnn;
 }
 
 FRAME p2p_oper_chan_change_confirm
