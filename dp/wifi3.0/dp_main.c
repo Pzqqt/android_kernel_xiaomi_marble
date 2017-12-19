@@ -574,6 +574,14 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 
 	srng->hal_srng = hal_srng_setup(hal_soc, ring_type, ring_num,
 		mac_id, &ring_params);
+
+	if (!srng->hal_srng) {
+		qdf_mem_free_consistent(soc->osdev, soc->osdev->dev,
+				srng->alloc_size,
+				srng->base_vaddr_unaligned,
+				srng->base_paddr_unaligned, 0);
+	}
+
 	return 0;
 }
 

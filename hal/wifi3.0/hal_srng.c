@@ -545,6 +545,7 @@ static int hal_get_srng_ring_id(struct hal_soc *hal, int ring_type,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"%s: ring_num exceeded maximum no. of supported rings\n",
 			__func__);
+		/* TODO: This is a programming error. Assert if this happens */
 		return -EINVAL;
 	}
 
