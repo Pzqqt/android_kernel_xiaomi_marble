@@ -110,6 +110,11 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 	if (sap_ctx->sapsMachine == eSAP_DISCONNECTED) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_WARN,
 				"In %s BSS already stopped", __func__);
+		if (sap_ctx->channelList != NULL) {
+			qdf_mem_free(sap_ctx->channelList);
+			sap_ctx->channelList = NULL;
+			sap_ctx->num_of_channel = 0;
+		}
 		return QDF_STATUS_E_FAILURE;
 	}
 
