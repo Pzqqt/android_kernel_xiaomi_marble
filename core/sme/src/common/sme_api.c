@@ -3343,7 +3343,7 @@ QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId)
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId))
 			status = csr_roam_issue_stop_bss_cmd(pMac, sessionId,
-							true);
+							false);
 		else
 			status = QDF_STATUS_E_INVAL;
 		sme_release_global_lock(&pMac->sme);
