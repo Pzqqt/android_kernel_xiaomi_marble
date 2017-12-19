@@ -2601,7 +2601,7 @@ IE fils_indication (EID_FILS_INDICATION)
        reserved                       : 4;
    }
    // other FILS elements
-   variable_data[3..255];
+   variable_data[2..255];
 }
 
 IE fils_assoc_delay_info (EID_EXTN_ID_ELEMENT) OUI ( 0x01 )
