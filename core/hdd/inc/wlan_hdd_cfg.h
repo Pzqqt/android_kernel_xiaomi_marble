@@ -12814,7 +12814,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_PCL_WEIGHT_WEIGHTAGE_NAME "pcl_weightage"
-#define CFG_PCL_WEIGHT_DEFAULT        (10)
+#define CFG_PCL_WEIGHT_DEFAULT        (0)
 #define CFG_PCL_WEIGHT_MIN            (0)
 #define CFG_PCL_WEIGHT_MAX            (100)
 
