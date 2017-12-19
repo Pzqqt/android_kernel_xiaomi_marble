@@ -241,6 +241,7 @@ typedef enum {
     WMI_GRP_REGULATORY,     /* 0x3a */
     WMI_GRP_HW_DATA_FILTER, /* 0x3b */
     WMI_GRP_WLM,            /* 0x3c WLAN Latency Manager */
+    WMI_GRP_11K_OFFLOAD,    /* 0x3d */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -876,6 +877,11 @@ typedef enum {
     WMI_READ_DATA_FROM_FLASH_CMDID,
     /* Thermal Throttling SET CONF commands */
     WMI_THERM_THROT_SET_CONF_CMDID,
+
+    /*  Offload 11k related requests */
+    WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
+    /* invoke neighbor report from FW */
+    WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID,
 
     /* GPIO Configuration */
     WMI_GPIO_CONFIG_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_GPIO),
@@ -3245,6 +3251,41 @@ typedef struct {
     /* followed by WMITLV_TAG_ARRAY_BYTE */
 } wmi_diag_event_fixed_param;
 
+#define WMI_11K_OFFLOAD_BITMAP_NEIGHBOR_REPORT_REQ  0x1
+
+typedef struct {
+    A_UINT32 time_offset;                   /* positive offset in secs from the time 11k offload command has been received, 0xFFFFFFFF if offset is not valid */
+    A_UINT32 low_rssi_offset;               /* positive offset in dB from current low rssi roaming trigger to send neighbor req, 0xFFFFFFFF if offset is not valid */
+    A_UINT32 bmiss_count_trigger;           /* value 1 is to send neighbor report at 1st BMISS, 0xFFFFFFFF if input is not valid */
+    A_UINT32 per_threshold_offset;          /* percentage offset from the current per_threshold, 0xFFFFFFFF if input is not valid */
+    A_UINT32 neighbor_report_cache_timeout; /* cache timeout in secs after which neighbor cache is not valid in FW, 0xFFFFFFFF if input is not valid */
+    A_UINT32 max_neighbor_report_req_cap;   /* 0xFFFFFFFF if input is not valid, else positive number per every roam, these are the maximum number of
+                                             * neighbor report requests that will be sent by FW after every roam */
+    wmi_ssid ssid;                          /* ssid of current connected AP FW might choose to use this SSID in the neighbor report req frame if it is
+                                             * interested in candidate of the same SSID */
+} wmi_neighbor_report_offload;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_offload_11k_report_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 offload_11k; /* bitmask to indicate to FW what all 11k features are offloaded */
+} wmi_11k_offload_report_fixed_param;
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_neighbor_report_offload_tlv_param */
+    wmi_neighbor_report_offload neighbor_rep_ofld_params;
+} wmi_neighbor_report_11k_offload_tlv_param;
+
+#define WMI_INVOKE_NEIGHBOR_REPORT_FLAGS_SEND_RESP_TO_HOST 0x1
+
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_invoke_neighbor_report_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 flags;
+    wmi_ssid ssid; /* if ssid.len == 0, firmware doesn't include ssid sub-element.
+                    * In that case AP gives all the candidates in ESS without SSID filter
+                    * If host wants to insert ssid subelement in the neighbor report request frame, then it can specify the ssid here */
+} wmi_11k_offload_invoke_neighbor_report_fixed_param;
 
 #define WMI_MAX_PMKID_LEN   16
 #define WMI_MAX_PMK_LEN     64
@@ -21021,6 +21062,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID);
         WMI_RETURN_STRING(WMI_SAP_OBSS_DETECTION_CFG_CMDID);
         WMI_RETURN_STRING(WMI_PDEV_DMA_RING_CFG_REQ_CMDID);
+        WMI_RETURN_STRING(WMI_11K_OFFLOAD_REPORT_CMDID);
+        WMI_RETURN_STRING(WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID);
     }
 
     return "Invalid WMI cmd";

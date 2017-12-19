@@ -241,6 +241,7 @@ typedef  enum  {
     WMI_SERVICE_SUPPORT_DIRECT_DMA=146, /* indicates target supports direct DMA,
                                          * host will rely on WMI_DMA_RING_CAPABILITIES to get supported modules */
     WMI_SERVICE_AP_OBSS_DETECTION_OFFLOAD=147, /* Support SAP mode OBSS detection offload */
+    WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT=148, /* Support for 11k neighbor report */
 
 
     /******* ADD NEW SERVICES HERE *******/

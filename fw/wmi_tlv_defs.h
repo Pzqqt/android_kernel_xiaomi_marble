@@ -883,6 +883,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_sar_get_limits_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_sar_get_limits_event_fixed_param,
     WMITLV_TAG_STRUC_wmi_sar_get_limits_event_row,
+    WMITLV_TAG_STRUC_wmi_offload_11k_report_fixed_param,
+    WMITLV_TAG_STRUC_wmi_invoke_neighbor_report_fixed_param,
+    WMITLV_TAG_STRUC_wmi_neighbor_report_offload_tlv_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1237,6 +1240,8 @@ typedef enum {
     OP(WMI_SAP_OBSS_DETECTION_CFG_CMDID) \
     OP(WMI_PDEV_DMA_RING_CFG_REQ_CMDID) \
     OP(WMI_SAR_GET_LIMITS_CMDID)\
+    OP(WMI_11K_OFFLOAD_REPORT_CMDID) \
+    OP(WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1547,6 +1552,19 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WOW_ENABLE_ICMPV6_NA_FLT_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_rmv_bcn_filter_cmd_fixed_param, wmi_rmv_bcn_filter_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_RMV_BCN_FILTER_CMDID);
+
+/*  Offload 11k related requests */
+#define WMITLV_TABLE_WMI_11K_OFFLOAD_REPORT_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_offload_11k_report_fixed_param, wmi_11k_offload_report_fixed_param,fixed_param, WMITLV_SIZE_FIX) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wmi_neighbor_report_11k_offload_tlv_param, offload_neighbor_report_param, WMITLV_SIZE_VAR)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_11K_OFFLOAD_REPORT_CMDID);
+
+/* invoke 11k neighbor report req from FW */
+#define WMITLV_TABLE_WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_invoke_neighbor_report_fixed_param,wmi_11k_offload_invoke_neighbor_report_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_11K_INVOKE_NEIGHBOR_REPORT_CMDID);
 
 /** Service bit WMI_SERVICE_ROAM_OFFLOAD for Roaming feature */
 /* Roam scan mode Cmd */
