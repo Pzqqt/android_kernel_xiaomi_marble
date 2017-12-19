@@ -12575,7 +12575,7 @@ enum hdd_external_acs_freq_band {
  */
 
 #define CFG_IS_BSSID_HINT_PRIORITY_NAME    "is_bssid_hint_priority"
-#define CFG_IS_BSSID_HINT_PRIORITY_DEFAULT (1)
+#define CFG_IS_BSSID_HINT_PRIORITY_DEFAULT (0)
 #define CFG_IS_BSSID_HINT_PRIORITY_MIN     (0)
 #define CFG_IS_BSSID_HINT_PRIORITY_MAX     (1)
 
