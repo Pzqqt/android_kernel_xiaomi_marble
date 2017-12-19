@@ -303,7 +303,7 @@ struct wmi_spectral_cmd_ops;
  * @sptrlto_get_spectral_diagstats: Get Spectral diagnostic statistics
  **/
 struct wlan_lmac_if_sptrl_tx_ops {
-	void * (*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
+	void *(*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
 	void (*sptrlto_pdev_spectral_deinit)(struct wlan_objmgr_pdev *pdev);
 	int (*sptrlto_set_spectral_config)(struct wlan_objmgr_pdev *pdev,
 					   const u_int32_t threshtype,

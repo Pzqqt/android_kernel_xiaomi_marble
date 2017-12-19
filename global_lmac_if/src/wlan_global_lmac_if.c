@@ -21,6 +21,7 @@
 #include "wlan_lmac_if_def.h"
 #include "wlan_lmac_if_api.h"
 #include "wlan_global_lmac_if_api.h"
+#include <wlan_spectral_utils_api.h>
 
 /* Function pointer to call DA/OL specific tx_ops registration function */
 QDF_STATUS (*wlan_global_lmac_if_tx_ops_register[MAX_DEV_TYPE])
@@ -40,6 +41,12 @@ QDF_STATUS wlan_lmac_if_sptrl_set_rx_ops_register_cb(void (*handler)
 EXPORT_SYMBOL(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
+/*
+ * spectral scan is built as seperate .ko for WIN where
+ * MCL it is part of wlan.ko so the registration of
+.* rx ops to global lmac if layer is different between WIN
+ * and MCL
+ */
 #ifdef WLAN_CONV_SPECTRAL_ENABLE
 /**
  * wlan_spectral_register_rx_ops() - Register spectral component RX OPS
@@ -47,10 +54,17 @@ EXPORT_SYMBOL(wlan_lmac_if_sptrl_set_rx_ops_register_cb);
  *
  * Return: None
  */
+#ifdef CONFIG_WIN
 static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	wlan_lmac_if_sptrl_rx_ops(rx_ops);
 }
+#else
+static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	wlan_lmac_if_sptrl_register_rx_ops(rx_ops);
+}
+#endif /*CONFIG_WIN*/
 #else
 /**
  * wlan_spectral_register_rx_ops() - Dummy api to register spectral RX OPS
@@ -61,7 +75,7 @@ static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 static void wlan_spectral_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 }
-#endif
+#endif /*WLAN_CONV_SPECTRAL_ENABLE*/
 
 /**
  * wlan_global_lmac_if_rx_ops_register() - Global lmac_if

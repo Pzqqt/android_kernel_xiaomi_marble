@@ -66,6 +66,8 @@
 #include <wlan_splitmac.h>
 #endif
 
+#include <wlan_spectral_utils_api.h>
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -631,6 +633,28 @@ static QDF_STATUS dispatcher_splitmac_deinit(void)
 }
 #endif  /* WLAN_SUPPORT_SPLITMAC */
 
+#ifdef CONFIG_MCL
+static QDF_STATUS dispatcher_spectral_init(void)
+{
+	return wlan_spectral_init();
+}
+
+static QDF_STATUS dispatcher_spectral_deinit(void)
+{
+	return wlan_spectral_deinit();
+}
+#else
+static QDF_STATUS dispatcher_spectral_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_spectral_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /*CONFIG_MCL*/
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -684,12 +708,22 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_splitmac_init())
 		goto splitmac_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_spectral_init())
+		goto spectral_init_fail;
+
+	/*
+	 * scheduler INIT has to be the last as each component's
+	 * initialization has to happen first and then at the end
+	 * scheduler needs to start accepting the service.
+	 */
 	if (QDF_STATUS_SUCCESS != scheduler_init())
 		goto scheduler_init_fail;
 
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_spectral_deinit();
+spectral_init_fail:
 	dispatcher_splitmac_deinit();
 splitmac_init_fail:
 	dispatcher_deinit_son();
@@ -732,6 +766,8 @@ EXPORT_SYMBOL(dispatcher_init);
 QDF_STATUS dispatcher_deinit(void)
 {
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_spectral_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_splitmac_deinit());
 
