@@ -2348,8 +2348,23 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 }
 #endif
 
+/**
+ * hdd_check_for_leaks() - Perform runtime memory leak checks
+ *
+ * This API triggers runtime memory leak detection. This feature enforces the
+ * policy that any memory allocated at runtime must also be released at runtime.
+ *
+ * Allocating memory at runtime and releasing it at unload is effectively a
+ * memory leak for configurations which never unload (e.g. LONU, statically
+ * compiled driver). Such memory leaks are NOT false positives, and must be
+ * fixed.
+ *
+ * Return: None
+ */
 static void hdd_check_for_leaks(void)
 {
+	/* DO NOT REMOVE these checks; for false positives, read above first */
+
 	qdf_mc_timer_check_for_leaks();
 }
 
