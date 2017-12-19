@@ -1075,9 +1075,14 @@ done:
 					HAL_RX_WBM_ERR_SRC_RXDMA) {
 			if (wbm_err_info.rxdma_psh_rsn
 					== HAL_RX_WBM_RXDMA_PSH_RSN_ERROR) {
+				struct dp_peer *peer = NULL;
+				uint16_t peer_id = 0xFFFF;
+
 				DP_STATS_INC(soc,
 					rx.err.rxdma_error
 					[wbm_err_info.rxdma_err_code], 1);
+				peer_id = hal_rx_mpdu_start_sw_peer_id_get(rx_tlv_hdr);
+				peer = dp_peer_find_by_id(soc, peer_id);
 
 				switch (wbm_err_info.rxdma_err_code) {
 				case HAL_RXDMA_ERR_UNENCRYPTED:
@@ -1092,9 +1097,13 @@ done:
 								nbuf,
 								rx_tlv_hdr);
 					nbuf = next;
+					if (peer)
+						DP_STATS_INC(peer, rx.err.mic_err, 1);
 					continue;
 
 				case HAL_RXDMA_ERR_DECRYPT:
+					if (peer)
+						DP_STATS_INC(peer, rx.err.decrypt_err, 1);
 					QDF_TRACE(QDF_MODULE_ID_DP,
 						QDF_TRACE_LEVEL_DEBUG,
 					"Packet received with Decrypt error");
