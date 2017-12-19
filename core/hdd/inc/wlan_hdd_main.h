@@ -1483,6 +1483,8 @@ struct hdd_context {
 
 	bool hdd_wlan_suspended;
 	bool suspended;
+	/* flag to start pktlog after SSR/PDR if previously enabled */
+	bool is_pktlog_enabled;
 
 	/* Lock to avoid race condition during start/stop bss */
 	struct mutex sap_lock;
