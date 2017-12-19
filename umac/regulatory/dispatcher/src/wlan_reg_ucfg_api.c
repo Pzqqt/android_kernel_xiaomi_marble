@@ -114,6 +114,19 @@ QDF_STATUS ucfg_reg_set_band(struct wlan_objmgr_pdev *pdev,
 }
 
 /**
+ * ucfg_reg_notify_sap_event() - Notify regulatory domain for sap event
+ * @pdev: The physical dev to set the band for
+ * @sap_state: true for sap start else false
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
+			bool sap_state)
+{
+	return reg_notify_sap_event(pdev, sap_state);
+}
+
+/**
  * ucfg_reg_set_fcc_constraint() - apply fcc constraints on channels 12/13
  * @pdev: The physical pdev to reduce tx power for
  *

@@ -2024,23 +2024,48 @@ static void reg_modify_chan_list_for_dfs_channels(struct regulatory_channel
 		}
 	}
 }
-
-static void reg_modify_chan_list_for_indoor_channels(struct regulatory_channel
-						 *chan_list, bool
-						 indoor_chan_enabled)
+static void reg_modify_chan_list_for_indoor_channels(
+		struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
 {
 	enum channel_enum chan_enum;
+	struct regulatory_channel *chan_list = pdev_priv_obj->cur_chan_list;
 
-	if (indoor_chan_enabled)
+	if (pdev_priv_obj->indoor_chan_enabled)
 		return;
 
-	for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
-		if (REGULATORY_CHAN_INDOOR_ONLY &
-		    chan_list[chan_enum].chan_flags) {
-			chan_list[chan_enum].state =
-				CHANNEL_STATE_DISABLE;
-			chan_list[chan_enum].chan_flags |=
-				REGULATORY_CHAN_DISABLED;
+	if (!pdev_priv_obj->force_ssc_disable_indoor_channel) {
+		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+			if (REGULATORY_CHAN_INDOOR_ONLY &
+			    chan_list[chan_enum].chan_flags) {
+				chan_list[chan_enum].state =
+					CHANNEL_STATE_DISABLE;
+				chan_list[chan_enum].chan_flags |=
+					REGULATORY_CHAN_DISABLED;
+			}
+		}
+	} else {
+
+		for (chan_enum = 0; chan_enum < NUM_CHANNELS; chan_enum++) {
+
+			if (pdev_priv_obj->sap_state) {
+
+				if (REGULATORY_CHAN_INDOOR_ONLY &
+					chan_list[chan_enum].chan_flags) {
+					chan_list[chan_enum].state =
+						CHANNEL_STATE_DISABLE;
+					chan_list[chan_enum].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+				}
+			} else {
+
+				if (REGULATORY_CHAN_INDOOR_ONLY &
+					chan_list[chan_enum].chan_flags) {
+					chan_list[chan_enum].state =
+						CHANNEL_STATE_DFS;
+					chan_list[chan_enum].chan_flags |=
+						REGULATORY_CHAN_NO_IR;
+				}
+			}
 		}
 	}
 }
@@ -2301,8 +2326,7 @@ static void reg_compute_pdev_current_chan_list(
 
 	reg_modify_chan_list_for_nol_list(pdev_priv_obj->cur_chan_list);
 
-	reg_modify_chan_list_for_indoor_channels(pdev_priv_obj->cur_chan_list,
-					   pdev_priv_obj->indoor_chan_enabled);
+	reg_modify_chan_list_for_indoor_channels(pdev_priv_obj);
 
 	reg_modify_chan_list_for_fcc_channel(pdev_priv_obj->cur_chan_list,
 					     pdev_priv_obj->set_fcc_channel);
@@ -2873,6 +2897,7 @@ QDF_STATUS wlan_regulatory_psoc_obj_created_notification(
 	soc_reg_obj->band_capability = BAND_ALL;
 	soc_reg_obj->enable_11d_supp = false;
 	soc_reg_obj->indoor_chan_enabled = true;
+	soc_reg_obj->force_ssc_disable_indoor_channel = false;
 	soc_reg_obj->master_vdev_cnt = 0;
 	soc_reg_obj->vdev_cnt_11d = 0;
 	soc_reg_obj->restart_beaconing = CH_AVOID_RULE_RESTART;
@@ -2983,6 +3008,46 @@ QDF_STATUS reg_set_band(struct wlan_objmgr_pdev *pdev,
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 
+	status = reg_send_scheduler_msg_sb(psoc, pdev);
+
+	return status;
+}
+
+QDF_STATUS reg_notify_sap_event(struct wlan_objmgr_pdev *pdev,
+			bool sap_state)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status;
+
+	pdev_priv_obj = reg_get_pdev_obj(pdev);
+
+	if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+		reg_err("pdev reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		reg_err("psoc is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_priv_obj = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_priv_obj)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	reg_info("sap_state: %d", sap_state);
+
+	if (pdev_priv_obj->sap_state == sap_state)
+		return QDF_STATUS_SUCCESS;
+
+	pdev_priv_obj->sap_state = sap_state;
+
+	reg_compute_pdev_current_chan_list(pdev_priv_obj);
 	status = reg_send_scheduler_msg_sb(psoc, pdev);
 
 	return status;
@@ -3122,6 +3187,8 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 	pdev_priv_obj->en_chan_144 = true;
 
 	reg_cap_ptr = psoc_priv_obj->reg_cap;
+	pdev_priv_obj->force_ssc_disable_indoor_channel =
+		psoc_priv_obj->force_ssc_disable_indoor_channel;
 
 	for (cnt = 0; cnt < PSOC_MAX_PHY_REG_CAP; cnt++) {
 		if (reg_cap_ptr == NULL) {
@@ -3425,6 +3492,8 @@ static void reg_change_pdev_for_config(struct wlan_objmgr_psoc *psoc,
 		psoc_priv_obj->dfs_enabled;
 	pdev_priv_obj->indoor_chan_enabled =
 		psoc_priv_obj->indoor_chan_enabled;
+	pdev_priv_obj->force_ssc_disable_indoor_channel =
+		psoc_priv_obj->force_ssc_disable_indoor_channel;
 	pdev_priv_obj->band_capability = psoc_priv_obj->band_capability;
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
@@ -3457,6 +3526,8 @@ QDF_STATUS reg_set_config_vars(struct wlan_objmgr_psoc *psoc,
 		config_vars.dfs_enabled;
 	psoc_priv_obj->indoor_chan_enabled =
 		config_vars.indoor_chan_enabled;
+	psoc_priv_obj->force_ssc_disable_indoor_channel =
+		config_vars.force_ssc_disable_indoor_channel;
 	psoc_priv_obj->band_capability = config_vars.band_capability;
 	psoc_priv_obj->restart_beaconing = config_vars.restart_beaconing;
 

@@ -79,6 +79,7 @@ struct wlan_regulatory_psoc_priv_obj {
 	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
 	struct wlan_psoc_host_hal_reg_capabilities_ext
 			reg_cap[PSOC_MAX_PHY_REG_CAP];
+	bool force_ssc_disable_indoor_channel;
 	qdf_spinlock_t cbk_list_lock;
 };
 
@@ -105,6 +106,8 @@ struct wlan_regulatory_pdev_priv_obj {
 	bool en_chan_144;
 	uint32_t wireless_modes;
 	struct ch_avoid_ind_type freq_avoid_list;
+	bool force_ssc_disable_indoor_channel;
+	bool sap_state;
 };
 
 #endif

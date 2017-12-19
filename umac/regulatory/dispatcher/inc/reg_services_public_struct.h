@@ -772,6 +772,7 @@ enum restart_beaconing_on_ch_avoid_rule {
  * @band_capability: band capability
  * @dfs_disable: dfs disabled
  * @indoor_channel_support: indoor channel support
+ * @force_ssc_disable_indoor_channel: Disable indoor channel on sap start
  * @restart_beaconing: control the beaconing entity to move
  * away from active LTE channels
  */
@@ -782,6 +783,7 @@ struct reg_config_vars {
 	enum band_info band_capability;
 	uint32_t dfs_enabled;
 	uint32_t indoor_chan_enabled;
+	uint32_t force_ssc_disable_indoor_channel;
 	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
 };
 
