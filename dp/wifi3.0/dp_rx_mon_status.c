@@ -325,6 +325,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
 			dp_rx_mon_dest_process(soc, mac_id, quota);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+			pdev->ppdu_info.com_info.last_ppdu_id =
+				pdev->ppdu_info.com_info.ppdu_id;
 		}
 	}
 	return;
@@ -734,6 +736,7 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 	qdf_nbuf_queue_init(&pdev->rx_status_q);
 
 	pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
+	pdev->ppdu_info.com_info.last_ppdu_id = 0;
 	qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 		sizeof(pdev->ppdu_info.rx_status));
 

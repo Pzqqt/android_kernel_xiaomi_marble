@@ -138,13 +138,14 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	void *p_buf_addr_info;
 	void *p_last_buf_addr_info;
 	uint32_t rx_bufs_used = 0;
-	uint32_t msdu_ppdu_id, msdu_cnt;
+	uint32_t msdu_ppdu_id, msdu_cnt, last_ppdu_id;
 	uint8_t *data;
 	uint32_t i;
 	uint32_t total_frag_len, frag_len;
 	bool is_frag, is_first_msdu;
 
 	msdu = 0;
+	last_ppdu_id = dp_pdev->ppdu_info.com_info.last_ppdu_id;
 
 	last = NULL;
 
@@ -168,129 +169,126 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				dp_rx_cookie_2_va_mon_buf(soc,
 					msdu_list.sw_cookie[i]);
 
-				qdf_assert(rx_desc);
-				msdu = rx_desc->nbuf;
+			qdf_assert(rx_desc);
+			msdu = rx_desc->nbuf;
 
-				qdf_nbuf_unmap_single(soc->osdev, msdu,
-					QDF_DMA_FROM_DEVICE);
+			qdf_nbuf_unmap_single(soc->osdev, msdu,
+				QDF_DMA_FROM_DEVICE);
 
-				data = qdf_nbuf_data(msdu);
+			data = qdf_nbuf_data(msdu);
 
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_DEBUG,
+				"[%s][%d] msdu_nbuf=%pK, data=%pK\n",
+				__func__, __LINE__, msdu, data);
+
+			rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
+
+			if (is_first_msdu) {
+				msdu_ppdu_id =
+				HAL_RX_MON_HW_DESC_GET_PPDUID_GET(rx_desc_tlv);
+				is_first_msdu = false;
+			}
+
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_DEBUG,
+				"[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x\n",
+				__func__, __LINE__, i, *ppdu_id, msdu_ppdu_id);
+
+			if (*ppdu_id > msdu_ppdu_id)
 				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_DEBUG,
-					"[%s][%d] msdu_nbuf=%pK, data=%pK\n",
-					__func__, __LINE__, msdu, data);
-
-				rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
-
-				if(is_first_msdu) {
-					msdu_ppdu_id =
-					HAL_RX_MON_HW_DESC_GET_PPDUID_GET(rx_desc_tlv);
-					is_first_msdu = false;
-				}
-
-				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_DEBUG,
-					"[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x\n",
-					__func__, __LINE__, i, *ppdu_id, msdu_ppdu_id);
-
-				if (*ppdu_id > msdu_ppdu_id)
-					QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_WARN,
-					"[%s][%d] ppdu_id=%id \
-					msdu_ppdu_id=%d\n",
+					"[%s][%d] ppdu_id=%d msdu_ppdu_id=%d\n",
 					__func__, __LINE__, *ppdu_id,
 					msdu_ppdu_id);
 
-				if (*ppdu_id < msdu_ppdu_id) {
-					*ppdu_id = msdu_ppdu_id;
-					return rx_bufs_used;
+			if ((*ppdu_id < msdu_ppdu_id) && (*ppdu_id >
+				last_ppdu_id)) {
+				*ppdu_id = msdu_ppdu_id;
+				return rx_bufs_used;
+			}
+
+			if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
+				hal_rx_mon_hw_desc_get_mpdu_status(rx_desc_tlv,
+					&(dp_pdev->ppdu_info.rx_status));
+
+
+			if (msdu_list.msdu_info[i].msdu_flags &
+				HAL_MSDU_F_MSDU_CONTINUATION) {
+				if (!is_frag) {
+					total_frag_len =
+					msdu_list.msdu_info[i].msdu_len;
+					is_frag = true;
 				}
-
-				if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
-					hal_rx_mon_hw_desc_get_mpdu_status(rx_desc_tlv,
-						&(dp_pdev->ppdu_info.rx_status));
-
-
-				if(msdu_list.msdu_info[i].msdu_flags &
-					HAL_MSDU_F_MSDU_CONTINUATION) {
-					if(!is_frag) {
-						total_frag_len =
-						msdu_list.msdu_info[i].msdu_len;
-						is_frag = true;
-					}
+				dp_mon_adjust_frag_len(
+					&total_frag_len, &frag_len);
+			} else {
+				if (is_frag) {
 					dp_mon_adjust_frag_len(
 						&total_frag_len, &frag_len);
 				} else {
-					if(is_frag) {
-						dp_mon_adjust_frag_len(
-							&total_frag_len, &frag_len);
-					} else {
-						frag_len =
-						msdu_list.msdu_info[i].msdu_len;
-					}
-					is_frag = false;
-					msdu_cnt--;
+					frag_len =
+					msdu_list.msdu_info[i].msdu_len;
 				}
+				is_frag = false;
+				msdu_cnt--;
+			}
 
-				rx_pkt_offset = HAL_RX_MON_HW_RX_DESC_SIZE();
-				/*
-				 * HW structures call this L3 header padding
-				 * -- even though this is actually the offset
-				 * from the buffer beginning where the L2
-				 * header begins.
-				*/
-				l2_hdr_offset =
-				hal_rx_msdu_end_l3_hdr_padding_get(data);
+			rx_pkt_offset = HAL_RX_MON_HW_RX_DESC_SIZE();
+			/*
+			 * HW structures call this L3 header padding
+			 * -- even though this is actually the offset
+			 * from the buffer beginning where the L2
+			 * header begins.
+			 */
+			l2_hdr_offset =
+			hal_rx_msdu_end_l3_hdr_padding_get(data);
 
-				rx_buf_size = rx_pkt_offset + l2_hdr_offset
-					+ frag_len;
+			rx_buf_size = rx_pkt_offset + l2_hdr_offset
+				+ frag_len;
 
-				qdf_nbuf_set_pktlen(msdu, rx_buf_size);
+			qdf_nbuf_set_pktlen(msdu, rx_buf_size);
 
 
-#if 0
-				/* Disble it.see packet on msdu done set to 0 */
-				/*
-				 * Check if DMA completed -- msdu_done is the
-				 * last bit to be written
-				*/
-				if (!hal_rx_attn_msdu_done_get(rx_desc_tlv)) {
-
-					QDF_TRACE(QDF_MODULE_ID_DP,
-						QDF_TRACE_LEVEL_ERROR,
-						"%s %d\n",
-						__func__, __LINE__);
-
-						print_hex_dump(KERN_ERR,
-						"\t Pkt Desc:",
-						DUMP_PREFIX_NONE, 32, 4,
-						rx_desc_tlv, 128, false);
-
-					qdf_assert(0);
-				}
-#endif
-
-				rx_bufs_used++;
+			/* Disble it.see packet on msdu done set to 0 */
+			/*
+			 * Check if DMA completed -- msdu_done is the
+			 * last bit to be written
+			 */
+			if (!hal_rx_attn_msdu_done_get(rx_desc_tlv)) {
 
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_DEBUG,
-					"rx_pkt_offset=%d, \
-					l2_hdr_offset=%d, msdu_len=%d, \
-					addr=%pK\n",
-					rx_pkt_offset,
-					l2_hdr_offset,
-					msdu_list.msdu_info[i].msdu_len,
-					qdf_nbuf_data(msdu));
+					"%s:%d: Pkt Desc\n",
+					__func__, __LINE__);
 
-				if (*head_msdu == NULL)
-					*head_msdu = msdu;
-				else
-					qdf_nbuf_set_next(last, msdu);
+				QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_DEBUG,
+					rx_desc_tlv, 128);
 
-				last = msdu;
-				dp_rx_add_to_free_desc_list(head,
-					tail, rx_desc);
+				qdf_assert_always(0);
+			}
+
+			rx_bufs_used++;
+
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_DEBUG,
+				"rx_pkt_offset=%d, \
+				l2_hdr_offset=%d, msdu_len=%d, \
+				addr=%pK\n",
+				rx_pkt_offset,
+				l2_hdr_offset,
+				msdu_list.msdu_info[i].msdu_len,
+				qdf_nbuf_data(msdu));
+
+			if (*head_msdu == NULL)
+				*head_msdu = msdu;
+			else
+				qdf_nbuf_set_next(last, msdu);
+
+			last = msdu;
+			dp_rx_add_to_free_desc_list(head,
+				tail, rx_desc);
 		}
 
 		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
@@ -730,6 +728,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
 				sizeof(pdev->ppdu_info.rx_status));
+			pdev->ppdu_info.com_info.last_ppdu_id =
+				pdev->ppdu_info.com_info.ppdu_id;
 			break;
 		}
 
