@@ -52,6 +52,14 @@
 #define GET_WMI_HDL_FROM_PSOC(psoc) \
 		(((struct target_psoc_info *)(psoc->tgt_if_handle))->wmi_handle)
 
+#ifdef CONFIG_MCL
+#define GET_WMI_HDL_FROM_PDEV(pdev) \
+		(((struct target_psoc_info *)(pdev->tgt_if_handle))->wmi_handle)
+#else
+#define GET_WMI_HDL_FROM_PDEV(pdev) ((pdev)->tgt_if_handle)
+#endif
+
+
 #define TARGET_TYPE_AR900B    9
 #define TARGET_TYPE_QCA9984   15 /* cascade */
 #define TARGET_TYPE_IPQ4019   16 /* dakota */
