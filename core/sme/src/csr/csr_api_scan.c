@@ -5281,7 +5281,7 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(filter->country,
 		pFilter->countryCode, WNI_CFG_COUNTRY_CODE_LEN);
 
-	if (pFilter->bWPSAssociation || pFilter->bWPSAssociation)
+	if (pFilter->bWPSAssociation || pFilter->bOSENAssociation)
 		filter->ignore_auth_enc_type = true;
 
 	filter->rrm_measurement_filter = pFilter->fMeasurement;
