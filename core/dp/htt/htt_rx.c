@@ -449,10 +449,20 @@ htt_rx_in_ord_paddr_get(uint32_t *u32p)
 	return paddr;
 }
 #else
-static inline qdf_dma_addr_t
+static qdf_dma_addr_t
 htt_rx_in_ord_paddr_get(uint32_t *u32p)
 {
-	return HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
+	qdf_dma_addr_t paddr = 0;
+
+	paddr = (qdf_dma_addr_t)HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
+	if (sizeof(qdf_dma_addr_t) > 4) {
+		u32p++;
+		/* 32 bit architectures dont like <<32 */
+		paddr |= (((qdf_dma_addr_t)
+			  HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p))
+			  << 16 << 16);
+	}
+	return paddr;
 }
 #endif /* ENABLE_DEBUG_ADDRESS_MARKING */
 #endif /* CONFIG_HL_SUPPORT*/
