@@ -111,6 +111,8 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_AMSDU_IN_AMPDU,
 			   he_cap->amsdu_in_ampdu);
 
+	he_cap->dual_band = ((cfg->band_cap == BAND_ALL) &&
+			     (hdd_ctx->config->nBandCapability == BAND_ALL));
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DUAL_BAND, he_cap->dual_band);
 	chan_width = HE_CH_WIDTH_COMBINE(he_cap->chan_width_0,
 				he_cap->chan_width_1, he_cap->chan_width_2,
