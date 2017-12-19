@@ -4377,6 +4377,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_INDOOR_CHANNEL_SUPPORT_MIN,
 		     CFG_INDOOR_CHANNEL_SUPPORT_MAX),
 
+	REG_VARIABLE(CFG_MARK_INDOOR_AS_DISABLE_NAME,
+		     WLAN_PARAM_Integer,
+		     struct hdd_config, force_ssc_disable_indoor_channel,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_MARK_INDOOR_AS_DISABLE_DEFAULT,
+		     CFG_MARK_INDOOR_AS_DISABLE_MIN,
+		     CFG_MARK_INDOOR_AS_DISABLE_MAX),
+
 	REG_VARIABLE(CFG_SAP_TX_LEAKAGE_THRESHOLD_NAME,
 		WLAN_PARAM_Integer,
 		struct hdd_config, sap_tx_leakage_threshold,
@@ -7060,7 +7068,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] Value = [%u]",
 		   CFG_HT_MPDU_DENSITY_NAME,
 		   hdd_ctx->config->ht_mpdu_density);
-
+	hdd_debug("Name = [%s] value = [%d]",
+		   CFG_MARK_INDOOR_AS_DISABLE_NAME,
+		   hdd_ctx->config->force_ssc_disable_indoor_channel);
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	hdd_notice("Name = [%s] Value = [%d]",

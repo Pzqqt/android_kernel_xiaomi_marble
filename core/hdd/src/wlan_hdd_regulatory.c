@@ -221,6 +221,8 @@ static void reg_program_config_vars(struct hdd_context *hdd_ctx,
 	config_vars->dfs_enabled = hdd_ctx->config->enableDFSChnlScan;
 	config_vars->indoor_chan_enabled =
 		hdd_ctx->config->indoor_channel_support;
+	config_vars->force_ssc_disable_indoor_channel =
+		hdd_ctx->config->force_ssc_disable_indoor_channel;
 	config_vars->band_capability = hdd_ctx->config->nBandCapability;
 	config_vars->restart_beaconing = hdd_ctx->config->
 		restart_beaconing_on_chan_avoid_event;
@@ -436,6 +438,11 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 			if (!reset)
 				hdd_modify_wiphy(wiphy, wiphy_chan);
 
+			if (hdd_ctx->config->force_ssc_disable_indoor_channel &&
+			     (wiphy_chan->flags & IEEE80211_CHAN_INDOOR_ONLY))
+				cds_chan->chan_flags |=
+					REGULATORY_CHAN_INDOOR_ONLY;
+
 			if (wiphy_chan->flags & IEEE80211_CHAN_DISABLED) {
 				cds_chan->state = CHANNEL_STATE_DISABLE;
 				cds_chan->chan_flags |=
@@ -454,7 +461,7 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 			} else if (wiphy_chan->flags &
 				     IEEE80211_CHAN_INDOOR_ONLY) {
 				cds_chan->chan_flags |=
-					REGULATORY_CHAN_INDOOR_ONLY;
+						REGULATORY_CHAN_INDOOR_ONLY;
 				if (hdd_ctx->config->indoor_channel_support
 				    == false) {
 					cds_chan->state = CHANNEL_STATE_DFS;
@@ -552,6 +559,107 @@ static int hdd_regulatory_init_no_offload(struct hdd_context *hdd_ctx,
 	return 0;
 }
 #endif
+
+/**
+ * hdd_modify_indoor_channel_state_flags() - modify wiphy flags and cds state
+ * @wiphy_chan: wiphy channel number
+ * @cds_chan: cds channel structure
+ * @disable: Disable/enable the flags
+ *
+ * Modify wiphy flags and cds state if channel is indoor.
+ *
+ * Return: void
+ */
+void hdd_modify_indoor_channel_state_flags(
+	struct hdd_context *hdd_ctx,
+	struct ieee80211_channel *wiphy_chan,
+	struct regulatory_channel *cds_chan,
+	enum channel_enum chan_enum, int chan_num, bool disable)
+{
+	bool indoor_support = hdd_ctx->config->indoor_channel_support;
+
+	/* Mark indoor channel to disable in wiphy and cds */
+	if (disable) {
+		if (wiphy_chan->flags & IEEE80211_CHAN_INDOOR_ONLY) {
+			wiphy_chan->flags |=
+				IEEE80211_CHAN_DISABLED;
+			hdd_info("Mark indoor channel %d as disable",
+				cds_chan->center_freq);
+			cds_chan->state =
+				CHANNEL_STATE_DISABLE;
+		}
+	} else {
+		if (wiphy_chan->flags & IEEE80211_CHAN_INDOOR_ONLY) {
+			wiphy_chan->flags &=
+					~IEEE80211_CHAN_DISABLED;
+			 /*
+			  * Indoor channels may be marked as dfs / enable
+			  * during regulatory processing
+			  */
+			if ((wiphy_chan->flags &
+				(IEEE80211_CHAN_RADAR |
+				IEEE80211_CHAN_PASSIVE_SCAN)) ||
+			     ((indoor_support == false) &&
+				(wiphy_chan->flags &
+				IEEE80211_CHAN_INDOOR_ONLY)))
+				cds_chan->state =
+					CHANNEL_STATE_DFS;
+			else
+				cds_chan->state =
+					CHANNEL_STATE_ENABLE;
+			hdd_debug("Mark indoor channel %d as cds_chan state %d",
+					cds_chan->chan_num, cds_chan->state);
+		}
+	}
+
+}
+
+void hdd_update_indoor_channel(struct hdd_context *hdd_ctx,
+					bool disable)
+{
+	int band_num;
+	int chan_num;
+	enum channel_enum chan_enum = CHAN_ENUM_1;
+	struct ieee80211_channel *wiphy_chan, *wiphy_chan_144 = NULL;
+	struct regulatory_channel *cds_chan;
+	uint8_t band_capability;
+	struct wiphy *wiphy = hdd_ctx->wiphy;
+
+	ENTER();
+	hdd_debug("mark indoor channel disable: %d", disable);
+
+	band_capability = hdd_ctx->curr_band;
+	for (band_num = 0; band_num < HDD_NUM_NL80211_BANDS; band_num++) {
+
+		if (wiphy->bands[band_num] == NULL)
+			continue;
+
+		for (chan_num = 0;
+		     chan_num < wiphy->bands[band_num]->n_channels &&
+		     chan_enum < NUM_CHANNELS;
+		     chan_num++) {
+
+			wiphy_chan =
+				&(wiphy->bands[band_num]->channels[chan_num]);
+			cds_chan = &(reg_channels[chan_enum]);
+			if (chan_enum == CHAN_ENUM_144)
+				wiphy_chan_144 = wiphy_chan;
+
+			chan_enum++;
+			hdd_modify_indoor_channel_state_flags(hdd_ctx,
+				wiphy_chan, cds_chan,
+				chan_enum, chan_num, disable);
+		}
+	}
+
+	/* Notify the regulatory domain to update the channel list */
+	if (QDF_IS_STATUS_ERROR(ucfg_reg_notify_sap_event(hdd_ctx->hdd_pdev,
+		disable))) {
+		hdd_err("Failed to notify sap event");
+	}
+	EXIT();
+
+}
 
 /**
  * hdd_program_country_code() - process channel information from country code

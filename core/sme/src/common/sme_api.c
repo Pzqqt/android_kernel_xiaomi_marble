@@ -6023,6 +6023,39 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * sme_update_channel_list() - Update configured channel list to fwr
+ * This is a synchronous API.
+ *
+ * @mac_ctx - The handle returned by mac_open.
+ *
+ * Return QDF_STATUS  SUCCESS.
+ * FAILURE or RESOURCES  The API finished and failed.
+ */
+QDF_STATUS
+sme_update_channel_list(tpAniSirGlobal mac_ctx)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		/* Update umac channel (enable/disable) from cds channels */
+		status = csr_get_channel_and_power_list(mac_ctx);
+		if (status != QDF_STATUS_SUCCESS) {
+			sme_err("fail to get Channels");
+			sme_release_global_lock(&mac_ctx->sme);
+			return status;
+		}
+
+		csr_apply_channel_power_info_wrapper(mac_ctx);
+		csr_scan_filter_results(mac_ctx);
+		sme_disconnect_connected_sessions(mac_ctx);
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+
+	return status;
+}
+
 static bool
 sme_search_in_base_ch_lst(tpAniSirGlobal mac_ctx, uint8_t curr_ch)
 {

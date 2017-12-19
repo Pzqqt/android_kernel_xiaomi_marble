@@ -90,6 +90,8 @@
 #include <wlan_p2p_ucfg_api.h>
 #include "sir_api.h"
 #include <wlan_green_ap_ucfg_api.h>
+#include "sme_api.h"
+#include "wlan_hdd_regulatory.h"
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -7658,7 +7660,6 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	ENTER();
 
-
 	hdd_notify_teardown_tdls_links(adapter->hdd_vdev);
 
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
@@ -7705,6 +7706,18 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 	clear_bit(ACS_PENDING, &adapter->event_flags);
 	clear_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags);
+
+	/* Mark the indoor channel (passive) to disable */
+	if (iniConfig->force_ssc_disable_indoor_channel) {
+		hdd_update_indoor_channel(hdd_ctx, true);
+		if (QDF_IS_STATUS_ERROR(
+		    sme_update_channel_list(hdd_ctx->hHal))) {
+			hdd_update_indoor_channel(hdd_ctx, false);
+			hdd_err("Can't start BSS: update channel list failed");
+			qdf_mem_free(sme_config);
+			return -EINVAL;
+		}
+	}
 
 	pConfig = &adapter->session.ap.sap_config;
 
@@ -8287,6 +8300,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	goto free;
 
 error:
+	/* Revert the indoor to passive marking if START BSS fails */
+	if (iniConfig->force_ssc_disable_indoor_channel) {
+		hdd_update_indoor_channel(hdd_ctx, false);
+		sme_update_channel_list(hdd_ctx->hHal);
+	}
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
 	wlan_hdd_undo_acs(adapter);
 

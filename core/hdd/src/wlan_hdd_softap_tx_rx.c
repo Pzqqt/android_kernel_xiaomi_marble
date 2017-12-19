@@ -49,6 +49,7 @@
 #include <wlan_hdd_object_manager.h>
 #include "wlan_p2p_ucfg_api.h"
 #include <wlan_hdd_ipa.h>
+#include <wlan_hdd_regulatory.h>
 
 /* Preprocessor definitions and constants */
 #undef QCA_HDD_SAP_DUMP_SK_BUFF
@@ -1070,6 +1071,13 @@ QDF_STATUS hdd_softap_stop_bss(struct hdd_adapter *adapter)
 			}
 		}
 	}
+
+	/*  Mark the indoor channel (passive) to enable  */
+	if (hdd_ctx->config->force_ssc_disable_indoor_channel) {
+		hdd_update_indoor_channel(hdd_ctx, false);
+		sme_update_channel_list(hdd_ctx->hHal);
+	}
+
 	return qdf_status;
 }
 

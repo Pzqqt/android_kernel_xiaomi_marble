@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -62,5 +62,34 @@ int hdd_reg_set_country(struct hdd_context *hdd_ctx, char *country_code);
  * Return: zero for success, non-zero error code for failure
  */
 int hdd_reg_set_band(struct net_device *dev, u8 ui_band);
+
+/**
+ * hdd_update_indoor_channel() - enable/disable indoor channel
+ * @hdd_ctx: hdd context
+ * @disable: whether to enable / disable indoor channel
+ *
+ * enable/disable indoor channel in wiphy/cds
+ *
+ * Return: void
+ */
+void hdd_update_indoor_channel(struct  hdd_context *hdd_ctx,
+					bool disable);
+/**
+ * hdd_modify_indoor_channel_state_flags() - modify wiphy flags and cds state
+ * @wiphy_chan: wiphy channel number
+ * @cds_chan: cds channel structure
+ * @chan_enum: channel enum maintain in reg db
+ * @chan_num: channel index
+ * @disable: Disable/enable the flags
+ *
+ * Modify wiphy flags and cds state if channel is indoor.
+ *
+ * Return: void
+ */
+void hdd_modify_indoor_channel_state_flags(
+	struct hdd_context *hdd_ctx,
+	struct ieee80211_channel *wiphy_chan,
+	struct regulatory_channel *cds_chan,
+	enum channel_enum chan_enum, int chan_num, bool disable);
 
 #endif
