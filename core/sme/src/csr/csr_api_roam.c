@@ -2857,6 +2857,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 
 		pMac->roam.configParam.scan_adaptive_dwell_mode =
 			pParam->scan_adaptive_dwell_mode;
+		pMac->roam.configParam.scan_adaptive_dwell_mode_nc =
+			pParam->scan_adaptive_dwell_mode_nc;
 		pMac->roam.configParam.roamscan_adaptive_dwell_mode =
 			pParam->roamscan_adaptive_dwell_mode;
 
@@ -3124,6 +3126,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 
 	pParam->scan_adaptive_dwell_mode =
 			cfg_params->scan_adaptive_dwell_mode;
+	pParam->scan_adaptive_dwell_mode_nc =
+			cfg_params->scan_adaptive_dwell_mode_nc;
 	pParam->roamscan_adaptive_dwell_mode =
 			cfg_params->roamscan_adaptive_dwell_mode;
 

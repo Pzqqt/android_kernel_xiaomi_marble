@@ -571,7 +571,13 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 		sme_debug("updating dwell time for first scan %u",
 			scan_req->maxChnTime);
 	}
-	scan_req->scan_adaptive_dwell_mode = cfg_prm->scan_adaptive_dwell_mode;
+
+	if (csr_is_conn_state_disconnected(pMac, sessionId))
+		scan_req->scan_adaptive_dwell_mode =
+					cfg_prm->scan_adaptive_dwell_mode_nc;
+	else
+		scan_req->scan_adaptive_dwell_mode =
+					cfg_prm->scan_adaptive_dwell_mode;
 
 	status = csr_scan_copy_request(pMac, &scan_cmd->u.scanCmd.u.scanRequest,
 				       scan_req);
