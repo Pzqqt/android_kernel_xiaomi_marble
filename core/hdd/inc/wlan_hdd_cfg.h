@@ -13206,7 +13206,7 @@ enum hdd_external_acs_freq_band {
  * esp_qbss_score_idx7_to_4 - percentage for  esp/qbss load for slots 4-7
  * @Min: 0x00000000
  * @Max: 0x64646464
- * @Default: 0x00000019
+ * @Default: 0x0000000A
  *
  * This INI give percentage value of channel_congestion_weightage to be used as
  * index in which the load value falls. Used only if num_esp_qbss_slots is
@@ -13228,7 +13228,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_ESP_QBSS_SCORE_IDX7_TO_4_NAME      "esp_qbss_score_idx7_to_4"
-#define CFG_ESP_QBSS_SCORE_IDX7_TO_4_DEFAULT   (0x00000019)
+#define CFG_ESP_QBSS_SCORE_IDX7_TO_4_DEFAULT   (0x0000000A)
 #define CFG_ESP_QBSS_SCORE_IDX7_TO_4_MIN       (0x00000000)
 #define CFG_ESP_QBSS_SCORE_IDX7_TO_4_MAX       (0x64646464)
 
