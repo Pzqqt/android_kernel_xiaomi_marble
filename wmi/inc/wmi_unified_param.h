@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -7711,38 +7711,6 @@ enum wmi_userspace_log_level {
 	WMI_LOG_LEVEL_NORMAL_COLLECT,
 	WMI_LOG_LEVEL_ISSUE_REPRO,
 	WMI_LOG_LEVEL_ACTIVE,
-};
-
-/**
- * struct encrypt_decrypt_req_params - encrypt/decrypt params
- * @vdev_id: virtual device id
- * @key_flag: This indicates firmware to encrypt/decrypt payload
- *    see ENCRYPT_DECRYPT_FLAG
- * @key_idx: Index used in storing key
- * @key_cipher: cipher used for encryption/decryption
- *   Eg: see WMI_CIPHER_AES_CCM for CCMP
- * @key_len: length of key data
- * @key_txmic_len: length of Tx MIC
- * @key_rxmic_len: length of Rx MIC
- * @key_data: Key
- * @pn: packet number
- * @mac_header: MAC header
- * @data_len: length of data
- * @data: pointer to payload
- */
-struct encrypt_decrypt_req_params {
-	uint32_t vdev_id;
-	uint8_t key_flag;
-	uint32_t key_idx;
-	uint32_t key_cipher;
-	uint32_t key_len;
-	uint32_t key_txmic_len;
-	uint32_t key_rxmic_len;
-	uint8_t key_data[MAC_MAX_KEY_LENGTH];
-	uint8_t pn[MAC_PN_LENGTH];
-	uint8_t mac_header[MAX_MAC_HEADER_LEN];
-	uint32_t data_len;
-	uint8_t *data;
 };
 
 /**

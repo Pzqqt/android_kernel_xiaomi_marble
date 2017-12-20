@@ -1333,7 +1333,11 @@ QDF_STATUS (*send_fw_test_cmd)(wmi_unified_t wmi_handle,
 
 #ifdef WLAN_FEATURE_DISA
 QDF_STATUS (*send_encrypt_decrypt_send_cmd)(wmi_unified_t wmi_handle,
-				struct encrypt_decrypt_req_params *params);
+				struct disa_encrypt_decrypt_req_params *params);
+
+QDF_STATUS (*extract_encrypt_decrypt_resp_event)(wmi_unified_t wmi_handle,
+			void *evt_buf,
+			struct disa_encrypt_decrypt_resp_params *resp);
 #endif
 
 QDF_STATUS (*send_sar_limit_cmd)(wmi_unified_t wmi_handle,
