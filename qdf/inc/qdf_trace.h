@@ -611,29 +611,93 @@ void __printf(3, 4) qdf_snprintf(char *str_buffer, unsigned int size,
 #define QDF_SNPRINTF qdf_snprintf
 
 #ifdef TSOSEG_DEBUG
-static inline
-int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg,
-			   uint16_t caller)
-{
-	int rc = -1;
 
-	if (tsoseg != NULL) {
-		tsoseg->dbg.cur++;  tsoseg->dbg.cur &= 0x0f;
-		tsoseg->dbg.history[tsoseg->dbg.cur] = caller;
-		rc = tsoseg->dbg.cur;
-	}
-	return rc;
-};
 static inline void qdf_tso_seg_dbg_bug(char *msg)
 {
 	qdf_print(msg);
 	QDF_BUG(0);
 };
 
+/**
+ * qdf_tso_seg_dbg_init - initialize TSO segment debug structure
+ * @tsoseg : structure to initialize
+ *
+ * TSO segment dbg structures are attached to qdf_tso_seg_elem_t
+ * structures and are allocated only of TSOSEG_DEBUG is defined.
+ * When allocated, at the time of the tso_seg_pool initialization,
+ * which goes with tx_desc initialization (1:1), each structure holds
+ * a number of (currently 16) history entries, basically describing
+ * what operation has been performed on this particular tso_seg_elem.
+ * This history buffer is a circular buffer and the current index is
+ * held in an atomic variable called cur. It is incremented every
+ * operation. Each of these operations are added with the function
+ * qdf_tso_seg_dbg_record.
+ * For each segment, this initialization function MUST be called PRIOR
+ * TO any _dbg_record() function calls.
+ * On free, qdf_tso_seg_elem structure is cleared (using qdf_tso_seg_dbg_zero)
+ * which clears the tso_desc, BUT DOES NOT CLEAR THE HISTORY element.
+ *
+ * Return:
+ *   None
+ */
+static inline
+void qdf_tso_seg_dbg_init(struct qdf_tso_seg_elem_t *tsoseg)
+{
+	tsoseg->dbg.txdesc = NULL;
+	qdf_atomic_init(&tsoseg->dbg.cur); /* history empty */
+}
+
+/**
+ * qdf_tso_seg_dbg_record - add a history entry to TSO debug structure
+ * @tsoseg : structure to initialize
+ * @id     : operation ID (identifies the caller)
+ *
+ * Adds a history entry to the history circular buffer. Each entry
+ * contains an operation id (caller, as currently each ID is used only
+ * once in the source, so it directly identifies the src line that invoked
+ * the recording.
+ *
+ * qdf_tso_seg_dbg_record CAN ONLY BE CALLED AFTER the entry is initialized
+ * by qdf_tso_seg_dbg_init.
+ *
+ * The entry to be added is written at the location pointed by the atomic
+ * variable called cur. Cur is an ever increasing atomic variable. It is
+ * masked so that only the lower 4 bits are used (16 history entries).
+ *
+ * Return:
+ *   int: the entry this record was recorded at
+ */
+static inline
+int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg, short id)
+{
+	int rc = -1;
+	unsigned int c;
+
+	qdf_assert(tsoseg);
+
+	if (id == TSOSEG_LOC_ALLOC) {
+		c = qdf_atomic_read(&tsoseg->dbg.cur);
+		/* dont crash on the very first alloc on the segment */
+		c &= 0x0f;
+		/* allow only INIT and FREE ops before ALLOC */
+		if (tsoseg->dbg.h[c].id >= id)
+			qdf_tso_seg_dbg_bug("Rogue TSO seg alloc");
+	}
+	c = qdf_atomic_inc_return(&tsoseg->dbg.cur);
+
+	c &= 0x0f;
+	tsoseg->dbg.h[c].ts = qdf_get_log_timestamp();
+	tsoseg->dbg.h[c].id = id;
+	rc = c;
+
+	return rc;
+};
+
 static inline void
 qdf_tso_seg_dbg_setowner(struct qdf_tso_seg_elem_t *tsoseg, void *owner)
 {
-	tsoseg->dbg.txdesc = owner;
+	if (tsoseg)
+		tsoseg->dbg.txdesc = owner;
 };
 
 static inline void
@@ -645,8 +709,11 @@ qdf_tso_seg_dbg_zero(struct qdf_tso_seg_elem_t *tsoseg)
 
 #else
 static inline
-int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg,
-			   uint16_t caller)
+void qdf_tso_seg_dbg_init(struct qdf_tso_seg_elem_t *tsoseg)
+{
+};
+static inline
+int qdf_tso_seg_dbg_record(struct qdf_tso_seg_elem_t *tsoseg, short id)
 {
 	return 0;
 };
