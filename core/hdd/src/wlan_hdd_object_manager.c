@@ -346,10 +346,10 @@ int hdd_objmgr_remove_peer_object(struct wlan_objmgr_vdev *vdev,
 
 	peer = wlan_objmgr_get_peer(psoc, mac_addr, WLAN_HDD_ID_OBJ_MGR);
 	if (peer) {
+		wlan_objmgr_peer_obj_delete(peer);
+
 		/* Unref to decrement ref happened in find_peer */
 		wlan_objmgr_peer_release_ref(peer, WLAN_HDD_ID_OBJ_MGR);
-
-		wlan_objmgr_peer_obj_delete(peer);
 
 		hdd_info("Peer obj "MAC_ADDRESS_STR" deleted",
 				MAC_ADDR_ARRAY(mac_addr));
