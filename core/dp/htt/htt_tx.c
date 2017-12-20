@@ -1527,6 +1527,7 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 
 	if (tso_seg->seg.num_frags < FRAG_NUM_MAX)
 		*word = 0;
+	qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_FILLHTTSEG);
 }
 #endif /* FEATURE_TSO */
 

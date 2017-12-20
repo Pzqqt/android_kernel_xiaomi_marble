@@ -895,20 +895,22 @@ struct qdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 		pdev->tso_seg_pool.num_free--;
 		tso_seg = pdev->tso_seg_pool.freelist;
 		if (tso_seg->on_freelist != 1) {
-			qdf_print("Do not alloc tso seg as this seg is not in freelist\n");
 			qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+			qdf_print("tso seg alloc failed: not in freelist");
 			QDF_BUG(0);
 			return NULL;
 		} else if (tso_seg->cookie != TSO_SEG_MAGIC_COOKIE) {
-			qdf_print("Do not alloc tso seg as cookie is not good\n");
 			qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+			qdf_print("tso seg alloc failed: bad cookie");
 			QDF_BUG(0);
 			return NULL;
 		}
 		/*this tso seg is not a part of freelist now.*/
 		tso_seg->on_freelist = 0;
-		qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_ALLOC);
+		tso_seg->sent_to_target = 0;
+		tso_seg->force_free = 0;
 		pdev->tso_seg_pool.freelist = pdev->tso_seg_pool.freelist->next;
+		qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_ALLOC);
 	}
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
 
@@ -932,11 +934,18 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	if (tso_seg->on_freelist != 0) {
 		qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
-		qdf_tso_seg_dbg_bug("Do not free tso seg, already freed");
+		qdf_print("Do not free tso seg, already freed");
+		QDF_BUG(0);
 		return;
 	} else if (tso_seg->cookie != TSO_SEG_MAGIC_COOKIE) {
-		qdf_print("Do not free the tso seg as cookie is not good. Looks like memory corruption");
 		qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+		qdf_print("Do not free tso seg: cookie is not good.");
+		QDF_BUG(0);
+		return;
+	} else if ((tso_seg->sent_to_target != 1) &&
+		   (tso_seg->force_free != 1)) {
+		qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+		qdf_print("Do not free tso seg:  yet to be sent to target");
 		QDF_BUG(0);
 		return;
 	}
@@ -948,10 +957,14 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	qdf_tso_seg_dbg_zero(tso_seg);
 	tso_seg->next = pdev->tso_seg_pool.freelist;
 	tso_seg->on_freelist = 1;
+	tso_seg->sent_to_target = 0;
 	tso_seg->cookie = TSO_SEG_MAGIC_COOKIE;
-	qdf_tso_seg_dbg_record(tso_seg, TSOSEG_LOC_FREE);
 	pdev->tso_seg_pool.freelist = tso_seg;
 	pdev->tso_seg_pool.num_free++;
+	qdf_tso_seg_dbg_record(tso_seg, tso_seg->force_free
+			       ? TSOSEG_LOC_FORCE_FREE
+			       : TSOSEG_LOC_FREE);
+	tso_seg->force_free = 0;
 	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
 }
 
