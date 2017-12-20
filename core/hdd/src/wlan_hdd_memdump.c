@@ -553,11 +553,6 @@ int memdump_init(void)
 		return -EINVAL;
 	}
 
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Not initializing memdump in FTM mode");
-		return -EINVAL;
-	}
-
 	status = memdump_procfs_init();
 	if (status) {
 		hdd_err("Failed to create proc file");
@@ -598,11 +593,6 @@ void memdump_deinit(void)
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("Invalid HDD context");
-		return;
-	}
-
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Not deinitializing memdump in FTM mode");
 		return;
 	}
 
