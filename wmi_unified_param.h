@@ -7923,6 +7923,45 @@ struct wmi_host_pdev_band_to_mac {
 #define WMI_HOST_MAX_PDEV 3
 
 #ifdef OL_ATH_SMART_LOGGING
+
+#define WMI_HOST_SMART_LOG_SCENARIO_SET(flag, scenario) ((flag) |= (scenario))
+#define WMI_HOST_SMART_LOG_SCENARIO_GET(flag, scenario) ((flag) &  (scenario))
+
+/**
+ * enum wmi_host_smart_log_scenario - Smart log scenarios to be enabled/disabled
+ * @WMI_HOST_SMART_LOG_ALL: All smart logging features.
+ * @WMI_HOST_SMART_LOG_CE_FULL_DETECT_BY_FW: CE with full detect by FW.
+ * @WMI_HOST_SMART_LOG_TX_RX_TIMEOUT: Tx/Rx timeout.
+ * @WMI_HOST_SMART_LOG_STA_KICKOUT: STA Kickout.
+ * @WMI_HOST_SMART_LOG_BCN_CMD_FAILURE: Beacon command failure.
+ * @WMI_HOST_SMART_LOG_P1_PING_FAILURE: P1 ping failure. Ping failure detection
+ * is done by host entities. So, host should be able to control the
+ * enable/disable of this feature. Yet, this is provided in case the
+ * corresponding FW specific debugs alone have to be enabled/disabled.
+ * @WMI_HOST_SMART_LOG_CONNECTION_FAILURE: Connection failure. Connection
+ * failure detection is done by host entities. So, host should be able to
+ * control the enable/disable of this feature. Yet, this is provided in case the
+ * corresponding FW specific debugs alone have to be enabled/disabled.
+ * @WMI_HOST_SMART_LOG_FW_INITIATED_PKT_LOG: FW Initiated packetlog.
+ * @WMI_HOST_SMART_LOG_EXTENSION_1: If WMI_HOST_SMART_LOG_EXTENSION_1 is set,
+ * then the 'log_case_ext_1' field in 'wmi_smart_logging' is used; else
+ * log_case_ext_1 is ignored.
+ */
+enum wmi_host_smart_log_scenario {
+	WMI_HOST_SMART_LOG_ALL                      =        0x0,
+	WMI_HOST_SMART_LOG_CE_FULL_DETECT_BY_FW     =        0x1,
+	WMI_HOST_SMART_LOG_TX_RX_TIMEOUT            =        0x2,
+	WMI_HOST_SMART_LOG_STA_KICKOUT              =        0x4,
+	WMI_HOST_SMART_LOG_BCN_CMD_FAILURE          =        0x8,
+	WMI_HOST_SMART_LOG_P1_PING_FAILURE          =       0x10,
+	WMI_HOST_SMART_LOG_CONNECTION_FAILURE       =       0x20,
+	WMI_HOST_SMART_LOG_FW_INITIATED_PKT_LOG     =       0x40,
+
+	/* New scenarios to be added here */
+
+	WMI_HOST_SMART_LOG_EXTENSION_1              = 0x80000000,
+};
+
 /**
  * struct wmi_fatal_condition_event - Fatal condition event param
  * @type: Type of event
