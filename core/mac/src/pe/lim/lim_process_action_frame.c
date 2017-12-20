@@ -2052,57 +2052,47 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	break;
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
 		switch (action_hdr->actionID) {
+		case SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID:
+			lim_process_ext_channel_switch_action_frame(mac_ctx,
+							rx_pkt_info, session);
+			break;
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
 			pub_action =
 				(tpSirMacVendorSpecificPublicActionFrameHdr)
 				action_hdr;
-			mac_hdr = NULL;
-			frame_len = 0;
 
-			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-			/* Check if it is a DPP public action frame. */
-			if (!qdf_mem_cmp(pub_action->Oui, dpp_oui, 4)) {
-				/*
-				 * Forward to the SME to HDD to wpa_supplicant
-				 * type is ACTION
-				 */
-				lim_send_sme_mgmt_frame_ind(mac_ctx,
-						mac_hdr->fc.subType,
-						(uint8_t *) mac_hdr,
-						frame_len +
-						sizeof(tSirMacMgmtHdr),
-						session->smeSessionId,
-						WMA_GET_RX_CH(rx_pkt_info),
-				session, WMA_GET_RX_RSSI_RAW(rx_pkt_info));
-			} else {
+			/*
+			 * Check if it is a DPP public action frame and fall
+			 * thru, else drop the frame.
+			 */
+			if (qdf_mem_cmp(pub_action->Oui, dpp_oui, 4)) {
 				pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
 					pub_action->Oui[0], pub_action->Oui[1],
 					pub_action->Oui[2], pub_action->Oui[3]);
+				break;
 			}
-		break;
-		/* Handle vendor specific action */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
-		{
-			tpSirMacMgmtHdr     header;
-			uint32_t            frame_len;
-
-		header = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-		lim_send_sme_mgmt_frame_ind(mac_ctx, header->fc.subType,
-		(uint8_t *)header, frame_len + sizeof(tSirMacMgmtHdr), 0,
-		WMA_GET_RX_CH(rx_pkt_info), NULL,
-			WMA_GET_RX_RSSI_RAW(rx_pkt_info));
-			break;
-		}
-
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
+		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
+		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
+		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
+		case SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE:
 			mac_hdr = NULL;
 			frame_len = 0;
 
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
+			if (frame_len < sizeof(pub_action)) {
+				pe_debug("Received public action frame of invalid len %d",
+					 frame_len);
+				return;
+			}
+
+			/*
+			 * Forward to the SME to HDD to wpa_supplicant
+			 * type is ACTION
+			 */
 			lim_send_sme_mgmt_frame_ind(mac_ctx,
 					mac_hdr->fc.subType,
 					(uint8_t *) mac_hdr,
@@ -2111,11 +2101,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					WMA_GET_RX_CH(rx_pkt_info), session,
 					WMA_GET_RX_RSSI_NORMALIZED(
 					rx_pkt_info));
-		break;
-
-		case SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID:
-			lim_process_ext_channel_switch_action_frame(mac_ctx,
-							rx_pkt_info, session);
 			break;
 		default:
 			pe_warn("Unhandled public action frame: %x",
@@ -2229,55 +2214,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	}
 }
 
-/*
- * lim_process_action_vendor_specific() - Process action frame received
- * @mac_ctx: Pointer to Global MAC structure
- * @pkt_info: A pointer to packet info structure
- * @action_hdr: Pointer to vendor specific action frame hdr
- * @session: PE session entry
- *
- * Return: none
- */
-static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
-			uint8_t *pkt_info,
-			tpSirMacVendorSpecificPublicActionFrameHdr action_hdr,
-			tpPESession session)
-{
-
-	tpSirMacMgmtHdr mac_hdr;
-	uint32_t frame_len;
-	uint8_t session_id = 0;
-	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
-
-	mac_hdr = WMA_GET_RX_MAC_HEADER(pkt_info);
-	frame_len = WMA_GET_RX_PAYLOAD_LEN(pkt_info);
-	if (frame_len < sizeof(action_hdr)) {
-		pe_debug("Received action frame of invalid len %d", frame_len);
-		return;
-	}
-
-	if (session)
-		session_id = session->smeSessionId;
-
-	/* Check if it is a DPP public action frame. */
-	if (!qdf_mem_cmp(action_hdr->Oui, dpp_oui, 4)) {
-		/* Forward to the SME to HDD to wpa_supplicant */
-		/* type is ACTION */
-		lim_send_sme_mgmt_frame_ind(mac_ctx, mac_hdr->fc.subType,
-					    (uint8_t *) mac_hdr, frame_len +
-					    sizeof(tSirMacMgmtHdr), session_id,
-					    WMA_GET_RX_CH(pkt_info), session,
-					    WMA_GET_RX_RSSI_NORMALIZED(
-					    pkt_info));
-	} else {
-		pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
-			 action_hdr->Oui[0],
-			 action_hdr->Oui[1],
-			 action_hdr->Oui[2],
-			 action_hdr->Oui[3]);
-	}
-}
-
 /**
  * lim_process_action_frame_no_session
  *
@@ -2300,6 +2236,9 @@ static void lim_process_action_vendor_specific(tpAniSirGlobal mac_ctx,
 void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 {
 	uint8_t *pBody = WMA_GET_RX_MPDU_DATA(pBd);
+	tpSirMacMgmtHdr mac_hdr;
+	uint32_t frame_len;
+	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
 	tpSirMacVendorSpecificPublicActionFrameHdr pActionHdr =
 		(tpSirMacVendorSpecificPublicActionFrameHdr) pBody;
 
@@ -2309,9 +2248,38 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
 		switch (pActionHdr->actionID) {
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
-			lim_process_action_vendor_specific(pMac, pBd,
-							   pActionHdr, NULL);
-		break;
+			/*
+			 * Check if it is a DPP public action frame and fall
+			 * thru, else drop the frame.
+			 */
+			if (qdf_mem_cmp(pActionHdr->Oui, dpp_oui, 4)) {
+				pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
+					pActionHdr->Oui[0], pActionHdr->Oui[1],
+					pActionHdr->Oui[2], pActionHdr->Oui[3]);
+				break;
+			}
+		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
+		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
+		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
+		case SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE:
+			mac_hdr = WMA_GET_RX_MAC_HEADER(pBd);
+			frame_len = WMA_GET_RX_PAYLOAD_LEN(pBd);
+			if (frame_len < sizeof(pActionHdr)) {
+				pe_debug("Received action frame of invalid len %d",
+					 frame_len);
+				return;
+			}
+			/*
+			 * Forward the GAS frames to  wpa_supplicant
+			 * type is ACTION
+			 */
+			lim_send_sme_mgmt_frame_ind(pMac,
+					mac_hdr->fc.subType,
+					(uint8_t *) mac_hdr,
+					frame_len + sizeof(tSirMacMgmtHdr), 0,
+					WMA_GET_RX_CH(pBd), NULL,
+					WMA_GET_RX_RSSI_NORMALIZED(pBd));
+			break;
 		default:
 			pe_warn("Unhandled public action frame: %x",
 				       pActionHdr->actionID);
