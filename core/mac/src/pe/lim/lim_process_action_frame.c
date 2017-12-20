@@ -467,17 +467,6 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 
 	pe_debug("Received Operating Mode action frame");
-	if (CHAN_ENUM_14 >= session->currentOperChannel)
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
-	else
-		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;
-	/* Do not update the channel bonding mode if channel bonding
-	 * mode is disabled in INI.
-	 */
-	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
-		pe_warn("channel bonding disabled");
-		return;
-	}
 	operating_mode_frm = qdf_mem_malloc(sizeof(*operating_mode_frm));
 	if (NULL == operating_mode_frm) {
 		pe_err("AllocateMemory failed");
@@ -501,6 +490,19 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	if (sta_ptr == NULL) {
 		pe_err("Station context not found");
 		goto end;
+	}
+
+	if (CHAN_ENUM_14 >= session->currentOperChannel)
+		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
+	else
+		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;
+	/*
+	 * Do not update the channel bonding mode if channel bonding
+	 * mode is disabled in INI.
+	 */
+	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
+		pe_warn("channel bonding disabled");
+		goto update_nss;
 	}
 
 	if (sta_ptr->htSupportedChannelWidthSet) {
@@ -564,6 +566,7 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 					     sta_ptr->staIndex, mac_hdr->sa);
 	}
 
+update_nss:
 	if (sta_ptr->vhtSupportedRxNss !=
 			(operating_mode_frm->OperatingMode.rxNSS + 1)) {
 		sta_ptr->vhtSupportedRxNss =
