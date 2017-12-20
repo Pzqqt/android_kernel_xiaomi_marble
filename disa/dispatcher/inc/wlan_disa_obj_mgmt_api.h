@@ -32,7 +32,14 @@
  *
  * Return: QDF_STATUS_SUCCESS - in case of success else return error
  */
+#ifdef WLAN_FEATURE_DISA
 QDF_STATUS disa_init(void);
+#else
+static inline QDF_STATUS disa_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * disa_deinit() - unregister disa notification handlers.
@@ -41,7 +48,44 @@ QDF_STATUS disa_init(void);
  *
  * Return: QDF_STATUS_SUCCESS - in case of success else return error
  */
+#ifdef WLAN_FEATURE_DISA
 QDF_STATUS disa_deinit(void);
+#else
+static inline QDF_STATUS disa_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * disa_psoc_enable() - Trigger psoc enable for DISA
+ * @psoc: objmgr psoc object
+ *
+ * Return: QDF status success or failure
+ */
+#ifdef WLAN_FEATURE_DISA
+QDF_STATUS disa_psoc_enable(struct wlan_objmgr_psoc *psoc);
+#else
+static inline QDF_STATUS disa_psoc_enable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
+/**
+ * disa_psoc_disable() - Trigger psoc disable for DISA
+ * @psoc: objmgr psoc object
+ *
+ * Return: QDF status success or failure
+ */
+#ifdef WLAN_FEATURE_DISA
+QDF_STATUS disa_psoc_disable(struct wlan_objmgr_psoc *psoc);
+#else
+static inline QDF_STATUS disa_psoc_disable(struct wlan_objmgr_psoc *psoc)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * disa_psoc_object_created_notification(): disa psoc create handler
@@ -67,19 +111,4 @@ QDF_STATUS disa_psoc_object_created_notification(
 QDF_STATUS disa_psoc_object_destroyed_notification(
 		struct wlan_objmgr_psoc *psoc, void *arg);
 
-/**
- * disa_psoc_enable() - Trigger psoc enable for DISA
- * @psoc: objmgr psoc object
- *
- * Return: QDF status success or failure
- */
-QDF_STATUS disa_psoc_enable(struct wlan_objmgr_psoc *psoc);
-
-/**
- * disa_psoc_disable() - Trigger psoc disable for DISA
- * @psoc: objmgr psoc object
- *
- * Return: QDF status success or failure
- */
-QDF_STATUS disa_psoc_disable(struct wlan_objmgr_psoc *psoc);
 #endif /* end  of _WLAN_DISA_OBJ_MGMT_API_H_ */

@@ -84,13 +84,4 @@ QDF_STATUS disa_core_encrypt_decrypt_req(struct wlan_objmgr_psoc *psoc,
 		encrypt_decrypt_resp_callback cb,
 		void *cookie);
 
-/**
- * disa_core_encrypt_decrypt_resp() - Collect encrypt/decrypt request resp
- * @psoc: objmgr psoc object
- * @resp: DISA encrypt/decrypt request response parameters
- *
- * Return: QDF status success or failure
- */
-QDF_STATUS disa_core_encrypt_decrypt_resp(struct wlan_objmgr_psoc *psoc,
-		struct disa_encrypt_decrypt_resp_params *resp);
 #endif /* end  of _WLAN_DISA_MAIN_H_ */

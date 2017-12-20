@@ -193,7 +193,6 @@ QDF_STATUS disa_psoc_object_destroyed_notification(
 QDF_STATUS disa_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	return tgt_disa_register_ev_handlers(psoc);
-
 }
 
 /**

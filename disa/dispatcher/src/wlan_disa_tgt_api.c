@@ -33,7 +33,19 @@
 QDF_STATUS tgt_disa_encrypt_decrypt_req(struct wlan_objmgr_psoc *psoc,
 		struct disa_encrypt_decrypt_req_params *req)
 {
-	return QDF_STATUS_SUCCESS;
+	struct wlan_disa_tx_ops *disa_tx_ops;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+
+	DISA_ENTER();
+
+	disa_tx_ops = GET_DISA_TX_OPS_FROM_VDEV(psoc);
+	QDF_ASSERT(disa_tx_ops->disa_encrypt_decrypt_req);
+
+	if (disa_tx_ops->disa_encrypt_decrypt_req)
+		status = disa_tx_ops->disa_encrypt_decrypt_req(psoc, req);
+
+	DISA_EXIT();
+	return status;
 }
 
 /**
@@ -47,6 +59,35 @@ QDF_STATUS tgt_disa_encrypt_decrypt_req(struct wlan_objmgr_psoc *psoc,
 QDF_STATUS tgt_disa_encrypt_decrypt_resp(struct wlan_objmgr_psoc *psoc,
 		struct disa_encrypt_decrypt_resp_params *resp)
 {
+	struct wlan_disa_ctx *disa_ctx;
+	encrypt_decrypt_resp_callback cb;
+	void *cookie;
+
+	DISA_ENTER();
+
+	if (!resp) {
+		disa_err("encrypt/decrypt resp is null");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	disa_ctx = disa_get_context();
+	if (!disa_ctx) {
+		disa_err("DISA context is NULL!");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spin_lock_bh(&disa_ctx->lock);
+	cb = disa_ctx->callback;
+	disa_ctx->callback = NULL;
+	cookie = disa_ctx->callback_context;
+	disa_ctx->callback_context = NULL;
+	disa_ctx->request_active = false;
+	qdf_spin_unlock_bh(&disa_ctx->lock);
+
+	if (cb)
+		cb(cookie, resp);
+
+	DISA_EXIT();
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -58,6 +99,15 @@ QDF_STATUS tgt_disa_encrypt_decrypt_resp(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS tgt_disa_register_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_disa_tx_ops *disa_tx_ops;
+
+	disa_tx_ops = GET_DISA_TX_OPS_FROM_VDEV(psoc);
+
+	QDF_ASSERT(disa_tx_ops->disa_register_ev_handlers);
+
+	if (disa_tx_ops->disa_register_ev_handlers)
+		return disa_tx_ops->disa_register_ev_handlers(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -69,6 +119,15 @@ QDF_STATUS tgt_disa_register_ev_handlers(struct wlan_objmgr_psoc *psoc)
  */
 QDF_STATUS tgt_disa_unregister_ev_handlers(struct wlan_objmgr_psoc *psoc)
 {
+	struct wlan_disa_tx_ops *disa_tx_ops;
+
+	disa_tx_ops = GET_DISA_TX_OPS_FROM_VDEV(psoc);
+
+	QDF_ASSERT(disa_tx_ops->disa_unregister_ev_handlers);
+
+	if (disa_tx_ops->disa_unregister_ev_handlers)
+		return disa_tx_ops->disa_unregister_ev_handlers(psoc);
+
 	return QDF_STATUS_SUCCESS;
 }
 
