@@ -202,12 +202,20 @@ enum block_ack_actioncode {
  * @PUB_ACTION_2040_BSS_COEXISTENCE:  public 20-40 bss coex action frame
  * @PUB_ACTION_EXT_CHANNEL_SWITCH_ID: public ext channel switch id action frame
  * @PUB_ACTION_VENDOR_SPECIFIC: vendor specific public action frame
+ * @PUB_ACTION_GAS_INITIAL_REQUEST: GAS initial request action frame
+ * @PUB_ACTION_GAS_INITIAL_RESPONSE: GAS initial response action frame
+ * @PUB_ACTION_GAS_COMEBACK_REQUEST: GAS comeback request action frame
+ * @PUB_ACTION_GAS_COMEBACK_RESPONSE: GAS comeback respose action frame
  * @PUB_ACTION_TDLS_DISCRESP: tdls discovery response public action frame
  */
 enum pub_actioncode {
 	PUB_ACTION_2040_BSS_COEXISTENCE = 0,
 	PUB_ACTION_EXT_CHANNEL_SWITCH_ID = 4,
 	PUB_ACTION_VENDOR_SPECIFIC = 9,
+	PUB_ACTION_GAS_INITIAL_REQUEST = 10,
+	PUB_ACTION_GAS_INITIAL_RESPONSE = 11,
+	PUB_ACTION_GAS_COMEBACK_REQUEST = 12,
+	PUB_ACTION_GAS_COMEBACK_RESPONSE = 13,
 	PUB_ACTION_TDLS_DISCRESP = 14,
 };
 
@@ -495,6 +503,10 @@ struct action_frm_hdr {
  * @MGMT_ACTION_VHT_OPMODE_NOTIF: vht opmode notification action frame
  * @MGMT_FRAME_TYPE_ALL:         mgmt frame type for all type of frames
  * @MGMT_MAX_FRAME_TYPE:         max. mgmt frame types
+ * @MGMT_ACTION_GAS_INITIAL_REQUEST: GAS Initial request action frame
+ * @MGMT_ACTION_GAS_INITIAL_RESPONSE: GAS Initial response action frame
+ * @MGMT_ACTION_GAS_COMEBACK_REQUEST: GAS Comeback request action frame
+ * @MGMT_ACTION_GAS_COMEBACK_RESPONSE: GAS Comeback response action frame
  */
 enum mgmt_frame_type {
 	MGMT_FRM_UNSPECIFIED = -1,
@@ -588,6 +600,10 @@ enum mgmt_frame_type {
 	MGMT_ACTION_VHT_COMPRESSED_BF,
 	MGMT_ACTION_VHT_GID_NOTIF,
 	MGMT_ACTION_VHT_OPMODE_NOTIF,
+	MGMT_ACTION_GAS_INITIAL_REQUEST,
+	MGMT_ACTION_GAS_INITIAL_RESPONSE,
+	MGMT_ACTION_GAS_COMEBACK_REQUEST,
+	MGMT_ACTION_GAS_COMEBACK_RESPONSE,
 	MGMT_FRAME_TYPE_ALL,
 	MGMT_MAX_FRAME_TYPE,
 };

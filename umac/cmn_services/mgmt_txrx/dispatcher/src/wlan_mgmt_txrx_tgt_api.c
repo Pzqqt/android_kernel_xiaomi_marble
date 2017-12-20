@@ -196,6 +196,18 @@ mgmt_get_public_action_subtype(uint8_t action_code)
 	case PUB_ACTION_TDLS_DISCRESP:
 		frm_type = MGMT_ACTION_TDLS_DISCRESP;
 		break;
+	case PUB_ACTION_GAS_INITIAL_REQUEST:
+		frm_type = MGMT_ACTION_GAS_INITIAL_REQUEST;
+		break;
+	case PUB_ACTION_GAS_INITIAL_RESPONSE:
+		frm_type = MGMT_ACTION_GAS_INITIAL_RESPONSE;
+		break;
+	case PUB_ACTION_GAS_COMEBACK_REQUEST:
+		frm_type = MGMT_ACTION_GAS_COMEBACK_REQUEST;
+		break;
+	case PUB_ACTION_GAS_COMEBACK_RESPONSE:
+		frm_type = MGMT_ACTION_GAS_COMEBACK_RESPONSE;
+		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;
 		break;
