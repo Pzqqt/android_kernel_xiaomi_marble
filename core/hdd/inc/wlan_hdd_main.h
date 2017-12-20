@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1840,8 +1840,7 @@ QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx,
 			     struct hdd_adapter *adapter,
 			     bool rtnl_held);
 QDF_STATUS hdd_close_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
-QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
-				 bool close_session);
+QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx);
 void hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held);
 QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx);
 QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx);
@@ -1862,8 +1861,7 @@ void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter,
 			bool rtnl_held);
 QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
-			    struct hdd_adapter *adapter,
-			    const bool bCloseSession);
+			    struct hdd_adapter *adapter);
 void hdd_set_station_ops(struct net_device *dev);
 uint8_t *wlan_hdd_get_intf_addr(struct hdd_context *hdd_ctx);
 void wlan_hdd_release_intf_addr(struct hdd_context *hdd_ctx,
@@ -2377,7 +2375,6 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx);
 int hdd_start_station_adapter(struct hdd_adapter *adapter);
 int hdd_start_ap_adapter(struct hdd_adapter *adapter);
 int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter);
-int hdd_start_ftm_adapter(struct hdd_adapter *adapter);
 int hdd_set_fw_params(struct hdd_adapter *adapter);
 int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 			   struct hdd_adapter *adapter,

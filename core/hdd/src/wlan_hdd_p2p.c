@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -855,7 +855,7 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	} else {
 		wlan_hdd_release_intf_addr(hdd_ctx,
 					 pVirtAdapter->mac_addr.bytes);
-		hdd_stop_adapter(hdd_ctx, pVirtAdapter, true);
+		hdd_stop_adapter(hdd_ctx, pVirtAdapter);
 		hdd_deinit_adapter(hdd_ctx, pVirtAdapter, true);
 		hdd_close_adapter(hdd_ctx, pVirtAdapter, true);
 	}

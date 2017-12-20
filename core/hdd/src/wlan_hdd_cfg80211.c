@@ -9718,7 +9718,7 @@ int wlan_hdd_request_pre_cac(uint8_t channel)
 	return 0;
 
 stop_close_pre_cac_adapter:
-	hdd_stop_adapter(hdd_ctx, pre_cac_adapter, true);
+	hdd_stop_adapter(hdd_ctx, pre_cac_adapter);
 	qdf_mem_free(pre_cac_adapter->session.ap.beacon);
 	pre_cac_adapter->session.ap.beacon = NULL;
 close_pre_cac_adapter:
@@ -14123,7 +14123,7 @@ static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 	}
 
 	wdev = ndev->ieee80211_ptr;
-	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 	wdev->iftype = type;
 	/*Check for sub-string p2p to confirm its a p2p interface */
@@ -14293,7 +14293,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					(adapter);
 			}
 
-			hdd_stop_adapter(hdd_ctx, adapter, true);
+			hdd_stop_adapter(hdd_ctx, adapter);
 			/* De-init the adapter */
 			hdd_deinit_adapter(hdd_ctx, adapter, true);
 			memset(&adapter->session, 0,

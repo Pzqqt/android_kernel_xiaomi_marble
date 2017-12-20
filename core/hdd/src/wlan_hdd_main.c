@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2099,19 +2099,16 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 		 * For IBSS interface is initialized as part of
 		 * hdd_init_station_mode()
 		 */
-		return 0;
+		goto exit_with_success;
 	case QDF_FTM_MODE:
-		ret = hdd_start_ftm_adapter(adapter);
-		if (ret)
-			goto err_start_adapter;
-		else
-			goto ftm_complete;
-	break;
+		/* vdevs are dynamically managed by firmware in FTM */
+		goto exit_with_success;
 	default:
 		hdd_err("Invalid session type %d", device_mode);
 		QDF_ASSERT(0);
 		goto err_start_adapter;
 	}
+
 	if (hdd_set_fw_params(adapter))
 		hdd_err("Failed to set the FW params for the adapter!");
 
@@ -2125,9 +2122,11 @@ int hdd_start_adapter(struct hdd_adapter *adapter)
 		goto err_start_adapter;
 	}
 
-ftm_complete:
+exit_with_success:
 	EXIT();
+
 	return 0;
+
 err_start_adapter:
 	return -EINVAL;
 }
@@ -2859,7 +2858,7 @@ static int __hdd_stop(struct net_device *dev)
 	 * Notice that hdd_stop_adapter is requested not to close the session
 	 * That is intentional to be able to scan if it is a STA/P2P interface
 	 */
-	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_stop_adapter(hdd_ctx, adapter);
 
 	/* DeInit the adapter. This ensures datapath cleanup as well */
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
@@ -4554,8 +4553,8 @@ void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter)
 	}
 }
 
-QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
-			    const bool bCloseSession)
+QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
+			    struct hdd_adapter *adapter)
 {
 	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	struct hdd_wext_state *pWextState =
@@ -4651,19 +4650,14 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		if (adapter->device_mode == QDF_STA_MODE)
 			wlan_cfg80211_sched_scan_stop(hdd_ctx->hdd_pdev,
 						      adapter->dev);
-		/*
-		 * It is possible that the caller of this function does not
-		 * wish to close the session
-		 */
-		if (true == bCloseSession) {
-			if (0 != wlan_hdd_try_disconnect(adapter)) {
-				hdd_err("Error: Can't disconnect adapter");
-				return QDF_STATUS_E_FAILURE;
-			}
-			hdd_debug("Destroying adapter: %d",
-				  adapter->session_id);
-			hdd_vdev_destroy(adapter);
+
+		if (wlan_hdd_try_disconnect(adapter)) {
+			hdd_err("Error: Can't disconnect adapter");
+			return QDF_STATUS_E_FAILURE;
 		}
+
+		hdd_vdev_destroy(adapter);
+
 		break;
 
 	case QDF_SAP_MODE:
@@ -4765,11 +4759,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *ada
 		cancel_work_sync(&adapter->ipv6_notifier_work);
 #endif
 #endif
-		if (true == bCloseSession) {
-			hdd_debug("Destroying adapter: %d",
-				  adapter->session_id);
-			hdd_vdev_destroy(adapter);
-		}
+
+		hdd_vdev_destroy(adapter);
+
 		mutex_unlock(&hdd_ctx->sap_lock);
 		break;
 	case QDF_OCB_MODE:
@@ -4809,8 +4801,7 @@ void  hdd_deinit_all_adapters(struct hdd_context *hdd_ctx, bool rtnl_held)
 	EXIT();
 }
 
-QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
-				 bool close_session)
+QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 
@@ -4819,7 +4810,7 @@ QDF_STATUS hdd_stop_all_adapters(struct hdd_context *hdd_ctx,
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	hdd_for_each_adapter(hdd_ctx, adapter)
-		hdd_stop_adapter(hdd_ctx, adapter, close_session);
+		hdd_stop_adapter(hdd_ctx, adapter);
 
 	EXIT();
 
@@ -6235,7 +6226,7 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 		 */
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		hdd_abort_sched_scan_all_adapters(hdd_ctx);
-		hdd_stop_all_adapters(hdd_ctx, true);
+		hdd_stop_all_adapters(hdd_ctx);
 		hdd_deinit_all_adapters(hdd_ctx, false);
 	}
 
@@ -8394,31 +8385,6 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 
 	EXIT();
 	return 0;
-}
-
-/**
- * hdd_start_ftm_adapter()- Start FTM adapter
- * @adapter: HDD adapter
- *
- * This function initializes the adapter for the FTM mode.
- *
- * Return: 0 on success or errno on failure.
- */
-int hdd_start_ftm_adapter(struct hdd_adapter *adapter)
-{
-	QDF_STATUS qdf_status;
-
-	ENTER_DEV(adapter->dev);
-
-	qdf_status = hdd_init_tx_rx(adapter);
-
-	if (QDF_STATUS_SUCCESS != qdf_status) {
-		hdd_err("Failed to start FTM adapter: %d", qdf_status);
-		return qdf_status_to_os_return(qdf_status);
-	}
-
-	return 0;
-	EXIT();
 }
 
 static int hdd_open_concurrent_interface(struct hdd_context *hdd_ctx,
@@ -11895,9 +11861,8 @@ static void hdd_stop_present_mode(struct hdd_context *hdd_ctx,
 	case QDF_GLOBAL_FTM_MODE:
 		hdd_abort_mac_scan_all_adapters(hdd_ctx);
 		wlan_cfg80211_cleanup_scan_queue(hdd_ctx->hdd_pdev);
+		hdd_stop_all_adapters(hdd_ctx);
 
-		/* re-use the existing session */
-		hdd_stop_all_adapters(hdd_ctx, false);
 		break;
 	default:
 		break;
@@ -12071,16 +12036,13 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 		goto reset_flags;
 	}
 
-	if (con_mode == QDF_GLOBAL_MONITOR_MODE ||
-	    con_mode == QDF_GLOBAL_FTM_MODE) {
+	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
 		if (hdd_start_adapter(adapter)) {
 			hdd_err("Failed to start %s adapter", kmessage);
 			ret = -EINVAL;
 			goto reset_flags;
 		}
-	}
 
-	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
 		hdd_info("Acquire wakelock for monitor mode!");
 		qdf_wake_lock_acquire(&hdd_ctx->monitor_mode_wakelock,
 				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);

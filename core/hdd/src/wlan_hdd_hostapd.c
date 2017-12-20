@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -515,7 +515,7 @@ static int __hdd_hostapd_stop(struct net_device *dev)
 	 * needs to de-init the sap session here and re-init when
 	 * __hdd_hostapd_open() API
 	 */
-	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_deinit_adapter(hdd_ctx, adapter, true);
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
 	/* Stop all tx queues */
@@ -1107,7 +1107,7 @@ static void __wlan_hdd_sap_pre_cac_failure(void *data)
 
 	wlan_hdd_release_intf_addr(hdd_ctx,
 				   adapter->mac_addr.bytes);
-	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_close_adapter(hdd_ctx, adapter, false);
 }
 
@@ -1158,7 +1158,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	cds_ssr_protect(__func__);
 	wlan_hdd_release_intf_addr(hdd_ctx,
 				   adapter->mac_addr.bytes);
-	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_stop_adapter(hdd_ctx, adapter);
 	hdd_close_adapter(hdd_ctx, adapter, false);
 	cds_ssr_unprotect(__func__);
 
