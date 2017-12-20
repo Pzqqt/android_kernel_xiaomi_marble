@@ -4942,6 +4942,7 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 	tDot11fIEWPA dot11WPAIE;
 	uint8_t *pRsnIe;
 	uint16_t RSNIeLen;
+	uint32_t parse_status;
 
 	/*
 	 * Clear struct of tDot11fIERSN and tDot11fIEWPA specifically
@@ -4963,8 +4964,13 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		pRsnIe = gen_ie + 2;
 		RSNIeLen = gen_ie_len - 2;
 		/* Unpack the RSN IE */
-		sme_unpack_rsn_ie(halHandle, pRsnIe, RSNIeLen,
+		parse_status = sme_unpack_rsn_ie(halHandle, pRsnIe, RSNIeLen,
 				  &dot11RSNIE, false);
+		if (!DOT11F_SUCCEEDED(parse_status)) {
+			hdd_err("Invalid RSN IE: parse status %d",
+				parse_status);
+			return -EINVAL;
+		}
 		/* Copy out the encryption and authentication types */
 		hdd_debug("pairwise cipher suite count: %d",
 			 dot11RSNIE.pwise_cipher_suite_count);
@@ -4999,8 +5005,13 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 		pRsnIe = gen_ie + 2 + 4;
 		RSNIeLen = gen_ie_len - (2 + 4);
 		/* Unpack the WPA IE */
-		dot11f_unpack_ie_wpa((tpAniSirGlobal) halHandle,
+		parse_status = dot11f_unpack_ie_wpa((tpAniSirGlobal) halHandle,
 				     pRsnIe, RSNIeLen, &dot11WPAIE, false);
+		if (!DOT11F_SUCCEEDED(parse_status)) {
+			hdd_err("Invalid WPA IE: parse status %d",
+				parse_status);
+			return -EINVAL;
+		}
 		/* Copy out the encryption and authentication types */
 		hdd_debug("WPA unicast cipher suite count: %d",
 			 dot11WPAIE.unicast_cipher_count);
@@ -5027,6 +5038,37 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 }
 
 /**
+ * hdd_set_def_rsne_override() - set default encryption type and auth type
+ * in profile.
+ * @roam_profile: pointer to adapter
+ * @auth_type: pointer to auth type
+ *
+ * Set default value of encryption type and auth type in profile to
+ * search the AP using filter, as in force_rsne_override the RSNIE can be
+ * currupt and we might not get the proper encryption type and auth type
+ * while parsing the RSNIE.
+ *
+ * Return: void
+ */
+static void hdd_set_def_rsne_override(
+	tCsrRoamProfile *roam_profile, eCsrAuthType *auth_type)
+{
+
+	hdd_debug("Set def values in roam profile");
+	roam_profile->MFPCapable = roam_profile->MFPEnabled;
+	roam_profile->EncryptionType.numEntries = 2;
+	roam_profile->mcEncryptionType.numEntries = 2;
+		/* Use the cipher type in the RSN IE */
+	roam_profile->EncryptionType.encryptionType[0] = eCSR_ENCRYPT_TYPE_AES;
+	roam_profile->EncryptionType.encryptionType[1] = eCSR_ENCRYPT_TYPE_TKIP;
+	roam_profile->mcEncryptionType.encryptionType[0] =
+		eCSR_ENCRYPT_TYPE_AES;
+	roam_profile->mcEncryptionType.encryptionType[1] =
+		eCSR_ENCRYPT_TYPE_TKIP;
+	*auth_type = eCSR_AUTH_TYPE_RSN_PSK;
+}
+
+/**
  * hdd_set_genie_to_csr() - set genie to csr
  * @adapter: pointer to adapter
  * @RSNAuthType: pointer to auth type
@@ -5041,6 +5083,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	uint32_t status = 0;
 	eCsrEncryptionType RSNEncryptType;
 	eCsrEncryptionType mcRSNEncryptType;
+	struct hdd_context *hdd_ctx;
 #ifdef WLAN_FEATURE_11W
 	uint8_t RSNMfpRequired = 0;
 	uint8_t RSNMfpCapable = 0;
@@ -5057,6 +5100,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 	} else {
 		return 0;
 	}
+
 	/* The actual processing may eventually be more extensive than this. */
 	/* Right now, just consume any PMKIDs that are  sent in by the app. */
 	status = hdd_process_genie(adapter, bssid,
@@ -5067,6 +5111,7 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 #endif
 				   pWextState->WPARSNIE[1] + 2,
 				   pWextState->WPARSNIE);
+
 	if (status == 0) {
 		/*
 		 * Now copy over all the security attributes
@@ -5106,6 +5151,21 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 #endif
 		hdd_debug("CSR AuthType = %d, EncryptionType = %d mcEncryptionType = %d",
 			 *RSNAuthType, RSNEncryptType, mcRSNEncryptType);
+	}
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	if (hdd_ctx->force_rsne_override &&
+	    (pWextState->WPARSNIE[0] == DOT11F_EID_RSN)) {
+		hdd_warn("Test mode enabled set def Auth and enc type. RSN IE passed in connect req: ");
+		qdf_trace_hex_dump(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
+				   pWextState->roamProfile.pRSNReqIE,
+				   pWextState->roamProfile.nRSNReqIELength);
+
+		pWextState->roamProfile.force_rsne_override = true;
+		/* If parsing failed set the def value for the roam profile */
+		if (status)
+			hdd_set_def_rsne_override(&pWextState->roamProfile,
+					    RSNAuthType);
 	}
 	return 0;
 }

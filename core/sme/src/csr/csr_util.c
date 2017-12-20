@@ -4693,6 +4693,22 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	do {
 		if (!csr_is_profile_rsn(pProfile))
 			break;
+		/* copy RSNIE from user as it is if test mode is enabled */
+		if (pProfile->force_rsne_override &&
+		    pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
+			sme_debug("force_rsne_override, copy RSN IE provided by user");
+			if (pProfile->nRSNReqIELength <=
+					DOT11F_IE_RSN_MAX_LEN) {
+				cbRsnIe = (uint8_t) pProfile->nRSNReqIELength;
+				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
+					     cbRsnIe);
+			} else {
+				sme_warn("csr_retrieve_rsn_ie detect invalid RSN IE length (%d)",
+					pProfile->nRSNReqIELength);
+			}
+			break;
+		}
+
 		if (csr_roam_is_fast_roam_enabled(pMac, sessionId)) {
 			/* If "Legacy Fast Roaming" is enabled ALWAYS rebuild
 			 * the RSN IE from scratch. So it contains the current

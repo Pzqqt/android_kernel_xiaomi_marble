@@ -13471,6 +13471,30 @@ enum hdd_external_acs_freq_band {
 
 /*
  * <ini>
+ * force_rsne_override - force rsnie override from user
+ * @Min: 0
+ * @Max: 1
+ * @Default: 0
+ *
+ * This ini is used to enable/disable test mode to force rsne override used in
+ * security enhancement test cases to pass the RSNIE sent by user in
+ * assoc request.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: internal
+ *
+ * </ini>
+ */
+#define CFG_FORCE_RSNE_OVERRIDE_NAME    "force_rsne_override"
+#define CFG_FORCE_RSNE_OVERRIDE_MIN     (0)
+#define CFG_FORCE_RSNE_OVERRIDE_MAX     (1)
+#define CFG_FORCE_RSNE_OVERRIDE_DEFAULT (0)
+
+/*
+ * <ini>
  * gChanSwitchHostapdRateEnabled - Enable/disable hostapd rate when doing SAP
  * channel switch
  * @Min: 0
@@ -14824,6 +14848,7 @@ struct hdd_config {
 	uint32_t oce_wan_score_slots11_to_8;
 	uint32_t oce_wan_score_slots15_to_12;
 	bool enable_scoring_for_roam;
+	bool force_rsne_override;
 	bool is_fils_enabled;
 	uint16_t wlm_latency_enable;
 	uint16_t wlm_latency_level;

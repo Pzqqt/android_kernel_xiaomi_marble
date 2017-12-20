@@ -490,7 +490,13 @@ uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal pMac, tpSirSmeJoinReq pJoinReq)
 {
 	uint8_t valid = true;
 
-	if (!lim_is_rsn_ie_valid_in_sme_req_message(pMac, &pJoinReq->rsnIE)) {
+	/*
+	 * If force_rsne_override is enabled that mean User has provided the
+	 * test RSNIE which need to be send as it is in assoc req and thus RSNIE
+	 * validity is not required.
+	 */
+	if (!pJoinReq->force_rsne_override &&
+	    !lim_is_rsn_ie_valid_in_sme_req_message(pMac, &pJoinReq->rsnIE)) {
 		pe_err("received SME_JOIN_REQ with invalid RSNIE");
 		valid = false;
 		goto end;
