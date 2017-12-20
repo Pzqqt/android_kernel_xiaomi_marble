@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3324,7 +3324,7 @@ static inline void ol_txrx_peer_free_tids(ol_txrx_peer_handle peer)
  *
  * Release peer reference and delete peer if refcount is 0
  *
- * Return: None
+ * Return: Resulting peer ref_cnt after this function is invoked
  */
 int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 			     enum peer_debug_id_type debug_id)
@@ -3500,6 +3500,9 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		/* Remove mappings from peer_id to peer object */
 		ol_txrx_peer_clear_map_peer(pdev, peer);
 
+		/* Remove peer pointer from local peer ID map */
+		ol_txrx_local_peer_id_free(pdev, peer);
+
 		ol_txrx_peer_free_tids(peer);
 
 		ol_txrx_dump_peer_access_list(peer);
@@ -3631,7 +3634,6 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 
 	/* flush all rx packets before clearing up the peer local_id */
 	ol_txrx_clear_peer_internal(peer);
-	ol_txrx_local_peer_id_free(peer->vdev->pdev, peer);
 
 	/* debug print to dump rx reorder state */
 	/* htt_rx_reorder_log_print(vdev->pdev->htt_pdev); */
