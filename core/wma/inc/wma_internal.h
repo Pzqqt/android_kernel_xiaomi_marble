@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1138,17 +1138,6 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 				       struct sir_mac_pwr_dbg_cmd *
 				       sir_pwr_dbg_params);
-
-#ifdef WLAN_FEATURE_DISA
-int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
-			uint32_t data_len);
-#else
-static inline int wma_encrypt_decrypt_msg_handler(void *handle, uint8_t *data,
-			uint32_t data_len)
-{
-	return 0;
-}
-#endif
 
 /**
  * wma_lost_link_info_handler() - collect lost link information and inform SME

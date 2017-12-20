@@ -2903,10 +2903,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_get_bpf_caps_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-				wmi_vdev_encrypt_decrypt_data_rsp_event_id,
-				wma_encrypt_decrypt_msg_handler,
-				WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   wmi_chan_info_event_id,
 					   wma_chan_info_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
@@ -7947,10 +7943,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case WMA_SEND_FREQ_RANGE_CONTROL_IND:
 		wma_enable_disable_caevent_ind(wma_handle, msg->bodyval);
-		break;
-	case WMA_ENCRYPT_DECRYPT_MSG:
-		wma_encrypt_decrypt_msg(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_UPDATE_TX_FAIL_CNT_TH:
 		wma_update_tx_fail_cnt_th(wma_handle, msg->bodyptr);

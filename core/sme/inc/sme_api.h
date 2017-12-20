@@ -1385,22 +1385,6 @@ QDF_STATUS sme_update_session_param(tHalHandle hal, uint8_t session_id,
  */
 QDF_STATUS sme_update_fils_setting(tHalHandle hal, uint8_t session_id,
 				   uint8_t param_val);
-#ifdef WLAN_FEATURE_DISA
-/**
- * sme_encrypt_decrypt_msg() - handles encrypt/decrypt mesaage
- * @hal: HAL handle
- * @encrypt_decrypt_params: struct to set encryption/decryption params.
- * @callback: callback function to be called with the result
- * @context: Opaque context to be passed to callback function
- *
- * Return: QDF_STATUS enumeration.
- */
-QDF_STATUS sme_encrypt_decrypt_msg(tHalHandle hal,
-		struct encrypt_decrypt_req_params *encrypt_decrypt_params,
-		sme_encrypt_decrypt_callback callback,
-		void *context);
-#endif
-
 #ifdef WLAN_FEATURE_FIPS
 /**
  * sme_fips_request() - Perform a FIPS certification operation
