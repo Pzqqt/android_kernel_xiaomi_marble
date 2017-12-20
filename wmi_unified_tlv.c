@@ -5155,7 +5155,7 @@ end:
  */
 static
 QDF_STATUS send_encrypt_decrypt_send_cmd_tlv(wmi_unified_t wmi_handle,
-		struct encrypt_decrypt_req_params *encrypt_decrypt_params)
+		struct disa_encrypt_decrypt_req_params *encrypt_decrypt_params)
 {
 	wmi_vdev_encrypt_decrypt_data_req_cmd_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
@@ -5227,8 +5227,49 @@ QDF_STATUS send_encrypt_decrypt_send_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
-#endif
 
+/**
+ * extract_encrypt_decrypt_resp_event_tlv() - extract encrypt decrypt resp
+ *	params from event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @resp: Pointer to hold resp parameters
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+static
+QDF_STATUS extract_encrypt_decrypt_resp_event_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, struct disa_encrypt_decrypt_resp_params *resp)
+{
+	WMI_VDEV_ENCRYPT_DECRYPT_DATA_RESP_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_encrypt_decrypt_data_resp_event_fixed_param *data_event;
+
+	param_buf = evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("encrypt decrypt resp evt_buf is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	data_event = param_buf->fixed_param;
+
+	resp->vdev_id = data_event->vdev_id;
+	resp->status = data_event->status;
+
+	if (data_event->data_length > param_buf->num_enc80211_frame) {
+		WMI_LOGE("FW msg data_len %d more than TLV hdr %d",
+			 data_event->data_length,
+			 param_buf->num_enc80211_frame);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	resp->data_len = data_event->data_length;
+
+	if (resp->data_len)
+		resp->data = (uint8_t *)param_buf->enc80211_frame;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * send_p2p_go_set_beacon_ie_cmd_tlv() - set beacon IE for p2p go
@@ -21124,8 +21165,12 @@ struct wmi_ops tlv_ops =  {
 	.extract_chan_info_event = extract_chan_info_event_tlv,
 	.extract_channel_hopping_event = extract_channel_hopping_event_tlv,
 	.send_fw_test_cmd = send_fw_test_cmd_tlv,
+#ifdef WLAN_FEATURE_DISA
 	.send_encrypt_decrypt_send_cmd =
 				send_encrypt_decrypt_send_cmd_tlv,
+	.extract_encrypt_decrypt_resp_event =
+				extract_encrypt_decrypt_resp_event_tlv,
+#endif
 	.send_sar_limit_cmd = send_sar_limit_cmd_tlv,
 	.send_power_dbg_cmd = send_power_dbg_cmd_tlv,
 	.send_multiple_vdev_restart_req_cmd =
