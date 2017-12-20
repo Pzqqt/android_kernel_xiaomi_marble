@@ -26,7 +26,7 @@
 #include "wlan_disa_public_struct.h"
 
 #define GET_DISA_TX_OPS_FROM_VDEV(vedv) \
-	(disa_psoc_get_priv(psoc)->disa_tx_ops)
+	(&disa_psoc_get_priv(psoc)->disa_tx_ops)
 
 /**
  * tgt_disa_encrypt_decrypt_req() - send encrypt/decrypt request to target if

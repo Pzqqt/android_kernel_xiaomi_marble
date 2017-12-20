@@ -51,6 +51,7 @@ struct disa_psoc_priv_obj {
 struct wlan_disa_ctx {
 	encrypt_decrypt_resp_callback callback;
 	void *callback_context;
+	bool request_active;
 	qdf_spinlock_t lock;
 };
 
