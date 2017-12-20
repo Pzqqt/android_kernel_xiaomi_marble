@@ -175,6 +175,7 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	struct target_psoc_info *tgt_hdl;
 	void *wmi_handle;
 	struct tgt_info *info;
+	wmi_legacy_service_ready_callback legacy_callback;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL in service ready handler");
@@ -235,6 +236,11 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		if (err_code)
 			goto exit;
 	}
+
+	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (legacy_callback)
+		legacy_callback(wmi_service_ready_ext_event_id,
+				scn_handle, event, data_len);
 
 	info->wlan_res_cfg.num_vdevs = (target_psoc_get_num_radios(tgt_hdl) *
 					info->wlan_res_cfg.num_vdevs);
@@ -303,6 +309,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	struct tgt_info *info;
 	uint8_t i;
 	struct wmi_host_ready_ev_param ready_ev;
+	wmi_legacy_service_ready_callback legacy_callback;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL");
@@ -363,6 +370,12 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	/* Set hw address in PSOC object */
 	wlan_psoc_set_hw_macaddr(psoc, myaddr);
 
+	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (legacy_callback)
+		legacy_callback(wmi_ready_event_id,
+				scn_handle, event, data_len);
+
+
 	for (i = 0; i < target_psoc_get_num_radios(tgt_hdl); i++) {
 		/* Temp change -
 		 * This may eihter come from FW or host needs derive.
@@ -376,6 +389,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		wlan_pdev_set_hw_macaddr(pdev, myaddr);
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_INIT_DEINIT_ID);
 	}
+
 	tgt_hdl->info.wmi_ready = TRUE;
 	init_deinit_wakeup_host_wait(psoc, tgt_hdl);
 
