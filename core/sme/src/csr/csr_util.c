@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3869,6 +3869,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 #endif
 	tDot11fBeaconIEs *pIesLocal = pIes;
 	eCsrAuthType negAuthType = eCSR_AUTH_TYPE_UNKNOWN;
+	tDot11fIERSN rsn_ie;
 
 	qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
 	do {
@@ -3881,6 +3882,19 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			     (csr_get_parsed_bss_description_ies
 				     (pMac, pSirBssDesc, &pIesLocal)))) {
 			break;
+		}
+
+		/*
+		 * Use intersection of the RSN cap sent by user space and
+		 * the AP, so that only common capability are enabled.
+		 */
+		if (pProfile->pRSNReqIE && pProfile->nRSNReqIELength) {
+			dot11f_unpack_ie_rsn(pMac, pProfile->pRSNReqIE + 2,
+				  pProfile->nRSNReqIELength -2, &rsn_ie, false);
+			pIesLocal->RSN.RSN_Cap[0] = pIesLocal->RSN.RSN_Cap[0] &
+						    rsn_ie.RSN_Cap[0];
+			pIesLocal->RSN.RSN_Cap[1] = pIesLocal->RSN.RSN_Cap[1] &
+						    rsn_ie.RSN_Cap[1];
 		}
 		/* See if the cyphers in the Bss description match with the
 		 * settings in the profile.
@@ -3914,14 +3928,12 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		qdf_mem_copy(&pAuthSuite->AuthOui[0], AuthSuite,
 			     sizeof(AuthSuite));
 
-		/* RSN capabilities follows the Auth Suite (two octects)
-		 * !!REVIEW - What should STA put in RSN capabilities, currently
-		 * just putting back APs capabilities For one, we shouldn't
-		 * EVER be sending out "pre-auth supported".  It is an AP only
-		 * capability For another, we should use the Management Frame
-		 * Protection values given by the supplicant
-		 */
+		/* PreAuthSupported is an AP only capability */
 		RSNCapabilities.PreAuthSupported = 0;
+		/*
+		 * Use the Management Frame Protection values given by the
+		 * supplicant, if AP and STA both are MFP capable.
+		 */
 #ifdef WLAN_FEATURE_11W
 		if (RSNCapabilities.MFPCapable && pProfile->MFPCapable) {
 			RSNCapabilities.MFPCapable = pProfile->MFPCapable;
