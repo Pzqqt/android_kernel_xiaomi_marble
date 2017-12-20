@@ -199,6 +199,10 @@ static const u32 hdd_cipher_suites[] = {
 #endif
 #ifdef WLAN_FEATURE_11W
 	WLAN_CIPHER_SUITE_AES_CMAC,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+	WLAN_CIPHER_SUITE_BIP_GMAC_128,
+	WLAN_CIPHER_SUITE_BIP_GMAC_256,
+#endif
 #endif
 	WLAN_CIPHER_SUITE_GCMP,
 	WLAN_CIPHER_SUITE_GCMP_256,
@@ -15121,6 +15125,14 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	case WLAN_CIPHER_SUITE_AES_CMAC:
 		setKey.encType = eCSR_ENCRYPT_TYPE_AES_CMAC;
 		break;
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0))
+	case WLAN_CIPHER_SUITE_BIP_GMAC_128:
+		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GMAC_128;
+		break;
+	case WLAN_CIPHER_SUITE_BIP_GMAC_256:
+		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GMAC_256;
+		break;
+#endif
 #endif
 	case WLAN_CIPHER_SUITE_GCMP:
 		setKey.encType = eCSR_ENCRYPT_TYPE_AES_GCMP;

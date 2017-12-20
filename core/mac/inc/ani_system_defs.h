@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -96,6 +96,8 @@ typedef enum eAniEdType {
 	/* Firmware uses key length to find GCMP 128 or 256 */
 	eSIR_ED_GCMP,
 	eSIR_ED_GCMP_256,
+	eSIR_ED_AES_GMAC_128,
+	eSIR_ED_AES_GMAC_256,
 	eSIR_ED_NOT_IMPLEMENTED = SIR_MAX_ENUM_SIZE
 } tAniEdType;
 

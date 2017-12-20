@@ -139,6 +139,16 @@ uint8_t csr_wapi_oui[][CSR_WAPI_OUI_SIZE] = {
 uint8_t csr_wme_info_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 uint8_t csr_wme_parm_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 
+uint8_t csr_group_mgmt_oui[][CSR_RSN_OUI_SIZE] = {
+#define ENUM_CMAC 0
+	{0x00, 0x0F, 0xAC, 0x06},
+#define ENUM_GMAC_128 1
+	{0x00, 0x0F, 0xAC, 0x0B},
+#define ENUM_GMAC_256 2
+	{0x00, 0x0F, 0xAC, 0x0C},
+};
+
+
 /* ////////////////////////////////////////////////////////////////////// */
 
 /**
@@ -3240,7 +3250,7 @@ static bool csr_is_auth_dpp_rsn(tpAniSirGlobal mac,
  * @suite_count: all supported akm suites count
  * @oui: Oui needs to be matched
  *
- * Return: True if OUI is SAE, false otherwise
+ * Return: True if OUI is OWE, false otherwise
  */
 static bool csr_is_auth_wpa_owe(tpAniSirGlobal mac,
 			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
@@ -3299,6 +3309,40 @@ static bool csr_is_auth_wpa_psk(tpAniSirGlobal pMac,
 {
 	return csr_is_oui_match
 		(pMac, AllSuites, cAllSuites, csr_wpa_oui[02], Oui);
+}
+
+/*
+ * csr_is_group_mgmt_gmac_128() - check whether oui is GMAC_128
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is GMAC_128, false otherwise
+ */
+static bool csr_is_group_mgmt_gmac_128(tpAniSirGlobal pMac,
+				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
+				uint8_t cAllSuites, uint8_t Oui[])
+{
+	return csr_is_oui_match(pMac, AllSuites, cAllSuites,
+				csr_group_mgmt_oui[ENUM_GMAC_128], Oui);
+}
+
+/*
+ * csr_is_group_mgmt_gmac_256() - check whether oui is GMAC_256
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is GMAC_256, false otherwise
+ */
+static bool csr_is_group_mgmt_gmac_256(tpAniSirGlobal pMac,
+				uint8_t AllSuites[][CSR_RSN_OUI_SIZE],
+				uint8_t cAllSuites, uint8_t Oui[])
+{
+	return csr_is_oui_match(pMac, AllSuites, cAllSuites,
+				csr_group_mgmt_oui[ENUM_GMAC_256], Oui);
 }
 
 static uint8_t csr_get_oui_index_from_cipher(eCsrEncryptionType enType)
@@ -3414,6 +3458,8 @@ static void csr_is_fils_auth(tpAniSirGlobal mac_ctx,
  * @capabilities: RSN capabilities
  * @negotiated_authtype: Negotiated auth type
  * @negotiated_mccipher: negotiated multicast cipher
+ * @gp_mgmt_cipher: group management cipher
+ * @mgmt_encryption_type: group management encryption type
  *
  * This routine will get all RSN information
  *
@@ -3426,18 +3472,24 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 				    uint8_t *mcast_cipher, uint8_t *auth_suite,
 				    tCsrRSNCapabilities *capabilities,
 				    eCsrAuthType *negotiated_authtype,
-				    eCsrEncryptionType *negotiated_mccipher)
+				    eCsrEncryptionType *negotiated_mccipher,
+				    uint8_t *gp_mgmt_cipher,
+				    tAniEdType *mgmt_encryption_type)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	bool acceptable_cipher = false;
+	bool group_mgmt_acceptable_cipher = false;
 	uint8_t c_ucast_cipher = 0;
 	uint8_t c_mcast_cipher = 0;
+	uint8_t c_group_mgmt_cipher = 0;
 	uint8_t c_auth_suites = 0, i;
 	uint8_t unicast[CSR_RSN_OUI_SIZE];
 	uint8_t multicast[CSR_RSN_OUI_SIZE];
+	uint8_t group_mgmt[CSR_RSN_OUI_SIZE];
 	uint8_t authsuites[CSR_RSN_MAX_AUTH_SUITES][CSR_RSN_OUI_SIZE];
 	uint8_t authentication[CSR_RSN_OUI_SIZE];
 	uint8_t mccipher_arr[CSR_RSN_MAX_MULTICAST_CYPHERS][CSR_RSN_OUI_SIZE];
+	uint8_t group_mgmt_arr[CSR_RSN_MAX_MULTICAST_CYPHERS][CSR_RSN_OUI_SIZE];
 	eCsrAuthType neg_authtype = eCSR_AUTH_TYPE_UNKNOWN;
 
 	if (!rsn_ie->present)
@@ -3478,6 +3530,28 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 
 	if (negotiated_mccipher)
 		*negotiated_mccipher = mc_encryption->encryptionType[i];
+
+	/* Group Management Cipher only for 11w */
+	if (mgmt_encryption_type) {
+		c_group_mgmt_cipher++;
+		qdf_mem_copy(group_mgmt_arr, rsn_ie->gp_mgmt_cipher_suite,
+						CSR_RSN_OUI_SIZE);
+		if (csr_is_group_mgmt_gmac_128(mac_ctx, group_mgmt_arr,
+			  c_group_mgmt_cipher, group_mgmt)) {
+			group_mgmt_acceptable_cipher = true;
+			*mgmt_encryption_type = eSIR_ED_AES_GMAC_128;
+		} else if (csr_is_group_mgmt_gmac_256(mac_ctx, group_mgmt_arr,
+			  c_group_mgmt_cipher, group_mgmt)) {
+			group_mgmt_acceptable_cipher = true;
+			*mgmt_encryption_type = eSIR_ED_AES_GMAC_256;
+		} else {
+			/* Default is CMAC */
+			group_mgmt_acceptable_cipher = true;
+			*mgmt_encryption_type = eSIR_ED_AES_128_CMAC;
+			qdf_mem_copy(group_mgmt, csr_group_mgmt_oui[ENUM_CMAC],
+						CSR_RSN_OUI_SIZE);
+		}
+	}
 
 	/* Initializing with false as it has true value already */
 	acceptable_cipher = false;
@@ -3586,6 +3660,10 @@ end:
 
 		if (ucast_cipher)
 			qdf_mem_copy(ucast_cipher, unicast, CSR_RSN_OUI_SIZE);
+
+		if (gp_mgmt_cipher && group_mgmt_acceptable_cipher)
+			qdf_mem_copy(gp_mgmt_cipher, group_mgmt,
+				     CSR_RSN_OUI_SIZE);
 
 		if (auth_suite)
 			qdf_mem_copy(auth_suite, authentication,
@@ -3715,7 +3793,7 @@ static bool csr_is_rsn_match(tHalHandle hHal, tCsrAuthList *pAuthType,
 					pEnMcType, &pIes->RSN,
 					NULL, NULL, NULL, NULL,
 					pNegotiatedAuthType,
-					pNegotiatedMCCipher);
+					pNegotiatedMCCipher, NULL, NULL);
 #ifdef WLAN_FEATURE_11W
 	/* If all the filter matches then finally checks for PMF capabilities */
 	if (fRSNMatch)
@@ -3933,6 +4011,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	uint8_t cbRSNIe = 0;
 	uint8_t UnicastCypher[CSR_RSN_OUI_SIZE];
 	uint8_t MulticastCypher[CSR_RSN_OUI_SIZE];
+	uint8_t gp_mgmt_cipher_suite[CSR_RSN_OUI_SIZE];
 	uint8_t AuthSuite[CSR_RSN_OUI_SIZE];
 	tCsrRSNAuthIe *pAuthSuite;
 	tCsrRSNCapabilities RSNCapabilities;
@@ -3975,10 +4054,12 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		 */
 		fRSNMatch = csr_get_rsn_information(hHal, &pProfile->AuthType,
 					pProfile->negotiatedUCEncryptionType,
-						&pProfile->mcEncryptionType,
-						&pIesLocal->RSN, UnicastCypher,
-						MulticastCypher, AuthSuite,
-					&RSNCapabilities, &negAuthType, NULL);
+					&pProfile->mcEncryptionType,
+					&pIesLocal->RSN, UnicastCypher,
+					MulticastCypher, AuthSuite,
+					&RSNCapabilities, &negAuthType, NULL,
+					gp_mgmt_cipher_suite,
+					&pProfile->mgmt_encryption_type);
 		if (!fRSNMatch)
 			break;
 
@@ -4055,8 +4136,8 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			pGroupMgmtCipherSuite =
 				(uint8_t *) pPMK + sizeof(uint16_t) +
 				(pPMK->cPMKIDs * CSR_RSN_PMKID_SIZE);
-			qdf_mem_copy(pGroupMgmtCipherSuite, csr_rsn_oui[07],
-				     CSR_WPA_OUI_SIZE);
+			qdf_mem_copy(pGroupMgmtCipherSuite,
+				     gp_mgmt_cipher_suite, CSR_RSN_OUI_SIZE);
 		}
 #endif
 
@@ -4860,7 +4941,12 @@ tAniEdType csr_translate_encrypt_type_to_ed_type(eCsrEncryptionType EncryptType)
 	case eCSR_ENCRYPT_TYPE_AES_GCMP_256:
 		edType = eSIR_ED_GCMP_256;
 		break;
-
+	case eCSR_ENCRYPT_TYPE_AES_GMAC_128:
+		edType = eSIR_ED_AES_GMAC_128;
+		break;
+	case eCSR_ENCRYPT_TYPE_AES_GMAC_256:
+		edType = eSIR_ED_AES_GMAC_256;
+		break;
 #endif
 	}
 

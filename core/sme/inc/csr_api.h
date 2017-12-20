@@ -94,10 +94,9 @@ typedef enum {
 #endif  /* FEATURE_WLAN_WAPI */
 	eCSR_ENCRYPT_TYPE_KRK,
 	eCSR_ENCRYPT_TYPE_BTK,
-#ifdef WLAN_FEATURE_11W
-	/* 11w BIP */
 	eCSR_ENCRYPT_TYPE_AES_CMAC,
-#endif
+	eCSR_ENCRYPT_TYPE_AES_GMAC_128,
+	eCSR_ENCRYPT_TYPE_AES_GMAC_256,
 	eCSR_ENCRYPT_TYPE_AES_GCMP,
 	eCSR_ENCRYPT_TYPE_AES_GCMP_256,
 	eCSR_ENCRYPT_TYPE_ANY,
@@ -228,6 +227,8 @@ typedef enum {
 #define CSR_AES_KEY_LEN             16
 #define CSR_AES_GCMP_KEY_LEN        16
 #define CSR_AES_GCMP_256_KEY_LEN    32
+#define CSR_AES_GMAC_128_KEY_LEN    16
+#define CSR_AES_GMAC_256_KEY_LEN    32
 #define CSR_MAX_TX_POWER        (WNI_CFG_CURRENT_TX_POWER_LEVEL_STAMAX)
 #define CSR_MAX_RSC_LEN             16
 #ifdef FEATURE_WLAN_WAPI
@@ -931,6 +932,7 @@ typedef struct csr_roam_profile {
 	uint8_t MFPRequired;
 	uint8_t MFPCapable;
 #endif
+	tAniEdType mgmt_encryption_type;
 	tCsrKeys Keys;
 	tCsrChannelInfo ChannelInfo;
 	uint8_t operationChannel;

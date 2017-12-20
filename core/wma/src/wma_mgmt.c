@@ -1625,9 +1625,8 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 {
 	struct set_key_params params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-#ifdef WLAN_FEATURE_11W
 	struct wma_txrx_node *iface = NULL;
-#endif /* WLAN_FEATURE_11W */
+
 	if ((key_params->key_type == eSIR_ED_NONE &&
 	     key_params->key_len) || (key_params->key_type != eSIR_ED_NONE &&
 				      !key_params->key_len)) {
@@ -1734,6 +1733,10 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	case eSIR_ED_AES_128_CMAC:
 		params.key_cipher = WMI_CIPHER_AES_CMAC;
 		break;
+	case eSIR_ED_AES_GMAC_128:
+	case eSIR_ED_AES_GMAC_256:
+		params.key_cipher = WMI_CIPHER_AES_GMAC;
+		break;
 #endif /* WLAN_FEATURE_11W */
 	/* Firmware uses length to detect GCMP 128/256*/
 	case eSIR_ED_GCMP:
@@ -1776,7 +1779,9 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	params.key_len = key_params->key_len;
 
 #ifdef WLAN_FEATURE_11W
-	if (key_params->key_type == eSIR_ED_AES_128_CMAC) {
+	if ((key_params->key_type == eSIR_ED_AES_128_CMAC) ||
+	   (key_params->key_type == eSIR_ED_AES_GMAC_128) ||
+	   (key_params->key_type == eSIR_ED_AES_GMAC_256)) {
 		iface = &wma_handle->interfaces[key_params->vdev_id];
 		if (iface) {
 			iface->key.key_length = key_params->key_len;

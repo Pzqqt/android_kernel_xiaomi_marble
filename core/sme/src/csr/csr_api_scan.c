@@ -5246,6 +5246,27 @@ static eCsrEncryptionType csr_covert_enc_type_old(enum wlan_enc_type enc)
 	}
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * csr_update_pmf_cap: Updates PMF cap
+ * @src_filter: Source filter
+ * @dst_filter: Destination filter
+ *
+ * Return: None
+ */
+static void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
+		struct scan_filter *dst_filter) {
+
+	if (src_filter->MFPCapable || src_filter->MFPEnabled)
+		dst_filter->pmf_cap = WLAN_PMF_CAPABLE;
+	if (src_filter->MFPRequired)
+		dst_filter->pmf_cap = WLAN_PMF_REQUIRED;
+}
+#else
+static inline void csr_update_pmf_cap(tCsrScanResultFilter *src_filter,
+		struct scan_filter *dst_filter)
+{}
+#endif
 
 static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	tCsrScanResultFilter *pFilter, struct scan_filter *filter)
@@ -5324,10 +5345,7 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 
 	filter->p2p_results = pFilter->p2pResult;
 
-	if (pFilter->MFPCapable || pFilter->MFPEnabled)
-		filter->pmf_cap = WLAN_PMF_CAPABLE;
-	if (pFilter->MFPRequired)
-		filter->pmf_cap = WLAN_PMF_REQUIRED;
+	csr_update_pmf_cap(pFilter, filter);
 
 	if (pFilter->BSSType == eCSR_BSS_TYPE_INFRASTRUCTURE)
 		filter->bss_type = WLAN_TYPE_BSS;

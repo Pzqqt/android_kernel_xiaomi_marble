@@ -1999,6 +1999,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		case eSIR_ED_GCMP_256:
 #ifdef WLAN_FEATURE_11W
 		case eSIR_ED_AES_128_CMAC:
+		case eSIR_ED_AES_GMAC_128:
+		case eSIR_ED_AES_GMAC_256:
 #endif
 			sta_idx = session->staId;
 			break;
