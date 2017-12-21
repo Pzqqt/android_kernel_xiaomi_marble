@@ -534,6 +534,11 @@ void dfs_init_precac_list(struct wlan_dfs *dfs)
 
 				precac_entry = qdf_mem_malloc(
 					sizeof(*precac_entry));
+				if (!precac_entry) {
+					dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+						"entry alloc fail for : %d", i);
+					continue;
+				}
 				precac_entry->vht80_freq =
 					ichan->dfs_ch_vhtop_ch_freq_seg1;
 				precac_entry->dfs = dfs;

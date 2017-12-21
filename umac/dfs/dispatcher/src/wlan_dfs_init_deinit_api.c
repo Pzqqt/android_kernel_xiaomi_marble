@@ -209,7 +209,7 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 		void *arg)
 {
-	struct wlan_dfs *dfs;
+	struct wlan_dfs *dfs = NULL;
 
 	if (!pdev) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "PDEV is NULL");
@@ -219,7 +219,7 @@ QDF_STATUS wlan_dfs_pdev_obj_destroy_notification(struct wlan_objmgr_pdev *pdev,
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 
 	/* DFS is NULL during unload. should we call this function before */
-	if (dfs != NULL) {
+	if (dfs) {
 		global_dfs_to_mlme.pdev_component_obj_detach(pdev,
 				WLAN_UMAC_COMP_DFS,
 				(void *)dfs);
@@ -237,7 +237,7 @@ static void dfs_scan_serialization_comp_info_cb(
 		struct wlan_objmgr_vdev *vdev,
 		union wlan_serialization_rules_info *comp_info)
 {
-	struct wlan_dfs *dfs;
+	struct wlan_dfs *dfs = NULL;
 	struct wlan_objmgr_pdev *pdev;
 
 	if (!comp_info) {

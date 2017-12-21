@@ -293,10 +293,8 @@ bad1:
 		qdf_mem_free(dfs->pulses);
 		dfs->pulses = NULL;
 	}
-	if (dfs->events) {
-		qdf_mem_free(dfs->events);
-		dfs->events = NULL;
-	}
+	qdf_mem_free(dfs->events);
+	dfs->events = NULL;
 
 	return 1;
 }
