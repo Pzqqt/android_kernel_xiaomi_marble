@@ -936,14 +936,15 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 {
 	struct nan_datapath_peer_ind *new_peer_ind;
 	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
-	struct wlan_objmgr_vdev *vdev =
-			wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-					add_sta_rsp->smesessionId, WLAN_NAN_ID);
+	struct wlan_objmgr_vdev *vdev;
 
 	if (!add_sta_rsp) {
 		pe_debug("Invalid add_sta_rsp");
 		return QDF_STATUS_E_INVAL;
 	}
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    add_sta_rsp->smesessionId,
+						    WLAN_NAN_ID);
 
 	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
 	if (!new_peer_ind) {

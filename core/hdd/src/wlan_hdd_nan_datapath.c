@@ -2176,6 +2176,11 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 
 	ENTER();
 
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx null");
+		return NULL;
+	}
+
 	if (hdd_ctx->config->is_ndi_mac_randomized) {
 		if (hdd_get_random_nan_mac_addr(hdd_ctx, &random_ndi_mac)) {
 			hdd_err("get random mac address failed");
@@ -2203,11 +2208,24 @@ struct wlan_objmgr_vdev *hdd_ndi_open(char *iface_name)
 
 int hdd_ndi_start(uint8_t vdev_id)
 {
+	uint8_t op_channel;
+	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	uint8_t op_channel = hdd_ctx->config->nan_datapath_ndi_channel;
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 
 	ENTER();
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return -EINVAL;
+	}
+
+	op_channel = hdd_ctx->config->nan_datapath_ndi_channel;
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return -EINVAL;
+	}
+
 	/*
 	 * The NAN data interface has been created at this point.
 	 * Unlike traditional device modes, where the higher application
@@ -2229,6 +2247,7 @@ int hdd_ndi_start(uint8_t vdev_id)
 		return -EINVAL;
 	}
 
+	EXIT();
 	return 0;
 }
 
@@ -2238,6 +2257,11 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return -EINVAL;
+	}
 
 	/* check if adapter by vdev_id is valid NDI */
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
@@ -2273,12 +2297,30 @@ int hdd_ndi_delete(uint8_t vdev_id, char *iface_name, uint16_t transaction_id)
 void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 				struct nan_datapath_inf_create_rsp *ndi_rsp)
 {
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
 	struct csr_roam_info roam_info = {0};
 	struct bss_description tmp_bss_descp = {0};
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
 	struct qdf_mac_addr bc_mac_addr = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is null");
+		return;
+	}
 
 	if (ndi_rsp->status == QDF_STATUS_SUCCESS) {
 		hdd_alert("NDI interface successfully created");
@@ -2308,17 +2350,47 @@ void hdd_ndi_drv_ndi_create_rsp_handler(uint8_t vdev_id,
 
 void hdd_ndi_close(uint8_t vdev_id)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return;
+	}
 
 	hdd_close_ndi(adapter);
 }
 
 void hdd_ndi_drv_ndi_delete_rsp_handler(uint8_t vdev_id)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is null");
+		return;
+	}
 
 	hdd_ctx->sta_to_adapter[sta_ctx->broadcast_staid] = NULL;
 	hdd_roam_deregister_sta(adapter, sta_ctx->broadcast_staid);
@@ -2356,13 +2428,32 @@ int hdd_ndp_get_peer_idx(uint8_t vdev_id, struct qdf_mac_addr *addr)
 int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool fist_peer)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
 	struct bss_description tmp_bss_descp = {0};
 	struct csr_roam_info roam_info = {0};
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 	ENTER();
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return -EINVAL;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return -EINVAL;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is null");
+		return -EINVAL;
+	}
+
 	/* save peer in ndp ctx */
 	if (false == hdd_save_peer(sta_ctx, sta_id, peer_mac_addr)) {
 		hdd_err("Ndp peer table full. cannot save new peer");
@@ -2400,11 +2491,30 @@ int hdd_ndp_new_peer_handler(uint8_t vdev_id, uint16_t sta_id,
 void hdd_ndp_peer_departed_handler(uint8_t vdev_id, uint16_t sta_id,
 			struct qdf_mac_addr *peer_mac_addr, bool last_peer)
 {
-	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	struct hdd_adapter *adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
-	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+	struct hdd_station_ctx *sta_ctx;
 
 	ENTER();
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("hdd_ctx is null");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (!adapter) {
+		hdd_err("adapter is null");
+		return;
+	}
+
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	if (!sta_ctx) {
+		hdd_err("sta_ctx is null");
+		return;
+	}
+
 	hdd_roam_deregister_sta(adapter, sta_id);
 	hdd_delete_peer(sta_ctx, sta_id);
 	hdd_ctx->sta_to_adapter[sta_id] = NULL;
