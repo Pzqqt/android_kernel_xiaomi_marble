@@ -6682,19 +6682,19 @@ static const char *const slim_rx_mux_text[] = {
 };
 
 static const char *const i2s_rx01_mux_text[] = {
-	"ZERO", "AIF1_PB"
+	"ZERO", "AIF1_PB", "AIF2_PB", "AIF3_PB"
 };
 
 static const char *const i2s_rx23_mux_text[] = {
-	"ZERO", "AIF1_PB", "AIF2_PB"
+	"ZERO", "AIF1_PB", "AIF2_PB", "AIF3_PB"
 };
 
 static const char *const i2s_rx45_mux_text[] = {
-	"ZERO", "AIF1_PB", "AIF3_PB"
+	"ZERO", "AIF1_PB", "AIF2_PB", "AIF3_PB"
 };
 
 static const char *const i2s_rx67_mux_text[] = {
-	"ZERO", "AIF1_PB"
+	"ZERO", "AIF1_PB", "AIF2_PB", "AIF3_PB"
 };
 
 static const char *const cdc_if_rx0_mux_text[] = {
@@ -8600,7 +8600,6 @@ static int tavil_hw_params(struct snd_pcm_substream *substream,
 
 static int tavil_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 {
-	struct tavil_priv *tavil = snd_soc_codec_get_drvdata(dai->codec);
 	u32 i2s_reg;
 
 	switch (dai->id) {
@@ -8624,13 +8623,11 @@ static int tavil_set_dai_fmt(struct snd_soc_dai *dai, unsigned int fmt)
 	switch (fmt & SND_SOC_DAIFMT_MASTER_MASK) {
 	case SND_SOC_DAIFMT_CBS_CFS:
 		/* CPU is master */
-		if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_I2C)
-			snd_soc_update_bits(dai->codec, i2s_reg, 0x2, 0x0);
+		snd_soc_update_bits(dai->codec, i2s_reg, 0x2, 0x0);
 		break;
 	case SND_SOC_DAIFMT_CBM_CFM:
 		/* CPU is slave */
-		if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_I2C)
-			snd_soc_update_bits(dai->codec, i2s_reg, 0x2, 0x2);
+		snd_soc_update_bits(dai->codec, i2s_reg, 0x2, 0x2);
 		break;
 	default:
 		return -EINVAL;
@@ -8799,7 +8796,7 @@ static struct snd_soc_dai_driver tavil_i2s_dai[] = {
 			.rates = WCD934X_RATES_MASK,
 			.formats = WCD934X_FORMATS_S16_S24_S32_LE,
 			.rate_min = 8000,
-			.rate_max = 192000,
+			.rate_max = 384000,
 			.channels_min = 1,
 			.channels_max = 2,
 		},
@@ -8813,7 +8810,7 @@ static struct snd_soc_dai_driver tavil_i2s_dai[] = {
 			.rates = WCD934X_RATES_MASK,
 			.formats = WCD934X_FORMATS_S16_S24_LE,
 			.rate_min = 8000,
-			.rate_max = 192000,
+			.rate_max = 384000,
 			.channels_min = 1,
 			.channels_max = 2,
 		},
@@ -8827,7 +8824,7 @@ static struct snd_soc_dai_driver tavil_i2s_dai[] = {
 			.rates = WCD934X_RATES_MASK,
 			.formats = WCD934X_FORMATS_S16_S24_S32_LE,
 			.rate_min = 8000,
-			.rate_max = 192000,
+			.rate_max = 384000,
 			.channels_min = 1,
 			.channels_max = 2,
 		},
@@ -8841,7 +8838,7 @@ static struct snd_soc_dai_driver tavil_i2s_dai[] = {
 			.rates = WCD934X_RATES_MASK,
 			.formats = WCD934X_FORMATS_S16_S24_LE,
 			.rate_min = 8000,
-			.rate_max = 192000,
+			.rate_max = 384000,
 			.channels_min = 1,
 			.channels_max = 2,
 		},
@@ -8855,7 +8852,7 @@ static struct snd_soc_dai_driver tavil_i2s_dai[] = {
 			.rates = WCD934X_RATES_MASK,
 			.formats = WCD934X_FORMATS_S16_S24_S32_LE,
 			.rate_min = 8000,
-			.rate_max = 192000,
+			.rate_max = 384000,
 			.channels_min = 1,
 			.channels_max = 2,
 		},
@@ -8869,7 +8866,7 @@ static struct snd_soc_dai_driver tavil_i2s_dai[] = {
 			.rates = WCD934X_RATES_MASK,
 			.formats = WCD934X_FORMATS_S16_S24_LE,
 			.rate_min = 8000,
-			.rate_max = 192000,
+			.rate_max = 384000,
 			.channels_min = 1,
 			.channels_max = 2,
 		},
@@ -10113,25 +10110,16 @@ static int tavil_soc_codec_probe(struct snd_soc_codec *codec)
 		goto err_hwdep;
 	}
 
-	if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_I2C)
-		snd_soc_dapm_new_controls(dapm, tavil_dapm_i2s_widgets,
-					  ARRAY_SIZE(tavil_dapm_i2s_widgets));
-	else
-		snd_soc_dapm_new_controls(dapm, tavil_dapm_slim_widgets,
-					  ARRAY_SIZE(tavil_dapm_slim_widgets));
-
-	if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_SLIMBUS)
-		snd_soc_dapm_add_routes(dapm, tavil_slim_audio_map,
-					ARRAY_SIZE(tavil_slim_audio_map));
-	else
-		snd_soc_dapm_add_routes(dapm, tavil_i2s_audio_map,
-					ARRAY_SIZE(tavil_i2s_audio_map));
-
 	for (i = 0; i < NUM_CODEC_DAIS; i++) {
 		INIT_LIST_HEAD(&tavil->dai[i].wcd9xxx_ch_list);
 		init_waitqueue_head(&tavil->dai[i].dai_wait);
 	}
+
 	if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_SLIMBUS) {
+		snd_soc_dapm_new_controls(dapm, tavil_dapm_slim_widgets,
+			ARRAY_SIZE(tavil_dapm_slim_widgets));
+		snd_soc_dapm_add_routes(dapm, tavil_slim_audio_map,
+				ARRAY_SIZE(tavil_slim_audio_map));
 		tavil_slimbus_slave_port_cfg.slave_dev_intfdev_la =
 					control->slim_slave->laddr;
 		tavil_slimbus_slave_port_cfg.slave_dev_pgd_la =
@@ -10139,6 +10127,11 @@ static int tavil_soc_codec_probe(struct snd_soc_codec *codec)
 		tavil_slimbus_slave_port_cfg.slave_port_mapping[0] =
 					WCD934X_TX13;
 		tavil_init_slim_slave_cfg(codec);
+	} else {
+		snd_soc_dapm_new_controls(dapm, tavil_dapm_i2s_widgets,
+			ARRAY_SIZE(tavil_dapm_i2s_widgets));
+		snd_soc_dapm_add_routes(dapm, tavil_i2s_audio_map,
+				ARRAY_SIZE(tavil_i2s_audio_map));
 	}
 
 	control->num_rx_port = WCD934X_RX_MAX;
@@ -10856,7 +10849,7 @@ static int tavil_probe(struct platform_device *pdev)
 
 	if (tavil->intf_type == WCD9XXX_INTERFACE_TYPE_I2C) {
 		if (apr_get_subsys_state() == APR_SUBSYS_DOWN) {
-			dev_err(&pdev->dev, "%s: dsp down\n", __func__);
+			dev_dbg(&pdev->dev, "%s: dsp down\n", __func__);
 			devm_kfree(&pdev->dev, tavil);
 			return -EPROBE_DEFER;
 		}
