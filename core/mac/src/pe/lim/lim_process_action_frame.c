@@ -501,7 +501,7 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	 * mode is disabled in INI.
 	 */
 	if (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) {
-		pe_warn("channel bonding disabled");
+		pe_debug("channel bonding disabled");
 		goto update_nss;
 	}
 

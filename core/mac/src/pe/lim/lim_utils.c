@@ -6971,7 +6971,7 @@ bool lim_is_robust_mgmt_action_frame(uint8_t action_category)
 	case SIR_MAC_ACTION_FST:
 		return true;
 	default:
-		pe_warn("non-PMF action category: %d", action_category);
+		pe_debug("non-PMF action category: %d", action_category);
 		break;
 	}
 	return false;
