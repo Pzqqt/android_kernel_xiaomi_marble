@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -772,12 +772,14 @@ ndp_responder_rsp_nla_failed:
 static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 				struct nan_datapath_indication_event *event)
 {
+	uint8_t *ifname;
 	uint16_t data_len;
+	uint8_t ifname_len;
 	uint32_t ndp_qos_config;
 	struct sk_buff *vendor_event;
+	enum nan_datapath_state state;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
-	enum nan_datapath_state state;
 
 	if (!event) {
 		cfg80211_err("Invalid NDP Indication");
@@ -796,9 +798,20 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 		return;
 	}
 
-	data_len = (5 * sizeof(uint32_t)) + (2 * QDF_MAC_ADDR_SIZE) + IFNAMSIZ +
-		event->ndp_info.ndp_app_info_len + event->scid.scid_len +
-		(10 * NLA_HDRLEN) + NLMSG_HDRLEN;
+	ifname = wlan_util_vdev_get_if_name(vdev);
+	if (!ifname) {
+		cfg80211_err("ifname is null");
+		return;
+	}
+	ifname_len = qdf_str_len(ifname);
+	if (ifname_len > IFNAMSIZ) {
+		cfg80211_err("ifname(%d) too long", ifname_len);
+		return;
+	}
+
+	data_len = (5 * sizeof(uint32_t)) + (2 * QDF_MAC_ADDR_SIZE) +
+		ifname_len + event->ndp_info.ndp_app_info_len +
+		event->scid.scid_len + (10 * NLA_HDRLEN) + NLMSG_HDRLEN;
 
 	/* notify response to the upper layer */
 	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy,
@@ -811,44 +824,44 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 	}
 
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
-	   QCA_WLAN_VENDOR_ATTR_NDP_REQUEST_IND))
+			QCA_WLAN_VENDOR_ATTR_NDP_REQUEST_IND))
 		goto ndp_indication_nla_failed;
 
 	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR,
-	   IFNAMSIZ, "nan0"/* adapter->dev->name - fetch dev name */))
+		    ifname_len, ifname))
 		goto ndp_indication_nla_failed;
 
 	if (nla_put_u32(vendor_event,
-	   QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID,
-	   event->service_instance_id))
+			QCA_WLAN_VENDOR_ATTR_NDP_SERVICE_INSTANCE_ID,
+			event->service_instance_id))
 		goto ndp_indication_nla_failed;
 
 	if (nla_put(vendor_event,
-	   QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR,
-	   QDF_MAC_ADDR_SIZE, event->peer_mac_addr.bytes))
+		    QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR,
+		    QDF_MAC_ADDR_SIZE, event->peer_mac_addr.bytes))
 		goto ndp_indication_nla_failed;
 
 	if (nla_put(vendor_event,
-	   QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR,
-	   QDF_MAC_ADDR_SIZE, event->peer_discovery_mac_addr.bytes))
+		    QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR,
+		    QDF_MAC_ADDR_SIZE, event->peer_discovery_mac_addr.bytes))
 		goto ndp_indication_nla_failed;
 
 	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID,
-	   event->ndp_instance_id))
+			event->ndp_instance_id))
 		goto ndp_indication_nla_failed;
 
 	if (event->ndp_info.ndp_app_info_len)
 		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO,
-		   event->ndp_info.ndp_app_info_len,
-		   event->ndp_info.ndp_app_info))
+			    event->ndp_info.ndp_app_info_len,
+			    event->ndp_info.ndp_app_info))
 			goto ndp_indication_nla_failed;
 
 	if (event->ndp_config.ndp_cfg_len) {
 		ndp_qos_config = *((uint32_t *)event->ndp_config.ndp_cfg);
 		/* at present ndp config stores 4 bytes QOS info only */
 		if (nla_put_u32(vendor_event,
-		   QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS,
-		   ndp_qos_config))
+				QCA_WLAN_VENDOR_ATTR_NDP_CONFIG_QOS,
+				ndp_qos_config))
 			goto ndp_indication_nla_failed;
 	}
 
@@ -859,15 +872,15 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 			goto ndp_indication_nla_failed;
 
 		if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SCID,
-				event->scid.scid_len,
-				event->scid.scid))
+			    event->scid.scid_len,
+			    event->scid.scid))
 			goto ndp_indication_nla_failed;
 
 		cfg80211_debug("csid: %d, scid_len: %d",
-			event->ncs_sk_type, event->scid.scid_len);
+			       event->ncs_sk_type, event->scid.scid_len);
 
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
-				event->scid.scid, event->scid.scid_len);
+				   event->scid.scid, event->scid.scid_len);
 	}
 
 	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
@@ -898,8 +911,10 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 				struct nan_datapath_confirm_event *ndp_confirm)
 {
 	int idx = 0;
+	uint8_t *ifname;
 	uint32_t data_len;
 	QDF_STATUS status;
+	uint8_t ifname_len;
 	uint32_t ndp_qos_config = 0;
 	struct sk_buff *vendor_event;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
@@ -933,7 +948,18 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 						 idx);
 	}
 
-	data_len = (4 * sizeof(uint32_t)) + QDF_MAC_ADDR_SIZE + IFNAMSIZ +
+	ifname = wlan_util_vdev_get_if_name(vdev);
+	if (!ifname) {
+		cfg80211_err("ifname is null");
+		return;
+	}
+	ifname_len = qdf_str_len(ifname);
+	if (ifname_len > IFNAMSIZ) {
+		cfg80211_err("ifname(%d) too long", ifname_len);
+		return;
+	}
+
+	data_len = (4 * sizeof(uint32_t)) + QDF_MAC_ADDR_SIZE + ifname_len +
 			+ NLMSG_HDRLEN + (7 * NLA_HDRLEN) +
 			ndp_confirm->ndp_info.ndp_app_info_len;
 
@@ -957,14 +983,15 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 		goto ndp_confirm_nla_failed;
 
 	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_NDI_MAC_ADDR,
-		QDF_MAC_ADDR_SIZE, ndp_confirm->peer_ndi_mac_addr.bytes))
+		    QDF_MAC_ADDR_SIZE, ndp_confirm->peer_ndi_mac_addr.bytes))
 		goto ndp_confirm_nla_failed;
 
 	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_IFACE_STR,
-		    IFNAMSIZ, "nan0" /* TBD adapter->dev->name - fetch name */))
+		    ifname_len, ifname))
 		goto ndp_confirm_nla_failed;
 
-	if (ndp_confirm->ndp_info.ndp_app_info_len && nla_put(vendor_event,
+	if (ndp_confirm->ndp_info.ndp_app_info_len &&
+		nla_put(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_NDP_APP_INFO,
 			ndp_confirm->ndp_info.ndp_app_info_len,
 			ndp_confirm->ndp_info.ndp_app_info))
@@ -982,10 +1009,10 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 
 	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
 	cfg80211_debug("NDP confim sent, ndp instance id: %d, peer addr: %pM, ndp_cfg: %d, rsp_code: %d, reason_code: %d",
-		ndp_confirm->ndp_instance_id,
-		ndp_confirm->peer_ndi_mac_addr.bytes,
-		ndp_qos_config, ndp_confirm->rsp_code,
-		ndp_confirm->reason_code);
+		       ndp_confirm->ndp_instance_id,
+		       ndp_confirm->peer_ndi_mac_addr.bytes,
+		       ndp_qos_config, ndp_confirm->rsp_code,
+		       ndp_confirm->reason_code);
 
 	cfg80211_debug("NDP confim, ndp app info dump");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
@@ -1352,7 +1379,7 @@ static void os_if_ndp_iface_create_rsp_handler(struct wlan_objmgr_psoc *psoc,
 						  ndi_rsp);
 	} else {
 		cfg80211_err("NDI interface creation failed with reason %d",
-				ndi_rsp->reason);
+			     create_reason);
 		goto close_ndi;
 	}
 
@@ -1463,6 +1490,11 @@ void os_if_nan_post_ndi_create_rsp(struct wlan_objmgr_psoc *psoc,
 	struct wlan_objmgr_vdev *vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
 						psoc, vdev_id, WLAN_NAN_ID);
 
+	if (!vdev) {
+		cfg80211_err("vdev is null");
+		return;
+	}
+
 	if (success) {
 		rsp.status = NAN_DATAPATH_RSP_STATUS_SUCCESS;
 		rsp.reason = 0;
@@ -1483,6 +1515,11 @@ void os_if_nan_post_ndi_delete_rsp(struct wlan_objmgr_psoc *psoc,
 	struct nan_datapath_inf_delete_rsp rsp = {0};
 	struct wlan_objmgr_vdev *vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
 						psoc, vdev_id, WLAN_NAN_ID);
+	if (!vdev) {
+		cfg80211_err("vdev is null");
+		return;
+	}
+
 	if (success) {
 		rsp.status = NAN_DATAPATH_RSP_STATUS_SUCCESS;
 		rsp.reason = 0;
