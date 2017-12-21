@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -148,4 +148,14 @@ struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
 				struct wlan_objmgr_psoc *psoc, char *ifname,
 				wlan_objmgr_ref_dbgid ref_id);
 
+/**
+ * wlan_util_vdev_get_if_name() - get vdev's interface name
+ * @vdev: VDEV object
+ *
+ * API to get vdev's interface name
+ *
+ * Return:
+ * @id: vdev's interface name
+ */
+uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev);
 #endif /* _WLAN_UTILITY_H_ */

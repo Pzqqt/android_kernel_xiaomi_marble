@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -109,8 +109,8 @@ inline QDF_STATUS ucfg_nan_set_active_ndp_sessions(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	if (idx > MAX_PEERS) {
-		nan_err("peer_idx(%d) is greater than MAX(%d) is null",
+	if (idx >= MAX_PEERS) {
+		nan_err("peer_idx(%d), MAX(%d)",
 			idx, MAX_PEERS);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -133,8 +133,8 @@ inline uint32_t ucfg_nan_get_active_ndp_sessions(struct wlan_objmgr_vdev *vdev,
 		return 0;
 	}
 
-	if (idx > MAX_PEERS) {
-		nan_err("peer_idx(%d) is greater than MAX(%d) is null",
+	if (idx >= MAX_PEERS) {
+		nan_err("peer_idx(%d), MAX(%d)",
 			idx, MAX_PEERS);
 		return 0;
 	}
