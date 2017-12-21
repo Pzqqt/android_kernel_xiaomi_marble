@@ -110,6 +110,7 @@
 #define HE_LTF_1_X 0
 #define HE_LTF_2_X 1
 #define HE_LTF_4_X 2
+#define VHT_SIG_SU_NSS_MASK	0x7
 enum {
 	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
 	HAL_HW_RX_DECAP_FORMAT_NWIFI,
@@ -375,7 +376,6 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 	struct rx_msdu_start *rx_msdu_start;
 	struct rx_pkt_tlvs *rx_desc = (struct rx_pkt_tlvs *)hw_desc_addr;
 	uint32_t reg_value;
-	uint8_t nss = 0;
 	static uint32_t sgi_hw_to_cdp[] = {
 		CDP_SGI_0_8_US,
 		CDP_SGI_0_4_US,
@@ -387,8 +387,6 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 
 	rs->ant_signal_db = HAL_RX_GET(rx_msdu_start,
 					RX_MSDU_START_5, USER_RSSI);
-	rs->mcs = HAL_RX_GET(rx_msdu_start,
-					RX_MSDU_START_5, RATE_MCS);
 	rs->is_stbc = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, STBC);
 
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, SGI);
@@ -401,21 +399,12 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 	switch (reg_value) {
 	case HAL_RX_PKT_TYPE_11N:
 		rs->ht_flags = 1;
-		rs->bw = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
-			RECEIVE_BANDWIDTH);
 		break;
 	case HAL_RX_PKT_TYPE_11AC:
 		rs->vht_flags = 1;
 		reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5,
 			RECEIVE_BANDWIDTH);
 		rs->vht_flag_values2 = reg_value;
-#if !defined(QCA_WIFI_QCA6290_11AX)
-		nss = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, NSS);
-		nss = nss + 1;
-#else
-		nss = 0;
-#endif
-		rs->vht_flag_values3[0] = (rs->mcs << 4) | nss ;
 		break;
 	case HAL_RX_PKT_TYPE_11AX:
 		rs->he_flags = 1;
@@ -534,9 +523,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		tid = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_12,
 				RECEIVED_QOS_DATA_TID_BITMAP);
 		ppdu_info->rx_status.tid = qdf_find_first_bit(&tid, sizeof(tid)*8);
-		ppdu_info->rx_status.mcs =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-						MCS);
 		ppdu_info->rx_status.tcp_msdu_count =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_9,
 					TCP_MSDU_COUNT) +
@@ -548,9 +534,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.other_msdu_count =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_10,
 						OTHER_MSDU_COUNT);
-		ppdu_info->rx_status.nss =
-			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1,
-						NSS);
 		ppdu_info->rx_status.first_data_seq_ctrl =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
 					DATA_SEQUENCE_CONTROL_INFO_VALID);
@@ -578,6 +561,11 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 				FEC_CODING);
 		ppdu_info->rx_status.ldpc = (value == HAL_SU_MU_CODING_LDPC) ?
 			1 : 0;
+		ppdu_info->rx_status.mcs = HAL_RX_GET(ht_sig_info,
+				HT_SIG_INFO_0, MCS);
+		ppdu_info->rx_status.bw = HAL_RX_GET(ht_sig_info,
+				HT_SIG_INFO_0, CBW);
+
 		break;
 	}
 
@@ -666,6 +654,21 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			1 : 0;
 		group_id = HAL_RX_GET(vht_sig_a_info, VHT_SIG_A_INFO_0, GROUP_ID);
 		ppdu_info->rx_status.vht_flag_values5 = group_id;
+		ppdu_info->rx_status.mcs = HAL_RX_GET(vht_sig_a_info,
+				VHT_SIG_A_INFO_1, MCS);
+#if !defined(QCA_WIFI_QCA6290_11AX)
+		value =  HAL_RX_GET(vht_sig_a_info,
+				VHT_SIG_A_INFO_0, N_STS);
+		ppdu_info->rx_status.nss = ((value & VHT_SIG_SU_NSS_MASK) + 1);
+#else
+		ppdu_info->rx_status.nss = 0;
+#endif
+		ppdu_info->rx_status.vht_flag_values3[0] =
+				(((ppdu_info->rx_status.mcs) << 4)
+				| ppdu_info->rx_status.nss);
+		ppdu_info->rx_status.bw = HAL_RX_GET(vht_sig_a_info,
+				VHT_SIG_A_INFO_0, BANDWIDTH);
+
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_SU_E:
