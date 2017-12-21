@@ -111,6 +111,10 @@ int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 		goto free_param_and_exit;
 
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (!legacy_callback) {
+		err_code = -EINVAL;
+		goto free_param_and_exit;
+	}
 	err_code = legacy_callback(wmi_service_ready_event_id,
 				  scn_handle, event, data_len);
 
@@ -372,6 +376,10 @@ int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 
 	wlan_objmgr_populate_ext_service_ready_data(psoc, service_param);
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
+	if (!legacy_callback) {
+		err_code = -EINVAL;
+		goto free_param_and_exit;
+	}
 
 	err_code = legacy_callback(wmi_service_ready_ext_event_id,
 				  scn_handle, event, data_len);
