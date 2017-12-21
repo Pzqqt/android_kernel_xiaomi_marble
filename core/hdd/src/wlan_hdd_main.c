@@ -103,7 +103,6 @@
 #include "wma.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_tsf.h"
-#include "wlan_hdd_green_ap.h"
 #include "bmi.h"
 #include <wlan_hdd_regulatory.h>
 #include "wlan_hdd_lpass.h"
@@ -135,6 +134,8 @@
 #include <net/cnss_nl.h>
 #endif
 #include "wlan_reg_ucfg_api.h"
+
+#include <wlan_green_ap_ucfg_api.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -272,6 +273,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_DFS] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_OBJ_MGR] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_ROAM_DEBUG] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_GREEN_AP] = {QDF_TRACE_LEVEL_ALL},
 };
 
 int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
@@ -1742,6 +1744,49 @@ static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 }
 #endif
 
+uint8_t hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
+				     bool *is_enabled)
+{
+	struct hdd_config *cfg;
+	uint32_t concurrency_mode;
+
+	cfg = hdd_ctx->config;
+	if (!cfg) {
+		hdd_err("NULL hdd config");
+		return -EINVAL;
+	}
+
+	concurrency_mode = policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc);
+
+	if (cfg->enable2x2 && cfg->enableGreenAP) {
+		if ((concurrency_mode & (1 << QDF_SAP_MODE)) &&
+		    !(concurrency_mode & (~(1 << QDF_SAP_MODE))))
+			*is_enabled = true;
+	}
+	return 0;
+}
+
+static int hdd_update_green_ap_config(struct hdd_context *hdd_ctx)
+{
+	struct green_ap_user_cfg green_ap_cfg;
+	struct hdd_config *cfg = hdd_ctx->config;
+	QDF_STATUS status;
+
+	green_ap_cfg.host_enable_egap = cfg->enable_egap;
+	green_ap_cfg.egap_inactivity_time = cfg->egap_inact_time;
+	green_ap_cfg.egap_wait_time = cfg->egap_wait_time;
+	green_ap_cfg.egap_feature_flags = cfg->egap_feature_flag;
+
+	status = ucfg_green_ap_update_user_config(hdd_ctx->hdd_pdev,
+						  &green_ap_cfg);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed to update green ap user configuration");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 void hdd_update_tgt_cfg(void *context, void *param)
 {
 	int ret;
@@ -1759,6 +1804,8 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		hdd_debug("New pdev has been created with pdev_id = %u",
 			hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
 	}
+
+	ret = hdd_update_green_ap_config(hdd_ctx);
 
 	if (cds_cfg) {
 		if (hdd_ctx->config->enable_sub_20_channel_width !=
@@ -1831,7 +1878,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->max_intf_count = cfg->max_intf_count;
 
 	hdd_lpass_target_config(hdd_ctx, cfg);
-	hdd_green_ap_target_config(hdd_ctx, cfg);
+	ucfg_green_ap_target_config(hdd_ctx->hdd_pdev, cfg->egap_support);
 
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);
@@ -3694,6 +3741,10 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	}
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
 
+	hdd_debug("Disabling Green AP");
+	ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev, false);
+	wlan_green_ap_stop(hdd_ctx->hdd_pdev);
+
 	qdf_mem_set(sta_ctx->conn_info.staId,
 		sizeof(sta_ctx->conn_info.staId), HDD_WLAN_INVALID_STA_ID);
 
@@ -4563,6 +4614,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	tSirUpdateIE updateIE;
 	unsigned long rc;
 	tsap_Config_t *sap_config;
+	bool is_enabled = false;
+	uint8_t ret;
 
 	ENTER();
 
@@ -4667,8 +4720,20 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		hdd_vdev_destroy(adapter);
+		ret = hdd_check_green_ap_enable(hdd_ctx, &is_enabled);
+		if (!ret) {
+			hdd_debug("Green AP enable status: %d", is_enabled);
+			if (is_enabled) {
+				hdd_debug("Enabling Green AP");
+				ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
+							    true);
+				wlan_green_ap_start(hdd_ctx->hdd_pdev);
+			}
+		} else {
+			hdd_err("Failed to check if Green AP should be enabled or not");
+		}
 
+		hdd_vdev_destroy(adapter);
 		break;
 
 	case QDF_SAP_MODE:
@@ -6268,7 +6333,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 * that requires pMac access after this.
 	 */
 
-	hdd_green_ap_deinit(hdd_ctx);
 	hdd_request_manager_deinit();
 
 	hdd_ipa_cleanup(hdd_ctx);
@@ -9818,7 +9882,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 		goto cds_disable;
 	}
 
-	if (hdd_enable_egap(hdd_ctx))
+	if (ucfg_green_ap_enable_egap(hdd_ctx->hdd_pdev))
 		hdd_debug("enhance green ap is not enabled");
 
 	if (0 != wlan_hdd_set_wow_pulse(hdd_ctx, true))
@@ -10238,7 +10302,6 @@ int hdd_wlan_startup(struct device *dev)
 #endif
 
 	hdd_request_manager_init();
-	hdd_green_ap_init(hdd_ctx);
 
 	hdd_driver_memdump_init();
 
@@ -10356,7 +10419,6 @@ err_stop_modules:
 err_memdump_deinit:
 	hdd_driver_memdump_deinit();
 
-	hdd_green_ap_deinit(hdd_ctx);
 	hdd_request_manager_deinit();
 	hdd_exit_netlink_services(hdd_ctx);
 

@@ -7888,11 +7888,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 			(struct gateway_param_update_req *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WMA_SET_EGAP_CONF_PARAMS:
-		wma_send_egap_conf_params(wma_handle,
-			(struct egap_conf_params *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_SET_ADAPT_DWELLTIME_CONF_PARAMS:
 		wma_send_adapt_dwelltime_params(wma_handle,
 			(struct adaptive_dwelltime_params *)msg->bodyptr);

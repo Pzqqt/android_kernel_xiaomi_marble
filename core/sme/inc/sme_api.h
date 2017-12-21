@@ -1240,21 +1240,6 @@ QDF_STATUS sme_gateway_param_update(tHalHandle hHal,
 				struct gateway_param_update_req *request);
 #endif
 
-#ifdef FEATURE_GREEN_AP
-QDF_STATUS sme_send_egap_conf_params(uint32_t enable,
-				     uint32_t inactivity_time,
-				     uint32_t wait_time,
-				     uint32_t flags);
-#else
-static inline QDF_STATUS sme_send_egap_conf_params(uint32_t enable,
-						   uint32_t inactivity_time,
-						   uint32_t wait_time,
-						   uint32_t flags)
-{
-	return QDF_STATUS_E_NOSUPPORT;
-}
-#endif
-
 void sme_update_fine_time_measurement_capab(tHalHandle hal, uint8_t session_id,
 								uint32_t val);
 QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hHal, uint32_t vdev_id);

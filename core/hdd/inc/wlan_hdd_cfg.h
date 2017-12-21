@@ -5862,7 +5862,7 @@ enum hdd_link_speed_rpt_type {
 #define CFG_ENABLE_FW_RTS_PROFILE_MAX          (66)
 #define CFG_ENABLE_FW_RTS_PROFILE_DEFAULT      (33)
 
-#ifdef FEATURE_GREEN_AP
+#ifdef WLAN_SUPPORT_GREEN_AP
 #define CFG_ENABLE_GREEN_AP_FEATURE         "gEnableGreenAp"
 #define CFG_ENABLE_GREEN_AP_FEATURE_MIN     (0)
 #define CFG_ENABLE_GREEN_AP_FEATURE_MAX     (1)
@@ -14482,7 +14482,7 @@ struct hdd_config {
 	uint8_t ignoreCAC;
 	bool IsSapDfsChSifsBurstEnabled;
 
-#ifdef FEATURE_GREEN_AP
+#ifdef WLAN_SUPPORT_GREEN_AP
 	bool enableGreenAP;
 	bool enable_egap;
 	uint32_t egap_feature_flag;

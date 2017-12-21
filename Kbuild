@@ -482,10 +482,6 @@ HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_cfg80211.o \
 		$(HDD_SRC_DIR)/wlan_hdd_p2p.o
 endif
 
-ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
-HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_green_ap.o
-endif
-
 ifeq ($(CONFIG_QCACLD_FEATURE_NAN),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_nan.o
 endif
@@ -882,6 +878,19 @@ UMAC_SPECTRAL_OBJS := $(UMAC_SPECTRAL_CORE_DIR)/spectral_offload.o \
 		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_phyerr.o \
 		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral.o \
 		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_sim.o
+
+############# UMAC_GREEN_AP ############
+UMAC_GREEN_AP_DIR := umac/green_ap
+UMAC_GREEN_AP_DISP_INC_DIR := $(UMAC_GREEN_AP_DIR)/dispatcher/inc
+UMAC_GREEN_AP_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_GREEN_AP_DIR)/core/src
+UMAC_GREEN_AP_DISP_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_GREEN_AP_DIR)/dispatcher/src
+UMAC_TARGET_GREEN_AP_INC := -I$(WLAN_COMMON_INC)/target_if/green_ap/inc
+
+UMAC_GREEN_AP_INC := -I$(WLAN_COMMON_INC)/$(UMAC_GREEN_AP_DISP_INC_DIR)
+UMAC_GREEN_AP_OBJS := $(UMAC_GREEN_AP_CORE_DIR)/wlan_green_ap_main.o \
+		$(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_api.o \
+                $(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_ucfg_api.o \
+                $(WLAN_COMMON_ROOT)/target_if/green_ap/src/target_if_green_ap.o
 
 ############# UMAC_CMN_SERVICES ############
 UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc \
@@ -1576,6 +1585,8 @@ endif
 INCS +=		$(UMAC_DISP_INC)
 INCS +=		$(UMAC_SCAN_INC)
 INCS +=		$(UMAC_TARGET_SCAN_INC)
+INCS +=		$(UMAC_GREEN_AP_INC)
+INCS +=		$(UMAC_TARGET_GREEN_AP_INC)
 INCS +=		$(UMAC_COMMON_INC)
 INCS +=		$(UMAC_SPECTRAL_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
@@ -1643,6 +1654,10 @@ OBJS +=		$(UMAC_SCAN_OBJS)
 OBJS +=		$(UMAC_COMMON_OBJS)
 OBJS +=		$(WCFG_OBJS)
 OBJS +=		$(UMAC_SPECTRAL_OBJS)
+
+ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
+OBJS +=		$(UMAC_GREEN_AP_OBJS)
+endif
 
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS +=		$(DP_OBJS)
@@ -2114,7 +2129,7 @@ endif #CONFIG_MOBILE_ROUTER
 
 #Green AP feature
 ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
-CDEFINES += -DFEATURE_GREEN_AP
+CDEFINES += -DWLAN_SUPPORT_GREEN_AP
 endif
 
 #Stats & Quota Metering feature

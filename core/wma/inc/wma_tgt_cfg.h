@@ -175,7 +175,7 @@ struct wma_tgt_cfg {
 	uint8_t lpss_support;
 #endif
 	uint8_t ap_arpns_support;
-#ifdef FEATURE_GREEN_AP
+#ifdef WLAN_SUPPORT_GREEN_AP
 	bool egap_support;
 #endif
 	uint32_t fine_time_measurement_cap;

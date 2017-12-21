@@ -1054,7 +1054,7 @@ QDF_STATUS wma_send_dbs_scan_selection_params(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_GREEN_AP
+#ifdef WLAN_SUPPORT_GREEN_AP
 
 /**
  * wma_egap_info_status_event() - egap info status event
@@ -1088,31 +1088,6 @@ static int wma_egap_info_status_event(void *handle, u_int8_t *event,
 		 chainmask_event->tx_chainmask,
 		 chainmask_event->rx_chainmask);
 	return 0;
-}
-
-/**
- * wma_send_egap_conf_params() - send wmi cmd of egap configuration params
- * @wma_handle:	 wma handler
- * @egap_params: pointer to egap_params
- *
- * Return:	 0 for success, otherwise appropriate error code
- */
-QDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
-				     struct egap_conf_params *egap_params)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_ap_ps_egap_param_cmd_fixed_param cmd = {0};
-	int32_t err;
-
-	cmd.enable = egap_params->enable;
-	cmd.inactivity_time = egap_params->inactivity_time;
-	cmd.wait_time = egap_params->wait_time;
-	cmd.flags = egap_params->flags;
-	err = wmi_unified_egap_conf_params_cmd(wma_handle->wmi_handle, &cmd);
-	if (err)
-		return QDF_STATUS_E_FAILURE;
-
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1158,7 +1133,7 @@ void wma_register_egap_event_handle(WMA_HANDLE handle)
 	} else
 		wma_handle->egap_support = false;
 }
-#endif /* FEATURE_GREEN_AP */
+#endif /* WLAN_SUPPORT_GREEN_AP */
 
 /**
  * wma_unified_fw_profiling_cmd() - send FW profiling cmd to WLAN FW

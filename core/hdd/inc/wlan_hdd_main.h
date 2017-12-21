@@ -1586,9 +1586,6 @@ struct hdd_context {
 	uint8_t dev_dfs_cac_status;
 
 	bool bt_coex_mode_set;
-#ifdef FEATURE_GREEN_AP
-	struct hdd_green_ap_ctx *green_ap_ctx;
-#endif
 	struct fw_log_info fw_log_settings;
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	qdf_mc_timer_t skip_acs_scan_timer;
@@ -2863,5 +2860,15 @@ void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc);
 
 int hdd_driver_memdump_init(void);
 void hdd_driver_memdump_deinit(void);
+
+/**
+ * hdd_check_green_ap_enable() - to check whether to enable green ap or not
+ * @hdd_ctx: hdd context
+ * @is_enabled: 1 - green ap enabled, 0 - green ap not enabled
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+uint8_t hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
+				     bool *is_enabled);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

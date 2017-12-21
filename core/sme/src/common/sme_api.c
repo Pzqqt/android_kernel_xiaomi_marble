@@ -13808,48 +13808,6 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 }
 #endif
 
-#ifdef FEATURE_GREEN_AP
-/**
- * sme_send_egap_conf_params() - set the enhanced green ap configuration params
- * @enable: enable/disable the enhanced green ap feature
- * @inactivity_time: inactivity timeout value
- * @wait_time: wait timeout value
- * @flag: feature flag in bitmasp
- *
- * Return: Return QDF_STATUS, otherwise appropriate failure code
- */
-QDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
-				     uint32_t wait_time, uint32_t flags)
-{
-	struct scheduler_msg message = {0};
-	QDF_STATUS status;
-	struct egap_conf_params *egap_params;
-
-	egap_params = qdf_mem_malloc(sizeof(*egap_params));
-	if (NULL == egap_params) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s: fail to alloc egap_params", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	egap_params->enable = enable;
-	egap_params->inactivity_time = inactivity_time;
-	egap_params->wait_time = wait_time;
-	egap_params->flags = flags;
-
-	message.type = WMA_SET_EGAP_CONF_PARAMS;
-	message.bodyptr = egap_params;
-	status = scheduler_post_msg(QDF_MODULE_ID_WMA, &message);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			"%s: Not able to post msg to WMA!", __func__);
-
-		qdf_mem_free(egap_params);
-	}
-	return status;
-}
-#endif
-
 /**
  * sme_set_fw_test() - set fw test
  * @fw_test: fw test param

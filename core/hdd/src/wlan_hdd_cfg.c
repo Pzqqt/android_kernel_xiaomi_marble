@@ -3312,7 +3312,7 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_MAX_CONCURRENT_CONNECTIONS_MIN,
 		     CFG_MAX_CONCURRENT_CONNECTIONS_MAX),
 
-#ifdef FEATURE_GREEN_AP
+#ifdef WLAN_SUPPORT_GREEN_AP
 	REG_VARIABLE(CFG_ENABLE_GREEN_AP_FEATURE, WLAN_PARAM_Integer,
 		     struct hdd_config, enableGreenAP,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6716,7 +6716,7 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->gSapPreferredChanLocation);
 	hdd_debug("Name = [gDisableDfsJapanW53] Value = [%u] ",
 		  hdd_ctx->config->gDisableDfsJapanW53);
-#ifdef FEATURE_GREEN_AP
+#ifdef WLAN_SUPPORT_GREEN_AP
 	hdd_debug("Name = [gEnableGreenAp] Value = [%u] ",
 		  hdd_ctx->config->enableGreenAP);
 	hdd_debug("Name = [gEenableEGAP] Value = [%u] ",

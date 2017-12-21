@@ -75,7 +75,6 @@
 #include "wlan_hdd_cfg.h"
 #include "wlan_policy_mgr_api.h"
 #include "wlan_hdd_tsf.h"
-#include "wlan_hdd_green_ap.h"
 #include <cdp_txrx_misc.h>
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_object_manager.h"
@@ -89,6 +88,7 @@
 #include "wlan_utility.h"
 #include <wlan_p2p_ucfg_api.h>
 #include "sir_api.h"
+#include <wlan_green_ap_ucfg_api.h>
 
 #define    IS_UP(_dev) \
 	(((_dev)->flags & (IFF_RUNNING|IFF_UP)) == (IFF_RUNNING|IFF_UP))
@@ -2243,7 +2243,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_err("Peer object "MAC_ADDRESS_STR" add fails!",
 					MAC_ADDR_ARRAY(event->staMac.bytes));
 
-		hdd_green_ap_add_sta(hdd_ctx);
+		wlan_green_ap_add_sta(hdd_ctx->hdd_pdev);
 		break;
 
 	case eSAP_STA_DISASSOC_EVENT:
@@ -2372,7 +2372,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_bus_bw_compute_timer_try_stop(hdd_ctx);
 		}
 #endif
-		hdd_green_ap_del_sta(hdd_ctx);
+		wlan_green_ap_del_sta(hdd_ctx->hdd_pdev);
 		break;
 
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:
@@ -8356,8 +8356,26 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return ret;
 
 	if (adapter->device_mode == QDF_SAP_MODE) {
+		uint8_t num_sessions;
+
 		wlan_hdd_del_station(adapter);
-		hdd_green_ap_stop_bss(hdd_ctx);
+
+		/*
+		 * For AP+AP mode, only trigger GREEN_AP_PS_STOP_EVENT, when the
+		 * last AP stops.
+		 */
+		status = policy_mgr_mode_specific_num_open_sessions(
+				hdd_ctx->hdd_psoc, QDF_SAP_MODE, &num_sessions);
+		if (status == QDF_STATUS_SUCCESS) {
+			if (num_sessions == 1) {
+				hdd_debug("Disabling Green AP");
+				ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
+							    false);
+				wlan_green_ap_stop(hdd_ctx->hdd_pdev);
+			}
+		} else {
+			hdd_err("Failed to get num open sessions for QDF_SAP_MODE");
+		}
 	}
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
@@ -8601,6 +8619,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	int status;
 	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
 	uint8_t channel;
+	bool is_enabled = false;
+	uint8_t ret;
 
 	ENTER();
 
@@ -8715,8 +8735,17 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 	}
 
-	if (QDF_SAP_MODE == adapter->device_mode)
-		hdd_green_ap_start_bss(hdd_ctx);
+	ret = hdd_check_green_ap_enable(hdd_ctx, &is_enabled);
+	if (!ret) {
+		hdd_debug("Green AP enable status: %d", is_enabled);
+		if (is_enabled) {
+			hdd_debug("Enabling Green AP");
+			ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev, true);
+			wlan_green_ap_start(hdd_ctx->hdd_pdev);
+		}
+	} else {
+		hdd_err("Failed to check if Green AP should be enabled or not");
+	}
 
 	if (adapter->device_mode == QDF_P2P_GO_MODE) {
 		struct hdd_adapter  *p2p_adapter;

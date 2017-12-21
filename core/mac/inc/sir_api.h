@@ -6432,23 +6432,6 @@ struct stsf {
 	uint32_t soc_timer_high;
 };
 
-/**
- * struct egap_params - the enhanced green ap params
- * @vdev_id: vdev id
- * @enable: enable or disable the enhance green ap in firmware
- * @inactivity_time: inactivity timeout value
- * @wait_time: wait timeout value
- * @flags: feature flag in bitmask
- *
- */
-struct egap_conf_params {
-	uint32_t   vdev_id;
-	bool       enable;
-	uint32_t   inactivity_time;
-	uint32_t   wait_time;
-	uint32_t   flags;
-};
-
 #define SIR_BCN_FLT_MAX_ELEMS_IE_LIST 8
 /**
  * struct beacon_filter_param - parameters for beacon filtering
