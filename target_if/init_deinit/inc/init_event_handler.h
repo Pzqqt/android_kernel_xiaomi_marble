@@ -1,6 +1,5 @@
 /*
- * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
- *
+ * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -18,27 +17,22 @@
  */
 
 /**
- * DOC: target_if_reg.h
- * This file contains regulatory target interface
+ * DOC: init_event_handler.h
+ *
+ * Public API file for common WMI event handlers
  */
-#ifndef __TARGET_IF_REG_H__
-#define __TARGET_IF_REG_H__
+#ifndef _INIT_EVENT_HANDLER_H_
+#define _INIT_EVENT_HANDLER_H_
 
 /**
- * target_if_register_regulatory_tx_ops() - register regulatory tx ops
+ * init_deinit_register_tgt_psoc_ev_handlers() - register tgt if handlers
+ * @psoc: PSOC object
  *
- * @tx_ops: tx_ops pointer
- * Return: Success or Failure
- */
-QDF_STATUS target_if_register_regulatory_tx_ops(struct wlan_lmac_if_tx_ops
-						*tx_ops);
-
-/**
- * target_if_reg_set_offloaded_info() - populate regulatory offloaded info
+ * API to register tgt handlers
  *
- * @psoc: psoc pointer
- * Return: Success or Failure
+ * Return: SUCCESS on successful registration
  */
-QDF_STATUS target_if_reg_set_offloaded_info(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
+				struct wlan_objmgr_psoc *psoc);
 
-#endif /* __TARGET_IF_REG_H__ */
+#endif /* _INIT_EVENT_HANDLER_H_ */

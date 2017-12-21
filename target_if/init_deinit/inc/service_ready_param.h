@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -16,25 +16,14 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 /**
- * DOC: wlan_objmgr_psoc_service_ready_api.h
+ * DOC: service_ready_param.h
  *
- * Public APIs to access (ext)service ready data from psoc object
+ * Public structures to access (ext)service ready data
  */
-#ifndef _WLAN_OBJMGR_PSOC_SERVICE_READY_API_H_
-#define _WLAN_OBJMGR_PSOC_SERVICE_READY_API_H_
+#ifndef _SERVICE_READY_PARAM_H_
+#define _SERVICE_READY_PARAM_H_
 
 #include "qdf_types.h"
-
-#define PSOC_SERVICE_BM_SIZE ((128 + sizeof(uint32_t) - 1) / sizeof(uint32_t))
-#define PSOC_HOST_MAX_NUM_SS (8)
-#define PSOC_HOST_MAX_PHY_SIZE (3)
-#define PSOC_MAX_HW_MODE (2)
-#define PSOC_MAX_MAC_PHY_CAP (5)
-#define PSOC_MAX_PHY_REG_CAP (3)
-#define PSOC_MAX_CHAINMASK_TABLES (5)
-
-/* forward declaration of object manager psoc object type */
-struct wlan_objmgr_psoc;
 
 /**
  * struct wlan_psoc_hal_reg_capability - hal reg table in psoc
@@ -102,45 +91,6 @@ struct wlan_psoc_target_capability_info {
 	uint32_t num_msdu_desc;
 	uint32_t fw_version;
 	uint32_t fw_version_1;
-};
-
-/**
- * struct wlan_objmgr_psoc_service_ready_param - psoc service ready structure
- * @service_bitmap: service bitmap
- * @target_caps: traget capability
- * @hal_reg_cap: hal reg capability
- */
-struct wlan_objmgr_psoc_service_ready_param {
-	uint32_t service_bitmap[PSOC_SERVICE_BM_SIZE];
-	struct wlan_psoc_target_capability_info target_caps;
-	struct wlan_psoc_hal_reg_capability hal_reg_cap;
-};
-
-/**
- * struct wlan_psoc_host_hal_reg_capabilities_ext: Below are Reg caps per PHY.
- *                       Please note PHY ID starts with 0.
- * @phy_id: phy id starts with 0.
- * @eeprom_reg_domain: regdomain value specified in EEPROM
- * @eeprom_reg_domain_ext: regdomain
- * @regcap1: CAP1 capabilities bit map, see REGDMN_CAP1_ defines
- * @regcap2: REGDMN EEPROM CAP, see REGDMN_EEPROM_EEREGCAP_ defines
- * @wireless_modes: REGDMN MODE, see REGDMN_MODE_ enum
- * @low_2ghz_chan: 2G channel low
- * @high_2ghz_chan: 2G channel High
- * @low_5ghz_chan: 5G channel low
- * @high_5ghz_chan: 5G channel High
- */
-struct wlan_psoc_host_hal_reg_capabilities_ext {
-	uint32_t phy_id;
-	uint32_t eeprom_reg_domain;
-	uint32_t eeprom_reg_domain_ext;
-	uint32_t regcap1;
-	uint32_t regcap2;
-	uint32_t wireless_modes;
-	uint32_t low_2ghz_chan;
-	uint32_t high_2ghz_chan;
-	uint32_t low_5ghz_chan;
-	uint32_t high_5ghz_chan;
 };
 
 /**
@@ -341,73 +291,8 @@ struct wlan_psoc_host_service_ext_param {
 	uint32_t num_phy;
 	uint32_t num_chainmask_tables;
 	uint32_t num_dbr_ring_caps;
-	struct wlan_psoc_host_chainmask_table chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
+	struct wlan_psoc_host_chainmask_table
+		chainmask_table[PSOC_MAX_CHAINMASK_TABLES];
 };
 
-/**
- * struct wlan_objmgr_psoc_ext_service_ready_param - psoc ext service ready
- * @service_ext_param: service ext param
- * @hw_mode_caps: hw mode caps
- * @mac_phy_cap: mac phy cap
- * @reg_cap: regulatory capability
- * @dbr_ring_cap: pointer to direct buf rx ring capability
- */
-struct wlan_objmgr_psoc_ext_service_ready_param {
-	struct wlan_psoc_host_service_ext_param service_ext_param;
-	struct wlan_psoc_host_hw_mode_caps hw_mode_caps[PSOC_MAX_HW_MODE];
-	struct wlan_psoc_host_mac_phy_caps
-			mac_phy_cap[PSOC_MAX_MAC_PHY_CAP];
-	struct wlan_psoc_host_hal_reg_capabilities_ext
-			reg_cap[PSOC_MAX_PHY_REG_CAP];
-	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
-};
-
-/**
- * wlan_objmgr_populate_service_ready_data() - populate wmi service ready data
- *                                             in psoc
- * @psoc: psoc object pointer
- * @service_ready_data: pointer to wmi service ready data
- *
- * Return: QDF status
- */
-void
-wlan_objmgr_populate_service_ready_data(struct wlan_objmgr_psoc *psoc,
-	struct wlan_objmgr_psoc_service_ready_param *service_ready_data);
-
-/**
- * wlan_objmgr_populate_ext_service_ready_data() - populate wmi ext service
- *                                                 ready data in psoc
- * @psoc: psoc object pointer
- * @ext_service_data: pointer to ext wmi service ready data
- *
- * Return: QDF status
- */
-void
-wlan_objmgr_populate_ext_service_ready_data(struct wlan_objmgr_psoc *psoc,
-	struct wlan_objmgr_psoc_ext_service_ready_param *ext_service_data);
-
-/**
- * wlan_objmgr_ext_service_ready_chainmask_table_alloc()
- *	- allocate chainmask table capability list.
- * @service_ext_param: pointer to server ext param.
- *
- * Allocates capability list based on num_valid_chainmasks for that table.
- *
- * Return: QDF Status.
- */
-QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_alloc(
-		struct wlan_psoc_host_service_ext_param *service_ext_param);
-
-/**
- * wlan_objmgr_ext_service_ready_chainmask_table_free()
- *	-free chainmask table capability list.
- * @service_ext_param: pointer to server ext param.
- *
- * free capability list based on num_valid_chainmasks for that table.
- *
- * Return: QDF Status.
- */
-QDF_STATUS wlan_objmgr_ext_service_ready_chainmask_table_free(
-		struct wlan_psoc_host_service_ext_param *service_ext_param);
-
-#endif /* _WLAN_OBJMGR_PSOC_SERVICE_READY_API_H_*/
+#endif /* _SERVICE_READY_PARAM_H_*/
