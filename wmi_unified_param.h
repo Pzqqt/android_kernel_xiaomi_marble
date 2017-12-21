@@ -5887,6 +5887,7 @@ typedef enum {
 	wmi_vdev_param_autorate_misc_cfg,
 	wmi_vdev_param_amsdu_subframe_size_per_ac,
 	wmi_vdev_param_set_he_sounding_mode,
+	wmi_vdev_param_sifs_trigger_rate,
 
 	wmi_vdev_param_max,
 } wmi_conv_vdev_param_id;
