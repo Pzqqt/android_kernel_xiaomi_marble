@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -465,6 +465,26 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 			   filter->auth_type[i]) {
 				neg_auth =
 					WLAN_AUTH_TYPE_RSN_8021X_SHA256;
+				match = true;
+				break;
+			}
+		}
+		if (scm_is_cipher_match(rsn.akm_suites,
+		   rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_SUITEB_EAP_SHA256))) {
+			if (WLAN_AUTH_TYPE_SUITEB_EAP_SHA256 ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_SUITEB_EAP_SHA256;
+				match = true;
+				break;
+			}
+		}
+		if (scm_is_cipher_match(rsn.akm_suites,
+		   rsn.akm_suite_count,
+		   WLAN_RSN_SEL(WLAN_AKM_SUITEB_EAP_SHA384))) {
+			if (WLAN_AUTH_TYPE_SUITEB_EAP_SHA384 ==
+			   filter->auth_type[i]) {
+				neg_auth = WLAN_AUTH_TYPE_SUITEB_EAP_SHA384;
 				match = true;
 				break;
 			}
