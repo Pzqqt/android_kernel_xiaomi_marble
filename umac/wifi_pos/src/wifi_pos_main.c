@@ -68,7 +68,7 @@ static bool wifi_pos_get_tlv_support(struct wlan_objmgr_psoc *psoc)
 	return true;
 }
 
-static int wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
 	uint8_t idx;
@@ -135,16 +135,20 @@ static int wifi_pos_process_data_req(struct wlan_objmgr_psoc *psoc,
 		 * it is.
 		 */
 		tx_ops = target_if_wifi_pos_get_txops(psoc);
+		if (!tx_ops) {
+			wifi_pos_err("tx ops null");
+			return QDF_STATUS_E_INVAL;
+		}
 		data_req.data_len = req->buf_len;
 		data_req.data = req->buf;
 		tx_ops->data_req_tx(psoc, &data_req);
 		break;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
-static int wifi_pos_process_set_cap_req(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS wifi_pos_process_set_cap_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
 	int error_code;
@@ -164,10 +168,10 @@ static int wifi_pos_process_set_cap_req(struct wlan_objmgr_psoc *psoc,
 					sizeof(error_code),
 					(uint8_t *)&error_code);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
-static int wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
 	struct wifi_pos_oem_get_cap_rsp cap_rsp = { { {0} } };
@@ -185,10 +189,10 @@ static int wifi_pos_process_get_cap_req(struct wlan_objmgr_psoc *psoc,
 					sizeof(cap_rsp),
 					(uint8_t *)&cap_rsp);
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
-static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
 	uint8_t idx;
@@ -208,7 +212,7 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, 0, WLAN_WIFI_POS_ID);
 	if (!pdev) {
 		wifi_pos_err("pdev get API failed");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	len = sizeof(uint8_t) + sizeof(struct wifi_pos_ch_info_rsp) * num_ch;
@@ -216,7 +220,7 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 	if (!buf) {
 		wifi_pos_alert("malloc failed");
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_ID);
-		return -ENOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	/* First byte of message body will have num of channels */
@@ -241,7 +245,8 @@ static int wifi_pos_process_ch_info_req(struct wlan_objmgr_psoc *psoc,
 					len, buf);
 	qdf_mem_free(buf);
 	wlan_objmgr_pdev_release_ref(pdev, WLAN_WIFI_POS_ID);
-	return 0;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 static void wifi_pos_vdev_iterator(struct wlan_objmgr_psoc *psoc,
@@ -254,10 +259,10 @@ static void wifi_pos_vdev_iterator(struct wlan_objmgr_psoc *psoc,
 	vdev_idx++;
 }
 
-static int wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
+static QDF_STATUS wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 					struct wifi_pos_req_msg *req)
 {
-	int ret = 0;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 	uint8_t err = 0;
 	uint32_t rsp_len;
 	char *sign_str = NULL;
@@ -276,7 +281,7 @@ static int wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 		(strncmp(sign_str, OEM_APP_SIGNATURE_STR,
 			 OEM_APP_SIGNATURE_LEN))) {
 		wifi_pos_err("Invalid signature pid(%d)", req->pid);
-		ret = -EPERM;
+		ret = QDF_STATUS_E_PERM;
 		err = OEM_ERR_INVALID_SIGNATURE;
 		goto app_reg_failed;
 	}
@@ -294,7 +299,7 @@ static int wifi_pos_process_app_reg_req(struct wlan_objmgr_psoc *psoc,
 	app_reg_rsp = qdf_mem_malloc(rsp_len);
 	if (!app_reg_rsp) {
 		wifi_pos_alert("malloc failed");
-		ret = -ENOMEM;
+		ret = QDF_STATUS_E_NOMEM;
 		err = OEM_ERR_NULL_CONTEXT;
 		goto app_reg_failed;
 	}
