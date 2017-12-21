@@ -2507,7 +2507,7 @@ uint8_t sap_select_channel(tHalHandle hal, struct sap_context *sap_ctx,
 	uint8_t best_ch_num = SAP_CHANNEL_NOT_SELECTED;
 	uint32_t ht40plus2gendch = 0;
 	v_REGDOMAIN_t domain;
-	uint8_t country[CDS_COUNTRY_CODE_LEN];
+	uint8_t country[CDS_COUNTRY_CODE_LEN + 1];
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t count;
 	uint32_t start_ch_num, end_ch_num, tmp_ch_num, operating_band = 0;

@@ -841,6 +841,12 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 	tHalHandle hal;
 
 	hal = CDS_GET_HAL_CB();
+	if (!hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  FL("null hal"));
+		return;
+	}
+
 	mac_ctx->sap.SapDfsInfo.target_channel =
 				sap_ctx->dfs_vendor_channel;
 

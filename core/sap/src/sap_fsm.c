@@ -1820,6 +1820,12 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 						mac_ctx->psoc,
 						sap_context->self_mac_addr,
 						WLAN_LEGACY_SME_ID);
+		if (!vdev) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  FL("Invalid vdev objmgr"));
+			return QDF_STATUS_E_INVAL;
+		}
+
 		ucfg_scan_init_default_params(vdev, req);
 		req->scan_req.dwell_time_active = 0;
 		req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
