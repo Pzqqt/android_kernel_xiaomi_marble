@@ -57,7 +57,9 @@
 #include "wlan_hdd_request_manager.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
+#ifdef CONFIG_LEAK_DETECTION
 #include "qdf_debug_domain.h"
+#endif
 #include <cdp_txrx_peer_ops.h>
 #include <cdp_txrx_misc.h>
 #include <cdp_txrx_stats.h>
@@ -2348,6 +2350,7 @@ static void hdd_nan_register_callbacks(struct hdd_context *hdd_ctx)
 }
 #endif
 
+#ifdef CONFIG_LEAK_DETECTION
 /**
  * hdd_check_for_leaks() - Perform runtime memory leak checks
  *
@@ -2367,6 +2370,13 @@ static void hdd_check_for_leaks(void)
 
 	qdf_mc_timer_check_for_leaks();
 }
+
+#define hdd_debug_domain_set(domain) qdf_debug_domain_set(domain)
+#else
+static inline void hdd_check_for_leaks(void) {}
+
+#define hdd_debug_domain_set(domain)
+#endif /* CONFIG_LEAK_DETECTION */
 
 /**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
@@ -2419,7 +2429,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 	case DRIVER_MODULES_CLOSED:
 		hdd_info("Wlan transitioning (CLOSED -> OPENED)");
 
-		qdf_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
+		hdd_debug_domain_set(QDF_DEBUG_DOMAIN_ACTIVE);
 
 		if (!reinit && !unint) {
 			ret = pld_power_on(qdf_dev->dev);
@@ -2606,7 +2616,7 @@ release_lock:
 	/* many adapter resources are not freed by design in SSR case */
 	if (!reinit)
 		hdd_check_for_leaks();
-	qdf_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
+	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
 	EXIT();
 
@@ -10053,7 +10063,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	/* many adapter resources are not freed by design in SSR case */
 	if (!is_recovery_stop)
 		hdd_check_for_leaks();
-	qdf_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
+	hdd_debug_domain_set(QDF_DEBUG_DOMAIN_INIT);
 
 	/* Once the firmware sequence is completed reset this flag */
 	hdd_ctx->imps_enabled = false;
