@@ -1656,10 +1656,13 @@ static QDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(
 							param->pdev_id);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-					 WMI_REQUEST_STATS_CMDID);
+
 	WMI_LOGD("STATS REQ STATS_ID:%d VDEV_ID:%d PDEV_ID:%d-->",
 				cmd->stats_id, cmd->vdev_id, cmd->pdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_REQUEST_STATS_CMDID);
+
 	if (ret) {
 		WMI_LOGE("Failed to send status request to fw =%d", ret);
 		wmi_buf_free(buf);
