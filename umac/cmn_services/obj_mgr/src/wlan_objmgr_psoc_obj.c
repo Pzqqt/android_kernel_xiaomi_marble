@@ -1235,6 +1235,11 @@ static qdf_list_t
 					peer_list =
 					qdf_mem_malloc(
 					sizeof(struct wlan_logically_del_peer));
+					if (peer_list == NULL) {
+						/* Lock is already released */
+						obj_mgr_err("Mem alloc failed");
+						break;
+					}
 
 					peer_list->peer = peer;
 
