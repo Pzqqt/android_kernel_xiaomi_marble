@@ -31,7 +31,7 @@
 #endif /*CONFIG_WIN*/
 #include <reg_services_public_struct.h>
 #include <target_if_spectral_sim.h>
-
+#include <target_if.h>
 /**
  * @spectral_ops - Spectral function table, holds the Spectral functions that
  * depend on whether the architecture is Direct Attach or Offload. This is used
@@ -134,7 +134,7 @@ static int target_if_send_vdev_spectral_configure_cmd(
 	sparam.chn_mask = param->ss_chn_mask;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send(
-		(wmi_unified_t)pdev->tgt_if_handle, &sparam);
+		GET_WMI_HDL_FROM_PDEV(pdev), &sparam);
 }
 
 /**
@@ -182,7 +182,7 @@ static int target_if_send_vdev_spectral_enable_cmd(
 	param.enabled = is_spectral_enabled;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_enable_cmd_send(
-		(wmi_unified_t)pdev->tgt_if_handle, &param);
+		GET_WMI_HDL_FROM_PDEV(pdev), &param);
 }
 
 /**
