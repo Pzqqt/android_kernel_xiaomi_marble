@@ -123,6 +123,8 @@ uint8_t ccp_rsn_oui_10[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x10};
 uint8_t ccp_rsn_oui_11[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x11};
 #endif
 uint8_t ccp_rsn_oui_12[HDD_RSN_OUI_SIZE] = {0x50, 0x6F, 0x9A, 0x02};
+uint8_t ccp_rsn_oui_0b[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x0B};
+uint8_t ccp_rsn_oui_0c[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x0C};
 
 /* OWE https://tools.ietf.org/html/rfc8110 */
 uint8_t ccp_rsn_oui_18[HDD_RSN_OUI_SIZE] = {0x00, 0x0F, 0xAC, 0x12};
@@ -4785,6 +4787,12 @@ eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 #endif
 	if (memcmp(auth_suite, ccp_rsn_oui_12, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_DPP_RSN;
+	} else if (memcmp(auth_suite, ccp_rsn_oui_0b, 4) == 0) {
+		/* Check for Suite B EAP 256 */
+		auth_type = eCSR_AUTH_TYPE_SUITEB_EAP_SHA256;
+	} else if (memcmp(auth_suite, ccp_rsn_oui_0c, 4) == 0) {
+		/* Check for Suite B EAP 384 */
+		auth_type = eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
 	} else
 	{
 		hdd_translate_fils_rsn_to_csr_auth(auth_suite, &auth_type);
@@ -5249,6 +5257,22 @@ int hdd_set_csr_auth_type(struct hdd_adapter *adapter,
 				/* OWE case */
 				roam_profile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_OWE;
+			} else if ((RSNAuthType ==
+				  eCSR_AUTH_TYPE_SUITEB_EAP_SHA256) &&
+				  ((pWextState->
+				  authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
+				  == IW_AUTH_KEY_MGMT_802_1X)) {
+				/* Suite B EAP SHA 256 */
+				roam_profile->AuthType.authType[0] =
+					eCSR_AUTH_TYPE_SUITEB_EAP_SHA256;
+			} else if ((RSNAuthType ==
+				  eCSR_AUTH_TYPE_SUITEB_EAP_SHA384) &&
+				  ((pWextState->
+				  authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
+				  == IW_AUTH_KEY_MGMT_802_1X)) {
+				/* Suite B EAP SHA 384 */
+				roam_profile->AuthType.authType[0] =
+					eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
 			} else if ((pWextState->
 			     authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
 			    == IW_AUTH_KEY_MGMT_802_1X) {

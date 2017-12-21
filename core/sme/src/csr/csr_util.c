@@ -119,6 +119,11 @@ uint8_t csr_rsn_oui[][CSR_RSN_OUI_SIZE] = {
 #define ENUM_OWE 16
 	/* OWE https://tools.ietf.org/html/rfc8110 */
 	{0x00, 0x0F, 0xAC, 0x12},
+#define ENUM_SUITEB_EAP256 17
+	{0x00, 0x0F, 0xAC, 0x0B},
+#define ENUM_SUITEB_EAP384 18
+	{0x00, 0x0F, 0xAC, 0x0C},
+
 	/* define new oui here, update #define CSR_OUI_***_INDEX  */
 };
 
@@ -2429,6 +2434,8 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 		break;
 
 	case eCSR_AUTH_TYPE_OWE:
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA256:
+	case eCSR_AUTH_TYPE_SUITEB_EAP_SHA384:
 		fRSNProfile = true;
 		break;
 
@@ -3226,6 +3233,41 @@ static bool csr_is_auth_wpa_owe(tpAniSirGlobal mac,
 		(mac, all_suites, suite_count, csr_rsn_oui[ENUM_OWE], oui);
 }
 
+/*
+ * csr_is_auth_suiteb_eap_256() - check whether oui is SuiteB EAP256
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is SuiteB EAP256, false otherwise
+ */
+static bool csr_is_auth_suiteb_eap_256(tpAniSirGlobal mac,
+			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+			       uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match(mac, all_suites, suite_count,
+				csr_rsn_oui[ENUM_SUITEB_EAP256], oui);
+}
+
+/*
+ * csr_is_auth_suiteb_eap_384() - check whether oui is SuiteB EAP384
+ * @mac: Global MAC context
+ * @all_suites: pointer to all supported akm suites
+ * @suite_count: all supported akm suites count
+ * @oui: Oui needs to be matched
+ *
+ * Return: True if OUI is SuiteB EAP384, false otherwise
+ */
+static bool csr_is_auth_suiteb_eap_384(tpAniSirGlobal mac,
+			       uint8_t all_suites[][CSR_RSN_OUI_SIZE],
+			       uint8_t suite_count, uint8_t oui[])
+{
+	return csr_is_oui_match(mac, all_suites, suite_count,
+				csr_rsn_oui[ENUM_SUITEB_EAP384], oui);
+}
+
+
 static bool csr_is_auth_wpa(tpAniSirGlobal pMac,
 			    uint8_t AllSuites[][CSR_WPA_OUI_SIZE],
 			    uint8_t cAllSuites, uint8_t Oui[])
@@ -3492,6 +3534,20 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 					c_auth_suites, authentication)) {
 			if (eCSR_AUTH_TYPE_OWE == auth_type->authType[i])
 				neg_authtype = eCSR_AUTH_TYPE_OWE;
+		}
+		if ((neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+		   csr_is_auth_suiteb_eap_256(mac_ctx, authsuites,
+		   c_auth_suites, authentication)) {
+			if (eCSR_AUTH_TYPE_SUITEB_EAP_SHA256 ==
+						auth_type->authType[i])
+				neg_authtype = eCSR_AUTH_TYPE_SUITEB_EAP_SHA256;
+		}
+		if ((neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
+		   csr_is_auth_suiteb_eap_384(mac_ctx, authsuites,
+		   c_auth_suites, authentication)) {
+			if (eCSR_AUTH_TYPE_SUITEB_EAP_SHA384 ==
+						auth_type->authType[i])
+				neg_authtype = eCSR_AUTH_TYPE_SUITEB_EAP_SHA384;
 		}
 
 		/*
