@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -254,6 +254,44 @@ wlan_pno_global_deinit(struct pno_def_config *pno_def)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+/*
+ * ucfg_scan_update_pno_dwell_time() - update active and passive dwell time
+ * depending on active concurrency modes
+ * @vdev: vdev object pointer
+ * @req: scan request
+ *
+ * Return: void
+ */
+static void ucfg_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
+	struct pno_scan_req_params *req, struct scan_default_params *scan_def)
+{
+	bool sap_or_p2p_present;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc)
+		return;
+
+	sap_or_p2p_present = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_SAP_MODE, NULL) ||
+				policy_mgr_mode_specific_connection_count(
+				psoc, QDF_P2P_GO_MODE, NULL) ||
+				policy_mgr_mode_specific_connection_count(
+				psoc, QDF_P2P_CLIENT_MODE, NULL);
+
+	if (sap_or_p2p_present) {
+		req->active_dwell_time = scan_def->conc_active_dwell;
+		req->passive_dwell_time = scan_def->conc_passive_dwell;
+	}
+
+}
+#else
+static inline void ucfg_scan_update_pno_dwell_time(struct wlan_objmgr_vdev *vdev,
+	struct pno_scan_req_params *req, struct scan_default_params *scan_def){}
+#endif
+
 QDF_STATUS
 ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	struct pno_scan_req_params *req)
@@ -274,6 +312,11 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	req->active_dwell_time = scan_def->active_dwell;
 	req->passive_dwell_time = scan_def->passive_dwell;
 
+	/*
+	 *  Update active and passive dwell time depending
+	 *  upon the present active concurrency mode
+	 */
+	ucfg_scan_update_pno_dwell_time(vdev, req, scan_def);
 	req->adaptive_dwell_mode = pno_def->adaptive_dwell_mode;
 
 	req->pno_channel_prediction = pno_def->adaptive_dwell_mode;
