@@ -1741,6 +1741,10 @@ static QDF_STATUS hdd_dis_connect_handler(struct hdd_adapter *adapter,
 	hdd_reset_limit_off_chan(adapter);
 
 	hdd_print_bss_info(sta_ctx);
+
+	if (policy_mgr_is_sta_active_connection_exists(hdd_ctx->hdd_psoc))
+		sme_enable_roaming_on_connected_sta(hdd_ctx->hHal);
+
 	return status;
 }
 

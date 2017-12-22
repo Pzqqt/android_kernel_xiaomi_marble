@@ -996,7 +996,6 @@ typedef struct csr_roam_profile {
 	uint32_t cac_duration_ms;
 	uint32_t dfs_regdomain;
 	bool supplicant_disabled_roaming;
-	bool roaming_allowed_on_iface;
 #ifdef WLAN_FEATURE_FILS_SK
 	bool fils_connection;
 	uint8_t *hlp_ie;

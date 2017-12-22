@@ -1214,7 +1214,6 @@ struct hdd_adapter {
 	uint8_t pre_cac_chan;
 	struct hdd_connect_pm_context connect_rpm_ctx;
 
-	bool fast_roaming_allowed;
 	/*
 	 * Indicate if HO fails during disconnect so that
 	 * disconnect is not initiated by HDD as its already

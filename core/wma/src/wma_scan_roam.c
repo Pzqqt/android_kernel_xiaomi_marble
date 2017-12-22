@@ -1882,8 +1882,8 @@ QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_PERM;
 	}
-	WMA_LOGD("%s: RSO Command:%d, reason:%d",
-			__func__, roam_req->Command, roam_req->reason);
+	WMA_LOGD("%s: RSO Command:%d, reason:%d session ID %d", __func__,
+		 roam_req->Command, roam_req->reason, roam_req->sessionId);
 	wma_handle->interfaces[roam_req->sessionId].roaming_in_progress = false;
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:

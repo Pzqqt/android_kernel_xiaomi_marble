@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1246,6 +1246,18 @@ bool csr_is_sta_session_connected(tpAniSirGlobal pMac);
 bool csr_is_p2p_session_connected(tpAniSirGlobal pMac);
 bool csr_is_any_session_connected(tpAniSirGlobal pMac);
 bool csr_is_infra_connected(tpAniSirGlobal pMac);
+
+/**
+ * csr_get_connected_infra() - get the session id of the connected infra
+ * @mac_ctx:  pointer to global mac structure
+ *
+ * The function check if any infra is present in connected state and if present
+ * return the session id of the connected infra else if no infra is in connected
+ * state return CSR_SESSION_ID_INVALID
+ *
+ * Return: session id of the connected infra
+ */
+uint8_t csr_get_connected_infra(tpAniSirGlobal mac_ctx);
 bool csr_is_concurrent_infra_connected(tpAniSirGlobal pMac);
 bool csr_is_concurrent_session_running(tpAniSirGlobal pMac);
 bool csr_is_infra_ap_started(tpAniSirGlobal pMac);

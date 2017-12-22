@@ -8016,8 +8016,6 @@ QDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	pDstProfile->sap_dot11mc = pSrcProfile->sap_dot11mc;
 	pDstProfile->supplicant_disabled_roaming =
 		pSrcProfile->supplicant_disabled_roaming;
-	pDstProfile->roaming_allowed_on_iface =
-		pSrcProfile->roaming_allowed_on_iface;
 	qdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
 #ifdef WLAN_FEATURE_11W
@@ -18750,6 +18748,29 @@ static void csr_update_score_params(tpAniSirGlobal mac_ctx,
 		bss_score_params->oce_wan_scoring.score_pcnt15_to_12;
 }
 
+uint8_t csr_get_roam_enabled_sta_sessionid(tpAniSirGlobal mac_ctx)
+{
+	struct csr_roam_session *session;
+	tpCsrNeighborRoamControlInfo roam_info;
+	uint8_t i;
+
+	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+		session = CSR_GET_SESSION(mac_ctx, i);
+		if (!session || !CSR_IS_SESSION_VALID(mac_ctx, i))
+			continue;
+		if (!session->pCurRoamProfile ||
+		    session->pCurRoamProfile->csrPersona != QDF_STA_MODE)
+			continue;
+		roam_info = &mac_ctx->roam.neighborRoamInfo[i];
+		if (roam_info->b_roam_scan_offload_started) {
+			sme_debug("Roaming enabled on iface, session: %d", i);
+			return i;
+		}
+	}
+
+	return CSR_SESSION_ID_INVALID;
+}
+
 /**
  * csr_roam_offload_scan() - populates roam offload scan request and sends to
  * WMA
@@ -18774,21 +18795,22 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		&mac_ctx->roam.neighborRoamInfo[session_id];
 	struct roam_ext_params *roam_params_dst;
 	struct roam_ext_params *roam_params_src;
-	uint8_t i;
+	uint8_t i, temp_session_id;
 	uint8_t op_channel;
 
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"RSO Command %d, Session id %d, Reason %d",
-			command, session_id, reason);
+	sme_debug("RSO Command %d, Session id %d, Reason %d", command,
+		   session_id, reason);
 	if (NULL == session) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			 "session is null");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if ((session->pCurRoamProfile &&
-		session->pCurRoamProfile->roaming_allowed_on_iface == false)) {
-		sme_debug("Roaming disabled on iface, session: %d", session_id);
+	temp_session_id = csr_get_roam_enabled_sta_sessionid(mac_ctx);
+	if ((temp_session_id != CSR_SESSION_ID_INVALID) &&
+	    (session_id != temp_session_id)) {
+		sme_debug("Roam cmd not for session %d on which roaming is enabled",
+			   temp_session_id);
 		return QDF_STATUS_E_FAILURE;
 	}
 

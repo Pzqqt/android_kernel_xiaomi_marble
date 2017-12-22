@@ -3750,7 +3750,7 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 
 	/* set fast roaming capability in sme session */
 	status = sme_config_fast_roaming(hdd_ctx->hHal, adapter->session_id,
-					 adapter->fast_roaming_allowed);
+					 true);
 	/* Set the default operation channel */
 	sta_ctx->conn_info.operationChannel =
 		hdd_ctx->config->OperatingChannel;
@@ -8533,9 +8533,6 @@ static int hdd_open_interfaces(struct hdd_context *hdd_ctx, bool rtnl_held)
 
 	if (adapter == NULL)
 		return -ENOSPC;
-
-	/* fast roaming is allowed only on first STA, i.e. wlan adapter */
-	adapter->fast_roaming_allowed = true;
 
 	if (strlen(hdd_ctx->config->enableConcurrentSTA) != 0) {
 		ret = hdd_open_concurrent_interface(hdd_ctx, rtnl_held);

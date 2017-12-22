@@ -1994,4 +1994,15 @@ uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
 				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
 				  bool append_ie);
 
+/**
+ * sme_enable_roaming_on_connected_sta() - Enable roaming on an connected sta
+ * @hal: handle returned by mac_open
+ *
+ * The function check if any connected STA is present on which roaming is not
+ * enabled and if present enabled roaming on that STA.
+ *
+ * Return: none
+ */
+void sme_enable_roaming_on_connected_sta(tHalHandle hal);
+
 #endif /* #if !defined( __SME_API_H ) */

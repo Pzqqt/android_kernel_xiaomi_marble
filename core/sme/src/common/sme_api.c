@@ -7278,13 +7278,12 @@ QDF_STATUS sme_stop_roaming(tHalHandle hal, uint8_t session_id, uint8_t reason)
 	}
 
 	session = CSR_GET_SESSION(mac_ctx, session_id);
-	if (session->pCurRoamProfile &&
-		!session->pCurRoamProfile->roaming_allowed_on_iface) {
-		sme_debug("Roaming was never started on session %d",
-				session_id);
+
+	roam_info = &mac_ctx->roam.neighborRoamInfo[session_id];
+	if (!roam_info->b_roam_scan_offload_started) {
+		sme_debug("Roaming already disabled for session %d", session_id);
 		return QDF_STATUS_SUCCESS;
 	}
-	roam_info = &mac_ctx->roam.neighborRoamInfo[session_id];
 	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
 		sme_err("failed to allocated memory");
@@ -15842,5 +15841,33 @@ free:
 		qdf_mem_free(res);
 
 	return status;
+}
+
+void sme_enable_roaming_on_connected_sta(tHalHandle hal)
+{
+	uint8_t session_id;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	QDF_STATUS status;
+
+	session_id = csr_get_roam_enabled_sta_sessionid(mac_ctx);
+	if (session_id != CSR_SESSION_ID_INVALID)
+		return;
+
+	session_id = csr_get_connected_infra(mac_ctx);
+	if (session_id == CSR_SESSION_ID_INVALID) {
+		sme_debug("No STA in conencted state");
+		return;
+	}
+
+	sme_debug("Roaming not enabled on any STA, enable roaming on session %d",
+		  session_id);
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		csr_roam_offload_scan(mac_ctx, session_id,
+				      ROAM_SCAN_OFFLOAD_START,
+				      REASON_CTX_INIT);
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3215,11 +3215,6 @@ static int drv_cmd_set_roam_mode(struct hdd_adapter *adapter,
 	uint8_t *value = command;
 	uint8_t roamMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
 
-	if (!adapter->fast_roaming_allowed) {
-		hdd_err("Roaming is always disabled on this interface");
-		goto exit;
-	}
-
 	/* Move pointer to ahead of SETROAMMODE<delimiter> */
 	value = value + SIZE_OF_SETROAMMODE + 1;
 
@@ -4255,11 +4250,6 @@ static int drv_cmd_set_fast_roam(struct hdd_adapter *adapter,
 	int ret = 0;
 	uint8_t *value = command;
 	uint8_t lfrMode = CFG_LFR_FEATURE_ENABLED_DEFAULT;
-
-	if (!adapter->fast_roaming_allowed) {
-		hdd_err("Roaming is always disabled on this interface");
-		goto exit;
-	}
 
 	/* Move pointer to ahead of SETFASTROAM<delimiter> */
 	value = value + command_len + 1;
@@ -5592,12 +5582,6 @@ static int drv_cmd_set_ccx_mode(struct hdd_adapter *adapter,
 	    pmkid_modes.fw_okc &&
 	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
 		hdd_warn("OKC/ESE/11R are supported simultaneously hence this operation is not permitted!");
-		ret = -EPERM;
-		goto exit;
-	}
-
-	if (!adapter->fast_roaming_allowed) {
-		hdd_warn("Fast roaming is not allowed on this device hence this operation is not permitted!");
 		ret = -EPERM;
 		goto exit;
 	}

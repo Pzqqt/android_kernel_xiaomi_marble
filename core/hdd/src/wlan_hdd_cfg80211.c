@@ -11744,7 +11744,7 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX + 1];
-	uint32_t is_fast_roam_enabled, enable_lfr_fw;
+	uint32_t is_fast_roam_enabled;
 	int ret;
 	QDF_STATUS qdf_status;
 	unsigned long rc;
@@ -11777,25 +11777,18 @@ static int __wlan_hdd_cfg80211_set_fast_roaming(struct wiphy *wiphy,
 
 	is_fast_roam_enabled = nla_get_u32(
 				tb[QCA_WLAN_VENDOR_ATTR_ROAMING_POLICY]);
-	hdd_debug("isFastRoamEnabled %d fast_roaming_allowed %d",
-		   is_fast_roam_enabled, adapter->fast_roaming_allowed);
+	hdd_debug("isFastRoamEnabled %d", is_fast_roam_enabled);
 
-	if (!adapter->fast_roaming_allowed) {
-		hdd_err("fast roaming not allowed on %s interface",
-			adapter->dev->name);
-		return -EINVAL;
-	}
 	/* Update roaming */
-	enable_lfr_fw = (is_fast_roam_enabled && adapter->fast_roaming_allowed);
 	qdf_status = sme_config_fast_roaming(hdd_ctx->hHal, adapter->session_id,
-					     enable_lfr_fw);
+					     is_fast_roam_enabled);
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		hdd_err("sme_config_fast_roaming failed with status=%d",
 				qdf_status);
 	ret = qdf_status_to_os_return(qdf_status);
 
 	if (eConnectionState_Associated == hdd_sta_ctx->conn_info.connState &&
-		QDF_IS_STATUS_SUCCESS(qdf_status) && !enable_lfr_fw) {
+		QDF_IS_STATUS_SUCCESS(qdf_status) && !is_fast_roam_enabled) {
 
 		INIT_COMPLETION(adapter->lfr_fw_status.disable_lfr_event);
 		/*
@@ -16540,10 +16533,7 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 		qdf_mem_copy((void *)(roam_profile->SSIDs.SSIDList->SSID.ssId),
 			     ssid, ssid_len);
 
-		roam_profile->supplicant_disabled_roaming =
-			!adapter->fast_roaming_allowed;
-		roam_profile->roaming_allowed_on_iface =
-			adapter->fast_roaming_allowed;
+		roam_profile->supplicant_disabled_roaming = false;
 
 		/* cleanup bssid hint */
 		qdf_mem_zero(roam_profile->bssid_hint.bytes,
@@ -20967,10 +20957,8 @@ static int __wlan_hdd_cfg80211_update_connect_params(
 		  changed, roam_profile->fils_con_info->is_fils_connection,
 		  roam_profile->fils_con_info->key_nai_length);
 
-	if (!adapter->fast_roaming_allowed ||
-	    !hdd_ctx->is_fils_roaming_supported) {
-		hdd_debug("LFR3: %d, FILS support %d",
-			  adapter->fast_roaming_allowed,
+	if (!hdd_ctx->is_fils_roaming_supported) {
+		hdd_debug("FILS roaming support %d",
 			  hdd_ctx->is_fils_roaming_supported);
 		return 0;
 	}
