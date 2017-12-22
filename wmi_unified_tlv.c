@@ -11218,6 +11218,95 @@ static QDF_STATUS send_vdev_set_custom_aggr_size_cmd_tlv(
 }
 
 /**
+ *  send_vdev_set_qdepth_thresh_cmd_tlv() - WMI set qdepth threshold
+ *  @param wmi_handle  : handle to WMI.
+ *  @param param       : pointer to tx antenna param
+ *
+ *  @return QDF_STATUS_SUCCESS  on success and -ve on failure.
+ */
+
+static QDF_STATUS send_vdev_set_qdepth_thresh_cmd_tlv(wmi_unified_t wmi_handle,
+				struct set_qdepth_thresh_params *param)
+{
+	wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param *cmd;
+	wmi_msduq_qdepth_thresh_update *cmd_update;
+	wmi_buf_t buf;
+	int32_t len = 0;
+	int i;
+	uint8_t *buf_ptr;
+	QDF_STATUS ret;
+
+	if (param->num_of_msduq_updates > QDEPTH_THRESH_MAX_UPDATES) {
+		WMI_LOGE("%s: Invalid Update Count!\n", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += (sizeof(wmi_msduq_qdepth_thresh_update) *
+			param->num_of_msduq_updates);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *)wmi_buf_data(buf);
+	cmd = (wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param *)
+								buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param
+	 , WMITLV_GET_STRUCT_TLVLEN(
+		wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param));
+
+	cmd->pdev_id =
+		wmi_handle->ops->convert_pdev_id_host_to_target(param->pdev_id);
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->mac_addr, &cmd->peer_mac_address);
+	cmd->num_of_msduq_updates = param->num_of_msduq_updates;
+
+	buf_ptr += sizeof(
+		wmi_peer_tid_msduq_qdepth_thresh_update_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			param->num_of_msduq_updates *
+			sizeof(wmi_msduq_qdepth_thresh_update));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cmd_update = (wmi_msduq_qdepth_thresh_update *)buf_ptr;
+
+	for (i = 0; i < cmd->num_of_msduq_updates; i++) {
+		WMITLV_SET_HDR(&cmd_update->tlv_header,
+		    WMITLV_TAG_STRUC_wmi_msduq_qdepth_thresh_update,
+		    WMITLV_GET_STRUCT_TLVLEN(
+				wmi_msduq_qdepth_thresh_update));
+		cmd_update->tid_num = param->update_params[i].tid_num;
+		cmd_update->msduq_update_mask =
+				param->update_params[i].msduq_update_mask;
+		cmd_update->qdepth_thresh_value =
+				param->update_params[i].qdepth_thresh_value;
+		WMI_LOGD("Set QDepth Threshold: vdev=0x%X pdev=0x%X, tid=0x%X "
+			 "mac_addr_upper4=%X, mac_addr_lower2:%X,"
+			 " update mask=0x%X thresh val=0x%X\n",
+			 cmd->vdev_id, cmd->pdev_id, cmd_update->tid_num,
+			 cmd->peer_mac_address.mac_addr31to0,
+			 cmd->peer_mac_address.mac_addr47to32,
+			 cmd_update->msduq_update_mask,
+			 cmd_update->qdepth_thresh_value);
+		cmd_update++;
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
+
+	if (ret != 0) {
+		WMI_LOGE(" %s :WMI Failed\n", __func__);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
  * send_set_vap_dscp_tid_map_cmd_tlv() - send vap dscp tid map cmd to fw
  * @wmi_handle: wmi handle
  * @param: pointer to hold vap dscp tid map param
@@ -20440,6 +20529,8 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_config_ratemask_cmd = send_vdev_config_ratemask_cmd_tlv,
 	.send_vdev_set_custom_aggr_size_cmd =
 		send_vdev_set_custom_aggr_size_cmd_tlv,
+	.send_vdev_set_qdepth_thresh_cmd =
+		send_vdev_set_qdepth_thresh_cmd_tlv,
 	.send_set_vap_dscp_tid_map_cmd = send_set_vap_dscp_tid_map_cmd_tlv,
 	.send_vdev_set_neighbour_rx_cmd = send_vdev_set_neighbour_rx_cmd_tlv,
 	.send_smart_ant_set_tx_ant_cmd = send_smart_ant_set_tx_ant_cmd_tlv,
