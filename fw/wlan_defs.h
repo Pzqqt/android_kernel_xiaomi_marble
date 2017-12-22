@@ -972,6 +972,7 @@ typedef enum {
     WLAN_DBG_DATA_STALL_RX_FCS_LEN_ERROR,   /* 5 */
     WLAN_DBG_DATA_STALL_MAC_WDOG_ERRORS,    /* 6 */ /* Mac watch dog */
     WLAN_DBG_DATA_STALL_PHY_BB_WDOG_ERROR,  /* 7 */ /* PHY watch dog */
+    WLAN_DBG_DATA_STALL_POST_TIM_NO_TXRX_ERROR, /* 8 */
     WLAN_DBG_DATA_STALL_MAX,
 } wlan_dbg_data_stall_type_e;
 
