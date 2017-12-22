@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -19100,12 +19100,13 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 static inline bool wlan_hdd_is_pmksa_valid(struct cfg80211_pmksa *pmksa)
 {
 	if (!pmksa->bssid) {
-		hdd_err("bssid (%pK) is NULL",
-		       pmksa->bssid);
-	} else if (!pmksa->ssid || !pmksa->cache_id) {
-		hdd_err("either ssid (%pK) or cache_id (%pK) are NULL",
-		       pmksa->ssid, pmksa->cache_id);
-		return false;
+		hdd_warn("bssid (%pK) is NULL",
+					pmksa->bssid);
+		if (!pmksa->ssid || !pmksa->cache_id) {
+			hdd_err("either ssid (%pK) or cache_id (%pK) are NULL",
+					pmksa->ssid, pmksa->cache_id);
+			return false;
+		}
 	}
 	return true;
 }
