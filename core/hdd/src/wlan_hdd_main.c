@@ -10275,9 +10275,11 @@ int hdd_wlan_startup(struct device *dev)
 
 	hdd_initialize_mac_address(hdd_ctx);
 
-	ret = hdd_register_notifiers(hdd_ctx);
-	if (ret)
+	ret = register_netdevice_notifier(&hdd_netdev_notifier);
+	if (ret) {
+		hdd_err("register_netdevice_notifier failed: %d", ret);
 		goto err_ipa_cleanup;
+	}
 
 	rtnl_held = hdd_hold_rtnl_lock();
 
@@ -10309,9 +10311,15 @@ int hdd_wlan_startup(struct device *dev)
 	if (hdd_ctx->rps)
 		hdd_set_rps_cpu_mask(hdd_ctx);
 
-	status = wlansap_global_init();
-	if (QDF_IS_STATUS_ERROR(status))
+	ret = hdd_register_notifiers(hdd_ctx);
+	if (ret)
 		goto err_close_adapters;
+
+	status = wlansap_global_init();
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_unregister_notifiers(hdd_ctx);
+		goto err_close_adapters;
+	}
 
 	if (hdd_ctx->config->fIsImpsEnabled)
 		hdd_set_idle_ps_config(hdd_ctx, true);
