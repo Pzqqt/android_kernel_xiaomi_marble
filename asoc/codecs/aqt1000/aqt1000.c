@@ -39,12 +39,13 @@
 #include "../wcdcal-hwdep.h"
 #include "aqt1000-internal.h"
 
-#define AQT1000_CODEC_HWDEP_NODE 1001
 #define AQT1000_TX_UNMUTE_DELAY_MS 40
 #define  TX_HPF_CUT_OFF_FREQ_MASK 0x60
 #define  CF_MIN_3DB_4HZ     0x0
 #define  CF_MIN_3DB_75HZ    0x1
 #define  CF_MIN_3DB_150HZ   0x2
+
+#define AQT_VERSION_ENTRY_SIZE 17
 
 static struct interp_sample_rate sr_val_tbl[] = {
 	{8000, 0x0}, {16000, 0x1}, {32000, 0x3}, {48000, 0x4}, {96000, 0x5},
@@ -3023,6 +3024,82 @@ static int aqt_set_micbias(struct aqt1000 *aqt,
 
 	return 0;
 }
+
+static ssize_t aqt_codec_version_read(struct snd_info_entry *entry,
+					void *file_private_data,
+					struct file *file,
+					char __user *buf, size_t count,
+					loff_t pos)
+{
+	char buffer[AQT_VERSION_ENTRY_SIZE];
+	int len = 0;
+
+	len = snprintf(buffer, sizeof(buffer), "AQT1000_1_0\n");
+
+	return simple_read_from_buffer(buf, count, &pos, buffer, len);
+}
+
+static struct snd_info_entry_ops aqt_codec_info_ops = {
+	.read = aqt_codec_version_read,
+};
+
+/*
+ * aqt_codec_info_create_codec_entry - creates aqt1000 module
+ * @codec_root: The parent directory
+ * @codec: Codec instance
+ *
+ * Creates aqt1000 module and version entry under the given
+ * parent directory.
+ *
+ * Return: 0 on success or negative error code on failure.
+ */
+int aqt_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
+				struct snd_soc_codec *codec)
+{
+	struct snd_info_entry *version_entry;
+	struct aqt1000 *aqt;
+	struct snd_soc_card *card;
+
+	if (!codec_root || !codec)
+		return -EINVAL;
+
+	aqt = snd_soc_codec_get_drvdata(codec);
+	if (!aqt) {
+		dev_dbg(codec->dev, "%s: aqt is NULL\n", __func__);
+		return _EINVAL;
+	}
+	card = codec->component.card;
+	aqt->entry = snd_info_create_subdir(codec_root->module,
+					   "aqt1000", codec_root);
+	if (!aqt->entry) {
+		dev_dbg(codec->dev, "%s: failed to create aqt1000 entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+
+	version_entry = snd_info_create_card_entry(card->snd_card,
+						  "version",
+						   aqt->entry);
+	if (!version_entry) {
+		dev_dbg(codec->dev, "%s: failed to create aqt1000 version entry\n",
+			__func__);
+		return -ENOMEM;
+	}
+
+	version_entry->private_data = aqt;
+	version_entry->size = AQT_VERSION_ENTRY_SIZE;
+	version_entry->content = SNDRV_INFO_CONTENT_DATA;
+	version_entry->c.ops = &aqt_codec_info_ops;
+
+	if (snd_info_register(version_entry) < 0) {
+		snd_info_free_entry(version_entry);
+		return -ENOMEM;
+	}
+	aqt->version_entry = version_entry;
+
+	return 0;
+}
+EXPORT_SYMBOL(aqt_codec_info_create_codec_entry);
 
 static const struct aqt_reg_mask_val aqt_codec_reg_init[] = {
 	{AQT1000_CHIP_CFG0_CLK_CFG_MCLK, 0x04, 0x00},

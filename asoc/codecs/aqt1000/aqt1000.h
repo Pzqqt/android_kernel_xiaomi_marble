@@ -220,6 +220,10 @@ struct aqt1000 {
 	struct irq_domain *virq;
 	int irq;
 	int irq_base;
+
+	/* Entry for version info */
+	struct snd_info_entry *entry;
+	struct snd_info_entry *version_entry;
 };
 
 #endif /* AQT1000_H */
