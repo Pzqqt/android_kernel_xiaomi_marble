@@ -1135,6 +1135,16 @@ QDF_STATUS wmi_unified_vdev_config_ratemask_cmd_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_set_custom_aggr_size_cmd_send(void *wmi_hdl,
 				struct set_custom_aggr_size_params *param);
 
+/**
+ *  wmi_unified_vdev_set_qdepth_thresh_cmd_send() - WMI set qdepth threshold
+ *  @param wmi_hdl      : handle to WMI.
+ *  @param param        : pointer to hold set qdepth thresh param
+ *
+ *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_vdev_set_qdepth_thresh_cmd_send(void *wmi_hdl,
+				struct set_qdepth_thresh_params *param);
+
 QDF_STATUS wmi_unified_pdev_set_regdomain_cmd_send(void *wmi_hdl,
 				struct pdev_set_regdomain_params *param);
 
