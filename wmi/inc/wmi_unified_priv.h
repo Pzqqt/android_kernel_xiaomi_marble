@@ -922,6 +922,9 @@ QDF_STATUS (*send_vdev_config_ratemask_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_vdev_set_custom_aggr_size_cmd)(wmi_unified_t wmi_handle,
 		struct set_custom_aggr_size_params *param);
 
+QDF_STATUS (*send_vdev_set_qdepth_thresh_cmd)(wmi_unified_t wmi_handle,
+		struct set_qdepth_thresh_params *param);
+
 QDF_STATUS (*send_wow_wakeup_cmd)(wmi_unified_t wmi_handle);
 
 QDF_STATUS (*send_wow_add_wakeup_event_cmd)(wmi_unified_t wmi_handle,

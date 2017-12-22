@@ -3887,6 +3887,39 @@ enum wmi_host_custom_aggr_type_t {
 	WMI_HOST_CUSTOM_AGGR_TYPE_MAX,
 };
 
+/*
+ * msduq_update_params - MSDUQ update param structure
+ * @tid_num: TID number
+ * @msduq_update_mask: update bit mask
+ * @qdepth_thresh_value: threshold value for the queue depth
+ */
+
+#define QDEPTH_THRESH_MAX_UPDATES 1
+
+typedef struct {
+	uint32_t tid_num;
+	uint32_t msduq_update_mask;
+	uint32_t qdepth_thresh_value;
+} msduq_update_params;
+
+/**
+ * struct set_qdepth_thresh_params - MSDU Queue Depth Threshold Params
+ * @vdev_id: vdev id
+ * @pdev_id: pdev id
+ * @mac_addr: MAC address
+ * @num_of_msduq_updates: holds the number of tid updates
+ */
+
+struct set_qdepth_thresh_params {
+	uint32_t pdev_id;
+	uint32_t vdev_id;
+	uint8_t mac_addr[IEEE80211_ADDR_LEN];
+	uint32_t num_of_msduq_updates;
+	msduq_update_params update_params[QDEPTH_THRESH_MAX_UPDATES];
+};
+
+
+
 /**
  * struct config_ratemask_params - ratemask config parameters
  * @vdev_id: vdev id
