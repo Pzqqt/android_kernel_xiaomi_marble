@@ -346,193 +346,186 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 		/* First time update, copy the capability as is */
 		qdf_mem_copy(he_cap, new_cap, sizeof(*he_cap));
 		he_cap->present = true;
-	} else {
-		/* Take union(max) or intersection(min) of the capabilities */
-		he_cap->htc_he = QDF_MIN(he_cap->htc_he, new_cap->htc_he);
-		he_cap->twt_request = QDF_MIN(he_cap->twt_request,
-					new_cap->twt_request);
-		he_cap->twt_responder = QDF_MIN(he_cap->twt_responder,
-						new_cap->twt_responder);
-		he_cap->fragmentation = QDF_MIN(he_cap->fragmentation,
-						new_cap->fragmentation);
-		he_cap->max_num_frag_msdu = QDF_MIN(he_cap->max_num_frag_msdu,
-						new_cap->max_num_frag_msdu);
-		he_cap->min_frag_size = QDF_MIN(he_cap->min_frag_size,
-						new_cap->min_frag_size);
-		he_cap->trigger_frm_mac_pad =
-			QDF_MIN(he_cap->trigger_frm_mac_pad,
-				new_cap->trigger_frm_mac_pad);
-		he_cap->multi_tid_aggr = QDF_MIN(he_cap->multi_tid_aggr,
-						new_cap->multi_tid_aggr);
-		he_cap->he_link_adaptation = QDF_MIN(he_cap->he_link_adaptation,
-						new_cap->he_link_adaptation);
-		he_cap->all_ack = QDF_MIN(he_cap->all_ack,
-						new_cap->all_ack);
-		he_cap->ul_mu_rsp_sched = QDF_MIN(he_cap->ul_mu_rsp_sched,
-						new_cap->ul_mu_rsp_sched);
-		he_cap->a_bsr = QDF_MIN(he_cap->a_bsr,
-						new_cap->a_bsr);
-		he_cap->broadcast_twt = QDF_MIN(he_cap->broadcast_twt,
-						new_cap->broadcast_twt);
-		he_cap->ba_32bit_bitmap = QDF_MIN(he_cap->ba_32bit_bitmap,
-						new_cap->ba_32bit_bitmap);
-		he_cap->mu_cascade = QDF_MIN(he_cap->mu_cascade,
-						new_cap->mu_cascade);
-		he_cap->ack_enabled_multitid =
-			QDF_MIN(he_cap->ack_enabled_multitid,
-				new_cap->ack_enabled_multitid);
-		he_cap->dl_mu_ba = QDF_MIN(he_cap->dl_mu_ba,
-						new_cap->dl_mu_ba);
-		he_cap->omi_a_ctrl = QDF_MIN(he_cap->omi_a_ctrl,
-						new_cap->omi_a_ctrl);
-		he_cap->ofdma_ra = QDF_MIN(he_cap->ofdma_ra,
-						new_cap->ofdma_ra);
-		he_cap->max_ampdu_len = QDF_MIN(he_cap->max_ampdu_len,
-						new_cap->max_ampdu_len);
-		he_cap->amsdu_frag = QDF_MIN(he_cap->amsdu_frag,
-						new_cap->amsdu_frag);
-		he_cap->flex_twt_sched = QDF_MIN(he_cap->flex_twt_sched,
-						new_cap->flex_twt_sched);
-		he_cap->rx_ctrl_frame = QDF_MIN(he_cap->rx_ctrl_frame,
-						new_cap->rx_ctrl_frame);
-		he_cap->bsrp_ampdu_aggr = QDF_MIN(he_cap->bsrp_ampdu_aggr,
-						new_cap->bsrp_ampdu_aggr);
-		he_cap->qtp = QDF_MIN(he_cap->qtp, new_cap->qtp);
-		he_cap->a_bqr = QDF_MIN(he_cap->a_bqr, new_cap->a_bqr);
-		he_cap->sr_responder = QDF_MIN(he_cap->sr_responder,
-					       new_cap->sr_responder);
-		he_cap->ndp_feedback_supp = QDF_MIN(he_cap->ndp_feedback_supp,
-						    new_cap->ndp_feedback_supp);
-		he_cap->ops_supp = QDF_MIN(he_cap->ops_supp, new_cap->ops_supp);
-		he_cap->amsdu_in_ampdu = QDF_MIN(he_cap->amsdu_in_ampdu,
-						 new_cap->amsdu_in_ampdu);
-		he_cap->reserved1 = QDF_MIN(he_cap->reserved1,
-					    new_cap->reserved1);
-
-		he_cap->dual_band = QDF_MIN(he_cap->dual_band,
-					    new_cap->dual_band);
-
-		he_cap->chan_width_0 = he_cap->chan_width_0 &
-						new_cap->chan_width_0;
-		he_cap->chan_width_1 = he_cap->chan_width_1 &
-						new_cap->chan_width_1;
-		he_cap->chan_width_2 = he_cap->chan_width_2 &
-						new_cap->chan_width_2;
-		he_cap->chan_width_3 = he_cap->chan_width_3 &
-						new_cap->chan_width_3;
-		he_cap->chan_width_4 = he_cap->chan_width_4 &
-						new_cap->chan_width_4;
-		he_cap->chan_width_5 = he_cap->chan_width_5 &
-						new_cap->chan_width_5;
-		he_cap->chan_width_6 = he_cap->chan_width_6 &
-						new_cap->chan_width_6;
-
-		he_cap->rx_pream_puncturing =
-			QDF_MIN(he_cap->rx_pream_puncturing,
-				new_cap->rx_pream_puncturing);
-		he_cap->device_class = QDF_MIN(he_cap->device_class,
-					       new_cap->device_class);
-		he_cap->ldpc_coding = QDF_MIN(he_cap->ldpc_coding,
-					      new_cap->ldpc_coding);
-		he_cap->he_1x_ltf_800_gi_ppdu =
-				QDF_MIN(he_cap->he_1x_ltf_800_gi_ppdu,
-					 new_cap->he_1x_ltf_800_gi_ppdu);
-		he_cap->midamble_rx_max_nsts =
-				QDF_MIN(he_cap->midamble_rx_max_nsts,
-					new_cap->midamble_rx_max_nsts);
-		he_cap->he_4x_ltf_3200_gi_ndp =
-				QDF_MIN(he_cap->he_4x_ltf_3200_gi_ndp,
-					new_cap->he_4x_ltf_3200_gi_ndp);
-		he_cap->stbc_lt_80mhz = QDF_MIN(he_cap->stbc_lt_80mhz,
-						new_cap->stbc_lt_80mhz);
-		he_cap->doppler = QDF_MIN(he_cap->doppler,
-					  new_cap->doppler);
-		he_cap->ul_mu = QDF_MIN(he_cap->ul_mu, new_cap->ul_mu);
-		he_cap->dcm_enc_tx = QDF_MIN(he_cap->dcm_enc_tx,
-					     new_cap->dcm_enc_tx);
-		he_cap->dcm_enc_rx = QDF_MIN(he_cap->dcm_enc_rx,
-					     new_cap->dcm_enc_rx);
-		he_cap->ul_he_mu = QDF_MIN(he_cap->ul_he_mu, new_cap->ul_he_mu);
-		he_cap->su_beamformer = QDF_MIN(he_cap->su_beamformer,
-						new_cap->su_beamformer);
-		he_cap->su_beamformee = QDF_MIN(he_cap->su_beamformee,
-						new_cap->su_beamformee);
-		he_cap->mu_beamformer = QDF_MIN(he_cap->mu_beamformer,
-						new_cap->mu_beamformer);
-		he_cap->bfee_sts_lt_80 = QDF_MIN(he_cap->bfee_sts_lt_80,
-						 new_cap->bfee_sts_lt_80);
-		he_cap->bfee_sts_gt_80 = QDF_MIN(he_cap->bfee_sts_gt_80,
-						 new_cap->bfee_sts_gt_80);
-		he_cap->num_sounding_lt_80 = QDF_MIN(he_cap->num_sounding_lt_80,
-						new_cap->num_sounding_lt_80);
-		he_cap->num_sounding_gt_80 = QDF_MIN(he_cap->num_sounding_gt_80,
-						new_cap->num_sounding_gt_80);
-		he_cap->su_feedback_tone16 = QDF_MIN(he_cap->su_feedback_tone16,
-						new_cap->su_feedback_tone16);
-		he_cap->mu_feedback_tone16 = QDF_MIN(he_cap->mu_feedback_tone16,
-						new_cap->mu_feedback_tone16);
-		he_cap->codebook_su = QDF_MIN(he_cap->codebook_su,
-					      new_cap->codebook_su);
-		he_cap->codebook_mu = QDF_MIN(he_cap->codebook_mu,
-					      new_cap->codebook_mu);
-		he_cap->beamforming_feedback =
-			QDF_MIN(he_cap->beamforming_feedback,
-				new_cap->beamforming_feedback);
-		he_cap->he_er_su_ppdu = QDF_MIN(he_cap->he_er_su_ppdu,
-						new_cap->he_er_su_ppdu);
-		he_cap->dl_mu_mimo_part_bw = QDF_MIN(he_cap->dl_mu_mimo_part_bw,
-				     new_cap->dl_mu_mimo_part_bw);
-		he_cap->ppet_present = QDF_MIN(he_cap->ppet_present,
-					       new_cap->ppet_present);
-		he_cap->srp = QDF_MIN(he_cap->srp, new_cap->srp);
-		he_cap->power_boost = QDF_MIN(he_cap->power_boost,
-					      new_cap->power_boost);
-		he_cap->he_ltf_800_gi_4x = QDF_MIN(he_cap->he_ltf_800_gi_4x,
-					       new_cap->he_ltf_800_gi_4x);
-		he_cap->er_he_ltf_800_gi_4x =
-				QDF_MIN(he_cap->er_he_ltf_800_gi_4x,
-					new_cap->er_he_ltf_800_gi_4x);
-		he_cap->he_ppdu_20_in_40Mhz_2G =
-				QDF_MIN(he_cap->he_ppdu_20_in_40Mhz_2G,
-					new_cap->he_ppdu_20_in_40Mhz_2G);
-		he_cap->he_ppdu_20_in_160_80p80Mhz =
-				QDF_MIN(he_cap->he_ppdu_20_in_160_80p80Mhz,
-					new_cap->he_ppdu_20_in_160_80p80Mhz);
-		he_cap->he_ppdu_80_in_160_80p80Mhz =
-				QDF_MIN(he_cap->he_ppdu_80_in_160_80p80Mhz,
-					new_cap->he_ppdu_80_in_160_80p80Mhz);
-		he_cap->er_1x_he_ltf_gi = QDF_MIN(he_cap->er_1x_he_ltf_gi,
-						  new_cap->er_1x_he_ltf_gi);
-		he_cap->midamble_rx_1x_he_ltf =
-				QDF_MIN(he_cap->midamble_rx_1x_he_ltf,
-					new_cap->midamble_rx_1x_he_ltf);
-		he_cap->reserved2 = QDF_MIN(he_cap->reserved2,
-					    new_cap->reserved2);
-
-		/* take intersection for MCS map */
-		mcs_1 = he_cap->rx_he_mcs_map_lt_80;
-		mcs_2 = new_cap->rx_he_mcs_map_lt_80;
-		he_cap->rx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = he_cap->tx_he_mcs_map_lt_80;
-		mcs_2 = new_cap->tx_he_mcs_map_lt_80;
-		he_cap->tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_160);
-		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_160);
-		*((uint16_t *)he_cap->rx_he_mcs_map_160) =
-						HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_160);
-		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_160);
-		*((uint16_t *)he_cap->tx_he_mcs_map_160) =
-						HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_80_80);
-		mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_80_80);
-		*((uint16_t *)he_cap->rx_he_mcs_map_80_80) =
-						HE_INTERSECT_MCS(mcs_1, mcs_2);
-		mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_80_80);
-		mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_80_80);
-		*((uint16_t *)he_cap->tx_he_mcs_map_80_80) =
-						HE_INTERSECT_MCS(mcs_1, mcs_2);
+		return;
 	}
+	/* Take union(max) or intersection(min) of the capabilities */
+	he_cap->htc_he = QDF_MIN(he_cap->htc_he, new_cap->htc_he);
+	he_cap->twt_request = QDF_MIN(he_cap->twt_request,
+			new_cap->twt_request);
+	he_cap->twt_responder = QDF_MIN(he_cap->twt_responder,
+			new_cap->twt_responder);
+	he_cap->fragmentation = QDF_MIN(he_cap->fragmentation,
+			new_cap->fragmentation);
+	he_cap->max_num_frag_msdu = QDF_MIN(he_cap->max_num_frag_msdu,
+			new_cap->max_num_frag_msdu);
+	he_cap->min_frag_size = QDF_MIN(he_cap->min_frag_size,
+			new_cap->min_frag_size);
+	he_cap->trigger_frm_mac_pad =
+		QDF_MIN(he_cap->trigger_frm_mac_pad,
+				new_cap->trigger_frm_mac_pad);
+	he_cap->multi_tid_aggr = QDF_MIN(he_cap->multi_tid_aggr,
+			new_cap->multi_tid_aggr);
+	he_cap->he_link_adaptation = QDF_MIN(he_cap->he_link_adaptation,
+			new_cap->he_link_adaptation);
+	he_cap->all_ack = QDF_MIN(he_cap->all_ack,
+			new_cap->all_ack);
+	he_cap->ul_mu_rsp_sched = QDF_MIN(he_cap->ul_mu_rsp_sched,
+			new_cap->ul_mu_rsp_sched);
+	he_cap->a_bsr = QDF_MIN(he_cap->a_bsr,
+			new_cap->a_bsr);
+	he_cap->broadcast_twt = QDF_MIN(he_cap->broadcast_twt,
+			new_cap->broadcast_twt);
+	he_cap->ba_32bit_bitmap = QDF_MIN(he_cap->ba_32bit_bitmap,
+			new_cap->ba_32bit_bitmap);
+	he_cap->mu_cascade = QDF_MIN(he_cap->mu_cascade,
+			new_cap->mu_cascade);
+	he_cap->ack_enabled_multitid =
+		QDF_MIN(he_cap->ack_enabled_multitid,
+				new_cap->ack_enabled_multitid);
+	he_cap->dl_mu_ba = QDF_MIN(he_cap->dl_mu_ba,
+			new_cap->dl_mu_ba);
+	he_cap->omi_a_ctrl = QDF_MIN(he_cap->omi_a_ctrl,
+			new_cap->omi_a_ctrl);
+	he_cap->ofdma_ra = QDF_MIN(he_cap->ofdma_ra,
+			new_cap->ofdma_ra);
+	he_cap->max_ampdu_len = QDF_MIN(he_cap->max_ampdu_len,
+			new_cap->max_ampdu_len);
+	he_cap->amsdu_frag = QDF_MIN(he_cap->amsdu_frag,
+			new_cap->amsdu_frag);
+	he_cap->flex_twt_sched = QDF_MIN(he_cap->flex_twt_sched,
+			new_cap->flex_twt_sched);
+	he_cap->rx_ctrl_frame = QDF_MIN(he_cap->rx_ctrl_frame,
+			new_cap->rx_ctrl_frame);
+	he_cap->bsrp_ampdu_aggr = QDF_MIN(he_cap->bsrp_ampdu_aggr,
+			new_cap->bsrp_ampdu_aggr);
+	he_cap->qtp = QDF_MIN(he_cap->qtp, new_cap->qtp);
+	he_cap->a_bqr = QDF_MIN(he_cap->a_bqr, new_cap->a_bqr);
+	he_cap->sr_responder = QDF_MIN(he_cap->sr_responder,
+			new_cap->sr_responder);
+	he_cap->ndp_feedback_supp = QDF_MIN(he_cap->ndp_feedback_supp,
+			new_cap->ndp_feedback_supp);
+	he_cap->ops_supp = QDF_MIN(he_cap->ops_supp, new_cap->ops_supp);
+	he_cap->amsdu_in_ampdu = QDF_MIN(he_cap->amsdu_in_ampdu,
+			new_cap->amsdu_in_ampdu);
+	he_cap->reserved1 = QDF_MIN(he_cap->reserved1,
+			new_cap->reserved1);
+
+	he_cap->dual_band = QDF_MIN(he_cap->dual_band,
+			new_cap->dual_band);
+
+	he_cap->chan_width_0 = he_cap->chan_width_0 | new_cap->chan_width_0;
+	he_cap->chan_width_1 = he_cap->chan_width_1 | new_cap->chan_width_1;
+	he_cap->chan_width_2 = he_cap->chan_width_2 | new_cap->chan_width_2;
+	he_cap->chan_width_3 = he_cap->chan_width_3 | new_cap->chan_width_3;
+	he_cap->chan_width_4 = he_cap->chan_width_4 | new_cap->chan_width_4;
+	he_cap->chan_width_5 = he_cap->chan_width_5 | new_cap->chan_width_5;
+	he_cap->chan_width_6 = he_cap->chan_width_6 | new_cap->chan_width_6;
+
+	he_cap->rx_pream_puncturing =
+		QDF_MIN(he_cap->rx_pream_puncturing,
+				new_cap->rx_pream_puncturing);
+	he_cap->device_class = QDF_MIN(he_cap->device_class,
+			new_cap->device_class);
+	he_cap->ldpc_coding = QDF_MIN(he_cap->ldpc_coding,
+			new_cap->ldpc_coding);
+	he_cap->he_1x_ltf_800_gi_ppdu =
+		QDF_MIN(he_cap->he_1x_ltf_800_gi_ppdu,
+				new_cap->he_1x_ltf_800_gi_ppdu);
+	he_cap->midamble_rx_max_nsts =
+		QDF_MIN(he_cap->midamble_rx_max_nsts,
+				new_cap->midamble_rx_max_nsts);
+	he_cap->he_4x_ltf_3200_gi_ndp =
+		QDF_MIN(he_cap->he_4x_ltf_3200_gi_ndp,
+				new_cap->he_4x_ltf_3200_gi_ndp);
+	he_cap->stbc_lt_80mhz = QDF_MIN(he_cap->stbc_lt_80mhz,
+			new_cap->stbc_lt_80mhz);
+	he_cap->doppler = QDF_MIN(he_cap->doppler,
+			new_cap->doppler);
+	he_cap->ul_mu = QDF_MIN(he_cap->ul_mu, new_cap->ul_mu);
+	he_cap->dcm_enc_tx = QDF_MIN(he_cap->dcm_enc_tx,
+			new_cap->dcm_enc_tx);
+	he_cap->dcm_enc_rx = QDF_MIN(he_cap->dcm_enc_rx,
+			new_cap->dcm_enc_rx);
+	he_cap->ul_he_mu = QDF_MIN(he_cap->ul_he_mu, new_cap->ul_he_mu);
+	he_cap->su_beamformer = QDF_MIN(he_cap->su_beamformer,
+			new_cap->su_beamformer);
+	he_cap->su_beamformee = QDF_MIN(he_cap->su_beamformee,
+			new_cap->su_beamformee);
+	he_cap->mu_beamformer = QDF_MIN(he_cap->mu_beamformer,
+			new_cap->mu_beamformer);
+	he_cap->bfee_sts_lt_80 = QDF_MIN(he_cap->bfee_sts_lt_80,
+			new_cap->bfee_sts_lt_80);
+	he_cap->bfee_sts_gt_80 = QDF_MIN(he_cap->bfee_sts_gt_80,
+			new_cap->bfee_sts_gt_80);
+	he_cap->num_sounding_lt_80 = QDF_MIN(he_cap->num_sounding_lt_80,
+			new_cap->num_sounding_lt_80);
+	he_cap->num_sounding_gt_80 = QDF_MIN(he_cap->num_sounding_gt_80,
+			new_cap->num_sounding_gt_80);
+	he_cap->su_feedback_tone16 = QDF_MIN(he_cap->su_feedback_tone16,
+			new_cap->su_feedback_tone16);
+	he_cap->mu_feedback_tone16 = QDF_MIN(he_cap->mu_feedback_tone16,
+			new_cap->mu_feedback_tone16);
+	he_cap->codebook_su = QDF_MIN(he_cap->codebook_su,
+			new_cap->codebook_su);
+	he_cap->codebook_mu = QDF_MIN(he_cap->codebook_mu,
+			new_cap->codebook_mu);
+	he_cap->beamforming_feedback =
+		QDF_MIN(he_cap->beamforming_feedback,
+				new_cap->beamforming_feedback);
+	he_cap->he_er_su_ppdu = QDF_MIN(he_cap->he_er_su_ppdu,
+			new_cap->he_er_su_ppdu);
+	he_cap->dl_mu_mimo_part_bw = QDF_MIN(he_cap->dl_mu_mimo_part_bw,
+			new_cap->dl_mu_mimo_part_bw);
+	he_cap->ppet_present = QDF_MIN(he_cap->ppet_present,
+			new_cap->ppet_present);
+	he_cap->srp = QDF_MIN(he_cap->srp, new_cap->srp);
+	he_cap->power_boost = QDF_MIN(he_cap->power_boost,
+			new_cap->power_boost);
+	he_cap->he_ltf_800_gi_4x = QDF_MIN(he_cap->he_ltf_800_gi_4x,
+			new_cap->he_ltf_800_gi_4x);
+	he_cap->er_he_ltf_800_gi_4x =
+		QDF_MIN(he_cap->er_he_ltf_800_gi_4x,
+				new_cap->er_he_ltf_800_gi_4x);
+	he_cap->he_ppdu_20_in_40Mhz_2G =
+		QDF_MIN(he_cap->he_ppdu_20_in_40Mhz_2G,
+				new_cap->he_ppdu_20_in_40Mhz_2G);
+	he_cap->he_ppdu_20_in_160_80p80Mhz =
+		QDF_MIN(he_cap->he_ppdu_20_in_160_80p80Mhz,
+				new_cap->he_ppdu_20_in_160_80p80Mhz);
+	he_cap->he_ppdu_80_in_160_80p80Mhz =
+		QDF_MIN(he_cap->he_ppdu_80_in_160_80p80Mhz,
+				new_cap->he_ppdu_80_in_160_80p80Mhz);
+	he_cap->er_1x_he_ltf_gi = QDF_MIN(he_cap->er_1x_he_ltf_gi,
+			new_cap->er_1x_he_ltf_gi);
+	he_cap->midamble_rx_1x_he_ltf =
+		QDF_MIN(he_cap->midamble_rx_1x_he_ltf,
+				new_cap->midamble_rx_1x_he_ltf);
+	he_cap->reserved2 = QDF_MIN(he_cap->reserved2,
+			new_cap->reserved2);
+
+	/* take intersection for MCS map */
+	mcs_1 = he_cap->rx_he_mcs_map_lt_80;
+	mcs_2 = new_cap->rx_he_mcs_map_lt_80;
+	he_cap->rx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
+	mcs_1 = he_cap->tx_he_mcs_map_lt_80;
+	mcs_2 = new_cap->tx_he_mcs_map_lt_80;
+	he_cap->tx_he_mcs_map_lt_80 = HE_INTERSECT_MCS(mcs_1, mcs_2);
+	mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_160);
+	mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_160);
+	*((uint16_t *)he_cap->rx_he_mcs_map_160) =
+		HE_INTERSECT_MCS(mcs_1, mcs_2);
+	mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_160);
+	mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_160);
+	*((uint16_t *)he_cap->tx_he_mcs_map_160) =
+		HE_INTERSECT_MCS(mcs_1, mcs_2);
+	mcs_1 = *((uint16_t *)he_cap->rx_he_mcs_map_80_80);
+	mcs_2 = *((uint16_t *)new_cap->rx_he_mcs_map_80_80);
+	*((uint16_t *)he_cap->rx_he_mcs_map_80_80) =
+		HE_INTERSECT_MCS(mcs_1, mcs_2);
+	mcs_1 = *((uint16_t *)he_cap->tx_he_mcs_map_80_80);
+	mcs_2 = *((uint16_t *)new_cap->tx_he_mcs_map_80_80);
+	*((uint16_t *)he_cap->tx_he_mcs_map_80_80) =
+		HE_INTERSECT_MCS(mcs_1, mcs_2);
 }
 
 void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
