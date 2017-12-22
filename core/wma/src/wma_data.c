@@ -2072,7 +2072,8 @@ int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
 	}
 
 	/*sanity check */
-	if ((num_peers > 32) || (NULL == peer_info)) {
+	if ((num_peers > 32) || (num_peers > param_tlvs->num_peer_info) ||
+	    (!peer_info)) {
 		WMA_LOGE("%s: Invalid event data from target num_peers %d peer_info %pK",
 			__func__, num_peers, peer_info);
 		status = 1;
