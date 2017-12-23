@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1392,9 +1392,13 @@ int dp_addba_requestprocess_wifi3(void *peer_handle,
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (rx_tid->userstatuscode != IEEE80211_STATUS_SUCCESS)
+		rx_tid->statuscode = rx_tid->userstatuscode;
+	else
+		rx_tid->statuscode = IEEE80211_STATUS_SUCCESS;
+
 	rx_tid->ba_win_size = buffersize;
 	rx_tid->dialogtoken = dialogtoken;
-	rx_tid->statuscode = QDF_STATUS_SUCCESS;
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
 	rx_tid->num_of_addba_req++;
 
@@ -1424,6 +1428,22 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	*statuscode = rx_tid->statuscode;
 	*buffersize = rx_tid->ba_win_size;
 	*batimeout  = 0;
+}
+
+/*
+* dp_set_addba_response() – Set a user defined ADDBA response status code
+*
+* @peer: Datapath peer handle
+* @tid: TID number
+* @statuscode: response status code to be set
+*/
+void dp_set_addba_response(void *peer_handle, uint8_t tid,
+	uint16_t statuscode)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+
+	rx_tid->userstatuscode = statuscode;
 }
 
 /*

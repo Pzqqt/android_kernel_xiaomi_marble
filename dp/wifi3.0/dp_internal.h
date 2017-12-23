@@ -351,6 +351,8 @@ extern int dp_addba_requestprocess_wifi3(void *peer_handle,
 extern void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	uint8_t *dialogtoken, uint16_t *statuscode,
 	uint16_t *buffersize, uint16_t *batimeout);
+extern void dp_set_addba_response(void *peer_handle, uint8_t tid,
+	uint16_t statuscode);
 extern int dp_delba_process_wifi3(void *peer_handle,
 	int tid, uint16_t reasoncode);
 

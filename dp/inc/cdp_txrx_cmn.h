@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -771,6 +771,23 @@ static inline int cdp_delba_process(ol_txrx_soc_handle soc,
 
 	return soc->ops->cmn_drv_ops->delba_process(peer_handle,
 			tid, reasoncode);
+}
+
+static inline void cdp_set_addbaresponse(ol_txrx_soc_handle soc,
+	void *peer_handle, int tid, uint16_t statuscode)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+				"%s: Invalid Instance:", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->set_addba_response)
+		return;
+
+	soc->ops->cmn_drv_ops->set_addba_response(peer_handle, tid, statuscode);
 }
 
 /**

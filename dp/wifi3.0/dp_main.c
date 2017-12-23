@@ -5895,6 +5895,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.addba_requestprocess = dp_addba_requestprocess_wifi3,
 	.addba_responsesetup = dp_addba_responsesetup_wifi3,
 	.delba_process = dp_delba_process_wifi3,
+	.set_addba_response = dp_set_addba_response,
 	.get_peer_mac_addr_frm_id = dp_get_peer_mac_addr_frm_id,
 	.flush_cache_rx_queue = NULL,
 	/* TODO: get API's for dscp-tid need to be added*/

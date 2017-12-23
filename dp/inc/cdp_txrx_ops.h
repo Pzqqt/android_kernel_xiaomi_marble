@@ -198,6 +198,9 @@ struct cdp_cmn_ops {
 	int (*delba_process)(void *peer_handle,
 		int tid, uint16_t reasoncode);
 
+	void (*set_addba_response)(void *peer_handle,
+		uint8_t tid, uint16_t statuscode);
+
 	uint8_t (*get_peer_mac_addr_frm_id)(struct cdp_soc_t *soc_handle,
 			uint16_t peer_id, uint8_t *mac_addr);
 
