@@ -1105,8 +1105,12 @@ static void wmi_debugfs_remove(wmi_unified_t wmi_handle)
 {
 	int i;
 	struct dentry *dentry = wmi_handle->log_info.wmi_log_debugfs_dir;
-	int id = wmi_handle->log_info.wmi_instance_id;
+	int id;
 
+	if (!wmi_handle->log_info.wmi_instance_id)
+		return;
+
+	id = wmi_handle->log_info.wmi_instance_id - 1;
 	if (dentry && (!(id < 0) || (id >= MAX_WMI_INSTANCES))) {
 		for (i = 0; i < NUM_DEBUG_INFOS; ++i) {
 			if (wmi_debugfs_infos[i].de[id])
@@ -1116,6 +1120,9 @@ static void wmi_debugfs_remove(wmi_unified_t wmi_handle)
 
 	if (dentry)
 		debugfs_remove_recursive(dentry);
+
+	if (wmi_handle->log_info.wmi_instance_id)
+		wmi_handle->log_info.wmi_instance_id--;
 }
 
 /**
@@ -1128,21 +1135,23 @@ static void wmi_debugfs_remove(wmi_unified_t wmi_handle)
  */
 static QDF_STATUS wmi_debugfs_init(wmi_unified_t wmi_handle)
 {
-	static int wmi_index;
+	int wmi_index = wmi_handle->log_info.wmi_instance_id;
 
-	if (wmi_index < MAX_WMI_INSTANCES)
+	if (wmi_index < MAX_WMI_INSTANCES) {
 		wmi_handle->log_info.wmi_log_debugfs_dir =
 			debugfs_create_dir(debugfs_dir[wmi_index], NULL);
 
-	if (wmi_handle->log_info.wmi_log_debugfs_dir == NULL) {
-		qdf_print("error while creating debugfs dir for %s\n",
-				debugfs_dir[wmi_index]);
-		return QDF_STATUS_E_FAILURE;
-	}
+		if (!wmi_handle->log_info.wmi_log_debugfs_dir) {
+			qdf_print("error while creating debugfs dir for %s\n",
+				  debugfs_dir[wmi_index]);
+			return QDF_STATUS_E_FAILURE;
+		}
 
-	wmi_debugfs_create(wmi_handle, wmi_handle->log_info.wmi_log_debugfs_dir,
-				wmi_index);
-	wmi_handle->log_info.wmi_instance_id = wmi_index++;
+		wmi_debugfs_create(wmi_handle,
+				   wmi_handle->log_info.wmi_log_debugfs_dir,
+				   wmi_index);
+		wmi_handle->log_info.wmi_instance_id++;
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
