@@ -4260,7 +4260,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 	}
 
 	buf_len = sizeof(wmi_extscan_hotlist_match_event_fixed_param) +
-		  (4 * sizeof(uint32_t)) +
+		  WMI_TLV_HDR_SIZE +
 		  (numap * sizeof(wmi_extscan_wlan_descriptor));
 
 	if (buf_len > len) {
