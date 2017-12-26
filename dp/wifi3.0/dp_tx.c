@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1744,11 +1744,10 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 			DP_STATS_INC_PKT(vdev,
 					tx_i.mcast_en.mcast_pkt, 1,
 					qdf_nbuf_len(nbuf));
-			if (dp_tx_prepare_send_me(vdev, nbuf)) {
+			if (dp_tx_prepare_send_me(vdev, nbuf) > 0) {
 				qdf_nbuf_free(nbuf);
 				return NULL;
 			}
-			return nbuf;
 		}
 	}
 #endif
