@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -312,7 +312,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 			scan_status);
 		sap_ctx->channel =
 			sap_select_default_oper_chan(hal_handle,
-					sap_ctx->acs_cfg->hw_mode);
+					sap_ctx->acs_cfg);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 		goto close_session;
@@ -378,7 +378,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 #else
 		sap_ctx->channel =
 			sap_select_default_oper_chan(hal_handle,
-				sap_ctx->acs_cfg->hw_mode);
+				sap_ctx->acs_cfg);
 	} else {
 #endif
 		/* Valid Channel Found from scan results. */

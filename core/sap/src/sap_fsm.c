@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1625,17 +1625,35 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 /**
  * sap_select_default_oper_chan() - Select operating channel based on acs hwmode
  * @hal: pointer to HAL
- * @acs_hwmode: HW mode of ACS
+ * @acs_cfg: ACS config info
  *
  * Return: selected operating channel
  */
-uint8_t sap_select_default_oper_chan(tHalHandle hal, uint32_t acs_hwmode)
+uint8_t sap_select_default_oper_chan(tHalHandle hal,
+		struct sap_acs_cfg *acs_cfg)
 {
 	uint8_t channel;
 
-	if ((acs_hwmode == QCA_ACS_MODE_IEEE80211A) ||
-			(acs_hwmode == QCA_ACS_MODE_IEEE80211AD))
+	if (NULL == acs_cfg) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"ACS config invalid!");
+		QDF_BUG(0);
+		return 0;
+	}
+
+	if (acs_cfg->hw_mode == eCSR_DOT11_MODE_11a)
 		channel = SAP_DEFAULT_5GHZ_CHANNEL;
+	else if ((acs_cfg->hw_mode == eCSR_DOT11_MODE_11n) ||
+		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11n_ONLY) ||
+		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac) ||
+		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac_ONLY) ||
+		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax) ||
+		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax_ONLY)) {
+		if (WLAN_REG_IS_5GHZ_CH(acs_cfg->start_ch))
+			channel = SAP_DEFAULT_5GHZ_CHANNEL;
+		else
+			channel = SAP_DEFAULT_24GHZ_CHANNEL;
+	}
 	else
 		channel = SAP_DEFAULT_24GHZ_CHANNEL;
 
@@ -1870,7 +1888,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 				  sap_context->channel);
 			sap_context->channel =
 				sap_select_default_oper_chan(h_hal,
-					sap_context->acs_cfg->hw_mode);
+					sap_context->acs_cfg);
 
 #ifdef SOFTAP_CHANNEL_RANGE
 			if (sap_context->channelList != NULL) {

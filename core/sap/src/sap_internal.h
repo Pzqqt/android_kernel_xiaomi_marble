@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -475,5 +475,6 @@ uint8_t sap_indicate_radar(struct sap_context *sap_ctx);
 #ifdef __cplusplus
 }
 #endif
-uint8_t sap_select_default_oper_chan(tHalHandle hal, uint32_t acs_hwmode);
+uint8_t sap_select_default_oper_chan(tHalHandle hal,
+		struct sap_acs_cfg *acs_cfg);
 #endif
