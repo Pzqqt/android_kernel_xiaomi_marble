@@ -359,6 +359,8 @@ QDF_STATUS regulatory_psoc_open(struct wlan_objmgr_psoc *psoc)
 		tx_ops->register_master_handler(psoc, NULL);
 	if (tx_ops->register_11d_new_cc_handler)
 		tx_ops->register_11d_new_cc_handler(psoc, NULL);
+	if (tx_ops->register_ch_avoid_event_handler)
+		tx_ops->register_ch_avoid_event_handler(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -372,6 +374,8 @@ QDF_STATUS regulatory_psoc_close(struct wlan_objmgr_psoc *psoc)
 		tx_ops->unregister_11d_new_cc_handler(psoc, NULL);
 	if (tx_ops->unregister_master_handler)
 		tx_ops->unregister_master_handler(psoc, NULL);
+	if (tx_ops->unregister_ch_avoid_event_handler)
+		tx_ops->unregister_ch_avoid_event_handler(psoc, NULL);
 
 	return QDF_STATUS_SUCCESS;
 }
