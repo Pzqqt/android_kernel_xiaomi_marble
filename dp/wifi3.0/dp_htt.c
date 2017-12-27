@@ -2343,12 +2343,10 @@ static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
 				pdev->tx_ppdu_info.buf, HTT_INVALID_PEER,
 				WDI_NO_VAL, pdev_id);
 
-	} else {
-		qdf_nbuf_free(pdev->tx_ppdu_info.buf);
+		pdev->tx_ppdu_info.buf = NULL;
+		pdev->tx_ppdu_info.last_user = 0;
 	}
 
-	pdev->tx_ppdu_info.buf = NULL;
-	pdev->tx_ppdu_info.last_user = 0;
 }
 #else
 static void dp_txrx_ppdu_stats_handler(struct dp_soc *soc,
