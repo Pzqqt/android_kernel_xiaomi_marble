@@ -1080,6 +1080,16 @@ QDF_STATUS policy_mgr_reset_connection_update(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS policy_mgr_set_connection_update(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * policy_mgr_set_opportunistic_update() - Set opportunistic
+ * update event
+ * @psoc: PSOC object information
+ * Sets the opportunistic update event
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_set_opportunistic_update(struct wlan_objmgr_psoc *psoc);
+
+/**
  * policy_mgr_restart_opportunistic_timer() - Restarts opportunistic timer
  * @psoc: PSOC object information
  * @check_state: check timer state if this flag is set, else restart
@@ -2163,6 +2173,7 @@ uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc);
  * state of opportunistic timer, if running, stop it and take
  * action
  * @psoc: soc pointer
+ * @id: Session/vdev id
  *
  * Get the current state of opportunistic timer, if it is
  * running, stop it and take action.
@@ -2170,7 +2181,7 @@ uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc);
  * Return: None
  */
 void policy_mgr_check_and_stop_opportunistic_timer(
-	struct wlan_objmgr_psoc *psoc);
+	struct wlan_objmgr_psoc *psoc, uint8_t id);
 
 /**
  * policy_mgr_set_weight_of_dfs_passive_channels_to_zero() - set weight of dfs

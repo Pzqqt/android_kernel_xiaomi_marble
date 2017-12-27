@@ -995,6 +995,28 @@ QDF_STATUS policy_mgr_set_connection_update(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS policy_mgr_set_opportunistic_update(struct wlan_objmgr_psoc *psoc)
+{
+	QDF_STATUS status;
+	struct policy_mgr_psoc_priv_obj *policy_mgr_context;
+
+	policy_mgr_context = policy_mgr_get_context(psoc);
+	if (!policy_mgr_context) {
+		policy_mgr_err("Invalid context");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = qdf_event_set(
+			&policy_mgr_context->opportunistic_update_done_evt);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		policy_mgr_err("set event failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS policy_mgr_restart_opportunistic_timer(
 		struct wlan_objmgr_psoc *psoc, bool check_state)
 {
@@ -1103,9 +1125,11 @@ void policy_mgr_checkn_update_hw_mode_single_mac_mode(
 }
 
 void policy_mgr_check_and_stop_opportunistic_timer(
-	struct wlan_objmgr_psoc *psoc)
+	struct wlan_objmgr_psoc *psoc, uint8_t id)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	enum policy_mgr_conc_next_action action = PM_NOP;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -1115,7 +1139,23 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 	if (QDF_TIMER_STATE_RUNNING ==
 		pm_ctx->dbs_opportunistic_timer.state) {
 		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
-		pm_dbs_opportunistic_timer_handler((void *)psoc);
+		action = policy_mgr_need_opportunistic_upgrade(psoc);
+		if (action) {
+			status = policy_mgr_next_actions(psoc, id, action,
+				POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC);
+			if (status != QDF_STATUS_SUCCESS) {
+				policy_mgr_err("Failed in policy_mgr_next_actions");
+				return;
+			}
+			status = qdf_wait_single_event(
+					&pm_ctx->opportunistic_update_done_evt,
+					CONNECTION_UPDATE_TIMEOUT);
+
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
+				policy_mgr_err("wait for event failed");
+				return;
+			}
+		}
 	}
 }
 

@@ -239,6 +239,8 @@ struct sta_ap_intf_check_work_ctx {
  * @unsafe_channel_list: LTE coex channel avoidance list
  * @unsafe_channel_count: LTE coex channel avoidance list count
  * @sta_ap_intf_check_work_info: Info related to sta_ap_intf_check_work
+ * @opportunistic_update_done_evt: qdf event to synchronize host
+ *                               & FW HW mode
  */
 struct policy_mgr_psoc_priv_obj {
 	struct wlan_objmgr_psoc *psoc;
@@ -272,6 +274,7 @@ struct policy_mgr_psoc_priv_obj {
 	struct sta_ap_intf_check_work_ctx *sta_ap_intf_check_work_info;
 	uint8_t cur_conc_system_pref;
 	uint8_t sta_sap_scc_on_dfs_chan_allowed;
+	qdf_event_t opportunistic_update_done_evt;
 };
 
 /**
