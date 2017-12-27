@@ -811,8 +811,12 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	if (PM_NOP != next_action)
 		policy_mgr_next_actions(context, session_id,
 			next_action, reason);
-	else
+	else {
 		policy_mgr_debug("No action needed right now");
+		ret = policy_mgr_set_opportunistic_update(context);
+		if (!QDF_IS_STATUS_SUCCESS(ret))
+			policy_mgr_err("ERROR: set opportunistic_update event failed");
+	}
 
 	return;
 }
@@ -2379,6 +2383,7 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 		enum policy_mgr_conn_update_reason reason)
 {
 	uint32_t conn_index = 0;
+	QDF_STATUS ret;
 
 	if (QDF_STATUS_SUCCESS != tx_status)
 		policy_mgr_err("nss update failed(%d) for vdev %d",
@@ -2394,7 +2399,14 @@ static void policy_mgr_nss_update_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	policy_mgr_debug("nss update successful for vdev:%d", vdev_id);
-	policy_mgr_next_actions(psoc, vdev_id, next_action, reason);
+	if (PM_NOP != next_action)
+		policy_mgr_next_actions(psoc, vdev_id, next_action, reason);
+	else {
+		policy_mgr_debug("No action needed right now");
+		ret = policy_mgr_set_opportunistic_update(psoc);
+		if (!QDF_IS_STATUS_SUCCESS(ret))
+			policy_mgr_err("ERROR: set opportunistic_update event failed");
+	}
 
 	return;
 }

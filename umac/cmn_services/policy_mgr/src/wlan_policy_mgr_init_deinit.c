@@ -406,6 +406,12 @@ QDF_STATUS policy_mgr_psoc_enable(struct wlan_objmgr_psoc *psoc)
 		return status;
 	}
 
+	status = qdf_event_create(&pm_ctx->opportunistic_update_done_evt);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		policy_mgr_err("opportunistic_update_done_evt init failed");
+		return status;
+	}
+
 	pm_ctx->do_hw_mode_change = false;
 	pm_ctx->hw_mode_change_in_progress = POLICY_MGR_HW_MODE_NOT_IN_PROGRESS;
 	/* reset sap mandatory channels */
@@ -469,6 +475,14 @@ QDF_STATUS policy_mgr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
 		(&pm_ctx->connection_update_done_evt))) {
 		policy_mgr_err("Failed to destroy connection_update_done_evt");
+		status = QDF_STATUS_E_FAILURE;
+		QDF_ASSERT(0);
+	}
+
+	/* destroy opportunistic_update_done_evt */
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_destroy
+		(&pm_ctx->opportunistic_update_done_evt))) {
+		policy_mgr_err("Failed to destroy opportunistic_update_done_evt");
 		status = QDF_STATUS_E_FAILURE;
 		QDF_ASSERT(0);
 	}
