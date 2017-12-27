@@ -242,6 +242,7 @@ typedef  enum  {
                                          * host will rely on WMI_DMA_RING_CAPABILITIES to get supported modules */
     WMI_SERVICE_AP_OBSS_DETECTION_OFFLOAD=147, /* Support SAP mode OBSS detection offload */
     WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT=148, /* Support for 11k neighbor report */
+    WMI_SERVICE_LISTEN_INTERVAL_OFFLOAD_SUPPORT=149, /* Support listen interval offload */
 
 
     /******* ADD NEW SERVICES HERE *******/

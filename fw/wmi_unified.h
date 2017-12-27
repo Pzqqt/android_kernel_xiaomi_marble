@@ -8100,6 +8100,19 @@ typedef enum {
      */
     WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP,                       /* 0x79 */
 
+    /** VDEV parameter to config modulated DTIM count */
+    WMI_VDEV_PARAM_MODDTIM_CNT,                              /* 0x7a */
+
+    /**
+     * VDEV parameter to config max listen interval,
+     * when modulated DTIM is enabled.
+     * Units are 100TU.
+     */
+    WMI_VDEV_PARAM_MAX_LI_OF_MODDTIM,                        /* 0x7b */
+
+    /** VDEV parameter to config dynamic DTIM count */
+    WMI_VDEV_PARAM_DYNDTIM_CNT,                              /* 0x7c */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are

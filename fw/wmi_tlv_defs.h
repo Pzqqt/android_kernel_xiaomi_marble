@@ -1438,6 +1438,7 @@ typedef enum {
     OP(WMI_PDEV_DMA_RING_CFG_RSP_EVENTID) \
     OP(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID) \
     OP(WMI_SAR_GET_LIMITS_EVENTID) \
+    OP(WMI_SAR2_RESULT_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
