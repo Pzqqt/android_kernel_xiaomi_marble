@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1171,7 +1171,7 @@ void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 
 	qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 
-	WMI_MGMT_COMMAND_RECORD(wmi_handle, cmd, data);
+	WMI_MGMT_COMMAND_RECORD(wmi_handle, cmd, (uint8_t *)data);
 
 	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 }
@@ -1410,12 +1410,12 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 		 * * exclude TLV and WMI headers */
 		if (wmi_handle->ops->is_management_record(cmd_id)) {
 			WMI_MGMT_COMMAND_RECORD(wmi_handle, cmd_id,
-				((uint32_t *) qdf_nbuf_data(buf) +
-				 wmi_handle->log_info.buf_offset_command));
+				qdf_nbuf_data(buf) +
+				wmi_handle->log_info.buf_offset_command);
 		} else {
 			WMI_COMMAND_RECORD(wmi_handle, cmd_id,
-			((uint32_t *) qdf_nbuf_data(buf) +
-			 wmi_handle->log_info.buf_offset_command));
+					qdf_nbuf_data(buf) +
+			 wmi_handle->log_info.buf_offset_command);
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
@@ -1754,8 +1754,8 @@ static void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 
 		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 		/* Exclude 4 bytes of TLV header */
-		WMI_RX_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
-				wmi_handle->log_info.buf_offset_event));
+		WMI_RX_EVENT_RECORD(wmi_handle, id, data +
+				wmi_handle->log_info.buf_offset_event);
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
 #endif
@@ -1841,11 +1841,11 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 		qdf_spin_lock_bh(&wmi_handle->log_info.wmi_record_lock);
 		/* Exclude 4 bytes of TLV header */
 		if (wmi_handle->ops->is_management_record(id)) {
-			WMI_MGMT_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data
-				+ wmi_handle->log_info.buf_offset_event));
+			WMI_MGMT_EVENT_RECORD(wmi_handle, id, data
+				+ wmi_handle->log_info.buf_offset_event);
 		} else {
-			WMI_EVENT_RECORD(wmi_handle, id, ((uint8_t *) data +
-					wmi_handle->log_info.buf_offset_event));
+			WMI_EVENT_RECORD(wmi_handle, id, data +
+					wmi_handle->log_info.buf_offset_event);
 		}
 		qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);
 	}
@@ -2293,12 +2293,12 @@ static void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	- exclude TLV and WMI headers */
 	if (wmi_handle->ops->is_management_record(cmd_id)) {
 		WMI_MGMT_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
-			((uint32_t *) qdf_nbuf_data(wmi_cmd_buf) +
-			wmi_handle->log_info.buf_offset_command));
+			qdf_nbuf_data(wmi_cmd_buf) +
+			wmi_handle->log_info.buf_offset_command);
 	} else {
 		WMI_COMMAND_TX_CMP_RECORD(wmi_handle, cmd_id,
-			((uint32_t *) qdf_nbuf_data(wmi_cmd_buf) +
-			wmi_handle->log_info.buf_offset_command));
+			qdf_nbuf_data(wmi_cmd_buf) +
+			wmi_handle->log_info.buf_offset_command);
 	}
 
 	qdf_spin_unlock_bh(&wmi_handle->log_info.wmi_record_lock);

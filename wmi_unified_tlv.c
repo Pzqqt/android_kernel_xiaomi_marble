@@ -22225,7 +22225,9 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
 	wmi_handle->ops = &tlv_ops;
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	wmi_handle->log_info.buf_offset_command = 2;
+	/* Skip saving WMI_CMD_HDR and TLV HDR */
+	wmi_handle->log_info.buf_offset_command = 8;
+	/* WMI_CMD_HDR is already stripped, skip saving TLV HDR */
 	wmi_handle->log_info.buf_offset_event = 4;
 #endif
 	populate_tlv_events_id(wmi_handle->wmi_events);
