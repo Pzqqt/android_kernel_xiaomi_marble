@@ -1392,6 +1392,8 @@ void sap_dfs_set_current_channel(void *ctx)
 	struct wlan_objmgr_pdev *pdev;
 	tpAniSirGlobal mac_ctx;
 	tHalHandle hal;
+	uint32_t use_nol = 0;
+	int error;
 
 	hal = CDS_GET_HAL_CB();
 	if (!hal) {
@@ -1449,6 +1451,9 @@ void sap_dfs_set_current_channel(void *ctx)
 	if (wlan_reg_is_dfs_ch(pdev, sap_ctx->channel)) {
 		tgt_dfs_get_radars(pdev);
 		tgt_dfs_radar_enable(pdev, 0, 0);
+		if (sap_ctx->csr_roamProfile.disableDFSChSwitch)
+			tgt_dfs_control(pdev, DFS_SET_USENOL, &use_nol,
+					sizeof(uint32_t), NULL, NULL, &error);
 	}
 }
 
