@@ -5821,9 +5821,6 @@ struct hdd_adapter *hdd_get_adapter_by_vdev(struct hdd_context *hdd_ctx,
 			return adapter;
 	}
 
-	hdd_err_ratelimited(RATE_LIMIT_ERROR_LOG,
-		"vdev_id %d does not exist with host", vdev_id);
-
 	return NULL;
 }
 
