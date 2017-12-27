@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -790,6 +790,24 @@ util_scan_entry_rsn(struct scan_cache_entry *scan_entry)
 }
 
 /**
+ * util_scan_get_rsn_len()- function to read rsn IE length if present
+ * @scan_entry: scan entry
+ *
+ * API, function to read rsn length if present
+ *
+ * Return: rsnie length
+ */
+static inline uint8_t
+util_scan_get_rsn_len(struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry && scan_entry->ie_list.rsn)
+		return scan_entry->ie_list.rsn[1] + 2;
+	else
+		return 0;
+}
+
+
+/**
  * util_scan_entry_wpa() - function to read wpa IE
  * @scan_entry: scan entry
  *
@@ -802,6 +820,24 @@ util_scan_entry_wpa(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.wpa;
 }
+
+/**
+ * util_scan_get_wpa_len()- function to read wpa IE length if present
+ * @scan_entry: scan entry
+ *
+ * API, function to read wpa ie length if present
+ *
+ * Return: wpa ie length
+ */
+static inline uint8_t
+util_scan_get_wpa_len(struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry && scan_entry->ie_list.wpa)
+		return scan_entry->ie_list.wpa[1] + 2;
+	else
+		return 0;
+}
+
 
 /**
  * util_scan_entry_wapi() - function to read wapi IE

@@ -153,6 +153,7 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 	struct security_info *security)
 {
 	int i;
+	QDF_STATUS status;
 	bool match = false;
 	enum wlan_auth_type neg_auth = WLAN_AUTH_TYPE_OPEN_SYSTEM;
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
@@ -223,8 +224,14 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 
 		cipher_type =
 			scm_get_cipher_suite_type(security->uc_enc);
-		wlan_parse_wpa_ie(
-			util_scan_entry_wpa(db_entry), &wpa);
+		status = wlan_parse_wpa_ie(util_scan_entry_wpa(db_entry), &wpa);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("failed to parse WPA IE, status %d", status);
+			scm_hex_dump(QDF_TRACE_LEVEL_DEBUG,
+				     util_scan_entry_wpa(db_entry),
+				     util_scan_get_wpa_len(db_entry));
+			return false;
+		}
 
 		match = scm_is_cipher_match(&wpa.mc_cipher,
 				  1, WLAN_WPA_SEL(cipher_type));
@@ -235,9 +242,14 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 
 		cipher_type =
 			scm_get_cipher_suite_type(security->uc_enc);
-
-		wlan_parse_rsn_ie(
-			   util_scan_entry_rsn(db_entry), &rsn);
+		status = wlan_parse_rsn_ie(util_scan_entry_rsn(db_entry), &rsn);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("failed to parse RSN IE, status %d", status);
+			scm_hex_dump(QDF_TRACE_LEVEL_DEBUG,
+				     util_scan_entry_rsn(db_entry),
+				     util_scan_get_rsn_len(db_entry));
+			return false;
+		}
 		match = scm_is_cipher_match(&rsn.gp_cipher_suite,
 				  1, WLAN_RSN_SEL(cipher_type));
 	}
@@ -297,12 +309,18 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 	enum wlan_auth_type neg_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
 	struct wlan_rsn_ie rsn = {0};
+	QDF_STATUS status;
 
 	if (!util_scan_entry_rsn(db_entry))
 		return false;
-
-	wlan_parse_rsn_ie(
-		   util_scan_entry_rsn(db_entry), &rsn);
+	status = wlan_parse_rsn_ie(util_scan_entry_rsn(db_entry), &rsn);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("failed to parse RSN IE, status %d", status);
+		scm_hex_dump(QDF_TRACE_LEVEL_DEBUG,
+			     util_scan_entry_rsn(db_entry),
+			     util_scan_get_rsn_len(db_entry));
+		return false;
+	}
 
 	cipher_type =
 		scm_get_cipher_suite_type(security->uc_enc);
@@ -493,6 +511,7 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 
 	if (!match)
 		return false;
+
 	match = scm_check_pmf_match(filter, &rsn);
 
 	if (match && security) {
@@ -516,6 +535,7 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 	struct security_info *security)
 {
 	int i;
+	QDF_STATUS status;
 	uint8_t cipher_type;
 	bool match = false;
 	enum wlan_auth_type neg_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
@@ -525,7 +545,14 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 	if (!util_scan_entry_wpa(db_entry))
 		return false;
 
-	wlan_parse_wpa_ie(util_scan_entry_wpa(db_entry), &wpa);
+	status = wlan_parse_wpa_ie(util_scan_entry_wpa(db_entry), &wpa);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		scm_err("failed to parse WPA IE, status %d", status);
+		scm_hex_dump(QDF_TRACE_LEVEL_DEBUG,
+			     util_scan_entry_wpa(db_entry),
+			     util_scan_get_wpa_len(db_entry));
+		return false;
+	}
 
 	cipher_type =
 		scm_get_cipher_suite_type(security->uc_enc);

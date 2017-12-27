@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -46,6 +46,10 @@
 		scm_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
 #define scm_debug(format, args...) \
 		scm_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
+
+#define scm_hex_dump(level, data, buf_len) \
+		qdf_trace_hex_dump(QDF_MODULE_ID_SCAN, level, data, buf_len)
+
 
 #define MAX_SCAN_EVENT_HANDLERS_PER_PDEV   100
 #define WLAN_MAX_MODULE_NAME    40
