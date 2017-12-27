@@ -860,15 +860,15 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			HAL_RX_OFFSET(PHYRX_RSSI_LEGACY_3,
 			RECEIVE_RSSI_INFO_PRE_RSSI_INFO_DETAILS);
 
-		ppdu_info->rx_status.rssi_comb = HAL_RX_GET(rssi_info_tlv,
+		ppdu_info->rx_status.rssi_comb = HAL_RX_GET(rx_tlv,
 			PHYRX_RSSI_LEGACY_35, RSSI_COMB);
-		ppdu_info->rx_status.bw = HAL_RX_GET(rssi_info_tlv,
+		ppdu_info->rx_status.bw = HAL_RX_GET(rx_tlv,
 #if !defined(QCA_WIFI_QCA6290_11AX)
 			PHYRX_RSSI_LEGACY_35, RECEIVE_BANDWIDTH);
 #else
 			PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
 #endif
-		ppdu_info->rx_status.preamble_type = HAL_RX_GET(rssi_info_tlv,
+		ppdu_info->rx_status.preamble_type = HAL_RX_GET(rx_tlv,
 			PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
 		ppdu_info->rx_status.he_re = 0;
 
