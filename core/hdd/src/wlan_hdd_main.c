@@ -2846,8 +2846,6 @@ static int __hdd_stop(struct net_device *dev)
 	if (WLAN_HDD_IS_NDI(adapter))
 		return 0;
 
-	policy_mgr_check_and_stop_opportunistic_timer(hdd_ctx->hdd_psoc);
-
 	/*
 	 * The interface is marked as down for outside world (aka kernel)
 	 * But the driver is pretty much alive inside. The driver needs to
@@ -4570,6 +4568,17 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	wlan_hdd_netif_queue_control(adapter,
 				     WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
 				     WLAN_CONTROL_PATH);
+	/*
+	 * if this is the last active connection check & stop the
+	 * opportunistic timer first
+	 */
+	if (((policy_mgr_get_connection_count(hdd_ctx->hdd_psoc) == 1) &&
+		(policy_mgr_mode_specific_connection_count(hdd_ctx->hdd_psoc,
+			policy_mgr_convert_device_mode_to_qdf_type(
+				adapter->device_mode), NULL) == 1)) ||
+			!policy_mgr_get_connection_count(hdd_ctx->hdd_psoc))
+		policy_mgr_check_and_stop_opportunistic_timer(
+			hdd_ctx->hdd_psoc, adapter->session_id);
 	switch (adapter->device_mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
