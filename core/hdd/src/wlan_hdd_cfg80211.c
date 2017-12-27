@@ -14650,6 +14650,11 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (wlan_hdd_validate_session_id(adapter->session_id)) {
+		hdd_err("Invalid session id: %d", adapter->session_id);
+		return -EINVAL;
+	}
+
 	hdd_debug("Device_mode %s(%d)",
 		hdd_device_mode_to_string(adapter->device_mode),
 		adapter->device_mode);
@@ -14671,6 +14676,11 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		struct hdd_wext_state *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 		roam_profile = &(pWextState->roamProfile);
+	}
+
+	if (roam_profile == NULL) {
+		hdd_err("Get roam profile failed!");
+		return -EINVAL;
 	}
 
 	switch (roam_profile->EncryptionType.encryptionType[0]) {
