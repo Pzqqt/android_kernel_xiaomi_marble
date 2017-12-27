@@ -302,12 +302,19 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 	if (!cmd || !cmd->umac_cmd) {
 		scm_err("cmd: %pK, umac_cmd: %pK, reason: %d",
 			cmd, cmd->umac_cmd, reason);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	req = cmd->umac_cmd;
-	scm_info("reason: %d, reqid:%d, scanid: %d, vdev_id: %d",
-		reason, req->scan_req.scan_req_id,
-		req->scan_req.scan_id, req->scan_req.vdev_id);
+	scm_debug("reason:%d, reqid:%d, scanid:%d, vdevid:%d, vdev:0x%pK",
+		reason, req->scan_req.scan_req_id, req->scan_req.scan_id,
+		req->scan_req.vdev_id, req->vdev);
+
+	if (!req->vdev) {
+		scm_err("NULL vdev. req:0x%pK, reason:%d\n", req, reason);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	switch (reason) {
 	case WLAN_SER_CB_ACTIVATE_CMD:
