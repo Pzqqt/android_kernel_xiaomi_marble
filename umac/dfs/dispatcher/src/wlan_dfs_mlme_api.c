@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -97,6 +97,7 @@ void dfs_mlme_mark_dfs(struct wlan_objmgr_pdev *pdev,
 }
 #endif
 
+#ifndef QCA_MCL_DFS_SUPPORT
 void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
 		uint8_t ieee_chan, uint16_t freq,
 		uint8_t cfreq2, uint64_t flags)
@@ -105,6 +106,22 @@ void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
 		global_dfs_to_mlme.mlme_start_csa(pdev, ieee_chan, freq, cfreq2,
 				flags);
 }
+#else
+void dfs_mlme_start_csa(struct wlan_objmgr_pdev *pdev,
+			uint8_t ieee_chan, uint16_t freq,
+			uint8_t cfreq2, uint64_t flags)
+{
+	if (!pdev) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "null pdev");
+		return;
+	}
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev,
+				WLAN_VDEV_OP,
+				dfs_send_radar_ind,
+				NULL, 0, WLAN_DFS_ID);
+}
+#endif
 
 #ifndef QCA_MCL_DFS_SUPPORT
 void dfs_mlme_proc_cac(struct wlan_objmgr_pdev *pdev, uint32_t vdev_id)
