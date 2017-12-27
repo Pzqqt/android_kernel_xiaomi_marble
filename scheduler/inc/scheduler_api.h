@@ -62,12 +62,12 @@ typedef enum {
  * struct scheduler_msg: scheduler message structure
  * @type: message type
  * @reserved: reserved field
+ * @bodyval: message body val
  * @bodyptr: message body pointer based on the type either a bodyptr pointer
  *     into memory or bodyval as a 32 bit data is used. bodyptr is always a
  *     freeable pointer, one should always make sure that bodyptr is always
  *     freeable.
  * Messages should use either bodyptr or bodyval; not both !!!
- * @bodyval: message body val
  * @callback: callback to be called by scheduler thread once message is posted
  *   and scheduler thread has started processing the message.
  * @flush_callback: flush callback which will be invoked during driver unload
@@ -79,8 +79,8 @@ typedef enum {
 struct scheduler_msg {
 	uint16_t type;
 	uint16_t reserved;
-	void *bodyptr;
 	uint32_t bodyval;
+	void *bodyptr;
 	void *callback;
 	void *flush_callback;
 };
