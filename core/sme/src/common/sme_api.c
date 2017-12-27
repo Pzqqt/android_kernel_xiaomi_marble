@@ -15825,6 +15825,15 @@ static bool sme_get_status_for_candidate(tHalHandle *hal,
 	return false;
 }
 
+uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
+				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
+				  bool append_ie)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	return sir_unpack_rsn_ie(mac_ctx, buf, buf_len, rsn_ie, append_ie);
+}
+
 /**
  * wlan_hdd_get_bss_transition_status() - get bss transition status all cadidates
  * @adapter : Pointer to adapter

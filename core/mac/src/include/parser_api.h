@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1192,4 +1192,35 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * sir_unpack_rsn_ie: wrapper to uRSN IE and update def RSN params
+ * if optional fields are not present.
+ * @mac_ctx: mac context
+ * @buf: rsn ie buffer pointer
+ * @buf_len: rsn ie buffer length
+ * @rsn_ie: outframe rsn ie structure
+ * @append_ie: flag to indicate if the rsn_ie need to be appended from buf
+ *
+ * Return: parse status
+ */
+uint32_t sir_unpack_rsn_ie(tpAniSirGlobal mac_ctx, uint8_t *buf,
+				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
+				  bool append_ie);
+
+/**
+ * sir_unpack_beacon_ie: wrapper to unpack beacon and update def RSN params
+ * if optional fields are not present.
+ * @mac_ctx: mac context
+ * @buf: beacon buffer pointer
+ * @buf_len: beacon buffer length
+ * @frame: outframe frame structure
+ * @append_ie: flag to indicate if the frame need to be appended from buf
+ *
+ * Return: parse status
+ */
+uint32_t sir_unpack_beacon_ie(tpAniSirGlobal mac_ctx, uint8_t *buf,
+				       uint32_t buf_len,
+				       tDot11fBeaconIEs *frame, bool append_ie);
+
 #endif /* __PARSE_H__ */

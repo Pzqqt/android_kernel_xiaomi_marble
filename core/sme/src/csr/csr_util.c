@@ -1752,7 +1752,7 @@ QDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
 		      GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 
 	if (ieLen > 0 && pIEStruct) {
-		if (!DOT11F_FAILED(dot11f_unpack_beacon_i_es
+		if (!DOT11F_FAILED(sir_unpack_beacon_ie
 				    (pMac, (uint8_t *) pBssDesc->ieFields,
 				    ieLen, pIEStruct, false)))
 		status = QDF_STATUS_SUCCESS;
@@ -3388,6 +3388,7 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 			CSR_RSN_OUI_SIZE);
 	c_ucast_cipher =
 		(uint8_t) (rsn_ie->pwise_cipher_suite_count);
+
 	c_auth_suites = (uint8_t) (rsn_ie->akm_suite_count);
 	for (i = 0; i < c_auth_suites && i < CSR_RSN_MAX_AUTH_SUITES; i++) {
 		qdf_mem_copy((void *)&authsuites[i],
@@ -3889,7 +3890,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		 * the AP, so that only common capability are enabled.
 		 */
 		if (pProfile->pRSNReqIE && pProfile->nRSNReqIELength) {
-			dot11f_unpack_ie_rsn(pMac, pProfile->pRSNReqIE + 2,
+			sir_unpack_rsn_ie(pMac, pProfile->pRSNReqIE + 2,
 				  pProfile->nRSNReqIELength -2, &rsn_ie, false);
 			pIesLocal->RSN.RSN_Cap[0] = pIesLocal->RSN.RSN_Cap[0] &
 						    rsn_ie.RSN_Cap[0];

@@ -2007,4 +2007,19 @@ int sme_get_bss_transition_status(tHalHandle hal,
 		uint16_t n_candidates,
 		bool is_bt_in_progress);
 
+/**
+ * sme_unpack_rsn_ie: wrapper to unpack RSN IE and update def RSN params
+ * if optional fields are not present.
+ * @hal: handle returned by mac_open
+ * @buf: rsn ie buffer pointer
+ * @buf_len: rsn ie buffer length
+ * @rsn_ie: outframe rsn ie structure
+ * @append_ie: flag to indicate if the rsn_ie need to be appended from buf
+ *
+ * Return: parse status
+ */
+uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
+				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
+				  bool append_ie);
+
 #endif /* #if !defined( __SME_API_H ) */

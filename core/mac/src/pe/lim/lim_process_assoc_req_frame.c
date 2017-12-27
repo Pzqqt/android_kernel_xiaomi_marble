@@ -777,7 +777,7 @@ static bool lim_chk_n_process_wpa_rsn_ie(tpAniSirGlobal mac_ctx,
 			if (assoc_req->rsnPresent) {
 				if (assoc_req->rsn.length) {
 					/* Unpack the RSN IE */
-					if (dot11f_unpack_ie_rsn(mac_ctx,
+					if (sir_unpack_rsn_ie(mac_ctx,
 						&assoc_req->rsn.info[0],
 						assoc_req->rsn.length,
 						&dot11f_ie_rsn, false) !=
