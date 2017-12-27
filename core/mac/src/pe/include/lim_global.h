@@ -299,19 +299,19 @@ typedef struct sLimMlmStaContext {
 	tAniAuthType authType;
 	uint16_t listenInterval;
 	tSirMacCapabilityInfo capabilityInfo;
-	tSirMacPropRateSet propRateSet;
 	tSirMacReasonCodes disassocReason;
-	uint16_t cleanupTrigger;
 
 	tSirResultCodes resultCode;
-	uint16_t protStatusCode;
 
+	tSirMacPropRateSet propRateSet;
 	uint8_t subType:1;      /* Indicates ASSOC (0) or REASSOC (1) */
 	uint8_t updateContext:1;
 	uint8_t schClean:1;
 	/* 802.11n HT Capability in Station: Enabled 1 or DIsabled 0 */
 	uint8_t htCapability:1;
 	uint8_t vhtCapability:1;
+	uint16_t cleanupTrigger;
+	uint16_t protStatusCode;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
 #endif

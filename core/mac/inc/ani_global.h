@@ -905,50 +905,50 @@ typedef struct sAniSirGlobal {
 
 	tRrmContext rrm;
 
-	uint8_t isCoalesingInIBSSAllowed;
 
 	csr_readyToSuspendCallback readyToSuspendCallback;
 	void *readyToSuspendContext;
+	uint8_t isCoalesingInIBSSAllowed;
 	uint8_t lteCoexAntShare;
 	uint8_t beacon_offload;
 	bool pmf_offload;
 	bool is_fils_roaming_supported;
-	uint32_t fEnableDebugLog;
-	uint16_t mgmtSeqNum;
 	bool enable5gEBT;
-	/* Miracast session 0-Disabled, 1-Source, 2-sink */
 	uint8_t fMiracastSessionPresent;
+	uint8_t f_prefer_non_dfs_on_radar;
+	uint32_t fEnableDebugLog;
+	uint32_t f_sta_miracast_mcc_rest_time_val;
+	/* Miracast session 0-Disabled, 1-Source, 2-sink */
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	csr_readyToExtWoWCallback readyToExtWoWCallback;
 	void *readyToExtWoWContext;
 #endif
-	uint32_t f_sta_miracast_mcc_rest_time_val;
-	uint8_t f_prefer_non_dfs_on_radar;
 	hdd_ftm_msg_processor ftm_msg_processor_callback;
 	struct vdev_type_nss vdev_type_nss_2g;
 	struct vdev_type_nss vdev_type_nss_5g;
 
+	uint16_t mgmtSeqNum;
 	/* 802.11p enable */
 	bool enable_dot11p;
-
 	/* DBS capability based on INI and FW capability */
 	uint8_t hw_dbs_capable;
-	/* Based on INI parameter */
-	uint32_t dual_mac_feature_disable;
 	uint32_t sta_sap_scc_on_dfs_chan;
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
-	bool first_scan_done;
-	int8_t first_scan_bucket_threshold;
-	enum auth_tx_ack_status auth_ack_status;
-	uint8_t user_configured_nss;
-	bool sta_prefer_80MHz_over_160MHz;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
-	enum  country_src reg_hint_src;
-	bool snr_monitor_enabled;
 	void (*chan_info_cb)(struct scan_chan_info *chan_info);
+	/* Based on INI parameter */
+	uint32_t dual_mac_feature_disable;
+
+	enum  country_src reg_hint_src;
 	uint32_t rx_packet_drop_counter;
+	enum auth_tx_ack_status auth_ack_status;
+	uint8_t user_configured_nss;
+	bool snr_monitor_enabled;
 	bool ignore_assoc_disallowed;
+	bool sta_prefer_80MHz_over_160MHz;
+	bool first_scan_done;
+	int8_t first_scan_bucket_threshold;
 	uint32_t peer_rssi;
 	uint32_t peer_txrate;
 	uint32_t peer_rxrate;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -75,6 +75,8 @@ typedef struct sAniSirCfgStatic {
 typedef struct sAniSirCfg {
 	/* CFG module status */
 	uint8_t gCfgStatus;
+	uint16_t gCfgMaxIBufSize;
+	uint16_t gCfgMaxSBufSize;
 
 	tCfgCtl *gCfgEntry;
 
@@ -82,9 +84,6 @@ typedef struct sAniSirCfg {
 	uint32_t *gCfgIBuf;
 	uint32_t *gCfgIBufMin;
 	uint32_t *gCfgIBufMax;
-
-	uint16_t gCfgMaxIBufSize;
-	uint16_t gCfgMaxSBufSize;
 
 	/* Static buffer for string parameter (must be word-aligned) */
 	uint8_t *gSBuffer;

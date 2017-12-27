@@ -938,7 +938,9 @@ typedef struct tagCsrRoamConnectedProfile {
 	tSirMacSSid SSID;
 	bool handoffPermitted;
 	bool ssidHidden;
+	uint8_t operationChannel;
 	struct qdf_mac_addr bssid;
+	uint16_t beaconInterval;
 	eCsrRoamBssType BSSType;
 	eCsrAuthType AuthType;
 	tCsrAuthList AuthInfo;
@@ -946,9 +948,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	tCsrEncryptionList EncryptionInfo;
 	eCsrEncryptionType mcEncryptionType;
 	tCsrEncryptionList mcEncryptionInfo;
-	uint8_t operationChannel;
 	uint32_t vht_channel_width;
-	uint16_t beaconInterval;
 	tCsrKeys Keys;
 	/*
 	 * meaningless on connect. It's an OUT param from CSR's point of view
@@ -958,6 +958,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	 */
 	uint8_t acm_mask;
 	tCsrRoamModifyProfileFields modifyProfileFields;
+	bool qosConnection;     /* A connection is QoS enabled */
 	uint32_t nAddIEAssocLength;
 	/*
 	 * If not null,it's IE byte stream for additional IE,
@@ -966,7 +967,6 @@ typedef struct tagCsrRoamConnectedProfile {
 	uint8_t *pAddIEAssoc;
 	tSirBssDescription *pBssDesc;
 	bool qap;               /* AP supports QoS */
-	bool qosConnection;     /* A connection is QoS enabled */
 	tCsrMobilityDomainInfo MDID;
 #ifdef FEATURE_WLAN_ESE
 	tCsrEseCckmInfo eseCckmInfo;
