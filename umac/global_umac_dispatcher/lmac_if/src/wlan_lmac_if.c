@@ -50,6 +50,10 @@
 #include <wlan_dfs_tgt_api.h>
 #include <wlan_dfs_utils_api.h>
 #endif
+#ifdef WLAN_SUPPORT_GREEN_AP
+#include <wlan_green_ap_api.h>
+#include <wlan_green_ap_ucfg_api.h>
+#endif
 
 /* Function pointer for OL/WMA specific UMAC tx_ops
  * registration.
@@ -286,6 +290,27 @@ wlan_lmac_if_umac_tdls_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 }
 #endif
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+static QDF_STATUS
+wlan_lmac_if_umac_green_ap_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	rx_ops->green_ap_rx_ops.is_ps_enabled = wlan_green_ap_is_ps_enabled;
+	rx_ops->green_ap_rx_ops.is_dbg_print_enabled =
+					ucfg_green_ap_get_debug_prints;
+	rx_ops->green_ap_rx_ops.ps_set = ucfg_green_ap_set_ps_config;
+	rx_ops->green_ap_rx_ops.ps_get = ucfg_green_ap_get_ps_config;
+	rx_ops->green_ap_rx_ops.suspend_handle = wlan_green_ap_suspend_handle;
+
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS
+wlan_lmac_if_umac_green_ap_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
  * @rx_ops: Pointer to rx_ops structure to be populated
@@ -348,6 +373,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 
 	/* DFS rx_ops */
 	wlan_lmac_if_umac_dfs_rx_ops_register(rx_ops);
+
+	wlan_lmac_if_umac_green_ap_rx_ops_register(rx_ops);
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -552,6 +552,10 @@ struct wlan_lmac_if_green_ap_tx_ops {
 				struct wlan_green_ap_egap_params *egap_params);
 	QDF_STATUS (*ps_on_off_send)(struct wlan_objmgr_pdev *pdev,
 				     bool value, uint8_t pdev_id);
+	QDF_STATUS (*reset_dev)(struct wlan_objmgr_pdev *pdev);
+	uint16_t (*get_current_channel)(struct wlan_objmgr_pdev *pdev);
+	uint64_t (*get_current_channel_flags)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*get_capab)(struct  wlan_objmgr_pdev *pdev);
 };
 #endif
 
@@ -997,6 +1001,17 @@ struct wlan_lmac_if_mlme_rx_ops {
 			uint8_t vdev_id);
 	void (*wlan_mlme_end_scan)(struct wlan_objmgr_pdev *pdev);
 };
+
+#ifdef WLAN_SUPPORT_GREEN_AP
+struct wlan_lmac_if_green_ap_rx_ops {
+	bool (*is_ps_enabled)(struct wlan_objmgr_pdev *pdev);
+	bool (*is_dbg_print_enabled)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*ps_get)(struct wlan_objmgr_pdev *pdev, uint8_t *value);
+	QDF_STATUS (*ps_set)(struct wlan_objmgr_pdev *pdev, uint8_t value);
+	void (*suspend_handle)(struct wlan_objmgr_pdev *pdev);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_rx_ops - south bound rx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx rx ops
@@ -1044,6 +1059,9 @@ struct wlan_lmac_if_rx_ops {
 	struct wlan_lmac_if_tdls_rx_ops tdls_rx_ops;
 #endif
 	struct wlan_lmac_if_mlme_rx_ops mops;
+#ifdef WLAN_SUPPORT_GREEN_AP
+	struct wlan_lmac_if_green_ap_rx_ops green_ap_rx_ops;
+#endif
 };
 
 /* Function pointer to call legacy tx_ops registration in OL/WMA.

@@ -23,6 +23,33 @@
 #include <../../core/src/wlan_green_ap_main_i.h>
 #include <wlan_objmgr_global_obj.h>
 
+QDF_STATUS wlan_green_ap_get_capab(
+			struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_green_ap_tx_ops *green_ap_tx_ops;
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+					WLAN_UMAC_COMP_GREEN_AP);
+
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+
+	green_ap_tx_ops = wlan_psoc_get_green_ap_tx_ops(green_ap_ctx);
+	if (!green_ap_tx_ops) {
+		green_ap_err("green ap tx ops obtained are NULL");
+		return QDF_STATUS_E_EXISTS;
+	}
+
+	if (green_ap_tx_ops->get_capab)
+		return green_ap_tx_ops->get_capab(pdev);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * wlan_green_ap_pdev_obj_create_notification() - called from objmgr when pdev
  *                                                is created
@@ -246,7 +273,6 @@ QDF_STATUS wlan_green_ap_stop(struct wlan_objmgr_pdev *pdev)
 	green_ap_debug("Green AP stop received");
 
 	qdf_spin_lock_bh(&green_ap_ctx->lock);
-
 	if (wlan_is_egap_enabled(green_ap_ctx)) {
 		qdf_spin_unlock_bh(&green_ap_ctx->lock);
 		green_ap_debug("enhanced green ap support is enabled");
@@ -257,7 +283,7 @@ QDF_STATUS wlan_green_ap_stop(struct wlan_objmgr_pdev *pdev)
 	qdf_timer_stop(&green_ap_ctx->ps_timer);
 
 	/* Disable the power save */
-	green_ap_ctx->ps_enable = 0;
+	green_ap_ctx->ps_enable = WLAN_GREEN_AP_PS_DISABLE;
 
 	qdf_spin_unlock_bh(&green_ap_ctx->lock);
 	return wlan_green_ap_state_mc(green_ap_ctx,
@@ -322,4 +348,50 @@ QDF_STATUS wlan_green_ap_del_sta(struct wlan_objmgr_pdev *pdev)
 
 	return wlan_green_ap_state_mc(green_ap_ctx,
 				      WLAN_GREEN_AP_DEL_STA_EVENT);
+}
+
+bool wlan_green_ap_is_ps_enabled(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
+	if (!pdev) {
+		green_ap_err("pdev context passed is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_GREEN_AP);
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if ((green_ap_ctx->ps_state == WLAN_GREEN_AP_PS_ON_STATE) &&
+			(green_ap_ctx->ps_enable))
+		return true;
+
+	return false;
+
+}
+
+void wlan_green_ap_suspend_handle(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
+	if (!pdev) {
+		green_ap_err("pdev context passed is NULL");
+		return;
+	}
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+				pdev, WLAN_UMAC_COMP_GREEN_AP);
+
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return;
+	}
+
+	wlan_green_ap_stop(pdev);
+
+	green_ap_ctx->ps_enable = WLAN_GREEN_AP_PS_SUSPEND;
 }

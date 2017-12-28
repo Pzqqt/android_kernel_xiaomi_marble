@@ -30,6 +30,10 @@ ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc
 endif
 
+ifeq ($(WLAN_SUPPORT_GREEN_AP), 1)
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/green_ap/dispatcher/inc
+endif
+
 #Start of offload related deifines
 HOST_CMN_CONVG_SRC := $(DEPTH)/cmn_dev
 HOST_CMN_CONVG_HIF_SRC := $(DEPTH)/cmn_dev/hif/src

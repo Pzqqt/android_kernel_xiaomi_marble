@@ -40,6 +40,10 @@ QDF_STATUS target_if_register_green_ap_tx_ops(
 
 	green_ap_tx_ops->enable_egap = target_if_green_ap_enable_egap;
 	green_ap_tx_ops->ps_on_off_send = target_if_green_ap_set_ps_on_off;
+	green_ap_tx_ops->reset_dev = NULL;
+	green_ap_tx_ops->get_current_channel = NULL;
+	green_ap_tx_ops->get_current_channel_flags = NULL;
+	green_ap_tx_ops->get_capab = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }

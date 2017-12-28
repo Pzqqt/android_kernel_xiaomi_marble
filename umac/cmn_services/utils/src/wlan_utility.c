@@ -237,3 +237,36 @@ uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev)
 	return name;
 }
 EXPORT_SYMBOL(wlan_util_vdev_get_if_name);
+
+static void wlan_vap_active(struct wlan_objmgr_pdev *pdev,
+			void *object,
+			void *arg)
+{
+	struct wlan_objmgr_vdev *vdev = (struct wlan_objmgr_vdev *)object;
+	uint8_t *flag = (uint8_t *)arg;
+
+	wlan_vdev_obj_lock(vdev);
+	if ((wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_RUN) ||
+		(wlan_vdev_mlme_get_state(vdev) == WLAN_VDEV_S_DFS_WAIT)) {
+		*flag = 1;
+	}
+	wlan_vdev_obj_unlock(vdev);
+}
+
+QDF_STATUS wlan_util_is_vap_active(struct wlan_objmgr_pdev *pdev)
+{
+	uint8_t flag = 0;
+
+	if (!pdev)
+		return QDF_STATUS_E_INVAL;
+
+	wlan_objmgr_pdev_iterate_obj_list(pdev,
+				WLAN_VDEV_OP,
+				wlan_vap_active,
+				&flag, 0, WLAN_OBJMGR_ID);
+
+	if (flag == 1)
+		return QDF_STATUS_SUCCESS;
+
+	return QDF_STATUS_E_INVAL;
+}

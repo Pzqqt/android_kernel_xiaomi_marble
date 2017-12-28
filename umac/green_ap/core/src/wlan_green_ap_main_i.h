@@ -30,6 +30,8 @@
 #include <qdf_types.h>
 #include <qdf_status.h>
 #include <qdf_timer.h>
+#include "wlan_utility.h"
+#include <qdf_module.h>
 
 #define WLAN_GREEN_AP_PS_ON_TIME        (0)
 #define WLAN_GREEN_AP_PS_TRANS_TIME     (20)
@@ -52,6 +54,9 @@
 #define green_ap_debug(format, args...) \
 		green_ap_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
+#define WLAN_GREEN_AP_PS_DISABLE 0
+#define WLAN_GREEN_AP_PS_ENABLE 1
+#define WLAN_GREEN_AP_PS_SUSPEND 2
 /**
  * enum wlan_green_ap_ps_state - PS states
  * @WLAN_GREEN_AP_PS_IDLE_STATE - Idle
@@ -108,6 +113,7 @@ struct wlan_pdev_green_ap_ctx {
 	qdf_timer_t ps_timer;
 	qdf_spinlock_t lock;
 	struct wlan_green_ap_egap_params egap_params;
+	bool dbg_enable;
 };
 
 /**
@@ -144,4 +150,18 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
  * @Return: None
  */
 void wlan_green_ap_timer_fn(void *pdev);
+
+/**
+ * wlan_green_ap_check_mode() - Check for mode
+ * @pdev: pdev pointer
+ * @object:  vdev object
+ * @arg: flag to be set
+ *
+ * Callback to check if all modes on radio are configured as AP
+ *
+ * @Return: None
+ */
+void wlan_green_ap_check_mode(struct wlan_objmgr_pdev *pdev,
+		void *object,
+		void *arg);
 #endif  /* _WLAN_GREEN_AP_MAIN_I_H_ */

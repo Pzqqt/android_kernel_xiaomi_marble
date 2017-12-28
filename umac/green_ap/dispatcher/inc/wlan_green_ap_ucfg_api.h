@@ -26,6 +26,7 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_pdev_obj.h>
 #include <qdf_status.h>
+#include "wlan_utility.h"
 
 /**
  * struct green_ap_user_cfg - green ap user cfg
@@ -116,4 +117,28 @@ QDF_STATUS ucfg_green_ap_set_transition_time(struct wlan_objmgr_pdev *pdev,
 QDF_STATUS ucfg_green_ap_get_transition_time(struct wlan_objmgr_pdev *pdev,
 					     uint32_t *ps_trans_time);
 
+/**
+ * ucfg_green_ap_config() - Config green AP
+ * @pdev: pdev pointer
+ *
+ * Return: Success or Failure
+ */
+QDF_STATUS ucfg_green_ap_config(struct wlan_objmgr_pdev *pdev, uint8_t val);
+
+/**
+ * ucfg_green_ap_enable_debug_prints() - Enable debugs
+ * @pdev: pdev pointer
+ *
+ * Return: None
+ */
+void ucfg_green_ap_enable_debug_prints(struct wlan_objmgr_pdev *pdev,
+					uint32_t val);
+
+/**
+ * ucfg_green_ap_get_debug_prints() - Check if debug enabled
+ * @pdev: pdev pointer
+ *
+ * Return: Debug value
+ */
+bool ucfg_green_ap_get_debug_prints(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_GREEN_AP_UCFG_API_H_ */

@@ -228,3 +228,76 @@ QDF_STATUS ucfg_green_ap_get_transition_time(struct wlan_objmgr_pdev *pdev,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+QDF_STATUS ucfg_green_ap_config(struct wlan_objmgr_pdev *pdev, uint8_t val)
+{
+
+	uint8_t flag;
+
+	if (wlan_green_ap_get_capab(pdev) == QDF_STATUS_E_NOSUPPORT) {
+		green_ap_err("GreenAP not supported on radio\n");
+		return QDF_STATUS_E_NOSUPPORT;
+	}
+
+	if (val) {
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+		wlan_objmgr_pdev_iterate_obj_list(pdev,
+					WLAN_VDEV_OP,
+					wlan_green_ap_check_mode,
+					&flag, 0, WLAN_OBJMGR_ID);
+		if (flag == 1) {
+			green_ap_err("Radio not in AP mode."
+					"Feature not supported");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+
+		green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+					WLAN_UMAC_COMP_GREEN_AP);
+
+		if (!green_ap_ctx) {
+			green_ap_err("green ap context obtained is NULL");
+			return QDF_STATUS_E_NOSUPPORT;
+		}
+
+		ucfg_green_ap_set_ps_config(pdev, val);
+
+		if (wlan_util_is_vap_active(pdev) == QDF_STATUS_SUCCESS)
+			wlan_green_ap_start(pdev);
+	} else {
+		wlan_green_ap_stop(pdev);
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+void ucfg_green_ap_enable_debug_prints(struct wlan_objmgr_pdev *pdev,
+				uint32_t val)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_GREEN_AP);
+
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return;
+	}
+
+	green_ap_ctx->dbg_enable = val;
+}
+
+bool ucfg_green_ap_get_debug_prints(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_GREEN_AP);
+
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return false;
+	}
+
+	return green_ap_ctx->dbg_enable;
+}
+

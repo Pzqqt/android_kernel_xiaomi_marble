@@ -96,4 +96,30 @@ QDF_STATUS wlan_green_ap_add_sta(struct wlan_objmgr_pdev *pdev);
  * Return: Success or Failure
  */
 QDF_STATUS wlan_green_ap_del_sta(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_green_ap_is_ps_enabled() - is power save enabled
+ * @pdev: pdev pointer
+ *
+ * Check if power save is enabled in FW
+ *
+ * Return: Success or Failure
+ */
+bool wlan_green_ap_is_ps_enabled(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_green_ap_suspend_handle() - handle driver suspend
+ * @pdev: pdev pointer
+ *
+ * Return: None
+ */
+void wlan_green_ap_suspend_handle(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * wlan_green_ap_get_capab() - get lmac capability
+ * @pdev: pdev pointer
+ *
+ * Return: Appropriate status
+ */
+QDF_STATUS wlan_green_ap_get_capab(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_GREEN_AP_API_H_ */

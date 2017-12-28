@@ -158,4 +158,13 @@ struct wlan_objmgr_vdev *wlan_util_get_vdev_by_ifname(
  * @id: vdev's interface name
  */
 uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev);
+
+/*
+ * wlan_util_is_vap_active() - Check for vap active
+ * @pdev: pdev pointer
+ *
+ * @Return: QDF_STATUS_SUCCESS in case of vap active
+ */
+QDF_STATUS wlan_util_is_vap_active(struct wlan_objmgr_pdev *pdev);
+
 #endif /* _WLAN_UTILITY_H_ */
