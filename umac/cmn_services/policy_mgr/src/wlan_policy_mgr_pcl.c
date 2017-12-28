@@ -1706,7 +1706,7 @@ uint8_t policy_mgr_get_alternate_channel_for_sap(
 	uint8_t pcl_channels[QDF_MAX_NUM_CHAN];
 	uint8_t pcl_weight[QDF_MAX_NUM_CHAN];
 	uint8_t channel = 0;
-	uint32_t pcl_len;
+	uint32_t pcl_len = 0;
 
 	if (QDF_STATUS_SUCCESS == policy_mgr_get_pcl(psoc, PM_SAP_MODE,
 		&pcl_channels[0], &pcl_len,
