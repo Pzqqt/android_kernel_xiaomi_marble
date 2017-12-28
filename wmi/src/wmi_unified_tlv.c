@@ -20954,6 +20954,58 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_obss_detection_cfg_cmd_tlv() - send obss detection
+ *   configurations to firmware.
+ * @wmi_handle: wmi handle
+ * @obss_cfg_param: obss detection configurations
+ *
+ * Send WMI_SAP_OBSS_DETECTION_CFG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_obss_detection_cfg_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wmi_obss_detection_cfg_param *obss_cfg_param)
+{
+	wmi_buf_t buf;
+	wmi_sap_obss_detection_cfg_cmd_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_sap_obss_detection_cfg_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_sap_obss_detection_cfg_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_sap_obss_detection_cfg_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_sap_obss_detection_cfg_cmd_fixed_param));
+
+	cmd->vdev_id = obss_cfg_param->vdev_id;
+	cmd->detect_period_ms = obss_cfg_param->obss_detect_period_ms;
+	cmd->b_ap_detect_mode = obss_cfg_param->obss_11b_ap_detect_mode;
+	cmd->b_sta_detect_mode = obss_cfg_param->obss_11b_sta_detect_mode;
+	cmd->g_ap_detect_mode = obss_cfg_param->obss_11g_ap_detect_mode;
+	cmd->a_detect_mode = obss_cfg_param->obss_11a_detect_mode;
+	cmd->ht_legacy_detect_mode = obss_cfg_param->obss_ht_legacy_detect_mode;
+	cmd->ht_mixed_detect_mode = obss_cfg_param->obss_ht_mixed_detect_mode;
+	cmd->ht_20mhz_detect_mode = obss_cfg_param->obss_ht_20mhz_detect_mode;
+	WMI_LOGD("Sending WMI_SAP_OBSS_DETECTION_CFG_CMDID vdev_id:%d",
+		  cmd->vdev_id);
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_SAP_OBSS_DETECTION_CFG_CMDID)) {
+		WMI_LOGE("Failed to send WMI_SAP_OBSS_DETECTION_CFG_CMDID");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -21398,6 +21450,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_ndp_end_ind = extract_ndp_end_ind_tlv,
 #endif
 	.send_btm_config = send_btm_config_cmd_tlv,
+	.send_obss_detection_cfg_cmd = send_obss_detection_cfg_cmd_tlv,
 };
 
 /**
@@ -21676,6 +21729,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_report_stats_event_id] = WMI_REPORT_STATS_EVENTID;
 	event_ids[wmi_dma_buf_release_event_id] =
 					WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID;
+	event_ids[wmi_sap_obss_detection_report_event_id] =
+		WMI_SAP_OBSS_DETECTION_REPORT_EVENTID;
 }
 
 #ifndef CONFIG_MCL

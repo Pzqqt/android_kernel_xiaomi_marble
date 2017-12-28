@@ -5640,6 +5640,7 @@ typedef enum {
 	wmi_radio_tx_power_level_stats_event_id,
 	wmi_report_stats_event_id,
 	wmi_dma_buf_release_event_id,
+	wmi_sap_obss_detection_report_event_id,
 
 	wmi_events_max,
 } wmi_conv_event_id;
@@ -8267,6 +8268,33 @@ struct direct_buf_rx_cfg_req {
 	uint32_t num_elems;
 	uint32_t event_timeout_ms;
 	uint32_t num_resp_per_event;
+};
+
+/**
+ * struct wmi_obss_detection_cfg_param - obss detection cfg
+ * @vdev_id: vdev id
+ * @obss_detect_period_ms: detection period in ms
+ * @obss_11b_ap_detect_mode: detect whether there is 11b ap/ibss
+ * @obss_11b_sta_detect_mode: detect whether there is 11b sta
+ *                            connected with other APs
+ * @obss_11g_ap_detect_mode: detect whether there is 11g AP
+ * @obss_11a_detect_mode: detect whether there is legacy 11a traffic
+ * @obss_ht_legacy_detect_mode: detect whether there is ap which is
+ *                              ht legacy mode
+ * @obss_ht_mixed_detect_mode: detect whether there is ap which is ht mixed mode
+ * @obss_ht_20mhz_detect_mode: detect whether there is ap which has 20M only
+ *                             station
+ */
+struct wmi_obss_detection_cfg_param {
+	uint32_t vdev_id;
+	uint32_t obss_detect_period_ms;
+	uint32_t obss_11b_ap_detect_mode;
+	uint32_t obss_11b_sta_detect_mode;
+	uint32_t obss_11g_ap_detect_mode;
+	uint32_t obss_11a_detect_mode;
+	uint32_t obss_ht_legacy_detect_mode;
+	uint32_t obss_ht_mixed_detect_mode;
+	uint32_t obss_ht_20mhz_detect_mode;
 };
 
 #endif /* _WMI_UNIFIED_PARAM_H_ */
