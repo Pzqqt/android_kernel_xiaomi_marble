@@ -13015,6 +13015,13 @@ typedef struct {
     A_UINT32 input; /* 0 - Output/ 1 - Input */
     A_UINT32 pull_type; /* Pull type defined above */
     A_UINT32 intr_mode; /* Interrupt mode defined above (Input) */
+    /* mux_config_val - configure pin MUX
+     * A value of 0x0 for this field means to use the default MUX configuration.
+     * Valid non-zero values are as follows:
+     * Rome:
+     *     0x4 - use the pin as GPIO (rather than UART)
+     */
+    A_UINT32 mux_config_val;
 } wmi_gpio_config_cmd_fixed_param;
 
 /* WMI_GPIO_OUTPUT_CMDID */
