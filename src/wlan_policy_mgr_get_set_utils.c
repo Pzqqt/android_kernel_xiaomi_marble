@@ -2561,8 +2561,10 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 	 *   return true.
 	 * If channel is different from operating channel but in same band.
 	 *   return false.
-	 * If operating channel in different band.
+	 * If operating channel in different band (DBS capable).
 	 *   return true.
+	 * If operating channel in different band (not DBS capable).
+	 *   return false.
 	 */
 	/* TODO: To be enhanced for SBS */
 		if (policy_mgr_is_dnsc_set(vdev)) {
@@ -2577,12 +2579,24 @@ QDF_STATUS policy_mgr_is_chan_ok_for_dnbs(struct wlan_objmgr_psoc *psoc,
 				wlan_objmgr_vdev_release_ref(vdev,
 						WLAN_POLICY_MGR_ID);
 				break;
+			} else if (policy_mgr_is_hw_dbs_capable(psoc)) {
+				*ok = true;
+				wlan_objmgr_vdev_release_ref(vdev,
+						WLAN_POLICY_MGR_ID);
+				break;
+			} else {
+				*ok = false;
+				wlan_objmgr_vdev_release_ref(vdev,
+						WLAN_POLICY_MGR_ID);
+				break;
 			}
 		} else {
 			*ok = true;
 		}
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_POLICY_MGR_ID);
 	}
+	policy_mgr_debug("chan: %d ok %d", channel, *ok);
+
 	return QDF_STATUS_SUCCESS;
 }
 
