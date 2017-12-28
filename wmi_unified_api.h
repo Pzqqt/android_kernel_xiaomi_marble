@@ -1767,7 +1767,7 @@ QDF_STATUS wmi_send_bcn_offload_control_cmd(void *wmi_hdl,
 /**
  * wmi_unified_send_wds_entry_list_cmd() - WMI function to get list of
  *  wds entries from FW
- * @wmi_handle: wmi handle
+ * @wmi_hdl: wmi handle
  *
  * Send WMI_PDEV_WDS_ENTRY_LIST_CMDID parameters to fw.
  *
@@ -1778,7 +1778,7 @@ QDF_STATUS wmi_unified_send_dump_wds_table_cmd(void *wmi_hdl);
 
 /**
  * wmi_extract_wds_entry - api to extract wds entry
- * @wmi_handle: wma handle
+ * @wmi_hdl: wmi handle
  * @evt_buf: pointer to event buffer
  * @wds_entry: wds entry
  * @idx: index to point wds entry in event buffer
@@ -1897,4 +1897,18 @@ QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
  */
 QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
 				       struct wmi_btm_config *params);
+
+/**
+ * wmi_unified_send_obss_detection_cfg_cmd() - WMI function to send obss
+ *  detection configuration to FW.
+ * @wmi_hdl: wmi handle
+ * @cfg: obss detection configuration
+ *
+ * Send WMI_SAP_OBSS_DETECTION_CFG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS wmi_unified_send_obss_detection_cfg_cmd(void *wmi_hdl,
+			struct wmi_obss_detection_cfg_param *cfg);
 #endif /* _WMI_UNIFIED_API_H_ */
