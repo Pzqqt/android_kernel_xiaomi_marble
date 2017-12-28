@@ -19,17 +19,16 @@
 #include <linux/gpio.h>
 #include <linux/delay.h>
 #include <linux/regmap.h>
-#include <linux/mfd/wcd9xxx/wcd9xxx_registers.h>
 #include <sound/pcm.h>
 #include <sound/pcm_params.h>
 #include <sound/soc.h>
 #include <sound/soc-dapm.h>
-#include "aqt.h"
-#include "aqt-mbhc.h"
-#include <asoc/aqt_registers.h>
-#include "aqt_irq.h"
+#include "aqt1000.h"
+#include "aqt1000-api.h"
+#include "aqt1000-mbhc.h"
+#include "aqt1000-registers.h"
+#include "aqt1000-irq.h"
 #include "pdata.h"
-#include "../wcd9xxx-irq.h"
 #include "../wcdcal-hwdep.h"
 #include "../wcd-mbhc-v2-api.h"
 
@@ -53,109 +52,104 @@
 static struct wcd_mbhc_register
 	wcd_mbhc_registers[WCD_MBHC_REG_FUNC_MAX] = {
 	WCD_MBHC_REGISTER("WCD_MBHC_L_DET_EN",
-			  AQT_ANA_MBHC_MECH, 0x80, 7, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x80, 7, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_GND_DET_EN",
-			  AQT_ANA_MBHC_MECH, 0x40, 6, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x40, 6, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MECH_DETECTION_TYPE",
-			  AQT_ANA_MBHC_MECH, 0x20, 5, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x20, 5, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MIC_CLAMP_CTL",
-			  AQT_MBHC_NEW_PLUG_DETECT_CTL, 0x30, 4, 0),
+			  AQT1000_MBHC_NEW_PLUG_DETECT_CTL, 0x30, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ELECT_DETECTION_TYPE",
-			  AQT_ANA_MBHC_ELECT, 0x08, 3, 0),
+			  AQT1000_ANA_MBHC_ELECT, 0x08, 3, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HS_L_DET_PULL_UP_CTRL",
-			  AQT_MBHC_NEW_PLUG_DETECT_CTL, 0xC0, 6, 0),
+			  AQT1000_MBHC_NEW_INT_MECH_DET_CURRENT, 0x1F, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HS_L_DET_PULL_UP_COMP_CTRL",
-			  AQT_ANA_MBHC_MECH, 0x04, 2, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x04, 2, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_PLUG_TYPE",
-			  AQT_ANA_MBHC_MECH, 0x10, 4, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x10, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_GND_PLUG_TYPE",
-			  AQT_ANA_MBHC_MECH, 0x08, 3, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x08, 3, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_SW_HPH_LP_100K_TO_GND",
-			  AQT_ANA_MBHC_MECH, 0x01, 0, 0),
+			  AQT1000_ANA_MBHC_MECH, 0x01, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ELECT_SCHMT_ISRC",
-			  AQT_ANA_MBHC_ELECT, 0x06, 1, 0),
+			  AQT1000_ANA_MBHC_ELECT, 0x06, 1, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_FSM_EN",
-			  AQT_ANA_MBHC_ELECT, 0x80, 7, 0),
+			  AQT1000_ANA_MBHC_ELECT, 0x80, 7, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_INSREM_DBNC",
-			  AQT_MBHC_NEW_PLUG_DETECT_CTL, 0x0F, 0, 0),
+			  AQT1000_MBHC_NEW_PLUG_DETECT_CTL, 0x0F, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_BTN_DBNC",
-			  AQT_MBHC_NEW_CTL_1, 0x03, 0, 0),
+			  AQT1000_MBHC_NEW_CTL_1, 0x03, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HS_VREF",
-			  AQT_MBHC_NEW_CTL_2, 0x03, 0, 0),
+			  AQT1000_MBHC_NEW_CTL_2, 0x03, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HS_COMP_RESULT",
-			  AQT_ANA_MBHC_RESULT_3, 0x08, 3, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0x08, 3, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MIC_SCHMT_RESULT",
-			  AQT_ANA_MBHC_RESULT_3, 0x20, 5, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0x20, 5, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_SCHMT_RESULT",
-			  AQT_ANA_MBHC_RESULT_3, 0x80, 7, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0x80, 7, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHR_SCHMT_RESULT",
-			  AQT_ANA_MBHC_RESULT_3, 0x40, 6, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0x40, 6, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_OCP_FSM_EN",
-			  AQT_HPH_OCP_CTL, 0x10, 4, 0),
+			  AQT1000_HPH_OCP_CTL, 0x10, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_BTN_RESULT",
-			  AQT_ANA_MBHC_RESULT_3, 0x07, 0, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0x07, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_BTN_ISRC_CTL",
-			  AQT_ANA_MBHC_ELECT, 0x70, 4, 0),
+			  AQT1000_ANA_MBHC_ELECT, 0x70, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ELECT_RESULT",
-			  AQT_ANA_MBHC_RESULT_3, 0xFF, 0, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0xFF, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MICB_CTRL",
-			  AQT_ANA_MICB2, 0xC0, 6, 0),
+			  AQT1000_ANA_MICB1, 0xC0, 6, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPH_CNP_WG_TIME",
-			  AQT_HPH_CNP_WG_TIME, 0xFF, 0, 0),
+			  AQT1000_HPH_CNP_WG_TIME, 0xFF, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHR_PA_EN",
-			  AQT_ANA_HPH, 0x40, 6, 0),
+			  AQT1000_ANA_HPH, 0x40, 6, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_PA_EN",
-			  AQT_ANA_HPH, 0x80, 7, 0),
+			  AQT1000_ANA_HPH, 0x80, 7, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPH_PA_EN",
-			  AQT_ANA_HPH, 0xC0, 6, 0),
+			  AQT1000_ANA_HPH, 0xC0, 6, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_SWCH_LEVEL_REMOVE",
-			  AQT_ANA_MBHC_RESULT_3, 0x10, 4, 0),
+			  AQT1000_ANA_MBHC_RESULT_3, 0x10, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_PULLDOWN_CTRL",
 			  0, 0, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ANC_DET_EN",
-			  AQT_MBHC_CTL_BCS, 0x02, 1, 0),
+			  AQT1000_MBHC_CTL_BCS, 0x02, 1, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_FSM_STATUS",
-			  AQT_MBHC_STATUS_SPARE_1, 0x01, 0, 0),
+			  AQT1000_MBHC_NEW_FSM_STATUS, 0x01, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_MUX_CTL",
-			  AQT_MBHC_NEW_CTL_2, 0x70, 4, 0),
+			  AQT1000_MBHC_NEW_CTL_2, 0x70, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_OCP_DET_EN",
-			  AQT_HPH_L_TEST, 0x01, 0, 0),
+			  AQT1000_HPH_L_TEST, 0x01, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHR_OCP_DET_EN",
-			  AQT_HPH_R_TEST, 0x01, 0, 0),
+			  AQT1000_HPH_R_TEST, 0x01, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHL_OCP_STATUS",
-			  AQT_INTR_PIN1_STATUS0, 0x04, 2, 0),
+			  AQT1000_INTR_CTRL_INT_STATUS_2, 0x20, 5, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_HPHR_OCP_STATUS",
-			  AQT_INTR_PIN1_STATUS0, 0x08, 3, 0),
+			  AQT1000_INTR_CTRL_INT_STATUS_2, 0x40, 6, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ADC_EN",
-			  AQT_MBHC_NEW_CTL_1, 0x08, 3, 0),
-	WCD_MBHC_REGISTER("WCD_MBHC_ADC_COMPLETE", AQT_MBHC_NEW_FSM_STATUS,
+			  AQT1000_MBHC_NEW_CTL_1, 0x08, 3, 0),
+	WCD_MBHC_REGISTER("WCD_MBHC_ADC_COMPLETE", AQT1000_MBHC_NEW_FSM_STATUS,
 			  0x40, 6, 0),
-	WCD_MBHC_REGISTER("WCD_MBHC_ADC_TIMEOUT", AQT_MBHC_NEW_FSM_STATUS,
+	WCD_MBHC_REGISTER("WCD_MBHC_ADC_TIMEOUT", AQT1000_MBHC_NEW_FSM_STATUS,
 			  0x80, 7, 0),
-	WCD_MBHC_REGISTER("WCD_MBHC_ADC_RESULT", AQT_MBHC_NEW_ADC_RESULT,
+	WCD_MBHC_REGISTER("WCD_MBHC_ADC_RESULT", AQT1000_MBHC_NEW_ADC_RESULT,
 			  0xFF, 0, 0),
-	WCD_MBHC_REGISTER("WCD_MBHC_MICB2_VOUT", AQT_ANA_MICB2, 0x3F, 0, 0),
+	WCD_MBHC_REGISTER("WCD_MBHC_MICB2_VOUT", AQT1000_ANA_MICB1, 0x3F, 0, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ADC_MODE",
-			  AQT_MBHC_NEW_CTL_1, 0x10, 4, 0),
+			  AQT1000_MBHC_NEW_CTL_1, 0x10, 4, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_DETECTION_DONE",
-			  AQT_MBHC_NEW_CTL_1, 0x04, 2, 0),
+			  AQT1000_MBHC_NEW_CTL_1, 0x04, 2, 0),
 	WCD_MBHC_REGISTER("WCD_MBHC_ELECT_ISRC_EN",
-			  AQT_ANA_MBHC_ZDET, 0x02, 1, 0),
+			  AQT1000_ANA_MBHC_ZDET, 0x02, 1, 0),
 };
 
 static const struct wcd_mbhc_intr intr_ids = {
-	.mbhc_sw_intr =  AQT_IRQ_MBHC_SW_DET,
-	.mbhc_btn_press_intr = AQT_IRQ_MBHC_BUTTON_PRESS_DET,
-	.mbhc_btn_release_intr = AQT_IRQ_MBHC_BUTTON_RELEASE_DET,
-	.mbhc_hs_ins_intr = AQT_IRQ_MBHC_ELECT_INS_REM_LEG_DET,
-	.mbhc_hs_rem_intr = AQT_IRQ_MBHC_ELECT_INS_REM_DET,
-	.hph_left_ocp = AQT_IRQ_HPH_PA_OCPL_FAULT,
-	.hph_right_ocp = AQT_IRQ_HPH_PA_OCPR_FAULT,
-};
-
-
-static char on_demand_supply_name[][MAX_ON_DEMAND_SUPPLY_NAME_LENGTH] = {
-	"cdc-vdd-mic-bias",
+	.mbhc_sw_intr =  AQT1000_IRQ_MBHC_SW_DET,
+	.mbhc_btn_press_intr = AQT1000_IRQ_MBHC_BUTTON_PRESS_DET,
+	.mbhc_btn_release_intr = AQT1000_IRQ_MBHC_BUTTON_RELEASE_DET,
+	.mbhc_hs_ins_intr = AQT1000_IRQ_MBHC_ELECT_INS_REM_LEG_DET,
+	.mbhc_hs_rem_intr = AQT1000_IRQ_MBHC_ELECT_INS_REM_DET,
+	.hph_left_ocp = AQT1000_IRQ_HPH_PA_OCPL_FAULT,
+	.hph_right_ocp = AQT1000_IRQ_HPH_PA_OCPR_FAULT,
 };
 
 struct aqt_mbhc_zdet_param {
@@ -171,33 +165,29 @@ static int aqt_mbhc_request_irq(struct snd_soc_codec *codec,
 				  int irq, irq_handler_t handler,
 				  const char *name, void *data)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
-	struct wcd9xxx_core_resource *core_res =
-				&wcd9xxx->core_res;
+	struct aqt1000 *aqt = dev_get_drvdata(codec->dev);
 
-	return wcd9xxx_request_irq(core_res, irq, handler, name, data);
+	return aqt_request_irq(aqt, irq, name, handler, data);
 }
 
 static void aqt_mbhc_irq_control(struct snd_soc_codec *codec,
 				   int irq, bool enable)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
-	struct wcd9xxx_core_resource *core_res =
-				&wcd9xxx->core_res;
+	struct aqt1000 *aqt = dev_get_drvdata(codec->dev);
+
 	if (enable)
-		wcd9xxx_enable_irq(core_res, irq);
+		aqt_enable_irq(aqt, irq);
 	else
-		wcd9xxx_disable_irq(core_res, irq);
+		aqt_disable_irq(aqt, irq);
 }
 
 static int aqt_mbhc_free_irq(struct snd_soc_codec *codec,
 			       int irq, void *data)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
-	struct wcd9xxx_core_resource *core_res =
-				&wcd9xxx->core_res;
+	struct aqt1000 *aqt = dev_get_drvdata(codec->dev);
 
-	wcd9xxx_free_irq(core_res, irq, data);
+	aqt_free_irq(aqt, irq, data);
+
 	return 0;
 }
 
@@ -205,75 +195,26 @@ static void aqt_mbhc_clk_setup(struct snd_soc_codec *codec,
 				 bool enable)
 {
 	if (enable)
-		snd_soc_update_bits(codec, AQT_MBHC_NEW_CTL_1,
+		snd_soc_update_bits(codec, AQT1000_MBHC_NEW_CTL_1,
 				    0x80, 0x80);
 	else
-		snd_soc_update_bits(codec, AQT_MBHC_NEW_CTL_1,
+		snd_soc_update_bits(codec, AQT1000_MBHC_NEW_CTL_1,
 				    0x80, 0x00);
 }
 
 static int aqt_mbhc_btn_to_num(struct snd_soc_codec *codec)
 {
-	return snd_soc_read(codec, AQT_ANA_MBHC_RESULT_3) & 0x7;
-}
-
-static int aqt_enable_ext_mb_source(struct wcd_mbhc *mbhc,
-				      bool turn_on)
-{
-	struct aqt_mbhc *aqt_mbhc;
-	struct snd_soc_codec *codec = mbhc->codec;
-	struct aqt_on_demand_supply *supply;
-	int ret = 0;
-
-	aqt_mbhc = container_of(mbhc, struct aqt_mbhc, wcd_mbhc);
-
-	supply =  &aqt_mbhc->on_demand_list[AQT_ON_DEMAND_MICBIAS];
-	if (!supply->supply) {
-		dev_dbg(codec->dev, "%s: warning supply not present ond for %s\n",
-				__func__, "onDemand Micbias");
-		return ret;
-	}
-
-	dev_dbg(codec->dev, "%s turn_on: %d count: %d\n", __func__, turn_on,
-		supply->ondemand_supply_count);
-
-	if (turn_on) {
-		if (!(supply->ondemand_supply_count)) {
-			ret = snd_soc_dapm_force_enable_pin(
-				snd_soc_codec_get_dapm(codec),
-				"MICBIAS_REGULATOR");
-			snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
-		}
-		supply->ondemand_supply_count++;
-	} else {
-		if (supply->ondemand_supply_count > 0)
-			supply->ondemand_supply_count--;
-		if (!(supply->ondemand_supply_count)) {
-			ret = snd_soc_dapm_disable_pin(
-				snd_soc_codec_get_dapm(codec),
-				"MICBIAS_REGULATOR");
-		snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
-		}
-	}
-
-	if (ret)
-		dev_err(codec->dev, "%s: Failed to %s external micbias source\n",
-			__func__, turn_on ? "enable" : "disabled");
-	else
-		dev_dbg(codec->dev, "%s: %s external micbias source\n",
-			__func__, turn_on ? "Enabled" : "Disabled");
-
-	return ret;
+	return snd_soc_read(codec, AQT1000_ANA_MBHC_RESULT_3) & 0x7;
 }
 
 static void aqt_mbhc_mbhc_bias_control(struct snd_soc_codec *codec,
 					 bool enable)
 {
 	if (enable)
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_ELECT,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_ELECT,
 				    0x01, 0x01);
 	else
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_ELECT,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_ELECT,
 				    0x01, 0x00);
 }
 
@@ -289,15 +230,10 @@ static void aqt_mbhc_program_btn_thr(struct snd_soc_codec *codec,
 			__func__, num_btn);
 		return;
 	}
-	/*
-	 * Tavil just needs one set of thresholds for button detection
-	 * due to micbias voltage ramp to pullup upon button press. So
-	 * btn_low and is_micbias are ignored and always program button
-	 * thresholds using btn_high.
-	 */
+
 	for (i = 0; i < num_btn; i++) {
 		vth = ((btn_high[i] * 2) / 25) & 0x3F;
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_BTN0 + i,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_BTN0 + i,
 				    0xFC, vth << 2);
 		dev_dbg(codec->dev, "%s: btn_high[%d]: %d, vth: %d\n",
 			__func__, i, btn_high[i], vth);
@@ -307,15 +243,10 @@ static void aqt_mbhc_program_btn_thr(struct snd_soc_codec *codec,
 static bool aqt_mbhc_lock_sleep(struct wcd_mbhc *mbhc, bool lock)
 {
 	struct snd_soc_codec *codec = mbhc->codec;
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
-	struct wcd9xxx_core_resource *core_res =
-				&wcd9xxx->core_res;
+	struct aqt1000 *aqt = dev_get_drvdata(codec->dev);
 	bool ret = 0;
 
-	if (lock)
-		ret = wcd9xxx_lock_sleep(core_res);
-	else
-		wcd9xxx_unlock_sleep(core_res);
+	dev_dbg(aqt->dev, "%s: lock: %d\n", __func__, lock);
 
 	return ret;
 }
@@ -324,9 +255,9 @@ static int aqt_mbhc_register_notifier(struct wcd_mbhc *mbhc,
 					struct notifier_block *nblock,
 					bool enable)
 {
-	struct aqt_mbhc *aqt_mbhc;
+	struct aqt1000_mbhc *aqt_mbhc;
 
-	aqt_mbhc = container_of(mbhc, struct aqt_mbhc, wcd_mbhc);
+	aqt_mbhc = container_of(mbhc, struct aqt1000_mbhc, wcd_mbhc);
 
 	if (enable)
 		return blocking_notifier_chain_register(&aqt_mbhc->notifier,
@@ -340,8 +271,9 @@ static bool aqt_mbhc_micb_en_status(struct wcd_mbhc *mbhc, int micb_num)
 {
 	u8 val;
 
-	if (micb_num == MIC_BIAS_2) {
-		val = (snd_soc_read(mbhc->codec, AQT_ANA_MICB2) >> 6);
+	if (micb_num == MIC_BIAS_1) {
+		val = ((snd_soc_read(mbhc->codec, AQT1000_ANA_MICB1) & 0xC0)
+			>> 6);
 		if (val == 0x01)
 			return true;
 	}
@@ -350,29 +282,28 @@ static bool aqt_mbhc_micb_en_status(struct wcd_mbhc *mbhc, int micb_num)
 
 static bool aqt_mbhc_hph_pa_on_status(struct snd_soc_codec *codec)
 {
-	return (snd_soc_read(codec, AQT_ANA_HPH) & 0xC0) ? true : false;
+	return (snd_soc_read(codec, AQT1000_ANA_HPH) & 0xC0) ? true : false;
 }
 
-static void aqt_mbhc_hph_l_pull_up_control(
-		struct snd_soc_codec *codec,
-		enum mbhc_hs_pullup_iref pull_up_cur)
+static void aqt_mbhc_hph_l_pull_up_control(struct snd_soc_codec *codec,
+					   int pull_up_cur)
 {
 	/* Default pull up current to 2uA */
-	if (pull_up_cur < I_OFF || pull_up_cur > I_3P0_UA ||
-	    pull_up_cur == I_DEFAULT)
-		pull_up_cur = I_2P0_UA;
+	if (pull_up_cur > HS_PULLUP_I_OFF || pull_up_cur < HS_PULLUP_I_3P0_UA ||
+	    pull_up_cur == HS_PULLUP_I_DEFAULT)
+		pull_up_cur = HS_PULLUP_I_2P0_UA;
 
 	dev_dbg(codec->dev, "%s: HS pull up current:%d\n",
 		__func__, pull_up_cur);
 
-	snd_soc_update_bits(codec, AQT_MBHC_NEW_PLUG_DETECT_CTL,
-			    0xC0, pull_up_cur << 6);
+	snd_soc_update_bits(codec, AQT1000_MBHC_NEW_INT_MECH_DET_CURRENT,
+			    0x1F, pull_up_cur);
 }
 
 static int aqt_mbhc_request_micbias(struct snd_soc_codec *codec,
 				      int micb_num, int req)
 {
-	int ret;
+	int ret = 0;
 
 	/*
 	 * If micbias is requested, make sure that there
@@ -397,14 +328,14 @@ static void aqt_mbhc_micb_ramp_control(struct snd_soc_codec *codec,
 					 bool enable)
 {
 	if (enable) {
-		snd_soc_update_bits(codec, AQT_ANA_MICB2_RAMP,
+		snd_soc_update_bits(codec, AQT1000_ANA_MICB1_RAMP,
 				    0x1C, 0x0C);
-		snd_soc_update_bits(codec, AQT_ANA_MICB2_RAMP,
+		snd_soc_update_bits(codec, AQT1000_ANA_MICB1_RAMP,
 				    0x80, 0x80);
 	} else {
-		snd_soc_update_bits(codec, AQT_ANA_MICB2_RAMP,
+		snd_soc_update_bits(codec, AQT1000_ANA_MICB1_RAMP,
 				    0x80, 0x00);
-		snd_soc_update_bits(codec, AQT_ANA_MICB2_RAMP,
+		snd_soc_update_bits(codec, AQT1000_ANA_MICB1_RAMP,
 				    0x1C, 0x00);
 	}
 }
@@ -412,11 +343,11 @@ static void aqt_mbhc_micb_ramp_control(struct snd_soc_codec *codec,
 static struct firmware_cal *aqt_get_hwdep_fw_cal(struct wcd_mbhc *mbhc,
 						   enum wcd_cal_type type)
 {
-	struct aqt_mbhc *aqt_mbhc;
+	struct aqt1000_mbhc *aqt_mbhc;
 	struct firmware_cal *hwdep_cal;
 	struct snd_soc_codec *codec = mbhc->codec;
 
-	aqt_mbhc = container_of(mbhc, struct aqt_mbhc, wcd_mbhc);
+	aqt_mbhc = container_of(mbhc, struct aqt1000_mbhc, wcd_mbhc);
 
 	if (!codec) {
 		pr_err("%s: NULL codec pointer\n", __func__);
@@ -433,10 +364,10 @@ static struct firmware_cal *aqt_get_hwdep_fw_cal(struct wcd_mbhc *mbhc,
 static int aqt_mbhc_micb_ctrl_threshold_mic(struct snd_soc_codec *codec,
 					      int micb_num, bool req_en)
 {
-	struct wcd9xxx_pdata *pdata = dev_get_platdata(codec->dev->parent);
+	struct aqt1000_pdata *pdata = dev_get_platdata(codec->dev);
 	int rc, micb_mv;
 
-	if (micb_num != MIC_BIAS_2)
+	if (micb_num != MIC_BIAS_1)
 		return -EINVAL;
 
 	/*
@@ -444,17 +375,17 @@ static int aqt_mbhc_micb_ctrl_threshold_mic(struct snd_soc_codec *codec,
 	 * voltage needed to detect threshold microphone, then do
 	 * not change the micbias, just return.
 	 */
-	if (pdata->micbias.micb2_mv >= WCD_MBHC_THR_HS_MICB_MV)
+	if (pdata->micbias.micb1_mv >= WCD_MBHC_THR_HS_MICB_MV)
 		return 0;
 
-	micb_mv = req_en ? WCD_MBHC_THR_HS_MICB_MV : pdata->micbias.micb2_mv;
+	micb_mv = req_en ? WCD_MBHC_THR_HS_MICB_MV : pdata->micbias.micb1_mv;
 
-	rc = aqt_mbhc_micb_adjust_voltage(codec, micb_mv, MIC_BIAS_2);
+	rc = aqt_mbhc_micb_adjust_voltage(codec, micb_mv, MIC_BIAS_1);
 
 	return rc;
 }
 
-static inline void aqt_mbhc_get_result_params(struct wcd9xxx *wcd9xxx,
+static inline void aqt_mbhc_get_result_params(struct aqt1000 *aqt,
 						s16 *d1_a, u16 noff,
 						int32_t *zdet)
 {
@@ -467,16 +398,16 @@ static inline void aqt_mbhc_get_result_params(struct wcd9xxx *wcd9xxx,
 			3277, 1639, 820, 410, 205, 103, 52, 26
 	};
 
-	regmap_update_bits(wcd9xxx->regmap, AQT_ANA_MBHC_ZDET, 0x20, 0x20);
+	regmap_update_bits(aqt->regmap, AQT1000_ANA_MBHC_ZDET, 0x20, 0x20);
 	for (i = 0; i < AQT_ZDET_NUM_MEASUREMENTS; i++) {
-		regmap_read(wcd9xxx->regmap, AQT_ANA_MBHC_RESULT_2, &val);
+		regmap_read(aqt->regmap, AQT1000_ANA_MBHC_RESULT_2, &val);
 		if (val & 0x80)
 			break;
 	}
 	val = val << 0x8;
-	regmap_read(wcd9xxx->regmap, AQT_ANA_MBHC_RESULT_1, &val1);
+	regmap_read(aqt->regmap, AQT1000_ANA_MBHC_RESULT_1, &val1);
 	val |= val1;
-	regmap_update_bits(wcd9xxx->regmap, AQT_ANA_MBHC_ZDET, 0x20, 0x00);
+	regmap_update_bits(aqt->regmap, AQT1000_ANA_MBHC_ZDET, 0x20, 0x00);
 	x1 = AQT_MBHC_GET_X1(val);
 	c1 = AQT_MBHC_GET_C1(val);
 	/* If ramp is not complete, give additional 5ms */
@@ -484,7 +415,7 @@ static inline void aqt_mbhc_get_result_params(struct wcd9xxx *wcd9xxx,
 		usleep_range(5000, 5050);
 
 	if (!c1 || !x1) {
-		dev_dbg(wcd9xxx->dev,
+		dev_dbg(aqt->dev,
 			"%s: Impedance detect ramp error, c1=%d, x1=0x%x\n",
 			__func__, c1, x1);
 		goto ramp_down;
@@ -496,13 +427,13 @@ static inline void aqt_mbhc_get_result_params(struct wcd9xxx *wcd9xxx,
 	else if (x1 < minCode_param[noff])
 		*zdet = AQT_ZDET_FLOATING_IMPEDANCE;
 
-	dev_dbg(wcd9xxx->dev, "%s: d1=%d, c1=%d, x1=0x%x, z_val=%d(milliOhm)\n",
+	dev_dbg(aqt->dev, "%s: d1=%d, c1=%d, x1=0x%x, z_val=%d(milliOhm)\n",
 		__func__, d1, c1, x1, *zdet);
 ramp_down:
 	i = 0;
 	while (x1) {
-		regmap_bulk_read(wcd9xxx->regmap,
-				 AQT_ANA_MBHC_RESULT_1, (u8 *)&val, 2);
+		regmap_bulk_read(aqt->regmap,
+				 AQT1000_ANA_MBHC_RESULT_1, (u8 *)&val, 2);
 		x1 = AQT_MBHC_GET_X1(val);
 		i++;
 		if (i == AQT_ZDET_NUM_MEASUREMENTS)
@@ -514,32 +445,32 @@ static void aqt_mbhc_zdet_ramp(struct snd_soc_codec *codec,
 				 struct aqt_mbhc_zdet_param *zdet_param,
 				 int32_t *zl, int32_t *zr, s16 *d1_a)
 {
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct aqt1000 *aqt = dev_get_drvdata(codec->dev);
 	int32_t zdet = 0;
 
-	snd_soc_update_bits(codec, AQT_MBHC_NEW_ZDET_ANA_CTL, 0x70,
+	snd_soc_update_bits(codec, AQT1000_MBHC_NEW_ZDET_ANA_CTL, 0x70,
 			    zdet_param->ldo_ctl << 4);
-	snd_soc_update_bits(codec, AQT_ANA_MBHC_BTN5, 0xFC,
+	snd_soc_update_bits(codec, AQT1000_ANA_MBHC_BTN5, 0xFC,
 			    zdet_param->btn5);
-	snd_soc_update_bits(codec, AQT_ANA_MBHC_BTN6, 0xFC,
+	snd_soc_update_bits(codec, AQT1000_ANA_MBHC_BTN6, 0xFC,
 			    zdet_param->btn6);
-	snd_soc_update_bits(codec, AQT_ANA_MBHC_BTN7, 0xFC,
+	snd_soc_update_bits(codec, AQT1000_ANA_MBHC_BTN7, 0xFC,
 			    zdet_param->btn7);
-	snd_soc_update_bits(codec, AQT_MBHC_NEW_ZDET_ANA_CTL, 0x0F,
+	snd_soc_update_bits(codec, AQT1000_MBHC_NEW_ZDET_ANA_CTL, 0x0F,
 			    zdet_param->noff);
-	snd_soc_update_bits(codec, AQT_MBHC_NEW_ZDET_RAMP_CTL, 0x0F,
+	snd_soc_update_bits(codec, AQT1000_MBHC_NEW_ZDET_RAMP_CTL, 0x0F,
 			    zdet_param->nshift);
 
 	if (!zl)
 		goto z_right;
 	/* Start impedance measurement for HPH_L */
-	regmap_update_bits(wcd9xxx->regmap,
-			   AQT_ANA_MBHC_ZDET, 0x80, 0x80);
-	dev_dbg(wcd9xxx->dev, "%s: ramp for HPH_L, noff = %d\n",
+	regmap_update_bits(aqt->regmap,
+			   AQT1000_ANA_MBHC_ZDET, 0x80, 0x80);
+	dev_dbg(aqt->dev, "%s: ramp for HPH_L, noff = %d\n",
 		__func__, zdet_param->noff);
-	aqt_mbhc_get_result_params(wcd9xxx, d1_a, zdet_param->noff, &zdet);
-	regmap_update_bits(wcd9xxx->regmap,
-			   AQT_ANA_MBHC_ZDET, 0x80, 0x00);
+	aqt_mbhc_get_result_params(aqt, d1_a, zdet_param->noff, &zdet);
+	regmap_update_bits(aqt->regmap,
+			   AQT1000_ANA_MBHC_ZDET, 0x80, 0x00);
 
 	*zl = zdet;
 
@@ -547,13 +478,13 @@ z_right:
 	if (!zr)
 		return;
 	/* Start impedance measurement for HPH_R */
-	regmap_update_bits(wcd9xxx->regmap,
-			   AQT_ANA_MBHC_ZDET, 0x40, 0x40);
-	dev_dbg(wcd9xxx->dev, "%s: ramp for HPH_R, noff = %d\n",
+	regmap_update_bits(aqt->regmap,
+			   AQT1000_ANA_MBHC_ZDET, 0x40, 0x40);
+	dev_dbg(aqt->dev, "%s: ramp for HPH_R, noff = %d\n",
 		__func__, zdet_param->noff);
-	aqt_mbhc_get_result_params(wcd9xxx, d1_a, zdet_param->noff, &zdet);
-	regmap_update_bits(wcd9xxx->regmap,
-			   AQT_ANA_MBHC_ZDET, 0x40, 0x00);
+	aqt_mbhc_get_result_params(aqt, d1_a, zdet_param->noff, &zdet);
+	regmap_update_bits(aqt->regmap,
+			   AQT1000_ANA_MBHC_ZDET, 0x40, 0x00);
 
 	*zr = zdet;
 }
@@ -566,10 +497,10 @@ static inline void aqt_wcd_mbhc_qfuse_cal(struct snd_soc_codec *codec,
 
 	if (*z_val < (AQT_ZDET_VAL_400/1000))
 		q1 = snd_soc_read(codec,
-			AQT_CHIP_TIER_CTRL_EFUSE_VAL_OUT1 + (2 * flag_l_r));
+			AQT1000_CHIP_CFG0_EFUSE_VAL_OUT1 + (2 * flag_l_r));
 	else
 		q1 = snd_soc_read(codec,
-			AQT_CHIP_TIER_CTRL_EFUSE_VAL_OUT2 + (2 * flag_l_r));
+			AQT1000_CHIP_CFG0_EFUSE_VAL_OUT2 + (2 * flag_l_r));
 	if (q1 & 0x80)
 		q1_cal = (10000 - ((q1 & 0x7F) * 25));
 	else
@@ -582,7 +513,7 @@ static void aqt_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 					  uint32_t *zr)
 {
 	struct snd_soc_codec *codec = mbhc->codec;
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	struct aqt1000 *aqt = dev_get_drvdata(codec->dev);
 	s16 reg0, reg1, reg2, reg3, reg4;
 	int32_t z1L, z1R, z1Ls;
 	int zMono, z_diff1, z_diff2;
@@ -604,26 +535,26 @@ static void aqt_wcd_mbhc_calc_impedance(struct wcd_mbhc *mbhc, uint32_t *zl,
 
 	WCD_MBHC_RSC_ASSERT_LOCKED(mbhc);
 
-	reg0 = snd_soc_read(codec, AQT_ANA_MBHC_BTN5);
-	reg1 = snd_soc_read(codec, AQT_ANA_MBHC_BTN6);
-	reg2 = snd_soc_read(codec, AQT_ANA_MBHC_BTN7);
-	reg3 = snd_soc_read(codec, AQT_MBHC_CTL_CLK);
-	reg4 = snd_soc_read(codec, AQT_MBHC_NEW_ZDET_ANA_CTL);
+	reg0 = snd_soc_read(codec, AQT1000_ANA_MBHC_BTN5);
+	reg1 = snd_soc_read(codec, AQT1000_ANA_MBHC_BTN6);
+	reg2 = snd_soc_read(codec, AQT1000_ANA_MBHC_BTN7);
+	reg3 = snd_soc_read(codec, AQT1000_MBHC_CTL_CLK);
+	reg4 = snd_soc_read(codec, AQT1000_MBHC_NEW_ZDET_ANA_CTL);
 
-	if (snd_soc_read(codec, AQT_ANA_MBHC_ELECT) & 0x80) {
+	if (snd_soc_read(codec, AQT1000_ANA_MBHC_ELECT) & 0x80) {
 		is_fsm_disable = true;
-		regmap_update_bits(wcd9xxx->regmap,
-				   AQT_ANA_MBHC_ELECT, 0x80, 0x00);
+		regmap_update_bits(aqt->regmap,
+				   AQT1000_ANA_MBHC_ELECT, 0x80, 0x00);
 	}
 
 	/* For NO-jack, disable L_DET_EN before Z-det measurements */
 	if (mbhc->hphl_swh)
-		regmap_update_bits(wcd9xxx->regmap,
-				   AQT_ANA_MBHC_MECH, 0x80, 0x00);
+		regmap_update_bits(aqt->regmap,
+				   AQT1000_ANA_MBHC_MECH, 0x80, 0x00);
 
 	/* Turn off 100k pull down on HPHL */
-	regmap_update_bits(wcd9xxx->regmap,
-			   AQT_ANA_MBHC_MECH, 0x01, 0x00);
+	regmap_update_bits(aqt->regmap,
+			   AQT1000_ANA_MBHC_MECH, 0x01, 0x00);
 
 	/* First get impedance on Left */
 	d1 = d1_a[1];
@@ -709,14 +640,14 @@ right_ch_impedance:
 		mbhc->hph_type = WCD_MBHC_HPH_MONO;
 		goto zdet_complete;
 	}
-	snd_soc_update_bits(codec, AQT_HPH_R_ATEST, 0x02, 0x02);
-	snd_soc_update_bits(codec, AQT_HPH_PA_CTL2, 0x40, 0x01);
+	snd_soc_update_bits(codec, AQT1000_HPH_R_ATEST, 0x02, 0x02);
+	snd_soc_update_bits(codec, AQT1000_HPH_PA_CTL2, 0x40, 0x01);
 	if (*zl < (AQT_ZDET_VAL_32/1000))
 		aqt_mbhc_zdet_ramp(codec, &zdet_param[0], &z1Ls, NULL, d1);
 	else
 		aqt_mbhc_zdet_ramp(codec, &zdet_param[1], &z1Ls, NULL, d1);
-	snd_soc_update_bits(codec, AQT_HPH_PA_CTL2, 0x40, 0x00);
-	snd_soc_update_bits(codec, AQT_HPH_R_ATEST, 0x02, 0x00);
+	snd_soc_update_bits(codec, AQT1000_HPH_PA_CTL2, 0x40, 0x00);
+	snd_soc_update_bits(codec, AQT1000_HPH_R_ATEST, 0x02, 0x00);
 	z1Ls /= 1000;
 	aqt_wcd_mbhc_qfuse_cal(codec, &z1Ls, 0);
 	/* Parallel of left Z and 9 ohm pull down resistor */
@@ -734,36 +665,36 @@ right_ch_impedance:
 	}
 
 zdet_complete:
-	snd_soc_write(codec, AQT_ANA_MBHC_BTN5, reg0);
-	snd_soc_write(codec, AQT_ANA_MBHC_BTN6, reg1);
-	snd_soc_write(codec, AQT_ANA_MBHC_BTN7, reg2);
+	snd_soc_write(codec, AQT1000_ANA_MBHC_BTN5, reg0);
+	snd_soc_write(codec, AQT1000_ANA_MBHC_BTN6, reg1);
+	snd_soc_write(codec, AQT1000_ANA_MBHC_BTN7, reg2);
 	/* Turn on 100k pull down on HPHL */
-	regmap_update_bits(wcd9xxx->regmap,
-			   AQT_ANA_MBHC_MECH, 0x01, 0x01);
+	regmap_update_bits(aqt->regmap,
+			   AQT1000_ANA_MBHC_MECH, 0x01, 0x01);
 
 	/* For NO-jack, re-enable L_DET_EN after Z-det measurements */
 	if (mbhc->hphl_swh)
-		regmap_update_bits(wcd9xxx->regmap,
-				   AQT_ANA_MBHC_MECH, 0x80, 0x80);
+		regmap_update_bits(aqt->regmap,
+				   AQT1000_ANA_MBHC_MECH, 0x80, 0x80);
 
-	snd_soc_write(codec, AQT_MBHC_NEW_ZDET_ANA_CTL, reg4);
-	snd_soc_write(codec, AQT_MBHC_CTL_CLK, reg3);
+	snd_soc_write(codec, AQT1000_MBHC_NEW_ZDET_ANA_CTL, reg4);
+	snd_soc_write(codec, AQT1000_MBHC_CTL_CLK, reg3);
 	if (is_fsm_disable)
-		regmap_update_bits(wcd9xxx->regmap,
-				   AQT_ANA_MBHC_ELECT, 0x80, 0x80);
+		regmap_update_bits(aqt->regmap,
+				   AQT1000_ANA_MBHC_ELECT, 0x80, 0x80);
 }
 
 static void aqt_mbhc_gnd_det_ctrl(struct snd_soc_codec *codec, bool enable)
 {
 	if (enable) {
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_MECH,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_MECH,
 				    0x02, 0x02);
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_MECH,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_MECH,
 				    0x40, 0x40);
 	} else {
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_MECH,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_MECH,
 				    0x40, 0x00);
-		snd_soc_update_bits(codec, AQT_ANA_MBHC_MECH,
+		snd_soc_update_bits(codec, AQT1000_ANA_MBHC_MECH,
 				    0x02, 0x00);
 	}
 }
@@ -772,69 +703,50 @@ static void aqt_mbhc_hph_pull_down_ctrl(struct snd_soc_codec *codec,
 					  bool enable)
 {
 	if (enable) {
-		snd_soc_update_bits(codec, AQT_HPH_PA_CTL2,
+		snd_soc_update_bits(codec, AQT1000_HPH_PA_CTL2,
 				    0x40, 0x40);
-		snd_soc_update_bits(codec, AQT_HPH_PA_CTL2,
+		snd_soc_update_bits(codec, AQT1000_HPH_PA_CTL2,
 				    0x10, 0x10);
 	} else {
-		snd_soc_update_bits(codec, AQT_HPH_PA_CTL2,
+		snd_soc_update_bits(codec, AQT1000_HPH_PA_CTL2,
 				    0x40, 0x00);
-		snd_soc_update_bits(codec, AQT_HPH_PA_CTL2,
+		snd_soc_update_bits(codec, AQT1000_HPH_PA_CTL2,
 				    0x10, 0x00);
 	}
 }
+
 static void aqt_mbhc_moisture_config(struct wcd_mbhc *mbhc)
 {
 	struct snd_soc_codec *codec = mbhc->codec;
 
 	if ((mbhc->moist_rref == R_OFF) ||
 	    (mbhc->mbhc_cfg->enable_usbc_analog)) {
-		snd_soc_update_bits(codec, AQT_MBHC_NEW_CTL_2,
+		snd_soc_update_bits(codec, AQT1000_MBHC_NEW_CTL_2,
 				    0x0C, R_OFF << 2);
 		return;
 	}
 
-	/* Donot enable moisture detection if jack type is NC */
+	/* Do not enable moisture detection if jack type is NC */
 	if (!mbhc->hphl_swh) {
 		dev_dbg(codec->dev, "%s: disable moisture detection for NC\n",
 			__func__);
-		snd_soc_update_bits(codec, AQT_MBHC_NEW_CTL_2,
+		snd_soc_update_bits(codec, AQT1000_MBHC_NEW_CTL_2,
 				    0x0C, R_OFF << 2);
 		return;
 	}
 
-	snd_soc_update_bits(codec, AQT_MBHC_NEW_CTL_2,
+	snd_soc_update_bits(codec, AQT1000_MBHC_NEW_CTL_2,
 			    0x0C, mbhc->moist_rref << 2);
-}
-
-static bool aqt_hph_register_recovery(struct wcd_mbhc *mbhc)
-{
-	struct snd_soc_codec *codec = mbhc->codec;
-	struct aqt_mbhc *aqt_mbhc = aqt_soc_get_mbhc(codec);
-
-	if (!aqt_mbhc)
-		return false;
-
-	aqt_mbhc->is_hph_recover = false;
-	snd_soc_dapm_force_enable_pin(snd_soc_codec_get_dapm(codec),
-				      "RESET_HPH_REGISTERS");
-	snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
-
-	snd_soc_dapm_disable_pin(snd_soc_codec_get_dapm(codec),
-				 "RESET_HPH_REGISTERS");
-	snd_soc_dapm_sync(snd_soc_codec_get_dapm(codec));
-
-	return aqt_mbhc->is_hph_recover;
 }
 
 static void aqt_update_anc_state(struct snd_soc_codec *codec, bool enable,
 				   int anc_num)
 {
 	if (enable)
-		snd_soc_update_bits(codec, AQT_CDC_RX1_RX_PATH_CFG0 +
+		snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CFG0 +
 				(20 * anc_num), 0x10, 0x10);
 	else
-		snd_soc_update_bits(codec, AQT_CDC_RX1_RX_PATH_CFG0 +
+		snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CFG0 +
 				(20 * anc_num), 0x10, 0x00);
 }
 
@@ -844,9 +756,9 @@ static bool aqt_is_anc_on(struct wcd_mbhc *mbhc)
 	u16 ancl, ancr;
 
 	ancl =
-	(snd_soc_read(mbhc->codec, AQT_CDC_RX1_RX_PATH_CFG0)) & 0x10;
+	(snd_soc_read(mbhc->codec, AQT1000_CDC_RX1_RX_PATH_CFG0)) & 0x10;
 	ancr =
-	(snd_soc_read(mbhc->codec, AQT_CDC_RX2_RX_PATH_CFG0)) & 0x10;
+	(snd_soc_read(mbhc->codec, AQT1000_CDC_RX2_RX_PATH_CFG0)) & 0x10;
 
 	anc_on = !!(ancl | ancr);
 
@@ -859,14 +771,13 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.free_irq = aqt_mbhc_free_irq,
 	.clk_setup = aqt_mbhc_clk_setup,
 	.map_btn_code_to_num = aqt_mbhc_btn_to_num,
-	.enable_mb_source = aqt_enable_ext_mb_source,
 	.mbhc_bias = aqt_mbhc_mbhc_bias_control,
 	.set_btn_thr = aqt_mbhc_program_btn_thr,
 	.lock_sleep = aqt_mbhc_lock_sleep,
 	.register_notifier = aqt_mbhc_register_notifier,
 	.micbias_enable_status = aqt_mbhc_micb_en_status,
 	.hph_pa_on_status = aqt_mbhc_hph_pa_on_status,
-	.hph_pull_up_control = aqt_mbhc_hph_l_pull_up_control,
+	.hph_pull_up_control_v2 = aqt_mbhc_hph_l_pull_up_control,
 	.mbhc_micbias_control = aqt_mbhc_request_micbias,
 	.mbhc_micb_ramp_control = aqt_mbhc_micb_ramp_control,
 	.get_hwdep_fw_cal = aqt_get_hwdep_fw_cal,
@@ -875,35 +786,16 @@ static const struct wcd_mbhc_cb mbhc_cb = {
 	.mbhc_gnd_det_ctrl = aqt_mbhc_gnd_det_ctrl,
 	.hph_pull_down_ctrl = aqt_mbhc_hph_pull_down_ctrl,
 	.mbhc_moisture_config = aqt_mbhc_moisture_config,
-	.hph_register_recovery = aqt_hph_register_recovery,
 	.update_anc_state = aqt_update_anc_state,
 	.is_anc_on = aqt_is_anc_on,
 };
-
-static struct regulator *aqt_codec_find_ondemand_regulator(
-		struct snd_soc_codec *codec, const char *name)
-{
-	int i;
-	struct wcd9xxx *wcd9xxx = dev_get_drvdata(codec->dev->parent);
-	struct wcd9xxx_pdata *pdata = dev_get_platdata(codec->dev->parent);
-
-	for (i = 0; i < wcd9xxx->num_of_supplies; ++i) {
-		if (pdata->regulator[i].ondemand &&
-		    wcd9xxx->supplies[i].supply &&
-		    !strcmp(wcd9xxx->supplies[i].supply, name))
-			return wcd9xxx->supplies[i].consumer;
-	}
-
-	dev_dbg(codec->dev, "Warning: regulator not found:%s\n",
-		name);
-	return NULL;
-}
 
 static int aqt_get_hph_type(struct snd_kcontrol *kcontrol,
 			      struct snd_ctl_elem_value *ucontrol)
 {
 	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt_mbhc *aqt_mbhc = aqt_soc_get_mbhc(codec);
+	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000_mbhc *aqt_mbhc = aqt->mbhc;
 	struct wcd_mbhc *mbhc;
 
 	if (!aqt_mbhc) {
@@ -926,7 +818,8 @@ static int aqt_hph_impedance_get(struct snd_kcontrol *kcontrol,
 	bool hphr;
 	struct soc_multi_mixer_control *mc;
 	struct snd_soc_codec *codec = snd_soc_kcontrol_codec(kcontrol);
-	struct aqt_mbhc *aqt_mbhc = aqt_soc_get_mbhc(codec);
+	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
+	struct aqt1000_mbhc *aqt_mbhc = aqt->mbhc;
 
 	if (!aqt_mbhc) {
 		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
@@ -961,7 +854,7 @@ static const struct snd_kcontrol_new impedance_detect_controls[] = {
  * @zr: handle to right-ch impedance
  * return 0 for success or error code in case of failure
  */
-int aqt_mbhc_get_impedance(struct aqt_mbhc *aqt_mbhc,
+int aqt_mbhc_get_impedance(struct aqt1000_mbhc *aqt_mbhc,
 			     uint32_t *zl, uint32_t *zr)
 {
 	if (!aqt_mbhc) {
@@ -986,8 +879,21 @@ EXPORT_SYMBOL(aqt_mbhc_get_impedance);
 int aqt_mbhc_hs_detect(struct snd_soc_codec *codec,
 			 struct wcd_mbhc_config *mbhc_cfg)
 {
-	struct aqt_mbhc *aqt_mbhc = aqt_soc_get_mbhc(codec);
+	struct aqt1000 *aqt;
+	struct aqt1000_mbhc *aqt_mbhc;
 
+	if (!codec) {
+		pr_err("%s: codec is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	aqt = snd_soc_codec_get_drvdata(codec);
+	if (!aqt) {
+		pr_err("%s: aqt is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	aqt_mbhc = aqt->mbhc;
 	if (!aqt_mbhc) {
 		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
 		return -EINVAL;
@@ -1003,8 +909,21 @@ EXPORT_SYMBOL(aqt_mbhc_hs_detect);
  */
 void aqt_mbhc_hs_detect_exit(struct snd_soc_codec *codec)
 {
-	struct aqt_mbhc *aqt_mbhc = aqt_soc_get_mbhc(codec);
+	struct aqt1000 *aqt;
+	struct aqt1000_mbhc *aqt_mbhc;
 
+	if (!codec) {
+		pr_err("%s: codec is NULL\n", __func__);
+		return;
+	}
+
+	aqt = snd_soc_codec_get_drvdata(codec);
+	if (!aqt) {
+		pr_err("%s: aqt is NULL\n", __func__);
+		return;
+	}
+
+	aqt_mbhc = aqt->mbhc;
 	if (!aqt_mbhc) {
 		dev_err(codec->dev, "%s: mbhc not initialized!\n", __func__);
 		return;
@@ -1020,7 +939,7 @@ EXPORT_SYMBOL(aqt_mbhc_hs_detect_exit);
  *
  * return 0 if mbhc_init is success or error code in case of failure
  */
-int aqt_mbhc_post_ssr_init(struct aqt_mbhc *mbhc,
+int aqt_mbhc_post_ssr_init(struct aqt1000_mbhc *mbhc,
 			     struct snd_soc_codec *codec)
 {
 	int ret;
@@ -1057,20 +976,24 @@ EXPORT_SYMBOL(aqt_mbhc_post_ssr_init);
  *
  * return 0 if mbhc_init is success or error code in case of failure
  */
-int aqt_mbhc_init(struct aqt_mbhc **mbhc, struct snd_soc_codec *codec,
+int aqt_mbhc_init(struct aqt1000_mbhc **mbhc, struct snd_soc_codec *codec,
 		    struct fw_info *fw_data)
 {
-	struct regulator *supply;
-	struct aqt_mbhc *aqt_mbhc;
+	struct aqt1000_mbhc *aqt_mbhc;
 	struct wcd_mbhc *wcd_mbhc;
 	int ret;
 
-	aqt_mbhc = devm_kzalloc(codec->dev, sizeof(struct aqt_mbhc),
+	if (!codec) {
+		pr_err("%s: codec is NULL\n", __func__);
+		return -EINVAL;
+	}
+
+	aqt_mbhc = devm_kzalloc(codec->dev, sizeof(struct aqt1000_mbhc),
 				    GFP_KERNEL);
 	if (!aqt_mbhc)
 		return -ENOMEM;
 
-	aqt_mbhc->wcd9xxx = dev_get_drvdata(codec->dev->parent);
+	aqt_mbhc->aqt = dev_get_drvdata(codec->dev);
 	aqt_mbhc->fw_data = fw_data;
 	BLOCKING_INIT_NOTIFIER_HEAD(&aqt_mbhc->notifier);
 	wcd_mbhc = &aqt_mbhc->wcd_mbhc;
@@ -1093,17 +1016,6 @@ int aqt_mbhc_init(struct aqt_mbhc **mbhc, struct snd_soc_codec *codec,
 		goto err;
 	}
 
-	supply = aqt_codec_find_ondemand_regulator(codec,
-			on_demand_supply_name[AQT_ON_DEMAND_MICBIAS]);
-	if (supply) {
-		aqt_mbhc->on_demand_list[
-			AQT_ON_DEMAND_MICBIAS].supply =
-				supply;
-		aqt_mbhc->on_demand_list[
-			AQT_ON_DEMAND_MICBIAS].ondemand_supply_count =
-				0;
-	}
-
 	(*mbhc) = aqt_mbhc;
 	snd_soc_add_codec_controls(codec, impedance_detect_controls,
 				   ARRAY_SIZE(impedance_detect_controls));
@@ -1123,8 +1035,21 @@ EXPORT_SYMBOL(aqt_mbhc_init);
  */
 void aqt_mbhc_deinit(struct snd_soc_codec *codec)
 {
-	struct aqt_mbhc *aqt_mbhc = aqt_soc_get_mbhc(codec);
+	struct aqt1000 *aqt;
+	struct aqt1000_mbhc *aqt_mbhc;
 
+	if (!codec) {
+		pr_err("%s: codec is NULL\n", __func__);
+		return;
+	}
+
+	aqt = snd_soc_codec_get_drvdata(codec);
+	if (!aqt) {
+		pr_err("%s: aqt is NULL\n", __func__);
+		return;
+	}
+
+	aqt_mbhc = aqt->mbhc;
 	if (aqt_mbhc) {
 		wcd_mbhc_deinit(&aqt_mbhc->wcd_mbhc);
 		devm_kfree(codec->dev, aqt_mbhc);
