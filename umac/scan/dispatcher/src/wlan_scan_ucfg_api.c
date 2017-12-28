@@ -26,6 +26,8 @@
 #include <wlan_objmgr_cmn.h>
 #include <wlan_serialization_api.h>
 #include <wlan_scan_tgt_api.h>
+#include <wlan_scan_utils_api.h>
+#include <wlan_reg_ucfg_api.h>
 #include <wlan_reg_services_api.h>
 #include <wlan_utility.h>
 #include "../../core/src/wlan_scan_main.h"
@@ -480,6 +482,7 @@ ucfg_scan_start(struct scan_start_request *req)
 	QDF_STATUS status;
 	struct wlan_scan_obj *scan_obj;
 	struct wlan_objmgr_pdev *pdev;
+	uint8_t idx;
 
 	if (!req || !req->vdev) {
 		scm_err("req or vdev within req is NULL");
@@ -514,9 +517,13 @@ ucfg_scan_start(struct scan_start_request *req)
 
 	/* Overwrite scan parameters as required */
 	if (!ucfg_scan_get_wide_band_scan(pdev)) {
-		scm_debug("wide_band_scan not supported, Scan 20 MHz");
 		req->scan_req.scan_f_wide_band = false;
+	} else {
+		req->scan_req.scan_f_wide_band = true;
+		if (req->scan_req.chan_list.num_chan == 0)
+			ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
 	}
+	scm_debug("scan_f_wide_band: %d", req->scan_req.scan_f_wide_band);
 
 	if (scan_obj->scan_def.usr_cfg_probe_rpt_time) {
 		req->scan_req.repeat_probe_time =
@@ -544,6 +551,13 @@ ucfg_scan_start(struct scan_start_request *req)
 		scm_scan_free_scan_request_mem(req);
 		return status;
 	}
+
+	scm_info("request to scan %d channels",
+		req->scan_req.chan_list.num_chan);
+	for (idx = 0; idx < req->scan_req.chan_list.num_chan; idx++)
+		scm_info("chan[%d]: freq:%d, phymode:%d", idx,
+				req->scan_req.chan_list.chan[idx].freq,
+				req->scan_req.chan_list.chan[idx].phymode);
 
 	msg.bodyptr = req;
 	msg.callback = scm_scan_start_req;
@@ -1216,54 +1230,150 @@ ucfg_scan_init_bssid_params(struct scan_start_request *req,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * is_chan_enabled_for_scan() - helper API to check if a frequency
+ * is allowed to scan.
+ * @reg_chan: regulatory_channel object
+ * @low_2g: lower 2.4 GHz frequency thresold
+ * @high_2g: upper 2.4 GHz frequency thresold
+ * @low_5g: lower 5 GHz frequency thresold
+ * @high_5g: upper 5 GHz frequency thresold
+ *
+ * Return: true if scan is allowed. false otherwise.
+ */
+static bool
+is_chan_enabled_for_scan(struct regulatory_channel *reg_chan,
+		uint32_t low_2g, uint32_t high_2g, uint32_t low_5g,
+		uint32_t high_5g)
+{
+	if (reg_chan->state == CHANNEL_STATE_DISABLE)
+		return false;
+	if (reg_chan->nol_chan)
+		return false;
+	/* 2 GHz channel */
+	if ((util_scan_scm_chan_to_band(reg_chan->chan_num) ==
+			WLAN_BAND_2_4_GHZ) &&
+			((reg_chan->center_freq < low_2g) ||
+			(reg_chan->center_freq > high_2g)))
+		return false;
+	else if ((reg_chan->center_freq < low_5g) ||
+			(reg_chan->center_freq > high_5g))
+		return false;
+
+	return true;
+}
+
 QDF_STATUS
 ucfg_scan_init_chanlist_params(struct scan_start_request *req,
 		uint32_t num_chans, uint32_t *chan_list, uint32_t *phymode)
 {
 	uint32_t idx;
+	QDF_STATUS status;
+	struct regulatory_channel *reg_chan_list = NULL;
+	uint32_t low_2g, high_2g, low_5g, high_5g;
+	struct wlan_objmgr_pdev *pdev = NULL;
+	uint32_t *scan_freqs = NULL;
 	uint32_t max_chans = sizeof(req->scan_req.chan_list.chan) /
 				sizeof(req->scan_req.chan_list.chan[0]);
 	if (!req) {
 		scm_err("null request");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	if (req->vdev)
+		pdev = wlan_vdev_get_pdev(req->vdev);
+	/*
+	 * If 0 channels are provided for scan and
+	 * wide band scan is enabled, scan all 20 mhz
+	 * available channels. This is required as FW
+	 * scans all channel/phy mode combinations
+	 * provided in scan channel list if 0 chans are
+	 * provided in scan request causing scan to take
+	 * too much time to complete.
+	 */
+	if (pdev && !num_chans && ucfg_scan_get_wide_band_scan(pdev)) {
+		reg_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+				sizeof(struct regulatory_channel));
+		if (!reg_chan_list) {
+			scm_err("Couldn't allocate reg_chan_list memory");
+			status = QDF_STATUS_E_NOMEM;
+			goto end;
+		}
+		scan_freqs = qdf_mem_malloc(sizeof(uint32_t) * max_chans);
+		if (!scan_freqs) {
+			scm_err("Couldn't allocate scan_freqs memory");
+			status = QDF_STATUS_E_NOMEM;
+			goto end;
+		}
+		status = ucfg_reg_get_current_chan_list(pdev, reg_chan_list);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("Couldn't get current chan list");
+			goto end;
+		}
+		status = wlan_reg_get_freq_range(pdev, &low_2g,
+				&high_2g, &low_5g, &high_5g);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			scm_err("Couldn't get frequency range");
+			goto end;
+		}
+
+		for (idx = 0, num_chans = 0;
+			(idx < NUM_CHANNELS && num_chans < max_chans); idx++)
+			if (is_chan_enabled_for_scan(&reg_chan_list[idx],
+					low_2g, high_2g, low_5g, high_5g))
+				scan_freqs[num_chans++] =
+				reg_chan_list[idx].center_freq;
+
+		chan_list = scan_freqs;
+	}
+
 	if (!num_chans) {
 		/* empty channel list provided */
 		qdf_mem_zero(&req->scan_req.chan_list,
 			sizeof(req->scan_req.chan_list));
 		req->scan_req.chan_list.num_chan = 0;
-		return QDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
+		goto end;
 	}
 	if (!chan_list) {
 		scm_err("null chan_list while num_chans: %d", num_chans);
-		return QDF_STATUS_E_NULL_VALUE;
+		status = QDF_STATUS_E_NULL_VALUE;
+		goto end;
 	}
 
 	if (num_chans > max_chans) {
-		/* got a big list. alert and continue */
+		/* got a big list. alert and fail */
 		scm_warn("overflow: received %d, max supported : %d",
 			num_chans, max_chans);
-		return QDF_STATUS_E_E2BIG;
+		status = QDF_STATUS_E_E2BIG;
+		goto end;
 	}
 
-	if (max_chans > num_chans)
-		max_chans = num_chans;
-
-	req->scan_req.chan_list.num_chan = max_chans;
-	for (idx = 0; idx < max_chans; idx++) {
+	req->scan_req.chan_list.num_chan = num_chans;
+	for (idx = 0; idx < num_chans; idx++) {
 		req->scan_req.chan_list.chan[idx].freq =
 			(chan_list[idx] > WLAN_24_GHZ_BASE_FREQ) ?
-			chan_list[idx] : wlan_chan_to_freq(chan_list[idx]);
-		req->scan_req.chan_list.chan[idx].phymode =
-			(phymode ? phymode[idx] : 0);
+			chan_list[idx] :
+			wlan_reg_chan_to_freq(pdev, chan_list[idx]);
+		if (phymode)
+			req->scan_req.chan_list.chan[idx].phymode =
+				phymode[idx];
+		else if (req->scan_req.chan_list.chan[idx].freq <=
+			WLAN_CHAN_15_FREQ)
+			req->scan_req.chan_list.chan[idx].phymode =
+				SCAN_PHY_MODE_11G;
+		else
+			req->scan_req.chan_list.chan[idx].phymode =
+				SCAN_PHY_MODE_11A;
+
+		scm_debug("chan[%d]: freq:%d, phymode:%d", idx,
+			req->scan_req.chan_list.chan[idx].freq,
+			req->scan_req.chan_list.chan[idx].phymode);
 	}
 
-	/* Enable wide band scan by default if phymode list is provided.
-	 * This flag will be cleared in @ucfg_scan_start() if underlying
-	 * phy doesn't support wide band scan.
-	 */
-	if (phymode)
-		req->scan_req.scan_f_wide_band = true;
+end:
+	if (scan_freqs)
+		qdf_mem_free(scan_freqs);
 
 	return QDF_STATUS_SUCCESS;
 }

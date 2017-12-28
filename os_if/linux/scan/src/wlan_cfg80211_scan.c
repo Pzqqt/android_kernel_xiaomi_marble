@@ -1119,6 +1119,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	wlan_scan_id scan_id;
 	bool is_p2p_scan = false;
+	enum wlan_band band;
 	struct net_device *netdev = NULL;
 
 	/* Get the vdev object */
@@ -1277,6 +1278,13 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 			len += snprintf(chl + len, 5, "%d ", channel);
 			req->scan_req.chan_list.chan[num_chan].freq =
 				wlan_chan_to_freq(channel);
+			band = util_scan_scm_chan_to_band(channel);
+			if (band == WLAN_BAND_2_4_GHZ)
+				req->scan_req.chan_list.chan[num_chan].phymode =
+					SCAN_PHY_MODE_11G;
+			else
+				req->scan_req.chan_list.chan[num_chan].phymode =
+					SCAN_PHY_MODE_11A;
 			num_chan++;
 		}
 		cfg80211_notice("Channel-List: %s", chl);
