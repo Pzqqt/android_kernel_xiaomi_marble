@@ -159,6 +159,7 @@ struct wma_dfs_radar_ind {
  * @dfs_cac_offload: dfs and cac timer offloaded
  * @tx_bfee_8ss_enabled: Tx Beamformee support for 8x8
  * @rcpi_enabled: for checking rcpi support
+ * @obss_detection_offloaded: obss detection offloaded to firmware
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -196,5 +197,6 @@ struct wma_tgt_cfg {
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;
 	bool rcpi_enabled;
+	bool obss_detection_offloaded;
 };
 #endif /* WMA_TGT_CFG_H */

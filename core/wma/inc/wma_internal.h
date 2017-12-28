@@ -1350,4 +1350,18 @@ int wma_fill_beacon_interval_reset_req(tp_wma_handle wma, uint8_t vdev_id,
  * Return: 'true' on valid vdev else 'false'
  */
 bool wma_is_vdev_valid(uint32_t vdev_id);
+
+/**
+ * wma_vdev_obss_detection_info_handler - event handler to handle obss detection
+ * @handle: the wma handle
+ * @event: buffer with event
+ * @len: buffer length
+ *
+ * This function receives obss detection info from firmware which is used to
+ * decide obss protection.
+ *
+ * Return: 0 on success
+ */
+int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
+					 uint32_t len);
 #endif

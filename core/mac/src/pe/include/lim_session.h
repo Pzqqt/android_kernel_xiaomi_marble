@@ -106,6 +106,26 @@ struct bss_color_info {
 };
 #endif
 
+/**
+ * struct obss_detection_cfg - current obss detection cfg set to firmware
+ * @obss_11b_ap_detect_mode: detection mode for 11b access point.
+ * @obss_11b_sta_detect_mode: detection mode for 11b station.
+ * @obss_11g_ap_detect_mode: detection mode for 11g access point.
+ * @obss_11a_detect_mode: detection mode for 11a access point.
+ * @obss_ht_legacy_detect_mode: detection mode for ht ap with legacy mode.
+ * @obss_ht_mixed_detect_mode: detection mode for ht ap with mixed mode.
+ * @obss_ht_20mhz_detect_mode: detection mode for ht ap with 20mhz mode.
+ */
+struct obss_detection_cfg {
+	uint8_t obss_11b_ap_detect_mode;
+	uint8_t obss_11b_sta_detect_mode;
+	uint8_t obss_11g_ap_detect_mode;
+	uint8_t obss_11a_detect_mode;
+	uint8_t obss_ht_legacy_detect_mode;
+	uint8_t obss_ht_mixed_detect_mode;
+	uint8_t obss_ht_20mhz_detect_mode;
+};
+
 typedef struct sPESession       /* Added to Support BT-AMP */
 {
 	/* To check session table is in use or free */
@@ -526,6 +546,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 	/* previous auth frame's sequence number */
 	uint16_t prev_auth_seq_num;
+	struct obss_detection_cfg obss_offload_cfg;
+	bool enable_obss_detection_offload;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

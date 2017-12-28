@@ -1849,6 +1849,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	uint8_t temp_band_cap;
 	struct cds_config_info *cds_cfg = cds_get_ini_config();
 	uint8_t antenna_mode;
+	QDF_STATUS status;
 
 	ret = hdd_objmgr_create_and_store_pdev(hdd_ctx);
 	if (ret) {
@@ -1856,7 +1857,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		QDF_BUG(0);
 	} else {
 		hdd_debug("New pdev has been created with pdev_id = %u",
-			hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
+			  hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
 	}
 
 	ret = hdd_update_green_ap_config(hdd_ctx);
@@ -1952,13 +1953,13 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->config->fine_time_meas_cap &= cfg->fine_time_measurement_cap;
 	hdd_ctx->fine_time_meas_cap_target = cfg->fine_time_measurement_cap;
 	hdd_debug("fine_time_meas_cap: 0x%x",
-		hdd_ctx->config->fine_time_meas_cap);
+		  hdd_ctx->config->fine_time_meas_cap);
 
 	antenna_mode = (hdd_ctx->config->enable2x2 == 0x01) ?
 			HDD_ANTENNA_MODE_2X2 : HDD_ANTENNA_MODE_1X1;
 	hdd_update_smps_antenna_mode(hdd_ctx, antenna_mode);
 	hdd_debug("Init current antenna mode: %d",
-		 hdd_ctx->current_antenna_mode);
+		  hdd_ctx->current_antenna_mode);
 
 	hdd_ctx->bpf_enabled = (cfg->bpf_enabled &&
 				hdd_ctx->config->bpf_packet_filter_enable);
@@ -1966,20 +1967,21 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_update_ra_rate_limit(hdd_ctx, cfg);
 
 	if ((hdd_ctx->config->txBFCsnValue >
-		WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF) &&
-						!cfg->tx_bfee_8ss_enabled)
+	     WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF) &&
+	    !cfg->tx_bfee_8ss_enabled)
 		hdd_ctx->config->txBFCsnValue =
 			WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_FW_DEF;
 
-	if (sme_cfg_set_int(hdd_ctx->hHal,
-			WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-			hdd_ctx->config->txBFCsnValue) == QDF_STATUS_E_FAILURE)
+	status = sme_cfg_set_int(hdd_ctx->hHal,
+				 WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+				 hdd_ctx->config->txBFCsnValue);
+	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("fw update WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED to CFG fails");
 
 
 	hdd_debug("Target BPF %d Host BPF %d 8ss fw support %d txBFCsnValue %d",
-		cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable,
-		cfg->tx_bfee_8ss_enabled, hdd_ctx->config->txBFCsnValue);
+		  cfg->bpf_enabled, hdd_ctx->config->bpf_packet_filter_enable,
+		  cfg->tx_bfee_8ss_enabled, hdd_ctx->config->txBFCsnValue);
 
 	/*
 	 * Update txBFCsnValue and NumSoundingDim values to vhtcap in wiphy
@@ -2006,6 +2008,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_nan_datapath_target_config(hdd_ctx, cfg);
 	hdd_ctx->dfs_cac_offload = cfg->dfs_cac_offload;
 	hdd_ctx->lte_coex_ant_share = cfg->services.lte_coex_ant_share;
+	status = sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_OBSS_DETECTION_OFFLOAD,
+				 cfg->obss_detection_offloaded);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Couldn't pass WNI_CFG_OBSS_DETECTION_OFFLOAD to CFG");
 }
 
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)

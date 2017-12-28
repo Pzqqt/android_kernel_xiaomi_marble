@@ -353,6 +353,7 @@ enum {
 	WNI_CFG_EDCA_ETSI_ACBE,
 	WNI_CFG_EDCA_ETSI_ACVI,
 	WNI_CFG_EDCA_ETSI_ACVO,
+	WNI_CFG_OBSS_DETECTION_OFFLOAD,
 	/* Any new items to be added should be above this strictly */
 	CFG_PARAM_MAX_NUM
 };

@@ -49,7 +49,7 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 	pmo_set_wow_default_ptrn(vdev_ctx, 0);
 
 	pmo_debug("Add user passed wow pattern id %d vdev id %d",
-		ptrn->pattern_id, ptrn->session_id);
+		  ptrn->pattern_id, ptrn->session_id);
 	/*
 	 * Convert received pattern mask value from bit representation
 	 * to byte representation.
@@ -72,15 +72,17 @@ QDF_STATUS pmo_core_add_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 			       (pos % PMO_NUM_BITS_IN_BYTE);
 		bit_to_check = 0x1 << bit_to_check;
 		if (ptrn->pattern_mask[pos / PMO_NUM_BITS_IN_BYTE] &
-							bit_to_check)
+		    bit_to_check)
 			new_mask[pos] = PMO_WOW_PTRN_MASK_VALID;
 	}
 
 	status = pmo_tgt_send_wow_patterns_to_fw(vdev,
-			ptrn->pattern_id,
-			ptrn->pattern, ptrn->pattern_size,
-			ptrn->pattern_byte_offset, new_mask,
-			ptrn->pattern_size, true);
+						 ptrn->pattern_id,
+						 ptrn->pattern,
+						 ptrn->pattern_size,
+						 ptrn->pattern_byte_offset,
+						 new_mask,
+						 ptrn->pattern_size, true);
 	if (status != QDF_STATUS_SUCCESS)
 		pmo_err("Failed to add wow pattern %d", ptrn->pattern_id);
 
@@ -110,7 +112,7 @@ QDF_STATUS pmo_core_del_wow_user_pattern(struct wlan_objmgr_vdev *vdev,
 	}
 
 	pmo_debug("Delete user passed wow pattern id %d total user pattern %d",
-		pattern_id, pmo_get_wow_user_ptrn(vdev_ctx));
+		  pattern_id, pmo_get_wow_user_ptrn(vdev_ctx));
 
 	pmo_tgt_del_wow_pattern(vdev, pattern_id, true);
 
@@ -160,7 +162,7 @@ void pmo_core_enable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 		goto out;
 
 	pmo_info("enable wakeup event vdev_id %d wake up event 0x%x%x%x%x",
-		vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
+		 vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
 	pmo_tgt_enable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
@@ -192,7 +194,7 @@ void pmo_core_disable_wakeup_event(struct wlan_objmgr_psoc *psoc,
 		goto out;
 
 	pmo_info("Disable wakeup event vdev_id %d wake up event 0x%x%x%x%x",
-		vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
+		 vdev_id, bitmap[0], bitmap[1], bitmap[2], bitmap[3]);
 	pmo_tgt_disable_wow_wakeup_event(vdev, bitmap);
 
 	pmo_vdev_put_ref(vdev);
@@ -228,7 +230,7 @@ bool pmo_is_beaconing_vdev_up(struct wlan_objmgr_psoc *psoc)
 
 		vdev_opmode = pmo_get_vdev_opmode(vdev);
 		is_beaconing = pmo_is_vdev_in_beaconning_mode(vdev_opmode) &&
-			pmo_is_vdev_up(vdev);
+			       pmo_is_vdev_up(vdev);
 
 		pmo_vdev_put_ref(vdev);
 
@@ -310,7 +312,7 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 			is_wow_applicable = true;
 		} else if (pmo_core_get_vdev_op_mode(vdev) == QDF_NDI_MODE) {
 			pmo_debug("vdev %d is in NAN data mode, enabling wow",
-				vdev_id);
+				  vdev_id);
 			is_wow_applicable = true;
 		}
 
@@ -321,7 +323,7 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 	}
 
 	pmo_debug("All vdev are in disconnected state\n"
-		"and pno/extscan is not in progress, skipping wow");
+		  "and pno/extscan is not in progress, skipping wow");
 
 	return false;
 }
@@ -334,64 +336,64 @@ void pmo_set_wow_event_bitmap(WOW_WAKE_EVENT_TYPE event,
 
 	if (!bitmask || wow_bitmap_size < PMO_WOW_MAX_EVENT_BM_LEN) {
 		pmo_err("wow bitmask length shorter than %d",
-			 PMO_WOW_MAX_EVENT_BM_LEN);
+			PMO_WOW_MAX_EVENT_BM_LEN);
 		return;
 	}
 	pmo_get_event_bitmap_idx(event, wow_bitmap_size, &bit_idx, &idx);
 	bitmask[idx] |= 1 << bit_idx;
 
 	pmo_debug("%s: bitmask updated %x%x%x%x",
-		 __func__, bitmask[0], bitmask[1], bitmask[2], bitmask[3]);
+		  __func__, bitmask[0], bitmask[1], bitmask[2], bitmask[3]);
 }
 
 void pmo_set_sta_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 {
 
 	pmo_set_wow_event_bitmap(WOW_CSA_IE_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_CLIENT_KICKOUT_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_MAGIC_PKT_RECVD_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_DEAUTH_RECVD_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_DISASSOC_RECVD_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_BMISS_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_GTK_ERR_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_BETTER_AP_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_HTT_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_RA_MATCH_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_NLO_DETECTED_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_EXTSCAN_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_OEM_RESPONSE_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_TDLS_CONN_TRACKER_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_11D_SCAN_EVENT,
 				 wow_bitmap_size,
 				 bitmask);
@@ -402,24 +404,27 @@ void pmo_set_sap_wow_bitmask(uint32_t *bitmask, uint32_t wow_bitmap_size)
 {
 
 	pmo_set_wow_event_bitmap(WOW_PROBE_REQ_WPS_IE_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_PATTERN_MATCH_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_AUTH_REQ_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_ASSOC_REQ_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_DEAUTH_RECVD_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_DISASSOC_RECVD_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
 	pmo_set_wow_event_bitmap(WOW_HTT_EVENT,
-			     wow_bitmap_size,
-			     bitmask);
+				 wow_bitmap_size,
+				 bitmask);
+	pmo_set_wow_event_bitmap(WOW_SAP_OBSS_DETECTION_EVENT,
+				 wow_bitmap_size,
+				 bitmask);
 }

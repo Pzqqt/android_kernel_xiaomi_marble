@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1898,6 +1898,10 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_DEL_ALL_TDLS_PEERS:
 		lim_process_sme_del_all_tdls_peers(mac_ctx, msg->bodyptr);
 		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
+	case WMA_OBSS_DETECTION_INFO:
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	default:

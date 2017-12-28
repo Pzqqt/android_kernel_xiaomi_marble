@@ -5253,3 +5253,42 @@ int wma_peer_ant_info_evt_handler(void *handle, u_int8_t *event,
 
 	return 0;
 }
+
+int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
+					 uint32_t len)
+{
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	struct wmi_obss_detect_info *obss_detection;
+	QDF_STATUS status;
+
+	if (!event) {
+		WMA_LOGE("Invalid obss_detection_info event buffer");
+		return -EINVAL;
+	}
+
+	obss_detection = qdf_mem_malloc(sizeof(*obss_detection));
+	if (!obss_detection) {
+		WMA_LOGE("%s: Failed to malloc", __func__);
+		return -ENOMEM;
+	}
+
+	status = wmi_unified_extract_obss_detection_info(wma->wmi_handle,
+							 event, obss_detection);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to extract obss info", __func__);
+		qdf_mem_free(obss_detection);
+		return -EINVAL;
+	}
+
+	if (!wma_is_vdev_valid(obss_detection->vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id %d", __func__,
+			 obss_detection->vdev_id);
+		qdf_mem_free(obss_detection);
+		return -EINVAL;
+	}
+
+	wma_send_msg(wma, WMA_OBSS_DETECTION_INFO, obss_detection, 0);
+
+	return 0;
+}
