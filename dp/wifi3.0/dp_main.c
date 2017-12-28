@@ -3664,6 +3664,15 @@ void dp_peer_unref_delete(void *peer_handle)
 					" - its last peer is done"),
 					vdev, vdev->mac_addr.raw);
 				/* all peers are gone, go ahead and delete it */
+				dp_tx_flow_pool_unmap_handler(pdev, vdev->vdev_id,
+								FLOW_TYPE_VDEV,
+								vdev->vdev_id);
+				dp_tx_vdev_detach(vdev);
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_INFO_HIGH,
+					FL("deleting vdev object %pK (%pM)"),
+					vdev, vdev->mac_addr.raw);
+
 				qdf_mem_free(vdev);
 				if (vdev_delete_cb)
 					vdev_delete_cb(vdev_delete_context);
