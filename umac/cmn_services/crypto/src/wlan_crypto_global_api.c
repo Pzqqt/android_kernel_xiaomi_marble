@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1280,6 +1280,17 @@ bool wlan_crypto_is_pmf_enabled(struct wlan_objmgr_vdev *vdev,
 
 	return false;
 }
+
+static void wlan_crypto_gmac_pn_swap(uint8_t *a, uint8_t *b)
+{
+	a[0] = b[5];
+	a[1] = b[4];
+	a[2] = b[3];
+	a[3] = b[2];
+	a[4] = b[1];
+	a[5] = b[0];
+}
+
 /**
  * wlan_crypto_add_mmie - called by mgmt txrx to add mmie in frame
  *
@@ -1397,25 +1408,21 @@ uint8_t *wlan_crypto_add_mmie(struct wlan_objmgr_vdev *vdev,
 
 		ret = omac1_aes_256(key->keyval, buf,
 					len + aad_len - hdrlen, mmie->mic);
-
 	} else if ((crypto_priv->igtk_key_type == WLAN_CRYPTO_CIPHER_AES_GMAC)
 			|| (crypto_priv->igtk_key_type
 					== WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
 
 		qdf_mem_copy(nounce, hdr->addr2, WLAN_ALEN);
-		qdf_mem_copy(nounce + 6, pn, 6);
+		wlan_crypto_gmac_pn_swap(nounce + 6, pn);
 		ret = wlan_crypto_aes_gmac(key->keyval, key->keylen, nounce,
 					sizeof(nounce), buf,
 					len + aad_len - hdrlen, mmie->mic);
-
 	}
 	qdf_mem_free(buf);
 	if (ret < 0) {
 		qdf_print("%s[%d] add mmie failed\n", __func__, __LINE__);
 		return NULL;
 	}
-
-	key->keytsc++;
 
 	return bfrm + len;
 }
@@ -1532,7 +1539,7 @@ bool wlan_crypto_is_mmie_valid(struct wlan_objmgr_vdev *vdev,
 			|| (crypto_priv->igtk_key_type
 					== WLAN_CRYPTO_CIPHER_AES_GMAC_256)) {
 		qdf_mem_copy(nounce, hdr->addr2, WLAN_ALEN);
-		qdf_mem_copy(nounce + 6, ipn, 6);
+		wlan_crypto_gmac_pn_swap(nounce + 6, ipn);
 		ret = wlan_crypto_aes_gmac(key->keyval, key->keylen, nounce,
 					sizeof(nounce), buf,
 					len + aad_len - hdrlen, mic);
