@@ -1213,11 +1213,6 @@ struct hdd_adapter {
 	 */
 	bool roam_ho_fail;
 	struct lfr_firmware_status lfr_fw_status;
-	/*
-	 * Store the restrict_offchannel count
-	 * to cater to multiple application.
-	 */
-	u8 restrict_offchannel_cnt;
 	bool con_status;
 	bool dad;
 	uint8_t active_ac;

@@ -6368,55 +6368,51 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	enum QDF_OPMODE dev_mode = adapter->device_mode;
 	int ret_val = 0;
+	QDF_STATUS status;
 
 	if (!(dev_mode == QDF_SAP_MODE || dev_mode == QDF_P2P_GO_MODE)) {
 		hdd_err("Invalid interface type:%d", dev_mode);
 		return -EINVAL;
 	}
-	/*
-	 * To cater to multiple apps we maintain
-	 * a counter to check if restrict_offchannel
-	 * is enabled or disabled per AP/GO vdev.
-	 */
+	status = wlan_objmgr_vdev_try_get_ref(adapter->hdd_vdev, WLAN_OSIF_ID);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("Access hdd_vdev failed: %d", status);
+		return -EINVAL;
+	}
 	if (restrict_offchan == 1) {
 		enum policy_mgr_con_mode pmode =
 		policy_mgr_convert_device_mode_to_qdf_type(dev_mode);
 		int chan;
 
-		adapter->restrict_offchannel_cnt++;
-		if (adapter->restrict_offchannel_cnt == 1) {
-			u32 vdev_id = wlan_vdev_get_id(adapter->hdd_vdev);
+		u32 vdev_id = wlan_vdev_get_id(adapter->hdd_vdev);
 
-			wlan_vdev_obj_lock(adapter->hdd_vdev);
-			wlan_vdev_mlme_cap_set(adapter->hdd_vdev,
-					       WLAN_VDEV_C_RESTRICT_OFFCHAN);
-			wlan_vdev_obj_unlock(adapter->hdd_vdev);
-			chan = policy_mgr_get_channel(hdd_ctx->hdd_psoc, pmode,
-						      &vdev_id);
-			if (!chan ||
-			    wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, chan)) {
-				hdd_err("unable to send avoid_freq");
-				ret_val = -EINVAL;
-			}
+		wlan_vdev_obj_lock(adapter->hdd_vdev);
+		wlan_vdev_mlme_cap_set(adapter->hdd_vdev,
+				       WLAN_VDEV_C_RESTRICT_OFFCHAN);
+		wlan_vdev_obj_unlock(adapter->hdd_vdev);
+		chan = policy_mgr_get_channel(hdd_ctx->hdd_psoc, pmode,
+					      &vdev_id);
+		if (!chan ||
+		    wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, chan)) {
+			hdd_err("unable to send avoid_freq");
+			ret_val = -EINVAL;
 		}
-	} else if ((restrict_offchan == 0) &&
-			(adapter->restrict_offchannel_cnt > 0)) {
-		adapter->restrict_offchannel_cnt--;
-		if (adapter->restrict_offchannel_cnt == 0) {
-			wlan_vdev_obj_lock(adapter->hdd_vdev);
-			wlan_vdev_mlme_cap_clear(adapter->hdd_vdev,
-						 WLAN_VDEV_C_RESTRICT_OFFCHAN);
-			wlan_vdev_obj_unlock(adapter->hdd_vdev);
-			if (wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0)) {
-				hdd_err("unable to clear avoid_freq");
-				ret_val = -EINVAL;
-			}
+		hdd_info("vdev %d mode %d dnbs enabled", vdev_id, dev_mode);
+	} else if (restrict_offchan == 0) {
+		wlan_vdev_obj_lock(adapter->hdd_vdev);
+		wlan_vdev_mlme_cap_clear(adapter->hdd_vdev,
+					 WLAN_VDEV_C_RESTRICT_OFFCHAN);
+		wlan_vdev_obj_unlock(adapter->hdd_vdev);
+		if (wlan_hdd_send_avoid_freq_for_dnbs(hdd_ctx, 0)) {
+			hdd_err("unable to clear avoid_freq");
+			ret_val = -EINVAL;
 		}
+		hdd_info("vdev mode %d dnbs disabled", dev_mode);
 	} else {
 		ret_val = -EINVAL;
 		hdd_err("Invalid RESTRICT_OFFCHAN setting");
 	}
-
+	wlan_objmgr_vdev_release_ref(adapter->hdd_vdev, WLAN_OSIF_ID);
 	return ret_val;
 }
 
