@@ -7232,3 +7232,15 @@ QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_send_obss_detection_cfg_cmd(void *wmi_hdl,
+		struct wmi_obss_detection_cfg_param *obss_cfg_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_obss_detection_cfg_cmd)
+		return wmi_handle->ops->send_obss_detection_cfg_cmd(wmi_handle,
+				obss_cfg_param);
+
+	return QDF_STATUS_E_FAILURE;
+}
