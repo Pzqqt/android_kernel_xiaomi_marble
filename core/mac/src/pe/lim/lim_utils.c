@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -5886,6 +5886,16 @@ bool lim_set_nss_change(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			uint8_t rxNss, uint8_t staId, uint8_t *peerMac)
 {
 	tUpdateRxNss tempParam;
+
+	if (!rxNss) {
+		pe_err("Invalid rxNss value: %u", rxNss);
+		if (!cds_is_driver_recovering()) {
+			if (cds_is_self_recovery_enabled())
+				cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
+			else
+				QDF_BUG(0);
+		}
+	}
 
 	tempParam.rxNss = rxNss;
 	tempParam.staId = staId;
