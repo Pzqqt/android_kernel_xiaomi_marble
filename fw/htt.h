@@ -163,9 +163,10 @@
  * 3.47 Add HTT_T2H PEER_MAP_V2 and PEER_UNMAP_V2
  * 3.48 Add pdev ID field to HTT_T2H_MSG_TYPE_PPDU_STATS_IND and
  *      HTT_T2H_MSG_TYPE_PKTLOG
+ * 3.49 Add HTT_T2H_MSG_TYPE_MONITOR_MAC_HEADER_IND def
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 48
+#define HTT_CURRENT_VERSION_MINOR 49
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -5495,6 +5496,7 @@ enum htt_t2h_msg_type {
     HTT_T2H_MSG_TYPE_PPDU_STATS_IND           = 0x1d,
     HTT_T2H_MSG_TYPE_PEER_MAP_V2              = 0x1e,
     HTT_T2H_MSG_TYPE_PEER_UNMAP_V2            = 0x1f,
+    HTT_T2H_MSG_TYPE_MONITOR_MAC_HEADER_IND   = 0x20,
 
     HTT_T2H_MSG_TYPE_TEST,
     /* keep this last */
@@ -10329,5 +10331,81 @@ typedef struct {
         ((c_macaddr)[3] << 24)); \
     (phtt_mac_addr)->mac_addr47to32 = ((c_macaddr)[4] | ((c_macaddr)[5] << 8));\
    } while (0)
+
+/**
+ * @brief target -> host monitor mac header indication message
+ *
+ * @details
+ * The following diagram shows the format of the monitor mac header message
+ * sent from the target to the host.
+ * This message is primarily sent when promiscuous rx mode is enabled.
+ * One message is sent per rx PPDU.
+ *
+ *          |31          24|23           16|15            8|7            0|
+ *          |-------------------------------------------------------------|
+ *          |            peer_id           |    reserved0  |    msg_type  |
+ *          |-------------------------------------------------------------|
+ *          |            reserved1         |           num_mpdu           |
+ *          |-------------------------------------------------------------|
+ *          |                       struct hw_rx_desc                     |
+ *          |                      (see wal_rx_desc.h)                    |
+ *          |-------------------------------------------------------------|
+ *          |                   struct ieee80211_frame_addr4              |
+ *          |                      (see ieee80211_defs.h)                 |
+ *          |-------------------------------------------------------------|
+ *          |                   struct ieee80211_frame_addr4              |
+ *          |                      (see ieee80211_defs.h)                 |
+ *          |-------------------------------------------------------------|
+ *          |                            ......                           |
+ *          |-------------------------------------------------------------|
+ *
+ * Header fields:
+ *  - msg_type
+ *    Bits 7:0
+ *    Purpose: Identifies this is a monitor mac header indication message.
+ *    Value: 0x20
+ *  - peer_id
+ *    Bits 31:16
+ *    Purpose: Software peer id given by host during association,
+ *             During promiscuous mode, the peer ID will be invalid (0xFF)
+ *             for rx PPDUs received from unassociated peers.
+ *    Value: peer ID (for associated peers) or 0xFF (for unassociated peers)
+ *  - num_mpdu
+ *    Bits 15:0
+ *    Purpose: The number of MPDU frame headers (struct ieee80211_frame_addr4)
+ *             delivered within the message.
+ *    Value: 1 to 32
+ *           num_mpdu is limited to a maximum value of 32, due to buffer
+ *           size limits.  For PPDUs with more than 32 MPDUs, only the
+ *           ieee80211_frame_addr4 headers from the first 32 MPDUs within
+ *           the PPDU will be provided.
+ */
+#define HTT_T2H_MONITOR_MAC_HEADER_IND_HDR_SIZE       8
+
+#define HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_M          0xFFFF0000
+#define HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_S          16
+
+#define HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_M         0x0000FFFF
+#define HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_S         0
+
+
+#define HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_SET(word, value)             \
+    do {                                                         \
+        HTT_CHECK_SET_VAL(HTT_T2H_MONITOR_MAC_HEADER_PEER_ID, value);   \
+        (word) |= (value)  << HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_S;     \
+    } while (0)
+#define HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_GET(word) \
+    (((word) & HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_M) >> \
+    HTT_T2H_MONITOR_MAC_HEADER_PEER_ID_S)
+
+#define HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_SET(word, value)             \
+    do {                                                         \
+        HTT_CHECK_SET_VAL(HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU, value);   \
+        (word) |= (value)  << HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_S;     \
+    } while (0)
+#define HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_GET(word) \
+    (((word) & HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_M) >> \
+    HTT_T2H_MONITOR_MAC_HEADER_NUM_MPDU_S)
+
 
 #endif
