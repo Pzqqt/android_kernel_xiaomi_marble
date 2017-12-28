@@ -3192,6 +3192,12 @@ static int wma_pdev_set_hw_mode_resp_evt_handler(void *handle,
 	}
 
 	wmi_event = param_buf->fixed_param;
+	if (wmi_event->num_vdev_mac_entries >
+	    param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping) {
+		WMA_LOGE("Invalid num_vdev_mac_entries: %d",
+				wmi_event->num_vdev_mac_entries);
+		goto fail;
+	}
 	hw_mode_resp->status = wmi_event->status;
 	hw_mode_resp->cfgd_hw_mode_index = wmi_event->cfgd_hw_mode_index;
 	hw_mode_resp->num_vdev_mac_entries = wmi_event->num_vdev_mac_entries;
@@ -3373,6 +3379,13 @@ static int wma_pdev_hw_mode_transition_evt_handler(void *handle,
 	wmi_event = param_buf->fixed_param;
 	vdev_mac_entry =
 		param_buf->wmi_pdev_set_hw_mode_response_vdev_mac_mapping;
+	if (wmi_event->num_vdev_mac_entries >
+	    param_buf->num_wmi_pdev_set_hw_mode_response_vdev_mac_mapping) {
+		WMA_LOGE("Invalid num_vdev_mac_entries: %d",
+			 wmi_event->num_vdev_mac_entries);
+		qdf_mem_free(hw_mode_trans_ind);
+		return -EINVAL;
+	}
 	wma_process_pdev_hw_mode_trans_ind(wma, wmi_event, vdev_mac_entry,
 		hw_mode_trans_ind);
 	/* Pass the message to PE */

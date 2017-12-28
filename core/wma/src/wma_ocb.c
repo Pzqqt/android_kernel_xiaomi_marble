@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -512,10 +512,11 @@ static int wma_dcc_get_stats_resp_event_handler(void *handle,
 
 	/* Allocate and populate the response */
 	if (fix_param->num_channels > ((WMI_SVC_MSG_MAX_SIZE -
-	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel))) {
-		WMA_LOGE("%s: too many channels:%d", __func__,
-			fix_param->num_channels);
-		QDF_ASSERT(0);
+	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel)) ||
+	    fix_param->num_channels > param_tlvs->num_stats_per_channel_list) {
+		WMA_LOGE("%s: too many channels:%d, param_tlvs->num_stats_per_channel_list:%d",
+			__func__, fix_param->num_channels,
+			param_tlvs->num_stats_per_channel_list);
 		return -EINVAL;
 	}
 	response = qdf_mem_malloc(sizeof(*response) + fix_param->num_channels *

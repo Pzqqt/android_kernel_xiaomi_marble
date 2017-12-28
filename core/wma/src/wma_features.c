@@ -1309,8 +1309,8 @@ int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf,
 	if (nan_rsp_event_hdr->data_len > ((WMI_SVC_MSG_MAX_SIZE -
 	    sizeof(*nan_rsp_event_hdr)) / sizeof(uint8_t)) ||
 	    nan_rsp_event_hdr->data_len > param_buf->num_data) {
-		WMA_LOGE("excess data length:%d", nan_rsp_event_hdr->data_len);
-		QDF_ASSERT(0);
+		WMA_LOGE("excess data length:%d, num_data:%d",
+			nan_rsp_event_hdr->data_len, param_buf->num_data);
 		return -EINVAL;
 	}
 	nan_rsp_event = (tSirNanEvent *) qdf_mem_malloc(alloc_len);
@@ -5140,6 +5140,12 @@ int wma_rx_aggr_failure_event_handler(void *handle, u_int8_t *event_buf,
 	}
 
 	rx_aggr_hole_event->hole_cnt = rx_aggr_failure_info->num_failure_info;
+	if (rx_aggr_hole_event->hole_cnt > param_buf->num_failure_info) {
+		WMA_LOGE("Invalid no of hole count: %d",
+				rx_aggr_hole_event->hole_cnt);
+		qdf_mem_free(rx_aggr_hole_event);
+		return -EINVAL;
+	}
 	WMA_LOGD("aggr holes_sum: %d\n",
 		rx_aggr_failure_info->num_failure_info);
 	for (i = 0; i < rx_aggr_hole_event->hole_cnt; i++) {

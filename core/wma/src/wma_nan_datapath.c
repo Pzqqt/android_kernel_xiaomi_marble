@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -454,6 +454,15 @@ static int wma_ndp_indication_event_handler(void *handle, uint8_t *event_info,
 	ind_event.ncs_sk_type = fixed_params->nan_csid;
 	ind_event.scid.scid_len = fixed_params->nan_scid_len;
 
+	if (fixed_params->ndp_cfg_len > event->num_ndp_cfg ||
+	    fixed_params->ndp_app_info_len > event->num_ndp_app_info ||
+	    fixed_params->nan_scid_len > event->num_ndp_scid) {
+		WMA_LOGD(FL("Invalid ndp_cfg_len: %d, ndp_app_info_len: %d, nan_scid_len: %d"),
+				fixed_params->ndp_cfg_len,
+				fixed_params->ndp_app_info_len,
+				fixed_params->nan_scid_len);
+		return -EINVAL;
+	}
 	if (ind_event.ndp_config.ndp_cfg_len) {
 		ind_event.ndp_config.ndp_cfg =
 			qdf_mem_malloc(fixed_params->ndp_cfg_len);
@@ -585,6 +594,11 @@ static int wma_ndp_confirm_event_handler(void *handle, uint8_t *event_info,
 				   ndp_confirm.peer_ndi_mac_addr.bytes);
 
 	ndp_confirm.ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
+	if (ndp_confirm.ndp_info.ndp_app_info_len > event->num_ndp_app_info) {
+		WMA_LOGE(FL("Invalid ndp_app_info_len: %d"),
+			ndp_confirm.ndp_info.ndp_app_info_len);
+		return -EINVAL;
+	}
 
 	if (ndp_confirm.ndp_info.ndp_app_info_len) {
 		ndp_confirm.ndp_info.ndp_app_info =
