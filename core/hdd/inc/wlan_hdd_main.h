@@ -1547,6 +1547,7 @@ struct hdd_context {
 	/* defining the solution type */
 	uint32_t target_type;
 
+	qdf_atomic_t con_mode_flag;
 	/* defining the firmware version */
 	uint32_t target_fw_version;
 	uint32_t target_fw_vers_ext;
