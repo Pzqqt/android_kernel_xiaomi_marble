@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -86,7 +86,6 @@
 
 #define PCL_ADVANTAGE 30
 #define PCL_RSSI_THRESHOLD -75
-
 #define CSR_SCAN_IS_OVER_BSS_LIMIT(pMac)  \
 	((pMac)->scan.nBssLimit <= (csr_ll_count(&(pMac)->scan.scanResultList)))
 
@@ -5311,6 +5310,11 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 
 	filter->dot11_mode = pFilter->phyMode;
 
+	// enable bss scoring for only STA mode
+	if (pFilter->csrPersona == QDF_STA_MODE)
+		filter->bss_scoring_required = true;
+	else
+		filter->bss_scoring_required = false;
 	if (!pFilter->BSSIDs.numOfBSSIDs) {
 		if (policy_mgr_map_concurrency_mode(
 		   &pFilter->csrPersona, &new_mode)) {
