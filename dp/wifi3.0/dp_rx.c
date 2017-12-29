@@ -1534,12 +1534,12 @@ done:
 					deliver_list_tail,
 					nbuf);
 
-		DP_STATS_INCC_PKT(peer, rx.multicast, 1, pkt_len,
+		DP_STATS_INCC_PKT(peer, rx.multicast, 1, qdf_nbuf_len(nbuf),
 				hal_rx_msdu_end_da_is_mcbc_get(
 					rx_tlv_hdr));
 
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
-				pkt_len);
+				qdf_nbuf_len(nbuf));
 
 		if ((soc->process_rx_status) && likely(peer) &&
 			hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {
