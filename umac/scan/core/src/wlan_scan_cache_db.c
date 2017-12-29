@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -817,7 +817,7 @@ scm_scan_apply_filter_get_entry(struct wlan_objmgr_psoc *psoc,
 	qdf_mem_copy(&scan_node->entry->neg_sec_info,
 		&security, sizeof(scan_node->entry->neg_sec_info));
 
-	if (!filter)
+	if (!filter || !filter->bss_scoring_required)
 		qdf_list_insert_front(scan_list,
 			&scan_node->node);
 	else

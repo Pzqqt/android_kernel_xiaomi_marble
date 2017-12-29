@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -481,6 +481,7 @@ struct fils_filter_info {
 };
 
 /**
+ * @bss_scoring_required :- flag to bypass scoring filtered results
  * @age_threshold: If set return entry which are newer than the age_threshold
  * @p2p_results: If only p2p entries is required
  * @rrm_measurement_filter: For measurement reports.if set, only SSID, BSSID
@@ -516,6 +517,7 @@ struct fils_filter_info {
  * @bssid_hint: Mac address of bssid_hint
  */
 struct scan_filter {
+	bool bss_scoring_required;
 	uint32_t age_threshold;
 	uint32_t p2p_results;
 	uint32_t rrm_measurement_filter;
