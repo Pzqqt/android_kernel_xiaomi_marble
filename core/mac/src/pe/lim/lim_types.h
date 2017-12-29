@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -983,4 +983,42 @@ enum {
 
 QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 		tSirMacAddr peer_mac, uint16_t tid, tpPESession session);
+
+/**
+ * lim_process_join_failure_timeout() - This function is called to process
+ * JoinFailureTimeout
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ *
+ * This function is called to process JoinFailureTimeout
+ *
+ * @Return None
+ */
+void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx);
+
+/**
+ * lim_process_auth_failure_timeout() - This function is called to process Min
+ * Channel Timeout during channel scan.
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ *
+ * This function is called to process Min Channel Timeout during channel scan.
+ *
+ * @Return: None
+ */
+void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx);
+
+/**
+ * lim_process_assoc_failure_timeout() - This function is called to process Min
+ * Channel Timeout during channel scan.
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @msg_type: Assoc or reassoc
+ *
+ * This function is called to process Min Channel Timeout during channel scan.
+ *
+ * @Return: None
+ */
+void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
+				       uint32_t msg_type);
 #endif /* __LIM_TYPES_H */

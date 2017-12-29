@@ -562,6 +562,11 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 	/* Deactivate addts response timer. */
 	tx_timer_deactivate(&lim_timer->gLimAddtsRspTimer);
 
+	if (tx_timer_running(&lim_timer->gLimJoinFailureTimer)) {
+		pe_err("Join failure timer running call the timeout API");
+		/* Cleanup as if join timer expired */
+		lim_process_join_failure_timeout(mac_ctx);
+	}
 	/* Deactivate Join failure timer. */
 	tx_timer_deactivate(&lim_timer->gLimJoinFailureTimer);
 
@@ -572,9 +577,19 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 	tx_timer_deactivate
 			(&lim_timer->g_lim_periodic_auth_retry_timer);
 
+	if (tx_timer_running(&lim_timer->gLimAssocFailureTimer)) {
+		pe_err("Assoc failure timer running call the timeout API");
+		/* Cleanup as if assoc timer expired */
+		lim_process_assoc_failure_timeout(mac_ctx, LIM_ASSOC);
+	}
 	/* Deactivate Association failure timer. */
 	tx_timer_deactivate(&lim_timer->gLimAssocFailureTimer);
 
+	if (tx_timer_running(&mac_ctx->lim.limTimers.gLimAuthFailureTimer)) {
+		pe_err("Auth failure timer running call the timeout API");
+		/* Cleanup as if auth timer expired */
+		lim_process_auth_failure_timeout(mac_ctx);
+	}
 	/* Deactivate Authentication failure timer. */
 	tx_timer_deactivate(&lim_timer->gLimAuthFailureTimer);
 
