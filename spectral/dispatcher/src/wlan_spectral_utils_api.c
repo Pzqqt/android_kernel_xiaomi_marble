@@ -149,7 +149,6 @@ wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops)
 	struct wlan_lmac_if_sptrl_rx_ops *sptrl_rx_ops = &rx_ops->sptrl_rx_ops;
 
 	/* Spectral rx ops */
-	sptrl_rx_ops->sptrlro_send_phydata = tgt_send_phydata;
 	sptrl_rx_ops->sptrlro_get_target_handle = tgt_get_target_handle;
 	sptrl_rx_ops->sptrlro_vdev_get_chan_freq = spectral_vdev_get_chan_freq;
 	sptrl_rx_ops->sptrlro_vdev_get_ch_width = spectral_vdev_get_ch_width;

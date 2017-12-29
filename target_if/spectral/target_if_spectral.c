@@ -1839,9 +1839,7 @@ target_if_spectral_detach(struct target_if_spectral *spectral)
 
 	target_if_spectral_detach_simulation(spectral);
 
-#ifdef SPECTRAL_USE_NETLINK_SOCKETS
-	target_if_spectral_destroy_netlink(spectral);
-#endif
+	spectral->nl_cb.destroy_netlink(spectral->pdev_obj);
 
 	qdf_spinlock_destroy(&spectral->spectral_lock);
 	qdf_spinlock_destroy(&spectral->noise_pwr_reports_lock);
@@ -1945,11 +1943,11 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_PHYDIAG))
 		spectral_info("HAL_CAP_PHYDIAG : Capable");
 
-	SPECTRAL_TODO("Need to fix the capablity check for RADAR");
+	/* TODO: Need to fix the capablity check for RADAR */
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_RADAR))
 		spectral_info("HAL_CAP_RADAR   : Capable");
 
-	SPECTRAL_TODO("Need to fix the capablity check for SPECTRAL\n");
+	/* TODO : Need to fix the capablity check for SPECTRAL */
 	/* TODO : Should this be called here of after ath_attach ? */
 	if (p_sops->get_capability(spectral, SPECTRAL_CAP_SPECTRAL_SCAN))
 		spectral_info("HAL_CAP_SPECTRAL_SCAN : Capable");
@@ -1957,13 +1955,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	qdf_spinlock_create(&spectral->spectral_lock);
 	qdf_spinlock_create(&spectral->noise_pwr_reports_lock);
 	target_if_spectral_clear_stats(spectral);
-
-	qdf_spinlock_create(&spectral->spectral_skbqlock);
-	STAILQ_INIT(&spectral->spectral_skbq);
-
-#ifdef SPECTRAL_USE_NETLINK_SOCKETS
-	target_if_spectral_init_netlink(spectral);
-#endif
 
 	/* Set the default values for spectral parameters */
 	target_if_spectral_init_param_defaults(spectral);
@@ -2029,10 +2020,12 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		if (target_type == TARGET_TYPE_QCA9984 ||
 		    target_type == TARGET_TYPE_QCA9888)
 			spectral->is_sec80_rssi_war_required = true;
+		spectral->use_nl_bcast = true;
 #else
 		spectral->is_160_format = true;
 		spectral->is_lb_edge_extrabins_format = true;
 		spectral->is_rb_edge_extrabins_format = true;
+		spectral->use_nl_bcast = false;
 #endif
 	}
 
@@ -2607,7 +2600,7 @@ target_if_stop_spectral_scan(struct wlan_objmgr_pdev *pdev)
 	qdf_spin_lock(&spectral->spectral_lock);
 	p_sops->stop_spectral_scan(spectral);
 	if (spectral->classify_scan) {
-		SPECTRAL_TODO("Check if this logic is necessary");
+		/* TODO : Check if this logic is necessary */
 		spectral->detects_control_channel = 0;
 		spectral->detects_extension_channel = 0;
 		spectral->detects_above_dc = 0;
@@ -2757,6 +2750,45 @@ target_if_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 	    cmd_ops->wmi_spectral_enable_cmd_send;
 }
 
+/**
+ * target_if_register_netlink_cb() - Register Netlink callbacks
+ * @pdev: Pointer to pdev object
+ * @nl_cb: Netlink callbacks to register
+ *
+ * Return: void
+ */
+static void
+target_if_register_netlink_cb(
+	struct wlan_objmgr_pdev *pdev,
+	struct spectral_nl_cb *nl_cb)
+{
+	struct target_if_spectral *spectral = NULL;
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	qdf_mem_copy(&spectral->nl_cb, nl_cb, sizeof(struct spectral_nl_cb));
+
+	if (spectral->use_nl_bcast)
+		spectral->send_phy_data = spectral->nl_cb.send_nl_bcast;
+	else
+		spectral->send_phy_data = spectral->nl_cb.send_nl_unicast;
+}
+
+/**
+ * target_if_use_nl_bcast() - Get whether to use broadcast/unicast while sending
+ * Netlink messages to the application layer
+ * @pdev: Pointer to pdev object
+ *
+ * Return: true for broadcast, false for unicast
+ */
+static bool
+target_if_use_nl_bcast(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_if_spectral *spectral = NULL;
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	return spectral->use_nl_bcast;
+}
+
 void
 target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -2786,6 +2818,10 @@ target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	    target_if_get_spectral_diagstats;
 	tx_ops->sptrl_tx_ops.sptrlto_register_wmi_spectral_cmd_ops =
 	    target_if_register_wmi_spectral_cmd_ops;
+	tx_ops->sptrl_tx_ops.sptrlto_register_netlink_cb =
+	    target_if_register_netlink_cb;
+	tx_ops->sptrl_tx_ops.sptrlto_use_nl_bcast =
+	    target_if_use_nl_bcast;
 }
 EXPORT_SYMBOL(target_if_sptrl_register_tx_ops);
 
@@ -2793,26 +2829,23 @@ void
 target_if_spectral_send_intf_found_msg(struct wlan_objmgr_pdev *pdev,
 				       uint16_t cw_int, uint32_t dcs_enabled)
 {
-#ifdef SPECTRAL_USE_NETLINK_SOCKETS
 	struct spectral_samp_msg *msg = NULL;
 	struct target_if_spectral_ops *p_sops = NULL;
 	struct target_if_spectral *spectral = NULL;
 
 	spectral = get_target_if_spectral_handle_from_pdev(pdev);
-	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
-	target_if_spectral_prep_skb(spectral);
-	if (spectral->spectral_skb) {
-		spectral->spectral_nlh =
-		    (struct nlmsghdr *)spectral->spectral_skb->data;
-		msg = (struct spectral_samp_msg *)NLMSG_DATA(
-				spectral->spectral_nlh);
+	msg  = (struct spectral_samp_msg *)spectral->nl_cb.get_nbuff(
+			spectral->pdev_obj);
+
+	if (msg) {
 		msg->int_type = cw_int ?
 		    SPECTRAL_DCS_INT_CW : SPECTRAL_DCS_INT_WIFI;
 		msg->dcs_enabled = dcs_enabled;
 		msg->signature = SPECTRAL_SIGNATURE;
+		p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 		p_sops->get_mac_address(spectral, msg->macaddr);
-		target_if_spectral_bcast_msg(spectral);
+		if (spectral->send_phy_data(pdev) == 0)
+			spectral->spectral_sent_msg++;
 	}
-#endif
 }
 EXPORT_SYMBOL(target_if_spectral_send_intf_found_msg);

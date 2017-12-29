@@ -25,19 +25,6 @@
 #include "../../core/spectral_cmn_api_i.h"
 
 /**
- * tgt_send_phydata() - Send Spectral PHY data
- * @pdev: Pointer to pdev
- * @sock: Netlink socket to use
- * @nbuf: Network buffer containing PHY data to send
- *
- * Send spectral PHY data over netlink
- *
- * Return: 0 on success, negative value on failure
- */
-int tgt_send_phydata(struct wlan_objmgr_pdev *pdev,
-		     struct sock *sock, qdf_nbuf_t nbuf);
-
-/**
  * tgt_get_target_handle() - Get target_if handle
  * @pdev: Pointer to pdev
  *
@@ -62,12 +49,9 @@ void *tgt_get_target_handle(struct wlan_objmgr_pdev *pdev);
  *
  * Return: 0 success else failure
  */
-int
-tgt_spectral_control(
-	struct wlan_objmgr_pdev *pdev,
-	u_int id,
-	void *indata,
-	u_int32_t insize, void *outdata, u_int32_t *outsize);
+int tgt_spectral_control(struct wlan_objmgr_pdev *pdev,
+			 u_int id, void *indata, u_int32_t insize,
+			 void *outdata, u_int32_t *outsize);
 
 /**
  * tgt_pdev_spectral_init() - implementation for spectral init
@@ -76,8 +60,7 @@ tgt_spectral_control(
  * Return: On success, pointer to Spectral target_if internal private data, on
  * failure, NULL
  */
-void *
-tgt_pdev_spectral_init(struct wlan_objmgr_pdev *pdev);
+void *tgt_pdev_spectral_init(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_pdev_spectral_deinit() - implementation for spectral de-init
@@ -85,8 +68,7 @@ tgt_pdev_spectral_init(struct wlan_objmgr_pdev *pdev);
  *
  * Return: None
  */
-void
-tgt_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev);
+void tgt_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_set_spectral_config() - Set spectral config
@@ -98,10 +80,9 @@ tgt_pdev_spectral_deinit(struct wlan_objmgr_pdev *pdev);
  *
  * Return: 0 on success else failure
  */
-int
-tgt_set_spectral_config(
-	struct wlan_objmgr_pdev *pdev,
-	const u_int32_t threshtype, const u_int32_t value);
+int tgt_set_spectral_config(struct wlan_objmgr_pdev *pdev,
+			    const u_int32_t threshtype,
+			    const u_int32_t value);
 
 /**
  * tgt_get_spectral_config() - Get spectral configuration
@@ -113,10 +94,8 @@ tgt_set_spectral_config(
  *
  * Return: None
  */
-void
-tgt_get_spectral_config(
-	struct wlan_objmgr_pdev *pdev,
-	struct spectral_config *sptrl_config);
+void tgt_get_spectral_config(struct wlan_objmgr_pdev *pdev,
+			     struct spectral_config *sptrl_config);
 
 /**
  * tgt_start_spectral_scan() - Start spectral scan
@@ -126,8 +105,7 @@ tgt_get_spectral_config(
  *
  * Return: 0 in case of success, -1 on failure
  */
-int
-tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev);
+int tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_stop_spectral_scan() - Stop spectral scan
@@ -137,8 +115,7 @@ tgt_start_spectral_scan(struct wlan_objmgr_pdev *pdev);
  *
  * Return: None
  */
-void
-tgt_stop_spectral_scan(struct wlan_objmgr_pdev *pdev);
+void tgt_stop_spectral_scan(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_is_spectral_active() - Get whether Spectral is active
@@ -148,8 +125,7 @@ tgt_stop_spectral_scan(struct wlan_objmgr_pdev *pdev);
  *
  * Return: True if Spectral is active, false if Spectral is not active
  */
-bool
-tgt_is_spectral_active(struct wlan_objmgr_pdev *pdev);
+bool tgt_is_spectral_active(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_is_spectral_enabled() - Get whether Spectral is active
@@ -159,8 +135,7 @@ tgt_is_spectral_active(struct wlan_objmgr_pdev *pdev);
  *
  * Return: True if Spectral is active, false if Spectral is not active
  */
-bool
-tgt_is_spectral_enabled(struct wlan_objmgr_pdev *pdev);
+bool tgt_is_spectral_enabled(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_set_debug_level() - Set debug level for Spectral
@@ -171,8 +146,7 @@ tgt_is_spectral_enabled(struct wlan_objmgr_pdev *pdev);
  *
  * Return: 0 in case of success
  */
-int
-tgt_set_debug_level(struct wlan_objmgr_pdev *pdev, u_int32_t debug_level);
+int tgt_set_debug_level(struct wlan_objmgr_pdev *pdev, u_int32_t debug_level);
 
 /**
  * tgt_get_debug_level() - Get debug level for Spectral
@@ -182,8 +156,7 @@ tgt_set_debug_level(struct wlan_objmgr_pdev *pdev, u_int32_t debug_level);
  *
  * Return: Current debug level
  */
-u_int32_t
-tgt_get_debug_level(struct wlan_objmgr_pdev *pdev);
+uint32_t tgt_get_debug_level(struct wlan_objmgr_pdev *pdev);
 
 /**
  * tgt_get_spectral_capinfo() - Get Spectral capability information
@@ -194,8 +167,7 @@ tgt_get_debug_level(struct wlan_objmgr_pdev *pdev);
  *
  * Return: void
  */
-void
-tgt_get_spectral_capinfo(struct wlan_objmgr_pdev *pdev, void *outdata);
+void tgt_get_spectral_capinfo(struct wlan_objmgr_pdev *pdev, void *outdata);
 
 /**
  * tgt_get_spectral_diagstats() - Get Spectral diagnostic statistics
@@ -206,8 +178,7 @@ tgt_get_spectral_capinfo(struct wlan_objmgr_pdev *pdev, void *outdata);
  *
  * Return: void
  */
-void
-tgt_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev, void *outdata);
+void tgt_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev, void *outdata);
 
 /**
  * tgt_register_wmi_spectral_cmd_ops() - Register wmi_spectral_cmd_ops
@@ -219,8 +190,25 @@ tgt_get_spectral_diagstats(struct wlan_objmgr_pdev *pdev, void *outdata);
  *
  * Return: void
  */
-void
-tgt_register_wmi_spectral_cmd_ops(
-	struct wlan_objmgr_pdev *pdev,
-	struct wmi_spectral_cmd_ops *cmd_ops);
+void tgt_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
+				       struct wmi_spectral_cmd_ops *cmd_ops);
+
+/**
+ * tgt_spectral_register_nl_cb() - Register Netlink callbacks
+ * @pdev: Pointer to pdev object
+ * @nl_cb: Netlink callbacks to register
+ *
+ * Return: void
+ */
+void tgt_spectral_register_nl_cb(struct wlan_objmgr_pdev *pdev,
+				 struct spectral_nl_cb *nl_cb);
+
+/**
+ * tgt_spectral_use_nl_bcast() - Get whether to use broadcast/unicast while
+ * sending Netlink messages to the application layer
+ * @pdev: Pointer to pdev object
+ *
+ * Return: true for broadcast, false for unicast
+ */
+bool tgt_spectral_use_nl_bcast(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_SPECTRAL_TGT_API_H_ */

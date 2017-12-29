@@ -55,14 +55,18 @@ QDF_PRINT_INFO(QDF_PRINT_IDX_SHARED, QDF_MODULE_ID_SPECTRAL, level, ## args)
 /**
  * struct pdev_spectral - Radio specific spectral object
  * @psptrl_pdev:          Back-pointer to struct wlan_objmgr_pdev
- * @psptrl_nl_sock:       Spectral Netlink socket for sending samples to
+ * @spectral_sock:        Spectral Netlink socket for sending samples to
  *                        applications
  * @psptrl_target_handle: reference to spectral lmac object
+ * @skb:                  Socket buffer for sending samples to applications
+ * @spectral_pid :        Spectral port ID
  */
 struct pdev_spectral {
 	struct wlan_objmgr_pdev *psptrl_pdev;
-	struct sock *psptrl_nl_sock;
+	struct sock *spectral_sock;
 	void *psptrl_target_handle;
+	struct sk_buff *skb;
+	uint32_t spectral_pid;
 };
 
 struct wmi_spectral_cmd_ops;
@@ -86,6 +90,8 @@ struct wmi_spectral_cmd_ops;
  * @sptrlc_get_spectral_capinfo:   Get spectral capability info
  * @sptrlc_get_spectral_diagstats: Get spectral diag status
  * @sptrlc_register_wmi_spectral_cmd_ops: Register wmi_spectral_cmd operations
+ * @sptrlc_register_netlink_cb: Register Netlink callbacks
+ * @sptrlc_use_nl_bcast: Check whether to use Netlink broadcast/unicast
  */
 struct spectral_context {
 	struct wlan_objmgr_psoc *psoc_obj;
@@ -118,6 +124,10 @@ struct spectral_context {
 	void (*sptrlc_register_wmi_spectral_cmd_ops)(
 			struct wlan_objmgr_pdev *pdev,
 			struct wmi_spectral_cmd_ops *cmd_ops);
+	void (*sptrlc_register_netlink_cb)(
+		struct wlan_objmgr_pdev *pdev,
+		struct spectral_nl_cb *nl_cb);
+	bool (*sptrlc_use_nl_bcast)(struct wlan_objmgr_pdev *pdev);
 };
 
 #endif				/* _SPECTRAL_DEFS_I_H_ */

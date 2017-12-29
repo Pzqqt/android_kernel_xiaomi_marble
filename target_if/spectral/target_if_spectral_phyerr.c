@@ -88,13 +88,12 @@ target_if_spectral_send_tlv_to_host(struct target_if_spectral *spectral,
 				    uint8_t *data, uint32_t datalen)
 {
 	int status = true;
+	void *nl_data = spectral->nl_cb.get_nbuff(spectral->pdev_obj);
 
-	target_if_spectral_prep_skb(spectral);
-	if (spectral->spectral_skb) {
-		spectral->spectral_nlh =
-		    (struct nlmsghdr *)spectral->spectral_skb->data;
-		memcpy(NLMSG_DATA(spectral->spectral_nlh), data, datalen);
-		target_if_spectral_bcast_msg(spectral);
+	if (nl_data) {
+		memcpy(nl_data, data, datalen);
+		if (spectral->send_phy_data(spectral->pdev_obj) == 0)
+			spectral->spectral_sent_msg++;
 	} else {
 		status = false;
 	}
@@ -1110,7 +1109,7 @@ target_if_spectral_dump_phyerr_data_gen2(uint8_t *data, uint32_t datalen,
 			ptlv->length;
 
 		if (curr_tlv_complete_size > bytes_remaining) {
-			spectral_err("Current indicated complete TLV size %u greater than number of bytes remaining to be processed %u",
+			spectral_err("TLV size %d greater than number of bytes remaining %d",
 				     curr_tlv_complete_size, bytes_remaining);
 			return -EPERM;
 		}

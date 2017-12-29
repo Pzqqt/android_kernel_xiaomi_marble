@@ -334,6 +334,8 @@ struct wmi_spectral_cmd_ops;
  * @sptrlto_clear_chaninfo:         Clear channel information
  * @sptrlto_get_spectral_capinfo:   Get Spectral capability information
  * @sptrlto_get_spectral_diagstats: Get Spectral diagnostic statistics
+ * @sptrlto_register_netlink_cb: Register Spectral Netlink callbacks
+ * @sptrlto_use_nl_bcast: Get whether to use Netlink broadcast/unicast
  **/
 struct wlan_lmac_if_sptrl_tx_ops {
 	void *(*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
@@ -358,6 +360,10 @@ struct wlan_lmac_if_sptrl_tx_ops {
 	void (*sptrlto_register_wmi_spectral_cmd_ops)(
 		struct wlan_objmgr_pdev *pdev,
 		struct wmi_spectral_cmd_ops *cmd_ops);
+	void (*sptrlto_register_netlink_cb)(
+		struct wlan_objmgr_pdev *pdev,
+		struct spectral_nl_cb *nl_cb);
+	bool (*sptrlto_use_nl_bcast)(struct wlan_objmgr_pdev *pdev);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 
@@ -920,12 +926,9 @@ struct wlan_lmac_if_sa_api_rx_ops {
 /**
  * struct wlan_lmac_if_sptrl_rx_ops - Spectral south bound Rx operations
  *
- * @sptrl_send_phydata:        Send Spectral PHY Data
  * @sptrlro_get_target_handle: Get Spectral handle for target/LMAC private data
  */
 struct wlan_lmac_if_sptrl_rx_ops {
-	int (*sptrlro_send_phydata)(struct wlan_objmgr_pdev *pdev,
-				    struct sock *sock, qdf_nbuf_t nbuf);
 	void * (*sptrlro_get_target_handle)(struct wlan_objmgr_pdev *pdev);
 	int16_t (*sptrlro_vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
 	enum phy_ch_width (*sptrlro_vdev_get_ch_width)(

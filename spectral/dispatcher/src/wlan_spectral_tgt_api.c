@@ -19,13 +19,6 @@
 
 #include <wlan_spectral_tgt_api.h>
 
-int
-tgt_send_phydata(struct wlan_objmgr_pdev *pdev,
-		 struct sock *sock, qdf_nbuf_t nbuf)
-{
-	return netlink_broadcast(sock, nbuf, 0, 1, GFP_ATOMIC);
-}
-
 void *
 tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 {
@@ -202,4 +195,33 @@ tgt_register_wmi_spectral_cmd_ops(
 
 	return psptrl_tx_ops->sptrlto_register_wmi_spectral_cmd_ops(pdev,
 								    cmd_ops);
+}
+
+void
+tgt_spectral_register_nl_cb(
+	struct wlan_objmgr_pdev *pdev,
+	struct spectral_nl_cb *nl_cb)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_register_netlink_cb(pdev,
+							  nl_cb);
+}
+
+bool
+tgt_spectral_use_nl_bcast(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	return psptrl_tx_ops->sptrlto_use_nl_bcast(pdev);
 }
