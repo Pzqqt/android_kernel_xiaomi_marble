@@ -92,6 +92,8 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 		cdp_rx_ppdu->is_ampdu = 1;
 	else
 		cdp_rx_ppdu->is_ampdu = 0;
+
+	cdp_rx_ppdu->tid = ppdu_info->rx_status.tid;
 }
 #else
 static inline void
@@ -173,7 +175,6 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
-
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
 				&peer->stats, ppdu->peer_id,
