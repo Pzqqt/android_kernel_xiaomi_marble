@@ -1,0 +1,24 @@
+
+include $(src)/configs/debug/low_mem_debug
+
+CONFIG_WLAN_LOG_WARN := y
+CONFIG_WLAN_LOG_INFO := y
+CONFIG_WLAN_LOG_DEBUG := y
+
+CONFIG_TRACE_RECORD_FEATURE := 1
+
+#Enable WLAN/Power debugfs feature only if debug_fs is enabled
+ifeq ($(CONFIG_DEBUG_FS), y)
+       # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
+       # configuration.
+       CONFIG_WLAN_DEBUGFS := y
+
+       CONFIG_WLAN_POWER_DEBUGFS := y
+endif
+
+PANIC_ON_BUG := 0
+
+WLAN_WARN_ON_ASSERT := 0
+
+#Flag to enable p2p debug feature
+CONFIG_WLAN_FEATURE_P2P_DEBUG := 1

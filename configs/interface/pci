@@ -1,0 +1,10 @@
+
+#Enable Low Latency Data Path
+WLAN_FEATURE_LL_DATA_PATH := 1
+
+#Enable 11AC TX
+CONFIG_ATH_11AC_TXCOMPACT := 1
+
+CONFIG_HIF_PCI := 1
+
+CONFIG_EXT_WOW := 1

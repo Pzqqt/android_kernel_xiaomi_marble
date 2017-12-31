@@ -1,0 +1,6 @@
+
+include $(src)/configs/debug/production_debug
+
+PANIC_ON_BUG := 1
+
+WLAN_WARN_ON_ASSERT := 1

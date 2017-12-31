@@ -1,0 +1,5 @@
+
+#Enable Low Latency Data Path
+WLAN_FEATURE_LL_DATA_PATH := 1
+
+CONFIG_HIF_SNOC:= 1

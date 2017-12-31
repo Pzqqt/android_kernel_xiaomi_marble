@@ -1,0 +1,15 @@
+
+##########################################
+# Features not enabled for mobile router
+
+# Enable TDLS Feature
+CONFIG_QCOM_TDLS := y
+
+CONFIG_QCACLD_FEATURE_NAN := y
+CONFIG_WLAN_FEATURE_NAN_DATAPATH := y
+CONFIG_NAN_CONVERGENCE := y
+
+CONFIG_QCOM_ESE := y
+
+CONFIG_QCA_IBSS_SUPPORT := 1
+##########################################

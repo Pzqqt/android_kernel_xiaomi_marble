@@ -6,52 +6,27 @@ else
 	KERNEL_BUILD := 0
 endif
 
-ifeq ($(CONFIG_CNSS_QCA6290), y)
-	CONFIG_LITHIUM := y
-	CONFIG_WLAN_FEATURE_11AX := y
-	CONFIG_WLAN_FEATURE_DFS_OFFLOAD := y
-endif
-
-ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
-	CONFIG_QCA_WIFI_SDIO := 1
-endif
-
-ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
-	CONFIG_ROME_IF = sdio
-endif
-
-ifdef CONFIG_ICNSS
-	CONFIG_ROME_IF = snoc
-endif
-
-ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
-ifndef CONFIG_ROME_IF
-	#use pci as default interface
-	CONFIG_ROME_IF = pci
-endif
-endif
-
 ifeq ($(KERNEL_BUILD),1)
 	# These are provided in external module based builds
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
 	WLAN_ROOT := drivers/staging/qcacld-3.0
-	WLAN_COMMON_ROOT := ../qca-wifi-host-cmn
-	WLAN_COMMON_INC := $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 endif
 
-# Make WLAN as open-source driver by default
-WLAN_OPEN_SOURCE := 1
+# If not set, assume, Common driver is with in the build tree
+WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
+WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
-ifeq ($(KERNEL_BUILD), 0)
-	# These are configurable via Kconfig for kernel-based builds
-	# Need to explicitly configure for Android-based builds
+##########################################
 
-	ifneq ($(DEVELOPER_DISABLE_BUILD_TIMESTAMP),y)
-	ifneq ($(WLAN_DISABLE_BUILD_TAG),y)
-	CONFIG_BUILD_TAG := y
-	endif
-	endif
+# Add profiles to enable/disable feature
+# based on market segment.
+#
+# Possible Values : mobile, iot, auto, mobilerouter
+# Default Value   : mobile
+
+ifndef CONFIG_PROFILE
+	CONFIG_PROFILE = mobile
 
 	ifeq ($(CONFIG_ARCH_MDM9630), y)
 	CONFIG_MOBILE_ROUTER := y
@@ -65,381 +40,105 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_MOBILE_ROUTER := y
 	endif
 
-	ifeq ($(CONFIG_ARCH_MSM8917), y)
-		ifeq ($(CONFIG_ROME_IF), sdio)
-			CONFIG_WLAN_SYNC_TSF_PLUS := y
-		endif
+	ifeq ($(CONFIG_MOBILE_ROUTER), y)
+	CONFIG_PROFILE = mobilerouter
+	endif
+endif
+
+##########################################
+
+# Add debug mode to enable/disable debug
+# related feautes.
+#
+# Possible Values : no_debug, low_mem_debug, production_debug,
+#                   perf_debug, slub_debug
+# Default Value   : production_debug
+#
+# no_debug         : no debug features
+# low_mem_debug    : debug level for low memory footprint devices.
+# production_debug : debug level for end user mobile builds.
+# perf_debug       : debug level for internal perf builds.
+# slub_debug       : enable all debug and unit test features,
+#                    used in slub debug builds.
+
+ifndef CONFIG_DEBUG_MODE
+	CONFIG_DEBUG_MODE = production_debug
+
+	ifeq ($(CONFIG_PERF_DEBUG),y)
+	CONFIG_DEBUG_MODE = perf_debug
 	endif
 
-	#Flag to enable Legacy Fast Roaming2(LFR2)
-	CONFIG_QCACLD_WLAN_LFR2 := y
-	#Flag to enable Legacy Fast Roaming3(LFR3)
-	ifneq ($(CONFIG_ARCH_SDX20), y)
-	CONFIG_QCACLD_WLAN_LFR3 := y
+	ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
+	CONFIG_DEBUG_MODE = slub_debug
 	endif
+endif
 
-	# JB kernel has CPU enablement patches, so enable
-	ifeq ($(CONFIG_ROME_IF),pci)
-		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := y
+##########################################
+
+# Interface configuration to enable/disable feature based on
+# interface value.
+# Possible Values: pci, snoc, sdio, usb
+
+# To Keep backward compatibality
+
+ifndef CONFIG_INTF
+	CONFIG_INTF = $(CONFIG_ROME_IF)
+
+	ifeq ($(CONFIG_CLD_HL_SDIO_CORE), y)
+	CONFIG_QCA_WIFI_SDIO := 1
 	endif
-	ifeq ($(CONFIG_ROME_IF),usb)
-		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := n
-	endif
-	ifeq ($(CONFIG_ROME_IF),sdio)
-		CONFIG_PRIMA_WLAN_11AC_HIGH_TP := n
-	endif
-
-	ifneq ($(CONFIG_MOBILE_ROUTER), y)
-	#Flag to enable TDLS feature
-	CONFIG_QCOM_TDLS := y
-	endif
-
-	CONFIG_QCACLD_FEATURE_GREEN_AP := y
-
-	ifeq ($(CONFIG_ARCH_MSM8998), y)
-	CONFIG_QCACLD_FEATURE_METERING := y
-	endif
-
-	ifeq ($(CONFIG_ARCH_SDM660), y)
-	CONFIG_QCACLD_FEATURE_METERING := y
-	endif
-
-	ifeq ($(CONFIG_ARCH_SDM630), y)
-	CONFIG_QCACLD_FEATURE_METERING := y
-	endif
-
-	ifeq ($(CONFIG_ARCH_SDM845), y)
-	CONFIG_QCACLD_FEATURE_METERING := y
-	endif
-
-	ifeq ($(CONFIG_ARCH_SDM670), y)
-	CONFIG_QCACLD_FEATURE_METERING := y
-	endif
-
-	#Flag to enable Fast Transition (11r) feature
-	CONFIG_QCOM_VOWIFI_11R := y
-
-	#Flag to enable FILS Feature (11ai)
-	CONFIG_WLAN_FEATURE_FILS := y
-	ifneq ($(CONFIG_QCA_CLD_WLAN),)
-		ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2) $(CONFIG_ICNSS)))
-		#Flag to enable Protected Managment Frames (11w) feature
-		CONFIG_WLAN_FEATURE_11W := y
-		#Flag to enable LTE CoEx feature
-		CONFIG_QCOM_LTE_COEX := y
-			ifneq ($(CONFIG_MOBILE_ROUTER), y)
-			#Flag to enable LPSS feature
-			CONFIG_WLAN_FEATURE_LPSS := y
-			endif
-		endif
-	endif
-
-	#Flag to enable Protected Managment Frames (11w) feature
-	ifeq ($(CONFIG_ROME_IF),usb)
-		CONFIG_WLAN_FEATURE_11W := y
-	endif
-	ifeq ($(CONFIG_ROME_IF),sdio)
-		CONFIG_WLAN_FEATURE_11W := y
-	endif
-
-	#Flag to enable the tx desc sanity check
-	ifeq ($(CONFIG_ROME_IF),usb)
-		CONFIG_QCA_TXDESC_SANITY_CHECKS := y
-	endif
-
-	ifneq ($(CONFIG_MOBILE_ROUTER), y)
-		#Flag to enable NAN
-		CONFIG_QCACLD_FEATURE_NAN := y
-	endif
-
-	ifneq ($(CONFIG_MOBILE_ROUTER), y)
-		#Flag to enable NAN Data path
-		CONFIG_WLAN_FEATURE_NAN_DATAPATH := y
-		CONFIG_NAN_CONVERGENCE := y
-	endif
-
-	#Flag to enable Linux QCMBR feature as default feature
-	ifeq ($(CONFIG_ROME_IF),usb)
-		CONFIG_LINUX_QCMBR :=y
-	endif
-
-	CONFIG_MPC_UT_FRAMEWORK := y
-
-	CONFIG_FEATURE_EPPING := y
-
-	#Flag to enable offload packets feature
-	CONFIG_WLAN_OFFLOAD_PACKETS := y
-
-	#enable TSF get feature
-	CONFIG_WLAN_SYNC_TSF := y
-	#Enable DSRC feature
 
 	ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
-	CONFIG_WLAN_FEATURE_DSRC := y
+	CONFIG_INTF = sdio
 	endif
 
-ifneq ($(CONFIG_ROME_IF),usb)
-ifneq ($(CONFIG_ROME_IF),sdio)
-	#Flag to enable DISA
-	CONFIG_WLAN_FEATURE_DISA := y
-
-	#Flag to enable FIPS
-	CONFIG_WLAN_FEATURE_FIPS := y
-
-	#Flag to enable SAE
-	CONFIG_WLAN_FEATURE_SAE := y
-
-	#Flag to enable Fast Path feature
-	CONFIG_WLAN_FASTPATH := y
-
-	# Flag to enable NAPI
-	CONFIG_WLAN_NAPI := y
-	CONFIG_WLAN_NAPI_DEBUG := n
-
-	# Flag to enable FW based TX Flow control
-	ifeq (y,$(findstring y,$(CONFIG_CNSS_EOS) $(CONFIG_LITHIUM)))
-		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
-	else
-		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
+	ifdef CONFIG_ICNSS
+	CONFIG_INTF = snoc
 	endif
 
-	# Flag to enable LRO (Large Receive Offload)
-	ifeq ($(CONFIG_INET_LRO), y)
-		CONFIG_WLAN_LRO := y
-	else
-		CONFIG_WLAN_LRO := n
+	ifeq (y,$(findstring y,$(CONFIG_CNSS) $(CONFIG_CNSS2)))
+		ifndef CONFIG_ROME_IF
+		#use pci as default interface
+		CONFIG_INTF = pci
+		endif
 	endif
 endif
-endif
 
-ifeq ($(CONFIG_ROME_IF), snoc)
-	CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
-endif
+##########################################
 
-	# Flag to enable LFR Subnet Detection
-	CONFIG_LFR_SUBNET_DETECTION := y
+# enable/disable feature based on architecture
+# Possible values : rome, helium, lithium, genoa
 
-	# Flag to enable MCC to SCC switch feature
-	CONFIG_MCC_TO_SCC_SWITCH := y
+ifndef CONFIG_ARCH
+	CONFIG_ARCH = rome
 
-ifeq ($(CONFIG_SLUB_DEBUG), y)
-	# Enable Obj Mgr Degug services if slub build
-	CONFIG_WLAN_OBJMGR_DEBUG:= y
-endif
-endif
+	ifeq ($(CONFIG_CNSS_QCA6290), y)
+		CONFIG_ARCH = lithium
+		CONFIG_LITHIUM := y
+	endif
 
-# As per target team, build is done as follows:
-# Defconfig : build with default flags
-# Slub      : defconfig  + CONFIG_SLUB_DEBUG=y +
-#	      CONFIG_SLUB_DEBUG_ON=y + CONFIG_PAGE_POISONING=y
-# Perf      : Using appropriate msmXXXX-perf_defconfig
-#
-# Shipment builds (user variants) should not have any debug feature
-# enabled. This is identified using 'TARGET_BUILD_VARIANT'. Slub builds
-# are identified using the CONFIG_SLUB_DEBUG_ON configuration. Since
-# there is no other way to identify defconfig builds, QCOMs internal
-# representation of perf builds (identified using the string 'perf'),
-# is used to identify if the build is a slub or defconfig one. This
-# way no critical debug feature will be enabled for perf and shipment
-# builds. Other OEMs are also protected using the TARGET_BUILD_VARIANT
-# config.
-ifneq ($(TARGET_BUILD_VARIANT),user)
 	ifeq ($(CONFIG_LITHIUM), y)
-		CONFIG_FEATURE_PKTLOG := n
-	else
-		CONFIG_FEATURE_PKTLOG := y
+	CONFIG_ARCH = lithium
+	endif
+
+	ifeq ($(CONFIG_ICNSS), y)
+	CONFIG_ARCH = helium
 	endif
 endif
 
-#Enable WLAN/Power debugfs feature only if debug_fs is enabled
-ifeq ($(CONFIG_DEBUG_FS), y)
-       # Flag to enable debugfs. Depends on CONFIG_DEBUG_FS in kernel
-       # configuration.
-       CONFIG_WLAN_DEBUGFS := y
+##########################################
 
-       CONFIG_WLAN_POWER_DEBUGFS := y
+include $(src)/configs/profile/$(CONFIG_PROFILE)
+include $(src)/configs/arch/$(CONFIG_ARCH)
+include $(src)/configs/interface/$(CONFIG_INTF)
+
+ifneq ($(CONFIG_DEBUG_MODE), no_debug)
+include $(src)/configs/debug/$(CONFIG_DEBUG_MODE)
 endif
 
-# If not set, assume, Common driver is with in the build tree
-WLAN_COMMON_ROOT ?= ../qca-wifi-host-cmn
-WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
+include $(src)/configs/Kbuild.default
 
-ifneq ($(CONFIG_MOBILE_ROUTER), y)
-CONFIG_QCOM_ESE := y
-endif
-
-# Feature flags which are not (currently) configurable via Kconfig
-
-#Whether to build debug version
-BUILD_DEBUG_VERSION := 1
-
-#Enable this flag to build driver in diag version
-BUILD_DIAG_VERSION := 1
-
-ifeq ($(CONFIG_SLUB_DEBUG), y)
-	PANIC_ON_BUG := 1
-	WLAN_WARN_ON_ASSERT := 1
-else ifeq ($(CONFIG_PERF_DEBUG), y)
-	PANIC_ON_BUG := 1
-	WLAN_WARN_ON_ASSERT := 1
-else
-	PANIC_ON_BUG := 0
-	WLAN_WARN_ON_ASSERT := 0
-endif
-
-# Compile all log levels by default
-CONFIG_WLAN_LOG_FATAL := y
-CONFIG_WLAN_LOG_ERROR := y
-CONFIG_WLAN_LOG_WARN := y
-CONFIG_WLAN_LOG_INFO := y
-CONFIG_WLAN_LOG_DEBUG := y
-
-#Enable OL debug and wmi unified functions
-CONFIG_ATH_PERF_PWR_OFFLOAD := 1
-
-#Disable packet log
-CONFIG_REMOVE_PKT_LOG := 0
-
-#Whether have QMI support
-CONFIG_QMI_SUPPORT := 1
-
-#Enable 11AC TX
-ifeq ($(CONFIG_ROME_IF),pci)
-	CONFIG_ATH_11AC_TXCOMPACT := 1
-endif
-ifeq ($(CONFIG_ROME_IF),usb)
-	CONFIG_ATH_11AC_TXCOMPACT := 0
-endif
-
-#Enable OS specific IRQ abstraction
-CONFIG_ATH_SUPPORT_SHARED_IRQ := 1
-
-#Enable message based HIF instead of RAW access in BMI
-ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
-CONFIG_HIF_MESSAGE_BASED := 0
-else
-CONFIG_HIF_MESSAGE_BASED := 1
-endif
-
-#Enable PCI specific APIS (dma, etc)
-ifeq ($(CONFIG_ROME_IF),pci)
-	CONFIG_HIF_PCI := 1
-endif
-
-#Enable USB specific APIS
-ifeq ($(CONFIG_ROME_IF),usb)
-	CONFIG_HIF_USB := 1
-	CONFIG_PLD_USB_CNSS := y
-endif
-
-#Enable SDIO specific APIS
-ifeq ($(CONFIG_ROME_IF),sdio)
-	CONFIG_HIF_SDIO := 1
-endif
-
-#Enable pci read/write config functions
-ifeq ($(CONFIG_ROME_IF),pci)
-	CONFIG_ATH_PCI := 1
-endif
-
-ifeq ($(CONFIG_ROME_IF),snoc)
-	CONFIG_HIF_SNOC:= 1
-endif
-
-ifneq ($(CONFIG_MOBILE_ROUTER), y)
-#Enable IBSS support on CLD
-CONFIG_QCA_IBSS_SUPPORT := 1
-endif
-
-#Enable power management suspend/resume functionality to PCI
-CONFIG_ATH_BUS_PM := 1
-
-#Enable FLOWMAC module support
-CONFIG_ATH_SUPPORT_FLOWMAC_MODULE := 0
-
-#Enable spectral support
-CONFIG_ATH_SUPPORT_SPECTRAL := 0
-
-#Enable HOST statistics support
-CONFIG_SUPPORT_HOST_STATISTICS := 0
-
-#Enable WDI Event support
-CONFIG_WDI_EVENT_ENABLE := 1
-
-#Endianess selection
-CONFIG_LITTLE_ENDIAN := 1
-
-#Enable TX reclaim support
-CONFIG_TX_CREDIT_RECLAIM_SUPPORT := 0
-
-#Enable FTM support
-CONFIG_QCA_WIFI_FTM := 1
-
-#Enable Checksum Offload
-CONFIG_CHECKSUM_OFFLOAD := 1
-
-#Enable GTK offload
-CONFIG_GTK_OFFLOAD := 1
-
-#Enable EXT WOW
-ifeq ($(CONFIG_ROME_IF),pci)
-	CONFIG_EXT_WOW := 1
-endif
-
-#Set this to 1 to catch erroneous Target accesses during debug.
-CONFIG_ATH_PCIE_ACCESS_DEBUG := 0
-
-#Enable IPA offload
-ifeq ($(CONFIG_IPA), y)
-CONFIG_IPA_OFFLOAD := 1
-endif
-ifeq ($(CONFIG_IPA3), y)
-CONFIG_IPA_OFFLOAD := 1
-endif
-
-#Enable Signed firmware support for split binary format
-CONFIG_QCA_SIGNED_SPLIT_BINARY_SUPPORT := 0
-
-#Enable single firmware binary format
-CONFIG_QCA_SINGLE_BINARY_SUPPORT := 0
-
-#Enable collecting target RAM dump after kernel panic
-CONFIG_TARGET_RAMDUMP_AFTER_KERNEL_PANIC := 1
-
-#Flag to enable/disable secure firmware feature
-CONFIG_FEATURE_SECURE_FIRMWARE := 0
-
-#Flag to enable Stats Ext implementation
-CONFIG_FEATURE_STATS_EXT := 1
-
-#Flag to enable HTC credit history feature
-CONFIG_FEATURE_HTC_CREDIT_HISTORY := 1
-
-#Flag to enable MTRACE feature
-CONFIG_TRACE_RECORD_FEATURE := 1
-
-#Flag to enable p2p debug feature
-CONFIG_WLAN_FEATURE_P2P_DEBUG := 1
-
-ifeq ($(CONFIG_CFG80211),y)
-HAVE_CFG80211 := 1
-else
-ifeq ($(CONFIG_CFG80211),m)
-HAVE_CFG80211 := 1
-else
-HAVE_CFG80211 := 0
-endif
-endif
-
-ifeq ($(CONFIG_SLUB_DEBUG_ON), y)
-	CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
-	CONFIG_LEAK_DETECTION := 1
-endif
-
-# enable unit-test suspend for napier builds
-ifeq ($(CONFIG_LITHIUM), y)
-	CONFIG_FEATURE_UNIT_TEST_SUSPEND := 1
-endif
+##########################################
 
 ############ UAPI ############
 UAPI_DIR :=	uapi
@@ -554,7 +253,7 @@ ifeq ($(CONFIG_WLAN_FEATURE_11AX),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_he.o
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_rx_monitor.o
 endif
 
@@ -685,7 +384,7 @@ SAP_OBJS :=	$(SAP_SRC_DIR)/sap_api_link_cntl.o \
 		$(SAP_SRC_DIR)/sap_fsm.o \
 		$(SAP_SRC_DIR)/sap_module.o
 
-############ DFS ############ 350
+############ DFS ############
 DFS_DIR :=     $(WLAN_COMMON_ROOT)/umac/dfs
 DFS_CORE_INC_DIR := $(DFS_DIR)/core/inc
 DFS_CORE_SRC_DIR := $(DFS_DIR)/core/src
@@ -1273,7 +972,7 @@ ifeq ($(CONFIG_IPA_OFFLOAD), 1)
 TXRX_OBJS +=     $(TXRX_DIR)/ol_txrx_ipa.o
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 ############ DP 3.0 ############
 DP_INC := -I$(WLAN_COMMON_ROOT)/dp/inc \
 	-I$(WLAN_COMMON_ROOT)/dp/wifi3.0
@@ -1501,7 +1200,7 @@ HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 HIF_CE_OBJS +=  $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/qca6290def.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service_srng.o
 endif
@@ -1562,7 +1261,7 @@ HIF_OBJS += $(HIF_USB_OBJS)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_usb.o
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 ############ HAL ############
 HAL_DIR :=	hal
 HAL_INC :=	-I$(WLAN_COMMON_INC)/$(HAL_DIR)/inc \
@@ -1680,7 +1379,7 @@ INCS +=		$(WMA_INC) \
 INCS +=		$(HIF_INC) \
 		$(BMI_INC)
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 INCS += 	$(HAL_INC) \
 		$(DP_INC)
 endif
@@ -1761,7 +1460,7 @@ OBJS +=		$(HIF_OBJS) \
 		$(CLD_TARGET_IF_OBJ) \
 		$(GLOBAL_LMAC_IF_OBJ)
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 OBJS += 	$(HAL_OBJS)
 endif
 
@@ -1814,7 +1513,7 @@ ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
 OBJS +=		$(UMAC_GREEN_AP_OBJS)
 endif
 
-ifeq ($(CONFIG_LITHIUM), y)
+ifeq ($(CONFIG_ARCH),lithium)
 OBJS +=		$(DP_OBJS)
 endif
 
@@ -1911,7 +1610,7 @@ CDEFINES += -DWLAN_NL80211_TESTMODE
 endif
 
 # Flag to enable bus auto suspend
-ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_INTF),pci)
 ifeq ($(CONFIG_BUS_AUTO_SUSPEND), y)
 CDEFINES += -DFEATURE_RUNTIME_PM
 endif
@@ -1921,16 +1620,16 @@ ifeq ($(CONFIG_ICNSS), y)
 CDEFINES += -DCONFIG_PLD_SNOC_ICNSS
 endif
 
-ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+ifeq ($(CONFIG_ARCH),helium)
 CDEFINES += -DQCA_WIFI_3_0
 endif
 
-ifeq (y,$(filter y,$(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
+ifeq ($(CONFIG_ARCH),helium)
 CDEFINES += -DQCA_WIFI_3_0_ADRASTEA
+CDEFINES += -DADRASTEA_RRI_ON_DDR
 ifeq ($(CONFIG_QMI_SUPPORT), 1)
 CDEFINES += -DADRASTEA_SHADOW_REGISTERS
 endif
-CDEFINES += -DADRASTEA_RRI_ON_DDR
 endif
 
 ifeq ($(CONFIG_QMI_SUPPORT), 0)
@@ -1965,16 +1664,11 @@ ifeq ($(CONFIG_WLAN_TX_FLOW_CONTROL_V2), y)
 CDEFINES +=	-DQCA_LL_TX_FLOW_CONTROL_V2
 CDEFINES +=	-DQCA_LL_TX_FLOW_GLOBAL_MGMT_POOL
 else
-ifeq ($(CONFIG_ROME_IF),pci)
-ifneq ($(CONFIG_LITHIUM),y)
+ifeq ($(CONFIG_INTF),pci)
+ifneq ($(CONFIG_ARCH),lithium)
 CDEFINES +=	-DQCA_LL_LEGACY_TX_FLOW_CONTROL
 endif
 endif
-endif
-
-ifneq ($(CONFIG_QCA_CLD_WLAN),)
-CDEFINES += -DWCN_PRONTO
-CDEFINES += -DWCN_PRONTO_V1
 endif
 
 ifeq ($(BUILD_DEBUG_VERSION),1)
@@ -1993,7 +1687,7 @@ ifeq ($(CONFIG_FEATURE_UNIT_TEST_SUSPEND), 1)
 	CDEFINES += -DWLAN_SUSPEND_RESUME_TEST
 endif
 
-ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
+ifeq ($(CONFIG_DEBUG_MODE),slub_debug)
 CDEFINES += -DTIMER_MANAGER
 CDEFINES += -DMEMORY_DEBUG
 CDEFINES += -DCONFIG_HALT_KMEMLEAK
@@ -2148,11 +1842,6 @@ ifeq ($(CONFIG_ATH_SUPPORT_SHARED_IRQ), 1)
 CDEFINES += -DATH_SUPPORT_SHARED_IRQ
 endif
 
-#Enable message based HIF instead of RAW access in BMI
-ifeq ($(CONFIG_HIF_MESSAGE_BASED), 1)
-CDEFINES += -DHIF_MESSAGE_BASED
-endif
-
 #Enable PCI specific APIS (dma, etc)
 ifeq ($(CONFIG_HIF_PCI), 1)
 CDEFINES += -DHIF_PCI
@@ -2163,7 +1852,7 @@ CDEFINES += -DHIF_SNOC
 endif
 
 #Enable High Latency related Flags
-ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
+ifeq ($(CONFIG_INTF),sdio)
 CDEFINES += -DCONFIG_HL_SUPPORT \
             -DCONFIG_AR6320_SUPPORT \
             -DSDIO_3_0 \
@@ -2198,7 +1887,7 @@ endif
 endif
 
 #Enable USB specific APIS
-ifeq ($(CONFIG_HIF_USB), 1)
+ifeq ($(CONFIG_INTF),usb)
 CDEFINES += -DHIF_USB \
             -DCONFIG_PLD_USB_CNSS \
             -DDEBUG_HL_LOGGING \
@@ -2207,11 +1896,6 @@ endif
 
 #Enable FW logs through ini
 CDEFINES += -DCONFIG_FW_LOGS_BASED_ON_INI
-
-#Enable pci read/write config functions
-ifeq ($(CONFIG_ATH_PCI), 1)
-CDEFINES += -DATH_PCI
-endif
 
 #Enable power management suspend/resume functionality
 ifeq ($(CONFIG_ATH_BUS_PM), 1)
@@ -2284,7 +1968,7 @@ CDEFINES += -DQCA_CONFIG_SMP
 endif
 
 #Enable Channel Matrix restriction for all Rome only targets
-ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
+ifneq ($(CONFIG_ICNSS),y)
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 endif
 
@@ -2297,7 +1981,7 @@ endif
 CDEFINES += -DQCA_HT_2040_COEX
 
 #features specific to mobile router use case
-ifeq ($(CONFIG_MOBILE_ROUTER), y)
+ifeq ($(CONFIG_PROFILE),mobilerouter)
 
 #enable MCC TO SCC switch
 CDEFINES += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -2320,7 +2004,8 @@ CDEFINES += -DMDM_PLATFORM
 #Disable STA-AP Mode DFS support
 CDEFINES += -DFEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 
-else #CONFIG_MOBILE_ROUTER
+CDEFINES += -DFEATURE_AP_MCC_CH_AVOIDANCE
+else
 
 #Open P2P device interface only for non-Mobile router use cases
 CDEFINES += -DWLAN_OPEN_P2P_INTERFACE
@@ -2328,7 +2013,7 @@ CDEFINES += -DWLAN_OPEN_P2P_INTERFACE
 #Enable 2.4 GHz social channels in 5 GHz only mode for p2p usage
 CDEFINES += -DWLAN_ENABLE_SOCIAL_CHANNELS_5G_ONLY
 
-endif #CONFIG_MOBILE_ROUTER
+endif
 
 #Green AP feature
 ifeq ($(CONFIG_QCACLD_FEATURE_GREEN_AP),y)
@@ -2395,61 +2080,51 @@ ifeq ($(CONFIG_WLAN_SYNC_TSF_PLUS), y)
 CDEFINES += -DWLAN_FEATURE_TSF_PLUS
 endif
 
+ifeq ($(CONFIG_ARCH),helium)
 # Enable full rx re-order offload for adrastea
-ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_FEATURE_RX_FULL_REORDER_OL
-endif
 
 # Enable athdiag procfs debug support for adrastea
-ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 CDEFINES += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
-endif
 
 # Enable 11AC TX compact feature for adrastea
-ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 CDEFINES += -DATH_11AC_TXCOMPACT
-endif
 
-# NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
-ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
-CONFIG_HELIUMPLUS := y
-CONFIG_64BIT_PADDR := y
-CONFIG_FEATURE_TSO := y
-CONFIG_FEATURE_TSO_DEBUG := y
 ifneq ($(CONFIG_FORCE_ALLOC_FROM_DMA_ZONE), y)
 CONFIG_ENABLE_DEBUG_ADDRESS_MARKING := y
 endif
+
+# NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
 ifeq ($(CONFIG_HELIUMPLUS),y)
 CDEFINES += -DHELIUMPLUS
 CDEFINES += -DAR900B
+
 ifeq ($(CONFIG_64BIT_PADDR),y)
 CDEFINES += -DHTT_PADDR64
 endif
 
-ifeq ($(CONFIG_SLUB_DEBUG_ON),y)
+ifeq ($(CONFIG_DEBUG_MODE),slub_debug)
 CDEFINES += -DOL_RX_INDICATION_RECORD
 CDEFINES += -DTSOSEG_DEBUG
 endif
-
 endif
+
 endif
 
 ifeq ($(CONFIG_ENABLE_DEBUG_ADDRESS_MARKING),y)
 CDEFINES += -DENABLE_DEBUG_ADDRESS_MARKING
 endif
+
 ifeq ($(CONFIG_FEATURE_TSO),y)
 CDEFINES += -DFEATURE_TSO
 endif
+
 ifeq ($(CONFIG_FEATURE_TSO_DEBUG),y)
 CDEFINES += -DFEATURE_TSO_DEBUG
 endif
 
 ifeq ($(CONFIG_WLAN_LRO), y)
 CDEFINES += -DFEATURE_LRO
-endif
-
-ifeq ($(CONFIG_MOBILE_ROUTER), y)
-CDEFINES += -DFEATURE_AP_MCC_CH_AVOIDANCE
 endif
 
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK), y)
@@ -2490,12 +2165,12 @@ endif
 
 #Flag to enable/disable WLAN D0-WOW
 ifeq ($(CONFIG_PCI_MSM), y)
-ifeq ($(CONFIG_ROME_IF),pci)
+ifeq ($(CONFIG_INTF),pci)
 CDEFINES += -DFEATURE_WLAN_D0WOW
 endif
 endif
 
-ifeq ($(CONFIG_LITHIUM),y)
+ifeq ($(CONFIG_ARCH),lithium)
 CDEFINES += -DCONFIG_SHADOW_V2
 CDEFINES += -DQCA6290_HEADERS_DEF
 CDEFINES += -DQCA_WIFI_QCA6290
