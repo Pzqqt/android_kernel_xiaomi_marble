@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -668,6 +668,7 @@ static int wlan_scan_request_enqueue(struct wlan_objmgr_pdev *pdev,
 	scan_req->scan_request = req;
 	scan_req->source = source;
 	scan_req->scan_id = scan_id;
+	scan_req->dev = req->wdev->netdev;
 
 	qdf_mutex_acquire(&osif_scan->scan_req_q_lock);
 	status = qdf_list_insert_back(&osif_scan->scan_req_q,
@@ -687,13 +688,15 @@ static int wlan_scan_request_enqueue(struct wlan_objmgr_pdev *pdev,
  * @nl_ctx: Global HDD context
  * @scan_id: scan id
  * @req: scan request
+ * @dev: net device
  * @source : returns source of the scan request
  *
  * Return: QDF_STATUS
  */
 static QDF_STATUS wlan_scan_request_dequeue(
 	struct wlan_objmgr_pdev *pdev,
-	uint32_t scan_id, struct cfg80211_scan_request **req, uint8_t *source)
+	uint32_t scan_id, struct cfg80211_scan_request **req,
+	uint8_t *source, struct net_device **dev)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct scan_req *scan_req;
@@ -739,6 +742,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 			if (status == QDF_STATUS_SUCCESS) {
 				*req = scan_req->scan_request;
 				*source = scan_req->source;
+				*dev = scan_req->dev;
 				qdf_mem_free(scan_req);
 				qdf_mutex_release(&scan_priv->scan_req_q_lock);
 				cfg80211_info("removed Scan id: %d, req = %pK, pending scans %d",
@@ -764,7 +768,7 @@ static QDF_STATUS wlan_scan_request_dequeue(
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
 /**
  * wlan_cfg80211_scan_done() - Scan completed callback to cfg80211
- *
+ * @netdev: Net device
  * @req : Scan request
  * @aborted : true scan aborted false scan success
  *
@@ -772,20 +776,21 @@ static QDF_STATUS wlan_scan_request_dequeue(
  *
  * Return: none
  */
-static void wlan_cfg80211_scan_done(struct cfg80211_scan_request *req,
-				   bool aborted)
+static void wlan_cfg80211_scan_done(struct net_device *netdev,
+				    struct cfg80211_scan_request *req,
+				    bool aborted)
 {
 	struct cfg80211_scan_info info = {
 		.aborted = aborted
 	};
 
-	if (req->wdev->netdev->flags & IFF_UP)
+	if (netdev->flags & IFF_UP)
 		cfg80211_scan_done(req, &info);
 }
 #elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 /**
  * wlan_cfg80211_scan_done() - Scan completed callback to cfg80211
- *
+ * @netdev: Net device
  * @req : Scan request
  * @aborted : true scan aborted false scan success
  *
@@ -793,10 +798,11 @@ static void wlan_cfg80211_scan_done(struct cfg80211_scan_request *req,
  *
  * Return: none
  */
-static void wlan_cfg80211_scan_done(struct cfg80211_scan_request *req,
-				   bool aborted)
+static void wlan_cfg80211_scan_done(struct net_device *netdev,
+				    struct cfg80211_scan_request *req,
+				    bool aborted)
 {
-	if (req->wdev->netdev->flags & IFF_UP)
+	if (netdev->flags & IFF_UP)
 		cfg80211_scan_done(req, aborted);
 }
 #endif
@@ -900,6 +906,7 @@ static void wlan_cfg80211_scan_done_callback(
 	uint8_t source = NL_SCAN;
 	struct wlan_objmgr_pdev *pdev;
 	struct pdev_osif_priv *osif_priv;
+	struct net_device *netdev = NULL;
 	QDF_STATUS status;
 
 	if ((event->type != SCAN_EVENT_TYPE_COMPLETED) &&
@@ -937,19 +944,14 @@ static void wlan_cfg80211_scan_done_callback(
 		return;
 
 	pdev = wlan_vdev_get_pdev(vdev);
-	status = wlan_scan_request_dequeue(pdev, scan_id, &req, &source);
+	status = wlan_scan_request_dequeue(
+			pdev, scan_id, &req, &source, &netdev);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		cfg80211_err("Dequeue of scan request failed ID: %d", scan_id);
 		goto allow_suspend;
 	}
 
-	if (req->wdev == NULL) {
-		cfg80211_err("wirless dev is NULL,Drop scan event Id: %d",
-				 scan_id);
-		goto allow_suspend;
-	}
-
-	if (req->wdev->netdev == NULL) {
+	if (!netdev) {
 		cfg80211_err("net dev is NULL,Drop scan event Id: %d",
 				 scan_id);
 		goto allow_suspend;
@@ -971,7 +973,7 @@ static void wlan_cfg80211_scan_done_callback(
 	 * scan done event will be posted
 	 */
 	if (NL_SCAN == source)
-		wlan_cfg80211_scan_done(req, aborted);
+		wlan_cfg80211_scan_done(netdev, req, aborted);
 	else
 		wlan_vendor_scan_callback(req, aborted);
 
@@ -1090,7 +1092,7 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
 		req = scan_req->scan_request;
 		source = scan_req->source;
 		if (NL_SCAN == source)
-			wlan_cfg80211_scan_done(req, aborted);
+			wlan_cfg80211_scan_done(scan_req->dev, req, aborted);
 		else
 			wlan_vendor_scan_callback(req, aborted);
 		qdf_mem_free(scan_req);
@@ -1117,6 +1119,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	struct wlan_objmgr_psoc *psoc;
 	wlan_scan_id scan_id;
 	bool is_p2p_scan = false;
+	struct net_device *netdev = NULL;
 
 	/* Get the vdev object */
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
@@ -1344,7 +1347,7 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 			status = -EIO;
 		}
 		wlan_scan_request_dequeue(pdev, scan_id, &request,
-					  &params->source);
+					  &params->source, &netdev);
 		if (qdf_list_empty(&osif_priv->osif_scan->scan_req_q))
 			qdf_runtime_pm_allow_suspend(
 				&osif_priv->osif_scan->runtime_pm_lock);

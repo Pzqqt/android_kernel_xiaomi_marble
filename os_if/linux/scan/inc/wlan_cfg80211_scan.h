@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -103,6 +103,7 @@ enum scan_source {
  * @scan_request: scan request holder
  * @scan_id: scan identifier used across host layers which is generated at WMI
  * @source: scan request originator (NL/Vendor scan)
+ * @dev: net device (same as what is in scan_request)
  *
  * Scan request linked list element
  */
@@ -111,6 +112,7 @@ struct scan_req {
 	struct cfg80211_scan_request *scan_request;
 	uint32_t scan_id;
 	uint8_t source;
+	struct net_device *dev;
 };
 
 /**
