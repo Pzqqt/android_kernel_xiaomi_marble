@@ -96,7 +96,10 @@
 ol_txrx_peer_handle
 ol_txrx_peer_find_by_local_id(struct cdp_pdev *pdev,
 			      uint8_t local_peer_id);
-
+ol_txrx_peer_handle
+ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
+			      uint8_t local_peer_id,
+			      enum peer_debug_id_type dbg_id);
 #endif /* QCA_SUPPORT_TXRX_LOCAL_PEER_ID */
 QDF_STATUS ol_txrx_peer_state_update(struct cdp_pdev *pdev,
 				     uint8_t *peer_mac,
@@ -468,6 +471,62 @@ ol_txrx_peer_find_by_local_id(struct cdp_pdev *ppdev,
 	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 	peer = pdev->local_peer_ids.map[local_peer_id];
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
+	return peer;
+}
+
+/**
+ * @brief Find a txrx peer handle from a peer's local ID
+ * @param pdev - the data physical device object
+ * @param local_peer_id - the ID txrx assigned locally to the peer in question
+ * @dbg_id - debug_id to track caller
+ * @return handle to the txrx peer object
+ * @details
+ *  The control SW typically uses the txrx peer handle to refer to the peer.
+ *  In unusual circumstances, if it is infeasible for the control SW maintain
+ *  the txrx peer handle but it can maintain a small integer local peer ID,
+ *  this function allows the peer handled to be retrieved, based on the local
+ *  peer ID.
+ *
+ * Note that this function increments the peer->ref_cnt.
+ * This makes sure that peer will be valid. This also means the caller needs to
+ * call the corresponding API -
+ *          ol_txrx_peer_release_ref
+ *
+ * reference.
+ * Sample usage:
+ *    {
+ *      //the API call below increments the peer->ref_cnt
+ *      peer = ol_txrx_peer_get_ref_by_local_id(pdev,local_peer_id, dbg_id);
+ *
+ *      // Once peer usage is done
+ *
+ *      //the API call below decrements the peer->ref_cnt
+ *      ol_txrx_peer_release_ref(peer, dbg_id);
+ *    }
+ *
+ * Return: peer handle if the peer is found, NULL if peer is not found.
+ */
+ol_txrx_peer_handle
+ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
+			      uint8_t local_peer_id,
+			      enum peer_debug_id_type dbg_id)
+{
+	struct ol_txrx_peer_t *peer = NULL;
+	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
+
+	if ((local_peer_id == OL_TXRX_INVALID_LOCAL_PEER_ID) ||
+	    (local_peer_id >= OL_TXRX_NUM_LOCAL_PEER_IDS)) {
+		return NULL;
+	}
+
+	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
+	peer = pdev->local_peer_ids.map[local_peer_id];
+	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
+	if (peer && peer->valid)
+		ol_txrx_peer_get_ref(peer, dbg_id);
+	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+
 	return peer;
 }
 
@@ -3339,6 +3398,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	int    rc;
 	struct ol_txrx_vdev_t *vdev;
 	struct ol_txrx_pdev_t *pdev;
+	bool ref_silent = false;
 
 	/* preconditions */
 	TXRX_ASSERT2(peer);
@@ -3362,10 +3422,14 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		return -EINVAL;
 	}
 
-	wlan_roam_debug_log(vdev->vdev_id, DEBUG_PEER_UNREF_DELETE,
-			    DEBUG_INVALID_PEER_ID, &peer->mac_addr.raw,
-			    peer, 0,
-			    qdf_atomic_read(&peer->ref_cnt));
+	if (debug_id == PEER_DEBUG_ID_OL_RX_THREAD)
+		ref_silent = true;
+
+	if (!ref_silent)
+		wlan_roam_debug_log(vdev->vdev_id, DEBUG_PEER_UNREF_DELETE,
+				    DEBUG_INVALID_PEER_ID, &peer->mac_addr.raw,
+				    peer, 0,
+				    qdf_atomic_read(&peer->ref_cnt));
 
 
 	/*
@@ -3410,7 +3474,6 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		QDF_BUG(0);
 		return -EACCES;
 	}
-
 	qdf_atomic_dec(&peer->access_list[debug_id]);
 
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
@@ -3429,6 +3492,9 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 
 		/* cleanup the Rx reorder queues for this peer */
 		ol_rx_peer_cleanup(vdev, peer);
+
+		qdf_spinlock_destroy(&peer->peer_info_lock);
+		qdf_spinlock_destroy(&peer->bufq_info.bufq_lock);
 
 		/* peer is removed from peer_list */
 		qdf_atomic_set(&peer->delete_in_progress, 0);
@@ -3517,10 +3583,12 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 		qdf_mem_free(peer);
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-		ol_txrx_info_high("[%d][%d]: ref delete peer %p ref_cnt -> %d",
-				  debug_id,
-				  qdf_atomic_read(&peer->access_list[debug_id]),
-				  peer, rc);
+		if (!ref_silent)
+			ol_txrx_info_high("[%d][%d]: ref delete peer %p ref_cnt -> %d",
+					debug_id,
+					qdf_atomic_read(
+						&peer->access_list[debug_id]),
+					peer, rc);
 	}
 	return rc;
 }
@@ -3661,8 +3729,6 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 	qdf_spin_unlock_bh(&vdev->pdev->last_real_peer_mutex);
 	htt_rx_reorder_log_print(peer->vdev->pdev->htt_pdev);
 
-	qdf_spinlock_destroy(&peer->peer_info_lock);
-	qdf_spinlock_destroy(&peer->bufq_info.bufq_lock);
 	/*
 	 * set delete_in_progress to identify that wma
 	 * is waiting for unmap massage for this peer
@@ -4909,7 +4975,8 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 	/* Do not use peer directly. Derive peer from staid to
 	 * make sure that peer is valid.
 	 */
-	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, staid);
+	peer = ol_txrx_peer_get_ref_by_local_id((struct cdp_pdev *)pdev,
+			staid, PEER_DEBUG_ID_OL_RX_THREAD);
 	if (!peer)
 		goto free_buf;
 
@@ -4931,6 +4998,8 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 		ol_txrx_flush_rx_frames(peer, 0);
 	} else
 		qdf_spin_unlock_bh(&peer->bufq_info.bufq_lock);
+
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_RX_THREAD);
 
 	buf = buf_list;
 	while (buf) {
