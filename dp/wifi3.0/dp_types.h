@@ -555,6 +555,8 @@ union dp_align_mac_addr {
  *             (used for aging out/expiry)
  * @ase_list_elem: node in peer AST list
  * @is_bss: flag to indicate if entry corresponds to bss peer
+ * @pdev_id: pdev ID
+ * @vdev_id: vdev ID
  * @type: flag to indicate type of the entry(static/WDS/MEC)
  * @hash_list_elem: node in soc AST hash list (mac address used as hash)
  */
@@ -566,6 +568,8 @@ struct dp_ast_entry {
 	bool next_hop;
 	bool is_active;
 	bool is_bss;
+	uint8_t pdev_id;
+	uint8_t vdev_id;
 	enum cdp_txrx_ast_entry_type type;
 	TAILQ_ENTRY(dp_ast_entry) ase_list_elem;
 	TAILQ_ENTRY(dp_ast_entry) hash_list_elem;

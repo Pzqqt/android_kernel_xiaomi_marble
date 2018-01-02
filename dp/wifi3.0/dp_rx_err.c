@@ -66,7 +66,7 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 {
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_ast_entry *ase;
-	uint16_t sa_idx;
+	uint16_t sa_idx = 0;
 	uint8_t *data;
 
 	/*
@@ -99,7 +99,8 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 	if (hal_rx_msdu_end_sa_is_valid_get(rx_tlv_hdr)) {
 		sa_idx = hal_rx_msdu_end_sa_idx_get(rx_tlv_hdr);
 
-		if ((sa_idx < 0) || (sa_idx > (WLAN_UMAC_PSOC_MAX_PEERS * 2))) {
+		if ((sa_idx < 0) ||
+				(sa_idx >= (WLAN_UMAC_PSOC_MAX_PEERS * 2))) {
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 					"invalid sa_idx: %d", sa_idx);
@@ -107,10 +108,34 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 		}
 
 		ase = soc->ast_table[sa_idx];
+		if (!ase) {
+			/* We do not get a peer map event for STA and without
+			 * this event we don't know what is STA's sa_idx.
+			 * For this reason the AST is still not associated to
+			 * any index postion in ast_table.
+			 * In these kind of scenarios where sa is valid but
+			 * ast is not in ast_table, we use the below API to get
+			 * AST entry for STA's own mac_address.
+			 */
+			ase = dp_peer_ast_hash_find(soc,
+							&data[DP_MAC_ADDR_LEN]);
+
+		}
 	} else
-		ase = dp_peer_ast_hash_find(soc, &data[DP_MAC_ADDR_LEN], 0);
+		ase = dp_peer_ast_hash_find(soc, &data[DP_MAC_ADDR_LEN]);
 
 	if (ase) {
+		ase->ast_idx = sa_idx;
+		soc->ast_table[sa_idx] = ase;
+
+		if (ase->pdev_id != vdev->pdev->pdev_id) {
+			qdf_spin_unlock_bh(&soc->ast_lock);
+			QDF_TRACE(QDF_MODULE_ID_DP,
+				QDF_TRACE_LEVEL_INFO,
+				 "Detected DBDC Root AP");
+			return false;
+		}
+
 		if ((ase->type == CDP_TXRX_AST_TYPE_MEC) ||
 				(ase->peer != peer)) {
 			qdf_spin_unlock_bh(&soc->ast_lock);

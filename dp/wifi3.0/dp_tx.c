@@ -1605,7 +1605,8 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	qdf_nbuf_t nbuf_copy;
 
 	qdf_spin_lock_bh(&(soc->ast_lock));
-	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost), 0);
+	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost));
+
 	if (ast_entry)
 		sa_peer = ast_entry->peer;
 
@@ -2028,7 +2029,8 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 	qdf_spin_lock_bh(&(soc->ast_lock));
 
-	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost), 0);
+	ast_entry = dp_peer_ast_hash_find(soc, (uint8_t *)(eh->ether_shost));
+
 	if (ast_entry)
 		sa_peer = ast_entry->peer;
 
@@ -2364,14 +2366,12 @@ void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)
 		mac_addr[(DP_MAC_ADDR_LEN - 1) - i] =
 					status[(DP_MAC_ADDR_LEN - 2) + i];
 
-	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, DP_MAC_ADDR_LEN) &&
-		!dp_peer_add_ast(soc, peer, mac_addr, dp_ast_type_mec)) {
-			soc->cdp_soc.ol_ops->peer_add_wds_entry(
-				vdev->osif_vdev,
+	if (qdf_mem_cmp(mac_addr, vdev->mac_addr.raw, DP_MAC_ADDR_LEN))
+		dp_peer_add_ast(soc,
+				peer,
 				mac_addr,
-				vdev->mac_addr.raw,
+				CDP_TXRX_AST_TYPE_MEC,
 				flags);
-	}
 }
 #else
 static void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status)

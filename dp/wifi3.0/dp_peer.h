@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -54,13 +54,28 @@ void dp_rx_sec_ind_handler(void *soc_handle, uint16_t peer_id,
 uint8_t dp_get_peer_mac_addr_frm_id(struct cdp_soc_t *soc_handle,
 		uint16_t peer_id, uint8_t *peer_mac);
 
-
 int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, enum dp_ast_type is_self);
-void dp_peer_del_ast(struct dp_soc *soc,
-		struct dp_ast_entry *ast_entry);
+		uint8_t *mac_addr, enum cdp_txrx_ast_entry_type type,
+		uint32_t flags);
+
+void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry);
+
+int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
+			struct dp_ast_entry *ast_entry,	uint32_t flags);
+
 struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
-		uint8_t *ast_mac_addr, int mac_addr_is_aligned);
+						uint8_t *ast_mac_addr);
+
+uint8_t dp_peer_ast_get_pdev_id(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry);
+
+
+uint8_t dp_peer_ast_get_next_hop(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry);
+
+void dp_peer_ast_set_type(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry,
+				enum cdp_txrx_ast_entry_type type);
 
 /*
  * dp_get_vdev_from_soc_vdev_id_wifi3() -

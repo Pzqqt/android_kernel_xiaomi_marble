@@ -314,20 +314,15 @@ static inline void dp_peer_ast_hash_remove(struct dp_soc *soc,
  * Return: AST entry
  */
 struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
-	uint8_t *ast_mac_addr, int mac_addr_is_aligned)
+						uint8_t *ast_mac_addr)
 {
 	union dp_align_mac_addr local_mac_addr_aligned, *mac_addr;
 	unsigned index;
 	struct dp_ast_entry *ase;
 
-	if (mac_addr_is_aligned) {
-		mac_addr = (union dp_align_mac_addr *) ast_mac_addr;
-	} else {
-		qdf_mem_copy(
-			&local_mac_addr_aligned.raw[0],
+	qdf_mem_copy(&local_mac_addr_aligned.raw[0],
 			ast_mac_addr, DP_MAC_ADDR_LEN);
-		mac_addr = &local_mac_addr_aligned;
-	}
+	mac_addr = &local_mac_addr_aligned;
 
 	index = dp_peer_ast_hash_index(soc, mac_addr);
 	TAILQ_FOREACH(ase, &soc->ast_hash.bins[index], hash_list_elem) {
@@ -408,10 +403,23 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
  * Return: 0 if new entry is allocated,
  *         1 if entry already exists or if allocation has failed
  */
-int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, enum dp_ast_type is_self)
+int dp_peer_add_ast(struct dp_soc *soc,
+			struct dp_peer *peer,
+			uint8_t *mac_addr,
+			enum cdp_txrx_ast_entry_type type,
+			uint32_t flags)
 {
 	struct dp_ast_entry *ast_entry;
+	struct dp_vdev *vdev = peer->vdev;
+	uint8_t next_node_mac[6];
+	bool ret = 1;
+
+	if (!vdev) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			FL("Peers vdev is NULL"));
+		QDF_ASSERT(0);
+		return ret;
+	}
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		"%s: peer %pK mac %02x:%02x:%02x:%02x:%02x:%02x\n",
@@ -421,13 +429,14 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	qdf_spin_lock_bh(&soc->ast_lock);
 
 	/* If AST entry already exists , just return from here */
-	ast_entry = dp_peer_ast_hash_find(soc, mac_addr, 0);
+	ast_entry = dp_peer_ast_hash_find(soc, mac_addr);
+
 	if (ast_entry) {
 		if (ast_entry->type == CDP_TXRX_AST_TYPE_MEC)
 			ast_entry->is_active = TRUE;
 
 		qdf_spin_unlock_bh(&soc->ast_lock);
-		return 1;
+		return ret;
 	}
 
 	ast_entry = (struct dp_ast_entry *)
@@ -438,22 +447,28 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			FL("fail to allocate ast_entry"));
 		QDF_ASSERT(0);
-		return 1;
+		return ret;
 	}
 
 	qdf_mem_copy(&ast_entry->mac_addr.raw[0], mac_addr, DP_MAC_ADDR_LEN);
 	ast_entry->peer = peer;
+	ast_entry->pdev_id = vdev->pdev->pdev_id;
+	ast_entry->vdev_id = vdev->vdev_id;
 
-	switch (is_self) {
-	case dp_ast_type_static:
+	switch (type) {
+	case CDP_TXRX_AST_TYPE_STATIC:
 		peer->self_ast_entry = ast_entry;
 		ast_entry->type = CDP_TXRX_AST_TYPE_STATIC;
 		break;
-	case dp_ast_type_wds:
+	case CDP_TXRX_AST_TYPE_WDS:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_WDS;
 		break;
-	case dp_ast_type_mec:
+	case CDP_TXRX_AST_TYPE_WDS_HM:
+		ast_entry->next_hop = 1;
+		ast_entry->type = CDP_TXRX_AST_TYPE_WDS_HM;
+		break;
+	case CDP_TXRX_AST_TYPE_MEC:
 		ast_entry->next_hop = 1;
 		ast_entry->type = CDP_TXRX_AST_TYPE_MEC;
 		break;
@@ -467,7 +482,21 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INC(soc, ast.added, 1);
 	dp_peer_ast_hash_add(soc, ast_entry);
 	qdf_spin_unlock_bh(&soc->ast_lock);
-	return 0;
+
+	if (ast_entry->type == CDP_TXRX_AST_TYPE_WDS)
+		qdf_mem_copy(next_node_mac, peer->mac_addr.raw, 6);
+	else
+		qdf_mem_copy(next_node_mac, peer->vdev->mac_addr.raw, 6);
+
+	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
+		ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
+				peer->vdev->osif_vdev,
+				mac_addr,
+				next_node_mac,
+				flags);
+	}
+
+	return ret;
 }
 
 /*
@@ -481,31 +510,117 @@ int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
  *
  * Return: None
  */
-void dp_peer_del_ast(struct dp_soc *soc,
-		struct dp_ast_entry *ast_entry)
+void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
 	struct dp_peer *peer = ast_entry->peer;
+
+	if (ast_entry->next_hop)
+		soc->cdp_soc.ol_ops->peer_del_wds_entry(peer->vdev->osif_vdev,
+						ast_entry->mac_addr.raw);
+
 	soc->ast_table[ast_entry->ast_idx] = NULL;
 	TAILQ_REMOVE(&peer->ast_entry_list, ast_entry, ase_list_elem);
 	DP_STATS_INC(soc, ast.deleted, 1);
 	dp_peer_ast_hash_remove(soc, ast_entry);
 	qdf_mem_free(ast_entry);
 }
+
+/*
+ * dp_peer_update_ast() - Delete and free AST entry
+ * @soc: SoC handle
+ * @peer: peer to which ast node belongs
+ * @ast_entry: AST entry of the node
+ * @flags: wds or hmwds
+ *
+ * This function update the AST entry to the roamed peer and soc tables
+ * It assumes caller has taken the ast lock to protect the access to these
+ * tables
+ *
+ * Return: 0 if ast entry is updated successfully
+ *         1 failure
+ */
+int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
+		       struct dp_ast_entry *ast_entry, uint32_t flags)
+{
+	bool ret = 1;
+
+	ast_entry->peer = peer;
+	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
+		ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
+				peer->vdev->osif_vdev,
+				ast_entry->mac_addr.raw,
+				peer->mac_addr.raw,
+				flags);
+	}
+	return ret;
+}
+
+/*
+ * dp_peer_ast_get_pdev_id() - get pdev_id from the ast entry
+ * @soc: SoC handle
+ * @ast_entry: AST entry of the node
+ *
+ * This function gets the pdev_id from the ast entry.
+ *
+ * Return: (uint8_t) pdev_id
+ */
+uint8_t dp_peer_ast_get_pdev_id(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry)
+{
+	return ast_entry->pdev_id;
+}
+
+/*
+ * dp_peer_ast_get_next_hop() - get next_hop from the ast entry
+ * @soc: SoC handle
+ * @ast_entry: AST entry of the node
+ *
+ * This function gets the next hop from the ast entry.
+ *
+ * Return: (uint8_t) next_hop
+ */
+uint8_t dp_peer_ast_get_next_hop(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry)
+{
+	return ast_entry->next_hop;
+}
+
+/*
+ * dp_peer_ast_set_type() - set type from the ast entry
+ * @soc: SoC handle
+ * @ast_entry: AST entry of the node
+ *
+ * This function sets the type in the ast entry.
+ *
+ * Return:
+ */
+void dp_peer_ast_set_type(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry,
+				enum cdp_txrx_ast_entry_type type)
+{
+	ast_entry->type = type;
+}
+
 #else
 int dp_peer_add_ast(struct dp_soc *soc, struct dp_peer *peer,
-		uint8_t *mac_addr, enum dp_ast_type is_self)
+		uint8_t *mac_addr, enum cdp_txrx_ast_entry_type type,
+		uint32_t flags)
 {
 	return 1;
 }
 
-void dp_peer_del_ast(struct dp_soc *soc,
-		struct dp_ast_entry *ast_entry)
+void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
 {
 }
 
+int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
+			struct dp_ast_entry *ast_entry, uint32_t flags)
+{
+	return 1;
+}
 
 struct dp_ast_entry *dp_peer_ast_hash_find(struct dp_soc *soc,
-	uint8_t *ast_mac_addr, int mac_addr_is_aligned)
+						uint8_t *ast_mac_addr)
 {
 	return NULL;
 }
@@ -524,6 +639,25 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
 
 static void dp_peer_ast_hash_detach(struct dp_soc *soc)
 {
+}
+
+void dp_peer_ast_set_type(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry,
+				enum cdp_txrx_ast_entry_type type)
+{
+}
+
+uint8_t dp_peer_ast_get_pdev_id(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry)
+{
+	return 0xff;
+}
+
+
+uint8_t dp_peer_ast_get_next_hop(struct dp_soc *soc,
+				struct dp_ast_entry *ast_entry)
+{
+	return 0xff;
 }
 #endif
 
