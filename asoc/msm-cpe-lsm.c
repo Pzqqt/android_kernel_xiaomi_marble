@@ -478,15 +478,18 @@ static int msm_cpe_lab_buf_alloc(struct snd_pcm_substream *substream,
 	lab_d->pcm_buf = pcm_buf;
 	dma_alloc = bufsz * bufcnt;
 	pcm_buf->mem = NULL;
-	pcm_buf->mem = dma_alloc_coherent(dma_data->sdev->dev.parent,
-					  dma_alloc,
-					  &(pcm_buf->phys),
-					  GFP_KERNEL);
+	pcm_buf->mem = kzalloc(dma_alloc, GFP_DMA);
 	if (!pcm_buf->mem) {
-		dev_err(rtd->dev,
-			"%s:DMA alloc failed size = %x\n",
-			__func__, dma_alloc);
 		rc = -ENOMEM;
+		goto fail;
+	}
+
+	pcm_buf->phys = dma_map_single(dma_data->sdev->dev.parent,
+			pcm_buf->mem, dma_alloc, DMA_BIDIRECTIONAL);
+	if (dma_mapping_error(dma_data->sdev->dev.parent, pcm_buf->phys)) {
+		dev_err(rtd->dev, "%s Error mapping DMA buffers\n", __func__);
+		pcm_buf->phys = (phys_addr_t)NULL;
+		rc = -EFAULT;
 		goto fail;
 	}
 
@@ -504,13 +507,10 @@ static int msm_cpe_lab_buf_alloc(struct snd_pcm_substream *substream,
 
 	return 0;
 fail:
-	if (pcm_buf) {
-		if (pcm_buf->mem)
-			dma_free_coherent(dma_data->sdev->dev.parent, dma_alloc,
-					  pcm_buf->mem, pcm_buf->phys);
-		kfree(pcm_buf);
-		lab_d->pcm_buf = NULL;
-	}
+	if (pcm_buf && pcm_buf->mem)
+		kfree(pcm_buf->mem);
+	kfree(pcm_buf);
+	lab_d->pcm_buf = NULL;
 exit:
 	return rc;
 }
@@ -544,8 +544,12 @@ static int msm_cpe_lab_buf_dealloc(struct snd_pcm_substream *substream,
 	pcm_buf = lab_d->pcm_buf;
 	dma_alloc = bufsz * bufcnt;
 	if (dma_data && pcm_buf)
-		dma_free_coherent(dma_data->sdev->dev.parent, dma_alloc,
-				  pcm_buf->mem, pcm_buf->phys);
+		if (pcm_buf->phys)
+			dma_unmap_single(dma_data->sdev->dev.parent,
+				pcm_buf->phys, dma_alloc, DMA_BIDIRECTIONAL);
+	if (pcm_buf)
+		kfree(pcm_buf->mem);
+
 	kfree(pcm_buf);
 	lab_d->pcm_buf = NULL;
 	return rc;
@@ -633,7 +637,7 @@ static int msm_cpe_lab_thread(void *data)
 	memset(lab_d->pcm_buf[0].mem, 0, lab_d->pcm_size);
 
 	rc = slim_port_xfer(dma_data->sdev, dma_data->ph,
-			    lab_d->pcm_buf[0].phys,
+			    lab_d->pcm_buf[0].mem,
 			    hw_params->buf_sz, &lab_d->comp);
 	if (rc) {
 		dev_err(rtd->dev,
@@ -643,7 +647,7 @@ static int msm_cpe_lab_thread(void *data)
 	}
 
 	rc = slim_port_xfer(dma_data->sdev, dma_data->ph,
-			    lab_d->pcm_buf[1].phys,
+			    lab_d->pcm_buf[1].mem,
 			    hw_params->buf_sz, &lab_d->comp);
 	if (rc) {
 		dev_err(rtd->dev,
@@ -678,7 +682,7 @@ static int msm_cpe_lab_thread(void *data)
 	       lab_d->thread_status != MSM_LSM_LAB_THREAD_ERROR) {
 
 		rc = slim_port_xfer(dma_data->sdev, dma_data->ph,
-				    next_buf->phys,
+				    next_buf->mem,
 				    hw_params->buf_sz, &lab_d->comp);
 		if (rc) {
 			dev_err(rtd->dev,
