@@ -1016,7 +1016,8 @@ QDF_STATUS cds_disable(struct wlan_objmgr_psoc *psoc)
 	 * wma_stop() does target PDEV suspend.
 	 */
 
-	dispatcher_psoc_disable(psoc);
+	if (psoc)
+		dispatcher_psoc_disable(psoc);
 
 	qdf_status = wma_stop(HAL_STOP_TYPE_RF_KILL);
 
