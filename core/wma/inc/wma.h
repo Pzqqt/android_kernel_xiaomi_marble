@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2382,20 +2382,27 @@ void wma_vdev_update_pause_bitmap(uint8_t vdev_id, uint16_t value)
 	tp_wma_handle wma = (tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 	struct wma_txrx_node *iface;
 
-	if (vdev_id >= wma->max_bssid) {
-		WMA_LOGE("%s: Invalid vdev_id: %d", __func__, vdev_id);
-		return;
-	}
-
 	if (!wma) {
 		WMA_LOGE("%s: WMA context is invald!", __func__);
 		return;
 	}
 
+	if (vdev_id >= wma->max_bssid) {
+		WMA_LOGE("%s: Invalid vdev_id: %d", __func__, vdev_id);
+		return;
+	}
+
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %pK",
-			 __func__, iface->handle);
+
+	if (!iface) {
+		WMA_LOGE("%s: Failed to get iface: NULL",
+			 __func__);
+		return;
+	}
+
+	if (!iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: NULL",
+			 __func__);
 		return;
 	}
 
@@ -2420,9 +2427,16 @@ uint16_t wma_vdev_get_pause_bitmap(uint8_t vdev_id)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %pK",
-			 __func__, iface->handle);
+
+	if (!iface) {
+		WMA_LOGE("%s: Failed to get iface: NULL",
+			 __func__);
+		return 0;
+	}
+
+	if (!iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: NULL",
+			 __func__);
 		return 0;
 	}
 
@@ -2446,9 +2460,16 @@ static inline bool wma_vdev_is_device_in_low_pwr_mode(uint8_t vdev_id)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %pK",
-			 __func__, iface->handle);
+
+	if (!iface) {
+		WMA_LOGE("%s: Failed to get iface: NULL",
+			 __func__);
+		return 0;
+	}
+
+	if (!iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle:NULL",
+			 __func__);
 		return 0;
 	}
 
@@ -2474,9 +2495,16 @@ void wma_vdev_set_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %pK",
-			 __func__, iface->handle);
+
+	if (!iface) {
+		WMA_LOGE("%s: Failed to get iface: NULL",
+			 __func__);
+		return;
+	}
+
+	if (!iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: NULL",
+			 __func__);
 		return;
 	}
 
@@ -2502,9 +2530,16 @@ void wma_vdev_clear_pause_bit(uint8_t vdev_id, wmi_tx_pause_type bit_pos)
 	}
 
 	iface = &wma->interfaces[vdev_id];
-	if (!iface || !iface->handle) {
-		WMA_LOGE("%s: Failed to get iface handle: %pK",
-			 __func__, iface->handle);
+
+	if (!iface) {
+		WMA_LOGE("%s: Failed to get iface: NULL",
+			 __func__);
+		return;
+	}
+
+	if (!iface->handle) {
+		WMA_LOGE("%s: Failed to get iface handle: NULL",
+			 __func__);
 		return;
 	}
 
