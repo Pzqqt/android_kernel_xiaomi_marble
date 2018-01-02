@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -165,7 +165,6 @@ void pktlog_release_buf(struct hif_opaque_softc *scn)
 	struct ath_pktlog_info *pl_info;
 
 	pl_dev = get_pktlog_handle();
-	pl_info = pl_dev->pl_info;
 
 	if (!pl_dev) {
 		qdf_print("%s: invalid pl_dev handle", __func__);
@@ -176,6 +175,8 @@ void pktlog_release_buf(struct hif_opaque_softc *scn)
 		qdf_print("%s: invalid pl_dev handle", __func__);
 		return;
 	}
+
+	pl_info = pl_dev->pl_info;
 
 	page_cnt = ((sizeof(*(pl_info->buf)) + pl_info->buf_size) /
 		    PAGE_SIZE) + 1;

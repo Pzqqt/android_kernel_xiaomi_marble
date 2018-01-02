@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -657,6 +657,8 @@ A_STATUS process_rx_info(void *pdev, void *data)
 
 	pl_info = pl_dev->pl_info;
 	pl_tgt_hdr = (uint32_t *) data;
+
+	qdf_mem_set(&pl_hdr, sizeof(pl_hdr), 0);
 	pl_hdr.flags = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_FLAGS_OFFSET) &
 			ATH_PKTLOG_HDR_FLAGS_MASK) >>
 		       ATH_PKTLOG_HDR_FLAGS_SHIFT;
@@ -716,6 +718,8 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	 * Makes the short words (16 bits) portable b/w little endian
 	 * and big endian
 	 */
+
+	qdf_mem_set(&pl_hdr, sizeof(pl_hdr), 0);
 	pl_hdr.flags = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_FLAGS_OFFSET) &
 			ATH_PKTLOG_HDR_FLAGS_MASK) >>
 		       ATH_PKTLOG_HDR_FLAGS_SHIFT;
@@ -730,6 +734,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 			   ATH_PKTLOG_HDR_MAC_ID_MASK) >>
 			  ATH_PKTLOG_HDR_MAC_ID_SHIFT;
 	pl_hdr.flags |= PKTLOG_HDR_SIZE_16;
+
 #else
 	pl_hdr.log_type = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_LOG_TYPE_OFFSET) &
 			   ATH_PKTLOG_HDR_LOG_TYPE_MASK) >>
@@ -845,6 +850,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 	 * Makes the short words (16 bits) portable b/w little endian
 	 * and big endian
 	 */
+	qdf_mem_set(&pl_hdr, sizeof(pl_hdr), 0);
 	pl_hdr.flags = (*(pl_tgt_hdr + ATH_PKTLOG_HDR_FLAGS_OFFSET) &
 			ATH_PKTLOG_HDR_FLAGS_MASK) >>
 		       ATH_PKTLOG_HDR_FLAGS_SHIFT;
@@ -895,6 +901,7 @@ int process_rx_desc_remote(void *pdev, void *data)
 	qdf_nbuf_t log_nbuf = (qdf_nbuf_t)data;
 
 	pl_info = pl_dev->pl_info;
+	qdf_mem_set(&pl_hdr, sizeof(pl_hdr), 0);
 	pl_hdr.flags = (1 << PKTLOG_FLG_FRM_TYPE_REMOTE_S);
 	pl_hdr.missed_cnt = 0;
 	pl_hdr.log_type = 22; /*PKTLOG_TYPE_RX_STATBUF*/
@@ -927,6 +934,7 @@ process_pktlog_lite(void *context, void *log_data, uint16_t log_type)
 	qdf_nbuf_t log_nbuf = (qdf_nbuf_t)log_data;
 
 	pl_info = pl_dev->pl_info;
+	qdf_mem_set(&pl_hdr, sizeof(pl_hdr), 0);
 	pl_hdr.flags = (1 << PKTLOG_FLG_FRM_TYPE_REMOTE_S);
 	pl_hdr.missed_cnt = 0;
 	pl_hdr.log_type = log_type;

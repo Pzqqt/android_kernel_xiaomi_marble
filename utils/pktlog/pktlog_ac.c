@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -82,6 +82,12 @@ void pktlog_set_callback_regtype(
 		enum pktlog_callback_regtype callback_type)
 {
 	struct pktlog_dev_t *pl_dev = get_pktlog_handle();
+
+	if (!pl_dev) {
+		qdf_print("Invalid pl_dev");
+		return;
+	}
+
 	pl_dev->callback_type = callback_type;
 }
 
