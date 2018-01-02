@@ -3733,7 +3733,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct wma_vdev_start_req req;
 	struct wma_target_req *msg;
 	uint8_t vdev_id = 0, peer_id;
-	void *peer;
+	void *peer = NULL;
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
 	int pps_val = 0;
@@ -4007,8 +4007,9 @@ send_final_rsp:
 	return;
 
 peer_cleanup:
-	wma_remove_peer(wma, add_bss->bssId, vdev_id, peer,
-			roam_synch_in_progress);
+	if (peer)
+		wma_remove_peer(wma, add_bss->bssId, vdev_id, peer,
+				roam_synch_in_progress);
 send_fail_resp:
 	add_bss->status = QDF_STATUS_E_FAILURE;
 	if (!wma_is_roam_synch_in_progress(wma, vdev_id))

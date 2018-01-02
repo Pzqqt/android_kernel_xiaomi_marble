@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -5517,6 +5517,11 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 	enum cds_band_type band;
 	bool status;
 
+	if (!wma_handle) {
+		WMA_LOGE("Invalid wma handle");
+		return false;
+	}
+
 	if (!WLAN_REG_IS_24GHZ_CH(channel))
 		band = CDS_BAND_5GHZ;
 	else
@@ -5882,7 +5887,14 @@ static void wma_init_wifi_pos_dma_rings(t_wma_handle *wma_handle,
 					uint8_t num_mac, void *buf)
 {
 	struct hif_softc *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	void *hal_soc = hif_get_hal_handle(hif_ctx);
+	void *hal_soc;
+
+	if (!hif_ctx) {
+		WMA_LOGE("invalid hif context");
+		return;
+	}
+
+	hal_soc = hif_get_hal_handle(hif_ctx);
 
 	wifi_pos_init_cir_cfr_rings(wma_handle->psoc, hal_soc, num_mac, buf);
 }

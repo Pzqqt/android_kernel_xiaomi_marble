@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1227,6 +1227,12 @@ void wma_check_and_set_wake_timer(uint32_t time)
 	int i;
 	struct wma_txrx_node *iface;
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		WMA_LOGE("%s: WMA is closed",
+			__func__);
+		return;
+	}
 
 	if (!WMI_SERVICE_EXT_IS_ENABLED(wma->wmi_service_bitmap,
 		wma->wmi_service_ext_bitmap,
