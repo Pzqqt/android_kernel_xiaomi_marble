@@ -2580,11 +2580,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
 	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
-
-#if defined(QCA_WIFI_FTM)
-	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
-		wma_utf_attach(wma_handle);
-#endif /* QCA_WIFI_FTM */
 	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
 	cds_cfg->max_station = wma_get_number_of_peers_supported(wma_handle);
 
@@ -2973,9 +2968,6 @@ err_event_init:
 	qdf_mem_free(wma_handle->interfaces);
 
 err_scn_context:
-#if defined(QCA_WIFI_FTM)
-	wma_utf_detach(wma_handle);
-#endif /* QCA_WIFI_FTM */
 	qdf_mem_free(((p_cds_contextType) cds_context)->cfg_ctx);
 	OS_FREE(wmi_handle);
 
@@ -4057,12 +4049,6 @@ QDF_STATUS wma_close(void)
 					    (&(wma_handle->mem_chunks[idx])),
 					    memctx));
 	}
-
-#if defined(QCA_WIFI_FTM)
-	/* Detach UTF and unregister the handler */
-	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
-		wma_utf_detach(wma_handle);
-#endif /* QCA_WIFI_FTM */
 
 	if (NULL != wma_handle->pGetRssiReq) {
 		qdf_mem_free(wma_handle->pGetRssiReq);

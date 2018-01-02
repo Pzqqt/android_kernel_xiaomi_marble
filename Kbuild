@@ -891,6 +891,35 @@ UMAC_GREEN_AP_OBJS := $(UMAC_GREEN_AP_CORE_DIR)/wlan_green_ap_main.o \
 		$(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_api.o \
                 $(UMAC_GREEN_AP_DISP_DIR)/wlan_green_ap_ucfg_api.o \
                 $(WLAN_COMMON_ROOT)/target_if/green_ap/src/target_if_green_ap.o
+############# FTM CORE ############
+FTM_CORE_DIR := ftm
+TARGET_IF_FTM_DIR := target_if/ftm
+OS_IF_LINUX_FTM_DIR := os_if/linux/ftm
+
+FTM_CORE_SRC := $(WLAN_COMMON_ROOT)/$(FTM_CORE_DIR)/core/src
+FTM_DISP_SRC := $(WLAN_COMMON_ROOT)/$(FTM_CORE_DIR)/dispatcher/src
+TARGET_IF_FTM_SRC := $(WLAN_COMMON_ROOT)/$(TARGET_IF_FTM_DIR)/src
+OS_IF_FTM_SRC := $(WLAN_COMMON_ROOT)/$(OS_IF_LINUX_FTM_DIR)/src
+
+FTM_CORE_INC := $(WLAN_COMMON_INC)/$(FTM_CORE_DIR)/core/src
+FTM_DISP_INC := $(WLAN_COMMON_INC)/$(FTM_CORE_DIR)/dispatcher/inc
+TARGET_IF_FTM_INC := $(WLAN_COMMON_INC)/$(TARGET_IF_FTM_DIR)/inc
+OS_IF_FTM_INC := $(WLAN_COMMON_INC)/$(OS_IF_LINUX_FTM_DIR)/inc
+
+FTM_INC := -I$(FTM_DISP_INC)	\
+	   -I$(FTM_CORE_INC)	\
+	   -I$(OS_IF_FTM_INC)	\
+	   -I$(TARGET_IF_FTM_INC)
+
+FTM_OBJS := $(FTM_DISP_SRC)/wlan_ftm_init_deinit.o \
+	    $(FTM_DISP_SRC)/wlan_ftm_ucfg_api.o \
+	    $(FTM_CORE_SRC)/wlan_ftm_svc.o \
+	    $(OS_IF_FTM_SRC)/wlan_cfg80211_ftm.o \
+	    $(TARGET_IF_FTM_SRC)/target_if_ftm.o
+
+ifeq ($(CONFIG_LINUX_QCMBR),y)
+FTM_OBJS += $(OS_IF_FTM_SRC)/wlan_ioctl_ftm.o
+endif
 
 ############# UMAC_CMN_SERVICES ############
 UMAC_COMMON_INC := -I$(WLAN_COMMON_INC)/umac/cmn_services/cmn_defs/inc \
@@ -1517,7 +1546,8 @@ INCS :=		$(HDD_INC) \
 		$(TARGET_IF_INC) \
 		$(CLD_TARGET_IF_INC) \
 		$(OS_IF_INC) \
-		$(GLOBAL_LMAC_IF_INC)
+		$(GLOBAL_LMAC_IF_INC) \
+		$(FTM_INC)
 
 INCS +=		$(WMA_INC) \
 		$(UAPI_INC) \
@@ -1599,7 +1629,8 @@ OBJS :=		$(HDD_OBJS) \
 		$(SYS_OBJS) \
 		$(QDF_OBJS) \
 		$(CDS_OBJS) \
-		$(DFS_OBJS)
+		$(DFS_OBJS) \
+		$(FTM_OBJS)
 
 OBJS +=		$(WMA_OBJS) \
 		$(TXRX_OBJS) \

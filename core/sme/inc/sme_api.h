@@ -485,9 +485,6 @@ static inline void sme_deregister_oem_data_rsp_callback(tHalHandle h_hal)
 
 #endif
 
-void sme_register_ftm_msg_processor(tHalHandle hal,
-				    hdd_ftm_msg_processor callback);
-
 extern QDF_STATUS sme_enter_wowl(tHalHandle hHal,
 			 void (*enter_wowl_callback_routine)(void
 						  *callbackContext,

@@ -81,6 +81,7 @@
 #endif
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg80211_scan.h>
+#include <wlan_cfg80211_ftm.h>
 
 #ifdef FEATURE_WLAN_EXTSCAN
 #include "wlan_hdd_ext_scan.h"
@@ -20427,38 +20428,17 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 #if  defined(QCA_WIFI_FTM)
 	case WLAN_HDD_TM_CMD_WLAN_FTM:
 	{
-		int buf_len;
-		void *buf;
-		QDF_STATUS status;
-
-		if (hdd_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-			hdd_err("Device is not in FTM mode");
-			return -EINVAL;
-		}
-
-		if (!tb[WLAN_HDD_TM_ATTR_DATA]) {
-			hdd_err("WLAN_HDD_TM_ATTR_DATA attribute is invalid");
-			return -EINVAL;
-		}
-
-		buf = nla_data(tb[WLAN_HDD_TM_ATTR_DATA]);
-		buf_len = nla_len(tb[WLAN_HDD_TM_ATTR_DATA]);
-
-		hdd_debug("****FTM Tx cmd len = %d*****", buf_len);
-
-		status = wlan_hdd_ftm_testmode_cmd(buf, buf_len);
-
-		if (status != QDF_STATUS_SUCCESS)
-			err = -EBUSY;
+		err = wlan_cfg80211_ftm_testmode_cmd(hdd_ctx->hdd_pdev,
+						     data, len);
 		break;
 	}
 #endif
-
 	default:
 		hdd_err("command: %d not supported",
-		       nla_get_u32(tb[WLAN_HDD_TM_ATTR_CMD]));
+			nla_get_u32(tb[WLAN_HDD_TM_ATTR_CMD]));
 		return -EOPNOTSUPP;
 	}
+
 	EXIT();
 	return err;
 }

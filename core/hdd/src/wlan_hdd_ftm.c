@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,6 +54,7 @@
 #include "ol_fw.h"
 #include "wlan_hdd_cfg80211.h"
 #include "hif.h"
+#include <wlan_ioctl_ftm.h>
 #endif
 
 #define HDD_FTM_WMA_PRE_START_TIMEOUT (30000) /* 30 seconds */
@@ -180,50 +181,17 @@ static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
 				  struct qcmbr_data *pqcmbr_data)
 {
 	int ret = 0;
-	struct qcmbr_queue *qcmbr_buf = NULL;
+	struct hdd_context *hdd_ctx;
 
-	switch (pqcmbr_data->cmd) {
-	case ATH_XIOCTL_UNIFIED_UTF_CMD: {
-		pqcmbr_data->copy_to_user = 0;
-		if (pqcmbr_data->length &&
-			pqcmbr_data->length <= sizeof(pqcmbr_data->buf)) {
-			if (wlan_hdd_ftm_testmode_cmd(pqcmbr_data->buf,
-						      pqcmbr_data->
-						      length)
-			    != QDF_STATUS_SUCCESS) {
-				ret = -EBUSY;
-			} else {
-				ret = 0;
-			}
-		}
-	}
-	break;
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
 
-	case ATH_XIOCTL_UNIFIED_UTF_RSP: {
-		pqcmbr_data->copy_to_user = 1;
-
-		spin_lock_bh(&qcmbr_queue_lock);
-		if (!list_empty(&qcmbr_queue_head)) {
-			qcmbr_buf = list_first_entry(&qcmbr_queue_head,
-						     struct qcmbr_queue,
-						     list);
-			list_del(&qcmbr_buf->list);
-			ret = 0;
-		} else {
-			ret = -1;
-		}
-		spin_unlock_bh(&qcmbr_queue_lock);
-
-		if (!ret) {
-			memcpy(pqcmbr_data->buf, qcmbr_buf->utf_buf,
-			       (MAX_UTF_LENGTH + 4));
-			qdf_mem_free(qcmbr_buf);
-		} else {
-			ret = -EAGAIN;
-		}
-	}
-	break;
-	}
+	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->hdd_pdev,
+					  pqcmbr_data->cmd,
+					  pqcmbr_data->buf,
+					  pqcmbr_data->length);
 
 	return ret;
 }

@@ -4158,29 +4158,6 @@ QDF_STATUS sme_oem_get_capability(tHalHandle hal,
 #endif
 
 /**
- * sme_register_ftm_msg_processor() - registers hdd ftm message processor
- * function to MAC/SYS
- *
- * @hal:        hal handle
- * @callback:   hdd function that has to be registered
- *
- * Return: void
- */
-void sme_register_ftm_msg_processor(tHalHandle hal,
-				    hdd_ftm_msg_processor callback)
-{
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
-
-	if (mac_ctx == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("mac ctx is NULL"));
-		return;
-	}
-
-	mac_ctx->ftm_msg_processor_callback = callback;
-}
-
-/**
  * sme_enter_wowl(): SME API exposed to HDD to request enabling of WOWL mode.
  * @hal_ctx - The handle returned by mac_open.
  * @enter_wowl_callback_routine -  Callback routine provided by HDD.

@@ -2623,11 +2623,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 		hdd_ctx->driver_status = DRIVER_MODULES_OPENED;
 		hdd_info("Wlan transitioned (now OPENED)");
 
-		if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-			sme_register_ftm_msg_processor(hdd_ctx->hHal,
-						       hdd_ftm_mc_process_msg);
-			break;
-		}
 		if (unint) {
 			hdd_debug("In phase-1 initialization  don't enable modules");
 			break;
