@@ -1849,6 +1849,10 @@ void lim_update_fils_rik(tpPESession pe_session,
 		return;
 	}
 
+	if (!pe_fils_info) {
+		pe_debug("No FILS info available in the session");
+		return;
+	}
 	if ((pe_fils_info->fils_rik_len > FILS_MAX_RIK_LENGTH) ||
 	    !pe_fils_info->fils_rik) {
 		pe_err("Fils rik len(%d) max %d", pe_fils_info->fils_rik_len,
