@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -265,7 +265,7 @@ QDF_STATUS utils_dfs_nol_addchan(struct wlan_objmgr_pdev *pdev,
 	if (!dfs)
 		return  QDF_STATUS_E_FAILURE;
 
-	dfs_nol_addchan(dfs, freq, dfs_nol_timeout);
+	DFS_NOL_ADD_CHAN_LOCKED(dfs, freq, dfs_nol_timeout);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -702,7 +702,7 @@ void utils_dfs_init_nol(struct wlan_objmgr_pdev *pdev)
 	if (len > 0) {
 		dfs_set_nol(dfs, dfs_nolinfo.dfs_nol, dfs_nolinfo.num_chans);
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "nol channels in pld");
-		dfs_print_nol(dfs);
+		DFS_PRINT_NOL_LOCKED(dfs);
 	} else {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "no nol in pld");
 	}
@@ -742,7 +742,7 @@ void utils_dfs_save_nol(struct wlan_objmgr_pdev *pdev)
 	}
 
 	qdf_mem_zero(&dfs_nolinfo, sizeof(dfs_nolinfo));
-	dfs_get_nol(dfs, dfs_nolinfo.dfs_nol, &num_chans);
+	DFS_GET_NOL_LOCKED(dfs, dfs_nolinfo.dfs_nol, &num_chans);
 	if (num_chans > 0) {
 
 		if (num_chans > DFS_MAX_NOL_CHANNEL)
@@ -767,7 +767,7 @@ void utils_dfs_print_nol_channels(struct wlan_objmgr_pdev *pdev)
 		return;
 	}
 
-	dfs_print_nol(dfs);
+	DFS_PRINT_NOL_LOCKED(dfs);
 }
 EXPORT_SYMBOL(utils_dfs_print_nol_channels);
 
@@ -782,7 +782,7 @@ void utils_dfs_clear_nol_channels(struct wlan_objmgr_pdev *pdev)
 	}
 
 	/* First print list */
-	dfs_print_nol(dfs);
+	DFS_PRINT_NOL_LOCKED(dfs);
 
 	/* clear local cache first */
 	dfs_nol_timer_cleanup(dfs);
@@ -807,6 +807,7 @@ void utils_dfs_reg_update_nol_ch(struct wlan_objmgr_pdev *pdev,
 		uint8_t num_ch,
 		bool nol_ch)
 {
+	/* TODO : Need locking?*/
 	wlan_reg_update_nol_ch(pdev, ch_list, num_ch, nol_ch);
 }
 EXPORT_SYMBOL(utils_dfs_reg_update_nol_ch);

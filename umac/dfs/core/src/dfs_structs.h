@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -108,20 +108,6 @@ struct dfs_bin5pulse {
 	uint32_t  b5_timewindow;
 	uint32_t  b5_rssithresh;
 	uint32_t  b5_rssimargin;
-};
-
-/**
- * struct dfs_nol_chan_entry - DFS NOL representation.
- * @nol_chfreq:      Centre frequency, MHz .
- * @nol_chwidth:     Width, MHz.
- * @nol_start_ticks: Start ticks, OS specific.
- * @nol_timeout_ms:  Timeout, ms
- */
-struct dfs_nol_chan_entry {
-	uint32_t      nol_chfreq;
-	uint32_t      nol_chwidth;
-	unsigned long nol_start_ticks;
-	uint32_t      nol_timeout_ms;
 };
 
 /**

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2007-2008 Sam Leffler, Errno Consulting
  * All rights reserved.
  *
@@ -447,7 +447,7 @@ void dfs_zero_cac_attach(struct wlan_dfs *dfs)
 {
 	dfs->dfs_precac_timeout_override = -1;
 	dfs_zero_cac_timer_init(dfs);
-	PRECAC_LIST_LOCK_INIT(dfs);
+	PRECAC_LIST_LOCK_CREATE(dfs);
 }
 
 /**
@@ -618,6 +618,7 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 void dfs_zero_cac_detach(struct wlan_dfs *dfs)
 {
 	dfs_deinit_precac_list(dfs);
+	PRECAC_LIST_LOCK_DESTROY(dfs);
 }
 
 uint8_t dfs_get_freq_from_precac_required_list(struct wlan_dfs *dfs,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -108,6 +108,12 @@ void dfs_nol_attach(struct wlan_dfs *dfs)
 	dfs->wlan_dfs_nol_timeout = DFS_NOL_TIMEOUT_S;
 	dfs_nol_timer_init(dfs);
 	dfs->dfs_use_nol = 1;
+	WLAN_DFSNOL_LOCK_CREATE(dfs);
+}
+
+void dfs_nol_detach(struct wlan_dfs *dfs)
+{
+	WLAN_DFSNOL_LOCK_DESTROY(dfs);
 }
 
 /**
@@ -144,7 +150,6 @@ static void dfs_nol_delete(struct wlan_dfs *dfs,
 				 (qdf_system_ticks()) / 1000));
 			qdf_timer_stop(&nol->nol_timer);
 			qdf_mem_free(nol);
-			nol = NULL;
 			nol = *prev_next;
 
 			/* Update the NOL counter. */
@@ -183,7 +188,7 @@ static os_timer_func(dfs_remove_from_nol)
 	delchwidth = nol_arg->nol_chwidth;
 
 	/* Delete the given NOL entry. */
-	dfs_nol_delete(dfs, delfreq, delchwidth);
+	DFS_NOL_DELETE_CHAN_LOCKED(dfs, delfreq, delchwidth);
 
 	/* Update the wireless stack with the new NOL. */
 	dfs_nol_update(dfs);
@@ -299,13 +304,15 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 		nol_time_left_ms =
 			qdf_system_ticks_to_msecs(qdf_system_ticks() -
 				dfs_nol[i].nol_start_ticks);
+
 		if (nol_time_left_ms < dfs_nol[i].nol_timeout_ms) {
 			chan.dfs_ch_freq = dfs_nol[i].nol_freq;
 			chan.dfs_ch_flags = 0;
 			chan.dfs_ch_flagext = 0;
 			nol_time_left_ms =
 				(dfs_nol[i].nol_timeout_ms - nol_time_left_ms);
-			dfs_nol_addchan(dfs, chan.dfs_ch_freq,
+
+			DFS_NOL_ADD_CHAN_LOCKED(dfs, chan.dfs_ch_freq,
 					(nol_time_left_ms / TIME_IN_MS));
 		}
 	}
@@ -388,22 +395,21 @@ bad:
 #undef TIME_IN_US
 }
 
-void dfs_get_nol_chfreq_and_chwidth(struct dfs_nol_chan_entry *nollist,
+void dfs_get_nol_chfreq_and_chwidth(struct dfsreq_nolelem *dfs_nol,
 		uint32_t *nol_chfreq,
 		uint32_t *nol_chwidth,
 		int index)
 {
-	if (!nollist)
+	if (!dfs_nol)
 		return;
 
-	*nol_chfreq = nollist[index].nol_chfreq;
-	*nol_chwidth = nollist[index].nol_chwidth;
+	*nol_chfreq = dfs_nol[index].nol_freq;
+	*nol_chwidth = dfs_nol[index].nol_chwidth;
 }
 
 void dfs_nol_update(struct wlan_dfs *dfs)
 {
-	struct dfs_nol_chan_entry *dfs_nol;
-	struct dfs_nolelem *nol;
+	struct dfsreq_nolelem *dfs_nol;
 	int nlen;
 
 	/*
@@ -412,8 +418,8 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 	 * returned pointer is 0x10.  Make sure you're aware of this
 	 * when you start debugging.
 	 */
-	dfs_nol = (struct dfs_nol_chan_entry *)qdf_mem_malloc(
-		sizeof(struct dfs_nol_chan_entry) * dfs->dfs_nol_count);
+	dfs_nol = (struct dfsreq_nolelem *)qdf_mem_malloc(
+		sizeof(struct dfsreq_nolelem) * dfs->dfs_nol_count);
 
 	if (!dfs_nol) {
 		/*
@@ -426,18 +432,7 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 		return;
 	}
 
-	/* Populate the nol array. */
-	nlen = 0;
-
-	nol = dfs->dfs_nol;
-	while (nol != NULL && nlen < dfs->dfs_nol_count) {
-		dfs_nol[nlen].nol_chfreq = nol->nol_freq;
-		dfs_nol[nlen].nol_chwidth = nol->nol_chwidth;
-		dfs_nol[nlen].nol_start_ticks = nol->nol_start_ticks;
-		dfs_nol[nlen].nol_timeout_ms = nol->nol_timeout_ms;
-		nlen++;
-		nol = nol->nol_next;
-	}
+	DFS_GET_NOL_LOCKED(dfs, dfs_nol, &nlen);
 
 	/* Be suitably paranoid for now. */
 	if (nlen != dfs->dfs_nol_count)
@@ -460,17 +455,10 @@ void dfs_nol_update(struct wlan_dfs *dfs)
 	qdf_mem_free(dfs_nol);
 }
 
-void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
+void dfs_nol_free_list(struct wlan_dfs *dfs)
 {
 	struct dfs_nolelem *nol = dfs->dfs_nol, *prev;
 
-	while (nol) {
-		qdf_timer_sync_cancel(&nol->nol_timer);
-		nol = nol->nol_next;
-	}
-
-	/* Free NOL elem, don't mix this while loop with above loop. */
-	nol = dfs->dfs_nol;
 	while (nol) {
 		prev = nol;
 		nol = nol->nol_next;
@@ -483,7 +471,37 @@ void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
 			ASSERT(0);
 		}
 	}
+
 	dfs->dfs_nol = NULL;
+}
+
+void dfs_nol_timer_cleanup(struct wlan_dfs *dfs)
+{
+	struct dfs_nolelem *nol;
+	os_timer_t *nol_timer_list;
+	uint8_t i;
+
+	nol_timer_list = (os_timer_t *)qdf_mem_malloc(
+			sizeof(os_timer_t) * dfs->dfs_nol_count);
+
+	if (!nol_timer_list) {
+		dfs_alert(dfs, WLAN_DEBUG_DFS_ALWAYS, "failed to allocate NOL timer memory!");
+		return;
+	}
+
+	WLAN_DFSNOL_LOCK(dfs);
+	nol = dfs->dfs_nol;
+	for (i = 0; (nol != NULL) && (i < dfs->dfs_nol_count);
+			i++, nol = nol->nol_next)
+		nol_timer_list[i] = nol->nol_timer;
+	WLAN_DFSNOL_UNLOCK(dfs);
+
+	for (i = 0; i < dfs->dfs_nol_count; i++)
+		qdf_timer_sync_cancel(&nol_timer_list[i]);
+
+	DFS_NOL_FREE_LIST_LOCKED(dfs);
+
+	qdf_mem_free(nol_timer_list);
 }
 
 int dfs_get_use_nol(struct wlan_dfs *dfs)
@@ -500,7 +518,7 @@ void dfs_getnol(struct wlan_dfs *dfs, void *dfs_nolinfo)
 {
 	struct dfsreq_nolinfo *nolinfo = (struct dfsreq_nolinfo *)dfs_nolinfo;
 
-	dfs_get_nol(dfs, nolinfo->dfs_nol, &(nolinfo->dfs_ch_nchans));
+	DFS_GET_NOL_LOCKED(dfs, nolinfo->dfs_nol, &(nolinfo->dfs_ch_nchans));
 }
 
 void dfs_clear_nolhistory(struct wlan_dfs *dfs)

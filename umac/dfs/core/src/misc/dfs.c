@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2006, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -187,12 +187,12 @@ int dfs_main_attach(struct wlan_dfs *dfs)
 	/*Verify : Passing NULL to qdf_timer_init().*/
 	dfs_main_task_timer_init(dfs);
 
-	WLAN_DFSQ_LOCK_INIT(dfs);
+	WLAN_DFSQ_LOCK_CREATE(dfs);
 	STAILQ_INIT(&dfs->dfs_radarq);
-	WLAN_ARQ_LOCK_INIT(dfs);
+	WLAN_ARQ_LOCK_CREATE(dfs);
 	STAILQ_INIT(&dfs->dfs_arq);
 	STAILQ_INIT(&(dfs->dfs_eventq));
-	WLAN_DFSEVENTQ_LOCK_INIT(dfs);
+	WLAN_DFSEVENTQ_LOCK_CREATE(dfs);
 
 	dfs->events = (struct dfs_event *)qdf_mem_malloc(
 			sizeof(struct dfs_event)*DFS_MAX_EVENTS);
@@ -420,6 +420,10 @@ void dfs_main_detach(struct wlan_dfs *dfs)
 		qdf_mem_free(dfs->events);
 		dfs->events = NULL;
 	}
+
+	WLAN_DFSQ_LOCK_DESTROY(dfs);
+	WLAN_ARQ_LOCK_DESTROY(dfs);
+	WLAN_DFSEVENTQ_LOCK_DESTROY(dfs);
 }
 
 void dfs_detach(struct wlan_dfs *dfs)
@@ -427,6 +431,7 @@ void dfs_detach(struct wlan_dfs *dfs)
 	if (!dfs->dfs_is_offload_enabled)
 		dfs_main_detach(dfs);
 	dfs_zero_cac_detach(dfs);
+	dfs_nol_detach(dfs);
 }
 
 void dfs_destroy_object(struct wlan_dfs *dfs)
@@ -889,10 +894,10 @@ int dfs_control(struct wlan_dfs *dfs,
 		}
 		*outsize = sizeof(struct dfsreq_nolinfo);
 		nol = (struct dfsreq_nolinfo *)outdata;
-		dfs_get_nol(dfs,
+		DFS_GET_NOL_LOCKED(dfs,
 				(struct dfsreq_nolelem *)nol->dfs_nol,
 				&nol->dfs_ch_nchans);
-		dfs_print_nol(dfs);
+		DFS_PRINT_NOL_LOCKED(dfs);
 		break;
 	case DFS_SET_NOL:
 		if (insize < sizeof(struct dfsreq_nolinfo) || !indata) {
@@ -905,7 +910,7 @@ int dfs_control(struct wlan_dfs *dfs,
 				nol->dfs_ch_nchans);
 		break;
 	case DFS_SHOW_NOL:
-		dfs_print_nol(dfs);
+		DFS_PRINT_NOL_LOCKED(dfs);
 		break;
 	case DFS_SHOW_NOLHISTORY:
 		dfs_print_nolhistory(dfs);

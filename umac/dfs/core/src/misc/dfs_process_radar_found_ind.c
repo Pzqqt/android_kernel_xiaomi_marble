@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,7 +146,8 @@ static QDF_STATUS dfs_radar_add_to_nol(struct wlan_dfs *dfs,
 			continue;
 		}
 		last_chan = freq_offset->chan_num[i];
-		dfs_nol_addchan(dfs, (uint16_t)freq_offset->freq[i],
+		DFS_NOL_ADD_CHAN_LOCKED(dfs,
+				(uint16_t)freq_offset->freq[i],
 				dfs->wlan_dfs_nol_timeout);
 		nollist[num_ch++] = last_chan;
 		dfs_info(dfs, WLAN_DEBUG_DFS,
