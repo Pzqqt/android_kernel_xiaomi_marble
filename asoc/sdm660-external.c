@@ -1,4 +1,4 @@
-/* Copyright (c) 2015-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2015-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1215,34 +1215,44 @@ static void msm_afe_clear_config(void)
 	afe_clear_config(AFE_SLIMBUS_SLAVE_CONFIG);
 }
 
-static int msm_adsp_power_up_config(struct snd_soc_codec *codec)
+static int msm_adsp_power_up_config(struct snd_soc_codec *codec,
+				    struct snd_card *card)
 {
 	int ret = 0;
 	unsigned long timeout;
 	int adsp_ready = 0;
-	struct snd_soc_card *card = codec->component.card;
-	struct msm_asoc_mach_data *pdata;
+	bool snd_card_online = 0;
 
-	pdata = snd_soc_card_get_drvdata(card);
 	timeout = jiffies +
 		msecs_to_jiffies(ADSP_STATE_READY_TIMEOUT_MS);
 
 	do {
-		if (q6core_is_adsp_ready()) {
-			pr_debug("%s: ADSP Audio is ready\n", __func__);
-			adsp_ready = 1;
-			break;
+		if (!snd_card_online) {
+			snd_card_online = snd_card_is_online_state(card);
+			pr_debug("%s: Sound card is %s\n", __func__,
+				 snd_card_online ? "Online" : "Offline");
 		}
+		if (!adsp_ready) {
+			adsp_ready = q6core_is_adsp_ready();
+			pr_debug("%s: ADSP Audio is %s\n", __func__,
+				 adsp_ready ? "ready" : "not ready");
+		}
+		if (snd_card_online && adsp_ready)
+			break;
+
 		/*
-		 * ADSP will be coming up after subsystem restart and
+		 * Sound card/ADSP will be coming up after subsystem restart and
 		 * it might not be fully up when the control reaches
 		 * here. So, wait for 50msec before checking ADSP state
 		 */
 		msleep(50);
 	} while (time_after(timeout, jiffies));
 
-	if (!adsp_ready) {
-		pr_err("%s: timed out waiting for ADSP Audio\n", __func__);
+	if (!snd_card_online || !adsp_ready) {
+		pr_err("%s: Timeout. Sound card is %s, ADSP Audio is %s\n",
+		       __func__,
+		       snd_card_online ? "Online" : "Offline",
+		       adsp_ready ? "ready" : "not ready");
 		ret = -ETIMEDOUT;
 		goto err_fail;
 	}
@@ -1300,7 +1310,7 @@ static int sdm660_notifier_service_cb(struct notifier_block *this,
 		}
 		codec = rtd->codec;
 
-		ret = msm_adsp_power_up_config(codec);
+		ret = msm_adsp_power_up_config(codec, card->snd_card);
 		if (ret < 0) {
 			dev_err(card->dev,
 				"%s: msm_adsp_power_up_config failed ret = %d!\n",
@@ -1688,7 +1698,7 @@ int msm_audrx_init(struct snd_soc_pcm_runtime *rtd)
 		msm_codec_fn.mbhc_hs_detect_exit = tasha_mbhc_hs_detect_exit;
 	}
 
-	ret = msm_adsp_power_up_config(codec);
+	ret = msm_adsp_power_up_config(codec, rtd->card->snd_card);
 	if (ret) {
 		pr_err("%s: Failed to set AFE config %d\n", __func__, ret);
 		goto err_afe_cfg;
