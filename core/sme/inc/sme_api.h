@@ -839,8 +839,8 @@ const char *sme_scan_type_to_string(const uint8_t scan_type);
 const char *sme_bss_type_to_string(const uint8_t bss_type);
 QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 		bool disablefwd);
-uint32_t sme_get_channel_bonding_mode5_g(tHalHandle hHal);
-uint32_t sme_get_channel_bonding_mode24_g(tHalHandle hHal);
+QDF_STATUS sme_get_channel_bonding_mode5_g(tHalHandle hHal, uint32_t *mode);
+QDF_STATUS sme_get_channel_bonding_mode24_g(tHalHandle hHal, uint32_t *mode);
 #ifdef WLAN_FEATURE_STATS_EXT
 typedef struct sStatsExtRequestReq {
 	uint32_t request_data_len;

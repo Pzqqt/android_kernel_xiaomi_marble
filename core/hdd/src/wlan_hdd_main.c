@@ -7156,11 +7156,18 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 	u32 tbytes;
 	qdf_time_t total, pause, unpause, curr_time, delta;
 	char temp_str[20 * WLAN_REASON_TYPE_MAX];
-	char comb_log_str[(ADAP_NETIFQ_LOG_LEN * MAX_NUMBER_OF_ADAPTERS) + 1];
+	char *comb_log_str;
+	uint32_t comb_log_str_size;
 	struct hdd_adapter *adapter = NULL;
 
+	comb_log_str_size = (ADAP_NETIFQ_LOG_LEN * MAX_NUMBER_OF_ADAPTERS) + 1;
+	comb_log_str = qdf_mem_malloc(comb_log_str_size);
+	if (!comb_log_str) {
+		hdd_err("failed to alloc comb_log_str");
+		return;
+	}
+
 	bytes_written = 0;
-	qdf_mem_set(comb_log_str, 0, sizeof(comb_log_str));
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		curr_time = qdf_system_ticks();
@@ -7196,8 +7203,8 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 			hdd_warn("log truncated");
 
 		bytes_written += snprintf(&comb_log_str[bytes_written],
-			bytes_written >= sizeof(comb_log_str) ? 0 :
-					sizeof(comb_log_str) - bytes_written,
+			bytes_written >= comb_log_str_size ? 0 :
+					comb_log_str_size - bytes_written,
 			"[%d %d] (%d) %u/%ums %s|",
 			adapter->session_id, adapter->device_mode,
 			adapter->pause_map,
@@ -7212,8 +7219,10 @@ hdd_display_netif_queue_history_compact(struct hdd_context *hdd_ctx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_LOW,
 		  "STATS |%s", comb_log_str);
 
-	if (bytes_written >= sizeof(comb_log_str))
+	if (bytes_written >= comb_log_str_size)
 		hdd_warn("log string truncated");
+
+	qdf_mem_free(comb_log_str);
 }
 
 /**

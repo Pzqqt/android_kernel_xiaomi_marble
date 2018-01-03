@@ -3106,37 +3106,82 @@ eCsrPhyMode sme_get_phy_mode(tHalHandle hHal)
 }
 
 /*
- * sme_get_channel_bonding_mode5_g() -
- * get the channel bonding mode for 5G band
+ * sme_get_channel_bonding_mode5_g() - get the channel bonding mode for 5G band
  *
  * hHal - HAL handle
- * Return channel bonding mode for 5G
+ * mode - channel bonding mode
+ *
+ * Return QDF_STATUS
  */
-uint32_t sme_get_channel_bonding_mode5_g(tHalHandle hHal)
+QDF_STATUS sme_get_channel_bonding_mode5_g(tHalHandle hHal, uint32_t *mode)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tSmeConfigParams smeConfig;
+	tSmeConfigParams *smeConfig;
 
-	sme_get_config_param(pMac, &smeConfig);
+	if (!mode) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: invalid mode", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	return smeConfig.csrConfig.channelBondingMode5GHz;
+	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
+	if (!smeConfig) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: failed to alloc smeConfig", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (sme_get_config_param(pMac, smeConfig) != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: sme_get_config_param failed", __func__);
+		qdf_mem_free(smeConfig);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*mode = smeConfig->csrConfig.channelBondingMode5GHz;
+	qdf_mem_free(smeConfig);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
- * sme_get_channel_bonding_mode24_g() -
- * get the channel bonding mode for 2.4G band
+ * sme_get_channel_bonding_mode24_g() - get the channel bonding mode for 2.4G
+ * band
  *
  * hHal - HAL handle
- * Return channel bonding mode for 2.4G
+ * mode - channel bonding mode
+ *
+ * Return QDF_STATUS
  */
-uint32_t sme_get_channel_bonding_mode24_g(tHalHandle hHal)
+QDF_STATUS sme_get_channel_bonding_mode24_g(tHalHandle hHal, uint32_t *mode)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tSmeConfigParams smeConfig;
+	tSmeConfigParams *smeConfig;
 
-	sme_get_config_param(pMac, &smeConfig);
+	if (!mode) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: invalid mode", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
 
-	return smeConfig.csrConfig.channelBondingMode24GHz;
+	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
+	if (!smeConfig) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: failed to alloc smeConfig", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (sme_get_config_param(pMac, smeConfig) != QDF_STATUS_SUCCESS) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"%s: sme_get_config_param failed", __func__);
+		qdf_mem_free(smeConfig);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*mode = smeConfig->csrConfig.channelBondingMode24GHz;
+	qdf_mem_free(smeConfig);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
