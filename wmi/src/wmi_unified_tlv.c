@@ -23069,6 +23069,22 @@ void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
 	wmi_handle->ops->convert_pdev_id_target_to_host =
 		convert_target_pdev_id_to_host_pdev_id;
 }
+
+/**
+ * wmi_ocb_ut_attach() - Attach OCB test framework
+ * @wmi_handle: wmi handle
+ *
+ * Return: None
+ */
+#ifdef WLAN_OCB_UT
+void wmi_ocb_ut_attach(struct wmi_unified *wmi_handle);
+#else
+static inline void wmi_ocb_ut_attach(struct wmi_unified *wmi_handle)
+{
+	return;
+}
+#endif
+
 /**
  * wmi_tlv_attach() - Attach TLV APIs
  *
@@ -23077,6 +23093,7 @@ void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
 void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
 	wmi_handle->ops = &tlv_ops;
+	wmi_ocb_ut_attach(wmi_handle);
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	/* Skip saving WMI_CMD_HDR and TLV HDR */
 	wmi_handle->log_info.buf_offset_command = 8;
