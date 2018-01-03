@@ -11977,6 +11977,7 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 	struct hdd_adapter *adapter;
 	enum QDF_GLOBAL_MODE curr_mode;
 	enum QDF_OPMODE adapter_mode;
+	int new_con_mode;
 
 	hdd_info("con_mode handler: %s", kmessage);
 
@@ -11986,18 +11987,22 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 
 	cds_set_load_in_progress(true);
 
-	ret = param_set_int(kmessage, kp);
+	ret = kstrtoint(kmessage, 0, &new_con_mode);
+	if (ret) {
+		hdd_err("Failed to parse con_mode '%s'", kmessage);
+		goto reset_flags;
+	}
 
-	if (!(is_con_mode_valid(con_mode))) {
-		hdd_err("invlaid con_mode %d", con_mode);
+	if (!is_con_mode_valid(new_con_mode)) {
+		hdd_err("invalid con_mode %d", new_con_mode);
 		ret = -EINVAL;
 		goto reset_flags;
 	}
 
 	curr_mode = hdd_get_conparam();
-	if (curr_mode == con_mode) {
+	if (curr_mode == new_con_mode) {
 		hdd_err("curr mode: %d is same as user triggered mode %d",
-		       curr_mode, con_mode);
+			curr_mode, new_con_mode);
 		ret = 0;
 		goto reset_flags;
 	}
@@ -12017,16 +12022,16 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 	/* Cleanup present mode before switching to new mode */
 	hdd_cleanup_present_mode(hdd_ctx, curr_mode);
 
-	hdd_set_conparam(con_mode);
+	hdd_set_conparam(new_con_mode);
 
 	/* Register for new con_mode & then kick_start modules again */
-	ret = hdd_register_req_mode(hdd_ctx, con_mode);
+	ret = hdd_register_req_mode(hdd_ctx, new_con_mode);
 	if (ret) {
 		hdd_err("Failed to register for new mode");
 		goto reset_flags;
 	}
 
-	adapter_mode = hdd_get_adpter_mode(con_mode);
+	adapter_mode = hdd_get_adpter_mode(new_con_mode);
 	if (adapter_mode == QDF_MAX_NO_OF_MODE) {
 		hdd_err("invalid adapter");
 		ret = -EINVAL;
@@ -12045,7 +12050,7 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 		goto reset_flags;
 	}
 
-	if (con_mode == QDF_GLOBAL_MONITOR_MODE) {
+	if (new_con_mode == QDF_GLOBAL_MONITOR_MODE) {
 		if (hdd_start_adapter(adapter)) {
 			hdd_err("Failed to start %s adapter", kmessage);
 			ret = -EINVAL;
@@ -12057,11 +12062,14 @@ static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
 				      WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE);
 	}
 
+	/* con_mode is a global module parameter */
+	con_mode = new_con_mode;
 	hdd_info("Mode successfully changed to %s", kmessage);
 	ret = 0;
 
 reset_flags:
 	cds_set_load_in_progress(false);
+
 	return ret;
 }
 
