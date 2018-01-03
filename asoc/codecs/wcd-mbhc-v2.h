@@ -589,6 +589,7 @@ struct wcd_mbhc {
 	struct work_struct usbc_analog_work;
 
 	struct wcd_mbhc_fn *mbhc_fn;
+	bool force_linein;
 };
 
 void wcd_mbhc_find_plug_and_report(struct wcd_mbhc *mbhc,
