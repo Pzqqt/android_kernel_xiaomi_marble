@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1096,6 +1096,15 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		pe_session->limMlmState, MAC_ADDR_ARRAY(mac_hdr->bssId),
 		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)));
 
+	if (pe_session->prev_auth_seq_num == curr_seq_num) {
+		pe_err("auth frame, seq num: %d is already processed, drop it",
+			curr_seq_num);
+		return;
+	}
+
+	/* save seq number in pe_session */
+	pe_session->prev_auth_seq_num = curr_seq_num;
+
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 
 	/* Restore default failure timeout */
@@ -1334,18 +1343,6 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			pe_err("failed to convert Auth Frame to structure or Auth is not valid");
 			goto free;
 	}
-
-	if (pe_session->prev_auth_seq_num == curr_seq_num &&
-	    pe_session->prev_auth_algo == rx_auth_frame->authAlgoNumber) {
-		pe_err("auth frame, seq num: %d is already processed, drop it",
-			curr_seq_num);
-		goto free;
-	}
-
-	/* save seq number in pe_session */
-	pe_session->prev_auth_seq_num = curr_seq_num;
-
-	pe_session->prev_auth_algo = rx_auth_frame->authAlgoNumber;
 
 	rx_auth_frm_body = rx_auth_frame;
 
