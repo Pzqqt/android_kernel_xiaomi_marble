@@ -2541,6 +2541,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	soc->pdev_list[pdev->pdev_id] = NULL;
 	soc->pdev_count--;
 	wlan_cfg_pdev_detach(pdev->wlan_cfg_ctx);
+	qdf_mem_free(pdev->dp_txrx_handle);
 	qdf_mem_free(pdev);
 }
 
@@ -5872,6 +5873,34 @@ dp_txrx_data_tx_cb_set(struct cdp_vdev *vdev_handle,
 	vdev->tx_non_std_data_callback.ctxt = ctxt;
 }
 
+/**
+ * dp_pdev_get_dp_txrx_handle() - get dp handle from pdev
+ * @pdev_hdl: datapath pdev handle
+ *
+ * Return: opaque pointer to dp txrx handle
+ */
+static void *dp_pdev_get_dp_txrx_handle(struct cdp_pdev *pdev_hdl)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+
+	return pdev->dp_txrx_handle;
+}
+
+/**
+ * dp_pdev_set_dp_txrx_handle() - set dp handle in pdev
+ * @pdev_hdl: datapath pdev handle
+ * @dp_txrx_hdl: opaque pointer for dp_txrx_handle
+ *
+ * Return: void
+ */
+static void
+dp_pdev_set_dp_txrx_handle(struct cdp_pdev *pdev_hdl, void *dp_txrx_hdl)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_hdl;
+
+	pdev->dp_txrx_handle = dp_txrx_hdl;
+}
+
 #ifdef CONFIG_WIN
 static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
@@ -5926,7 +5955,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_pn_check = dp_set_pn_check_wifi3,
 	.update_config_parameters = dp_update_config_parameters,
 	/* TODO: Add other functions */
-	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set
+	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set,
+	.get_dp_txrx_handle = dp_pdev_get_dp_txrx_handle,
+	.set_dp_txrx_handle = dp_pdev_set_dp_txrx_handle,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {

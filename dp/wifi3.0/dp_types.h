@@ -1103,6 +1103,8 @@ struct dp_pdev {
 		uint16_t tx_peer_id;
 		uint16_t rx_ppdu_id;
 	} am_copy_id;
+
+	void *dp_txrx_handle; /* Advanced data path handle */
 };
 
 struct dp_peer;

@@ -228,6 +228,9 @@ struct cdp_cmn_ops {
 		 uint32_t *rx_pn);
 	QDF_STATUS (*update_config_parameters)(struct cdp_soc *psoc,
 			struct cdp_config_params *params);
+
+	void *(*get_dp_txrx_handle)(struct cdp_pdev *pdev_hdl);
+	void (*set_dp_txrx_handle)(struct cdp_pdev *pdev_hdl, void *dp_txrx_hdl);
 };
 
 struct cdp_ctrl_ops {
