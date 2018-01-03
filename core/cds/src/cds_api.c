@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1885,19 +1885,24 @@ static void cds_trigger_recovery_work(void *param)
 	qdf_runtime_lock_t rtl;
 	qdf_device_t qdf;
 
-	if (!cds_is_self_recovery_enabled()) {
-		cds_err("Recovery is not enabled");
-		QDF_BUG(0);
+	if (cds_is_driver_recovering()) {
+		cds_err("Recovery in progress; ignoring recovery trigger");
 		return;
 	}
 
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
-		cds_err("Recovery in progress; ignoring recovery trigger");
+	if (cds_is_driver_in_bad_state()) {
+		cds_err("Driver is in bad state; ignoring recovery trigger");
 		return;
 	}
 
 	if (cds_is_fw_down()) {
 		cds_err("FW is down; ignoring recovery trigger");
+		return;
+	}
+
+	if (!cds_is_self_recovery_enabled()) {
+		cds_err("Recovery is not enabled");
+		QDF_BUG(0);
 		return;
 	}
 
