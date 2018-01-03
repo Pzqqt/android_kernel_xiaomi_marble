@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -7640,7 +7640,7 @@ static void hdd_set_fine_time_meas_cap(struct hdd_context *hdd_ctx)
  */
 
 static QDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
-			       uint8_t *len, uint8_t array_max_len, bool to_hex)
+			     uint8_t *len, uint16_t array_max_len, bool to_hex)
 {
 	char *format, *s = str;
 
@@ -7690,7 +7690,7 @@ static QDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
 }
 
 QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
-				  uint8_t *len, uint8_t array_max_len)
+				  uint8_t *len, uint16_t array_max_len)
 {
 	return hdd_convert_string_to_array(str, array, len,
 					   array_max_len, false);

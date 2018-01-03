@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,7 +49,7 @@
 
 struct hdd_context;
 
-#define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (255)
+#define FW_MODULE_LOG_LEVEL_STRING_LENGTH  (512)
 #define TX_SCHED_WRR_PARAM_STRING_LENGTH   (50)
 #define TX_SCHED_WRR_PARAMS_NUM            (5)
 #define CFG_ENABLE_RX_THREAD		(1 << 0)
@@ -15017,7 +15017,7 @@ void hdd_update_tgt_cfg(void *context, void *param);
  * Return: QDF_STATUS
  */
 QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
-				  uint8_t *len, uint8_t array_max_len);
+				  uint8_t *len, uint16_t array_max_len);
 
 QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 				uint8_t *len, uint8_t int_array_max_len);
