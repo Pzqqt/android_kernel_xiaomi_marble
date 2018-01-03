@@ -20790,6 +20790,8 @@ static QDF_STATUS extract_wlan_radar_event_info_tlv(
 	wlan_radar_event->upload_fullts_high = radar_event->upload_fullts_high;
 	wlan_radar_event->upload_fullts_low = radar_event->upload_fullts_low;
 	wlan_radar_event->peak_sidx = radar_event->peak_sidx;
+	wlan_radar_event->delta_peak = radar_event->pulse_delta_peak;
+	wlan_radar_event->delta_diff = radar_event->pulse_delta_diff;
 	wlan_radar_event->pdev_id = radar_event->pdev_id;
 
 	return QDF_STATUS_SUCCESS;
