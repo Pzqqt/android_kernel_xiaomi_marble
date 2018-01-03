@@ -72,6 +72,26 @@
 #endif
 
 typedef struct sg_table __sgtable_t;
+
+/*
+ * The IDs of the various system clocks
+ */
+#define __QDF_CLOCK_REALTIME CLOCK_REALTIME
+#define __QDF_CLOCK_MONOTONIC CLOCK_MONOTONIC
+
+/*
+ * Return values for the qdf_hrtimer_data_t callback function
+ */
+#define __QDF_HRTIMER_NORESTART HRTIMER_NORESTART
+#define __QDF_HRTIMER_RESTART HRTIMER_RESTART
+
+/*
+ * Mode arguments of qdf_hrtimer_data_t related functions
+ */
+#define __QDF_HRTIMER_MODE_ABS HRTIMER_MODE_ABS
+#define __QDF_HRTIMER_MODE_REL HRTIMER_MODE_REL
+#define __QDF_HRTIMER_MODE_PINNED HRTIMER_MODE_PINNED
+
 #else
 
 /*
@@ -95,6 +115,13 @@ typedef unsigned long __sgtable_t;
 #define DMA_TO_DEVICE   0
 #define DMA_BIDIRECTIONAL 0
 #define DMA_FROM_DEVICE 0
+#define __QDF_CLOCK_REALTIME 0
+#define __QDF_CLOCK_MONOTONIC 0
+#define __QDF_HRTIMER_MODE_ABS 0
+#define __QDF_HRTIMER_MODE_REL 0
+#define __QDF_HRTIMER_MODE_PINNED 0
+#define __QDF_HRTIMER_NORESTART 0
+#define __QDF_HRTIMER_RESTART 0
 #define __iomem
 #endif /* __KERNEL__ */
 

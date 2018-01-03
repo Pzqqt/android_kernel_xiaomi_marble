@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,6 +36,82 @@
 #include <i_qdf_time.h>
 
 typedef __qdf_time_t qdf_time_t;
+typedef __qdf_ktime_t qdf_ktime_t;
+
+/**
+ * qdf_ns_to_ktime - Converts nanoseconds to a qdf_ktime_t object
+ * @ns: time in nanoseconds
+ *
+ * Return: nanoseconds as qdf_ktime_t object
+ */
+
+static inline qdf_ktime_t qdf_ns_to_ktime(uint64_t ns)
+{
+	return __qdf_ns_to_ktime(ns);
+}
+
+/**
+ * qdf_ktime_add - Adds two qdf_ktime_t objects and returns
+ * a qdf_ktime_t object
+ * @ktime1: time as qdf_ktime_t object
+ * @ktime2: time as qdf_ktime_t object
+ *
+ * Return: sum of both qdf_ktime_t as qdf_ktime_t object
+ */
+
+static inline qdf_ktime_t qdf_ktime_add(qdf_ktime_t ktime1, qdf_ktime_t ktime2)
+{
+	return __qdf_ktime_add(ktime1, ktime2);
+}
+
+/**
+ * qdf_ktime_get - Gets the current time as qdf_ktime_t object
+ *
+ * Return: current time as qdf_ktime_t object
+ */
+
+static inline qdf_ktime_t qdf_ktime_get(void)
+{
+	return __qdf_ktime_get();
+}
+
+/**
+ * qdf_ktime_add_ns - Adds qdf_ktime_t object and nanoseconds value and
+ * returns the qdf_ktime_t object
+ * @ktime: time as qdf_ktime_t object
+ * @ns: time in nanoseconds
+ *
+ * Return: qdf_ktime_t object
+ */
+
+static inline qdf_ktime_t qdf_ktime_add_ns(qdf_ktime_t ktime, int64_t ns)
+{
+	return __qdf_ktime_add_ns(ktime, ns);
+}
+
+/**
+ * qdf_ktime_to_ms - Convert the qdf_ktime_t object into milliseconds
+ * @ktime: time as qdf_ktime_t object
+ *
+ * Return: qdf_ktime_t in milliseconds
+ */
+
+static inline int64_t qdf_ktime_to_ms(qdf_ktime_t ktime)
+{
+	return __qdf_ktime_to_ms(ktime);
+}
+
+/**
+ * qdf_ktime_to_ns - Convert the qdf_ktime_t object into nanoseconds
+ * @ktime: time as qdf_ktime_t object
+ *
+ * Return: qdf_ktime_t in nanoseconds
+ */
+
+static inline int64_t qdf_ktime_to_ns(qdf_ktime_t ktime)
+{
+	return __qdf_ktime_to_ns(ktime);
+}
 
 /**
  * qdf_system_ticks - Count the number of ticks elapsed from the time when

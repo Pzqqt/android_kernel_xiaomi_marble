@@ -1085,14 +1085,60 @@ enum qdf_hang_reason {
 	QDF_RESUME_TIMEOUT = 9,
 };
 
-/*
- * Verbosity levels for stats for which want to have different levels
+/**
+ * enum qdf_stats_verbosity_level - Verbosity levels for stats
+ * for which want to have different levels
  * @QDF_STATS_VERBOSITY_LEVEL_LOW: Stats verbosity level low
  * @QDF_STATS_VERBOSITY_LEVEL_HIGH: Stats verbosity level high
  */
 enum qdf_stats_verbosity_level {
 	QDF_STATS_VERBOSITY_LEVEL_LOW,
 	QDF_STATS_VERBOSITY_LEVEL_HIGH
+};
+
+/**
+ * enum qdf_clock_id - The clock IDs of the various system clocks
+ * @QDF_CLOCK_REALTIME: Clock is close to current time of day
+ * @QDF_CLOCK_MONOTONIC: Clock is absolute elapsed time
+ */
+enum qdf_clock_id {
+	QDF_CLOCK_REALTIME = __QDF_CLOCK_REALTIME,
+	QDF_CLOCK_MONOTONIC = __QDF_CLOCK_MONOTONIC
+};
+
+/**
+ * enum qdf_hrtimer_mode - Mode arguments of qdf_hrtimer_data_t
+ * related functions
+ * @QDF_HRTIMER_MODE_ABS: Time value is absolute
+ * @QDF_HRTIMER_MODE_REL: Time value is relative to now
+ * @QDF_HRTIMER_MODE_PINNED: Timer is bound to CPU
+ */
+enum qdf_hrtimer_mode {
+	QDF_HRTIMER_MODE_ABS = __QDF_HRTIMER_MODE_ABS,
+	QDF_HRTIMER_MODE_REL = __QDF_HRTIMER_MODE_REL,
+	QDF_HRTIMER_MODE_PINNED =  __QDF_HRTIMER_MODE_PINNED,
+};
+
+/**
+ * enum qdf_hrtimer_restart_status - Return values for the
+ * qdf_hrtimer_data_t callback function
+ * @QDF_HRTIMER_NORESTART: Timer is not restarted
+ * @QDF_HRTIMER_RESTART: Timer must be restarted
+ */
+enum qdf_hrtimer_restart_status {
+	QDF_HRTIMER_NORESTART = __QDF_HRTIMER_NORESTART,
+	QDF_HRTIMER_RESTART = __QDF_HRTIMER_RESTART,
+};
+
+/**
+ * enum qdf_context_mode - Values for the
+ * hrtimer context
+ * @QDF_CONTEXT_HARDWARE: Runs in hw interrupt context
+ * @QDF_CONTEXT_TASKLET: Runs in tasklet context
+ */
+enum qdf_context_mode {
+	QDF_CONTEXT_HARDWARE = 0,
+	QDF_CONTEXT_TASKLET = 1,
 };
 
 #endif /* __QDF_TYPES_H */

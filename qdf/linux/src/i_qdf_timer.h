@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,7 +47,7 @@
 /* timer data type */
 typedef struct timer_list __qdf_timer_t;
 
-typedef void (*qdf_dummy_timer_func_t)(unsigned long arg);
+typedef void (*__qdf_dummy_timer_func_t)(unsigned long arg);
 
 /**
  * __qdf_timer_init() - initialize a softirq timer
@@ -72,19 +72,19 @@ static inline QDF_STATUS __qdf_timer_init(qdf_handle_t hdl,
 	if (type == QDF_TIMER_TYPE_SW) {
 		if (object_is_on_stack(timer))
 			setup_deferrable_timer_on_stack(
-			    timer, (qdf_dummy_timer_func_t)func,
+			    timer, (__qdf_dummy_timer_func_t)func,
 			    (unsigned long)arg);
 		else
 			setup_deferrable_timer(timer,
-					       (qdf_dummy_timer_func_t)func,
+					       (__qdf_dummy_timer_func_t)func,
 					       (unsigned long)arg);
 	} else {
 		if (object_is_on_stack(timer))
 			setup_timer_on_stack(timer,
-					     (qdf_dummy_timer_func_t)func,
+					     (__qdf_dummy_timer_func_t)func,
 					     (unsigned long)arg);
 		else
-			setup_timer(timer, (qdf_dummy_timer_func_t)func,
+			setup_timer(timer, (__qdf_dummy_timer_func_t)func,
 				    (unsigned long)arg);
 	}
 

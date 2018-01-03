@@ -48,6 +48,76 @@
 #include <linux/version.h>
 
 typedef unsigned long __qdf_time_t;
+typedef ktime_t  __qdf_ktime_t;
+
+/**
+ * __qdf_ns_to_ktime() - Converts nanoseconds to a ktime object
+ * @ns: time in nanoseconds
+ *
+ * Return: nanoseconds as ktime object
+ */
+static inline ktime_t __qdf_ns_to_ktime(uint64_t ns)
+{
+	return ns_to_ktime(ns);
+}
+
+/**
+ * __qdf_ktime_add() - Adds two ktime objects and returns
+ * a ktime object
+ * @time1: time as ktime object
+ * @time2: time as ktime object
+ *
+ * Return: sum of ktime objects as ktime object
+ */
+static inline ktime_t __qdf_ktime_add(ktime_t ktime1, ktime_t ktime2)
+{
+	return ktime_add(ktime1, ktime2);
+}
+
+/**
+ * __qdf_ktime_get() - Gets the current time as ktime object
+ *
+ * Return: current time as ktime object
+ */
+static inline ktime_t __qdf_ktime_get(void)
+{
+	return ktime_get();
+}
+
+/**
+ * __qdf_ktime_add_ns() - Adds ktime object and nanoseconds value and
+ * returns the ktime object
+ *
+ * Return: ktime object
+ */
+static inline ktime_t __qdf_ktime_add_ns(ktime_t ktime, int64_t ns)
+{
+	return ktime_add_ns(ktime, ns);
+}
+
+/**
+ * __qdf_ktime_to_ns() - convert ktime to nanoseconds
+ * @ktime: time as ktime object
+ * @ns: time in nanoseconds
+ *
+ * Return: ktime in nanoseconds
+ */
+static inline int64_t __qdf_ktime_to_ns(ktime_t ktime)
+{
+	return ktime_to_ns(ktime);
+}
+
+/**
+ * __qdf_ktime_to_ms() - convert ktime to milliseconds
+ * @ktime: time as ktime object
+ *
+ * Return: ktime in milliseconds
+ */
+static inline int64_t __qdf_ktime_to_ms(ktime_t ktime)
+{
+	return ktime_to_ms(ktime);
+}
+
 
 /**
  * __qdf_system_ticks() - get system ticks
