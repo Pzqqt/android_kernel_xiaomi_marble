@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,6 +59,7 @@ typedef __in6_addr_t in6_addr_t;
 #define QDF_NET_IF_NAME_SIZE     64
 #define QDF_NET_ETH_LEN          QDF_NET_MAC_ADDR_MAX_LEN
 #define QDF_NET_MAX_MCAST_ADDR   64
+#define QDF_NET_IPV4_LEN         4
 
 /* Extended Traffic ID  passed to target if the TID is unknown */
 #define QDF_NBUF_TX_EXT_TID_INVALID    0x1f
@@ -71,9 +72,47 @@ typedef __in6_addr_t in6_addr_t;
 #define QDF_IEEE80211_FC1_TODS          0x01
 #define QDF_IEEE80211_FC1_FROMDS        0x02
 
+#define QDF_NET_IS_MAC_MULTICAST(_a)   (*(_a) & 0x01)
+
 typedef struct qdf_net_ethaddr {
 	uint8_t addr[QDF_NET_ETH_LEN];
 } qdf_net_ethaddr_t;
+
+/**
+ * typedef qdf_net_arphdr_t - ARP header info
+ * @ar_hrd: hardware type
+ * @ar_pro: protocol type
+ * @ar_hln: hardware address length
+ * @ar_pln: protocol length
+ * @ar_op: arp operation code
+ * @ar_sha: sender hardware address
+ * @ar_sip: sender IP address
+ * @ar_tha: target hardware address
+ * @ar_tip: target IP address
+ */
+typedef struct qdf_net_arphdr {
+	uint16_t ar_hrd;
+	uint16_t ar_pro;
+	uint8_t  ar_hln;
+	uint8_t  ar_pln;
+	uint16_t ar_op;
+	uint8_t  ar_sha[QDF_NET_ETH_LEN];
+	uint8_t  ar_sip[QDF_NET_IPV4_LEN];
+	uint8_t  ar_tha[QDF_NET_ETH_LEN];
+	uint8_t  ar_tip[QDF_NET_IPV4_LEN];
+} qdf_net_arphdr_t;
+
+/**
+ * typedef qdf_net_icmp6_11addr_t - ICMP6 header info
+ * @type: hardware type
+ * @len: hardware address length
+ * @addr: hardware address
+ */
+typedef struct qdf_net_icmp6_11addr {
+	uint8_t type;
+	uint8_t len;
+	uint8_t addr[QDF_NET_ETH_LEN];
+} qdf_net_icmp6_11addr_t;
 
 #define QDF_TCPHDR_FIN __QDF_TCPHDR_FIN
 #define QDF_TCPHDR_SYN __QDF_TCPHDR_SYN
@@ -487,6 +526,18 @@ typedef struct {
 	uint16_t vlan_encapsulated_proto;
 	uint16_t ether_type;
 } qdf_ethervlan_header_t;
+
+/**
+ * typedef qdf_ether_header_t - ethernet header info
+ * @ether_dhost: destination hardware address
+ * @ether_shost: source hardware address
+ * @ether_type: ethernet type
+ */
+typedef struct {
+	uint8_t  ether_dhost[QDF_NET_ETH_LEN];
+	uint8_t  ether_shost[QDF_NET_ETH_LEN];
+	uint16_t ether_type;
+} qdf_ether_header_t;
 
 typedef struct {
 	uint8_t llc_dsap;
