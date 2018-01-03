@@ -231,6 +231,82 @@ while (0)
 
 #define DP_HTT_T2H_HP_PIPE 5
 
+#define DP_UPDATE_STATS(_tgtobj, _srcobj)	\
+	do {				\
+		uint8_t i;		\
+		uint8_t pream_type;	\
+		for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) { \
+			for (i = 0; i < MAX_MCS; i++) { \
+				DP_STATS_AGGR(_tgtobj, _srcobj, \
+					tx.pkt_type[pream_type].mcs_count[i]); \
+				DP_STATS_AGGR(_tgtobj, _srcobj, \
+					rx.pkt_type[pream_type].mcs_count[i]); \
+			} \
+		} \
+		  \
+		for (i = 0; i < MAX_BW; i++) { \
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.bw[i]); \
+			DP_STATS_AGGR(_tgtobj, _srcobj, rx.bw[i]); \
+		} \
+		  \
+		for (i = 0; i < SS_COUNT; i++) \
+			DP_STATS_AGGR(_tgtobj, _srcobj, rx.nss[i]); \
+		\
+		for (i = 0; i < WME_AC_MAX; i++) { \
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.wme_ac_type[i]); \
+			DP_STATS_AGGR(_tgtobj, _srcobj, rx.wme_ac_type[i]); \
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.excess_retries_ac[i]); \
+		\
+		} \
+		\
+		for (i = 0; i < MAX_GI; i++) { \
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.sgi_count[i]); \
+			DP_STATS_AGGR(_tgtobj, _srcobj, rx.sgi_count[i]); \
+		} \
+		\
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.comp_pkt); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.ucast); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.mcast); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.tx_success); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.tx_failed); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ofdma); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.stbc); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ldpc); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.retries); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.non_amsdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.amsdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_tx); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_notx); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.age_out); \
+								\
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.mic_err); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.decrypt_err); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_ampdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.ampdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_amsdu_cnt); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, rx.amsdu_cnt); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.to_stack); \
+								\
+		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)	\
+			DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.rcvd_reo[i]); \
+									\
+		_srcobj->stats.rx.unicast.num = \
+			_srcobj->stats.rx.to_stack.num - \
+					_srcobj->stats.rx.multicast.num; \
+		_srcobj->stats.rx.unicast.bytes = \
+			_srcobj->stats.rx.to_stack.bytes - \
+					_srcobj->stats.rx.multicast.bytes; \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.unicast); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.multicast); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.wds); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.raw); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.pkts); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.fail); \
+								  \
+		_tgtobj->stats.tx.last_ack_rssi =	\
+			_srcobj->stats.tx.last_ack_rssi; \
+	}  while (0)
 
 extern int dp_peer_find_attach(struct dp_soc *soc);
 extern void dp_peer_find_detach(struct dp_soc *soc);

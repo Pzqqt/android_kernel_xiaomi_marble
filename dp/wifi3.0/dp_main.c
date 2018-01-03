@@ -3584,6 +3584,7 @@ void dp_mark_peer_inact(void *peer, bool inactive)
 void dp_peer_unref_delete(void *peer_handle)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	struct dp_peer *bss_peer = NULL;
 	struct dp_vdev *vdev = peer->vdev;
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -3673,6 +3674,13 @@ void dp_peer_unref_delete(void *peer_handle)
 #ifdef notyet
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
+		if (!vdev && !vdev->vap_bss_peer)
+			goto free_peer;
+
+		bss_peer = vdev->vap_bss_peer;
+		DP_UPDATE_STATS(bss_peer, peer);
+
+free_peer:
 		qdf_mem_free(peer);
 #endif
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
@@ -4137,83 +4145,12 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 {
 	struct dp_peer *peer = NULL;
 	struct dp_soc *soc = vdev->pdev->soc;
-	int i;
-	uint8_t pream_type;
 
 	qdf_mem_set(&(vdev->stats.tx), sizeof(vdev->stats.tx), 0x0);
 	qdf_mem_set(&(vdev->stats.rx), sizeof(vdev->stats.rx), 0x0);
 
-	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
-		for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
-			for (i = 0; i < MAX_MCS; i++) {
-				DP_STATS_AGGR(vdev, peer,
-					tx.pkt_type[pream_type].mcs_count[i]);
-				DP_STATS_AGGR(vdev, peer,
-					rx.pkt_type[pream_type].mcs_count[i]);
-			}
-		}
-
-		for (i = 0; i < MAX_BW; i++) {
-			DP_STATS_AGGR(vdev, peer, tx.bw[i]);
-			DP_STATS_AGGR(vdev, peer, rx.bw[i]);
-		}
-
-		for (i = 0; i < SS_COUNT; i++)
-			DP_STATS_AGGR(vdev, peer, rx.nss[i]);
-
-		for (i = 0; i < WME_AC_MAX; i++) {
-			DP_STATS_AGGR(vdev, peer, tx.wme_ac_type[i]);
-			DP_STATS_AGGR(vdev, peer, rx.wme_ac_type[i]);
-			DP_STATS_AGGR(vdev, peer, tx.excess_retries_ac[i]);
-
-		}
-
-		for (i = 0; i < MAX_GI; i++) {
-			DP_STATS_AGGR(vdev, peer, tx.sgi_count[i]);
-			DP_STATS_AGGR(vdev, peer, rx.sgi_count[i]);
-		}
-
-		DP_STATS_AGGR_PKT(vdev, peer, tx.comp_pkt);
-		DP_STATS_AGGR_PKT(vdev, peer, tx.ucast);
-		DP_STATS_AGGR_PKT(vdev, peer, tx.mcast);
-		DP_STATS_AGGR_PKT(vdev, peer, tx.tx_success);
-		DP_STATS_AGGR(vdev, peer, tx.tx_failed);
-		DP_STATS_AGGR(vdev, peer, tx.ofdma);
-		DP_STATS_AGGR(vdev, peer, tx.stbc);
-		DP_STATS_AGGR(vdev, peer, tx.ldpc);
-		DP_STATS_AGGR(vdev, peer, tx.retries);
-		DP_STATS_AGGR(vdev, peer, tx.non_amsdu_cnt);
-		DP_STATS_AGGR(vdev, peer, tx.amsdu_cnt);
-		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_rem);
-		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_rem_tx);
-		DP_STATS_AGGR(vdev, peer, tx.dropped.fw_rem_notx);
-		DP_STATS_AGGR(vdev, peer, tx.dropped.age_out);
-
-		DP_STATS_AGGR(vdev, peer, rx.err.mic_err);
-		DP_STATS_AGGR(vdev, peer, rx.err.decrypt_err);
-		DP_STATS_AGGR(vdev, peer, rx.non_ampdu_cnt);
-		DP_STATS_AGGR(vdev, peer, rx.ampdu_cnt);
-		DP_STATS_AGGR(vdev, peer, rx.non_amsdu_cnt);
-		DP_STATS_AGGR(vdev, peer, rx.amsdu_cnt);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.to_stack);
-
-		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)
-			DP_STATS_AGGR_PKT(vdev, peer, rx.rcvd_reo[i]);
-
-		peer->stats.rx.unicast.num = peer->stats.rx.to_stack.num -
-			peer->stats.rx.multicast.num;
-		peer->stats.rx.unicast.bytes = peer->stats.rx.to_stack.bytes -
-			peer->stats.rx.multicast.bytes;
-		DP_STATS_AGGR_PKT(vdev, peer, rx.unicast);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.multicast);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.wds);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.raw);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.intra_bss.pkts);
-		DP_STATS_AGGR_PKT(vdev, peer, rx.intra_bss.fail);
-
-		vdev->stats.tx.last_ack_rssi =
-			peer->stats.tx.last_ack_rssi;
-	}
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem)
+		DP_UPDATE_STATS(vdev, peer);
 
 	if (soc->cdp_soc.ol_ops->update_dp_stats)
 		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
@@ -4230,8 +4167,6 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 {
 	struct dp_vdev *vdev = NULL;
-	uint8_t i;
-	uint8_t pream_type;
 
 	qdf_mem_set(&(pdev->stats.tx), sizeof(pdev->stats.tx), 0x0);
 	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
@@ -4240,112 +4175,51 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
 		dp_aggregate_vdev_stats(vdev);
+		DP_UPDATE_STATS(pdev, vdev);
 
-		for (pream_type = 0; pream_type < DOT11_MAX; pream_type++) {
-			for (i = 0; i < MAX_MCS; i++) {
-				DP_STATS_AGGR(pdev, vdev,
-					tx.pkt_type[pream_type].mcs_count[i]);
-				DP_STATS_AGGR(pdev, vdev,
-					rx.pkt_type[pream_type].mcs_count[i]);
-			}
-		}
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.nawds_mcast);
 
-		for (i = 0; i < MAX_BW; i++) {
-			DP_STATS_AGGR(pdev, vdev, tx.bw[i]);
-			DP_STATS_AGGR(pdev, vdev, rx.bw[i]);
-		}
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.rcvd);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.processed);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.reinject_pkts);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.inspect_pkts);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.raw.raw_pkt);
+		DP_STATS_AGGR(pdev, vdev, tx_i.raw.dma_map_error);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.tso.tso_pkt);
+		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_host);
+		DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_target);
+		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_host);
+		DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_target);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.sg.sg_pkt);
+		DP_STATS_AGGR_PKT(pdev, vdev, tx_i.mcast_en.mcast_pkt);
+		DP_STATS_AGGR(pdev, vdev,
+				tx_i.mcast_en.dropped_map_error);
+		DP_STATS_AGGR(pdev, vdev,
+				tx_i.mcast_en.dropped_self_mac);
+		DP_STATS_AGGR(pdev, vdev,
+				tx_i.mcast_en.dropped_send_fail);
+		DP_STATS_AGGR(pdev, vdev, tx_i.mcast_en.ucast);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.dma_error);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.ring_full);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na);
+		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
+		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
+		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
 
-		for (i = 0; i < SS_COUNT; i++)
-			DP_STATS_AGGR(pdev, vdev, rx.nss[i]);
+		pdev->stats.tx_i.dropped.dropped_pkt.num =
+			pdev->stats.tx_i.dropped.dma_error +
+			pdev->stats.tx_i.dropped.ring_full +
+			pdev->stats.tx_i.dropped.enqueue_fail +
+			pdev->stats.tx_i.dropped.desc_na +
+			pdev->stats.tx_i.dropped.res_full;
 
-			for (i = 0; i < WME_AC_MAX; i++) {
-				DP_STATS_AGGR(pdev, vdev, tx.wme_ac_type[i]);
-				DP_STATS_AGGR(pdev, vdev, rx.wme_ac_type[i]);
-				DP_STATS_AGGR(pdev, vdev,
-						tx.excess_retries_ac[i]);
-
-			}
-
-			for (i = 0; i < MAX_GI; i++) {
-				DP_STATS_AGGR(pdev, vdev, tx.sgi_count[i]);
-				DP_STATS_AGGR(pdev, vdev, rx.sgi_count[i]);
-			}
-
-			DP_STATS_AGGR_PKT(pdev, vdev, tx.comp_pkt);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx.ucast);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx.mcast);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx.tx_success);
-			DP_STATS_AGGR(pdev, vdev, tx.tx_failed);
-			DP_STATS_AGGR(pdev, vdev, tx.ofdma);
-			DP_STATS_AGGR(pdev, vdev, tx.stbc);
-			DP_STATS_AGGR(pdev, vdev, tx.ldpc);
-			DP_STATS_AGGR(pdev, vdev, tx.retries);
-			DP_STATS_AGGR(pdev, vdev, tx.non_amsdu_cnt);
-			DP_STATS_AGGR(pdev, vdev, tx.amsdu_cnt);
-			DP_STATS_AGGR(pdev, vdev, tx.dropped.fw_rem);
-			DP_STATS_AGGR(pdev, vdev, tx.dropped.fw_rem_tx);
-			DP_STATS_AGGR(pdev, vdev, tx.dropped.fw_rem_notx);
-			DP_STATS_AGGR(pdev, vdev, tx.dropped.age_out);
-
-			DP_STATS_AGGR(pdev, vdev, rx.err.mic_err);
-			DP_STATS_AGGR(pdev, vdev, rx.err.decrypt_err);
-			DP_STATS_AGGR(pdev, vdev, rx.non_ampdu_cnt);
-			DP_STATS_AGGR(pdev, vdev, rx.ampdu_cnt);
-			DP_STATS_AGGR(pdev, vdev, rx.non_amsdu_cnt);
-			DP_STATS_AGGR(pdev, vdev, rx.amsdu_cnt);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.to_stack);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[0]);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[1]);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[2]);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.rcvd_reo[3]);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.unicast);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.multicast);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.wds);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss.pkts);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.intra_bss.fail);
-			DP_STATS_AGGR_PKT(pdev, vdev, rx.raw);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.nawds_mcast);
-
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.rcvd);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.processed);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.reinject_pkts);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.inspect_pkts);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.raw.raw_pkt);
-			DP_STATS_AGGR(pdev, vdev, tx_i.raw.dma_map_error);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.tso.tso_pkt);
-			DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_host);
-			DP_STATS_AGGR(pdev, vdev, tx_i.tso.dropped_target);
-			DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_host);
-			DP_STATS_AGGR(pdev, vdev, tx_i.sg.dropped_target);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.sg.sg_pkt);
-			DP_STATS_AGGR_PKT(pdev, vdev, tx_i.mcast_en.mcast_pkt);
-			DP_STATS_AGGR(pdev, vdev,
-					tx_i.mcast_en.dropped_map_error);
-			DP_STATS_AGGR(pdev, vdev,
-					tx_i.mcast_en.dropped_self_mac);
-			DP_STATS_AGGR(pdev, vdev,
-					tx_i.mcast_en.dropped_send_fail);
-			DP_STATS_AGGR(pdev, vdev, tx_i.mcast_en.ucast);
-			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.dma_error);
-			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.ring_full);
-			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.enqueue_fail);
-			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.desc_na);
-			DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
-			DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
-			DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
-
-			pdev->stats.tx_i.dropped.dropped_pkt.num =
-				pdev->stats.tx_i.dropped.dma_error +
-				pdev->stats.tx_i.dropped.ring_full +
-				pdev->stats.tx_i.dropped.enqueue_fail +
-				pdev->stats.tx_i.dropped.desc_na +
-				pdev->stats.tx_i.dropped.res_full;
-
-			pdev->stats.tx.last_ack_rssi =
-				vdev->stats.tx.last_ack_rssi;
-			pdev->stats.tx_i.tso.num_seg =
-				vdev->stats.tx_i.tso.num_seg;
+		pdev->stats.tx.last_ack_rssi =
+			vdev->stats.tx.last_ack_rssi;
+		pdev->stats.tx_i.tso.num_seg =
+			vdev->stats.tx_i.tso.num_seg;
 	}
+
 }
 
 /**
