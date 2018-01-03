@@ -809,8 +809,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (rx_bufs_used) {
 		dp_rx_buffers_replenish(soc, mac_id,
 			&pdev->rxdma_mon_buf_ring[mac_for_pdev],
-			&soc->rx_desc_mon[mac_id], rx_bufs_used, &head, &tail,
-			HAL_RX_BUF_RBM_SW3_BM);
+			&soc->rx_desc_mon[mac_id], rx_bufs_used, &head, &tail);
 	}
 }
 
@@ -846,16 +845,20 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 		return status;
 	}
 
+	rx_desc_pool->owner = HAL_RX_BUF_RBM_SW3_BM;
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			  "%s: Mon RX Buffers Replenish pdev_id=%d",
 			  __func__, pdev_id);
 
+
 	status = dp_rx_buffers_replenish(soc, mac_id, rxdma_srng, rx_desc_pool,
-			rxdma_entries, &desc_list, &tail,
-			HAL_RX_BUF_RBM_SW3_BM);
+			rxdma_entries, &desc_list, &tail);
+
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_buffers_replenish() failed \n", __func__);
+				"%s: dp_rx_buffers_replenish() failed",
+				__func__);
 		return status;
 	}
 

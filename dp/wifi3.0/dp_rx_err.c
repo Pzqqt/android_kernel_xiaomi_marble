@@ -981,7 +981,7 @@ done:
 		rx_desc_pool = &soc->rx_desc_buf[0];
 
 		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
-			rx_bufs_used, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+			rx_bufs_used, &head, &tail);
 	}
 
 	return rx_bufs_used; /* Assume no scale factor for now */
@@ -1114,8 +1114,7 @@ done:
 
 			dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
 					rx_desc_pool, rx_bufs_reaped[mac_id],
-					&head[mac_id], &tail[mac_id],
-					HAL_RX_BUF_RBM_SW3_BM);
+					&head[mac_id], &tail[mac_id]);
 			rx_bufs_used += rx_bufs_reaped[mac_id];
 		}
 	}
@@ -1280,7 +1279,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 		if (msdu_list.sw_cookie[0] != HAL_RX_COOKIE_SPECIAL) {
 			/* if the msdus belongs to NSS offloaded radio &&
-			 * the rbm is not SW3_BM then return the msdu_link
+			 * the rbm is not SW1_BM then return the msdu_link
 			 * descriptor without freeing the msdus (nbufs). let
 			 * these buffers be given to NSS completion ring for
 			 * NSS to free them.
@@ -1401,8 +1400,8 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
 		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
-			rx_desc_pool, rx_bufs_used, &head, &tail,
-			HAL_RX_BUF_RBM_SW3_BM);
+			rx_desc_pool, rx_bufs_used, &head, &tail);
+
 		work_done += rx_bufs_used;
 	}
 

@@ -977,8 +977,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 				dp_rx_buffers_replenish(soc, mac_for_pdev,
 					rx_refill_buf_ring,
 					&soc->rx_desc_buf[mac_for_pdev], 0,
-					&desc_list, &tail,
-					HAL_RX_BUF_RBM_SW3_BM);
+					&desc_list, &tail);
 			}
 		}
 	}

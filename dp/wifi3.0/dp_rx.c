@@ -27,7 +27,6 @@
 #endif
 #include "dp_internal.h"
 #include "dp_rx_mon.h"
-
 #ifdef RX_DESC_DEBUG_CHECK
 static inline void dp_rx_desc_prep(struct dp_rx_desc *rx_desc, qdf_nbuf_t nbuf)
 {
@@ -69,7 +68,6 @@ static inline bool dp_rx_check_ap_bridge(struct dp_vdev *vdev)
  *	       or NULL during dp rx initialization or out of buffer
  *	       interrupt.
  * @tail: tail of descs list
- * @owner: who owns the nbuf (host, NSS etc...)
  * Return: return success or failure
  */
 QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
@@ -77,8 +75,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				struct rx_desc_pool *rx_desc_pool,
 				uint32_t num_req_buffers,
 				union dp_rx_desc_list_elem_t **desc_list,
-				union dp_rx_desc_list_elem_t **tail,
-				uint8_t owner)
+				union dp_rx_desc_list_elem_t **tail)
 {
 	uint32_t num_alloc_desc;
 	uint16_t num_desc_to_free = 0;
@@ -207,7 +204,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 						(*desc_list)->rx_desc.cookie,
-						owner);
+						rx_desc_pool->owner);
 
 		*desc_list = next;
 	}
@@ -1393,8 +1390,7 @@ done:
 
 		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
 					rx_desc_pool, rx_bufs_reaped[mac_id],
-					&head[mac_id], &tail[mac_id],
-					HAL_RX_BUF_RBM_SW3_BM);
+					&head[mac_id], &tail[mac_id]);
 	}
 
 	/* Peer can be NULL is case of LFR */
@@ -1681,10 +1677,12 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 	rx_desc_pool = &soc->rx_desc_buf[pdev_id];
 
 	dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries*3, rx_desc_pool);
+
+	rx_desc_pool->owner = DP_WBM2SW_RBM;
 	/* For Rx buffers, WBM release ring is SW RING 3,for all pdev's */
 	dp_rxdma_srng = &pdev->rx_refill_buf_ring;
 	dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng, rx_desc_pool,
-		0, &desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
+		0, &desc_list, &tail);
 
 	return QDF_STATUS_SUCCESS;
 }

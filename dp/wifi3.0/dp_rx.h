@@ -30,6 +30,11 @@
 #define RX_BUFFER_ALIGNMENT     4
 #endif /* RXDMA_OPTIMIZATION */
 
+#ifdef QCA_HOST2FW_RXBUF_RING
+#define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW1_BM
+#else
+#define DP_WBM2SW_RBM HAL_RX_BUF_RBM_SW3_BM
+#endif
 #define RX_BUFFER_SIZE			2048
 #define RX_BUFFER_RESERVATION   0
 
@@ -676,7 +681,6 @@ static inline bool check_qwrap_multicast_loopback(struct dp_vdev *vdev,
  *	       or NULL during dp rx initialization or out of buffer
  *	       interrupt.
  * @tail: tail of descs list
- * @owner: who owns the nbuf (host, NSS etc...)
  * Return: return success or failure
  */
 QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
@@ -684,8 +688,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 				 struct rx_desc_pool *rx_desc_pool,
 				 uint32_t num_req_buffers,
 				 union dp_rx_desc_list_elem_t **desc_list,
-				 union dp_rx_desc_list_elem_t **tail,
-				 uint8_t owner);
+				 union dp_rx_desc_list_elem_t **tail);
 
 /**
  * dp_rx_link_desc_return() - Return a MPDU link descriptor to HW

@@ -129,7 +129,7 @@ void dp_rx_reorder_flush_frag(struct dp_peer *peer,
 		dp_rx_add_to_free_desc_list(&head, &tail,
 				peer->rx_tid[tid].head_frag_desc);
 		dp_rx_buffers_replenish(soc, 0, dp_rxdma_srng, rx_desc_pool,
-			1, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+			1, &head, &tail);
 	}
 
 	dp_rx_defrag_cleanup(peer, tid);

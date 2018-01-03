@@ -212,12 +212,14 @@ enum dp_nss_cfg {
  * @array: pointer to array of RX descriptor
  * @freelist: pointer to free RX descriptor link list
  * @lock: Protection for the RX descriptor pool
+ * @owner: owner for nbuf
  */
 struct rx_desc_pool {
 	uint32_t pool_size;
 	union dp_rx_desc_list_elem_t *array;
 	union dp_rx_desc_list_elem_t *freelist;
 	qdf_spinlock_t lock;
+	uint8_t owner;
 };
 
 /**
