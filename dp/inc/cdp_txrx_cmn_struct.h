@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -787,7 +787,7 @@ struct cdp_pkt_info {
 	/*no of packets*/
 	uint32_t num;
 	/* total no of bytes */
-	uint32_t bytes;
+	uint64_t bytes;
 };
 
 /* Tx  Stats */
