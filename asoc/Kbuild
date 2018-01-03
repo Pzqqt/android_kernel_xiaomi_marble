@@ -122,7 +122,7 @@ endif
 ifdef CONFIG_DOLBY_LICENSE
 	PLATFORM_OBJS += msm-ds2-dap-config.o
 endif
-ifdef CONFIG_SND_HWDEP
+ifdef CONFIG_SND_HWDEP_ROUTING
 	PLATFORM_OBJS += msm-pcm-routing-devdep.o
 endif
 ifdef CONFIG_QTI_PP
