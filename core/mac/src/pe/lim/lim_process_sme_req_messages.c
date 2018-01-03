@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2924,6 +2924,7 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		if (mlm_set_key_req->numKeys >
 				SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS) {
 			pe_err("no.of keys exceeded max num of default keys limit");
+			qdf_mem_free(mlm_set_key_req);
 			goto end;
 		}
 		qdf_copy_macaddr(&mlm_set_key_req->peer_macaddr,

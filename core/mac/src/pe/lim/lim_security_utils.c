@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -901,7 +901,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams = qdf_mem_malloc(sizeof(tSetStaKeyParams));
 	if (NULL == pSetStaKeyParams) {
 		pe_err("Unable to allocate memory during SET_BSSKEY");
-		return;
+		goto fail;
 	}
 
 	/* Update the WMA_SET_STAKEY_REQ parameters */
@@ -990,8 +990,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 					SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
 			} else {
 				pe_err("Wrong Key Index %d", defWEPIdx);
-				qdf_mem_free(pSetStaKeyParams);
-				return;
+				goto free_sta_key;
 			}
 		}
 		break;
@@ -1024,11 +1023,15 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	if (eSIR_SUCCESS != retCode) {
 		pe_err("Posting SET_STAKEY to HAL failed, reason=%X",
 			retCode);
-		/* Respond to SME with LIM_MLM_SETKEYS_CNF */
-		mlmSetKeysCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
+		goto free_sta_key;
 	} else
 		return;         /* Continue after WMA_SET_STAKEY_RSP... */
 
+free_sta_key:
+	qdf_mem_free(pSetStaKeyParams);
+fail:
+	/* Respond to SME with LIM_MLM_SETKEYS_CNF */
+	mlmSetKeysCnf.resultCode = eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	if (sendRsp == true)
 		lim_post_sme_set_keys_cnf(pMac, pMlmSetKeysReq, &mlmSetKeysCnf);
 }
