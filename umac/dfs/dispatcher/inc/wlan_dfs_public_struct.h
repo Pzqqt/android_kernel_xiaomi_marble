@@ -89,6 +89,8 @@ struct radar_event_info {
 	uint32_t upload_fullts_high;
 	int32_t  peak_sidx;
 	uint8_t  pdev_id;
+	uint8_t  delta_diff;
+	int8_t   delta_peak;
 };
 
 /**

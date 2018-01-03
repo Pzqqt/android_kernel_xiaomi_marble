@@ -938,8 +938,8 @@ void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 	 * Index of peak magnitude
 	 */
 	event->re_sidx = wlan_radar_event->peak_sidx;
-	event->re_delta_diff = 0;
-	event->re_delta_peak = 0;
+	event->re_delta_diff = wlan_radar_event->delta_diff;
+	event->re_delta_peak = wlan_radar_event->delta_peak;
 	event->re_flags = 0;
 
 	/*
