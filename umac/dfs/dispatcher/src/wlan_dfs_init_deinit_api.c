@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -256,6 +256,8 @@ static void dfs_scan_serialization_comp_info_cb(
 		return;
 	}
 
+	comp_info->scan_info.is_cac_in_progress = false;
+
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
@@ -264,8 +266,6 @@ static void dfs_scan_serialization_comp_info_cb(
 
 	if (dfs_is_ap_cac_timer_running(dfs))
 		comp_info->scan_info.is_cac_in_progress = true;
-	else
-		comp_info->scan_info.is_cac_in_progress = false;
 }
 
 QDF_STATUS wifi_dfs_psoc_enable(struct wlan_objmgr_psoc *psoc)
