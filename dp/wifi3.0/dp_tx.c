@@ -2957,7 +2957,7 @@ static inline void dp_tx_me_mem_free(struct dp_pdev *pdev,
 	while (seg_info_head) {
 		nbuf = seg_info_head->nbuf;
 		mc_uc_buf = (struct dp_tx_me_buf_t *)
-			seg_info_new->frags[0].vaddr;
+			seg_info_head->frags[0].vaddr;
 		phy_addr = seg_info_head->frags[0].paddr_hi;
 		phy_addr =  (phy_addr << 32) | seg_info_head->frags[0].paddr_lo;
 		qdf_mem_unmap_nbytes_single(pdev->soc->osdev,
