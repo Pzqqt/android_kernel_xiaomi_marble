@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -337,7 +337,7 @@ int dfs_init_radar_filters(struct wlan_dfs *dfs,
 	dfs_print_filters(dfs);
 
 	dfs->dfs_rinfo.rn_numbin5radars  = numb5radars;
-	if (!(dfs->dfs_b5radars))
+	if (dfs->dfs_b5radars)
 		qdf_mem_free(dfs->dfs_b5radars);
 
 	dfs->dfs_b5radars = (struct dfs_bin5radars *)qdf_mem_malloc(
