@@ -9152,7 +9152,7 @@ enum hdd_link_speed_rpt_type {
  *
  * <----- fine_time_meas_cap (in bits) ----->
  *+----------+-----+-----+------+------+-------+-------+-----+-----+
- *|   9-31   |  8  |  7  |   5  |   4  |   3   |   2   |  1  |  0  |
+ *|   8-31   |  7  |  6  |   5  |   4  |   3   |   2   |  1  |  0  |
  *+----------+-----+-----+------+------+-------+-------+-----+-----+
  *| reserved | SAP | SAP |P2P-GO|P2P-GO|P2P-CLI|P2P-CLI| STA | STA |
  *|          |resp |init |resp  |init  |resp   |init   |resp |init |

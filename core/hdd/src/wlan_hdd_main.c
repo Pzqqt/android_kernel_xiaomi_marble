@@ -8495,6 +8495,7 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 	QDF_STATUS status;
 	bool is_ssr = false;
 	int ret;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	ENTER();
 
@@ -8523,6 +8524,14 @@ int hdd_start_ap_adapter(struct hdd_adapter *adapter)
 		hdd_sap_destroy_ctx(adapter);
 		return ret;
 	}
+
+	if (adapter->device_mode == QDF_SAP_MODE)
+		sme_cli_set_command(adapter->session_id,
+			WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,
+			(bool)(hdd_ctx->config->fine_time_meas_cap &
+							WMI_FW_AP_RTT_RESPR),
+			VDEV_CMD);
+
 	status = hdd_init_ap_mode(adapter, is_ssr);
 
 	if (QDF_STATUS_SUCCESS != status) {
