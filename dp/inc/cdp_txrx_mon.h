@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -87,8 +87,8 @@ static inline void cdp_monitor_set_filter_non_data
 			(pdev, val);
 }
 
-static inline u_int8_t cdp_monitor_get_filter_ucast_data(ol_txrx_soc_handle soc,
-			struct cdp_vdev *vdev_txrx_handle)
+static inline bool cdp_monitor_get_filter_ucast_data
+(ol_txrx_soc_handle soc, struct cdp_vdev *vdev_txrx_handle)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -105,8 +105,8 @@ static inline u_int8_t cdp_monitor_get_filter_ucast_data(ol_txrx_soc_handle soc,
 			(vdev_txrx_handle);
 }
 
-static inline u_int8_t cdp_monitor_get_filter_mcast_data(ol_txrx_soc_handle soc,
-				struct cdp_vdev *vdev_txrx_handle)
+static inline bool cdp_monitor_get_filter_mcast_data
+(ol_txrx_soc_handle soc, struct cdp_vdev *vdev_txrx_handle)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
@@ -123,8 +123,8 @@ static inline u_int8_t cdp_monitor_get_filter_mcast_data(ol_txrx_soc_handle soc,
 			(vdev_txrx_handle);
 }
 
-static inline u_int8_t cdp_monitor_get_filter_non_data(ol_txrx_soc_handle soc,
-				struct cdp_vdev *vdev_txrx_handle)
+static inline bool cdp_monitor_get_filter_non_data
+(ol_txrx_soc_handle soc, struct cdp_vdev *vdev_txrx_handle)
 {
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,

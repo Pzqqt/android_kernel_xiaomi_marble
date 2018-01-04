@@ -4066,6 +4066,67 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * dp_vdev_get_filter_ucast_data() - get DP VDEV monitor ucast filter
+ * @vdev_handle: Datapath VDEV handle
+ * Return: true on ucast filter flag set
+ */
+static bool dp_vdev_get_filter_ucast_data(struct cdp_vdev *vdev_handle)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
+
+	pdev = vdev->pdev;
+
+	if ((pdev->fp_data_filter & FILTER_DATA_UCAST) ||
+	    (pdev->mo_data_filter & FILTER_DATA_UCAST))
+		return true;
+
+	return false;
+}
+
+/**
+ * dp_vdev_get_filter_mcast_data() - get DP VDEV monitor mcast filter
+ * @vdev_handle: Datapath VDEV handle
+ * Return: true on mcast filter flag set
+ */
+static bool dp_vdev_get_filter_mcast_data(struct cdp_vdev *vdev_handle)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
+
+	pdev = vdev->pdev;
+
+	if ((pdev->fp_data_filter & FILTER_DATA_MCAST) ||
+	    (pdev->mo_data_filter & FILTER_DATA_MCAST))
+		return true;
+
+	return false;
+}
+
+/**
+ * dp_vdev_get_filter_non_data() - get DP VDEV monitor non_data filter
+ * @vdev_handle: Datapath VDEV handle
+ * Return: true on non data filter flag set
+ */
+static bool dp_vdev_get_filter_non_data(struct cdp_vdev *vdev_handle)
+{
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev;
+
+	pdev = vdev->pdev;
+
+	if ((pdev->fp_mgmt_filter & FILTER_MGMT_ALL) ||
+	    (pdev->mo_mgmt_filter & FILTER_MGMT_ALL)) {
+		if ((pdev->fp_ctrl_filter & FILTER_CTRL_ALL) ||
+		    (pdev->mo_ctrl_filter & FILTER_CTRL_ALL)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+
 #ifdef MESH_MODE_SUPPORT
 void dp_peer_set_mesh_mode(struct cdp_vdev *vdev_hdl, uint32_t val)
 {
@@ -6040,9 +6101,9 @@ static struct cdp_mon_ops dp_ops_mon = {
 	.txrx_monitor_set_filter_ucast_data = NULL,
 	.txrx_monitor_set_filter_mcast_data = NULL,
 	.txrx_monitor_set_filter_non_data = NULL,
-	.txrx_monitor_get_filter_ucast_data = NULL,
-	.txrx_monitor_get_filter_mcast_data = NULL,
-	.txrx_monitor_get_filter_non_data = NULL,
+	.txrx_monitor_get_filter_ucast_data = dp_vdev_get_filter_ucast_data,
+	.txrx_monitor_get_filter_mcast_data = dp_vdev_get_filter_mcast_data,
+	.txrx_monitor_get_filter_non_data = dp_vdev_get_filter_non_data,
 	.txrx_reset_monitor_mode = dp_reset_monitor_mode,
 	/* Added support for HK advance filter */
 	.txrx_set_advance_monitor_filter = dp_pdev_set_advance_monitor_filter,

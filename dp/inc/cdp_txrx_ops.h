@@ -488,11 +488,11 @@ struct cdp_mon_ops {
 	void (*txrx_monitor_set_filter_non_data)
 		(struct cdp_pdev *, u_int8_t val);
 
-	u_int8_t (*txrx_monitor_get_filter_ucast_data)
+	bool (*txrx_monitor_get_filter_ucast_data)
 		(struct cdp_vdev *vdev_txrx_handle);
-	u_int8_t (*txrx_monitor_get_filter_mcast_data)
+	bool (*txrx_monitor_get_filter_mcast_data)
 		(struct cdp_vdev *vdev_txrx_handle);
-	u_int8_t (*txrx_monitor_get_filter_non_data)
+	bool (*txrx_monitor_get_filter_non_data)
 		(struct cdp_vdev *vdev_txrx_handle);
 	int (*txrx_reset_monitor_mode)(struct cdp_pdev *pdev);
 
