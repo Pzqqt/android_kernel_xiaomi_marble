@@ -317,7 +317,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_P2P: P2P module ID
  * @QDF_MODULE_ID_POLICY_MGR: Policy Manager module ID
  * @QDF_MODULE_ID_CONFIG: CONFIG module ID
- * @QDF_MODULE_ID_REGULATORY    : REGULATORY module ID
+ * @QDF_MODULE_ID_REGULATORY: REGULATORY module ID
  * @QDF_MODULE_ID_NAN: NAN module ID
  * @QDF_MODULE_ID_SPECTRAL: Spectral module ID
  * @QDF_MODULE_ID_ROAM_DEBUG: Roam Debug logging
@@ -328,6 +328,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_FTM: FTM module ID
  * @QDF_MODULE_ID_EXTAP: Extender AP module ID
  * @QDF_MODULE_ID_FD: FILS discovery logging
+ * @QDF_MODULE_ID_OCB: OCB module ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -428,6 +429,7 @@ typedef enum {
 	QDF_MODULE_ID_FTM,
 	QDF_MODULE_ID_EXTAP,
 	QDF_MODULE_ID_FD,
+	QDF_MODULE_ID_OCB,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

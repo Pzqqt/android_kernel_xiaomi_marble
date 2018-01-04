@@ -201,6 +201,8 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_REGULATORY_SB_ID:      SB regulatory operations
  * @WLAN_REGULATORY_NB_ID:      NB regulatory operations
  * @WLAN_POLICY_MGR_ID:         Policy Manager operations
+ * @WLAN_SON_ID:                SON
+ * @WLAN_SA_API_ID:             SA PAI
  * @WLAN_SPECTRAL_ID:           Spectral operations
  * @WLAN_SPLITMAC_ID:           SplitMac
  * @WLAN_DEBUG_ID:              Debug operations
@@ -208,6 +210,8 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_DISA_ID:               DISA (encryption test) operations
  * @WLAN_FTM_ID:                FTM module
  * @WLAN_FD_ID:                 FILS Discovery
+ * @WLAN_OCB_NB_ID:             OCB Northbound operations
+ * @WLAN_OCB_SB_ID:             OCB Southbound operations
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -248,7 +252,8 @@ typedef enum {
 	WLAN_DISA_ID          = 31,
 	WLAN_FTM_ID           = 32,
 	WLAN_FD_ID            = 33,
-
+	WLAN_OCB_NB_ID        = 34,
+	WLAN_OCB_SB_ID        = 35,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 

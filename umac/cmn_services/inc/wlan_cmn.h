@@ -119,12 +119,14 @@
  * @WLAN_UMAC_COMP_DFS:           DFS
  * @WLAN_UMAC_COMP_SPECTRAL:      Spectral
  * @WLAN_UMAC_COMP_OFFCHAN_TXRX:  Offchan TxRx
+ * @WLAN_UMAC_COMP_SON:           SON
+ * @WLAN_UMAC_COMP_SPECTRAL:      Spectral
  * @WLAN_UMAC_COMP_SPLITMAC:      SplitMAC
  * @WLAN_UMAC_COMP_DISA:          DISA encryption test
  * @WLAN_UMAC_COMP_GREEN_AP:      Green AP
  * @WLAN_UMAC_COMP_FTM:           FTM component
  * @WLAN_UMAC_COMP_FD:            FILS Discovery
- *
+ * @WLAN_UMAC_COMP_OCB:           OCB
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -156,6 +158,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_GREEN_AP,
 	WLAN_UMAC_COMP_FTM,
 	WLAN_UMAC_COMP_FD,
+	WLAN_UMAC_COMP_OCB,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 
