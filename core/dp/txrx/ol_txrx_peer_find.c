@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -303,6 +303,10 @@ void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev)
 				 * ol_txrx_peer_release_ref.
 				 */
 				qdf_atomic_init(&peer->ref_cnt); /* set to 0 */
+				ol_txrx_peer_get_ref(peer,
+						     PEER_DEBUG_ID_OL_INTERNAL);
+				ol_txrx_peer_release_ref(peer,
+						     PEER_DEBUG_ID_OL_INTERNAL);
 			}
 		}
 	}
