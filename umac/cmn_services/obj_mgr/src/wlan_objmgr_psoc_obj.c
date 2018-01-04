@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1724,7 +1724,7 @@ void wlan_objmgr_psoc_release_ref(struct wlan_objmgr_psoc *psoc,
 						wlan_objmgr_ref_dbgid id)
 {
 	if (psoc == NULL) {
-		obj_mgr_err("psoc obj is NULLi for id:%d", id);
+		obj_mgr_err("psoc obj is NULL for id:%d", id);
 		QDF_ASSERT(0);
 		return;
 	}

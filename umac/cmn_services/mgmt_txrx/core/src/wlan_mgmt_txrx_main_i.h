@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -170,26 +170,35 @@ struct mgmt_txrx_stats_t {
 };
 
 /**
- * struct mgmt_txrx_priv_context - mgmt txrx private context
- * @psoc_context:     psoc context
- * @mgmt_rx_comp_cb:  array of pointers of mgmt rx cbs
+ * struct mgmt_txrx_priv_psoc_context - mgmt txrx private psoc context
+ * @psoc:                psoc context
+ * @mgmt_rx_comp_cb:     array of pointers of mgmt rx cbs
+ * @mgmt_txrx_psoc_ctx_lock:  mgmt txrx psoc ctx lock
+ */
+struct mgmt_txrx_priv_psoc_context {
+	struct wlan_objmgr_psoc *psoc;
+	struct mgmt_rx_handler *mgmt_rx_comp_cb[MGMT_MAX_FRAME_TYPE];
+	qdf_spinlock_t mgmt_txrx_psoc_ctx_lock;
+};
+
+/**
+ * struct mgmt_txrx_priv_context_dev - mgmt txrx private context
+ * @pdev:     pdev context
  * @mgmt_desc_pool:   pointer to mgmt desc. pool
  * @mgmt_txrx_stats:  pointer to mgmt txrx stats
  * @wakelock_tx_cmp:  mgmt tx complete wake lock
  */
-struct mgmt_txrx_priv_context {
-	struct wlan_objmgr_psoc *psoc;
-	struct mgmt_rx_handler *mgmt_rx_comp_cb[MGMT_MAX_FRAME_TYPE];
+struct mgmt_txrx_priv_pdev_context {
+	struct wlan_objmgr_pdev *pdev;
 	struct mgmt_desc_pool_t mgmt_desc_pool;
 	struct mgmt_txrx_stats_t *mgmt_txrx_stats;
-	qdf_spinlock_t mgmt_txrx_ctx_lock;
 	qdf_wake_lock_t wakelock_tx_cmp;
 };
 
 
 /**
  * wlan_mgmt_txrx_desc_pool_init() - initializes mgmt. desc. pool
- * @mgmt_txrx_ctx: mgmt txrx context
+ * @mgmt_txrx_pdev_ctx: mgmt txrx pdev context
  * @pool_size: desc. pool size
  *
  * This function initializes the mgmt descriptor pool.
@@ -197,23 +206,23 @@ struct mgmt_txrx_priv_context {
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_mgmt_txrx_desc_pool_init(
-			struct mgmt_txrx_priv_context *mgmt_txrx_ctx,
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx,
 			uint32_t pool_size);
 
 /**
  * wlan_mgmt_txrx_desc_pool_deinit() - deinitializes mgmt. desc. pool
- * @mgmt_txrx_ctx: mgmt txrx context
+ * @mgmt_txrx_pdev_ctx: mgmt txrx pdev context
  *
  * This function deinitializes the mgmt descriptor pool.
  *
  * Return: void
  */
 void wlan_mgmt_txrx_desc_pool_deinit(
-			struct mgmt_txrx_priv_context *mgmt_txrx_ctx);
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
 
 /**
  * wlan_mgmt_txrx_desc_get() - gets mgmt. descriptor from freelist
- * @mgmt_txrx_ctx: mgmt txrx context
+ * @mgmt_txrx_pdev_ctx: mgmt txrx pdev context
  *
  * This function retrieves the mgmt. descriptor for mgmt. tx frames
  * from the mgmt. descriptor freelist.
@@ -221,18 +230,19 @@ void wlan_mgmt_txrx_desc_pool_deinit(
  * Return: mgmt. descriptor retrieved.
  */
 struct mgmt_txrx_desc_elem_t *wlan_mgmt_txrx_desc_get(
-			struct mgmt_txrx_priv_context *mgmt_txrx_ctx);
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx);
 
 /**
  * wlan_mgmt_txrx_desc_put() - puts mgmt. descriptor back in freelist
- * @mgmt_txrx_ctx: mgmt txrx context
+ * @mgmt_txrx_pdev_ctx: mgmt txrx pdev context
  * @desc_id: mgmt txrx descriptor id
  *
  * This function puts the mgmt. descriptor back in to the freelist.
  *
  * Return: void
  */
-void wlan_mgmt_txrx_desc_put(struct mgmt_txrx_priv_context *mgmt_txrx_ctx,
-			     uint32_t desc_id);
+void wlan_mgmt_txrx_desc_put(
+			struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx,
+			uint32_t desc_id);
 
 #endif

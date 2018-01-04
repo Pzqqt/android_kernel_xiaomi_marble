@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -30,11 +30,7 @@
 #include "wlan_objmgr_cmn.h"
 #include "qdf_nbuf.h"
 
-/**
- * Current HTC credit is 2 so pool size of 50 is sufficient as non
- * converged code will still be using similar implementation from WMA path
- */
-#define MGMT_DESC_POOL_MAX 50
+#define MGMT_DESC_POOL_MAX 512
 
 #define mgmt_txrx_log(level, args...) \
 			QDF_TRACE(QDF_MODULE_ID_MGMT_TXRX, level, ## args)

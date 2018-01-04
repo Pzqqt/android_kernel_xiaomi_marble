@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -321,6 +321,8 @@ wlan_lmac_if_umac_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 			tgt_mgmt_txrx_get_peer_from_desc_id;
 	mgmt_txrx_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id =
 			tgt_mgmt_txrx_get_vdev_id_from_desc_id;
+	mgmt_txrx_rx_ops->mgmt_txrx_get_free_desc_pool_count =
+			tgt_mgmt_txrx_get_free_desc_pool_count;
 
 	/* scan rx ops */
 	rx_ops->scan.scan_ev_handler = tgt_scan_event_handler;

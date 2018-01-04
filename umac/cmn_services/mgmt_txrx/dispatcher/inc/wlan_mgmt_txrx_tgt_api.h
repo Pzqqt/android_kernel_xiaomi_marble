@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,7 +50,7 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 
 /**
  * tgt_mgmt_txrx_tx_completion_handler() - handles mgmt. tx completions
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: mgmt desc. id
  * @status: status of download of tx packet
  * @tx_compl_params: tx completion params
@@ -62,13 +62,13 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id, uint32_t status,
 			void *tx_compl_params);
 
 /**
  * tgt_mgmt_txrx_get_nbuf_from_desc_id() - extracts nbuf from mgmt desc
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: desc_id
  *
  * This function extracts nbuf from mgmt desc extracted from desc id.
@@ -77,12 +77,12 @@ QDF_STATUS tgt_mgmt_txrx_tx_completion_handler(
  *         NULL - in case of failure
  */
 qdf_nbuf_t tgt_mgmt_txrx_get_nbuf_from_desc_id(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id);
 
 /**
  * tgt_mgmt_txrx_get_peer_from_desc_id() - extracts peer from mgmt desc
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: desc_id
  *
  * This function extracts peer from mgmt desc extracted from desc id.
@@ -92,12 +92,12 @@ qdf_nbuf_t tgt_mgmt_txrx_get_nbuf_from_desc_id(
  */
 struct wlan_objmgr_peer *
 tgt_mgmt_txrx_get_peer_from_desc_id(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id);
 
 /**
  * tgt_mgmt_txrx_get_vdev_id_from_desc_id() - extracts vdev id from mgmt desc
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: desc_id
  *
  * This function extracts vdev id from mgmt desc extracted from desc id.
@@ -106,7 +106,18 @@ tgt_mgmt_txrx_get_peer_from_desc_id(
  *         WLAN_UMAC_VDEV_ID_MAX - in case of failure
  */
 uint8_t tgt_mgmt_txrx_get_vdev_id_from_desc_id(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id);
+
+/**
+ * tgt_mgmt_txrx_get_free_desc_pool_count() - get free mgmt desc count
+ * @pdev: pdev context
+ *
+ * This function returns the count of free mgmt descriptors.
+ *
+ * Return:  free descpriptor count
+ */
+uint32_t tgt_mgmt_txrx_get_free_desc_pool_count(
+			struct wlan_objmgr_pdev *pdev);
 
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -606,7 +606,7 @@ struct wlan_lmac_if_tx_ops {
  */
 struct wlan_lmac_if_mgmt_txrx_rx_ops {
 	QDF_STATUS (*mgmt_tx_completion_handler)(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id, uint32_t status,
 			void *tx_compl_params);
 	QDF_STATUS (*mgmt_rx_frame_handler)(
@@ -614,13 +614,15 @@ struct wlan_lmac_if_mgmt_txrx_rx_ops {
 			qdf_nbuf_t buf,
 			struct mgmt_rx_event_params *mgmt_rx_params);
 	qdf_nbuf_t (*mgmt_txrx_get_nbuf_from_desc_id)(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id);
 	struct wlan_objmgr_peer * (*mgmt_txrx_get_peer_from_desc_id)(
-			struct wlan_objmgr_psoc *psoc, uint32_t desc_id);
+			struct wlan_objmgr_pdev *pdev, uint32_t desc_id);
 	uint8_t (*mgmt_txrx_get_vdev_id_from_desc_id)(
-			struct wlan_objmgr_psoc *psoc,
+			struct wlan_objmgr_pdev *pdev,
 			uint32_t desc_id);
+	uint32_t (*mgmt_txrx_get_free_desc_pool_count)(
+			struct wlan_objmgr_pdev *pdev);
 };
 
 struct wlan_lmac_if_reg_rx_ops {

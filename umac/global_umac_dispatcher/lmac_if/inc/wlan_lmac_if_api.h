@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -22,6 +22,7 @@
 
 #include "wlan_objmgr_cmn.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wlan_objmgr_pdev_obj.h"
 
 /**
  * wlan_lmac_if_umac_rx_ops_register() - UMAC rx handler register
@@ -102,7 +103,7 @@ wlan_lmac_if_get_reg_rx_ops(struct wlan_objmgr_psoc *psoc)
 
 /**
  * mgmt_txrx_get_nbuf() - retrieve nbuf from mgmt desc_id
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: mgmt desc_id
  *
  * API to retrieve the nbuf from mgmt desc_id
@@ -110,12 +111,16 @@ wlan_lmac_if_get_reg_rx_ops(struct wlan_objmgr_psoc *psoc)
  * Return: nbuf
  */
 static inline qdf_nbuf_t
-mgmt_txrx_get_nbuf(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
+mgmt_txrx_get_nbuf(struct wlan_objmgr_pdev *pdev, uint32_t desc_id)
 {
-	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
-				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
 	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_nbuf_from_desc_id)
-		return mgmt_rx_ops->mgmt_txrx_get_nbuf_from_desc_id(psoc,
+		return mgmt_rx_ops->mgmt_txrx_get_nbuf_from_desc_id(pdev,
 								     desc_id);
 
 	return NULL;
@@ -123,7 +128,7 @@ mgmt_txrx_get_nbuf(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
 
 /**
  * mgmt_txrx_tx_completion_handler() - mgmt tx completion handler
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: mgmt desc_id
  * @status: tx status
  * @params: tx params
@@ -133,18 +138,22 @@ mgmt_txrx_get_nbuf(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 static inline QDF_STATUS
-mgmt_txrx_tx_completion_handler(struct wlan_objmgr_psoc *psoc,
+mgmt_txrx_tx_completion_handler(struct wlan_objmgr_pdev *pdev,
 				uint32_t desc_id, uint32_t status,
 				void *params)
 {
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+	struct wlan_objmgr_psoc *psoc;
 	qdf_nbuf_t nbuf;
-	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
-				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
 	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_tx_completion_handler)
-		return mgmt_rx_ops->mgmt_tx_completion_handler(psoc, desc_id,
+		return mgmt_rx_ops->mgmt_tx_completion_handler(pdev, desc_id,
 							status, params);
 
-	nbuf = mgmt_txrx_get_nbuf(psoc, desc_id);
+	nbuf = mgmt_txrx_get_nbuf(pdev, desc_id);
 	if (nbuf)
 		qdf_nbuf_free(nbuf);
 
@@ -165,8 +174,10 @@ static inline QDF_STATUS
 mgmt_txrx_rx_handler(struct wlan_objmgr_psoc *psoc, qdf_nbuf_t nbuf,
 			void *params)
 {
-	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
-				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
 	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_rx_frame_handler)
 		return mgmt_rx_ops->mgmt_rx_frame_handler(psoc, nbuf, params);
 
@@ -178,7 +189,7 @@ mgmt_txrx_rx_handler(struct wlan_objmgr_psoc *psoc, qdf_nbuf_t nbuf,
 
 /**
  * mgmt_txrx_get_peer() - retrieve peer from mgmt desc_id
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: mgmt desc_id
  *
  * API to retrieve the peer from mgmt desc_id
@@ -186,12 +197,16 @@ mgmt_txrx_rx_handler(struct wlan_objmgr_psoc *psoc, qdf_nbuf_t nbuf,
  * Return: objmgr peer pointer
  */
 static inline struct wlan_objmgr_peer *
-mgmt_txrx_get_peer(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
+mgmt_txrx_get_peer(struct wlan_objmgr_pdev *pdev, uint32_t desc_id)
 {
-	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
-				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
 	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_peer_from_desc_id)
-		return mgmt_rx_ops->mgmt_txrx_get_peer_from_desc_id(psoc,
+		return mgmt_rx_ops->mgmt_txrx_get_peer_from_desc_id(pdev,
 								     desc_id);
 
 	return NULL;
@@ -199,7 +214,7 @@ mgmt_txrx_get_peer(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
 
 /**
  * mgmt_txrx_get_vdev_id() - retrieve vdev_id from mgmt desc_id
- * @psoc: psoc context
+ * @pdev: pdev context
  * @desc_id: mgmt desc_id
  *
  * API to retrieve the vdev_id from mgmt desc_id
@@ -207,14 +222,42 @@ mgmt_txrx_get_peer(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
  * Return: vdev_id
  */
 static inline uint8_t
-mgmt_txrx_get_vdev_id(struct wlan_objmgr_psoc *psoc, uint32_t desc_id)
+mgmt_txrx_get_vdev_id(struct wlan_objmgr_pdev *pdev, uint32_t desc_id)
 {
-	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops =
-				wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
 	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id)
-		return mgmt_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id(psoc,
+		return mgmt_rx_ops->mgmt_txrx_get_vdev_id_from_desc_id(pdev,
 								   desc_id);
 
 	return WLAN_UMAC_VDEV_ID_MAX;
+}
+/**
+ * mgmt_txrx_get_free_desc_count() - retrieve vdev_id from mgmt desc_id
+ * @pdev: pdev context
+ *
+ * API to get the free desc count mgmt desc pool
+ *
+ * Return: free_desc_count
+ */
+static inline uint32_t
+mgmt_txrx_get_free_desc_count(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_lmac_if_mgmt_txrx_rx_ops *mgmt_rx_ops;
+	struct wlan_objmgr_psoc *psoc;
+	uint32_t free_desc_count = WLAN_INVALID_MGMT_DESC_COUNT;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	mgmt_rx_ops = wlan_lmac_if_get_mgmt_txrx_rx_ops(psoc);
+
+	if (mgmt_rx_ops && mgmt_rx_ops->mgmt_txrx_get_free_desc_pool_count)
+		free_desc_count = mgmt_rx_ops->mgmt_txrx_get_free_desc_pool_count(
+						pdev);
+
+	return free_desc_count;
 }
 #endif /* _WLAN_LMAC_IF_API_H */
