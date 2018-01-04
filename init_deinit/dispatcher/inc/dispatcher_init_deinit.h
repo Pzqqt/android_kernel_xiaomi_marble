@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -154,5 +154,27 @@ QDF_STATUS dispatcher_psoc_enable(struct wlan_objmgr_psoc *psoc);
  * Return: none
  */
 QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * dispatcher_pdev_open(): API to trigger PDEV open for all new components
+ * @pdev: pdev context
+ *
+ * This API calls all new components PDEV OPEN APIs. This is invoked from
+ * during PDEV object is created.
+ *
+ * Return: none
+ */
+QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dispatcher_pdev_close(): API to trigger PDEV close for all new components
+ * @pdev: pdev context
+ *
+ * This API calls all new components PDEV CLOSE APIs. This is invoked from
+ * during driver unload sequence.
+ *
+ * Return: none
+ */
+QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev);
 
 #endif /* End of  !defined(__DISPATCHER_INIT_H) */

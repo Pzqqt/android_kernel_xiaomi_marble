@@ -2341,7 +2341,7 @@ static QDF_STATUS reg_sched_chan_change_cbks_nb(struct scheduler_msg *msg)
 	return QDF_STATUS_SUCCESS;
 }
 
-static QDF_STATUS reg_send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS reg_send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
 					struct wlan_objmgr_pdev *pdev)
 {
 	struct scheduler_msg msg = {0};
@@ -3031,14 +3031,6 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 				&psoc_priv_obj->mas_chan_params[pdev_id]);
 
 	reg_compute_pdev_current_chan_list(pdev_priv_obj);
-
-	status = reg_send_scheduler_msg_sb(parent_psoc, pdev);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		qdf_mem_free(pdev_priv_obj);
-		reg_err("scheduler send msg failed");
-		return status;
-	}
 
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
 						     WLAN_UMAC_COMP_REGULATORY,

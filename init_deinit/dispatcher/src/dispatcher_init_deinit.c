@@ -274,6 +274,18 @@ static QDF_STATUS dispatcher_regulatory_psoc_close(struct wlan_objmgr_psoc
 	return regulatory_psoc_close(psoc);
 }
 
+static QDF_STATUS dispatcher_regulatory_pdev_open(struct wlan_objmgr_pdev
+						  *pdev)
+{
+	return regulatory_pdev_open(pdev);
+}
+
+static QDF_STATUS dispatcher_regulatory_pdev_close(struct wlan_objmgr_pdev
+						  *pdev)
+{
+	return regulatory_pdev_close(pdev);
+}
+
 #ifdef WLAN_POLICY_MGR_ENABLE
 static QDF_STATUS dispatcher_policy_mgr_init(void)
 {
@@ -1127,3 +1139,27 @@ QDF_STATUS dispatcher_psoc_disable(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(dispatcher_psoc_disable);
+
+QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_pdev_open(pdev))
+		goto out;
+
+	return QDF_STATUS_SUCCESS;
+
+out:
+	return QDF_STATUS_E_FAILURE;
+}
+EXPORT_SYMBOL(dispatcher_pdev_open);
+
+QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_pdev_close(pdev))
+		goto out;
+
+	return QDF_STATUS_SUCCESS;
+
+out:
+	return QDF_STATUS_E_FAILURE;
+}
+EXPORT_SYMBOL(dispatcher_pdev_close);

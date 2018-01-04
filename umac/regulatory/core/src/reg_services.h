@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -414,4 +414,15 @@ bool reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev);
  */
 QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
 		struct ch_avoid_ind_type *ch_avoid_event);
+
+/**
+ * reg_send_scheduler_msg_sb() - Start scheduler to call list of callbacks
+ * registered whenever current chan list changes.
+ * @psoc: Pointer to PSOC structure.
+ * @pdev: Pointer to PDEV structure.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
+		struct wlan_objmgr_pdev *pdev);
 #endif
