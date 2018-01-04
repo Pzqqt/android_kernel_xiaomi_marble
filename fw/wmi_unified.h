@@ -12757,6 +12757,21 @@ typedef struct {
 } wmi_vdev_get_arp_stats_event_fixed_param;
 
 typedef struct {
+    A_UINT32 tlv_header; /*  TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_set_connectivity_check_stats */
+    A_UINT32 pkt_type_bitmap;  /* WMI_IP_CONNECTIVITY_STATS_RX_PKT_TYPE_BITMAP - only for DNS, TCP and ICMP */
+    A_UINT32 tcp_src_port;  /* target will maintain TCP stats (only) for frames with this src port */
+    A_UINT32 tcp_dst_port; /* target will maintain TCP stats (only) for frames with this dst port */
+    A_UINT32 icmp_ipv4; /* target will maintain ICMPv4 stats (only) for frames containing this IP address */
+} wmi_vdev_set_connectivity_check_stats;
+
+/*  per vdev dns/icmp/tcp based stats*/
+typedef struct {
+    A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_get_connectivity_check_stats */
+    A_UINT32 tcp_ack_recvd; /* number of tcp syn ack's received by FW */
+    A_UINT32 icmpv4_rsp_recvd; /* number of icmpv4 responses received by FW */
+} wmi_vdev_get_connectivity_check_stats;
+
+typedef struct {
     A_UINT32 tlv_header;
     A_UINT32 vdev_id;
 #define IPSEC_NATKEEPALIVE_FILTER_DISABLE 0
