@@ -1770,7 +1770,6 @@ void hdd_ipa_uc_sharing_stats_request(struct hdd_adapter *adapter,
 		return;
 	}
 
-	HDD_IPA_LOG(LOG1, "SHARING_STATS: reset_stats=%d", reset_stats);
 	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	if (false == hdd_ipa->resource_loading) {
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
