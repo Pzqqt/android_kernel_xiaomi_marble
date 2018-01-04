@@ -74,6 +74,7 @@ static QDF_STATUS wlan_objmgr_vdev_object_status(
 static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_pdev *pdev;
+	struct wlan_objmgr_psoc *psoc;
 
 	if (vdev == NULL) {
 		obj_mgr_err("vdev is NULL");
@@ -86,6 +87,11 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 			vdev->vdev_objmgr.vdev_id);
 		return QDF_STATUS_E_FAILURE;
 	}
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (psoc == NULL) {
+		obj_mgr_err("psoc is NULL in pdev");
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	/* Detach VDEV from PDEV VDEV's list */
 	if (wlan_objmgr_pdev_vdev_detach(pdev, vdev) ==
@@ -93,9 +99,8 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	/* Detach VDEV from PSOC VDEV's list */
-	if (wlan_objmgr_psoc_vdev_detach(
-			pdev->pdev_objmgr.wlan_psoc, vdev) ==
-					QDF_STATUS_E_FAILURE)
+	if (wlan_objmgr_psoc_vdev_detach(psoc, vdev) ==
+					 QDF_STATUS_E_FAILURE)
 		return QDF_STATUS_E_FAILURE;
 
 	qdf_spinlock_destroy(&vdev->vdev_lock);
