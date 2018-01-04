@@ -80,6 +80,7 @@
 
 #include "wma_he.h"
 #include "wlan_roam_debug.h"
+#include "wlan_ocb_ucfg_api.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -1183,7 +1184,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		wma_vdev_set_mlme_state(wma, resp_event->vdev_id,
 			WLAN_VDEV_S_RUN);
-		wma_ocb_start_resp_ind_cont(wma);
+		ucfg_ocb_config_channel(wma->pdev);
 	}
 
 	if ((wma->interfaces[resp_event->vdev_id].type == WMI_VDEV_TYPE_AP) &&

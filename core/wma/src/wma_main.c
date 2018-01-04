@@ -3927,9 +3927,9 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
-	status = wma_ocb_register_event_handlers(wma_handle);
-	if (status) {
-		WMA_LOGE("Failed to register ocb event handlers");
+	status = wma_ocb_register_callbacks(wma_handle);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		WMA_LOGE("Failed to register OCB callbacks");
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}

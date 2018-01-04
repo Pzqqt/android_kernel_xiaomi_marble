@@ -34,8 +34,10 @@
 #include "wma_ocb.h"
 #include "wmi_unified_api.h"
 #include "cds_utils.h"
+#include "cds_api.h"
 #include <cdp_txrx_ocb.h>
 #include <cdp_txrx_handle.h>
+#include "wlan_ocb_ucfg_api.h"
 
 /**
  * wma_ocb_resp() - send the OCB set config response via callback
@@ -244,14 +246,14 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 {
 	int32_t ret, i;
 	uint32_t *ch_mhz;
-	struct ocb_config_param tconfig = {0};
+	struct ocb_config tconfig = {0};
 
-	tconfig.session_id = config->session_id;
+	tconfig.vdev_id = config->session_id;
 	tconfig.channel_count = config->channel_count;
 	tconfig.schedule_size = config->schedule_size;
 	tconfig.flags = config->flags;
-	tconfig.channels = (struct ocb_config_channel *)config->channels;
-	tconfig.schedule = (struct ocb_config_sched *)config->schedule;
+	tconfig.channels = (struct ocb_config_chan *)config->channels;
+	tconfig.schedule = (struct ocb_config_schdl *)config->schedule;
 	tconfig.dcc_ndl_chan_list_len = config->dcc_ndl_chan_list_len;
 	tconfig.dcc_ndl_chan_list = config->dcc_ndl_chan_list;
 	tconfig.dcc_ndl_active_state_list_len =
@@ -276,8 +278,7 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 		wma_handle->ocb_config_req = copy_sir_ocb_config(config);
 	}
 
-	ret = wmi_unified_ocb_set_config(wma_handle->wmi_handle, &tconfig,
-				     ch_mhz);
+	ret = wmi_unified_ocb_set_config(wma_handle->wmi_handle, &tconfig);
 	if (ret != EOK) {
 		if (wma_handle->ocb_config_req) {
 			qdf_mem_free(wma_handle->ocb_config_req);
@@ -409,7 +410,7 @@ int wma_ocb_get_tsf_timer(tp_wma_handle wma_handle,
 
 	/* Send the WMI command */
 	ret = wmi_unified_ocb_get_tsf_timer(wma_handle->wmi_handle,
-					request->vdev_id);
+			(struct ocb_get_tsf_timer_param *)request);
 	/* If there is an error, set the completion event */
 	if (ret != EOK) {
 		WMA_LOGE(FL("Failed to send WMI message: %d"), ret);
@@ -471,7 +472,7 @@ int wma_dcc_get_stats(tp_wma_handle wma_handle,
 		      struct sir_dcc_get_stats *get_stats_param)
 {
 	int32_t ret;
-	struct dcc_get_stats_param cmd = {0};
+	struct ocb_dcc_get_stats_param cmd = {0};
 
 	cmd.vdev_id = get_stats_param->vdev_id;
 	cmd.channel_count = get_stats_param->channel_count;
@@ -560,8 +561,7 @@ int wma_dcc_clear_stats(tp_wma_handle wma_handle,
 
 	/* Send the WMI command */
 	ret = wmi_unified_dcc_clear_stats(wma_handle->wmi_handle,
-				   clear_stats_param->vdev_id,
-				   clear_stats_param->dcc_stats_bitmap);
+		(struct ocb_dcc_clear_stats_param *)clear_stats_param);
 	if (ret != EOK) {
 		WMA_LOGE(FL("Failed to send the WMI command"));
 		return -EIO;
@@ -581,9 +581,9 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 		       struct sir_dcc_update_ndl *update_ndl_param)
 {
 	QDF_STATUS qdf_status;
-	struct dcc_update_ndl_param *cmd;
+	struct ocb_dcc_update_ndl_param *cmd;
 
-	cmd = (struct dcc_update_ndl_param *) update_ndl_param;
+	cmd = (struct ocb_dcc_update_ndl_param *) update_ndl_param;
 	/* Send the WMI command */
 	qdf_status = wmi_unified_dcc_update_ndl(wma_handle->wmi_handle,
 				   cmd);
@@ -754,6 +754,56 @@ int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 			WMA_RX_SERIALIZER_CTX);
 	if (status)
 		return status;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_start_ocb_vdev() - start OCB vdev
+ * @config: ocb channel config
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS wma_start_ocb_vdev(struct ocb_config *config)
+{
+	struct wma_target_req *msg;
+	struct wma_vdev_start_req req;
+	QDF_STATUS status;
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
+
+	qdf_mem_zero(&req, sizeof(req));
+	msg = wma_fill_vdev_req(wma, config->vdev_id,
+				WMA_OCB_SET_CONFIG_CMD,
+				WMA_TARGET_REQ_TYPE_VDEV_START,
+				(void *)config, 1000);
+	if (!msg) {
+		WMA_LOGE(FL("Failed to fill vdev req %d"), config->vdev_id);
+
+		return QDF_STATUS_E_NOMEM;
+	}
+	req.chan = cds_freq_to_chan(config->channels[0].chan_freq);
+	req.vdev_id = msg->vdev_id;
+	if (cds_chan_to_band(req.chan) == CDS_BAND_2GHZ)
+		req.dot11_mode = WNI_CFG_DOT11_MODE_11G;
+	else
+		req.dot11_mode = WNI_CFG_DOT11_MODE_11A;
+
+	req.preferred_rx_streams = 2;
+	req.preferred_tx_streams = 2;
+
+	status = wma_vdev_start(wma, &req, false);
+	if (status != QDF_STATUS_SUCCESS) {
+		wma_remove_vdev_req(wma, req.vdev_id,
+				    WMA_TARGET_REQ_TYPE_VDEV_START);
+		WMA_LOGE(FL("vdev_start failed, status = %d"), status);
+	}
+
+	return status;
+}
+
+QDF_STATUS wma_ocb_register_callbacks(tp_wma_handle wma_handle)
+{
+	ucfg_ocb_register_vdev_start(wma_handle->pdev, wma_start_ocb_vdev);
 
 	return QDF_STATUS_SUCCESS;
 }

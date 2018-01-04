@@ -135,6 +135,7 @@
 #include <net/cnss_nl.h>
 #endif
 #include "wlan_reg_ucfg_api.h"
+#include "wlan_ocb_ucfg_api.h"
 
 #include <wlan_green_ap_ucfg_api.h>
 
@@ -275,6 +276,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_OBJ_MGR] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_ROAM_DEBUG] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_GREEN_AP] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_OCB] = {QDF_TRACE_LEVEL_ALL},
 };
 
 int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
@@ -11695,6 +11697,7 @@ static void component_init(void)
 {
 	pmo_init();
 	disa_init();
+	ucfg_ocb_init();
 }
 
 /**
@@ -11704,18 +11707,21 @@ static void component_init(void)
  */
 static void component_deinit(void)
 {
+	ucfg_ocb_deinit();
 	pmo_deinit();
 	disa_deinit();
 }
 
 void hdd_component_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
+	ocb_psoc_enable(psoc);
 	disa_psoc_enable(psoc);
 }
 
 void hdd_component_psoc_disable(struct wlan_objmgr_psoc *psoc)
 {
 	disa_psoc_disable(psoc);
+	ocb_psoc_disable(psoc);
 }
 
 /**

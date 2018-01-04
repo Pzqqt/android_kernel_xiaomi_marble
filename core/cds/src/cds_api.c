@@ -68,6 +68,7 @@
 #include <cdp_txrx_handle.h>
 #include "qdf_cpuhp.h"
 #include "target_type.h"
+#include "wlan_ocb_ucfg_api.h"
 
 /* Preprocessor Definitions and Constants */
 
@@ -633,6 +634,7 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	pmo_ucfg_psoc_update_dp_handle(psoc, gp_cds_context->dp_soc);
+	ucfg_ocb_update_dp_handle(psoc, gp_cds_context->dp_soc);
 
 	cds_set_ac_specs_params(cds_cfg);
 
@@ -730,6 +732,7 @@ QDF_STATUS cds_dp_open(struct wlan_objmgr_psoc *psoc)
 	}
 
 	pmo_ucfg_psoc_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
+	ucfg_ocb_set_txrx_handle(psoc, gp_cds_context->pdev_txrx_ctx);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);

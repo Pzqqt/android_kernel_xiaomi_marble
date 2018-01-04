@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,6 +65,14 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 		       struct sir_dcc_update_ndl *update_ndl_param);
 
 int wma_ocb_register_event_handlers(tp_wma_handle wma_handle);
+
+/**
+ * wma_ocb_register_callbacks() - register WMA layer callback for OCB
+ * @wma_handle: wma handle
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS wma_ocb_register_callbacks(tp_wma_handle wma_handle);
 #else
 static inline int wma_ocb_set_config_resp(tp_wma_handle wma_handle,
 		uint8_t status)
@@ -140,6 +148,17 @@ static inline int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 static inline int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 {
 	return 0;
+}
+
+/**
+ * wma_ocb_register_callbacks() - register WMA layer callback for OCB
+ * @wma_handle: wma handle
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static inline QDF_STATUS wma_ocb_register_callbacks(tp_wma_handle wma_handle)
+{
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 #endif /* __WMA_OCB_H */

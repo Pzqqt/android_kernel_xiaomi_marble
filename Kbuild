@@ -1018,11 +1018,22 @@ DISA_OBJS :=	$(DISA_DIR)/core/src/wlan_disa_main.o \
 		$(DISA_DIR)/dispatcher/src/wlan_disa_ucfg_api.o
 endif
 
+######## OCB ##############
+OCB_DIR := components/ocb
+OCB_INC := -I$(WLAN_ROOT)/$(OCB_DIR)/core/inc \
+		-I$(WLAN_ROOT)/$(OCB_DIR)/dispatcher/inc
+
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+OCB_OBJS :=	$(OCB_DIR)/dispatcher/src/wlan_ocb_ucfg_api.o \
+		$(OCB_DIR)/dispatcher/src/wlan_ocb_tgt_api.o \
+		$(OCB_DIR)/core/src/wlan_ocb_main.o
+endif
+
 ########## CLD TARGET_IF #######
 CLD_TARGET_IF_DIR := components/target_if
 
 CLD_TARGET_IF_INC := -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/inc \
-					 -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/src \
+	 -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/pmo/src
 
 CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_gtk.o \
@@ -1034,7 +1045,12 @@ CLD_TARGET_IF_OBJ := $(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_arp.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_pkt_filter.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_static_config.o \
 		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_suspend_resume.o \
-		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o \
+		$(CLD_TARGET_IF_DIR)/pmo/src/target_if_pmo_wow.o
+
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/ocb/inc
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/ocb/src/target_if_ocb.o
+endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
 CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/disa/inc
@@ -1136,6 +1152,12 @@ WMI_OBJS := $(WMI_OBJ_DIR)/wmi_unified.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_reg_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_dfs_api.o \
 	    $(WMI_OBJ_DIR)/wmi_unified_non_tlv.o
+
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+ifeq ($(CONFIG_OCB_UT_FRAMEWORK), y)
+WMI_OBJS += $(WMI_OBJ_DIR)/wmi_unified_ocb_ut.o
+endif
+endif
 
 ########### FWLOG ###########
 FWLOG_DIR := $(WLAN_COMMON_ROOT)/utils/fwlog
@@ -1603,6 +1625,7 @@ INCS +=		$(NLINK_INC) \
 		$(WLAN_LOGGING_INC)
 
 INCS +=		$(PLD_INC)
+INCS +=		$(OCB_INC)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)
 INCS +=		$(PKTLOG_INC)
@@ -1671,6 +1694,10 @@ OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
 OBJS +=		$(UMAC_SER_OBJS)
 OBJS +=		$(PLD_OBJS)
+
+ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
+OBJS +=		$(OCB_OBJS)
+endif
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)
 OBJS +=		$(PKTLOG_OBJS)
@@ -2024,6 +2051,11 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 CDEFINES += -DWLAN_FEATURE_DSRC
+
+ifeq ($(CONFIG_OCB_UT_FRAMEWORK), y)
+CDEFINES += -DWLAN_OCB_UT
+endif
+
 endif
 
 ifeq ($(CONFIG_ARCH_SDX20), y)
