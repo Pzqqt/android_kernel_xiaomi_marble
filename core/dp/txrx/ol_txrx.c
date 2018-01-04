@@ -5454,7 +5454,7 @@ ol_txrx_dump_pkt(qdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
 bool
 ol_txrx_fwd_desc_thresh_check(struct ol_txrx_vdev_t *vdev)
 {
-	struct ol_tx_flow_pool_t *pool = vdev->pool;
+	struct ol_tx_flow_pool_t *pool;
 	bool enough_desc_flag;
 
 	if (!vdev)
