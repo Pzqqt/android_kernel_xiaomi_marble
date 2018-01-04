@@ -8284,8 +8284,10 @@ static int __q6asm_read(struct audio_client *ac, bool is_custom_len_reqd,
 		list_for_each_safe(ptr, next, &ac->port[OUT].mem_map_handle) {
 			buf_node = list_entry(ptr, struct asm_buffer_node,
 					list);
-			if (buf_node->buf_phys_addr == ab->phys)
+			if (buf_node->buf_phys_addr == ab->phys) {
 				read.mem_map_handle = buf_node->mmap_hdl;
+				break;
+			}
 		}
 		dev_vdbg(ac->dev, "memory_map handle in q6asm_read: [%0x]:",
 				read.mem_map_handle);
