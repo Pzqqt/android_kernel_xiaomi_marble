@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -500,6 +500,8 @@ static QDF_STATUS lim_mgmt_tdls_tx_complete(void *context,
 	pe_debug("tdls_frm_session_id: %x tx_complete: %x",
 		mac_ctx->lim.tdls_frm_session_id, tx_complete);
 
+	tx_complete =
+		(tx_complete == WMI_MGMT_TX_COMP_TYPE_COMPLETE_OK) ? 1 : 0;
 	if (NO_SESSION != mac_ctx->lim.tdls_frm_session_id) {
 		lim_send_sme_mgmt_tx_completion(mac_ctx,
 				mac_ctx->lim.tdls_frm_session_id,
