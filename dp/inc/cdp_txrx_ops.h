@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -656,6 +656,9 @@ struct ol_if_ops {
 	void (*rx_mic_error)(void *ol_soc_handle,
 			 uint16_t vdev_id, void *wh);
 	uint8_t (*freq_to_channel)(void *ol_soc_handle,  uint16_t vdev_id);
+
+	void (*record_act_change)(struct wlan_objmgr_pdev *pdev,
+				  u_int8_t *dstmac, bool active);
 
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1169,6 +1169,10 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 			goto fail;
 
 		}
+#ifdef QCA_SUPPORT_SON
+		dp_mark_peer_inact(peer, false);
+#endif
+
 
 		/* Get MSDU DESC info */
 		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);

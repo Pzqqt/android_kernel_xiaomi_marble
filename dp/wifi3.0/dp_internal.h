@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -311,6 +311,13 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 int dp_get_ring_id_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
+void dp_mark_peer_inact(void *peer_handle, bool inactive);
+bool dp_set_inact_params(struct cdp_pdev *pdev_handle,
+		 u_int16_t inact_check_interval,
+		 u_int16_t inact_normal, u_int16_t inact_overload);
+bool dp_start_inact_timer(struct cdp_pdev *pdev_handle, bool enable);
+void dp_set_overload(struct cdp_pdev *pdev_handle, bool overload);
+bool dp_peer_is_inact(void *peer_handle);
 
 #ifdef WDI_EVENT_ENABLE
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,

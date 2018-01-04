@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2093,6 +2093,103 @@ dp_dscp_tid_map_setup(struct dp_pdev *pdev)
 	}
 }
 
+#ifdef QCA_SUPPORT_SON
+/**
+ * dp_mark_peer_inact(): Update peer inactivity status
+ * @peer_handle - datapath peer handle
+ *
+ * Return: void
+ */
+void dp_mark_peer_inact(void *peer_handle, bool inactive)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	struct dp_pdev *pdev;
+	struct dp_soc *soc;
+	bool inactive_old;
+
+	if (!peer)
+		return;
+
+	pdev = peer->vdev->pdev;
+	soc = pdev->soc;
+
+	inactive_old = peer->peer_bs_inact_flag == 1;
+	if (!inactive)
+		peer->peer_bs_inact = soc->pdev_bs_inact_reload;
+	peer->peer_bs_inact_flag = inactive ? 1 : 0;
+
+	if (inactive_old != inactive) {
+		struct ieee80211com *ic;
+		struct ol_ath_softc_net80211 *scn;
+
+		scn = (struct ol_ath_softc_net80211 *)pdev->osif_pdev;
+		ic = &scn->sc_ic;
+		/**
+		 * Note: a node lookup can happen in RX datapath context
+		 * when a node changes from inactive to active (at most once
+		 * per inactivity timeout threshold)
+		 */
+		if (soc->cdp_soc.ol_ops->record_act_change) {
+			soc->cdp_soc.ol_ops->record_act_change(ic->ic_pdev_obj,
+					peer->mac_addr.raw, !inactive);
+		}
+	}
+}
+
+/**
+ * dp_txrx_peer_find_inact_timeout_handler(): Inactivity timeout function
+ *
+ * Periodically checks the inactivity status
+ */
+static os_timer_func(dp_txrx_peer_find_inact_timeout_handler)
+{
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	struct dp_soc *soc;
+	int i;
+
+	OS_GET_TIMER_ARG(soc, struct dp_soc *);
+
+	qdf_spin_lock(&soc->peer_ref_mutex);
+
+	for (i = 0; i < soc->pdev_count; i++) {
+	pdev = soc->pdev_list[i];
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->opmode != wlan_op_mode_ap)
+			continue;
+
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (!peer->authorize) {
+				/**
+				 * Inactivity check only interested in
+				 * connected node
+				 */
+				continue;
+			}
+			if (peer->peer_bs_inact > soc->pdev_bs_inact_reload) {
+				/**
+				 * This check ensures we do not wait extra long
+				 * due to the potential race condition
+				 */
+				peer->peer_bs_inact = soc->pdev_bs_inact_reload;
+			}
+			if (peer->peer_bs_inact > 0) {
+				/* Do not let it wrap around */
+				peer->peer_bs_inact--;
+			}
+			if (peer->peer_bs_inact == 0)
+				dp_mark_peer_inact(peer, true);
+		}
+	}
+	}
+
+	qdf_spin_unlock(&soc->peer_ref_mutex);
+	qdf_timer_mod(&soc->pdev_bs_inact_timer,
+		      soc->pdev_bs_inact_interval * 1000);
+}
+#endif
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @osif_pdev: Opaque PDEV handle from OSIF/HDD
@@ -2298,6 +2395,11 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 				"dp_wdi_evet_attach failed\n");
 		goto fail1;
 	}
+#ifdef QCA_SUPPORT_SON
+	qdf_timer_init(soc->osdev, &soc->pdev_bs_inact_timer,
+		       dp_txrx_peer_find_inact_timeout_handler,
+		       (void *)soc, QDF_TIMER_TYPE_WAKE_APPS);
+#endif
 
 	/* set the reo destination during initialization */
 	pdev->reo_dest = pdev->pdev_id + 1;
@@ -3267,6 +3369,212 @@ static void dp_peer_authorize(struct cdp_peer *peer_handle, uint32_t authorize)
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
 }
+
+#ifdef QCA_SUPPORT_SON
+/*
+ * dp_txrx_update_inact_threshold() - Update inact timer threshold
+ * @pdev_handle: Device handle
+ * @new_threshold : updated threshold value
+ *
+ */
+static void
+dp_txrx_update_inact_threshold(struct cdp_pdev *pdev_handle,
+			       u_int16_t new_threshold)
+{
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = pdev->soc;
+	u_int16_t old_threshold = soc->pdev_bs_inact_reload;
+
+	if (old_threshold == new_threshold)
+		return;
+
+	soc->pdev_bs_inact_reload = new_threshold;
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->opmode != wlan_op_mode_ap)
+			continue;
+
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (!peer->authorize)
+				continue;
+
+			if (old_threshold - peer->peer_bs_inact >=
+					new_threshold) {
+				dp_mark_peer_inact((void *)peer, true);
+				peer->peer_bs_inact = 0;
+			} else {
+				peer->peer_bs_inact = new_threshold -
+					(old_threshold - peer->peer_bs_inact);
+			}
+		}
+	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+}
+
+/**
+ * dp_txrx_reset_inact_count(): Reset inact count
+ * @pdev_handle - device handle
+ *
+ * Return: void
+ */
+static void
+dp_txrx_reset_inact_count(struct cdp_pdev *pdev_handle)
+{
+	struct dp_vdev *vdev = NULL;
+	struct dp_peer *peer = NULL;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_soc *soc = pdev->soc;
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->opmode != wlan_op_mode_ap)
+			continue;
+
+		TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+			if (!peer->authorize)
+				continue;
+
+			peer->peer_bs_inact = soc->pdev_bs_inact_reload;
+		}
+	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+}
+
+/**
+ * dp_set_inact_params(): set inactivity params
+ * @pdev_handle - device handle
+ * @inact_check_interval - inactivity interval
+ * @inact_normal - Inactivity normal
+ * @inact_overload - Inactivity overload
+ *
+ * Return: bool
+ */
+bool dp_set_inact_params(struct cdp_pdev *pdev_handle,
+			 u_int16_t inact_check_interval,
+			 u_int16_t inact_normal, u_int16_t inact_overload)
+{
+	struct dp_soc *soc;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (!pdev)
+		return false;
+
+	soc = pdev->soc;
+	if (!soc)
+		return false;
+
+	soc->pdev_bs_inact_interval = inact_check_interval;
+	soc->pdev_bs_inact_normal = inact_normal;
+	soc->pdev_bs_inact_overload = inact_overload;
+
+	dp_txrx_update_inact_threshold((struct cdp_pdev *)pdev,
+					soc->pdev_bs_inact_normal);
+
+	return true;
+}
+
+/**
+ * dp_start_inact_timer(): Inactivity timer start
+ * @pdev_handle - device handle
+ * @enable - Inactivity timer start/stop
+ *
+ * Return: bool
+ */
+bool dp_start_inact_timer(struct cdp_pdev *pdev_handle, bool enable)
+{
+	struct dp_soc *soc;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (!pdev)
+		return false;
+
+	soc = pdev->soc;
+	if (!soc)
+		return false;
+
+	if (enable) {
+		dp_txrx_reset_inact_count((struct cdp_pdev *)pdev);
+		qdf_timer_mod(&soc->pdev_bs_inact_timer,
+			      soc->pdev_bs_inact_interval * 1000);
+	} else {
+		qdf_timer_stop(&soc->pdev_bs_inact_timer);
+	}
+
+	return true;
+}
+
+/**
+ * dp_set_overload(): Set inactivity overload
+ * @pdev_handle - device handle
+ * @overload - overload status
+ *
+ * Return: void
+ */
+void dp_set_overload(struct cdp_pdev *pdev_handle, bool overload)
+{
+	struct dp_soc *soc;
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	if (!pdev)
+		return;
+
+	soc = pdev->soc;
+	if (!soc)
+		return;
+
+	dp_txrx_update_inact_threshold((struct cdp_pdev *)pdev,
+			overload ? soc->pdev_bs_inact_overload :
+			soc->pdev_bs_inact_normal);
+}
+
+/**
+ * dp_peer_is_inact(): check whether peer is inactive
+ * @peer_handle - datapath peer handle
+ *
+ * Return: bool
+ */
+bool dp_peer_is_inact(void *peer_handle)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	if (!peer)
+		return false;
+
+	return peer->peer_bs_inact_flag == 1;
+}
+
+#else
+
+bool dp_set_inact_params(struct cdp_pdev *pdev, u_int16_t inact_check_interval,
+			 u_int16_t inact_normal, u_int16_t inact_overload)
+{
+	return false;
+}
+
+bool dp_start_inact_timer(struct cdp_pdev *pdev, bool enable)
+{
+	return false;
+}
+
+void dp_set_overload(struct cdp_pdev *pdev, bool overload)
+{
+	return;
+}
+
+bool dp_peer_is_inact(void *peer)
+{
+	return false;
+}
+
+void dp_mark_peer_inact(void *peer, bool inactive)
+{
+	return;
+}
+
+#endif
 
 /*
  * dp_peer_unref_delete() - unref and delete peer
@@ -5728,6 +6036,13 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_peer_authorize = dp_peer_authorize,
+#ifdef QCA_SUPPORT_SON
+	.txrx_set_inact_params = dp_set_inact_params,
+	.txrx_start_inact_timer = dp_start_inact_timer,
+	.txrx_set_overload = dp_set_overload,
+	.txrx_peer_is_inact = dp_peer_is_inact,
+	.txrx_mark_peer_inact = dp_mark_peer_inact,
+#endif
 	.txrx_set_vdev_rx_decap_type = dp_set_vdev_rx_decap_type,
 	.txrx_set_tx_encap_type = dp_set_vdev_tx_encap_type,
 #ifdef MESH_MODE_SUPPORT
