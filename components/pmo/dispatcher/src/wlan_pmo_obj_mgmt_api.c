@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -370,7 +370,7 @@ QDF_STATUS pmo_unregister_suspend_handler(
 		goto out;
 	}
 
-	if (id > WLAN_UMAC_MAX_COMPONENTS || id < 0) {
+	if (id >= WLAN_UMAC_MAX_COMPONENTS || id < 0) {
 		pmo_err("component id: %d is %s then valid components id",
 			id, id < 0 ? "Less" : "More");
 		status = QDF_STATUS_E_FAILURE;
