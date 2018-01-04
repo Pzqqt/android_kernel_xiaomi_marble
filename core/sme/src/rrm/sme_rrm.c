@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -692,12 +692,15 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	if (status != QDF_STATUS_SUCCESS) {
 		sme_err("sme session ID not found for bssid= "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(sme_rrm_ctx->sessionBssId.bytes));
-		return QDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
+		goto free_ch_lst;
 	}
 
 	if ((sme_rrm_ctx->currentIndex) >=
-			sme_rrm_ctx->channelList.numOfChannels)
-		return status;
+			sme_rrm_ctx->channelList.numOfChannels) {
+		sme_debug("done with the complete ch lt. finish and fee now");
+		goto free_ch_lst;
+	}
 
 	if (eRRM_MSG_SOURCE_ESE_UPLOAD == sme_rrm_ctx->msgSource ||
 		eRRM_MSG_SOURCE_LEGACY_ESE == sme_rrm_ctx->msgSource)
@@ -803,6 +806,8 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 					sme_rrm_ctx->currentIndex]);
 		status = ucfg_scan_start(req);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
+		return status;
 	} else if (eSIR_BEACON_TABLE == scan_type) {
 		/*
 		 * In beacon table mode, scan results are taken directly from
@@ -823,6 +828,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 #ifdef FEATURE_WLAN_ESE
 			sme_rrm_ctx->eseBcnReqInProgress = false;
 #endif
+			return status;
 		} else {
 			/*
 			 * Done with the measurement. Clean up all context and
@@ -831,7 +837,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 			sme_rrm_send_scan_result(mac_ctx, 1,
 				&sme_rrm_ctx->channelList.ChannelList[
 					sme_rrm_ctx->currentIndex], true);
-			qdf_mem_free(sme_rrm_ctx->channelList.ChannelList);
+			goto free_ch_lst;
 		}
 	} else {
 		sme_err("Unknown beacon report req mode(%d)", scan_type);
@@ -841,7 +847,12 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		 * and PE will not handle subsequent Beacon requests
 		 */
 		sme_rrm_send_beacon_report_xmit_ind(mac_ctx, NULL, true, 0);
+		goto free_ch_lst;
 	}
+
+free_ch_lst:
+	qdf_mem_free(sme_rrm_ctx->channelList.ChannelList);
+	sme_rrm_ctx->channelList.ChannelList = NULL;
 	return status;
 }
 
@@ -863,7 +874,6 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 	tpSirBeaconReportReqInd pBeaconReq = (tpSirBeaconReportReqInd) pMsgBuf;
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 	uint32_t len = 0, i = 0;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	sme_debug("Received Beacon report request ind Channel = %d",
 		pBeaconReq->channelInfo.channelNum);
@@ -955,16 +965,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		pSmeRrmContext->token, pSmeRrmContext->regClass,
 		pSmeRrmContext->randnIntvl, pSmeRrmContext->msgSource);
 
-	status = sme_rrm_issue_scan_req(pMac);
-
-	if (status != QDF_STATUS_SUCCESS) {
-		if (pSmeRrmContext->channelList.ChannelList) {
-			qdf_mem_free(pSmeRrmContext->channelList.ChannelList);
-			pSmeRrmContext->channelList.ChannelList = NULL;
-		}
-	}
-
-	return status;
+	return sme_rrm_issue_scan_req(pMac);
 }
 
 /**
