@@ -9441,6 +9441,16 @@ typedef struct {
 #define WMI_PEER_NSS_VHT160                             0x14
 /* peer NSS for VHT160 - Extended NSS support */
 #define WMI_PEER_NSS_VHT80_80                           0x15
+/* Peer SU TXBF sounding interval */
+#define WMI_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL        0x16
+/* Peer MU TXBF sounding interval */
+#define WMI_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL        0x17
+/* Peer TXBF sounding enable or disable */
+#define WMI_PEER_PARAM_TXBF_SOUNDING_ENABLE             0x18
+/* Per peer 11ax OFDMA enable or disable */
+#define WMI_PEER_PARAM_OFDMA_ENABLE                     0x19
+/* Per peer 11ax/11ac MU enable or disable */
+#define WMI_PEER_PARAM_MU_ENABLE                        0x1a
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
