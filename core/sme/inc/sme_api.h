@@ -78,6 +78,7 @@
 #define SME_EXIT() sme_logfl(QDF_TRACE_LEVEL_DEBUG, "exit")
 
 #define SME_SESSION_ID_ANY        50
+#define SME_SESSION_ID_BROADCAST  0xFF
 
 #define SME_INVALID_COUNTRY_CODE "XX"
 #define INVALID_ROAM_ID 0

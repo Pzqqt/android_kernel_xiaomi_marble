@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014,2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -142,6 +142,13 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	if (NULL == pSirSmeMgmtFrame) {
 		pe_err("AllocateMemory failed for eWNI_SME_LISTEN_RSP");
 		return;
+	}
+
+	if (qdf_is_macaddr_broadcast(
+		(struct qdf_mac_addr *) pSirSmeMgmtFrame->frameBuf + 4) &&
+		!sessionId) {
+		pe_debug("Broadcast action frame");
+		sessionId = SME_SESSION_ID_BROADCAST;
 	}
 
 	pSirSmeMgmtFrame->frame_len = frameLen;

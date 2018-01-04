@@ -7759,6 +7759,19 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 			if (adapter)
 				break;
 		}
+	} else if (SME_SESSION_ID_BROADCAST == frame_ind->sessionId) {
+		hdd_for_each_adapter(hdd_ctx, adapter) {
+			if ((NULL != adapter) &&
+			    (WLAN_HDD_ADAPTER_MAGIC == adapter->magic)) {
+				__hdd_indicate_mgmt_frame(adapter,
+						frame_ind->frame_len,
+						frame_ind->frameBuf,
+						frame_ind->frameType,
+						frame_ind->rxChan,
+						frame_ind->rxRssi);
+			}
+		}
+		adapter = NULL;
 	} else {
 		adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx,
 					frame_ind->sessionId);
