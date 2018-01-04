@@ -2535,8 +2535,14 @@ lim_handle_bss_color_change_ie(tpAniSirGlobal mac_ctx,
 			session->he_bss_color_change.countdown--;
 		} else {
 			session->bss_color_changing = 0;
-			if (session->he_bss_color_change.new_color != 0)
+			if (session->he_bss_color_change.new_color != 0) {
 				session->he_op.bss_col_disabled = 0;
+				session->he_op.bss_color =
+					session->he_bss_color_change.new_color;
+				lim_send_obss_color_collision_cfg(mac_ctx,
+						session,
+						OBSS_COLOR_COLLISION_DETECTION);
+			}
 		}
 
 		lim_send_bss_color_change_ie_update(mac_ctx, session);

@@ -1921,6 +1921,11 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+	case WMA_OBSS_COLOR_COLLISION_INFO:
+		lim_process_obss_color_collision_info(mac_ctx, msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;

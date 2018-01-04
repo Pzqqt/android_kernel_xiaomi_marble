@@ -1612,6 +1612,10 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 		return "CHIP_POWER_FAILURE_DETECT";
 	case WOW_REASON_11D_SCAN:
 		return "11D_SCAN";
+	case WOW_REASON_SAP_OBSS_DETECTION:
+		return "SAP_OBSS_DETECTION";
+	case WOW_REASON_BSS_COLOR_COLLISION_DETECT:
+		return "BSS_COLOR_COLLISION_DETECT";
 	default:
 		return "unknown";
 	}
@@ -5329,6 +5333,47 @@ int wma_vdev_obss_detection_info_handler(void *handle, uint8_t *event,
 	}
 
 	wma_send_msg(wma, WMA_OBSS_DETECTION_INFO, obss_detection, 0);
+
+	return 0;
+}
+
+int wma_vdev_bss_color_collision_info_handler(void *handle,
+					      uint8_t *event,
+					      uint32_t len)
+{
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	struct wmi_obss_color_collision_info *obss_color_info;
+	QDF_STATUS status;
+
+	if (!event) {
+		WMA_LOGE("Invalid obss_color_collision event buffer");
+		return -EINVAL;
+	}
+
+	obss_color_info = qdf_mem_malloc(sizeof(*obss_color_info));
+	if (!obss_color_info) {
+		WMA_LOGE("%s: Failed to malloc", __func__);
+		return -ENOMEM;
+	}
+
+	status = wmi_unified_extract_obss_color_collision_info(wma->wmi_handle,
+							       event,
+							       obss_color_info);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to extract obss color info", __func__);
+		qdf_mem_free(obss_color_info);
+		return -EINVAL;
+	}
+
+	if (!wma_is_vdev_valid(obss_color_info->vdev_id)) {
+		WMA_LOGE("%s: Invalid vdev id %d", __func__,
+			 obss_color_info->vdev_id);
+		qdf_mem_free(obss_color_info);
+		return -EINVAL;
+	}
+
+	wma_send_msg(wma, WMA_OBSS_COLOR_COLLISION_INFO, obss_color_info, 0);
 
 	return 0;
 }

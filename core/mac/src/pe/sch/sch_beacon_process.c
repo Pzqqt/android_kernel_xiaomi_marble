@@ -492,6 +492,9 @@ sch_bcn_update_he_ies(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	uint8_t session_bss_col_disabled_flag;
 	bool anything_changed = false;
 
+	if (session->is_session_obss_color_collision_det_enabled)
+		return;
+
 	if (session->he_op.present && bcn->he_op.present) {
 		if (bcn->vendor_he_bss_color_change.present &&
 				(session->he_op.bss_color !=
@@ -1055,7 +1058,9 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		bcn_prm.bssIdx = ap_session->bssIdx;
 
-		sch_check_bss_color_ie(mac_ctx, ap_session, &bcn, &bcn_prm);
+		if (!ap_session->is_session_obss_color_collision_det_enabled)
+			sch_check_bss_color_ie(mac_ctx, ap_session,
+					       &bcn, &bcn_prm);
 
 		if ((ap_session->gLimProtectionControl !=
 		     WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) &&

@@ -4585,9 +4585,49 @@ send_rsp:
 #endif
 
 /**
+ * wma_send_bss_color_change_enable() - send bss color chnage enable cmd.
+ * @wma: wma handle
+ * @params: add sta params
+ *
+ * Send bss color change command to firmware, to enable firmware to update
+ * internally if any change in bss color in advertised by associated AP.
+ *
+ * Return: none
+ */
+#ifdef WLAN_FEATURE_11AX
+static void wma_send_bss_color_change_enable(tp_wma_handle wma,
+					     tpAddStaParams params)
+{
+	QDF_STATUS status;
+	uint32_t vdev_id = params->smesessionId;
+
+	if (!params->he_capable) {
+		WMA_LOGD("%s: he_capable is not set for vdev_id:%d",
+			 __func__, vdev_id);
+		return;
+	}
+
+	status = wmi_unified_send_bss_color_change_enable_cmd(wma->wmi_handle,
+							      vdev_id,
+							      true);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("Failed to enable bss color change offload, vdev:%d",
+			 vdev_id);
+	}
+
+	return;
+}
+#else
+static void wma_send_bss_color_change_enable(tp_wma_handle wma,
+					     tpAddStaParams params)
+{
+}
+#endif
+
+/**
  * wma_add_sta_req_sta_mode() - process add sta request in sta mode
  * @wma: wma handle
- * @add_sta: add sta params
+ * @params: add sta params
  *
  * Return: none
  */
@@ -4795,6 +4835,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 				smps_param);
 		}
 	}
+
+	wma_send_bss_color_change_enable(wma, params);
 
 	/* Partial AID match power save, enable when SU bformee */
 	if (params->enableVhtpAid && params->vhtTxBFCapable)

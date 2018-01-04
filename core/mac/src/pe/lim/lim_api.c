@@ -476,6 +476,14 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 		return eSIR_FAILURE;
 	}
 
+	if (eSIR_SUCCESS !=
+	    wlan_cfg_get_int(pMac, WNI_CFG_OBSS_COLOR_COLLISION_OFFLOAD,
+			     (uint32_t *) &pMac->lim.
+			     global_obss_color_collision_det_offload)) {
+		pe_err("cfg get obss_color_collision_offload failed");
+		return eSIR_FAILURE;
+	}
+
 	return eSIR_SUCCESS;
 }
 

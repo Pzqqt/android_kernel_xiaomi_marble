@@ -567,9 +567,40 @@ static inline void lim_process_rx_scan_handler(struct wlan_objmgr_vdev *vdev,
  * Return: void
  */
 void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf);
+
+/**
+ * lim_process_obss_color_collision_info() - Process the obss color collision
+ *  request.
+ * @mac_ctx: global mac context pointer
+ * @msg_buf: message buffer pointer
+ *
+ * Return: void
+ */
+void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
+					   uint32_t *msg_buf);
+
+/**
+ * lim_send_obss_color_collision_cfg() - Send obss color collision cfg.
+ * @mac_ctx: global mac context pointer
+ * @session: Pointer to session
+ * @event_type: obss color collision detection type
+ *
+ * Return: void
+ */
+void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
+				       tpPESession session,
+				       enum wmi_obss_color_collision_evt_type
+				       event_type);
 #else
 static inline void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx,
 		uint32_t *msg_buf)
+{}
+static inline void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
+							 uint32_t *msg_buf)
+{}
+static inline void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
+			tpPESession session,
+			enum wmi_obss_color_collision_evt_type event_type)
 {}
 #endif
 void lim_send_delts_req_action_frame(tpAniSirGlobal pMac, tSirMacAddr peer,

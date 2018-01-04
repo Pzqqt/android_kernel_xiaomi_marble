@@ -5095,6 +5095,8 @@ static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg
 			  psessionEntry->currentOperChannel);
 		lim_send_beacon_ind(pMac, psessionEntry);
 		lim_enable_obss_detection_config(pMac, psessionEntry);
+		lim_send_obss_color_collision_cfg(pMac, psessionEntry,
+					OBSS_COLOR_COLLISION_DETECTION);
 	} else {
 		pe_err("Invalid Beacon Start Indication");
 		return;
@@ -5979,6 +5981,163 @@ static void lim_process_set_ie_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 }
 
 #ifdef WLAN_FEATURE_11AX_BSS_COLOR
+
+/**
+ * obss_color_collision_process_color_disable() - Disable bss color
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: pointer to session
+ *
+ * This function will disbale bss color.
+ *
+ * Return: None
+ */
+static void obss_color_collision_process_color_disable(tpAniSirGlobal mac_ctx,
+						       tpPESession session)
+{
+	tUpdateBeaconParams beacon_params;
+
+	if (!session) {
+		pe_err("Invalid session");
+		return;
+	}
+
+	if (session->valid && !LIM_IS_AP_ROLE(session)) {
+		pe_err("Invalid SystemRole %d",
+		       GET_LIM_SYSTEM_ROLE(session));
+		return;
+	}
+
+	if (session->bss_color_changing == 1) {
+		pe_warn("%d: color change in progress", session->smeSessionId);
+		/* Continue color collision detection */
+		lim_send_obss_color_collision_cfg(mac_ctx, session,
+				OBSS_COLOR_COLLISION_DETECTION);
+		return;
+	}
+
+	if (session->he_op.bss_col_disabled == 1) {
+		pe_warn("%d: bss color already disabled",
+			session->smeSessionId);
+		/* Continue free color detection */
+		lim_send_obss_color_collision_cfg(mac_ctx, session,
+				OBSS_COLOR_FREE_SLOT_AVAILABLE);
+		return;
+	}
+
+	qdf_mem_zero(&beacon_params, sizeof(beacon_params));
+	beacon_params.paramChangeBitmap |= PARAM_BSS_COLOR_CHANGED;
+	session->he_op.bss_col_disabled = 1;
+	session->he_bss_color_change.new_color = 0;
+	session->he_op.bss_color = 0;
+	beacon_params.bss_color = 0;
+	beacon_params.bss_color_disabled = 1;
+
+	if (sch_set_fixed_beacon_fields(mac_ctx, session) !=
+	    eSIR_SUCCESS) {
+		pe_err("Unable to set op mode IE in beacon");
+		return;
+	}
+
+	lim_send_beacon_params(mac_ctx, &beacon_params, session);
+	lim_send_obss_color_collision_cfg(mac_ctx, session,
+					  OBSS_COLOR_FREE_SLOT_AVAILABLE);
+}
+
+/**
+ * obss_color_collision_process_color_change() - Process bss color change
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: pointer to session
+ * @obss_color_info: obss color collision/free slot indication info
+ *
+ * This function selects new color ib case of bss color collision.
+ *
+ * Return: None
+ */
+static void obss_color_collision_process_color_change(tpAniSirGlobal mac_ctx,
+		tpPESession session,
+		struct wmi_obss_color_collision_info *obss_color_info)
+{
+	int i, num_bss_color = 0;
+	uint32_t bss_color_bitmap;
+	uint8_t bss_color_index_array[MAX_BSS_COLOR_VALUE];
+	uint32_t rand_byte = 0;
+	struct sir_set_he_bss_color he_bss_color;
+	bool is_color_collision = false;
+
+
+	if (session->bss_color_changing == 1) {
+		pe_err("%d: color change in progress", session->smeSessionId);
+		return;
+	}
+
+	if (!session->he_op.bss_col_disabled) {
+		if (session->he_op.bss_color < 32)
+			is_color_collision = (obss_color_info->
+					     obss_color_bitmap_bit0to31 >>
+					     session->he_op.bss_color) & 0x01;
+		else
+			is_color_collision = (obss_color_info->
+					     obss_color_bitmap_bit32to63 >>
+					     (session->he_op.bss_color -
+					      31)) & 0x01;
+		if (!is_color_collision) {
+			pe_err("%d: color collision not found, curr_color: %d",
+			       session->smeSessionId,
+			       session->he_op.bss_color);
+			return;
+		}
+	}
+
+	bss_color_bitmap = obss_color_info->obss_color_bitmap_bit0to31;
+
+	/* Skip color zero */
+	bss_color_bitmap = bss_color_bitmap >> 1;
+	for (i = 0; (i < 31) && (num_bss_color < MAX_BSS_COLOR_VALUE); i++) {
+		if (!(bss_color_bitmap & 0x01)) {
+			bss_color_index_array[num_bss_color] = i + 1;
+			num_bss_color++;
+		}
+		bss_color_bitmap = bss_color_bitmap >> 1;
+	}
+
+	bss_color_bitmap = obss_color_info->obss_color_bitmap_bit32to63;
+	for (i = 0; (i < 32) && (num_bss_color < MAX_BSS_COLOR_VALUE); i++) {
+		if (!(bss_color_bitmap & 0x01)) {
+			bss_color_index_array[num_bss_color] = i + 32;
+			num_bss_color++;
+		}
+		bss_color_bitmap = bss_color_bitmap >> 1;
+	}
+
+	if (num_bss_color) {
+		qdf_get_random_bytes((void *) &rand_byte, 1);
+		i = (rand_byte + qdf_mc_timer_get_system_ticks()) %
+		    num_bss_color;
+		pe_debug("New bss color = %d", bss_color_index_array[i]);
+		he_bss_color.session_id = obss_color_info->vdev_id;
+		he_bss_color.bss_color = bss_color_index_array[i];
+		lim_process_set_he_bss_color(mac_ctx,
+					     (uint32_t *)&he_bss_color);
+	} else {
+		pe_err("Unable to find bss color from bitmasp");
+		if (obss_color_info->evt_type ==
+		    OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY &&
+		    session->obss_color_collision_dec_evt ==
+		    OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY)
+			/* In dot11BSSColorCollisionAPPeriod and
+			 * timer expired, time to disable bss color.
+			 */
+			obss_color_collision_process_color_disable(mac_ctx,
+								   session);
+		else
+			/*
+			 * Enter dot11BSSColorCollisionAPPeriod period.
+			 */
+			lim_send_obss_color_collision_cfg(mac_ctx, session,
+					OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY);
+	}
+}
+
 void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	struct sir_set_he_bss_color *bss_color;
@@ -6016,9 +6175,6 @@ void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	session_entry->he_bss_color_change.countdown =
 		BSS_COLOR_SWITCH_COUNTDOWN;
 	session_entry->he_bss_color_change.new_color = bss_color->bss_color;
-	session_entry->he_op.bss_color =
-		session_entry->he_bss_color_change.new_color;
-	beacon_params.bss_color = session_entry->he_op.bss_color;
 	beacon_params.bss_color_disabled =
 		session_entry->he_op.bss_col_disabled;
 	session_entry->bss_color_changing = 1;
@@ -6030,5 +6186,132 @@ void lim_process_set_he_bss_color(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	}
 
 	lim_send_beacon_params(mac_ctx, &beacon_params, session_entry);
+	lim_send_obss_color_collision_cfg(mac_ctx, session_entry,
+			OBSS_COLOR_COLLISION_DETECTION_DISABLE);
+}
+
+void lim_send_obss_color_collision_cfg(tpAniSirGlobal mac_ctx,
+				       tpPESession session,
+				       enum wmi_obss_color_collision_evt_type
+				       event_type)
+{
+	struct wmi_obss_color_collision_cfg_param *cfg_param;
+	struct scheduler_msg msg = {0};
+
+	if (!session) {
+		pe_err("Invalid session");
+		return;
+	}
+
+	if (!session->he_capable ||
+	    !session->is_session_obss_color_collision_det_enabled) {
+		pe_debug("%d: obss color det not enabled, he_cap:%d, sup:%d:%d",
+			 session->smeSessionId, session->he_capable,
+			 session->is_session_obss_color_collision_det_enabled,
+			 mac_ctx->lim.global_obss_color_collision_det_offload);
+		return;
+	}
+
+	cfg_param = qdf_mem_malloc(sizeof(*cfg_param));
+	if (!cfg_param) {
+		pe_err("Failed to allocate memory");
+		return;
+	}
+
+	pe_debug("%d: sending event:%d", session->smeSessionId, event_type);
+	qdf_mem_zero(cfg_param, sizeof(*cfg_param));
+	cfg_param->vdev_id = session->smeSessionId;
+	cfg_param->evt_type = event_type;
+	if (LIM_IS_AP_ROLE(session))
+		cfg_param->detection_period_ms =
+			OBSS_COLOR_COLLISION_DETECTION_AP_PERIOD_MS;
+	else
+		cfg_param->detection_period_ms =
+			OBSS_COLOR_COLLISION_DETECTION_STA_PERIOD_MS;
+
+	cfg_param->scan_period_ms = OBSS_COLOR_COLLISION_SCAN_PERIOD_MS;
+	if (event_type == OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY)
+		cfg_param->free_slot_expiry_time_ms =
+			OBSS_COLOR_COLLISION_FREE_SLOT_EXPIRY_MS;
+
+	msg.type = WMA_OBSS_COLOR_COLLISION_REQ;
+	msg.bodyptr = cfg_param;
+	msg.reserved = 0;
+
+	if (QDF_IS_STATUS_ERROR(scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
+		pe_err("Failed to post WMA_OBSS_COLOR_COLLISION_REQ to WMA");
+		qdf_mem_free(cfg_param);
+	} else {
+		session->obss_color_collision_dec_evt = event_type;
+	}
+}
+
+void lim_process_obss_color_collision_info(tpAniSirGlobal mac_ctx,
+					   uint32_t *msg_buf)
+{
+	struct wmi_obss_color_collision_info *obss_color_info;
+	tpPESession session;
+
+	if (!msg_buf) {
+		pe_err("Buffer is Pointing to NULL");
+		return;
+	}
+
+	obss_color_info = (struct wmi_obss_color_collision_info *)msg_buf;
+	session = pe_find_session_by_sme_session_id(mac_ctx,
+						    obss_color_info->vdev_id);
+	if (!session) {
+		pe_err("Session not found for given session_id %d",
+			obss_color_info->vdev_id);
+		return;
+	}
+
+	pe_debug("vdev_id:%d, evt:%d:%d, 0to31:0x%x, 32to63:0x%x, cap:%d:%d:%d",
+		 obss_color_info->vdev_id,
+		 obss_color_info->evt_type,
+		 session->obss_color_collision_dec_evt,
+		 obss_color_info->obss_color_bitmap_bit0to31,
+		 obss_color_info->obss_color_bitmap_bit32to63,
+		 session->he_capable,
+		 session->is_session_obss_color_collision_det_enabled,
+		 mac_ctx->lim.global_obss_color_collision_det_offload);
+
+	if (!session->he_capable ||
+	    !session->is_session_obss_color_collision_det_enabled) {
+		return;
+	}
+
+	switch (obss_color_info->evt_type) {
+	case OBSS_COLOR_COLLISION_DETECTION_DISABLE:
+		pe_err("%d: FW disabled obss color det. he_cap:%d, sup:%d:%d",
+		       session->smeSessionId, session->he_capable,
+		       session->is_session_obss_color_collision_det_enabled,
+		       mac_ctx->lim.global_obss_color_collision_det_offload);
+		session->is_session_obss_color_collision_det_enabled = false;
+		return;
+	case OBSS_COLOR_FREE_SLOT_AVAILABLE:
+	case OBSS_COLOR_COLLISION_DETECTION:
+	case OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY:
+		if (session->valid && !LIM_IS_AP_ROLE(session)) {
+			pe_debug("Invalid System Role %d",
+				 GET_LIM_SYSTEM_ROLE(session));
+			return;
+		}
+
+		if (session->obss_color_collision_dec_evt !=
+		    obss_color_info->evt_type) {
+			pe_debug("%d: Wrong event: %d, skiping",
+				 obss_color_info->vdev_id,
+				 obss_color_info->evt_type);
+			return;
+		}
+		obss_color_collision_process_color_change(mac_ctx, session,
+							  obss_color_info);
+		break;
+	default:
+		pe_err("%d: Invalid event type %d",
+		       obss_color_info->vdev_id, obss_color_info->evt_type);
+		return;
+	}
 }
 #endif

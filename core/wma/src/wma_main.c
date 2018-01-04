@@ -3304,6 +3304,12 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 			wma_vdev_obss_detection_info_handler,
 			WMA_RX_SERIALIZER_CTX);
 
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+			wmi_obss_color_collision_report_event_id,
+			wma_vdev_bss_color_collision_info_handler,
+			WMA_RX_WORK_CTX);
+
+
 	return QDF_STATUS_SUCCESS;
 
 err_dbglog_init:
@@ -5068,12 +5074,30 @@ static void wma_update_hdd_band_cap(WMI_PHY_CAPABILITY supported_band,
 static void wma_update_obss_detection_support(tp_wma_handle wh,
 					      struct wma_tgt_cfg *tgt_cfg)
 {
-	if (WMI_SERVICE_EXT_IS_ENABLED(wh->wmi_service_bitmap,
-				       wh->wmi_service_ext_bitmap,
-				       WMI_SERVICE_AP_OBSS_DETECTION_OFFLOAD))
+	if (wmi_service_enabled(wh->wmi_handle,
+				wmi_service_ap_obss_detection_offload))
 		tgt_cfg->obss_detection_offloaded = true;
 	else
 		tgt_cfg->obss_detection_offloaded = false;
+}
+
+/**
+ * wma_update_obss_color_collision_support() - update obss color collision
+ *   offload support
+ * @wh: wma handle
+ * @tgt_cfg: target configuration to be updated
+ *
+ * Update obss color collision offload support based on service bit.
+ *
+ * Return: None
+ */
+static void wma_update_obss_color_collision_support(tp_wma_handle wh,
+						    struct wma_tgt_cfg *tgt_cfg)
+{
+	if (wmi_service_enabled(wh->wmi_handle, wmi_service_bss_color_offload))
+		tgt_cfg->obss_color_collision_offloaded = true;
+	else
+		tgt_cfg->obss_color_collision_offloaded = false;
 }
 
 /**
@@ -5152,6 +5176,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 			      - WMI_TLV_HEADROOM;
 	tgt_cfg.tx_bfee_8ss_enabled = wma_handle->tx_bfee_8ss_enabled;
 	wma_update_obss_detection_support(wma_handle, &tgt_cfg);
+	wma_update_obss_color_collision_support(wma_handle, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
@@ -7300,6 +7325,29 @@ static QDF_STATUS wma_process_limit_off_chan(tp_wma_handle wma_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS wma_process_obss_color_collision_req(tp_wma_handle wma_handle,
+		struct wmi_obss_color_collision_cfg_param *cfg)
+{
+	QDF_STATUS status;
+
+	if (cfg->vdev_id >= wma_handle->max_bssid) {
+		WMA_LOGE(FL("Invalid vdev_id: %d"), cfg->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+	if (!wma_is_vdev_up(cfg->vdev_id)) {
+		WMA_LOGE("vdev %d is not up skipping obss color collision req",
+			 cfg->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	status = wmi_unified_send_obss_color_collision_cfg_cmd(wma_handle->
+							       wmi_handle, cfg);
+	if (QDF_IS_STATUS_ERROR(status))
+		WMA_LOGE("Failed to send obss color collision cfg");
+
+	return status;
+}
+
 /**
  * wma_send_obss_detection_cfg() - send obss detection cfg to firmware
  * @wma_handle: pointer to wma handle
@@ -8088,6 +8136,10 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case WMA_INVOKE_NEIGHBOR_REPORT:
 		wma_send_invoke_neighbor_report(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_OBSS_COLOR_COLLISION_REQ:
+		wma_process_obss_color_collision_req(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

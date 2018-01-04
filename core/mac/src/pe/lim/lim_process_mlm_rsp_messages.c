@@ -255,7 +255,9 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 					psessionEntry->ssId.ssId,
 					psessionEntry->currentOperChannel);
 			lim_send_beacon_ind(pMac, psessionEntry);
-			lim_enable_obss_detection_config (pMac, psessionEntry);
+			lim_enable_obss_detection_config(pMac, psessionEntry);
+			lim_send_obss_color_collision_cfg(pMac, psessionEntry,
+					OBSS_COLOR_COLLISION_DETECTION);
 		}
 	}
 }
@@ -1564,6 +1566,8 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 		 * be passed in here
 		 */
 		mlm_assoc_cnf.resultCode = (tSirResultCodes) eSIR_SME_SUCCESS;
+		lim_send_obss_color_collision_cfg(mac_ctx, session_entry,
+					OBSS_COLOR_COLLISION_DETECTION);
 	} else {
 		pe_err("ADD_STA failed!");
 		if (session_entry->limSmeState == eLIM_SME_WT_REASSOC_STATE)

@@ -2015,6 +2015,12 @@ void hdd_update_tgt_cfg(void *context, void *param)
 				 cfg->obss_detection_offloaded);
 	if (QDF_IS_STATUS_ERROR(status))
 		hdd_err("Couldn't pass WNI_CFG_OBSS_DETECTION_OFFLOAD to CFG");
+
+	status = sme_cfg_set_int(hdd_ctx->hHal,
+				 WNI_CFG_OBSS_COLOR_COLLISION_OFFLOAD,
+				 cfg->obss_color_collision_offloaded);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to set WNI_CFG_OBSS_COLOR_COLLISION_OFFLOAD");
 }
 
 bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)

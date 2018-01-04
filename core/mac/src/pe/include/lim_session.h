@@ -100,6 +100,10 @@ typedef struct join_params {
 #define MAX_BSS_COLOR_VALUE 63
 #define TIME_BEACON_NOT_UPDATED 30000
 #define BSS_COLOR_SWITCH_COUNTDOWN 5
+#define OBSS_COLOR_COLLISION_DETECTION_STA_PERIOD_MS 10000
+#define OBSS_COLOR_COLLISION_DETECTION_AP_PERIOD_MS 5000
+#define OBSS_COLOR_COLLISION_SCAN_PERIOD_MS 200
+#define OBSS_COLOR_COLLISION_FREE_SLOT_EXPIRY_MS 50000
 struct bss_color_info {
 	qdf_time_t timestamp;
 	uint64_t seen_count;
@@ -555,6 +559,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool recvd_deauth_while_roaming;
 	bool recvd_disassoc_while_roaming;
 	bool deauth_disassoc_rc;
+	enum wmi_obss_color_collision_evt_type obss_color_collision_dec_evt;
+	bool is_session_obss_color_collision_det_enabled;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------
