@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -388,7 +388,7 @@ htt_rx_paddr_mark_high_bits(qdf_dma_addr_t paddr)
 	return paddr;
 }
 
-#ifdef HTT_PADDR64
+#if HTT_PADDR64
 static inline qdf_dma_addr_t htt_paddr_trim_to_37(qdf_dma_addr_t paddr)
 {
 	qdf_dma_addr_t ret = paddr;
@@ -449,6 +449,7 @@ htt_rx_in_ord_paddr_get(uint32_t *u32p)
 	return paddr;
 }
 #else
+#if HTT_PADDR64
 static qdf_dma_addr_t
 htt_rx_in_ord_paddr_get(uint32_t *u32p)
 {
@@ -464,6 +465,14 @@ htt_rx_in_ord_paddr_get(uint32_t *u32p)
 	}
 	return paddr;
 }
+#else
+static inline qdf_dma_addr_t
+htt_rx_in_ord_paddr_get(uint32_t *u32p)
+{
+	return HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*u32p);
+}
+
+#endif
 #endif /* ENABLE_DEBUG_ADDRESS_MARKING */
 #endif /* CONFIG_HL_SUPPORT*/
 
