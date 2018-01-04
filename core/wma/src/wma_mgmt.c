@@ -3499,8 +3499,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				    should_drop = true;
 			}
 		}
-		*cdp_peer_last_assoc_received(soc, peer) =
-				qdf_get_system_timestamp();
+		*ptr = qdf_get_system_timestamp();
 		break;
 	case IEEE80211_FC0_SUBTYPE_DISASSOC:
 		ptr = cdp_peer_last_disassoc_received(soc, peer);
@@ -3515,8 +3514,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				    should_drop = true;
 			}
 		}
-		*cdp_peer_last_disassoc_received(soc, peer) =
-				qdf_get_system_timestamp();
+		*ptr = qdf_get_system_timestamp();
 		break;
 	case IEEE80211_FC0_SUBTYPE_DEAUTH:
 		ptr = cdp_peer_last_deauth_received(soc, peer);
@@ -3531,8 +3529,7 @@ static bool wma_is_pkt_drop_candidate(tp_wma_handle wma_handle,
 				    should_drop = true;
 			}
 		}
-		*cdp_peer_last_deauth_received(soc, peer) =
-				qdf_get_system_timestamp();
+		*ptr = qdf_get_system_timestamp();
 		break;
 	default:
 		break;

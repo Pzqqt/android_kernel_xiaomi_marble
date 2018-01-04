@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4663,6 +4663,11 @@ bool wma_is_service_enabled(WMI_SERVICE service_type)
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		return false;
+	}
+
+	if (service_type >= WMI_MAX_SERVICE) {
+		WMA_LOGE("%s: Invalid service type %d", __func__, service_type);
 		return false;
 	}
 

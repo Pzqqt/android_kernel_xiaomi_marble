@@ -6112,6 +6112,11 @@ QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 		return QDF_STATUS_E_FAULT;
 	}
 
+	if (!wma) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
 #ifdef NAPIER_SCAN
 	*scan_id = ucfg_scan_get_scan_id(wma->psoc);
 #else
