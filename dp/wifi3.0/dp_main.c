@@ -4189,6 +4189,7 @@ void dp_aggregate_vdev_stats(struct dp_vdev *vdev)
 static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 {
 	struct dp_vdev *vdev = NULL;
+	struct dp_soc *soc = pdev->soc;
 
 	qdf_mem_set(&(pdev->stats.tx), sizeof(pdev->stats.tx), 0x0);
 	qdf_mem_set(&(pdev->stats.rx), sizeof(pdev->stats.rx), 0x0);
@@ -4243,6 +4244,9 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		pdev->stats.tx_i.tso.num_seg =
 			vdev->stats.tx_i.tso.num_seg;
 	}
+	if (soc->cdp_soc.ol_ops->update_dp_stats)
+		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
+				&pdev->stats, pdev->pdev_id, UPDATE_PDEV_STATS);
 
 }
 
