@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -382,7 +382,7 @@ struct wlan_crypto_params *wlan_crypto_peer_get_crypto_params(
 
 /**
  * wlan_crypto_set_peer_wep_keys - set wep keys into peer entries
- *
+ * @vdev:vdev
  * @peer:peer
  *
  * This function gets called by mlme, when auth frame is received.
@@ -391,7 +391,7 @@ struct wlan_crypto_params *wlan_crypto_peer_get_crypto_params(
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_crypto_set_peer_wep_keys(struct wlan_objmgr_vdev *vdev,
-						uint8_t *mac_addr);
+					struct wlan_objmgr_peer *peer);
 
 /**
  * wlan_crypto_register_crypto_rx_ops - set crypto_rx_ops

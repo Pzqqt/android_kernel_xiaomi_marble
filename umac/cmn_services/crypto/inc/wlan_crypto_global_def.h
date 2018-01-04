@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -302,7 +302,7 @@ struct wlan_lmac_if_crypto_rx_ops {
 					qdf_nbuf_t wbuf, uint8_t *macaddr,
 					uint8_t tid);
 	QDF_STATUS(*set_peer_wep_keys)(struct wlan_objmgr_vdev *vdev,
-						uint8_t *mac_addr);
+					struct wlan_objmgr_peer *peer);
 };
 
 #define WLAN_CRYPTO_RX_OPS_ENCAP(crypto_rx_ops) \
