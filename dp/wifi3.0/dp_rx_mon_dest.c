@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -249,7 +249,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 			qdf_nbuf_set_pktlen(msdu, rx_buf_size);
 
-
+#if 0
 			/* Disble it.see packet on msdu done set to 0 */
 			/*
 			 * Check if DMA completed -- msdu_done is the
@@ -268,7 +268,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 				qdf_assert_always(0);
 			}
-
+#endif
 			rx_bufs_used++;
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
