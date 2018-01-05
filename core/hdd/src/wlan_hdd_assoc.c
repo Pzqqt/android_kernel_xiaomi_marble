@@ -1321,7 +1321,6 @@ static void hdd_send_association_event(struct net_device *dev,
 				       adapter->hdd_vdev);
 
 #ifdef MSM_PLATFORM
-#if defined(CONFIG_ICNSS) || defined(CONFIG_CNSS)
 		/* start timer in sta/p2p_cli */
 		spin_lock_bh(&hdd_ctx->bus_bw_lock);
 		adapter->prev_tx_packets = adapter->stats.tx_packets;
@@ -1332,7 +1331,6 @@ static void hdd_send_association_event(struct net_device *dev,
 			&adapter->prev_fwd_rx_packets);
 		spin_unlock_bh(&hdd_ctx->bus_bw_lock);
 		hdd_bus_bw_compute_timer_start(hdd_ctx);
-#endif
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
 			sta_ctx->conn_info.connState) {
