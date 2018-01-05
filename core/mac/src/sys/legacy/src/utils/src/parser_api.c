@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -6265,6 +6265,7 @@ QDF_STATUS populate_dot11f_he_operation(tpAniSirGlobal mac_ctx,
 	qdf_mem_copy(he_op, &session->he_op, sizeof(*he_op));
 
 	he_op->vht_oper_present = 1;
+	he_op->present = 1;
 	if (session->ch_width > CH_WIDTH_40MHZ) {
 		he_op->vht_oper.info.chan_width = 1;
 		he_op->vht_oper.info.center_freq_seg0 =

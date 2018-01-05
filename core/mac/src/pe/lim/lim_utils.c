@@ -7315,25 +7315,27 @@ void lim_update_stads_he_caps(tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
 
 void lim_update_usr_he_cap(tpAniSirGlobal mac_ctx, tpPESession session)
 {
-	const uint8_t *vendor_ie;
 	tSirAddIeParams *add_ie = &session->addIeParams;
 	tDot11fIEhe_cap *he_cap = &session->he_config;
 	struct he_cap_network_endian *he_cap_from_ie;
-
-	vendor_ie = wlan_get_ext_ie_ptr_from_ext_id(
-			HE_CAP_OUI_TYPE, HE_CAP_OUI_SIZE,
-			add_ie->probeRespBCNData_buff,
-			add_ie->probeRespBCNDataLen);
-	if (!vendor_ie) {
-		pe_err("11AX: Unable to parse HE Caps");
+	uint8_t extracted_buff[DOT11F_IE_HE_CAP_MAX_LEN + 2];
+	enum eSirRetStatus status;
+	qdf_mem_zero(extracted_buff, sizeof(extracted_buff));
+	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
+			&add_ie->probeRespBCNDataLen,
+			DOT11F_EID_HE_CAP, ONE_BYTE,
+			HE_CAP_OUI_TYPE, (uint8_t)HE_CAP_OUI_SIZE,
+			extracted_buff, DOT11F_IE_HE_CAP_MAX_LEN);
+	if (eSIR_SUCCESS != status) {
+		pe_debug("Failed to strip HE cap IE status: %d", status);
 		return;
 	}
 
 	pe_debug("Before update: su_beamformer: %d, su_beamformee: %d, mu_beamformer: %d",
 		he_cap->su_beamformer, he_cap->su_beamformee, he_cap->mu_beamformer);
 
-	he_cap_from_ie =
-		(struct he_cap_network_endian *)&vendor_ie[HE_OP_OUI_SIZE + 2];
+	he_cap_from_ie = (struct he_cap_network_endian *)
+					&extracted_buff[HE_CAP_OUI_SIZE + 2];
 
 	he_cap->su_beamformer =
 		he_cap->su_beamformer & he_cap_from_ie->su_beamformer;
@@ -7350,22 +7352,24 @@ void lim_decide_he_op(tpAniSirGlobal mac_ctx, tpAddBssParams add_bss,
 		      tpPESession session)
 {
 	uint32_t val;
-	const uint8_t *vendor_ie;
 	struct he_ops_network_endian *he_ops_from_ie;
 	tDot11fIEhe_op *he_ops = &add_bss->he_op;
 	tSirAddIeParams *add_ie = &session->addIeParams;
+	uint8_t extracted_buff[DOT11F_IE_HE_OP_MAX_LEN + 2];
+	enum eSirRetStatus status;
 
-	vendor_ie = wlan_get_ext_ie_ptr_from_ext_id(
-			HE_OP_OUI_TYPE, HE_OP_OUI_SIZE,
-			add_ie->probeRespBCNData_buff,
-			add_ie->probeRespBCNDataLen);
-	if (!vendor_ie) {
-		pe_err("11AX: Unable to parse HE Operation");
+	qdf_mem_zero(extracted_buff, sizeof(extracted_buff));
+	status = lim_strip_ie(mac_ctx, add_ie->probeRespBCNData_buff,
+			&add_ie->probeRespBCNDataLen,
+			DOT11F_EID_HE_OP, ONE_BYTE,
+			HE_OP_OUI_TYPE, (uint8_t)HE_OP_OUI_SIZE,
+			extracted_buff, DOT11F_IE_HE_OP_MAX_LEN);
+	if (eSIR_SUCCESS != status) {
+		pe_debug("Failed to strip HE OP IE status: %d", status);
 		return;
 	}
-
-	he_ops_from_ie =
-		(struct he_ops_network_endian *)&vendor_ie[HE_OP_OUI_SIZE + 2];
+	he_ops_from_ie = (struct he_ops_network_endian *)
+					&extracted_buff[HE_OP_OUI_SIZE + 2];
 
 	he_ops->bss_color = he_ops_from_ie->bss_color;
 	he_ops->default_pe = he_ops_from_ie->default_pe;
