@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -129,8 +129,8 @@ struct direct_buf_rx_psoc_obj {
 };
 
 /**
- * target_if_direct_buf_rx_register_events: Register WMI events to direct
- *                                          buffer rx module
+ * target_if_direct_buf_rx_register_events() - Register WMI events to direct
+ *                                             buffer rx module
  * @psoc: pointer to psoc object
  *
  * Return : QDF status of operation
@@ -139,8 +139,8 @@ QDF_STATUS target_if_direct_buf_rx_register_events(
 				struct wlan_objmgr_psoc *psoc);
 
 /**
- * target_if_direct_buf_rx_unregister_events: Unregister WMI events to direct
- *                                            buffer rx module
+ * target_if_direct_buf_rx_unregister_events() - Unregister WMI events to direct
+ *                                               buffer rx module
  * @psoc: pointer to psoc object
  *
  * Return : QDF status of operation
@@ -149,9 +149,9 @@ QDF_STATUS target_if_direct_buf_rx_unregister_events(
 				struct wlan_objmgr_psoc *psoc);
 
 /**
- * target_if_direct_buf_rx_pdev_create_handler: Handler to be invoked for
- *                                              direct buffer rx module during
- *                                              pdev object create
+ * target_if_direct_buf_rx_pdev_create_handler() - Handler to be invoked for
+ *                                                 direct buffer rx module
+ *                                                 during pdev object create
  * @pdev: pointer to pdev object
  * @data: pointer to data
  *
@@ -161,9 +161,9 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 				struct wlan_objmgr_pdev *pdev, void *data);
 
 /**
- * target_if_direct_buf_rx_pdev_destroy_handler: Handler to be invoked for
- *                                               direct buffer rx module during
- *                                               pdev object destroy
+ * target_if_direct_buf_rx_pdev_destroy_handler() - Handler to be invoked for
+ *                                                  direct buffer rx module
+ *                                                  during pdev object destroy
  * @pdev: pointer to pdev object
  * @data: pointer to data
  *
@@ -173,30 +173,30 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 				struct wlan_objmgr_pdev *pdev, void *data);
 
 /**
- * target_if_direct_buf_rx_psoc_obj_create: Handler invoked for
- *                                          direct buffer rx module during
- *                                          attach
+ * target_if_direct_buf_rx_psoc_create_handler() - Handler invoked for
+ *                                                 direct buffer rx module
+ *                                                 during attach
  * @pdev: pointer to psoc object
  *
  * Return : QDF status of operation
  */
-QDF_STATUS target_if_direct_buf_rx_psoc_obj_create(
-				struct wlan_objmgr_psoc *psoc);
+QDF_STATUS target_if_direct_buf_rx_psoc_create_handler(
+				struct wlan_objmgr_psoc *psoc, void *data);
 
 /**
- * target_if_direct_buf_rx_psoc_obj_destroy: Handler invoked for
- *                                           direct buffer rx module during
- *                                           detach
+ * target_if_direct_buf_rx_psoc_destroy_handler() - Handler invoked for
+ *                                                  direct buffer rx module
+ *                                                  during detach
  * @pdev: pointer to psoc object
  *
  * Return : QDF status of operation
  */
-QDF_STATUS target_if_direct_buf_rx_psoc_obj_destroy(
-				struct wlan_objmgr_psoc *psoc);
+QDF_STATUS target_if_direct_buf_rx_psoc_destroy_handler(
+				struct wlan_objmgr_psoc *psoc, void *data);
 
 /**
- * target_if_deinit_dbr_ring: Function to deinitialize buffers and ring
- *                            allocated for direct buffer rx module
+ * target_if_deinit_dbr_ring() - Function to deinitialize buffers and ring
+ *                               allocated for direct buffer rx module
  * @pdev: pointer to pdev object
  * @dbr_pdev_obj: pointer to direct buffer rx module pdev obj
  * @mod_id: module id indicating the module using direct buffer rx framework
@@ -207,8 +207,8 @@ QDF_STATUS target_if_deinit_dbr_ring(struct wlan_objmgr_pdev *pdev,
 				struct direct_buf_rx_pdev_obj *dbr_pdev_obj,
 				enum DBR_MODULE mod_id);
 /**
- * target_if_direct_buf_rx_module_register: Function to register to direct
- *                                          buffer rx module
+ * target_if_direct_buf_rx_module_register() - Function to register to direct
+ *                                             buffer rx module
  * @pdev: pointer to pdev object
  * @mod_id: module id indicating the module using direct buffer rx framework
  * @dbr_rsp_handler: function pointer pointing to the response handler to be

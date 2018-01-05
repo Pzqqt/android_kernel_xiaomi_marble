@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -24,15 +24,28 @@
 #include <wlan_objmgr_cmn.h>
 #include "target_if_direct_buf_rx_main.h"
 
-QDF_STATUS direct_buf_rx_attach(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS direct_buf_rx_init(void)
 {
 	QDF_STATUS status;
 
-	status = target_if_direct_buf_rx_psoc_obj_create(psoc);
+	status = wlan_objmgr_register_psoc_create_handler(
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+			target_if_direct_buf_rx_psoc_create_handler,
+			NULL);
 
 	if (QDF_IS_STATUS_ERROR(status)) {
-		direct_buf_rx_err("Failed to create psoc priv obj");
+		direct_buf_rx_err("Failed to register psoc create handler");
 		return status;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+			target_if_direct_buf_rx_psoc_destroy_handler,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		direct_buf_rx_err("Failed to register psoc destroy handler");
+		goto dbr_unreg_psoc_create;
 	}
 
 	status = wlan_objmgr_register_pdev_create_handler(
@@ -42,7 +55,7 @@ QDF_STATUS direct_buf_rx_attach(struct wlan_objmgr_psoc *psoc)
 
 	if (QDF_IS_STATUS_ERROR(status)) {
 		direct_buf_rx_err("Failed to register pdev create handler");
-		goto dbr_destroy_psoc_handler;
+		goto dbr_unreg_psoc_destroy;
 	}
 
 	status = wlan_objmgr_register_pdev_destroy_handler(
@@ -55,22 +68,9 @@ QDF_STATUS direct_buf_rx_attach(struct wlan_objmgr_psoc *psoc)
 		goto dbr_unreg_pdev_create;
 	}
 
-	status = target_if_direct_buf_rx_register_events(psoc);
-
-	if (QDF_IS_STATUS_ERROR(status)) {
-		direct_buf_rx_err("Direct Buffer RX register events failed");
-		goto dbr_unreg_pdev_destroy;
-	}
-
 	direct_buf_rx_info("Direct Buffer RX pdev,psoc create and destroy handlers registered");
 
 	return QDF_STATUS_SUCCESS;
-
-dbr_unreg_pdev_destroy:
-	status = wlan_objmgr_unregister_pdev_destroy_handler(
-			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
-			target_if_direct_buf_rx_pdev_destroy_handler,
-			NULL);
 
 dbr_unreg_pdev_create:
 	status = wlan_objmgr_unregister_pdev_create_handler(
@@ -78,21 +78,25 @@ dbr_unreg_pdev_create:
 			target_if_direct_buf_rx_pdev_create_handler,
 			NULL);
 
-dbr_destroy_psoc_handler:
-	status = target_if_direct_buf_rx_psoc_obj_destroy(psoc);
+dbr_unreg_psoc_destroy:
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+			target_if_direct_buf_rx_psoc_destroy_handler,
+			NULL);
+
+dbr_unreg_psoc_create:
+	status = wlan_objmgr_unregister_psoc_create_handler(
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+			target_if_direct_buf_rx_psoc_create_handler,
+			NULL);
 
 	return QDF_STATUS_E_FAILURE;
 }
-qdf_export_symbol(direct_buf_rx_attach);
+qdf_export_symbol(direct_buf_rx_init);
 
-QDF_STATUS direct_buf_rx_detach(struct wlan_objmgr_psoc *psoc)
+QDF_STATUS direct_buf_rx_deinit(void)
 {
 	QDF_STATUS status;
-
-	status = target_if_direct_buf_rx_unregister_events(psoc);
-
-	if (QDF_IS_STATUS_ERROR(status))
-		direct_buf_rx_err("Direct Buffer RX unregister events failed");
 
 	status = wlan_objmgr_unregister_pdev_destroy_handler(
 			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
@@ -110,18 +114,29 @@ QDF_STATUS direct_buf_rx_detach(struct wlan_objmgr_psoc *psoc)
 	if (QDF_IS_STATUS_ERROR(status))
 		direct_buf_rx_err("Failed to unregister pdev create handler");
 
-	status = target_if_direct_buf_rx_psoc_obj_destroy(psoc);
+	status = wlan_objmgr_unregister_psoc_destroy_handler(
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+			target_if_direct_buf_rx_psoc_destroy_handler,
+			NULL);
 
 	if (QDF_IS_STATUS_ERROR(status))
-		direct_buf_rx_err("Failed to destroy psoc priv obj");
+		direct_buf_rx_err("Failed to unregister psoc destroy handler");
+
+	status = wlan_objmgr_unregister_psoc_create_handler(
+			WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+			target_if_direct_buf_rx_psoc_create_handler,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		direct_buf_rx_err("Failed to unregister psoc create handler");
 
 	direct_buf_rx_info("Direct Buffer RX pdev,psoc create and destroy handlers unregistered");
 
 	return status;
 }
-qdf_export_symbol(direct_buf_rx_detach);
+qdf_export_symbol(direct_buf_rx_deinit);
 
-QDF_STATUS direct_buf_rx_psoc_obj_fill(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 				void *hal_soc, qdf_device_t osdev)
 {
 	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
@@ -151,5 +166,9 @@ void target_if_direct_buf_rx_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
 	tx_ops->dbr_tx_ops.direct_buf_rx_module_register =
 				target_if_direct_buf_rx_module_register;
+	tx_ops->dbr_tx_ops.direct_buf_rx_register_events =
+				target_if_direct_buf_rx_register_events;
+	tx_ops->dbr_tx_ops.direct_buf_rx_unregister_events =
+				target_if_direct_buf_rx_unregister_events;
 }
 qdf_export_symbol(target_if_direct_buf_rx_register_tx_ops);

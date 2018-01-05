@@ -84,6 +84,28 @@ struct wlan_objmgr_psoc *target_if_get_psoc_from_scn_hdl(void *scn_handle)
 	return psoc;
 }
 
+#ifdef DIRECT_BUF_RX_ENABLE
+static QDF_STATUS target_if_direct_buf_rx_init(void)
+{
+	return direct_buf_rx_init();
+}
+
+static QDF_STATUS target_if_direct_buf_rx_deinit(void)
+{
+	return direct_buf_rx_deinit();
+}
+#else
+static QDF_STATUS target_if_direct_buf_rx_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS target_if_direct_buf_rx_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* DIRECT_BUF_RX_ENABLE */
+
 QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb)
 {
 	g_target_if_ctx = qdf_mem_malloc(sizeof(*g_target_if_ctx));
@@ -99,6 +121,8 @@ QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb)
 	g_target_if_ctx->magic = TGT_MAGIC;
 	g_target_if_ctx->get_psoc_hdl_cb = psoc_hdl_cb;
 	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
+
+	target_if_direct_buf_rx_init();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -120,6 +144,8 @@ QDF_STATUS target_if_close(void)
 	qdf_spinlock_destroy(&g_target_if_ctx->lock);
 	qdf_mem_free(g_target_if_ctx);
 	g_target_if_ctx = NULL;
+
+	target_if_direct_buf_rx_deinit();
 
 	return QDF_STATUS_SUCCESS;
 }

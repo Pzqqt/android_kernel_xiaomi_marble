@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -199,8 +199,8 @@ QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
 	return status;
 }
 
-QDF_STATUS target_if_direct_buf_rx_psoc_obj_create(
-	struct wlan_objmgr_psoc *psoc)
+QDF_STATUS target_if_direct_buf_rx_psoc_create_handler(
+	struct wlan_objmgr_psoc *psoc, void *data)
 {
 	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
 	QDF_STATUS status;
@@ -239,8 +239,8 @@ attach_error:
 	return status;
 }
 
-QDF_STATUS target_if_direct_buf_rx_psoc_obj_destroy(
-	struct wlan_objmgr_psoc *psoc)
+QDF_STATUS target_if_direct_buf_rx_psoc_destroy_handler(
+	struct wlan_objmgr_psoc *psoc, void *data)
 {
 	QDF_STATUS status;
 	struct direct_buf_rx_psoc_obj *dbr_psoc_obj;
@@ -408,6 +408,12 @@ static QDF_STATUS target_if_dbr_init_ring(struct wlan_objmgr_pdev *pdev,
 
 	if (dbr_psoc_obj == NULL) {
 		direct_buf_rx_err("dir buf rx psoc object is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (dbr_psoc_obj->hal_soc == NULL ||
+	    dbr_psoc_obj->osdev == NULL) {
+		direct_buf_rx_err("dir buf rx target attach failed");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -615,7 +621,7 @@ static QDF_STATUS target_if_init_dbr_ring(struct wlan_objmgr_pdev *pdev,
 
 	direct_buf_rx_info("mod_param %pK", mod_param);
 
-	mod_param->mod_id = mod_id+1;
+	mod_param->mod_id = mod_id;
 
 	/* Initialize DMA ring now */
 	status = target_if_dbr_init_srng(pdev, mod_param);
@@ -777,6 +783,7 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 					  WLAN_DIRECT_BUF_RX_ID);
 	if (!pdev) {
 		direct_buf_rx_err("pdev is null");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_DIRECT_BUF_RX_ID);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -785,13 +792,15 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 
 	if (dbr_pdev_obj == NULL) {
 		direct_buf_rx_err("dir buf rx object is null");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_DIRECT_BUF_RX_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	mod_param = &(dbr_pdev_obj->dbr_mod_param[dbr_rsp.mod_id-1]);
+	mod_param = &(dbr_pdev_obj->dbr_mod_param[dbr_rsp.mod_id]);
 
 	if (!mod_param) {
 		direct_buf_rx_err("dir buf rx module param is null");
+		wlan_objmgr_pdev_release_ref(pdev, WLAN_DIRECT_BUF_RX_ID);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -805,6 +814,8 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 			&dbr_rsp.dbr_entries[i]) != QDF_STATUS_SUCCESS) {
 			direct_buf_rx_err("Unable to extract DBR buf entry %d",
 					  i+1);
+			wlan_objmgr_pdev_release_ref(pdev,
+						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
 		}
 		status = target_if_get_dbr_data(pdev, mod_param, &dbr_rsp,
@@ -812,6 +823,8 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 
 		if (QDF_IS_STATUS_ERROR(status)) {
 			direct_buf_rx_err("DBR data get failed");
+			wlan_objmgr_pdev_release_ref(pdev,
+						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
 		}
 		ret = mod_param->dbr_rsp_handler(pdev, &dbr_data);
@@ -819,9 +832,13 @@ static int target_if_direct_buf_rx_rsp_event_handler(ol_scn_t scn,
 						      dbr_data.vaddr, cookie);
 		if (QDF_IS_STATUS_ERROR(status)) {
 			direct_buf_rx_err("dir buf rx ring replenish failed");
+			wlan_objmgr_pdev_release_ref(pdev,
+						     WLAN_DIRECT_BUF_RX_ID);
 			return QDF_STATUS_E_FAILURE;
 		}
 	}
+
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_DIRECT_BUF_RX_ID);
 
 	return ret;
 }
@@ -950,8 +967,7 @@ QDF_STATUS target_if_direct_buf_rx_register_events(
 				WMI_RX_UMAC_CTX);
 
 	if (ret) {
-		direct_buf_rx_err("register event handler failed: err %d", ret);
-		return QDF_STATUS_E_INVAL;
+		direct_buf_rx_info("event handler not supported", ret);
 	}
 
 	return QDF_STATUS_SUCCESS;

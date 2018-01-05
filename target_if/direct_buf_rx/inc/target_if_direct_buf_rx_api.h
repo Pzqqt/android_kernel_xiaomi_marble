@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -57,35 +57,33 @@ struct direct_buf_rx_data {
 };
 
 /**
- * direct_buf_rx_attach: Function to initialize direct buf rx module
- * @psoc: pointer to psoc object
+ * direct_buf_rx_init() - Function to initialize direct buf rx module
  *
  * Return: QDF status of operation
  */
-QDF_STATUS direct_buf_rx_attach(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS direct_buf_rx_init(void);
 
 /**
- * direct_buf_rx_detach: Function to deinitialize direct buf rx module
- * @psoc: pointer to psoc object
+ * direct_buf_rx_deinit() - Function to deinitialize direct buf rx module
  *
  * Return: QDF status of operation
  */
-QDF_STATUS direct_buf_rx_detach(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS direct_buf_rx_deinit(void);
 
 /**
- * direct_buf_rx_psoc_obj_fill: Fill hal_soc,osdev in direct buf rx psoc obj
+ * direct_buf_rx_target_attach() - Attach hal_soc,osdev in direct buf rx psoc obj
  * @psoc: pointer to psoc object
  * @hal_soc: Opaque HAL SOC handle
  * @osdev: QDF os device handle
  *
  * Return: QDF status of operation
  */
-QDF_STATUS direct_buf_rx_psoc_obj_fill(struct wlan_objmgr_psoc *psoc,
+QDF_STATUS direct_buf_rx_target_attach(struct wlan_objmgr_psoc *psoc,
 				void *hal_soc, qdf_device_t osdev);
 
 /**
- * target_if_direct_buf_rx_register_tx_ops: Register tx ops for direct buffer
- *                                          rx module
+ * target_if_direct_buf_rx_register_tx_ops() - Register tx ops for direct buffer
+ *                                             rx module
  * @tx_ops: pointer to lmac interface tx ops
  *
  * Return: None

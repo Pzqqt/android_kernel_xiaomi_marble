@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -1269,4 +1269,16 @@ struct wlan_logically_del_peer {
 	qdf_list_node_t list;
 	struct wlan_objmgr_peer *peer;
 };
+
+/**
+ * wlan_psoc_get_lmac_if_txops() - get lmac if txops for the psoc
+ * @psoc: psoc object pointer
+ *
+ * Return: Pointer to wlan_lmac_if_tx_ops
+ */
+static inline struct wlan_lmac_if_tx_ops *
+wlan_psoc_get_lmac_if_txops(struct wlan_objmgr_psoc *psoc)
+{
+	return &((psoc->soc_cb.tx_ops));
+}
 #endif /* _WLAN_OBJMGR_PSOC_OBJ_H_*/
