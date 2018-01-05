@@ -359,6 +359,7 @@ QDF_STATUS (*send_set_mimops_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_set_sta_uapsd_auto_trig_cmd)(wmi_unified_t wmi_handle,
 				struct sta_uapsd_trig_params *param);
 
+#ifdef WLAN_FEATURE_DSRC
 QDF_STATUS (*send_ocb_set_utc_time_cmd)(wmi_unified_t wmi_handle,
 				struct ocb_utc_param *utc);
 
@@ -372,17 +373,28 @@ QDF_STATUS (*send_ocb_stop_timing_advert_cmd)(wmi_unified_t wmi_handle,
 	struct ocb_timing_advert_param *timing_advert);
 
 QDF_STATUS (*send_dcc_get_stats_cmd)(wmi_unified_t wmi_handle,
-		     struct dcc_get_stats_param *get_stats_param);
+		     struct ocb_dcc_get_stats_param *get_stats_param);
 
 QDF_STATUS (*send_dcc_clear_stats_cmd)(wmi_unified_t wmi_handle,
 				uint32_t vdev_id, uint32_t dcc_stats_bitmap);
 
 QDF_STATUS (*send_dcc_update_ndl_cmd)(wmi_unified_t wmi_handle,
-		       struct dcc_update_ndl_param *update_ndl_param);
+		       struct ocb_dcc_update_ndl_param *update_ndl_param);
 
 QDF_STATUS (*send_ocb_set_config_cmd)(wmi_unified_t wmi_handle,
-		  struct ocb_config_param *config, uint32_t *ch_mhz);
-
+		  struct ocb_config *config);
+QDF_STATUS (*extract_ocb_chan_config_resp)(wmi_unified_t wmi_hdl,
+					   void *evt_buf,
+					   uint32_t *status);
+QDF_STATUS (*extract_ocb_tsf_timer)(wmi_unified_t wmi_hdl,
+				    void *evt_buf,
+				    struct ocb_get_tsf_timer_response *resp);
+QDF_STATUS (*extract_dcc_update_ndl_resp)(wmi_unified_t wmi_hdl,
+		void *evt_buf, struct ocb_dcc_update_ndl_response *resp);
+QDF_STATUS (*extract_dcc_stats)(wmi_unified_t wmi_hdl,
+				void *evt_buf,
+				struct ocb_dcc_get_stats_response **response);
+#endif
 QDF_STATUS (*send_lro_config_cmd)(wmi_unified_t wmi_handle,
 	 struct wmi_lro_config_cmd_t *wmi_lro_cmd);
 
