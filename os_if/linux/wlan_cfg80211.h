@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -65,6 +65,7 @@
 },
 
 #undef nla_parse
+#undef nla_parse_nested
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
 					  int maxtype,
@@ -73,6 +74,15 @@ static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
 					  const struct nla_policy *policy)
 {
 	return nla_parse(tb, maxtype, head, len, policy);
+}
+
+static inline int
+wlan_cfg80211_nla_parse_nested(struct nlattr *tb[],
+			       int maxtype,
+			       const struct nlattr *nla,
+			       const struct nla_policy *policy)
+{
+	return nla_parse_nested(tb, maxtype, nla, policy);
 }
 #else
 static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
@@ -83,8 +93,18 @@ static inline int wlan_cfg80211_nla_parse(struct nlattr **tb,
 {
 	return nla_parse(tb, maxtype, head, len, policy, NULL);
 }
+
+static inline int
+wlan_cfg80211_nla_parse_nested(struct nlattr *tb[],
+			       int maxtype,
+			       const struct nlattr *nla,
+			       const struct nla_policy *policy)
+{
+	return nla_parse_nested(tb, maxtype, nla, policy, NULL);
+}
 #endif
-#define nla_parse(...) (obsolete, use wlan_cfg80211_nla_parse or hdd_nla_parse)
+#define nla_parse(...) (obsolete, use wlan_cfg80211_nla_parse)
+#define nla_parse_nested(...) (obsolete, use wlan_cfg80211_nla_parse_nested)
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 7, 0))
 static inline int
