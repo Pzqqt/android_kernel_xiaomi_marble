@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -260,9 +260,6 @@ QDF_STATUS target_if_p2p_set_ps(struct wlan_objmgr_psoc *psoc,
 	QDF_STATUS status;
 	 wmi_unified_t wmi_handle = target_if_get_wmi_handle(psoc);
 
-	target_if_debug("psoc:%pK, vdev_id:%d, opp_ps:%d", psoc,
-		ps_config->vdev_id, ps_config->opp_ps);
-
 	if (!wmi_handle) {
 		target_if_err("Invalid wmi handle");
 		return QDF_STATUS_E_INVAL;
@@ -272,6 +269,9 @@ QDF_STATUS target_if_p2p_set_ps(struct wlan_objmgr_psoc *psoc,
 		target_if_err("ps config parameters is null");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	target_if_debug("psoc:%pK, vdev_id:%d, opp_ps:%d", psoc,
+			ps_config->vdev_id, ps_config->opp_ps);
 
 	cmd.opp_ps = ps_config->opp_ps;
 	cmd.ctwindow = ps_config->ct_window;
@@ -301,8 +301,6 @@ QDF_STATUS target_if_p2p_lo_start(struct wlan_objmgr_psoc *psoc,
 {
 	wmi_unified_t wmi_handle = target_if_get_wmi_handle(psoc);
 
-	target_if_debug("psoc:%pK, vdev_id:%d", psoc, lo_start->vdev_id);
-
 	if (!wmi_handle) {
 		target_if_err("Invalid wmi handle");
 		return QDF_STATUS_E_INVAL;
@@ -312,6 +310,7 @@ QDF_STATUS target_if_p2p_lo_start(struct wlan_objmgr_psoc *psoc,
 		target_if_err("lo start parameters is null");
 		return QDF_STATUS_E_INVAL;
 	}
+	target_if_debug("psoc:%pK, vdev_id:%d", psoc, lo_start->vdev_id);
 
 	return wmi_unified_p2p_lo_start_cmd(wmi_handle, lo_start);
 }
