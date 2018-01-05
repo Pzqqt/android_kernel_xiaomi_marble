@@ -11497,7 +11497,7 @@ enum hdd_wext_control {
 #define CFG_HE_DYNAMIC_FRAGMENTATION_NAME    "he_dynamic_frag_support"
 #define CFG_HE_DYNAMIC_FRAGMENTATION_MIN     (0)
 #define CFG_HE_DYNAMIC_FRAGMENTATION_MAX     (3)
-#define CFG_HE_DYNAMIC_FRAGMENTATION_DEFAULT (1)
+#define CFG_HE_DYNAMIC_FRAGMENTATION_DEFAULT (0)
 
 /*
  * <ini>
