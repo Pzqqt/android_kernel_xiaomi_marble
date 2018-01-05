@@ -373,6 +373,57 @@ const char *hdd_device_mode_to_string(uint8_t device_mode)
 }
 
 /**
+ * hdd_get_valid_chan() - return current chan list from regulatory.
+ * @hdd_ctx: HDD context
+ * @chan_list: buf hold returned chan list
+ * @chan_num: input buf size and output returned chan num
+ *
+ * This function helps get current available chan list from regulatory
+ * module. It excludes the "disabled" and "invalid" channels.
+ *
+ * Return: 0 for success.
+ */
+static int hdd_get_valid_chan(struct hdd_context *hdd_ctx,
+			      uint8_t *chan_list,
+			      uint32_t *chan_num)
+{
+	int i = 0, j = 0;
+	struct regulatory_channel *cur_chan_list;
+	struct wlan_objmgr_pdev *pdev;
+
+	if (!hdd_ctx || !hdd_ctx->hdd_pdev || !chan_list || !chan_num)
+		return -EINVAL;
+
+	pdev = hdd_ctx->hdd_pdev;
+	cur_chan_list = qdf_mem_malloc(NUM_CHANNELS *
+			sizeof(struct regulatory_channel));
+	if (!cur_chan_list)
+		return -ENOMEM;
+
+	if (wlan_reg_get_current_chan_list(pdev, cur_chan_list) !=
+					   QDF_STATUS_SUCCESS) {
+		qdf_mem_free(cur_chan_list);
+		return -EINVAL;
+	}
+
+	for (i = 0; i < NUM_CHANNELS; i++) {
+		uint32_t ch = cur_chan_list[i].chan_num;
+		enum channel_state state = wlan_reg_get_channel_state(pdev,
+								      ch);
+
+		if (state != CHANNEL_STATE_DISABLE &&
+		    state != CHANNEL_STATE_INVALID &&
+		    j < *chan_num) {
+			chan_list[j] = (uint8_t)ch;
+			j++;
+		}
+	}
+	*chan_num = j;
+	qdf_mem_free(cur_chan_list);
+	return 0;
+}
+
+/**
  * hdd_validate_channel_and_bandwidth() - Validate the channel-bandwidth combo
  * @adapter: HDD adapter
  * @chan_number: Channel number
@@ -386,10 +437,11 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 		uint32_t chan_number,
 		enum phy_ch_width chan_bw)
 {
-	uint8_t chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN, i;
+	uint8_t chan[NUM_CHANNELS];
+	uint32_t len = NUM_CHANNELS, i;
 	bool found = false;
 	tHalHandle hal;
+	int ret;
 
 	hal = WLAN_HDD_GET_HAL_CTX(adapter);
 	if (!hal) {
@@ -397,9 +449,11 @@ int hdd_validate_channel_and_bandwidth(struct hdd_adapter *adapter,
 		return -EINVAL;
 	}
 
-	if (0 != sme_cfg_get_str(hal, WNI_CFG_VALID_CHANNEL_LIST, chan, &len)) {
-		hdd_err("No valid channel list");
-		return -EOPNOTSUPP;
+	ret = hdd_get_valid_chan(adapter->hdd_ctx, chan,
+				 &len);
+	if (ret) {
+		hdd_err("error %d in getting valid channel list", ret);
+		return ret;
 	}
 
 	for (i = 0; i < len; i++) {
@@ -7436,6 +7490,7 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 	tHalHandle *hal_handle;
 	struct hdd_context *hdd_ctx;
 	bool found = false;
+	int ret;
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (!hdd_ctx) {
@@ -7486,10 +7541,10 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 
 	/* Try for safe channel from all valid channel */
 	pcl.pcl_len = MAX_NUM_CHAN;
-	status = sme_get_cfg_valid_channels(pcl.pcl_list,
-					&pcl.pcl_len);
-	if (QDF_IS_STATUS_ERROR(status)) {
-		hdd_err("error in getting valid channel list");
+	ret = hdd_get_valid_chan(hdd_ctx, pcl.pcl_list,
+				 &pcl.pcl_len);
+	if (ret) {
+		hdd_err("error %d in getting valid channel list", ret);
 		return INVALID_CHANNEL_ID;
 	}
 
