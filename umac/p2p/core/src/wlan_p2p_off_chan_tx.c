@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -142,7 +142,7 @@ static const uint8_t *p2p_get_p2pie_from_probe_rsp(
 {
 	const uint8_t *ie;
 	const uint8_t *p2p_ie;
-	const uint8_t *tmp_p2p_ie;
+	const uint8_t *tmp_p2p_ie = NULL;
 	uint16_t ie_len;
 
 	if (tx_ctx->buf_len <= PROBE_RSP_IE_OFFSET) {
