@@ -3706,6 +3706,7 @@ static QDF_STATUS send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_DSRC
 /**
  * send_ocb_set_utc_time_cmd() - send the UTC time to the firmware
  * @wmi_handle: pointer to the wmi handle
@@ -3910,7 +3911,7 @@ static QDF_STATUS send_ocb_get_tsf_timer_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: 0 on succes
  */
 static QDF_STATUS send_dcc_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
-		     struct dcc_get_stats_param *get_stats_param)
+		     struct ocb_dcc_get_stats_param *get_stats_param)
 {
 	QDF_STATUS ret;
 	wmi_dcc_get_stats_cmd_fixed_param *cmd;
@@ -4034,7 +4035,7 @@ static QDF_STATUS send_dcc_clear_stats_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: 0 on success
  */
 static QDF_STATUS send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
-		       struct dcc_update_ndl_param *update_ndl_param)
+		       struct ocb_dcc_update_ndl_param *update_ndl_param)
 {
 	QDF_STATUS qdf_status;
 	wmi_dcc_update_ndl_cmd_fixed_param *cmd;
@@ -4139,7 +4140,7 @@ static QDF_STATUS send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
  * Return: 0 on success
  */
 static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
-				struct ocb_config_param *config, uint32_t *ch_mhz)
+				struct ocb_config *config)
 {
 	QDF_STATUS ret;
 	wmi_ocb_set_config_cmd_fixed_param *cmd;
@@ -4207,7 +4208,7 @@ static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		WMITLV_TAG_STRUC_wmi_ocb_set_config_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(wmi_ocb_set_config_cmd_fixed_param));
-	cmd->vdev_id = config->session_id;
+	cmd->vdev_id = config->vdev_id;
 	cmd->channel_count = config->channel_count;
 	cmd->schedule_size = config->schedule_size;
 	cmd->flags = config->flags;
@@ -4227,7 +4228,7 @@ static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 		chan->band_center_freq2 = 0;
 		chan->info = 0;
 
-		WMI_SET_CHANNEL_MODE(chan, ch_mhz[i]);
+		WMI_SET_CHANNEL_MODE(chan, config->channels[i].ch_mode);
 		WMI_SET_CHANNEL_MAX_POWER(chan, config->channels[i].max_pwr);
 		WMI_SET_CHANNEL_MIN_POWER(chan, config->channels[i].min_pwr);
 		WMI_SET_CHANNEL_MAX_TX_POWER(chan, config->channels[i].max_pwr);
@@ -4337,6 +4338,123 @@ static QDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return ret;
 }
+
+/**
+ * extract_ocb_channel_config_resp_tlv() - extract ocb channel config resp
+ * @wmi_handle: wmi handle
+ * @evt_buf: wmi event buffer
+ * @status: status buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS extract_ocb_channel_config_resp_tlv(wmi_unified_t wmi_handle,
+						      void *evt_buf,
+						      uint32_t *status)
+{
+	WMI_OCB_SET_CONFIG_RESP_EVENTID_param_tlvs *param_tlvs;
+	wmi_ocb_set_config_resp_event_fixed_param *fix_param;
+
+	param_tlvs = evt_buf;
+	fix_param = param_tlvs->fixed_param;
+
+	*status = fix_param->status;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_ocb_tsf_timer_tlv() - extract TSF timer from event buffer
+ * @wmi_handle: wmi handle
+ * @evt_buf: wmi event buffer
+ * @resp: response buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS extract_ocb_tsf_timer_tlv(wmi_unified_t wmi_handle,
+			void *evt_buf, struct ocb_get_tsf_timer_response *resp)
+{
+	WMI_OCB_GET_TSF_TIMER_RESP_EVENTID_param_tlvs *param_tlvs;
+	wmi_ocb_get_tsf_timer_resp_event_fixed_param *fix_param;
+
+	param_tlvs = evt_buf;
+	fix_param = param_tlvs->fixed_param;
+	resp->vdev_id = fix_param->vdev_id;
+	resp->timer_high = fix_param->tsf_timer_high;
+	resp->timer_low = fix_param->tsf_timer_low;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_ocb_ndl_resp_tlv() - extract TSF timer from event buffer
+ * @wmi_handle: wmi handle
+ * @evt_buf: wmi event buffer
+ * @resp: response buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS extract_ocb_ndl_resp_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, struct ocb_dcc_update_ndl_response *resp)
+{
+	WMI_DCC_UPDATE_NDL_RESP_EVENTID_param_tlvs *param_tlvs;
+	wmi_dcc_update_ndl_resp_event_fixed_param *fix_param;
+
+	param_tlvs = evt_buf;
+	fix_param = param_tlvs->fixed_param;
+	resp->vdev_id = fix_param->vdev_id;
+	resp->status = fix_param->status;
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_ocb_dcc_stats_tlv() - extract DCC stats from event buffer
+ * @wmi_handle: wmi handle
+ * @evt_buf: wmi event buffer
+ * @resp: response buffer
+ *
+ * Since length of stats is variable, buffer for DCC stats will be allocated
+ * in this function. The caller must free the buffer.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+static QDF_STATUS extract_ocb_dcc_stats_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf, struct ocb_dcc_get_stats_response **resp)
+{
+	struct ocb_dcc_get_stats_response *response;
+	WMI_DCC_GET_STATS_RESP_EVENTID_param_tlvs *param_tlvs;
+	wmi_dcc_get_stats_resp_event_fixed_param *fix_param;
+
+	param_tlvs = (WMI_DCC_GET_STATS_RESP_EVENTID_param_tlvs *)evt_buf;
+	fix_param = param_tlvs->fixed_param;
+
+	/* Allocate and populate the response */
+	if (fix_param->num_channels > ((WMI_SVC_MSG_MAX_SIZE -
+	    sizeof(*fix_param)) / sizeof(wmi_dcc_ndl_stats_per_channel))) {
+		WMI_LOGE("%s: too many channels:%d", __func__,
+			 fix_param->num_channels);
+		QDF_ASSERT(0);
+		*resp = NULL;
+		return QDF_STATUS_E_INVAL;
+	}
+	response = qdf_mem_malloc(sizeof(*response) + fix_param->num_channels *
+		sizeof(wmi_dcc_ndl_stats_per_channel));
+	*resp = response;
+	if (!response)
+		return  QDF_STATUS_E_NOMEM;
+
+	response->vdev_id = fix_param->vdev_id;
+	response->num_channels = fix_param->num_channels;
+	response->channel_stats_array_len =
+		fix_param->num_channels *
+		sizeof(wmi_dcc_ndl_stats_per_channel);
+	response->channel_stats_array = ((uint8_t *)response) +
+					sizeof(*response);
+	qdf_mem_copy(response->channel_stats_array,
+		     param_tlvs->stats_per_channel_list,
+		     response->channel_stats_array_len);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 /**
  * send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv() -enable/disable mcc scheduler
@@ -21576,6 +21694,7 @@ struct wmi_ops tlv_ops =  {
 #endif
 	.send_set_smps_params_cmd = send_set_smps_params_cmd_tlv,
 	.send_set_mimops_cmd = send_set_mimops_cmd_tlv,
+#ifdef WLAN_FEATURE_DSRC
 	.send_ocb_set_utc_time_cmd = send_ocb_set_utc_time_cmd_tlv,
 	.send_ocb_get_tsf_timer_cmd = send_ocb_get_tsf_timer_cmd_tlv,
 	.send_dcc_clear_stats_cmd = send_dcc_clear_stats_cmd_tlv,
@@ -21585,6 +21704,11 @@ struct wmi_ops tlv_ops =  {
 	.send_ocb_stop_timing_advert_cmd = send_ocb_stop_timing_advert_cmd_tlv,
 	.send_ocb_start_timing_advert_cmd =
 		send_ocb_start_timing_advert_cmd_tlv,
+	.extract_ocb_chan_config_resp = extract_ocb_channel_config_resp_tlv,
+	.extract_ocb_tsf_timer = extract_ocb_tsf_timer_tlv,
+	.extract_dcc_update_ndl_resp = extract_ocb_ndl_resp_tlv,
+	.extract_dcc_stats = extract_ocb_dcc_stats_tlv,
+#endif
 	.send_set_enable_disable_mcc_adaptive_scheduler_cmd =
 		 send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv,
 	.send_set_mcc_channel_time_latency_cmd =
