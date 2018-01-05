@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1145,8 +1145,8 @@ static int __wlan_hdd_cfg80211_handle_tsf_cmd(struct wiphy *wiphy,
 	if (0 != status)
 		return -EINVAL;
 
-	if (hdd_nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_TSF_MAX, data,
-			  data_len, tsf_policy)) {
+	if (wlan_cfg80211_nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_TSF_MAX,
+				    data, data_len, tsf_policy)) {
 		hdd_err("Invalid TSF cmd");
 		return -EINVAL;
 	}

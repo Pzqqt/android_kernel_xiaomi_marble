@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1997,8 +1997,9 @@ static int __wlan_hdd_cfg80211_process_ndp_cmd(struct wiphy *wiphy,
 		hdd_err("NAN datapath is not enabled");
 		return -EPERM;
 	}
-	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
-			  data, data_len, qca_wlan_vendor_ndp_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX,
+				    data, data_len,
+				    qca_wlan_vendor_ndp_policy)) {
 		hdd_err("Invalid NDP vendor command attributes");
 		return -EINVAL;
 	}

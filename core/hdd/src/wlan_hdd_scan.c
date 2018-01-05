@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -940,8 +940,8 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
-	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX, data, data_len,
-			  scan_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SCAN_MAX,
+				    data, data_len, scan_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}

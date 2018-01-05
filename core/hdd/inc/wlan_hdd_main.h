@@ -2761,50 +2761,17 @@ static inline void hdd_update_hlp_info(struct net_device *dev,
 {}
 #endif
 
-#undef nla_parse
-#undef nla_parse_nested
 #if LINUX_VERSION_CODE < KERNEL_VERSION(4, 12, 0)
 static inline void hdd_dev_setup_destructor(struct net_device *dev)
 {
 	dev->destructor = free_netdev;
-}
-
-static inline int
-hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
-	      int len, const struct nla_policy *policy)
-{
-	return nla_parse(tb, maxtype, head, len, policy);
-}
-
-static inline int
-hdd_nla_parse_nested(struct nlattr *tb[], int maxtype, const struct nlattr *nla,
-		     const struct nla_policy *policy)
-{
-	return nla_parse_nested(tb, maxtype, nla, policy);
 }
 #else
 static inline void hdd_dev_setup_destructor(struct net_device *dev)
 {
 	dev->needs_free_netdev = true;
 }
-
-static inline int
-hdd_nla_parse(struct nlattr **tb, int maxtype, const struct nlattr *head,
-	      int len, const struct nla_policy *policy)
-{
-	return nla_parse(tb, maxtype, head, len, policy, NULL);
-}
-
-static inline int
-hdd_nla_parse_nested(struct nlattr *tb[], int maxtype, const struct nlattr *nla,
-		     const struct nla_policy *policy)
-{
-	return nla_parse_nested(tb, maxtype, nla, policy, NULL);
-}
 #endif /* KERNEL_VERSION(4, 12, 0) */
-#define nla_parse(...) (obsolete, use wlan_cfg80211_nla_parse or hdd_nla_parse)
-#define nla_parse_nested(...) \
-	(obsolete, use wlan_cfg80211_nla_parse_nested or hdd_nla_parse_nested)
 
 /**
  * hdd_dp_trace_init() - initialize DP Trace by calling the QDF API

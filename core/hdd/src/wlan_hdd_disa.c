@@ -177,8 +177,9 @@ hdd_fill_encrypt_decrypt_params(struct disa_encrypt_decrypt_req_params
 	uint8_t *tmp;
 	uint8_t fc[2];
 
-	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX,
-		      data, data_len, encrypt_decrypt_policy)) {
+	if (wlan_cfg80211_nla_parse(tb,
+				    QCA_WLAN_VENDOR_ATTR_ENCRYPTION_TEST_MAX,
+				    data, data_len, encrypt_decrypt_policy)) {
 		hdd_err("Invalid ATTR");
 		return -EINVAL;
 	}

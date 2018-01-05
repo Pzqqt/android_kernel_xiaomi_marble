@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -227,8 +227,9 @@ __wlan_hdd_cfg80211_configure_tdls_mode(struct wiphy *wiphy,
 	if (NULL == adapter)
 		return -EINVAL;
 
-	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX, data,
-			  data_len, wlan_hdd_tdls_mode_configuration_policy)) {
+	if (wlan_cfg80211_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TDLS_CONFIG_MAX,
+				    data, data_len,
+				    wlan_hdd_tdls_mode_configuration_policy)) {
 		hdd_err("Invalid attribute");
 		return -EINVAL;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -111,8 +111,9 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	 * ipv4 addr: 4 bytes
 	 * ipv6 addr: 16 bytes
 	 */
-	if (hdd_nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX, data,
-			  data_len, policy)) {
+	if (wlan_cfg80211_nla_parse(tb,
+				    QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX,
+				    data, data_len, policy)) {
 		hdd_err("Invalid ATTR list");
 		return -EINVAL;
 	}
