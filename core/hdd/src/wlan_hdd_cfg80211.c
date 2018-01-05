@@ -1722,32 +1722,37 @@ static int wlan_hdd_reset_force_acs_chan_range(struct hdd_context *hdd_ctx,
 }
 
 /**
- * wlan_hdd_set_acs_ch_range : Start ACS channel range values
+ * wlan_hdd_set_acs_ch_range : Populate ACS hw mode and channel range values
  * @sap_cfg: pointer to SAP config struct
+ * @hw_mode: hw mode retrieved from vendor command buffer
+ * @ht_enabled: whether HT phy mode is enabled
+ * @vht_enabled: whether VHT phy mode is enabled
  *
- * This function sets the default ACS start and end channel for the given band
- * and also parses the given ACS channel list.
+ * This function populates the ACS hw mode based on the configuration retrieved
+ * from the vendor command buffer; and sets ACS start and end channel for the
+ * given band.
  *
- * Return: status
+ * Return: 0 if success; -EINVAL if ACS channel list is NULL
  */
-static int wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
-							bool vht_enabled)
+static int wlan_hdd_set_acs_ch_range(
+	tsap_Config_t *sap_cfg, enum qca_wlan_vendor_acs_hw_mode hw_mode,
+	bool ht_enabled, bool vht_enabled)
 {
 	int i;
 
-	if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211B) {
+	if (hw_mode == QCA_ACS_MODE_IEEE80211B) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11b;
 		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
 		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_14);
-	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211G) {
+	} else if (hw_mode == QCA_ACS_MODE_IEEE80211G) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11g;
 		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
 		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_13);
-	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211A) {
+	} else if (hw_mode == QCA_ACS_MODE_IEEE80211A) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11a;
 		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_36);
 		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_165);
-	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
+	} else if (hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_abg;
 		sap_cfg->acs_cfg.start_ch = WLAN_REG_CH_NUM(CHAN_ENUM_1);
 		sap_cfg->acs_cfg.end_ch = WLAN_REG_CH_NUM(CHAN_ENUM_165);
@@ -2505,7 +2510,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	int status = -EINVAL, i = 0;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_ACS_MAX + 1];
 	bool ht_enabled, ht40_enabled, vht_enabled;
-	uint8_t ch_width, hw_mode;
+	uint8_t ch_width;
+	enum qca_wlan_vendor_acs_hw_mode hw_mode;
 	QDF_STATUS qdf_status;
 
 	/* ***Note*** Donot set SME config related to ACS operation here because
@@ -2557,8 +2563,6 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 	hw_mode = nla_get_u8(tb[QCA_WLAN_VENDOR_ATTR_ACS_HW_MODE]);
-	/* This value will be overwritten in wlan_hdd_set_acs_ch_range */
-	sap_config->acs_cfg.hw_mode = hw_mode;
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_HT_ENABLED])
 		ht_enabled =
@@ -2685,7 +2689,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				  pcl_channels_weight_list[i]);
 	}
 
-	status = wlan_hdd_set_acs_ch_range(sap_config, ht_enabled, vht_enabled);
+	status = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
+					   ht_enabled, vht_enabled);
 	if (status) {
 		hdd_err("set acs channel range failed");
 		goto out;

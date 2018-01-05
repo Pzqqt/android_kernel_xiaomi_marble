@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -495,7 +495,7 @@ typedef struct sap_SSIDInfo {
 struct sap_acs_cfg {
 	/* ACS Algo Input */
 	uint8_t    acs_mode;
-	uint32_t    hw_mode;
+	eCsrPhyMode hw_mode;
 	uint8_t    start_ch;
 	uint8_t    end_ch;
 	uint8_t    *ch_list;

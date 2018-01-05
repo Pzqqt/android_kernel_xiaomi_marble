@@ -1622,15 +1622,7 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 	return false;
 }
 
-/**
- * sap_select_default_oper_chan() - Select operating channel based on acs hwmode
- * @hal: pointer to HAL
- * @acs_cfg: ACS config info
- *
- * Return: selected operating channel
- */
-uint8_t sap_select_default_oper_chan(tHalHandle hal,
-		struct sap_acs_cfg *acs_cfg)
+uint8_t sap_select_default_oper_chan(struct sap_acs_cfg *acs_cfg)
 {
 	uint8_t channel;
 
@@ -1641,21 +1633,21 @@ uint8_t sap_select_default_oper_chan(tHalHandle hal,
 		return 0;
 	}
 
-	if (acs_cfg->hw_mode == eCSR_DOT11_MODE_11a)
+	if (acs_cfg->hw_mode == eCSR_DOT11_MODE_11a) {
 		channel = SAP_DEFAULT_5GHZ_CHANNEL;
-	else if ((acs_cfg->hw_mode == eCSR_DOT11_MODE_11n) ||
-		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11n_ONLY) ||
-		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac) ||
-		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac_ONLY) ||
-		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax) ||
-		(acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax_ONLY)) {
+	} else if ((acs_cfg->hw_mode == eCSR_DOT11_MODE_11n) ||
+		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11n_ONLY) ||
+		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac) ||
+		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ac_ONLY) ||
+		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax) ||
+		   (acs_cfg->hw_mode == eCSR_DOT11_MODE_11ax_ONLY)) {
 		if (WLAN_REG_IS_5GHZ_CH(acs_cfg->start_ch))
 			channel = SAP_DEFAULT_5GHZ_CHANNEL;
 		else
 			channel = SAP_DEFAULT_24GHZ_CHANNEL;
-	}
-	else
+	} else {
 		channel = SAP_DEFAULT_24GHZ_CHANNEL;
+	}
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			FL("channel selected to start bss %d"), channel);
@@ -1886,8 +1878,7 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("SAP Configuring default channel, Ch=%d"),
 				  sap_context->channel);
-			sap_context->channel =
-				sap_select_default_oper_chan(h_hal,
+			sap_context->channel = sap_select_default_oper_chan(
 					sap_context->acs_cfg);
 
 #ifdef SOFTAP_CHANNEL_RANGE

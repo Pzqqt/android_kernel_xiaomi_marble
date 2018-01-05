@@ -311,8 +311,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 			FL("CSR scan_status = eCSR_SCAN_ABORT/FAILURE (%d), choose default channel"),
 			scan_status);
 		sap_ctx->channel =
-			sap_select_default_oper_chan(hal_handle,
-					sap_ctx->acs_cfg);
+			sap_select_default_oper_chan(sap_ctx->acs_cfg);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 		goto close_session;
@@ -377,8 +376,7 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 	} else {
 #else
 		sap_ctx->channel =
-			sap_select_default_oper_chan(hal_handle,
-				sap_ctx->acs_cfg);
+			sap_select_default_oper_chan(sap_ctx->acs_cfg);
 	} else {
 #endif
 		/* Valid Channel Found from scan results. */
