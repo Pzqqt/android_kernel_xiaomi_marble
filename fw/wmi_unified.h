@@ -8113,6 +8113,11 @@ typedef enum {
     /** VDEV parameter to config dynamic DTIM count */
     WMI_VDEV_PARAM_DYNDTIM_CNT,                              /* 0x7c */
 
+    /** VDEV parameter to enable or disable RTT responder role
+      * valid values: 0-Disable responder role 1-Enable responder role
+      */
+    WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,        /* 0x7d */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
