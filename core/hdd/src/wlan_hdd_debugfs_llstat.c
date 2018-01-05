@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,6 +38,8 @@ struct ll_stats_buf {
 
 static struct ll_stats_buf ll_stats;
 
+static DEFINE_MUTEX(llstats_mutex);
+
 void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 		void *data, uint32_t num_peers)
 {
@@ -52,7 +54,9 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 
 	ENTER();
 
+	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
+		mutex_unlock(&llstats_mutex);
 		hdd_err("LL statistics buffer is NULL");
 		return;
 	}
@@ -64,6 +68,7 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 			"\n\n===LL_STATS_IFACE: num_peers: %d===", num_peers);
 
 	if (false == hdd_get_interface_info(adapter, &iface_stat->info)) {
+		mutex_unlock(&llstats_mutex);
 		hdd_err("hdd_get_interface_info get fail");
 		return;
 	}
@@ -141,6 +146,7 @@ void hdd_debugfs_process_iface_stats(struct hdd_adapter *adapter,
 	}
 
 	ll_stats.len += len;
+	mutex_unlock(&llstats_mutex);
 	EXIT();
 }
 
@@ -155,7 +161,9 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 
 	ENTER();
 
+	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
+		mutex_unlock(&llstats_mutex);
 		hdd_err("LL statistics buffer is NULL");
 		return;
 	}
@@ -202,6 +210,7 @@ void hdd_debugfs_process_peer_stats(struct hdd_adapter *adapter, void *data)
 				(num_rate * sizeof(tSirWifiRateStat)));
 	}
 	ll_stats.len += len;
+	mutex_unlock(&llstats_mutex);
 	EXIT();
 
 }
@@ -217,7 +226,9 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 
 	ENTER();
 
+	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
+		mutex_unlock(&llstats_mutex);
 		hdd_err("LL statistics buffer is NULL");
 		return;
 	}
@@ -279,26 +290,35 @@ void hdd_debugfs_process_radio_stats(struct hdd_adapter *adapter,
 		radio_stat++;
 	}
 	ll_stats.len += len;
+	mutex_unlock(&llstats_mutex);
 	EXIT();
 }
 
 static inline void wlan_hdd_llstats_free_buf(void)
 {
+	mutex_lock(&llstats_mutex);
 	qdf_mem_free(ll_stats.result);
 	ll_stats.result = NULL;
 	ll_stats.len =  0;
+	mutex_unlock(&llstats_mutex);
 }
 
 static int wlan_hdd_llstats_alloc_buf(void)
 {
+	mutex_lock(&llstats_mutex);
+	if (ll_stats.result) {
+		mutex_unlock(&llstats_mutex);
+		hdd_err("Buffer is already allocated");
+		return 0;
+	}
 	ll_stats.len = 0;
-
 	ll_stats.result = qdf_mem_malloc(DEBUGFS_LLSTATS_BUF_SIZE);
 	if (!ll_stats.result) {
+		mutex_unlock(&llstats_mutex);
 		hdd_err("LL Stats buffer allocation failed");
 		return -EINVAL;
 	}
-
+	mutex_unlock(&llstats_mutex);
 	return 0;
 }
 
@@ -319,15 +339,17 @@ static ssize_t hdd_debugfs_stats_update(char __user *buf, size_t count,
 	ssize_t ret_cnt;
 
 	ENTER();
-
+	mutex_lock(&llstats_mutex);
 	if (!ll_stats.result) {
+		mutex_unlock(&llstats_mutex);
 		hdd_err("Trying to read from NULL buffer");
 		return 0;
 	}
 
-	hdd_info("LL stats read req: count: %zu, pos: %lld", count, *pos);
 	ret_cnt = simple_read_from_buffer(buf, count, pos,
 			ll_stats.result, ll_stats.len);
+	mutex_unlock(&llstats_mutex);
+	hdd_debug("LL stats read req: count: %zu, pos: %lld", count, *pos);
 
 	EXIT();
 	return ret_cnt;
