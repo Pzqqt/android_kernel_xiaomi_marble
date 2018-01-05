@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1474,7 +1474,10 @@ cgstatic cfg_static[CFG_PARAM_MAX_NUM] = {
 	WNI_CFG_HE_TX_MCS_MAP_80_80_MIN, WNI_CFG_HE_TX_MCS_MAP_80_80_MAX,
 	WNI_CFG_HE_TX_MCS_MAP_80_80_DEF},
 
-	{WNI_CFG_HE_PPET,
+	{WNI_CFG_HE_PPET_2G,
+	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE,
+	0, 0, 0},
+	{WNI_CFG_HE_PPET_5G,
 	CFG_CTL_VALID | CFG_CTL_RE | CFG_CTL_WE,
 	0, 0, 0},
 
@@ -1775,7 +1778,12 @@ cfgstatic_string cfg_static_string[CFG_MAX_STATIC_STRING] = {
 	WNI_CFG_WPS_UUID_LEN,
 	6,
 	{0xa, 0xb, 0xc, 0xd, 0xe, 0xf} },
-	{WNI_CFG_HE_PPET,
+	{WNI_CFG_HE_PPET_2G,
+	WNI_CFG_HE_PPET_LEN,
+	WNI_CFG_HE_PPET_LEN,
+	{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,
+	 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0} },
+	{WNI_CFG_HE_PPET_5G,
 	WNI_CFG_HE_PPET_LEN,
 	WNI_CFG_HE_PPET_LEN,
 	{0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0, 0x0,

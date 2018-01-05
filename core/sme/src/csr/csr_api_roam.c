@@ -2440,7 +2440,8 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 
 	if (he_cap->ppet_present) {
 		value = WNI_CFG_HE_PPET_LEN;
-		sme_cfg_get_str(mac_ctx, WNI_CFG_HE_PPET,
+		/* till now operating channel is not decided yet, use 5g cap */
+		sme_cfg_get_str(mac_ctx, WNI_CFG_HE_PPET_5G,
 			(void *)&he_cap->ppe_threshold, &value);
 	} else {
 		he_cap->ppe_threshold.present = false;

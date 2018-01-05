@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -190,6 +190,8 @@ struct wma_tgt_cfg {
 	uint16_t wmi_max_len;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap;
+	tDot11fIEppe_threshold ppet_2g;
+	tDot11fIEppe_threshold ppet_5g;
 #endif
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;

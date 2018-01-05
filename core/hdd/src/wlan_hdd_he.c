@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -201,9 +201,14 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_MCS_MAP_80_80,
 		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
-	/* PPET can not be configured by user - Set values from FW */
-	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET,
-				 (void *)&he_cap->ppe_threshold, ppet_size);
+	/* PPET can not be configured by user - Set per band values from FW */
+	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET_2G,
+				 (void *)&cfg->ppet_2g, ppet_size);
+	if (status == QDF_STATUS_E_FAILURE)
+		hdd_alert("could not set HE PPET");
+
+	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET_5G,
+				 (void *)&cfg->ppet_5g, ppet_size);
 	if (status == QDF_STATUS_E_FAILURE)
 		hdd_alert("could not set HE PPET");
 }

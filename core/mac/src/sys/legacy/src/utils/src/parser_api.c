@@ -6296,7 +6296,8 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 
 		if (he_cap->ppet_present) {
 			value = WNI_CFG_HE_PPET_LEN;
-			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET,
+			/* if session less then take 5g cap */
+			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_5G,
 				(void *)&he_cap->ppe_threshold, value, value);
 		} else {
 			he_cap->ppe_threshold.present = false;
@@ -6308,8 +6309,15 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 	qdf_mem_copy(he_cap, &session->he_config, sizeof(*he_cap));
 	if (he_cap->ppet_present) {
 		value = WNI_CFG_HE_PPET_LEN;
-		CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET,
-			(void *)&he_cap->ppe_threshold, value, value);
+		/* if session is present, populate PPET based on band */
+		if (IS_5G_CH(session->currentOperChannel))
+			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_5G,
+				    (void *)&he_cap->ppe_threshold,
+				    value, value);
+		else
+			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_2G,
+				    (void *)&he_cap->ppe_threshold,
+				    value, value);
 	} else {
 		he_cap->ppe_threshold.present = false;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -178,7 +178,6 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  * @he_cap: pointer to dot11f structure
  * @mac_cap: Received HE MAC capability
  * @phy_cap: Received HE PHY capability
- * @he_ppet: Received HE PPE threshold
  * @supp_mcs: Max MCS supported (Tx/Rx)
  * @tx_chain_mask: Tx chain mask
  * @rx_chain_mask: Rx chain mask
@@ -190,13 +189,11 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
  * Return: None
  */
 static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
-			       uint32_t *phy_cap, void *he_ppet,
-			       uint32_t supp_mcs, uint32_t tx_chain_mask,
-			       uint32_t rx_chain_mask)
+			       uint32_t *phy_cap, uint32_t supp_mcs,
+			       uint32_t tx_chain_mask, uint32_t rx_chain_mask)
 {
 	uint8_t nss, chan_width;
 	uint16_t rx_mcs_le_80, tx_mcs_le_80, rx_mcs_160, tx_mcs_160;
-	struct wmi_host_ppe_threshold *ppet = he_ppet;
 
 	nss = QDF_MAX(wma_get_num_of_setbits_from_bitmask(tx_chain_mask),
 			wma_get_num_of_setbits_from_bitmask(rx_chain_mask));
@@ -320,8 +317,6 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 	*((uint16_t *)he_cap->rx_he_mcs_map_160) = tx_mcs_160;
 	*((uint16_t *)he_cap->rx_he_mcs_map_80_80) = rx_mcs_160;
 	*((uint16_t *)he_cap->tx_he_mcs_map_80_80) = tx_mcs_160;
-
-	wma_convert_he_ppet(&he_cap->ppe_threshold, ppet);
 }
 
 /**
@@ -876,11 +871,15 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				wma_convert_he_cap(&he_cap_mac,
 						mac_cap->he_cap_info_2G,
 						mac_cap->he_cap_phy_info_2G,
-						(uint8_t *)&mac_cap->he_ppet2G,
 						mac_cap->he_supp_mcs_2G,
 						mac_cap->tx_chain_mask_2G,
 						mac_cap->rx_chain_mask_2G);
-
+				WMA_LOGD(FL("2g phy: nss: %d, ru_idx_msk: %d"),
+					mac_cap->he_ppet2G.numss_m1,
+					mac_cap->he_ppet2G.ru_mask);
+				wma_convert_he_ppet(&tgt_cfg->ppet_2g,
+					(struct wmi_host_ppe_threshold *)
+					&mac_cap->he_ppet2G);
 			}
 
 			if (he_cap_mac.present)
@@ -893,11 +892,15 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				wma_convert_he_cap(&he_cap_mac,
 						mac_cap->he_cap_info_5G,
 						mac_cap->he_cap_phy_info_5G,
-						(uint8_t *)&mac_cap->he_ppet5G,
 						mac_cap->he_supp_mcs_5G,
 						mac_cap->tx_chain_mask_5G,
 						mac_cap->rx_chain_mask_5G);
-
+				WMA_LOGD(FL("5g phy: nss: %d, ru_idx_msk: %d"),
+					mac_cap->he_ppet2G.numss_m1,
+					mac_cap->he_ppet2G.ru_mask);
+				wma_convert_he_ppet(&tgt_cfg->ppet_5g,
+					(struct wmi_host_ppe_threshold *)
+					&mac_cap->he_ppet5G);
 			}
 
 			if (he_cap_mac.present)

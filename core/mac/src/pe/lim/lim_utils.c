@@ -7528,6 +7528,14 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tTx MCS map for <= 80+80 Mhz: 0x%04x",
 		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
+	pe_debug("\t ppe_th:  present: %d, nss_count: %d, ru_idx_msk: %d",
+		he_cap->ppe_threshold.present,
+		he_cap->ppe_threshold.nss_count,
+		he_cap->ppe_threshold.ru_idx_mask);
+
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+		&he_cap->ppe_threshold, sizeof(tDot11fIEppe_threshold));
+
 	/* HE PPET */
 	if (!he_cap->ppet_present)
 		return;
@@ -7536,7 +7544,6 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 		pe_debug(FL("PPET is not present. Invalid IE"));
 		return;
 	}
-
 }
 
 void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEhe_op *he_ops)

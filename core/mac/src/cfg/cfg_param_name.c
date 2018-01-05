@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -330,7 +330,8 @@ const char *cfg_get_string(uint16_t cfg_id)
 	CASE_RETURN_STRING(WNI_CFG_HE_TX_MCS_MAP_160);
 	CASE_RETURN_STRING(WNI_CFG_HE_RX_MCS_MAP_80_80);
 	CASE_RETURN_STRING(WNI_CFG_HE_TX_MCS_MAP_80_80);
-	CASE_RETURN_STRING(WNI_CFG_HE_PPET);
+	CASE_RETURN_STRING(WNI_CFG_HE_PPET_2G);
+	CASE_RETURN_STRING(WNI_CFG_HE_PPET_5G);
 	CASE_RETURN_STRING(WNI_CFG_HE_OPS_BSS_COLOR);
 	CASE_RETURN_STRING(WNI_CFG_HE_OPS_DEFAULT_PE);
 	CASE_RETURN_STRING(WNI_CFG_HE_OPS_TWT_REQUIRED);
