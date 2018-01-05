@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3308,7 +3308,16 @@ static QDF_STATUS wma_switch_channel(tp_wma_handle wma,
 	pmac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (pmac == NULL) {
-		WMA_LOGE("%s: vdev start failed as pmac is NULL", __func__);
+		WMA_LOGE("%s: channel switch failed as pmac is NULL",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	chanmode = wma_chan_phy_mode(req->chan, req->chan_width,
+				     req->dot11_mode);
+
+	if (chanmode == MODE_UNKNOWN) {
+		WMA_LOGE("%s: invalid phy mode!", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -3325,8 +3334,6 @@ static QDF_STATUS wma_switch_channel(tp_wma_handle wma,
 
 	/* Fill channel info */
 	cmd->mhz = cds_chan_to_freq(req->chan);
-	chanmode = wma_chan_phy_mode(req->chan, req->chan_width,
-				    req->dot11_mode);
 
 	intr[req->vdev_id].chanmode = chanmode; /* save channel mode */
 	intr[req->vdev_id].ht_capable = req->ht_capable;
