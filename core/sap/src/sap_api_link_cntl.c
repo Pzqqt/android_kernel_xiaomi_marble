@@ -310,8 +310,12 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("CSR scan_status = eCSR_SCAN_ABORT/FAILURE (%d), choose default channel"),
 			scan_status);
-		sap_ctx->channel =
+		oper_channel =
 			sap_select_default_oper_chan(sap_ctx->acs_cfg);
+		sap_ctx->channel = oper_channel;
+		sap_ctx->acs_cfg->pri_ch = oper_channel;
+		sap_config_acs_result(hal_handle, sap_ctx,
+				      sap_ctx->acs_cfg->ht_sec_ch);
 		sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 		sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 		goto close_session;
