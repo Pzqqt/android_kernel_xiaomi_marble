@@ -13454,6 +13454,11 @@ void hdd_drv_ops_inactivity_handler(void)
 		sizeof("shutdown")))
 		QDF_BUG(0);
 
+	if (cds_is_fw_down()) {
+		hdd_err("FW is down");
+		return;
+	}
+
 	if (cds_is_self_recovery_enabled())
 		cds_trigger_recovery(QDF_REASON_UNSPECIFIED);
 	else
