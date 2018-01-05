@@ -12708,7 +12708,7 @@ static int __wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 	nla_for_each_nested(attr,
 			    tb[QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO],
 			    rem) {
-		ret = nla_parse_nested(
+		ret = hdd_nla_parse_nested(
 				tb_msg,
 				QCA_WLAN_VENDOR_ATTR_BTM_CANDIDATE_INFO_MAX,
 				attr, btm_cand_list_policy);
