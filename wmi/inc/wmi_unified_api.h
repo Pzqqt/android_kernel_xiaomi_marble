@@ -58,6 +58,9 @@
 #ifdef WLAN_SUPPORT_GREEN_AP
 #include "wlan_green_ap_api.h"
 #endif
+#ifdef WLAN_FEATURE_DSRC
+#include "wlan_ocb_public_structs.h"
+#endif
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -552,20 +555,140 @@ QDF_STATUS wmi_unified_set_smps_params(void *wmi_hdl, uint8_t vdev_id,
 
 QDF_STATUS wmi_unified_set_mimops(void *wmi_hdl, uint8_t vdev_id, int value);
 
-QDF_STATUS wmi_unified_ocb_set_utc_time(void *wmi_hdl,
-				struct ocb_utc_param *utc);
-
-QDF_STATUS wmi_unified_ocb_start_timing_advert(void *wmi_hdl,
+#ifdef WLAN_FEATURE_DSRC
+/**
+ * wmi_unified_ocb_start_timing_advert() - start sending the timing
+ *  advertisement frames on a channel
+ * @wmi_handle: pointer to the wmi handle
+ * @timing_advert: pointer to the timing advertisement struct
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_ocb_start_timing_advert(struct wmi_unified *wmi_handle,
 	struct ocb_timing_advert_param *timing_advert);
 
-QDF_STATUS wmi_unified_ocb_stop_timing_advert(void *wmi_hdl,
+/**
+ * wmi_unified_ocb_stop_timing_advert() - stop sending the timing
+ *  advertisement frames on a channel
+ * @wmi_handle: pointer to the wmi handle
+ * @timing_advert: pointer to the timing advertisement struct
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_ocb_stop_timing_advert(struct wmi_unified *wmi_handle,
 	struct ocb_timing_advert_param *timing_advert);
 
-QDF_STATUS wmi_unified_ocb_set_config(void *wmi_hdl,
-		   struct ocb_config_param *config, uint32_t *ch_mhz);
+/**
+ * wmi_unified_ocb_set_config() - send the OCB config to the FW
+ * @wmi_handle: pointer to the wmi handle
+ * @config: the OCB configuration
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failures
+ */
+QDF_STATUS wmi_unified_ocb_set_config(struct wmi_unified *wmi_handle,
+				      struct ocb_config *config);
 
-QDF_STATUS wmi_unified_ocb_get_tsf_timer(void *wmi_hdl,
-			  uint8_t vdev_id);
+/**
+ * wmi_unified_ocb_get_tsf_timer() - get ocb tsf timer val
+ * @wmi_handle: pointer to the wmi handle
+ * @req: request for tsf timer
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_ocb_get_tsf_timer(struct wmi_unified *wmi_handle,
+					 struct ocb_get_tsf_timer_param *req);
+
+/**
+ * wmi_unified_ocb_set_utc_time_cmd() - get ocb tsf timer val
+ * @wmi_handle: pointer to the wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_ocb_set_utc_time_cmd(struct wmi_unified *wmi_handle,
+					    struct ocb_utc_param *utc);
+
+/**
+ * wmi_unified_dcc_get_stats_cmd() - get the DCC channel stats
+ * @wmi_handle: pointer to the wmi handle
+ * @get_stats_param: pointer to the dcc stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_dcc_get_stats_cmd(struct wmi_unified *wmi_handle,
+		     struct ocb_dcc_get_stats_param *get_stats_param);
+
+/**
+ * wmi_unified_dcc_clear_stats() - command to clear the DCC stats
+ * @wmi_handle: pointer to the wmi handle
+ * @clear_stats_param: parameters to the command
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_dcc_clear_stats(struct wmi_unified *wmi_handle,
+			struct ocb_dcc_clear_stats_param *clear_stats_param);
+
+/**
+ * wmi_unified_dcc_update_ndl() - command to update the NDL data
+ * @wmi_handle: pointer to the wmi handle
+ * @update_ndl_param: pointer to the request parameters
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failures
+ */
+QDF_STATUS wmi_unified_dcc_update_ndl(struct wmi_unified *wmi_handle,
+		       struct ocb_dcc_update_ndl_param *update_ndl_param);
+
+/**
+ * wmi_extract_ocb_set_channel_config_resp() - extract status from wmi event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @status: status buffer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS
+wmi_extract_ocb_set_channel_config_resp(struct wmi_unified *wmi_handle,
+					void *evt_buf,
+					uint32_t *status);
+
+/**
+ * wmi_extract_ocb_tsf_timer() - extract tsf timer from wmi event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @resp: tsf timer
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS wmi_extract_ocb_tsf_timer(struct wmi_unified *wmi_handle,
+				     void *evt_buf,
+				     struct ocb_get_tsf_timer_response *resp);
+
+/**
+ * wmi_extract_dcc_update_ndl_resp() - extract NDL update from wmi event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @resp: ndl update status
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS wmi_extract_dcc_update_ndl_resp(struct wmi_unified *wmi_handle,
+		void *evt_buf, struct ocb_dcc_update_ndl_response *resp);
+
+/**
+ * wmi_extract_dcc_stats() - extract DCC stats from wmi event
+ * @wmi_handle: wmi handle
+ * @evt_buf: pointer to event buffer
+ * @resp: DCC stats
+ *
+ * Since length of the response is variable, response buffer will be allocated.
+ * The caller must free the response buffer.
+ *
+ * Return: QDF_STATUS_SUCCESS on success
+ */
+QDF_STATUS wmi_extract_dcc_stats(struct wmi_unified *wmi_handle,
+				 void *evt_buf,
+				 struct ocb_dcc_get_stats_response **response);
+#endif
 
 QDF_STATUS wmi_unified_lro_config_cmd(void *wmi_hdl,
 	 struct wmi_lro_config_cmd_t *wmi_lro_cmd);
@@ -895,18 +1018,6 @@ QDF_STATUS wmi_unified_process_fw_mem_dump_cmd(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_process_set_ie_info_cmd(void *wmi_hdl,
 				   struct vdev_ie_info_param *ie_info);
-
-QDF_STATUS wmi_unified_ocb_set_utc_time_cmd(void *wmi_hdl,
-			  struct ocb_utc_param *utc);
-
-QDF_STATUS wmi_unified_dcc_get_stats_cmd(void *wmi_hdl,
-		     struct dcc_get_stats_param *get_stats_param);
-
-QDF_STATUS wmi_unified_dcc_clear_stats(void *wmi_hdl,
-				uint32_t vdev_id, uint32_t dcc_stats_bitmap);
-
-QDF_STATUS wmi_unified_dcc_update_ndl(void *wmi_hdl,
-		       struct dcc_update_ndl_param *update_ndl_param);
 
 QDF_STATUS wmi_unified_save_fw_version_cmd(void *wmi_hdl,
 		void *evt_buf);
