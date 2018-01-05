@@ -471,7 +471,8 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 		return NULL;
 	}
 
-	if (qdf_unlikely(vdev->mesh_vdev)) {
+	if (msdu_info->exception_fw &&
+			qdf_unlikely(vdev->mesh_vdev)) {
 		qdf_mem_copy(&cached_ext_desc[HAL_TX_EXTENSION_DESC_LEN_BYTES],
 				&msdu_info->meta_data[0],
 				sizeof(struct htt_tx_msdu_desc_ext2_t));
@@ -526,7 +527,7 @@ struct dp_tx_ext_desc_elem_s *dp_tx_prepare_ext_desc(struct dp_vdev *vdev,
 static
 struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		qdf_nbuf_t nbuf, uint8_t desc_pool_id,
-		uint32_t *meta_data)
+		struct dp_tx_msdu_info_s *msdu_info)
 {
 	uint8_t align_pad;
 	uint8_t is_exception = 0;
@@ -586,8 +587,8 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 	 *  |                             |
 	 *  |-----------------------------|
 	 */
-	if (qdf_unlikely(vdev->mesh_vdev ||
-				(vdev->opmode == wlan_op_mode_ocb))) {
+	if (qdf_unlikely((msdu_info->exception_fw)) ||
+				(vdev->opmode == wlan_op_mode_ocb)) {
 		align_pad = ((unsigned long) qdf_nbuf_data(nbuf)) & 0x7;
 		if (qdf_nbuf_push_head(nbuf, align_pad) == NULL) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -596,7 +597,7 @@ struct dp_tx_desc_s *dp_tx_prepare_desc_single(struct dp_vdev *vdev,
 		}
 
 		htt_hdr_size = dp_tx_prepare_htt_metadata(vdev, nbuf,
-				meta_data);
+				msdu_info->meta_data);
 		if (htt_hdr_size == 0)
 			goto failure;
 		tx_desc->pkt_offset = align_pad + htt_hdr_size;
@@ -696,7 +697,7 @@ static struct dp_tx_desc_s *dp_tx_prepare_desc(struct dp_vdev *vdev,
 	tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 	qdf_atomic_inc(&pdev->num_tx_exception);
 #endif
-	if (qdf_unlikely(vdev->mesh_vdev))
+	if (qdf_unlikely(msdu_info->exception_fw))
 		tx_desc->flags |= DP_TX_DESC_FLAG_TO_FW;
 
 	tx_desc->msdu_ext_desc = msdu_ext_desc;
@@ -1169,19 +1170,21 @@ static void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
  *         nbuf when it fails to send
  */
 static qdf_nbuf_t dp_tx_send_msdu_single(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint8_t tid, struct dp_tx_queue *tx_q,
-		uint32_t *meta_data, uint16_t peer_id)
+		struct dp_tx_msdu_info_s *msdu_info,
+		uint16_t peer_id)
 {
 	struct dp_pdev *pdev = vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc;
 	QDF_STATUS status;
+	struct dp_tx_queue *tx_q = &(msdu_info->tx_queue);
 	void *hal_srng = soc->tcl_data_ring[tx_q->ring_id].hal_srng;
 	uint16_t htt_tcl_metadata = 0;
+	uint8_t tid = msdu_info->tid;
 
 	HTT_TX_TCL_METADATA_VALID_HTT_SET(htt_tcl_metadata, 0);
 	/* Setup Tx descriptor for an MSDU, and MSDU extension descriptor */
-	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id, meta_data);
+	tx_desc = dp_tx_prepare_desc_single(vdev, nbuf, tx_q->desc_pool_id, msdu_info);
 	if (!tx_desc) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 			  "%s Tx_desc prepare Fail vdev %pK queue %d\n",
@@ -1487,14 +1490,14 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	struct htt_tx_msdu_desc_ext2_t *meta_data =
 				(struct htt_tx_msdu_desc_ext2_t *)&msdu_info->meta_data[0];
 
-	nbuf = qdf_nbuf_unshare(nbuf);
-	if (nbuf == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-				"qdf_nbuf_unshare failed\n");
-		return nbuf;
+	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
+
+	if (CB_FTYPE_MESH_TX_INFO != qdf_nbuf_get_tx_ftype(nbuf)) {
+		msdu_info->exception_fw = 0;
+		goto remove_meta_hdr;
 	}
 
-	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
+	msdu_info->exception_fw = 1;
 
 	qdf_mem_set(meta_data, sizeof(struct htt_tx_msdu_desc_ext2_t), 0);
 
@@ -1531,6 +1534,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	meta_data->valid_key_flags = 1;
 	meta_data->key_flags = (mhdr->keyix & 0x3);
 
+remove_meta_hdr:
 	if (qdf_nbuf_pull_head(nbuf, sizeof(struct meta_hdr_s)) == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"qdf_nbuf_pull_head failed\n");
@@ -1539,12 +1543,12 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s , Meta hdr %0x %0x %0x %0x %0x\n",
+			"%s , Meta hdr %0x %0x %0x %0x %0x to_fw %d\n",
 			__func__, msdu_info->meta_data[0],
 			msdu_info->meta_data[1],
 			msdu_info->meta_data[2],
 			msdu_info->meta_data[3],
-			msdu_info->meta_data[4]);
+			msdu_info->meta_data[4], msdu_info->exception_fw);
 
 	return nbuf;
 }
@@ -1571,7 +1575,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
  * return: NULL on success nbuf on failure
  */
 static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
-		uint8_t tid, struct dp_tx_queue *tx_q, uint32_t *meta_data)
+		struct dp_tx_msdu_info_s *msdu_info)
 {
 	struct dp_peer *peer = NULL;
 	struct dp_soc *soc = vdev->pdev->soc;
@@ -1609,8 +1613,8 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 			}
 
 			peer_id = peer->peer_ids[0];
-			nbuf_copy = dp_tx_send_msdu_single(vdev, nbuf_copy, tid,
-					tx_q, meta_data, peer_id);
+			nbuf_copy = dp_tx_send_msdu_single(vdev, nbuf_copy,
+					msdu_info, peer_id);
 			if (nbuf_copy != NULL) {
 				qdf_nbuf_free(nbuf_copy);
 				continue;
@@ -1624,6 +1628,64 @@ static qdf_nbuf_t dp_tx_prepare_nawds(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	return NULL;
 }
+#endif
+
+/**
+ * dp_tx_send_mesh() - Transmit mesh frame on a given VAP
+ * @vap_dev: DP vdev handle
+ * @nbuf: skb
+ *
+ * Entry point for Core Tx layer (DP_TX) invoked from
+ * hard_start_xmit in OSIF/HDD
+ *
+ * Return: NULL on success,
+ *         nbuf when it fails to send
+ */
+#ifdef MESH_MODE_SUPPORT
+qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
+{
+	struct meta_hdr_s *mhdr;
+	qdf_nbuf_t nbuf_mesh = NULL;
+	qdf_nbuf_t nbuf_clone = NULL;
+	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
+
+	nbuf_mesh = qdf_nbuf_unshare(nbuf);
+	if (nbuf_mesh == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_unshare failed\n");
+		return nbuf;
+	}
+	nbuf = nbuf_mesh;
+
+	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
+	if (mhdr->flags & METAHDR_FLAG_INFO_UPDATED) {
+		nbuf_clone = qdf_nbuf_clone(nbuf);
+		if (nbuf_clone == NULL) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"qdf_nbuf_clone failed\n");
+			return nbuf;
+		}
+		qdf_nbuf_set_tx_ftype(nbuf_clone, CB_FTYPE_MESH_TX_INFO);
+	}
+
+	if (nbuf_clone) {
+		if (!dp_tx_send(vap_dev, nbuf_clone)) {
+			DP_STATS_INC(vdev, tx_i.mesh.exception_fw, 1);
+		} else
+			qdf_nbuf_free(nbuf_clone);
+	}
+
+	qdf_nbuf_set_tx_ftype(nbuf, CB_FTYPE_INVALID);
+	return dp_tx_send(vap_dev, nbuf);
+}
+
+#else
+
+qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
+{
+	return dp_tx_send(vap_dev, nbuf);
+}
+
 #endif
 
 /**
@@ -1771,8 +1833,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	 * prepare direct-buffer type TCL descriptor and enqueue to TCL
 	 * SRNG. There is no need to setup a MSDU extension descriptor.
 	 */
-	nbuf = dp_tx_send_msdu_single(vdev, nbuf, msdu_info.tid,
-			&msdu_info.tx_queue, msdu_info.meta_data, peer_id);
+	nbuf = dp_tx_send_msdu_single(vdev, nbuf, &msdu_info, peer_id);
 
 	return nbuf;
 
@@ -1909,9 +1970,7 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 
 				nbuf_copy = dp_tx_send_msdu_single(vdev,
 						nbuf_copy,
-						msdu_info.tid,
-						&msdu_info.tx_queue,
-						msdu_info.meta_data,
+						&msdu_info,
 						peer_id);
 
 				if (nbuf_copy) {
@@ -1936,9 +1995,7 @@ void dp_tx_reinject_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 					1, qdf_nbuf_len(nbuf));
 
 		nbuf = dp_tx_send_msdu_single(vdev,
-				nbuf, msdu_info.tid,
-				&msdu_info.tx_queue,
-				msdu_info.meta_data, peer_id);
+					nbuf, &msdu_info, peer_id);
 
 		if (nbuf) {
 			QDF_TRACE(QDF_MODULE_ID_DP,
@@ -2087,10 +2144,14 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 			ts.ppdu_id, nbuf) == QDF_STATUS_SUCCESS)
 		return;
 
-	if (!vdev->mesh_vdev) {
+	if (qdf_likely(!vdev->mesh_vdev))
 		qdf_nbuf_free(nbuf);
-	} else {
-		vdev->osif_tx_free_ext((nbuf));
+	else {
+		if (desc->flags & DP_TX_DESC_FLAG_TO_FW) {
+			qdf_nbuf_free(nbuf);
+			DP_STATS_INC(vdev, tx_i.mesh.completion_fw, 1);
+		} else
+			vdev->osif_tx_free_ext((nbuf));
 	}
 }
 
@@ -2386,7 +2447,8 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 			(ts.status == HAL_TX_TQM_RR_REM_CMD_REM));
 
 	/* Update per-packet stats */
-	if (qdf_unlikely(vdev->mesh_vdev))
+	if (qdf_unlikely(vdev->mesh_vdev) &&
+			!(tx_desc->flags & DP_TX_DESC_FLAG_TO_FW))
 		dp_tx_comp_fill_tx_completion_stats(tx_desc, &ts);
 
 	/* Update peer level stats */

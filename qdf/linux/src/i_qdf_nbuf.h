@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -583,6 +583,7 @@ typedef enum {
 	CB_FTYPE_INTRABSS_FWD = 5,
 	CB_FTYPE_RX_INFO = 6,
 	CB_FTYPE_MESH_RX_INFO = 7,
+	CB_FTYPE_MESH_TX_INFO = 8,
 } CB_FTYPE;
 
 /*

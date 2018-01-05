@@ -115,6 +115,8 @@ struct dp_tx_queue {
  * @u.tso_info: TSO information for TSO frame types
  * 	     (chain of the TSO segments, number of segments)
  * @u.sg_info: Scatter Gather information for non-TSO SG frames
+ * @meta_data: Mesh meta header information
+ * @exception_fw: Duplicate frame to be sent to firmware
  *
  * This structure holds the complete MSDU information needed to program the
  * Hardware TCL and MSDU extension descriptors for different frame types
@@ -129,7 +131,8 @@ struct dp_tx_msdu_info_s {
 		struct qdf_tso_info_t tso_info;
 		struct dp_tx_sg_info_s sg_info;
 	} u;
-	uint32_t meta_data[5];
+	uint32_t meta_data[6];
+	uint8_t exception_fw;
 };
 
 QDF_STATUS dp_tx_vdev_attach(struct dp_vdev *vdev);
@@ -143,6 +146,7 @@ QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(void *data_vdev, qdf_nbuf_t nbuf);
+qdf_nbuf_t dp_tx_send_mesh(void *data_vdev, qdf_nbuf_t nbuf);
 
 #ifdef CONVERGED_TDLS_ENABLE
 qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,

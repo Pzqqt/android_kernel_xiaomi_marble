@@ -2969,7 +2969,10 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	vdev->me_convert = txrx_ops->me_convert;
 
 	/* TODO: Enable the following once Tx code is integrated */
-	txrx_ops->tx.tx = dp_tx_send;
+	if (vdev->mesh_vdev)
+		txrx_ops->tx.tx = dp_tx_send_mesh;
+	else
+		txrx_ops->tx.tx = dp_tx_send;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		"DP Vdev Register success");
@@ -4216,6 +4219,8 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 		DP_STATS_AGGR(pdev, vdev, tx_i.dropped.res_full);
 		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified);
 		DP_STATS_AGGR(pdev, vdev, tx_i.cce_classified_raw);
+		DP_STATS_AGGR(pdev, vdev, tx_i.mesh.exception_fw);
+		DP_STATS_AGGR(pdev, vdev, tx_i.mesh.completion_fw);
 
 		pdev->stats.tx_i.dropped.dropped_pkt.num =
 			pdev->stats.tx_i.dropped.dma_error +
@@ -4332,10 +4337,15 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 	DP_PRINT_STATS("	Bytes = %llu",
 			pdev->stats.tx_i.nawds_mcast.bytes);
 	DP_PRINT_STATS("CCE Classified:");
-	DP_TRACE(FATAL, "	CCE Classified Packets: %u",
+	DP_PRINT_STATS("	CCE Classified Packets: %u",
 			pdev->stats.tx_i.cce_classified);
-	DP_TRACE(FATAL, "	RAW CCE Classified Packets: %u",
+	DP_PRINT_STATS("	RAW CCE Classified Packets: %u",
 			pdev->stats.tx_i.cce_classified_raw);
+	DP_PRINT_STATS("Mesh stats:");
+	DP_PRINT_STATS("	frames to firmware: %u",
+			pdev->stats.tx_i.mesh.exception_fw);
+	DP_PRINT_STATS("	completions from fw: %u",
+			pdev->stats.tx_i.mesh.completion_fw);
 }
 
 /**

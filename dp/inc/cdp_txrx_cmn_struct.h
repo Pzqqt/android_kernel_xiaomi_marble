@@ -1001,6 +1001,14 @@ struct cdp_tx_ingress_stats {
 		uint32_t res_full;
 	} dropped;
 
+	/* Mesh packets info */
+	struct {
+		/* packets sent to fw */
+		uint32_t exception_fw;
+		/* packets completions received from fw */
+		uint32_t completion_fw;
+	} mesh;
+
 	/*Number of packets classified by CCE*/
 	uint32_t cce_classified;
 
