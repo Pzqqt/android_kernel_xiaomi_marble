@@ -1141,6 +1141,7 @@ void policy_mgr_check_and_stop_opportunistic_timer(
 		qdf_mc_timer_stop(&pm_ctx->dbs_opportunistic_timer);
 		action = policy_mgr_need_opportunistic_upgrade(psoc);
 		if (action) {
+			qdf_event_reset(&pm_ctx->opportunistic_update_done_evt);
 			status = policy_mgr_next_actions(psoc, id, action,
 				POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC);
 			if (status != QDF_STATUS_SUCCESS) {
