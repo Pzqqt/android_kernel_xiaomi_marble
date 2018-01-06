@@ -1901,6 +1901,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		msg->bodyptr = NULL;
 		break;
 	case WMA_OBSS_DETECTION_INFO:
+		lim_process_obss_detection_ind(mac_ctx, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3087,6 +3087,9 @@ lim_delete_dph_hash_entry(tpAniSirGlobal mac_ctx, tSirMacAddr sta_addr,
 			lim_send_beacon_params(mac_ctx, &beacon_params,
 					       session_entry);
 		}
+
+		lim_obss_send_detection_cfg(mac_ctx, session_entry, false);
+
 #ifdef WLAN_FEATURE_11W
 		if (sta_ds->rmfEnabled) {
 			pe_debug("delete pmf timer sta-idx:%d assoc-id:%d",

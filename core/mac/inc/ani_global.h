@@ -828,7 +828,7 @@ typedef struct sAniSirLim {
 	uint8_t scan_disabled;
 	uint8_t beacon_probe_rsp_cnt_per_scan;
 	wlan_scan_requester req_id;
-	uint8_t obss_detection_offloaded;
+	bool global_obss_offload_enabled;
 } tAniSirLim, *tpAniSirLim;
 
 struct mgmt_frm_reg_info {

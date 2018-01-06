@@ -1041,6 +1041,10 @@ void lim_handle_update_olbc_cache(tpAniSirGlobal mac_ctx)
 		return;
 	}
 
+	if (psessionEntry->is_session_obss_offload_enabled) {
+		pe_debug("protection offloaded");
+		return;
+	}
 	qdf_mem_set((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams), 0);
 	beaconParams.bssIdx = psessionEntry->bssIdx;
 

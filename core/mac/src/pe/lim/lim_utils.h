@@ -71,6 +71,43 @@ typedef enum {
 
 #define MGMT_RX_PACKETS_THRESHOLD 200
 
+/* 11B AP detection bit position */
+#define OBSS_DETECTION_11B_AP_BIT_MASK       0x0001
+/* 11B STA detection bit position */
+#define OBSS_DETECTION_11B_STA_BIT_MASK      0x0002
+/* 11G AP detection bit position */
+#define OBSS_DETECTION_11G_AP_BIT_MASK       0x0004
+/* 11A AP detection bit position */
+#define OBSS_DETECTION_11A_BIT_MASK          0x0008
+/* HT legacy detection bit position */
+#define OBSS_DETECTION_HT_LEGACY_BIT_MASK    0x0010
+/* HT mixed detection bit position */
+#define OBSS_DETECTION_HT_MIXED_BIT_MASK     0x0020
+/* HT 20mhz detection bit position */
+#define OBSS_DETECTION_HT_20MHZ_BIT_MASK     0x0040
+
+/**
+ * OBSS detection period in ms, used by firmware to decide
+ * absent detection and also gap between same detection ind.
+ */
+#define OBSS_DETECTION_PERIOD_MS             4000
+
+/* To check if 11B AP detection bit set */
+#define OBSS_DETECTION_IS_11B_AP(_m) ((_m) & OBSS_DETECTION_11B_AP_BIT_MASK)
+/* To check if 11B STA detection bit set */
+#define OBSS_DETECTION_IS_11B_STA(_m) ((_m) & OBSS_DETECTION_11B_STA_BIT_MASK)
+/* To check if 11G AP detection bit set */
+#define OBSS_DETECTION_IS_11G_AP(_m) ((_m) & OBSS_DETECTION_11G_AP_BIT_MASK)
+/* To check if 11A AP detection bit set */
+#define OBSS_DETECTION_IS_11A(_m) ((_m) & OBSS_DETECTION_11A_BIT_MASK)
+/* To check if HT legacy detection bit set */
+#define OBSS_DETECTION_IS_HT_LEGACY(_m) \
+	((_m) & OBSS_DETECTION_HT_LEGACY_BIT_MASK)
+/* To check if HT mixed detection bit set */
+#define OBSS_DETECTION_IS_HT_MIXED(_m) ((_m) & OBSS_DETECTION_HT_MIXED_BIT_MASK)
+/* To check if HT 20mhz detection bit set */
+#define OBSS_DETECTION_IS_HT_20MHZ(_m) ((_m) & OBSS_DETECTION_HT_20MHZ_BIT_MASK)
+
 #ifdef WLAN_FEATURE_11W
 typedef union uPmfSaQueryTimerId {
 	struct {
@@ -1234,5 +1271,61 @@ void lim_send_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 				       uint16_t new_channel,
 				       uint8_t ch_bandwidth,
 				       tpPESession session_entry);
+
+/**
+ * lim_process_obss_detection_ind() - Process obss detection indication
+ * @mac_ctx: Pointer to Global MAC structure.
+ * @obss_detection: obss detection info.
+ *
+ * Process obss detection indication and apply necessary protection for
+ * the given AP session.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
+					  struct wmi_obss_detect_info
+					  *obss_detection);
+
+/**
+ * lim_obss_send_detection_cfg() - Send obss detection configuration to firmware
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: Pointer to session
+ * @force: Force to send new configuration even if new cfg same as old
+ *
+ * Generate new cfg based on current protection status and send new cfg to
+ * firmware.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
+				       tpPESession session,
+				       bool force);
+
+/**
+ * lim_obss_generate_detection_config() - get new obss offload detection cfg
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: Pointer to session
+ * @cfg: Obss detection cfg buffer pointer
+ *
+ * Generate new cfg based on current protection status.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
+					      tpPESession session,
+					      struct obss_detection_cfg *cfg);
+
+/**
+ * lim_enable_obss_detection_config() - Enable obss detection
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session: Pointer to session
+ *
+ * This function will enable legacy obss detection (by starting timer)
+ * or also offload based detection based on support.
+ *
+ * Return: None
+ */
+void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
+				      tpPESession session);
 
 #endif /* __LIM_UTILS_H */

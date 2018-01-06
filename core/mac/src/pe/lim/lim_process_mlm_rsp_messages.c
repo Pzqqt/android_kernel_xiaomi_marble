@@ -255,6 +255,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 					psessionEntry->ssId.ssId,
 					psessionEntry->currentOperChannel);
 			lim_send_beacon_ind(pMac, psessionEntry);
+			lim_enable_obss_detection_config (pMac, psessionEntry);
 		}
 	}
 }

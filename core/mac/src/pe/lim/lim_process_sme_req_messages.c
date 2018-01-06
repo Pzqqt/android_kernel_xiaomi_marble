@@ -5072,6 +5072,7 @@ static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg
 			  psessionEntry->ssId.ssId,
 			  psessionEntry->currentOperChannel);
 		lim_send_beacon_ind(pMac, psessionEntry);
+		lim_enable_obss_detection_config(pMac, psessionEntry);
 	} else {
 		pe_err("Invalid Beacon Start Indication");
 		return;

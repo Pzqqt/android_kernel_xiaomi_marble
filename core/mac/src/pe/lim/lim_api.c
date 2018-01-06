@@ -470,7 +470,7 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 	if (eSIR_SUCCESS != wlan_cfg_get_int(pMac,
 					     WNI_CFG_OBSS_DETECTION_OFFLOAD,
 					     (uint32_t *)&pMac->lim.
-					     obss_detection_offloaded)) {
+					     global_obss_offload_enabled)) {
 		pe_err("cfg get obss_detection_offloaded failed");
 		return eSIR_FAILURE;
 	}

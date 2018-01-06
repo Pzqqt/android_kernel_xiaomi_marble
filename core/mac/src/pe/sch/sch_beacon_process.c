@@ -1057,8 +1057,9 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 		sch_check_bss_color_ie(mac_ctx, ap_session, &bcn, &bcn_prm);
 
-		if (ap_session->gLimProtectionControl !=
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
+		if ((ap_session->gLimProtectionControl !=
+		     WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) &&
+		    !ap_session->is_session_obss_offload_enabled)
 			ap_beacon_process(mac_ctx, rx_pkt_info,
 					  &bcn, &bcn_prm, ap_session);
 
@@ -1186,4 +1187,429 @@ sch_beacon_edca_process(tpAniSirGlobal pMac, tSirMacEdcaParamSetIE *edca,
 		       session->gLimEdcaParams[i].txoplimit);
 	}
 	return eSIR_SUCCESS;
+}
+
+void lim_enable_obss_detection_config(tpAniSirGlobal mac_ctx,
+				      tpPESession session)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	if (!session) {
+		pe_err("Invalid session, protection not enabled");
+		return;
+	}
+
+	if (session->gLimProtectionControl ==
+	    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) {
+		pe_err("protectiond disabled, force policy, session %d",
+		       session->smeSessionId);
+		return;
+	}
+
+	if (mac_ctx->lim.global_obss_offload_enabled) {
+		status = lim_obss_send_detection_cfg(mac_ctx, session, true);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("vdev %d: offload enable failed, trying legacy",
+			       session->smeSessionId);
+			session->is_session_obss_offload_enabled = false;
+		} else {
+			pe_debug("vdev %d: offload detection enabled",
+				 session->smeSessionId);
+			session->is_session_obss_offload_enabled = true;
+			lim_obss_send_detection_cfg(mac_ctx, session, true);
+		}
+	}
+
+	if (!mac_ctx->lim.global_obss_offload_enabled ||
+	    QDF_IS_STATUS_ERROR(status)) {
+		status = qdf_mc_timer_start(&session->
+					    protection_fields_reset_timer,
+					    SCH_PROTECTION_RESET_TIME);
+		if (QDF_IS_STATUS_ERROR(status))
+			pe_err("vdev %d: start timer failed",
+			       session->smeSessionId);
+		else
+			pe_debug("vdev %d: legacy detection enabled",
+				 session->smeSessionId);
+	}
+}
+
+QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
+					      tpPESession session,
+					      struct obss_detection_cfg *cfg)
+{
+	uint32_t phy_mode;
+	enum band_info rf_band = BAND_UNKNOWN;
+	uint32_t detect_masks;
+
+	if (!mac_ctx || !session || !cfg) {
+		pe_err("Invalid params mac_ctx %pK, session %pK, cfg %pK",
+			mac_ctx, session, cfg);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	lim_get_phy_mode(mac_ctx, &phy_mode, session);
+	rf_band = session->limRFBand;
+	qdf_mem_zero(cfg, sizeof(*cfg));
+	detect_masks = session->obss_offload_cfg.obss_current_detection_masks;
+
+	pe_debug("band:%d, phy_mode:%d, ht_cap:%d, ht_oper_mode:%d",
+		 rf_band, phy_mode, session->htCapability,
+		 mac_ctx->lim.gHTOperMode);
+	pe_debug("assoc_sta: 11b:%d, 11g:%d, 11a:%d, ht20:%d",
+		 session->gLim11bParams.protectionEnabled,
+		 session->gLim11gParams.protectionEnabled,
+		 session->gLim11aParams.protectionEnabled,
+		 session->gLimHt20Params.protectionEnabled);
+	pe_debug("obss: 11b:%d, 11g:%d, 11a:%d, ht20:%d, masks:0x%0x",
+		 session->gLimOlbcParams.protectionEnabled,
+		 session->gLimOverlap11gParams.protectionEnabled,
+		 session->gLimOverlap11aParams.protectionEnabled,
+		 session->gLimOverlapHt20Params.protectionEnabled,
+		 detect_masks);
+
+	if ((rf_band == BAND_2G)) {
+		if ((phy_mode == WNI_CFG_PHY_MODE_11G ||
+		    session->htCapability) &&
+		    !session->gLim11bParams.protectionEnabled) {
+			if (!session->gLimOlbcParams.protectionEnabled &&
+			    !session->gLimOverlap11gParams.protectionEnabled) {
+				cfg->obss_11b_ap_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+				cfg->obss_11b_sta_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+			} else {
+				if (OBSS_DETECTION_IS_11B_AP(detect_masks))
+					cfg->obss_11b_ap_detect_mode =
+						OBSS_OFFLOAD_DETECTION_ABSENT;
+				if (OBSS_DETECTION_IS_11B_STA(detect_masks))
+					cfg->obss_11b_sta_detect_mode =
+						OBSS_OFFLOAD_DETECTION_ABSENT;
+			}
+		} else if (session->gLim11bParams.protectionEnabled) {
+			session->gLimOlbcParams.protectionEnabled = false;
+		}
+
+		if (session->htCapability &&
+		    session->cfgProtection.overlapFromllg &&
+		    !session->gLim11gParams.protectionEnabled) {
+			if (!session->gLimOverlap11gParams.protectionEnabled) {
+				cfg->obss_11g_ap_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+				cfg->obss_ht_legacy_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+				cfg->obss_ht_mixed_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+			} else {
+				if (OBSS_DETECTION_IS_11G_AP(detect_masks))
+					cfg->obss_11g_ap_detect_mode =
+						OBSS_OFFLOAD_DETECTION_ABSENT;
+				if (OBSS_DETECTION_IS_HT_LEGACY(detect_masks))
+					cfg->obss_ht_legacy_detect_mode =
+						OBSS_OFFLOAD_DETECTION_ABSENT;
+				if (OBSS_DETECTION_IS_HT_MIXED(detect_masks))
+					cfg->obss_ht_mixed_detect_mode =
+						OBSS_OFFLOAD_DETECTION_ABSENT;
+			}
+		} else if (session->gLim11gParams.protectionEnabled) {
+			session->gLimOverlap11gParams.protectionEnabled = false;
+		}
+
+		/* INI related settings */
+		if (mac_ctx->roam.configParam.ignore_peer_erp_info)
+			cfg->obss_11b_sta_detect_mode =
+				OBSS_OFFLOAD_DETECTION_DISABLED;
+
+		if (mac_ctx->roam.configParam.ignore_peer_ht_opmode)
+			cfg->obss_ht_legacy_detect_mode =
+				OBSS_OFFLOAD_DETECTION_DISABLED;
+	}
+
+	if ((rf_band == BAND_5G) && session->htCapability) {
+		if (!session->gLim11aParams.protectionEnabled) {
+			if (!session->gLimOverlap11aParams.protectionEnabled)
+				cfg->obss_11a_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+			else if (OBSS_DETECTION_IS_11A(detect_masks))
+					cfg->obss_11a_detect_mode =
+						OBSS_OFFLOAD_DETECTION_ABSENT;
+		} else {
+			session->gLimOverlap11aParams.protectionEnabled = false;
+		}
+	}
+
+	if (((rf_band == BAND_2G) || (rf_band == BAND_5G)) &&
+	    session->htCapability) {
+
+		if (!session->gLimHt20Params.protectionEnabled) {
+			if (!session->gLimOverlapHt20Params.protectionEnabled) {
+				cfg->obss_ht_20mhz_detect_mode =
+					OBSS_OFFLOAD_DETECTION_PRESENT;
+			} else if (OBSS_DETECTION_IS_HT_20MHZ(detect_masks)) {
+					cfg->obss_ht_20mhz_detect_mode =
+					OBSS_OFFLOAD_DETECTION_ABSENT;
+			}
+		} else {
+			session->gLimOverlapHt20Params.protectionEnabled =
+				false;
+		}
+	}
+
+	pe_debug("b_ap:%d, b_s:%d, g:%d, a:%d, ht_le:%d, ht_m:%d, ht_20:%d",
+		 cfg->obss_11b_ap_detect_mode,
+		 cfg->obss_11b_sta_detect_mode,
+		 cfg->obss_11g_ap_detect_mode,
+		 cfg->obss_11a_detect_mode,
+		 cfg->obss_ht_legacy_detect_mode,
+		 cfg->obss_ht_mixed_detect_mode,
+		 cfg->obss_ht_20mhz_detect_mode);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS lim_obss_send_detection_cfg(tpAniSirGlobal mac_ctx,
+				       tpPESession session, bool force)
+{
+	QDF_STATUS status;
+	struct obss_detection_cfg obss_cfg;
+	struct wmi_obss_detection_cfg_param *req_param;
+
+	if (!session) {
+		pe_err("Invalid session");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!session->is_session_obss_offload_enabled) {
+		pe_debug("obss offload protectiond disabled, session %d",
+		       session->smeSessionId);
+		/* Send success */
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (session->gLimProtectionControl ==
+	    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE) {
+		pe_debug("protectiond disabled, force from policy, session %d",
+		       session->smeSessionId);
+		/* Send success */
+		return QDF_STATUS_SUCCESS;
+	}
+
+	status = lim_obss_generate_detection_config(mac_ctx,
+						    session,
+						    &obss_cfg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to generate obss detection cfg, session %d",
+		       session->smeSessionId);
+		return status;
+	}
+
+	if (qdf_mem_cmp(&session->obss_offload_cfg, &obss_cfg, sizeof(obss_cfg))
+	    || force) {
+		struct scheduler_msg msg = {0};
+		req_param = qdf_mem_malloc(sizeof(*req_param));
+		if (!req_param) {
+			pe_err("Failed to allocate memory");
+			return QDF_STATUS_E_NOMEM;
+		}
+		qdf_mem_copy(&session->obss_offload_cfg, &obss_cfg,
+				sizeof(obss_cfg));
+		req_param->vdev_id = session->smeSessionId;
+		req_param->obss_detect_period_ms = OBSS_DETECTION_PERIOD_MS;
+		req_param->obss_11b_ap_detect_mode =
+			obss_cfg.obss_11b_ap_detect_mode;
+		req_param->obss_11b_sta_detect_mode =
+			obss_cfg.obss_11b_sta_detect_mode;
+		req_param->obss_11g_ap_detect_mode =
+			obss_cfg.obss_11g_ap_detect_mode;
+		req_param->obss_11a_detect_mode =
+			obss_cfg.obss_11a_detect_mode;
+		req_param->obss_ht_legacy_detect_mode =
+			obss_cfg.obss_ht_legacy_detect_mode;
+		req_param->obss_ht_20mhz_detect_mode =
+			obss_cfg.obss_ht_20mhz_detect_mode;
+		req_param->obss_ht_mixed_detect_mode =
+			obss_cfg.obss_ht_mixed_detect_mode;
+
+		msg.type = WMA_OBSS_DETECTION_REQ;
+		msg.bodyptr = req_param;
+		msg.reserved = 0;
+		status = scheduler_post_msg(QDF_MODULE_ID_WMA, &msg);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			pe_err("Failed to post WMA_OBSS_DETECTION_REQ to WMA");
+			qdf_mem_free(req_param);
+			return status;
+		}
+	} else {
+		pe_debug("Skiping WMA_OBSS_DETECTION_REQ, force = %d", force);
+	}
+
+	return status;
+}
+
+QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
+					  struct wmi_obss_detect_info
+					  *obss_detection)
+{
+	QDF_STATUS status;
+	uint32_t detect_masks;
+	uint32_t reason;
+	struct obss_detection_cfg *obss_cfg;
+	bool enable;
+	tpPESession session;
+	tUpdateBeaconParams bcn_prm;
+	enum band_info rf_band = BAND_UNKNOWN;
+
+	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " MAC_ADDRESS_STR,
+		 obss_detection->vdev_id, obss_detection->reason,
+		 obss_detection->matched_detection_masks,
+		 MAC_ADDR_ARRAY(obss_detection->matched_bssid_addr));
+
+	session = pe_find_session_by_sme_session_id(mac_ctx,
+						    obss_detection->vdev_id);
+	if (!session) {
+		pe_err("Failed to get session for id %d",
+		       obss_detection->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!LIM_IS_AP_ROLE(session)) {
+		pe_err("session %d is not AP", obss_detection->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!session->is_session_obss_offload_enabled) {
+		pe_err("Offload already disabled for session %d",
+		       obss_detection->vdev_id);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	reason = obss_detection->reason;
+	detect_masks = obss_detection->matched_detection_masks;
+
+	if (reason == OBSS_OFFLOAD_DETECTION_PRESENT) {
+		enable = true;
+	} else if (reason == OBSS_OFFLOAD_DETECTION_ABSENT) {
+		enable = false;
+	} else if (reason == OBSS_OFFLOAD_DETECTION_DISABLED) {
+		/*
+		 * Most common reason for this event-type from firmware
+		 * is insufficient memory.
+		 * Disable offload OBSS detection and enable legacy-way
+		 * of detecting OBSS by parsing beacons.
+		 **/
+		session->is_session_obss_offload_enabled = false;
+		pe_err("FW indicated obss offload disabled");
+		pe_err("Enabling host based detection, session %d",
+		       obss_detection->vdev_id);
+
+		status = qdf_mc_timer_start(&session->
+					    protection_fields_reset_timer,
+					    SCH_PROTECTION_RESET_TIME);
+		if (QDF_IS_STATUS_ERROR(status))
+			pe_err("cannot start protection reset timer");
+
+		return QDF_STATUS_SUCCESS;
+	} else {
+		pe_err("Invalid reason %d, session %d",
+		       obss_detection->reason,
+		       obss_detection->vdev_id);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	rf_band = session->limRFBand;
+	qdf_mem_zero(&bcn_prm, sizeof(bcn_prm));
+	obss_cfg = &session->obss_offload_cfg;
+
+	if (OBSS_DETECTION_IS_11B_AP(detect_masks)) {
+		if (reason != obss_cfg->obss_11b_ap_detect_mode ||
+		    rf_band != BAND_2G)
+			goto wrong_detection;
+
+		lim_enable11g_protection(mac_ctx, enable, true,
+					 &bcn_prm, session);
+	}
+	if (OBSS_DETECTION_IS_11B_STA(detect_masks)) {
+		if (reason != obss_cfg->obss_11b_sta_detect_mode ||
+		    rf_band != BAND_2G)
+			goto wrong_detection;
+
+		lim_enable11g_protection(mac_ctx, enable, true,
+					 &bcn_prm, session);
+	}
+	if (OBSS_DETECTION_IS_11G_AP(detect_masks)) {
+		if (reason != obss_cfg->obss_11g_ap_detect_mode ||
+		    rf_band != BAND_2G)
+			goto wrong_detection;
+
+		lim_enable_ht_protection_from11g(mac_ctx, enable, true,
+						 &bcn_prm, session);
+	}
+	if (OBSS_DETECTION_IS_11A(detect_masks)) {
+		if (reason != obss_cfg->obss_11a_detect_mode ||
+		    rf_band != BAND_5G)
+			goto wrong_detection;
+
+		lim_update_11a_protection(mac_ctx, enable, true,
+					  &bcn_prm, session);
+	}
+	if (OBSS_DETECTION_IS_HT_LEGACY(detect_masks)) {
+		/* for 5GHz, we have only 11a detection, which covers legacy */
+		if (reason != obss_cfg->obss_ht_legacy_detect_mode ||
+		    rf_band != BAND_2G)
+			goto wrong_detection;
+
+		lim_enable_ht_protection_from11g(mac_ctx, enable, true,
+						 &bcn_prm, session);
+	}
+	if (OBSS_DETECTION_IS_HT_MIXED(detect_masks)) {
+		/* for 5GHz, we have only 11a detection, which covers ht mix */
+		if (reason != obss_cfg->obss_ht_mixed_detect_mode ||
+		    rf_band != BAND_2G)
+			goto wrong_detection;
+
+		lim_enable_ht_protection_from11g(mac_ctx, enable, true,
+						 &bcn_prm, session);
+	}
+	if (OBSS_DETECTION_IS_HT_20MHZ(detect_masks)) {
+		if (reason != obss_cfg->obss_ht_20mhz_detect_mode)
+			goto wrong_detection;
+
+		lim_enable_ht20_protection(mac_ctx, enable, true,
+					   &bcn_prm, session);
+	}
+
+	/* save current detection */
+	session->obss_offload_cfg.obss_current_detection_masks = detect_masks;
+
+	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) &&
+	    bcn_prm.paramChangeBitmap) {
+		/* Update the bcn and apply the new settings to HAL */
+		sch_set_fixed_beacon_fields(mac_ctx, session);
+		pe_debug("Beacon for PE session: %d got changed: 0x%x",
+			 session->smeSessionId, bcn_prm.paramChangeBitmap);
+		if (!IS_SIR_STATUS_SUCCESS(lim_send_beacon_params(
+		     mac_ctx, &bcn_prm, session))) {
+			pe_err("Failed to send beacon param, session %d",
+				obss_detection->vdev_id);
+			return QDF_STATUS_E_FAULT;
+		}
+	}
+
+	status = lim_obss_send_detection_cfg(mac_ctx, session, true);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		pe_err("Failed to send obss detection cfg, session %d",
+			obss_detection->vdev_id);
+		return status;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+wrong_detection:
+	/*
+	 * We may get this wrong detection before FW can update latest cfg,
+	 * So keeping log level debug
+	 **/
+	pe_debug("Wrong detection, session %d", obss_detection->vdev_id);
+
+	return QDF_STATUS_E_INVAL;
 }

@@ -115,6 +115,7 @@ struct bss_color_info {
  * @obss_ht_legacy_detect_mode: detection mode for ht ap with legacy mode.
  * @obss_ht_mixed_detect_mode: detection mode for ht ap with mixed mode.
  * @obss_ht_20mhz_detect_mode: detection mode for ht ap with 20mhz mode.
+ * @obss_current_detection_masks: current detection masks.
  */
 struct obss_detection_cfg {
 	uint8_t obss_11b_ap_detect_mode;
@@ -124,6 +125,7 @@ struct obss_detection_cfg {
 	uint8_t obss_ht_legacy_detect_mode;
 	uint8_t obss_ht_mixed_detect_mode;
 	uint8_t obss_ht_20mhz_detect_mode;
+	uint32_t obss_current_detection_masks;
 };
 
 typedef struct sPESession       /* Added to Support BT-AMP */
@@ -547,7 +549,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	/* previous auth frame's sequence number */
 	uint16_t prev_auth_seq_num;
 	struct obss_detection_cfg obss_offload_cfg;
-	bool enable_obss_detection_offload;
+	bool is_session_obss_offload_enabled;
+	bool is_obss_reset_timer_initialized;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

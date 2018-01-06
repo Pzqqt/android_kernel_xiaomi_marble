@@ -2492,6 +2492,8 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 			pe_debug("Failed to Transmit Beacons on channel: %d after AP channel change response",
 				       psessionEntry->bcnLen);
 		}
+
+		lim_obss_send_detection_cfg(pMac, psessionEntry, true);
 	}
 	return;
 }

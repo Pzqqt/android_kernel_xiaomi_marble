@@ -1323,6 +1323,8 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_send_beacon_params(mac_ctx, &beacon_params, pe_session);
 	}
 
+	lim_obss_send_detection_cfg(mac_ctx, pe_session, false);
+
 	if (assoc_req != NULL) {
 		addn_ie_len = pe_session->addIeParams.assocRespDataLen;
 

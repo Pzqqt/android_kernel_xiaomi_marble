@@ -515,18 +515,20 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 
 	if (eSIR_INFRA_AP_MODE == bssType) {
 		session_ptr->old_protection_state = 0;
+		session_ptr->is_session_obss_offload_enabled = false;
+		session_ptr->is_obss_reset_timer_initialized = false;
 		session_ptr->mac_ctx = (void *)pMac;
-		status = qdf_mc_timer_init(
-			&session_ptr->protection_fields_reset_timer,
-			QDF_TIMER_TYPE_SW, pe_reset_protection_callback,
-			(void *)&pMac->lim.gpSession[i]);
-		if (status == QDF_STATUS_SUCCESS) {
-			status = qdf_mc_timer_start(
-				&session_ptr->protection_fields_reset_timer,
-				SCH_PROTECTION_RESET_TIME);
-		}
-		if (status != QDF_STATUS_SUCCESS)
-			pe_err("cannot create or start protectionFieldsResetTimer");
+
+		status = qdf_mc_timer_init(&session_ptr->
+					   protection_fields_reset_timer,
+					   QDF_TIMER_TYPE_SW,
+					   pe_reset_protection_callback,
+					   (void *)&pMac->lim.gpSession[i]);
+
+		if (QDF_IS_STATUS_ERROR(status))
+			pe_err("cannot create protection fields reset timer");
+		else
+			session_ptr->is_obss_reset_timer_initialized = true;
 	}
 	pe_init_fils_info(session_ptr);
 	pe_init_pmf_comeback_timer(pMac, session_ptr, *sessionId);
