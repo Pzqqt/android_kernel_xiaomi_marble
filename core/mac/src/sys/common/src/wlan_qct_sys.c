@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -143,7 +143,6 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	data_stall_detect_cb data_stall_detect_callback;
-	tpAniSirGlobal mac_ctx;
 	void *hHal;
 
 	if (NULL == pMsg) {
@@ -190,35 +189,6 @@ static QDF_STATUS sys_mc_process_msg(struct scheduler_msg *pMsg)
 			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 				"Rx SYS_MSG_ID_MC_THR_PROBE msgType=%d[0x%08x]",
 				pMsg->type, pMsg->type);
-			break;
-
-		case SYS_MSG_ID_FTM_RSP:
-			hHal = cds_get_context(QDF_MODULE_ID_PE);
-			if (NULL == hHal) {
-				QDF_TRACE(QDF_MODULE_ID_SYS,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Invalid hal"));
-				qdf_mem_free(pMsg->bodyptr);
-				break;
-			}
-			mac_ctx = PMAC_STRUCT(hHal);
-			if (NULL == mac_ctx) {
-				QDF_TRACE(QDF_MODULE_ID_SYS,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("Invalid mac context"));
-				qdf_mem_free(pMsg->bodyptr);
-				break;
-			}
-			if (NULL == mac_ctx->ftm_msg_processor_callback) {
-				QDF_TRACE(QDF_MODULE_ID_SYS,
-						QDF_TRACE_LEVEL_ERROR,
-						FL("callback pointer is NULL"));
-				qdf_mem_free(pMsg->bodyptr);
-				break;
-			}
-			mac_ctx->ftm_msg_processor_callback(
-					(void *)pMsg->bodyptr);
-			qdf_mem_free(pMsg->bodyptr);
 			break;
 
 		case SYS_MSG_ID_DATA_STALL_MSG:

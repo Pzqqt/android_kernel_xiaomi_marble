@@ -13846,21 +13846,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	hdd_config_sched_scan_plans_to_wiphy(wiphy, pCfg);
 	wlan_hdd_cfg80211_add_connected_pno_support(wiphy);
 
-#if  defined QCA_WIFI_FTM
-	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
-#endif
-
-	/* even with WIPHY_FLAG_CUSTOM_REGULATORY,
-	 * driver can still register regulatory callback and
-	 * it will get regulatory settings in wiphy->band[], but
-	 * driver need to determine what to do with both
-	 * regulatory settings
-	 */
-
-#if  defined QCA_WIFI_FTM
-	}
-#endif
-
 	wiphy->max_scan_ssids = MAX_SCAN_SSID;
 
 	wiphy->max_scan_ie_len = SIR_MAC_MAX_ADD_IE_LENGTH;
@@ -20500,51 +20485,6 @@ static int wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 	return ret;
 }
 
-#if  defined(QCA_WIFI_FTM)
-/**
- * wlan_hdd_testmode_rx_event() - test mode rx event handler
- * @buf: Pointer to buffer
- * @buf_len: Buffer length
- *
- * Return: none
- */
-void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
-{
-	struct sk_buff *skb;
-	struct hdd_context *hdd_ctx;
-
-	if (!buf || !buf_len) {
-		hdd_err("buf or buf_len invalid, buf: %pK buf_len: %zu", buf, buf_len);
-		return;
-	}
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hdd_err("hdd context invalid");
-		return;
-	}
-
-	skb = cfg80211_testmode_alloc_event_skb(hdd_ctx->wiphy,
-						buf_len, GFP_KERNEL);
-	if (!skb) {
-		hdd_err("failed to allocate testmode rx skb!");
-		return;
-	}
-
-	if (nla_put_u32(skb, WLAN_HDD_TM_ATTR_CMD, WLAN_HDD_TM_CMD_WLAN_FTM) ||
-	    nla_put(skb, WLAN_HDD_TM_ATTR_DATA, buf_len, buf))
-		goto nla_put_failure;
-
-	hdd_debug("****FTM Rx cmd len = %zu*****", buf_len);
-
-	cfg80211_testmode_event(skb, GFP_KERNEL);
-	return;
-
-nla_put_failure:
-	kfree_skb(skb);
-	hdd_err("nla_put failed on testmode rx skb!");
-}
-#endif
 #endif /* CONFIG_NL80211_TESTMODE */
 
 #ifdef QCA_HT_2040_COEX

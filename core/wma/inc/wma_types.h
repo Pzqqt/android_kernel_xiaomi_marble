@@ -267,9 +267,6 @@
 #define WMA_AGGR_QOS_REQ               SIR_HAL_AGGR_QOS_REQ
 #define WMA_AGGR_QOS_RSP               SIR_HAL_AGGR_QOS_RSP
 
-/* FTM CMD MSG */
-#define WMA_FTM_CMD_REQ        SIR_PTT_MSG_TYPES_BEGIN
-#define WMA_FTM_CMD_RSP        SIR_PTT_MSG_TYPES_END
 #define WMA_CSA_OFFLOAD_EVENT  SIR_CSA_OFFLOAD_EVENT
 
 #ifdef FEATURE_WLAN_ESE
@@ -650,14 +647,6 @@ typedef struct {
 	uint32_t param_vdev_id;
 	uint32_t param_vp_dev;
 } wma_cli_set_cmd_t;
-
-#if defined(QCA_WIFI_FTM)
-#define AR6K_TM_DATA_MAX_LEN    5000
-struct ar6k_testmode_cmd_data {
-	void *data;
-	int len;
-};
-#endif
 
 #ifdef FEATURE_WLAN_TDLS
 /**

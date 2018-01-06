@@ -7441,12 +7441,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 #endif /* REMOVE_PKT_LOG */
-#if defined(QCA_WIFI_FTM)
-	case WMA_FTM_CMD_REQ:
-		wma_process_ftm_command(wma_handle,
-				(struct ar6k_testmode_cmd_data *)msg->bodyptr);
-		break;
-#endif /* QCA_WIFI_FTM */
 	case WMA_ENTER_PS_REQ:
 		wma_enable_sta_ps_mode(wma_handle,
 				       (tpEnablePsParams) msg->bodyptr);

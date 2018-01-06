@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -131,10 +131,6 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 
 	case SIR_PMM_MSG_TYPES_BEGIN:   /* Posts a message to the LIM MsgQ */
 		status = sme_post_pe_message(pMac, &msg);
-		break;
-
-	case SIR_PTT_MSG_TYPES_BEGIN:
-		qdf_mem_free(msg.bodyptr);
 		break;
 
 	default:

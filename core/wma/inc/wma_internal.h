@@ -890,16 +890,6 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 void wma_get_stats_req(WMA_HANDLE handle,
 		       tAniGetPEStatsReq *get_stats_param);
 
-#if defined(QCA_WIFI_FTM)
-void wma_utf_detach(tp_wma_handle wma_handle);
-
-void wma_utf_attach(tp_wma_handle wma_handle);
-
-QDF_STATUS
-wma_process_ftm_command(tp_wma_handle wma_handle,
-			struct ar6k_testmode_cmd_data *msg_buffer);
-#endif
-
 /*
  * wma_features.c functions declarations
  */

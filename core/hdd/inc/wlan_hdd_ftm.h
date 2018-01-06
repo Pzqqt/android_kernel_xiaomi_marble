@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,12 +42,14 @@
 
 struct hdd_context;
 
-int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx);
-void hdd_ftm_mc_process_msg(void *message);
 #if  defined(QCA_WIFI_FTM)
-QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);
 int wlan_hdd_qcmbr_unified_ioctl(struct hdd_adapter *adapter,
 				 struct ifreq *ifr);
-#endif
-
-#endif
+int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx);
+#else
+static inline int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)
+{
+	return 0;
+}
+#endif /* QCA_WIFI_FTM */
+#endif /* WLAN_HDD_FTM_H */

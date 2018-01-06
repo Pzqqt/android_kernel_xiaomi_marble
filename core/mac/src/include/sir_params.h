@@ -788,10 +788,6 @@ struct sir_mgmt_msg {
 #define SIR_MNT_RELEASE_BD             (SIR_MNT_MSG_TYPES_BEGIN + 0)
 #define SIR_MNT_MSG_TYPES_END          (SIR_MNT_MSG_TYPES_BEGIN + 0xFF)
 
-/* PTT message types */
-#define SIR_PTT_MSG_TYPES_BEGIN            0x3000
-#define SIR_PTT_MSG_TYPES_END              0x3300
-
 /* ****************************************** *
 *                                            *
 *         EVENT TYPE Defintions              *

@@ -1149,41 +1149,6 @@ struct wma_txrx_node {
 	bool is_waiting_for_key;
 };
 
-#if defined(QCA_WIFI_FTM)
-#define MAX_UTF_EVENT_LENGTH    2048
-#define MAX_WMI_UTF_LEN         252
-
-/**
- * struct SEG_HDR_INFO_STRUCT - header info
- * @len: length
- * @msgref: message refrence
- * @segmentInfo: segment info
- * @pad: padding
- */
-typedef struct {
-	A_UINT32 len;
-	A_UINT32 msgref;
-	A_UINT32 segmentInfo;
-	A_UINT32 pad;
-} SEG_HDR_INFO_STRUCT;
-
-/**
- * struct utf_event_info - UTF event info
- * @data: data ptr
- * @length: length
- * @offset: offset
- * @currentSeq: curent squence
- * @expectedSeq: expected sequence
- */
-struct utf_event_info {
-	uint8_t *data;
-	uint32_t length;
-	qdf_size_t offset;
-	uint8_t currentSeq;
-	uint8_t expectedSeq;
-};
-#endif
-
 /**
  * struct scan_timer_info - scan timer info
  * @vdev_id: vdev id
@@ -1312,7 +1277,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @vht_cap_info: VHT capablity info
  * @vht_supp_mcs: VHT supported MCS
  * @num_rf_chains: number of RF chains
- * @utf_event_info: UTF event information
  * @is_fw_assert: is fw asserted
  * @wow: wow related patterns & parameters
  * @no_of_suspend_ind: number of suspend indications
@@ -1471,9 +1435,6 @@ typedef struct {
 	uint32_t vht_cap_info;
 	uint32_t vht_supp_mcs;
 	uint32_t num_rf_chains;
-#if defined(QCA_WIFI_FTM)
-	struct utf_event_info utf_event_info;
-#endif
 	uint8_t is_fw_assert;
 	struct wma_wow wow;
 	uint8_t no_of_suspend_ind;

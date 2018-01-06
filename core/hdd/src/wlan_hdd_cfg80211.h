@@ -348,11 +348,6 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 #endif
 #endif /* USE_CFG80211_DEL_STA_V2 */
 
-
-#if  defined(QCA_WIFI_FTM)     && defined(CONFIG_NL80211_TESTMODE)
-void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);
-#endif
-
 int wlan_hdd_send_avoid_freq_event(struct hdd_context *hdd_ctx,
 				   struct ch_avoid_ind_type *avoid_freq_list);
 
