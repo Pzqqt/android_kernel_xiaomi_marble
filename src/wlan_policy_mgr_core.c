@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1250,6 +1250,35 @@ void policy_mgr_set_pcl_for_existing_combo(
 	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
 }
 
+static uint32_t pm_get_vdev_id_of_first_conn_idx(struct wlan_objmgr_psoc *psoc)
+{
+	uint32_t conn_index = 0, vdev_id = 0;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return conn_index;
+	}
+	qdf_mutex_acquire(&pm_ctx->qdf_conc_list_lock);
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++)  {
+		if (pm_conc_connection_list[conn_index].in_use) {
+			vdev_id = pm_conc_connection_list[conn_index].vdev_id;
+			break;
+		}
+	}
+	qdf_mutex_release(&pm_ctx->qdf_conc_list_lock);
+	if (conn_index == MAX_NUMBER_OF_CONC_CONNECTIONS)
+		policy_mgr_debug("Use default vdev_id:%d for opportunistic upgrade",
+				 vdev_id);
+	else
+		policy_mgr_debug("Use vdev_id:%d for opportunistic upgrade",
+				 vdev_id);
+
+	return vdev_id;
+}
+
 /**
  * pm_dbs_opportunistic_timer_handler() - handler of
  * dbs_opportunistic_timer
@@ -1262,6 +1291,7 @@ void policy_mgr_set_pcl_for_existing_combo(
 void pm_dbs_opportunistic_timer_handler(void *data)
 {
 	enum policy_mgr_conc_next_action action = PM_NOP;
+	uint32_t session_id;
 	struct wlan_objmgr_psoc *psoc = (struct wlan_objmgr_psoc *)data;
 
 	if (!psoc) {
@@ -1272,15 +1302,11 @@ void pm_dbs_opportunistic_timer_handler(void *data)
 	/* if we still need it */
 	action = policy_mgr_need_opportunistic_upgrade(psoc);
 	policy_mgr_debug("action:%d", action);
-	if (action) {
-		/* lets call for action */
-		/* session id is being used only
-		 * in hidden ssid case for now.
-		 * So, session id 0 is ok here.
-		 */
-		policy_mgr_next_actions(psoc, 0, action,
+	if (!action)
+		return;
+	session_id = pm_get_vdev_id_of_first_conn_idx(psoc);
+	policy_mgr_next_actions(psoc, session_id, action,
 				POLICY_MGR_UPDATE_REASON_OPPORTUNISTIC);
-	}
 }
 
 /**
