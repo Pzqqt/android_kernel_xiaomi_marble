@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -262,7 +262,7 @@ bool pmo_core_is_wow_applicable(struct wlan_objmgr_psoc *psoc)
 {
 	int vdev_id;
 	struct wlan_objmgr_vdev *vdev;
-	bool is_wow_applicable;
+	bool is_wow_applicable = false;
 	QDF_STATUS status;
 
 	if (!psoc) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,7 @@ static QDF_STATUS pmo_core_send_lphb_enable(struct wlan_objmgr_psoc *psoc,
 	}
 
 	/* target already configured, now cache command status */
-	if (ts_lphb_enable->enable) {
+	if (ts_lphb_enable->enable && ts_lphb_enable->item > 0) {
 		i = ts_lphb_enable->item - 1;
 		qdf_spin_lock_bh(&psoc_ctx->lock);
 		psoc_ctx->wow.lphb_cache[i].cmd
