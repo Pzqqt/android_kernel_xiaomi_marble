@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -82,6 +82,14 @@ bool lmac_is_mode_offload(struct wlan_objmgr_pdev *pdev);
  * @pdev: Pointer to PDEV structure.
  */
 uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * lmac_is_mode_dfs_offload() - Check the DFS offload is enabled.
+ * @psoc: Pointer to PSOC structure.
+ *
+ * returns true if DFS offload is enabled, otherwise returns false
+ */
+bool lmac_is_mode_dfs_offload(struct wlan_objmgr_psoc *psoc);
 
 /**
  * lmac_get_ext_busy() - Get ext_busy.

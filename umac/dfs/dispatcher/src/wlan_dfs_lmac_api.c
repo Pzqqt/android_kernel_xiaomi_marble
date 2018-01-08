@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -131,6 +131,19 @@ uint16_t lmac_get_ah_devid(struct wlan_objmgr_pdev *pdev)
 		dfs_tx_ops->dfs_get_ah_devid(pdev, &devid);
 
 	return devid;
+}
+
+bool lmac_is_mode_dfs_offload(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	bool is_offload = false;
+
+	dfs_tx_ops = &psoc->soc_cb.tx_ops.dfs_tx_ops;
+
+	if (dfs_tx_ops->dfs_is_tgt_offload)
+		dfs_tx_ops->dfs_is_tgt_offload(psoc, &is_offload);
+
+	return is_offload;
 }
 
 uint32_t lmac_get_ext_busy(struct wlan_objmgr_pdev *pdev)

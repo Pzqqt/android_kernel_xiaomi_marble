@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -73,13 +73,7 @@
 /* WLAN 5GHz channel number 170 freq */
 #define DFS_CHAN_170_FREQ        (5852)
 
-/* dfs offload service bit */
-#define DFS_SERVICE_PHYERR_OFFLOAD 113
 
-/* check if dfs offload enabled */
-#define DFS_OFFLOAD_IS_ENABLED(service_bitmap) \
-	(((service_bitmap)[(DFS_SERVICE_PHYERR_OFFLOAD)/(sizeof(A_UINT32))] & \
-	   (1 << ((DFS_SERVICE_PHYERR_OFFLOAD)%(sizeof(A_UINT32))))) != 0)
 
 extern struct dfs_to_mlme global_dfs_to_mlme;
 

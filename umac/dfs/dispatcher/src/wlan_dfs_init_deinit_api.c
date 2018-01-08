@@ -29,6 +29,7 @@
 #endif
 #include "wlan_objmgr_global_obj.h"
 #include "wlan_dfs_init_deinit_api.h"
+#include "wlan_dfs_lmac_api.h"
 #include "../../core/src/dfs.h"
 #include "a_types.h"
 #include "wlan_serialization_api.h"
@@ -333,10 +334,10 @@ QDF_STATUS wlan_dfs_pdev_obj_create_notification(struct wlan_objmgr_pdev *pdev,
 	global_dfs_to_mlme.pdev_component_obj_attach(pdev,
 		WLAN_UMAC_COMP_DFS, (void *)dfs, QDF_STATUS_SUCCESS);
 	dfs->dfs_pdev_obj = pdev;
-	dfs->dfs_is_offload_enabled =
-		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
-	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-			"dfs_offload %d", dfs->dfs_is_offload_enabled);
+	dfs->dfs_is_offload_enabled = lmac_is_mode_dfs_offload(psoc);
+	dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS, "dfs_offload %d",
+			dfs->dfs_is_offload_enabled);
+
 	dfs = wlan_pdev_get_dfs_obj(pdev);
 	if (dfs_attach(dfs) == 1) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs_attch failed");
@@ -412,9 +413,9 @@ static void dfs_scan_serialization_comp_info_cb(
 QDF_STATUS wifi_dfs_psoc_enable(struct wlan_objmgr_psoc *psoc)
 {
 	QDF_STATUS status;
-	bool dfs_offload =
-		DFS_OFFLOAD_IS_ENABLED(psoc->service_param.service_bitmap);
+	bool dfs_offload;
 
+	dfs_offload = lmac_is_mode_dfs_offload(psoc);
 	dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS, "dfs_offload %d", dfs_offload);
 
 	status = tgt_dfs_reg_ev_handler(psoc, dfs_offload);

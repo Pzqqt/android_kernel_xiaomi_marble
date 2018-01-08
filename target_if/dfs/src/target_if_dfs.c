@@ -35,6 +35,8 @@
 #include <wmi_unified_dfs_api.h>
 #include "wlan_dfs_tgt_api.h"
 #include "target_type.h"
+#include <init_deinit_ucfg.h>
+#include <wlan_reg_ucfg_api.h>
 
 static inline struct wlan_lmac_if_dfs_rx_ops *
 target_if_dfs_get_rx_ops(struct wlan_objmgr_psoc *psoc)
@@ -314,14 +316,15 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 			target_if_err("null tgt_psoc_info");
 			return QDF_STATUS_E_FAILURE;
 		}
-		if (target_if_is_dfs_3(tgt_psoc_info->target_type))
+		if (target_if_is_dfs_3(
+				target_psoc_get_target_type(tgt_psoc_info)))
 			return target_if_dfs_reg_phyerr_events(psoc);
 		else
 			return target_if_reg_phyerr_events_dfs2(psoc, pdev);
 	}
 
 	/* dfs offload case, send offload enable command first */
-	wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	wmi_handle = ucfg_get_pdev_wmi_handle(pdev);
 	status = wmi_unified_dfs_phyerr_offload_en_cmd(wmi_handle,
 			WMI_HOST_PDEV_ID_SOC);
 	if (QDF_IS_STATUS_SUCCESS(status))
@@ -339,7 +342,7 @@ static QDF_STATUS target_process_bang_radar_cmd(
 	int i;
 	wmi_unified_t wmi_handle;
 
-	wmi_handle = (wmi_unified_t) GET_WMI_HDL_FROM_PDEV(pdev);
+	wmi_handle = (wmi_unified_t)ucfg_get_pdev_wmi_handle(pdev);
 
 	wmi_utest.vdev_id = dfs_unit_test->vdev_id;
 	wmi_utest.module_id = WLAN_MODULE_PHYERR_DFS;
@@ -361,18 +364,28 @@ static QDF_STATUS target_process_bang_radar_cmd(
 	return status;
 }
 
-#ifdef QCA_MCL_DFS_SUPPORT
 static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
 		bool *is_5ghz)
 {
 	struct wlan_objmgr_psoc *psoc;
+	uint8_t pdev_id;
+	struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap_ptr;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 	if (!psoc) {
 		target_if_err("dfs: null psoc");
 		return QDF_STATUS_E_FAILURE;
 	}
-	if (psoc->service_param.hal_reg_cap.wireless_modes &
+
+	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	reg_cap_ptr = ucfg_reg_get_hal_reg_cap(psoc);
+	if (!reg_cap_ptr) {
+		target_if_err("dfs: reg cap null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (reg_cap_ptr[pdev_id].wireless_modes &
 			WMI_HOST_REGDMN_MODE_11A)
 		*is_5ghz = true;
 	else
@@ -381,6 +394,7 @@ static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_MCL_DFS_SUPPORT
 /**
  * target_if_dfs_set_phyerr_filter_offload() - config phyerr filter offload.
  * @pdev: Pointer to DFS pdev object.
@@ -416,29 +430,6 @@ static QDF_STATUS target_if_dfs_set_phyerr_filter_offload(
 	return QDF_STATUS_SUCCESS;
 }
 #else
-static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
-		bool *is_5ghz)
-{
-	struct wlan_objmgr_psoc *psoc;
-	uint8_t pdev_id;
-
-	psoc = wlan_pdev_get_psoc(pdev);
-	if (!psoc) {
-		target_if_err("dfs: null psoc");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-
-	if (psoc->ext_service_param.reg_cap[pdev_id].wireless_modes &
-			WMI_HOST_REGDMN_MODE_11A)
-		*is_5ghz = true;
-	else
-		*is_5ghz = false;
-
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS target_if_dfs_set_phyerr_filter_offload(
 					struct wlan_objmgr_pdev *pdev,
 					bool dfs_phyerr_filter_offload)
@@ -487,7 +478,7 @@ static QDF_STATUS target_if_dfs_get_caps(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	switch (tgt_psoc_info->target_type) {
+	switch (target_psoc_get_target_type(tgt_psoc_info)) {
 	case TARGET_TYPE_AR900B:
 		break;
 
