@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -114,15 +114,6 @@ static void do_recv_completion(HTC_ENDPOINT *pEndpoint,
 		pPacket = htc_packet_dequeue(pQueueToIndicate);
 		do_recv_completion_pkt(pEndpoint, pPacket);
 	}
-}
-
-static void recv_packet_completion(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,
-				   HTC_PACKET *pPacket)
-{
-	do_recv_completion_pkt(pEndpoint, pPacket);
-
-	/* recover the packet container */
-	free_htc_packet_container(target, pPacket);
 }
 
 void htc_control_rx_complete(void *Context, HTC_PACKET *pPacket)
@@ -504,7 +495,11 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 		qdf_nbuf_pull_head(netbuf, HTC_HEADER_LEN);
 		qdf_nbuf_set_pktlen(netbuf, pPacket->ActualLength);
 
-		recv_packet_completion(target, pEndpoint, pPacket);
+		do_recv_completion_pkt(pEndpoint, pPacket);
+
+		/* recover the packet container */
+		free_htc_packet_container(target, pPacket);
+
 		netbuf = NULL;
 
 	} while (false);

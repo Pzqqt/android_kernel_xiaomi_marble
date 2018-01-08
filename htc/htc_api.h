@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -171,10 +171,7 @@ struct htc_ep_callbacks {
 	 * indications (EpTxComplete must be NULL)
 	 */
 	HTC_EP_SEND_PKT_COMP_MULTIPLE EpTxCompleteMultiple;
-	/* OPTIONAL completion handler for multiple
-	 * recv packet indications (EpRecv must be NULL)
-	 */
-	HTC_EP_RECV_PKT_MULTIPLE EpRecvPktMultiple;
+
 	HTC_EP_RESUME_TX_QUEUE ep_resume_tx_queue;
 	/* if EpRecvAllocThresh is non-NULL, HTC will compare the
 	 * threshold value to the current recv packet length and invoke
@@ -188,7 +185,6 @@ struct htc_ep_callbacks {
 	 * are empty
 	 */
 	int RecvRefillWaterMark;
-
 };
 
 /* service connection information */
