@@ -62,6 +62,8 @@
 #ifdef WLAN_SUPPORT_GREEN_AP
 #include <target_if_green_ap.h>
 #endif
+#include <init_deinit_ucfg.h>
+#include <service_ready_util.h>
 
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
@@ -315,6 +317,15 @@ static void target_if_target_tx_ops_register(
 
 	target_tx_ops->tgt_is_tgt_type_qca9888 =
 		target_is_tgt_type_qca9888;
+
+	target_tx_ops->tgt_get_tgt_type =
+		ucfg_get_tgt_type;
+
+	target_tx_ops->tgt_get_tgt_version =
+		ucfg_get_tgt_version;
+
+	target_tx_ops->tgt_get_tgt_revision =
+		ucfg_get_tgt_revision;
 }
 
 static
@@ -412,26 +423,107 @@ QDF_STATUS target_if_register_legacy_service_ready_cb(
 }
 EXPORT_SYMBOL(target_if_register_legacy_service_ready_cb);
 
+QDF_STATUS target_if_alloc_pdev_tgt_info(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_pdev_info *tgt_pdev_info;
+
+	if (!pdev) {
+		target_if_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tgt_pdev_info = qdf_mem_malloc(sizeof(*tgt_pdev_info));
+
+	if (tgt_pdev_info == NULL) {
+		target_if_err("Failed to allocate pdev target info");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	wlan_pdev_set_tgt_if_handle(pdev, tgt_pdev_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_free_pdev_tgt_info(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_pdev_info *tgt_pdev_info;
+
+	if (!pdev) {
+		target_if_err("pdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tgt_pdev_info = wlan_pdev_get_tgt_if_handle(pdev);
+
+	wlan_pdev_set_tgt_if_handle(pdev, NULL);
+
+	qdf_mem_free(tgt_pdev_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_psoc_info;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tgt_psoc_info = qdf_mem_malloc(sizeof(*tgt_psoc_info));
+
+	if (tgt_psoc_info == NULL) {
+		target_if_err("Failed to allocate psoc target info");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
+
+	qdf_init_waitqueue_head(&tgt_psoc_info->info.event_queue);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_psoc_info;
+	struct wlan_psoc_host_service_ext_param *ext_param;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
+
+	ext_param = target_psoc_get_service_ext_param(tgt_psoc_info);
+	wlan_ext_service_ready_chainmask_table_free(ext_param);
+
+	wlan_psoc_set_tgt_if_handle(psoc, NULL);
+
+	qdf_mem_free(tgt_psoc_info);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_psoc_info;
-	void *wmi_handle;
 
 	if (psoc == NULL) {
-		target_if_err("%s: pSOC is NULL", __func__);
+		target_if_err("pSOC is NULL");
 		return NULL;
 	}
 
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
 
 	if (tgt_psoc_info == NULL) {
-		target_if_err("%s: psoc tgt_if_handle is NULL", __func__);
+		target_if_err("psoc tgt_if_handle is NULL");
 		return NULL;
 	}
 
-	wmi_handle = tgt_psoc_info->wmi_handle;
-
-	return wmi_handle;
+	return target_psoc_get_wmi_hdl(tgt_psoc_info);
 
 }
 

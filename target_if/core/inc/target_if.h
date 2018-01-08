@@ -26,6 +26,9 @@
 #include "qdf_types.h"
 #include "qdf_util.h"
 #include "wlan_objmgr_psoc_obj.h"
+#include "wmi_unified_api.h"
+#include "wmi_unified_priv.h"
+#include "wmi_unified_param.h"
 
 /* ASCII "TGT\0" */
 #define TGT_MAGIC 0x54575400
@@ -49,12 +52,6 @@
 #define TARGET_IF_ENTER() target_if_logfl(QDF_TRACE_LEVEL_INFO, "enter")
 #define TARGET_IF_EXIT() target_if_logfl(QDF_TRACE_LEVEL_INFO, "exit")
 
-#ifdef CONFIG_MCL
-#define GET_WMI_HDL_FROM_PDEV(pdev) \
-		(((struct target_psoc_info *)(pdev->tgt_if_handle))->wmi_handle)
-#else
-#define GET_WMI_HDL_FROM_PDEV(pdev) ((pdev)->tgt_if_handle)
-#endif
 
 #ifdef CONFIG_MCL
 #define TARGET_TYPE_AR900B    9  /* Beeliner */
@@ -85,20 +82,199 @@ struct target_if_ctx {
 	qdf_spinlock_t lock;
 };
 
+struct target_psoc_info;
+/**
+ * struct host_fw_ver - holds host fw version
+ * @host_ver: Host version
+ * @target_ver: Target version ID
+ * @target_rev: Target revision ID
+ * @wlan_ver: FW SW version
+ * @wlan_ver_1: FW SW version second dword
+ * @abi_ver: ABI version
+ */
+struct host_fw_ver {
+	uint32_t host_ver;
+	uint32_t target_ver;
+	uint32_t target_rev;
+	uint32_t wlan_ver;
+	uint32_t wlan_ver_1;
+	uint32_t abi_ver;
+};
+
+
+/**
+ * struct comp_hdls - Non-umac/lower layer components handles, it is a sub
+ *                    structure of target psoc information
+ * @hif_hdl: HIF handle
+ * @htc_hdl: HTC handle
+ * @wmi_hdl: WMI handle
+ * @accelerator_hdl: NSS offload/IPA handle
+ */
+struct comp_hdls {
+	void *hif_hdl;
+	void *htc_hdl;
+	void *wmi_hdl;
+	void *accelerator_hdl;
+};
+
+/**
+ * struct tgt_info - FW or lower layer related info(required by target_if),
+ *                   it is a sub structure of taarget psoc information
+ * @version: Host FW version struct
+ * @wlan_res_cfg:  target_resource_config info
+ * @wlan_ext_res_cfg: wmi_host_ext_resource_config info
+ * @wmi_service_ready: is service ready received
+ * @wmi_ready: is ready event received
+ * @total_mac_phy_cnt: num of mac phys
+ * @num_radios: number of radios
+ * @wlan_init_status: Target init status
+ * @target_type: Target type
+ * @max_descs: Max descriptors
+ * @preferred_hw_mode: preferred hw mode
+ * @wmi_timeout: wait timeout for target events
+ * @wmi_timeout_unintr: wait timeout uninterruptedly
+ * @event_queue: wait queue for target events
+ * @service_bitmap: WMI service bitmap
+ * @target_cap: target capabilities
+ * @service_ext_param: ext service params
+ * @mac_phy_cap: phy caps array
+ * @reg_cap: regulatory caps array
+ * @num_mem_chunks: number of mem chunks allocated
+ * @mem_chunks: allocated memory blocks for FW
+ */
+struct tgt_info {
+	struct host_fw_ver version;
+	target_resource_config wlan_res_cfg;
+	wmi_host_ext_resource_config wlan_ext_res_cfg;
+	bool wmi_service_ready;
+	bool wmi_ready;
+	uint8_t total_mac_phy_cnt;
+	uint8_t num_radios;
+	uint32_t wlan_init_status;
+	uint32_t target_type;
+	uint32_t max_descs;
+	uint32_t preferred_hw_mode;
+	uint32_t wmi_timeout;
+	uint32_t wmi_timeout_unintr;
+	qdf_wait_queue_head_t event_queue;
+	uint32_t service_bitmap[PSOC_SERVICE_BM_SIZE];
+	struct wlan_psoc_target_capability_info target_caps;
+	struct wlan_psoc_host_service_ext_param service_ext_param;
+	struct wlan_psoc_host_mac_phy_caps
+			mac_phy_cap[PSOC_MAX_MAC_PHY_CAP];
+	struct wlan_psoc_host_dbr_ring_caps *dbr_ring_cap;
+	uint32_t num_mem_chunks;
+	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
+};
+
+/**
+ * struct target_ops - Holds feature specific function pointers, which would be
+ *                     invoked as part of service ready or ext service ready
+ * @ext_resource_config_enable: Ext resource config
+ * @peer_config: Peer config enable
+ * @mesh_support_enable: Mesh support enable
+ * @smart_antenna_enable: Smart antenna enable
+ * @atf_config_enable: ATF config enable
+ * @qwrap_config_enable: QWRAP config enable
+ * @btcoex_config_enable: BTCOEX config enable
+ * @lteu_ext_support_enable: LTE-U Ext config enable
+ * @set_init_cmd_dev_based_params: Sets Init command params
+ * @alloc_pdevs: Allocates PDEVs
+ * @update_pdev_tgt_info: Updates PDEV target info
+ * @mem_mgr_alloc_chunk: Allocates memory through MEM manager
+ * @mem_mgr_free_chunks: Free memory chunks through MEM manager
+ * @print_svc_ready_ex_param: Print service ready ext params
+ * @add_11ax_modes: Adds 11ax modes to reg cap
+ * @set_default_tgt_config: Sets target config with default values
+ * @sw_version_check: Checks the SW version
+ */
+struct target_ops {
+	QDF_STATUS (*ext_resource_config_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*peer_config)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*mesh_support_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*smart_antenna_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*atf_config_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*qwrap_config_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*btcoex_config_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*lteu_ext_support_enable)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info, uint8_t *event);
+	void (*set_init_cmd_dev_based_params)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info);
+	QDF_STATUS (*alloc_pdevs)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info);
+	QDF_STATUS (*update_pdev_tgt_info)
+		(struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info);
+	uint32_t (*mem_mgr_alloc_chunk)(struct wlan_objmgr_psoc *psoc,
+		struct target_psoc_info *tgt_info,
+		u_int32_t req_id, u_int32_t idx, u_int32_t num_units,
+		u_int32_t unit_len, u_int32_t num_unit_info);
+	QDF_STATUS (*mem_mgr_free_chunks)(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl);
+	void (*print_svc_ready_ex_param)(
+		 struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info);
+	void (*add_11ax_modes)(
+		 struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info);
+	void (*set_default_tgt_config)(
+		 struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_info);
+	QDF_STATUS (*sw_version_check)(
+		 struct wlan_objmgr_psoc *psoc,
+		 struct target_psoc_info *tgt_hdl,
+		 uint8_t *evt_buf);
+};
+
+
+
 /**
  * struct target_psoc_info - target psoc information
- * @tgt_if_handle: target interface handle
- * @target_type: target type
- * @target_version: target version
- * @target_revision: target revision
+ * @hdls: component handles (htc/htt/wmi) sub structure
+ * @info: target related info sub structure
+ * @feature_ptr: stores legacy pointer or few driver specific structures
+ * @tif_ops: holds driver specific function pointers
  */
-
 struct target_psoc_info {
-	void *wmi_handle;
-	uint32_t target_type;
-	uint32_t target_version;
-	uint32_t target_revision;
+	struct comp_hdls hdls;
+	struct tgt_info info;
+	void *feature_ptr;
+	struct target_ops *tif_ops;
 };
+
+/**
+ * struct target_pdev_info - target pdev information
+ * @wmi_handle: WMI handle
+ * @accelerator_hdl: NSS offload/IPA handles
+ * @pdev_idx: pdev id (of FW)
+ * @phy_idx: phy id (of FW)
+ * @feature_ptr: stores legacy pointer or few driver specific structures
+ */
+struct target_pdev_info {
+	void *wmi_handle;
+	void *accelerator_hdl;
+	int32_t pdev_idx;
+	int32_t phy_idx;
+	void *feature_ptr;
+};
+
 
 /**
  * target_if_open() - target_if open
@@ -148,7 +324,7 @@ struct wlan_objmgr_psoc *target_if_get_psoc_from_scn_hdl(void *scn_handle);
 QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
 
 /**
- * target_if_get_psoc_from_scn_hdl() - get psoc from scn handle
+ * target_if_get_psoc_legacy_service_ready_cb() - get psoc from scn handle
  *
  * This API is generally used while processing wmi event.
  * In wmi event SCN handle will be passed by wmi hence
@@ -157,11 +333,11 @@ QDF_STATUS target_if_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops);
  * Return: wmi_legacy_service_ready_callback
  */
 wmi_legacy_service_ready_callback
-target_if_get_psoc_legacy_service_ready_cb(void);
+		target_if_get_psoc_legacy_service_ready_cb(void);
 
 /**
  * target_if_register_legacy_service_ready_cb() - get legacy
- * service ready handler from scn handle
+ *                                       service ready handler from scn handle
  *
  * @service_ready_cb: funtion pointer to service ready callback
  *
@@ -170,24 +346,55 @@ target_if_get_psoc_legacy_service_ready_cb(void);
 QDF_STATUS target_if_register_legacy_service_ready_cb(
 	wmi_legacy_service_ready_callback service_ready_cb);
 
+/**
+ * target_if_alloc_pdev_tgt_info() - alloc pdev tgt info
+ * @pdev: pointer to pdev
+ *
+ * API to allocate memory for target_pdev_info
+ *
+ * Return: SUCCESS on successful memory allocation or Failure
+ */
+QDF_STATUS target_if_alloc_pdev_tgt_info(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_free_pdev_tgt_info() - free pdev tgt info
+ * @pdev: pointer to pdev
+ *
+ * API to free allocated memory for target_pdev_info
+ *
+ * Return: SUCCESS on successful memory deallocation or Failure
+ */
+QDF_STATUS target_if_free_pdev_tgt_info(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * target_if_alloc_psoc_tgt_info() - alloc psoc tgt info
+ * @psoc: pointer to psoc
+ *
+ * API to allocate memory for target_psoc_info
+ *
+ * Return: SUCCESS on successful memory allocation or Failure
+ */
+QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_free_psoc_tgt_info() - free psoc tgt info
+ * @psoc: pointer to psoc
+ *
+ * API to free allocated memory for target_psoc_info
+ *
+ * Return: SUCCESS on successful memory deallocation or Failure
+ */
+QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * target_if_get_wmi_handle() - get wmi handle
+ * @psoc: pointer to psoc
+ *
+ * API to get wmi handle free allocated memory for target_psoc_info
+ *
+ * Return: SUCCESS on successful memory deallocation or Failure
+ */
 void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc);
-
-static inline void *GET_WMI_HDL_FROM_PSOC(struct wlan_objmgr_psoc *psoc)
-{
-	void *tgt_if_handle;
-
-	if (psoc) {
-		tgt_if_handle = psoc->tgt_if_handle;
-
-		if (tgt_if_handle)
-			return ((struct target_psoc_info *)
-						tgt_if_handle)->wmi_handle;
-		else
-			return NULL;
-	}
-
-	return NULL;
-}
 
 /**
  * target_is_tgt_type_ar900b() - Check if the target type is AR900B
@@ -220,5 +427,1341 @@ bool target_is_tgt_type_qca9984(uint32_t target_type);
  * Return: true if the target_type is QCA9888, else false.
  */
 bool target_is_tgt_type_qca9888(uint32_t target_type);
+
+
+/**
+ * target_psoc_set_wlan_init_status() - set info wlan_init_status
+ * @psoc_info:          pointer to structure target_psoc_info
+ * @wlan_init_status:   FW init status
+ *
+ * API to set wlan_init_status
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_wlan_init_status
+		(struct target_psoc_info *psoc_info, uint32_t wlan_init_status)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.wlan_init_status = wlan_init_status;
+}
+
+/**
+ * target_psoc_get_wlan_init_status() - get info wlan_init_status
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wlan_init_status
+ *
+ * Return: uint32_t
+ */
+static inline uint32_t target_psoc_get_wlan_init_status
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.wlan_init_status;
+}
+
+/**
+ * target_psoc_set_target_type() - set info target_type
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @target_type: Target type
+ *
+ * API to set target_type
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_target_type
+		(struct target_psoc_info *psoc_info, uint32_t target_type)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.target_type = target_type;
+}
+
+/**
+ * target_psoc_get_target_type() - get info target_type
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get target_type
+ *
+ * Return: unit32_t
+ */
+static inline uint32_t target_psoc_get_target_type
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.target_type;
+}
+
+/**
+ * target_psoc_set_max_descs() - set info max_descs
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @max_descs:  Max descriptors
+ *
+ * API to set max_descs
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_max_descs
+		(struct target_psoc_info *psoc_info, uint32_t max_descs)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.max_descs = max_descs;
+}
+
+/**
+ * target_psoc_get_max_descs() - get info max_descs
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get max_descs
+ *
+ * Return: unint32_t
+ */
+static inline uint32_t target_psoc_get_max_descs
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.max_descs;
+}
+
+/**
+ * target_psoc_set_wmi_service_ready() - set info wmi_service_ready
+ * @psoc_info:         pointer to structure target_psoc_info
+ * @wmi_service_ready: service ready flag
+ *
+ * API to set wmi_service_ready
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_wmi_service_ready
+		(struct target_psoc_info *psoc_info, bool wmi_service_ready)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.wmi_service_ready = wmi_service_ready;
+}
+
+/**
+ * target_psoc_get_wmi_service_ready() - get info wmi_service_ready
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wmi_service_ready
+ *
+ * Return: bool
+ */
+static inline bool target_psoc_get_wmi_service_ready
+		(struct target_psoc_info *psoc_info)
+{
+	return psoc_info->info.wmi_service_ready;
+}
+
+/**
+ * target_psoc_set_wmi_ready() - set info wmi_ready
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @wmi_ready:  Ready event flag
+ *
+ * API to set wmi_ready
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_wmi_ready
+		(struct target_psoc_info *psoc_info, bool wmi_ready)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.wmi_ready = wmi_ready;
+}
+
+/**
+ * target_psoc_get_wmi_ready() - get info wmi_ready
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wmi_ready
+ *
+ * Return: bool
+ */
+static inline bool target_psoc_get_wmi_ready
+		(struct target_psoc_info *psoc_info)
+{
+	return psoc_info->info.wmi_ready;
+}
+
+/**
+ * target_psoc_set_preferred_hw_mode() - set preferred_hw_mode
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @preferred_hw_mode: Preferred HW mode
+ *
+ * API to set preferred_hw_mode
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_preferred_hw_mode(
+		struct target_psoc_info *psoc_info, uint32_t preferred_hw_mode)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.preferred_hw_mode = preferred_hw_mode;
+}
+
+/**
+ * target_psoc_get_preferred_hw_mode() - get preferred_hw_mode
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get preferred_hw_mode
+ *
+ * Return: unint32_t
+ */
+static inline uint32_t target_psoc_get_preferred_hw_mode
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.preferred_hw_mode;
+}
+
+/**
+ * target_psoc_set_wmi_timeout() - set wmi_timeout
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @wmi_timeout: WMI timeout value in sec
+ *
+ * API to set wmi_timeout
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_wmi_timeout
+		(struct target_psoc_info *psoc_info, uint32_t wmi_timeout)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.wmi_timeout = wmi_timeout;
+}
+
+/**
+ * target_psoc_get_wmi_timeout() - get wmi_timeout
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wmi_timeout
+ *
+ * Return: unint32_t
+ */
+static inline uint32_t target_psoc_get_wmi_timeout
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.wmi_timeout;
+}
+
+/**
+ * target_psoc_set_wmi_timeout_unintr() - set wmi_timeout_unintr
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @wmi_timeout_unint: WMI timeout uninterrupted in sec
+ *
+ * API to set wmi_timeout_unintr
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_wmi_timeout_unintr
+		(struct target_psoc_info *psoc_info, uint32_t wmi_timeout_unint)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.wmi_timeout_unintr = wmi_timeout_unint;
+}
+
+/**
+ * target_psoc_get_wmi_timeout_unintr() - get wmi_timeout_unintr
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wmi_timeout_unintr
+ *
+ * Return: unint32_t
+ */
+static inline uint32_t target_psoc_get_wmi_timeout_unintr
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.wmi_timeout_unintr;
+}
+
+/**
+ * target_psoc_set_total_mac_phy_cnt() - set total_mac_phy
+ * @psoc_info:  pointer to structure target_psoc_infoa
+ * @total_mac_phy_cnt: Total MAC PHY cnt
+ *
+ * API to set total_mac_phy
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_total_mac_phy_cnt
+		(struct target_psoc_info *psoc_info, uint8_t total_mac_phy_cnt)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.total_mac_phy_cnt = total_mac_phy_cnt;
+}
+
+/**
+ * target_psoc_get_total_mac_phy_cnt() - get total_mac_phy
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get total_mac_phy
+ *
+ * Return: unint8_t
+ */
+static inline uint8_t target_psoc_get_total_mac_phy_cnt(
+		struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return 0;
+
+	return psoc_info->info.total_mac_phy_cnt;
+}
+
+/**
+ * target_psoc_set_num_radios() - set num of radios
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @num_radios: Number of radios
+ *
+ * API to set number of radios
+ *
+ * Return: number of radios
+ */
+static inline void target_psoc_set_num_radios(
+		struct target_psoc_info *psoc_info, uint8_t num_radios)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.num_radios = num_radios;
+}
+
+/**
+ * target_psoc_get_num_radios() - get number of radios
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get number_of_radios
+ *
+ * Return: number of radios
+ */
+static inline uint8_t target_psoc_get_num_radios
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return 0;
+
+	return psoc_info->info.num_radios;
+}
+
+/**
+ * target_psoc_set_service_bitmap() - set service_bitmap
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @service_bitmap: FW service bitmap
+ *
+ * API to set service_bitmap
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_service_bitmap
+		(struct target_psoc_info *psoc_info, uint32_t *service_bitmap)
+{
+	qdf_mem_copy(psoc_info->info.service_bitmap, service_bitmap,
+			sizeof(psoc_info->info.service_bitmap));
+}
+
+/**
+ * target_psoc_get_service_bitmap() - get service_bitmap
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get service_bitmap
+ *
+ * Return: unint32_t
+ */
+static inline uint32_t *target_psoc_get_service_bitmap
+		(struct target_psoc_info *psoc_info)
+{
+	return psoc_info->info.service_bitmap;
+}
+
+/**
+ * target_psoc_set_num_mem_chunks - set num_mem_chunks
+ * @psoc_info:  pointer to structure target_psoc_info
+ & @num_mem_chunks: Num Memory chunks allocated for FW
+ *
+ * API to set num_mem_chunks
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_num_mem_chunks(
+		struct target_psoc_info *psoc_info, uint32_t num_mem_chunks)
+{
+	if (psoc_info == NULL)
+		return;
+	psoc_info->info.num_mem_chunks = num_mem_chunks;
+}
+
+/**
+ * target_psoc_get_num_mem_chunks() - get num_mem_chunks
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get total_mac_phy
+ *
+ * Return: unint8_t
+ */
+static inline uint32_t target_psoc_get_num_mem_chunks
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return (uint32_t)-1;
+
+	return psoc_info->info.num_mem_chunks;
+}
+/**
+ * target_psoc_set_hif_hdl - set hif_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @hif_hdl:    HIF handle
+ *
+ * API to set hif_hdl
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_hif_hdl
+		(struct target_psoc_info *psoc_info, void *hif_hdl)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->hdls.hif_hdl = hif_hdl;
+}
+
+/**
+ * target_psoc_get_hif_hdl() - get hif_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get hif_hdl
+ *
+ * Return: hif_hdl
+ */
+static inline void *target_psoc_get_num_hif_hdl
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->hdls.hif_hdl;
+}
+
+/**
+ * target_psoc_set_hif_hdl - set htc_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @htc_hdl:    HTC handle
+ *
+ * API to set htc_hdl
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_htc_hdl
+		(struct target_psoc_info *psoc_info, void *htc_hdl)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->hdls.htc_hdl = htc_hdl;
+}
+
+/**
+ * target_psoc_get_htc_hdl() - get htc_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get htc_hdl
+ *
+ * Return: htc_hdl
+ */
+static inline void *target_psoc_get_htc_hdl
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->hdls.htc_hdl;
+}
+/**
+ * target_psoc_set_wmi_hdl - set wmi_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @wmi_hdl:    WMI handle
+ *
+ * API to set wmi_hdl
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_wmi_hdl
+		(struct target_psoc_info *psoc_info, void *wmi_hdl)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->hdls.wmi_hdl = wmi_hdl;
+}
+
+/**
+ * target_psoc_get_wmi_hdl() - get wmi_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wmi_hdl
+ *
+ * Return: wmi_hdl
+ */
+static inline void *target_psoc_get_wmi_hdl
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->hdls.wmi_hdl;
+}
+
+/**
+ * target_psoc_set_accelerator_hdl - set accelerator_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @accelerator_hdl: Accelator handle
+ *
+ * API to set accelerator_hdl
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_accelerator_hdl
+		(struct target_psoc_info *psoc_info, void *accelerator_hdl)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->hdls.accelerator_hdl = accelerator_hdl;
+}
+
+/**
+ * target_psoc_get_accelerator_hdl() - get accelerator_hdl
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get accelerator_hdl
+ *
+ * Return: accelerator_hdl
+ */
+static inline void *target_psoc_get_accelerator_hdl
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->hdls.accelerator_hdl;
+}
+
+/**
+ * target_psoc_set_feature_ptr - set feature_ptr
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @feature_ptr: set feature pointer
+ *
+ * API to set feature_ptr
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_feature_ptr
+		(struct target_psoc_info *psoc_info, void *feature_ptr)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->feature_ptr = feature_ptr;
+}
+
+/**
+ * target_psoc_get_feature_ptr() - get feature_ptr
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get feature_ptr
+ *
+ * Return: feature_ptr
+ */
+static inline void *target_psoc_get_feature_ptr
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->feature_ptr;
+}
+
+/**
+ * target_psoc_get_version()- get host_fw_ver version
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get host_fw_ver version
+ *
+ * Return: void
+ */
+static inline struct host_fw_ver *target_psoc_get_version
+		(struct target_psoc_info *psoc_info)
+{
+	return &psoc_info->info.version;
+}
+
+/**
+ * target_psoc_get_target_ver()- get target version
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get target version
+ *
+ * Return: target version
+ */
+static inline uint32_t target_psoc_get_target_ver
+		(struct target_psoc_info *psoc_info)
+{
+	return psoc_info->info.version.target_ver;
+}
+
+/**
+ * target_psoc_set_target_ver()- set target version
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @target_ver: Target version
+ *
+ * API to set target version
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_target_ver
+		(struct target_psoc_info *psoc_info, uint32_t target_ver)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.version.target_ver = target_ver;
+}
+
+/**
+ * target_psoc_set_target_rev()- set target revision
+ * @psoc_info:  pointer to structure target_psoc_info
+ * @target_rev: Target revision
+ *
+ * API to get target version
+ *
+ * Return: void
+ */
+static inline void target_psoc_set_target_rev
+		(struct target_psoc_info *psoc_info, uint32_t target_rev)
+{
+	if (psoc_info == NULL)
+		return;
+
+	psoc_info->info.version.target_rev = target_rev;
+}
+
+/**
+ * target_psoc_get_target_rev()- get target revision
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get target revision
+ *
+ * Return: target revision
+ */
+static inline uint32_t target_psoc_get_target_rev
+		(struct target_psoc_info *psoc_info)
+{
+	return psoc_info->info.version.target_rev;
+}
+
+/**
+ * target_psoc_get_wlan_res_cfg() - get wlan_res_cfg
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wlan_res_cfg
+ *
+ * Return: structure pointer to host_fw_ver
+ */
+static inline target_resource_config *target_psoc_get_wlan_res_cfg
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return &psoc_info->info.wlan_res_cfg;
+}
+
+/**
+ * target_psoc_get_wlan_ext_res_cfg() - get wlan_ext_res_cfg
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get wlan_ext_res_cfg
+ *
+ * Return: structure pointer to wmi_host_ext_resource_config
+ */
+static inline wmi_host_ext_resource_config *target_psoc_get_wlan_ext_res_cfg
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return &psoc_info->info.wlan_ext_res_cfg;
+}
+
+/**
+ * target_psoc_get_event_queue() - get event_queue
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get event_queue
+ *
+ * Return: structure pointer to qdf_wait_queue_head_t
+ */
+static inline qdf_wait_queue_head_t *target_psoc_get_event_queue
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return &psoc_info->info.event_queue;
+}
+
+/**
+ * target_psoc_get_target_caps() - get target_caps
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get target_caps
+ *
+ * Return: structure pointer to wlan_psoc_target_capability_info
+ */
+static inline struct wlan_psoc_target_capability_info
+		*target_psoc_get_target_caps(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return &psoc_info->info.target_caps;
+}
+
+/**
+ * target_psoc_get_service_ext_param() - get service_ext_param
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get service_ext_param
+ *
+ * Return: structure pointer to wlan_psoc_host_service_ext_param
+ */
+static inline struct wlan_psoc_host_service_ext_param
+		*target_psoc_get_service_ext_param
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return &psoc_info->info.service_ext_param;
+}
+
+
+/**
+ * target_psoc_get_mac_phy_cap() - get mac_phy_cap
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get mac_phy_cap
+ *
+ * Return: structure pointer to wlan_psoc_host_mac_phy_caps
+ */
+static inline struct wlan_psoc_host_mac_phy_caps *target_psoc_get_mac_phy_cap
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->info.mac_phy_cap;
+}
+
+/**
+ * target_psoc_get_dbr_ring_caps() - get dbr_ring_cap
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get dbr_ring_cap
+ *
+ * Return: structure pointer to wlan_psoc_host_dbr_ring_caps
+ */
+static inline struct wlan_psoc_host_dbr_ring_caps
+	*target_psoc_get_dbr_ring_caps(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->info.dbr_ring_cap;
+}
+/**
+ * target_psoc_get_mem_chunks() - get mem_chunks
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get mem_chunks
+ *
+ * Return: structure pointer to wmi_host_mem_chunk
+ */
+static inline struct wmi_host_mem_chunk *target_psoc_get_mem_chunks
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->info.mem_chunks;
+}
+
+/**
+ * target_psoc_get_tif_ops() - get tif_ops
+ * @psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get tif_ops
+ *
+ * Return: structure pointer to target_ops
+ */
+static inline struct target_ops *target_psoc_get_tif_ops
+		(struct target_psoc_info *psoc_info)
+{
+	if (psoc_info == NULL)
+		return NULL;
+
+	return psoc_info->tif_ops;
+}
+
+/**
+ * target_pdev_set_feature_ptr - set feature_ptr
+ * @pdev_info:  pointer to structure target_pdev_info
+ * @feature_ptr: Feature pointer
+ *
+ * API to set feature_ptr
+ *
+ * Return: void
+ */
+static inline void target_pdev_set_feature_ptr
+		(struct target_pdev_info *pdev_info, void *feature_ptr)
+{
+	if (pdev_info == NULL)
+		return;
+
+	pdev_info->feature_ptr = feature_ptr;
+}
+
+/**
+ * target_pdev_get_feature_ptr() - get feature_ptr
+ * @pdev_info:  pointer to structure target_pdev_info
+ *
+ * API to get feature_ptr
+ *
+ * Return: feature_ptr
+ */
+static inline void *target_pdev_get_feature_ptr
+		(struct target_pdev_info *pdev_info)
+{
+	if (pdev_info == NULL)
+		return NULL;
+
+	return pdev_info->feature_ptr;
+}
+
+/**
+ * target_pdev_set_wmi_handle - set wmi_handle
+ * @pdev_info:  pointer to structure target_pdev_info
+ * @wmi_handle: WMI handle
+ *
+ * API to set wmi_handle
+ *
+ * Return: void
+ */
+static inline void target_pdev_set_wmi_handle
+		(struct target_pdev_info *pdev_info, void *wmi_handle)
+{
+	if (pdev_info == NULL)
+		return;
+
+	pdev_info->wmi_handle = wmi_handle;
+}
+
+/**
+ * target_pdev_get_wmi_handle - get wmi_handle
+ * @pdev_info:  pointer to structure target_dev_info
+ *
+ * API to get wmi_handle
+ *
+ * Return: wmi_handle
+ */
+static inline void *target_pdev_get_wmi_handle
+		(struct target_pdev_info *pdev_info)
+{
+	if (pdev_info == NULL)
+		return NULL;
+
+	return pdev_info->wmi_handle;
+}
+
+/**
+ * target_pdev_set_accelerator_hdl - set accelerator_hdl
+ * @pdev_info:  pointer to structure target_pdev_info
+ * @accelerator_hdl: Accelator handle
+ *
+ * API to set accelerator_hdl
+ *
+ * Return: void
+ */
+static inline void target_pdev_set_accelerator_hdl
+		(struct target_pdev_info *pdev_info, void *accelerator_hdl)
+{
+	if (pdev_info == NULL)
+		return;
+
+	pdev_info->accelerator_hdl = accelerator_hdl;
+}
+
+/**
+ * target_pdev_get_accelerator_hdl - get accelerator_hdl
+ * @pdev_info:  pointer to structure target_dev_info
+ *
+ * API to get accelerator_hdl
+ *
+ * Return: accelerator_hdl
+ */
+static inline void *target_pdev_get_accelerator_hdl
+		(struct target_pdev_info *pdev_info)
+{
+	if (pdev_info == NULL)
+		return NULL;
+
+	return pdev_info->accelerator_hdl;
+}
+
+/**
+ * target_pdev_set_pdev_idx - set pdev_idx
+ * @pdev_info:  pointer to structure target_pdev_info
+ * @pdev_idx:   PDEV id of FW
+ *
+ * API to set pdev_idx
+ *
+ * Return: void
+ */
+static inline void target_pdev_set_pdev_idx
+		(struct target_pdev_info *pdev_info, int32_t pdev_idx)
+{
+	if (pdev_info == NULL)
+		return;
+
+	pdev_info->pdev_idx = pdev_idx;
+}
+
+/**
+ * target_pdev_get_pdev_idx  - get pdev_idx
+ * @pdev_info:  pointer to structure target_dev_info
+ *
+ * API to get pdev_idx
+ *
+ * Return: int32_t
+ */
+static inline int32_t  target_pdev_get_pdev_idx
+		(struct target_pdev_info *pdev_info)
+{
+	if (pdev_info == NULL)
+		return -EINVAL;
+
+	return pdev_info->pdev_idx;
+}
+
+/**
+ * target_pdev_set_phy_idx - set phy_idx
+ * @pdev_info:  pointer to structure target_pdev_info
+ * @phy_idx:    phy ID of FW
+ *
+ * API to set phy_idx
+ *
+ * Return: void
+ */
+static inline void target_pdev_set_phy_idx
+		(struct target_pdev_info *pdev_info, int32_t phy_idx)
+{
+	if (pdev_info == NULL)
+		return;
+
+	pdev_info->phy_idx  = phy_idx;
+}
+
+/**
+ * target_pdev_get_phy_idx  - get phy_idx
+ * @pdev_info:  pointer to structure target_dev_info
+ *
+ * API to get phy_idx
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_pdev_get_phy_idx
+		(struct target_pdev_info *pdev_info)
+{
+	if (pdev_info == NULL)
+		return -EINVAL;
+
+	return pdev_info->phy_idx;
+}
+
+/**
+ * GET_WMI_HDL_FROM_PSOC - get wmi handle from psoc
+ * @psoc:  psoc object
+ *
+ * API to get wmi_handle from psoc
+ *
+ * Return: wmi_handle on success
+ *         if tgt handle is not initialized, it returns NULL
+ */
+static inline void *GET_WMI_HDL_FROM_PSOC(struct wlan_objmgr_psoc *psoc)
+{
+	void *tgt_if_handle;
+
+	if (psoc) {
+		tgt_if_handle = psoc->tgt_if_handle;
+
+		if (tgt_if_handle)
+			return (target_psoc_get_wmi_hdl(
+				(struct target_psoc_info *)tgt_if_handle));
+		else
+			return NULL;
+	}
+
+	return NULL;
+}
+
+/**
+ * GET_WMI_HDL_FROM_PDEV - get wmi handle from pdev
+ * @pdev:  pdev object
+ *
+ * API to get wmi_handle from pdev
+ *
+ * Return: wmi_handle on success
+ *         if tgt handle is not initialized, it returns NULL
+ */
+static inline void *GET_WMI_HDL_FROM_PDEV(struct wlan_objmgr_pdev *pdev)
+{
+	void *tgt_if_handle;
+
+	if (pdev) {
+		tgt_if_handle =  pdev->tgt_if_handle;
+
+		if (tgt_if_handle)
+			return target_pdev_get_wmi_handle(tgt_if_handle);
+		else
+			return NULL;
+	}
+
+	return NULL;
+}
+
+/**
+ * target_if_ext_res_cfg_enable - Enable ext resource config
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable Ext resource config
+ *
+ * Return: none
+ */
+static inline void target_if_ext_res_cfg_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->ext_resource_config_enable))
+		tgt_hdl->tif_ops->ext_resource_config_enable(psoc,
+				tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_peer_cfg_enable - Enable peer config
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable peer config
+ *
+ * Return: none
+ */
+static inline void target_if_peer_cfg_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->peer_config))
+		tgt_hdl->tif_ops->peer_config(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_mesh_support_enable - Enable MESH mode support
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable Mesh mode
+ *
+ * Return: none
+ */
+static inline void target_if_mesh_support_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->mesh_support_enable))
+		tgt_hdl->tif_ops->mesh_support_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_smart_antenna_enable - Enable Smart antenna module
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable Smart antenna
+ *
+ * Return: none
+ */
+static inline void target_if_smart_antenna_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->smart_antenna_enable))
+		tgt_hdl->tif_ops->smart_antenna_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_atf_cfg_enable - Enable ATF config
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable ATF config
+ *
+ * Return: none
+ */
+static inline void target_if_atf_cfg_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->atf_config_enable))
+		tgt_hdl->tif_ops->atf_config_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_qwrap_cfg_enable - Enable QWRAP config
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable QWRAP config
+ *
+ * Return: none
+ */
+static inline void target_if_qwrap_cfg_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->qwrap_config_enable))
+		tgt_hdl->tif_ops->qwrap_config_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_btcoex_cfg_enable - Enable BT coex config
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable BT coex config
+ *
+ * Return: none
+ */
+static inline void target_if_btcoex_cfg_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->btcoex_config_enable))
+		tgt_hdl->tif_ops->btcoex_config_enable(psoc, tgt_hdl, evt_buf);
+}
+
+/**
+ * target_if_lteu_cfg_enable - Enable LTEU config
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API to enable LTEU coex config
+ *
+ * Return: none
+ */
+static inline void target_if_lteu_cfg_enable(struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->lteu_ext_support_enable))
+		tgt_hdl->tif_ops->lteu_ext_support_enable(psoc,	tgt_hdl,
+								evt_buf);
+}
+
+/**
+ * target_if_set_init_cmd_dev_param - Set init command params
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ *
+ * API to set init command param based on config
+ *
+ * Return: none
+ */
+static inline void target_if_set_init_cmd_dev_param(
+	struct wlan_objmgr_psoc *psoc, struct target_psoc_info *tgt_hdl)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->set_init_cmd_dev_based_params)) {
+		tgt_hdl->tif_ops->set_init_cmd_dev_based_params(psoc,
+					tgt_hdl);
+	}
+}
+
+/**
+ * target_if_alloc_pdevs - Allocate PDEVs
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ *
+ * API allocates PDEVs based on ext service ready param
+ *
+ * Return: SUCCESS on pdev allocation or PDEV allocation is not needed
+ *         FAILURE, if allocation fails
+ */
+static inline QDF_STATUS target_if_alloc_pdevs(struct wlan_objmgr_psoc *psoc,
+					struct target_psoc_info *tgt_hdl)
+{
+	QDF_STATUS ret_val;
+
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->alloc_pdevs))
+		ret_val = tgt_hdl->tif_ops->alloc_pdevs(psoc, tgt_hdl);
+	else
+		ret_val = QDF_STATUS_SUCCESS;
+
+	return ret_val;
+}
+
+/**
+ * target_if_update_pdev_tgt_info - Update PDEVs info
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ *
+ * API updates PDEVs info based on config
+ *
+ * Return: SUCCESS on pdev updation or PDEV updation is not needed
+ *         FAILURE, if updation fails
+ */
+static inline QDF_STATUS target_if_update_pdev_tgt_info(
+	struct wlan_objmgr_psoc *psoc, struct target_psoc_info *tgt_hdl)
+{
+	QDF_STATUS ret_val;
+
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->update_pdev_tgt_info))
+		ret_val = tgt_hdl->tif_ops->update_pdev_tgt_info(psoc,
+							tgt_hdl);
+	else
+		ret_val = QDF_STATUS_SUCCESS;
+
+	return ret_val;
+}
+
+/**
+ * target_if_print_service_ready_ext_param - Print Service ready ext param
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ *
+ * API to print service ready ext param
+ *
+ * Return: none
+ */
+static inline void target_if_print_service_ready_ext_param(
+	struct wlan_objmgr_psoc *psoc, struct target_psoc_info *tgt_hdl)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->print_svc_ready_ex_param)) {
+		tgt_hdl->tif_ops->print_svc_ready_ex_param(psoc,
+			tgt_hdl);
+	}
+}
+
+/**
+ * target_if_add_11ax_modes - Add 11ax modes explicitly
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ *
+ * API to adds 11ax modes
+ *
+ * Return: none
+ */
+static inline void target_if_add_11ax_modes(struct wlan_objmgr_psoc *psoc,
+					struct target_psoc_info *tgt_hdl)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->add_11ax_modes)) {
+		tgt_hdl->tif_ops->add_11ax_modes(psoc, tgt_hdl);
+	}
+}
+
+/**
+ * target_if_set_default_config - Set default config in init command
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ *
+ * API to set default config in init command
+ *
+ * Return: none
+ */
+static inline void target_if_set_default_config(struct wlan_objmgr_psoc *psoc,
+					struct target_psoc_info *tgt_hdl)
+{
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->set_default_tgt_config)) {
+		tgt_hdl->tif_ops->set_default_tgt_config(psoc, tgt_hdl);
+	}
+}
+
+/**
+ * target_if_sw_version_check - SW version check
+ * @psoc:  psoc object
+ * @tgt_hdl: target_psoc_info pointer
+ * @evt_buf: Event buffer received from FW
+ *
+ * API checks the SW version
+ *
+ * Return: SUCCESS on version matches or version check is not needed
+ *         FAILURE, if check fails
+ */
+static inline QDF_STATUS target_if_sw_version_check(
+			struct wlan_objmgr_psoc *psoc,
+			struct target_psoc_info *tgt_hdl, uint8_t *evt_buf)
+{
+	QDF_STATUS ret_val;
+
+	if ((tgt_hdl->tif_ops) &&
+		(tgt_hdl->tif_ops->sw_version_check))
+		ret_val = tgt_hdl->tif_ops->sw_version_check(psoc, tgt_hdl,
+								evt_buf);
+	else
+		ret_val = QDF_STATUS_SUCCESS;
+
+	return ret_val;
+}
 #endif
 
