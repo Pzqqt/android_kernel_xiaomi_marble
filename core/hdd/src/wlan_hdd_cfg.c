@@ -5425,6 +5425,27 @@ struct reg_table_entry g_registry_table[] = {
 		CFG_IS_SAE_ENABLED_MIN,
 		CFG_IS_SAE_ENABLED_MAX),
 #endif
+
+	REG_VARIABLE(CFG_BTM_SOLICITED_TIMEOUT, WLAN_PARAM_Integer,
+		     struct hdd_config, btm_solicited_timeout,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BTM_SOLICITED_TIMEOUT_DEFAULT,
+		     CFG_BTM_SOLICITED_TIMEOUT_MIN,
+		     CFG_BTM_SOLICITED_TIMEOUT_MAX),
+
+	REG_VARIABLE(CFG_BTM_MAX_ATTEMPT_CNT, WLAN_PARAM_Integer,
+		     struct hdd_config, btm_max_attempt_cnt,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BTM_MAX_ATTEMPT_CNT_DEFAULT,
+		     CFG_BTM_MAX_ATTEMPT_CNT_MIN,
+		     CFG_BTM_MAX_ATTEMPT_CNT_MAX),
+
+	REG_VARIABLE(CFG_BTM_STICKY_TIME, WLAN_PARAM_Integer,
+		     struct hdd_config, btm_sticky_time,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_BTM_STICKY_TIME_DEFAULT,
+		     CFG_BTM_STICKY_TIME_MIN,
+		     CFG_BTM_STICKY_TIME_MAX),
 };
 
 
@@ -7270,6 +7291,12 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [btm_offload_config] value = [0x%x]",
 		  hdd_ctx->config->btm_offload_config);
 	hdd_cfg_print_sae(hdd_ctx);
+	hdd_debug("Name = [btm_solicited_timeout] value = [0x%x]",
+		  hdd_ctx->config->btm_solicited_timeout);
+	hdd_debug("Name = [btm_max_attempt_cnt] value = [0x%x]",
+		  hdd_ctx->config->btm_max_attempt_cnt);
+	hdd_debug("Name = [btm_sticky_time] value = [0x%x]",
+		  hdd_ctx->config->btm_sticky_time);
 }
 
 
@@ -9094,9 +9121,6 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		(pConfig->rssi_assoc_reject_enabled *
 		WMI_VDEV_OCE_REASSOC_REJECT_FEATURE_BITMAP);
 	smeConfig->csrConfig.oce_feature_bitmap = val;
-	smeConfig->csrConfig.btm_offload_config =
-					    hdd_ctx->config->btm_offload_config;
-
 	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_thres =
 		hdd_ctx->config->mbo_candidate_rssi_thres;
 	smeConfig->csrConfig.mbo_thresholds.mbo_current_rssi_thres =
@@ -9105,7 +9129,14 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 		hdd_ctx->config->mbo_current_rssi_mcc_thres;
 	smeConfig->csrConfig.mbo_thresholds.mbo_candidate_rssi_btc_thres =
 		hdd_ctx->config->mbo_candidate_rssi_btc_thres;
-
+	smeConfig->csrConfig.btm_offload_config =
+			hdd_ctx->config->btm_offload_config;
+	smeConfig->csrConfig.btm_solicited_timeout =
+			hdd_ctx->config->btm_solicited_timeout;
+	smeConfig->csrConfig.btm_max_attempt_cnt =
+			hdd_ctx->config->btm_max_attempt_cnt;
+	smeConfig->csrConfig.btm_sticky_time =
+			hdd_ctx->config->btm_sticky_time;
 	hdd_update_bss_score_params(hdd_ctx->config,
 			&smeConfig->csrConfig.bss_score_params);
 

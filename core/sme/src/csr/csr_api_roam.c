@@ -3053,6 +3053,12 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			     sizeof(struct sir_score_config));
 		pMac->roam.configParam.btm_offload_config =
 						     pParam->btm_offload_config;
+		pMac->roam.configParam.btm_solicited_timeout =
+			pParam->btm_solicited_timeout;
+		pMac->roam.configParam.btm_max_attempt_cnt =
+			pParam->btm_max_attempt_cnt;
+		pMac->roam.configParam.btm_sticky_time =
+			pParam->btm_sticky_time;
 
 		csr_update_he_config_param(pMac, pParam);
 	}
@@ -3323,6 +3329,11 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		     &pMac->roam.configParam.bss_score_params,
 		     sizeof(struct sir_score_config));
 	pParam->btm_offload_config = pMac->roam.configParam.btm_offload_config;
+	pParam->btm_solicited_timeout =
+		pMac->roam.configParam.btm_solicited_timeout;
+	pParam->btm_max_attempt_cnt =
+		pMac->roam.configParam.btm_max_attempt_cnt;
+	pParam->btm_sticky_time = pMac->roam.configParam.btm_sticky_time;
 
 	pParam->mbo_thresholds.mbo_candidate_rssi_thres =
 		pMac->roam.configParam.mbo_thresholds.
@@ -18209,7 +18220,13 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->lca_config_params.num_disallowed_aps =
 		mac_ctx->roam.configParam.num_disallowed_aps;
 	req_buf->btm_offload_config =
-				   mac_ctx->roam.configParam.btm_offload_config;
+		mac_ctx->roam.configParam.btm_offload_config;
+	req_buf->btm_solicited_timeout =
+		mac_ctx->roam.configParam.btm_solicited_timeout;
+	req_buf->btm_max_attempt_cnt =
+		mac_ctx->roam.configParam.btm_max_attempt_cnt;
+	req_buf->btm_sticky_time =
+		mac_ctx->roam.configParam.btm_sticky_time;
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

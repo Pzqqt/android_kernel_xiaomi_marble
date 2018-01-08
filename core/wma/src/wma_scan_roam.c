@@ -1874,6 +1874,9 @@ static QDF_STATUS wma_roam_scan_btm_offload(tp_wma_handle wma_handle,
 
 	params->vdev_id = roam_req->sessionId;
 	params->btm_offload_config = roam_req->btm_offload_config;
+	params->btm_solicited_timeout = roam_req->btm_solicited_timeout;
+	params->btm_max_attempt_cnt = roam_req->btm_max_attempt_cnt;
+	params->btm_sticky_time = roam_req->btm_sticky_time;
 	status = wmi_unified_send_btm_config(wma_handle->wmi_handle, params);
 	qdf_mem_free(params);
 
