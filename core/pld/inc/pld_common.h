@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -135,7 +135,6 @@ struct pld_platform_cap {
 enum pld_uevent {
 	PLD_RECOVERY,
 	PLD_FW_DOWN,
-	PLD_FW_READY,
 };
 
 /**

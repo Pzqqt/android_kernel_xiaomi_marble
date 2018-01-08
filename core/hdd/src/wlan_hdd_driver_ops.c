@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -252,6 +252,7 @@ int hdd_hif_open(struct device *dev, void *bdev, const struct hif_bus_id *bid,
 		ret = qdf_status_to_os_return(status);
 		goto err_hif_close;
 	} else {
+		cds_set_target_ready(true);
 		ret = hdd_napi_create();
 		hdd_debug("hdd_napi_create returned: %d", ret);
 		if (ret == 0)
@@ -1452,9 +1453,6 @@ static void wlan_hdd_set_the_pld_uevent(struct pld_uevent_data *uevent)
 	case PLD_FW_DOWN:
 		cds_set_fw_state(CDS_FW_STATE_DOWN);
 		break;
-	case PLD_FW_READY:
-		cds_set_target_ready(true);
-		break;
 	}
 }
 
@@ -1489,7 +1487,6 @@ static void wlan_hdd_handle_the_pld_uevent(struct pld_uevent_data *uevent)
 			wlan_cfg80211_cleanup_scan_queue(
 					hdd_ctx->hdd_pdev);
 		break;
-	case PLD_FW_READY:
 	default:
 		break;
 	}
