@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -171,9 +171,14 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
+	/*
+	 * The ch_list buffer can accomadate a maximum of
+	 * NUM_CHANNELS and hence the ch_cnt should also not
+	 * exceed NUM_CHANNELS.
+	 */
 	pm_ctx->unsafe_channel_count = avoid_freq_ind->chan_list.ch_cnt >=
-			QDF_MAX_NUM_CHAN ?
-			QDF_MAX_NUM_CHAN : avoid_freq_ind->chan_list.ch_cnt;
+			NUM_CHANNELS ?
+			NUM_CHANNELS : avoid_freq_ind->chan_list.ch_cnt;
 	if (pm_ctx->unsafe_channel_count)
 		qdf_mem_copy(pm_ctx->unsafe_channel_list,
 			avoid_freq_ind->chan_list.ch_list,
