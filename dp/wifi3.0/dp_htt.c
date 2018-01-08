@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2715,6 +2715,7 @@ htt_htc_soc_attach(struct htt_soc *soc)
 	struct htc_service_connect_req connect;
 	struct htc_service_connect_resp response;
 	A_STATUS status;
+	struct dp_soc *dpsoc = soc->dp_soc;
 
 	qdf_mem_set(&connect, sizeof(connect), 0);
 	qdf_mem_set(&response, sizeof(response), 0);
@@ -2752,6 +2753,7 @@ htt_htc_soc_attach(struct htt_soc *soc)
 
 	soc->htc_endpoint = response.Endpoint;
 
+	hif_save_htc_htt_config_endpoint(dpsoc->hif_handle, soc->htc_endpoint);
 	dp_hif_update_pipe_callback(soc->dp_soc, (void *)soc,
 		dp_htt_hif_t2h_hp_callback, DP_HTT_T2H_HP_PIPE);
 
