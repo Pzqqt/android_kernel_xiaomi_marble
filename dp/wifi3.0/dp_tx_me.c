@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -118,7 +118,7 @@ dp_tx_me_alloc_descriptor(struct cdp_pdev *pdev_handle)
  *
  * Return:void
  */
-static inline void
+void
 dp_tx_me_exit(struct dp_pdev *pdev)
 {
 	/* Add flow control buffer count */

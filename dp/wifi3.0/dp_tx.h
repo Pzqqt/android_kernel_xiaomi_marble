@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -175,6 +175,14 @@ static inline void dp_non_std_tx_comp_free_buff(struct dp_tx_desc_s *tx_desc,
 void dp_tx_mec_handler(struct dp_vdev *vdev, uint8_t *status);
 #endif
 
+#ifdef ATH_SUPPORT_IQUE
+void dp_tx_me_exit(struct dp_pdev *pdev);
+#else
+static inline void dp_tx_me_exit(struct dp_pdev *pdev)
+{
+	return;
+}
+#endif
 
 #ifdef FEATURE_PERPKT_INFO
 QDF_STATUS

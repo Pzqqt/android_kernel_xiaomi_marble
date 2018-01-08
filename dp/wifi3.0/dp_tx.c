@@ -2718,7 +2718,7 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev)
  */
 QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
 {
-	/* What should do here? */
+	dp_tx_me_exit(pdev);
 	return QDF_STATUS_SUCCESS;
 }
 
