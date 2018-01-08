@@ -1281,7 +1281,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	uint8_t *peer_mac_addr;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	QDF_STATUS qdf_status;
-	uint32_t bitmap = CDP_PEER_DELETE_NO_SPECIAL;
+	uint32_t bitmap = 1 << CDP_PEER_DELETE_NO_SPECIAL;
 
 	if (!wma->interfaces[vdev_id].peer_count) {
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
@@ -1327,7 +1327,8 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("%s Peer delete could not be sent to firmware %d",
 			 __func__, qdf_status);
-		bitmap = CDP_PEER_DO_NOT_START_UNMAP_TIMER;
+		/* Clear default bit and set to NOT_START_UNMAP */
+		bitmap = 1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER;
 	}
 
 peer_detach:
@@ -1450,7 +1451,8 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	if (wmi_unified_peer_create_send(wma->wmi_handle,
 					 &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s : Unable to create peer in Target", __func__);
-		cdp_peer_delete(soc, peer, CDP_PEER_DO_NOT_START_UNMAP_TIMER);
+		cdp_peer_delete(soc, peer,
+				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
 		goto err;
 	}
 
@@ -5109,7 +5111,7 @@ void wma_delete_bss_ho_fail(tp_wma_handle wma, tpDeleteBssParams params)
 	}
 
 	if (peer)
-		cdp_peer_delete(soc, peer, CDP_PEER_DELETE_NO_SPECIAL);
+		cdp_peer_delete(soc, peer, 1 << CDP_PEER_DELETE_NO_SPECIAL);
 	iface->peer_count--;
 	WMA_LOGI("%s: Removed peer %pK with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, peer, params->bssid,  params->smesessionId,

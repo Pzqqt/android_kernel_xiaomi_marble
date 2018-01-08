@@ -3662,18 +3662,16 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 	 */
 	qdf_atomic_set(&peer->delete_in_progress, 1);
 
-	if (bitmap & CDP_PEER_DO_NOT_START_UNMAP_TIMER) {
+	if (!(bitmap & (1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER))) {
 		if (vdev->opmode == wlan_op_mode_sta) {
 			qdf_mem_copy(&peer->vdev->last_peer_mac_addr,
 				&peer->mac_addr,
 				sizeof(union ol_txrx_align_mac_addr_t));
-		}
 
-		/*
-		 * Create a timer to track unmap events when the sta peer gets
-		 * deleted.
-		 */
-		if (vdev->opmode == wlan_op_mode_sta) {
+			/*
+			 * Create a timer to track unmap events when the
+			 * sta peer gets deleted.
+			 */
 			qdf_timer_start(&peer->peer_unmap_timer,
 					OL_TXRX_PEER_UNMAP_TIMEOUT);
 			ol_txrx_info_high
@@ -3693,7 +3691,7 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 
 /**
  * ol_txrx_peer_detach_force_delete() - Detach and delete a peer's data object
- * @peer - the object to detach
+ * @ppeer - the object to detach
  *
  * Detach a peer and force peer object to be removed. It is called during
  * roaming scenario when the firmware has already deleted a peer.
@@ -3712,7 +3710,7 @@ static void ol_txrx_peer_detach_force_delete(void *ppeer)
 
 	/* Clear the peer_id_to_obj map entries */
 	ol_txrx_peer_remove_obj_map_entries(pdev, peer);
-	ol_txrx_peer_detach(peer, CDP_PEER_DELETE_NO_SPECIAL);
+	ol_txrx_peer_detach(peer, 1 << CDP_PEER_DELETE_NO_SPECIAL);
 }
 
 /**
