@@ -22,7 +22,6 @@
 #ifndef _WLAN_OBJMGR_PSOC_OBJ_H_
 #define _WLAN_OBJMGR_PSOC_OBJ_H_
 
-#include "wlan_objmgr_psoc_service_ready_api.h"
 #include "wlan_objmgr_cmn.h"
 #include "wlan_lmac_if_def.h"
 
@@ -109,6 +108,18 @@
 #define WLAN_SOC_CEXT_ACS_CHAN_HOP     0x00000020
 	/* CAPABILITY: the device support STA DFS */
 #define WLAN_SOC_CEXT_STADFS           0x00000040
+	/* NSS offload capability */
+#define WLAN_SOC_CEXT_NSS_OFFLOAD      0x00000080
+	/* SW cal support capability */
+#define WLAN_SOC_CEXT_SW_CAL           0x00000100
+	/* Hybrid mode */
+#define WLAN_SOC_CEXT_HYBRID_MODE      0x00000200
+	/* TT support */
+#define WLAN_SOC_CEXT_TT_SUPPORT       0x00000400
+	/* WMI MGMT REF */
+#define WLAN_SOC_CEXT_WMI_MGMT_REF     0x00000800
+	/* Wideband scan */
+#define WLAN_SOC_CEXT_WIDEBAND_SCAN    0x00001000
 
 /* feature_flags */
 	/* CONF: ATH FF enabled */
@@ -151,7 +162,21 @@
 #define WLAN_SOC_F_PWRCNSTRIE          0x00010000
 	/* STATUS: 11D in used */
 #define WLAN_SOC_F_DOT11D              0x00020000
+	/* Beacon offload */
+#define WLAN_SOC_F_BCN_OFFLOAD         0x00040000
+	/* QWRAP enable */
+#define WLAN_SOC_F_QWRAP_ENABLE        0x00080000
+	/* LTEU support */
+#define WLAN_SOC_F_LTEU_SUPPORT        0x00100000
+	/* BT coext support */
+#define WLAN_SOC_F_BTCOEX_SUPPORT      0x00200000
+	/* HOST 80211 enable*/
+#define WLAN_SOC_F_HOST_80211_ENABLE   0x00400000
 
+/* PSOC op flags */
+
+	/* Invalid VHT cap */
+#define WLAN_SOC_OP_VHT_INVALID_CAP    0x00000001
 /**
  * struct wlan_objmgr_psoc_regulatory -  Regulatory sub structure of PSOC
  * @country_code:  Country code
@@ -196,6 +221,7 @@ struct wlan_objmgr_psoc_user_config {
  * @soc_fw_caps:     FW capabilities
  * @soc_fw_ext_caps: FW ext capabilities
  * @soc_feature_caps:Feature capabilities
+ * @soc_op_flags:    Flags to set/reset during operation
  * @soc_hw_macaddr[]:HW MAC address
  * @user_config:     user config from OS layer
  */
@@ -205,6 +231,7 @@ struct wlan_objmgr_psoc_nif {
 	uint32_t soc_fw_caps;
 	uint32_t soc_fw_ext_caps;
 	uint32_t soc_feature_caps;
+	uint32_t soc_op_flags;
 	uint8_t soc_hw_macaddr[WLAN_MACADDR_LEN];
 	struct wlan_objmgr_psoc_user_config user_config;
 };
@@ -220,6 +247,7 @@ struct wlan_objmgr_psoc_nif {
  * @wlan_vdev_list[]:     VDEV list
  * @wlan_vdev_id_map[]:   VDEV id map, to allocate free ids
  * @wlan_peer_count:      PEER count
+ * @max_peer_count:       Max no. of peers supported by this PSOC
  * @peer_list:            Peer list
  * @ref_cnt:              Ref count
  * @ref_id_dbg:           Array to track Ref count
@@ -236,6 +264,7 @@ struct wlan_objmgr_psoc_objmgr {
 	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS];
 	uint32_t wlan_vdev_id_map[2];
 	uint16_t wlan_peer_count;
+	uint16_t max_peer_count;
 	struct wlan_peer_list peer_list;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
@@ -280,10 +309,6 @@ struct wlan_soc_timer {
  * @obj_status[]:          component object status
  * @obj_state:             object state
  * @tgt_if_handle:         target interface handle
- *    For OL based target it points to wmi handle
- * @total_mac_phy:         number of mac/phy supported by HW
- * @service_param:         FW service capability info
- * @ext_service_param:     extended FW service capability info
  * @dp_handle:             DP module handle
  * @psoc_lock:             psoc lock
  */
@@ -299,11 +324,35 @@ struct wlan_objmgr_psoc {
 	QDF_STATUS obj_status[WLAN_UMAC_MAX_COMPONENTS];
 	WLAN_OBJ_STATE obj_state;
 	void *tgt_if_handle;
-	uint8_t total_mac_phy;
-	struct wlan_objmgr_psoc_service_ready_param service_param;
-	struct wlan_objmgr_psoc_ext_service_ready_param ext_service_param;
 	void *dp_handle;
 	qdf_spinlock_t psoc_lock;
+};
+
+/**
+ * struct wlan_psoc_host_hal_reg_capabilities_ext: Below are Reg caps per PHY.
+ *                       Please note PHY ID starts with 0.
+ * @phy_id: phy id starts with 0.
+ * @eeprom_reg_domain: regdomain value specified in EEPROM
+ * @eeprom_reg_domain_ext: regdomain
+ * @regcap1: CAP1 capabilities bit map, see REGDMN_CAP1_ defines
+ * @regcap2: REGDMN EEPROM CAP, see REGDMN_EEPROM_EEREGCAP_ defines
+ * @wireless_modes: REGDMN MODE, see REGDMN_MODE_ enum
+ * @low_2ghz_chan: 2G channel low
+ * @high_2ghz_chan: 2G channel High
+ * @low_5ghz_chan: 5G channel low
+ * @high_5ghz_chan: 5G channel High
+ */
+struct wlan_psoc_host_hal_reg_capabilities_ext {
+	uint32_t phy_id;
+	uint32_t eeprom_reg_domain;
+	uint32_t eeprom_reg_domain_ext;
+	uint32_t regcap1;
+	uint32_t regcap2;
+	uint32_t wireless_modes;
+	uint32_t low_2ghz_chan;
+	uint32_t high_2ghz_chan;
+	uint32_t low_5ghz_chan;
+	uint32_t high_5ghz_chan;
 };
 
 /**
@@ -1016,9 +1065,54 @@ static inline void wlan_psoc_nif_feat_cap_clear(struct wlan_objmgr_psoc *psoc,
  * Return: 1 (for set) or 0 (for not set)
  */
 static inline uint8_t wlan_psoc_nif_feat_cap_get(struct wlan_objmgr_psoc *psoc,
-				uint32_t feat_cap)
+							uint32_t feat_cap)
 {
 	return (psoc->soc_nif.soc_feature_caps & feat_cap) ? 1 : 0;
+}
+
+/**
+ * wlan_psoc_nif_op_flag_get() - get op flags
+ * @psoc: PSOC object
+ * @flag: op flag to be checked
+ *
+ * API to know, whether particular op flag is set in psoc
+ *
+ * Return: 1 (for set) or 0 (for not set)
+ */
+static inline uint8_t wlan_psoc_nif_op_flag_get(struct wlan_objmgr_psoc *psoc,
+						uint32_t flag)
+{
+	return (psoc->soc_nif.soc_op_flags & flag) ? 1 : 0;
+}
+
+/**
+ * wlan_psoc_nif_op_flag_set() - set op flag
+ * @psoc: PSOC object
+ * @flag: op flag to be set
+ *
+ * API to set op flag in psoc
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_op_flag_set(struct wlan_objmgr_psoc *psoc,
+						uint32_t flag)
+{
+	psoc->soc_nif.soc_op_flags |= flag;
+}
+
+/**
+ * wlan_psoc_nif_op_flag_clear() - clear op flag
+ * @psoc: PSOC object
+ * @flag: op flag to be cleared
+ *
+ * API to clear op flag in psoc
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_nif_op_flag_clear(struct wlan_objmgr_psoc *psoc,
+						uint32_t flag)
+{
+	psoc->soc_nif.soc_op_flags &= ~flag;
 }
 
 /**
@@ -1152,6 +1246,64 @@ static inline void wlan_psoc_set_qdf_dev(
 		return;
 
 	psoc->soc_objmgr.qdf_dev = dev;
+}
+
+/**
+ * wlan_psoc_set_max_vdev_count() - set psoc max vdev count
+ * @psoc: PSOC object
+ * @vdev count: Max vdev count
+ *
+ * API to set Max vdev count
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_set_max_vdev_count(struct wlan_objmgr_psoc *psoc,
+						uint8_t max_vdev_count)
+{
+	psoc->soc_objmgr.max_vdev_count = max_vdev_count;
+}
+
+/**
+ * wlan_psoc_get_max_vdev_count() - get psoc max vdev count
+ * @psoc: PSOC object
+ *
+ * API to set Max vdev count
+ *
+ * Return: @vdev count: Max vdev count
+ */
+static inline uint8_t wlan_psoc_get_max_vdev_count(
+					struct wlan_objmgr_psoc *psoc)
+{
+	return psoc->soc_objmgr.max_vdev_count;
+}
+
+/**
+ * wlan_psoc_set_max_peer_count() - set psoc max peer count
+ * @psoc: PSOC object
+ * @peer count: Max peer count
+ *
+ * API to set Max peer count
+ *
+ * Return: void
+ */
+static inline void wlan_psoc_set_max_peer_count(struct wlan_objmgr_psoc *psoc,
+						uint16_t max_peer_count)
+{
+	psoc->soc_objmgr.max_peer_count = max_peer_count;
+}
+
+/**
+ * wlan_psoc_get_max_peer_count() - get psoc max peer count
+ * @psoc: PSOC object
+ *
+ * API to set Max peer count
+ *
+ * Return: @peer count: Max peer count
+ */
+static inline uint16_t wlan_psoc_get_max_peer_count(
+					struct wlan_objmgr_psoc *psoc)
+{
+	return psoc->soc_objmgr.max_peer_count;
 }
 
 /**

@@ -212,6 +212,7 @@ typedef void (*wlan_objmgr_peer_status_handler)(
  * @WLAN_FD_ID:                 FILS Discovery
  * @WLAN_OCB_NB_ID:             OCB Northbound operations
  * @WLAN_OCB_SB_ID:             OCB Southbound operations
+ * @WLAN_INIT_DEINIT_ID:        Init deinit module
  * @WLAN_REF_ID_MAX:            Max id used to generate ref count tracking array
  */
  /* New value added to the enum must also be reflected in function
@@ -254,6 +255,7 @@ typedef enum {
 	WLAN_FD_ID            = 33,
 	WLAN_OCB_NB_ID        = 34,
 	WLAN_OCB_SB_ID        = 35,
+	WLAN_INIT_DEINIT_ID   = 36,
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
@@ -301,6 +303,9 @@ static inline char *string_from_dbgid(wlan_objmgr_ref_dbgid id)
 					"WLAN_DISA_ID",
 					"WLAN_FTM_ID",
 					"WLAN_FD_ID",
+					"WLAN_OCB_NB_ID",
+					"WLAN_OCB_SB_ID",
+					"WLAN_INIT_DEINIT_ID",
 					"WLAN_REF_ID_MAX" };
 
 	return (char *)strings[id];

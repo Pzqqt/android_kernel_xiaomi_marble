@@ -57,6 +57,7 @@ static QDF_STATUS wlan_objmgr_peer_object_status(
 			failure, complete object need to be cleaned up */
 		} else if ((peer->obj_status[id] == QDF_STATUS_E_NOMEM) ||
 			(peer->obj_status[id] == QDF_STATUS_E_FAILURE)) {
+			obj_mgr_err("Peer comp object(id:%d) alloc fail", id);
 			status = QDF_STATUS_E_FAILURE;
 			break;
 		}

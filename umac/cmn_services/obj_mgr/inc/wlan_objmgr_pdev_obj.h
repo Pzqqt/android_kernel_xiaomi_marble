@@ -120,12 +120,14 @@ struct osif_pdev_priv;
  * @pdev_fw_caps:       radio specific FW capabilities
  * @pdev_feature_caps:  radio specific feature capabilities
  * @pdev_ospriv:        OS specific pointer
+ * @macaddr[]:          MAC address
  * @notified_ap_vdev:   ap vdev
  */
 struct wlan_objmgr_pdev_nif {
 	uint32_t pdev_fw_caps;
 	uint32_t pdev_feature_caps;
 	struct pdev_osif_priv *pdev_ospriv;
+	uint8_t macaddr[WLAN_MACADDR_LEN];
 	uint8_t notified_ap_vdev;
 };
 
@@ -576,10 +578,11 @@ static inline uint8_t wlan_pdev_nif_feat_cap_get(struct wlan_objmgr_pdev *pdev,
  */
 static inline uint8_t *wlan_pdev_get_hw_macaddr(struct wlan_objmgr_pdev *pdev)
 {
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
+	if (!pdev)
+		return NULL;
 
 	/* This API is invoked with lock acquired, do not add log prints */
-	return wlan_psoc_get_hw_macaddr(psoc);
+	return pdev->pdev_nif.macaddr;
 }
 
 /**
@@ -596,11 +599,8 @@ static inline uint8_t *wlan_pdev_get_hw_macaddr(struct wlan_objmgr_pdev *pdev)
 static inline void wlan_pdev_set_hw_macaddr(struct wlan_objmgr_pdev *pdev,
 			uint8_t *macaddr)
 {
-	struct wlan_objmgr_psoc *psoc = wlan_pdev_get_psoc(pdev);
-
 	/* This API is invoked with lock acquired, do not add log prints */
-	if (psoc != NULL)
-		wlan_psoc_set_hw_macaddr(psoc, macaddr);
+	WLAN_ADDR_COPY(pdev->pdev_nif.macaddr, macaddr);
 }
 
 /**
