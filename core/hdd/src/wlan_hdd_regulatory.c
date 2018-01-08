@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -983,6 +983,35 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 }
 
 /**
+ * hdd_ch_avoid_dyn_cbk() - Callback of chan avoid event when reg non-offload
+ * @psoc: PSOC object
+ * @pdev: PDEV object
+ * @chan_list: Current reg channel list, not used in this callback
+ * @avoid_freq_ind: Frequency avoid data post from event handler
+ * @arg: Callback function context parameter
+ *
+ * Return: None.
+ */
+static void hdd_ch_avoid_dyn_cbk(struct wlan_objmgr_psoc *psoc,
+				 struct wlan_objmgr_pdev *pdev,
+				 struct regulatory_channel *chan_list,
+				 struct avoid_freq_ind_data *avoid_freq_ind,
+				 void *arg)
+{
+	struct wiphy *wiphy;
+	struct pdev_osif_priv *pdev_priv;
+	struct hdd_context *hdd_ctx;
+
+	pdev_priv = wlan_pdev_get_ospriv(pdev);
+	wiphy = pdev_priv->wiphy;
+	hdd_ctx = wiphy_priv(wiphy);
+
+	if (avoid_freq_ind)
+		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
+				 &avoid_freq_ind->freq_list);
+}
+
+/**
  * hdd_regulatory_init_offload() - regulatory init
  * @hdd_ctx: hdd context
  * @wiphy: wiphy
@@ -1032,6 +1061,9 @@ int hdd_regulatory_init(struct hdd_context *hdd_ctx, struct wiphy *wiphy)
 		wiphy->regulatory_flags |= REGULATORY_DISABLE_BEACON_HINTS;
 		wiphy->regulatory_flags |= REGULATORY_COUNTRY_IE_IGNORE;
 		hdd_regulatory_init_no_offload(hdd_ctx, wiphy);
+		ucfg_reg_register_chan_change_callback(hdd_ctx->hdd_psoc,
+						       hdd_ch_avoid_dyn_cbk,
+						       NULL);
 	}
 
 	return 0;
