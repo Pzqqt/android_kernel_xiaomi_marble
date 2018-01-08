@@ -1674,6 +1674,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 	dfs_info.channel = ap_ctx->operating_channel;
 	sme_get_country_code(hdd_ctx->hHal, dfs_info.country_code, &cc_len);
+	staId = pSapEvent->sapevt.sapStartBssCompleteEvent.staId;
 
 	switch (sapEvent) {
 	case eSAP_START_BSS_EVENT:
