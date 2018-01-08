@@ -1528,6 +1528,258 @@ uint32_t  __qdf_nbuf_get_arp_tgt_ip(uint8_t *data)
 }
 
 /**
+ * __qdf_nbuf_get_dns_domain_name() - get dns domain name
+ * @data: Pointer to network data buffer
+ * @len: length to copy
+ *
+ * This api is for dns domain name
+ *
+ * Return: dns domain name.
+ */
+uint8_t *__qdf_nbuf_get_dns_domain_name(uint8_t *data, uint32_t len)
+{
+	uint8_t *domain_name;
+
+	domain_name = (uint8_t *)
+			(data + QDF_NBUF_PKT_DNS_NAME_OVER_UDP_OFFSET);
+	return domain_name;
+}
+
+
+/**
+ * __qdf_nbuf_data_is_dns_query() - check if skb data is a dns query
+ * @data: Pointer to network data buffer
+ *
+ * This api is for dns query packet.
+ *
+ * Return: true if packet is dns query packet.
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_dns_query(uint8_t *data)
+{
+	uint16_t op_code;
+	uint16_t tgt_port;
+
+	tgt_port = (uint16_t)(*(uint16_t *)(data +
+				QDF_NBUF_PKT_DNS_DST_PORT_OFFSET));
+	/* Standard DNS query always happen on Dest Port 53. */
+	if (tgt_port == QDF_SWAP_U16(QDF_NBUF_PKT_DNS_STANDARD_PORT)) {
+		op_code = (uint16_t)(*(uint16_t *)(data +
+				QDF_NBUF_PKT_DNS_OVER_UDP_OPCODE_OFFSET));
+		if ((QDF_SWAP_U16(op_code) & QDF_NBUF_PKT_DNSOP_BITMAP) ==
+				QDF_NBUF_PKT_DNSOP_STANDARD_QUERY)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_dns_response() - check if skb data is a dns response
+ * @data: Pointer to network data buffer
+ *
+ * This api is for dns query response.
+ *
+ * Return: true if packet is dns response packet.
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_dns_response(uint8_t *data)
+{
+	uint16_t op_code;
+	uint16_t src_port;
+
+	src_port = (uint16_t)(*(uint16_t *)(data +
+				QDF_NBUF_PKT_DNS_SRC_PORT_OFFSET));
+	/* Standard DNS response always comes on Src Port 53. */
+	if (src_port == QDF_SWAP_U16(QDF_NBUF_PKT_DNS_STANDARD_PORT)) {
+		op_code = (uint16_t)(*(uint16_t *)(data +
+				QDF_NBUF_PKT_DNS_OVER_UDP_OPCODE_OFFSET));
+
+		if ((QDF_SWAP_U16(op_code) & QDF_NBUF_PKT_DNSOP_BITMAP) ==
+				QDF_NBUF_PKT_DNSOP_STANDARD_RESPONSE)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_tcp_syn() - check if skb data is a tcp syn
+ * @data: Pointer to network data buffer
+ *
+ * This api is for tcp syn packet.
+ *
+ * Return: true if packet is tcp syn packet.
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_tcp_syn(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_TCP_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_TCPOP_SYN)
+		return true;
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_tcp_syn_ack() - check if skb data is a tcp syn ack
+ * @data: Pointer to network data buffer
+ *
+ * This api is for tcp syn ack packet.
+ *
+ * Return: true if packet is tcp syn ack packet.
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_tcp_syn_ack(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_TCP_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_TCPOP_SYN_ACK)
+		return true;
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_tcp_ack() - check if skb data is a tcp ack
+ * @data: Pointer to network data buffer
+ *
+ * This api is for tcp ack packet.
+ *
+ * Return: true if packet is tcp ack packet.
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_tcp_ack(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_TCP_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_TCPOP_ACK)
+		return true;
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_get_tcp_src_port() - get tcp src port
+ * @data: Pointer to network data buffer
+ *
+ * This api is for tcp packet.
+ *
+ * Return: tcp source port value.
+ */
+uint16_t __qdf_nbuf_data_get_tcp_src_port(uint8_t *data)
+{
+	uint16_t src_port;
+
+	src_port = (uint16_t)(*(uint16_t *)(data +
+				QDF_NBUF_PKT_TCP_SRC_PORT_OFFSET));
+
+	return src_port;
+}
+
+/**
+ * __qdf_nbuf_data_get_tcp_dst_port() - get tcp dst port
+ * @data: Pointer to network data buffer
+ *
+ * This api is for tcp packet.
+ *
+ * Return: tcp destination port value.
+ */
+uint16_t __qdf_nbuf_data_get_tcp_dst_port(uint8_t *data)
+{
+	uint16_t tgt_port;
+
+	tgt_port = (uint16_t)(*(uint16_t *)(data +
+				QDF_NBUF_PKT_TCP_DST_PORT_OFFSET));
+
+	return tgt_port;
+}
+
+/**
+ * __qdf_nbuf_data_is_icmpv4_req() - check if skb data is a icmpv4 request
+ * @data: Pointer to network data buffer
+ *
+ * This api is for ipv4 req packet.
+ *
+ * Return: true if packet is icmpv4 request
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_icmpv4_req(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_ICMPv4_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_ICMPv4OP_REQ)
+		return true;
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_is_icmpv4_rsp() - check if skb data is a icmpv4 res
+ * @data: Pointer to network data buffer
+ *
+ * This api is for ipv4 res packet.
+ *
+ * Return: true if packet is icmpv4 response
+ *	   false otherwise.
+ */
+bool __qdf_nbuf_data_is_icmpv4_rsp(uint8_t *data)
+{
+	uint8_t op_code;
+
+	op_code = (uint8_t)(*(uint8_t *)(data +
+				QDF_NBUF_PKT_ICMPv4_OPCODE_OFFSET));
+
+	if (op_code == QDF_NBUF_PKT_ICMPv4OP_REPLY)
+		return true;
+	return false;
+}
+
+/**
+ * __qdf_nbuf_data_get_icmpv4_src_ip() - get icmpv4 src IP
+ * @data: Pointer to network data buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: icmpv4 packet source IP value.
+ */
+uint32_t __qdf_nbuf_get_icmpv4_src_ip(uint8_t *data)
+{
+	uint32_t src_ip;
+
+	src_ip = (uint32_t)(*(uint32_t *)(data +
+				QDF_NBUF_PKT_ICMPv4_SRC_IP_OFFSET));
+
+	return src_ip;
+}
+
+/**
+ * __qdf_nbuf_data_get_icmpv4_tgt_ip() - get icmpv4 target IP
+ * @data: Pointer to network data buffer
+ *
+ * This api is for ipv4 packet.
+ *
+ * Return: icmpv4 packet target IP value.
+ */
+uint32_t __qdf_nbuf_get_icmpv4_tgt_ip(uint8_t *data)
+{
+	uint32_t tgt_ip;
+
+	tgt_ip = (uint32_t)(*(uint32_t *)(data +
+				QDF_NBUF_PKT_ICMPv4_TGT_IP_OFFSET));
+
+	return tgt_ip;
+}
+
+
+/**
  * __qdf_nbuf_data_is_ipv6_pkt() - check if it is IPV6 packet.
  * @data: Pointer to IPV6 packet data buffer
  *
