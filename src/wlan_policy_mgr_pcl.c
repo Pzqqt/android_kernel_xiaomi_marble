@@ -182,7 +182,8 @@ void policy_mgr_reg_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 	if (pm_ctx->unsafe_channel_count)
 		qdf_mem_copy(pm_ctx->unsafe_channel_list,
 			avoid_freq_ind->chan_list.ch_list,
-			pm_ctx->unsafe_channel_count);
+			pm_ctx->unsafe_channel_count *
+			sizeof(pm_ctx->unsafe_channel_list[0]));
 	policy_mgr_debug("Channel list update, recieved %d avoided channels",
 		pm_ctx->unsafe_channel_count);
 }
