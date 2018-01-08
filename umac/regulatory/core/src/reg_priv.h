@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -74,6 +74,8 @@ struct wlan_regulatory_psoc_priv_obj {
 	struct unsafe_ch_list unsafe_chan_list;
 	struct ch_avoid_ind_type avoid_freq_list;
 	enum restart_beaconing_on_ch_avoid_rule restart_beaconing;
+	struct wlan_psoc_host_hal_reg_capabilities_ext
+			reg_cap[PSOC_MAX_PHY_REG_CAP];
 	qdf_spinlock_t cbk_list_lock;
 };
 

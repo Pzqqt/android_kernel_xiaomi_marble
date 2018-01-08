@@ -2201,8 +2201,8 @@ static void reg_init_pdev_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
 }
 
 
-static void reg_compute_pdev_current_chan_list(struct wlan_regulatory_pdev_priv_obj
-					       *pdev_priv_obj)
+static void reg_compute_pdev_current_chan_list(
+			struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj)
 {
 	qdf_mem_copy(pdev_priv_obj->cur_chan_list,
 		     pdev_priv_obj->mas_chan_list,
@@ -3027,7 +3027,7 @@ QDF_STATUS wlan_regulatory_pdev_obj_created_notification(
 		psoc_priv_obj->indoor_chan_enabled;
 	pdev_priv_obj->en_chan_144 = true;
 
-	reg_cap_ptr = parent_psoc->ext_service_param.reg_cap;
+	reg_cap_ptr = psoc_priv_obj->reg_cap;
 
 	for (cnt = 0; cnt < PSOC_MAX_PHY_REG_CAP; cnt++) {
 		if (reg_cap_ptr == NULL) {
@@ -3775,9 +3775,9 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 		start_ch_idx = INVALID_CHANNEL;
 		end_ch_idx = INVALID_CHANNEL;
 		start_channel = reg_freq_to_chan(pdev,
-			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq);
+				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq);
 		end_channel = reg_freq_to_chan(pdev,
-			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq);
+				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq);
 		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d",
 			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq,
 			start_channel,
@@ -3792,19 +3792,19 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 
 		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
 			ch_loop++) {
-			if (REG_CH_TO_FREQ(ch_loop) >= psoc_priv_obj->avoid_freq_list.
-				avoid_freq_range[i].start_freq) {
+			if (REG_CH_TO_FREQ(ch_loop) >=
+				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq) {
 				start_ch_idx = ch_loop;
 				break;
 			}
 		}
 		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
 			ch_loop++) {
-			if (REG_CH_TO_FREQ(ch_loop) >= psoc_priv_obj->avoid_freq_list.
-				avoid_freq_range[i].end_freq) {
+			if (REG_CH_TO_FREQ(ch_loop) >=
+				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq) {
 				end_ch_idx = ch_loop;
-				if (REG_CH_TO_FREQ(ch_loop) > psoc_priv_obj->avoid_freq_list.
-					avoid_freq_range[i].end_freq)
+				if (REG_CH_TO_FREQ(ch_loop) >
+					psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq)
 					end_ch_idx--;
 				break;
 			}
@@ -4120,3 +4120,45 @@ bool reg_get_en_chan_144(struct wlan_objmgr_pdev *pdev)
 
 	return pdev_priv_obj->en_chan_144;
 }
+
+struct wlan_psoc_host_hal_reg_capabilities_ext *reg_get_hal_reg_cap(
+						struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return NULL;
+	}
+
+	return soc_reg->reg_cap;
+}
+
+QDF_STATUS reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+		struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap,
+		uint16_t phy_cnt)
+{
+	struct wlan_regulatory_psoc_priv_obj *soc_reg;
+
+	soc_reg = reg_get_psoc_obj(psoc);
+
+	if (!IS_VALID_PSOC_REG_OBJ(soc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (phy_cnt > PSOC_MAX_PHY_REG_CAP) {
+		reg_err("phy cnt:%d is more than %d", phy_cnt,
+						PSOC_MAX_PHY_REG_CAP);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	qdf_mem_copy(soc_reg->reg_cap, reg_cap,
+		phy_cnt *
+			sizeof(struct wlan_psoc_host_hal_reg_capabilities_ext));
+
+	return QDF_STATUS_SUCCESS;
+}
+

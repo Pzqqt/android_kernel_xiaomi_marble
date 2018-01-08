@@ -254,4 +254,25 @@ QDF_STATUS ucfg_reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev);
  * Return: QDF_STATUS
  */
 QDF_STATUS ucfg_reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * ucfg_reg_get_hal_reg_cap() - return hal reg cap
+ * @psoc: psoc ptr
+ *
+ * Return: ptr to  wlan_psoc_host_hal_reg_capabilities_ext
+ */
+struct wlan_psoc_host_hal_reg_capabilities_ext *ucfg_reg_get_hal_reg_cap(
+				struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_reg_set_hal_reg_cap() - update hal reg cap
+ * @psoc: psoc ptr
+ * @reg_cap: Regulatory cap array
+ * @phy_cnt: Number of phy
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+			struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap,
+			uint16_t phy_cnt);
 #endif

@@ -24,6 +24,7 @@
 
 #include <wlan_reg_ucfg_api.h>
 #include "../../core/src/reg_services.h"
+#include <qdf_module.h>
 
 QDF_STATUS ucfg_reg_register_event_handler(uint8_t vdev_id, reg_event_cb cb,
 		void *arg)
@@ -230,3 +231,19 @@ QDF_STATUS ucfg_reg_11d_vdev_created_update(struct wlan_objmgr_vdev *vdev)
 {
 	return reg_11d_vdev_created_update(vdev);
 }
+
+struct wlan_psoc_host_hal_reg_capabilities_ext *ucfg_reg_get_hal_reg_cap(
+				struct wlan_objmgr_psoc *psoc)
+{
+	return reg_get_hal_reg_cap(psoc);
+}
+qdf_export_symbol(ucfg_reg_get_hal_reg_cap);
+
+QDF_STATUS ucfg_reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+		struct wlan_psoc_host_hal_reg_capabilities_ext *hal_reg_cap,
+		uint16_t phy_cnt)
+
+{
+	return reg_set_hal_reg_cap(psoc, hal_reg_cap, phy_cnt);
+}
+qdf_export_symbol(ucfg_reg_set_hal_reg_cap);

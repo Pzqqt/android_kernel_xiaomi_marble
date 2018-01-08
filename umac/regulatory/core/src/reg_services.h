@@ -435,4 +435,26 @@ QDF_STATUS reg_process_ch_avoid_event(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS reg_send_scheduler_msg_sb(struct wlan_objmgr_psoc *psoc,
 		struct wlan_objmgr_pdev *pdev);
+
+/**
+ * reg_get_hal_reg_cap() - Get HAL REG capabilities
+ * @psoc: psoc for country information
+ *
+ * Return: hal reg cap pointer
+ */
+struct wlan_psoc_host_hal_reg_capabilities_ext *reg_get_hal_reg_cap(
+						struct wlan_objmgr_psoc *psoc);
+
+/**
+ * reg_set_hal_reg_cap() - Set HAL REG capabilities
+ * @psoc: psoc for country information
+ * @reg_cap: Regulatory caps pointer
+ * @phy_cnt: number of phy
+ *
+ * Return: hal reg cap pointer
+ */
+QDF_STATUS reg_set_hal_reg_cap(struct wlan_objmgr_psoc *psoc,
+		struct wlan_psoc_host_hal_reg_capabilities_ext *reg_cap,
+		uint16_t phy_cnt);
+
 #endif
