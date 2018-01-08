@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -187,5 +187,4 @@ int adm_programable_channel_mixer(int port_id, int copp_idx, int session_id,
 			int channel_index);
 void msm_dts_srs_acquire_lock(void);
 void msm_dts_srs_release_lock(void);
-void adm_set_lsm_port_id(int port_id);
 #endif /* __Q6_ADM_V2_H__ */
