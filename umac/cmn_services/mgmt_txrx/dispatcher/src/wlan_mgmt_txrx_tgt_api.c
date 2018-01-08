@@ -1014,7 +1014,7 @@ no_registered_cb:
 	 * decrementing the peer ref count that was incremented while
 	 * accessing peer in wlan_mgmt_txrx_mgmt_frame_tx
 	 */
-	wlan_objmgr_peer_release_ref(mgmt_desc->peer, WLAN_MGMT_SB_ID);
+	wlan_objmgr_peer_release_ref(mgmt_desc->peer, WLAN_MGMT_NB_ID);
 	wlan_mgmt_txrx_desc_put(mgmt_txrx_pdev_ctx, desc_id);
 	return QDF_STATUS_SUCCESS;
 }

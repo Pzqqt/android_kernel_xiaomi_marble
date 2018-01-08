@@ -376,12 +376,12 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wlan_objmgr_peer_get_ref(peer, WLAN_MGMT_SB_ID);
+	wlan_objmgr_peer_get_ref(peer, WLAN_MGMT_NB_ID);
 
 	vdev = wlan_peer_get_vdev(peer);
 	if (!vdev) {
 		mgmt_txrx_err("vdev unavailable for peer %pK", peer);
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -389,7 +389,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	if (!psoc) {
 		mgmt_txrx_err("psoc unavailable for peer %pK vdev %pK",
 				peer, vdev);
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -407,13 +407,13 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	if (!txrx_ctx) {
 		mgmt_txrx_err("No txrx context for peer %pK pdev %pK",
 				peer, pdev);
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	desc = wlan_mgmt_txrx_desc_get(txrx_ctx);
 	if (!desc) {
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -428,7 +428,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 		mgmt_txrx_err(
 				"mgmt txrx txop to send mgmt frame is NULL for psoc: %pK",
 				psoc);
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		desc->nbuf = NULL;
 		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_FAILURE;
@@ -438,7 +438,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 			vdev, buf, desc->desc_id, mgmt_tx_params)) {
 		mgmt_txrx_err("Mgmt send fail for peer %pK psoc %pK pdev: %pK",
 				peer, psoc, pdev);
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		desc->nbuf = NULL;
 		wlan_mgmt_txrx_desc_put(txrx_ctx, desc->desc_id);
 		return QDF_STATUS_E_FAILURE;
