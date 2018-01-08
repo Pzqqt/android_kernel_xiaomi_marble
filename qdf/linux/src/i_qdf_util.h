@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,9 +71,18 @@ typedef wait_queue_head_t __qdf_wait_queue_head_t;
 #define __qdf_wait_queue_interruptible(wait_queue, condition) \
 		wait_event_interruptible(wait_queue, condition)
 
+#define __qdf_wait_queue_timeout( \
+			wait_queue, condition, timeout) \
+		wait_event_timeout(wait_queue, condition,\
+			 timeout)
+
+
 #define __qdf_init_waitqueue_head(_q) init_waitqueue_head(_q)
 
 #define __qdf_wake_up_interruptible(_q) wake_up_interruptible(_q)
+
+#define __qdf_wake_up(_q) wake_up(_q)
+
 
 #define __qdf_wake_up_completion(_q) wake_up_completion(_q)
 
