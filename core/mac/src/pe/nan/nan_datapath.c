@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -942,13 +942,24 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 		pe_debug("Invalid add_sta_rsp");
 		return QDF_STATUS_E_INVAL;
 	}
+
+	if (!psoc) {
+		pe_debug("Invalid psoc");
+		return QDF_STATUS_E_INVAL;
+	}
+
 	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
 						    add_sta_rsp->smesessionId,
 						    WLAN_NAN_ID);
+	if (!vdev) {
+		pe_debug("Invalid vdev");
+		return QDF_STATUS_E_INVAL;
+	}
 
 	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
 	if (!new_peer_ind) {
 		pe_debug("Failed to allocate memory");
+		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -959,6 +970,7 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 	new_peer_ind->sta_id = add_sta_rsp->staIdx;
 
 	ucfg_nan_event_handler(psoc, vdev, NDP_NEW_PEER, new_peer_ind);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 	return QDF_STATUS_SUCCESS;
 }
 #endif
