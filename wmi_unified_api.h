@@ -39,6 +39,7 @@
 #endif
 #include "htc_api.h"
 #include "wmi_unified_param.h"
+#include "service_ready_param.h"
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_mgmt_txrx_utils_api.h"
 #ifdef WLAN_PMO_ENABLE
