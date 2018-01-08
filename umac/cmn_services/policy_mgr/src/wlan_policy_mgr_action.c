@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -432,7 +432,7 @@ QDF_STATUS policy_mgr_next_actions(struct wlan_objmgr_psoc *psoc,
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct policy_mgr_hw_mode_params hw_mode;
-	struct dbs_nss nss_dbs;
+	struct dbs_nss nss_dbs = {0};
 
 	if (policy_mgr_is_hw_dbs_capable(psoc) == false) {
 		policy_mgr_err("driver isn't dbs capable, no further action needed");
