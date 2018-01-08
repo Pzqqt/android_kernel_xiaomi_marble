@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -160,8 +160,6 @@ typedef struct {
  * @bc: hal bus context
  * @device: generic device
  * @event_queue: instance to wait queue
- * @wmi_timeout: init timeout
- * @wmi_timeout_unintr: init timeout (uninterrupted wait)
  * @is_device_asleep: keep device status, sleep or awakei
  * @acfg_event_list: event list
  * @acfg_event_queue_lock: queue lock
@@ -185,8 +183,6 @@ struct _NIC_DEV {
 #ifdef ATH_PERF_PWR_OFFLOAD
 	struct device *device;
 	wait_queue_head_t event_queue;
-	unsigned int wmi_timeout;
-	unsigned int wmi_timeout_unintr;
 #endif /* PERF_PWR_OFFLOAD */
 #if OS_SUPPORT_ASYNC_Q
 	os_mesg_queue_t async_q;
