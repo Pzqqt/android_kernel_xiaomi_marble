@@ -2079,6 +2079,9 @@ QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
+	if (sapctx->sessionId >= SAP_MAX_NUM_SESSION)
+		return QDF_STATUS_E_FAILURE;
+
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].sessionID =
 		CSR_SESSION_ID_INVALID;
 	mac_ctx->sap.sapCtxList[sapctx->sessionId].pSapContext = NULL;
