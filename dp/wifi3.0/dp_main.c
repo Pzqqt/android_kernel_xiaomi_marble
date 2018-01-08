@@ -3683,6 +3683,11 @@ void dp_peer_unref_delete(void *peer_handle)
 		} else {
 			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		}
+
+		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
+			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
+					vdev->vdev_id, peer->mac_addr.raw);
+		}
 #ifdef notyet
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
@@ -3695,11 +3700,6 @@ void dp_peer_unref_delete(void *peer_handle)
 free_peer:
 		qdf_mem_free(peer);
 #endif
-		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
-			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
-					vdev->vdev_id, peer->mac_addr.raw);
-		}
-
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 	}
