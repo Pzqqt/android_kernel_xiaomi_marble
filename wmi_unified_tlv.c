@@ -21062,6 +21062,10 @@ static QDF_STATUS send_btm_config_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_btm_config_fixed_param));
 	cmd->vdev_id = params->vdev_id;
 	cmd->flags = params->btm_offload_config;
+	cmd->max_attempt_cnt = params->btm_max_attempt_cnt;
+	cmd->solicited_timeout_ms = params->btm_solicited_timeout;
+	cmd->stick_time_seconds = params->btm_sticky_time;
+
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 	    WMI_ROAM_BTM_CONFIG_CMDID)) {
 		WMI_LOGE("%s: failed to send WMI_ROAM_BTM_CONFIG_CMDID",
