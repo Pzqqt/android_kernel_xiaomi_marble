@@ -39,7 +39,6 @@
 #include <wmi_unified.h>
 #endif
 #include "qdf_atomic.h"
-#include "wlan_objmgr_psoc_service_ready_api.h"
 
 #ifdef CONVERGED_P2P_ENABLE
 #include <wlan_p2p_public_struct.h>
