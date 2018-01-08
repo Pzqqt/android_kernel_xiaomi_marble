@@ -520,6 +520,7 @@ struct wlan_lmac_if_reg_tx_ops {
  * @dfs_reg_ev_handler:                 Register dfs event handler.
  * @dfs_process_emulate_bang_radar_cmd: Process emulate bang radar test command.
  * @dfs_is_pdev_5ghz:                   Check if the given pdev is 5GHz.
+ * @dfs_set_phyerr_filter_offload:      Config phyerr filter offload.
  */
 
 struct wlan_lmac_if_dfs_tx_ops {
@@ -554,6 +555,9 @@ struct wlan_lmac_if_dfs_tx_ops {
 			struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
 	QDF_STATUS (*dfs_is_pdev_5ghz)(struct wlan_objmgr_pdev *pdev,
 			bool *is_5ghz);
+	QDF_STATUS (*dfs_set_phyerr_filter_offload)(
+			struct wlan_objmgr_pdev *pdev,
+			bool dfs_phyerr_filter_offload);
 };
 
 /**
@@ -963,6 +967,8 @@ struct wlan_lmac_if_nan_rx_ops {
  * @dfs_process_radar_ind:            Process radar found indication.
  * @dfs_dfs_cac_complete_ind:         Process cac complete indication.
  * @dfs_stop:                         Clear dfs timers.
+ * @dfs_process_phyerr_filter_offload:Process radar event.
+ * @dfs_is_phyerr_filter_offload:     Check whether phyerr filter is offload.
  */
 struct wlan_lmac_if_dfs_rx_ops {
 	QDF_STATUS (*dfs_get_radars)(struct wlan_objmgr_pdev *pdev);
@@ -1019,6 +1025,12 @@ struct wlan_lmac_if_dfs_rx_ops {
 			uint32_t vdev_id);
 #endif
 	QDF_STATUS (*dfs_stop)(struct wlan_objmgr_pdev *pdev);
+	QDF_STATUS (*dfs_process_phyerr_filter_offload)(
+			struct wlan_objmgr_pdev *pdev,
+			struct radar_event_info *wlan_radar_info);
+	QDF_STATUS (*dfs_is_phyerr_filter_offload)(
+			struct wlan_objmgr_pdev *pdev,
+			bool *is_phyerr_filter_offload);
 };
 
 struct wlan_lmac_if_mlme_rx_ops {

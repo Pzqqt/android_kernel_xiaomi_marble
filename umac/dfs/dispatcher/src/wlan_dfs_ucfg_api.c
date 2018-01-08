@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -147,3 +147,31 @@ QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(ucfg_dfs_get_precac_enable);
+
+#ifdef QCA_MCL_DFS_SUPPORT
+QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
+		struct dfs_user_config *req)
+{
+	struct dfs_soc_priv_obj *soc_obj;
+
+	if (!psoc || !req) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"psoc: 0x%pK, req: 0x%pK", psoc, req);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							WLAN_UMAC_COMP_DFS);
+	if (!soc_obj) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to get dfs psoc component");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_obj->dfs_is_phyerr_filter_offload =
+			req->dfs_is_phyerr_filter_offload;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(ucfg_dfs_update_config);
+#endif

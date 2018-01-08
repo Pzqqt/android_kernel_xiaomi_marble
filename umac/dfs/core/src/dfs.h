@@ -1012,6 +1012,23 @@ struct wlan_dfs {
 };
 
 /**
+ * struct dfs_soc_priv_obj - dfs private data
+ * @psoc: pointer to PSOC object information
+ * @pdev: pointer to PDEV object information
+ * @dfs_is_phyerr_filter_offload: For some chip like Rome indicates too many
+ *                                phyerr packets in a short time, which causes
+ *                                OS hang. If this feild is configured as true,
+ *                                FW will do the pre-check, filter out some
+ *                                kinds of invalid phyerrors and indicate
+ *                                radar detection related information to host.
+ */
+struct dfs_soc_priv_obj {
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_objmgr_pdev *pdev;
+	bool dfs_is_phyerr_filter_offload;
+};
+
+/**
  * enum DFS debug - This should match the table from if_ath.c.
  * @WLAN_DEBUG_DFS:             Minimal DFS debug.
  * @WLAN_DEBUG_DFS1:            Normal DFS debug.
@@ -1590,6 +1607,18 @@ void dfs_process_phyerr(struct wlan_dfs *dfs,
 		uint32_t r_rs_tstamp,
 		uint64_t r_fulltsf);
 
+#ifdef QCA_MCL_DFS_SUPPORT
+/**
+ * dfs_process_phyerr_filter_offload() - Process radar event.
+ * @dfs: Pointer to wlan_dfs structure.
+ * @wlan_radar_event: Pointer to radar_event_info structure.
+ *
+ * Return: None
+ */
+void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
+		struct radar_event_info *wlan_radar_event);
+#endif
+
 /**
  * dfs_is_precac_timer_running() - Check whether precac timer is running.
  * @dfs: Pointer to wlan_dfs structure.
@@ -2118,4 +2147,12 @@ wlan_psoc_get_dfs_txops(struct wlan_objmgr_psoc *psoc);
  * @dfs: Pointer to wlan_dfs structure.
  */
 void dfs_nol_free_list(struct wlan_dfs *dfs);
+
+/**
+ * dfs_set_phyerr_filter_offload - config phyerr filter offload.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Return: None
+ */
+void dfs_set_phyerr_filter_offload(struct wlan_dfs *dfs);
 #endif  /* _DFS_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -109,6 +109,68 @@ QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 EXPORT_SYMBOL(tgt_dfs_process_phyerr);
+
+#ifdef QCA_MCL_DFS_SUPPORT
+QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
+		struct radar_event_info *wlan_radar_event)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
+		return  QDF_STATUS_E_FAILURE;
+	}
+	if (!dfs->dfs_is_offload_enabled)
+		dfs_process_phyerr_filter_offload(dfs, wlan_radar_event);
+	else
+		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
+				"Received a pulse from firmware even though the DFS is offloaded"
+			);
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(tgt_dfs_process_phyerr_filter_offload);
+
+QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
+		bool *is_phyerr_filter_offload)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct dfs_soc_priv_obj *soc_obj;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						WLAN_UMAC_COMP_DFS);
+	if (!soc_obj) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to get dfs psoc component");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	*is_phyerr_filter_offload = soc_obj->dfs_is_phyerr_filter_offload;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(tgt_dfs_is_phyerr_filter_offload);
+#else
+QDF_STATUS tgt_dfs_process_phyerr_filter_offload(
+		struct wlan_objmgr_pdev *pdev,
+		struct radar_event_info *wlan_radar_event)
+{
+	return QDF_STATUS_SUCCESS;
+}
+QDF_STATUS tgt_dfs_is_phyerr_filter_offload(
+		struct wlan_objmgr_pdev *pdev,
+		bool *is_phyerr_filter_offload)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 QDF_STATUS tgt_dfs_is_precac_timer_running(struct wlan_objmgr_pdev *pdev,
 		bool *is_precac_timer_running)
@@ -313,3 +375,36 @@ QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_E_FAILURE;
 }
 EXPORT_SYMBOL(tgt_dfs_process_emulate_bang_radar_cmd);
+
+#ifdef QCA_MCL_DFS_SUPPORT
+QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_dfs_tx_ops *dfs_tx_ops;
+	struct dfs_soc_priv_obj *soc_obj;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	if (!psoc) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "psoc is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+							WLAN_UMAC_COMP_DFS);
+	if (!soc_obj) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to get dfs psoc component");
+		return QDF_STATUS_E_FAILURE;
+	}
+	dfs_tx_ops = wlan_psoc_get_dfs_txops(psoc);
+	if (dfs_tx_ops && dfs_tx_ops->dfs_set_phyerr_filter_offload)
+		return dfs_tx_ops->dfs_set_phyerr_filter_offload(pdev,
+				soc_obj->dfs_is_phyerr_filter_offload);
+	else
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+				"dfs_tx_ops=%pK", dfs_tx_ops);
+
+	return QDF_STATUS_E_FAILURE;
+}
+EXPORT_SYMBOL(tgt_dfs_set_phyerr_filter_offload);
+#endif

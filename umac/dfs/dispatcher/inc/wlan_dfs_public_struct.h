@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -63,5 +63,39 @@ struct dfs_acs_info {
 	uint8_t acs_mode;
 	uint8_t start_ch;
 	uint8_t end_ch;
+};
+
+/**
+ * struct radar_event_info - radar event info.
+ * @pulse_is_chirp: flag to indicate if this pulse is chirp.
+ * @pulse_center_freq: the center frequency of the radar pulse detected, KHz.
+ * @pulse_duration: the duaration of the pulse in us.
+ * @rssi: RSSI recorded in the ppdu.
+ * @pulse_detect_ts: timestamp indicates the time when DFS pulse is detected.
+ * @upload_fullts_low: low 32 tsf timestamp get from MAC tsf timer indicates
+ *  the time that the radar event uploading to host.
+ * @upload_fullts_high: high 32 tsf timestamp get from MAC tsf timer indicates
+ *  the time that the radar event uploading to host.
+ * @peak_sidx: index of peak magnitude bin (signed)
+ * @pdev_id: pdev_id for identifying the MAC.
+ */
+struct radar_event_info {
+	uint8_t  pulse_is_chirp;
+	uint32_t pulse_center_freq;
+	uint32_t pulse_duration;
+	uint8_t  rssi;
+	uint32_t pulse_detect_ts;
+	uint32_t upload_fullts_low;
+	uint32_t upload_fullts_high;
+	int32_t  peak_sidx;
+	uint8_t  pdev_id;
+};
+
+/**
+ * struct dfs_user_config - user configuration required for for DFS.
+ * @dfs_is_phyerr_filter_offload: flag to indicate DFS phyerr filtering offload.
+ */
+struct dfs_user_config {
+	bool dfs_is_phyerr_filter_offload;
 };
 #endif

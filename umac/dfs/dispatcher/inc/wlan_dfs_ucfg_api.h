@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -232,4 +232,15 @@ QDF_STATUS ucfg_dfs_set_precac_enable(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS ucfg_dfs_get_precac_enable(struct wlan_objmgr_pdev *pdev, int *buff);
 
+#ifdef QCA_MCL_DFS_SUPPORT
+/**
+ * ucfg_dfs_update_config() - Update DFS user config.
+ * @psoc: Pointer to psoc.
+ * @req: DFS user config.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_dfs_update_config(struct wlan_objmgr_psoc *psoc,
+		struct dfs_user_config *req);
+#endif
 #endif /* _WLAN_DFS_UCFG_API_H_ */

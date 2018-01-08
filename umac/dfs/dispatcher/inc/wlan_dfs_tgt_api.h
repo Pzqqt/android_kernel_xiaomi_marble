@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -115,6 +115,28 @@ QDF_STATUS tgt_dfs_process_phyerr(struct wlan_objmgr_pdev *pdev,
 	uint8_t r_ext_rssi,
 	uint32_t r_rs_tstamp,
 	uint64_t r_fulltsf);
+
+/**
+ * tgt_dfs_process_phyerr_filter_offload() - Process radar event.
+ * Wrapper function for dfs_process_phyerr_filter_offload(). This function
+ * called from outside of DFS component.
+ * @pdev: Pointer to DFS pdev object.
+ * @wlan_radar_event: pointer to radar_event_info.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
+	struct radar_event_info *wlan_radar_event);
+
+/**
+ * tgt_dfs_is_phyerr_filter_offload() - Is phyerr filter offload.
+ * @pdev: Pointer to DFS pdev object.
+ * @is_phyerr_filter_offload: Pointer to is_phyerr_filter_offload.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
+	bool *is_phyerr_filter_offload);
 
 /**
  * tgt_dfs_destroy_object() - Destroys the DFS object.
@@ -241,4 +263,13 @@ QDF_STATUS tgt_dfs_stop(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS tgt_dfs_process_emulate_bang_radar_cmd(struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test);
 
+#ifdef QCA_MCL_DFS_SUPPORT
+/**
+ * tgt_dfs_set_phyerr_filter_offload() - config phyerr filter offload
+ * @pdev: Pointer to DFS pdev object.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS tgt_dfs_set_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev);
+#endif
 #endif /* _WLAN_DFS_TGT_API_H_ */

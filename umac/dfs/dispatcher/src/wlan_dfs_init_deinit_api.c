@@ -94,49 +94,192 @@ void register_dfs_callbacks(void)
 }
 #endif
 
+/**
+ * dfs_psoc_obj_create_notification() - dfs psoc create notification handler
+ * @psoc: psoc object
+ * @arg_list: Argument list
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dfs_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
+					     void *arg_list)
+{
+	QDF_STATUS status;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = qdf_mem_malloc(sizeof(*dfs_soc_obj));
+	if (!dfs_soc_obj) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to allocate memory for dfs object");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	dfs_soc_obj->psoc = psoc;
+
+	status = wlan_objmgr_psoc_component_obj_attach(psoc,
+						       WLAN_UMAC_COMP_DFS,
+						       (void *)dfs_soc_obj,
+						       QDF_STATUS_SUCCESS);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to attach psoc dfs component");
+		qdf_mem_free(dfs_soc_obj);
+		return status;
+	}
+
+	dfs_debug(NULL, WLAN_DEBUG_DFS1,
+		"DFS obj attach to psoc successfully");
+
+	return status;
+}
+
+/**
+ * dfs_psoc_obj_destroy_notification() - dfs psoc destroy notification handler
+ * @psoc: psoc object
+ * @arg_list: Argument list
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS dfs_psoc_obj_destroy_notification(struct wlan_objmgr_psoc *psoc,
+					      void *arg_list)
+{
+	QDF_STATUS status;
+	struct dfs_soc_priv_obj *dfs_soc_obj;
+
+	dfs_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						WLAN_UMAC_COMP_DFS);
+	if (!dfs_soc_obj) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to get dfs obj in psoc");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = wlan_objmgr_psoc_component_obj_detach(psoc,
+						       WLAN_UMAC_COMP_DFS,
+						       dfs_soc_obj);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to detach psoc dfs component");
+
+	qdf_mem_free(dfs_soc_obj);
+
+	return status;
+}
+
 QDF_STATUS dfs_init(void)
 {
-	QDF_STATUS res;
+	QDF_STATUS status;
+
+	status = wlan_objmgr_register_psoc_create_handler(WLAN_UMAC_COMP_DFS,
+			dfs_psoc_obj_create_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to register psoc create handler for dfs");
+		goto err_psoc_create;
+	}
+
+	status = wlan_objmgr_register_psoc_destroy_handler(WLAN_UMAC_COMP_DFS,
+			dfs_psoc_obj_destroy_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to register psoc delete handler for dfs");
+		goto err_psoc_delete;
+	}
 
 	register_dfs_callbacks();
 
-	if (wlan_objmgr_register_pdev_create_handler(WLAN_UMAC_COMP_DFS,
-				wlan_dfs_pdev_obj_create_notification,
-				NULL)
-			!= QDF_STATUS_SUCCESS) {
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (wlan_objmgr_register_pdev_destroy_handler(WLAN_UMAC_COMP_DFS,
-				wlan_dfs_pdev_obj_destroy_notification,
-				NULL)
-			!= QDF_STATUS_SUCCESS) {
-		return QDF_STATUS_E_FAILURE;
+	status = wlan_objmgr_register_pdev_create_handler(WLAN_UMAC_COMP_DFS,
+			wlan_dfs_pdev_obj_create_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to register pdev create handler for dfs");
+		goto err_pdev_create;
 	}
 
-	res = qdf_print_set_category_verbose(qdf_get_pidx(),
+	status = wlan_objmgr_register_pdev_destroy_handler(WLAN_UMAC_COMP_DFS,
+			wlan_dfs_pdev_obj_destroy_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to register pdev delete handler for dfs");
+		goto err_pdev_delete;
+	}
+
+	status = qdf_print_set_category_verbose(qdf_get_pidx(),
 			QDF_MODULE_ID_DFS, QDF_TRACE_LEVEL_INFO, true);
-	if (res) {
-		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,  "Failed to set verbose for category");
-		return QDF_STATUS_E_FAILURE;
+
+	if (QDF_IS_STATUS_ERROR(status)) {
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to set verbose for category");
+		goto err_category_verbose;
 	}
 
 	return QDF_STATUS_SUCCESS;
+
+err_category_verbose:
+	wlan_objmgr_unregister_pdev_destroy_handler(WLAN_UMAC_COMP_DFS,
+			wlan_dfs_pdev_obj_destroy_notification,
+			NULL);
+err_pdev_delete:
+	wlan_objmgr_unregister_pdev_create_handler(WLAN_UMAC_COMP_DFS,
+			wlan_dfs_pdev_obj_create_notification,
+			NULL);
+err_pdev_create:
+	wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_DFS,
+			dfs_psoc_obj_destroy_notification,
+			NULL);
+err_psoc_delete:
+	wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_DFS,
+			dfs_psoc_obj_create_notification,
+			NULL);
+err_psoc_create:
+	return status;
 }
 
 QDF_STATUS dfs_deinit(void)
 {
-	if (wlan_objmgr_unregister_pdev_create_handler(WLAN_UMAC_COMP_DFS,
-				wlan_dfs_pdev_obj_create_notification,
-				NULL)
-			!= QDF_STATUS_SUCCESS) {
-		return QDF_STATUS_E_FAILURE;
-	}
-	if (wlan_objmgr_unregister_pdev_destroy_handler(WLAN_UMAC_COMP_DFS,
-				wlan_dfs_pdev_obj_destroy_notification,
-				NULL)
-			!= QDF_STATUS_SUCCESS) {
-		return QDF_STATUS_E_FAILURE;
-	}
+	QDF_STATUS status;
+
+	status = wlan_objmgr_unregister_psoc_create_handler(WLAN_UMAC_COMP_DFS,
+			dfs_psoc_obj_create_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to deregister dfs psoc obj create");
+
+	status = wlan_objmgr_unregister_psoc_destroy_handler(WLAN_UMAC_COMP_DFS,
+			dfs_psoc_obj_destroy_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to deregister dfs psoc obj destroy");
+
+	status = wlan_objmgr_unregister_pdev_create_handler(WLAN_UMAC_COMP_DFS,
+			wlan_dfs_pdev_obj_create_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to deregister dfs pdev obj create");
+
+	status = wlan_objmgr_unregister_pdev_destroy_handler(WLAN_UMAC_COMP_DFS,
+			wlan_dfs_pdev_obj_destroy_notification,
+			NULL);
+
+	if (QDF_IS_STATUS_ERROR(status))
+		dfs_err(NULL, WLAN_DEBUG_DFS_ALWAYS,
+			"Failed to deregister dfs pdev obj destroy");
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -845,3 +845,139 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 #undef PRI_CH_RADAR_FOUND
 #undef EXT_CH_RADAR_EARLY_FOUND
 }
+
+#ifdef QCA_MCL_DFS_SUPPORT
+void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
+	struct radar_event_info *wlan_radar_event)
+{
+	struct dfs_event *event;
+	int empty;
+	int do_check_chirp = 0;
+	int is_hw_chirp = 0;
+	int is_sw_chirp = 0;
+	int is_pri = 0;
+
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
+		return;
+	}
+
+	if (dfs->dfs_ignore_dfs) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS1, "ignoring dfs");
+		return;
+	}
+
+	if (!(dfs->dfs_proc_phyerr & DFS_RADAR_EN)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"DFS_RADAR_EN not set in dfs->dfs_proc_phyerr");
+		return;
+	}
+
+	if (WLAN_IS_CHAN_RADAR(dfs->dfs_curchan)) {
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"Radar already found in the channel, do not queue radar data");
+		return;
+	}
+
+	dfs->wlan_dfs_stats.total_phy_errors++;
+	if (dfs->dfs_caps.wlan_chip_is_bb_tlv) {
+		do_check_chirp = 1;
+		is_pri = 1;
+		is_hw_chirp = wlan_radar_event->pulse_is_chirp;
+
+		if ((uint32_t) dfs->dfs_phyerr_freq_min >
+		    wlan_radar_event->pulse_center_freq) {
+			dfs->dfs_phyerr_freq_min =
+				(int)wlan_radar_event->pulse_center_freq;
+		}
+
+		if (dfs->dfs_phyerr_freq_max <
+		    (int)wlan_radar_event->pulse_center_freq) {
+			dfs->dfs_phyerr_freq_max =
+				(int)wlan_radar_event->pulse_center_freq;
+		}
+	}
+
+	/*
+	 * Now, add the parsed, checked and filtered
+	 * radar phyerror event radar pulse event list.
+	 * This event will then be processed by
+	 * dfs_radar_processevent() to see if the pattern
+	 * of pulses in radar pulse list match any radar
+	 * singnature in the current regulatory domain.
+	 */
+
+	WLAN_DFSEVENTQ_LOCK(dfs);
+	empty = STAILQ_EMPTY(&(dfs->dfs_eventq));
+	WLAN_DFSEVENTQ_UNLOCK(dfs);
+	if (empty)
+		return;
+	/*
+	 * Add the event to the list, if there's space.
+	 */
+	WLAN_DFSEVENTQ_LOCK(dfs);
+	event = STAILQ_FIRST(&(dfs->dfs_eventq));
+	if (!event) {
+		WLAN_DFSEVENTQ_UNLOCK(dfs);
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,
+			"%s: No more space left for queuing DFS Phyerror events",
+			__func__);
+		return;
+	}
+	STAILQ_REMOVE_HEAD(&(dfs->dfs_eventq), re_list);
+	WLAN_DFSEVENTQ_UNLOCK(dfs);
+	dfs->dfs_phyerr_queued_count++;
+	dfs->dfs_phyerr_w53_counter++;
+	event->re_dur = (uint8_t) wlan_radar_event->pulse_duration;
+	event->re_rssi = wlan_radar_event->rssi;
+	event->re_ts = wlan_radar_event->pulse_detect_ts & DFS_TSMASK;
+	event->re_full_ts = (((uint64_t) wlan_radar_event->upload_fullts_high)
+				<< 32) | wlan_radar_event->upload_fullts_low;
+
+	/*
+	 * Index of peak magnitude
+	 */
+	event->re_sidx = wlan_radar_event->peak_sidx;
+	event->re_delta_diff = 0;
+	event->re_delta_peak = 0;
+	event->re_flags = 0;
+
+	/*
+	 * Handle chirp flags.
+	 */
+	if (do_check_chirp) {
+		event->re_flags |= DFS_EVENT_CHECKCHIRP;
+		if (is_hw_chirp)
+			event->re_flags |= DFS_EVENT_HW_CHIRP;
+		if (is_sw_chirp)
+			event->re_flags |= DFS_EVENT_SW_CHIRP;
+	}
+	/*
+	 * Correctly set which channel is being reported on
+	 */
+	if (is_pri) {
+		event->re_chanindex = (uint8_t) dfs->dfs_curchan_radindex;
+	} else {
+		if (dfs->dfs_extchan_radindex == -1)
+			dfs_debug(dfs, WLAN_DEBUG_DFS1,
+				"%s phyerr on ext channel", __func__);
+		event->re_chanindex = (uint8_t) dfs->dfs_extchan_radindex;
+		dfs_debug(dfs, WLAN_DEBUG_DFS1,
+			"%s:New extension channel event is added to queue",
+			 __func__);
+	}
+
+	WLAN_DFSQ_LOCK(dfs);
+
+	STAILQ_INSERT_TAIL(&(dfs->dfs_radarq), event, re_list);
+
+	empty = STAILQ_EMPTY(&dfs->dfs_radarq);
+
+	WLAN_DFSQ_UNLOCK(dfs);
+
+	if (!empty && !dfs->wlan_radar_tasksched) {
+		dfs->wlan_radar_tasksched = 1;
+		qdf_timer_mod(&dfs->wlan_dfs_task_timer, 0);
+	}
+}
+#endif
