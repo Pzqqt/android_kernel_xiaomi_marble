@@ -953,7 +953,12 @@ QDF_STATUS cds_enable(struct wlan_objmgr_psoc *psoc)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 		  "%s: CDS Start is successful!!", __func__);
 
-	dispatcher_psoc_enable(psoc);
+	qdf_status = dispatcher_psoc_enable(psoc);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
+			  "%s: dispatcher_psoc_enable failed", __func__);
+		goto err_soc_target_detach;
+	}
 
 	/* Trigger psoc enable for CLD components */
 	hdd_component_psoc_enable(psoc);
