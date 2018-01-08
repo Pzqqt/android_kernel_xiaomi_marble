@@ -25,6 +25,7 @@
 #include <target_if_spectral.h>
 #include <wlan_lmac_if_def.h>
 #include <wlan_osif_priv.h>
+#include <init_deinit_ucfg.h>
 #include <reg_services_public_struct.h>
 #ifdef CONFIG_WIN
 #include <wlan_mlme_dispatcher.h>
@@ -120,7 +121,7 @@ target_if_send_vdev_spectral_configure_cmd(struct target_if_spectral *spectral,
 	sparam.chn_mask = param->ss_chn_mask;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_configure_cmd_send(
-		GET_WMI_HDL_FROM_PDEV(pdev), &sparam);
+				GET_WMI_HDL_FROM_PDEV(pdev), &sparam);
 }
 
 /**
@@ -167,7 +168,7 @@ target_if_send_vdev_spectral_enable_cmd(struct target_if_spectral *spectral,
 	param.enabled = is_spectral_enabled;
 
 	return spectral->param_wmi_cmd_ops.wmi_spectral_enable_cmd_send(
-		GET_WMI_HDL_FROM_PDEV(pdev), &param);
+				GET_WMI_HDL_FROM_PDEV(pdev), &param);
 }
 
 /**
@@ -1965,21 +1966,18 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	struct target_if_spectral_ops *p_sops = NULL;
 	struct target_if_spectral *spectral = NULL;
 #ifdef CONFIG_WIN
-	struct ol_ath_softc_net80211 *scn = NULL;
+	uint32_t target_type;
+	uint32_t target_revision;
+	struct wlan_objmgr_psoc *psoc;
+	struct wlan_lmac_if_target_tx_ops *tx_ops;
 #endif
-	struct pdev_osif_priv *osif_priv = NULL;
 
-	osif_priv = wlan_pdev_get_ospriv(pdev);
-#ifdef CONFIG_WIN
-	scn = (struct ol_ath_softc_net80211 *)osif_priv->legacy_osif_priv;
-	if (!scn) {
-		qdf_print("%s: scn is NULL!\n", __func__);
+	if (!pdev) {
+		qdf_print("SPECTRAL: pdev is NULL!\n");
 		return NULL;
 	}
-#endif
-	spectral =
-	    (struct target_if_spectral *)
-	    qdf_mem_malloc(sizeof(struct target_if_spectral));
+	spectral = (struct target_if_spectral *)qdf_mem_malloc(
+			sizeof(struct target_if_spectral));
 	if (!spectral) {
 		qdf_print("SPECTRAL : Memory allocation failed\n");
 		return spectral;
@@ -1987,6 +1985,26 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	qdf_mem_zero(spectral, sizeof(struct target_if_spectral));
 	/* Store pdev in Spectral */
 	spectral->pdev_obj = pdev;
+
+#ifdef CONFIG_WIN
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	tx_ops = &psoc->soc_cb.tx_ops.target_tx_ops;
+
+	if (tx_ops->tgt_get_tgt_type) {
+		target_type = tx_ops->tgt_get_tgt_type(psoc);
+	} else {
+		qdf_mem_free(spectral);
+		return NULL;
+	}
+
+	if (tx_ops->tgt_get_tgt_revision) {
+		target_revision = tx_ops->tgt_get_tgt_revision(psoc);
+	} else {
+		qdf_mem_free(spectral);
+		return NULL;
+	}
+#endif
 
 	/* init the function ptr table */
 	target_if_spectral_init_dummy_function_table(spectral);
@@ -2020,8 +2038,8 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	/* Set the default values for spectral parameters */
 	target_if_spectral_init_param_defaults(spectral);
 #ifdef CONFIG_WIN
-	if ((scn->soc->target_type == TARGET_TYPE_QCA8074) || (
-		scn->soc->target_type == TARGET_TYPE_QCA6290)) {
+	if ((target_type == TARGET_TYPE_QCA8074) || (
+		target_type == TARGET_TYPE_QCA6290)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
 		spectral->tag_sscan_summary_exp =
@@ -2067,23 +2085,24 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->is_lb_edge_extrabins_format = false;
 		spectral->is_rb_edge_extrabins_format = false;
 #ifdef CONFIG_WIN
-		if (scn->soc->target_type == TARGET_TYPE_QCA9984 ||
-		    scn->soc->target_type == TARGET_TYPE_QCA9888) {
+
+		if (target_type == TARGET_TYPE_QCA9984 ||
+		    target_type == TARGET_TYPE_QCA9888) {
 			spectral->is_160_format = true;
 			spectral->is_lb_edge_extrabins_format = true;
 			spectral->is_rb_edge_extrabins_format = true;
-		} else if ((scn->soc->target_type == TARGET_TYPE_AR900B) &&
-			   (scn->soc->target_revision == AR900B_REV_2)) {
+		} else  if ((target_type == TARGET_TYPE_AR900B) &&
+			    (target_revision == AR900B_REV_2)) {
 			spectral->is_rb_edge_extrabins_format = true;
 		}
 
-		if (scn->soc->target_type == TARGET_TYPE_QCA9984 ||
-		    scn->soc->target_type == TARGET_TYPE_QCA9888)
+		if (target_type == TARGET_TYPE_QCA9984 ||
+		    target_type == TARGET_TYPE_QCA9888)
 			spectral->is_sec80_rssi_war_required = true;
 #else
-	spectral->is_160_format = true;
-	spectral->is_lb_edge_extrabins_format = true;
-	spectral->is_rb_edge_extrabins_format = true;
+		spectral->is_160_format = true;
+		spectral->is_lb_edge_extrabins_format = true;
+		spectral->is_rb_edge_extrabins_format = true;
 #endif
 	}
 
