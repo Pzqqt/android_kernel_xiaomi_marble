@@ -1763,6 +1763,42 @@ static bool dp_reo_remap_config(struct dp_soc *soc,
 #endif
 
 /*
+ * dp_reo_frag_dst_set() - configure reo register to set the
+ *                        fragment destination ring
+ * @soc : Datapath soc
+ * @frag_dst_ring : output parameter to set fragment destination ring
+ *
+ * Based on offload_radio below fragment destination rings is selected
+ * 0 - TCL
+ * 1 - SW1
+ * 2 - SW2
+ * 3 - SW3
+ * 4 - SW4
+ * 5 - Release
+ * 6 - FW
+ * 7 - alternate select
+ *
+ * return: void
+ */
+static void dp_reo_frag_dst_set(struct dp_soc *soc, uint8_t *frag_dst_ring)
+{
+	uint8_t offload_radio = wlan_cfg_get_dp_soc_nss_cfg(soc->wlan_cfg_ctx);
+
+	switch (offload_radio) {
+	case 0:
+		*frag_dst_ring = HAL_SRNG_REO_EXCEPTION;
+		break;
+	case 3:
+		*frag_dst_ring = HAL_SRNG_REO_ALTERNATE_SELECT;
+		break;
+	default:
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("dp_reo_frag_dst_set invalid offload radio config"));
+		break;
+	}
+}
+
+/*
  * dp_soc_cmn_setup() - Common SoC level initializion
  * @soc:		Datapath SOC handle
  *
@@ -1973,6 +2009,11 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		wlan_cfg_get_defrag_timeout_check(soc->wlan_cfg_ctx);
 
 out:
+	/*
+	 * set the fragment destination ring
+	 */
+	dp_reo_frag_dst_set(soc, &reo_params.frag_dst_ring);
+
 	hal_reo_setup(soc->hal_soc, &reo_params);
 
 	qdf_atomic_set(&soc->cmn_init_done, 1);

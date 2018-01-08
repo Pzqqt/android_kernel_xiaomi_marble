@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -231,7 +231,7 @@ void hal_reo_setup(void *hal_soc,
 	HAL_REG_WRITE(soc, HWIO_REO_R0_GENERAL_ENABLE_ADDR(
 		SEQ_WCSS_UMAC_REO_REG_OFFSET),
 		HAL_SM(HWIO_REO_R0_GENERAL_ENABLE,
-		FRAGMENT_DEST_RING, HAL_SRNG_REO_EXCEPTION) |
+		FRAGMENT_DEST_RING, reo_params->frag_dst_ring) |
 		HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, AGING_LIST_ENABLE, 1) |
 		HAL_SM(HWIO_REO_R0_GENERAL_ENABLE, AGING_FLUSH_ENABLE, 1));
 	/* Other ring enable bits and REO_ENABLE will be set by FW */

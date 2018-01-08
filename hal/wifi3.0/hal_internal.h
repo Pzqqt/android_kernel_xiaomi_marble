@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions are
@@ -182,6 +182,7 @@ enum hal_srng_ring_id {
 };
 
 #define HAL_SRNG_REO_EXCEPTION HAL_SRNG_REO2SW1
+#define HAL_SRNG_REO_ALTERNATE_SELECT 0x7
 
 #define HAL_MAX_LMACS 3
 #define HAL_MAX_RINGS_PER_LMAC (HAL_SRNG_LMAC1_ID_END - HAL_SRNG_LMAC1_ID_START)
