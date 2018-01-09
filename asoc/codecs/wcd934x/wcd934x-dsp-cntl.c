@@ -31,6 +31,7 @@
 #define WCD_PROCFS_ENTRY_MAX_LEN 16
 #define WCD_934X_RAMDUMP_START_ADDR 0x20100000
 #define WCD_934X_RAMDUMP_SIZE ((1024 * 1024) - 128)
+#define WCD_MISCDEV_CMD_MAX_LEN 11
 
 #define WCD_CNTL_MUTEX_LOCK(codec, lock)             \
 {                                                    \
@@ -75,6 +76,95 @@ static u8 mem_enable_values[] = {
 	0xFE, 0xFC, 0xF8, 0xF0,
 	0xE0, 0xC0, 0x80, 0x00,
 };
+
+#ifdef CONFIG_DEBUG_FS
+#define WCD_CNTL_SET_ERR_IRQ_FLAG(cntl)\
+	atomic_cmpxchg(&cntl->err_irq_flag, 0, 1)
+#define WCD_CNTL_CLR_ERR_IRQ_FLAG(cntl)\
+	atomic_set(&cntl->err_irq_flag, 0)
+
+static u16 wdsp_reg_for_debug_dump[] = {
+	WCD934X_CPE_SS_CPE_CTL,
+	WCD934X_CPE_SS_PWR_SYS_PSTATE_CTL_0,
+	WCD934X_CPE_SS_PWR_SYS_PSTATE_CTL_1,
+	WCD934X_CPE_SS_PWR_CPEFLL_CTL,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_DEEPSLP_0,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_DEEPSLP_1,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_DEEPSLP_OVERRIDE,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_SHUTDOWN_0,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_SHUTDOWN_1,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_SHUTDOWN_2,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_SHUTDOWN_3,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_SHUTDOWN_4,
+	WCD934X_CPE_SS_PWR_CPE_SYSMEM_SHUTDOWN_5,
+	WCD934X_CPE_SS_PWR_CPE_DRAM1_SHUTDOWN,
+	WCD934X_CPE_SS_SOC_SW_COLLAPSE_CTL,
+	WCD934X_CPE_SS_MAD_CTL,
+	WCD934X_CPE_SS_CPAR_CTL,
+	WCD934X_CPE_SS_WDOG_CFG,
+	WCD934X_CPE_SS_STATUS,
+	WCD934X_CPE_SS_SS_ERROR_INT_MASK_0A,
+	WCD934X_CPE_SS_SS_ERROR_INT_MASK_0B,
+	WCD934X_CPE_SS_SS_ERROR_INT_MASK_1A,
+	WCD934X_CPE_SS_SS_ERROR_INT_MASK_1B,
+	WCD934X_CPE_SS_SS_ERROR_INT_STATUS_0A,
+	WCD934X_CPE_SS_SS_ERROR_INT_STATUS_0B,
+	WCD934X_CPE_SS_SS_ERROR_INT_STATUS_1A,
+	WCD934X_CPE_SS_SS_ERROR_INT_STATUS_1B,
+};
+
+static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl)
+{
+	struct snd_soc_codec *codec = cntl->codec;
+	struct wdsp_err_signal_arg arg;
+	int i;
+	u8 val;
+
+	/* If WDSP SSR happens, skip collecting debug dumps */
+	if (WCD_CNTL_SET_ERR_IRQ_FLAG(cntl) != 0)
+		return;
+
+	/* Mask all error interrupts */
+	snd_soc_write(codec, WCD934X_CPE_SS_SS_ERROR_INT_MASK_0A,
+		      0xFF);
+	snd_soc_write(codec, WCD934X_CPE_SS_SS_ERROR_INT_MASK_0B,
+		      0xFF);
+
+	/* Collect important WDSP registers dump for debug use */
+	pr_err("%s: Dump the WDSP registers for debug use\n", __func__);
+	for (i = 0; i < sizeof(wdsp_reg_for_debug_dump)/sizeof(u16); i++) {
+		val = snd_soc_read(codec, wdsp_reg_for_debug_dump[i]);
+		pr_err("%s: reg = 0x%x, val = 0x%x\n", __func__,
+		       wdsp_reg_for_debug_dump[i], val);
+	}
+
+	/* Trigger NMI in WDSP to sync and update the memory */
+	snd_soc_write(codec, WCD934X_CPE_SS_BACKUP_INT, 0x02);
+
+	/* Collect WDSP ramdump for debug use */
+	if (cntl->m_dev && cntl->m_ops && cntl->m_ops->signal_handler) {
+		arg.mem_dumps_enabled = cntl->ramdump_enable;
+		arg.remote_start_addr = WCD_934X_RAMDUMP_START_ADDR;
+		arg.dump_size = WCD_934X_RAMDUMP_SIZE;
+		cntl->m_ops->signal_handler(cntl->m_dev, WDSP_DEBUG_DUMP,
+					    &arg);
+	}
+
+	/* Unmask the fatal irqs */
+	snd_soc_write(codec, WCD934X_CPE_SS_SS_ERROR_INT_MASK_0A,
+		      ~(cntl->irqs.fatal_irqs & 0xFF));
+	snd_soc_write(codec, WCD934X_CPE_SS_SS_ERROR_INT_MASK_0B,
+		      ~((cntl->irqs.fatal_irqs >> 8) & 0xFF));
+
+	WCD_CNTL_CLR_ERR_IRQ_FLAG(cntl);
+}
+#else
+#define WCD_CNTL_SET_ERR_IRQ_FLAG(cntl) 0
+#define WCD_CNTL_CLR_ERR_IRQ_FLAG(cntl) do {} while (0)
+static void wcd_cntl_collect_debug_dumps(struct wcd_dsp_cntl *cntl)
+{
+}
+#endif
 
 static ssize_t wdsp_boot_show(struct wcd_dsp_cntl *cntl, char *buf)
 {
@@ -663,6 +753,7 @@ static int wcd_cntl_do_boot(struct wcd_dsp_cntl *cntl)
 	if (!ret) {
 		dev_err(codec->dev, "%s: WDSP boot timed out\n",
 			__func__);
+		wcd_cntl_collect_debug_dumps(cntl);
 		ret = -ETIMEDOUT;
 		goto err_boot;
 	} else {
@@ -719,7 +810,7 @@ static irqreturn_t wcd_cntl_err_irq(int irq, void *data)
 	struct wdsp_err_signal_arg arg;
 	u16 status = 0;
 	u8 reg_val;
-	int ret = 0;
+	int rc, ret = 0;
 
 	reg_val = snd_soc_read(codec, WCD934X_CPE_SS_SS_ERROR_INT_STATUS_0A);
 	status = status | reg_val;
@@ -732,6 +823,12 @@ static irqreturn_t wcd_cntl_err_irq(int irq, void *data)
 
 	if ((status & cntl->irqs.fatal_irqs) &&
 	    (cntl->m_dev && cntl->m_ops && cntl->m_ops->signal_handler)) {
+		/*
+		 * If WDSP SSR happens, skip collecting debug dumps.
+		 * If debug dumps collecting happens first, WDSP_ERR_INTR
+		 * will be blocked in signal_handler and get processed later.
+		 */
+		rc = WCD_CNTL_SET_ERR_IRQ_FLAG(cntl);
 		arg.mem_dumps_enabled = cntl->ramdump_enable;
 		arg.remote_start_addr = WCD_934X_RAMDUMP_START_ADDR;
 		arg.dump_size = WCD_934X_RAMDUMP_SIZE;
@@ -742,6 +839,8 @@ static irqreturn_t wcd_cntl_err_irq(int irq, void *data)
 				"%s: Failed to handle fatal irq 0x%x\n",
 				__func__, status & cntl->irqs.fatal_irqs);
 		wcd_cntl_change_online_state(cntl, 0);
+		if (rc == 0)
+			WCD_CNTL_CLR_ERR_IRQ_FLAG(cntl);
 	} else {
 		dev_err(cntl->codec->dev, "%s: Invalid signal_handler\n",
 			__func__);
@@ -912,7 +1011,7 @@ static ssize_t wcd_miscdev_write(struct file *filep, const char __user *ubuf,
 	bool vote;
 	int ret = 0;
 
-	if (count == 0 || count > 2) {
+	if (count == 0 || count > WCD_MISCDEV_CMD_MAX_LEN) {
 		pr_err("%s: Invalid count = %zd\n", __func__, count);
 		ret = -EINVAL;
 		goto done;
@@ -939,6 +1038,11 @@ static ssize_t wcd_miscdev_write(struct file *filep, const char __user *ubuf,
 		}
 		cntl->boot_reqs--;
 		vote = false;
+	} else if (!strcmp(val, "DEBUG_DUMP")) {
+		dev_dbg(cntl->codec->dev,
+			"%s: Collect dumps for debug use\n", __func__);
+		wcd_cntl_collect_debug_dumps(cntl);
+		goto done;
 	} else {
 		dev_err(cntl->codec->dev, "%s: Invalid value %s\n",
 			__func__, val);
@@ -1309,6 +1413,7 @@ void wcd_dsp_cntl_init(struct snd_soc_codec *codec,
 	mutex_init(&control->clk_mutex);
 	mutex_init(&control->ssr_mutex);
 	init_waitqueue_head(&control->ssr_entry.offline_poll_wait);
+	WCD_CNTL_CLR_ERR_IRQ_FLAG(control);
 
 	/*
 	 * The default state of WDSP is in SVS mode.
