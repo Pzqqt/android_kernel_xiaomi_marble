@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -122,6 +122,7 @@ static qdf_lro_ctx_t wlan_hdd_get_lro_ctx(struct sk_buff *skb)
 		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
 	if (hif_hdl == NULL) {
 		hdd_err("hif_hdl is NULL");
+		return NULL;
 	}
 
 	return hif_get_lro_info(QDF_NBUF_CB_RX_CTX_ID(skb), hif_hdl);
@@ -254,6 +255,11 @@ hdd_lro_set_reset(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 void hdd_disable_lro_in_concurrency(bool disable)
 {
 	struct hdd_context *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+
+	if (hdd_ctx == NULL) {
+		hdd_err("hdd_ctx is NULL");
+		return;
+	}
 
 	if (disable) {
 		if (hdd_ctx->en_tcp_delack_no_lro) {
