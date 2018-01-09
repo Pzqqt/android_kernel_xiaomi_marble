@@ -125,21 +125,7 @@ struct dp_rate_debug {
 #define MCS_INVALID 0
 
 static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
-	{
-		{"CCK 11 Mbps Long  ", MCS_VALID},
-		{"CCK 5.5 Mbps Long ", MCS_VALID},
-		{"CCK 2 Mbps Long   ", MCS_VALID},
-		{"CCK 1 Mbps Long   ", MCS_VALID},
-		{"CCK 11 Mbps Short ", MCS_VALID},
-		{"CCK 5.5 Mbps Short", MCS_VALID},
-		{"CCK 2 Mbps Short  ", MCS_VALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_INVALID},
-		{"INVALID ", MCS_VALID},
-	},
+
 	{
 		{"OFDM 48 Mbps", MCS_VALID},
 		{"OFDM 24 Mbps", MCS_VALID},
@@ -149,6 +135,21 @@ static const struct dp_rate_debug dp_rate_string[DOT11_MAX][MAX_MCS] = {
 		{"OFDM 36 Mbps", MCS_VALID},
 		{"OFDM 18 Mbps", MCS_VALID},
 		{"OFDM 9 Mbps ", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_INVALID},
+		{"INVALID ", MCS_VALID},
+	},
+	{
+		{"CCK 11 Mbps Long  ", MCS_VALID},
+		{"CCK 5.5 Mbps Long ", MCS_VALID},
+		{"CCK 2 Mbps Long   ", MCS_VALID},
+		{"CCK 1 Mbps Long   ", MCS_VALID},
+		{"CCK 11 Mbps Short ", MCS_VALID},
+		{"CCK 5.5 Mbps Short", MCS_VALID},
+		{"CCK 2 Mbps Short  ", MCS_VALID},
+		{"INVALID ", MCS_INVALID},
 		{"INVALID ", MCS_INVALID},
 		{"INVALID ", MCS_INVALID},
 		{"INVALID ", MCS_INVALID},
@@ -4648,7 +4649,7 @@ dp_print_rx_rates(struct dp_vdev *vdev)
 		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
 				" %d", pdev->stats.rx.nss[i]);
 	}
-	DP_PRINT_STATS("NSS(0-7) = %s",
+	DP_PRINT_STATS("NSS(1-8) = %s",
 			nss);
 
 	DP_PRINT_STATS("SGI ="
@@ -4930,7 +4931,7 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
 				" %d", peer->stats.rx.nss[i]);
 	}
-	DP_PRINT_STATS("NSS(0-7) = %s",
+	DP_PRINT_STATS("NSS(1-8) = %s",
 			nss);
 
 	DP_PRINT_STATS("Aggregation:");

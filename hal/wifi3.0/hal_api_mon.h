@@ -894,8 +894,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 #else
 			PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
 #endif
-		ppdu_info->rx_status.preamble_type = HAL_RX_GET(rx_tlv,
-			PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
 		ppdu_info->rx_status.he_re = 0;
 
 		value = HAL_RX_GET(rssi_info_tlv,
