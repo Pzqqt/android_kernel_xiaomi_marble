@@ -18630,7 +18630,7 @@ static void csr_update_fils_params_rso(tpAniSirGlobal mac,
 	if (!fils_info || !req_buffer)
 		return;
 
-	if ((!fils_info->keyname_nai) || (!fils_info->key_nai_length)) {
+	if (!fils_info->key_nai_length) {
 		sme_debug("key_nai_length is NULL");
 		return;
 	}
