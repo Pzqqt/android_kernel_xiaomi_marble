@@ -667,6 +667,12 @@ static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
 	case WMI_HOST_PEER_PARAM_TXBF_SOUNDING_ENABLE:
 		*targ_paramid = WMI_PEER_PARAM_TXBF_SOUNDING_ENABLE;
 		break;
+	case WMI_HOST_PEER_PARAM_MU_ENABLE:
+		*targ_paramid = WMI_PEER_PARAM_MU_ENABLE;
+		break;
+	case WMI_HOST_PEER_PARAM_OFDMA_ENABLE:
+		*targ_paramid = WMI_PEER_PARAM_OFDMA_ENABLE;
+		break;
 	default:
 		return QDF_STATUS_E_NOSUPPORT;
 	}
