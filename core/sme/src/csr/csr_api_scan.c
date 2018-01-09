@@ -2313,6 +2313,10 @@ static enum csr_scancomplete_nextcommand csr_scan_get_next_command_state(
 	int8_t channel;
 	struct csr_roam_session *session;
 
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("session %d is invalid", session_id);
+		return NextCommand;
+	}
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	switch (session->scan_info.scan_reason) {
 	case eCsrScanForSsid:
@@ -2455,9 +2459,9 @@ csr_diag_scan_complete(tpAniSirGlobal mac_ctx,
 	}
 
 	list = ucfg_scan_get_result(pdev, NULL);
-	sme_debug("num_entries %d",
-					qdf_list_size(list));
-	if (!list || !qdf_list_size(list)) {
+	if (list)
+		sme_debug("num_entries %d", qdf_list_size(list));
+	if (!list || (list && !qdf_list_size(list))) {
 		sme_err("get scan result failed");
 		WLAN_HOST_DIAG_LOG_REPORT(pScanLog);
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_LEGACY_MAC_ID);
@@ -2543,6 +2547,15 @@ static QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 	uint32_t bss_len;
 	struct csr_roam_session *session;
 
+	/*
+	 * check the session's validity first, if session itself
+	 * is not valid then there is no point of releasing the memory
+	 * for invalid session (i.e. "goto error" case)
+	 */
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("session %d is invalid", session_id);
+		return QDF_STATUS_E_FAILURE;
+	}
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!session->scan_info.roambssentry)
 		return QDF_STATUS_SUCCESS;
@@ -2863,6 +2876,10 @@ void csr_scan_callback(struct wlan_objmgr_vdev *vdev,
 		return;
 
 	session_id = wlan_vdev_get_id(vdev);
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("session %d is invalid", session_id);
+		return;
+	}
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 
 	sme_debug("Scan Completion: status %d session %d scan_id %d",
@@ -4088,6 +4105,10 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	wlan_scan_id scan_id;
 	struct csr_roam_session *session = CSR_GET_SESSION(mac_ctx, session_id);
 
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("session %d is invalid", session_id);
+		return status;
+	}
 	if (!(mac_ctx->scan.fScanEnable) && (num_ssid != 1)) {
 		sme_err(
 			"cannot scan because scanEnable (%d) or numSSID (%d) is invalid",
@@ -5342,7 +5363,7 @@ static void csr_update_bss_with_fils_data(tpAniSirGlobal mac_ctx,
 					  struct scan_cache_entry *scan_entry,
 					  tSirBssDescription *bss_descr)
 {
-	tDot11fIEfils_indication fils_indication;
+	tDot11fIEfils_indication fils_indication = {0};
 	struct sir_fils_indication fils_ind;
 
 	if (!scan_entry->ie_list.fils_indication)
@@ -5695,9 +5716,10 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal mac_ctx,
 
 	list = ucfg_scan_get_result(pdev,
 		    pFilter ? &filter : NULL);
-	sme_debug("num_entries %d", qdf_list_size(list));
+	if (list)
+		sme_debug("num_entries %d", qdf_list_size(list));
 
-	if (!list || !qdf_list_size(list)) {
+	if (!list || (list && !qdf_list_size(list))) {
 		sme_err("get scan result failed");
 		status = QDF_STATUS_E_NULL_VALUE;
 		goto error;
