@@ -1540,6 +1540,10 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 
 	for (i = 0; i < *pcl_len_org; i++) {
 		found = false;
+		if (i >= QDF_MAX_NUM_CHAN) {
+			policy_mgr_debug("index is exceeding QDF_MAX_NUM_CHAN");
+			break;
+		}
 		for (j = 0; j < pm_ctx->sap_mandatory_channels_len; j++) {
 			if (pcl_list_org[i] ==
 			    pm_ctx->sap_mandatory_channels[j]) {
@@ -1547,7 +1551,7 @@ QDF_STATUS policy_mgr_modify_sap_pcl_based_on_mandatory_channel(
 				break;
 			}
 		}
-		if (found) {
+		if (found && (pcl_len < QDF_MAX_NUM_CHAN)) {
 			pcl_list[pcl_len] = pcl_list_org[i];
 			weight_list[pcl_len++] = weight_list_org[i];
 		}
