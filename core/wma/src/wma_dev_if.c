@@ -5161,7 +5161,8 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 	}
 }
 #else
-static void wma_wait_tx_complete(tp_wma_handle wma)
+static void wma_wait_tx_complete(tp_wma_handle wma,
+				 uint32_t session_id)
 {
 }
 #endif

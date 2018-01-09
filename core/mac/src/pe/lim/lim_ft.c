@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -478,7 +478,7 @@ void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 }
 #endif
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#if defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * lim_fill_dot11mode() - to fill 802.11 mode in FT session
  * @mac_ctx: pointer to mac ctx
@@ -505,7 +505,7 @@ static void lim_fill_dot11mode(tpAniSirGlobal mac_ctx,
 		pftSessionEntry->dot11mode = self_dot11_mode;
 	}
 }
-#else
+#elif defined(WLAN_FEATURE_HOST_ROAM)
 /**
  * lim_fill_dot11mode() - to fill 802.11 mode in FT session
  * @mac_ctx: pointer to mac ctx

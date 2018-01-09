@@ -1900,6 +1900,8 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 	return status;
 }
 
+
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /**
  * csr_fetch_ch_lst_from_received_list() - fetch channel list from received list
  * and update req msg
@@ -1975,6 +1977,7 @@ csr_fetch_ch_lst_from_received_list(tpAniSirGlobal mac_ctx,
 	req_buf->ConnectedNetwork.ChannelCount = num_channels;
 	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC_UPDATE;
 }
+#endif
 
 /**
  * csr_set_cckm_ie() - set CCKM IE
