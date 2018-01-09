@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -160,6 +160,7 @@
  * @first_data_seq_ctrl: Sequence ctrl field of first data frame
  * @ast_index: AST table hash index
  * @tid: QoS traffic tid number
+ * @rs_fcs_err: FCS error flag
  * @he_per_user_1: HE per user info1
  * @he_per_user_2: HE per user info2
  * @he_per_user_position: HE per user position info
@@ -220,6 +221,7 @@ struct mon_rx_status {
 	int16_t first_data_seq_ctrl;
 	uint32_t ast_index;
 	uint32_t tid;
+	uint8_t  rs_fcs_err;
 	/* New HE radiotap fields */
 	uint16_t he_per_user_1;
 	uint16_t he_per_user_2;

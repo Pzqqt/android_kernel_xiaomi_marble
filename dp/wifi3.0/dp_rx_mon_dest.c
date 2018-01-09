@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2018 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -334,6 +334,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	unsigned char *dest;
 	struct ieee80211_frame *wh;
 	struct ieee80211_qoscntl *qos;
+	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
 	head_frag_list = NULL;
 
 	/* The nbuf has been pulled just beyond the status and points to the
@@ -352,6 +353,8 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	rx_desc = qdf_nbuf_data(last_msdu);
 
 	rx_status->cdp_rs_fcs_err = HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
+	dp_pdev->ppdu_info.rx_status.rs_fcs_err =
+		HAL_RX_DESC_GET_MPDU_FCS_ERR(rx_desc);
 
 	/* Fill out the rx_status from the PPDU start and end fields */
 	/*   HAL_RX_GET_PPDU_STATUS(soc, mac_id, rx_status); */

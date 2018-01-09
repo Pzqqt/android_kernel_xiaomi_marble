@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -568,7 +568,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 				HT_SIG_INFO_0, MCS);
 		ppdu_info->rx_status.bw = HAL_RX_GET(ht_sig_info,
 				HT_SIG_INFO_0, CBW);
-
+		ppdu_info->rx_status.sgi = HAL_RX_GET(ht_sig_info,
+				HT_SIG_INFO_1, SHORT_GI);
 		break;
 	}
 
@@ -659,6 +660,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.vht_flag_values5 = group_id;
 		ppdu_info->rx_status.mcs = HAL_RX_GET(vht_sig_a_info,
 				VHT_SIG_A_INFO_1, MCS);
+		ppdu_info->rx_status.sgi = HAL_RX_GET(vht_sig_a_info,
+				VHT_SIG_A_INFO_1, GI_SETTING);
 #if !defined(QCA_WIFI_QCA6290_11AX)
 		value =  HAL_RX_GET(vht_sig_a_info,
 				VHT_SIG_A_INFO_0, N_STS);
@@ -706,7 +709,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		/*data2*/
 		ppdu_info->rx_status.he_data2 =
 			QDF_MON_STATUS_HE_GI_KNOWN;
-		ppdu_info->rx_status.he_data2 =
+		ppdu_info->rx_status.he_data2 |=
 			QDF_MON_STATUS_TXBF_KNOWN |
 			QDF_MON_STATUS_PE_DISAMBIGUITY_KNOWN |
 			QDF_MON_STATUS_TXOP_KNOWN |
@@ -728,6 +731,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
 				HE_SIG_A_SU_INFO_0, TRANSMIT_MCS);
+		ppdu_info->rx_status.mcs = value;
 		value = value << QDF_MON_STATUS_TRANSMIT_MCS_SHIFT;
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
@@ -757,6 +761,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		value = HAL_RX_GET(he_sig_a_su_info,
 				HE_SIG_A_SU_INFO_0, TRANSMIT_BW);
 		ppdu_info->rx_status.he_data5 = value;
+		ppdu_info->rx_status.bw = value;
 		value = HAL_RX_GET(he_sig_a_su_info,
 				HE_SIG_A_SU_INFO_0, CP_LTF_SIZE);
 		switch (value) {
@@ -777,6 +782,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 				he_ltf = HE_LTF_4_X;
 				break;
 		}
+		ppdu_info->rx_status.sgi = he_gi;
 		value = he_gi << QDF_MON_STATUS_GI_SHIFT;
 		ppdu_info->rx_status.he_data5 |= value;
 		value = he_ltf << QDF_MON_STATUS_HE_LTF_SHIFT;
@@ -797,6 +803,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		/*data6*/
 		value = HAL_RX_GET(he_sig_a_su_info, HE_SIG_A_SU_INFO_0, NSTS);
 		value++;
+		ppdu_info->rx_status.nss = value;
 		ppdu_info->rx_status.he_data6 = value;
 		value = HAL_RX_GET(he_sig_a_su_info, HE_SIG_A_SU_INFO_1,
 							DOPPLER_INDICATION);
