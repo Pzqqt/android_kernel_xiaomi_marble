@@ -597,6 +597,13 @@ bool cds_is_group_addr(uint8_t *mac_addr)
  * Return: ARP stats IP to track.
  */
 uint32_t cds_get_arp_stats_gw_ip(void *context);
+/**
+ * cds_get_connectivity_stats_pkt_bitmap() - get pkt-type bitmap
+ * @context: osif dev context
+ *
+ * Return: pkt bitmap to track
+ */
+uint32_t cds_get_connectivity_stats_pkt_bitmap(void *context);
 void cds_incr_arp_stats_tx_tgt_delivered(void);
 void cds_incr_arp_stats_tx_tgt_acked(void);
 

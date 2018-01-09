@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1037,6 +1037,7 @@ struct ol_txrx_vdev_t {
 						* pseudo-peer)
 						*/
 	ol_txrx_rx_fp rx; /* receive function used by this vdev */
+	ol_txrx_stats_rx_fp stats_rx; /* receive function used by this vdev */
 
 	struct {
 		/*
