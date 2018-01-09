@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3815,6 +3815,8 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 
 	for (ch_loop = 0; ch_loop < psoc_priv_obj->unsafe_chan_list.ch_cnt;
 		ch_loop++) {
+		if (ch_loop >= NUM_CHANNELS)
+			break;
 		reg_debug("channel %d is not safe",
 			psoc_priv_obj->unsafe_chan_list.
 			ch_list[ch_loop]);
