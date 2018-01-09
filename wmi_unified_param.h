@@ -6839,6 +6839,12 @@ typedef enum {
 	WMI_HOST_PEER_NSS_VHT160 = 0x15,
 	/* peer NSS for 160Mhx */
 	WMI_HOST_PEER_NSS_VHT80_80 = 0x16,
+	/* Set SU sounding interval */
+	WMI_HOST_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL = 0x17,
+	/* Set MU sounding interval */
+	WMI_HOST_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL = 0x18,
+	/* Enable sounding interval set */
+	WMI_HOST_PEER_PARAM_TXBF_SOUNDING_ENABLE = 0x19,
 } PEER_PARAM_ENUM;
 #define WMI_HOST_PEER_MIMO_PS_NONE	0x0
 #define WMI_HOST_PEER_MIMO_PS_STATIC	0x1
