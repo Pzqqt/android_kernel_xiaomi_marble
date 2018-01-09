@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -61,6 +61,7 @@ QDF_STATUS tdls_psoc_obj_create_notification(struct wlan_objmgr_psoc *psoc,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("Failed to attach psoc tdls component");
 		qdf_mem_free(tdls_soc_obj);
+		return status;
 	}
 
 	tdls_soc_global = tdls_soc_obj;
@@ -88,7 +89,6 @@ QDF_STATUS tdls_psoc_obj_destroy_notification(struct wlan_objmgr_psoc *psoc,
 
 	if (QDF_IS_STATUS_ERROR(status))
 		tdls_err("Failed to detach psoc tdls component");
-
 	qdf_mem_free(tdls_soc_obj);
 
 	return status;
