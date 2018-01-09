@@ -6442,7 +6442,7 @@ static int wlan_hdd_handle_restrict_offchan_config(struct hdd_adapter *adapter,
 static int wlan_hdd_cfg80211_wifi_set_reorder_timeout(struct hdd_context *hdd_ctx,
 						      struct nlattr *tb[])
 {
-	int ret_val;
+	int ret_val = 0;
 	QDF_STATUS qdf_status;
 	struct sir_set_rx_reorder_timeout_val reorder_timeout;
 
@@ -6509,7 +6509,7 @@ static int wlan_hdd_cfg80211_wifi_set_rx_blocksize(struct hdd_context *hdd_ctx,
 						   struct hdd_adapter *adapter,
 						   struct nlattr *tb[])
 {
-	int ret_val;
+	int ret_val = 0;
 	uint32_t set_value;
 	QDF_STATUS qdf_status;
 	struct sir_peer_set_rx_blocksize rx_blocksize;
@@ -11150,6 +11150,11 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
+	if (!channel_list) {
+		hdd_err("channel_list is NULL");
+		return -EINVAL;
+	}
+
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 	sap_config = &adapter->session.ap.sap_config;
 
@@ -11159,7 +11164,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 		qdf_mc_timer_stop(&adapter->session.ap.vendor_acs_timer);
 	}
 
-	if (channel_list && channel_list->pri_ch == 0) {
+	if (channel_list->pri_ch == 0) {
 		/* Check mode, set default channel */
 		channel_list->pri_ch = 6;
 		/*
@@ -11200,7 +11205,7 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 		hdd_info("invalid reason for timer invoke");
 	}
 	EXIT();
-	return status;
+	return qdf_status_to_os_return(status);
 }
 
 /**
@@ -11386,7 +11391,7 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 		channel_cnt--;
 		channel_list++;
 	}
-	hdd_debug("received primary channel as %d", channel_list->pri_ch);
+
 	if ((channel_cnt <= 0) || !channel_list) {
 		hdd_err("no available channel/chanlist %d/%pK", channel_cnt,
 			channel_list);
@@ -11394,10 +11399,12 @@ static int __wlan_hdd_cfg80211_update_vendor_channel(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	qdf_status = hdd_update_acs_channel(adapter, reason,
+	hdd_debug("received primary channel as %d", channel_list->pri_ch);
+
+	ret_val = hdd_update_acs_channel(adapter, reason,
 				      channel_cnt, channel_list);
 	qdf_mem_free(channel_list_ptr);
-	return qdf_status_to_os_return(qdf_status);
+	return ret_val;
 }
 
 /**
@@ -18221,7 +18228,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	/* Check for max concurrent connections after doing disconnect if any */
 	if (req->channel) {
-		bool ok;
+		bool ok = false;
 
 		if (req->channel->hw_value && policy_mgr_is_chan_ok_for_dnbs(
 						hdd_ctx->hdd_psoc,

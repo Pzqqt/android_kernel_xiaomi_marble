@@ -4969,6 +4969,8 @@ static inline bool hdd_is_fils_connection(struct hdd_adapter *adapter)
 	if (wext_state->roamProfile.fils_con_info)
 		return wext_state->roamProfile.
 			fils_con_info->is_fils_connection;
+
+	return false;
 }
 #else
 static inline bool hdd_is_fils_connection(struct hdd_adapter *adapter)
