@@ -4010,13 +4010,18 @@ typedef struct {
 typedef struct {
     A_UINT32 tlv_header; /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_vdev_config_ratemask_fixed_param */
     A_UINT32 vdev_id;
-    /* 0 - cck/ofdm
+    /*
+     * 0 - cck/ofdm
      * 1 - HT
-     * 2 - VHT */
+     * 2 - VHT
+     * 3 - HE
+     */
     A_UINT32 type;
 
     A_UINT32 mask_lower32;
     A_UINT32 mask_higher32;
+    A_UINT32 mask_lower32_2;
+    A_UINT32 mask_higher32_2;
 } wmi_vdev_config_ratemask_cmd_fixed_param;
 
 /* nrp action - Filter Neighbor Rx Packets  - add/remove filter */
