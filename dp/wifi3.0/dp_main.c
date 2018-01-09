@@ -3683,7 +3683,7 @@ void dp_peer_unref_delete(void *peer_handle)
 #ifdef notyet
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
-		if (!vdev && !vdev->vap_bss_peer)
+		if (!vdev || !vdev->vap_bss_peer)
 			goto free_peer;
 
 		bss_peer = vdev->vap_bss_peer;
