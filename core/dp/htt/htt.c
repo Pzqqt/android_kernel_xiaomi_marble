@@ -880,7 +880,7 @@ int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
  */
 void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
-	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO, "%s: enter",
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_DEBUG, "%s: enter",
 		__func__);
 
 	/* TX IPA micro controller detach */
@@ -889,7 +889,7 @@ void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 	/* RX IPA micro controller detach */
 	htt_rx_ipa_uc_detach(pdev);
 
-	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_INFO, "%s: exit",
+	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_DEBUG, "%s: exit",
 		__func__);
 }
 

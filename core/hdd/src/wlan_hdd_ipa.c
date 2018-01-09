@@ -1885,7 +1885,7 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (!hdd_ipa->ipa_pipes_down) {
 		/*
@@ -1911,7 +1911,7 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	cdp_ipa_enable_autonomy(soc, (struct cdp_pdev *)pdev);
 
 end:
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: ipa_pipes_down=%d",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: ipa_pipes_down=%d",
 		    hdd_ipa->ipa_pipes_down);
 
 	return result;
@@ -1929,7 +1929,7 @@ static int hdd_ipa_uc_disable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	int result = 0;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (hdd_ipa->ipa_pipes_down) {
 		/*
@@ -1954,7 +1954,7 @@ static int hdd_ipa_uc_disable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	hdd_ipa->ipa_pipes_down = true;
 
 end:
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: ipa_pipes_down=%d",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: ipa_pipes_down=%d",
 		    hdd_ipa->ipa_pipes_down);
 	return result;
 }
@@ -1969,7 +1969,7 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 {
 	struct hdd_context *hdd_ctx = hdd_ipa->hdd_ctx;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	hdd_ipa->activated_fw_pipe = 0;
 	hdd_ipa->resource_loading = true;
@@ -2006,7 +2006,7 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 		hdd_ipa->resource_loading = false;
 	}
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit");
 	return 0;
 }
 
@@ -2021,7 +2021,7 @@ static void hdd_ipa_uc_handle_last_discon(struct hdd_ipa_priv *hdd_ipa)
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (!pdev) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "txrx context is NULL");
@@ -2036,7 +2036,7 @@ static void hdd_ipa_uc_handle_last_discon(struct hdd_ipa_priv *hdd_ipa)
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Disable FW TX PIPE");
 	cdp_ipa_set_active(soc, (struct cdp_pdev *)pdev, false, true);
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: IPA WDI Pipes deactivated");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: IPA WDI Pipes deactivated");
 }
 
 /**
@@ -3197,7 +3197,7 @@ int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx)
 	int ret = 0;
 	QDF_STATUS status;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (!hdd_ipa_uc_is_enabled(hdd_ctx))
 		return ret;
@@ -3221,7 +3221,7 @@ int hdd_ipa_uc_ol_deinit(struct hdd_context *hdd_ctx)
 	hdd_ipa_cleanup_pending_event(hdd_ipa);
 	qdf_mutex_release(&hdd_ipa->ipa_lock);
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: ret=%d", ret);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: ret=%d", ret);
 	return ret;
 }
 
@@ -3240,7 +3240,7 @@ static void __hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (!hdd_ipa_is_enabled(hdd_ctx) || !hdd_ctx->hdd_ipa)
 		return;
@@ -3255,7 +3255,7 @@ static void __hdd_ipa_uc_force_pipe_shutdown(struct hdd_context *hdd_ctx)
 			    "IPA pipes are down, do nothing");
 	}
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit");
 }
 
 /**
@@ -3353,7 +3353,7 @@ static int hdd_ipa_uc_disconnect_client(struct hdd_adapter *adapter)
 	int ret = 0;
 	int i;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 		if (qdf_is_macaddr_broadcast(&adapter->sta_info[i].sta_mac))
 			continue;
@@ -3365,7 +3365,7 @@ static int hdd_ipa_uc_disconnect_client(struct hdd_adapter *adapter)
 			hdd_ipa->sap_num_connected_sta--;
 		}
 	}
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: sap_num_connected_sta=%d",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: sap_num_connected_sta=%d",
 		    hdd_ipa->sap_num_connected_sta);
 
 	return ret;
@@ -3384,12 +3384,12 @@ static int hdd_ipa_uc_disconnect_ap(struct hdd_adapter *adapter)
 {
 	int ret = 0;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 	if (adapter->ipa_context) {
 		hdd_ipa_uc_send_evt(adapter, WLAN_AP_DISCONNECT,
 			adapter->dev->dev_addr);
 	}
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit");
 
 	return ret;
 }
@@ -3408,14 +3408,14 @@ static int hdd_ipa_uc_disconnect_sta(struct hdd_adapter *adapter)
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 	int ret = 0;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
 	    hdd_ipa->sta_connected) {
 		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		hdd_ipa_uc_send_evt(adapter, WLAN_STA_DISCONNECT,
 				sta_ctx->conn_info.bssId.bytes);
 	}
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit");
 
 	return ret;
 }
@@ -3460,7 +3460,7 @@ static int __hdd_ipa_uc_ssr_deinit(void)
 	struct hdd_ipa_iface_context *iface_context;
 	struct hdd_context *hdd_ctx;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (!hdd_ipa)
 		return 0;
@@ -3503,7 +3503,7 @@ static int __hdd_ipa_uc_ssr_deinit(void)
 		hdd_ipa->uc_op_work[idx].msg = NULL;
 	}
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit");
 	return 0;
 }
 
@@ -3541,7 +3541,7 @@ static int __hdd_ipa_uc_ssr_reinit(struct hdd_context *hdd_ctx)
 	int i;
 	struct hdd_ipa_iface_context *iface_context = NULL;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	if (!hdd_ipa || !hdd_ipa_uc_is_enabled(hdd_ctx))
 		return 0;
@@ -3566,7 +3566,7 @@ static int __hdd_ipa_uc_ssr_reinit(struct hdd_context *hdd_ctx)
 		hdd_ipa->uc_loaded = true;
 	}
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit");
 	return 0;
 }
 
@@ -5975,7 +5975,7 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 
 	init_completion(&hdd_ipa->ipa_resource_comp);
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: success");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: success");
 	return QDF_STATUS_SUCCESS;
 
 fail_create_sys_pipe:
