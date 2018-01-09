@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -358,6 +358,12 @@ enum hal_rx_ret_buf_manager {
 	((*_OFFSET_TO_WORD_PTR(msdu_info_ptr,			\
 		RX_MSDU_DESC_INFO_0_MSDU_CONTINUATION_OFFSET)) & \
 		RX_MSDU_DESC_INFO_0_MSDU_CONTINUATION_MASK)
+
+#define HAL_RX_MSDU_REO_DST_IND_GET(msdu_info_ptr)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(msdu_info_ptr,	\
+	RX_MSDU_DESC_INFO_0_REO_DESTINATION_INDICATION_OFFSET)),	\
+	RX_MSDU_DESC_INFO_0_REO_DESTINATION_INDICATION_MASK,		\
+	RX_MSDU_DESC_INFO_0_REO_DESTINATION_INDICATION_LSB))
 
 #define HAL_RX_MSDU_SA_IS_VALID_FLAG_GET(msdu_info_ptr)		\
 	((*_OFFSET_TO_WORD_PTR(msdu_info_ptr,			\
@@ -1557,6 +1563,12 @@ hal_rx_mpdu_get_fr_ds(uint8_t *buf)
 		RX_MPDU_INFO_2_MAC_ADDR_AD3_VALID_MASK,	\
 		RX_MPDU_INFO_2_MAC_ADDR_AD3_VALID_LSB))
 
+#define HAL_RX_MPDU_MAC_ADDR_AD4_VALID_GET(_rx_mpdu_info) \
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_OFFSET)), \
+		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_MASK,	\
+		RX_MPDU_INFO_2_MAC_ADDR_AD4_VALID_LSB))
+
 #define HAL_RX_MPDU_AD1_31_0_GET(_rx_mpdu_info)	\
 	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
 		RX_MPDU_INFO_15_MAC_ADDR_AD1_31_0_OFFSET)), \
@@ -1592,6 +1604,18 @@ hal_rx_mpdu_get_fr_ds(uint8_t *buf)
 		RX_MPDU_INFO_19_MAC_ADDR_AD3_47_32_OFFSET)), \
 		RX_MPDU_INFO_19_MAC_ADDR_AD3_47_32_MASK,	\
 		RX_MPDU_INFO_19_MAC_ADDR_AD3_47_32_LSB))
+
+#define HAL_RX_MPDU_AD4_31_0_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_20_MAC_ADDR_AD4_31_0_OFFSET)), \
+		RX_MPDU_INFO_20_MAC_ADDR_AD4_31_0_MASK,	\
+		RX_MPDU_INFO_20_MAC_ADDR_AD4_31_0_LSB))
+
+#define HAL_RX_MPDU_AD4_47_32_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info, \
+		RX_MPDU_INFO_21_MAC_ADDR_AD4_47_32_OFFSET)), \
+		RX_MPDU_INFO_21_MAC_ADDR_AD4_47_32_MASK,	\
+		RX_MPDU_INFO_21_MAC_ADDR_AD4_47_32_LSB))
 
 /*
  * hal_rx_mpdu_get_addr1(): API to check get address1 of the mpdu
@@ -1674,8 +1698,8 @@ static inline
 QDF_STATUS hal_rx_mpdu_get_addr3(uint8_t *buf, uint8_t *mac_addr)
 {
 	struct __attribute__((__packed__)) hal_addr3 {
-		uint16_t ad3_15_0;
-		uint32_t ad3_47_16;
+		uint32_t ad3_31_0;
+		uint16_t ad3_47_32;
 	};
 
 	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
@@ -1689,8 +1713,43 @@ QDF_STATUS hal_rx_mpdu_get_addr3(uint8_t *buf, uint8_t *mac_addr)
 	mac_addr_ad3_valid = HAL_RX_MPDU_MAC_ADDR_AD3_VALID_GET(mpdu_info);
 
 	if (mac_addr_ad3_valid) {
-		addr->ad3_15_0 = HAL_RX_MPDU_AD3_31_0_GET(mpdu_info);
-		addr->ad3_47_16 = HAL_RX_MPDU_AD3_47_32_GET(mpdu_info);
+		addr->ad3_31_0 = HAL_RX_MPDU_AD3_31_0_GET(mpdu_info);
+		addr->ad3_47_32 = HAL_RX_MPDU_AD3_47_32_GET(mpdu_info);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/*
+ * hal_rx_mpdu_get_addr4(): API to get address4 of the mpdu
+ * in the packet
+ *
+ * @buf: pointer to the start of RX PKT TLV header
+ * @mac_addr: pointer to mac address
+ * Return: sucess/failure
+ */
+static inline
+QDF_STATUS hal_rx_mpdu_get_addr4(uint8_t *buf, uint8_t *mac_addr)
+{
+	struct __attribute__((__packed__)) hal_addr4 {
+		uint32_t ad4_31_0;
+		uint16_t ad4_47_32;
+	};
+
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	struct hal_addr4 *addr = (struct hal_addr4 *)mac_addr;
+	uint32_t mac_addr_ad4_valid;
+
+	mac_addr_ad4_valid = HAL_RX_MPDU_MAC_ADDR_AD4_VALID_GET(mpdu_info);
+
+	if (mac_addr_ad4_valid) {
+		addr->ad4_31_0 = HAL_RX_MPDU_AD4_31_0_GET(mpdu_info);
+		addr->ad4_47_32 = HAL_RX_MPDU_AD4_47_32_GET(mpdu_info);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -1965,6 +2024,31 @@ static inline void hal_rx_msdu_list_get(void *msdu_link_desc,
 			__func__, __LINE__, i, msdu_list->sw_cookie[i]);
 	}
 	*num_msdus = i;
+}
+
+/**
+ * hal_rx_msdu_reo_dst_ind_get: Gets the REO
+ * destination ring ID from the msdu desc info
+ *
+ * @msdu_link_desc : Opaque cookie pointer used by HAL to get to
+ * the current descriptor
+ *
+ * Return: dst_ind (REO destination ring ID)
+ */
+static inline uint32_t
+hal_rx_msdu_reo_dst_ind_get(void *msdu_link_desc)
+{
+	struct rx_msdu_details *msdu_details;
+	struct rx_msdu_desc_info *msdu_desc_info;
+	struct rx_msdu_link *msdu_link = (struct rx_msdu_link *)msdu_link_desc;
+	uint32_t dst_ind;
+
+	msdu_details = HAL_RX_LINK_DESC_MSDU0_PTR(msdu_link);
+
+	/* The first msdu in the link should exsist */
+	msdu_desc_info = HAL_RX_MSDU_DESC_INFO_GET(&msdu_details[0]);
+	dst_ind = HAL_RX_MSDU_REO_DST_IND_GET(msdu_desc_info);
+	return dst_ind;
 }
 
 /**
@@ -3067,7 +3151,7 @@ uint8_t hal_rx_get_rx_more_frag_bit(uint8_t *buf)
  *
  */
 static inline
-uint8_t hal_rx_get_frame_ctrl_field(uint8_t *buf)
+uint16_t hal_rx_get_frame_ctrl_field(uint8_t *buf)
 {
 	struct rx_pkt_tlvs *pkt_tlvs = hal_rx_get_pkt_tlvs(buf);
 	struct rx_mpdu_info *rx_mpdu_info = hal_rx_get_mpdu_info(pkt_tlvs);

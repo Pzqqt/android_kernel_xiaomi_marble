@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -154,9 +154,9 @@ static void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
  *
  * Build a per-tid, per-sequence fragment list.
  *
- * Returns: None
+ * Returns: Success, if inserted
  */
-static void dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
+static QDF_STATUS dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
 	qdf_nbuf_t *head_addr, qdf_nbuf_t *tail_addr, qdf_nbuf_t frag,
 	uint8_t *all_frag_present)
 {
@@ -168,10 +168,12 @@ static void dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 	uint8_t *rx_desc_info;
 
+
 	qdf_assert(frag);
 	qdf_assert(head_addr);
 	qdf_assert(tail_addr);
 
+	*all_frag_present = 0;
 	rx_desc_info = qdf_nbuf_data(frag);
 	cur_fragno = dp_rx_frag_get_mpdu_frag_number(rx_desc_info);
 
@@ -181,7 +183,7 @@ static void dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
 		qdf_nbuf_set_next(*tail_addr, NULL);
 		rx_tid->curr_frag_num = cur_fragno;
 
-		goto end;
+		goto insert_done;
 	}
 
 	/* In sequence fragment */
@@ -198,7 +200,7 @@ static void dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
 
 		if (cur_fragno == head_fragno) {
 			qdf_nbuf_free(frag);
-			*all_frag_present = 0;
+			goto insert_fail;
 		} else if (head_fragno > cur_fragno) {
 			qdf_nbuf_set_next(frag, cur);
 			cur = frag;
@@ -212,6 +214,12 @@ static void dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
 					dp_rx_frag_get_mpdu_frag_number(
 								rx_desc_info);
 			}
+
+			if (cur_fragno == head_fragno) {
+				qdf_nbuf_free(frag);
+				goto insert_fail;
+			}
+
 			qdf_nbuf_set_next(prev, frag);
 			qdf_nbuf_set_next(frag, cur);
 		}
@@ -239,12 +247,15 @@ static void dp_rx_defrag_fraglist_insert(struct dp_peer *peer, unsigned tid,
 
 		if (!next) {
 			*all_frag_present = 1;
-			return;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
-end:
-	*all_frag_present = 0;
+insert_done:
+	return QDF_STATUS_SUCCESS;
+
+insert_fail:
+	return QDF_STATUS_E_FAILURE;
 }
 
 
@@ -708,7 +719,7 @@ static void dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf)
 	struct llc_snap_hdr_t *llchdr;
 	struct ethernet_hdr_t *eth_hdr;
 	uint8_t ether_type[2];
-	uint16_t fc;
+	uint16_t fc = 0;
 	union dp_align_mac_addr mac_addr;
 	uint8_t *rx_desc_info = qdf_mem_malloc(RX_PKT_TLVS_LEN);
 
@@ -773,6 +784,14 @@ static void dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf)
 		break;
 
 	case IEEE80211_FC1_DIR_DSTODS:
+		hal_rx_mpdu_get_addr3(rx_desc_info,
+			&mac_addr.raw[0]);
+		qdf_mem_copy(eth_hdr->dest_addr, &mac_addr.raw[0],
+			IEEE80211_ADDR_LEN);
+		hal_rx_mpdu_get_addr4(rx_desc_info,
+			&mac_addr.raw[0]);
+		qdf_mem_copy(eth_hdr->src_addr, &mac_addr.raw[0],
+			IEEE80211_ADDR_LEN);
 		break;
 
 	default:
@@ -809,7 +828,7 @@ static void dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf)
 	void *ent_ring_desc, *ent_mpdu_desc_info, *ent_qdesc_addr;
 	void *dst_mpdu_desc_info, *dst_qdesc_addr;
 	qdf_dma_addr_t paddr;
-	uint32_t nbuf_len, seq_no;
+	uint32_t nbuf_len, seq_no, dst_ind;
 	uint32_t *mpdu_wrd;
 
 	void *dst_ring_desc =
@@ -835,6 +854,8 @@ static void dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf)
 	msdu_desc_info = (uint8_t *)msdu0 +
 		RX_MSDU_DETAILS_2_RX_MSDU_DESC_INFO_RX_MSDU_DESC_INFO_DETAILS_OFFSET;
 
+	dst_ind = hal_rx_msdu_reo_dst_ind_get(link_desc_va);
+
 	qdf_mem_zero(msdu_desc_info, sizeof(struct rx_msdu_desc_info));
 
 	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
@@ -844,7 +865,7 @@ static void dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf)
 	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
 			MSDU_CONTINUATION, 0x0);
 	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
-			REO_DESTINATION_INDICATION, 1);
+			REO_DESTINATION_INDICATION, dst_ind);
 	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
 			MSDU_LENGTH, nbuf_len);
 	HAL_RX_MSDU_DESC_INFO_SET(msdu_desc_info,
@@ -914,9 +935,8 @@ static void dp_rx_defrag_nwifi_to_8023(qdf_nbuf_t nbuf)
 
 	qdf_mem_copy(ent_qdesc_addr, dst_qdesc_addr, 8);
 
-	/* dst ind */
 	HAL_RX_FLD_SET(ent_ring_desc, REO_ENTRANCE_RING_5,
-			REO_DESTINATION_INDICATION, 0x1);
+			REO_DESTINATION_INDICATION, dst_ind);
 
 	hal_srng_access_end(soc->hal_soc, hal_srng);
 
@@ -1259,7 +1279,7 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	 * If the earlier sequence was dropped, this will be the fresh start.
 	 * Else, continue with next fragment in a given sequence
 	 */
-	dp_rx_defrag_fraglist_insert(peer, tid, &rx_reorder_array_elem->head,
+	status = dp_rx_defrag_fraglist_insert(peer, tid, &rx_reorder_array_elem->head,
 			&rx_reorder_array_elem->tail, frag,
 			&all_frag_present);
 
@@ -1269,7 +1289,8 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	 * have to use the next MSDU link descriptor and chain them together
 	 * before reinjection
 	 */
-	if ((fragno == 0) && (rx_reorder_array_elem->head == frag)) {
+	if ((fragno == 0) && (status == QDF_STATUS_SUCCESS) &&
+			(rx_reorder_array_elem->head == frag)) {
 
 		status = dp_rx_defrag_save_info_from_ring_desc(ring_desc,
 					peer, tid);
