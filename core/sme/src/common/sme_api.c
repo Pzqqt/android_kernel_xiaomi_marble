@@ -213,6 +213,10 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			command->u.set_hw_mode_cmd.reason,
 			command->u.set_hw_mode_cmd.session_id,
 			command->u.set_hw_mode_cmd.context);
+	if (!CSR_IS_SESSION_VALID(mac, session_id)) {
+		sme_err("session %d is invalid", session_id);
+		goto end;
+	}
 	session = CSR_GET_SESSION(mac, session_id);
 	if (reason == SIR_UPDATE_REASON_HIDDEN_STA) {
 		/* In the case of hidden SSID, connection update
@@ -1367,6 +1371,10 @@ QDF_STATUS sme_update_new_channel_event(tHalHandle hal, uint8_t session_id)
 	eCsrRoamResult roamResult;
 
 	roamInfo = qdf_mem_malloc(sizeof(*roamInfo));
+	if (!roamInfo) {
+		sme_err("mem alloc failed for roam info");
+		return QDF_STATUS_E_FAILURE;
+	}
 	roamInfo->dfs_event.sessionId = session_id;
 
 	roamStatus = eCSR_ROAM_CHANNEL_COMPLETE_IND;
@@ -5185,6 +5193,10 @@ QDF_STATUS sme_change_mcc_beacon_interval(uint8_t sessionId)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac_ctx = sme_get_mac_context();
 
+	if (!mac_ctx) {
+		sme_err("mac_ctx is NULL");
+		return status;
+	}
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_send_chng_mcc_beacon_interval(mac_ctx,
@@ -9154,6 +9166,10 @@ QDF_STATUS sme_set_wlm_latency_level(tHalHandle hal, uint16_t session_id,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: WLM latency level setting is disabled",
 			   __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (!wma) {
+		sme_err("wma is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -13241,6 +13257,10 @@ QDF_STATUS sme_pdev_set_pcl(struct policy_mgr_pcl_list msg)
 	struct wmi_pcl_chan_weights *req_msg;
 	uint32_t len, i;
 
+	if (!mac) {
+		sme_err("mac is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 	len = sizeof(*req_msg);
 
 	req_msg = qdf_mem_malloc(len);
@@ -13291,6 +13311,10 @@ QDF_STATUS sme_pdev_set_hw_mode(struct policy_mgr_hw_mode msg)
 	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd = NULL;
 
+	if (!mac) {
+		sme_err("mac is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Failed to acquire lock");
@@ -13361,6 +13385,10 @@ QDF_STATUS sme_nss_update_request(uint32_t vdev_id,
 	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd = NULL;
 
+	if (!mac) {
+		sme_err("mac is null");
+		return status;
+	}
 	status = sme_acquire_global_lock(&mac->sme);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 		cmd = csr_get_command_buffer(mac);
@@ -13402,6 +13430,10 @@ QDF_STATUS sme_soc_set_dual_mac_config(struct policy_mgr_dual_mac_config msg)
 	tpAniSirGlobal mac = sme_get_mac_context();
 	tSmeCmd *cmd;
 
+	if (!mac) {
+		sme_err("mac is null");
+		return QDF_STATUS_E_FAILURE;
+	}
 	status = sme_acquire_global_lock(&mac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_err("Failed to acquire lock");

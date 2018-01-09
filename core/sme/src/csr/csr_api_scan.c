@@ -5784,7 +5784,7 @@ QDF_STATUS csr_scan_get_result_for_bssid(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	scan_filter->BSSIDs.bssid = qdf_mem_malloc(sizeof(bssid));
+	scan_filter->BSSIDs.bssid = qdf_mem_malloc(sizeof(*bssid));
 	if (!scan_filter->BSSIDs.bssid) {
 		sme_err("Failed to allocate memory for BSSIDs");
 		status = QDF_STATUS_E_FAILURE;
@@ -5792,7 +5792,7 @@ QDF_STATUS csr_scan_get_result_for_bssid(tpAniSirGlobal mac_ctx,
 	}
 
 	scan_filter->BSSIDs.numOfBSSIDs = 1;
-	qdf_mem_copy(scan_filter->BSSIDs.bssid, bssid, sizeof(bssid));
+	qdf_mem_copy(scan_filter->BSSIDs.bssid, bssid, sizeof(*bssid));
 
 	status = csr_scan_get_result(mac_ctx, scan_filter,
 				&filtered_scan_result);
