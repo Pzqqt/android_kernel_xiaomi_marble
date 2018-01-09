@@ -108,8 +108,7 @@ static int parse_fwk_version_info(uint32_t *payload)
 	 */
 	ver_size = sizeof(struct avcs_get_fwk_version) +
 		   num_services * sizeof(struct avs_svc_api_info);
-	if (q6core_lcl.q6core_avcs_ver_info.ver_info != NULL)
-		pr_warn("%s: Version info is not NULL\n", __func__);
+
 	q6core_lcl.q6core_avcs_ver_info.ver_info =
 		kzalloc(ver_size, GFP_ATOMIC);
 	if (q6core_lcl.q6core_avcs_ver_info.ver_info == NULL)
@@ -236,7 +235,6 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 		pr_debug("%s: Received AVCS_CMDRSP_GET_FWK_VERSION\n",
 			 __func__);
 		payload1 = data->payload;
-		q6core_lcl.avcs_fwk_ver_resp_received = 1;
 		ret = parse_fwk_version_info(payload1);
 		if (ret < 0) {
 			q6core_lcl.adsp_status = ret;
@@ -246,6 +244,7 @@ static int32_t aprv2_core_fn_q(struct apr_client_data *data, void *priv)
 			q6core_lcl.q6core_avcs_ver_info.status =
 						VER_QUERY_SUPPORTED;
 		}
+		q6core_lcl.avcs_fwk_ver_resp_received = 1;
 		wake_up(&q6core_lcl.avcs_fwk_ver_req_wait);
 		break;
 	default:
@@ -445,8 +444,14 @@ size_t q6core_get_fwk_version_size(uint32_t service_id)
 	if (ret)
 		goto done;
 
-	num_services = q6core_lcl.q6core_avcs_ver_info.ver_info
-			       ->avcs_fwk_version.num_services;
+	if (q6core_lcl.q6core_avcs_ver_info.ver_info != NULL) {
+		num_services = q6core_lcl.q6core_avcs_ver_info.ver_info
+					->avcs_fwk_version.num_services;
+	} else {
+		pr_err("%s: ver_info is NULL\n", __func__);
+		ret = -EINVAL;
+		goto done;
+	}
 
 	ret = sizeof(struct avcs_get_fwk_version);
 	if (service_id == AVCS_SERVICE_ID_ALL)
