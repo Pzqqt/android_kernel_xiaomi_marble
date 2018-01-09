@@ -658,6 +658,15 @@ static QDF_STATUS convert_host_peer_id_to_target_id_tlv(
 	case WMI_HOST_PEER_NSS_VHT80_80:
 		*targ_paramid = WMI_PEER_NSS_VHT80_80;
 		break;
+	case WMI_HOST_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL:
+		*targ_paramid = WMI_PEER_PARAM_SU_TXBF_SOUNDING_INTERVAL;
+		break;
+	case WMI_HOST_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL:
+		*targ_paramid = WMI_PEER_PARAM_MU_TXBF_SOUNDING_INTERVAL;
+		break;
+	case WMI_HOST_PEER_PARAM_TXBF_SOUNDING_ENABLE:
+		*targ_paramid = WMI_PEER_PARAM_TXBF_SOUNDING_ENABLE;
+		break;
 	default:
 		return QDF_STATUS_E_NOSUPPORT;
 	}
