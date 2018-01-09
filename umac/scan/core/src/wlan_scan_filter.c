@@ -158,6 +158,9 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 	enum wlan_auth_type neg_auth = WLAN_AUTH_TYPE_OPEN_SYSTEM;
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
 
+	if (!security)
+		return false;
+
 	/* If privacy bit is not set, consider no match */
 	if (!db_entry->cap_info.wlan_caps.privacy)
 		return false;
@@ -311,6 +314,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 	struct wlan_rsn_ie rsn = {0};
 	QDF_STATUS status;
 
+	if (!security)
+		return false;
 	if (!util_scan_entry_rsn(db_entry))
 		return false;
 	status = wlan_parse_rsn_ie(util_scan_entry_rsn(db_entry), &rsn);
@@ -554,6 +559,8 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
 	struct wlan_wpa_ie wpa = {0};
 
+	if (!security)
+		return false;
 	if (!util_scan_entry_wpa(db_entry))
 		return false;
 
@@ -653,6 +660,8 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
 	enum wlan_enc_type neg_mccipher = WLAN_ENCRYPT_TYPE_NONE;
 	struct wlan_wapi_ie wapi = {0};
 
+	if (!security)
+		return false;
 	if (!util_scan_entry_wapi(db_entry))
 		return false;
 

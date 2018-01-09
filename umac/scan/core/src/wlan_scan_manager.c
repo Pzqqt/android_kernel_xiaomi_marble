@@ -301,13 +301,13 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 	QDF_STATUS status;
 
 	if (!cmd) {
-		scm_err("cmd: %pK, reason: %d", cmd, reason);
+		scm_err("cmd is NULL, reason: %d", reason);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	if (!cmd->umac_cmd) {
-		scm_err("umac_cmd: %pK, reason: %d", cmd->umac_cmd, reason);
+		scm_err("cmd->umac_cmd is NULL , reason: %d", reason);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
@@ -374,8 +374,14 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	struct wlan_objmgr_psoc *psoc;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!msg || !msg->bodyptr) {
-		scm_err("msg or msg->bodyptr is NULL");
+	if (!msg) {
+		scm_err("msg received is NULL");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!msg->bodyptr) {
+		scm_err("bodyptr is NULL");
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -477,8 +483,14 @@ scm_scan_cancel_req(struct scheduler_msg *msg)
 	struct scan_cancel_request *req;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!msg || !msg->bodyptr) {
-		scm_err("msg or msg->bodyptr is NULL");
+	if (!msg) {
+		scm_err("msg received is NULL");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!msg->bodyptr) {
+		scm_err("Bodyptr is NULL");
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -658,8 +670,14 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	struct scan_start_request *scan_start_req;
 	struct wlan_scan_obj *scan;
 
-	if (!msg || !msg->bodyptr) {
-		scm_err("msg or msg->bodyptr is NULL");
+	if (!msg) {
+		scm_err("NULL msg received ");
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	if (!msg->bodyptr) {
+		scm_err("NULL scan event received");
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
