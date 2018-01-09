@@ -72,6 +72,27 @@ uint8_t wlan_freq_to_chan(uint32_t freq)
 	return chan;
 }
 
+bool wlan_is_ie_valid(const uint8_t *ie, size_t ie_len)
+{
+	uint8_t elen;
+
+	while (ie_len) {
+		if (ie_len < 2)
+			return false;
+
+		elen = ie[1];
+		ie_len -= 2;
+		ie += 2;
+		if (elen > ie_len)
+			return false;
+
+		ie_len -= elen;
+		ie += elen;
+	}
+
+	return true;
+}
+
 static const uint8_t *wlan_get_ie_ptr_from_eid_n_oui(uint8_t eid,
 						     const uint8_t *oui,
 						     uint8_t oui_size,

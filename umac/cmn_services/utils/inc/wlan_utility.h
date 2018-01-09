@@ -63,6 +63,21 @@ bool wlan_is_dsrc_channel(uint16_t center_freq);
 uint8_t wlan_freq_to_chan(uint32_t freq);
 
 /**
+ * wlan_is_ie_valid() - Determine if an IE sequence is valid
+ * @ie: Pointer to the IE buffer
+ * @ie_len: Length of the IE buffer @ie
+ *
+ * This function validates that the IE sequence is valid by verifying
+ * that the sum of the lengths of the embedded elements match the
+ * length of the sequence.
+ *
+ * Note well that a 0-length IE sequence is considered valid.
+ *
+ * Return: true if the IE sequence is valid, false if it is invalid
+ */
+bool wlan_is_ie_valid(const uint8_t *ie, size_t ie_len);
+
+/**
  * wlan_get_ie_ptr_from_eid() - Find out ie from eid
  * @eid: element id
  * @ie: source ie address
