@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3112,7 +3112,7 @@ QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx)
 	if (!hdd_ipa_uc_is_enabled(hdd_ctx))
 		return QDF_STATUS_SUCCESS;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	/* Do only IPA Pipe specific configuration here. All one time
 	 * initialization wrt IPA UC shall in hdd_ipa_init and those need
@@ -3166,7 +3166,7 @@ QDF_STATUS hdd_ipa_uc_ol_init(struct hdd_context *hdd_ctx)
 	}
 
 fail_return:
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: status=%d", status);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: status=%d", status);
 	return status;
 }
 
@@ -5877,7 +5877,7 @@ static QDF_STATUS __hdd_ipa_init(struct hdd_context *hdd_ctx)
 	if (!hdd_ipa_is_enabled(hdd_ctx))
 		return QDF_STATUS_SUCCESS;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "enter");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "enter");
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
@@ -5986,7 +5986,7 @@ fail_setup_rm:
 	hdd_ctx->hdd_ipa = NULL;
 	ghdd_ipa = NULL;
 fail_return:
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "exit: fail");
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: fail");
 	return QDF_STATUS_E_FAILURE;
 }
 

@@ -1977,7 +1977,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, struct scheduler_msg *pMsg)
 		return status;
 	}
 	if (!SME_IS_START(pMac)) {
-		sme_warn("message type %d in stop state ignored", pMsg->type);
+		sme_debug("message type %d in stop state ignored", pMsg->type);
 		if (pMsg->bodyptr)
 			qdf_mem_free(pMsg->bodyptr);
 		goto release_lock;
