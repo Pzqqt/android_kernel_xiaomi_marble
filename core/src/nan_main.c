@@ -441,6 +441,30 @@ static QDF_STATUS nan_handle_end_ind(
 	return QDF_STATUS_SUCCESS;
 }
 
+static QDF_STATUS nan_handle_schedule_update(
+				struct nan_datapath_sch_update_event *ind)
+{
+	struct wlan_objmgr_psoc *psoc;
+	struct nan_psoc_priv_obj *psoc_nan_obj;
+
+	psoc = wlan_vdev_get_psoc(ind->vdev);
+	if (!psoc) {
+		nan_err("psoc is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj = nan_get_psoc_priv_obj(psoc);
+	if (!psoc_nan_obj) {
+		nan_err("psoc_nan_obj is NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	psoc_nan_obj->cb_obj.os_if_event_handler(psoc, ind->vdev,
+						 NDP_SCHEDULE_UPDATE, ind);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -483,6 +507,9 @@ QDF_STATUS nan_event_handler(struct scheduler_msg *pe_msg)
 		break;
 	case NDP_END_IND:
 		nan_handle_end_ind(pe_msg->bodyptr);
+		break;
+	case NDP_SCHEDULE_UPDATE:
+		nan_handle_schedule_update(pe_msg->bodyptr);
 		break;
 	default:
 		nan_alert("Unhandled NDP event: %d", pe_msg->type);

@@ -39,23 +39,45 @@ struct wlan_objmgr_vdev;
 #define NAN_MAX_SERVICE_NAME_LEN 255
 #define NAN_PASSPHRASE_MIN_LEN 8
 #define NAN_PASSPHRASE_MAX_LEN 63
+#define NAN_CH_INFO_MAX_CHANNELS 4
 
-
-#define NAN_DATAPATH_INF_CREATE_REQ                     0
-#define NAN_DATAPATH_INF_CREATE_RSP                     1
-#define NAN_DATAPATH_INF_DELETE_REQ                     2
-#define NAN_DATAPATH_INF_DELETE_RSP                     3
-#define NDP_INITIATOR_REQ                               4
-#define NDP_INITIATOR_RSP                               5
-#define NDP_RESPONDER_REQ                               6
-#define NDP_RESPONDER_RSP                               7
-#define NDP_END_REQ                                     8
-#define NDP_END_RSP                                     9
-#define NDP_INDICATION                                  10
-#define NDP_CONFIRM                                     11
-#define NDP_END_IND                                     12
-#define NDP_NEW_PEER                                    13
-#define NDP_PEER_DEPARTED                               14
+/**
+ * enum nan_datapath_msg_type - NDP msg type
+ * @NAN_DATAPATH_INF_CREATE_REQ: ndi create request
+ * @NAN_DATAPATH_INF_CREATE_RSP: ndi create response
+ * @NAN_DATAPATH_INF_DELETE_REQ: ndi delete request
+ * @NAN_DATAPATH_INF_DELETE_RSP: ndi delete response
+ * @NDP_INITIATOR_REQ: ndp initiator request
+ * @NDP_INITIATOR_RSP: ndp initiator response
+ * @NDP_RESPONDER_REQ: ndp responder request
+ * @NDP_RESPONDER_RSP: ndp responder response
+ * @NDP_END_REQ: ndp end request
+ * @NDP_END_RSP: ndp end response
+ * @NDP_INDICATION: ndp indication
+ * @NDP_CONFIRM: ndp confirm
+ * @NDP_END_IND: ndp end indication
+ * @NDP_NEW_PEER: ndp new peer created
+ * @NDP_PEER_DEPARTED: ndp peer departed/deleted
+ * @NDP_SCHEDULE_UPDATE: ndp schedule update
+ */
+enum nan_datapath_msg_type {
+	NAN_DATAPATH_INF_CREATE_REQ  = 0,
+	NAN_DATAPATH_INF_CREATE_RSP  = 1,
+	NAN_DATAPATH_INF_DELETE_REQ  = 2,
+	NAN_DATAPATH_INF_DELETE_RSP  = 3,
+	NDP_INITIATOR_REQ            = 4,
+	NDP_INITIATOR_RSP            = 5,
+	NDP_RESPONDER_REQ            = 6,
+	NDP_RESPONDER_RSP            = 7,
+	NDP_END_REQ                  = 8,
+	NDP_END_RSP                  = 9,
+	NDP_INDICATION               = 10,
+	NDP_CONFIRM                  = 11,
+	NDP_END_IND                  = 12,
+	NDP_NEW_PEER                 = 13,
+	NDP_PEER_DEPARTED            = 14,
+	NDP_SCHEDULE_UPDATE          = 15,
+};
 
 /**
  * enum nan_datapath_status_type - NDP status type
@@ -280,6 +302,22 @@ struct peer_nan_datapath_map {
 };
 
 /**
+ * struct nan_datapath_channel_info - ndp channel and channel bandwidth
+ * @channel: channel freq in mhz of the ndp connection
+ * @ch_width: channel width (wmi_channel_width) of the ndp connection
+ * @nss: nss used for ndp connection
+ *
+ */
+struct nan_datapath_channel_info {
+	uint32_t channel;
+	uint32_t ch_width;
+	uint32_t nss;
+};
+
+#define NAN_CH_INFO_MAX_LEN \
+	(NAN_CH_INFO_MAX_CHANNELS * sizeof(struct nan_datapath_channel_info))
+
+/**
  * struct nan_datapath_inf_create_req - ndi create request params
  * @transaction_id: unique identifier
  * @iface_name: interface name
@@ -460,6 +498,8 @@ struct nan_datapath_end_indication_event {
  * @num_active_ndps_on_peer: number of ndp instances on peer
  * @peer_ndi_mac_addr: peer NDI mac address
  * @rsp_code: ndp response code
+ * @num_channels: num channels
+ * @ch: channel info struct array
  * @ndp_info: ndp application info
  *
  */
@@ -470,6 +510,8 @@ struct nan_datapath_confirm_event {
 	uint32_t num_active_ndps_on_peer;
 	struct qdf_mac_addr peer_ndi_mac_addr;
 	enum nan_datapath_response_code rsp_code;
+	uint32_t num_channels;
+	struct nan_datapath_channel_info ch[NAN_CH_INFO_MAX_CHANNELS];
 	struct nan_datapath_app_info ndp_info;
 };
 
@@ -514,6 +556,27 @@ struct nan_datapath_peer_ind {
 	uint8_t session_id;
 	struct qdf_mac_addr peer_mac_addr;
 	uint16_t sta_id;
+};
+
+/**
+ * struct nan_datapath_sch_update_event - ndp schedule update indication
+ * @vdev: vdev schedule update was received
+ * @peer_addr: peer for which schedule update was received
+ * @flags: reason for sch update (opaque to driver)
+ * @num_channels: num of channels
+ * @num_ndp_instances: num of ndp instances
+ * @ch: channel info array
+ * @ndp_instances: array of ndp instances
+ *
+ */
+struct nan_datapath_sch_update_event {
+	struct wlan_objmgr_vdev *vdev;
+	struct qdf_mac_addr peer_addr;
+	uint32_t flags;
+	uint32_t num_channels;
+	uint32_t num_ndp_instances;
+	struct nan_datapath_channel_info ch[NAN_CH_INFO_MAX_CHANNELS];
+	uint32_t ndp_instances[NDP_NUM_INSTANCE_ID];
 };
 
 /**
