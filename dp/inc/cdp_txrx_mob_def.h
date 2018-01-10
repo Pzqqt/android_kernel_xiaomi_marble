@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,6 +196,7 @@ enum ol_tx_spec {
  * @PEER_DEBUG_ID_WMA_ADDBA_REQ: debug id for ADDBA request
  * @PEER_DEBUG_ID_WMA_DELBA_REQ: debug id for DELBA request
  * @PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP: debug id for send ADDBA response
+ * @PEER_DEBUG_ID_OL_RX_THREAD: debug id for rx thread
  * @PEER_DEBUG_ID_MAX: debug id MAX
  */
 enum peer_debug_id_type {
@@ -204,6 +205,7 @@ enum peer_debug_id_type {
 	PEER_DEBUG_ID_WMA_ADDBA_REQ = 2,
 	PEER_DEBUG_ID_WMA_DELBA_REQ = 3,
 	PEER_DEBUG_ID_LIM_SEND_ADDBA_RESP = 4,
+	PEER_DEBUG_ID_OL_RX_THREAD = 5,
 	PEER_DEBUG_ID_MAX
 };
 
