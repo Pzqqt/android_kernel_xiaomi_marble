@@ -17809,6 +17809,69 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+
+static QDF_STATUS extract_ndp_sch_update_tlv(wmi_unified_t wmi_handle,
+		uint8_t *data, struct nan_datapath_sch_update_event *ind)
+{
+	uint8_t i;
+	WMI_HOST_WLAN_PHY_MODE ch_mode;
+	WMI_NDL_SCHEDULE_UPDATE_EVENTID_param_tlvs *event;
+	wmi_ndl_schedule_update_fixed_param *fixed_params;
+
+	event = (WMI_NDL_SCHEDULE_UPDATE_EVENTID_param_tlvs *)data;
+	fixed_params = event->fixed_param;
+
+	WMI_LOGD(FL("flags: %d, num_ch: %d, num_ndp_instances: %d"),
+		 fixed_params->flags, fixed_params->num_channels,
+		 fixed_params->num_ndp_instances);
+
+	ind->vdev =
+		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
+						     fixed_params->vdev_id,
+						     WLAN_NAN_ID);
+	if (!ind->vdev) {
+		WMI_LOGE("vdev is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	ind->flags = fixed_params->flags;
+	ind->num_channels = fixed_params->num_channels;
+	ind->num_ndp_instances = fixed_params->num_ndp_instances;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_macaddr,
+				   ind->peer_addr.bytes);
+
+	if (ind->num_ndp_instances > NDP_NUM_INSTANCE_ID) {
+		WMI_LOGE(FL("uint32 overflow"));
+		wlan_objmgr_vdev_release_ref(ind->vdev, WLAN_NAN_ID);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_mem_copy(ind->ndp_instances, event->ndp_instance_list,
+		     sizeof(uint32_t) * ind->num_ndp_instances);
+
+	if (ind->num_channels > NAN_CH_INFO_MAX_CHANNELS) {
+		WMI_LOGE(FL("too many channels"));
+		ind->num_channels = NAN_CH_INFO_MAX_CHANNELS;
+	}
+	for (i = 0; i < ind->num_channels; i++) {
+		ind->ch[i].channel = event->ndl_channel_list[i].mhz;
+		ind->ch[i].nss = event->nss_list[i];
+		ch_mode = WMI_GET_CHANNEL_MODE(&event->ndl_channel_list[i]);
+		ind->ch[i].ch_width = wmi_get_ch_width_from_phy_mode(wmi_handle,
+								     ch_mode);
+		WMI_LOGD(FL("ch: %d, ch_mode: %d, nss: %d"),
+			 ind->ch[i].channel,
+			 ind->ch[i].ch_width,
+			 ind->ch[i].nss);
+	}
+
+	for (i = 0; i < fixed_params->num_ndp_instances; i++)
+		WMI_LOGD(FL("instance_id[%d]: %d"),
+			 i, event->ndp_instance_list[i]);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #endif
 
 #ifdef QCA_SUPPORT_CP_STATS
@@ -22963,6 +23026,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_ndp_responder_rsp = extract_ndp_responder_rsp_tlv,
 	.extract_ndp_end_rsp = extract_ndp_end_rsp_tlv,
 	.extract_ndp_end_ind = extract_ndp_end_ind_tlv,
+	.extract_ndp_sch_update = extract_ndp_sch_update_tlv,
 #endif
 	.send_btm_config = send_btm_config_cmd_tlv,
 	.send_obss_detection_cfg_cmd = send_obss_detection_cfg_cmd_tlv,
@@ -23236,6 +23300,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 	event_ids[wmi_ndp_end_indication_event_id] =
 		WMI_NDP_END_INDICATION_EVENTID;
 	event_ids[wmi_ndp_end_rsp_event_id] = WMI_NDP_END_RSP_EVENTID;
+	event_ids[wmi_ndl_schedule_update_event_id] =
+					WMI_NDL_SCHEDULE_UPDATE_EVENTID;
 
 	event_ids[wmi_oem_response_event_id] = WMI_OEM_RESPONSE_EVENTID;
 	event_ids[wmi_peer_stats_info_event_id] = WMI_PEER_STATS_INFO_EVENTID;

@@ -7368,6 +7368,16 @@ QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_extract_ndp_sch_update(wmi_unified_t wmi_handle, uint8_t *data,
+				      struct nan_datapath_sch_update_event *ind)
+{
+	if (wmi_handle->ops->extract_ndp_sch_update)
+		return wmi_handle->ops->extract_ndp_sch_update(wmi_handle,
+							       data, ind);
+
+	return QDF_STATUS_E_FAILURE;
+}
 #endif
 QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
 				       struct wmi_btm_config *params)
