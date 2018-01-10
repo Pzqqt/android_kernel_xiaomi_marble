@@ -1845,6 +1845,10 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	} else {
 		hdd_debug("New pdev has been created with pdev_id = %u",
 			  hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id);
+		if (dispatcher_pdev_open(hdd_ctx->hdd_pdev)) {
+			hdd_err("dispatcher pdev open failed");
+			QDF_BUG(0);
+		}
 	}
 
 	ret = hdd_update_green_ap_config(hdd_ctx);
@@ -2669,6 +2673,7 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 post_disable:
 	cds_post_disable();
+	dispatcher_pdev_close(hdd_ctx->hdd_pdev);
 	hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 
 cds_txrx_free:
@@ -10134,6 +10139,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		QDF_ASSERT(0);
 	}
 
+	dispatcher_pdev_close(hdd_ctx->hdd_pdev);
 	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
 	if (ret) {
 		hdd_err("Failed to destroy pdev; errno:%d", ret);
