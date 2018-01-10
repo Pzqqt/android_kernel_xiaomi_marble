@@ -735,16 +735,17 @@ static QDF_STATUS send_peer_update_wds_entry_cmd_non_tlv(wmi_unified_t wmi_handl
 			WMI_PEER_UPDATE_WDS_ENTRY_CMDID);
 }
 
+#ifdef WLAN_SUPPORT_GREEN_AP
 /**
  * send_green_ap_ps_cmd_non_tlv() - enable green ap powersave command
  * @wmi_handle: wmi handle
  * @value: value
- * @mac_id: mac id to have radio context
+ * @pdev_id: pdev id to have radio context
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS send_green_ap_ps_cmd_non_tlv(wmi_unified_t wmi_handle,
-						uint32_t value, uint8_t mac_id)
+						uint32_t value, uint8_t pdev_id)
 {
 	wmi_pdev_green_ap_ps_enable_cmd *cmd;
 	wmi_buf_t buf;
@@ -775,6 +776,7 @@ static QDF_STATUS send_green_ap_ps_cmd_non_tlv(wmi_unified_t wmi_handle,
 #endif /* OL_GREEN_AP_DEBUG_CONFIG_INTERACTIONS */
 	return ret;
 }
+#endif
 
 /**
  * send_pdev_utf_cmd_non_tlv() - send utf command to fw
@@ -8229,7 +8231,9 @@ struct wmi_ops non_tlv_ops =  {
 	.send_vdev_up_cmd = send_vdev_up_cmd_non_tlv,
 	.send_peer_create_cmd = send_peer_create_cmd_non_tlv,
 	.send_peer_delete_cmd = send_peer_delete_cmd_non_tlv,
+#ifdef WLAN_SUPPORT_GREEN_AP
 	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_non_tlv,
+#endif
 	.send_pdev_utf_cmd = send_pdev_utf_cmd_non_tlv,
 	.send_pdev_param_cmd = send_pdev_param_cmd_non_tlv,
 	.send_suspend_cmd = send_suspend_cmd_non_tlv,
