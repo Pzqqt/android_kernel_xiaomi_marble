@@ -93,6 +93,8 @@
 #include <wlan_pmo_ucfg_api.h>
 #include "wifi_pos_api.h"
 #include "hif_main.h"
+#include <target_if_spectral.h>
+#include <wlan_spectral_utils_api.h>
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -3478,6 +3480,7 @@ QDF_STATUS wma_start(void)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle;
 	int status;
+	struct wmi_spectral_cmd_ops cmd_ops;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3698,6 +3701,11 @@ QDF_STATUS wma_start(void)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
+	cmd_ops.wmi_spectral_configure_cmd_send =
+			wmi_unified_vdev_spectral_configure_cmd_send;
+	cmd_ops.wmi_spectral_enable_cmd_send =
+			wmi_unified_vdev_spectral_enable_cmd_send;
+	wlan_register_wmi_spectral_cmd_ops(wma_handle->pdev, &cmd_ops);
 
 end:
 	WMA_LOGD("%s: Exit", __func__);

@@ -112,7 +112,7 @@
 #include "wlan_utility.h"
 #include "wlan_reg_ucfg_api.h"
 #include "wifi_pos_api.h"
-
+#include "wlan_hdd_spectralscan.h"
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 
@@ -13534,7 +13534,7 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_fetch_bss_transition_status
 	},
-
+	FEATURE_SPECTRAL_SCAN_VENDOR_COMMANDS
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_COMMANDS
 #endif

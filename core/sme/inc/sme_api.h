@@ -1993,6 +1993,31 @@ int sme_get_bss_transition_status(tHalHandle hal,
 uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
 				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
 				  bool append_ie);
+/**
+ * sme_get_oper_chan_freq - gets the operating channel freq
+ * @vdev: vdev handle
+ *
+ * Return: operating channel frequency
+ */
+int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * sme_get_oper_ch_width - gets the operating channel width
+ * @vdev: vdev handle
+ *
+ * Return: operating channel width
+ */
+enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev);
+
+/**
+ * sme_get_oper_ch_width - gets the secondary channel frequency
+ * @vdev: vdev handle
+ * @sec20chan_freq: secondary channel frequency
+ *
+ * Return: secondary channel frequency
+ */
+int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
+						uint16_t *sec20chan_freq);
 
 /**
  * sme_enable_roaming_on_connected_sta() - Enable roaming on an connected sta

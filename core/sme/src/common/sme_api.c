@@ -65,6 +65,7 @@
 #include "wifi_pos_api.h"
 #include "net/cfg80211.h"
 #include <qca_vendor.h>
+#include <wlan_spectral_utils_api.h>
 
 static tSelfRecoveryStats g_self_recovery_stats;
 
@@ -1239,6 +1240,7 @@ QDF_STATUS sme_start(tHalHandle hHal)
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	struct policy_mgr_sme_cbacks sme_cbacks;
+	struct spectral_legacy_cbacks spectral_cb;
 
 	do {
 		status = csr_start(pMac);
@@ -1264,6 +1266,10 @@ QDF_STATUS sme_start(tHalHandle hHal)
 				status);
 			break;
 		}
+		spectral_cb.vdev_get_chan_freq = sme_get_oper_chan_freq;
+		spectral_cb.vdev_get_ch_width = sme_get_oper_ch_width;
+		spectral_cb.vdev_get_sec20chan_freq_mhz = sme_get_sec20chan_freq_mhz;
+		spectral_register_legacy_cb(pMac->psoc, &spectral_cb);
 		pMac->sme.state = SME_STATE_START;
 
 		/* START RRM */
@@ -15913,6 +15919,73 @@ void sme_enable_roaming_on_connected_sta(tHalHandle hal)
 				      REASON_CTX_INIT);
 		sme_release_global_lock(&mac_ctx->sme);
 	}
+}
 
+int16_t sme_get_oper_chan_freq(struct wlan_objmgr_vdev *vdev)
+{
+	uint8_t vdev_id, chan;
+	struct csr_roam_session *session;
+	tpAniSirGlobal mac_ctx;
+	tHalHandle h_hal;
+	int16_t freq = 0;
+
+	if (vdev == NULL) {
+		sme_err("Invalid vdev id is passed");
+		return 0;
+	}
+
+	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	mac_ctx = PMAC_STRUCT(h_hal);
+	vdev_id = wlan_vdev_get_id(vdev);
+	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+		sme_err("Invalid vdev id is passed");
+		return 0;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+	chan = csr_get_infra_operation_channel(mac_ctx, vdev_id);
+	if (chan)
+		freq = cds_chan_to_freq(chan);
+
+	return freq;
+}
+
+enum phy_ch_width sme_get_oper_ch_width(struct wlan_objmgr_vdev *vdev)
+{
+	uint8_t vdev_id;
+	struct csr_roam_session *session;
+	tpAniSirGlobal mac_ctx;
+	tHalHandle h_hal;
+	enum phy_ch_width ch_width = CH_WIDTH_20MHZ;
+
+	if (vdev == NULL) {
+		sme_err("Invalid vdev id is passed");
+		return CH_WIDTH_INVALID;
+	}
+
+	h_hal = cds_get_context(QDF_MODULE_ID_SME);
+	mac_ctx = PMAC_STRUCT(h_hal);
+	vdev_id = wlan_vdev_get_id(vdev);
+	if (!CSR_IS_SESSION_VALID(mac_ctx, vdev_id)) {
+		sme_err("Invalid vdev id is passed");
+		return CH_WIDTH_INVALID;
+	}
+
+	session = CSR_GET_SESSION(mac_ctx, vdev_id);
+
+	if (csr_is_conn_state_connected(mac_ctx, vdev_id))
+		ch_width = session->connectedProfile.vht_channel_width;
+
+	return ch_width;
+}
+
+int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
+						uint16_t *sec20chan_freq)
+{
+	uint8_t vdev_id;
+
+	vdev_id = wlan_vdev_get_id(vdev);
+	/* Need to extend */
+	return 0;
 }
 
