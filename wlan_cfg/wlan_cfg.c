@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -187,6 +187,7 @@
 #define WLAN_CFG_HTT_PKT_TYPE 2
 #define WLAN_CFG_MAX_PEER_ID 64
 
+#define WLAN_CFG_RX_DEFRAG_TIMEOUT 100
 
 #ifdef CONFIG_MCL
 static const int tx_ring_mask[WLAN_CFG_INT_NUM_CONTEXTS] = {
@@ -350,6 +351,9 @@ struct wlan_cfg_dp_soc_ctxt *wlan_cfg_soc_attach()
 	wlan_cfg_ctx->base_hw_macid = 1;
 	/*Enable checksum offload by default*/
 	wlan_cfg_ctx->tcp_udp_checksumoffload = 1;
+
+	wlan_cfg_ctx->defrag_timeout_check = 1;
+	wlan_cfg_ctx->rx_defrag_min_timeout = WLAN_CFG_RX_DEFRAG_TIMEOUT;
 
 	return wlan_cfg_ctx;
 }
@@ -697,6 +701,17 @@ int wlan_cfg_get_checksum_offload(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->tcp_udp_checksumoffload;
 }
+
+int wlan_cfg_get_rx_defrag_min_timeout(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->rx_defrag_min_timeout;
+}
+
+int wlan_cfg_get_defrag_timeout_check(struct wlan_cfg_dp_soc_ctxt *cfg)
+{
+	return cfg->defrag_timeout_check;
+}
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
  * wlan_cfg_get_tx_flow_stop_queue_th() - Get flow control stop threshold

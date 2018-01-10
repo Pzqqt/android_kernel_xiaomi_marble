@@ -1,5 +1,5 @@
 /*
-* * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+* * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -146,11 +146,13 @@ struct wlan_cfg_dp_soc_ctxt {
 	bool tso_enabled;
 	bool napi_enabled;
 	bool tcp_udp_checksumoffload;
+	bool defrag_timeout_check;
 	int nss_cfg;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	uint32_t tx_flow_stop_queue_threshold;
 	uint32_t tx_flow_start_queue_offset;
 #endif
+	uint32_t rx_defrag_min_timeout;
 };
 
 /**
@@ -663,4 +665,7 @@ int wlan_cfg_get_tx_flow_stop_queue_th(struct wlan_cfg_dp_soc_ctxt *cfg);
 
 int wlan_cfg_get_tx_flow_start_queue_offset(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif /* QCA_LL_TX_FLOW_CONTROL_V2 */
+int wlan_cfg_get_rx_defrag_min_timeout(struct wlan_cfg_dp_soc_ctxt *cfg);
+
+int wlan_cfg_get_defrag_timeout_check(struct wlan_cfg_dp_soc_ctxt *cfg);
 #endif

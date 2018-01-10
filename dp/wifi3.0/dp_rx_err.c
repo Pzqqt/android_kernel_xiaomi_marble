@@ -879,6 +879,8 @@ dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota)
 done:
 	hal_srng_access_end(hal_soc, hal_ring);
 
+	if (soc->rx.flags.defrag_timeout_check)
+		dp_rx_defrag_waitlist_flush(soc);
 
 	/* Assume MAC id = 0, owner = 0 */
 	if (rx_bufs_used) {

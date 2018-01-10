@@ -1965,6 +1965,13 @@ static int dp_soc_cmn_setup(struct dp_soc *soc)
 		reo_params.rx_hash_enabled = true;
 	}
 
+	/* setup the global rx defrag waitlist */
+	TAILQ_INIT(&soc->rx.defrag.waitlist);
+	soc->rx.defrag.timeout_ms =
+		wlan_cfg_get_rx_defrag_min_timeout(soc->wlan_cfg_ctx);
+	soc->rx.flags.defrag_timeout_check =
+		wlan_cfg_get_defrag_timeout_check(soc->wlan_cfg_ctx);
+
 out:
 	hal_reo_setup(soc->hal_soc, &reo_params);
 

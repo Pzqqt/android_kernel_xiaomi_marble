@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -139,4 +139,8 @@ uint8_t dp_rx_get_pkt_dir(uint8_t *rx_desc_info)
 	return mac_hdr->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 }
 
+void dp_rx_defrag_waitlist_flush(struct dp_soc *soc);
+void dp_rx_reorder_flush_frag(struct dp_peer *peer,
+			 unsigned int tid);
+void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid);
 #endif /* _DP_RX_DEFRAG_H */

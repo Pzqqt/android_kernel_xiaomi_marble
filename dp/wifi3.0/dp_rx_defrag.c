@@ -83,7 +83,70 @@ static void dp_rx_clear_saved_desc_info(struct dp_peer *peer, unsigned tid)
 	peer->rx_tid[tid].dst_ring_desc = NULL;
 }
 
-#ifdef DEFRAG_TIMEOUT
+/*
+ * dp_rx_reorder_flush_frag(): Flush the frag list
+ * @peer: Pointer to the peer data structure
+ * @tid: Transmit ID (TID)
+ *
+ * Flush the per-TID frag list
+ *
+ * Returns: None
+ */
+void dp_rx_reorder_flush_frag(struct dp_peer *peer,
+			 unsigned int tid)
+{
+	struct dp_rx_reorder_array_elem *rx_reorder_array_elem;
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Flushing TID %d"), tid);
+
+	rx_reorder_array_elem = peer->rx_tid[tid].array;
+	if (rx_reorder_array_elem->head) {
+		dp_rx_defrag_frames_free(rx_reorder_array_elem->head);
+		rx_reorder_array_elem->head = NULL;
+		rx_reorder_array_elem->tail = NULL;
+	}
+}
+
+/*
+ * dp_rx_defrag_waitlist_flush(): Flush SOC defrag wait list
+ * @soc: DP SOC
+ *
+ * Flush fragments of all waitlisted TID's
+ *
+ * Returns: None
+ */
+void dp_rx_defrag_waitlist_flush(struct dp_soc *soc)
+{
+	struct dp_rx_tid *rx_reorder, *tmp;
+	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
+
+	TAILQ_FOREACH_SAFE(rx_reorder, &soc->rx.defrag.waitlist,
+			   defrag_waitlist_elem, tmp) {
+		struct dp_peer *peer;
+		struct dp_rx_tid *rx_reorder_base;
+		unsigned int tid;
+
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Current time  %u"), now_ms);
+
+		if (rx_reorder->defrag_timeout_ms > now_ms)
+			break;
+
+		tid = rx_reorder->tid;
+		/* get index 0 of the rx_reorder array */
+		rx_reorder_base = rx_reorder - tid;
+		peer =
+			container_of(rx_reorder_base, struct dp_peer,
+				     rx_tid[0]);
+
+		TAILQ_REMOVE(&soc->rx.defrag.waitlist, rx_reorder,
+			     defrag_waitlist_elem);
+		//dp_rx_defrag_waitlist_remove(peer, tid);
+		dp_rx_reorder_flush_frag(peer, tid);
+	}
+}
+
 /*
  * dp_rx_defrag_waitlist_add(): Update per-PDEV defrag wait list
  * @peer: Pointer to the peer data structure
@@ -97,6 +160,9 @@ static void dp_rx_defrag_waitlist_add(struct dp_peer *peer, unsigned tid)
 {
 	struct dp_soc *psoc = peer->vdev->pdev->soc;
 	struct dp_rx_tid *rx_reorder = &peer->rx_tid[tid];
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Adding TID %u to waitlist"), tid);
 
 	/* TODO: use LIST macros instead of TAIL macros */
 	TAILQ_INSERT_TAIL(&psoc->rx.defrag.waitlist, rx_reorder,
@@ -112,7 +178,7 @@ static void dp_rx_defrag_waitlist_add(struct dp_peer *peer, unsigned tid)
  *
  * Returns: None
  */
-static void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
+void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 {
 	struct dp_pdev *pdev = peer->vdev->pdev;
 	struct dp_soc *soc = pdev->soc;
@@ -125,23 +191,16 @@ static void dp_rx_defrag_waitlist_remove(struct dp_peer *peer, unsigned tid)
 		return;
 	}
 
-	rx_reorder = &peer->rx_tid[tid];
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				FL("Remove TID %u from waitlist"), tid);
 
-	if (rx_reorder->defrag_waitlist_elem.tqe_next != NULL) {
-
-		TAILQ_REMOVE(&soc->rx.defrag.waitlist, rx_reorder,
-				defrag_waitlist_elem);
-		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
-		rx_reorder->defrag_waitlist_elem.tqe_prev = NULL;
-	} else if (rx_reorder->defrag_waitlist_elem.tqe_prev == NULL) {
-
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-			"waitlist->tqe_prev is NULL");
-		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
-		qdf_assert(0);
+	TAILQ_FOREACH(rx_reorder, &soc->rx.defrag.waitlist,
+			   defrag_waitlist_elem) {
+		if (rx_reorder->tid == tid)
+			TAILQ_REMOVE(&soc->rx.defrag.waitlist,
+				rx_reorder, defrag_waitlist_elem);
 	}
 }
-#endif
 
 /*
  * dp_rx_defrag_fraglist_insert(): Create a per-sequence fragment list
@@ -1257,17 +1316,18 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 			rx_reorder_array_elem->head = NULL;
 			rx_reorder_array_elem->tail = NULL;
 
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+				"%s mismatch, dropping earlier sequence ",
+				(rxseq == rx_tid->curr_seq_num)
+				? "address"
+				: "seq number");
+
 			/*
 			 * The sequence number for this fragment becomes the
 			 * new sequence number to be processed
 			 */
 			rx_tid->curr_seq_num = rxseq;
 
-			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
-				"%s mismatch, dropping earlier sequence ",
-				(rxseq == rx_tid->curr_seq_num)
-				? "address"
-				: "seq number");
 		}
 	} else {
 		/* Start of a new sequence */
@@ -1314,13 +1374,9 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 	}
 
-#ifdef DEFRAG_TIMEOUT
-	/* TODO: handle fragment timeout gracefully */
-	if (pdev->soc->rx.flags.defrag_timeout_check) {
+	if (pdev->soc->rx.flags.defrag_timeout_check)
 		dp_rx_defrag_waitlist_remove(peer, tid);
-		goto end;
-	}
-#endif
+
 	/* Yet to receive more fragments for this sequence number */
 	if (!all_frag_present) {
 		uint32_t now_ms =
@@ -1328,6 +1384,8 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 
 		peer->rx_tid[tid].defrag_timeout_ms =
 			now_ms + pdev->soc->rx.defrag.timeout_ms;
+
+		dp_rx_defrag_waitlist_add(peer, tid);
 
 		return QDF_STATUS_SUCCESS;
 	}
