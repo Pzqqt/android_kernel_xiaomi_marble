@@ -51,6 +51,9 @@ static QDF_STATUS target_if_nan_event_flush_cb(struct scheduler_msg *msg)
 	case NDP_END_IND:
 		vdev = ((struct nan_datapath_end_indication_event *)ptr)->vdev;
 		break;
+	case NDP_SCHEDULE_UPDATE:
+		vdev = ((struct nan_datapath_sch_update_event *)ptr)->vdev;
+		break;
 	default:
 		break;
 	}
@@ -89,6 +92,9 @@ static QDF_STATUS target_if_nan_event_dispatcher(struct scheduler_msg *msg)
 		break;
 	case NDP_END_IND:
 		vdev = ((struct nan_datapath_end_indication_event *)ptr)->vdev;
+		break;
+	case NDP_SCHEDULE_UPDATE:
+		vdev = ((struct nan_datapath_sch_update_event *)ptr)->vdev;
 		break;
 	default:
 		target_if_err("invalid msg type %d", msg->type);
@@ -559,6 +565,55 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 	return 0;
 }
 
+static int target_if_ndp_sch_update_handler(ol_scn_t scn, uint8_t *data,
+					    uint32_t data_len)
+{
+	QDF_STATUS status;
+	struct wlan_objmgr_psoc *psoc;
+	struct wmi_unified *wmi_handle;
+	struct scheduler_msg msg = {0};
+	struct nan_datapath_sch_update_event *rsp;
+
+	psoc = target_if_get_psoc_from_scn_hdl(scn);
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return -EINVAL;
+	}
+
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
+	if (!wmi_handle) {
+		target_if_err("wmi_handle is null.");
+		return -EINVAL;
+	}
+
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_sch_update(wmi_handle, data, rsp);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(rsp);
+		return -EINVAL;
+	}
+
+	msg.bodyptr = rsp;
+	msg.type = NDP_SCHEDULE_UPDATE;
+	msg.callback = target_if_nan_event_dispatcher;
+	msg.flush_callback = target_if_nan_event_flush_cb;
+	target_if_debug("NDP_SCHEDULE_UPDATE sent: %d", msg.type);
+	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		target_if_err("failed to post msg, status: %d", status);
+		target_if_nan_event_flush_cb(&msg);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 static QDF_STATUS target_if_nan_req(void *req, uint32_t req_type)
 {
 	/* send cmd to fw */
@@ -675,6 +730,16 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	ret = wmi_unified_register_event_handler(handle,
+		wmi_ndl_schedule_update_event_id,
+		target_if_ndp_sch_update_handler,
+		WMI_RX_UMAC_CTX);
+	if (ret) {
+		target_if_err("wmi event registration failed, ret: %d", ret);
+		target_if_nan_deregister_events(psoc);
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -682,6 +747,13 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 {
 	int ret, status = 0;
 	wmi_unified_t handle = get_wmi_unified_hdl_from_psoc(psoc);
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				wmi_ndl_schedule_update_event_id);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
 				wmi_ndp_end_rsp_event_id);
