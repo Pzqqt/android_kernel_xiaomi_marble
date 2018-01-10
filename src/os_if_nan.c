@@ -122,6 +122,14 @@ vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_PARAMS_MAX + 1] = {
 						.type = NLA_BINARY,
 						.len = NAN_MAX_SERVICE_NAME_LEN
 	},
+	[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_INFO] = {
+						.type = NLA_BINARY,
+						.len = NAN_CH_INFO_MAX_LEN
+	},
+	[QCA_WLAN_VENDOR_ATTR_NDP_NSS] = {
+						.type = NLA_U32,
+						.len = sizeof(uint32_t)
+	},
 };
 
 static int os_if_nan_process_ndi_create(struct wlan_objmgr_psoc *psoc,
@@ -1023,6 +1031,7 @@ ndp_indication_nla_failed:
 static inline uint32_t osif_ndp_get_ndp_confirm_ind_len(
 				struct nan_datapath_confirm_event *ndp_confirm)
 {
+	uint32_t ch_info_len = 0;
 	uint32_t data_len = NLMSG_HDRLEN;
 
 	data_len += nla_total_size(vendor_attr_policy[
@@ -1042,7 +1051,60 @@ static inline uint32_t osif_ndp_get_ndp_confirm_ind_len(
 		data_len +=
 			nla_total_size(ndp_confirm->ndp_info.ndp_app_info_len);
 
+	/* ch_info is a nested array of following attributes */
+	ch_info_len += nla_total_size(
+		vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL].len);
+	ch_info_len += nla_total_size(
+		vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_WIDTH].len);
+	ch_info_len += nla_total_size(
+		vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_NSS].len);
+
+	if (ndp_confirm->num_channels)
+		data_len += ndp_confirm->num_channels *
+				nla_total_size(ch_info_len);
+
 	return data_len;
+}
+
+static QDF_STATUS os_if_ndp_confirm_pack_ch_info(struct sk_buff *event,
+				struct nan_datapath_confirm_event *ndp_confirm)
+{
+	int idx = 0;
+	struct nlattr *ch_array, *ch_element;
+
+	cfg80211_debug("num_ch: %d", ndp_confirm->num_channels);
+	if (!ndp_confirm->num_channels)
+		return QDF_STATUS_SUCCESS;
+
+	ch_array = nla_nest_start(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_INFO);
+	if (!ch_array)
+		return QDF_STATUS_E_FAULT;
+
+	for (idx = 0; idx < ndp_confirm->num_channels; idx++) {
+		cfg80211_debug("ch[%d]: freq: %d, width: %d, nss: %d",
+			       idx, ndp_confirm->ch[idx].channel,
+			       ndp_confirm->ch[idx].ch_width,
+			       ndp_confirm->ch[idx].nss);
+		ch_element = nla_nest_start(event, idx);
+		if (!ch_element)
+			return QDF_STATUS_E_FAULT;
+
+		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL,
+				ndp_confirm->ch[idx].channel))
+			return QDF_STATUS_E_FAULT;
+
+		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_WIDTH,
+				ndp_confirm->ch[idx].ch_width))
+			return QDF_STATUS_E_FAULT;
+
+		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_NSS,
+				ndp_confirm->ch[idx].nss))
+			return QDF_STATUS_E_FAULT;
+		nla_nest_end(event, ch_element);
+	}
+	nla_nest_end(event, ch_array);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1062,20 +1124,20 @@ static inline uint32_t osif_ndp_get_ndp_confirm_ind_len(
  *
  * Return: none
  */
-static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
-				struct nan_datapath_confirm_event *ndp_confirm)
+static void
+os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
+			      struct nan_datapath_confirm_event *ndp_confirm)
 {
 	int idx = 0;
 	uint8_t *ifname;
 	uint32_t data_len;
 	QDF_STATUS status;
 	qdf_size_t ifname_len;
-	uint32_t ndp_qos_config = 0;
+	struct nan_callbacks cb_obj;
 	struct sk_buff *vendor_event;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
 	struct wlan_objmgr_psoc *psoc = wlan_vdev_get_psoc(vdev);
 	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
-	struct nan_callbacks cb_obj;
 
 	if (!ndp_confirm) {
 		cfg80211_err("Invalid NDP Initator response");
@@ -1156,12 +1218,19 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 			ndp_confirm->reason_code))
 		goto ndp_confirm_nla_failed;
 
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_NUM_CHANNELS,
+			ndp_confirm->num_channels))
+		goto ndp_confirm_nla_failed;
+
+	status = os_if_ndp_confirm_pack_ch_info(vendor_event, ndp_confirm);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto ndp_confirm_nla_failed;
+
 	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
-	cfg80211_debug("NDP confim sent, ndp instance id: %d, peer addr: %pM, ndp_cfg: %d, rsp_code: %d, reason_code: %d",
+	cfg80211_debug("NDP confim sent, ndp instance id: %d, peer addr: %pM rsp_code: %d, reason_code: %d",
 		       ndp_confirm->ndp_instance_id,
 		       ndp_confirm->peer_ndi_mac_addr.bytes,
-		       ndp_qos_config, ndp_confirm->rsp_code,
-		       ndp_confirm->reason_code);
+		       ndp_confirm->rsp_code, ndp_confirm->reason_code);
 
 	cfg80211_debug("NDP confim, ndp app info dump");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
@@ -1620,6 +1689,168 @@ static void os_if_ndp_iface_delete_rsp_handler(struct wlan_objmgr_psoc *psoc,
 	cb_obj.drv_ndi_delete_rsp_handler(vdev_id);
 }
 
+static inline uint32_t osif_ndp_get_ndp_sch_update_ind_len(
+			struct nan_datapath_sch_update_event *sch_update)
+{
+	uint32_t ch_info_len = 0;
+	uint32_t data_len = NLMSG_HDRLEN;
+
+	data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD].len);
+	data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR].len);
+	if (sch_update->num_ndp_instances)
+		data_len += nla_total_size(sch_update->num_ndp_instances *
+					   sizeof(uint32_t));
+	data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_UPDATE_REASON].len);
+	data_len += nla_total_size(vendor_attr_policy[
+			QCA_WLAN_VENDOR_ATTR_NDP_NUM_CHANNELS].len);
+	/* ch_info is a nested array of following attributes */
+	ch_info_len += nla_total_size(
+		vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL].len);
+	ch_info_len += nla_total_size(
+		vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_WIDTH].len);
+	ch_info_len += nla_total_size(
+		vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_NDP_NSS].len);
+
+	if (sch_update->num_ndp_instances)
+		data_len += sch_update->num_ndp_instances *
+						nla_total_size(ch_info_len);
+
+	return data_len;
+}
+
+static QDF_STATUS os_if_ndp_sch_update_pack_ch_info(struct sk_buff *event,
+			struct nan_datapath_sch_update_event *sch_update)
+{
+	int idx = 0;
+	struct nlattr *ch_array, *ch_element;
+
+	cfg80211_debug("num_ch: %d", sch_update->num_channels);
+	if (!sch_update->num_channels)
+		return QDF_STATUS_SUCCESS;
+
+	ch_array = nla_nest_start(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_INFO);
+	if (!ch_array)
+		return QDF_STATUS_E_FAULT;
+
+	for (idx = 0; idx < sch_update->num_channels; idx++) {
+		cfg80211_debug("ch[%d]: freq: %d, width: %d, nss: %d",
+				idx, sch_update->ch[idx].channel,
+				sch_update->ch[idx].ch_width,
+				sch_update->ch[idx].nss);
+		ch_element = nla_nest_start(event, idx);
+		if (!ch_element)
+			return QDF_STATUS_E_FAULT;
+
+		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL,
+				sch_update->ch[idx].channel))
+			return QDF_STATUS_E_FAULT;
+
+		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_CHANNEL_WIDTH,
+				sch_update->ch[idx].ch_width))
+			return QDF_STATUS_E_FAULT;
+
+		if (nla_put_u32(event, QCA_WLAN_VENDOR_ATTR_NDP_NSS,
+				sch_update->ch[idx].nss))
+			return QDF_STATUS_E_FAULT;
+		nla_nest_end(event, ch_element);
+	}
+	nla_nest_end(event, ch_array);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * os_if_ndp_sch_update_ind_handler() - NDP schedule update handler
+ * @vdev: vdev object pointer
+ * @ind: sch update pointer
+ *
+ * Following vendor event is sent to cfg80211:
+ *
+ * Return: none
+ */
+static void os_if_ndp_sch_update_ind_handler(struct wlan_objmgr_vdev *vdev,
+					     void *ind)
+{
+	int idx = 0;
+	uint8_t *ifname;
+	QDF_STATUS status;
+	uint32_t data_len;
+	uint8_t ifname_len;
+	struct sk_buff *vendor_event;
+	struct nan_datapath_sch_update_event *sch_update = ind;
+	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+	struct pdev_osif_priv *os_priv = wlan_pdev_get_ospriv(pdev);
+
+	if (!sch_update) {
+		cfg80211_err("Invalid sch update params");
+		return;
+	}
+
+	ifname = wlan_util_vdev_get_if_name(vdev);
+	if (!ifname) {
+		cfg80211_err("ifname is null");
+		return;
+	}
+	ifname_len = qdf_str_len(ifname);
+	if (ifname_len > IFNAMSIZ) {
+		cfg80211_err("ifname(%d) too long", ifname_len);
+		return;
+	}
+
+	data_len = osif_ndp_get_ndp_sch_update_ind_len(sch_update);
+	vendor_event = cfg80211_vendor_event_alloc(os_priv->wiphy, NULL,
+				data_len, QCA_NL80211_VENDOR_SUBCMD_NDP_INDEX,
+				GFP_ATOMIC);
+	if (!vendor_event) {
+		cfg80211_err("cfg80211_vendor_event_alloc failed");
+		return;
+	}
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_SUBCMD,
+			QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_UPDATE_IND))
+		goto ndp_sch_ind_nla_failed;
+
+	if (nla_put(vendor_event,
+		    QCA_WLAN_VENDOR_ATTR_NDP_PEER_DISCOVERY_MAC_ADDR,
+		    QDF_MAC_ADDR_SIZE, sch_update->peer_addr.bytes))
+		goto ndp_sch_ind_nla_failed;
+
+	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_INSTANCE_ID_ARRAY,
+		    sch_update->num_ndp_instances * sizeof(uint32_t),
+		    sch_update->ndp_instances))
+		goto ndp_sch_ind_nla_failed;
+
+	if (nla_put_u32(vendor_event,
+			QCA_WLAN_VENDOR_ATTR_NDP_SCHEDULE_UPDATE_REASON,
+			sch_update->flags))
+		goto ndp_sch_ind_nla_failed;
+
+	if (nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_NDP_NUM_CHANNELS,
+			sch_update->num_channels))
+		goto ndp_sch_ind_nla_failed;
+
+	status = os_if_ndp_sch_update_pack_ch_info(vendor_event, sch_update);
+	if (QDF_IS_STATUS_ERROR(status))
+		goto ndp_sch_ind_nla_failed;
+
+	cfg80211_debug("Flags: %d, num_instance_id: %d", sch_update->flags,
+		       sch_update->num_ndp_instances);
+
+	for (idx = 0; idx < sch_update->num_ndp_instances; idx++)
+		cfg80211_debug("ndp_instance[%d]: %d", idx,
+			       sch_update->ndp_instances[idx]);
+
+	cfg80211_vendor_event(vendor_event, GFP_ATOMIC);
+	return;
+
+ndp_sch_ind_nla_failed:
+	cfg80211_err("nla_put api failed");
+	kfree_skb(vendor_event);
+}
+
 void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
 			     struct wlan_objmgr_vdev *vdev,
 			     uint32_t type, void *msg)
@@ -1654,6 +1885,9 @@ void os_if_nan_event_handler(struct wlan_objmgr_psoc *psoc,
 		break;
 	case NDP_PEER_DEPARTED:
 		os_if_peer_departed_ind_handler(vdev, msg);
+		break;
+	case NDP_SCHEDULE_UPDATE:
+		os_if_ndp_sch_update_ind_handler(vdev, msg);
 		break;
 	default:
 		break;
