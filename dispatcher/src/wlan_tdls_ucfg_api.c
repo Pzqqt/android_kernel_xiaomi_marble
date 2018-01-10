@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -624,8 +624,7 @@ QDF_STATUS ucfg_tdls_notify_sta_connect(
 	struct tdls_sta_notify_params *notify;
 
 	if (!notify_info || !notify_info->vdev) {
-		tdls_err("notify_info->vdev: %pK, notify_info %pK",
-				notify_info->vdev, notify_info);
+		tdls_err("notify_info %pK", notify_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	tdls_debug("Enter ");
@@ -656,8 +655,7 @@ QDF_STATUS ucfg_tdls_notify_sta_disconnect(
 	struct tdls_sta_notify_params *notify;
 
 	if (!notify_info || !notify_info->vdev) {
-		tdls_err("notify_info->vdev: %pK, notify_info %pK",
-				notify_info->vdev, notify_info);
+		tdls_err("notify_info %pK", notify_info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -691,8 +689,7 @@ QDF_STATUS ucfg_tdls_set_operating_mode(
 	struct tdls_set_mode_params *set_mode;
 
 	if (!set_mode_params || !set_mode_params->vdev) {
-		tdls_err("vdev: %pK, set_mode_params %pK",
-				set_mode_params->vdev, set_mode_params);
+		tdls_err("set_mode_params %pK", set_mode_params);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 

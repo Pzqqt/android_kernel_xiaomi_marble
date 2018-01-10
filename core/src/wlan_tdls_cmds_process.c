@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2249,16 +2249,18 @@ QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
 	struct tdls_osif_indication ind;
 
 	if (!req || !req->vdev) {
-		tdls_err("req: %p", req);
-		status = QDF_STATUS_E_INVAL;
-		goto error;
+		tdls_err("Invalid input params req: %p", req);
+		if (req)
+			qdf_mem_free(req);
+
+		return QDF_STATUS_E_INVAL;
 	}
 
 	vdev = req->vdev;
 	status = tdls_get_vdev_objects(vdev, &vdev_obj, &soc_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("can't get vdev_obj & soc_obj");
-		goto error;
+		goto get_obj_err;
 	}
 
 	if (soc_obj->connected_peer_count == 0)
@@ -2267,7 +2269,7 @@ QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
 	if (soc_obj->tdls_nss_switch_in_progress) {
 		if (!soc_obj->tdls_nss_teardown_complete) {
 			tdls_err("TDLS antenna switch is in progress");
-			goto error;
+			goto ant_sw_in_progress;
 		} else {
 			goto ant_sw_done;
 		}
@@ -2291,7 +2293,7 @@ QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
 	if (tdls_teardown_links(soc_obj, req->mode) == 0)
 		goto ant_sw_done;
 
-error:
+ant_sw_in_progress:
 	ant_switch_state = -EAGAIN;
 ant_sw_done:
 	if (soc_obj->tdls_event_cb) {
@@ -2310,8 +2312,10 @@ ant_sw_done:
 		   soc_obj->tdls_nss_switch_in_progress,
 		   soc_obj->tdls_nss_teardown_complete);
 
+get_obj_err:
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_TDLS_NB_ID);
 	qdf_mem_free(req);
+
 	return status;
 }
 
@@ -2320,7 +2324,7 @@ QDF_STATUS tdls_antenna_switch_flush_callback(struct scheduler_msg *msg)
 	struct tdls_antenna_switch_request *req;
 
 	if (!msg || !msg->bodyptr) {
-		tdls_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
+		tdls_err("msg: 0x%pK", msg);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 	req = msg->bodyptr;

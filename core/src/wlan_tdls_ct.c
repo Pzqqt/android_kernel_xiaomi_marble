@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -509,10 +509,15 @@ void tdls_indicate_teardown(struct tdls_vdev_priv_obj *tdls_vdev,
 	struct tdls_soc_priv_obj *tdls_soc;
 	struct tdls_osif_indication indication;
 
+	if (!tdls_vdev || !curr_peer) {
+		tdls_err("tdls_vdev: %pK, curr_peer: %pK",
+			 tdls_vdev, curr_peer);
+		return;
+	}
+
 	tdls_soc = wlan_vdev_get_tdls_soc_obj(tdls_vdev->vdev);
-	if (!tdls_soc || !tdls_vdev || !curr_peer) {
-		tdls_err("tdls_soc: %pK, tdls_vdev: %pK, curr_peer: %pK",
-			 tdls_soc, tdls_vdev, curr_peer);
+	if (!tdls_soc) {
+		tdls_err("tdls_soc: %pK", tdls_soc);
 		return;
 	}
 
