@@ -226,6 +226,12 @@ struct ol_ath_radiostats {
 	A_UINT32    rx_mgmt_rssi_drop;
 	A_UINT32    tx_retries;
 	A_UINT32    rx_data_bytes;
+	A_UINT32    tx_frame_count;
+	A_UINT32    rx_frame_count;
+	A_UINT32    rx_clear_count;
+	A_UINT32    cycle_count;
+	A_UINT32    phy_err_count;
+	A_UINT32    chan_tx_pwr;
 };
 
 #ifndef CONFIG_WIN
