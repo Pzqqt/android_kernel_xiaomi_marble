@@ -39,6 +39,9 @@
 #include "wlan_pmo_hw_filter_public_struct.h"
 #endif
 #include <wlan_utility.h>
+#ifdef WLAN_SUPPORT_GREEN_AP
+#include "wlan_green_ap_api.h"
+#endif
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
@@ -971,18 +974,17 @@ static QDF_STATUS send_peer_update_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_PEER_UPDATE_WDS_ENTRY_CMDID);
 }
 
-
-
+#ifdef WLAN_SUPPORT_GREEN_AP
 /**
  * send_green_ap_ps_cmd_tlv() - enable green ap powersave command
  * @wmi_handle: wmi handle
  * @value: value
- * @mac_id: mac id to have radio context
+ * @pdev_id: pdev id to have radio context
  *
  * Return: QDF_STATUS_SUCCESS for success or error code
  */
 static QDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
-						uint32_t value, uint8_t mac_id)
+						uint32_t value, uint8_t pdev_id)
 {
 	wmi_pdev_green_ap_ps_enable_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -1001,7 +1003,7 @@ static QDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 		   WMITLV_TAG_STRUC_wmi_pdev_green_ap_ps_enable_cmd_fixed_param,
 		   WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_green_ap_ps_enable_cmd_fixed_param));
-	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(mac_id);
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(pdev_id);
 	cmd->enable = value;
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -1013,6 +1015,7 @@ static QDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return 0;
 }
+#endif
 
 /**
  * send_pdev_utf_cmd_tlv() - send utf command to fw
@@ -8521,6 +8524,7 @@ static QDF_STATUS send_get_link_speed_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_SUPPORT_GREEN_AP
 /**
  * send_egap_conf_params_cmd_tlv() - send wmi cmd of egap configuration params
  * @wmi_handle:	 wmi handler
@@ -8529,7 +8533,7 @@ static QDF_STATUS send_get_link_speed_cmd_tlv(wmi_unified_t wmi_handle,
  * Return:	 0 for success, otherwise appropriate error code
  */
 static QDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
-		     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params)
+		     struct wlan_green_ap_egap_params *egap_params)
 {
 	wmi_ap_ps_egap_param_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -8546,10 +8550,10 @@ static QDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
 		       WMITLV_GET_STRUCT_TLVLEN(
 			       wmi_ap_ps_egap_param_cmd_fixed_param));
 
-	cmd->enable = egap_params->enable;
-	cmd->inactivity_time = egap_params->inactivity_time;
-	cmd->wait_time = egap_params->wait_time;
-	cmd->flags = egap_params->flags;
+	cmd->enable = egap_params->host_enable_egap;
+	cmd->inactivity_time = egap_params->egap_inactivity_time;
+	cmd->wait_time = egap_params->egap_wait_time;
+	cmd->flags = egap_params->egap_feature_flags;
 	err = wmi_unified_cmd_send(wmi_handle, buf,
 				   sizeof(*cmd), WMI_AP_PS_EGAP_PARAM_CMDID);
 	if (err) {
@@ -8560,6 +8564,7 @@ static QDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * send_fw_profiling_cmd_tlv() - send FW profiling cmd to WLAN FW
@@ -20837,7 +20842,6 @@ struct wmi_ops tlv_ops =  {
 	.send_peer_add_wds_entry_cmd = send_peer_add_wds_entry_cmd_tlv,
 	.send_peer_del_wds_entry_cmd = send_peer_del_wds_entry_cmd_tlv,
 	.send_peer_update_wds_entry_cmd = send_peer_update_wds_entry_cmd_tlv,
-	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_tlv,
 	.send_pdev_utf_cmd = send_pdev_utf_cmd_tlv,
 	.send_pdev_param_cmd = send_pdev_param_cmd_tlv,
 	.send_suspend_cmd = send_suspend_cmd_tlv,
@@ -20979,13 +20983,16 @@ struct wmi_ops tlv_ops =  {
 #ifdef CONFIG_MCL
 	.send_process_dhcp_ind_cmd = send_process_dhcp_ind_cmd_tlv,
 	.send_get_link_speed_cmd = send_get_link_speed_cmd_tlv,
-	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,
 	.send_bcn_buf_ll_cmd = send_bcn_buf_ll_cmd_tlv,
 	.send_roam_scan_offload_mode_cmd =
 			send_roam_scan_offload_mode_cmd_tlv,
 	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
 	.send_roam_scan_offload_ap_profile_cmd =
 			send_roam_scan_offload_ap_profile_cmd_tlv,
+#endif
+#ifdef WLAN_SUPPORT_GREEN_AP
+	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,
+	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_tlv,
 #endif
 	.send_fw_profiling_cmd = send_fw_profiling_cmd_tlv,
 	.send_csa_offload_enable_cmd = send_csa_offload_enable_cmd_tlv,

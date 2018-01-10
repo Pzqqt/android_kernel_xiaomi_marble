@@ -58,6 +58,9 @@
 #ifdef WLAN_OFFCHAN_TXRX_ENABLE
 #include <target_if_offchan_txrx_api.h>
 #endif
+#ifdef WLAN_SUPPORT_GREEN_AP
+#include <target_if_green_ap.h>
+#endif
 
 #ifdef DIRECT_BUF_RX_ENABLE
 #include <target_if_direct_buf_rx_api.h>
@@ -259,6 +262,20 @@ static void target_if_direct_buf_rx_tx_ops_register(
 }
 #endif /* DIRECT_BUF_RX_ENABLE */
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+static QDF_STATUS target_if_green_ap_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return target_if_register_green_ap_tx_ops(tx_ops);
+}
+#else
+static QDF_STATUS target_if_green_ap_tx_ops_register(
+				struct wlan_lmac_if_tx_ops *tx_ops)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif /* WLAN_SUPPORT_GREEN_AP */
+
 static void target_if_target_tx_ops_register(
 		struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -313,6 +330,8 @@ QDF_STATUS target_if_register_umac_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	target_if_target_tx_ops_register(tx_ops);
 
 	target_if_offchan_txrx_ops_register(tx_ops);
+
+	target_if_green_ap_tx_ops_register(tx_ops);
 
 	/* Converged UMAC components to register their TX-ops here */
 	return QDF_STATUS_SUCCESS;

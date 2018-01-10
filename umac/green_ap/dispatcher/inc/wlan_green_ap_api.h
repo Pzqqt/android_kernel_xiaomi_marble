@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,7 +23,25 @@
 #ifndef _WLAN_GREEN_AP_API_H_
 #define _WLAN_GREEN_AP_API_H_
 
+#include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <qdf_status.h>
+
+/**
+ * struct wlan_green_ap_egap_params - enhance green ap params
+ * @fw_egap_support: fw enhance green ap support
+ * @host_enable_egap: HOST enhance green ap support
+ * @egap_inactivity_time: inactivity time
+ * @egap_wait_time: wait time
+ * @egap_feature_flags: feature flags
+ */
+struct wlan_green_ap_egap_params {
+	bool fw_egap_support;
+	bool host_enable_egap;
+	uint32_t egap_inactivity_time;
+	uint32_t egap_wait_time;
+	uint32_t egap_feature_flags;
+};
 
 /**
  * wlan_green_ap_init() - initialize green ap component
@@ -43,7 +61,7 @@ QDF_STATUS wlan_green_ap_deinit(void);
  * wlan_green_ap_start() - Start green ap
  * @pdev: pdev pointer
  *
- * Call this function when the first vdev comes up
+ * Call this function when the first SAP comes up
  *
  * Return: Success or Failure
  */
@@ -53,7 +71,7 @@ QDF_STATUS wlan_green_ap_start(struct wlan_objmgr_pdev *pdev);
  * wlan_green_ap_stop() - Stop green ap
  * @pdev: pdev pointer
  *
- * Call this function when the last vdev goes down
+ * Call this function when the last SAP goes down
  *
  * Return: Success or Failure
  */
@@ -73,10 +91,9 @@ QDF_STATUS wlan_green_ap_add_sta(struct wlan_objmgr_pdev *pdev);
  * wlan_green_ap_del_sta() - On disassociation
  * @pdev: pdev pointer
  *
- * Call this function when new node is associated
+ * Call this function when new node is disassociated
  *
  * Return: Success or Failure
  */
 QDF_STATUS wlan_green_ap_del_sta(struct wlan_objmgr_pdev *pdev);
-
 #endif /* _WLAN_GREEN_AP_API_H_ */

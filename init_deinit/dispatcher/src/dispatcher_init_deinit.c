@@ -68,6 +68,10 @@
 
 #include <wlan_spectral_utils_api.h>
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+#include <wlan_green_ap_api.h>
+#endif
+
 /**
  * DOC: This file provides various init/deinit trigger point for new
  * components.
@@ -689,6 +693,28 @@ static QDF_STATUS dispatcher_dbr_psoc_disable(struct wlan_objmgr_psoc *psoc)
 }
 #endif /* DIRECT_BUF_RX_ENABLE */
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+static QDF_STATUS dispatcher_green_ap_init(void)
+{
+	return wlan_green_ap_init();
+}
+
+static QDF_STATUS dispatcher_green_ap_deinit(void)
+{
+	return wlan_green_ap_deinit();
+}
+#else
+static QDF_STATUS dispatcher_green_ap_init(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static QDF_STATUS dispatcher_green_ap_deinit(void)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS dispatcher_init(void)
 {
 	if (QDF_STATUS_SUCCESS != wlan_objmgr_global_obj_init())
@@ -745,6 +771,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_spectral_init())
 		goto spectral_init_fail;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_green_ap_init())
+		goto green_ap_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -756,6 +785,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	dispatcher_green_ap_deinit();
+green_ap_init_fail:
 	dispatcher_spectral_deinit();
 spectral_init_fail:
 	dispatcher_splitmac_deinit();
@@ -800,6 +831,8 @@ EXPORT_SYMBOL(dispatcher_init);
 QDF_STATUS dispatcher_deinit(void)
 {
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_green_ap_deinit());
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_spectral_deinit());
 

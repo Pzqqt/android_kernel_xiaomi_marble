@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,23 +22,40 @@
 #ifndef __TARGET_IF_GREEN_AP_H__
 #define __TARGET_IF_GREEN_AP_H__
 
+#include <wlan_objmgr_cmn.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <qdf_status.h>
+#include <wlan_lmac_if_def.h>
 
 /**
- * target_if_green_ap_enable_egap() - Enable egap
- * @pdev: pdev pointer
+ * target_if_register_green_ap_tx_ops() - lmac handler to register
+ *   green ap tx_ops callback functions
+ * @tx_ops: wlan_lmac_if_tx_ops object
  *
- * @Return: None
+ * Return: QDF_STATUS in case of success
  */
-void target_if_green_ap_enable_egap(struct wlan_objmgr_pdev *pdev);
+QDF_STATUS target_if_register_green_ap_tx_ops(
+		struct wlan_lmac_if_tx_ops *tx_ops);
 
 /**
- * target_if_green_ap_set_ps_on_off() - PS toggle
+ * target_if_green_ap_enable_egap() - enable enhanced green ap
+ * @pdev: pdev pointer
+ * @egap_params: enhanced green ap params
+ *
+ * @Return: QDF_STATUS_SUCCESS in case of success
+ */
+QDF_STATUS target_if_green_ap_enable_egap(
+		struct wlan_objmgr_pdev *pdev,
+		struct wlan_green_ap_egap_params *egap_params);
+
+/**
+ * target_if_green_ap_set_ps_on_off() - Green AP PS toggle
  * @pdev: pdev pointer
  * @value: Value to send PS on/off to FW
+ * @pdev_id: pdev id
  *
- * @Return: None
+ * @Return: QDF_STATUS_SUCCESS in case of success
  */
-void target_if_green_ap_set_ps_on_off(struct wlan_objmgr_pdev *pdev,
-				     uint32_t value);
+QDF_STATUS target_if_green_ap_set_ps_on_off(struct wlan_objmgr_pdev *pdev,
+					    bool value, uint8_t pdev_id);
 #endif

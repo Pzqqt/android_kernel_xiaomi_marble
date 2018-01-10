@@ -122,6 +122,7 @@
  * @WLAN_UMAC_COMP_OFFCHAN_TXRX:  Offchan TxRx
  * @WLAN_UMAC_COMP_SPLITMAC:      SplitMAC
  * @WLAN_UMAC_COMP_DISA:          DISA encryption test
+ * @WLAN_UMAC_COMP_GREEN_AP:      Green AP
  *
  * This id is static.
  * On Adding new component, new id has to be assigned
@@ -149,6 +150,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_SPECTRAL,
 	WLAN_UMAC_COMP_SPLITMAC,
 	WLAN_UMAC_COMP_DISA,
+	WLAN_UMAC_COMP_GREEN_AP,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

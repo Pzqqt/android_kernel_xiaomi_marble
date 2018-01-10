@@ -49,6 +49,9 @@
 #include <wlan_dfs_public_struct.h>
 #endif
 #include <qdf_threads.h>
+#ifdef WLAN_SUPPORT_GREEN_AP
+#include "wlan_green_ap_api.h"
+#endif
 
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
@@ -231,8 +234,10 @@ QDF_STATUS (*send_vdev_up_cmd)(wmi_unified_t wmi,
 QDF_STATUS (*send_peer_create_cmd)(wmi_unified_t wmi,
 					struct peer_create_params *param);
 
+#ifdef WLAN_SUPPORT_GREEN_AP
 QDF_STATUS (*send_green_ap_ps_cmd)(wmi_unified_t wmi_handle,
-						uint32_t value, uint8_t mac_id);
+				   uint32_t value, uint8_t pdev_id);
+#endif
 
 QDF_STATUS
 (*send_pdev_utf_cmd)(wmi_unified_t wmi_handle,
@@ -604,9 +609,6 @@ QDF_STATUS (*send_process_dhcp_ind_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_get_link_speed_cmd)(wmi_unified_t wmi_handle,
 			wmi_mac_addr peer_macaddr);
 
-QDF_STATUS (*send_egap_conf_params_cmd)(wmi_unified_t wmi_handle,
-				     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params);
-
 QDF_STATUS (*send_bcn_buf_ll_cmd)(wmi_unified_t wmi_handle,
 			wmi_bcn_send_from_host_cmd_fixed_param * param);
 
@@ -620,6 +622,11 @@ QDF_STATUS (*send_roam_scan_offload_ap_profile_cmd)(wmi_unified_t wmi_handle,
 QDF_STATUS (*send_pktlog_wmi_send_cmd)(wmi_unified_t wmi_handle,
 				   WMI_PKTLOG_EVENT pktlog_event,
 				   WMI_CMD_ID cmd_id, uint8_t user_triggered);
+#endif
+
+#ifdef WLAN_SUPPORT_GREEN_AP
+QDF_STATUS (*send_egap_conf_params_cmd)(wmi_unified_t wmi_handle,
+			struct wlan_green_ap_egap_params *egap_params);
 #endif
 
 QDF_STATUS (*send_fw_profiling_cmd)(wmi_unified_t wmi_handle,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -969,6 +969,19 @@ bool policy_mgr_map_concurrency_mode(enum QDF_OPMODE *old_mode,
 QDF_STATUS policy_mgr_get_channel_from_scan_result(
 		struct wlan_objmgr_psoc *psoc,
 		void *roam_profile, uint8_t *channel);
+
+/**
+ * policy_mgr_mode_specific_num_open_sessions() - to get number of open sessions
+ *                                                for a specific mode
+ * @psoc: PSOC object information
+ * @mode: device mode
+ * @num_sessions: to store num open sessions
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_mode_specific_num_open_sessions(
+		struct wlan_objmgr_psoc *psoc, enum QDF_OPMODE mode,
+		uint8_t *num_sessions);
 
 /**
  * policy_mgr_concurrent_open_sessions_running() - Checks for

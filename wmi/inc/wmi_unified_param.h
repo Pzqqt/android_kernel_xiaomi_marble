@@ -911,14 +911,6 @@ struct bss_chan_info_request_params {
 };
 
 /**
- * struct green_ap_ps_params - green ap ps cmd parameter
- * @value: parameter value
- */
-struct green_ap_ps_params {
-	uint32_t value;
-};
-
-/**
  * struct wow_cmd_params - wow cmd parameter
  * @enable: wow enable or disable flag
  * @can_suspend_link: flag to indicate if link can be suspended

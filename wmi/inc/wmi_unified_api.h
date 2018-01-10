@@ -55,6 +55,9 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
 #endif
+#ifdef WLAN_SUPPORT_GREEN_AP
+#include "wlan_green_ap_api.h"
+#endif
 
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
@@ -421,7 +424,7 @@ QDF_STATUS wmi_unified_stats_request_send(void *wmi_hdl,
 				struct stats_request_params *param);
 
 QDF_STATUS wmi_unified_green_ap_ps_send(void *wmi_hdl,
-						uint32_t value, uint8_t mac_id);
+					uint32_t value, uint8_t pdev_id);
 
 #ifdef FEATURE_WLAN_D0WOW
 QDF_STATUS wmi_unified_d0wow_enable_send(void *wmi_hdl,
@@ -757,10 +760,11 @@ QDF_STATUS wmi_unified_process_dhcp_ind(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_get_link_speed_cmd(void *wmi_hdl,
 					wmi_mac_addr peer_macaddr);
+#endif
 
+#ifdef WLAN_SUPPORT_GREEN_AP
 QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,
-		wmi_ap_ps_egap_param_cmd_fixed_param *egap_params);
-
+		struct wlan_green_ap_egap_params *egap_params);
 #endif
 
 QDF_STATUS wmi_unified_fw_profiling_data_cmd(void *wmi_hdl,

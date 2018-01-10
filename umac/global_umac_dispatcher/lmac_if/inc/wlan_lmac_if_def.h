@@ -539,11 +539,28 @@ struct wlan_lmac_if_offchan_txrx_ops {
 };
 #endif
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+struct wlan_green_ap_egap_params;
+/**
+ * struct wlan_lmac_if_green_ap_tx_ops - structure of tx function
+ *                  pointers for green ap component
+ * @enable_egap: function pointer to send enable egap indication to fw
+ * @ps_on_off_send:  function pointer to send enable/disable green ap ps to fw
+ */
+struct wlan_lmac_if_green_ap_tx_ops {
+	QDF_STATUS (*enable_egap)(struct wlan_objmgr_pdev *pdev,
+				struct wlan_green_ap_egap_params *egap_params);
+	QDF_STATUS (*ps_on_off_send)(struct wlan_objmgr_pdev *pdev,
+				     bool value, uint8_t pdev_id);
+};
+#endif
+
 /**
  * struct wlan_lmac_if_tx_ops - south bound tx function pointers
  * @mgmt_txrx_tx_ops: mgmt txrx tx ops
  * @scan: scan tx ops
  * @dfs_tx_ops: dfs tx ops.
+ * @green_ap_tx_ops: green_ap tx_ops
  *
  * Callback function tabled to be registered with umac.
  * umac will use the functional table to send events/frames to lmac/wmi
@@ -598,6 +615,9 @@ struct wlan_lmac_if_tx_ops {
 #endif
 #ifdef DIRECT_BUF_RX_ENABLE
 	struct wlan_lmac_if_direct_buf_rx_tx_ops dbr_tx_ops;
+#endif
+#ifdef WLAN_SUPPORT_GREEN_AP
+	 struct wlan_lmac_if_green_ap_tx_ops green_ap_tx_ops;
 #endif
 };
 

@@ -324,6 +324,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_CDP: Converged Data Path module ID
  * @QDF_MODULE_ID_DIRECT_BUF_RX: Direct Buffer Receive module ID
  * @QDF_MODULE_ID_DISA: DISA (encryption test) module ID
+ * @QDF_MODULE_ID_GREEN_AP: Green AP related logging
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -420,6 +421,7 @@ typedef enum {
 	QDF_MODULE_ID_CDP,
 	QDF_MODULE_ID_DIRECT_BUF_RX,
 	QDF_MODULE_ID_DISA,
+	QDF_MODULE_ID_GREEN_AP,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;

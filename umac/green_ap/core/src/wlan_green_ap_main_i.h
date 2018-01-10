@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,6 +23,34 @@
 
 #ifndef _WLAN_GREEN_AP_MAIN_I_H_
 #define _WLAN_GREEN_AP_MAIN_I_H_
+
+#include <wlan_objmgr_cmn.h>
+#include <wlan_objmgr_pdev_obj.h>
+#include <wlan_green_ap_api.h>
+#include <qdf_types.h>
+#include <qdf_status.h>
+#include <qdf_timer.h>
+
+#define WLAN_GREEN_AP_PS_ON_TIME        (0)
+#define WLAN_GREEN_AP_PS_TRANS_TIME     (20)
+
+#define green_ap_log(level, args...) \
+			QDF_TRACE(QDF_MODULE_ID_GREEN_AP, level, ## args)
+#define green_ap_logfl(level, format, args...) \
+			green_ap_log(level, FL(format), ## args)
+
+#define green_ap_alert(format, args...) \
+		green_ap_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
+#define green_ap_err(format, args...) \
+		green_ap_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
+#define green_apwarn(format, args...) \
+		green_ap_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
+#define green_ap_notice(format, args...) \
+		green_ap_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
+#define green_ap_info(format, args...) \
+		green_ap_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
+#define green_ap_debug(format, args...) \
+		green_ap_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 /**
  * enum wlan_green_ap_ps_state - PS states
@@ -59,54 +87,61 @@ enum wlan_green_ap_ps_event {
 /**
  * struct wlan_pdev_green_ap_ctx - green ap context
  * @pdev - Pdev pointer
- * @green_ap_ps_enable  - Enable PS
- * @green_ap_ps_on_time - PS on time, once enabled
- * @green_ap_ps_trans_time - PS transition time
- * @green_ap_num_node - Number of nodes associated to radio
+ * @ps_enable  - Enable PS
+ * @ps_on_time - PS on time, once enabled
+ * @ps_trans_time - PS transition time
+ * @num_nodes - Number of nodes associated to radio
  * @ps_state - PS state
  * @ps_event - PS event
- * @green_ap_ps_timer - Timer
- * @green_ap_egap_support - Enhanced green ap support
+ * @ps_timer - Timer
+ * @lock: green ap spinlock
+ * @egap_params - Enhanced green ap params
  */
 struct wlan_pdev_green_ap_ctx {
 	struct wlan_objmgr_pdev *pdev;
-	uint8_t green_ap_ps_enable;
-	uint8_t green_ap_ps_on_time;
-	uint32_t green_ap_ps_trans_time;
-	uint32_t green_ap_num_nodes;
+	uint8_t ps_enable;
+	uint8_t ps_on_time;
+	uint32_t ps_trans_time;
+	uint32_t num_nodes;
 	enum wlan_green_ap_ps_state ps_state;
 	enum wlan_green_ap_ps_event ps_event;
-	qdf_timer_t green_ap_ps_timer;
-	bool green_ap_egap_support;
+	qdf_timer_t ps_timer;
+	qdf_spinlock_t lock;
+	struct wlan_green_ap_egap_params egap_params;
 };
 
 /**
- * wlan_green_ap_state_mc() - Green ap state machine
- * @pdev: pdev pointer
- * @event: ps event
+ * wlan_psoc_get_green_ap_tx_ops() - Obtain green ap tx ops from green ap ctx
+ * @green_ap_ctx: green ap context
  *
- * @Return: None
+ * @Return: green ap tx ops pointer
  */
-void wlan_green_ap_state_mc(struct wlan_objmgr_pdev *pdev,
-			   enum wlan_green_ap_ps_event event);
+struct wlan_lmac_if_green_ap_tx_ops *
+wlan_psoc_get_green_ap_tx_ops(struct wlan_pdev_green_ap_ctx *green_ap_ctx);
 
 /**
- * wlan_green_ap_ps_event_state_update() - Update PS state and event
- * @pdev: pdev pointer
- * @state: ps state
+ * wlan_is_egap_enabled() - Get Enhance Green AP feature status
+ * @green_ap_ctx: green ap context
+ *
+ * Return: true if firmware, feature_flag and ini are all egap enabled
+ */
+bool wlan_is_egap_enabled(struct wlan_pdev_green_ap_ctx *green_ap_ctx);
+
+/**
+ * wlan_green_ap_state_mc() - Green ap state machine
+ * @green_ap_ctx: green ap context
  * @event: ps event
  *
- * @Return: None
+ * @Return: Success or Failure
  */
-void wlan_green_ap_ps_event_state_update(struct wlan_objmgr_pdev *pdev,
-			 enum wlan_green_ap_ps_state state,
-			 enum wlan_green_ap_ps_event event);
+QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
+				  enum wlan_green_ap_ps_event event);
 
 /**
  * wlan_green_ap_timer_fn() - Green ap timer callback
  * @pdev: pdev pointer
  *
- * @Return: status
+ * @Return: None
  */
-int wlan_green_ap_timer_fn(struct wlan_objmgr_pdev *pdev);
+void wlan_green_ap_timer_fn(void *pdev);
 #endif  /* _WLAN_GREEN_AP_MAIN_I_H_ */

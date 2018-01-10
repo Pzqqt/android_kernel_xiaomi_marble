@@ -285,33 +285,33 @@ QDF_STATUS wmi_unified_peer_rx_reorder_queue_remove_send(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
-#if defined(FEATURE_GREEN_AP) || defined(ATH_SUPPORT_GREEN_AP)
+#ifdef WLAN_SUPPORT_GREEN_AP
 /**
  * wmi_unified_green_ap_ps_send() - enable green ap powersave command
  * @wmi_handle: wmi handle
  * @value: value
- * @mac_id: mac id to have radio context
+ * @pdev_id: pdev id to have radio context
  *
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
 QDF_STATUS wmi_unified_green_ap_ps_send(void *wmi_hdl,
-						uint32_t value, uint8_t mac_id)
+						uint32_t value, uint8_t pdev_id)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_green_ap_ps_cmd)
 		return wmi_handle->ops->send_green_ap_ps_cmd(wmi_handle, value,
-				  mac_id);
+				  pdev_id);
 
 	return QDF_STATUS_E_FAILURE;
 }
 #else
 QDF_STATUS wmi_unified_green_ap_ps_send(void *wmi_hdl,
-						uint32_t value, uint8_t mac_id)
+						uint32_t value, uint8_t pdev_id)
 {
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
-#endif /* FEATURE_GREEN_AP or ATH_SUPPORT_GREEN_AP*/
+#endif /* WLAN_SUPPORT_GREEN_AP */
 
 /**
  * wmi_unified_pdev_utf_cmd() - send utf command to fw
@@ -2221,7 +2221,9 @@ QDF_STATUS wmi_unified_get_link_speed_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
+#ifdef WLAN_SUPPORT_GREEN_AP
 /**
  * wmi_unified_egap_conf_params_cmd() - send wmi cmd of egap configuration params
  * @wmi_handle:	 wmi handler
@@ -2230,7 +2232,7 @@ QDF_STATUS wmi_unified_get_link_speed_cmd(void *wmi_hdl,
  * Return:	 0 for success, otherwise appropriate error code
  */
 QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,
-				     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params)
+				struct wlan_green_ap_egap_params *egap_params)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -2240,7 +2242,6 @@ QDF_STATUS wmi_unified_egap_conf_params_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
-
 #endif
 
 /**
