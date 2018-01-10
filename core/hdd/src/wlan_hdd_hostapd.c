@@ -1741,9 +1741,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
-		adapter->sta_info[staId].ecsa_capable = pSapEvent->
-			sapevt.sapStationAssocReassocCompleteEvent.ecsa_capable;
-
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
 			status = hdd_ipa_wlan_evt(adapter,
 					ap_ctx->broadcast_sta_id,
@@ -2133,6 +2130,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		staId = event->staId;
 		if (QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_fill_station_info(adapter, event);
+
+		adapter->sta_info[staId].ecsa_capable = event->ecsa_capable;
 
 		if (hdd_ipa_is_enabled(hdd_ctx)) {
 			status = hdd_ipa_wlan_evt(adapter,
