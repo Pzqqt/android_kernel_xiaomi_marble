@@ -10021,8 +10021,8 @@ static int tavil_post_reset_cb(struct wcd9xxx *wcd9xxx)
 	else if (control->mclk_rate == WCD934X_MCLK_CLK_9P6MHZ)
 		snd_soc_update_bits(codec, WCD934X_CODEC_RPM_CLK_MCLK_CFG,
 				    0x03, 0x01);
-	wcd_resmgr_post_ssr_v2(tavil->resmgr);
 	tavil_update_reg_defaults(tavil);
+	wcd_resmgr_post_ssr_v2(tavil->resmgr);
 	tavil_codec_init_reg(tavil);
 	__tavil_enable_efuse_sensing(tavil);
 	tavil_mclk2_reg_defaults(tavil);
