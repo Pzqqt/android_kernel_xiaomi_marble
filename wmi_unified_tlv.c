@@ -1695,7 +1695,7 @@ static QDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->param_id = vdev_param;
 	cmd->param_value = param->param_value;
 	WMI_LOGD("Setting vdev %d param = %x, value = %u",
-		 param->if_id, param->param_id, param->param_value);
+		 cmd->vdev_id, cmd->param_id, cmd->param_value);
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_VDEV_SET_PARAM_CMDID);
 	if (QDF_IS_STATUS_ERROR(ret)) {
@@ -23738,6 +23738,8 @@ static void populate_vdev_param_tlv(uint32_t *vdev_param)
 					WMI_VDEV_PARAM_RATE_DROPDOWN_BMAP;
 	vdev_param[wmi_vdev_param_set_ba_mode] =
 					WMI_VDEV_PARAM_BA_MODE;
+	vdev_param[wmi_vdev_param_capabilities] =
+					WMI_VDEV_PARAM_CAPABILITIES;
 }
 #endif
 
