@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -164,9 +164,10 @@
  * 3.48 Add pdev ID field to HTT_T2H_MSG_TYPE_PPDU_STATS_IND and
  *      HTT_T2H_MSG_TYPE_PKTLOG
  * 3.49 Add HTT_T2H_MSG_TYPE_MONITOR_MAC_HEADER_IND def
+ * 3.50 Add learning_frame flag to htt_tx_msdu_desc_ext2_t
  */
 #define HTT_CURRENT_VERSION_MAJOR 3
-#define HTT_CURRENT_VERSION_MINOR 49
+#define HTT_CURRENT_VERSION_MINOR 50
 
 #define HTT_NUM_TX_FRAG_DESC  1024
 
@@ -1648,7 +1649,13 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
      * This structure can be expanded further up to 60 bytes
      * by adding further DWORDs as needed.
      */
-    A_UINT32 rsvd0;
+    A_UINT32
+        /* learning_frame
+         * When this flag is set, this frame will be dropped by FW
+         * rather than being enqueued to the Transmit Queue Manager (TQM) HW.
+         */
+        learning_frame      :  1,
+        rsvd0               : 31;
 
 } POSTPACK;
 
@@ -1713,6 +1720,10 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
 #define HTT_TX_MSDU_EXT2_DESC_KEY_FLAGS_S                     8
 #define HTT_TX_MSDU_EXT_DESC_CHANFREQ_M                       0xffff0000
 #define HTT_TX_MSDU_EXT_DESC_CHANFREQ_S                       16
+
+/* DWORD 5 */
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_M           0x00000001
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_S           0
 
 /* DWORD 0 */
 #define HTT_TX_MSDU_EXT2_DESC_FLAG_VALID_PWR_GET(_var) \
@@ -1974,6 +1985,15 @@ PREPACK struct htt_tx_msdu_desc_ext2_t {
          ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_CHANFREQ_S)); \
      } while (0)
 
+/* DWORD 5 */
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_GET(_var) \
+    (((_var) & HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_M) >> \
+    HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_S)
+#define HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_SET(_var, _val) \
+    do { \
+        HTT_CHECK_SET_VAL(HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME, _val); \
+        ((_var) |= ((_val) << HTT_TX_MSDU_EXT2_DESC_FLAG_LEARNING_FRAME_S)); \
+    } while (0)
 
 typedef enum {
     HTT_TCL_METADATA_TYPE_PEER_BASED = 0,
