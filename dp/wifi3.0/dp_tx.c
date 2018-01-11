@@ -2117,7 +2117,8 @@ static void dp_tx_inspect_handler(struct dp_tx_desc_s *tx_desc, uint8_t *status)
 #ifdef FEATURE_PERPKT_INFO
 QDF_STATUS
 dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		      uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf)
+		      uint16_t peer_id, uint32_t ppdu_id, uint8_t first_msdu,
+		      uint8_t last_msdu, qdf_nbuf_t netbuf)
 {
 	struct tx_capture_hdr *ppdu_hdr;
 	struct dp_peer *peer = NULL;
@@ -2156,6 +2157,9 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 	ppdu_hdr->ppdu_id = ppdu_id;
 	qdf_mem_copy(ppdu_hdr->ra, peer->mac_addr.raw,
 			IEEE80211_ADDR_LEN);
+	ppdu_hdr->peer_id = peer_id;
+	ppdu_hdr->first_msdu = first_msdu;
+	ppdu_hdr->last_msdu = last_msdu;
 
 	dp_wdi_event_handler(WDI_EVENT_TX_DATA, soc,
 				netbuf, peer_id,
@@ -2166,7 +2170,8 @@ dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
 #else
 static QDF_STATUS
 dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		      uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf)
+		      uint16_t peer_id, uint32_t ppdu_id, uint8_t first_msdu,
+		      uint8_t last_msdu, qdf_nbuf_t netbuf)
 {
 	return QDF_STATUS_E_NOSUPPORT;
 }
@@ -2216,7 +2221,8 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 	qdf_nbuf_unmap(soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
 
 	if (dp_send_compl_to_stack(soc, desc->pdev, ts.peer_id,
-			ts.ppdu_id, nbuf) == QDF_STATUS_SUCCESS)
+			ts.ppdu_id, ts.first_msdu, ts.last_msdu,
+			nbuf) == QDF_STATUS_SUCCESS)
 		return;
 
 	if (!vdev->mesh_vdev) {

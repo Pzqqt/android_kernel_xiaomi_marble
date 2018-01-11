@@ -189,7 +189,8 @@ static inline void dp_tx_me_exit(struct dp_pdev *pdev)
 #ifdef FEATURE_PERPKT_INFO
 QDF_STATUS
 dp_send_compl_to_stack(struct dp_soc *soc,  struct dp_pdev *pdev,
-		      uint16_t peer_id, uint32_t ppdu_id, qdf_nbuf_t netbuf);
+		      uint16_t peer_id, uint32_t ppdu_id, uint8_t first_msdu,
+		      uint8_t last_msdu, qdf_nbuf_t netbuf);
 #endif
 
 /* TODO TX_FEATURE_NOT_YET */
