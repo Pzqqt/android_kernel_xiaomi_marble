@@ -1026,47 +1026,20 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf);
 void qdf_net_buf_debug_acquire_skb(qdf_nbuf_t net_buf,
 			uint8_t *file_name, uint32_t line_num);
 void qdf_net_buf_debug_release_skb(qdf_nbuf_t net_buf);
-void qdf_net_buf_free_debug_add(qdf_nbuf_t net_buf, uint8_t *file_name,
-				uint32_t line_num);
 
 /* nbuf allocation rouines */
 
-#define qdf_nbuf_alloc(d, s, r, a, p)			\
+#define qdf_nbuf_alloc(d, s, r, a, p) \
 	qdf_nbuf_alloc_debug(d, s, r, a, p, __FILE__, __LINE__)
-static inline qdf_nbuf_t
-qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size, int reserve,
-		int align, int prio, uint8_t *file_name,
-		uint32_t line_num)
-{
-	qdf_nbuf_t net_buf;
 
-	net_buf = __qdf_nbuf_alloc(osdev, size, reserve, align, prio);
+qdf_nbuf_t qdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size,
+				int reserve, int align, int prio,
+				uint8_t *file, uint32_t line);
 
-	/* Store SKB in internal QDF tracking table */
-	if (qdf_likely(net_buf))
-		qdf_net_buf_debug_add_node(net_buf, size, file_name, line_num);
-
-	return net_buf;
-}
-
-#define qdf_nbuf_free(d)			\
+#define qdf_nbuf_free(d) \
 	qdf_nbuf_free_debug(d, __FILE__, __LINE__)
-static inline void qdf_nbuf_free_debug(qdf_nbuf_t net_buf,
-				       uint8_t *file_name, uint32_t line_num)
-{
-	if (qdf_nbuf_is_tso(net_buf) &&
-			qdf_nbuf_get_users(net_buf) > 1)
-		goto free_buf;
 
-	/* Remove SKB from internal QDF tracking table */
-	if (qdf_likely(net_buf)) {
-		qdf_net_buf_free_debug_add(net_buf, file_name, line_num);
-		qdf_net_buf_debug_delete_node(net_buf);
-	}
-
-free_buf:
-	__qdf_nbuf_free(net_buf);
-}
+void qdf_nbuf_free_debug(qdf_nbuf_t nbuf, uint8_t *file, uint32_t line);
 
 #define qdf_nbuf_clone(buf)     \
 	qdf_nbuf_clone_debug(buf, __FILE__, __LINE__)
