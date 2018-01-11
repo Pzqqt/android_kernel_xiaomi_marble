@@ -284,7 +284,6 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 {
 	tpDphHashNode sta_ds;
 	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) lim_msg->bodyptr;
-	tSirResultCodes status = eSIR_SME_SUCCESS;
 	struct wlan_objmgr_vdev *vdev;
 	struct wlan_objmgr_psoc *psoc = mac_ctx->psoc;
 	struct nan_datapath_peer_ind peer_ind;
@@ -295,7 +294,6 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	}
 	if (!LIM_IS_NDI_ROLE(pe_session)) {
 		pe_err("Session %d is not NDI role", del_sta_params->assocId);
-		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
 
@@ -304,13 +302,11 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	if (!sta_ds) {
 		pe_err("DPH Entry for STA %X is missing",
 			del_sta_params->assocId);
-		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
 
 	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
 		pe_err("DEL STA failed!");
-		status = eSIR_SME_REFUSED;
 		goto skip_event;
 	}
 	pe_info("Deleted STA AssocID %d staId %d MAC " MAC_ADDRESS_STR,
@@ -325,14 +321,20 @@ void lim_process_ndi_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	peer_ind.sta_id = sta_ds->staIndex;
 	qdf_mem_copy(&peer_ind.peer_mac_addr.bytes,
 		sta_ds->staAddr, sizeof(tSirMacAddr));
-	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
-					pe_session->smeSessionId, WLAN_NAN_ID);
-
 	lim_release_peer_idx(mac_ctx, sta_ds->assocId, pe_session);
 	lim_delete_dph_hash_entry(mac_ctx, sta_ds->staAddr, sta_ds->assocId,
 			pe_session);
 	pe_session->limMlmState = eLIM_MLM_IDLE_STATE;
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(psoc,
+						    pe_session->smeSessionId,
+						    WLAN_NAN_ID);
+	if (!vdev) {
+		pe_err("Failed to get vdev from id");
+		goto skip_event;
+	}
 	ucfg_nan_event_handler(psoc, vdev, NDP_PEER_DEPARTED, &peer_ind);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 
 skip_event:
 	qdf_mem_free(del_sta_params);
@@ -467,13 +469,13 @@ static QDF_STATUS lim_send_sme_ndp_add_sta_rsp(tpAniSirGlobal mac_ctx,
 						    add_sta_rsp->smesessionId,
 						    WLAN_NAN_ID);
 	if (!vdev) {
-		pe_debug("Invalid vdev");
+		pe_err("Failed to get vdev from id");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	new_peer_ind = qdf_mem_malloc(sizeof(*new_peer_ind));
 	if (!new_peer_ind) {
-		pe_debug("Failed to allocate memory");
+		pe_err("Failed to allocate memory");
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_NAN_ID);
 		return QDF_STATUS_E_NOMEM;
 	}
