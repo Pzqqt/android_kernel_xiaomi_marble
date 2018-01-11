@@ -2495,6 +2495,12 @@ qdf_nbuf_expand(qdf_nbuf_t buf, uint32_t headroom, uint32_t tailroom)
 	return __qdf_nbuf_expand(buf, headroom, tailroom);
 }
 
+static inline int
+qdf_nbuf_linearize(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_linearize(buf);
+}
+
 static inline qdf_nbuf_t
 qdf_nbuf_unshare(qdf_nbuf_t buf)
 {

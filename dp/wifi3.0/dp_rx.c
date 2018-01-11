@@ -394,6 +394,16 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 			memset(nbuf->cb, 0x0, sizeof(nbuf->cb));
 			len = qdf_nbuf_len(nbuf);
 
+			/* linearize the nbuf just before we send to
+			 * dp_tx_send()
+			 */
+			if (qdf_unlikely(qdf_nbuf_get_ext_list(nbuf))) {
+				if (qdf_nbuf_linearize(nbuf) == -ENOMEM)
+					return false;
+
+				nbuf = qdf_nbuf_unshare(nbuf);
+			}
+
 			if (!dp_tx_send(sa_peer->vdev, nbuf)) {
 				DP_STATS_INC_PKT(sa_peer, rx.intra_bss.pkts,
 						1, len);

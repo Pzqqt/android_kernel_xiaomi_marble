@@ -1492,6 +1492,24 @@ __qdf_nbuf_realloc_tailroom(struct sk_buff *skb, uint32_t tailroom)
 }
 
 /**
+ * __qdf_nbuf_linearize() - skb linearize
+ * @skb: sk buff
+ *
+ * create a version of the specified nbuf whose contents
+ * can be safely modified without affecting other
+ * users.If the nbuf is non-linear then this function
+ * linearize. if unable to linearize returns -ENOMEM on
+ * success 0 is returned
+ *
+ * Return: 0 on Success, -ENOMEM on failure is returned.
+ */
+static inline int
+__qdf_nbuf_linearize(struct sk_buff *skb)
+{
+	return skb_linearize(skb);
+}
+
+/**
  * __qdf_nbuf_unshare() - skb unshare
  * @skb: sk buff
  *
