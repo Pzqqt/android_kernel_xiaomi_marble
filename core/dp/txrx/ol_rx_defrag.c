@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -630,6 +630,11 @@ void ol_rx_defrag_waitlist_flush(struct ol_txrx_pdev_t *pdev)
 			break;
 
 		tid = rx_reorder->tid;
+		if (tid >= OL_TXRX_NUM_EXT_TIDS) {
+			ol_txrx_err("%s:  invalid tid, %u\n", __FUNCTION__, tid);
+			WARN_ON(1);
+			continue;
+		}
 		/* get index 0 of the rx_reorder array */
 		rx_reorder_base = rx_reorder - tid;
 		peer =
