@@ -2219,7 +2219,7 @@ CDEFINES += -DWLAN_SUPPORT_GREEN_AP
 endif
 
 #Stats & Quota Metering feature
-ifeq ($(CONFIG_IPA),y)
+ifeq ($(CONFIG_IPA_OFFLOAD),1)
 ifeq ($(CONFIG_QCACLD_FEATURE_METERING),y)
 CDEFINES += -DFEATURE_METERING
 endif

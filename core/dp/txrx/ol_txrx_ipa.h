@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -74,6 +74,8 @@ struct ol_txrx_ipa_uc_rx_hdr {
 #define OL_TXRX_IPA_IPV4_NAME_EXT              "_ipv4"
 #define OL_TXRX_IPA_IPV6_NAME_EXT              "_ipv6"
 
+#define OL_TXRX_IPA_MAX_IFACE                  3
+
 #define OL_TXRX_IPA_WLAN_FRAG_HEADER        sizeof(struct frag_header)
 #define OL_TXRX_IPA_WLAN_IPA_HEADER         sizeof(struct ipa_header)
 #define OL_TXRX_IPA_UC_WLAN_TX_HDR_LEN      sizeof(struct ol_txrx_ipa_uc_tx_hdr)
@@ -110,10 +112,18 @@ QDF_STATUS ol_txrx_ipa_uc_register_op_cb(struct cdp_pdev *pdev,
 QDF_STATUS ol_txrx_ipa_uc_get_stat(struct cdp_pdev *pdev);
 QDF_STATUS ol_txrx_ipa_enable_autonomy(struct cdp_pdev *pdev);
 QDF_STATUS ol_txrx_ipa_disable_autonomy(struct cdp_pdev *pdev);
+#ifdef CONFIG_IPA_WDI_UNIFIED_API
+QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
+		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
+		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
+		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in);
+#else /* CONFIG_IPA_WDI_UNIFIED_API */
 QDF_STATUS ol_txrx_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
 		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
 		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
 		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+#endif /* CONFIG_IPA_WDI_UNIFIED_API */
 QDF_STATUS ol_txrx_ipa_cleanup(uint32_t tx_pipe_handle,
 		uint32_t rx_pipe_handle);
 QDF_STATUS ol_txrx_ipa_setup_iface(char *ifname, uint8_t *mac_addr,
