@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,8 +42,7 @@ QDF_STATUS sme_ps_uapsd_enable(tHalHandle hal_ctx, uint32_t session_id);
 QDF_STATUS sme_ps_uapsd_disable(tHalHandle hal_ctx, uint32_t session_id);
 
 /* Condition check if driver is ready to enter in PS */
-QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id,
-				   enum sme_ps_cmd command);
+QDF_STATUS sme_enable_sta_ps_check(tpAniSirGlobal mac_ctx, uint32_t session_id);
 
 QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx,
 		uint32_t session_id,
