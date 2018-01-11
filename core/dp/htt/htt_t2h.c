@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -951,6 +951,12 @@ void htt_t2h_msg_handler_fast(void *context, qdf_nbuf_t *cmpl_msdus,
 
 			peer_id = HTT_RX_IND_PEER_ID_GET(*msg_word);
 			tid = HTT_RX_IND_EXT_TID_GET(*msg_word);
+			if (tid >= OL_TXRX_NUM_EXT_TIDS) {
+				qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid tid %d\n",
+					tid);
+				WARN_ON(1);
+				break;
+			}
 
 			num_msdu_bytes =
 				HTT_RX_IND_FW_RX_DESC_BYTES_GET(

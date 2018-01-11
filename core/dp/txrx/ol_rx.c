@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1487,6 +1487,11 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	uint8_t pktlog_bit;
 #endif
 	uint32_t filled = 0;
+	if (tid >= OL_TXRX_NUM_EXT_TIDS) {
+		ol_txrx_err("%s:  invalid tid, %u\n", __FUNCTION__, tid);
+		WARN_ON(1);
+		return;
+	}
 
 	if (pdev) {
 		if (qdf_unlikely(QDF_GLOBAL_MONITOR_MODE == cds_get_conparam()))
