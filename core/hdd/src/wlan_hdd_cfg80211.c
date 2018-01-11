@@ -668,27 +668,6 @@ static const struct wiphy_wowlan_support wowlan_support_cfg80211_init = {
 };
 #endif
 
-bool hdd_is_ie_valid(const uint8_t *ie, size_t ie_len)
-{
-	uint8_t elen;
-
-	while (ie_len) {
-		if (ie_len < 2)
-			return false;
-
-		elen = ie[1];
-		ie_len -= 2;
-		ie += 2;
-		if (elen > ie_len)
-			return false;
-
-		ie_len -= elen;
-		ie += elen;
-	}
-
-	return true;
-}
-
 /**
  * hdd_add_channel_switch_support()- Adds Channel Switch flag if supported
  * @flags: Pointer to the flags to Add channel switch flag.
@@ -6588,7 +6567,7 @@ static int hdd_config_scan_default_ies(struct hdd_adapter *adapter,
 	}
 
 	scan_ie = nla_data(attr);
-	if (!hdd_is_ie_valid(scan_ie, scan_ie_len)) {
+	if (!wlan_is_ie_valid(scan_ie, scan_ie_len)) {
 		hdd_err("Invalid default scan IEs");
 		return -EINVAL;
 	}
