@@ -10132,19 +10132,6 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 
 	hdd_runtime_suspend_context_deinit(hdd_ctx);
 
-	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to destroy pdev; errno:%d", ret);
-		QDF_ASSERT(0);
-	}
-
-	/*
-	 * Reset total mac phy during module stop such that during
-	 * next module start same psoc is used to populate new service
-	 * ready data
-	 */
-	hdd_ctx->hdd_psoc->total_mac_phy = 0;
-
 	qdf_status = cds_dp_close(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_warn("Failed to stop CDS DP: %d", qdf_status);
@@ -10158,6 +10145,19 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 		ret = -EINVAL;
 		QDF_ASSERT(0);
 	}
+
+	ret = hdd_objmgr_release_and_destroy_pdev(hdd_ctx);
+	if (ret) {
+		hdd_err("Failed to destroy pdev; errno:%d", ret);
+		QDF_ASSERT(0);
+	}
+
+	/*
+	 * Reset total mac phy during module stop such that during
+	 * next module start same psoc is used to populate new service
+	 * ready data
+	 */
+	hdd_ctx->hdd_psoc->total_mac_phy = 0;
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {
