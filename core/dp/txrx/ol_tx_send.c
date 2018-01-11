@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -662,7 +662,14 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 
 	for (i = 0; i < num_msdus; i++) {
 		tx_desc_id = desc_ids[i];
+		if (tx_desc_id >= pdev->tx_desc.pool_size) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			"%s: drop due to invalid msdu id = %x\n",
+			__func__, tx_desc_id);
+			continue;
+		}
 		tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
+		qdf_assert(tx_desc);
 		tx_desc->status = status;
 		netbuf = tx_desc->netbuf;
 
@@ -960,7 +967,14 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 
 	for (i = 0; i < num_msdus; i++) {
 		tx_desc_id = desc_ids[i];
+		if (tx_desc_id >= pdev->tx_desc.pool_size) {
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+			"%s: drop due to invalid msdu id = %x\n",
+			__func__, tx_desc_id);
+			continue;
+		}
 		tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
+		qdf_assert(tx_desc);
 		netbuf = tx_desc->netbuf;
 
 		/* find the "vdev" this tx_desc belongs to */
