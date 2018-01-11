@@ -32,7 +32,11 @@
 #include "wlan_objmgr_psoc_obj.h"
 
 #ifdef IPA_OFFLOAD
+#ifdef CONFIG_IPA_WDI_UNIFIED_API
+#include <qdf_ipa_wdi3.h>
+#else
 #include <qdf_ipa.h>
+#endif
 #endif
 
 /**
@@ -869,10 +873,18 @@ struct cdp_ipa_ops {
 #endif
 	QDF_STATUS (*ipa_enable_autonomy)(struct cdp_pdev *pdev);
 	QDF_STATUS (*ipa_disable_autonomy)(struct cdp_pdev *pdev);
+#ifdef CONFIG_IPA_WDI_UNIFIED_API
+	QDF_STATUS (*ipa_setup)(struct cdp_pdev *pdev, void *ipa_i2w_cb,
+		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
+		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle,
+		bool is_smmu_enabled, qdf_ipa_sys_connect_params_t *sys_in);
+#else /* CONFIG_IPA_WDI_UNIFIED_API */
 	QDF_STATUS (*ipa_setup)(struct cdp_pdev *pdev, void *ipa_i2w_cb,
 		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
 		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
 		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+#endif /* CONFIG_IPA_WDI_UNIFIED_API */
 	QDF_STATUS (*ipa_cleanup)(uint32_t tx_pipe_handle,
 		uint32_t rx_pipe_handle);
 	QDF_STATUS (*ipa_setup_iface)(char *ifname, uint8_t *mac_addr,
