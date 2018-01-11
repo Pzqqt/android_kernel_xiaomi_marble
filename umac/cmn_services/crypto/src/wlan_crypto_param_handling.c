@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -56,7 +56,6 @@ cipher2cap(int cipher)
 
 /**
  * wlan_crypto_set_authmode - called by ucfg to configure authmode for vdev
- *
  * @vdev: vdev
  * @authmode: authmode
  *
@@ -73,7 +72,6 @@ QDF_STATUS wlan_crypto_set_authmode(struct wlan_crypto_params *crypto_params,
 
 /**
  * wlan_crypto_get_authmode - called by ucfg to get authmode of particular vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get authmode of particular vdev
@@ -87,7 +85,6 @@ int32_t wlan_crypto_get_authmode(struct wlan_crypto_params *crypto_params)
 
 /**
  * wlan_crypto_set_mcastcipher - called by ucfg to configure mcastcipher in vdev
- *
  * @vdev: vdev
  * @wlan_crypto_cipher_type: mcast cipher value.
  *
@@ -118,7 +115,6 @@ QDF_STATUS wlan_crypto_set_mcastcipher(struct wlan_crypto_params *crypto_params,
 }
 /**
  * wlan_crypto_get_mcastcipher - called by ucfg to get mcastcipher from vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get mcastcipher of particular vdev
@@ -133,7 +129,6 @@ int32_t wlan_crypto_get_mcastcipher(struct wlan_crypto_params *crypto_params)
 /**
  * wlan_crypto_set_ucastciphers - called by ucfg to configure
  *                                        unicast ciphers in vdev
- *
  * @vdev: vdev
  * @ciphers: bitmap value of all supported unicast ciphers
  *
@@ -167,7 +162,6 @@ QDF_STATUS wlan_crypto_set_ucastciphers(
 
 /**
  * wlan_crypto_get_ucastciphers - called by ucfg to get ucastcipher from vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get supported unicast ciphers
@@ -182,7 +176,6 @@ int32_t wlan_crypto_get_ucastciphers(struct wlan_crypto_params *crypto_params)
 /**
  * wlan_crypto_set_mgmtcipher - called by ucfg to configure
  *                                        mgmt ciphers in vdev
- *
  * @vdev: vdev
  * @ciphers: bitmap value of all supported unicast ciphers
  *
@@ -206,7 +199,6 @@ QDF_STATUS wlan_crypto_set_mgmtcipher(
 
 /**
  * wlan_crypto_get_mgmtciphers - called by ucfg to get mgmtcipher from vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get supported unicast ciphers
@@ -221,7 +213,6 @@ int32_t wlan_crypto_get_mgmtciphers(struct wlan_crypto_params *crypto_params)
 /**
  * wlan_crypto_set_cipher_cap - called by ucfg to configure
  *                                        cipher cap in vdev
- *
  * @vdev: vdev
  * @ciphers: bitmap value of all supported unicast ciphers
  *
@@ -240,7 +231,6 @@ QDF_STATUS wlan_crypto_set_cipher_cap(
 
 /**
  * wlan_crypto_get_cipher_cap - called by ucfg to get cipher caps from vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get supported unicast ciphers
@@ -255,7 +245,6 @@ int32_t wlan_crypto_get_cipher_cap(struct wlan_crypto_params *crypto_params)
 /**
  * wlan_crypto_set_rsn_cap - called by ucfg to configure
  *                                        cipher cap in vdev
- *
  * @vdev: vdev
  * @ciphers: bitmap value of all supported unicast ciphers
  *
@@ -274,7 +263,6 @@ QDF_STATUS wlan_crypto_set_rsn_cap(
 
 /**
  * wlan_crypto_get_rsn_cap - called by ucfg to get rsn caps from vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get supported unicast ciphers
@@ -290,7 +278,6 @@ int32_t wlan_crypto_get_rsn_cap(struct wlan_crypto_params *crypto_params)
 /**
  * wlan_crypto_set_key_mgmt - called by ucfg to configure
  *                                        key_mgmt in vdev
- *
  * @vdev: vdev
  * @ciphers: bitmap value of all supported unicast ciphers
  *
@@ -309,7 +296,6 @@ QDF_STATUS wlan_crypto_set_key_mgmt(
 
 /**
  * wlan_crypto_get_key_mgmt - called by ucfg to get key mgmt from vdev
- *
  * @vdev: vdev
  *
  * This function gets called from ucfg to get supported unicast ciphers

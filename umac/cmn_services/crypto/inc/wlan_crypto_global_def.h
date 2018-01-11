@@ -84,8 +84,8 @@
 						| WLAN_CRYPTO_KEY_SWDEMIC)
 
 /*
- *	Cipher types
-*/
+ * Cipher types
+ */
 typedef enum wlan_crypto_cipher_type {
 	WLAN_CRYPTO_CIPHER_WEP          = 0,
 	WLAN_CRYPTO_CIPHER_TKIP         = 1,
@@ -168,21 +168,25 @@ typedef enum wlan_crypto_key_mgmt {
 	WLAN_CRYPTO_KEY_MGMT_IEEE8021X_SUITE_B_192 = 17,
 } wlan_crypto_key_mgmt;
 
-/* crypto parames for vdev and peers */
+/**
+ * struct wlan_crypto_params - holds crypto params
+ * @authmodeset:        authentication mode
+ * @ucastcipherset:     unicast ciphers
+ * @mcastcipherset:     multicast cipher
+ * @mgmtcipherset:      mgmt cipher
+ * @cipher_caps:        cipher capability
+ * @rsn_caps:           rsn_capability
+ * @key_mgmt:           key mgmt
+ *
+ * This structure holds crypto params for peer or vdev
+ */
 struct wlan_crypto_params {
-	/* authentication mode set*/
 	uint32_t authmodeset;
-	/* unicast cipher set*/
 	uint32_t ucastcipherset;
-	/* mcast/group cipher set*/
 	uint32_t mcastcipherset;
-	/* management frames cipher set */
 	uint32_t mgmtcipherset;
-	/* cipher capabilities */
 	uint32_t cipher_caps;
-	/* rsn caps*/
 	uint16_t rsn_caps;
-	/* key mgmt used*/
 	uint16_t key_mgmt;
 };
 
@@ -196,32 +200,40 @@ typedef enum wlan_crypto_param_type {
 	WLAN_CRYPTO_PARAM_KEY_MGMT,
 } wlan_crypto_param_type;
 
-/* key structure */
+/**
+ * struct wlan_crypto_key - key structure
+ * @keylen:         length of the key
+ * @valid:          is key valid or not
+ * @flags:          key flags
+ * @keyix:          key id
+ * @cipher_table:   table which stores cipher related info
+ * @private:        private pointer to save cipher context
+ * @keylock:        spin lock
+ * @recviv:         WAPI key receive sequence counter
+ * @txiv:           WAPI key transmit sequence counter
+ * @keytsc:         key transmit sequence counter
+ * @keyrsc:         key receive sequence counter
+ * @keyrsc_suspect: key receive sequence counter under
+ *                  suspect when pN jump is detected
+ * @keyglobal:      key receive global sequence counter used with suspect
+ * @keyval:         key value buffer
+ *
+ * This key structure to key related details.
+ */
 struct wlan_crypto_key {
 	uint8_t     keylen;
-	/* key valid to indicate key is valid or not */;
 	bool        valid;
-	/* key flags */;
 	uint16_t    flags;
 	uint16_t    keyix;
-	/* cipher ops table*/
 	void        *cipher_table;
-	/* cipher context*/
 	void        *private;
 	qdf_spinlock_t	keylock;
-	/* WAPI key receive sequence counter */
 	uint8_t     recviv[WLAN_CRYPTO_WAPI_IV_SIZE];
-	/* WAPI key transmit sequence counter */
 	uint8_t     txiv[WLAN_CRYPTO_WAPI_IV_SIZE];
-	/* key transmit sequence counter */
 	uint64_t    keytsc;
-	/* key receive sequence counter */
 	uint64_t    keyrsc[WLAN_CRYPTO_TID_SIZE];
-	/* key receive sequence counter under suspect when pN jump is detected*/
 	uint64_t    keyrsc_suspect[WLAN_CRYPTO_TID_SIZE];
-	/* key receive sequence counter */
 	uint64_t    keyglobal;
-	/* key value */
 	uint8_t     keyval[WLAN_CRYPTO_KEYBUF_SIZE
 				+ WLAN_CRYPTO_MICBUF_SIZE];
 #define txmic    (keyval + WLAN_CRYPTO_KEYBUF_SIZE \
@@ -230,28 +242,35 @@ struct wlan_crypto_key {
 				+ WLAN_CRYPTO_RXMIC_OFFSET)
 };
 
+/**
+ * struct wlan_crypto_req_key - key request structure
+ * @type:                       key/cipher type
+ * @pad:                        padding member
+ * @keyix:                      key index
+ * @keylen:                     length of the key value
+ * @flags:                      key flags
+ * @macaddr:                    macaddr of the key
+ * @keyrsc:                     key receive sequence counter
+ * @keytsc:                     key transmit sequence counter
+ * @keydata:                    key value
+ * @txiv:                       wapi key tx iv
+ * @rxiv:                       wapi key rx iv
+ * @filsaad:                    FILS AEAD data
+ *
+ * Key request structure used for setkey, getkey or delkey
+ */
 struct wlan_crypto_req_key {
-	/* key/cipher type */
 	uint8_t    type;
 	uint8_t    pad;
-	/* key index */
-	uint16_t   keyix
-	/* key length in bytes */;
+	uint16_t   keyix;
 	uint8_t    keylen;
-	/* key flags */;
 	uint8_t    flags;
 	uint8_t    macaddr[WLAN_MACADDR_LEN];
-	/* key receive sequence counter */
 	uint64_t   keyrsc;
-	/* key transmit sequence counter */
 	uint64_t   keytsc;
-	/* key value */
 	uint8_t    keydata[WLAN_CRYPTO_KEYBUF_SIZE + WLAN_CRYPTO_MICBUF_SIZE];
-	/* wapi key tx iv */
 	uint8_t    txiv[WLAN_CRYPTO_WAPI_IV_SIZE];
-	/* wapi key rx iv */
 	uint8_t    recviv[WLAN_CRYPTO_WAPI_IV_SIZE];
-	/* FILS AEAD data */
 	struct     wlan_crypto_fils_aad_key   filsaad;
 };
 

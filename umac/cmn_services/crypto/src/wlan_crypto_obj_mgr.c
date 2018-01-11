@@ -267,8 +267,9 @@ static QDF_STATUS wlan_crypto_peer_obj_destroy_handler(
 	return QDF_STATUS_SUCCESS;
 }
 /**
- * wlan_crypto_init - Init the crypto service with object manager
- *                    Called from umac init context.
+ * __wlan_crypto_init - Init the crypto service with object manager
+ *                    Called from crypto init context.
+ *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS __wlan_crypto_init(void)
@@ -317,8 +318,9 @@ register_success:
 }
 
 /**
- * wlan_crypto_deinit - Deinit the crypto service with object manager
- *                    Called from umac deinit context.
+ * __wlan_crypto_deinit - Deinit the crypto service with object manager
+ *                         Called from crypto context.
+ *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS __wlan_crypto_deinit(void)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -374,7 +374,16 @@ static inline void wlan_crypto_put_be64(u8 *a, u64 val)
 #define HAS_CIPHER_CAP(_param, _c)  ((_param)->cipher_caps & (1<<(_c)))
 #define HAS_ANY_CIPHER_CAP(_param)  ((_param)->cipher_caps)
 
-/* Management MIC information element (IEEE 802.11w) */
+/**
+ * struct wlan_crypto_mmie - MMIE IE
+ * @element_id:      element id
+ * @length:          length of the ie
+ * @key_id:          igtk key_id used
+ * @sequence_number: igtk PN number
+ * @mic:             MIC for the frame
+ *
+ * This structure represents Management MIC information element (IEEE 802.11w)
+ */
 struct wlan_crypto_mmie {
 	uint8_t  element_id;
 	uint8_t  length;
@@ -383,6 +392,17 @@ struct wlan_crypto_mmie {
 	uint8_t  mic[16];
 } __packed;
 
+/**
+ * struct wlan_crypto_comp_priv - crypto component private structure
+ * @crypto_params:    crypto params for the peer
+ * @key:              key buffers for this peer
+ * @igtk_key:         igtk key buffer for this peer
+ * @igtk_key_type:    igtk key type
+ * @def_tx_keyid:     default key used for this peer
+ * @def_igtk_tx_keyid default igtk key used for this peer
+ * @fils_aead_set     fils params for this peer
+ *
+ */
 struct wlan_crypto_comp_priv {
 	struct wlan_crypto_params crypto_params;
 	struct wlan_crypto_key *key[WLAN_CRYPTO_MAXKEYIDX];
@@ -393,20 +413,28 @@ struct wlan_crypto_comp_priv {
 	uint8_t fils_aead_set;
 };
 
-
+/**
+ * struct wlan_crypto_cipher - crypto cipher table
+ * @cipher_name: printable name
+ * @cipher:      cipher type WLAN_CRYPTO_CIPHER_*
+ * @header:      size of privacy header (bytes)
+ * @trailer:     size of privacy trailer (bytes)
+ * @miclen:      size of mic trailer (bytes)
+ * @keylen:      max key length
+ * @setkey:      function pointer for setkey
+ * @encap:       function pointer for encap
+ * @decap:       function pointer for decap
+ * @enmic:       function pointer for enmic
+ * @demic:       function pointer for demic
+ *
+ */
 struct wlan_crypto_cipher {
-	/* printable name */
 	const char *cipher_name;
-	/* WLAN_CRYPTO_CIPHER_* */
 	wlan_crypto_cipher_type cipher;
-	/* size of privacy header (bytes) */
-	const uint8_t	header;
-	/* size of privacy trailer (bytes) */
-	const uint8_t	trailer;
-	/* size of mic trailer (bytes) */
-	const uint8_t	miclen;
-	/* max key length */
-	const uint32_t keylen;
+	const uint8_t   header;
+	const uint8_t   trailer;
+	const uint8_t   miclen;
+	const uint32_t  keylen;
 	QDF_STATUS(*setkey)(struct wlan_crypto_key *);
 	QDF_STATUS(*encap)(struct wlan_crypto_key *,
 				qdf_nbuf_t, uint8_t,  uint8_t);
@@ -421,8 +449,8 @@ struct wlan_crypto_cipher {
 
 /**
  * wlan_crypto_is_data_protected - check is frame is protected or not
- *
  * @data: frame
+ *
  * This function check is frame is protected or not
  *
  * Return: TRUE/FALSE
@@ -439,8 +467,8 @@ static inline bool wlan_crypto_is_data_protected(const void *data)
 
 /**
  * ieee80211_hdrsize - calculate frame header size
- *
  * @data: frame
+ *
  * This function calculate frame header size
  *
  * Return: header size of the frame
@@ -467,8 +495,8 @@ static inline int ieee80211_hdrsize(const void *data)
 
 /**
  * wlan_get_tid - get tid of the frame
- *
  * @data: frame
+ *
  * This function get tid of the frame
  *
  * Return: tid of the frame
