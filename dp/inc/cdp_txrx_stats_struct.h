@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -224,6 +224,8 @@ struct ol_ath_radiostats {
 	A_UINT32    peer_delete_req;
 	A_UINT32    peer_delete_resp;
 	A_UINT32    rx_mgmt_rssi_drop;
+	A_UINT32    tx_retries;
+	A_UINT32    rx_data_bytes;
 };
 
 #ifndef CONFIG_WIN
