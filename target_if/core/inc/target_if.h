@@ -57,10 +57,11 @@
 #endif
 
 #ifdef CONFIG_MCL
-#define TARGET_TYPE_AR900B    9
+#define TARGET_TYPE_AR900B    9  /* Beeliner */
 #define TARGET_TYPE_QCA9984   15 /* cascade */
 #define TARGET_TYPE_IPQ4019   16 /* dakota */
 #define TARGET_TYPE_QCA9888   17 /* besra */
+#define TARGET_TYPE_AR9888    7  /* Peregrine */
 #endif
 
 typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2011, Atheros Communications Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for any
@@ -457,17 +457,25 @@ void dfs_get_radars(struct wlan_dfs *dfs)
 #define AR9300_DEVID_AR956X_PCIE    0x0036 /* Aphrodite: 1x1 DB + BT - AR9564 */
 #define AR9300_DEVID_EMU_PCIE       0xabcd
 
+	struct wlan_objmgr_psoc *psoc;
+
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
 		return;
 	}
 
-	if (lmac_is_mode_offload(dfs->dfs_pdev_obj)) {
-		/* For offload */
+	psoc = wlan_pdev_get_psoc(dfs->dfs_pdev_obj);
+	if (!psoc) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "psoc is NULL");
+		return;
+	}
+
+	if (wlan_objmgr_psoc_get_dev_type(psoc) == WLAN_DEV_OL) {
+		/* For offload chip */
 		ol_if_dfs_configure(dfs);
 	} else {
 		uint16_t devid = lmac_get_ah_devid(dfs->dfs_pdev_obj);
-		/* For DA */
+		/* For DA chip*/
 
 		switch (devid) {
 		case AR5212_DEVID_IBM:
