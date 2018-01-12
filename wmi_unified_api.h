@@ -1911,4 +1911,22 @@ QDF_STATUS wmi_unified_send_btm_config(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_send_obss_detection_cfg_cmd(void *wmi_hdl,
 			struct wmi_obss_detection_cfg_param *cfg);
+
+/**
+ * wmi_unified_extract_obss_detection_info() - WMI function to extract obss
+ *  detection info from FW.
+ * @wmi_hdl: wmi handle
+ * @data: event data from firmware
+ * @info: Pointer to hold obss detection info
+ *
+ * This function is used to extract obss info from firmware.
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS wmi_unified_extract_obss_detection_info(void *wmi_hdl,
+						   uint8_t *data,
+						   struct wmi_obss_detect_info
+						   *info);
+
 #endif /* _WMI_UNIFIED_API_H_ */

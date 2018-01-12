@@ -8297,4 +8297,33 @@ struct wmi_obss_detection_cfg_param {
 	uint32_t obss_ht_20mhz_detect_mode;
 };
 
+/**
+ * enum sap_obss_detection_reason - obss detection event reasons
+ * @OBSS_OFFLOAD_DETECTION_DISABLED: OBSS detection disabled
+ * @OBSS_OFFLOAD_DETECTION_PRESENT: OBSS present detection
+ * @OBSS_OFFLOAD_DETECTION_ABSENT: OBSS absent detection
+ *
+ * Defines different types of reasons for obss detection event from firmware.
+ */
+enum wmi_obss_detection_reason {
+	OBSS_OFFLOAD_DETECTION_DISABLED = 0,
+	OBSS_OFFLOAD_DETECTION_PRESENT  = 1,
+	OBSS_OFFLOAD_DETECTION_ABSENT   = 2,
+};
+
+/**
+ * struct wmi_obss_detect_info - OBSS detection info from firmware
+ * @vdev_id: IDof the vdev to which this info belongs.
+ * @reason: Indicate if present or Absent detection,
+ *          also if not supported offload for this vdev.
+ * @matched_detection_masks: Detection bit map.
+ * @matched_bssid_addr: MAC address valid for only if info is present detection.
+ */
+struct wmi_obss_detect_info {
+	uint32_t vdev_id;
+	enum wmi_obss_detection_reason reason;
+	uint32_t matched_detection_masks;
+	uint8_t matched_bssid_addr[IEEE80211_ADDR_LEN];
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
