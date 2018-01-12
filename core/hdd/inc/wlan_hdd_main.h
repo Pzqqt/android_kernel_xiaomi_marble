@@ -1,4 +1,4 @@
-/*
+ /*
  * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
@@ -2870,5 +2870,14 @@ void hdd_driver_memdump_deinit(void);
  */
 uint8_t hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
 				     bool *is_enabled);
+
+/**
+ * hdd_is_cli_iface_up() - check if there is any cli iface up
+ * @hdd_ctx: HDD context
+ *
+ * Return: return true if there is any cli iface(STA/P2P_CLI) is up
+ *         else return false
+ */
+bool hdd_is_cli_iface_up(struct hdd_context *hdd_ctx);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */
