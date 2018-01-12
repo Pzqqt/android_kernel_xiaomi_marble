@@ -548,15 +548,17 @@ void qdf_nbuf_map_check_for_leaks(void)
 	qdf_err("Nbuf map without unmap events detected!");
 	qdf_err("------------------------------------------------------------");
 
+	/* Hold the lock for the entire iteration for safe list/meta access. We
+	 * are explicitly preferring the chance to watchdog on the print, over
+	 * the posibility of invalid list/memory access. Since we are going to
+	 * panic anyway, the worst case is loading up the crash dump to find out
+	 * what was in the hash table.
+	 */
 	qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
 	hash_for_each(qdf_nbuf_map_ht, bucket, meta, node) {
-		qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
-
 		count++;
-		qdf_err("0x%pk @ %s:%u", meta->nbuf, kbasename(meta->file),
-			meta->line);
-
-		qdf_spin_lock_irqsave(&qdf_nbuf_map_lock);
+		qdf_err("0x%pk @ %s:%u",
+			meta->nbuf, kbasename(meta->file), meta->line);
 	}
 	qdf_spin_unlock_irqrestore(&qdf_nbuf_map_lock);
 
