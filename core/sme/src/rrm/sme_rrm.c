@@ -45,6 +45,7 @@
 
 #include "rrm_global.h"
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_utility.h>
 
 /* Roam score for a neighbor AP will be calculated based on the below
  * definitions. The calculated roam score will be used to select the
@@ -686,6 +687,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	uint64_t current_time;
 	struct scan_start_request *req;
 	struct wlan_objmgr_vdev *vdev;
+	uint32_t chan_num;
 
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
@@ -797,13 +799,14 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 
 		/* set requestType to full scan */
 		req->scan_req.chan_list.num_chan = 1;
+		chan_num = sme_rrm_ctx->channelList.ChannelList[
+			   sme_rrm_ctx->currentIndex];
 		req->scan_req.chan_list.chan[0].freq =
-			sme_rrm_ctx->channelList.ChannelList[
-						sme_rrm_ctx->currentIndex];
-		sme_debug("Duration %d On channel %d ",
+			wlan_chan_to_freq(chan_num);
+		sme_debug("Duration %d On channel %d freq %d",
 				req->scan_req.dwell_time_active,
-				sme_rrm_ctx->channelList.ChannelList[
-					sme_rrm_ctx->currentIndex]);
+				chan_num,
+				req->scan_req.chan_list.chan[0].freq);
 		status = ucfg_scan_start(req);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
 
