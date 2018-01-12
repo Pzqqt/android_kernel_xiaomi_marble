@@ -616,6 +616,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	ie_lst->ssid = conv_ptr(ie_lst->ssid, old_ptr, new_ptr);
 	ie_lst->rates = conv_ptr(ie_lst->rates, old_ptr, new_ptr);
 	ie_lst->xrates = conv_ptr(ie_lst->xrates, old_ptr, new_ptr);
+	ie_lst->ds_param = conv_ptr(ie_lst->ds_param, old_ptr, new_ptr);
 	ie_lst->csa = conv_ptr(ie_lst->csa, old_ptr, new_ptr);
 	ie_lst->xcsa = conv_ptr(ie_lst->xcsa, old_ptr, new_ptr);
 	ie_lst->secchanoff = conv_ptr(ie_lst->secchanoff, old_ptr, new_ptr);
@@ -879,6 +880,23 @@ static inline uint8_t*
 util_scan_entry_sfa(struct scan_cache_entry *scan_entry)
 {
 	return scan_entry->ie_list.sfa;
+}
+
+/**
+ * util_scan_entry_ds_param() - function to read ds params
+ * @scan_entry: scan entry
+ *
+ * API, function to read ds params
+ *
+ * Return: ds params or NULL if ie is not present
+ */
+static inline uint8_t*
+util_scan_entry_ds_param(struct scan_cache_entry *scan_entry)
+{
+	if (scan_entry)
+		return scan_entry->ie_list.ds_param;
+	else
+		return NULL;
 }
 
 /**

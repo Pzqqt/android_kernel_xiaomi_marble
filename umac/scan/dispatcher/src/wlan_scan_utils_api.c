@@ -455,6 +455,7 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 			scan_params->ie_list.rates = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_DSPARMS:
+			scan_params->ie_list.ds_param = (uint8_t *)ie;
 			scan_params->channel.chan_idx =
 				((struct ds_ie *)ie)->cur_chan;
 			break;

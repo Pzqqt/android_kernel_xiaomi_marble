@@ -117,6 +117,7 @@ struct element_info {
  * @ssid:       pointer to ssid ie
  * @rates:      pointer to supported rates ie
  * @xrates:     pointer to extended supported rate ie
+ * @ds_param:   pointer to ds params
  * @csa:        pointer to csa ie
  * @xcsa:       pointer to extended csa ie
  * @wpa:        pointer to wpa ie
@@ -156,6 +157,7 @@ struct ie_list {
 	uint8_t *ssid;
 	uint8_t *rates;
 	uint8_t *xrates;
+	uint8_t *ds_param;
 	uint8_t *csa;
 	uint8_t *xcsa;
 	uint8_t *wpa;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,6 +35,8 @@
 
 #define SCM_PCL_RSSI_THRESHOLD -75
 #define BEST_CANDIDATE_MAX_BSS_SCORE 10000
+
+#define ADJACENT_CHANNEL_RSSI_THRESHOLD -80
 
 /**
  * struct scan_dbs - scan cache data base definition

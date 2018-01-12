@@ -477,10 +477,30 @@ static void scm_delete_duplicate_entry(struct scan_dbs *scan_db,
 				scan_params->ssid.length);
 		}
 	}
+
 	/*
-	 * Use old value for rssi if beacon
-	 * was heard on adjacent channel.
+	 * Due to Rx sensitivity issue, sometime beacons are seen on adjacent
+	 * channel so workaround in software is needed. If DS params or HT info
+	 * are present driver can get proper channel info from these IEs and set
+	 * channel_mismatch so that the older RSSI values are used in new entry.
+	 *
+	 * For the cases where DS params and HT info is not present, driver
+	 * needs to check below conditions to get proper channel and set
+	 * channel_mismatch so that the older RSSI values are used in new entry:
+	 *   -- The old entry channel and new entry channel are not same
+	 *   -- RSSI is less than -80, this indicate that the signal has leaked
+	 *       in adjacent channel.
 	 */
+	if ((scan_params->frm_subtype == MGMT_SUBTYPE_BEACON) &&
+	    !util_scan_entry_htinfo(scan_params) &&
+	    !util_scan_entry_ds_param(scan_params) &&
+	    (scan_params->channel.chan_idx != scan_entry->channel.chan_idx) &&
+	    (scan_params->rssi_raw  < ADJACENT_CHANNEL_RSSI_THRESHOLD)) {
+		scan_params->channel.chan_idx = scan_entry->channel.chan_idx;
+		scan_params->channel_mismatch = true;
+	}
+
+	/* Use old value for rssi if beacon was heard on adjacent channel. */
 	if (scan_params->channel_mismatch) {
 		scan_params->rssi_raw = scan_entry->rssi_raw;
 		scan_params->avg_rssi = scan_entry->avg_rssi;
@@ -671,6 +691,14 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 			struct scan_cache_node, node);
 
 		scan_entry = scan_node->entry;
+
+		status = scm_add_update_entry(scan_db, scan_entry);
+		if (QDF_IS_STATUS_ERROR(status)) {
+			util_scan_free_cache_entry(scan_entry);
+			qdf_mem_free(scan_node);
+			scm_err("failed to add entry");
+			continue;
+		}
 		scm_info("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x "
 			"ssid:%.*s, rssi: %d",
 			(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
@@ -684,12 +712,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		if (scan_obj->cb.inform_beacon)
 			scan_obj->cb.inform_beacon(pdev, scan_entry);
-
-		status = scm_add_update_entry(scan_db, scan_entry);
-		if (QDF_IS_STATUS_ERROR(status)) {
-			util_scan_free_cache_entry(scan_entry);
-			scm_err("failed to add entry");
-		}
 		qdf_mem_free(scan_node);
 	}
 
