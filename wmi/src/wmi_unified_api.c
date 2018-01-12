@@ -7244,3 +7244,16 @@ QDF_STATUS wmi_unified_send_obss_detection_cfg_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+QDF_STATUS wmi_unified_extract_obss_detection_info(void *wmi_hdl,
+						   uint8_t *data,
+						   struct wmi_obss_detect_info
+						   *info)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_obss_detection_info)
+		return wmi_handle->ops->extract_obss_detection_info(data, info);
+
+	return QDF_STATUS_E_FAILURE;
+}

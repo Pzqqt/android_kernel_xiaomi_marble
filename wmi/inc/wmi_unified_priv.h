@@ -1496,6 +1496,8 @@ QDF_STATUS (*send_btm_config)(wmi_unified_t wmi_handle,
 			      struct wmi_btm_config *params);
 QDF_STATUS (*send_obss_detection_cfg_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_obss_detection_cfg_param *obss_cfg_param);
+QDF_STATUS (*extract_obss_detection_info)(uint8_t *evt_buf,
+					  struct wmi_obss_detect_info *info);
 };
 
 /* Forward declartion for psoc*/
