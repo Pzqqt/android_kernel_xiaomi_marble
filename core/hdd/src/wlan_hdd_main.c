@@ -4924,13 +4924,15 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter;
 	struct hdd_station_ctx *sta_ctx;
 	struct qdf_mac_addr peerMacAddr;
+	int sta_id;
 
 	ENTER();
 
 	cds_flush_work(&hdd_ctx->sap_pre_cac_work);
 
 	hdd_for_each_adapter(hdd_ctx, adapter) {
-		hdd_notice("Disabling queues for adapter type: %d",
+		hdd_notice("[SSR] reset adapter with device mode %s(%d)",
+			   hdd_device_mode_to_string(adapter->device_mode),
 			   adapter->device_mode);
 
 		if ((adapter->device_mode == QDF_STA_MODE) ||
@@ -4979,7 +4981,7 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 				WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 		}
 
-		/* Delete peers if any for STA and P2P client modes */
+		/* Delete connection peers if any to avoid peer object leaks */
 		if (adapter->device_mode == QDF_STA_MODE ||
 		    adapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
@@ -4988,6 +4990,16 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 
 			hdd_objmgr_remove_peer_object(adapter->hdd_vdev,
 						      peerMacAddr.bytes);
+		} else if (adapter->device_mode == QDF_P2P_GO_MODE) {
+			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
+				if (adapter->sta_info[sta_id].in_use) {
+					hdd_debug("[SSR] deregister STA with ID %d",
+						  sta_id);
+					hdd_softap_deregister_sta(adapter,
+								  sta_id);
+					adapter->sta_info[sta_id].in_use = 0;
+				}
+			}
 		}
 
 		/* Destroy vdev which will be recreated during reinit. */
@@ -5534,6 +5546,10 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 	hdd_for_each_adapter(hdd_ctx, adapter) {
 		if (!hdd_is_interface_up(adapter))
 			continue;
+
+		hdd_debug("[SSR] start adapter with device mode %s(%d)",
+			  hdd_device_mode_to_string(adapter->device_mode),
+			  adapter->device_mode);
 
 		hdd_wmm_init(adapter);
 
