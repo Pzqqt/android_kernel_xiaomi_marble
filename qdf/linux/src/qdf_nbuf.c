@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1836,9 +1836,8 @@ EXPORT_SYMBOL(qdf_net_buf_debug_add_node);
 void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 {
 	uint32_t i;
-	bool found = false;
 	QDF_NBUF_TRACK *p_head;
-	QDF_NBUF_TRACK *p_node;
+	QDF_NBUF_TRACK *p_node = NULL;
 	unsigned long irq_flag;
 	QDF_NBUF_TRACK *p_prev;
 
@@ -1855,7 +1854,6 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 	/* Found at head of the table */
 	if (p_head->net_buf == net_buf) {
 		gp_qdf_net_buf_track_tbl[i] = p_node->p_next;
-		found = true;
 		goto done;
 	}
 
@@ -1865,7 +1863,6 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 		p_node = p_node->p_next;
 		if ((NULL != p_node) && (p_node->net_buf == net_buf)) {
 			p_prev->p_next = p_node->p_next;
-			found = true;
 			break;
 		}
 	}
@@ -1873,13 +1870,13 @@ void qdf_net_buf_debug_delete_node(qdf_nbuf_t net_buf)
 done:
 	spin_unlock_irqrestore(&g_qdf_net_buf_track_lock[i], irq_flag);
 
-	if (!found) {
-		qdf_print("Unallocated buffer ! Double free of net_buf %pK ?",
-			  net_buf);
-		QDF_ASSERT(0);
-	} else {
+	if (p_node) {
 		qdf_mem_skb_dec(p_node->size);
 		qdf_nbuf_track_free(p_node);
+	} else {
+		qdf_print("Unallocated buffer ! Double free of net_buf %pK ?",
+			  net_buf);
+		QDF_BUG(0);
 	}
 }
 EXPORT_SYMBOL(qdf_net_buf_debug_delete_node);
