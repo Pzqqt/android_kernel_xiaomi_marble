@@ -1207,7 +1207,6 @@ wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 	if (!wma_is_vdev_valid(if_id)) {
 		WMA_LOGE(FL("vdev_id: %d is not active reject the req: param id %d val %d"),
 			if_id, param_id, param_value);
-		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
