@@ -351,6 +351,7 @@ static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(struct cdp_pdev *ppdev,
 {
 	struct ol_txrx_pdev_t *pdev = (struct ol_txrx_pdev_t *)ppdev;
 	struct ol_txrx_peer_t *peer = NULL;
+	ol_txrx_vdev_handle vdev;
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -364,14 +365,18 @@ static struct cdp_vdev *ol_txrx_get_vdev_by_sta_id(struct cdp_pdev *ppdev,
 		return NULL;
 	}
 
-	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
+	peer = ol_txrx_peer_get_ref_by_local_id((struct cdp_pdev *)pdev, sta_id,
+						PEER_DEBUG_ID_OL_INTERNAL);
 	if (!peer) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "PEER [%d] not found", sta_id);
 		return NULL;
 	}
 
-	return (struct cdp_vdev *)peer->vdev;
+	vdev = peer->vdev;
+	ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
+
+	return (struct cdp_vdev *)vdev;
 }
 
 /**
