@@ -1418,6 +1418,13 @@ WIFI_POS_OBJS := $(WIFI_POS_CORE_DIR)/wifi_pos_api.o \
 		 $(WIFI_POS_TGT_DIR)/target_if_wifi_pos.o
 endif
 
+###### CP STATS ########
+CONFIG_CP_STATS := y
+
+CP_STATS_OS_IF_INC      := -I$(WLAN_COMMON_INC)/os_if/linux/cp_stats/inc
+CP_STATS_TGT_INC        := -I$(WLAN_COMMON_INC)/target_if/cp_stats/inc
+CP_STATS_DISPATCHER_INC := -I$(WLAN_COMMON_INC)/umac/cp_stats/dispatcher/inc
+
 ######################### NAN #########################
 NAN_CORE_DIR := $(WLAN_COMMON_ROOT)/umac/nan/core/src
 NAN_CORE_INC := -I$(WLAN_COMMON_INC)/umac/nan/core/inc
@@ -1698,8 +1705,10 @@ endif
 INCS +=		$(WIFI_POS_API_INC)
 INCS +=		$(WIFI_POS_TGT_INC)
 INCS +=		$(WIFI_POS_OS_IF_INC)
-##########################################
-
+################ CP STATS ################
+INCS +=		$(CP_STATS_OS_IF_INC)
+INCS +=		$(CP_STATS_TGT_INC)
+INCS +=		$(CP_STATS_DISPATCHER_INC)
 ################ NAN POS ################
 INCS +=		$(NAN_CORE_INC)
 INCS +=		$(NAN_UCFG_INC)
