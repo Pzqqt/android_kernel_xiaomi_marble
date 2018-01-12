@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,6 +86,11 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 	cdp_rx_ppdu->num_msdu = (cdp_rx_ppdu->tcp_msdu_count +
 			cdp_rx_ppdu->udp_msdu_count +
 			cdp_rx_ppdu->other_msdu_count);
+
+	if (ppdu_info->com_info.mpdu_cnt_fcs_ok > 1)
+		cdp_rx_ppdu->is_ampdu = 1;
+	else
+		cdp_rx_ppdu->is_ampdu = 0;
 }
 #else
 static inline void
@@ -124,37 +129,44 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		return;
 
 	DP_STATS_UPD(peer, rx.rssi, ppdu->rssi);
+
+	if ((preamble == DOT11_A) || (preamble == DOT11_B))
+		ppdu->u.nss = 1;
+
+	if (ppdu->u.nss)
+		DP_STATS_INC(peer, rx.nss[ppdu->u.nss - 1], num_msdu);
+
 	DP_STATS_INC(peer, rx.sgi_count[ppdu->u.gi], num_msdu);
 	DP_STATS_INC(peer, rx.bw[ppdu->u.bw], num_msdu);
 	DP_STATS_INCC(peer, rx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
 	DP_STATS_INCC(peer, rx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
 	DP_STATS_UPD(peer, rx.rx_rate, mcs);
 	DP_STATS_INCC(peer,
-			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS - 1], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_A)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11A) && (preamble == DOT11_A)));
 	DP_STATS_INCC(peer,
-			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS - 1], num_msdu,
 			((mcs >= MAX_MCS_11B) && (preamble == DOT11_B)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11B) && (preamble == DOT11_B)));
 	DP_STATS_INCC(peer,
-			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS - 1], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_N)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11A) && (preamble == DOT11_N)));
 	DP_STATS_INCC(peer,
-			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS - 1], num_msdu,
 			((mcs >= MAX_MCS_11AC) && (preamble == DOT11_AC)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11AC) && (preamble == DOT11_AC)));
 	DP_STATS_INCC(peer,
-			rx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			rx.pkt_type[preamble].mcs_count[MAX_MCS - 1], num_msdu,
 			((mcs >= (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,

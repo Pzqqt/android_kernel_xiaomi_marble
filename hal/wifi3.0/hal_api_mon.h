@@ -428,6 +428,8 @@ struct hal_rx_ppdu_common_info {
 	uint32_t ppdu_id;
 	uint32_t last_ppdu_id;
 	uint32_t ppdu_timestamp;
+	uint32_t mpdu_cnt_fcs_ok;
+	uint32_t mpdu_cnt_fcs_err;
 };
 
 struct hal_rx_ppdu_info {
@@ -523,6 +525,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.ast_index =
 				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_4,
 						AST_INDEX);
+		ppdu_info->rx_status.mcs =
+			 HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1, MCS);
+
 		tid = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_12,
 				RECEIVED_QOS_DATA_TID_BITMAP);
 		ppdu_info->rx_status.tid = qdf_find_first_bit(&tid, sizeof(tid)*8);
@@ -536,13 +541,21 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 						UDP_MSDU_COUNT);
 		ppdu_info->rx_status.other_msdu_count =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_10,
-						OTHER_MSDU_COUNT);
+					OTHER_MSDU_COUNT);
+		ppdu_info->rx_status.nss =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1, NSS);
 		ppdu_info->rx_status.first_data_seq_ctrl =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
 					DATA_SEQUENCE_CONTROL_INFO_VALID);
 		ppdu_info->rx_status.preamble_type =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
 						HT_CONTROL_FIELD_PKT_TYPE);
+		ppdu_info->com_info.mpdu_cnt_fcs_ok =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
+					MPDU_CNT_FCS_OK);
+		ppdu_info->com_info.mpdu_cnt_fcs_err =
+			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_2,
+					MPDU_CNT_FCS_ERR);
 		break;
 	}
 

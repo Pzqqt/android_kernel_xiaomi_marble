@@ -836,6 +836,9 @@ struct cdp_tx_stats {
 	/* SGI count */
 	uint32_t sgi_count[MAX_GI];
 
+	/* Packet count for different num_spatial_stream values */
+	uint32_t nss[SS_COUNT];
+
 	/* Packet Count for different bandwidths */
 	uint32_t bw[MAX_BW];
 
@@ -935,6 +938,8 @@ struct cdp_tx_ingress_stats {
 	struct cdp_pkt_info inspect_pkts;
 	/*NAWDS  Multicast Packet Count */
 	struct cdp_pkt_info nawds_mcast;
+	/* Number of broadcast packets */
+	struct cdp_pkt_info bcast;
 
 	struct {
 		/* Total Raw packets */

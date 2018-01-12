@@ -1193,14 +1193,16 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		DP_STATS_INC_PKT(peer, rx.rcvd_reo[ring_id], 1,
 				qdf_nbuf_len(rx_desc->nbuf));
 
-		ampdu_flag = (mpdu_desc_info.mpdu_flags &
-				HAL_MPDU_F_AMPDU_FLAG);
+		if (soc->process_rx_status) {
+			ampdu_flag = (mpdu_desc_info.mpdu_flags &
+					HAL_MPDU_F_AMPDU_FLAG);
 
-		DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
-		DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
+			DP_STATS_INCC(peer, rx.ampdu_cnt, 1, ampdu_flag);
+			DP_STATS_INCC(peer, rx.non_ampdu_cnt, 1, !(ampdu_flag));
+		}
 
 		amsdu_flag = ((msdu_desc_info.msdu_flags &
-				HAL_MSDU_F_FIRST_MSDU_IN_MPDU) &&
+					HAL_MSDU_F_FIRST_MSDU_IN_MPDU) &&
 				(msdu_desc_info.msdu_flags &
 					HAL_MSDU_F_LAST_MSDU_IN_MPDU));
 
@@ -1410,7 +1412,7 @@ done:
 			DP_STATS_INC(peer, rx.bw[bw], 1);
 			DP_STATS_INC(peer, rx.sgi_count[sgi], 1);
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-					mcs_count[MAX_MCS], 1,
+					mcs_count[MAX_MCS - 1], 1,
 					((mcs >= MAX_MCS_11A) &&
 					 (pkt_type == DOT11_A)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
@@ -1418,7 +1420,7 @@ done:
 					((mcs < MAX_MCS_11A) &&
 					 (pkt_type == DOT11_A)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-					mcs_count[MAX_MCS], 1,
+					mcs_count[MAX_MCS - 1], 1,
 					((mcs >= MAX_MCS_11B) &&
 					 (pkt_type == DOT11_B)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
@@ -1426,7 +1428,7 @@ done:
 					((mcs < MAX_MCS_11B) &&
 					 (pkt_type == DOT11_B)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-					mcs_count[MAX_MCS], 1,
+					mcs_count[MAX_MCS - 1], 1,
 					((mcs >= MAX_MCS_11A) &&
 					 (pkt_type == DOT11_N)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
@@ -1434,7 +1436,7 @@ done:
 					((mcs < MAX_MCS_11A) &&
 					 (pkt_type == DOT11_N)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-					mcs_count[MAX_MCS], 1,
+					mcs_count[MAX_MCS - 1], 1,
 					((mcs >= MAX_MCS_11AC) &&
 					 (pkt_type == DOT11_AC)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
@@ -1442,7 +1444,7 @@ done:
 					((mcs < MAX_MCS_11AC) &&
 					 (pkt_type == DOT11_AC)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].
-					mcs_count[MAX_MCS], 1,
+					mcs_count[MAX_MCS - 1], 1,
 					((mcs >= (MAX_MCS - 1)) &&
 					 (pkt_type == DOT11_AX)));
 			DP_STATS_INCC(peer, rx.pkt_type[pkt_type].

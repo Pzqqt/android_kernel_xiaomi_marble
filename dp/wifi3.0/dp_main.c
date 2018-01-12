@@ -4828,6 +4828,14 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.bw[2], peer->stats.tx.bw[3],
 			peer->stats.tx.bw[4], peer->stats.tx.bw[5]);
 
+	index = 0;
+	for (i = 0; i < SS_COUNT; i++) {
+		index += qdf_snprint(&nss[index], DP_NSS_LENGTH - index,
+				" %d", peer->stats.tx.nss[i]);
+	}
+	DP_PRINT_STATS("NSS(1-8) = %s",
+			nss);
+
 	DP_PRINT_STATS("Aggregation:");
 	DP_PRINT_STATS("	Number of Msdu's Part of Amsdu = %d",
 			peer->stats.tx.amsdu_cnt);

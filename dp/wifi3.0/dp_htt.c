@@ -80,6 +80,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_UPD(peer, tx.tx_rate, ppdu->tx_rate);
 	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], num_msdu);
 	DP_STATS_INC(peer, tx.bw[ppdu->bw], num_msdu);
+	DP_STATS_INC(peer, tx.nss[ppdu->nss], num_msdu);
 	DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
 	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
 	DP_STATS_INCC(peer, tx.stbc, num_msdu, ppdu->stbc);
@@ -101,31 +102,31 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INC(peer, tx.retries,
 			(ppdu->long_retries + ppdu->short_retries));
 	DP_STATS_INCC(peer,
-			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS-1], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_A)));
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11A) && (preamble == DOT11_A)));
 	DP_STATS_INCC(peer,
-			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS-1], num_msdu,
 			((mcs >= MAX_MCS_11B) && (preamble == DOT11_B)));
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS_11B)) && (preamble == DOT11_B)));
 	DP_STATS_INCC(peer,
-			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS-1], num_msdu,
 			((mcs >= MAX_MCS_11A) && (preamble == DOT11_N)));
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11A) && (preamble == DOT11_N)));
 	DP_STATS_INCC(peer,
-			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS-1], num_msdu,
 			((mcs >= MAX_MCS_11AC) && (preamble == DOT11_AC)));
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < MAX_MCS_11AC) && (preamble == DOT11_AC)));
 	DP_STATS_INCC(peer,
-			tx.pkt_type[preamble].mcs_count[MAX_MCS], num_msdu,
+			tx.pkt_type[preamble].mcs_count[MAX_MCS-1], num_msdu,
 			((mcs >= (MAX_MCS - 1)) && (preamble == DOT11_AX)));
 	DP_STATS_INCC(peer,
 			tx.pkt_type[preamble].mcs_count[mcs], num_msdu,

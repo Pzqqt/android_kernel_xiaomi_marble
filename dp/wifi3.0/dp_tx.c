@@ -2353,23 +2353,23 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	if (!(soc->process_tx_status))
 		return;
 
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 			((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_A)));
 	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
 			((mcs < (MAX_MCS_11A)) && (pkt_type == DOT11_A)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 			((mcs >= MAX_MCS_11B) && (pkt_type == DOT11_B)));
 	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
 			((mcs < MAX_MCS_11B) && (pkt_type == DOT11_B)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 			((mcs >= MAX_MCS_11A) && (pkt_type == DOT11_N)));
 	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
 			((mcs < MAX_MCS_11A) && (pkt_type == DOT11_N)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 			((mcs >= MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
 	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
 			((mcs < MAX_MCS_11AC) && (pkt_type == DOT11_AC)));
-	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS], 1,
+	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[MAX_MCS - 1], 1,
 			((mcs >= (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
 	DP_STATS_INCC(peer, tx.pkt_type[pkt_type].mcs_count[mcs], 1,
 			((mcs < (MAX_MCS - 1)) && (pkt_type == DOT11_AX)));
