@@ -1,5 +1,5 @@
 /* SPDX-License-Identifier: GPL-2.0-only */
-/* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2019, The Linux Foundation. All rights reserved.
  */
 #ifndef __WCD_MBHC_V2_H__
 #define __WCD_MBHC_V2_H__
@@ -540,6 +540,7 @@ struct wcd_mbhc {
 	bool gnd_swh; /*track GND switch NC / NO */
 	u32 hs_thr;
 	u32 hph_thr;
+	u32 micb_mv;
 	u32 swap_thr;
 	u32 moist_vref;
 	u32 moist_iref;
