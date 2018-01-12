@@ -196,6 +196,12 @@ extern uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type);
 uint32_t hal_srng_max_entries(void *hal_soc, int ring_type);
 
 /**
+ * hal_srng_dump - Dump ring status
+ * @srng: hal srng pointer
+ */
+void hal_srng_dump(struct hal_srng *srng);
+
+/**
  * hal_srng_get_dir - Returns the direction of the ring
  * @hal_soc: Opaque HAL SOC handle
  * @ring_type: one of the types from hal_ring_type

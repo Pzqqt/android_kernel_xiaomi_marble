@@ -1331,6 +1331,29 @@ enum hal_srng_dir hal_srng_get_dir(void *hal_soc, int ring_type)
 }
 
 /**
+ * hal_srng_dump - Dump ring status
+ * @srng: hal srng pointer
+ */
+void hal_srng_dump(struct hal_srng *srng)
+{
+	if (srng->ring_dir == HAL_SRNG_SRC_RING) {
+		qdf_print("=== SRC RING %d ===", srng->ring_id);
+		qdf_print("hp %u, reap_hp %u, tp %u, cached tp %u",
+			  srng->u.src_ring.hp,
+			  srng->u.src_ring.reap_hp,
+			  *srng->u.src_ring.tp_addr,
+			  srng->u.src_ring.cached_tp);
+	} else {
+		qdf_print("=== DST RING %d ===", srng->ring_id);
+		qdf_print("tp %u, hp %u, cached tp %u, loop_cnt %u",
+			  srng->u.dst_ring.tp,
+			  *srng->u.dst_ring.hp_addr,
+			  srng->u.dst_ring.cached_hp,
+			  srng->u.dst_ring.loop_cnt);
+	}
+}
+
+/**
  * hal_get_srng_params - Retreive SRNG parameters for a given ring from HAL
  *
  * @hal_soc: Opaque HAL SOC handle
