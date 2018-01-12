@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -260,11 +260,6 @@ int hdd_driver_memdump_init(void)
 	int status;
 	struct hdd_context *hdd_ctx;
 
-	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
-		hdd_err("Not initializing memdump in FTM mode");
-		return -EINVAL;
-	}
-
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hdd_err("Invalid HDD context");
@@ -291,11 +286,6 @@ int hdd_driver_memdump_init(void)
  */
 void hdd_driver_memdump_deinit(void)
 {
-	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
-		hdd_err("Not deinitializing memdump in FTM mode");
-		return;
-	}
-
 	hdd_driver_memdump_procfs_remove();
 
 	hdd_driver_mem_cleanup();
