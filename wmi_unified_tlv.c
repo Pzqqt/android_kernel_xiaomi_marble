@@ -21009,6 +21009,56 @@ static QDF_STATUS send_obss_detection_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_obss_detection_info_tlv() - Extract obss detection info
+ *   received from firmware.
+ * @evt_buf: pointer to event buffer
+ * @obss_detection: Pointer to hold obss detection info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_obss_detection_info_tlv(uint8_t *evt_buf,
+						  struct wmi_obss_detect_info
+						  *obss_detection)
+{
+	WMI_SAP_OBSS_DETECTION_REPORT_EVENTID_param_tlvs *param_buf;
+	wmi_sap_obss_detection_info_evt_fixed_param *fix_param;
+
+	if (!obss_detection) {
+		WMI_LOGE("%s: Invalid obss_detection event buffer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param_buf = (WMI_SAP_OBSS_DETECTION_REPORT_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("%s: Invalid evt_buf", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fix_param = param_buf->fixed_param;
+	obss_detection->vdev_id = fix_param->vdev_id;
+	obss_detection->matched_detection_masks =
+		fix_param->matched_detection_masks;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fix_param->matched_bssid_addr,
+				   &obss_detection->matched_bssid_addr[0]);
+	switch (fix_param->reason) {
+	case WMI_SAP_OBSS_DETECTION_EVENT_REASON_NOT_SUPPORT:
+		obss_detection->reason = OBSS_OFFLOAD_DETECTION_DISABLED;
+		break;
+	case WMI_SAP_OBSS_DETECTION_EVENT_REASON_PRESENT_NOTIFY:
+		obss_detection->reason = OBSS_OFFLOAD_DETECTION_PRESENT;
+		break;
+	case WMI_SAP_OBSS_DETECTION_EVENT_REASON_ABSENT_TIMEOUT:
+		obss_detection->reason = OBSS_OFFLOAD_DETECTION_ABSENT;
+		break;
+	default:
+		WMI_LOGE("%s: Invalid reason %d", __func__, fix_param->reason);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -21451,6 +21501,7 @@ struct wmi_ops tlv_ops =  {
 #endif
 	.send_btm_config = send_btm_config_cmd_tlv,
 	.send_obss_detection_cfg_cmd = send_obss_detection_cfg_cmd_tlv,
+	.extract_obss_detection_info = extract_obss_detection_info_tlv,
 };
 
 /**
