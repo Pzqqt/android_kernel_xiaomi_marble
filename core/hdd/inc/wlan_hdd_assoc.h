@@ -213,6 +213,7 @@ struct hdd_connection_info {
 /* Forward declarations */
 struct hdd_adapter;
 struct hdd_station_ctx;
+struct hdd_context;
 
 /**
  * hdd_is_connecting() - Function to check connection progress
@@ -238,6 +239,16 @@ bool hdd_conn_is_connected(struct hdd_station_ctx *sta_ctx);
  *      BAND_ALL if not connected
  */
 enum band_info hdd_conn_get_connected_band(struct hdd_station_ctx *sta_ctx);
+
+/**
+ * hdd_get_sta_connection_in_progress() - get STA for which connection
+ *                                        is in progress
+ * @hdd_ctx: hdd context
+ *
+ * Return: hdd adpater for which connection is in progress
+ */
+struct hdd_adapter *hdd_get_sta_connection_in_progress(
+			struct hdd_context *hdd_ctx);
 
 /**
  * hdd_sme_roam_callback() - hdd sme roam callback

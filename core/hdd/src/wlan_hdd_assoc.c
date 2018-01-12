@@ -304,6 +304,39 @@ hdd_conn_get_connected_cipher_algo(struct hdd_station_ctx *sta_ctx,
 	return fConnected;
 }
 
+struct hdd_adapter *hdd_get_sta_connection_in_progress(
+			struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter = NULL;
+	struct hdd_station_ctx *hdd_sta_ctx;
+
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return NULL;
+	}
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if ((QDF_STA_MODE == adapter->device_mode) ||
+		    (QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
+		    (QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
+			if (eConnectionState_Connecting ==
+			    hdd_sta_ctx->conn_info.connState) {
+				hdd_debug("session_id %d: Connection is in progress",
+					  adapter->session_id);
+				return adapter;
+			} else if ((eConnectionState_Associated ==
+				   hdd_sta_ctx->conn_info.connState) &&
+				   !hdd_sta_ctx->conn_info.uIsAuthenticated) {
+				hdd_debug("session_id %d: Key exchange is in progress",
+					  adapter->session_id);
+				return adapter;
+			}
+		}
+	}
+	return NULL;
+}
+
 /**
  * hdd_remove_beacon_filter() - remove beacon filter
  * @adapter: Pointer to the hdd adapter

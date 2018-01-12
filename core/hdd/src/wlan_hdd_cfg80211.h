@@ -510,6 +510,17 @@ uint8_t hdd_get_sap_operating_band(struct hdd_context *hdd_ctx);
 int wlan_hdd_try_disconnect(struct hdd_adapter *adapter);
 
 /**
+ * wlan_hdd_disconnect() - hdd disconnect api
+ * @adapter: Pointer to adapter
+ * @reason: Disconnect reason code
+ *
+ * This function is used to issue a disconnect request to SME
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int wlan_hdd_disconnect(struct hdd_adapter *adapter, u16 reason);
+
+/**
  * hdd_update_cca_info_cb() - stores congestion value in station context
  * @context : HDD context
  * @congestion : congestion
