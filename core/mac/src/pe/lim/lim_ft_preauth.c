@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -755,7 +755,7 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 {
 	tpPESession session_entry;
 
-	session_entry = pe_find_session_by_session_id(mac_ctx, session_id);
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx, session_id);
 	if (session_entry == NULL) {
 		pe_err("SessionId:%d Session Does not exist", session_id);
 		return;
