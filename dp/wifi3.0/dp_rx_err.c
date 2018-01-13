@@ -1122,6 +1122,7 @@ done:
 			qdf_assert(0);
 		}
 
+		qdf_nbuf_free(nbuf);
 		nbuf = next;
 		hal_rx_dump_pkt_tlvs(rx_tlv_hdr, QDF_TRACE_LEVEL_DEBUG);
 	}
