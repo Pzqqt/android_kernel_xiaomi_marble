@@ -2248,15 +2248,18 @@ QDF_STATUS tdls_process_antenna_switch(struct tdls_antenna_switch_request *req)
 	uint8_t channel;
 	struct tdls_osif_indication ind;
 
-	if (!req || !req->vdev) {
-		tdls_err("Invalid input params req: %p", req);
-		if (req)
-			qdf_mem_free(req);
-
+	if (!req) {
+		tdls_err("null req");
 		return QDF_STATUS_E_INVAL;
 	}
 
 	vdev = req->vdev;
+	if (!vdev) {
+		tdls_err("null vdev");
+		qdf_mem_free(req);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	status = tdls_get_vdev_objects(vdev, &vdev_obj, &soc_obj);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		tdls_err("can't get vdev_obj & soc_obj");
