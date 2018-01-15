@@ -3853,10 +3853,7 @@ QDF_STATUS hdd_roam_deregister_tdlssta(struct hdd_adapter *adapter,
 	qdf_status = cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
 			staId);
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hdd_err("cdp_clear_peer() failed for staID: %d Status: %d [0x%08X]",
-			staId, qdf_status, qdf_status);
-	}
+
 	return qdf_status;
 }
 
