@@ -892,6 +892,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_bpf_set_vdev_work_memory_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_bpf_get_vdev_work_memory_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_bpf_get_vdev_work_memory_resp_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_pdev_get_nfcal_power_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1251,6 +1252,7 @@ typedef enum {
     OP(WMI_BPF_SET_VDEV_ENABLE_CMDID) \
     OP(WMI_BPF_SET_VDEV_WORK_MEMORY_CMDID) \
     OP(WMI_BPF_GET_VDEV_WORK_MEMORY_CMDID) \
+    OP(WMI_PDEV_GET_NFCAL_POWER_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3257,6 +3259,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_COEX_CONFIG_CMDID);
 #define WMITLV_TABLE_WMI_COEX_GET_ANTENNA_ISOLATION_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_coex_get_antenna_isolation_cmd_fixed_param, wmi_coex_get_antenna_isolation_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_COEX_GET_ANTENNA_ISOLATION_CMDID);
+
+/* Cal Get power fixed param */
+#define WMITLV_TABLE_WMI_PDEV_GET_NFCAL_POWER_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_get_nfcal_power_fixed_param, wmi_pdev_get_nfcal_power_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_NFCAL_POWER_CMDID);
 
 /* bpf offload capability get cmd */
 #define WMITLV_TABLE_WMI_BPF_GET_CAPABILITY_CMDID(id,op,buf,len) \

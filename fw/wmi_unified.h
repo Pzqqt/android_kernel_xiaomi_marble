@@ -21320,6 +21320,13 @@ typedef struct {
 
 typedef struct {
     /** TLV tag and len; tag equals
+     * WMITLV_TAG_STRUC_wmi_pdev_get_nfcal_power_fixed_param */
+    A_UINT32 tlv_header;
+    /* Currently there are no parameters for this message. */
+} wmi_pdev_get_nfcal_power_fixed_param;
+
+typedef struct {
+    /** TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_coex_report_isolation_event_fixed_param */
     A_UINT32 tlv_header;
     /** Antenna isolation value in dB units, none zero value is valid while 0 means failed to do isolation measurement or corresponding chain is not active.
