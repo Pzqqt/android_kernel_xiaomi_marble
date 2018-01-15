@@ -3573,7 +3573,7 @@ int hdd_vdev_ready(struct hdd_adapter *adapter)
 int hdd_vdev_destroy(struct hdd_adapter *adapter)
 {
 	QDF_STATUS status;
-	int errno;
+	int errno = 0;
 	struct hdd_context *hdd_ctx;
 	uint8_t vdev_id;
 
@@ -3586,16 +3586,6 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		return -EINVAL;
 	}
 	status = ucfg_reg_11d_vdev_delete_update(adapter->hdd_vdev);
-	/*
-	 * In SSR case, there is no need to destroy vdev in firmware since
-	 * it has already asserted. vdev can be released directly.
-	 */
-	if (cds_is_driver_recovering()) {
-		hdd_debug("SSR: silently release the vdev for session-id: %d",
-			  adapter->session_id);
-		clear_bit(SME_SESSION_OPENED, &adapter->event_flags);
-		goto release_vdev;
-	}
 
 	/* close sme session (destroy vdev in firmware via legacy API) */
 	qdf_event_reset(&adapter->qdf_session_close_event);
@@ -3603,7 +3593,8 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	status = sme_close_session(hdd_ctx->hHal, adapter->session_id);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		hdd_err("failed to close sme session: %d", status);
-		return qdf_status_to_os_return(status);
+		errno = qdf_status_to_os_return(status);
+		goto release_vdev;
 	}
 
 	/* block on a completion variable until sme session is closed */
@@ -3617,16 +3608,26 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 		adapter->session_id = HDD_SESSION_ID_INVALID;
 		if (QDF_STATUS_E_TIMEOUT != status) {
 			hdd_err("timed out waiting for close sme session: %u", status);
-			return -ETIMEDOUT;
+			errno = -ETIMEDOUT;
+			goto release_vdev;
 		} else if (adapter->qdf_session_close_event.force_set) {
 			hdd_err("Session close evt focefully set, SSR/PDR has occurred");
-			return -EINVAL;
+			errno = -EINVAL;
+			goto release_vdev;
 		} else {
 			hdd_err("Failed to close sme session (%u)", status);
-			return -EINVAL;
+			errno = -EINVAL;
+			goto release_vdev;
 		}
 	}
+
 release_vdev:
+	/* In SSR case, directly exit may cause objects leaks,
+	 * if sme_close_session failed.Free objects anyway.
+	 */
+	if (errno && !cds_is_driver_recovering())
+		return errno;
+
 	/* do vdev logical destroy via objmgr */
 	errno = hdd_objmgr_destroy_vdev(adapter);
 	if (errno) {

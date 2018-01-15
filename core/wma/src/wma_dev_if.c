@@ -643,6 +643,24 @@ out:
 		wma_send_del_sta_self_resp(del_sta_self_req_param);
 	return status;
 }
+
+/**
+ * wma_force_vdev_cleanup() - Cleanup vdev resource when SSR
+ * @wma_handle: WMA handle
+ * @vdev_id: vdev ID
+ *
+ * Return: none
+ */
+static void wma_force_vdev_cleanup(tp_wma_handle wma_handle, uint8_t vdev_id)
+{
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
+
+	WMA_LOGE("SSR: force cleanup vdev(%d) resouce", vdev_id);
+	iface->vdev_active = false;
+	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
+}
+
 /**
  * wma_vdev_detach() - send vdev delete command to fw
  * @wma_handle: wma handle
@@ -660,6 +678,21 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	struct wma_target_req *req_msg;
 
+	if (!iface->handle) {
+		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
+			 vdev_id);
+		goto send_rsp;
+	}
+
+	/*
+	 * In SSR case, there is no need to destroy vdev in firmware since
+	 * it has already asserted.
+	 */
+	if (cds_is_driver_recovering()) {
+		wma_force_vdev_cleanup(wma_handle, vdev_id);
+		goto send_rsp;
+	}
+
 	if (qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
 		req_msg = wma_find_vdev_req(wma_handle, vdev_id,
 				WMA_TARGET_REQ_TYPE_VDEV_STOP, false);
@@ -674,19 +707,6 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 		return status;
 	}
 	iface->is_del_sta_defered = false;
-
-	if (!iface->handle) {
-		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
-			 vdev_id);
-		pdel_sta_self_req_param->status = status;
-		if (generateRsp) {
-			wma_send_del_sta_self_resp(pdel_sta_self_req_param);
-		} else {
-			qdf_mem_free(pdel_sta_self_req_param);
-			pdel_sta_self_req_param = NULL;
-		}
-		return status;
-	}
 
 	/* P2P Device */
 	if ((iface->type == WMI_VDEV_TYPE_AP) &&
@@ -719,9 +739,16 @@ send_fail_rsp:
 			QDF_BUG(0);
 		}
 	}
+	status = QDF_STATUS_E_FAILURE;
 
-	pdel_sta_self_req_param->status = QDF_STATUS_E_FAILURE;
-	wma_send_del_sta_self_resp(pdel_sta_self_req_param);
+send_rsp:
+	if (generateRsp) {
+		pdel_sta_self_req_param->status = status;
+		wma_send_del_sta_self_resp(pdel_sta_self_req_param);
+	} else {
+		qdf_mem_free(pdel_sta_self_req_param);
+		pdel_sta_self_req_param = NULL;
+	}
 	return status;
 }
 
