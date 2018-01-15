@@ -988,6 +988,17 @@ static inline bool lim_is_session_he_capable(tpPESession session)
 	return session->he_capable;
 }
 
+/**
+ * lim_get_session_he_frag_cap(): Get session HE fragmentation cap
+ * @session: pointer to session
+ *
+ * Return: HE fragmentation value
+ */
+static inline uint8_t lim_get_session_he_frag_cap(tpPESession session)
+{
+	return session->he_config.fragmentation;
+}
+
 static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)
 {
 	return sta_ds->mlmStaContext.he_capable;
@@ -1148,6 +1159,11 @@ static inline void lim_update_sta_he_capable(tpAniSirGlobal mac,
 static inline bool lim_is_session_he_capable(tpPESession session)
 {
 	return false;
+}
+
+static inline uint8_t lim_get_session_he_frag_cap(tpPESession session)
+{
+	return 0;
 }
 
 static inline bool lim_is_sta_he_capable(tpDphHashNode sta_ds)

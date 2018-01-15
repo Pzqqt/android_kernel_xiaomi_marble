@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1697,7 +1697,8 @@ static void lim_process_addba_req(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		lim_send_addba_response_frame(mac_ctx, mac_hdr->sa,
-			addba_req->addba_param_set.tid, session);
+			addba_req->addba_param_set.tid, session,
+			addba_req->addba_extn_element.present);
 	} else {
 		pe_err("Failed to process addba request");
 	}

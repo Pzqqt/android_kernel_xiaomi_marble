@@ -4684,6 +4684,7 @@ returnAfterError:
  * @peer_mac: Peer MAC address
  * @tid: TID for which addba response is being sent
  * @session: PE session entry
+ * @addba_extn_present: ADDBA extension present flag
  *
  * This function is called when ADDBA request is successful. ADDBA response is
  * setup by calling addba_response_setup API and frame is then sent out OTA.
@@ -4691,7 +4692,8 @@ returnAfterError:
  * Return: QDF_STATUS
  */
 QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
-			tSirMacAddr peer_mac, uint16_t tid, tpPESession session)
+		tSirMacAddr peer_mac, uint16_t tid,
+		tpPESession session, uint8_t addba_extn_present)
 {
 
 	tDot11faddba_rsp frm;
@@ -4706,6 +4708,7 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	uint8_t peer_id, dialog_token;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	void *peer, *pdev;
+	uint8_t he_frag = 0;
 
 	sme_sessionid = session->smeSessionId;
 
@@ -4737,12 +4740,29 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_POLICY_IMMEDIATE;
 	frm.addba_param_set.policy = SIR_MAC_BA_AMSDU_SUPPORTED;
 	frm.ba_timeout.timeout = batimeout;
+	if (addba_extn_present) {
+		frm.addba_extn_element.present = 1;
+		frm.addba_extn_element.no_fragmentation = 1;
+		if (lim_is_session_he_capable(session)) {
+			he_frag = lim_get_session_he_frag_cap(session);
+			if (he_frag != 0) {
+				frm.addba_extn_element.no_fragmentation = 0;
+				frm.addba_extn_element.he_frag_operation =
+					he_frag;
+			}
+		}
+	}
 
 	pe_debug("Sending a ADDBA Response from %pM to %pM",
 		session->selfMacAddr, peer_mac);
 	pe_debug("tid: %d, dialog_token: %d, status: %d, buff_size: %d",
 		tid, frm.DialogToken.token, frm.Status.status,
 		frm.addba_param_set.buff_size);
+	pe_debug("addba_extn %d he_capable %d no_frag %d he_frag %d",
+		addba_extn_present,
+		lim_is_session_he_capable(session),
+		frm.addba_extn_element.no_fragmentation,
+		frm.addba_extn_element.he_frag_operation);
 
 	status = dot11f_get_packed_addba_rsp_size(mac_ctx, &frm, &payload_size);
 	if (DOT11F_FAILED(status)) {

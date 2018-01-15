@@ -113,6 +113,7 @@ const EID_PU_BUFFER_STATUS           = 106;
 const EID_QOS_MAP_SET                = 110;
 const EID_ESE_SPECIFIC               = 150;
 const EID_ESE_CCKM_SPECIFIC          = 156;
+const EID_ADDBA_EXTN_ELEMENT         = 159;
 const EID_VHT_CAPABILITIES           =  191;
 const EID_VHT_OPERATION_ELEMENT      =  192;
 const EID_VHT_EXT_BSS_LOAD           =  193;
@@ -472,6 +473,15 @@ FF ba_start_seq_ctrl(2)
     {
       frag_number: 4;
       ssn: 12;
+    }
+}
+
+IE addba_extn_element(EID_ADDBA_EXTN_ELEMENT)
+{
+    {
+      no_fragmentation: 1;
+      he_frag_operation: 2;
+      reserved: 5;
     }
 }
 
@@ -4265,6 +4275,7 @@ FRAME addba_req
     FF    addba_param_set;
     FF    ba_timeout;
     FF    ba_start_seq_ctrl;
+    OPTIE addba_extn_element;
 }
 
 FRAME addba_rsp
@@ -4275,6 +4286,7 @@ FRAME addba_rsp
     FF    Status;
     FF    addba_param_set;
     FF    ba_timeout;
+    OPTIE addba_extn_element;
 }
 
 FRAME delba_req
