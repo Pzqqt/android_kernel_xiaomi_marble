@@ -897,7 +897,6 @@ static int tavil_codec_enable_anc(struct snd_soc_dapm_widget *w,
 	struct wcd9xxx_anc_header *anc_head;
 	struct firmware_cal *hwdep_cal = NULL;
 	u32 anc_writes_size = 0;
-	u32 anc_cal_size = 0;
 	int anc_size_remaining;
 	u32 *anc_ptr;
 	u16 reg;
@@ -986,8 +985,16 @@ static int tavil_codec_enable_anc(struct snd_soc_dapm_widget *w,
 			goto err;
 		}
 
-		anc_cal_size = anc_writes_size;
-		for (i = 0; i < anc_writes_size; i++) {
+		i = 0;
+
+		if (!strcmp(w->name, "RX INT1 DAC") ||
+		    !strcmp(w->name, "RX INT3 DAC"))
+			anc_writes_size = anc_writes_size / 2;
+		else if (!strcmp(w->name, "RX INT2 DAC") ||
+			 !strcmp(w->name, "RX INT4 DAC"))
+			i = anc_writes_size / 2;
+
+		for (; i < anc_writes_size; i++) {
 			WCD934X_CODEC_UNPACK_ENTRY(anc_ptr[i], reg, mask, val);
 			snd_soc_write(codec, reg, (val & mask));
 		}
