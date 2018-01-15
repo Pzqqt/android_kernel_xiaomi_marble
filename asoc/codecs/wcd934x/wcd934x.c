@@ -526,7 +526,7 @@ struct tx_mute_work {
 	struct delayed_work dwork;
 };
 
-#define WCD934X_SPK_ANC_EN_DELAY_MS 350
+#define WCD934X_SPK_ANC_EN_DELAY_MS 550
 static int spk_anc_en_delay = WCD934X_SPK_ANC_EN_DELAY_MS;
 module_param(spk_anc_en_delay, int, 0664);
 MODULE_PARM_DESC(spk_anc_en_delay, "delay to enable anc in speaker path");
