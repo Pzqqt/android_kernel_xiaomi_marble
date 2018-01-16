@@ -5260,7 +5260,6 @@ tSirNwType lim_get_nw_type(tpAniSirGlobal pMac, uint8_t channelNum, uint32_t typ
 				}
 			}
 			if (pBeacon->extendedRatesPresent) {
-				pe_debug("Beacon, nwtype: G");
 				nwType = eSIR_11G_NW_TYPE;
 			} else if (pBeacon->HTInfo.present ||
 				   IS_BSS_VHT_CAPABLE(pBeacon->VHTCaps)) {
@@ -5268,7 +5267,6 @@ tSirNwType lim_get_nw_type(tpAniSirGlobal pMac, uint8_t channelNum, uint32_t typ
 			}
 		} else {
 			/* 11a packet */
-			pe_debug("Beacon, nwtype: A");
 			nwType = eSIR_11A_NW_TYPE;
 		}
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -172,14 +172,11 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);
 	pBssDescr->seq_ctrl = pHdr->seqControl;
 
-	pe_debug("BSSID: "MAC_ADDRESS_STR " tsf_delta: %u ReceivedTime: %llu ssid: %s",
-		  MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->tsf_delta,
-		  pBssDescr->received_time,
-		  ((pBPR->ssidPresent) ? (char *)pBPR->ssId.ssId : ""));
-
-	pe_debug("Seq Ctrl: Frag Num: %d Seq Num: LO: %02x HI: %02x",
-		pBssDescr->seq_ctrl.fragNum, pBssDescr->seq_ctrl.seqNumLo,
-		pBssDescr->seq_ctrl.seqNumHi);
+	pe_debug("Received %s from BSSID: %pM tsf_delta = %u Seq Num: %x ssid:%.*s, rssi: %d",
+		 pBssDescr->fProbeRsp ? "Probe Rsp" : "Beacon", pHdr->bssId,
+		 pBssDescr->tsf_delta, ((pHdr->seqControl.seqNumHi <<
+		 HIGH_SEQ_NUM_OFFSET) | pHdr->seqControl.seqNumLo),
+		 pBPR->ssId.length, pBPR->ssId.ssId, pBssDescr->rssi_raw);
 
 	if (fScanning) {
 		rrm_get_start_tsf(pMac, pBssDescr->startTSF);
@@ -214,9 +211,6 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 
 	/*set channel number in beacon in case it is not present */
 	pBPR->channelNumber = pBssDescr->channelId;
-
-	pe_debug("Collected BSS Description for Channel: %1d length: %u IE Fields: %u",
-		pBssDescr->channelId, pBssDescr->length, ieLen);
 	pMac->lim.beacon_probe_rsp_cnt_per_scan++;
 
 	return;

@@ -4438,8 +4438,9 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 	struct cfg80211_bss *bss_status;
 	struct hdd_context *hdd_ctx;
 
-	hdd_debug("CSR Callback: status= %d result= %d roamID=%d",
-		 roamStatus, roamResult, roamId);
+	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roamStatus)
+		hdd_debug("CSR Callback: status= %d result= %d roamID=%d",
+			  roamStatus, roamResult, roamId);
 
 	/* Sanity check */
 	if ((NULL == adapter) || (WLAN_HDD_ADAPTER_MAGIC != adapter->magic)) {

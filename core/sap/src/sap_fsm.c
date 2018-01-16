@@ -2316,7 +2316,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			  FL("Invalid MAC context"));
 		return QDF_STATUS_E_FAILURE;
 	}
-
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("SAP event callback event = %s"),
 		  sap_hdd_event_to_string(sap_hddevent));

@@ -1181,24 +1181,6 @@ static QDF_STATUS pe_handle_mgmt_frame(struct wlan_objmgr_psoc *psoc,
 	 */
 
 	mHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
-	if (mHdr->fc.type == SIR_MAC_MGMT_FRAME) {
-		pe_debug("RxBd: %pK mHdr: %pK Type: %d Subtype: %d  SizesFC: %zu Mgmt: %zu",
-		  pRxPacketInfo, mHdr, mHdr->fc.type, mHdr->fc.subType,
-		  sizeof(tSirMacFrameCtl), sizeof(tSirMacMgmtHdr));
-
-		pe_debug("mpdu_len: %d hdr_len: %d data_len: %d",
-		       WMA_GET_RX_MPDU_LEN(pRxPacketInfo),
-		       WMA_GET_RX_MPDU_HEADER_LEN(pRxPacketInfo),
-		       WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo));
-
-		if (WMA_GET_ROAMCANDIDATEIND(pRxPacketInfo))
-			pe_debug("roamCandidateInd: %d",
-				WMA_GET_ROAMCANDIDATEIND(pRxPacketInfo));
-
-		if (WMA_GET_OFFLOADSCANLEARN(pRxPacketInfo))
-			pe_debug("offloadScanLearn: %d",
-				 WMA_GET_OFFLOADSCANLEARN(pRxPacketInfo));
-	}
 
 	if (QDF_STATUS_SUCCESS !=
 	    pe_drop_pending_rx_mgmt_frames(pMac, mHdr, pVosPkt))

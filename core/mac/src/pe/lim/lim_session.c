@@ -568,8 +568,6 @@ tpPESession pe_find_session_by_bssid(tpAniSirGlobal pMac, uint8_t *bssid,
 		}
 	}
 
-	pe_debug("Session lookup fails for BSSID:");
-	lim_print_mac_addr(pMac, bssid, LOGD);
 	return NULL;
 
 }

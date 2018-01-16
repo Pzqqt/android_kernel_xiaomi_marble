@@ -3710,15 +3710,15 @@ int wma_form_rx_packet(qdf_nbuf_t buf,
 	rx_pkt->pkt_meta.tsf_delta = mgmt_rx_params->tsf_delta;
 	rx_pkt->pkt_buf = buf;
 
-	WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" snr = %d, rssi = %d, rssi_raw = %d tsf_delta: %u"),
-			MAC_ADDR_ARRAY(wh->i_addr3),
-			mgmt_rx_params->snr, rx_pkt->pkt_meta.rssi,
-			rx_pkt->pkt_meta.rssi_raw,
-			mgmt_rx_params->tsf_delta);
-
 	/* If it is a beacon/probe response, save it for future use */
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	mgt_subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
+
+	WMA_LOGD(FL("BSSID: "MAC_ADDRESS_STR" snr = %d, Type = %x, Subtype = %x, seq_num = %u, rssi = %d, rssi_raw = %d tsf_delta: %u"),
+			MAC_ADDR_ARRAY(wh->i_addr3),
+			mgmt_rx_params->snr, mgt_type, mgt_subtype,
+			*(uint16_t *)wh->i_seq, rx_pkt->pkt_meta.rssi,
+			rx_pkt->pkt_meta.rssi_raw, mgmt_rx_params->tsf_delta);
 
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
 	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||

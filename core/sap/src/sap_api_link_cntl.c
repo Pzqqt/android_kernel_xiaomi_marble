@@ -919,8 +919,12 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	}
 
 	mac_ctx = PMAC_STRUCT(hal);
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("Before switch on roam_status = %d"), roam_status);
+	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roam_status) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			FL("roam_status = %d, roam_result = %d"),
+			roam_status, roam_result);
+	}
+
 	switch (roam_status) {
 	case eCSR_ROAM_INFRA_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1096,9 +1100,6 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	default:
 		break;
 	}
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  FL("Before switch on roam_result = %d"), roam_result);
 
 	switch (roam_result) {
 	case eCSR_ROAM_RESULT_INFRA_ASSOCIATION_IND:

@@ -1444,10 +1444,12 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 			cds_pkt_return_packet(body_ptr);
 			break;
 		}
-
-		pe_debug("roamCandidateInd: %d offloadScanLearn: %d",
-				WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr),
-				WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr));
+		if (WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr))
+			pe_debug("roamCandidateInd: %d",
+				 WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr));
+		if (WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr))
+			pe_debug("offloadScanLearn: %d",
+				 WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr));
 
 		lim_handle80211_frames(mac_ctx, &new_msg, &defer_msg);
 
