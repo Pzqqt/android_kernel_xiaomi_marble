@@ -62,6 +62,8 @@
 
 /**
  * enum WLAN_OBJ_STATE - State of Object
+ * @WLAN_OBJ_STATE_ALLOCATED:           Common object is allocated, but not
+ *                                      fully initialized
  * @WLAN_OBJ_STATE_CREATED:             All component objects are created
  * @WLAN_OBJ_STATE_DELETED:             All component objects are destroyed
  * @WLAN_OBJ_STATE_PARTIALLY_CREATED:   Few/All component objects creation is
@@ -82,14 +84,15 @@
  *                                      destroyed
  */
 typedef enum {
-	WLAN_OBJ_STATE_CREATED            = 0,
-	WLAN_OBJ_STATE_DELETED            = 1,
-	WLAN_OBJ_STATE_PARTIALLY_CREATED  = 2,
-	WLAN_OBJ_STATE_PARTIALLY_DELETED  = 3,
-	WLAN_OBJ_STATE_COMP_DEL_PROGRESS  = 4,
-	WLAN_OBJ_STATE_LOGICALLY_DELETED  = 5,
-	WLAN_OBJ_STATE_CREATION_FAILED    = 6,
-	WLAN_OBJ_STATE_DELETION_FAILED    = 7,
+	WLAN_OBJ_STATE_ALLOCATED          = 0,
+	WLAN_OBJ_STATE_CREATED            = 1,
+	WLAN_OBJ_STATE_DELETED            = 2,
+	WLAN_OBJ_STATE_PARTIALLY_CREATED  = 3,
+	WLAN_OBJ_STATE_PARTIALLY_DELETED  = 4,
+	WLAN_OBJ_STATE_COMP_DEL_PROGRESS  = 5,
+	WLAN_OBJ_STATE_LOGICALLY_DELETED  = 6,
+	WLAN_OBJ_STATE_CREATION_FAILED    = 7,
+	WLAN_OBJ_STATE_DELETION_FAILED    = 8,
 } WLAN_OBJ_STATE;
 
 /* Object type is assigned with value */

@@ -123,6 +123,7 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 		obj_mgr_err("PSOC allocation failed");
 		return NULL;
 	}
+	psoc->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 	qdf_spinlock_create(&psoc->psoc_lock);
 	/* Initialize with default values */
 	objmgr = &psoc->soc_objmgr;
@@ -425,9 +426,8 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 		for (obj_id = 0; obj_id < WLAN_UMAC_MAX_PDEVS; obj_id++) {
 			pdev = objmgr->wlan_pdev_list[obj_id];
 			if ((pdev != NULL) &&
-			    (pdev->obj_state !=
-				WLAN_OBJ_STATE_LOGICALLY_DELETED)) {
-				wlan_objmgr_pdev_get_ref(pdev, dbg_id);
+			    (wlan_objmgr_pdev_try_get_ref(pdev, dbg_id) ==
+				QDF_STATUS_SUCCESS)) {
 				handler(psoc, (void *)pdev, arg);
 				wlan_objmgr_pdev_release_ref(pdev, dbg_id);
 			}
@@ -438,9 +438,8 @@ QDF_STATUS wlan_objmgr_iterate_obj_list(
 		for (obj_id = 0; obj_id < WLAN_UMAC_PSOC_MAX_VDEVS; obj_id++) {
 			vdev = objmgr->wlan_vdev_list[obj_id];
 			if ((vdev != NULL) &&
-			    (vdev->obj_state !=
-				WLAN_OBJ_STATE_LOGICALLY_DELETED)) {
-				wlan_objmgr_vdev_get_ref(vdev, dbg_id);
+			    (wlan_objmgr_vdev_try_get_ref(vdev, dbg_id) ==
+				QDF_STATUS_SUCCESS)) {
 				handler(psoc, vdev, arg);
 				wlan_objmgr_vdev_release_ref(vdev, dbg_id);
 			}
@@ -1703,11 +1702,13 @@ QDF_STATUS wlan_objmgr_psoc_try_get_ref(struct wlan_objmgr_psoc *psoc,
 	}
 
 	wlan_psoc_obj_lock(psoc);
-	if (psoc->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+	if (psoc->obj_state != WLAN_OBJ_STATE_CREATED) {
 		wlan_psoc_obj_unlock(psoc);
 		if (psoc->soc_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err("[Ref id: %d] psoc is in L-Del state", id);
+			obj_mgr_err(
+			"[Ref id: %d] psoc is not in Created state(%d)",
+					id, psoc->obj_state);
 
 		return QDF_STATUS_E_RESOURCES;
 	}
@@ -1827,7 +1828,7 @@ QDF_STATUS wlan_objmgr_psoc_set_user_config(struct wlan_objmgr_psoc *psoc,
 	}
 	wlan_psoc_obj_lock(psoc);
 	qdf_mem_copy(&psoc->soc_nif.user_config, user_config_data,
-				sizeof(psoc->soc_nif.user_config));
+		     sizeof(psoc->soc_nif.user_config));
 	wlan_psoc_obj_unlock(psoc);
 
 	return QDF_STATUS_SUCCESS;

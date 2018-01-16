@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,6 +110,7 @@ struct wlan_objmgr_pdev *wlan_objmgr_pdev_obj_create(
 		obj_mgr_err("pdev alloc failed");
 		return NULL;
 	}
+	pdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 	/* Attach PDEV with PSOC */
 	if (wlan_objmgr_psoc_pdev_attach(psoc, pdev)
 				!= QDF_STATUS_SUCCESS) {
@@ -824,13 +825,13 @@ QDF_STATUS wlan_objmgr_pdev_try_get_ref(struct wlan_objmgr_pdev *pdev,
 
 	wlan_pdev_obj_lock(pdev);
 	pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
-	if (pdev->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+	if (pdev->obj_state != WLAN_OBJ_STATE_CREATED) {
 		wlan_pdev_obj_unlock(pdev);
 		if (pdev->pdev_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err("[Ref id: %d] pdev [%d] is in L-Del state",
-					id, pdev_id);
-
+			obj_mgr_err(
+			"[Ref id: %d] pdev [%d] is not in Created(st:%d)",
+					id, pdev_id, pdev->obj_state);
 		return QDF_STATUS_E_RESOURCES;
 	}
 

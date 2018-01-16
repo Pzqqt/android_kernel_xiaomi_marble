@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -167,6 +167,7 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 				macaddr[3], macaddr[4], macaddr[5]);
 		return NULL;
 	}
+	peer->obj_state = WLAN_OBJ_STATE_ALLOCATED;
 	qdf_atomic_init(&peer->peer_objmgr.ref_cnt);
 	for (id = 0; id < WLAN_REF_ID_MAX; id++)
 		qdf_atomic_init(&peer->peer_objmgr.ref_id_dbg[id]);
@@ -592,14 +593,14 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 
 	wlan_peer_obj_lock(peer);
 	macaddr = wlan_peer_get_macaddr(peer);
-	if (peer->obj_state == WLAN_OBJ_STATE_LOGICALLY_DELETED) {
+	if (peer->obj_state != WLAN_OBJ_STATE_CREATED) {
 		wlan_peer_obj_unlock(peer);
 		if (peer->peer_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
-			obj_mgr_err("peer(%02x:%02x:%02x:%02x:%02x:%02x) L-Del",
-				macaddr[0], macaddr[1], macaddr[2],
-				macaddr[3], macaddr[4], macaddr[5]);
-
+			obj_mgr_err(
+			"peer(" QDF_MAC_ADDRESS_STR ") not in Created st(%d)",
+			QDF_MAC_ADDR_ARRAY(macaddr),
+				peer->obj_state);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
