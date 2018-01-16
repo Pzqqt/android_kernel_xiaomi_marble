@@ -2088,6 +2088,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_softap_change_sta_state(adapter,
 						    &key_complete->peerMacAddr,
 						    OL_TXRX_PEER_STATE_AUTH);
+		status = wlan_hdd_send_sta_authorized_event(
+						adapter, hdd_ctx,
+						&key_complete->peerMacAddr);
+
 		}
 		return QDF_STATUS_SUCCESS;
 	case eSAP_STA_MIC_FAILURE_EVENT:

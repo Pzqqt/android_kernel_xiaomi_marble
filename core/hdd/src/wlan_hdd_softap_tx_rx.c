@@ -1088,6 +1088,10 @@ QDF_STATUS hdd_softap_register_sta(struct hdd_adapter *adapter,
 						OL_TXRX_PEER_STATE_AUTH, false);
 
 		adapter->sta_info[sta_id].peer_state = OL_TXRX_PEER_STATE_AUTH;
+		if (!qdf_is_macaddr_broadcast(sta_mac))
+			qdf_status = wlan_hdd_send_sta_authorized_event(
+							adapter, hdd_ctx,
+							sta_mac);
 	} else {
 
 		hdd_info("ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",

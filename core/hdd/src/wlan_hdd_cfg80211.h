@@ -592,4 +592,17 @@ int wlan_hdd_send_mode_change_event(void);
 int wlan_hdd_restore_channels(struct hdd_context *hdd_ctx,
 			      bool notify_sap_event);
 
+/*
+ * wlan_hdd_send_sta_authorized_event: Function to send station authorized
+ * event to user space in case of SAP
+ * @adapter: Pointer to the adapter
+ * @hdd_ctx: HDD Context
+ * @mac_addr: MAC address of the STA for whic the Authorized event needs to
+ * be sent
+ * This api is used to send station authorized event to user space
+ */
+QDF_STATUS wlan_hdd_send_sta_authorized_event(
+					struct hdd_adapter *adapter,
+					struct hdd_context *hdd_ctx,
+					const struct qdf_mac_addr *mac_addr);
 #endif
