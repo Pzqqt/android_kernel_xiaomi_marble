@@ -264,6 +264,9 @@ typedef struct tagSmeStruct {
 	void (*get_arp_stats_cb)(void *, struct rsp_stats *);
 	get_chain_rssi_callback get_chain_rssi_cb;
 	void *get_chain_rssi_context;
+	void (*tx_queue_cb)(void *, uint32_t vdev_id,
+			    enum netif_action_type action,
+			    enum netif_reason_type reason);
 } tSmeStruct, *tpSmeStruct;
 
 #endif /* #if !defined( __SMEINTERNAL_H ) */

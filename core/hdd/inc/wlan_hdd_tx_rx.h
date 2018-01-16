@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,6 +65,19 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 				struct qdf_mac_addr *peer_mac_addr,
 				uint8_t *sta_id);
+
+/**
+ * hdd_tx_queue_cb() - Disable/Enable the Transmit Queues
+ * @context: HDD context
+ * @vdev_id: vdev id
+ * @action: Action to be taken on the Tx Queues
+ * @reason: Reason for the netif action
+ *
+ * Return: None
+ */
+void hdd_tx_queue_cb(void *context, uint32_t vdev_id,
+		     enum netif_action_type action,
+		     enum netif_reason_type reason);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 void hdd_tx_resume_cb(void *adapter_context, bool tx_resume);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1891,6 +1891,35 @@ void hdd_send_rps_disable_ind(struct hdd_adapter *adapter)
 				    &rps_data, sizeof(rps_data));
 
 	cds_cfg->rps_enabled = false;
+}
+
+void hdd_tx_queue_cb(void *context, uint32_t vdev_id,
+		     enum netif_action_type action,
+		     enum netif_reason_type reason)
+{
+	struct hdd_context *hdd_ctx = (struct hdd_context *)context;
+	struct hdd_adapter *adapter = NULL;
+
+	/*
+	 * Validating the context is not required here.
+	 * if there is a driver unload/SSR in progress happening in a
+	 * different context and it has been scheduled to run and
+	 * driver got a firmware event of sta kick out, then it is
+	 * good to disable the Tx Queue to stop the influx of traffic.
+	 */
+	if (hdd_ctx == NULL) {
+		hdd_err("Invalid context passed");
+		return;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
+	if (adapter == NULL) {
+		hdd_err("vdev_id %d does not exist with host", vdev_id);
+		return;
+	}
+	hdd_debug("Tx Queue action %d on vdev %d", action, vdev_id);
+
+	wlan_hdd_netif_queue_control(adapter, action, reason);
 }
 
 #ifdef MSM_PLATFORM

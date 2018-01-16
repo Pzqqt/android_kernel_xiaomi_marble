@@ -15499,6 +15499,32 @@ QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
 	return status;
 }
 
+QDF_STATUS sme_register_tx_queue_cb(tHalHandle hal,
+				    void (*tx_queue_cb)(void *,
+				    uint32_t vdev_id,
+				    enum netif_action_type action,
+				    enum netif_reason_type reason))
+{
+	QDF_STATUS status;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		mac->sme.tx_queue_cb = tx_queue_cb;
+		sme_release_global_lock(&mac->sme);
+		sme_debug("Tx queue callback set");
+	} else {
+		sme_err("Aquiring lock failed %d", status);
+	}
+
+	return status;
+}
+
+QDF_STATUS sme_deregister_tx_queue_cb(tHalHandle hal)
+{
+	return sme_register_tx_queue_cb(hal, NULL);
+}
+
 QDF_STATUS sme_set_smps_cfg(uint32_t vdev_id, uint32_t param_id,
 						uint32_t param_val)
 {

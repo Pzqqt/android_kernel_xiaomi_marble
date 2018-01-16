@@ -485,15 +485,16 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 	    (session->limMlmState == eLIM_MLM_LINK_ESTABLISHED_STATE) &&
 	    (session->limSmeState != eLIM_SME_WT_DISASSOC_STATE) &&
 	    (session->limSmeState != eLIM_SME_WT_DEAUTH_STATE)) {
-		if (!mac_ctx->sys.gSysEnableLinkMonitorMode)
-			return;
+		if (!mac_ctx->sys.gSysEnableLinkMonitorMode) {
+			goto hb_handler_fail;
+		}
 
 		/* Ignore HB if channel switch is in progress */
 		if (session->gLimSpecMgmt.dot11hChanSwState ==
 		   eLIM_11H_CHANSW_RUNNING) {
 			pe_debug("Ignore Heartbeat failure as Channel switch is in progress");
 			session->pmmOffloadInfo.bcnmiss = false;
-			return;
+			goto hb_handler_fail;
 		}
 		/* Beacon frame not received within heartbeat timeout. */
 		pe_warn("Heartbeat Failure");
@@ -561,4 +562,10 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 		lim_print_mlm_state(mac_ctx, LOG1, session->limMlmState);
 		mac_ctx->lim.gLimHBfailureCntInOtherStates++;
 	}
+
+hb_handler_fail:
+	if (mac_ctx->sme.tx_queue_cb)
+		mac_ctx->sme.tx_queue_cb(mac_ctx->hHdd, session->smeSessionId,
+					 WLAN_WAKE_ALL_NETIF_QUEUE,
+					 WLAN_CONTROL_PATH);
 }

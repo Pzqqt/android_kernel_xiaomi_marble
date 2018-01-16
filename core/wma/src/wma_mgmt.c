@@ -2772,6 +2772,7 @@ void wma_set_keepalive_req(tp_wma_handle wma,
 void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 {
 	tSirSmeMissedBeaconInd *beacon_miss_ind;
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	beacon_miss_ind = (tSirSmeMissedBeaconInd *) qdf_mem_malloc
 				  (sizeof(tSirSmeMissedBeaconInd));
@@ -2780,6 +2781,10 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id, int32_t rssi)
 		WMA_LOGE("%s: Memory allocation failure", __func__);
 		return;
 	}
+	if (mac && mac->sme.tx_queue_cb)
+		mac->sme.tx_queue_cb(mac->hHdd, vdev_id,
+				     WLAN_STOP_ALL_NETIF_QUEUE,
+				     WLAN_CONTROL_PATH);
 	beacon_miss_ind->messageType = WMA_MISSED_BEACON_IND;
 	beacon_miss_ind->length = sizeof(tSirSmeMissedBeaconInd);
 	beacon_miss_ind->bssIdx = vdev_id;

@@ -10650,6 +10650,11 @@ int hdd_register_cb(struct hdd_context *hdd_ctx)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("set bt activity info callback failed");
 
+	status = sme_register_tx_queue_cb(hdd_ctx->hHal,
+					  hdd_tx_queue_cb);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Register tx queue callback failed");
+
 	EXIT();
 
 	return ret;
@@ -10670,6 +10675,7 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 
 	ENTER();
 
+	sme_deregister_tx_queue_cb(hdd_ctx->hHal);
 	status = sme_deregister_for_dcc_stats_event(hdd_ctx->hHal);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("De-register of dcc stats callback failed: %d",

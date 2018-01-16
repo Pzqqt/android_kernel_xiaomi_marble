@@ -5546,6 +5546,11 @@ void lim_handle_heart_beat_failure_timeout(tpAniSirGlobal mac_ctx)
 			pe_err("Unexpected wt-probe-timeout in state");
 			lim_print_mlm_state(mac_ctx, LOGE,
 				psession_entry->limMlmState);
+			if (mac_ctx->sme.tx_queue_cb)
+				mac_ctx->sme.tx_queue_cb(mac_ctx->hHdd,
+						psession_entry->smeSessionId,
+						WLAN_WAKE_ALL_NETIF_QUEUE,
+						WLAN_CONTROL_PATH);
 		}
 	}
 	/*

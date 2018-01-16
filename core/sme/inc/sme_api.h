@@ -1562,6 +1562,27 @@ QDF_STATUS sme_congestion_register_callback(tHalHandle hal,
 	void (*congestion_cb)(void *, uint32_t congestion, uint32_t vdev_id));
 
 /**
+ * sme_register_tx_queue_cb(): Register tx queue callback
+ * @hal: handler for HAL
+ * @tx_queue_cb: Transmit Queues callback
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_register_tx_queue_cb(tHalHandle hal,
+				    void (*tx_queue_cb)(void *,
+				    uint32_t vdev_id,
+				    enum netif_action_type action,
+				    enum netif_reason_type reason));
+
+/**
+ * sme_deregister_tx_queue_cb() - Deregister the tx queue callback
+ * @hal: HAL handle
+ *
+ * Return: QDF status
+ */
+QDF_STATUS sme_deregister_tx_queue_cb(tHalHandle hal);
+
+/**
  * sme_rso_cmd_status_cb() - Set RSO cmd status callback
  * @hal: HAL Handle
  * @cb: HDD Callback to rso comman status read
