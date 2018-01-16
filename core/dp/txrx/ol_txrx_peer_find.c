@@ -750,8 +750,10 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 	 */
 	if (vdev->last_real_peer
 	    && vdev->last_real_peer->peer_ids[0] != HTT_INVALID_PEER_ID) {
+		qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 		ol_txrx_peer_get_ref(vdev->last_real_peer,
 				     PEER_DEBUG_ID_OL_INTERNAL);
+		qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 		peer = vdev->last_real_peer;
 	} else {
 		peer = NULL;

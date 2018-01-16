@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -350,15 +350,17 @@ struct ol_txrx_peer_t *ol_tx_tdls_peer_find(struct ol_txrx_pdev_t *pdev,
 	struct ol_txrx_peer_t *peer = NULL;
 
 	if (vdev->hlTdlsFlag) {
-		peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
-						vdev->hl_tdls_ap_mac_addr.raw,
-						peer_id);
+		peer = ol_txrx_peer_find_hash_find_get_ref(pdev,
+					vdev->hl_tdls_ap_mac_addr.raw, 0, 1,
+					PEER_DEBUG_ID_OL_INTERNAL);
+
 		if (peer &&  (peer->peer_ids[0] == HTT_INVALID_PEER_ID)) {
+			ol_txrx_peer_release_ref(peer,
+						 PEER_DEBUG_ID_OL_INTERNAL);
 			peer = NULL;
 		} else {
 			if (peer)
-				ol_txrx_peer_get_ref(peer,
-						     PEER_DEBUG_ID_OL_INTERNAL);
+				*peer_id = peer->local_id;
 		}
 	}
 	if (!peer)

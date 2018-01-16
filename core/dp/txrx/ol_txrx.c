@@ -131,6 +131,7 @@ ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr)
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t  *)pvdev;
 
+	qdf_spin_lock_bh(&vdev->pdev->last_real_peer_mutex);
 	if (bss_addr && vdev->last_real_peer &&
 	    !qdf_mem_cmp((u8 *)bss_addr,
 			     vdev->last_real_peer->mac_addr.raw,
@@ -138,6 +139,7 @@ ol_txrx_copy_mac_addr_raw(struct cdp_vdev *pvdev, uint8_t *bss_addr)
 		qdf_mem_copy(vdev->hl_tdls_ap_mac_addr.raw,
 			     vdev->last_real_peer->mac_addr.raw,
 			     OL_TXRX_MAC_ADDR_LEN);
+	qdf_spin_unlock_bh(&vdev->pdev->last_real_peer_mutex);
 }
 
 /**
@@ -156,16 +158,16 @@ ol_txrx_add_last_real_peer(struct cdp_pdev *ppdev,
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	ol_txrx_peer_handle peer;
 
-	if (vdev->last_real_peer == NULL) {
-		peer = NULL;
-		peer = ol_txrx_find_peer_by_addr(
-				(struct cdp_pdev *)pdev,
-				vdev->hl_tdls_ap_mac_addr.raw,
-				peer_id);
-		if (peer && (peer->peer_ids[0] !=
-					HTT_INVALID_PEER_ID))
-			vdev->last_real_peer = peer;
-	}
+	peer = ol_txrx_find_peer_by_addr(
+		(struct cdp_pdev *)pdev,
+		vdev->hl_tdls_ap_mac_addr.raw,
+		peer_id);
+
+	qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
+	if (!vdev->last_real_peer && peer &&
+	    (peer->peer_ids[0] != HTT_INVALID_PEER_ID))
+		vdev->last_real_peer = peer;
+	qdf_spin_unlock_bh(&pdev->last_real_peer_mutex);
 }
 
 /**
@@ -201,14 +203,18 @@ ol_txrx_update_last_real_peer(struct cdp_pdev *ppdev, void *ppeer,
 	struct ol_txrx_peer_t *peer = ppeer;
 	struct ol_txrx_vdev_t *vdev;
 
+	if (!restore_last_peer)
+		return;
+
 	vdev = peer->vdev;
-	if (restore_last_peer && (vdev->last_real_peer == NULL)) {
-		peer = NULL;
-		peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
+	peer = ol_txrx_find_peer_by_addr((struct cdp_pdev *)pdev,
 				vdev->hl_tdls_ap_mac_addr.raw, peer_id);
-		if (peer && (peer->peer_ids[0] != HTT_INVALID_PEER_ID))
-			vdev->last_real_peer = peer;
-	}
+
+	qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
+	if (!vdev->last_real_peer && peer &&
+	    (peer->peer_ids[0] != HTT_INVALID_PEER_ID))
+		vdev->last_real_peer = peer;
+	qdf_spin_unlock_bh(&pdev->last_real_peer_mutex);
 }
 #endif
 
@@ -2697,8 +2703,11 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 	TAILQ_INSERT_TAIL(&vdev->peer_list, peer, peer_list_elem);
 	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 	/* check whether this is a real peer (peer mac addr != vdev mac addr) */
-	if (ol_txrx_peer_find_mac_addr_cmp(&vdev->mac_addr, &peer->mac_addr))
+	if (ol_txrx_peer_find_mac_addr_cmp(&vdev->mac_addr, &peer->mac_addr)) {
+		qdf_spin_lock_bh(&pdev->last_real_peer_mutex);
 		vdev->last_real_peer = peer;
+		qdf_spin_unlock_bh(&pdev->last_real_peer_mutex);
+	}
 
 	peer->rx_opt_proc = pdev->rx_opt_proc;
 
@@ -3722,9 +3731,6 @@ static void ol_txrx_peer_detach(void *ppeer, uint32_t bitmap)
 		   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 		   peer->mac_addr.raw[4], peer->mac_addr.raw[5]);
 
-	if (peer->vdev->last_real_peer == peer)
-		peer->vdev->last_real_peer = NULL;
-
 	qdf_spin_lock_bh(&vdev->pdev->last_real_peer_mutex);
 	if (vdev->last_real_peer == peer)
 		vdev->last_real_peer = NULL;
@@ -4434,8 +4440,11 @@ static void ol_txrx_disp_peer_stats(ol_txrx_pdev_handle pdev)
 	for (i = 0; i < OL_TXRX_NUM_LOCAL_PEER_IDS; i++) {
 		qdf_spin_lock_bh(&pdev->local_peer_ids.lock);
 		peer = pdev->local_peer_ids.map[i];
-		if (peer)
+		if (peer) {
+			qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 			ol_txrx_peer_get_ref(peer, PEER_DEBUG_ID_OL_INTERNAL);
+			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+		}
 		qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
 
 		if (peer) {
