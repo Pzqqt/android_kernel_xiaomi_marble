@@ -5981,7 +5981,7 @@ QDF_STATUS hdd_abort_mac_scan_all_adapters(struct hdd_context *hdd_ctx)
 		    adapter->device_mode == QDF_P2P_GO_MODE) {
 			wlan_abort_scan(hdd_ctx->hdd_pdev, INVAL_PDEV_ID,
 					adapter->session_id, INVALID_SCAN_ID,
-					false);
+					true);
 		}
 	}
 
