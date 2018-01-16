@@ -168,6 +168,7 @@ wlan_serialization_create_cmd_pool(struct wlan_objmgr_pdev *pdev,
 		qdf_list_insert_back(
 				&ser_pdev_obj->global_cmd_pool_list,
 				&cmd_list_ptr->node);
+		cmd_list_ptr->cmd_in_use = 0;
 		serialization_debug("Created node at %pK and inserted to pool",
 				cmd_list_ptr);
 	}
@@ -199,6 +200,11 @@ static QDF_STATUS wlan_serialization_pdev_obj_create_notification(
 	if (NULL == ser_pdev_obj) {
 		serialization_alert("Mem alloc failed for ser pdev obj");
 		return QDF_STATUS_E_NOMEM;
+	}
+	status = wlan_serialization_create_lock(ser_pdev_obj);
+	if (status != QDF_STATUS_SUCCESS) {
+		serialization_err("Failed to create serialization lock");
+		return status;
 	}
 	qdf_list_create(&ser_pdev_obj->active_list,
 			WLAN_SERIALIZATION_MAX_ACTIVE_CMDS);
@@ -290,7 +296,10 @@ static QDF_STATUS wlan_serialization_pdev_obj_destroy_notification(
 	wlan_serialization_destroy_list(ser_pdev_obj,
 					&ser_pdev_obj->pending_scan_list);
 	wlan_serialization_destroy_cmd_pool(ser_pdev_obj);
-	serialization_debug("ser pdev obj deleted with status %d", status);
+	serialization_debug("ser pdev obj detached with status %d", status);
+	status = wlan_serialization_destroy_lock(ser_pdev_obj);
+	if (status != QDF_STATUS_SUCCESS)
+		serialization_err("Failed to destroy serialization lock");
 	qdf_mem_free(ser_pdev_obj);
 
 	return status;

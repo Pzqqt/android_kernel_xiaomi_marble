@@ -27,6 +27,7 @@
 #include <wlan_objmgr_pdev_obj.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <qdf_list.h>
+#include <qdf_status.h>
 
 void wlan_serialization_move_pending_to_active(
 		enum wlan_serialization_cmd_type cmd_type,
@@ -37,6 +38,7 @@ void wlan_serialization_move_pending_to_active(
 	struct wlan_serialization_command_list *active_cmd_list = NULL;
 	enum wlan_serialization_status status;
 	qdf_list_node_t *nnode = NULL;
+	QDF_STATUS list_peek_status;
 
 	if (!ser_pdev_obj) {
 		serialization_err("Can't find ser_pdev_obj");
@@ -47,13 +49,14 @@ void wlan_serialization_move_pending_to_active(
 		pending_queue = &ser_pdev_obj->pending_scan_list;
 	else
 		pending_queue = &ser_pdev_obj->pending_list;
-
-	if (qdf_list_empty(pending_queue)) {
+	if (wlan_serialization_list_empty(pending_queue, ser_pdev_obj)) {
 		serialization_debug("nothing to move from pend to active que");
 		serialization_debug("cmd_type - %d", cmd_type);
 		return;
 	}
-	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(pending_queue, &nnode)) {
+	list_peek_status = wlan_serialization_peek_front(pending_queue, &nnode,
+							 ser_pdev_obj);
+	if (QDF_STATUS_SUCCESS != list_peek_status) {
 		serialization_err("can't read from pending queue");
 		serialization_debug("cmd_type - %d", cmd_type);
 		return;
@@ -77,8 +80,23 @@ void wlan_serialization_move_pending_to_active(
 				cmd_list->cmd.cmd_id, cmd_list->cmd.cmd_type);
 		return;
 	} else {
-		wlan_serialization_put_back_to_global_list(pending_queue,
-				ser_pdev_obj, cmd_list);
+		/*
+		 * Before removing the cmd from pending list and putting it
+		 * back in the global list, check if someone has already
+		 * deleted it. if so, do not do it again. if not, continue with
+		 * removing the node. if the CMD_MARKED_FOR_DELETE is
+		 * cleared after deletion, then inside the below API,
+		 * it is checked if the command is active and in use or
+		 * not before removing.
+		 */
+		if (!qdf_atomic_test_and_set_bit(CMD_MARKED_FOR_DELETE,
+						 &cmd_list->cmd_in_use)) {
+			serialization_debug("SER_CMD marked for removal");
+			wlan_serialization_put_back_to_global_list(
+					pending_queue, ser_pdev_obj, cmd_list);
+		} else {
+			serialization_debug("SER_CMD already being deleted");
+		}
 		wlan_serialization_activate_cmd(active_cmd_list,
 						ser_pdev_obj);
 	}
@@ -93,7 +111,7 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 		struct wlan_serialization_command *cmd, uint8_t is_active_queue)
 {
 	uint32_t qsize;
-	struct wlan_serialization_command_list *cmd_list;
+	struct wlan_serialization_command_list *cmd_list = NULL;
 	qdf_list_node_t *nnode = NULL, *pnode = NULL;
 	enum wlan_serialization_cmd_status status = WLAN_SER_CMD_NOT_FOUND;
 	struct wlan_objmgr_psoc *psoc = NULL;
@@ -108,25 +126,31 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 	else
 		serialization_debug("Can't find psoc");
 
-	qsize = qdf_list_size(queue);
-	while (qsize--) {
-		if (wlan_serialization_get_cmd_from_queue(queue, &nnode)
-				!= QDF_STATUS_SUCCESS) {
+	qsize = wlan_serialization_list_size(queue, ser_pdev_obj);
+	while (!wlan_serialization_list_empty(queue, ser_pdev_obj) && qsize--) {
+		if (wlan_serialization_get_cmd_from_queue(
+					queue, &nnode,
+					ser_pdev_obj) != QDF_STATUS_SUCCESS) {
 			serialization_err("can't read cmd from queue");
 			status = WLAN_SER_CMD_NOT_FOUND;
 			break;
 		}
 		cmd_list = qdf_container_of(nnode,
 				struct wlan_serialization_command_list, node);
-		if ((cmd && ((cmd->cmd_id != cmd_list->cmd.cmd_id) ||
-				(cmd->cmd_type != cmd_list->cmd.cmd_type))) ||
-			(vdev && (vdev != cmd_list->cmd.vdev)) ||
-			(pdev && (pdev != wlan_vdev_get_pdev(
-						cmd_list->cmd.vdev)))) {
+		if (cmd && !wlan_serialization_match_cmd_id_type(
+							nnode, cmd,
+							ser_pdev_obj)) {
 			pnode = nnode;
 			continue;
 		}
-
+		if (vdev && !wlan_serialization_match_cmd_vdev(nnode, vdev)) {
+			pnode = nnode;
+			continue;
+		}
+		if (pdev && !wlan_serialization_match_cmd_pdev(nnode, pdev)) {
+			pnode = nnode;
+			continue;
+		}
 		/*
 		 * active queue can't be removed directly, requester needs to
 		 * wait for active command response and send remove request for
@@ -148,6 +172,24 @@ wlan_serialization_remove_all_cmd_from_queue(qdf_list_t *queue,
 			}
 			status = WLAN_SER_CMD_IN_ACTIVE_LIST;
 		}
+		/*
+		 * There is a possiblity that the cmd cleanup may happen
+		 * in different contexts at the same time.
+		 * e.g: ifconfig down coming in ioctl context and command
+		 * complete event being handled in scheduler thread context.
+		 * In such scenario's check if either of the threads have
+		 * marked the command for delete and then proceed further
+		 * with cleanup. if it is already marked for cleanup, then
+		 * there is no need to proceed since the other thread is
+		 * cleaning it up.
+		 */
+		if (qdf_atomic_test_and_set_bit(CMD_MARKED_FOR_DELETE,
+						&cmd_list->cmd_in_use)) {
+			serialization_debug("SER_CMD already being deleted");
+			status = WLAN_SER_CMD_NOT_FOUND;
+			break;
+		}
+		serialization_debug("SER_CMD marked for removal");
 		/*
 		 * call pending cmd's callback to notify that
 		 * it is being removed
@@ -202,10 +244,10 @@ static void wlan_serialization_remove_cmd_from_given_queue(qdf_list_t *queue,
 	if (!cmd)
 		return;
 
-	qsize = qdf_list_size(queue);
-
+	qsize = wlan_serialization_list_size(queue, ser_pdev_obj);
 	while (qsize--) {
-		status = wlan_serialization_get_cmd_from_queue(queue, &nnode);
+		status = wlan_serialization_get_cmd_from_queue(queue, &nnode,
+							       ser_pdev_obj);
 		if (status != QDF_STATUS_SUCCESS) {
 			serialization_err("can't peek cmd_id[%d] type[%d]",
 					  cmd->cmd_id, cmd->cmd_type);
@@ -213,11 +255,23 @@ static void wlan_serialization_remove_cmd_from_given_queue(qdf_list_t *queue,
 		}
 		cmd_list = qdf_container_of(nnode,
 				struct wlan_serialization_command_list, node);
-		if ((cmd_list->cmd.cmd_id != cmd->cmd_id) ||
-				(cmd_list->cmd.cmd_type != cmd->cmd_type))
+		if (!wlan_serialization_match_cmd_id_type(nnode, cmd,
+							  ser_pdev_obj))
 			continue;
-		if (cmd_list->cmd.vdev != cmd->vdev)
+		if (!wlan_serialization_match_cmd_vdev(nnode, cmd->vdev))
 			continue;
+		/*
+		 * Before removing the command from queue, check if it is
+		 * already in process of being removed in some other
+		 * context and if so, there is no need to continue with
+		 * the removal.
+		 */
+		if (qdf_atomic_test_and_set_bit(CMD_MARKED_FOR_DELETE,
+						&cmd_list->cmd_in_use)) {
+			serialization_debug("SER_CMD already being deleted");
+			break;
+		}
+		serialization_debug("SER_CMD marked for removal");
 		if (cmd_list->cmd.cmd_cb) {
 			/* caller should release the memory */
 			cmd_list->cmd.cmd_cb(&cmd_list->cmd,
@@ -276,7 +330,7 @@ wlan_serialization_remove_cmd_from_active_queue(struct wlan_objmgr_psoc *psoc,
 	else
 		queue = &ser_pdev_obj->active_list;
 
-	if (qdf_list_empty(queue)) {
+	if (wlan_serialization_list_empty(queue, ser_pdev_obj)) {
 		serialization_err("Empty queue");
 		return;
 	}
@@ -325,7 +379,7 @@ wlan_serialization_remove_cmd_from_pending_queue(struct wlan_objmgr_psoc *psoc,
 	else
 		queue = &ser_pdev_obj->pending_list;
 
-	if (qdf_list_empty(queue)) {
+	if (wlan_serialization_list_empty(queue, ser_pdev_obj)) {
 		serialization_err("Empty queue");
 		return;
 	}

@@ -32,6 +32,15 @@
 #include "wlan_serialization_rules_i.h"
 #include "wlan_scan_ucfg_api.h"
 
+/*
+ * Below bit positions are used to identify if a
+ * serialization command is in use or marked for
+ * deletion.
+ * CMD_MARKED_FOR_DELETE - The command is about to be deleted
+ * CMD_IS_ACTIVE - The command is active and currently in use
+ */
+#define CMD_MARKED_FOR_DELETE   1
+#define CMD_IS_ACTIVE           2
 /**
  * struct wlan_serialization_timer - Timer used for serialization
  * @cmd:      Cmd to which the timer is linked
@@ -55,10 +64,12 @@ struct wlan_serialization_timer {
  * struct wlan_serialization_command_list - List of commands to be serialized
  * @node: Node identifier in the list
  * @cmd: Command to be serialized
+ * @active: flag to check if the node/entry is logically active
  */
 struct wlan_serialization_command_list {
 	qdf_list_node_t node;
 	struct wlan_serialization_command cmd;
+	unsigned long cmd_in_use;
 };
 
 /**
@@ -68,7 +79,8 @@ struct wlan_serialization_command_list {
  * @active_scan_list: list to hold the scan commands currently active
  * @pending_scan_list: list to hold the scan commands currently pending
  * @global_cmd_pool_list: list to hold the global buffers
- * @cmd_ptr: pointer to globally allocated cmd pool
+ * @pdev_ser_list_lock: A per pdev lock to protect the concurrent operations
+ *                      on the queues.
  *
  * Serialization component maintains linked lists to store the commands
  * sent by other components to get serialized. All the lists are per
@@ -84,6 +96,7 @@ struct wlan_serialization_pdev_priv_obj {
 	qdf_list_t active_scan_list;
 	qdf_list_t pending_scan_list;
 	qdf_list_t global_cmd_pool_list;
+	qdf_spinlock_t pdev_ser_list_lock;
 };
 
 /**
@@ -150,6 +163,7 @@ wlan_serialization_get_pdev_from_cmd(struct wlan_serialization_command *cmd);
  * wlan_serialization_get_cmd_from_queue() - to extract command from given queue
  * @queue: pointer to queue
  * @nnode: next node to extract
+ * @ser_pdev_obj: Serialization PDEV object pointer
  *
  * This API will try to extract node from queue which is next to prev node. If
  * no previous node is given then take out the front node of the queue.
@@ -157,7 +171,8 @@ wlan_serialization_get_pdev_from_cmd(struct wlan_serialization_command *cmd);
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_serialization_get_cmd_from_queue(qdf_list_t *queue,
-						 qdf_list_node_t **nnode);
+			qdf_list_node_t **nnode,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
 
 /**
  * wlan_serialization_is_active_cmd_allowed() - check to see if command
@@ -280,16 +295,6 @@ QDF_STATUS wlan_serialization_validate_cmd(
 QDF_STATUS wlan_serialization_validate_cmdtype(
 		 enum wlan_serialization_cmd_type cmd_type);
 
-/**
- * wlan_serialization_release_list_cmds() - Release the list cmds to global pool
- * @ser_pdev_obj: Serialization private pdev object
- * @list: List for which the commands have to be returned to the global pool
- *
- * Return: None
- */
-void wlan_serialization_release_list_cmds(
-		struct wlan_serialization_pdev_priv_obj *ser_pdev_obj,
-		qdf_list_t *list);
 
 /**
  * wlan_serialization_destroy_list() - Release the cmds and destroy list
@@ -321,13 +326,13 @@ struct wlan_serialization_pdev_priv_obj *wlan_serialization_get_pdev_priv_obj(
 		struct wlan_objmgr_pdev *pdev);
 
 /**
- * wlan_serialization_get_obj() - Return the component private obj
+ * wlan_serialization_get_psoc_obj() - Return the component private obj
  * @psoc: Pointer to the SERIALIZATION object
  *
  * Return: Serialization component's level private data object
  */
 struct wlan_serialization_psoc_priv_obj *
-wlan_serialization_get_obj(struct wlan_serialization_command *cmd);
+wlan_serialization_get_psoc_obj(struct wlan_serialization_command *cmd);
 
 /**
  * wlan_serialization_is_cmd_in_vdev_list() - Check Node present in VDEV list
@@ -410,5 +415,202 @@ bool wlan_serialization_is_cmd_present_queue(
  */
 void wlan_serialization_activate_cmd(
 			struct wlan_serialization_command_list *cmd_list,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+
+/**
+ * wlan_serialization_list_empty() - check if the list is empty
+ * @queue: Queue/List that needs to be checked for emptiness
+ * @ser_pdev_obj: Serialization private pdev object
+ *
+ * Return: true if list is empty and false otherwise
+ */
+bool wlan_serialization_list_empty(
+			qdf_list_t *queue,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+
+/**
+ * wlan_serialization_list_size() - Find the size of the provided queue
+ * @queue: Queue/List for which the size/length is to be returned
+ * @ser_pdev_obj: Serialization private pdev object
+ *
+ * Return: size/length of the queue/list
+ */
+uint32_t wlan_serialization_list_size(
+			qdf_list_t *queue,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_acquire_lock() - to acquire lock for serialization module
+ * @obj: pdev private object
+ *
+ * This API will acquire lock for serialization module. Mutex or spinlock will
+ * be decided based on the context of the operation.
+ *
+ * Return: QDF_STATUS based on outcome of the operation
+ */
+QDF_STATUS
+wlan_serialization_acquire_lock(struct wlan_serialization_pdev_priv_obj *obj);
+
+/**
+ * wlan_serialization_release_lock() - to release lock for serialization module
+ * @obj: pdev private object
+ *
+ * This API will release lock for serialization module. Mutex or spinlock will
+ * be decided based on the context of the operation.
+ *
+ * Return: QDF_STATUS based on outcome of the operation
+ */
+QDF_STATUS
+wlan_serialization_release_lock(struct wlan_serialization_pdev_priv_obj *obj);
+
+/**
+ * wlan_serialization_create_lock() - to create lock for serialization module
+ * @obj: pdev private object
+ *
+ * This API will create a lock for serialization module.
+ *
+ * Return: QDF_STATUS based on outcome of the operation
+ */
+QDF_STATUS
+wlan_serialization_create_lock(struct wlan_serialization_pdev_priv_obj  *obj);
+
+/**
+ * wlan_serialization_destroy_lock() - to destroy lock for serialization module
+ *
+ * This API will destroy a lock for serialization module.
+ *
+ * Return: QDF_STATUS based on outcome of the operation
+ */
+QDF_STATUS
+wlan_serialization_destroy_lock(struct wlan_serialization_pdev_priv_obj *obj);
+/**
+ * wlan_serialization_match_cmd_scan_id() - Check for a match on given nnode
+ * @nnode: The node on which the matching has to be done
+ * @cmd: Command that needs to be filled if there is a match
+ * @scan_id: Scan ID to be matched
+ * @vdev: VDEV object to be matched
+ * @ser_pdev_obj: Serialization PDEV Object pointer.
+ *
+ * This API will check if the scan ID and VDEV of the given nnode are
+ * matching with the one's that are being passed to this function.
+ *
+ * Return: True if matched,false otherwise.
+ */
+bool wlan_serialization_match_cmd_scan_id(
+			qdf_list_node_t *nnode,
+			struct wlan_serialization_command **cmd,
+			uint16_t scan_id, struct wlan_objmgr_vdev *vdev,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_match_cmd_id_type() - Check for a match on given nnode
+ * @nnode: The node on which the matching has to be done
+ * @cmd: Command that needs to be matched
+ * @ser_pdev_obj: Serialization PDEV Object pointer.
+ *
+ * This API will check if the cmd ID and cmd type of the given nnode are
+ * matching with the one's that are being passed to this function.
+ *
+ * Return: True if matched,false otherwise.
+ */
+bool wlan_serialization_match_cmd_id_type(
+			qdf_list_node_t *nnode,
+			struct wlan_serialization_command *cmd,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_match_cmd_vdev() - Check for a match on given nnode
+ * @nnode: The node on which the matching has to be done
+ * @vdev: VDEV object that needs to be matched
+ *
+ * This API will check if the VDEV object of the given nnode are
+ * matching with the one's that are being passed to this function.
+ *
+ * Return: True if matched,false otherwise.
+ */
+bool wlan_serialization_match_cmd_vdev(qdf_list_node_t *nnode,
+				       struct wlan_objmgr_vdev *vdev);
+/**
+ * wlan_serialization_match_cmd_pdev() - Check for a match on given nnode
+ * @nnode: The node on which the matching has to be done
+ * @pdev: VDEV object that needs to be matched
+ *
+ * This API will check if the PDEV object of the given nnode are
+ * matching with the one's that are being passed to this function.
+ *
+ * Return: True if matched,false otherwise.
+ */
+bool wlan_serialization_match_cmd_pdev(qdf_list_node_t *nnode,
+				       struct wlan_objmgr_pdev *pdev);
+/**
+ * wlan_serialization_remove_front() - Remove the front node of the list
+ * @list: List from which the node is to be removed
+ * @node: Pointer to store the node that is removed
+ * @ser_pdev_obj: Serialization PDEV Object pointer
+ *
+ * Return: QDF_STATUS Success or Failure
+ */
+QDF_STATUS wlan_serialization_remove_front(
+			qdf_list_t *list,
+			qdf_list_node_t **node,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_remove_node() - Remove the given node from the list
+ * @list: List from which the node is to be removed
+ * @node: Pointer to the node that is to be removed
+ * @ser_pdev_obj: Serialization PDEV Object pointer
+ *
+ * Return: QDF_STATUS Success or Failure
+ */
+QDF_STATUS wlan_serialization_remove_node(
+			qdf_list_t *list,
+			qdf_list_node_t *node,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_insert_front() - Insert a node into the front of the list
+ * @list: List to which the node is to be inserted
+ * @node: Pointer to the node that is to be inserted
+ * @ser_pdev_obj: Serialization PDEV Object pointer
+ *
+ * Return: QDF_STATUS Success or Failure
+ */
+QDF_STATUS wlan_serialization_insert_front(
+			qdf_list_t *list,
+			qdf_list_node_t *node,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_insert_back() - Insert a node into the back of the list
+ * @list: List to which the node is to be inserted
+ * @node: Pointer to the node that is to be inserted
+ * @ser_pdev_obj: Serialization PDEV Object pointer
+ *
+ * Return: QDF_STATUS Success or Failure
+ */
+QDF_STATUS wlan_serialization_insert_back(
+			qdf_list_t *list,
+			qdf_list_node_t *node,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_peek_front() - Peek the front node of the list
+ * @list: List on which the node is to be peeked
+ * @node: Pointer to the store the node that is being peeked
+ * @ser_pdev_obj: Serialization PDEV Object pointer
+ *
+ * Return: QDF_STATUS Success or Failure
+ */
+QDF_STATUS wlan_serialization_peek_front(
+			qdf_list_t *list,
+			qdf_list_node_t **node,
+			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
+/**
+ * wlan_serialization_peek_next() - Peek the next node of the list
+ * @list: List on which the node is to be peeked
+ * @node1: Input node which is previous to the node to be peeked
+ * @node2: Pointer to the store the node that is being peeked
+ * @ser_pdev_obj: Serialization PDEV Object pointer
+ *
+ * Return: QDF_STATUS Success or Failure
+ */
+QDF_STATUS wlan_serialization_peek_next(
+			qdf_list_t *list,
+			qdf_list_node_t *node1,
+			qdf_list_node_t **node2,
 			struct wlan_serialization_pdev_priv_obj *ser_pdev_obj);
 #endif
