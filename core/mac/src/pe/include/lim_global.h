@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -166,6 +166,7 @@ typedef enum eLimMlmStates {
 	eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE,
 	eLIM_MLM_WT_FT_REASSOC_RSP_STATE,
 	eLIM_MLM_P2P_LISTEN_STATE,
+	eLIM_MLM_WT_SAE_AUTH_STATE,
 } tLimMlmStates;
 
 /* 11h channel quiet states */

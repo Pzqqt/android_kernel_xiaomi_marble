@@ -1015,6 +1015,75 @@ static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
 	return fl;
 }
 
+#ifdef WLAN_FEATURE_SAE
+/**
+ * lim_process_mlm_auth_req_sae() - Handle SAE authentication
+ * @mac_ctx: global MAC context
+ * @session: PE session entry
+ *
+ * This function is called by lim_process_mlm_auth_req to handle SAE
+ * authentication.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
+		tpPESession session)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	struct sir_sae_info *sae_info;
+	struct scheduler_msg msg = {0};
+
+	sae_info = qdf_mem_malloc(sizeof(*sae_info));
+	if (sae_info == NULL) {
+		pe_err("Memory allocation failed");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sae_info->msg_type = eWNI_SME_TRIGGER_SAE;
+	sae_info->msg_len = sizeof(*sae_info);
+	sae_info->vdev_id = session->smeSessionId;
+
+	qdf_mem_copy(sae_info->peer_mac_addr.bytes,
+		session->bssId,
+		QDF_MAC_ADDR_SIZE);
+
+	sae_info->ssid.length = session->ssId.length;
+	qdf_mem_copy(sae_info->ssid.ssId,
+		session->ssId.ssId,
+		session->ssId.length);
+
+	pe_debug("vdev_id %d ssid %.*s "MAC_ADDRESS_STR"",
+		sae_info->vdev_id,
+		sae_info->ssid.length,
+		sae_info->ssid.ssId,
+		MAC_ADDR_ARRAY(sae_info->peer_mac_addr.bytes));
+
+	msg.type = eWNI_SME_TRIGGER_SAE;
+	msg.bodyptr = sae_info;
+	msg.bodyval = 0;
+
+	qdf_status = mac_ctx->lim.sme_msg_callback(mac_ctx, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		pe_err("SAE failed for AUTH frame");
+		qdf_mem_free(sae_info);
+		return qdf_status;
+	}
+	session->limMlmState = eLIM_MLM_WT_SAE_AUTH_STATE;
+
+	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
+		       session->limMlmState));
+
+	return qdf_status;
+}
+#else
+static QDF_STATUS lim_process_mlm_auth_req_sae(tpAniSirGlobal mac_ctx,
+		tpPESession session)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
+
+
 /**
  * lim_process_mlm_auth_req() - process lim auth request
  *
@@ -1102,7 +1171,19 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 			 mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr);
 
 	session->limPrevMlmState = session->limMlmState;
-	session->limMlmState = eLIM_MLM_WT_AUTH_FRAME2_STATE;
+
+	if (mac_ctx->lim.gpLimMlmAuthReq->authType == eSIR_AUTH_TYPE_SAE) {
+		if (lim_process_mlm_auth_req_sae(mac_ctx, session) !=
+					QDF_STATUS_SUCCESS) {
+			mlm_auth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
+			goto end;
+		} else {
+			pe_debug("lim_process_mlm_auth_req_sae is successful");
+			return;
+		}
+	} else
+		session->limMlmState = eLIM_MLM_WT_AUTH_FRAME2_STATE;
+
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
 		       session->limMlmState));
 

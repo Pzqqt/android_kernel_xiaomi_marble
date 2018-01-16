@@ -302,6 +302,7 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_ABORT);
 		CASE_RETURN_STR(eCSR_ROAM_NAPI_OFF);
 		CASE_RETURN_STR(eCSR_ROAM_CHANNEL_COMPLETE_IND);
+		CASE_RETURN_STR(eCSR_ROAM_SAE_COMPUTE);
 	default:
 		return "unknown";
 	}

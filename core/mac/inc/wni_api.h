@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -246,6 +246,7 @@ enum eWniMsgTypes {
 	eWNI_SME_UPDATE_CONFIG,
 	eWNI_SME_BT_ACTIVITY_INFO_IND,
 	eWNI_SME_SET_HE_BSS_COLOR,
+	eWNI_SME_TRIGGER_SAE,
 	eWNI_SME_MSG_TYPES_END
 };
 
