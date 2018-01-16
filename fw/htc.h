@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016, 2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -233,7 +233,8 @@ typedef PREPACK struct {
 #define HTC_CONNECT_FLAGS_ENABLE_HTC_SCHEDULE          (1 << 4)
 
               ServiceMetaLength : 8,   /* length of meta data that follows */
-              _Pad1 : 8;
+              LookAheadV2 : 1, /* 1 if host supports HTC_LOOKAHEAD_REPORT_V2 */
+              _Pad1 : 7;
 
     /* service-specific meta data starts after the header */
 
@@ -266,7 +267,8 @@ typedef PREPACK struct {
               EndpointID : 8,       /* assigned endpoint ID */
               MaxMsgSize : 16;      /* maximum expected message size on this endpoint */
     A_UINT32  ServiceMetaLength : 8,    /* length of meta data that follows */
-              _Pad1 : 8,
+              LookAheadV2 : 1,/* 1 if target supports HTC_LOOKAHEAD_REPORT_V2 */
+              _Pad1 : 7,
               reserved : 16;
 
     /* service-specific meta data starts after the header */
@@ -391,6 +393,30 @@ typedef PREPACK struct {
     * The PreValid bytes must equal the inverse of the PostValid byte */
 
 } POSTPACK HTC_LOOKAHEAD_REPORT;
+
+/*
+ * If the host sets the HTC_CONNECT_SERVICE_MSG.LookAheadV2 flag and the
+ * target sets the HTC_CONNECT_SERVICE_RESPONSE_MSG.LookAheadV2 flag,
+ * HTC_LOOKAHEAD_REPORT_V2 is used; otherwise HTC_LOOKAHEAD_REPORT is used.
+ */
+typedef PREPACK struct {
+    A_UINT32 PreValid : 8,   /* pre valid guard */
+        reserved0 : 24;
+    A_UINT32 LookAhead0 : 8,  /* 8 byte lookahead */
+        LookAhead1 : 8,
+        LookAhead2 : 8,
+        LookAhead3 : 8;
+    A_UINT32 LookAhead4 : 8,  /* 8 byte lookahead */
+        LookAhead5 : 8,
+        LookAhead6 : 8,
+        LookAhead7 : 8;
+    A_UINT32 PostValid : 8,   /* post valid guard */
+        reserved1 : 24;
+    /* NOTE: the LookAhead array is guarded by PreValid and Post Valid
+     * guard bytes.
+     * The PreValid byte must equal the inverse of the PostValid byte.
+     */
+} POSTPACK HTC_LOOKAHEAD_REPORT_V2;
 
 #define HTC_LOOKAHEAD_REPORT_PREVALID_LSB         0
 #define HTC_LOOKAHEAD_REPORT_PREVALID_MASK        0x000000ff
