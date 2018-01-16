@@ -230,7 +230,7 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
 					WLAN_GREEN_AP_PS_WAIT_STATE,
 					WLAN_GREEN_AP_PS_WAIT_EVENT);
 			qdf_timer_start(&green_ap_ctx->ps_timer,
-					green_ap_ctx->ps_trans_time);
+					green_ap_ctx->ps_trans_time * 1000);
 		}
 		break;
 
@@ -242,19 +242,19 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
 						WLAN_GREEN_AP_PS_WAIT_STATE,
 						WLAN_GREEN_AP_PS_WAIT_EVENT);
 			qdf_timer_start(&green_ap_ctx->ps_timer,
-					green_ap_ctx->ps_trans_time);
+					green_ap_ctx->ps_trans_time * 1000);
 		}
 		break;
 
 	case WLAN_GREEN_AP_PS_WAIT_STATE:
 		if (!green_ap_ctx->num_nodes) {
 			if ((channel == 0) || (channel_flags == 0)) {
-			/*
-			 * Stay in the current state and restart the
-			 * timer to check later.
-			 */
+				/*
+				 * Stay in the current state and restart the
+				 * timer to check later.
+				 */
 				qdf_timer_start(&green_ap_ctx->ps_timer,
-					green_ap_ctx->ps_on_time);
+					green_ap_ctx->ps_on_time * 1000);
 			} else {
 				wlan_green_ap_ps_event_state_update(
 						green_ap_ctx,
@@ -268,7 +268,7 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
 
 				if (green_ap_ctx->ps_on_time)
 					qdf_timer_start(&green_ap_ctx->ps_timer,
-						green_ap_ctx->ps_on_time);
+						green_ap_ctx->ps_on_time * 1000);
 			}
 		} else {
 			green_ap_info("Transition to OFF from WAIT");
@@ -312,7 +312,7 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
 			wlan_green_ap_ant_ps_reset(green_ap_ctx);
 			green_ap_info("Transition to WAIT from ON\n");
 			qdf_timer_start(&green_ap_ctx->ps_timer,
-					green_ap_ctx->ps_trans_time);
+					green_ap_ctx->ps_trans_time * 1000);
 		}
 		break;
 

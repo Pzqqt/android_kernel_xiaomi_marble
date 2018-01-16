@@ -81,8 +81,8 @@ static QDF_STATUS wlan_green_ap_pdev_obj_create_notification(
 	green_ap_ctx->ps_state = WLAN_GREEN_AP_PS_IDLE_STATE;
 	green_ap_ctx->ps_event = WLAN_GREEN_AP_PS_WAIT_EVENT;
 	green_ap_ctx->num_nodes = 0;
-	green_ap_ctx->ps_on_time = WLAN_GREEN_AP_PS_ON_TIME * 1000;
-	green_ap_ctx->ps_trans_time = WLAN_GREEN_AP_PS_TRANS_TIME * 1000;
+	green_ap_ctx->ps_on_time = WLAN_GREEN_AP_PS_ON_TIME;
+	green_ap_ctx->ps_trans_time = WLAN_GREEN_AP_PS_TRANS_TIME;
 
 	green_ap_ctx->pdev = pdev;
 
