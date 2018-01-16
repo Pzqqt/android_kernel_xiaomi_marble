@@ -472,11 +472,17 @@ lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 	 * retry is needed also cancel the auth rety timer
 	 */
 	pMac->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
-	/* 'Change' timer for future activations */
-	lim_deactivate_and_change_timer(pMac, eLIM_AUTH_RETRY_TIMER);
 
+	/* Auth retry and AUth failure timers are not started for SAE */
 	/* 'Change' timer for future activations */
-	lim_deactivate_and_change_timer(pMac, eLIM_AUTH_FAIL_TIMER);
+	if (tx_timer_running(&pMac->lim.limTimers.
+	    g_lim_periodic_auth_retry_timer))
+		lim_deactivate_and_change_timer(pMac,
+				eLIM_AUTH_RETRY_TIMER);
+	/* 'Change' timer for future activations */
+	if (tx_timer_running(&pMac->lim.limTimers.gLimAuthFailureTimer))
+		lim_deactivate_and_change_timer(pMac,
+				eLIM_AUTH_FAIL_TIMER);
 
 	sir_copy_mac_addr(currentBssId, sessionEntry->bssId);
 

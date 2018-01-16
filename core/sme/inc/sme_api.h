@@ -2039,4 +2039,24 @@ void sme_enable_roaming_on_connected_sta(tHalHandle hal);
  */
 QDF_STATUS sme_send_mgmt_tx(tHalHandle hal, uint8_t session_id,
 			   const uint8_t *buf, uint32_t len);
+
+#ifdef WLAN_FEATURE_SAE
+/**
+ * sme_handle_sae_msg() - Sends SAE message received from supplicant
+ * @hal: The handle returned by mac_open
+ * @session_id: session id
+ * @sae_status: status of SAE authentication
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
+		uint8_t sae_status);
+#else
+static inline QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
+		uint8_t sae_status)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */

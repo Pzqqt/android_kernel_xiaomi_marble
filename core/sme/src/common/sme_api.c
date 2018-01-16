@@ -16021,3 +16021,39 @@ int sme_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
 	return 0;
 }
 
+#ifdef WLAN_FEATURE_SAE
+QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
+		uint8_t sae_status)
+{
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	struct sir_sae_msg *sae_msg;
+	struct scheduler_msg sch_msg = {0};
+
+	qdf_status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		sae_msg = qdf_mem_malloc(sizeof(*sae_msg));
+		if (!sae_msg) {
+			qdf_status = QDF_STATUS_E_NOMEM;
+			sme_err("SAE: memory allocation failed");
+		} else {
+			sae_msg->message_type = eWNI_SME_SEND_SAE_MSG;
+			sae_msg->length = sizeof(*sae_msg);
+			sae_msg->session_id = session_id;
+			sae_msg->sae_status = sae_status;
+			sme_debug("SAE: sae_status %d session_id %d",
+				sae_msg->sae_status,
+				sae_msg->session_id);
+
+			sch_msg.type = eWNI_SME_SEND_SAE_MSG;
+			sch_msg.bodyptr = sae_msg;
+
+			qdf_status =
+				scheduler_post_msg(QDF_MODULE_ID_PE, &sch_msg);
+		}
+		sme_release_global_lock(&mac->sme);
+	}
+
+	return qdf_status;
+}
+#endif
