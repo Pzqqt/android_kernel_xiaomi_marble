@@ -5512,6 +5512,61 @@ QDF_STATUS sme_deregister_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 
+/**
+ * sme_prepare_mgmt_tx() - Prepares mgmt frame
+ * @hal: The handle returned by mac_open
+ * @session_id: session id
+ * @buf: pointer to frame
+ * @len: frame length
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS sme_prepare_mgmt_tx(tHalHandle hal, uint8_t session_id,
+			   const uint8_t *buf, uint32_t len)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct sir_mgmt_msg *msg;
+	uint16_t msg_len;
+	struct scheduler_msg sch_msg = {0};
+
+	sme_debug("prepares auth frame");
+
+	msg_len = sizeof(*msg) + len;
+	msg = qdf_mem_malloc(msg_len);
+	if (msg == NULL) {
+		status = QDF_STATUS_E_NOMEM;
+	} else {
+		msg->type = eWNI_SME_SEND_MGMT_FRAME_TX;
+		msg->msg_len = msg_len;
+		msg->session_id = session_id;
+		msg->data = (uint8_t *)msg + sizeof(*msg);
+		qdf_mem_copy(msg->data, buf, len);
+
+		sch_msg.type = eWNI_SME_SEND_MGMT_FRAME_TX;
+		sch_msg.bodyptr = msg;
+		status = scheduler_post_msg(QDF_MODULE_ID_PE, &sch_msg);
+	}
+	return status;
+}
+
+QDF_STATUS sme_send_mgmt_tx(tHalHandle hal, uint8_t session_id,
+			   const uint8_t *buf, uint32_t len)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_SEND_MGMT_TX, session_id, 0));
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = sme_prepare_mgmt_tx(hal, session_id, buf, len);
+		sme_release_global_lock(&mac->sme);
+	}
+
+	return status;
+}
+
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 /**
  * sme_configure_ext_wow() - configure Extr WoW

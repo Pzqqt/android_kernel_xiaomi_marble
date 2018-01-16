@@ -1477,6 +1477,11 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
 		break;
+	case eWNI_SME_SEND_MGMT_FRAME_TX:
+		lim_send_mgmt_frame_tx(mac_ctx, msg);
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	case eWNI_SME_MON_INIT_SESSION:
 		lim_mon_init_session(mac_ctx, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);

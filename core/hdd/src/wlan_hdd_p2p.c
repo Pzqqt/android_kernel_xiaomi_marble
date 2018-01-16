@@ -226,6 +226,9 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	QDF_STATUS status;
 	struct net_device *dev = wdev->netdev;
 	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	uint8_t type;
+	uint8_t sub_type;
+	QDF_STATUS qdf_status;
 
 	ENTER();
 
@@ -237,6 +240,26 @@ static int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	if (wlan_hdd_validate_session_id(adapter->session_id)) {
 		hdd_err("invalid session id: %d", adapter->session_id);
 		return -EINVAL;
+	}
+
+	type = WLAN_HDD_GET_TYPE_FRM_FC(buf[0]);
+	sub_type = WLAN_HDD_GET_SUBTYPE_FRM_FC(buf[0]);
+
+	/* When frame to be transmitted is auth mgmt, then trigger
+	 * sme_send_mgmt_tx to send auth frame without need for policy manager.
+	 * Where as wlan_cfg80211_mgmt_tx requires roc and requires approval
+	 * from policy manager.
+	 */
+	if ((adapter->device_mode == QDF_STA_MODE) &&
+	    (type == SIR_MAC_MGMT_FRAME &&
+	    sub_type == SIR_MAC_MGMT_AUTH)) {
+		qdf_status = sme_send_mgmt_tx(WLAN_HDD_GET_HAL_CTX(adapter),
+					      adapter->session_id, buf, len);
+
+		if (QDF_IS_STATUS_SUCCESS(qdf_status))
+			return 0;
+		else
+			return -EINVAL;
 	}
 
 	status = wlan_cfg80211_mgmt_tx(adapter->hdd_vdev, chan,

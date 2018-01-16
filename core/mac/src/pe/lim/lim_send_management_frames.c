@@ -4827,3 +4827,85 @@ error_addba_rsp:
 	cds_packet_free((void *)pkt_ptr);
 	return qdf_status;
 }
+
+/**
+ * lim_tx_mgmt_frame() - Transmits Auth mgmt frame
+ * @mac_ctx Pointer to Global MAC structure
+ * @mb_msg: Received message info
+ * @msg_len: Received message length
+ * @packet: Packet to be transmitted
+ * @frame: Received frame
+ *
+ * Return: None
+ */
+static void lim_tx_mgmt_frame(tpAniSirGlobal mac_ctx,
+	struct sir_mgmt_msg *mb_msg, uint32_t msg_len,
+	void *packet, uint8_t *frame)
+{
+	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
+	QDF_STATUS qdf_status;
+	uint8_t sme_session_id = 0;
+	tpPESession session;
+	uint16_t auth_ack_status;
+	enum rateid min_rid = RATEID_DEFAULT;
+
+	sme_session_id = mb_msg->session_id;
+	session = pe_find_session_by_sme_session_id(mac_ctx, sme_session_id);
+	if (session == NULL) {
+		pe_err("session not found for given sme session");
+		return;
+	}
+
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
+			 session->peSessionId, fc->subType));
+
+	mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
+	min_rid = lim_get_min_session_txrate(session);
+
+	qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
+					 (uint16_t)msg_len,
+					 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
+					 7, lim_tx_complete, frame,
+					 lim_auth_tx_complete_cnf,
+					 0, sme_session_id, false, 0, min_rid);
+	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
+		session->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		pe_err("*** Could not send Auth frame, retCode=%X ***",
+			qdf_status);
+		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_FAILURE;
+		auth_ack_status = SENT_FAIL;
+		lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_ACK_EVENT,
+				session, auth_ack_status, eSIR_FAILURE);
+		/* Pkt will be freed up by the callback */
+	}
+}
+
+void lim_send_mgmt_frame_tx(tpAniSirGlobal mac_ctx,
+		struct scheduler_msg *msg)
+{
+	struct sir_mgmt_msg *mb_msg = (struct sir_mgmt_msg *)msg->bodyptr;
+	uint32_t msg_len;
+	tpSirMacFrameCtl fc = (tpSirMacFrameCtl) mb_msg->data;
+	uint8_t sme_session_id;
+	QDF_STATUS qdf_status;
+	uint8_t *frame;
+	void *packet;
+
+	msg_len = mb_msg->msg_len - sizeof(*mb_msg);
+	pe_debug("sending fc->type: %d fc->subType: %d",
+		fc->type, fc->subType);
+
+	sme_session_id = mb_msg->session_id;
+
+	qdf_status = cds_packet_alloc((uint16_t) msg_len, (void **)&frame,
+				 (void **)&packet);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		pe_err("call to bufAlloc failed for AUTH frame");
+		return;
+	}
+
+	qdf_mem_copy(frame, mb_msg->data, msg_len);
+
+	lim_tx_mgmt_frame(mac_ctx, mb_msg, msg_len, packet, frame);
+}
