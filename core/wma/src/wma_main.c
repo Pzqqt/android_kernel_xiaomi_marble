@@ -921,6 +921,27 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 }
 
 /**
+ * wma_set_dtim_period() - set dtim period to FW
+ * @wma: wma handle
+ * @dtim_params: dtim params
+ *
+ * Return: none
+ */
+static void wma_set_dtim_period(tp_wma_handle wma,
+				struct set_dtim_params *dtim_params)
+{
+	struct wma_txrx_node *iface =
+		&wma->interfaces[dtim_params->session_id];
+	if (!wma_is_vdev_valid(dtim_params->session_id)) {
+		WMA_LOGE("%s: invalid VDEV", __func__);
+		return;
+	}
+	WMA_LOGD("%s: set dtim_period %d", __func__,
+			dtim_params->dtim_period);
+	iface->dtimPeriod = dtim_params->dtim_period;
+
+}
+/**
  * wma_set_modulated_dtim() - function to configure modulated dtim
  * @wma: wma handle
  * @privcmd: structure containing parameters
@@ -7550,6 +7571,11 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 	case WMA_DISABLE_UAPSD_REQ:
 		wma_disable_uapsd_mode(wma_handle,
 				       (tpDisableUapsdParams) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_SET_DTIM_PERIOD:
+		wma_set_dtim_period(wma_handle,
+				    (struct set_dtim_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_TX_POWER_REQ:

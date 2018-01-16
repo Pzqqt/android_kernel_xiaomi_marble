@@ -219,6 +219,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint64_t lastBeaconTimeStamp;
 	/* RX Beacon count for the current BSS to which STA is connected. */
 	uint32_t currentBssBeaconCnt;
+	uint8_t bcon_dtim_period;
 
 	uint32_t bcnLen;
 	uint8_t *beacon;        /* Used to store last beacon / probe response before assoc. */

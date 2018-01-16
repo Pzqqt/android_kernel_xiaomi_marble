@@ -3534,6 +3534,7 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_DTIM_PERIOD,
 					      dtimPeriod);
+	intr[vdev_id].dtimPeriod = dtimPeriod;
 	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_DTIM_PERIOD");
 
