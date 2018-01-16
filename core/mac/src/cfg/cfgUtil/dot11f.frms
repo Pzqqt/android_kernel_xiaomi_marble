@@ -2808,8 +2808,6 @@ IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
     };
 }
 
-const SUB_EID_PPET = 1;
-
 IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
 {
     {
@@ -2906,15 +2904,13 @@ IE he_cap (EID_EXTN_ID_ELEMENT) OUI (0x23)
     tx_he_mcs_map_160[2][0..1] COUNTIS chan_width_2;
     rx_he_mcs_map_80_80[2][0..1] COUNTIS chan_width_3;
     tx_he_mcs_map_80_80[2][0..1] COUNTIS chan_width_3;
-    OPTIE IE ppe_threshold (SUB_EID_PPET)
+    OPTIONAL UNION ppet (DISCRIMINATOR ppet_present)
     {
-      {
-        nss_count:3;
-        ru_idx_mask:4;
-        ppet_b1:1;
-      }
-      ppet[1..24];
-    }
+        ppe_threshold (ppet_present IS 1)
+        {
+            ppe_th[1..25];
+        }
+    };
 }
 
 IE he_op (EID_EXTN_ID_ELEMENT) OUI (0x24)

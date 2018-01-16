@@ -54,7 +54,6 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   struct wma_tgt_cfg *cfg)
 {
 	uint8_t chan_width;
-	uint32_t ppet_size = sizeof(tDot11fIEppe_threshold);
 	QDF_STATUS status;
 	tDot11fIEhe_cap *he_cap = &cfg->he_cap;
 
@@ -203,14 +202,14 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 
 	/* PPET can not be configured by user - Set per band values from FW */
 	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET_2G,
-				 (void *)&cfg->ppet_2g, ppet_size);
+				 cfg->ppet_2g, HE_MAX_PPET_SIZE);
 	if (status == QDF_STATUS_E_FAILURE)
-		hdd_alert("could not set HE PPET");
+		hdd_alert("could not set 2G HE PPET");
 
 	status = sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_HE_PPET_5G,
-				 (void *)&cfg->ppet_5g, ppet_size);
+				 cfg->ppet_5g, HE_MAX_PPET_SIZE);
 	if (status == QDF_STATUS_E_FAILURE)
-		hdd_alert("could not set HE PPET");
+		hdd_alert("could not set 5G HE PPET");
 }
 
 void wlan_hdd_check_11ax_support(struct hdd_beacon_data *beacon,

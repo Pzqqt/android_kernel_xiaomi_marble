@@ -191,8 +191,8 @@ struct wma_tgt_cfg {
 	uint16_t wmi_max_len;
 #ifdef WLAN_FEATURE_11AX
 	tDot11fIEhe_cap he_cap;
-	tDot11fIEppe_threshold ppet_2g;
-	tDot11fIEppe_threshold ppet_5g;
+	uint8_t ppet_2g[HE_MAX_PPET_SIZE];
+	uint8_t ppet_5g[HE_MAX_PPET_SIZE];
 #endif
 	bool dfs_cac_offload;
 	bool tx_bfee_8ss_enabled;

@@ -7391,6 +7391,7 @@ void lim_copy_join_req_he_cap(tpPESession session,
 void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 {
 	uint8_t chan_width;
+	struct ppet_hdr *hdr;
 
 	if (!he_cap->present)
 		return;
@@ -7530,22 +7531,12 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tTx MCS map for <= 80+80 Mhz: 0x%04x",
 		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
-	pe_debug("\t ppe_th:  present: %d, nss_count: %d, ru_idx_msk: %d",
-		he_cap->ppe_threshold.present,
-		he_cap->ppe_threshold.nss_count,
-		he_cap->ppe_threshold.ru_idx_mask);
+	hdr = (struct ppet_hdr *)&he_cap->ppet;
+	pe_debug("\t ppe_th:: nss_count: %d, ru_idx_msk: %d",
+		hdr->nss, hdr->ru_idx_mask);
 
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
-		&he_cap->ppe_threshold, sizeof(tDot11fIEppe_threshold));
-
-	/* HE PPET */
-	if (!he_cap->ppet_present)
-		return;
-
-	if (!he_cap->ppe_threshold.present) {
-		pe_debug(FL("PPET is not present. Invalid IE"));
-		return;
-	}
+		&he_cap->ppet, HE_MAX_PPET_SIZE);
 }
 
 void lim_log_he_op(tpAniSirGlobal mac, tDot11fIEhe_op *he_ops)

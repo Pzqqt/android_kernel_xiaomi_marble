@@ -2842,6 +2842,8 @@ sir_convert_assoc_req_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pAssocReq->he_cap, &ar->he_cap,
 			     sizeof(tDot11fIEhe_cap));
 		pe_debug("Received Assoc Req with HE Capability IE");
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
+				   &pAssocReq->he_cap, sizeof(tDot11fIEhe_cap));
 	}
 	qdf_mem_free(ar);
 	return eSIR_SUCCESS;
@@ -6111,6 +6113,7 @@ tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 				   tDot11fIEhe_cap *he_cap)
 {
+	uint8_t *ppet;
 	uint32_t value = 0;
 	tSirRetStatus status;
 
@@ -6294,9 +6297,13 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 			value = WNI_CFG_HE_PPET_LEN;
 			/* if session less then take 5g cap */
 			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_5G,
-				(void *)&he_cap->ppe_threshold, value, value);
+				    he_cap->ppet.ppe_threshold.ppe_th,
+				    value, value);
+			ppet = he_cap->ppet.ppe_threshold.ppe_th;
+			he_cap->ppet.ppe_threshold.num_ppe_th =
+						lim_truncate_ppet(ppet, value);
 		} else {
-			he_cap->ppe_threshold.present = false;
+			he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 		}
 
 		return QDF_STATUS_SUCCESS;
@@ -6308,14 +6315,17 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		/* if session is present, populate PPET based on band */
 		if (IS_5G_CH(session->currentOperChannel))
 			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_5G,
-				    (void *)&he_cap->ppe_threshold,
+				    he_cap->ppet.ppe_threshold.ppe_th,
 				    value, value);
 		else
 			CFG_GET_STR(status, mac_ctx, WNI_CFG_HE_PPET_2G,
-				    (void *)&he_cap->ppe_threshold,
+				    he_cap->ppet.ppe_threshold.ppe_th,
 				    value, value);
+		ppet = he_cap->ppet.ppe_threshold.ppe_th;
+		he_cap->ppet.ppe_threshold.num_ppe_th =
+						lim_truncate_ppet(ppet, value);
 	} else {
-		he_cap->ppe_threshold.present = false;
+		he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 	}
 
 	lim_log_he_cap(mac_ctx, he_cap);

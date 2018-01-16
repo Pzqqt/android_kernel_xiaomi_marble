@@ -1223,4 +1223,20 @@ uint32_t sir_unpack_beacon_ie(tpAniSirGlobal mac_ctx, uint8_t *buf,
 				       uint32_t buf_len,
 				       tDot11fBeaconIEs *frame, bool append_ie);
 
+/**
+ * lim_truncate_ppet: truncates ppet of trailling zeros
+ * @ppet: ppet to truncate
+ * max_len: max length of ppet
+ *
+ * Return: new length after truncation
+ */
+static inline uint32_t lim_truncate_ppet(uint8_t *ppet, uint32_t max_len)
+{
+	while (max_len) {
+		if (ppet[max_len - 1])
+			break;
+		max_len--;
+	}
+	return max_len;
+}
 #endif /* __PARSE_H__ */

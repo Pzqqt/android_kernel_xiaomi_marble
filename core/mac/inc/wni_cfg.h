@@ -413,7 +413,7 @@ enum {
 #define WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN    255
 #define WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN    255
 #define WNI_CFG_WPS_UUID_LEN    16
-#define WNI_CFG_HE_PPET_LEN 27
+#define WNI_CFG_HE_PPET_LEN     25
 
 /*
  * Integer parameter min/max/default values

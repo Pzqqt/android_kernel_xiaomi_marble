@@ -2497,9 +2497,12 @@ static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 		value = WNI_CFG_HE_PPET_LEN;
 		/* till now operating channel is not decided yet, use 5g cap */
 		sme_cfg_get_str(mac_ctx, WNI_CFG_HE_PPET_5G,
-			(void *)&he_cap->ppe_threshold, &value);
+				he_cap->ppet.ppe_threshold.ppe_th, &value);
+		he_cap->ppet.ppe_threshold.num_ppe_th =
+			lim_truncate_ppet(he_cap->ppet.ppe_threshold.ppe_th,
+					  value);
 	} else {
-		he_cap->ppe_threshold.present = false;
+		he_cap->ppet.ppe_threshold.num_ppe_th = 0;
 	}
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STA_OBSSPD, &value);
 	session->he_sta_obsspd = value;

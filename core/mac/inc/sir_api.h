@@ -7429,6 +7429,15 @@ struct wow_enable_params {
 #define HE_PPET_SIZE 3
 #define HE_BYTE_SIZE 8
 
+struct ppet_hdr {
+	uint8_t nss:3;
+	uint8_t ru_idx_mask:4;
+	uint8_t remaining:1;
+};
+
+/* MAX PPET size = 7 bits + (max_nss X max_ru_number X 6) = 25 bytes */
+#define HE_MAX_PPET_SIZE WNI_CFG_HE_PPET_LEN
+
 #define HE_MAX_PHY_CAP_SIZE 3
 
 #define HE_CH_WIDTH_GET_BIT(ch_wd, bit)      (((ch_wd) >> (bit)) & 1)

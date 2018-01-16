@@ -71,7 +71,7 @@ static void wma_he_ppet_merge(uint8_t *host_ppet, int *byte_idx_p, int *used_p,
 }
 
 /**
- * wma_he_find_ppet() - Helper function for PPET conversion
+ * wma_he_populate_ppet() - Helper function for PPET conversion
  * @ppet: pointer to fw array
  * @nss: Number of NSS
  * @ru: Number of RU
@@ -84,8 +84,8 @@ static void wma_he_ppet_merge(uint8_t *host_ppet, int *byte_idx_p, int *used_p,
  *
  * Return: None
  */
-static void wma_he_find_ppet(uint32_t *ppet, int nss, int ru,
-			     uint8_t *host_ppet, int req_byte)
+static void wma_he_populate_ppet(uint32_t *ppet, int nss, int ru,
+				 uint8_t *host_ppet, int req_byte)
 {
 	int byte_idx = 0, used, i, j;
 	uint8_t ppet16, ppet8;
@@ -119,23 +119,25 @@ static void wma_he_find_ppet(uint32_t *ppet, int nss, int ru,
  *
  * Return: None
  */
-static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
+static void wma_convert_he_ppet(uint8_t *he_ppet,
 				struct wmi_host_ppe_threshold *ppet)
 {
 	int bits, req_byte;
-	uint8_t *host_ppet, ru_count, mask;
+	struct ppet_hdr *hdr;
+	uint8_t ru_count, mask;
+	struct ppe_threshold *ppet_1;
 
+	ppet_1 = NULL;
 	if (!ppet) {
 		WMA_LOGE(FL("PPET is NULL"));
-		he_ppet->present = false;
+		qdf_mem_zero(he_ppet, HE_MAX_PPET_SIZE);
 		return;
 	}
 
-	he_ppet->present = true;
-	he_ppet->nss_count = ppet->numss_m1;
-	he_ppet->ru_idx_mask = ppet->ru_bit_mask;
-
-	mask = he_ppet->ru_idx_mask;
+	hdr = (struct ppet_hdr *)he_ppet;
+	hdr->nss = ppet->numss_m1;
+	hdr->ru_idx_mask = ppet->ru_bit_mask;
+	mask = hdr->ru_idx_mask;
 	for (ru_count = 0; mask; mask >>= 1)
 		if (mask & 0x01)
 			ru_count++;
@@ -144,33 +146,12 @@ static void wma_convert_he_ppet(tDot11fIEppe_threshold *he_ppet,
 	 * there will be two PPET for each NSS/RU pair
 	 * PPET8 and PPET16, hence HE_PPET_SIZE * 2 bits for PPET
 	 */
-	bits = HE_PPET_NSS_RU_LEN + ((he_ppet->nss_count + 1) * ru_count) *
+	bits = HE_PPET_NSS_RU_LEN + ((hdr->nss + 1) * ru_count) *
 				     (HE_PPET_SIZE * 2);
 
 	req_byte = (bits / HE_BYTE_SIZE) + 1;
-
-	host_ppet = qdf_mem_malloc(sizeof(*host_ppet) * req_byte);
-	if (!host_ppet) {
-		WMA_LOGE(FL("mem alloc failed for host_ppet"));
-		he_ppet->present = false;
-		return;
-	}
-
-	wma_he_find_ppet(ppet->ppet16_ppet8_ru3_ru0, he_ppet->nss_count + 1,
-			 ru_count, host_ppet, req_byte);
-
-	he_ppet->ppet_b1 = (host_ppet[0] << HE_PPET_NSS_RU_LEN);
-
-	/*
-	 * req_byte calculates total bytes, num_ppet stores only the bytes
-	 * going into ppet data member in he_ppet. -1 to exclude the byte
-	 * storing nss/ru and first PPET16.
-	 */
-	he_ppet->num_ppet = req_byte - 1;
-	if (he_ppet->num_ppet > 0)
-		qdf_mem_copy(he_ppet->ppet, &host_ppet[1], he_ppet->num_ppet);
-
-	qdf_mem_free(host_ppet);
+	wma_he_populate_ppet(ppet->ppet16_ppet8_ru3_ru0, hdr->nss + 1,
+			 ru_count, he_ppet, req_byte);
 }
 
 /**
@@ -526,6 +507,7 @@ static void wma_derive_ext_he_cap(t_wma_handle *wma_handle,
 void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 {
 	uint8_t chan_width;
+	struct ppet_hdr *hdr;
 
 	if (!he_cap->present) {
 		WMA_LOGI(FL("HE Capabilities not present"));
@@ -644,12 +626,14 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	WMA_LOGD("\tTx MCS MAP for BW = 80 + 80 MHz: 0x%x",
 		*((uint16_t *)he_cap->tx_he_mcs_map_80_80));
 
+	hdr = (struct ppet_hdr *)&he_cap->ppet.ppe_threshold.ppe_th[0];
 	/* HE PPET */
-	WMA_LOGD("\tNSS: %d", he_cap->ppe_threshold.nss_count + 1);
-	WMA_LOGD("\tRU Index mask: 0x%04x", he_cap->ppe_threshold.ru_idx_mask);
-	WMA_LOGD("\tnum_ppet: %d", he_cap->ppe_threshold.num_ppet);
+	WMA_LOGD("\tNSS: %d", hdr->nss + 1);
+	WMA_LOGD("\tRU Index mask: 0x%04x", hdr->ru_idx_mask);
+	WMA_LOGD("\tnum_ppet: %d", he_cap->ppet.ppe_threshold.num_ppe_th);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
-		he_cap->ppe_threshold.ppet, he_cap->ppe_threshold.num_ppet);
+		he_cap->ppet.ppe_threshold.ppe_th,
+		he_cap->ppet.ppe_threshold.num_ppe_th);
 }
 
 void wma_print_he_ppet(void *he_ppet)
@@ -877,7 +861,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				WMA_LOGD(FL("2g phy: nss: %d, ru_idx_msk: %d"),
 					mac_cap->he_ppet2G.numss_m1,
 					mac_cap->he_ppet2G.ru_mask);
-				wma_convert_he_ppet(&tgt_cfg->ppet_2g,
+				wma_convert_he_ppet(tgt_cfg->ppet_2g,
 					(struct wmi_host_ppe_threshold *)
 					&mac_cap->he_ppet2G);
 			}
@@ -898,7 +882,7 @@ void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
 				WMA_LOGD(FL("5g phy: nss: %d, ru_idx_msk: %d"),
 					mac_cap->he_ppet2G.numss_m1,
 					mac_cap->he_ppet2G.ru_mask);
-				wma_convert_he_ppet(&tgt_cfg->ppet_5g,
+				wma_convert_he_ppet(tgt_cfg->ppet_5g,
 					(struct wmi_host_ppe_threshold *)
 					&mac_cap->he_ppet5G);
 			}
@@ -938,7 +922,7 @@ void wma_print_he_op(tDot11fIEhe_op *he_ops)
 /**
  * wma_parse_he_ppet() - Convert PPET stored in dot11f structure into FW
  *                       structure.
- * @dot11f_ppet: pointer to dot11f format PPET
+ * @rcvd_ppet: pointer to dot11f format PPET
  * @peer_ppet: pointer peer_ppet to be sent in peer assoc
  *
  * This function converts the sequence of PPET stored in the host in OTA type
@@ -947,19 +931,22 @@ void wma_print_he_op(tDot11fIEhe_op *he_ops)
  *
  * Return: None
  */
-static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
+static void wma_parse_he_ppet(int8_t *rcvd_ppet,
 			      struct wmi_host_ppe_threshold *peer_ppet)
 {
+	struct ppet_hdr *hdr;
 	uint8_t num_ppet, mask, mask1, mask2;
 	uint32_t ppet1, ppet2, ppet;
 	uint8_t bits, pad, pad_bits, req_byte;
 	uint8_t byte_idx, start, i, j, parsed;
 	uint32_t *ppet_r = peer_ppet->ppet16_ppet8_ru3_ru0;
-	uint8_t *rcvd_ppet;
 	uint8_t nss, ru;
 
-	nss = dot11f_ppet->nss_count + 1;
-	mask = dot11f_ppet->ru_idx_mask;
+	hdr = (struct ppet_hdr *)rcvd_ppet;
+	nss = hdr->nss + 1;
+	mask = hdr->ru_idx_mask;
+	peer_ppet->numss_m1 = nss - 1;
+	peer_ppet->ru_bit_mask = mask;
 
 	for (ru = 0; mask; mask >>= 1) {
 		if (mask & 0x1)
@@ -967,21 +954,7 @@ static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
 	}
 
 	WMA_LOGD(FL("Rcvd nss=%d ru_idx_mask: %0x ru_count=%d"),
-		 nss, mask, ru);
-
-	/* rcvd_ppet will store the ppet array and first byte of the ppet */
-	rcvd_ppet = qdf_mem_malloc(sizeof(*rcvd_ppet) *
-				  (dot11f_ppet->num_ppet + 1));
-	if (!rcvd_ppet) {
-		WMA_LOGE(FL("mem alloc failed"));
-		return;
-	}
-
-	rcvd_ppet[0] = (dot11f_ppet->ppet_b1 << 7);
-	qdf_mem_copy(&rcvd_ppet[1], dot11f_ppet->ppet, dot11f_ppet->num_ppet);
-
-	peer_ppet->numss_m1 = nss - 1;
-	peer_ppet->ru_bit_mask = dot11f_ppet->ru_idx_mask;
+		 nss, hdr->ru_idx_mask, ru);
 
 	/* each nss-ru pair have 2 PPET (PPET8/PPET16) */
 	bits = HE_PPET_NSS_RU_LEN + (nss + ru) * (HE_PPET_SIZE * 2);
@@ -1006,7 +979,7 @@ static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
 	 */
 
 	/* first bit of first PPET is in the last bit of first byte */
-	parsed = 7;
+	parsed = HE_PPET_NSS_RU_LEN;
 
 	/*
 	 * refer wmi_ppe_threshold defn to understand how ppet is stored.
@@ -1038,8 +1011,6 @@ static void wma_parse_he_ppet(tDot11fIEppe_threshold *dot11f_ppet,
 				 ppet_r[i]);
 		}
 	}
-
-	qdf_mem_free(rcvd_ppet);
 }
 
 void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
@@ -1195,7 +1166,7 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 	WMI_HEOPS_BSSCOLORDISABLE_SET(he_ops, he_op->bss_col_disabled);
 	peer->peer_he_ops = he_ops;
 
-	wma_parse_he_ppet(&he_cap->ppe_threshold, &peer->peer_ppet);
+	wma_parse_he_ppet(he_cap->ppet.ppe_threshold.ppe_th, &peer->peer_ppet);
 
 	wma_print_he_cap(he_cap);
 	WMA_LOGD(FL("Peer HE Capabilities:"));
