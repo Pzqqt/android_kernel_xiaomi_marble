@@ -5917,6 +5917,7 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	struct dp_peer *peer = (struct dp_peer *) peer_hdl;
 	struct dp_soc *soc = (struct dp_soc *) vdev->pdev->soc;
 
+	peer->delete_in_progress = true;
 	dp_peer_delete_ast_entries(soc, peer);
 }
 #endif

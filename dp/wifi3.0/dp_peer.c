@@ -1041,6 +1041,9 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	void *hw_qdesc_vaddr;
 	uint32_t alloc_tries = 0;
 
+	if (peer->delete_in_progress)
+		return QDF_STATUS_E_FAILURE;
+
 	if (rx_tid->hw_qdesc_vaddr_unaligned != NULL)
 		return dp_rx_tid_update_wifi3(peer, tid, ba_window_size,
 			start_seq);

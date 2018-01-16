@@ -1331,6 +1331,7 @@ struct dp_peer {
 #ifdef WDS_VENDOR_EXTENSION
 	dp_ecm_policy wds_ecm;
 #endif
+	bool delete_in_progress;
 };
 
 #ifdef CONFIG_WIN
