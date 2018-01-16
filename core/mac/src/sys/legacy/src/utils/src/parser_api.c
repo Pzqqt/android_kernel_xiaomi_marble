@@ -1499,7 +1499,7 @@ populate_dot11f_rsn(tpAniSirGlobal pMac,
 	if (pRsnIe->length) {
 		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_RSN);
 		if (0 <= idx) {
-			status = sir_unpack_rsn_ie(pMac, pRsnIe->rsnIEdata + idx + 2,   /* EID, length */
+			status = dot11f_unpack_ie_rsn(pMac, pRsnIe->rsnIEdata + idx + 2,   /* EID, length */
 						      pRsnIe->rsnIEdata[idx + 1],
 						      pDot11f, false);
 			if (DOT11F_FAILED(status)) {
@@ -3392,7 +3392,7 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 	}
 	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
-	status = sir_unpack_beacon_ie(pMac, pPayload, nPayload,
+	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload,
 					   pBies, false);
 
 	if (DOT11F_FAILED(status)) {
@@ -3670,72 +3670,6 @@ static inline void update_bss_color_change_from_beacon_ies(
 {}
 #endif
 
-/**
- * sir_update_def_rsn_params: Update def RSN params if optional fields are
- * not present.
- * @rsn_ie: RSN ie structure
- *
- * Check if the RSN IE contain optional params and if not fill with the
- * default values
- *
- * Return: void
- */
-static void sir_update_def_rsn_params(tDot11fIERSN *rsn_ie)
-{
-	uint8_t zero_gp_cipher_suite[RSN_OUI_SIZE] = {0x00, 0x00, 0x00, 0x00};
-	uint8_t def_cipher_suite[RSN_OUI_SIZE] = {0x00, 0x0f, 0xac, 0x04};
-	uint8_t def_akm_suite[RSN_OUI_SIZE] = {0x00, 0x0f, 0xac, 0x01};
-
-	if (!qdf_mem_cmp(rsn_ie->gp_cipher_suite, zero_gp_cipher_suite,
-			 RSN_OUI_SIZE)) {
-		qdf_mem_copy(rsn_ie->gp_cipher_suite, def_cipher_suite,
-			     RSN_OUI_SIZE);
-		rsn_ie->pwise_cipher_suite_count = 1;
-		qdf_mem_copy(rsn_ie->pwise_cipher_suites, def_cipher_suite,
-			     RSN_OUI_SIZE);
-		rsn_ie->akm_suite_count = 1;
-		qdf_mem_copy(rsn_ie->akm_suites, def_akm_suite, RSN_OUI_SIZE);
-	} else if (!rsn_ie->pwise_cipher_suite_count) {
-		rsn_ie->pwise_cipher_suite_count = 1;
-		qdf_mem_copy(rsn_ie->pwise_cipher_suites, def_cipher_suite,
-			     RSN_OUI_SIZE);
-		rsn_ie->akm_suite_count = 1;
-		qdf_mem_copy(rsn_ie->akm_suites, def_akm_suite, RSN_OUI_SIZE);
-
-	} else if (!rsn_ie->akm_suite_count) {
-		rsn_ie->akm_suite_count = 1;
-		qdf_mem_copy(rsn_ie->akm_suites, def_akm_suite, RSN_OUI_SIZE);
-	}
-}
-
-uint32_t sir_unpack_rsn_ie(tpAniSirGlobal mac_ctx, uint8_t *buf,
-				  uint8_t buf_len, tDot11fIERSN *rsn_ie,
-				  bool append_ie)
-{
-	uint32_t status;
-
-	status = dot11f_unpack_ie_rsn(mac_ctx, buf, buf_len, rsn_ie, append_ie);
-
-	if (rsn_ie->present)
-		sir_update_def_rsn_params(rsn_ie);
-
-	return status;
-}
-
-uint32_t sir_unpack_beacon_ie(tpAniSirGlobal mac_ctx, uint8_t *buf,
-	uint32_t buf_len, tDot11fBeaconIEs *frame, bool append_ie)
-{
-	uint32_t status;
-
-	status = dot11f_unpack_beacon_i_es(mac_ctx, buf, buf_len,
-						   frame, append_ie);
-
-	if (frame->RSN.present)
-		sir_update_def_rsn_params(&frame->RSN);
-
-	return status;
-}
-
 tSirRetStatus
 sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		    tpSirProbeRespBeacon pBeaconStruct,
@@ -3754,7 +3688,7 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 	}
 	qdf_mem_zero(pBies, sizeof(tDot11fBeaconIEs));
 	/* delegate to the framesc-generated code, */
-	status = sir_unpack_beacon_ie(pMac, pPayload, nPayload,
+	status = dot11f_unpack_beacon_i_es(pMac, pPayload, nPayload,
 					   pBies, false);
 
 	if (DOT11F_FAILED(status)) {

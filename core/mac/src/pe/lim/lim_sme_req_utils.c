@@ -284,7 +284,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 	} else if ((rsn_ie->length == rsn_ie->rsnIEdata[1] + 2) &&
 		   (rsn_ie->rsnIEdata[0] == SIR_MAC_RSN_EID)) {
 		pe_debug("Only RSN IE is present");
-		sir_unpack_rsn_ie(mac_ctx, &rsn_ie->rsnIEdata[2],
+		dot11f_unpack_ie_rsn(mac_ctx, &rsn_ie->rsnIEdata[2],
 				     rsn_ie->rsnIEdata[1],
 				     &session->gStartBssRSNIe, false);
 		return true;
@@ -312,7 +312,7 @@ lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal mac_ctx,
 		return false;
 	} else {
 		/* Both RSN and WPA IEs are present */
-		sir_unpack_rsn_ie(mac_ctx, &rsn_ie->rsnIEdata[2],
+		dot11f_unpack_ie_rsn(mac_ctx, &rsn_ie->rsnIEdata[2],
 				     rsn_ie->rsnIEdata[1],
 				     &session->gStartBssRSNIe, false);
 		dot11f_unpack_ie_wpa(mac_ctx, &rsn_ie->rsnIEdata[wpa_idx + 6],

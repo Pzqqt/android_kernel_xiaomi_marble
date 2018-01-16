@@ -4999,8 +4999,8 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				 uint16_t gen_ie_len, uint8_t *gen_ie)
 {
 	tHalHandle halHandle = WLAN_HDD_GET_HAL_CTX(adapter);
-	tDot11fIERSN dot11RSNIE;
-	tDot11fIEWPA dot11WPAIE;
+	tDot11fIERSN dot11RSNIE = {0};
+	tDot11fIEWPA dot11WPAIE = {0};
 	uint8_t *pRsnIe;
 	uint16_t RSNIeLen;
 	uint32_t parse_status;
@@ -5032,16 +5032,18 @@ static int32_t hdd_process_genie(struct hdd_adapter *adapter,
 				parse_status);
 			return -EINVAL;
 		}
+		hdd_debug("gp_cipher_suite_present: %d",
+			 dot11RSNIE.gp_cipher_suite_present);
 		/* Copy out the encryption and authentication types */
 		hdd_debug("pairwise cipher suite count: %d",
 			 dot11RSNIE.pwise_cipher_suite_count);
 		hdd_debug("authentication suite count: %d",
-			 dot11RSNIE.akm_suite_count);
-		/* dot11RSNIE.akm_suite_count */
+			 dot11RSNIE.akm_suite_cnt);
+		/* dot11RSNIE.akm_suite_cnt */
 		/* Just translate the FIRST one */
 		*pAuthType =
 			hdd_translate_rsn_to_csr_auth_type(
-					dot11RSNIE.akm_suites[0]);
+					dot11RSNIE.akm_suite[0]);
 		/* dot11RSNIE.pwise_cipher_suite_count */
 		*pEncryptType =
 			hdd_translate_rsn_to_csr_encryption_type(
@@ -5239,8 +5241,9 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 		if (status)
 			hdd_set_def_rsne_override(&pWextState->roamProfile,
 					    RSNAuthType);
+		return 0;
 	}
-	return 0;
+	return status;
 }
 
 #ifdef WLAN_FEATURE_FILS_SK

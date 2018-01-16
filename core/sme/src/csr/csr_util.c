@@ -1597,7 +1597,7 @@ QDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
 		      GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 
 	if (ieLen > 0 && pIEStruct) {
-		if (!DOT11F_FAILED(sir_unpack_beacon_ie
+		if (!DOT11F_FAILED(dot11f_unpack_beacon_i_es
 				    (pMac, (uint8_t *) pBssDesc->ieFields,
 				    ieLen, pIEStruct, false)))
 		status = QDF_STATUS_SUCCESS;
@@ -3370,10 +3370,10 @@ static bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 	c_ucast_cipher =
 		(uint8_t) (rsn_ie->pwise_cipher_suite_count);
 
-	c_auth_suites = (uint8_t) (rsn_ie->akm_suite_count);
+	c_auth_suites = (uint8_t) (rsn_ie->akm_suite_cnt);
 	for (i = 0; i < c_auth_suites && i < CSR_RSN_MAX_AUTH_SUITES; i++) {
 		qdf_mem_copy((void *)&authsuites[i],
-			(void *)&rsn_ie->akm_suites[i], CSR_RSN_OUI_SIZE);
+			(void *)&rsn_ie->akm_suite[i], CSR_RSN_OUI_SIZE);
 	}
 
 	/* Check - Is requested unicast Cipher supported by the BSS. */
@@ -3886,7 +3886,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 #endif
 	tDot11fBeaconIEs *pIesLocal = pIes;
 	eCsrAuthType negAuthType = eCSR_AUTH_TYPE_UNKNOWN;
-	tDot11fIERSN rsn_ie;
+	tDot11fIERSN rsn_ie = {0};
 
 	qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
 	qdf_mem_zero(&rsn_ie, sizeof(rsn_ie));
@@ -3908,7 +3908,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 		 * the AP, so that only common capability are enabled.
 		 */
 		if (pProfile->pRSNReqIE && pProfile->nRSNReqIELength) {
-			sir_unpack_rsn_ie(pMac, pProfile->pRSNReqIE + 2,
+			dot11f_unpack_ie_rsn(pMac, pProfile->pRSNReqIE + 2,
 				  pProfile->nRSNReqIELength -2, &rsn_ie, false);
 			pIesLocal->RSN.RSN_Cap[0] = pIesLocal->RSN.RSN_Cap[0] &
 						    rsn_ie.RSN_Cap[0];

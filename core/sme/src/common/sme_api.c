@@ -16032,7 +16032,7 @@ uint32_t sme_unpack_rsn_ie(tHalHandle hal, uint8_t *buf,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	return sir_unpack_rsn_ie(mac_ctx, buf, buf_len, rsn_ie, append_ie);
+	return dot11f_unpack_ie_rsn(mac_ctx, buf, buf_len, rsn_ie, append_ie);
 }
 
 /**

@@ -1437,10 +1437,10 @@ IE RSN (EID_RSN)                          // 7.3.2.25
     // to 61.  However, that seems needlessly wasteful of space.
     pwise_cipher_suites[4][0..6] COUNTIS pwise_cipher_suite_count;
     // Optional count of AKM suite selectors
-    OPTIONAL akm_suite_count, 2;
+    OPTIONAL akm_suite_cnt, 2;
     // Again, I see nothing in the Standard explicitly limiting the number of
     // AKM suite selectors other than the maximum size of an IE.
-    akm_suites[4][0..6] COUNTIS akm_suite_count;
+    akm_suite[4][0..6] COUNTIS akm_suite_cnt;
     OPTIONAL RSN_Cap[2];
     // Finally, the IE may contain zero or more PMKIDs:
     OPTIONAL pmkid_count, 2;
