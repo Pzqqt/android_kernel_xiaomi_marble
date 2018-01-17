@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -182,7 +182,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	int status = EOK;
-	const char *filename = NULL;
+	const char *filename;
 	const struct firmware *fw_entry;
 	uint32_t fw_entry_size;
 	uint8_t *temp_eeprom;
@@ -342,7 +342,8 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, enum ATH_BIN_FILE file,
 
 	if (status) {
 		BMI_ERR("%s: Failed to get %s", __func__, filename);
-		return -ENOENT;
+		status = -ENOENT;
+		goto release_fw;
 	}
 
 	if (!fw_entry || !fw_entry->data) {
@@ -503,8 +504,10 @@ release_fw:
 		release_firmware(fw_entry);
 
 	for (i = 0; i < bd_files; i++) {
-		qdf_mem_free(bd_id_filename[i]);
-		bd_id_filename[i] = NULL;
+		if (bd_id_filename[i]) {
+			qdf_mem_free(bd_id_filename[i]);
+			bd_id_filename[i] = NULL;
+		}
 	}
 
 	if (status != EOK)
