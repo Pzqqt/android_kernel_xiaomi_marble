@@ -1362,9 +1362,9 @@ void hdd_ipa_set_tx_flow_info(void)
 	struct hdd_station_ctx *sta_ctx;
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	struct hdd_hostapd_state *hostapd_state;
-	struct qdf_mac_addr staBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
-	struct qdf_mac_addr p2pBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
-	struct qdf_mac_addr apBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
+	struct qdf_mac_addr staBssid = QDF_MAC_ADDR_ZERO_INIT;
+	struct qdf_mac_addr p2pBssid = QDF_MAC_ADDR_ZERO_INIT;
+	struct qdf_mac_addr apBssid = QDF_MAC_ADDR_ZERO_INIT;
 	uint8_t staChannel = 0, p2pChannel = 0, apChannel = 0;
 	const char *p2pMode = "DEV";
 	struct hdd_context *hdd_ctx;
