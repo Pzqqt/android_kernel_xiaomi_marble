@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -73,6 +73,7 @@
 #define WLAN_WAIT_TIME_WLANSTART 2000
 #endif
 
+#ifdef WLAN_FEATURE_EPPING
 static struct epping_context *g_epping_ctx;
 
 /**
@@ -352,3 +353,4 @@ error_end:
 	bmi_cleanup(ol_ctx);
 	return A_ERROR;
 }
+#endif

@@ -189,6 +189,7 @@ static struct shadow_reg_cfg target_shadow_reg_cfg_map[] = {
 #endif
 };
 
+#ifdef WLAN_FEATURE_EPPING
 static struct shadow_reg_cfg target_shadow_reg_cfg_epping[] = {
 	{ 0, ADRASTEA_SRC_WR_INDEX_OFFSET},
 	{ 3, ADRASTEA_SRC_WR_INDEX_OFFSET},
@@ -200,6 +201,7 @@ static struct shadow_reg_cfg target_shadow_reg_cfg_epping[] = {
 	{ 7, ADRASTEA_DST_WR_INDEX_OFFSET},
 	{ 8, ADRASTEA_DST_WR_INDEX_OFFSET},
 };
+#endif
 
 /* CE_PCI TABLE */
 /*
@@ -551,10 +553,10 @@ static struct service_to_pipe target_service_to_ce_map_ar900b[] = {
 	},
 };
 
-
 static struct shadow_reg_cfg *target_shadow_reg_cfg = target_shadow_reg_cfg_map;
 static int shadow_cfg_sz = sizeof(target_shadow_reg_cfg_map);
 
+#ifdef WLAN_FEATURE_EPPING
 static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
 	{WMI_DATA_VO_SVC, PIPEDIR_OUT, 3,},     /* out = UL = host -> target */
 	{WMI_DATA_VO_SVC, PIPEDIR_IN, 2,},      /* in = DL = target -> host */
@@ -575,6 +577,16 @@ static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
 	{0, 0, 0,},             /* Must be last */
 };
 
+void hif_select_epping_service_to_pipe_map(struct service_to_pipe
+					   **tgt_svc_map_to_use,
+					   uint32_t *sz_tgt_svc_map_to_use)
+{
+	*tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
+	*sz_tgt_svc_map_to_use =
+			sizeof(target_service_to_ce_map_wlan_epping);
+}
+#endif
+
 static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 				    struct service_to_pipe **tgt_svc_map_to_use,
 				    uint32_t *sz_tgt_svc_map_to_use)
@@ -583,9 +595,8 @@ static void hif_select_service_to_pipe_map(struct hif_softc *scn,
 	struct hif_target_info *tgt_info = &scn->target_info;
 
 	if (QDF_IS_EPPING_ENABLED(mode)) {
-		*tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
-		*sz_tgt_svc_map_to_use =
-			sizeof(target_service_to_ce_map_wlan_epping);
+		hif_select_epping_service_to_pipe_map(tgt_svc_map_to_use,
+						      sz_tgt_svc_map_to_use);
 	} else {
 		switch (tgt_info->target_type) {
 		default:
@@ -2448,7 +2459,22 @@ int hif_wlan_enable(struct hif_softc *scn)
 				       mode, QWLAN_VERSIONSTR);
 }
 
+#ifdef WLAN_FEATURE_EPPING
+
 #define CE_EPPING_USES_IRQ true
+
+void hif_ce_prepare_epping_config(struct HIF_CE_state *hif_state)
+{
+	if (CE_EPPING_USES_IRQ)
+		hif_state->host_ce_config = host_ce_config_wlan_epping_irq;
+	else
+		hif_state->host_ce_config = host_ce_config_wlan_epping_poll;
+	hif_state->target_ce_config = target_ce_config_wlan_epping;
+	hif_state->target_ce_config_sz = sizeof(target_ce_config_wlan_epping);
+	target_shadow_reg_cfg = target_shadow_reg_cfg_epping;
+	shadow_cfg_sz = sizeof(target_shadow_reg_cfg_epping);
+}
+#endif
 
 /**
  * hif_ce_prepare_config() - load the correct static tables.
@@ -2468,14 +2494,7 @@ void hif_ce_prepare_config(struct hif_softc *scn)
 	scn->ce_count = HOST_CE_COUNT;
 	/* if epping is enabled we need to use the epping configuration. */
 	if (QDF_IS_EPPING_ENABLED(mode)) {
-		if (CE_EPPING_USES_IRQ)
-			hif_state->host_ce_config = host_ce_config_wlan_epping_irq;
-		else
-			hif_state->host_ce_config = host_ce_config_wlan_epping_poll;
-		hif_state->target_ce_config = target_ce_config_wlan_epping;
-		hif_state->target_ce_config_sz = sizeof(target_ce_config_wlan_epping);
-		target_shadow_reg_cfg = target_shadow_reg_cfg_epping;
-		shadow_cfg_sz = sizeof(target_shadow_reg_cfg_epping);
+		hif_ce_prepare_epping_config(hif_state);
 	}
 
 	switch (tgt_info->target_type) {

@@ -147,6 +147,7 @@ static struct CE_pipe_config target_ce_config_wlan[] = {
 	{ /* CE11 */ 11, PIPEDIR_IN,  32, 2048, CE_ATTR_FLAGS, 0,},
 };
 
+#ifdef WLAN_FEATURE_EPPING
 static struct CE_attr host_ce_config_wlan_epping_poll[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 2048, 0, NULL,},
@@ -207,6 +208,7 @@ static struct CE_pipe_config target_ce_config_wlan_epping[] = {
 	/* CE8 used only by IPA */
 	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,}
 };
+#endif
 #else
 static struct CE_attr host_ce_config_wlan[] = {
 	/* host->target HTC control and raw streams */
@@ -252,6 +254,7 @@ static struct CE_pipe_config target_ce_config_wlan[] = {
 	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,}
 };
 
+#ifdef WLAN_FEATURE_EPPING
 static struct CE_attr host_ce_config_wlan_epping_poll[] = {
 	/* host->target HTC control and raw streams */
 	{ /* CE0 */ CE_ATTR_FLAGS, 0, 16, 256, 0, NULL,},
@@ -324,6 +327,7 @@ static struct CE_pipe_config target_ce_config_wlan_epping[] = {
 	{ /* CE10 */ 10, PIPEDIR_IN,  0, 0, CE_ATTR_FLAGS, 0,},
 	{ /* CE11 */ 11, PIPEDIR_IN,  0, 0, CE_ATTR_FLAGS, 0,},
 };
+#endif
 #endif
 
 static struct CE_attr host_ce_config_wlan_ar9888[] = {

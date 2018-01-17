@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,8 +42,23 @@
 #include <qdf_types.h>
 
 /* epping_main signatures */
+#ifdef WLAN_FEATURE_EPPING
 int epping_open(void);
 void epping_close(void);
 void epping_disable(void);
 int epping_enable(struct device *parent_dev);
+#else
+static inline int epping_open(void)
+{
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline int epping_enable(struct device *parent_dev)
+{
+	return QDF_STATUS_E_INVAL;
+}
+
+static inline void epping_close(void) {}
+static inline void epping_disable(void) {}
+#endif
 #endif /* end #ifndef EPPING_MAIN_H */

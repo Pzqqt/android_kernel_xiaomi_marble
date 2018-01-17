@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -217,5 +217,22 @@ void hif_get_target_ce_config(struct hif_softc *scn,
 		uint32_t *target_service_to_ce_map_sz_ret,
 		struct shadow_reg_cfg **target_shadow_reg_cfg_v1_ret,
 		uint32_t *shadow_cfg_v1_sz_ret);
+
+#ifdef WLAN_FEATURE_EPPING
+void hif_ce_prepare_epping_config(struct HIF_CE_state *hif_state);
+void hif_select_epping_service_to_pipe_map(struct service_to_pipe
+					   **tgt_svc_map_to_use,
+					   uint32_t *sz_tgt_svc_map_to_use);
+
+#else
+static inline
+void hif_ce_prepare_epping_config(struct HIF_CE_state *hif_state)
+{ }
+static inline
+void hif_select_epping_service_to_pipe_map(struct service_to_pipe
+					   **tgt_svc_map_to_use,
+					   uint32_t *sz_tgt_svc_map_to_use)
+{ }
+#endif
 
 #endif /* __CE_H__ */
