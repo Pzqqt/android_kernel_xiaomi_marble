@@ -663,8 +663,6 @@ typedef enum {
 #define QDF_MAC_ADDRESS_STR QDF_MAC_ADDR_STR
 /* backwards compatibility; use QDF_MAC_ADDR_BCAST_INIT instead */
 #define QDF_MAC_ADDR_BROADCAST_INITIALIZER QDF_MAC_ADDR_BCAST_INIT
-/* backwards compatibility; use QDF_MAC_ADDR_ZERO_INIT instead */
-#define QDF_MAC_ADDR_ZERO_INITIALIZER QDF_MAC_ADDR_ZERO_INIT
 
 /**
  * struct qdf_mac_addr - A MAC address
