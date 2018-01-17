@@ -603,7 +603,7 @@ QDF_STATUS wlan_objmgr_peer_try_get_ref(struct wlan_objmgr_peer *peer,
 		if (peer->peer_objmgr.print_cnt++ <=
 				WLAN_OBJMGR_RATELIMIT_THRESH)
 			obj_mgr_err(
-			"peer(" QDF_MAC_ADDRESS_STR ") not in Created st(%d)",
+			"peer(" QDF_MAC_ADDR_STR ") not in Created st(%d)",
 			QDF_MAC_ADDR_ARRAY(macaddr),
 				peer->obj_state);
 		return QDF_STATUS_E_RESOURCES;

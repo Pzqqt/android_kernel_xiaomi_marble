@@ -661,9 +661,6 @@ typedef enum {
 #define QDF_MAC_ADDR_BCAST_INIT { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } }
 #define QDF_MAC_ADDR_ZERO_INIT { { 0, 0, 0, 0, 0, 0 } }
 
-/* backwards compatibility; use QDF_MAC_ADDR_STR instead */
-#define QDF_MAC_ADDRESS_STR QDF_MAC_ADDR_STR
-
 /**
  * struct qdf_mac_addr - A MAC address
  * @bytes: the raw address bytes array
