@@ -2118,13 +2118,17 @@ bool policy_mgr_concurrent_open_sessions_running(
 bool policy_mgr_concurrent_beaconing_sessions_running(
 	struct wlan_objmgr_psoc *psoc)
 {
-	return (policy_mgr_mode_specific_connection_count(
-			psoc, QDF_SAP_MODE, NULL) +
-		policy_mgr_mode_specific_connection_count(
-			psoc, QDF_P2P_GO_MODE, NULL) +
-		policy_mgr_mode_specific_connection_count(
-			psoc, QDF_IBSS_MODE, NULL) > 1) ?
-		true : false;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return false;
+	}
+
+	return (pm_ctx->no_of_open_sessions[QDF_SAP_MODE] +
+		pm_ctx->no_of_open_sessions[QDF_P2P_GO_MODE] +
+		pm_ctx->no_of_open_sessions[QDF_IBSS_MODE] > 1) ? true : false;
 }
 
 
