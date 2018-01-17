@@ -653,34 +653,124 @@ typedef enum {
 #endif
 #endif
 
-#define QDF_MAC_ADDR_SIZE (6)
-#define QDF_MAC_ADDRESS_STR "%02x:%02x:%02x:%02x:%02x:%02x"
-#define QDF_MAC_ADDR_ARRAY(a) \
-	(a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
+#define QDF_MAC_ADDR_SIZE 6
+#define QDF_MAC_ADDR_STR "%02x:%02x:%02x:%02x:%02x:%02x"
+#define QDF_MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]
+#define QDF_MAC_ADDR_BCAST_INIT { { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } }
+#define QDF_MAC_ADDR_ZERO_INIT { { 0, 0, 0, 0, 0, 0 } }
+
+/* backwards compatibility; use QDF_MAC_ADDR_STR instead */
+#define QDF_MAC_ADDRESS_STR QDF_MAC_ADDR_STR
+/* backwards compatibility; use QDF_MAC_ADDR_BCAST_INIT instead */
+#define QDF_MAC_ADDR_BROADCAST_INITIALIZER QDF_MAC_ADDR_BCAST_INIT
+/* backwards compatibility; use QDF_MAC_ADDR_ZERO_INIT instead */
+#define QDF_MAC_ADDR_ZERO_INITIALIZER QDF_MAC_ADDR_ZERO_INIT
 
 /**
- * struct qdf_mac_addr - mac address array
- * @bytes: MAC address bytes
+ * struct qdf_mac_addr - A MAC address
+ * @bytes: the raw address bytes array
  */
 struct qdf_mac_addr {
 	uint8_t bytes[QDF_MAC_ADDR_SIZE];
 };
 
 /**
- * This macro is used to initialize a QDF MacAddress to the broadcast
- * MacAddress. It is used like this...
+ * qdf_mac_parse() - parse the given string as a MAC address
+ * @mac_str: the input MAC address string to parse
+ * @out_addr: the output MAC address value, populated on success
+ *
+ * A MAC address is a set of 6, colon-delimited, hexadecimal encoded octets.
+ *
+ * E.g.
+ *	00:00:00:00:00:00 (zero address)
+ *	ff:ff:ff:ff:ff:ff (broadcast address)
+ *	12:34:56:78:90:ab (an arbitrary address)
+ *
+ * This implementation also accepts MAC addresses without colons. Historically,
+ * other delimiters and groupings have been used to represent MAC addresses, but
+ * these are not supported here. Hexadecimal digits may be in either upper or
+ * lower case.
+ *
+ * Return: QDF_STATUS
  */
-#define QDF_MAC_ADDR_BROADCAST_INITIALIZER \
-	{ { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff } }
+QDF_STATUS qdf_mac_parse(const char *mac_str, struct qdf_mac_addr *out_addr);
+
+#define QDF_IPV4_ADDR_SIZE 4
+#define QDF_IPV4_ADDR_STR "%d.%d.%d.%d"
+#define QDF_IPV4_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3]
+#define QDF_IPV4_ADDR_ZERO_INIT { { 0, 0, 0, 0 } }
 
 /**
- * This macro is used to initialize a QDF MacAddress to zero
- * It is used like this...
+ * struct qdf_ipv4_addr - An IPV4 address
+ * @bytes: the raw address bytes array
  */
-#define QDF_MAC_ADDR_ZERO_INITIALIZER { { 0, 0, 0, 0, 0, 0 } }
+struct qdf_ipv4_addr {
+	uint8_t bytes[QDF_IPV4_ADDR_SIZE];
+};
 
-#define QDF_IPV4_ADDR_SIZE (4)
-#define QDF_IPV6_ADDR_SIZE (16)
+/**
+ * qdf_ipv4_parse() - parse the given string as an IPV4 address
+ * @ipv4_str: the input IPV4 address string to parse
+ * @out_addr: the output IPV4 address value, populated on success
+ *
+ * An IPV4 address is a set of 4, dot-delimited, decimal encoded octets.
+ *
+ * E.g.
+ *	0.0.0.0 (wildcard address)
+ *	127.0.0.1 (loopback address)
+ *	255.255.255.255 (broadcast address)
+ *	192.168.0.1 (an arbitrary address)
+ *
+ * Historically, non-decimal encodings have also been used to represent IPV4
+ * addresses, but these are not supported here.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_ipv4_parse(const char *ipv4_str, struct qdf_ipv4_addr *out_addr);
+
+#define QDF_IPV6_ADDR_SIZE 16
+#define QDF_IPV6_ADDR_HEXTET_COUNT 8
+#define QDF_IPV6_ADDR_STR "%x:%x:%x:%x:%x:%x:%x:%x"
+#define QDF_IPV6_ADDR_ARRAY(a) \
+	((a)[0] << 8) + (a)[1], ((a)[2] << 8) + (a)[3], \
+	((a)[4] << 8) + (a)[5], ((a)[6] << 8) + (a)[7], \
+	((a)[8] << 8) + (a)[9], ((a)[10] << 8) + (a)[11], \
+	((a)[12] << 8) + (a)[13], ((a)[14] << 8) + (a)[15]
+#define QDF_IPV6_ADDR_ZERO_INIT \
+	{ { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 } }
+
+/**
+ * struct qdf_ipv6_addr - An IPV6 address
+ * @bytes: the raw address bytes array
+ */
+struct qdf_ipv6_addr {
+	uint8_t bytes[QDF_IPV6_ADDR_SIZE];
+};
+
+/**
+ * qdf_ipv6_parse() - parse the given string as an IPV6 address
+ * @ipv6_str: the input IPV6 address string to parse
+ * @out_addr: the output IPV6 address value, populated on success
+ *
+ * A hextet is a pair of octets. An IPV6 address is a set of 8, colon-delimited,
+ * hexadecimal encoded hextets. Each hextet may omit leading zeros. One or more
+ * zero-hextets may be "compressed" using a pair of colons ("::"). Up to one
+ * such zero-compression is allowed per address.
+ *
+ * E.g.
+ *	0:0:0:0:0:0:0:0 (unspecified address)
+ *	:: (also the unspecified address)
+ *	0:0:0:0:0:0:0:1 (loopback address)
+ *	::1 (also the loopback address)
+ *	900a:ae7::6 (an arbitrary address)
+ *	900a:ae7:0:0:0:0:0:6 (the same arbitrary address)
+ *
+ * Hexadecimal digits may be in either upper or lower case.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr);
+
 #define QDF_MAX_NUM_CHAN   (128)
 
 /**
