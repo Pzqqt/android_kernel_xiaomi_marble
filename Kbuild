@@ -164,6 +164,8 @@ ifeq ($(KERNEL_BUILD), 0)
 
 	CONFIG_MPC_UT_FRAMEWORK := y
 
+	CONFIG_FEATURE_EPPING := y
+
 	#Flag to enable offload packets feature
 	CONFIG_WLAN_OFFLOAD_PACKETS := y
 
@@ -1671,7 +1673,6 @@ INCS +=		$(UMAC_SPECTRAL_INC)
 INCS +=		$(UMAC_TARGET_SPECTRAL_INC)
 
 OBJS :=		$(HDD_OBJS) \
-		$(EPPING_OBJS) \
 		$(MAC_OBJS) \
 		$(SAP_OBJS) \
 		$(SME_OBJS) \
@@ -1702,6 +1703,11 @@ OBJS +=		$(HIF_OBJS) \
 ifeq ($(CONFIG_LITHIUM), y)
 OBJS += 	$(HAL_OBJS)
 endif
+
+ifeq ($(CONFIG_FEATURE_EPPING), y)
+OBJS += 	$(EPPING_OBJS)
+endif
+
 
 OBJS +=		$(UMAC_OBJMGR_OBJS)
 OBJS +=		$(WIFI_POS_OBJS)
@@ -2345,6 +2351,10 @@ endif
 
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK), y)
 CDEFINES += -DMPC_UT_FRAMEWORK
+endif
+
+ifeq ($(CONFIG_FEATURE_EPPING), y)
+CDEFINES += -DWLAN_FEATURE_EPPING
 endif
 
 ifeq ($(CONFIG_WLAN_OFFLOAD_PACKETS),y)
