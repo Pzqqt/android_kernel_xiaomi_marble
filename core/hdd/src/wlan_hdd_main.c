@@ -5573,7 +5573,7 @@ QDF_STATUS hdd_start_all_adapters(struct hdd_context *hdd_ctx)
 {
 	struct hdd_adapter *adapter;
 #ifndef MSM_PLATFORM
-	struct qdf_mac_addr bcastMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bcastMac = QDF_MAC_ADDR_BCAST_INIT;
 #endif
 	eConnectionState connState;
 

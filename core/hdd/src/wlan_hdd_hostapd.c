@@ -4494,8 +4494,8 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	int *value = (int *)extra;
 	int set_value;
 	int ret;
-	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
+	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
 
 	ENTER_DEV(dev);
 
@@ -5472,7 +5472,7 @@ __iw_get_peer_rssi(struct net_device *dev, struct iw_request_info *info,
 	struct hdd_adapter *adapter = netdev_priv(dev);
 	struct hdd_context *hddctx;
 	char macaddrarray[MAC_ADDRESS_STR_LEN];
-	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr macaddress = QDF_MAC_ADDR_BCAST_INIT;
 	int ret;
 	char *rssi_info_output = extra;
 	struct sir_peer_sta_info peer_sta_info;

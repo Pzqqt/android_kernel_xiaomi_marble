@@ -665,7 +665,7 @@ static int hdd_set_grat_arp_keepalive(struct hdd_adapter *adapter)
 	struct hdd_station_ctx *sta_ctx;
 	tSirKeepAliveReq req = {
 		.packetType = SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP,
-		.dest_macaddr = QDF_MAC_ADDR_BROADCAST_INITIALIZER,
+		.dest_macaddr = QDF_MAC_ADDR_BCAST_INIT,
 	};
 
 	if (!adapter) {
@@ -1999,8 +1999,8 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = (struct hdd_context *) wiphy_priv(wiphy);
 	tHalHandle hHal = NULL;
-	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
+	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
 	int status;
 
 	ENTER();

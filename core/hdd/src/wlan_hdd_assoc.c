@@ -1491,8 +1491,7 @@ QDF_STATUS hdd_roam_deregister_sta(struct hdd_adapter *adapter, uint8_t staid)
 	struct hdd_station_ctx *sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int ret = 0;
 	struct qdf_mac_addr *peer_mac = NULL;
-	struct qdf_mac_addr broadcastMacAddr =
-				QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr broadcastMacAddr = QDF_MAC_ADDR_BCAST_INIT;
 	if (eConnectionState_IbssDisconnected ==
 	    sta_ctx->conn_info.connState) {
 		/*
@@ -3300,8 +3299,7 @@ static void hdd_roam_ibss_indication_handler(struct hdd_adapter *adapter,
 	{
 		struct hdd_station_ctx *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter);
-		struct qdf_mac_addr broadcastMacAddr =
-			QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+		struct qdf_mac_addr broadcastMacAddr = QDF_MAC_ADDR_BCAST_INIT;
 		int ret;
 
 		if (NULL == roam_info) {

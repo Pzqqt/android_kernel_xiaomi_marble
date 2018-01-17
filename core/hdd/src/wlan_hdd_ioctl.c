@@ -5657,8 +5657,8 @@ static int drv_cmd_max_tx_power(struct hdd_adapter *adapter,
 	int txPower;
 	QDF_STATUS smeStatus;
 	uint8_t *value = command;
-	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BCAST_INIT;
+	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BCAST_INIT;
 
 	status = hdd_parse_setmaxtxpower_command(value, &txPower);
 	if (status) {
