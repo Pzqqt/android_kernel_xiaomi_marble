@@ -416,6 +416,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 			frag_list_sum_len -= HAL_RX_FCS_LEN;
 			qdf_nbuf_append_ext_list(mpdu_buf, head_frag_list,
 				frag_list_sum_len);
+			qdf_nbuf_set_next(mpdu_buf, NULL);
 		}
 
 		goto mpdu_stitch_done;
