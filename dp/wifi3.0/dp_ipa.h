@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  * 
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -22,6 +22,7 @@
 #define IPA_TCL_DATA_RING_IDX	2
 #define IPA_TX_COMP_RING_IDX	2
 #define IPA_REO_DEST_RING_IDX	3
+#define IPA_RX_REFILL_BUF_RING_IDX	2
 
 /**
  * struct dp_ipa_uc_tx_hdr - full tx header registered to IPA hardware

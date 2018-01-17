@@ -2358,6 +2358,58 @@ void dp_free_inact_timer(struct dp_soc *soc)
 
 #endif
 
+#ifdef IPA_OFFLOAD
+/**
+ * dp_setup_ipa_rx_refill_buf_ring - Setup second Rx refill buffer ring
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * Return: QDF_STATUS_SUCCESS: success
+ *         QDF_STATUS_E_RESOURCES: Error return
+ */
+static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					   struct dp_pdev *pdev)
+{
+	/* Setup second Rx refill buffer ring */
+	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
+			  IPA_RX_REFILL_BUF_RING_IDX,
+			  pdev->pdev_id, RXDMA_REFILL_RING_SIZE)) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			FL("dp_srng_setup failed second rx refill ring"));
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_cleanup_ipa_rx_refill_buf_ring - Cleanup second Rx refill buffer ring
+ * @soc: data path instance
+ * @pdev: core txrx pdev context
+ *
+ * Return: void
+ */
+static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					      struct dp_pdev *pdev)
+{
+	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF,
+			IPA_RX_REFILL_BUF_RING_IDX);
+}
+
+#else
+
+static int dp_setup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					   struct dp_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+static void dp_cleanup_ipa_rx_refill_buf_ring(struct dp_soc *soc,
+					      struct dp_pdev *pdev)
+{
+}
+
+#endif
+
 /*
 * dp_pdev_attach_wifi3() - attach txrx pdev
 * @ctrl_pdev: Opaque PDEV object
@@ -2511,13 +2563,8 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		}
 	}
 
-	/* Setup second Rx refill buffer ring */
-	if (dp_srng_setup(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF, 2,
-				pdev->pdev_id, RXDMA_REFILL_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed second rx refill ring"));
+	if (dp_setup_ipa_rx_refill_buf_ring(soc, pdev))
 		goto fail1;
-	}
 
 	if (dp_ipa_ring_resource_setup(soc, pdev))
 		goto fail1;
@@ -2662,7 +2709,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_ipa_uc_detach(soc, pdev);
 
-	dp_srng_cleanup(soc, &pdev->rx_refill_buf_ring2, RXDMA_BUF, 2);
+	dp_cleanup_ipa_rx_refill_buf_ring(soc, pdev);
 
 	/* Cleanup per PDEV REO rings if configured */
 	if (wlan_cfg_per_pdev_rx_ring(soc->wlan_cfg_ctx)) {
