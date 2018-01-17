@@ -1008,6 +1008,7 @@ static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx)
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
 	qdf_runtime_lock_init(&ctx->dfs);
+	qdf_runtime_lock_init(&ctx->connect);
 
 	wlan_scan_runtime_pm_init(hdd_ctx->hdd_pdev);
 }
@@ -1023,28 +1024,14 @@ static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx)
 	struct hdd_runtime_pm_context *ctx = &hdd_ctx->runtime_context;
 
 	qdf_runtime_lock_deinit(&ctx->dfs);
+	qdf_runtime_lock_deinit(&ctx->connect);
 
 	wlan_scan_runtime_pm_deinit(hdd_ctx->hdd_pdev);
 }
 
-static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter)
-{
-	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
-
-	qdf_runtime_lock_init(&ctx->connect);
-}
-
-static void hdd_adapter_runtime_suspend_deinit(struct hdd_adapter *adapter)
-{
-	struct hdd_connect_pm_context *ctx = &adapter->connect_rpm_ctx;
-
-	qdf_runtime_lock_deinit(&ctx->connect);
-}
 #else /* FEATURE_RUNTIME_PM */
 static void hdd_runtime_suspend_context_init(struct hdd_context *hdd_ctx) {}
 static void hdd_runtime_suspend_context_deinit(struct hdd_context *hdd_ctx) {}
-static void hdd_adapter_runtime_suspend_init(struct hdd_adapter *adapter) {}
-static void hdd_adapter_runtime_suspend_deinit(struct hdd_adapter *adapter) {}
 #endif /* FEATURE_RUNTIME_PM */
 
 #define INTF_MACADDR_MASK       0x7
@@ -3455,7 +3442,6 @@ static struct hdd_adapter *hdd_alloc_station_adapter(struct hdd_context *hdd_ctx
 		/* set dev's parent to underlying device */
 		SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
 		hdd_wmm_init(adapter);
-		hdd_adapter_runtime_suspend_init(adapter);
 		spin_lock_init(&adapter->pause_map_lock);
 		adapter->start_time = adapter->last_time = qdf_system_ticks();
 	}
@@ -3953,8 +3939,6 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 
 	hdd_debugfs_exit(adapter);
 
-	hdd_adapter_runtime_suspend_deinit(adapter);
-
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
 	 * the driver is almost closed and cannot handle either control
@@ -4415,7 +4399,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 #endif
 		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status)
-			goto err_deinit_adapter_runtime_pm;
+			goto err_free_netdev;
 
 		/* Stop the Interface TX queue. */
 		hdd_debug("Disabling queues");
@@ -4427,7 +4411,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		if (QDF_NDI_MODE == session_type) {
 			status = hdd_init_nan_data_mode(adapter);
 			if (QDF_STATUS_SUCCESS != status)
-				goto err_deinit_adapter_runtime_pm;
+				goto err_free_netdev;
 		}
 
 		break;
@@ -4486,7 +4470,7 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 		adapter->device_mode = session_type;
 		status = hdd_register_interface(adapter, rtnl_held);
 		if (QDF_STATUS_SUCCESS != status)
-			goto err_deinit_adapter_runtime_pm;
+			goto err_free_netdev;
 
 		/* Stop the Interface TX queue. */
 		hdd_debug("Disabling queues");
@@ -4538,12 +4522,6 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 
 	return adapter;
 
-err_deinit_adapter_runtime_pm:
-	/*
-	 * For certain error cases that hdd_alloc_station_adapter()
-	 * is used to allocate the adapter.
-	 */
-	hdd_adapter_runtime_suspend_deinit(adapter);
 err_free_netdev:
 	wlan_hdd_release_intf_addr(hdd_ctx, adapter->mac_addr.bytes);
 	free_netdev(adapter->dev);
@@ -5543,6 +5521,9 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 {
 	struct hdd_adapter *padapter = (struct hdd_adapter *) netdev_priv(dev);
 	struct cfg80211_bss *bss = NULL;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(padapter);
 
 	if (WLAN_STATUS_SUCCESS == status) {
 		struct ieee80211_channel *chan;
@@ -5571,7 +5552,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			status, gfp, connect_timeout, timeout_reason);
 	}
 
-	qdf_runtime_pm_allow_suspend(&padapter->connect_rpm_ctx.connect);
+	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 }
 #else
@@ -5587,7 +5568,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 	cfg80211_connect_result(dev, bssid, req_ie, req_ie_len,
 				resp_ie, resp_ie_len, status, gfp);
 
-	qdf_runtime_pm_allow_suspend(&padapter->connect_rpm_ctx.connect);
+	qdf_runtime_pm_allow_suspend(&hdd_ctx->runtime_context.connect);
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 }
 #endif

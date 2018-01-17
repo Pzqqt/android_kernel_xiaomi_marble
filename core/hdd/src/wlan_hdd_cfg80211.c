@@ -16798,8 +16798,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			hdd_conn_set_connection_state(adapter,
 			eConnectionState_Connecting);
 
-		qdf_runtime_pm_prevent_suspend(&adapter->connect_rpm_ctx.
-					       connect);
+		qdf_runtime_pm_prevent_suspend(
+				&hdd_ctx->runtime_context.connect);
 		hdd_prevent_suspend_timeout(HDD_WAKELOCK_TIMEOUT_CONNECT,
 					    WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 		qdf_status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(adapter),
@@ -16817,8 +16817,8 @@ static int wlan_hdd_cfg80211_connect_start(struct hdd_adapter *adapter,
 			/* change back to NotAssociated */
 			hdd_conn_set_connection_state(adapter,
 						      eConnectionState_NotConnected);
-			qdf_runtime_pm_allow_suspend(&adapter->connect_rpm_ctx.
-						     connect);
+			qdf_runtime_pm_allow_suspend(
+					&hdd_ctx->runtime_context.connect);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_CONNECT);
 		}
 

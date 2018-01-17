@@ -948,11 +948,13 @@ struct hdd_chan_change_params {
 /**
  * struct hdd_runtime_pm_context - context to prevent/allow runtime pm
  * @dfs: dfs context to prevent/allow runtime pm
+ * @connect: connect context to prevent/allow runtime pm
  *
  * Runtime PM control for underlying activities
  */
 struct hdd_runtime_pm_context {
 	qdf_runtime_lock_t dfs;
+	qdf_runtime_lock_t connect;
 };
 
 /**
@@ -1212,7 +1214,6 @@ struct hdd_adapter {
 	 * channel needs to be moved from the existing 2.4GHz channel.
 	 */
 	uint8_t pre_cac_chan;
-	struct hdd_connect_pm_context connect_rpm_ctx;
 
 	/*
 	 * Indicate if HO fails during disconnect so that
