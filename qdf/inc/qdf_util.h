@@ -274,8 +274,7 @@ static inline bool qdf_is_macaddr_group(struct qdf_mac_addr *mac_addr)
  */
 static inline bool qdf_is_macaddr_broadcast(struct qdf_mac_addr *mac_addr)
 {
-	struct qdf_mac_addr broadcast_mac_addr =
-		QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr broadcast_mac_addr = QDF_MAC_ADDR_BCAST_INIT;
 	return qdf_is_macaddr_equal(mac_addr, &broadcast_mac_addr);
 }
 
