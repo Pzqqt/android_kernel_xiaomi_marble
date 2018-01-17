@@ -11012,13 +11012,6 @@ send_set_ctl_table_cmd_tlv(wmi_unified_t wmi_handle,
 	if (!param->ctl_array)
 		return QDF_STATUS_E_FAILURE;
 
-	if (param->ctl_cmd_len !=
-		WMI_HOST_NUM_CTLS_2G * WMI_HOST_NUM_BAND_EDGES_2G * 2 +
-		WMI_HOST_NUM_CTLS_5G * WMI_HOST_NUM_BAND_EDGES_5G * 2) {
-		qdf_print("CTL array len not correct\n");
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	ctl_tlv_len = WMI_TLV_HDR_SIZE +
 		roundup(param->ctl_cmd_len, sizeof(A_UINT32));
 	len = sizeof(*cmd) + ctl_tlv_len;
