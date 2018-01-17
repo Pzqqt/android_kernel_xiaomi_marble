@@ -730,8 +730,18 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 			 uint8_t txFlag, uint8_t sessionId, bool tdlsflag,
 			 uint16_t channel_freq, enum rateid rid);
 
+/**
+ * wma_open() - Allocate wma context and initialize it.
+ * @psoc: Psoc pointer
+ * @wma_tgt_cfg_cb: tgt config callback fun
+ * @cds_cfg:  mac parameters
+ * @target_type: Target type
+ *
+ * Return: 0 on success, errno on failure
+ */
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
-		    wma_tgt_cfg_cb pTgtUpdCB, struct cds_config_info *cds_cfg);
+		    wma_tgt_cfg_cb pTgtUpdCB, struct cds_config_info *cds_cfg,
+		    uint32_t target_type);
 
 /**
  * wma_vdev_init() - initialize a wma vdev

@@ -2795,17 +2795,10 @@ static int wma_rx_service_available_event(void *handle, uint8_t *cmd_param_info,
 	return 0;
 }
 
-/**
- * wma_open() - Allocate wma context and initialize it.
- * @psoc: Psoc pointer
- * @wma_tgt_cfg_cb: tgt config callback fun
- * @cds_cfg:  mac parameters
- *
- * Return: 0 on success, errno on failure
- */
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
-		    struct cds_config_info *cds_cfg)
+		    struct cds_config_info *cds_cfg,
+		    uint32_t target_type)
 {
 	tp_wma_handle wma_handle;
 	HTC_HANDLE htc_handle;
@@ -2911,7 +2904,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* store the wmi handle in tgt_if_handle */
 	tgt_psoc_info->wmi_handle = wmi_handle;
-
+	tgt_psoc_info->target_type = target_type;
 	wlan_psoc_obj_lock(psoc);
 	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
 	wlan_psoc_obj_unlock(psoc);
