@@ -112,8 +112,8 @@ int cds_set_cpus_allowed_ptr(struct task_struct *task, unsigned long cpu)
  * @high_throughput:	high throughput is required or not
  *
  * Find current online cores.
- * high troughput required and PERF core online, then attach to last PERF core
- * low throughput required or only little cores online, the attach any little
+ * high troughput required and PERF core online, then attach any PERF core
+ * low throughput required or only little cores online, then attach any little
  * core
  *
  * Return: 0 success
@@ -126,9 +126,9 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 	unsigned long *online_litl_cpu = NULL;
 	unsigned char perf_core_count = 0;
 	unsigned char litl_core_count = 0;
-	int cds_max_cluster_id = 0;
+	int cds_max_cluster_id = CDS_CPU_CLUSTER_TYPE_LITTLE;
 #ifdef WLAN_OPEN_SOURCE
-	struct cpumask litl_mask;
+	struct cpumask cpu_mask;
 	unsigned long cpus;
 	int i;
 #endif
@@ -169,18 +169,16 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 					 CDS_CPU_CLUSTER_TYPE_PERF) {
 			online_perf_cpu[perf_core_count] = cpus;
 			perf_core_count++;
+			cds_max_cluster_id = CDS_CPU_CLUSTER_TYPE_PERF;
 		} else {
 			online_litl_cpu[litl_core_count] = cpus;
 			litl_core_count++;
 		}
-		cds_max_cluster_id =  topology_physical_package_id(cpus);
 	}
-#else
-	cds_max_cluster_id = 0;
 #endif
 
 	/* Single cluster system, not need to handle this */
-	if (0 == cds_max_cluster_id) {
+	if (CDS_CPU_CLUSTER_TYPE_LITTLE == cds_max_cluster_id) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_LOW,
 		"%s: single cluster system. returning", __func__);
 		goto success;
@@ -191,60 +189,37 @@ static int cds_sched_find_attach_cpu(p_cds_sched_context pSchedContext,
 			"%s: Both Cluster off, do nothing", __func__);
 		goto success;
 	}
-
-	if ((high_throughput && perf_core_count) || (!litl_core_count)) {
-		/* Attach RX thread to PERF CPU */
-		if (pSchedContext->rx_thread_cpu !=
-			online_perf_cpu[perf_core_count - 1]) {
-			if (cds_set_cpus_allowed_ptr(
-				pSchedContext->ol_rx_thread,
-				online_perf_cpu[perf_core_count - 1])) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					QDF_TRACE_LEVEL_ERROR,
-					"%s: rx thread perf core set fail",
-					__func__);
-				goto err;
-			}
-			pSchedContext->rx_thread_cpu =
-				online_perf_cpu[perf_core_count - 1];
-		}
-	} else {
 #if defined(WLAN_OPEN_SOURCE) && \
-	 (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+	(LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
+	if ((high_throughput && perf_core_count) || (!litl_core_count)) {
+		/* Attach to any perf core
+		 * Final decision should made by scheduler */
+
+		cpumask_clear(&cpu_mask);
+		for (i = 0; i < perf_core_count; i++)
+			cpumask_set_cpu(online_perf_cpu[i], &cpu_mask);
+
+		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &cpu_mask);
+		pSchedContext->rx_thread_cpu_cluster =
+						CDS_CPU_CLUSTER_TYPE_PERF;
+	} else {
 		/* Attach to any little core
 		 * Final decision should made by scheduler */
 
-		cpumask_clear(&litl_mask);
+		cpumask_clear(&cpu_mask);
 		for (i = 0; i < litl_core_count; i++)
-			cpumask_set_cpu(online_litl_cpu[i], &litl_mask);
+			cpumask_set_cpu(online_litl_cpu[i], &cpu_mask);
 
-		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &litl_mask);
-		pSchedContext->rx_thread_cpu = 0;
-#else
-
-		/* Attach RX thread to last little core CPU */
-		if (pSchedContext->rx_thread_cpu !=
-			online_perf_cpu[litl_core_count - 1]) {
-			if (cds_set_cpus_allowed_ptr(
-				pSchedContext->ol_rx_thread,
-				online_perf_cpu[litl_core_count - 1])) {
-				QDF_TRACE(QDF_MODULE_ID_QDF,
-					QDF_TRACE_LEVEL_ERROR,
-					"%s: rx thread litl core set fail",
-					__func__);
-				goto err;
-			}
-			pSchedContext->rx_thread_cpu =
-				online_perf_cpu[litl_core_count - 1];
-		}
-#endif /* WLAN_OPEN_SOURCE */
+		set_cpus_allowed_ptr(pSchedContext->ol_rx_thread, &cpu_mask);
+		pSchedContext->rx_thread_cpu_cluster =
+						CDS_CPU_CLUSTER_TYPE_LITTLE;
 	}
-
-	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
-		  "%s: NUM PERF CORE %d, HIGH TPUTR REQ %d, RX THRE CPU %lu",
+#endif
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
+		  "%s: NUM PERF CORE %d, HIGH TPUT REQ %d, RX THRE CLUS %d",
 		 __func__, perf_core_count,
 		 (int)pSchedContext->high_throughput_required,
-		 pSchedContext->rx_thread_cpu);
+		 (int)pSchedContext->rx_thread_cpu_cluster);
 
 success:
 	qdf_mem_free(online_perf_cpu);

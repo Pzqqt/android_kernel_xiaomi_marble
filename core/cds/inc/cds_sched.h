@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -149,8 +149,8 @@ typedef struct _cds_sched_context {
 	/* affinity lock */
 	struct mutex affinity_lock;
 
-	/* rx thread affinity cpu */
-	unsigned long rx_thread_cpu;
+	/* rx thread affinity cpu cluster */
+	uint8_t rx_thread_cpu_cluster;
 
 	/* high throughput required */
 	bool high_throughput_required;
