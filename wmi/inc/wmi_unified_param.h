@@ -8427,4 +8427,56 @@ struct wmi_obss_detect_info {
 	uint8_t matched_bssid_addr[IEEE80211_ADDR_LEN];
 };
 
+/**
+ * @time_offset: time offset after 11k offload command to trigger a neighbor
+ *	report request (in seconds)
+ * @low_rssi_offset: Offset from rssi threshold to trigger a neighbor
+ *	report request (in dBm)
+ * @bmiss_count_trigger: Number of beacon miss events to trigger neighbor
+ *	report request
+ * @per_threshold_offset: offset from PER threshold to trigger neighbor
+ *	report request (in %)
+ * @neighbor_report_cache_timeout: timeout after which new trigger can enable
+ *	sending of a neighbor report request (in seconds)
+ * @max_neighbor_report_req_cap: max number of neighbor report requests that
+ *	can be sent to the peer in the current session
+ * @ssid: Current connect SSID info
+ */
+struct wmi_11k_offload_neighbor_report_params {
+	uint32_t time_offset;
+	uint32_t low_rssi_offset;
+	uint32_t bmiss_count_trigger;
+	uint32_t per_threshold_offset;
+	uint32_t neighbor_report_cache_timeout;
+	uint32_t max_neighbor_report_req_cap;
+	struct mac_ssid ssid;
+};
+
+/**
+ * struct wmi_11k_offload_params - offload 11k features to FW
+ * @vdev_id: vdev id
+ * @offload_11k_bitmask: bitmask to specify offloaded features
+ *	B0: Neighbor Report Request offload
+ *	B1-B31: Reserved
+ * @neighbor_report_params: neighbor report offload params
+ */
+struct wmi_11k_offload_params {
+	uint32_t vdev_id;
+	uint32_t offload_11k_bitmask;
+	struct wmi_11k_offload_neighbor_report_params neighbor_report_params;
+};
+
+/**
+ * struct wmi_invoke_neighbor_report_params - Invoke neighbor report request
+ *	from IW to FW
+ * @vdev_id: vdev id
+ * @send_resp_to_host: bool to send response to host or not
+ * @ssid: ssid given from the IW command
+ */
+struct wmi_invoke_neighbor_report_params {
+	uint32_t vdev_id;
+	uint32_t send_resp_to_host;
+	struct mac_ssid ssid;
+};
+
 #endif /* _WMI_UNIFIED_PARAM_H_ */
