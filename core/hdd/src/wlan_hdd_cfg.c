@@ -8661,15 +8661,8 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 
 	return status;
 }
-/**
- * hdd_to_csr_wmm_mode() - Utility function to convert HDD to CSR WMM mode
- *
- * @enum hdd_wmm_user_mode - hdd WMM user mode
- *
- * Return: CSR WMM mode
- */
-static eCsrRoamWmmUserModeType
-hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode)
+
+eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode)
 {
 	switch (mode) {
 	case HDD_WMM_USER_MODE_QBSS_ONLY:

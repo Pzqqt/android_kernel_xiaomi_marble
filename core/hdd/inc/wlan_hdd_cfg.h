@@ -15352,6 +15352,15 @@ struct reg_table_entry {
 	unsigned long notifyId; /* Dynamic modification identifier */
 };
 
+/**
+ * hdd_to_csr_wmm_mode() - Utility function to convert HDD to CSR WMM mode
+ *
+ * @enum hdd_wmm_user_mode - hdd WMM user mode
+ *
+ * Return: CSR WMM mode
+ */
+eCsrRoamWmmUserModeType hdd_to_csr_wmm_mode(enum hdd_wmm_user_mode mode);
+
 /* Function declarations and documenation */
 QDF_STATUS hdd_parse_config_ini(struct hdd_context *hdd_ctx);
 

@@ -7232,6 +7232,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1];
 	int ret_val = 0;
 	uint8_t cfg_val = 0;
+	tSmeConfigParams *sme_config;
 
 	ENTER_DEV(dev);
 
@@ -7275,6 +7276,29 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 					    cfg_val);
 		if (ret_val)
 			return ret_val;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE]);
+		sme_config = qdf_mem_malloc(sizeof(*sme_config));
+		if (!sme_config) {
+			hdd_err("mem alloc failed for sme_config");
+			return -ENOMEM;
+		}
+		qdf_mem_zero(sme_config, sizeof(*sme_config));
+		sme_get_config_param(hdd_ctx->hHal, sme_config);
+		if (!cfg_val) {
+			sme_config->csrConfig.WMMSupportMode =
+				hdd_to_csr_wmm_mode(HDD_WMM_USER_MODE_NO_QOS);
+			hdd_debug("wmm is disabled");
+		} else {
+			sme_config->csrConfig.WMMSupportMode =
+				hdd_to_csr_wmm_mode(hdd_ctx->config->WmmMode);
+			hdd_debug("using wmm default value");
+		}
+		sme_update_config(hdd_ctx->hHal, sme_config);
+		qdf_mem_free(sme_config);
 	}
 
 	return ret_val;
