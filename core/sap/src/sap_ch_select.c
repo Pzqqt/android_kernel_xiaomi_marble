@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -604,6 +604,7 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 #endif
 	uint32_t dfs_master_cap_enabled;
 	bool include_dfs_ch = true;
+	uint8_t chan_num;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH, "In %s",
 		  __func__);
@@ -693,6 +694,21 @@ static bool sap_chan_sel_init(tHalHandle halHandle,
 			pSpectCh->valid = true;
 			pSpectCh->rssiAgr = SOFTAP_MIN_RSSI;    /* Initialise for all channels */
 			pSpectCh->channelWidth = SOFTAP_HT20_CHANNELWIDTH;      /* Initialise 20MHz for all the Channels */
+			/* Initialise max ACS weight for all channels */
+			pSpectCh->weight = SAP_ACS_WEIGHT_MAX;
+			for (chan_num = 0; chan_num < sap_ctx->num_of_channel;
+			     chan_num++) {
+				if (pSpectCh->chNum !=
+				    sap_ctx->channelList[chan_num])
+					continue;
+
+				/*
+				 * Initialize ACS weight to 0 for channels
+				 * present in sap context scan channel list
+				 */
+				pSpectCh->weight = 0;
+				break;
+			}
 		}
 	}
 	return true;
@@ -1649,6 +1665,9 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		if (ch_in_pcl(sap_ctx, chn_num))
 			rssi -= PCL_RSSI_DISCOUNT;
 
+		if (pSpectCh->weight == SAP_ACS_WEIGHT_MAX)
+			goto debug_info;
+
 		pSpectCh->weight =
 			SAPDFS_NORMALISE_1000 *
 			(sapweight_rssi_count(sap_ctx, rssi,
@@ -1659,6 +1678,7 @@ static void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 			pSpectCh->weight = SAP_ACS_WEIGHT_MAX;
 		pSpectCh->weight_copy = pSpectCh->weight;
 
+debug_info:
 		/* ------ Debug Info ------ */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, Chan=%d Weight= %d rssiAgr=%d bssCount=%d",
