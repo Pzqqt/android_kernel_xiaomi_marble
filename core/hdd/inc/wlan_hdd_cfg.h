@@ -14348,8 +14348,8 @@ struct hdd_config {
 	bool enable2x2;
 	uint32_t vdev_type_nss_2g;
 	uint32_t vdev_type_nss_5g;
-	bool txchainmask1x1;
-	bool rxchainmask1x1;
+	uint8_t txchainmask1x1;
+	uint8_t rxchainmask1x1;
 	bool enableMuBformee;
 	bool enableVhtpAid;
 	bool enableVhtGid;
