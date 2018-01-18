@@ -129,6 +129,8 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 
 	pdev = peer->vdev->pdev;
 
+	dp_mark_peer_inact(peer, false);
+
 	if (soc->process_rx_status)
 		return;
 

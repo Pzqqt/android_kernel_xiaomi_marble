@@ -1172,10 +1172,6 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 			goto fail;
 
 		}
-#ifdef QCA_SUPPORT_SON
-		dp_mark_peer_inact(peer, false);
-#endif
-
 
 		/* Get MSDU DESC info */
 		hal_rx_msdu_desc_info_get(ring_desc, &msdu_desc_info);

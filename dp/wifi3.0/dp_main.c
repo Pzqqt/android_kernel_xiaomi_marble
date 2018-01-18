@@ -2196,6 +2196,13 @@ static os_timer_func(dp_txrx_peer_find_inact_timeout_handler)
 	qdf_timer_mod(&soc->pdev_bs_inact_timer,
 		      soc->pdev_bs_inact_interval * 1000);
 }
+
+#else
+
+void dp_mark_peer_inact(void *peer, bool inactive)
+{
+	return;
+}
 #endif
 
 /*
@@ -3577,12 +3584,6 @@ bool dp_peer_is_inact(void *peer)
 {
 	return false;
 }
-
-void dp_mark_peer_inact(void *peer, bool inactive)
-{
-	return;
-}
-
 #endif
 
 /*
