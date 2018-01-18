@@ -432,12 +432,6 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 			&wait_for_csa);
 	if (wait_for_csa)
 		return QDF_STATUS_SUCCESS;
-
-	dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
-			dfs->dfs_curchan->dfs_ch_ieee,
-			dfs->dfs_curchan->dfs_ch_freq,
-			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
-			dfs->dfs_curchan->dfs_ch_flags);
 	/*
 	 * EV 129487 : We have detected radar in the channel,
 	 * stop processing PHY error data as this can cause
@@ -449,6 +443,12 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		dfs_radar_disable(dfs);
 		dfs_second_segment_radar_disable(dfs);
 	}
+
+	dfs_mlme_mark_dfs(dfs->dfs_pdev_obj,
+			dfs->dfs_curchan->dfs_ch_ieee,
+			dfs->dfs_curchan->dfs_ch_freq,
+			dfs->dfs_curchan->dfs_ch_vhtop_ch_freq_seg2,
+			dfs->dfs_curchan->dfs_ch_flags);
 
 	return QDF_STATUS_SUCCESS;
 }
