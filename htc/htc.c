@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -496,7 +496,7 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 		for (i = 0; i < HTC_MAX_SERVICE_ALLOC_ENTRIES; i++) {
 			if (target->ServiceTxAllocTable[i].service_id != 0) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
-						("HTC Service Index : %d TX : 0x%2.2X : alloc:%d\n",
+						("SVS Index : %d TX : 0x%2.2X : alloc:%d",
 						 i,
 						 target->ServiceTxAllocTable[i].
 						 service_id,
@@ -595,7 +595,7 @@ QDF_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 			target->MaxMsgsPerHTCBundle = 1;
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
-				("Target Ready! : transmit resources : %d size:%d, MaxMsgsPerHTCBundle = %d\n",
+				("Target Ready! TX resource : %d size:%d, MaxMsgsPerHTCBundle = %d",
 				 target->TotalTransmitCredits,
 				 target->TargetCreditSize,
 				 target->MaxMsgsPerHTCBundle));
@@ -721,12 +721,12 @@ QDF_STATUS htc_start(HTC_HANDLE HTCHandle)
 
 		if (!htc_credit_flow) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
-					("HTC will not use TX credit flow control\n"));
+					("HTC will not use TX credit flow control"));
 			pSetupComp->SetupFlags |=
 				HTC_SETUP_COMPLETE_FLAGS_DISABLE_TX_CREDIT_FLOW;
 		} else {
 			AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
-					("HTC using TX credit flow control\n"));
+					("HTC using TX credit flow control"));
 		}
 
 		if ((hif_get_bus_type(target->hif_dev) == QDF_BUS_TYPE_SDIO) ||
