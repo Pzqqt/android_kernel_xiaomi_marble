@@ -16735,6 +16735,51 @@ send_delba_send_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * send_addba_clearresponse_cmd_tlv() - send addba clear response command
+ * to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to addba clearresp params
+ * @macaddr: peer mac address
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_addba_clearresponse_cmd_tlv(wmi_unified_t wmi_handle,
+			uint8_t macaddr[IEEE80211_ADDR_LEN],
+			struct addba_clearresponse_params *param)
+{
+	wmi_addba_clear_resp_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	QDF_STATUS ret;
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_addba_clear_resp_cmd_fixed_param *)wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_addba_clear_resp_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_addba_clear_resp_cmd_fixed_param));
+
+	cmd->vdev_id = param->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->peer_macaddr);
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+				buf, len, WMI_ADDBA_CLEAR_RESP_CMDID);
+	if (QDF_IS_STATUS_ERROR(ret)) {
+		WMI_LOGE("%s: Failed to send cmd to fw, ret=%d", __func__, ret);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_bcn_offload_control_cmd_tlv - send beacon ofload control cmd to fw
  * @wmi_handle: wmi handle
  * @bcn_ctrl_param: pointer to bcn_offload_control param
@@ -21472,6 +21517,7 @@ struct wmi_ops tlv_ops =  {
 	.send_bcn_offload_control_cmd = send_bcn_offload_control_cmd_tlv,
 	.send_addba_send_cmd = send_addba_send_cmd_tlv,
 	.send_delba_send_cmd = send_delba_send_cmd_tlv,
+	.send_addba_clearresponse_cmd = send_addba_clearresponse_cmd_tlv,
 	.get_target_cap_from_service_ready = extract_service_ready_tlv,
 	.extract_hal_reg_cap = extract_hal_reg_cap_tlv,
 	.extract_host_mem_req = extract_host_mem_req_tlv,
