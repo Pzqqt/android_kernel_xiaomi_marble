@@ -1,4 +1,4 @@
-/* Copyright (c) 2016, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016, 2018 The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -29,6 +29,14 @@ struct cdc_regulator {
 extern int msm_cdc_get_power_supplies(struct device *dev,
 				      struct cdc_regulator **cdc_vreg,
 				      int *total_num_supplies);
+extern int msm_cdc_disable_ondemand_supply(struct device *dev,
+					struct regulator_bulk_data *supplies,
+					struct cdc_regulator *cdc_vreg,
+					int num_supplies, char *supply_name);
+extern int msm_cdc_enable_ondemand_supply(struct device *dev,
+					  struct regulator_bulk_data *supplies,
+					  struct cdc_regulator *cdc_vreg,
+					  int num_supplies, char *supply_name);
 extern int msm_cdc_disable_static_supplies(struct device *dev,
 					struct regulator_bulk_data *supplies,
 					struct cdc_regulator *cdc_vreg,

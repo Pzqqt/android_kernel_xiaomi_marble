@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -125,6 +125,106 @@ static int msm_cdc_check_supply_param(struct device *dev,
 
 	return 0;
 }
+
+/*
+ * msm_cdc_disable_ondemand_supply:
+ *	Disable codec ondemand supply
+ *
+ * @dev: pointer to codec device
+ * @supplies: pointer to regulator bulk data
+ * @cdc_vreg: pointer to platform regulator data
+ * @num_supplies: number of supplies
+ * @supply_name: Ondemand supply name to be enabled
+ *
+ * Return error code if supply disable is failed
+ */
+int msm_cdc_disable_ondemand_supply(struct device *dev,
+				    struct regulator_bulk_data *supplies,
+				    struct cdc_regulator *cdc_vreg,
+				    int num_supplies,
+				    char *supply_name)
+{
+	int rc, i;
+
+	if ((!supply_name) || (!supplies)) {
+		pr_err("%s: either dev or supplies or cdc_vreg is NULL\n",
+				__func__);
+		return -EINVAL;
+	}
+	/* input parameter validation */
+	rc = msm_cdc_check_supply_param(dev, cdc_vreg, num_supplies);
+	if (rc)
+		return rc;
+
+	for (i = 0; i < num_supplies; i++) {
+		if (cdc_vreg[i].ondemand &&
+			!strcmp(cdc_vreg[i].name, supply_name)) {
+			rc = regulator_disable(supplies[i].consumer);
+			if (rc)
+				dev_err(dev, "%s: failed to disable supply %s, err:%d\n",
+					__func__, supplies[i].supply, rc);
+			break;
+		}
+	}
+	if (i == num_supplies) {
+		dev_err(dev, "%s: not able to find supply %s\n",
+			__func__, supply_name);
+		rc = -EINVAL;
+	}
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_cdc_disable_ondemand_supply);
+
+/*
+ * msm_cdc_enable_ondemand_supply:
+ *	Enable codec ondemand supply
+ *
+ * @dev: pointer to codec device
+ * @supplies: pointer to regulator bulk data
+ * @cdc_vreg: pointer to platform regulator data
+ * @num_supplies: number of supplies
+ * @supply_name: Ondemand supply name to be enabled
+ *
+ * Return error code if supply enable is failed
+ */
+int msm_cdc_enable_ondemand_supply(struct device *dev,
+				   struct regulator_bulk_data *supplies,
+				   struct cdc_regulator *cdc_vreg,
+				   int num_supplies,
+				   char *supply_name)
+{
+	int rc, i;
+
+	if ((!supply_name) || (!supplies)) {
+		pr_err("%s: either dev or supplies or cdc_vreg is NULL\n",
+				__func__);
+		return -EINVAL;
+	}
+	/* input parameter validation */
+	rc = msm_cdc_check_supply_param(dev, cdc_vreg, num_supplies);
+	if (rc)
+		return rc;
+
+	for (i = 0; i < num_supplies; i++) {
+		if (cdc_vreg[i].ondemand &&
+			!strcmp(cdc_vreg[i].name, supply_name)) {
+			rc = regulator_enable(supplies[i].consumer);
+			if (rc)
+				dev_err(dev, "%s: failed to enable supply %s, rc: %d\n",
+					__func__, supplies[i].supply, rc);
+			break;
+		}
+	}
+	if (i == num_supplies) {
+		dev_err(dev, "%s: not able to find supply %s\n",
+			__func__, supply_name);
+		rc = -EINVAL;
+	}
+
+	return rc;
+}
+EXPORT_SYMBOL(msm_cdc_enable_ondemand_supply);
 
 /*
  * msm_cdc_disable_static_supplies:
