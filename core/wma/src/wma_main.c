@@ -5943,8 +5943,9 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 		return;
 	}
 
-	if (param_buf->soc_hw_mode_caps->num_hw_modes >
-			MAX_NUM_HW_MODE) {
+	if ((param_buf->soc_hw_mode_caps->num_hw_modes > MAX_NUM_HW_MODE) ||
+	    (param_buf->soc_hw_mode_caps->num_hw_modes >
+	    param_buf->num_hw_mode_caps)) {
 		WMA_LOGE("Invalid num_hw_modes %u received from firmware",
 			 param_buf->soc_hw_mode_caps->num_hw_modes);
 		return;
@@ -6025,10 +6026,12 @@ static void wma_populate_soc_caps(t_wma_handle *wma_handle,
 	 * next thing is to populate reg caps per phy
 	 */
 
-	if (param_buf->soc_hal_reg_caps->num_phy >
-			MAX_NUM_PHY) {
+	if ((param_buf->soc_hal_reg_caps->num_phy > MAX_NUM_PHY) ||
+	    (param_buf->soc_hal_reg_caps->num_phy >
+	    param_buf->num_hal_reg_caps)) {
 		WMA_LOGE("Invalid num_phy %u received from firmware",
 			 param_buf->soc_hal_reg_caps->num_phy);
+		wma_cleanup_dbs_phy_caps(wma_handle);
 		return;
 	}
 
