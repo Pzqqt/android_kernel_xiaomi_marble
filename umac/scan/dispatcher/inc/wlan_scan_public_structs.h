@@ -729,6 +729,18 @@ struct chan_list {
 };
 
 /**
+ * enum scan_type: scan type
+ * @SCAN_NON_P2P_DEFAULT: Def scan
+ * @SCAN_P2P_SEARCH: P2P Search
+ * @SCAN_P2P_LISTEN: P2P listed
+ */
+enum p2p_scan_type {
+	SCAN_NON_P2P_DEFAULT = 0,
+	SCAN_P2P_SEARCH = 1,
+	SCAN_P2P_LISTEN = 2,
+};
+
+/**
  * struct scan_req_params - start scan request parameter
  * @scan_id: scan id
  * @scan_req_id: scan requester id
@@ -807,6 +819,7 @@ struct scan_req_params {
 	uint32_t vdev_id;
 	uint32_t pdev_id;
 	enum scan_priority scan_priority;
+	enum p2p_scan_type p2p_scan_type;
 	union {
 		struct {
 			uint32_t scan_ev_started:1,
@@ -1267,6 +1280,7 @@ struct pno_user_cfg {
  * @ie_whitelist: probe req IE whitelist attrs
  * @is_bssid_hint_priority: True if bssid_hint is priority
  * @enable_mac_spoofing: enable mac address spoof in scan
+ * @sta_miracast_mcc_rest_time: sta miracast mcc rest time
  * @score_config: scoring logic configuration
  */
 struct scan_user_cfg {
@@ -1290,6 +1304,7 @@ struct scan_user_cfg {
 	uint32_t usr_cfg_num_probes;
 	bool is_bssid_hint_priority;
 	bool enable_mac_spoofing;
+	uint32_t sta_miracast_mcc_rest_time;
 	struct scoring_config score_config;
 };
 

@@ -1194,43 +1194,8 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	   !qdf_mem_cmp(&request->ssids[0], "DIRECT-", 7))
 		is_p2p_scan = true;
 
-	if (is_p2p_scan && request->no_cck) {
-		req->scan_req.adaptive_dwell_time_mode =
-			SCAN_DWELL_MODE_STATIC;
-		req->scan_req.dwell_time_active +=
-			P2P_SEARCH_DWELL_TIME_INC;
-		req->scan_req.repeat_probe_time =
-			req->scan_req.dwell_time_active / 5;
-		req->scan_req.burst_duration =
-			BURST_SCAN_MAX_NUM_OFFCHANNELS *
-			req->scan_req.dwell_time_active;
-		if (req->scan_req.burst_duration >
-		    P2P_SCAN_MAX_BURST_DURATION) {
-			uint8_t channels =
-				P2P_SCAN_MAX_BURST_DURATION /
-				req->scan_req.dwell_time_active;
-			if (channels)
-				req->scan_req.burst_duration =
-					channels *
-					req->scan_req.dwell_time_active;
-			else
-				req->scan_req.burst_duration =
-					P2P_SCAN_MAX_BURST_DURATION;
-		}
-		req->scan_req.scan_ev_bss_chan = false;
-	} else {
-		req->scan_req.scan_f_cck_rates = true;
-		if (!req->scan_req.num_ssids)
-			req->scan_req.scan_f_bcast_probe = true;
-		req->scan_req.scan_f_add_tpc_ie_in_probe = true;
-	}
-	req->scan_req.scan_f_add_ds_ie_in_probe = true;
-	req->scan_req.scan_f_filter_prb_req = true;
-
-	req->scan_req.n_probes = (req->scan_req.repeat_probe_time > 0) ?
-		(req->scan_req.dwell_time_active /
-		req->scan_req.repeat_probe_time) : 0;
-
+	if (is_p2p_scan && request->no_cck)
+		req->scan_req.p2p_scan_type = SCAN_P2P_SEARCH;
 	/*
 	 * FW require at least 1 MAC to send probe request.
 	 * If MAC is all 0 set it to BC addr as this is the address on

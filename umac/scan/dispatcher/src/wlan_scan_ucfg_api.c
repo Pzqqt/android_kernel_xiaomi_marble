@@ -37,6 +37,7 @@
 #include <wlan_pmo_obj_mgmt_api.h>
 #endif
 #ifdef WLAN_POLICY_MGR_ENABLE
+#include <wlan_dfs_utils_api.h>
 #include <wlan_policy_mgr_api.h>
 #endif
 
@@ -468,12 +469,358 @@ end:
 	scm_debug("scan_ctrl_flags_ext: 0x%x",
 			req->scan_req.scan_ctrl_flags_ext);
 }
-#else
+
+/**
+ * ucfg_update_passive_dwell_time() - update dwell passive time
+ * @vdev: vdev object
+ * @req: scan request
+ *
+ * Return: None
+ */
 static void
-ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
+ucfg_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
+					    struct scan_start_request *req)
+{
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+	if (!psoc)
+		return;
+
+	if (policy_mgr_is_sta_connected_2g(psoc) &&
+	    !policy_mgr_is_hw_dbs_capable(psoc) &&
+	    ucfg_scan_get_bt_activity(psoc))
+		req->scan_req.dwell_time_passive =
+				PASSIVE_DWELL_TIME_BT_A2DP_ENABLED;
+}
+
+static const struct probe_time_dwell_time
+	scan_probe_time_dwell_time_map[SCAN_DWELL_TIME_PROBE_TIME_MAP_SIZE] = {
+	{28, 11},               /* 0 SSID */
+	{28, 20},               /* 1 SSID */
+	{28, 20},               /* 2 SSID */
+	{28, 20},               /* 3 SSID */
+	{28, 20},               /* 4 SSID */
+	{28, 20},               /* 5 SSID */
+	{28, 20},               /* 6 SSID */
+	{28, 11},               /* 7 SSID */
+	{28, 11},               /* 8 SSID */
+	{28, 11},               /* 9 SSID */
+	{28, 8}                 /* 10 SSID */
+};
+
+/**
+ * ucfg_scan_get_burst_duration() - get burst duration depending on max chan
+ * and miracast.
+ * @max_ch_time: max channel time
+ * @miracast_enabled: if miracast is enabled
+ *
+ * Return: burst_duration
+ */
+static inline
+int ucfg_scan_get_burst_duration(int max_ch_time,
+					     bool miracast_enabled)
+{
+	int burst_duration = 0;
+
+	if (miracast_enabled) {
+		/*
+		 * When miracast is running, burst
+		 * duration needs to be minimum to avoid
+		 * any stutter or glitch in miracast
+		 * during station scan
+		 */
+		if (max_ch_time <= SCAN_GO_MIN_ACTIVE_SCAN_BURST_DURATION)
+			burst_duration = max_ch_time;
+		else
+			burst_duration = SCAN_GO_MIN_ACTIVE_SCAN_BURST_DURATION;
+	} else {
+		/*
+		 * If miracast is not running, accommodate max
+		 * stations to make the scans faster
+		 */
+		burst_duration = SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
+						max_ch_time;
+		if (burst_duration > SCAN_GO_MAX_ACTIVE_SCAN_BURST_DURATION) {
+			uint8_t channels = SCAN_P2P_SCAN_MAX_BURST_DURATION /
+								 max_ch_time;
+
+			if (channels)
+				burst_duration = channels * max_ch_time;
+			else
+				burst_duration =
+					 SCAN_GO_MAX_ACTIVE_SCAN_BURST_DURATION;
+		}
+	}
+	return burst_duration;
+}
+
+/**
+ * ucfg_scan_req_update_params() - update scan req params depending on
+ * concurrent mode present.
+ * @vdev: vdev object pointer
+ * @req: scan request
+ * @scan_obj: scan object
+ *
+ * Return: void
+ */
+static void ucfg_scan_req_update_concurrency_params(
+	struct wlan_objmgr_vdev *vdev, struct scan_start_request *req,
+	struct wlan_scan_obj *scan_obj)
+{
+	bool ap_present, go_present, sta_active, p2p_cli_present, ndi_present;
+	struct wlan_objmgr_psoc *psoc;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	if (!psoc)
+		return;
+
+	ap_present = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_SAP_MODE, NULL);
+	go_present = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_P2P_GO_MODE, NULL);
+	p2p_cli_present = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_P2P_CLIENT_MODE, NULL);
+	sta_active = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_STA_MODE, NULL);
+	ndi_present = policy_mgr_mode_specific_connection_count(
+				psoc, QDF_NDI_MODE, NULL);
+
+	if (policy_mgr_get_connection_count(psoc)) {
+		if (req->scan_req.scan_f_passive)
+			req->scan_req.dwell_time_passive =
+				scan_obj->scan_def.conc_passive_dwell;
+		else
+			req->scan_req.dwell_time_active =
+				scan_obj->scan_def.conc_active_dwell;
+		req->scan_req.max_rest_time =
+				scan_obj->scan_def.conc_max_rest_time;
+		req->scan_req.min_rest_time =
+			scan_obj->scan_def.conc_min_rest_time;
+		req->scan_req.idle_time = scan_obj->scan_def.conc_idle_time;
+	}
+
+	/*
+	 * If AP is active set min rest time same as max rest time, so that
+	 * firmware spends more time on home channel which will increase the
+	 * probability of sending beacon at TBTT
+	 */
+	if (ap_present || go_present)
+		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
+
+	if (req->scan_req.p2p_scan_type == SCAN_NON_P2P_DEFAULT) {
+		/*
+		 * Decide burst_duration and dwell_time_active based on
+		 * what type of devices are active.
+		 */
+		do {
+			if (ap_present && go_present && sta_active) {
+				if (req->scan_req.dwell_time_active <=
+					SCAN_3PORT_CONC_SCAN_MAX_BURST_DURATION)
+					req->scan_req.burst_duration =
+						req->scan_req.dwell_time_active;
+				else
+					req->scan_req.burst_duration =
+					SCAN_3PORT_CONC_SCAN_MAX_BURST_DURATION;
+
+				break;
+			}
+
+			if (scan_obj->miracast_enabled &&
+			    policy_mgr_is_mcc_in_24G(psoc))
+				req->scan_req.max_rest_time =
+				  scan_obj->scan_def.sta_miracast_mcc_rest_time;
+
+			if (go_present) {
+				/*
+				 * Background scan while GO is sending beacons.
+				 * Every off-channel transition has overhead of
+				 * 2 beacon intervals for NOA. Maximize number
+				 * of channels in every transition by using
+				 * burst scan.
+				 */
+				req->scan_req.burst_duration =
+					ucfg_scan_get_burst_duration(
+						req->scan_req.dwell_time_active,
+						scan_obj->miracast_enabled);
+				break;
+			}
+			if ((sta_active || p2p_cli_present) &&
+			    !req->scan_req.burst_duration) {
+				/* Typical background scan.
+				 * Disable burst scan for now.
+				 */
+				req->scan_req.burst_duration = 0;
+				break;
+			}
+
+			if (ndi_present) {
+				req->scan_req.burst_duration =
+					ucfg_scan_get_burst_duration(
+						req->scan_req.dwell_time_active,
+						scan_obj->miracast_enabled);
+				break;
+			}
+		} while (0);
+
+		if (ap_present) {
+			uint8_t ssid_num;
+			ssid_num = req->scan_req.num_ssids *
+					req->scan_req.num_bssid;
+			req->scan_req.repeat_probe_time =
+				scan_probe_time_dwell_time_map[
+					QDF_MIN(ssid_num,
+					SCAN_DWELL_TIME_PROBE_TIME_MAP_SIZE
+					- 1)].probe_time;
+			req->scan_req.n_probes =
+				(req->scan_req.repeat_probe_time > 0) ?
+				req->scan_req.dwell_time_active /
+				req->scan_req.repeat_probe_time : 0;
+		}
+	}
+
+	if (ap_present) {
+		uint8_t ap_chan;
+		struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
+
+		ap_chan = policy_mgr_get_channel(psoc, QDF_SAP_MODE, NULL);
+		/*
+		 * P2P/STA scan while SoftAP is sending beacons.
+		 * Max duration of CTS2self is 32 ms, which limits the
+		 * dwell time. If DBS is supported and if SAP is on 2G channel
+		 * then keep passive dwell time default.
+		 */
+		req->scan_req.dwell_time_active =
+				QDF_MIN(req->scan_req.dwell_time_active,
+					(SCAN_CTS_DURATION_MS_MAX -
+					SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME));
+		if (!policy_mgr_is_hw_dbs_capable(psoc) ||
+		    (policy_mgr_is_hw_dbs_capable(psoc) &&
+		     WLAN_CHAN_IS_5GHZ(ap_chan))) {
+			req->scan_req.dwell_time_passive =
+				req->scan_req.dwell_time_active;
+		}
+		req->scan_req.burst_duration = 0;
+		if (utils_is_dfs_ch(pdev, ap_chan))
+			req->scan_req.burst_duration =
+				SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS *
+				req->scan_req.dwell_time_active;
+	}
+}
+
+#else
+static inline void ucfg_scan_req_update_concurrency_params(
+	struct wlan_objmgr_vdev *vdev, struct scan_start_request *req,
+	struct wlan_scan_obj *scan_obj)
 {
 }
+static inline void
+ucfg_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
+					    struct scan_start_request *req) {}
+static inline void
+ucfg_scan_update_dbs_scan_ctrl_ext_flag(
+	struct scan_start_request *req) {}
 #endif
+
+/**
+ * ucfg_scan_req_update_params() - update scan req params depending on modes
+ * and scan type.
+ * @vdev: vdev object pointer
+ * @req: scan request
+ * @scan_obj: scan object
+ *
+ * Return: void
+ */
+static void
+ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
+	struct scan_start_request *req, struct wlan_scan_obj *scan_obj)
+{
+
+	/* Ensure correct number of probes are sent on active channel */
+	if (!req->scan_req.repeat_probe_time)
+		req->scan_req.repeat_probe_time =
+			req->scan_req.dwell_time_active / SCAN_NPROBES_DEFAULT;
+
+	if (req->scan_req.scan_f_passive)
+		req->scan_req.scan_ctrl_flags_ext |=
+			SCAN_FLAG_EXT_FILTER_PUBLIC_ACTION_FRAME;
+
+	if (!req->scan_req.n_probes)
+		req->scan_req.n_probes = (req->scan_req.repeat_probe_time > 0) ?
+					  req->scan_req.dwell_time_active /
+					  req->scan_req.repeat_probe_time : 0;
+
+	if (req->scan_req.p2p_scan_type == SCAN_NON_P2P_DEFAULT) {
+		req->scan_req.scan_f_cck_rates = true;
+		if (!req->scan_req.num_ssids)
+			req->scan_req.scan_f_bcast_probe = true;
+		req->scan_req.scan_f_add_ds_ie_in_probe = true;
+		req->scan_req.scan_f_filter_prb_req = true;
+		req->scan_req.scan_f_add_tpc_ie_in_probe = true;
+	} else {
+		req->scan_req.adaptive_dwell_time_mode = SCAN_DWELL_MODE_STATIC;
+		if (req->scan_req.p2p_scan_type == SCAN_P2P_LISTEN) {
+			req->scan_req.repeat_probe_time = 0;
+		} else {
+			req->scan_req.scan_f_filter_prb_req = true;
+
+			req->scan_req.dwell_time_active +=
+					P2P_SEARCH_DWELL_TIME_INC;
+			/*
+			 * 3 channels with default max dwell time 40 ms.
+			 * Cap limit will be set by
+			 * P2P_SCAN_MAX_BURST_DURATION. Burst duration
+			 * should be such that no channel is scanned less
+			 * than the dwell time in normal scenarios.
+			 */
+			if (req->scan_req.chan_list.num_chan ==
+			    WLAN_P2P_SOCIAL_CHANNELS &&
+			    !scan_obj->miracast_enabled)
+				req->scan_req.repeat_probe_time =
+					req->scan_req.dwell_time_active / 5;
+			else
+				req->scan_req.repeat_probe_time =
+					req->scan_req.dwell_time_active / 3;
+
+			req->scan_req.burst_duration =
+					BURST_SCAN_MAX_NUM_OFFCHANNELS *
+					req->scan_req.dwell_time_active;
+			if (req->scan_req.burst_duration >
+			    P2P_SCAN_MAX_BURST_DURATION) {
+				uint8_t channels =
+					P2P_SCAN_MAX_BURST_DURATION /
+					req->scan_req.dwell_time_active;
+				if (channels)
+					req->scan_req.burst_duration =
+						channels *
+						req->scan_req.dwell_time_active;
+				else
+					req->scan_req.burst_duration =
+						P2P_SCAN_MAX_BURST_DURATION;
+			}
+			req->scan_req.scan_ev_bss_chan = false;
+		}
+	}
+
+	if (!req->scan_req.scan_f_passive)
+		ucfg_update_passive_dwell_time(vdev, req);
+	ucfg_scan_update_dbs_scan_ctrl_ext_flag(req);
+
+	/*
+	 * No need to update conncurrency parmas if req is passive scan on
+	 * single channel ie ROC, Preauth etc
+	 */
+	if (!(req->scan_req.scan_f_passive &&
+	      req->scan_req.chan_list.num_chan == 1))
+		ucfg_scan_req_update_concurrency_params(vdev, req, scan_obj);
+
+	scm_debug("dwell time: active %d ;passive %d, repeat_probe_time %d n_probes %d flags_ext %x",
+		  req->scan_req.dwell_time_active,
+		  req->scan_req.dwell_time_passive,
+		  req->scan_req.repeat_probe_time, req->scan_req.n_probes,
+		  req->scan_req.scan_ctrl_flags_ext);
+}
 
 QDF_STATUS
 ucfg_scan_start(struct scan_start_request *req)
@@ -515,6 +862,8 @@ ucfg_scan_start(struct scan_start_request *req)
 		req->scan_req.scan_req_id, req->scan_req.scan_id,
 		req->scan_req.vdev_id);
 
+	ucfg_scan_req_update_params(req->vdev, req, scan_obj);
+
 	/* Overwrite scan parameters as required */
 	if (!ucfg_scan_get_wide_band_scan(pdev)) {
 		req->scan_req.scan_f_wide_band = false;
@@ -524,22 +873,6 @@ ucfg_scan_start(struct scan_start_request *req)
 			ucfg_scan_init_chanlist_params(req, 0, NULL, NULL);
 	}
 	scm_debug("scan_f_wide_band: %d", req->scan_req.scan_f_wide_band);
-
-	if (scan_obj->scan_def.usr_cfg_probe_rpt_time) {
-		req->scan_req.repeat_probe_time =
-			scan_obj->scan_def.usr_cfg_probe_rpt_time;
-		scm_debug("usr_cfg_probe_rpt_time %d",
-				req->scan_req.repeat_probe_time);
-	}
-
-	if (scan_obj->scan_def.usr_cfg_num_probes) {
-		req->scan_req.n_probes = scan_obj->scan_def.usr_cfg_num_probes;
-		scm_debug("usr_cfg_num_probes %d", req->scan_req.n_probes);
-	}
-	ucfg_scan_update_dbs_scan_ctrl_ext_flag(req);
-	if (req->scan_req.scan_f_passive)
-		req->scan_req.scan_ctrl_flags_ext |=
-			SCAN_FLAG_EXT_FILTER_PUBLIC_ACTION_FRAME;
 
 	/* Try to get vdev reference. Return if reference could
 	 * not be taken. Reference will be released once scan
@@ -598,6 +931,22 @@ bool ucfg_scan_get_enable(struct wlan_objmgr_psoc *psoc)
 		return false;
 	}
 	return scan_obj->enable_scan;
+}
+
+QDF_STATUS ucfg_scan_set_miracast(
+	struct wlan_objmgr_psoc *psoc, bool enable)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	scan_obj->miracast_enabled = enable;
+	scm_debug("set miracast_enable to %d", scan_obj->miracast_enabled);
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS
@@ -935,6 +1284,8 @@ wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 	scan_obj->scan_def.active_dwell = SCAN_ACTIVE_DWELL_TIME;
 	scan_obj->scan_def.passive_dwell = SCAN_PASSIVE_DWELL_TIME;
 	scan_obj->scan_def.max_rest_time = SCAN_MAX_REST_TIME;
+	scan_obj->scan_def.sta_miracast_mcc_rest_time =
+					SCAN_STA_MIRACAST_MCC_REST_TIME;
 	scan_obj->scan_def.min_rest_time = SCAN_MIN_REST_TIME;
 	scan_obj->scan_def.conc_active_dwell = SCAN_CONC_ACTIVE_DWELL_TIME;
 	scan_obj->scan_def.conc_passive_dwell = SCAN_CONC_PASSIVE_DWELL_TIME;
@@ -1044,70 +1395,6 @@ ucfg_scan_unregister_event_handler(struct wlan_objmgr_pdev *pdev,
 		(found ? "removed" : "not found"), handler_cnt);
 }
 
-#ifdef WLAN_POLICY_MGR_ENABLE
-/**
- * ucfg_scan_req_update_params() - update scan req params depending
- * on active modes
- * @vdev: vdev object pointer
- * @req: scan request
- *
- * Return: void
- */
-static void ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
-	struct scan_start_request *req)
-{
-	bool ap_or_go_present;
-	struct wlan_objmgr_psoc *psoc;
-
-	psoc = wlan_vdev_get_psoc(vdev);
-
-	if (!psoc)
-		return;
-
-	ap_or_go_present = policy_mgr_mode_specific_connection_count(
-				psoc, QDF_SAP_MODE, NULL) ||
-				policy_mgr_mode_specific_connection_count(
-				psoc, QDF_P2P_GO_MODE, NULL);
-
-	/*
-	 * If AP is active set min rest time same as max rest time, so that
-	 * firmware spends more time on home channel which will increase the
-	 * probability of sending beacon at TBTT
-	 */
-	if (ap_or_go_present)
-		req->scan_req.min_rest_time = req->scan_req.max_rest_time;
-}
-
-/**
- * ucfg_update_passive_dwell_time() - update dwell passive time
- * @vdev: vdev object
- * @dwell_time: pointer to passive dwell time
- *
- * Return: None
- */
-static void ucfg_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
-					   uint32_t *dwell_time)
-{
-	struct wlan_objmgr_psoc *psoc;
-
-	psoc = wlan_vdev_get_psoc(vdev);
-
-	if (!psoc)
-		return;
-
-	if (policy_mgr_is_sta_connected_2g(psoc) &&
-	    !policy_mgr_is_hw_dbs_capable(psoc) &&
-	    ucfg_scan_get_bt_activity(psoc))
-		*dwell_time = PASSIVE_DWELL_TIME_BT_A2DP_ENABLED;
-}
-#else
-static inline void ucfg_scan_req_update_params(struct wlan_objmgr_vdev *vdev,
-	struct scan_start_request *req){}
-static inline void ucfg_update_passive_dwell_time(struct wlan_objmgr_vdev *vdev,
-						  uint32_t *dwell_time){}
-#endif
-
-
 QDF_STATUS
 ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	struct scan_start_request *req)
@@ -1129,6 +1416,7 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 
 	req->vdev = vdev;
 	req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
+	req->scan_req.p2p_scan_type = SCAN_NON_P2P_DEFAULT;
 	req->scan_req.scan_priority = def->scan_priority;
 	req->scan_req.dwell_time_active = def->active_dwell;
 	req->scan_req.dwell_time_passive = def->passive_dwell;
@@ -1146,8 +1434,6 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 	req->scan_req.scan_flags = def->scan_flags;
 	req->scan_req.scan_events = def->scan_events;
 	req->scan_req.scan_random.randomize = def->enable_mac_spoofing;
-	ucfg_scan_req_update_params(vdev, req);
-	ucfg_update_passive_dwell_time(vdev, &req->scan_req.dwell_time_passive);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -1504,10 +1790,12 @@ QDF_STATUS ucfg_scan_update_user_config(struct wlan_objmgr_psoc *psoc,
 	scan_def->adaptive_dwell_time_mode = scan_cfg->scan_dwell_time_mode;
 	scan_def->scan_f_chan_stat_evnt = scan_cfg->is_snr_monitoring_enabled;
 	scan_obj->ie_whitelist = scan_cfg->ie_whitelist;
-	scan_def->usr_cfg_probe_rpt_time = scan_cfg->usr_cfg_probe_rpt_time;
-	scan_def->usr_cfg_num_probes = scan_cfg->usr_cfg_num_probes;
+	scan_def->repeat_probe_time = scan_cfg->usr_cfg_probe_rpt_time;
+	scan_def->num_probes = scan_cfg->usr_cfg_num_probes;
 	scan_def->is_bssid_hint_priority = scan_cfg->is_bssid_hint_priority;
 	scan_def->enable_mac_spoofing = scan_cfg->enable_mac_spoofing;
+	scan_def->sta_miracast_mcc_rest_time =
+				scan_cfg->sta_miracast_mcc_rest_time;
 
 	ucfg_scan_assign_rssi_category(scan_def,
 			scan_cfg->scan_bucket_threshold,

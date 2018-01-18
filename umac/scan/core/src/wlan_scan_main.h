@@ -57,6 +57,29 @@
 #define WLAN_MAX_REQUESTORS     200
 #define WLAN_SCAN_ID_MASK 0x00000FFF
 #define WLAN_HOST_SCAN_REQ_ID_PREFIX 0x0000A000
+#define SCAN_NPROBES_DEFAULT 2
+#define WLAN_P2P_SOCIAL_CHANNELS 3
+
+#define SCAN_BURST_SCAN_MAX_NUM_OFFCHANNELS  (3)
+#define SCAN_SCAN_IDLE_TIME_DEFAULT          (25)
+#define SCAN_3PORT_CONC_SCAN_MAX_BURST_DURATION  (25)
+#define SCAN_CTS_DURATION_MS_MAX             (32)
+#define SCAN_ROAM_SCAN_CHANNEL_SWITCH_TIME    (4)
+#define SCAN_DWELL_TIME_PROBE_TIME_MAP_SIZE      (11)
+#define SCAN_GO_MIN_ACTIVE_SCAN_BURST_DURATION   (40)
+#define SCAN_GO_MAX_ACTIVE_SCAN_BURST_DURATION   (120)
+#define SCAN_P2P_SCAN_MAX_BURST_DURATION     (180)
+
+/**
+ * struct probe_time_dwell_time - probe time, dwell time map
+ * @dwell_time: dwell time
+ * @probe_time: repeat probe time
+ */
+struct probe_time_dwell_time {
+	uint8_t dwell_time;
+	uint8_t probe_time;
+};
+
 /*
  * For the requestor id:
  *     bit  0~12 is used for real requestor id.
@@ -68,6 +91,7 @@
 #define WLAN_SCAN_REQUESTER_ID_MASK 0x00001FFF
 
 #define SCM_NUM_RSSI_CAT        15
+#define SCAN_STA_MIRACAST_MCC_REST_TIME 400
 
 #ifdef CONFIG_MCL
 #define MAX_SCAN_CACHE_SIZE 300
@@ -229,6 +253,7 @@ struct pno_def_config {
  * @active_dwell: default active dwell time
  * @passive_dwell:default passive dwell time
  * @max_rest_time: default max rest time
+ * @sta_miracast_mcc_rest_time: max rest time for miracast and mcc
  * @min_rest_time: default min rest time
  * @idle_time: default idle time
  * @conc_active_dwell: default concurrent active dwell time
@@ -303,6 +328,7 @@ struct scan_default_params {
 	uint32_t active_dwell;
 	uint32_t passive_dwell;
 	uint32_t max_rest_time;
+	uint32_t sta_miracast_mcc_rest_time;
 	uint32_t min_rest_time;
 	uint32_t idle_time;
 	uint32_t conc_active_dwell;
@@ -408,6 +434,7 @@ struct scan_cb {
  * @pno_cfg: default pno configuration
  * @ie_whitelist: default ie whitelist attrs
  * @bt_a2dp_enabled: if bt a2dp is enabled
+ * @miracast_enabled: miracast enabled
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
  */
@@ -425,6 +452,7 @@ struct wlan_scan_obj {
 	struct pno_def_config pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
 	bool bt_a2dp_enabled;
+	bool miracast_enabled;
 	struct scan_start_request scan_start_request_buff;
 };
 
