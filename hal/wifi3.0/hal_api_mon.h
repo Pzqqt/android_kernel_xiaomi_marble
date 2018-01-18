@@ -118,6 +118,24 @@
 #define HAL_TID_INVALID 31
 #define HAL_AST_IDX_INVALID 0xFFFF
 
+#ifdef GET_MSDU_AGGREGATION
+#define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)\
+{\
+	struct rx_msdu_end *rx_msdu_end;\
+	bool first_msdu, last_msdu; \
+	rx_msdu_end = &rx_desc->msdu_end_tlv.rx_msdu_end;\
+	first_msdu = HAL_RX_GET(rx_msdu_end, RX_MSDU_END_5, FIRST_MSDU);\
+	last_msdu = HAL_RX_GET(rx_msdu_end, RX_MSDU_END_5, LAST_MSDU);\
+	if (first_msdu && last_msdu)\
+		rs->rs_flags &= (~IEEE80211_AMSDU_FLAG);\
+	else\
+		rs->rs_flags |= (IEEE80211_AMSDU_FLAG); \
+} \
+
+#else
+#define HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs)
+#endif
+
 enum {
 	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
 	HAL_HW_RX_DECAP_FORMAT_NWIFI,
@@ -391,6 +409,7 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 	};
 
 	rx_msdu_start = &rx_desc->msdu_start_tlv.rx_msdu_start;
+	HAL_RX_GET_MSDU_AGGREGATION(rx_desc, rs);
 
 	rs->ant_signal_db = HAL_RX_GET(rx_msdu_start,
 					RX_MSDU_START_5, USER_RSSI);
@@ -572,6 +591,12 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->com_info.mpdu_cnt_fcs_err =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_2,
 					MPDU_CNT_FCS_ERR);
+		if ((ppdu_info->com_info.mpdu_cnt_fcs_ok |
+			ppdu_info->com_info.mpdu_cnt_fcs_err) > 1)
+			ppdu_info->rx_status.rs_flags |= IEEE80211_AMPDU_FLAG;
+		else
+			ppdu_info->rx_status.rs_flags &=
+				(~IEEE80211_AMPDU_FLAG);
 		break;
 	}
 
