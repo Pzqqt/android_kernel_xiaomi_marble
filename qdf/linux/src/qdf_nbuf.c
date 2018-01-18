@@ -35,12 +35,15 @@
 #include <linux/version.h>
 #include <linux/skbuff.h>
 #include <linux/module.h>
+#include <linux/proc_fs.h>
+#include <qdf_atomic.h>
 #include <qdf_types.h>
 #include <qdf_nbuf.h>
 #include <qdf_mem.h>
 #include <qdf_status.h>
 #include <qdf_lock.h>
 #include <qdf_trace.h>
+#include <qdf_debugfs.h>
 #include <net/ieee80211_radiotap.h>
 #include <qdf_module.h>
 #include <qdf_atomic.h>
@@ -94,6 +97,10 @@ static struct qdf_track_timer alloc_track_timer;
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[QDF_NBUF_TX_PKT_STATE_MAX];
 static uint32_t nbuf_tx_data[QDF_NBUF_TX_PKT_STATE_MAX];
+#ifdef QDF_NBUF_GLOBAL_COUNT
+#define NBUF_DEBUGFS_NAME      "nbuf_counters"
+static qdf_atomic_t nbuf_count;
+#endif
 
 /**
  * qdf_nbuf_tx_desc_count_display() - Displays the packet counter
@@ -294,6 +301,47 @@ static inline void __qdf_nbuf_stop_replenish_timer(void) {}
 qdf_nbuf_trace_update_t qdf_trace_update_cb;
 qdf_nbuf_free_t nbuf_free_cb;
 
+#ifdef QDF_NBUF_GLOBAL_COUNT
+
+/**
+ * __qdf_nbuf_count_get() - get nbuf global count
+ *
+ * Return: nbuf global count
+ */
+int __qdf_nbuf_count_get(void)
+{
+	return qdf_atomic_read(&nbuf_count);
+}
+EXPORT_SYMBOL(__qdf_nbuf_count_get);
+
+/**
+ * __qdf_nbuf_count_inc() - increment nbuf global count
+ *
+ * @buf: sk buff
+ *
+ * Return: void
+ */
+void __qdf_nbuf_count_inc(qdf_nbuf_t nbuf)
+{
+	qdf_atomic_inc(&nbuf_count);
+}
+EXPORT_SYMBOL(__qdf_nbuf_count_inc);
+
+/**
+ * __qdf_nbuf_count_dec() - decrement nbuf global count
+ *
+ * @buf: sk buff
+ *
+ * Return: void
+ */
+void __qdf_nbuf_count_dec(__qdf_nbuf_t nbuf)
+{
+	qdf_atomic_dec(&nbuf_count);
+}
+EXPORT_SYMBOL(__qdf_nbuf_count_dec);
+#endif
+
+
 /**
  * __qdf_nbuf_alloc() - Allocate nbuf
  * @hdl: Device handle
@@ -374,6 +422,7 @@ skb_alloc:
 	 * pointer
 	 */
 	skb_reserve(skb, reserve);
+	qdf_nbuf_count_inc(skb);
 
 	return skb;
 }
@@ -433,6 +482,7 @@ skb_alloc:
 	 * pointer
 	 */
 	skb_reserve(skb, reserve);
+	qdf_nbuf_count_inc(skb);
 
 	return skb;
 }
@@ -452,6 +502,7 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 	if (pld_nbuf_pre_alloc_free(skb))
 		return;
 
+	qdf_nbuf_count_dec(skb);
 	if (nbuf_free_cb)
 		nbuf_free_cb(skb);
 	else
@@ -463,6 +514,7 @@ void __qdf_nbuf_free(struct sk_buff *skb)
 	if (pld_nbuf_pre_alloc_free(skb))
 		return;
 
+	qdf_nbuf_count_dec(skb);
 	dev_kfree_skb_any(skb);
 }
 #endif
@@ -3682,3 +3734,41 @@ void qdf_nbuf_init_fast(qdf_nbuf_t nbuf)
 EXPORT_SYMBOL(qdf_nbuf_init_fast);
 #endif /* WLAN_FEATURE_FASTPATH */
 
+
+#ifdef QDF_NBUF_GLOBAL_COUNT
+#ifdef WLAN_DEBUGFS
+/**
+ * __qdf_nbuf_mod_init() - Intialization routine for qdf_nuf
+ *
+ * Return void
+ */
+void __qdf_nbuf_mod_init(void)
+{
+	qdf_atomic_init(&nbuf_count);
+	qdf_debugfs_init();
+	qdf_debugfs_create_atomic(NBUF_DEBUGFS_NAME, S_IRUSR, NULL, &nbuf_count);
+}
+
+/**
+ * __qdf_nbuf_mod_init() - Unintialization routine for qdf_nuf
+ *
+ * Return void
+ */
+void __qdf_nbuf_mod_exit(void)
+{
+	qdf_debugfs_exit();
+}
+
+#else
+
+void __qdf_nbuf_mod_init(void)
+{
+	qdf_atomic_init(&nbuf_count);
+}
+
+void __qdf_nbuf_mod_exit(void)
+{
+}
+
+#endif
+#endif

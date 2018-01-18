@@ -55,6 +55,10 @@ $(HOST_CMN_CONVG_NLINK)/src/wlan_nlink_srv.o \
 $(HOST_CMN_CONVG_LOGGING)/src/wlan_logging_sock_svc.o
 endif
 
+ifeq ($(WLAN_DEBUGFS),1)
+qdf-objs += linux/src/qdf_debugfs.o
+endif
+
 ifeq ($(BUILD_ADF_NET_IOCTL),1)
 EXTRA_CFLAGS+= -DADF_NET_IOCTL_SUPPORT
 #adf-objs += os/linux/adf_os_netlink_pvt.o \

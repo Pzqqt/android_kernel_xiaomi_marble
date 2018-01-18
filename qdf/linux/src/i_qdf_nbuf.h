@@ -652,6 +652,41 @@ enum qdf_proto_subtype  __qdf_nbuf_data_get_icmpv6_subtype(uint8_t *data);
 uint8_t __qdf_nbuf_data_get_ipv4_proto(uint8_t *data);
 uint8_t __qdf_nbuf_data_get_ipv6_proto(uint8_t *data);
 
+#ifdef QDF_NBUF_GLOBAL_COUNT
+int __qdf_nbuf_count_get(void);
+void __qdf_nbuf_count_inc(struct sk_buff *skb);
+void __qdf_nbuf_count_dec(struct sk_buff *skb);
+void __qdf_nbuf_mod_init(void);
+void __qdf_nbuf_mod_exit(void);
+
+#else
+
+static inline int __qdf_nbuf_count_get(void)
+{
+	return 0;
+}
+
+static inline void __qdf_nbuf_count_inc(struct sk_buff *skb)
+{
+	return;
+}
+
+static inline void __qdf_nbuf_count_dec(struct sk_buff *skb)
+{
+	return;
+}
+
+static inline void __qdf_nbuf_mod_init(void)
+{
+	return;
+}
+
+static inline void __qdf_nbuf_mod_exit(void)
+{
+	return;
+}
+#endif
+
 /**
  * __qdf_to_status() - OS to QDF status conversion
  * @error : OS error
@@ -814,7 +849,13 @@ int __qdf_nbuf_shared(struct sk_buff *skb);
  */
 static inline struct sk_buff *__qdf_nbuf_clone(struct sk_buff *skb)
 {
-	return skb_clone(skb, GFP_ATOMIC);
+	struct sk_buff *skb_new = NULL;
+
+	skb_new = skb_clone(skb, GFP_ATOMIC);
+	if (skb_new)
+		__qdf_nbuf_count_inc(skb_new);
+
+	return skb_new;
 }
 
 /**
@@ -828,7 +869,13 @@ static inline struct sk_buff *__qdf_nbuf_clone(struct sk_buff *skb)
  */
 static inline struct sk_buff *__qdf_nbuf_copy(struct sk_buff *skb)
 {
-	return skb_copy(skb, GFP_ATOMIC);
+	struct sk_buff *skb_new = NULL;
+
+	skb_new = skb_copy(skb, GFP_ATOMIC);
+	if (skb_new)
+		__qdf_nbuf_count_inc(skb_new);
+
+	return skb_new;
 }
 
 #define __qdf_nbuf_reserve      skb_reserve

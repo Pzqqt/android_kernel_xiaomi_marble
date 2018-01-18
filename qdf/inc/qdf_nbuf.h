@@ -2683,6 +2683,59 @@ qdf_nbuf_get_timedelta_us(struct sk_buff *skb)
 	return __qdf_nbuf_get_timedelta_us(skb);
 }
 
+/**
+ * qdf_nbuf_count_get() - get global nbuf gauge
+ *
+ * Return: global nbuf gauge
+ */
+static inline int qdf_nbuf_count_get(void)
+{
+	return __qdf_nbuf_count_get();
+}
+
+/**
+ * qdf_nbuf_count_inc() - increment nbuf global count
+ *
+ * @buf: sk buff
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_count_inc(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_count_inc(buf);
+}
+
+/**
+ * qdf_nbuf_count_dec() - decrement nbuf global count
+ *
+ * @buf: sk buff
+ *
+ * Return: void
+ */
+static inline void qdf_nbuf_count_dec(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_count_dec(buf);
+}
+
+/**
+ * qdf_nbuf_mod_init() - Intialization routine for qdf_nbuf
+ *
+ * Return void
+ */
+static inline void qdf_nbuf_mod_init(void)
+{
+	return __qdf_nbuf_mod_init();
+}
+
+/**
+ * qdf_nbuf_mod_init() - Unintialization routine for qdf_nbuf
+ *
+ * Return void
+ */
+static inline void qdf_nbuf_mod_exit(void)
+{
+	return __qdf_nbuf_mod_exit();
+}
 #ifdef CONFIG_WIN
 #include <i_qdf_nbuf_api_w.h>
 #else

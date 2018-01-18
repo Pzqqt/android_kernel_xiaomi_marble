@@ -59,6 +59,7 @@ qdf_dentry_t qdf_debugfs_get_root(void)
 {
 	return qdf_debugfs_root;
 }
+qdf_export_symbol(qdf_debugfs_get_root);
 
 umode_t qdf_debugfs_get_filemode(uint16_t mode)
 {
