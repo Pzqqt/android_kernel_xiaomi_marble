@@ -448,6 +448,17 @@ struct csr_neighbor_roamconfig {
 	int32_t nhi_rssi_scan_rssi_ub;
 };
 
+/*
+ * Neighbor Report Params Bitmask
+ */
+#define NEIGHBOR_REPORT_PARAMS_TIME_OFFSET            0x01
+#define NEIGHBOR_REPORT_PARAMS_LOW_RSSI_OFFSET        0x02
+#define NEIGHBOR_REPORT_PARAMS_BMISS_COUNT_TRIGGER    0x04
+#define NEIGHBOR_REPORT_PARAMS_PER_THRESHOLD_OFFSET   0x08
+#define NEIGHBOR_REPORT_PARAMS_CACHE_TIMEOUT          0x10
+#define NEIGHBOR_REPORT_PARAMS_MAX_REQ_CAP            0x20
+#define NEIGHBOR_REPORT_PARAMS_ALL                    0x3F
+
 struct csr_config {
 	uint32_t agingCount;
 	uint32_t FragmentationThreshold;
@@ -641,6 +652,8 @@ struct csr_config {
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;
 	uint32_t btm_sticky_time;
+	uint32_t offload_11k_enable_bitmask;
+	struct csr_neighbor_report_offload_params neighbor_report_offload;
 };
 
 struct csr_channel_powerinfo {

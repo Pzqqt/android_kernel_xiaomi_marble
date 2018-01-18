@@ -474,6 +474,8 @@
 #define WMA_SET_LIMIT_OFF_CHAN               SIR_HAL_SET_LIMIT_OFF_CHAN
 #define WMA_OBSS_DETECTION_REQ               SIR_HAL_OBSS_DETECTION_REQ
 #define WMA_OBSS_DETECTION_INFO              SIR_HAL_OBSS_DETECTION_INFO
+#define WMA_SET_11K_OFFLOAD                  SIR_HAL_SET_11K_OFFLOAD
+#define WMA_INVOKE_NEIGHBOR_REPORT           SIR_HAL_INVOKE_NEIGHBOR_REPORT
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40

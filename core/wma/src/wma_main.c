@@ -4706,6 +4706,10 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 				       wmi_service_mawc_support))
 		cfg->is_fw_mawc_capable = true;
 
+	if (WMI_SERVICE_EXT_IS_ENABLED(wh->wmi_service_bitmap,
+			wh->wmi_service_ext_bitmap,
+			WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT))
+		cfg->is_11k_offload_supported = true;
 }
 
 /**
@@ -7398,6 +7402,59 @@ static void wma_set_del_pmkid_cache(WMA_HANDLE handle,
 		WMA_LOGE("failed to send set/del pmkid cmd to fw");
 }
 
+/**
+ * wma_send_offload_11k_params() - API to send 11k offload params to FW
+ * @handle: WMA handle
+ * @params: Pointer to 11k offload params
+ *
+ * Return: None
+ */
+static
+void wma_send_offload_11k_params(WMA_HANDLE handle,
+				    struct wmi_11k_offload_params *params)
+{
+	QDF_STATUS status;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("WMA is closed, cannot send 11k offload cmd");
+		return;
+	}
+
+	status = wmi_unified_offload_11k_cmd(wma_handle->wmi_handle, params);
+
+	if (status != QDF_STATUS_SUCCESS)
+		WMA_LOGE("failed to send 11k offload command");
+}
+
+/**
+ * wma_send_invoke_neighbor_report() - API to send invoke neighbor report
+ * command to fw
+ *
+ * @handle: WMA handle
+ * @params: Pointer to invoke neighbor report params
+ *
+ * Return: None
+ */
+static
+void wma_send_invoke_neighbor_report(WMA_HANDLE handle,
+			struct wmi_invoke_neighbor_report_params *params)
+{
+	QDF_STATUS status;
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (!wma_handle || !wma_handle->wmi_handle) {
+		WMA_LOGE("WMA is closed, cannot send invoke neighbor report");
+		return;
+	}
+
+	status = wmi_unified_invoke_neighbor_report_cmd(wma_handle->wmi_handle,
+							params);
+
+	if (status != QDF_STATUS_SUCCESS)
+		WMA_LOGE("failed to send invoke neighbor report command");
+}
+
 QDF_STATUS wma_set_rx_reorder_timeout_val(tp_wma_handle wma_handle,
 	struct sir_set_rx_reorder_timeout_val *reorder_timeout)
 {
@@ -8411,6 +8468,14 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case WMA_OBSS_DETECTION_REQ:
 		wma_send_obss_detection_cfg(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_SET_11K_OFFLOAD:
+		wma_send_offload_11k_params(wma_handle, msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_INVOKE_NEIGHBOR_REPORT:
+		wma_send_invoke_neighbor_report(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	default:

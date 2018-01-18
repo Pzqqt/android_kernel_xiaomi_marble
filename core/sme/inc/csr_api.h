@@ -1140,6 +1140,32 @@ struct csr_mbo_thresholds {
 	int8_t mbo_candidate_rssi_btc_thres;
 };
 
+/**
+ * struct csr_neighbor_report_offload_params - neighbor report offload params
+ * @params_bitmask: bitmask to specify which of the below are enabled
+ * @time_offset: time offset after 11k offload command to trigger a neighbor
+ *		report request (in seconds)
+ * @low_rssi_offset: Offset from rssi threshold to trigger neighbor
+ *	report request (in dBm)
+ * @bmiss_count_trigger: Number of beacon miss events to trigger neighbor
+ *		report request
+ * @per_threshold_offset: offset from PER threshold to trigger neighbor
+ *		report request (in %)
+ * @neighbor_report_cache_timeout: timeout after which new trigger can enable
+ *		sending of a neighbor report request (in seconds)
+ * @max_neighbor_report_req_cap: max number of neighbor report requests that
+ *		can be sent to the peer in the current session
+ */
+struct csr_neighbor_report_offload_params {
+	uint8_t params_bitmask;
+	uint32_t time_offset;
+	uint32_t low_rssi_offset;
+	uint32_t bmiss_count_trigger;
+	uint32_t per_threshold_offset;
+	uint32_t neighbor_report_cache_timeout;
+	uint32_t max_neighbor_report_req_cap;
+};
+
 typedef struct tagCsrConfigParam {
 	uint32_t FragmentationThreshold;
 	/* keep this uint32_t. This gets converted to ePhyChannelBondState */
@@ -1377,6 +1403,8 @@ typedef struct tagCsrConfigParam {
 	uint32_t btm_solicited_timeout;
 	uint32_t btm_max_attempt_cnt;
 	uint32_t btm_sticky_time;
+	uint32_t offload_11k_enable_bitmask;
+	struct csr_neighbor_report_offload_params neighbor_report_offload;
 } tCsrConfigParam;
 
 /* Tush */
