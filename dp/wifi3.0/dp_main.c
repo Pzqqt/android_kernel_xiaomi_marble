@@ -4846,6 +4846,10 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.mcast.num);
 	DP_PRINT_STATS("Multicast Success Bytes = %llu",
 			peer->stats.tx.mcast.bytes);
+	DP_PRINT_STATS("Broadcast Success Packets = %d",
+			peer->stats.tx.bcast.num);
+	DP_PRINT_STATS("Broadcast Success Bytes = %llu",
+			peer->stats.tx.bcast.bytes);
 	DP_PRINT_STATS("Packets Failed = %d",
 			peer->stats.tx.tx_failed);
 	DP_PRINT_STATS("Packets In OFDMA = %d",
@@ -4902,6 +4906,15 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.tx.sgi_count[1],
 			peer->stats.tx.sgi_count[2],
 			peer->stats.tx.sgi_count[3]);
+	DP_PRINT_STATS("Excess Retries per AC ");
+	DP_PRINT_STATS("	 Best effort = %d",
+			peer->stats.tx.excess_retries_per_ac[0]);
+	DP_PRINT_STATS("	 Background= %d",
+			peer->stats.tx.excess_retries_per_ac[1]);
+	DP_PRINT_STATS("	 Video = %d",
+			peer->stats.tx.excess_retries_per_ac[2]);
+	DP_PRINT_STATS("	 Voice = %d",
+			peer->stats.tx.excess_retries_per_ac[3]);
 	DP_PRINT_STATS("BW Counts = 20MHZ %d 40MHZ %d 80MHZ %d 160MHZ %d\n",
 			peer->stats.tx.bw[2], peer->stats.tx.bw[3],
 			peer->stats.tx.bw[4], peer->stats.tx.bw[5]);
@@ -4936,6 +4949,10 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.multicast.num);
 	DP_PRINT_STATS("Multicast Bytes Received = %llu",
 			peer->stats.rx.multicast.bytes);
+	DP_PRINT_STATS("Broadcast Packets Received = %d",
+			peer->stats.rx.bcast.num);
+	DP_PRINT_STATS("Broadcast Bytes Received = %llu",
+			peer->stats.rx.bcast.bytes);
 	DP_PRINT_STATS("WDS Packets Received = %d",
 			peer->stats.rx.wds.num);
 	DP_PRINT_STATS("WDS Bytes Received = %llu",

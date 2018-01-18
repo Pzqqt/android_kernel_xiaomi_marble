@@ -596,6 +596,8 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 	struct dp_vdev *vdev;
 	uint16_t peer_id = 0xFFFF;
 	struct dp_peer *peer = NULL;
+	struct ether_header *eh;
+	bool isBroadcast;
 
 	/*
 	 * Check if DMA completed -- msdu_done is the last bit
@@ -668,6 +670,18 @@ dp_rx_err_deliver(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 
 	}
 	dp_rx_fill_mesh_stats(vdev, nbuf, rx_tlv_hdr, peer);
+
+	if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
+				(vdev->rx_decap_type ==
+				htt_cmn_pkt_type_ethernet))) {
+		eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+		isBroadcast = (IEEE80211_IS_BROADCAST
+				(eh->ether_dhost)) ? 1 : 0 ;
+		if (isBroadcast) {
+			DP_STATS_INC_PKT(peer, rx.bcast, 1,
+					qdf_nbuf_len(nbuf));
+		}
+	}
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw)) {
 		dp_rx_deliver_raw(vdev, nbuf, peer);

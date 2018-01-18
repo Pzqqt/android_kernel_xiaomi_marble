@@ -1072,10 +1072,12 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	struct dp_pdev *pdev;
 	struct dp_srng *dp_rxdma_srng;
 	struct rx_desc_pool *rx_desc_pool;
+	struct ether_header *eh;
 	struct dp_soc *soc = int_ctx->soc;
 	uint8_t ring_id = 0;
 	uint8_t core_id = 0;
 	bool is_first_frag = 0;
+	bool isBroadcast = 0;
 	uint16_t mpdu_len = 0;
 	qdf_nbuf_t head_frag_nbuf = NULL;
 	qdf_nbuf_t frag_list_head = NULL;
@@ -1133,6 +1135,7 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 		rx_buf_cookie = HAL_RX_REO_BUF_COOKIE_GET(ring_desc);
 
 		rx_desc = dp_rx_cookie_2_va_rxdma_buf(soc, rx_buf_cookie);
+
 
 		qdf_assert(rx_desc);
 		rx_bufs_reaped[rx_desc->pool_id]++;
@@ -1542,6 +1545,18 @@ done:
 
 		DP_STATS_INC_PKT(peer, rx.to_stack, 1,
 				qdf_nbuf_len(nbuf));
+
+		if (qdf_unlikely(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr) &&
+					(vdev->rx_decap_type ==
+					 htt_cmn_pkt_type_ethernet))) {
+			eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+			isBroadcast = (IEEE80211_IS_BROADCAST
+					(eh->ether_dhost)) ? 1 : 0 ;
+			if (isBroadcast) {
+				DP_STATS_INC_PKT(peer, rx.bcast, 1,
+						qdf_nbuf_len(nbuf));
+			}
+		}
 
 		if ((soc->process_rx_status) && likely(peer) &&
 			hal_rx_attn_first_mpdu_get(rx_tlv_hdr)) {

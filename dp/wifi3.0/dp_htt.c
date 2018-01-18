@@ -2113,7 +2113,7 @@ static void dp_process_ppdu_stats_user_compltn_flush_tlv(struct dp_pdev *pdev,
 	tid = HTT_PPDU_STATS_FLUSH_TLV_TID_NUM_GET(*tag_buf);
 
 	if (drop_reason == HTT_FLUSH_EXCESS_RETRIES) {
-		DP_STATS_INC(peer, tx.excess_retries[TID_TO_WME_AC(tid)],
+		DP_STATS_INC(peer, tx.excess_retries_per_ac[TID_TO_WME_AC(tid)],
 					num_msdu);
 	}
 }

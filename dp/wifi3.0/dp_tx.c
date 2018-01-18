@@ -1651,6 +1651,7 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 	qdf_mem_set(&seg_info, sizeof(seg_info), 0x0);
 
 	eh = (struct ether_header *)qdf_nbuf_data(nbuf);
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s , skb %0x:%0x:%0x:%0x:%0x:%0x\n",
 			__func__, nbuf->data[0], nbuf->data[1], nbuf->data[2],
@@ -2343,6 +2344,10 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_soc *soc = NULL;
 	struct dp_vdev *vdev = tx_desc->vdev;
 	struct dp_peer *peer = NULL;
+	struct ether_header *eh =
+		(struct ether_header *)qdf_nbuf_data(tx_desc->nbuf);
+	bool isBroadcast;
+
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -2397,6 +2402,14 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 				"invalid peer");
 		DP_STATS_INC_PKT(soc, tx.tx_invalid_peer, 1, length);
 		goto out;
+	}
+	if (qdf_likely(vdev->tx_encap_type == htt_cmn_pkt_type_ethernet)) {
+		isBroadcast = (IEEE80211_IS_BROADCAST(eh->ether_dhost)) ? 1 : 0 ;
+
+		if (isBroadcast) {
+			DP_STATS_INC_PKT(peer, tx.bcast, 1,
+					qdf_nbuf_len(tx_desc->nbuf));
+		}
 	}
 
 	dp_tx_update_peer_stats(peer, &ts, length);

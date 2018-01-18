@@ -801,6 +801,8 @@ struct cdp_tx_stats {
 	struct cdp_pkt_info ucast;
 	/* Multicast Packet Count */
 	struct cdp_pkt_info mcast;
+	/* Broadcast Packet Count*/
+	struct cdp_pkt_info bcast;
 	/*NAWDS  Multicast Packet Count */
 	struct cdp_pkt_info nawds_mcast;
 	/*NAWDS  Multicast Drop Count */
@@ -842,14 +844,11 @@ struct cdp_tx_stats {
 	/* Packet Count for different bandwidths */
 	uint32_t bw[MAX_BW];
 
-	/* Excess Retry Count */
-	uint32_t excess_retries[WME_AC_MAX];
-
 	/* Wireless Multimedia type Count */
 	uint32_t wme_ac_type[WME_AC_MAX];
 
 	/* Wireless Multimedia type Count */
-	uint32_t excess_retries_ac[WME_AC_MAX];
+	uint32_t excess_retries_per_ac[WME_AC_MAX];
 
 	/* Packets dropped on the Tx side */
 	struct {
@@ -874,6 +873,8 @@ struct cdp_rx_stats {
 	struct cdp_pkt_info unicast;
 	/* Total multicast packets */
 	struct cdp_pkt_info multicast;
+	/* Broadcast Packet Count*/
+	struct cdp_pkt_info bcast;
 	/* WDS packets received */
 	struct cdp_pkt_info wds;
 	/* Raw Pakets received */

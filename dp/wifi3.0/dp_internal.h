@@ -255,7 +255,7 @@ while (0)
 		for (i = 0; i < WME_AC_MAX; i++) { \
 			DP_STATS_AGGR(_tgtobj, _srcobj, tx.wme_ac_type[i]); \
 			DP_STATS_AGGR(_tgtobj, _srcobj, rx.wme_ac_type[i]); \
-			DP_STATS_AGGR(_tgtobj, _srcobj, tx.excess_retries_ac[i]); \
+			DP_STATS_AGGR(_tgtobj, _srcobj, tx.excess_retries_per_ac[i]); \
 		\
 		} \
 		\
@@ -267,6 +267,7 @@ while (0)
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.comp_pkt); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.ucast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.mcast); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.bcast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, tx.tx_success); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.tx_failed); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.ofdma); \
@@ -287,6 +288,7 @@ while (0)
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.non_amsdu_cnt); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.amsdu_cnt); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.to_stack); \
+		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.bcast);\
 								\
 		for (i = 0; i <  CDP_MAX_RX_RINGS; i++)	\
 			DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.rcvd_reo[i]); \
