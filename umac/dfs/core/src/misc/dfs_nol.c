@@ -139,6 +139,7 @@ void dfs_nol_attach(struct wlan_dfs *dfs)
 
 void dfs_nol_detach(struct wlan_dfs *dfs)
 {
+	dfs_nol_timer_cleanup(dfs);
 	qdf_flush_work(&dfs->dfs_nol_elem_free_work);
 	qdf_destroy_work(NULL, &dfs->dfs_nol_elem_free_work);
 	WLAN_DFSNOL_LOCK_DESTROY(dfs);
