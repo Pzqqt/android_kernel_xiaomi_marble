@@ -1518,6 +1518,11 @@ QDF_STATUS (*extract_swfda_vdev_id)(wmi_unified_t wmi_handle, void *evt_buf,
 QDF_STATUS (*send_fils_discovery_send_cmd)(wmi_unified_t wmi_handle,
 					   struct fd_params *param);
 #endif /* WLAN_SUPPORT_FILS */
+QDF_STATUS (*send_offload_11k_cmd)(wmi_unified_t wmi_handle,
+		struct wmi_11k_offload_params *params);
+
+QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
+		struct wmi_invoke_neighbor_report_params *params);
 };
 
 /* Forward declartion for psoc*/
