@@ -972,8 +972,11 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 				(void *)eSAP_STATUS_SUCCESS);
 		return 0;
 	}
-	mac_ctx->sap.SapDfsInfo.new_chanWidth = ch_wd;
-
+	mac_ctx->sap.SapDfsInfo.new_chanWidth = ch_params->ch_width;
+	sap_ctx->ch_params.ch_width = ch_params->ch_width;
+	sap_ctx->ch_params.sec_ch_offset = ch_params->sec_ch_offset;
+	sap_ctx->ch_params.center_freq_seg0 = ch_params->center_freq_seg0;
+	sap_ctx->ch_params.center_freq_seg1 = ch_params->center_freq_seg1;
 	return ch;
 }
 
