@@ -612,6 +612,7 @@ static inline int
 cdp_wdi_event_sub(ol_txrx_soc_handle soc,
 		struct cdp_pdev *pdev, void *event_cb_sub, uint32_t event)
 {
+
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
@@ -645,6 +646,7 @@ static inline int
 cdp_wdi_event_unsub(ol_txrx_soc_handle soc,
 		struct cdp_pdev *pdev, void *event_cb_sub, uint32_t event)
 {
+
 	if (!soc || !soc->ops) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"%s invalid instance", __func__);
@@ -714,35 +716,6 @@ static inline int cdp_set_mgmt_tx_power(ol_txrx_soc_handle soc,
 	soc->ops->ctrl_ops->txrx_update_mgmt_txpow_vdev(vdev,
 							subtype, tx_power);
 	return 0;
-}
-/**
- * @brief WDI event handler
- * @details
- *  This function handles in the events posted by the packet logger.
- *  This function shall only be called if there was a successful prior call
- *  to event_sub() on the same wdi_event_subscribe object.
- *
- * @param soc - pointer to the soc
- * @param pdev - the data physical device object
- * @param event - which event is being handled
- * @param event - data for the event
- * @return - int
- */
-static inline A_STATUS
-cdp_wdi_event_handler(ol_txrx_soc_handle soc,
-		struct cdp_pdev *pdev, uint32_t event, void *evt_data)
-{
-	if (!soc || !soc->ops || !soc->ops->ctrl_ops) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
-			"%s invalid instance", __func__);
-		return A_ERROR;
-	}
-
-	if (soc->ops->ctrl_ops->txrx_wdi_event_handler)
-		return soc->ops->ctrl_ops->txrx_wdi_event_handler
-			(pdev, event, evt_data);
-
-	return A_OK;
 }
 
 static inline void *

@@ -616,7 +616,6 @@ static int __pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
 
 		pl_dev->tgt_pktlog_alloced = true;
 	}
-
 	if (log_state != 0) {
 		/* WDI subscribe */
 		if (!pl_dev->is_pktlog_cb_subscribed) {
@@ -871,11 +870,6 @@ void pktlog_process_fw_msg(uint32_t *buff)
 	uint32_t *pl_hdr;
 	uint32_t log_type;
 	struct cdp_pdev *pdev = get_txrx_context();
-#ifdef CONFIG_MCL
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
-#else
-	/*TODO: WIN implementation to get soc */
-#endif
 
 	if (!pdev) {
 		qdf_print("%s: txrx_pdev is NULL", __func__);
@@ -892,20 +886,20 @@ void pktlog_process_fw_msg(uint32_t *buff)
 		|| (log_type == PKTLOG_TYPE_TX_MSDU_ID)
 		|| (log_type == PKTLOG_TYPE_TX_FRM_HDR)
 		|| (log_type == PKTLOG_TYPE_TX_VIRT_ADDR))
-		cdp_wdi_event_handler(soc, pdev,
-				WDI_EVENT_TX_STATUS, pl_hdr);
+		wdi_event_handler(WDI_EVENT_TX_STATUS,
+				  pdev, pl_hdr);
 	else if (log_type == PKTLOG_TYPE_RC_FIND)
-		cdp_wdi_event_handler(soc, pdev,
-				WDI_EVENT_RATE_FIND, pl_hdr);
+		wdi_event_handler(WDI_EVENT_RATE_FIND,
+				  pdev, pl_hdr);
 	else if (log_type == PKTLOG_TYPE_RC_UPDATE)
-		cdp_wdi_event_handler(soc, pdev,
-				WDI_EVENT_RATE_UPDATE, pl_hdr);
+		wdi_event_handler(WDI_EVENT_RATE_UPDATE,
+				  pdev, pl_hdr);
 	else if (log_type == PKTLOG_TYPE_RX_STAT)
-		cdp_wdi_event_handler(soc, pdev,
-				WDI_EVENT_RX_DESC, pl_hdr);
+		wdi_event_handler(WDI_EVENT_RX_DESC,
+				  pdev, pl_hdr);
 	else if (log_type == PKTLOG_TYPE_SW_EVENT)
-		cdp_wdi_event_handler(soc, pdev,
-				WDI_EVENT_SW_EVENT, pl_hdr);
+		wdi_event_handler(WDI_EVENT_SW_EVENT,
+				  pdev, pl_hdr);
 }
 
 #if defined(QCA_WIFI_3_0_ADRASTEA)

@@ -233,10 +233,11 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 	if (write) {
 		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
-		if (ret == 0)
+		if (ret == 0) {
 			ret = pl_dev->pl_funcs->pktlog_enable(
 					(struct hif_opaque_softc *)scn, enable,
 					cds_is_packet_log_enabled(), 0, 1);
+		}
 		else
 			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_DEBUG,
 				  "Line:%d %s:proc_dointvec failed reason %d",
