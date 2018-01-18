@@ -1910,7 +1910,7 @@ QDF_STATUS wlan_crypto_rsnie_check(struct wlan_crypto_params *crypto_params,
 	if (len < 14)
 		return QDF_STATUS_E_INVAL;
 
-	frm += 2, len -= 2;
+	frm += 2;
 	/* NB: iswapoui already validated the OUI and type */
 	w = LE_READ_2(frm);
 	if (w != RSN_VERSION)
