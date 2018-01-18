@@ -65,6 +65,15 @@ QDF_STATUS ucfg_reg_get_default_country(struct wlan_objmgr_psoc *psoc,
 					       uint8_t *country_code);
 
 /**
+ * ucfg_reg_get_current_country() - Get the current regulatory country
+ * @psoc: The physical SoC to get current country from
+ * @country_code: the buffer to populate the country code into
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ucfg_reg_get_current_country(struct wlan_objmgr_psoc *psoc,
+					       uint8_t *country_code);
+/**
  * ucfg_reg_set_default_country() - Set the default regulatory country
  * @psoc: The physical SoC to set default country for
  * @country_code: The country information to configure

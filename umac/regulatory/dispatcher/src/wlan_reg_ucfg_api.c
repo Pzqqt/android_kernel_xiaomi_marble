@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -141,6 +141,11 @@ QDF_STATUS ucfg_reg_get_default_country(struct wlan_objmgr_psoc *psoc,
 	return reg_read_default_country(psoc, country_code);
 }
 
+QDF_STATUS ucfg_reg_get_current_country(struct wlan_objmgr_psoc *psoc,
+					       uint8_t *country_code)
+{
+	return reg_read_current_country(psoc, country_code);
+}
 /**
  * ucfg_reg_set_default_country() - Set the default regulatory country
  * @psoc: The physical SoC to set default country for

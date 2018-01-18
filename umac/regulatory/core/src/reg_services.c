@@ -1325,6 +1325,28 @@ QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+QDF_STATUS reg_read_current_country(struct wlan_objmgr_psoc *psoc,
+				    uint8_t *country_code)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_reg;
+
+	if (!country_code) {
+		reg_err("country_code is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc_reg = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_mem_copy(country_code,
+		     psoc_reg->cur_country,
+		     REG_ALPHA2_LEN + 1);
+
+	return QDF_STATUS_SUCCESS;
+}
 /**
  * reg_set_default_country() - Read the default country for the regdomain
  * @country: country code.
@@ -1378,7 +1400,7 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 	if (!qdf_mem_cmp(psoc_reg->cur_country,
 			country, REG_ALPHA2_LEN)) {
 		reg_err("country is not different");
-		return QDF_STATUS_E_INVAL;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	reg_debug("programming new country:%s to firmware", country);

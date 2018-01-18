@@ -145,6 +145,16 @@ QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country_code);
 
 /**
+ * reg_read_current_country() - Get the current regulatory country
+ * @psoc: The physical SoC to get current country from
+ * @country_code: the buffer to populate the country code into
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_read_current_country(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *country_code);
+
+/**
  * reg_set_default_country() - Set the default regulatory country
  * @psoc: The physical SoC to set default country for
  * @req: The country information to configure

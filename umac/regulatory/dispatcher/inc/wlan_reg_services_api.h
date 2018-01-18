@@ -85,6 +85,16 @@ QDF_STATUS wlan_reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
  */
 QDF_STATUS wlan_reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				   uint8_t *country);
+
+/**
+ * wlan_reg_read_current_country() - Read the current country for the regdomain
+ * @country: pointer to the country code.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_read_current_country(struct wlan_objmgr_psoc *psoc,
+				   uint8_t *country);
+
 /**
  * wlan_reg_get_channel_state() - Get channel state from regulatory
  * @ch: channel number.
