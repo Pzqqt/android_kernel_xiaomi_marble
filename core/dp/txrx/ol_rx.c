@@ -158,7 +158,8 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 	else
 		data.mac_id = 0;
 
-	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, &data);
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, (struct cdp_pdev *)pdev,
+			  &data);
 }
 #else
 void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
@@ -180,7 +181,8 @@ void ol_rx_send_pktlog_event(struct ol_txrx_pdev_t *pdev,
 	else
 		data.mac_id = 0;
 
-	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, pdev, &data);
+	wdi_event_handler(WDI_EVENT_RX_DESC_REMOTE, (struct cdp_pdev *)pdev,
+			  &data);
 }
 #endif
 
@@ -301,7 +303,8 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 	msg.msdu = msdu;
 	msg.vdev_id = vdev->vdev_id;
 #ifdef WDI_EVENT_ENABLE
-	wdi_event_handler(WDI_EVENT_RX_PEER_INVALID, pdev, &msg);
+	wdi_event_handler(WDI_EVENT_RX_PEER_INVALID, (struct cdp_pdev *)pdev,
+			  &msg);
 #endif
 }
 

@@ -6649,12 +6649,10 @@ static void wma_set_wifi_start_packet_stats(void *wma_handle,
 #ifdef HELIUMPLUS
 	log_state = ATH_PKTLOG_ANI | ATH_PKTLOG_RCUPDATE | ATH_PKTLOG_RCFIND |
 		ATH_PKTLOG_RX | ATH_PKTLOG_TX |
-		ATH_PKTLOG_TEXT | ATH_PKTLOG_SW_EVENT |
-		ATH_PKTLOG_LITE_T2H | ATH_PKTLOG_LITE_RX;
+		ATH_PKTLOG_TEXT | ATH_PKTLOG_SW_EVENT;
 #else
 	log_state = ATH_PKTLOG_LITE_T2H | ATH_PKTLOG_LITE_RX;
 #endif
-
 	if (start_log->size != 0) {
 		pktlog_setsize(scn, start_log->size * MEGABYTE);
 		return;

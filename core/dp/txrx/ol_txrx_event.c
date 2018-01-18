@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -77,10 +77,13 @@ wdi_event_iter_sub(struct ol_txrx_pdev_t *pdev,
 
 void
 wdi_event_handler(enum WDI_EVENT event,
-		  struct ol_txrx_pdev_t *txrx_pdev, void *data)
+		  struct cdp_pdev *ppdev, void *data)
 {
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
+	struct ol_txrx_pdev_t *txrx_pdev =
+				(struct ol_txrx_pdev_t *)ppdev;
+
 	/*
 	 * Input validation
 	 */
@@ -107,11 +110,16 @@ wdi_event_handler(enum WDI_EVENT event,
 }
 
 A_STATUS
-wdi_event_sub(struct ol_txrx_pdev_t *txrx_pdev,
-	      wdi_event_subscribe *event_cb_sub, enum WDI_EVENT event)
+wdi_event_sub(struct cdp_pdev *ppdev,
+	      void *pevent_cb_sub, uint32_t event)
 {
 	uint32_t event_index;
 	wdi_event_subscribe *wdi_sub;
+	struct ol_txrx_pdev_t *txrx_pdev =
+				(struct ol_txrx_pdev_t *)ppdev;
+	wdi_event_subscribe *event_cb_sub =
+				(wdi_event_subscribe *)pevent_cb_sub;
+
 	/* Input validation */
 	if (!txrx_pdev || !txrx_pdev->wdi_event_list) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -152,10 +160,16 @@ wdi_event_sub(struct ol_txrx_pdev_t *txrx_pdev,
 }
 
 A_STATUS
-wdi_event_unsub(struct ol_txrx_pdev_t *txrx_pdev,
-		wdi_event_subscribe *event_cb_sub, enum WDI_EVENT event)
+wdi_event_unsub(struct cdp_pdev *ppdev,
+		void *pevent_cb_sub, uint32_t event)
 {
 	uint32_t event_index = event - WDI_EVENT_BASE;
+
+	struct ol_txrx_pdev_t *txrx_pdev =
+				(struct ol_txrx_pdev_t *)ppdev;
+
+	wdi_event_subscribe *event_cb_sub =
+				(wdi_event_subscribe *)pevent_cb_sub;
 
 	/* Input validation */
 	if (!event_cb_sub) {

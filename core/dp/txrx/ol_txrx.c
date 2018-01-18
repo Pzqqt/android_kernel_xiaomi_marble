@@ -1375,6 +1375,7 @@ void htt_pkt_log_init(struct cdp_pdev *ppdev, void *scn)
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 			!QDF_IS_EPPING_ENABLED(cds_get_conparam())) {
 		pktlog_sethandle(&handle->pl_dev, scn);
+		pktlog_set_callback_regtype(PKTLOG_DEFAULT_CALLBACK_REGISTRATION);
 		if (pktlogmod_init(scn))
 			qdf_print("%s: pktlogmod_init failed", __func__);
 		else
@@ -5785,6 +5786,18 @@ ol_txrx_wrapper_set_flow_control_parameters(struct cdp_cfg *cfg_pdev,
 		(struct txrx_pdev_cfg_param_t *)cfg_param);
 }
 
+#ifdef WDI_EVENT_ENABLE
+void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
+{
+	struct ol_txrx_pdev_t *pdev =
+				 (struct ol_txrx_pdev_t *)txrx_pdev;
+	if (pdev != NULL)
+		return pdev->pl_dev;
+
+	return NULL;
+}
+#endif
+
 static struct cdp_cmn_ops ol_ops_cmn = {
 	.txrx_soc_attach_target = ol_txrx_soc_attach_target,
 	.txrx_vdev_attach = ol_txrx_vdev_attach,
@@ -5911,16 +5924,6 @@ static struct cdp_mob_stats_ops ol_ops_mob_stats = {
 	.stats = ol_txrx_stats
 };
 
-static void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
-{
-	struct ol_txrx_pdev_t *handle = (struct ol_txrx_pdev_t *)txrx_pdev;
-
-	if (handle != NULL)
-		return handle->pl_dev;
-
-	return NULL;
-}
-
 static struct cdp_cfg_ops ol_ops_cfg = {
 	.set_cfg_rx_fwd_disabled = ol_set_cfg_rx_fwd_disabled,
 	.set_cfg_packet_log_enabled = ol_set_cfg_packet_log_enabled,
@@ -5982,6 +5985,8 @@ static struct cdp_pmf_ops ol_ops_pmf = {
 
 static struct cdp_ctrl_ops ol_ops_ctrl = {
 	.txrx_get_pldev = ol_get_pldev,
+	.txrx_wdi_event_sub = wdi_event_sub,
+	.txrx_wdi_event_unsub = wdi_event_unsub,
 };
 
 /* WINplatform specific structures */

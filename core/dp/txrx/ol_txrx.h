@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -92,6 +92,14 @@ ol_txrx_hl_tdls_flag_reset(struct cdp_vdev *vdev, bool flag)
 }
 #endif
 
+#ifdef WDI_EVENT_ENABLE
+void *ol_get_pldev(struct cdp_pdev *txrx_pdev);
+#else
+void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
+{
+	return NULL;
+}
+#endif
 /*
  * @nbuf: buffer which contains data to be displayed
  * @nbuf_paddr: physical address of the buffer
