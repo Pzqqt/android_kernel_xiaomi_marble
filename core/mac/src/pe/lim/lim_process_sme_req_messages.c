@@ -3835,6 +3835,19 @@ __lim_process_sme_get_tsm_stats_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 }
 #endif /* FEATURE_WLAN_ESE */
 
+static void lim_process_sme_set_addba_accept(tpAniSirGlobal mac_ctx,
+		struct sme_addba_accept *msg)
+{
+	if (!msg) {
+		pe_err("Msg Buffer is NULL");
+		return;
+	}
+	if (!msg->addba_accept)
+		mac_ctx->reject_addba_req = 1;
+	else
+		mac_ctx->reject_addba_req = 0;
+}
+
 static void lim_process_sme_update_config(tpAniSirGlobal mac_ctx,
 					  struct update_config *msg)
 {
@@ -5028,6 +5041,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 	case eWNI_SME_UPDATE_CONFIG:
 		lim_process_sme_update_config(pMac,
 					(struct update_config *)pMsgBuf);
+		break;
+	case eWNI_SME_SET_ADDBA_ACCEPT:
+		lim_process_sme_set_addba_accept(pMac,
+					(struct sme_addba_accept *)pMsgBuf);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

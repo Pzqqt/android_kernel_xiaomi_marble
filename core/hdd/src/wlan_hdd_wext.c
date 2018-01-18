@@ -915,6 +915,7 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 #ifdef WE_SET_TX_POWER
 #undef WE_SET_TX_POWER
 #endif
+
 /*
  * <ioctl>
  * setTxPower - Set the current transmit power
@@ -1164,7 +1165,6 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
  * </ioctl>
  */
 #define WE_SET_MODULATED_DTIM                 96
-
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -11348,8 +11348,8 @@ static const struct iw_priv_args we_private_args[] = {
 	 0, "pdev_reset" },
 
 	{WE_SET_MODULATED_DTIM,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 0, "setModDTIM" },
+	IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	0, "setModDTIM" },
 
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,

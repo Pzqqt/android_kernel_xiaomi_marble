@@ -818,6 +818,18 @@ QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 				   uint8_t targetChannel, uint8_t csaIeReqd,
 				   struct ch_params *ch_params);
 
+/**
+ * sme_set_addba_accept() - Allow/Reject the ADDBA req session
+ * @hal: handle returned by mac_open
+ * @session_id: sme session id
+ * @value: Allow/Reject AddBA session
+ *
+ * Allows/Rejects the ADDBA req session
+ *
+ * Return: 0 on success else errno
+ */
+int sme_set_addba_accept(tHalHandle hal, uint8_t session_id, int value);
+
 QDF_STATUS sme_init_thermal_info(tHalHandle hHal,
 				 tSmeThermalParams thermalParam);
 

@@ -10144,6 +10144,31 @@ int sme_update_ht_config(tHalHandle hHal, uint8_t sessionId, uint16_t htCapab,
 	return 0;
 }
 
+int sme_set_addba_accept(tHalHandle hal, uint8_t session_id, int value)
+{
+	struct sme_addba_accept *addba_accept;
+	struct scheduler_msg msg = {0};
+	QDF_STATUS status;
+
+	addba_accept = qdf_mem_malloc(sizeof(*addba_accept));
+	if (!addba_accept) {
+		sme_err("mem alloc failed for addba_accept");
+		return -EIO;
+	}
+	addba_accept->session_id = session_id;
+	addba_accept->addba_accept = value;
+	qdf_mem_zero(&msg, sizeof(msg));
+	msg.type = eWNI_SME_SET_ADDBA_ACCEPT;
+	msg.reserved = 0;
+	msg.bodyptr = addba_accept;
+	status = scheduler_post_msg(QDF_MODULE_ID_PE, &msg);
+	if (status != QDF_STATUS_SUCCESS) {
+		sme_err("Not able to post addba reject");
+		qdf_mem_free(addba_accept);
+		return -EIO;
+	}
+	return 0;
+}
 #define HT20_SHORT_GI_MCS7_RATE 722
 /*
  * sme_send_rate_update_ind() -

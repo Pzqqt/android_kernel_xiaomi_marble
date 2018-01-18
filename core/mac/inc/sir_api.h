@@ -7305,6 +7305,16 @@ struct sme_long_retry_limit {
 };
 
 /**
+ * struct sme_addba_accept - Allow/reject the addba request frame
+ * @session_id: Session id
+ * @addba_accept: Allow/reject the addba request frame
+ */
+struct sme_addba_accept {
+	uint8_t session_id;
+	uint8_t addba_accept;
+};
+
+/**
  * struct sme_sta_inactivity_timeout - set sta_inactivity_timeout
  * @session_id: session Id.
  * @sta_inactivity_timeout: Timeout to disconnect STA after there

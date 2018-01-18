@@ -6246,6 +6246,15 @@ wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
 	[QCA_WLAN_VENDOR_ATTR_CONFIG_RSN_IE] = {.type = NLA_U8},
 };
 
+static const struct nla_policy
+wlan_hdd_wifi_test_config_policy[
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1] = {
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE] = {
+			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ACCEPT_ADDBA_REQ] = {
+			.type = NLA_U8},
+};
+
 /**
  * wlan_hdd_add_qcn_ie() - Add QCN IE to a given IE buffer
  * @ie_data: IE buffer
@@ -7193,6 +7202,93 @@ static int wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_wifi_configuration_set(wiphy, wdev,
 							 data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_set_wifi_test_config() - Wifi test configuration
+ * vendor command
+ *
+ * @wiphy: wiphy device pointer
+ * @wdev: wireless device pointer
+ * @data: Vendor command data buffer
+ * @data_len: Buffer length
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX
+ *
+ * Return: Error code.
+ */
+static int
+__wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
+		struct wireless_dev *wdev, const void *data, int data_len) {
+
+	struct net_device *dev = wdev->netdev;
+	struct hdd_adapter *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	struct hdd_context *hdd_ctx  = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1];
+	int ret_val = 0;
+	uint8_t cfg_val = 0;
+
+	ENTER_DEV(dev);
+
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+	if (ret_val)
+		return ret_val;
+
+	if (hdd_ctx->driver_status == DRIVER_MODULES_CLOSED) {
+		hdd_err("Driver Modules are closed, can not start logger");
+		return -EINVAL;
+	}
+
+	if (wlan_cfg80211_nla_parse(tb,
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX,
+			data, data_len, wlan_hdd_wifi_test_config_policy)) {
+		hdd_err("invalid attr");
+		return -EINVAL;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ACCEPT_ADDBA_REQ]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ACCEPT_ADDBA_REQ]
+			);
+		hdd_debug("set addba accept req from peer value %d", cfg_val);
+		ret_val = sme_set_addba_accept(hdd_ctx->hHal,
+				adapter->session_id, cfg_val);
+		if (ret_val)
+			return ret_val;
+	}
+
+	return ret_val;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_wifi_test_config() - Wifi test configuration
+ * vendor command
+ *
+ * @wiphy: wiphy device pointer
+ * @wdev: wireless device pointer
+ * @data: Vendor command data buffer
+ * @data_len: Buffer length
+ *
+ * Handles QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX
+ *
+ * Return: EOK or other error codes.
+ */
+static int wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
+		struct wireless_dev *wdev, const void *data, int data_len)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_set_wifi_test_config(wiphy, wdev,
+			data, data_len);
 	cds_ssr_unprotect(__func__);
 
 	return ret;
@@ -13302,6 +13398,16 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_wifi_configuration_set
 	},
 #endif
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			WIPHY_VENDOR_CMD_NEED_NETDEV |
+			WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_wifi_test_config
+	},
+
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
 		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_ROAM,

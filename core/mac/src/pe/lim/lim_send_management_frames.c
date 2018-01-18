@@ -4740,6 +4740,10 @@ QDF_STATUS lim_send_addba_response_frame(tpAniSirGlobal mac_ctx,
 
 	frm.DialogToken.token = dialog_token;
 	frm.Status.status = status_code;
+	if (mac_ctx->reject_addba_req) {
+		frm.Status.status = eSIR_MAC_REQ_DECLINED_STATUS;
+		pe_err("refused addba req");
+	}
 	frm.addba_param_set.tid = tid;
 	frm.addba_param_set.buff_size = buff_size;
 	frm.addba_param_set.amsdu_supp = SIR_MAC_BA_POLICY_IMMEDIATE;
