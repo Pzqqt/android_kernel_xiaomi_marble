@@ -243,8 +243,9 @@ typedef enum {
 	WLAN_DEBUG_ID         = 29,
 	WLAN_DIRECT_BUF_RX_ID = 30,
 	WLAN_DISA_ID          = 31,
-	WLAN_FTM_ID           = 31,
+	WLAN_FTM_ID           = 32,
 	WLAN_FD_ID            = 33,
+
 	WLAN_REF_ID_MAX,
 } wlan_objmgr_ref_dbgid;
 
