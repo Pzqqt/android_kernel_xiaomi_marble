@@ -300,12 +300,18 @@ scm_scan_serialize_callback(struct wlan_serialization_command *cmd,
 	struct scan_start_request *req;
 	QDF_STATUS status;
 
-	if (!cmd || !cmd->umac_cmd) {
-		scm_err("cmd: %pK, umac_cmd: %pK, reason: %d",
-			cmd, cmd->umac_cmd, reason);
+	if (!cmd) {
+		scm_err("cmd: %pK, reason: %d", cmd, reason);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
+	if (!cmd->umac_cmd) {
+		scm_err("umac_cmd: %pK, reason: %d", cmd->umac_cmd, reason);
+		QDF_ASSERT(0);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	req = cmd->umac_cmd;
 	scm_debug("reason:%d, reqid:%d, scanid:%d, vdevid:%d, vdev:0x%pK",
 		reason, req->scan_req.scan_req_id, req->scan_req.scan_id,
@@ -369,10 +375,10 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
-		QDF_ASSERT(0);
+		scm_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
 	req = msg->bodyptr;
 	cmd.cmd_type = WLAN_SER_CMD_SCAN;
 	cmd.cmd_id = req->scan_req.scan_id;
@@ -472,10 +478,10 @@ scm_scan_cancel_req(struct scheduler_msg *msg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
-		QDF_ASSERT(0);
+		scm_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
 	req = msg->bodyptr;
 	/*
 	 * If requester wants to wait for target scan cancel event
@@ -614,9 +620,10 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	struct scan_start_request *scan_start_req;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: %pK, bodyptr: %pK", msg, msg->bodyptr);
+		scm_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
 	event_info = msg->bodyptr;
 	vdev = event_info->vdev;
 	event = &(event_info->event);
@@ -704,9 +711,10 @@ QDF_STATUS scm_scan_event_flush_callback(struct scheduler_msg *msg)
 	struct scan_event_info *event_info;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: %pK, bodyptr: %pK", msg, msg->bodyptr);
+		scm_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
 	event_info = msg->bodyptr;
 	vdev = event_info->vdev;
 
@@ -743,9 +751,10 @@ QDF_STATUS scm_scan_start_flush_callback(struct scheduler_msg *msg)
 	struct scan_start_request *req;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
+		scm_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
 	req = msg->bodyptr;
 	wlan_objmgr_vdev_release_ref(req->vdev, WLAN_SCAN_ID);
 	scm_scan_free_scan_request_mem(req);
@@ -758,7 +767,7 @@ QDF_STATUS scm_scan_cancel_flush_callback(struct scheduler_msg *msg)
 	struct scan_cancel_request *req;
 
 	if (!msg || !msg->bodyptr) {
-		scm_err("msg: 0x%pK, bodyptr: 0x%pK", msg, msg->bodyptr);
+		scm_err("msg or msg->bodyptr is NULL");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 

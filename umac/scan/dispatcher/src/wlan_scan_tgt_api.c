@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -283,7 +283,12 @@ tgt_scan_set_max_active_scans(struct wlan_objmgr_psoc *psoc,
 		scm_err("null psoc");
 		return QDF_STATUS_E_NULL_VALUE;
 	}
+
 	scan_params = wlan_scan_psoc_get_def_params(psoc);
+	if (!scan_params) {
+		scm_err("wlan_scan_psoc_get_def_params returned NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	scan_params->max_active_scans_allowed = max_active_scans;
 

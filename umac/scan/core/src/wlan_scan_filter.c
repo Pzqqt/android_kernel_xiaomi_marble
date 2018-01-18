@@ -255,7 +255,7 @@ static bool scm_is_wep_security(struct scan_filter *filter,
 	}
 
 
-	if (match && security) {
+	if (match) {
 		security->auth_type = neg_auth;
 		security->mc_enc = neg_mccipher;
 	}
@@ -526,7 +526,7 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 
 	match = scm_check_pmf_match(filter, &rsn);
 
-	if (match && security) {
+	if (match) {
 		security->auth_type = neg_auth;
 		security->mc_enc = neg_mccipher;
 	}
@@ -626,7 +626,7 @@ static bool scm_is_wpa_security(struct scan_filter *filter,
 		}
 	}
 
-	if (match && security) {
+	if (match) {
 		security->auth_type = neg_auth;
 		security->mc_enc = neg_mccipher;
 	}
@@ -698,7 +698,7 @@ static bool scm_is_wapi_security(struct scan_filter *filter,
 		}
 	}
 
-	if (match && security) {
+	if (match) {
 		security->auth_type = neg_auth;
 		security->mc_enc = neg_mccipher;
 	}
@@ -895,6 +895,9 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	struct scan_default_params *def_param;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
+	if (!def_param)
+		return false;
+
 	roam_params = &def_param->roam_params;
 
 	if (filter->p2p_results && !db_entry->is_p2p)

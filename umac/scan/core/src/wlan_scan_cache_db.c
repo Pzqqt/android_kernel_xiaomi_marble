@@ -287,6 +287,10 @@ void scm_age_out_entries(struct wlan_objmgr_psoc *psoc,
 	struct scan_default_params *def_param;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
+	if (!def_param) {
+		scm_err("wlan_scan_psoc_get_def_params failed");
+		return;
+	}
 
 	for (i = 0 ; i < SCAN_HASH_SIZE; i++) {
 		cur_node = scm_get_next_node(scan_db,
@@ -334,10 +338,13 @@ static QDF_STATUS scm_flush_oldest_entry(struct scan_dbs *scan_db)
 				oldest_node = cur_node;
 		}
 	}
-	scm_debug("Flush oldest BSSID: %pM with age %d ms",
-			oldest_node->entry->bssid.bytes,
-			util_scan_entry_age(oldest_node->entry));
-	scm_scan_entry_put_ref(scan_db, oldest_node, false, true);
+
+	if (oldest_node) {
+		scm_debug("Flush oldest BSSID: %pM with age %d ms",
+				oldest_node->entry->bssid.bytes,
+				util_scan_entry_age(oldest_node->entry));
+		scm_scan_entry_put_ref(scan_db, oldest_node, false, true);
+	}
 	qdf_spin_unlock_bh(&scan_db->scan_db_lock);
 
 	return QDF_STATUS_SUCCESS;
@@ -726,6 +733,10 @@ static void scm_list_insert_sorted(struct wlan_objmgr_psoc *psoc,
 	int pcl_chan_weight = 0;
 
 	params = wlan_scan_psoc_get_def_params(psoc);
+	if (!params) {
+		scm_err("wlan_scan_psoc_get_def_params failed");
+		return;
+	}
 
 	if (filter->num_of_pcl_channels > 0 &&
 			(scan_node->entry->rssi_raw > SCM_PCL_RSSI_THRESHOLD)) {

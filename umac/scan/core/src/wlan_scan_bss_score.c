@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -381,7 +381,7 @@ static int32_t scm_calculate_bandwidth_score(
 	int32_t bw_weight_per_idx;
 	uint8_t cbmode = 0;
 	uint8_t ch_width_index;
-	bool is_vht;
+	bool is_vht = false;
 
 	bw_weight_per_idx = score_config->bandwidth_weight_per_index;
 

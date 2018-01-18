@@ -307,6 +307,11 @@ ucfg_scan_get_pno_def_params(struct wlan_objmgr_vdev *vdev,
 	}
 
 	scan_def = wlan_vdev_get_def_scan_params(vdev);
+	if (!scan_def) {
+		scm_err("wlan_vdev_get_def_scan_params returned NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	pno_def = &scan->pno_cfg;
 
 	req->active_dwell_time = scan_def->active_dwell;
@@ -477,7 +482,7 @@ ucfg_scan_start(struct scan_start_request *req)
 	struct wlan_objmgr_pdev *pdev;
 
 	if (!req || !req->vdev) {
-		scm_err("vdev: %pK, req: %pK", req->vdev, req);
+		scm_err("req or vdev within req is NULL");
 		if (req)
 			scm_scan_free_scan_request_mem(req);
 		return QDF_STATUS_E_NULL_VALUE;
@@ -622,7 +627,7 @@ ucfg_scan_cancel(struct scan_cancel_request *req)
 	QDF_STATUS status;
 
 	if (!req || !req->vdev) {
-		scm_err("vdev: %pK, req: %pK", req->vdev, req);
+		scm_err("req or vdev within req is NULL");
 		if (req)
 			qdf_mem_free(req);
 		return QDF_STATUS_E_NULL_VALUE;
@@ -669,7 +674,7 @@ ucfg_scan_cancel_sync(struct scan_cancel_request *req)
 	qdf_event_t cancel_scan_event;
 
 	if (!req || !req->vdev) {
-		scm_err("vdev: %pK, req: %pK", req->vdev, req);
+		scm_err("req or vdev within req is NULL");
 		if (req)
 			qdf_mem_free(req);
 		return QDF_STATUS_E_NULL_VALUE;
@@ -1100,6 +1105,10 @@ ucfg_scan_init_default_params(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_INVAL;
 	}
 	def = wlan_vdev_get_def_scan_params(vdev);
+	if (!def) {
+		scm_err("wlan_vdev_get_def_scan_params returned NULL");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
 
 	/* Zero out everything and explicitly set fields as required */
 	qdf_mem_zero(req, sizeof(*req));
@@ -1640,6 +1649,10 @@ ucfg_scan_get_max_active_scans(struct wlan_objmgr_psoc *psoc)
 		return 0;
 	}
 	scan_params = wlan_scan_psoc_get_def_params(psoc);
+	if (!scan_params) {
+		scm_err("Failed to get scan object");
+		return 0;
+	}
 
 	return scan_params->max_active_scans_allowed;
 }
