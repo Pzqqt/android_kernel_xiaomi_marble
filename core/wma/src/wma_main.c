@@ -2348,6 +2348,337 @@ static int wma_flush_complete_evt_handler(void *handle,
 			WLAN_LOG_INDICATOR_FIRMWARE, reason_code);
 	return QDF_STATUS_E_FAILURE;
 }
+/**
+ * wma_extract_single_phyerr_spectral() - extract single phy error from event
+ * @handle: wma handle
+ * @param evt_buf: pointer to event buffer
+ * @param datalen: data length of event buffer
+ * @param buf_offset: Pointer to hold value of current event buffer offset
+ * post extraction
+ * @param phyerr: Pointer to hold phyerr
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_extract_single_phyerr_spectral(void *handle,
+		void *evt_buf,
+		uint16_t datalen, uint16_t *buf_offset,
+		wmi_host_phyerr_t *phyerr)
+{
+	wmi_single_phyerr_rx_event *ev;
+	int n = *buf_offset;
+
+	ev = (wmi_single_phyerr_rx_event *)((uint8_t *)evt_buf + n);
+
+	if (n < datalen) {
+		/* ensure there's at least space for the header */
+		if ((datalen - n) < sizeof(ev->hdr)) {
+			WMA_LOGE("%s: not enough space? (datalen=%d, n=%d, hdr=%zu bytes",
+					__func__, datalen, n, sizeof(ev->hdr));
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		phyerr->bufp = ev->bufp;
+		phyerr->buf_len = ev->hdr.buf_len;
+
+		/*
+		 * Sanity check the buffer length of the event against
+		 * what we currently have.
+		 *
+		 * Since buf_len is 32 bits, we check if it overflows
+		 * a large 32 bit value.  It's not 0x7fffffff because
+		 * we increase n by (buf_len + sizeof(hdr)), which would
+		 * in itself cause n to overflow.
+		 *
+		 * If "int" is 64 bits then this becomes a moot point.
+		 */
+		if (ev->hdr.buf_len > 0x7f000000) {
+			WMA_LOGE("%s: buf_len is garbage? (0x%x)",
+				__func__, ev->hdr.buf_len);
+			return QDF_STATUS_E_FAILURE;
+		}
+		if (n + ev->hdr.buf_len > datalen) {
+			WMA_LOGE("%s: buf_len exceeds available space n=%d, buf_len=%d, datalen=%d",
+				__func__, n, ev->hdr.buf_len, datalen);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		phyerr->phy_err_code = WMI_UNIFIED_PHYERRCODE_GET(&ev->hdr);
+		phyerr->tsf_timestamp = ev->hdr.tsf_timestamp;
+
+#ifdef DEBUG_SPECTRAL_SCAN
+		WMA_LOGD("%s: len=%d, tsf=0x%08x, rssi = 0x%x/0x%x/0x%x/0x%x, comb rssi = 0x%x, phycode=%d",
+				__func__,
+				ev->hdr.buf_len,
+				ev->hdr.tsf_timestamp,
+				ev->hdr.rssi_chain0,
+				ev->hdr.rssi_chain1,
+				ev->hdr.rssi_chain2,
+				ev->hdr.rssi_chain3,
+				WMI_UNIFIED_RSSI_COMB_GET(&ev->hdr),
+					  phyerr->phy_err_code);
+
+		/*
+		 * For now, unroll this loop - the chain 'value' field isn't
+		 * a variable but glued together into a macro field definition.
+		 * Grr. :-)
+		 */
+		WMA_LOGD("%s: chain 0: raw=0x%08x; pri20=%d sec20=%d sec40=%d sec80=%d",
+				__func__,
+				ev->hdr.rssi_chain0,
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, PRI20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, SEC20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, SEC40),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, SEC80));
+
+		WMA_LOGD("%s: chain 1: raw=0x%08x: pri20=%d sec20=%d sec40=%d sec80=%d",
+				__func__,
+				ev->hdr.rssi_chain1,
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, PRI20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, SEC20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, SEC40),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, SEC80));
+
+		WMA_LOGD("%s: chain 2: raw=0x%08x: pri20=%d sec20=%d sec40=%d sec80=%d",
+				__func__,
+				ev->hdr.rssi_chain2,
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, PRI20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, SEC20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, SEC40),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, SEC80));
+
+		WMA_LOGD("%s: chain 3: raw=0x%08x: pri20=%d sec20=%d sec40=%d sec80=%d",
+				__func__,
+				ev->hdr.rssi_chain3,
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, PRI20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, SEC20),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, SEC40),
+				WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, SEC80));
+
+
+		WMA_LOGD("%s: freq_info_1=0x%08x, freq_info_2=0x%08x",
+			   __func__, ev->hdr.freq_info_1, ev->hdr.freq_info_2);
+
+		/*
+		 * The NF chain values are signed and are negative - hence
+		 * the cast evilness.
+		 */
+		WMA_LOGD("%s: nfval[1]=0x%08x, nfval[2]=0x%08x, nf=%d/%d/%d/%d, freq1=%d, freq2=%d, cw=%d",
+				__func__,
+				ev->hdr.nf_list_1,
+				ev->hdr.nf_list_2,
+				(int) WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 0),
+				(int) WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 1),
+				(int) WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 2),
+				(int) WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 3),
+				WMI_UNIFIED_FREQ_INFO_GET(&ev->hdr, 1),
+				WMI_UNIFIED_FREQ_INFO_GET(&ev->hdr, 2),
+				WMI_UNIFIED_CHWIDTH_GET(&ev->hdr));
+#endif
+
+		/*
+		 * If required, pass spectral events to the spectral module
+		 */
+		if (ev->hdr.buf_len > 0) {
+
+			/* Initialize the NF values to Zero. */
+			phyerr->rf_info.noise_floor[0] =
+			    WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 0);
+			phyerr->rf_info.noise_floor[1] =
+			    WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 1);
+			phyerr->rf_info.noise_floor[2] =
+			    WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 2);
+			phyerr->rf_info.noise_floor[3] =
+			    WMI_UNIFIED_NF_CHAIN_GET(&ev->hdr, 3);
+
+			/* populate the rf info */
+			phyerr->rf_info.rssi_comb =
+			    WMI_UNIFIED_RSSI_COMB_GET(&ev->hdr);
+
+			/* Need to unroll loop due to macro
+			 * constraints chain 0
+			 */
+			phyerr->rf_info.pc_rssi_info[0].rssi_pri20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, PRI20);
+			phyerr->rf_info.pc_rssi_info[0].rssi_sec20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, SEC20);
+			phyerr->rf_info.pc_rssi_info[0].rssi_sec40 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, SEC40);
+			phyerr->rf_info.pc_rssi_info[0].rssi_sec80 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 0, SEC80);
+
+			/* chain 1 */
+			phyerr->rf_info.pc_rssi_info[1].rssi_pri20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, PRI20);
+			phyerr->rf_info.pc_rssi_info[1].rssi_sec20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, SEC20);
+			phyerr->rf_info.pc_rssi_info[1].rssi_sec40 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, SEC40);
+			phyerr->rf_info.pc_rssi_info[1].rssi_sec80 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 1, SEC80);
+
+			/* chain 2 */
+			phyerr->rf_info.pc_rssi_info[2].rssi_pri20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, PRI20);
+			phyerr->rf_info.pc_rssi_info[2].rssi_sec20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, SEC20);
+			phyerr->rf_info.pc_rssi_info[2].rssi_sec40 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, SEC40);
+			phyerr->rf_info.pc_rssi_info[2].rssi_sec80 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 2, SEC80);
+
+			/* chain 3 */
+			phyerr->rf_info.pc_rssi_info[3].rssi_pri20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, PRI20);
+			phyerr->rf_info.pc_rssi_info[3].rssi_sec20 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, SEC20);
+			phyerr->rf_info.pc_rssi_info[3].rssi_sec40 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, SEC40);
+			phyerr->rf_info.pc_rssi_info[3].rssi_sec80 =
+			WMI_UNIFIED_RSSI_CHAN_GET(&ev->hdr, 3, SEC80);
+
+			phyerr->chan_info.center_freq1 =
+			    WMI_UNIFIED_FREQ_INFO_GET(&ev->hdr, 1);
+			phyerr->chan_info.center_freq2 =
+			    WMI_UNIFIED_FREQ_INFO_GET(&ev->hdr, 2);
+
+		}
+
+		/*
+		 * Advance the buffer pointer to the next PHY error.
+		 * buflen is the length of this payload, so we need to
+		 * advance past the current header _AND_ the payload.
+		 */
+		 n += sizeof(*ev) + ev->hdr.buf_len;
+	}
+	*buf_offset += n;
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_extract_comb_phyerr_spectral() - extract comb phy error from event
+ * @handle: wma handle
+ * @param evt_buf: pointer to event buffer
+ * @param datalen: data length of event buffer
+ * @param buf_offset: Pointer to hold value of current event buffer offset
+ * post extraction
+ * @param phyerr: Pointer to hold phyerr
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS wma_extract_comb_phyerr_spectral(void *handle, void *data,
+		uint16_t datalen, uint16_t *buf_offset,
+		wmi_host_phyerr_t *phyerr)
+{
+	WMI_PHYERR_EVENTID_param_tlvs *param_tlvs;
+	wmi_comb_phyerr_rx_hdr *pe_hdr;
+
+	param_tlvs = (WMI_PHYERR_EVENTID_param_tlvs *) data;
+	if (!param_tlvs) {
+		WMA_LOGE("%s: Received NULL data from FW", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pe_hdr = param_tlvs->hdr;
+	if (pe_hdr == NULL) {
+		WMA_LOGE("%s: Received Data PE Header is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Ensure it's at least the size of the header */
+	if (datalen < sizeof(*pe_hdr)) {
+		WMA_LOGE("%s:  Expected minimum size %zu, received %d",
+			 __func__, sizeof(*pe_hdr), datalen);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/*
+	 * Reconstruct the 64 bit event TSF. This isn't from the MAC, it's
+	 * at the time the event was sent to us, the TSF value will be
+	 * in the future.
+	 */
+	phyerr->tsf64 = pe_hdr->tsf_l32;
+	phyerr->tsf64 |= (((uint64_t) pe_hdr->tsf_u32) << 32);
+
+	phyerr->bufp = param_tlvs->bufp;
+	phyerr->buf_len = pe_hdr->buf_len;
+
+	phyerr->phy_err_mask0 = pe_hdr->rsPhyErrMask0;
+	phyerr->phy_err_mask1 = pe_hdr->rsPhyErrMask1;
+
+	*buf_offset = sizeof(*pe_hdr) + sizeof(uint32_t);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * spectral_phyerr_event_handler() - spectral phyerr event handler
+ * @handle: wma handle
+ * @data: data buffer
+ * @datalen: buffer length
+ *
+ * Return:  QDF_STATUS
+ */
+static QDF_STATUS spectral_phyerr_event_handler(void *handle,
+					uint8_t *data, uint32_t datalen)
+{
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint16_t buf_offset, event_buf_len = 0;
+	wmi_single_phyerr_rx_event *ev;
+	wmi_host_phyerr_t phyerr;
+	struct target_if_spectral_rfqual_info rfqual_info;
+	struct target_if_spectral_chan_info chan_info;
+	struct target_if_spectral_acs_stats acs_stats;
+
+	if (NULL == wma) {
+		WMA_LOGE("%s:wma handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	memset(&phyerr, 0, sizeof(wmi_host_phyerr_t));
+	if (wma_extract_comb_phyerr_spectral(handle, data,
+			datalen, &buf_offset, &phyerr)) {
+		WMA_LOGE("%s: extract comb phyerr failed", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	ev = (wmi_single_phyerr_rx_event *)phyerr.bufp;
+	event_buf_len = phyerr.buf_len;
+	/* Loop over the bufp, extracting out phyerrors */
+	buf_offset = 0;
+	while (buf_offset < event_buf_len) {
+		if (wma_extract_single_phyerr_spectral(handle, ev,
+			event_buf_len, &buf_offset, &phyerr)) {
+			WMA_LOGE("%s: extract single phy err failed", __func__);
+			return QDF_STATUS_E_FAILURE;
+		}
+
+		if (phyerr.buf_len > 0) {
+			if (sizeof(phyerr.rf_info) > sizeof(rfqual_info))
+				qdf_mem_copy(&rfqual_info, &phyerr.rf_info,
+						sizeof(rfqual_info));
+			else
+				qdf_mem_copy(&rfqual_info, &phyerr.rf_info,
+						sizeof(phyerr.rf_info));
+
+			if (sizeof(phyerr.chan_info) > sizeof(chan_info))
+				qdf_mem_copy(&chan_info, &phyerr.chan_info,
+						sizeof(chan_info));
+			else
+				qdf_mem_copy(&chan_info, &phyerr.chan_info,
+						sizeof(phyerr.chan_info));
+
+			target_if_spectral_process_phyerr(wma->pdev, phyerr.bufp,
+							phyerr.buf_len,
+							&rfqual_info,
+							&chan_info,
+							phyerr.tsf64,
+							&acs_stats);
+		}
+	}
+
+	return status;
+}
 
 /**
  * wma_unified_phyerr_rx_event_handler() - phyerr event handler
@@ -2368,6 +2699,40 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	 * need complete testing of non offloaded DFS code before we enable
 	 * it in cmn code.
 	 **/
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	wmi_host_phyerr_t phyerr;
+	uint16_t buf_offset = 0;
+
+	if (NULL == wma) {
+		WMA_LOGE("%s:wma handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* sanity check on data length */
+	if (wma_extract_comb_phyerr_spectral(wma->wmi_handle, data,
+			datalen, &buf_offset, &phyerr) != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: extract phy error from comb phy event failure",
+				__func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* handle different PHY Error conditions */
+	if (((phyerr.phy_err_mask0 & (WMI_PHY_ERROR_MASK0_RADAR |
+				WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT |
+				WMI_PHY_ERROR_MASK0_SPECTRAL_SCAN)) == 0)) {
+		WMA_LOGD("%s:Unknown phy error event", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Handle Spectral or DFS PHY Error */
+	if (phyerr.phy_err_mask0 & (WMI_PHY_ERROR_MASK0_RADAR |
+				WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) {
+		/* Do nothing*/
+	} else if (phyerr.phy_err_mask0 & (WMI_PHY_ERROR_MASK0_SPECTRAL_SCAN |
+				WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) {
+		status = spectral_phyerr_event_handler(wma, data, datalen);
+	}
 	return QDF_STATUS_SUCCESS;
 }
 
