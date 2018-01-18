@@ -122,6 +122,24 @@ QDF_STATUS wmi_unified_vdev_start_send(void *wmi_hdl,
 }
 
 /**
+ * wmi_unified_vdev_set_nac_rssi_send() - send NAC_RSSI command to fw
+ * @wmi: wmi handle
+ * @req: pointer to hold nac rssi request data
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_unified_vdev_set_nac_rssi_send(void *wmi_hdl,
+			struct vdev_scan_nac_rssi_params *req)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_vdev_set_nac_rssi_cmd)
+		return wmi_handle->ops->send_vdev_set_nac_rssi_cmd(wmi_handle, req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_hidden_ssid_vdev_restart_send() - restart vdev to set hidden ssid
  * @wmi: wmi handle
  * @restart_params: vdev restart params
@@ -6562,6 +6580,26 @@ QDF_STATUS wmi_extract_bcn_stats(void *wmi_hdl, void *evt_buf,
 	if (wmi_handle->ops->extract_bcn_stats)
 		return wmi_handle->ops->extract_bcn_stats(wmi_handle,
 				evt_buf, index, vdev_bcn_stats);
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_extract_vdev_nac_rssi_stats() - extract NAC_RSSI stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param vdev_extd_stats: Pointer to hold nac rssi stats
+ *
+ * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
+ */
+QDF_STATUS wmi_extract_vdev_nac_rssi_stats(void *wmi_hdl, void *evt_buf,
+		 struct wmi_host_vdev_nac_rssi_event *vdev_nac_rssi_stats)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->extract_vdev_nac_rssi_stats)
+		return wmi_handle->ops->extract_vdev_nac_rssi_stats(wmi_handle,
+				evt_buf, vdev_nac_rssi_stats);
+
 	return QDF_STATUS_E_FAILURE;
 }
 

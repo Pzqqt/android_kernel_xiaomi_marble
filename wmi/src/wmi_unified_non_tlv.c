@@ -226,6 +226,41 @@ functions in OL layer
 }
 
 /**
+ * send_vdev_set_nac_rssi_cmd_non_tlv() - send set NAC_RSSI command to fw
+ * @wmi: wmi handle
+ * @param: Pointer to hold nac rssi stats
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_vdev_set_nac_rssi_cmd_non_tlv(wmi_unified_t wmi,
+				struct vdev_scan_nac_rssi_params *param)
+{
+	wmi_vdev_scan_nac_rssi_config_cmd *cmd;
+	wmi_buf_t buf;
+	int len = sizeof(wmi_vdev_scan_nac_rssi_config_cmd);
+
+	buf = wmi_buf_alloc(wmi, len);
+	if (!buf) {
+		qdf_print("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_scan_nac_rssi_config_cmd *)wmi_buf_data(buf);
+	cmd->vdev_id = param->vdev_id;
+	cmd->action = param->action;
+	cmd->chan_num = param->chan_num;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->bssid_addr, &cmd->bssid_addr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(param->client_addr, &cmd->client_addr);
+	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_SET_SCAN_NAC_RSSI_CMDID)) {
+		qdf_print("%s: ERROR: Host unable to send LOWI request to FW\n", __func__);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * send_vdev_set_neighbour_rx_cmd_non_tlv() - set neighbour rx param in fw
  * @wmi_handle: wmi handle
  * @macaddr: vdev mac address
@@ -1408,6 +1443,8 @@ static uint32_t get_stats_id_non_tlv(wmi_host_stats_id host_stats_id)
 		stats_id |= WMI_REQUEST_INST_STAT;
 	if (host_stats_id & WMI_HOST_REQUEST_PEER_EXTD_STAT)
 		stats_id |= WMI_REQUEST_PEER_EXTD_STAT;
+	if (host_stats_id & WMI_HOST_REQUEST_NAC_RSSI)
+		stats_id |= WMI_REQUEST_NAC_RSSI_STAT;
 
 	return stats_id;
 }
@@ -7561,8 +7598,15 @@ static QDF_STATUS extract_all_stats_counts_non_tlv(wmi_unified_t wmi_handle,
 		wmi_host_stats_event *stats_param)
 {
 	wmi_stats_event *ev = (wmi_stats_event *) evt_buf;
+	wmi_stats_id stats_id = ev->stats_id;
+	wmi_host_stats_id nac_rssi_ev = 0;
 
-	switch (ev->stats_id) {
+	if (stats_id & WMI_REQUEST_NAC_RSSI_STAT) {
+		nac_rssi_ev = WMI_HOST_REQUEST_NAC_RSSI;
+		stats_id &= ~WMI_REQUEST_NAC_RSSI_STAT;
+	}
+
+	switch (stats_id) {
 	case WMI_REQUEST_PEER_STAT:
 		stats_param->stats_id |= WMI_HOST_REQUEST_PEER_STAT;
 		break;
@@ -7583,11 +7627,15 @@ static QDF_STATUS extract_all_stats_counts_non_tlv(wmi_unified_t wmi_handle,
 		stats_param->stats_id |= WMI_HOST_REQUEST_VDEV_EXTD_STAT;
 		break;
 
+	case WMI_REQUEST_PDEV_EXT2_STAT:
+		stats_param->stats_id |= nac_rssi_ev;
+		break;
 	default:
 		stats_param->stats_id = 0;
 		break;
 
 	}
+
 	stats_param->num_pdev_stats = ev->num_pdev_stats;
 	stats_param->num_pdev_ext_stats = ev->num_pdev_ext_stats;
 	stats_param->num_vdev_stats = ev->num_vdev_stats;
@@ -7912,6 +7960,50 @@ static QDF_STATUS extract_vdev_extd_stats_non_tlv(wmi_unified_t wmi_handle,
 				sizeof(wmi_host_vdev_extd_stats));
 		}
 	}
+	return QDF_STATUS_SUCCESS;
+}
+/**
+ * extract_vdev_nac_rssi_stats_non_tlv() - extract vdev NAC_RSSI stats from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param vdev_nac_rssi_event: Pointer to hold vdev NAC_RSSI stats
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_vdev_nac_rssi_stats_non_tlv(wmi_unified_t wmi_handle,
+	void *evt_buf, struct wmi_host_vdev_nac_rssi_event *vdev_nac_rssi_stats)
+{
+	uint8_t *pdata = ((wmi_stats_event *)evt_buf)->data;
+
+	if (WMI_REQUEST_NAC_RSSI_STAT &
+		((wmi_stats_event *)evt_buf)->stats_id) {
+
+
+		struct wmi_host_vdev_nac_rssi_event *ev = (struct wmi_host_vdev_nac_rssi_event *)
+		((pdata) +
+		((((wmi_stats_event *)evt_buf)->num_pdev_stats) *
+					 sizeof(wmi_pdev_stats)) +
+		((((wmi_stats_event *)evt_buf)->num_pdev_ext_stats) *
+					 sizeof(wmi_pdev_ext_stats)) +
+		((((wmi_stats_event *)evt_buf)->num_vdev_stats) *
+					 sizeof(wmi_vdev_stats)) +
+		((((wmi_stats_event *)evt_buf)->num_peer_stats) *
+					 sizeof(wmi_peer_stats)) +
+		((((wmi_stats_event *)evt_buf)->num_bcnflt_stats) *
+					 sizeof(wmi_bcnfilter_stats_t)) +
+		((WMI_REQUEST_PEER_EXTD_STAT &
+		((wmi_stats_event *)evt_buf)->stats_id) ? ((((wmi_stats_event *)evt_buf)->num_peer_stats) *
+					 sizeof(wmi_peer_extd_stats)) : 0) +
+		((WMI_REQUEST_VDEV_EXTD_STAT &
+		((wmi_stats_event *)evt_buf)->stats_id) ? ((((wmi_stats_event *)evt_buf)->num_vdev_stats)*
+				       sizeof(wmi_vdev_extd_stats)) : 0) +
+		((((wmi_stats_event *)evt_buf)->num_pdev_stats) *
+					 (sizeof(wmi_pdev_ext2_stats))));
+
+		OS_MEMCPY(vdev_nac_rssi_stats, ev,
+				sizeof(struct wmi_host_vdev_nac_rssi_event));
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -8399,6 +8491,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_thermal_mitigation_param_cmd =
 				send_thermal_mitigation_param_cmd_non_tlv,
 	.send_vdev_start_cmd = send_vdev_start_cmd_non_tlv,
+	.send_vdev_set_nac_rssi_cmd = send_vdev_set_nac_rssi_cmd_non_tlv,
 	.send_vdev_stop_cmd = send_vdev_stop_cmd_non_tlv,
 	.send_vdev_set_neighbour_rx_cmd =
 			send_vdev_set_neighbour_rx_cmd_non_tlv,
@@ -8526,6 +8619,7 @@ struct wmi_ops non_tlv_ops =  {
 	.extract_tx_data_traffic_ctrl_ev =
 				extract_tx_data_traffic_ctrl_ev_non_tlv,
 	.extract_vdev_extd_stats = extract_vdev_extd_stats_non_tlv,
+	.extract_vdev_nac_rssi_stats = extract_vdev_nac_rssi_stats_non_tlv,
 	.extract_fips_event_data = extract_fips_event_data_non_tlv,
 	.extract_mumimo_tx_count_ev_param =
 				extract_mumimo_tx_count_ev_param_non_tlv,
