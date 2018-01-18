@@ -12530,33 +12530,6 @@ static int hdd_set_clear_connectivity_check_stats_info(
 	uint32_t pkt_bitmap;
 	int rem;
 
-	/* Clear All Stats command has come */
-	if (!is_set_stats) {
-		arp_stats_params->pkt_type_bitmap = adapter->pkt_type_bitmap;
-		/* DNS tracking is not supported in FW. */
-		arp_stats_params->pkt_type_bitmap &=
-						~CONNECTIVITY_CHECK_SET_DNS;
-		arp_stats_params->flag = false;
-		arp_stats_params->pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
-		qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
-			     sizeof(adapter->hdd_stats.hdd_arp_stats));
-		qdf_mem_zero(&adapter->hdd_stats.hdd_dns_stats,
-			     sizeof(adapter->hdd_stats.hdd_dns_stats));
-		qdf_mem_zero(&adapter->hdd_stats.hdd_tcp_stats,
-			     sizeof(adapter->hdd_stats.hdd_tcp_stats));
-		qdf_mem_zero(&adapter->hdd_stats.hdd_icmpv4_stats,
-			     sizeof(adapter->hdd_stats.hdd_icmpv4_stats));
-		adapter->track_arp_ip = 0;
-		qdf_mem_zero(adapter->dns_payload,
-			     adapter->track_dns_domain_len);
-		adapter->track_dns_domain_len = 0;
-		adapter->track_src_port = 0;
-		adapter->track_dest_port = 0;
-		adapter->track_dest_ipv4 = 0;
-		adapter->pkt_type_bitmap = 0;
-		goto end;
-	}
-
 	/* Set NUD command for start tracking is received. */
 	nla_for_each_nested(curr_attr,
 			    tb[STATS_SET_DATA_PKT_INFO],
@@ -12578,12 +12551,14 @@ static int hdd_set_clear_connectivity_check_stats_info(
 				err = -EINVAL;
 				goto end;
 			}
-			arp_stats_params->pkt_type_bitmap = pkt_bitmap;
-			arp_stats_params->flag = true;
-			adapter->pkt_type_bitmap |=
+
+			if (is_set_stats) {
+				arp_stats_params->pkt_type_bitmap = pkt_bitmap;
+				arp_stats_params->flag = true;
+				adapter->pkt_type_bitmap |=
 					arp_stats_params->pkt_type_bitmap;
 
-			if (pkt_bitmap & CONNECTIVITY_CHECK_SET_ARP) {
+				if (pkt_bitmap & CONNECTIVITY_CHECK_SET_ARP) {
 				if (!tb[STATS_GW_IPV4]) {
 					hdd_err("GW ipv4 address is not present");
 					err = -EINVAL;
@@ -12595,66 +12570,109 @@ static int hdd_set_clear_connectivity_check_stats_info(
 						WLAN_NUD_STATS_ARP_PKT_TYPE;
 				adapter->track_arp_ip =
 						arp_stats_params->ip_addr;
-				qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
-					sizeof(adapter->hdd_stats.
-					       hdd_arp_stats));
-			}
-
-			if (pkt_bitmap & CONNECTIVITY_CHECK_SET_DNS) {
-				uint8_t *domain_name;
-
-				if (!tb2[STATS_DNS_DOMAIN_NAME]) {
-					hdd_err("DNS domain id is not present");
-					err = -EINVAL;
-					goto end;
 				}
-				domain_name =
-					nla_data(tb2[STATS_DNS_DOMAIN_NAME]);
-				adapter->track_dns_domain_len =
-					nla_len(tb2[STATS_DNS_DOMAIN_NAME]);
-				hdd_dns_make_name_query(domain_name,
-						    adapter->dns_payload);
-				/* DNS tracking is not supported in FW. */
-				arp_stats_params->pkt_type_bitmap &=
+
+				if (pkt_bitmap & CONNECTIVITY_CHECK_SET_DNS) {
+					uint8_t *domain_name;
+
+					if (!tb2[STATS_DNS_DOMAIN_NAME]) {
+						hdd_err("DNS domain id is not present");
+						err = -EINVAL;
+						goto end;
+					}
+					domain_name = nla_data(
+						tb2[STATS_DNS_DOMAIN_NAME]);
+					adapter->track_dns_domain_len =
+						nla_len(tb2[
+							STATS_DNS_DOMAIN_NAME]);
+					hdd_dns_make_name_query(domain_name,
+							adapter->dns_payload);
+					/* DNStracking isn't supported in FW. */
+					arp_stats_params->pkt_type_bitmap &=
 						~CONNECTIVITY_CHECK_SET_DNS;
-				qdf_mem_zero(&adapter->hdd_stats.hdd_dns_stats,
-					sizeof(adapter->hdd_stats.
-					       hdd_dns_stats));
-			}
-
-			if (pkt_bitmap & CONNECTIVITY_CHECK_SET_TCP_HANDSHAKE) {
-				if (!tb2[STATS_SRC_PORT] ||
-				    !tb2[STATS_DEST_PORT]) {
-					hdd_err("Source/Dest port is not present");
-					err = -EINVAL;
-					goto end;
 				}
-				arp_stats_params->tcp_src_port =
-					nla_get_u32(tb2[STATS_SRC_PORT]);
-				arp_stats_params->tcp_dst_port =
-					nla_get_u32(tb2[STATS_DEST_PORT]);
-				adapter->track_src_port =
+
+				if (pkt_bitmap &
+				    CONNECTIVITY_CHECK_SET_TCP_HANDSHAKE) {
+					if (!tb2[STATS_SRC_PORT] ||
+					    !tb2[STATS_DEST_PORT]) {
+						hdd_err("Source/Dest port is not present");
+						err = -EINVAL;
+						goto end;
+					}
+					arp_stats_params->tcp_src_port =
+						nla_get_u32(
+							tb2[STATS_SRC_PORT]);
+					arp_stats_params->tcp_dst_port =
+						nla_get_u32(
+							tb2[STATS_DEST_PORT]);
+					adapter->track_src_port =
 						arp_stats_params->tcp_src_port;
-				adapter->track_dest_port =
+					adapter->track_dest_port =
 						arp_stats_params->tcp_dst_port;
-				qdf_mem_zero(&adapter->hdd_stats.hdd_tcp_stats,
-					sizeof(adapter->hdd_stats.
-					       hdd_tcp_stats));
-			}
-
-			if (pkt_bitmap & CONNECTIVITY_CHECK_SET_ICMPV4) {
-				if (!tb2[STATS_DEST_IPV4]) {
-					hdd_err("destination ipv4 address to track ping packets is not present");
-					err = -EINVAL;
-					goto end;
 				}
-				arp_stats_params->icmp_ipv4 =
-					nla_get_u32(tb2[STATS_DEST_IPV4]);
-				adapter->track_dest_ipv4 =
+
+				if (pkt_bitmap &
+				    CONNECTIVITY_CHECK_SET_ICMPV4) {
+					if (!tb2[STATS_DEST_IPV4]) {
+						hdd_err("destination ipv4 address to track ping packets is not present");
+						err = -EINVAL;
+						goto end;
+					}
+					arp_stats_params->icmp_ipv4 =
+						nla_get_u32(
+							tb2[STATS_DEST_IPV4]);
+					adapter->track_dest_ipv4 =
 						arp_stats_params->icmp_ipv4;
-				qdf_mem_zero(&adapter->hdd_stats.hdd_tcp_stats,
-					sizeof(adapter->hdd_stats.
-							hdd_tcp_stats));
+				}
+			} else {
+				/* clear stats command received */
+				arp_stats_params->pkt_type_bitmap = pkt_bitmap;
+				arp_stats_params->flag = false;
+				adapter->pkt_type_bitmap &=
+					(~arp_stats_params->pkt_type_bitmap);
+
+				if (pkt_bitmap & CONNECTIVITY_CHECK_SET_ARP) {
+					arp_stats_params->pkt_type =
+						WLAN_NUD_STATS_ARP_PKT_TYPE;
+					qdf_mem_zero(&adapter->hdd_stats.
+								hdd_arp_stats,
+						     sizeof(adapter->hdd_stats.
+								hdd_arp_stats));
+					adapter->track_arp_ip = 0;
+				}
+
+				if (pkt_bitmap & CONNECTIVITY_CHECK_SET_DNS) {
+					/* DNStracking isn't supported in FW. */
+					arp_stats_params->pkt_type_bitmap &=
+						~CONNECTIVITY_CHECK_SET_DNS;
+					qdf_mem_zero(&adapter->hdd_stats.
+								hdd_dns_stats,
+						     sizeof(adapter->hdd_stats.
+								hdd_dns_stats));
+					qdf_mem_zero(adapter->dns_payload,
+						adapter->track_dns_domain_len);
+					adapter->track_dns_domain_len = 0;
+				}
+
+				if (pkt_bitmap &
+				    CONNECTIVITY_CHECK_SET_TCP_HANDSHAKE) {
+					qdf_mem_zero(&adapter->hdd_stats.
+								hdd_tcp_stats,
+						     sizeof(adapter->hdd_stats.
+								hdd_tcp_stats));
+					adapter->track_src_port = 0;
+					adapter->track_dest_port = 0;
+				}
+
+				if (pkt_bitmap &
+				    CONNECTIVITY_CHECK_SET_ICMPV4) {
+					qdf_mem_zero(&adapter->hdd_stats.
+							hdd_icmpv4_stats,
+						     sizeof(adapter->hdd_stats.
+							hdd_icmpv4_stats));
+					adapter->track_dest_ipv4 = 0;
+				}
 			}
 		} else {
 			hdd_err("stats list empty");
@@ -12882,19 +12900,20 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 					  "%s STATS_SET_START CMD", __func__);
 				return -EINVAL;
 			}
+
+			arp_stats_params.pkt_type_bitmap =
+						CONNECTIVITY_CHECK_SET_ARP;
+			adapter->pkt_type_bitmap |=
+					arp_stats_params.pkt_type_bitmap;
 			arp_stats_params.flag = true;
 			arp_stats_params.ip_addr =
 					nla_get_u32(tb[STATS_GW_IPV4]);
 			adapter->track_arp_ip = arp_stats_params.ip_addr;
-
-			qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
-			     sizeof(adapter->hdd_stats.hdd_arp_stats));
-
 			arp_stats_params.pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
 		}
 	} else {
-		/* clear tracking stats of other data types as well*/
-		if (adapter->pkt_type_bitmap) {
+		/* clear stats command received. */
+		if (tb[STATS_SET_DATA_PKT_INFO]) {
 			err = hdd_set_clear_connectivity_check_stats_info(
 						adapter,
 						&arp_stats_params, tb, false);
@@ -12908,6 +12927,10 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 			if (!arp_stats_params.pkt_type_bitmap)
 				return err;
 		} else {
+			arp_stats_params.pkt_type_bitmap =
+						CONNECTIVITY_CHECK_SET_ARP;
+			adapter->pkt_type_bitmap &=
+					(~arp_stats_params.pkt_type_bitmap);
 			arp_stats_params.flag = false;
 			qdf_mem_zero(&adapter->hdd_stats.hdd_arp_stats,
 				     sizeof(adapter->hdd_stats.hdd_arp_stats));
@@ -12915,10 +12938,9 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		}
 	}
 
-	if (arp_stats_params.flag) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-			  "%s STATS_SET_START Cleared!!", __func__);
-	}
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
+		  "%s STATS_SET_START Received flag %d!!", __func__,
+		  arp_stats_params.flag);
 
 	arp_stats_params.vdev_id = adapter->session_id;
 
