@@ -2571,7 +2571,7 @@ uint8_t sap_select_channel(tHalHandle hal, struct sap_context *sap_ctx,
 	sap_process_avoid_ie(hal, sap_ctx, scan_result, spect_info);
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-	wlan_reg_read_default_country(mac_ctx->psoc, country);
+	wlan_reg_read_current_country(mac_ctx->psoc, country);
 	wlan_reg_get_domain_from_country_code(&domain, country, SOURCE_DRIVER);
 #ifdef SOFTAP_CHANNEL_RANGE
 	start_ch_num = sap_ctx->acs_cfg->start_ch;

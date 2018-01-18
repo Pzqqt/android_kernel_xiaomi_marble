@@ -378,7 +378,7 @@ populate_dot11f_country(tpAniSirGlobal pMac,
 			return eSIR_SUCCESS;
 		}
 
-		wlan_reg_read_default_country(pMac->psoc, code);
+		wlan_reg_read_current_country(pMac->psoc, code);
 
 		qdf_mem_copy(pDot11f->country, code, 2);
 
@@ -6080,7 +6080,7 @@ tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal mac_ctx,
 	item = WNI_CFG_MAX_TX_POWER_5;
 	CFG_GET_STR(nSirStatus, mac_ctx, item, temp, len,
 		WNI_CFG_MAX_TX_POWER_5_LEN);
-	wlan_reg_read_default_country(mac_ctx->psoc, code);
+	wlan_reg_read_current_country(mac_ctx->psoc, code);
 	qdf_mem_copy(&frame->Country, code, 2);
 	if (len > MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE)
 		len = MAX_SIZE_OF_TRIPLETS_IN_COUNTRY_IE;
