@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -91,7 +91,7 @@ static void wlan_p2p_rx_callback(void *user_data,
 		freq = ieee80211_channel_to_frequency(
 			rx_frame->rx_chan, NL80211_BAND_5GHZ);
 
-	cfg80211_notice("Indicate frame over nl80211, vdev id:%d, idx:%d",
+	cfg80211_debug("Indicate frame over nl80211, vdev id:%d, idx:%d",
 		   rx_frame->vdev_id, wdev->netdev->ifindex);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 18, 0))
@@ -129,7 +129,7 @@ static void wlan_p2p_action_tx_cnf_callback(void *user_data,
 	struct wireless_dev *wdev;
 	bool is_success;
 
-	cfg80211_info("user data:%pK, action cookie:%llx, buf:%pK, len:%d, tx status:%d",
+	cfg80211_debug("user data:%pK, action cookie:%llx, buf:%pK, len:%d, tx status:%d",
 		user_data, tx_cnf->action_cookie, tx_cnf->buf,
 		tx_cnf->buf_len, tx_cnf->status);
 

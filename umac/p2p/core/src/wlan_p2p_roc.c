@@ -380,7 +380,8 @@ fail:
 		return status;
 	}
 
-	status = p2p_mgmt_rx_ops(roc_ctx->p2p_soc_obj->soc, true);
+	p2p_soc_obj->cur_roc_vdev_id = roc_ctx->vdev_id;
+	status = p2p_mgmt_rx_ops(p2p_soc_obj->soc, true);
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Failed to register mgmt rx callback, status:%d",
 			status);
@@ -520,6 +521,7 @@ static QDF_STATUS p2p_process_scan_complete_evt(
 		p2p_err("Failed to destroy roc timer");
 
 	status = p2p_mgmt_rx_ops(p2p_soc_obj->soc, false);
+	p2p_soc_obj->cur_roc_vdev_id = P2P_INVALID_VDEV_ID;
 	if (status != QDF_STATUS_SUCCESS)
 		p2p_err("Failed to deregister mgmt rx callback");
 

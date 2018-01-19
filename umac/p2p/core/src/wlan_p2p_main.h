@@ -32,6 +32,7 @@
 #define MAX_QUEUE_LENGTH 20
 #define P2P_NOA_ATTR_IND 0x1090
 #define P2P_MODULE_NAME  "P2P"
+#define P2P_INVALID_VDEV_ID 0xFFFFFFFF
 
 #define p2p_log(level, args...) \
 	QDF_TRACE(QDF_MODULE_ID_P2P, level, ## args)
@@ -167,6 +168,7 @@ enum p2p_connection_status {
  * @cancel_roc_done:  Cancel roc done event
  * @roc_runtime_lock: Runtime lock for roc request
  * @p2p_cb: Callbacks to protocol stack
+ * @cur_roc_vdev_id:  Vdev id of current roc
  * @connection_status:Global P2P connection status
  */
 struct p2p_soc_priv_obj {
@@ -179,6 +181,7 @@ struct p2p_soc_priv_obj {
 	qdf_event_t cancel_roc_done;
 	qdf_runtime_lock_t roc_runtime_lock;
 	struct p2p_protocol_callbacks p2p_cb;
+	uint32_t cur_roc_vdev_id;
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	enum p2p_connection_status connection_status;
 #endif

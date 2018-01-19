@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -185,9 +185,7 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	struct p2p_rx_mgmt_event *rx_mgmt_event;
 	struct p2p_soc_priv_obj *p2p_soc_obj;
 	struct scheduler_msg msg = {0};
-	struct wlan_frame_hdr *wh;
 	struct wlan_objmgr_vdev *vdev;
-	struct p2p_roc_context *roc_ctx;
 	uint32_t vdev_id;
 	uint8_t *pdata;
 
@@ -208,13 +206,12 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 	}
 
 	if (!peer) {
-		roc_ctx = p2p_find_current_roc_ctx(p2p_soc_obj);
-		if (!roc_ctx) {
-			p2p_err("current roc ctx is null, can't get vdev id");
+		if (p2p_soc_obj->cur_roc_vdev_id == P2P_INVALID_VDEV_ID) {
+			p2p_err("vdev id of current roc invalid");
 			qdf_nbuf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		} else {
-			vdev_id = roc_ctx->vdev_id;
+			vdev_id = p2p_soc_obj->cur_roc_vdev_id;
 		}
 	} else {
 		vdev = wlan_peer_get_vdev(peer);
@@ -241,7 +238,6 @@ QDF_STATUS tgt_p2p_mgmt_frame_rx_cb(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	wh = (struct wlan_frame_hdr *)qdf_nbuf_data(buf);
 	pdata = (uint8_t *)qdf_nbuf_data(buf);
 	rx_mgmt->frame_len = mgmt_rx_params->buf_len;
 	rx_mgmt->rx_chan = mgmt_rx_params->channel;
