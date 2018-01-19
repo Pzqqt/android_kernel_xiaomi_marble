@@ -143,6 +143,8 @@ QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev);
 QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev);
 
 qdf_nbuf_t dp_tx_send(void *data_vdev, qdf_nbuf_t nbuf);
+qdf_nbuf_t dp_tx_send_exception(void *data_vdev, qdf_nbuf_t nbuf,
+				struct cdp_tx_exception_metadata *tx_exc);
 
 #ifdef CONVERGED_TDLS_ENABLE
 qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,

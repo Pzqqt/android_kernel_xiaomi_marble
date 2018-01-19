@@ -319,6 +319,23 @@ enum cdp_sec_type {
     cdp_num_sec_types
 };
 
+/**
+ *  struct cdp_tx_exception_metadata - Exception path parameters
+ *  @peer_id: Peer id of the peer
+ *  @tid: Transmit Identifier
+ *  @tx_encap_type: Transmit encap type (i.e. Raw, Native Wi-Fi, Ethernet)
+ *  @sec_type: sec_type to be passed to HAL
+ *
+ *  This structure holds the parameters needed in the exception path of tx
+ *
+ */
+struct cdp_tx_exception_metadata {
+	uint16_t peer_id;
+	uint8_t tid;
+	uint16_t tx_encap_type;
+	enum cdp_sec_type sec_type;
+};
+
 typedef struct cdp_soc_t *ol_txrx_soc_handle;
 
 /**
@@ -375,6 +392,18 @@ typedef void
  */
 typedef qdf_nbuf_t (*ol_txrx_tx_fp)(void *data_vdev,
 				    qdf_nbuf_t msdu_list);
+
+/**
+ * ol_txrx_tx_exc_fp - top-level transmit function on exception path
+ * @data_vdev - handle to the virtual device object
+ * @msdu_list - list of network buffers
+ * @tx_exc_metadata - structure that holds parameters to exception path
+ */
+typedef qdf_nbuf_t (*ol_txrx_tx_exc_fp)(void *data_vdev,
+					qdf_nbuf_t msdu_list,
+					struct cdp_tx_exception_metadata
+						*tx_exc_metadata);
+
 /**
  * ol_txrx_tx_flow_control_fp - tx flow control notification
  * function from txrx to OS shim
@@ -518,6 +547,7 @@ struct ol_txrx_ops {
 	/* tx function pointers - specified by txrx, stored by OS shim */
 	struct {
 		ol_txrx_tx_fp         tx;
+		ol_txrx_tx_exc_fp     tx_exception;
 		ol_txrx_tx_free_ext_fp tx_free_ext;
 	} tx;
 

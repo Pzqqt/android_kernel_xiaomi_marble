@@ -2987,6 +2987,8 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 	/* TODO: Enable the following once Tx code is integrated */
 	txrx_ops->tx.tx = dp_tx_send;
 
+	txrx_ops->tx.tx_exception = dp_tx_send_exception;
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 		"DP Vdev Register success");
 }
