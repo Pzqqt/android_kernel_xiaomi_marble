@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -296,6 +296,19 @@ void p2p_peer_authorized(struct wlan_objmgr_vdev *vdev, uint8_t *mac_addr);
  */
 QDF_STATUS ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
 	uint32_t vdev_id, bool disable_noa);
+
+/**
+ * ucfg_p2p_register_callbacks() - register p2p callbacks
+ * @soc: soc context
+ * @cb_obj: p2p_protocol_callbacks struct
+ *
+ * This function registers lim callbacks to p2p components to provide
+ * protocol information.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS ucfg_p2p_register_callbacks(struct wlan_objmgr_psoc *soc,
+	    struct p2p_protocol_callbacks *cb_obj);
 
 /**
  * ucfg_p2p_status_scan() - Show P2P connection status when scanning

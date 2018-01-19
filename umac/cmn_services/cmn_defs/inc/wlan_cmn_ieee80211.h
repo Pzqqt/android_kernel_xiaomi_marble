@@ -25,6 +25,10 @@
 #include <qdf_types.h>
 #include <osdep.h>
 
+#define IEEE80211_CCMP_HEADERLEN    8
+#define IEEE80211_CCMP_MICLEN       8
+#define IEEE80211_FC1_WEP           0x40
+
 #define WLAN_SEQ_SEQ_SHIFT 4
 
 #define P2P_WFA_OUI {0x50, 0x6f, 0x9a}

@@ -869,17 +869,24 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	/* mpdu_data_ptr is pointer to action header */
 	mpdu_data_ptr = (uint8_t *)qdf_nbuf_data(buf) +
 			sizeof(struct ieee80211_frame);
+	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
+	    (mgmt_subtype == MGMT_SUBTYPE_ACTION) &&
+	    !qdf_is_macaddr_group((struct qdf_mac_addr *)wh->i_addr1) &&
+	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1))
+		mpdu_data_ptr += IEEE80211_CCMP_HEADERLEN;
+
 	frm_type = mgmt_txrx_get_frm_type(mgmt_subtype, mpdu_data_ptr);
 	if (frm_type == MGMT_FRM_UNSPECIFIED) {
-		mgmt_txrx_err("Unspecified mgmt frame type");
+		mgmt_txrx_err("Unspecified mgmt frame type fc: %x %x",
+			      wh->i_fc[0], wh->i_fc[1]);
 		qdf_nbuf_free(buf);
 		status = QDF_STATUS_E_FAILURE;
 		goto dec_peer_ref_cnt;
 	}
 
-	mgmt_txrx_info("Rcvd mgmt frame, mgmt txrx frm type: %u"
-			"seq. no.: %u, peer: %pK",
-			frm_type, *(uint16_t *)wh->i_seq, peer);
+	mgmt_txrx_info("Rcvd mgmt frame, mgmt txrx frm type: %u seq. no.: %u, peer: %pK fc: %x %x",
+		       frm_type, *(uint16_t *)wh->i_seq, peer, wh->i_fc[0],
+		       wh->i_fc[1]);
 
 	mgmt_txrx_psoc_ctx = (struct mgmt_txrx_priv_psoc_context *)
 			wlan_objmgr_psoc_get_comp_private_obj(psoc,
