@@ -11791,6 +11791,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "ibssPeerInfo"},
 
+#ifdef TRACE_RECORD
 	/* handlers for sub-ioctl */
 	{WE_MTRACE_SELECTIVE_MODULE_LOG_ENABLE_CMD,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
@@ -11801,6 +11802,7 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "dumplog"},
+#endif
 
 	{WE_POLICY_MANAGER_CINFO_CMD,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,

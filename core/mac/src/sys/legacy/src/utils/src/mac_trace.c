@@ -49,7 +49,6 @@
 #include "qdf_trace.h"
 #include "wma_if.h"
 
-#ifdef TRACE_RECORD
 /**
  * mac_trace_get_neighbour_roam_state() - Get the neighbor roam state
  * @neighbourroamstate: State in numeric form
@@ -218,6 +217,7 @@ uint8_t *mac_trace_get_lim_mlm_state(uint16_t mlm_state)
 	}
 }
 
+#ifdef TRACE_RECORD
 /**
  * mac_trace_get_sme_msg_string() - Get the msg
  * @sme_msg: message type in numeric form
@@ -395,6 +395,7 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		break;
 	}
 }
+#endif
 
 /**
  * mac_trace_get_wma_msg_string() - Get the msg
@@ -673,6 +674,7 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 	}
 }
 
+#ifdef TRACE_RECORD
 /**
  * mac_trace_get_lim_msg_string() - Get the msg
  * @lim_msg: message type in numeric form

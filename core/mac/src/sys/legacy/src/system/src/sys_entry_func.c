@@ -137,7 +137,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 				subtype, dropreason);
 				MTRACE(mac_trace(mac_ctx,
 					TRACE_CODE_RX_MGMT_DROP, NO_SESSION,
-					dropreason);)
+					dropreason));
 			goto fail;
 		}
 

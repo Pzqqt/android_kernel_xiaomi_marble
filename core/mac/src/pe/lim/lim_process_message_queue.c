@@ -769,15 +769,13 @@ uint32_t lim_defer_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg)
 
 	if (retCode == TX_SUCCESS) {
 		MTRACE(mac_trace_msg_rx
-			       (pMac, NO_SESSION,
-			       LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DEFERRED));
-		       )
+			(pMac, NO_SESSION,
+			LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DEFERRED)));
 	} else {
 		pe_err("Dropped lim message (0x%X) Message %s", pMsg->type, lim_msg_str(pMsg->type));
 		MTRACE(mac_trace_msg_rx
-			       (pMac, NO_SESSION,
-			       LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DROPPED));
-		       )
+			(pMac, NO_SESSION,
+			LIM_TRACE_MAKE_RXMSG(pMsg->type, LIM_MSG_DROPPED)));
 	}
 
 	return retCode;
@@ -1336,7 +1334,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		    msg->type != WMA_RX_SCAN_EVENT)
 			MTRACE(mac_trace_msg_rx(mac_ctx, NO_SESSION,
 				LIM_TRACE_MAKE_RXMSG(msg->type,
-				LIM_MSG_PROCESSED));)
+				LIM_MSG_PROCESSED)));
 	}
 
 	switch (msg->type) {

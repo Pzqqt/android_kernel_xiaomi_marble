@@ -183,10 +183,8 @@ QDF_STATUS cds_init(void)
 	qdf_mem_zero(&g_qdf_ctx, sizeof(g_qdf_ctx));
 
 	qdf_trace_spin_lock_init();
-
-#if defined(TRACE_RECORD)
 	qdf_trace_init();
-#endif
+
 	qdf_register_debugcb_init();
 
 	cds_ssr_protect_init();

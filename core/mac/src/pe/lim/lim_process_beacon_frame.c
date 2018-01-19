@@ -116,9 +116,9 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		session->currentBssBeaconCnt++;
 	}
 	MTRACE(mac_trace(mac_ctx,
-		TRACE_CODE_RX_MGMT_TSF, 0, bcn_ptr->timeStamp[0]);)
+		TRACE_CODE_RX_MGMT_TSF, 0, bcn_ptr->timeStamp[0]));
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_RX_MGMT_TSF, 0,
-		bcn_ptr->timeStamp[1]);)
+		bcn_ptr->timeStamp[1]));
 
 	if ((mac_ctx->lim.gLimMlmState ==
 				eLIM_MLM_WT_PROBE_RESP_STATE) ||
