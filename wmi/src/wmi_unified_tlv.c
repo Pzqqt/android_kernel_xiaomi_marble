@@ -15678,7 +15678,7 @@ static QDF_STATUS send_unit_test_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI("%s: MODULE ID: %d\n", __func__, cmd->module_id);
 	WMI_LOGI("%s: TOKEN: %d\n", __func__, cmd->diag_token);
 	WMI_LOGI("%s: %d num of args = ", __func__, wmi_utest->num_args);
-	for (i = 0; (i < wmi_utest->num_args && i < WMI_MAX_NUM_ARGS); i++) {
+	for (i = 0; (i < wmi_utest->num_args && i < WMI_UNIT_TEST_MAX_NUM_ARGS); i++) {
 		unit_test_cmd_args[i] = wmi_utest->args[i];
 		WMI_LOGI("%d,", wmi_utest->args[i]);
 	}
@@ -16558,7 +16558,7 @@ static QDF_STATUS send_power_dbg_cmd_tlv(wmi_unified_t wmi_handle,
 		       (param->num_args * sizeof(uint32_t)));
 	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
 	WMI_LOGI("%s: %d num of args = ", __func__, param->num_args);
-	for (i = 0; (i < param->num_args && i < WMI_MAX_NUM_ARGS); i++) {
+	for (i = 0; (i < param->num_args && i < WMI_UNIT_TEST_MAX_NUM_ARGS); i++) {
 		cmd_args[i] = param->args[i];
 		WMI_LOGI("%d,", param->args[i]);
 	}
