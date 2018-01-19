@@ -2364,11 +2364,6 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 	}
 
 	mac = PMAC_STRUCT(hal);
-	if (!mac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
-			  "%s: DFS NOL is empty", __func__);
-		return QDF_STATUS_SUCCESS;
-	}
 
 	if (conf == eSAP_DFS_NOL_CLEAR) {
 		struct wlan_objmgr_pdev *pdev;
@@ -2391,10 +2386,6 @@ QDF_STATUS wlansap_set_dfs_nol(struct sap_context *sap_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: unsupport type %d", __func__, conf);
 	}
-
-	/* set DFS-NOL back to keep it update-to-date in CNSS */
-	sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NOL_SET,
-			  (void *) eSAP_STATUS_SUCCESS);
 
 	return QDF_STATUS_SUCCESS;
 }

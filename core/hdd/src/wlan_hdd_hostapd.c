@@ -2532,40 +2532,6 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_ACS_SCAN_SUCCESS_EVENT:
 		return hdd_handle_acs_scan_event(pSapEvent, adapter);
 
-	case eSAP_DFS_NOL_GET:
-		hdd_debug("Received eSAP_DFS_NOL_GET event");
-
-		/* get the dfs nol from PLD */
-		ret = pld_wlan_get_dfs_nol(hdd_ctx->parent_dev,
-					   pSapEvent->sapevt.sapDfsNolInfo.
-					   pDfsList,
-					   pSapEvent->sapevt.sapDfsNolInfo.
-					   sDfsList);
-
-		if (ret > 0) {
-			hdd_debug("Get %d bytes of dfs nol from PLD", ret);
-			return QDF_STATUS_SUCCESS;
-		}
-		hdd_debug("No dfs nol entry in PLD, ret: %d", ret);
-		return QDF_STATUS_E_FAULT;
-
-	case eSAP_DFS_NOL_SET:
-		hdd_debug("Received eSAP_DFS_NOL_SET event");
-
-		/* set the dfs nol to PLD */
-		ret = pld_wlan_set_dfs_nol(hdd_ctx->parent_dev,
-					   pSapEvent->sapevt.sapDfsNolInfo.
-					   pDfsList,
-					   pSapEvent->sapevt.sapDfsNolInfo.
-					   sDfsList);
-
-		if (ret) {
-			hdd_debug("Failed to set dfs nol - ret: %d", ret);
-		} else {
-			hdd_debug(" Set %d bytes dfs nol to PLD",
-				 pSapEvent->sapevt.sapDfsNolInfo.sDfsList);
-		}
-		return QDF_STATUS_SUCCESS;
 	case eSAP_ACS_CHANNEL_SELECTED:
 		hdd_debug("ACS Completed for wlan%d",
 					adapter->dev->ifindex);

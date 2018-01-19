@@ -861,9 +861,6 @@ static void wlansap_update_vendor_acs_chan(tpAniSirGlobal mac_ctx,
 		mac_ctx->sap.SapDfsInfo.cac_state =
 			eSAP_DFS_DO_NOT_SKIP_CAC;
 		sap_cac_reset_notify(hal);
-		/* set DFS-NOL back to keep it update-to-date in CNSS */
-		sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NOL_SET,
-				     (void *) eSAP_STATUS_SUCCESS);
 		return;
 	}
 	/* App failed to provide new channel, try random channel algo */
@@ -1053,9 +1050,6 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 			mac_ctx->sap.SapDfsInfo.cac_state =
 				eSAP_DFS_DO_NOT_SKIP_CAC;
 			sap_cac_reset_notify(hal);
-			/* set DFS-NOL back to keep it update-to-date in CNSS */
-			sap_signal_hdd_event(sap_ctx, NULL, eSAP_DFS_NOL_SET,
-					     (void *) eSAP_STATUS_SUCCESS);
 			break;
 		}
 		/* Issue stopbss for each sapctx */

@@ -167,10 +167,6 @@ typedef enum {
 	eSAP_DFS_PRE_CAC_END,
 	eSAP_DFS_RADAR_DETECT,
 	eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC,
-	/* Event sent when user need to get the DFS NOL from CNSS */
-	eSAP_DFS_NOL_GET,
-	/* Event sent when user need to set the DFS NOL to CNSS */
-	eSAP_DFS_NOL_SET,
 	/* No ch available after DFS RADAR detect */
 	eSAP_DFS_NO_AVAILABLE_CHANNEL,
 	eSAP_STOP_BSS_DUE_TO_NO_CHNL,

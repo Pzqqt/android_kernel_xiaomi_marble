@@ -859,8 +859,6 @@ static uint8_t *sap_hdd_event_to_string(eSapHddEvent event)
 	CASE_RETURN_STRING(eSAP_DFS_PRE_CAC_END);
 	CASE_RETURN_STRING(eSAP_DFS_RADAR_DETECT);
 	CASE_RETURN_STRING(eSAP_DFS_RADAR_DETECT_DURING_PRE_CAC);
-	CASE_RETURN_STRING(eSAP_DFS_NOL_GET);
-	CASE_RETURN_STRING(eSAP_DFS_NOL_SET);
 	CASE_RETURN_STRING(eSAP_DFS_NO_AVAILABLE_CHANNEL);
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	CASE_RETURN_STRING(eSAP_ACS_SCAN_SUCCESS_EVENT);
@@ -1593,7 +1591,6 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 	uint8_t channels[MAX_BONDED_CHANNELS];
 	uint8_t num_channels;
 	struct wlan_objmgr_pdev *pdev = NULL;
-	tSapDfsInfo *dfs_info;
 	enum channel_state ch_state;
 
 	if (!h_hal) {
@@ -1602,16 +1599,6 @@ sap_dfs_is_channel_in_nol_list(struct sap_context *sap_context,
 		return false;
 	} else {
 		mac_ctx = PMAC_STRUCT(h_hal);
-	}
-
-	dfs_info = &mac_ctx->sap.SapDfsInfo;
-	if ((dfs_info->numCurrentRegDomainDfsChannels == 0) ||
-	    (dfs_info->numCurrentRegDomainDfsChannels >
-	     NUM_5GHZ_CHANNELS)) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-			  FL("invalid dfs channel count %d"),
-			  dfs_info->numCurrentRegDomainDfsChannels);
-		return false;
 	}
 
 	/* get the bonded channels */
@@ -2650,22 +2637,6 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 			sap_ctx->csr_roamProfile.ch_params.center_freq_seg1;
 		break;
 
-	case eSAP_DFS_NOL_GET:
-		sap_ap_event.sapHddEventCode = eSAP_DFS_NOL_GET;
-		sap_ap_event.sapevt.sapDfsNolInfo.sDfsList =
-			NUM_5GHZ_CHANNELS * sizeof(tSapDfsNolInfo);
-		sap_ap_event.sapevt.sapDfsNolInfo.pDfsList = (void *)
-			(&mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList[0]);
-		break;
-
-	case eSAP_DFS_NOL_SET:
-		sap_ap_event.sapHddEventCode = eSAP_DFS_NOL_SET;
-		sap_ap_event.sapevt.sapDfsNolInfo.sDfsList =
-			mac_ctx->sap.SapDfsInfo.numCurrentRegDomainDfsChannels *
-			sizeof(tSapDfsNolInfo);
-		sap_ap_event.sapevt.sapDfsNolInfo.pDfsList = (void *)
-			(&mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList[0]);
-		break;
 	case eSAP_ECSA_CHANGE_CHAN_IND:
 
 		if (!csr_roaminfo) {
@@ -4475,9 +4446,6 @@ static int sap_start_dfs_cac_timer(struct sap_context *sap_ctx)
  */
 QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sapContext)
 {
-	uint8_t count = 0;
-	int i;
-	bool bFound = false;
 	tHalHandle hHal;
 	tpAniSirGlobal pMac;
 
@@ -4495,46 +4463,7 @@ QDF_STATUS sap_init_dfs_channel_nol_list(struct sap_context *sapContext)
 	}
 	pMac = PMAC_STRUCT(hHal);
 
-	/* to indicate hdd to get cnss dfs nol */
-	if (QDF_STATUS_SUCCESS == sap_signal_hdd_event(sapContext, NULL,
-						       eSAP_DFS_NOL_GET,
-						       (void *)
-						       eSAP_STATUS_SUCCESS)) {
-		bFound = true;
-	}
-
-	for (i = CHAN_ENUM_36; i <= CHAN_ENUM_165; i++) {
-		if (wlan_reg_get_channel_state(pMac->pdev, i) ==
-				CHANNEL_STATE_DFS) {
-			/* if dfs nol is not found, initialize it */
-			if (!bFound) {
-				pMac->sap.SapDfsInfo.sapDfsChannelNolList[count]
-				.dfs_channel_number =
-					WLAN_REG_CH_NUM(i);
-
-				QDF_TRACE(QDF_MODULE_ID_SAP,
-					  QDF_TRACE_LEVEL_INFO_LOW,
-					  "%s: CHANNEL = %d", __func__,
-					  pMac->sap.SapDfsInfo.
-					  sapDfsChannelNolList[count].
-					  dfs_channel_number);
-
-				pMac->sap.SapDfsInfo.sapDfsChannelNolList[count]
-				.radar_status_flag =
-					eSAP_DFS_CHANNEL_USABLE;
-				pMac->sap.SapDfsInfo.sapDfsChannelNolList[count]
-				.radar_found_timestamp = 0;
-			}
-			count++;
-		}
-	}
-
-	pMac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels = count;
-
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_LOW,
-		  "%s[%d] NUMBER OF DFS CHANNELS = %d",
-		  __func__, __LINE__,
-		  pMac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels);
+	utils_dfs_init_nol(pMac->pdev);
 
 	return QDF_STATUS_SUCCESS;
 }
