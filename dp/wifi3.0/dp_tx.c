@@ -1744,7 +1744,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 			DP_STATS_INC_PKT(vdev,
 					tx_i.mcast_en.mcast_pkt, 1,
 					qdf_nbuf_len(nbuf));
-			if (dp_tx_prepare_send_me(vdev, nbuf) > 0) {
+			if (dp_tx_prepare_send_me(vdev, nbuf) !=
+					QDF_STATUS_SUCCESS) {
 				qdf_nbuf_free(nbuf);
 				return NULL;
 			}

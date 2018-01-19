@@ -151,7 +151,7 @@ qdf_nbuf_t dp_tx_non_std(struct cdp_vdev *vdev_handle,
 
 uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota);
 
-int32_t
+QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf);
 
 #ifndef CONVERGED_TDLS_ENABLE
