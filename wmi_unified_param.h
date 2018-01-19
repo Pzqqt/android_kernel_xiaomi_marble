@@ -51,7 +51,7 @@
 #define WMI_SMPS_MASK_LOWER_16BITS 0xFF
 #define WMI_SMPS_MASK_UPPER_3BITS 0x7
 #define WMI_SMPS_PARAM_VALUE_S 29
-#define WMI_MAX_NUM_ARGS 8
+#define WMI_UNIT_TEST_MAX_NUM_ARGS 100
 /* The size of the utc time in bytes. */
 #define WMI_SIZE_UTC_TIME (10)
 /* The size of the utc time error in bytes. */
@@ -3576,7 +3576,7 @@ struct wmi_unit_test_cmd {
 	uint32_t module_id;
 	uint32_t num_args;
 	uint32_t diag_token;
-	uint32_t args[WMI_MAX_NUM_ARGS];
+	uint32_t args[WMI_UNIT_TEST_MAX_NUM_ARGS];
 };
 
 /**
