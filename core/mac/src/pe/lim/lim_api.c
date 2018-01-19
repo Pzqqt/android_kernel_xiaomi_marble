@@ -76,6 +76,7 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "os_if_nan.h"
 #include <wlan_scan_ucfg_api.h>
+#include <wlan_p2p_ucfg_api.h>
 
 static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 {
@@ -777,6 +778,85 @@ static void pe_shutdown_notifier_cb(void *ctx)
 	}
 }
 
+#ifdef WLAN_FEATURE_11W
+/**
+ * is_mgmt_protected - check RMF enabled for the peer
+ * @vdev_id: vdev id
+ * @peer_mac_addr: peer mac address
+ *
+ * The function check the mgmt frame protection enabled or not
+ * for station mode and AP mode
+ *
+ * Return: true, if the connection is RMF enabled.
+ */
+static bool is_mgmt_protected(uint32_t vdev_id,
+				  const uint8_t *peer_mac_addr)
+{
+	uint16_t aid;
+	tpDphHashNode sta_ds;
+	tpPESession session;
+	bool protected = false;
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac_ctx)
+		return false;
+
+	session = pe_find_session_by_sme_session_id(mac_ctx,
+						    vdev_id);
+	if (!session) {
+		/* couldn't find session */
+		pe_err("Session not found for vdev_id: %d", vdev_id);
+		return false;
+	}
+
+	if (LIM_IS_AP_ROLE(session)) {
+		sta_ds = dph_lookup_hash_entry(mac_ctx,
+					       (uint8_t *)peer_mac_addr, &aid,
+					       &session->dph.dphHashTable);
+		if (sta_ds) {
+			/* rmfenabled will be set at the time of addbss.
+			 * but sometimes EAP auth fails and keys are not
+			 * installed then if we send any management frame
+			 * like deauth/disassoc with this bit set then
+			 * firmware crashes. so check for keys are
+			 * installed or not also before setting the bit
+			 */
+			if (sta_ds->rmfEnabled && sta_ds->is_key_installed)
+				protected = true;
+		}
+	} else if (session->limRmfEnabled &&
+		   session->is_key_installed) {
+		protected = true;
+	}
+
+	return protected;
+}
+#else
+/**
+ * is_mgmt_protected - check RMF enabled for the peer
+ * @vdev_id: vdev id
+ * @peer_mac_addr: peer mac address
+ *
+ * The function check the mgmt frame protection enabled or not
+ * for station mode and AP mode
+ *
+ * Return: true, if the connection is RMF enabled.
+ */
+static bool is_mgmt_protected(uint32_t vdev_id,
+				  const uint8_t *peer_mac_addr)
+{
+	return false;
+}
+#endif
+
+static void p2p_register_callbacks(tpAniSirGlobal mac_ctx)
+{
+	struct p2p_protocol_callbacks p2p_cb = {0};
+
+	p2p_cb.is_mgmt_protected = is_mgmt_protected;
+	ucfg_p2p_register_callbacks(mac_ctx->psoc, &p2p_cb);
+}
+
 /** -------------------------------------------------------------
    \fn pe_open
    \brief will be called in Open sequence from mac_open
@@ -833,6 +913,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, struct cds_config_info *cds_cfg)
 #endif
 	lim_register_debug_callback();
 	lim_nan_register_callbacks(pMac);
+	p2p_register_callbacks(pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(
 	    cds_shutdown_notifier_register(pe_shutdown_notifier_cb, pMac))) {
