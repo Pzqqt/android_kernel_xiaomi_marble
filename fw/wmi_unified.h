@@ -4784,6 +4784,8 @@ typedef enum {
 
     /* Enable/Disable data stall detection */
     WMI_PDEV_PARAM_DATA_STALL_DETECT_ENABLE,          /* 0x9b */
+    /* GCMP Support indication to FW */
+    WMI_PDEV_PARAM_GCMP_SUPPORT_ENABLE,               /* 0x9c */
 } WMI_PDEV_PARAM;
 
 typedef struct {
