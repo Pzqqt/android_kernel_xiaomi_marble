@@ -1201,6 +1201,7 @@ void wma_check_and_set_wake_timer(uint32_t time)
 {
 	int i;
 	struct wma_txrx_node *iface;
+	bool is_set_key_in_progress = false;
 	t_wma_handle *wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma) {
@@ -1223,10 +1224,14 @@ void wma_check_and_set_wake_timer(uint32_t time)
 			 * right now cookie is dont care, since FW disregards
 			 * that.
 			 */
+			is_set_key_in_progress = true;
 			wma_wow_set_wake_time((WMA_HANDLE)wma, i, 0, time);
 			break;
 		}
 	}
+
+	if (!is_set_key_in_progress)
+		WMA_LOGD("set key not in progress for any vdev");
 }
 
 /**
