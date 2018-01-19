@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -23,8 +23,8 @@
 #include <wmi_unified_api.h>
 #include <wlan_objmgr_psoc_obj.h>
 #include <scheduler_api.h>
-#include "wlan_p2p_ucfg_api.h"
 #include "wlan_p2p_public_struct.h"
+#include "wlan_p2p_ucfg_api.h"
 #include "../../core/src/wlan_p2p_main.h"
 #include "../../core/src/wlan_p2p_roc.h"
 #include "../../core/src/wlan_p2p_off_chan_tx.h"
@@ -421,6 +421,28 @@ QDF_STATUS  ucfg_p2p_set_noa(struct wlan_objmgr_psoc *soc,
 	}
 
 	return status;
+}
+
+QDF_STATUS ucfg_p2p_register_callbacks(struct wlan_objmgr_psoc *soc,
+	    struct p2p_protocol_callbacks *cb_obj)
+{
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+
+	if (!soc || !cb_obj) {
+		p2p_err("psoc %pM cb_obj %pM context passed is NULL", soc,
+			cb_obj);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	p2p_soc_obj = wlan_objmgr_psoc_get_comp_private_obj(soc,
+		      WLAN_UMAC_COMP_P2P);
+	if (!p2p_soc_obj) {
+		p2p_err("p2p soc private object is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	p2p_soc_obj->p2p_cb = *cb_obj;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS ucfg_p2p_status_scan(struct wlan_objmgr_vdev *vdev)

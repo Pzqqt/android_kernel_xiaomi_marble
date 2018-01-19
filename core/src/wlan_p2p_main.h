@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -166,6 +166,7 @@ enum p2p_connection_status {
  *                    data to HDD
  * @cancel_roc_done:  Cancel roc done event
  * @roc_runtime_lock: Runtime lock for roc request
+ * @p2p_cb: Callbacks to protocol stack
  * @connection_status:Global P2P connection status
  */
 struct p2p_soc_priv_obj {
@@ -177,6 +178,7 @@ struct p2p_soc_priv_obj {
 	struct p2p_start_param *start_param;
 	qdf_event_t cancel_roc_done;
 	qdf_runtime_lock_t roc_runtime_lock;
+	struct p2p_protocol_callbacks p2p_cb;
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	enum p2p_connection_status connection_status;
 #endif

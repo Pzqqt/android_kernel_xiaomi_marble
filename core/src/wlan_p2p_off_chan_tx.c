@@ -495,21 +495,6 @@ static QDF_STATUS p2p_populate_mac_header(
 }
 
 /**
- * p2p_set_protected_bit() - set protected bit
- * @tx_ctx:     tx context
- * @frame:      pointer to frame
- *
- * This function sets protected bit of this mgmt frame
- *
- * Return: QDF_STATUS_SUCCESS - in case of success
- */
-static QDF_STATUS p2p_set_protected_bit(
-	struct tx_action_context *tx_ctx, void *frame)
-{
-	return QDF_STATUS_E_INVAL;
-}
-
-/**
  * p2p_get_frame_type_str() - parse frame type to string
  * @frame_info: frame information
  *
@@ -799,7 +784,7 @@ static QDF_STATUS p2p_rx_update_connection_status(
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 static QDF_STATUS p2p_packet_alloc(uint16_t size, void **data,
-	void **ppPacket)
+	qdf_nbuf_t *ppPacket)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	qdf_nbuf_t nbuf;
@@ -882,7 +867,7 @@ static QDF_STATUS p2p_send_tx_conf(struct tx_action_context *tx_ctx,
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
-	uint32_t buf_len, void *packet, uint8_t *frame)
+	uint32_t buf_len, qdf_nbuf_t packet, uint8_t *frame)
 {
 	QDF_STATUS status;
 	mgmt_tx_download_comp_cb tx_comp_cb;
@@ -935,7 +920,7 @@ static QDF_STATUS p2p_mgmt_tx(struct tx_action_context *tx_ctx,
 	tx_ctx->nbuf = packet;
 
 	status = wlan_mgmt_txrx_mgmt_frame_tx(peer, tx_ctx->p2p_soc_obj,
-			(qdf_nbuf_t)packet, tx_comp_cb, tx_ota_comp_cb,
+			packet, tx_comp_cb, tx_ota_comp_cb,
 			WLAN_UMAC_COMP_P2P, &mgmt_param);
 
 	wlan_objmgr_peer_release_ref(peer, WLAN_P2P_ID);
@@ -1353,6 +1338,120 @@ static QDF_STATUS p2p_disable_tx_timer(struct tx_action_context *tx_ctx)
 }
 
 /**
+ * is_rmf_mgmt_action_frame() - check RMF action frame by category
+ * @action_category: action frame actegory
+ *
+ * This function check the frame is robust mgmt action frame or not
+ *
+ * Return: true - if category is robust mgmt type
+ */
+static bool is_rmf_mgmt_action_frame(uint8_t action_category)
+{
+	switch (action_category) {
+	case ACTION_CATEGORY_SPECTRUM_MGMT:
+	case ACTION_CATEGORY_QOS:
+	case ACTION_CATEGORY_DLS:
+	case ACTION_CATEGORY_BACK:
+	case ACTION_CATEGORY_RRM:
+	case ACTION_FAST_BSS_TRNST:
+	case ACTION_CATEGORY_SA_QUERY:
+	case ACTION_CATEGORY_PROTECTED_DUAL_OF_PUBLIC_ACTION:
+	case ACTION_CATEGORY_WNM:
+	case ACTION_CATEGORY_MESH_ACTION:
+	case ACTION_CATEGORY_MULTIHOP_ACTION:
+	case ACTION_CATEGORY_DMG:
+	case ACTION_CATEGORY_FST:
+	case ACTION_CATEGORY_VENDOR_SPECIFIC_PROTECTED:
+		return true;
+	default:
+		break;
+	}
+	return false;
+}
+
+/**
+ * p2p_populate_rmf_field() - populate unicast rmf frame
+ * @tx_ctx: tx_action_context
+ * @size: input size of frame, and output new size
+ * @ppbuf: input frame ptr, and output new frame
+ * @ppkt: input pkt, output new pkt.
+ *
+ * This function allocates new pkt for rmf frame. The
+ * new frame has extra space for ccmp field.
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+static QDF_STATUS p2p_populate_rmf_field(struct tx_action_context *tx_ctx,
+	uint32_t *size, uint8_t **ppbuf, qdf_nbuf_t *ppkt)
+{
+	struct wlan_frame_hdr *wh, *rmf_wh;
+	struct action_frm_hdr *action_hdr;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	qdf_nbuf_t pkt = NULL;
+	uint8_t *frame;
+	uint32_t frame_len;
+	struct p2p_soc_priv_obj *p2p_soc_obj;
+
+	p2p_soc_obj = tx_ctx->p2p_soc_obj;
+
+	if (tx_ctx->frame_info.sub_type != P2P_MGMT_ACTION ||
+	    !p2p_soc_obj->p2p_cb.is_mgmt_protected)
+		return QDF_STATUS_SUCCESS;
+	if (*size < (sizeof(struct wlan_frame_hdr) +
+	    sizeof(struct action_frm_hdr))) {
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wh = (struct wlan_frame_hdr *)(*ppbuf);
+	action_hdr = (struct action_frm_hdr *)(*ppbuf + sizeof(*wh));
+
+	if (!is_rmf_mgmt_action_frame(action_hdr->action_category)) {
+		p2p_debug("non rmf act frame 0x%x cat %x",
+			  tx_ctx->frame_info.sub_type,
+			  action_hdr->action_category);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	if (!p2p_soc_obj->p2p_cb.is_mgmt_protected(
+		tx_ctx->vdev_id, wh->i_addr1)) {
+		p2p_debug("non rmf connection vdev %d "QDF_MAC_ADDR_STR,
+			  tx_ctx->vdev_id, QDF_MAC_ADDR_ARRAY(wh->i_addr1));
+		return QDF_STATUS_SUCCESS;
+	}
+	if (!qdf_is_macaddr_group((struct qdf_mac_addr *)wh->i_addr1) &&
+	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1)) {
+
+		frame_len = *size + IEEE80211_CCMP_HEADERLEN +
+			    IEEE80211_CCMP_MICLEN;
+		status = p2p_packet_alloc((uint16_t)frame_len, (void **)&frame,
+			 &pkt);
+		if (status != QDF_STATUS_SUCCESS) {
+			p2p_err("Failed to allocate %d bytes for rmf frame.",
+				frame_len);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		qdf_mem_copy(frame, wh, sizeof(*wh));
+		qdf_mem_copy(frame + sizeof(*wh) + IEEE80211_CCMP_HEADERLEN,
+			     *ppbuf + sizeof(*wh),
+			     *size - sizeof(*wh));
+		rmf_wh = (struct wlan_frame_hdr *)frame;
+		(rmf_wh)->i_fc[1] |= IEEE80211_FC1_WEP;
+		p2p_debug("set protection 0x%x cat %d "QDF_MAC_ADDR_STR,
+			  tx_ctx->frame_info.sub_type,
+			  action_hdr->action_category,
+			  QDF_MAC_ADDR_ARRAY(wh->i_addr1));
+
+		qdf_nbuf_free(*ppkt);
+		*ppbuf = frame;
+		*ppkt = pkt;
+		*size = frame_len;
+	}
+
+	return status;
+}
+
+/**
  * p2p_execute_tx_action_frame() - execute tx action frame
  * @tx_ctx:        tx context
  *
@@ -1364,7 +1463,7 @@ static QDF_STATUS p2p_execute_tx_action_frame(
 	struct tx_action_context *tx_ctx)
 {
 	uint8_t *frame;
-	void *packet;
+	qdf_nbuf_t packet;
 	QDF_STATUS status;
 	uint8_t noa_len = 0;
 	uint8_t noa_stream[P2P_NOA_STREAM_ARR_SIZE];
@@ -1411,7 +1510,7 @@ static QDF_STATUS p2p_execute_tx_action_frame(
 
 		/* Ok-- try to allocate some memory: */
 	status = p2p_packet_alloc((uint16_t) buf_len, (void **)&frame,
-			(void **)&packet);
+			&packet);
 	if (status != QDF_STATUS_SUCCESS) {
 		p2p_err("Failed to allocate %d bytes for a Probe Request.",
 			buf_len);
@@ -1439,7 +1538,12 @@ static QDF_STATUS p2p_execute_tx_action_frame(
 		qdf_mem_copy(frame, tx_ctx->buf, buf_len);
 	}
 
-	p2p_set_protected_bit(tx_ctx, frame);
+	status = p2p_populate_rmf_field(tx_ctx, &buf_len, &frame, &packet);
+	if (status != QDF_STATUS_SUCCESS) {
+		p2p_err("failed to populate rmf frame");
+		qdf_nbuf_free(packet);
+		return status;
+	}
 	status = p2p_mgmt_tx(tx_ctx, buf_len, packet, frame);
 	if (status == QDF_STATUS_SUCCESS) {
 		if (tx_ctx->no_ack) {

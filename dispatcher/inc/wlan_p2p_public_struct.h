@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -213,6 +213,14 @@ struct p2p_noa_info {
 	uint32_t vdev_id;
 	uint32_t num_desc;
 	struct noa_descriptor noa_desc[P2P_MAX_NOA_DESC];
+};
+
+/**
+ * struct p2p_protocol_callbacks - callback to non-converged driver
+ * @is_mgmt_protected: func to get 11w mgmt protection status
+ */
+struct p2p_protocol_callbacks {
+	bool (*is_mgmt_protected)(uint32_t vdev_id, const uint8_t *peer_addr);
 };
 
 #endif /* _WLAN_P2P_PUBLIC_STRUCT_H_ */

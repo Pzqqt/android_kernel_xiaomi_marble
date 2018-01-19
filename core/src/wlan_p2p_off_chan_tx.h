@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -173,7 +173,7 @@ struct tx_action_context {
 	uint32_t duration;
 	qdf_mc_timer_t tx_timer;
 	struct p2p_frame_info frame_info;
-	void *nbuf;
+	qdf_nbuf_t nbuf;
 };
 
 /**
