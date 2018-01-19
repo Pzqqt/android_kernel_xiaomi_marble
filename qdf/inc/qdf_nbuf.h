@@ -217,7 +217,9 @@ struct mon_rx_status {
 	uint8_t  beamformed;
 	uint8_t  he_sig_b_common_RU[4];
 	int8_t   rssi_comb;
+	uint8_t  reception_type;
 	uint16_t duration;
+	uint8_t frame_control_info_valid;
 	int16_t first_data_seq_ctrl;
 	uint32_t ast_index;
 	uint32_t tid;

@@ -81,6 +81,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 	cdp_rx_ppdu->u.mcs = ppdu_info->rx_status.mcs;
 	cdp_rx_ppdu->u.gi = ppdu_info->rx_status.sgi;
 	cdp_rx_ppdu->u.preamble = ppdu_info->rx_status.preamble_type;
+	cdp_rx_ppdu->u.ppdu_type = ppdu_info->rx_status.reception_type;
 	cdp_rx_ppdu->rssi = ppdu_info->rx_status.rssi_comb;
 	cdp_rx_ppdu->timestamp = ppdu_info->com_info.ppdu_timestamp;
 	cdp_rx_ppdu->channel = ppdu_info->rx_status.chan_freq;
@@ -116,7 +117,7 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 		struct cdp_rx_indication_ppdu *ppdu)
 {
 	struct dp_pdev *pdev = NULL;
-	uint8_t mcs, preamble;
+	uint8_t mcs, preamble, ac = 0;
 	uint16_t num_msdu;
 
 	mcs = ppdu->u.mcs;
@@ -141,6 +142,7 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 
 	DP_STATS_INC(peer, rx.sgi_count[ppdu->u.gi], num_msdu);
 	DP_STATS_INC(peer, rx.bw[ppdu->u.bw], num_msdu);
+	DP_STATS_INC(peer, rx.reception_type[ppdu->u.ppdu_type], num_msdu);
 	DP_STATS_INCC(peer, rx.ampdu_cnt, num_msdu, ppdu->is_ampdu);
 	DP_STATS_INCC(peer, rx.non_ampdu_cnt, num_msdu, !(ppdu->is_ampdu));
 	DP_STATS_UPD(peer, rx.rx_rate, mcs);
@@ -174,7 +176,14 @@ static void dp_rx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INCC(peer,
 			rx.pkt_type[preamble].mcs_count[mcs], num_msdu,
 			((mcs < (MAX_MCS - 1)) && (preamble == DOT11_AX)));
-	DP_STATS_INC(peer, rx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
+	/*
+	 * If invalid TID, it could be a non-qos frame, hence do not update
+	 * any AC counters
+	 */
+	ac = TID_TO_WME_AC(ppdu->tid);
+	if (ppdu->tid != HAL_TID_INVALID)
+		DP_STATS_INC(peer, rx.wme_ac_type[ac], num_msdu);
+
 	if (soc->cdp_soc.ol_ops->update_dp_stats) {
 		soc->cdp_soc.ol_ops->update_dp_stats(pdev->osif_pdev,
 				&peer->stats, ppdu->peer_id,
@@ -245,6 +254,20 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 	qdf_nbuf_t ppdu_nbuf;
 	struct dp_peer *peer;
 	struct cdp_rx_indication_ppdu *cdp_rx_ppdu;
+
+	/*
+	 * Do not allocate if fcs error,
+	 * ast idx invalid / fctl invalid
+	 */
+
+	if (!ppdu_info->rx_status.frame_control_info_valid)
+		return;
+
+	if (ppdu_info->com_info.mpdu_cnt_fcs_ok == 0)
+		return;
+
+	if (ppdu_info->rx_status.ast_index == HAL_AST_IDX_INVALID)
+		return;
 
 	ppdu_nbuf = qdf_nbuf_alloc(soc->osdev,
 			sizeof(struct hal_rx_ppdu_info), 0, 0, FALSE);

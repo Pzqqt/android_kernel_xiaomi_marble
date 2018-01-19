@@ -114,6 +114,10 @@
 #define HE_LTF_2_X 1
 #define HE_LTF_4_X 2
 #define VHT_SIG_SU_NSS_MASK	0x7
+
+#define HAL_TID_INVALID 31
+#define HAL_AST_IDX_INVALID 0xFFFF
+
 enum {
 	HAL_HW_RX_DECAP_FORMAT_RAW = 0,
 	HAL_HW_RX_DECAP_FORMAT_NWIFI,
@@ -521,6 +525,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 	case WIFIRX_PPDU_END_USER_STATS_E:
 	{
 		unsigned long tid = 0;
+		uint16_t seq = 0;
 
 		ppdu_info->rx_status.ast_index =
 				HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_4,
@@ -531,6 +536,10 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		tid = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_12,
 				RECEIVED_QOS_DATA_TID_BITMAP);
 		ppdu_info->rx_status.tid = qdf_find_first_bit(&tid, sizeof(tid)*8);
+
+		if (ppdu_info->rx_status.tid == (sizeof(tid) * 8))
+			ppdu_info->rx_status.tid = HAL_TID_INVALID;
+
 		ppdu_info->rx_status.tcp_msdu_count =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_9,
 					TCP_MSDU_COUNT) +
@@ -544,9 +553,16 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 					OTHER_MSDU_COUNT);
 		ppdu_info->rx_status.nss =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_1, NSS);
-		ppdu_info->rx_status.first_data_seq_ctrl =
+
+		ppdu_info->rx_status.frame_control_info_valid =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
 					DATA_SEQUENCE_CONTROL_INFO_VALID);
+
+		seq = HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_5,
+					FIRST_DATA_SEQ_CTRL);
+		if (ppdu_info->rx_status.frame_control_info_valid)
+			ppdu_info->rx_status.first_data_seq_ctrl = seq;
+
 		ppdu_info->rx_status.preamble_type =
 			HAL_RX_GET(rx_tlv, RX_PPDU_END_USER_STATS_3,
 						HT_CONTROL_FIELD_PKT_TYPE);
@@ -895,6 +911,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			PHYRX_RSSI_LEGACY_0, RECEIVE_BANDWIDTH);
 #endif
 		ppdu_info->rx_status.he_re = 0;
+
+		ppdu_info->rx_status.reception_type = HAL_RX_GET(rx_tlv,
+				PHYRX_RSSI_LEGACY_0, RECEPTION_TYPE);
 
 		value = HAL_RX_GET(rssi_info_tlv,
 			RECEIVE_RSSI_INFO_0, RSSI_PRI20_CHAIN0);

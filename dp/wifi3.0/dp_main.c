@@ -4613,6 +4613,8 @@ static inline void
 dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 {
 	struct dp_peer *peer = NULL;
+	struct dp_soc *soc = (struct dp_soc *)vdev->pdev->soc;
+
 	DP_STATS_CLR(vdev->pdev);
 	DP_STATS_CLR(vdev->pdev->soc);
 	DP_STATS_CLR(vdev);
@@ -4620,8 +4622,21 @@ dp_txrx_host_stats_clr(struct dp_vdev *vdev)
 		if (!peer)
 			return;
 		DP_STATS_CLR(peer);
+
+		if (soc->cdp_soc.ol_ops->update_dp_stats) {
+			soc->cdp_soc.ol_ops->update_dp_stats(
+					vdev->pdev->osif_pdev,
+					&peer->stats,
+					peer->peer_ids[0],
+					UPDATE_PEER_STATS);
+		}
+
 	}
 
+	if (soc->cdp_soc.ol_ops->update_dp_stats)
+		soc->cdp_soc.ol_ops->update_dp_stats(vdev->pdev->osif_pdev,
+				&vdev->stats, (uint16_t)vdev->vdev_id,
+				UPDATE_VDEV_STATS);
 }
 
 /**
