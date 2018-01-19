@@ -227,7 +227,7 @@ static os_timer_func(dfs_remove_from_nol)
 	dfs_debug(dfs, WLAN_DEBUG_DFS_NOL,
 		    "remove channel %d from nol", chan);
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
-			(uint8_t *)&chan, 1, DFS_NOL_RESET);
+				    &chan, 1, DFS_NOL_RESET);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
 
 	/*
@@ -330,6 +330,7 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 	uint32_t nol_time_left_ms;
 	struct dfs_channel chan;
 	int i;
+	uint8_t chan_num;
 
 	if (!dfs) {
 		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
@@ -350,6 +351,9 @@ void dfs_set_nol(struct wlan_dfs *dfs,
 
 			DFS_NOL_ADD_CHAN_LOCKED(dfs, chan.dfs_ch_freq,
 					(nol_time_left_ms / TIME_IN_MS));
+			chan_num = utils_dfs_freq_to_chan(chan.dfs_ch_freq);
+			utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
+						&chan_num, 1, DFS_NOL_SET);
 		}
 	}
 #undef TIME_IN_MS
