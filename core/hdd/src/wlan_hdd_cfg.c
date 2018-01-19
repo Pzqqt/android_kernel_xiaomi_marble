@@ -5446,6 +5446,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_BTM_STICKY_TIME_DEFAULT,
 		     CFG_BTM_STICKY_TIME_MIN,
 		     CFG_BTM_STICKY_TIME_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_GCMP_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, gcmp_enabled,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_GCMP_DEFAULT,
+		     CFG_ENABLE_GCMP_MIN,
+		     CFG_ENABLE_GCMP_MAX),
 };
 
 
@@ -7297,6 +7304,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 		  hdd_ctx->config->btm_max_attempt_cnt);
 	hdd_debug("Name = [btm_sticky_time] value = [0x%x]",
 		  hdd_ctx->config->btm_sticky_time);
+	hdd_debug("Name = [%s] value = [%d]",
+		  CFG_ENABLE_GCMP_NAME,
+		  hdd_ctx->config->gcmp_enabled);
 }
 
 
