@@ -6357,8 +6357,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
-	hdd_close_all_adapters(hdd_ctx, false);
-
 	hdd_wlan_stop_modules(hdd_ctx, false);
 
 	hdd_driver_memdump_deinit();
@@ -6382,6 +6380,8 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	 */
 
 	hdd_request_manager_deinit();
+
+	hdd_close_all_adapters(hdd_ctx, false);
 
 	hdd_ipa_cleanup(hdd_ctx);
 
