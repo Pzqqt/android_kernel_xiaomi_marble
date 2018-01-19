@@ -904,6 +904,7 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
  * @vdev_id: Vdev id
  * @channel: Channel to change
  * @ch_width: channel width to change
+ * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * Invoke the callback function to change SAP channel using (E)CSA
  *
@@ -911,7 +912,8 @@ void policy_mgr_check_concurrent_intf_and_restart_sap(
  */
 void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 					    uint8_t vdev_id, uint32_t channel,
-					    uint32_t ch_width)
+					    uint32_t ch_width,
+					    bool forced)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -924,7 +926,7 @@ void policy_mgr_change_sap_channel_with_csa(struct wlan_objmgr_psoc *psoc,
 	if (pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb) {
 		policy_mgr_info("SAP change change without restart");
 		pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb(psoc,
-				vdev_id, channel, ch_width);
+				vdev_id, channel, ch_width, forced);
 	}
 }
 #endif
