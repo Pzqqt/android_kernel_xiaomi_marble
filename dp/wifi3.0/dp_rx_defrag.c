@@ -1039,6 +1039,12 @@ static QDF_STATUS dp_rx_defrag(struct dp_peer *peer, unsigned tid,
 		cur = tmp_next;
 	}
 
+	/* Temporary fix to drop all encrypted packets */
+	if (peer->security[index].sec_type !=
+			htt_sec_type_none) {
+		return QDF_STATUS_E_DEFRAG_ERROR;
+	}
+
 	switch (peer->security[index].sec_type) {
 	case htt_sec_type_tkip:
 		tkip_demic = 1;
@@ -1399,6 +1405,14 @@ static QDF_STATUS dp_rx_defrag_store_fragment(struct dp_soc *soc,
 	if (QDF_IS_STATUS_ERROR(status)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			"Fragment processing failed");
+		if (dp_rx_link_desc_return(soc,
+					peer->rx_tid[tid].dst_ring_desc,
+					HAL_BM_ACTION_PUT_IN_IDLE_LIST) !=
+				QDF_STATUS_SUCCESS)
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s: Failed to return link desc\n",
+					__func__);
+		dp_rx_defrag_cleanup(peer, tid);
 		goto end;
 	}
 
