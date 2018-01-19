@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,18 +59,21 @@ hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4]);
 
 int hdd_softap_set_channel_change(struct net_device *dev,
 					int target_channel,
-					enum phy_ch_width target_bw);
+					enum phy_ch_width target_bw,
+					bool forced);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
 				uint32_t target_channel,
-				uint32_t target_bw);
+				uint32_t target_bw,
+				bool forced);
 /**
  * hdd_sap_restart_chan_switch_cb() - Function to restart SAP with
  * a different channel
  * @psoc: PSOC object information
  * @vdev_id: vdev id
  * @channel: channel to switch
+ * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * This function restarts SAP with a different channel
  *
@@ -79,7 +82,8 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *adapter,
  */
 void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 				    uint8_t vdev_id, uint32_t channel,
-				    uint32_t channel_bw);
+				    uint32_t channel_bw,
+				    bool forced);
 /**
  * wlan_hdd_get_channel_for_sap_restart() - Function to get
  * suitable channel and restart SAP

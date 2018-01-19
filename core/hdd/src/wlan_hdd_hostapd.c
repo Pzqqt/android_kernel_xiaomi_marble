@@ -214,8 +214,6 @@ int hdd_sap_context_init(struct hdd_context *hdd_ctx)
 	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
 	qdf_spinlock_create(&hdd_ctx->sap_update_info_lock);
 
-	qdf_atomic_init(&hdd_ctx->dfs_radar_found);
-
 	return 0;
 }
 
@@ -1176,7 +1174,7 @@ static void wlan_hdd_sap_pre_cac_success(void *data)
 	wlan_hdd_set_pre_cac_complete_status(ap_adapter, true);
 	i = hdd_softap_set_channel_change(ap_adapter->dev,
 			ap_adapter->pre_cac_chan,
-			CH_WIDTH_MAX);
+			CH_WIDTH_MAX, false);
 	if (0 != i) {
 		hdd_err("failed to change channel");
 		wlan_hdd_set_pre_cac_complete_status(ap_adapter, false);
@@ -1691,7 +1689,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hostapd_state->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
 
-		qdf_atomic_set(&hdd_ctx->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 		wlansap_get_dfs_ignore_cac(hdd_ctx->hHal, &ignoreCAC);
 
 		/* DFS requirement: DO NOT transmit during CAC. */
@@ -1944,7 +1942,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			hdd_debug("Sent CAC start to user space");
 		}
 
-		qdf_atomic_set(&hdd_ctx->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 		break;
 	case eSAP_DFS_CAC_INTERRUPTED:
 		/*
@@ -2586,7 +2584,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				pSapEvent->sapevt.sap_chan_cng_ind.new_chan);
 		if (hdd_softap_set_channel_change(dev,
 			 pSapEvent->sapevt.sap_chan_cng_ind.new_chan,
-			 CH_WIDTH_MAX))
+			 CH_WIDTH_MAX, false))
 			return QDF_STATUS_E_FAILURE;
 		else
 			return QDF_STATUS_SUCCESS;
@@ -2801,11 +2799,12 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
  * @target_channel: target channel number.
  * @target_bw: Target bandwidth to move.
  * If no bandwidth is specified, the value is CH_WIDTH_MAX
+ * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * Return: 0 for success, non zero for failure
  */
 int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
-				 enum phy_ch_width target_bw)
+				 enum phy_ch_width target_bw, bool forced)
 {
 	QDF_STATUS status;
 	int ret = 0;
@@ -2850,7 +2849,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	 * once the channel change is completed and SAP will
 	 * post eSAP_START_BSS_EVENT success event to HDD.
 	 */
-	if (qdf_atomic_inc_return(&hdd_ctx->dfs_radar_found) > 1) {
+	if (qdf_atomic_inc_return(&adapter->dfs_radar_found) > 1) {
 		hdd_err("Channel switch in progress!!");
 		return -EBUSY;
 	}
@@ -2861,7 +2860,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 	status = wlansap_set_channel_change_with_csa(
 		WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 		(uint32_t)target_channel,
-		target_bw, true);
+		target_bw, forced);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("SAP set channel failed for channel: %d, bw: %d",
@@ -2871,7 +2870,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		 * radar found flag and also restart the netif
 		 * queues.
 		 */
-		qdf_atomic_set(&hdd_ctx->dfs_radar_found, 0);
+		qdf_atomic_set(&adapter->dfs_radar_found, 0);
 
 		ret = -EINVAL;
 	}
@@ -2885,6 +2884,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
  * @ap_adapter: HDD adapter
  * @target_channel: Channel to which switch must happen
  * @target_bw: Bandwidth of the target channel
+ * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * Invokes the necessary API to perform channel switch for the SAP or GO
  *
@@ -2892,7 +2892,8 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
  */
 void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 					uint32_t target_channel,
-					uint32_t target_bw)
+					uint32_t target_bw,
+					bool forced)
 {
 	struct net_device *dev = ap_adapter->dev;
 	int ret;
@@ -2904,7 +2905,8 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 		return;
 	}
 
-	ret = hdd_softap_set_channel_change(dev, target_channel, target_bw);
+	ret = hdd_softap_set_channel_change(dev, target_channel,
+					    target_bw, forced);
 	if (ret) {
 		hdd_err("channel switch failed");
 		return;
@@ -2913,7 +2915,8 @@ void hdd_sap_restart_with_channel_switch(struct hdd_adapter *ap_adapter,
 
 void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 				    uint8_t vdev_id, uint32_t channel,
-				    uint32_t channel_bw)
+				    uint32_t channel_bw,
+				    bool forced)
 {
 	struct hdd_adapter *ap_adapter =
 		wlan_hdd_get_adapter_from_vdev(psoc, vdev_id);
@@ -2923,7 +2926,7 @@ void hdd_sap_restart_chan_switch_cb(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 	hdd_sap_restart_with_channel_switch(ap_adapter, channel,
-					    channel_bw);
+					    channel_bw, forced);
 }
 
 QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
@@ -3020,7 +3023,7 @@ QDF_STATUS wlan_hdd_get_channel_for_sap_restart(
 	hdd_info("SAP channel change with CSA/ECSA");
 	hdd_sap_restart_chan_switch_cb(psoc, vdev_id,
 		hdd_ap_ctx->sap_config.channel,
-		hdd_ap_ctx->sap_config.ch_params.ch_width);
+		hdd_ap_ctx->sap_config.ch_params.ch_width, false);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -3382,7 +3385,8 @@ static __iw_softap_setparam(struct net_device *dev,
 			hdd_debug("SET Channel Change to new channel= %d",
 			       set_value);
 			ret = hdd_softap_set_channel_change(dev, set_value,
-								CH_WIDTH_MAX);
+								CH_WIDTH_MAX,
+								false);
 		} else {
 			hdd_err("Channel Change Failed, Device in test mode");
 			ret = -EINVAL;
@@ -6487,6 +6491,8 @@ struct hdd_adapter *hdd_wlan_create_ap_dev(struct hdd_context *hdd_ctx,
 	SET_NETDEV_DEV(dev, hdd_ctx->parent_dev);
 	spin_lock_init(&adapter->pause_map_lock);
 	adapter->start_time = adapter->last_time = qdf_system_ticks();
+
+	qdf_atomic_init(&adapter->dfs_radar_found);
 
 	return adapter;
 }

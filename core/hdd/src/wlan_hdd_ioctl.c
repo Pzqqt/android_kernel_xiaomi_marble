@@ -6722,7 +6722,7 @@ static int drv_cmd_set_channel_switch(struct hdd_adapter *adapter,
 
 	hdd_debug("CH:%d BW:%d", chan_number, chan_bw);
 
-	status = hdd_softap_set_channel_change(dev, chan_number, width);
+	status = hdd_softap_set_channel_change(dev, chan_number, width, false);
 	if (status) {
 		hdd_err("Set channel change fail");
 		return status;

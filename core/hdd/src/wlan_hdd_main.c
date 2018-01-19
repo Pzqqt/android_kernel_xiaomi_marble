@@ -7571,13 +7571,15 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
  * hdd_switch_sap_channel() - Move SAP to the given channel
  * @adapter: AP adapter
  * @channel: Channel
+ * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * Moves the SAP interface by invoking the function which
  * executes the callback to perform channel switch using (E)CSA.
  *
  * Return: None
  */
-void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel)
+void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
+			    bool forced)
 {
 	struct hdd_ap_ctx *hdd_ap_ctx;
 	tHalHandle *hal_handle;
@@ -7612,7 +7614,7 @@ void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel)
 
 	policy_mgr_change_sap_channel_with_csa(hdd_ctx->hdd_psoc,
 		adapter->session_id, channel,
-		hdd_ap_ctx->sap_config.ch_width_orig);
+		hdd_ap_ctx->sap_config.ch_width_orig, forced);
 }
 
 int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
@@ -7717,7 +7719,8 @@ void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctxt)
 			hdd_debug("driver to start sap: %d",
 				hdd_ctxt->config->sap_internal_restart);
 			if (hdd_ctxt->config->sap_internal_restart)
-				hdd_switch_sap_channel(adapter, restart_chan);
+				hdd_switch_sap_channel(adapter, restart_chan,
+						       true);
 			else
 				return;
 		}
@@ -7782,7 +7785,7 @@ static void hdd_lte_coex_restart_sap(struct hdd_adapter *adapter,
 
 	wlan_hdd_send_svc_nlink_msg(hdd_ctx->radio_index,
 				    WLAN_SVC_LTE_COEX_IND, NULL, 0);
-	hdd_switch_sap_channel(adapter, restart_chan);
+	hdd_switch_sap_channel(adapter, restart_chan, true);
 }
 
 int hdd_clone_local_unsafe_chan(struct hdd_context *hdd_ctx,

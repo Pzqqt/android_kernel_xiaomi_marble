@@ -1253,8 +1253,9 @@ wlansap_update_csa_channel_params(struct sap_context *sap_context,
  * @sapContext: Pointer to SAP context
  * @targetChannel: Target channel
  * @target_bw: Target bandwidth
- * @strict: if true switch to the requested channel always, fail
- *        otherwise
+ * @strict: if true switch to the requested channel always,
+ *        SCC/MCC check will be ignored,
+ *        fail otherwise
  *
  * This api function does a channel change to the target channel specified.
  * CSA IE is included in the beacons before doing a channel change.
@@ -1315,13 +1316,16 @@ QDF_STATUS wlansap_set_channel_change_with_csa(struct sap_context *sapContext,
 		 * validate target channel switch w.r.t various concurrency
 		 * rules set.
 		 */
-		valid = wlan_sap_validate_channel_switch(hHal, targetChannel,
-				sapContext);
-		if (!valid) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-					FL("Channel switch to %u is not allowed due to concurrent channel interference"),
-					targetChannel);
-			return QDF_STATUS_E_FAULT;
+		if (!strict) {
+			valid = wlan_sap_validate_channel_switch(hHal,
+				targetChannel, sapContext);
+			if (!valid) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_ERROR,
+					  FL("Channel switch to %u is not allowed due to concurrent channel interference"),
+					  targetChannel);
+				return QDF_STATUS_E_FAULT;
+			}
 		}
 		/*
 		 * Post a CSA IE request to SAP state machine with

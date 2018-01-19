@@ -11185,7 +11185,8 @@ static int hdd_update_acs_channel(struct hdd_adapter *adapter, uint8_t reason,
 		sap_config->acs_cfg.ch_width = channel_list->chan_width;
 		hdd_ap_ctx->sap_config.ch_width_orig =
 				channel_list->chan_width;
-		hdd_switch_sap_channel(adapter, sap_config->acs_cfg.pri_ch);
+		hdd_switch_sap_channel(adapter, sap_config->acs_cfg.pri_ch,
+				       true);
 		break;
 
 	default:
@@ -20931,7 +20932,7 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 
 	ch_width = hdd_map_nl_chan_width(csa_params->chandef.width);
 
-	ret = hdd_softap_set_channel_change(dev, channel, ch_width);
+	ret = hdd_softap_set_channel_change(dev, channel, ch_width, false);
 	return ret;
 }
 

@@ -1120,6 +1120,8 @@ struct hdd_adapter {
 		struct hdd_ap_ctx ap;
 	} session;
 
+	qdf_atomic_t dfs_radar_found;
+
 #ifdef WLAN_FEATURE_TSF
 	/* tsf value received from firmware */
 	uint64_t cur_target_time;
@@ -1545,7 +1547,6 @@ struct hdd_context {
 	/* defining the firmware version */
 	uint32_t target_fw_version;
 	uint32_t target_fw_vers_ext;
-	qdf_atomic_t dfs_radar_found;
 
 	/* defining the chip/rom version */
 	uint32_t target_hw_version;
@@ -2164,13 +2165,15 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason);
  * hdd_switch_sap_channel() - Move SAP to the given channel
  * @adapter: AP adapter
  * @channel: Channel
+ * @forced: Force to switch channel, ignore SCC/MCC check
  *
  * Moves the SAP interface by invoking the function which
  * executes the callback to perform channel switch using (E)CSA.
  *
  * Return: None
  */
-void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel);
+void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
+			    bool forced);
 
 void hdd_update_macaddr(struct hdd_config *config,
 			struct qdf_mac_addr hw_macaddr);
