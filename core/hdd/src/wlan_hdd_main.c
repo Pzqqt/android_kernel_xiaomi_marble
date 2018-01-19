@@ -2472,6 +2472,22 @@ static inline void hdd_check_for_leaks(void) {}
 #endif /* CONFIG_LEAK_DETECTION */
 
 /**
+ * hdd_update_country_code - Update country code
+ * @hdd_ctx: HDD context
+ *
+ * Update country code based on module parameter country_code
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_update_country_code(struct hdd_context *hdd_ctx)
+{
+	if (!country_code)
+		return 0;
+
+	return hdd_reg_set_country(hdd_ctx, country_code);
+}
+
+/**
  * hdd_wlan_start_modules() - Single driver state machine for starting modules
  * @hdd_ctx: HDD context
  * @adapter: HDD adapter
@@ -2655,7 +2671,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 		hdd_ctx->driver_status = DRIVER_MODULES_ENABLED;
 		hdd_info("Wlan transitioned (now ENABLED)");
-
 		break;
 
 	default:
@@ -2666,6 +2681,11 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_ctx->start_modules_in_progress = false;
+	if (DRIVER_MODULES_ENABLED == hdd_ctx->driver_status) {
+		ret = hdd_update_country_code(hdd_ctx);
+		if (ret)
+			hdd_err("Failed to update command line country code!");
+	}
 	mutex_unlock(&hdd_ctx->iface_change_lock);
 
 	EXIT();
@@ -8634,21 +8654,6 @@ err_close_adapters:
 	return ret;
 }
 
-/**
- * hdd_update_country_code - Update country code
- * @hdd_ctx: HDD context
- *
- * Update country code based on module parameter country_code
- *
- * Return: 0 on success and errno on failure
- */
-static int hdd_update_country_code(struct hdd_context *hdd_ctx)
-{
-	if (!country_code)
-		return 0;
-
-	return hdd_reg_set_country(hdd_ctx, country_code);
-}
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 /**
@@ -9681,12 +9686,6 @@ static int hdd_features_init(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 
 	ENTER();
 
-	ret = hdd_update_country_code(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to update country code: %d", ret);
-		goto out;
-	}
-
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
 	sme_set_prefer_80MHz_over_160MHz(hdd_ctx->hHal,
@@ -9798,9 +9797,7 @@ deregister_cb:
 	hdd_deregister_cb(hdd_ctx);
 deregister_frames:
 	wlan_hdd_cfg80211_deregister_frames(adapter);
-out:
 	return -EINVAL;
-
 }
 
 /**
@@ -9942,7 +9939,7 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 	}
 	status = hdd_register_bcn_cb(hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hdd_alert("hdd_post_cds_enable_config failed");
+		hdd_err("hdd_register_bcn_cb failed");
 		goto cds_disable;
 	}
 
