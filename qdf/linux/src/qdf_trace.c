@@ -92,6 +92,7 @@ module_trace_info g_qdf_trace_info[QDF_MODULE_ID_MAX] = {
 	[QDF_MODULE_ID_REGULATORY] = {QDF_DEFAULT_TRACE_LEVEL, "REG"},
 };
 
+#ifdef TRACE_RECORD
 /* Static and Global variables */
 static spinlock_t ltrace_lock;
 
@@ -108,6 +109,7 @@ static t_qdf_trace_data g_qdf_trace_data;
  */
 static tp_qdf_trace_cb qdf_trace_cb_table[QDF_MODULE_ID_MAX];
 static tp_qdf_trace_cb qdf_trace_restore_cb_table[QDF_MODULE_ID_MAX];
+#endif
 static tp_qdf_state_info_cb qdf_state_info_table[QDF_MODULE_ID_MAX];
 
 #ifdef CONFIG_DP_TRACE
@@ -374,6 +376,7 @@ EXPORT_SYMBOL(qdf_trace_hex_dump);
 
 #endif
 
+#ifdef TRACE_RECORD
 /**
  * qdf_trace_enable() - Enable MTRACE for specific modules
  * @bitmask_of_module_id: Bitmask according to enum of the modules.
@@ -458,8 +461,6 @@ void qdf_trace_init(void)
 }
 EXPORT_SYMBOL(qdf_trace_init);
 
-#ifdef CONFIG_MCL
-
 /**
  * qdf_trace() - puts the messages in to ring-buffer
  * @module: Enum of module, basically module id.
@@ -528,8 +529,6 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 	spin_unlock_irqrestore(&ltrace_lock, flags);
 }
 EXPORT_SYMBOL(qdf_trace);
-
-#endif
 
 /**
  * qdf_trace_spin_lock_init() - initializes the lock variable before use
@@ -669,6 +668,7 @@ void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
 	}
 }
 EXPORT_SYMBOL(qdf_trace_dump_all);
+#endif
 
 /**
  * qdf_register_debugcb_init() - initializes debug callbacks

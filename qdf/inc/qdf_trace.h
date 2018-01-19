@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -77,10 +77,6 @@ typedef int (qdf_abstract_print)(void *priv, const char *fmt, ...);
 #define DPTRACE(p)
 #endif
 
-#ifdef CONFIG_MCL
-void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
-#endif
-
 /* By default Data Path module will have all log levels enabled, except debug
  * log level. Debug level will be left up to the framework or user space modules
  * to be enabled when issue is detected
@@ -115,12 +111,12 @@ void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
 #ifdef TRACE_RECORD
 
 #define MTRACE(p) p
-#define NO_SESSION 0xFF
 
 #else
-#define MTRACE(p) {  }
+#define MTRACE(p) do { } while (0)
 
 #endif
+#define NO_SESSION 0xFF
 
 /**
  * typedef struct qdf_trace_record_s - keep trace record
@@ -455,12 +451,42 @@ void qdf_register_debug_callback(QDF_MODULE_ID module_id,
 					tp_qdf_state_info_cb qdf_state_infocb);
 QDF_STATUS qdf_state_info_dump_all(char *buf, uint16_t size,
 			uint16_t *driver_dump_size);
+#ifdef TRACE_RECORD
 void qdf_trace_register(QDF_MODULE_ID, tp_qdf_trace_cb);
-QDF_STATUS qdf_trace_spin_lock_init(void);
 void qdf_trace_init(void);
+void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
 void qdf_trace_enable(uint32_t, uint8_t enable);
 void qdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);
+QDF_STATUS qdf_trace_spin_lock_init(void);
+#else
+#ifdef CONFIG_MCL
+static inline
+void qdf_trace_init(void)
+{
+}
 
+static inline
+void qdf_trace_enable(uint32_t bitmask_of_module_id, uint8_t enable)
+{
+}
+static inline
+void qdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
+{
+}
+
+static inline
+void qdf_trace_dump_all(void *p_mac, uint8_t code, uint8_t session,
+			uint32_t count, uint32_t bitmask_of_module)
+{
+}
+
+static inline
+QDF_STATUS qdf_trace_spin_lock_init(void)
+{
+	return QDF_STATUS_E_INVAL;
+}
+#endif
+#endif
 
 #ifdef CONFIG_DP_TRACE
 void qdf_dp_set_proto_bitmap(uint32_t val);
