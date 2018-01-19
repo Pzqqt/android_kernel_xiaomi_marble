@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -820,6 +820,7 @@ QDF_STATUS p2p_psoc_object_open(struct wlan_objmgr_psoc *soc)
 	}
 
 	qdf_runtime_lock_init(&p2p_soc_obj->roc_runtime_lock);
+	p2p_soc_obj->cur_roc_vdev_id = P2P_INVALID_VDEV_ID;
 	p2p_register_pmo_handler();
 
 	p2p_debug("p2p psoc object open successful");
