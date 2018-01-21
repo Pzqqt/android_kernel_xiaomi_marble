@@ -3051,7 +3051,7 @@ ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 		if (temp) {
 			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 			callback(callback_context, temp->mac_addr.raw,
-				vdev->vdev_id, temp, false);
+				vdev->vdev_id, temp);
 			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 		}
 		/* self peer is deleted last */
@@ -3072,7 +3072,7 @@ ol_txrx_remove_peers_for_vdev(struct cdp_vdev *pvdev,
 		/* remove IBSS bss peer last */
 		peer = TAILQ_FIRST(&vdev->peer_list);
 		callback(callback_context, (uint8_t *) &vdev->mac_addr,
-			 vdev->vdev_id, peer, false);
+			 vdev->vdev_id, peer);
 	}
 }
 
@@ -3091,13 +3091,14 @@ ol_txrx_remove_peers_for_vdev_no_lock(struct cdp_vdev *pvdev,
 {
 	struct ol_txrx_vdev_t *vdev = (struct ol_txrx_vdev_t *)pvdev;
 	ol_txrx_peer_handle peer = NULL;
+	ol_txrx_peer_handle tmp_peer = NULL;
 
-	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+	TAILQ_FOREACH_SAFE(peer, &vdev->peer_list, peer_list_elem, tmp_peer) {
 		ol_txrx_info_high(
 			   "%s: peer found for vdev id %d. deleting the peer",
 			   __func__, vdev->vdev_id);
 		callback(callback_context, (uint8_t *)&vdev->mac_addr,
-				vdev->vdev_id, peer, false);
+				vdev->vdev_id, peer);
 	}
 }
 

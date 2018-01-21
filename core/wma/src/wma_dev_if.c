@@ -649,6 +649,23 @@ out:
 }
 
 /**
+ * wma_peer_remove_for_vdev_callback() - remove peer for vdev when SSR
+ * @handle: wma handle
+ * @bssid: mac address
+ * @vdev_id: vdev id
+ * @peer: peer ptr
+ *
+ * Wapper wma_remove_peer for callback, this function will remove peer
+ * without waiting for peer unmap event.
+ * Return: none
+ */
+static void wma_peer_remove_for_vdev_callback(void *handle, uint8_t *bssid,
+		uint8_t vdev_id, void *peer)
+{
+	wma_remove_peer(handle, bssid, vdev_id, peer, true);
+}
+
+/**
  * wma_force_vdev_cleanup() - Cleanup vdev resource when SSR
  * @wma_handle: WMA handle
  * @vdev_id: vdev ID
@@ -659,9 +676,30 @@ static void wma_force_vdev_cleanup(tp_wma_handle wma_handle, uint8_t vdev_id)
 {
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
+	struct cdp_pdev *pdev;
+	struct cdp_vdev *vdev;
 
 	WMA_LOGE("SSR: force cleanup vdev(%d) resouce", vdev_id);
 	iface->vdev_active = false;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		WMA_LOGE("%s: Failed to get pdev", __func__);
+		goto VDEV_DETACH;
+	}
+
+	vdev = cdp_get_vdev_from_vdev_id(soc, pdev, vdev_id);
+	if (!vdev) {
+		WMA_LOGE("%s: Failed to get vdev (%d)", __func__, vdev_id);
+		goto VDEV_DETACH;
+	}
+
+	/* force remove all peer for vdev */
+	cdp_peer_remove_for_vdev_no_lock(soc, vdev,
+					 wma_peer_remove_for_vdev_callback,
+					 wma_handle);
+
+VDEV_DETACH:
 	wma_cdp_vdev_detach(soc, wma_handle, vdev_id);
 }
 
