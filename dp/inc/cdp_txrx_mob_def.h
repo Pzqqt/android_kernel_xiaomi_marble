@@ -410,7 +410,7 @@ struct ieee80211_delba_parameterset {
  * ol_txrx_vdev_peer_remove_cb - wma_remove_peer callback
  */
 typedef void (*ol_txrx_vdev_peer_remove_cb)(void *handle, uint8_t *bssid,
-		uint8_t vdev_id, void *peer, bool roam_synch_in_progress);
+		uint8_t vdev_id, void *peer);
 
 /**
  * ol_txrx_tx_flow_control_fp - tx flow control notification

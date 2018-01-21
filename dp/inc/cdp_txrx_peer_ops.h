@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -143,6 +143,34 @@ cdp_peer_remove_for_vdev(ol_txrx_soc_handle soc,
 			vdev, callback, callback_context, remove_last_peer);
 
 	return;
+}
+
+/**
+ * cdp_peer_remove_for_vdev_no_lock() - remove peer instance from vdev
+ * @soc - data path soc handle
+ * @vdev - virtual interface instance
+ * @callback - remove done notification callback function pointer
+ * @callback_context - callback caller context
+ *
+ * remove peer instance from virtual interface without lock
+ *
+ * Return: NONE
+ */
+static inline void
+cdp_peer_remove_for_vdev_no_lock(ol_txrx_soc_handle soc,
+				 struct cdp_vdev *vdev,
+				 ol_txrx_vdev_peer_remove_cb callback,
+				 void *callback_context)
+{
+	if (!soc || !soc->ops || !soc->ops->peer_ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			  "%s invalid instance", __func__);
+		return;
+	}
+
+	if (soc->ops->peer_ops->remove_peers_for_vdev_no_lock)
+		return soc->ops->peer_ops->remove_peers_for_vdev_no_lock(
+			vdev, callback, callback_context);
 }
 
 /**
