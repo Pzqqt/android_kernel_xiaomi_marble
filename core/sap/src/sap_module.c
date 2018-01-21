@@ -2627,11 +2627,15 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
  *
  * Return: void
  */
-void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log)
+void wlan_sap_enable_phy_error_logs(tHalHandle hal, uint32_t enable_log)
 {
+	int error;
+
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 
-	mac_ctx->sap.enable_dfs_phy_error_logs = enable_log;
+	mac_ctx->sap.enable_dfs_phy_error_logs = !!enable_log;
+	tgt_dfs_control(mac_ctx->pdev, DFS_SET_DEBUG_LEVEL, &enable_log,
+			sizeof(uint32_t), NULL, NULL, &error);
 }
 
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx)

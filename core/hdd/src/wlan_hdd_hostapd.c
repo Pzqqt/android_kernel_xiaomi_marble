@@ -3355,9 +3355,9 @@ static __iw_softap_setparam(struct net_device *dev,
 
 	switch (sub_cmd) {
 	case QCASAP_SET_RADAR_DBG:
-		hdd_debug("QCASAP_SET_RADAR_DBG called with: value: %d",
-		       set_value);
-		wlan_sap_enable_phy_error_logs(hHal, (bool) set_value);
+		hdd_debug("QCASAP_SET_RADAR_DBG called with: value: %x",
+				set_value);
+		wlan_sap_enable_phy_error_logs(hHal, set_value);
 		break;
 
 	case QCSAP_PARAM_CLR_ACL:

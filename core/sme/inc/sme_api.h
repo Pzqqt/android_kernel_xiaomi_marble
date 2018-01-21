@@ -1098,7 +1098,7 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 	uint32_t notify_id,
 	int32_t val);
 
-void wlan_sap_enable_phy_error_logs(tHalHandle hal, bool enable_log);
+void wlan_sap_enable_phy_error_logs(tHalHandle hal, uint32_t enable_log);
 #ifdef WLAN_FEATURE_DSRC
 void sme_set_dot11p_config(tHalHandle hal, bool enable_dot11p);
 
