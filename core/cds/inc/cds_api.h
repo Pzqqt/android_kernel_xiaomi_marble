@@ -590,7 +590,13 @@ bool cds_is_group_addr(uint8_t *mac_addr)
 		return false;
 }
 
-uint32_t cds_get_arp_stats_gw_ip(void);
+/**
+ * cds_get_arp_stats_gw_ip() - get arp stats track IP
+ * @context: osif dev
+ *
+ * Return: ARP stats IP to track.
+ */
+uint32_t cds_get_arp_stats_gw_ip(void *context);
 void cds_incr_arp_stats_tx_tgt_delivered(void);
 void cds_incr_arp_stats_tx_tgt_acked(void);
 

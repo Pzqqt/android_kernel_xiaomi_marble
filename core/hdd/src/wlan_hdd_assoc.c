@@ -1985,6 +1985,7 @@ QDF_STATUS hdd_roam_register_sta(struct hdd_adapter *adapter,
 	/* Register the vdev transmit and receive functions */
 	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
 	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 
 	adapter->txrx_vdev = (void *)cdp_get_vdev_from_vdev_id(soc,
 				(struct cdp_pdev *)pdev,
@@ -3826,6 +3827,7 @@ QDF_STATUS hdd_roam_register_tdlssta(struct hdd_adapter *adapter,
 		 (struct cdp_pdev *)pdev, adapter->session_id),
 		 adapter, &txrx_ops);
 	adapter->tx_fn = txrx_ops.tx.tx;
+	txrx_ops.rx.stats_rx = hdd_tx_rx_collect_connectivity_stats_info;
 
 	/* Register the Station with TL...  */
 	qdf_status = cdp_peer_register(soc,

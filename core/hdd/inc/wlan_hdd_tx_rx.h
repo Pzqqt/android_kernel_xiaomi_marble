@@ -65,6 +65,18 @@ QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 QDF_STATUS hdd_get_peer_sta_id(struct hdd_station_ctx *sta_ctx,
 				struct qdf_mac_addr *peer_mac_addr,
 				uint8_t *sta_id);
+/**
+ * hdd_tx_rx_collect_connectivity_stats_info() - collect connectivity stats
+ * @skb: pointer to skb data
+ * @adapter: pointer to vdev apdapter
+ * @action: action done on pkt.
+ * @pkt_type: data pkt type
+ *
+ * Return: None
+ */
+void hdd_tx_rx_collect_connectivity_stats_info(struct sk_buff *skb,
+		void *adapter, enum connectivity_stats_pkt_status action,
+		uint8_t *pkt_type);
 
 /**
  * hdd_tx_queue_cb() - Disable/Enable the Transmit Queues

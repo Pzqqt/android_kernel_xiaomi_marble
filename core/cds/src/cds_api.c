@@ -2776,22 +2776,18 @@ cds_print_htc_credit_history(uint32_t count, qdf_abstract_print *print,
 }
 #endif
 
-/**
- * cds_get_arp_stats_gw_ip() - get arp stats track IP
- *
- * Return: ARP stats IP to track
- */
-uint32_t cds_get_arp_stats_gw_ip(void)
+uint32_t cds_get_arp_stats_gw_ip(void *context)
 {
-	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter = (struct hdd_adapter *)context;
 
-	hdd_ctx = (struct hdd_context *) (gp_cds_context->pHDDContext);
-	if (!hdd_ctx) {
-		cds_err("Hdd Context is Null");
+	if (unlikely(adapter->magic != WLAN_HDD_ADAPTER_MAGIC)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "Magic cookie(%x) for adapter sanity verification is invalid",
+			  adapter->magic);
 		return 0;
 	}
 
-	return hdd_ctx->track_arp_ip;
+	return adapter->track_arp_ip;
 }
 
 /**
