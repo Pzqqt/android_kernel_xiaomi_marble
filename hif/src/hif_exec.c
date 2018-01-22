@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -295,13 +295,16 @@ uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 	for (i = 0; i < hif_state->hif_num_extgroup; i++) {
 		hif_ext_group = hif_state->hif_ext_group[i];
 		status = 0;
-		if (hif_ext_group->configured &&
-		    hif_ext_group->irq_requested == false)
-			status = hif_grp_irq_configure(scn, hif_ext_group);
-		if (status != 0)
-			HIF_ERROR("%s: failed for group %d", __func__, i);
 		qdf_spinlock_create(&hif_ext_group->irq_lock);
-		hif_ext_group->irq_enabled = true;
+		if (hif_ext_group->configured &&
+		    hif_ext_group->irq_requested == false) {
+			hif_ext_group->irq_enabled = true;
+			status = hif_grp_irq_configure(scn, hif_ext_group);
+		}
+		if (status != 0) {
+			HIF_ERROR("%s: failed for group %d", __func__, i);
+			hif_ext_group->irq_enabled = false;
+		}
 	}
 
 	scn->ext_grp_irq_configured = true;
