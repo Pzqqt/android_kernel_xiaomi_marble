@@ -2091,6 +2091,51 @@ QDF_STATUS wmi_unified_extract_obss_detection_info(void *wmi_hdl,
 						   uint8_t *data,
 						   struct wmi_obss_detect_info
 						   *info);
+/**
+ * wmi_unified_send_bss_color_change_enable_cmd() - WMI function to send bss
+ *  color change enable to FW.
+ * @wmi_hdl: wmi handle
+ * @vdev_id: vdev ID
+ * @enable: enable or disable color change handeling within firmware
+ *
+ * Send WMI_BSS_COLOR_CHANGE_ENABLE_CMDID parameters to fw,
+ * thereby firmware updates bss color when AP announces bss color change.
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS wmi_unified_send_bss_color_change_enable_cmd(void *wmi_hdl,
+							uint32_t vdev_id,
+							bool enable);
+
+/**
+ * wmi_unified_send_obss_color_collision_cfg_cmd() - WMI function to send bss
+ *  color collision detection configuration to FW.
+ * @wmi_hdl: wmi handle
+ * @cfg: obss color collision detection configuration
+ *
+ * Send WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS wmi_unified_send_obss_color_collision_cfg_cmd(void *wmi_hdl,
+		struct wmi_obss_color_collision_cfg_param *cfg);
+
+/**
+ * wmi_unified_extract_obss_color_collision_info() - WMI function to extract
+ *  obss color collision info from FW.
+ * @wmi_hdl: wmi handle
+ * @data: event data from firmware
+ * @info: Pointer to hold bss color collision info
+ *
+ * This function is used to extract bss collision info from firmware.
+ *
+ * Return: QDF_STATUS
+ */
+
+QDF_STATUS wmi_unified_extract_obss_color_collision_info(void *wmi_hdl,
+		uint8_t *data, struct wmi_obss_color_collision_info *info);
 
 #ifdef WLAN_SUPPORT_GREEN_AP
 QDF_STATUS wmi_extract_green_ap_egap_status_info(

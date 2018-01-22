@@ -1553,6 +1553,13 @@ int (*wmi_check_and_pad_event)(void *os_handle, void *param_struc_ptr,
 int (*wmi_check_command_params)(void *os_handle, void *param_struc_ptr,
 				A_UINT32 param_buf_len,
 				A_UINT32 wmi_cmd_event_id);
+QDF_STATUS (*send_bss_color_change_enable_cmd)(wmi_unified_t wmi_handle,
+					       uint32_t vdev_id,
+					       bool enable);
+QDF_STATUS (*send_obss_color_collision_cfg_cmd)(wmi_unified_t wmi_handle,
+		struct wmi_obss_color_collision_cfg_param *cfg);
+QDF_STATUS (*extract_obss_color_collision_info)(uint8_t *evt_buf,
+		struct wmi_obss_color_collision_info *info);
 };
 
 /* Forward declartion for psoc*/
