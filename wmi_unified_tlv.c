@@ -21519,8 +21519,6 @@ static QDF_STATUS send_obss_detection_cfg_cmd_tlv(wmi_unified_t wmi_handle,
 	cmd->ht_legacy_detect_mode = obss_cfg_param->obss_ht_legacy_detect_mode;
 	cmd->ht_mixed_detect_mode = obss_cfg_param->obss_ht_mixed_detect_mode;
 	cmd->ht_20mhz_detect_mode = obss_cfg_param->obss_ht_20mhz_detect_mode;
-	WMI_LOGD("Sending WMI_SAP_OBSS_DETECTION_CFG_CMDID vdev_id:%d",
-		  cmd->vdev_id);
 
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_SAP_OBSS_DETECTION_CFG_CMDID)) {
@@ -21754,6 +21752,170 @@ static QDF_STATUS extract_green_ap_egap_status_info_tlv(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+/*
+ * send_bss_color_change_enable_cmd_tlv() - Send command to enable or disable of
+ * updating bss color change within firmware when AP announces bss color change.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev ID
+ * @enable: enable bss color change within firmware
+ *
+ * Send WMI_BSS_COLOR_CHANGE_ENABLE_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_bss_color_change_enable_cmd_tlv(wmi_unified_t wmi_handle,
+						       uint32_t vdev_id,
+						       bool enable)
+{
+	wmi_buf_t buf;
+	wmi_bss_color_change_enable_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_bss_color_change_enable_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_bss_color_change_enable_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_bss_color_change_enable_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_bss_color_change_enable_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->enable = enable;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_BSS_COLOR_CHANGE_ENABLE_CMDID)) {
+		WMI_LOGE("Failed to send WMI_BSS_COLOR_CHANGE_ENABLE_CMDID");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_obss_color_collision_cfg_cmd_tlv() - send bss color detection
+ *   configurations to firmware.
+ * @wmi_handle: wmi handle
+ * @cfg_param: obss detection configurations
+ *
+ * Send WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID parameters to fw.
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS send_obss_color_collision_cfg_cmd_tlv(
+		wmi_unified_t wmi_handle,
+		struct wmi_obss_color_collision_cfg_param *cfg_param)
+{
+	wmi_buf_t buf;
+	wmi_obss_color_collision_det_config_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_obss_color_collision_det_config_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s: Failed to allocate wmi buffer", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_obss_color_collision_det_config_fixed_param *)wmi_buf_data(
+			buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_obss_color_collision_det_config_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_obss_color_collision_det_config_fixed_param));
+	cmd->vdev_id = cfg_param->vdev_id;
+	cmd->flags = cfg_param->flags;
+	cmd->current_bss_color = cfg_param->current_bss_color;
+	cmd->detection_period_ms = cfg_param->detection_period_ms;
+	cmd->scan_period_ms = cfg_param->scan_period_ms;
+	cmd->free_slot_expiry_time_ms = cfg_param->free_slot_expiry_time_ms;
+
+	switch (cfg_param->evt_type) {
+	case OBSS_COLOR_COLLISION_DETECTION_DISABLE:
+		cmd->evt_type = WMI_BSS_COLOR_COLLISION_DISABLE;
+		break;
+	case OBSS_COLOR_COLLISION_DETECTION:
+		cmd->evt_type = WMI_BSS_COLOR_COLLISION_DETECTION;
+		break;
+	case OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY:
+		cmd->evt_type = WMI_BSS_COLOR_FREE_SLOT_TIMER_EXPIRY;
+		break;
+	case OBSS_COLOR_FREE_SLOT_AVAILABLE:
+		cmd->evt_type = WMI_BSS_COLOR_FREE_SLOT_AVAILABLE;
+		break;
+	default:
+		WMI_LOGE("%s: invalid event type: %d",
+			 __func__, cfg_param->evt_type);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID)) {
+		WMI_LOGE("%s: Sending OBSS color det cmd failed, vdev_id: %d",
+			 __func__, cfg_param->vdev_id);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * extract_obss_color_collision_info_tlv() - Extract bss color collision info
+ *   received from firmware.
+ * @evt_buf: pointer to event buffer
+ * @info: Pointer to hold bss collision  info
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS extract_obss_color_collision_info_tlv(uint8_t *evt_buf,
+		struct wmi_obss_color_collision_info *info)
+{
+	WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID_param_tlvs *param_buf;
+	wmi_obss_color_collision_evt_fixed_param *fix_param;
+
+	if (!info) {
+		WMI_LOGE("%s: Invalid obss color buffer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param_buf = (WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID_param_tlvs *)
+		    evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("%s: Invalid evt_buf", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	fix_param = param_buf->fixed_param;
+	info->vdev_id = fix_param->vdev_id;
+	info->obss_color_bitmap_bit0to31 = fix_param->bss_color_bitmap_bit0to31;
+	info->obss_color_bitmap_bit32to63 =
+		fix_param->bss_color_bitmap_bit32to63;
+
+	switch (fix_param->evt_type) {
+	case WMI_BSS_COLOR_COLLISION_DISABLE:
+		info->evt_type = OBSS_COLOR_COLLISION_DETECTION_DISABLE;
+		break;
+	case WMI_BSS_COLOR_COLLISION_DETECTION:
+		info->evt_type = OBSS_COLOR_COLLISION_DETECTION;
+		break;
+	case WMI_BSS_COLOR_FREE_SLOT_TIMER_EXPIRY:
+		info->evt_type = OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY;
+		break;
+	case WMI_BSS_COLOR_FREE_SLOT_AVAILABLE:
+		info->evt_type = OBSS_COLOR_FREE_SLOT_AVAILABLE;
+		break;
+	default:
+		WMI_LOGE("%s: invalid event type: %d, vdev_id: %d",
+			 __func__, fix_param->evt_type, fix_param->vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
 
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
@@ -22221,6 +22383,12 @@ struct wmi_ops tlv_ops =  {
 	.wmi_free_allocated_event = wmitlv_free_allocated_event_tlvs,
 	.wmi_check_and_pad_event = wmitlv_check_and_pad_event_tlvs,
 	.wmi_check_command_params = wmitlv_check_command_tlv_params,
+	.send_bss_color_change_enable_cmd =
+		send_bss_color_change_enable_cmd_tlv,
+	.send_obss_color_collision_cfg_cmd =
+		send_obss_color_collision_cfg_cmd_tlv,
+	.extract_obss_color_collision_info =
+		extract_obss_color_collision_info_tlv,
 };
 
 /**
@@ -22503,6 +22671,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 		WMI_SAP_OBSS_DETECTION_REPORT_EVENTID;
 	event_ids[wmi_host_swfda_event_id] = WMI_HOST_SWFDA_EVENTID;
 	event_ids[wmi_sar_get_limits_event_id] = WMI_SAR_GET_LIMITS_EVENTID;
+	event_ids[wmi_obss_color_collision_report_event_id] =
+		WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID;
 }
 
 /**
