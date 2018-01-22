@@ -57,8 +57,7 @@ struct wlan_psoc_target_capability_info *ucfg_get_target_cap(
 		return NULL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return NULL;
@@ -115,8 +114,7 @@ target_resource_config *ucfg_get_tgt_res_cfg(struct wlan_objmgr_psoc *psoc)
 		return NULL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return NULL;
@@ -134,8 +132,7 @@ int32_t ucfg_get_pdev_idx(struct wlan_objmgr_pdev *pdev)
 		return 0xffffffff;
 	}
 
-	tgt_hdl = (struct target_pdev_info *)wlan_pdev_get_tgt_if_handle(
-						pdev);
+	tgt_hdl = wlan_pdev_get_tgt_if_handle(pdev);
 	if (!tgt_hdl) {
 		target_if_err("target_pdev_info is null");
 		return 0xffffffff;
@@ -153,8 +150,7 @@ uint32_t ucfg_get_tgt_type(struct wlan_objmgr_psoc *psoc)
 		return 0;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return 0;
@@ -188,8 +184,7 @@ uint32_t ucfg_get_tgt_version(struct wlan_objmgr_psoc *psoc)
 		return -EINVAL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return -EINVAL;
@@ -207,8 +202,7 @@ uint32_t ucfg_get_tgt_revision(struct wlan_objmgr_psoc *psoc)
 		return -EINVAL;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return -EINVAL;
@@ -228,8 +222,7 @@ bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
 		return false;
 	}
 
-	tgt_hdl = (struct target_psoc_info *)wlan_psoc_get_tgt_if_handle(
-						psoc);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
 	if (!tgt_hdl) {
 		target_if_err("target_psoc_info is null");
 		return false;
@@ -248,6 +241,57 @@ bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
 	return false;
 }
 
+void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_hdl;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return NULL;
+	}
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return NULL;
+	}
+
+	return target_psoc_get_wmi_hdl(tgt_hdl);
+}
+
+void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_hdl;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return NULL;
+	}
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return NULL;
+	}
+
+	return target_psoc_get_htc_hdl(tgt_hdl);
+}
+
+void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
+{
+	struct target_psoc_info *tgt_hdl;
+
+	if (!psoc) {
+		target_if_err("psoc is null");
+		return NULL;
+	}
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(psoc);
+	if (!tgt_hdl) {
+		target_if_err("target_psoc_info is null");
+		return NULL;
+	}
+
+	return target_psoc_get_hif_hdl(tgt_hdl);
+}
+
 void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
 {
 	struct target_pdev_info *tgt_hdl;
@@ -256,8 +300,7 @@ void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
 		target_if_err("pdev is null");
 		return NULL;
 	}
-	tgt_hdl = (struct target_pdev_info *)wlan_pdev_get_tgt_if_handle(
-						pdev);
+	tgt_hdl = wlan_pdev_get_tgt_if_handle(pdev);
 	if (!tgt_hdl) {
 		target_if_err("target_pdev_info is null");
 		return NULL;

@@ -507,26 +507,6 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 	return QDF_STATUS_SUCCESS;
 }
 
-void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc)
-{
-	struct target_psoc_info *tgt_psoc_info;
-
-	if (psoc == NULL) {
-		target_if_err("pSOC is NULL");
-		return NULL;
-	}
-
-	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
-
-	if (tgt_psoc_info == NULL) {
-		target_if_err("psoc tgt_if_handle is NULL");
-		return NULL;
-	}
-
-	return target_psoc_get_wmi_hdl(tgt_psoc_info);
-
-}
-
 bool target_is_tgt_type_ar900b(uint32_t target_type)
 {
 	return target_type == TARGET_TYPE_AR900B;

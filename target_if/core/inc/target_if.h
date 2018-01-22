@@ -387,16 +387,6 @@ QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc);
 QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc);
 
 /**
- * target_if_get_wmi_handle() - get wmi handle
- * @psoc: pointer to psoc
- *
- * API to get wmi handle free allocated memory for target_psoc_info
- *
- * Return: SUCCESS on successful memory deallocation or Failure
- */
-void *target_if_get_wmi_handle(struct wlan_objmgr_psoc *psoc);
-
-/**
  * target_is_tgt_type_ar900b() - Check if the target type is AR900B
  * @target_type: target type to be checked.
  *
@@ -862,7 +852,7 @@ static inline void target_psoc_set_hif_hdl
  *
  * Return: hif_hdl
  */
-static inline void *target_psoc_get_num_hif_hdl
+static inline void *target_psoc_get_hif_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)

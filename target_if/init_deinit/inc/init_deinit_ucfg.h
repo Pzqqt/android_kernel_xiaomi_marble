@@ -145,6 +145,36 @@ uint32_t ucfg_get_tgt_revision(struct wlan_objmgr_psoc *psoc);
 bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc);
 
 /**
+ * ucfg_get_wmi_hdl() - get wmi handle
+ * @psoc: pointer to psoc
+ *
+ * API to get wmi handle
+ *
+ * Return: wmi handler
+ */
+void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_htc_hdl() - get htc handler
+ * @psoc: pointer to psoc
+ *
+ * API to get htc handle
+ *
+ * Return: htc handler
+ */
+void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_hif_hdl() - get hif handle
+ * @psoc: pointer to psoc
+ *
+ * API to get hif handle
+ *
+ * Return: hif handler
+ */
+void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
+
+/**
  * ucfg_get_pdev_wmi_handle() - get pdev wmi handle
  * @pdev: pointer to dev
  *
