@@ -8050,44 +8050,12 @@ void hdd_acs_response_timeout_handler(void *context)
 	}
 }
 
-/**
- * wlan_hdd_disable_all_dual_mac_features() - Disable dual mac features
- * @hdd_ctx: HDD context
- *
- * Disables all the dual mac features like DBS, Agile DFS etc.
- *
- * Return: QDF_STATUS_SUCCESS on success
- */
-static QDF_STATUS wlan_hdd_disable_all_dual_mac_features(struct hdd_context *hdd_ctx)
-{
-	struct policy_mgr_dual_mac_config cfg = {0};
-	QDF_STATUS status;
-
-	if (!hdd_ctx) {
-		hdd_err("HDD context is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cfg.scan_config = 0;
-	cfg.fw_mode_config = 0;
-	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
-
-	hdd_debug("Disabling all dual mac features...");
-
-	status = sme_soc_set_dual_mac_config(cfg);
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("sme_soc_set_dual_mac_config failed %d", status);
-		return status;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
 static QDF_STATUS
 wlan_hdd_update_dbs_scan_and_fw_mode_config(struct hdd_context *hdd_ctx)
 {
 	struct policy_mgr_dual_mac_config cfg = {0};
 	QDF_STATUS status;
+	uint32_t channel_select_logic_conc;
 
 	if (!hdd_ctx) {
 		hdd_err("HDD context is NULL");
@@ -8097,15 +8065,26 @@ wlan_hdd_update_dbs_scan_and_fw_mode_config(struct hdd_context *hdd_ctx)
 	cfg.scan_config = 0;
 	cfg.fw_mode_config = 0;
 	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
-	status = policy_mgr_get_updated_scan_and_fw_mode_config(
+
+	if (!policy_mgr_is_dbs_enable(hdd_ctx->hdd_psoc))
+		channel_select_logic_conc = 0;
+	else
+		channel_select_logic_conc = hdd_ctx->config->
+						channel_select_logic_conc;
+
+	if (hdd_ctx->config->dual_mac_feature_disable !=
+	    DISABLE_DBS_CXN_AND_SCAN) {
+		status = policy_mgr_get_updated_scan_and_fw_mode_config(
 				hdd_ctx->hdd_psoc, &cfg.scan_config,
 				&cfg.fw_mode_config,
-				hdd_ctx->config->dual_mac_feature_disable);
+				hdd_ctx->config->dual_mac_feature_disable,
+				channel_select_logic_conc);
 
-	if (status != QDF_STATUS_SUCCESS) {
-		hdd_err("wma_get_updated_scan_and_fw_mode_config failed %d",
+		if (status != QDF_STATUS_SUCCESS) {
+			hdd_err("wma_get_updated_scan_and_fw_mode_config failed %d",
 				status);
-		return status;
+			return status;
+		}
 	}
 
 	hdd_debug("send scan_cfg: 0x%x fw_mode_cfg: 0x%x to fw",
@@ -9704,30 +9683,6 @@ static int hdd_set_auto_shutdown_cb(struct hdd_context *hdd_ctx)
 }
 #endif
 
-static QDF_STATUS hdd_set_dbs_scan_and_fw_mode_cfg(struct hdd_context *hdd_ctx)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	switch (hdd_ctx->config->dual_mac_feature_disable) {
-	case DISABLE_DBS_CXN_AND_SCAN:
-		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
-		if (status != QDF_STATUS_SUCCESS)
-			hdd_err("Failed to disable dual mac features");
-		break;
-	case DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN:
-	case DISABLE_DBS_CXN_AND_ENABLE_DBS_SCAN_WITH_ASYNC_SCAN_OFF:
-	case ENABLE_DBS_CXN_AND_ENABLE_SCAN_WITH_ASYNC_SCAN_OFF:
-		status = wlan_hdd_update_dbs_scan_and_fw_mode_config(hdd_ctx);
-		if (status != QDF_STATUS_SUCCESS)
-			hdd_err("Failed to set dbs scan and fw mode config");
-		break;
-	default:
-		break;
-	}
-
-	return status;
-}
-
 /**
  * hdd_features_init() - Init features
  * @hdd_ctx:	HDD context
@@ -9807,7 +9762,7 @@ static int hdd_features_init(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 		goto deregister_frames;
 	}
 
-	status = hdd_set_dbs_scan_and_fw_mode_cfg(hdd_ctx);
+	status = wlan_hdd_update_dbs_scan_and_fw_mode_config(hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Failed to set dbs scan and fw mode cfg");
 		goto deregister_cb;
