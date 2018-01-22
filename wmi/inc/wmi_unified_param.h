@@ -5559,6 +5559,7 @@ typedef enum {
 	wmi_report_stats_event_id,
 	wmi_dma_buf_release_event_id,
 	wmi_sap_obss_detection_report_event_id,
+	wmi_obss_color_collision_report_event_id,
 	wmi_host_swfda_event_id,
 	wmi_sar_get_limits_event_id,
 
@@ -8276,7 +8277,7 @@ struct wmi_obss_detection_cfg_param {
 };
 
 /**
- * enum sap_obss_detection_reason - obss detection event reasons
+ * enum wmi_obss_detection_reason - obss detection event reasons
  * @OBSS_OFFLOAD_DETECTION_DISABLED: OBSS detection disabled
  * @OBSS_OFFLOAD_DETECTION_PRESENT: OBSS present detection
  * @OBSS_OFFLOAD_DETECTION_ABSENT: OBSS absent detection
@@ -8291,7 +8292,7 @@ enum wmi_obss_detection_reason {
 
 /**
  * struct wmi_obss_detect_info - OBSS detection info from firmware
- * @vdev_id: IDof the vdev to which this info belongs.
+ * @vdev_id: ID of the vdev to which this info belongs.
  * @reason: Indicate if present or Absent detection,
  *          also if not supported offload for this vdev.
  * @matched_detection_masks: Detection bit map.
@@ -8356,4 +8357,55 @@ struct wmi_invoke_neighbor_report_params {
 	struct mac_ssid ssid;
 };
 
+/**
+ * enum wmi_obss_color_collision_evt_type - bss color collision event type
+ * @OBSS_COLOR_COLLISION_DETECTION_DISABLE: OBSS color detection disabled
+ * @OBSS_COLOR_COLLISION_DETECTION: OBSS color collision detection
+ * @OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY: OBSS free slot detection with
+ *                                     within expiry period
+ * @OBSS_COLOR_FREE_SLOT_AVAILABLE: OBSS free slot detection
+ *
+ * Defines different types of type for obss color collision event type.
+ */
+enum wmi_obss_color_collision_evt_type {
+	OBSS_COLOR_COLLISION_DETECTION_DISABLE = 0,
+	OBSS_COLOR_COLLISION_DETECTION = 1,
+	OBSS_COLOR_FREE_SLOT_TIMER_EXPIRY = 2,
+	OBSS_COLOR_FREE_SLOT_AVAILABLE = 3,
+};
+
+/**
+ * struct wmi_obss_color_collision_cfg_param - obss color collision cfg
+ * @vdev_id: vdev id
+ * @flags: proposed for future use cases, currently not used.
+ * @evt_type: bss color collision event.
+ * @current_bss_color: current bss color.
+ * @detection_period_ms: scan interval for both AP and STA mode.
+ * @scan_period_ms: scan period for passive scan to detect collision.
+ * @free_slot_expiry_time_ms: FW to notify host at timer expiry after
+ *                            which Host will disable the bss color.
+ */
+struct wmi_obss_color_collision_cfg_param {
+	uint32_t vdev_id;
+	uint32_t flags;
+	enum wmi_obss_color_collision_evt_type evt_type;
+	uint32_t current_bss_color;
+	uint32_t detection_period_ms;
+	uint32_t scan_period_ms;
+	uint32_t free_slot_expiry_time_ms;
+};
+
+/**
+ * struct wmi_obss_color_collision_info - bss color detection info from firmware
+ * @vdev_id: ID of the vdev to which this info belongs.
+ * @evt_type: bss color collision event.
+ * @obss_color_bitmap_bit0to31: Bit set indicating BSS color present.
+ * @obss_color_bitmap_bit32to63: Bit set indicating BSS color present.
+ */
+struct wmi_obss_color_collision_info {
+	uint32_t vdev_id;
+	enum wmi_obss_color_collision_evt_type evt_type;
+	uint32_t obss_color_bitmap_bit0to31;
+	uint32_t obss_color_bitmap_bit32to63;
+};
 #endif /* _WMI_UNIFIED_PARAM_H_ */

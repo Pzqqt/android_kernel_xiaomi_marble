@@ -7372,3 +7372,40 @@ QDF_STATUS wmi_extract_green_ap_egap_status_info(
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+
+QDF_STATUS wmi_unified_send_bss_color_change_enable_cmd(void *wmi_hdl,
+							uint32_t vdev_id,
+							bool enable)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_bss_color_change_enable_cmd)
+		return wmi_handle->ops->send_bss_color_change_enable_cmd(
+				wmi_handle, vdev_id, enable);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_send_obss_color_collision_cfg_cmd(void *wmi_hdl,
+		struct wmi_obss_color_collision_cfg_param *cfg)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->send_obss_color_collision_cfg_cmd)
+		return wmi_handle->ops->send_obss_color_collision_cfg_cmd(
+				wmi_handle, cfg);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+QDF_STATUS wmi_unified_extract_obss_color_collision_info(void *wmi_hdl,
+		uint8_t *data, struct wmi_obss_color_collision_info *info)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_obss_color_collision_info)
+		return wmi_handle->ops->extract_obss_color_collision_info(data,
+									  info);
+
+	return QDF_STATUS_E_FAILURE;
+}
