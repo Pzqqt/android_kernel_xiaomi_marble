@@ -2504,7 +2504,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	if (params->extraie.len)
 		extraie_len_with_pad =
 		roundup(params->extraie.len, sizeof(uint32_t));
-		len += extraie_len_with_pad;
+	len += extraie_len_with_pad;
 
 	len += WMI_TLV_HDR_SIZE; /* Length of TLV for array of wmi_vendor_oui */
 	if (ie_whitelist->num_vendor_oui)
