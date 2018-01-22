@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2151,11 +2151,12 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 
 	switch (updateType) {
 	case eUPDATE_IE_PROBE_BCN:
+		if (pConfig->pProbeRespBcnIEsBuffer)
+			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
 		if (bufferValid) {
 			pConfig->probeRespBcnIEsLen = bufferLength;
 			pConfig->pProbeRespBcnIEsBuffer = pBuffer;
 		} else {
-			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
 			pConfig->probeRespBcnIEsLen = 0;
 			pConfig->pProbeRespBcnIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
@@ -2163,11 +2164,12 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		}
 		break;
 	case eUPDATE_IE_PROBE_RESP:
+		if (pConfig->pProbeRespIEsBuffer)
+			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
 		if (bufferValid) {
 			pConfig->probeRespIEsBufferLen = bufferLength;
 			pConfig->pProbeRespIEsBuffer = pBuffer;
 		} else {
-			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
 			pConfig->probeRespIEsBufferLen = 0;
 			pConfig->pProbeRespIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
@@ -2175,11 +2177,12 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		}
 		break;
 	case eUPDATE_IE_ASSOC_RESP:
+		if (pConfig->pAssocRespIEsBuffer)
+			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
 		if (bufferValid) {
 			pConfig->assocRespIEsLen = bufferLength;
 			pConfig->pAssocRespIEsBuffer = pBuffer;
 		} else {
-			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
 			pConfig->assocRespIEsLen = 0;
 			pConfig->pAssocRespIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
