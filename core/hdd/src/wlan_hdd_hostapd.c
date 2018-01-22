@@ -859,6 +859,8 @@ static int hdd_stop_bss_link(struct hdd_adapter *adapter,
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 					adapter->device_mode,
 					adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+					    false);
 	}
 	EXIT();
 	return (status == QDF_STATUS_SUCCESS) ? 0 : -EBUSY;
@@ -5200,6 +5202,8 @@ __iw_softap_stopbss(struct net_device *dev,
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 					     adapter->device_mode,
 					     adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+					    false);
 		ret = qdf_status_to_os_return(status);
 	}
 	EXIT();
@@ -8293,10 +8297,13 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 	set_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
 	/* Initialize WMM configuation */
 	hdd_wmm_init(adapter);
-	if (hostapd_state->bss_state == BSS_START)
+	if (hostapd_state->bss_state == BSS_START) {
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					adapter->device_mode,
 					adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+					    true);
+	}
 #ifdef DHCP_SERVER_OFFLOAD
 	if (iniConfig->enableDHCPServerOffload)
 		wlan_hdd_set_dhcp_server_offload(adapter);
@@ -8424,28 +8431,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		wlan_hdd_disconnect(sta_adapter, eCSR_DISCONNECT_REASON_DEAUTH);
 	}
 
-	if (adapter->device_mode == QDF_SAP_MODE) {
-		uint8_t num_sessions;
-
+	if (adapter->device_mode == QDF_SAP_MODE)
 		wlan_hdd_del_station(adapter);
-
-		/*
-		 * For AP+AP mode, only trigger GREEN_AP_PS_STOP_EVENT, when the
-		 * last AP stops.
-		 */
-		status = policy_mgr_mode_specific_num_open_sessions(
-				hdd_ctx->hdd_psoc, QDF_SAP_MODE, &num_sessions);
-		if (status == QDF_STATUS_SUCCESS) {
-			if (num_sessions == 1) {
-				hdd_debug("Disabling Green AP");
-				ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
-							    false);
-				wlan_green_ap_stop(hdd_ctx->hdd_pdev);
-			}
-		} else {
-			hdd_err("Failed to get num open sessions for QDF_SAP_MODE");
-		}
-	}
 
 	cds_flush_work(&adapter->sap_stop_bss_work);
 	/*
@@ -8509,6 +8496,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 						adapter->device_mode,
 						adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+					    false);
 		adapter->session.ap.beacon = NULL;
 		qdf_mem_free(old);
 	}
@@ -8697,9 +8686,6 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	int status;
 	struct sme_sta_inactivity_timeout  *sta_inactivity_timer;
 	uint8_t channel;
-	bool is_enabled = false;
-	uint8_t ret;
-
 	ENTER();
 
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
@@ -8811,18 +8797,6 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			hdd_err("ERROR: qdf wait for event failed!!");
 			return -EINVAL;
 		}
-	}
-
-	ret = hdd_check_green_ap_enable(hdd_ctx, &is_enabled);
-	if (!ret) {
-		hdd_debug("Green AP enable status: %d", is_enabled);
-		if (is_enabled) {
-			hdd_debug("Enabling Green AP");
-			ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev, true);
-			wlan_green_ap_start(hdd_ctx->hdd_pdev);
-		}
-	} else {
-		hdd_err("Failed to check if Green AP should be enabled or not");
 	}
 
 	if (adapter->device_mode == QDF_P2P_GO_MODE) {

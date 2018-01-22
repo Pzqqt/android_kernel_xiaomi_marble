@@ -310,6 +310,125 @@ void hdd_start_complete(int ret)
 }
 
 /**
+ * hdd_check_green_ap_enable() - to check whether to enable green ap or not
+ * @hdd_ctx: hdd context
+ * @enable_green_ap: 1 - enable green ap enabled, 0 - disbale green ap
+ *
+ * Return: 0 - success, < 0 - failure
+ */
+static int hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
+				     bool *enable_green_ap)
+{
+	uint8_t num_sessions, mode;
+	QDF_STATUS status;
+
+	for (mode = 0;
+	     mode < QDF_MAX_NO_OF_MODE;
+	     mode++) {
+		if (mode == QDF_SAP_MODE || mode == QDF_P2P_GO_MODE)
+			continue;
+
+		status = policy_mgr_mode_specific_num_active_sessions(
+					hdd_ctx->hdd_psoc, mode, &num_sessions);
+		hdd_debug("No. of active sessions for mode: %d is %d",
+			  mode, num_sessions);
+		if (status != QDF_STATUS_SUCCESS) {
+			hdd_err("Failed to get num sessions for mode: %d",
+				mode);
+			return -EINVAL;
+		} else if (num_sessions) {
+			*enable_green_ap = false;
+			return 0;
+		}
+	}
+	*enable_green_ap = true;
+	return 0;
+}
+
+int hdd_start_green_ap_state_mc(struct hdd_context *hdd_ctx,
+				enum QDF_OPMODE mode, bool is_session_start)
+{
+	struct hdd_config *cfg;
+	bool enable_green_ap = false;
+	uint8_t num_sap_sessions = 0, num_p2p_go_sessions = 0, ret = 0;
+
+	cfg = hdd_ctx->config;
+	if (!cfg) {
+		hdd_err("NULL hdd config");
+		return -EINVAL;
+	}
+
+	if (!cfg->enable2x2 || !cfg->enableGreenAP) {
+		hdd_info("Green AP support not present: enable2x2: %d, enableGreenAp: %d",
+			 cfg->enable2x2, cfg->enableGreenAP);
+		return 0;
+	}
+
+	policy_mgr_mode_specific_num_active_sessions(hdd_ctx->hdd_psoc,
+						     QDF_SAP_MODE,
+						     &num_sap_sessions);
+	policy_mgr_mode_specific_num_active_sessions(hdd_ctx->hdd_psoc,
+						     QDF_P2P_GO_MODE,
+						     &num_p2p_go_sessions);
+
+	switch (mode) {
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_IBSS_MODE:
+		if (!num_sap_sessions && !num_p2p_go_sessions)
+			return 0;
+
+		if (is_session_start) {
+			hdd_debug("Disabling Green AP");
+			ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
+						    false);
+			wlan_green_ap_stop(hdd_ctx->hdd_pdev);
+		} else {
+			ret = hdd_check_green_ap_enable(hdd_ctx,
+							&enable_green_ap);
+			if (!ret) {
+				if (enable_green_ap) {
+					hdd_debug("Enabling Green AP");
+					ucfg_green_ap_set_ps_config(
+						hdd_ctx->hdd_pdev, true);
+					wlan_green_ap_start(hdd_ctx->hdd_pdev);
+				}
+			} else {
+				hdd_err("Failed to check Green AP enable status");
+			}
+		}
+		break;
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
+		if (is_session_start) {
+			ret = hdd_check_green_ap_enable(hdd_ctx,
+							&enable_green_ap);
+			if (!ret) {
+				if (enable_green_ap) {
+					hdd_debug("Enabling Green AP");
+					ucfg_green_ap_set_ps_config(
+						hdd_ctx->hdd_pdev, true);
+					wlan_green_ap_start(hdd_ctx->hdd_pdev);
+				}
+			} else {
+				hdd_err("Failed to check Green AP enable status");
+			}
+		} else {
+			if (!num_sap_sessions && !num_p2p_go_sessions) {
+				hdd_debug("Disabling Green AP");
+				ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
+							    false);
+				wlan_green_ap_stop(hdd_ctx->hdd_pdev);
+			}
+		}
+		break;
+	default:
+		break;
+	}
+	return ret;
+}
+
+/**
  * hdd_set_rps_cpu_mask - set RPS CPU mask for interfaces
  * @hdd_ctx: pointer to struct hdd_context
  *
@@ -1801,28 +1920,6 @@ static void hdd_update_ra_rate_limit(struct hdd_context *hdd_ctx,
 {
 }
 #endif
-
-uint8_t hdd_check_green_ap_enable(struct hdd_context *hdd_ctx,
-				     bool *is_enabled)
-{
-	struct hdd_config *cfg;
-	uint32_t concurrency_mode;
-
-	cfg = hdd_ctx->config;
-	if (!cfg) {
-		hdd_err("NULL hdd config");
-		return -EINVAL;
-	}
-
-	concurrency_mode = policy_mgr_get_concurrency_mode(hdd_ctx->hdd_psoc);
-
-	if (cfg->enable2x2 && cfg->enableGreenAP) {
-		if ((concurrency_mode & (1 << QDF_SAP_MODE)) &&
-		    !(concurrency_mode & (~(1 << QDF_SAP_MODE))))
-			*is_enabled = true;
-	}
-	return 0;
-}
 
 static int hdd_update_green_ap_config(struct hdd_context *hdd_ctx)
 {
@@ -3849,10 +3946,6 @@ QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter)
 	}
 	hdd_conn_set_connection_state(adapter, eConnectionState_NotConnected);
 
-	hdd_debug("Disabling Green AP");
-	ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev, false);
-	wlan_green_ap_stop(hdd_ctx->hdd_pdev);
-
 	qdf_mem_set(sta_ctx->conn_info.staId,
 		sizeof(sta_ctx->conn_info.staId), HDD_WLAN_INVALID_STA_ID);
 
@@ -4740,8 +4833,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 	tSirUpdateIE updateIE;
 	unsigned long rc;
 	tsap_Config_t *sap_config;
-	bool is_enabled = false;
-	uint8_t ret;
 
 	ENTER();
 
@@ -4845,19 +4936,6 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		ret = hdd_check_green_ap_enable(hdd_ctx, &is_enabled);
-		if (!ret) {
-			hdd_debug("Green AP enable status: %d", is_enabled);
-			if (is_enabled) {
-				hdd_debug("Enabling Green AP");
-				ucfg_green_ap_set_ps_config(hdd_ctx->hdd_pdev,
-							    true);
-				wlan_green_ap_start(hdd_ctx->hdd_pdev);
-			}
-		} else {
-			hdd_err("Failed to check if Green AP should be enabled or not");
-		}
-
 		hdd_vdev_destroy(adapter);
 		break;
 
@@ -4925,6 +5003,9 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 			policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 						adapter->device_mode,
 						adapter->session_id);
+			hdd_start_green_ap_state_mc(hdd_ctx,
+						    adapter->device_mode,
+						    false);
 
 			qdf_copy_macaddr(&updateIE.bssid,
 					 &adapter->mac_addr);
@@ -5095,6 +5176,8 @@ QDF_STATUS hdd_reset_all_adapters(struct hdd_context *hdd_ctx)
 		hdd_deinit_tx_rx(adapter);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 				adapter->device_mode, adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, adapter->device_mode,
+					    false);
 		if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
 			hdd_wmm_adapter_close(adapter);
 			clear_bit(WMM_INIT_DONE, &adapter->event_flags);
@@ -11410,6 +11493,8 @@ void wlan_hdd_stop_sap(struct hdd_adapter *ap_adapter)
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 						ap_adapter->device_mode,
 						ap_adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, ap_adapter->device_mode,
+					    false);
 		hdd_debug("SAP Stop Success");
 	} else {
 		hdd_err("Can't stop ap because its not started");
@@ -11474,10 +11559,13 @@ void wlan_hdd_start_sap(struct hdd_adapter *ap_adapter, bool reinit)
 	hdd_info("SAP Start Success");
 	wlansap_reset_sap_config_add_ie(sap_config, eUPDATE_IE_ALL);
 	set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-	if (hostapd_state->bss_state == BSS_START)
+	if (hostapd_state->bss_state == BSS_START) {
 		policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 					ap_adapter->device_mode,
 					ap_adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, ap_adapter->device_mode,
+					    true);
+	}
 	mutex_unlock(&hdd_ctx->sap_lock);
 
 	return;
@@ -13222,6 +13310,8 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 		policy_mgr_decr_session_set_pcl(hdd_ctx->hdd_psoc,
 			ap_adapter->device_mode, ap_adapter->session_id);
+		hdd_start_green_ap_state_mc(hdd_ctx, ap_adapter->device_mode,
+					    false);
 		hdd_err("SAP Stop Success");
 
 		if (0 != wlan_hdd_cfg80211_update_apies(ap_adapter)) {
@@ -13253,10 +13343,14 @@ void hdd_restart_sap(struct hdd_adapter *ap_adapter)
 		}
 		hdd_err("SAP Start Success");
 		set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		if (hostapd_state->bss_state == BSS_START)
+		if (hostapd_state->bss_state == BSS_START) {
 			policy_mgr_incr_active_session(hdd_ctx->hdd_psoc,
 						ap_adapter->device_mode,
 						ap_adapter->session_id);
+			hdd_start_green_ap_state_mc(hdd_ctx,
+						    ap_adapter->device_mode,
+						    true);
+		}
 	}
 end:
 	mutex_unlock(&hdd_ctx->sap_lock);
