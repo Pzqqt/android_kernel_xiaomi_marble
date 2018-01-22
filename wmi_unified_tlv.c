@@ -20058,8 +20058,11 @@ static QDF_STATUS extract_peer_delete_response_event_tlv(wmi_unified_t wmi_hdl,
 
 static bool is_management_record_tlv(uint32_t cmd_id)
 {
-	if (cmd_id == WMI_MGMT_TX_COMPLETION_EVENTID)
+	if ((cmd_id == WMI_MGMT_TX_COMPLETION_EVENTID) ||
+			(cmd_id == WMI_MGMT_TX_SEND_CMDID) ||
+			(cmd_id == WMI_OFFCHAN_DATA_TX_SEND_CMDID)) {
 		return true;
+	}
 
 	return false;
 }
