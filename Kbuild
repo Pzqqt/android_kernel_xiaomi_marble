@@ -852,6 +852,7 @@ UMAC_TARGET_SCAN_INC := -I$(WLAN_COMMON_INC)/target_if/scan/inc
 
 UMAC_SCAN_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SCAN_DISP_INC_DIR)
 UMAC_SCAN_OBJS := $(UMAC_SCAN_CORE_DIR)/wlan_scan_cache_db.o \
+		$(UMAC_SCAN_CORE_DIR)/wlan_scan_11d.o \
 		$(UMAC_SCAN_CORE_DIR)/wlan_scan_bss_score.o \
 		$(UMAC_SCAN_CORE_DIR)/wlan_scan_filter.o \
 		$(UMAC_SCAN_CORE_DIR)/wlan_scan_main.o \

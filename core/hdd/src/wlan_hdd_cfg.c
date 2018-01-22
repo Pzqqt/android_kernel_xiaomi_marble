@@ -4655,13 +4655,6 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_TIMER_MULTIPLIER_MIN,
 		     CFG_TIMER_MULTIPLIER_MAX),
 
-	REG_VARIABLE(CFG_ENABLE_REG_OFFLOAD_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, reg_offload_enabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_REG_OFFLOAD_DEFAULT,
-		     CFG_ENABLE_REG_OFFLOAD_MIN,
-		     CFG_ENABLE_REG_OFFLOAD_MAX),
-
 	REG_VARIABLE(CFG_PRB_REQ_IE_WHITELIST_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, probe_req_ie_whitelist,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,

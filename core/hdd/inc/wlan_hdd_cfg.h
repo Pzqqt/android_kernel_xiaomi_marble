@@ -11712,26 +11712,6 @@ enum l1ss_sleep_allowed {
 #define CFG_TIMER_MULTIPLIER_DEFAULT	(1)
 #endif
 
-/* enable_reg_offload - enable regulatory offload
- * @Min: 0
- * @Max: 1
- * @Default: 1
- *
- * This ini is used to enable or disable reg offload
- *
- * Related: None
- *
- * Supported Feature: reg offload
- *
- * Usage: External
- *
- * </ini>
- */
-#define CFG_ENABLE_REG_OFFLOAD_NAME      "enable_reg_offload"
-#define CFG_ENABLE_REG_OFFLOAD_MIN       (0)
-#define CFG_ENABLE_REG_OFFLOAD_MAX       (1)
-#define CFG_ENABLE_REG_OFFLOAD_DEFAULT   (1)
-
 /* Begin of probe request IE whitelisting feature ini params */
 /*
  * <ini>
@@ -15132,7 +15112,6 @@ struct hdd_config {
 	uint32_t arp_ac_category;
 	bool ani_enabled;
 	bool qcn_ie_support;
-	bool reg_offload_enabled;
 	bool tx_orphan_enable;
 
 	bool probe_req_ie_whitelist;
