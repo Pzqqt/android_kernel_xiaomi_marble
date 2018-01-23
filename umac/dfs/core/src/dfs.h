@@ -664,6 +664,7 @@ struct dfs_state {
  * @nol_next:         Next element pointer.
  */
 struct dfs_nolelem {
+	TAILQ_ENTRY(dfs_nolelem) nolelem_list;
 	struct wlan_dfs *nol_dfs;
 	uint32_t       nol_freq;
 	uint32_t       nol_chwidth;
@@ -890,6 +891,8 @@ struct dfs_event_log {
  * @dfs_seq_num:                     Sequence number.
  * @dfs_nol_event[]:                 NOL event.
  * @dfs_nol_timer:                   NOL list processing.
+ * @dfs_nol_free_list:               NOL free list.
+ * @dfs_nol_elem_free_work:          The work queue to free an NOL element.
  * @dfs_cac_timer:                   CAC timer.
  * @dfs_cac_valid_timer:             Ignore CAC when this timer is running.
  * @dfs_cac_timeout_override:        Overridden cac timeout.
@@ -980,6 +983,10 @@ struct wlan_dfs {
 	uint32_t       dfs_seq_num;
 	int            dfs_nol_event[DFS_CHAN_MAX];
 	os_timer_t     dfs_nol_timer;
+
+	TAILQ_HEAD(, dfs_nolelem) dfs_nol_free_list;
+	qdf_work_t     dfs_nol_elem_free_work;
+
 	os_timer_t     dfs_cac_timer;
 	os_timer_t     dfs_cac_valid_timer;
 	int            dfs_cac_timeout_override;
@@ -1254,6 +1261,14 @@ void dfs_nol_update(struct wlan_dfs *dfs);
  * Cancels the NOL timer and frees the NOL elements.
  */
 void dfs_nol_timer_cleanup(struct wlan_dfs *dfs);
+
+/**
+ * dfs_nol_workqueue_cleanup() - Flushes NOL workqueue.
+ * @dfs: Pointer to wlan_dfs structure.
+ *
+ * Flushes the NOL workqueue.
+ */
+void dfs_nol_workqueue_cleanup(struct wlan_dfs *dfs);
 
 /**
  * dfs_retain_bin5_burst_pattern() - Retain the BIN5 burst pattern.
