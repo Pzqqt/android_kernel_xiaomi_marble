@@ -2417,6 +2417,12 @@ QDF_STATUS sap_signal_hdd_event(struct sap_context *sap_ctx,
 				  FL("Invalid CSR Roam Info"));
 			return QDF_STATUS_E_INVAL;
 		}
+		if (eSAP_DISCONNECTING == sap_ctx->sapsMachine) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				  "SAP is disconnecting, not able to handle any incoming (re)assoc req");
+			return QDF_STATUS_E_ABORTED;
+		}
+
 		reassoc_complete =
 		    &sap_ap_event.sapevt.sapStationAssocReassocCompleteEvent;
 

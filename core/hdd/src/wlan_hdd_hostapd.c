@@ -2083,6 +2083,12 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_STA_ASSOC_EVENT:
 	case eSAP_STA_REASSOC_EVENT:
 		event = &pSapEvent->sapevt.sapStationAssocReassocCompleteEvent;
+		if (eSAP_STATUS_FAILURE == event->status) {
+			hdd_notice("assoc failure: " MAC_ADDRESS_STR,
+				   MAC_ADDR_ARRAY(wrqu.addr.sa_data));
+			break;
+		}
+
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
 		       &event->staMac, QDF_MAC_ADDR_SIZE);
