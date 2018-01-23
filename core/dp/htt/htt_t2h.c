@@ -510,6 +510,15 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 
 	case HTT_T2H_MSG_TYPE_WDI_IPA_OP_RESPONSE:
 	{
+		uint16_t len;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
+		len = HTT_WDI_IPA_OP_RESPONSE_RSP_LEN_GET(*msg_word);
+
+		if (sizeof(struct htt_wdi_ipa_op_response_t) + len > msg_len) {
+			qdf_print("Invalid buffer length");
+			WARN_ON(1);
+			break;
+		}
 		htt_ipa_op_response(pdev, msg_word);
 		break;
 	}
@@ -518,8 +527,16 @@ static void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg,
 	{
 		uint8_t num_flows;
 		struct htt_flow_pool_map_payload_t *pool_map_payoad;
+		int msg_len = qdf_nbuf_len(htt_t2h_msg);
 
 		num_flows = HTT_FLOW_POOL_MAP_NUM_FLOWS_GET(*msg_word);
+
+		if (((HTT_FLOW_POOL_MAP_PAYLOAD_SZ /
+			HTT_FLOW_POOL_MAP_HEADER_SZ) * num_flows + 1) * sizeof(*msg_word) > msg_len) {
+			qdf_print("Invalid num_flows");
+			WARN_ON(1);
+			break;
+		}
 
 		msg_word++;
 		while (num_flows) {
