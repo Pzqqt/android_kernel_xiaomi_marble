@@ -3454,9 +3454,9 @@ qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
  */
 #define RADIOTAP_HEADER_LEN (sizeof(struct ieee80211_radiotap_header) + 100)
 
-#define IEEE80211_RADIOTAP_HE 22
-#define IEEE80211_RADIOTAP_HE_MU	23
-#define IEEE80211_RADIOTAP_HE_MU_OTHER	24
+#define IEEE80211_RADIOTAP_HE 23
+#define IEEE80211_RADIOTAP_HE_MU	24
+#define IEEE80211_RADIOTAP_HE_MU_OTHER	25
 
 /**
  * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
