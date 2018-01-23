@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -37,6 +37,16 @@
 #define PAGE_REG_ADDR 0x00
 
 static enum wcd9xxx_intf_status wcd9xxx_intf = -1;
+
+static struct mfd_cell pahu_devs[] = {
+	{
+		.name = "qcom-wcd-pinctrl",
+		.of_compatible = "qcom,wcd-pinctrl",
+	},
+	{
+		.name = "pahu_codec",
+	},
+};
 
 static struct mfd_cell tavil_devs[] = {
 	{
@@ -467,7 +477,8 @@ int wcd9xxx_page_write(struct wcd9xxx *wcd9xxx, unsigned short *reg)
 	unsigned short c_reg, reg_addr;
 	u8 pg_num, prev_pg_num;
 
-	if (wcd9xxx->type != WCD9335 && wcd9xxx->type != WCD934X)
+	if (wcd9xxx->type != WCD9335 && wcd9xxx->type != WCD934X &&
+		wcd9xxx->type != WCD9360)
 		return ret;
 
 	c_reg = *reg;
@@ -864,6 +875,10 @@ int wcd9xxx_get_codec_info(struct device *dev)
 	}
 
 	switch (wcd9xxx->type) {
+	case WCD9360:
+		cinfo->dev = pahu_devs;
+		cinfo->size = ARRAY_SIZE(pahu_devs);
+		break;
 	case WCD934X:
 		cinfo->dev = tavil_devs;
 		cinfo->size = ARRAY_SIZE(tavil_devs);

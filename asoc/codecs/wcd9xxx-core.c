@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -88,6 +88,7 @@ static const int wcd9xxx_cdc_types[] = {
 	[WCD9330] = WCD9330,
 	[WCD9335] = WCD9335,
 	[WCD934X] = WCD934X,
+	[WCD9360] = WCD9360,
 };
 
 static const struct of_device_id wcd9xxx_of_match[] = {
@@ -327,7 +328,8 @@ int wcd9xxx_slim_write_repeat(struct wcd9xxx *wcd9xxx, unsigned short reg,
 	struct slim_ele_access slim_msg;
 
 	mutex_lock(&wcd9xxx->io_lock);
-	if (wcd9xxx->type == WCD9335 || wcd9xxx->type == WCD934X) {
+	if (wcd9xxx->type == WCD9335 || wcd9xxx->type == WCD934X ||
+		wcd9xxx->type == WCD9360) {
 		ret = wcd9xxx_page_write(wcd9xxx, &reg);
 		if (ret)
 			goto done;
