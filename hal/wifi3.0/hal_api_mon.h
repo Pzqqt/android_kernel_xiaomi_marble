@@ -509,8 +509,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->com_info.ppdu_id =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_0,
 				PHY_PPDU_ID);
-		/* TODO: Ensure channel number is set in PHY meta data */
-		ppdu_info->rx_status.chan_freq =
+		/* channel number is set in PHY meta data */
+		ppdu_info->rx_status.chan_num =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_1,
 				SW_PHY_META_DATA);
 		ppdu_info->com_info.ppdu_timestamp =
