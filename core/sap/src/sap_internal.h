@@ -438,26 +438,6 @@ QDF_STATUS sap_set_session_param(tHalHandle hal, struct sap_context *sapctx,
  */
 QDF_STATUS sap_clear_session_param(tHalHandle hal, struct sap_context *sapctx,
 				uint32_t session_id);
-/**
- * sap_mark_leaking_ch() - to mark channel leaking in to nol
- * @sap_ctx: pointer to SAP context
- * @ch_width: channel width
- * @nol: nol info
- * @temp_ch_lst_sz: the target channel list
- * @temp_ch_lst: the target channel list
- *
- * This function removes the channels from temp channel list that
- * (if selected as target channel) will cause leakage in one of
- * the NOL channels
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS
-sap_mark_leaking_ch(struct sap_context *sap_ctx,
-		enum phy_ch_width ch_width,
-		tSapDfsNolInfo *nol,
-		uint8_t temp_ch_lst_sz,
-		uint8_t *temp_ch_lst);
 
 void sap_scan_event_callback(struct wlan_objmgr_vdev *vdev,
 			struct scan_event *event, void *arg);

@@ -1381,6 +1381,15 @@ QDF_STATUS wlansap_acs_chselect(struct sap_context *sap_context,
  */
 uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx);
 
+/**
+ * wlansap_set_tx_leakage_threshold() - set sap tx leakage threshold.
+ * @hal: HAL pointer
+ * @tx_leakage_threshold: sap tx leakage threshold
+ *
+ * This function set sap tx leakage threshold.
+ *
+ * Return: QDF_STATUS.
+ */
 QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 			uint16_t tx_leakage_threshold);
 

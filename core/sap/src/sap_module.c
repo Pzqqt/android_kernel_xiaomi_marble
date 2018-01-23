@@ -410,25 +410,14 @@ bool wlansap_is_channel_in_nol_list(struct sap_context *sap_ctx,
 					      chanBondState);
 }
 
-#ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
-static QDF_STATUS wlansap_mark_leaking_channel(struct sap_context *sap_ctx,
-		tSapDfsNolInfo *nol,
+static QDF_STATUS wlansap_mark_leaking_channel(struct wlan_objmgr_pdev *pdev,
 		uint8_t *leakage_adjusted_lst,
 		uint8_t chan_bw)
 {
 
-	return sap_mark_leaking_ch(sap_ctx, chan_bw, nol, 1,
+	return utils_dfs_mark_leaking_ch(pdev, chan_bw, 1,
 			leakage_adjusted_lst);
 }
-#else
-static QDF_STATUS wlansap_mark_leaking_channel(struct sap_context *sap_ctx,
-		tSapDfsNolInfo *nol,
-		uint8_t *leakage_adjusted_lst,
-		uint8_t chan_bw)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 
 bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 				       uint8_t channel,
@@ -437,7 +426,6 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 	tpAniSirGlobal mac_ctx;
 	uint8_t leakage_adjusted_lst[1];
 	void *handle = NULL;
-	tSapDfsNolInfo *nol;
 
 	leakage_adjusted_lst[0] = channel;
 	handle = CDS_GET_HAL_CB();
@@ -447,15 +435,13 @@ bool wlansap_is_channel_leaking_in_nol(struct sap_context *sap_ctx,
 				"%s: Invalid mac pointer", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	nol = mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList;
-	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			FL("sapdfs: Processing current chan against NOL."));
-	if (wlansap_mark_leaking_channel(sap_ctx, nol,
-			leakage_adjusted_lst, chan_bw) != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_ERROR(wlansap_mark_leaking_channel(mac_ctx->pdev,
+			leakage_adjusted_lst, chan_bw)))
 		return true;
-	}
-	if (leakage_adjusted_lst[0] == 0)
+
+	if (!leakage_adjusted_lst[0])
 		return true;
+
 	return false;
 }
 
@@ -2548,15 +2534,6 @@ uint32_t wlansap_get_chan_width(struct sap_context *sap_ctx)
 	return wlan_sap_get_vht_ch_width(sap_ctx);
 }
 
-/**
- * wlansap_set_tx_leakage_threshold() - set sap tx leakage threshold.
- * @hal: HAL pointer
- * @tx_leakage_threshold: sap tx leakage threshold
- *
- * This function set sap tx leakage threshold.
- *
- * Return: QDF_STATUS.
- */
 QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 			uint16_t tx_leakage_threshold)
 {
@@ -2569,10 +2546,10 @@ QDF_STATUS wlansap_set_tx_leakage_threshold(tHalHandle hal,
 	}
 
 	mac = PMAC_STRUCT(hal);
-	mac->sap.SapDfsInfo.tx_leakage_threshold = tx_leakage_threshold;
+	tgt_dfs_set_tx_leakage_threshold(mac->pdev, tx_leakage_threshold);
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			"%s: leakage_threshold %d", __func__,
-			mac->sap.SapDfsInfo.tx_leakage_threshold);
+			tx_leakage_threshold);
 	return QDF_STATUS_SUCCESS;
 }
 

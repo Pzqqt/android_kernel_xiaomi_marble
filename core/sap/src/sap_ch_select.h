@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2015, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -176,28 +176,5 @@ typedef struct sSapChSelParams {
 	void *pSpectInfoParams; /**pDfsParams;   // Filled with tSapChSelSpectInfo */
 	uint16_t numChannels;
 } tSapChSelParams;
-
-#define SAP_TX_LEAKAGE_THRES 310
-#define SAP_TX_LEAKAGE_MAX  1000
-#define SAP_TX_LEAKAGE_MIN  200
-
-/*
- * This define is used to block additional channels
- * based on the new data gathered on auto platforms
- * and to differentiate the leakage data among different
- * platforms.
- */
-
-#define SAP_TX_LEAKAGE_AUTO_MIN  210
-
-typedef struct sSapTxLeakInfo {
-	uint8_t leak_chan;      /* leak channel */
-	uint32_t leak_lvl;      /* tx leakage lvl */
-} tSapTxLeakInfo;
-
-typedef struct sSapChanMatrixInfo {
-	uint8_t channel;        /* channel to switch from */
-	tSapTxLeakInfo chan_matrix[CHAN_ENUM_144 - CHAN_ENUM_36 + 1];
-} tSapChanMatrixInfo;
 
 #endif /* if !defined __SAP_CH_SELECT_H */
