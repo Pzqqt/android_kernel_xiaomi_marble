@@ -4975,12 +4975,13 @@ static int __iw_get_channel_list(struct net_device *dev,
 
 	for (i = band_start_channel; i <= band_end_channel; i++) {
 		if ((CHANNEL_STATE_ENABLE ==
-			wlan_reg_get_channel_state(hdd_ctx->hdd_pdev, i)) ||
-			(is_dfs_mode_enabled &&
-		     CHANNEL_STATE_DFS ==
-		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev, i))) {
+		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+						WLAN_REG_CH_NUM(i))) ||
+		    (is_dfs_mode_enabled && CHANNEL_STATE_DFS ==
+		     wlan_reg_get_channel_state(hdd_ctx->hdd_pdev,
+						WLAN_REG_CH_NUM(i)))) {
 			channel_list->channels[num_channels] =
-				WLAN_REG_CH_NUM(i);
+						WLAN_REG_CH_NUM(i);
 			num_channels++;
 		}
 	}
