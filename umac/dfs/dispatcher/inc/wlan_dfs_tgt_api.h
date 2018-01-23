@@ -158,6 +158,18 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev);
 QDF_STATUS tgt_dfs_radar_enable(struct wlan_objmgr_pdev *pdev,
 	int no_cac, uint32_t opmode);
 
+#ifdef QCA_MCL_DFS_SUPPORT
+/**
+ * tgt_dfs_set_tx_leakage_threshold() - set tx_leakage_threshold.
+ * @pdev: Pointer to DFS pdev object.
+ * @tx_leakage_threshold: tx leakage threshold for dfs.
+ *
+ * Return QDF_STATUS.
+ */
+QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
+		uint16_t tx_leakage_threshold);
+#endif
+
 /**
  * tgt_dfs_control()- Used to process ioctls related to DFS.
  * @pdev: Pointer to DFS pdev object.

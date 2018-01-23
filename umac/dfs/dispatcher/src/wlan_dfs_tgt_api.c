@@ -223,6 +223,25 @@ QDF_STATUS tgt_dfs_destroy_object(struct wlan_objmgr_pdev *pdev)
 }
 EXPORT_SYMBOL(tgt_dfs_destroy_object);
 
+#ifdef QCA_MCL_DFS_SUPPORT
+QDF_STATUS tgt_dfs_set_tx_leakage_threshold(struct wlan_objmgr_pdev *pdev,
+		uint16_t tx_leakage_threshold)
+{
+	struct wlan_dfs *dfs;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "dfs is NULL");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	dfs->tx_leakage_threshold = tx_leakage_threshold;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(tgt_dfs_set_tx_leakage_threshold);
+#endif
+
 QDF_STATUS tgt_dfs_control(struct wlan_objmgr_pdev *pdev,
 		u_int id,
 		void *indata,

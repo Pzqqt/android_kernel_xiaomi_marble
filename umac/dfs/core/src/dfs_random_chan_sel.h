@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -114,6 +114,21 @@
 /* Max valid channel number */
 #define MAX_CHANNEL_NUM                         184
 
+#ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
+#define DFS_TX_LEAKAGE_THRES 310
+#define DFS_TX_LEAKAGE_MAX  1000
+#define DFS_TX_LEAKAGE_MIN  200
+
+/*
+ * This define is used to block additional channels
+ * based on the new data gathered on auto platforms
+ * and to differentiate the leakage data among different
+ * platforms.
+ */
+
+#define DFS_TX_LEAKAGE_AUTO_MIN  210
+#endif
+
 #define DFS_IS_CHANNEL_WEATHER_RADAR(_f) (((_f) >= 5600) && ((_f) <= 5650))
 #define DFS_IS_CHAN_JAPAN_INDOOR(_ch)  (((_ch) >= 36)  && ((_ch) <= 64))
 #define DFS_IS_CHAN_JAPAN_OUTDOOR(_ch) (((_ch) >= 100) && ((_ch) <= 140))
@@ -138,6 +153,46 @@ struct chan_bonding_info {
 struct chan_bonding_bitmap {
 	struct chan_bonding_info chan_bonding_set[DFS_MAX_80MHZ_BANDS];
 };
+
+#ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
+/**
+ * struct dfs_tx_leak_info - DFS leakage info
+ * @leak_chan: leak channel.
+ * @leak_lvl: tx leakage lvl.
+ */
+struct dfs_tx_leak_info {
+	uint8_t leak_chan;
+	uint32_t leak_lvl;
+};
+
+/**
+ * struct dfs_matrix_tx_leak_info - DFS leakage matrix info for dfs channel.
+ * @channel: channel to switch from
+ * @chan_matrix DFS leakage matrix info for given dfs channel.
+ */
+struct dfs_matrix_tx_leak_info {
+	uint8_t channel;
+	struct dfs_tx_leak_info chan_matrix[CHAN_ENUM_144 - CHAN_ENUM_36 + 1];
+};
+#endif
+
+/**
+ * dfs_mark_leaking_ch() - to mark channel leaking in to nol
+ * @dfs: dfs handler.
+ * @ch_width: channel width
+ * @temp_ch_lst_sz: the target channel list
+ * @temp_ch_lst: the target channel list
+ *
+ * This function removes the channels from temp channel list that
+ * (if selected as target channel) will cause leakage in one of
+ * the NOL channels
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS dfs_mark_leaking_ch(struct wlan_dfs *dfs,
+		enum phy_ch_width ch_width,
+		uint8_t temp_ch_lst_sz,
+		uint8_t *temp_ch_lst);
 
 /**
  * dfs_prepare_random_channel() - This function picks a random channel from

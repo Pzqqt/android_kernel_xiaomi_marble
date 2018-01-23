@@ -852,6 +852,25 @@ uint32_t utils_dfs_chan_to_freq(uint8_t chan)
 }
 EXPORT_SYMBOL(utils_dfs_chan_to_freq);
 
+#ifdef QCA_MCL_DFS_SUPPORT
+QDF_STATUS utils_dfs_mark_leaking_ch(struct wlan_objmgr_pdev *pdev,
+	enum phy_ch_width ch_width,
+	uint8_t temp_ch_lst_sz,
+	uint8_t *temp_ch_lst)
+{
+	struct wlan_dfs *dfs = NULL;
+
+	dfs = global_dfs_to_mlme.pdev_get_comp_private_obj(pdev);
+	if (!dfs) {
+		dfs_err(dfs, WLAN_DEBUG_DFS_ALWAYS,  "null dfs");
+		return  QDF_STATUS_E_FAILURE;
+	}
+
+	return dfs_mark_leaking_ch(dfs, ch_width, temp_ch_lst_sz, temp_ch_lst);
+}
+EXPORT_SYMBOL(utils_dfs_mark_leaking_ch);
+#endif
+
 int utils_get_dfsdomain(struct wlan_objmgr_pdev *pdev)
 {
 	enum dfs_reg dfsdomain;
