@@ -29,6 +29,11 @@ ifeq ($(KERNEL_BUILD), 0)
 		export
 		INCS    +=  -include $(AUDIO_ROOT)/config/sdm670autoconf.h
 	endif
+	ifeq ($(CONFIG_ARCH_SDM855), y)
+		include $(AUDIO_ROOT)/config/sdm855auto.conf
+		export
+		INCS    +=  -include $(AUDIO_ROOT)/config/sdm855autoconf.h
+	endif
 endif
 
 # As per target team, build is done as follows:
@@ -156,8 +161,8 @@ endif
 
 
 ifeq ($(KERNEL_BUILD), 0)
-KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module.symvers
-KBUILD_EXTRA_SYMBOLS +=$(OUT)/obj/vendor/qcom/opensource/audio-kernel/soc/Module.symvers
+KBUILD_EXTRA_SYMBOLS +=$(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/dsp/Module.symvers
+KBUILD_EXTRA_SYMBOLS +=$(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/soc/Module.symvers
 endif
 
 ifeq ($(KERNEL_BUILD), 1)
