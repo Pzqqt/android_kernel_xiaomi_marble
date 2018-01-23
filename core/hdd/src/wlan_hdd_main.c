@@ -10015,6 +10015,12 @@ int hdd_configure_cds(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter)
 		hdd_debug("Failed to register DP cb with Policy Manager");
 		goto cds_disable;
 	}
+	status = policy_mgr_register_mode_change_cb(hdd_ctx->hdd_psoc,
+					       wlan_hdd_send_mode_change_event);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_debug("Failed to register mode change cb with Policy Manager");
+		goto cds_disable;
+	}
 
 	if (ucfg_green_ap_enable_egap(hdd_ctx->hdd_pdev))
 		hdd_debug("enhance green ap is not enabled");
@@ -10061,6 +10067,11 @@ static int hdd_deconfigure_cds(struct hdd_context *hdd_ctx)
 
 	/* De-register the SME callbacks */
 	hdd_deregister_cb(hdd_ctx);
+
+	qdf_status = policy_mgr_deregister_mode_change_cb(hdd_ctx->hdd_psoc);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+		hdd_debug("Failed to deregister mode change cb with Policy Manager");
+	}
 
 	qdf_status = cds_disable(hdd_ctx->hdd_psoc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {

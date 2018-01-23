@@ -1423,7 +1423,10 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_HANG,
 	},
-
+	[QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO,
+	},
 #ifdef WLAN_UMAC_CONVERGENCE
 	COMMON_VENDOR_EVENTS
 #endif
@@ -13322,6 +13325,169 @@ static int wlan_hdd_cfg80211_fetch_bss_transition_status(struct wiphy *wiphy,
 	cds_ssr_unprotect(__func__);
 
 	return ret;
+}
+
+/**
+ * wlan_hdd_fill_intf_info() - Fill skb buffer with interface info
+ * @skb: Pointer to skb
+ * @info: mac mode info
+ * @index: attribute type index for nla_nest_start()
+ *
+ * Return : 0 on success and errno on failure
+ */
+static int wlan_hdd_fill_intf_info(struct sk_buff *skb,
+				   struct connection_info *info, int index)
+{
+	struct nlattr *attr;
+	uint32_t freq;
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *hdd_adapter;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx)
+		goto error;
+
+	hdd_adapter = hdd_get_adapter_by_vdev(hdd_ctx, info->vdev_id);
+	if (!hdd_adapter)
+		goto error;
+
+	attr = nla_nest_start(skb, index);
+	if (!attr)
+		goto error;
+
+	freq = sme_chn_to_freq(info->channel);
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_IFINDEX,
+	    hdd_adapter->dev->ifindex) ||
+	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_FREQ, freq))
+		goto error;
+
+	nla_nest_end(skb, attr);
+
+	return 0;
+error:
+	hdd_err("Fill buffer with interface info failed");
+	kfree_skb(skb);
+	return -EINVAL;
+}
+
+/**
+ * wlan_hdd_fill_mac_info() - Fill skb buffer with mac info
+ * @skb: Pointer to skb
+ * @info: mac mode info
+ * @mac_id: MAC id
+ * @conn_count: number of current connections
+ *
+ * Return : 0 on success and errno on failure
+ */
+static int wlan_hdd_fill_mac_info(struct sk_buff *skb,
+				  struct connection_info *info, uint32_t mac_id,
+				  uint32_t conn_count)
+{
+	struct nlattr *attr, *intf_attr;
+	uint32_t band = 0, i = 0, j = 0;
+	bool present = false;
+
+	while (i < conn_count) {
+		if (info[i].mac_id == mac_id) {
+			present = true;
+			if (info[i].channel <= SIR_11B_CHANNEL_END)
+				band |= 1 << NL80211_BAND_2GHZ;
+			else if (info[i].channel <= SIR_11A_CHANNEL_END)
+				band |= 1 << NL80211_BAND_5GHZ;
+		}
+		i++;
+	}
+
+	if (!present)
+		return 0;
+
+	i = 0;
+	attr = nla_nest_start(skb, mac_id);
+	if (!attr)
+		goto error;
+
+	if (nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MAC_INFO_MAC_ID, mac_id) ||
+	    nla_put_u32(skb, QCA_WLAN_VENDOR_ATTR_MAC_INFO_BAND, band))
+		goto error;
+
+	intf_attr = nla_nest_start(skb, QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO);
+	if (!intf_attr)
+		goto error;
+
+	while (i < conn_count) {
+		if (info[i].mac_id == mac_id) {
+			if (wlan_hdd_fill_intf_info(skb, &info[i], j))
+				return -EINVAL;
+			j++;
+		}
+		i++;
+	}
+
+	nla_nest_end(skb, intf_attr);
+
+	nla_nest_end(skb, attr);
+
+	return 0;
+error:
+	hdd_err("Fill buffer with mac info failed");
+	kfree_skb(skb);
+	return -EINVAL;
+}
+
+
+int wlan_hdd_send_mode_change_event(void)
+{
+	int err;
+	struct hdd_context *hdd_ctx;
+	struct sk_buff *skb;
+	struct nlattr *attr;
+	struct connection_info info[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	uint32_t conn_count, mac_id;
+
+	ENTER();
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("HDD context is NULL");
+		return -EINVAL;
+	}
+
+	err = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != err)
+		return err;
+
+	conn_count = policy_mgr_get_connection_info(hdd_ctx->hdd_psoc, info);
+	if (!conn_count)
+		return -EINVAL;
+
+	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy, NULL,
+				  (sizeof(uint32_t) * 4) *
+				  MAX_NUMBER_OF_CONC_CONNECTIONS + NLMSG_HDRLEN,
+				  QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX,
+				  GFP_KERNEL);
+	if (!skb) {
+		hdd_err("cfg80211_vendor_cmd_alloc_reply_skb failed");
+		return -ENOMEM;
+	}
+
+	attr = nla_nest_start(skb, QCA_WLAN_VENDOR_ATTR_MAC_INFO);
+	if (!attr) {
+		hdd_err("nla_nest_start failed");
+		kfree_skb(skb);
+		return -EINVAL;
+	}
+
+	for (mac_id = 0; mac_id < MAX_MAC; mac_id++) {
+		if (wlan_hdd_fill_mac_info(skb, info, mac_id, conn_count))
+			return -EINVAL;
+	}
+
+	nla_nest_end(skb, attr);
+
+	cfg80211_vendor_event(skb, GFP_KERNEL);
+	EXIT();
+
+	return err;
 }
 
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
