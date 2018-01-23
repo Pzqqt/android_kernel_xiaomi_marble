@@ -1353,6 +1353,7 @@ fail:
 				soc->wbm_idle_scatter_buf_size,
 				soc->wbm_idle_scatter_buf_base_vaddr[i],
 				soc->wbm_idle_scatter_buf_base_paddr[i], 0);
+			soc->wbm_idle_scatter_buf_base_vaddr[i] = NULL;
 		}
 	}
 
@@ -1363,6 +1364,7 @@ fail:
 				soc->link_desc_banks[i].base_vaddr_unaligned,
 				soc->link_desc_banks[i].base_paddr_unaligned,
 				0);
+			soc->link_desc_banks[i].base_vaddr_unaligned = NULL;
 		}
 	}
 	return QDF_STATUS_E_FAILURE;
@@ -1386,6 +1388,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 				soc->wbm_idle_scatter_buf_size,
 				soc->wbm_idle_scatter_buf_base_vaddr[i],
 				soc->wbm_idle_scatter_buf_base_paddr[i], 0);
+			soc->wbm_idle_scatter_buf_base_vaddr[i] = NULL;
 		}
 	}
 
@@ -1396,6 +1399,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 				soc->link_desc_banks[i].base_vaddr_unaligned,
 				soc->link_desc_banks[i].base_paddr_unaligned,
 				0);
+			soc->link_desc_banks[i].base_vaddr_unaligned = NULL;
 		}
 	}
 }

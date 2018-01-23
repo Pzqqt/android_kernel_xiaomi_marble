@@ -985,6 +985,7 @@ fail:
 			dp_pdev->link_desc_banks[i].size,
 			dp_pdev->link_desc_banks[i].base_vaddr_unaligned,
 			dp_pdev->link_desc_banks[i].base_paddr_unaligned, 0);
+			dp_pdev->link_desc_banks[i].base_vaddr_unaligned = NULL;
 		}
 	}
 	return QDF_STATUS_E_FAILURE;
@@ -1004,6 +1005,7 @@ static void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 			dp_pdev->link_desc_banks[i].size,
 			dp_pdev->link_desc_banks[i].base_vaddr_unaligned,
 			dp_pdev->link_desc_banks[i].base_paddr_unaligned, 0);
+			dp_pdev->link_desc_banks[i].base_vaddr_unaligned = NULL;
 		}
 	}
 }
