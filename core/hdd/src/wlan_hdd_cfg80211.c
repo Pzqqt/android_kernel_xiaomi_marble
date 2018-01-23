@@ -2962,9 +2962,9 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter)
 		test_bit(ACS_PENDING, &con_sap_adapter->event_flags)) {
 		INIT_DELAYED_WORK(&con_sap_adapter->acs_pending_work,
 				      wlan_hdd_cfg80211_start_pending_acs);
-		/* Lets give 500ms for OBSS + START_BSS to complete */
+		/* Lets give 1500ms for OBSS + START_BSS to complete */
 		schedule_delayed_work(&con_sap_adapter->acs_pending_work,
-							msecs_to_jiffies(500));
+					msecs_to_jiffies(1500));
 	}
 }
 
