@@ -1240,7 +1240,7 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 {
 	uint32_t phy_mode;
 	enum band_info rf_band = BAND_UNKNOWN;
-	uint32_t detect_masks;
+	struct obss_detection_cfg *cur_detect;
 
 	if (!mac_ctx || !session || !cfg) {
 		pe_err("Invalid params mac_ctx %pK, session %pK, cfg %pK",
@@ -1251,7 +1251,7 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 	lim_get_phy_mode(mac_ctx, &phy_mode, session);
 	rf_band = session->limRFBand;
 	qdf_mem_zero(cfg, sizeof(*cfg));
-	detect_masks = session->obss_offload_cfg.obss_current_detection_masks;
+	cur_detect = &session->current_obss_detection;
 
 	pe_debug("band:%d, phy_mode:%d, ht_cap:%d, ht_oper_mode:%d",
 		 rf_band, phy_mode, session->htCapability,
@@ -1261,12 +1261,19 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 		 session->gLim11gParams.protectionEnabled,
 		 session->gLim11aParams.protectionEnabled,
 		 session->gLimHt20Params.protectionEnabled);
-	pe_debug("obss: 11b:%d, 11g:%d, 11a:%d, ht20:%d, masks:0x%0x",
+	pe_debug("obss: 11b:%d, 11g:%d, 11a:%d, ht20:%d",
 		 session->gLimOlbcParams.protectionEnabled,
 		 session->gLimOverlap11gParams.protectionEnabled,
 		 session->gLimOverlap11aParams.protectionEnabled,
-		 session->gLimOverlapHt20Params.protectionEnabled,
-		 detect_masks);
+		 session->gLimOverlapHt20Params.protectionEnabled);
+	pe_debug("detect: b_ap:%d, b_s:%d, g:%d, a:%d, htl:%d, htm:%d, ht20:%d",
+		 cur_detect->obss_11b_ap_detect_mode,
+		 cur_detect->obss_11b_sta_detect_mode,
+		 cur_detect->obss_11g_ap_detect_mode,
+		 cur_detect->obss_11a_detect_mode,
+		 cur_detect->obss_ht_legacy_detect_mode,
+		 cur_detect->obss_ht_mixed_detect_mode,
+		 cur_detect->obss_ht_20mhz_detect_mode);
 
 	if ((rf_band == BAND_2G)) {
 		if ((phy_mode == WNI_CFG_PHY_MODE_11G ||
@@ -1279,10 +1286,12 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 				cfg->obss_11b_sta_detect_mode =
 					OBSS_OFFLOAD_DETECTION_PRESENT;
 			} else {
-				if (OBSS_DETECTION_IS_11B_AP(detect_masks))
+				if (cur_detect->obss_11b_ap_detect_mode ==
+				    OBSS_OFFLOAD_DETECTION_PRESENT)
 					cfg->obss_11b_ap_detect_mode =
 						OBSS_OFFLOAD_DETECTION_ABSENT;
-				if (OBSS_DETECTION_IS_11B_STA(detect_masks))
+				if (cur_detect->obss_11b_sta_detect_mode ==
+				    OBSS_OFFLOAD_DETECTION_PRESENT)
 					cfg->obss_11b_sta_detect_mode =
 						OBSS_OFFLOAD_DETECTION_ABSENT;
 			}
@@ -1301,13 +1310,16 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 				cfg->obss_ht_mixed_detect_mode =
 					OBSS_OFFLOAD_DETECTION_PRESENT;
 			} else {
-				if (OBSS_DETECTION_IS_11G_AP(detect_masks))
+				if (cur_detect->obss_11g_ap_detect_mode ==
+				    OBSS_OFFLOAD_DETECTION_PRESENT)
 					cfg->obss_11g_ap_detect_mode =
 						OBSS_OFFLOAD_DETECTION_ABSENT;
-				if (OBSS_DETECTION_IS_HT_LEGACY(detect_masks))
+				if (cur_detect->obss_ht_legacy_detect_mode ==
+				    OBSS_OFFLOAD_DETECTION_PRESENT)
 					cfg->obss_ht_legacy_detect_mode =
 						OBSS_OFFLOAD_DETECTION_ABSENT;
-				if (OBSS_DETECTION_IS_HT_MIXED(detect_masks))
+				if (cur_detect->obss_ht_mixed_detect_mode ==
+				    OBSS_OFFLOAD_DETECTION_PRESENT)
 					cfg->obss_ht_mixed_detect_mode =
 						OBSS_OFFLOAD_DETECTION_ABSENT;
 			}
@@ -1330,7 +1342,8 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 			if (!session->gLimOverlap11aParams.protectionEnabled)
 				cfg->obss_11a_detect_mode =
 					OBSS_OFFLOAD_DETECTION_PRESENT;
-			else if (OBSS_DETECTION_IS_11A(detect_masks))
+			else if (cur_detect->obss_11a_detect_mode ==
+				 OBSS_OFFLOAD_DETECTION_PRESENT)
 					cfg->obss_11a_detect_mode =
 						OBSS_OFFLOAD_DETECTION_ABSENT;
 		} else {
@@ -1345,7 +1358,8 @@ QDF_STATUS lim_obss_generate_detection_config(tpAniSirGlobal mac_ctx,
 			if (!session->gLimOverlapHt20Params.protectionEnabled) {
 				cfg->obss_ht_20mhz_detect_mode =
 					OBSS_OFFLOAD_DETECTION_PRESENT;
-			} else if (OBSS_DETECTION_IS_HT_20MHZ(detect_masks)) {
+			} else if (cur_detect->obss_ht_20mhz_detect_mode ==
+				   OBSS_OFFLOAD_DETECTION_PRESENT) {
 					cfg->obss_ht_20mhz_detect_mode =
 					OBSS_OFFLOAD_DETECTION_ABSENT;
 			}
@@ -1458,6 +1472,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 	tpPESession session;
 	tUpdateBeaconParams bcn_prm;
 	enum band_info rf_band = BAND_UNKNOWN;
+	struct obss_detection_cfg *cur_detect;
 
 	pe_debug("obss detect ind id %d, reason %d, msk 0x%x, " MAC_ADDRESS_STR,
 		 obss_detection->vdev_id, obss_detection->reason,
@@ -1519,6 +1534,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 	rf_band = session->limRFBand;
 	qdf_mem_zero(&bcn_prm, sizeof(bcn_prm));
 	obss_cfg = &session->obss_offload_cfg;
+	cur_detect = &session->current_obss_detection;
 
 	if (OBSS_DETECTION_IS_11B_AP(detect_masks)) {
 		if (reason != obss_cfg->obss_11b_ap_detect_mode ||
@@ -1527,6 +1543,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_enable11g_protection(mac_ctx, enable, true,
 					 &bcn_prm, session);
+		cur_detect->obss_11b_ap_detect_mode = reason;
 	}
 	if (OBSS_DETECTION_IS_11B_STA(detect_masks)) {
 		if (reason != obss_cfg->obss_11b_sta_detect_mode ||
@@ -1535,6 +1552,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_enable11g_protection(mac_ctx, enable, true,
 					 &bcn_prm, session);
+		cur_detect->obss_11b_sta_detect_mode = reason;
 	}
 	if (OBSS_DETECTION_IS_11G_AP(detect_masks)) {
 		if (reason != obss_cfg->obss_11g_ap_detect_mode ||
@@ -1543,6 +1561,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_enable_ht_protection_from11g(mac_ctx, enable, true,
 						 &bcn_prm, session);
+		cur_detect->obss_11g_ap_detect_mode = reason;
 	}
 	if (OBSS_DETECTION_IS_11A(detect_masks)) {
 		if (reason != obss_cfg->obss_11a_detect_mode ||
@@ -1551,6 +1570,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_update_11a_protection(mac_ctx, enable, true,
 					  &bcn_prm, session);
+		cur_detect->obss_11a_detect_mode = reason;
 	}
 	if (OBSS_DETECTION_IS_HT_LEGACY(detect_masks)) {
 		/* for 5GHz, we have only 11a detection, which covers legacy */
@@ -1560,6 +1580,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_enable_ht_protection_from11g(mac_ctx, enable, true,
 						 &bcn_prm, session);
+		cur_detect->obss_ht_legacy_detect_mode = reason;
 	}
 	if (OBSS_DETECTION_IS_HT_MIXED(detect_masks)) {
 		/* for 5GHz, we have only 11a detection, which covers ht mix */
@@ -1569,6 +1590,7 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_enable_ht_protection_from11g(mac_ctx, enable, true,
 						 &bcn_prm, session);
+		cur_detect->obss_ht_mixed_detect_mode = reason;
 	}
 	if (OBSS_DETECTION_IS_HT_20MHZ(detect_masks)) {
 		if (reason != obss_cfg->obss_ht_20mhz_detect_mode)
@@ -1576,10 +1598,8 @@ QDF_STATUS lim_process_obss_detection_ind(tpAniSirGlobal mac_ctx,
 
 		lim_enable_ht20_protection(mac_ctx, enable, true,
 					   &bcn_prm, session);
+		cur_detect->obss_ht_20mhz_detect_mode = reason;
 	}
-
-	/* save current detection */
-	session->obss_offload_cfg.obss_current_detection_masks = detect_masks;
 
 	if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running) &&
 	    bcn_prm.paramChangeBitmap) {
