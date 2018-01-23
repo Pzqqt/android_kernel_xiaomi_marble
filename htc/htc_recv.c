@@ -30,7 +30,7 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 /* HTC Control message receive timeout msec */
-#define HTC_CONTROL_RX_TIMEOUT     3000
+#define HTC_CONTROL_RX_TIMEOUT     6000
 
 #if defined(WLAN_DEBUG) || defined(DEBUG)
 void debug_dump_bytes(uint8_t *buffer, uint16_t length, char *pDescription)
