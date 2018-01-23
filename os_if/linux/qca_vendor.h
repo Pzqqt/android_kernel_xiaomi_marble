@@ -2887,12 +2887,14 @@ enum qca_wlan_vendor_attr_sap_conditional_chan_switch {
 
 /**
  * enum wifi_logger_supported_features - values for supported logger features
- * @WIFI_LOGGER_MEMORY_DUMP_SUPPORTED - Memory dump of FW
- * @WIFI_LOGGER_PER_PACKET_TX_RX_STATUS_SUPPORTED - Per packet statistics
- * @WIFI_LOGGER_CONNECT_EVENT_SUPPORTED - Logging of Connectivity events
- * @WIFI_LOGGER_POWER_EVENT_SUPPORTED - Power of driver
- * @WIFI_LOGGER_WAKE_LOCK_SUPPORTED - Wakelock of driver
- * @WIFI_LOGGER_WATCHDOG_TIMER_SUPPORTED - monitor FW health
+ * @WIFI_LOGGER_MEMORY_DUMP_SUPPORTED: Memory dump of FW
+ * @WIFI_LOGGER_PER_PACKET_TX_RX_STATUS_SUPPORTED: Per packet statistics
+ * @WIFI_LOGGER_CONNECT_EVENT_SUPPORTED: Logging of Connectivity events
+ * @WIFI_LOGGER_POWER_EVENT_SUPPORTED: Power of driver
+ * @WIFI_LOGGER_WAKE_LOCK_SUPPORTE: Wakelock of driver
+ * @WIFI_LOGGER_WATCHDOG_TIMER_SUPPORTED: monitor FW health
+ * @WIFI_LOGGER_DRIVER_DUMP_SUPPORTED: support driver dump
+ * @WIFI_LOGGER_PACKET_FATE_SUPPORTED: tracks connection packets fate
  */
 enum wifi_logger_supported_features {
 	WIFI_LOGGER_MEMORY_DUMP_SUPPORTED = (1 << (0)),
@@ -2902,6 +2904,8 @@ enum wifi_logger_supported_features {
 	WIFI_LOGGER_WAKE_LOCK_SUPPORTED = (1 << (4)),
 	WIFI_LOGGER_VERBOSE_SUPPORTED = (1 << (5)),
 	WIFI_LOGGER_WATCHDOG_TIMER_SUPPORTED = (1 << (6)),
+	WIFI_LOGGER_DRIVER_DUMP_SUPPORTED = (1 << (7)),
+	WIFI_LOGGER_PACKET_FATE_SUPPORTED = (1 << (8))
 };
 /**
  * enum qca_wlan_vendor_attr_acs_offload
