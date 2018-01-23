@@ -17400,6 +17400,19 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 	fixed_params =
 		(wmi_ndp_indication_event_fixed_param *)event->fixed_param;
 
+	if (fixed_params->ndp_cfg_len > event->num_ndp_cfg) {
+		WMI_LOGE("FW message ndp cfg length %d larger than TLV hdr %d",
+			 fixed_params->ndp_cfg_len, event->num_ndp_cfg);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (fixed_params->ndp_app_info_len > event->num_ndp_app_info) {
+		WMI_LOGE("FW message ndp app info length %d more than TLV hdr %d",
+			 fixed_params->ndp_app_info_len,
+			 event->num_ndp_app_info);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	*rsp = qdf_mem_malloc(sizeof(**rsp));
 	if (!(*rsp)) {
 		WMI_LOGE("malloc failed");
@@ -17474,9 +17487,23 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->ndp_instance_id, fixed_params->rsp_code,
 		 fixed_params->reason_code,
 		 fixed_params->num_active_ndps_on_peer);
+
+	if (fixed_params->ndp_cfg_len > event->num_ndp_cfg) {
+		WMI_LOGE("FW message ndp cfg length %d larger than TLV hdr %d",
+			 fixed_params->ndp_cfg_len, event->num_ndp_cfg);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	WMI_LOGD("ndp_cfg - %d bytes", fixed_params->ndp_cfg_len);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 		&event->ndp_cfg, fixed_params->ndp_cfg_len);
+
+	if (fixed_params->ndp_app_info_len > event->num_ndp_app_info) {
+		WMI_LOGE("FW message ndp app info length %d more than TLV hdr %d",
+			 fixed_params->ndp_app_info_len,
+			 event->num_ndp_app_info);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	WMI_LOGD("ndp_app_info - %d bytes",
 			fixed_params->ndp_app_info_len);
