@@ -2011,7 +2011,12 @@ bool hdd_dfs_indicate_radar(struct hdd_context *hdd_ctx)
 	struct hdd_adapter *adapter;
 	struct hdd_ap_ctx *ap_ctx;
 
-	if (!hdd_ctx || hdd_ctx->config->disableDFSChSwitch) {
+	if (!hdd_ctx) {
+		hdd_info("Couldn't get hdd_ctx");
+		return true;
+	}
+
+	if (hdd_ctx->config->disableDFSChSwitch) {
 		hdd_info("skip tx block hdd_ctx=%pK, disableDFSChSwitch=%d",
 			 hdd_ctx, hdd_ctx->config->disableDFSChSwitch);
 		return true;
@@ -10772,9 +10777,8 @@ void hdd_softap_sta_disassoc(struct hdd_adapter *adapter,
 		stainfo->rssi = peer_sta_info.info[0].rssi;
 		stainfo->tx_rate = peer_sta_info.info[0].tx_rate;
 		stainfo->rx_rate = peer_sta_info.info[0].rx_rate;
+		stainfo->reason_code = pDelStaParams->reason_code;
 	}
-
-	stainfo->reason_code = pDelStaParams->reason_code;
 
 	wlansap_disassoc_sta(WLAN_HDD_GET_SAP_CTX_PTR(adapter),
 			     pDelStaParams);
