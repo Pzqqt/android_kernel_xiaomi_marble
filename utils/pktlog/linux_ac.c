@@ -110,8 +110,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 
 	if (!pl_dev) {
 		printk(PKTLOG_TAG
-		       "%s: Unable to allocate buffer "
-		       "scn or scn->pdev_txrx_handle->pl_dev is null\n",
+		       "%s: Unable to allocate buffer pdev_txrx_handle or pdev_txrx_handle->pl_dev is null\n",
 		       __func__);
 		return -EINVAL;
 	}

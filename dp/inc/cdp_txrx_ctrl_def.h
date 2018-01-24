@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016,2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -72,8 +72,10 @@ void ol_ll_pdev_tx_unlock(void *);
 	qdf_spin_unlock_bh(&((_x)->peer_lock[_id]))
 
 #else
-#define OSIF_VAP_TX_LOCK(_x)  ol_ll_pdev_tx_lock((_x)->iv_txrx_handle)
-#define OSIF_VAP_TX_UNLOCK(_x) ol_ll_pdev_tx_unlock((_x)->iv_txrx_handle)
+#define OSIF_VAP_TX_LOCK(_x)  ol_ll_pdev_tx_lock( \
+			wlan_vdev_get_dp_handle((_x)->os_if_vdev))
+#define OSIF_VAP_TX_UNLOCK(_x) ol_ll_pdev_tx_unlock( \
+			wlan_vdev_get_dp_handle((_x)->os_if_vdev))
 
 #define OL_TX_FLOW_CTRL_LOCK(_x)
 #define OL_TX_FLOW_CTRL_UNLOCK(_x)
