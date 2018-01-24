@@ -8516,49 +8516,9 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 				(struct policy_mgr_hw_mode *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WMA_OCB_SET_CONFIG_CMD:
-		wma_ocb_set_config_req(wma_handle,
-			(struct sir_ocb_config *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_OCB_SET_UTC_TIME_CMD:
-		wma_ocb_set_utc_time(wma_handle,
-			(struct sir_ocb_utc *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_OCB_START_TIMING_ADVERT_CMD:
-		wma_ocb_start_timing_advert(wma_handle,
-			(struct sir_ocb_timing_advert *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_OCB_STOP_TIMING_ADVERT_CMD:
-		wma_ocb_stop_timing_advert(wma_handle,
-			(struct sir_ocb_timing_advert *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_DCC_CLEAR_STATS_CMD:
-		wma_dcc_clear_stats(wma_handle,
-			(struct sir_dcc_clear_stats *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_OCB_GET_TSF_TIMER_CMD:
-		wma_ocb_get_tsf_timer(wma_handle,
-			(struct sir_ocb_get_tsf_timer *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_SET_WISA_PARAMS:
 		wma_set_wisa_params(wma_handle,
 			(struct sir_wisa_params *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_DCC_GET_STATS_CMD:
-		wma_dcc_get_stats(wma_handle,
-			(struct sir_dcc_get_stats *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_DCC_UPDATE_NDL_CMD:
-		wma_dcc_update_ndl(wma_handle,
-			(struct sir_dcc_update_ndl *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case SIR_HAL_PDEV_DUAL_MAC_CFG_REQ:

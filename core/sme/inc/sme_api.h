@@ -1427,70 +1427,12 @@ int sme_update_tx_bfee_nsts(mac_handle_t mac_handle, uint8_t session_id,
 void wlan_sap_enable_phy_error_logs(mac_handle_t mac_handle,
 				    uint32_t enable_log);
 #ifdef WLAN_FEATURE_DSRC
-QDF_STATUS sme_ocb_set_config(mac_handle_t mac_handle, void *context,
-			      ocb_callback callback,
-			      struct sir_ocb_config *config);
-
-QDF_STATUS sme_ocb_set_utc_time(mac_handle_t mac_handle,
-				struct sir_ocb_utc *utc);
-
-QDF_STATUS sme_ocb_start_timing_advert(mac_handle_t mac_handle,
-	struct sir_ocb_timing_advert *timing_advert);
-
-QDF_STATUS sme_ocb_stop_timing_advert(mac_handle_t mac_handle,
-	struct sir_ocb_timing_advert *timing_advert);
-
 int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
 				    tSirMacAddr self_addr,
 				    uint8_t **buf, uint32_t *timestamp_offset,
 				    uint32_t *time_value_offset);
 
-QDF_STATUS sme_ocb_get_tsf_timer(mac_handle_t mac_handle, void *context,
-				 ocb_callback callback,
-				 struct sir_ocb_get_tsf_timer *request);
-
-QDF_STATUS sme_dcc_get_stats(mac_handle_t mac_handle, void *context,
-			     ocb_callback callback,
-			     struct sir_dcc_get_stats *request);
-
-QDF_STATUS sme_dcc_clear_stats(mac_handle_t mac_handle, uint32_t vdev_id,
-			       uint32_t dcc_stats_bitmap);
-
-QDF_STATUS sme_dcc_update_ndl(mac_handle_t mac_handle, void *context,
-			      ocb_callback callback,
-			      struct sir_dcc_update_ndl *request);
-
-QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t mac_handle,
-					    void *context,
-					    ocb_callback callback);
-QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t mac_handle);
-
 #else
-static inline
-QDF_STATUS sme_ocb_set_config(mac_handle_t mac_handle, void *context,
-			      ocb_callback callback,
-			      struct sir_ocb_config *config)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS sme_ocb_set_utc_time(struct sir_ocb_utc *utc)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS sme_ocb_start_timing_advert(
-		struct sir_ocb_timing_advert *timing_advert)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS sme_ocb_stop_timing_advert(struct sir_ocb_timing_advert
-		*timing_advert)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
 static inline
 int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
 				    tSirMacAddr self_addr, uint8_t **buf,
@@ -1498,51 +1440,6 @@ int sme_ocb_gen_timing_advert_frame(mac_handle_t mac_handle,
 				    uint32_t *time_value_offset)
 {
 	return 0;
-}
-
-static inline
-QDF_STATUS sme_ocb_get_tsf_timer(mac_handle_t mac_handle, void *context,
-				 ocb_callback callback,
-				 struct sir_ocb_get_tsf_timer *request)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_dcc_get_stats(mac_handle_t mac_handle, void *context,
-			     ocb_callback callback,
-			     struct sir_dcc_get_stats *request)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_dcc_clear_stats(uint32_t vdev_id,
-			       uint32_t dcc_stats_bitmap)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_dcc_update_ndl(mac_handle_t mac_handle, void *context,
-			      ocb_callback callback,
-			      struct sir_dcc_update_ndl *request)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_register_for_dcc_stats_event(mac_handle_t mac_handle,
-					    void *context,
-					    ocb_callback callback)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline
-QDF_STATUS sme_deregister_for_dcc_stats_event(mac_handle_t mac_handle)
-{
-	return QDF_STATUS_SUCCESS;
 }
 
 #endif

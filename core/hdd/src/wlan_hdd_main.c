@@ -12169,10 +12169,6 @@ void hdd_deregister_cb(struct hdd_context *hdd_ctx)
 
 	mac_handle = hdd_ctx->mac_handle;
 	sme_deregister_tx_queue_cb(mac_handle);
-	status = sme_deregister_for_dcc_stats_event(mac_handle);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("De-register of dcc stats callback failed: %d",
-			status);
 
 	sme_reset_link_layer_stats_ind_cb(mac_handle);
 	sme_reset_rssi_threshold_breached_cb(mac_handle);

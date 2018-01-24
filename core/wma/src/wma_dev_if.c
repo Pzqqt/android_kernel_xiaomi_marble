@@ -4147,12 +4147,6 @@ void wma_vdev_resp_timer(void *data)
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 
 		wma_handle_add_bss_req_timeout(wma, tgt_req);
-	} else if (tgt_req->msg_type == WMA_OCB_SET_CONFIG_CMD) {
-		WMA_LOGE(FL("Failed to send OCB set config cmd"));
-		iface = &wma->interfaces[tgt_req->vdev_id];
-
-		wma_vdev_set_mlme_state_stop(wma, tgt_req->vdev_id);
-		wma_ocb_set_config_resp(wma, QDF_STATUS_E_TIMEOUT);
 	} else if (tgt_req->msg_type == WMA_HIDDEN_SSID_VDEV_RESTART) {
 		if (wma_get_hidden_ssid_restart_in_progress(
 		    &wma->interfaces[tgt_req->vdev_id]) &&
