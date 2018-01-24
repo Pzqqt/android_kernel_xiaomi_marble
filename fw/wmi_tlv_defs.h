@@ -893,6 +893,9 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_bpf_get_vdev_work_memory_cmd_fixed_param,
     WMITLV_TAG_STRUC_wmi_bpf_get_vdev_work_memory_resp_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_pdev_get_nfcal_power_fixed_param,
+    WMITLV_TAG_STRUC_wmi_bss_color_change_enable_fixed_param,
+    WMITLV_TAG_STRUC_wmi_obss_color_collision_det_config_fixed_param,
+    WMITLV_TAG_STRUC_wmi_obss_color_collision_evt_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1253,6 +1256,8 @@ typedef enum {
     OP(WMI_BPF_SET_VDEV_WORK_MEMORY_CMDID) \
     OP(WMI_BPF_GET_VDEV_WORK_MEMORY_CMDID) \
     OP(WMI_PDEV_GET_NFCAL_POWER_CMDID) \
+    OP(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID) \
+    OP(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1451,6 +1456,7 @@ typedef enum {
     OP(WMI_SAR_GET_LIMITS_EVENTID) \
     OP(WMI_SAR2_RESULT_EVENTID) \
     OP(WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID) \
+    OP(WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3084,6 +3090,16 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SAP_SET_BLACKLIST_PARAM_CMDID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sap_obss_detection_cfg_cmd_fixed_param, wmi_sap_obss_detection_cfg_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAP_OBSS_DETECTION_CFG_CMDID);
 
+/* STA BSS Color change offload param Cmd */
+#define WMITLV_TABLE_WMI_BSS_COLOR_CHANGE_ENABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_bss_color_change_enable_fixed_param, wmi_bss_color_change_enable_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID);
+
+/* OBSS Color collision detection config cmd */
+#define WMITLV_TABLE_WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_obss_color_collision_det_config_fixed_param, wmi_obss_color_collision_det_config_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID);
+
 /* APFIND Request */
 #define WMITLV_TABLE_WMI_APFIND_CMDID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_apfind_cmd_param, wmi_apfind_cmd_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -4419,6 +4435,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SAP_OFL_DEL_STA_EVENTID);
 #define WMITLV_TABLE_WMI_SAP_OBSS_DETECTION_REPORT_EVENTID(id,op,buf,len) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_sap_obss_detection_info_evt_fixed_param, wmi_sap_obss_detection_info_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SAP_OBSS_DETECTION_REPORT_EVENTID);
+
+/* OBSS Color collision detection event */
+#define WMITLV_TABLE_WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_obss_color_collision_evt_fixed_param, wmi_obss_color_collision_evt_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID);
 
 /* Set OCB schedule event, DEPRECATED */
 #define WMITLV_TABLE_WMI_OCB_SET_SCHED_EVENTID(id,op,buf,len) \

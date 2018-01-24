@@ -533,6 +533,8 @@ typedef enum {
     WMI_PDEV_SEND_FD_CMDID,
     /** Cmd to enable/disable offloaded beacons */
     WMI_BCN_OFFLOAD_CTRL_CMDID,
+    /** Cmd to enable FW handling BSS color change notification from AP. */
+    WMI_BSS_COLOR_CHANGE_ENABLE_CMDID,
 
     /** commands to directly control ba negotiation directly from host. only used in test mode */
 
@@ -998,6 +1000,7 @@ typedef enum {
      */
     WMI_OBSS_SCAN_ENABLE_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_OBSS_OFL),
     WMI_OBSS_SCAN_DISABLE_CMDID,
+    WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID,
 
     /**LPI commands*/
     /**LPI mgmt snooping config command*/
@@ -1570,6 +1573,9 @@ typedef enum {
     WMI_SAP_OFL_ADD_STA_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_SAP_OFL),
     WMI_SAP_OFL_DEL_STA_EVENTID,
     WMI_SAP_OBSS_DETECTION_REPORT_EVENTID,
+
+    /* OBSS Offloads events */
+    WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_OBSS_OFL),
 
     /** Out-of-context-of-bss (OCB) events */
     WMI_OCB_SET_CONFIG_RESP_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_OCB),
@@ -11460,6 +11466,7 @@ typedef enum event_type_e {
     WOW_CHIP_POWER_FAILURE_DETECT_EVENT,
     WOW_11D_SCAN_EVENT,
     WOW_SAP_OBSS_DETECTION_EVENT,
+    WOW_BSS_COLOR_COLLISION_DETECT_EVENT,
 } WOW_WAKE_EVENT_TYPE;
 
 typedef enum wake_reason_e {
@@ -11517,6 +11524,7 @@ typedef enum wake_reason_e {
     WOW_REASON_OIC_PING_OFFLOAD,
     WOW_REASON_WLAN_DHCP_RENEW,
     WOW_REASON_SAP_OBSS_DETECTION,
+    WOW_REASON_BSS_COLOR_COLLISION_DETECT,
 
     WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
@@ -17369,6 +17377,41 @@ typedef struct wmi_sap_obss_detection_info_evt_s {
     wmi_mac_addr matched_bssid_addr;  /* valid when reason is WMI_SAP_OBSS_DETECTION_EVENT_REASON_PRESENT_NOTIFY */
 } wmi_sap_obss_detection_info_evt_fixed_param;
 
+/** WMI command to enable STA FW handle bss color change notification from AP */
+typedef struct  {
+    A_UINT32 tlv_header; /* tag equals WMITLV_TAG_STRUC_wmi_bss_color_change_enable_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 enable;
+} wmi_bss_color_change_enable_fixed_param;
+
+typedef enum  {
+    WMI_BSS_COLOR_COLLISION_DISABLE = 0,
+    WMI_BSS_COLOR_COLLISION_DETECTION,
+    WMI_BSS_COLOR_FREE_SLOT_TIMER_EXPIRY,
+    WMI_BSS_COLOR_FREE_SLOT_AVAILABLE,
+} WMI_BSS_COLOR_COLLISION_EVT_TYPE;
+
+/** Command to enable OBSS Color collision detection for both STA and AP mode */
+typedef struct  {
+    A_UINT32 tlv_header;                /* tag equals WMITLV_TAG_STRUC_wmi_obss_color_collision_det_config_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 flags;                     /* proposed for future use cases */
+    A_UINT32 evt_type;                  /* WMI_BSS_COLOR_COLLISION_EVT_TYPE */
+    A_UINT32 current_bss_color;
+    A_UINT32 detection_period_ms;       /* scan interval for both AP and STA mode */
+    A_UINT32 scan_period_ms;            /* scan period for passive scan to detect collision */
+    A_UINT32 free_slot_expiry_time_ms;  /* FW to notify host at timer expiry after which Host disables bss color */
+} wmi_obss_color_collision_det_config_fixed_param;
+
+/** WMI event to notify host on OBSS Color collision detection, free slot available for AP mode */
+typedef struct  {
+    A_UINT32 tlv_header;                    /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_obss_color_collision_evt_fixed_param */
+    A_UINT32 vdev_id;
+    A_UINT32 evt_type;                      /* WMI_BSS_COLOR_COLLISION_EVT_TYPE */
+    A_UINT32 bss_color_bitmap_bit0to31;     /* Bit set indicating BSS color present */
+    A_UINT32 bss_color_bitmap_bit32to63;    /* Bit set indicating BSS color present */
+} wmi_obss_color_collision_evt_fixed_param;
+
 /**
  * OCB DCC types and structures.
  */
@@ -21183,6 +21226,8 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_BPF_SET_VDEV_ENABLE_CMDID);
         WMI_RETURN_STRING(WMI_BPF_SET_VDEV_WORK_MEMORY_CMDID);
         WMI_RETURN_STRING(WMI_BPF_GET_VDEV_WORK_MEMORY_CMDID);
+        WMI_RETURN_STRING(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID);
+        WMI_RETURN_STRING(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID);
     }
 
     return "Invalid WMI cmd";
