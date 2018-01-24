@@ -213,14 +213,6 @@ QDF_STATUS wma_send_adapt_dwelltime_params(WMA_HANDLE handle,
  */
 QDF_STATUS wma_send_dbs_scan_selection_params(WMA_HANDLE handle,
 			struct wmi_dbs_scan_sel_params *dbs_scan_params);
-#ifdef WLAN_SUPPORT_GREEN_AP
-void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle);
-void wma_register_egap_event_handle(WMA_HANDLE handle);
-#else
-static inline void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg,
-					  WMA_HANDLE handle) {}
-static inline void wma_register_egap_event_handle(WMA_HANDLE handle) {}
-#endif
 QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
 QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 

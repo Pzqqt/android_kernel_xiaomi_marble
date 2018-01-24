@@ -1931,7 +1931,6 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->max_intf_count = cfg->max_intf_count;
 
 	hdd_lpass_target_config(hdd_ctx, cfg);
-	ucfg_green_ap_target_config(hdd_ctx->hdd_pdev, cfg->egap_support);
 
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);

@@ -95,6 +95,7 @@
 #include <wlan_spectral_utils_api.h>
 #include "init_event_handler.h"
 #include "init_deinit_ucfg.h"
+#include "target_if_green_ap.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -5154,12 +5155,17 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 		wma_handle->fine_time_measurement_cap;
 	tgt_cfg.wmi_max_len = wmi_get_max_msg_len(wma_handle->wmi_handle)
 			      - WMI_TLV_HEADROOM;
-	wma_setup_egap_support(&tgt_cfg, wma_handle);
 	tgt_cfg.tx_bfee_8ss_enabled = wma_handle->tx_bfee_8ss_enabled;
 	wma_update_obss_detection_support(wma_handle, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
+
+	/* register the Enhanced Green AP event handler */
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_EGAP))
+		target_if_green_ap_register_egap_event_handler(
+					wma_handle->pdev);
 }
 
 /**
@@ -5504,9 +5510,6 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		wlan_res_cfg->use_pdev_id = false;
 
 	wlan_res_cfg->max_num_dbs_scan_duty_cycle = CDS_DBS_SCAN_CLIENTS_MAX;
-
-	/* register the Enhanced Green AP event handler */
-	wma_register_egap_event_handle(wma_handle);
 
 	/* Initialize the log supported event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
