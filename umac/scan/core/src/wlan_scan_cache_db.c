@@ -124,6 +124,13 @@ static void scm_scan_entry_put_ref(struct scan_dbs *scan_db,
 	if (lock_needed)
 		qdf_spin_lock_bh(&scan_db->scan_db_lock);
 
+	if (delete && !scan_node->active) {
+		if (lock_needed)
+			qdf_spin_unlock_bh(&scan_db->scan_db_lock);
+		scm_warn("node is already deleted");
+		return;
+	}
+
 	if (!qdf_atomic_read(&scan_node->ref_cnt)) {
 		if (lock_needed)
 			qdf_spin_unlock_bh(&scan_db->scan_db_lock);
@@ -132,13 +139,9 @@ static void scm_scan_entry_put_ref(struct scan_dbs *scan_db,
 		return;
 	}
 
-	if (delete) {
-		if (!scan_node->active) {
-			scm_err("node is already deleted");
-			QDF_ASSERT(0);
-		}
+	if (delete)
 		scan_node->active = false;
-	}
+
 	/* Decrement ref count, free scan_node, if ref count == 0 */
 	if (qdf_atomic_dec_and_test(&scan_node->ref_cnt))
 		scm_del_scan_node_from_db(scan_db, scan_node);
