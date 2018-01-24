@@ -2200,12 +2200,13 @@ static inline void dp_tx_comp_free_buf(struct dp_soc *soc,
 					desc->msdu_ext_desc->vaddr)) {
 			/* If remaining number of segment is 0
 			 * actual TSO may unmap and free */
-			if (!DP_DESC_NUM_FRAG(desc)) {
-				qdf_nbuf_unmap(soc->osdev, nbuf,
+			if (qdf_nbuf_get_users(nbuf) == 1)
+				__qdf_nbuf_unmap_single(soc->osdev,
+						nbuf,
 						QDF_DMA_TO_DEVICE);
-				qdf_nbuf_free(nbuf);
-				return;
-			}
+
+			qdf_nbuf_free(nbuf);
+			return;
 		}
 	}
 
