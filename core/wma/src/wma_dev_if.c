@@ -73,6 +73,7 @@
 #include "wlan_policy_mgr_api.h"
 #include "wma_nan_datapath.h"
 #include "wlan_tgt_def_config.h"
+#include <wlan_dfs_tgt_api.h>
 #include <cdp_txrx_handle.h>
 #include "wlan_pmo_ucfg_api.h"
 #include "wlan_reg_services_api.h"
@@ -1014,6 +1015,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("Invalid vdev id received from firmware");
 		return -EINVAL;
 	}
+
+	if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id))
+		tgt_dfs_radar_enable(wma->pdev, 0, 0);
 
 	if (resp_event->status == QDF_STATUS_SUCCESS) {
 		wma->interfaces[resp_event->vdev_id].tx_streams =
