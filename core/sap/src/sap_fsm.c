@@ -4092,6 +4092,7 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 	uint8_t i;
 #endif
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tSapChSelSpectInfo spect_info_obj = { NULL, 0 };
 
 	if (NULL == hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -4157,6 +4158,16 @@ static QDF_STATUS sap_get_channel_list(struct sap_context *sap_ctx,
 		    ((false == mac_ctx->scan.fEnableDFSChnlScan) &&
 		     (CHANNEL_STATE_ENABLE ==
 		      wlan_reg_get_channel_state(mac_ctx->pdev, loop_count)))))
+			continue;
+
+		/*
+		 * Skip the channels which are not in ACS config from user
+		 * space
+		 */
+		if (SAP_CHANNEL_NOT_SELECTED ==
+			sap_channel_in_acs_channel_list(
+				WLAN_REG_CH_NUM(loop_count),
+				sap_ctx, &spect_info_obj))
 			continue;
 
 #ifdef FEATURE_WLAN_CH_AVOID

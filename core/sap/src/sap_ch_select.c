@@ -492,7 +492,6 @@ void sap_update_unsafe_channel_list(tHalHandle hal, struct sap_context *sap_ctx)
  *
  * Return: channel number if in acs channel list or SAP_CHANNEL_NOT_SELECTED
  */
-static
 uint8_t sap_channel_in_acs_channel_list(uint8_t channel_num,
 					struct sap_context *sap_ctx,
 					tSapChSelSpectInfo *spect_info_params)
