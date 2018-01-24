@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -254,10 +254,12 @@ static ssize_t qdf_seq_write(struct file *filp, const char __user *ubuf,
 	fops = seq->private;
 	if (fops && fops->write) {
 		buf = qdf_mem_malloc(len + 1);
-		buf[len] = '\0';
-		rc = simple_write_to_buffer(buf, len, ppos, ubuf, len);
-		fops->write(fops->priv, buf, len + 1);
-		qdf_mem_free(buf);
+		if (buf) {
+			buf[len] = '\0';
+			rc = simple_write_to_buffer(buf, len, ppos, ubuf, len);
+			fops->write(fops->priv, buf, len + 1);
+			qdf_mem_free(buf);
+		}
 	}
 
 	return rc;
