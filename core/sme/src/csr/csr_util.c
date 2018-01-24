@@ -4089,6 +4089,8 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	tDot11fIERSN rsn_ie;
 
 	qdf_mem_zero(&pmkid_cache, sizeof(pmkid_cache));
+	qdf_mem_zero(&rsn_ie, sizeof(rsn_ie));
+
 	do {
 		if (!csr_is_profile_rsn(pProfile))
 			break;
