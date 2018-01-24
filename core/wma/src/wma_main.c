@@ -2203,6 +2203,28 @@ static struct wlan_objmgr_psoc *wma_get_psoc_from_scn_handle(void *scn_handle)
 
 	return wma_handle->psoc;
 }
+
+/**
+ * wma_get_pdev_from_scn_handle() - API to get pdev from scn handle
+ * @scn_handle: opaque wma handle
+ *
+ * API to get pdev from scn handle
+ *
+ * Return: None
+ */
+static struct wlan_objmgr_pdev *wma_get_pdev_from_scn_handle(void *scn_handle)
+{
+	tp_wma_handle wma_handle;
+
+	if (!scn_handle) {
+		WMA_LOGE("invalid scn handle");
+		return NULL;
+	}
+	wma_handle = (tp_wma_handle)scn_handle;
+
+	return wma_handle->pdev;
+}
+
 /**
  * wma_legacy_service_ready_event_handler() - legacy (ext)service ready handler
  * @event_id: event_id
@@ -5137,6 +5159,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_obss_detection_support(wma_handle, &tgt_cfg);
 	wma_update_hdd_cfg_ndp(wma_handle, &tgt_cfg);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
+	target_if_store_pdev_target_if_ctx(wma_get_pdev_from_scn_handle);
 }
 
 /**
