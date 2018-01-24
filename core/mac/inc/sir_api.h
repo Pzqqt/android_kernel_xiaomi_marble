@@ -7459,6 +7459,11 @@ struct ppet_hdr {
 	((HE_MCS_MSK_4_NSS(nss) & (mcs_set)) != HE_MCS_MSK_4_NSS(nss))
 
 #define HE_MCS_ALL_DISABLED                   0xFFFF
+
+#define HE_MCS_0_7     0x0
+#define HE_MCS_0_9     0x1
+#define HE_MCS_0_11    0x2
+#define HE_MCS_DISABLE 0x3
 /*
  * Following formuala has been arrived at using karnaugh map and unit tested
  * with sample code. Take MCS for each NSS as 2 bit value first and solve for

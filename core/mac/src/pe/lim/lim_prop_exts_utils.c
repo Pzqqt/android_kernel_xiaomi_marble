@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -283,8 +283,52 @@ static void lim_extract_he_op(tpPESession session,
 		pe_debug("he_op.default_pe %d", session->he_op.default_pe);
 	}
 }
+
+static bool lim_check_he_80_mcs11_supp(tpPESession session,
+		tSirProbeRespBeacon *beacon_struct) {
+	uint8_t rx_mcs_map;
+	uint8_t tx_mcs_map;
+	rx_mcs_map = beacon_struct->he_cap.rx_he_mcs_map_lt_80;
+	tx_mcs_map = beacon_struct->he_cap.tx_he_mcs_map_lt_80;
+	if ((session->nss == NSS_1x1_MODE) &&
+		((HE_GET_MCS_4_NSS(rx_mcs_map, 1) == HE_MCS_0_11) ||
+		(HE_GET_MCS_4_NSS(tx_mcs_map, 1) == HE_MCS_0_11)))
+		return true;
+
+	if ((session->nss == NSS_2x2_MODE) &&
+		((HE_GET_MCS_4_NSS(rx_mcs_map, 2) == HE_MCS_0_11) ||
+		(HE_GET_MCS_4_NSS(tx_mcs_map, 2) == HE_MCS_0_11)))
+		return true;
+
+	return false;
+}
+
+static void lim_check_he_ldpc_cap(tpPESession session,
+		tSirProbeRespBeacon *beacon_struct)
+{
+	if (session->he_capable && beacon_struct->he_cap.present) {
+		if (beacon_struct->he_cap.ldpc_coding)
+			return;
+		else if ((session->ch_width == CH_WIDTH_20MHZ) &&
+				!lim_check_he_80_mcs11_supp(session,
+					beacon_struct))
+			return;
+		session->he_capable = false;
+		pe_err("LDPC check failed for HE operation");
+		if (session->vhtCapability) {
+			session->dot11mode = WNI_CFG_DOT11_MODE_11AC;
+			pe_debug("Update dot11mode to 11ac");
+		} else {
+			session->dot11mode = WNI_CFG_DOT11_MODE_11N;
+			pe_debug("Update dot11mode to 11N");
+		}
+	}
+}
 #else
 static inline void lim_extract_he_op(tpPESession session,
+		tSirProbeRespBeacon *beacon_struct)
+{}
+static void lim_check_he_ldpc_cap(tpPESession session,
 		tSirProbeRespBeacon *beacon_struct)
 {}
 #endif
@@ -522,6 +566,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			pe_err("AP does not support op_mode rx");
 		}
 	}
+	lim_check_he_ldpc_cap(session, beacon_struct);
 	lim_extract_he_op(session, beacon_struct);
 	/* Extract the UAPSD flag from WMM Parameter element */
 	if (beacon_struct->wmeEdcaPresent)
