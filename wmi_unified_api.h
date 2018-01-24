@@ -2091,6 +2091,12 @@ QDF_STATUS wmi_unified_extract_obss_detection_info(void *wmi_hdl,
 						   struct wmi_obss_detect_info
 						   *info);
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+QDF_STATUS wmi_extract_green_ap_egap_status_info(
+		void *wmi_hdl, uint8_t *evt_buf,
+		struct wlan_green_ap_egap_status_info *egap_status_info_params);
+#endif
+
 #ifdef WLAN_SUPPORT_FILS
 /**
  * wmi_unified_fils_vdev_config_send_cmd() - send FILS config cmd to fw
