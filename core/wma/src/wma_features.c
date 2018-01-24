@@ -2564,6 +2564,11 @@ static int wma_wake_event_packet(
 	uint8_t *packet;
 	uint32_t packet_len;
 
+	if (event_param->num_wow_packet_buffer <= 4) {
+		WMA_LOGE("Invalid wow packet buffer from firmware %u",
+			 event_param->num_wow_packet_buffer);
+		return -EINVAL;
+	}
 	/* first 4 bytes are the length, followed by the buffer */
 	packet_len = *(uint32_t *)event_param->wow_packet_buffer;
 	packet = event_param->wow_packet_buffer + 4;
@@ -2653,8 +2658,12 @@ static int wma_wake_event_piggybacked(
 	 * piggybacked event is empty. In these cases we just want to wake up,
 	 * and no action is needed. Bail out now if that is the case.
 	 */
-	if (!event_param->wow_packet_buffer)
+	if (!event_param->wow_packet_buffer ||
+	    event_param->num_wow_packet_buffer <= 4) {
+		WMA_LOGE("Invalid wow packet buffer from firmware %u",
+			 event_param->num_wow_packet_buffer);
 		return 0;
+	}
 
 	wake_reason = event_param->fixed_param->wake_reason;
 
