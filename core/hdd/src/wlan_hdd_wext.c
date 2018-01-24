@@ -10604,7 +10604,6 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	return qdf_status_to_os_return(status);
 }
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
 static int printk_adapter(void *priv, const char *fmt, ...)
 {
 	int ret;
@@ -10624,36 +10623,27 @@ static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
 
 	switch (log_id) {
 	case HTC_CREDIT_HISTORY_LOG:
-		print(NULL, "HTC Credit History (count %u)", count);
 		cds_print_htc_credit_history(count, print, NULL);
 		break;
 	case COMMAND_LOG:
-		print(NULL, "Command Log (count %u)", count);
 		wma_print_wmi_cmd_log(count, print, NULL);
 		break;
 	case COMMAND_TX_CMP_LOG:
-		print(NULL, "Command Tx Complete Log (count %u)", count);
 		wma_print_wmi_cmd_tx_cmp_log(count, print, NULL);
 		break;
 	case MGMT_COMMAND_LOG:
-		print(NULL, "Management Command Log (count %u)", count);
 		wma_print_wmi_mgmt_cmd_log(count, print, NULL);
 		break;
 	case MGMT_COMMAND_TX_CMP_LOG:
-		print(NULL, "Management Command Tx Complete Log (count %u)",
-		      count);
 		wma_print_wmi_mgmt_cmd_tx_cmp_log(count, print, NULL);
 		break;
 	case EVENT_LOG:
-		print(NULL, "Event Log (count %u)", count);
 		wma_print_wmi_event_log(count, print, NULL);
 		break;
 	case RX_EVENT_LOG:
-		print(NULL, "Rx Event Log (count %u)", count);
 		wma_print_wmi_rx_event_log(count, print, NULL);
 		break;
 	case MGMT_EVENT_LOG:
-		print(NULL, "Management Event Log (count %u)", count);
 		wma_print_wmi_mgmt_event_log(count, print, NULL);
 		break;
 	default:
@@ -10661,11 +10651,6 @@ static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
 		break;
 	}
 }
-#else
-static inline void hdd_ioctl_log_buffer(int log_id, uint32_t count)
-{
-}
-#endif /* WMI_INTERFACE_EVENT_LOGGING */
 
 static int __iw_set_two_ints_getnone(struct net_device *dev,
 				     struct iw_request_info *info,
@@ -11998,10 +11983,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "crash_inject"}
 	,
+#if defined(WMI_INTERFACE_EVENT_LOGGING) || defined(FEATURE_HTC_CREDIT_HISTORY)
 	{WE_LOG_BUFFER,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "log_buffer"}
 	,
+#endif
 #endif
 #ifdef WLAN_SUSPEND_RESUME_TEST
 	{WE_SET_WLAN_SUSPEND,

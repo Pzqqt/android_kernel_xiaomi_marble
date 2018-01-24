@@ -398,6 +398,9 @@ CONFIG_FEATURE_SECURE_FIRMWARE := 0
 #Flag to enable Stats Ext implementation
 CONFIG_FEATURE_STATS_EXT := 1
 
+#Flag to enable HTC credit history feature
+CONFIG_FEATURE_HTC_CREDIT_HISTORY := 1
+
 ifeq ($(CONFIG_CFG80211),y)
 HAVE_CFG80211 := 1
 else
@@ -1383,6 +1386,10 @@ HTC_OBJS := $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc.o \
             $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc_recv.o \
             $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc_services.o
 
+ifeq ($(CONFIG_FEATURE_HTC_CREDIT_HISTORY), 1)
+HTC_OBJS += $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc_credit_history.o
+endif
+
 ########### HIF ###########
 HIF_DIR := hif
 HIF_CE_DIR := $(HIF_DIR)/src/ce
@@ -1808,6 +1815,10 @@ else
 CDEFINES += -DFEATURE_OEM_DATA_SUPPORT
 endif
 ####################################
+
+ifeq ($(CONFIG_FEATURE_HTC_CREDIT_HISTORY), 1)
+CDEFINES += -DFEATURE_HTC_CREDIT_HISTORY
+endif
 
 ifneq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DWLAN_LOGGING_SOCK_SVC_ENABLE

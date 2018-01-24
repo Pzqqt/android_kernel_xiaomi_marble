@@ -2762,7 +2762,7 @@ enum QDF_GLOBAL_MODE cds_get_conparam(void)
 	return con_mode;
 }
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
+#ifdef FEATURE_HTC_CREDIT_HISTORY
 inline void
 cds_print_htc_credit_history(uint32_t count, qdf_abstract_print *print,
 			     void *print_priv)

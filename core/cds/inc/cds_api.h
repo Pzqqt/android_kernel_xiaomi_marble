@@ -551,11 +551,28 @@ void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
 }
 #endif
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
-void cds_print_htc_credit_history(uint32_t count, qdf_abstract_print * print,
-				  void *print_priv);
-#endif
+#ifdef FEATURE_HTC_CREDIT_HISTORY
+/**
+ * cds_print_htc_credit_history() - Helper function to copy HTC credit
+ *				    history via htc_print_credit_history()
+ *
+ * @count:	Number of lines to be copied
+ * @print:	Print callback to print in the buffer
+ *
+ * Return:	none
+ */
+void cds_print_htc_credit_history(uint32_t count,
+				qdf_abstract_print * print,
+				void *print_priv);
+#else
 
+static inline
+void cds_print_htc_credit_history(uint32_t count,
+				qdf_abstract_print *print,
+				void *print_priv)
+{
+}
+#endif
 /**
  * cds_is_group_addr() - checks whether addr is multi cast
  * @mac_addr: address to be checked for multicast
