@@ -959,9 +959,13 @@ static uint8_t sap_random_channel_sel(struct sap_context *sap_ctx)
 	}
 
 	ch_params->ch_width = ch_wd;
-	acs_info.acs_mode = sap_ctx->acs_cfg->acs_mode;
-	acs_info.start_ch = sap_ctx->acs_cfg->start_ch;
-	acs_info.end_ch = sap_ctx->acs_cfg->end_ch;
+	if (sap_ctx->acs_cfg) {
+		acs_info.acs_mode = sap_ctx->acs_cfg->acs_mode;
+		acs_info.start_ch = sap_ctx->acs_cfg->start_ch;
+		acs_info.end_ch = sap_ctx->acs_cfg->end_ch;
+	} else {
+		acs_info.acs_mode = false;
+	}
 	if (QDF_IS_STATUS_ERROR(utils_dfs_get_random_channel(
 	    pdev, 0, ch_params, &hw_mode, &ch, &acs_info))) {
 		/* No available channel found */
