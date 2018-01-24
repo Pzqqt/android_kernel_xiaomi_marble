@@ -5566,6 +5566,23 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 	}
 	pdev = vdev->pdev;
 
+	/*
+	 * For HTT_DBG_EXT_STATS_RESET command, FW need to config
+	 * from param0 to param3 according to below rule:
+	 *
+	 * PARAM:
+	 *   - config_param0 : start_offset (stats type)
+	 *   - config_param1 : stats bmask from start offset
+	 *   - config_param2 : stats bmask from start offset + 32
+	 *   - config_param3 : stats bmask from start offset + 64
+	 */
+	if (req->stats == CDP_TXRX_STATS_0) {
+		req->param0 = HTT_DBG_EXT_STATS_PDEV_TX;
+		req->param1 = 0xFFFFFFFF;
+		req->param2 = 0xFFFFFFFF;
+		req->param3 = 0xFFFFFFFF;
+	}
+
 	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
 				req->param1, req->param2, req->param3, 0);
 }
