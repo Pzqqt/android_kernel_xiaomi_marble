@@ -966,7 +966,8 @@ static int __wlan_hdd_bus_resume(void)
 	return 0;
 
 out:
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state())
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
+		cds_is_fw_down())
 		return 0;
 
 	QDF_BUG(false);
