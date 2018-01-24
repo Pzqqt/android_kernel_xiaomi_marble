@@ -5521,9 +5521,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 {
 	struct hdd_adapter *padapter = (struct hdd_adapter *) netdev_priv(dev);
 	struct cfg80211_bss *bss = NULL;
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(padapter);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(padapter);
 
 	if (WLAN_STATUS_SUCCESS == status) {
 		struct ieee80211_channel *chan;
@@ -5564,6 +5562,7 @@ void hdd_connect_result(struct net_device *dev, const u8 *bssid,
 			tSirResultCodes timeout_reason)
 {
 	struct hdd_adapter *padapter = (struct hdd_adapter *) netdev_priv(dev);
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(padapter);
 
 	cfg80211_connect_result(dev, bssid, req_ie, req_ie_len,
 				resp_ie, resp_ie_len, status, gfp);
