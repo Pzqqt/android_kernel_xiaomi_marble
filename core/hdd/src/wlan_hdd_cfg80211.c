@@ -18977,6 +18977,11 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(struct hdd_adapter *adapter,
 				 * Skip past the EID byte and length byte
 				 * and four byte WiFi OUI
 				 */
+				if (ie[1] < DOT11F_IE_WPA_MIN_LEN ||
+				    ie[1] > DOT11F_IE_WPA_MAX_LEN) {
+					hdd_err("invalid ie len:%d", ie[1]);
+					return -EINVAL;
+				}
 				dot11f_unpack_ie_wpa((tpAniSirGlobal) halHandle,
 						     (uint8_t *)&ie[2 + 4],
 						     ie[1] - 4, &dot11WPAIE,
