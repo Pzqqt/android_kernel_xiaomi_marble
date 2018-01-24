@@ -27,6 +27,7 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
+#include "htc_credit_history.h"
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 /* HTC Control message receive timeout msec */
@@ -428,12 +429,10 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 			case HTC_MSG_WAKEUP_FROM_SUSPEND_ID:
 				AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
 					("Received initial wake up"));
-				LOCK_HTC_CREDIT(target);
 				htc_credit_record(HTC_INITIAL_WAKE_UP,
 					pEndpoint->TxCredits,
 					HTC_PACKET_QUEUE_DEPTH(
-						&pEndpoint->TxQueue));
-				UNLOCK_HTC_CREDIT(target);
+					&pEndpoint->TxQueue));
 				info = &target->HTCInitInfo;
 				if (info && info->target_initial_wakeup_cb)
 					info->target_initial_wakeup_cb(
@@ -445,12 +444,10 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 #endif
 			case HTC_MSG_SEND_SUSPEND_COMPLETE:
 				wow_nack = false;
-				LOCK_HTC_CREDIT(target);
 				htc_credit_record(HTC_SUSPEND_ACK,
 					pEndpoint->TxCredits,
 					HTC_PACKET_QUEUE_DEPTH(
-						&pEndpoint->TxQueue));
-				UNLOCK_HTC_CREDIT(target);
+					&pEndpoint->TxQueue));
 				target->HTCInitInfo.TargetSendSuspendComplete(
 					target->HTCInitInfo.target_psoc,
 					wow_nack);
@@ -458,13 +455,10 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				break;
 			case HTC_MSG_NACK_SUSPEND:
 				wow_nack = true;
-				LOCK_HTC_CREDIT(target);
 				htc_credit_record(HTC_SUSPEND_ACK,
 					pEndpoint->TxCredits,
 					HTC_PACKET_QUEUE_DEPTH(
-						&pEndpoint->TxQueue));
-				UNLOCK_HTC_CREDIT(target);
-
+					&pEndpoint->TxQueue));
 				target->HTCInitInfo.TargetSendSuspendComplete(
 					target->HTCInitInfo.target_psoc,
 					wow_nack);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -117,13 +117,6 @@ htc_credit_exchange_type_str(enum htc_credit_exchange_type type)
 		return "Unknown htc_credit_exchange_type";
 	}
 }
-
-struct HTC_CREDIT_HISTORY {
-	enum htc_credit_exchange_type type;
-	uint64_t time;
-	uint32_t tx_credit;
-	uint32_t htc_tx_queue_depth;
-};
 
 typedef struct _HTC_ENDPOINT {
 	HTC_ENDPOINT_ID Id;
@@ -275,8 +268,6 @@ do { \
 #define UNLOCK_HTC_RX(t)           qdf_spin_unlock_bh(&(t)->HTCRxLock)
 #define LOCK_HTC_TX(t)             qdf_spin_lock_bh(&(t)->HTCTxLock)
 #define UNLOCK_HTC_TX(t)           qdf_spin_unlock_bh(&(t)->HTCTxLock)
-#define LOCK_HTC_CREDIT(t)         qdf_spin_lock_bh(&(t)->HTCCreditLock)
-#define UNLOCK_HTC_CREDIT(t)       qdf_spin_unlock_bh(&(t)->HTCCreditLock)
 #define LOCK_HTC_EP_TX_LOOKUP(t)   qdf_spin_lock_bh(&(t)->lookup_queue_lock)
 #define UNLOCK_HTC_EP_TX_LOOKUP(t) qdf_spin_unlock_bh(&(t)->lookup_queue_lock)
 
@@ -327,9 +318,6 @@ void htc_send_complete_check_cleanup(void *context);
 #ifdef FEATURE_RUNTIME_PM
 void htc_kick_queues(void *context);
 #endif
-
-void htc_credit_record(enum htc_credit_exchange_type type, uint32_t tx_credit,
-		       uint32_t htc_tx_queue_depth);
 
 static inline void htc_send_complete_poll_timer_stop(HTC_ENDPOINT *
 						     pEndpoint) {

@@ -27,6 +27,7 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
+#include "htc_credit_history.h"
 #include <hif.h>
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_print */
@@ -274,10 +275,10 @@ HTC_HANDLE htc_create(void *ol_sc, struct htc_init_info *pInfo,
 	}
 
 	htc_runtime_pm_init(target);
+	htc_credit_history_init();
 	qdf_spinlock_create(&target->HTCLock);
 	qdf_spinlock_create(&target->HTCRxLock);
 	qdf_spinlock_create(&target->HTCTxLock);
-	qdf_spinlock_create(&target->HTCCreditLock);
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
 		qdf_spinlock_create(&pEndpoint->lookup_queue_lock);

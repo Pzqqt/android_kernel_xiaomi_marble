@@ -27,6 +27,7 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
+#include "htc_credit_history.h"
 #include <qdf_mem.h>            /* qdf_mem_malloc */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include "qdf_module.h"
@@ -53,11 +54,6 @@ static unsigned int ep_debug_mask =
 	(1 << ENDPOINT_0) | (1 << ENDPOINT_1) | (1 << ENDPOINT_2);
 #endif
 
-/* HTC Control Path Credit History */
-uint32_t g_htc_credit_history_idx;
-uint32_t g_htc_credit_history_length;
-struct HTC_CREDIT_HISTORY htc_credit_history_buffer[HTC_CREDIT_HISTORY_MAX];
-
 #ifdef QCA_WIFI_NAPIER_EMULATION
 #define HTC_EMULATION_DELAY_IN_MS 20
 /**
@@ -74,84 +70,6 @@ static inline void htc_add_emulation_delay(void)
 {
 }
 #endif
-
-/**
- * htc_credit_record() - records tx que state & credit transactions
- * @type:		type of echange can be HTC_REQUEST_CREDIT
- *			or HTC_PROCESS_CREDIT_REPORT
- * @tx_credits:		current number of tx_credits
- * @htc_tx_queue_depth:	current hct tx queue depth
- *
- * This function records the credits and pending commands whenever a command is
- * sent or credits are returned.  Call this after the credits have been updated
- * according to the transaction.  Call this before dequeing commands.
- *
- * Consider making this function accept an HTC_ENDPOINT and find the current
- * credits and queue depth itself.
- *
- * Consider moving the LOCK_HTC_CREDIT(target); logic into this func as well
- */
-void htc_credit_record(enum htc_credit_exchange_type type, uint32_t tx_credit,
-		       uint32_t htc_tx_queue_depth) {
-	if (HTC_CREDIT_HISTORY_MAX <= g_htc_credit_history_idx)
-		g_htc_credit_history_idx = 0;
-
-	htc_credit_history_buffer[g_htc_credit_history_idx].type = type;
-	htc_credit_history_buffer[g_htc_credit_history_idx].time =
-		qdf_get_log_timestamp();
-	htc_credit_history_buffer[g_htc_credit_history_idx].tx_credit =
-		tx_credit;
-	htc_credit_history_buffer[g_htc_credit_history_idx].htc_tx_queue_depth =
-		htc_tx_queue_depth;
-
-	g_htc_credit_history_idx++;
-	g_htc_credit_history_length++;
-	htc_add_emulation_delay();
-}
-
-#ifdef WMI_INTERFACE_EVENT_LOGGING
-void htc_print_credit_history(HTC_HANDLE htc, uint32_t count,
-			      qdf_abstract_print *print, void *print_priv)
-{
-	uint32_t idx;
-	HTC_TARGET *target;
-
-	target = GET_HTC_TARGET_FROM_HANDLE(htc);
-	LOCK_HTC_CREDIT(target);
-
-	if (count > HTC_CREDIT_HISTORY_MAX)
-		count = HTC_CREDIT_HISTORY_MAX;
-	if (count > g_htc_credit_history_length)
-		count = g_htc_credit_history_length;
-
-	/* subtract count from index, and wrap if necessary */
-	idx = HTC_CREDIT_HISTORY_MAX + g_htc_credit_history_idx - count;
-	idx %= HTC_CREDIT_HISTORY_MAX;
-
-	print(print_priv,
-	      "Time (seconds)     Type                         Credits    Queue Depth");
-	while (count) {
-		struct HTC_CREDIT_HISTORY *hist =
-						&htc_credit_history_buffer[idx];
-		uint64_t secs, usecs;
-
-		qdf_log_timestamp_to_secs(hist->time, &secs, &usecs);
-		print(print_priv, "% 8lld.%06lld    %-25s    %-7.d    %d",
-		      secs,
-		      usecs,
-		      htc_credit_exchange_type_str(hist->type),
-		      hist->tx_credit,
-		      hist->htc_tx_queue_depth);
-
-		--count;
-		++idx;
-		if (idx >= HTC_CREDIT_HISTORY_MAX)
-			idx = 0;
-	}
-
-	UNLOCK_HTC_CREDIT(target);
-}
-#endif /* WMI_INTERFACE_EVENT_LOGGING */
 
 void htc_dump_counter_info(HTC_HANDLE HTCHandle)
 {
@@ -909,16 +827,12 @@ static void get_htc_send_packets_credit_based(HTC_TARGET *target,
 			    pEndpoint->TxCreditsPerMaxMsg) {
 				/* tell the target we need credits ASAP! */
 				sendFlags |= HTC_FLAGS_NEED_CREDIT_UPDATE;
-
 				if (pEndpoint->service_id == WMI_CONTROL_SVC) {
-					LOCK_HTC_CREDIT(target);
 					htc_credit_record(HTC_REQUEST_CREDIT,
 							  pEndpoint->TxCredits,
 							  HTC_PACKET_QUEUE_DEPTH
-								  (tx_queue));
-					UNLOCK_HTC_CREDIT(target);
+							  (tx_queue));
 				}
-
 				INC_HTC_EP_STAT(pEndpoint,
 						TxCreditLowIndications, 1);
 #if DEBUG_CREDIT
@@ -2241,16 +2155,12 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 #endif
 
 		pEndpoint->TxCredits += rpt_credits;
-
 		if (pEndpoint->service_id == WMI_CONTROL_SVC) {
-			LOCK_HTC_CREDIT(target);
 			htc_credit_record(HTC_PROCESS_CREDIT_REPORT,
 					  pEndpoint->TxCredits,
 					  HTC_PACKET_QUEUE_DEPTH(&pEndpoint->
-								 TxQueue));
-			UNLOCK_HTC_CREDIT(target);
+							TxQueue));
 		}
-
 		if (pEndpoint->TxCredits
 		    && HTC_PACKET_QUEUE_DEPTH(&pEndpoint->TxQueue)) {
 			UNLOCK_HTC_TX(target);
