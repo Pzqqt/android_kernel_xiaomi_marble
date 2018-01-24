@@ -2591,6 +2591,14 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    true == psessionEntry->dfsIncludeChanSwIe) {
+
+		if (psessionEntry->gLimChannelSwitch.switchCount) {
+			/* Decrement the beacon switch count */
+			psessionEntry->gLimChannelSwitch.switchCount--;
+			pe_debug("current beacon count %d",
+				psessionEntry->gLimChannelSwitch.switchCount);
+		}
+
 		/* Send only 5 beacons with CSA IE Set in when a radar is detected */
 		if (psessionEntry->gLimChannelSwitch.switchCount > 0) {
 			/*
@@ -2605,8 +2613,6 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 				lim_send_chan_switch_action_frame(pMac,
 					ch, ch_width, psessionEntry);
 
-			/* Decrement the IE count */
-			psessionEntry->gLimChannelSwitch.switchCount--;
 		} else {
 			/* Done with CSA IE update, send response back to SME */
 			psessionEntry->gLimChannelSwitch.switchCount = 0;
