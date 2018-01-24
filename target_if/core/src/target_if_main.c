@@ -94,6 +94,20 @@ struct wlan_objmgr_psoc *target_if_get_psoc_from_scn_hdl(void *scn_handle)
 	return psoc;
 }
 
+struct wlan_objmgr_pdev *target_if_get_pdev_from_scn_hdl(void *scn_handle)
+{
+	struct wlan_objmgr_pdev *pdev;
+
+	qdf_spin_lock_bh(&g_target_if_ctx->lock);
+	if (scn_handle && g_target_if_ctx->get_pdev_hdl_cb)
+		pdev = g_target_if_ctx->get_pdev_hdl_cb(scn_handle);
+	else
+		pdev = NULL;
+	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
+
+	return pdev;
+}
+
 #ifdef DIRECT_BUF_RX_ENABLE
 static QDF_STATUS target_if_direct_buf_rx_init(void)
 {
@@ -148,6 +162,7 @@ QDF_STATUS target_if_close(void)
 	qdf_spin_lock_bh(&g_target_if_ctx->lock);
 	g_target_if_ctx->magic = 0;
 	g_target_if_ctx->get_psoc_hdl_cb = NULL;
+	g_target_if_ctx->get_pdev_hdl_cb = NULL;
 	g_target_if_ctx->service_ready_cb = NULL;
 	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
 
@@ -156,6 +171,22 @@ QDF_STATUS target_if_close(void)
 	g_target_if_ctx = NULL;
 
 	target_if_direct_buf_rx_deinit();
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS target_if_store_pdev_target_if_ctx(
+		get_pdev_handle_callback pdev_hdl_cb)
+{
+	if (!g_target_if_ctx) {
+		QDF_ASSERT(0);
+		target_if_err("target if ctx is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	qdf_spin_lock_bh(&g_target_if_ctx->lock);
+	g_target_if_ctx->get_pdev_hdl_cb = pdev_hdl_cb;
+	qdf_spin_unlock_bh(&g_target_if_ctx->lock);
 
 	return QDF_STATUS_SUCCESS;
 }

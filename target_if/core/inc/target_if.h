@@ -64,6 +64,9 @@
 typedef struct wlan_objmgr_psoc *(*get_psoc_handle_callback)(
 			void *scn_handle);
 
+typedef struct wlan_objmgr_pdev *(*get_pdev_handle_callback)(
+			void *scn_handle);
+
 typedef int (*wmi_legacy_service_ready_callback)(uint32_t event_id,
 						void *handle,
 						uint8_t *event_data,
@@ -72,12 +75,14 @@ typedef int (*wmi_legacy_service_ready_callback)(uint32_t event_id,
 /**
  * struct target_if_ctx - target_interface context
  * @magic: magic for target if ctx
- * @get_wmi_handle:  function pointer to get wmi handle
+ * @get_psoc_hdl_cb:  function pointer to get psoc
+ * @get_pdev_hdl_cb:  function pointer to get pdev
  * @lock: spin lock for protecting the ctx
  */
 struct target_if_ctx {
 	uint32_t magic;
 	get_psoc_handle_callback get_psoc_hdl_cb;
+	get_pdev_handle_callback get_pdev_hdl_cb;
 	wmi_legacy_service_ready_callback service_ready_cb;
 	qdf_spinlock_t lock;
 };
@@ -294,6 +299,15 @@ QDF_STATUS target_if_open(get_psoc_handle_callback psoc_hdl_cb);
 QDF_STATUS target_if_close(void);
 
 /**
+ * target_if_store_pdev_target_if_ctx() - stores objmgr pdev in target if ctx
+ * @pdev_hdl_cb: function pointer to get objmgr pdev
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS target_if_store_pdev_target_if_ctx(
+		get_pdev_handle_callback pdev_hdl_cb);
+
+/**
  * wlan_get_tgt_if_ctx() -Get target if ctx
  *
  * Return: target if ctx
@@ -311,6 +325,18 @@ struct target_if_ctx *target_if_get_ctx(void);
  * Return: index for matching scn handle
  */
 struct wlan_objmgr_psoc *target_if_get_psoc_from_scn_hdl(void *scn_handle);
+
+/**
+ * target_if_get_pdev_from_scn_hdl() - get pdev from scn handle
+ * @scn_handle: scn handle
+ *
+ * This API is generally used while processing wmi event.
+ * In wmi event SCN handle will be passed by wmi hence
+ * using this API we can get pdev from scn handle.
+ *
+ * Return: pdev for matching scn handle
+ */
+struct wlan_objmgr_pdev *target_if_get_pdev_from_scn_hdl(void *scn_handle);
 
 /** target_if_register_tx_ops() - register tx_ops
  * @tx_ops: tx_ops structure
