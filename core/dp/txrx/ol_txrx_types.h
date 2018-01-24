@@ -1324,6 +1324,11 @@ struct ol_rx_remote_data {
 	uint8_t mac_id;
 };
 
+struct ol_fw_data {
+	void *data;
+	uint32_t len;
+};
+
 #define INVALID_REORDER_INDEX 0xFFFF
 
 #define SPS_DESC_SIZE 8
