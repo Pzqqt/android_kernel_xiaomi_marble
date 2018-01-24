@@ -896,6 +896,7 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_bss_color_change_enable_fixed_param,
     WMITLV_TAG_STRUC_wmi_obss_color_collision_det_config_fixed_param,
     WMITLV_TAG_STRUC_wmi_obss_color_collision_evt_fixed_param,
+    WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1258,6 +1259,7 @@ typedef enum {
     OP(WMI_PDEV_GET_NFCAL_POWER_CMDID) \
     OP(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID) \
     OP(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID) \
+    OP(WMI_RUNTIME_DPD_RECAL_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -3613,6 +3615,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID);
 #define WMITLV_TABLE_WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID(id,op,buf,len) \
   WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param, wmi_pdev_set_rx_filter_promiscuous_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID);
+
+/* Runtime DPD Recalibration Params */
+#define WMITLV_TABLE_WMI_RUNTIME_DPD_RECAL_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param, wmi_runtime_dpd_recal_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_RUNTIME_DPD_RECAL_CMDID);
 
 
 /************************** TLV definitions of WMI events *******************************/

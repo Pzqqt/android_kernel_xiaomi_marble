@@ -879,6 +879,8 @@ typedef enum {
     WMI_READ_DATA_FROM_FLASH_CMDID,
     /* Thermal Throttling SET CONF commands */
     WMI_THERM_THROT_SET_CONF_CMDID,
+    /* set runtime dpd recalibration params */
+    WMI_RUNTIME_DPD_RECAL_CMDID,
 
     /*  Offload 11k related requests */
     WMI_11K_OFFLOAD_REPORT_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_11K_OFFLOAD),
@@ -21228,6 +21230,7 @@ static INLINE A_UINT8 *wmi_id_to_name(A_UINT32 wmi_command)
         WMI_RETURN_STRING(WMI_BPF_GET_VDEV_WORK_MEMORY_CMDID);
         WMI_RETURN_STRING(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID);
         WMI_RETURN_STRING(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID);
+        WMI_RETURN_STRING(WMI_RUNTIME_DPD_RECAL_CMDID);
     }
 
     return "Invalid WMI cmd";
@@ -21889,6 +21892,29 @@ typedef struct {
      */
     A_UINT32 paddr_hi;
 } wmi_dma_buf_release_entry;
+
+typedef struct {
+    A_UINT32 tlv_header;  /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param  */
+    A_UINT32 enable;      /* Enable/disable */
+
+    /* Thermal Thresholds,
+     * DPD recalibration will be triggered, when current temperature is
+     * either greater than (tmpt_base_c + dlt_tmpt_c_h),
+     * or less than (tmpt_base_c + dlt_tmpt_c_l).
+     * Here tmpt_base_c is the temperature in centigrade when first run dpd calibration.
+     */
+    A_UINT32 dlt_tmpt_c_h;
+    A_UINT32 dlt_tmpt_c_l;
+
+    /* cooling_time_ms
+     * The time (in milliseconds) expected to be needed for the unit
+     * to cool from dlt_tmpt_c_h to dlt_tmpt_c_l.
+     */
+    A_UINT32 cooling_time_ms;
+
+    /*  Max duration for dpd re-cal. Unit: ms */
+    A_UINT32 dpd_dur_max_ms;
+} wmi_runtime_dpd_recal_cmd_fixed_param;
 
 
 /* ADD NEW DEFS HERE */
