@@ -38,6 +38,16 @@ QDF_STATUS target_if_register_green_ap_tx_ops(
 		struct wlan_lmac_if_tx_ops *tx_ops);
 
 /**
+ * target_if_green_ap_register_egap_event_handler() - registers enhanced
+ *                                  green ap event handler
+ * @pdev: objmgr pdev
+ *
+ * Return: QDF_STATUS in case of success
+ */
+QDF_STATUS target_if_green_ap_register_egap_event_handler(
+			struct wlan_objmgr_pdev *pdev);
+
+/**
  * target_if_green_ap_enable_egap() - enable enhanced green ap
  * @pdev: pdev pointer
  * @egap_params: enhanced green ap params

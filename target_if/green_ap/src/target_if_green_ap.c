@@ -48,6 +48,79 @@ QDF_STATUS target_if_register_green_ap_tx_ops(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * target_if_green_ap_egap_status_info_event() - egap status info event
+ * @scn: pointer to scn handle
+ * @evt_buf: pointer to event buffer
+ * @data_len: data len of the event buffer
+ *
+ * Return: 0 for success, otherwise appropriate error code
+ */
+static int target_if_green_ap_egap_status_info_event(
+		ol_scn_t scn, uint8_t *evt_buf, uint32_t data_len)
+{
+	struct wlan_objmgr_pdev *pdev;
+	struct wlan_green_ap_egap_status_info egap_status_info_params;
+
+	pdev = target_if_get_pdev_from_scn_hdl(scn);
+	if (!pdev) {
+		green_ap_err("pdev is null");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (wmi_extract_green_ap_egap_status_info(GET_WMI_HDL_FROM_PDEV(pdev),
+						  evt_buf,
+						  &egap_status_info_params) !=
+						  QDF_STATUS_SUCCESS) {
+		green_ap_err("unable to extract green ap egap status info");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	green_ap_debug("mac_id: %d, status: %d, tx_mask: %x, rx_mask: %d",
+		       egap_status_info_params.mac_id,
+		       egap_status_info_params.status,
+		       egap_status_info_params.tx_chainmask,
+		       egap_status_info_params.rx_chainmask);
+
+	return 0;
+}
+
+QDF_STATUS target_if_green_ap_register_egap_event_handler(
+			struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
+	struct wlan_green_ap_egap_params *egap_params;
+	int ret;
+
+	if (!pdev || !GET_WMI_HDL_FROM_PDEV(pdev)) {
+		green_ap_err("pdev or pdev->tgt_if_handle is null");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
+			pdev, WLAN_UMAC_COMP_GREEN_AP);
+	if (!green_ap_ctx) {
+		green_ap_err("green ap context obtained is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	egap_params = &green_ap_ctx->egap_params;
+
+	ret = wmi_unified_register_event_handler(
+			GET_WMI_HDL_FROM_PDEV(pdev),
+			wmi_ap_ps_egap_info_event_id,
+			target_if_green_ap_egap_status_info_event,
+			WMI_RX_UMAC_CTX);
+	if (ret < 0) {
+		green_ap_err("Failed to register Enhance Green AP event");
+		egap_params->fw_egap_support = false;
+	} else {
+		green_ap_info("Set the Enhance Green AP event handler");
+		egap_params->fw_egap_support = true;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS target_if_green_ap_enable_egap(
 		struct wlan_objmgr_pdev *pdev,
 		struct wlan_green_ap_egap_params *egap_params)

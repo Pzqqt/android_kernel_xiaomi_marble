@@ -44,6 +44,20 @@ struct wlan_green_ap_egap_params {
 };
 
 /**
+ * struct wlan_green_ap_egap_status_info - enhance green ap params
+ * @status: egap status
+ * @mac_id: mac id
+ * @tx_chainmask: tx chainmask
+ * @rx_chainmask: rx chainmask
+ */
+struct wlan_green_ap_egap_status_info {
+	uint32_t status;
+	uint32_t mac_id;
+	uint32_t tx_chainmask;
+	uint32_t rx_chainmask;
+};
+
+/**
  * wlan_green_ap_init() - initialize green ap component
  *
  * Return: Success or Failure

@@ -62,19 +62,6 @@ QDF_STATUS ucfg_green_ap_update_user_config(
 QDF_STATUS ucfg_green_ap_enable_egap(struct wlan_objmgr_pdev *pdev);
 
 /**
- * ucfg_green_ap_target_config() - Handle Green AP target configuration
- * @pdev: pdev pointer
- * @fw_egap_support: fw egap support
- *
- * This API stores the fw enhanced green AP support capability
- * in green ap ctx.
- *
- * Return: Success or Failure
- */
-QDF_STATUS ucfg_green_ap_target_config(struct wlan_objmgr_pdev *pdev,
-				       bool fw_egap_support);
-
-/**
  * ucfg_green_ap_set_ps_config() - Set ps value
  * @pdev: pdev pointer
  * @value - value to be set

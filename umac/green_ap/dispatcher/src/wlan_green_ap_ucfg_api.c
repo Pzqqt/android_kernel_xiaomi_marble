@@ -86,30 +86,6 @@ QDF_STATUS ucfg_green_ap_enable_egap(struct wlan_objmgr_pdev *pdev)
 	return green_ap_tx_ops->enable_egap(pdev, &green_ap_ctx->egap_params);
 }
 
-QDF_STATUS ucfg_green_ap_target_config(struct wlan_objmgr_pdev *pdev,
-				       bool fw_egap_support)
-{
-	struct wlan_pdev_green_ap_ctx *green_ap_ctx;
-
-	if (!pdev) {
-		green_ap_err("pdev context passed is NULL");
-		return QDF_STATUS_E_INVAL;
-	}
-
-	green_ap_ctx = wlan_objmgr_pdev_get_comp_private_obj(
-			pdev, WLAN_UMAC_COMP_GREEN_AP);
-	if (!green_ap_ctx) {
-		green_ap_err("green ap context obtained is NULL");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	qdf_spin_lock_bh(&green_ap_ctx->lock);
-	green_ap_ctx->egap_params.fw_egap_support = fw_egap_support;
-	qdf_spin_unlock_bh(&green_ap_ctx->lock);
-
-	return QDF_STATUS_SUCCESS;
-}
-
 QDF_STATUS ucfg_green_ap_set_ps_config(struct wlan_objmgr_pdev *pdev,
 				       uint8_t value)
 {

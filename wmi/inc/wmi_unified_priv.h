@@ -239,6 +239,10 @@ QDF_STATUS (*send_peer_create_cmd)(wmi_unified_t wmi,
 #ifdef WLAN_SUPPORT_GREEN_AP
 QDF_STATUS (*send_green_ap_ps_cmd)(wmi_unified_t wmi_handle,
 				   uint32_t value, uint8_t pdev_id);
+
+QDF_STATUS (*extract_green_ap_egap_status_info)(
+		uint8_t *evt_buf,
+		struct wlan_green_ap_egap_status_info *egap_status_info_params);
 #endif
 
 QDF_STATUS

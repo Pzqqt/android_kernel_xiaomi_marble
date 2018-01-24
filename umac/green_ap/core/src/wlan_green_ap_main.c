@@ -199,16 +199,16 @@ QDF_STATUS wlan_green_ap_state_mc(struct wlan_pdev_green_ap_ctx *green_ap_ctx,
 	/* Confirm that power save is enabled before doing state transitions */
 	if (!green_ap_ctx->ps_enable) {
 		green_ap_debug("Green-AP is disabled");
-		wlan_green_ap_ps_event_state_update(
-				green_ap_ctx,
-				WLAN_GREEN_AP_PS_IDLE_STATE,
-				WLAN_GREEN_AP_PS_WAIT_EVENT);
 		if (green_ap_ctx->ps_state == WLAN_GREEN_AP_PS_ON_STATE) {
 			if (green_ap_tx_ops->ps_on_off_send(green_ap_ctx->pdev,
 								false, pdev_id))
 				green_ap_err("failed to set green ap mode");
 			wlan_green_ap_ant_ps_reset(green_ap_ctx);
 		}
+		wlan_green_ap_ps_event_state_update(
+				green_ap_ctx,
+				WLAN_GREEN_AP_PS_IDLE_STATE,
+				WLAN_GREEN_AP_PS_WAIT_EVENT);
 		goto done;
 	}
 
