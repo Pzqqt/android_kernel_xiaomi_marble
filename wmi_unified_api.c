@@ -7351,3 +7351,18 @@ QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+
+#ifdef WLAN_SUPPORT_GREEN_AP
+QDF_STATUS wmi_extract_green_ap_egap_status_info(
+		void *wmi_hdl, uint8_t *evt_buf,
+		struct wlan_green_ap_egap_status_info *egap_status_info_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t)wmi_hdl;
+
+	if (wmi_handle->ops->extract_green_ap_egap_status_info)
+		return wmi_handle->ops->extract_green_ap_egap_status_info(
+				evt_buf, egap_status_info_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+#endif

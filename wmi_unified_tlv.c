@@ -21665,6 +21665,35 @@ static QDF_STATUS send_invoke_neighbor_report_cmd_tlv(wmi_unified_t wmi_handle,
 	return status;
 }
 
+#ifdef WLAN_SUPPORT_GREEN_AP
+static QDF_STATUS extract_green_ap_egap_status_info_tlv(
+		uint8_t *evt_buf,
+		struct wlan_green_ap_egap_status_info *egap_status_info_params)
+{
+	WMI_AP_PS_EGAP_INFO_EVENTID_param_tlvs *param_buf;
+	wmi_ap_ps_egap_info_event_fixed_param  *egap_info_event;
+	wmi_ap_ps_egap_info_chainmask_list *chainmask_event;
+
+	param_buf = (WMI_AP_PS_EGAP_INFO_EVENTID_param_tlvs *)evt_buf;
+	if (!param_buf) {
+		WMI_LOGE("Invalid EGAP Info status event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	egap_info_event = (wmi_ap_ps_egap_info_event_fixed_param *)
+				param_buf->fixed_param;
+	chainmask_event = (wmi_ap_ps_egap_info_chainmask_list *)
+				param_buf->chainmask_list;
+
+	egap_status_info_params->status = egap_info_event->status;
+	egap_status_info_params->mac_id = chainmask_event->mac_id;
+	egap_status_info_params->tx_chainmask = chainmask_event->tx_chainmask;
+	egap_status_info_params->rx_chainmask = chainmask_event->rx_chainmask;
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -21842,6 +21871,8 @@ struct wmi_ops tlv_ops =  {
 #ifdef WLAN_SUPPORT_GREEN_AP
 	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,
 	.send_green_ap_ps_cmd = send_green_ap_ps_cmd_tlv,
+	.extract_green_ap_egap_status_info =
+			extract_green_ap_egap_status_info_tlv,
 #endif
 	.send_fw_profiling_cmd = send_fw_profiling_cmd_tlv,
 	.send_csa_offload_enable_cmd = send_csa_offload_enable_cmd_tlv,
