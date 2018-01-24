@@ -525,6 +525,8 @@ ol_txrx_peer_get_ref_by_local_id(struct cdp_pdev *ppdev,
 	qdf_spin_unlock_bh(&pdev->local_peer_ids.lock);
 	if (peer && peer->valid)
 		ol_txrx_peer_get_ref(peer, dbg_id);
+	else
+		peer = NULL;
 	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 
 	return peer;
@@ -4984,6 +4986,7 @@ static void ol_rx_data_cb(struct ol_txrx_pdev_t *pdev,
 	if (qdf_unlikely(!(peer->state >= OL_TXRX_PEER_STATE_CONN) ||
 					 !peer->vdev->rx)) {
 		qdf_spin_unlock_bh(&peer->peer_info_lock);
+		ol_txrx_peer_release_ref(peer, PEER_DEBUG_ID_OL_RX_THREAD);
 		goto free_buf;
 	}
 
