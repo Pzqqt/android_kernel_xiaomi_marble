@@ -2769,6 +2769,13 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 	}
 
 	wake_info = event_param->fixed_param;
+
+	if (wake_info->vdev_id >= wma->max_bssid) {
+		WMA_LOGE("%s: received invalid vdev_id %d",
+			 __func__, wake_info->vdev_id);
+		return -EINVAL;
+	}
+
 	wma_wake_event_log_reason(wma, wake_info);
 
 	pmo_ucfg_psoc_wakeup_host_event_received(wma->psoc);
