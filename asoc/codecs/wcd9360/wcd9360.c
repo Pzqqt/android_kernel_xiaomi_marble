@@ -184,6 +184,8 @@ enum {
 	AIF4_PB,
 	AIF4_VIFEED,
 	AIF4_MAD_TX,
+	I2S1_PB,
+	I2S1_CAP,
 	NUM_CODEC_DAIS,
 };
 
@@ -601,6 +603,7 @@ struct pahu_priv {
 	struct platform_device *pdev_child_devices
 		[WCD9360_CHILD_DEVICES_MAX];
 	int child_count;
+	int i2s_ref_cnt;
 };
 
 static const struct pahu_reg_mask_val pahu_spkr_default[] = {
@@ -1538,6 +1541,71 @@ static int pahu_codec_enable_slimvi_feedback(struct snd_soc_dapm_widget *w,
 	}
 done:
 	return ret;
+}
+
+static void pahu_codec_enable_i2s(struct snd_soc_codec *codec, bool enable)
+{
+	struct pahu_priv *pahu = snd_soc_codec_get_drvdata(codec);
+
+	if (enable) {
+		if (++pahu->i2s_ref_cnt == 1)
+			snd_soc_update_bits(codec, WCD9360_DATA_HUB_I2S_1_CTL,
+					    0x01, 0x01);
+	} else {
+		if (--pahu->i2s_ref_cnt == 0)
+			snd_soc_update_bits(codec, WCD9360_DATA_HUB_I2S_1_CTL,
+					    0x01, 0x00);
+	}
+}
+
+static int pahu_i2s_aif_rx_event(struct snd_soc_dapm_widget *w,
+			      struct snd_kcontrol *kcontrol,
+			      int event)
+{
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+
+	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
+	switch(event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		pahu_cdc_mclk_enable(codec, true);
+		break;
+	case SND_SOC_DAPM_POST_PMU:
+		pahu_codec_enable_i2s(codec, true);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		pahu_codec_enable_i2s(codec, false);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		pahu_cdc_mclk_enable(codec, false);
+		break;
+	}
+
+	return 0;
+}
+
+static int pahu_i2s_aif_tx_event(struct snd_soc_dapm_widget *w,
+			      struct snd_kcontrol *kcontrol,
+			      int event)
+{
+	struct snd_soc_codec *codec = snd_soc_dapm_to_codec(w->dapm);
+
+	dev_dbg(codec->dev, "%s %s %d\n", __func__, w->name, event);
+	switch(event) {
+	case SND_SOC_DAPM_PRE_PMU:
+		pahu_cdc_mclk_enable(codec, true);
+		break;
+	case SND_SOC_DAPM_POST_PMU:
+		pahu_codec_enable_i2s(codec, true);
+		break;
+	case SND_SOC_DAPM_PRE_PMD:
+		pahu_codec_enable_i2s(codec, false);
+		break;
+	case SND_SOC_DAPM_POST_PMD:
+		pahu_cdc_mclk_enable(codec, false);
+		break;
+	}
+
+	return 0;
 }
 
 static int pahu_codec_enable_ldo_rxtx(struct snd_soc_dapm_widget *w,
@@ -4413,8 +4481,14 @@ static const char * const cdc_if_tx9_mux_text[] = {
 static const char * const cdc_if_tx10_mux_text[] = {
 	"ZERO", "DEC6", "DEC6_192"
 };
+static const char * const cdc_if_tx10_mux2_text[] = {
+	"TX10_MUX1", "I2SRX1_0_BRDG"
+};
+static const char * const cdc_if_tx11_mux2_text[] = {
+	"TX11_MUX1", "I2SRX1_1_BRDG", "SWR_PACKED_PDM"
+};
 static const char * const cdc_if_tx11_mux_text[] = {
-	"DEC_0_5", "DEC_9_12", "MAD_AUDIO", "MAD_BRDCST"
+	"RDMA_TX11", "DEC_0_5", "DEC_9_12", "MAD_AUDIO", "MAD_BRDCST"
 };
 static const char * const cdc_if_tx11_inp1_mux_text[] = {
 	"ZERO", "DEC0", "DEC1", "DEC2", "DEC3", "DEC4",
@@ -4518,10 +4592,10 @@ static const char *const cdc_if_rx1_mux_text[] = {
 	"SLIM RX1", "I2S RX1"
 };
 static const char *const cdc_if_rx2_mux_text[] = {
-	"SLIM RX2", "I2S RX2"
+	"SLIM RX2", "I2SRX1_0", "I2SRX0_2"
 };
 static const char *const cdc_if_rx3_mux_text[] = {
-	"SLIM RX3", "I2S RX3"
+	"SLIM RX3", "I2SRX1_1", "I2SRX0_3"
 };
 static const char *const cdc_if_rx4_mux_text[] = {
 	"SLIM RX4", "I2S RX4"
@@ -4823,10 +4897,14 @@ WCD_DAPM_ENUM(cdc_if_tx9, WCD9360_CDC_IF_ROUTER_TX_MUX_CFG2, 2,
 	cdc_if_tx9_mux_text);
 WCD_DAPM_ENUM(cdc_if_tx10, WCD9360_CDC_IF_ROUTER_TX_MUX_CFG2, 4,
 	cdc_if_tx10_mux_text);
+WCD_DAPM_ENUM(cdc_if_tx10_inp2, WCD9360_DATA_HUB_SB_TX10_INP_CFG, 3,
+	cdc_if_tx10_mux2_text);
 WCD_DAPM_ENUM(cdc_if_tx11_inp1, WCD9360_CDC_IF_ROUTER_TX_MUX_CFG3, 0,
 	cdc_if_tx11_inp1_mux_text);
 WCD_DAPM_ENUM(cdc_if_tx11, WCD9360_DATA_HUB_SB_TX11_INP_CFG, 0,
 	cdc_if_tx11_mux_text);
+WCD_DAPM_ENUM(cdc_if_tx11_inp2, WCD9360_DATA_HUB_SB_TX11_INP_CFG, 3,
+	cdc_if_tx11_mux2_text);
 WCD_DAPM_ENUM(cdc_if_tx13_inp1, WCD9360_CDC_IF_ROUTER_TX_MUX_CFG3, 4,
 	cdc_if_tx13_inp1_mux_text);
 WCD_DAPM_ENUM(cdc_if_tx13, WCD9360_DATA_HUB_SB_TX13_INP_CFG, 0,
@@ -4974,6 +5052,17 @@ static const struct snd_kcontrol_new adc_us_mux8_switch =
 static const struct snd_kcontrol_new wdma3_onoff_switch =
 	SOC_DAPM_SINGLE("Switch", SND_SOC_NOPM, 0, 1, 0);
 
+static const char *const i2s_tx1_0_txt[] = {
+	"ZERO", "SB_TX8", "SB_RX2", "SB_TX12"
+};
+
+static const char *const i2s_tx1_1_txt[] = {
+	"ZERO", "SB_RX0", "SB_RX1", "SB_RX2", "SB_RX3", "SB_TX11"
+};
+
+WCD_DAPM_ENUM(i2s_tx1_0_inp, WCD9360_DATA_HUB_I2S_TX1_0_CFG, 0, i2s_tx1_0_txt);
+WCD_DAPM_ENUM(i2s_tx1_1_inp, WCD9360_DATA_HUB_I2S_TX1_1_CFG, 0, i2s_tx1_1_txt);
+
 static const struct snd_soc_dapm_widget pahu_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_IN_E("AIF1 PB", "AIF1 Playback", 0, SND_SOC_NOPM,
 		AIF1_PB, 0, pahu_codec_enable_slimrx,
@@ -4986,6 +5075,11 @@ static const struct snd_soc_dapm_widget pahu_dapm_widgets[] = {
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 	SND_SOC_DAPM_AIF_IN_E("AIF4 PB", "AIF4 Playback", 0, SND_SOC_NOPM,
 		AIF4_PB, 0, pahu_codec_enable_slimrx,
+		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
+
+	SND_SOC_DAPM_AIF_IN_E("I2S1 PB", "I2S1 Playback", 0, SND_SOC_NOPM,
+		I2S1_PB, 0, pahu_i2s_aif_rx_event,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD |
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
 
 	WCD_DAPM_MUX("SLIM RX0 MUX", WCD9360_RX0, slim_rx0),
@@ -5104,6 +5198,8 @@ static const struct snd_soc_dapm_widget pahu_dapm_widgets[] = {
 	WCD_DAPM_MUX("CDC_IF TX11 INP1 MUX", WCD9360_TX11, cdc_if_tx11_inp1),
 	WCD_DAPM_MUX("CDC_IF TX13 MUX", WCD9360_TX13, cdc_if_tx13),
 	WCD_DAPM_MUX("CDC_IF TX13 INP1 MUX", WCD9360_TX13, cdc_if_tx13_inp1),
+	WCD_DAPM_MUX("CDC_IF TX10 MUX2", WCD9360_TX10, cdc_if_tx10_inp2),
+	WCD_DAPM_MUX("CDC_IF TX11 MUX2", WCD9360_TX11, cdc_if_tx11_inp2),
 
 	SND_SOC_DAPM_MUX_E("ADC MUX0", WCD9360_CDC_TX0_TX_PATH_CTL, 5, 0,
 		&tx_adc_mux0_mux, pahu_codec_enable_dec,
@@ -5234,6 +5330,16 @@ static const struct snd_soc_dapm_widget pahu_dapm_widgets[] = {
 	SND_SOC_DAPM_AIF_OUT_E("AIF3 CAP", "AIF3 Capture", 0, SND_SOC_NOPM,
 		AIF3_CAP, 0, pahu_codec_enable_slimtx,
 		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
+
+	WCD_DAPM_MUX("I2S TX1_0 MUX", 0, i2s_tx1_0_inp),
+	WCD_DAPM_MUX("I2S TX1_1 MUX", 0, i2s_tx1_1_inp),
+	SND_SOC_DAPM_MIXER("I2S TX1 MIXER", SND_SOC_NOPM, 0, 0, NULL, 0),
+
+	SND_SOC_DAPM_AIF_OUT_E("I2S1 CAP", "I2S1 Capture", 0,
+		SND_SOC_NOPM, I2S1_CAP, 0, pahu_i2s_aif_tx_event,
+		SND_SOC_DAPM_PRE_PMU | SND_SOC_DAPM_PRE_PMD |
+		SND_SOC_DAPM_POST_PMU | SND_SOC_DAPM_POST_PMD),
+
 	SND_SOC_DAPM_MIXER("AIF1_CAP Mixer", SND_SOC_NOPM, AIF1_CAP, 0,
 		aif1_cap_mixer, ARRAY_SIZE(aif1_cap_mixer)),
 	SND_SOC_DAPM_MIXER("AIF2_CAP Mixer", SND_SOC_NOPM, AIF2_CAP, 0,
@@ -5956,6 +6062,22 @@ static int pahu_hw_params(struct snd_pcm_substream *substream,
 	return 0;
 }
 
+static int pahu_i2s_hw_params(struct snd_pcm_substream *substream,
+			   struct snd_pcm_hw_params *params,
+			   struct snd_soc_dai *dai)
+{
+	struct pahu_priv *pahu = snd_soc_codec_get_drvdata(dai->codec);
+
+	dev_dbg(dai->dev, "%s: dai_name = %s DAI-ID %x rate %d num_ch %d\n",
+		 __func__, dai->name, dai->id, params_rate(params),
+		 params_channels(params));
+
+	pahu->dai[dai->id].rate = params_rate(params);
+	pahu->dai[dai->id].bit_width = params_width(params);
+
+	return 0;
+}
+
 static struct snd_soc_dai_ops pahu_dai_ops = {
 	.startup = pahu_startup,
 	.shutdown = pahu_shutdown,
@@ -5969,6 +6091,10 @@ static struct snd_soc_dai_ops pahu_vi_dai_ops = {
 	.hw_params = pahu_vi_hw_params,
 	.set_channel_map = pahu_set_channel_map,
 	.get_channel_map = pahu_get_channel_map,
+};
+
+static struct snd_soc_dai_ops pahu_i2s_dai_ops = {
+	.hw_params = pahu_i2s_hw_params,
 };
 
 static struct snd_soc_dai_driver pahu_dai[] = {
@@ -6097,6 +6223,34 @@ static struct snd_soc_dai_driver pahu_dai[] = {
 			.channels_max = 1,
 		},
 		.ops = &pahu_dai_ops,
+	},
+	{
+		.name = "pahu_i2s1_rx",
+		.id = I2S1_PB,
+		.playback = {
+			.stream_name = "I2S1 Playback",
+			.rates = WCD9360_RATES_MASK | WCD9360_FRAC_RATES_MASK,
+			.formats = WCD9360_FORMATS_S16_S24_S32_LE,
+			.rate_min = 8000,
+			.rate_max = 384000,
+			.channels_min = 1,
+			.channels_max = 2,
+		},
+		.ops = &pahu_i2s_dai_ops,
+	},
+	{
+		.name = "pahu_i2s1_tx",
+		.id = I2S1_CAP,
+		.capture = {
+			.stream_name = "I2S1 Capture",
+			.rates = WCD9360_RATES_MASK | WCD9360_FRAC_RATES_MASK,
+			.formats = WCD9360_FORMATS_S16_S24_S32_LE,
+			.rate_min = 8000,
+			.rate_max = 192000,
+			.channels_min = 1,
+			.channels_max = 2,
+		},
+		.ops = &pahu_i2s_dai_ops,
 	},
 };
 
@@ -7205,6 +7359,8 @@ static int pahu_soc_codec_probe(struct snd_soc_codec *codec)
 	snd_soc_dapm_ignore_suspend(dapm, "AIF4 Playback");
 	snd_soc_dapm_ignore_suspend(dapm, "AIF4 MAD TX");
 	snd_soc_dapm_ignore_suspend(dapm, "VIfeed");
+	snd_soc_dapm_ignore_suspend(dapm, "I2S1 Playback");
+	snd_soc_dapm_ignore_suspend(dapm, "I2S1 Capture");
 
 	snd_soc_dapm_sync(dapm);
 
