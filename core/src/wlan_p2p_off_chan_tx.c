@@ -702,9 +702,9 @@ static QDF_STATUS p2p_tx_update_connection_status(
 
 	if (tx_frame_info->public_action_type !=
 		P2P_PUBLIC_ACTION_NOT_SUPPORT)
-		p2p_debug("%s ---> OTA to "QDF_MAC_ADDRESS_STR,
-				p2p_get_frame_type_str(tx_frame_info),
-				QDF_MAC_ADDR_ARRAY(mac_to));
+		p2p_debug("%s ---> OTA to " QDF_MAC_ADDR_STR,
+			  p2p_get_frame_type_str(tx_frame_info),
+			  QDF_MAC_ADDR_ARRAY(mac_to));
 
 	if ((tx_frame_info->public_action_type ==
 	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
@@ -746,9 +746,9 @@ static QDF_STATUS p2p_rx_update_connection_status(
 
 	if (rx_frame_info->public_action_type !=
 		P2P_PUBLIC_ACTION_NOT_SUPPORT)
-		p2p_debug("%s <--- OTA from "QDF_MAC_ADDRESS_STR,
-				p2p_get_frame_type_str(rx_frame_info),
-				QDF_MAC_ADDR_ARRAY(mac_from));
+		p2p_debug("%s <--- OTA from " QDF_MAC_ADDR_STR,
+			  p2p_get_frame_type_str(rx_frame_info),
+			  QDF_MAC_ADDR_ARRAY(mac_from));
 
 	if ((rx_frame_info->public_action_type ==
 	     P2P_PUBLIC_ACTION_PROV_DIS_REQ) &&
