@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -34,9 +34,9 @@ spectral_init_module(void)
 {
 	qdf_print("qca_spectral module loaded\n");
 	wlan_spectral_init();
-	/* register spectral rxops*/
-	wlan_lmac_if_sptrl_set_rx_ops_register_cb(
-		wlan_lmac_if_sptrl_register_rx_ops);
+	/* register spectral rxops */
+	wlan_lmac_if_sptrl_set_rx_ops_register_cb
+	    (wlan_lmac_if_sptrl_register_rx_ops);
 	return 0;
 }
 
@@ -54,4 +54,3 @@ spectral_exit_module(void)
 
 module_init(spectral_init_module);
 module_exit(spectral_exit_module);
-

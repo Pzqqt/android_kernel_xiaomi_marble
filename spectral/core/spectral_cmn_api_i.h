@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -23,7 +23,7 @@
 #include "spectral_defs_i.h"
 
 /**
- * wlan_spectral_psoc_obj_create_handler(): handler for psoc object create
+ * wlan_spectral_psoc_obj_create_handler() - handler for psoc object create
  * @psoc: reference to global psoc object
  * @arg:  reference to argument provided during registration of handler
  *
@@ -35,10 +35,10 @@
  *         QDF_STATUS_E_NOMEM on failure of spectral object allocation
  */
 QDF_STATUS wlan_spectral_psoc_obj_create_handler(struct wlan_objmgr_psoc *psoc,
-							void *arg);
+						 void *arg);
 
 /**
- * wlan_spectral_psoc_obj_destroy_handler(): handler for psoc object delete
+ * wlan_spectral_psoc_obj_destroy_handler() - handler for psoc object delete
  * @psoc: reference to global psoc object
  * @arg:  reference to argument provided during registration of handler
  *
@@ -53,7 +53,7 @@ QDF_STATUS wlan_spectral_psoc_obj_destroy_handler(struct wlan_objmgr_psoc *psoc,
 						  void *arg);
 
 /**
- * wlan_spectral_pdev_obj_create_handler(): handler for pdev object create
+ * wlan_spectral_pdev_obj_create_handler() - handler for pdev object create
  * @pdev: reference to global pdev object
  * @arg:  reference to argument provided during registration of handler
  *
@@ -68,7 +68,7 @@ QDF_STATUS wlan_spectral_pdev_obj_create_handler(struct wlan_objmgr_pdev *pdev,
 						 void *arg);
 
 /**
- * wlan_spectral_pdev_obj_destroy_handler(): handler for pdev object delete
+ * wlan_spectral_pdev_obj_destroy_handler() - handler for pdev object delete
  * @pdev: reference to global pdev object
  * @arg:  reference to argument provided during registration of handler
  *
@@ -83,7 +83,7 @@ QDF_STATUS wlan_spectral_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
 						  void *arg);
 
 /**
- * spectral_control_cmn(): common handler for demultiplexing requests from
+ * spectral_control_cmn()- common handler for demultiplexing requests from
  *                         higher layer
  * @pdev:    reference to global pdev object
  * @id:      spectral config command id
@@ -97,12 +97,10 @@ QDF_STATUS wlan_spectral_pdev_obj_destroy_handler(struct wlan_objmgr_pdev *pdev,
  *
  * Return: 0 success else failure
  */
-int spectral_control_cmn(
-	struct wlan_objmgr_pdev *pdev,
-	u_int id,
-	void *indata,
-	u_int32_t insize,
-	void *outdata, u_int32_t *outsize);
+int spectral_control_cmn(struct wlan_objmgr_pdev *pdev,
+			 u_int id,
+			 void *indata,
+			 uint32_t insize, void *outdata, uint32_t *outsize);
 
 /**
  * spectral_control_ol(): Offload handler for demultiplexing requests from
@@ -121,7 +119,7 @@ int spectral_control_cmn(
  */
 int spectral_control_ol(
 	struct wlan_objmgr_pdev *pdev, u_int id,
-	void *indata, u_int32_t insize, void *outdata, u_int32_t *outsize);
+	void *indata, uint32_t insize, void *outdata, uint32_t *outsize);
 
 /**
  * spectral_get_spectral_ctx_from_pdev() - API to get spectral context object
@@ -133,9 +131,8 @@ int spectral_control_ol(
  *
  * Return : Reference to spectral_context object
  */
-static inline
-struct spectral_context *spectral_get_spectral_ctx_from_pdev(
-	struct wlan_objmgr_pdev *pdev)
+static inline struct spectral_context *
+spectral_get_spectral_ctx_from_pdev(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 	struct spectral_context *sc = NULL;
@@ -160,9 +157,8 @@ struct spectral_context *spectral_get_spectral_ctx_from_pdev(
  *
  * Return : Reference to spectral_context object
  */
-static inline
-struct spectral_context *spectral_get_spectral_ctx_from_psoc(
-	struct wlan_objmgr_psoc *psoc)
+static inline struct spectral_context *
+spectral_get_spectral_ctx_from_psoc(struct wlan_objmgr_psoc *psoc)
 {
 	struct spectral_context *sc = NULL;
 
@@ -185,9 +181,8 @@ struct spectral_context *spectral_get_spectral_ctx_from_psoc(
  *
  * Return : Reference to spectral_context object
  */
-static inline
-struct spectral_context *spectral_get_spectral_ctx_from_vdev(
-	struct wlan_objmgr_vdev *vdev)
+static inline struct spectral_context *
+spectral_get_spectral_ctx_from_vdev(struct wlan_objmgr_vdev *vdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 	struct spectral_context *sc = NULL;
@@ -201,5 +196,4 @@ struct spectral_context *spectral_get_spectral_ctx_from_vdev(
 
 	return sc;
 }
-#endif /* _SPECTRAL_CMN_API_I_H_*/
-
+#endif				/* _SPECTRAL_CMN_API_I_H_ */

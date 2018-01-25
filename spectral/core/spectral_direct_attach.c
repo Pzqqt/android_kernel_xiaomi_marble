@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -19,8 +19,23 @@
 
 #include "spectral_cmn_api_i.h"
 
-int spectral_control_da(struct wlan_objmgr_pdev *pdev, u_int id, void *indata,
-			u_int32_t insize, void *outdata, u_int32_t *outsize)
+/**
+ * spectral_control_da()- handler for demultiplexing requests from higher layer
+ * @pdev:    reference to global pdev object
+ * @id:      spectral config command id
+ * @indata:  reference to input data
+ * @insize:  input data size
+ * @outdata: reference to output data
+ * @outsize: output data size
+ *
+ * This function processes the spectral config command
+ * and appropriate handlers are invoked.
+ *
+ * Return: 0 success else failure
+ */
+int
+spectral_control_da(struct wlan_objmgr_pdev *pdev, u_int id, void *indata,
+		    uint32_t insize, void *outdata, uint32_t *outsize)
 {
 	struct spectral_context *sc;
 	int error = 0;
@@ -34,32 +49,29 @@ int spectral_control_da(struct wlan_objmgr_pdev *pdev, u_int id, void *indata,
 		spectral_err("spectral context is NULL!\n");
 		return -EPERM;
 	}
-	switch (id) {
-#if ATH_SUPPORT_RAW_ADC_CAPTURE
-	case SPECTRAL_ADC_ENABLE_TEST_ADDAC_MODE:
-		error = spectral_enter_raw_capture_mode(dev, indata);
-		break;
-	case SPECTRAL_ADC_DISABLE_TEST_ADDAC_MODE:
-		error = spectral_exit_raw_capture_mode(dev);
-		break;
-	case SPECTRAL_ADC_RETRIEVE_DATA:
-		error = spectral_retrieve_raw_capture(dev, outdata, outsize);
-		break;
-#endif
-	default:
-		error = spectral_control_cmn(
-			pdev,
-			 id,
-			 indata,
-			 insize,
-			 outdata,
-			 outsize);
-		break;
-	}
+
+	/*
+	 * Note: Add handling for the cases SPECTRAL_ADC_ENABLE_TEST_ADDAC_MODE
+	 * SPECTRAL_ADC_DISABLE_TEST_ADDAC_MODE and SPECTRAL_ADC_RETRIEVE_DATA,
+	 * when raw ADC capture is needed.
+	 * This is only applicable for direct attach chipsets.
+	 */
+	error = spectral_control_cmn(pdev,
+				     id,
+				     indata, insize, outdata, outsize);
+
 	return error;
 }
 
-static void *pdev_spectral_init_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * pdev_spectral_init_da() - offload implementation for spectral init
+ * @pdev: Pointer to pdev
+ *
+ * Return: On success, pointer to Spectral target_if internal private data, on
+ * failure, NULL
+ */
+static void *
+pdev_spectral_init_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -69,7 +81,14 @@ static void *pdev_spectral_init_da(struct wlan_objmgr_pdev *pdev)
 		pdev);
 }
 
-static void pdev_spectral_deinit_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * pdev_spectral_deinit_da() - offload implementation for spectral de-init
+ * @pdev: Pointer to pdev
+ *
+ * Return: None
+ */
+static void
+pdev_spectral_deinit_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -78,32 +97,61 @@ static void pdev_spectral_deinit_da(struct wlan_objmgr_pdev *pdev)
 	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_pdev_spectral_deinit(pdev);
 }
 
-static int set_spectral_config_da(
-	struct wlan_objmgr_pdev *pdev,
-	const u_int32_t threshtype, const u_int32_t value)
+/**
+ * set_spectral_config_da() - Set spectral config
+ * @pdev:       Pointer to pdev object
+ * @threshtype: spectral parameter type
+ * @value:      value to be configured for the given spectral parameter
+ *
+ * DA implementation for setting spectral config
+ *
+ * Return: 0 on success else failure
+ */
+static int
+set_spectral_config_da(struct wlan_objmgr_pdev *pdev,
+		       const uint32_t threshtype, const uint32_t value)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_set_spectral_config(
-		pdev,
-		threshtype,
-		value);
+		pdev, threshtype, value);
 }
 
-static void get_spectral_config_da(struct wlan_objmgr_pdev *pdev,
-				   struct spectral_config *sptrl_config)
+/**
+ * get_spectral_config_da() - Get spectral configuration
+ * @pdev: Pointer to pdev object
+ * @param: Pointer to spectral_config structure in which the configuration
+ * should be returned
+ *
+ * DA implementation for getting the current spectral configuration
+ *
+ * Return: None
+ */
+static void
+get_spectral_config_da(struct wlan_objmgr_pdev *pdev,
+		       struct spectral_config *sptrl_config)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_config(pdev,
-			sptrl_config);
+	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_config(
+		pdev,
+		sptrl_config);
 }
 
-static int start_spectral_scan_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * start_spectral_scan_da() - Start spectral scan
+ * @pdev: Pointer to pdev object
+ *
+ * DA implementation for starting spectral scan
+ *
+ * Return: 0 in case of success, -1 on failure
+ */
+static int
+start_spectral_scan_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -113,7 +161,16 @@ static int start_spectral_scan_da(struct wlan_objmgr_pdev *pdev)
 		pdev);
 }
 
-static void stop_spectral_scan_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * stop_spectral_scan_da() - Stop spectral scan
+ * @pdev: Pointer to pdev object
+ *
+ * DA implementation for stop spectral scan
+ *
+ * Return: None
+ */
+static void
+stop_spectral_scan_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -122,7 +179,16 @@ static void stop_spectral_scan_da(struct wlan_objmgr_pdev *pdev)
 	psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_stop_spectral_scan(pdev);
 }
 
-static bool is_spectral_active_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * is_spectral_active_da() - Get whether Spectral is active
+ * @pdev: Pointer to pdev object
+ *
+ * DA implementation to get whether Spectral is active
+ *
+ * Return: True if Spectral is active, false if Spectral is not active
+ */
+static bool
+is_spectral_active_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -132,7 +198,16 @@ static bool is_spectral_active_da(struct wlan_objmgr_pdev *pdev)
 		pdev);
 }
 
-static bool is_spectral_enabled_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * is_spectral_enabled_da() - Get whether Spectral is active
+ * @pdev: Pointer to pdev object
+ *
+ * DA implementation to get whether Spectral is active
+ *
+ * Return: True if Spectral is active, false if Spectral is not active
+ */
+static bool
+is_spectral_enabled_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -142,18 +217,37 @@ static bool is_spectral_enabled_da(struct wlan_objmgr_pdev *pdev)
 		pdev);
 }
 
-static int set_debug_level_da(struct wlan_objmgr_pdev *pdev,
-			      u_int32_t debug_level)
+/**
+ * set_debug_level_da() - Set debug level for Spectral
+ * @pdev: Pointer to pdev object
+ * @debug_level: Debug level
+ *
+ * DA implementation to set the debug level for Spectral
+ *
+ * Return: 0 in case of success
+ */
+static int
+set_debug_level_da(struct wlan_objmgr_pdev *pdev, uint32_t debug_level)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
-	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_set_debug_level(pdev,
+	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_set_debug_level(
+			pdev,
 			debug_level);
 }
 
-static u_int32_t get_debug_level_da(struct wlan_objmgr_pdev *pdev)
+/**
+ * get_debug_level_da() - Get debug level for Spectral
+ * @pdev: Pointer to pdev object
+ *
+ * DA implementation to get the debug level for Spectral
+ *
+ * Return: Current debug level
+ */
+static uint32_t
+get_debug_level_da(struct wlan_objmgr_pdev *pdev)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
@@ -162,33 +256,59 @@ static u_int32_t get_debug_level_da(struct wlan_objmgr_pdev *pdev)
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_debug_level(pdev);
 }
 
-static void get_spectral_capinfo_da(struct wlan_objmgr_pdev *pdev,
-				    void *outdata)
+/**
+ * get_spectral_capinfo_da() - Get Spectral capability information
+ * @pdev: Pointer to pdev object
+ * @outdata: Buffer into which data should be copied
+ *
+ * DA implementation to get the spectral capability information
+ *
+ * Return: void
+ */
+static void
+get_spectral_capinfo_da(struct wlan_objmgr_pdev *pdev, void *outdata)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_capinfo(
-		pdev,
-		 outdata);
+		pdev, outdata);
 }
 
-static void get_spectral_diagstats_da(struct wlan_objmgr_pdev *pdev,
-				      void *outdata)
+/**
+ * get_spectral_diagstats_da() - Get Spectral diagnostic statistics
+ * @pdev:  Pointer to pdev object
+ * @outdata: Buffer into which data should be copied
+ *
+ * DA implementation to get the spectral diagnostic statistics
+ *
+ * Return: void
+ */
+static void
+get_spectral_diagstats_da(struct wlan_objmgr_pdev *pdev, void *outdata)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 
 	psoc = wlan_pdev_get_psoc(pdev);
 
 	return psoc->soc_cb.tx_ops.sptrl_tx_ops.sptrlto_get_spectral_diagstats(
-		pdev,
-		 outdata);
+		pdev, outdata);
 }
 
-static void register_wmi_spectral_cmd_ops_da(
-		struct wlan_objmgr_pdev *pdev,
-		struct wmi_spectral_cmd_ops *cmd_ops)
+/**
+ * register_wmi_spectral_cmd_ops_da() - Register wmi_spectral_cmd_ops
+ * @cmd_ops: Pointer to the structure having wmi_spectral_cmd function pointers
+ * @pdev: Pointer to pdev object
+ *
+ * DA implementation to register wmi_spectral_cmd_ops in spectral
+ * internal data structure
+ *
+ * Return: void
+ */
+static void
+register_wmi_spectral_cmd_ops_da(struct wlan_objmgr_pdev *pdev,
+				 struct wmi_spectral_cmd_ops *cmd_ops)
 {
 	struct wlan_objmgr_psoc *psoc = NULL;
 	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
@@ -197,32 +317,30 @@ static void register_wmi_spectral_cmd_ops_da(
 
 	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
 
-	return psptrl_tx_ops->sptrlto_register_wmi_spectral_cmd_ops(
-		pdev,
-		cmd_ops);
+	return psptrl_tx_ops->sptrlto_register_wmi_spectral_cmd_ops(pdev,
+								    cmd_ops);
 }
 
-
-void spectral_ctx_init_da(struct spectral_context *sc)
+void
+spectral_ctx_init_da(struct spectral_context *sc)
 {
 	if (!sc) {
 		spectral_err("spectral context is null!\n");
 		return;
 	}
-	sc->sptrlc_spectral_control       = spectral_control_da;
-	sc->sptrlc_pdev_spectral_init     = pdev_spectral_init_da;
-	sc->sptrlc_pdev_spectral_deinit   = pdev_spectral_deinit_da;
-	sc->sptrlc_set_spectral_config    = set_spectral_config_da;
-	sc->sptrlc_get_spectral_config    = get_spectral_config_da;
-	sc->sptrlc_start_spectral_scan    = start_spectral_scan_da;
-	sc->sptrlc_stop_spectral_scan     = stop_spectral_scan_da;
-	sc->sptrlc_is_spectral_active     = is_spectral_active_da;
-	sc->sptrlc_is_spectral_enabled    = is_spectral_enabled_da;
-	sc->sptrlc_set_debug_level        = set_debug_level_da;
-	sc->sptrlc_get_debug_level        = get_debug_level_da;
-	sc->sptrlc_get_spectral_capinfo   = get_spectral_capinfo_da;
+	sc->sptrlc_spectral_control = spectral_control_da;
+	sc->sptrlc_pdev_spectral_init = pdev_spectral_init_da;
+	sc->sptrlc_pdev_spectral_deinit = pdev_spectral_deinit_da;
+	sc->sptrlc_set_spectral_config = set_spectral_config_da;
+	sc->sptrlc_get_spectral_config = get_spectral_config_da;
+	sc->sptrlc_start_spectral_scan = start_spectral_scan_da;
+	sc->sptrlc_stop_spectral_scan = stop_spectral_scan_da;
+	sc->sptrlc_is_spectral_active = is_spectral_active_da;
+	sc->sptrlc_is_spectral_enabled = is_spectral_enabled_da;
+	sc->sptrlc_set_debug_level = set_debug_level_da;
+	sc->sptrlc_get_debug_level = get_debug_level_da;
+	sc->sptrlc_get_spectral_capinfo = get_spectral_capinfo_da;
 	sc->sptrlc_get_spectral_diagstats = get_spectral_diagstats_da;
 	sc->sptrlc_register_wmi_spectral_cmd_ops =
-		register_wmi_spectral_cmd_ops_da;
+	    register_wmi_spectral_cmd_ops_da;
 }
-

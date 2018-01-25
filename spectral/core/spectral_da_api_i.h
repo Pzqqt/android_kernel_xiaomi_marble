@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -23,11 +23,14 @@
 #include "spectral_defs_i.h"
 
 /**
- * spectral_ctx_init_da() - Internal function to initialise spectral context
+ * spectral_ctx_init_da() - Internal function to initialize spectral context
  * with direct attach specific functions
  * @sc : spectral context
  *
- * Return : void
+ * Internal function to initialize spectral context with direct attach
+ * specific functions
+ *
+ * Return : None
  */
 void spectral_ctx_init_da(struct spectral_context *sc);
 
