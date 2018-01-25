@@ -2330,7 +2330,7 @@ static void csr_start_bss_copy_he_cap(tSirSmeStartBssReq *req,
 		     sizeof(session->he_config));
 }
 
-static void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
+void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 			struct csr_roam_session *session)
 {
 	uint32_t value = 0;
@@ -2531,11 +2531,6 @@ static inline void csr_join_req_copy_he_cap(tSirSmeJoinReq *csr_join_req,
 }
 
 static inline void csr_start_bss_copy_he_cap(tSirSmeStartBssReq *req,
-			struct csr_roam_session *session)
-{
-}
-
-static inline void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 			struct csr_roam_session *session)
 {
 }

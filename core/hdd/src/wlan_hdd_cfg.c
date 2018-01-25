@@ -9433,7 +9433,7 @@ next_token:
  * hdd_update_nss() - Update the number of spatial streams supported.
  * Ensure that nss is either 1 or 2 before calling this.
  *
- * @hdd_ctx: the pointer to hdd context
+ * @adapter: the pointer to adapter
  * @nss: the number of spatial streams to be updated
  *
  * This function is used to modify the number of spatial streams
@@ -9442,8 +9442,9 @@ next_token:
  * Return: QDF_STATUS_SUCCESS if nss is correctly updated,
  *              otherwise QDF_STATUS_E_FAILURE would be returned
  */
-QDF_STATUS hdd_update_nss(struct hdd_context *hdd_ctx, uint8_t nss)
+QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss)
 {
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_config *hdd_config = hdd_ctx->config;
 	uint32_t temp = 0;
 	uint32_t rx_supp_data_rate, tx_supp_data_rate;
@@ -9573,6 +9574,7 @@ QDF_STATUS hdd_update_nss(struct hdd_context *hdd_ctx, uint8_t nss)
 		status = false;
 		hdd_err("Could not pass on MCS SET to CFG");
 	}
+	sme_update_he_cap_nss(hdd_ctx->hHal, adapter->session_id, nss);
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES
 
 	if (QDF_STATUS_SUCCESS != sme_update_nss(hdd_ctx->hHal, nss))

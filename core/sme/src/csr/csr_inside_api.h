@@ -1155,5 +1155,14 @@ bool csr_lookup_pmkid_using_bssid(tpAniSirGlobal mac,
 					struct csr_roam_session *session,
 					tPmkidCacheInfo *pmk_cache,
 					uint32_t *index);
+#ifdef WLAN_FEATURE_11AX
+void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
+			struct csr_roam_session *session);
+#else
+static inline void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
+			struct csr_roam_session *session)
+{
+}
+#endif
 
 #endif /* CSR_INSIDE_API_H__ */

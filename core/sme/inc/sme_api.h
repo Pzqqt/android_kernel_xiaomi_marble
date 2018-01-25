@@ -2095,4 +2095,21 @@ static inline QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
 }
 #endif
 
+#ifdef WLAN_FEATURE_11AX
+/**
+ * sme_update_he_cap_nss() - sets the nss based on user request
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @nss: no.of spatial streams value
+ *
+ * Return: None
+ */
+void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
+		uint8_t nss);
+#else
+static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
+		uint8_t nss)
+{}
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */

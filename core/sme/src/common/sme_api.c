@@ -13127,6 +13127,37 @@ void sme_update_user_configured_nss(tHalHandle hal, uint8_t nss)
 	mac_ctx->user_configured_nss = nss;
 }
 
+#ifdef WLAN_FEATURE_11AX
+void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
+		uint8_t nss)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *csr_session;
+	uint32_t tx_mcs_map = 0;
+	uint32_t rx_mcs_map = 0;
+
+	if (!nss || (nss > 2)) {
+		sme_err("invalid Nss value %d", nss);
+	}
+	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80, &rx_mcs_map);
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80, &tx_mcs_map);
+	if (nss == 1) {
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_DISABLE, 2);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_DISABLE, 2);
+	} else {
+		tx_mcs_map = HE_SET_MCS_4_NSS(tx_mcs_map, HE_MCS_0_11, 2);
+		rx_mcs_map = HE_SET_MCS_4_NSS(rx_mcs_map, HE_MCS_0_11, 2);
+	}
+	sme_info("new HE Nss MCS MAP: Rx 0x%0X, Tx: 0x%0X",
+			rx_mcs_map, tx_mcs_map);
+	sme_cfg_set_int(mac_ctx, WNI_CFG_HE_RX_MCS_MAP_LT_80, rx_mcs_map);
+	sme_cfg_set_int(mac_ctx, WNI_CFG_HE_TX_MCS_MAP_LT_80, tx_mcs_map);
+	csr_update_session_he_cap(mac_ctx, csr_session);
+
+}
+#endif
+
 /**
  * sme_set_nud_debug_stats_cb() - set nud debug stats callback
  * @hal: global hal handle

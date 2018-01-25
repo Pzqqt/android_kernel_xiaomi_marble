@@ -15424,7 +15424,7 @@ QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 
 void hdd_cfg_print(struct hdd_context *hdd_ctx);
 
-QDF_STATUS hdd_update_nss(struct hdd_context *hdd_ctx, uint8_t nss);
+QDF_STATUS hdd_update_nss(struct hdd_adapter *adapter, uint8_t nss);
 
 /**
  * hdd_dfs_indicate_radar() - Block tx as radar found on the channel

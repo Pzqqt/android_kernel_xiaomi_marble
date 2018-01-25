@@ -5809,8 +5809,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 			ret = -EINVAL;
 		} else {
 			if (QDF_STATUS_SUCCESS !=
-				hdd_update_nss(WLAN_HDD_GET_CTX(adapter),
-				set_value))
+				hdd_update_nss(adapter, set_value))
 				ret = -EINVAL;
 		}
 		break;
