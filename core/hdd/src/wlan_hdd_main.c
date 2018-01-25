@@ -6391,7 +6391,6 @@ static void hdd_wlan_exit(struct hdd_context *hdd_ctx)
 	hdd_ipa_cleanup(hdd_ctx);
 
 	wlansap_global_deinit();
-	wlan_hdd_deinit_chan_info(hdd_ctx);
 	/*
 	 * If there is re_init failure wiphy would have already de-registered
 	 * check the wiphy status before un-registering again
@@ -9788,6 +9787,8 @@ static int hdd_features_init(struct hdd_context *hdd_ctx, struct hdd_adapter *ad
 	if (ret)
 		goto deregister_cb;
 
+	wlan_hdd_init_chan_info(hdd_ctx);
+
 	EXIT();
 	return 0;
 
@@ -9810,6 +9811,7 @@ out:
  */
 static void hdd_features_deinit(struct hdd_context *hdd_ctx)
 {
+	wlan_hdd_deinit_chan_info(hdd_ctx);
 	wlan_hdd_tsf_deinit(hdd_ctx);
 }
 
@@ -10407,8 +10409,6 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;
-
-	wlan_hdd_init_chan_info(hdd_ctx);
 
 	hdd_initialize_mac_address(hdd_ctx);
 
