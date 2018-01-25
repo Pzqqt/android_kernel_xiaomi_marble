@@ -73,6 +73,7 @@ ifdef CONFIG_SND_SOC_MSM_QDSP6V2_INTF
 	Q6_OBJS += q6audio-v2.o
 	Q6_OBJS += q6voice.o
 	Q6_OBJS += q6core.o
+	Q6_OBJS += q6common.o
 	Q6_OBJS += rtac.o
 	Q6_OBJS += q6lsm.o
 	Q6_OBJS += audio_slimslave.o

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -37,6 +37,7 @@
 #include <dsp/q6afe-v2.h>
 #include <dsp/q6lsm.h>
 #include <dsp/q6core.h>
+#include <dsp/q6common.h>
 #include <dsp/audio_cal_utils.h>
 
 #include "msm-pcm-routing-v2.h"
@@ -16829,6 +16830,46 @@ static const struct snd_kcontrol_new stereo_channel_reverse_control[] = {
 	msm_routing_stereo_channel_reverse_control_put),
 };
 
+static int msm_routing_instance_id_support_info(struct snd_kcontrol *kcontrol,
+						struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BOOLEAN;
+	uinfo->count = 1;
+	return 0;
+}
+
+static int msm_routing_instance_id_support_put(
+	struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	bool supported = ucontrol->value.integer.value[0] ? true : false;
+
+	q6common_update_instance_id_support(supported);
+	return 0;
+}
+
+static int msm_routing_instance_id_support_get(
+	struct snd_kcontrol *kcontrol, struct snd_ctl_elem_value *ucontrol)
+{
+	bool supported = false;
+
+	supported = q6common_is_instance_id_supported();
+	ucontrol->value.integer.value[0] = supported ? 1 : 0;
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new
+	msm_routing_feature_support_mixer_controls[] = {
+		{
+			.access = SNDRV_CTL_ELEM_ACCESS_READ |
+				SNDRV_CTL_ELEM_ACCESS_WRITE,
+			.info = msm_routing_instance_id_support_info,
+			.name = "Instance ID Support",
+			.put = msm_routing_instance_id_support_put,
+			.get = msm_routing_instance_id_support_get,
+		},
+};
+
 static const struct snd_pcm_ops msm_routing_pcm_ops = {
 	.hw_params	= msm_pcm_routing_hw_params,
 	.close          = msm_pcm_routing_close,
@@ -16900,6 +16941,10 @@ static int msm_routing_probe(struct snd_soc_platform *platform)
 					ARRAY_SIZE(aptx_dec_license_controls));
 	snd_soc_add_platform_controls(platform, stereo_channel_reverse_control,
 				ARRAY_SIZE(stereo_channel_reverse_control));
+	snd_soc_add_platform_controls(
+			platform, msm_routing_feature_support_mixer_controls,
+			ARRAY_SIZE(msm_routing_feature_support_mixer_controls));
+
 	return 0;
 }
 
