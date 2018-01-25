@@ -1865,6 +1865,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		frm->vendor_vht_ie.sub_type =
 			pe_session->vendor_specific_vht_ie_sub_type;
 		frm->vendor_vht_ie.VHTCaps.present = 1;
+		if (!mac_ctx->roam.configParam.enable_subfee_vendor_vhtie &&
+		    pe_session->vht_config.su_beam_formee) {
+			pe_debug("Disable SU beamformee for vendor IE");
+			pe_session->vht_config.su_beam_formee = 0;
+		}
 		populate_dot11f_vht_caps(mac_ctx, pe_session,
 				&frm->vendor_vht_ie.VHTCaps);
 		vht_enabled = true;

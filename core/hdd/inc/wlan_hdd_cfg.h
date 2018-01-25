@@ -7388,6 +7388,29 @@ enum hdd_link_speed_rpt_type {
 #define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_DEFAULT (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STADEF)
 
 /*
+ * <ini>
+ * enable_subfee_vendor_vhtie - ini to enable/disable SU Bformee in vendor VHTIE
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable/disable SU Bformee in vendor vht ie if gTxBFEnable
+ * is enabled. if gTxBFEnable is 0 this will not have any effect.
+ *
+ * Related: gTxBFEnable.
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_NAME    "enable_subfee_vendor_vhtie"
+#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MIN     (0)
+#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MAX     (1)
+#define CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_DEFAULT (1)
+
+/*
  * Enable / Disable Tx beamformee in SAP mode
  * Default: Disable
  */
@@ -14632,6 +14655,7 @@ struct hdd_config {
 	uint8_t vhtRxMCS;
 	uint8_t vhtTxMCS;
 	bool enableTxBF;
+	bool enable_subfee_vendor_vhtie;
 	bool enable_txbf_sap_mode;
 	uint8_t txBFCsnValue;
 	bool enable_su_tx_bformer;

@@ -1283,6 +1283,7 @@ typedef struct tagCsrConfigParam {
 	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
 	uint8_t enableTxBF;
+	bool enable_subfee_vendor_vhtie;
 	uint8_t enable_txbf_sap_mode;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;

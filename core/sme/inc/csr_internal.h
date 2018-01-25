@@ -565,6 +565,7 @@ struct csr_config {
 	/* To enable scanning 2g channels twice on single scan req from HDD */
 	bool fScanTwice;
 	uint32_t nVhtChannelWidth;
+	bool enable_subfee_vendor_vhtie;
 	uint8_t enable_txbf_sap_mode;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;

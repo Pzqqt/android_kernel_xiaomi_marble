@@ -2881,6 +2881,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 
 		pMac->roam.configParam.nVhtChannelWidth =
 			pParam->nVhtChannelWidth;
+		pMac->roam.configParam.enable_subfee_vendor_vhtie =
+					pParam->enable_subfee_vendor_vhtie;
 		pMac->roam.configParam.enable_txbf_sap_mode =
 			pParam->enable_txbf_sap_mode;
 		pMac->roam.configParam.enable2x2 = pParam->enable2x2;
@@ -3205,6 +3207,8 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		     &cfg_params->neighborRoamConfig,
 		     sizeof(tCsrNeighborRoamConfigParams));
 	pParam->nVhtChannelWidth = cfg_params->nVhtChannelWidth;
+	pParam->enable_subfee_vendor_vhtie =
+				cfg_params->enable_subfee_vendor_vhtie;
 	pParam->enable_txbf_sap_mode =
 		cfg_params->enable_txbf_sap_mode;
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;

@@ -2583,6 +2583,13 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MIN,
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX),
 
+	REG_VARIABLE(CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_subfee_vendor_vhtie,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_DEFAULT,
+		     CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MIN,
+		     CFG_ENABLE_SUBFEE_IN_VENDOR_VHTIE_MAX),
+
 	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_SAP_MODE, WLAN_PARAM_Integer,
 		     struct hdd_config, enable_txbf_sap_mode,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -8921,6 +8928,9 @@ QDF_STATUS hdd_set_sme_config(struct hdd_context *hdd_ctx)
 	 */
 	smeConfig->csrConfig.nVhtChannelWidth = pConfig->vhtChannelWidth;
 	smeConfig->csrConfig.enableTxBF = pConfig->enableTxBF;
+	smeConfig->csrConfig.enable_subfee_vendor_vhtie =
+				pConfig->enable_subfee_vendor_vhtie;
+
 	smeConfig->csrConfig.enable_txbf_sap_mode =
 		pConfig->enable_txbf_sap_mode;
 	smeConfig->csrConfig.enable2x2 = pConfig->enable2x2;
