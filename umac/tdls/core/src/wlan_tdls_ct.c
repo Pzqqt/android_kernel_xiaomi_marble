@@ -127,8 +127,8 @@ void tdls_discovery_timeout_peer_cb(void *user_data)
 							    &p_node);
 				continue;
 			}
-			tdls_debug(QDF_MAC_ADDRESS_STR " to idle state",
-				    QDF_MAC_ADDR_ARRAY(peer->peer_mac.bytes));
+			tdls_debug(QDF_MAC_ADDR_STR " to idle state",
+				   QDF_MAC_ADDR_ARRAY(peer->peer_mac.bytes));
 			tdls_set_peer_link_status(peer,
 						  TDLS_LINK_IDLE,
 						  TDLS_LINK_NOT_SUPPORTED);
@@ -379,8 +379,8 @@ void tdls_implicit_send_discovery_request(
 	/* This function is called in mutex_lock */
 	temp_peer = tdls_is_progress(tdls_vdev_obj, NULL, 0);
 	if (NULL != temp_peer) {
-		tdls_notice(QDF_MAC_ADDRESS_STR " ongoing. pre_setup ignored",
-			  QDF_MAC_ADDR_ARRAY(temp_peer->peer_mac.bytes));
+		tdls_notice(QDF_MAC_ADDR_STR " ongoing. pre_setup ignored",
+			    QDF_MAC_ADDR_ARRAY(temp_peer->peer_mac.bytes));
 		goto done;
 	}
 
@@ -446,7 +446,7 @@ int tdls_recv_discovery_resp(struct tdls_vdev_priv_obj *tdls_vdev,
 	if (0 == tdls_vdev->discovery_sent_cnt)
 		qdf_mc_timer_stop(&tdls_vdev->peer_discovery_timer);
 
-	tdls_debug("Discovery(%u) Response from " QDF_MAC_ADDRESS_STR
+	tdls_debug("Discovery(%u) Response from " QDF_MAC_ADDR_STR
 		   " link_status %d", tdls_vdev->discovery_sent_cnt,
 		   QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
 		   curr_peer->link_status);
@@ -462,7 +462,7 @@ int tdls_recv_discovery_resp(struct tdls_vdev_priv_obj *tdls_vdev,
 			tdls_set_peer_link_status(curr_peer,
 						TDLS_LINK_DISCOVERED,
 						TDLS_LINK_SUCCESS);
-			tdls_debug("Rssi Threshold met: " QDF_MAC_ADDRESS_STR
+			tdls_debug("Rssi Threshold met: " QDF_MAC_ADDR_STR
 				" rssi = %d threshold= %d",
 				QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
 				curr_peer->rssi,
@@ -477,8 +477,7 @@ int tdls_recv_discovery_resp(struct tdls_vdev_priv_obj *tdls_vdev,
 						TDLS_EVENT_SETUP_REQ,
 						&indication);
 		} else {
-			tdls_debug("Rssi Threshold not met: "
-				QDF_MAC_ADDRESS_STR
+			tdls_debug("Rssi Threshold not met: " QDF_MAC_ADDR_STR
 				" rssi = %d threshold = %d ",
 				QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
 				curr_peer->rssi,
@@ -601,7 +600,7 @@ tdls_ct_process_idle_handler(
 		return;
 	}
 
-	tdls_debug(QDF_MAC_ADDRESS_STR
+	tdls_debug(QDF_MAC_ADDR_STR
 		" tx_pkt: %d, rx_pkt: %d, idle_packet_n: %d",
 		QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
 		curr_peer->tx_pkt,
@@ -616,12 +615,12 @@ tdls_ct_process_idle_handler(
 	    (curr_peer->rx_pkt >=
 	     tdls_vdev_obj->threshold_config.idle_packet_n)) {
 		/* this tdls link got back to normal, so keep it */
-		tdls_debug("tdls link to " QDF_MAC_ADDRESS_STR
+		tdls_debug("tdls link to " QDF_MAC_ADDR_STR
 			 " back to normal, will stay",
 			  QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
 	} else {
 		/* this tdls link needs to get torn down */
-		tdls_notice("trigger tdls link to "QDF_MAC_ADDRESS_STR" down",
+		tdls_notice("trigger tdls link to "QDF_MAC_ADDR_STR" down",
 			    QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
 		tdls_indicate_teardown(tdls_vdev_obj,
 					curr_peer,
@@ -705,7 +704,7 @@ static void tdls_ct_process_connected_link(
 
 	if ((int32_t)curr_peer->rssi <
 	    (int32_t)tdls_vdev->threshold_config.rssi_teardown_threshold) {
-		tdls_warn("Tear down - low RSSI: " QDF_MAC_ADDRESS_STR "!",
+		tdls_warn("Tear down - low RSSI: " QDF_MAC_ADDR_STR "!",
 			 QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
 		tdls_indicate_teardown(tdls_vdev,
 					curr_peer,
@@ -736,7 +735,7 @@ static void tdls_ct_process_connected_link(
 		if (QDF_TIMER_STATE_RUNNING !=
 		    curr_peer->peer_idle_timer.state) {
 			tdls_warn("Tx/Rx Idle timer start: "
-				QDF_MAC_ADDRESS_STR "!",
+				QDF_MAC_ADDR_STR "!",
 				QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
 			tdls_timer_restart(tdls_vdev->vdev,
 				&curr_peer->peer_idle_timer,
@@ -744,7 +743,7 @@ static void tdls_ct_process_connected_link(
 		}
 	} else if (QDF_TIMER_STATE_RUNNING ==
 		   curr_peer->peer_idle_timer.state) {
-		tdls_warn("Tx/Rx Idle timer stop: " QDF_MAC_ADDRESS_STR "!",
+		tdls_warn("Tx/Rx Idle timer stop: " QDF_MAC_ADDR_STR "!",
 			 QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes));
 		qdf_mc_timer_stop(&curr_peer->peer_idle_timer);
 	}
@@ -853,7 +852,7 @@ static void tdls_ct_process_peers(struct tdls_peer *curr_peer,
 				  struct tdls_vdev_priv_obj *tdls_vdev_obj,
 				  struct tdls_soc_priv_obj *tdls_soc_obj)
 {
-	tdls_debug(QDF_MAC_ADDRESS_STR " link_status %d tdls_support %d",
+	tdls_debug(QDF_MAC_ADDR_STR " link_status %d tdls_support %d",
 		 QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
 		 curr_peer->link_status, curr_peer->tdls_support);
 
@@ -1116,7 +1115,7 @@ int tdls_set_tdls_offchannelmode(struct wlan_objmgr_vdev *vdev,
 	qdf_mem_copy(&chan_switch_params.peer_mac_addr,
 		     &conn_peer->peer_mac.bytes,
 		     QDF_MAC_ADDR_SIZE);
-	tdls_notice("Peer " QDF_MAC_ADDRESS_STR " vdevId: %d, off channel: %d, offset: %d, mode: %d, is_responder: %d",
+	tdls_notice("Peer " QDF_MAC_ADDR_STR " vdevId: %d, off channel: %d, offset: %d, mode: %d, is_responder: %d",
 		 QDF_MAC_ADDR_ARRAY(chan_switch_params.peer_mac_addr),
 		 chan_switch_params.vdev_id,
 		 chan_switch_params.tdls_off_ch,

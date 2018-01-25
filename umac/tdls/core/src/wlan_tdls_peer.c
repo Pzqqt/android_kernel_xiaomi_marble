@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,7 @@ struct tdls_peer *tdls_find_peer(struct tdls_vdev_priv_obj *vdev_obj,
 		status = qdf_list_peek_next(head, p_node, &p_node);
 	}
 
-	tdls_debug("no tdls peer " QDF_MAC_ADDRESS_STR,
+	tdls_debug("no tdls peer " QDF_MAC_ADDR_STR,
 		   QDF_MAC_ADDR_ARRAY(macaddr));
 	return NULL;
 }
@@ -188,7 +188,7 @@ static struct tdls_peer *tdls_add_peer(struct tdls_vdev_priv_obj *vdev_obj,
 
 	qdf_list_insert_back(head, &peer->node);
 
-	tdls_debug("add tdls peer: " QDF_MAC_ADDRESS_STR,
+	tdls_debug("add tdls peer: " QDF_MAC_ADDR_STR,
 		   QDF_MAC_ADDR_ARRAY(macaddr));
 	return peer;
 }
@@ -222,7 +222,7 @@ tdls_find_progress_peer_in_list(qdf_list_t *head,
 			status = qdf_list_peek_next(head, p_node, &p_node);
 			continue;
 		} else if (TDLS_LINK_CONNECTING == peer->link_status) {
-			tdls_debug(QDF_MAC_ADDRESS_STR " TDLS_LINK_CONNECTING",
+			tdls_debug(QDF_MAC_ADDR_STR " TDLS_LINK_CONNECTING",
 				   QDF_MAC_ADDR_ARRAY(peer->peer_mac.bytes));
 			return peer;
 		}
@@ -353,7 +353,7 @@ tdls_find_first_connected_peer(struct tdls_vdev_priv_obj *vdev_obj)
 			peer = qdf_container_of(p_node, struct tdls_peer, node);
 
 			if (peer && TDLS_LINK_CONNECTED == peer->link_status) {
-				tdls_debug(QDF_MAC_ADDRESS_STR
+				tdls_debug(QDF_MAC_ADDR_STR
 					   " TDLS_LINK_CONNECTED",
 					   QDF_MAC_ADDR_ARRAY(
 						   peer->peer_mac.bytes));
@@ -795,7 +795,7 @@ void tdls_peer_idle_timers_destroy(struct tdls_vdev_priv_obj *vdev_obj)
 		while (QDF_IS_STATUS_SUCCESS(status)) {
 			peer = qdf_container_of(p_node, struct tdls_peer, node);
 			if (peer && peer->is_peer_idle_timer_initialised) {
-				tdls_debug(QDF_MAC_ADDRESS_STR
+				tdls_debug(QDF_MAC_ADDR_STR
 					   ": destroy  idle timer ",
 					   QDF_MAC_ADDR_ARRAY(
 						   peer->peer_mac.bytes));

@@ -449,7 +449,7 @@ QDF_STATUS ucfg_tdls_oper(struct wlan_objmgr_vdev *vdev,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	tdls_debug("%s for peer " QDF_MAC_ADDRESS_STR,
+	tdls_debug("%s for peer " QDF_MAC_ADDR_STR,
 		   tdls_get_oper_str(cmd),
 		   QDF_MAC_ADDR_ARRAY(macaddr));
 

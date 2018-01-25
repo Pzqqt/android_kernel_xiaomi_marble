@@ -1691,9 +1691,8 @@ void qdf_dp_display_proto_pkt(struct qdf_dp_trace_record_s *record,
 	struct qdf_dp_trace_proto_buf *buf =
 		(struct qdf_dp_trace_proto_buf *)record->data;
 
-	DPTRACE_PRINT("DPT: %04d: %s [%d] [%s%s] SA: "
-		QDF_MAC_ADDRESS_STR " %s DA: "
-		QDF_MAC_ADDRESS_STR,
+	DPTRACE_PRINT("DPT: %04d: %s [%d] [%s%s] SA: " QDF_MAC_ADDR_STR
+		" %s DA: " QDF_MAC_ADDR_STR,
 		index,
 		(live == true) ? "" : record->time,
 		buf->vdev_id,
