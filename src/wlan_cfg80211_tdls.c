@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -44,7 +44,7 @@ static int wlan_cfg80211_tdls_validate_mac_addr(const uint8_t *mac)
 	static const uint8_t temp_mac[QDF_MAC_ADDR_SIZE] = {0};
 
 	if (!qdf_mem_cmp(mac, temp_mac, QDF_MAC_ADDR_SIZE)) {
-		cfg80211_debug("Invalid Mac address " QDF_MAC_ADDRESS_STR " cmd declined.",
+		cfg80211_debug("Invalid Mac address " QDF_MAC_ADDR_STR " cmd declined.",
 		QDF_MAC_ADDR_ARRAY(mac));
 		return -EINVAL;
 	}
@@ -173,7 +173,7 @@ int wlan_cfg80211_tdls_add_peer(struct wlan_objmgr_pdev *pdev,
 	if (status)
 		return status;
 
-	cfg80211_debug("Add TDLS peer " QDF_MAC_ADDRESS_STR,
+	cfg80211_debug("Add TDLS peer " QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(mac));
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
 							 WLAN_OSIF_ID);
@@ -388,7 +388,7 @@ int wlan_cfg80211_tdls_update_peer(struct wlan_objmgr_pdev *pdev,
 	if (status)
 		return status;
 
-	cfg80211_debug("Update TDLS peer " QDF_MAC_ADDRESS_STR,
+	cfg80211_debug("Update TDLS peer " QDF_MAC_ADDR_STR,
 		       QDF_MAC_ADDR_ARRAY(mac));
 	vdev = wlan_objmgr_get_vdev_by_macaddr_from_pdev(pdev, dev->dev_addr,
 							 WLAN_OSIF_ID);
@@ -727,7 +727,7 @@ int wlan_cfg80211_tdls_mgmt(struct wlan_objmgr_pdev *pdev,
 
 	/* make sure doesn't call send_mgmt() while it is pending */
 	if (TDLS_VDEV_MAGIC == tdls_priv->mgmt_tx_completion_status) {
-		cfg80211_err(QDF_MAC_ADDRESS_STR " action %d couldn't sent, as one is pending. return EBUSY",
+		cfg80211_err(QDF_MAC_ADDR_STR " action %d couldn't sent, as one is pending. return EBUSY",
 			     QDF_MAC_ADDR_ARRAY(peer_mac), action_code);
 		wlan_objmgr_vdev_release_ref(vdev, WLAN_OSIF_ID);
 		return -EBUSY;
