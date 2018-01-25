@@ -2118,10 +2118,25 @@ static inline QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
  */
 void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss);
+
+/**
+ * sme_update_he_mcs() - sets the HE MCS based on user request
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @he_mcs: HE MCS value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs);
 #else
 static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss)
 {}
+static inline int sme_update_he_mcs(tHalHandle hal, uint8_t session_id,
+				    uint16_t he_mcs)
+{
+	return 0;
+}
 #endif
 
 #endif /* #if !defined( __SME_API_H ) */

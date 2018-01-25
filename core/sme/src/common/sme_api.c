@@ -13181,6 +13181,68 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 	csr_update_session_he_cap(mac_ctx, csr_session);
 
 }
+
+int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *csr_session;
+	uint16_t mcs_val = 0;
+	uint16_t mcs_map = HE_MCS_ALL_DISABLED;
+	uint32_t wni_cfg_tx_param = 0;
+	uint32_t wni_cfg_rx_param = 0;
+
+	csr_session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!csr_session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	if ((he_mcs & 0x3) == HE_MCS_DISABLE) {
+		sme_err("Invalid HE MCS 0x%0x, can't disable 0-7 for 1ss",
+				he_mcs);
+		return -EINVAL;
+	}
+	mcs_val = he_mcs & 0x3;
+	switch (he_mcs) {
+	case HE_80_MCS0_7:
+	case HE_80_MCS0_9:
+	case HE_80_MCS0_11:
+		if (mac_ctx->roam.configParam.enable2x2) {
+			mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
+			mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 2);
+		} else {
+			mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
+		}
+		wni_cfg_tx_param = WNI_CFG_HE_TX_MCS_MAP_LT_80;
+		wni_cfg_rx_param = WNI_CFG_HE_RX_MCS_MAP_LT_80;
+		break;
+
+	case HE_160_MCS0_7:
+	case HE_160_MCS0_9:
+	case HE_160_MCS0_11:
+		mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
+		wni_cfg_tx_param = WNI_CFG_HE_TX_MCS_MAP_160;
+		wni_cfg_rx_param = WNI_CFG_HE_RX_MCS_MAP_160;
+		break;
+
+	case HE_80p80_MCS0_7:
+	case HE_80p80_MCS0_9:
+	case HE_80p80_MCS0_11:
+		mcs_map = HE_SET_MCS_4_NSS(mcs_map, mcs_val, 1);
+		wni_cfg_tx_param = WNI_CFG_HE_TX_MCS_MAP_80_80;
+		wni_cfg_rx_param = WNI_CFG_HE_RX_MCS_MAP_80_80;
+		break;
+
+	default:
+		sme_err("Invalid HE MCS 0x%0x", he_mcs);
+		return -EINVAL;
+	}
+	sme_info("new HE MCS 0x%0x", mcs_map);
+	sme_cfg_set_int(mac_ctx, wni_cfg_tx_param, mcs_map);
+	sme_cfg_set_int(mac_ctx, wni_cfg_rx_param, mcs_map);
+	csr_update_session_he_cap(mac_ctx, csr_session);
+
+	return 0;
+}
 #endif
 
 /**

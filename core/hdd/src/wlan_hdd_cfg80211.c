@@ -6253,6 +6253,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_ACCEPT_ADDBA_REQ] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7261,6 +7263,16 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		hdd_debug("set addba accept req from peer value %d", cfg_val);
 		ret_val = sme_set_addba_accept(hdd_ctx->hHal,
 				adapter->session_id, cfg_val);
+		if (ret_val)
+			return ret_val;
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS]);
+		hdd_debug("set HE MCS value 0x%0X", cfg_val);
+		ret_val = sme_update_he_mcs(hdd_ctx->hHal, adapter->session_id,
+					    cfg_val);
 		if (ret_val)
 			return ret_val;
 	}
