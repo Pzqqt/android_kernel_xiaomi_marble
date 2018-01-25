@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -20,13 +20,15 @@
 #include <wlan_spectral_tgt_api.h>
 #include "../../core/spectral_cmn_api_i.h"
 
-int tgt_send_phydata(struct wlan_objmgr_pdev *pdev,
-		     struct sock *sock, qdf_nbuf_t nbuf)
+int
+tgt_send_phydata(struct wlan_objmgr_pdev *pdev,
+		 struct sock *sock, qdf_nbuf_t nbuf)
 {
 	return netlink_broadcast(sock, nbuf, 0, 1, GFP_ATOMIC);
 }
 
-void *tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
+void *
+tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 {
 	struct pdev_spectral *ps;
 
@@ -34,9 +36,8 @@ void *tgt_get_target_handle(struct wlan_objmgr_pdev *pdev)
 		spectral_err("PDEV is NULL!\n");
 		return NULL;
 	}
-	ps = wlan_objmgr_pdev_get_comp_private_obj(
-		pdev,
-		 WLAN_UMAC_COMP_SPECTRAL);
+	ps = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						   WLAN_UMAC_COMP_SPECTRAL);
 	if (!ps) {
 		spectral_err("PDEV SPECTRAL object is NULL!\n");
 		return NULL;

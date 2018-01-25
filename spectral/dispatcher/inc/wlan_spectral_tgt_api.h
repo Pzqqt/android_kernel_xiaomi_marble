@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -24,10 +24,12 @@
 #include <qdf_types.h>
 
 /**
- * tgt_send_phydata() - Send Spectral PHY data over netlink
+ * tgt_send_phydata() - Send Spectral PHY data
  * @pdev: Pointer to pdev
  * @sock: Netlink socket to use
  * @nbuf: Network buffer containing PHY data to send
+ *
+ * Send spectral PHY data over netlink
  *
  * Return: 0 on success, negative value on failure
  */
@@ -35,12 +37,14 @@ int tgt_send_phydata(struct wlan_objmgr_pdev *pdev,
 		     struct sock *sock, qdf_nbuf_t nbuf);
 
 /**
- * tgt_get_target_handle() - Get handle to target_if internal Spectral data
+ * tgt_get_target_handle() - Get target_if handle
  * @pdev: Pointer to pdev
+ *
+ * Get handle to target_if internal Spectral data
  *
  * Return: Handle to target_if internal Spectral data on success, NULL on
  * failure
  */
 void *tgt_get_target_handle(struct wlan_objmgr_pdev *pdev);
 
-#endif /* _WLAN_SPECTRAL_TGT_API_H_*/
+#endif /* _WLAN_SPECTRAL_TGT_API_H_ */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -24,7 +24,7 @@
 #include <wlan_lmac_if_def.h>
 
 /**
- * wlan_spectral_init(): API to init spectral component
+ * wlan_spectral_init() - API to init spectral component
  *
  * This API is invoked from dispatcher init during all component init.
  * This API will register all required handlers for pdev and peer object
@@ -36,7 +36,7 @@
 QDF_STATUS wlan_spectral_init(void);
 
 /**
- * wlan_spectral_deinit(): API to deinit spectral component
+ * wlan_spectral_deinit() - API to deinit spectral component
  *
  * This API is invoked from dispatcher deinit during all component deinit.
  * This API will unregister all registered handlers for pdev and peer object
@@ -48,25 +48,30 @@ QDF_STATUS wlan_spectral_init(void);
 QDF_STATUS wlan_spectral_deinit(void);
 
 /**
- * wlan_lmac_if_sptrl_register_rx_ops(): Register lmac interface Rx operations
+ * wlan_lmac_if_sptrl_register_rx_ops() - Register lmac interface Rx operations
  * @rx_ops: Pointer to lmac interface Rx operations structure
+ *
+ * API to register spectral related lmac interface Rx operations
  *
  * Return: None
  */
-void wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
+void
+wlan_lmac_if_sptrl_register_rx_ops(struct wlan_lmac_if_rx_ops *rx_ops);
 
 /**
-* wlan_register_wmi_spectral_cmd_ops(): Register operations related to wmi
-					commands on spectral parameters
+* wlan_register_wmi_spectral_cmd_ops() - Register operations related to wmi
+* commands on spectral parameters
 * @pdev    - the physical device object
 * @cmd_ops - pointer to the structure holding the operations
 *	     related to wmi commands on spectral parameters
 *
+* API to register operations related to wmi commands on spectral parameters
+*
 * Return: None
 */
-void wlan_register_wmi_spectral_cmd_ops(
-		struct wlan_objmgr_pdev *pdev,
-		struct wmi_spectral_cmd_ops *cmd_ops);
+void
+wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
+				   struct wmi_spectral_cmd_ops *cmd_ops);
 
 /**
  * struct spectral_legacy_cbacks - Spectral legacy callbacks
@@ -78,19 +83,8 @@ struct spectral_legacy_cbacks {
 	int16_t (*vdev_get_chan_freq)(struct wlan_objmgr_vdev *vdev);
 	enum phy_ch_width (*vdev_get_ch_width)(struct wlan_objmgr_vdev *vdev);
 	int (*vdev_get_sec20chan_freq_mhz)(struct wlan_objmgr_vdev *vdev,
-					     uint16_t *sec20chan_freq);
+					   uint16_t *sec20chan_freq);
 };
-
-/**
- * spectral_register_legacy_cb - Register legacy callbacks
- * @psoc:          psoc object
- * @legacy_cbacks:        legacy callback structure
- *
- * Return: SUCCESS,
- *         Failure
- */
-QDF_STATUS spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
-		struct spectral_legacy_cbacks *legacy_cbacks);
 
 /**
  * spectral_vdev_get_chan_freq - Get vdev channel frequency
@@ -101,14 +95,6 @@ QDF_STATUS spectral_register_legacy_cb(struct wlan_objmgr_psoc *psoc,
 int16_t spectral_vdev_get_chan_freq(struct wlan_objmgr_vdev *vdev);
 
 /**
- * spectral_vdev_get_ch_width - Get vdev channel band width
- * @vdev:   vdev object
- *
- * Return: phy channel width
- */
-enum phy_ch_width spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
-
-/**
  * spectral_vdev_get_sec20chan_freq_mhz - Get vdev secondary channel frequncy
  * @vdev:   vdev object
  * @sec20chan_freq: secondary channel frequency
@@ -117,5 +103,32 @@ enum phy_ch_width spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
  */
 int spectral_vdev_get_sec20chan_freq_mhz(struct wlan_objmgr_vdev *vdev,
 					uint16_t *sec20chan_freq);
+
+/**
+ * spectral_register_legacy_cb() - Register spectral legacy callbacks
+ * commands on spectral parameters
+ * @psoc    - the physical device object
+ * @legacy_cbacks - Reference to struct spectral_legacy_cbacks from which
+ * function pointers need to be copied
+ *
+ * API to register spectral related legacy callbacks
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS spectral_register_legacy_cb(
+	struct wlan_objmgr_psoc *psoc,
+	struct spectral_legacy_cbacks *legacy_cbacks);
+
+/**
+ * spectral_vdev_get_ch_width() - Get the channel bandwidth
+ * @vdev    - Pointer to vdev
+ *
+ * API to get the channel bandwidth of a given vdev
+ *
+ * Return: Enumeration corresponding to the channel bandwidth
+ */
+enum phy_ch_width
+spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
 
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/

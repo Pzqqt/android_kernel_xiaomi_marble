@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -81,15 +81,15 @@ struct spectral_ioctl_params {
 	int16_t   spectral_fft_period;
 	int16_t   pectral_period;
 	int16_t   spectral_count;
-	u_int16_t spectral_short_report;
-	u_int16_t spectral_pri;
+	uint16_t spectral_short_report;
+	uint16_t spectral_pri;
 };
 
 struct ath_spectral_caps {
-	u_int8_t phydiag_cap;
-	u_int8_t radar_cap;
-	u_int8_t spectral_cap;
-	u_int8_t advncd_spectral_cap;
+	uint8_t phydiag_cap;
+	uint8_t radar_cap;
+	uint8_t spectral_cap;
+	uint8_t advncd_spectral_cap;
 };
 
 #define SPECTRAL_IOCTL_PARAM_NOVAL (65535)

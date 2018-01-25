@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -26,7 +26,7 @@
 /* Spectral specific UCFG set operations */
 
 /**
- * ucfg_spectral_control() - Carry out Spectral control get/set operations
+ * ucfg_spectral_control() - Carry out Spectral control operations
  * @pdev: Pointer to pdev
  * @id: Spectral operation ID
  * @indata: Pointer to input data
@@ -34,13 +34,13 @@
  * @outdata: Pointer to buffer where the output should be stored
  * @outsize: Size of outdata buffer
  *
+ * Carry out Spectral specific UCFG control get/set operations
+ *
  * Return: 0 on success, negative value on failure
  */
-int ucfg_spectral_control(
-	struct wlan_objmgr_pdev *pdev,
-	 u_int id,
-	 void *indata,
-	 u_int32_t insize,
-			  void *outdata, u_int32_t *outsize);
+int ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
+			  u_int id,
+			  void *indata,
+			  uint32_t insize, void *outdata, uint32_t *outsize);
 
-#endif /* _WLAN_SPECTRAL_UCFG_API_H_*/
+#endif /* _WLAN_SPECTRAL_UCFG_API_H_ */

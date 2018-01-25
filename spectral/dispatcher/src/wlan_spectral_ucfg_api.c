@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -21,12 +21,11 @@
 #include "../../core/spectral_cmn_api_i.h"
 #include <wlan_spectral_utils_api.h>
 
-int ucfg_spectral_control(
-	struct wlan_objmgr_pdev *pdev,
-	u_int id,
-	void *indata,
-	u_int32_t insize,
-	void *outdata, u_int32_t *outsize)
+int
+ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
+		      u_int id,
+		      void *indata,
+		      uint32_t insize, void *outdata, uint32_t *outsize)
 {
 	struct spectral_context *sc;
 
@@ -39,12 +38,9 @@ int ucfg_spectral_control(
 		spectral_err("spectral context is NULL!\n");
 		return -EPERM;
 	}
-	return sc->sptrlc_spectral_control(
-		pdev,
-		 id,
-		 indata,
-		 insize,
-		 outdata,
-		 outsize);
+
+	return sc->sptrlc_spectral_control(pdev,
+					   id,
+					   indata, insize, outdata, outsize);
 }
 EXPORT_SYMBOL(ucfg_spectral_control);
