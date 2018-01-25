@@ -962,7 +962,6 @@ UMAC_OBJMGR_OBJS := $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_global_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_pdev_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_peer_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_obj.o \
-		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_service_ready_api.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_vdev_obj.o
 
 ###########  UMAC MGMT TXRX ##########
@@ -1122,10 +1121,13 @@ TARGET_IF_INC := -I$(WLAN_COMMON_INC)/target_if/core/inc \
 		 -I$(WLAN_COMMON_INC)/target_if/tdls/inc
 
 TARGET_IF_OBJ := $(TARGET_IF_DIR)/core/src/target_if_main.o \
-		$(TARGET_IF_DIR)/init_deinit/src/service_ready_event_handler.o \
 		$(TARGET_IF_DIR)/p2p/src/target_if_p2p.o \
 		$(TARGET_IF_DIR)/regulatory/src/target_if_reg.o \
-		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o
+		$(TARGET_IF_DIR)/tdls/src/target_if_tdls.o \
+		$(TARGET_IF_DIR)/init_deinit/src/init_cmd_api.o \
+		$(TARGET_IF_DIR)/init_deinit/src/init_deinit_ucfg.o \
+		$(TARGET_IF_DIR)/init_deinit/src/init_event_handler.o \
+		$(TARGET_IF_DIR)/init_deinit/src/service_ready_util.o \
 
 ########### GLOBAL_LMAC_IF ##########
 GLOBAL_LMAC_IF_DIR := $(WLAN_COMMON_ROOT)/global_lmac_if

@@ -130,6 +130,7 @@
 #include <cdp_txrx_cmn_struct.h>
 #include "wlan_hdd_sysfs.h"
 #include "wlan_disa_ucfg_api.h"
+#include <target_if.h>
 
 #ifdef CNSS_GENL
 #include <net/cnss_nl.h>
@@ -10066,6 +10067,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	bool is_recovery_stop = cds_is_driver_recovering();
 	bool is_idle_stop = !cds_is_driver_unloading() && !is_recovery_stop;
 	int active_threads;
+	struct target_psoc_info *tgt_hdl;
 
 	ENTER();
 	hdd_alert("stop WLAN module: entering driver status=%d",
@@ -10178,7 +10180,10 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	 * next module start same psoc is used to populate new service
 	 * ready data
 	 */
-	hdd_ctx->hdd_psoc->total_mac_phy = 0;
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(hdd_ctx->hdd_psoc);
+	if (tgt_hdl)
+		target_psoc_set_total_mac_phy_cnt(tgt_hdl, 0);
+
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!hif_ctx) {

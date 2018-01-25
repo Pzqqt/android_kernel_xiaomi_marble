@@ -32,6 +32,8 @@
 
 #include <wlan_hdd_object_manager.h>
 #include <wlan_osif_priv.h>
+#include <wlan_reg_ucfg_api.h>
+#include <target_if.h>
 
 #define LOW_2GHZ_FREQ 2312
 #define HIGH_2GHZ_FREQ 2732
@@ -140,7 +142,7 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 		return -ENOMEM;
 	}
 
-	reg_cap_ptr = psoc->ext_service_param.reg_cap;
+	reg_cap_ptr = ucfg_reg_get_hal_reg_cap(psoc);
 	reg_cap_ptr->phy_id = 0;
 	reg_cap_ptr->low_2ghz_chan = LOW_2GHZ_FREQ;
 	reg_cap_ptr->high_2ghz_chan = HIGH_2GHZ_FREQ;
@@ -150,7 +152,8 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 	pdev = wlan_objmgr_pdev_obj_create(psoc, priv);
 	if (!pdev) {
 		hdd_err("pdev obj create failed");
-		return -ENOMEM;
+		status = QDF_STATUS_E_NOMEM;
+		goto free_priv;
 	}
 
 	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_HDD_ID_OBJ_MGR);
@@ -160,17 +163,20 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 		goto pdev_destroy;
 	}
 
+	status = target_if_alloc_pdev_tgt_info(pdev);
+	if (status != QDF_STATUS_SUCCESS) {
+		hdd_err("pdev tgt info alloc failed");
+		goto pdev_destroy;
+	}
+
 	hdd_ctx->hdd_pdev = pdev;
 	sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
-	wlan_pdev_obj_lock(pdev);
-	wlan_pdev_set_tgt_if_handle(pdev, psoc->tgt_if_handle);
-	wlan_pdev_obj_unlock(pdev);
-
 	return 0;
 
 pdev_destroy:
 	wlan_objmgr_pdev_obj_delete(pdev);
+free_priv:
 	qdf_mem_free(priv);
 
 	return qdf_status_to_os_return(status);
@@ -188,8 +194,9 @@ int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 	if (!pdev)
 		return -EINVAL;
 
-	hdd_deinit_pdev_os_priv(pdev);
+	target_if_free_pdev_tgt_info(pdev);
 
+	hdd_deinit_pdev_os_priv(pdev);
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 	wlan_pdev_reset_ospriv(pdev);
 	qdf_mem_free(osif_priv);

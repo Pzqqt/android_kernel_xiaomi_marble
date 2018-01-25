@@ -42,7 +42,6 @@
 #include "wni_api.h"
 #include "ani_global.h"
 #include "wmi_unified.h"
-#include "service_ready_event_handler.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
 #if defined(CONFIG_HL_SUPPORT)
@@ -64,7 +63,6 @@
 #endif /* REMOVE_PKT_LOG */
 
 #include "dbglog_host.h"
-#include "wmi_version_whitelist.h"
 #include "csr_api.h"
 #include "ol_fw.h"
 
@@ -95,6 +93,8 @@
 #include "hif_main.h"
 #include <target_if_spectral.h>
 #include <wlan_spectral_utils_api.h>
+#include "init_event_handler.h"
+#include "init_deinit_ucfg.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -2209,13 +2209,19 @@ static int wma_legacy_service_ready_event_handler(uint32_t event_id,
 						  uint8_t *event_data,
 						  uint32_t length)
 {
-	if (wmi_service_ready_event_id == event_id)
+	switch (event_id) {
+	case wmi_service_ready_event_id:
 		return wma_rx_service_ready_event(handle, event_data, length);
-	else if (wmi_service_ready_ext_event_id == event_id)
+	case wmi_service_ready_ext_event_id:
 		return wma_rx_service_ready_ext_event(handle, event_data,
 						      length);
-	else
+	case wmi_ready_event_id:
+		return wma_rx_ready_event(handle, event_data, length);
+	default:
+		WMA_LOGE("Legacy callback invoked with invalid event_id:%d",
+			 event_id);
 		QDF_BUG(0);
+	}
 
 	return 0;
 }
@@ -2752,49 +2758,6 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 	vdev->is_waiting_for_key = false;
 }
 
-/**
- * wma_rx_service_available_event() - service available event handler
- * @handle: pointer to wma handle
- * @cmd_param_info: Pointer to service available event TLVs
- * @length: length of the event buffer received
- *
- * Return: zero on success, error code on failure
- */
-static int wma_rx_service_available_event(void *handle, uint8_t *cmd_param_info,
-					uint32_t length)
-{
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	WMI_SERVICE_AVAILABLE_EVENTID_param_tlvs *param_buf;
-	wmi_service_available_event_fixed_param *ev;
-
-	param_buf = (WMI_SERVICE_AVAILABLE_EVENTID_param_tlvs *) cmd_param_info;
-	if (!(handle && param_buf)) {
-		WMA_LOGE("%s: Invalid arguments", __func__);
-		return -EINVAL;
-	}
-
-	ev = param_buf->fixed_param;
-	if (!ev) {
-		WMA_LOGE("%s: Invalid buffer", __func__);
-		return -EINVAL;
-	}
-
-	WMA_LOGD("WMA <-- WMI_SERVICE_AVAILABLE_EVENTID");
-
-	wma_handle->wmi_service_ext_offset = ev->wmi_service_segment_offset;
-	qdf_mem_copy(wma_handle->wmi_service_ext_bitmap,
-				&ev->wmi_service_segment_bitmap[0],
-				WMI_SERVICE_EXT_BM_SIZE32 * sizeof(A_UINT32));
-
-	if (wmi_save_ext_service_bitmap(wma_handle->wmi_handle,
-				cmd_param_info, NULL)
-			!= QDF_STATUS_SUCCESS)
-		qdf_print("Failed to save ext service bitmap\n");
-
-
-	return 0;
-}
-
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
 		    struct cds_config_info *cds_cfg,
@@ -2845,10 +2808,10 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	qdf_mem_zero(wma_handle, sizeof(t_wma_handle));
 
-	tgt_psoc_info = qdf_mem_malloc(sizeof(*tgt_psoc_info));
-	if (!tgt_psoc_info) {
-		WMA_LOGE("%s: failed to allocate mem for tgt info", __func__);
-		return QDF_STATUS_E_NOMEM;
+	if (target_if_alloc_psoc_tgt_info(psoc)) {
+		WMA_LOGE("%s target psoc info allocation failed", __func__);
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto err_free_wma_handle;
 	}
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
@@ -2877,8 +2840,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	qdf_status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_LEGACY_WMA_ID);
 	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("%s: PSOC get_ref fails", __func__);
-		qdf_mem_free(tgt_psoc_info);
-		return qdf_status;
+		goto err_wma_handle;
 	}
 	wma_handle->psoc = psoc;
 
@@ -2903,34 +2865,18 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	WMA_LOGA("WMA --> wmi_unified_attach - success");
 
 	/* store the wmi handle in tgt_if_handle */
-	tgt_psoc_info->wmi_handle = wmi_handle;
-	tgt_psoc_info->target_type = target_type;
-	wlan_psoc_obj_lock(psoc);
-	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
-	wlan_psoc_obj_unlock(psoc);
+	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
 
-	wmi_unified_register_event_handler(wmi_handle,
-					   wmi_service_available_event_id,
-					   wma_rx_service_available_event,
-					   WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(wmi_handle,
-					   wmi_service_ready_event_id,
-					   init_deinit_service_ready_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(wmi_handle,
-					   wmi_service_ready_ext_event_id,
-					   init_deinit_service_ext_ready_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
-	wmi_unified_register_event_handler(wmi_handle,
-					   wmi_ready_event_id,
-					   wma_rx_ready_event,
-					   WMA_RX_SERIALIZER_CTX);
 	/* Save the WMI & HTC handle */
+	target_psoc_set_wmi_hdl(tgt_psoc_info, wmi_handle);
 	wma_handle->wmi_handle = wmi_handle;
-	wma_handle->htc_handle = htc_handle;
+	target_psoc_set_htc_hdl(tgt_psoc_info, htc_handle);
 	wma_handle->cds_context = cds_context;
 	wma_handle->qdf_dev = qdf_dev;
 	wma_handle->max_scan = cds_cfg->max_scan;
+
+	/* Register Converged Event handlers */
+	init_deinit_register_tgt_psoc_ev_handlers(psoc);
 
 	/* Initialize max_no_of_peers for wma_get_number_of_peers_supported() */
 	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
@@ -3009,12 +2955,6 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_handle->new_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->saved_chan.num_channels = 0;
 	wma_handle->fw_timeout_crash = cds_cfg->fw_timeout_crash;
-
-	qdf_status = qdf_event_create(&wma_handle->wma_ready_event);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("%s: wma_ready_event initialization failed", __func__);
-		goto err_event_init;
-	}
 
 	qdf_status = qdf_mc_timer_init(&wma_handle->service_ready_ext_timer,
 					QDF_TIMER_TYPE_SW,
@@ -3339,7 +3279,7 @@ err_scn_context:
 	OS_FREE(wmi_handle);
 
 err_wma_handle:
-	qdf_mem_free(tgt_psoc_info);
+	target_if_free_psoc_tgt_info(psoc);
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
@@ -3353,7 +3293,7 @@ err_wma_handle:
 		qdf_wake_lock_destroy(&wma_handle->wow_auto_shutdown_wl);
 		qdf_wake_lock_destroy(&wma_handle->roam_ho_wl);
 	}
-
+err_free_wma_handle:
 	cds_free_context(QDF_MODULE_ID_WMA, wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
@@ -3369,9 +3309,9 @@ err_wma_handle:
 QDF_STATUS wma_pre_start(void)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	A_STATUS status = A_OK;
 	tp_wma_handle wma_handle;
 	struct scheduler_msg wma_msg = { 0 };
+	void *htc_handle;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3379,16 +3319,23 @@ QDF_STATUS wma_pre_start(void)
 
 	/* Validate the wma_handle */
 	if (NULL == wma_handle) {
-		WMA_LOGE("%s: invalid argument", __func__);
+		WMA_LOGE("%s: invalid wma handle", __func__);
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
-	/* Open endpoint for ctrl path - WMI <--> HTC */
-	status = wmi_unified_connect_htc_service(wma_handle->wmi_handle,
-						 wma_handle->htc_handle);
-	if (A_OK != status) {
-		WMA_LOGE("%s: wmi_unified_connect_htc_service", __func__);
 
+	htc_handle = ucfg_get_htc_hdl(wma_handle->psoc);
+	if (!htc_handle) {
+		WMA_LOGE("%s: invalid htc handle", __func__);
+		qdf_status = QDF_STATUS_E_INVAL;
+		goto end;
+	}
+
+	/* Open endpoint for ctrl path - WMI <--> HTC */
+	qdf_status = wmi_unified_connect_htc_service(wma_handle->wmi_handle,
+						     htc_handle);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		WMA_LOGE("%s: wmi_unified_connect_htc_service", __func__);
 		if (!cds_is_fw_down())
 			QDF_BUG(0);
 
@@ -4067,6 +4014,7 @@ QDF_STATUS wma_start(void)
 		qdf_status = QDF_STATUS_E_FAILURE;
 		goto end;
 	}
+
 	cmd_ops.wmi_spectral_configure_cmd_send =
 			wmi_unified_vdev_spectral_configure_cmd_send;
 	cmd_ops.wmi_spectral_enable_cmd_send =
@@ -4348,9 +4296,7 @@ static void wma_cleanup_dbs_phy_caps(t_wma_handle *wma_handle)
 QDF_STATUS wma_close(void)
 {
 	tp_wma_handle wma_handle;
-	uint32_t idx;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	struct target_psoc_info *tgt_psoc_info;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -4394,8 +4340,6 @@ QDF_STATUS wma_close(void)
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		WMA_LOGE("%s: dbglog_deinit failed", __func__);
 
-	/* close the qdf events */
-	qdf_event_destroy(&wma_handle->wma_ready_event);
 	qdf_status = qdf_mc_timer_destroy(&wma_handle->service_ready_ext_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE("%s: Failed to destroy service ready ext event timer",
@@ -4413,16 +4357,6 @@ QDF_STATUS wma_close(void)
 	qdf_runtime_lock_deinit(&wma_handle->wmi_cmd_rsp_runtime_lock);
 	qdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
 	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
-	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
-		qdf_mem_free_consistent(wma_handle->qdf_dev,
-					wma_handle->qdf_dev->dev,
-					wma_handle->mem_chunks[idx].len,
-					wma_handle->mem_chunks[idx].vaddr,
-					wma_handle->mem_chunks[idx].paddr,
-					qdf_get_dma_mem_context(
-					    (&(wma_handle->mem_chunks[idx])),
-					    memctx));
-	}
 
 	if (NULL != wma_handle->pGetRssiReq) {
 		qdf_mem_free(wma_handle->pGetRssiReq);
@@ -4437,18 +4371,14 @@ QDF_STATUS wma_close(void)
 		wma_handle->pdev = NULL;
 	}
 
-	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
-	if (tgt_psoc_info) {
-		qdf_mem_free(tgt_psoc_info);
-		wlan_psoc_set_tgt_if_handle(wma_handle->psoc, NULL);
-	}
-
 	pmo_unregister_pause_bitmap_notifier(wma_handle->psoc,
 		wma_vdev_update_pause_bitmap);
 	pmo_unregister_get_pause_bitmap(wma_handle->psoc,
 		wma_vdev_get_pause_bitmap);
 	pmo_unregister_is_device_in_low_pwr_mode(wma_handle->psoc,
 		wma_vdev_is_device_in_low_pwr_mode);
+
+	target_if_free_psoc_tgt_info(wma_handle->psoc);
 
 	wlan_objmgr_psoc_release_ref(wma_handle->psoc, WLAN_LEGACY_WMA_ID);
 	wma_handle->psoc = NULL;
@@ -4485,91 +4415,6 @@ static void wma_update_fw_config(tp_wma_handle wma_handle,
 				   wmi_service_bpf_offload))
 		tgt_cap->wlan_resource_config.num_wow_filters =
 					WMA_STA_WOW_DEFAULT_PTRN_MAX;
-}
-
-/**
- * wma_alloc_host_mem_chunk() - allocate host memory
- * @wma_handle: wma handle
- * @req_id: request id
- * @idx: index
- * @num_units: number of units
- * @unit_len: unit length
- *
- * allocate a chunk of memory at the index indicated and
- * if allocation fail allocate smallest size possiblr and
- * return number of units allocated.
- *
- * Return: number of units or 0 for error.
- */
-static uint32_t wma_alloc_host_mem_chunk(tp_wma_handle wma_handle,
-					 uint32_t req_id, uint32_t idx,
-					 uint32_t num_units, uint32_t unit_len)
-{
-	qdf_dma_addr_t paddr;
-
-	if (!num_units || !unit_len)
-		return 0;
-	wma_handle->mem_chunks[idx].vaddr = NULL;
-	/** reduce the requested allocation by half until allocation succeeds */
-	while (wma_handle->mem_chunks[idx].vaddr == NULL && num_units) {
-		wma_handle->mem_chunks[idx].vaddr =
-			qdf_mem_alloc_consistent(wma_handle->qdf_dev,
-						 wma_handle->qdf_dev->dev,
-						    num_units * unit_len,
-						    &paddr);
-		if (wma_handle->mem_chunks[idx].vaddr == NULL) {
-			num_units = (num_units >> 1);/* reduce length by half */
-		} else {
-			wma_handle->mem_chunks[idx].paddr = paddr;
-			wma_handle->mem_chunks[idx].len = num_units * unit_len;
-			wma_handle->mem_chunks[idx].req_id = req_id;
-		}
-	}
-	return num_units;
-}
-
-#define HOST_MEM_SIZE_UNIT 4
-/**
- * wma_alloc_host_mem() - allocate amount of memory requested by FW.
- * @wma_handle: wma handle
- * @req_id: request id
- * @num_units: number of units
- * @unit_len: unit length
- *
- * Return: none
- */
-static void wma_alloc_host_mem(tp_wma_handle wma_handle, uint32_t req_id,
-			       uint32_t num_units, uint32_t unit_len)
-{
-	uint32_t remaining_units, allocated_units, idx;
-
-	/* adjust the length to nearest multiple of unit size */
-	unit_len = (unit_len + (HOST_MEM_SIZE_UNIT - 1)) &
-		   (~(HOST_MEM_SIZE_UNIT - 1));
-	idx = wma_handle->num_mem_chunks;
-	remaining_units = num_units;
-	while (remaining_units) {
-		allocated_units = wma_alloc_host_mem_chunk(wma_handle, req_id,
-							   idx, remaining_units,
-							   unit_len);
-		if (allocated_units == 0) {
-			WMA_LOGE("FAILED TO ALLOCATED memory unit len %d units requested %d units allocated %d ",
-				 unit_len, num_units,
-				 (num_units - remaining_units));
-			wma_handle->num_mem_chunks = idx;
-			break;
-		}
-		remaining_units -= allocated_units;
-		++idx;
-		if (idx == MAX_MEM_CHUNKS) {
-			WMA_LOGE("RWACHED MAX CHUNK LIMIT for memory units %d unit len %d requested by FW, only allocated %d ",
-				 num_units, unit_len,
-				 (num_units - remaining_units));
-			wma_handle->num_mem_chunks = idx;
-			break;
-		}
-	}
-	wma_handle->num_mem_chunks = idx;
 }
 
 /**
@@ -5274,78 +5119,6 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 }
 
 /**
- * wma_setup_wmi_init_msg() - fill wmi init message buffer
- * @wma_handle: wma handle
- * @ev: ready event fixed params
- * @param_buf: redy event TLVs
- * @len: buffer length
- *
- * Return: wmi buffer or NULL for error
- */
-static int wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
-				wmi_service_ready_event_fixed_param *ev,
-				WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf)
-{
-	wlan_host_mem_req *ev_mem_reqs;
-	wmi_abi_version my_vers;
-	wmi_abi_version host_abi_vers;
-	int num_whitelist;
-	uint16_t idx;
-	uint32_t num_units;
-
-	ev_mem_reqs = param_buf->mem_reqs;
-
-	/* allocate memory requested by FW */
-	if (ev->num_mem_reqs > WMI_MAX_MEM_REQS) {
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	for (idx = 0; idx < ev->num_mem_reqs; ++idx) {
-		num_units = ev_mem_reqs[idx].num_units;
-		if (ev_mem_reqs[idx].num_unit_info & NUM_UNITS_IS_NUM_PEERS) {
-			/*
-			 * number of units to allocate is number
-			 * of peers, 1 extra for self peer on
-			 * target. this needs to be fied, host
-			 * and target can get out of sync
-			 */
-			num_units = wma_handle->wlan_resource_config.num_peers +
-									 1;
-		}
-		WMA_LOGD("idx %d req %d  num_units %d num_unit_info %d unit size %d actual units %d ",
-			idx, ev_mem_reqs[idx].req_id,
-			ev_mem_reqs[idx].num_units,
-			ev_mem_reqs[idx].num_unit_info,
-			ev_mem_reqs[idx].unit_size, num_units);
-		wma_alloc_host_mem(wma_handle, ev_mem_reqs[idx].req_id,
-				   num_units, ev_mem_reqs[idx].unit_size);
-	}
-
-	qdf_mem_copy(&wma_handle->target_abi_vers,
-		     &param_buf->fixed_param->fw_abi_vers,
-		     sizeof(wmi_abi_version));
-	num_whitelist = sizeof(version_whitelist) /
-			sizeof(wmi_whitelist_version_info);
-	my_vers.abi_version_0 = WMI_ABI_VERSION_0;
-	my_vers.abi_version_1 = WMI_ABI_VERSION_1;
-	my_vers.abi_version_ns_0 = WMI_ABI_VERSION_NS_0;
-	my_vers.abi_version_ns_1 = WMI_ABI_VERSION_NS_1;
-	my_vers.abi_version_ns_2 = WMI_ABI_VERSION_NS_2;
-	my_vers.abi_version_ns_3 = WMI_ABI_VERSION_NS_3;
-
-	wmi_cmp_and_set_abi_version(num_whitelist, version_whitelist,
-				    &my_vers,
-				    &param_buf->fixed_param->fw_abi_vers,
-				    &host_abi_vers);
-
-	qdf_mem_copy(&wma_handle->final_abi_vers, &host_abi_vers,
-		     sizeof(wmi_abi_version));
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_dump_dbs_hw_mode() - Print the DBS HW modes
  * @wma_handle: WMA handle
  *
@@ -5445,8 +5218,15 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	uint32_t *ev_wlan_dbs_hw_mode_list;
 	QDF_STATUS ret;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct target_psoc_info *tgt_hdl;
 
 	WMA_LOGD("%s: Enter", __func__);
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) cmd_param_info;
 	if (!(handle && param_buf)) {
@@ -5710,49 +5490,18 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	status = wma_setup_wmi_init_msg(wma_handle, ev, param_buf);
-	if (status != EOK) {
-		WMA_LOGE("Failed to setup for wma init command");
-		return -EINVAL;
-	}
-
-	/* A host, which supports WMI_SERVICE_READY_EXT_EVENTID, would need to
-	 * check the WMI_SERVICE_READY message for an "extension" flag, and if
-	 * this flag is set, then hold off on sending the WMI_INIT message until
-	 * WMI_SERVICE_READY_EXT_EVENTID is received.
-	 */
-	if (!wmi_service_enabled(wma_handle->wmi_handle,
-				wmi_service_ext_msg)) {
-		/* No service extended message support.
-		 * Send INIT command immediately
-		 */
-		struct wmi_init_cmd_param init_param = {0};
-		init_param.res_cfg = &wma_handle->wlan_resource_config;
-		init_param.num_mem_chunks = wma_handle->num_mem_chunks;
-		init_param.mem_chunks = wma_handle->mem_chunks;
-		init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
-		WMA_LOGA("WMA --> WMI_INIT_CMDID");
-		status = wmi_unified_init_cmd_send(wma_handle->wmi_handle,
-			&init_param);
-		if (status != EOK) {
-			WMA_LOGE("Failed to send WMI_INIT_CMDID command");
-			return -EINVAL;
-		}
-	} else {
-		ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
-				WMA_SERVICE_READY_EXT_TIMEOUT);
-		if (!QDF_IS_STATUS_SUCCESS(ret))
-			WMA_LOGE("Failed to start the service ready ext timer");
-
-		WMA_LOGD("%s: WMA waiting for WMI_SERVICE_READY_EXT_EVENTID",
-				__func__);
-	}
+	ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
+				 WMA_SERVICE_READY_EXT_TIMEOUT);
+	if (!QDF_IS_STATUS_SUCCESS(ret))
+		WMA_LOGE("Failed to start the service ready ext timer");
 
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 				   wmi_service_8ss_tx_bfee))
 		wma_handle->tx_bfee_8ss_enabled = true;
 	else
 		wma_handle->tx_bfee_8ss_enabled = false;
+
+	target_psoc_set_num_radios(tgt_hdl, 1);
 
 	return 0;
 }
@@ -6447,14 +6196,19 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
 	wmi_service_ready_ext_event_fixed_param *ev;
-	int status;
 	QDF_STATUS ret;
-	struct wmi_init_cmd_param init_param = {0};
+	struct target_psoc_info *tgt_hdl;
 
 	WMA_LOGD("%s: Enter", __func__);
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		return -EINVAL;
+	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
 		return -EINVAL;
 	}
 
@@ -6491,21 +6245,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	WMA_LOGD("WMA --> WMI_INIT_CMDID");
 
-	init_param.res_cfg = &wma_handle->wlan_resource_config;
-	init_param.num_mem_chunks = wma_handle->num_mem_chunks;
-	init_param.mem_chunks = wma_handle->mem_chunks;
-	init_param.hw_mode_id = WMI_HOST_HW_MODE_MAX;
-	status = wmi_unified_init_cmd_send(wma_handle->wmi_handle, &init_param);
-	if (status != EOK)
-		/* In success case, WMI layer will free after getting copy
-		 * engine TX complete interrupt
-		 */
-		WMA_LOGE("Failed to send WMI_INIT_CMDID command");
-
 	wma_init_scan_fw_mode_config(wma_handle,
 				ev->default_conc_scan_config_bits,
 				ev->default_fw_config_bits);
 	wma_handle->target_fw_vers_ext = ev->fw_build_vers_ext;
+
+	target_psoc_set_num_radios(tgt_hdl, 1);
 	return 0;
 }
 
@@ -6546,39 +6291,6 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	wma_handle->wmi_ready = true;
 	wma_handle->wlan_init_status = ev->status;
 
-	/*
-	 * We need to check the WMI versions and make sure both
-	 * host and fw are compatible.
-	 */
-	if (!wmi_versions_are_compatible(&wma_handle->final_abi_vers,
-					 &ev->fw_abi_vers)) {
-		/*
-		 * Error: Our host version and the given firmware version
-		 * are incompatible.
-		 */
-		WMA_LOGE("%s: Error: Incompatible WMI version.", __func__);
-		WMA_LOGE("%s: Host: %d,%d,0x%x 0x%x 0x%x 0x%x, FW: %d,%d,0x%x 0x%x 0x%x 0x%x",
-			 __func__,
-			 WMI_VER_GET_MAJOR(wma_handle->final_abi_vers.
-					   abi_version_0),
-			 WMI_VER_GET_MINOR(wma_handle->final_abi_vers.
-					   abi_version_0),
-			 wma_handle->final_abi_vers.abi_version_ns_0,
-			 wma_handle->final_abi_vers.abi_version_ns_1,
-			 wma_handle->final_abi_vers.abi_version_ns_2,
-			 wma_handle->final_abi_vers.abi_version_ns_3,
-			 WMI_VER_GET_MAJOR(ev->fw_abi_vers.abi_version_0),
-			 WMI_VER_GET_MINOR(ev->fw_abi_vers.abi_version_0),
-			 ev->fw_abi_vers.abi_version_ns_0,
-			 ev->fw_abi_vers.abi_version_ns_1,
-			 ev->fw_abi_vers.abi_version_ns_2,
-			 ev->fw_abi_vers.abi_version_ns_3);
-		if (wma_handle->wlan_init_status == WLAN_INIT_STATUS_SUCCESS) {
-			/* Failed this connection to FW */
-			wma_handle->wlan_init_status =
-				WLAN_INIT_STATUS_GEN_FAILED;
-		}
-	}
 	qdf_mem_copy(&wma_handle->final_abi_vers, &ev->fw_abi_vers,
 		     sizeof(wmi_abi_version));
 	qdf_mem_copy(&wma_handle->target_abi_vers, &ev->fw_abi_vers,
@@ -6589,9 +6301,8 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, wma_handle->hwaddr);
 
 	wma_update_hdd_cfg(wma_handle);
-
-	qdf_event_set(&wma_handle->wma_ready_event);
-
+	target_pdev_set_wmi_handle(wma_handle->pdev->tgt_if_handle,
+				   wma_handle->wmi_handle);
 	WMA_LOGD("Exit");
 
 	return 0;
@@ -6653,17 +6364,29 @@ QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	QDF_STATUS qdf_status;
+	struct target_psoc_info *tgt_hdl;
+	int timeleft;
 
-	/* wait until WMI_READY_EVENTID received from FW */
-	qdf_status = qdf_wait_for_event_completion(
-					&wma_handle->wma_ready_event,
-					WMA_READY_EVENTID_TIMEOUT);
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
-	if (QDF_STATUS_SUCCESS != qdf_status) {
+	timeleft = qdf_wait_queue_timeout(
+			tgt_hdl->info.event_queue,
+			((tgt_hdl->info.wmi_service_ready) &&
+			(tgt_hdl->info.wmi_ready)),
+			WMA_READY_EVENTID_TIMEOUT);
+	if (!timeleft) {
 		WMA_LOGE("%s: Timeout waiting for ready event from FW",
 			 __func__);
 		qdf_status = QDF_STATUS_E_FAILURE;
+	} else {
+		WMA_LOGI("%s Ready event received from FW", __func__);
+		qdf_status = QDF_STATUS_SUCCESS;
 	}
+
 	return qdf_status;
 }
 

@@ -619,14 +619,14 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 	if (TARGET_TYPE_QCA6290 == hdd_ctx->target_type)
 		gp_cds_context->dp_soc = cdp_soc_attach(LITHIUM_DP,
-			gp_cds_context->pHIFContext, scn,
+			gp_cds_context->pHIFContext, psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
-			&dp_ol_if_ops, psoc);
+			&dp_ol_if_ops);
 	else
 		gp_cds_context->dp_soc = cdp_soc_attach(MOB_DRV_LEGACY_DP,
-			gp_cds_context->pHIFContext, scn,
+			gp_cds_context->pHIFContext, psoc,
 			gp_cds_context->htc_ctx, gp_cds_context->qdf_ctx,
-			&dp_ol_if_ops, psoc);
+			&dp_ol_if_ops);
 
 	if (!gp_cds_context->dp_soc) {
 		status = QDF_STATUS_E_FAILURE;

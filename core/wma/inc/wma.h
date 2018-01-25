@@ -1228,11 +1228,9 @@ struct hw_mode_idx_to_mac_cap_idx {
 /**
  * struct t_wma_handle - wma context
  * @wmi_handle: wmi handle
- * @htc_handle: htc handle
  * @cds_context: cds handle
  * @mac_context: mac context
  * @psoc: psoc context
- * @wma_ready_event: wma rx ready event
  * @wma_resume_event: wma resume event
  * @target_suspend: target suspend event
  * @recovery_event: wma FW recovery event
@@ -1369,12 +1367,10 @@ struct hw_mode_idx_to_mac_cap_idx {
  */
 typedef struct {
 	void *wmi_handle;
-	void *htc_handle;
 	void *cds_context;
 	void *mac_context;
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
-	qdf_event_t wma_ready_event;
 	qdf_event_t wma_resume_event;
 	qdf_event_t target_suspend;
 	qdf_event_t runtime_suspend;

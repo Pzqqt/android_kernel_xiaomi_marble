@@ -81,6 +81,7 @@
 #include "wma_he.h"
 #include "wlan_roam_debug.h"
 #include "wlan_ocb_ucfg_api.h"
+#include "init_deinit_ucfg.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -4923,6 +4924,13 @@ static void wma_delete_sta_req_sta_mode(tp_wma_handle wma,
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 {
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
+	void *htc_handle;
+
+	htc_handle = ucfg_get_htc_hdl(wma->psoc);
+	if (!htc_handle) {
+		WMA_LOGE(":%sHTC handle is NULL:%d", __func__, __LINE__);
+		return;
+	}
 
 	WMA_LOGD("%s: add_sta->sessionId = %d.", __func__,
 		 add_sta->smesessionId);
@@ -4945,7 +4953,7 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 	/* IBSS should share the same code as AP mode */
 	case BSS_OPERATIONAL_MODE_IBSS:
 	case BSS_OPERATIONAL_MODE_AP:
-		htc_vote_link_up(wma->htc_handle);
+		htc_vote_link_up(htc_handle);
 		wma_add_sta_req_ap_mode(wma, add_sta);
 		break;
 	case BSS_OPERATIONAL_MODE_NDI:
@@ -4975,6 +4983,13 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	uint8_t oper_mode = BSS_OPERATIONAL_MODE_STA;
 	uint8_t smesession_id = del_sta->smesessionId;
 	bool rsp_requested = del_sta->respReqd;
+	void *htc_handle;
+
+	htc_handle = ucfg_get_htc_hdl(wma->psoc);
+	if (!htc_handle) {
+		WMA_LOGE(":%sHTC handle is NULL:%d", __func__, __LINE__);
+		return;
+	}
 
 	if (wma_is_vdev_in_ap_mode(wma, smesession_id))
 		oper_mode = BSS_OPERATIONAL_MODE_AP;
@@ -5005,7 +5020,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	case BSS_OPERATIONAL_MODE_IBSS: /* IBSS shares AP code */
 	case BSS_OPERATIONAL_MODE_AP:
-		htc_vote_link_down(wma->htc_handle);
+		htc_vote_link_down(htc_handle);
 		wma_delete_sta_req_ap_mode(wma, del_sta);
 		/* free the memory here only if sync feature is not enabled */
 		if (!rsp_requested &&

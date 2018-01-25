@@ -734,11 +734,11 @@ QDF_STATUS wma_tx_packet(void *pWMA,
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @psoc: Psoc pointer
- * @wma_tgt_cfg_cb: tgt config callback fun
+ * @pTgtUpdCB: tgt config update callback fun
  * @cds_cfg:  mac parameters
  * @target_type: Target type
  *
- * Return: 0 on success, errno on failure
+ * Return: QDF_STATUS
  */
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		    wma_tgt_cfg_cb pTgtUpdCB, struct cds_config_info *cds_cfg,
