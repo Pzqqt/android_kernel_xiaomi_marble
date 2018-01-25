@@ -30,6 +30,7 @@
 #include "wlan_objmgr_vdev_obj.h"
 #include "wlan_objmgr_peer_obj.h"
 #include "qdf_nbuf.h"
+#include "wlan_lmac_if_api.h"
 
 /**
  * wlan_mgmt_txrx_psoc_obj_create_notification() - called from objmgr when psoc
@@ -766,5 +767,48 @@ QDF_STATUS wlan_mgmt_txrx_psoc_close(struct wlan_objmgr_psoc *psoc)
 			}
 		}
 	}
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wlan_mgmt_txrx_pdev_drain(struct wlan_objmgr_pdev *pdev,
+				mgmt_frame_fill_peer_cb mgmt_fill_peer_cb,
+				void *status)
+{
+	struct mgmt_txrx_priv_pdev_context *mgmt_txrx_pdev_ctx;
+	struct mgmt_txrx_desc_elem_t *mgmt_desc;
+	struct wlan_objmgr_peer *peer;
+	uint32_t pool_size;
+	int i;
+
+	if (!pdev) {
+		mgmt_txrx_err("pdev context is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+	mgmt_txrx_pdev_ctx = (struct mgmt_txrx_priv_pdev_context *)
+		wlan_objmgr_pdev_get_comp_private_obj(pdev,
+			WLAN_UMAC_COMP_MGMT_TXRX);
+	if (!mgmt_txrx_pdev_ctx) {
+		mgmt_txrx_err("mgmt txrx context is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pool_size = mgmt_txrx_pdev_ctx->mgmt_desc_pool.free_list.max_size;
+	if (!pool_size) {
+		mgmt_txrx_err("pool size is 0");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < pool_size; i++) {
+		if (mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[i].in_use) {
+			mgmt_desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[i];
+			peer = mgmt_txrx_get_peer(pdev, mgmt_desc->desc_id);
+			QDF_ASSERT(peer != NULL);
+			if (mgmt_fill_peer_cb)
+				mgmt_fill_peer_cb(peer, mgmt_desc->nbuf);
+			mgmt_txrx_tx_completion_handler(pdev,
+				mgmt_desc->desc_id, 0, status);
+		}
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
