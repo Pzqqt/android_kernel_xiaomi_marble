@@ -4847,7 +4847,7 @@ static int wma_sar_event_handler(void *handle, uint8_t *evt_buf, uint32_t len)
 {
 	tp_wma_handle wma_handle;
 	wmi_unified_t wmi_handle;
-	struct sar_limit_event event;
+	struct sar_limit_event *event;
 	wma_sar_cb callback;
 	QDF_STATUS status;
 
@@ -4865,17 +4865,26 @@ static int wma_sar_event_handler(void *handle, uint8_t *evt_buf, uint32_t len)
 		return QDF_STATUS_E_INVAL;
 	}
 
+	event = qdf_mem_malloc(sizeof(*event));
+	if (!event) {
+		WMA_LOGE(FL("failed to malloc sar_limit_event"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
 	status = wmi_unified_extract_sar_limit_event(wmi_handle,
-						     evt_buf, &event);
+						     evt_buf, event);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE(FL("Event extract failure: %d"), status);
+		qdf_mem_free(event);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	callback = sar_callback;
 	sar_callback = NULL;
 	if (callback)
-		callback(sar_context, &event);
+		callback(sar_context, event);
+
+	qdf_mem_free(event);
 
 	return 0;
 }
