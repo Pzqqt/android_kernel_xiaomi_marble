@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -97,9 +97,6 @@ void lim_set_active_edca_params(tpAniSirGlobal pMac,
 #define HT_BYTE5_FILTER_MASK    0xFD
 #define DS_PARAM_CHANNEL_MASK   0x0
 #define VHTOP_CHWIDTH_MASK      0xFC
-
-tSirRetStatus lim_send_beacon_filter_info(tpAniSirGlobal pMac,
-					  tpPESession psessionEntry);
 
 #ifdef WLAN_FEATURE_11W
 tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,

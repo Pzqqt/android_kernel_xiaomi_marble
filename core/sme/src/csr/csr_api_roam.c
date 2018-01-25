@@ -12201,21 +12201,6 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		 * after PTK and before GTK.
 		 */
 		if (qdf_is_macaddr_broadcast(&pRsp->peer_macaddr)) {
-			tpSirSetActiveModeSetBncFilterReq pMsg;
-
-			pMsg = qdf_mem_malloc(
-				    sizeof(tSirSetActiveModeSetBncFilterReq));
-			if (NULL == pMsg) {
-				sme_err("Malloc failed");
-				return;
-			}
-			pMsg->messageType = eWNI_SME_SET_BCN_FILTER_REQ;
-			pMsg->length = sizeof(tSirSetActiveModeSetBncFilterReq);
-			pMsg->seesionId = sessionId;
-			qdf_copy_macaddr(&pMsg->bssid,
-				&session->connectedProfile.bssid);
-
-			status = umac_send_mb_message_to_mac(pMsg);
 			/*
 			 * OBSS SCAN Indication will be sent to Firmware
 			 * to start OBSS Scan

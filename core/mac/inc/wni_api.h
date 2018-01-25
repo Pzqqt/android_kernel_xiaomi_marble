@@ -146,7 +146,6 @@ enum eWniMsgTypes {
 	/* SIR_LIM_MSG_TYPES_BEGIN+0xB0 = 12B0 (which means max of 176 messages and */
 	/* eWNI_SME_TDLS_DEL_STA_RSP = 175. */
 	/* Should fix above issue to enable TDLS_INTERNAL */
-	eWNI_SME_SET_BCN_FILTER_REQ,
 	eWNI_SME_RESET_AP_CAPS_CHANGED,
 #ifdef WLAN_FEATURE_11W
 	eWNI_SME_UNPROT_MGMT_FRM_IND,

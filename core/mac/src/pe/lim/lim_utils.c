@@ -416,8 +416,6 @@ char *lim_msg_str(uint32_t msgType)
 		return "eWNI_PMC_EXIT_BMPS_RSP";
 	case eWNI_PMC_EXIT_BMPS_IND:
 		return "eWNI_PMC_EXIT_BMPS_IND";
-	case eWNI_SME_SET_BCN_FILTER_REQ:
-		return "eWNI_SME_SET_BCN_FILTER_REQ";
 #ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
 		return "eWNI_SME_GET_TSM_STATS_REQ";

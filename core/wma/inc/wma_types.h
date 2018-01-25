@@ -216,7 +216,6 @@
 
 /* Messages to support transmit_halt and transmit_resume */
 #define WMA_TRANSMISSION_CONTROL_IND            SIR_HAL_TRANSMISSION_CONTROL_IND
-#define WMA_BEACON_FILTER_IND          SIR_HAL_BEACON_FILTER_IND
 
 #define WMA_ENABLE_UAPSD_REQ            SIR_HAL_ENABLE_UAPSD_REQ
 #define WMA_DISABLE_UAPSD_REQ           SIR_HAL_DISABLE_UAPSD_REQ

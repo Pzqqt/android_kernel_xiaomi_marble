@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -44,31 +44,6 @@
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "lim_utils.h"
-
-/* When beacon filtering is enabled, firmware will
- * analyze the selected beacons received during BMPS,
- * and monitor any changes in the IEs as listed below.
- * The format of the table is:
- *    - EID
- *    - Check for IE presence
- *    - Byte offset
- *    - Byte value
- *    - Bit Mask
- *    - Byte refrence
- */
-static tBeaconFilterIe beacon_filter_table[] = {
-	{SIR_MAC_DS_PARAM_SET_EID, 0, {0, 0, DS_PARAM_CHANNEL_MASK, 0} },
-	{SIR_MAC_ERP_INFO_EID, 0, {0, 0, ERP_FILTER_MASK, 0} },
-	{SIR_MAC_EDCA_PARAM_SET_EID, 0, {0, 0, EDCA_FILTER_MASK, 0} },
-	{SIR_MAC_QOS_CAPABILITY_EID, 0, {0, 0, QOS_FILTER_MASK, 0} },
-	{SIR_MAC_CHNL_SWITCH_ANN_EID, 1, {0, 0, 0, 0} },
-	{SIR_MAC_HT_INFO_EID, 0, {0, 0, HT_BYTE0_FILTER_MASK, 0} },
-	{SIR_MAC_HT_INFO_EID, 0, {2, 0, HT_BYTE2_FILTER_MASK, 0} },
-	{SIR_MAC_HT_INFO_EID, 0, {5, 0, HT_BYTE5_FILTER_MASK, 0} },
-	{SIR_MAC_PWR_CONSTRAINT_EID, 0, {0, 0, 0, 0} },
-	{SIR_MAC_VHT_OPMODE_EID, 0, {0, 0, 0, 0} },
-	{SIR_MAC_VHT_OPERATION_EID, 0, {0, 0, VHTOP_CHWIDTH_MASK, 0} }
-};
 
 /**
  * lim_send_cf_params()
@@ -549,75 +524,6 @@ extern tSirRetStatus lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 		qdf_mem_free(pLinkStateParams);
 		pe_err("Posting link state %d failed, reason = %x", state,
 			retCode);
-	}
-	return retCode;
-}
-
-/** ---------------------------------------------------------
-   \fn      lim_send_beacon_filter_info
-   \brief   LIM sends beacon filtering info to WMA
-   \param   tpAniSirGlobal  pMac
-   \return  None
-   -----------------------------------------------------------*/
-tSirRetStatus lim_send_beacon_filter_info(tpAniSirGlobal pMac,
-					  tpPESession psessionEntry)
-{
-	tpBeaconFilterMsg pBeaconFilterMsg = NULL;
-	tSirRetStatus retCode = eSIR_SUCCESS;
-	struct scheduler_msg msgQ = {0};
-	uint8_t *ptr;
-	uint32_t i;
-	uint32_t msgSize;
-	tpBeaconFilterIe pIe;
-
-	if (psessionEntry == NULL) {
-		pe_err("Fail to find the right session");
-		retCode = eSIR_FAILURE;
-		return retCode;
-	}
-	msgSize = sizeof(tBeaconFilterMsg) + sizeof(beacon_filter_table);
-	pBeaconFilterMsg = qdf_mem_malloc(msgSize);
-	if (NULL == pBeaconFilterMsg) {
-		pe_err("Fail to allocate memory for beaconFiilterMsg");
-		retCode = eSIR_MEM_ALLOC_FAILED;
-		return retCode;
-	}
-	/* Fill in capability Info and mask */
-	/* Don't send this message if no active Infra session is found. */
-	pBeaconFilterMsg->capabilityInfo = psessionEntry->limCurrentBssCaps;
-	pBeaconFilterMsg->capabilityMask = CAPABILITY_FILTER_MASK;
-	pBeaconFilterMsg->beaconInterval =
-		(uint16_t) psessionEntry->beaconParams.beaconInterval;
-	/* Fill in number of IEs in beacon_filter_table */
-	pBeaconFilterMsg->ieNum =
-		(uint16_t) (sizeof(beacon_filter_table) / sizeof(tBeaconFilterIe));
-	/* Fill the BSSIDX */
-	pBeaconFilterMsg->bssIdx = psessionEntry->bssIdx;
-
-	/* Fill message with info contained in the beacon_filter_table */
-	ptr = (uint8_t *) pBeaconFilterMsg + sizeof(tBeaconFilterMsg);
-	for (i = 0; i < (pBeaconFilterMsg->ieNum); i++) {
-		pIe = (tpBeaconFilterIe) ptr;
-		pIe->elementId = beacon_filter_table[i].elementId;
-		pIe->checkIePresence = beacon_filter_table[i].checkIePresence;
-		pIe->byte.offset = beacon_filter_table[i].byte.offset;
-		pIe->byte.value = beacon_filter_table[i].byte.value;
-		pIe->byte.bitMask = beacon_filter_table[i].byte.bitMask;
-		pIe->byte.ref = beacon_filter_table[i].byte.ref;
-		ptr += sizeof(tBeaconFilterIe);
-	}
-	msgQ.type = WMA_BEACON_FILTER_IND;
-	msgQ.reserved = 0;
-	msgQ.bodyptr = pBeaconFilterMsg;
-	msgQ.bodyval = 0;
-	pe_debug("Sending WMA_BEACON_FILTER_IND");
-	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
-	retCode = wma_post_ctrl_msg(pMac, &msgQ);
-	if (eSIR_SUCCESS != retCode) {
-		qdf_mem_free(pBeaconFilterMsg);
-		pe_err("Posting WMA_BEACON_FILTER_IND failed, reason=%X",
-			retCode);
-		return retCode;
 	}
 	return retCode;
 }

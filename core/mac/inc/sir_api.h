@@ -3656,13 +3656,6 @@ typedef struct sSirTdlsEventnotify {
 } tSirTdlsEventnotify;
 #endif /* FEATURE_WLAN_TDLS */
 
-typedef struct sSirActiveModeSetBcnFilterReq {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t seesionId;
-	struct qdf_mac_addr bssid;
-} tSirSetActiveModeSetBncFilterReq, *tpSirSetActiveModeSetBncFilterReq;
-
 /* Reset AP Caps Changed */
 typedef struct sSirResetAPCapsChange {
 	uint16_t messageType;

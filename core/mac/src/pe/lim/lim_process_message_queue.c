@@ -1345,8 +1345,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	tSirTdlsInd *tdls_ind = NULL;
 	tpDphHashNode sta_ds = NULL;
 #endif
-	tSirSetActiveModeSetBncFilterReq *bcn_filter_req = NULL;
-
 	if (ANI_DRIVER_TYPE(mac_ctx) == QDF_DRIVER_TYPE_MFG) {
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
@@ -1817,19 +1815,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
-	case eWNI_SME_SET_BCN_FILTER_REQ:
-		bcn_filter_req =
-			(tSirSetActiveModeSetBncFilterReq *) msg->bodyptr;
-		session_entry = pe_find_session_by_bssid(mac_ctx,
-			bcn_filter_req->bssid.bytes, &session_id);
-		if ((session_entry != NULL) &&
-			(lim_send_beacon_filter_info(mac_ctx, session_entry) !=
-			 eSIR_SUCCESS))
-			pe_err("Failied to send Beacon Filter Info");
-		qdf_mem_free((void *)(msg->bodyptr));
-		msg->bodyptr = NULL;
-		break;
-
 	case WMA_RX_CHN_STATUS_EVENT:
 		lim_process_rx_channel_status_event(mac_ctx, msg->bodyptr);
 		break;

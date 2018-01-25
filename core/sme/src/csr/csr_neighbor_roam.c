@@ -1091,7 +1091,6 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	struct csr_roam_session *session = &pMac->roam.roamSession[session_id];
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	struct csr_roam_info roamInfo;
-	tpSirSetActiveModeSetBncFilterReq msg;
 #endif
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
@@ -1127,18 +1126,6 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		session->roam_synch_data->authStatus)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"LFR3:csr_neighbor_roam_indicate_connect");
-		msg = qdf_mem_malloc(sizeof(tSirSetActiveModeSetBncFilterReq));
-		if (msg == NULL) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"LFR3:Mem Alloc failed for beacon Filter Req");
-			return QDF_STATUS_E_NOMEM;
-		}
-		msg->messageType = eWNI_SME_SET_BCN_FILTER_REQ;
-		msg->length = sizeof(tSirSetActiveModeSetBncFilterReq);
-		msg->seesionId = session_id;
-		qdf_copy_macaddr(&msg->bssid,
-			&session->connectedProfile.bssid);
-		status = umac_send_mb_message_to_mac(msg);
 		qdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
 		roamInfo.roamSynchInProgress =
