@@ -35,6 +35,7 @@
 #include "codecs/msm-cdc-pinctrl.h"
 #include "codecs/wcd9360/wcd9360.h"
 #include "codecs/wsa881x.h"
+#include "codecs/wcd-mbhc-v2.h"
 
 #define DRV_NAME "sdm855-asoc-snd"
 
@@ -56,6 +57,8 @@
 #define SAMPLING_RATE_192KHZ    192000
 #define SAMPLING_RATE_352P8KHZ  352800
 #define SAMPLING_RATE_384KHZ    384000
+
+#define WCD9XXX_MBHC_DEF_RLOADS     5
 
 #define WSA8810_NAME_1 "wsa881x.20170211"
 #define WSA8810_NAME_2 "wsa881x.20170212"
@@ -156,6 +159,7 @@ struct msm_pinctrl_info {
 struct msm_asoc_mach_data {
 	struct snd_info_entry *codec_root;
 	struct msm_pinctrl_info pinctrl_info;
+	struct device_node *us_euro_gpio_p; /* used by pinctrl API */
 };
 
 struct msm_asoc_wcd93xx_codec {
@@ -507,6 +511,32 @@ static struct msm_asoc_wcd93xx_codec msm_codec_fn;
 static int msm_snd_enable_codec_ext_clk(struct snd_soc_codec *codec,
 					int enable, bool dapm);
 static int msm_wsa881x_init(struct snd_soc_component *component);
+
+/*
+ * Need to report LINEIN
+ * if R/L channel impedance is larger than 5K ohm
+ */
+static struct wcd_mbhc_config wcd_mbhc_cfg = {
+	.read_fw_bin = false,
+	.calibration = NULL,
+	.detect_extn_cable = true,
+	.mono_stero_detection = false,
+	.swap_gnd_mic = NULL,
+	.hs_ext_micbias = true,
+	.key_code[0] = KEY_MEDIA,
+	.key_code[1] = KEY_VOICECOMMAND,
+	.key_code[2] = KEY_VOLUMEUP,
+	.key_code[3] = KEY_VOLUMEDOWN,
+	.key_code[4] = 0,
+	.key_code[5] = 0,
+	.key_code[6] = 0,
+	.key_code[7] = 0,
+	.linein_th = 5000,
+	.moisture_en = true,
+	.mbhc_micbias = MIC_BIAS_2,
+	.anc_micbias = MIC_BIAS_2,
+	.enable_anc_mic_detect = false,
+};
 
 static struct snd_soc_dapm_route wcd_audio_paths[] = {
 	{"MIC BIAS1", NULL, "MCLK TX"},
@@ -3416,6 +3446,49 @@ done:
 	return rc;
 }
 
+static bool msm_usbc_swap_gnd_mic(struct snd_soc_codec *codec, bool active)
+{
+	return false;
+}
+
+static bool msm_swap_gnd_mic(struct snd_soc_codec *codec, bool active)
+{
+	int value = 0;
+	bool ret = false;
+	struct snd_soc_card *card;
+	struct msm_asoc_mach_data *pdata;
+
+	if (!codec) {
+		pr_err("%s codec is NULL\n", __func__);
+		return false;
+	}
+	card = codec->component.card;
+	pdata = snd_soc_card_get_drvdata(card);
+
+	if (!pdata)
+		return false;
+
+	if (wcd_mbhc_cfg.enable_usbc_analog)
+		return msm_usbc_swap_gnd_mic(codec, active);
+
+	/* if usbc is not defined, swap using us_euro_gpio_p */
+	if (pdata->us_euro_gpio_p) {
+		value = msm_cdc_pinctrl_get_state(
+				pdata->us_euro_gpio_p);
+		if (value)
+			msm_cdc_pinctrl_select_sleep_state(
+					pdata->us_euro_gpio_p);
+		else
+			msm_cdc_pinctrl_select_active_state(
+					pdata->us_euro_gpio_p);
+		dev_dbg(codec->dev, "%s: swap select switch %d to %d\n",
+			__func__, value, !value);
+		ret = true;
+	}
+
+	return ret;
+}
+
 static int msm_afe_set_config(struct snd_soc_codec *codec)
 {
 	int ret = 0;
@@ -5954,28 +6027,8 @@ static struct snd_soc_dai_link msm_pahu_snd_card_dai_links[
 			 ARRAY_SIZE(msm_mi2s_be_dai_links) +
 			 ARRAY_SIZE(msm_auxpcm_be_dai_links)];
 
-static int msm_snd_card_pahu_late_probe(struct snd_soc_card *card)
-{
-	const char *be_dl_name = LPASS_BE_SLIMBUS_0_RX;
-	struct snd_soc_pcm_runtime *rtd;
-	int ret = 0;
-
-	rtd = snd_soc_get_pcm_runtime(card, be_dl_name);
-	if (!rtd) {
-		dev_err(card->dev,
-			"%s: snd_soc_get_pcm_runtime for %s failed!\n",
-			__func__, be_dl_name);
-		ret = -EINVAL;
-		goto err;
-	}
-
-err:
-	return ret;
-}
-
 struct snd_soc_card snd_soc_card_pahu_msm = {
 	.name		= "sdm855-pahu-snd-card",
-	.late_probe	= msm_snd_card_pahu_late_probe,
 };
 
 static int msm_populate_dai_link_component_of_node(
@@ -6566,6 +6619,7 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 {
 	struct snd_soc_card *card;
 	struct msm_asoc_mach_data *pdata;
+	const char *mbhc_audio_jack_type = NULL;
 	int ret;
 
 	if (!pdev->dev.of_node) {
@@ -6624,6 +6678,43 @@ static int msm_asoc_machine_probe(struct platform_device *pdev)
 	dev_info(&pdev->dev, "Sound card %s registered\n", card->name);
 	spdev = pdev;
 
+	ret = of_property_read_string(pdev->dev.of_node,
+		"qcom,mbhc-audio-jack-type", &mbhc_audio_jack_type);
+	if (ret) {
+		dev_dbg(&pdev->dev, "Looking up %s property in node %s failed\n",
+			"qcom,mbhc-audio-jack-type",
+			pdev->dev.of_node->full_name);
+		dev_dbg(&pdev->dev, "Jack type properties set to default\n");
+	} else {
+		if (!strcmp(mbhc_audio_jack_type, "4-pole-jack")) {
+			wcd_mbhc_cfg.enable_anc_mic_detect = false;
+			dev_dbg(&pdev->dev, "This hardware has 4 pole jack");
+		} else if (!strcmp(mbhc_audio_jack_type, "5-pole-jack")) {
+			wcd_mbhc_cfg.enable_anc_mic_detect = true;
+			dev_dbg(&pdev->dev, "This hardware has 5 pole jack");
+		} else if (!strcmp(mbhc_audio_jack_type, "6-pole-jack")) {
+			wcd_mbhc_cfg.enable_anc_mic_detect = true;
+			dev_dbg(&pdev->dev, "This hardware has 6 pole jack");
+		} else {
+			wcd_mbhc_cfg.enable_anc_mic_detect = false;
+			dev_dbg(&pdev->dev, "Unknown value, set to default\n");
+		}
+	}
+	/*
+	 * Parse US-Euro gpio info from DT. Report no error if us-euro
+	 * entry is not found in DT file as some targets do not support
+	 * US-Euro detection
+	 */
+	pdata->us_euro_gpio_p = of_parse_phandle(pdev->dev.of_node,
+					"qcom,us-euro-gpios", 0);
+	if (!pdata->us_euro_gpio_p) {
+		dev_dbg(&pdev->dev, "property %s not detected in node %s",
+			"qcom,us-euro-gpios", pdev->dev.of_node->full_name);
+	} else {
+		dev_dbg(&pdev->dev, "%s detected\n",
+			"qcom,us-euro-gpios");
+		wcd_mbhc_cfg.swap_gnd_mic = msm_swap_gnd_mic;
+	}
 	/* Parse pinctrl info from devicetree */
 	ret = msm_get_pinctrl(pdev);
 	if (!ret) {
