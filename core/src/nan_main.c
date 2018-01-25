@@ -272,7 +272,7 @@ static QDF_STATUS nan_handle_confirm(
 		 * This peer was created at ndp_indication but
 		 * confirm failed, so it needs to be deleted
 		 */
-		nan_err("NDP confirm with reject and no active ndp sessions. deleting peer: "QDF_MAC_ADDRESS_STR" on vdev_id: %d",
+		nan_err("NDP confirm with reject and no active ndp sessions. deleting peer: "QDF_MAC_ADDR_STR" on vdev_id: %d",
 			QDF_MAC_ADDR_ARRAY(confirm->peer_ndi_mac_addr.bytes),
 			vdev_id);
 		psoc_nan_obj->cb_obj.delete_peers_by_addr(vdev_id,
@@ -332,7 +332,7 @@ static QDF_STATUS nan_handle_ndp_ind(
 	}
 
 	nan_debug("role: %d, vdev: %d, csid: %d, peer_mac_addr "
-		QDF_MAC_ADDRESS_STR,
+		QDF_MAC_ADDR_STR,
 		ndp_ind->role, vdev_id, ndp_ind->ncs_sk_type,
 		QDF_MAC_ADDR_ARRAY(ndp_ind->peer_mac_addr.bytes));
 
