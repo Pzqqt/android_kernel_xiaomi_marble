@@ -896,9 +896,10 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 	wma_print_he_cap(he_cap);
 }
 
-void wma_he_update_tgt_services(tp_wma_handle wma, struct wma_tgt_services *cfg)
+void wma_he_update_tgt_services(struct wmi_unified *wmi_handle,
+				struct wma_tgt_services *cfg)
 {
-	if (wmi_service_enabled(wma->wmi_handle, wmi_service_11ax)) {
+	if (wmi_service_enabled(wmi_handle, wmi_service_11ax)) {
 		cfg->en_11ax = true;
 		wma_set_fw_wlan_feat_caps(DOT11AX);
 		WMA_LOGI(FL("11ax is enabled"));

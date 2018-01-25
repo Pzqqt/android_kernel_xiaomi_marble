@@ -4457,28 +4457,28 @@ static void wma_set_tx_partition_base(uint32_t value)
 
 /**
  * wma_update_target_services() - update target services from wma handle
- * @wh: wma handle
+ * @wmi_handle: Unified wmi handle
  * @cfg: target services
  *
  * Return: none
  */
-static inline void wma_update_target_services(tp_wma_handle wh,
+static inline void wma_update_target_services(struct wmi_unified *wmi_handle,
 					      struct wma_tgt_services *cfg)
 {
 	/* STA power save */
-	cfg->sta_power_save = wmi_service_enabled(wh->wmi_handle,
+	cfg->sta_power_save = wmi_service_enabled(wmi_handle,
 						     wmi_service_sta_pwrsave);
 
 	/* Enable UAPSD */
-	cfg->uapsd = wmi_service_enabled(wh->wmi_handle,
+	cfg->uapsd = wmi_service_enabled(wmi_handle,
 					    wmi_service_ap_uapsd);
 
 	/* Update AP DFS service */
-	cfg->ap_dfs = wmi_service_enabled(wh->wmi_handle,
+	cfg->ap_dfs = wmi_service_enabled(wmi_handle,
 					     wmi_service_ap_dfs);
 
 	/* Enable 11AC */
-	cfg->en_11ac = wmi_service_enabled(wh->wmi_handle,
+	cfg->en_11ac = wmi_service_enabled(wmi_handle,
 					      wmi_service_11ac);
 	if (cfg->en_11ac)
 		g_fw_wlan_feat_caps |= (1 << DOT11AC);
@@ -4490,86 +4490,82 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	g_fw_wlan_feat_caps |= (1 << WOW);
 
 	/* ARP offload */
-	cfg->arp_offload = wmi_service_enabled(wh->wmi_handle,
+	cfg->arp_offload = wmi_service_enabled(wmi_handle,
 						  wmi_service_arpns_offload);
 
 	/* Adaptive early-rx */
-	cfg->early_rx = wmi_service_enabled(wh->wmi_handle,
+	cfg->early_rx = wmi_service_enabled(wmi_handle,
 					       wmi_service_early_rx);
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
-	if (wmi_service_enabled(wh->wmi_handle, wmi_service_nlo))
+	if (wmi_service_enabled(wmi_handle, wmi_service_nlo))
 		cfg->pno_offload = true;
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
 #ifdef FEATURE_WLAN_EXTSCAN
-	if (wmi_service_enabled(wh->wmi_handle, wmi_service_extscan))
+	if (wmi_service_enabled(wmi_handle, wmi_service_extscan))
 		g_fw_wlan_feat_caps |= (1 << EXTENDED_SCAN);
 #endif /* FEATURE_WLAN_EXTSCAN */
-	cfg->lte_coex_ant_share = wmi_service_enabled(wh->wmi_handle,
+	cfg->lte_coex_ant_share = wmi_service_enabled(wmi_handle,
 					wmi_service_lte_ant_share_support);
 #ifdef FEATURE_WLAN_TDLS
 	/* Enable TDLS */
-	if (wmi_service_enabled(wh->wmi_handle, wmi_service_tdls)) {
+	if (wmi_service_enabled(wmi_handle, wmi_service_tdls)) {
 		cfg->en_tdls = 1;
 		g_fw_wlan_feat_caps |= (1 << TDLS);
 	}
 	/* Enable advanced TDLS features */
-	if (wmi_service_enabled(wh->wmi_handle,
-				   wmi_service_tdls_offchan)) {
+	if (wmi_service_enabled(wmi_handle, wmi_service_tdls_offchan)) {
 		cfg->en_tdls_offchan = 1;
 		g_fw_wlan_feat_caps |= (1 << TDLS_OFF_CHANNEL);
 	}
 
 	cfg->en_tdls_uapsd_buf_sta =
-		wmi_service_enabled(wh->wmi_handle,
+		wmi_service_enabled(wmi_handle,
 				       wmi_service_tdls_uapsd_buffer_sta);
 	cfg->en_tdls_uapsd_sleep_sta =
-		wmi_service_enabled(wh->wmi_handle,
+		wmi_service_enabled(wmi_handle,
 				       wmi_service_tdls_uapsd_sleep_sta);
 #endif /* FEATURE_WLAN_TDLS */
 	if (wmi_service_enabled
-		    (wh->wmi_handle, wmi_service_beacon_offload))
+		    (wmi_handle, wmi_service_beacon_offload))
 		cfg->beacon_offload = true;
 	if (wmi_service_enabled
-		    (wh->wmi_handle, wmi_service_sta_pmf_offload))
+		    (wmi_handle, wmi_service_sta_pmf_offload))
 		cfg->pmf_offload = true;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	/* Enable Roam Offload */
-	cfg->en_roam_offload = wmi_service_enabled(wh->wmi_handle,
+	cfg->en_roam_offload = wmi_service_enabled(wmi_handle,
 					      wmi_service_roam_ho_offload);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 #ifdef WLAN_FEATURE_NAN
-	if (wmi_service_enabled(wh->wmi_handle, wmi_service_nan))
+	if (wmi_service_enabled(wmi_handle, wmi_service_nan))
 		g_fw_wlan_feat_caps |= (1 << NAN);
 #endif /* WLAN_FEATURE_NAN */
 
-	if (wmi_service_enabled(wh->wmi_handle, wmi_service_rtt))
+	if (wmi_service_enabled(wmi_handle, wmi_service_rtt))
 		g_fw_wlan_feat_caps |= (1 << RTT);
 
-	if (wmi_service_enabled(wh->wmi_handle,
+	if (wmi_service_enabled(wmi_handle,
 			wmi_service_tx_msdu_id_new_partition_support)) {
 		wma_set_tx_partition_base(HTT_TX_IPA_NEW_MSDU_ID_SPACE_BEGIN);
 	} else {
 		wma_set_tx_partition_base(HTT_TX_IPA_MSDU_ID_SPACE_BEGIN);
 	}
 
-	wma_he_update_tgt_services(wh, cfg);
+	wma_he_update_tgt_services(wmi_handle, cfg);
 
 	cfg->get_peer_info_enabled =
-		wmi_service_enabled(wh->wmi_handle,
+		wmi_service_enabled(wmi_handle,
 				       wmi_service_peer_stats_info);
-	if (wmi_service_enabled(wh->wmi_handle,
-			wmi_service_fils_support))
+	if (wmi_service_enabled(wmi_handle, wmi_service_fils_support))
 		cfg->is_fils_roaming_supported = true;
 
-	if (wmi_service_enabled(wh->wmi_handle,
-				       wmi_service_mawc_support))
+	if (wmi_service_enabled(wmi_handle, wmi_service_mawc_support))
 		cfg->is_fw_mawc_capable = true;
 
-	if (WMI_SERVICE_EXT_IS_ENABLED(wh->wmi_service_bitmap,
-			wh->wmi_service_ext_bitmap,
-			WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT))
+	if (wmi_service_enabled(wmi_handle,
+				wmi_service_11k_neighbour_report_support))
 		cfg->is_11k_offload_supported = true;
 }
 
@@ -5091,8 +5087,9 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	struct wma_tgt_cfg tgt_cfg;
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	target_resource_config *wlan_res_cfg;
-	struct target_psoc_info *tgt_hdl;
 	struct wlan_psoc_host_service_ext_param *service_ext_param;
+	struct target_psoc_info *tgt_hdl;
+	struct wmi_unified *wmi_handle;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -5105,6 +5102,11 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
 	service_ext_param =
 			target_psoc_get_service_ext_param(tgt_hdl);
+	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+	if (!wmi_handle) {
+		WMA_LOGE("%s: wmi handle is NULL", __func__);
+		return;
+	}
 
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 
@@ -5117,7 +5119,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	qdf_mem_copy(tgt_cfg.hw_macaddr.bytes, wma_handle->hwaddr,
 		     ATH_MAC_LEN);
 
-	wma_update_target_services(wma_handle, &tgt_cfg.services);
+	wma_update_target_services(wmi_handle, &tgt_cfg.services);
 	wma_update_target_ht_cap(tgt_hdl, &tgt_cfg.ht_cap);
 	wma_update_target_vht_cap(tgt_hdl, &tgt_cfg.vht_cap);
 	/*

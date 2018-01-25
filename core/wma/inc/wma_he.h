@@ -25,7 +25,7 @@
 
 #ifdef WLAN_FEATURE_11AX
 /**
- * @wma_print_he_cap() - Print HE capabilities
+ * wma_print_he_cap() - Print HE capabilities
  * @he_cap: pointer to HE Capability
  *
  * Received HE capabilities are converted into dot11f structure.
@@ -69,7 +69,7 @@ void wma_print_he_phy_cap(uint32_t *phy_cap);
 void wma_print_he_mac_cap(uint32_t mac_cap);
 
 /**
- * @wma_print_he_op() - Print HE Operation
+ * wma_print_he_op() - Print HE Operation
  * @he_cap: pointer to HE Operation
  *
  * Print HE operation stored as dot11f structure
@@ -94,7 +94,7 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
 
 /*
  * wma_he_update_tgt_services() - update tgt cfg to indicate 11ax support
- * @wma: pointer to WMA handle
+ * @wmi_handle: pointer to WMI handle
  * @cfg: pointer to WMA target services
  *
  * Based on WMI SERVICES information, enable 11ax support and set DOT11AX bit
@@ -102,7 +102,7 @@ void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
  *
  * Return: None
  */
-void wma_he_update_tgt_services(tp_wma_handle wma,
+void wma_he_update_tgt_services(struct wmi_unified *wmi_handle,
 				struct wma_tgt_services *cfg);
 
 /**
@@ -257,7 +257,7 @@ static inline void wma_update_target_ext_he_cap(struct
 {
 }
 
-static inline void wma_he_update_tgt_services(tp_wma_handle wma,
+static inline void wma_he_update_tgt_services(struct wmi_unified *wmi_handle,
 					      struct wma_tgt_services *cfg)
 {
 	cfg->en_11ax = false;
