@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -183,7 +183,7 @@ tgt_tdls_event_handler(struct wlan_objmgr_psoc *psoc,
 		tdls_err("psoc: 0x%pK, info: 0x%pK", psoc, info);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
-	tdls_debug("vdev: %d, type: %d, reason: %d" QDF_MAC_ADDRESS_STR,
+	tdls_debug("vdev: %d, type: %d, reason: %d" QDF_MAC_ADDR_STR,
 		   info->vdev_id, info->message_type, info->peer_reason,
 		   QDF_MAC_ADDR_ARRAY(info->peermac.bytes));
 	notify = qdf_mem_malloc(sizeof(*notify));

@@ -1058,7 +1058,7 @@ static int __tdls_get_all_peers_from_list(
 			if (buf_len < 32 + 1)
 				break;
 			len = qdf_scnprintf(buf, buf_len,
-				QDF_MAC_ADDRESS_STR "%3d%4s%3s%5d\n",
+				QDF_MAC_ADDR_STR "%3d%4s%3s%5d\n",
 				QDF_MAC_ADDR_ARRAY(curr_peer->peer_mac.bytes),
 				curr_peer->sta_id,
 				(curr_peer->tdls_support ==
@@ -1413,7 +1413,7 @@ QDF_STATUS tdls_scan_callback(struct tdls_soc_priv_obj *tdls_soc)
 	curr_peer = tdls_is_progress(tdls_vdev, NULL, 0);
 	if (NULL != curr_peer) {
 		if (tdls_soc->scan_reject_count++ >= TDLS_SCAN_REJECT_MAX) {
-			tdls_notice(QDF_MAC_ADDRESS_STR
+			tdls_notice(QDF_MAC_ADDR_STR
 				    ". scan rejected %d. force it to idle",
 				    QDF_MAC_ADDR_ARRAY(
 						curr_peer->peer_mac.bytes),
