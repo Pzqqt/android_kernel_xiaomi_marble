@@ -1066,7 +1066,8 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 				pSapContext =
 				    mac_ctx->sap.sapCtxList[intf].pSapContext;
 				profile = &pSapContext->csr_roamProfile;
-				if (!wlan_reg_is_dfs_ch(mac_ctx->pdev,
+				if (!wlan_reg_is_passive_or_disable_ch(
+						mac_ctx->pdev,
 						profile->operationChannel))
 					continue;
 				QDF_TRACE(QDF_MODULE_ID_SAP,
