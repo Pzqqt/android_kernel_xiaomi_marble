@@ -1248,7 +1248,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @wmi_ready: wmi status flag
  * @wlan_init_status: wlan init status
  * @qdf_dev: qdf device
- * @phy_capability: PHY Capability from Target
  * @max_frag_entry: Max number of Fragment entry
  * @wmi_service_bitmap: wmi services bitmap received from Target
  * @frameTransRequired: frame transmission required
@@ -1390,7 +1389,6 @@ typedef struct {
 	bool wmi_ready;
 	uint32_t wlan_init_status;
 	qdf_device_t qdf_dev;
-	uint32_t phy_capability;
 	uint32_t max_frag_entry;
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
 	uint32_t wmi_service_ext_offset;
