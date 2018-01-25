@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -24,85 +24,102 @@
 #include "target_if_spectral.h"
 
 /**
- * @brief Initialize Spectral Simulation functionality
- * @details
- *  Setup data structures to be used for serving out data corresponding to
- *  various bandwidths and configurations.
+ * target_if_spectral_sim_attach() - Initialize Spectral Simulation
+ * functionality
+ * @spectral - pointer to spectral internal data structure
  *
- * @param spectral - ath_spectral structure
- * @return Integer status value. 0:Success, -1:Failure
+ * Setup data structures to be used for serving out data corresponding to
+ * various bandwidths and configurations.
+ *
+ * Return: Integer status value. 0:Success, -1:Failure
  */
 int target_if_spectral_sim_attach(struct target_if_spectral *spectral);
 
 /**
- * @brief De-initialize Spectral Simulation functionality
- * @details
- *  Free up data structures used for serving out data corresponding to various
- *  bandwidths and configurations.
+ * target_if_spectral_sim_detach() - De-initialize Spectral Simulation
+ * functionality
+ * @spectral - pointer to spectral internal data structure
  *
- * @param spectral - ath_spectral structure
+ * Free up data structures used for serving out data corresponding to various
+ * bandwidths and configurations.
+ *
+ * Return: None
  */
 void target_if_spectral_sim_detach(struct target_if_spectral *spectral);
 
 /**
- * @brief Check if Spectral (simulated) is active
+ * target_if_spectral_sops_sim_is_active() - Check if Spectral(simulated) is
+ * active
+ * @arg - pointer to spectral internal data structure
  *
- * @param arg - pointer to ath_spectral structure
- * @return Integer status value. 0: Not active, 1: Active
+ * Check if Spectral (simulated) is active
+ *
+ * Return: Integer status value. 0: Not active, 1: Active
  */
-u_int32_t tif_spectral_sim_is_spectral_active(void *arg);
+uint32_t target_if_spectral_sops_sim_is_active(void *arg);
 
 /**
- * @brief Check if Spectral (simulated) is enabled
+ * target_if_spectral_sops_sim_is_enabled() - Check if Spectral(simulated) is
+ * enabled
+ * @arg - pointer to spectral internal data structure
  *
- * @param arg - pointer to ath_spectral structure
- * @return Integer status value. 0: Not enabled, 1: Enabled
+ * Check if Spectral(simulated) is enabled
+ *
+ * Return: Integer status value. 0: Not enabled, 1: Enabled
  */
-u_int32_t tif_spectral_sim_is_spectral_enabled(void *arg);
+uint32_t target_if_spectral_sops_sim_is_enabled(void *arg);
 
 /**
- * @brief Start Spectral simulation
+ * target_if_spectral_sops_sim_start_scan() - Start Spectral simulation
+ * @arg - pointer to spectral internal data structure
  *
- * @param arg - pointer to ath_spectral structure
- * @return Integer status value. 0: Failure, 1: Success
+ * Start Spectral simulation
+ *
+ * Return: Integer status value. 0: Failure, 1: Success
  */
-u_int32_t tif_spectral_sim_start_spectral_scan(void *arg);
+uint32_t target_if_spectral_sops_sim_start_scan(void *arg);
 
 /**
- * @brief Stop Spectral simulation
+ * target_if_spectral_sops_sim_stop_scan() - Stop Spectral simulation
+ * @arg - pointer to spectral internal data structure
  *
- * @param arg - pointer to ath_spectral structure
- * @return Integer status value. 0: Failure, 1: Success
+ * Stop Spectral simulation
+ *
+ * Return: Integer status value. 0: Failure, 1: Success
  */
-u_int32_t tif_spectral_sim_stop_spectral_scan(void *arg);
+uint32_t target_if_spectral_sops_sim_stop_scan(void *arg);
 
 /**
- * @brief Configure Spectral parameters into simulation
- * @details
+ * target_if_spectral_sops_sim_configure_params() - Configure Spectral
+ * parameters into simulation
+ * arg - pointer to ath_spectral structure
+ * params - pointer to struct spectral_config structure bearing Spectral
+ *          configuration
+ *
  *  Internally, this function actually searches if a record set with the desired
  *  configuration has been loaded. If so, it points to the record set for
  *  later usage when the simulation is started. If not, it returns an error.
  *
- * @param arg - pointer to ath_spectral structure
- * @param params - pointer to struct spectral_config structure bearing Spectral
- *                 configuration
- * @return Integer status value. 0: Failure, 1: Success
+ * Return: Integer status value. 0: Failure, 1: Success
  */
-u_int32_t tif_spectral_sim_configure_params(
+uint32_t target_if_spectral_sops_sim_configure_params(
 	void *arg,
-	 struct spectral_config *params);
+	struct spectral_config *params);
 
 /**
- * @brief Get Spectral parameters configured into simulation
+ * target_if_spectral_sops_sim_get_params() - Get Spectral parameters configured
+ * into simulation
+ * arg - pointer to ath_spectral structure
+ * params - pointer to struct spectral_config structure which should be
+ *          populated with Spectral configuration
  *
- * @param arg - pointer to ath_spectral structure
- * @param params - pointer to struct spectral_config structure which should be
- *                 populated with Spectral configuration
- * @return Integer status value. 0: Failure, 1: Success
+ * Get Spectral parameters configured into simulation
+ *
+ * Return: Integer status value. 0: Failure, 1: Success
  */
-u_int32_t tif_spectral_sim_get_params(
+uint32_t target_if_spectral_sops_sim_get_params(
 	void *arg,
-	 struct spectral_config *params);
+	struct spectral_config *params);
 
-#endif /* QCA_SUPPORT_SPECTRAL_SIMULATION */
-#endif /* _SPECTRAL_SIM_H_ */
+#endif				/* QCA_SUPPORT_SPECTRAL_SIMULATION */
+#endif				/* _SPECTRAL_SIM_H_ */

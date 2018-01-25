@@ -1410,13 +1410,13 @@ target_if_init_spectral_simulation_ops(struct target_if_spectral_ops *p_sops)
 	 * use of record and replay of samples would concern higher
 	 * level sample processing rather than lower level delivery.
 	 */
-	p_sops->is_spectral_enabled = tif_spectral_sim_is_spectral_enabled;
-	p_sops->is_spectral_active = tif_spectral_sim_is_spectral_active;
-	p_sops->start_spectral_scan = tif_spectral_sim_start_spectral_scan;
-	p_sops->stop_spectral_scan = tif_spectral_sim_stop_spectral_scan;
+	p_sops->is_spectral_enabled = target_if_spectral_sops_sim_is_enabled;
+	p_sops->is_spectral_active = target_if_spectral_sops_sim_is_active;
+	p_sops->start_spectral_scan = target_if_spectral_sops_sim_start_scan;
+	p_sops->stop_spectral_scan = target_if_spectral_sops_sim_stop_scan;
 	p_sops->configure_spectral =
-		tif_spectral_sim_configure_params;
-	p_sops->get_spectral_config = tif_spectral_sim_get_params;
+		target_if_spectral_sops_sim_configure_params;
+	p_sops->get_spectral_config = target_if_spectral_sops_sim_get_params;
 }
 
 #else
