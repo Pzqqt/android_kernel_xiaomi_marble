@@ -82,6 +82,7 @@
 #include "wlan_roam_debug.h"
 #include "wlan_ocb_ucfg_api.h"
 #include "init_deinit_ucfg.h"
+#include <target_if.h>
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -983,19 +984,33 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	QDF_STATUS status;
 	int err;
 	wmi_channel_width chanwidth;
-
+	target_resource_config *wlan_res_cfg;
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
+#endif
 
+	if (!psoc) {
+		WMA_LOGE("%s: psoc is NULL", __func__);
+		return -EINVAL;
+	}
+
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		policy_mgr_set_do_hw_mode_change_flag(
-			wma->psoc, false);
+			psoc, false);
 		return -EINVAL;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
 	WMA_LOGD("%s: Enter", __func__);
+
+	wlan_res_cfg = ucfg_get_tgt_res_cfg(psoc);
+	if (!wlan_res_cfg) {
+		WMA_LOGE("%s: Wlan resource config is NULL", __func__);
+		return -EINVAL;
+	}
 
 	param_buf = (WMI_VDEV_START_RESP_EVENTID_param_tlvs *) cmd_param_info;
 	if (!param_buf) {
@@ -1028,7 +1043,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			resp_event->cfgd_rx_streams;
 		wma->interfaces[resp_event->vdev_id].chain_mask =
 			resp_event->chain_mask;
-		if (wma->wlan_resource_config.use_pdev_id) {
+		if (wlan_res_cfg->use_pdev_id) {
 			if (resp_event->pdev_id == WMI_PDEV_ID_SOC) {
 				WMA_LOGE("%s: soc level id received for mac id",
 					__func__);
@@ -1437,18 +1452,30 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	void *peer = NULL;
 	struct peer_create_params param = {0};
 	uint8_t *mac_addr_raw;
-	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	void *dp_soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct wlan_objmgr_psoc *psoc = wma->psoc;
+	target_resource_config *wlan_res_cfg;
 
+	if (!psoc) {
+		WMA_LOGE("%s: psoc is NULL", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	wlan_res_cfg = ucfg_get_tgt_res_cfg(psoc);
+	if (!wlan_res_cfg) {
+		WMA_LOGE("%s: psoc target res cfg is null", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
 
 	if (++wma->interfaces[vdev_id].peer_count >
-	    wma->wlan_resource_config.num_peers) {
+	    wlan_res_cfg->num_peers) {
 		WMA_LOGE("%s, the peer count exceeds the limit %d", __func__,
 			 wma->interfaces[vdev_id].peer_count - 1);
 		goto err;
 	}
 
-	if (!soc) {
-		WMA_LOGE("%s:SOC context is NULL", __func__);
+	if (!dp_soc) {
+		WMA_LOGE("%s:DP SOC context is NULL", __func__);
 		goto err;
 	}
 
@@ -1465,7 +1492,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	 * where the HTT peer map event is received before the peer object
 	 * is created in the data path
 	 */
-	peer = cdp_peer_create(soc, vdev, peer_addr);
+	peer = cdp_peer_create(dp_soc, vdev, peer_addr);
 	if (!peer) {
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		goto err;
@@ -1483,7 +1510,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 	if (wmi_unified_peer_create_send(wma->wmi_handle,
 					 &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s : Unable to create peer in Target", __func__);
-		cdp_peer_delete(soc, peer,
+		cdp_peer_delete(dp_soc, peer,
 				1 << CDP_PEER_DO_NOT_START_UNMAP_TIMER);
 		goto err;
 	}
@@ -1494,12 +1521,12 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, struct cdp_pdev *pdev,
 
 	wlan_roam_debug_log(vdev_id, DEBUG_PEER_CREATE_SEND,
 			    DEBUG_INVALID_PEER_ID, peer_addr, peer, 0, 0);
-	cdp_peer_setup(soc, vdev, peer);
+	cdp_peer_setup(dp_soc, vdev, peer);
 
 	WMA_LOGD("%s: Initialized peer with peer_addr %pM vdev_id %d",
 		__func__, peer_addr, vdev_id);
 
-	mac_addr_raw = cdp_get_vdev_mac_addr(soc, vdev);
+	mac_addr_raw = cdp_get_vdev_mac_addr(dp_soc, vdev);
 	if (mac_addr_raw == NULL) {
 		WMA_LOGE("%s: peer mac addr is NULL", __func__);
 		return QDF_STATUS_E_FAULT;

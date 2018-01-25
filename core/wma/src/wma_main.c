@@ -224,92 +224,100 @@ static uint32_t wma_get_number_of_tids_supported(uint8_t no_of_peers_supported)
 }
 #endif
 
+#ifdef PERE_IP_HDR_ALIGNMENT_WAR
+static void wma_reset_rx_decap_mode(target_resource_config *tgt_cfg)
+{
+	/*
+	 * To make the IP header begins at dword aligned address,
+	 * we make the decapsulation mode as Native Wifi.
+	 */
+	tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_NWIFI;
+}
+#else
+static void wma_reset_rx_decap_mode(target_resource_config *tgt_cfg)
+{
+}
+
+#endif
 /**
  * wma_set_default_tgt_config() - set default tgt config
  * @wma_handle: wma handle
+ * @tgt_cfg: Resource config given to target
  *
  * Return: none
  */
-static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
+static void wma_set_default_tgt_config(tp_wma_handle wma_handle,
+				       target_resource_config *tgt_cfg)
 {
 	uint8_t no_of_peers_supported;
-	target_resource_config tgt_cfg;
 
-	qdf_mem_zero(&tgt_cfg, sizeof(tgt_cfg));
-	tgt_cfg.num_vdevs = CFG_TGT_NUM_VDEV;
-	tgt_cfg.num_peers = CFG_TGT_NUM_PEERS + CFG_TGT_NUM_VDEV + 2;
-	tgt_cfg.num_offload_peers = CFG_TGT_NUM_OFFLOAD_PEERS;
-	tgt_cfg.num_offload_reorder_buffs = CFG_TGT_NUM_OFFLOAD_REORDER_BUFFS;
-	tgt_cfg.num_peer_keys = CFG_TGT_NUM_PEER_KEYS;
-	tgt_cfg.num_tids = CFG_TGT_NUM_TIDS;
-	tgt_cfg.ast_skid_limit = CFG_TGT_AST_SKID_LIMIT;
-	tgt_cfg.tx_chain_mask = CFG_TGT_DEFAULT_TX_CHAIN_MASK;
-	tgt_cfg.rx_chain_mask = CFG_TGT_DEFAULT_RX_CHAIN_MASK;
-	tgt_cfg.rx_timeout_pri[0] = CFG_TGT_RX_TIMEOUT_LO_PRI;
-	tgt_cfg.rx_timeout_pri[1] = CFG_TGT_RX_TIMEOUT_LO_PRI;
-	tgt_cfg.rx_timeout_pri[2] = CFG_TGT_RX_TIMEOUT_LO_PRI;
-	tgt_cfg.rx_timeout_pri[3] = CFG_TGT_RX_TIMEOUT_HI_PRI;
-	tgt_cfg.rx_decap_mode = CFG_TGT_RX_DECAP_MODE;
-	tgt_cfg.scan_max_pending_req = CFG_TGT_DEFAULT_SCAN_MAX_REQS;
-	tgt_cfg.bmiss_offload_max_vdev = CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV;
-	tgt_cfg.roam_offload_max_vdev = CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV;
-	tgt_cfg.roam_offload_max_ap_profiles =
+	qdf_mem_zero(tgt_cfg, sizeof(target_resource_config));
+	tgt_cfg->num_vdevs = CFG_TGT_NUM_VDEV;
+	tgt_cfg->num_peers = CFG_TGT_NUM_PEERS + CFG_TGT_NUM_VDEV + 2;
+	tgt_cfg->num_offload_peers = CFG_TGT_NUM_OFFLOAD_PEERS;
+	tgt_cfg->num_offload_reorder_buffs = CFG_TGT_NUM_OFFLOAD_REORDER_BUFFS;
+	tgt_cfg->num_peer_keys = CFG_TGT_NUM_PEER_KEYS;
+	tgt_cfg->num_tids = CFG_TGT_NUM_TIDS;
+	tgt_cfg->ast_skid_limit = CFG_TGT_AST_SKID_LIMIT;
+	tgt_cfg->tx_chain_mask = CFG_TGT_DEFAULT_TX_CHAIN_MASK;
+	tgt_cfg->rx_chain_mask = CFG_TGT_DEFAULT_RX_CHAIN_MASK;
+	tgt_cfg->rx_timeout_pri[0] = CFG_TGT_RX_TIMEOUT_LO_PRI;
+	tgt_cfg->rx_timeout_pri[1] = CFG_TGT_RX_TIMEOUT_LO_PRI;
+	tgt_cfg->rx_timeout_pri[2] = CFG_TGT_RX_TIMEOUT_LO_PRI;
+	tgt_cfg->rx_timeout_pri[3] = CFG_TGT_RX_TIMEOUT_HI_PRI;
+	tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE;
+	tgt_cfg->scan_max_pending_req = CFG_TGT_DEFAULT_SCAN_MAX_REQS;
+	tgt_cfg->bmiss_offload_max_vdev =
+			CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV;
+	tgt_cfg->roam_offload_max_vdev = CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV;
+	tgt_cfg->roam_offload_max_ap_profiles =
 		CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_PROFILES;
-	tgt_cfg.num_mcast_groups = CFG_TGT_DEFAULT_NUM_MCAST_GROUPS;
-	tgt_cfg.num_mcast_table_elems = CFG_TGT_DEFAULT_NUM_MCAST_TABLE_ELEMS;
-	tgt_cfg.mcast2ucast_mode = CFG_TGT_DEFAULT_MCAST2UCAST_MODE;
-	tgt_cfg.tx_dbg_log_size = CFG_TGT_DEFAULT_TX_DBG_LOG_SIZE;
-	tgt_cfg.num_wds_entries = CFG_TGT_WDS_ENTRIES;
-	tgt_cfg.dma_burst_size = CFG_TGT_DEFAULT_DMA_BURST_SIZE;
-	tgt_cfg.mac_aggr_delim = CFG_TGT_DEFAULT_MAC_AGGR_DELIM;
-	tgt_cfg.rx_skip_defrag_timeout_dup_detection_check =
+	tgt_cfg->num_mcast_groups = CFG_TGT_DEFAULT_NUM_MCAST_GROUPS;
+	tgt_cfg->num_mcast_table_elems = CFG_TGT_DEFAULT_NUM_MCAST_TABLE_ELEMS;
+	tgt_cfg->mcast2ucast_mode = CFG_TGT_DEFAULT_MCAST2UCAST_MODE;
+	tgt_cfg->tx_dbg_log_size = CFG_TGT_DEFAULT_TX_DBG_LOG_SIZE;
+	tgt_cfg->num_wds_entries = CFG_TGT_WDS_ENTRIES;
+	tgt_cfg->dma_burst_size = CFG_TGT_DEFAULT_DMA_BURST_SIZE;
+	tgt_cfg->mac_aggr_delim = CFG_TGT_DEFAULT_MAC_AGGR_DELIM;
+	tgt_cfg->rx_skip_defrag_timeout_dup_detection_check =
 		CFG_TGT_DEFAULT_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK,
-	tgt_cfg.vow_config = CFG_TGT_DEFAULT_VOW_CONFIG;
-	tgt_cfg.gtk_offload_max_vdev = CFG_TGT_DEFAULT_GTK_OFFLOAD_MAX_VDEV;
-	tgt_cfg.num_msdu_desc = CFG_TGT_NUM_MSDU_DESC;
-	tgt_cfg.max_frag_entries = CFG_TGT_MAX_FRAG_TABLE_ENTRIES;
-	tgt_cfg.num_tdls_vdevs = CFG_TGT_NUM_TDLS_VDEVS;
-	tgt_cfg.num_tdls_conn_table_entries =
+	tgt_cfg->vow_config = CFG_TGT_DEFAULT_VOW_CONFIG;
+	tgt_cfg->gtk_offload_max_vdev = CFG_TGT_DEFAULT_GTK_OFFLOAD_MAX_VDEV;
+	tgt_cfg->num_msdu_desc = CFG_TGT_NUM_MSDU_DESC;
+	tgt_cfg->max_frag_entries = CFG_TGT_MAX_FRAG_TABLE_ENTRIES;
+	tgt_cfg->num_tdls_vdevs = CFG_TGT_NUM_TDLS_VDEVS;
+	tgt_cfg->num_tdls_conn_table_entries =
 		CFG_TGT_NUM_TDLS_CONN_TABLE_ENTRIES;
-	tgt_cfg.beacon_tx_offload_max_vdev =
+	tgt_cfg->beacon_tx_offload_max_vdev =
 		CFG_TGT_DEFAULT_BEACON_TX_OFFLOAD_MAX_VDEV;
-	tgt_cfg.num_multicast_filter_entries =
+	tgt_cfg->num_multicast_filter_entries =
 		CFG_TGT_MAX_MULTICAST_FILTER_ENTRIES;
-	tgt_cfg.num_wow_filters = 0;
-	tgt_cfg.num_keep_alive_pattern = 0;
-	tgt_cfg.keep_alive_pattern_size = 0;
-	tgt_cfg.max_tdls_concurrent_sleep_sta =
+	tgt_cfg->num_wow_filters = 0;
+	tgt_cfg->num_keep_alive_pattern = 0;
+	tgt_cfg->keep_alive_pattern_size = 0;
+	tgt_cfg->max_tdls_concurrent_sleep_sta =
 		CFG_TGT_NUM_TDLS_CONC_SLEEP_STAS;
-	tgt_cfg.max_tdls_concurrent_buffer_sta =
+	tgt_cfg->max_tdls_concurrent_buffer_sta =
 		CFG_TGT_NUM_TDLS_CONC_BUFFER_STAS;
-	tgt_cfg.wmi_send_separate = 0;
-	tgt_cfg.num_ocb_vdevs = CFG_TGT_NUM_OCB_VDEVS;
-	tgt_cfg.num_ocb_channels = CFG_TGT_NUM_OCB_CHANNELS;
-	tgt_cfg.num_ocb_schedules = CFG_TGT_NUM_OCB_SCHEDULES;
+	tgt_cfg->wmi_send_separate = 0;
+	tgt_cfg->num_ocb_vdevs = CFG_TGT_NUM_OCB_VDEVS;
+	tgt_cfg->num_ocb_channels = CFG_TGT_NUM_OCB_CHANNELS;
+	tgt_cfg->num_ocb_schedules = CFG_TGT_NUM_OCB_SCHEDULES;
 
 	no_of_peers_supported = wma_get_number_of_peers_supported(wma_handle);
-	tgt_cfg.num_peers = no_of_peers_supported + CFG_TGT_NUM_VDEV + 2;
-	tgt_cfg.num_tids = wma_get_number_of_tids_supported(
-				no_of_peers_supported);
-	tgt_cfg.scan_max_pending_req = wma_handle->max_scan;
+	tgt_cfg->num_peers = no_of_peers_supported + CFG_TGT_NUM_VDEV + 2;
+	tgt_cfg->num_tids = wma_get_number_of_tids_supported(
+						no_of_peers_supported);
+	tgt_cfg->scan_max_pending_req = wma_handle->max_scan;
 
-	tgt_cfg.mgmt_comp_evt_bundle_support = true;
-	tgt_cfg.tx_msdu_new_partition_id_support = true;
+	tgt_cfg->mgmt_comp_evt_bundle_support = true;
+	tgt_cfg->tx_msdu_new_partition_id_support = true;
 
 	/* reduce the peer/vdev if CFG_TGT_NUM_MSDU_DESC exceeds 1000 */
-#ifdef PERE_IP_HDR_ALIGNMENT_WAR
-	if (scn->host_80211_enable) {
-		/*
-		 * To make the IP header begins at dword aligned address,
-		 * we make the decapsulation mode as Native Wifi.
-		 */
-		tgt_cfg.rx_decap_mode = CFG_TGT_RX_DECAP_MODE_NWIFI;
-	}
-#endif /* PERE_IP_HDR_ALIGNMENT_WAR */
-	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
-		tgt_cfg.rx_decap_mode = CFG_TGT_RX_DECAP_MODE_RAW;
+	wma_reset_rx_decap_mode(tgt_cfg);
 
-	wma_handle->wlan_resource_config = tgt_cfg;
+	if (cds_get_conparam() == QDF_GLOBAL_MONITOR_MODE)
+		tgt_cfg->rx_decap_mode = CFG_TGT_RX_DECAP_MODE_RAW;
 }
 
 /**
@@ -2774,6 +2782,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	bool use_cookie = false;
 	int i;
 	void *cds_context;
+	target_resource_config *wlan_res_cfg;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -2886,7 +2895,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_init_max_no_of_peers(wma_handle, cds_cfg->max_station);
 
 	/* initialize default target config */
-	wma_set_default_tgt_config(wma_handle);
+	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_psoc_info);
+
+	wma_set_default_tgt_config(wma_handle, wlan_res_cfg);
 
 	wma_handle->tx_chain_mask_cck = cds_cfg->tx_chain_mask_cck;
 	wma_handle->self_gen_frm_pwr = cds_cfg->self_gen_frm_pwr;
@@ -2895,18 +2906,16 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	cds_cfg->max_bssid = WMA_MAX_SUPPORTED_BSS;
 
-	wma_handle->wlan_resource_config.num_wow_filters =
-		cds_cfg->max_wow_filters;
-	wma_handle->wlan_resource_config.num_keep_alive_pattern =
-		WMA_MAXNUM_PERIODIC_TX_PTRNS;
+	wlan_res_cfg->num_wow_filters = cds_cfg->max_wow_filters;
+	wlan_res_cfg->num_keep_alive_pattern = WMA_MAXNUM_PERIODIC_TX_PTRNS;
 
 	/* The current firmware implementation requires the number of
 	 * offload peers should be (number of vdevs + 1).
 	 */
-	wma_handle->wlan_resource_config.num_offload_peers =
+	wlan_res_cfg->num_offload_peers =
 		cds_cfg->ap_maxoffload_peers + 1;
 
-	wma_handle->wlan_resource_config.num_offload_reorder_buffs =
+	wlan_res_cfg->num_offload_reorder_buffs =
 		cds_cfg->ap_maxoffload_reorderbuffs + 1;
 
 	wma_handle->ol_ini_info = cds_cfg->ol_ini_info;
@@ -5072,6 +5081,18 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 {
 	struct wma_tgt_cfg tgt_cfg;
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	target_resource_config *wlan_res_cfg;
+	struct target_psoc_info *tgt_hdl;
+
+	WMA_LOGD("%s: Enter", __func__);
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
+		return;
+	}
+
+	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
 
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 
@@ -5079,7 +5100,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.reg_domain = wma_handle->reg_cap.eeprom_rd;
 	tgt_cfg.eeprom_rd_ext = wma_handle->reg_cap.eeprom_rd_ext;
 
-	tgt_cfg.max_intf_count = wma_handle->wlan_resource_config.num_vdevs;
+	tgt_cfg.max_intf_count = wlan_res_cfg->num_vdevs;
 
 	qdf_mem_copy(tgt_cfg.hw_macaddr.bytes, wma_handle->hwaddr,
 		     ATH_MAC_LEN);
@@ -5219,14 +5240,19 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	QDF_STATUS ret;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
 	struct target_psoc_info *tgt_hdl;
+	struct wlan_psoc_target_capability_info *tgt_cap_info;
+	target_resource_config *wlan_res_cfg;
 
 	WMA_LOGD("%s: Enter", __func__);
 
 	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
 	if (!tgt_hdl) {
 		WMA_LOGE("%s: target psoc info is NULL", __func__);
-		return QDF_STATUS_E_INVAL;
+		return -EINVAL;
 	}
+
+	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
+	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
 
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) cmd_param_info;
 	if (!(handle && param_buf)) {
@@ -5258,10 +5284,13 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("%s: Memory allocation failed for DBS", __func__);
 		/* Continuing with the rest of the processing */
 	}
-	qdf_mem_copy(wma_handle->hw_mode.hw_mode_list,
-			ev_wlan_dbs_hw_mode_list,
-			(sizeof(*wma_handle->hw_mode.hw_mode_list) *
-						wma_handle->num_dbs_hw_modes));
+
+	if (wma_handle->hw_mode.hw_mode_list)
+		qdf_mem_copy(wma_handle->hw_mode.hw_mode_list,
+			     ev_wlan_dbs_hw_mode_list,
+			     (sizeof(*wma_handle->hw_mode.hw_mode_list) *
+			      wma_handle->num_dbs_hw_modes));
+
 	policy_mgr_init_dbs_hw_mode(wma_handle->psoc,
 	ev->num_dbs_hw_modes, ev_wlan_dbs_hw_mode_list);
 	wma_dump_dbs_hw_mode(wma_handle);
@@ -5274,27 +5303,30 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 */
 	wma_init_scan_fw_mode_config(wma_handle, 0, 0);
 
-	wma_handle->phy_capability = ev->phy_capability;
-	wma_handle->max_frag_entry = ev->max_frag_entry;
-	wma_handle->num_rf_chains = ev->num_rf_chains;
+	wma_handle->phy_capability = tgt_cap_info->phy_capability;
+	wma_handle->max_frag_entry = tgt_cap_info->max_frag_entry;
+	wma_handle->num_rf_chains  = tgt_cap_info->num_rf_chains;
 	qdf_mem_copy(&wma_handle->reg_cap, param_buf->hal_reg_capabilities,
-		     sizeof(HAL_REG_CAPABILITIES));
+				 sizeof(HAL_REG_CAPABILITIES));
+
 	wma_handle->ht_cap_info = ev->ht_cap_info;
 	wma_handle->vht_cap_info = ev->vht_cap_info;
 	wma_handle->vht_supp_mcs = ev->vht_supp_mcs;
 	wma_handle->num_rf_chains = ev->num_rf_chains;
 
 	wma_handle->target_fw_version = ev->fw_build_vers;
-	wma_handle->new_hw_mode_index = ev->default_dbs_hw_mode_index;
+	wma_handle->new_hw_mode_index = tgt_cap_info->default_dbs_hw_mode_index;
 	policy_mgr_update_new_hw_mode_index(wma_handle->psoc,
-	ev->default_dbs_hw_mode_index);
-	wma_handle->fine_time_measurement_cap = ev->wmi_fw_sub_feat_caps;
+	tgt_cap_info->default_dbs_hw_mode_index);
+	wma_handle->fine_time_measurement_cap =
+				tgt_cap_info->wmi_fw_sub_feat_caps;
 
 	WMA_LOGD("%s: Firmware default hw mode index : %d",
-		 __func__, ev->default_dbs_hw_mode_index);
+		 __func__, tgt_cap_info->default_dbs_hw_mode_index);
 	WMA_LOGI("%s: Firmware build version : %08x",
 		 __func__, ev->fw_build_vers);
-	WMA_LOGD("FW fine time meas cap: 0x%x", ev->wmi_fw_sub_feat_caps);
+	WMA_LOGD("FW fine time meas cap: 0x%x",
+		 tgt_cap_info->wmi_fw_sub_feat_caps);
 
 	if (ev->hw_bd_id) {
 		wma_handle->hw_bd_id = ev->hw_bd_id;
@@ -5316,7 +5348,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 
 	/* wmi service is ready */
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,
-		     param_buf->wmi_service_bitmap,
+		     tgt_hdl->info.service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
 
 	cdp_cfg_tx_set_is_mgmt_over_wmi_enabled(soc,
@@ -5330,7 +5362,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 						    WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register swba beacon event cb");
-		return -EINVAL;
+		goto free_hw_mode_list;
 	}
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->lpss_support =
@@ -5360,7 +5392,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 						WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register CSA offload event cb");
-			return -EINVAL;
+			goto free_hw_mode_list;
 		}
 	}
 
@@ -5378,7 +5410,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 					WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register MGMT over WMI completion handler");
-			return -EINVAL;
+			goto free_hw_mode_list;
 		}
 
 		status = wmi_unified_register_event_handler(
@@ -5388,7 +5420,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 				WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register MGMT over WMI completion handler");
-			return -EINVAL;
+			goto free_hw_mode_list;
 		}
 
 	} else {
@@ -5405,7 +5437,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 					WMA_RX_WORK_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register GTK offload event cb");
-			return -EINVAL;
+			goto free_hw_mode_list;
 		}
 	}
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
@@ -5416,7 +5448,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 				WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register WMI_TBTTOFFSET_UPDATE_EVENTID callback");
-		return -EINVAL;
+		goto free_hw_mode_list;
 	}
 
 	if (wmi_service_enabled(wma_handle->wmi_handle,
@@ -5429,7 +5461,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 							WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register RCPI event handler");
-			return -EINVAL;
+			goto free_hw_mode_list;
 		}
 		wma_handle->rcpi_enabled = true;
 	}
@@ -5444,12 +5476,11 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 */
 	if (wmi_service_enabled(wma_handle->wmi_handle,
 			wmi_service_deprecated_replace))
-		wma_handle->wlan_resource_config.use_pdev_id = true;
+		wlan_res_cfg->use_pdev_id = true;
 	else
-		wma_handle->wlan_resource_config.use_pdev_id = false;
+		wlan_res_cfg->use_pdev_id = false;
 
-	wma_handle->wlan_resource_config.max_num_dbs_scan_duty_cycle =
-		CDS_DBS_SCAN_CLIENTS_MAX;
+	wlan_res_cfg->max_num_dbs_scan_duty_cycle = CDS_DBS_SCAN_CLIENTS_MAX;
 
 	/* register the Enhanced Green AP event handler */
 	wma_register_egap_event_handle(wma_handle);
@@ -5461,7 +5492,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register log supported event cb");
-		return -EINVAL;
+		goto free_hw_mode_list;
 	}
 
 	cdp_mark_first_wakeup_packet(soc,
@@ -5474,20 +5505,19 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		wmi_service_enabled(wma_handle->wmi_handle,
 			wmi_service_nan_data);
 	qdf_mem_copy(target_cap.wmi_service_bitmap,
-		     param_buf->wmi_service_bitmap,
+		     tgt_hdl->info.service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
-	target_cap.wlan_resource_config = wma_handle->wlan_resource_config;
+	target_cap.wlan_resource_config = tgt_hdl->info.wlan_res_cfg;
 	wma_update_fw_config(wma_handle, &target_cap);
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,
 		     target_cap.wmi_service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
-	wma_handle->wlan_resource_config = target_cap.wlan_resource_config;
 
 	status = wmi_unified_save_fw_version_cmd(wma_handle->wmi_handle,
 				param_buf);
 	if (status != EOK) {
 		WMA_LOGE("Failed to send WMI_INIT_CMDID command");
-		return -EINVAL;
+		goto free_hw_mode_list;
 	}
 
 	ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
@@ -5504,6 +5534,16 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	target_psoc_set_num_radios(tgt_hdl, 1);
 
 	return 0;
+
+free_hw_mode_list:
+	if (wma_handle->hw_mode.hw_mode_list) {
+		qdf_mem_free(wma_handle->hw_mode.hw_mode_list);
+		wma_handle->hw_mode.hw_mode_list = NULL;
+		WMA_LOGD("%s: DBS list is freed", __func__);
+	}
+
+	return -EINVAL;
+
 }
 
 /**

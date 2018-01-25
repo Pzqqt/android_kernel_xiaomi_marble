@@ -1251,7 +1251,6 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @phy_capability: PHY Capability from Target
  * @max_frag_entry: Max number of Fragment entry
  * @wmi_service_bitmap: wmi services bitmap received from Target
- * @wlan_resource_config: resource config
  * @frameTransRequired: frame transmission required
  * @wmaGlobalSystemRole: global system role
  * @tx_frm_download_comp_cb: Tx Frame Compl Cb registered by umac
@@ -1399,7 +1398,6 @@ typedef struct {
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
 	uint32_t wmi_service_ext_offset;
 	uint32_t wmi_service_ext_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
-	target_resource_config wlan_resource_config;
 	uint32_t frameTransRequired;
 	tBssSystemRole wmaGlobalSystemRole;
 	wma_tx_dwnld_comp_callback tx_frm_download_comp_cb;
