@@ -985,6 +985,19 @@ QDF_STATUS policy_mgr_mode_specific_num_open_sessions(
 		uint8_t *num_sessions);
 
 /**
+ * policy_mgr_mode_specific_num_active_sessions() - to get number of active
+ *               sessions for a specific mode
+ * @psoc: PSOC object information
+ * @mode: device mode
+ * @num_sessions: to store num active sessions
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_mode_specific_num_active_sessions(
+		struct wlan_objmgr_psoc *psoc, enum QDF_OPMODE mode,
+		uint8_t *num_sessions);
+
+/**
  * policy_mgr_concurrent_open_sessions_running() - Checks for
  * concurrent open session
  * @psoc: PSOC object information
