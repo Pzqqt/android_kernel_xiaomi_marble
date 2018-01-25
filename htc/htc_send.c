@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -585,6 +585,7 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 	uint32_t data_attr = 0;
 	enum qdf_bus_type bus_type;
 	QDF_STATUS ret;
+	bool rt_put = false;
 
 	bus_type = hif_get_bus_type(target->hif_dev);
 
@@ -678,17 +679,24 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 		}
 
 		htc_packet_set_magic_cookie(pPacket, HTC_PACKET_MAGIC_COOKIE);
-		status = hif_send_head(target->hif_dev,
-				       pEndpoint->UL_PipeID, pEndpoint->Id,
-				       HTC_HDR_LENGTH + pPacket->ActualLength,
-				       netbuf, data_attr);
-
+		/*
+		 * For HTT messages without a response from fw,
+		 *   do the runtime put here.
+		 * otherwise runtime put will be done when the fw response comes
+		 */
+		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT)
+			rt_put = true;
 #if DEBUG_BUNDLE
 		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
 			  pEndpoint->Id,
 			  pEndpoint->TxCreditSize,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);
 #endif
+		status = hif_send_head(target->hif_dev,
+				       pEndpoint->UL_PipeID, pEndpoint->Id,
+				       HTC_HDR_LENGTH + pPacket->ActualLength,
+				       netbuf, data_attr);
+
 		htc_issue_tx_bundle_stats_inc(target);
 
 		target->ce_send_cnt++;
@@ -724,14 +732,10 @@ static QDF_STATUS htc_issue_packets(HTC_TARGET *target,
 			}
 			break;
 		}
-
-		/*
-		 * For HTT messages without a response from fw,
-		 *   do the runtime put here.
-		 * otherwise runtime put will be done when the fw response comes
-		 */
-		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT)
+		if (rt_put) {
 			hif_pm_runtime_put(target->hif_dev);
+			rt_put = false;
+		}
 	}
 	if (qdf_unlikely(QDF_IS_STATUS_ERROR(status))) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
