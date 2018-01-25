@@ -1053,11 +1053,18 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	struct qpower_params *qparams = &intr[vid].config.qpower_params;
 	struct pdev_params pdev_param;
 	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct target_psoc_info *tgt_hdl;
 
 	WMA_LOGD("wmihandle %pK", wma->wmi_handle);
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Failed to get pMac", __func__);
+		return;
+	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
 		return;
 	}
 
@@ -1097,7 +1104,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		    (privcmd->param_id == WMI_PDEV_PARAM_TX_CHAIN_MASK)) {
 			if (QDF_STATUS_SUCCESS !=
 					wma_check_txrx_chainmask(
-					wma->num_rf_chains,
+					target_if_get_num_rf_chains(tgt_hdl),
 					privcmd->param_value)) {
 				WMA_LOGD("Chainmask value is invalid");
 				return;
@@ -4435,12 +4442,14 @@ QDF_STATUS wma_close(void)
 /**
  * wma_update_fw_config() - update fw configuration
  * @wma_handle: wma handle
- * @tgt_cap: target capabality
+ * @tgt_cap: pointer to structure target_psoc_info
+ * @tgt_hdl: Target capability info
  *
  * Return: none
  */
 static void wma_update_fw_config(tp_wma_handle wma_handle,
-				 struct wma_target_cap *tgt_cap)
+				 struct wma_target_cap *tgt_cap,
+				 struct target_psoc_info *tgt_hdl)
 {
 	/*
 	 * tgt_cap contains default target resource configuration
@@ -4449,9 +4458,10 @@ static void wma_update_fw_config(tp_wma_handle wma_handle,
 	/* Override the no. of max fragments as per platform configuration */
 	tgt_cap->wlan_resource_config.max_frag_entries =
 					QDF_MIN(QCA_OL_11AC_TX_MAX_FRAGS,
-						wma_handle->max_frag_entry);
-	wma_handle->max_frag_entry =
-		tgt_cap->wlan_resource_config.max_frag_entries;
+					target_if_get_max_frag_entry(tgt_hdl));
+
+	target_if_set_max_frag_entry(tgt_hdl,
+			tgt_cap->wlan_resource_config.max_frag_entries);
 
 	/* Update no. of maxWoWFilters depending on BPF service */
 	if (wmi_service_enabled(wma_handle->wmi_handle,
@@ -4602,37 +4612,42 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 
 /**
  * wma_update_target_ht_cap() - update ht capabality from wma handle
- * @wh: wma handle
- * @cfg: ht capabality
+ * @tgt_hdl: pointer to structure target_psoc_info
+ * @cfg: ht capability
  *
  * Return: none
  */
-static inline void wma_update_target_ht_cap(tp_wma_handle wh,
-					    struct wma_tgt_ht_cap *cfg)
+static inline void
+wma_update_target_ht_cap(struct target_psoc_info *tgt_hdl,
+			 struct wma_tgt_ht_cap *cfg)
 {
+	int ht_cap_info;
+
+	ht_cap_info = target_if_get_ht_cap_info(tgt_hdl);
 	/* RX STBC */
-	cfg->ht_rx_stbc = !!(wh->ht_cap_info & WMI_HT_CAP_RX_STBC);
+	cfg->ht_rx_stbc = !!(ht_cap_info & WMI_HT_CAP_RX_STBC);
 
 	/* TX STBC */
-	cfg->ht_tx_stbc = !!(wh->ht_cap_info & WMI_HT_CAP_TX_STBC);
+	cfg->ht_tx_stbc = !!(ht_cap_info & WMI_HT_CAP_TX_STBC);
 
 	/* MPDU density */
-	cfg->mpdu_density = wh->ht_cap_info & WMI_HT_CAP_MPDU_DENSITY;
+	cfg->mpdu_density = ht_cap_info & WMI_HT_CAP_MPDU_DENSITY;
 
 	/* HT RX LDPC */
-	cfg->ht_rx_ldpc = !!(wh->ht_cap_info & WMI_HT_CAP_LDPC);
+	cfg->ht_rx_ldpc = !!(ht_cap_info & WMI_HT_CAP_LDPC);
 
 	/* HT SGI */
-	cfg->ht_sgi_20 = !!(wh->ht_cap_info & WMI_HT_CAP_HT20_SGI);
+	cfg->ht_sgi_20 = !!(ht_cap_info & WMI_HT_CAP_HT20_SGI);
 
-	cfg->ht_sgi_40 = !!(wh->ht_cap_info & WMI_HT_CAP_HT40_SGI);
+	cfg->ht_sgi_40 = !!(ht_cap_info & WMI_HT_CAP_HT40_SGI);
 
 	/* RF chains */
-	cfg->num_rf_chains = wh->num_rf_chains;
+	cfg->num_rf_chains = target_if_get_num_rf_chains(tgt_hdl);
 
 	WMA_LOGD("%s: ht_cap_info - %x ht_rx_stbc - %d, ht_tx_stbc - %d\n"
 		 "mpdu_density - %d ht_rx_ldpc - %d ht_sgi_20 - %d\n"
-		 "ht_sgi_40 - %d num_rf_chains - %d", __func__, wh->ht_cap_info,
+		 "ht_sgi_40 - %d num_rf_chains - %d", __func__,
+		 ht_cap_info,
 		 cfg->ht_rx_stbc, cfg->ht_tx_stbc, cfg->mpdu_density,
 		 cfg->ht_rx_ldpc, cfg->ht_sgi_20, cfg->ht_sgi_40,
 		 cfg->num_rf_chains);
@@ -4641,55 +4656,59 @@ static inline void wma_update_target_ht_cap(tp_wma_handle wh,
 
 /**
  * wma_update_target_vht_cap() - update vht capabality from wma handle
- * @wh: wma handle
+ * @tgt_hdl: pointer to structure target_psoc_info
  * @cfg: vht capabality
  *
  * Return: none
  */
-static inline void wma_update_target_vht_cap(tp_wma_handle wh,
-					     struct wma_tgt_vht_cap *cfg)
+static inline void
+wma_update_target_vht_cap(struct target_psoc_info *tgt_hdl,
+			  struct wma_tgt_vht_cap *cfg)
 {
+	int vht_cap_info = target_if_get_vht_cap_info(tgt_hdl);
 
-	if (wh->vht_cap_info & WMI_VHT_CAP_MAX_MPDU_LEN_11454)
+	if (vht_cap_info & WMI_VHT_CAP_MAX_MPDU_LEN_11454)
 		cfg->vht_max_mpdu = WMI_VHT_CAP_MAX_MPDU_LEN_11454;
-	else if (wh->vht_cap_info & WMI_VHT_CAP_MAX_MPDU_LEN_7935)
+	else if (vht_cap_info & WMI_VHT_CAP_MAX_MPDU_LEN_7935)
 		cfg->vht_max_mpdu = WMI_VHT_CAP_MAX_MPDU_LEN_7935;
 	else
 		cfg->vht_max_mpdu = 0;
 
 
-	if (wh->vht_cap_info & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ) {
+	if (vht_cap_info & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ) {
 		cfg->supp_chan_width = 1 << eHT_CHANNEL_WIDTH_80P80MHZ;
 		cfg->supp_chan_width |= 1 << eHT_CHANNEL_WIDTH_160MHZ;
-	} else if (wh->vht_cap_info & WMI_VHT_CAP_CH_WIDTH_160MHZ)
+	} else if (vht_cap_info & WMI_VHT_CAP_CH_WIDTH_160MHZ) {
 		cfg->supp_chan_width = 1 << eHT_CHANNEL_WIDTH_160MHZ;
-	else
+	} else {
 		cfg->supp_chan_width = 1 << eHT_CHANNEL_WIDTH_80MHZ;
+	}
 
-	cfg->vht_rx_ldpc = wh->vht_cap_info & WMI_VHT_CAP_RX_LDPC;
+	cfg->vht_rx_ldpc = vht_cap_info & WMI_VHT_CAP_RX_LDPC;
 
-	cfg->vht_short_gi_80 = wh->vht_cap_info & WMI_VHT_CAP_SGI_80MHZ;
-	cfg->vht_short_gi_160 = wh->vht_cap_info & WMI_VHT_CAP_SGI_160MHZ;
+	cfg->vht_short_gi_80 = vht_cap_info & WMI_VHT_CAP_SGI_80MHZ;
+	cfg->vht_short_gi_160 = vht_cap_info & WMI_VHT_CAP_SGI_160MHZ;
 
-	cfg->vht_tx_stbc = wh->vht_cap_info & WMI_VHT_CAP_TX_STBC;
+	cfg->vht_tx_stbc = vht_cap_info & WMI_VHT_CAP_TX_STBC;
 
-	cfg->vht_rx_stbc = (wh->vht_cap_info & WMI_VHT_CAP_RX_STBC_1SS) |
-		(wh->vht_cap_info & WMI_VHT_CAP_RX_STBC_2SS) |
-		(wh->vht_cap_info & WMI_VHT_CAP_RX_STBC_3SS);
+	cfg->vht_rx_stbc =
+		(vht_cap_info & WMI_VHT_CAP_RX_STBC_1SS) |
+		(vht_cap_info & WMI_VHT_CAP_RX_STBC_2SS) |
+		(vht_cap_info & WMI_VHT_CAP_RX_STBC_3SS);
 
-	cfg->vht_max_ampdu_len_exp = (wh->vht_cap_info &
+	cfg->vht_max_ampdu_len_exp = (vht_cap_info &
 				      WMI_VHT_CAP_MAX_AMPDU_LEN_EXP)
 				     >> WMI_VHT_CAP_MAX_AMPDU_LEN_EXP_SHIFT;
 
-	cfg->vht_su_bformer = wh->vht_cap_info & WMI_VHT_CAP_SU_BFORMER;
+	cfg->vht_su_bformer = vht_cap_info & WMI_VHT_CAP_SU_BFORMER;
 
-	cfg->vht_su_bformee = wh->vht_cap_info & WMI_VHT_CAP_SU_BFORMEE;
+	cfg->vht_su_bformee = vht_cap_info & WMI_VHT_CAP_SU_BFORMEE;
 
-	cfg->vht_mu_bformer = wh->vht_cap_info & WMI_VHT_CAP_MU_BFORMER;
+	cfg->vht_mu_bformer = vht_cap_info & WMI_VHT_CAP_MU_BFORMER;
 
-	cfg->vht_mu_bformee = wh->vht_cap_info & WMI_VHT_CAP_MU_BFORMEE;
+	cfg->vht_mu_bformee = vht_cap_info & WMI_VHT_CAP_MU_BFORMEE;
 
-	cfg->vht_txop_ps = wh->vht_cap_info & WMI_VHT_CAP_TXOP_PS;
+	cfg->vht_txop_ps = vht_cap_info & WMI_VHT_CAP_TXOP_PS;
 
 	WMA_LOGD("%s: max_mpdu %d supp_chan_width %x rx_ldpc %x\n"
 		 "short_gi_80 %x tx_stbc %x rx_stbc %x txop_ps %x\n"
@@ -5117,6 +5136,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	target_resource_config *wlan_res_cfg;
 	struct target_psoc_info *tgt_hdl;
+	struct wlan_psoc_host_service_ext_param *service_ext_param;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -5127,6 +5147,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	}
 
 	wlan_res_cfg = target_psoc_get_wlan_res_cfg(tgt_hdl);
+	service_ext_param =
+			target_psoc_get_service_ext_param(tgt_hdl);
 
 	qdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 
@@ -5140,8 +5162,8 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 		     ATH_MAC_LEN);
 
 	wma_update_target_services(wma_handle, &tgt_cfg.services);
-	wma_update_target_ht_cap(wma_handle, &tgt_cfg.ht_cap);
-	wma_update_target_vht_cap(wma_handle, &tgt_cfg.vht_cap);
+	wma_update_target_ht_cap(tgt_hdl, &tgt_cfg.ht_cap);
+	wma_update_target_vht_cap(tgt_hdl, &tgt_cfg.vht_cap);
 	/*
 	 * This will overwrite the structure filled by wma_update_target_ht_cap
 	 * and wma_update_target_vht_cap APIs.
@@ -5151,8 +5173,11 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 
 	wma_update_target_ext_he_cap(wma_handle, &tgt_cfg);
 
-	tgt_cfg.target_fw_version = wma_handle->target_fw_version;
-	tgt_cfg.target_fw_vers_ext = wma_handle->target_fw_vers_ext;
+	tgt_cfg.target_fw_version = target_if_get_fw_version(tgt_hdl);
+	if (service_ext_param)
+		tgt_cfg.target_fw_vers_ext =
+				service_ext_param->fw_build_vers_ext;
+
 #ifdef WLAN_FEATURE_LPSS
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
@@ -5164,7 +5189,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	wma_update_hdd_band_cap(target_if_get_phy_capability(tgt_hdl),
 				&tgt_cfg);
 	tgt_cfg.fine_time_measurement_cap =
-		wma_handle->fine_time_measurement_cap;
+		target_if_get_wmi_fw_sub_feat_caps(tgt_hdl);
 	tgt_cfg.wmi_max_len = wmi_get_max_msg_len(wma_handle->wmi_handle)
 			      - WMI_TLV_HEADROOM;
 	tgt_cfg.tx_bfee_8ss_enabled = wma_handle->tx_bfee_8ss_enabled;
@@ -5358,22 +5383,14 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 */
 	wma_init_scan_fw_mode_config(wma_handle, 0, 0);
 
-	wma_handle->max_frag_entry = tgt_cap_info->max_frag_entry;
-	wma_handle->num_rf_chains  = tgt_cap_info->num_rf_chains;
 	qdf_mem_copy(&wma_handle->reg_cap, param_buf->hal_reg_capabilities,
 				 sizeof(HAL_REG_CAPABILITIES));
 
-	wma_handle->ht_cap_info = ev->ht_cap_info;
-	wma_handle->vht_cap_info = ev->vht_cap_info;
 	wma_handle->vht_supp_mcs = ev->vht_supp_mcs;
-	wma_handle->num_rf_chains = ev->num_rf_chains;
 
-	wma_handle->target_fw_version = ev->fw_build_vers;
 	wma_handle->new_hw_mode_index = tgt_cap_info->default_dbs_hw_mode_index;
 	policy_mgr_update_new_hw_mode_index(wma_handle->psoc,
 	tgt_cap_info->default_dbs_hw_mode_index);
-	wma_handle->fine_time_measurement_cap =
-				tgt_cap_info->wmi_fw_sub_feat_caps;
 
 	WMA_LOGD("%s: Firmware default hw mode index : %d",
 		 __func__, tgt_cap_info->default_dbs_hw_mode_index);
@@ -5558,7 +5575,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		     service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
 	target_cap.wlan_resource_config = tgt_hdl->info.wlan_res_cfg;
-	wma_update_fw_config(wma_handle, &target_cap);
+	wma_update_fw_config(wma_handle, &target_cap, tgt_hdl);
 	qdf_mem_copy(wma_handle->wmi_service_bitmap,
 		     service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
@@ -5667,18 +5684,29 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 	struct hw_mode_idx_to_mac_cap_idx *map;
 	WMI_MAC_PHY_CAPABILITIES *phy_cap;
 	uint8_t phyid, our_hw_mode = hw_mode;
+	struct target_psoc_info *tgt_hdl;
+	int ht_cap_info, vht_cap_info;
 
 	if (!wma_handle) {
 		WMA_LOGE("Invalid wma handle");
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: target psoc info is NULL", __func__);
+		return -EINVAL;
+	}
+
+	ht_cap_info = target_if_get_ht_cap_info(tgt_hdl);
+	vht_cap_info = target_if_get_vht_cap_info(tgt_hdl);
+
 	if (0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes) {
 		WMA_LOGD("Invalid number of hw modes, use legacy HT/VHT caps");
-		caps_per_phy->ht_2g = wma_handle->ht_cap_info;
-		caps_per_phy->ht_5g = wma_handle->ht_cap_info;
-		caps_per_phy->vht_2g = wma_handle->vht_cap_info;
-		caps_per_phy->vht_5g = wma_handle->vht_cap_info;
+		caps_per_phy->ht_2g = ht_cap_info;
+		caps_per_phy->ht_5g = ht_cap_info;
+		caps_per_phy->vht_2g = vht_cap_info;
+		caps_per_phy->vht_5g = vht_cap_info;
 		/* legacy platform doesn't support HE IE */
 		caps_per_phy->he_2g = 0;
 		caps_per_phy->he_5g = 0;
@@ -6289,7 +6317,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	wmi_service_ready_ext_event_fixed_param *ev;
 	QDF_STATUS ret;
 	struct target_psoc_info *tgt_hdl;
-
+	uint32_t conc_scan_config_bits, fw_config_bits;
 	WMA_LOGD("%s: Enter", __func__);
 
 	if (!wma_handle) {
@@ -6317,9 +6345,11 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	WMA_LOGD("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
 
+	fw_config_bits = target_if_get_fw_config_bits(tgt_hdl);
+	conc_scan_config_bits = target_if_get_conc_scan_config_bits(tgt_hdl);
+
 	WMA_LOGD("%s: Defaults: scan config:%x FW mode config:%x",
-			__func__, ev->default_conc_scan_config_bits,
-			ev->default_fw_config_bits);
+		__func__, conc_scan_config_bits, fw_config_bits);
 
 	ret = qdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
 	if (!QDF_IS_STATUS_SUCCESS(ret)) {
@@ -6336,10 +6366,8 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	WMA_LOGD("WMA --> WMI_INIT_CMDID");
 
-	wma_init_scan_fw_mode_config(wma_handle,
-				ev->default_conc_scan_config_bits,
-				ev->default_fw_config_bits);
-	wma_handle->target_fw_vers_ext = ev->fw_build_vers_ext;
+	wma_init_scan_fw_mode_config(wma_handle, conc_scan_config_bits,
+				     fw_config_bits);
 
 	target_psoc_set_num_radios(tgt_hdl, 1);
 	return 0;
@@ -6381,11 +6409,6 @@ int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
 				wmi_service_half_rate_quarter_rate_support);
 	wma_handle->wmi_ready = true;
 	wma_handle->wlan_init_status = ev->status;
-
-	qdf_mem_copy(&wma_handle->final_abi_vers, &ev->fw_abi_vers,
-		     sizeof(wmi_abi_version));
-	qdf_mem_copy(&wma_handle->target_abi_vers, &ev->fw_abi_vers,
-		     sizeof(wmi_abi_version));
 
 	/* copy the mac addr */
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&ev->mac_addr, wma_handle->myaddr);

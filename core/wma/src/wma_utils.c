@@ -67,6 +67,7 @@
 #include "linux/ieee80211.h"
 #include <cdp_txrx_handle.h>
 #include "cds_reg_service.h"
+#include "target_if.h"
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
@@ -4092,14 +4093,21 @@ QDF_STATUS wma_get_wcnss_software_version(uint8_t *version,
 					  uint32_t version_buffer_size)
 {
 	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	struct target_psoc_info *tgt_hdl;
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("%s: Failed to get wma", __func__);
+		return QDF_STATUS_E_FAULT;
+	}
+
 	snprintf(version, version_buffer_size, "%x",
-		 (unsigned int)wma_handle->target_fw_version);
+		 target_if_get_fw_version(tgt_hdl));
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4183,13 +4191,20 @@ uint32_t wma_get_vht_ch_width(void)
 {
 	uint32_t fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
 	tp_wma_handle wm_hdl = cds_get_context(QDF_MODULE_ID_WMA);
+	struct target_psoc_info *tgt_hdl;
+	int vht_cap_info;
 
 	if (NULL == wm_hdl)
 		return fw_ch_wd;
 
-	if (wm_hdl->vht_cap_info & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ)
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wm_hdl->psoc);
+	if (!tgt_hdl)
+		return fw_ch_wd;
+
+	vht_cap_info = target_if_get_vht_cap_info(tgt_hdl);
+	if (vht_cap_info & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ)
 		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
-	else if (wm_hdl->vht_cap_info & WMI_VHT_CAP_CH_WIDTH_160MHZ)
+	else if (vht_cap_info & WMI_VHT_CAP_CH_WIDTH_160MHZ)
 		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
 
 	return fw_ch_wd;

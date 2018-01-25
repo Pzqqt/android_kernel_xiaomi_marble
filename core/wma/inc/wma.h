@@ -1239,16 +1239,11 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @driver_type: driver type
  * @myaddr: current mac address
  * @hwaddr: mac address from EEPROM
- * @target_abi_vers: target firmware version
- * @final_abi_vers: The final ABI version to be used for communicating
- * @target_fw_version: Target f/w build version
- * @target_fw_vers_ext: Target f/w build version sub id
  * @lpss_support: LPSS feature is supported in target or not
  * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
  * @wlan_init_status: wlan init status
  * @qdf_dev: qdf device
- * @max_frag_entry: Max number of Fragment entry
  * @wmi_service_bitmap: wmi services bitmap received from Target
  * @frameTransRequired: frame transmission required
  * @wmaGlobalSystemRole: global system role
@@ -1269,10 +1264,7 @@ struct hw_mode_idx_to_mac_cap_idx {
  * @pdevconfig: pdev related configrations
  * @vdev_resp_queue: vdev response queue
  * @vdev_respq_lock: vdev response queue lock
- * @ht_cap_info: HT capablity info
- * @vht_cap_info: VHT capablity info
  * @vht_supp_mcs: VHT supported MCS
- * @num_rf_chains: number of RF chains
  * @is_fw_assert: is fw asserted
  * @wow: wow related patterns & parameters
  * @no_of_suspend_ind: number of suspend indications
@@ -1378,10 +1370,6 @@ typedef struct {
 	enum qdf_driver_type driver_type;
 	uint8_t myaddr[IEEE80211_ADDR_LEN];
 	uint8_t hwaddr[IEEE80211_ADDR_LEN];
-	wmi_abi_version target_abi_vers;
-	wmi_abi_version final_abi_vers;
-	uint32_t target_fw_version;
-	uint32_t target_fw_vers_ext;
 #ifdef WLAN_FEATURE_LPSS
 	uint8_t lpss_support;
 #endif
@@ -1389,7 +1377,6 @@ typedef struct {
 	bool wmi_ready;
 	uint32_t wlan_init_status;
 	qdf_device_t qdf_dev;
-	uint32_t max_frag_entry;
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
 	uint32_t wmi_service_ext_offset;
 	uint32_t wmi_service_ext_bitmap[WMI_SERVICE_SEGMENT_BM_SIZE32];
@@ -1420,10 +1407,7 @@ typedef struct {
 	qdf_spinlock_t vdev_respq_lock;
 	qdf_list_t wma_hold_req_queue;
 	qdf_spinlock_t wma_hold_req_q_lock;
-	uint32_t ht_cap_info;
-	uint32_t vht_cap_info;
 	uint32_t vht_supp_mcs;
-	uint32_t num_rf_chains;
 	uint8_t is_fw_assert;
 	struct wma_wow wow;
 	uint8_t no_of_suspend_ind;
@@ -1524,7 +1508,6 @@ typedef struct {
 		enum sir_roam_op_code reason);
 	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
-	uint32_t fine_time_measurement_cap;
 	bool bpf_enabled;
 	bool bpf_packet_filter_enable;
 	enum active_bpf_mode active_uc_bpf_mode;
