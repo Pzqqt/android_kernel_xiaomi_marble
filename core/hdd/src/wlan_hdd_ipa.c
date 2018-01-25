@@ -2031,8 +2031,6 @@ static void hdd_ipa_uc_handle_last_discon(struct hdd_ipa_priv *hdd_ipa)
 	INIT_COMPLETION(hdd_ipa->ipa_resource_comp);
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Disable FW RX PIPE");
 	cdp_ipa_set_active(soc, (struct cdp_pdev *)pdev, false, false);
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Disable FW TX PIPE");
-	cdp_ipa_set_active(soc, (struct cdp_pdev *)pdev, false, true);
 
 	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "exit: IPA WDI Pipes deactivated");
 }
@@ -2648,6 +2646,8 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	struct ipa_uc_fw_stats *uc_fw_stat;
 	struct hdd_ipa_priv *hdd_ipa;
 	struct hdd_context *hdd_ctx;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!op_msg || !usr_ctxt) {
@@ -2700,8 +2700,17 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		}
 		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	} else if ((HDD_IPA_UC_OPCODE_TX_SUSPEND == msg->op_code) ||
-	    (HDD_IPA_UC_OPCODE_RX_SUSPEND == msg->op_code)) {
+		   (HDD_IPA_UC_OPCODE_RX_SUSPEND == msg->op_code)) {
 		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
+
+		if (HDD_IPA_UC_OPCODE_RX_SUSPEND == msg->op_code) {
+			hdd_ipa_uc_disable_pipes(hdd_ipa);
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
+					"Disable FW TX PIPE");
+			cdp_ipa_set_active(soc, (struct cdp_pdev *)pdev,
+					   false, true);
+		}
+
 		hdd_ipa->activated_fw_pipe--;
 		if (!hdd_ipa->activated_fw_pipe) {
 			/*
@@ -2710,7 +2719,6 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			 */
 			hdd_ipa->resource_unloading = false;
 			complete(&hdd_ipa->ipa_resource_comp);
-			hdd_ipa_uc_disable_pipes(hdd_ipa);
 			if (hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 				ipa_rm_release_resource(
 					IPA_RM_RESOURCE_WLAN_PROD);
