@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -68,7 +68,7 @@
 #define SPECTRAL_PARAM_STOP              (22)
 #define SPECTRAL_PARAM_ENABLE            (23)
 
-#ifdef ATH_SPECTRAL_USE_EMU_DEFAULTS
+#ifdef SPECTRAL_USE_EMU_DEFAULTS
 /* Use defaults from emulation */
 #define SPECTRAL_SCAN_ACTIVE_DEFAULT           (0x0)
 #define SPECTRAL_SCAN_ENABLE_DEFAULT           (0x0)
@@ -91,7 +91,8 @@
 #define SPECTRAL_SCAN_DBM_ADJ_DEFAULT          (0x0)
 #define SPECTRAL_SCAN_CHN_MASK_DEFAULT         (0x1)
 #else
-/* Static default values for spectral state and configuration.
+/*
+ * Static default values for spectral state and configuration.
  * These definitions should be treated as temporary. Ideally,
  * we should get the defaults from firmware - this will be discussed.
  *
@@ -118,12 +119,27 @@
 #define SPECTRAL_SCAN_BIN_SCALE_DEFAULT        (1)
 #define SPECTRAL_SCAN_DBM_ADJ_DEFAULT          (1)
 #define SPECTRAL_SCAN_CHN_MASK_DEFAULT         (1)
-#endif /* ATH_SPECTRAL_USE_EMU_DEFAULTS */
+#endif				/* SPECTRAL_USE_EMU_DEFAULTS */
 
 /* The below two definitions apply only to pre-11ac chipsets */
 #define SPECTRAL_SCAN_SHORT_REPORT_DEFAULT     (1)
 #define SPECTRAL_SCAN_FFT_PERIOD_DEFAULT       (1)
 
+/**
+ * enum wlan_cfg80211_spectral_vendorcmd_handler_idx - Indices to cfg80211
+ * spectral vendor command handlers
+ * @SPECTRAL_SCAN_START_HANDLER_IDX:  Index to SPECTRAL_SCAN_START handler
+ * @SPECTRAL_SCAN_STOP_HANDLER_IDX:  Index to SPECTRAL_SCAN_STOP handler
+ * @SPECTRAL_SCAN_GET_CONFIG_HANDLER_IDX: Index to SPECTRAL_SCAN_GET_CONFIG
+ * handler
+ * @SPECTRAL_SCAN_GET_DIAG_STATS_HANDLER_IDX: Index to
+ * SPECTRAL_SCAN_GET_DIAG_STATS handler
+ * @SPECTRAL_SCAN_GET_CAP_HANDLER_IDX: Index to SPECTRAL_SCAN_GET_CAP handler
+ * @SPECTRAL_SCAN_GET_STATUS_HANDLER_IDX: Index to SPECTRAL_SCAN_GET_STATUS
+ * handler
+ * @SPECTRAL_SCAN_VENDOR_CMD_HANDLER_MAX: Number of cfg80211 spectral
+ * vendor command handlers supported
+ */
 enum wlan_cfg80211_spectral_vendorcmd_handler_idx {
 	SPECTRAL_SCAN_START_HANDLER_IDX,
 	SPECTRAL_SCAN_STOP_HANDLER_IDX,
@@ -136,33 +152,33 @@ enum wlan_cfg80211_spectral_vendorcmd_handler_idx {
 
 /**
  * enum spectral_debug - Spectral debug level
- * @ATH_DEBUG_SPECTRAL:  Minimal SPECTRAL debug
- * @ATH_DEBUG_SPECTRAL1: Normal SPECTRAL debug
- * @ATH_DEBUG_SPECTRAL2: Maximal SPECTRAL debug
- * @ATH_DEBUG_SPECTRAL3: Matched filterID display
- * @ATH_DEBUG_SPECTRAL4: One time dump of FFT report
+ * @DEBUG_SPECTRAL:  Minimal SPECTRAL debug
+ * @DEBUG_SPECTRAL1: Normal SPECTRAL debug
+ * @DEBUG_SPECTRAL2: Maximal SPECTRAL debug
+ * @DEBUG_SPECTRAL3: Matched filterID display
+ * @DEBUG_SPECTRAL4: One time dump of FFT report
  */
 enum spectral_debug {
-	ATH_DEBUG_SPECTRAL       = 0x00000100,
-	ATH_DEBUG_SPECTRAL1      = 0x00000200,
-	ATH_DEBUG_SPECTRAL2      = 0x00000400,
-	ATH_DEBUG_SPECTRAL3      = 0x00000800,
-	ATH_DEBUG_SPECTRAL4      = 0x00001000,
+	DEBUG_SPECTRAL = 0x00000100,
+	DEBUG_SPECTRAL1 = 0x00000200,
+	DEBUG_SPECTRAL2 = 0x00000400,
+	DEBUG_SPECTRAL3 = 0x00000800,
+	DEBUG_SPECTRAL4 = 0x00001000,
 };
 
 /**
- * enum SPECTRAL_CAPABILITY_TYPE - Spectral capability type
+ * enum spectral_capability_type - Spectral capability type
  * @SPECTRAL_CAP_PHYDIAG:              Phydiag capability
  * @SPECTRAL_CAP_RADAR:                Radar detection capability
  * @SPECTRAL_CAP_SPECTRAL_SCAN:        Spectral capability
  * @SPECTRAL_CAP_ADVNCD_SPECTRAL_SCAN: Advanced spectral capability
  */
-typedef enum {
+enum spectral_capability_type {
 	SPECTRAL_CAP_PHYDIAG,
 	SPECTRAL_CAP_RADAR,
 	SPECTRAL_CAP_SPECTRAL_SCAN,
 	SPECTRAL_CAP_ADVNCD_SPECTRAL_SCAN,
-} SPECTRAL_CAPABILITY_TYPE;
+};
 
 /**
  * struct spectral_chan_stats - channel status info
@@ -176,14 +192,14 @@ typedef enum {
  * @maxregpower_sec80:   Max regulatory power of secondary 80 Mhz
  */
 struct spectral_chan_stats {
-	int          cycle_count;
-	int          channel_load;
-	int          per;
-	int          noisefloor;
-	u_int16_t    comp_usablity;
-	int8_t       maxregpower;
-	u_int16_t    comp_usablity_sec80;
-	int8_t       maxregpower_sec80;
+	int cycle_count;
+	int channel_load;
+	int per;
+	int noisefloor;
+	uint16_t comp_usablity;
+	int8_t maxregpower;
+	uint16_t comp_usablity_sec80;
+	int8_t maxregpower_sec80;
 };
 
 /**
@@ -199,11 +215,11 @@ struct spectral_chan_stats {
  *                                 mismatches in Search FFT report
  */
 struct spectral_diag_stats {
-	u_int64_t spectral_mismatch;
-	u_int64_t spectral_sec80_sfft_insufflen;
-	u_int64_t spectral_no_sec80_sfft;
-	u_int64_t spectral_vhtseg1id_mismatch;
-	u_int64_t spectral_vhtseg2id_mismatch;
+	uint64_t spectral_mismatch;
+	uint64_t spectral_sec80_sfft_insufflen;
+	uint64_t spectral_no_sec80_sfft;
+	uint64_t spectral_vhtseg1id_mismatch;
+	uint64_t spectral_vhtseg2id_mismatch;
 };
 
 /**
@@ -214,14 +230,14 @@ struct spectral_diag_stats {
  * @advncd_spectral_cap: Advanced spectral capability
  */
 struct spectral_caps {
-	u_int8_t phydiag_cap;
-	u_int8_t radar_cap;
-	u_int8_t spectral_cap;
-	u_int8_t advncd_spectral_cap;
+	uint8_t phydiag_cap;
+	uint8_t radar_cap;
+	uint8_t spectral_cap;
+	uint8_t advncd_spectral_cap;
 };
 
 /**
- * struct spectral_config
+ * struct spectral_config - spectral config parameters
  * @ss_fft_period:        Skip interval for FFT reports
  * @ss_period:            Spectral scan period
  * @ss_count:             # of reports to return from ss_active
@@ -279,30 +295,30 @@ struct spectral_caps {
  * @ss_nf_temp_data:      temperature data taken during nf scan
  */
 struct spectral_config {
-	u_int16_t   ss_fft_period;
-	u_int16_t   ss_period;
-	u_int16_t   ss_count;
-	u_int16_t   ss_short_report;
-	u_int8_t    radar_bin_thresh_sel;
-	u_int16_t   ss_spectral_pri;
-	u_int16_t   ss_fft_size;
-	u_int16_t   ss_gc_ena;
-	u_int16_t   ss_restart_ena;
-	u_int16_t   ss_noise_floor_ref;
-	u_int16_t   ss_init_delay;
-	u_int16_t   ss_nb_tone_thr;
-	u_int16_t   ss_str_bin_thr;
-	u_int16_t   ss_wb_rpt_mode;
-	u_int16_t   ss_rssi_rpt_mode;
-	u_int16_t   ss_rssi_thr;
-	u_int16_t   ss_pwr_format;
-	u_int16_t   ss_rpt_mode;
-	u_int16_t   ss_bin_scale;
-	u_int16_t   ss_dbm_adj;
-	u_int16_t   ss_chn_mask;
-	int8_t      ss_nf_cal[AH_MAX_CHAINS * 2];
-	int8_t      ss_nf_pwr[AH_MAX_CHAINS * 2];
-	int32_t     ss_nf_temp_data;
+	uint16_t ss_fft_period;
+	uint16_t ss_period;
+	uint16_t ss_count;
+	uint16_t ss_short_report;
+	uint8_t radar_bin_thresh_sel;
+	uint16_t ss_spectral_pri;
+	uint16_t ss_fft_size;
+	uint16_t ss_gc_ena;
+	uint16_t ss_restart_ena;
+	uint16_t ss_noise_floor_ref;
+	uint16_t ss_init_delay;
+	uint16_t ss_nb_tone_thr;
+	uint16_t ss_str_bin_thr;
+	uint16_t ss_wb_rpt_mode;
+	uint16_t ss_rssi_rpt_mode;
+	uint16_t ss_rssi_thr;
+	uint16_t ss_pwr_format;
+	uint16_t ss_rpt_mode;
+	uint16_t ss_bin_scale;
+	uint16_t ss_dbm_adj;
+	uint16_t ss_chn_mask;
+	int8_t ss_nf_cal[AH_MAX_CHAINS * 2];
+	int8_t ss_nf_pwr[AH_MAX_CHAINS * 2];
+	int32_t ss_nf_temp_data;
 };
 
 /**
@@ -315,11 +331,17 @@ struct spectral_scan_state {
 	uint8_t is_enabled;
 };
 
-typedef enum _dcs_int_type {
+/**
+ * enum dcs_int_type - Interference type indicated by DCS
+ * @SPECTRAL_DCS_INT_NONE:  No interference
+ * @SPECTRAL_DCS_INT_CW:  CW interference
+ * @SPECTRAL_DCS_INT_WIFI:  WLAN interference
+ */
+enum dcs_int_type {
 	SPECTRAL_DCS_INT_NONE,
 	SPECTRAL_DCS_INT_CW,
 	SPECTRAL_DCS_INT_WIFI
-} DCS_INT_TYPE;
+};
 
 /**
  * struct INTERF_RSP - Interference record
@@ -331,9 +353,9 @@ typedef enum _dcs_int_type {
  * @advncd_spectral_cap: Advanced spectral capability
  */
 struct INTERF_RSP {
-	u_int8_t  interf_type;
-	u_int16_t interf_min_freq;
-	u_int16_t interf_max_freq;
+	uint8_t interf_type;
+	uint16_t interf_min_freq;
+	uint16_t interf_max_freq;
 } __ATTRIB_PACKED;
 
 /**
@@ -342,25 +364,25 @@ struct INTERF_RSP {
  * @interf: Array of interference records
  */
 struct INTERF_SRC_RSP {
-	u_int16_t count;
+	uint16_t count;
 	struct INTERF_RSP interf[MAX_INTERF];
 } __ATTRIB_PACKED;
 
 /**
- * struct spectral_classifier_params -
+ * struct spectral_classifier_params - spectral classifier parameters
  * @spectral_20_40_mode:  Is AP in 20/40 mode?
  * @spectral_dc_index:    DC index
  * @spectral_dc_in_mhz:   DC in MHz
  * @upper_chan_in_mhz:    Upper channel in MHz
  * @lower_chan_in_mhz:    Lower channel in MHz
  */
-typedef struct spectral_classifier_params {
+struct spectral_classifier_params {
 	int spectral_20_40_mode;
 	int spectral_dc_index;
 	int spectral_dc_in_mhz;
 	int upper_chan_in_mhz;
 	int lower_chan_in_mhz;
-} __ATTRIB_PACKED SPECTRAL_CLASSIFIER_PARAMS;
+} __ATTRIB_PACKED;
 
 /**
  * struct spectral_samp_data - Spectral Analysis Messaging Protocol Data format
@@ -403,32 +425,33 @@ typedef struct spectral_classifier_params {
  *                            segment
  * @ch_width:                 Channel width 20/40/80/160 MHz
  */
-typedef struct spectral_samp_data {
-	int16_t                              spectral_data_len;
-	int16_t                              spectral_data_len_sec80;
-	int16_t                              spectral_rssi;
-	int16_t                              spectral_rssi_sec80;
-	int8_t                               spectral_combined_rssi;
-	int8_t                               spectral_upper_rssi;
-	int8_t                               spectral_lower_rssi;
-	int8_t  spectral_chain_ctl_rssi[MAX_SPECTRAL_CHAINS];
-	int8_t  spectral_chain_ext_rssi[MAX_SPECTRAL_CHAINS];
-	u_int8_t                             spectral_max_scale;
-	int16_t                              spectral_bwinfo;
-	int32_t                              spectral_tstamp;
-	int16_t                              spectral_max_index;
-	int16_t                              spectral_max_index_sec80;
-	int16_t                              spectral_max_mag;
-	int16_t                              spectral_max_mag_sec80;
-	u_int8_t                             spectral_max_exp;
-	int32_t                              spectral_last_tstamp;
-	int16_t                              spectral_upper_max_index;
-	int16_t                              spectral_lower_max_index;
-	u_int8_t                             spectral_nb_upper;
-	u_int8_t                             spectral_nb_lower;
-	struct spectral_classifier_params    classifier_params;
-	u_int16_t                            bin_pwr_count;
-	/* For 11ac chipsets prior to AR900B version 2.0, a max of 512 bins are
+struct spectral_samp_data {
+	int16_t spectral_data_len;
+	int16_t spectral_data_len_sec80;
+	int16_t spectral_rssi;
+	int16_t spectral_rssi_sec80;
+	int8_t spectral_combined_rssi;
+	int8_t spectral_upper_rssi;
+	int8_t spectral_lower_rssi;
+	int8_t spectral_chain_ctl_rssi[MAX_SPECTRAL_CHAINS];
+	int8_t spectral_chain_ext_rssi[MAX_SPECTRAL_CHAINS];
+	uint8_t spectral_max_scale;
+	int16_t spectral_bwinfo;
+	int32_t spectral_tstamp;
+	int16_t spectral_max_index;
+	int16_t spectral_max_index_sec80;
+	int16_t spectral_max_mag;
+	int16_t spectral_max_mag_sec80;
+	uint8_t spectral_max_exp;
+	int32_t spectral_last_tstamp;
+	int16_t spectral_upper_max_index;
+	int16_t spectral_lower_max_index;
+	uint8_t spectral_nb_upper;
+	uint8_t spectral_nb_lower;
+	struct spectral_classifier_params classifier_params;
+	uint16_t bin_pwr_count;
+	/*
+	 * For 11ac chipsets prior to AR900B version 2.0, a max of 512 bins are
 	 * delivered.  However, there can be additional bins reported for
 	 * AR900B version 2.0 and QCA9984 as described next:
 	 *
@@ -444,16 +467,16 @@ typedef struct spectral_samp_data {
 	 * then 8 more bins (4 more on left side and 4 more on right side)
 	 * are added.
 	 */
-	u_int8_t                             lb_edge_extrabins;
-	u_int8_t                             rb_edge_extrabins;
-	u_int16_t                            bin_pwr_count_sec80;
-	u_int8_t                             bin_pwr[MAX_NUM_BINS];
-	u_int8_t                             bin_pwr_sec80[MAX_NUM_BINS];
-	struct INTERF_SRC_RSP                interf_list;
-	int16_t                              noise_floor;
-	int16_t                              noise_floor_sec80;
-	u_int32_t                            ch_width;
-} __ATTRIB_PACKED SPECTRAL_SAMP_DATA;
+	uint8_t lb_edge_extrabins;
+	uint8_t rb_edge_extrabins;
+	uint16_t bin_pwr_count_sec80;
+	uint8_t bin_pwr[MAX_NUM_BINS];
+	uint8_t bin_pwr_sec80[MAX_NUM_BINS];
+	struct INTERF_SRC_RSP interf_list;
+	int16_t noise_floor;
+	int16_t noise_floor_sec80;
+	uint32_t ch_width;
+} __ATTRIB_PACKED;
 
 /**
  * struct spectral_samp_msg - Spectral SAMP message
@@ -467,17 +490,17 @@ typedef struct spectral_samp_data {
  * @macaddr:            Indicates the device interface
  * @samp_data:          SAMP Data
  */
-typedef struct spectral_samp_msg {
-	u_int32_t             signature;
-	u_int16_t             freq;
-	u_int16_t             vhtop_ch_freq_seg1;
-	u_int16_t             vhtop_ch_freq_seg2;
-	u_int16_t             freq_loading;
-	u_int16_t             dcs_enabled;
-	DCS_INT_TYPE          int_type;
-	u_int8_t              macaddr[6];
-	SPECTRAL_SAMP_DATA    samp_data;
-} __ATTRIB_PACKED SPECTRAL_SAMP_MSG;
+struct spectral_samp_msg {
+	uint32_t signature;
+	uint16_t freq;
+	uint16_t vhtop_ch_freq_seg1;
+	uint16_t vhtop_ch_freq_seg2;
+	uint16_t freq_loading;
+	uint16_t dcs_enabled;
+	enum dcs_int_type int_type;
+	uint8_t macaddr[6];
+	struct spectral_samp_data samp_data;
+} __ATTRIB_PACKED;
 
 #ifdef WIN32
 #pragma pack(pop, spectral)
@@ -486,5 +509,4 @@ typedef struct spectral_samp_msg {
 #undef __ATTRIB_PACKED
 #endif
 
-#endif /* _WLAN_SPECTRAL_PUBLIC_STRUCTS_H_ */
-
+#endif				/* _WLAN_SPECTRAL_PUBLIC_STRUCTS_H_ */

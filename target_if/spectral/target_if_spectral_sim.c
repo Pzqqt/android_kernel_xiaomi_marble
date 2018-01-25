@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015,2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015,2017-2018 The Linux Foundation. All rights reserved.
  *
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -541,7 +541,7 @@ OS_TIMER_FUNC(spectral_sim_phyerrdelivery_handler)
 	OS_GET_TIMER_ARG(spectral, struct target_if_spectral *);
 	qdf_assert_always(spectral);
 
-	p_sops = GET_TIF_SPECTRAL_OPS(spectral);
+	p_sops = GET_TARGET_IF_SPECTRAL_OPS(spectral);
 	qdf_assert_always(spectral);
 
 	simctx = (ath_spectralsim_context *)spectral->simctx;
