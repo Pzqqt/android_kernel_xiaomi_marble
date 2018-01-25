@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -556,12 +556,15 @@ static int msm_voice_slowtalk_put(struct snd_kcontrol *kcontrol,
 {
 	int st_enable = ucontrol->value.integer.value[0];
 	uint32_t session_id = ucontrol->value.integer.value[1];
+	struct module_instance_info mod_inst_info;
 
+	memset(&mod_inst_info, 0, sizeof(mod_inst_info));
 	pr_debug("%s: st enable=%d session_id=%#x\n", __func__, st_enable,
 		 session_id);
 
-	voc_set_pp_enable(session_id,
-			  MODULE_ID_VOICE_MODULE_ST, st_enable);
+	mod_inst_info.module_id = MODULE_ID_VOICE_MODULE_ST;
+	mod_inst_info.instance_id = INSTANCE_ID_0;
+	voc_set_pp_enable(session_id, mod_inst_info, st_enable);
 
 	return 0;
 }
