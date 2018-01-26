@@ -12477,20 +12477,30 @@ send_periodic_chan_stats_config_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  * send_nf_dbr_dbm_info_get_cmd_tlv() - send request to get nf to fw
  * @wmi_handle: wmi handle
+ * @mac_id: radio context
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS
-send_nf_dbr_dbm_info_get_cmd_tlv(wmi_unified_t wmi_handle)
+send_nf_dbr_dbm_info_get_cmd_tlv(wmi_unified_t wmi_handle, uint8_t mac_id)
 {
 	wmi_buf_t buf;
 	QDF_STATUS ret;
+	wmi_pdev_get_nfcal_power_fixed_param *cmd;
+	int32_t len = sizeof(*cmd);
 
-	buf = wmi_buf_alloc(wmi_handle, 0);
+	buf = wmi_buf_alloc(wmi_handle, len);
 	if (buf == NULL)
 		return QDF_STATUS_E_NOMEM;
 
-	ret = wmi_unified_cmd_send(wmi_handle, buf, 0,
+	cmd = (wmi_pdev_get_nfcal_power_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_get_nfcal_power_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+				(wmi_pdev_get_nfcal_power_fixed_param));
+	cmd->pdev_id = wmi_handle->ops->convert_pdev_id_host_to_target(mac_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 				   WMI_PDEV_GET_NFCAL_POWER_CMDID);
 	if (ret != 0) {
 		WMI_LOGE("Sending get nfcal power cmd failed\n");
@@ -20572,6 +20582,72 @@ static QDF_STATUS extract_pdev_tpc_ev_param_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * extract_nfcal_power_ev_param_tlv() - extract noise floor calibration
+ * power param from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold nf cal power param
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+extract_nfcal_power_ev_param_tlv(wmi_unified_t wmi_handle,
+				 void *evt_buf,
+				 wmi_host_pdev_nfcal_power_all_channels_event *param)
+{
+	WMI_PDEV_NFCAL_POWER_ALL_CHANNELS_EVENTID_param_tlvs *param_buf;
+	wmi_pdev_nfcal_power_all_channels_event_fixed_param *event;
+	wmi_pdev_nfcal_power_all_channels_nfdBr *ch_nfdbr;
+	wmi_pdev_nfcal_power_all_channels_nfdBm *ch_nfdbm;
+	wmi_pdev_nfcal_power_all_channels_freqNum *ch_freqnum;
+	uint32_t i;
+
+	param_buf =
+		(WMI_PDEV_NFCAL_POWER_ALL_CHANNELS_EVENTID_param_tlvs *)evt_buf;
+	event = param_buf->fixed_param;
+	ch_nfdbr = param_buf->nfdbr;
+	ch_nfdbm = param_buf->nfdbm;
+	ch_freqnum = param_buf->freqnum;
+
+	WMI_LOGD("pdev_id[%x], num_nfdbr[%d], num_nfdbm[%d] num_freqnum[%d]\n",
+		 event->pdev_id, param_buf->num_nfdbr,
+		 param_buf->num_nfdbm, param_buf->num_freqnum);
+
+	if (param_buf->num_nfdbr >
+	    WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS) {
+		WMI_LOGE("invalid number of nfdBr");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (param_buf->num_nfdbm >
+	    WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS) {
+		WMI_LOGE("invalid number of nfdBm");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (param_buf->num_freqnum > WMI_HOST_RXG_CAL_CHAN_MAX) {
+		WMI_LOGE("invalid number of freqNum");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	for (i = 0; i < param_buf->num_nfdbr; i++) {
+		param->nfdbr[i] = (int8_t)ch_nfdbr->nfdBr;
+		param->nfdbm[i] = (int8_t)ch_nfdbm->nfdBm;
+		ch_nfdbr++;
+		ch_nfdbm++;
+	}
+
+	for (i = 0; i < param_buf->num_freqnum; i++) {
+		param->freqnum[i] = ch_freqnum->freqNum;
+		ch_freqnum++;
+	}
+
+	param->pdev_id = event->pdev_id;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 
 #ifdef BIG_ENDIAN_HOST
 /**
@@ -22502,6 +22578,7 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_tpc_ev_param = extract_pdev_tpc_ev_param_tlv,
 	.extract_pdev_tpc_config_ev_param =
 			extract_pdev_tpc_config_ev_param_tlv,
+	.extract_nfcal_power_ev_param = extract_nfcal_power_ev_param_tlv,
 	.extract_wds_addr_event = extract_wds_addr_event_tlv,
 	.extract_peer_sta_ps_statechange_ev =
 		extract_peer_sta_ps_statechange_ev_tlv,
@@ -22631,7 +22708,8 @@ static void populate_tlv_events_id(uint32_t *event_ids)
 				WMI_OFFLOAD_PROB_RESP_TX_STATUS_EVENTID;
 	event_ids[wmi_mgmt_tx_completion_event_id] =
 				WMI_MGMT_TX_COMPLETION_EVENTID;
-
+	event_ids[wmi_pdev_nfcal_power_all_channels_event_id] =
+				WMI_PDEV_NFCAL_POWER_ALL_CHANNELS_EVENTID;
 	event_ids[wmi_tx_delba_complete_event_id] =
 					WMI_TX_DELBA_COMPLETE_EVENTID;
 	event_ids[wmi_tx_addba_complete_event_id] =
