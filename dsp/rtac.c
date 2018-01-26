@@ -104,12 +104,12 @@ struct rtac_afe_user_data {
 	uint32_t	port_id;
 	union {
 		struct rtac_afe_set {
-			struct afe_port_cmd_set_param_v2 cmd;
-			struct afe_port_param_data_v2    data;
+			struct afe_rtac_set_param_v2 cmd;
+			struct param_hdr_v1 data;
 		} rtac_afe_set;
 		struct rtac_afe_get {
-			struct afe_port_cmd_get_param_v2 cmd;
-			struct afe_port_param_data_v2    data;
+			struct afe_rtac_get_param_v2 cmd;
+			struct param_hdr_v1 data;
 		} rtac_afe_get;
 	};
 }  __packed;
@@ -1273,7 +1273,7 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 		goto err;
 	}
 	if (opcode == AFE_PORT_CMD_SET_PARAM_V2) {
-		struct afe_port_cmd_set_param_v2 *afe_set_apr_msg;
+		struct afe_rtac_set_param_v2 *afe_set_apr_msg;
 
 		/* set data size to actual out of band payload size */
 		if (user_afe_buf.rtac_afe_set.cmd.payload_size >
@@ -1286,11 +1286,12 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 		}
 
 		/* Copy buffer to out-of-band payload */
-		if (copy_from_user((void *)
-				rtac_cal[AFE_RTAC_CAL].cal_data.kvaddr,
-				buf+offsetof(struct rtac_afe_user_data,
-				rtac_afe_set.data),
-				user_afe_buf.rtac_afe_set.cmd.payload_size)) {
+		if (copy_from_user(
+			    (void *) rtac_cal[AFE_RTAC_CAL].cal_data.kvaddr,
+			    (void __user *) buf +
+				    offsetof(struct rtac_afe_user_data,
+					     rtac_afe_set.data),
+			    user_afe_buf.rtac_afe_set.cmd.payload_size)) {
 			pr_err("%s: Could not copy payload from user buffer\n",
 				__func__);
 			result = -EINVAL;
@@ -1298,14 +1299,14 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 		}
 
 		/* Copy AFE APR Message */
-		afe_set_apr_msg = (struct afe_port_cmd_set_param_v2 *)
-				((u8 *)rtac_afe_buffer +
-				sizeof(struct apr_hdr));
-		if (copy_from_user((void *)
-				afe_set_apr_msg,
-				buf + offsetof(struct rtac_afe_user_data,
-				rtac_afe_set.cmd),
-				sizeof(struct afe_port_cmd_set_param_v2))) {
+		afe_set_apr_msg = (struct afe_rtac_set_param_v2
+					   *) ((u8 *) rtac_afe_buffer +
+					       sizeof(struct apr_hdr));
+		if (copy_from_user((void *) afe_set_apr_msg,
+				   (void __user *) buf +
+					   offsetof(struct rtac_afe_user_data,
+						    rtac_afe_set.cmd),
+				   sizeof(struct afe_rtac_set_param_v2))) {
 			pr_err("%s: Could not copy payload from user buffer\n",
 				__func__);
 			result = -EINVAL;
@@ -1321,10 +1322,10 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 				rtac_cal[AFE_RTAC_CAL].map_data.map_handle;
 
 		apr_msg_size = sizeof(struct apr_hdr) +
-				sizeof(struct afe_port_cmd_set_param_v2);
+			       sizeof(struct afe_rtac_set_param_v2);
 
 	} else {
-		struct afe_port_cmd_get_param_v2 *afe_get_apr_msg;
+		struct afe_rtac_get_param_v2 *afe_get_apr_msg;
 
 		if (user_afe_buf.cmd_size > MAX_PAYLOAD_SIZE) {
 			pr_err("%s: Invalid payload size = %d\n",
@@ -1334,13 +1335,14 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 		}
 
 		/* Copy buffer to in-band payload */
-		afe_get_apr_msg = (struct afe_port_cmd_get_param_v2 *)
-					((u8 *) rtac_afe_buffer +
-					sizeof(struct apr_hdr));
-		if (copy_from_user((void *)afe_get_apr_msg,
-				buf+offsetof(struct rtac_afe_user_data,
-				rtac_afe_get.cmd),
-			sizeof(struct afe_port_cmd_get_param_v2))) {
+		afe_get_apr_msg = (struct afe_rtac_get_param_v2
+					   *) ((u8 *) rtac_afe_buffer +
+					       sizeof(struct apr_hdr));
+		if (copy_from_user((void *) afe_get_apr_msg,
+				   (void __user *) buf +
+					   offsetof(struct rtac_afe_user_data,
+						    rtac_afe_get.cmd),
+				   sizeof(struct afe_rtac_get_param_v2))) {
 			pr_err("%s: Could not copy payload from user buffer\n",
 				__func__);
 			result = -EINVAL;
@@ -1356,7 +1358,7 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 				rtac_cal[AFE_RTAC_CAL].map_data.map_handle;
 		afe_get_apr_msg->payload_size -= sizeof(struct apr_hdr);
 		apr_msg_size = sizeof(struct apr_hdr) +
-				sizeof(struct afe_port_cmd_get_param_v2);
+			       sizeof(struct afe_rtac_get_param_v2);
 	}
 
 	fill_afe_apr_hdr((struct apr_hdr *) rtac_afe_buffer,
@@ -1396,13 +1398,13 @@ static int send_rtac_afe_apr(void *buf, uint32_t opcode)
 	}
 
 	if (opcode == AFE_PORT_CMD_GET_PARAM_V2) {
-		struct afe_port_param_data_v2 *get_resp;
+		struct param_hdr_v1 *get_resp;
 
-		get_resp = (struct afe_port_param_data_v2 *)
-				rtac_cal[AFE_RTAC_CAL].cal_data.kvaddr;
+		get_resp = (struct param_hdr_v1 *) rtac_cal[AFE_RTAC_CAL]
+				   .cal_data.kvaddr;
 
-		bytes_returned = get_resp->param_size +
-				sizeof(struct afe_port_param_data_v2);
+		bytes_returned =
+			get_resp->param_size + sizeof(struct param_hdr_v1);
 
 		if (bytes_returned > rtac_cal[AFE_RTAC_CAL].
 			map_data.map_size) {
