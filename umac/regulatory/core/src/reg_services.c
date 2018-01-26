@@ -1257,8 +1257,10 @@ static void reg_set_2g_channel_params(struct wlan_objmgr_pdev *pdev,
 						HIGH_PRIMARY_CH;
 				ch_params->center_freq_seg0 =
 					(oper_ch + sec_ch_2g)/2;
-			} else
+			} else {
 				ch_params->sec_ch_offset = NO_SEC_CH;
+				ch_params->center_freq_seg0 = oper_ch;
+			}
 			break;
 		}
 
