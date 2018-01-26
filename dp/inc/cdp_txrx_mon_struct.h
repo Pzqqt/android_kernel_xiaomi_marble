@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -196,4 +196,34 @@ struct cdp_mon_status {
 
 };
 
+enum {
+	CDP_MON_PPDU_START = 0,
+	CDP_MON_PPDU_END,
+};
+
+/**
+ * struct cdp_pdev_mon_stats
+ * @status_ppdu_state: state on PPDU start and end
+ * @status_ppdu_start: status ring PPDU start TLV count
+ * @status_ppdu_end: status ring PPDU end TLV count
+ * @status_ppdu_compl: status ring matching start and end count on PPDU
+ * @status_ppdu_start_mis: status ring missing start TLV count on PPDU
+ * @status_ppdu_end_mis: status ring missing end TLV count on PPDU
+ * @status_ppdu_done: status ring PPDU done TLV count
+ * @dest_ppdu_done: destination ring PPDU count
+ * @dest_mpdu_done: destination ring MPDU count
+ */
+struct cdp_pdev_mon_stats {
+#ifndef REMOVE_MON_DBG_STATS
+	uint32_t status_ppdu_state;
+	uint32_t status_ppdu_start;
+	uint32_t status_ppdu_end;
+	uint32_t status_ppdu_compl;
+	uint32_t status_ppdu_start_mis;
+	uint32_t status_ppdu_end_mis;
+#endif
+	uint32_t status_ppdu_done;
+	uint32_t dest_ppdu_done;
+	uint32_t dest_mpdu_done;
+};
 #endif

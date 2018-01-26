@@ -389,6 +389,16 @@ enum {
 };
 
 /**
+ * enum
+ * @HAL_RX_MON_PPDU_START: PPDU start TLV is decoded in HAL
+ * @HAL_RX_MON_PPDU_END: PPDU end TLV is decided in HAL
+ */
+enum {
+	HAL_RX_MON_PPDU_START = 0,
+	HAL_RX_MON_PPDU_END,
+};
+
+/**
  * hal_rx_mon_hw_desc_get_mpdu_status: Retrieve MPDU status
  *
  * @ hw_desc_addr: Start address of Rx HW TLVs
@@ -450,6 +460,8 @@ struct hal_rx_ppdu_info {
 	struct hal_rx_ppdu_user_info user_info[HAL_MAX_UL_MU_USERS];
 	struct mon_rx_status rx_status;
 	struct hal_rx_msdu_payload_info msdu_info;
+	/* status ring PPDU start and end state */
+	uint32_t rx_state;
 };
 
 static inline uint32_t
@@ -508,6 +520,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->com_info.ppdu_timestamp =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_2,
 				PPDU_START_TIMESTAMP);
+		ppdu_info->rx_state = HAL_RX_MON_PPDU_START;
 		break;
 
 	case WIFIRX_PPDU_START_USER_INFO_E:
@@ -518,6 +531,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			"[%s][%d] ppdu_end_e len=%d",
 				__func__, __LINE__, tlv_len);
 		/* This is followed by sub-TLVs of PPDU_END */
+		ppdu_info->rx_state = HAL_RX_MON_PPDU_END;
 		break;
 
 	case WIFIRXPCU_PPDU_END_INFO_E:

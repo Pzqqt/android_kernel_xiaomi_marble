@@ -284,6 +284,7 @@ const int dp_stats_mapping_table[][STATS_TYPE_MAX] = {
 	{TXRX_FW_STATS_INVALID, TXRX_RX_HOST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_AST_STATS},
 	{TXRX_FW_STATS_INVALID, TXRX_SRNG_PTR_STATS},
+	{TXRX_FW_STATS_INVALID, TXRX_RX_MON_STATS},
 };
 
 static int dp_peer_add_ast_wifi3(struct cdp_soc_t *soc_hdl,
@@ -5198,6 +5199,31 @@ dp_print_pdev_rx_stats(struct dp_pdev *pdev)
 }
 
 /**
+ * dp_print_pdev_rx_mon_stats(): Print Pdev level RX monitor stats
+ * @pdev: DP_PDEV Handle
+ *
+ * Return: void
+ */
+static inline void
+dp_print_pdev_rx_mon_stats(struct dp_pdev *pdev)
+{
+	struct cdp_pdev_mon_stats *rx_mon_stats;
+
+	rx_mon_stats = &pdev->rx_mon_stats;
+
+	DP_PRINT_STATS("PDEV Rx Monitor Stats:\n");
+
+	dp_rx_mon_print_dbg_ppdu_stats(rx_mon_stats);
+
+	DP_PRINT_STATS("status_ppdu_done_cnt = %d",
+		       rx_mon_stats->status_ppdu_done);
+	DP_PRINT_STATS("dest_ppdu_done_cnt = %d",
+		       rx_mon_stats->dest_ppdu_done);
+	DP_PRINT_STATS("dest_mpdu_done_cnt = %d",
+		       rx_mon_stats->dest_mpdu_done);
+}
+
+/**
  * dp_print_soc_tx_stats(): Print SOC level  stats
  * @soc DP_SOC Handle
  *
@@ -5810,8 +5836,11 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 		dp_print_peer_table(vdev);
 		break;
 	case TXRX_SRNG_PTR_STATS:
-		 dp_print_ring_stats(pdev);
-		 break;
+		dp_print_ring_stats(pdev);
+		break;
+	case TXRX_RX_MON_STATS:
+		dp_print_pdev_rx_mon_stats(pdev);
+		break;
 	default:
 		DP_TRACE(FATAL, "Wrong Input For TxRx Host Stats");
 		break;

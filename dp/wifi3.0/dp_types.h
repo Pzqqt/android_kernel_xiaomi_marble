@@ -1102,6 +1102,8 @@ struct dp_pdev {
 	qdf_nbuf_queue_t rx_status_q;
 	uint32_t mon_ppdu_status;
 	struct cdp_mon_status rx_mon_recv_status;
+	/* monitor mode status/destination ring PPDU and MPDU count */
+	struct cdp_pdev_mon_stats rx_mon_stats;
 
 	/* pool addr for mcast enhance buff */
 	struct {
