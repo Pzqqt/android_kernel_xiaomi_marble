@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,9 +47,9 @@ static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
 }
 
-static void hdd_deinit_pdev_os_priv(struct hdd_context *hdd_ctx)
+static void hdd_deinit_pdev_os_priv(struct wlan_objmgr_pdev *pdev)
 {
-	wlan_cfg80211_scan_priv_deinit(hdd_ctx->hdd_pdev);
+	wlan_cfg80211_scan_priv_deinit(pdev);
 }
 
 static void hdd_init_vdev_os_priv(struct hdd_adapter *adapter,
@@ -77,33 +77,53 @@ static void hdd_init_psoc_qdf_ctx(struct wlan_objmgr_psoc *psoc)
 int hdd_objmgr_create_and_store_psoc(struct hdd_context *hdd_ctx,
 				     uint8_t psoc_id)
 {
+	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc;
 
 	psoc = wlan_objmgr_psoc_obj_create(psoc_id, WLAN_DEV_OL);
 	if (!psoc)
 		return -ENOMEM;
 
+	status = wlan_objmgr_psoc_try_get_ref(psoc, WLAN_HDD_ID_OBJ_MGR);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to acquire psoc ref; status:%d", status);
+		QDF_BUG(false);
+		goto psoc_destroy;
+	}
+
 	hdd_init_psoc_qdf_ctx(psoc);
 	hdd_ctx->hdd_psoc = psoc;
 
 	return 0;
+
+psoc_destroy:
+	wlan_objmgr_psoc_obj_delete(psoc);
+
+	return qdf_status_to_os_return(status);
 }
 
 int hdd_objmgr_release_and_destroy_psoc(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 
 	hdd_ctx->hdd_psoc = NULL;
+
+	QDF_BUG(psoc);
 	if (!psoc)
 		return -EINVAL;
 
 	wlan_objmgr_print_ref_all_objects_per_psoc(psoc);
 
-	return qdf_status_to_os_return(wlan_objmgr_psoc_obj_delete(psoc));
+	status = wlan_objmgr_psoc_obj_delete(psoc);
+	wlan_objmgr_psoc_release_ref(psoc, WLAN_HDD_ID_OBJ_MGR);
+
+	return qdf_status_to_os_return(status);
 }
 
 int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
 	struct wlan_objmgr_psoc *psoc = hdd_ctx->hdd_psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct pdev_osif_priv *priv;
@@ -133,30 +153,51 @@ int hdd_objmgr_create_and_store_pdev(struct hdd_context *hdd_ctx)
 		return -ENOMEM;
 	}
 
+	status = wlan_objmgr_pdev_try_get_ref(pdev, WLAN_HDD_ID_OBJ_MGR);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		hdd_err("Failed to acquire pdev ref; status:%d", status);
+		QDF_BUG(false);
+		goto pdev_destroy;
+	}
+
 	hdd_ctx->hdd_pdev = pdev;
 	sme_store_pdev(hdd_ctx->hHal, hdd_ctx->hdd_pdev);
 	hdd_init_pdev_os_priv(hdd_ctx, priv);
 	wlan_pdev_obj_lock(pdev);
 	wlan_pdev_set_tgt_if_handle(pdev, psoc->tgt_if_handle);
 	wlan_pdev_obj_unlock(pdev);
+
 	return 0;
+
+pdev_destroy:
+	wlan_objmgr_pdev_obj_delete(pdev);
+	qdf_mem_free(priv);
+
+	return qdf_status_to_os_return(status);
 }
 
 int hdd_objmgr_release_and_destroy_pdev(struct hdd_context *hdd_ctx)
 {
+	QDF_STATUS status;
 	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
 	struct pdev_osif_priv *osif_priv;
 
-	hdd_deinit_pdev_os_priv(hdd_ctx);
 	hdd_ctx->hdd_pdev = NULL;
+
+	QDF_BUG(pdev);
 	if (!pdev)
 		return -EINVAL;
+
+	hdd_deinit_pdev_os_priv(pdev);
 
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 	wlan_pdev_reset_ospriv(pdev);
 	qdf_mem_free(osif_priv);
 
-	return qdf_status_to_os_return(wlan_objmgr_pdev_obj_delete(pdev));
+	status = wlan_objmgr_pdev_obj_delete(pdev);
+	wlan_objmgr_pdev_release_ref(pdev, WLAN_HDD_ID_OBJ_MGR);
+
+	return qdf_status_to_os_return(status);
 }
 
 int hdd_objmgr_create_and_store_vdev(struct wlan_objmgr_pdev *pdev,
@@ -233,53 +274,37 @@ osif_priv_free:
 	return errno;
 }
 
-int hdd_objmgr_destroy_vdev(struct hdd_adapter *adapter)
+int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
 {
-	struct wlan_objmgr_vdev *vdev;
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev = adapter->hdd_vdev;
 	struct vdev_osif_priv *osif_priv;
-
-	vdev = adapter->hdd_vdev;
-	if (!vdev)
-		return -EINVAL;
-
-	osif_priv = wlan_vdev_get_ospriv(vdev);
-
-	if (!osif_priv)
-		return -EINVAL;
-
-	wlan_cfg80211_tdls_priv_deinit(osif_priv);
-	qdf_mem_free(osif_priv);
-	wlan_vdev_reset_ospriv(vdev);
-
-	if (hdd_objmgr_remove_peer_object(vdev,
-					  wlan_vdev_mlme_get_macaddr(vdev))) {
-		hdd_err("Self peer delete failed");
-		return -EINVAL;
-	}
-
-	return qdf_status_to_os_return(wlan_objmgr_vdev_obj_delete(vdev));
-}
-
-int hdd_objmgr_release_vdev(struct hdd_adapter *adapter)
-{
-	/* allow physical vdev destroy by releasing the hdd reference */
-	wlan_objmgr_vdev_release_ref(adapter->hdd_vdev, WLAN_HDD_ID_OBJ_MGR);
+	uint8_t *self_mac_addr;
 
 	adapter->hdd_vdev = NULL;
 	adapter->session_id = HDD_SESSION_ID_INVALID;
 
-	return 0;
-}
+	QDF_BUG(vdev);
+	if (!vdev)
+		return -EINVAL;
 
-int hdd_objmgr_release_and_destroy_vdev(struct hdd_adapter *adapter)
-{
-	int errno;
+	osif_priv = wlan_vdev_get_ospriv(vdev);
+	wlan_vdev_reset_ospriv(vdev);
 
-	errno = hdd_objmgr_destroy_vdev(adapter);
-	if (errno)
-		return errno;
+	QDF_BUG(osif_priv);
+	if (osif_priv) {
+		wlan_cfg80211_tdls_priv_deinit(osif_priv);
+		qdf_mem_free(osif_priv);
+	}
 
-	return hdd_objmgr_release_vdev(adapter);
+	self_mac_addr = wlan_vdev_mlme_get_macaddr(vdev);
+	if (hdd_objmgr_remove_peer_object(vdev, self_mac_addr))
+		hdd_err("Self peer delete failed");
+
+	status = wlan_objmgr_vdev_obj_delete(vdev);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_HDD_ID_OBJ_MGR);
+
+	return qdf_status_to_os_return(status);
 }
 
 int hdd_objmgr_add_peer_object(struct wlan_objmgr_vdev *vdev,

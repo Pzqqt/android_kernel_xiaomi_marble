@@ -3656,18 +3656,12 @@ release_vdev:
 		return errno;
 
 	/* do vdev logical destroy via objmgr */
-	errno = hdd_objmgr_destroy_vdev(adapter);
+	errno = hdd_objmgr_release_and_destroy_vdev(adapter);
 	if (errno) {
-		hdd_err("failed to destroy objmgr vdev: %d", errno);
+		hdd_err("failed to destroy objmgr vdev; errno:%d", errno);
 		return errno;
 	}
 
-	/* now that sme session is closed, allow physical vdev destroy */
-	errno = hdd_objmgr_release_vdev(adapter);
-	if (errno) {
-		hdd_err("failed to release objmgr vdev: %d", errno);
-		return errno;
-	}
 	hdd_info("vdev %d destroyed successfully", vdev_id);
 
 	return 0;
