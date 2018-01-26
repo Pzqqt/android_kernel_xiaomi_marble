@@ -44,3 +44,23 @@ ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 					   indata, insize, outdata, outsize);
 }
 EXPORT_SYMBOL(ucfg_spectral_control);
+
+void ucfg_spectral_scan_set_ppid(struct wlan_objmgr_pdev *pdev, uint32_t ppid)
+{
+	struct pdev_spectral *ps = NULL;
+
+	if (!pdev) {
+		spectral_err("PDEV is NULL!");
+		return;
+	}
+	ps = wlan_objmgr_pdev_get_comp_private_obj(pdev,
+						   WLAN_UMAC_COMP_SPECTRAL);
+	if (!ps) {
+		spectral_err("spectral context is NULL!");
+		return;
+	}
+	ps->spectral_pid = ppid;
+	spectral_debug("spectral ppid: %d", ppid);
+
+	return;
+}

@@ -13,6 +13,7 @@ include $(obj)/$(DEPTH)/os/linux/Makefile-linux.common
 INCS += -I$(HAL) -I$(HAL)/$(OS) -I$(ATH) -I$(ATH_RATE) -I$(ATH_PKTLOG) -I$(WLAN) -I$(IF_WLAN) -I$(ATH_SPECTRAL) -I$(ATHEROSPATH) -I$(obj)/$(DEPTH)/../../apps/spectral/common
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/inc -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/obj_mgr/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/utils/nlink/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/scan/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/cmn_defs/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/global_umac_dispatcher/lmac_if/inc

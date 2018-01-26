@@ -1967,7 +1967,9 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		    TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3;
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
 		spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
-	} else {
+	} else
+#else
+	{
 		spectral->spectral_gen = SPECTRAL_GEN2;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN2;
 		spectral->tag_sscan_summary_exp =
@@ -1975,13 +1977,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN2;
 		spectral->tlvhdr_size = sizeof(struct spectral_phyerr_tlv_gen2);
 	}
-#else
-	spectral->spectral_gen = SPECTRAL_GEN3;
-	spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN3;
-	spectral->tag_sscan_summary_exp =
-		TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3;
-	spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
-	spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
 #endif
 
 	if (target_if_spectral_attach_simulation(spectral) < 0)
@@ -2022,9 +2017,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 			spectral->is_sec80_rssi_war_required = true;
 		spectral->use_nl_bcast = true;
 #else
-		spectral->is_160_format = true;
-		spectral->is_lb_edge_extrabins_format = true;
-		spectral->is_rb_edge_extrabins_format = true;
 		spectral->use_nl_bcast = false;
 #endif
 	}

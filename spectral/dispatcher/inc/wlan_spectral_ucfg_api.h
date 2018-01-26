@@ -43,4 +43,16 @@ int ucfg_spectral_control(struct wlan_objmgr_pdev *pdev,
 			  void *indata,
 			  uint32_t insize, void *outdata, uint32_t *outsize);
 
+/**
+ * ucfg_spectral_scan_set_ppid() - configure pid of spectral tool
+ * @pdev: Pointer to pdev
+ * @ppid: Spectral tool pid
+ *
+ * Configure pid of spectral tool
+ *
+ * Return: None
+ */
+void ucfg_spectral_scan_set_ppid(struct wlan_objmgr_pdev *pdev,
+					uint32_t ppid);
+
 #endif /* _WLAN_SPECTRAL_UCFG_API_H_ */

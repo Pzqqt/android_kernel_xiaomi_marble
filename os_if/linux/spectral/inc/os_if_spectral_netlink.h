@@ -22,6 +22,9 @@
 
 #include <net/netlink.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <linux/version.h>
+#include <linux/module.h>
+#include <linux/kernel.h>
 
 /* NETLINK related declarations */
 #if (KERNEL_VERSION(2, 6, 31) > LINUX_VERSION_CODE)
@@ -50,5 +53,15 @@ extern struct net init_net;
  * Return: None
  */
 void os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * os_if_spectral_prep_skb() - Prepare socket buffer
+ * @pdev : Pointer to pdev
+ *
+ * Prepare socket buffer to send the data to application layer
+ *
+ * Return: NLMSG_DATA of the created skb or NULL if no memory
+ */
+void *os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev);
 
 #endif /* _OS_IF_SPECTRAL_NETLINK_H */
