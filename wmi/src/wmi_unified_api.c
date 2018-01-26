@@ -4881,15 +4881,17 @@ QDF_STATUS wmi_send_ext_resource_config(void *wmi_hdl,
 /**
  *  wmi_unified_nf_dbr_dbm_info_get_cmd_send() - WMI request nf info function
  *  @param wmi_handle	  : handle to WMI.
+ *  @mac_id: mac_id
  *
  *  @return QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failure
  */
-QDF_STATUS wmi_unified_nf_dbr_dbm_info_get_cmd_send(void *wmi_hdl)
+QDF_STATUS wmi_unified_nf_dbr_dbm_info_get_cmd_send(void *wmi_hdl,
+						    uint8_t mac_id)
 {
 	wmi_unified_t wmi = (wmi_unified_t) wmi_hdl;
 
 	if (wmi->ops->send_nf_dbr_dbm_info_get_cmd)
-		return wmi->ops->send_nf_dbr_dbm_info_get_cmd(wmi);
+		return wmi->ops->send_nf_dbr_dbm_info_get_cmd(wmi, mac_id);
 
 	return QDF_STATUS_E_FAILURE;
 }

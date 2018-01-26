@@ -287,8 +287,8 @@
 
 #define WMI_HOST_TPC_RATE_MAX	160
 #define WMI_HOST_TPC_TX_NUM_CHAIN	4
-#define WMI_HOST_RXG_CAL_CHAN_MAX	4
-#define WMI_HOST_MAX_NUM_CHAINS	4
+#define WMI_HOST_RXG_CAL_CHAN_MAX	8
+#define WMI_HOST_MAX_NUM_CHAINS	8
 #define WMI_MAX_NUM_OF_RATE_THRESH   4
 
 #define WMI_HOST_PDEV_MAX_VDEVS         17
@@ -6317,31 +6317,24 @@ typedef struct {
 
 /**
  * struct wmi_host_pdev_nfcal_power_all_channels_event - NF cal event data
- * @nfdBr:
- *   chan0: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- *   chan1: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- *   chan2: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- *   chan3: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- * @nfdBr:
- *   chan0: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- *   chan1: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- *   chan2: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- *   chan3: {NFCalPower_chain0, NFCalPower_chain1,
- *           NFCalPower_chain2, NFCalPower_chain3},
- * @freqNum: frequency number
+ * @nfdbr:
+ *   chan[0 ~ 7]: {NFCalPower_chain0, NFCalPower_chain1,
+ *                 NFCalPower_chain2, NFCalPower_chain3,
+ *                 NFCalPower_chain4, NFCalPower_chain5,
+ *                 NFCalPower_chain6, NFCalPower_chain7},
+ * @nfdbm:
+ *   chan[0 ~ 7]: {NFCalPower_chain0, NFCalPower_chain1,
+ *                 NFCalPower_chain2, NFCalPower_chain3,
+ *                 NFCalPower_chain4, NFCalPower_chain5,
+ *                 NFCalPower_chain6, NFCalPower_chain7},
+ * @freqnum:
+ *   chan[0 ~ 7]: frequency number
  * @pdev_id: pdev_id
  */
 typedef struct {
-	int8_t nfdBr[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
-	int8_t nfdBm[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
-	uint32_t freqNum[WMI_HOST_RXG_CAL_CHAN_MAX];
+	int8_t nfdbr[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
+	int8_t nfdbm[WMI_HOST_RXG_CAL_CHAN_MAX * WMI_HOST_MAX_NUM_CHAINS];
+	uint32_t freqnum[WMI_HOST_RXG_CAL_CHAN_MAX];
 	uint32_t pdev_id;
 } wmi_host_pdev_nfcal_power_all_channels_event;
 

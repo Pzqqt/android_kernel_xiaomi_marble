@@ -4592,11 +4592,12 @@ send_periodic_chan_stats_config_cmd_non_tlv(wmi_unified_t wmi_handle,
 /**
  * send_nf_dbr_dbm_info_get_cmd_non_tlv() - send request to get nf to fw
  * @wmi_handle: wmi handle
+ * @mac_id: radio context
  *
  * Return: 0 for success or error code
  */
 static QDF_STATUS
-send_nf_dbr_dbm_info_get_cmd_non_tlv(wmi_unified_t wmi_handle)
+send_nf_dbr_dbm_info_get_cmd_non_tlv(wmi_unified_t wmi_handle, uint8_t mac_id)
 {
 	wmi_buf_t wmibuf;
 
@@ -6597,9 +6598,17 @@ static QDF_STATUS extract_nfcal_power_ev_param_non_tlv(wmi_unified_t wmi_handle,
 	wmi_pdev_nfcal_power_all_channels_event *event =
 	    (wmi_pdev_nfcal_power_all_channels_event *)evt_buf;
 
-	qdf_mem_copy(param->nfdBr, event->nfdBr, sizeof(param->nfdBr));
-	qdf_mem_copy(param->nfdBm, event->nfdBm, sizeof(param->nfdBm));
-	qdf_mem_copy(param->freqNum, event->freqNum, sizeof(param->freqNum));
+	if ((sizeof(event->nfdBr) == sizeof(param->nfdbr)) &&
+	    (sizeof(event->nfdBm) == sizeof(param->nfdbm)) &&
+	    (sizeof(event->freqNum) == sizeof(param->freqnum))) {
+		qdf_mem_copy(param->nfdbr, event->nfdBr, sizeof(param->nfdbr));
+		qdf_mem_copy(param->nfdbm, event->nfdBm, sizeof(param->nfdbm));
+		qdf_mem_copy(param->freqnum, event->freqNum,
+			     sizeof(param->freqnum));
+	} else {
+		WMI_LOGE("%s: %d Failed copy out of bound memory!\n", __func__, __LINE__);
+		return QDF_STATUS_E_RESOURCES;
+	}
 
 	param->pdev_id = WMI_NON_TLV_DEFAULT_PDEV_ID;
 
