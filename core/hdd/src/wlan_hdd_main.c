@@ -3628,10 +3628,11 @@ int hdd_vdev_destroy(struct hdd_adapter *adapter)
 	}
 
 release_vdev:
-	/* In SSR case, directly exit may cause objects leaks,
-	 * if sme_close_session failed.Free objects anyway.
+	/*
+	 * In SSR or driver unloading case, directly exit may cause objects
+	 * leak, if sme_close_session failed. Free objects anyway.
 	 */
-	if (errno && !cds_is_driver_recovering())
+	if (errno && !(cds_is_driver_recovering() || cds_is_driver_unloading()))
 		return errno;
 
 	/* do vdev logical destroy via objmgr */
