@@ -736,9 +736,10 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t msdu,
 
 	if (qdf_unlikely(CE_RING_DELTA(nentries_mask, write_index, sw_index - 1)
 			 < SLOTS_PER_DATAPATH_TX)) {
-		HIF_ERROR("Source ring full, required %d, available %d",
-		      SLOTS_PER_DATAPATH_TX,
-		      CE_RING_DELTA(nentries_mask, write_index, sw_index - 1));
+		hif_err_rl("Source ring full, required %d, available %d",
+			   SLOTS_PER_DATAPATH_TX,
+			   CE_RING_DELTA(nentries_mask, write_index,
+					 sw_index - 1));
 		OL_ATH_CE_PKT_ERROR_COUNT_INCR(scn, CE_RING_DELTA_FAIL);
 		if (ok_to_send)
 			Q_TARGET_ACCESS_END(scn);
