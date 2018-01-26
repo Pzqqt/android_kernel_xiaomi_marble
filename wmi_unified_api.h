@@ -1424,7 +1424,8 @@ uint8_t *wmi_extract_dbglog_data_len(void *wmi_hdl,
 QDF_STATUS wmi_send_ext_resource_config(void *wmi_hdl,
 				wmi_host_ext_resource_config *ext_cfg);
 
-QDF_STATUS wmi_unified_nf_dbr_dbm_info_get_cmd_send(void *wmi_hdl);
+QDF_STATUS wmi_unified_nf_dbr_dbm_info_get_cmd_send(void *wmi_hdl,
+						    uint8_t mac_id);
 
 QDF_STATUS wmi_unified_packet_power_info_get_cmd_send(void *wmi_hdl,
 				struct packet_power_info_params *param);
