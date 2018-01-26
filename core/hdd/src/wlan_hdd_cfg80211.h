@@ -441,6 +441,22 @@ wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
 				   struct bss_description *bss_desc);
 
 /**
+ * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel
+ * @adapter: pointer to adapter
+ * @channel: given channel number
+ * @reason: reason for HW mode change is needed
+ *
+ * This API decides and sets hardware mode to DBS based on given channel.
+ * For example, some of the platforms require DBS hardware mode to operate
+ * in 2.4G channel
+ *
+ * Return: 0 for success and non-zero for failure
+ */
+int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
+				uint8_t channel,
+				enum policy_mgr_conn_update_reason reason);
+
+/**
  * hdd_rate_info_bw: an HDD internal rate bandwidth representation
  * @HDD_RATE_BW_5: 5MHz
  * @HDD_RATE_BW_10: 10MHz

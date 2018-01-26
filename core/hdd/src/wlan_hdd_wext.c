@@ -10521,6 +10521,11 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 		hdd_err("Invalid capture channel or bandwidth for a country");
 		return -EINVAL;
 	}
+	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, chan,
+				POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
+		hdd_err("Failed to change hw mode");
+		return -EINVAL;
+	}
 
 	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
 					     &roam_profile);

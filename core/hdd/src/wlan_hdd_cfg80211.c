@@ -8366,32 +8366,10 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	if (0 != wlan_hdd_check_remain_on_channel(adapter))
 		hdd_warn("Remain On Channel Pending");
 
-	ret = policy_mgr_reset_connection_update(hdd_ctx->hdd_psoc);
-	if (!QDF_IS_STATUS_SUCCESS(ret))
-		hdd_err("clearing event failed");
-
-	ret = policy_mgr_current_connections_update(hdd_ctx->hdd_psoc,
-				adapter->session_id, channel_hint,
-				SIR_UPDATE_REASON_SET_OPER_CHAN);
-	if (QDF_STATUS_E_FAILURE == ret) {
-		/* return in the failure case */
-		hdd_err("ERROR: connections update failed!!");
+	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, channel_hint,
+				POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
+		hdd_err("Failed to change hw mode");
 		return -EINVAL;
-	}
-
-	if (QDF_STATUS_SUCCESS == ret) {
-		/*
-		 * Success is the only case for which we expect hw mode
-		 * change to take place, hence we need to wait.
-		 * For any other return value it should be a pass
-		 * through
-		 */
-		ret = policy_mgr_wait_for_connection_update(hdd_ctx->hdd_psoc);
-		if (!QDF_IS_STATUS_SUCCESS(ret)) {
-			hdd_err("ERROR: qdf wait for event failed!!");
-			return -EINVAL;
-		}
-
 	}
 
 	return 0;
@@ -20998,6 +20976,60 @@ enum policy_mgr_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 	return mode;
 }
 
+int wlan_hdd_change_hw_mode_for_given_chnl(struct hdd_adapter *adapter,
+			uint8_t channel,
+			enum policy_mgr_conn_update_reason reason)
+{
+	QDF_STATUS status;
+	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	ENTER();
+	if (0 != wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	status = policy_mgr_reset_connection_update(hdd_ctx->hdd_psoc);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		hdd_err("clearing event failed");
+
+	status = policy_mgr_current_connections_update(hdd_ctx->hdd_psoc,
+			adapter->session_id, channel, reason);
+	switch (status) {
+	case QDF_STATUS_E_FAILURE:
+		/*
+		 * QDF_STATUS_E_FAILURE indicates that some error has occured
+		 * while changing the hw mode
+		 */
+		hdd_err("ERROR: connections update failed!!");
+		return -EINVAL;
+
+	case QDF_STATUS_SUCCESS:
+		/*
+		 * QDF_STATUS_SUCCESS indicates that HW mode change has been
+		 * triggered and wait for it to finish.
+		 */
+		status = policy_mgr_wait_for_connection_update(
+						hdd_ctx->hdd_psoc);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			hdd_err("ERROR: qdf wait for event failed!!");
+			return -EINVAL;
+		}
+		if (QDF_MONITOR_MODE == adapter->device_mode)
+			hdd_info("Monitor mode:channel:%d (SMM->DBS)", channel);
+		break;
+
+	default:
+		/*
+		 * QDF_STATUS_E_NOSUPPORT indicates that no HW mode change is
+		 * required, so caller can proceed further.
+		 */
+		break;
+
+	}
+	EXIT();
+
+	return 0;
+}
+
 /**
  * wlan_hdd_cfg80211_set_mon_ch() - Set monitor mode capture channel
  * @wiphy: Handle to struct wiphy to get handle to module context.
@@ -21064,6 +21096,11 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 	}
 	wlan_reg_set_channel_params(hdd_ctx->hdd_pdev, chan_num,
 			sec_ch, &ch_params);
+	if (wlan_hdd_change_hw_mode_for_given_chnl(adapter, chan_num,
+				POLICY_MGR_UPDATE_REASON_SET_OPER_CHAN)) {
+		hdd_err("Failed to change hw mode");
+		return -EINVAL;
+	}
 	status = sme_roam_channel_change_req(hal_hdl, bssid, &ch_params,
 						 &roam_profile);
 	if (status) {
@@ -21073,6 +21110,7 @@ static int __wlan_hdd_cfg80211_set_mon_ch(struct wiphy *wiphy,
 		return ret;
 	}
 	EXIT();
+
 	return 0;
 }
 
