@@ -245,6 +245,10 @@ struct wlan_objmgr_peer *wlan_objmgr_peer_obj_create(
 		wlan_objmgr_peer_obj_delete(peer);
 		return NULL;
 	}
+
+	obj_mgr_debug("Created peer " QDF_MAC_ADDR_STR,
+		      QDF_MAC_ADDR_ARRAY(macaddr));
+
 	return peer;
 }
 
@@ -262,6 +266,9 @@ static QDF_STATUS wlan_objmgr_peer_obj_destroy(struct wlan_objmgr_peer *peer)
 	}
 
 	macaddr = wlan_peer_get_macaddr(peer);
+
+	obj_mgr_debug("Physically deleting peer " QDF_MAC_ADDR_STR,
+		      QDF_MAC_ADDR_ARRAY(macaddr));
 
 	if (peer->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
 		obj_mgr_err(
@@ -311,14 +318,12 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer)
 	macaddr = wlan_peer_get_macaddr(peer);
 	wlan_peer_obj_unlock(peer);
 
+	obj_mgr_debug("Logically deleting peer " QDF_MAC_ADDR_STR,
+		      QDF_MAC_ADDR_ARRAY(macaddr));
 
 	print_idx = qdf_get_pidx();
 	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
 		QDF_TRACE_LEVEL_DEBUG)) {
-		obj_mgr_debug(
-		"Logically deleting the peer (%02x:%02x:%02x:%02x:%02x:%02x)",
-					macaddr[0], macaddr[1], macaddr[2],
-					macaddr[3], macaddr[4], macaddr[5]);
 		wlan_objmgr_print_ref_ids(peer->peer_objmgr.ref_id_dbg);
 	}
 

@@ -227,6 +227,9 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 			vdev->vdev_objmgr.vdev_id);
 		return NULL;
 	}
+
+	obj_mgr_info("Created vdev %d", vdev->vdev_objmgr.vdev_id);
+
 	return vdev;
 }
 EXPORT_SYMBOL(wlan_objmgr_vdev_obj_create);
@@ -245,6 +248,8 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 	}
 
 	vdev_id = wlan_vdev_get_id(vdev);
+
+	obj_mgr_info("Physically deleting vdev %d", vdev_id);
 
 	if (vdev->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
 		obj_mgr_err("vdev object delete is not invoked: vdev-id:%d",
@@ -292,11 +297,11 @@ QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	obj_mgr_info("Logically deleting vdev %d", vdev->vdev_objmgr.vdev_id);
+
 	print_idx = qdf_get_pidx();
 	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
 		QDF_TRACE_LEVEL_DEBUG)) {
-		obj_mgr_debug("Logically deleting the vdev(id:%d)",
-					vdev->vdev_objmgr.vdev_id);
 		wlan_objmgr_print_ref_ids(vdev->vdev_objmgr.ref_id_dbg);
 	}
 

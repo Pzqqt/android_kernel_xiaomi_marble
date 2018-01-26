@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,18 +21,12 @@
 
 #include "wlan_objmgr_global_obj_i.h"
 #include <wlan_objmgr_global_obj.h>
+#include "wlan_objmgr_psoc_obj.h"
 #include "qdf_mem.h"
 
 /* Global object, it is declared globally */
 struct wlan_objmgr_global *g_umac_glb_obj;
-/* Component Name table */
-const char *wlan_umac_Component_name[] = {
-	"MLME",
-	"SCAN_MGR",
-	"SCAN_CACHE",
-	"MGMT_TXRX",
-	"",
-};
+
 /*
 ** APIs to Create/Delete Global object APIs
 */
@@ -715,7 +709,6 @@ QDF_STATUS wlan_objmgr_unregister_peer_status_handler(
 	return QDF_STATUS_SUCCESS;
 }
 
-
 QDF_STATUS wlan_objmgr_psoc_object_attach(struct wlan_objmgr_psoc *psoc)
 {
 	uint8_t index = 0;
@@ -727,6 +720,7 @@ QDF_STATUS wlan_objmgr_psoc_object_attach(struct wlan_objmgr_psoc *psoc)
 		if (g_umac_glb_obj->psoc[index] == NULL) {
 			/* Found free slot, store psoc */
 			g_umac_glb_obj->psoc[index] = psoc;
+			psoc->soc_objmgr.psoc_id = index;
 			status = QDF_STATUS_SUCCESS;
 			break;
 		}
@@ -738,21 +732,18 @@ QDF_STATUS wlan_objmgr_psoc_object_attach(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS wlan_objmgr_psoc_object_detach(struct wlan_objmgr_psoc *psoc)
 {
-	uint8_t index = 0;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	uint8_t psoc_id;
+
+	psoc_id = psoc->soc_objmgr.psoc_id;
+	QDF_BUG(psoc_id < WLAN_OBJMGR_MAX_DEVICES);
+	if (psoc_id >= WLAN_OBJMGR_MAX_DEVICES)
+		return QDF_STATUS_E_INVAL;
 
 	qdf_spin_lock_bh(&g_umac_glb_obj->global_lock);
-	while (index < WLAN_OBJMGR_MAX_DEVICES) {
-		if (g_umac_glb_obj->psoc[index] == psoc) {
-			/* found psoc, store NULL */
-			g_umac_glb_obj->psoc[index] = NULL;
-			status = QDF_STATUS_SUCCESS;
-			break;
-		}
-		index++;
-	}
+	g_umac_glb_obj->psoc[psoc_id] = NULL;
 	qdf_spin_unlock_bh(&g_umac_glb_obj->global_lock);
-	return status;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 QDF_STATUS wlan_objmgr_global_obj_can_destroyed(void)

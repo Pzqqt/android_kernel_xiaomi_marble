@@ -211,6 +211,7 @@ struct wlan_objmgr_psoc_nif {
 
 /**
  * struct wlan_objmgr_psoc_objmgr - psoc object manager sub structure
+ * @psoc_id:              The PSOC's numeric Id
  * @wlan_pdev_count:      PDEV count
  * @wlan_pdev_list[]:     PDEV list
  * @wlan_pdev_id_map:     PDEV id map, to allocate free ids
@@ -226,6 +227,7 @@ struct wlan_objmgr_psoc_nif {
  * @qdf_dev:              QDF Device
  */
 struct wlan_objmgr_psoc_objmgr {
+	uint8_t psoc_id;
 	uint8_t wlan_pdev_count;
 	struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];
 	uint8_t wlan_pdev_id_map;

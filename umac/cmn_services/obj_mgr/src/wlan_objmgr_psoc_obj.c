@@ -182,6 +182,8 @@ struct wlan_objmgr_psoc *wlan_objmgr_psoc_obj_create(uint32_t phy_version,
 		return NULL;
 	}
 
+	obj_mgr_info("Created psoc %d", psoc->soc_objmgr.psoc_id);
+
 	return psoc;
 }
 EXPORT_SYMBOL(wlan_objmgr_psoc_obj_create);
@@ -197,6 +199,8 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 		obj_mgr_err("psoc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	obj_mgr_info("Physically deleting psoc %d", psoc->soc_objmgr.psoc_id);
 
 	if (psoc->obj_state != WLAN_OBJ_STATE_LOGICALLY_DELETED) {
 		obj_mgr_err("psoc object delete is not invoked");
@@ -244,11 +248,11 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	print_idx = qdf_get_pidx();
+	obj_mgr_info("Logically deleting psoc %d", psoc->soc_objmgr.psoc_id);
 
+	print_idx = qdf_get_pidx();
 	if (qdf_print_is_verbose_enabled(print_idx, QDF_MODULE_ID_OBJ_MGR,
 		QDF_TRACE_LEVEL_DEBUG)) {
-		obj_mgr_debug("Logically deleting the psoc");
 		wlan_objmgr_print_ref_ids(psoc->soc_objmgr.ref_id_dbg);
 	}
 
