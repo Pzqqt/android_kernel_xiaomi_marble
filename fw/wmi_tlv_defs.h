@@ -897,6 +897,18 @@ typedef enum {
     WMITLV_TAG_STRUC_wmi_obss_color_collision_det_config_fixed_param,
     WMITLV_TAG_STRUC_wmi_obss_color_collision_evt_fixed_param,
     WMITLV_TAG_STRUC_wmi_runtime_dpd_recal_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_disable_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_del_dialog_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_pause_dialog_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_resume_dialog_cmd_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_enable_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_disable_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_add_dialog_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_del_dialog_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_pause_dialog_complete_event_fixed_param,
+    WMITLV_TAG_STRUC_wmi_twt_resume_dialog_complete_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -1260,6 +1272,12 @@ typedef enum {
     OP(WMI_BSS_COLOR_CHANGE_ENABLE_CMDID) \
     OP(WMI_OBSS_COLOR_COLLISION_DET_CONFIG_CMDID) \
     OP(WMI_RUNTIME_DPD_RECAL_CMDID) \
+    OP(WMI_TWT_ENABLE_CMDID) \
+    OP(WMI_TWT_DISABLE_CMDID) \
+    OP(WMI_TWT_ADD_DIALOG_CMDID) \
+    OP(WMI_TWT_DEL_DIALOG_CMDID) \
+    OP(WMI_TWT_PAUSE_DIALOG_CMDID) \
+    OP(WMI_TWT_RESUME_DIALOG_CMDID) \
     /* add new CMD_LIST elements above this line */
 
 
@@ -1459,6 +1477,12 @@ typedef enum {
     OP(WMI_SAR2_RESULT_EVENTID) \
     OP(WMI_BPF_GET_VDEV_WORK_MEMORY_RESP_EVENTID) \
     OP(WMI_OBSS_COLOR_COLLISION_DETECTION_EVENTID) \
+    OP(WMI_TWT_ENABLE_COMPLETE_EVENTID) \
+    OP(WMI_TWT_DISABLE_COMPLETE_EVENTID) \
+    OP(WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID) \
+    OP(WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID) \
+    OP(WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID) \
+    OP(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID) \
     /* add new EVT_LIST elements above this line */
 
 
@@ -3622,6 +3646,36 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_RX_FILTER_PROMISCUOUS_CMDID);
 
 WMITLV_CREATE_PARAM_STRUC(WMI_RUNTIME_DPD_RECAL_CMDID);
 
+/* TWT enable cmd */
+#define WMITLV_TABLE_WMI_TWT_ENABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_enable_cmd_fixed_param, wmi_twt_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_ENABLE_CMDID);
+
+/* TWT disable cmd */
+#define WMITLV_TABLE_WMI_TWT_DISABLE_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_disable_cmd_fixed_param, wmi_twt_disable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_DISABLE_CMDID);
+
+/* TWT add dialog cmd */
+#define WMITLV_TABLE_WMI_TWT_ADD_DIALOG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_add_dialog_cmd_fixed_param, wmi_twt_add_dialog_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_ADD_DIALOG_CMDID);
+
+/* TWT delete dialog cmd */
+#define WMITLV_TABLE_WMI_TWT_DEL_DIALOG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_del_dialog_cmd_fixed_param, wmi_twt_del_dialog_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_DEL_DIALOG_CMDID);
+
+/* TWT pause dialog cmd */
+#define WMITLV_TABLE_WMI_TWT_PAUSE_DIALOG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_pause_dialog_cmd_fixed_param, wmi_twt_pause_dialog_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_PAUSE_DIALOG_CMDID);
+
+/* TWT resume dialog cmd */
+#define WMITLV_TABLE_WMI_TWT_RESUME_DIALOG_CMDID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_resume_dialog_cmd_fixed_param, wmi_twt_resume_dialog_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_RESUME_DIALOG_CMDID);
+
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -4839,6 +4893,38 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_DMA_RING_BUF_RELEASE_EVENTID);
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_unit_test_event_fixed_param, wmi_unit_test_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_UNIT_TEST_EVENTID);
+
+
+/* enabling TWT complete Event */
+#define WMITLV_TABLE_WMI_TWT_ENABLE_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_enable_complete_event_fixed_param, wmi_twt_enable_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_ENABLE_COMPLETE_EVENTID);
+
+/* disabling TWT complete Event */
+#define WMITLV_TABLE_WMI_TWT_DISABLE_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_disable_complete_event_fixed_param, wmi_twt_disable_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_DISABLE_COMPLETE_EVENTID);
+
+/* adding TWT dialog complete Event */
+#define WMITLV_TABLE_WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_add_dialog_complete_event_fixed_param, wmi_twt_add_dialog_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_ADD_DIALOG_COMPLETE_EVENTID);
+
+/* deleting TWT dialog complete Event */
+#define WMITLV_TABLE_WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_del_dialog_complete_event_fixed_param, wmi_twt_del_dialog_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_DEL_DIALOG_COMPLETE_EVENTID);
+
+/* pausing TWT dialog complete Event */
+#define WMITLV_TABLE_WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_pause_dialog_complete_event_fixed_param, wmi_twt_pause_dialog_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_PAUSE_DIALOG_COMPLETE_EVENTID);
+
+/* resuming TWT dialog complete Event */
+#define WMITLV_TABLE_WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID(id,op,buf,len) \
+    WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_twt_resume_dialog_complete_event_fixed_param, wmi_twt_resume_dialog_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TWT_RESUME_DIALOG_COMPLETE_EVENTID);
+
 
 #ifdef __cplusplus
 }
