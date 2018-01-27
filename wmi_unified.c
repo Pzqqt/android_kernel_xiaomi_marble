@@ -2034,11 +2034,13 @@ static inline void wmi_target_params_init(struct wmi_soc *soc,
 {
 	wmi_handle->pdev_param = soc->pdev_param;
 	wmi_handle->vdev_param = soc->vdev_param;
+	wmi_handle->services = soc->services;
 }
 #else
 static inline void wmi_target_params_init(struct wmi_soc *soc,
 				struct wmi_unified *wmi_handle)
 {
+	wmi_handle->services = soc->services;
 }
 #endif
 
@@ -2147,7 +2149,6 @@ void *wmi_unified_attach(void *scn_handle,
 	wmi_handle->ctx = soc->ctx;
 	wmi_handle->wmi_events = soc->wmi_events;
 	wmi_target_params_init(soc, wmi_handle);
-	wmi_handle->services = soc->services;
 	wmi_handle->scn_handle = scn_handle;
 	soc->scn_handle = scn_handle;
 	qdf_atomic_init(&wmi_handle->pending_cmds);
