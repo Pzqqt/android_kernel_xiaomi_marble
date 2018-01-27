@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -174,7 +174,7 @@ EXPORT_SYMBOL(qdf_mc_timer_manager_init);
 
 static inline void qdf_mc_timer_panic(void)
 {
-	QDF_BUG(0);
+	QDF_DEBUG_PANIC();
 }
 
 static void qdf_mc_timer_print_list(qdf_list_t *timers)

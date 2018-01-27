@@ -117,9 +117,12 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #endif
 
 #ifdef PANIC_ON_BUG
-#define __qdf_do_bug() BUG_ON(1)
+static inline void QDF_DEBUG_PANIC(void)
+{
+	BUG();
+}
 #else
-#define __qdf_do_bug()
+static inline void QDF_DEBUG_PANIC(void) { }
 #endif
 
 #define QDF_BUG(_condition) \
@@ -127,7 +130,7 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 		if (!(_condition)) { \
 			pr_err("QDF BUG in %s Line %d: Failed assertion '" \
 			       #_condition "'\n", __func__, __LINE__); \
-			__qdf_do_bug();\
+			QDF_DEBUG_PANIC(); \
 		} \
 	} while (0)
 
