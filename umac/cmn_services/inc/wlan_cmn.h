@@ -560,12 +560,12 @@ struct wlan_ssid {
 	uint8_t ssid[WLAN_SSID_MAX_LEN];
 };
 
-/* MAC address length */
-#define WLAN_MACADDR_LEN 6
+/* depreciated; use QDF_MAC_ADDR_SIZE instead */
+#define WLAN_MACADDR_LEN QDF_MAC_ADDR_SIZE
 /* Util API to copy the MAC address */
-#define WLAN_ADDR_COPY(dst, src)    qdf_mem_copy(dst, src, WLAN_MACADDR_LEN)
+#define WLAN_ADDR_COPY(dst, src)    qdf_mem_copy(dst, src, QDF_MAC_ADDR_SIZE)
 /* Util API to compare the MAC address */
-#define WLAN_ADDR_EQ(a1, a2)   qdf_mem_cmp(a1, a2, WLAN_MACADDR_LEN)
+#define WLAN_ADDR_EQ(a1, a2)   qdf_mem_cmp(a1, a2, QDF_MAC_ADDR_SIZE)
 
 #define PSOC_SERVICE_BM_SIZE ((128 + sizeof(uint32_t) - 1) / sizeof(uint32_t))
 #define PSOC_HOST_MAX_NUM_SS (8)

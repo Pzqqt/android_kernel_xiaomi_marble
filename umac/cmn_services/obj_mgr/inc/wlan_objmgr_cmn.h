@@ -36,7 +36,7 @@
 
 /* simple hash is enough for variation of macaddr */
 #define WLAN_PEER_HASH(addr)   \
-(((const uint8_t *)(addr))[WLAN_MACADDR_LEN - 1] % WLAN_PEER_HASHSIZE)
+(((const uint8_t *)(addr))[QDF_MAC_ADDR_SIZE - 1] % WLAN_PEER_HASHSIZE)
 
 #define obj_mgr_log(level, args...) \
 		QDF_TRACE(QDF_MODULE_ID_OBJ_MGR, level, ## args)

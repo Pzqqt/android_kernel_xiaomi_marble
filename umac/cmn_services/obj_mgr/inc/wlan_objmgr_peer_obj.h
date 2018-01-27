@@ -175,7 +175,7 @@ struct wlan_peer_activity {  /*TODO */
 struct wlan_objmgr_peer {
 	qdf_list_node_t psoc_peer;
 	qdf_list_node_t vdev_peer;
-	uint8_t macaddr[WLAN_MACADDR_LEN];
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	struct wlan_objmgr_peer_mlme peer_mlme;
 	struct wlan_peer_activity peer_activity;
 	struct wlan_objmgr_peer_objmgr peer_objmgr;

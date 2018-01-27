@@ -305,7 +305,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	struct target_psoc_info *tgt_hdl;
 	void *wmi_handle;
 	struct wmi_host_fw_abi_ver fw_ver;
-	uint8_t myaddr[WLAN_MACADDR_LEN];
+	uint8_t myaddr[QDF_MAC_ADDR_SIZE];
 	struct tgt_info *info;
 	struct wmi_host_ready_ev_param ready_ev;
 	wmi_legacy_service_ready_callback legacy_callback;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,10 +86,10 @@ void wlan_roam_debug_log(uint8_t vdev_id, uint8_t op,
 	rec->peer_id = peer_id;
 	if (mac_addr)
 		qdf_mem_copy(rec->mac_addr.bytes, mac_addr,
-			     WLAN_MACADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 	else
 		qdf_mem_zero(rec->mac_addr.bytes,
-			     WLAN_MACADDR_LEN);
+			     QDF_MAC_ADDR_SIZE);
 	rec->peer_obj = peer_obj;
 	rec->arg1 = arg1;
 	rec->arg2 = arg2;

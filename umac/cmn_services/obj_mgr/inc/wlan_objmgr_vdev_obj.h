@@ -251,8 +251,8 @@ struct wlan_vdev_create_params {
 	enum QDF_OPMODE opmode;
 	uint32_t flags;
 	struct vdev_osif_priv *osifp;
-	uint8_t macaddr[WLAN_MACADDR_LEN];
-	uint8_t mataddr[WLAN_MACADDR_LEN];
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
+	uint8_t mataddr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -315,8 +315,8 @@ struct wlan_objmgr_vdev_mlme {
 	uint32_t max_rate;
 	uint32_t tx_mgmt_rate;
 	uint32_t vdev_op_flags;
-	uint8_t  mataddr[WLAN_MACADDR_LEN];
-	uint8_t  macaddr[WLAN_MACADDR_LEN];
+	uint8_t  mataddr[QDF_MAC_ADDR_SIZE];
+	uint8_t  macaddr[QDF_MAC_ADDR_SIZE];
 	char ssid[WLAN_SSID_MAX_LEN+1];
 	uint8_t ssid_len;
 };

@@ -127,7 +127,7 @@ struct wlan_objmgr_pdev_nif {
 	uint32_t pdev_fw_caps;
 	uint32_t pdev_feature_caps;
 	struct pdev_osif_priv *pdev_ospriv;
-	uint8_t macaddr[WLAN_MACADDR_LEN];
+	uint8_t macaddr[QDF_MAC_ADDR_SIZE];
 	uint8_t notified_ap_vdev;
 };
 

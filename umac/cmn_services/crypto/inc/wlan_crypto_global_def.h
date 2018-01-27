@@ -265,7 +265,7 @@ struct wlan_crypto_req_key {
 	uint16_t   keyix;
 	uint8_t    keylen;
 	uint8_t    flags;
-	uint8_t    macaddr[WLAN_MACADDR_LEN];
+	uint8_t    macaddr[QDF_MAC_ADDR_SIZE];
 	uint64_t   keyrsc;
 	uint64_t   keytsc;
 	uint8_t    keydata[WLAN_CRYPTO_KEYBUF_SIZE + WLAN_CRYPTO_MICBUF_SIZE];

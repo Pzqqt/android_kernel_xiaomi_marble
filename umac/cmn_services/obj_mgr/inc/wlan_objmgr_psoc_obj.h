@@ -232,7 +232,7 @@ struct wlan_objmgr_psoc_nif {
 	uint32_t soc_fw_ext_caps;
 	uint32_t soc_feature_caps;
 	uint32_t soc_op_flags;
-	uint8_t soc_hw_macaddr[WLAN_MACADDR_LEN];
+	uint8_t soc_hw_macaddr[QDF_MAC_ADDR_SIZE];
 	struct wlan_objmgr_psoc_user_config user_config;
 };
 
