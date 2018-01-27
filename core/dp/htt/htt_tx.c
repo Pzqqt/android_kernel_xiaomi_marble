@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1086,7 +1086,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		if (!buffer_vaddr) {
 			qdf_print("IPA WDI TX buffer alloc fail %d allocated\n",
 				tx_buffer_count);
-			return tx_buffer_count;
+			goto pwr2;
 		}
 
 		header_ptr = buffer_vaddr;
@@ -1131,6 +1131,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		ring_vaddr++;
 	}
 
+pwr2:
 	/*
 	 * Tx complete ring buffer count should be power of 2.
 	 * So, allocated Tx buffer count should be one less than ring buffer
@@ -1212,7 +1213,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		if (!buffer_vaddr) {
 			qdf_print("%s: TX BUF alloc fail, loop index: %d",
 				  __func__, tx_buffer_count);
-			return tx_buffer_count;
+			goto pwr2;
 		}
 
 		/* Init buffer */
@@ -1234,7 +1235,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 			  "%s: nbuf map failed, loop index: %d",
 			  __func__, tx_buffer_count);
 			qdf_nbuf_free(buffer_vaddr);
-			return tx_buffer_count;
+			goto pwr2;
 		}
 
 		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
@@ -1256,6 +1257,7 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		ring_vaddr++;
 	}
 
+pwr2:
 	/*
 	 * Tx complete ring buffer count should be power of 2.
 	 * So, allocated Tx buffer count should be one less than ring buffer
@@ -1270,14 +1272,13 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 
 		/* Free over allocated buffers below power of 2 */
 		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
-			if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
-				qdf_mem_free_consistent(
-					pdev->osdev, pdev->osdev->dev,
-					ol_cfg_ipa_uc_tx_buf_size(
-						pdev->ctrl_pdev),
-					pdev->ipa_uc_tx_rsc.
-						tx_buf_pool_vaddr_strg[idx],
-					pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
+
+			buffer_vaddr =
+				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx];
+			if (buffer_vaddr) {
+				qdf_nbuf_unmap(pdev->osdev, buffer_vaddr,
+						QDF_DMA_BIDIRECTIONAL);
+				qdf_nbuf_free(buffer_vaddr);
 			}
 		}
 	}
@@ -1299,6 +1300,8 @@ static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		buffer_vaddr = pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx];
 		if (buffer_vaddr) {
+			qdf_nbuf_unmap(pdev->osdev, buffer_vaddr,
+				      QDF_DMA_BIDIRECTIONAL);
 			qdf_nbuf_free(buffer_vaddr);
 		}
 	}
