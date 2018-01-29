@@ -8083,12 +8083,22 @@ struct wmi_btm_config {
  * @flag: enable/disable stats
  * @pkt_type: type of packet(1 - arp)
  * @ip_addr: subnet ipv4 address in case of encrypted packets
+ * @pkt_type_bitmap: pkt bitmap
+ * @tcp_src_port: tcp src port for pkt tracking
+ * @tcp_dst_port: tcp dst port for pkt tracking
+ * @icmp_ipv4: target ipv4 address to track ping packets
+ * @reserved: reserved
  */
 struct set_arp_stats {
 	uint32_t vdev_id;
 	uint8_t flag;
 	uint8_t pkt_type;
 	uint32_t ip_addr;
+	uint32_t pkt_type_bitmap;
+	uint32_t tcp_src_port;
+	uint32_t tcp_dst_port;
+	uint32_t icmp_ipv4;
+	uint32_t reserved;
 };
 
 /**
