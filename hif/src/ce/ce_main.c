@@ -1214,7 +1214,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 
 			/* epping */
 			/* poll timer */
-			if ((CE_state->attr_flags & CE_ATTR_ENABLE_POLL)) {
+			if ((CE_state->attr_flags & CE_ATTR_ENABLE_POLL) ||
+					scn->polled_mode_on) {
 				qdf_timer_init(scn->qdf_dev,
 						       &CE_state->poll_timer,
 						       ce_poll_timeout,
@@ -1274,6 +1275,14 @@ void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 	scn->fastpath_mode_on = true;
 }
 
+void hif_enable_polled_mode(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	HIF_DBG("%s, Enabling polled mode", __func__);
+
+	scn->polled_mode_on = true;
+}
+
 /**
  * hif_is_fastpath_mode_enabled - API to query if fasthpath mode is enabled
  * @hif_ctx: HIF Context
@@ -1287,6 +1296,13 @@ bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	return scn->fastpath_mode_on;
+}
+
+bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->polled_mode_on;
 }
 
 /**

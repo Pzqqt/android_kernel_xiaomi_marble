@@ -3689,6 +3689,10 @@ int hif_configure_irq(struct hif_softc *scn)
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
 	HIF_TRACE("%s: E", __func__);
+	if (scn->polled_mode_on) {
+		scn->request_irq_done = false;
+		return 0;
+	}
 
 	hif_init_reschedule_tasklet_work(sc);
 

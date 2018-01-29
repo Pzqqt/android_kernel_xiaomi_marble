@@ -490,6 +490,9 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 
 typedef void (*fastpath_msg_handler)(void *, qdf_nbuf_t *, uint32_t);
 
+void hif_enable_polled_mode(struct hif_opaque_softc *hif_ctx);
+bool hif_is_polled_mode_enabled(struct hif_opaque_softc *hif_ctx);
+
 /*
  * Set the FASTPATH_mode_on flag in sc, for use by data path
  */

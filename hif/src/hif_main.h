@@ -168,6 +168,7 @@ struct hif_softc {
 	qdf_dma_addr_t paddr_rri_on_ddr;
 	int linkstate_vote;
 	bool fastpath_mode_on;
+	bool polled_mode_on;
 	atomic_t tasklet_from_intr;
 	int htc_htt_tx_endpoint;
 	qdf_dma_addr_t mem_pa;
