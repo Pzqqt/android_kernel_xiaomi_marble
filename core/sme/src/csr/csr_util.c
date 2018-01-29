@@ -492,11 +492,6 @@ bool csr_scan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
 	return !wlan_serialization_get_active_list_count(mac_ctx->psoc, true);
 }
 
-bool csr_scan_pending_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
-					bool inter_locked)
-{
-	return !wlan_serialization_get_pending_list_count(mac_ctx->psoc, true);
-}
 
 bool csr_nonscan_active_ll_is_list_empty(struct sAniSirGlobal *mac_ctx,
 				bool inter_locked)

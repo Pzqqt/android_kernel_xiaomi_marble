@@ -3886,62 +3886,6 @@ void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 	}
 }
 
-bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)
-{
-	bool fRet = false;
-	tListElem *pEntry, *pEntryTmp;
-	tSmeCmd *pCommand;
-	tDblLinkList localList;
-
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sme_err("failed to open list");
-		return fRet;
-	}
-
-	csr_scan_pending_ll_lock(pMac);
-	pEntry = csr_scan_pending_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
-	while (pEntry) {
-		pEntryTmp = csr_scan_pending_ll_next(pMac, pEntry,
-						LL_ACCESS_NOLOCK);
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		if (!((eSmeCommandScan == pCommand->command)
-		    && (sessionId == pCommand->sessionId))) {
-			pEntry = pEntryTmp;
-			continue;
-		}
-		sme_debug("-------- abort scan command reason = %d",
-			pCommand->u.scanCmd.reason);
-		/* The rest are fresh scan requests */
-		if (csr_scan_pending_ll_remove_entry(pMac, pEntry,
-					LL_ACCESS_NOLOCK)) {
-			csr_ll_insert_tail(&localList, pEntry,
-					   LL_ACCESS_NOLOCK);
-		}
-		fRet = true;
-		pEntry = pEntryTmp;
-	}
-
-	csr_scan_pending_ll_unlock(pMac);
-
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		if (pCommand->u.scanCmd.callback) {
-			/*
-			 * User scan request is pending, send response with
-			 * status eCSR_SCAN_ABORT
-			 */
-			pCommand->u.scanCmd.callback(pMac,
-				pCommand->u.scanCmd.pContext, sessionId,
-				pCommand->u.scanCmd.scanID, eCSR_SCAN_ABORT);
-		}
-		csr_release_command(pMac, pCommand);
-	}
-	csr_ll_close(&localList);
-
-	return fRet;
-}
-
 QDF_STATUS csr_scan_get_pmkid_candidate_list(tpAniSirGlobal pMac,
 					     uint32_t sessionId,
 					     tPmkidCandidateInfo *pPmkidList,
@@ -4444,61 +4388,50 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 	} /* AllocateMemory */
 }
 
-
-/**
- * csr_scan_abort_all_scans() - Abort scan on all Sessions
- * @mac_ctx: pointer to Global Mac structure
- * @reason: reason for cancelling scan
- *
- * Abort scan on all Sessions
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
-				   eCsrAbortReason reason)
+QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal mac_ctx, uint8_t vdev_id,
+				   uint32_t scan_id)
 {
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint8_t session_id;
+	struct scan_cancel_request *req;
+	QDF_STATUS status;
+	struct wlan_objmgr_vdev *vdev;
 
-	mac_ctx->scan.fDropScanCmd = true;
-	for (session_id = 0; session_id < CSR_ROAM_SESSION_MAX; session_id++) {
-		if (CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
-			csr_remove_cmd_from_pending_list(
-				mac_ctx,
-				session_id, INVALID_SCAN_ID,
-				eSmeCommandScan);
-			csr_abort_scan_from_active_list(mac_ctx,
-				 session_id, INVALID_SCAN_ID, eSmeCommandScan,
-				 reason);
-		}
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		sme_err("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
 	}
-	mac_ctx->scan.fDropScanCmd = false;
 
-	return status;
-}
+	/* Get NL global context from objmgr*/
+	if (vdev_id == INVAL_VDEV_ID)
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+				0, WLAN_LEGACY_SME_ID);
+	else
+		vdev = wlan_objmgr_get_vdev_by_id_from_pdev(mac_ctx->pdev,
+				vdev_id, WLAN_LEGACY_SME_ID);
 
-QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
-				   uint32_t scan_id, eCsrAbortReason reason)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	QDF_STATUS ret;
-
-	pMac->scan.fDropScanCmd = true;
-	ret = csr_remove_cmd_from_pending_list(pMac,
-			sessionId, scan_id, eSmeCommandScan);
-	pMac->scan.fDropScanCmd = false;
-
-	/*
-	 * If we are not able to find command for scan id in
-	 * pending list, check active list. Also if the session
-	 * id is valid then we have to check below active list.
-	 */
-	if (ret != QDF_STATUS_SUCCESS ||
-			sessionId != CSR_SESSION_ID_INVALID) {
-		status = csr_abort_scan_from_active_list(pMac,
-				sessionId, scan_id,
-				eSmeCommandScan, reason);
+	if (!vdev) {
+		sme_err("Failed get vdev");
+		qdf_mem_free(req);
+		return QDF_STATUS_E_INVAL;
 	}
+
+	req->vdev = vdev;
+	req->cancel_req.scan_id = scan_id;
+	req->cancel_req.pdev_id = wlan_objmgr_pdev_get_pdev_id(mac_ctx->pdev);
+	req->cancel_req.vdev_id = vdev_id;
+	if (scan_id != INVAL_SCAN_ID)
+		req->cancel_req.req_type = WLAN_SCAN_CANCEL_SINGLE;
+	if (vdev_id == INVAL_VDEV_ID)
+		req->cancel_req.req_type = WLAN_SCAN_CANCEL_PDEV_ALL;
+	else
+		req->cancel_req.req_type = WLAN_SCAN_CANCEL_VDEV_ALL;
+
+	status = ucfg_scan_cancel(req);
+	if (QDF_IS_STATUS_ERROR(status))
+		sme_err("Cancel scan request failed");
+
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_SME_ID);
+
 	return status;
 }
 QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
@@ -4553,237 +4486,6 @@ QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 	}
 
 	csr_ll_close(&localList);
-	return status;
-}
-
-QDF_STATUS csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
-						uint8_t sessionId,
-						uint32_t scan_id,
-						eSmeCommandType commandType)
-{
-	tDblLinkList localList;
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-	tListElem *pEntryToRemove;
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sme_err("failed to open list");
-		return status;
-	}
-
-	csr_scan_pending_ll_lock(pMac);
-	pEntry = csr_scan_pending_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
-
-	/*
-	 * Have to make sure we don't loop back to the head of the list,
-	 * which will happen if the entry is NOT on the list
-	 */
-	while (pEntry) {
-		pEntryToRemove = pEntry;
-		pEntry = csr_scan_pending_ll_next(pMac, pEntry,
-						LL_ACCESS_NOLOCK);
-		pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
-
-		if ((pCommand->command == commandType) &&
-		    (((commandType == eSmeCommandScan) &&
-		    (pCommand->u.scanCmd.scanID == scan_id)) ||
-		    (pCommand->sessionId == sessionId))) {
-			/* Remove that entry only */
-			if (csr_scan_pending_ll_remove_entry(pMac,
-					pEntryToRemove, LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntryToRemove,
-						   LL_ACCESS_NOLOCK);
-				status = QDF_STATUS_SUCCESS;
-			}
-		}
-	}
-	csr_scan_pending_ll_unlock(pMac);
-
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		sme_debug("Sending abort for command ID %d",
-			(commandType == eSmeCommandScan) ? pCommand->u.
-			scanCmd.scanID : sessionId);
-		csr_release_command(pMac, pCommand);
-	}
-
-	csr_ll_close(&localList);
-	return status;
-}
-
-QDF_STATUS csr_scan_abort_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	pMac->scan.fDropScanCmd = true;
-	csr_remove_scan_for_ssid_from_pending_list(pMac, sessionId);
-	pMac->scan.fDropScanCmd = false;
-	csr_abort_scan_from_active_list(pMac,
-			sessionId, INVALID_SCAN_ID, eSmeCommandScan,
-			eCSR_SCAN_ABORT_SSID_ONLY);
-	return status;
-}
-
-void csr_remove_scan_for_ssid_from_pending_list(tpAniSirGlobal pMac,
-						uint32_t sessionId)
-{
-	tDblLinkList localList;
-	tListElem *pEntry;
-	tSmeCmd *pCommand;
-	tListElem *pEntryToRemove;
-
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sme_err("failed to open list");
-		return;
-	}
-	csr_scan_pending_ll_lock(pMac);
-	if (!csr_scan_pending_ll_is_list_empty(pMac, LL_ACCESS_NOLOCK)) {
-		pEntry = csr_scan_pending_ll_peek_head(pMac, LL_ACCESS_NOLOCK);
-		/*
-		 * Have to make sure we don't loop back to the head of the list,
-		 * which will happen if the entry is NOT on the list...
-		 */
-		while (pEntry) {
-			pEntryToRemove = pEntry;
-			pEntry = csr_scan_pending_ll_next(pMac, pEntry,
-						LL_ACCESS_NOLOCK);
-			pCommand = GET_BASE_ADDR(pEntryToRemove, tSmeCmd, Link);
-
-			if (!((eSmeCommandScan == pCommand->command) &&
-			    (sessionId == pCommand->sessionId)))
-				continue;
-			if (eCsrScanForSsid != pCommand->u.scanCmd.reason)
-				continue;
-			/* Remove that entry only */
-			if (csr_scan_pending_ll_remove_entry(pMac,
-					pEntryToRemove, LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntryToRemove,
-						   LL_ACCESS_NOLOCK);
-			}
-		}
-	}
-	csr_scan_pending_ll_unlock(pMac);
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		csr_release_command(pMac, pCommand);
-	}
-	csr_ll_close(&localList);
-}
-
-
-/**
- * csr_send_scan_abort() -  Sends scan abort command to firmware
- * @mac_ctx: Pointer to Global Mac structure
- * @session_id: CSR session identification
- * @scan_id: scan identifier
- *
- * .Sends scan abort command to firmware
- *
- * Return: None
- */
-static void csr_send_scan_abort(tpAniSirGlobal mac_ctx,
-	uint32_t session_id, uint32_t scan_id)
-{
-	tSirSmeScanAbortReq *msg;
-	uint16_t msg_len;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	msg_len = (uint16_t)(sizeof(tSirSmeScanAbortReq));
-	msg = qdf_mem_malloc(msg_len);
-	if (NULL == msg) {
-		sme_err("Failed to alloc memory for SmeScanAbortReq");
-		return;
-	}
-	msg->type = eWNI_SME_SCAN_ABORT_IND;
-	msg->msgLen = msg_len;
-	msg->sessionId = session_id;
-	msg->scan_id = scan_id;
-	sme_debug(
-		"Abort scan sent to Firmware scan_id %d session %d",
-		scan_id, session_id);
-	status = umac_send_mb_message_to_mac(msg);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sme_err("Failed to send abort scan.scan_id %d session %d",
-			scan_id, session_id);
-	}
-}
-
-/**
- * csr_abort_scan_from_active_list() -  Remove Scan command from active list
- * @mac_ctx: Pointer to Global Mac structure
- * @list: pointer to scan active list
- * @session_id: CSR session identification
- * @scan_id: scan id
- * @scan_cmd_type: scan command type
- * @abort_reason: abort reason
- *
- * Remove Scan command from active scan list by matching either the scan id
- * or session id.
- *
- * Return: Success - QDF_STATUS_SUCCESS, Failure - error number
- */
-QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal mac_ctx,
-		uint32_t session_id, uint32_t scan_id,
-		eSmeCommandType scan_cmd_type, eCsrAbortReason abort_reason)
-{
-	tListElem *entry;
-	tSmeCmd *cmd;
-	tListElem *entry_remove;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	csr_scan_active_ll_lock(mac_ctx);
-	if (!csr_scan_active_ll_is_list_empty(mac_ctx, LL_ACCESS_NOLOCK)) {
-		entry = csr_scan_active_ll_peek_head(mac_ctx, LL_ACCESS_NOLOCK);
-		while (entry) {
-			entry_remove = entry;
-			entry = csr_scan_active_ll_next(mac_ctx, entry,
-						LL_ACCESS_NOLOCK);
-			cmd = GET_BASE_ADDR(entry_remove, tSmeCmd, Link);
-
-			/*skip if abort reason is for SSID*/
-			if ((abort_reason == eCSR_SCAN_ABORT_SSID_ONLY) &&
-				(eCsrScanForSsid != cmd->u.scanCmd.reason))
-				continue;
-			/*
-			 * Do not skip if command and either session id
-			 * or scan id is matched
-			 */
-			if ((cmd->command == scan_cmd_type) &&
-			    ((cmd->u.scanCmd.scanID == scan_id) ||
-			    (cmd->sessionId == session_id))) {
-				if (abort_reason ==
-				    eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE)
-					cmd->u.scanCmd.abort_scan_indication =
-					eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE;
-
-				csr_send_scan_abort(mac_ctx, cmd->sessionId,
-						    cmd->u.scanCmd.scanID);
-
-			}
-		}
-	}
-	csr_scan_active_ll_unlock(mac_ctx);
-
-	return status;
-}
-
-
-QDF_STATUS csr_scan_abort_mac_scan_not_for_connect(tpAniSirGlobal pMac,
-						   uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-
-	if (!csr_is_scan_for_roam_command_active(pMac, sessionId)) {
-		/*
-		 * Only abort the scan if it is not used for other roam/connect
-		 * purpose
-		 */
-		status = csr_scan_abort_mac_scan(pMac, sessionId,
-				INVALID_SCAN_ID, eCSR_SCAN_ABORT_DEFAULT);
-	}
 	return status;
 }
 bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel)
@@ -5022,43 +4724,16 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 void csr_scan_active_list_timeout_handle(void *userData)
 {
 	tSmeCmd *scan_cmd = (tSmeCmd *) userData;
-	tHalHandle *hal_ctx = cds_get_context(QDF_MODULE_ID_PE);
-	tpAniSirGlobal mac_ctx;
 	uint16_t scan_id;
-	tSirSmeScanAbortReq *msg;
-	uint16_t msg_len;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (scan_cmd == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Scan Timeout: Scan command is NULL"));
 		return;
 	}
-	if (hal_ctx == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("HAL Context is NULL"));
-		return;
-	}
-	mac_ctx = PMAC_STRUCT(hal_ctx);
 	scan_id = scan_cmd->u.scanCmd.scanID;
 	sme_err("Scan Timeout:Sending abort to Firmware ID %d session %d",
 		scan_id, scan_cmd->sessionId);
-	msg_len = (uint16_t)(sizeof(tSirSmeScanAbortReq));
-	msg = qdf_mem_malloc(msg_len);
-	if (NULL == msg) {
-		sme_err("Failed to alloc memory for SmeScanAbortReq");
-		return;
-	}
-	msg->type = eWNI_SME_SCAN_ABORT_IND;
-	msg->msgLen = msg_len;
-	msg->sessionId = scan_cmd->sessionId;
-	msg->scan_id = scan_id;
-	status = umac_send_mb_message_to_mac(msg);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		sme_err("Failed to post message to LIM");
-
-	scan_cmd->u.scanCmd.status = eCSR_SCAN_FAILURE;
-	csr_release_command(mac_ctx, scan_cmd);
 }
 
 static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)

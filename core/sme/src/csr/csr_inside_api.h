@@ -291,42 +291,20 @@ QDF_STATUS csr_scan_free_request(tpAniSirGlobal pMac, tCsrScanRequest *pReq);
 QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
 			     tCsrRoamProfile *pProfile, uint32_t roamId,
 			     bool notify);
-/* To remove fresh scan commands from the pending queue */
-bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId);
-QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t sessionId,
-				   uint32_t scan_id, eCsrAbortReason reason);
-QDF_STATUS csr_scan_abort_all_scans(tpAniSirGlobal mac_ctx,
-				   eCsrAbortReason reason);
 /**
- * csr_remove_cmd_from_pending_list() - Remove command from
- * pending list
- * @pMac: Pointer to Global MAC structure
- * @sessionId: session id
+ * csr_scan_abort_mac_scan() - Generic API to abort scan request
+ * @pMac: pointer to pmac
+ * @vdev_id: pdev id
  * @scan_id: scan id
- * @pList: pointer to pending command list
- * @commandType: sme command type
  *
- * Remove command from pending list by matching either
- * scan id or session id.
+ * Generic API to abort scans
  *
- * Return: QDF_STATUS_SUCCESS for success, QDF_STATUS_E_FAILURE
- * for failure
+ * Return: 0 for success, non zero for failure
  */
-QDF_STATUS csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
-			uint8_t sessionId, uint32_t scan_id,
-			eSmeCommandType commandType);
+QDF_STATUS csr_scan_abort_mac_scan(tpAniSirGlobal pMac, uint8_t vdev_id,
+				   uint32_t scan_id);
 QDF_STATUS csr_remove_nonscan_cmd_from_pending_list(tpAniSirGlobal pMac,
 			uint8_t sessionId, eSmeCommandType commandType);
-QDF_STATUS csr_scan_abort_mac_scan_not_for_connect(tpAniSirGlobal pMac,
-						   uint8_t sessionId);
-QDF_STATUS csr_scan_abort_scan_for_ssid(tpAniSirGlobal pMac,
-					uint32_t sessionId);
-void csr_remove_scan_for_ssid_from_pending_list(tpAniSirGlobal pMac,
-						uint32_t sessionId);
-
-QDF_STATUS csr_abort_scan_from_active_list(tpAniSirGlobal pMac,
-		uint32_t sessionId, uint32_t scan_id,
-		eSmeCommandType scan_cmd_type, eCsrAbortReason abort_reason);
 
 /* If fForce is true we will save the new String that is learn't. */
 /* Typically it will be true in case of Join or user initiated ioctl */

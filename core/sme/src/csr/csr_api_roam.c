@@ -8327,8 +8327,8 @@ QDF_STATUS csr_roam_issue_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		status = QDF_STATUS_E_RESOURCES;
 	} else {
 		if (fClearScan)
-			csr_scan_abort_mac_scan_not_for_connect(pMac,
-								sessionId);
+			csr_scan_abort_mac_scan(pMac, sessionId, INVAL_SCAN_ID);
+
 		pCommand->u.roamCmd.fReleaseProfile = false;
 		if (NULL == pProfile) {
 			/* We can roam now
@@ -8390,7 +8390,7 @@ QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 		sme_err("fail to get command buffer");
 		status = QDF_STATUS_E_RESOURCES;
 	} else {
-		csr_scan_abort_mac_scan_not_for_connect(pMac, sessionId);
+		csr_scan_abort_mac_scan(pMac, sessionId, INVAL_SCAN_ID);
 		if (pProfile) {
 			/* This is likely trying to reassoc to
 			 * different profile
@@ -8562,10 +8562,7 @@ QDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		pProfile->BSSType, pProfile->AuthType.authType[0],
 		pProfile->EncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(pMac, sessionId);
-	csr_scan_remove_fresh_scan_command(pMac, sessionId);
-	csr_scan_abort_mac_scan(pMac, sessionId,
-				INVALID_SCAN_ID,
-				eCSR_SCAN_ABORT_DEFAULT);
+	csr_scan_abort_mac_scan(pMac, sessionId, INVAL_SCAN_ID);
 	csr_roam_remove_duplicate_command(pMac, sessionId, NULL, eCsrHddIssued);
 	/* Check whether ssid changes */
 	if (csr_is_conn_state_connected(pMac, sessionId) &&
@@ -8771,8 +8768,7 @@ csr_roam_reassoc(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		profile->BSSType, profile->AuthType.authType[0],
 		profile->EncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(mac_ctx, session_id);
-	csr_scan_remove_fresh_scan_command(mac_ctx, session_id);
-	csr_scan_abort_mac_scan_not_for_connect(mac_ctx, session_id);
+	csr_scan_abort_mac_scan(mac_ctx, session_id, INVAL_SCAN_ID);
 	csr_roam_remove_duplicate_command(mac_ctx, session_id, NULL,
 					  eCsrHddIssuedReassocToSameAP);
 	if (csr_is_conn_state_connected(mac_ctx, session_id)) {
@@ -8836,7 +8832,7 @@ static QDF_STATUS csr_roam_join_last_profile(tpAniSirGlobal pMac,
 	}
 
 	if (pSession->pCurRoamProfile) {
-		csr_scan_abort_mac_scan_not_for_connect(pMac, sessionId);
+		csr_scan_abort_mac_scan(pMac, sessionId, INVAL_SCAN_ID);
 		/* We have to make a copy of pCurRoamProfile because it
 		 * will be free inside csr_roam_issue_connect
 		 */
@@ -9175,7 +9171,7 @@ QDF_STATUS csr_roam_disconnect_internal(tpAniSirGlobal pMac, uint32_t sessionId,
 	} else {
 		pMac->roam.roamSession[sessionId].connectState =
 			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING;
-		csr_scan_abort_scan_for_ssid(pMac, sessionId);
+		csr_scan_abort_mac_scan(pMac, sessionId, INVAL_SCAN_ID);
 		status = QDF_STATUS_CMD_NOT_QUEUED;
 		sme_debug("Disconnect cmd not queued, Roam command is not present return with status: %d",
 			status);
@@ -12566,8 +12562,7 @@ void csr_roam_cancel_roaming(tpAniSirGlobal pMac, uint32_t sessionId)
 			/* Since CSR may be in lostlink roaming situation,
 			 * abort all roaming related activities
 			 */
-			csr_scan_abort_mac_scan(pMac, sessionId,
-				INVALID_SCAN_ID, eCSR_SCAN_ABORT_DEFAULT);
+			csr_scan_abort_mac_scan(pMac, sessionId, INVAL_SCAN_ID);
 			csr_roam_stop_roaming_timer(pMac, sessionId);
 		}
 	}
@@ -20928,8 +20923,8 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	if (command->u.set_hw_mode_cmd.reason ==
 		POLICY_MGR_UPDATE_REASON_HIDDEN_STA) {
 		sme_err("clear any pending scan command");
-		status = csr_scan_abort_mac_scan_not_for_connect(mac,
-				command->u.set_hw_mode_cmd.session_id);
+		status = csr_scan_abort_mac_scan(mac,
+			command->u.set_hw_mode_cmd.session_id, INVAL_SCAN_ID);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sme_err("Failed to clear scan cmd");
 			goto fail;

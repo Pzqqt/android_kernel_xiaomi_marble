@@ -7560,10 +7560,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_start_scan(wma_handle, msg->bodyptr, msg->type);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WMA_STOP_SCAN_OFFLOAD_REQ:
-		wma_stop_scan(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_UPDATE_CHAN_LIST_REQ:
 		wma_update_channel_list(wma_handle,
 					(tSirUpdateChanList *) msg->bodyptr);

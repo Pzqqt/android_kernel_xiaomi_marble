@@ -67,6 +67,8 @@
 #include "wlan_reg_services_api.h"
 #include "lim_security_utils.h"
 #include "cds_ieee80211_common.h"
+#include <wlan_scan_ucfg_api.h>
+
 
 void lim_log_session_states(tpAniSirGlobal pMac);
 static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
@@ -1209,76 +1211,42 @@ end:
 	return;
 } /*** end lim_handle80211_frames() ***/
 
-/**
- * lim_send_stop_scan_offload_req()
- *
- ***FUNCTION:
- * This function will be called to abort the ongoing offloaded scan
- * request.
- *
- *
- ***NOTE:
- *
- * @param  pMac      Pointer to Global MAC structure
- * @return QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
- */
-static QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
-	uint8_t SessionId, uint32_t scan_id, uint32_t scan_requestor_id)
-{
-	struct scheduler_msg msg = {0};
-	tSirRetStatus rc = eSIR_SUCCESS;
-	tAbortScanParams *pAbortScanParams;
-
-	pAbortScanParams = qdf_mem_malloc(sizeof(tAbortScanParams));
-	if (NULL == pAbortScanParams) {
-		pe_err("Memory allocation failed for AbortScanParams");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	pAbortScanParams->SessionId = SessionId;
-	pAbortScanParams->scan_id = scan_id;
-	pAbortScanParams->scan_requestor_id = scan_requestor_id;
-	msg.type = WMA_STOP_SCAN_OFFLOAD_REQ;
-	msg.bodyptr = pAbortScanParams;
-	msg.bodyval = 0;
-
-	rc = wma_post_ctrl_msg(pMac, &msg);
-	if (rc != eSIR_SUCCESS) {
-		pe_err("wma_post_ctrl_msg() return failure");
-		qdf_mem_free(pAbortScanParams);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pe_debug("Abort ongoing offload scan");
-	return QDF_STATUS_SUCCESS;
-
-}
-
-/**
- * lim_process_abort_scan_ind() - abort the scan which is presently being run
- *
- * @mac_ctx: Pointer to Global MAC structure
- * @session_id: PE session
- * @scan_id: Scan ID from the scan request
- * @scan_requesor_id: Entity requesting the scan
- *
- * @return: None
- */
 void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
-	uint8_t session_id, uint32_t scan_id, uint32_t scan_requestor_id)
+	uint8_t vdev_id, uint32_t scan_id, uint32_t scan_requestor_id)
 {
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_SCAN_ABORT_IND_EVENT,
-		NULL, 0, 0);
-#endif
+	QDF_STATUS status;
+	struct scan_cancel_request *req;
+	struct wlan_objmgr_vdev *vdev;
 
 	pe_debug("scan_id %d, scan_requestor_id 0x%x",
-		scan_id, scan_requestor_id);
+			scan_id, scan_requestor_id);
 
-	/* send stop scan cmd to firmware */
-	lim_send_stop_scan_offload_req(mac_ctx, session_id, scan_id,
-		scan_requestor_id);
-	return;
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(
+			mac_ctx->psoc, vdev_id,
+			WLAN_LEGACY_MAC_ID);
+	if (!vdev) {
+		pe_debug("vdev is NULL");
+		return;
+	}
+
+	req = qdf_mem_malloc(sizeof(*req));
+	if (!req) {
+		pe_debug("failed to alloc scan cancel request");
+		goto fail;
+	}
+
+	req->vdev = vdev;
+	req->cancel_req.requester = scan_requestor_id;
+	req->cancel_req.scan_id = scan_id;
+	req->cancel_req.vdev_id = vdev_id;
+	req->cancel_req.req_type = WLAN_SCAN_CANCEL_SINGLE;
+
+	status = ucfg_scan_cancel(req);
+	if (QDF_IS_STATUS_ERROR(status))
+		pe_err("Cancel scan request failed");
+
+fail:
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_MAC_ID);
 }
 
 static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
@@ -1337,9 +1305,7 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	cds_pkt_t *body_ptr = NULL;
 	QDF_STATUS qdf_status;
 	struct scheduler_msg new_msg = {0};
-	tSirSmeScanAbortReq *req_msg = NULL;
 	uint8_t session_id;
-	uint32_t scan_id;
 
 #ifdef FEATURE_WLAN_TDLS
 	tSirTdlsInd *tdls_ind = NULL;
@@ -1492,17 +1458,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_SEND_DISASSOC_FRAME:
 		/* Need to response to hdd */
 		lim_process_normal_hdd_msg(mac_ctx, msg, true);
-		break;
-	case eWNI_SME_SCAN_ABORT_IND:
-		req_msg = msg->bodyptr;
-		if (req_msg) {
-			session_id = req_msg->sessionId;
-			scan_id = req_msg->scan_id;
-			lim_process_abort_scan_ind(mac_ctx, session_id,
-				scan_id, USER_SCAN_REQUESTOR_ID);
-			qdf_mem_free((void *)msg->bodyptr);
-			msg->bodyptr = NULL;
-		}
 		break;
 	case eWNI_SME_PDEV_SET_HT_VHT_IE:
 	case eWNI_SME_SET_VDEV_IES_PER_BAND:

@@ -1469,9 +1469,6 @@ uint32_t csr_scan_pending_ll_count(struct sAniSirGlobal *mac_ctx);
 bool csr_scan_active_ll_is_list_empty(
 				struct sAniSirGlobal *mac_ctx,
 				bool inter_locked);
-bool csr_scan_pending_ll_is_list_empty(
-				struct sAniSirGlobal *mac_ctx,
-				bool inter_locked);
 bool csr_scan_active_ll_remove_entry(
 		struct sAniSirGlobal *mac_ctx,
 		tListElem *entry, bool inter_locked);

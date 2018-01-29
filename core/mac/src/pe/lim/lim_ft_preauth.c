@@ -488,9 +488,9 @@ send_rsp:
 	     psessionEntry->ftPEContext.pFTPreAuthReq->preAuthchannelNum) ||
 	    lim_is_in_mcc(pMac)) {
 		/* Need to move to the original AP channel */
-		lim_process_abort_scan_ind(pMac, psessionEntry->peSessionId,
+		lim_process_abort_scan_ind(pMac, psessionEntry->smeSessionId,
 			psessionEntry->ftPEContext.pFTPreAuthReq->scan_id,
-			PREAUTH_REQUESTOR_ID);
+			pMac->lim.req_id | PREAUTH_REQUESTOR_ID);
 	} else {
 		pe_debug("Pre auth on same channel as connected AP channel %d\
 			and no mcc pe sessions exist",
@@ -714,6 +714,7 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 			  FL("Invalid scan ID"));
 		return QDF_STATUS_E_FAILURE;
 	}
+	ft_preauth_req->scan_id = req->scan_req.scan_id;
 	req->scan_req.vdev_id = session_id;
 	req->scan_req.scan_req_id = mac_ctx->lim.req_id | PREAUTH_REQUESTOR_ID;
 	req->scan_req.scan_priority = WMI_SCAN_PRIORITY_VERY_HIGH;

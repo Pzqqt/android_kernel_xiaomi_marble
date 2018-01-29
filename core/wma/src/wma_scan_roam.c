@@ -610,46 +610,6 @@ error1:
 }
 
 /**
- * wma_stop_scan() - stop scan command
- * @wma_handle: wma handle
- * @abort_scan_req: abort scan params
- *
- * Send stop scan command to fw.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
-			 tAbortScanParams *abort_scan_req)
-{
-	QDF_STATUS qdf_status;
-	struct scan_cancel_param  scan_param = {0};
-
-	scan_param.vdev_id = abort_scan_req->SessionId;
-	scan_param.requester = abort_scan_req->scan_requestor_id;
-	scan_param.scan_id = abort_scan_req->scan_id;
-	/* stop the scan with the corresponding scan_id */
-	scan_param.req_type = WLAN_SCAN_CANCEL_SINGLE;
-	qdf_status = wmi_unified_scan_stop_cmd_send(wma_handle->wmi_handle,
-						&scan_param);
-	/* Call the wmi api to request the scan */
-	if (QDF_IS_STATUS_ERROR(qdf_status)) {
-		WMA_LOGE("wmi_unified_cmd_send WMI_STOP_SCAN_CMDID returned Error %d",
-			qdf_status);
-		goto error;
-	}
-	WMA_LOGI("scan_id 0x%x, scan_requestor_id 0x%x, vdev_id %d",
-		 abort_scan_req->scan_id,
-		 abort_scan_req->scan_requestor_id,
-		 abort_scan_req->SessionId);
-	WMA_LOGI("WMA --> WMI_STOP_SCAN_CMDID");
-
-	return QDF_STATUS_SUCCESS;
-
-error:
-	return qdf_status;
-}
-
-/**
  * wma_update_channel_list() - update channel list
  * @handle: wma handle
  * @chan_list: channel list
@@ -5978,19 +5938,6 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	struct scheduler_msg cds_msg = {0};
 	tSirSmeCandidateFoundInd *candidate_ind;
-	struct scan_param *params;
-
-	params = &wma->interfaces[vdev_id].scan_info;
-	/* abort existing scans from GUI, but not roaming preauth scan */
-	if (params->scan_id != 0 && params->chan_freq == 0 &&
-	    params->scan_requestor_id == USER_SCAN_REQUESTOR_ID) {
-		tAbortScanParams abortScan;
-
-		abortScan.SessionId = vdev_id;
-		abortScan.scan_id = params->scan_id;
-		abortScan.scan_requestor_id = params->scan_requestor_id;
-		wma_stop_scan(wma, &abortScan);
-	}
 
 	candidate_ind = qdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
 	if (!candidate_ind) {

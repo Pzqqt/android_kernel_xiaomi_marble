@@ -337,7 +337,17 @@ void pe_free_msg(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
    --------------------------------------------------------------------------*/
 void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *data);
 
-void lim_process_abort_scan_ind(tpAniSirGlobal pMac, uint8_t sessionId,
+/**
+ * lim_process_abort_scan_ind() - abort the scan which is presently being run
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @vdev_id: vdev_id
+ * @scan_id: Scan ID from the scan request
+ * @scan_requesor_id: Entity requesting the scan
+ *
+ * @return: None
+ */
+void lim_process_abort_scan_ind(tpAniSirGlobal pMac, uint8_t vdev_id,
 	uint32_t scan_id, uint32_t scan_requestor_id);
 
 void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
