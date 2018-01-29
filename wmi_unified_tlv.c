@@ -18416,6 +18416,7 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 {
 	WMI_MGMT_RX_EVENTID_param_tlvs *param_tlvs = NULL;
 	wmi_mgmt_rx_hdr *ev_hdr = NULL;
+	int i;
 
 	param_tlvs = (WMI_MGMT_RX_EVENTID_param_tlvs *) evt_buf;
 	if (!param_tlvs) {
@@ -18441,7 +18442,8 @@ static QDF_STATUS extract_mgmt_rx_params_tlv(wmi_unified_t wmi_handle,
 	hdr->flags = ev_hdr->flags;
 	hdr->rssi = ev_hdr->rssi;
 	hdr->tsf_delta = ev_hdr->tsf_delta;
-	qdf_mem_copy(hdr->rssi_ctl, ev_hdr->rssi_ctl, sizeof(hdr->rssi_ctl));
+	for (i = 0; i < ATH_MAX_ANTENNA; i++)
+		hdr->rssi_ctl[i] = ev_hdr->rssi_ctl[i];
 
 	*bufp = param_tlvs->bufp;
 
