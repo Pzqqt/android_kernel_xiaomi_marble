@@ -644,8 +644,9 @@ enum mgmt_frame_type {
 	MGMT_MAX_FRAME_TYPE,
 };
 
-#define WLAN_MGMT_TXRX_HOST_MAX_ANTENNA 4
-
+#define WLAN_MGMT_TXRX_HOST_MAX_ANTENNA          4
+#define WLAN_INVALID_PER_CHAIN_RSSI             0x80
+#define WLAN_NOISE_FLOOR_DBM_DEFAULT            -96
 /**
  * struct mgmt_rx_event_params - host mgmt header params
  * @channel: channel on which this frame is received

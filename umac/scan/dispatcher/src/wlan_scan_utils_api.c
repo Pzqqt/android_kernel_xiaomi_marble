@@ -853,6 +853,9 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 			   (frame + sizeof(*hdr));
 	hdr = (struct wlan_frame_hdr *)frame;
 
+	/* update timestamp in nanoseconds needed by kernel layers */
+	scan_entry->boottime_ns = qdf_get_monotonic_boottime_ns();
+
 	scan_entry->frm_subtype = frm_subtype;
 	qdf_mem_copy(scan_entry->bssid.bytes,
 		hdr->i_addr3, QDF_MAC_ADDR_SIZE);
@@ -865,6 +868,10 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 	scan_entry->rssi_raw = rx_param->rssi;
 	scan_entry->avg_rssi = WLAN_RSSI_IN(scan_entry->rssi_raw);
 	scan_entry->tsf_delta = rx_param->tsf_delta;
+
+	/* Copy per chain rssi to scan entry */
+	qdf_mem_copy(scan_entry->per_chain_snr, rx_param->rssi_ctl,
+		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
 
 	/* store jiffies */
 	scan_entry->rrm_parent_tsf = (u_int32_t) qdf_system_ticks();

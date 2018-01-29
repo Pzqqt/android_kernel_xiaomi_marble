@@ -1574,16 +1574,82 @@ static inline void wlan_add_age_ie(uint8_t *mgmt_frame,
 }
 #endif /* WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS */
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || \
+	defined(CFG80211_INFORM_BSS_FRAME_DATA)
+/**
+ * wlan_fill_per_chain_rssi() - fill per chain RSSI in inform bss
+ * @data: bss data
+ * @per_chain_snr: per chain RSSI
+ *
+ * Return: void
+ */
+#if defined(CFG80211_SCAN_PER_CHAIN_RSSI_SUPPORT) || \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0))
+static void wlan_fill_per_chain_rssi(struct cfg80211_inform_bss *data,
+	struct wlan_cfg80211_inform_bss *bss)
+{
+
+	uint32_t i;
+
+	if (!bss || !data) {
+		cfg80211_err("Received bss is NULL");
+		return;
+	}
+	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++) {
+		if (!bss->per_chain_snr[i] ||
+		    (bss->per_chain_snr[i] == WLAN_INVALID_PER_CHAIN_RSSI))
+			continue;
+		/* Add noise margin to SNR to convert it to RSSI */
+		data->chain_signal[i] = bss->per_chain_snr[i] +
+					WLAN_NOISE_FLOOR_DBM_DEFAULT;
+		data->chains |= BIT(i);
+	}
+}
+#else
+static inline void
+wlan_fill_per_chain_rssi(struct cfg80211_inform_bss *data,
+	struct wlan_cfg80211_inform_bss *bss)
+{
+}
+#endif
+
+struct cfg80211_bss *
+wlan_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
+		struct wlan_cfg80211_inform_bss *bss)
+{
+	struct cfg80211_inform_bss data  = {0};
+
+	if (!bss) {
+		cfg80211_err("bss is null");
+		return NULL;
+	}
+	wlan_fill_per_chain_rssi(&data, bss);
+
+	data.chan = bss->chan;
+	data.boottime_ns = bss->boottime_ns;
+	data.signal = bss->rssi;
+	return cfg80211_inform_bss_frame_data(wiphy, &data, bss->mgmt,
+					      bss->frame_len, GFP_KERNEL);
+}
+#else
+struct cfg80211_bss *
+wlan_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
+		struct wlan_cfg80211_inform_bss *bss)
+
+{
+	return cfg80211_inform_bss_frame(wiphy, bss->chan, bss->mgmt,
+					 bss->frame_len,
+					 bss->rssi, GFP_KERNEL);
+}
+#endif
+
 void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 		struct scan_cache_entry *scan_params)
 {
 	struct pdev_osif_priv *pdev_ospriv = wlan_pdev_get_ospriv(pdev);
 	struct wiphy *wiphy;
-	int frame_len;
-	struct ieee80211_mgmt *mgmt = NULL;
-	struct ieee80211_channel *chan;
-	int rssi = 0;
 	struct cfg80211_bss *bss_status = NULL;
+	struct wlan_cfg80211_inform_bss bss_data = {0};
 
 	if (!pdev_ospriv) {
 		cfg80211_err("os_priv is NULL");
@@ -1592,31 +1658,31 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 
 	wiphy = pdev_ospriv->wiphy;
 
-	frame_len = wlan_get_frame_len(scan_params);
-	mgmt = qdf_mem_malloc(frame_len);
-	if (!mgmt) {
+	bss_data.frame_len = wlan_get_frame_len(scan_params);
+	bss_data.mgmt = qdf_mem_malloc(bss_data.frame_len);
+	if (!bss_data.mgmt) {
 		cfg80211_err("mem alloc failed");
 		return;
 	}
-	qdf_mem_copy(mgmt,
+	qdf_mem_copy(bss_data.mgmt,
 		 util_scan_entry_frame_ptr(scan_params),
 		 util_scan_entry_frame_len(scan_params));
 	/*
 	 * Android does not want the timestamp from the frame.
 	 * Instead it wants a monotonic increasing value
 	 */
-	mgmt->u.probe_resp.timestamp = qdf_get_monotonic_boottime();
-	wlan_add_age_ie((uint8_t *)mgmt, scan_params);
+	bss_data.mgmt->u.probe_resp.timestamp = qdf_get_monotonic_boottime();
+	wlan_add_age_ie((uint8_t *)bss_data.mgmt, scan_params);
 	/*
 	 * Based on .ini configuration, raw rssi can be reported for bss.
 	 * Raw rssi is typically used for estimating power.
 	 */
-	rssi = scan_params->rssi_raw;
+	bss_data.rssi = scan_params->rssi_raw;
 
-	chan = wlan_get_ieee80211_channel(wiphy,
+	bss_data.chan = wlan_get_ieee80211_channel(wiphy,
 		scan_params->channel.chan_idx);
-	if (!chan) {
-		qdf_mem_free(mgmt);
+	if (!bss_data.chan) {
+		qdf_mem_free(bss_data.mgmt);
 		return;
 	}
 
@@ -1624,13 +1690,20 @@ void wlan_cfg80211_inform_bss_frame(struct wlan_objmgr_pdev *pdev,
 	 * Supplicant takes the signal strength in terms of
 	 * mBm (1 dBm = 100 mBm).
 	 */
-	rssi = QDF_MIN(rssi, 0) * 100;
+	bss_data.rssi = QDF_MIN(bss_data.rssi, 0) * 100;
+
+	bss_data.boottime_ns = scan_params->boottime_ns;
+
+	qdf_mem_copy(bss_data.per_chain_snr, scan_params->per_chain_snr,
+		     WLAN_MGMT_TXRX_HOST_MAX_ANTENNA);
 
 	cfg80211_info("BSSID: %pM Channel:%d RSSI:%d",
-		mgmt->bssid, chan->center_freq, (int)(rssi / 100));
+		bss_data.mgmt->bssid, bss_data.chan->center_freq,
+		(int)(bss_data.rssi / 100));
 
-	bss_status =
-		cfg80211_inform_bss_frame(wiphy, chan, mgmt,
-		frame_len, rssi, GFP_KERNEL);
-	qdf_mem_free(mgmt);
+	bss_status = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
+	if (!bss_status)
+		cfg80211_err("failed to inform bss");
+
+	qdf_mem_free(bss_data.mgmt);
 }

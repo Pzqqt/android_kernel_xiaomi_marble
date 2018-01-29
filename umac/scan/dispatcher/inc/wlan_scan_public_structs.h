@@ -27,6 +27,7 @@
 #include <qdf_list.h>
 #include <qdf_atomic.h>
 #include <wlan_cmn_ieee80211.h>
+#include <wlan_mgmt_txrx_utils_api.h>
 
 typedef uint16_t wlan_scan_requester;
 typedef uint32_t wlan_scan_id;
@@ -278,6 +279,8 @@ struct security_info {
  * @tsf_delta: TSF delta
  * @bss_score: bss score calculated on basis of RSSI/caps etc.
  * @neg_sec_info: negotiated security info
+ * @per_chain_snr: per chain SNR value received.
+ * boottime_ns: boottime in ns.
  * @rrm_parent_tsf: RRM parent tsf
  * @mlme_info: Mlme info, this will be updated by MLME for the scan entry
  * @alt_wcn_ie: alternate WCN IE
@@ -314,6 +317,8 @@ struct scan_cache_entry {
 	uint32_t tsf_delta;
 	uint32_t bss_score;
 	struct security_info neg_sec_info;
+	uint8_t per_chain_snr[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
+	uint64_t boottime_ns;
 	uint32_t rrm_parent_tsf;
 	struct element_info alt_wcn_ie;
 	struct ie_list ie_list;

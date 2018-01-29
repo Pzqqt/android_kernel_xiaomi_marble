@@ -32,7 +32,7 @@
 #include <qdf_list.h>
 #include <qdf_types.h>
 #include <wlan_scan_ucfg_api.h>
-
+#include <wlan_mgmt_txrx_utils_api.h>
 
 /* Max number of scans allowed from userspace */
 #define WLAN_MAX_SCAN_COUNT 8
@@ -126,6 +126,25 @@ struct scan_params {
 	struct element_info default_ie;
 };
 
+/**
+ * struct wlan_cfg80211_inform_bss - BSS inform data
+ * @chan: channel the frame was received on
+ * @mgmt: beacon/probe resp frame
+ * @frame_len: frame length
+ * @rssi: signal strength in mBm (100*dBm)
+ * @boottime_ns: timestamp (CLOCK_BOOTTIME) when the information was received.
+ * @per_chain_snr: per chain snr received
+ */
+struct wlan_cfg80211_inform_bss {
+	struct ieee80211_channel *chan;
+	struct ieee80211_mgmt *mgmt;
+	size_t frame_len;
+	int rssi;
+	uint64_t boottime_ns;
+	uint8_t per_chain_snr[WLAN_MGMT_TXRX_HOST_MAX_ANTENNA];
+};
+
+
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * wlan_cfg80211_sched_scan_start() - cfg80211 scheduled scan(pno) start
@@ -210,6 +229,19 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(
 int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		struct cfg80211_scan_request *request,
 		struct scan_params *params);
+
+/**
+ * wlan_cfg80211_inform_bss_frame_data() - API to inform beacon to cfg80211
+ * @wiphy: wiphy
+ * @bss_data: bss data
+ *
+ * API to inform beacon to cfg80211
+ *
+ * Return: pointer to bss entry
+ */
+struct cfg80211_bss *
+wlan_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
+		struct wlan_cfg80211_inform_bss *bss);
 
 /**
  * wlan_cfg80211_inform_bss_frame() - API to inform beacon to cfg80211
