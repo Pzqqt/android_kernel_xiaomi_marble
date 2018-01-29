@@ -114,6 +114,7 @@
 #include "wifi_pos_api.h"
 #include "wlan_hdd_spectralscan.h"
 #include "wlan_ipa_ucfg_api.h"
+#include "wlan_cfg80211_mc_cp_stats.h"
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
@@ -10942,6 +10943,7 @@ static int wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 #undef BPF_PROGRAM
 #undef BPF_MAX
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * define short names for the global vendor params
  * used by wlan_hdd_cfg80211_wakelock_stats_rsp_callback()
@@ -10992,8 +10994,6 @@ static int wlan_hdd_cfg80211_sap_configuration_set(struct wiphy *wiphy,
 		QCA_WLAN_VENDOR_ATTR_PNO_COMPLETE_CNT
 #define PARAM_PNO_MATCH_CNT \
 		QCA_WLAN_VENDOR_ATTR_PNO_MATCH_CNT
-
-
 
 /**
  * hdd_send_wakelock_stats() - API to send wakelock stats
@@ -11122,6 +11122,41 @@ nla_put_failure:
 	kfree_skb(skb);
 	return -EINVAL;
 }
+#endif
+
+#ifdef QCA_SUPPORT_CP_STATS
+static int wlan_hdd_process_wake_lock_stats(struct hdd_context *hdd_ctx)
+{
+	return wlan_cfg80211_mc_cp_stats_get_wakelock_stats(hdd_ctx->hdd_psoc,
+							    hdd_ctx->wiphy);
+}
+#else
+/**
+ * wlan_hdd_process_wake_lock_stats() - wrapper function to absract cp_stats
+ * or legacy get_wake_lock_stats API.
+ * @hdd_ctx: pointer to hdd_ctx
+ *
+ * Return: 0 on success; error number otherwise.
+ */
+static int wlan_hdd_process_wake_lock_stats(struct hdd_context *hdd_ctx)
+{
+	int ret;
+	QDF_STATUS qdf_status;
+	struct sir_wake_lock_stats wake_lock_stats = {0};
+
+	qdf_status = wma_get_wakelock_stats(&wake_lock_stats);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		hdd_err("failed to get wakelock stats(err=%d)", qdf_status);
+		return -EINVAL;
+	}
+
+	ret = hdd_send_wakelock_stats(hdd_ctx, &wake_lock_stats);
+	if (ret)
+		hdd_err("Failed to post wake lock stats");
+
+	return ret;
+}
+#endif
 
 /**
  * __wlan_hdd_cfg80211_get_wakelock_stats() - gets wake lock stats
@@ -11142,10 +11177,8 @@ static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 					const void *data,
 					int data_len)
 {
+	int ret;
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
-	int status, ret;
-	struct sir_wake_lock_stats wake_lock_stats;
-	QDF_STATUS qdf_status;
 
 	hdd_enter();
 
@@ -11154,21 +11187,11 @@ static int __wlan_hdd_cfg80211_get_wakelock_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status)
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
 		return -EINVAL;
 
-	qdf_status = wma_get_wakelock_stats(&wake_lock_stats);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		hdd_err("failed to get wakelock stats(err=%d)", qdf_status);
-		return -EINVAL;
-	}
-
-	ret = hdd_send_wakelock_stats(hdd_ctx,
-					&wake_lock_stats);
-	if (ret)
-		hdd_err("Failed to post wake lock stats");
-
+	ret = wlan_hdd_process_wake_lock_stats(hdd_ctx);
 	hdd_exit();
 	return ret;
 }

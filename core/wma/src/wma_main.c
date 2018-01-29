@@ -97,6 +97,7 @@
 #include "init_deinit_ucfg.h"
 #include "target_if_green_ap.h"
 #include "service_ready_param.h"
+#include "wlan_cp_stats_mc_ucfg_api.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -2073,6 +2074,112 @@ struct wma_version_info g_wmi_version_info;
  *
  * Return: None
  */
+#ifdef QCA_SUPPORT_CP_STATS
+static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
+{
+	uint8_t vdev_id;
+	uint16_t len = 0;
+	t_wma_handle *wma;
+	char *buf = *buf_ptr;
+	struct wma_txrx_node *iface;
+	struct wake_lock_stats stats;
+	struct wlan_objmgr_vdev *vdev;
+
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma) {
+		WMA_LOGE("%s: WMA context is invald!", __func__);
+		return;
+	}
+
+	WMA_LOGE("%s: size of buffer: %d", __func__, *size);
+
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		iface = &wma->interfaces[vdev_id];
+		if (!iface->handle)
+			continue;
+
+		vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
+						vdev_id, WLAN_LEGACY_WMA_ID);
+		ucfg_mc_cp_stats_get_vdev_wake_lock_stats(vdev, &stats);
+		len += qdf_scnprintf(buf + len, *size - len,
+			"\n"
+			"vdev_id %d\n"
+			"WoW Stats\n"
+			"\tpno_match %u\n"
+			"\tpno_complete %u\n"
+			"\tgscan %u\n"
+			"\tlow_rssi %u\n"
+			"\trssi_breach %u\n"
+			"\tucast %u\n"
+			"\tbcast %u\n"
+			"\ticmpv4 %u\n"
+			"\ticmpv6 %u\n"
+			"\tipv4_mcast %u\n"
+			"\tipv6_mcast %u\n"
+			"\tipv6_mcast_ra %u\n"
+			"\tipv6_mcast_ns %u\n"
+			"\tipv6_mcast_na %u\n"
+			"\toem_response %u\n"
+			"conn_state %d\n"
+			"dtimPeriod %d\n"
+			"chanmode %d\n"
+			"vht_capable %d\n"
+			"ht_capable %d\n"
+			"chan_width %d\n"
+			"vdev_active %d\n"
+			"vdev_up %d\n"
+			"aid %d\n"
+			"rate_flags %d\n"
+			"nss %d\n"
+			"tx_power %d\n"
+			"max_tx_power %d\n"
+			"nwType %d\n"
+			"tx_streams %d\n"
+			"rx_streams %d\n"
+			"chain_mask %d\n"
+			"nss_2g %d\n"
+			"nss_5g %d",
+			vdev_id,
+			stats.pno_match_wake_up_count,
+			stats.pno_complete_wake_up_count,
+			stats.gscan_wake_up_count,
+			stats.low_rssi_wake_up_count,
+			stats.rssi_breach_wake_up_count,
+			stats.ucast_wake_up_count,
+			stats.bcast_wake_up_count,
+			stats.icmpv4_count,
+			stats.icmpv6_count,
+			stats.ipv4_mcast_wake_up_count,
+			stats.ipv6_mcast_wake_up_count,
+			stats.ipv6_mcast_ra_stats,
+			stats.ipv6_mcast_ns_stats,
+			stats.ipv6_mcast_na_stats,
+			stats.oem_response_wake_up_count,
+			iface->conn_state,
+			iface->dtimPeriod,
+			iface->chanmode,
+			iface->vht_capable,
+			iface->ht_capable,
+			iface->chan_width,
+			iface->vdev_active,
+			wma_is_vdev_up(vdev_id),
+			iface->aid,
+			iface->rate_flags,
+			iface->nss,
+			iface->tx_power,
+			iface->max_tx_power,
+			iface->nwType,
+			iface->tx_streams,
+			iface->rx_streams,
+			iface->chain_mask,
+			iface->nss_2g,
+			iface->nss_5g);
+	}
+
+	*size -= len;
+	*buf_ptr += len;
+}
+#else /* QCA_SUPPORT_CP_STATS */
 static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 {
 	t_wma_handle *wma;
@@ -2174,6 +2281,7 @@ static void wma_state_info_dump(char **buf_ptr, uint16_t *size)
 	*size -= len;
 	*buf_ptr += len;
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 
 /**
  * wma_register_debug_callback() - registration function for wma layer

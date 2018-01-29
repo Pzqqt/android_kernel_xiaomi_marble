@@ -6205,6 +6205,7 @@ struct sir_bpf_get_offload {
 	uint32_t remaining_bytes_for_bpf_inst;
 };
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * struct sir_wake_lock_stats - wake lock stats structure
  * @wow_unspecified_wake_up_count: number of non-wow related wake ups
@@ -6283,6 +6284,7 @@ struct sir_vdev_wow_stats {
 	uint32_t pwr_save_fail_detected;
 	uint32_t scan_11d;
 };
+#endif
 
 /**
  * enum ht_capability_fields - HT Capabilities bit fields

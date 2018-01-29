@@ -73,6 +73,7 @@
 #include <target_if_scan.h>
 #include "wlan_reg_services_api.h"
 #include "wlan_roam_debug.h"
+#include <wlan_cp_stats_mc_ucfg_api.h>
 
 #ifndef ARRAY_LENGTH
 #define ARRAY_LENGTH(a)         (sizeof(a) / sizeof((a)[0]))
@@ -86,7 +87,7 @@
 #define WMA_SET_VDEV_IE_SOURCE_HOST 0x0
 
 
-#ifdef FEATURE_WLAN_DIAG_SUPPORT
+#if defined(FEATURE_WLAN_DIAG_SUPPORT)
 /**
  * qdf_wma_wow_wakeup_stats_event()- send wow wakeup stats
  * @tp_wma_handle wma: WOW wakeup packet counter
@@ -95,6 +96,41 @@
  *
  * Return: void.
  */
+#ifdef QCA_SUPPORT_CP_STATS
+static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
+{
+	QDF_STATUS status;
+	struct wake_lock_stats stats = {0};
+
+	WLAN_HOST_DIAG_EVENT_DEF(wow_stats,
+	struct host_event_wlan_powersave_wow_stats);
+
+	status = ucfg_mc_cp_stats_get_psoc_wake_lock_stats(wma->psoc, &stats);
+	if (QDF_IS_STATUS_ERROR(status))
+		return;
+	qdf_mem_zero(&wow_stats, sizeof(wow_stats));
+
+	wow_stats.wow_bcast_wake_up_count = stats.bcast_wake_up_count;
+	wow_stats.wow_ipv4_mcast_wake_up_count = stats.ipv4_mcast_wake_up_count;
+	wow_stats.wow_ipv6_mcast_wake_up_count = stats.ipv6_mcast_wake_up_count;
+	wow_stats.wow_ipv6_mcast_ra_stats = stats.ipv6_mcast_ra_stats;
+	wow_stats.wow_ipv6_mcast_ns_stats = stats.ipv6_mcast_ns_stats;
+	wow_stats.wow_ipv6_mcast_na_stats = stats.ipv6_mcast_na_stats;
+	wow_stats.wow_pno_match_wake_up_count = stats.pno_match_wake_up_count;
+	wow_stats.wow_pno_complete_wake_up_count =
+				stats.pno_complete_wake_up_count;
+	wow_stats.wow_gscan_wake_up_count = stats.gscan_wake_up_count;
+	wow_stats.wow_low_rssi_wake_up_count = stats.low_rssi_wake_up_count;
+	wow_stats.wow_rssi_breach_wake_up_count =
+				stats.rssi_breach_wake_up_count;
+	wow_stats.wow_icmpv4_count = stats.icmpv4_count;
+	wow_stats.wow_icmpv6_count = stats.icmpv6_count;
+	wow_stats.wow_oem_response_wake_up_count =
+				stats.oem_response_wake_up_count;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&wow_stats, EVENT_WLAN_POWERSAVE_WOW_STATS);
+}
+#else /* QCA_SUPPORT_CP_STATS*/
 static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 {
 	QDF_STATUS status;
@@ -139,6 +175,7 @@ static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 
 	WLAN_HOST_DIAG_EVENT_REPORT(&WowStats, EVENT_WLAN_POWERSAVE_WOW_STATS);
 }
+#endif /* QCA_SUPPORT_CP_STATS */
 #else
 static inline void qdf_wma_wow_wakeup_stats_event(tp_wma_handle wma)
 {
@@ -1622,6 +1659,66 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 	}
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+static void wma_inc_wow_stats(t_wma_handle *wma,
+			      WOW_EVENT_INFO_fixed_param *wake_info)
+{
+	ucfg_mc_cp_stats_inc_wake_lock_stats(wma->psoc,
+					     wake_info->vdev_id,
+					     wake_info->wake_reason);
+}
+
+static void wma_wow_stats_display(struct wake_lock_stats *stats)
+{
+	WMA_LOGA("uc %d bc %d v4_mc %d v6_mc %d ra %d ns %d na %d pno_match %d pno_complete %d gscan %d low_rssi %d rssi_breach %d icmp %d icmpv6 %d oem %d",
+		stats->ucast_wake_up_count,
+		stats->bcast_wake_up_count,
+		stats->ipv4_mcast_wake_up_count,
+		stats->ipv6_mcast_wake_up_count,
+		stats->ipv6_mcast_ra_stats,
+		stats->ipv6_mcast_ns_stats,
+		stats->ipv6_mcast_na_stats,
+		stats->pno_match_wake_up_count,
+		stats->pno_complete_wake_up_count,
+		stats->gscan_wake_up_count,
+		stats->low_rssi_wake_up_count,
+		stats->rssi_breach_wake_up_count,
+		stats->icmpv4_count,
+		stats->icmpv6_count,
+		stats->oem_response_wake_up_count);
+}
+
+static void wma_print_wow_stats(t_wma_handle *wma,
+				WOW_EVENT_INFO_fixed_param *wake_info)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wake_lock_stats stats = {0};
+
+	switch (wake_info->wake_reason) {
+	case WOW_REASON_BPF_ALLOW:
+	case WOW_REASON_PATTERN_MATCH_FOUND:
+	case WOW_REASON_RA_MATCH:
+	case WOW_REASON_NLOD:
+	case WOW_REASON_NLO_SCAN_COMPLETE:
+	case WOW_REASON_LOW_RSSI:
+	case WOW_REASON_EXTSCAN:
+	case WOW_REASON_RSSI_BREACH_EVENT:
+	case WOW_REASON_OEM_RESPONSE_EVENT:
+	case WOW_REASON_CHIP_POWER_FAILURE_DETECT:
+	case WOW_REASON_11D_SCAN:
+		break;
+	default:
+		return;
+	}
+
+	vdev = wlan_objmgr_get_vdev_by_id_from_psoc(wma->psoc,
+						    wake_info->vdev_id,
+						    WLAN_LEGACY_WMA_ID);
+	ucfg_mc_cp_stats_get_vdev_wake_lock_stats(vdev, &stats);
+	wlan_objmgr_vdev_release_ref(vdev, WLAN_LEGACY_WMA_ID);
+	wma_wow_stats_display(&stats);
+}
+#else
 /**
  * wma_wow_stats_display() - display wow wake up stats
  * @stats: per vdev stats counters
@@ -1723,6 +1820,7 @@ static void wma_inc_wow_stats(t_wma_handle *wma,
 		break;
 	}
 }
+#endif
 
 #ifdef FEATURE_WLAN_EXTSCAN
 /**
@@ -2187,36 +2285,33 @@ static void wma_log_pkt_tcpv6(uint8_t *data, uint32_t length)
 	WMA_LOGD("TCP_seq_num: %u", qdf_cpu_to_be16(seq_num));
 }
 
-/**
- * wma_wow_parse_data_pkt() - API to parse data buffer for data
- *    packet that resulted in WOW wakeup.
- * @stats: per-vdev stats for tracking packet types
- * @data: Pointer to data buffer
- * @length: data buffer length
- *
- * This function parses the data buffer received (first few bytes of
- * skb->data) to get informaton like src mac addr, dst mac addr, packet
- * len, seq_num, etc. It also increments stats for different packet types.
- *
- * Return: void
- */
-static void wma_wow_parse_data_pkt(struct sir_vdev_wow_stats *stats,
-				   uint8_t *data,
-				   uint32_t length)
+#ifdef QCA_SUPPORT_CP_STATS
+static void wma_wow_inc_wake_lock_stats_by_dst_addr(t_wma_handle *wma,
+						    uint8_t vdev_id,
+						    uint8_t *dest_mac)
 {
-	enum qdf_proto_subtype proto_subtype;
-	const char *proto_subtype_name;
-	uint8_t *dest_mac;
-	uint8_t *src_mac;
+	ucfg_mc_cp_stats_inc_wake_lock_stats_by_dst_addr(wma->psoc,
+							 vdev_id,
+							 dest_mac);
+}
 
-	WMA_LOGD("packet length: %u", length);
-	if (length < QDF_NBUF_TRAC_IPV4_OFFSET)
-		return;
+static void wma_wow_inc_wake_lock_stats_by_protocol(t_wma_handle *wma,
+			uint8_t vdev_id, enum qdf_proto_subtype proto_subtype)
+{
+	ucfg_mc_cp_stats_inc_wake_lock_stats_by_protocol(wma->psoc,
+							 vdev_id,
+							 proto_subtype);
+}
+#else
+static void wma_wow_inc_wake_lock_stats_by_dst_addr(t_wma_handle *wma,
+						    uint8_t vdev_id,
+						    uint8_t *dest_mac)
+{
+	struct wma_txrx_node *vdev;
+	struct sir_vdev_wow_stats *stats;
 
-	src_mac = data + QDF_NBUF_SRC_MAC_OFFSET;
-	dest_mac = data + QDF_NBUF_DEST_MAC_OFFSET;
-	WMA_LOGD("Src_mac: " MAC_ADDRESS_STR ", Dst_mac: " MAC_ADDRESS_STR,
-		 MAC_ADDR_ARRAY(src_mac), MAC_ADDR_ARRAY(dest_mac));
+	vdev = &wma->interfaces[vdev_id];
+	stats = &vdev->wow_stats;
 
 	switch (*dest_mac) {
 	case WMA_BCAST_MAC_ADDR:
@@ -2232,6 +2327,76 @@ static void wma_wow_parse_data_pkt(struct sir_vdev_wow_stats *stats,
 		stats->ucast++;
 		break;
 	}
+}
+
+static void wma_wow_inc_wake_lock_stats_by_protocol(t_wma_handle *wma,
+			uint8_t vdev_id, enum qdf_proto_subtype proto_subtype)
+{
+	struct wma_txrx_node *vdev;
+	struct sir_vdev_wow_stats *stats;
+
+	vdev = &wma->interfaces[vdev_id];
+	stats = &vdev->wow_stats;
+
+	switch (proto_subtype) {
+	case QDF_PROTO_ICMP_RES:
+		stats->icmpv4++;
+		break;
+	case QDF_PROTO_ICMPV6_REQ:
+	case QDF_PROTO_ICMPV6_RES:
+	case QDF_PROTO_ICMPV6_RS:
+		stats->icmpv6++;
+		break;
+	case QDF_PROTO_ICMPV6_RA:
+		stats->icmpv6++;
+		stats->ipv6_mcast_ra++;
+		break;
+	case QDF_PROTO_ICMPV6_NS:
+		stats->icmpv6++;
+		stats->ipv6_mcast_ns++;
+		break;
+	case QDF_PROTO_ICMPV6_NA:
+		stats->icmpv6++;
+		stats->ipv6_mcast_na++;
+		break;
+	default:
+		break;
+	}
+}
+#endif
+
+/**
+ * wma_wow_parse_data_pkt() - API to parse data buffer for data
+ *    packet that resulted in WOW wakeup.
+ * @stats: per-vdev stats for tracking packet types
+ * @data: Pointer to data buffer
+ * @length: data buffer length
+ *
+ * This function parses the data buffer received (first few bytes of
+ * skb->data) to get information like src mac addr, dst mac addr, packet
+ * len, seq_num, etc. It also increments stats for different packet types.
+ *
+ * Return: void
+ */
+static void wma_wow_parse_data_pkt(t_wma_handle *wma,
+				   uint8_t vdev_id, uint8_t *data,
+				   uint32_t length)
+{
+	uint8_t *src_mac;
+	uint8_t *dest_mac;
+	const char *proto_subtype_name;
+	enum qdf_proto_subtype proto_subtype;
+
+	WMA_LOGD("packet length: %u", length);
+	if (length < QDF_NBUF_TRAC_IPV4_OFFSET)
+		return;
+
+	src_mac = data + QDF_NBUF_SRC_MAC_OFFSET;
+	dest_mac = data + QDF_NBUF_DEST_MAC_OFFSET;
+	WMA_LOGD("Src_mac: " MAC_ADDRESS_STR ", Dst_mac: " MAC_ADDRESS_STR,
+		 MAC_ADDR_ARRAY(src_mac), MAC_ADDR_ARRAY(dest_mac));
+
+	wma_wow_inc_wake_lock_stats_by_dst_addr(wma, vdev_id, dest_mac);
 
 	proto_subtype = wma_wow_get_pkt_proto_subtype(data, length);
 	proto_subtype_name = wma_pkt_proto_subtype_to_string(proto_subtype);
@@ -2259,29 +2424,19 @@ static void wma_wow_parse_data_pkt(struct sir_vdev_wow_stats *stats,
 
 	case QDF_PROTO_ICMP_REQ:
 	case QDF_PROTO_ICMP_RES:
-		stats->icmpv4++;
+		wma_wow_inc_wake_lock_stats_by_protocol(wma, vdev_id,
+							proto_subtype);
 		wma_log_pkt_icmpv4(data, length);
 		break;
 
 	case QDF_PROTO_ICMPV6_REQ:
 	case QDF_PROTO_ICMPV6_RES:
 	case QDF_PROTO_ICMPV6_RS:
-		stats->icmpv6++;
-		wma_log_pkt_icmpv6(data, length);
-		break;
 	case QDF_PROTO_ICMPV6_RA:
-		stats->icmpv6++;
-		stats->ipv6_mcast_ra++;
-		wma_log_pkt_icmpv6(data, length);
-		break;
 	case QDF_PROTO_ICMPV6_NS:
-		stats->icmpv6++;
-		stats->ipv6_mcast_ns++;
-		wma_log_pkt_icmpv6(data, length);
-		break;
 	case QDF_PROTO_ICMPV6_NA:
-		stats->icmpv6++;
-		stats->ipv6_mcast_na++;
+		wma_wow_inc_wake_lock_stats_by_protocol(wma, vdev_id,
+							proto_subtype);
 		wma_log_pkt_icmpv6(data, length);
 		break;
 
@@ -2312,7 +2467,7 @@ static void wma_wow_parse_data_pkt(struct sir_vdev_wow_stats *stats,
  * @buf_len: length of data buffer
  *
  * This function parses the data buffer received (802.11 header)
- * to get informaton like src mac addr, dst mac addr, seq_num,
+ * to get information like src mac addr, dst mac addr, seq_num,
  * frag_num, etc.
  *
  * Return: void
@@ -2533,7 +2688,8 @@ static int wma_wake_event_packet(
 				   packet, packet_len);
 
 		vdev = &wma->interfaces[wake_info->vdev_id];
-		wma_wow_parse_data_pkt(&vdev->wow_stats, packet, packet_len);
+		wma_wow_parse_data_pkt(wma, wake_info->vdev_id,
+				       packet, packet_len);
 		break;
 
 	default:
@@ -2806,7 +2962,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 	pmo_ucfg_psoc_wakeup_host_event_received(wma->psoc);
 
 	wma_print_wow_stats(wma, wake_info);
-
 	/* split based on payload type */
 	if (is_piggybacked_event(wake_info->wake_reason))
 		errno = wma_wake_event_piggybacked(wma, event_param, len);
@@ -2817,7 +2972,6 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event, uint32_t len)
 
 	wma_inc_wow_stats(wma, wake_info);
 	wma_print_wow_stats(wma, wake_info);
-
 	wma_acquire_wow_wakelock(wma, wake_info->wake_reason);
 
 	return errno;
@@ -4637,6 +4791,7 @@ int wma_p2p_lo_event_handler(void *handle, uint8_t *event_buf,
 	return 0;
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 /**
  * wma_get_wakelock_stats() - Populates wake lock stats
  * @stats: non-null wakelock structure to populate
@@ -4694,6 +4849,7 @@ QDF_STATUS wma_get_wakelock_stats(struct sir_wake_lock_stats *stats)
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * wma_process_fw_test_cmd() - send unit test command to fw.

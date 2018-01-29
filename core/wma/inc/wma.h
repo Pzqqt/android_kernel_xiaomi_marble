@@ -1125,7 +1125,9 @@ struct wma_txrx_node {
 	tSirHostOffloadReq arp_offload_req;
 	tSirHostOffloadReq ns_offload_req;
 	bool is_vdev_valid;
+#ifndef QCA_SUPPORT_CP_STATS
 	struct sir_vdev_wow_stats wow_stats;
+#endif
 	struct sme_rcpi_req *rcpi_req;
 #ifdef WLAN_FEATURE_11AX
 	bool he_capable;
