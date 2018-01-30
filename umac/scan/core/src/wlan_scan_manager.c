@@ -609,6 +609,44 @@ scm_pno_event_handler(struct wlan_objmgr_vdev *vdev,
 }
 #endif
 
+/**
+ * scm_scan_update_scan_event() - update scan event
+ * @scan: scan object
+ * @event: scan event
+ * @scan_start_req: scan_start_req used for triggering scan
+ *
+ * update scan params in scan event
+ *
+ * Return: QDF_STATUS
+ */
+static QDF_STATUS
+scm_scan_update_scan_event(struct wlan_scan_obj *scan,
+		struct scan_event *event,
+		struct scan_start_request *scan_start_req)
+{
+	if (!event)
+		return QDF_STATUS_E_NULL_VALUE;
+
+	if (!scan || !scan_start_req) {
+		event->scan_start_req = NULL;
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	/* copy scan start request to pass back buffer */
+	qdf_mem_copy(&scan->scan_start_request_buff, scan_start_req,
+			sizeof(struct scan_start_request));
+	/* reset all pointers */
+	scan->scan_start_request_buff.scan_req.extraie.ptr = NULL;
+	scan->scan_start_request_buff.scan_req.extraie.len = 0;
+	scan->scan_start_request_buff.scan_req.htcap.ptr = NULL;
+	scan->scan_start_request_buff.scan_req.htcap.len = 0;
+	scan->scan_start_request_buff.scan_req.vhtcap.ptr = NULL;
+	scan->scan_start_request_buff.scan_req.vhtcap.len = 0;
+
+	event->scan_start_req = &scan->scan_start_request_buff;
+
+	return QDF_STATUS_SUCCESS;
+}
+
 QDF_STATUS
 scm_scan_event_handler(struct scheduler_msg *msg)
 {
@@ -618,6 +656,7 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	struct wlan_serialization_command cmd = {0,};
 	struct wlan_serialization_command *queued_cmd;
 	struct scan_start_request *scan_start_req;
+	struct wlan_scan_obj *scan;
 
 	if (!msg || !msg->bodyptr) {
 		scm_err("msg or msg->bodyptr is NULL");
@@ -673,8 +712,8 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 		scm_err("NULL umac_cmd");
 		goto exit;
 	}
-
 	scan_start_req = queued_cmd->umac_cmd;
+
 	if (scan_start_req->scan_req.scan_req_id != event->requester) {
 		scm_err("req ID mismatch, scan_req_id:%d, event_req_id:%d",
 				scan_start_req->scan_req.scan_req_id,
@@ -682,10 +721,9 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 		goto exit;
 	}
 
-	event->scan_start_req = scan_start_req;
-
-	/* Notify all interested parties */
-	scm_scan_post_event(vdev, event);
+	scan = wlan_vdev_get_scan_obj(vdev);
+	if (scan)
+		scm_scan_update_scan_event(scan, event, scan_start_req);
 
 	switch (event->type) {
 	case SCAN_EVENT_TYPE_COMPLETED:
@@ -696,6 +734,9 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 	default:
 		break;
 	}
+
+	/* Notify all interested parties */
+	scm_scan_post_event(vdev, event);
 
 exit:
 	/* free event info memory */

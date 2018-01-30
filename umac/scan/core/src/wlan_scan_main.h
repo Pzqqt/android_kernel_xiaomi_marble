@@ -405,6 +405,9 @@ struct scan_cb {
  * @pdev_info: pointer to pdev info
  * @pno_cfg: default pno configuration
  * @ie_whitelist: default ie whitelist attrs
+ * @bt_a2dp_enabled: if bt a2dp is enabled
+ * @scan_start_request_buff: buffer used to pass
+ *      scan config to event handlers
  */
 struct wlan_scan_obj {
 	bool enable_scan;
@@ -419,6 +422,7 @@ struct wlan_scan_obj {
 	struct pno_def_config pno_cfg;
 	struct probe_req_whitelist_attr ie_whitelist;
 	bool bt_a2dp_enabled;
+	struct scan_start_request scan_start_request_buff;
 };
 
 /**
