@@ -30,7 +30,11 @@
 #include "wlan_objmgr_cmn.h"
 #include "qdf_nbuf.h"
 
+#ifdef CONFIG_MCL
 #define MGMT_DESC_POOL_MAX 64
+#else
+#define MGMT_DESC_POOL_MAX 512
+#endif
 
 #define mgmt_txrx_log(level, args...) \
 			QDF_TRACE(QDF_MODULE_ID_MGMT_TXRX, level, ## args)
