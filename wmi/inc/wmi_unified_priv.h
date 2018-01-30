@@ -1542,6 +1542,17 @@ QDF_STATUS (*send_offload_11k_cmd)(wmi_unified_t wmi_handle,
 
 QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_invoke_neighbor_report_params *params);
+
+void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle);
+void (*wmi_free_allocated_event)(A_UINT32 cmd_event_id,
+				void **wmi_cmd_struct_ptr);
+int (*wmi_check_and_pad_event)(void *os_handle, void *param_struc_ptr,
+				A_UINT32 param_buf_len,
+				A_UINT32 wmi_cmd_event_id,
+				void **wmi_cmd_struct_ptr);
+int (*wmi_check_command_params)(void *os_handle, void *param_struc_ptr,
+				A_UINT32 param_buf_len,
+				A_UINT32 wmi_cmd_event_id);
 };
 
 /* Forward declartion for psoc*/
@@ -1652,15 +1663,16 @@ struct wmi_soc {
 
 };
 
+void wmi_unified_register_module(enum wmi_target_type target_type,
+			void (*wmi_attach)(wmi_unified_t wmi_handle));
+void wmi_tlv_init(void);
+void wmi_non_tlv_init(void);
 #ifdef WMI_NON_TLV_SUPPORT
 /* ONLY_NON_TLV_TARGET:TLV attach dummy function defintion for case when
  * driver supports only NON-TLV target (WIN mainline) */
 #define wmi_tlv_attach(x) qdf_print("TLV Unavailable\n")
-#define wmi_tlv_pdev_id_conversion_enable(wmi_hdl) \
-		qdf_print("PDEV conversion Not Available")
 #else
 void wmi_tlv_attach(wmi_unified_t wmi_handle);
-void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle);
 #endif
 void wmi_non_tlv_attach(wmi_unified_t wmi_handle);
 

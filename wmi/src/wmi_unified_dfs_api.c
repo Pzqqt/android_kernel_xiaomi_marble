@@ -40,6 +40,7 @@ QDF_STATUS wmi_extract_dfs_cac_complete_event(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+EXPORT_SYMBOL(wmi_extract_dfs_cac_complete_event);
 
 QDF_STATUS wmi_extract_dfs_radar_detection_event(void *wmi_hdl,
 		uint8_t *evt_buf,
@@ -70,3 +71,4 @@ QDF_STATUS wmi_extract_wlan_radar_event_info(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 #endif
+EXPORT_SYMBOL(wmi_extract_dfs_radar_detection_event);

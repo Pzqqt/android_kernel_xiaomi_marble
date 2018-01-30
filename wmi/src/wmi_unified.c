@@ -31,6 +31,7 @@
 #include "htc_api.h"
 #include "htc_api.h"
 #include "wmi_unified_priv.h"
+#include "qdf_module.h"
 
 #ifndef WMI_NON_TLV_SUPPORT
 #include "wmi_tlv_helper.h"
@@ -1210,6 +1211,7 @@ void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
 			void *header, uint32_t vdev_id, uint32_t chanfreq) { }
 static inline void wmi_log_buffer_free(struct wmi_unified *wmi_handle) { }
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
+qdf_export_symbol(wmi_mgmt_cmd_record);
 
 int wmi_get_host_credits(wmi_unified_t wmi_handle);
 /* WMI buffer APIs */
@@ -1244,11 +1246,13 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
 
 	return wmi_buf;
 }
+qdf_export_symbol(wmi_buf_alloc_debug);
 
 void wmi_buf_free(wmi_buf_t net_buf)
 {
 	qdf_nbuf_free(net_buf);
 }
+qdf_export_symbol(wmi_buf_free);
 #else
 wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint16_t len)
 {
@@ -1273,11 +1277,13 @@ wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint16_t len)
 	qdf_nbuf_set_pktlen(wmi_buf, len);
 	return wmi_buf;
 }
+qdf_export_symbol(wmi_buf_alloc);
 
 void wmi_buf_free(wmi_buf_t net_buf)
 {
 	qdf_nbuf_free(net_buf);
 }
+qdf_export_symbol(wmi_buf_free);
 #endif
 
 /**
@@ -1292,6 +1298,7 @@ uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle)
 {
 	return wmi_handle->max_msg_len - WMI_MIN_HEAD_ROOM;
 }
+qdf_export_symbol(wmi_get_max_msg_len);
 
 #ifndef WMI_CMD_STRINGS
 static uint8_t *wmi_id_to_name(uint32_t wmi_command)
@@ -1372,7 +1379,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 	if (wmi_handle->target_type == WMI_TLV_TARGET) {
 		void *buf_ptr = (void *)qdf_nbuf_data(buf);
 
-		if (wmitlv_check_command_tlv_params(NULL, buf_ptr, len, cmd_id)
+		if (wmi_handle->ops->wmi_check_command_params(NULL, buf_ptr, len, cmd_id)
 			!= 0) {
 			QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_ERROR,
 			"\nERROR: %s: Invalid WMI Param Buffer for Cmd:%d",
@@ -1454,6 +1461,7 @@ QDF_STATUS wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf,
 
 	return QDF_STATUS_SUCCESS;
 }
+qdf_export_symbol(wmi_unified_cmd_send);
 
 /**
  * wmi_unified_get_event_handler_ix() - gives event handler's index
@@ -1573,6 +1581,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 
 	return 0;
 }
+qdf_export_symbol(wmi_unified_register_event_handler);
 
 /**
  * wmi_unified_unregister_event() - unregister wmi event handler
@@ -1651,6 +1660,7 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 
 	return 0;
 }
+qdf_export_symbol(wmi_unified_unregister_event_handler);
 
 /**
  * wmi_process_fw_event_default_ctx() - process in default caller context
@@ -1838,7 +1848,7 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	if (wmi_handle->target_type == WMI_TLV_TARGET) {
 		/* Validate and pad(if necessary) the TLVs */
 		tlv_ok_status =
-			wmitlv_check_and_pad_event_tlvs(wmi_handle->scn_handle,
+			wmi_handle->ops->wmi_check_and_pad_event(wmi_handle->scn_handle,
 							data, len, id,
 							&wmi_cmd_struct_ptr);
 		if (tlv_ok_status != 0) {
@@ -1883,7 +1893,7 @@ end:
 	/* Free event buffer and allocated event tlv */
 #ifndef WMI_NON_TLV_SUPPORT
 	if (wmi_handle->target_type == WMI_TLV_TARGET)
-		wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
+		wmi_handle->ops->wmi_free_allocated_event(id, &wmi_cmd_struct_ptr);
 #endif
 
 	qdf_nbuf_free(evt_buf);
@@ -2107,6 +2117,19 @@ error:
 
 	return NULL;
 }
+qdf_export_symbol(wmi_unified_get_pdev_handle);
+
+static void (*wmi_attach_register[WMI_MAX_TARGET_TYPE])(wmi_unified_t);
+
+void wmi_unified_register_module(enum wmi_target_type target_type,
+			void (*wmi_attach)(wmi_unified_t wmi_handle))
+{
+	if (target_type < WMI_MAX_TARGET_TYPE)
+		wmi_attach_register[target_type] = wmi_attach;
+
+	return;
+}
+qdf_export_symbol(wmi_unified_register_module);
 
 /**
  * wmi_unified_attach() -  attach for unified WMI
@@ -2170,10 +2193,12 @@ void *wmi_unified_attach(void *scn_handle,
 				rx_ops->wma_process_fw_event_handler_cbk;
 	wmi_handle->target_type = target_type;
 	soc->target_type = target_type;
-	if (target_type == WMI_TLV_TARGET)
-		wmi_tlv_attach(wmi_handle);
-	else
-		wmi_non_tlv_attach(wmi_handle);
+	if (wmi_attach_register[target_type]) {
+		wmi_attach_register[target_type](wmi_handle);
+	} else {
+		WMI_LOGE("wmi attach is not registered");
+		goto error;
+	}
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = use_cookie;
 	wmi_handle->osdev = osdev;
@@ -2493,6 +2518,7 @@ wmi_flush_endpoint(wmi_unified_t wmi_handle)
 	htc_flush_endpoint(wmi_handle->htc_handle,
 		wmi_handle->wmi_endpoint_id, 0);
 }
+qdf_export_symbol(wmi_flush_endpoint);
 
 /**
  * generic function to block unified WMI command
@@ -2518,7 +2544,7 @@ wmi_stop(wmi_unified_t wmi_handle)
 void wmi_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
 {
 	if (wmi_handle->target_type == WMI_TLV_TARGET)
-		wmi_tlv_pdev_id_conversion_enable(wmi_handle);
+		wmi_handle->ops->wmi_pdev_id_conversion_enable(wmi_handle);
 }
 
 #endif

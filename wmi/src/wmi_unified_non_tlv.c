@@ -8410,6 +8410,16 @@ QDF_STATUS send_wds_entry_list_cmd_non_tlv(wmi_unified_t wmi_handle)
 }
 
 
+/**
+ * wmi_non_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
+ *
+ * Return None.
+ */
+void wmi_non_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
+{
+	qdf_print("PDEV conversion Not Available");
+}
+
 struct wmi_ops non_tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_non_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_non_tlv,
@@ -8644,6 +8654,7 @@ struct wmi_ops non_tlv_ops =  {
 	.send_fils_discovery_send_cmd = send_fils_discovery_send_cmd_non_tlv,
 	.extract_swfda_vdev_id = extract_swfda_vdev_id_non_tlv,
 #endif /* WLAN_SUPPORT_FILS */
+	.wmi_pdev_id_conversion_enable = wmi_non_tlv_pdev_id_conversion_enable,
 };
 
 /**
@@ -9322,4 +9333,16 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 #else
 	qdf_print("%s: Not supported\n", __func__);
 #endif
+}
+EXPORT_SYMBOL(wmi_non_tlv_attach);
+
+/**
+ * wmi_non_tlv_init() - Initialize WMI NON TLV module by registering Non TLV
+ * attach routine.
+ *
+ * Return: None
+ */
+void wmi_non_tlv_init(void)
+{
+	wmi_unified_register_module(WMI_NON_TLV_TARGET, &wmi_non_tlv_attach);
 }
