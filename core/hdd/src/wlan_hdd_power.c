@@ -84,6 +84,7 @@
 #include "wlan_hdd_packet_filter_api.h"
 #include "wlan_cfg80211_scan.h"
 #include "wlan_ipa_ucfg_api.h"
+#include <wlan_cfg80211_mc_cp_stats.h>
 
 /* Preprocessor definitions and constants */
 #ifdef QCA_WIFI_NAPIER_EMULATION
@@ -2068,6 +2069,18 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)
+{
+	wlan_cfg80211_mc_cp_stats_get_tx_power(adapter->hdd_vdev, dbm);
+}
+#else
+static void wlan_hdd_get_tx_power(struct hdd_adapter *adapter, int *dbm)
+{
+	wlan_hdd_get_class_astats(adapter);
+	*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
+}
+#endif
 /**
  * __wlan_hdd_cfg80211_get_txpower() - get TX power
  * @wiphy: Pointer to wiphy
@@ -2126,10 +2139,10 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
 			 adapter->session_id, adapter->device_mode));
-	wlan_hdd_get_class_astats(adapter);
-	*dbm = adapter->hdd_stats.class_a_stat.max_pwr;
 
-	hdd_exit();
+	wlan_hdd_get_tx_power(adapter, dbm);
+	hdd_debug("power: %d", *dbm);
+
 	return 0;
 }
 

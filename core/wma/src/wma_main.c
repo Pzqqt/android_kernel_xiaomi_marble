@@ -3009,6 +3009,18 @@ void wma_wmi_stop(void)
 	wmi_stop(wma_handle->wmi_handle);
 }
 
+#ifdef QCA_SUPPORT_CP_STATS
+static void wma_register_stats_events(wmi_unified_t wmi_handle) {}
+#else
+static void wma_register_stats_events(wmi_unified_t wmi_handle)
+{
+	wmi_unified_register_event_handler(wmi_handle,
+					   wmi_update_stats_event_id,
+					   wma_stats_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
+}
+#endif
+
 /**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
@@ -3330,11 +3342,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 					   wma_peer_sta_kickout_event_handler,
 					   WMA_RX_SERIALIZER_CTX);
 
-	/* register for stats response event */
-	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   wmi_update_stats_event_id,
-					   wma_stats_event_handler,
-					   WMA_RX_SERIALIZER_CTX);
+	/* register for stats event */
+	wma_register_stats_events(wma_handle->wmi_handle);
 
 	/* register for stats response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

@@ -114,7 +114,7 @@
 #include "wifi_pos_api.h"
 #include "wlan_hdd_spectralscan.h"
 #include "wlan_ipa_ucfg_api.h"
-#include "wlan_cfg80211_mc_cp_stats.h"
+#include <wlan_cfg80211_mc_cp_stats.h>
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)

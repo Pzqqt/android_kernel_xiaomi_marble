@@ -5534,6 +5534,7 @@ int wlan_hdd_get_peer_info(struct hdd_adapter *adapter,
 	return ret;
 }
 
+#ifndef QCA_SUPPORT_CP_STATS
 struct class_a_stats {
 	tCsrGlobalClassAStatsInfo class_a_stats;
 };
@@ -5635,6 +5636,7 @@ return_cached_results:
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 struct station_stats {
 	tCsrSummaryStatsInfo summary_stats;
