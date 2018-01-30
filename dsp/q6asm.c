@@ -8779,35 +8779,6 @@ fail_cmd:
 EXPORT_SYMBOL(q6asm_get_session_time_legacy);
 
 /**
- * q6asm_send_audio_effects_params -
- *       command to send audio effects params
- *
- * @ac: Audio client handle
- * @params: audio effects params
- * @params_length: size of params
- *
- * Returns 0 on success or error on failure
- */
-int q6asm_send_audio_effects_params(struct audio_client *ac, char *params,
-				    uint32_t params_length)
-{
-	int rc;
-
-	pr_debug("%s:\n", __func__);
-
-	/*
-	 * Leave function as wrapper for use by effects. Params must be properly
-	 * packed. Use q6common_pack_pp_param to pack params correctly.
-	 */
-	rc = q6asm_set_pp_params(ac, NULL, params, params_length);
-	if (rc)
-		pr_err("%s: audio effects set-params send failed\n", __func__);
-
-	return rc;
-}
-EXPORT_SYMBOL(q6asm_send_audio_effects_params);
-
-/**
  * q6asm_send_mtmx_strtr_window -
  *       command to send matrix for window params
  *
