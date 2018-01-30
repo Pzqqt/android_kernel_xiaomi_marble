@@ -21344,6 +21344,67 @@ send_pdev_caldata_version_check_cmd_tlv(wmi_unified_t wmi_handle,
 }
 
 /**
+ * convert_host_pdev_id_to_target_pdev_id() - Convert pdev_id from
+ *           host to target defines.
+ * @param pdev_id: host pdev_id to be converted.
+ * Return: target pdev_id after conversion.
+ */
+static uint32_t convert_host_pdev_id_to_target_pdev_id(uint32_t pdev_id)
+{
+	switch (pdev_id) {
+	case WMI_HOST_PDEV_ID_SOC:
+		return WMI_PDEV_ID_SOC;
+	case WMI_HOST_PDEV_ID_0:
+		return WMI_PDEV_ID_1ST;
+	case WMI_HOST_PDEV_ID_1:
+		return WMI_PDEV_ID_2ND;
+	case WMI_HOST_PDEV_ID_2:
+		return WMI_PDEV_ID_3RD;
+	}
+
+	QDF_ASSERT(0);
+
+	return WMI_PDEV_ID_SOC;
+}
+
+/**
+ * convert_target_pdev_id_to_host_pdev_id() - Convert pdev_id from
+ *           target to host defines.
+ * @param pdev_id: target pdev_id to be converted.
+ * Return: host pdev_id after conversion.
+ */
+static uint32_t convert_target_pdev_id_to_host_pdev_id(uint32_t pdev_id)
+{
+	switch (pdev_id) {
+	case WMI_PDEV_ID_SOC:
+		return WMI_HOST_PDEV_ID_SOC;
+	case WMI_PDEV_ID_1ST:
+		return WMI_HOST_PDEV_ID_0;
+	case WMI_PDEV_ID_2ND:
+		return WMI_HOST_PDEV_ID_1;
+	case WMI_PDEV_ID_3RD:
+		return WMI_HOST_PDEV_ID_2;
+	}
+
+	QDF_ASSERT(0);
+
+	return WMI_HOST_PDEV_ID_SOC;
+}
+
+/**
+ * wmi_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
+ *
+ * Return None.
+ */
+static void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
+{
+	wmi_handle->ops->convert_pdev_id_host_to_target =
+		convert_host_pdev_id_to_target_pdev_id;
+	wmi_handle->ops->convert_pdev_id_target_to_host =
+		convert_target_pdev_id_to_host_pdev_id;
+}
+
+/**
  * extract_pdev_caldata_version_check_ev_param_tlv() - extract caldata from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -22156,6 +22217,10 @@ struct wmi_ops tlv_ops =  {
 #endif /* WLAN_SUPPORT_FILS */
 	.send_offload_11k_cmd = send_offload_11k_cmd_tlv,
 	.send_invoke_neighbor_report_cmd = send_invoke_neighbor_report_cmd_tlv,
+	.wmi_pdev_id_conversion_enable = wmi_tlv_pdev_id_conversion_enable,
+	.wmi_free_allocated_event = wmitlv_free_allocated_event_tlvs,
+	.wmi_check_and_pad_event = wmitlv_check_and_pad_event_tlvs,
+	.wmi_check_command_params = wmitlv_check_command_tlv_params,
 };
 
 /**
@@ -23068,67 +23133,6 @@ static void populate_target_defines_tlv(struct wmi_unified *wmi_handle)
 #endif
 
 /**
- * convert_host_pdev_id_to_target_pdev_id() - Convert pdev_id from
- *           host to target defines.
- * @param pdev_id: host pdev_id to be converted.
- * Return: target pdev_id after conversion.
- */
-static uint32_t convert_host_pdev_id_to_target_pdev_id(uint32_t pdev_id)
-{
-	switch (pdev_id) {
-	case WMI_HOST_PDEV_ID_SOC:
-		return WMI_PDEV_ID_SOC;
-	case WMI_HOST_PDEV_ID_0:
-		return WMI_PDEV_ID_1ST;
-	case WMI_HOST_PDEV_ID_1:
-		return WMI_PDEV_ID_2ND;
-	case WMI_HOST_PDEV_ID_2:
-		return WMI_PDEV_ID_3RD;
-	}
-
-	QDF_ASSERT(0);
-
-	return WMI_PDEV_ID_SOC;
-}
-
-/**
- * convert_target_pdev_id_to_host_pdev_id() - Convert pdev_id from
- *           target to host defines.
- * @param pdev_id: target pdev_id to be converted.
- * Return: host pdev_id after conversion.
- */
-static uint32_t convert_target_pdev_id_to_host_pdev_id(uint32_t pdev_id)
-{
-	switch (pdev_id) {
-	case WMI_PDEV_ID_SOC:
-		return WMI_HOST_PDEV_ID_SOC;
-	case WMI_PDEV_ID_1ST:
-		return WMI_HOST_PDEV_ID_0;
-	case WMI_PDEV_ID_2ND:
-		return WMI_HOST_PDEV_ID_1;
-	case WMI_PDEV_ID_3RD:
-		return WMI_HOST_PDEV_ID_2;
-	}
-
-	QDF_ASSERT(0);
-
-	return WMI_HOST_PDEV_ID_SOC;
-}
-
-/**
- * wmi_tlv_pdev_id_conversion_enable() - Enable pdev_id conversion
- *
- * Return None.
- */
-void wmi_tlv_pdev_id_conversion_enable(wmi_unified_t wmi_handle)
-{
-	wmi_handle->ops->convert_pdev_id_host_to_target =
-		convert_host_pdev_id_to_target_pdev_id;
-	wmi_handle->ops->convert_pdev_id_target_to_host =
-		convert_target_pdev_id_to_host_pdev_id;
-}
-
-/**
  * wmi_ocb_ut_attach() - Attach OCB test framework
  * @wmi_handle: wmi handle
  *
@@ -23161,4 +23165,15 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_tlv_service(wmi_handle->services);
 	populate_target_defines_tlv(wmi_handle);
+}
+EXPORT_SYMBOL(wmi_tlv_attach);
+
+/**
+ * wmi_tlv_init() - Initialize WMI TLV module by registering TLV attach routine
+ *
+ * Return: None
+ */
+void wmi_tlv_init(void)
+{
+	wmi_unified_register_module(WMI_TLV_TARGET, &wmi_tlv_attach);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,6 +28,7 @@
 #include "wmi_tlv_platform.c"
 #include "wmi_tlv_defs.h"
 #include "wmi_version.h"
+#include "qdf_module.h"
 
 #define WMITLV_GET_ATTRIB_NUM_TLVS  0xFFFFFFFF
 
@@ -475,6 +476,7 @@ wmitlv_check_command_tlv_params(void *os_handle, void *param_struc_ptr,
 			(os_handle, param_struc_ptr, param_buf_len, is_cmd_id,
 			wmi_cmd_event_id);
 }
+qdf_export_symbol(wmitlv_check_command_tlv_params);
 
 /**
  * wmitlv_check_and_pad_tlvs() - tlv helper function
@@ -981,6 +983,7 @@ wmitlv_check_and_pad_event_tlvs(void *os_handle, void *param_struc_ptr,
 			(os_handle, param_struc_ptr, param_buf_len, is_cmd_id,
 			wmi_cmd_event_id, wmi_cmd_struct_ptr);
 }
+qdf_export_symbol(wmitlv_check_and_pad_event_tlvs);
 
 /**
  * wmitlv_check_and_pad_command_tlvs() - tlv helper function
@@ -1102,6 +1105,7 @@ void wmitlv_free_allocated_event_tlvs(A_UINT32 cmd_event_id,
 {
 	wmitlv_free_allocated_tlvs(0, cmd_event_id, wmi_cmd_struct_ptr);
 }
+qdf_export_symbol(wmitlv_free_allocated_event_tlvs);
 
 /**
  * wmi_versions_are_compatible() - tlv helper function
