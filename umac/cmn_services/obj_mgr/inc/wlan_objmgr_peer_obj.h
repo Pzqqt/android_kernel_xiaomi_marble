@@ -119,20 +119,20 @@ enum wlan_peer_state {
  * @peer_flags:      PEER OP flags
  * @peer_type:       Type of PEER, (STA/AP/etc.)
  * @phymode:         phy mode of station
- * @rssi:            Last received RSSI value
  * @max_rate:        Max Rate supported
- * @seq_num:         Sequence number
  * @state:           State of the peer
+ * @seq_num:         Sequence number
+ * @rssi:            Last received RSSI value
  */
 struct wlan_objmgr_peer_mlme {
 	uint32_t peer_capinfo;
 	uint32_t peer_flags;
 	enum wlan_peer_type peer_type;
 	enum wlan_phymode phymode;
-	int8_t rssi;
 	uint32_t max_rate;
-	uint16_t seq_num;
 	enum wlan_peer_state state;
+	uint16_t seq_num;
+	int8_t rssi;
 	bool is_authenticated;
 };
 

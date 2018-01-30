@@ -242,16 +242,16 @@ enum wlan_vdev_state {
  * struct wlan_vdev_create_params - Create params, HDD/OSIF passes this
  *				    structure While creating VDEV
  * @opmode:      Opmode of VDEV
- * @macaddr[]:   MAC address
  * @flags:       create flags
  * @osifp:       OS structure
+ * @macaddr[]:   MAC address
  * @mataddr[]:   MAT address
  */
 struct wlan_vdev_create_params {
 	enum QDF_OPMODE opmode;
-	uint8_t macaddr[WLAN_MACADDR_LEN];
 	uint32_t flags;
 	struct vdev_osif_priv *osifp;
+	uint8_t macaddr[WLAN_MACADDR_LEN];
 	uint8_t mataddr[WLAN_MACADDR_LEN];
 };
 
@@ -282,43 +282,43 @@ struct wlan_channel {
 /**
  * struct wlan_objmgr_vdev_mlme - VDEV MLME specific sub structure
  * @vdev_opmode:        Opmode of VDEV
- * @ssid[]:             SSID
- * @ssid_len:           SSID length
+ * @mlme_state:         VDEV state
  * @bss_chan:           BSS channel
  * @des_chan:           Desired channel, for STA Desired may not be used
  * @nss:                Num. Spatial streams
  * @tx_chainmask:       Tx Chainmask
  * @rx_chainmask:       Rx Chainmask
- * @macaddr[]:          VDEV self MAC address
+ * @tx_power:           Tx power
  * @vdev_caps:          VDEV capabilities
  * @vdev_feat_caps:     VDEV feature caps
  * @vdev_feat_ext_caps: VDEV Extended feature caps
  * @max_rate:           MAX rate
  * @tx_mgmt_rate:       TX Mgmt. Rate
- * @tx_power:           Tx power
- * @mlme_state:         VDEV state
  * @vdev_op_flags:      Operation flags
  * @mataddr[]:          MAT address
+ * @macaddr[]:          VDEV self MAC address
+ * @ssid[]:             SSID
+ * @ssid_len:           SSID length
  */
 struct wlan_objmgr_vdev_mlme {
 	enum QDF_OPMODE vdev_opmode;
-	char ssid[WLAN_SSID_MAX_LEN+1];
-	uint8_t ssid_len;
+	enum wlan_vdev_state mlme_state;
 	struct wlan_channel  *bss_chan;   /* Define wlan_channel */
 	struct wlan_channel  *des_chan;  /*TODO ??? */
 	uint8_t nss;
 	uint8_t tx_chainmask;
 	uint8_t rx_chainmask;
-	uint8_t  macaddr[WLAN_MACADDR_LEN];
+	uint8_t  tx_power;
 	uint32_t vdev_caps;
 	uint32_t vdev_feat_caps;
 	uint32_t vdev_feat_ext_caps;
 	uint32_t max_rate;
 	uint32_t tx_mgmt_rate;
-	uint8_t  tx_power;
-	enum wlan_vdev_state mlme_state;
 	uint32_t vdev_op_flags;
 	uint8_t  mataddr[WLAN_MACADDR_LEN];
+	uint8_t  macaddr[WLAN_MACADDR_LEN];
+	char ssid[WLAN_SSID_MAX_LEN+1];
+	uint8_t ssid_len;
 };
 
 /**
@@ -332,6 +332,7 @@ struct wlan_objmgr_vdev_nif {
 /**
  *  struct wlan_objmgr_vdev_objmgr - vdev object manager sub structure
  *  @vdev_id:           VDEV id
+ *  @print_cnt:         Count to throttle Logical delete prints
  *  @self_peer:         Self PEER
  *  @bss_peer:          BSS PEER
  *  @wlan_peer_list:    PEER list
@@ -341,10 +342,10 @@ struct wlan_objmgr_vdev_nif {
  *  @c_flags:           creation specific flags
  *  @ref_cnt:           Ref count
  *  @ref_id_dbg:        Array to track Ref count
- *  @print_cnt:         Count to throttle Logical delete prints
  */
 struct wlan_objmgr_vdev_objmgr {
 	uint8_t vdev_id;
+	uint8_t print_cnt;
 	struct wlan_objmgr_peer *self_peer;
 	struct wlan_objmgr_peer *bss_peer;
 	qdf_list_t wlan_peer_list;
@@ -354,7 +355,6 @@ struct wlan_objmgr_vdev_objmgr {
 	uint32_t c_flags;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
-	uint8_t print_cnt;
 };
 
 /**

@@ -143,27 +143,27 @@ struct wlan_objmgr_pdev_mlme {
 /**
  * struct wlan_objmgr_pdev_objmgr - pdev object object manager structure
  * @wlan_pdev_id:      PDEV id
- * @wlan_vdev_list:    List maintains the VDEVs created on this PDEV
  * @wlan_vdev_count:   VDEVs count
  * @max_vdev_count:    Max no. of VDEVs supported by this PDEV
+ * @print_cnt:         Count to throttle Logical delete prints
+ * @wlan_vdev_list:    List maintains the VDEVs created on this PDEV
  * @wlan_peer_count:   Peer count
  * @max_peer_count:    Max Peer count
  * @wlan_psoc:         back pointer to PSOC, its attached to
  * @ref_cnt:           Ref count
  * @ref_id_dbg:        Array to track Ref count
- * @print_cnt:         Count to throttle Logical delete prints
  */
 struct wlan_objmgr_pdev_objmgr {
 	uint8_t wlan_pdev_id;
-	qdf_list_t wlan_vdev_list;
 	uint8_t wlan_vdev_count;
 	uint8_t max_vdev_count;
+	uint8_t print_cnt;
+	qdf_list_t wlan_vdev_list;
 	uint16_t wlan_peer_count;
 	uint16_t max_peer_count;
 	struct wlan_objmgr_psoc *wlan_psoc;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
-	uint8_t print_cnt;
 };
 
 /**
@@ -191,7 +191,6 @@ struct wlan_objmgr_pdev {
 	void *dp_handle;
 	qdf_spinlock_t pdev_lock;
 };
-
 
 /**
  ** APIs to Create/Delete Global object APIs

@@ -197,21 +197,21 @@ struct wlan_objmgr_psoc_regulatory {
  * @dot11_mode: Phy mode
  * @skip_dfs_chnl_in_p2p_search: Skip Dfs Channel in case of P2P
  *                             Search
- * @dual_mac_feature_disable: Disable Dual MAC feature
  * @indoor_channel_support: Enable/disable sap on indoor channel
  * @optimize_chan_avoid_event: Optimize channel avoidance
  *                           indication coming from firmware
  * @band_capability: Preferred band (0:Both,  1:2G only,  2:5G only)
+ * @dual_mac_feature_disable: Disable Dual MAC feature
  */
 struct wlan_objmgr_psoc_user_config {
 	bool is_11d_support_enabled;
 	bool is_11h_support_enabled;
 	uint8_t dot11_mode;
 	bool skip_dfs_chnl_in_p2p_search;
-	uint32_t dual_mac_feature_disable;
 	bool indoor_channel_support;
 	bool optimize_chan_avoid_event;
 	uint8_t band_capability;
+	uint32_t dual_mac_feature_disable;
 };
 
 /**
@@ -240,35 +240,35 @@ struct wlan_objmgr_psoc_nif {
  * struct wlan_objmgr_psoc_objmgr - psoc object manager sub structure
  * @psoc_id:              The PSOC's numeric Id
  * @wlan_pdev_count:      PDEV count
- * @wlan_pdev_list[]:     PDEV list
  * @wlan_pdev_id_map:     PDEV id map, to allocate free ids
  * @wlan_vdev_count:      VDEV count
  * @max_vdev_count:       Max no. of VDEVs supported by this PSOC
- * @wlan_vdev_list[]:     VDEV list
- * @wlan_vdev_id_map[]:   VDEV id map, to allocate free ids
+ * @print_cnt:            Count to throttle Logical delete prints
  * @wlan_peer_count:      PEER count
  * @max_peer_count:       Max no. of peers supported by this PSOC
+ * @wlan_pdev_list[]:     PDEV list
+ * @wlan_vdev_list[]:     VDEV list
+ * @wlan_vdev_id_map[]:   VDEV id map, to allocate free ids
  * @peer_list:            Peer list
  * @ref_cnt:              Ref count
  * @ref_id_dbg:           Array to track Ref count
- * @print_cnt:            Count to throttle Logical delete prints
  * @qdf_dev:              QDF Device
  */
 struct wlan_objmgr_psoc_objmgr {
 	uint8_t psoc_id;
 	uint8_t wlan_pdev_count;
-	struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];
 	uint8_t wlan_pdev_id_map;
 	uint8_t wlan_vdev_count;
 	uint8_t max_vdev_count;
-	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS];
-	uint32_t wlan_vdev_id_map[2];
+	uint8_t print_cnt;
 	uint16_t wlan_peer_count;
 	uint16_t max_peer_count;
+	struct wlan_objmgr_pdev *wlan_pdev_list[WLAN_UMAC_MAX_PDEVS];
+	struct wlan_objmgr_vdev *wlan_vdev_list[WLAN_UMAC_PSOC_MAX_VDEVS];
+	uint32_t wlan_vdev_id_map[2];
 	struct wlan_peer_list peer_list;
 	qdf_atomic_t ref_cnt;
 	qdf_atomic_t ref_id_dbg[WLAN_REF_ID_MAX];
-	uint8_t print_cnt;
 	qdf_device_t qdf_dev;
 };
 
