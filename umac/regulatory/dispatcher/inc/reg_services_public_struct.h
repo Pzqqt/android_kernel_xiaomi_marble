@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -822,6 +822,8 @@ enum direction {
  * @mas_chan_list: master chan list
  * @default_country: default country
  * @current_country: current country
+ * @def_region_domain: default reg domain
+ * @def_country_code: default country code
  * @reg_dmn_pair: reg domain pair
  * @ctry_code: country code
  */
@@ -831,6 +833,8 @@ struct mas_chan_params {
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
 	char current_country[REG_ALPHA2_LEN + 1];
+	uint16_t def_region_domain;
+	uint16_t def_country_code;
 	uint16_t reg_dmn_pair;
 	uint16_t ctry_code;
 };

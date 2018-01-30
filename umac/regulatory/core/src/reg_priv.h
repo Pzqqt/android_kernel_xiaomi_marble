@@ -51,10 +51,13 @@ struct wlan_regulatory_psoc_priv_obj {
 	uint8_t num_phy;
 	char cur_country[REG_ALPHA2_LEN + 1];
 	char def_country[REG_ALPHA2_LEN + 1];
+	uint16_t def_country_code;
+	uint16_t def_region_domain;
 	enum country_src cc_src;
 	struct wlan_objmgr_psoc *psoc_ptr;
 	bool new_user_ctry_pending;
 	bool new_11d_ctry_pending;
+	bool world_country_pending;
 	bool dfs_enabled;
 	enum band_info band_capability;
 	bool indoor_chan_enabled;
@@ -83,6 +86,8 @@ struct wlan_regulatory_pdev_priv_obj {
 	struct regulatory_channel cur_chan_list[NUM_CHANNELS];
 	struct regulatory_channel mas_chan_list[NUM_CHANNELS];
 	char default_country[REG_ALPHA2_LEN + 1];
+	uint16_t def_region_domain;
+	uint16_t def_country_code;
 	char current_country[REG_ALPHA2_LEN + 1];
 	uint16_t reg_dmn_pair;
 	uint16_t ctry_code;

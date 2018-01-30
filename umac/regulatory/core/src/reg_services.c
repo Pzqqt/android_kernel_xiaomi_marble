@@ -40,6 +40,7 @@
 #define CHAN_13_CENT_FREQ 2472
 #define MAX_PWR_FCC_CHAN_13 2
 #define CHAN_144_CENT_FREQ 5720
+#define DEFAULT_WORLD_REGDMN 0x60
 
 #define IS_VALID_PSOC_REG_OBJ(psoc_priv_obj) (NULL != psoc_priv_obj)
 #define IS_VALID_PDEV_REG_OBJ(pdev_priv_obj) (NULL != pdev_priv_obj)
@@ -1303,6 +1304,15 @@ QDF_STATUS reg_get_curr_band(struct wlan_objmgr_pdev *pdev,
 	return QDF_STATUS_SUCCESS;
 }
 
+static bool
+reg_is_world_ctry_code(uint16_t ctry_code)
+{
+	if ((ctry_code & 0xFFF0) == DEFAULT_WORLD_REGDMN)
+		return true;
+
+	return false;
+}
+
 QDF_STATUS reg_read_default_country(struct wlan_objmgr_psoc *psoc,
 				    uint8_t *country_code)
 {
@@ -1397,6 +1407,7 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 			   uint8_t *country)
 {
 	struct wlan_regulatory_psoc_priv_obj *psoc_reg;
+	struct wlan_regulatory_pdev_priv_obj *pdev_priv_obj;
 	struct wlan_lmac_if_reg_tx_ops *tx_ops;
 	struct set_country country_code;
 	struct wlan_objmgr_psoc *psoc;
@@ -1427,7 +1438,10 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 		     country, REG_ALPHA2_LEN + 1);
 	country_code.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
 
-	psoc_reg->new_user_ctry_pending = true;
+	if (reg_is_world_alpha2(country))
+		psoc_reg->world_country_pending = true;
+	else
+		psoc_reg->new_user_ctry_pending = true;
 
 	if (psoc_reg->offload_enabled) {
 		tx_ops = reg_get_psoc_tx_ops(psoc);
@@ -1439,8 +1453,25 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 			return QDF_STATUS_E_FAULT;
 		}
 	} else {
-		qdf_mem_copy(rd.cc.alpha, country, REG_ALPHA2_LEN + 1);
-		rd.flags = ALPHA_IS_SET;
+		if (reg_is_world_alpha2(country)) {
+			pdev_priv_obj = reg_get_pdev_obj(pdev);
+			if (!IS_VALID_PDEV_REG_OBJ(pdev_priv_obj)) {
+				reg_err("reg component pdev priv is NULL");
+				return QDF_STATUS_E_INVAL;
+			}
+			if (reg_is_world_ctry_code(
+				    pdev_priv_obj->def_region_domain))
+				rd.cc.regdmn_id =
+					pdev_priv_obj->def_region_domain;
+			else
+				rd.cc.regdmn_id = DEFAULT_WORLD_REGDMN;
+			rd.flags = REGDMN_IS_SET;
+		} else {
+			qdf_mem_copy(rd.cc.alpha, country,
+				     REG_ALPHA2_LEN + 1);
+			rd.flags = ALPHA_IS_SET;
+		}
+
 		reg_program_chan_list(pdev, &rd);
 	}
 
@@ -2234,6 +2265,9 @@ static void reg_init_pdev_mas_chan_list(struct wlan_regulatory_pdev_priv_obj
 	pdev_priv_obj->reg_dmn_pair = mas_chan_params->reg_dmn_pair;
 	pdev_priv_obj->ctry_code =  mas_chan_params->ctry_code;
 
+	pdev_priv_obj->def_region_domain = mas_chan_params->reg_dmn_pair;
+	pdev_priv_obj->def_country_code =  mas_chan_params->ctry_code;
+
 	qdf_mem_copy(pdev_priv_obj->default_country,
 		     mas_chan_params->default_country, REG_ALPHA2_LEN + 1);
 
@@ -2757,7 +2791,6 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 					reg_rule_5g, num_5g_reg_rules,
 					min_bw_5g, mas_chan_list);
 
-	soc_reg->cc_src = SOURCE_DRIVER;
 	if (soc_reg->new_user_ctry_pending == true) {
 		soc_reg->new_user_ctry_pending = false;
 		soc_reg->cc_src = SOURCE_USERSPACE;
@@ -2768,13 +2801,31 @@ QDF_STATUS reg_process_master_chan_list(struct cur_regulatory_info
 		soc_reg->new_11d_ctry_pending = false;
 		soc_reg->cc_src = SOURCE_11D;
 		soc_reg->user_ctry_set = false;
+	} else if (soc_reg->world_country_pending == true) {
+		soc_reg->world_country_pending = false;
+		soc_reg->cc_src = SOURCE_CORE;
+		soc_reg->user_ctry_set = false;
 	} else {
+		soc_reg->cc_src = SOURCE_DRIVER;
+
+		if (reg_is_world_alpha2(regulat_info->alpha2))
+			soc_reg->cc_src = SOURCE_CORE;
+
 		qdf_mem_copy(soc_reg->mas_chan_params[phy_id].default_country,
 			     regulat_info->alpha2,
 			     REG_ALPHA2_LEN + 1);
+
+		soc_reg->mas_chan_params[phy_id].def_country_code =
+			regulat_info->ctry_code;
+		soc_reg->mas_chan_params[phy_id].def_region_domain =
+			regulat_info->reg_dmn_pair;
+
 		qdf_mem_copy(soc_reg->def_country,
 			     regulat_info->alpha2,
 			     REG_ALPHA2_LEN + 1);
+
+		soc_reg->def_country_code = regulat_info->ctry_code;
+		soc_reg->def_region_domain = regulat_info->reg_dmn_pair;
 	}
 
 	pdev = wlan_objmgr_get_pdev_by_id(psoc, phy_id, dbg_id);
