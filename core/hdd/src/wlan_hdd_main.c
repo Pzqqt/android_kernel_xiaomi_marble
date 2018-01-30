@@ -12867,6 +12867,8 @@ static int hdd_update_scan_config(struct hdd_context *hdd_ctx)
 	scan_cfg.usr_cfg_num_probes = cfg->scan_num_probes;
 	scan_cfg.is_bssid_hint_priority = cfg->is_bssid_hint_priority;
 	scan_cfg.enable_mac_spoofing = cfg->enable_mac_spoofing;
+	scan_cfg.sta_miracast_mcc_rest_time =
+				cfg->sta_miracast_mcc_rest_time_val;
 
 	hdd_update_pno_config(&scan_cfg.pno_cfg, cfg);
 	hdd_update_ie_whitelist_attr(&scan_cfg.ie_whitelist, cfg);

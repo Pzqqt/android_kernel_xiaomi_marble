@@ -4668,6 +4668,12 @@ static int drv_cmd_miracast(struct hdd_adapter *adapter,
 		hdd_err("Failed to set miracast");
 		return -EBUSY;
 	}
+	ret_status = ucfg_scan_set_miracast(hdd_ctx->hdd_psoc,
+					    filterType ? true : false);
+	if (QDF_IS_STATUS_ERROR(ret_status)) {
+		hdd_err("Failed to set miracastn scan");
+		return -EBUSY;
+	}
 
 	if (policy_mgr_is_mcc_in_24G(hdd_ctx->hdd_psoc))
 		return wlan_hdd_set_mas(adapter, filterType);

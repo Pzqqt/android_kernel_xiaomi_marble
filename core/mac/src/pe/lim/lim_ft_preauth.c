@@ -717,7 +717,7 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 	ft_preauth_req->scan_id = req->scan_req.scan_id;
 	req->scan_req.vdev_id = session_id;
 	req->scan_req.scan_req_id = mac_ctx->lim.req_id | PREAUTH_REQUESTOR_ID;
-	req->scan_req.scan_priority = WMI_SCAN_PRIORITY_VERY_HIGH;
+	req->scan_req.scan_priority = SCAN_PRIORITY_VERY_HIGH;
 	req->scan_req.scan_f_passive = true;
 
 	req->scan_req.chan_list.num_chan = 1;

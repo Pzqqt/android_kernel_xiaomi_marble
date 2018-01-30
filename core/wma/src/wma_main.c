@@ -7415,10 +7415,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		wma_vdev_detach(wma_handle,
 				(struct del_sta_self_params *) msg->bodyptr, 1);
 		break;
-	case WMA_START_SCAN_OFFLOAD_REQ:
-		wma_start_scan(wma_handle, msg->bodyptr, msg->type);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_UPDATE_CHAN_LIST_REQ:
 		wma_update_channel_list(wma_handle,
 					(tSirUpdateChanList *) msg->bodyptr);

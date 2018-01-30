@@ -245,9 +245,6 @@ QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 				     int *buf_len,
 				     tAbortScanParams *abort_scan_req);
 
-QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
-			  tSirScanOffloadReq *scan_req, uint16_t msg_type);
-
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list);
 
