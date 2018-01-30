@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,6 +41,7 @@
 #include "htc_services.h"
 #include "a_types.h"
 #include "dummy.h"
+#include "qdf_module.h"
 
 /**
  * hif_intialize_default_ops() - intializes default operations values
@@ -242,6 +243,7 @@ int hif_target_sleep_state_adjust(struct hif_softc *hif_sc,
 	return hif_sc->bus_ops.hif_target_sleep_state_adjust(hif_sc,
 			sleep_ok, wait_for_it);
 }
+qdf_export_symbol(hif_target_sleep_state_adjust);
 
 void hif_disable_isr(struct hif_opaque_softc *hif_hdl)
 {
@@ -318,6 +320,7 @@ void hif_irq_enable(struct hif_softc *hif_sc, int irq_id)
 {
 	hif_sc->bus_ops.hif_irq_enable(hif_sc, irq_id);
 }
+qdf_export_symbol(hif_irq_enable);
 
 void hif_irq_disable(struct hif_softc *hif_sc, int irq_id)
 {

@@ -17,6 +17,7 @@
  */
 
 #include "hal_api.h"
+#include "qdf_module.h"
 
 /* TODO: See if the following definition is available in HW headers */
 #define HAL_REO_OWNED 4
@@ -215,6 +216,7 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 	}
 #endif
 }
+qdf_export_symbol(hal_reo_qdesc_setup);
 
 
 /**
@@ -307,4 +309,5 @@ void hal_reo_setup(void *hal_soc,
 	 * GLOBAL_LINK_DESC_COUNT_CTRL
 	 */
 }
+qdf_export_symbol(hal_reo_setup);
 

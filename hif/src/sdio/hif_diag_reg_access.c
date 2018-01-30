@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,6 +35,8 @@
 #include "hif.h"
 #include "if_sdio.h"
 #include "regtable_sdio.h"
+
+#include "qdf_module.h"
 
 #define CPU_DBG_SEL_ADDRESS                      0x00000483
 #define CPU_DBG_ADDRESS                          0x00000484
@@ -262,6 +264,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn,
 
 	return QDF_STATUS_SUCCESS;
 }
+qdf_export_symbol(hif_diag_read_mem);
 
 /**
  * hif_ar6k_read_target_register - call to read target register values

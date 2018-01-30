@@ -42,6 +42,7 @@
 #include "qdf_trace.h"
 #include "hif_debug.h"
 #include "bmi_msg.h"
+#include "qdf_module.h"
 
 /* Track a BMI transaction that is in progress */
 #ifndef BIT
@@ -283,6 +284,7 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 	qdf_mem_free(transaction);
 	return status;
 }
+qdf_export_symbol(hif_exchange_bmi_msg);
 
 #ifdef BMI_RSP_POLLING
 #define BMI_RSP_CB_REGISTER 0

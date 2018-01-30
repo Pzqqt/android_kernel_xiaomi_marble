@@ -30,6 +30,7 @@
 #include "hal_api.h"
 #include "target_type.h"
 #include "wcss_version.h"
+#include "qdf_module.h"
 
 /**
  * Common SRNG register access macros:
@@ -782,6 +783,7 @@ fail1:
 fail0:
 	return NULL;
 }
+qdf_export_symbol(hal_attach);
 
 /**
  * hal_mem_info - Retreive hal memory base address
@@ -800,6 +802,7 @@ void hal_get_meminfo(void *hal_soc, struct hal_mem_info *mem )
 	hif_read_phy_mem_base(hal->hif_handle, (qdf_dma_addr_t *)&mem->dev_base_paddr);
 	return;
 }
+qdf_export_symbol(hal_get_meminfo);
 
 /**
  * hal_detach - Detach HAL layer
@@ -826,6 +829,7 @@ extern void hal_detach(void *hal_soc)
 
 	return;
 }
+qdf_export_symbol(hal_detach);
 
 /**
  * hal_srng_src_hw_init - Private function to initialize SRNG
@@ -1283,6 +1287,7 @@ void *hal_srng_setup(void *hal_soc, int ring_type, int ring_num,
 
 	return (void *)srng;
 }
+qdf_export_symbol(hal_srng_setup);
 
 /**
  * hal_srng_cleanup - Deinitialize HW SRNG ring.
@@ -1295,6 +1300,7 @@ void hal_srng_cleanup(void *hal_soc, void *hal_srng)
 	SRNG_LOCK_DESTROY(&srng->lock);
 	srng->initialized = 0;
 }
+qdf_export_symbol(hal_srng_cleanup);
 
 /**
  * hal_srng_get_entrysize - Returns size of ring entry in bytes
@@ -1308,6 +1314,7 @@ uint32_t hal_srng_get_entrysize(void *hal_soc, int ring_type)
 		HAL_SRNG_CONFIG(hal, ring_type);
 	return ring_config->entry_size << 2;
 }
+qdf_export_symbol(hal_srng_get_entrysize);
 
 /**
  * hal_srng_max_entries - Returns maximum possible number of ring entries
@@ -1321,6 +1328,7 @@ uint32_t hal_srng_max_entries(void *hal_soc, int ring_type)
 	struct hal_hw_srng_config *ring_config = HAL_SRNG_CONFIG(hal, ring_type);
 	return SRNG_MAX_SIZE_DWORDS / ring_config->entry_size;
 }
+qdf_export_symbol(hal_srng_max_entries);
 
 enum hal_srng_dir hal_srng_get_dir(void *hal_soc, int ring_type)
 {
@@ -1383,3 +1391,4 @@ extern void hal_get_srng_params(void *hal_soc, void *hal_ring,
 	for (i = 0 ; i < MAX_SRNG_REG_GROUPS; i++)
 		ring_params->hwreg_base[i] = srng->hwreg_base[i];
 }
+qdf_export_symbol(hal_get_srng_params);

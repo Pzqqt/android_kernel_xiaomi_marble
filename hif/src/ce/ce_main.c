@@ -48,6 +48,7 @@
 #ifndef CONFIG_WIN
 #include "qwlan_version.h"
 #endif
+#include "qdf_module.h"
 
 #define CE_POLL_TIMEOUT 10      /* ms */
 
@@ -678,6 +679,7 @@ bool ce_srng_based(struct hif_softc *scn)
 	}
 	return false;
 }
+qdf_export_symbol(ce_srng_based);
 
 #ifdef QCA_WIFI_SUPPORT_SRNG
 static struct ce_ops *ce_services_attach(struct hif_softc *scn)
@@ -2751,6 +2753,7 @@ int hif_ce_fastpath_cb_register(struct hif_opaque_softc *hif_ctx,
 
 	return QDF_STATUS_SUCCESS;
 }
+qdf_export_symbol(hif_ce_fastpath_cb_register);
 #endif
 
 #ifdef IPA_OFFLOAD
@@ -3206,6 +3209,7 @@ int hif_dump_ce_registers(struct hif_softc *scn)
 	}
 	return 0;
 }
+qdf_export_symbol(hif_dump_ce_registers);
 #ifdef QCA_NSS_WIFI_OFFLOAD_SUPPORT
 struct hif_pipe_addl_info *hif_get_addl_pipe_info(struct hif_opaque_softc *osc,
 		struct hif_pipe_addl_info *hif_info, uint32_t pipe)
@@ -3249,6 +3253,7 @@ struct hif_pipe_addl_info *hif_get_addl_pipe_info(struct hif_opaque_softc *osc,
 
 	return hif_info;
 }
+qdf_export_symbol(hif_get_addl_pipe_info);
 
 uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc, uint32_t mode)
 {
@@ -3257,7 +3262,7 @@ uint32_t hif_set_nss_wifiol_mode(struct hif_opaque_softc *osc, uint32_t mode)
 	scn->nss_wifi_ol_mode = mode;
 	return 0;
 }
-
+qdf_export_symbol(hif_set_nss_wifiol_mode);
 #endif
 
 void hif_set_attribute(struct hif_opaque_softc *osc, uint8_t hif_attrib)
@@ -3278,6 +3283,7 @@ void hif_disable_interrupt(struct hif_opaque_softc *osc, uint32_t pipe_num)
 	CE_COPY_COMPLETE_INTR_DISABLE(scn, ctrl_addr);
 	Q_TARGET_ACCESS_END(scn);
 }
+qdf_export_symbol(hif_disable_interrupt);
 
 /**
  * hif_fw_event_handler() - hif fw event handler

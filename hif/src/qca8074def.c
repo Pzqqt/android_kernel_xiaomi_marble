@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "qdf_module.h"
 
 #if defined(QCA8074_HEADERS_DEF)
 
@@ -225,6 +227,7 @@
 #define MY_TARGET_BOARD_EXT_DATA_SZ QCA8074_BOARD_EXT_DATA_SZ
 #include "targetdef.h"
 #include "hostdef.h"
+qdf_export_symbol(QCA8074_CE_TARGETdef);
 #else
 #include "common_drv.h"
 #include "targetdef.h"
@@ -232,3 +235,5 @@
 struct targetdef_s *QCA8074_TARGETdef;
 struct hostdef_s *QCA8074_HOSTdef;
 #endif /*QCA8074_HEADERS_DEF */
+qdf_export_symbol(QCA8074_TARGETdef);
+qdf_export_symbol(QCA8074_HOSTdef);

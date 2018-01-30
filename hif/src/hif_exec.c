@@ -19,6 +19,7 @@
 #include <hif_exec.h>
 #include <ce_main.h>
 #include <hif_irq_affinity.h>
+#include "qdf_module.h"
 
 /* mapping NAPI budget 0 to internal budget 0
  * NAPI budget 1 to internal budget [1,scaler -1]
@@ -66,6 +67,7 @@ void hif_print_napi_stats(struct hif_opaque_softc *hif_ctx)
 		}
 	}
 }
+qdf_export_symbol(hif_print_napi_stats);
 
 static void hif_exec_tasklet_schedule(struct hif_exec_context *ctx)
 {
@@ -311,6 +313,7 @@ uint32_t hif_configure_ext_group_interrupts(struct hif_opaque_softc *hif_ctx)
 
 	return QDF_STATUS_SUCCESS;
 }
+qdf_export_symbol(hif_configure_ext_group_interrupts);
 
 /**
  * hif_ext_group_interrupt_handler() - handler for related interrupts
@@ -407,6 +410,7 @@ uint32_t hif_register_ext_group(struct hif_opaque_softc *hif_ctx,
 	hif_state->hif_num_extgroup++;
 	return QDF_STATUS_SUCCESS;
 }
+qdf_export_symbol(hif_register_ext_group);
 
 /**
  * hif_exec_create() - create an execution context
@@ -479,3 +483,4 @@ void hif_deregister_exec_group(struct hif_opaque_softc *hif_ctx,
 
 	}
 }
+qdf_export_symbol(hif_deregister_exec_group);

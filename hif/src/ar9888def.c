@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013,2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013,2016,2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -15,6 +15,8 @@
  * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
  * PERFORMANCE OF THIS SOFTWARE.
  */
+
+#include "qdf_module.h"
 
 #if defined(AR9888_HEADERS_DEF)
 #define AR9888 1
@@ -199,6 +201,7 @@
 #define MY_TARGET_BOARD_EXT_DATA_SZ AR9888_BOARD_EXT_DATA_SZ
 #include "targetdef.h"
 #include "hostdef.h"
+qdf_export_symbol(AR9888_CE_TARGETdef);
 #else
 #include "common_drv.h"
 #include "targetdef.h"
@@ -206,3 +209,5 @@
 struct targetdef_s *AR9888_TARGETdef;
 struct hostdef_s *AR9888_HOSTdef;
 #endif /*AR9888_HEADERS_DEF */
+qdf_export_symbol(AR9888_TARGETdef);
+qdf_export_symbol(AR9888_HOSTdef);

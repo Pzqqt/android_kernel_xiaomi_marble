@@ -29,6 +29,7 @@
 #include "htc_internal.h"
 #include <hif.h>
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
+#include "qdf_module.h"
 
 /* use credit flow control over HTC */
 unsigned int htc_credit_flow = 1;
@@ -402,6 +403,7 @@ QDF_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 	return status;
 }
+qdf_export_symbol(htc_connect_service);
 
 void htc_set_credit_distribution(HTC_HANDLE HTCHandle,
 				 void *pCreditDistContext,

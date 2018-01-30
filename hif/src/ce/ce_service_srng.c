@@ -29,6 +29,7 @@
 #include "hif_debug.h"
 #include "hal_api.h"
 #include "pld_common.h"
+#include "qdf_module.h"
 
 /*
  * Support for Copy Engine hardware, which is mainly used for
@@ -860,3 +861,4 @@ struct ce_ops *ce_services_srng()
 {
 	return &ce_service_srng;
 }
+qdf_export_symbol(ce_services_srng);

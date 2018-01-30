@@ -52,6 +52,7 @@
 #endif
 #include "hif_napi.h"
 #include "hif_unit_test_suspend_i.h"
+#include "qdf_module.h"
 
 void hif_dump(struct hif_opaque_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
@@ -243,6 +244,7 @@ void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 
 	scn->htc_htt_tx_endpoint = htc_htt_tx_endpoint;
 }
+qdf_export_symbol(hif_save_htc_htt_config_endpoint);
 
 static const struct qwlan_hw qwlan_hw_list[] = {
 	{
@@ -385,6 +387,7 @@ void *hif_get_dev_ba(struct hif_opaque_softc *hif_handle)
 
 	return scn->mem;
 }
+qdf_export_symbol(hif_get_dev_ba);
 /**
  * hif_open(): hif_open
  * @qdf_ctx: QDF Context
@@ -704,6 +707,7 @@ void hif_read_phy_mem_base(struct hif_softc *scn, qdf_dma_addr_t *phy_mem_base)
 {
 	*phy_mem_base = scn->mem_pa;
 }
+qdf_export_symbol(hif_read_phy_mem_base);
 
 /**
  * hif_get_device_type(): hif_get_device_type
@@ -829,6 +833,7 @@ bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx)
 	return (hif_sc->bus_type != QDF_BUS_TYPE_SNOC) &&
 		!ce_srng_based(hif_sc);
 }
+qdf_export_symbol(hif_needs_bmi);
 
 /**
  * hif_get_bus_type() - return the bus type
@@ -877,6 +882,7 @@ struct hif_target_info *hif_get_target_info_handle(
 	return &sc->target_info;
 
 }
+qdf_export_symbol(hif_get_target_info_handle);
 
 #if defined(FEATURE_LRO)
 
@@ -1051,6 +1057,7 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 
 	HIF_INFO_LO("-%s\n", __func__);
 }
+qdf_export_symbol(hif_update_pipe_callback);
 
 /**
  * hif_is_recovery_in_progress() - API to query upper layers if recovery in
@@ -1104,6 +1111,7 @@ qdf_nbuf_t hif_batch_send(struct hif_opaque_softc *osc, qdf_nbuf_t msdu,
 	return ce_batch_send((struct CE_handle *)ce_tx_hdl, msdu, transfer_id,
 			len, sendhead);
 }
+qdf_export_symbol(hif_batch_send);
 
 /**
  * hif_update_tx_ring() - API to access hif specific function
@@ -1119,6 +1127,7 @@ void hif_update_tx_ring(struct hif_opaque_softc *osc, u_int32_t num_htt_cmpls)
 
 	ce_update_tx_ring(ce_tx_hdl, num_htt_cmpls);
 }
+qdf_export_symbol(hif_update_tx_ring);
 
 
 /**
@@ -1139,6 +1148,7 @@ int hif_send_single(struct hif_opaque_softc *osc, qdf_nbuf_t msdu, uint32_t
 	return ce_send_single((struct CE_handle *)ce_tx_hdl, msdu, transfer_id,
 			len);
 }
+qdf_export_symbol(hif_send_single);
 
 /**
  * hif_send_fast() - API to access hif specific function
@@ -1159,6 +1169,7 @@ int hif_send_fast(struct hif_opaque_softc *osc, qdf_nbuf_t nbuf,
 	return ce_send_fast((struct CE_handle *)ce_tx_hdl, nbuf,
 			transfer_id, download_len);
 }
+qdf_export_symbol(hif_send_fast);
 #endif
 
 /**
@@ -1178,6 +1189,7 @@ void hif_reg_write(struct hif_opaque_softc *hif_ctx, uint32_t offset,
 	hif_write32_mb(scn->mem + offset, value);
 
 }
+qdf_export_symbol(hif_reg_write);
 
 /**
  * hif_reg_read() - API to access hif specific function
@@ -1194,6 +1206,7 @@ uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset)
 
 	return hif_read32_mb(scn->mem + offset);
 }
+qdf_export_symbol(hif_reg_read);
 
 #if defined(HIF_USB)
 /**

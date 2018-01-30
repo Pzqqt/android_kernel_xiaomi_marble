@@ -40,6 +40,7 @@
 #include "ce_api.h"
 #include "qdf_trace.h"
 #include "hif_debug.h"
+#include "qdf_module.h"
 
 void
 hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
@@ -324,6 +325,7 @@ done:
 
 	return status;
 }
+qdf_export_symbol(hif_diag_read_mem);
 
 /* Read 4-byte aligned data from Target memory or register */
 QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,

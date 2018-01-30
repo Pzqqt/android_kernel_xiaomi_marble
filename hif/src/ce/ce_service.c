@@ -36,6 +36,7 @@
 #include "hif_main.h"
 #include "hif_debug.h"
 #include "hif_napi.h"
+#include "qdf_module.h"
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0
@@ -216,6 +217,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 		hif_ce_desc_data_record(event, len);
 #endif
 }
+qdf_export_symbol(hif_record_ce_desc_event);
 
 /**
  * ce_init_ce_desc_event_log() - initialize the ce event log
@@ -248,6 +250,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn,
 		int index, int len)
 {
 }
+qdf_export_symbol(hif_record_ce_desc_event);
 
 inline void ce_init_ce_desc_event_log(struct hif_softc *scn, int ce_id,
 					int size)
@@ -2242,6 +2245,7 @@ target_access_end:
 		HIF_ERROR("<--[premature rc=%d]", CE_state->receive_count);
 	return CE_state->receive_count;
 }
+qdf_export_symbol(ce_per_engine_service);
 
 /*
  * Handler for per-engine interrupts on ALL active CEs.
@@ -2501,6 +2505,7 @@ bool ce_check_rx_pending(struct CE_state *CE_state)
 	else
 		return false;
 }
+qdf_export_symbol(ce_check_rx_pending);
 
 #ifdef IPA_OFFLOAD
 /**

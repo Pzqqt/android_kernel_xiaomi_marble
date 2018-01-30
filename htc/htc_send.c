@@ -29,7 +29,7 @@
 #include "htc_internal.h"
 #include <qdf_mem.h>            /* qdf_mem_malloc */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-
+#include "qdf_module.h"
 
 /* #define USB_HIF_SINGLE_PIPE_DATA_SCHED */
 /* #ifdef USB_HIF_SINGLE_PIPE_DATA_SCHED */
@@ -169,6 +169,7 @@ int htc_get_tx_queue_depth(HTC_HANDLE *htc_handle, HTC_ENDPOINT_ID endpoint_id)
 
 	return HTC_PACKET_QUEUE_DEPTH(&endpoint->TxQueue);
 }
+qdf_export_symbol(htc_get_tx_queue_depth);
 
 void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle,
 					      int *credits)
@@ -1554,6 +1555,7 @@ QDF_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket)
 			 pPacket->ActualLength));
 	return __htc_send_pkt(HTCHandle, pPacket);
 }
+qdf_export_symbol(htc_send_pkt);
 
 #ifdef ATH_11AC_TXCOMPACT
 /**
@@ -1873,6 +1875,7 @@ QDF_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	return status;
 }
 #endif /*ATH_11AC_TXCOMPACT */
+qdf_export_symbol(htc_send_data_pkt);
 
 /*
  * In the adapted HIF layer, qdf_nbuf_t are passed between HIF and HTC,
@@ -2046,6 +2049,7 @@ void htc_ctrl_msg_cmpl(HTC_HANDLE htc_pdev, HTC_ENDPOINT_ID htc_ep_id)
 
 	htc_send_complete_check(pendpoint, 1);
 }
+qdf_export_symbol(htc_ctrl_msg_cmpl);
 #endif
 
 /* callback when TX resources become available */

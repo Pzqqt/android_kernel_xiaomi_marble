@@ -37,6 +37,7 @@
 #include <hif_debug.h>
 #define ATH_MODULE_NAME hif
 #include <a_debug.h>
+#include "qdf_module.h"
 
 #if defined(WLAN_DEBUG) || defined(DEBUG)
 static ATH_DEBUG_MASK_DESCRIPTION g_hif_debug_description[] = {
@@ -854,6 +855,7 @@ QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn,
 	HIF_TRACE("-%s", __func__);
 	return status;
 }
+qdf_export_symbol(hif_diag_read_mem);
 
 /**
  * hif_diag_write_mem() -write  nbytes of data to target memory or register

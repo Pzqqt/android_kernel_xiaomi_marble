@@ -18,6 +18,7 @@
 
 #include "hal_reo.h"
 #include "hal_tx.h"
+#include "qdf_module.h"
 
 #define BLOCK_RES_MASK		0xF
 static inline uint8_t hal_find_one_bit(uint8_t x)
@@ -118,6 +119,7 @@ inline int hal_reo_cmd_queue_stats(void *reo_ring, struct hal_soc *soc,
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
+qdf_export_symbol(hal_reo_cmd_queue_stats);
 
 inline int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
 				    struct hal_reo_cmd_params *cmd)
@@ -161,6 +163,7 @@ inline int hal_reo_cmd_flush_queue(void *reo_ring, struct hal_soc *soc,
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
+qdf_export_symbol(hal_reo_cmd_flush_queue);
 
 inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 				    struct hal_reo_cmd_params *cmd)
@@ -237,6 +240,7 @@ inline int hal_reo_cmd_flush_cache(void *reo_ring, struct hal_soc *soc,
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
+qdf_export_symbol(hal_reo_cmd_flush_cache);
 
 inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 				      struct hal_reo_cmd_params *cmd)
@@ -290,6 +294,7 @@ inline int hal_reo_cmd_unblock_cache(void *reo_ring, struct hal_soc *soc,
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
+qdf_export_symbol(hal_reo_cmd_unblock_cache);
 
 inline int hal_reo_cmd_flush_timeout_list(void *reo_ring, struct hal_soc *soc,
 					   struct hal_reo_cmd_params *cmd)
@@ -332,6 +337,7 @@ inline int hal_reo_cmd_flush_timeout_list(void *reo_ring, struct hal_soc *soc,
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
+qdf_export_symbol(hal_reo_cmd_flush_timeout_list);
 
 inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 					struct hal_reo_cmd_params *cmd)
@@ -531,6 +537,7 @@ inline int hal_reo_cmd_update_rx_queue(void *reo_ring, struct hal_soc *soc,
 	return HAL_GET_FIELD(UNIFORM_REO_CMD_HEADER_0, REO_CMD_NUMBER,
 				     val);
 }
+qdf_export_symbol(hal_reo_cmd_update_rx_queue);
 
 inline void hal_reo_queue_stats_status(uint32_t *reo_desc,
 			     struct hal_reo_queue_status *st)
@@ -721,6 +728,7 @@ inline void hal_reo_queue_stats_status(uint32_t *reo_desc,
 		HAL_GET_FIELD(REO_GET_QUEUE_STATS_STATUS_23,
 			      HOLE_COUNT, val);
 }
+qdf_export_symbol(hal_reo_queue_stats_status);
 
 inline void hal_reo_flush_queue_status(uint32_t *reo_desc,
 				    struct hal_reo_flush_queue_status *st)
@@ -740,6 +748,7 @@ inline void hal_reo_flush_queue_status(uint32_t *reo_desc,
 	st->error = HAL_GET_FIELD(REO_FLUSH_QUEUE_STATUS_2, ERROR_DETECTED,
 				  val);
 }
+qdf_export_symbol(hal_reo_flush_queue_status);
 
 inline void hal_reo_flush_cache_status(uint32_t *reo_desc, struct hal_soc *soc,
 				    struct hal_reo_flush_cache_status *st)
@@ -792,6 +801,7 @@ inline void hal_reo_flush_cache_status(uint32_t *reo_desc, struct hal_soc *soc,
 			      val);
 
 }
+qdf_export_symbol(hal_reo_flush_cache_status);
 
 inline void hal_reo_unblock_cache_status(uint32_t *reo_desc,
 					 struct hal_soc *soc,
@@ -824,6 +834,7 @@ inline void hal_reo_unblock_cache_status(uint32_t *reo_desc,
 		qdf_clear_bit(soc->index,
 			     (unsigned long *)&soc->reo_res_bitmap);
 }
+qdf_export_symbol(hal_reo_unblock_cache_status);
 
 inline void hal_reo_flush_timeout_list_status(
 			 uint32_t *reo_desc,
@@ -867,6 +878,7 @@ inline void hal_reo_flush_timeout_list_status(
 				       FORWARD_BUF_COUNT,
 				       val);
 }
+qdf_export_symbol(hal_reo_flush_timeout_list_status);
 
 inline void hal_reo_desc_thres_reached_status(
 			 uint32_t *reo_desc,
@@ -924,6 +936,7 @@ inline void hal_reo_desc_thres_reached_status(
 				LINK_DESCRIPTOR_COUNTER_SUM,
 				val);
 }
+qdf_export_symbol(hal_reo_desc_thres_reached_status);
 
 inline void hal_reo_rx_update_queue_status(uint32_t *reo_desc,
 				      struct hal_reo_update_rx_queue_status *st)
@@ -936,6 +949,7 @@ inline void hal_reo_rx_update_queue_status(uint32_t *reo_desc,
 	HAL_REO_STATUS_GET_HEADER(reo_desc,
 			      REO_UPDATE_RX_REO_QUEUE, st->header);
 }
+qdf_export_symbol(hal_reo_rx_update_queue_status);
 
 /**
  * hal_reo_init_cmd_ring() - Initialize descriptors of REO command SRNG
@@ -971,3 +985,4 @@ inline void hal_reo_init_cmd_ring(struct hal_soc *soc, void *hal_srng)
 
 	soc->reo_res_bitmap = 0;
 }
+qdf_export_symbol(hal_reo_init_cmd_ring);

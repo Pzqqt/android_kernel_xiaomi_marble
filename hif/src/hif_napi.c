@@ -54,6 +54,7 @@
 #include <ce_internal.h>
 #include <hif_irq_affinity.h>
 #include "qdf_cpuhp.h"
+#include "qdf_module.h"
 
 enum napi_decision_vector {
 	HIF_NAPI_NOEVENT = 0,
@@ -210,6 +211,7 @@ hnc_err:
 	NAPI_DEBUG("<--napi_instances_map=%x]", napid->ce_map);
 	return rc;
 }
+qdf_export_symbol(hif_napi_create);
 
 /**
  *
@@ -314,6 +316,7 @@ int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 
 	return rc;
 }
+qdf_export_symbol(hif_napi_destroy);
 
 /**
  * hif_napi_get_lro_info() - returns the address LRO data for napi_id
@@ -604,6 +607,7 @@ int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	NAPI_DEBUG("<--[rc=%d]", rc);
 	return rc;
 }
+qdf_export_symbol(hif_napi_event);
 
 /**
  * hif_napi_enabled() - checks whether NAPI is enabled for given ce or not
@@ -623,7 +627,8 @@ int hif_napi_enabled(struct hif_opaque_softc *hif_ctx, int ce)
 		rc = ((hif->napi_data.state == ENABLE_NAPI_MASK) &&
 		      (hif->napi_data.ce_map & (0x01 << ce)));
 	return rc;
-};
+}
+qdf_export_symbol(hif_napi_enabled);
 
 /**
  * hif_napi_enable_irq() - enables bus interrupts after napi_complete
@@ -671,6 +676,7 @@ int hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
 
 	return true;
 }
+qdf_export_symbol(hif_napi_schedule);
 
 /**
  * hif_napi_correct_cpu() - correct the interrupt affinity for napi if needed
@@ -845,6 +851,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 out:
 	return rc;
 }
+qdf_export_symbol(hif_napi_poll);
 
 #ifdef HIF_IRQ_AFFINITY
 /**

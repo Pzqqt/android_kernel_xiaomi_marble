@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,6 +17,7 @@
  */
 
 #include "hal_api.h"
+#include "qdf_module.h"
 
 /**
  * hal_setup_link_idle_list - Setup scattered idle list using the
@@ -154,4 +155,4 @@ void hal_setup_link_idle_list(void *hal_soc,
 		SEQ_WCSS_UMAC_WBM_REG_OFFSET),
 		0x40);
 }
-
+qdf_export_symbol(hal_setup_link_idle_list);
