@@ -935,7 +935,7 @@ static void pktlog_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 
 	/* check for sanity of the packet, have seen corrupted pkts */
 	if (pktlog_nbuf_check_sanity(pktlog_t2h_msg)) {
-		qdf_print("%s: packet 0x%p corrupted? Leaking...",
+		qdf_print("%s: packet 0x%pK corrupted? Leaking...",
 			  __func__, pktlog_t2h_msg);
 		/* do not free; may crash! */
 		QDF_ASSERT(0);
