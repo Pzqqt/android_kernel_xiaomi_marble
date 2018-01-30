@@ -3658,10 +3658,13 @@ static QDF_STATUS ol_txrx_clear_peer(struct cdp_pdev *ppdev, uint8_t sta_id)
 		return QDF_STATUS_E_INVAL;
 	}
 
-
 	peer = ol_txrx_peer_find_by_local_id((struct cdp_pdev *)pdev, sta_id);
+
+	/* Return success, if the peer is already cleared by
+	 * data path via peer detach function.
+	 */
 	if (!peer)
-		return QDF_STATUS_E_FAULT;
+		return QDF_STATUS_SUCCESS;
 
 	return ol_txrx_clear_peer_internal(peer);
 
