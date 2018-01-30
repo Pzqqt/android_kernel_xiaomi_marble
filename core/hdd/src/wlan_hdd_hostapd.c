@@ -4118,8 +4118,6 @@ static __iw_softap_getparam(struct net_device *dev,
 	QDF_STATUS status;
 	int ret;
 	struct hdd_context *hdd_ctx;
-	uint8_t nol[QDF_MAX_NUM_CHAN];
-	uint32_t nol_len = 0;
 
 	ENTER_DEV(dev);
 
@@ -4247,10 +4245,6 @@ static __iw_softap_getparam(struct net_device *dev,
 	{
 		struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 		struct wlan_objmgr_pdev *pdev;
-
-		wlansap_get_dfs_nol(
-			WLAN_HDD_GET_SAP_CTX_PTR(adapter),
-			nol, &nol_len);
 
 		pdev = hdd_ctx->hdd_pdev;
 		if (!pdev) {

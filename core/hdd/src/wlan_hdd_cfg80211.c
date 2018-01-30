@@ -1900,29 +1900,6 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter)
 }
 
 /**
- * wlan_hdd_sap_get_nol() - Get SAPs NOL
- * @ap_adapter: AP adapter
- * @nol: Non-occupancy list
- * @nol_len: Length of NOL
- *
- * Get the NOL for SAP
- *
- * Return: Zero on success, non-zero on failure
- */
-static int wlan_hdd_sap_get_nol(struct hdd_adapter *ap_adapter, uint8_t *nol,
-				uint32_t *nol_len)
-{
-	QDF_STATUS ret;
-
-	ret = wlansap_get_dfs_nol(WLAN_HDD_GET_SAP_CTX_PTR(ap_adapter),
-				nol, nol_len);
-	if (QDF_IS_STATUS_ERROR(ret))
-		return -EINVAL;
-
-	return 0;
-}
-
-/**
  * hdd_update_vendor_pcl_list() - This API will return unsorted pcl list
  * @hdd_ctx: hdd context
  * @acs_chan_params: external acs channel params
@@ -9689,67 +9666,6 @@ static int wlan_hdd_set_chan_before_pre_cac(struct hdd_adapter *ap_adapter,
 	return 0;
 }
 
-/**
- * wlan_hdd_get_chanlist_without_nol() - This API removes the channels which
- * are in nol list from provided channel list
- * @adapter: AP adapter
- * @channel_count: channel count
- * @channel_list: channel list
- *
- * Return: None
- */
-static void wlan_hdd_get_chanlist_without_nol(struct hdd_adapter *adapter,
-				      uint32_t *channel_count,
-				      uint8_t *channel_list)
-{
-	uint8_t i, j;
-	uint32_t nol_len = 0;
-	uint8_t nol[QDF_MAX_NUM_CHAN] = {0};
-	uint8_t tmp_chan_list[QDF_MAX_NUM_CHAN] = {0};
-	uint32_t chan_count;
-	bool found;
-	struct hdd_context *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-
-	if (!hdd_ctx) {
-		hdd_err("hdd ctx not found");
-		*channel_count = 0;
-		return;
-	}
-
-	if ((*channel_count == 0) || (*channel_count > QDF_MAX_NUM_CHAN)) {
-		hdd_err("invalid channel count %d", *channel_count);
-		return;
-	}
-
-	wlan_hdd_sap_get_nol(adapter, nol, &nol_len);
-	if (nol_len == 0)
-		return;
-
-	qdf_mem_copy(tmp_chan_list, channel_list, *channel_count);
-	chan_count = *channel_count;
-	qdf_mem_zero(channel_list, chan_count);
-	*channel_count = 0;
-
-	for (i = 0 ; i < chan_count; i++) {
-		if ((hdd_ctx->config->force_sap_acs_st_ch > tmp_chan_list[i]) ||
-		    (hdd_ctx->config->force_sap_acs_end_ch < tmp_chan_list[i]))
-			continue;
-		found = false;
-		for (j = 0; j < nol_len; j++) {
-			if (tmp_chan_list[i] == nol[j]) {
-				found = true;
-				hdd_notice("skipped channel %d due to nol",
-						nol[j]);
-				break;
-			}
-		}
-		if (!found) {
-			channel_list[*channel_count] = tmp_chan_list[i];
-			*channel_count = *channel_count + 1;
-		}
-	}
-}
-
 int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 				       uint32_t *channel_count,
 				       uint8_t *channel_list,
@@ -9761,6 +9677,8 @@ int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 	uint32_t chan_count;
 	uint8_t i;
 	QDF_STATUS status;
+	struct wlan_objmgr_pdev *pdev = hdd_ctx->hdd_pdev;
+	uint8_t tmp_chan;
 
 	sap_config = &adapter->session.ap.sap_config;
 
@@ -9774,21 +9692,24 @@ int wlan_hdd_sap_get_valid_channellist(struct hdd_adapter *adapter,
 	}
 
 	for (i = 0; i < chan_count; i++) {
+		tmp_chan = tmp_chan_list[i];
 		if (*channel_count < QDF_MAX_NUM_CHAN) {
 			if ((BAND_2G == band) &&
-			    (WLAN_REG_IS_24GHZ_CH(tmp_chan_list[i]))) {
-				channel_list[*channel_count] = tmp_chan_list[i];
+			    (WLAN_REG_IS_24GHZ_CH(tmp_chan)) &&
+			    (!wlan_reg_is_disable_ch(pdev, tmp_chan))) {
+				channel_list[*channel_count] = tmp_chan;
 				*channel_count += 1;
 			} else if ((BAND_5G == band) &&
-				(WLAN_REG_IS_5GHZ_CH(tmp_chan_list[i]))) {
-				channel_list[*channel_count] = tmp_chan_list[i];
+				(WLAN_REG_IS_5GHZ_CH(tmp_chan)) &&
+				(!wlan_reg_is_disable_ch(pdev, tmp_chan))) {
+				channel_list[*channel_count] = tmp_chan;
 				*channel_count += 1;
 			}
 		} else {
 			break;
 		}
 	}
-	wlan_hdd_get_chanlist_without_nol(adapter, channel_count, channel_list);
+
 	if (*channel_count == 0) {
 		hdd_err("no valid channel found");
 		return -EINVAL;
@@ -9814,12 +9735,9 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 						uint8_t channel,
 						uint8_t *pre_cac_chan)
 {
-	uint32_t i, j;
+	uint32_t i;
 	QDF_STATUS status;
-	int ret;
-	uint8_t nol[QDF_MAX_NUM_CHAN];
-	uint32_t nol_len = 0, weight_len = 0;
-	bool found;
+	uint32_t weight_len = 0;
 	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	uint8_t channel_list[QDF_MAX_NUM_CHAN] = {0};
 	uint8_t pcl_weights[QDF_MAX_NUM_CHAN] = {0};
@@ -9840,17 +9758,7 @@ static int wlan_hdd_validate_and_get_pre_cac_ch(struct hdd_context *hdd_ctx,
 		}
 		policy_mgr_update_with_safe_channel_list(hdd_ctx->hdd_psoc,
 				channel_list, &len, pcl_weights, weight_len);
-		ret = wlan_hdd_sap_get_nol(ap_adapter, nol, &nol_len);
 		for (i = 0; i < len; i++) {
-			found = false;
-			for (j = 0; j < nol_len; j++) {
-				if (channel_list[i] == nol[j]) {
-					found = true;
-					break;
-				}
-			}
-			if (found)
-				continue;
 			if (wlan_reg_is_dfs_ch(hdd_ctx->hdd_pdev,
 						channel_list[i])) {
 				*pre_cac_chan = channel_list[i];
