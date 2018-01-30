@@ -108,7 +108,8 @@ struct wmi_rx_ops {
  */
 enum wmi_target_type {
 	WMI_TLV_TARGET,
-	WMI_NON_TLV_TARGET
+	WMI_NON_TLV_TARGET,
+	WMI_MAX_TARGET_TYPE
 };
 
 /**
