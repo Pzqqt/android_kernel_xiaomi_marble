@@ -247,6 +247,7 @@ typedef  enum  {
     WMI_SERVICE_RUNTIME_DPD_RECAL=151, /* Runtime DPD recalibration support */
     WMI_SERVICE_STA_TWT=152, /* support for TWT (Target Wake Time) of STA */
     WMI_SERVICE_AP_TWT=153, /* support for TWT (Target Wake Time) on AP */
+    WMI_SERVICE_GMAC_OFFLOAD_SUPPORT=154, /* Support for GMAC */
 
 
     /******* ADD NEW SERVICES HERE *******/
