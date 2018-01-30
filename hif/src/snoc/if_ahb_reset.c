@@ -277,7 +277,7 @@ void hif_ahb_device_reset(struct hif_softc *scn)
 	uint32_t haltreq_offset;
 	uint32_t haltack_offset;
 	void __iomem *mem_tcsr;
-	uint32_t wifi_core_id;
+	uint32_t wifi_core_id = 0XFFFFFFFF;
 	uint32_t reg_value;
 	int wait_limit = ATH_AHB_RESET_WAIT_MAX;
 
