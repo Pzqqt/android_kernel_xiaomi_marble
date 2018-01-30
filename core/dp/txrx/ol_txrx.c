@@ -3415,6 +3415,7 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 	struct ol_txrx_vdev_t *vdev;
 	struct ol_txrx_pdev_t *pdev;
 	bool ref_silent = false;
+	int access_list = 0;
 
 	/* preconditions */
 	TXRX_ASSERT2(peer);
@@ -3598,12 +3599,13 @@ int ol_txrx_peer_release_ref(ol_txrx_peer_handle peer,
 
 		qdf_mem_free(peer);
 	} else {
+		access_list = qdf_atomic_read(
+						&peer->access_list[debug_id]);
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 		if (!ref_silent)
 			ol_txrx_info_high("[%d][%d]: ref delete peer %p ref_cnt -> %d",
 					debug_id,
-					qdf_atomic_read(
-						&peer->access_list[debug_id]),
+					access_list,
 					peer, rc);
 	}
 	return rc;
