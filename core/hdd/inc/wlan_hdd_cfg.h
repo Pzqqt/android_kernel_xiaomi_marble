@@ -14340,6 +14340,28 @@ enum hdd_external_acs_freq_band {
 #define CFG_OFFLOAD_NEIGHBOR_REPORT_MAX_REQ_CAP_DEFAULT (3)
 
 /*
+ * <ini>
+ * wmi_wq_watchdog - Sets timeout period for wmi watchdog bite
+ * @Min: 0
+ * @Max: 30
+ * @Default: 20
+ *
+ * This ini is used to set timeout period for wmi watchdog bite. If it is
+ * 0 then wmi watchdog bite is disabled.
+ *
+ * Related: None
+ *
+ * Supported Feature: STA
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_WMI_WQ_WATCHDOG          "wmi_wq_watchdog"
+#define CFG_WMI_WQ_WATCHDOG_MIN      (0)
+#define CFG_WMI_WQ_WATCHDOG_MAX      (30) /* 30s */
+#define CFG_WMI_WQ_WATCHDOG_DEFAULT  (20) /* 20s */
+/*
  * Type declarations
  */
 struct hdd_config {
@@ -15249,6 +15271,7 @@ struct hdd_config {
 	uint32_t neighbor_report_offload_per_threshold_offset;
 	uint32_t neighbor_report_offload_cache_timeout;
 	uint32_t neighbor_report_offload_max_req_cap;
+	uint16_t wmi_wq_watchdog_timeout;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
