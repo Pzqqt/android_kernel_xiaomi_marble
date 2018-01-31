@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4942,8 +4942,12 @@ static QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 	if (csr_roam_is11r_assoc(pMac, sessionId))
 		pSession->ftHandoffInProgress = true;
 #endif
-	/* If FT handoff is in progress, legacy handoff need not be enabled */
-	if (!pSession->ftHandoffInProgress)
+	/* If FT handoff/ESE in progress, legacy handoff need not be enabled */
+	if (!pSession->ftHandoffInProgress
+#ifdef FEATURE_WLAN_ESE
+	    && !csr_roam_is_ese_assoc(pMac, sessionId)
+#endif
+	   )
 		pSession->handoffRequested = true;
 
 	/* this session no longer needs UAPSD */
