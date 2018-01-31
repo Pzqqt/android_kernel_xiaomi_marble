@@ -10426,7 +10426,8 @@ int hdd_wlan_startup(struct device *dev)
 	if (hdd_ctx->config->enable_dp_trace)
 		hdd_dp_trace_init(hdd_ctx->config);
 
-	if (hdd_ipa_init(hdd_ctx) == QDF_STATUS_E_FAILURE)
+	ret = hdd_ipa_init(hdd_ctx);
+	if (ret == QDF_STATUS_E_FAILURE)
 		goto err_wiphy_unregister;
 
 	hdd_initialize_mac_address(hdd_ctx);
