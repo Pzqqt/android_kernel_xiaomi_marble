@@ -401,15 +401,20 @@ ucfg_scan_update_pno_config(struct pno_def_config *pno,
  * ucfg_scan_update_dbs_scan_ctrl_ext_flag() - update dbs scan ctrl flags
  * @req: pointer to scan request
  *
- * This function updates the dbs scan ctrl flags.
- * Non-DBS scan is requested if any of the below case is met:
- * 1. HW is DBS incapable
- * 2. Directed scan
- * 3. Channel list has only few channels
- * 4. Channel list has single band channels
- * For remaining cases, dbs scan is requested.
+ * This function sets scan_ctrl_flags_ext value depending on the type of
+ * scan and the channel lists.
  *
- * Return: None
+ * Non-DBS scan is requested if any of the below case is met:
+ *     1. HW is DBS incapable
+ *     2. Directed scan
+ *     3. Channel list has only few channels
+ *     4. Channel list has single band channels
+ *     5. A high accuracy scan request is sent by kernel.
+ *
+ * DBS scan is enabled for these conditions:
+ *     1. A low power or low span scan request is sent by kernel.
+ * For remaining cases DBS is enabled by default.
+ * Return: void
  */
 static void
 ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
@@ -424,6 +429,15 @@ ucfg_scan_update_dbs_scan_ctrl_ext_flag(struct scan_start_request *req)
 	if (DISABLE_DBS_CXN_AND_SCAN ==
 			wlan_objmgr_psoc_get_dual_mac_disable(psoc))
 		goto end;
+
+	if (req->scan_req.scan_policy_high_accuracy)
+		goto end;
+
+	if ((req->scan_req.scan_policy_low_power) ||
+	    (req->scan_req.scan_policy_low_span)) {
+		scan_dbs_policy = SCAN_DBS_POLICY_IGNORE_DUTY;
+		goto end;
+	}
 
 	conn_cnt = policy_mgr_get_connection_count(psoc);
 	if (conn_cnt > 0) {

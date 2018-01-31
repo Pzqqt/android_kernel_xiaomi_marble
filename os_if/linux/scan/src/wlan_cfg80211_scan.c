@@ -1174,6 +1174,34 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev,
 	return;
 }
 
+/**
+ * wlan_cfg80211_update_scan_policy_type_flags() - Set scan flags according to
+ * scan request
+ * @scan_req: Pointer to csr scan req
+ *
+ * Return: None
+ */
+#if defined(CFG80211_SCAN_DBS_CONTROL_SUPPORT) || \
+	   (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 16, 0))
+static void wlan_cfg80211_update_scan_policy_type_flags(
+	struct cfg80211_scan_request *req,
+	struct scan_req_params *scan_req)
+{
+	if (req->flags & NL80211_SCAN_FLAG_HIGH_ACCURACY)
+		scan_req->scan_policy_high_accuracy = true;
+	if (req->flags & NL80211_SCAN_FLAG_LOW_SPAN)
+		scan_req->scan_policy_low_span = true;
+	if (req->flags & NL80211_SCAN_FLAG_LOW_POWER)
+		scan_req->scan_policy_low_power = true;
+}
+#else
+static inline void wlan_cfg80211_update_scan_policy_type_flags(
+		struct cfg80211_scan_request *req,
+		struct scan_req_params *scan_req)
+{
+}
+#endif
+
 int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 		struct cfg80211_scan_request *request,
 		struct scan_params *params)
@@ -1230,6 +1258,10 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 	req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
 	req->scan_req.scan_id = scan_id;
 	req->scan_req.scan_req_id = req_id;
+
+	/* Update scan policy type flags according to cfg scan request */
+	wlan_cfg80211_update_scan_policy_type_flags(request,
+					     &req->scan_req);
 	/*
 	 * Even though supplicant doesn't provide any SSIDs, n_ssids is
 	 * set to 1.  Because of this, driver is assuming that this is not
@@ -1267,6 +1299,16 @@ int wlan_cfg80211_scan(struct wlan_objmgr_pdev *pdev,
 
 	if (is_p2p_scan && request->no_cck)
 		req->scan_req.p2p_scan_type = SCAN_P2P_SEARCH;
+
+	/* Set dwell time mode according to scan policy type flags */
+	if (req->scan_req.scan_policy_high_accuracy)
+		req->scan_req.adaptive_dwell_time_mode =
+					SCAN_DWELL_MODE_STATIC;
+	if ((req->scan_req.scan_policy_low_power) ||
+	   (req->scan_req.scan_policy_low_span))
+		req->scan_req.adaptive_dwell_time_mode =
+					SCAN_DWELL_MODE_AGGRESSIVE;
+
 	/*
 	 * FW require at least 1 MAC to send probe request.
 	 * If MAC is all 0 set it to BC addr as this is the address on

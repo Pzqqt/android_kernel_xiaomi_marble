@@ -884,6 +884,15 @@ struct scan_req_params {
 		};
 		uint32_t scan_flags;
 	};
+	union {
+		struct {
+			uint32_t scan_policy_high_accuracy:1,
+				 scan_policy_low_span:1,
+				 scan_policy_low_power:1;
+		};
+		uint32_t scan_policy_type;
+	};
+
 	enum scan_dwelltime_adaptive_mode adaptive_dwell_time_mode;
 	uint32_t burst_duration;
 	uint32_t num_bssid;
