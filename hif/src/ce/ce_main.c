@@ -1461,9 +1461,11 @@ void ce_fini(struct CE_handle *copyeng)
 	struct hif_softc *scn = CE_state->scn;
 	uint32_t desc_size;
 
+	bool inited = CE_state->timer_inited;
 	CE_state->state = CE_UNUSED;
 	scn->ce_id_to_state[CE_id] = NULL;
-
+	/* Set the flag to false first to stop processing in ce_poll_timeout */
+	CE_state->timer_inited = false;
 	qdf_lro_deinit(CE_state->lro_data);
 
 	if (CE_state->src_ring) {
@@ -1503,8 +1505,7 @@ void ce_fini(struct CE_handle *copyeng)
 		qdf_mem_free(CE_state->dest_ring);
 
 		/* epping */
-		if (CE_state->timer_inited) {
-			CE_state->timer_inited = false;
+		if (inited) {
 			qdf_timer_free(&CE_state->poll_timer);
 		}
 	}
