@@ -1626,6 +1626,13 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	struct set_key_params params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct wma_txrx_node *iface = NULL;
+	enum htt_sec_type sec_type = htt_sec_type_none;
+	void *soc = cds_get_context(QDF_MODULE_ID_SOC);
+	struct cdp_pdev *txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	struct cdp_vdev *txrx_vdev;
+	uint32_t pn[4] = {0, 0, 0, 0};
+	uint8_t peer_id;
+	struct cdp_peer *peer;
 
 	if ((key_params->key_type == eSIR_ED_NONE &&
 	     key_params->key_len) || (key_params->key_type != eSIR_ED_NONE &&
@@ -1643,6 +1650,11 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		WMA_LOGE(FL("Invalid vdev_id: %d"), key_params->vdev_id);
 		return QDF_STATUS_E_INVAL;
 	}
+
+	txrx_vdev = wma_find_vdev_by_id(wma_handle,
+					key_params->vdev_id);
+	peer = cdp_peer_find_by_addr(soc, txrx_pdev,
+				key_params->peer_mac, &peer_id);
 	iface = &wma_handle->interfaces[key_params->vdev_id];
 
 	params.vdev_id = key_params->vdev_id;
@@ -1671,6 +1683,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	switch (key_params->key_type) {
 	case eSIR_ED_NONE:
 		params.key_cipher = WMI_CIPHER_NONE;
+		sec_type = htt_sec_type_none;
 		break;
 	case eSIR_ED_WEP40:
 	case eSIR_ED_WEP104:
@@ -1684,11 +1697,13 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 			WMA_LOGD("AP Mode: cmd->key_flags |= TX_USAGE");
 			params.key_flags |= TX_USAGE;
 		}
+		sec_type = htt_sec_type_wep104;
 		break;
 	case eSIR_ED_TKIP:
 		params.key_txmic_len = WMA_TXMIC_LEN;
 		params.key_rxmic_len = WMA_RXMIC_LEN;
 		params.key_cipher = WMI_CIPHER_TKIP;
+		sec_type = htt_sec_type_tkip;
 		break;
 #ifdef FEATURE_WLAN_WAPI
 #define WPI_IV_LEN 16
@@ -1728,6 +1743,7 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 #endif /* FEATURE_WLAN_WAPI */
 	case eSIR_ED_CCMP:
 		params.key_cipher = WMI_CIPHER_AES_CCM;
+		sec_type = htt_sec_type_aes_ccmp;
 		break;
 #ifdef WLAN_FEATURE_11W
 	case eSIR_ED_AES_128_CMAC:
@@ -1805,6 +1821,9 @@ static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		 key_params->unicast, key_params->peer_mac,
 		 key_params->def_key_idx);
 	WMA_LOGD("keyrsc param %llu", *(params.key_rsc_counter));
+
+	/* Set PN check & security type in data path */
+	cdp_set_pn_check(soc, txrx_vdev, peer, sec_type, pn);
 
 	status = wmi_unified_setup_install_key_cmd(wma_handle->wmi_handle,
 								&params);
