@@ -103,6 +103,7 @@
 #define CDP_MU_MAX_USERS 8
 #define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
 
+#define CDP_DATA_TID_MAX 8
 /*
  * advance rx monitor filter
  * */
