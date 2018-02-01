@@ -4800,6 +4800,12 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		hdd_vdev_destroy(adapter);
 		break;
 
+	case QDF_MONITOR_MODE:
+		wlan_hdd_scan_abort(adapter);
+		hdd_deregister_tx_flow_control(adapter);
+		hdd_vdev_destroy(adapter);
+		break;
+
 	case QDF_SAP_MODE:
 		wlan_hdd_scan_abort(adapter);
 		/* Flush IPA exception path packets */
