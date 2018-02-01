@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -141,17 +141,24 @@ void wlan_serialization_activate_cmd(
 	 */
 	qdf_status = cmd_list->cmd.cmd_cb(&cmd_list->cmd,
 				WLAN_SER_CB_ACTIVATE_CMD);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
+	if (QDF_IS_STATUS_SUCCESS(qdf_status))
+		return;
+	if (wlan_serialization_is_cmd_present_in_active_queue(
+		psoc, &cmd_list->cmd)) {
 		wlan_serialization_find_and_stop_timer(psoc,
-				&cmd_list->cmd);
+						&cmd_list->cmd);
 		cmd_list->cmd.cmd_cb(&cmd_list->cmd,
 				WLAN_SER_CB_RELEASE_MEM_CMD);
 		wlan_serialization_put_back_to_global_list(
 				queue, ser_pdev_obj, cmd_list);
-		wlan_serialization_move_pending_to_active(
+	} else {
+		serialization_err("cmd type:%d, id: %d is removed from active list already",
+				cmd_list->cmd.cmd_type,
+				cmd_list->cmd.cmd_id);
+	}
+	wlan_serialization_move_pending_to_active(
 				cmd_list->cmd.cmd_type,
 				ser_pdev_obj);
-	}
 }
 
 enum wlan_serialization_status
