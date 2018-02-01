@@ -14114,7 +14114,7 @@ enum hdd_external_acs_freq_band {
 /*
  * <ini>
  * sticky_time - Stick time after roaming to new AP by BTM
- * @Min: 1
+ * @Min: 0
  * @Max: 0x0000FFFF
  * @Default: 300
  *
@@ -14128,7 +14128,7 @@ enum hdd_external_acs_freq_band {
  * </ini>
  */
 #define CFG_BTM_STICKY_TIME           "btm_sticky_time"
-#define CFG_BTM_STICKY_TIME_MIN       (0x00000001)
+#define CFG_BTM_STICKY_TIME_MIN       (0x00000000)
 #define CFG_BTM_STICKY_TIME_MAX       (0x0000FFFF)
 #define CFG_BTM_STICKY_TIME_DEFAULT   (300)
 
