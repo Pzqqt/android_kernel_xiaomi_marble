@@ -10065,7 +10065,8 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	QDF_STATUS qdf_status;
 	int ret = 0;
 	bool is_recovery_stop = cds_is_driver_recovering();
-	bool is_idle_stop = !cds_is_driver_unloading() && !is_recovery_stop;
+	bool is_idle_stop = !cds_is_driver_unloading() && !is_recovery_stop &&
+		!cds_is_driver_loading();
 	int active_threads;
 	struct target_psoc_info *tgt_hdl;
 
