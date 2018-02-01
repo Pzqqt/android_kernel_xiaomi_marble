@@ -2521,12 +2521,19 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	mcs = ts->mcs;
 	pkt_type = ts->pkt_type;
 
-
 	if (!ts->release_src == HAL_TX_COMP_RELEASE_SOURCE_TQM)
 		return;
 
+	if (peer->bss_peer) {
+		DP_STATS_INC_PKT(peer, tx.mcast, 1, length);
+		DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
+	} else {
+		if (ts->status == HAL_TX_TQM_RR_FRAME_ACKED) {
+			DP_STATS_INC_PKT(peer, tx.ucast, 1, length);
+			DP_STATS_INC_PKT(peer, tx.tx_success, 1, length);
+		}
+	}
 
-	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 			(ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
@@ -2610,7 +2617,6 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 	struct dp_peer *peer = NULL;
 	struct ether_header *eh =
 		(struct ether_header *)qdf_nbuf_data(tx_desc->nbuf);
-	bool isBroadcast;
 
 	hal_tx_comp_get_status(&tx_desc->comp, &ts);
 
@@ -2668,13 +2674,11 @@ static inline void dp_tx_comp_process_tx_status(struct dp_tx_desc_s *tx_desc,
 		DP_STATS_INC_PKT(soc, tx.tx_invalid_peer, 1, length);
 		goto out;
 	}
-	if (qdf_likely(vdev->tx_encap_type == htt_cmn_pkt_type_ethernet)) {
-		isBroadcast = (IEEE80211_IS_BROADCAST(eh->ether_dhost)) ? 1 : 0 ;
 
-		if (isBroadcast) {
-			DP_STATS_INC_PKT(peer, tx.bcast, 1,
-					qdf_nbuf_len(tx_desc->nbuf));
-		}
+	if (qdf_likely(peer->vdev->tx_encap_type ==
+				htt_cmn_pkt_type_ethernet)) {
+		if (peer->bss_peer && IEEE80211_IS_BROADCAST(eh->ether_dhost))
+			DP_STATS_INC_PKT(peer, tx.bcast, 1, length);
 	}
 
 	dp_tx_update_peer_stats(peer, &ts, length);
