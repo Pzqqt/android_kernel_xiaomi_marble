@@ -92,6 +92,33 @@ int hdd_update_cds_config_ftm(struct hdd_context *hdd_ctx)
 }
 
 #ifdef LINUX_QCMBR
+
+/**
+ * wlan_hdd_qcmbr_command() - QCMBR command handler
+ * @adapter: adapter upon which the command was received
+ * @pqcmbr_data: QCMBR command
+ *
+ * Return: 0 on success, non-zero on error
+ */
+static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
+				  struct qcmbr_data *pqcmbr_data)
+{
+	int ret = 0;
+	struct hdd_context *hdd_ctx;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->hdd_pdev,
+					  pqcmbr_data->cmd,
+					  pqcmbr_data->buf,
+					  pqcmbr_data->length);
+
+	return ret;
+}
+
 #ifdef CONFIG_COMPAT
 
 /**
@@ -133,32 +160,6 @@ static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
 	return 0;
 }
 #endif /* CONFIG_COMPAT */
-
-/**
- * wlan_hdd_qcmbr_command() - QCMBR command handler
- * @adapter: adapter upon which the command was received
- * @pqcmbr_data: QCMBR command
- *
- * Return: 0 on success, non-zero on error
- */
-static int wlan_hdd_qcmbr_command(struct hdd_adapter *adapter,
-				  struct qcmbr_data *pqcmbr_data)
-{
-	int ret = 0;
-	struct hdd_context *hdd_ctx;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret)
-		return ret;
-
-	ret = wlan_ioctl_ftm_testmode_cmd(hdd_ctx->hdd_pdev,
-					  pqcmbr_data->cmd,
-					  pqcmbr_data->buf,
-					  pqcmbr_data->length);
-
-	return ret;
-}
 
 /**
  * wlan_hdd_qcmbr_ioctl() - Standard QCMBR ioctl handler
