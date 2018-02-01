@@ -1,4 +1,4 @@
-/* Copyright (c) 2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2017-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -34,6 +34,7 @@
 #define WCD_MBHC_ADC_HS_THRESHOLD_MV    1700
 #define WCD_MBHC_ADC_HPH_THRESHOLD_MV   75
 #define WCD_MBHC_ADC_MICBIAS_MV         1800
+#define WCD_MBHC_FAKE_INS_RETRY         4
 
 static int wcd_mbhc_get_micbias(struct wcd_mbhc *mbhc)
 {
@@ -1021,6 +1022,8 @@ exit:
 static irqreturn_t wcd_mbhc_adc_hs_ins_irq(int irq, void *data)
 {
 	struct wcd_mbhc *mbhc = data;
+	u8 clamp_state = 0;
+	u8 clamp_retry = WCD_MBHC_FAKE_INS_RETRY;
 
 	pr_debug("%s: enter\n", __func__);
 
@@ -1034,6 +1037,19 @@ static irqreturn_t wcd_mbhc_adc_hs_ins_irq(int irq, void *data)
 		pr_debug("%s: leave\n", __func__);
 		return IRQ_HANDLED;
 	}
+
+	do {
+		WCD_MBHC_REG_READ(WCD_MBHC_IN2P_CLAMP_STATE, clamp_state);
+		if (clamp_state) {
+			pr_debug("%s: fake insertion irq, leave\n", __func__);
+			return IRQ_HANDLED;
+		}
+		/*
+		 * check clamp for 120ms but at 30ms chunks to leave
+		 * room for other interrupts to be processed
+		 */
+		usleep_range(30000, 30100);
+	} while (--clamp_retry);
 
 	WCD_MBHC_RSC_LOCK(mbhc);
 	/*
