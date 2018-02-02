@@ -7249,7 +7249,7 @@ QDF_STATUS wmi_unified_ndp_end_req_cmd_send(void *wmi_hdl,
 }
 
 QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_initiator_rsp **rsp)
+			uint8_t *data, struct nan_datapath_initiator_rsp *rsp)
 {
 	if (wmi_handle->ops->extract_ndp_initiator_rsp)
 		return wmi_handle->ops->extract_ndp_initiator_rsp(wmi_handle,
@@ -7259,7 +7259,7 @@ QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
 }
 
 QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
-			       struct nan_datapath_indication_event **ind)
+			       struct nan_datapath_indication_event *ind)
 {
 	if (wmi_handle->ops->extract_ndp_ind)
 		return wmi_handle->ops->extract_ndp_ind(wmi_handle,
@@ -7269,7 +7269,7 @@ QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
 }
 
 QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
-				   struct nan_datapath_confirm_event **ev)
+				   struct nan_datapath_confirm_event *ev)
 {
 	if (wmi_handle->ops->extract_ndp_confirm)
 		return wmi_handle->ops->extract_ndp_confirm(wmi_handle,
@@ -7279,7 +7279,7 @@ QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
 }
 
 QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_responder_rsp **rsp)
+			uint8_t *data, struct nan_datapath_responder_rsp *rsp)
 {
 	if (wmi_handle->ops->extract_ndp_responder_rsp)
 		return wmi_handle->ops->extract_ndp_responder_rsp(wmi_handle,
@@ -7289,7 +7289,7 @@ QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
 }
 
 QDF_STATUS wmi_extract_ndp_end_rsp(wmi_unified_t wmi_handle, uint8_t *data,
-				   struct nan_datapath_end_rsp_event **rsp)
+				   struct nan_datapath_end_rsp_event *rsp)
 {
 	if (wmi_handle->ops->extract_ndp_end_rsp)
 		return wmi_handle->ops->extract_ndp_end_rsp(wmi_handle,

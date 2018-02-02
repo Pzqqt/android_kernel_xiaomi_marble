@@ -17517,7 +17517,7 @@ static QDF_STATUS nan_ndp_end_req_tlv(wmi_unified_t wmi_handle,
 }
 
 static QDF_STATUS extract_ndp_initiator_rsp_tlv(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_initiator_rsp **rsp)
+			uint8_t *data, struct nan_datapath_initiator_rsp *rsp)
 {
 	WMI_NDP_INITIATOR_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_initiator_rsp_event_fixed_param  *fixed_params;
@@ -17525,32 +17525,25 @@ static QDF_STATUS extract_ndp_initiator_rsp_tlv(wmi_unified_t wmi_handle,
 	event = (WMI_NDP_INITIATOR_RSP_EVENTID_param_tlvs *)data;
 	fixed_params = event->fixed_param;
 
-	*rsp = qdf_mem_malloc(sizeof(**rsp));
-	if (!(*rsp)) {
-		WMI_LOGE("malloc failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	(*rsp)->vdev =
+	rsp->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
-	if (!(*rsp)->vdev) {
+	if (!rsp->vdev) {
 		WMI_LOGE("vdev is null");
-		qdf_mem_free(*rsp);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	(*rsp)->transaction_id = fixed_params->transaction_id;
-	(*rsp)->ndp_instance_id = fixed_params->ndp_instance_id;
-	(*rsp)->status = fixed_params->rsp_status;
-	(*rsp)->reason = fixed_params->reason_code;
+	rsp->transaction_id = fixed_params->transaction_id;
+	rsp->ndp_instance_id = fixed_params->ndp_instance_id;
+	rsp->status = fixed_params->rsp_status;
+	rsp->reason = fixed_params->reason_code;
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
-		uint8_t *data, struct nan_datapath_indication_event **rsp)
+		uint8_t *data, struct nan_datapath_indication_event *rsp)
 {
 	WMI_NDP_INDICATION_EVENTID_param_tlvs *event;
 	wmi_ndp_indication_event_fixed_param *fixed_params;
@@ -17572,30 +17565,23 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	*rsp = qdf_mem_malloc(sizeof(**rsp));
-	if (!(*rsp)) {
-		WMI_LOGE("malloc failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	(*rsp)->vdev =
+	rsp->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
-	if (!(*rsp)->vdev) {
+	if (!rsp->vdev) {
 		WMI_LOGE("vdev is null");
-		qdf_mem_free(*rsp);
 		return QDF_STATUS_E_INVAL;
 	}
-	(*rsp)->service_instance_id = fixed_params->service_instance_id;
-	(*rsp)->ndp_instance_id = fixed_params->ndp_instance_id;
-	(*rsp)->role = fixed_params->self_ndp_role;
-	(*rsp)->policy = fixed_params->accept_policy;
+	rsp->service_instance_id = fixed_params->service_instance_id;
+	rsp->ndp_instance_id = fixed_params->ndp_instance_id;
+	rsp->role = fixed_params->self_ndp_role;
+	rsp->policy = fixed_params->accept_policy;
 
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
-				(*rsp)->peer_mac_addr.bytes);
+				rsp->peer_mac_addr.bytes);
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_discovery_mac_addr,
-				(*rsp)->peer_discovery_mac_addr.bytes);
+				rsp->peer_discovery_mac_addr.bytes);
 
 	WMI_LOGD("WMI_NDP_INDICATION_EVENTID(0x%X) received. vdev %d,\n"
 		"service_instance %d, ndp_instance %d, role %d, policy %d,\n"
@@ -17605,8 +17591,8 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 		 fixed_params->ndp_instance_id, fixed_params->self_ndp_role,
 		 fixed_params->accept_policy,
 		 fixed_params->nan_csid, fixed_params->nan_scid_len,
-		 (*rsp)->peer_mac_addr.bytes,
-		 (*rsp)->peer_discovery_mac_addr.bytes);
+		 rsp->peer_mac_addr.bytes,
+		 rsp->peer_discovery_mac_addr.bytes);
 
 	WMI_LOGD("ndp_cfg - %d bytes", fixed_params->ndp_cfg_len);
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
@@ -17617,24 +17603,24 @@ static QDF_STATUS extract_ndp_ind_tlv(wmi_unified_t wmi_handle,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 			&event->ndp_app_info, fixed_params->ndp_app_info_len);
 
-	(*rsp)->ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
-	(*rsp)->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
-	(*rsp)->ncs_sk_type = fixed_params->nan_csid;
-	(*rsp)->scid.scid_len = fixed_params->nan_scid_len;
-	qdf_mem_copy((*rsp)->ndp_config.ndp_cfg, event->ndp_cfg,
-		     (*rsp)->ndp_config.ndp_cfg_len);
-	qdf_mem_copy((*rsp)->ndp_info.ndp_app_info, event->ndp_app_info,
-		     (*rsp)->ndp_info.ndp_app_info_len);
-	qdf_mem_copy((*rsp)->scid.scid, event->ndp_scid, (*rsp)->scid.scid_len);
+	rsp->ndp_config.ndp_cfg_len = fixed_params->ndp_cfg_len;
+	rsp->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
+	rsp->ncs_sk_type = fixed_params->nan_csid;
+	rsp->scid.scid_len = fixed_params->nan_scid_len;
+	qdf_mem_copy(rsp->ndp_config.ndp_cfg, event->ndp_cfg,
+		     rsp->ndp_config.ndp_cfg_len);
+	qdf_mem_copy(rsp->ndp_info.ndp_app_info, event->ndp_app_info,
+		     rsp->ndp_info.ndp_app_info_len);
+	qdf_mem_copy(rsp->scid.scid, event->ndp_scid, rsp->scid.scid_len);
 	WMI_LOGD("scid hex dump:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
-			   (*rsp)->scid.scid, (*rsp)->scid.scid_len);
+			   rsp->scid.scid, rsp->scid.scid_len);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_confirm_event **rsp)
+			uint8_t *data, struct nan_datapath_confirm_event *rsp)
 {
 	WMI_NDP_CONFIRM_EVENTID_param_tlvs *event;
 	wmi_ndp_confirm_event_fixed_param *fixed_params;
@@ -17669,36 +17655,29 @@ static QDF_STATUS extract_ndp_confirm_tlv(wmi_unified_t wmi_handle,
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 		&event->ndp_app_info, fixed_params->ndp_app_info_len);
 
-	*rsp = qdf_mem_malloc(sizeof(**rsp));
-	if (!(*rsp)) {
-		WMI_LOGE("malloc failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	(*rsp)->vdev =
+	rsp->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
-	if (!(*rsp)->vdev) {
+	if (!rsp->vdev) {
 		WMI_LOGE("vdev is null");
-		qdf_mem_free(*rsp);
 		return QDF_STATUS_E_INVAL;
 	}
-	(*rsp)->ndp_instance_id = fixed_params->ndp_instance_id;
-	(*rsp)->rsp_code = fixed_params->rsp_code;
-	(*rsp)->reason_code = fixed_params->reason_code;
-	(*rsp)->num_active_ndps_on_peer = fixed_params->num_active_ndps_on_peer;
+	rsp->ndp_instance_id = fixed_params->ndp_instance_id;
+	rsp->rsp_code = fixed_params->rsp_code;
+	rsp->reason_code = fixed_params->reason_code;
+	rsp->num_active_ndps_on_peer = fixed_params->num_active_ndps_on_peer;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
-				   (*rsp)->peer_ndi_mac_addr.bytes);
-	(*rsp)->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
-	qdf_mem_copy((*rsp)->ndp_info.ndp_app_info, event->ndp_app_info,
-		     (*rsp)->ndp_info.ndp_app_info_len);
+				   rsp->peer_ndi_mac_addr.bytes);
+	rsp->ndp_info.ndp_app_info_len = fixed_params->ndp_app_info_len;
+	qdf_mem_copy(rsp->ndp_info.ndp_app_info, event->ndp_app_info,
+		     rsp->ndp_info.ndp_app_info_len);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS extract_ndp_responder_rsp_tlv(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_responder_rsp **rsp)
+			uint8_t *data, struct nan_datapath_responder_rsp *rsp)
 {
 	WMI_NDP_RESPONDER_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_responder_rsp_event_fixed_param  *fixed_params;
@@ -17708,36 +17687,29 @@ static QDF_STATUS extract_ndp_responder_rsp_tlv(wmi_unified_t wmi_handle,
 
 	WMI_LOGD("WMI_NDP_RESPONDER_RSP_EVENTID(0x%X) received. vdev_id: %d, peer_mac_addr: %pM,transaction_id: %d, status_code %d, reason_code: %d, create_peer: %d",
 		 WMI_NDP_RESPONDER_RSP_EVENTID, fixed_params->vdev_id,
-		 (*rsp)->peer_mac_addr.bytes, (*rsp)->transaction_id,
-		 (*rsp)->status, (*rsp)->reason, (*rsp)->create_peer);
+		 rsp->peer_mac_addr.bytes, rsp->transaction_id,
+		 rsp->status, rsp->reason, rsp->create_peer);
 
-	*rsp = qdf_mem_malloc(sizeof(**rsp));
-	if (!(*rsp)) {
-		WMI_LOGE("malloc failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	(*rsp)->vdev =
+	rsp->vdev =
 		wlan_objmgr_get_vdev_by_id_from_psoc(wmi_handle->soc->wmi_psoc,
 						     fixed_params->vdev_id,
 						     WLAN_NAN_ID);
-	if (!(*rsp)->vdev) {
+	if (!rsp->vdev) {
 		WMI_LOGE("vdev is null");
-		qdf_mem_free(*rsp);
 		return QDF_STATUS_E_INVAL;
 	}
-	(*rsp)->transaction_id = fixed_params->transaction_id;
-	(*rsp)->reason = fixed_params->reason_code;
-	(*rsp)->status = fixed_params->rsp_status;
-	(*rsp)->create_peer = fixed_params->create_peer;
+	rsp->transaction_id = fixed_params->transaction_id;
+	rsp->reason = fixed_params->reason_code;
+	rsp->status = fixed_params->rsp_status;
+	rsp->create_peer = fixed_params->create_peer;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fixed_params->peer_ndi_mac_addr,
-				(*rsp)->peer_mac_addr.bytes);
+				rsp->peer_mac_addr.bytes);
 
 	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS extract_ndp_end_rsp_tlv(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_end_rsp_event **rsp)
+			uint8_t *data, struct nan_datapath_end_rsp_event *rsp)
 {
 	WMI_NDP_END_RSP_EVENTID_param_tlvs *event;
 	wmi_ndp_end_rsp_event_fixed_param *fixed_params = NULL;
@@ -17748,22 +17720,15 @@ static QDF_STATUS extract_ndp_end_rsp_tlv(wmi_unified_t wmi_handle,
 		 WMI_NDP_END_RSP_EVENTID, fixed_params->transaction_id,
 		 fixed_params->rsp_status, fixed_params->reason_code);
 
-	*rsp = qdf_mem_malloc(sizeof(**rsp));
-	if (!(*rsp)) {
-		WMI_LOGE("malloc failed");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	(*rsp)->vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(
+	rsp->vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(
 			wmi_handle->soc->wmi_psoc, QDF_NDI_MODE, WLAN_NAN_ID);
-	if (!(*rsp)->vdev) {
+	if (!rsp->vdev) {
 		WMI_LOGE("vdev is null");
-		qdf_mem_free(*rsp);
 		return QDF_STATUS_E_INVAL;
 	}
-	(*rsp)->transaction_id = fixed_params->transaction_id;
-	(*rsp)->reason = fixed_params->reason_code;
-	(*rsp)->status = fixed_params->rsp_status;
+	rsp->transaction_id = fixed_params->transaction_id;
+	rsp->reason = fixed_params->reason_code;
+	rsp->status = fixed_params->rsp_status;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -17781,7 +17746,25 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 
 	if (event->num_ndp_end_indication_list == 0) {
 		WMI_LOGE("Error: Event ignored, 0 ndp instances");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
+	}
+
+	WMI_LOGD("number of ndp instances = %d",
+		 event->num_ndp_end_indication_list);
+
+	if (event->num_ndp_end_indication_list > ((UINT_MAX - sizeof(**rsp))/
+						sizeof((*rsp)->ndp_map[0]))) {
+		WMI_LOGE("num_ndp_end_ind_list %d too large",
+			 event->num_ndp_end_indication_list);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	buf_size = sizeof(**rsp) + event->num_ndp_end_indication_list *
+			sizeof((*rsp)->ndp_map[0]);
+	*rsp = qdf_mem_malloc(buf_size);
+	if (!(*rsp)) {
+		WMI_LOGE("Failed to allocate memory");
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	(*rsp)->vdev = wlan_objmgr_get_vdev_by_opmode_from_psoc(
@@ -17789,17 +17772,8 @@ static QDF_STATUS extract_ndp_end_ind_tlv(wmi_unified_t wmi_handle,
 	if (!(*rsp)->vdev) {
 		WMI_LOGE("vdev is null");
 		qdf_mem_free(*rsp);
+		*rsp = NULL;
 		return QDF_STATUS_E_INVAL;
-	}
-
-	WMI_LOGD("number of ndp instances = %d",
-		 event->num_ndp_end_indication_list);
-	buf_size = sizeof(*rsp) + event->num_ndp_end_indication_list *
-			sizeof((*rsp)->ndp_map[0]);
-	*rsp = qdf_mem_malloc(buf_size);
-	if (!(*rsp)) {
-		WMI_LOGE("Failed to allocate memory");
-		return -ENOMEM;
 	}
 
 	(*rsp)->num_ndp_ids = event->num_ndp_end_indication_list;
