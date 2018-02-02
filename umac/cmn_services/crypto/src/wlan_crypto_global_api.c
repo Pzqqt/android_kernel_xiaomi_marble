@@ -86,9 +86,10 @@ static QDF_STATUS wlan_crypto_set_igtk_key(struct wlan_crypto_key *key)
 {
 	return QDF_STATUS_SUCCESS;
 }
+
 /**
  * wlan_crypto_set_param - called by ucfg to set crypto param
- * @vdev: vdev
+ * @crypto_params: crypto_params
  * @param: param to be set.
  * @value: value
  *
@@ -96,22 +97,11 @@ static QDF_STATUS wlan_crypto_set_igtk_key(struct wlan_crypto_key *key)
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_crypto_set_param(struct wlan_objmgr_vdev *vdev,
+static QDF_STATUS wlan_crypto_set_param(struct wlan_crypto_params *crypto_params,
 					wlan_crypto_param_type param,
 					uint32_t value){
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
-	struct wlan_crypto_comp_priv *crypto_priv;
-	struct wlan_crypto_params *crypto_params;
 
-	crypto_priv = (struct wlan_crypto_comp_priv *)
-					wlan_get_vdev_crypto_obj(vdev);
-
-	if (crypto_priv == NULL) {
-		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-	crypto_params = &(crypto_priv->crypto_params);
 	switch (param) {
 	case WLAN_CRYPTO_PARAM_AUTH_MODE:
 		status = wlan_crypto_set_authmode(crypto_params, value);
@@ -137,6 +127,70 @@ QDF_STATUS wlan_crypto_set_param(struct wlan_objmgr_vdev *vdev,
 	default:
 		status = QDF_STATUS_E_INVAL;
 	}
+	return status;
+}
+
+/**
+ * wlan_crypto_set_vdev_param - called by ucfg to set crypto param
+ * @vdev: vdev
+ * @param: param to be set.
+ * @value: value
+ *
+ * This function gets called from ucfg to set param
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_set_vdev_param(struct wlan_objmgr_vdev *vdev,
+					wlan_crypto_param_type param,
+					uint32_t value){
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+
+	crypto_priv = (struct wlan_crypto_comp_priv *)
+					wlan_get_vdev_crypto_obj(vdev);
+
+	if (crypto_priv == NULL) {
+		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	crypto_params = &(crypto_priv->crypto_params);
+
+	status = wlan_crypto_set_param(crypto_params, param, value);
+
+	return status;
+}
+
+/**
+ * wlan_crypto_set_param - called by ucfg to set crypto param
+ *
+ * @peer: peer
+ * @param: param to be set.
+ * @value: value
+ *
+ * This function gets called from ucfg to set param
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_set_peer_param(struct wlan_objmgr_peer *peer,
+				wlan_crypto_param_type param,
+				uint32_t value){
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+	struct wlan_crypto_comp_priv *crypto_priv;
+	struct wlan_crypto_params *crypto_params;
+
+	crypto_params = wlan_crypto_peer_get_comp_params(peer,
+							&crypto_priv);
+
+	if (crypto_priv == NULL) {
+		qdf_print("%s[%d] crypto_priv NULL\n", __func__, __LINE__);
+		return QDF_STATUS_E_INVAL;
+	}
+
+	crypto_params = &(crypto_priv->crypto_params);
+
+	status = wlan_crypto_set_param(crypto_params, param, value);
 
 	return status;
 }

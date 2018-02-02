@@ -24,7 +24,7 @@
 
 
 /**
- * wlan_crypto_set_param - called by ucfg to set crypto param
+ * wlan_crypto_set_vdev_param - called by ucfg to set crypto param
  * @vdev: vdev
  * @param: param to be set.
  * @value: value
@@ -33,9 +33,24 @@
  *
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
-QDF_STATUS wlan_crypto_set_param(struct wlan_objmgr_vdev *vdev,
+QDF_STATUS wlan_crypto_set_vdev_param(struct wlan_objmgr_vdev *vdev,
 					wlan_crypto_param_type param,
 					uint32_t value);
+
+/**
+ * wlan_crypto_set_peer_param - called by ucfg to set crypto param
+ *
+ * @peer: peer
+ * @param: param to be set.
+ * @value: value
+ *
+ * This function gets called from ucfg to set param
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_crypto_set_peer_param(struct wlan_objmgr_peer *peer,
+						wlan_crypto_param_type param,
+						uint32_t value);
 
 /**
  * wlan_crypto_get_param - called by ucfg to get crypto param
