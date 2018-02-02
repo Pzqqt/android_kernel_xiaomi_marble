@@ -660,6 +660,70 @@ typedef enum {
 #endif
 #endif
 
+/**
+ * qdf_bool_parse() - parse the given string as a boolean value
+ * @bool_str: the input boolean string to parse
+ * @out_bool: the output boolean value, populated on success
+ *
+ * 1, y, Y are mapped to true, 0, n, N are mapped to false.
+ * Leading/trailing whitespace is ignored.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_bool_parse(const char *bool_str, bool *out_bool);
+
+/**
+ * qdf_int32_parse() - parse the given string as a 32-bit signed integer
+ * @int_str: the input integer string to parse
+ * @out_int: the output integer value, populated on success
+ *
+ * Supports binary (0b), octal (0o), decimal (no prefix), and hexadecimal (0x)
+ * encodings via typical prefix notation. Leading/trailing whitespace is
+ * ignored.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_int32_parse(const char *int_str, int32_t *out_int);
+
+/**
+ * qdf_uint32_parse() - parse the given string as a 32-bit unsigned integer
+ * @int_str: the input integer string to parse
+ * @out_int: the output integer value, populated on success
+ *
+ * Supports binary (0b), octal (0o), decimal (no prefix), and hexadecimal (0x)
+ * encodings via typical prefix notation. Leading/trailing whitespace is
+ * ignored.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_uint32_parse(const char *int_str, uint32_t *out_int);
+
+/**
+ * qdf_int64_parse() - parse the given string as a 64-bit signed integer
+ * @int_str: the input integer string to parse
+ * @out_int: the output integer value, populated on success
+ *
+ * Supports binary (0b), octal (0o), decimal (no prefix), and hexadecimal (0x)
+ * encodings via typical prefix notation. Leading/trailing whitespace is
+ * ignored.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_int64_parse(const char *int_str, int64_t *out_int);
+
+/**
+ * qdf_uint64_parse() - parse the given string as a 64-bit unsigned integer
+ * @int_str: the input integer string to parse
+ * @out_int: the output integer value, populated on success
+ *
+ * Supports binary (0b), octal (0o), decimal (no prefix), and hexadecimal (0x)
+ * encodings via typical prefix notation. Leading/trailing whitespace is
+ * ignored.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS qdf_uint64_parse(const char *int_str, uint64_t *out_int);
+
 #define QDF_MAC_ADDR_SIZE 6
 #define QDF_MAC_ADDR_STR "%02x:%02x:%02x:%02x:%02x:%02x"
 #define QDF_MAC_ADDR_ARRAY(a) (a)[0], (a)[1], (a)[2], (a)[3], (a)[4], (a)[5]

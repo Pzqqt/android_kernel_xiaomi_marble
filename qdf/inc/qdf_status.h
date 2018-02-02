@@ -1,8 +1,7 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
- *
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -86,6 +85,7 @@
  * @QDF_STATUS_CRYPTO_MIC_FAILURE: MIC failure in received frame
  * @QDF_STATUS_CRYPTO_ENCRYPT_FAILED: encryption failed
  * @QDF_STATUS_CRYPTO_DECRYPT_FAILED: decryption failed
+ * @QDF_STATUS_E_RANGE: result/parameter/operation was out of range
  * @QDF_STATUS_MAX: not a realy value just a place holder for max
  */
 typedef enum {
@@ -140,6 +140,7 @@ typedef enum {
 	QDF_STATUS_CRYPTO_ENCRYPT_FAILED,
 	QDF_STATUS_CRYPTO_DECRYPT_FAILED,
 	QDF_STATUS_E_DEFRAG_ERROR,
+	QDF_STATUS_E_RANGE,
 	QDF_STATUS_MAX
 } QDF_STATUS;
 
