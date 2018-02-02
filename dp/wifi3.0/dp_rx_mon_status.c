@@ -500,16 +500,38 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 			rx_desc = &desc_list->rx_desc;
 		}
 
-		/* Allocate a new skb */
-		status_nbuf = qdf_nbuf_alloc(soc->osdev, RX_BUFFER_SIZE,
-			RX_BUFFER_RESERVATION, RX_BUFFER_ALIGNMENT, FALSE);
+		status_nbuf = dp_rx_nbuf_prepare(soc, pdev);
 
-		status_buf = qdf_nbuf_data(status_nbuf);
+		/*
+		 * qdf_nbuf alloc or map failed,
+		 * free the dp rx desc to free list,
+		 * fill in NULL dma address at current HP entry,
+		 * keep HP in mon_status_ring unchanged,
+		 * wait next time dp_rx_mon_status_srng_process
+		 * to fill in buffer at current HP.
+		 */
+		if (qdf_unlikely(status_nbuf == NULL)) {
+			union dp_rx_desc_list_elem_t *desc_list = NULL;
+			union dp_rx_desc_list_elem_t *tail = NULL;
+			struct rx_desc_pool *rx_desc_pool;
 
-		hal_clear_rx_status_done(status_buf);
+			rx_desc_pool = &soc->rx_desc_status[mac_id];
 
-		qdf_nbuf_map_single(soc->osdev, status_nbuf,
-			QDF_DMA_BIDIRECTIONAL);
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: fail to allocate or map qdf_nbuf",
+				__func__);
+			dp_rx_add_to_free_desc_list(&desc_list,
+						&tail, rx_desc);
+			dp_rx_add_desc_list_to_free_list(soc, &desc_list,
+						&tail, mac_id, rx_desc_pool);
+
+			hal_rxdma_buff_addr_info_set(
+						rxdma_mon_status_ring_entry,
+						0, 0, HAL_RX_BUF_RBM_SW3_BM);
+			work_done++;
+			break;
+		}
+
 		paddr = qdf_nbuf_get_frag_paddr(status_nbuf, 0);
 
 		rx_desc->nbuf = status_nbuf;
@@ -620,14 +642,14 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 	uint32_t num_alloc_desc;
 	uint16_t num_desc_to_free = 0;
 	uint32_t num_entries_avail;
-	uint32_t count;
+	uint32_t count = 0;
 	int sync_hw_ptr = 1;
 	qdf_dma_addr_t paddr;
 	qdf_nbuf_t rx_netbuf;
 	void *rxdma_ring_entry;
 	union dp_rx_desc_list_elem_t *next;
 	void *rxdma_srng;
-	uint8_t *status_buf;
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(dp_soc, mac_id);
 
 	rxdma_srng = dp_rxdma_srng->hal_srng;
 
@@ -675,23 +697,21 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 		num_req_buffers = num_entries_avail;
 	}
 
-	for (count = 0; count < num_req_buffers; count++) {
-		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
-							 rxdma_srng);
+	while (count < num_req_buffers) {
+		rx_netbuf = dp_rx_nbuf_prepare(dp_soc, dp_pdev);
 
-		rx_netbuf = qdf_nbuf_alloc(dp_soc->osdev,
-					RX_BUFFER_SIZE,
-					RX_BUFFER_RESERVATION,
-					RX_BUFFER_ALIGNMENT,
-					FALSE);
-
-		status_buf = qdf_nbuf_data(rx_netbuf);
-		hal_clear_rx_status_done(status_buf);
-
-		memset(status_buf, 0, RX_BUFFER_SIZE);
-
-		qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
-				    QDF_DMA_BIDIRECTIONAL);
+		/*
+		 * qdf_nbuf alloc or map failed,
+		 * keep HP in mon_status_ring unchanged,
+		 * wait dp_rx_mon_status_srng_process
+		 * to fill in buffer at current HP.
+		 */
+		if (qdf_unlikely(rx_netbuf == NULL)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: qdf_nbuf allocate or map fail, count %d",
+				__func__, count);
+			break;
+		}
 
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 
@@ -699,15 +719,20 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
 
 		(*desc_list)->rx_desc.nbuf = rx_netbuf;
 		(*desc_list)->rx_desc.in_use = 1;
+
+		count++;
+		rxdma_ring_entry = hal_srng_src_get_next(dp_soc->hal_soc,
+							 rxdma_srng);
+
 		hal_rxdma_buff_addr_info_set(rxdma_ring_entry, paddr,
 			(*desc_list)->rx_desc.cookie, owner);
 
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 			"[%s][%d] rx_desc=%pK, cookie=%d, nbuf=%pK, \
-			status_buf=%pK paddr=%pK\n",
+			paddr=%pK\n",
 			__func__, __LINE__, &(*desc_list)->rx_desc,
 			(*desc_list)->rx_desc.cookie, rx_netbuf,
-			status_buf, (void *)paddr);
+			(void *)paddr);
 
 		*desc_list = next;
 	}

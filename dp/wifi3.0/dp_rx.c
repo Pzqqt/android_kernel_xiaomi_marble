@@ -170,7 +170,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 
 		ret = qdf_nbuf_map_single(dp_soc->osdev, rx_netbuf,
 				    QDF_DMA_BIDIRECTIONAL);
-		if (qdf_unlikely(ret == QDF_STATUS_E_FAILURE)) {
+		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
 			qdf_nbuf_free(rx_netbuf);
 			DP_STATS_INC(dp_pdev, replenish.map_err, 1);
 			continue;
@@ -1707,4 +1707,63 @@ dp_rx_pdev_attach(struct dp_pdev *pdev)
 		0, &desc_list, &tail, HAL_RX_BUF_RBM_SW3_BM);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/*
+ * dp_rx_nbuf_prepare() - prepare RX nbuf
+ * @soc: core txrx main context
+ * @pdev: core txrx pdev context
+ *
+ * This function alloc & map nbuf for RX dma usage, retry it if failed
+ * until retry times reaches max threshold or succeeded.
+ *
+ * Return: qdf_nbuf_t pointer if succeeded, NULL if failed.
+ */
+qdf_nbuf_t
+dp_rx_nbuf_prepare(struct dp_soc *soc, struct dp_pdev *pdev)
+{
+	uint8_t *buf;
+	int32_t nbuf_retry_count;
+	QDF_STATUS ret;
+	qdf_nbuf_t nbuf = NULL;
+
+	for (nbuf_retry_count = 0; nbuf_retry_count <
+		QDF_NBUF_ALLOC_MAP_RETRY_THRESHOLD;
+			nbuf_retry_count++) {
+		/* Allocate a new skb */
+		nbuf = qdf_nbuf_alloc(soc->osdev,
+					RX_BUFFER_SIZE,
+					RX_BUFFER_RESERVATION,
+					RX_BUFFER_ALIGNMENT,
+					FALSE);
+
+		if (nbuf == NULL) {
+			DP_STATS_INC(pdev,
+				replenish.nbuf_alloc_fail, 1);
+			continue;
+		}
+
+		buf = qdf_nbuf_data(nbuf);
+
+		memset(buf, 0, RX_BUFFER_SIZE);
+
+		ret = qdf_nbuf_map_single(soc->osdev, nbuf,
+				    QDF_DMA_BIDIRECTIONAL);
+
+		/* nbuf map failed */
+		if (qdf_unlikely(QDF_IS_STATUS_ERROR(ret))) {
+			qdf_nbuf_free(nbuf);
+			DP_STATS_INC(pdev, replenish.map_err, 1);
+			continue;
+		}
+		/* qdf_nbuf alloc and map succeeded */
+		break;
+	}
+
+	/* qdf_nbuf still alloc or map failed */
+	if (qdf_unlikely(nbuf_retry_count >=
+			QDF_NBUF_ALLOC_MAP_RETRY_THRESHOLD))
+		return NULL;
+
+	return nbuf;
 }

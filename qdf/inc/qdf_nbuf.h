@@ -142,6 +142,9 @@
 #define QDF_NBUF_TX_PKT_STATE_MAX            10
 #define QDF_NBUF_TX_PKT_LI_DP                11
 
+/* qdf_nbuf allocate and map max retry threshold when failed */
+#define QDF_NBUF_ALLOC_MAP_RETRY_THRESHOLD      20
+
 /* Enable flag to print TSO specific prints in datapath */
 #ifdef TSO_DEBUG_LOG_ENABLE
 #define TSO_DEBUG(fmt, args ...) \
