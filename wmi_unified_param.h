@@ -404,6 +404,11 @@ typedef void *ol_scn_t;
 typedef int (*wmi_unified_event_handler)(ol_scn_t scn_handle,
 		 uint8_t *event_buf, uint32_t len);
 
+/**
+ * @WMI_HOST_WLAN_PHY_MODE: Host based enum ID for corresponding in
+ * WLAN_PHY_MODE. This should be consistent with WLAN_PHY_MODE always to avoid
+ * breaking the WMI
+ */
 typedef enum {
 	WMI_HOST_MODE_11A	= 0,   /* 11a Mode */
 	WMI_HOST_MODE_11G	= 1,   /* 11b/g Mode */
