@@ -23001,6 +23001,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 				WMI_SERVICE_AP_OBSS_DETECTION_OFFLOAD;
 	wmi_service[wmi_service_bss_color_offload] =
 				WMI_SERVICE_BSS_COLOR_OFFLOAD;
+	wmi_service[wmi_service_gmac_offload_support] =
+				WMI_SERVICE_GMAC_OFFLOAD_SUPPORT;
 
 }
 
