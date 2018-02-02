@@ -1516,18 +1516,19 @@ QDF_STATUS (*send_ndp_end_req_cmd)(wmi_unified_t wmi_handle,
 				struct nan_datapath_end_req *req);
 
 QDF_STATUS (*extract_ndp_initiator_rsp)(wmi_unified_t wmi_handle,
-		uint8_t *data, struct nan_datapath_initiator_rsp **rsp);
+		uint8_t *data, struct nan_datapath_initiator_rsp *rsp);
 QDF_STATUS (*extract_ndp_ind)(wmi_unified_t wmi_handle,
-		uint8_t *data, struct nan_datapath_indication_event **ind);
+		uint8_t *data, struct nan_datapath_indication_event *ind);
 QDF_STATUS (*extract_ndp_confirm)(wmi_unified_t wmi_handle,
-		uint8_t *data, struct nan_datapath_confirm_event **ev);
+		uint8_t *data, struct nan_datapath_confirm_event *ev);
 QDF_STATUS (*extract_ndp_responder_rsp)(wmi_unified_t wmi_handle,
-		uint8_t *data, struct nan_datapath_responder_rsp **rsp);
+		uint8_t *data, struct nan_datapath_responder_rsp *rsp);
 QDF_STATUS (*extract_ndp_end_rsp)(wmi_unified_t wmi_handle,
-		uint8_t *data, struct nan_datapath_end_rsp_event **rsp);
+		uint8_t *data, struct nan_datapath_end_rsp_event *rsp);
 QDF_STATUS (*extract_ndp_end_ind)(wmi_unified_t wmi_handle,
 		uint8_t *data, struct nan_datapath_end_indication_event **ind);
-#endif
+#endif /* WLAN_FEATURE_NAN_CONVERGENCE */
+
 QDF_STATUS (*send_btm_config)(wmi_unified_t wmi_handle,
 			      struct wmi_btm_config *params);
 QDF_STATUS (*send_obss_detection_cfg_cmd)(wmi_unified_t wmi_handle,
