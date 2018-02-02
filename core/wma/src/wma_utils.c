@@ -263,6 +263,8 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					mcs_nss2[index].ht40_rate[1]);
 			if (match_rate) {
 				*mcsRateFlag = eHAL_TX_RATE_HT40;
+				if (nss == 2)
+					index += MAX_HT_MCS_IDX;
 				goto rate_found;
 			}
 		}
@@ -276,6 +278,8 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 					mcs_nss2[index].ht20_rate[1]);
 			if (match_rate) {
 				*mcsRateFlag = eHAL_TX_RATE_HT20;
+				if (nss == 2)
+					index += MAX_HT_MCS_IDX;
 				goto rate_found;
 			}
 		}

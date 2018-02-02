@@ -4248,6 +4248,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					}
 					maxSpeedMCS = 1;
 				}
+				if (nss == 2)
+					maxMCSIdx += MAX_HT_MCS_IDX;
 			}
 		}
 
@@ -4274,7 +4276,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		} else {
 			sinfo->txrate.mcs = maxMCSIdx;
 			sinfo->txrate.nss = nss;
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 
 			if (rate_flags & eHAL_TX_RATE_VHT80)
 				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_80);
@@ -4287,6 +4288,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				if (rate_flags & eHAL_TX_RATE_HT40)
 					hdd_set_rate_bw(&sinfo->txrate,
 							HDD_RATE_BW_40);
+			} else {
+				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			}
 
 			if (rate_flags & eHAL_TX_RATE_SGI) {
@@ -4312,7 +4315,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			/* must be MCS */
 			sinfo->txrate.mcs = mcs_index;
 			sinfo->txrate.nss = nss;
-			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 
 			if (rate_flags & eHAL_TX_RATE_VHT80)
 				hdd_set_rate_bw(&sinfo->txrate, HDD_RATE_BW_80);
@@ -4325,6 +4327,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				if (rate_flags & eHAL_TX_RATE_HT40)
 					hdd_set_rate_bw(&sinfo->txrate,
 							HDD_RATE_BW_40);
+			} else {
+				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			}
 
 			if (rate_flags & eHAL_TX_RATE_SGI) {
