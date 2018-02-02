@@ -851,6 +851,8 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 #endif
 	tHalHandle h_hal;
 	uint8_t con_ch;
+	uint8_t vdev_id;
+	uint32_t scan_id;
 
 	h_hal = cds_get_context(QDF_MODULE_ID_SME);
 	if (NULL == h_hal) {
@@ -1005,8 +1007,10 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 
 		ucfg_scan_init_default_params(vdev, req);
 		req->scan_req.dwell_time_active = 0;
-		req->scan_req.scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
-		req->scan_req.vdev_id = wlan_vdev_get_id(vdev);
+		scan_id = ucfg_scan_get_scan_id(mac_ctx->psoc);
+		req->scan_req.scan_id = scan_id;
+		vdev_id = wlan_vdev_get_id(vdev);
+		req->scan_req.vdev_id = vdev_id;
 		req->scan_req.scan_req_id = sap_context->req_id;
 		sap_get_channel_list(sap_context, &channel_list,
 				  &num_of_channels);
@@ -1074,8 +1078,9 @@ QDF_STATUS sap_goto_channel_sel(struct sap_context *sap_context,
 		} else {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				 FL("return sme_ScanReq, scanID=%d, Ch=%d"),
-				req->scan_req.scan_id,
+				 scan_id,
 				 sap_context->channel);
+			host_log_acs_scan_start(scan_id, vdev_id);
 		}
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		}

@@ -374,6 +374,40 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 	}
 }
 
+const char *csr_phy_mode_str(eCsrPhyMode phy_mode)
+{
+	switch (phy_mode) {
+	case eCSR_DOT11_MODE_abg:
+		return "abg";
+	case eCSR_DOT11_MODE_11a:
+		return "11a";
+	case eCSR_DOT11_MODE_11b:
+		return "11b";
+	case eCSR_DOT11_MODE_11g:
+		return "11g";
+	case eCSR_DOT11_MODE_11n:
+		return "11n";
+	case eCSR_DOT11_MODE_11g_ONLY:
+		return "11g_only";
+	case eCSR_DOT11_MODE_11n_ONLY:
+		return "11n_only";
+	case eCSR_DOT11_MODE_11b_ONLY:
+		return "11b_only";
+	case eCSR_DOT11_MODE_11ac:
+		return "11ac";
+	case eCSR_DOT11_MODE_11ac_ONLY:
+		return "11ac_only";
+	case eCSR_DOT11_MODE_AUTO:
+		return "auto";
+	case eCSR_DOT11_MODE_11ax:
+		return "11ax";
+	case eCSR_DOT11_MODE_11ax_ONLY:
+		return "11ax_only";
+	default:
+		return "unknown";
+	}
+}
+
 void purge_sme_session_active_scan_cmd_list(struct sAniSirGlobal *mac_ctx,
 				uint32_t session_id)
 {

@@ -2586,7 +2586,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		sap_config->acs_cfg.ch_width, ht_enabled, vht_enabled,
 		sap_config->acs_cfg.start_ch, sap_config->acs_cfg.end_ch,
 		sap_config->acs_cfg.band);
-
+	host_log_acs_req_event(adapter->dev->name,
+			  csr_phy_mode_str(sap_config->acs_cfg.hw_mode),
+			  ch_width, ht_enabled, vht_enabled,
+			  sap_config->acs_cfg.start_ch,
+			  sap_config->acs_cfg.end_ch);
 	if (hdd_ctx->config->auto_channel_select_weight)
 		sap_config->auto_channel_select_weight =
 		    hdd_ctx->config->auto_channel_select_weight;

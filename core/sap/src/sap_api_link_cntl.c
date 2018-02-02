@@ -286,6 +286,31 @@ static QDF_STATUS sap_hdd_signal_event_handler(void *ctx)
 	return status;
 }
 
+/**
+ * acs_scan_done_status_str() - parse scan status to string
+ * @status: scan status
+ *
+ * This function parse scan status to string
+ *
+ * Return: status string
+ *
+ */
+static const char *acs_scan_done_status_str(eCsrScanStatus status)
+{
+	switch (status) {
+	case eCSR_SCAN_SUCCESS:
+		return "Success";
+	case eCSR_SCAN_FAILURE:
+		return "Failure";
+	case eCSR_SCAN_ABORT:
+		return "Abort";
+	case eCSR_SCAN_FOUND_PEER:
+		return "Found peer";
+	default:
+		return "Unknown";
+	}
+}
+
 QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 						   struct sap_context *sap_ctx,
 						   uint8_t sessionid,
@@ -297,6 +322,8 @@ QDF_STATUS wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle,
 	uint8_t oper_channel = 0;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
+	host_log_acs_scan_done(acs_scan_done_status_str(scan_status),
+			  sessionid, scanid);
 	if (eCSR_SCAN_SUCCESS != scan_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			FL("CSR scan_status = eCSR_SCAN_ABORT/FAILURE (%d), choose default channel"),
