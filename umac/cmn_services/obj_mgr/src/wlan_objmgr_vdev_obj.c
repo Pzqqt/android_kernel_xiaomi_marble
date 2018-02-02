@@ -104,6 +104,9 @@ static QDF_STATUS wlan_objmgr_vdev_obj_free(struct wlan_objmgr_vdev *vdev)
 		return QDF_STATUS_E_FAILURE;
 
 	qdf_spinlock_destroy(&vdev->vdev_lock);
+
+	qdf_mem_free(vdev->vdev_mlme.bss_chan);
+	qdf_mem_free(vdev->vdev_mlme.des_chan);
 	qdf_mem_free(vdev);
 
 	return QDF_STATUS_SUCCESS;
@@ -140,11 +143,33 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		return NULL;
 	}
 	vdev->obj_state = WLAN_OBJ_STATE_ALLOCATED;
+
+	vdev->vdev_mlme.bss_chan = (struct wlan_channel *)qdf_mem_malloc(
+			sizeof(struct wlan_channel));
+	if (vdev->vdev_mlme.bss_chan == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_MLME, QDF_TRACE_LEVEL_ERROR,
+				"%s:bss_chan is NULL", __func__);
+		qdf_mem_free(vdev);
+		return NULL;
+	}
+
+	vdev->vdev_mlme.des_chan = (struct wlan_channel *)qdf_mem_malloc(
+			sizeof(struct wlan_channel));
+	if (vdev->vdev_mlme.des_chan == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_MLME, QDF_TRACE_LEVEL_ERROR,
+				"%s:des_chan is NULL", __func__);
+		qdf_mem_free(vdev->vdev_mlme.bss_chan);
+		qdf_mem_free(vdev);
+		return NULL;
+	}
+
 	/* Attach VDEV to PSOC VDEV's list */
 	if (wlan_objmgr_psoc_vdev_attach(psoc, vdev) !=
 				QDF_STATUS_SUCCESS) {
 		obj_mgr_err("psoc vdev attach failed for vdev-id:%d",
 					vdev->vdev_objmgr.vdev_id);
+		qdf_mem_free(vdev->vdev_mlme.bss_chan);
+		qdf_mem_free(vdev->vdev_mlme.des_chan);
 		qdf_mem_free(vdev);
 		return NULL;
 	}
@@ -156,6 +181,8 @@ struct wlan_objmgr_vdev *wlan_objmgr_vdev_obj_create(
 		obj_mgr_err("pdev vdev attach failed for vdev-id:%d",
 				vdev->vdev_objmgr.vdev_id);
 		wlan_objmgr_psoc_vdev_detach(psoc, vdev);
+		qdf_mem_free(vdev->vdev_mlme.bss_chan);
+		qdf_mem_free(vdev->vdev_mlme.des_chan);
 		qdf_mem_free(vdev);
 		return NULL;
 	}
@@ -257,7 +284,7 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 		WLAN_OBJMGR_BUG(0);
 	}
 
-	/* Invoke registered create handlers */
+	/* Invoke registered destroy handlers */
 	for (id = 0; id < WLAN_UMAC_MAX_COMPONENTS; id++) {
 		handler = g_umac_glb_obj->vdev_destroy_handler[id];
 		arg = g_umac_glb_obj->vdev_destroy_handler_arg[id];

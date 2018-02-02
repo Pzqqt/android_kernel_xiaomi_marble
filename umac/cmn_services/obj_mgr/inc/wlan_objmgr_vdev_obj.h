@@ -259,9 +259,26 @@ struct wlan_vdev_create_params {
 
 /**
  * struct wlan_channel - channel structure
+ * @ch_freq:      Channel in Mhz.
+ * @ch_ieee:      IEEE channel number.
+ * @ch_flags:     Channel flags.
+ * @ch_flagext:   Channel extension flags.
+ * @ch_maxpower:  Maximum tx power in dBm.
+ * @ch_freq_seg1: Channel Center frequeny for VHT80/160 and HE80/160.
+ * @ch_freq_seg2: Second channel Center frequency applicable for 80+80MHz mode.
+ * @ch_width:     Channel width.
+ * @ch_phymode:   Channel phymode.
  */
 struct wlan_channel {
-
+	uint16_t     ch_freq;
+	uint8_t      ch_ieee;
+	uint64_t     ch_flags;
+	uint16_t     ch_flagext;
+	int8_t       ch_maxpower;
+	uint8_t      ch_freq_seg1;
+	uint8_t      ch_freq_seg2;
+	enum wlan_phy_ch_width ch_width;
+	enum wlan_phymode ch_phymode;
 };
 
 /**
