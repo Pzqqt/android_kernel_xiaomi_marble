@@ -843,7 +843,8 @@ QDF_STATUS reg_get_channel_list_with_power(struct wlan_objmgr_pdev *pdev,
 	reg_channels = pdev_priv_obj->cur_chan_list;
 
 	for (i = 0, count = 0; i < NUM_CHANNELS; i++) {
-		if (reg_channels[i].state) {
+		if (reg_channels[i].state &&
+		    reg_channels[i].state != REGULATORY_CHAN_DISABLED) {
 			ch_list[count].chan_num =
 				reg_channels[i].chan_num;
 			ch_list[count++].tx_power =
@@ -1376,6 +1377,22 @@ QDF_STATUS reg_set_default_country(struct wlan_objmgr_psoc *psoc,
 	return QDF_STATUS_SUCCESS;
 }
 
+bool reg_is_world_alpha2(uint8_t *alpha2)
+{
+	if ((alpha2[0] == '0') && (alpha2[1] == '0'))
+		return true;
+
+	return false;
+}
+
+bool reg_is_us_alpha2(uint8_t *alpha2)
+{
+	if ((alpha2[0] == 'U') && (alpha2[1] == 'S'))
+		return true;
+
+	return false;
+}
+
 QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 			   uint8_t *country)
 {
@@ -1428,6 +1445,55 @@ QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev,
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
+			       uint8_t *country)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_reg;
+	struct set_country country_code;
+	struct wlan_objmgr_psoc *psoc;
+	struct cc_regdmn_s rd;
+	QDF_STATUS status;
+
+	if (!country) {
+		reg_err("country code is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	psoc = wlan_pdev_get_psoc(pdev);
+	psoc_reg = reg_get_psoc_obj(psoc);
+	if (!IS_VALID_PSOC_REG_OBJ(psoc_reg)) {
+		reg_err("psoc reg component is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	if (!qdf_mem_cmp(psoc_reg->cur_country,
+			 country, REG_ALPHA2_LEN)) {
+		reg_debug("country is not different");
+		return QDF_STATUS_SUCCESS;
+	}
+
+	reg_info("programming new 11d country:%c%c to firmware",
+		 country[0], country[1]);
+
+	qdf_mem_copy(country_code.country,
+		     country, REG_ALPHA2_LEN + 1);
+	country_code.pdev_id = wlan_objmgr_pdev_get_pdev_id(pdev);
+
+	psoc_reg->new_11d_ctry_pending = true;
+
+	if (psoc_reg->offload_enabled) {
+		reg_err("reg offload, 11d offload too!");
+		status = QDF_STATUS_E_FAULT;
+	} else {
+		qdf_mem_copy(rd.cc.alpha, country, REG_ALPHA2_LEN + 1);
+		rd.flags = ALPHA_IS_SET;
+		reg_program_chan_list(pdev, &rd);
+		status = QDF_STATUS_SUCCESS;
+	}
+
+	return status;
 }
 
 QDF_STATUS reg_reset_country(struct wlan_objmgr_psoc *psoc)
@@ -1864,9 +1930,16 @@ static void reg_populate_band_channels(enum channel_enum start_chan,
 
 		if (found_rule_ptr) {
 			mas_chan_list[chan_enum].max_bw = bw;
-
 			reg_fill_channel_info(chan_enum, found_rule_ptr,
 					      mas_chan_list, min_bw);
+			/* Disable 2.4 Ghz channels that dont have 20 mhz bw */
+			if (start_chan == MIN_24GHZ_CHANNEL &&
+			    20 > mas_chan_list[chan_enum].max_bw) {
+				mas_chan_list[chan_enum].chan_flags |=
+						REGULATORY_CHAN_DISABLED;
+				mas_chan_list[chan_enum].state =
+						REGULATORY_CHAN_DISABLED;
+			}
 		}
 	}
 }
@@ -3965,6 +4038,23 @@ QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 	psoc_priv_obj->new_11d_ctry_pending = true;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+bool reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+
+	psoc_priv_obj =
+	     wlan_objmgr_psoc_get_comp_private_obj(psoc,
+						   WLAN_UMAC_COMP_REGULATORY);
+
+	if (NULL == psoc_priv_obj) {
+		reg_err("reg psoc private obj is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return (psoc_priv_obj->enable_11d_supp_original &&
+		!psoc_priv_obj->is_11d_offloaded);
 }
 
 bool reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)

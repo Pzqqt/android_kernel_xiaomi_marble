@@ -339,11 +339,8 @@ static inline bool util_is_bss_type_match(enum wlan_bss_type bss_type,
  * Return: true if country match
  */
 static inline bool util_country_code_match(uint8_t *country,
-	uint8_t *country_ie)
+					   struct wlan_country_ie *cc)
 {
-	struct wlan_country_ie *cc =
-		(struct wlan_country_ie *)country;
-
 	if (!country || !country[0])
 		return true;
 
@@ -351,7 +348,7 @@ static inline bool util_country_code_match(uint8_t *country,
 		return false;
 
 	if (cc->cc[0] == country[0] &&
-		cc->cc[1] == country[1])
+	    cc->cc[1] == country[1])
 		return true;
 
 	return false;
@@ -1034,10 +1031,10 @@ util_scan_entry_vendor(struct scan_cache_entry *scan_entry)
  *
  * Return: countryie or NULL if ie is not present
  */
-static inline uint8_t*
+static inline struct wlan_country_ie*
 util_scan_entry_country(struct scan_cache_entry *scan_entry)
 {
-	return scan_entry->ie_list.country;
+	return (struct wlan_country_ie *)scan_entry->ie_list.country;
 }
 
 /**
@@ -1060,8 +1057,7 @@ util_scan_entry_copy_country(struct scan_cache_entry *scan_entry,
 	if (!cntry)
 		return QDF_STATUS_E_INVAL;
 
-	country_ie = (struct wlan_country_ie *)
-		util_scan_entry_country(scan_entry);
+	country_ie = util_scan_entry_country(scan_entry);
 
 	if (!country_ie)
 		return QDF_STATUS_E_NOMEM;

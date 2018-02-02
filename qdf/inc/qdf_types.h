@@ -95,6 +95,11 @@ typedef struct qdf_sglist {
  */
 #define qdf_packed __qdf_packed
 
+/**
+ * qdf_toupper - char lower to upper.
+ */
+#define qdf_toupper __qdf_toupper
+
 typedef void *qdf_net_handle_t;
 
 typedef void *qdf_netlink_handle_t;

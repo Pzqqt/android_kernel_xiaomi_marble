@@ -451,6 +451,22 @@ QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
 	return reg_set_country(pdev, country);
 }
 
+QDF_STATUS wlan_reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *country)
+{
+	return reg_set_11d_country(pdev, country);
+}
+
+bool wlan_reg_is_world(uint8_t *country)
+{
+	return reg_is_world_alpha2(country);
+}
+
+bool wlan_reg_is_us(uint8_t *country)
+{
+	return reg_is_us_alpha2(country);
+}
+
 void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					    reg_chan_change_callback cbk,
 					    void *arg)
@@ -463,6 +479,11 @@ void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					      reg_chan_change_callback cbk)
 {
 	reg_unregister_chan_change_callback(psoc, cbk);
+}
+
+bool wlan_reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc)
+{
+	return reg_11d_original_enabled_on_host(psoc);
 }
 
 bool wlan_reg_11d_enabled_on_host(struct wlan_objmgr_psoc *psoc)

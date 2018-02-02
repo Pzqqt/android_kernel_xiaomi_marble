@@ -37,6 +37,8 @@
 #include <wlan_scan_utils_api.h>
 #include "wlan_scan_main.h"
 #include "wlan_scan_cache_db_i.h"
+#include "wlan_reg_services_api.h"
+#include "wlan_reg_ucfg_api.h"
 
 /**
  * scm_del_scan_node() - API to remove scan node from the list
@@ -691,6 +693,9 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 			struct scan_cache_node, node);
 
 		scan_entry = scan_node->entry;
+
+		if (wlan_reg_11d_enabled_on_host(psoc))
+			scm_11d_handle_country_info(psoc, pdev, scan_entry);
 
 		status = scm_add_update_entry(scan_db, scan_entry);
 		if (QDF_IS_STATUS_ERROR(status)) {

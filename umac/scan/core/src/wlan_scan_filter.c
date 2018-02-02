@@ -893,6 +893,7 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	bool match = false;
 	struct roam_filter_params *roam_params;
 	struct scan_default_params *def_param;
+	struct wlan_country_ie *cc_ie;
 
 	def_param = wlan_scan_psoc_get_def_params(psoc);
 	if (!def_param)
@@ -972,8 +973,8 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 	if (!scm_is_fils_config_match(filter, db_entry))
 		return false;
 
-	if (!util_country_code_match(filter->country,
-	   db_entry->ie_list.country))
+	cc_ie = util_scan_entry_country(db_entry);
+	if (!util_country_code_match(filter->country, cc_ie))
 		return false;
 
 	if (!util_mdie_match(filter->mobility_domain,

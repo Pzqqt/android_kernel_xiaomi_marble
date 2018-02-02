@@ -165,6 +165,22 @@ QDF_STATUS reg_set_default_country(struct wlan_objmgr_psoc *psoc,
 		uint8_t *country);
 
 /**
+ * reg_is_world_alpha2 - is reg world mode
+ * @alpha2: country code pointer
+ *
+ * Return: true or false
+ */
+bool reg_is_world_alpha2(uint8_t *alpha2);
+
+/**
+ * reg_is_us_alpha2 - is US country code
+ * @alpha2: country code pointer
+ *
+ * Return: true or false
+ */
+bool reg_is_us_alpha2(uint8_t *alpha2);
+
+/**
  * reg_set_country() - Set the current regulatory country
  * @pdev: pdev device for country information
  * @country: country value
@@ -172,6 +188,15 @@ QDF_STATUS reg_set_default_country(struct wlan_objmgr_psoc *psoc,
  * Return: QDF_STATUS
  */
 QDF_STATUS reg_set_country(struct wlan_objmgr_pdev *pdev, uint8_t *country);
+
+/**
+ * reg_set_11d_country() - Set the 11d regulatory country
+ * @pdev: pdev device for country information
+ * @country: country value
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS reg_set_11d_country(struct wlan_objmgr_pdev *pdev, uint8_t *country);
 
 /**
  * reg_reset_country() - Reset the regulatory country to default
@@ -335,6 +360,14 @@ enum country_src reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
  */
 QDF_STATUS reg_save_new_11d_country(struct wlan_objmgr_psoc *psoc,
 		uint8_t *country);
+
+/**
+ * reg_11d_original_enabled_on_host() - whether 11d original enabled on host
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc);
 
 /**
  * reg_11d_enabled_on_host() - know whether 11d enabled on host

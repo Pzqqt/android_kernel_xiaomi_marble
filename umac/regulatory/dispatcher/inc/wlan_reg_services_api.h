@@ -372,6 +372,21 @@ uint32_t wlan_reg_freq_to_chan(struct wlan_objmgr_pdev *pdev,
  */
 uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
 			       uint32_t chan);
+/**
+ * wlan_reg_is_world() - reg is world mode
+ * @country: The country information
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_world(uint8_t *country);
+
+/**
+ * wlan_reg_is_us() - reg is us country
+ * @country: The country information
+ *
+ * Return: true or false
+ */
+bool wlan_reg_is_us(uint8_t *country);
 
 /**
  * wlan_reg_set_country() - Set the current regulatory country
@@ -381,7 +396,17 @@ uint32_t wlan_reg_chan_to_freq(struct wlan_objmgr_pdev *pdev,
  * Return: QDF_STATUS
  */
 QDF_STATUS wlan_reg_set_country(struct wlan_objmgr_pdev *pdev,
-				       uint8_t *country);
+				uint8_t *country);
+
+/**
+ * wlan_reg_set_11d_country() - Set the 11d regulatory country
+ * @pdev: The physical dev to set current country for
+ * @country: The country information to configure
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS wlan_reg_set_11d_country(struct wlan_objmgr_pdev *pdev,
+				    uint8_t *country);
 
 /**
  * wlan_reg_register_chan_change_callback () - add chan change cbk
@@ -404,6 +429,15 @@ void wlan_reg_register_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  */
 void wlan_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
 					      reg_chan_change_callback cbk);
+
+/**
+ * wlan_reg_11d_original_enabled_on_host() - 11d original enabled don host
+ * @psoc: psoc ptr
+ *
+ * Return: bool
+ */
+bool wlan_reg_11d_original_enabled_on_host(struct wlan_objmgr_psoc *psoc);
+
 /**
  * wlan_reg_11d_enabled_on_host() - 11d enabled don host
  * @psoc: psoc ptr

@@ -29,6 +29,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_scan_public_structs.h>
 #include "wlan_scan_cache_db.h"
+#include "wlan_scan_11d.h"
 
 #define scm_log(level, args...) \
 		QDF_TRACE(QDF_MODULE_ID_SCAN, level, ## args)
@@ -396,6 +397,7 @@ struct scan_cb {
  * struct wlan_scan_obj - scan object definition
  * @enable_scan: if scan is enabled
  * @scan_db:    scan cache data base
+ * @cc_db:      pointer of country code data base
  * @lock:       spin lock
  * @scan_def:   default scan parameters
  * @cb:         nif/sif function callbacks
@@ -414,6 +416,7 @@ struct wlan_scan_obj {
 	qdf_spinlock_t lock;
 	qdf_atomic_t scan_ids;
 	struct scan_dbs scan_db[WLAN_UMAC_MAX_PDEVS];
+	struct scan_country_code_db *cc_db;
 	struct scan_default_params scan_def;
 	struct scan_cb cb;
 	struct scan_requester_info requesters[WLAN_MAX_REQUESTORS];

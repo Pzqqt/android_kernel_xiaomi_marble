@@ -727,6 +727,8 @@ scm_scan_event_handler(struct scheduler_msg *msg)
 
 	switch (event->type) {
 	case SCAN_EVENT_TYPE_COMPLETED:
+		scm_11d_decide_country_code(vdev);
+		/* fall through to release the command */
 	case SCAN_EVENT_TYPE_START_FAILED:
 	case SCAN_EVENT_TYPE_DEQUEUED:
 		scm_release_serialization_command(vdev, event->scan_id);
