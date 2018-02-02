@@ -2580,6 +2580,27 @@ static void ol_txrx_flush_cache_rx_queue(void)
 #define PEER_DEL_TIMEOUT QDF_PEER_DELETION_TIMEDOUT
 
 /**
+ * ol_txrx_dump_peer_access_list() - dump peer access list
+ * @peer: peer handle
+ *
+ * This function will dump if any peer debug ids are still accessing peer
+ *
+ * Return: None
+ */
+static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
+{
+	u32 i;
+	u32 pending_ref;
+
+	for (i = 0; i < PEER_DEBUG_ID_MAX; i++) {
+		pending_ref = qdf_atomic_read(&peer->access_list[i]);
+		if (pending_ref)
+			ol_txrx_info_high("id %d pending refs %d",
+					  i, pending_ref);
+	}
+}
+
+/**
  * ol_txrx_peer_attach - Allocate and set up references for a
  * data peer object.
  * @data_pdev: data physical device object that will indirectly
@@ -2683,8 +2704,8 @@ ol_txrx_peer_attach(struct cdp_vdev *pvdev, uint8_t *peer_mac_addr)
 			ol_txrx_err("error waiting for peer_id(%d) deletion, status %d\n",
 				    vdev->wait_on_peer_id, (int) rc);
 			/* Added for debugging only */
+			ol_txrx_dump_peer_access_list(temp_peer);
 			wlan_roam_debug_dump_table();
-			cds_trigger_recovery(PEER_DEL_TIMEOUT);
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 
 			return NULL;
@@ -3351,27 +3372,6 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id)
 }
 
 /**
- * ol_txrx_dump_peer_access_list() - dump peer access list
- * @peer: peer handle
- *
- * This function will dump if any peer debug ids are still accessing peer
- *
- * Return: None
- */
-static void ol_txrx_dump_peer_access_list(ol_txrx_peer_handle peer)
-{
-	u32 i;
-	u32 pending_ref;
-
-	for (i = 0; i < PEER_DEBUG_ID_MAX; i++) {
-		pending_ref = qdf_atomic_read(&peer->access_list[i]);
-		if (pending_ref)
-			ol_txrx_info_high("id %d pending refs %d",
-					  i, pending_ref);
-	}
-}
-
-/**
  * ol_txrx_peer_free_tids() - free tids for the peer
  * @peer: peer handle
  *
@@ -3671,6 +3671,7 @@ void peer_unmap_timer_work_function(void *param)
 {
 	WMA_LOGE("Enter: %s", __func__);
 	/* Added for debugging only */
+	ol_txrx_dump_peer_access_list(param);
 	wlan_roam_debug_dump_table();
 	cds_trigger_recovery(QDF_PEER_UNMAP_TIMEDOUT);
 }
@@ -3696,7 +3697,7 @@ void peer_unmap_timer_handler(void *data)
 	if (!cds_is_driver_recovering() && !cds_is_fw_down()) {
 		qdf_create_work(0, &txrx_pdev->peer_unmap_timer_work,
 				peer_unmap_timer_work_function,
-				NULL);
+				peer);
 		qdf_sched_work(0, &txrx_pdev->peer_unmap_timer_work);
 	} else {
 		ol_txrx_err("Recovery is in progress, ignore!");
