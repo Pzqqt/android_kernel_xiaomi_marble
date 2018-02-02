@@ -4875,6 +4875,41 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	if (params->enableAmpduPs && (params->htCapable || params->vhtCapable))
 		wma_set_ppsconfig(params->smesessionId,
 				  WMA_VHT_PPS_DELIM_CRC_FAIL, 1);
+	if (WMI_SERVICE_EXT_IS_ENABLED(wma->wmi_service_bitmap,
+			wma->wmi_service_ext_bitmap,
+			WMI_SERVICE_LISTEN_INTERVAL_OFFLOAD_SUPPORT)) {
+		WMA_LOGD("%s: listen interval offload enabled, setting params",
+			 __func__);
+		status = wma_vdev_set_param(wma->wmi_handle,
+					    params->smesessionId,
+					    WMI_VDEV_PARAM_MAX_LI_OF_MODDTIM,
+					    wma->staMaxLIModDtim);
+		if (status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE(FL("can't set MAX_LI for session: %d"),
+				 params->smesessionId);
+		}
+		status = wma_vdev_set_param(wma->wmi_handle,
+					    params->smesessionId,
+					    WMI_VDEV_PARAM_DYNDTIM_CNT,
+					    wma->staDynamicDtim);
+		if (status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE(FL("can't set DYNDTIM_CNT for session: %d"),
+				 params->smesessionId);
+		}
+		status  = wma_vdev_set_param(wma->wmi_handle,
+					     params->smesessionId,
+					     WMI_VDEV_PARAM_MODDTIM_CNT,
+					     wma->staModDtim);
+		if (status != QDF_STATUS_SUCCESS) {
+			WMA_LOGE(FL("can't set DTIM_CNT for session: %d"),
+				 params->smesessionId);
+		}
+
+	} else {
+		WMA_LOGD("%s: listen interval offload is not set",
+			 __func__);
+	}
+
 	iface->aid = params->assocId;
 	params->nss = iface->nss;
 out:
