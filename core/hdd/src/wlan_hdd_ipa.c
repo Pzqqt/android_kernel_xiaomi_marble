@@ -505,13 +505,6 @@ struct hdd_ipa_priv {
 
 #define HDD_BW_GET_DIFF(_x, _y) (unsigned long)((ULONG_MAX - (_y)) + (_x) + 1)
 
-#if defined(QCA_WIFI_3_0) && defined(CONFIG_IPA3)
-#define HDD_IPA_CHECK_HW() ipa_uc_reg_rdyCB(NULL)
-#else
-/* Do nothing */
-#define HDD_IPA_CHECK_HW() 0
-#endif /* IPA3 */
-
 #define HDD_IPA_DBG_DUMP_RX_LEN 84
 #define HDD_IPA_DBG_DUMP_TX_LEN 48
 
@@ -4557,8 +4550,11 @@ static void hdd_ipa_send_pkt_to_tl(
  */
 bool hdd_ipa_is_present(struct hdd_context *hdd_ctx)
 {
-	/* Check if ipa hw is enabled */
-	if (HDD_IPA_CHECK_HW() != -EPERM)
+	/*
+	 * Check if ipa hw is enabled
+	 * TODO: Add support for WDI unified API
+	 */
+	if (ipa_uc_reg_rdyCB(NULL) != -EPERM)
 		return true;
 	else
 		return false;
