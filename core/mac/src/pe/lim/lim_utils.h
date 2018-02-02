@@ -67,6 +67,9 @@ typedef enum {
 #define CENTER_FREQ_DIFF_160MHz 8
 #define CENTER_FREQ_DIFF_80P80MHz 16
 
+#define CH_TO_CNTR_FREQ_DIFF_160MHz 14
+#define CH_TO_CNTR_FREQ_DIFF_80MHz 6
+
 #define IS_VHT_NSS_1x1(__mcs_map)	((__mcs_map & 0xFFFC) == 0xFFFC)
 
 #define MGMT_RX_PACKETS_THRESHOLD 200

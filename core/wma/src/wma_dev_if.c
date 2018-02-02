@@ -2486,6 +2486,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	struct wma_txrx_node *iface = &wma->interfaces[req->vdev_id];
 	struct wma_target_req *req_msg;
 	uint32_t chan_mode;
+	enum phy_ch_width ch_width;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (mac_ctx == NULL) {
@@ -2493,13 +2494,55 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	chan_mode = wma_chan_phy_mode(req->chan, req->chan_width,
-					     req->dot11_mode);
+	params.band_center_freq1 = cds_chan_to_freq(req->chan);
+	ch_width = req->chan_width;
+	bw_val = wlan_reg_get_bw_value(req->chan_width);
+	if (20 < bw_val) {
+		if (req->ch_center_freq_seg0) {
+			params.band_center_freq1 =
+				cds_chan_to_freq(req->ch_center_freq_seg0);
+		} else {
+			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 20",
+					__func__, bw_val);
+			params.band_center_freq1 = cds_chan_to_freq(req->chan);
+			ch_width = CH_WIDTH_20MHZ;
+			bw_val = 20;
+		}
+	}
+	if (80 < bw_val) {
+		if (req->ch_center_freq_seg1) {
+			params.band_center_freq2 =
+				cds_chan_to_freq(req->ch_center_freq_seg1);
+		} else {
+			WMA_LOGE("%s: invalid cntr_freq for bw %d, drop to 80",
+					__func__, bw_val);
+			params.band_center_freq2 = 0;
+			ch_width = CH_WIDTH_80MHZ;
+		}
+	} else {
+		params.band_center_freq2 = 0;
+	}
+	chan_mode = wma_chan_phy_mode(req->chan, ch_width,
+				      req->dot11_mode);
 
 	if (chan_mode == MODE_UNKNOWN) {
 		WMA_LOGE("%s: invalid phy mode!", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (!params.band_center_freq1) {
+		WMA_LOGE("%s: invalid center freq1", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (((ch_width == CH_WIDTH_160MHZ) || (ch_width == CH_WIDTH_80P80MHZ))
+				&& !params.band_center_freq2) {
+		WMA_LOGE("%s: invalid center freq2 for 160MHz", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	/* Fill channel info */
+	params.chan_freq = cds_chan_to_freq(req->chan);
+	params.chan_mode = chan_mode;
 
 	if (!isRestart &&
 	    qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
@@ -2523,10 +2566,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	WMA_LOGD("%s: Enter isRestart=%d vdev=%d", __func__, isRestart,
 		 req->vdev_id);
 	params.vdev_id = req->vdev_id;
-
-	/* Fill channel info */
-	params.chan_freq = cds_chan_to_freq(req->chan);
-	params.chan_mode = chan_mode;
 
 	intr[params.vdev_id].chanmode = params.chan_mode;
 	intr[params.vdev_id].ht_capable = req->ht_capable;
@@ -2555,23 +2594,11 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	intr[params.vdev_id].config.gtx_info.gtxBWMask =
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
 	intr[params.vdev_id].mhz = params.chan_freq;
-	intr[params.vdev_id].chan_width = req->chan_width;
+	intr[params.vdev_id].chan_width = ch_width;
 	wma_copy_txrxnode_he_ops(&intr[params.vdev_id], req);
 
 	temp_chan_info &= 0xffffffc0;
 	temp_chan_info |= params.chan_mode;
-
-	params.band_center_freq1 = params.chan_freq;
-
-	bw_val = wlan_reg_get_bw_value(req->chan_width);
-	if (20 < bw_val)
-		params.band_center_freq1 =
-			cds_chan_to_freq(req->ch_center_freq_seg0);
-	if (80 < bw_val)
-		params.band_center_freq2 =
-			cds_chan_to_freq(req->ch_center_freq_seg1);
-	else
-		params.band_center_freq2 = 0;
 
 	/* Set half or quarter rate WMI flags */
 	params.is_half_rate = req->is_half_rate;
