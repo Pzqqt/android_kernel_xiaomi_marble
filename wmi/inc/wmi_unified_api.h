@@ -2019,7 +2019,7 @@ QDF_STATUS wmi_unified_ndp_end_req_cmd_send(void *wmi_hdl,
  * Return: status of operation
  */
 QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_initiator_rsp **rsp);
+			uint8_t *data, struct nan_datapath_initiator_rsp *rsp);
 
 /**
  * wmi_extract_ndp_ind - api to extract ndp indication struct from even buffer
@@ -2030,7 +2030,7 @@ QDF_STATUS wmi_extract_ndp_initiator_rsp(wmi_unified_t wmi_handle,
  * Return: status of operation
  */
 QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
-			struct nan_datapath_indication_event **ind);
+			struct nan_datapath_indication_event *ind);
 
 /**
  * wmi_extract_ndp_confirm - api to extract ndp confim struct from even buffer
@@ -2041,7 +2041,7 @@ QDF_STATUS wmi_extract_ndp_ind(wmi_unified_t wmi_handle, uint8_t *data,
  * Return: status of operation
  */
 QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
-			struct nan_datapath_confirm_event **ev);
+			struct nan_datapath_confirm_event *ev);
 
 /**
  * wmi_extract_ndp_responder_rsp - api to extract responder rsp from even buffer
@@ -2052,7 +2052,7 @@ QDF_STATUS wmi_extract_ndp_confirm(wmi_unified_t wmi_handle, uint8_t *data,
  * Return: status of operation
  */
 QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
-			uint8_t *data, struct nan_datapath_responder_rsp **rsp);
+			uint8_t *data, struct nan_datapath_responder_rsp *rsp);
 
 /**
  * wmi_extract_ndp_end_rsp - api to extract ndp end rsp from even buffer
@@ -2063,7 +2063,7 @@ QDF_STATUS wmi_extract_ndp_responder_rsp(wmi_unified_t wmi_handle,
  * Return: status of operation
  */
 QDF_STATUS wmi_extract_ndp_end_rsp(wmi_unified_t wmi_handle, uint8_t *data,
-			struct nan_datapath_end_rsp_event **rsp);
+			struct nan_datapath_end_rsp_event *rsp);
 
 /**
  * wmi_extract_ndp_end_ind - api to extract ndp end indication from even buffer
@@ -2075,7 +2075,6 @@ QDF_STATUS wmi_extract_ndp_end_rsp(wmi_unified_t wmi_handle, uint8_t *data,
  */
 QDF_STATUS wmi_extract_ndp_end_ind(wmi_unified_t wmi_handle, uint8_t *data,
 			struct nan_datapath_end_indication_event **ind);
-
 #endif
 
 /**
@@ -2226,4 +2225,5 @@ QDF_STATUS wmi_unified_offload_11k_cmd(void *wmi_hdl,
  */
 QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(void *wmi_hdl,
 			struct wmi_invoke_neighbor_report_params *params);
+
 #endif /* _WMI_UNIFIED_API_H_ */

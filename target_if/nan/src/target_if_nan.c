@@ -181,7 +181,7 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 	struct wmi_unified *wmi_handle;
 	struct wlan_objmgr_psoc *psoc;
 	struct scheduler_msg msg = {0};
-	struct nan_datapath_initiator_rsp *rsp = NULL;
+	struct nan_datapath_initiator_rsp *rsp;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -195,9 +195,16 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	status = wmi_extract_ndp_initiator_rsp(wmi_handle, data, &rsp);
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_initiator_rsp(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(rsp);
 		return -EINVAL;
 	}
 
@@ -209,7 +216,7 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		qdf_mem_free(rsp);
+		target_if_nan_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -223,7 +230,7 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct scheduler_msg msg = {0};
-	struct nan_datapath_indication_event *rsp = NULL;
+	struct nan_datapath_indication_event *rsp;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -237,9 +244,16 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	status = wmi_extract_ndp_ind(wmi_handle, data, &rsp);
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_ind(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(rsp);
 		return -EINVAL;
 	}
 
@@ -251,7 +265,7 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		qdf_mem_free(rsp);
+		target_if_nan_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -265,7 +279,7 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct scheduler_msg msg = {0};
-	struct nan_datapath_confirm_event *rsp = NULL;
+	struct nan_datapath_confirm_event *rsp;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -279,9 +293,16 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	status = wmi_extract_ndp_confirm(wmi_handle, data, &rsp);
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_confirm(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(rsp);
 		return -EINVAL;
 	}
 
@@ -293,7 +314,7 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		qdf_mem_free(rsp);
+		target_if_nan_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -356,7 +377,7 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct scheduler_msg msg = {0};
-	struct nan_datapath_responder_rsp *rsp = NULL;
+	struct nan_datapath_responder_rsp *rsp;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -370,9 +391,16 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	status = wmi_extract_ndp_responder_rsp(wmi_handle, data, &rsp);
+	rsp = qdf_mem_malloc(sizeof(*rsp));
+	if (!rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_responder_rsp(wmi_handle, data, rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(rsp);
 		return -EINVAL;
 	}
 
@@ -384,7 +412,7 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		qdf_mem_free(rsp);
+		target_if_nan_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -447,7 +475,7 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 	struct wlan_objmgr_psoc *psoc;
 	struct wmi_unified *wmi_handle;
 	struct scheduler_msg msg = {0};
-	struct nan_datapath_end_rsp_event *end_rsp = NULL;
+	struct nan_datapath_end_rsp_event *end_rsp;
 
 	psoc = target_if_get_psoc_from_scn_hdl(scn);
 	if (!psoc) {
@@ -461,9 +489,16 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	status = wmi_extract_ndp_end_rsp(wmi_handle, data, &end_rsp);
+	end_rsp = qdf_mem_malloc(sizeof(*end_rsp));
+	if (!end_rsp) {
+		target_if_err("malloc failed");
+		return -ENOMEM;
+	}
+
+	status = wmi_extract_ndp_end_rsp(wmi_handle, data, end_rsp);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("parsing of event failed, %d", status);
+		qdf_mem_free(end_rsp);
 		return -EINVAL;
 	}
 
@@ -475,7 +510,7 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		qdf_mem_free(end_rsp);
+		target_if_nan_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -517,7 +552,7 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 	status = scheduler_post_msg(QDF_MODULE_ID_TARGET_IF, &msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		target_if_err("failed to post msg, status: %d", status);
-		qdf_mem_free(rsp);
+		target_if_nan_event_flush_cb(&msg);
 		return -EINVAL;
 	}
 
@@ -649,28 +684,7 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				wmi_ndp_initiator_rsp_event_id);
-	if (ret) {
-		target_if_err("wmi event deregistration failed, ret: %d", ret);
-		status = ret;
-	}
-
-	ret = wmi_unified_unregister_event_handler(handle,
-				wmi_ndp_indication_event_id);
-	if (ret) {
-		target_if_err("wmi event deregistration failed, ret: %d", ret);
-		status = ret;
-	}
-
-	ret = wmi_unified_unregister_event_handler(handle,
-				wmi_ndp_confirm_event_id);
-	if (ret) {
-		target_if_err("wmi event deregistration failed, ret: %d", ret);
-		status = ret;
-	}
-
-	ret = wmi_unified_unregister_event_handler(handle,
-				wmi_ndp_responder_rsp_event_id);
+				wmi_ndp_end_rsp_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
@@ -684,7 +698,28 @@ QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 	}
 
 	ret = wmi_unified_unregister_event_handler(handle,
-				wmi_ndp_end_rsp_event_id);
+				wmi_ndp_responder_rsp_event_id);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				wmi_ndp_confirm_event_id);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				wmi_ndp_indication_event_id);
+	if (ret) {
+		target_if_err("wmi event deregistration failed, ret: %d", ret);
+		status = ret;
+	}
+
+	ret = wmi_unified_unregister_event_handler(handle,
+				wmi_ndp_initiator_rsp_event_id);
 	if (ret) {
 		target_if_err("wmi event deregistration failed, ret: %d", ret);
 		status = ret;
