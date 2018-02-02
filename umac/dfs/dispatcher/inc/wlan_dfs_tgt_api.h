@@ -130,13 +130,13 @@ QDF_STATUS tgt_dfs_process_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
 
 /**
  * tgt_dfs_is_phyerr_filter_offload() - Is phyerr filter offload.
- * @pdev: Pointer to DFS pdev object.
+ * @psoc: Pointer to psoc object.
  * @is_phyerr_filter_offload: Pointer to is_phyerr_filter_offload.
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_pdev *pdev,
-	bool *is_phyerr_filter_offload);
+QDF_STATUS tgt_dfs_is_phyerr_filter_offload(struct wlan_objmgr_psoc *psoc,
+					    bool *is_phyerr_filter_offload);
 
 /**
  * tgt_dfs_destroy_object() - Destroys the DFS object.
