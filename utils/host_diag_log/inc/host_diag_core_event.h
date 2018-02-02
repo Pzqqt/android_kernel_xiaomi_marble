@@ -881,6 +881,92 @@ enum wake_lock_reason {
 	WIFI_POWER_EVENT_WAKELOCK_MONITOR_MODE,
 };
 
+/* The length of interface name should >= IFNAMSIZ */
+#define HOST_EVENT_INTF_STR_LEN 16
+#define HOST_EVENT_HW_MODE_STR_LEN 12
+
+/**
+ * struct host_event_wlan_acs_req - payload for ACS diag event
+ * @intf: network interface name for WLAN
+ * @hw_mode: hw mode configured by hostapd
+ * @bw: channel bandwidth(MHz)
+ * @ht: a flag indicating whether HT phy mode is enabled
+ * @vht: a flag indicating whether VHT phy mode is enabled
+ * @chan_start: starting channel number for ACS scan
+ * @chan_end: ending channel number for ACS scan
+ *
+ * This structure includes all the payload related to ACS request parameters
+ */
+struct host_event_wlan_acs_req {
+	uint8_t intf[HOST_EVENT_INTF_STR_LEN];
+	uint8_t hw_mode[HOST_EVENT_HW_MODE_STR_LEN];
+	uint16_t bw;
+	uint8_t ht;
+	uint8_t vht;
+	uint16_t chan_start;
+	uint16_t chan_end;
+};
+
+/**
+ * struct host_event_wlan_acs_scan_start - payload for ACS scan request
+ * @scan_id: scan request ID
+ * @vdev_id: vdev/session ID
+ *
+ * This structure includes all the payload related to ACS scan request
+ * parameters
+ */
+struct host_event_wlan_acs_scan_start {
+	uint32_t scan_id;
+	uint8_t vdev_id;
+};
+
+#define HOST_EVENT_STATUS_STR_LEN 24
+
+/**
+ * struct host_event_wlan_acs_scan_done - payload for ACS scan done event
+ * @status: indicating whether ACS scan is successful
+ * @vdev_id: vdev/session ID
+ * @scan_id: scan request ID
+ *
+ * This structure includes all the payload related to ACS scan done event
+ */
+struct host_event_wlan_acs_scan_done {
+	uint8_t status[HOST_EVENT_STATUS_STR_LEN];
+	uint32_t scan_id;
+	uint8_t vdev_id;
+};
+
+/**
+ * struct host_event_wlan_acs_chan_spectral_weight - payload for spectral
+ * weight event indication
+ * @chan: channel number
+ * @weight: channel weight
+ * @rssi: RSSI value obtained after scanning
+ * @bss_count: number of BSS detected on this channel
+ *
+ * This structure includes all the payload related to a channel's weight
+ * evaluation result
+ */
+struct host_event_wlan_acs_chan_spectral_weight {
+	uint16_t chan;
+	uint16_t weight;
+	int32_t rssi;
+	uint16_t bss_count;
+};
+
+/**
+ * struct host_event_wlan_acs_best_chan - payload for ACS best channel event
+ * @chan: channel number
+ * @weight: channel weight
+ *
+ * This structure includes all the payload related to the best channel
+ * selected after ACS procedure
+ */
+struct host_event_wlan_acs_best_chan {
+	uint16_t chan;
+	uint16_t weight;
+};
+
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */

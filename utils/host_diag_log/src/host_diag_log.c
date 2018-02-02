@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -33,6 +33,7 @@
 #include "wlan_nlink_srv.h"
 #include "cds_api.h"
 #include "wlan_ps_wow_diag.h"
+#include "qdf_str.h"
 
 #define PTT_MSG_DIAG_CMDS_TYPE   (0x5050)
 
@@ -294,4 +295,75 @@ void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
 	WLAN_HOST_DIAG_EVENT_REPORT(&wowRequest,
 		EVENT_WLAN_POWERSAVE_WOW);
 }
+
+void host_log_acs_req_event(uint8_t *intf, const uint8_t *hw_mode, uint16_t bw,
+			    uint8_t ht, uint8_t vht, uint16_t chan_start,
+			    uint16_t chan_end)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(acs_req, struct host_event_wlan_acs_req);
+
+	qdf_str_lcopy(acs_req.intf, intf, HOST_EVENT_INTF_STR_LEN);
+	qdf_str_lcopy(acs_req.hw_mode, hw_mode, HOST_EVENT_HW_MODE_STR_LEN);
+	acs_req.bw = bw;
+	acs_req.ht = ht;
+	acs_req.vht = vht;
+	acs_req.chan_start = chan_start;
+	acs_req.chan_end = chan_end;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&acs_req, EVENT_WLAN_ACS_REQ);
+}
+
+void host_log_acs_scan_start(uint32_t scan_id, uint8_t vdev_id)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(acs_scan_start,
+				 struct host_event_wlan_acs_scan_start);
+
+	acs_scan_start.scan_id = scan_id;
+	acs_scan_start.vdev_id = vdev_id;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&acs_scan_start,
+				    EVENT_WLAN_ACS_SCAN_START);
+}
+
+void host_log_acs_scan_done(const uint8_t *status,
+			    uint8_t vdev_id, uint32_t scan_id)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(acs_scan_done,
+				 struct host_event_wlan_acs_scan_done);
+
+	qdf_str_lcopy(acs_scan_done.status, status, HOST_EVENT_STATUS_STR_LEN);
+	acs_scan_done.vdev_id = vdev_id;
+	acs_scan_done.scan_id = scan_id;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&acs_scan_done, EVENT_WLAN_ACS_SCAN_DONE);
+}
+
+void host_log_acs_chan_spect_weight(uint16_t chan, uint16_t weight,
+				    int32_t rssi, uint16_t bss_count)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(
+		acs_chan_spect_weight,
+		struct host_event_wlan_acs_chan_spectral_weight);
+
+	acs_chan_spect_weight.chan = chan;
+	acs_chan_spect_weight.weight = weight;
+	acs_chan_spect_weight.rssi = rssi;
+	acs_chan_spect_weight.bss_count = bss_count;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&acs_chan_spect_weight,
+				    EVENT_WLAN_ACS_CHANNEL_SPECTRAL_WEIGHT);
+}
+
+void host_log_acs_best_chan(uint16_t chan, uint16_t weight)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(acs_best_chan,
+				 struct host_event_wlan_acs_best_chan);
+
+	acs_best_chan.chan = chan;
+	acs_best_chan.weight = weight;
+
+	WLAN_HOST_DIAG_EVENT_REPORT(&acs_best_chan,
+				    EVENT_WLAN_ACS_BEST_CHANNEL);
+}
+
 #endif

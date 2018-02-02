@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -108,10 +108,108 @@ static inline void host_log_low_resource_failure(uint8_t event_sub_type)
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause);
+
+/**
+ * host_log_acs_req_event() - ACS request event indication
+ * @intf: network interface name for WLAN
+ * @hw_mode: hw mode configured by hostapd
+ * @bw: channel bandwidth (MHz)
+ * @ht: a flag indicating whether HT phy mode is enabled
+ * @vht: a flag indicating whether VHT phy mode is enabled
+ * @chan_start: starting channel number for ACS scan
+ * @chan_end: ending channel number for ACS scan
+ *
+ * Indicates the diag event for ACS request with payload related
+ * to parameters populated by hostapd
+ *
+ * Return: None
+ */
+void host_log_acs_req_event(uint8_t *intf, const uint8_t *hw_mode,
+			    uint16_t bw, uint8_t ht, uint8_t vht,
+			    uint16_t chan_start, uint16_t chan_end);
+
+/**
+ * host_log_acs_scan_start() - ACS scan start event indication
+ * @scan_id: scan request ID
+ * @vdev_id: vdev/session ID
+ *
+ * Indicates the diag event for ACS scan start request
+ *
+ * Return: None
+ */
+void host_log_acs_scan_start(uint32_t scan_id, uint8_t vdev_id);
+
+/**
+ * host_log_acs_scan_done() - ACS scan done event indication
+ * @status: indicating whether ACS scan is successful
+ * @vdev_id: vdev/session ID
+ * @scan_id: scan request ID
+ *
+ * Indicates the diag event for ACS scan done
+ *
+ * Return: None
+ */
+void host_log_acs_scan_done(const uint8_t *status, uint8_t vdev_id,
+			    uint32_t scan_id);
+
+/**
+ * host_log_acs_chan_spect_weight() - ACS channel spectral weight indication
+ * weight event indication
+ * @chan: channel number
+ * @weight: channel weight
+ * @rssi: RSSI value obtained after scanning
+ * @bss_count: number of BSS detected on this channel
+ *
+ * Indicates a diag event for ACS channel weight evaluation result
+ *
+ * Return: None
+ */
+void host_log_acs_chan_spect_weight(uint16_t chan, uint16_t weight,
+				    int32_t rssi, uint16_t bss_count);
+
+/**
+ * host_log_acs_best_chan() - ACS best channel event indication
+ * @chan: channel number
+ * @weight: channel weight
+ *
+ * Indicates the best channel has been selected after ACS
+ *
+ * Return: None
+ */
+void host_log_acs_best_chan(uint16_t chan, uint16_t weight);
+
 #else
 static inline void qdf_wow_wakeup_host_event(uint8_t wow_wakeup_cause)
 {
 	return;
+}
+
+static inline void host_log_acs_req_event(uint8_t *intf, uint8_t *hw_mode,
+					  uint16_t bw, uint8_t ht, uint8_t vht,
+					  uint16_t chan_start,
+					  uint16_t chan_end)
+{
+}
+
+static inline void host_log_acs_scan_start(uint8_t *scan_type,
+					   uint8_t *bss_type, uint32_t scan_id,
+					   uint8_t vdev_id)
+{
+}
+
+static inline void host_log_acs_scan_done(const uint8_t *status,
+					  uint8_t vdev_id, uint32_t scan_id)
+{
+}
+
+static inline void host_log_acs_chan_spect_weight(uint16_t chan,
+						  uint16_t weight, int32_t rssi,
+						  uint16_t bss_count)
+{
+}
+
+static inline void host_log_acs_best_chan(uint16_t chan, uint32_t weight)
+{
 }
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef __cplusplus
