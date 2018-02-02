@@ -2242,4 +2242,13 @@ QDF_STATUS wmi_unified_offload_11k_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_invoke_neighbor_report_cmd(void *wmi_hdl,
 			struct wmi_invoke_neighbor_report_params *params);
 
+/* wmi_get_ch_width_from_phy_mode() - convert phy mode to channel width
+ * @wmi_hdl: wmi handle
+ * @phymode: phy mode
+ *
+ * Return: wmi channel width
+ */
+wmi_host_channel_width wmi_get_ch_width_from_phy_mode(void *wmi_hdl,
+					WMI_HOST_WLAN_PHY_MODE phymode);
+
 #endif /* _WMI_UNIFIED_API_H_ */
