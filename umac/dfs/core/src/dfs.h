@@ -913,6 +913,9 @@ struct dfs_event_log {
  * @dfs_use_nol:                     Use the NOL when radar found(default: TRUE)
  * @dfs_nol_lock:                    Lock to protect nol list.
  * @tx_leakage_threshold:            Tx leakage threshold for dfs.
+ * @dfs_use_nol_subchannel_marking:  Use subchannel marking logic to add only
+ *                                   radar affected subchannel instead of all
+ *                                   bonding channels.
  */
 struct wlan_dfs {
 	uint32_t       dfs_debug_mask;
@@ -1011,6 +1014,7 @@ struct wlan_dfs {
 	int            dfs_use_nol;
 	qdf_spinlock_t dfs_nol_lock;
 	uint16_t tx_leakage_threshold;
+	bool dfs_use_nol_subchannel_marking;
 };
 
 /**

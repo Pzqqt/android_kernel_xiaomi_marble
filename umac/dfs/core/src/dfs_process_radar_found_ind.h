@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -59,7 +59,7 @@
 /* Frequency offset to sidx */
 #define DFS_FREQ_OFFSET_TO_SIDX(_f)  ((32 * (_f)) / 10)
 /* sidx offset boundary */
-#define DFS_BOUNDRY_SIDX  32
+#define DFS_BOUNDARY_SIDX  32
 /* freq offset for chirp */
 #define DFS_CHIRP_OFFSET  10
 /* second segment freq offset */
@@ -70,9 +70,17 @@
 #define LEFT_CH   1
 #define RIGHT_CH  2
 
+/* Next channel number offset's from center channel number */
+#define DFS_5GHZ_NEXT_CHAN_OFFSET  2
+#define DFS_5GHZ_2ND_CHAN_OFFSET   6
+#define DFS_5GHZ_3RD_CHAN_OFFSET  10
+#define DFS_5GHZ_4TH_CHAN_OFFSET  14
+
+/* Max number of bonding channels in 160 MHz segment */
+#define NUM_CHANNELS_160MHZ 8
+
 /**
  * struct freqs_offsets - frequency and offset information
- * @chan_num: channel number.
  * @freq: channel frequency in mhz.
  * @offset: offset from center frequency.
  *
@@ -84,7 +92,6 @@
  * channels in NOL and regulatory database.
  */
 struct freqs_offsets {
-	uint32_t  chan_num[DFS_NUM_FREQ_OFFSET];
 	uint32_t freq[DFS_NUM_FREQ_OFFSET];
 	int32_t offset[DFS_NUM_FREQ_OFFSET];
 };

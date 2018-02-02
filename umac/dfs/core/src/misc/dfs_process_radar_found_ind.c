@@ -118,47 +118,55 @@
  */
 
 /**
- * dfs_radar_add_to_nol()- add channel to nol list
- * @dfs: dfs handler
- * @freq_offset: freq offset
+ * dfs_radar_add_channel_list_to_nol()- Add given channels to nol
+ * @dfs: Pointer to wlan_dfs structure.
+ * @channels: Pointer to the channel list.
+ * @num_channels: Number of channels in the list.
  *
- * add channel to nol list.
+ * Add list of channels to nol, only if the channel is dfs.
  *
- * Return: None
+ * Return: QDF_STATUS
  */
-static QDF_STATUS dfs_radar_add_to_nol(struct wlan_dfs *dfs,
-		struct freqs_offsets *freq_offset)
+static QDF_STATUS dfs_radar_add_channel_list_to_nol(struct wlan_dfs *dfs,
+						    uint8_t *channels,
+						    uint8_t num_channels)
 {
 	int i;
 	uint8_t last_chan = 0;
-	uint8_t nollist[DFS_NUM_FREQ_OFFSET];
+	uint8_t nollist[NUM_CHANNELS_160MHZ];
 	uint8_t num_ch = 0;
 
-	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
-		if (freq_offset->chan_num[i] == 0 ||
-		    freq_offset->chan_num[i] == last_chan)
-			continue;
-		if (!utils_is_dfs_ch(dfs->dfs_pdev_obj,
-		     freq_offset->chan_num[i])) {
-			dfs_info(dfs, WLAN_DEBUG_DFS,
-					"ch=%d is not dfs, skip",
-					freq_offset->chan_num[i]);
-			continue;
-		}
-		last_chan = freq_offset->chan_num[i];
-		DFS_NOL_ADD_CHAN_LOCKED(dfs,
-				(uint16_t)freq_offset->freq[i],
-				dfs->wlan_dfs_nol_timeout);
-		nollist[num_ch++] = last_chan;
-		dfs_info(dfs, WLAN_DEBUG_DFS,
-				"ch = %d Added to NOL", last_chan);
+	if (num_channels > NUM_CHANNELS_160MHZ) {
+		dfs_err(dfs, WLAN_DEBUG_DFS,
+			"Invalid num channels: %d", num_channels);
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!num_ch)
+	for (i = 0; i < num_channels; i++) {
+		if (channels[i] == 0 ||
+		    channels[i] == last_chan)
+			continue;
+		if (!utils_is_dfs_ch(dfs->dfs_pdev_obj, channels[i])) {
+			dfs_info(dfs, WLAN_DEBUG_DFS, "ch=%d is not dfs, skip",
+				 channels[i]);
+			continue;
+		}
+		last_chan = channels[i];
+		DFS_NOL_ADD_CHAN_LOCKED(dfs,
+				(uint16_t)utils_dfs_chan_to_freq(channels[i]),
+				dfs->wlan_dfs_nol_timeout);
+		nollist[num_ch++] = last_chan;
+		dfs_info(dfs, WLAN_DEBUG_DFS, "ch=%d Added to NOL", last_chan);
+	}
+
+	if (!num_ch) {
+		dfs_err(dfs, WLAN_DEBUG_DFS,
+			"dfs channels not found in channel list");
 		return QDF_STATUS_E_FAILURE;
+	}
 
 	utils_dfs_reg_update_nol_ch(dfs->dfs_pdev_obj,
-			nollist, num_ch, DFS_NOL_SET);
+				    nollist, num_ch, DFS_NOL_SET);
 	dfs_nol_update(dfs);
 	utils_dfs_save_nol(dfs->dfs_pdev_obj);
 
@@ -175,7 +183,7 @@ static QDF_STATUS dfs_radar_add_to_nol(struct wlan_dfs *dfs,
  * Return: None
  */
 static void dfs_radar_chan_for_80(struct freqs_offsets *freq_offset,
-		uint32_t center_freq)
+				  uint32_t center_freq)
 {
 	int i;
 
@@ -215,7 +223,7 @@ static void dfs_radar_chan_for_80(struct freqs_offsets *freq_offset,
  * Return: None
  */
 static void dfs_radar_chan_for_40(struct freqs_offsets *freq_offset,
-		uint32_t center_freq)
+				  uint32_t center_freq)
 {
 	int i;
 
@@ -247,7 +255,7 @@ static void dfs_radar_chan_for_40(struct freqs_offsets *freq_offset,
  * Return: None
  */
 static void dfs_radar_chan_for_20(struct freqs_offsets *freq_offset,
-		uint32_t center_freq)
+				  uint32_t center_freq)
 {
 	int i;
 
@@ -268,23 +276,26 @@ static void dfs_radar_chan_for_20(struct freqs_offsets *freq_offset,
  * dfs_find_radar_affected_subchans() - Finds radar affected sub channels.
  * @dfs: Pointer to wlan_dfs structure.
  * @radar_found: Pointer to radar_found structure.
- * @freq_offset: Pointer to save radar affected channels.
+ * @channels: Pointer to save radar affected channels.
+ *
+ * Return: Number of channels.
  */
-static void dfs_find_radar_affected_subchans(
-		struct wlan_dfs *dfs,
-		struct radar_found_info *radar_found,
-		struct freqs_offsets *freq_offset)
+static uint8_t dfs_find_radar_affected_subchans(struct wlan_dfs *dfs,
+						struct radar_found_info
+						*radar_found,
+						uint8_t *channels)
 {
 	int i;
 	uint32_t freq_center, flag;
 	int32_t sidx;
 	struct dfs_channel *curchan = dfs->dfs_curchan;
+	struct freqs_offsets freq_offset;
 
-	qdf_mem_set(freq_offset, sizeof(*freq_offset), 0);
+	qdf_mem_set(&freq_offset, sizeof(freq_offset), 0);
 	flag = curchan->dfs_ch_flags;
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++)
-		freq_offset->offset[i] = radar_found->freq_offset;
+		freq_offset.offset[i] = radar_found->freq_offset;
 
 	sidx = DFS_FREQ_OFFSET_TO_SIDX(radar_found->freq_offset);
 
@@ -304,52 +315,104 @@ static void dfs_find_radar_affected_subchans(
 	}
 
 	dfs_info(dfs, WLAN_DEBUG_DFS,
-			"seg=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d",
-			radar_found->segment_id, sidx,
-			radar_found->freq_offset, radar_found->is_chirp,
-			flag, freq_center);
+		 "seg=%d, sidx=%d, offset=%d, chirp=%d, flag=%d, f=%d",
+		 radar_found->segment_id, sidx,
+		 radar_found->freq_offset, radar_found->is_chirp,
+		 flag, freq_center);
 
-	if ((WLAN_IS_CHAN_A(curchan))         ||
-			WLAN_IS_CHAN_MODE_20(curchan)) {
+	if ((WLAN_IS_CHAN_A(curchan)) ||
+	    WLAN_IS_CHAN_MODE_20(curchan)) {
 		if (radar_found->is_chirp ||
-		   (sidx && !(abs(sidx) % DFS_BOUNDRY_SIDX))) {
-			freq_offset->offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
-			freq_offset->offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
+		    (sidx && !(abs(sidx) % DFS_BOUNDARY_SIDX))) {
+			freq_offset.offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
+			freq_offset.offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
 		}
-		dfs_radar_chan_for_20(freq_offset, freq_center);
+		dfs_radar_chan_for_20(&freq_offset, freq_center);
 	} else if (WLAN_IS_CHAN_MODE_40(curchan)) {
-		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDRY_SIDX)) {
-			freq_offset->offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
-			freq_offset->offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
+		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDARY_SIDX)) {
+			freq_offset.offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
+			freq_offset.offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
 		}
-		dfs_radar_chan_for_40(freq_offset, freq_center);
+		dfs_radar_chan_for_40(&freq_offset, freq_center);
 	} else if (WLAN_IS_CHAN_MODE_80(curchan) ||
 			WLAN_IS_CHAN_MODE_160(curchan) ||
 			WLAN_IS_CHAN_MODE_80_80(curchan)) {
-		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDRY_SIDX)) {
-			freq_offset->offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
-			freq_offset->offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
+		if (radar_found->is_chirp || !(abs(sidx) % DFS_BOUNDARY_SIDX)) {
+			freq_offset.offset[LEFT_CH] -= DFS_CHIRP_OFFSET;
+			freq_offset.offset[RIGHT_CH] += DFS_CHIRP_OFFSET;
 		}
-		dfs_radar_chan_for_80(freq_offset, freq_center);
+		dfs_radar_chan_for_80(&freq_offset, freq_center);
 	} else {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
-				"channel flag(%d) is invalid", flag);
-		return;
+			"channel flag=%d is invalid", flag);
+		return 0;
 	}
 
 	for (i = 0; i < DFS_NUM_FREQ_OFFSET; i++) {
-		freq_offset->chan_num[i] = utils_dfs_freq_to_chan(
-				freq_offset->freq[i]);
-		dfs_info(dfs, WLAN_DEBUG_DFS, "offset = %d, channel = %d",
-			    i, freq_offset->chan_num[i]);
+		channels[i] = utils_dfs_freq_to_chan(freq_offset.freq[i]);
+		dfs_info(dfs, WLAN_DEBUG_DFS, "offset=%d, channel=%d",
+			 i, channels[i]);
 	}
+
+	return i;
+}
+
+/**
+ * dfs_get_bonding_channels() - Get bonding channels.
+ * @curchan: Pointer to dfs_channels to know width and primary channel.
+ * @segment_id: Segment id, useful for 80+80/160 MHz operating band.
+ * @channels: Pointer to save radar affected channels.
+ *
+ * Return: Number of channels.
+ */
+static uint8_t dfs_get_bonding_channels(struct dfs_channel *curchan,
+					uint32_t segment_id,
+					uint8_t *channels)
+{
+	uint8_t center_chan;
+	uint8_t nchannels = 0;
+
+	if (!segment_id)
+		center_chan = curchan->dfs_ch_vhtop_ch_freq_seg1;
+	else
+		center_chan = curchan->dfs_ch_vhtop_ch_freq_seg2;
+
+	if (WLAN_IS_CHAN_MODE_20(curchan)) {
+		nchannels = 1;
+		channels[0] = center_chan;
+	} else if (WLAN_IS_CHAN_MODE_40(curchan)) {
+		nchannels = 2;
+		channels[0] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[1] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+	} else if (WLAN_IS_CHAN_MODE_80(curchan) ||
+		   WLAN_IS_CHAN_MODE_80_80(curchan)) {
+		nchannels = 4;
+		channels[0] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[1] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[2] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[3] = center_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+	} else if (WLAN_IS_CHAN_MODE_160(curchan)) {
+		nchannels = 8;
+		center_chan = curchan->dfs_ch_vhtop_ch_freq_seg2;
+		channels[0] = center_chan - DFS_5GHZ_4TH_CHAN_OFFSET;
+		channels[1] = center_chan - DFS_5GHZ_3RD_CHAN_OFFSET;
+		channels[2] = center_chan - DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[3] = center_chan - DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[4] = center_chan + DFS_5GHZ_NEXT_CHAN_OFFSET;
+		channels[5] = center_chan + DFS_5GHZ_2ND_CHAN_OFFSET;
+		channels[6] = center_chan + DFS_5GHZ_3RD_CHAN_OFFSET;
+		channels[7] = center_chan + DFS_5GHZ_4TH_CHAN_OFFSET;
+	}
+
+	return nchannels;
 }
 
 QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
-		struct radar_found_info *radar_found)
+				 struct radar_found_info *radar_found)
 {
-	struct freqs_offsets freq_offset;
 	bool wait_for_csa = false;
+	uint8_t channels[NUM_CHANNELS_160MHZ];
+	uint8_t num_channels;
 	QDF_STATUS status;
 
 	if (!dfs->dfs_curchan) {
@@ -360,7 +423,7 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	/* Check if the current channel is a non DFS channel */
 	if (!dfs_radarevent_basic_sanity(dfs, dfs->dfs_curchan)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
-				"radar event on a non-DFS channel");
+			"radar event on a non-DFS channel");
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -369,24 +432,31 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 		return QDF_STATUS_SUCCESS;
 	}
 
-	dfs_find_radar_affected_subchans(dfs, radar_found, &freq_offset);
+	if (dfs->dfs_use_nol_subchannel_marking)
+		num_channels = dfs_find_radar_affected_subchans(dfs,
+								radar_found,
+								channels);
+	else
+		num_channels = dfs_get_bonding_channels(dfs->dfs_curchan,
+							radar_found->segment_id,
+							channels);
 
-	status = dfs_radar_add_to_nol(dfs, &freq_offset);
+	status = dfs_radar_add_channel_list_to_nol(dfs, channels, num_channels);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		dfs_err(dfs, WLAN_DEBUG_DFS,
-				"radar event received on invalid channel");
+			"radar event received on invalid channel");
 		return status;
 	}
 
 	if (radar_found->segment_id == SEG_ID_SECONDARY)
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"Radar found on second segment VHT80 freq=%d MHz",
-				dfs->dfs_precac_secondary_freq);
+			 "Radar found on second segment VHT80 freq=%d MHz",
+			 dfs->dfs_precac_secondary_freq);
 	else
 		dfs_info(NULL, WLAN_DEBUG_DFS_ALWAYS,
-				"Radar found on channel %d (%d MHz)",
-				dfs->dfs_curchan->dfs_ch_ieee,
-				dfs->dfs_curchan->dfs_ch_freq);
+			 "Radar found on channel=%d, freq=%d MHz",
+			 dfs->dfs_curchan->dfs_ch_ieee,
+			 dfs->dfs_curchan->dfs_ch_freq);
 
 	/*
 	 * If precac is running and the radar found in secondary
@@ -395,9 +465,9 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * channel.
 	 */
 	dfs_debug(dfs, WLAN_DEBUG_DFS,
-			"found_on_second = %d is_pre = %d",
-			dfs->is_radar_found_on_secondary_seg,
-			dfs_is_precac_timer_running(dfs));
+		  "found_on_second=%d is_pre=%d",
+		  dfs->is_radar_found_on_secondary_seg,
+		  dfs_is_precac_timer_running(dfs));
 
 	/*
 	 * Even if radar found on primary, we need to move the channel
@@ -405,17 +475,16 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * precac-nol-list.
 	 */
 	if (dfs->dfs_precac_enable)
-		dfs_mark_precac_dfs(dfs,
-				dfs->is_radar_found_on_secondary_seg);
+		dfs_mark_precac_dfs(dfs, dfs->is_radar_found_on_secondary_seg);
 
-	if (!dfs->dfs_is_offload_enabled) {
-		if (dfs->is_radar_found_on_secondary_seg) {
-			dfs_second_segment_radar_disable(dfs);
-			dfs->is_radar_found_on_secondary_seg = 0;
-			if (dfs->is_radar_during_precac) {
-				dfs->is_radar_during_precac = 0;
-				return QDF_STATUS_SUCCESS;
-			}
+	if (!dfs->dfs_is_offload_enabled &&
+	    dfs->is_radar_found_on_secondary_seg) {
+		dfs_second_segment_radar_disable(dfs);
+		dfs->is_radar_found_on_secondary_seg = 0;
+
+		if (dfs->is_radar_during_precac) {
+			dfs->is_radar_during_precac = 0;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -428,10 +497,10 @@ QDF_STATUS dfs_process_radar_ind(struct wlan_dfs *dfs,
 	 * NOL code isn't used, that flag is never cleared. This
 	 * needs to be fixed. See EV 105776.
 	 */
-	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj,
-			&wait_for_csa);
+	dfs_mlme_start_rcsa(dfs->dfs_pdev_obj, &wait_for_csa);
 	if (wait_for_csa)
 		return QDF_STATUS_SUCCESS;
+
 	/*
 	 * EV 129487 : We have detected radar in the channel,
 	 * stop processing PHY error data as this can cause
