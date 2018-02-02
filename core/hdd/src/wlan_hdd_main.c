@@ -8090,8 +8090,11 @@ static void hdd_override_ini_config(struct hdd_context *hdd_ctx)
 		hdd_debug("Module enable_11d set to %d", enable_11d);
 	}
 
-	if (!hdd_ipa_is_present(hdd_ctx))
+	if (!hdd_ipa_is_present(hdd_ctx)) {
 		hdd_ctx->config->IpaConfig = 0;
+		hdd_debug("IpaConfig override to %d",
+			hdd_ctx->config->IpaConfig);
+	}
 
 	if (!hdd_ctx->config->rssi_assoc_reject_enabled ||
 	    !hdd_ctx->config->enable_bcast_probe_rsp) {
