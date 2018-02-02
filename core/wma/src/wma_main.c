@@ -1775,6 +1775,9 @@ QDF_STATUS wma_process_hal_pwr_dbg_cmd(WMA_HANDLE handle,
 
 static void wma_discard_fw_event(struct scheduler_msg *msg)
 {
+	if (!msg->bodyptr)
+		return;
+
 	switch (msg->type) {
 	case WMA_PROCESS_FW_EVENT:
 		qdf_nbuf_free(((wma_process_fw_event_params *)msg->bodyptr)
@@ -1784,8 +1787,8 @@ static void wma_discard_fw_event(struct scheduler_msg *msg)
 		qdf_mem_free(((tpLinkStateParams) msg->bodyptr)->callbackArg);
 		break;
 	}
-	if (msg->bodyptr)
-		qdf_mem_free(msg->bodyptr);
+
+	qdf_mem_free(msg->bodyptr);
 	msg->bodyptr = NULL;
 	msg->bodyval = 0;
 	msg->type = 0;
@@ -3402,6 +3405,7 @@ void wma_send_msg_by_priority(tp_wma_handle wma_handle, uint16_t msg_type,
 	msg.type = msg_type;
 	msg.bodyval = body_val;
 	msg.bodyptr = body_ptr;
+	msg.flush_callback = wma_discard_fw_event;
 
 	status = scheduler_post_msg_by_priority(QDF_MODULE_ID_PE,
 					       &msg, is_high_priority);
