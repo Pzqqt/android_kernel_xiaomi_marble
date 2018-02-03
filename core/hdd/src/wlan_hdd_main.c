@@ -6669,8 +6669,7 @@ static int hdd_wiphy_init(struct hdd_context *hdd_ctx)
 		return ret_val;
 	}
 
-	if (!hdd_ctx->reg_offload)
-		hdd_program_country_code(hdd_ctx);
+	pld_increment_driver_load_cnt(hdd_ctx->parent_dev);
 
 	return ret_val;
 }

@@ -708,8 +708,13 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		  request->dfs_region);
 
 	switch (request->initiator) {
-	case NL80211_REGDOM_SET_BY_USER:
 	case NL80211_REGDOM_SET_BY_CORE:
+		if (pld_get_driver_load_cnt(hdd_ctx->parent_dev) == 0) {
+			hdd_debug("ignore the 1st time notifier from CORE");
+			return;
+		}
+		/* fall through to set country */
+	case NL80211_REGDOM_SET_BY_USER:
 		status = ucfg_reg_set_country(hdd_ctx->hdd_pdev,
 					      request->alpha2);
 		break;
