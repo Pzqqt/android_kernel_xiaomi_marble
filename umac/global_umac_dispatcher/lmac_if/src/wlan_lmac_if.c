@@ -132,6 +132,7 @@ wlan_lmac_if_fd_rx_ops_register(struct wlan_lmac_if_rx_ops *rx_ops)
 {
 	struct wlan_lmac_if_fd_rx_ops *fd_rx_ops = &rx_ops->fd_rx_ops;
 
+	fd_rx_ops->fd_is_fils_enable = tgt_fd_is_fils_enable;
 	fd_rx_ops->fd_alloc = tgt_fd_alloc;
 	fd_rx_ops->fd_stop = tgt_fd_stop;
 	fd_rx_ops->fd_free = tgt_fd_free;

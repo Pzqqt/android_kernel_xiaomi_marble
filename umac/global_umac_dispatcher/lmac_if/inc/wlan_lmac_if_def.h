@@ -864,6 +864,7 @@ struct wlan_lmac_if_atf_rx_ops {
 #ifdef WLAN_SUPPORT_FILS
 /**
  * struct wlan_lmac_if_fd_rx_ops - FILS Discovery specific Rx function pointers
+ * @fd_is_fils_enable:      FILS enabled or not
  * @fd_alloc:               Allocate FD buffer
  * @fd_stop:                Stop and free deferred FD buffer
  * @fd_free:                Free FD frame buffer
@@ -871,10 +872,12 @@ struct wlan_lmac_if_atf_rx_ops {
  * @fd_swfda_handler:       SWFDA event handler
  */
 struct wlan_lmac_if_fd_rx_ops {
+	uint8_t (*fd_is_fils_enable)(struct wlan_objmgr_vdev *vdev);
 	void (*fd_alloc)(struct wlan_objmgr_vdev *vdev);
 	void (*fd_stop)(struct wlan_objmgr_vdev *vdev);
 	void (*fd_free)(struct wlan_objmgr_vdev *vdev);
-	uint32_t (*fd_get_valid_fd_period)(struct wlan_objmgr_vdev *vdev);
+	uint32_t (*fd_get_valid_fd_period)(struct wlan_objmgr_vdev *vdev,
+					   uint8_t *is_modified);
 	QDF_STATUS (*fd_swfda_handler)(struct wlan_objmgr_vdev *vdev);
 };
 #endif
