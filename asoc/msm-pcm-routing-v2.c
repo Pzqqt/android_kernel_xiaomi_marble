@@ -11768,24 +11768,7 @@ static int msm_source_tracking_info(struct snd_kcontrol *kcontrol,
 static int msm_voice_source_tracking_get(struct snd_kcontrol *kcontrol,
 					 struct snd_ctl_elem_value *ucontrol)
 {
-	int ret = 0;
-	struct source_tracking_param sourceTrackingData;
-
-	memset(&sourceTrackingData, 0, sizeof(struct source_tracking_param));
-
-	ret = voc_get_source_tracking(&sourceTrackingData);
-	if (ret) {
-		pr_err("%s: Error getting Source Tracking Params, err=%d\n",
-			  __func__, ret);
-
-		ret = -EINVAL;
-		goto done;
-	}
-	memcpy(ucontrol->value.bytes.data, (void *)&sourceTrackingData,
-		sizeof(struct source_tracking_param));
-
-done:
-	return ret;
+	return -EINVAL;
 }
 
 static int msm_audio_get_copp_idx_from_port_id(int port_id, int session_type,
