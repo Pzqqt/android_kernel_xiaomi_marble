@@ -50,6 +50,365 @@
 #define TXRX_STATS_LEVEL TXRX_STATS_LEVEL_BASIC
 #endif
 
+/* 1 additional MCS is for invalid values */
+#define MAX_MCS (12 + 1)
+#define MAX_MCS_11A 8
+#define MAX_MCS_11B 7
+#define MAX_MCS_11AC 12
+/* 1 additional GI is for invalid values */
+#define MAX_GI (4 + 1)
+#define SS_COUNT 8
+#define MAX_BW 7
+#define MAX_RECEPTION_TYPES 4
+
+/* WME stream classes */
+#define WME_AC_BE    0    /* best effort */
+#define WME_AC_BK    1    /* background */
+#define WME_AC_VI    2    /* video */
+#define WME_AC_VO    3    /* voice */
+#define WME_AC_MAX   4    /* MAX AC Value */
+
+#define CDP_MAX_RX_RINGS 4
+
+/* Different Packet Types */
+enum cdp_packet_type {
+	DOT11_A = 0,
+	DOT11_B = 1,
+	DOT11_N = 2,
+	DOT11_AC = 3,
+	DOT11_AX = 4,
+	DOT11_MAX = 5,
+};
+
+/* packet info */
+struct cdp_pkt_info {
+	/*no of packets*/
+	uint32_t num;
+	/* total no of bytes */
+	uint64_t bytes;
+};
+
+/* Tx  Stats */
+struct cdp_tx_stats {
+	/* Pkt Info for which completions were received */
+	struct cdp_pkt_info comp_pkt;
+	/* Unicast Packet Count */
+	struct cdp_pkt_info ucast;
+	/* Multicast Packet Count */
+	struct cdp_pkt_info mcast;
+	/* Broadcast Packet Count*/
+	struct cdp_pkt_info bcast;
+	/*NAWDS  Multicast Packet Count */
+	struct cdp_pkt_info nawds_mcast;
+	/*NAWDS  Multicast Drop Count */
+	uint32_t nawds_mcast_drop;
+	/* Successful Tx Packets */
+	struct cdp_pkt_info tx_success;
+	/* Total Tx failure */
+	uint32_t tx_failed;
+	/* Total Packets as ofdma*/
+	uint32_t ofdma;
+	/* Packets in STBC */
+	uint32_t stbc;
+	/* Packets in LDPC */
+	uint32_t ldpc;
+	/* Packet retries */
+	uint32_t retries;
+	/* Number of MSDUs with no MSDU level aggregation */
+	uint32_t non_amsdu_cnt;
+	/* Number of MSDUs part of AMSDU*/
+	uint32_t amsdu_cnt;
+	/* Tx Rate */
+	uint32_t tx_rate;
+
+	/* RSSI of last packet */
+	uint32_t last_ack_rssi;
+
+	/* Packet Type */
+	struct {
+		/* MCS Count */
+		uint32_t mcs_count[MAX_MCS];
+	} pkt_type[DOT11_MAX];
+
+	/* SGI count */
+	uint32_t sgi_count[MAX_GI];
+
+	/* Packet count for different num_spatial_stream values */
+	uint32_t nss[SS_COUNT];
+
+	/* Packet Count for different bandwidths */
+	uint32_t bw[MAX_BW];
+
+	/* Wireless Multimedia type Count */
+	uint32_t wme_ac_type[WME_AC_MAX];
+
+	/* Wireless Multimedia type Count */
+	uint32_t excess_retries_per_ac[WME_AC_MAX];
+
+	/* Packets dropped on the Tx side */
+	struct {
+		/* Discarded by firmware */
+		uint32_t fw_rem;
+		/* firmware_discard_untransmitted */
+		uint32_t fw_rem_notx;
+		/* firmware_discard_transmitted */
+		uint32_t fw_rem_tx;
+		/* aged out in mpdu/msdu queues*/
+		uint32_t age_out;
+	} dropped;
+};
+
+/* Rx Level Stats */
+struct cdp_rx_stats {
+	/* Total packets sent up the stack */
+	struct cdp_pkt_info to_stack;
+	/* Packets received on the reo ring */
+	struct cdp_pkt_info rcvd_reo[CDP_MAX_RX_RINGS];
+	/* Total unicast packets */
+	struct cdp_pkt_info unicast;
+	/* Total multicast packets */
+	struct cdp_pkt_info multicast;
+	/* Broadcast Packet Count*/
+	struct cdp_pkt_info bcast;
+	/* WDS packets received */
+	struct cdp_pkt_info wds;
+	/* Raw Pakets received */
+	struct cdp_pkt_info raw;
+	/* Total multicast packets */
+	struct cdp_pkt_info nawds_mcast_drop;
+
+	struct {
+	/* Intra BSS packets received */
+	struct cdp_pkt_info pkts;
+	struct cdp_pkt_info fail;
+	} intra_bss;
+
+	/* Errors */
+	struct {
+		/* Rx MIC errors */
+		uint32_t mic_err;
+		/* Rx Decryption Errors */
+		uint32_t decrypt_err;
+	} err;
+
+	/* Wireless Multimedia type Count */
+	uint32_t wme_ac_type[WME_AC_MAX];
+	/* Reception type os packets */
+	uint32_t reception_type[MAX_RECEPTION_TYPES];
+	/* Packet Type */
+	struct {
+		/* MCS Count */
+		uint32_t mcs_count[MAX_MCS];
+	} pkt_type[DOT11_MAX];
+	/* SGI count */
+	uint32_t sgi_count[MAX_GI];
+	/* Packet count in spatiel Streams */
+	uint32_t nss[SS_COUNT];
+	/* Packet Count in different bandwidths */
+	uint32_t bw[MAX_BW];
+	/*  Number of MSDUs with no MPDU level aggregation */
+	uint32_t non_ampdu_cnt;
+	/* Number of MSDUs part of AMSPU */
+	uint32_t ampdu_cnt;
+	/* Number of MSDUs with no MSDU level aggregation */
+	uint32_t non_amsdu_cnt;
+	/* Number of MSDUs part of AMSDU*/
+	uint32_t amsdu_cnt;
+	/* Number of bar received */
+	uint32_t bar_recv_cnt;
+	/* RSSI of received signal */
+	uint32_t rssi;
+	/*Rx rate */
+	uint32_t rx_rate;
+};
+
+/* Tx ingress Stats */
+struct cdp_tx_ingress_stats {
+	/* Total packets received for transmission */
+	struct cdp_pkt_info rcvd;
+	/* Tx packets processed*/
+	struct cdp_pkt_info processed;
+	/* Total packets passed Reinject handler */
+	struct cdp_pkt_info reinject_pkts;
+	/*  Total packets passed to inspect handler */
+	struct cdp_pkt_info inspect_pkts;
+	/*NAWDS  Multicast Packet Count */
+	struct cdp_pkt_info nawds_mcast;
+	/* Number of broadcast packets */
+	struct cdp_pkt_info bcast;
+
+	struct {
+		/* Total Raw packets */
+		struct cdp_pkt_info raw_pkt;
+		/* DMA map error */
+		uint32_t dma_map_error;
+	} raw;
+
+	/* TSO packets info */
+	struct {
+		/* No of segments in TSO packets */
+		uint32_t num_seg;
+		/* total no of TSO packets */
+		struct cdp_pkt_info tso_pkt;
+		/* TSO packets dropped by host */
+		uint32_t dropped_host;
+		/* TSO packets dropped by target */
+		uint32_t dropped_target;
+	} tso;
+
+	/* Scatter Gather packet info */
+	struct {
+		/* Total scatter gather packets */
+		struct cdp_pkt_info sg_pkt;
+		/* SG packets dropped by host */
+		uint32_t dropped_host;
+		/* SG packets dropped by target */
+		uint32_t dropped_target;
+		/* Dma map error */
+		uint32_t dma_map_error;
+	} sg;
+
+	/* Multicast Enhancement packets info */
+	struct {
+		/* total no of multicast conversion packets */
+		struct cdp_pkt_info mcast_pkt;
+		/* packets dropped due to map error */
+		uint32_t dropped_map_error;
+		/* packets dropped due to self Mac address */
+		uint32_t dropped_self_mac;
+		/* Packets dropped due to send fail */
+		uint32_t dropped_send_fail;
+		/* total unicast packets transmitted */
+		uint32_t ucast;
+		/* Segment allocation failure */
+		uint32_t fail_seg_alloc;
+		/* NBUF clone failure */
+		uint32_t clone_fail;
+	} mcast_en;
+
+	/* Packets dropped on the Tx side */
+	struct {
+		/* Total scatter gather packets */
+		struct cdp_pkt_info dropped_pkt;
+		/* Desc Not Available */
+		uint32_t desc_na;
+		/* Ring Full */
+		uint32_t ring_full;
+		/* Hwenqueue failed */
+		uint32_t enqueue_fail;
+		/* DMA failed */
+		uint32_t dma_error;
+		/* Resource Full: Congestion Control */
+		uint32_t res_full;
+	} dropped;
+
+	/* Mesh packets info */
+	struct {
+		/* packets sent to fw */
+		uint32_t exception_fw;
+		/* packets completions received from fw */
+		uint32_t completion_fw;
+	} mesh;
+
+	/*Number of packets classified by CCE*/
+	uint32_t cce_classified;
+
+	/*Number of raw packets classified by CCE*/
+	uint32_t cce_classified_raw;
+};
+
+struct cdp_vdev_stats {
+	/* Tx ingress stats */
+	struct cdp_tx_ingress_stats tx_i;
+	/* CDP Tx Stats */
+	struct cdp_tx_stats tx;
+	/* CDP Rx Stats */
+	struct cdp_rx_stats rx;
+};
+
+
+struct cdp_peer_stats {
+	/* CDP Tx Stats */
+	struct cdp_tx_stats tx;
+	/* CDP Rx Stats */
+	struct cdp_rx_stats rx;
+};
+
+/* Tx completions per interrupt */
+struct cdp_hist_tx_comp {
+	uint32_t pkts_1;
+	uint32_t pkts_2_20;
+	uint32_t pkts_21_40;
+	uint32_t pkts_41_60;
+	uint32_t pkts_61_80;
+	uint32_t pkts_81_100;
+	uint32_t pkts_101_200;
+	uint32_t pkts_201_plus;
+};
+
+/* Rx ring descriptors reaped per interrupt */
+struct cdp_hist_rx_ind {
+	uint32_t pkts_1;
+	uint32_t pkts_2_20;
+	uint32_t pkts_21_40;
+	uint32_t pkts_41_60;
+	uint32_t pkts_61_80;
+	uint32_t pkts_81_100;
+	uint32_t pkts_101_200;
+	uint32_t pkts_201_plus;
+};
+
+struct cdp_pdev_stats {
+	/* packets dropped on rx */
+	struct {
+		/* packets dropped because nsdu_done bit not set */
+		uint32_t msdu_not_done;
+		/* Multicast Echo check */
+		uint32_t mec;
+		/* Mesh Filtered packets */
+		uint32_t mesh_filter;
+	} dropped;
+
+	struct {
+		/* total packets replnished */
+		struct cdp_pkt_info pkts;
+		/* rxdma errors */
+		uint32_t rxdma_err;
+		/* nbuf alloc failed */
+		uint32_t nbuf_alloc_fail;
+		/* Mapping failure */
+		uint32_t map_err;
+		/* x86 failures */
+		uint32_t x86_fail;
+		/* low threshold interrupts */
+		uint32_t low_thresh_intrs;
+	} replenish;
+
+	/* Rx Raw Packets */
+	uint32_t rx_raw_pkts;
+	/* Mesh Rx Stats Alloc fail */
+	uint32_t mesh_mem_alloc;
+
+	/* Rx errors */
+	struct {
+		/* desc alloc failed errors */
+		uint32_t desc_alloc_fail;
+	} err;
+
+	/* buffers added back in freelist */
+	uint32_t buf_freelist;
+	/* Tx Ingress stats */
+	struct cdp_tx_ingress_stats tx_i;
+	/* CDP Tx Stats */
+	struct cdp_tx_stats tx;
+	/* CDP Rx Stats */
+	struct cdp_rx_stats rx;
+	/* Number of Tx completions per interrupt */
+	struct cdp_hist_tx_comp tx_comp_histogram;
+	/* Number of Rx ring descriptors reaped per interrupt */
+	struct cdp_hist_rx_ind rx_ind_histogram;
+};
+
 #ifndef BIG_ENDIAN_HOST
 typedef struct {
 	uint64_t pkts;
@@ -63,6 +422,7 @@ struct ol_txrx_elem_t {
 typedef struct ol_txrx_elem_t ol_txrx_stats_elem;
 #endif
 
+#ifndef CONFIG_MCL
 /**
  * @brief data stats published by the host txrx layer
  */
@@ -234,20 +594,6 @@ struct ol_ath_radiostats {
 	A_UINT32    chan_tx_pwr;
 };
 
-#ifndef CONFIG_WIN
-/*
- * structure to hold all stats information
- * for offload device interface
- */
-struct ol_stats {
-	int txrx_stats_level;
-	struct ol_txrx_stats txrx_stats;
-	struct wlan_dbg_stats stats;
-	struct ol_ath_radiostats interface_stats;
-	struct wlan_dbg_tidq_stats tidq_stats;
-};
-
-#endif
 /*
  * Enumeration of PDEV Configuration parameter
  */
@@ -516,7 +862,7 @@ enum _ol_ath_param_t {
 enum _ol_hal_param_t {
 	OL_HAL_CONFIG_DMA_BEACON_RESPONSE_TIME         = 0
 };
-
+#endif
 
 /* Bitmasks for stats that can block */
 #define EXT_TXRX_FW_STATS		0x0001

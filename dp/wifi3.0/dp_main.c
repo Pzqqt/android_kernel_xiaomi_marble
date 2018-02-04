@@ -35,6 +35,7 @@
 #include <cdp_txrx_handle.h>
 #include <wlan_cfg.h>
 #include "cdp_txrx_cmn_struct.h"
+#include "cdp_txrx_stats_struct.h"
 #include <qdf_util.h>
 #include "dp_peer.h"
 #include "dp_rx_mon.h"
@@ -4232,13 +4233,13 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 			}
 			waitcnt = 0;
 			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
-			while (!(qdf_atomic_read(&(pdev->stats.cmd_complete)))
+			while (!(qdf_atomic_read(&(pdev->stats_cmd_complete)))
 				&& waitcnt < 10) {
 				schedule_timeout_interruptible(
 						STATS_PROC_TIMEOUT);
 				waitcnt++;
 			}
-			qdf_atomic_set(&(pdev->stats.cmd_complete), 0);
+			qdf_atomic_set(&(pdev->stats_cmd_complete), 0);
 		}
 	}
 }
@@ -4260,12 +4261,12 @@ void dp_rx_bar_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 	if (queue_status->header.status != HAL_REO_CMD_SUCCESS) {
 		DP_TRACE_STATS(FATAL, "REO stats failure %d \n",
 			queue_status->header.status);
-		qdf_atomic_set(&(pdev->stats.cmd_complete), 1);
+		qdf_atomic_set(&(pdev->stats_cmd_complete), 1);
 		return;
 	}
 
 	pdev->stats.rx.bar_recv_cnt += queue_status->bar_rcvd_cnt;
-	qdf_atomic_set(&(pdev->stats.cmd_complete), 1);
+	qdf_atomic_set(&(pdev->stats_cmd_complete), 1);
 
 }
 
@@ -5503,6 +5504,26 @@ static void dp_set_vdev_dscp_tid_map_wifi3(struct cdp_vdev *vdev_handle,
 	return;
 }
 
+/*
+ * dp_txrx_stats_publish(): publish pdev stats into a buffer
+ * @pdev_handle: DP_PDEV handle
+ * @buf: to hold pdev_stats
+ *
+ * Return: int
+ */
+static int
+dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, void *buf)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct cdp_pdev_stats *buffer = (struct cdp_pdev_stats *) buf;
+
+	dp_aggregate_pdev_stats(pdev);
+
+	qdf_mem_copy(buffer, &pdev->stats, sizeof(pdev->stats));
+
+	return TXRX_STATS_LEVEL;
+}
+
 /**
  * dp_set_pdev_dscp_tid_map_wifi3(): update dscp tid map in pdev
  * @pdev: DP_PDEV handle
@@ -6184,6 +6205,7 @@ static struct cdp_host_stats_ops dp_ops_host_stats = {
 	.get_htt_stats = dp_get_htt_stats,
 	.txrx_enable_enhanced_stats = dp_enable_enhanced_stats,
 	.txrx_disable_enhanced_stats = dp_disable_enhanced_stats,
+	.txrx_stats_publish = dp_txrx_stats_publish,
 	/* TODO */
 };
 

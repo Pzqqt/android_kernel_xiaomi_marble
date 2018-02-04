@@ -26,9 +26,7 @@
 #define _CDP_TXRX_CMN_OPS_H_
 
 #include <cdp_txrx_cmn_struct.h>
-#ifdef CONFIG_WIN
 #include <cdp_txrx_stats_struct.h>
-#endif
 #include "cdp_txrx_handle.h"
 #include <cdp_txrx_mon_struct.h>
 #include "wlan_objmgr_psoc_obj.h"

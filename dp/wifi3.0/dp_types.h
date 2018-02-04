@@ -1068,6 +1068,8 @@ struct dp_pdev {
 	/* Number of VAPs with mcast enhancement enabled */
 	qdf_atomic_t mc_num_vap_attached;
 
+	qdf_atomic_t stats_cmd_complete;
+
 #ifdef IPA_OFFLOAD
 	ipa_uc_op_cb_type ipa_uc_op_cb;
 	void *usr_ctxt;
