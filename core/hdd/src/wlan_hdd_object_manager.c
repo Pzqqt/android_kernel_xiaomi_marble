@@ -34,6 +34,7 @@
 #include <wlan_osif_priv.h>
 #include <wlan_reg_ucfg_api.h>
 #include <target_if.h>
+#include <os_if_spectral_netlink.h>
 
 #define LOW_2GHZ_FREQ 2312
 #define HIGH_2GHZ_FREQ 2732
@@ -47,6 +48,7 @@ static void hdd_init_pdev_os_priv(struct hdd_context *hdd_ctx,
 	os_priv->wiphy = hdd_ctx->wiphy;
 	os_priv->legacy_osif_priv = hdd_ctx;
 	wlan_cfg80211_scan_priv_init(hdd_ctx->hdd_pdev);
+	os_if_spectral_netlink_init(hdd_ctx->hdd_pdev);
 }
 
 static void hdd_deinit_pdev_os_priv(struct wlan_objmgr_pdev *pdev)

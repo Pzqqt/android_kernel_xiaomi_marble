@@ -1710,6 +1710,7 @@ struct hdd_context {
 	bool force_rsne_override;
 	qdf_wake_lock_t monitor_mode_wakelock;
 	bool lte_coex_ant_share;
+	int sscan_pid;
 };
 
 /**

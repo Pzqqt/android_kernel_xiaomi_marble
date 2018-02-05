@@ -139,7 +139,7 @@
 #include "wlan_ocb_ucfg_api.h"
 
 #include <wlan_green_ap_ucfg_api.h>
-
+#include <wlan_hdd_spectralscan.h>
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
 #else
@@ -6212,6 +6212,12 @@ static int hdd_init_netlink_services(struct hdd_context *hdd_ctx)
 	ret = cnss_diag_activate_service();
 	if (ret) {
 		hdd_err("cnss_diag_activate_service failed: %d", ret);
+		goto err_close_cesium;
+	}
+
+	ret = spectral_scan_activate_service();
+	if (ret) {
+		hdd_alert("spectral_scan_activate_service failed: %d", ret);
 		goto err_close_cesium;
 	}
 

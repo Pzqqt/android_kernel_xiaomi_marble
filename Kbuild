@@ -872,13 +872,16 @@ UMAC_SPECTRAL_CORE_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SPECTRAL_DIR)/core
 UMAC_SPECTRAL_DISP_DIR := $(WLAN_COMMON_ROOT)/$(UMAC_SPECTRAL_DIR)/dispatcher/src
 UMAC_TARGET_SPECTRAL_INC := -I$(WLAN_COMMON_INC)/target_if/spectral
 
-UMAC_SPECTRAL_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SPECTRAL_DISP_INC_DIR)
+UMAC_SPECTRAL_INC := -I$(WLAN_COMMON_INC)/$(UMAC_SPECTRAL_DISP_INC_DIR) \
+			-I$(WLAN_COMMON_INC)/$(UMAC_SPECTRAL_CORE_INC_DIR) \
+			-I$(WLAN_COMMON_INC)/target_if/direct_buf_rx/inc
 UMAC_SPECTRAL_OBJS := $(UMAC_SPECTRAL_CORE_DIR)/spectral_offload.o \
 		$(UMAC_SPECTRAL_CORE_DIR)/spectral_common.o \
 		$(UMAC_SPECTRAL_DISP_DIR)/wlan_spectral_ucfg_api.o \
 		$(UMAC_SPECTRAL_DISP_DIR)/wlan_spectral_utils_api.o \
 		$(UMAC_SPECTRAL_DISP_DIR)/wlan_spectral_tgt_api.o \
 		$(WLAN_COMMON_ROOT)/os_if/linux/spectral/src/wlan_cfg80211_spectral.o \
+		$(WLAN_COMMON_ROOT)/os_if/linux/spectral/src/os_if_spectral_netlink.o \
 		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_netlink.o \
 		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral_phyerr.o \
 		$(WLAN_COMMON_ROOT)/target_if/spectral/target_if_spectral.o \

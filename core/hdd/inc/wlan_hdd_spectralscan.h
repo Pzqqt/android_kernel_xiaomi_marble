@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -25,6 +25,26 @@
 
 #if !defined(WLAN_HDD_SPECTRALSCAN_H)
 #define WLAN_HDD_SPECTRALSCAN_H
+
+/*
+ * enum spectral_scan_msg_type - spectral scan registration
+ * @SPECTRAL_SCAN_REGISTER_REQ: spectral scan app register request
+ * @SPECTRAL_SCAN_REGISTER_RSP: spectral scan app register response
+ */
+enum spectral_scan_msg_type {
+	SPECTRAL_SCAN_REGISTER_REQ,
+	SPECTRAL_SCAN_REGISTER_RSP,
+};
+
+/*
+ * struct spectral_scan_msg - spectral scan request message
+ * @msg_type: message type
+ * @pid: process id
+ */
+struct spectral_scan_msg {
+	uint32_t msg_type;
+	uint32_t pid;
+};
 
 #define FEATURE_SPECTRAL_SCAN_VENDOR_COMMANDS \
 { \
@@ -166,5 +186,14 @@ int wlan_hdd_cfg80211_spectral_scan_get_status(struct wiphy *wiphy,
 						const void *data,
 						int data_len);
 
+/**
+ * spectral_scan_activate_service() - Activate spectral scan  message handler
+ *
+ *  This function registers a handler to receive netlink message from
+ *  the spectral scan application process.
+ *
+ * Return - 0 for success, non zero for failure
+ */
+int spectral_scan_activate_service(void);
 
 #endif
