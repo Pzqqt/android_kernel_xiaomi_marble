@@ -318,7 +318,7 @@ static inline void
 dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota)
 {
-	struct dp_pdev *pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	struct hal_rx_ppdu_info *ppdu_info;
 	qdf_nbuf_t status_nbuf;
 	uint8_t *rx_tlv;
@@ -401,14 +401,15 @@ static inline uint32_t
 dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t quota)
 {
-	struct dp_pdev *pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	void *hal_soc;
 	void *mon_status_srng;
 	void *rxdma_mon_status_ring_entry;
 	QDF_STATUS status;
 	uint32_t work_done = 0;
+	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 
-	mon_status_srng = pdev->rxdma_mon_status_ring.hal_srng;
+	mon_status_srng = pdev->rxdma_mon_status_ring[mac_for_pdev].hal_srng;
 
 	qdf_assert(mon_status_srng);
 	if (!mon_status_srng || !hal_srng_initialized(mon_status_srng)) {
@@ -590,6 +591,7 @@ dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
 /**
  * dp_rx_pdev_mon_detach() - detach dp rx for status ring
  * @pdev: core txrx pdev context
+ * @mac_id: mac_id/pdev_id correspondinggly for MCL and WIN
  *
  * This function will detach DP RX status ring from
  * main device context. will free DP Rx resources for
@@ -599,16 +601,14 @@ dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota) {
  *         QDF_STATUS_E_RESOURCES: Error return
  */
 QDF_STATUS
-dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev)
+dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id)
 {
-	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	struct rx_desc_pool *rx_desc_pool;
 
-	rx_desc_pool = &soc->rx_desc_status[pdev_id];
-	if (rx_desc_pool->pool_size != 0) {
-		dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
-	}
+	rx_desc_pool = &soc->rx_desc_status[mac_id];
+	if (rx_desc_pool->pool_size != 0)
+		dp_rx_desc_pool_free(soc, mac_id, rx_desc_pool);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -772,8 +772,7 @@ QDF_STATUS dp_rx_mon_status_buffers_replenish(struct dp_soc *dp_soc,
  *         QDF_STATUS_E_RESOURCES: Error return
  */
 QDF_STATUS
-dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
-	uint8_t pdev_id = pdev->pdev_id;
+dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int ring_id) {
 	struct dp_soc *soc = pdev->soc;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
 	union dp_rx_desc_list_elem_t *tail = NULL;
@@ -781,19 +780,20 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 	uint32_t rxdma_entries;
 	struct rx_desc_pool *rx_desc_pool;
 	QDF_STATUS status;
+	int mac_for_pdev = dp_get_mac_id_for_mac(soc, ring_id);
 
-	rxdma_srng = &pdev->rxdma_mon_status_ring;
+	rxdma_srng = &pdev->rxdma_mon_status_ring[mac_for_pdev];
 
 	rxdma_entries = rxdma_srng->alloc_size/hal_srng_get_entrysize(
 		soc->hal_soc, RXDMA_MONITOR_STATUS);
 
-	rx_desc_pool = &soc->rx_desc_status[pdev_id];
+	rx_desc_pool = &soc->rx_desc_status[ring_id];
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			"%s: Mon RX Status Pool[%d] allocation size=%d\n",
-			__func__, pdev_id, rxdma_entries);
+			__func__, ring_id, rxdma_entries);
 
-	status = dp_rx_desc_pool_alloc(soc, pdev_id, rxdma_entries+1,
+	status = dp_rx_desc_pool_alloc(soc, ring_id, rxdma_entries+1,
 			rx_desc_pool);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -802,10 +802,10 @@ dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev) {
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
-			"%s: Mon RX Status Buffers Replenish pdev_id=%d\n",
-			__func__, pdev_id);
+			"%s: Mon RX Status Buffers Replenish ring_id=%d\n",
+			__func__, ring_id);
 
-	status = dp_rx_mon_status_buffers_replenish(soc, pdev_id, rxdma_srng,
+	status = dp_rx_mon_status_buffers_replenish(soc, ring_id, rxdma_srng,
 			rx_desc_pool, rxdma_entries, &desc_list, &tail,
 			HAL_RX_BUF_RBM_SW3_BM);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

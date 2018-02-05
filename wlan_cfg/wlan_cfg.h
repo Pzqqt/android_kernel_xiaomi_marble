@@ -35,6 +35,7 @@
 /* PPDU Stats Configuration - Configure bitmask for enabling tx ppdu tlv's */
 #define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0x1FFF
 
+#define NUM_RXDMA_RINGS_PER_PDEV 2
 #else
 #define MAX_PDEV_CNT 3
 #define WLAN_CFG_INT_NUM_CONTEXTS 7
@@ -47,6 +48,7 @@
 /* PPDU Stats Configuration - Configure bitmask for enabling tx ppdu tlv's */
 #define DP_PPDU_TXLITE_STATS_BITMASK_CFG 0xFFFF
 
+#define NUM_RXDMA_RINGS_PER_PDEV 1
 #endif
 
 /* Tx configuration */

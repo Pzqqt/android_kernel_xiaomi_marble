@@ -985,18 +985,18 @@ struct dp_pdev {
 	 struct wlan_cfg_dp_pdev_ctxt *wlan_cfg_ctx;
 
 	/* RXDMA monitor buffer replenish ring */
-	struct dp_srng rxdma_mon_buf_ring;
+	struct dp_srng rxdma_mon_buf_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
 	/* RXDMA monitor destination ring */
-	struct dp_srng rxdma_mon_dst_ring;
+	struct dp_srng rxdma_mon_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
 	/* RXDMA monitor status ring. TBD: Check format of this ring */
-	struct dp_srng rxdma_mon_status_ring;
+	struct dp_srng rxdma_mon_status_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
-	struct dp_srng rxdma_mon_desc_ring;
+	struct dp_srng rxdma_mon_desc_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
 	/* RXDMA error destination ring */
-	struct dp_srng rxdma_err_dst_ring[MAX_RX_MAC_RINGS];
+	struct dp_srng rxdma_err_dst_ring[NUM_RXDMA_RINGS_PER_PDEV];
 
 	/* Link descriptor memory banks */
 	struct {

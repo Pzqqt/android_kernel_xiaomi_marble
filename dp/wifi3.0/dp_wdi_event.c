@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -119,7 +119,7 @@ dp_wdi_event_handler(
 	wdi_event_subscribe *wdi_sub;
 	struct dp_pdev *txrx_pdev;
 	struct dp_soc *soc_t = (struct dp_soc *)soc;
-	txrx_pdev = (struct dp_pdev *)soc_t->pdev_list[pdev_id];
+	txrx_pdev = dp_get_pdev_for_mac_id(soc_t, pdev_id);
 
 	if (!event) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,

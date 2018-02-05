@@ -1253,7 +1253,7 @@ dp_rx_err_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t push_reason;
 	uint8_t rxdma_error_code = 0;
 	uint8_t bm_action = HAL_BM_ACTION_PUT_IN_IDLE_LIST;
-	struct dp_pdev *pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 
 	msdu = 0;
 
@@ -1348,8 +1348,7 @@ uint32_t
 dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
 	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
-	int ring_idx = dp_get_ring_id_for_mac_id(soc, mac_id);
-	uint8_t pdev_id;
+	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 	void *hal_soc;
 	void *rxdma_dst_ring_desc;
 	void *err_dst_srng;
@@ -1364,8 +1363,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	if (!pdev)
 		return 0;
 #endif
-	pdev_id = pdev->pdev_id;
-	err_dst_srng = pdev->rxdma_err_dst_ring[ring_idx].hal_srng;
+	err_dst_srng = pdev->rxdma_err_dst_ring[mac_for_pdev].hal_srng;
 
 	if (!err_dst_srng) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1401,7 +1399,7 @@ dp_rxdma_err_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		dp_rxdma_srng = &pdev->rx_refill_buf_ring;
 		rx_desc_pool = &soc->rx_desc_buf[mac_id];
 
-		dp_rx_buffers_replenish(soc, pdev_id, dp_rxdma_srng,
+		dp_rx_buffers_replenish(soc, mac_id, dp_rxdma_srng,
 			rx_desc_pool, rx_bufs_used, &head, &tail,
 			HAL_RX_BUF_RBM_SW3_BM);
 		work_done += rx_bufs_used;

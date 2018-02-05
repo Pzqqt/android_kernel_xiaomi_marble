@@ -38,17 +38,18 @@
  */
 static QDF_STATUS
 dp_rx_mon_link_desc_return(struct dp_pdev *dp_pdev,
-	void *buf_addr_info)
+	void *buf_addr_info, int mac_id)
 {
 	struct dp_srng *dp_srng;
 	void *hal_srng;
 	void *hal_soc;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	void *src_srng_desc;
+	int mac_for_pdev = dp_get_mac_id_for_mac(dp_pdev->soc, mac_id);
 
 	hal_soc = dp_pdev->soc->hal_soc;
 
-	dp_srng = &dp_pdev->rxdma_mon_desc_ring;
+	dp_srng = &dp_pdev->rxdma_mon_desc_ring[mac_for_pdev];
 	hal_srng = dp_srng->hal_srng;
 
 	qdf_assert(hal_srng);
@@ -127,7 +128,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	union dp_rx_desc_list_elem_t **head,
 	union dp_rx_desc_list_elem_t **tail)
 {
-	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	void *rx_desc_tlv;
 	void *rx_msdu_link_desc;
 	qdf_nbuf_t msdu;
@@ -316,11 +317,11 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
 			&p_buf_addr_info);
 
-		if (dp_rx_mon_link_desc_return(dp_pdev, p_last_buf_addr_info)
-			!= QDF_STATUS_SUCCESS) {
+		if (dp_rx_mon_link_desc_return(dp_pdev, p_last_buf_addr_info,
+			mac_id) != QDF_STATUS_SUCCESS)
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"dp_rx_mon_link_desc_return failed\n");
-		}
+
 		p_last_buf_addr_info = p_buf_addr_info;
 
 	} while (buf_info.paddr && msdu_cnt);
@@ -361,7 +362,7 @@ qdf_nbuf_t dp_rx_mon_restitch_mpdu_from_msdus(struct dp_soc *soc,
 	unsigned char *dest;
 	struct ieee80211_frame *wh;
 	struct ieee80211_qoscntl *qos;
-	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	head_frag_list = NULL;
 
 	/* The nbuf has been pulled just beyond the status and points to the
@@ -673,7 +674,7 @@ void dp_rx_extract_radiotap_info(struct cdp_mon_status *rx_status,
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
 {
-	struct dp_pdev *pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	struct cdp_mon_status *rs = &pdev->rx_mon_recv_status;
 	qdf_nbuf_t mon_skb, skb_next;
 	qdf_nbuf_t mon_mpdu = NULL;
@@ -731,8 +732,7 @@ mon_deliver_fail:
 */
 void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 {
-	struct dp_pdev *pdev = soc->pdev_list[mac_id];
-	uint8_t pdev_id;
+	struct dp_pdev *pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	void *hal_soc;
 	void *rxdma_dst_ring_desc;
 	void *mon_dst_srng;
@@ -740,9 +740,9 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	union dp_rx_desc_list_elem_t *tail = NULL;
 	uint32_t ppdu_id;
 	uint32_t rx_bufs_used;
+	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 
-	pdev_id = pdev->pdev_id;
-	mon_dst_srng = pdev->rxdma_mon_dst_ring.hal_srng;
+	mon_dst_srng = pdev->rxdma_mon_dst_ring[mac_for_pdev].hal_srng;
 
 	if (!mon_dst_srng || !hal_srng_initialized(mon_dst_srng)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -797,14 +797,15 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 	hal_srng_access_end(hal_soc, mon_dst_srng);
 
 	if (rx_bufs_used) {
-		dp_rx_buffers_replenish(soc, pdev_id,
-			&pdev->rxdma_mon_buf_ring, &soc->rx_desc_mon[pdev_id],
-			rx_bufs_used, &head, &tail, HAL_RX_BUF_RBM_SW3_BM);
+		dp_rx_buffers_replenish(soc, mac_id,
+			&pdev->rxdma_mon_buf_ring[mac_for_pdev],
+			&soc->rx_desc_mon[mac_id], rx_bufs_used, &head, &tail,
+			HAL_RX_BUF_RBM_SW3_BM);
 	}
 }
 
 static QDF_STATUS
-dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev) {
+dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev, int mac_id) {
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	union dp_rx_desc_list_elem_t *desc_list = NULL;
@@ -813,20 +814,21 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev) {
 	uint32_t rxdma_entries;
 	struct rx_desc_pool *rx_desc_pool;
 	QDF_STATUS status;
+	uint8_t mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 
-	rxdma_srng = &pdev->rxdma_mon_buf_ring;
+	rxdma_srng = &pdev->rxdma_mon_buf_ring[mac_for_pdev];
 
 	rxdma_entries = rxdma_srng->alloc_size/hal_srng_get_entrysize(
 				soc->hal_soc,
 				RXDMA_MONITOR_BUF);
 
-	rx_desc_pool = &soc->rx_desc_mon[pdev_id];
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_LOW,
 			  "%s: Mon RX Desc Pool[%d] allocation size=%d"
 			  , __func__, pdev_id, rxdma_entries*3);
 
-	status = dp_rx_desc_pool_alloc(soc, pdev_id,
+	status = dp_rx_desc_pool_alloc(soc, mac_id,
 			rxdma_entries*3, rx_desc_pool);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -838,7 +840,7 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev) {
 			  "%s: Mon RX Buffers Replenish pdev_id=%d",
 			  __func__, pdev_id);
 
-	status = dp_rx_buffers_replenish(soc, pdev_id, rxdma_srng, rx_desc_pool,
+	status = dp_rx_buffers_replenish(soc, mac_id, rxdma_srng, rx_desc_pool,
 			rxdma_entries, &desc_list, &tail,
 			HAL_RX_BUF_RBM_SW3_BM);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -851,15 +853,14 @@ dp_rx_pdev_mon_buf_attach(struct dp_pdev *pdev) {
 }
 
 static QDF_STATUS
-dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev) {
-	uint8_t pdev_id = pdev->pdev_id;
+dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev, int mac_id)
+{
 	struct dp_soc *soc = pdev->soc;
 	struct rx_desc_pool *rx_desc_pool;
 
-	rx_desc_pool = &soc->rx_desc_mon[pdev_id];
-	if (rx_desc_pool->pool_size != 0) {
-		dp_rx_desc_pool_free(soc, pdev_id, rx_desc_pool);
-	}
+	rx_desc_pool = &soc->rx_desc_mon[mac_id];
+	if (rx_desc_pool->pool_size != 0)
+		dp_rx_desc_pool_free(soc, mac_id, rx_desc_pool);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -870,7 +871,8 @@ dp_rx_pdev_mon_buf_detach(struct dp_pdev *pdev) {
  */
 static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 {
-	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
+	int mac_for_pdev = dp_get_mac_id_for_mac(soc, mac_id);
 	int link_desc_size = hal_get_link_desc_size(soc->hal_soc);
 	int link_desc_align = hal_get_link_desc_align(soc->hal_soc);
 	uint32_t max_alloc_size = wlan_cfg_max_alloc_size(soc->wlan_cfg_ctx);
@@ -883,7 +885,7 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 	struct dp_srng *dp_srng;
 	int i;
 
-	dp_srng = &dp_pdev->rxdma_mon_desc_ring;
+	dp_srng = &dp_pdev->rxdma_mon_desc_ring[mac_for_pdev];
 
 	num_entries = dp_srng->alloc_size/hal_srng_get_entrysize(
 					soc->hal_soc, RXDMA_MONITOR_DESC);
@@ -984,7 +986,7 @@ static int dp_mon_link_desc_pool_setup(struct dp_soc *soc, uint32_t mac_id)
 	entry_size = hal_srng_get_entrysize(soc->hal_soc, RXDMA_MONITOR_DESC);
 	total_mem_size = entry_size * total_link_descs;
 
-	mon_desc_srng = dp_pdev->rxdma_mon_desc_ring.hal_srng;
+	mon_desc_srng = dp_pdev->rxdma_mon_desc_ring[mac_for_pdev].hal_srng;
 
 	num_replenish_buf = 0;
 
@@ -1049,7 +1051,7 @@ fail:
  */
 static void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 {
-	struct dp_pdev *dp_pdev = soc->pdev_list[mac_id];
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(soc, mac_id);
 	int i;
 
 	for (i = 0; i < MAX_MON_LINK_DESC_BANKS; i++) {
@@ -1077,34 +1079,40 @@ static void dp_mon_link_desc_pool_cleanup(struct dp_soc *soc, uint32_t mac_id)
 
 QDF_STATUS
 dp_rx_pdev_mon_attach(struct dp_pdev *pdev) {
-	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
 	QDF_STATUS status;
+	uint8_t pdev_id = pdev->pdev_id;
+	int mac_id;
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_WARN,
 			"%s: pdev attach id=%d\n", __func__, pdev_id);
 
-	status = dp_rx_pdev_mon_buf_attach(pdev);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_pdev_mon_buf_attach() failed \n", __func__);
-		return status;
-	}
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-	status = dp_rx_pdev_mon_status_attach(pdev);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_rx_pdev_mon_status_attach() failed \n",
-			__func__);
-		return status;
-	}
+		status = dp_rx_pdev_mon_buf_attach(pdev, mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: dp_rx_pdev_mon_buf_attach() failed\n",
+				__func__);
+			return status;
+		}
 
-	status = dp_mon_link_desc_pool_setup(soc, pdev_id);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"%s: dp_mon_link_desc_pool_setup() failed \n",
-			__func__);
-		return status;
+		status = dp_rx_pdev_mon_status_attach(pdev, mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: dp_rx_pdev_mon_status_attach() failed\n",
+				__func__);
+			return status;
+		}
+
+		status = dp_mon_link_desc_pool_setup(soc, mac_for_pdev);
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"%s: dp_mon_link_desc_pool_setup() failed\n",
+				__func__);
+			return status;
+		}
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -1124,10 +1132,15 @@ QDF_STATUS
 dp_rx_pdev_mon_detach(struct dp_pdev *pdev) {
 	uint8_t pdev_id = pdev->pdev_id;
 	struct dp_soc *soc = pdev->soc;
+	int mac_id;
 
-	dp_mon_link_desc_pool_cleanup(soc, pdev_id);
-	dp_rx_pdev_mon_status_detach(pdev);
-	dp_rx_pdev_mon_buf_detach(pdev);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+
+		dp_mon_link_desc_pool_cleanup(soc, mac_for_pdev);
+		dp_rx_pdev_mon_status_detach(pdev, mac_for_pdev);
+		dp_rx_pdev_mon_buf_detach(pdev, mac_for_pdev);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }

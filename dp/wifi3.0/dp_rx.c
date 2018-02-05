@@ -82,7 +82,7 @@ QDF_STATUS dp_rx_buffers_replenish(struct dp_soc *dp_soc, uint32_t mac_id,
 {
 	uint32_t num_alloc_desc;
 	uint16_t num_desc_to_free = 0;
-	struct dp_pdev *dp_pdev = dp_soc->pdev_list[mac_id];
+	struct dp_pdev *dp_pdev = dp_get_pdev_for_mac_id(dp_soc, mac_id);
 	uint32_t num_entries_avail;
 	uint32_t count;
 	int sync_hw_ptr = 1;

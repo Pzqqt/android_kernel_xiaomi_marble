@@ -35,7 +35,6 @@
 #ifdef CONFIG_MCL
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define WLAN_CFG_PER_PDEV_LMAC_RING 0
-#define NUM_RXDMA_RINGS_PER_PDEV 2
 #define WLAN_LRO_ENABLE 1
 #ifdef IPA_OFFLOAD
 #define WLAN_CFG_TX_RING_SIZE 2048
@@ -62,7 +61,6 @@
 #ifdef CONFIG_WIN
 #define WLAN_CFG_PER_PDEV_RX_RING 0
 #define WLAN_CFG_PER_PDEV_LMAC_RING 1
-#define NUM_RXDMA_RINGS_PER_PDEV 1
 #define WLAN_LRO_ENABLE 0
 
 /* Tx Descriptor and Tx Extension Descriptor pool sizes */

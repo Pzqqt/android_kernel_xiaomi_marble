@@ -729,6 +729,7 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 	uint8_t reo_status_mask = int_ctx->reo_status_ring_mask;
 	uint32_t remaining_quota = dp_budget;
 	struct dp_pdev *pdev = NULL;
+	int mac_id;
 
 	/* Process Tx completion interrupts first to return back buffers */
 	while (tx_mask) {
@@ -804,7 +805,6 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 			}
 		}
 		for (ring = 0; ring < MAX_RX_MAC_RINGS; ring++) {
-			/* Need to check on this, why is required */
 			work_done = dp_rxdma_err_process(soc, ring,
 						remaining_quota);
 			budget -= work_done;
@@ -819,12 +819,18 @@ static uint32_t dp_service_srngs(void *dp_ctx, uint32_t dp_budget)
 		pdev = soc->pdev_list[ring];
 		if (pdev == NULL)
 			continue;
-		if (int_ctx->rx_mon_ring_mask & (1 << ring)) {
-			work_done = dp_mon_process(soc, ring, remaining_quota);
-			budget -= work_done;
-			if (budget <= 0)
-				goto budget_done;
-			remaining_quota = budget;
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+
+			if (int_ctx->rx_mon_ring_mask & (1 << mac_for_pdev)) {
+				work_done = dp_mon_process(soc, mac_for_pdev,
+						remaining_quota);
+				budget -= work_done;
+				if (budget <= 0)
+					goto budget_done;
+				remaining_quota = budget;
+			}
 		}
 
 		if (int_ctx->rxdma2host_ring_mask & (1 << ring)) {
@@ -2430,6 +2436,7 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 
 	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
 	struct dp_pdev *pdev = qdf_mem_malloc(sizeof(*pdev));
+	int mac_id;
 
 	if (!pdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -2525,34 +2532,41 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 		goto fail1;
 	}
 
-	if (dp_srng_setup(soc, &pdev->rxdma_mon_buf_ring, RXDMA_MONITOR_BUF, 0,
-		pdev_id, RXDMA_MONITOR_BUF_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed for rxdma_mon_buf_ring"));
-		goto fail1;
-	}
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-	if (dp_srng_setup(soc, &pdev->rxdma_mon_dst_ring, RXDMA_MONITOR_DST, 0,
-		pdev_id, RXDMA_MONITOR_DST_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed for rxdma_mon_dst_ring"));
-		goto fail1;
-	}
+		if (dp_srng_setup(soc, &pdev->rxdma_mon_buf_ring[mac_id],
+			RXDMA_MONITOR_BUF, 0, mac_for_pdev,
+			RXDMA_MONITOR_BUF_RING_SIZE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("dp_srng_setup failed for rxdma_mon_buf_ring"));
+			goto fail1;
+		}
+
+		if (dp_srng_setup(soc, &pdev->rxdma_mon_dst_ring[mac_id],
+			RXDMA_MONITOR_DST, 0, mac_for_pdev,
+			RXDMA_MONITOR_DST_RING_SIZE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("dp_srng_setup failed for rxdma_mon_dst_ring"));
+			goto fail1;
+		}
 
 
-	if (dp_srng_setup(soc, &pdev->rxdma_mon_status_ring,
-		RXDMA_MONITOR_STATUS, 0, pdev_id,
-		RXDMA_MONITOR_STATUS_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			FL("dp_srng_setup failed for rxdma_mon_status_ring"));
-		goto fail1;
-	}
+		if (dp_srng_setup(soc, &pdev->rxdma_mon_status_ring[mac_id],
+			RXDMA_MONITOR_STATUS, 0, mac_for_pdev,
+			RXDMA_MONITOR_STATUS_RING_SIZE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			 FL("dp_srng_setup failed for rxdma_mon_status_ring"));
+			goto fail1;
+		}
 
-	if (dp_srng_setup(soc, &pdev->rxdma_mon_desc_ring,
-		RXDMA_MONITOR_DESC, 0, pdev_id, RXDMA_MONITOR_DESC_RING_SIZE)) {
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-			"dp_srng_setup failed for rxdma_mon_desc_ring\n");
-		goto fail1;
+		if (dp_srng_setup(soc, &pdev->rxdma_mon_desc_ring[mac_id],
+			RXDMA_MONITOR_DESC, 0, mac_for_pdev,
+			RXDMA_MONITOR_DESC_RING_SIZE)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  "dp_srng_setup failed for rxdma_mon_desc_ring\n");
+			goto fail1;
+		}
 	}
 
 	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
@@ -2694,6 +2708,7 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 	struct dp_pdev *pdev = (struct dp_pdev *)txrx_pdev;
 	struct dp_soc *soc = pdev->soc;
 	qdf_nbuf_t curr_nbuf, next_nbuf;
+	int mac_id;
 
 	dp_wdi_event_detach(pdev);
 
@@ -2729,24 +2744,21 @@ static void dp_pdev_detach_wifi3(struct cdp_pdev *txrx_pdev, int force)
 
 	dp_rxdma_ring_cleanup(soc, pdev);
 
-	dp_srng_cleanup(soc, &pdev->rxdma_mon_buf_ring, RXDMA_MONITOR_BUF, 0);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		dp_srng_cleanup(soc, &pdev->rxdma_mon_buf_ring[mac_id],
+			RXDMA_MONITOR_BUF, 0);
 
-	dp_srng_cleanup(soc, &pdev->rxdma_mon_dst_ring, RXDMA_MONITOR_DST, 0);
+		dp_srng_cleanup(soc, &pdev->rxdma_mon_dst_ring[mac_id],
+			RXDMA_MONITOR_DST, 0);
 
-	dp_srng_cleanup(soc, &pdev->rxdma_mon_status_ring,
-		RXDMA_MONITOR_STATUS, 0);
+		dp_srng_cleanup(soc, &pdev->rxdma_mon_status_ring[mac_id],
+			RXDMA_MONITOR_STATUS, 0);
 
-	dp_srng_cleanup(soc, &pdev->rxdma_mon_desc_ring,
-		RXDMA_MONITOR_DESC, 0);
+		dp_srng_cleanup(soc, &pdev->rxdma_mon_desc_ring[mac_id],
+			RXDMA_MONITOR_DESC, 0);
 
-	if (wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx)) {
-		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[0], RXDMA_DST, 0);
-	} else {
-		int i;
-
-		for (i = 0; i < MAX_RX_MAC_RINGS; i++)
-			dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[i],
-				RXDMA_DST, 0);
+		dp_srng_cleanup(soc, &pdev->rxdma_err_dst_ring[mac_id],
+			RXDMA_DST, 0);
 	}
 
 	curr_nbuf = pdev->invalid_peer_head_msdu;
@@ -2905,8 +2917,7 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
 		if (pdev) {
-			int mac_id = 0;
-			int j;
+			int mac_id;
 			bool dbs_enable = 0;
 			int max_mac_rings =
 				 wlan_cfg_get_num_mac_rings
@@ -2944,37 +2955,39 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 					 FL("pdev_id %d max_mac_rings %d\n"),
 					 pdev->pdev_id, max_mac_rings);
 
-			for (j = 0; j < max_mac_rings; j++) {
+			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
+				int mac_for_pdev = dp_get_mac_id_for_pdev(
+							mac_id, pdev->pdev_id);
+
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
 					 QDF_TRACE_LEVEL_ERROR,
-					 FL("mac_id %d\n"), mac_id);
-				htt_srng_setup(soc->htt_handle, mac_id,
-					 pdev->rx_mac_buf_ring[j]
+					 FL("mac_id %d\n"), mac_for_pdev);
+				htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					 pdev->rx_mac_buf_ring[mac_id]
 						.hal_srng,
 					 RXDMA_BUF);
-				htt_srng_setup(soc->htt_handle, mac_id,
-					pdev->rxdma_err_dst_ring[j]
+				htt_srng_setup(soc->htt_handle, mac_for_pdev,
+					pdev->rxdma_err_dst_ring[mac_id]
 						.hal_srng,
 					RXDMA_DST);
-				mac_id++;
+
+				/* Configure monitor mode rings */
+				htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				   pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
+				   RXDMA_MONITOR_BUF);
+
+				htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				   pdev->rxdma_mon_dst_ring[mac_id].hal_srng,
+				   RXDMA_MONITOR_DST);
+
+				htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				  pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+				  RXDMA_MONITOR_STATUS);
+
+				htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				  pdev->rxdma_mon_desc_ring[mac_id].hal_srng,
+				  RXDMA_MONITOR_DESC);
 			}
-
-			/* Configure monitor mode rings */
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_buf_ring.hal_srng,
-					RXDMA_MONITOR_BUF);
-
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_dst_ring.hal_srng,
-					RXDMA_MONITOR_DST);
-
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_status_ring.hal_srng,
-				RXDMA_MONITOR_STATUS);
-
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_desc_ring.hal_srng,
-				RXDMA_MONITOR_DESC);
 		}
 	}
 
@@ -2988,33 +3001,38 @@ static void dp_rxdma_ring_config(struct dp_soc *soc)
 	soc->reap_timer_init = 1;
 }
 #else
+/* This is only for WIN */
 static void dp_rxdma_ring_config(struct dp_soc *soc)
 {
 	int i;
+	int mac_id;
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		struct dp_pdev *pdev = soc->pdev_list[i];
 
-		if (pdev) {
-			int ring_idx = dp_get_ring_id_for_mac_id(soc, i);
+		if (pdev == NULL)
+			continue;
 
-			htt_srng_setup(soc->htt_handle, i,
+		for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+			int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, i);
+
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
 				pdev->rx_refill_buf_ring.hal_srng, RXDMA_BUF);
 
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_buf_ring.hal_srng,
-					RXDMA_MONITOR_BUF);
-			htt_srng_setup(soc->htt_handle, i,
-					pdev->rxdma_mon_dst_ring.hal_srng,
-					RXDMA_MONITOR_DST);
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_status_ring.hal_srng,
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
+				RXDMA_MONITOR_BUF);
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				pdev->rxdma_mon_dst_ring[mac_id].hal_srng,
+				RXDMA_MONITOR_DST);
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				pdev->rxdma_mon_status_ring[mac_id].hal_srng,
 				RXDMA_MONITOR_STATUS);
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_mon_desc_ring.hal_srng,
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				pdev->rxdma_mon_desc_ring[mac_id].hal_srng,
 				RXDMA_MONITOR_DESC);
-			htt_srng_setup(soc->htt_handle, i,
-				pdev->rxdma_err_dst_ring[ring_idx].hal_srng,
+			htt_srng_setup(soc->htt_handle, mac_for_pdev,
+				pdev->rxdma_err_dst_ring[mac_id].hal_srng,
 				RXDMA_DST);
 		}
 	}
@@ -4128,8 +4146,9 @@ static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
-	struct dp_soc *soc;
+	struct dp_soc *soc = pdev->soc;
 	uint8_t pdev_id;
+	int mac_id;
 
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
@@ -4137,13 +4156,17 @@ static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 	pdev->monitor_vdev = NULL;
 	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_buf_ring.hal_srng,
-		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 
 	return 0;
 }
@@ -4215,13 +4238,13 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
 	struct dp_soc *soc;
 	uint8_t pdev_id;
+	int mac_id;
 
 	qdf_assert(vdev);
 
 	pdev = vdev->pdev;
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
-
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 		"pdev=%pK, pdev_id=%d, soc=%pK vdev=%pK\n",
 		pdev, pdev_id, soc, vdev);
@@ -4271,9 +4294,13 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_buf_ring.hal_srng,
-		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -4300,9 +4327,13 @@ static int dp_vdev_set_monitor_mode(struct cdp_vdev *vdev_handle,
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4324,6 +4355,7 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
 	struct dp_soc *soc;
 	uint8_t pdev_id;
+	int mac_id;
 
 	pdev_id = pdev->pdev_id;
 	soc = pdev->soc;
@@ -4357,13 +4389,17 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 
 	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_buf_ring.hal_srng,
-		RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -4390,9 +4426,13 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_buf_ring.hal_srng, RXDMA_MONITOR_BUF,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_buf_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_BUF, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 
 	htt_tlv_filter.mpdu_start = 1;
 	htt_tlv_filter.msdu_start = 1;
@@ -4419,9 +4459,13 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 	htt_tlv_filter.mo_ctrl_filter = pdev->mo_ctrl_filter;
 	htt_tlv_filter.mo_data_filter = pdev->mo_data_filter;
 
-	htt_h2t_rx_ring_cfg(soc->htt_handle, pdev_id,
-		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id, pdev_id);
+
+		htt_h2t_rx_ring_cfg(soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -4987,6 +5031,7 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 {
 	uint32_t i;
 	char ring_name[STR_MAXLEN + 1];
+	int mac_id;
 
 	dp_print_ring_stat_from_hal(pdev->soc,
 			&pdev->soc->reo_exception_ring,
@@ -5038,18 +5083,20 @@ dp_print_ring_stats(struct dp_pdev *pdev)
 			&pdev->rx_refill_buf_ring2,
 			"Second Rx Refill Buf Ring");
 
-	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rxdma_mon_buf_ring,
-			"Rxdma Mon Buf Ring");
-	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rxdma_mon_dst_ring,
-			"Rxdma Mon Dst Ring");
-	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rxdma_mon_status_ring,
-			"Rxdma Mon Status Ring");
-	dp_print_ring_stat_from_hal(pdev->soc,
-			&pdev->rxdma_mon_desc_ring,
-			"Rxdma mon desc Ring");
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->rxdma_mon_buf_ring[mac_id],
+				"Rxdma Mon Buf Ring");
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->rxdma_mon_dst_ring[mac_id],
+				"Rxdma Mon Dst Ring");
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->rxdma_mon_status_ring[mac_id],
+				"Rxdma Mon Status Ring");
+		dp_print_ring_stat_from_hal(pdev->soc,
+				&pdev->rxdma_mon_desc_ring[mac_id],
+				"Rxdma mon desc Ring");
+	}
 
 	for (i = 0; i < MAX_RX_MAC_RINGS; i++) {
 		snprintf(ring_name, STR_MAXLEN, "Rxdma err dst ring %d", i);
@@ -5538,13 +5585,18 @@ static void
 dp_ppdu_ring_reset(struct dp_pdev *pdev)
 {
 	struct htt_rx_ring_tlv_filter htt_tlv_filter;
+	int mac_id;
 
 	qdf_mem_set(&(htt_tlv_filter), sizeof(htt_tlv_filter), 0x0);
 
-	htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, pdev->pdev_id,
-		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+							pdev->pdev_id);
 
+		htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 }
 
 /*
@@ -5557,6 +5609,7 @@ static void
 dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 {
 	struct htt_rx_ring_tlv_filter htt_tlv_filter = {0};
+	int mac_id;
 
 	htt_tlv_filter.mpdu_start = 0;
 	htt_tlv_filter.msdu_start = 0;
@@ -5581,9 +5634,14 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.mo_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.mo_data_filter = FILTER_DATA_ALL;
 
-	htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, pdev->pdev_id,
-		pdev->rxdma_mon_status_ring.hal_srng, RXDMA_MONITOR_STATUS,
-		RX_BUFFER_SIZE, &htt_tlv_filter);
+	for (mac_id = 0; mac_id < NUM_RXDMA_RINGS_PER_PDEV; mac_id++) {
+		int mac_for_pdev = dp_get_mac_id_for_pdev(mac_id,
+						pdev->pdev_id);
+
+		htt_h2t_rx_ring_cfg(pdev->soc->htt_handle, mac_for_pdev,
+			pdev->rxdma_mon_status_ring[mac_id].hal_srng,
+			RXDMA_MONITOR_STATUS, RX_BUFFER_SIZE, &htt_tlv_filter);
+	}
 }
 
 /*
@@ -7006,27 +7064,6 @@ void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
 }
 
 /*
- * dp_get_ring_id_for_mac_id() -  Return pdev for mac_id
- *
- * @soc: handle to DP soc
- * @mac_id: MAC id
- *
- * Return: ring id
- */
-int dp_get_ring_id_for_mac_id(struct dp_soc *soc, uint32_t mac_id)
-{
-	/*
-	 * Single pdev using both MACs will operate on both MAC rings,
-	 * which is the case for MCL.
-	 */
-	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
-		return mac_id;
-
-	/* For WIN each PDEV will operate one ring, so index is zero. */
-	return 0;
-}
-
-/*
  * dp_is_hw_dbs_enable() - Procedure to check if DBS is supported
  * @soc:		DP SoC context
  * @max_mac_rings:	No of MAC rings
@@ -7101,13 +7138,17 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
+					int mac_for_pdev =
+						dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+
 					htt_h2t_rx_ring_cfg(soc->htt_handle,
-							pdev->pdev_id + mac_id,
-							pdev->rxdma_mon_status_ring
-							.hal_srng,
-							RXDMA_MONITOR_STATUS,
-							RX_BUFFER_SIZE,
-							&htt_tlv_filter);
+					 mac_for_pdev,
+					 pdev->rxdma_mon_status_ring[mac_id]
+					 .hal_srng,
+					 RXDMA_MONITOR_STATUS,
+					 RX_BUFFER_SIZE,
+					 &htt_tlv_filter);
 
 				}
 
@@ -7144,9 +7185,13 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
+					int mac_for_pdev =
+						dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+
 					htt_h2t_rx_ring_cfg(soc->htt_handle,
-					pdev->pdev_id + mac_id,
-					pdev->rxdma_mon_status_ring
+					mac_for_pdev,
+					pdev->rxdma_mon_status_ring[mac_id]
 					.hal_srng,
 					RXDMA_MONITOR_STATUS,
 					RX_BUFFER_SIZE_PKTLOG_LITE,
@@ -7168,10 +7213,13 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			}
 
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
+				int mac_for_pdev = dp_get_mac_id_for_pdev(
+							mac_id,	pdev->pdev_id);
+
 				pdev->pktlog_ppdu_stats = true;
 				dp_h2t_cfg_stats_msg_send(pdev,
-						DP_PPDU_TXLITE_STATS_BITMASK_CFG,
-						pdev->pdev_id + mac_id);
+					DP_PPDU_TXLITE_STATS_BITMASK_CFG,
+					mac_for_pdev);
 			}
 			break;
 
@@ -7194,13 +7242,17 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 
 				for (mac_id = 0; mac_id < max_mac_rings;
 								mac_id++) {
+					int mac_for_pdev =
+						dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+
 					htt_h2t_rx_ring_cfg(soc->htt_handle,
-							pdev->pdev_id + mac_id,
-							pdev->rxdma_mon_status_ring
-							.hal_srng,
-							RXDMA_MONITOR_STATUS,
-							RX_BUFFER_SIZE,
-							&htt_tlv_filter);
+					  mac_for_pdev,
+					  pdev->rxdma_mon_status_ring[mac_id]
+					  .hal_srng,
+					  RXDMA_MONITOR_STATUS,
+					  RX_BUFFER_SIZE,
+					  &htt_tlv_filter);
 				}
 
 				if (soc->reap_timer_init)
@@ -7219,16 +7271,20 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			 * header file will use proper macros
 			*/
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
+				int mac_for_pdev =
+						dp_get_mac_id_for_pdev(mac_id,
+								pdev->pdev_id);
+
 				pdev->pktlog_ppdu_stats = false;
 				if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable && !pdev->mcopy_mode) {
 					dp_h2t_cfg_stats_msg_send(pdev, 0,
-							pdev->pdev_id + mac_id);
+								mac_for_pdev);
 				} else if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
 					dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_SNIFFER,
-							pdev->pdev_id + mac_id);
+								mac_for_pdev);
 				} else if (pdev->enhanced_stats_en) {
 					dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ENH_STATS,
-							pdev->pdev_id + mac_id);
+								mac_for_pdev);
 				}
 			}
 

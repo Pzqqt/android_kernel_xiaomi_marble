@@ -394,7 +394,6 @@ void dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle,
 	 uint32_t *rx_pn);
 
 void *dp_get_pdev_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
-int dp_get_ring_id_for_mac_id(struct dp_soc *soc, uint32_t mac_id);
 void dp_mark_peer_inact(void *peer_handle, bool inactive);
 bool dp_set_inact_params(struct cdp_pdev *pdev_handle,
 		 u_int16_t inact_check_interval,
@@ -404,6 +403,51 @@ void dp_set_overload(struct cdp_pdev *pdev_handle, bool overload);
 bool dp_peer_is_inact(void *peer_handle);
 void dp_init_inact_timer(struct dp_soc *soc);
 void dp_free_inact_timer(struct dp_soc *soc);
+
+/*
+ * dp_get_mac_id_for_pdev() -  Return mac corresponding to pdev for mac
+ *
+ * @mac_id: MAC id
+ * @pdev_id: pdev_id corresponding to pdev, 0 for MCL
+ *
+ * Single pdev using both MACs will operate on both MAC rings,
+ * which is the case for MCL.
+ * For WIN each PDEV will operate one ring, so index is zero.
+ *
+ */
+static inline int dp_get_mac_id_for_pdev(uint32_t mac_id, uint32_t pdev_id)
+{
+	if (mac_id && pdev_id) {
+		qdf_print("Both mac_id and pdev_id cannot be non zero");
+		QDF_BUG(0);
+		return 0;
+	}
+	return (mac_id + pdev_id);
+}
+
+/*
+ * dp_get_mac_id_for_mac() -  Return mac corresponding WIN and MCL mac_ids
+ *
+ * @soc: handle to DP soc
+ * @mac_id: MAC id
+ *
+ * Single pdev using both MACs will operate on both MAC rings,
+ * which is the case for MCL.
+ * For WIN each PDEV will operate one ring, so index is zero.
+ *
+ */
+static inline int dp_get_mac_id_for_mac(struct dp_soc *soc, uint32_t mac_id)
+{
+	/*
+	 * Single pdev using both MACs will operate on both MAC rings,
+	 * which is the case for MCL.
+	 */
+	if (!wlan_cfg_per_pdev_lmac_ring(soc->wlan_cfg_ctx))
+		return mac_id;
+
+	/* For WIN each PDEV will operate one ring, so index is zero. */
+	return 0;
+}
 
 #ifdef WDI_EVENT_ENABLE
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,

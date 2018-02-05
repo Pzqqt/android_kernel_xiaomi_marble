@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -41,8 +41,8 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id,
 QDF_STATUS dp_rx_pdev_mon_attach(struct dp_pdev *pdev);
 QDF_STATUS dp_rx_pdev_mon_detach(struct dp_pdev *pdev);
 
-QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev);
-QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev);
+QDF_STATUS dp_rx_pdev_mon_status_attach(struct dp_pdev *pdev, int mac_id);
+QDF_STATUS dp_rx_pdev_mon_status_detach(struct dp_pdev *pdev, int mac_id);
 
 uint32_t dp_mon_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota);
 QDF_STATUS dp_rx_mon_deliver(struct dp_soc *soc, uint32_t mac_id,
