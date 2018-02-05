@@ -96,6 +96,7 @@
 #include "init_event_handler.h"
 #include "init_deinit_ucfg.h"
 #include "target_if_green_ap.h"
+#include "service_ready_param.h"
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
@@ -4300,47 +4301,6 @@ QDF_STATUS wma_wmi_work_close(void)
 }
 
 /**
- * wma_cleanup_dbs_phy_caps() - release memory allocated for holding ext cap
- * @wma_handle: pointer to wma handle
- *
- * This function releases all the memory created for holding extended
- * capabilities per hardware mode and per PHY
- *
- * Return: void
- */
-static void wma_cleanup_dbs_phy_caps(t_wma_handle *wma_handle)
-{
-	if (NULL == wma_handle) {
-		WMA_LOGE("%s: Invalid wma handle", __func__);
-		return;
-	}
-
-	if (wma_handle->phy_caps.hw_mode_to_mac_cap_map) {
-		qdf_mem_free(wma_handle->phy_caps.hw_mode_to_mac_cap_map);
-		wma_handle->phy_caps.hw_mode_to_mac_cap_map = NULL;
-		WMA_LOGD("%s: hw_mode_to_mac_cap_map freed", __func__);
-	}
-
-	if (wma_handle->phy_caps.each_hw_mode_cap) {
-		qdf_mem_free(wma_handle->phy_caps.each_hw_mode_cap);
-		wma_handle->phy_caps.each_hw_mode_cap = NULL;
-		WMA_LOGD("%s: each_hw_mode_cap freed", __func__);
-	}
-
-	if (wma_handle->phy_caps.each_phy_cap_per_hwmode) {
-		qdf_mem_free(wma_handle->phy_caps.each_phy_cap_per_hwmode);
-		wma_handle->phy_caps.each_phy_cap_per_hwmode = NULL;
-		WMA_LOGD("%s: each_phy_cap_per_hwmode freed", __func__);
-	}
-
-	if (wma_handle->phy_caps.each_phy_hal_reg_cap) {
-		qdf_mem_free(wma_handle->phy_caps.each_phy_hal_reg_cap);
-		wma_handle->phy_caps.each_phy_hal_reg_cap = NULL;
-		WMA_LOGD("%s: each_phy_hal_reg_cap freed", __func__);
-	}
-}
-
-/**
  * wma_close() - wma close function.
  *               cleanup resources attached with wma.
  *
@@ -4373,7 +4333,7 @@ QDF_STATUS wma_close(void)
 		wma_handle->hw_mode.hw_mode_list = NULL;
 		WMA_LOGD("%s: DBS list is freed", __func__);
 	}
-	wma_cleanup_dbs_phy_caps(wma_handle);
+
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_EXTSCAN
 		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
@@ -4724,7 +4684,6 @@ wma_update_target_vht_cap(struct target_psoc_info *tgt_hdl,
 
 /**
  * wma_update_supported_bands() - update supported bands from service ready ext
- * @wma_handle: pointer to wma handle
  * @supported_bands: Supported band given by FW through service ready ext params
  * @new_supported_bands: New supported band which needs to be updated by
  *			 this API which WMA layer understands
@@ -4734,16 +4693,12 @@ wma_update_target_vht_cap(struct target_psoc_info *tgt_hdl,
  *
  * Return: QDF_STATUS
  */
-static QDF_STATUS wma_update_supported_bands(t_wma_handle *wma_handle,
+static QDF_STATUS wma_update_supported_bands(
 			WLAN_BAND_CAPABILITY supported_bands,
 			WMI_PHY_CAPABILITY *new_supported_bands)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (!wma_handle) {
-		WMA_LOGE("%s: NULL wma_handle", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
 	if (!new_supported_bands) {
 		WMA_LOGE("%s: NULL new supported band variable", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -4765,7 +4720,6 @@ static QDF_STATUS wma_update_supported_bands(t_wma_handle *wma_handle,
 
 /**
  * wma_derive_ext_ht_cap() - Derive HT caps based on given value
- * @wma_handle: pointer to wma_handle
  * @ht_cap: given pointer to HT caps which needs to be updated
  * @tx_chain: given tx chainmask value
  * @rx_chain: given rx chainmask value
@@ -4778,13 +4732,13 @@ static QDF_STATUS wma_update_supported_bands(t_wma_handle *wma_handle,
  * Return: none
  *
  */
-static void wma_derive_ext_ht_cap(tp_wma_handle wma_handle,
+static void wma_derive_ext_ht_cap(
 			struct wma_tgt_ht_cap *ht_cap, uint32_t value,
 			uint32_t tx_chain, uint32_t rx_chain)
 {
 	struct wma_tgt_ht_cap tmp = {0};
 
-	if (NULL == wma_handle || NULL == ht_cap)
+	if (ht_cap == NULL)
 		return;
 
 	if (!qdf_mem_cmp(ht_cap, &tmp, sizeof(struct wma_tgt_ht_cap))) {
@@ -4821,7 +4775,7 @@ static void wma_derive_ext_ht_cap(tp_wma_handle wma_handle,
 
 /**
  * wma_update_target_ext_ht_cap() - Update HT caps with given extended cap
- * @wma_handle: pointer to wma_handle
+ * @tgt_hdl - target psoc information
  * @ht_cap: HT cap structure to be filled
  *
  * This function loop through each hardware mode and for each hardware mode
@@ -4831,43 +4785,44 @@ static void wma_derive_ext_ht_cap(tp_wma_handle wma_handle,
  * Return: none
  *
  */
-static void wma_update_target_ext_ht_cap(tp_wma_handle wma_handle,
-		struct wma_tgt_ht_cap *ht_cap)
+static void wma_update_target_ext_ht_cap(struct target_psoc_info *tgt_hdl,
+					 struct wma_tgt_ht_cap *ht_cap)
 {
 	int i, j = 0, max_mac;
 	uint32_t ht_2g, ht_5g;
 	struct wma_tgt_ht_cap tmp_ht_cap = {0}, tmp_cap = {0};
-	struct extended_caps *phy_caps;
-	WMI_MAC_PHY_CAPABILITIES *mac_cap;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+	int num_hw_modes;
 
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	/*
 	 * for legacy device extended cap might not even come, so in that case
 	 * don't overwrite legacy values
 	 */
-	if (!wma_handle ||
-		(0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes)) {
+	if (!num_hw_modes) {
 		WMA_LOGD("%s: No extended HT cap for current SOC", __func__);
 		return;
 	}
 
-	phy_caps = &wma_handle->phy_caps;
-	for (i = 0; i < phy_caps->num_hw_modes.num_hw_modes; i++) {
-		if (phy_caps->each_hw_mode_cap[i].phy_id_map == PHY1_PHY2)
+	for (i = 0; i < num_hw_modes; i++) {
+		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
 			max_mac = j + 2;
 		else
 			max_mac = j + 1;
 		for ( ; j < max_mac; j++) {
-			mac_cap = &phy_caps->each_phy_cap_per_hwmode[j];
-			ht_2g = mac_cap->ht_cap_info_2G;
-			ht_5g = mac_cap->ht_cap_info_5G;
+			ht_2g = mac_phy_cap[j].ht_cap_info_2G;
+			ht_5g = mac_phy_cap[j].ht_cap_info_5G;
 			if (ht_2g)
-				wma_derive_ext_ht_cap(wma_handle, &tmp_ht_cap,
-					ht_2g, mac_cap->tx_chain_mask_2G,
-					mac_cap->rx_chain_mask_2G);
+				wma_derive_ext_ht_cap(&tmp_ht_cap,
+						      ht_2g,
+					mac_phy_cap[j].tx_chain_mask_2G,
+					mac_phy_cap[j].rx_chain_mask_2G);
 			if (ht_5g)
-				wma_derive_ext_ht_cap(wma_handle, &tmp_ht_cap,
-					ht_5g, mac_cap->tx_chain_mask_5G,
-					mac_cap->rx_chain_mask_5G);
+				wma_derive_ext_ht_cap(&tmp_ht_cap,
+						      ht_5g,
+					mac_phy_cap[j].tx_chain_mask_5G,
+					mac_phy_cap[j].rx_chain_mask_5G);
 		}
 	}
 
@@ -4888,7 +4843,6 @@ static void wma_update_target_ext_ht_cap(tp_wma_handle wma_handle,
 
 /**
  * wma_derive_ext_vht_cap() - Derive VHT caps based on given value
- * @wma_handle: pointer to wma_handle
  * @vht_cap: pointer to given VHT caps to be filled
  * @value: new VHT cap info provided in form of bitmask
  *
@@ -4899,13 +4853,13 @@ static void wma_update_target_ext_ht_cap(tp_wma_handle wma_handle,
  * Return: none
  *
  */
-static void wma_derive_ext_vht_cap(t_wma_handle *wma_handle,
+static void wma_derive_ext_vht_cap(
 			struct wma_tgt_vht_cap *vht_cap, uint32_t value)
 {
 	struct wma_tgt_vht_cap tmp_cap = {0};
 	uint32_t tmp = 0;
 
-	if (NULL == wma_handle || NULL == vht_cap)
+	if (vht_cap == NULL)
 		return;
 
 	if (!qdf_mem_cmp(vht_cap, &tmp_cap,
@@ -4994,7 +4948,7 @@ static void wma_derive_ext_vht_cap(t_wma_handle *wma_handle,
 
 /**
  * wma_update_target_ext_vht_cap() - Update VHT caps with given extended cap
- * @wma_handle: pointer to wma_handle
+ * @tgt_hdl - target psoc information
  * @vht_cap: VHT cap structure to be filled
  *
  * This function loop through each hardware mode and for each hardware mode
@@ -5004,41 +4958,40 @@ static void wma_derive_ext_vht_cap(t_wma_handle *wma_handle,
  * Return: none
  *
  */
-static void wma_update_target_ext_vht_cap(t_wma_handle *wma_handle,
-		struct wma_tgt_vht_cap *vht_cap)
+static void wma_update_target_ext_vht_cap(struct target_psoc_info *tgt_hdl,
+					  struct wma_tgt_vht_cap *vht_cap)
 {
-	int i, j = 0, max_mac;
+	int i, j = 0, max_mac, num_hw_modes;
 	uint32_t vht_cap_info_2g, vht_cap_info_5g;
 	struct wma_tgt_vht_cap tmp_vht_cap = {0}, tmp_cap = {0};
-	struct extended_caps *phy_caps;
-	WMI_MAC_PHY_CAPABILITIES *mac_cap;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
+
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 
 	/*
 	 * for legacy device extended cap might not even come, so in that case
 	 * don't overwrite legacy values
 	 */
-	if (!wma_handle ||
-		(0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes)) {
+	if (num_hw_modes) {
 		WMA_LOGD("%s: No extended VHT cap for current SOC", __func__);
 		return;
 	}
 
-	phy_caps = &wma_handle->phy_caps;
-	for (i = 0; i < phy_caps->num_hw_modes.num_hw_modes; i++) {
-		if (phy_caps->each_hw_mode_cap[i].phy_id_map == PHY1_PHY2)
+	for (i = 0; i < num_hw_modes; i++) {
+		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
 			max_mac = j + 2;
 		else
 			max_mac = j + 1;
 		for ( ; j < max_mac; j++) {
-			mac_cap = &phy_caps->each_phy_cap_per_hwmode[j];
-			vht_cap_info_2g = mac_cap->vht_cap_info_2G;
-			vht_cap_info_5g = mac_cap->vht_cap_info_5G;
+			vht_cap_info_2g = mac_phy_cap[j].vht_cap_info_2G;
+			vht_cap_info_5g = mac_phy_cap[j].vht_cap_info_5G;
 			if (vht_cap_info_2g)
-				wma_derive_ext_vht_cap(wma_handle, &tmp_vht_cap,
-					vht_cap_info_2g);
+				wma_derive_ext_vht_cap(&tmp_vht_cap,
+						       vht_cap_info_2g);
 			if (vht_cap_info_5g)
-				wma_derive_ext_vht_cap(wma_handle, &tmp_vht_cap,
-					vht_cap_info_5g);
+				wma_derive_ext_vht_cap(&tmp_vht_cap,
+						       vht_cap_info_5g);
 		}
 	}
 
@@ -5171,10 +5124,10 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	 * This will overwrite the structure filled by wma_update_target_ht_cap
 	 * and wma_update_target_vht_cap APIs.
 	 */
-	wma_update_target_ext_ht_cap(wma_handle, &tgt_cfg.ht_cap);
-	wma_update_target_ext_vht_cap(wma_handle, &tgt_cfg.vht_cap);
+	wma_update_target_ext_ht_cap(tgt_hdl, &tgt_cfg.ht_cap);
+	wma_update_target_ext_vht_cap(tgt_hdl, &tgt_cfg.vht_cap);
 
-	wma_update_target_ext_he_cap(wma_handle, &tgt_cfg);
+	wma_update_target_ext_he_cap(tgt_hdl, &tgt_cfg);
 
 	tgt_cfg.target_fw_version = target_if_get_fw_version(tgt_hdl);
 	if (service_ext_param)
@@ -5247,7 +5200,7 @@ static void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
 
 /**
  * wma_init_scan_fw_mode_config() - Initialize scan/fw mode config
- * @wma_handle: WMA handle
+ * @psoc: Object manager psoc
  * @scan_config: Scam mode configuration
  * @fw_config: FW mode configuration
  *
@@ -5256,18 +5209,18 @@ static void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
  *
  * Return: None
  */
-static void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle,
+static void wma_init_scan_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 					 uint32_t scan_config,
 					 uint32_t fw_config)
 {
 	WMA_LOGD("%s: Enter", __func__);
 
-	if (!wma_handle) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
+	if (!psoc) {
+		WMA_LOGE("%s: obj psoc is NULL", __func__);
 		return;
 	}
 
-	policy_mgr_init_dbs_config(wma_handle->psoc, scan_config, fw_config);
+	policy_mgr_init_dbs_config(psoc, scan_config, fw_config);
 }
 
 /**
@@ -5384,7 +5337,7 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	 * This is to ensure that no garbage values would be
 	 * present in the absence of ext service ready event.
 	 */
-	wma_init_scan_fw_mode_config(wma_handle, 0, 0);
+	wma_init_scan_fw_mode_config(wma_handle->psoc, 0, 0);
 
 	qdf_mem_copy(&wma_handle->reg_cap, param_buf->hal_reg_capabilities,
 				 sizeof(HAL_REG_CAPABILITIES));
@@ -5619,8 +5572,7 @@ free_hw_mode_list:
  * wma_get_phyid_for_given_band() - to get phyid for band
  *
  * @wma_handle: Pointer to wma handle
- * @map: Pointer to map which is derived from hw mode & has mapping between
- *       hw mode and available PHYs for that hw mode.
+*  @tgt_hdl: target psoc information
  * @band: enum value of for 2G or 5G band
  * @phyid: Pointer to phyid which needs to be filled
  *
@@ -5632,33 +5584,30 @@ free_hw_mode_list:
  */
 static QDF_STATUS wma_get_phyid_for_given_band(
 			tp_wma_handle wma_handle,
-			struct hw_mode_idx_to_mac_cap_idx *map,
+			struct target_psoc_info *tgt_hdl,
 			enum cds_band_type band, uint8_t *phyid)
 {
-	uint8_t idx, i;
-	WMI_MAC_PHY_CAPABILITIES *cap;
+	uint8_t idx, i, num_radios;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 
 	if (!wma_handle) {
 		WMA_LOGE("Invalid wma handle");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!map) {
-		WMA_LOGE("Invalid given map");
-		return QDF_STATUS_E_FAILURE;
-	}
-	idx = map->mac_cap_idx;
+	idx = 0;
 	*phyid = idx;
+	num_radios = target_psoc_get_num_radios(tgt_hdl);
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 
-	for (i = 0; i < map->num_of_macs; i++) {
-		cap = &wma_handle->phy_caps.each_phy_cap_per_hwmode[idx + i];
+	for (i = 0; i < num_radios; i++) {
 		if ((band == CDS_BAND_2GHZ) &&
-				(WLAN_2G_CAPABILITY == cap->supported_bands)) {
+		(WLAN_2G_CAPABILITY == mac_phy_cap[idx + i].supported_bands)) {
 			*phyid = idx + i;
 			WMA_LOGD("Select 2G capable phyid[%d]", *phyid);
 			return QDF_STATUS_SUCCESS;
 		} else if ((band == CDS_BAND_5GHZ) &&
-				(WLAN_5G_CAPABILITY == cap->supported_bands)) {
+		(WLAN_5G_CAPABILITY == mac_phy_cap[idx + i].supported_bands)) {
 			*phyid = idx + i;
 			WMA_LOGD("Select 5G capable phyid[%d]", *phyid);
 			return QDF_STATUS_SUCCESS;
@@ -5684,11 +5633,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		enum hw_mode_dbs_capab hw_mode, enum cds_band_type band)
 {
 	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
-	struct hw_mode_idx_to_mac_cap_idx *map;
-	WMI_MAC_PHY_CAPABILITIES *phy_cap;
-	uint8_t phyid, our_hw_mode = hw_mode;
 	struct target_psoc_info *tgt_hdl;
 	int ht_cap_info, vht_cap_info;
+	uint8_t phyid, our_hw_mode = hw_mode, num_hw_modes;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap;
 
 	if (!wma_handle) {
 		WMA_LOGE("Invalid wma handle");
@@ -5703,8 +5651,10 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 
 	ht_cap_info = target_if_get_ht_cap_info(tgt_hdl);
 	vht_cap_info = target_if_get_vht_cap_info(tgt_hdl);
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 
-	if (0 == wma_handle->phy_caps.num_hw_modes.num_hw_modes) {
+	if (!num_hw_modes) {
 		WMA_LOGD("Invalid number of hw modes, use legacy HT/VHT caps");
 		caps_per_phy->ht_2g = ht_cap_info;
 		caps_per_phy->ht_5g = ht_cap_info;
@@ -5725,21 +5675,18 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	map = &wma_handle->phy_caps.hw_mode_to_mac_cap_map[our_hw_mode];
-
 	if (QDF_STATUS_SUCCESS !=
-		wma_get_phyid_for_given_band(wma_handle, map, band, &phyid)) {
+		wma_get_phyid_for_given_band(wma_handle, tgt_hdl, band, &phyid)) {
 		WMA_LOGE("Invalid phyid");
 		return QDF_STATUS_E_FAILURE;
 	}
-	phy_cap = &wma_handle->phy_caps.each_phy_cap_per_hwmode[phyid];
 
-	caps_per_phy->ht_2g = phy_cap->ht_cap_info_2G;
-	caps_per_phy->ht_5g = phy_cap->ht_cap_info_5G;
-	caps_per_phy->vht_2g = phy_cap->vht_cap_info_2G;
-	caps_per_phy->vht_5g = phy_cap->vht_cap_info_5G;
-	caps_per_phy->he_2g = phy_cap->he_cap_info_2G;
-	caps_per_phy->he_5g = phy_cap->he_cap_info_5G;
+	caps_per_phy->ht_2g = mac_phy_cap[phyid].ht_cap_info_2G;
+	caps_per_phy->ht_5g = mac_phy_cap[phyid].ht_cap_info_5G;
+	caps_per_phy->vht_2g = mac_phy_cap[phyid].vht_cap_info_2G;
+	caps_per_phy->vht_5g = mac_phy_cap[phyid].vht_cap_info_5G;
+	caps_per_phy->he_2g = mac_phy_cap[phyid].he_cap_info_2G;
+	caps_per_phy->he_5g = mac_phy_cap[phyid].he_cap_info_5G;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -5755,14 +5702,24 @@ QDF_STATUS wma_get_caps_for_phyidx_hwmode(struct wma_caps_per_phy *caps_per_phy,
 bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 {
 	t_wma_handle *wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	struct target_psoc_info *tgt_hdl;
 	struct wma_caps_per_phy caps_per_phy = {0};
 	enum cds_band_type band;
 	bool status;
+	uint8_t num_hw_modes;
 
 	if (!wma_handle) {
 		WMA_LOGE("Invalid wma handle");
 		return false;
 	}
+
+	tgt_hdl = wlan_psoc_get_tgt_if_handle(wma_handle->psoc);
+	if (!tgt_hdl) {
+		WMA_LOGE("Target handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 
 	if (!WLAN_REG_IS_24GHZ_CH(channel))
 		band = CDS_BAND_5GHZ;
@@ -5780,7 +5737,7 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
 	 * capability. But new platforms like Helium set WMI_HT_CAP_RX_LDPC
 	 * instead.
 	 */
-	if (wma_handle->phy_caps.num_hw_modes.num_hw_modes == 0) {
+	if (0 == num_hw_modes) {
 		status = (!!(caps_per_phy.ht_2g & WMI_HT_CAP_LDPC));
 	} else {
 		if (WLAN_REG_IS_24GHZ_CH(channel))
@@ -5799,31 +5756,24 @@ bool wma_is_rx_ldpc_supported_for_channel(uint32_t channel)
  *
  * Return: none
  */
-static void wma_print_mac_phy_capabilities(WMI_MAC_PHY_CAPABILITIES *cap,
-					   int index)
+static void wma_print_mac_phy_capabilities(struct wlan_psoc_host_mac_phy_caps
+					   *cap, int index)
 {
 	uint32_t mac_2G, mac_5G;
 	uint32_t phy_2G[WMI_MAX_HECAP_PHY_SIZE];
 	uint32_t phy_5G[WMI_MAX_HECAP_PHY_SIZE];
-	wmi_ppe_threshold ppet_2G, ppet_5G;
+	struct wlan_psoc_host_ppe_threshold ppet_2G, ppet_5G;
 
 	WMA_LOGI("\t: index [%d]", index);
 	WMA_LOGI("\t: cap for hw_mode_id[%d]", cap->hw_mode_id);
 	WMA_LOGI("\t: pdev_id[%d]", cap->pdev_id);
 	WMA_LOGI("\t: phy_id[%d]", cap->phy_id);
-	WMA_LOGI("\t: supports_11b[%d]",
-		WMI_SUPPORT_11B_GET(cap->supported_flags));
-	WMA_LOGI("\t: supports_11g[%d]",
-		WMI_SUPPORT_11G_GET(cap->supported_flags));
-	WMA_LOGI("\t: supports_11a[%d]",
-		WMI_SUPPORT_11A_GET(cap->supported_flags));
-	WMA_LOGI("\t: supports_11n[%d]",
-		WMI_SUPPORT_11N_GET(cap->supported_flags));
-	WMA_LOGI("\t: supports_11ac[%d]",
-		WMI_SUPPORT_11AC_GET(cap->supported_flags));
-	WMA_LOGI("\t: supports_11ax[%d]",
-		WMI_SUPPORT_11AX_GET(cap->supported_flags));
-	WMA_LOGI("\t: supported_flags[%d]", cap->supported_flags);
+	WMA_LOGI("\t: supports_11b[%d]", cap->supports_11b);
+	WMA_LOGI("\t: supports_11g[%d]", cap->supports_11g);
+	WMA_LOGI("\t: supports_11a[%d]", cap->supports_11a);
+	WMA_LOGI("\t: supports_11n[%d]", cap->supports_11n);
+	WMA_LOGI("\t: supports_11ac[%d]", cap->supports_11ac);
+	WMA_LOGI("\t: supports_11ax[%d]", cap->supports_11ax);
 	WMA_LOGI("\t: supported_bands[%d]", cap->supported_bands);
 	WMA_LOGI("\t: ampdu_density[%d]", cap->ampdu_density);
 	WMA_LOGI("\t: max_bw_supported_2G[%d]", cap->max_bw_supported_2G);
@@ -5861,34 +5811,35 @@ static void wma_print_mac_phy_capabilities(WMI_MAC_PHY_CAPABILITIES *cap,
 
 /**
  * wma_print_populate_soc_caps() - Prints all the caps populated per hw mode
- * @wma_handle: pointer to wma_handle
+ * @tgt_info: target related info
  *
  * This function prints all the caps populater per hw mode and per PHY
  *
  * Return: none
  */
-static void wma_print_populate_soc_caps(t_wma_handle *wma_handle)
+static void wma_print_populate_soc_caps(struct target_psoc_info *tgt_hdl)
 {
-	int i, j = 0, max_mac;
-	WMI_MAC_PHY_CAPABILITIES *tmp;
+	int i, j = 0, max_mac, num_hw_modes;
+	struct wlan_psoc_host_mac_phy_caps *mac_phy_cap, *tmp;
+
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
 
 	/* print number of hw modes */
-	WMA_LOGD("%s: num of hw modes [%d]", __func__,
-		wma_handle->phy_caps.num_hw_modes.num_hw_modes);
+	WMA_LOGD("%s: num of hw modes [%d]", __func__, num_hw_modes);
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
 	WMA_LOGD("%s: <====== HW mode cap printing starts ======>", __func__);
 	/* print cap of each hw mode */
-	for (i = 0; i < wma_handle->phy_caps.num_hw_modes.num_hw_modes; i++) {
+	for (i = 0; i < num_hw_modes; i++) {
 		WMA_LOGD("====>: hw mode id[%d], phy_id map[%d]",
-			wma_handle->phy_caps.each_hw_mode_cap[i].hw_mode_id,
-			wma_handle->phy_caps.each_hw_mode_cap[i].phy_id_map);
-		if (wma_handle->phy_caps.each_hw_mode_cap[i].phy_id_map ==
-								PHY1_PHY2)
+			mac_phy_cap[i].hw_mode_id,
+			mac_phy_cap[i].phy_id);
+		if (mac_phy_cap[i].phy_id == PHY1_PHY2)
 			max_mac = j + 2;
 		else
 			max_mac = j + 1;
 
 		for ( ; j < max_mac; j++) {
-			tmp = &wma_handle->phy_caps.each_phy_cap_per_hwmode[j];
+			tmp = &mac_phy_cap[j];
 			wma_print_mac_phy_capabilities(tmp, j);
 		}
 	}
@@ -5940,7 +5891,7 @@ static enum hw_mode_bandwidth wma_map_wmi_channel_width_to_hw_mode_bw(
  *
  * Return: none
  */
-static void wma_get_hw_mode_params(WMI_MAC_PHY_CAPABILITIES *caps,
+static void wma_get_hw_mode_params(struct wlan_psoc_host_mac_phy_caps *caps,
 			struct mac_ss_bw_info *info)
 {
 	if (!caps) {
@@ -6022,32 +5973,24 @@ static void wma_set_hw_mode_params(t_wma_handle *wma_handle,
 static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 					  struct target_psoc_info *tgt_hdl)
 {
-	struct extended_caps *phy_caps;
-	WMI_MAC_PHY_CAPABILITIES *tmp;
+	struct wlan_psoc_host_mac_phy_caps *tmp, *mac_phy_cap;
 	uint32_t i, hw_config_type, j = 0;
 	uint32_t dbs_mode, sbs_mode;
 	struct mac_ss_bw_info mac0_ss_bw_info = {0};
 	struct mac_ss_bw_info mac1_ss_bw_info = {0};
 	WMI_PHY_CAPABILITY new_supported_band = 0;
 	bool supported_band_update_failure = false;
+	struct wlan_psoc_target_capability_info *tgt_cap_info;
+	int num_hw_modes;
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	phy_caps = &wma_handle->phy_caps;
-	if (!phy_caps) {
-		WMA_LOGE("%s: Invalid phy capabilities", __func__);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	if (!phy_caps->num_hw_modes.num_hw_modes) {
-		WMA_LOGE("%s: Number of HW modes: %d",
-			 __func__, phy_caps->num_hw_modes.num_hw_modes);
-		return QDF_STATUS_SUCCESS;
-	}
-
+	num_hw_modes = target_psoc_get_num_hw_modes(tgt_hdl);
+	mac_phy_cap = target_psoc_get_mac_phy_cap(tgt_hdl);
+	tgt_cap_info = target_psoc_get_target_caps(tgt_hdl);
 	/*
 	 * This list was updated as part of service ready event. Re-populate
 	 * HW mode list from the device capabilities.
@@ -6058,32 +6001,30 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 		WMA_LOGD("%s: DBS list is freed", __func__);
 	}
 
-	wma_handle->num_dbs_hw_modes = phy_caps->num_hw_modes.num_hw_modes;
 	wma_handle->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*wma_handle->hw_mode.hw_mode_list) *
-			       wma_handle->num_dbs_hw_modes);
+			       num_hw_modes);
 	if (!wma_handle->hw_mode.hw_mode_list) {
 		WMA_LOGE("%s: Memory allocation failed for DBS", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("%s: Updated HW mode list: Num modes:%d",
-		 __func__, wma_handle->num_dbs_hw_modes);
+		 __func__, num_hw_modes);
 
-	for (i = 0; i < wma_handle->num_dbs_hw_modes; i++) {
+	for (i = 0; i < num_hw_modes; i++) {
 		/* Update for MAC0 */
-		tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+		tmp = &mac_phy_cap[j++];
 		wma_get_hw_mode_params(tmp, &mac0_ss_bw_info);
-		hw_config_type =
-			phy_caps->each_hw_mode_cap[i].hw_mode_config_type;
+		hw_config_type = mac_phy_cap[j].hw_mode_config_type;
 		dbs_mode = HW_MODE_DBS_NONE;
 		sbs_mode = HW_MODE_SBS_NONE;
 		mac1_ss_bw_info.mac_tx_stream = 0;
 		mac1_ss_bw_info.mac_rx_stream = 0;
 		mac1_ss_bw_info.mac_bw = 0;
-		if (QDF_STATUS_SUCCESS != wma_update_supported_bands(wma_handle,
-						tmp->supported_bands,
-						&new_supported_band))
+		if (wma_update_supported_bands(tmp->supported_bands,
+						&new_supported_band)
+		   != QDF_STATUS_SUCCESS)
 			supported_band_update_failure = true;
 
 		/* SBS and DBS have dual MAC. Upto 2 MACs are considered. */
@@ -6091,7 +6032,7 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 		    (hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
 		    (hw_config_type == WMI_HW_MODE_SBS)) {
 			/* Update for MAC1 */
-			tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+			tmp = &mac_phy_cap[j++];
 			wma_get_hw_mode_params(tmp, &mac1_ss_bw_info);
 			if (hw_config_type == WMI_HW_MODE_DBS)
 				dbs_mode = HW_MODE_DBS;
@@ -6099,8 +6040,7 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 			    (hw_config_type == WMI_HW_MODE_SBS))
 				sbs_mode = HW_MODE_SBS;
 			if (QDF_STATUS_SUCCESS !=
-					wma_update_supported_bands(wma_handle,
-						tmp->supported_bands,
+			wma_update_supported_bands(tmp->supported_bands,
 						&new_supported_band))
 				supported_band_update_failure = true;
 		}
@@ -6121,7 +6061,7 @@ static QDF_STATUS wma_update_hw_mode_list(t_wma_handle *wma_handle,
 
 	if (QDF_STATUS_SUCCESS !=
 			policy_mgr_update_hw_mode_list(wma_handle->psoc,
-						       phy_caps))
+						       tgt_hdl))
 		WMA_LOGE("%s: failed to update policy manager", __func__);
 	wma_dump_dbs_hw_mode(wma_handle);
 	return QDF_STATUS_SUCCESS;
@@ -6146,6 +6086,7 @@ static void wma_init_wifi_pos_dma_rings(t_wma_handle *wma_handle,
 /**
  * wma_populate_soc_caps() - populate entire SOC's capabilities
  * @wma_handle: pointer to wma global structure
+ * @tgt_hdl: target psoc information
  * @param_buf: pointer to param of service ready extension event from fw
  *
  * This API populates all capabilities of entire SOC. For example,
@@ -6156,152 +6097,17 @@ static void wma_init_wifi_pos_dma_rings(t_wma_handle *wma_handle,
  * Return: none
  */
 static void wma_populate_soc_caps(t_wma_handle *wma_handle,
+				  struct target_psoc_info *tgt_hdl,
 			WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf)
 {
-	int i, num_of_mac_caps = 0, tmp = 0;
-	struct extended_caps *phy_caps;
-	struct hw_mode_idx_to_mac_cap_idx *map;
 
 	WMA_LOGD("%s: Enter", __func__);
-
-	if (!wma_handle) {
-		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return;
-	}
-
-	if (!param_buf) {
-		WMA_LOGE("%s: Invalid event", __func__);
-		return;
-	}
-	phy_caps = &wma_handle->phy_caps;
-
-	/*
-	 * first thing to do is to get how many number of hw modes are
-	 * supported and populate in wma_handle global structure
-	 */
-	if (NULL == param_buf->soc_hw_mode_caps) {
-		WMA_LOGE("%s: Invalid number of hw modes", __func__);
-		return;
-	}
-
-	if ((param_buf->soc_hw_mode_caps->num_hw_modes > MAX_NUM_HW_MODE) ||
-	    (param_buf->soc_hw_mode_caps->num_hw_modes >
-	    param_buf->num_hw_mode_caps)) {
-		WMA_LOGE("Invalid num_hw_modes %u received from firmware",
-			 param_buf->soc_hw_mode_caps->num_hw_modes);
-		return;
-	}
-
-	qdf_mem_copy(&phy_caps->num_hw_modes,
-			param_buf->soc_hw_mode_caps,
-			sizeof(WMI_SOC_MAC_PHY_HW_MODE_CAPS));
-	if (0 == phy_caps->num_hw_modes.num_hw_modes) {
-		WMA_LOGE("%s: Number of hw modes is zero", __func__);
-		return;
-	}
-	WMA_LOGD("%s: Given number of hw modes[%d]",
-		 __func__, phy_caps->num_hw_modes.num_hw_modes);
-
-	/*
-	 * next thing is to allocate the memory to map hw mode to phy/mac caps
-	 */
-	phy_caps->hw_mode_to_mac_cap_map =
-		qdf_mem_malloc(phy_caps->num_hw_modes.num_hw_modes *
-				sizeof(struct hw_mode_idx_to_mac_cap_idx));
-	if (!phy_caps->hw_mode_to_mac_cap_map) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
-		return;
-	}
-
-	/*
-	 * next thing is to allocate the memory for per hw caps
-	 */
-	phy_caps->each_hw_mode_cap =
-		qdf_mem_malloc(phy_caps->num_hw_modes.num_hw_modes *
-				sizeof(WMI_HW_MODE_CAPABILITIES));
-	if (!phy_caps->each_hw_mode_cap) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
-		wma_cleanup_dbs_phy_caps(wma_handle);
-		return;
-	}
-	qdf_mem_copy(phy_caps->each_hw_mode_cap,
-			param_buf->hw_mode_caps,
-			phy_caps->num_hw_modes.num_hw_modes *
-			sizeof(WMI_HW_MODE_CAPABILITIES));
-	/*
-	 * next thing is to count the number of mac cap to populate per
-	 * hw mode and generate map, so that our search can be done
-	 * efficiently which is O(1)
-	 */
-	for (i = 0; i < phy_caps->num_hw_modes.num_hw_modes; i++) {
-		map = &phy_caps->hw_mode_to_mac_cap_map[i];
-		if (phy_caps->each_hw_mode_cap[i].phy_id_map == PHY1_PHY2) {
-			tmp = num_of_mac_caps;
-			num_of_mac_caps = num_of_mac_caps +  2;
-			map->num_of_macs = 2;
-		} else {
-			tmp = num_of_mac_caps;
-			num_of_mac_caps = num_of_mac_caps + 1;
-			map->num_of_macs = 1;
-		}
-		map->mac_cap_idx = tmp;
-		map->hw_mode_id = phy_caps->each_hw_mode_cap[i].hw_mode_id;
-	}
-
-	/*
-	 * next thing is to populate each phy caps per hw mode
-	 */
-	phy_caps->each_phy_cap_per_hwmode =
-		qdf_mem_malloc(num_of_mac_caps *
-				sizeof(WMI_MAC_PHY_CAPABILITIES));
-	if (!phy_caps->each_phy_cap_per_hwmode) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
-		wma_cleanup_dbs_phy_caps(wma_handle);
-		return;
-	}
-	qdf_mem_copy(phy_caps->each_phy_cap_per_hwmode,
-			param_buf->mac_phy_caps,
-			num_of_mac_caps * sizeof(WMI_MAC_PHY_CAPABILITIES));
-
-	/*
-	 * next thing is to populate reg caps per phy
-	 */
-
-	if ((param_buf->soc_hal_reg_caps->num_phy > MAX_NUM_PHY) ||
-	    (param_buf->soc_hal_reg_caps->num_phy >
-	    param_buf->num_hal_reg_caps)) {
-		WMA_LOGE("Invalid num_phy %u received from firmware",
-			 param_buf->soc_hal_reg_caps->num_phy);
-		wma_cleanup_dbs_phy_caps(wma_handle);
-		return;
-	}
-
-	qdf_mem_copy(&phy_caps->num_phy_for_hal_reg_cap,
-			param_buf->soc_hal_reg_caps,
-			sizeof(WMI_SOC_HAL_REG_CAPABILITIES));
-	if (phy_caps->num_phy_for_hal_reg_cap.num_phy == 0) {
-		WMA_LOGE("%s: incorrect number of phys", __func__);
-		wma_cleanup_dbs_phy_caps(wma_handle);
-		return;
-	}
-	phy_caps->each_phy_hal_reg_cap =
-		qdf_mem_malloc(phy_caps->num_phy_for_hal_reg_cap.num_phy *
-				sizeof(WMI_HAL_REG_CAPABILITIES_EXT));
-	if (!phy_caps->each_phy_hal_reg_cap) {
-		WMA_LOGE("%s: Memory allocation failed", __func__);
-		wma_cleanup_dbs_phy_caps(wma_handle);
-		return;
-	}
-	qdf_mem_copy(phy_caps->each_phy_hal_reg_cap,
-			param_buf->hal_reg_caps,
-			phy_caps->num_phy_for_hal_reg_cap.num_phy *
-				sizeof(WMI_HAL_REG_CAPABILITIES_EXT));
 
 	wma_init_wifi_pos_dma_rings(wma_handle,
 				    param_buf->num_oem_dma_ring_caps,
 				    param_buf->oem_dma_ring_caps);
 
-	wma_print_populate_soc_caps(wma_handle);
+	wma_print_populate_soc_caps(tgt_hdl);
 }
 
 /**
@@ -6321,6 +6127,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	QDF_STATUS ret;
 	struct target_psoc_info *tgt_hdl;
 	uint32_t conc_scan_config_bits, fw_config_bits;
+
 	WMA_LOGD("%s: Enter", __func__);
 
 	if (!wma_handle) {
@@ -6359,7 +6166,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 		WMA_LOGE("Failed to stop the service ready ext timer");
 		return -EINVAL;
 	}
-	wma_populate_soc_caps(wma_handle, param_buf);
+	wma_populate_soc_caps(wma_handle, tgt_hdl, param_buf);
 
 	ret = wma_update_hw_mode_list(wma_handle, tgt_hdl);
 	if (QDF_IS_STATUS_ERROR(ret)) {
@@ -6369,7 +6176,7 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	WMA_LOGD("WMA --> WMI_INIT_CMDID");
 
-	wma_init_scan_fw_mode_config(wma_handle, conc_scan_config_bits,
+	wma_init_scan_fw_mode_config(wma_handle->psoc, conc_scan_config_bits,
 				     fw_config_bits);
 
 	target_psoc_set_num_radios(tgt_hdl, 1);

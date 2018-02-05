@@ -1477,7 +1477,6 @@ typedef struct {
 	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
-	struct extended_caps phy_caps;
 	qdf_atomic_t scan_id_counter;
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t wow_unspecified_wake_count;

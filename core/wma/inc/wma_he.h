@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -21,6 +21,7 @@
 
 #include "wma.h"
 #include "sir_api.h"
+#include "target_if.h"
 
 #ifdef WLAN_FEATURE_11AX
 /**
@@ -79,7 +80,7 @@ void wma_print_he_op(tDot11fIEhe_op *he_ops);
 
 /**
  * wma_update_target_ext_he_cap() - Update HE caps with given extended cap
- * @wma_handle: pointer to wma_handle
+ * @tgt_hdl: target psoc information
  * @tgt_cfg: Target config
  *
  * This function loop through each hardware mode and for each hardware mode
@@ -88,8 +89,8 @@ void wma_print_he_op(tDot11fIEhe_op *he_ops);
  *
  * Return: None
  */
-void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
-	struct wma_tgt_cfg *tgt_cfg);
+void wma_update_target_ext_he_cap(struct target_psoc_info *tgt_hdl,
+				  struct wma_tgt_cfg *tgt_cfg);
 
 /*
  * wma_he_update_tgt_services() - update tgt cfg to indicate 11ax support
@@ -250,7 +251,8 @@ static inline void wma_print_he_op(tDot11fIEhe_op *he_ops)
 {
 }
 
-static inline void wma_update_target_ext_he_cap(tp_wma_handle wma_handle,
+static inline void wma_update_target_ext_he_cap(struct
+						target_psoc_info *tgt_hdl,
 						struct wma_tgt_cfg *tgt_cfg)
 {
 }
