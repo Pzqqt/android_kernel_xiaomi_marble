@@ -1660,6 +1660,7 @@ struct wmi_soc {
 	HTC_ENDPOINT_ID wmi_endpoint_id[WMI_MAX_RADIOS];
 	uint16_t max_msg_len[WMI_MAX_RADIOS];
 	struct wmi_ops *ops;
+	const uint32_t *svc_ids;
 	uint32_t wmi_events[wmi_events_max];
 	/* WMI service bitmap recieved from target */
 	uint32_t *wmi_service_bitmap;
