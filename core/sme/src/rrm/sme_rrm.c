@@ -682,12 +682,7 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpRrmSMEContext sme_rrm_ctx = &mac_ctx->rrm.rrmSmeContext;
 	uint32_t session_id;
-	uint32_t max_chan_time;
 	tSirScanType scan_type;
-	uint64_t current_time;
-	struct scan_start_request *req;
-	struct wlan_objmgr_vdev *vdev;
-	uint32_t chan_num;
 
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
 			&sme_rrm_ctx->sessionBssId, &session_id);
@@ -712,6 +707,12 @@ static QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 
 	if ((eSIR_ACTIVE_SCAN == scan_type) ||
 			(eSIR_PASSIVE_SCAN == scan_type)) {
+		uint32_t max_chan_time;
+		uint64_t current_time;
+		struct scan_start_request *req;
+		struct wlan_objmgr_vdev *vdev;
+		uint32_t chan_num;
+
 		req = qdf_mem_malloc(sizeof(*req));
 		if (!req) {
 			sme_debug("Failed to allocate memory");
