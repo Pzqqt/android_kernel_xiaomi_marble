@@ -171,7 +171,8 @@ int init_deinit_populate_mac_phy_capability(void *handle, uint8_t *evt,
 			target_if_err("failed to parse mac phy capability");
 			return qdf_status_to_os_return(status);
 		}
-
+		info->mac_phy_cap[info->total_mac_phy_cnt].hw_mode_config_type
+					= hw_cap->hw_mode_config_type;
 		info->total_mac_phy_cnt++;
 		phy_bit_map &= (phy_bit_map - 1);
 		mac_phy_id++;

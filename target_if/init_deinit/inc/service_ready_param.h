@@ -116,6 +116,7 @@ struct wlan_psoc_host_ppe_threshold {
  *        by hw_mode_id.
  * @pdev_id: pdev_id starts with 1. pdev_id 1 => phy_id 0, pdev_id 2 => phy_id 1
  * @phy_id: Starts with 0
+ * @hw_mode_config_type: holds the enum wmi_hw_mode_config_type
  * @bitmap of supported modulations
  * @supported_bands: supported bands, enum WLAN_BAND_CAPABILITY
  * @ampdu_density: ampdu density 0 for no restriction, 1 for 1/4 us,
@@ -159,6 +160,7 @@ struct wlan_psoc_host_mac_phy_caps {
 	uint32_t hw_mode_id;
 	uint32_t pdev_id;
 	uint32_t phy_id;
+	int hw_mode_config_type;
 	uint32_t supports_11b:1,
 		 supports_11g:1,
 		 supports_11a:1,

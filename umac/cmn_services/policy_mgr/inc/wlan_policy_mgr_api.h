@@ -40,6 +40,8 @@
 #include "wlan_objmgr_psoc_obj.h"
 #include "wlan_policy_mgr_public_struct.h"
 
+struct target_psoc_info;
+
 typedef const enum policy_mgr_pcl_type
 	pm_dbs_pcl_second_connection_table_type
 	[PM_MAX_ONE_CONNECTION_MODE][PM_MAX_NUM_OF_MODE]
@@ -1922,8 +1924,7 @@ void policy_mgr_init_dbs_hw_mode(struct wlan_objmgr_psoc *psoc,
  * policy_mgr_update_hw_mode_list() - Function to initialize DBS
  * HW modes in policy manager component
  * @psoc: PSOC object information
- * @num_dbs_hw_modes: Number of HW modes
- * @ev_wlan_dbs_hw_mode_list: HW list
+ * @tgt_hdl: Target psoc information
  *
  * This function to initialize the DBS HW modes in policy
  * manager
@@ -1932,7 +1933,7 @@ void policy_mgr_init_dbs_hw_mode(struct wlan_objmgr_psoc *psoc,
  *
  */
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
-				struct extended_caps *phy_caps);
+					  struct target_psoc_info *tgt_hdl);
 
 /**
  * policy_mgr_update_hw_mode_index() - Function to update

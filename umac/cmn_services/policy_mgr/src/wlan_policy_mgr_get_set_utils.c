@@ -145,7 +145,8 @@ static enum hw_mode_bandwidth policy_mgr_map_wmi_channel_width_to_hw_mode_bw(
 	return HW_MODE_BW_NONE;
 }
 
-static void policy_mgr_get_hw_mode_params(WMI_MAC_PHY_CAPABILITIES *caps,
+static void policy_mgr_get_hw_mode_params(
+		struct wlan_psoc_host_mac_phy_caps *caps,
 		struct policy_mgr_mac_ss_bw_info *info)
 {
 	if (!caps) {
@@ -223,14 +224,15 @@ static void policy_mgr_set_hw_mode_params(struct wlan_objmgr_psoc *psoc,
 }
 
 QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
-		struct extended_caps *phy_caps)
+					  struct target_psoc_info *tgt_hdl)
 {
-	WMI_MAC_PHY_CAPABILITIES *tmp;
+	struct wlan_psoc_host_mac_phy_caps *tmp;
 	uint32_t i, hw_config_type, j = 0;
 	uint32_t dbs_mode, sbs_mode;
 	struct policy_mgr_mac_ss_bw_info mac0_ss_bw_info = {0};
 	struct policy_mgr_mac_ss_bw_info mac1_ss_bw_info = {0};
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	struct tgt_info *info;
 
 	pm_ctx = policy_mgr_get_context(psoc);
 	if (!pm_ctx) {
@@ -238,14 +240,10 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!phy_caps) {
-		policy_mgr_err("Invalid phy capabilities");
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!phy_caps->num_hw_modes.num_hw_modes) {
+	info = &tgt_hdl->info;
+	if (!info->service_ext_param.num_hw_modes) {
 		policy_mgr_err("Number of HW modes: %d",
-		phy_caps->num_hw_modes.num_hw_modes);
+			       info->service_ext_param.num_hw_modes);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -259,7 +257,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 		policy_mgr_debug("DBS list is freed");
 	}
 
-	pm_ctx->num_dbs_hw_modes = phy_caps->num_hw_modes.num_hw_modes;
+	pm_ctx->num_dbs_hw_modes = info->service_ext_param.num_hw_modes;
 	pm_ctx->hw_mode.hw_mode_list =
 		qdf_mem_malloc(sizeof(*pm_ctx->hw_mode.hw_mode_list) *
 		pm_ctx->num_dbs_hw_modes);
@@ -273,10 +271,9 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 
 	for (i = 0; i < pm_ctx->num_dbs_hw_modes; i++) {
 		/* Update for MAC0 */
-		tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+		tmp = &info->mac_phy_cap[j++];
 		policy_mgr_get_hw_mode_params(tmp, &mac0_ss_bw_info);
-		hw_config_type =
-		phy_caps->each_hw_mode_cap[i].hw_mode_config_type;
+		hw_config_type = tmp->hw_mode_config_type;
 		dbs_mode = HW_MODE_DBS_NONE;
 		sbs_mode = HW_MODE_SBS_NONE;
 		mac1_ss_bw_info.mac_tx_stream = 0;
@@ -288,7 +285,7 @@ QDF_STATUS policy_mgr_update_hw_mode_list(struct wlan_objmgr_psoc *psoc,
 			(hw_config_type == WMI_HW_MODE_SBS_PASSIVE) ||
 			(hw_config_type == WMI_HW_MODE_SBS)) {
 			/* Update for MAC1 */
-			tmp = &phy_caps->each_phy_cap_per_hwmode[j++];
+			tmp = &info->mac_phy_cap[j++];
 			policy_mgr_get_hw_mode_params(tmp, &mac1_ss_bw_info);
 			if (hw_config_type == WMI_HW_MODE_DBS)
 				dbs_mode = HW_MODE_DBS;
