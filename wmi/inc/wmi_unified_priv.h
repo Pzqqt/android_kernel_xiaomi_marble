@@ -56,6 +56,10 @@
 #include "nan_public_structs.h"
 #endif
 
+#ifdef WLAN_SUPPORT_TWT
+#include "wmi_unified_twt_param.h"
+#endif
+
 #define WMI_UNIFIED_MAX_EVENT 0x100
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
@@ -1563,6 +1567,49 @@ QDF_STATUS (*send_obss_color_collision_cfg_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_obss_color_collision_cfg_param *cfg);
 QDF_STATUS (*extract_obss_color_collision_info)(uint8_t *evt_buf,
 		struct wmi_obss_color_collision_info *info);
+#ifdef WLAN_SUPPORT_TWT
+QDF_STATUS (*send_twt_enable_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_enable_param *params);
+
+QDF_STATUS (*send_twt_disable_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_disable_param *params);
+
+QDF_STATUS (*send_twt_add_dialog_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_add_dialog_param *params);
+
+QDF_STATUS (*send_twt_del_dialog_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_del_dialog_param *params);
+
+QDF_STATUS (*send_twt_pause_dialog_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_pause_dialog_cmd_param *params);
+
+QDF_STATUS (*send_twt_resume_dialog_cmd)(wmi_unified_t wmi_handle,
+			struct wmi_twt_resume_dialog_cmd_param *params);
+
+QDF_STATUS (*extract_twt_enable_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_enable_complete_event_param *params);
+
+QDF_STATUS (*extract_twt_disable_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_disable_complete_event *params);
+
+QDF_STATUS (*extract_twt_add_dialog_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_add_dialog_complete_event_param *params);
+
+QDF_STATUS (*extract_twt_del_dialog_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_del_dialog_complete_event_param *params);
+
+QDF_STATUS (*extract_twt_pause_dialog_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_pause_dialog_complete_event_param *params);
+
+QDF_STATUS (*extract_twt_resume_dialog_comp_event)(wmi_unified_t wmi_handle,
+		uint8_t *evt_buf,
+		struct wmi_twt_resume_dialog_complete_event_param *params);
+#endif
 };
 
 /* Forward declartion for psoc*/

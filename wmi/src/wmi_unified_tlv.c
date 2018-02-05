@@ -23785,6 +23785,14 @@ static inline void wmi_ocb_ut_attach(struct wmi_unified *wmi_handle)
 }
 #endif
 
+#ifdef WLAN_SUPPORT_TWT
+void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle);
+#else
+static void wmi_twt_attach_tlv(struct wmi_unified *wmi_handle)
+{
+	return;
+}
+#endif
 /**
  * wmi_tlv_attach() - Attach TLV APIs
  *
@@ -23804,6 +23812,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 	populate_tlv_events_id(wmi_handle->wmi_events);
 	populate_tlv_service(wmi_handle->services);
 	populate_target_defines_tlv(wmi_handle);
+	wmi_twt_attach_tlv(wmi_handle);
 }
 qdf_export_symbol(wmi_tlv_attach);
 
