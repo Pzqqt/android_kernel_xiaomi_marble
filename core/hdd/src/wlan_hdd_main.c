@@ -4915,6 +4915,8 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 		cdp_clear_peer(cds_get_context(QDF_MODULE_ID_SOC),
 			(struct cdp_pdev *)cds_get_context(QDF_MODULE_ID_TXRX),
 			WLAN_HDD_GET_STATION_CTX_PTR(adapter)->conn_info.staId[0]);
+		hdd_deregister_tx_flow_control(adapter);
+		hdd_vdev_destroy(adapter);
 		break;
 	default:
 		break;
