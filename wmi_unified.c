@@ -2369,8 +2369,6 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 						uint32_t pdev_idx)
 {
 	int status;
-	uint32_t svc_id[] = {WMI_CONTROL_SVC, WMI_CONTROL_SVC_WMAC1,
-						WMI_CONTROL_SVC_WMAC2};
 	struct htc_service_connect_resp response;
 	struct htc_service_connect_req connect;
 
@@ -2391,7 +2389,7 @@ static int wmi_connect_pdev_htc_service(struct wmi_soc *soc,
 		wmi_htc_tx_complete /* ar6000_tx_queue_full */;
 
 	/* connect to control service */
-	connect.service_id = svc_id[pdev_idx];
+	connect.service_id = soc->svc_ids[pdev_idx];
 	status = htc_connect_service(soc->htc_handle, &connect,
 				&response);
 

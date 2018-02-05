@@ -32,13 +32,16 @@
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
 #include "wmi.h"
 #include "wmi_unified.h"
-
+#include <htc_services.h>
 
 /* pdev_id is used to distinguish the radio for which event
  * is recieved. Since non-tlv target has only one radio, setting
  * default pdev_id to one to keep rest of the code using WMI APIs unfiorm.
  */
 #define WMI_NON_TLV_DEFAULT_PDEV_ID WMI_HOST_PDEV_ID_0
+
+/* HTC service id for WMI */
+static const uint32_t svc_ids[] = {WMI_CONTROL_SVC};
 
 /**
  * send_vdev_create_cmd_non_tlv() - send VDEV create command to fw
@@ -9329,6 +9332,7 @@ void wmi_non_tlv_attach(struct wmi_unified *wmi_handle)
 {
 #if defined(WMI_NON_TLV_SUPPORT) || defined(WMI_TLV_AND_NON_TLV_SUPPORT)
 	wmi_handle->ops = &non_tlv_ops;
+	wmi_handle->soc->svc_ids = &svc_ids[0];
 	populate_non_tlv_service(wmi_handle->services);
 	populate_non_tlv_events_id(wmi_handle->wmi_events);
 	populate_pdev_param_non_tlv(wmi_handle->pdev_param);
