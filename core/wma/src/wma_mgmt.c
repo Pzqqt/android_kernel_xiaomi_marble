@@ -2967,8 +2967,19 @@ int wma_mgmt_tx_bundle_completion_handler(void *handle, uint8_t *buf,
 void wma_process_update_opmode(tp_wma_handle wma_handle,
 			       tUpdateVHTOpMode *update_vht_opmode)
 {
-	WMA_LOGD("%s: opMode = %d", __func__, update_vht_opmode->opMode);
+	struct wma_txrx_node *iface;
+	wmi_channel_width ch_width;
 
+	iface = &wma_handle->interfaces[update_vht_opmode->smesessionId];
+	ch_width = chanmode_to_chanwidth(iface->chanmode);
+
+	if (ch_width < update_vht_opmode->opMode) {
+		WMA_LOGE("%s: Invalid peer bw update %d, self bw %d",
+				__func__, update_vht_opmode->opMode,
+				ch_width);
+		return;
+	}
+	WMA_LOGD("%s: opMode = %d", __func__, update_vht_opmode->opMode);
 	wma_set_peer_param(wma_handle, update_vht_opmode->peer_mac,
 			   WMI_PEER_CHWIDTH, update_vht_opmode->opMode,
 			   update_vht_opmode->smesessionId);
