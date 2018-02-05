@@ -83,6 +83,7 @@
 #define CDP_MU_MAX_USERS 8
 #define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
 #define CDP_INVALID_PEER 0xffff
+#define CDP_INVALID_TID	 31
 
 #define CDP_DATA_TID_MAX 8
 /*

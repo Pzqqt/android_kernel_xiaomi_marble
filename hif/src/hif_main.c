@@ -939,6 +939,7 @@ enum hif_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx)
 
 	return scn->target_status;
 }
+qdf_export_symbol(hif_get_target_status);
 
 /**
  * hif_set_target_status() - API to set target status

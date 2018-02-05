@@ -31,6 +31,7 @@
 #include "wmi_unified_priv.h"
 #include "wmi_version_whitelist.h"
 #include <wlan_defs.h>
+#include <htc_services.h>
 
 #ifdef CONVERGED_P2P_ENABLE
 #include "wlan_p2p_public_struct.h"
@@ -46,6 +47,11 @@
 #ifdef WLAN_FEATURE_NAN_CONVERGENCE
 #include "nan_public_structs.h"
 #endif
+
+/* HTC service ids for WMI for multi-radio */
+static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
+				WMI_CONTROL_SVC_WMAC1,
+				WMI_CONTROL_SVC_WMAC2};
 
 /* copy_vdev_create_pdev_id() - copy pdev from host params to target command
  *                              buffer.
@@ -23773,6 +23779,7 @@ void wmi_tlv_attach(wmi_unified_t wmi_handle)
 {
 	wmi_handle->ops = &tlv_ops;
 	wmi_ocb_ut_attach(wmi_handle);
+	wmi_handle->soc->svc_ids = &multi_svc_ids[0];
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	/* Skip saving WMI_CMD_HDR and TLV HDR */
 	wmi_handle->log_info.buf_offset_command = 8;

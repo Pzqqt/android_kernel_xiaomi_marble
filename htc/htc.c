@@ -54,6 +54,13 @@ ATH_DEBUG_INSTANTIATE_MODULE_VAR(htc,
 
 #endif
 
+#if (defined(CONFIG_MCL) || (QCA_WIFI_QCA8074))
+static const uint32_t svc_id[] = {WMI_CONTROL_SVC, WMI_CONTROL_SVC_WMAC1,
+						WMI_CONTROL_SVC_WMAC2};
+#else
+static const uint32_t svc_id[] = {WMI_CONTROL_SVC};
+#endif
+
 extern unsigned int htc_credit_flow;
 
 static void reset_endpoint_states(HTC_TARGET *target);
@@ -471,8 +478,6 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 						   pEntry, credits);
 	} else {
 		int i;
-		uint32_t svc_id[] = {WMI_CONTROL_SVC, WMI_CONTROL_SVC_WMAC1,
-						WMI_CONTROL_SVC_WMAC2};
 		uint32_t max_wmi_svc = (sizeof(svc_id) / sizeof(uint32_t));
 
 		if ((target->wmi_ep_count == 0) ||

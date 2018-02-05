@@ -388,6 +388,7 @@ static struct service_to_pipe target_service_to_ce_map_wlan[] = {
 
 /* PIPEDIR_OUT = HOST to Target */
 /* PIPEDIR_IN  = TARGET to HOST */
+#if (defined(QCA_WIFI_QCA8074))
 static struct service_to_pipe target_service_to_ce_map_qca8074[] = {
 	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
 	{ WMI_DATA_VO_SVC, PIPEDIR_IN, 2, },
@@ -411,7 +412,12 @@ static struct service_to_pipe target_service_to_ce_map_qca8074[] = {
 	/* (Additions here) */
 	{ 0, 0, 0, },
 };
+#else
+static struct service_to_pipe target_service_to_ce_map_qca8074[] = {
+};
+#endif
 
+#if (defined(QCA_WIFI_QCA6290))
 #ifdef CONFIG_WIN
 static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
@@ -451,6 +457,10 @@ static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
 	/* (Additions here) */
 	{ 0, 0, 0, },
+};
+#endif
+#else
+static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 };
 #endif
 

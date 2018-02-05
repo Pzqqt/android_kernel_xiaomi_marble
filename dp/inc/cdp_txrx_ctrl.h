@@ -33,6 +33,8 @@
 #ifndef _CDP_TXRX_CTRL_H_
 #define _CDP_TXRX_CTRL_H_
 #include "cdp_txrx_handle.h"
+#include "cdp_txrx_cmn_struct.h"
+#include "cdp_txrx_ops.h"
 
 static inline int cdp_is_target_ar900b
 	(ol_txrx_soc_handle soc, struct cdp_vdev *vdev)

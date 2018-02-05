@@ -255,7 +255,9 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 	uint16_t payloadLen;
 	uint32_t trailerlen = 0;
 	uint8_t htc_ep_id;
+#ifdef HTC_MSG_WAKEUP_FROM_SUSPEND_ID
 	struct htc_init_info *info;
+#endif
 
 #ifdef RX_SG_SUPPORT
 	LOCK_HTC_RX(target);

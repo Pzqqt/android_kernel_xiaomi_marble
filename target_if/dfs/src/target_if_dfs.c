@@ -320,6 +320,7 @@ static QDF_STATUS target_if_dfs_register_event_handler(
 	}
 }
 
+#if (defined(CONFIG_MCL) || (QCA_WIFI_QCA8074))
 static QDF_STATUS target_process_bang_radar_cmd(
 		struct wlan_objmgr_pdev *pdev,
 		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
@@ -356,9 +357,16 @@ static QDF_STATUS target_process_bang_radar_cmd(
 	status = wmi_unified_unit_test_cmd(wmi_handle, &wmi_utest);
 	if (QDF_IS_STATUS_ERROR(status))
 		target_if_err("dfs: unit_test_cmd send failed %d", status);
-
 	return status;
 }
+#else
+static QDF_STATUS target_process_bang_radar_cmd(
+		struct wlan_objmgr_pdev *pdev,
+		struct dfs_emulate_bang_radar_test_cmd *dfs_unit_test)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 static QDF_STATUS target_if_dfs_is_pdev_5ghz(struct wlan_objmgr_pdev *pdev,
 		bool *is_5ghz)

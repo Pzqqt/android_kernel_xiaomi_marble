@@ -129,6 +129,14 @@ PERF_PWR_OFFLOAD_INC += -I$(PERF_PWR_OFFLOAD_DIR_PATH)/wlan/include \
  -I$(PERF_PWR_OFFLOAD_WMI_SRC)/inc \
  -I$(obj)/$(DEPTH)/offload/extra_include
 
+#Add HK/BL Fw header path required by common files
+ifeq (1, ${WIFI_TARGET_3_0})
+PERF_PWR_OFFLOAD_INC += -I$(PERF_PWR_OFFLOAD_DIR_PATH)/include/fwcommon \
+                       -I$(PERF_PWR_OFFLOAD_DIR_PATH)/include/fwcommon/htt_stats
+else
+PERF_PWR_OFFLOAD_INC += -I$(PERF_PWR_OFFLOAD_DIR_PATH)/include/legacy
+endif
+
 INCS += $(PERF_PWR_OFFLOAD_INC)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/spectral
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/wmi/inc
