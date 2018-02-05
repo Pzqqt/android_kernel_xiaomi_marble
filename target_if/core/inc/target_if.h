@@ -1779,5 +1779,211 @@ static inline QDF_STATUS target_if_sw_version_check(
 
 	return ret_val;
 }
+
+/**
+ * target_if_get_phy_capability  - get phy capability
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get phy capability from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_phy_capability
+			(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return -EINVAL;
+
+	return target_psoc_info->info.target_caps.phy_capability;
+}
+
+/**
+ * target_if_set_phy_capability  - set phy capability
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ * @phy_capab: PHY capabilities
+ *
+ * API to set phy capability in the target caps
+ *
+ * Return: None
+ */
+static inline void target_if_set_phy_capability
+		(struct target_psoc_info *target_psoc_info, int phy_capability)
+{
+	if (target_psoc_info == NULL)
+		return;
+
+	target_psoc_info->info.target_caps.phy_capability = phy_capability;
+}
+
+/**
+ * target_if_set_max_frag_entry  - set Maximum frag entries
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ * @max_frag_entry: Maximum frag entries
+ *
+ * API to set Maximum frag entries from the target caps
+ *
+ * Return: None
+ */
+static inline void target_if_set_max_frag_entry
+		(struct target_psoc_info *target_psoc_info, int max_frag_entry)
+{
+	if (target_psoc_info == NULL)
+		return;
+
+	target_psoc_info->info.target_caps.max_frag_entry = max_frag_entry;
+}
+
+/**
+ * target_if_get_max_frag_entry  - get Maximum frag entries
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get Maximum frag entries from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_max_frag_entry
+		(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return -EINVAL;
+
+	return target_psoc_info->info.target_caps.max_frag_entry;
+}
+
+/**
+ * target_if_get_ht_cap_info  - get ht capabilities info
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get ht capabilities info from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_ht_cap_info
+		(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return -EINVAL;
+
+	return target_psoc_info->info.target_caps.ht_cap_info;
+}
+
+/**
+ * target_if_get_vht_cap_info  - get vht capabilities info
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get vht capabilities info from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_vht_cap_info
+		(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return -EINVAL;
+
+	return target_psoc_info->info.target_caps.vht_cap_info;
+}
+
+/**
+ * target_if_get_num_rf_chains  - get Number of RF chains supported
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get Number of RF chains supported from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_num_rf_chains
+		(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return -EINVAL;
+
+	return target_psoc_info->info.target_caps.num_rf_chains;
+}
+
+/**
+ * target_if_get_fw_version  - get firmware version
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get firmware version from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_fw_version
+		(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return 0;
+
+	return target_psoc_info->info.target_caps.fw_version;
+}
+
+/**
+ * target_if_get_wmi_fw_sub_feat_caps  - FW sub feature capabilities
+ * @target_psoc_info:  pointer to structure target_psoc_info
+ *
+ * API to get FW sub feature capabilities from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_wmi_fw_sub_feat_caps
+		(struct target_psoc_info *target_psoc_info)
+{
+	if (target_psoc_info == NULL)
+		return -EINVAL;
+
+	return target_psoc_info->info.target_caps.wmi_fw_sub_feat_caps;
+}
+
+/**
+ * target_if_get_conc_scan_config_bits  - Default concurrenct scan config
+ * @tgt_hdl:  pointer to structure target_psoc_info
+ *
+ * API to get Default concurrenct scan config from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_conc_scan_config_bits
+		(struct target_psoc_info *tgt_hdl)
+{
+	if (tgt_hdl == NULL)
+		return -EINVAL;
+
+	return tgt_hdl->info.service_ext_param.default_conc_scan_config_bits;
+}
+
+/**
+ * target_if_get_fw_config_bits  - Default HW config bits
+ * @tgt_hdl:  pointer to structure target_psoc_info
+ *
+ * API to get Default HW config bits from the target caps
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_if_get_fw_config_bits
+		(struct target_psoc_info *tgt_hdl)
+{
+	if (tgt_hdl == NULL)
+		return -EINVAL;
+
+	return tgt_hdl->info.service_ext_param.default_fw_config_bits;
+}
+
+/**
+ * target_psoc_get_num_hw_modes  - get number of dbs hardware modes
+ * @tgt_hdl:  pointer to structure target_psoc_info
+ *
+ * API to get Number of Dual Band Simultaneous (DBS) hardware modes
+ *
+ * Return: int32_t
+ */
+static inline int32_t target_psoc_get_num_hw_modes
+		(struct target_psoc_info *tgt_hdl)
+{
+	if (tgt_hdl == NULL)
+		return -EINVAL;
+
+	return tgt_hdl->info.service_ext_param.num_hw_modes;
+}
 #endif
 
