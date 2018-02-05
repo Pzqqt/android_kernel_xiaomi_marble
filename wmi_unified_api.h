@@ -62,6 +62,10 @@
 #ifdef WLAN_FEATURE_DSRC
 #include "wlan_ocb_public_structs.h"
 #endif
+#ifdef WLAN_SUPPORT_TWT
+#include "wmi_unified_twt_param.h"
+#include "wmi_unified_twt_api.h"
+#endif
 
 #ifdef IPA_OFFLOAD
 #include "wlan_ipa_public_struct.h"
