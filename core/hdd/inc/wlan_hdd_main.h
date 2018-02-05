@@ -1889,6 +1889,20 @@ enum QDF_GLOBAL_MODE hdd_get_conparam(void);
 void crda_regulatory_entry_default(uint8_t *countryCode, int domain_id);
 void wlan_hdd_reset_prob_rspies(struct hdd_adapter *adapter);
 void hdd_prevent_suspend(uint32_t reason);
+
+/*
+ * hdd_get_first_valid_adapter() - Get the first valid adapter from adapter list
+ *
+ * This function is used to fetch the first valid adapter from the adapter
+ * list. If there is no valid adapter then it returns NULL
+ *
+ * @hdd_ctx: HDD context handler
+ *
+ * Return: NULL if no valid adapter found in the adapter list
+ *
+ */
+struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx);
+
 void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
 

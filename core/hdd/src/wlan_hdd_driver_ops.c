@@ -531,12 +531,6 @@ static void wlan_hdd_shutdown(void)
 {
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
-	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
-		hdd_err("Crash recovery is not allowed in FTM mode");
-		QDF_BUG(0);
-		return;
-	}
-
 	if (!hif_ctx) {
 		hdd_err("Failed to get HIF context, ignore SSR shutdown");
 		return;

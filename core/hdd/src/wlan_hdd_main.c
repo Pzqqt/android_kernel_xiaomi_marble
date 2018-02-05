@@ -6670,6 +6670,18 @@ QDF_STATUS hdd_post_cds_enable_config(struct hdd_context *hdd_ctx)
 	return QDF_STATUS_SUCCESS;
 }
 
+struct hdd_adapter *hdd_get_first_valid_adapter(struct hdd_context *hdd_ctx)
+{
+	struct hdd_adapter *adapter;
+
+	hdd_for_each_adapter(hdd_ctx, adapter) {
+		if (adapter && adapter->magic == WLAN_HDD_ADAPTER_MAGIC)
+			return adapter;
+	}
+
+	return NULL;
+}
+
 /* wake lock APIs for HDD */
 void hdd_prevent_suspend(uint32_t reason)
 {

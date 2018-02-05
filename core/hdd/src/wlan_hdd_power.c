@@ -1365,23 +1365,9 @@ QDF_STATUS hdd_wlan_re_init(void)
 	}
 	bug_on_reinit_failure = hdd_ctx->config->bug_on_reinit_failure;
 
-	/* The driver should always be initialized in STA mode after SSR */
-	hdd_set_conparam(0);
-	/* Try to get an adapter from mode ID */
-	adapter = hdd_get_adapter(hdd_ctx, QDF_STA_MODE);
-	if (!adapter) {
-		adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
-		if (!adapter) {
-			adapter = hdd_get_adapter(hdd_ctx, QDF_IBSS_MODE);
-			if (!adapter) {
-				adapter = hdd_get_adapter(hdd_ctx,
-							  QDF_MONITOR_MODE);
-			if (!adapter)
-				hdd_err("Failed to get Adapter!");
-			}
-
-		}
-	}
+	adapter = hdd_get_first_valid_adapter(hdd_ctx);
+	if (!adapter)
+		hdd_err("Failed to get adapter");
 
 	if (hdd_ctx->config->enable_dp_trace)
 		hdd_dp_trace_init(hdd_ctx->config);
@@ -1418,20 +1404,11 @@ QDF_STATUS hdd_wlan_re_init(void)
 	sme_set_chip_pwr_save_fail_cb(hdd_ctx->hHal,
 				      hdd_chip_pwr_save_fail_detected_cb);
 
-	ret = hdd_register_cb(hdd_ctx);
-	if (ret) {
-		hdd_err("Failed to register HDD callbacks!");
-		goto err_cds_disable;
-	}
-
 	hdd_lpass_notify_start(hdd_ctx);
 
 	hdd_send_default_scan_ies(hdd_ctx);
 	hdd_info("WLAN host driver reinitiation completed!");
 	goto success;
-
-err_cds_disable:
-	hdd_wlan_stop_modules(hdd_ctx, false);
 
 err_re_init:
 	/* Allow the phone to go to sleep */
