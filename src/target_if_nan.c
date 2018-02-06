@@ -146,7 +146,7 @@ static QDF_STATUS target_if_nan_ndp_initiator_req(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null.");
 		return QDF_STATUS_E_INVAL;
@@ -189,7 +189,7 @@ static int target_if_ndp_initiator_rsp_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null");
 		return -EINVAL;
@@ -238,7 +238,7 @@ static int target_if_ndp_ind_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null");
 		return -EINVAL;
@@ -287,7 +287,7 @@ static int target_if_ndp_confirm_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null");
 		return -EINVAL;
@@ -342,7 +342,7 @@ static QDF_STATUS target_if_nan_ndp_responder_req(
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null.");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -385,7 +385,7 @@ static int target_if_ndp_responder_rsp_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null.");
 		return -EINVAL;
@@ -439,7 +439,7 @@ static QDF_STATUS target_if_nan_ndp_end_req(struct nan_datapath_end_req *req)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null.");
 		return QDF_STATUS_E_NULL_VALUE;
@@ -483,7 +483,7 @@ static int target_if_ndp_end_rsp_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null.");
 		return -EINVAL;
@@ -532,7 +532,7 @@ static int target_if_ndp_end_ind_handler(ol_scn_t scn, uint8_t *data,
 		return -EINVAL;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		target_if_err("wmi_handle is null.");
 		return -EINVAL;
@@ -614,7 +614,7 @@ inline struct wlan_lmac_if_nan_rx_ops *target_if_nan_get_rx_ops(
 QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 {
 	int ret;
-	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t handle = get_wmi_unified_hdl_from_psoc(psoc);
 
 	ret = wmi_unified_register_event_handler(handle,
 		wmi_ndp_initiator_rsp_event_id,
@@ -681,7 +681,7 @@ QDF_STATUS target_if_nan_register_events(struct wlan_objmgr_psoc *psoc)
 QDF_STATUS target_if_nan_deregister_events(struct wlan_objmgr_psoc *psoc)
 {
 	int ret, status = 0;
-	wmi_unified_t handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_unified_t handle = get_wmi_unified_hdl_from_psoc(psoc);
 
 	ret = wmi_unified_unregister_event_handler(handle,
 				wmi_ndp_end_rsp_event_id);
