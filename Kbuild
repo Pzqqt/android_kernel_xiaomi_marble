@@ -804,6 +804,7 @@ QDF_INC :=	-I$(WLAN_COMMON_INC)/$(QDF_OS_INC_DIR) \
 
 QDF_OBJS := 	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_event.o \
+		$(QDF_LINUX_OBJ_DIR)/qdf_file.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_list.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_lock.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_mc_timer.o \
@@ -812,6 +813,7 @@ QDF_OBJS := 	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_threads.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_crypto.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
+		$(QDF_OBJ_DIR)/qdf_parse.o \
 		$(QDF_OBJ_DIR)/qdf_str.o \
 		$(QDF_OBJ_DIR)/qdf_types.o
 
