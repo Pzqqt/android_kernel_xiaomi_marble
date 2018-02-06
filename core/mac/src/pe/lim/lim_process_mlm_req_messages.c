@@ -2699,38 +2699,6 @@ void lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * lim_complete_mlm_scan() - This function is called to send MLM_SCAN_CNF
- * message to SME state machine.
- *
- * @mac_ctx:      Pointer to Global MAC structure
- * @ret_code:     Result code to be sent
- *
- * This function is called to send MLM_SCAN_CNF message to SME state machine.
- *
- * @Return: None
- */
-
-void lim_complete_mlm_scan(tpAniSirGlobal mac_ctx, tSirResultCodes ret_code)
-{
-	tLimMlmScanCnf mlm_scan_cnf;
-
-	/* Restore previous MLM state */
-	mac_ctx->lim.gLimMlmState = mac_ctx->lim.gLimPrevMlmState;
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, NO_SESSION,
-			 mac_ctx->lim.gLimMlmState));
-	lim_restore_pre_scan_state(mac_ctx);
-	/* Free up mac_ctx->lim.gLimMlmScanReq */
-	if (NULL != mac_ctx->lim.gpLimMlmScanReq) {
-		qdf_mem_free(mac_ctx->lim.gpLimMlmScanReq);
-		mac_ctx->lim.gpLimMlmScanReq = NULL;
-	}
-
-	mlm_scan_cnf.resultCode = ret_code;
-	lim_post_sme_message(mac_ctx, LIM_MLM_SCAN_CNF,
-			     (uint32_t *) &mlm_scan_cnf);
-}
-
-/**
  * lim_set_channel() - set channel api for lim
  *
  * @mac_ctx:                Pointer to Global MAC structure

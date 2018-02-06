@@ -822,9 +822,6 @@ typedef struct sAniSirLim {
 	uint8_t gLimDfsTargetChanNum;
 	uint8_t probeCounter;
 	uint8_t maxProbe;
-	QDF_STATUS(*add_bssdescr_callback)
-		(tpAniSirGlobal pMac, tpSirBssDescription buf,
-		uint32_t scan_id, uint32_t flags);
 	QDF_STATUS(*sme_msg_callback)
 		(tHalHandle hal, struct scheduler_msg *msg);
 	uint8_t retry_packet_cnt;

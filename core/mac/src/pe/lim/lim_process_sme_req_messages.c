@@ -88,7 +88,6 @@
 static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal, uint32_t *);
 static bool __lim_process_sme_start_bss_req(tpAniSirGlobal,
 					    struct scheduler_msg *pMsg);
-static void __lim_process_sme_scan_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_join_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_reassoc_req(tpAniSirGlobal, uint32_t *);
 static void __lim_process_sme_disassoc_req(tpAniSirGlobal, uint32_t *);
@@ -330,81 +329,6 @@ fail:
 }
 
 /**
- * __lim_fresh_scan_reqd() - determine if a fresh scan request must be issued.
- * @mac_ctx: Pointer to Global MAC structure
- * @return_fresh_results: Trigger fresh scan.
- *
- * PE will do fresh scan, if all of the active sessions are in
- * good state (Link Est or BSS Started). If one of the sessions
- * is not in one of the above states, then PE does not do fresh
- * scan. If no session exists (scanning very first time),
- * then PE will always do fresh scan if SME asks it to do that.
- *
- * Return: true for fresh scan results, false if in invalid state.
- */
-static uint8_t
-__lim_fresh_scan_reqd(tpAniSirGlobal mac_ctx, uint8_t return_fresh_results)
-{
-	uint8_t valid_state = true;
-	int i;
-
-
-	pe_debug("gLimSmeState: %d, returnFreshResults 0x%x",
-		mac_ctx->lim.gLimSmeState, return_fresh_results);
-
-	if (mac_ctx->lim.gLimSmeState != eLIM_SME_IDLE_STATE)
-		return false;
-
-	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
-
-		if (mac_ctx->lim.gpSession[i].valid == false)
-			continue;
-
-		pe_debug("session %d, bsstype %d, limSystemRole %d, limSmeState %d",
-			i, mac_ctx->lim.gpSession[i].bssType,
-			mac_ctx->lim.gpSession[i].limSystemRole,
-			mac_ctx->lim.gpSession[i].limSmeState);
-
-		if (mac_ctx->lim.gpSession[i].bssType == eSIR_NDI_MODE)
-			continue;
-
-		if (mac_ctx->lim.gpSession[i].bssType ==
-				eSIR_INFRASTRUCTURE_MODE &&
-				mac_ctx->lim.gpSession[i].limSmeState ==
-				eLIM_SME_LINK_EST_STATE)
-			continue;
-
-		if (mac_ctx->lim.gpSession[i].bssType == eSIR_IBSS_MODE &&
-				mac_ctx->lim.gpSession[i].limSmeState ==
-				eLIM_SME_NORMAL_STATE)
-			continue;
-
-		if (mac_ctx->lim.gpSession[i].bssType == eSIR_INFRA_AP_MODE &&
-				mac_ctx->lim.gpSession[i].pePersona ==
-				QDF_P2P_GO_MODE &&
-				mac_ctx->lim.gpSession[i].limSmeState ==
-				eLIM_SME_NORMAL_STATE)
-			continue;
-
-		if (mac_ctx->lim.gpSession[i].limSystemRole == eLIM_AP_ROLE &&
-				mac_ctx->lim.gpSession[i].limSmeState ==
-				eLIM_SME_NORMAL_STATE)
-			continue;
-
-		valid_state = false;
-		break;
-	}
-
-	pe_debug("valid_state: %d", valid_state);
-
-	if ((valid_state) &&
-	    (return_fresh_results & SIR_BG_SCAN_RETURN_FRESH_RESULTS))
-		return true;
-	else
-		return false;
-}
-
-/**
  * __lim_is_sme_assoc_cnf_valid()
  *
  ***FUNCTION:
@@ -553,7 +477,6 @@ static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal pMac, uint32_t *pMsgB
 		ready_req->pe_roam_synch_cb = pe_roam_synch_callback;
 		pe_register_mgmt_rx_frm_callback(pMac);
 		pe_register_callbacks_with_wma(pMac, ready_req);
-		pMac->lim.add_bssdescr_callback = ready_req->add_bssdescr_cb;
 		pMac->lim.sme_msg_callback = ready_req->sme_msg_cb;
 	}
 
@@ -1210,250 +1133,6 @@ void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data)
 	random[0] |= (random[0] << 15);
 	random[1] = random[0] >> 1;
 	qdf_mem_copy(data, (uint8_t *) random, sizeof(tSirMacAddr));
-}
-
-static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
-						      tpSirSmeScanReq pScanReq)
-{
-	tSirScanOffloadReq *pScanOffloadReq;
-	uint8_t *p;
-	struct scheduler_msg msg = {0};
-	uint16_t i, len;
-	uint16_t addn_ie_len = 0;
-	tSirRetStatus status, rc = eSIR_SUCCESS;
-	tDot11fIEExtCap extracted_extcap = {0};
-	bool extcap_present = true;
-
-	if (pScanReq->uIEFieldLen) {
-		status = lim_strip_extcap_update_struct(pMac,
-			     (uint8_t *) pScanReq + pScanReq->uIEFieldOffset,
-			     &pScanReq->uIEFieldLen, &extracted_extcap);
-
-		if (eSIR_SUCCESS != status) {
-			extcap_present = false;
-			pe_debug("Unable to Strip ExtCap IE from Scan Req");
-		}
-
-		if (extcap_present) {
-			pe_debug("Extcap was part of SCAN IE - Updating FW");
-			lim_send_ext_cap_ie(pMac, pScanReq->sessionId,
-					    &extracted_extcap, true);
-		}
-	} else {
-	    pe_debug("No IEs in the scan request from supplicant");
-	}
-
-	/**
-	 * The tSirScanOffloadReq will reserve the space for first channel,
-	 * so allocate the memory for (numChannels - 1) and uIEFieldLen
-	 */
-	len = sizeof(tSirScanOffloadReq) +
-		(pScanReq->channelList.numChannels - 1) +
-		pScanReq->uIEFieldLen;
-
-	pScanOffloadReq = qdf_mem_malloc(len);
-	if (NULL == pScanOffloadReq) {
-		pe_err("AllocateMemory failed for pScanOffloadReq");
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
-	msg.bodyptr = pScanOffloadReq;
-	msg.bodyval = 0;
-
-	qdf_copy_macaddr(&pScanOffloadReq->bssId, &pScanReq->bssId);
-
-	if (pScanReq->numSsid > SIR_SCAN_MAX_NUM_SSID) {
-		pe_err("Invalid value (%d) for numSsid",
-			SIR_SCAN_MAX_NUM_SSID);
-		qdf_mem_free(pScanOffloadReq);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pScanOffloadReq->numSsid = pScanReq->numSsid;
-	for (i = 0; i < pScanOffloadReq->numSsid; i++) {
-		pScanOffloadReq->ssId[i].length = pScanReq->ssId[i].length;
-		qdf_mem_copy((uint8_t *) pScanOffloadReq->ssId[i].ssId,
-			     (uint8_t *) pScanReq->ssId[i].ssId,
-			     pScanOffloadReq->ssId[i].length);
-	}
-
-	pScanOffloadReq->hiddenSsid = pScanReq->hiddenSsid;
-	qdf_copy_macaddr(&pScanOffloadReq->selfMacAddr, &pScanReq->selfMacAddr);
-	pScanOffloadReq->bssType = pScanReq->bssType;
-	pScanOffloadReq->dot11mode = pScanReq->dot11mode;
-	pScanOffloadReq->scanType = pScanReq->scanType;
-	pScanOffloadReq->minChannelTime = pScanReq->minChannelTime;
-	pScanOffloadReq->maxChannelTime = pScanReq->maxChannelTime;
-	pScanOffloadReq->restTime = pScanReq->restTime;
-	pScanOffloadReq->min_rest_time = pScanReq->min_rest_time;
-	pScanOffloadReq->idle_time = pScanReq->idle_time;
-	pScanOffloadReq->scan_adaptive_dwell_mode =
-			pScanReq->scan_adaptive_dwell_mode;
-
-	for (i = 0; i < pMac->lim.maxBssId; i++) {
-		tpPESession session_entry =
-				pe_find_session_by_sme_session_id(pMac, i);
-		if (session_entry &&
-			(eLIM_MLM_LINK_ESTABLISHED_STATE ==
-				session_entry->limMlmState) &&
-			(session_entry->beaconParams.beaconInterval
-				< BEACON_INTERVAL_THRESHOLD)) {
-			pScanOffloadReq->burst_scan_duration =
-						STA_BURST_SCAN_DURATION;
-			break;
-		}
-	}
-
-	/* for normal scan, the value for p2pScanType should be 0
-	   always */
-	if (pScanReq->p2pSearch)
-		pScanOffloadReq->p2pScanType = P2P_SCAN_TYPE_SEARCH;
-
-	pScanOffloadReq->sessionId = pScanReq->sessionId;
-	pScanOffloadReq->scan_id = pScanReq->scan_id;
-	pScanOffloadReq->scan_requestor_id = USER_SCAN_REQUESTOR_ID;
-	pScanOffloadReq->scan_adaptive_dwell_mode =
-			pScanReq->scan_adaptive_dwell_mode;
-
-	if (pScanOffloadReq->sessionId >= pMac->lim.maxBssId)
-		pe_err("Invalid pe sessionID: %d",
-			pScanOffloadReq->sessionId);
-
-	pScanOffloadReq->channelList.numChannels =
-		pScanReq->channelList.numChannels;
-	p = &(pScanOffloadReq->channelList.channelNumber[0]);
-	for (i = 0; i < pScanOffloadReq->channelList.numChannels; i++)
-		p[i] = pScanReq->channelList.channelNumber[i];
-
-	pScanOffloadReq->uIEFieldLen = pScanReq->uIEFieldLen;
-	pScanOffloadReq->uIEFieldOffset = len - addn_ie_len -
-						pScanOffloadReq->uIEFieldLen;
-	qdf_mem_copy((uint8_t *) pScanOffloadReq +
-		     pScanOffloadReq->uIEFieldOffset,
-		     (uint8_t *) pScanReq + pScanReq->uIEFieldOffset,
-		     pScanReq->uIEFieldLen);
-
-	rc = wma_post_ctrl_msg(pMac, &msg);
-	if (rc != eSIR_SUCCESS) {
-		pe_err("wma_post_ctrl_msg() return failure");
-		qdf_mem_free(pScanOffloadReq);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pe_debug("Processed Offload Scan Request Successfully");
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
- * __lim_process_sme_scan_req() - Process the SME Scan Request
- * @mac_ctx: Global MAC Context
- * @msg_buf: Buffer which contains the request and pertinent parameters
- *
- * This function is called to process SME_SCAN_REQ message
- * from HDD or upper layer application.
- *
- * Return: None
- */
-
-static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
-		uint32_t *msg_buf)
-{
-	tpSirSmeScanReq scan_req;
-	uint8_t valid_req = 0;
-
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_SCAN_REQ_EVENT, NULL,
-			      eSIR_SUCCESS, eSIR_SUCCESS);
-#endif
-	mac_ctx->lim.beacon_probe_rsp_cnt_per_scan = 0;
-
-	scan_req = (tpSirSmeScanReq) msg_buf;
-	pe_debug("SME SCAN REQ id %d numChan %d min %d max %d IELen %d first %d fresh %d unique %d type %s (%d) rsp %d",
-		scan_req->scan_id, scan_req->channelList.numChannels,
-		scan_req->minChannelTime, scan_req->maxChannelTime,
-		scan_req->uIEFieldLen, scan_req->returnAfterFirstMatch,
-		scan_req->returnFreshResults, scan_req->returnUniqueResults,
-		lim_scan_type_to_string(scan_req->scanType),
-		scan_req->scanType, mac_ctx->lim.gLimRspReqd ? 1 : 0);
-	/*
-	 * Since scan req always requires a response, we will overwrite response
-	 * required here. This is added esp to take care of the condition where
-	 * in p2p go case, we hold the scan req and insert single NOA. We send
-	 * the held scan request to FW later on getting start NOA ind from FW so
-	 * we lose state of the gLimRspReqd flag for the scan req if any other
-	 * request comes by then. e.g. While unit testing, we found when insert
-	 * single NOA is done, we see a get stats request which turns the flag
-	 * gLimRspReqd to false; now when we actually start the saved scan req
-	 * for init scan after getting NOA started, the gLimRspReqd being a
-	 * global flag is showing false instead of true value for this saved
-	 * scan req. Since all scan reqs coming to lim require a response,
-	 * there is no harm in setting the global flag gLimRspReqd to true here.
-	 */
-	mac_ctx->lim.gLimRspReqd = true;
-
-	/*
-	 * copy the Self MAC address from SmeReq to the globalplace,
-	 * used for sending probe req
-	 */
-	sir_copy_mac_addr(mac_ctx->lim.gSelfMacAddr,
-			  scan_req->selfMacAddr.bytes);
-	valid_req = lim_is_sme_scan_req_valid(mac_ctx, scan_req);
-
-	if (!valid_req || mac_ctx->lim.scan_disabled) {
-		pe_err("Scan disabled %d, Valid Scan Req %d",
-			mac_ctx->lim.scan_disabled, valid_req);
-
-		if (mac_ctx->lim.gLimRspReqd) {
-			mac_ctx->lim.gLimRspReqd = false;
-
-			lim_send_sme_scan_rsp(mac_ctx,
-					eSIR_SME_INVALID_PARAMETERS,
-					scan_req->sessionId,
-					scan_req->transactionId,
-					scan_req->scan_id);
-		}
-		return;
-	}
-
-	/*
-	 * If scan request is received in idle, joinFailed
-	 * states or in link established state (in STA role)
-	 * or in normal state (in STA-in-IBSS/AP role) with
-	 * 'return fresh scan results' request from HDD or
-	 * it is periodic background scanning request,
-	 * trigger fresh scan request to MLM
-	 */
-	if (__lim_fresh_scan_reqd(mac_ctx, scan_req->returnFreshResults)) {
-
-		mac_ctx->lim.gLim24Band11dScanDone = 0;
-		mac_ctx->lim.gLim50Band11dScanDone = 0;
-		mac_ctx->lim.gLimReturnAfterFirstMatch =
-			scan_req->returnAfterFirstMatch;
-		mac_ctx->lim.gLimReturnUniqueResults =
-			((scan_req->returnUniqueResults) > 0 ? true : false);
-
-		if (QDF_STATUS_SUCCESS !=
-			lim_send_hal_start_scan_offload_req(mac_ctx,
-			    scan_req)) {
-			pe_err("Couldn't send Offload scan request");
-			lim_send_sme_scan_rsp(mac_ctx,
-					eSIR_SME_INVALID_PARAMETERS,
-					scan_req->sessionId,
-					scan_req->transactionId,
-					scan_req->scan_id);
-			return;
-		}
-	} else {
-		/* In all other cases return 'cached' scan results */
-		if (mac_ctx->lim.gLimRspReqd) {
-			mac_ctx->lim.gLimRspReqd = false;
-			lim_send_sme_scan_rsp(mac_ctx, eSIR_SME_SUCCESS,
-				scan_req->sessionId,
-				scan_req->transactionId, scan_req->scan_id);
-		}
-	}
 }
 
 /**
@@ -4427,10 +4106,6 @@ void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal mac_ctx)
 		return;
 	}
 	switch (mac_ctx->lim.gDeferMsgTypeForNOA) {
-	case eWNI_SME_SCAN_REQ:
-		__lim_process_sme_scan_req(mac_ctx,
-				mac_ctx->lim.gpDefdSmeMsgForNOA);
-		break;
 	case eWNI_SME_JOIN_REQ:
 		__lim_process_sme_join_req(mac_ctx,
 				mac_ctx->lim.gpDefdSmeMsgForNOA);
@@ -4859,10 +4534,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 
 	case eWNI_SME_START_BSS_REQ:
 		bufConsumed = __lim_process_sme_start_bss_req(pMac, pMsg);
-		break;
-
-	case eWNI_SME_SCAN_REQ:
-		__lim_process_sme_scan_req(pMac, pMsgBuf);
 		break;
 
 	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:

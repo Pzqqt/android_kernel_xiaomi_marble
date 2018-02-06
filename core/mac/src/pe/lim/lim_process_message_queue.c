@@ -639,16 +639,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	qdf_mem_zero(bssdescr, frame_len);
 
 	lim_collect_bss_description(pmac, bssdescr, frame, rx_pkt_info, false);
-	/*
-	 * Send the beacon to CSR with registered callback routine.
-	 * scan_id and flags parameters are currently unused and set to 0.
-	 * EXT scan results will also be added to scan cache in SME
-	 */
-	if (pmac->lim.add_bssdescr_callback) {
-		(pmac->lim.add_bssdescr_callback) (pmac, bssdescr, 0, 0);
-	} else {
-		pe_err("No CSR callback routine to send beacon/probe response");
-	}
+
 	qdf_mem_free(bssdescr);
 
 	mmh_msg.type = msg_type;
@@ -1437,7 +1428,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 			cds_pkt_return_packet(body_ptr);
 		}
 		break;
-	case eWNI_SME_SCAN_REQ:
 	case eWNI_SME_DISASSOC_REQ:
 	case eWNI_SME_DEAUTH_REQ:
 #ifdef FEATURE_WLAN_TDLS

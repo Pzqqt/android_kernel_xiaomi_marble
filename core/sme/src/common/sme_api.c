@@ -380,11 +380,6 @@ done:
 static void dump_csr_command_info(tpAniSirGlobal pMac, tSmeCmd *pCmd)
 {
 	switch (pCmd->command) {
-	case eSmeCommandScan:
-		sme_debug("scan command reason is %d",
-			pCmd->u.scanCmd.reason);
-		break;
-
 	case eSmeCommandRoam:
 		sme_debug("roam command reason is %d",
 			pCmd->u.roamCmd.roamReason);
@@ -523,12 +518,6 @@ QDF_STATUS sme_ser_handle_active_cmd(struct wlan_serialization_command *cmd)
 		csr_roam_process_wm_status_change_command(mac_ctx,
 					sme_cmd);
 		break;
-	case eSmeCommandScan:
-		sme_debug("Processing scan offload cmd");
-		qdf_mc_timer_start(&sme_cmd->u.scanCmd.csr_scan_timer,
-				CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT);
-		status = csr_process_scan_command(mac_ctx, sme_cmd);
-		break;
 	/*
 	 * Treat standby differently here because caller may not be able
 	 * to handle the failure so we do our best here
@@ -595,8 +584,6 @@ QDF_STATUS sme_ser_cmd_callback(void *buf,
 		break;
 	case WLAN_SER_CB_CANCEL_CMD:
 		sme_debug("WLAN_SER_CB_CANCEL_CMD callback");
-		sme_cmd = cmd->umac_cmd;
-		csr_cancel_command(mac_ctx, sme_cmd);
 		break;
 	case WLAN_SER_CB_RELEASE_MEM_CMD:
 		sme_debug("WLAN_SER_CB_RELEASE_MEM_CMD callback");
@@ -1174,7 +1161,6 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 		}
 		msg->messageType = eWNI_SME_SYS_READY_IND;
 		msg->length = sizeof(*msg);
-		msg->add_bssdescr_cb = csr_scan_process_single_bssdescr;
 		msg->csr_roam_synch_cb = csr_roam_synch_callback;
 		msg->sme_msg_cb = sme_process_msg_callback;
 

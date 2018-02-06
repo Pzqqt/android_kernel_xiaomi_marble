@@ -706,9 +706,6 @@ void lim_set_channel(tpAniSirGlobal pMac, uint8_t channel,
 		uint32_t dfs_regdomain);
 
 
-/* / Function that completes channel scan */
-void lim_complete_mlm_scan(tpAniSirGlobal, tSirResultCodes);
-
 #ifdef ANI_SUPPORT_11H
 /* / Function that sends Measurement Report action frame */
 tSirRetStatus lim_send_meas_report_frame(tpAniSirGlobal, tpSirMacMeasReqActionFrame,

@@ -225,8 +225,6 @@ void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_reinit_wm_status_change_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 QDF_STATUS csr_roam_send_set_key_cmd(tpAniSirGlobal mac_ctx,
 		uint32_t session_id, struct setkey_cmd *set_key_cmd);
-void csr_cancel_command(tpAniSirGlobal mac_ctx, tSmeCmd *sme_cmd);
-
 QDF_STATUS csr_is_valid_channel(tpAniSirGlobal pMac, uint8_t chnNum);
 
 QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme);

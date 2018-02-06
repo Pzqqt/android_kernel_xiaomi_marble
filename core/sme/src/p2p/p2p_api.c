@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -83,74 +83,6 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 			     (void *)pMac->p2pContext.probeRspIe,
 			     pMac->p2pContext.probeRspIeLength);
 	status = umac_send_mb_message_to_mac(pMsg);
-
-	return status;
-}
-
-/* handle LIM remain on channel rsp: Success/failure. */
-
-QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *pEntry = NULL;
-	tSmeCmd *pCommand = NULL;
-	bool fFound;
-	remainOnChanCallback callback = NULL;
-	struct sir_roc_rsp *rsp = (struct sir_roc_rsp *)pMsg;
-
-	csr_get_active_scan_entry(pMac, rsp->scan_id, &pEntry);
-	if (!pEntry) {
-		sme_err("No cmd found in active list");
-		return status;
-	}
-
-	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	if (eSmeCommandRemainOnChannel != pCommand->command)
-		return status;
-
-	callback = pCommand->u.remainChlCmd.callback;
-	if (callback && rsp) {
-		if (rsp->status != eSIR_SME_SUCCESS)
-			status = QDF_STATUS_E_FAILURE;
-		callback(pMac, pCommand->u.remainChlCmd.callbackCtx,
-				status, rsp->scan_id);
-	}
-
-	fFound = csr_scan_active_ll_remove_entry(pMac, pEntry,
-				     LL_ACCESS_LOCK);
-	if (fFound)
-		/* Now put this command back on the avilable command list */
-		csr_release_command(pMac, pCommand);
-
-	return status;
-}
-
-/* Handle the remain on channel ready indication from PE */
-
-QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *pEntry = NULL;
-	tSmeCmd *pCommand = NULL;
-	struct csr_roam_info RoamInfo;
-	struct sir_roc_rsp *rsp =  (struct sir_roc_rsp *)pMsg;
-
-	csr_get_active_scan_entry(pMac, rsp->scan_id, &pEntry);
-	if (!pEntry) {
-		sme_err("No cmd found in active list");
-		return status;
-	}
-	sme_debug("Ready Ind %d %d", rsp->session_id, rsp->scan_id);
-	pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-	if (eSmeCommandRemainOnChannel == pCommand->command) {
-		RoamInfo.roc_scan_id = rsp->scan_id;
-		/* forward the indication to HDD */
-		RoamInfo.pRemainCtx = pCommand->u.remainChlCmd.callbackCtx;
-		csr_roam_call_callback(pMac, rsp->session_id,
-				       &RoamInfo, 0,
-				       eCSR_ROAM_REMAIN_CHAN_READY, 0);
-	}
 
 	return status;
 }

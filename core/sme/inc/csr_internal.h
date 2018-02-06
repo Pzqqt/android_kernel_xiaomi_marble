@@ -115,21 +115,7 @@ enum csr_cfgdot11mode {
 };
 
 enum csr_scan_reason {
-	eCsrScanOther = 1,
-	eCsrScanLostLink1,
-	eCsrScanLostLink2,
-	eCsrScanLostLink3,
-	eCsrScanLostLink4,
-	eCsrScan11d1,           /* First 11d scan */
-	eCsrScan11d2,           /* First 11d scan has failed */
-	eCsrScan11dDone,        /* 11d scan succeed, try rest of the channels */
-	eCsrScanUserRequest,
 	eCsrScanForSsid,
-	eCsrScanIdleScan,
-	eCsrScanProbeBss,       /* direct prb on entry from candidate list-HO */
-	eCsrScanAbortNormalScan,/* aborting a normal scan */
-	eCsrScanP2PFindPeer,
-	eCsrScanCandidateFound,
 };
 
 enum csr_roam_reason {
@@ -342,7 +328,6 @@ struct scan_cmd {
 	uint32_t scanID;
 	csr_scan_completeCallback callback;
 	void *pContext;
-	enum csr_scan_reason reason;
 	eCsrScanStatus status;
 	enum csr_roam_state lastRoamState[CSR_ROAM_SESSION_MAX];
 	tCsrRoamProfile *pToRoamProfile;
@@ -688,14 +673,6 @@ struct csr_votes11d {
 
 struct csr_scanstruct {
 	struct scan_profile scanProfile;
-	bool fScanEnable;
-	bool fFullScanIssued;
-	qdf_mc_timer_t hTimerIdleScan;
-	/*
-	 * changes on every scan, it is used as a flag for whether 11d info is
-	 * found on every scan
-	 */
-	uint8_t channelOf11dInfo;
 	uint8_t scanResultCfgAgingTime;
 	tSirScanType curScanType;
 	struct csr_channel channels11d;
@@ -1438,65 +1415,6 @@ QDF_STATUS csr_issue_stored_joinreq(tpAniSirGlobal mac_ctx,
 		uint32_t session_id);
 QDF_STATUS csr_get_channels_and_power(tpAniSirGlobal pMac);
 
-/* csr_scan_process_single_bssdescr() - Add a bssdescriptor to scan table
- *
- * @mac_ctx - MAC context
- * @bssdescr - Pointer to BSS description structure that contains
- *             everything from beacon/probe response frame and additional
- *             information.
- * @scan_id - Scan identifier of the scan request that was running
- *            when this beacon was received. Reserved for future when
- *            firmware provides that information.
- * @flags - Reserved for future use.
- *
- * Callback routine called by LIM when it receives a beacon or probe response
- * from the device. 802.11 frame is already converted to internal
- * tSirBssDescription data structure.
- *
- * Return: 0 or other error codes.
- */
-
-QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
-		tSirBssDescription *pSirBssDescription,
-		uint32_t scan_id, uint32_t flags);
-
-void csr_scan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx);
-void csr_scan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
-void csr_scan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);
-void csr_scan_active_ll_lock(struct sAniSirGlobal *mac_ctx);
-uint32_t csr_scan_active_ll_count(struct sAniSirGlobal *mac_ctx);
-uint32_t csr_scan_pending_ll_count(struct sAniSirGlobal *mac_ctx);
-bool csr_scan_active_ll_is_list_empty(
-				struct sAniSirGlobal *mac_ctx,
-				bool inter_locked);
-bool csr_scan_active_ll_remove_entry(
-		struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked);
-bool csr_scan_pending_ll_remove_entry(
-		struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked);
-tListElem *csr_scan_active_ll_peek_head(
-		struct sAniSirGlobal *mac_ctx,
-		bool inter_locked);
-tListElem *csr_scan_pending_ll_peek_head(
-		struct sAniSirGlobal *mac_ctx,
-		bool inter_locked);
-tListElem *csr_scan_pending_ll_next(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked);
-tListElem *csr_scan_active_ll_next(struct sAniSirGlobal *mac_ctx,
-		tListElem *entry, bool inter_locked);
-tListElem *csr_scan_active_ll_remove_head(
-			struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
-tListElem *csr_scan_pending_ll_remove_head(
-			struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
-tListElem *csr_scan_active_ll_remove_head(
-			struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
-tListElem *csr_scan_pending_ll_remove_head(
-			struct sAniSirGlobal *mac_ctx,
-			bool fInterlocked);
 void csr_nonscan_pending_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_active_ll_unlock(struct sAniSirGlobal *mac_ctx);
 void csr_nonscan_pending_ll_lock(struct sAniSirGlobal *mac_ctx);

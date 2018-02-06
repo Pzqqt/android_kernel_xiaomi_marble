@@ -5702,44 +5702,6 @@ QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 						&params);
 }
 
-/**
- * wma_get_scan_id() - Generates scan id
- * @scan_id: Scan id
- *
- * This function generates the scan id.
- *
- * Return: QDF_STATUS
- */
-
-QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
-{
-	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-
-	if (!scan_id) {
-		WMA_LOGE("Scan_id is NULL");
-		return QDF_STATUS_E_FAULT;
-	}
-
-	if (!wma) {
-		WMA_LOGE("%s: wma handle is NULL", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
-
-#ifdef NAPIER_SCAN
-	*scan_id = ucfg_scan_get_scan_id(wma->psoc);
-#else
-	/* host need to cycle through the lower 12 bits to generate ids */
-	*scan_id = qdf_atomic_inc_return(&wma->scan_id_counter) &
-			WMA_SCAN_ID_MASK;
-	/*
-	 * Firmware expects the host scan request id appended
-	 * by PREFIX 0xA000
-	 */
-	*scan_id = *scan_id | WMI_HOST_SCAN_REQ_ID_PREFIX;
-#endif
-	return QDF_STATUS_SUCCESS;
-}
-
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 /**
  * wma_set_gateway_params() - set gateway parameters

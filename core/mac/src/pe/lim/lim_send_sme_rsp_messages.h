@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,11 +51,6 @@ void lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	 uint32_t scan_id);
 void lim_send_sme_start_bss_rsp(tpAniSirGlobal, uint16_t, tSirResultCodes,
 				tpPESession, uint8_t, uint16_t);
-void lim_send_sme_scan_rsp(tpAniSirGlobal, tSirResultCodes, uint8_t,
-	uint16_t, uint32_t scan_id);
-void lim_post_sme_scan_rsp_message(tpAniSirGlobal, tSirResultCodes,
-				   uint8_t, uint16_t, uint32_t scan_id);
-
 void lim_send_sme_join_reassoc_rsp(tpAniSirGlobal, uint16_t, tSirResultCodes,
 				   uint16_t, tpPESession, uint8_t, uint16_t);
 void lim_send_sme_disassoc_ntf(tpAniSirGlobal, tSirMacAddr, tSirResultCodes,
