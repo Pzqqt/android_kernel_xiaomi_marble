@@ -152,7 +152,17 @@ bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc);
  *
  * Return: wmi handler
  */
-void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
+struct common_wmi_handle *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_wmi_unified_hdl() - get wmi handle
+ * @psoc: pointer to psoc
+ *
+ * API to get wmi handle
+ *
+ * Return: wmi handler
+ */
+wmi_unified_t ucfg_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_get_htc_hdl() - get htc handler
@@ -162,7 +172,7 @@ void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc);
  *
  * Return: htc handler
  */
-void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
+struct common_htc_handle *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_set_htc_hdl() - set htc handle
@@ -173,7 +183,8 @@ void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc);
  *
  * Return: void
  */
-void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc, void *htc_hdl);
+void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
+			struct common_htc_handle *htc_hdl);
 
 /**
  * ucfg_get_hif_hdl() - get hif handle
@@ -183,7 +194,17 @@ void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc, void *htc_hdl);
  *
  * Return: hif handler
  */
-void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
+struct common_hif_handle *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * ucfg_get_ol_hif_hdl() - get hif handle
+ * @psoc: pointer to psoc
+ *
+ * API to get hif handle
+ *
+ * Return: hif handler
+ */
+struct hif_opaque_softc *ucfg_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc);
 
 /**
  * ucfg_get_pdev_wmi_handle() - get pdev wmi handle
@@ -193,7 +214,19 @@ void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc);
  *
  * Return: wmi handle
  */
-void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev);
+struct common_wmi_handle *ucfg_get_pdev_wmi_handle(
+		struct wlan_objmgr_pdev *pdev);
+
+/**
+ * ucfg_get_pdev_wmi_unified_handle() - get pdev wmi handle
+ * @pdev: pointer to dev
+ *
+ * API to get wmi handle
+ *
+ * Return: wmi handle
+ */
+wmi_unified_t ucfg_get_pdev_wmi_unified_handle(
+		struct wlan_objmgr_pdev *pdev);
 
 /**
  * ucfg_get_psoc_feature_ptr() - get feature pointer

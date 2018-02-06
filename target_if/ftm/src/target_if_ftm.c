@@ -101,7 +101,7 @@ QDF_STATUS target_if_ftm_cmd_send(struct wlan_objmgr_pdev *pdev,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	handle = get_wmi_unified_hdl_from_pdev(pdev);
 	if (!handle) {
 		target_if_err("null handle");
 		return QDF_STATUS_E_FAILURE;
@@ -126,7 +126,7 @@ QDF_STATUS target_if_ftm_attach(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!handle) {
 		target_if_err("null handle");
 		return QDF_STATUS_E_FAILURE;
@@ -154,7 +154,7 @@ QDF_STATUS target_if_ftm_detach(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!handle) {
 		target_if_err("null handle");
 		return QDF_STATUS_E_FAILURE;

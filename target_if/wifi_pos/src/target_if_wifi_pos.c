@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -346,37 +346,41 @@ QDF_STATUS target_if_wifi_pos_register_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_response_event_id,
-					target_if_wifi_pos_oem_rsp_ev_handler,
-					WMI_RX_WORK_CTX);
+	ret = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_response_event_id,
+			target_if_wifi_pos_oem_rsp_ev_handler,
+			WMI_RX_WORK_CTX);
 	if (ret) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_cap_event_id,
-					wifi_pos_oem_cap_ev_handler,
-					WMI_RX_WORK_CTX);
+	ret = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_cap_event_id,
+			wifi_pos_oem_cap_ev_handler,
+			WMI_RX_WORK_CTX);
 	if (ret) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_meas_report_event_id,
-					wifi_pos_oem_meas_rpt_ev_handler,
-					WMI_RX_WORK_CTX);
+	ret = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_meas_report_event_id,
+			wifi_pos_oem_meas_rpt_ev_handler,
+			WMI_RX_WORK_CTX);
 	if (ret) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_report_event_id,
-					wifi_pos_oem_err_rpt_ev_handler,
-					WMI_RX_WORK_CTX);
+	ret = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_report_event_id,
+			wifi_pos_oem_err_rpt_ev_handler,
+			WMI_RX_WORK_CTX);
 	if (ret) {
 		target_if_err("register_event_handler failed: err %d", ret);
 		return QDF_STATUS_E_INVAL;
@@ -392,14 +396,18 @@ QDF_STATUS target_if_wifi_pos_deregister_events(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_response_event_id);
-	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_cap_event_id);
-	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_meas_report_event_id);
-	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_oem_report_event_id);
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_response_event_id);
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_cap_event_id);
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_meas_report_event_id);
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_oem_report_event_id);
 
 	return QDF_STATUS_SUCCESS;
 }

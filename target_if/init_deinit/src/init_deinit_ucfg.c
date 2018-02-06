@@ -243,7 +243,7 @@ bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
 }
 qdf_export_symbol(ucfg_is_target_ar900b);
 
-void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
+struct common_wmi_handle *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -262,7 +262,13 @@ void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
 }
 qdf_export_symbol(ucfg_get_wmi_hdl);
 
-void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
+wmi_unified_t ucfg_get_wmi_unified_hdl(struct wlan_objmgr_psoc *psoc)
+{
+	return (wmi_unified_t)ucfg_get_wmi_hdl(psoc);
+}
+qdf_export_symbol(ucfg_get_wmi_unified_hdl);
+
+struct common_htc_handle *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -281,7 +287,8 @@ void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 }
 qdf_export_symbol(ucfg_get_htc_hdl);
 
-void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc, void *htc_hdl)
+void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc,
+			struct common_htc_handle *htc_hdl)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -298,7 +305,7 @@ void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc, void *htc_hdl)
 	target_psoc_set_htc_hdl(tgt_hdl, htc_hdl);
 }
 
-void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
+struct common_hif_handle *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
 
@@ -317,7 +324,14 @@ void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
 }
 qdf_export_symbol(ucfg_get_hif_hdl);
 
-void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
+struct hif_opaque_softc *ucfg_get_ol_hif_hdl(struct wlan_objmgr_psoc *psoc)
+{
+	return (struct hif_opaque_softc *)ucfg_get_hif_hdl(psoc);
+}
+qdf_export_symbol(ucfg_get_ol_hif_hdl);
+
+struct common_wmi_handle *ucfg_get_pdev_wmi_handle(
+		struct wlan_objmgr_pdev *pdev)
 {
 	struct target_pdev_info *tgt_hdl;
 
@@ -335,6 +349,12 @@ void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
 	return target_pdev_get_wmi_handle(tgt_hdl);
 }
 qdf_export_symbol(ucfg_get_pdev_wmi_handle);
+
+wmi_unified_t
+ucfg_get_pdev_wmi_unified_handle(struct wlan_objmgr_pdev *pdev)
+{
+	return (wmi_unified_t)ucfg_get_pdev_wmi_handle(pdev);
+}
 
 uint32_t ucfg_get_num_radios(struct wlan_objmgr_psoc *psoc)
 {

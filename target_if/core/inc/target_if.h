@@ -107,6 +107,10 @@ struct host_fw_ver {
 };
 
 struct common_dbglog_handle;
+struct common_hif_handle;
+struct common_htc_handle;
+struct common_wmi_handle;
+struct common_accelerator_handle;
 
 /**
  * struct comp_hdls - Non-umac/lower layer components handles, it is a sub
@@ -118,10 +122,10 @@ struct common_dbglog_handle;
  * @dbglog_hdl: Debug log handle
  */
 struct comp_hdls {
-	void *hif_hdl;
-	void *htc_hdl;
-	void *wmi_hdl;
-	void *accelerator_hdl;
+	struct common_hif_handle *hif_hdl;
+	struct common_htc_handle *htc_hdl;
+	struct common_wmi_handle *wmi_hdl;
+	struct common_accelerator_handle *accelerator_hdl;
 	struct common_dbglog_handle *dbglog_hdl;
 };
 
@@ -276,8 +280,8 @@ struct target_psoc_info {
  * @feature_ptr: stores legacy pointer or few driver specific structures
  */
 struct target_pdev_info {
-	void *wmi_handle;
-	void *accelerator_hdl;
+	struct common_wmi_handle *wmi_handle;
+	struct common_accelerator_handle *accelerator_hdl;
 	int32_t pdev_idx;
 	int32_t phy_idx;
 	void *feature_ptr;
@@ -865,7 +869,8 @@ static inline uint32_t target_psoc_get_num_mem_chunks
  * Return: void
  */
 static inline void target_psoc_set_hif_hdl
-		(struct target_psoc_info *psoc_info, void *hif_hdl)
+		(struct target_psoc_info *psoc_info,
+		 struct common_hif_handle *hif_hdl)
 {
 	if (psoc_info == NULL)
 		return;
@@ -881,7 +886,7 @@ static inline void target_psoc_set_hif_hdl
  *
  * Return: hif_hdl
  */
-static inline void *target_psoc_get_hif_hdl
+static inline struct common_hif_handle *target_psoc_get_hif_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)
@@ -900,7 +905,8 @@ static inline void *target_psoc_get_hif_hdl
  * Return: void
  */
 static inline void target_psoc_set_htc_hdl
-		(struct target_psoc_info *psoc_info, void *htc_hdl)
+		(struct target_psoc_info *psoc_info,
+		 struct common_htc_handle *htc_hdl)
 {
 	if (psoc_info == NULL)
 		return;
@@ -916,7 +922,7 @@ static inline void target_psoc_set_htc_hdl
  *
  * Return: htc_hdl
  */
-static inline void *target_psoc_get_htc_hdl
+static inline struct common_htc_handle *target_psoc_get_htc_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)
@@ -934,7 +940,8 @@ static inline void *target_psoc_get_htc_hdl
  * Return: void
  */
 static inline void target_psoc_set_wmi_hdl
-		(struct target_psoc_info *psoc_info, void *wmi_hdl)
+		(struct target_psoc_info *psoc_info,
+		 struct common_wmi_handle *wmi_hdl)
 {
 	if (psoc_info == NULL)
 		return;
@@ -950,7 +957,7 @@ static inline void target_psoc_set_wmi_hdl
  *
  * Return: wmi_hdl
  */
-static inline void *target_psoc_get_wmi_hdl
+static inline struct common_wmi_handle *target_psoc_get_wmi_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)
@@ -969,7 +976,8 @@ static inline void *target_psoc_get_wmi_hdl
  * Return: void
  */
 static inline void target_psoc_set_accelerator_hdl
-		(struct target_psoc_info *psoc_info, void *accelerator_hdl)
+		(struct target_psoc_info *psoc_info,
+		 struct common_accelerator_handle *accelerator_hdl)
 {
 	if (psoc_info == NULL)
 		return;
@@ -985,7 +993,8 @@ static inline void target_psoc_set_accelerator_hdl
  *
  * Return: accelerator_hdl
  */
-static inline void *target_psoc_get_accelerator_hdl
+static inline
+struct common_accelerator_handle *target_psoc_get_accelerator_hdl
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)
@@ -1342,7 +1351,8 @@ static inline void *target_pdev_get_feature_ptr
  * Return: void
  */
 static inline void target_pdev_set_wmi_handle
-		(struct target_pdev_info *pdev_info, void *wmi_handle)
+		(struct target_pdev_info *pdev_info,
+		 struct common_wmi_handle *wmi_handle)
 {
 	if (pdev_info == NULL)
 		return;
@@ -1358,7 +1368,7 @@ static inline void target_pdev_set_wmi_handle
  *
  * Return: wmi_handle
  */
-static inline void *target_pdev_get_wmi_handle
+static inline struct common_wmi_handle *target_pdev_get_wmi_handle
 		(struct target_pdev_info *pdev_info)
 {
 	if (pdev_info == NULL)
@@ -1377,7 +1387,8 @@ static inline void *target_pdev_get_wmi_handle
  * Return: void
  */
 static inline void target_pdev_set_accelerator_hdl
-		(struct target_pdev_info *pdev_info, void *accelerator_hdl)
+		(struct target_pdev_info *pdev_info,
+		 struct common_accelerator_handle *accelerator_hdl)
 {
 	if (pdev_info == NULL)
 		return;
@@ -1393,8 +1404,8 @@ static inline void target_pdev_set_accelerator_hdl
  *
  * Return: accelerator_hdl
  */
-static inline void *target_pdev_get_accelerator_hdl
-		(struct target_pdev_info *pdev_info)
+static inline struct common_accelerator_handle *
+target_pdev_get_accelerator_hdl(struct target_pdev_info *pdev_info)
 {
 	if (pdev_info == NULL)
 		return NULL;
@@ -1481,7 +1492,8 @@ static inline int32_t target_pdev_get_phy_idx
  * Return: wmi_handle on success
  *         if tgt handle is not initialized, it returns NULL
  */
-static inline void *GET_WMI_HDL_FROM_PSOC(struct wlan_objmgr_psoc *psoc)
+static inline struct common_wmi_handle *GET_WMI_HDL_FROM_PSOC(
+		struct wlan_objmgr_psoc *psoc)
 {
 	void *tgt_if_handle;
 
@@ -1507,7 +1519,8 @@ static inline void *GET_WMI_HDL_FROM_PSOC(struct wlan_objmgr_psoc *psoc)
  * Return: wmi_handle on success
  *         if tgt handle is not initialized, it returns NULL
  */
-static inline void *GET_WMI_HDL_FROM_PDEV(struct wlan_objmgr_pdev *pdev)
+static inline struct common_wmi_handle *GET_WMI_HDL_FROM_PDEV(
+		struct wlan_objmgr_pdev *pdev)
 {
 	void *tgt_if_handle;
 
@@ -1521,6 +1534,36 @@ static inline void *GET_WMI_HDL_FROM_PDEV(struct wlan_objmgr_pdev *pdev)
 	}
 
 	return NULL;
+}
+
+/**
+ * get_wmi_unified_hdl_from_psoc - get wmi handle from psoc
+ * @psoc:  psoc object
+ *
+ * API to get wmi_handle from psoc
+ *
+ * Return: wmi_handle on success
+ *         if tgt handle is not initialized, it returns NULL
+ */
+static inline wmi_unified_t
+get_wmi_unified_hdl_from_psoc(struct wlan_objmgr_psoc *psoc)
+{
+	return (wmi_unified_t)GET_WMI_HDL_FROM_PSOC(psoc);
+}
+
+/**
+ * get_wmi_unified_hdl_from_pdev - get wmi handle from pdev
+ * @pdev:  pdev object
+ *
+ * API to get wmi_handle from pdev
+ *
+ * Return: wmi_handle on success
+ *         if tgt handle is not initialized, it returns NULL
+ */
+static inline wmi_unified_t
+get_wmi_unified_hdl_from_pdev(struct wlan_objmgr_pdev *pdev)
+{
+	return (wmi_unified_t)GET_WMI_HDL_FROM_PDEV(pdev);
 }
 
 /**

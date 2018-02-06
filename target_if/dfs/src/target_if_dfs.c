@@ -138,9 +138,9 @@ static QDF_STATUS target_if_reg_phyerr_events_dfs2(
 						&is_phyerr_filter_offload)))
 			if (is_phyerr_filter_offload)
 				ret = wmi_unified_register_event(
-					GET_WMI_HDL_FROM_PSOC(psoc),
-					wmi_dfs_radar_event_id,
-					target_if_radar_event_handler);
+						get_wmi_unified_hdl_from_psoc(psoc),
+						wmi_dfs_radar_event_id,
+						target_if_radar_event_handler);
 
 	if (ret) {
 		target_if_err("failed to register wmi_dfs_radar_event_id");

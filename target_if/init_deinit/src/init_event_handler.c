@@ -41,7 +41,7 @@ static int init_deinit_service_ready_event_handler(ol_scn_t scn_handle,
 	struct wlan_objmgr_psoc *psoc;
 	struct target_psoc_info *tgt_hdl;
 	wmi_legacy_service_ready_callback legacy_callback;
-	void *wmi_handle;
+	struct common_wmi_handle *wmi_handle;
 	QDF_STATUS ret_val;
 
 	if (!scn_handle) {
@@ -173,7 +173,7 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	int err_code;
 	struct wlan_objmgr_psoc *psoc;
 	struct target_psoc_info *tgt_hdl;
-	void *wmi_handle;
+	struct common_wmi_handle *wmi_handle;
 	struct tgt_info *info;
 	wmi_legacy_service_ready_callback legacy_callback;
 
@@ -262,7 +262,7 @@ static int init_deinit_service_available_handler(ol_scn_t scn_handle,
 {
 	struct wlan_objmgr_psoc *psoc;
 	struct target_psoc_info *tgt_hdl;
-	void *wmi_handle;
+	struct common_wmi_handle *wmi_handle;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL");
@@ -303,7 +303,7 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	struct wlan_objmgr_psoc *psoc;
 	struct wlan_objmgr_pdev *pdev;
 	struct target_psoc_info *tgt_hdl;
-	void *wmi_handle;
+	struct common_wmi_handle *wmi_handle;
 	struct wmi_host_fw_abi_ver fw_ver;
 	uint8_t myaddr[QDF_MAC_ADDR_SIZE];
 	struct tgt_info *info;
@@ -450,7 +450,7 @@ QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
 				struct wlan_objmgr_psoc *psoc)
 {
 	struct target_psoc_info *tgt_hdl;
-	void *wmi_handle;
+	wmi_unified_t wmi_handle;
 	QDF_STATUS retval = QDF_STATUS_SUCCESS;
 
 	if (!psoc) {
@@ -465,7 +465,7 @@ QDF_STATUS init_deinit_register_tgt_psoc_ev_handlers(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
+	wmi_handle = (wmi_unified_t)target_psoc_get_wmi_hdl(tgt_hdl);
 
 	retval = wmi_unified_register_event_handler(wmi_handle,
 				wmi_service_ready_event_id,

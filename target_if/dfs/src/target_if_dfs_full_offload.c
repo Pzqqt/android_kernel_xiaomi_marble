@@ -156,12 +156,14 @@ QDF_STATUS target_if_dfs_reg_offload_events(
 {
 	int ret1, ret2;
 
-	ret1 = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	ret1 = wmi_unified_register_event(
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dfs_radar_detection_event_id,
 			target_if_dfs_radar_detection_event_handler);
 	target_if_debug("wmi_dfs_radar_detection_event_id ret=%d", ret1);
 
-	ret2 = wmi_unified_register_event(GET_WMI_HDL_FROM_PSOC(psoc),
+	ret2 = wmi_unified_register_event(
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_dfs_cac_complete_id,
 			target_if_dfs_cac_complete_event_handler);
 	target_if_debug("wmi_dfs_cac_complete_id ret=%d", ret2);
@@ -187,7 +189,7 @@ QDF_STATUS target_process_bang_radar_cmd(
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	wmi_handle = GET_WMI_HDL_FROM_PDEV(pdev);
+	wmi_handle = get_wmi_unified_hdl_from_pdev(pdev);
 	if (!wmi_handle) {
 		target_if_err("null wmi_handle");
 		return QDF_STATUS_E_FAILURE;

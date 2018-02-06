@@ -187,7 +187,7 @@ static int target_if_mc_cp_stats_stats_event_handler(ol_scn_t scn,
 		cp_stats_err("null psoc");
 		return -EINVAL;
 	}
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 
 	rx_ops = target_if_cp_stats_get_rx_ops(psoc);
 	if (!rx_ops || !rx_ops->process_stats_event) {
@@ -259,7 +259,8 @@ target_if_cp_stats_register_event_handler(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	status = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
+	status = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
 			wmi_update_stats_event_id,
 			target_if_mc_cp_stats_stats_event_handler,
 			WMI_RX_WORK_CTX);
@@ -279,7 +280,8 @@ target_if_cp_stats_unregister_event_handler(struct wlan_objmgr_psoc *psoc)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
 					     wmi_update_stats_event_id);
 
 	return QDF_STATUS_SUCCESS;
@@ -314,7 +316,7 @@ static QDF_STATUS target_if_cp_stats_send_stats_req(
 	struct wmi_unified *wmi_handle;
 	struct stats_request_params param = {0};
 
-	wmi_handle = GET_WMI_HDL_FROM_PSOC(psoc);
+	wmi_handle = get_wmi_unified_hdl_from_psoc(psoc);
 	if (!wmi_handle) {
 		cp_stats_err("wmi_handle is null.");
 		return QDF_STATUS_E_NULL_VALUE;

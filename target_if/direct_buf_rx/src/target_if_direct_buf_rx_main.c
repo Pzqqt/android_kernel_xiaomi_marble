@@ -1006,10 +1006,11 @@ QDF_STATUS target_if_direct_buf_rx_register_events(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_register_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-				wmi_dma_buf_release_event_id,
-				target_if_direct_buf_rx_rsp_event_handler,
-				WMI_RX_UMAC_CTX);
+	ret = wmi_unified_register_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_dma_buf_release_event_id,
+			target_if_direct_buf_rx_rsp_event_handler,
+			WMI_RX_UMAC_CTX);
 
 	if (ret)
 		direct_buf_rx_info("event handler not supported", ret);
@@ -1025,8 +1026,9 @@ QDF_STATUS target_if_direct_buf_rx_unregister_events(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wmi_unified_unregister_event_handler(GET_WMI_HDL_FROM_PSOC(psoc),
-					     wmi_dma_buf_release_event_id);
+	wmi_unified_unregister_event_handler(
+			get_wmi_unified_hdl_from_psoc(psoc),
+			wmi_dma_buf_release_event_id);
 
 	return QDF_STATUS_SUCCESS;
 }
