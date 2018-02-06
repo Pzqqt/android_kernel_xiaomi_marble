@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1794,9 +1794,11 @@ void ol_txrx_vdev_flush(struct cdp_vdev *pvdev)
 		qdf_nbuf_t next =
 			qdf_nbuf_next(vdev->ll_pause.txq.head);
 		qdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
-		qdf_nbuf_unmap(vdev->pdev->osdev,
-			       vdev->ll_pause.txq.head,
-			       QDF_DMA_TO_DEVICE);
+		if (QDF_NBUF_CB_PADDR(vdev->ll_pause.txq.head)) {
+			qdf_nbuf_unmap(vdev->pdev->osdev,
+				       vdev->ll_pause.txq.head,
+				       QDF_DMA_TO_DEVICE);
+		}
 		qdf_nbuf_tx_free(vdev->ll_pause.txq.head,
 				 QDF_NBUF_PKT_ERROR);
 		vdev->ll_pause.txq.head = next;
