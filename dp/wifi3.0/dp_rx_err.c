@@ -132,7 +132,9 @@ static inline bool dp_rx_mcast_echo_check(struct dp_soc *soc,
 			qdf_spin_unlock_bh(&soc->ast_lock);
 			QDF_TRACE(QDF_MODULE_ID_DP,
 				QDF_TRACE_LEVEL_INFO,
-				 "Detected DBDC Root AP");
+				"Detected DBDC Root AP %pM, %d %d",
+				&data[DP_MAC_ADDR_LEN], vdev->pdev->pdev_id,
+				ase->pdev_id);
 			return false;
 		}
 
@@ -553,7 +555,8 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 	}
 
 	/* WDS Source Port Learning */
-	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet))
+	if (qdf_likely(vdev->rx_decap_type == htt_cmn_pkt_type_ethernet &&
+		vdev->wds_enabled))
 		dp_rx_wds_srcport_learn(soc, rx_tlv_hdr, peer, nbuf);
 
 	if (hal_rx_mpdu_start_mpdu_qos_control_valid_get(rx_tlv_hdr)) {

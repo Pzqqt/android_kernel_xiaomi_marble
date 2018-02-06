@@ -257,7 +257,14 @@ struct cdp_cmn_ops {
 			struct cdp_config_params *params);
 
 	void *(*get_dp_txrx_handle)(struct cdp_pdev *pdev_hdl);
-	void (*set_dp_txrx_handle)(struct cdp_pdev *pdev_hdl, void *dp_txrx_hdl);
+	void (*set_dp_txrx_handle)(struct cdp_pdev *pdev_hdl,
+			void *dp_txrx_hdl);
+
+	void *(*get_soc_dp_txrx_handle)(struct cdp_soc *soc_handle);
+	void (*set_soc_dp_txrx_handle)(struct cdp_soc *soc_handle,
+			void *dp_txrx_handle);
+
+	ol_txrx_tx_fp tx_send;
 };
 
 struct cdp_ctrl_ops {

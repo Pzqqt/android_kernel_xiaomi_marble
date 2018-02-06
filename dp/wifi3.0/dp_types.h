@@ -834,6 +834,7 @@ struct dp_soc {
 	/* htt stats */
 	struct htt_t2h_stats htt_stats;
 
+	void *external_txrx_handle; /* External data path handle */
 #ifdef IPA_OFFLOAD
 	/* IPA uC datapath offload Wlan Tx resources */
 	struct {

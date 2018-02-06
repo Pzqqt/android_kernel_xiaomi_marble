@@ -6255,6 +6255,34 @@ dp_pdev_set_dp_txrx_handle(struct cdp_pdev *pdev_hdl, void *dp_txrx_hdl)
 	pdev->dp_txrx_handle = dp_txrx_hdl;
 }
 
+/**
+ * dp_soc_get_dp_txrx_handle() - get context for external-dp from dp soc
+ * @soc_handle: datapath soc handle
+ *
+ * Return: opaque pointer to external dp (non-core DP)
+ */
+static void *dp_soc_get_dp_txrx_handle(struct cdp_soc *soc_handle)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+
+	return soc->external_txrx_handle;
+}
+
+/**
+ * dp_soc_set_dp_txrx_handle() - set external dp handle in soc
+ * @soc_handle: datapath soc handle
+ * @txrx_handle: opaque pointer to external dp (non-core DP)
+ *
+ * Return: void
+ */
+static void
+dp_soc_set_dp_txrx_handle(struct cdp_soc *soc_handle, void *txrx_handle)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_handle;
+
+	soc->external_txrx_handle = txrx_handle;
+}
+
 #ifdef CONFIG_WIN
 static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 {
@@ -6320,6 +6348,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_data_tx_cb_set = dp_txrx_data_tx_cb_set,
 	.get_dp_txrx_handle = dp_pdev_get_dp_txrx_handle,
 	.set_dp_txrx_handle = dp_pdev_set_dp_txrx_handle,
+	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
+	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
+	.tx_send = dp_tx_send,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
