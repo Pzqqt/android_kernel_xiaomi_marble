@@ -2957,6 +2957,11 @@ static int __tavil_codec_enable_swr(struct snd_soc_dapm_widget *w, int event)
 
 	tavil = snd_soc_codec_get_drvdata(codec);
 
+	if (!tavil->swr.ctrl_data)
+		return -EINVAL;
+	if (!tavil->swr.ctrl_data[0].swr_pdev)
+		return -EINVAL;
+
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
 		if (((strnstr(w->name, "INT7_", sizeof("RX INT7_"))) ||
