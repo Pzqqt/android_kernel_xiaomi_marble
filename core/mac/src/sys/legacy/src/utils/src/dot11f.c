@@ -6609,7 +6609,8 @@ uint32_t dot11f_unpack_ie_he_cap(tpAniSirGlobal pCtx,
 	pDst->he_1x_ltf_800_gi_ppdu = tmp78__ >> 14 & 0x1;
 	pDst->midamble_rx_max_nsts = tmp78__ >> 15 & 0x3;
 	pDst->he_4x_ltf_3200_gi_ndp = tmp78__ >> 17 & 0x1;
-	pDst->stbc_lt_80mhz = tmp78__ >> 18 & 0x3;
+	pDst->tx_stbc_lt_80mhz = tmp78__ >> 18 & 0x1;
+	pDst->rx_stbc_lt_80mhz = tmp78__ >> 19 & 0x1;
 	pDst->doppler = tmp78__ >> 20 & 0x3;
 	pDst->ul_mu = tmp78__ >> 22 & 0x3;
 	pDst->dcm_enc_tx = tmp78__ >> 24 & 0x7;
@@ -6637,7 +6638,8 @@ uint32_t dot11f_unpack_ie_he_cap(tpAniSirGlobal pCtx,
 	pDst->power_boost = tmp79__ >> 25 & 0x1;
 	pDst->he_ltf_800_gi_4x = tmp79__ >> 26 & 0x1;
 	pDst->max_nc = tmp79__ >> 27 & 0x7;
-	pDst->stbc_gt_80mhz = tmp79__ >> 30 & 0x3;
+	pDst->tx_stbc_gt_80mhz = tmp79__ >> 30 & 0x1;
+	pDst->rx_stbc_gt_80mhz = tmp79__ >> 31 & 0x1;
 	tmp80__ = *pBuf;
 	pBuf += 1;
 	ielen -= 1;
@@ -23456,7 +23458,8 @@ uint32_t dot11f_pack_ie_he_cap(tpAniSirGlobal pCtx,
 		tmp170__ |= (pSrc->he_1x_ltf_800_gi_ppdu << 14);
 		tmp170__ |= (pSrc->midamble_rx_max_nsts << 15);
 		tmp170__ |= (pSrc->he_4x_ltf_3200_gi_ndp << 17);
-		tmp170__ |= (pSrc->stbc_lt_80mhz << 18);
+		tmp170__ |= (pSrc->tx_stbc_lt_80mhz << 18);
+		tmp170__ |= (pSrc->rx_stbc_lt_80mhz << 19);
 		tmp170__ |= (pSrc->doppler << 20);
 		tmp170__ |= (pSrc->ul_mu << 22);
 		tmp170__ |= (pSrc->dcm_enc_tx << 24);
@@ -23486,7 +23489,8 @@ uint32_t dot11f_pack_ie_he_cap(tpAniSirGlobal pCtx,
 		tmp171__ |= (pSrc->power_boost << 25);
 		tmp171__ |= (pSrc->he_ltf_800_gi_4x << 26);
 		tmp171__ |= (pSrc->max_nc << 27);
-		tmp171__ |= (pSrc->stbc_gt_80mhz << 30);
+		tmp171__ |= (pSrc->tx_stbc_gt_80mhz << 30);
+		tmp171__ |= (pSrc->rx_stbc_gt_80mhz << 31);
 		frameshtonl(pCtx, pBuf, tmp171__, 0);
 		*pnConsumed += 4;
 		pBuf += 4;

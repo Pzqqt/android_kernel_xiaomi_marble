@@ -8760,7 +8760,8 @@ typedef struct sDot11fIEhe_cap {
 	uint32_t he_1x_ltf_800_gi_ppdu:1;
 	uint32_t midamble_rx_max_nsts:2;
 	uint32_t he_4x_ltf_3200_gi_ndp:1;
-	uint32_t        stbc_lt_80mhz:2;
+	uint32_t     tx_stbc_lt_80mhz:1;
+	uint32_t     rx_stbc_lt_80mhz:1;
 	uint32_t              doppler:2;
 	uint32_t                ul_mu:2;
 	uint32_t           dcm_enc_tx:3;
@@ -8785,7 +8786,8 @@ typedef struct sDot11fIEhe_cap {
 	uint32_t          power_boost:1;
 	uint32_t     he_ltf_800_gi_4x:1;
 	uint32_t               max_nc:3;
-	uint32_t        stbc_gt_80mhz:2;
+	uint32_t     tx_stbc_gt_80mhz:1;
+	uint32_t     rx_stbc_gt_80mhz:1;
 	uint8_t  er_he_ltf_800_gi_4x:1;
 	uint8_t he_ppdu_20_in_40Mhz_2G:1;
 	uint8_t he_ppdu_20_in_160_80p80Mhz:1;

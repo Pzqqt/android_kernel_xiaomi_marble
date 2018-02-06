@@ -56,6 +56,7 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	uint8_t chan_width;
 	QDF_STATUS status;
 	tDot11fIEhe_cap *he_cap = &cfg->he_cap;
+	struct hdd_config *config = hdd_ctx->config;
 
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_CONTROL, he_cap->htc_he);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TWT_REQUESTOR,
@@ -130,8 +131,24 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 			   he_cap->midamble_rx_max_nsts);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_LTF_NDP,
 			   he_cap->he_4x_ltf_3200_gi_ndp);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STBC_LT80,
-			   he_cap->stbc_lt_80mhz);
+	if (config->enableRxSTBC) {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_LT80,
+				   he_cap->rx_stbc_lt_80mhz);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_GT80,
+				   he_cap->rx_stbc_gt_80mhz);
+	} else {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_LT80, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_RX_STBC_GT80, 0);
+	}
+	if (config->enableTxSTBC) {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_STBC_LT80,
+				   he_cap->tx_stbc_lt_80mhz);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_STBC_GT80,
+				   he_cap->tx_stbc_gt_80mhz);
+	} else {
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_STBC_LT80, 0);
+		hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_TX_STBC_GT80, 0);
+	}
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DOPPLER, he_cap->doppler);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_UL_MUMIMO, he_cap->ul_mu);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_DCM_TX, he_cap->dcm_enc_tx);
@@ -173,8 +190,6 @@ void hdd_update_tgt_he_cap(struct hdd_context *hdd_ctx,
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_4x_LTF_GI,
 			   he_cap->he_ltf_800_gi_4x);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_MAX_NC, he_cap->max_nc);
-	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_STBC_GT80,
-			   he_cap->stbc_gt_80mhz);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_ER_4x_LTF_GI,
 			   he_cap->er_he_ltf_800_gi_4x);
 	hdd_he_set_wni_cfg(hdd_ctx, WNI_CFG_HE_PPDU_20_IN_40MHZ_2G,

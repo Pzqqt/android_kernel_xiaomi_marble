@@ -4322,6 +4322,9 @@ int hdd_set_tx_stbc(struct hdd_adapter *adapter, int value)
 				   value);
 	if (ret)
 		hdd_err("Failed to set TX STBC value");
+	ret = sme_update_he_tx_stbc_cap(hal, adapter->session_id, value);
+	if (ret)
+		hdd_err("Failed to set HE TX STBC value");
 
 	return ret;
 }
@@ -4389,6 +4392,10 @@ int hdd_set_rx_stbc(struct hdd_adapter *adapter, int value)
 				   value);
 	if (ret)
 		hdd_err("Failed to set RX STBC value");
+
+	ret = sme_update_he_rx_stbc_cap(hal, adapter->session_id, value);
+	if (ret)
+		hdd_err("Failed to set HE RX STBC value");
 
 	return ret;
 }

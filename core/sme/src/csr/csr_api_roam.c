@@ -2422,8 +2422,10 @@ void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	he_cap->midamble_rx_max_nsts = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_LTF_NDP, &value);
 	he_cap->he_4x_ltf_3200_gi_ndp = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STBC_LT80, &value);
-	he_cap->stbc_lt_80mhz = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_STBC_LT80, &value);
+	he_cap->tx_stbc_lt_80mhz = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_STBC_LT80, &value);
+	he_cap->rx_stbc_lt_80mhz = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_DOPPLER, &value);
 	he_cap->doppler = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_UL_MUMIMO, &value);
@@ -2472,8 +2474,10 @@ void csr_update_session_he_cap(tpAniSirGlobal mac_ctx,
 	he_cap->he_ltf_800_gi_4x = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_MAX_NC, &value);
 	he_cap->max_nc = value;
-	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_STBC_GT80, &value);
-	he_cap->stbc_gt_80mhz = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_TX_STBC_GT80, &value);
+	he_cap->tx_stbc_gt_80mhz = value;
+	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_RX_STBC_GT80, &value);
+	he_cap->rx_stbc_gt_80mhz = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, &value);
 	he_cap->er_he_ltf_800_gi_4x = value;
 	sme_cfg_get_int(mac_ctx, WNI_CFG_HE_PPDU_20_IN_40MHZ_2G, &value);

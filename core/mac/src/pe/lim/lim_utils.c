@@ -7205,29 +7205,25 @@ static void lim_intersect_he_caps(tDot11fIEhe_cap *rcvd_he,
 
 	peer_he->fragmentation &= session_he->fragmentation;
 
-	/* Tx STBC is first bit and Rx STBC is second bit */
-	if (session_he->stbc_lt_80mhz) {
-		val = 0;
-		if ((session_he->stbc_lt_80mhz & 0x1) &&
-		    (peer_he->stbc_lt_80mhz & 0x10))
-			val |= (1 << 1);
-		if ((session_he->stbc_lt_80mhz & 0x10) &&
-		    (peer_he->stbc_lt_80mhz & 0x1))
-			val |= (1 << 0);
-		peer_he->stbc_lt_80mhz = val;
-	}
+	if (session_he->tx_stbc_lt_80mhz && peer_he->rx_stbc_lt_80mhz)
+		peer_he->rx_stbc_lt_80mhz = 1;
+	else
+		peer_he->rx_stbc_lt_80mhz = 0;
 
-	/* Tx STBC is first bit and Rx STBC is second bit */
-	if (session_he->stbc_gt_80mhz) {
-		val = 0;
-		if ((session_he->stbc_gt_80mhz & 0x1) &&
-		    (peer_he->stbc_gt_80mhz & 0x10))
-			val |= (1 << 1);
-		if ((session_he->stbc_gt_80mhz & 0x10) &&
-		    (peer_he->stbc_gt_80mhz & 0x1))
-			val |= (1 << 0);
-		peer_he->stbc_gt_80mhz = val;
-	}
+	if (session_he->rx_stbc_lt_80mhz && peer_he->tx_stbc_lt_80mhz)
+		peer_he->tx_stbc_lt_80mhz = 1;
+	else
+		peer_he->tx_stbc_lt_80mhz = 0;
+
+	if (session_he->tx_stbc_gt_80mhz && peer_he->rx_stbc_gt_80mhz)
+		peer_he->rx_stbc_gt_80mhz = 1;
+	else
+		peer_he->rx_stbc_gt_80mhz = 0;
+
+	if (session_he->rx_stbc_gt_80mhz && peer_he->tx_stbc_gt_80mhz)
+		peer_he->tx_stbc_gt_80mhz = 1;
+	else
+		peer_he->tx_stbc_gt_80mhz = 0;
 
 	/* Tx Doppler is first bit and Rx Doppler is second bit */
 	if (session_he->doppler) {
@@ -7505,8 +7501,10 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 			he_cap->midamble_rx_max_nsts);
 	pe_debug("\tLTF and GI for NDP: 0x%02x",
 			he_cap->he_4x_ltf_3200_gi_ndp);
-	pe_debug("\tSTBC Tx & Rx support (<= 80MHz): 0x%02x",
-		 he_cap->stbc_lt_80mhz);
+	pe_debug("\tSTBC Tx support (<= 80MHz): 0x%01x",
+		 he_cap->tx_stbc_lt_80mhz);
+	pe_debug("\tSTBC Rx support (<= 80MHz): 0x%01x",
+		 he_cap->rx_stbc_lt_80mhz);
 	pe_debug("\tDoppler support: 0x%02x", he_cap->doppler);
 	pe_debug("\tUL MU: 0x%02x", he_cap->ul_mu);
 	pe_debug("\tDCM encoding Tx: 0x%03x", he_cap->dcm_enc_tx);
@@ -7542,8 +7540,10 @@ void lim_log_he_cap(tpAniSirGlobal mac, tDot11fIEhe_cap *he_cap)
 	pe_debug("\tSRP based SR-support: 0x%01x", he_cap->srp);
 	pe_debug("\tPower boost factor: 0x%01x", he_cap->power_boost);
 	pe_debug("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
-	pe_debug("\tSTBC Tx & Rx support (> 80MHz): 0x%02x",
-		 he_cap->stbc_gt_80mhz);
+	pe_debug("\tSTBC Tx support (> 80MHz): 0x%01x",
+		 he_cap->tx_stbc_gt_80mhz);
+	pe_debug("\tSTBC Rx support (> 80MHz): 0x%01x",
+		 he_cap->rx_stbc_gt_80mhz);
 	pe_debug("\tMax Nc: 0x%03x", he_cap->max_nc);
 	pe_debug("\tER 4x HE LTF support: 0x%01x", he_cap->er_he_ltf_800_gi_4x);
 	pe_debug("\tER 4x HE LTF support: 0x%01x",
@@ -7704,8 +7704,10 @@ void lim_set_he_caps(tpAniSirGlobal mac, tpPESession session, uint8_t *ie_start,
 		he_cap->he_1x_ltf_800_gi_ppdu = dot11_cap.he_1x_ltf_800_gi_ppdu;
 		he_cap->midamble_rx_max_nsts = dot11_cap.midamble_rx_max_nsts;
 		he_cap->he_4x_ltf_3200_gi_ndp = dot11_cap.he_4x_ltf_3200_gi_ndp;
-		he_cap->stbc_lt_80mhz = dot11_cap.stbc_lt_80mhz;
-		he_cap->stbc_gt_80mhz = dot11_cap.stbc_gt_80mhz;
+		he_cap->tx_stbc_lt_80mhz = dot11_cap.tx_stbc_lt_80mhz;
+		he_cap->rx_stbc_lt_80mhz = dot11_cap.rx_stbc_lt_80mhz;
+		he_cap->tx_stbc_gt_80mhz = dot11_cap.tx_stbc_gt_80mhz;
+		he_cap->rx_stbc_gt_80mhz = dot11_cap.rx_stbc_gt_80mhz;
 		he_cap->doppler = dot11_cap.doppler;
 		he_cap->ul_mu = dot11_cap.ul_mu;
 		he_cap->dcm_enc_tx = dot11_cap.dcm_enc_tx;

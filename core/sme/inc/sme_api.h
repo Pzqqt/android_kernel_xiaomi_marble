@@ -2128,12 +2128,42 @@ void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
  * Return: 0 on success else err code
  */
 int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs);
+/**
+ * sme_update_he_tx_stbc_cap() - Sets the HE Tx STBC capability
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @value: set value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value);
+
+/**
+ * sme_update_he_rx_stbc_cap() - Sets the HE Rx STBC capability
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @value: set value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id, int value);
 #else
 static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss)
 {}
 static inline int sme_update_he_mcs(tHalHandle hal, uint8_t session_id,
 				    uint16_t he_mcs)
+{
+	return 0;
+}
+static inline int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id,
+					    int value)
+{
+	return 0;
+}
+
+static inline int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id,
+					    int value)
 {
 	return 0;
 }

@@ -13243,6 +13243,51 @@ int sme_update_he_mcs(tHalHandle hal, uint8_t session_id, uint16_t he_mcs)
 
 	return 0;
 }
+
+static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
+		uint16_t he_cap, int value)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct csr_roam_session *session;
+	uint32_t he_cap_val = 0;
+
+	session = CSR_GET_SESSION(mac_ctx, session_id);
+	if (!session) {
+		sme_err("No session for id %d", session_id);
+		return -EINVAL;
+	}
+	he_cap_val = value ? 1 : 0;
+	sme_cfg_set_int(mac_ctx, he_cap, he_cap_val);
+	csr_update_session_he_cap(mac_ctx, session);
+
+	return 0;
+}
+
+int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)
+{
+	int ret;
+
+	ret = sme_update_he_cap(hal, session_id,
+			 WNI_CFG_HE_TX_STBC_LT80, value);
+	if (ret)
+		return ret;
+
+	return sme_update_he_cap(hal, session_id,
+			 WNI_CFG_HE_TX_STBC_GT80, value);
+}
+
+int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)
+{
+	int ret;
+
+	ret = sme_update_he_cap(hal, session_id,
+			 WNI_CFG_HE_RX_STBC_LT80, value);
+	if (ret)
+		return ret;
+
+	return sme_update_he_cap(hal, session_id,
+			 WNI_CFG_HE_RX_STBC_GT80, value);
+}
 #endif
 
 /**

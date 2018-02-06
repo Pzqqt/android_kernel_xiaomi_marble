@@ -6208,8 +6208,10 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->midamble_rx_max_nsts = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_LTF_NDP, value);
 		he_cap->he_4x_ltf_3200_gi_ndp = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC_LT80, value);
-		he_cap->stbc_lt_80mhz = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_STBC_LT80, value);
+		he_cap->tx_stbc_lt_80mhz = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_STBC_LT80, value);
+		he_cap->rx_stbc_lt_80mhz = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_DOPPLER, value);
 		he_cap->doppler = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_UL_MUMIMO, value);
@@ -6258,8 +6260,10 @@ QDF_STATUS populate_dot11f_he_caps(tpAniSirGlobal mac_ctx, tpPESession session,
 		he_cap->he_ltf_800_gi_4x = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_MAX_NC, value);
 		he_cap->max_nc = value;
-		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_STBC_GT80, value);
-		he_cap->stbc_gt_80mhz = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_TX_STBC_GT80, value);
+		he_cap->tx_stbc_gt_80mhz = value;
+		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_RX_STBC_GT80, value);
+		he_cap->rx_stbc_gt_80mhz = value;
 		CFG_GET_INT(status, mac_ctx, WNI_CFG_HE_ER_4x_LTF_GI, value);
 		he_cap->er_he_ltf_800_gi_4x = value;
 		CFG_GET_INT(status, mac_ctx,

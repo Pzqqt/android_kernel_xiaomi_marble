@@ -228,10 +228,10 @@ static void wma_convert_he_cap(tDot11fIEhe_cap *he_cap, uint32_t mac_cap,
 	he_cap->midamble_rx_max_nsts =
 		WMI_HECAP_PHY_MIDAMBLERXMAXNSTS_GET(phy_cap);
 	he_cap->he_4x_ltf_3200_gi_ndp = WMI_HECAP_PHY_LTFGIFORNDP_GET(phy_cap);
-	he_cap->stbc_lt_80mhz = (WMI_HECAP_PHY_RXSTBC_GET(phy_cap) << 1) |
-				 WMI_HECAP_PHY_TXSTBC_GET(phy_cap);
-	he_cap->stbc_gt_80mhz = (WMI_HECAP_PHY_STBCRXGT80_GET(phy_cap) << 1) |
-				 WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
+	he_cap->rx_stbc_lt_80mhz = WMI_HECAP_PHY_RXSTBC_GET(phy_cap);
+	he_cap->tx_stbc_lt_80mhz = WMI_HECAP_PHY_TXSTBC_GET(phy_cap);
+	he_cap->rx_stbc_gt_80mhz = WMI_HECAP_PHY_STBCRXGT80_GET(phy_cap);
+	he_cap->tx_stbc_gt_80mhz = WMI_HECAP_PHY_STBCTXGT80_GET(phy_cap);
 
 	he_cap->doppler = (WMI_HECAP_PHY_RXDOPPLER_GET(phy_cap) << 1) |
 				WMI_HECAP_PHY_TXDOPPLER_GET(phy_cap);
@@ -412,8 +412,10 @@ static void wma_derive_ext_he_cap(tDot11fIEhe_cap *he_cap,
 	he_cap->he_4x_ltf_3200_gi_ndp =
 		QDF_MIN(he_cap->he_4x_ltf_3200_gi_ndp,
 				new_cap->he_4x_ltf_3200_gi_ndp);
-	he_cap->stbc_lt_80mhz = QDF_MIN(he_cap->stbc_lt_80mhz,
-			new_cap->stbc_lt_80mhz);
+	he_cap->tx_stbc_lt_80mhz = QDF_MIN(he_cap->tx_stbc_lt_80mhz,
+			new_cap->tx_stbc_lt_80mhz);
+	he_cap->rx_stbc_lt_80mhz = QDF_MIN(he_cap->rx_stbc_lt_80mhz,
+			new_cap->rx_stbc_lt_80mhz);
 	he_cap->doppler = QDF_MIN(he_cap->doppler,
 			new_cap->doppler);
 	he_cap->ul_mu = QDF_MIN(he_cap->ul_mu, new_cap->ul_mu);
@@ -566,7 +568,8 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	WMA_LOGD("\tMidamble Rx MAX NSTS: 0x%02x",
 		 he_cap->midamble_rx_max_nsts);
 	WMA_LOGD("\tLTF and GI for NDP: 0x%02x", he_cap->he_4x_ltf_3200_gi_ndp);
-	WMA_LOGD("\tSTBC Tx & Rx support: 0x%02x", he_cap->stbc_lt_80mhz);
+	WMA_LOGD("\tSTBC Tx support <= 80M: 0x%01x", he_cap->tx_stbc_lt_80mhz);
+	WMA_LOGD("\tSTBC Rx support <= 80M: 0x%01x", he_cap->rx_stbc_lt_80mhz);
 	WMA_LOGD("\tDoppler support: 0x%02x", he_cap->doppler);
 	WMA_LOGD("\tUL MU: 0x%02x", he_cap->ul_mu);
 	WMA_LOGD("\tDCM encoding Tx: 0x%03x", he_cap->dcm_enc_tx);
@@ -600,7 +603,8 @@ void wma_print_he_cap(tDot11fIEhe_cap *he_cap)
 	WMA_LOGD("\t4x HE LTF support: 0x%01x", he_cap->he_ltf_800_gi_4x);
 
 	WMA_LOGD("\tMax NC: 0x%01x", he_cap->max_nc);
-	WMA_LOGD("\tstbc gt 80mhz: 0x%01x", he_cap->stbc_gt_80mhz);
+	WMA_LOGD("\tstbc Tx gt 80mhz: 0x%01x", he_cap->tx_stbc_gt_80mhz);
+	WMA_LOGD("\tstbc Rx gt 80mhz: 0x%01x", he_cap->rx_stbc_gt_80mhz);
 	WMA_LOGD("\ter_he_ltf_800_gi_4x: 0x%01x", he_cap->er_he_ltf_800_gi_4x);
 	WMA_LOGD("\the_ppdu_20_in_40Mhz_2G: 0x%01x",
 					he_cap->he_ppdu_20_in_40Mhz_2G);
@@ -1075,10 +1079,8 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 				he_cap->midamble_rx_max_nsts);
 	WMI_HECAP_PHY_LTFGIFORNDP_SET(phy_cap, he_cap->he_4x_ltf_3200_gi_ndp);
 
-	temp = he_cap->stbc_lt_80mhz & 0x1;
-	WMI_HECAP_PHY_RXSTBC_SET(phy_cap, temp);
-	temp = he_cap->stbc_lt_80mhz >> 0x1;
-	WMI_HECAP_PHY_TXSTBC_SET(phy_cap, temp);
+	WMI_HECAP_PHY_RXSTBC_SET(phy_cap, he_cap->rx_stbc_lt_80mhz);
+	WMI_HECAP_PHY_TXSTBC_SET(phy_cap, he_cap->tx_stbc_lt_80mhz);
 
 	temp = he_cap->doppler & 0x1;
 	WMI_HECAP_PHY_RXDOPPLER_SET(phy_cap, temp);
@@ -1117,10 +1119,8 @@ void wma_populate_peer_he_cap(struct peer_assoc_params *peer,
 
 	WMI_HECAP_PHY_MAXNC_SET(phy_cap, he_cap->max_nc);
 
-	temp = he_cap->stbc_gt_80mhz & 0x1;
-	WMI_HECAP_PHY_STBCRXGT80_SET(phy_cap, temp);
-	temp = he_cap->stbc_gt_80mhz >> 0x1;
-	WMI_HECAP_PHY_STBCTXGT80_SET(phy_cap, temp);
+	WMI_HECAP_PHY_STBCRXGT80_SET(phy_cap, he_cap->rx_stbc_gt_80mhz);
+	WMI_HECAP_PHY_STBCTXGT80_SET(phy_cap, he_cap->tx_stbc_gt_80mhz);
 
 	WMI_HECAP_PHY_ERSU4X800NSECGI_SET(phy_cap, he_cap->er_he_ltf_800_gi_4x);
 	WMI_HECAP_PHY_HEPPDU20IN40MHZ2G_SET(phy_cap,
