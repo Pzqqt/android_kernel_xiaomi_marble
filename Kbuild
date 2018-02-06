@@ -221,6 +221,10 @@ endif
 	# Flag to enable MCC to SCC switch feature
 	CONFIG_MCC_TO_SCC_SWITCH := y
 
+ifeq ($(CONFIG_SLUB_DEBUG), y)
+	# Enable Obj Mgr Degug services if slub build
+	CONFIG_WLAN_OBJMGR_DEBUG:= y
+endif
 endif
 
 # As per target team, build is done as follows:
@@ -998,6 +1002,10 @@ UMAC_OBJMGR_OBJS := $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_global_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_peer_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_psoc_obj.o \
 		$(UMAC_OBJMGR_DIR)/src/wlan_objmgr_vdev_obj.o
+
+ifeq ($(CONFIG_WLAN_OBJMGR_DEBUG), y)
+UMAC_OBJMGR_OBJS += $(UMAC_OBJMGR_DIR)/src/wlan_objmgr_debug.o
+endif
 
 ###########  UMAC MGMT TXRX ##########
 UMAC_MGMT_TXRX_DIR := $(WLAN_COMMON_ROOT)/umac/cmn_services/mgmt_txrx
@@ -1993,7 +2001,9 @@ CDEFINES += -DWLAN_POWER_DEBUGFS
 endif
 
 # Enable object manager reference count debug infrastructure
+ifeq ($(CONFIG_WLAN_OBJMGR_DEBUG), y)
 CDEFINES += -DWLAN_OBJMGR_DEBUG
+endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_SAE),y)
 CDEFINES += -DWLAN_FEATURE_SAE

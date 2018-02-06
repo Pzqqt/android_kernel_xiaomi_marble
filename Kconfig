@@ -147,4 +147,8 @@ config WLAN_FEATURE_FILS
 config NAN_CONVERGENCE
 	bool "Enable NAN_CONVERGENCE feature"
 	default n
+
+config WLAN_OBJMGR_DEBUG
+	bool "Enable WLAN Obj Mgr Debug services"
+	default n
 endif # QCA_CLD_WLAN
