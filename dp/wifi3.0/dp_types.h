@@ -1343,6 +1343,8 @@ struct dp_peer {
 	/* set when node is authorized */
 	uint8_t authorize:1;
 
+	u_int8_t nac;
+
 	/* Band steering: Set when node is inactive */
 	uint8_t peer_bs_inact_flag:1;
 	u_int16_t peer_bs_inact; /* inactivity mark count */

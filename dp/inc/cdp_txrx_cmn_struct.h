@@ -82,6 +82,7 @@
 
 #define CDP_MU_MAX_USERS 8
 #define CDP_MU_MAX_USER_INDEX (CDP_MU_MAX_USERS - 1)
+#define CDP_INVALID_PEER 0xffff
 
 #define CDP_DATA_TID_MAX 8
 /*
@@ -215,12 +216,33 @@ enum cdp_ppdu_ftype {
  * translation is a simple shift operation.
  */
 enum htt_cmn_pkt_type {
-    htt_cmn_pkt_type_raw = 0,
-    htt_cmn_pkt_type_native_wifi = 1,
-    htt_cmn_pkt_type_ethernet = 2,
+	htt_cmn_pkt_type_raw = 0,
+	htt_cmn_pkt_type_native_wifi = 1,
+	htt_cmn_pkt_type_ethernet = 2,
+	htt_cmn_pkt_type_mgmt = 3,
+	htt_cmn_pkt_type_eth2 = 4,
 
-    /* keep this last */
-    htt_cmn_pkt_num_types
+	/* keep this last */
+	htt_cmn_pkt_num_types
+};
+
+/**
+ * @General description of HTT received packets status
+ * It is similar to htt_rx_status enum
+ * but is added as a cdp enum can be freely used in OL_IF layer
+ */
+enum htt_cmn_rx_status {
+	htt_cmn_rx_status_unknown = 0x0,
+	htt_cmn_rx_status_ok,
+	htt_cmn_rx_status_err_fcs,
+	htt_cmn_rx_status_err_dup,
+	htt_cmn_rx_status_err_replay,
+	htt_cmn_rx_status_inv_peer,
+	htt_cmn_rx_status_ctrl_mgmt_null = 0x08,
+	htt_cmn_rx_status_tkip_mic_err = 0x09,
+	htt_cmn_rx_status_decrypt_err = 0x0A,
+	htt_cmn_rx_status_mpdu_length_err = 0x0B,
+	htt_cmn_rx_status_err_misc = 0xFF
 };
 
 

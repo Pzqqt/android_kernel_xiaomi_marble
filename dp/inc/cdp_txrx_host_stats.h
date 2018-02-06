@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -423,7 +423,7 @@ static inline void cdp_get_dp_htt_stats(ol_txrx_soc_handle soc,
  */
 
 #if defined(QCA_SUPPORT_SON) || defined(ENHANCED_STATS)
-uint32_t *ol_txrx_get_en_stats_base(ol_txrx_pdev_handle txrx_pdev, uint32_t *msg_word,
+uint32_t *ol_txrx_get_en_stats_base(struct cdp_pdev *pdev, uint32_t *msg_word,
     uint32_t msg_len, enum htt_cmn_t2h_en_stats_type *type,  enum htt_cmn_t2h_en_stats_status *status);
 #endif
 #endif /* _CDP_TXRX_HOST_STATS_H_ */

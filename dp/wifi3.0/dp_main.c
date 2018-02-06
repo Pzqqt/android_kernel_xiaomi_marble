@@ -4014,6 +4014,7 @@ static struct cdp_cfg *dp_get_ctrl_pdev_from_vdev_wifi3(struct cdp_vdev *pvdev)
 
 	return (struct cdp_cfg *)pdev->wlan_cfg_ctx;
 }
+
 /**
  * dp_reset_monitor_mode() - Disable monitor mode
  * @pdev_handle: Datapath PDEV handle
@@ -4043,6 +4044,56 @@ static int dp_reset_monitor_mode(struct cdp_pdev *pdev_handle)
 
 	return 0;
 }
+
+/**
+ * dp_set_nac() - set peer_nac
+ * @peer_handle: Datapath PEER handle
+ *
+ * Return: void
+ */
+static void dp_set_nac(struct cdp_peer *peer_handle)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+
+	peer->nac = 1;
+}
+
+/**
+ * dp_get_tx_pending() - read pending tx
+ * @pdev_handle: Datapath PDEV handle
+ *
+ * Return: outstanding tx
+ */
+static int dp_get_tx_pending(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	return qdf_atomic_read(&pdev->num_tx_outstanding);
+}
+
+/**
+ * dp_get_peer_mac_from_peer_id() - get peer mac
+ * @pdev_handle: Datapath PDEV handle
+ * @peer_id: Peer ID
+ * @peer_mac: MAC addr of PEER
+ *
+ * Return: void
+ */
+static void dp_get_peer_mac_from_peer_id(struct cdp_pdev *pdev_handle,
+	uint32_t peer_id, uint8_t *peer_mac)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+	struct dp_peer *peer;
+
+	if (pdev && peer_mac) {
+		peer = dp_peer_find_by_id(pdev->soc, (uint16_t)peer_id);
+		if (peer && peer->mac_addr.raw) {
+			qdf_mem_copy(peer_mac, peer->mac_addr.raw,
+					DP_MAC_ADDR_LEN);
+		}
+	}
+}
+
 /**
  * dp_vdev_set_monitor_mode() - Set DP VDEV to monitor mode
  * @vdev_handle: Datapath VDEV handle
@@ -4270,6 +4321,20 @@ static int dp_pdev_set_advance_monitor_filter(struct cdp_pdev *pdev_handle,
 		RX_BUFFER_SIZE, &htt_tlv_filter);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * dp_get_pdev_id_frm_pdev() - get pdev_id
+ * @pdev_handle: Datapath PDEV handle
+ *
+ * Return: pdev_id
+ */
+static
+uint8_t dp_get_pdev_id_frm_pdev(struct cdp_pdev *pdev_handle)
+{
+	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
+
+	return pdev->pdev_id;
 }
 
 /**
@@ -6384,6 +6449,11 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_stats = dp_txrx_stats,
 	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
+	.txrx_get_pdev_id_frm_pdev = dp_get_pdev_id_frm_pdev,
+	.txrx_set_nac = dp_set_nac,
+	.txrx_get_tx_pending = dp_get_tx_pending,
+	.txrx_set_pdev_tx_capture = dp_config_debug_sniffer,
+	.txrx_get_peer_mac_from_peer_id = dp_get_peer_mac_from_peer_id,
 	.display_stats = dp_txrx_dump_stats,
 	.txrx_soc_set_nss_cfg = dp_soc_set_nss_cfg_wifi3,
 	.txrx_soc_get_nss_cfg = dp_soc_get_nss_cfg_wifi3,

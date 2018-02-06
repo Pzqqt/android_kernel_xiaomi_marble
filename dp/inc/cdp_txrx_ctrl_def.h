@@ -60,8 +60,8 @@ void ol_ll_pdev_tx_unlock(void *);
 #define OL_TX_DESC_LOCK(_x)  qdf_spin_lock_bh(_x)
 #define OL_TX_DESC_UNLOCK(_x) qdf_spin_unlock_bh(_x)
 
-#define OSIF_VAP_TX_LOCK(_x)  spin_lock(&((_x)->tx_lock))
-#define OSIF_VAP_TX_UNLOCK(_x)  spin_unlock(&((_x)->tx_lock))
+#define OSIF_VAP_TX_LOCK(_y, _x)  spin_lock(&((_x)->tx_lock))
+#define OSIF_VAP_TX_UNLOCK(_y, _x)  spin_unlock(&((_x)->tx_lock))
 
 #define OL_TX_PEER_LOCK(_x, _id) qdf_spin_lock_bh(&((_x)->peer_lock[_id]))
 #define OL_TX_PEER_UNLOCK(_x, _id) qdf_spin_unlock_bh(&((_x)->peer_lock[_id]))
@@ -72,10 +72,10 @@ void ol_ll_pdev_tx_unlock(void *);
 	qdf_spin_unlock_bh(&((_x)->peer_lock[_id]))
 
 #else
-#define OSIF_VAP_TX_LOCK(_x)  ol_ll_pdev_tx_lock( \
-			wlan_vdev_get_dp_handle((_x)->os_if_vdev))
-#define OSIF_VAP_TX_UNLOCK(_x) ol_ll_pdev_tx_unlock( \
-			wlan_vdev_get_dp_handle((_x)->os_if_vdev))
+#define OSIF_VAP_TX_LOCK(_y, _x)  cdp_vdev_tx_lock( \
+			_y, wlan_vdev_get_dp_handle((_x)->os_if_vdev))
+#define OSIF_VAP_TX_UNLOCK(_y, _x) cdp_vdev_tx_unlock( \
+			_y, wlan_vdev_get_dp_handle((_x)->os_if_vdev))
 
 #define OL_TX_FLOW_CTRL_LOCK(_x)
 #define OL_TX_FLOW_CTRL_UNLOCK(_x)

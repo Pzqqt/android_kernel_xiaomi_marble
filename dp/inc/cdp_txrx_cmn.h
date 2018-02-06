@@ -1019,7 +1019,6 @@ static inline void cdp_flush_cache_rx_queue(ol_txrx_soc_handle soc)
 	if (!soc->ops->cmn_drv_ops ||
 	    !soc->ops->cmn_drv_ops->flush_cache_rx_queue)
 		return;
-
 	soc->ops->cmn_drv_ops->flush_cache_rx_queue();
 }
 
@@ -1241,7 +1240,7 @@ cdp_pdev_set_dp_txrx_handle(ol_txrx_soc_handle soc, void *pdev, void *dp_hdl)
 	soc->ops->cmn_drv_ops->set_dp_txrx_handle(pdev, dp_hdl);
 }
 
-/**
+/*
  * cdp_soc_get_dp_txrx_handle() - get extended dp handle from soc
  * @soc: opaque soc handle
  *
@@ -1315,5 +1314,171 @@ cdp_tx_send(ol_txrx_soc_handle soc, struct cdp_vdev *vdev, qdf_nbuf_t nbuf)
 		return;
 
 	soc->ops->cmn_drv_ops->tx_send(vdev, nbuf);
+}
+
+/*
+ * cdp_get_pdev_id_frm_pdev() - return pdev_id from pdev
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ *
+ * Return: pdev_id
+ */
+static inline
+uint8_t cdp_get_pdev_id_frm_pdev(ol_txrx_soc_handle soc,
+	struct cdp_pdev *pdev)
+{
+	if (soc->ops->cmn_drv_ops->txrx_get_pdev_id_frm_pdev)
+		return soc->ops->cmn_drv_ops->txrx_get_pdev_id_frm_pdev(pdev);
+	return 0;
+}
+
+/**
+ * cdp_set_nac() - set nac
+ * @soc: opaque soc handle
+ * @peer: data path peer handle
+ *
+ */
+static inline
+void cdp_set_nac(ol_txrx_soc_handle soc,
+	struct cdp_peer *peer)
+{
+	if (soc->ops->cmn_drv_ops->txrx_set_nac)
+		soc->ops->cmn_drv_ops->txrx_set_nac(peer);
+}
+
+/**
+ * cdp_set_pdev_tx_capture() - set pdev tx_capture
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ * @val: value of pdev_tx_capture
+ *
+ * Return: void
+ */
+static inline
+void cdp_set_pdev_tx_capture(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, int val)
+{
+	if (soc->ops->cmn_drv_ops->txrx_set_pdev_tx_capture)
+		return soc->ops->cmn_drv_ops->txrx_set_pdev_tx_capture(pdev,
+				val);
+
+}
+
+/**
+ * cdp_get_peer_mac_from_peer_id() - get peer mac addr from peer id
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ * @peer_id: data path peer id
+ * @peer_mac: peer_mac
+ *
+ * Return: void
+ */
+static inline
+void cdp_get_peer_mac_from_peer_id(ol_txrx_soc_handle soc,
+	struct cdp_pdev *pdev_handle,
+	uint32_t peer_id, uint8_t *peer_mac)
+{
+	if (soc->ops->cmn_drv_ops->txrx_get_peer_mac_from_peer_id)
+		soc->ops->cmn_drv_ops->txrx_get_peer_mac_from_peer_id(
+				pdev_handle, peer_id, peer_mac);
+}
+
+/**
+ * cdp_vdev_tx_lock() - acquire lock
+ * @soc: opaque soc handle
+ * @vdev: data path vdev handle
+ *
+ * Return: void
+ */
+static inline
+void cdp_vdev_tx_lock(ol_txrx_soc_handle soc,
+	struct cdp_vdev *vdev)
+{
+	if (soc->ops->cmn_drv_ops->txrx_vdev_tx_lock)
+		soc->ops->cmn_drv_ops->txrx_vdev_tx_lock(vdev);
+}
+
+/**
+ * cdp_vdev_tx_unlock() - release lock
+ * @soc: opaque soc handle
+ * @vdev: data path vdev handle
+ *
+ * Return: void
+ */
+static inline
+void cdp_vdev_tx_unlock(ol_txrx_soc_handle soc,
+	struct cdp_vdev *vdev)
+{
+	if (soc->ops->cmn_drv_ops->txrx_vdev_tx_unlock)
+		soc->ops->cmn_drv_ops->txrx_vdev_tx_unlock(vdev);
+}
+
+/**
+ * cdp_ath_getstats() - get updated athstats
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ * @net_device_stats: interface stats
+ * @rtnl_link_stats64: device statistics structure
+ *
+ * Return: void
+ */
+#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 36)
+static inline void cdp_ath_getstats(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, struct net_device_stats *stats)
+#else
+static inline void cdp_ath_getstats(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, struct rtnl_link_stats64 *stats)
+#endif
+{
+	if (soc && soc->ops && soc->ops->cmn_drv_ops->txrx_ath_getstats)
+		soc->ops->cmn_drv_ops->txrx_ath_getstats(pdev, stats);
+}
+
+/**
+ * cdp_set_gid_flag() - set groupid flag
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ * @mem_status: member status from grp management frame
+ * @user_position: user position from grp management frame
+ *
+ * Return: void
+ */
+static inline
+void cdp_set_gid_flag(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev, u_int8_t *mem_status,
+		u_int8_t *user_position)
+{
+	if (soc->ops->cmn_drv_ops->txrx_set_gid_flag)
+		soc->ops->cmn_drv_ops->txrx_set_gid_flag(pdev, mem_status, user_position);
+}
+
+/**
+ * cdp_fw_supported_enh_stats_version() - returns the fw enhanced stats version
+ * @soc: opaque soc handle
+ * @pdev: data path pdev handle
+ *
+ */
+static inline
+uint32_t cdp_fw_supported_enh_stats_version(ol_txrx_soc_handle soc,
+		struct cdp_pdev *pdev)
+{
+	if (soc->ops->cmn_drv_ops->txrx_fw_supported_enh_stats_version)
+		return soc->ops->cmn_drv_ops->txrx_fw_supported_enh_stats_version(pdev);
+	return 0;
+}
+
+/**
+ * cdp_get_pdev_id_frm_pdev() - return pdev_id from pdev
+ * @soc: opaque soc handle
+ * @ni: associated node
+ * @force: number of frame in SW queue
+ * Return: void
+ */
+static inline
+void cdp_if_mgmt_drain(ol_txrx_soc_handle soc,
+		void *ni, int force)
+{
+	if (soc->ops->cmn_drv_ops->txrx_if_mgmt_drain)
+		soc->ops->cmn_drv_ops->txrx_if_mgmt_drain(ni, force);
 }
 #endif /* _CDP_TXRX_CMN_H_ */

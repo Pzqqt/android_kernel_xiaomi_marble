@@ -123,6 +123,34 @@ struct cdp_cmn_ops {
 	int (*txrx_set_monitor_mode)(struct cdp_vdev *vdev,
 			uint8_t smart_monitor);
 
+	uint8_t (*txrx_get_pdev_id_frm_pdev)(struct cdp_pdev *pdev);
+
+	void (*txrx_set_nac)(struct cdp_peer *peer);
+
+	void (*txrx_set_pdev_tx_capture)(struct cdp_pdev *pdev, int val);
+
+	void (*txrx_get_peer_mac_from_peer_id)
+		(struct cdp_pdev *pdev_handle,
+		 uint32_t peer_id, uint8_t *peer_mac);
+
+	void (*txrx_vdev_tx_lock)(struct cdp_vdev *vdev);
+
+	void (*txrx_vdev_tx_unlock)(struct cdp_vdev *vdev);
+
+	void (*txrx_ath_getstats)(struct cdp_pdev *pdev,
+#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 36)
+			struct rtnl_link_stats64 *stats);
+#else
+			struct net_device_stats *stats);
+#endif
+
+	void (*txrx_set_gid_flag)(struct cdp_pdev *pdev, u_int8_t *mem_status,
+			u_int8_t *user_position);
+
+	uint32_t (*txrx_fw_supported_enh_stats_version)(struct cdp_pdev *pdev);
+
+	void (*txrx_if_mgmt_drain)(void *ni, int force);
+
 	void (*txrx_set_curchan)(struct cdp_pdev *pdev, uint32_t chan_mhz);
 
 	void (*txrx_set_privacy_filters)
