@@ -452,11 +452,16 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 			status = hal_get_rx_status_done(status_buf);
 
 			if (status != QDF_STATUS_SUCCESS) {
+				uint32_t hp, tp;
+				hal_api_get_tphp(hal_soc, mon_status_srng,
+					&tp, &hp);
 				QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_WARN,
-				"[%s][%d] status not done",
-				__func__, __LINE__);
-				break;
+				QDF_TRACE_LEVEL_ERROR,
+				"[%s][%d] status not done - hp:%u, tp:%u",
+				__func__, __LINE__, hp, tp);
+				/* WAR for missing status: Skip status entry */
+				hal_srng_src_get_next(hal_soc, mon_status_srng);
+				continue;
 			}
 			qdf_nbuf_set_pktlen(status_nbuf, RX_BUFFER_SIZE);
 
@@ -501,8 +506,7 @@ dp_rx_mon_status_srng_process(struct dp_soc *soc, uint32_t mac_id,
 		hal_rxdma_buff_addr_info_set(rxdma_mon_status_ring_entry,
 			paddr, rx_desc->cookie, HAL_RX_BUF_RBM_SW3_BM);
 
-		rxdma_mon_status_ring_entry =
-			hal_srng_src_get_next(hal_soc, mon_status_srng);
+		hal_srng_src_get_next(hal_soc, mon_status_srng);
 		work_done++;
 	}
 done:

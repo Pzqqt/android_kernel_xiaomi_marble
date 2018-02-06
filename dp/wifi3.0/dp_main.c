@@ -564,7 +564,8 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 	 * monitor buffer rings.
 	 * TODO: See if this is required for any other ring
 	 */
-	if ((ring_type == RXDMA_BUF) || (ring_type == RXDMA_MONITOR_BUF)) {
+	if ((ring_type == RXDMA_BUF) || (ring_type == RXDMA_MONITOR_BUF) ||
+		(ring_type == RXDMA_MONITOR_STATUS)) {
 		/* TODO: Setting low threshold to 1/8th of ring size
 		 * see if this needs to be configurable
 		 */
@@ -913,6 +914,9 @@ static void dp_soc_interrupt_map_calculate_integrated(struct dp_soc *soc,
 		if (rx_mon_mask & (1 << j)) {
 			irq_id_map[num_irq++] =
 				ppdu_end_interrupts_mac1 -
+				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
+			irq_id_map[num_irq++] =
+				rxdma2host_monitor_status_ring_mac1 -
 				wlan_cfg_get_hw_mac_idx(soc->wlan_cfg_ctx, j);
 		}
 
@@ -1423,7 +1427,7 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define RXDMA_MONITOR_BUF_RING_SIZE 4096
 #define RXDMA_MONITOR_DST_RING_SIZE 2048
 #define RXDMA_MONITOR_STATUS_RING_SIZE 1024
-#define RXDMA_MONITOR_DESC_RING_SIZE 2048
+#define RXDMA_MONITOR_DESC_RING_SIZE 4096
 #define RXDMA_ERR_DST_RING_SIZE 1024
 
 /*

@@ -294,7 +294,11 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 		hal_rx_mon_next_link_desc_get(rx_msdu_link_desc, &buf_info,
 			&p_buf_addr_info);
 
-		dp_rx_mon_link_desc_return(dp_pdev, p_last_buf_addr_info);
+		if (dp_rx_mon_link_desc_return(dp_pdev, p_last_buf_addr_info)
+			!= QDF_STATUS_SUCCESS) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+				"dp_rx_mon_link_desc_return failed\n");
+		}
 		p_last_buf_addr_info = p_buf_addr_info;
 
 	} while (buf_info.paddr && msdu_cnt);
