@@ -2892,6 +2892,8 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 
 	/* Attach mc_thread context processing function */
 	ops.wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
+	/* initialize tlv attach */
+	wmi_tlv_init();
 	/* attach the wmi */
 	wmi_handle = wmi_unified_attach(wma_handle, NULL,
 					WMI_TLV_TARGET, use_cookie, &ops, psoc);
