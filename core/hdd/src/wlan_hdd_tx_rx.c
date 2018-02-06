@@ -595,9 +595,10 @@ static int __hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	++adapter->hdd_stats.tx_rx_stats.tx_called;
 	adapter->hdd_stats.tx_rx_stats.cont_txtimeout_cnt = 0;
 
-	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state()) {
+	if (cds_is_driver_recovering() || cds_is_driver_in_bad_state() ||
+	    cds_is_load_or_unload_in_progress()) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
-			"Recovery in progress, dropping the packet");
+			  "Recovery/(Un)load in progress, dropping the packet");
 		goto drop_pkt;
 	}
 
