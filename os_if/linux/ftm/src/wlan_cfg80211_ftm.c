@@ -23,6 +23,7 @@
 #include <net/cfg80211.h>
 #include <qdf_util.h>
 #include <wlan_objmgr_pdev_obj.h>
+#include <wlan_cfg80211.h>
 #include <wlan_cfg80211_ftm.h>
 #include <wlan_ftm_ucfg_api.h>
 #include <wlan_osif_priv.h>
@@ -82,8 +83,8 @@ wlan_cfg80211_ftm_testmode_cmd(struct wlan_objmgr_pdev *pdev,
 
 	ftm_pdev_obj->cmd_type = WIFI_FTM_CMD_NL80211;
 
-	err = nla_parse(tb, WLAN_CFG80211_FTM_ATTR_MAX - 1, data,
-			len, wlan_cfg80211_ftm_policy);
+	err = wlan_cfg80211_nla_parse(tb, WLAN_CFG80211_FTM_ATTR_MAX - 1, data,
+					len, wlan_cfg80211_ftm_policy);
 	if (err) {
 		ftm_err("Testmode INV ATTR");
 		return err;
