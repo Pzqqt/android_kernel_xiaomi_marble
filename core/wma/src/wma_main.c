@@ -2909,6 +2909,7 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	/* store the wmi handle in tgt_if_handle */
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
 
+	target_psoc_set_target_type(tgt_psoc_info, target_type);
 	/* Save the WMI & HTC handle */
 	target_psoc_set_wmi_hdl(tgt_psoc_info, wmi_handle);
 	wma_handle->wmi_handle = wmi_handle;
