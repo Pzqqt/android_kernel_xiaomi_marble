@@ -7240,31 +7240,6 @@ static void wma_set_del_pmkid_cache(WMA_HANDLE handle,
 }
 
 /**
- * wma_send_offload_11k_params() - API to send 11k offload params to FW
- * @handle: WMA handle
- * @params: Pointer to 11k offload params
- *
- * Return: None
- */
-static
-void wma_send_offload_11k_params(WMA_HANDLE handle,
-				    struct wmi_11k_offload_params *params)
-{
-	QDF_STATUS status;
-	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-
-	if (!wma_handle || !wma_handle->wmi_handle) {
-		WMA_LOGE("WMA is closed, cannot send 11k offload cmd");
-		return;
-	}
-
-	status = wmi_unified_offload_11k_cmd(wma_handle->wmi_handle, params);
-
-	if (status != QDF_STATUS_SUCCESS)
-		WMA_LOGE("failed to send 11k offload command");
-}
-
-/**
  * wma_send_invoke_neighbor_report() - API to send invoke neighbor report
  * command to fw
  *
@@ -8301,10 +8276,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case WMA_OBSS_DETECTION_REQ:
 		wma_send_obss_detection_cfg(wma_handle, msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
-	case WMA_SET_11K_OFFLOAD:
-		wma_send_offload_11k_params(wma_handle, msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_INVOKE_NEIGHBOR_REPORT:

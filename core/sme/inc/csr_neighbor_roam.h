@@ -440,16 +440,4 @@ QDF_STATUS csr_invoke_neighbor_report_request(uint8_t session_id,
 				struct sRrmNeighborReq *neighbor_report_req,
 				bool send_resp_to_host);
 
-/**
- * csr_send_11k_offload_params - Update 11K offload params to FW
- * @mac_ctx: MAC context
- * @session_id: session id
- *
- * API to update 11k offload params to WMA then to FW
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS csr_send_11k_offload_params(tpAniSirGlobal mac_ctx,
-					uint8_t session_id);
-
 #endif /* CSR_NEIGHBOR_ROAM_H */

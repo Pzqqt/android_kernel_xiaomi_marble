@@ -1160,7 +1160,6 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		csr_neighbor_roam_reset_init_state_control_info(pMac,
 			session_id);
 		csr_neighbor_roam_info_ctx_init(pMac, session_id);
-		csr_send_11k_offload_params(pMac, session_id);
 		break;
 	default:
 		sme_err("Connect evt received in invalid state %s Ignoring",
