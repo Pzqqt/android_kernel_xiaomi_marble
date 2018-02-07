@@ -3418,6 +3418,9 @@ void hif_wlan_disable(struct hif_softc *scn)
 	enum pld_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 
+	if (scn->target_status == TARGET_STATUS_RESET)
+		return;
+
 	if (QDF_GLOBAL_FTM_MODE == con_mode)
 		mode = PLD_FTM;
 	else if (QDF_IS_EPPING_ENABLED(con_mode))
