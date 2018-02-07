@@ -3214,8 +3214,6 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 	pdev = vdev->pdev;
 	soc = pdev->soc;
 
-	dp_peer_rx_init(pdev, peer);
-
 	peer->last_assoc_rcvd = 0;
 	peer->last_disassoc_rcvd = 0;
 	peer->last_deauth_rcvd = 0;
@@ -3243,6 +3241,8 @@ static void dp_peer_setup_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 			pdev->osif_pdev, peer->mac_addr.raw,
 			 peer->vdev->vdev_id, hash_based, reo_dest);
 	}
+
+	dp_peer_rx_init(pdev, peer);
 	return;
 }
 
