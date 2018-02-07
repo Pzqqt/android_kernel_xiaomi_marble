@@ -919,6 +919,19 @@ bool scm_filter_match(struct wlan_objmgr_psoc *psoc,
 			}
 		}
 	}
+	/*
+	 * In OWE transition mode, ssid is hidden. And supplicant does not issue
+	 * scan with specific ssid prior to connect as in other hidden ssid
+	 * cases. Add explicit check to allow OWE when ssid is hidden.
+	 */
+	if (!match && util_scan_entry_is_hidden_ap(db_entry)) {
+		for (i = 0; i < filter->num_of_auth; i++) {
+			if (filter->auth_type[i] == WLAN_AUTH_TYPE_OWE) {
+				match = true;
+				break;
+			}
+		}
+	}
 	if (!match && filter->num_of_ssid)
 		return false;
 
