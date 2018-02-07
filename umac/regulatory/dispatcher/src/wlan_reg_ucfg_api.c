@@ -222,6 +222,12 @@ enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 	return reg_get_cc_and_src(psoc, alpha2);
 }
 
+void ucfg_reg_unit_simulate_ch_avoid(struct wlan_objmgr_psoc *psoc,
+	struct ch_avoid_ind_type *ch_avoid)
+{
+	reg_process_ch_avoid_event(psoc, ch_avoid);
+}
+
 QDF_STATUS ucfg_reg_11d_vdev_delete_update(struct wlan_objmgr_vdev *vdev)
 {
 	return reg_11d_vdev_delete_update(vdev);

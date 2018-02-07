@@ -2095,38 +2095,6 @@ reg_modify_chan_list_for_nol_list(struct regulatory_channel *chan_list)
 	}
 }
 
-static void
-reg_modify_chan_list_for_unsafe_ch(struct wlan_regulatory_pdev_priv_obj
-		*pdev_priv_obj)
-{
-	enum channel_enum chan_enum;
-	struct regulatory_channel *chan_list;
-	struct wlan_objmgr_psoc *psoc;
-	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
-	struct unsafe_ch_list *unsafe_list;
-	uint8_t i;
-
-	psoc = wlan_pdev_get_psoc(pdev_priv_obj->pdev_ptr);
-	psoc_priv_obj = (struct wlan_regulatory_psoc_priv_obj *)
-		wlan_objmgr_psoc_get_comp_private_obj(psoc,
-					 WLAN_UMAC_COMP_REGULATORY);
-	if (!psoc_priv_obj) {
-		reg_err("psoc priv obj is NULL");
-		return;
-	}
-
-	chan_list = pdev_priv_obj->cur_chan_list;
-	unsafe_list = &psoc_priv_obj->unsafe_chan_list;
-
-	for (i = 0; i < unsafe_list->ch_cnt; i++) {
-		chan_enum = reg_get_chan_enum(unsafe_list->ch_list[i]);
-		if (chan_enum == INVALID_CHANNEL)
-			continue;
-		chan_list[chan_enum].state = CHANNEL_STATE_DISABLE;
-		chan_list[chan_enum].chan_flags |= REGULATORY_CHAN_DISABLED;
-	}
-}
-
 /**
  * reg_find_low_limit_chan_enum() - Find low limit 2G and 5G channel enums.
  * @chan_list: Pointer to regulatory channel list.
@@ -2303,8 +2271,6 @@ static void reg_compute_pdev_current_chan_list(
 
 	reg_modify_chan_list_for_chan_144(pdev_priv_obj->cur_chan_list,
 					  pdev_priv_obj->en_chan_144);
-
-	reg_modify_chan_list_for_unsafe_ch(pdev_priv_obj);
 }
 
 static void reg_call_chan_change_cbks(struct wlan_objmgr_psoc *psoc,

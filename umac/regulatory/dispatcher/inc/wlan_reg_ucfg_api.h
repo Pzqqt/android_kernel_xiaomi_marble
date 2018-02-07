@@ -239,6 +239,19 @@ void ucfg_reg_unregister_chan_change_callback(struct wlan_objmgr_psoc *psoc,
  */
 enum country_src ucfg_reg_get_cc_and_src(struct wlan_objmgr_psoc *psoc,
 					 uint8_t *alpha2);
+
+/**
+ * ucfg_reg_unit_simulate_ch_avoid () - fake a ch avoid event
+ * @psoc: psoc ptr
+ * @ch_avoid: ch_avoid_ind_type ranges
+ *
+ * This function inject a ch_avoid event for unit test sap chan switch.
+ *
+ * Return: void
+ */
+void ucfg_reg_unit_simulate_ch_avoid(struct wlan_objmgr_psoc *psoc,
+	struct ch_avoid_ind_type *ch_avoid);
+
 /**
  * ucfg_reg_11d_vdev_delete_update() - update vdev delete to regulatory
  * @vdev: vdev ptr
