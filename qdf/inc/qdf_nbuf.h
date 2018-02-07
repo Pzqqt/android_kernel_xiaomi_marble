@@ -2301,6 +2301,21 @@ bool qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data)
 }
 
 /**
+ * qdf_nbuf_is_bcast_pkt() - check if it is broadcast packet.
+ * @buf: Network buffer
+ *
+ * This func. checks whether packet is broadcast or not.
+ *
+ * Return: TRUE if it is broadcast packet
+ *         FALSE if not
+ */
+static inline
+bool qdf_nbuf_is_bcast_pkt(qdf_nbuf_t buf)
+{
+	return __qdf_nbuf_is_bcast_pkt(buf);
+}
+
+/**
  * qdf_invalidate_range() - invalidate virtual address range
  * @start: start address of the address range
  * @end: end address of the address range

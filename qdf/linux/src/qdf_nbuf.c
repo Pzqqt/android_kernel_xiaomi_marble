@@ -1691,6 +1691,19 @@ bool __qdf_nbuf_data_is_ipv6_tcp_pkt(uint8_t *data)
 		return false;
 }
 
+/**
+ * __qdf_nbuf_is_bcast_pkt() - is destination address broadcast
+ * @nbuf - sk buff
+ *
+ * Return: true if packet is broadcast
+ *	   false otherwise
+ */
+bool __qdf_nbuf_is_bcast_pkt(qdf_nbuf_t nbuf)
+{
+	struct ethhdr *eh = (struct ethhdr *)qdf_nbuf_data(nbuf);
+	return qdf_is_macaddr_broadcast((struct qdf_mac_addr *)eh->h_dest);
+}
+
 #ifdef MEMORY_DEBUG
 #define QDF_NET_BUF_TRACK_MAX_SIZE    (1024)
 
