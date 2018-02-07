@@ -307,9 +307,9 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	struct wmi_host_fw_abi_ver fw_ver;
 	uint8_t myaddr[WLAN_MACADDR_LEN];
 	struct tgt_info *info;
-	uint8_t i;
 	struct wmi_host_ready_ev_param ready_ev;
 	wmi_legacy_service_ready_callback legacy_callback;
+	uint8_t num_radios, i;
 
 	if (!scn_handle) {
 		target_if_err("scn handle NULL");
@@ -365,21 +365,54 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 	 */
 	info->wlan_init_status = wmi_ready_extract_init_status(
 						wmi_handle, event);
-	/* copy the mac addr */
-	wmi_ready_extract_mac_addr(wmi_handle, event, myaddr);
-	/* Set hw address in PSOC object */
-	wlan_psoc_set_hw_macaddr(psoc, myaddr);
 
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
 	if (legacy_callback)
 		legacy_callback(wmi_ready_event_id,
 				scn_handle, event, data_len);
 
+	num_radios = target_psoc_get_num_radios(tgt_hdl);
+	/*
+	 * For non-legacy HW, MAC addr list is extracted.
+	 */
+	if (num_radios > 1) {
+		uint8_t num_mac_addr;
+		wmi_host_mac_addr *addr_list;
+		int i;
 
-	for (i = 0; i < target_psoc_get_num_radios(tgt_hdl); i++) {
-		/* Temp change -
-		 * This may eihter come from FW or host needs derive.
-		 */
+		addr_list = wmi_ready_extract_mac_addr_list(wmi_handle, event,
+							    &num_mac_addr);
+		if ((num_mac_addr >= num_radios) && (addr_list)) {
+			for (i = 0; i < num_radios; i++) {
+				WMI_HOST_MAC_ADDR_TO_CHAR_ARRAY(&addr_list[i],
+								myaddr);
+				pdev = wlan_objmgr_get_pdev_by_id(psoc, i,
+								  WLAN_INIT_DEINIT_ID);
+				if (!pdev) {
+					target_if_err(" PDEV %d is NULL", i);
+					return -EINVAL;
+				}
+				wlan_pdev_set_hw_macaddr(pdev, myaddr);
+				wlan_objmgr_pdev_release_ref(pdev,
+							WLAN_INIT_DEINIT_ID);
+
+				/* assign 1st radio addr to psoc */
+				if (i == 0)
+					wlan_psoc_set_hw_macaddr(psoc, myaddr);
+			}
+			goto out;
+		} else {
+			target_if_err("Using default MAC addr for all radios..");
+		}
+	}
+
+	/*
+	 * We extract single MAC address in two scenarios:
+	 * 1. In non-legacy case, if addr list is NULL or num_mac_addr < num_radios
+	 * 2. In all legacy cases
+	 */
+	for (i = 0; i < num_radios; i++) {
+		wmi_ready_extract_mac_addr(wmi_handle, event, myaddr);
 		myaddr[MAC_BYTE_4] += i;
 		pdev = wlan_objmgr_get_pdev_by_id(psoc, i, WLAN_INIT_DEINIT_ID);
 		if (!pdev) {
@@ -388,8 +421,12 @@ static int init_deinit_ready_event_handler(ol_scn_t scn_handle,
 		}
 		wlan_pdev_set_hw_macaddr(pdev, myaddr);
 		wlan_objmgr_pdev_release_ref(pdev, WLAN_INIT_DEINIT_ID);
+		/* assign 1st radio addr to psoc */
+		if (i == 0)
+			wlan_psoc_set_hw_macaddr(psoc, myaddr);
 	}
 
+out:
 	tgt_hdl->info.wmi_ready = TRUE;
 	init_deinit_wakeup_host_wait(psoc, tgt_hdl);
 
