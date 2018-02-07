@@ -81,7 +81,6 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 	DP_STATS_INC(peer, tx.sgi_count[ppdu->gi], num_msdu);
 	DP_STATS_INC(peer, tx.bw[ppdu->bw], num_msdu);
 	DP_STATS_INC(peer, tx.nss[ppdu->nss], num_msdu);
-	DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
 	DP_STATS_INC(peer, tx.wme_ac_type[TID_TO_WME_AC(ppdu->tid)], num_msdu);
 	DP_STATS_INCC(peer, tx.stbc, num_msdu, ppdu->stbc);
 	DP_STATS_INCC(peer, tx.ldpc, num_msdu, ppdu->ldpc);
@@ -94,6 +93,7 @@ static void dp_tx_stats_update(struct dp_soc *soc, struct dp_peer *peer,
 					+ ppdu->retry_bytes +
 					ppdu->failed_bytes));
 	} else {
+		DP_STATS_UPD(peer, tx.last_ack_rssi, ack_rssi);
 		DP_STATS_INC_PKT(peer, tx.ucast, num_msdu, (ppdu->success_bytes
 					+ ppdu->retry_bytes +
 					ppdu->failed_bytes));

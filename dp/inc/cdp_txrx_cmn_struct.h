@@ -1036,7 +1036,7 @@ struct cdp_rx_indication_ppdu {
 	} u;
 	uint32_t lsig_a;
 	uint32_t rssi;
-	uint32_t timestamp;
+	uint64_t timestamp;
 	uint8_t channel;
 };
 
