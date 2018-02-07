@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -117,28 +117,19 @@ static inline void qdf_trace_msg(QDF_MODULE_ID module, QDF_TRACE_LEVEL level,
 #endif
 
 #ifdef PANIC_ON_BUG
-
-#define QDF_BUG(_condition) \
-	do { \
-		if (!(_condition)) { \
-			pr_err("QDF BUG in %s Line %d\n", \
-			       __func__, __LINE__); \
-			BUG_ON(1); \
-		} \
-	} while (0)
-
+#define __qdf_do_bug() BUG_ON(1)
 #else
+#define __qdf_do_bug()
+#endif
 
 #define QDF_BUG(_condition) \
 	do { \
 		if (!(_condition)) { \
-			pr_err("QDF BUG in %s Line %d\n", \
-			       __func__, __LINE__); \
-			WARN_ON(1); \
+			pr_err("QDF BUG in %s Line %d: Failed assertion '" \
+			       #_condition "'\n", __func__, __LINE__); \
+			__qdf_do_bug();\
 		} \
 	} while (0)
-
-#endif
 
 #ifdef KSYM_SYMBOL_LEN
 #define __QDF_SYMBOL_LEN KSYM_SYMBOL_LEN
