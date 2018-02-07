@@ -959,7 +959,6 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 	struct pdev_osif_priv *pdev_priv;
 	struct hdd_context *hdd_ctx;
 	enum country_src cc_src;
-	struct regulatory_request request;
 	uint8_t alpha2[REG_ALPHA2_LEN + 1];
 
 	pdev_priv = wlan_pdev_get_ospriv(pdev);
@@ -977,35 +976,9 @@ static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 
 	sme_generic_change_country_code(hdd_ctx->hHal,
 					hdd_ctx->reg.alpha2);
-
 	if (avoid_freq_ind)
 		hdd_ch_avoid_ind(hdd_ctx, &avoid_freq_ind->chan_list,
 				&avoid_freq_ind->freq_list);
-
-	if (SOURCE_UNKNOWN != cc_src) {
-		qdf_mem_set(&request, sizeof(request), 0);
-
-		request.alpha2[0] = alpha2[0];
-		request.alpha2[1] = alpha2[1];
-
-		switch (cc_src) {
-		case SOURCE_CORE:
-			request.initiator = NL80211_REGDOM_SET_BY_CORE;
-			break;
-		case SOURCE_11D:
-			request.initiator = NL80211_REGDOM_SET_BY_COUNTRY_IE;
-			break;
-		case SOURCE_USERSPACE:
-			request.initiator = NL80211_REGDOM_SET_BY_USER;
-			break;
-		case SOURCE_DRIVER:
-		default:
-			request.initiator = NL80211_REGDOM_SET_BY_DRIVER;
-			break;
-		}
-
-		cfg80211_send_reg_change_event(&request, wiphy);
-	}
 }
 
 /**
