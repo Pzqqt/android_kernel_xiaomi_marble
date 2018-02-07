@@ -77,6 +77,8 @@ static struct ath_pktlog_info *g_pktlog_info;
 
 static struct proc_dir_entry *g_pktlog_pde;
 
+static DEFINE_MUTEX(proc_mutex);
+
 static int pktlog_attach(struct hif_opaque_softc *scn);
 static void pktlog_detach(struct hif_opaque_softc *scn);
 static int pktlog_open(struct inode *i, struct file *f);
@@ -206,9 +208,11 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 	ol_ath_generic_softc_handle scn;
 	struct pktlog_dev_t *pl_dev;
 
+	mutex_lock(&proc_mutex);
 	scn = (ol_ath_generic_softc_handle) ctl->extra1;
 
 	if (!scn) {
+		mutex_unlock(&proc_mutex);
 		printk("%s: Invalid scn context\n", __func__);
 		ASSERT(0);
 		return -EINVAL;
@@ -217,6 +221,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
+		mutex_unlock(&proc_mutex);
 		printk("%s: Invalid pktlog context\n", __func__);
 		ASSERT(0);
 		return -ENODEV;
@@ -247,6 +252,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 
 	ctl->data = NULL;
 	ctl->maxlen = 0;
+	mutex_unlock(&proc_mutex);
 
 	return ret;
 }
@@ -264,9 +270,11 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 	ol_ath_generic_softc_handle scn;
 	struct pktlog_dev_t *pl_dev;
 
+	mutex_lock(&proc_mutex);
 	scn = (ol_ath_generic_softc_handle) ctl->extra1;
 
 	if (!scn) {
+		mutex_unlock(&proc_mutex);
 		printk("%s: Invalid scn context\n", __func__);
 		ASSERT(0);
 		return -EINVAL;
@@ -275,6 +283,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 	pl_dev = get_pktlog_handle();
 
 	if (!pl_dev) {
+		mutex_unlock(&proc_mutex);
 		printk("%s: Invalid pktlog handle\n", __func__);
 		ASSERT(0);
 		return -ENODEV;
@@ -297,6 +306,7 @@ qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 
 	ctl->data = NULL;
 	ctl->maxlen = 0;
+	mutex_unlock(&proc_mutex);
 
 	return ret;
 }
