@@ -268,7 +268,13 @@ BUILD_DEBUG_VERSION := 1
 BUILD_DIAG_VERSION := 1
 
 #Do we panic on bug?  default is to warn
-PANIC_ON_BUG := 1
+ifeq ($(CONFIG_SLUB_DEBUG), y)
+	PANIC_ON_BUG := 1
+else ifeq ($(CONFIG_PERF_DEBUG), y)
+	PANIC_ON_BUG := 1
+else
+	PANIC_ON_BUG := 0
+endif
 
 #Enable OL debug and wmi unified functions
 CONFIG_ATH_PERF_PWR_OFFLOAD := 1

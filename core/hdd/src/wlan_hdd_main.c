@@ -158,6 +158,12 @@
 #define MEMORY_DEBUG_STR ""
 #endif
 
+#ifdef PANIC_ON_BUG
+#define PANIC_ON_BUG_STR " +PANIC_ON_BUG"
+#else
+#define PANIC_ON_BUG_STR ""
+#endif
+
 int wlan_start_ret_val;
 static DECLARE_COMPLETION(wlan_start_comp);
 static unsigned int dev_num = 1;
@@ -11767,7 +11773,7 @@ static int __hdd_module_init(void)
 	pr_err("%s: Loading driver v%s (%s)\n",
 	       WLAN_MODULE_NAME,
 	       g_wlan_driver_version,
-	       TIMER_MANAGER_STR MEMORY_DEBUG_STR);
+	       TIMER_MANAGER_STR MEMORY_DEBUG_STR PANIC_ON_BUG_STR);
 
 	ret = wlan_hdd_state_ctrl_param_create();
 	if (ret) {
