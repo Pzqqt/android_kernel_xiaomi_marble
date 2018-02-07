@@ -2512,6 +2512,27 @@ static const struct ccp_freq_chan_map freq_chan_map[] = {
 
 /*
  * <ioctl>
+ * ch_avoid - unit test SAP channel avoidance
+ *
+ * @INPUT: chan avoid ranges
+ *
+ * @OUTPUT: none
+ *
+ * This IOCTL is used to fake a channel avoidance event.
+ * To test SAP/GO chan switch during chan avoid event process.
+ *
+ * @E.g: iwpriv wlan0 ch_avoid 2452 2462
+ *
+ * Supported Feature: SAP chan avoidance.
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_CHAN_AVOID 21
+
+/*
+ * <ioctl>
  * set_scan_cfg - Set dual MAC scan config parameters.
  *
  * @INPUT: dbs, dbs_plus_agile_scan, single_mac_scan_with_dbs
@@ -8626,6 +8647,47 @@ static int iw_get_policy_manager_ut_ops(struct hdd_context *hdd_ctx,
 #endif
 
 /**
+ * hdd_ch_avoid_unit_cmd - unit test ch avoidance
+ * @hdd_ctx: hdd_context
+ * @num_args: input args number
+ * @apps_args: args data ptr
+ *
+ * This is to inject a ch avoid event to do unit test SAP chan avoidance.
+ *
+ * Return: void
+ */
+#if WLAN_DEBUG
+static void hdd_ch_avoid_unit_cmd(struct hdd_context *hdd_ctx,
+				  int num_args, int *apps_args)
+{
+	struct ch_avoid_ind_type ch_avoid;
+	int cnt = 0, i;
+
+	if (num_args < 2 || num_args > CH_AVOID_MAX_RANGE * 2 ||
+	    num_args % 2 != 0)
+		return;
+	hdd_info("simulate ch avoid num_args %d", num_args);
+	for (i = 0; i < num_args && i < CH_AVOID_MAX_RANGE * 2; i++) {
+		ch_avoid.avoid_freq_range[cnt].start_freq =
+			apps_args[i];
+		ch_avoid.avoid_freq_range[cnt].end_freq =
+			apps_args[++i];
+
+		hdd_info("simulate ch avoid [%d %d]",
+			 ch_avoid.avoid_freq_range[cnt].start_freq,
+			 ch_avoid.avoid_freq_range[cnt].end_freq);
+		cnt++;
+	}
+	ch_avoid.ch_avoid_range_cnt = cnt;
+	ucfg_reg_unit_simulate_ch_avoid(hdd_ctx->hdd_psoc, &ch_avoid);
+}
+#else
+static void hdd_ch_avoid_unit_cmd(struct hdd_context *hdd_ctx,
+				  int num_args, int *apps_args)
+{
+}
+#endif
+/**
  * __iw_set_var_ints_getnone - Generic "set many" private ioctl handler
  * @dev: device upon which the ioctl was received
  * @info: ioctl request information
@@ -8859,6 +8921,11 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		iw_get_policy_manager_ut_ops(hdd_ctx, adapter,
 					     sub_cmd, apps_args);
+	}
+	break;
+	case WE_SET_CHAN_AVOID:
+	{
+		hdd_ch_avoid_unit_cmd(hdd_ctx, num_args, apps_args);
 	}
 	break;
 	default:
@@ -11827,6 +11894,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
 	 0,
 	 "gpio_control"},
+#endif
+#ifdef WLAN_DEBUG
+	{WE_SET_CHAN_AVOID,
+	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+	 0,
+	 "ch_avoid"},
 #endif
 	/* handlers for main ioctl */
 	{WLAN_PRIV_FIPS_TEST,

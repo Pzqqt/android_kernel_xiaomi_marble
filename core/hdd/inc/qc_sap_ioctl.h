@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -108,6 +108,27 @@ struct channel_list_info {
 #define WE_SET_SAP_CHANNELS  3
 #define QCSAP_IOCTL_PRIV_SET_VAR_INT_GET_NONE (SIOCIWFIRSTPRIV + 16)
 #define WE_UNIT_TEST_CMD   7
+/*
+ * <ioctl>
+ * ch_avoid - unit test SAP channel avoidance
+ *
+ * @INPUT: chan avoid ranges
+ *
+ * @OUTPUT: none
+ *
+ * This IOCTL is used to fake a channel avoidance event.
+ * To test SAP/GO chan switch during chan avoid event process.
+ *
+ * @E.g: iwpriv wlan0 ch_avoid 2452 2462
+ *
+ * Supported Feature: SAP chan avoidance.
+ *
+ * Usage: Internal
+ *
+ * </ioctl>
+ */
+#define WE_SET_CHAN_AVOID 21
+
 #define QCSAP_IOCTL_SET_CHANNEL_RANGE (SIOCIWFIRSTPRIV + 17)
 
 #define WE_P2P_NOA_CMD  2

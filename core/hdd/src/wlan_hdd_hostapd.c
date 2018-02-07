@@ -5980,6 +5980,15 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		WE_UNIT_TEST_CMD, IW_PRIV_TYPE_INT | MAX_VAR_ARGS, 0,
 		"setUnitTestCmd"
 	}
+#ifdef WLAN_DEBUG
+	,
+	{
+		WE_SET_CHAN_AVOID,
+		IW_PRIV_TYPE_INT | MAX_VAR_ARGS,
+		0,
+		"ch_avoid"
+	}
+#endif
 	,
 	/* handlers for main ioctl */
 	{
