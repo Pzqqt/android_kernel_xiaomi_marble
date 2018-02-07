@@ -185,12 +185,11 @@ QDF_STATUS
 dp_tx_prepare_send_me(struct dp_vdev *vdev, qdf_nbuf_t nbuf)
 {
 	if (vdev->me_convert) {
-		 if (vdev->me_convert(vdev->osif_vdev, nbuf) < 0)
-			return QDF_STATUS_E_FAILURE;
-
-		 return QDF_STATUS_SUCCESS;
+		 if (vdev->me_convert(vdev->osif_vdev, nbuf) > 0)
+			return QDF_STATUS_SUCCESS;
 	}
 
 	return QDF_STATUS_E_FAILURE;
 }
+
 #endif

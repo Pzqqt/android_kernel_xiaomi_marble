@@ -1944,9 +1944,8 @@ qdf_nbuf_t dp_tx_send(void *vap_dev, qdf_nbuf_t nbuf)
 			DP_STATS_INC_PKT(vdev,
 					tx_i.mcast_en.mcast_pkt, 1,
 					qdf_nbuf_len(nbuf));
-			if (dp_tx_prepare_send_me(vdev, nbuf) !=
+			if (dp_tx_prepare_send_me(vdev, nbuf) ==
 					QDF_STATUS_SUCCESS) {
-				qdf_nbuf_free(nbuf);
 				return NULL;
 			}
 		}
@@ -3240,7 +3239,7 @@ fail:
  *
  * return: void
  */
-static inline void dp_tx_me_mem_free(struct dp_pdev *pdev,
+static void dp_tx_me_mem_free(struct dp_pdev *pdev,
 		struct dp_tx_seg_info_s *seg_info_head)
 {
 	struct dp_tx_me_buf_t *mc_uc_buf;
@@ -3321,7 +3320,8 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"Mapping failure Error:%d", status);
 		DP_STATS_INC(vdev, tx_i.mcast_en.dropped_map_error, 1);
-		return 0;
+		qdf_nbuf_free(nbuf);
+		return 1;
 	}
 
 	paddr_data = qdf_nbuf_get_frag_paddr(nbuf, 0) + IEEE80211_ADDR_LEN;
@@ -3415,8 +3415,9 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 		seg_info_tail = seg_info_new;
 	}
 
-	if (!seg_info_head)
-		return 0;
+	if (!seg_info_head) {
+		goto free_return;
+	}
 
 	msdu_info.u.sg_info.curr_seg = seg_info_head;
 	msdu_info.num_seg = new_mac_cnt;
@@ -3432,6 +3433,8 @@ dp_tx_me_send_convert_ucast(struct cdp_vdev *vdev_handle, qdf_nbuf_t nbuf,
 	}
 	qdf_mem_free(seg_info_head);
 
+	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_free(nbuf);
 	return new_mac_cnt;
 
 fail_map:
@@ -3445,7 +3448,10 @@ fail_buf_alloc:
 
 fail_seg_alloc:
 	dp_tx_me_mem_free(pdev, seg_info_head);
+
+free_return:
 	qdf_nbuf_unmap(pdev->soc->osdev, nbuf, QDF_DMA_TO_DEVICE);
-	return 0;
+	qdf_nbuf_free(nbuf);
+	return 1;
 }
 
