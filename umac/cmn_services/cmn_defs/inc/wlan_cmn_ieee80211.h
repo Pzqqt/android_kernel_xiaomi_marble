@@ -86,6 +86,27 @@
 #define WLAN_MAX_IE_LEN                255
 #define WLAN_RSN_IE_LEN                22
 
+/* Individual element IEs length checks */
+
+#define WLAN_SUPPORTED_RATES_IE_MAX_LEN          8
+#define WLAN_DS_PARAM_IE_MAX_LEN                 1
+#define WLAN_COUNTRY_IE_MIN_LEN                  3
+#define WLAN_QUIET_IE_MAX_LEN                    6
+#define WLAN_CSA_IE_MAX_LEN                      3
+#define WLAN_XCSA_IE_MAX_LEN                     4
+#define WLAN_SECCHANOFF_IE_MAX_LEN               1
+#define WLAN_EXT_SUPPORTED_RATES_IE_MAX_LEN      12
+#define WLAN_EXTCAP_IE_MAX_LEN                   15
+#define WLAN_FILS_INDICATION_IE_MIN_LEN          2
+#define WLAN_MOBILITY_DOMAIN_IE_MAX_LEN          3
+#define WLAN_OPMODE_IE_MAX_LEN                   1
+#define WLAN_IBSSDFS_IE_MIN_LEN                  7
+#define WLAN_EXT_ESP_IE_MAX_LEN                  96
+#define WLAN_HE_CAP_IE_MIN_LEN                   18
+#define WLAN_HE_CAP_IE_MAX_LEN                   53
+#define WLAN_HE_OP_IE_MIN_LEN                     6
+#define WLAN_HE_OP_IE_MAX_LEN                    10
+
 /* HT capability flags */
 #define WLAN_HTCAP_C_ADVCODING             0x0001
 #define WLAN_HTCAP_C_CHWIDTH40             0x0002
@@ -414,6 +435,8 @@ struct wlan_rsn_ie_hdr {
 	u8 version[2];
 };
 
+#define WLAN_RSN_IE_MIN_LEN                    3
+
 /**
  * struct wlan_rsn_ie: rsn ie info
  * @ver: RSN ver
@@ -439,6 +462,8 @@ struct wlan_rsn_ie {
 	uint8_t pmkid[MAX_PMKID][PMKID_LEN];
 	uint32_t mgmt_cipher_suite;
 };
+
+#define WLAN_WAPI_IE_MIN_LEN            20
 
 /**
  * struct wlan_wpa_ie_hdr: wpa ie header
@@ -683,8 +708,10 @@ struct fils_indication_ie {
 	uint16_t is_fils_sk_auth_pfs_supported:1;
 	uint16_t is_pk_auth_supported:1;
 	uint16_t reserved:4;
-	uint8_t variable_data[255];
+	uint8_t variable_data[253];
 } qdf_packed;
+
+#define WLAN_VENDOR_HT_IE_OFFSET_LEN    4
 
 /**
  * struct wlan_vendor_ie_htcap: vendor private HT Capability IE
@@ -775,6 +802,9 @@ struct wlan_vendor_ie_htinfo {
 	uint8_t hi_ouitype;
 	struct wlan_ie_htinfo_cmn hi_ie;
 } qdf_packed;
+
+#define WLAN_VENDOR_VHTCAP_IE_OFFSET    7
+#define WLAN_VENDOR_VHTOP_IE_OFFSET     21
 
 /**
  * struct wlan_ie_vhtcaps - VHT capabilities
@@ -869,12 +899,14 @@ struct wlan_country_ie {
  * struct wlan_country_ie: country IE
  * @ie: QBSS IE
  * @len: IE len
+ * @station_count: number of station associated
  * @qbss_chan_load: qbss channel load
  * @qbss_load_avail: qbss_load_avail
  */
 struct qbss_load_ie {
 	uint8_t ie;
 	uint8_t len;
+	uint16_t station_count;
 	uint8_t qbss_chan_load;
 	uint16_t qbss_load_avail;
 } qdf_packed;
@@ -893,6 +925,8 @@ struct wlan_bcn_frame {
 	struct ie_header ie;
 } qdf_packed;
 
+#define WLAN_TIM_IE_MIN_LENGTH             4
+
 /**
  * struct wlan_tim_ie: tim IE
  * @tim_ie: Time IE
@@ -908,7 +942,7 @@ struct wlan_tim_ie {
 	uint8_t tim_count;      /* DTIM count */
 	uint8_t tim_period;     /* DTIM period */
 	uint8_t tim_bitctl;     /* bitmap control */
-	uint8_t tim_bitmap[1];  /* variable-length bitmap */
+	uint8_t tim_bitmap[251];  /* variable-length bitmap */
 } qdf_packed;
 
 /**

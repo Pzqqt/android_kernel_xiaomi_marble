@@ -341,7 +341,7 @@ util_scan_is_hidden_ssid(struct ie_ssid *ssid)
 	return true;
 }
 
-static void
+static QDF_STATUS
 util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 	struct ie_header *ie)
 {
@@ -352,24 +352,32 @@ util_scan_parse_extn_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.srp   = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HECAP:
+		if ((extn_ie->ie_len < WLAN_HE_CAP_IE_MIN_LEN) ||
+		    (extn_ie->ie_len > WLAN_HE_CAP_IE_MAX_LEN))
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.hecap = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_HEOP:
+		if ((extn_ie->ie_len < WLAN_HE_OP_IE_MIN_LEN) ||
+		    (extn_ie->ie_len > WLAN_HE_OP_IE_MAX_LEN))
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.heop  = (uint8_t *)ie;
 		break;
 	case WLAN_EXTN_ELEMID_ESP:
+		if (extn_ie->ie_len > WLAN_EXT_ESP_IE_MAX_LEN)
+			return QDF_STATUS_E_INVAL;
 		scan_params->ie_list.esp = (uint8_t *)ie;
 		break;
 	default:
 		break;
 	}
+	return QDF_STATUS_SUCCESS;
 }
 
-static void
+static QDF_STATUS
 util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 	struct ie_header *ie)
 {
-
 	if (scan_params->ie_list.vendor == NULL)
 		scan_params->ie_list.vendor = (uint8_t *)ie;
 
@@ -397,20 +405,51 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 		scan_params->ie_list.sonadv = (uint8_t *)ie;
 	} else if (is_ht_cap((uint8_t *)ie)) {
 		/* we only care if there isn't already an HT IE (ANA) */
-		if (scan_params->ie_list.htcap == NULL)
+		if (scan_params->ie_list.htcap == NULL) {
+			if (ie->ie_len != (WLAN_VENDOR_HT_IE_OFFSET_LEN +
+					   sizeof(struct htcap_cmn_ie)))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.htcap =
-			  (uint8_t *)&(((struct wlan_vendor_ie_htcap *)ie)->ie);
+			 (uint8_t *)&(((struct wlan_vendor_ie_htcap *)ie)->ie);
+		}
 	} else if (is_ht_info((uint8_t *)ie)) {
 		/* we only care if there isn't already an HT IE (ANA) */
-		if (scan_params->ie_list.htinfo == NULL)
+		if (scan_params->ie_list.htinfo == NULL) {
+			if (ie->ie_len != WLAN_VENDOR_HT_IE_OFFSET_LEN +
+					  sizeof(struct wlan_ie_htinfo_cmn))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.htinfo =
 			  (uint8_t *)&(((struct wlan_vendor_ie_htinfo *)
 			  ie)->hi_ie);
+		}
 	} else if (is_interop_vht((uint8_t *)ie) &&
 	    !(scan_params->ie_list.vhtop)) {
+		uint8_t *vendor_ie = (uint8_t *)(ie);
+
+		if (ie->ie_len < ((WLAN_VENDOR_VHTCAP_IE_OFFSET +
+				 sizeof(struct wlan_ie_vhtcaps)) -
+				 sizeof(struct ie_header)))
+			return QDF_STATUS_E_INVAL;
+		vendor_ie = ((uint8_t *)(ie)) + WLAN_VENDOR_VHTCAP_IE_OFFSET;
+		if (vendor_ie[1] != (sizeof(struct wlan_ie_vhtcaps)) -
+				      sizeof(struct ie_header))
+			return QDF_STATUS_E_INVAL;
 		/* location where Interop Vht Cap IE and VHT OP IE Present */
-		scan_params->ie_list.vhtcap = (((uint8_t *)(ie)) + 7);
-		scan_params->ie_list.vhtop = (((uint8_t *)(ie)) + 21);
+		scan_params->ie_list.vhtcap = (((uint8_t *)(ie)) +
+						WLAN_VENDOR_VHTCAP_IE_OFFSET);
+		if (ie->ie_len > ((WLAN_VENDOR_VHTCAP_IE_OFFSET +
+				 sizeof(struct wlan_ie_vhtcaps)) -
+				 sizeof(struct ie_header)) &&
+		    ie->ie_len < ((WLAN_VENDOR_VHTOP_IE_OFFSET +
+				  sizeof(struct wlan_ie_vhtop)) -
+				  sizeof(struct ie_header)))
+			return QDF_STATUS_E_INVAL;
+		vendor_ie = ((uint8_t *)(ie)) + WLAN_VENDOR_VHTOP_IE_OFFSET;
+		if (vendor_ie[1] != (sizeof(struct wlan_ie_vhtop) -
+				     sizeof(struct ie_header)))
+			return QDF_STATUS_E_INVAL;
+		scan_params->ie_list.vhtop = (((uint8_t *)(ie)) +
+						WLAN_VENDOR_VHTOP_IE_OFFSET);
 	} else if (is_bwnss_oui((uint8_t *)ie)) {
 		/*
 		 * Bandwidth-NSS map has sub-type & version.
@@ -420,6 +459,7 @@ util_scan_parse_vendor_ie(struct scan_cache_entry *scan_params,
 	} else if (is_mbo_oce_oui((uint8_t *)ie)) {
 		scan_params->ie_list.mbo_oce = (uint8_t *)ie;
 	}
+	return QDF_STATUS_SUCCESS;
 }
 
 static QDF_STATUS
@@ -449,56 +489,89 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 
 		switch (ie->ie_id) {
 		case WLAN_ELEMID_SSID:
+			if (ie->ie_len > (sizeof(struct ie_ssid) -
+					  sizeof(struct ie_header)))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.ssid = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_RATES:
+			if (ie->ie_len > WLAN_SUPPORTED_RATES_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.rates = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_DSPARMS:
+			if (ie->ie_len != WLAN_DS_PARAM_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.ds_param = (uint8_t *)ie;
 			scan_params->channel.chan_idx =
 				((struct ds_ie *)ie)->cur_chan;
 			break;
 		case WLAN_ELEMID_TIM:
+			if (ie->ie_len < WLAN_TIM_IE_MIN_LENGTH)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.tim = (uint8_t *)ie;
 			scan_params->dtim_period =
 				((struct wlan_tim_ie *)ie)->tim_period;
 			break;
 		case WLAN_ELEMID_COUNTRY:
+			if (ie->ie_len < WLAN_COUNTRY_IE_MIN_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.country = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_QBSS_LOAD:
+			if (ie->ie_len != sizeof(struct qbss_load_ie) -
+					  sizeof(struct ie_header))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.qbssload = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_CHANSWITCHANN:
+			if (ie->ie_len != WLAN_CSA_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.csa = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_IBSSDFS:
+			if (ie->ie_len < WLAN_IBSSDFS_IE_MIN_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.ibssdfs = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_QUIET:
+			if (ie->ie_len != WLAN_QUIET_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.quiet = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_ERP:
+			if (ie->ie_len != (sizeof(struct erp_ie) -
+					    sizeof(struct ie_header)))
+				return QDF_STATUS_E_INVAL;
 			scan_params->erp = ((struct erp_ie *)ie)->value;
 			break;
 		case WLAN_ELEMID_HTCAP_ANA:
+			if (ie->ie_len != sizeof(struct htcap_cmn_ie))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.htcap =
 				(uint8_t *)&(((struct htcap_ie *)ie)->ie);
 			break;
 		case WLAN_ELEMID_RSN:
+			if (ie->ie_len < WLAN_RSN_IE_MIN_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.rsn = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_XRATES:
 			scan_params->ie_list.xrates = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_EXTCHANSWITCHANN:
+			if (ie->ie_len != WLAN_XCSA_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.xcsa = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_SECCHANOFFSET:
+			if (ie->ie_len != WLAN_SECCHANOFF_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.secchanoff = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_HTINFO_ANA:
+			if (ie->ie_len != sizeof(struct wlan_ie_htinfo_cmn))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.htinfo =
 			  (uint8_t *)&(((struct wlan_ie_htinfo *) ie)->hi_ie);
 			scan_params->channel.chan_idx =
@@ -506,26 +579,42 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 			  (scan_params->ie_list.htinfo))->hi_ctrlchannel;
 			break;
 		case WLAN_ELEMID_WAPI:
+			if (ie->ie_len < WLAN_WAPI_IE_MIN_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.wapi = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_XCAPS:
+			if (ie->ie_len > WLAN_EXTCAP_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.extcaps = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_VHTCAP:
+			if (ie->ie_len != (sizeof(struct wlan_ie_vhtcaps) -
+					   sizeof(struct ie_header)))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.vhtcap = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_VHTOP:
+			if (ie->ie_len != (sizeof(struct wlan_ie_vhtop) -
+					   sizeof(struct ie_header)))
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.vhtop = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_OP_MODE_NOTIFY:
+			if (ie->ie_len != WLAN_OPMODE_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 				scan_params->ie_list.opmode = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_MOBILITY_DOMAIN:
+			if (ie->ie_len != WLAN_MOBILITY_DOMAIN_IE_MAX_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.mdie = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_VENDOR:
-			util_scan_parse_vendor_ie(scan_params,
-				ie);
+			status = util_scan_parse_vendor_ie(scan_params,
+							   ie);
+			if (QDF_IS_STATUS_ERROR(status))
+				return status;
 			break;
 		case WLAN_ELEMID_CHAN_SWITCH_WRAP:
 			scan_params->ie_list.cswrp = (uint8_t *)ie;
@@ -542,10 +631,14 @@ util_scan_populate_bcn_ie_list(struct scan_cache_entry *scan_params)
 			}
 			break;
 		case WLAN_ELEMID_FILS_INDICATION:
+			if (ie->ie_len < WLAN_FILS_INDICATION_IE_MIN_LEN)
+				return QDF_STATUS_E_INVAL;
 			scan_params->ie_list.fils_indication = (uint8_t *)ie;
 			break;
 		case WLAN_ELEMID_EXTN_ELEM:
-			util_scan_parse_extn_ie(scan_params, ie);
+			status = util_scan_parse_extn_ie(scan_params, ie);
+			if (QDF_IS_STATUS_ERROR(status))
+				return status;
 			break;
 		default:
 			break;
