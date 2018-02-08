@@ -371,7 +371,7 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	struct wlan_serialization_command cmd = {0, };
 	enum wlan_serialization_status ser_cmd_status;
 	struct scan_start_request *req;
-	struct wlan_objmgr_psoc *psoc;
+	struct wlan_scan_obj *scan_obj;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!msg) {
@@ -386,6 +386,12 @@ scm_scan_start_req(struct scheduler_msg *msg)
 	}
 
 	req = msg->bodyptr;
+	scan_obj = wlan_vdev_get_scan_obj(req->vdev);
+	if (!scan_obj) {
+		scm_debug("Couldn't find scan object");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
 	cmd.cmd_type = WLAN_SER_CMD_SCAN;
 	cmd.cmd_id = req->scan_req.scan_id;
 	cmd.cmd_cb = (wlan_serialization_cmd_callback)
@@ -397,15 +403,8 @@ scm_scan_start_req(struct scheduler_msg *msg)
 		SCAN_TIMEOUT_GRACE_PERIOD;
 	cmd.vdev = req->vdev;
 
-	psoc = wlan_vdev_get_psoc(cmd.vdev);
-	/*
-	 * Temp Hack to disable Serialization Timer
-	 * Modified Serialization module to ignore timeout of 0 value
-	 */
-	if (wlan_is_emulation_platform(wlan_psoc_get_nif_phy_version(psoc))) {
+	if (scan_obj->disable_timeout)
 		cmd.cmd_timeout_duration = 0;
-		scm_info("[SCAN-EMULATION]: Disabling Serialization Timer for Emulation\n");
-	}
 
 	scm_info("req: 0x%pK, reqid: %d, scanid: %d, vdevid: %d",
 		req, req->scan_req.scan_req_id, req->scan_req.scan_id,

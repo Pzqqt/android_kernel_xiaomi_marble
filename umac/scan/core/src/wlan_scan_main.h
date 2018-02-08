@@ -435,6 +435,7 @@ struct scan_cb {
  * @ie_whitelist: default ie whitelist attrs
  * @bt_a2dp_enabled: if bt a2dp is enabled
  * @miracast_enabled: miracast enabled
+ * @disable_timeout: command timeout disabled
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
  */
@@ -453,6 +454,7 @@ struct wlan_scan_obj {
 	struct probe_req_whitelist_attr ie_whitelist;
 	bool bt_a2dp_enabled;
 	bool miracast_enabled;
+	bool disable_timeout;
 	struct scan_start_request scan_start_request_buff;
 };
 

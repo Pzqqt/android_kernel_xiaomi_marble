@@ -47,7 +47,6 @@ wlan_serialization_add_cmd_to_given_queue(qdf_list_t *queue,
 	}
 	if (qdf_list_empty(&ser_pdev_obj->global_cmd_pool_list)) {
 		serialization_err("list is full, can't add more");
-		QDF_BUG(0);
 		return WLAN_SER_CMD_DENIED_LIST_FULL;
 	}
 	if (qdf_list_remove_front(&ser_pdev_obj->global_cmd_pool_list,

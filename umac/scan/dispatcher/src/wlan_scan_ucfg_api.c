@@ -950,6 +950,34 @@ QDF_STATUS ucfg_scan_set_miracast(
 }
 
 QDF_STATUS
+ucfg_scan_set_disable_timeout(struct wlan_objmgr_psoc *psoc, bool disable)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+	scan_obj->disable_timeout = disable;
+	scm_debug("set disable_timeout to %d", scan_obj->disable_timeout);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+bool ucfg_scan_get_disable_timeout(struct wlan_objmgr_psoc *psoc)
+{
+	struct wlan_scan_obj *scan_obj;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object");
+		return false;
+	}
+	return scan_obj->disable_timeout;
+}
+
+QDF_STATUS
 ucfg_scan_set_wide_band_scan(struct wlan_objmgr_pdev *pdev, bool enable)
 {
 	uint8_t pdev_id;
@@ -1281,6 +1309,7 @@ static QDF_STATUS
 wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 {
 	scan_obj->enable_scan = true;
+	scan_obj->disable_timeout = false;
 	scan_obj->scan_def.active_dwell = SCAN_ACTIVE_DWELL_TIME;
 	scan_obj->scan_def.passive_dwell = SCAN_PASSIVE_DWELL_TIME;
 	scan_obj->scan_def.max_rest_time = SCAN_MAX_REST_TIME;
