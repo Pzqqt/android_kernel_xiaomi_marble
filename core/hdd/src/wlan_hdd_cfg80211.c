@@ -2668,8 +2668,16 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	}
 
 	sap_config->acs_cfg.band = hw_mode;
+	status = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
+					   ht_enabled, vht_enabled);
+	if (status) {
+		hdd_err("set acs channel range failed");
+		goto out;
+	}
+
 	/* ACS override for android */
 	if (hdd_ctx->config->sap_p2p_11ac_override && ht_enabled &&
+	    sap_config->acs_cfg.end_ch >= WLAN_REG_CH_NUM(CHAN_ENUM_36) &&
 	    !(((adapter->device_mode == QDF_SAP_MODE) &&
 	      (hdd_ctx->config->sap_force_11n_for_11ac)) ||
 	      ((adapter->device_mode == QDF_P2P_GO_MODE) &&
@@ -2680,24 +2688,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		sap_config->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 		sap_config->acs_cfg.ch_width =
 					hdd_ctx->config->vhtChannelWidth;
-		status = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
-						   ht_enabled, vht_enabled);
-		if (status) {
-			hdd_err("set acs channel range failed");
-			goto out;
-		}
 		/* No VHT80 in 2.4G so perform ACS accordingly */
 		if (sap_config->acs_cfg.end_ch <= 14 &&
 		    sap_config->acs_cfg.ch_width == eHT_CHANNEL_WIDTH_80MHZ) {
 			sap_config->acs_cfg.ch_width = eHT_CHANNEL_WIDTH_40MHZ;
 			hdd_debug("resetting to 40Mhz in 2.4Ghz");
-		}
-	} else {
-		status = wlan_hdd_set_acs_ch_range(sap_config, hw_mode,
-						   ht_enabled, vht_enabled);
-		if (status) {
-			hdd_err("set acs channel range failed");
-			goto out;
 		}
 	}
 
