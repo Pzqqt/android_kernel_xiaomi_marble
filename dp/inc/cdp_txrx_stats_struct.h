@@ -70,6 +70,12 @@
 
 #define CDP_MAX_RX_RINGS 4
 
+/*
+ * Number of TLVs sent by FW. Needs to reflect
+ * HTT_PPDU_STATS_MAX_TAG declared in FW
+ */
+#define CDP_PPDU_STATS_MAX_TAG 14
+
 /* Different Packet Types */
 enum cdp_packet_type {
 	DOT11_A = 0,
@@ -407,6 +413,7 @@ struct cdp_pdev_stats {
 	struct cdp_hist_tx_comp tx_comp_histogram;
 	/* Number of Rx ring descriptors reaped per interrupt */
 	struct cdp_hist_rx_ind rx_ind_histogram;
+	uint64_t ppdu_stats_counter[CDP_PPDU_STATS_MAX_TAG];
 };
 
 #ifndef BIG_ENDIAN_HOST

@@ -1106,6 +1106,9 @@ struct dp_pdev {
 		uint16_t rx_ppdu_id;
 	} am_copy_id;
 
+	/* To check if PPDU Tx stats are enabled for Pktlog */
+	bool pktlog_ppdu_stats;
+
 	void *dp_txrx_handle; /* Advanced data path handle */
 };
 

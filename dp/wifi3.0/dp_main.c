@@ -86,7 +86,12 @@ qdf_declare_param(rx_hash, bool);
 
 #define STR_MAXLEN	64
 
-#define DP_PPDU_STATS_CFG_ALL 0xffff
+#define DP_PPDU_STATS_CFG_ALL 0xFFFF
+
+/* PPDU stats mask sent to FW to enable enhanced stats */
+#define DP_PPDU_STATS_CFG_ENH_STATS 0xE67
+/* PPDU stats mask sent to FW to support debug sniffer feature */
+#define DP_PPDU_STATS_CFG_SNIFFER 0x2FFF
 /**
  * default_dscp_tid_map - Default DSCP-TID mapping
  *
@@ -4373,6 +4378,7 @@ static inline void dp_aggregate_pdev_stats(struct dp_pdev *pdev)
 static inline void
 dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 {
+	uint8_t index = 0;
 	DP_PRINT_STATS("PDEV Tx Stats:\n");
 	DP_PRINT_STATS("Received From Stack:");
 	DP_PRINT_STATS("	Packets = %d",
@@ -4473,6 +4479,11 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx_i.mesh.exception_fw);
 	DP_PRINT_STATS("	completions from fw: %u",
 			pdev->stats.tx_i.mesh.completion_fw);
+	DP_PRINT_STATS("PPDU stats counter");
+	for (index = 0; index < CDP_PPDU_STATS_MAX_TAG; index++) {
+		DP_PRINT_STATS("	Tag[%d] = %llu", index,
+				pdev->stats.ppdu_stats_counter[index]);
+	}
 }
 
 /**
@@ -5257,9 +5268,12 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 		pdev->tx_sniffer_enable = 0;
 		pdev->mcopy_mode = 0;
 
-		if (!pdev->enhanced_stats_en) {
+		if (!pdev->pktlog_ppdu_stats && !pdev->enhanced_stats_en) {
 			dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
 			dp_ppdu_ring_reset(pdev);
+		} else if (pdev->enhanced_stats_en) {
+			dp_h2t_cfg_stats_msg_send(pdev,
+				DP_PPDU_STATS_CFG_ENH_STATS, pdev->pdev_id);
 		}
 		break;
 
@@ -5267,18 +5281,19 @@ dp_config_debug_sniffer(struct cdp_pdev *pdev_handle, int val)
 		pdev->tx_sniffer_enable = 1;
 		pdev->mcopy_mode = 0;
 
-		if (!pdev->enhanced_stats_en)
+		if (!pdev->pktlog_ppdu_stats)
 			dp_h2t_cfg_stats_msg_send(pdev,
-				DP_PPDU_STATS_CFG_ALL, pdev->pdev_id);
+				DP_PPDU_STATS_CFG_SNIFFER, pdev->pdev_id);
 		break;
 	case 2:
 		pdev->mcopy_mode = 1;
 		pdev->tx_sniffer_enable = 0;
-		if (!pdev->enhanced_stats_en) {
+		if (!pdev->enhanced_stats_en)
 			dp_ppdu_ring_cfg(pdev);
+
+		if (!pdev->pktlog_ppdu_stats)
 			dp_h2t_cfg_stats_msg_send(pdev,
-				DP_PPDU_STATS_CFG_ALL, pdev->pdev_id);
-		}
+				DP_PPDU_STATS_CFG_SNIFFER, pdev->pdev_id);
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -5302,8 +5317,8 @@ dp_enable_enhanced_stats(struct cdp_pdev *pdev_handle)
 	if (!pdev->mcopy_mode)
 		dp_ppdu_ring_cfg(pdev);
 
-	if (!pdev->tx_sniffer_enable && !pdev->mcopy_mode)
-		dp_h2t_cfg_stats_msg_send(pdev, 0xffff, pdev->pdev_id);
+	if (!pdev->pktlog_ppdu_stats && !pdev->tx_sniffer_enable && !pdev->mcopy_mode)
+		dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ENH_STATS, pdev->pdev_id);
 }
 
 /*
@@ -5319,7 +5334,7 @@ dp_disable_enhanced_stats(struct cdp_pdev *pdev_handle)
 
 	pdev->enhanced_stats_en = 0;
 
-	if (!pdev->tx_sniffer_enable && !pdev->mcopy_mode)
+	if (!pdev->pktlog_ppdu_stats && !pdev->tx_sniffer_enable && !pdev->mcopy_mode)
 		dp_h2t_cfg_stats_msg_send(pdev, 0, pdev->pdev_id);
 
 	if (!pdev->mcopy_mode)
@@ -6739,6 +6754,7 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			 * in htt header file will use proper macros
 			*/
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
+				pdev->pktlog_ppdu_stats = true;
 				dp_h2t_cfg_stats_msg_send(pdev, 0xffff,
 						pdev->pdev_id + mac_id);
 			}
@@ -6788,8 +6804,17 @@ int dp_set_pktlog_wifi3(struct dp_pdev *pdev, uint32_t event,
 			 * header file will use proper macros
 			*/
 			for (mac_id = 0; mac_id < max_mac_rings; mac_id++) {
-				dp_h2t_cfg_stats_msg_send(pdev, 0,
-						pdev->pdev_id + mac_id);
+				pdev->pktlog_ppdu_stats = false;
+				if (!pdev->enhanced_stats_en && !pdev->tx_sniffer_enable && !pdev->mcopy_mode) {
+					dp_h2t_cfg_stats_msg_send(pdev, 0,
+							pdev->pdev_id + mac_id);
+				} else if (pdev->tx_sniffer_enable || pdev->mcopy_mode) {
+					dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_SNIFFER,
+							pdev->pdev_id + mac_id);
+				} else if (pdev->enhanced_stats_en) {
+					dp_h2t_cfg_stats_msg_send(pdev, DP_PPDU_STATS_CFG_ENH_STATS,
+							pdev->pdev_id + mac_id);
+				}
 			}
 
 			break;
