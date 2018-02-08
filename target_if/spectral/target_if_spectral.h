@@ -27,6 +27,7 @@
 #include <qdf_lock.h>
 #include <wlan_spectral_public_structs.h>
 #include <reg_services_public_struct.h>
+#include <target_if_direct_buf_rx_api.h>
 
 #ifdef WIN32
 #pragma pack(push, target_if_spectral, 1)
@@ -103,6 +104,7 @@ QDF_PRINT_INFO(QDF_PRINT_IDX_SHARED, QDF_MODULE_ID_SPECTRAL, level, ## args)
 	OS_MEMCPY((destp), (srcp), (len));
 #endif
 
+#define DUMMY_NF_VALUE          (-123)
 /* 5 categories x (lower + upper) bands */
 #define MAX_INTERF                   10
 #define HOST_MAX_ANTENNA         3
@@ -300,6 +302,33 @@ struct spectral_phyerr_fft_report_gen3 {
 	uint8_t buf[0];
 } __ATTRIB_PACK;
 
+/**
+ * struct spectral_sscan_report_gen3 - spectral report in phyerr event
+ * @sscan_timestamp:  Timestamp at which fft report was generated
+ * @sscan_hdr_sig:    signature
+ * @sscan_hdr_tag:    tag
+ * @sscan_hdr_length: length
+ * @hdr_a:          Header[0:31]
+ * @resv:           Header[32:63]
+ * @hdr_b:          Header[64:95]
+ * @resv:           Header[96:127]
+ */
+struct spectral_sscan_report_gen3 {
+	u_int32_t sscan_timestamp;
+#ifdef BIG_ENDIAN_HOST
+	u_int8_t  sscan_hdr_sig;
+	u_int8_t  sscan_hdr_tag;
+	u_int16_t sscan_hdr_length;
+#else
+	u_int16_t sscan_hdr_length;
+	u_int8_t  sscan_hdr_tag;
+	u_int8_t  sscan_hdr_sig;
+#endif /* BIG_ENDIAN_HOST */
+	u_int32_t hdr_a;
+	u_int32_t res1;
+	u_int32_t hdr_b;
+	u_int32_t res2;
+} __ATTRIB_PACK;
 /* END of spectral GEN III HW specific details */
 
 typedef signed char pwr_dbm;
@@ -773,6 +802,7 @@ struct target_if_spectral {
 	struct spectral_nl_cb nl_cb;
 	bool use_nl_bcast;
 	int (*send_phy_data)(struct wlan_objmgr_pdev *pdev);
+	u_int8_t                               fftbin_size_war;
 };
 
 /**
@@ -899,25 +929,16 @@ void target_if_spectral_create_samp_msg(
 
 /**
  * target_if_spectral_process_phyerr_gen3() - Process phyerror event for gen3
- * @spectral: Pointer to Spectral object
- * @data: Pointer to phyerror event buffer
- * @datalen: Data length
- * @p_rfqual: RF quality info
- * @p_chaninfo: Channel info
- * @tsf64: 64 bit tsf timestamp
- * @acs_stats: ACS stats
+ * @pdev:    Pointer to pdev object
+ * @payload: Pointer to spectral report
  *
  * Process phyerror event for gen3
  *
  * Return: Success/Failure
  */
 int target_if_spectral_process_phyerr_gen3(
-	struct target_if_spectral *spectral,
-	uint8_t *data,
-	uint32_t datalen, struct target_if_spectral_rfqual_info *p_rfqual,
-	struct target_if_spectral_chan_info *p_chaninfo,
-	uint64_t tsf64,
-	struct target_if_spectral_acs_stats *acs_stats);
+	struct wlan_objmgr_pdev *pdev,
+	struct direct_buf_rx_data *payload);
 
 /**
  * target_if_process_phyerr_gen2() - Process PHY Error for gen2

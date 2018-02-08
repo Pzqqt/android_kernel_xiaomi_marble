@@ -22,6 +22,7 @@
 #include <qdf_types.h>
 #include<wlan_global_lmac_if_api.h>
 #include "spectral_defs_i.h"
+#include <dispatcher_init_deinit.h>
 
 MODULE_LICENSE("Dual BSD/GPL");
 
@@ -38,6 +39,10 @@ spectral_init_module(void)
 	/* register spectral rxops */
 	wlan_lmac_if_sptrl_set_rx_ops_register_cb
 	    (wlan_lmac_if_sptrl_register_rx_ops);
+	/* register spectral pdev open handler */
+	dispatcher_register_spectral_pdev_open_handler(
+		spectral_pdev_open);
+
 	return 0;
 }
 

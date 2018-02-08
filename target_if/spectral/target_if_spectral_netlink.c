@@ -128,6 +128,9 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 	struct spectral_classifier_params *cp = NULL;
 	struct spectral_classifier_params *pcp = NULL;
 	struct target_if_spectral_ops *p_sops = NULL;
+	uint32_t *binptr = NULL;
+	int idx = 0;
+
 	static int samp_msg_index;
 
 	spec_samp_msg  = (struct spectral_samp_msg *)spectral->nl_cb.get_nbuff(
@@ -206,8 +209,14 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 
 	OS_MEMCPY(cp, pcp, sizeof(struct spectral_classifier_params));
 
-	SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(&data->bin_pwr[0],
+	if (spectral->fftbin_size_war) {
+		binptr = (uint32_t *)bin_pwr_data;
+		for (idx = 0; idx < params->pwr_count; idx++)
+			data->bin_pwr[idx] = *(binptr++);
+	} else {
+		SPECTRAL_MESSAGE_COPY_CHAR_ARRAY(&data->bin_pwr[0],
 					 bin_pwr_data, params->pwr_count);
+	}
 
 	spec_samp_msg->vhtop_ch_freq_seg1 = params->vhtop_ch_freq_seg1;
 	spec_samp_msg->vhtop_ch_freq_seg2 = params->vhtop_ch_freq_seg2;

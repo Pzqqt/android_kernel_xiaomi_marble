@@ -86,6 +86,8 @@
  * thier actual handlers are ready
  */
 
+spectral_pdev_open_handler dispatcher_spectral_pdev_open_handler_cb;
+
 #ifdef CONVERGED_P2P_ENABLE
 static QDF_STATUS p2p_init(void)
 {
@@ -279,6 +281,39 @@ static QDF_STATUS dispatcher_regulatory_pdev_open(struct wlan_objmgr_pdev
 {
 	return regulatory_pdev_open(pdev);
 }
+
+#ifdef CONFIG_WIN
+QDF_STATUS dispatcher_register_spectral_pdev_open_handler(
+			spectral_pdev_open_handler handler)
+{
+	dispatcher_spectral_pdev_open_handler_cb = handler;
+
+	return QDF_STATUS_SUCCESS;
+}
+EXPORT_SYMBOL(dispatcher_register_spectral_pdev_open_handler);
+
+static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
+						  *pdev)
+{
+	return dispatcher_spectral_pdev_open_handler_cb(pdev);
+}
+
+static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS dispatcher_spectral_pdev_open(struct wlan_objmgr_pdev
+						  *pdev)
+{
+	return spectral_pdev_open(pdev);
+}
+
+static QDF_STATUS dispatcher_spectral_pdev_close(struct wlan_objmgr_pdev *pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 
 static QDF_STATUS dispatcher_regulatory_pdev_close(struct wlan_objmgr_pdev
 						  *pdev)
@@ -1145,7 +1180,13 @@ QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
 	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_pdev_open(pdev))
 		goto out;
 
+	if (QDF_STATUS_SUCCESS != dispatcher_spectral_pdev_open(pdev))
+		goto spectral_pdev_open_fail;
+
 	return QDF_STATUS_SUCCESS;
+
+spectral_pdev_open_fail:
+	dispatcher_regulatory_pdev_close(pdev);
 
 out:
 	return QDF_STATUS_E_FAILURE;
@@ -1154,12 +1195,10 @@ EXPORT_SYMBOL(dispatcher_pdev_open);
 
 QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev)
 {
-	if (QDF_STATUS_SUCCESS != dispatcher_regulatory_pdev_close(pdev))
-		goto out;
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_pdev_close(pdev));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_spectral_pdev_close(pdev));
 
 	return QDF_STATUS_SUCCESS;
-
-out:
-	return QDF_STATUS_E_FAILURE;
 }
 EXPORT_SYMBOL(dispatcher_pdev_close);

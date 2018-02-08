@@ -172,3 +172,16 @@ wlan_register_wmi_spectral_cmd_ops(struct wlan_objmgr_pdev *pdev,
 	return sc->sptrlc_register_wmi_spectral_cmd_ops(pdev, cmd_ops);
 }
 EXPORT_SYMBOL(wlan_register_wmi_spectral_cmd_ops);
+
+QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	/* Enable the registartion once FW supports this */
+	spectral_debug("Enable registration to direct dma once FW supports it");
+
+	return status;
+}

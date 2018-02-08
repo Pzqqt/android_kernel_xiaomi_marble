@@ -30,6 +30,7 @@
 #include <osif_rawmode_sim.h>
 #endif /*CONFIG_WIN*/
 #include <reg_services_public_struct.h>
+#include <target_if_direct_buf_rx_api.h>
 extern int spectral_debug_level;
 
 #if WLAN_SPECTRAL_ENABLE
@@ -1182,6 +1183,7 @@ target_if_dump_fft_report_gen3(struct spectral_phyerr_fft_report_gen3
 	int fft_hdr_length = (p_fft_report->fft_hdr_length * 4);
 	int report_len = (fft_hdr_length + 8);
 	int fft_bin_len = (fft_hdr_length - 16);
+	int fft_bin_len_adj = fft_bin_len >> 2;
 
 	spectral_debug("#############################################################");
 	spectral_debug("Spectral search fft_report");
@@ -1194,8 +1196,10 @@ target_if_dump_fft_report_gen3(struct spectral_phyerr_fft_report_gen3
 		       fft_hdr_length, fft_hdr_length);
 	spectral_debug("Total length of search fft report is %d(0x%x) bytes",
 		       report_len, report_len);
-	spectral_debug("Number of fftbins in report is %d(0x%x)", fft_bin_len,
+	spectral_debug("FW reported fftbins in report is %d(0x%x)", fft_bin_len,
 		       fft_bin_len);
+	spectral_debug("Actual number of fftbins in report is %d(0x%x)\n",
+			fft_bin_len_adj, fft_bin_len_adj);
 
 	spectral_debug("fft_detector_id = %u\nfft_num = %u\nfft_radar_check = %u\nfft_peak_sidx = %d\nfft_chn_idx = %u\nfft_base_pwr_db = %u\nfft_total_gain_db   = %u\nfft_num_str_bins_ib = %u\nfft_peak_mag   = %d\nfft_avgpwr_db  = %u\nfft_relpwr_db  = %u",
 		       p_sfft->fft_detector_id,
@@ -1211,11 +1215,11 @@ target_if_dump_fft_report_gen3(struct spectral_phyerr_fft_report_gen3
 
 	spectral_debug("FFT bins:");
 	for (i = 0; i < (fft_hdr_length - 16); i++) {
+		if (i % 16 == 0)
+			spectral_debug("\n%d :", i);
 		fft_mag =
 		    ((uint8_t *)p_fft_report)[SPECTRAL_FFT_BINS_POS + i];
-		spectral_debug("%d: %d, ", i, fft_mag);
-		if (i % 16 == 0)
-			spectral_debug("\n");
+		spectral_debug("%d ", fft_mag);
 	}
 	spectral_debug("\n");
 	spectral_debug("#############################################################");
@@ -1224,17 +1228,86 @@ target_if_dump_fft_report_gen3(struct spectral_phyerr_fft_report_gen3
 }
 
 /**
+ * target_if_consume_sscan_report_gen3() - Consume spectral summary report
+ * @spectral: Pointer to spectral object
+ * @data: Pointer to spectral summary
+ *
+ * Consume spectral summary report for gen3
+ *
+ * Return: rssi
+ */
+static int
+target_if_consume_sscan_report_gen3(struct target_if_spectral *spectral,
+				    uint8_t *data) {
+	int rssi;
+	struct spectral_sscan_report_gen3 *psscan_report;
+
+	psscan_report = (struct spectral_sscan_report_gen3 *)data;
+	rssi = get_bitfield(psscan_report->hdr_a, 10, 18);
+
+	return rssi;
+}
+
+/**
+ * target_if_verify_sig_and_tag_gen3() - Verify tag and signature
+ *                                       of spectral report
+ * @spectral: Pointer to spectral object
+ * @data: Pointer to spectral summary report
+ * @exp_tag: iexpected tag value
+ *
+ * Process fft report for gen3
+ *
+ * Return: SUCCESS/FAILURE
+ */
+static int
+target_if_verify_sig_and_tag_gen3(struct target_if_spectral *spectral,
+				  uint8_t *data, uint8_t exp_tag)
+{
+	uint8_t tag = 0;
+	uint8_t signature = 0;
+
+	/* Peek into the data to figure out whether
+	 *      1) Signature matches the expected value
+	 *      2) What is inside the package (TAG ID is used for finding this)
+	 */
+	tag = *(data + PHYERR_HDR_TAG_POS);
+	signature = *(data + PHYERR_HDR_SIG_POS);
+
+	if (signature != SPECTRAL_PHYERR_SIGNATURE_GEN3) {
+		if (spectral_debug_level & DEBUG_SPECTRAL4)
+			spectral_err("Unexpected sig %x in spectral phyerror",
+				  signature);
+			spectral_err("Expected sig is %x\n",
+				  SPECTRAL_PHYERR_SIGNATURE_GEN3);
+		spectral->diag_stats.spectral_mismatch++;
+		return -EINVAL;
+	}
+
+	if (tag != exp_tag) {
+		if (spectral_debug_level & DEBUG_SPECTRAL4)
+			spectral_err("Unexpected tag %x in spectral phyerror",
+				  tag);
+			spectral_err("Expected tag is %x\n", exp_tag);
+		spectral->diag_stats.spectral_mismatch++;
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
  * target_if_consume_sfft_report_gen3() -  Process fft report for gen3
  * @spectral: Pointer to spectral object
- * @pinfo: Pointer to phyerror info
+ * @data: Pointer to phyerror data
  *
  * Process fft report for gen3
  *
  * Return: Success/Failure
  */
 static int
-target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
-				   struct phyerr_info *pinfo)
+target_if_consume_spectral_report_gen3(
+	 struct target_if_spectral *spectral,
+	 uint8_t *data)
 {
 	/*
 	 * XXX : The classifier do not use all the members of the SAMP
@@ -1261,34 +1334,39 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 	 *          1. Order of FFT bin values
 	 *
 	 */
-
-	/* Unpack the arguments */
-	uint32_t datalen = pinfo->datalen;
-	struct target_if_spectral_rfqual_info *p_rfqual = pinfo->p_rfqual;
-	struct target_if_spectral_chan_info *p_chaninfo = pinfo->p_chaninfo;
-	uint64_t tsf64 = pinfo->tsf64;
-	struct target_if_spectral_acs_stats *acs_stats = pinfo->acs_stats;
-
+	uint64_t tsf64 = 0;
 	struct target_if_samp_msg_params params;
 	struct spectral_search_fft_info_gen3 search_fft_info;
 	struct spectral_search_fft_info_gen3 *p_sfft = &search_fft_info;
 	int8_t rssi_up = 0;
 	int8_t rssi_low = 0;
 	int8_t chn_idx_highest_enabled = 0;
-	int8_t chn_idx_lowest_enabled = 0;
-	uint8_t control_rssi = 0;
+	int8_t chn_idx_lowest_enabled  = 0;
+	uint8_t control_rssi   = 0;
 	uint8_t extension_rssi = 0;
-	uint32_t tstamp = 0;
 	int fft_hdr_length = 0;
 	int report_len = 0;
 	int fft_bin_len = 0;
 	struct target_if_spectral_ops *p_sops =
 		GET_TARGET_IF_SPECTRAL_OPS(spectral);
-	struct spectral_phyerr_fft_report_gen3 *p_fft_report =
-	    (struct spectral_phyerr_fft_report_gen3 *)(pinfo->data);
+	struct spectral_phyerr_fft_report_gen3 *p_fft_report;
+	int8_t rssi;
 
 	OS_MEMZERO(&params, sizeof(params));
 
+	if (target_if_verify_sig_and_tag_gen3(
+			spectral, data,
+			TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0)
+		goto fail;
+	rssi = target_if_consume_sscan_report_gen3(spectral, data);
+	/* Advance buf pointer to the search fft report */
+	data += sizeof(struct spectral_sscan_report_gen3);
+
+	if (target_if_verify_sig_and_tag_gen3(
+			spectral, data,
+			TLV_TAG_SEARCH_FFT_REPORT_GEN3) != 0)
+		goto fail;
+	p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)data;
 	fft_hdr_length = p_fft_report->fft_hdr_length * 4;
 	if (fft_hdr_length < 16) {
 		spectral_err("Unexpected TLV length %u for FFT Report! Hexdump follows",
@@ -1298,11 +1376,7 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 
 	report_len = (fft_hdr_length + 8);
 	fft_bin_len = (fft_hdr_length - 16);
-	if (datalen < report_len) {
-		spectral_err("Total PHY error data length %u too short to contain the search fft report of length %u",
-			     datalen, report_len);
-		goto fail;
-	}
+	tsf64 = p_fft_report->fft_timestamp;
 
 	target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
 
@@ -1316,8 +1390,6 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
 		target_if_dump_fft_report_gen3(p_fft_report, p_sfft);
 
-	tstamp = p_sops->get_tsf64(spectral) & SPECTRAL_TSMASK;
-
 	if (spectral->upper_is_control)
 		rssi_up = control_rssi;
 	else
@@ -1328,17 +1400,18 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 	else
 		rssi_low = extension_rssi;
 
-	params.rssi = p_rfqual->rssi_comb;
-	params.lower_rssi = rssi_low;
-	params.upper_rssi = rssi_up;
+	params.rssi         = rssi;
+	params.lower_rssi   = rssi_low;
+	params.upper_rssi   = rssi_up;
 
 	if (spectral->sc_spectral_noise_pwr_cal) {
-		params.chain_ctl_rssi[0] = p_rfqual->pc_rssi_info[0].rssi_pri20;
-		params.chain_ctl_rssi[1] = p_rfqual->pc_rssi_info[1].rssi_pri20;
-		params.chain_ctl_rssi[2] = p_rfqual->pc_rssi_info[2].rssi_pri20;
-		params.chain_ext_rssi[0] = p_rfqual->pc_rssi_info[0].rssi_sec20;
-		params.chain_ext_rssi[1] = p_rfqual->pc_rssi_info[1].rssi_sec20;
-		params.chain_ext_rssi[2] = p_rfqual->pc_rssi_info[2].rssi_sec20;
+	/* Fill 0's till FW provides them */
+		params.chain_ctl_rssi[0] = 0;
+		params.chain_ctl_rssi[1] = 0;
+		params.chain_ctl_rssi[2] = 0;
+		params.chain_ext_rssi[0] = 0;
+		params.chain_ext_rssi[1] = 0;
+		params.chain_ext_rssi[2] = 0;
 	}
 
 	/*
@@ -1363,21 +1436,18 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 	 *       in to account. This is marked for future enhancements.
 	 */
 	chn_idx_highest_enabled = ((spectral->params.ss_chn_mask & 0x8) ? 3 :
-				   (spectral->params.ss_chn_mask & 0x4) ? 2 :
-				   (spectral->params.ss_chn_mask & 0x2) ? 1 :
-				   0);
-	chn_idx_lowest_enabled =
-	    ((spectral->params.ss_chn_mask & 0x1) ? 0 :
-	     (spectral->params.ss_chn_mask & 0x2) ? 1 :
-	     (spectral->params.ss_chn_mask & 0x4) ? 2 : 3);
-	control_rssi = (uint8_t)
-	    p_rfqual->pc_rssi_info[chn_idx_highest_enabled].rssi_pri20;
-	extension_rssi = (uint8_t)
-	    p_rfqual->pc_rssi_info[chn_idx_highest_enabled].rssi_sec20;
+			(spectral->params.ss_chn_mask & 0x4) ? 2 :
+			(spectral->params.ss_chn_mask & 0x2) ? 1 : 0);
+		chn_idx_lowest_enabled  =
+			((spectral->params.ss_chn_mask & 0x1) ? 0 :
+			(spectral->params.ss_chn_mask & 0x2) ? 1 :
+			(spectral->params.ss_chn_mask & 0x4) ? 2 : 3);
+		control_rssi    = 0;
+		extension_rssi  = 0;
 
-	params.bwinfo = 0;
-	params.tstamp = 0;
-	params.max_mag = p_sfft->fft_peak_mag;
+		params.bwinfo   = 0;
+		params.tstamp   = 0;
+		params.max_mag  = p_sfft->fft_peak_mag;
 
 	/* params.max_index    = p_sfft->peak_inx; */
 	params.max_exp = 0;
@@ -1397,44 +1467,35 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 	 * corresponding
 	 * to the highest enabled antenna chain
 	 */
-	params.noise_floor = p_rfqual->noise_floor[chn_idx_highest_enabled];
-	params.datalen = (fft_hdr_length * 4);
-	params.pwr_count = fft_bin_len;
-	params.tstamp = (tsf64 & SPECTRAL_TSMASK);
-
-	acs_stats->ctrl_nf = params.noise_floor;
-	acs_stats->ext_nf = params.noise_floor;
-	acs_stats->nfc_ctl_rssi = control_rssi;
-	acs_stats->nfc_ext_rssi = extension_rssi;
+	/* TODO:  Fill proper values once FW provides them*/
+	params.noise_floor       = DUMMY_NF_VALUE;
+	params.datalen           = (fft_hdr_length * 4);
+	params.pwr_count         = fft_bin_len >> 2;
+	params.tstamp            = (tsf64 & SPECTRAL_TSMASK);
 
 	if (spectral->ch_width == CH_WIDTH_160MHZ) {
-		/*
-		 * We expect to see one more Search FFT report, and it should be
+		/* We expect to see one more Search FFT report, and it should be
 		 * equal in size to the current one.
 		 */
-		if (datalen != (2 * report_len)) {
-			spectral->diag_stats.spectral_sec80_sfft_insufflen++;
+		/* Advance to the secondary 80 Mhz spectral report */
+		data += report_len;
+
+		if (target_if_verify_sig_and_tag_gen3(
+				spectral, data,
+				TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3) != 0)
 			goto fail;
-		}
+		rssi = target_if_consume_sscan_report_gen3(spectral, data);
+		/* Advance buf pointer to the search fft report */
+		data += sizeof(struct spectral_sscan_report_gen3);
 
-		p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)(
-					(uint8_t *)p_fft_report + report_len);
-
-		if (p_fft_report->fft_hdr_sig !=
-		    SPECTRAL_PHYERR_SIGNATURE_GEN3) {
-			spectral->diag_stats.spectral_mismatch++;
+		if (target_if_verify_sig_and_tag_gen3(
+				spectral, data,
+				TLV_TAG_SEARCH_FFT_REPORT_GEN3) != 0)
 			goto fail;
-		}
-
-		if (p_fft_report->fft_hdr_tag !=
-		    TLV_TAG_SEARCH_FFT_REPORT_GEN3) {
-			spectral->diag_stats.spectral_no_sec80_sfft++;
-			goto fail;
-		}
-
+		p_fft_report = (struct spectral_phyerr_fft_report_gen3 *)(data);
 		fft_hdr_length = p_fft_report->fft_hdr_length * 4;
-		report_len = (fft_hdr_length + 8);
-		fft_bin_len = (fft_hdr_length - 16);
+		report_len     = (fft_hdr_length + 8);
+		fft_bin_len    = (fft_hdr_length - 16);
 
 		target_if_process_sfft_report_gen3(p_fft_report, p_sfft);
 
@@ -1449,34 +1510,32 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 		    (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4))
 			target_if_dump_fft_report_gen3(p_fft_report, p_sfft);
 
-		params.vhtop_ch_freq_seg1 = p_chaninfo->center_freq1;
-		params.vhtop_ch_freq_seg2 = p_chaninfo->center_freq2;
+		params.vhtop_ch_freq_seg1 = 0;
+		params.vhtop_ch_freq_seg2 = 0;
 
 		/* XXX: Confirm. TBD at SoD. */
-		params.rssi_sec80 = p_rfqual->rssi_comb;
+		params.rssi_sec80 = rssi;
 
 		/* XXX: Determine dynamically. TBD at SoD. */
 
 		/*
-		 * For VHT80_80/VHT160, the noise floor for primary 80MHz
-		 * segment is populated with the
-		 * lowest enabled antenna chain and the noise floor for
-		 * secondary 80MHz segment is populated
+		 * For VHT80_80/VHT160,the noise floor for primary 80MHz segment
+		 * populated with the
+		 * lowest enabled antenna chain and the nf for secondary 80MHz
+		 * segment is populated
 		 * with the highest enabled antenna chain
 		 */
-		params.noise_floor_sec80 =
-		    p_rfqual->noise_floor[chn_idx_highest_enabled];
-		params.noise_floor =
-		    p_rfqual->noise_floor[chn_idx_lowest_enabled];
+		/* TODO:  Fill proper values once FW provides them*/
+		params.noise_floor_sec80    = DUMMY_NF_VALUE;
+		params.noise_floor          = DUMMY_NF_VALUE;
 
-		params.max_mag_sec80 = p_sfft->fft_peak_mag;
+		params.max_mag_sec80        = p_sfft->fft_peak_mag;
 		/* params.max_index_sec80      = p_sfft->peak_inx; */
 		/* XXX Does this definition of datalen *still hold? */
-		params.datalen_sec80 = fft_hdr_length;
-		params.pwr_count_sec80 = fft_bin_len;
-		params.bin_pwr_data_sec80 = (uint8_t *)(
-						(uint8_t *)p_fft_report +
-						SPECTRAL_FFT_BINS_POS);
+		params.datalen_sec80        = fft_hdr_length;
+		params.pwr_count_sec80      = fft_bin_len >> 2;
+		params.bin_pwr_data_sec80   = (u_int8_t *)(
+			(uint8_t *)p_fft_report + SPECTRAL_FFT_BINS_POS);
 	}
 
 	qdf_mem_copy(&params.classifier_params,
@@ -1490,83 +1549,40 @@ target_if_consume_sfft_report_gen3(struct target_if_spectral *spectral,
 
  fail:
 	spectral_err("Error in function while processing search fft report");
-	target_if_print_buf((uint8_t *)p_fft_report, fft_hdr_length + 8);
 	return -EPERM;
 }
 
-int
-target_if_spectral_process_phyerr_gen3(
-	struct target_if_spectral *spectral,
-	uint8_t *data,
-	uint32_t datalen,
-	struct target_if_spectral_rfqual_info *p_rfqual,
-	struct target_if_spectral_chan_info *p_chaninfo,
-	uint64_t tsf64,
-	struct target_if_spectral_acs_stats *acs_stats)
+int target_if_spectral_process_phyerr_gen3(
+	struct wlan_objmgr_pdev *pdev,
+	struct direct_buf_rx_data *payload)
 {
-	uint8_t tag = 0;
-	uint8_t signature = 0;
-	struct phyerr_info pinfo;
 	int ret = 0;
+	uint8_t *data = (uint8_t *)payload->vaddr;
+	struct target_if_spectral *spectral;
 
-	/*
-	 * pack arguments in a structure as there are
-	 * more than 3 arguments
-	 */
-	pinfo.data = data;
-	pinfo.datalen = datalen;
-	pinfo.p_rfqual = p_rfqual;
-	pinfo.p_chaninfo = p_chaninfo;
-	pinfo.tsf64 = tsf64;
-	pinfo.acs_stats = acs_stats;
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (spectral == NULL) {
+		spectral_err("Spectral target object is null");
+		return -EINVAL;
+	}
 
 	if (spectral_debug_level & (DEBUG_SPECTRAL2 | DEBUG_SPECTRAL4)) {
-		spectral_debug("Printing the spectral phyerr buffer for debug purpose");
-		spectral_debug("Dalalength of buffer = 0x%x(%d)",
-			       datalen, datalen);
+		spectral_debug("Printing the spectral phyerr buffer for debug");
+		spectral_debug("Datalength of buffer = 0x%x(%d) bufptr = 0x%p",
+			  payload->dbr_len, payload->dbr_len, payload->vaddr);
 #ifdef CONFIG_WIN
-		RAWSIM_PKT_HEXDUMP(data, datalen);
+		RAWSIM_PKT_HEXDUMP((unsigned char *)payload->vaddr, 1024);
 #endif
 	}
 
-	/*
-	 * Peek into the data to figure out whether
-	 * 1) Signature matches the expected value
-	 * 2) What is inside the package (TAG ID is used for finding this)
-	 */
-	tag = *(data + PHYERR_HDR_TAG_POS);
-	signature = *(data + PHYERR_HDR_SIG_POS);
+	ret = target_if_consume_spectral_report_gen3(spectral, data);
 
-	if (signature != SPECTRAL_PHYERR_SIGNATURE_GEN3) {
-		spectral_err("Unexpected signature %x in spectral phyerror event",
-			     signature);
-		spectral->diag_stats.spectral_mismatch++;
-		ret = -1;
-		goto end;
-	}
-
-	switch (tag) {
-	case TLV_TAG_SPECTRAL_SUMMARY_REPORT_GEN3:
-		/*
-		 * Place holder
-		 * We don't use spectral scan report as of now
-		 */
-		break;
-
-	case TLV_TAG_SEARCH_FFT_REPORT_GEN3:
-		ret = target_if_consume_sfft_report_gen3(spectral, &pinfo);
-		break;
-
-	default:
-		spectral_warn("Unknown tag %x in spectral phyerror event",
-			      tag);
-		break;
-	}
-
- end:
 	if (spectral_debug_level & DEBUG_SPECTRAL4)
 		spectral_debug_level = DEBUG_SPECTRAL;
+
 	return ret;
 }
+EXPORT_SYMBOL(target_if_spectral_process_phyerr_gen3);
+/* END of spectral GEN III HW specific functions */
 
-#endif
+#endif  /* WLAN_SPECTRAL_ENABLE */

@@ -29,6 +29,10 @@
 #include <wlan_objmgr_psoc_obj.h>
 #include <wlan_objmgr_global_obj.h>
 
+/* Function pointer for spectral pdev open handler */
+typedef QDF_STATUS (*spectral_pdev_open_handler)(
+		struct wlan_objmgr_pdev *pdev);
+
 /**
  * dispatcher_init(): API to init all new components
  *
@@ -176,5 +180,17 @@ QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev);
  * Return: none
  */
 QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * dispatcher_register_spectral_pdev_open_handler():
+ * API to register spectral pdev open handler
+ * @handler: pdev open handler
+ *
+ * This API registers spectral pdev open handler.
+ *
+ * Return: none
+ */
+QDF_STATUS dispatcher_register_spectral_pdev_open_handler(QDF_STATUS (*handler)
+				(struct wlan_objmgr_pdev *pdev));
 
 #endif /* End of  !defined(__DISPATCHER_INIT_H) */

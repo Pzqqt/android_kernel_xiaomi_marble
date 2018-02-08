@@ -131,4 +131,15 @@ QDF_STATUS spectral_register_legacy_cb(
 enum phy_ch_width
 spectral_vdev_get_ch_width(struct wlan_objmgr_vdev *vdev);
 
+/**
+ * spectral_pdev_open() - Spectral pdev open handler
+ * @pdev:  pointer to pdev object
+ *
+ * API to execute operations on pdev open
+ *
+ * Return: QDF_STATUS_SUCCESS upon successful registration,
+ *         QDF_STATUS_E_FAILURE upon failure
+ */
+QDF_STATUS spectral_pdev_open(struct wlan_objmgr_pdev *pdev);
+
 #endif /* _WLAN_SPECTRAL_UTILS_API_H_*/

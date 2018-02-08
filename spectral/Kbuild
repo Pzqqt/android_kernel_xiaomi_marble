@@ -27,6 +27,7 @@ INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/dfs/dispatcher/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/spectral/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/os_if/linux/scan/inc
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/spectral/core
+INCS += -I$(obj)/$(DEPTH)/cmn_dev/target_if/direct_buf_rx/inc
 
 ifeq ($(WLAN_CONV_CRYPTO_SUPPORTED), 1)
 INCS += -I$(obj)/$(DEPTH)/cmn_dev/umac/cmn_services/crypto/inc

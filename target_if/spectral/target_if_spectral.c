@@ -1429,10 +1429,9 @@ target_if_init_spectral_ops_gen2(void)
 static void
 target_if_init_spectral_ops_gen3(void)
 {
-	struct target_if_spectral_ops *p_sops = &spectral_ops;
-
-	p_sops->spectral_process_phyerr =
-		target_if_spectral_process_phyerr_gen3;
+	/* Placeholder */
+	spectral_debug("Placeholder for gen3 spectral ops registration");
+	return;
 }
 
 /**
@@ -1959,6 +1958,10 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 	/* Set the default values for spectral parameters */
 	target_if_spectral_init_param_defaults(spectral);
 #ifdef CONFIG_WIN
+	if (target_type == TARGET_TYPE_QCA8074)
+		spectral->fftbin_size_war = 1;
+	else
+		spectral->fftbin_size_war = 0;
 	if ((target_type == TARGET_TYPE_QCA8074) || (
 		target_type == TARGET_TYPE_QCA6290)) {
 		spectral->spectral_gen = SPECTRAL_GEN3;
