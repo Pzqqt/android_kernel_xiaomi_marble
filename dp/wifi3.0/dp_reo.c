@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -177,21 +177,20 @@ next:
 void dp_reo_cmdlist_destroy(struct dp_soc *soc)
 {
 	struct dp_reo_cmd_info *reo_cmd = NULL;
+	struct dp_reo_cmd_info *tmp_cmd = NULL;
 	union hal_reo_status reo_status;
 
 	reo_status.queue_status.header.status =
 			HAL_REO_CMD_FAILED;
 
 	qdf_spin_lock_bh(&soc->rx.reo_cmd_lock);
-	TAILQ_FOREACH(reo_cmd, &soc->rx.reo_cmd_list,
-		      reo_cmd_list_elem) {
+	TAILQ_FOREACH_SAFE(reo_cmd, &soc->rx.reo_cmd_list,
+		      reo_cmd_list_elem, tmp_cmd) {
 		TAILQ_REMOVE(&soc->rx.reo_cmd_list, reo_cmd,
 		       reo_cmd_list_elem);
-		if (reo_cmd) {
-			reo_cmd->handler(soc, reo_cmd->data,
-					&reo_status);
-			qdf_mem_free(reo_cmd);
-		}
+		reo_cmd->handler(soc, reo_cmd->data,
+				&reo_status);
+		qdf_mem_free(reo_cmd);
 	}
 	qdf_spin_unlock_bh(&soc->rx.reo_cmd_lock);
 }
