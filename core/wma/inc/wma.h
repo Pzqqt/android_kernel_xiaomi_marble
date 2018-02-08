@@ -1110,6 +1110,8 @@ struct wma_txrx_node {
 	void *staKeyParams;
 	bool restore_dtim_setting;
 	uint32_t peer_count;
+	qdf_atomic_t fw_peer_count;
+	qdf_event_t fw_peer_delete;
 	bool roam_synch_in_progress;
 	void *plink_status_req;
 	void *psnr_req;
