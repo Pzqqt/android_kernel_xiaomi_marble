@@ -22705,6 +22705,8 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_8ss_tx_bfee] = WMI_SERVICE_8SS_TX_BFEE;
 	wmi_service[wmi_service_fils_support] = WMI_SERVICE_FILS_SUPPORT;
 	wmi_service[wmi_service_mawc_support] = WMI_SERVICE_MAWC_SUPPORT;
+	wmi_service[wmi_service_11k_neighbour_report_support] =
+				WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT;
 
 }
 
