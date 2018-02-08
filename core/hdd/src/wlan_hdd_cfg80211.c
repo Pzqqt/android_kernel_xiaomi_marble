@@ -6265,6 +6265,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SEND_ADDBA_REQ] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7242,6 +7244,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX + 1];
 	int ret_val = 0;
 	uint8_t cfg_val = 0;
+	uint8_t set_val = 0;
 	tSmeConfigParams *sme_config;
 
 	ENTER_DEV(dev);
@@ -7309,6 +7312,23 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		}
 		sme_update_config(hdd_ctx->hHal, sme_config);
 		qdf_mem_free(sme_config);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SEND_ADDBA_REQ]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SEND_ADDBA_REQ]);
+		if (cfg_val) {
+			/*Auto BA mode*/
+			set_val = 0;
+			hdd_debug("BA operating mode is set to auto");
+		} else {
+			/*Manual BA mode*/
+			set_val = 1;
+			hdd_debug("BA operating mode is set to Manual");
+		}
+
+		ret_val = wma_cli_set_command(adapter->session_id,
+				WMI_VDEV_PARAM_BA_MODE, set_val, VDEV_CMD);
 	}
 
 	return ret_val;
