@@ -252,6 +252,11 @@ uint8_t *wlan_util_vdev_get_if_name(struct wlan_objmgr_vdev *vdev)
 		return NULL;
 	}
 
+	if (!osif_priv->wdev) {
+		wlan_vdev_obj_unlock(vdev);
+		return NULL;
+	}
+
 	name = osif_priv->wdev->netdev->name;
 	wlan_vdev_obj_unlock(vdev);
 
