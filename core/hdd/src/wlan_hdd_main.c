@@ -4143,6 +4143,11 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 		return 0;
 	}
 
+	if (hdd_ctx->lte_coex_ant_share) {
+		hdd_info("lte ant sharing enabled. skip chainmask programming");
+		return 0;
+	}
+
 	if (hdd_ctx->config->txchainmask1x1) {
 		ret_val = sme_cli_set_command(adapter->session_id,
 					      WMI_PDEV_PARAM_TX_CHAIN_MASK,
@@ -4159,11 +4164,6 @@ static int hdd_configure_chain_mask(struct hdd_adapter *adapter)
 					      PDEV_CMD);
 		if (ret_val)
 			goto error;
-	}
-
-	if (hdd_ctx->lte_coex_ant_share) {
-		hdd_info("lte ant sharing enabled. skip per band chain mask");
-		return 0;
 	}
 
 	if (hdd_ctx->config->txchainmask1x1 ||
