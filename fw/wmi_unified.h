@@ -21444,7 +21444,10 @@ typedef struct {
     /** TLV tag and len; tag equals
      * WMITLV_TAG_STRUC_wmi_pdev_get_nfcal_power_fixed_param */
     A_UINT32 tlv_header;
-    /* Currently there are no parameters for this message. */
+    /** pdev_id for identifying the MAC
+     * See macros starting with WMI_PDEV_ID_ for values.
+     */
+    A_UINT32 pdev_id;
 } wmi_pdev_get_nfcal_power_fixed_param;
 
 typedef struct {
