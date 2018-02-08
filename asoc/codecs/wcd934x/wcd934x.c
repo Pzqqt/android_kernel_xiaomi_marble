@@ -1858,6 +1858,18 @@ static void tavil_codec_clear_anc_tx_hold(struct tavil_priv *tavil)
 		tavil_codec_set_tx_hold(tavil->codec, WCD934X_ANA_AMIC4, false);
 }
 
+
+static void tavil_ocp_control(struct snd_soc_codec *codec, bool enable)
+{
+	if (enable) {
+		snd_soc_update_bits(codec, WCD934X_HPH_OCP_CTL, 0x10, 0x10);
+		snd_soc_update_bits(codec, WCD934X_RX_OCP_CTL, 0x0F, 0x02);
+	} else {
+		snd_soc_update_bits(codec, WCD934X_RX_OCP_CTL, 0x0F, 0x0F);
+		snd_soc_update_bits(codec, WCD934X_HPH_OCP_CTL, 0x10, 0x00);
+	}
+}
+
 static int tavil_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 				      struct snd_kcontrol *kcontrol,
 				      int event)
@@ -1871,6 +1883,7 @@ static int tavil_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		tavil_ocp_control(codec, false);
 		if (TAVIL_IS_1_0(tavil->wcd9xxx))
 			snd_soc_update_bits(codec, WCD934X_HPH_REFBUFF_LP_CTL,
 					    0x06, (0x03 << 1));
@@ -1967,8 +1980,10 @@ static int tavil_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 			ret = tavil_codec_enable_anc(w, kcontrol, event);
 		}
 		tavil_codec_override(codec, tavil->hph_mode, event);
+		tavil_ocp_control(codec, true);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		tavil_ocp_control(codec, false);
 		blocking_notifier_call_chain(&tavil->mbhc->notifier,
 					     WCD_EVENT_PRE_HPHR_PA_OFF,
 					     &tavil->mbhc->wcd_mbhc);
@@ -2007,6 +2022,7 @@ static int tavil_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 					    WCD934X_CDC_RX2_RX_PATH_CFG0,
 					    0x10, 0x00);
 		}
+		tavil_ocp_control(codec, true);
 		break;
 	};
 
@@ -2026,6 +2042,7 @@ static int tavil_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 
 	switch (event) {
 	case SND_SOC_DAPM_PRE_PMU:
+		tavil_ocp_control(codec, false);
 		if (TAVIL_IS_1_0(tavil->wcd9xxx))
 			snd_soc_update_bits(codec, WCD934X_HPH_REFBUFF_LP_CTL,
 					    0x06, (0x03 << 1));
@@ -2119,8 +2136,10 @@ static int tavil_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			ret = tavil_codec_enable_anc(w, kcontrol, event);
 		}
 		tavil_codec_override(codec, tavil->hph_mode, event);
+		tavil_ocp_control(codec, true);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		tavil_ocp_control(codec, false);
 		blocking_notifier_call_chain(&tavil->mbhc->notifier,
 					     WCD_EVENT_PRE_HPHL_PA_OFF,
 					     &tavil->mbhc->wcd_mbhc);
@@ -2160,6 +2179,7 @@ static int tavil_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 			snd_soc_update_bits(codec,
 				WCD934X_CDC_RX1_RX_PATH_CFG0, 0x10, 0x00);
 		}
+		tavil_ocp_control(codec, true);
 		break;
 	};
 
