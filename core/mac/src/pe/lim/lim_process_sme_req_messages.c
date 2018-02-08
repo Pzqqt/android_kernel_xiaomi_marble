@@ -5143,9 +5143,11 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (session_entry->currentOperChannel ==
-			ch_change_req->targetChannel) {
-		pe_err("target CH is same as current CH");
+	if ((session_entry->currentOperChannel ==
+			ch_change_req->targetChannel) &&
+	     (session_entry->ch_width == ch_change_req->ch_width)) {
+		pe_err("Target channel and mode is same as current channel and mode channel %d and mode %d",
+		       session_entry->currentOperChannel, session_entry->ch_width);
 		return;
 	}
 
