@@ -8200,6 +8200,13 @@ typedef enum {
       */
     WMI_VDEV_PARAM_ENABLE_DISABLE_RTT_RESPONDER_ROLE,        /* 0x7d */
 
+    /** Parameter to configure BA mode.
+     * Default: Auto mode.
+     * Valid values: 0- Auto mode,
+     *               1- Manual mode(addba req not sent).
+     */
+    WMI_VDEV_PARAM_BA_MODE,                                 /* 0x7e */
+
 
     /*=== ADD NEW VDEV PARAM TYPES ABOVE THIS LINE ===
      * The below vdev param types are used for prototyping, and are
