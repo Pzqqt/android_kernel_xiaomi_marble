@@ -14341,6 +14341,24 @@ enum hdd_external_acs_freq_band {
 #define CFG_WMI_WQ_WATCHDOG_MIN      (0)
 #define CFG_WMI_WQ_WATCHDOG_MAX      (30) /* 30s */
 #define CFG_WMI_WQ_WATCHDOG_DEFAULT  (20) /* 20s */
+
+/*
+ * <ini>
+ * gEnableDTIMSelectionDiversity - Enable/Disable chain
+ * selection optimization for one chain dtim
+ * @Min: 0
+ * @Max: 30
+ * @Default: 5
+ *
+ * Usage: External
+ *
+ * </ini>
+ */
+#define CFG_DTIM_SELECTION_DIVERSITY_NAME    "gEnableDTIMSelectionDiversity"
+#define CFG_DTIM_SELECTION_DIVERSITY_MIN     (0)
+#define CFG_DTIM_SELECTION_DIVERSITY_MAX     (30)
+#define CFG_DTIM_SELECTION_DIVERSITY_DEFAULT (5)
+
 /*
  * Type declarations
  */
@@ -15251,6 +15269,7 @@ struct hdd_config {
 	uint32_t neighbor_report_offload_cache_timeout;
 	uint32_t neighbor_report_offload_max_req_cap;
 	uint16_t wmi_wq_watchdog_timeout;
+	bool enable_dtim_selection_diversity;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

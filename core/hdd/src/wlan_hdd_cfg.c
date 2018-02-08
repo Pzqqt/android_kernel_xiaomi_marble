@@ -5526,6 +5526,14 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_WMI_WQ_WATCHDOG_DEFAULT,
 		     CFG_WMI_WQ_WATCHDOG_MIN,
 		     CFG_WMI_WQ_WATCHDOG_MAX),
+
+	REG_VARIABLE(CFG_DTIM_SELECTION_DIVERSITY_NAME,
+		     WLAN_PARAM_Integer,
+		     struct hdd_config, enable_dtim_selection_diversity,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_DTIM_SELECTION_DIVERSITY_DEFAULT,
+		     CFG_DTIM_SELECTION_DIVERSITY_MIN,
+		     CFG_DTIM_SELECTION_DIVERSITY_MAX),
 };
 
 
@@ -7416,6 +7424,9 @@ void hdd_cfg_print(struct hdd_context *hdd_ctx)
 	hdd_debug("Name = [%s] value = [%d]",
 		  CFG_ENABLE_GCMP_NAME,
 		  hdd_ctx->config->gcmp_enabled);
+	hdd_debug("Name = [%s] value = [%d]",
+		  CFG_DTIM_SELECTION_DIVERSITY_NAME,
+		  hdd_ctx->config->enable_dtim_selection_diversity);
 
 	hdd_cfg_print_11k_offload_params(hdd_ctx);
 }

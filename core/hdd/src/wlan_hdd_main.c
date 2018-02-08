@@ -4256,6 +4256,17 @@ int hdd_set_fw_params(struct hdd_adapter *adapter)
 		goto error;
 	}
 
+
+	ret = sme_cli_set_command(
+			adapter->session_id,
+			WMI_PDEV_PARAM_1CH_DTIM_OPTIMIZED_CHAIN_SELECTION,
+			hdd_ctx->config->enable_dtim_selection_diversity,
+			PDEV_CMD);
+	if (ret) {
+		hdd_err("Failed to set DTIM_OPTIMIZED_CHAIN_SELECTION");
+		goto error;
+	}
+
 	if (adapter->device_mode == QDF_STA_MODE) {
 		sme_set_smps_cfg(adapter->session_id,
 					HDD_STA_SMPS_PARAM_UPPER_BRSSI_THRESH,
