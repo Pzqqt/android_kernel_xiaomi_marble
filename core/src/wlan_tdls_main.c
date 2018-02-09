@@ -833,14 +833,6 @@ static void tdls_send_update_to_fw(struct tdls_vdev_priv_obj *tdls_vdev_obj,
 
 	tdls_debug("TDLS Set state cnt %d",
 		tdls_soc_obj->set_state_info.set_state_cnt);
-
-	if (tdls_soc_obj->set_state_info.set_state_cnt == 1)
-		/* register callbacks with tx/rx mgmt */
-		tdls_mgmt_rx_ops(tdls_soc_obj->soc, true);
-	else
-		/* deregister callbacks with tx/rx mgmt */
-		tdls_mgmt_rx_ops(tdls_soc_obj->soc, false);
-
 done:
 	qdf_mem_free(tdls_info_to_fw);
 	return;
