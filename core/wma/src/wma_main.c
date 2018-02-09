@@ -2894,10 +2894,9 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	qdf_device_t qdf_dev;
 	void *wmi_handle;
 	QDF_STATUS qdf_status;
-	struct wmi_rx_ops ops;
+	struct wmi_unified_attach_params params;
 	struct policy_mgr_wma_cbacks wma_cbacks;
 	struct target_psoc_info *tgt_psoc_info;
-	bool use_cookie = false;
 	int i;
 	void *cds_context;
 	target_resource_config *wlan_res_cfg;
@@ -2975,13 +2974,19 @@ QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 	wma_target_if_open(wma_handle);
 	target_if_open(wma_get_psoc_from_scn_handle);
 
+	params.osdev = NULL;
+	params.target_type = WMI_TLV_TARGET;
+	params.use_cookie = false;
+	params.psoc = psoc;
+	params.max_commands = WMI_MAX_CMDS;
 	/* Attach mc_thread context processing function */
-	ops.wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
+	params.rx_ops->wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
+
 	/* initialize tlv attach */
 	wmi_tlv_init();
+
 	/* attach the wmi */
-	wmi_handle = wmi_unified_attach(wma_handle, NULL,
-					WMI_TLV_TARGET, use_cookie, &ops, psoc);
+	wmi_handle = wmi_unified_attach(wma_handle, &params);
 	if (!wmi_handle) {
 		WMA_LOGE("%s: failed to attach WMI", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
