@@ -2052,6 +2052,9 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		}
 	break;
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
+		mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+
 		switch (action_hdr->actionID) {
 		case SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID:
 			lim_process_ext_channel_switch_action_frame(mac_ctx,
@@ -2061,7 +2064,11 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			pub_action =
 				(tpSirMacVendorSpecificPublicActionFrameHdr)
 				action_hdr;
-
+			if (frame_len < sizeof(pub_action)) {
+				pe_debug("Received vendor specific public action frame of invalid len %d",
+					 frame_len);
+				return;
+			}
 			/*
 			 * Check if it is a DPP public action frame and fall
 			 * thru, else drop the frame.
@@ -2072,24 +2079,13 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					pub_action->Oui[2], pub_action->Oui[3]);
 				break;
 			}
+			/* Fall through to send the frame to supplicant */
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		case SIR_MAC_ACTION_2040_BSS_COEXISTENCE:
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
 		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
 		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
 		case SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE:
-			mac_hdr = NULL;
-			frame_len = 0;
-
-			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-
-			if (frame_len < sizeof(pub_action)) {
-				pe_debug("Received public action frame of invalid len %d",
-					 frame_len);
-				return;
-			}
-
 			/*
 			 * Forward to the SME to HDD to wpa_supplicant
 			 * type is ACTION
@@ -2236,40 +2232,45 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
  */
 void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 {
+	tpSirMacMgmtHdr mac_hdr = WMA_GET_RX_MAC_HEADER(pBd);
+	uint32_t frame_len = WMA_GET_RX_PAYLOAD_LEN(pBd);
 	uint8_t *pBody = WMA_GET_RX_MPDU_DATA(pBd);
-	tpSirMacMgmtHdr mac_hdr;
-	uint32_t frame_len;
 	uint8_t dpp_oui[] = { 0x50, 0x6F, 0x9A, 0x1A };
-	tpSirMacVendorSpecificPublicActionFrameHdr pActionHdr =
-		(tpSirMacVendorSpecificPublicActionFrameHdr) pBody;
+	tpSirMacActionFrameHdr action_hdr = (tpSirMacActionFrameHdr) pBody;
+	tpSirMacVendorSpecificPublicActionFrameHdr vendor_specific;
 
-	pe_debug("Received a Action frame -- no session");
+	pe_debug("Received an Action frame -- no session");
 
-	switch (pActionHdr->category) {
+	switch (action_hdr->category) {
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
-		switch (pActionHdr->actionID) {
+		switch (action_hdr->actionID) {
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:
+			vendor_specific =
+				(tpSirMacVendorSpecificPublicActionFrameHdr)
+				action_hdr;
+
+			if (frame_len < sizeof(vendor_specific)) {
+				pe_debug("Received vendor specific public action frame of invalid len %d",
+					 frame_len);
+				return;
+			}
 			/*
 			 * Check if it is a DPP public action frame and fall
 			 * thru, else drop the frame.
 			 */
-			if (qdf_mem_cmp(pActionHdr->Oui, dpp_oui, 4)) {
+			if (qdf_mem_cmp(vendor_specific->Oui, dpp_oui, 4)) {
 				pe_debug("Unhandled public action frame (Vendor specific) OUI: %x %x %x %x",
-					pActionHdr->Oui[0], pActionHdr->Oui[1],
-					pActionHdr->Oui[2], pActionHdr->Oui[3]);
+					vendor_specific->Oui[0],
+					vendor_specific->Oui[1],
+					vendor_specific->Oui[2],
+					vendor_specific->Oui[3]);
 				break;
 			}
+			/* Fall through to send the frame to supplicant */
 		case SIR_MAC_ACTION_GAS_INITIAL_REQUEST:
 		case SIR_MAC_ACTION_GAS_INITIAL_RESPONSE:
 		case SIR_MAC_ACTION_GAS_COMEBACK_REQUEST:
 		case SIR_MAC_ACTION_GAS_COMEBACK_RESPONSE:
-			mac_hdr = WMA_GET_RX_MAC_HEADER(pBd);
-			frame_len = WMA_GET_RX_PAYLOAD_LEN(pBd);
-			if (frame_len < sizeof(pActionHdr)) {
-				pe_debug("Received action frame of invalid len %d",
-					 frame_len);
-				return;
-			}
 			/*
 			 * Forward the GAS frames to  wpa_supplicant
 			 * type is ACTION
@@ -2283,13 +2284,13 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 			break;
 		default:
 			pe_warn("Unhandled public action frame: %x",
-				       pActionHdr->actionID);
+				       action_hdr->actionID);
 			break;
 		}
 		break;
 	default:
 		pe_warn("Unhandled action frame without session: %x",
-			       pActionHdr->category);
+			       action_hdr->category);
 		break;
 
 	}
