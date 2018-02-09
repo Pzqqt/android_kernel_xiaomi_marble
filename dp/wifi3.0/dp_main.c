@@ -2252,12 +2252,29 @@ static os_timer_func(dp_txrx_peer_find_inact_timeout_handler)
 		      soc->pdev_bs_inact_interval * 1000);
 }
 
+
+/**
+ * dp_free_inact_timer(): free inact timer
+ * @timer - inact timer handle
+ *
+ * Return: bool
+ */
+void dp_free_inact_timer(struct dp_soc *soc)
+{
+	qdf_timer_free(&soc->pdev_bs_inact_timer);
+}
 #else
 
 void dp_mark_peer_inact(void *peer, bool inactive)
 {
 	return;
 }
+
+void dp_free_inact_timer(struct dp_soc *soc)
+{
+	return;
+}
+
 #endif
 
 /*
@@ -2465,11 +2482,6 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 				"dp_wdi_evet_attach failed\n");
 		goto fail1;
 	}
-#ifdef QCA_SUPPORT_SON
-	qdf_timer_init(soc->osdev, &soc->pdev_bs_inact_timer,
-		       dp_txrx_peer_find_inact_timeout_handler,
-		       (void *)soc, QDF_TIMER_TYPE_WAKE_APPS);
-#endif
 
 	/* set the reo destination during initialization */
 	pdev->reo_dest = pdev->pdev_id + 1;
@@ -2656,6 +2668,8 @@ static void dp_soc_detach_wifi3(void *txrx_soc)
 
 	/* Free pending htt stats messages */
 	qdf_nbuf_queue_free(&soc->htt_stats.msg);
+
+	dp_free_inact_timer(soc);
 
 	for (i = 0; i < MAX_PDEV_CNT; i++) {
 		if (soc->pdev_list[i])
@@ -3622,6 +3636,19 @@ bool dp_peer_is_inact(void *peer_handle)
 	return peer->peer_bs_inact_flag == 1;
 }
 
+/**
+ * dp_init_inact_timer: initialize the inact timer
+ * @soc - SOC handle
+ *
+ * Return: void
+ */
+void dp_init_inact_timer(struct dp_soc *soc)
+{
+	qdf_timer_init(soc->osdev, &soc->pdev_bs_inact_timer,
+		dp_txrx_peer_find_inact_timeout_handler,
+		(void *)soc, QDF_TIMER_TYPE_WAKE_APPS);
+}
+
 #else
 
 bool dp_set_inact_params(struct cdp_pdev *pdev, u_int16_t inact_check_interval,
@@ -3636,6 +3663,11 @@ bool dp_start_inact_timer(struct cdp_pdev *pdev, bool enable)
 }
 
 void dp_set_overload(struct cdp_pdev *pdev, bool overload)
+{
+	return;
+}
+
+void dp_init_inact_timer(struct dp_soc *soc)
 {
 	return;
 }
@@ -6560,6 +6592,9 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 	qdf_spinlock_create(&soc->htt_stats.lock);
 	/* initialize work queue for stats processing */
 	qdf_create_work(0, &soc->htt_stats.work, htt_t2h_stats_handler, soc);
+
+	/*Initialize inactivity timer for wifison */
+	dp_init_inact_timer(soc);
 
 	return (void *)soc;
 

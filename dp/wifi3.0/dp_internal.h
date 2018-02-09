@@ -398,6 +398,8 @@ bool dp_set_inact_params(struct cdp_pdev *pdev_handle,
 bool dp_start_inact_timer(struct cdp_pdev *pdev_handle, bool enable);
 void dp_set_overload(struct cdp_pdev *pdev_handle, bool overload);
 bool dp_peer_is_inact(void *peer_handle);
+void dp_init_inact_timer(struct dp_soc *soc);
+void dp_free_inact_timer(struct dp_soc *soc);
 
 #ifdef WDI_EVENT_ENABLE
 QDF_STATUS dp_h2t_cfg_stats_msg_send(struct dp_pdev *pdev,
