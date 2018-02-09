@@ -61,6 +61,9 @@
  * @pool_id		: pool Id for which this allocated.
  *			  Can only be used if there is no flow
  *			  steering
+ * @in_use		  rx_desc is in use
+ * @unmapped		  used to mark rx_desc an unmapped if the corresponding
+ *			  nbuf is already unmapped
  */
 struct dp_rx_desc {
 	qdf_nbuf_t nbuf;
@@ -70,7 +73,8 @@ struct dp_rx_desc {
 #ifdef RX_DESC_DEBUG_CHECK
 	uint32_t magic;
 #endif
-	uint8_t in_use:1;
+	uint8_t	in_use:1,
+	unmapped:1;
 };
 
 #define RX_DESC_COOKIE_INDEX_SHIFT		0
@@ -325,6 +329,7 @@ void dp_rx_add_to_free_desc_list(union dp_rx_desc_list_elem_t **head,
 
 	new->nbuf = NULL;
 	new->in_use = 0;
+	new->unmapped = 0;
 
 	((union dp_rx_desc_list_elem_t *)new)->next = *head;
 	*head = (union dp_rx_desc_list_elem_t *)new;

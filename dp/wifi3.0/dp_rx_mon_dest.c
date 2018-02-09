@@ -172,15 +172,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			qdf_assert(rx_desc);
 			msdu = rx_desc->nbuf;
 
-			qdf_nbuf_unmap_single(soc->osdev, msdu,
-				QDF_DMA_FROM_DEVICE);
+			if (rx_desc->unmapped == 0) {
+				qdf_nbuf_unmap_single(soc->osdev, msdu,
+						      QDF_DMA_FROM_DEVICE);
+				rx_desc->unmapped = 1;
+			}
 
 			data = qdf_nbuf_data(msdu);
-
-			QDF_TRACE(QDF_MODULE_ID_DP,
-				QDF_TRACE_LEVEL_DEBUG,
-				"[%s][%d] msdu_nbuf=%pK, data=%pK",
-				__func__, __LINE__, msdu, data);
 
 			rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
 
@@ -191,16 +189,18 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 			}
 
 			QDF_TRACE(QDF_MODULE_ID_DP,
-				  QDF_TRACE_LEVEL_DEBUG,
-				  "[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x",
-				  __func__, __LINE__, i, *ppdu_id, msdu_ppdu_id);
+					  QDF_TRACE_LEVEL_DEBUG,
+					  "[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x last_ppdu_id=%x num msdus = %u",
+					  __func__, __LINE__, i,
+					  *ppdu_id, msdu_ppdu_id, last_ppdu_id,
+					  num_msdus);
 
 			if (*ppdu_id > msdu_ppdu_id)
 				QDF_TRACE(QDF_MODULE_ID_DP,
-					QDF_TRACE_LEVEL_WARN,
-					"[%s][%d] ppdu_id=%d msdu_ppdu_id=%d\n",
-					__func__, __LINE__, *ppdu_id,
-					msdu_ppdu_id);
+						  QDF_TRACE_LEVEL_WARN,
+						  "[%s][%d] ppdu_id=%d msdu_ppdu_id=%d",
+						  __func__, __LINE__, *ppdu_id,
+						  msdu_ppdu_id);
 
 			if ((*ppdu_id < msdu_ppdu_id) && (*ppdu_id >
 				last_ppdu_id)) {
