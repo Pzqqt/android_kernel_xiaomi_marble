@@ -238,22 +238,39 @@ static int hdd_get_random_nan_mac_addr(struct hdd_context *hdd_ctx,
 				       struct qdf_mac_addr *mac_addr)
 {
 	struct hdd_adapter *adapter;
+	uint8_t pos, bit_pos, byte_pos, mask;
 	uint8_t i, attempts, max_attempt = 16;
 
 	for (attempts = 0; attempts < max_attempt; attempts++) {
-		cds_rand_get_bytes(0, (uint8_t *)mac_addr, sizeof(*mac_addr));
+		/* if NDI is present next addr is required to be 1 bit apart  */
+		adapter = hdd_get_adapter(hdd_ctx, QDF_NDI_MODE);
+		if (adapter) {
+			hdd_debug("NDI already exists, deriving next mac");
+			qdf_mem_copy(mac_addr, &adapter->mac_addr,
+				     sizeof(*mac_addr));
+			cds_rand_get_bytes(0, &pos, sizeof(pos));
+			/* skipping byte 0, 5 leaves 8*4=32 positions */
+			pos = pos % 32;
+			bit_pos = pos % 8;
+			byte_pos = pos / 8;
+			mask = 1 << bit_pos;
+			/* flip the required bit */
+			mac_addr->bytes[byte_pos + 1] ^= mask;
+		} else {
+			cds_rand_get_bytes(0, (uint8_t *)mac_addr,
+					   sizeof(*mac_addr));
+			/*
+			 * Reset multicast bit (bit-0) and set
+			 * locally-administered bit
+			 */
+			mac_addr->bytes[0] = 0x2;
 
-		/*
-		 * Reset multicast bit (bit-0) and set locally-administered bit
-		 */
-		mac_addr->bytes[0] = 0x2;
-
-		/*
-		 * to avoid potential conflict with FW's generated NMI mac addr,
-		 * host sets LSB if 6th byte to 0
-		 */
-		mac_addr->bytes[5] &= 0xFE;
-
+			/*
+			 * to avoid potential conflict with FW's generated NMI
+			 * mac addr, host sets LSB if 6th byte to 0
+			 */
+			mac_addr->bytes[5] &= 0xFE;
+		}
 		for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 			if (!qdf_mem_cmp(hdd_ctx->config->intfMacAddr[i].bytes,
 					 mac_addr, sizeof(*mac_addr)))
