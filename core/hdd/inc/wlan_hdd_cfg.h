@@ -15120,11 +15120,11 @@ struct hdd_config {
 	enum active_bpf_mode active_uc_bpf_mode;
 	enum active_bpf_mode active_mc_bc_bpf_mode;
 	bool enable_bcast_probe_rsp;
+	uint8_t he_dynamic_frag_support;
 #ifdef WLAN_FEATURE_11AX
 	bool enable_ul_mimo;
 	bool enable_ul_ofdma;
 	uint32_t he_sta_obsspd;
-	uint8_t he_dynamic_frag_support;
 #endif
 	enum l1ss_sleep_allowed l1ss_sleep_allowed;
 	uint32_t arp_ac_category;

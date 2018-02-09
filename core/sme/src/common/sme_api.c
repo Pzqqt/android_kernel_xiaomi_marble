@@ -13235,15 +13235,13 @@ static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	struct csr_roam_session *session;
-	uint32_t he_cap_val = 0;
 
 	session = CSR_GET_SESSION(mac_ctx, session_id);
 	if (!session) {
 		sme_err("No session for id %d", session_id);
 		return -EINVAL;
 	}
-	he_cap_val = value ? 1 : 0;
-	sme_cfg_set_int(mac_ctx, he_cap, he_cap_val);
+	sme_cfg_set_int(mac_ctx, he_cap, value);
 	csr_update_session_he_cap(mac_ctx, session);
 
 	return 0;
@@ -13252,27 +13250,40 @@ static int sme_update_he_cap(tHalHandle hal, uint8_t session_id,
 int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)
 {
 	int ret;
+	uint32_t he_cap_val = 0;
+
+	he_cap_val = value ? 1 : 0;
 
 	ret = sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_TX_STBC_LT80, value);
+			 WNI_CFG_HE_TX_STBC_LT80, he_cap_val);
 	if (ret)
 		return ret;
 
 	return sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_TX_STBC_GT80, value);
+			 WNI_CFG_HE_TX_STBC_GT80, he_cap_val);
 }
 
 int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id, int value)
 {
 	int ret;
+	uint32_t he_cap_val = 0;
+
+	he_cap_val = value ? 1 : 0;
 
 	ret = sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_RX_STBC_LT80, value);
+			 WNI_CFG_HE_RX_STBC_LT80, he_cap_val);
 	if (ret)
 		return ret;
 
 	return sme_update_he_cap(hal, session_id,
-			 WNI_CFG_HE_RX_STBC_GT80, value);
+			 WNI_CFG_HE_RX_STBC_GT80, he_cap_val);
+}
+
+int sme_update_he_frag_supp(tHalHandle hal, uint8_t session_id,
+		uint16_t he_frag)
+{
+	return sme_update_he_cap(hal, session_id,
+			 WNI_CFG_HE_FRAGMENTATION, he_frag);
 }
 #endif
 

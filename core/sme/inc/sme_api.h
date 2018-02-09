@@ -2145,6 +2145,17 @@ int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id, int value);
  * Return: 0 on success else err code
  */
 int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id, int value);
+
+/**
+ * sme_update_he_frag_supp() - sets the HE fragmentation support
+ * @hal: Pointer to HAL
+ * @session_id: SME session id
+ * @he_frag: HE fragmention support value
+ *
+ * Return: 0 on success else err code
+ */
+int sme_update_he_frag_supp(tHalHandle hal, uint8_t session_id,
+		uint16_t he_frag);
 #else
 static inline void sme_update_he_cap_nss(tHalHandle hal, uint8_t session_id,
 		uint8_t nss)
@@ -2162,6 +2173,12 @@ static inline int sme_update_he_tx_stbc_cap(tHalHandle hal, uint8_t session_id,
 
 static inline int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id,
 					    int value)
+{
+	return 0;
+}
+
+static inline int sme_update_he_frag_supp(tHalHandle hal, uint8_t session_id,
+		uint16_t he_frag)
 {
 	return 0;
 }

@@ -6272,6 +6272,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SEND_ADDBA_REQ] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_FRAGMENTATION] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7334,6 +7336,20 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 
 		ret_val = wma_cli_set_command(adapter->session_id,
 				WMI_VDEV_PARAM_BA_MODE, set_val, VDEV_CMD);
+	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_FRAGMENTATION]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_FRAGMENTATION]
+			);
+		if (cfg_val > HE_FRAG_LEVEL1)
+			set_val = HE_FRAG_LEVEL1;
+		else
+			set_val = cfg_val;
+
+		hdd_debug("set HE fragmention to %d", set_val);
+		ret_val = sme_update_he_frag_supp(hdd_ctx->hHal,
+				adapter->session_id, set_val);
 	}
 
 	return ret_val;
