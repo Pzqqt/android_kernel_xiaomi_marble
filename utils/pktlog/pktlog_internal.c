@@ -280,6 +280,13 @@ fill_ieee80211_hdr_data(struct cdp_pdev *pdev,
 	pl_msdu_info->priv_size = sizeof(uint32_t) *
 				 pl_msdu_info->num_msdu + sizeof(uint32_t);
 
+	if (pl_msdu_info->num_msdu > MAX_PKT_INFO_MSDU_ID) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid num_msdu count",
+			  __func__);
+		qdf_assert(0);
+		return;
+	}
 	for (i = 0; i < pl_msdu_info->num_msdu; i++) {
 		/*
 		 * Handle big endianness
