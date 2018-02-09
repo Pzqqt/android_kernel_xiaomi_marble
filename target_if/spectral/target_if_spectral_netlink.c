@@ -252,7 +252,6 @@ target_if_spectral_create_samp_msg(struct target_if_spectral *spectral,
 		target_if_spectral_process_noise_pwr_report(
 			spectral, spec_samp_msg);
 
-	spectral_debug("Recieved sample message");
 	if (spectral->send_phy_data(spectral->pdev_obj) == 0)
 		spectral->spectral_sent_msg++;
 

@@ -1834,16 +1834,17 @@ static void
 target_if_spectral_detach(struct target_if_spectral *spectral)
 {
 	spectral_info("spectral detach");
-	qdf_spinlock_destroy(&spectral->param_info.osps_lock);
-
-	target_if_spectral_detach_simulation(spectral);
-
-	spectral->nl_cb.destroy_netlink(spectral->pdev_obj);
-
-	qdf_spinlock_destroy(&spectral->spectral_lock);
-	qdf_spinlock_destroy(&spectral->noise_pwr_reports_lock);
 
 	if (spectral) {
+		qdf_spinlock_destroy(&spectral->param_info.osps_lock);
+
+		target_if_spectral_detach_simulation(spectral);
+
+		spectral->nl_cb.destroy_netlink(spectral->pdev_obj);
+
+		qdf_spinlock_destroy(&spectral->spectral_lock);
+		qdf_spinlock_destroy(&spectral->noise_pwr_reports_lock);
+
 		qdf_mem_free(spectral);
 		spectral = NULL;
 	}
@@ -1971,7 +1972,7 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN3;
 		spectral->tlvhdr_size = SPECTRAL_PHYERR_TLVSIZE_GEN3;
 	} else
-#else
+#endif
 	{
 		spectral->spectral_gen = SPECTRAL_GEN2;
 		spectral->hdr_sig_exp = SPECTRAL_PHYERR_SIGNATURE_GEN2;
@@ -1980,7 +1981,6 @@ target_if_pdev_spectral_init(struct wlan_objmgr_pdev *pdev)
 		spectral->tag_sscan_fft_exp = TLV_TAG_SEARCH_FFT_REPORT_GEN2;
 		spectral->tlvhdr_size = sizeof(struct spectral_phyerr_tlv_gen2);
 	}
-#endif
 
 	if (target_if_spectral_attach_simulation(spectral) < 0)
 		return NULL;
