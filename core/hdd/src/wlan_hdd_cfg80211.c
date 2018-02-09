@@ -10504,6 +10504,56 @@ static int wlan_hdd_cfg80211_sta_roam_policy(struct wiphy *wiphy,
 }
 
 #ifdef FEATURE_WLAN_CH_AVOID
+
+static int hdd_validate_avoid_freq_chanlist(
+					struct hdd_context *hdd_ctx,
+					struct ch_avoid_ind_type *channel_list)
+{
+	unsigned int range_idx, ch_idx;
+	unsigned int unsafe_channel_index, unsafe_channel_count = 0;
+	bool ch_found = false;
+
+	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
+				       (uint16_t)NUM_CHANNELS);
+
+	for (range_idx = 0; range_idx < channel_list->ch_avoid_range_cnt;
+					range_idx++) {
+		if ((channel_list->avoid_freq_range[range_idx].start_freq <
+		     CDS_24_GHZ_CHANNEL_1) ||
+		    (channel_list->avoid_freq_range[range_idx].end_freq >
+		     CDS_5_GHZ_CHANNEL_165) ||
+		    (channel_list->avoid_freq_range[range_idx].start_freq >
+		     channel_list->avoid_freq_range[range_idx].end_freq))
+			continue;
+
+		for (ch_idx = channel_list->
+				avoid_freq_range[range_idx].start_freq;
+		     ch_idx <= channel_list->
+					avoid_freq_range[range_idx].end_freq;
+		     ch_idx++) {
+			for (unsafe_channel_index = 0;
+			     unsafe_channel_index < unsafe_channel_count;
+			     unsafe_channel_index++) {
+				if (ch_idx ==
+					hdd_ctx->unsafe_channel_list[
+					unsafe_channel_index]) {
+					hdd_log(QDF_TRACE_LEVEL_INFO,
+						"Duplicate channel %d",
+						ch_idx);
+					ch_found = true;
+					break;
+				}
+			}
+			if (!ch_found) {
+				hdd_ctx->unsafe_channel_list[
+				unsafe_channel_count++] = ch_idx;
+			}
+			ch_found = false;
+		}
+	}
+	return unsafe_channel_count;
+}
+
 /**
  * __wlan_hdd_cfg80211_avoid_freq() - ask driver to restart SAP if SAP
  * is on unsafe channel.
@@ -10526,11 +10576,11 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 {
 	struct hdd_context *hdd_ctx = wiphy_priv(wiphy);
 	int ret;
-	uint16_t unsafe_channel_count;
-	int unsafe_channel_index;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	uint16_t *local_unsafe_list;
-	uint16_t local_unsafe_list_count;
+	uint16_t unsafe_channel_index, local_unsafe_list_count;
+	struct ch_avoid_ind_type *channel_list;
+	enum tQDF_GLOBAL_CON_MODE curr_mode;
 
 	ENTER_DEV(wdev->netdev);
 
@@ -10538,15 +10588,24 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 		hdd_err("qdf_ctx is NULL");
 		return -EINVAL;
 	}
-
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Command not allowed in FTM mode");
+	curr_mode = hdd_get_conparam();
+	if (QDF_GLOBAL_FTM_MODE == curr_mode ||
+	    QDF_GLOBAL_MONITOR_MODE == curr_mode) {
+		hdd_err("Command not allowed in FTM/MONITOR mode");
 		return -EINVAL;
 	}
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
+
+	channel_list = (struct ch_avoid_ind_type *)data;
+	if (!channel_list) {
+		hdd_log(QDF_TRACE_LEVEL_ERROR,
+			"Avoid frequency channel list empty");
+		return -EINVAL;
+	}
+
 	ret = hdd_clone_local_unsafe_chan(hdd_ctx,
 					  &local_unsafe_list,
 					  &local_unsafe_list_count);
@@ -10559,13 +10618,18 @@ __wlan_hdd_cfg80211_avoid_freq(struct wiphy *wiphy,
 			&(hdd_ctx->unsafe_channel_count),
 			sizeof(hdd_ctx->unsafe_channel_list));
 
-	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
-			(uint16_t)NUM_CHANNELS);
+	hdd_ctx->unsafe_channel_count = hdd_validate_avoid_freq_chanlist(
+								hdd_ctx,
+								channel_list);
+
+	pld_set_wlan_unsafe_channel(qdf_ctx->dev, hdd_ctx->unsafe_channel_list,
+				    hdd_ctx->unsafe_channel_count);
+
 	for (unsafe_channel_index = 0;
-			unsafe_channel_index < unsafe_channel_count;
-			unsafe_channel_index++) {
+	     unsafe_channel_index < hdd_ctx->unsafe_channel_count;
+	     unsafe_channel_index++) {
 		hdd_debug("Channel %d is not safe",
-			hdd_ctx->unsafe_channel_list[unsafe_channel_index]);
+			  hdd_ctx->unsafe_channel_list[unsafe_channel_index]);
 	}
 	if (hdd_local_unsafe_channel_updated(hdd_ctx, local_unsafe_list,
 					     local_unsafe_list_count))
