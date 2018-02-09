@@ -3006,7 +3006,7 @@ IE mu_edca_param_set (EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x04)
     acvo_muedca_timer, 1;
 }
 
-IE bss_color_change(EID_VENDOR_SPECIFIC) OUI (0x00, 0x13, 0x74, 0x05)
+IE bss_color_change (EID_EXTN_ID_ELEMENT) OUI (0x2A)
 {
     countdown, 1;
     {
