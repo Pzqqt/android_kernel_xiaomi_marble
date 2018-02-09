@@ -2083,7 +2083,6 @@ static QDF_STATUS send_beacon_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	uint8_t *buf_ptr;
 	uint32_t wmi_buf_len;
 
-	WMI_LOGI("%s\n", __func__);
 	wmi_buf_len = sizeof(wmi_bcn_tmpl_cmd_fixed_param) +
 		      sizeof(wmi_bcn_prb_info) + WMI_TLV_HDR_SIZE +
 		      param->tmpl_len_aligned;
