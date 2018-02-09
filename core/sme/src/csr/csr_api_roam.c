@@ -5078,7 +5078,6 @@ void csr_set_cfg_privacy(tpAniSirGlobal pMac, struct csr_roam_profile *pProfile,
 	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_2, Key1, Key1Length);
 	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_3, Key2, Key2Length);
 	cfg_set_str(pMac, WNI_CFG_WEP_DEFAULT_KEY_4, Key3, Key3Length);
-	cfg_set_int(pMac, WNI_CFG_WEP_KEY_LENGTH, WepKeyLength);
 	cfg_set_int(pMac, WNI_CFG_WEP_DEFAULT_KEYID, WepDefaultKeyId);
 }
 
@@ -5327,11 +5326,6 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 							SIR_MAC_RATE_2,
 							SIR_MAC_RATE_5_5,
 							SIR_MAC_RATE_11} } };
-
-	tSirMacPropRateSet DefaultSupportedPropRates = { 3,
-							 {SIR_MAC_RATE_72,
-							  SIR_MAC_RATE_96,
-							  SIR_MAC_RATE_108} };
 	enum csr_cfgdot11mode cfgDot11Mode;
 	enum band_info eBand;
 	/* leave enough room for the max number of rates */
@@ -5341,10 +5335,6 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 	uint8_t ExtendedOperationalRates
 				[CSR_DOT11_EXTENDED_SUPPORTED_RATES_MAX];
 	uint32_t ExtendedOperationalRatesLength = 0;
-	/* leave enough room for the max number of proprietary rates */
-	uint8_t ProprietaryOperationalRates[4];
-	uint32_t ProprietaryOperationalRatesLength = 0;
-	uint32_t PropRatesEnable = 0;
 	uint8_t operationChannel = 0;
 
 	if (pProfile->ChannelInfo.ChannelList)
@@ -5369,18 +5359,6 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 
 		/* Nothing in the Extended rate set. */
 		ExtendedOperationalRatesLength = 0;
-		/* populate proprietary rates if user allows them */
-		if (pMac->roam.configParam.ProprietaryRatesEnabled) {
-			ProprietaryOperationalRatesLength =
-				DefaultSupportedPropRates.numPropRates *
-				sizeof(*DefaultSupportedPropRates.propRate);
-			qdf_mem_copy(ProprietaryOperationalRates,
-				     DefaultSupportedPropRates.propRate,
-				     ProprietaryOperationalRatesLength);
-		} else {
-			/* No proprietary modes */
-			ProprietaryOperationalRatesLength = 0;
-		}
 	} else if (eCSR_CFG_DOT11_MODE_11B == cfgDot11Mode) {
 		/* 11b rates into the Operational Rate Set. */
 		OperationalRatesLength =
@@ -5391,8 +5369,6 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 			     OperationalRatesLength);
 		/* Nothing in the Extended rate set. */
 		ExtendedOperationalRatesLength = 0;
-		/* No proprietary modes */
-		ProprietaryOperationalRatesLength = 0;
 	} else {
 		/* 11G */
 
@@ -5411,28 +5387,6 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 		qdf_mem_copy(ExtendedOperationalRates,
 			     DefaultSupportedRates11a.supportedRateSet.rate,
 			     ExtendedOperationalRatesLength);
-
-		/* populate proprietary rates if user allows them */
-		if (pMac->roam.configParam.ProprietaryRatesEnabled) {
-			ProprietaryOperationalRatesLength =
-				DefaultSupportedPropRates.numPropRates *
-				sizeof(*DefaultSupportedPropRates.propRate);
-			qdf_mem_copy(ProprietaryOperationalRates,
-				     DefaultSupportedPropRates.propRate,
-				     ProprietaryOperationalRatesLength);
-		} else {
-			/* No proprietary modes */
-			ProprietaryOperationalRatesLength = 0;
-		}
-	}
-	/* set this to 1 if prop. rates need to be advertised in to the
-	 * IBSS beacon and user wants to use them
-	 */
-	if (ProprietaryOperationalRatesLength
-	    && pMac->roam.configParam.ProprietaryRatesEnabled) {
-		PropRatesEnable = 1;
-	} else {
-		PropRatesEnable = 0;
 	}
 
 	/* Set the operational rate set CFG variables... */
@@ -5441,9 +5395,6 @@ static void csr_set_cfg_rate_set_from_profile(tpAniSirGlobal pMac,
 	cfg_set_str(pMac, WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET,
 			ExtendedOperationalRates,
 			ExtendedOperationalRatesLength);
-	cfg_set_str(pMac, WNI_CFG_PROPRIETARY_OPERATIONAL_RATE_SET,
-			ProprietaryOperationalRates,
-			ProprietaryOperationalRatesLength);
 }
 
 void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result,

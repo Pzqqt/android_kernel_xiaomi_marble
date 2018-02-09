@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,21 +48,6 @@
 
 static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry);
 
-static void lim_set_default_key_id_and_keys(tpAniSirGlobal pMac)
-{
-#ifdef FIXME_GEN6
-	uint32_t val;
-	uint32_t dkCfgId;
-
-	pe_debug("Setting default keys at SP");
-	if (wlan_cfg_get_int(pMac, WNI_CFG_WEP_DEFAULT_KEYID,
-			     &val) != eSIR_SUCCESS) {
-		pe_err("Unable to retrieve defaultKeyId from CFG");
-	}
-	dkCfgId = limGetCfgIdOfDefaultKeyid(val);
-#endif
-
-} /*** end lim_set_default_key_id_and_keys() ***/
 /** -------------------------------------------------------------
    \fn lim_set_cfg_protection
    \brief sets lim global cfg cache from the config.
@@ -204,25 +189,6 @@ void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
 	pe_debug("Handling CFG parameter id %X update", cfgId);
 
 	switch (cfgId) {
-	case WNI_CFG_WEP_DEFAULT_KEYID:
-
-		/* !!LAC - when the default KeyID is changed, force all of the */
-		/* keys and the keyID to be reprogrammed.  this allows the */
-		/* keys to change after the initial setting of the keys when the CFG was */
-		/* applied at association time through CFG changes of the keys. */
-		lim_set_default_key_id_and_keys(pMac);
-
-		break;
-
-	case WNI_CFG_EXCLUDE_UNENCRYPTED:
-		if (wlan_cfg_get_int(pMac, WNI_CFG_EXCLUDE_UNENCRYPTED,
-				     &val1) != eSIR_SUCCESS) {
-			pe_err("Unable to retrieve excludeUnencr from CFG");
-		}
-		pe_err("Unsupported CFG: WNI_CFG_EXCLUDE_UNENCRYPTED");
-
-		break;
-
 	case WNI_CFG_ASSOCIATION_FAILURE_TIMEOUT:
 		if (pMac->lim.gLimMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE) {
 			/* 'Change' timer for future activations */
@@ -235,19 +201,6 @@ void lim_handle_cf_gparam_update(tpAniSirGlobal pMac, uint32_t cfgId)
 	case WNI_CFG_PROTECTION_ENABLED:
 		lim_set_cfg_protection(pMac, NULL);
 		break;
-	case WNI_CFG_PROBE_RSP_BCN_ADDNIE_FLAG:
-	{
-		struct scheduler_msg msg = { 0 };
-		uint32_t status;
-
-		msg.type = SIR_LIM_UPDATE_BEACON;
-
-		status = lim_post_msg_api(pMac, &msg);
-
-		if (status != TX_SUCCESS)
-			pe_err("Failed lim_post_msg_api %u", status);
-			break;
-	}
 
 	case WNI_CFG_MPDU_DENSITY:
 		if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=
@@ -347,9 +300,6 @@ void lim_apply_configuration(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	psessionEntry->limSentCapsChangeNtf = false;
 
 	lim_get_phy_mode(pMac, &phyMode, psessionEntry);
-
-	/* Set default keyId and keys */
-	lim_set_default_key_id_and_keys(pMac);
 
 	lim_update_config(pMac, psessionEntry);
 

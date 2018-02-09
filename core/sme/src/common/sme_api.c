@@ -7095,17 +7095,7 @@ QDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 QDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
 						bool fEnableFwRssiMonitoring)
 {
-	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
-
-	if (sme_cfg_set_int (hHal, WNI_CFG_PS_ENABLE_RSSI_MONITOR,
-						fEnableFwRssiMonitoring) ==
-						QDF_STATUS_E_FAILURE) {
-		qdf_ret_status = QDF_STATUS_E_FAILURE;
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  "Could not pass on WNI_CFG_PS_RSSI_MONITOR to CFG");
-	}
-
-	return qdf_ret_status;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*

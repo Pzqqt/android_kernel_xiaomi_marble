@@ -20349,37 +20349,6 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 		hdd_debug("set frag threshold %hu", frag_threshold);
 	}
 
-	if ((changed & WIPHY_PARAM_RETRY_SHORT)
-	    || (changed & WIPHY_PARAM_RETRY_LONG)) {
-		u8 retry_value = (changed & WIPHY_PARAM_RETRY_SHORT) ?
-				 wiphy->retry_short : wiphy->retry_long;
-
-		if ((WNI_CFG_LONG_RETRY_LIMIT_STAMIN > retry_value) ||
-		    (WNI_CFG_LONG_RETRY_LIMIT_STAMAX < retry_value)) {
-			hdd_err("Invalid Retry count: %hu", retry_value);
-			return -EINVAL;
-		}
-
-		if (changed & WIPHY_PARAM_RETRY_LONG) {
-			if (0 != sme_cfg_set_int(hHal,
-						WNI_CFG_LONG_RETRY_LIMIT,
-						retry_value)) {
-				hdd_err("sme_cfg_set_int failed for long retry count: %hu",
-					retry_value);
-				return -EIO;
-			}
-			hdd_debug("set long retry count %hu", retry_value);
-		} else if (changed & WIPHY_PARAM_RETRY_SHORT) {
-			if (0 != sme_cfg_set_int(hHal,
-						WNI_CFG_SHORT_RETRY_LIMIT,
-						retry_value)) {
-				hdd_err("sme_cfg_set_int failed for short retry count: %hu",
-					retry_value);
-				return -EIO;
-			}
-			hdd_debug("set short retry count %hu", retry_value);
-		}
-	}
 	hdd_exit();
 	return 0;
 }

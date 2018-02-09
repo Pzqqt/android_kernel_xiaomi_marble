@@ -8210,39 +8210,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_LOW_GAIN_OVERRIDE to HAL");
 	}
 
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_RSSI_FILTER_PERIOD,
-		    config->nRssiFilterPeriod) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_RSSI_FILTER_PERIOD to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_IGNORE_DTIM,
-		     config->fIgnoreDtim) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_IGNORE_DTIM to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_PS_ENABLE_HEART_BEAT,
-		    config->fEnableFwHeartBeatMonitoring)
-		    == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PS_HEART_BEAT to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_PS_ENABLE_BCN_FILTER,
-		    config->fEnableFwBeaconFiltering) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PS_BCN_FILTER to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_PS_ENABLE_RSSI_MONITOR,
-		    config->fEnableFwRssiMonitoring) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PS_RSSI_MONITOR to CFG");
-	}
-
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
 		    config->nDataInactivityTimeout) == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -8298,38 +8265,11 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_TELE_BCN_WAKEUP_EN to CFG");
 	}
 
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TELE_BCN_TRANS_LI,
-		    config->nTeleBcnTransListenInterval) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TELE_BCN_TRANS_LI to CFG");
-	}
-
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TELE_BCN_MAX_LI,
 		    config->nTeleBcnMaxListenInterval) ==
 		    QDF_STATUS_E_FAILURE) {
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_TELE_BCN_MAX_LI to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TELE_BCN_TRANS_LI_IDLE_BCNS,
-		    config->nTeleBcnTransLiNumIdleBeacons) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TELE_BCN_TRANS_LI_IDLE_BCNS to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TELE_BCN_MAX_LI_IDLE_BCNS,
-		    config->nTeleBcnMaxLiNumIdleBeacons) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_TELE_BCN_MAX_LI_IDLE_BCNS to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_RF_SETTLING_TIME_CLK,
-		    config->rfSettlingTimeUs) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_RF_SETTLING_TIME_CLK to CFG");
 	}
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD,
@@ -8338,24 +8278,7 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		status = false;
 		hdd_err("Couldn't pass on WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD to CFG");
 	}
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_DYNAMIC_PS_POLL_VALUE,
-		    config->dynamicPsPollValue) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DYNAMIC_PS_POLL_VALUE to CFG");
-	}
 
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_PS_NULLDATA_AP_RESP_TIMEOUT,
-		    config->nNullDataApRespTimeout) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_PS_NULLDATA_DELAY_TIMEOUT to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD,
-		    config->apDataAvailPollPeriodInMs) ==
-		    QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD to CFG");
-	}
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_FRAGMENTATION_THRESHOLD,
 		    config->FragmentationThreshold) == QDF_STATUS_E_FAILURE) {
 		status = false;
@@ -8407,12 +8330,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_ASSOC_STA_LIMIT to CFG");
 	}
 #endif
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ENABLE_LPWR_IMG_TRANSITION,
-			    config->enableLpwrImgTransition)
-			== QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_ENABLE_LPWR_IMG_TRANSITION to CFG");
-	}
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 		    config->enableMCCAdaptiveScheduler) ==
@@ -8426,29 +8343,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP to CFG");
 	}
 
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_DYNAMIC_THRESHOLD_ZERO,
-		    config->retryLimitZero) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DYNAMIC_THRESHOLD_ZERO to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_DYNAMIC_THRESHOLD_ONE,
-		    config->retryLimitOne) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DYNAMIC_THRESHOLD_ONE to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_DYNAMIC_THRESHOLD_TWO,
-		    config->retryLimitTwo) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DYNAMIC_THRESHOLD_TWO to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_MAX_MEDIUM_TIME,
-		     config->cfgMaxMediumTime) == QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_MAX_MEDIUM_TIME to CFG");
-	}
 #ifdef FEATURE_WLAN_TDLS
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
@@ -8488,28 +8382,6 @@ bool hdd_update_config_cfg(struct hdd_context *hdd_ctx)
 		hdd_err("Couldn't pass on WNI_CFG_TDLS_WMM_MODE_ENABLED to CFG");
 	}
 #endif
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ENABLE_ADAPT_RX_DRAIN,
-			    config->fEnableAdaptRxDrain) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_ENABLE_ADAPT_RX_DRAIN to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_ANTENNA_DIVESITY,
-			    config->antennaDiversity) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_ANTENNA_DIVESITY to CFG");
-	}
-
-	if (sme_cfg_set_int(hdd_ctx->hHal,
-			    WNI_CFG_DEFAULT_RATE_INDEX_24GHZ,
-			    config->defaultRateIndex24Ghz) ==
-			QDF_STATUS_E_FAILURE) {
-		status = false;
-		hdd_err("Couldn't pass on WNI_CFG_DEFAULT_RATE_INDEX_24GHZ to CFG");
-	}
 
 	if (sme_cfg_set_int(hdd_ctx->hHal,
 			    WNI_CFG_DEBUG_P2P_REMAIN_ON_CHANNEL,
