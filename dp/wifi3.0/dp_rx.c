@@ -651,6 +651,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 	struct ieee80211_frame *wh;
 	uint8_t i;
 	uint8_t *rx_pkt_hdr;
+	qdf_nbuf_t curr_nbuf, next_nbuf;
 
 	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(mpdu));
 	wh = (struct ieee80211_frame *)rx_pkt_hdr;
@@ -658,13 +659,13 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 	if (!DP_FRAME_IS_DATA(wh)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
 				"NAWDS valid only for data frames");
-		return 1;
+		goto free;
 	}
 
 	if (qdf_nbuf_len(mpdu) < sizeof(struct ieee80211_frame)) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"Invalid nbuf length");
-		return 1;
+		goto free;
 	}
 
 
@@ -697,7 +698,7 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				"VDEV not found");
-		return 1;
+		goto free;
 	}
 
 out:
@@ -706,8 +707,16 @@ out:
 	msg.nbuf = mpdu;
 	msg.vdev_id = vdev->vdev_id;
 	if (pdev->soc->cdp_soc.ol_ops->rx_invalid_peer)
-		return pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(
-				pdev->osif_pdev, &msg);
+		pdev->soc->cdp_soc.ol_ops->rx_invalid_peer(pdev->osif_pdev, &msg);
+
+free:
+	/* Drop and free packet */
+	curr_nbuf = mpdu;
+	while (curr_nbuf) {
+		next_nbuf = qdf_nbuf_next(curr_nbuf);
+		qdf_nbuf_free(curr_nbuf);
+		curr_nbuf = next_nbuf;
+	}
 
 	return 0;
 }

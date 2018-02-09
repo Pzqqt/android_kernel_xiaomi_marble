@@ -394,7 +394,6 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 								uint8_t mac_id)
 {
 	bool mpdu_done = false;
-	qdf_nbuf_t curr_nbuf, next_nbuf;
 
 	/* TODO: Currently only single radio is supported, hence
 	 * pdev hard coded to '0' index
@@ -403,13 +402,6 @@ dp_rx_chain_msdus(struct dp_soc *soc, qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
 
 	if (hal_rx_msdu_end_first_msdu_get(rx_tlv_hdr)) {
 		qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
-
-		curr_nbuf = dp_pdev->invalid_peer_head_msdu;
-		while (curr_nbuf) {
-			next_nbuf = qdf_nbuf_next(curr_nbuf);
-			qdf_nbuf_free(curr_nbuf);
-			curr_nbuf = next_nbuf;
-		}
 
 		dp_pdev->invalid_peer_head_msdu = NULL;
 		dp_pdev->invalid_peer_tail_msdu = NULL;
