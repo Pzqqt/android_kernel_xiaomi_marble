@@ -21755,12 +21755,21 @@ typedef enum {
 /*
 * Lay out of flags in wmi_wlm_config_cmd_fixed_param
 *
-* |31  12|  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
-* +------+------+------+------+------+------+------+-----+-----+
-* | RSVD | SSLP | CSLP | RSVD | Roam | RSVD | DWLT | DFS | SUP |
-* +------+-------------+-------------+-------------------------+
-* |  WAL |      PS     |     Roam    |         Scan            |
+* |31  17|16 14| 13 | 12 |  11  |  10  |9    8|7    6|5    4|3    2|  1  |  0  |
+* +------+-----+----+----+------+------+------+------+------+------+-----+-----+
+* | RSVD | NSS |EDCA| TRY| SSLP | CSLP | RSVD | Roam | RSVD | DWLT | DFS | SUP |
+* +----------------------+-------------+-------------+-------------------------+
+* |          WAL         |      PS     |     Roam    |         Scan            |
 *
+* Flag values:
+*     TRY: (1) enable short limit for retrying unacked tx, where the limit is
+*              based on the traffic's latency level
+*          (0) default tx retry behavior
+*    EDCA: (1) Apply VO parameters on BE
+*          (0) default behavior
+*     NSS: (0) no Nss limits, other than those negotiatied during association
+*          (1) during 2-chain operation, tx only a single spatial stream
+*          (2) - (7) reserved / invalid
 */
 /* bit 0-3 of flags is used for scan operation */
 /* bit 0: WLM_FLAGS_SCAN_SUPPRESS, suppress all scan and other bits would be ignored if bit is set */
@@ -21812,7 +21821,7 @@ typedef enum {
 #define WLM_FLAGS_PS_DISABLE_SYS_SLEEP  1  /* disable sys sleep */
 
 
-/* bit 12-31 of flags is reserved for powersave and WAL */
+/* bit 17-31 of flags is reserved for powersave and WAL */
 
 #define WLM_FLAGS_SCAN_IS_SUPPRESS(flag)                  WMI_GET_BITS(flag, 0, 1)
 #define WLM_FLAGS_SCAN_SET_SUPPRESS(flag, val)            WMI_SET_BITS(flag, 0, 1, val)
@@ -21826,6 +21835,12 @@ typedef enum {
 #define WLM_FLAGS_PS_SET_CSS_CLPS_DISABLE(flag, val)      WMI_SET_BITS(flag, 10, 1, val)
 #define WLM_FLAGS_PS_IS_SYS_SLP_DISABLED(flag)            WMI_GET_BITS(flag, 11, 1)
 #define WLM_FLAGS_PS_SET_SYS_SLP_DISABLE(flag, val)       WMI_SET_BITS(flag, 11, 1, val)
+#define WLM_FLAGS_WAL_LIMIT_TRY_ENABLED(flag)             WMI_GET_BITS(flag, 12, 1)
+#define WLM_FLAGS_WAL_LIMIT_TRY_SET(flag, val)            WMI_SET_BITS(flag, 12, 1, val)
+#define WLM_FLAGS_WAL_ADJUST_EDCA_ENABLED(flag)           WMI_GET_BITS(flag, 13, 1)
+#define WLM_FLAGS_WAL_ADJUST_EDCA_SET(flag, val)          WMI_SET_BITS(flag, 13, 1, val)
+#define WLM_FLAGS_WAL_1NSS_ENABLED(flag)                 (WMI_GET_BITS(flag, 14, 3) & 0x1)
+#define WLM_FLAGS_WAL_NSS_SET(flag, val)                  WMI_SET_BITS(flag, 14, 3, val)
 
 typedef struct {
     /** TLV tag and len; tag equals
