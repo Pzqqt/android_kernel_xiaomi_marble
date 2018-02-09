@@ -477,6 +477,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 {
 	uint32_t tlv_tag, user_id, tlv_len, value;
 	uint8_t group_id = 0;
+	uint8_t he_dcm = 0;
+	uint8_t he_stbc = 0;
 	uint16_t he_gi = 0;
 	uint16_t he_ltf = 0;
 
@@ -789,6 +791,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
 				HE_SIG_A_SU_INFO_0, DCM);
+		he_dcm = value;
 		value = value << QDF_MON_STATUS_DCM_SHIFT;
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
@@ -802,6 +805,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.he_data3 |= value;
 		value = HAL_RX_GET(he_sig_a_su_info,
 				HE_SIG_A_SU_INFO_1, STBC);
+		he_stbc = value;
 		value = value << QDF_MON_STATUS_STBC_SHIFT;
 		ppdu_info->rx_status.he_data3 |= value;
 
@@ -831,8 +835,13 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 				he_ltf = HE_LTF_2_X;
 				break;
 		case 3:
-				he_gi = HE_GI_3_2;
-				he_ltf = HE_LTF_4_X;
+				if (he_dcm && he_stbc) {
+					he_gi = HE_GI_0_8;
+					he_ltf = HE_LTF_4_X;
+				} else {
+					he_gi = HE_GI_3_2;
+					he_ltf = HE_LTF_4_X;
+				}
 				break;
 		}
 		ppdu_info->rx_status.sgi = he_gi;
