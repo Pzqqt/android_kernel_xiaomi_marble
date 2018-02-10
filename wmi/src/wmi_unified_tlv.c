@@ -22877,6 +22877,10 @@ static void populate_tlv_service(uint32_t *wmi_service)
 	wmi_service[wmi_service_mawc_support] = WMI_SERVICE_MAWC_SUPPORT;
 	wmi_service[wmi_service_11k_neighbour_report_support] =
 				WMI_SERVICE_11K_NEIGHBOUR_REPORT_SUPPORT;
+	wmi_service[wmi_service_ap_obss_detection_offload] =
+				WMI_SERVICE_AP_OBSS_DETECTION_OFFLOAD;
+	wmi_service[wmi_service_bss_color_offload] =
+				WMI_SERVICE_BSS_COLOR_OFFLOAD;
 
 }
 
