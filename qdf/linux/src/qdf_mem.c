@@ -89,6 +89,7 @@ static inline qdf_list_t *qdf_mem_dma_list(enum qdf_debug_domain domain)
  * @file: name of the file the allocation was made from
  * @line: line number of the file the allocation was made from
  * @size: size of the allocation in bytes
+ * @caller: Caller of the function for which memory is allocated
  * @header: a known value, used to detect out-of-bounds access
  */
 struct qdf_mem_header {
@@ -98,6 +99,7 @@ struct qdf_mem_header {
 	const char *file;
 	uint32_t line;
 	uint32_t size;
+	void *caller;
 	uint64_t header;
 };
 
@@ -142,7 +144,7 @@ static void qdf_mem_trailer_init(struct qdf_mem_header *header)
 }
 
 static void qdf_mem_header_init(struct qdf_mem_header *header, qdf_size_t size,
-				const char *file, uint32_t line)
+				const char *file, uint32_t line, void *caller)
 {
 	QDF_BUG(header);
 	if (!header)
@@ -153,6 +155,7 @@ static void qdf_mem_header_init(struct qdf_mem_header *header, qdf_size_t size,
 	header->file = file;
 	header->line = line;
 	header->size = size;
+	header->caller = caller;
 	header->header = WLAN_MEM_HEADER;
 }
 
@@ -357,6 +360,7 @@ static int seq_printf_printer(void *priv, const char *fmt, ...)
  * @file: the file which allocated memory
  * @line: the line at which allocation happened
  * @size: the size of allocation
+ * @caller: Address of the caller function
  * @count: how many allocations of same type
  *
  */
@@ -364,6 +368,7 @@ struct __qdf_mem_info {
 	const char *file;
 	uint32_t line;
 	uint32_t size;
+	void *caller;
 	uint32_t count;
 };
 
@@ -385,7 +390,7 @@ static void qdf_mem_domain_print_header(qdf_abstract_print print,
 {
 	print(print_priv,
 	      "--------------------------------------------------------------");
-	print(print_priv, " count    size     total    filename");
+	print(print_priv, " count    size     total    filename     caller");
 	print(print_priv,
 	      "--------------------------------------------------------------");
 }
@@ -409,12 +414,12 @@ static void qdf_mem_meta_table_print(struct __qdf_mem_info *table,
 			break;
 
 		print(print_priv,
-		      "%6u x %5u = %7uB @ %s:%u",
+		      "%6u x %5u = %7uB @ %s:%u   %pS",
 		      table[i].count,
 		      table[i].size,
 		      table[i].count * table[i].size,
 		      kbasename(table[i].file),
-		      table[i].line);
+		      table[i].line, table[i].caller);
 	}
 }
 
@@ -436,12 +441,14 @@ static bool qdf_mem_meta_table_insert(struct __qdf_mem_info *table,
 			table[i].line = meta->line;
 			table[i].size = meta->size;
 			table[i].count = 1;
+			table[i].caller = meta->caller;
 			break;
 		}
 
 		if (table[i].file == meta->file &&
 		    table[i].line == meta->line &&
-		    table[i].size == meta->size) {
+		    table[i].size == meta->size &&
+		    table[i].caller == meta->caller) {
 			table[i].count++;
 			break;
 		}
@@ -1035,7 +1042,8 @@ static void qdf_mem_debug_exit(void)
 	qdf_spinlock_destroy(&qdf_mem_dma_list_lock);
 }
 
-void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line)
+void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
+			   void *caller)
 {
 	QDF_STATUS status;
 	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
@@ -1066,7 +1074,7 @@ void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line)
 		return NULL;
 	}
 
-	qdf_mem_header_init(header, size, file, line);
+	qdf_mem_header_init(header, size, file, line, caller);
 	qdf_mem_trailer_init(header);
 	ptr = qdf_mem_get_ptr(header);
 
@@ -1586,7 +1594,8 @@ qdf_mem_dma_free(void *dev, qdf_size_t size, void *vaddr, qdf_dma_addr_t paddr)
 #ifdef MEMORY_DEBUG
 void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 				     qdf_size_t size, qdf_dma_addr_t *paddr,
-				     const char *file, uint32_t line)
+				     const char *file, uint32_t line,
+				     void *caller)
 {
 	QDF_STATUS status;
 	enum qdf_debug_domain current_domain = qdf_debug_domain_get();
@@ -1613,7 +1622,7 @@ void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 	 * Prefix the header into DMA buffer causes SMMU faults, so
 	 * do not prefix header into the DMA buffers
 	 */
-	qdf_mem_header_init(header, size, file, line);
+	qdf_mem_header_init(header, size, file, line, caller);
 
 	qdf_spin_lock_irqsave(&qdf_mem_dma_list_lock);
 	status = qdf_list_insert_front(mem_list, &header->node);

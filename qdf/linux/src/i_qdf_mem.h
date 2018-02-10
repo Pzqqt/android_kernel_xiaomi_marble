@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -66,6 +66,7 @@
 #define vfree(buf)
 #define pci_alloc_consistent(dev, size, paddr) NULL
 #define __qdf_mempool_t void*
+#define QDF_RET_IP NULL
 #endif /* __KERNEL__ */
 #include <qdf_status.h>
 
@@ -205,6 +206,7 @@ int __qdf_mempool_init(qdf_device_t osdev, __qdf_mempool_t *pool, int pool_cnt,
 void __qdf_mempool_destroy(qdf_device_t osdev, __qdf_mempool_t pool);
 void *__qdf_mempool_alloc(qdf_device_t osdev, __qdf_mempool_t pool);
 void __qdf_mempool_free(qdf_device_t osdev, __qdf_mempool_t pool, void *buf);
+#define QDF_RET_IP ((void *)_RET_IP_)
 
 #define __qdf_mempool_elem_size(_pool) ((_pool)->elem_size)
 #endif

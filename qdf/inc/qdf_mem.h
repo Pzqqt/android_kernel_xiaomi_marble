@@ -101,6 +101,7 @@ void qdf_mem_exit(void);
  * @size: Number of bytes of memory to allocate.
  * @file: File name of the call site
  * @line: Line number of the call site
+ * @caller: Address of the caller function
  *
  * This function will dynamicallly allocate the specified number of bytes of
  * memory and add it to the qdf tracking list to check for memory leaks and
@@ -108,10 +109,11 @@ void qdf_mem_exit(void);
  *
  * Return: A valid memory location on success, or NULL on failure
  */
-void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line);
+void *qdf_mem_malloc_debug(size_t size, const char *file, uint32_t line,
+			   void *caller);
 
 #define qdf_mem_malloc(size) \
-	qdf_mem_malloc_debug(size, __FILE__, __LINE__)
+	qdf_mem_malloc_debug(size, __FILE__, __LINE__, QDF_RET_IP)
 
 /**
  * qdf_mem_free_debug() - debug version of qdf_mem_free
@@ -167,16 +169,18 @@ void qdf_mem_check_for_leaks(void);
  * @paddr: Physical address
  * @file: file name of the call site
  * @line: line numbe rof the call site
+ * @caller: Address of the caller function
  *
  * Return: pointer of allocated memory or null if memory alloc fails
  */
 void *qdf_mem_alloc_consistent_debug(qdf_device_t osdev, void *dev,
 				     qdf_size_t size, qdf_dma_addr_t *paddr,
-				     const char *file, uint32_t line);
+				     const char *file, uint32_t line,
+				     void *caller);
 
 #define qdf_mem_alloc_consistent(osdev, dev, size, paddr) \
 	qdf_mem_alloc_consistent_debug(osdev, dev, size, paddr, \
-				       __FILE__, __LINE__)
+				       __FILE__, __LINE__, QDF_RET_IP)
 
 /**
  * qdf_mem_free_consistent_debug() - free consistent qdf memory
