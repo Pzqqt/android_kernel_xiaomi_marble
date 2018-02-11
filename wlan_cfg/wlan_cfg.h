@@ -1,6 +1,6 @@
 /*
 * * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
- * 
+ *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
  * above copyright notice and this permission notice appear in all
@@ -457,6 +457,14 @@ int wlan_cfg_pkt_type(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 int wlan_cfg_get_num_tx_desc_pool(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
+ * wlan_cfg_set_num_tx_desc_pool() - Set the number of Tx Descriptor pools for the
+ *					device
+ * @wlan_cfg_ctx - Configuration Handle
+ * @num_pool - Number of pool
+ */
+void wlan_cfg_set_num_tx_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg, int num_pool);
+
+/*
  * wlan_cfg_get_num_tx_ext_desc_pool() -  Number of Tx MSDU ext Descriptor
  *					pools
  * @wlan_cfg_ctx - Configuration Handle
@@ -467,12 +475,28 @@ int wlan_cfg_get_num_tx_ext_desc_pool(
 		struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
 
 /*
+ * wlan_cfg_set_num_tx_ext_desc_pool() -  Set the number of Tx MSDU ext Descriptor
+ *					pools
+ * @wlan_cfg_ctx - Configuration Handle
+ * @num_pool - Number of pool
+ */
+void wlan_cfg_set_num_tx_ext_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg, int num_pool);
+
+/*
  * wlan_cfg_get_num_tx_desc() - Number of Tx Descriptors per pool
  * @wlan_cfg_ctx - Configuration Handle
  *
  * Return: num_tx_desc
  */
 int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/*
+ * wlan_cfg_set_num_tx_desc() - Set the number of Tx Descriptors per pool
+ *
+ * @wlan_cfg_ctx - Configuration Handle
+ * @num_desc: Number of descriptor
+ */
+void wlan_cfg_set_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg, int num_desc);
 
 /*
  * wlan_cfg_get_num_tx_ext_desc() - Number of Tx MSDU extension Descriptors
@@ -482,6 +506,14 @@ int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
  * Return: num_tx_ext_desc
  */
 int wlan_cfg_get_num_tx_ext_desc(struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx);
+
+/*
+ * wlan_cfg_set_num_tx_ext_desc() - Set the number of Tx MSDU extension Descriptors
+ *					per pool
+ * @wlan_cfg_ctx - Configuration Handle
+ * @num_desc: Number of descriptor
+ */
+void wlan_cfg_set_num_tx_ext_desc(struct wlan_cfg_dp_soc_ctxt *cfg, int num_ext_desc);
 
 /*
  * wlan_cfg_max_peer_id() - Get maximum peer ID

@@ -584,9 +584,19 @@ int wlan_cfg_get_num_tx_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->num_tx_desc_pool;
 }
 
+void wlan_cfg_set_num_tx_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg, int num_pool)
+{
+	cfg->num_tx_desc_pool = num_pool;
+}
+
 int wlan_cfg_get_num_tx_ext_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_tx_ext_desc_pool;
+}
+
+void wlan_cfg_set_num_tx_ext_desc_pool(struct wlan_cfg_dp_soc_ctxt *cfg, int num_pool)
+{
+	cfg->num_tx_ext_desc_pool = num_pool;
 }
 
 int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
@@ -594,9 +604,19 @@ int wlan_cfg_get_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
 	return cfg->num_tx_desc;
 }
 
+void wlan_cfg_set_num_tx_desc(struct wlan_cfg_dp_soc_ctxt *cfg, int num_desc)
+{
+	cfg->num_tx_desc = num_desc;
+}
+
 int wlan_cfg_get_num_tx_ext_desc(struct wlan_cfg_dp_soc_ctxt *cfg)
 {
 	return cfg->num_tx_ext_desc;
+}
+
+void wlan_cfg_set_num_tx_ext_desc(struct wlan_cfg_dp_soc_ctxt *cfg, int num_ext_desc)
+{
+	cfg->num_tx_ext_desc = num_ext_desc;
 }
 
 uint32_t wlan_cfg_max_peer_id(struct wlan_cfg_dp_soc_ctxt *cfg)

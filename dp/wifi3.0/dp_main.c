@@ -3007,7 +3007,20 @@ static int dp_soc_get_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc)
 static void dp_soc_set_nss_cfg_wifi3(struct cdp_soc_t *cdp_soc, int config)
 {
 	struct dp_soc *dsoc = (struct dp_soc *)cdp_soc;
-	wlan_cfg_set_dp_soc_nss_cfg(dsoc->wlan_cfg_ctx, config);
+	struct wlan_cfg_dp_soc_ctxt *wlan_cfg_ctx = dsoc->wlan_cfg_ctx;
+
+	wlan_cfg_set_dp_soc_nss_cfg(wlan_cfg_ctx, config);
+
+	/*
+	 * TODO: masked out based on the per offloaded radio
+	 */
+	if (config == dp_nss_cfg_dbdc) {
+		wlan_cfg_set_num_tx_desc_pool(wlan_cfg_ctx, 0);
+		wlan_cfg_set_num_tx_ext_desc_pool(wlan_cfg_ctx, 0);
+		wlan_cfg_set_num_tx_desc(wlan_cfg_ctx, 0);
+		wlan_cfg_set_num_tx_ext_desc(wlan_cfg_ctx, 0);
+	}
+
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
 				FL("nss-wifi<0> nss config is enabled"));
 }

@@ -193,6 +193,20 @@ enum dp_ast_type {
 };
 
 /**
+ * enum dp_nss_cfg
+ * @dp_nss_cfg_default: No radios are offloaded
+ * @dp_nss_cfg_first_radio: First radio offloaded
+ * @dp_nss_cfg_second_radio: Second radio offloaded
+ * @dp_nss_cfg_dbdc: Dual radios offloaded
+ */
+enum dp_nss_cfg {
+	dp_nss_cfg_default,
+	dp_nss_cfg_first_radio,
+	dp_nss_cfg_second_radio,
+	dp_nss_cfg_dbdc,
+};
+
+/**
  * struct rx_desc_pool
  * @pool_size: number of RX descriptor in the pool
  * @array: pointer to array of RX descriptor
