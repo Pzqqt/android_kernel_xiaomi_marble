@@ -811,6 +811,9 @@ void dfs_process_phyerr(struct wlan_dfs *dfs, void *buf, uint16_t datalen,
 			event->re_relpwr_db = e.relpwr_db;
 			event->re_delta_diff = e.pulse_delta_diff;
 			event->re_delta_peak = e.pulse_delta_peak;
+			event->re_psidx_diff = e.pulse_psidx_diff;
+			event->re_flags = 0;
+			event->re_flags |= DFS_EVENT_VALID_PSIDX_DIFF;
 			/* Handle chirp flags. */
 			if (e.do_check_chirp) {
 				event->re_flags |= DFS_EVENT_CHECKCHIRP;
@@ -941,6 +944,10 @@ void dfs_process_phyerr_filter_offload(struct wlan_dfs *dfs,
 	event->re_delta_diff = wlan_radar_event->delta_diff;
 	event->re_delta_peak = wlan_radar_event->delta_peak;
 	event->re_flags = 0;
+	if (wlan_radar_event->is_psidx_diff_valid) {
+		event->re_flags |= DFS_EVENT_VALID_PSIDX_DIFF;
+		event->re_psidx_diff = wlan_radar_event->psidx_diff;
+	}
 
 	/*
 	 * Handle chirp flags.

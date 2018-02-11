@@ -78,6 +78,10 @@ struct dfs_acs_info {
  *  the time that the radar event uploading to host.
  * @peak_sidx: index of peak magnitude bin (signed)
  * @pdev_id: pdev_id for identifying the MAC.
+ * @delta_diff: Delta diff value.
+ * @delta_peak: Delta peak value.
+ * @psidx_diff: Psidx diff value.
+ * @is_psidx_diff_valid: Does fw send valid psidx diff.
  */
 struct radar_event_info {
 	uint8_t  pulse_is_chirp;
@@ -91,6 +95,8 @@ struct radar_event_info {
 	uint8_t  pdev_id;
 	uint8_t  delta_diff;
 	int8_t   delta_peak;
+	int8_t   psidx_diff;
+	int8_t   is_psidx_diff_valid;
 };
 
 /**

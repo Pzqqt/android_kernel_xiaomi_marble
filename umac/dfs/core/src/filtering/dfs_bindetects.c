@@ -292,6 +292,7 @@ void dfs_add_pulse(
 	dl->dl_elems[index].de_seg_id = re->re_seg_id;
 	dl->dl_elems[index].de_sidx = re->re_sidx;
 	dl->dl_elems[index].de_delta_peak = re->re_delta_peak;
+	dl->dl_elems[index].de_psidx_diff = re->re_psidx_diff;
 	dl->dl_elems[index].de_seq_num = dfs->dfs_seq_num;
 
 	dfs_debug(dfs, WLAN_DEBUG_DFS2,
@@ -681,6 +682,7 @@ int dfs_bin_check(
  * @sidx_min: Sidx min.
  * @sidx_max: Sidx max.
  * @delta_peak_match_count: Delta peak match count.
+ * @psidx_diff_match_count: Psidx diff match count.
  * @rf: Pointer to dfs_filter structure.
  */
 static inline void dfs_update_min_and_max_sidx(
@@ -689,6 +691,7 @@ static inline void dfs_update_min_and_max_sidx(
 		int32_t *sidx_min,
 		int32_t *sidx_max,
 		uint8_t *delta_peak_match_count,
+		uint8_t *psidx_diff_match_count,
 		struct dfs_filter *rf)
 {
 	/* update sidx min/max for false detection check later */
@@ -698,9 +701,15 @@ static inline void dfs_update_min_and_max_sidx(
 	if (*sidx_max < dl->dl_elems[delayindex].de_sidx)
 		*sidx_max = dl->dl_elems[delayindex].de_sidx;
 
-	if ((rf->rf_check_delta_peak) &&
-			(dl->dl_elems[delayindex].de_delta_peak != 0))
-		(*delta_peak_match_count)++;
+	if (rf->rf_check_delta_peak) {
+		if (dl->dl_elems[delayindex].de_delta_peak != 0)
+			(*delta_peak_match_count)++;
+		else if ((dl->dl_elems[delayindex].de_psidx_diff >=
+				DFS_MIN_PSIDX_DIFF) &&
+			(dl->dl_elems[delayindex].de_psidx_diff <=
+				DFS_MAX_PSIDX_DIFF))
+			(*psidx_diff_match_count)++;
+	}
 }
 
 /**
@@ -715,6 +724,7 @@ static inline void dfs_update_min_and_max_sidx(
  * @sidx_min: Sidx min.
  * @sidx_max: Sidx max.
  * @delta_peak_match_count: Delta peak match count.
+ * @psidx_diff_match_count: Psidx diff match count.
  * @dl: Pointer to dfs_delayline structure.
  */
 static inline void dfs_check_pulses_for_delta_variance(
@@ -728,6 +738,7 @@ static inline void dfs_check_pulses_for_delta_variance(
 		int32_t *sidx_min,
 		int32_t *sidx_max,
 		uint8_t *delta_peak_match_count,
+		uint8_t *psidx_diff_match_count,
 		struct dfs_delayline *dl)
 {
 	uint32_t delta_ts_variance, j;
@@ -741,6 +752,7 @@ static inline void dfs_check_pulses_for_delta_variance(
 			dfs_update_min_and_max_sidx(dl, delayindex,
 					sidx_min, sidx_max,
 					delta_peak_match_count,
+					psidx_diff_match_count,
 					rf);
 			(*numpulses)++;
 			if (rf->rf_ignore_pri_window > 0)
@@ -761,6 +773,7 @@ static inline void dfs_check_pulses_for_delta_variance(
  * @durmargin: Duration margin.
  * @numpulses: Number of pulses.
  * @delta_peak_match_count: Pointer to delta_peak_match_count.
+ * @psidx_diff_match_count: Pointer to psidx_diff_match_count.
  * @prev_good_timestamp: Previous good timestamp.
  * @fundamentalpri: Highest PRI.
  */
@@ -775,6 +788,7 @@ static void dfs_count_the_other_delay_elements(
 		uint32_t durmargin,
 		int *numpulses,
 		uint8_t *delta_peak_match_count,
+		uint8_t *psidx_diff_match_count,
 		uint32_t *prev_good_timestamp,
 		int fundamentalpri)
 {
@@ -822,6 +836,7 @@ static void dfs_count_the_other_delay_elements(
 			dfs_update_min_and_max_sidx(dl, delayindex,
 					&sidx_min, &sidx_max,
 					delta_peak_match_count,
+					psidx_diff_match_count,
 					rf);
 			(*numpulses)++;
 		} else {
@@ -842,6 +857,7 @@ static void dfs_count_the_other_delay_elements(
 					primargin, numpulses, delayindex,
 					&sidx_min, &sidx_max,
 					delta_peak_match_count,
+					psidx_diff_match_count,
 					dl);
 		}
 		*prev_good_timestamp = dl->dl_elems[delayindex].de_ts;
@@ -849,11 +865,13 @@ static void dfs_count_the_other_delay_elements(
 		dl->dl_min_sidx = sidx_min;
 		dl->dl_max_sidx = sidx_max;
 		dl->dl_delta_peak_match_count = *delta_peak_match_count;
+		dl->dl_psidx_diff_match_count = *psidx_diff_match_count;
 
 		dfs_debug(dfs, WLAN_DEBUG_DFS2,
-			"rf->minpri=%d rf->maxpri=%d searchpri = %d index = %d numpulses = %d delta peak match count = %d deltapri=%d j=%d",
+			"rf->minpri=%d rf->maxpri=%d searchpri = %d index = %d numpulses = %d delta peak match count = %d psidx diff match count = %d deltapri=%d j=%d",
 			rf->rf_minpri, rf->rf_maxpri, searchpri, i,
-			*numpulses, *delta_peak_match_count, deltapri, j);
+			*numpulses, *delta_peak_match_count,
+			*psidx_diff_match_count, deltapri, j);
 	}
 }
 
@@ -879,6 +897,7 @@ int dfs_bin_pri_check(
 	 */
 	int numpulses = 1;
 	uint8_t delta_peak_match_count = 1;
+	uint8_t psidx_diff_match_count = 1;
 	int priscorechk = 1;
 
 	/* Use the adjusted PRI margin to reduce false alarms
@@ -940,6 +959,7 @@ int dfs_bin_pri_check(
 		dfs_count_the_other_delay_elements(dfs, rf, dl, i, refpri,
 				refdur, primargin, durmargin, &numpulses,
 				&delta_peak_match_count,
+				&psidx_diff_match_count,
 				&prev_good_timestamp, fundamentalpri);
 
 	return numpulses;

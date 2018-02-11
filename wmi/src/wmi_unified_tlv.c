@@ -21203,6 +21203,14 @@ static QDF_STATUS extract_wlan_radar_event_info_tlv(
 	wlan_radar_event->peak_sidx = radar_event->peak_sidx;
 	wlan_radar_event->delta_peak = radar_event->pulse_delta_peak;
 	wlan_radar_event->delta_diff = radar_event->pulse_delta_diff;
+	if (radar_event->pulse_flags &
+			WMI_DFS_RADAR_PULSE_FLAG_MASK_PSIDX_DIFF_VALID) {
+		wlan_radar_event->is_psidx_diff_valid = true;
+		wlan_radar_event->psidx_diff = radar_event->psidx_diff;
+	} else {
+		wlan_radar_event->is_psidx_diff_valid = false;
+	}
+
 	wlan_radar_event->pdev_id = radar_event->pdev_id;
 
 	return QDF_STATUS_SUCCESS;

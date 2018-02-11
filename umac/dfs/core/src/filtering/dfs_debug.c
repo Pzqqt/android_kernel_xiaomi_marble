@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013, 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013, 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2002-2010, Atheros Communications Inc.
  * Permission to use, copy, modify, and/or distribute this software for any
  * purpose with or without fee is hereby granted, provided that the above
@@ -29,10 +29,11 @@ void dfs_print_delayline(struct wlan_dfs *dfs, struct dfs_delayline *dl)
 	for (i = 0; i < dl->dl_numelems; i++) {
 		de = &dl->dl_elems[index];
 		dfs_debug(dfs, WLAN_DEBUG_DFS2,
-				"Elem %u: ts=%llu diff_ts=%u (0x%x) dur=%u, seg_id=%d sidx=%d delta_peak=%d seq_num=%d",
+				"Elem %u: ts=%llu diff_ts=%u (0x%x) dur=%u, seg_id=%d sidx=%d delta_peak=%d psidx_diff=%d seq_num=%d",
 				i, de->de_ts, de->de_time, de->de_time,
 				de->de_dur, de->de_seg_id, de->de_sidx,
-				de->de_delta_peak, de->de_seq_num);
+				de->de_delta_peak, de->de_psidx_diff,
+				de->de_seq_num);
 
 		index = (index + 1) & DFS_MAX_DL_MASK;
 	}

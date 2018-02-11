@@ -113,7 +113,7 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 	for (i = 0; (i < DFS_EVENT_LOG_SIZE) && (i < dfs->dfs_event_log_count);
 			i++) {
 		dfs_debug(dfs, WLAN_DEBUG_DFS,
-			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_diff=%d, delta_peak=%d",
+			"ts=%llu diff_ts=%u rssi=%u dur=%u, is_chirp=%d, seg_id=%d, sidx=%d, freq_offset=%d.%dMHz, peak_mag=%d, total_gain=%d, mb_gain=%d, relpwr_db=%d, delta_diff=%d, delta_peak=%d, psidx_diff=%d",
 			dfs->radar_log[i].ts, dfs->radar_log[i].diff_ts,
 			dfs->radar_log[i].rssi, dfs->radar_log[i].dur,
 			dfs->radar_log[i].is_chirp, dfs->radar_log[i].seg_id,
@@ -125,7 +125,8 @@ static void dfs_print_radar_events(struct wlan_dfs *dfs)
 			dfs->radar_log[i].mb_gain,
 			dfs->radar_log[i].relpwr_db,
 			dfs->radar_log[i].delta_diff,
-			dfs->radar_log[i].delta_peak);
+			dfs->radar_log[i].delta_peak,
+			dfs->radar_log[i].psidx_diff);
 	}
 	dfs->dfs_event_log_count = 0;
 	dfs->dfs_phyerr_count = 0;
@@ -191,11 +192,12 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 			index =  (pl->pl_firstelem + i) &
 				DFS_MAX_PULSE_BUFFER_MASK;
 			dfs_debug(dfs, WLAN_DEBUG_DFS2,
-					"Elem %u: ts=%llu dur=%u, seq_num=%d, delta_peak=%d\n",
+					"Elem %u: ts=%llu dur=%u, seq_num=%d, delta_peak=%d, psidx_diff=%d\n",
 					i, pl->pl_elems[index].p_time,
 					pl->pl_elems[index].p_dur,
 					pl->pl_elems[index].p_seq_num,
-					pl->pl_elems[index].p_delta_peak);
+					pl->pl_elems[index].p_delta_peak,
+					pl->pl_elems[index].p_psidx_diff);
 		}
 	}
 
@@ -280,12 +282,14 @@ static int dfs_confirm_radar(struct wlan_dfs *dfs,
 	}
 
 	if ((rf->rf_check_delta_peak) &&
-			((dl->dl_delta_peak_match_count) <
-			 rf->rf_threshold)) {
+			((dl->dl_delta_peak_match_count +
+			dl->dl_psidx_diff_match_count - 1) <
+			rf->rf_threshold)) {
 		dfs_info(dfs, WLAN_DEBUG_DFS_ALWAYS,
-				"%s: Rejecting Radar since delta peak values are invalid : dl_delta_peak_match_count=%d, rf_threshold=%d\n",
-				__func__, dl->dl_delta_peak_match_count,
-				rf->rf_threshold);
+			"%s: Rejecting Radar since delta peak values are invalid : dl_delta_peak_match_count=%d, dl_psidx_diff_match_count=%d, rf_threshold=%d\n",
+			__func__, dl->dl_delta_peak_match_count,
+			dl->dl_psidx_diff_match_count,
+			rf->rf_threshold);
 		return 0;
 	}
 
@@ -385,6 +389,7 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 	uint64_t deltaT = 0;
 	int ext_chan_event_flag = 0;
 	struct dfs_filter *rf = NULL;
+	int8_t ori_rf_check_delta_peak = 0;
 
 	for (p = 0, *found = 0; (p < ft->ft_numfilters) &&
 			(!(*found)) && !(*false_radar_found); p++) {
@@ -417,11 +422,24 @@ void __dfs_process_radarevent(struct wlan_dfs *dfs,
 					(uint32_t) deltaT, re->re_dur,
 					ext_chan_event_flag);
 
-				if (*found)
+				if (*found) {
+					ori_rf_check_delta_peak =
+						rf->rf_check_delta_peak;
+					/*
+					 * If FW does not send valid psidx_diff
+					 * Do not do chirp check.
+					 */
+					if (rf->rf_check_delta_peak &&
+						(!(re->re_flags &
+						DFS_EVENT_VALID_PSIDX_DIFF)))
+						rf->rf_check_delta_peak = false;
 					dfs_confirm_radar_check(dfs,
 							rf, ext_chan_event_flag,
 							found,
 							false_radar_found);
+					rf->rf_check_delta_peak =
+						ori_rf_check_delta_peak;
+				}
 			}
 
 			if (dfs->dfs_debug_mask & WLAN_DEBUG_DFS2)
@@ -739,6 +757,7 @@ static inline void dfs_log_event(
 		dfs->radar_log[i].relpwr_db = (*re).re_relpwr_db;
 		dfs->radar_log[i].delta_diff = (*re).re_delta_diff;
 		dfs->radar_log[i].delta_peak = (*re).re_delta_peak;
+		dfs->radar_log[i].psidx_diff = (*re).re_psidx_diff;
 		dfs->radar_log[i].is_chirp = DFS_EVENT_NOTCHIRP(re) ?
 			0 : 1;
 		dfs->dfs_event_log_count++;
@@ -1098,6 +1117,7 @@ static inline void dfs_add_to_pulseline(
 	pl->pl_elems[*index].p_rssi = (*re).re_rssi;
 	pl->pl_elems[*index].p_sidx = (*re).re_sidx;
 	pl->pl_elems[*index].p_delta_peak = (*re).re_delta_peak;
+	pl->pl_elems[*index].p_psidx_diff = (*re).re_psidx_diff;
 	*diff_ts = (uint32_t)*this_ts - *test_ts;
 	*test_ts = (uint32_t)*this_ts;
 
@@ -1151,6 +1171,7 @@ static inline void dfs_conditional_clear_delaylines(
 		pl->pl_elems[index].p_rssi = re.re_rssi;
 		pl->pl_elems[index].p_sidx = re.re_sidx;
 		pl->pl_elems[index].p_delta_peak = re.re_delta_peak;
+		pl->pl_elems[index].p_psidx_diff = re.re_psidx_diff;
 		dfs->dfs_seq_num++;
 		pl->pl_elems[index].p_seq_num = dfs->dfs_seq_num;
 	}

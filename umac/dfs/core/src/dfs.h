@@ -262,6 +262,11 @@
 #define DFS_NO_FAST_CLOCK_MULTIPLIER (80)
 #define DFS_BIG_SIDX 10000
 
+/* Min value of valid psidx diff */
+#define DFS_MIN_PSIDX_DIFF 4
+/* Max value of valid psidx diff */
+#define DFS_MAX_PSIDX_DIFF 16
+
 /**
  * Software use: channel interference used for as AR as well as RADAR
  * interference detection.
@@ -368,6 +373,8 @@
  * @p_seg_id:      Segment id.
  * @p_sidx:        Sidx value.
  * @p_delta_peak:  Delta peak value.
+ * @p_psidx_diff:  The difference in the FFT peak index between the short FFT
+ *                 and the first long FFT.
  * @p_seq_num:     Sequence number.
  */
 struct dfs_pulseparams {
@@ -377,6 +384,7 @@ struct dfs_pulseparams {
 	uint8_t  p_seg_id;
 	int16_t  p_sidx;
 	int8_t   p_delta_peak;
+	int16_t  p_psidx_diff;
 	uint32_t p_seq_num;
 } qdf_packed;
 
@@ -397,6 +405,8 @@ struct dfs_pulseline {
 #define DFS_EVENT_CHECKCHIRP  0x01 /* Whether to check the chirp flag */
 #define DFS_EVENT_HW_CHIRP    0x02 /* hardware chirp */
 #define DFS_EVENT_SW_CHIRP    0x04 /* software chirp */
+/* Whether the event contains valid psidx diff value*/
+#define DFS_EVENT_VALID_PSIDX_DIFF 0x08
 
 /* Use this only if the event has CHECKCHIRP set. */
 #define DFS_EVENT_ISCHIRP(e) \
@@ -431,6 +441,7 @@ struct dfs_pulseline {
  * @re_relpwr_db:        Relpower in db.
  * @re_delta_diff:       Delta diff.
  * @re_delta_peak:       Delta peak.
+ * @re_psidx_diff:       Psidx diff.
  * @re_list:             List of radar events.
  */
 struct dfs_event {
@@ -452,6 +463,7 @@ struct dfs_event {
 	int       re_relpwr_db;
 	uint8_t   re_delta_diff;
 	int8_t    re_delta_peak;
+	int16_t   re_psidx_diff;
 
 	STAILQ_ENTRY(dfs_event) re_list;
 } qdf_packed;
@@ -506,6 +518,7 @@ struct dfs_ar_state {
  * @de_seg_id:     Segment id for HT80_80/HT160 use.
  * @de_sidx:       Sidx value.
  * @de_delta_peak: Delta peak.
+ * @de_psidx_diff: Psidx diff.
  * @de_seq_num:    Sequence number.
  */
 struct dfs_delayelem {
@@ -516,6 +529,7 @@ struct dfs_delayelem {
 	uint8_t  de_seg_id;
 	int16_t  de_sidx;
 	int8_t   de_delta_peak;
+	int16_t  de_psidx_diff;
 	uint32_t de_seq_num;
 } qdf_packed;
 
@@ -545,6 +559,8 @@ struct dfs_delayelem {
  *                     Used for sidx spread check.
  * @dl_delta_peak_match_count: Number of pulse in the delay line that had valid
  *                             delta peak value.
+ * @dl_psidx_diff_match_count: Number of pulse in the delay line that had valid
+ *                             psidx diff value.
  */
 struct dfs_delayline {
 	struct dfs_delayelem dl_elems[DFS_MAX_DL_SIZE];
@@ -559,6 +575,7 @@ struct dfs_delayline {
 	int16_t  dl_min_sidx;
 	int8_t   dl_max_sidx;
 	uint8_t  dl_delta_peak_match_count;
+	uint8_t  dl_psidx_diff_match_count;
 } qdf_packed;
 
 /**
@@ -795,6 +812,7 @@ struct dfs_stats {
  * @relpwr_db:        Relpower in db.
  * @delta_diff:       Delta diff.
  * @delta_peak:       Delta peak.
+ * @psidx_diff:       Psidx diff.
  */
 
 struct dfs_event_log {
@@ -812,6 +830,7 @@ struct dfs_event_log {
 	int       relpwr_db;
 	uint8_t   delta_diff;
 	int8_t    delta_peak;
+	int16_t   psidx_diff;
 };
 
 #define WLAN_DFS_RESET_TIME_S 7
@@ -1161,6 +1180,7 @@ enum {
  * @relpwr_db:           Relpower in DB.
  * @pulse_delta_diff:    Pulse delta diff.
  * @pulse_delta_peak:    Pulse delta peak.
+ * @pulse_psidx_diff:    Pulse psidx diff.
  *
  * Chirp notes!
  *
@@ -1230,6 +1250,7 @@ struct dfs_phy_err {
 	int      relpwr_db;
 	uint8_t  pulse_delta_diff;
 	int8_t   pulse_delta_peak;
+	int16_t  pulse_psidx_diff;
 };
 
 /**
