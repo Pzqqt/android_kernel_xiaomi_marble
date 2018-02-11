@@ -174,6 +174,7 @@ QDF_STATUS ucfg_get_pdev_target_type(struct wlan_objmgr_pdev *pdev,
 	*target_type = ucfg_get_tgt_type(psoc);
 	return QDF_STATUS_SUCCESS;
 }
+qdf_export_symbol(ucfg_get_pdev_target_type);
 
 uint32_t ucfg_get_tgt_version(struct wlan_objmgr_psoc *psoc)
 {
@@ -240,6 +241,7 @@ bool ucfg_is_target_ar900b(struct wlan_objmgr_psoc *psoc)
 	}
 	return false;
 }
+qdf_export_symbol(ucfg_is_target_ar900b);
 
 void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
 {
@@ -258,6 +260,7 @@ void *ucfg_get_wmi_hdl(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_wmi_hdl(tgt_hdl);
 }
+qdf_export_symbol(ucfg_get_wmi_hdl);
 
 void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 {
@@ -276,6 +279,7 @@ void *ucfg_get_htc_hdl(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_htc_hdl(tgt_hdl);
 }
+qdf_export_symbol(ucfg_get_htc_hdl);
 
 void ucfg_set_htc_hdl(struct wlan_objmgr_psoc *psoc, void *htc_hdl)
 {
@@ -311,6 +315,7 @@ void *ucfg_get_hif_hdl(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_hif_hdl(tgt_hdl);
 }
+qdf_export_symbol(ucfg_get_hif_hdl);
 
 void *ucfg_get_pdev_wmi_handle(struct wlan_objmgr_pdev *pdev)
 {
@@ -363,6 +368,7 @@ void *ucfg_get_psoc_feature_ptr(struct wlan_objmgr_psoc *psoc)
 
 	return target_psoc_get_feature_ptr(tgt_hdl);
 }
+qdf_export_symbol(ucfg_get_psoc_feature_ptr);
 
 void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
 {
@@ -380,3 +386,4 @@ void *ucfg_get_pdev_feature_ptr(struct wlan_objmgr_pdev *pdev)
 
 	return target_pdev_get_feature_ptr(tgt_hdl);
 }
+qdf_export_symbol(ucfg_get_pdev_feature_ptr);
