@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -110,6 +110,7 @@ enum active_bpf_mode {
  * @force_target_assert_enabled: Indicate whether target assert enabled or not
  * @bandcapability: Configured band by user
  * @rps_enabled: RPS enabled in SAP mode
+ * @delay_before_vdev_stop: wait time for tx complete before vdev stop
  * Structure for holding cds ini parameters.
  */
 
@@ -171,6 +172,7 @@ struct cds_config_info {
 	bool force_target_assert_enabled;
 	uint8_t bandcapability;
 	bool rps_enabled;
+	uint8_t delay_before_vdev_stop;
 };
 
 #ifdef WLAN_FEATURE_FILS_SK

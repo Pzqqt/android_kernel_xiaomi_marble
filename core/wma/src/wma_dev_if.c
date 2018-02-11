@@ -5327,7 +5327,6 @@ fail_del_bss_ho_fail:
 				   (void *)params, 0);
 }
 
-#ifdef WLAN_FEATURE_HOST_ROAM
 /**
  * wma_wait_tx_complete() - Wait till tx packets are drained
  * @wma: wma handle
@@ -5365,12 +5364,6 @@ static void wma_wait_tx_complete(tp_wma_handle wma,
 		max_wait_iterations--;
 	}
 }
-#else
-static void wma_wait_tx_complete(tp_wma_handle wma,
-				 uint32_t session_id)
-{
-}
-#endif
 /**
  * wma_delete_bss() - process delete bss request from upper layer
  * @wma: wma handle
