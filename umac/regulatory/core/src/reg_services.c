@@ -3846,6 +3846,7 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 	uint16_t end_channel;
 	uint32_t i;
 	struct wlan_regulatory_psoc_priv_obj *psoc_priv_obj;
+	struct ch_avoid_freq_type *range;
 
 	psoc_priv_obj = wlan_objmgr_psoc_get_comp_private_obj(psoc,
 		WLAN_UMAC_COMP_REGULATORY);
@@ -3864,14 +3865,12 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 
 		start_ch_idx = INVALID_CHANNEL;
 		end_ch_idx = INVALID_CHANNEL;
-		start_channel = reg_freq_to_chan(pdev,
-				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq);
-		end_channel = reg_freq_to_chan(pdev,
-				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq);
+		range = &psoc_priv_obj->avoid_freq_list.avoid_freq_range[i];
+
+		start_channel = reg_freq_to_chan(pdev, range->start_freq);
+		end_channel = reg_freq_to_chan(pdev, range->end_freq);
 		reg_debug("start: freq %d, ch %d, end: freq %d, ch %d",
-			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq,
-			start_channel,
-			psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq,
+			range->start_freq, start_channel, range->end_freq,
 			end_channel);
 
 		/* do not process frequency bands that are not mapped to
@@ -3882,19 +3881,16 @@ static QDF_STATUS reg_process_ch_avoid_freq(struct wlan_objmgr_psoc *psoc,
 
 		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
 			ch_loop++) {
-			if (REG_CH_TO_FREQ(ch_loop) >=
-				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].start_freq) {
+			if (REG_CH_TO_FREQ(ch_loop) >= range->start_freq) {
 				start_ch_idx = ch_loop;
 				break;
 			}
 		}
 		for (ch_loop = 0; ch_loop < NUM_CHANNELS;
 			ch_loop++) {
-			if (REG_CH_TO_FREQ(ch_loop) >=
-				psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq) {
+			if (REG_CH_TO_FREQ(ch_loop) >= range->end_freq) {
 				end_ch_idx = ch_loop;
-				if (REG_CH_TO_FREQ(ch_loop) >
-					psoc_priv_obj->avoid_freq_list.avoid_freq_range[i].end_freq)
+				if (REG_CH_TO_FREQ(ch_loop) > range->end_freq)
 					end_ch_idx--;
 				break;
 			}
