@@ -48,6 +48,14 @@ void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx);
 void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 			    struct wma_tgt_cfg *cfg);
 
+/**
+ * hdd_send_twt_enable_cmd() - Send TWT enable command to target
+ * @hdd_ctx: HDD Context
+ *
+ * Return: None
+ */
+void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx);
+
 #else
 static inline void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx)
 {
@@ -55,6 +63,10 @@ static inline void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx)
 
 static inline void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 					  struct wma_tgt_cfg *cfg)
+{
+}
+
+static inline void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
 {
 }
 

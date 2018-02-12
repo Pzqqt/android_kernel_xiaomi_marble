@@ -27,6 +27,8 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_cfg.h"
 #include "cfg_api.h"
+#include "sme_api.h"
+#include "wma_twt.h"
 
 void hdd_twt_print_ini_config(struct hdd_context *hdd_ctx)
 {
@@ -58,5 +60,22 @@ void hdd_update_tgt_twt_cap(struct hdd_context *hdd_ctx,
 	 */
 	sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_BCAST_TWT,
 			QDF_MIN(0, hdd_ctx->config->enable_twt));
+}
+
+void hdd_send_twt_enable_cmd(struct hdd_context *hdd_ctx)
+{
+	uint8_t pdev_id = hdd_ctx->hdd_pdev->pdev_objmgr.wlan_pdev_id;
+	uint32_t req_val, resp_val, bcast_val;
+	uint32_t congestion_timeout = hdd_ctx->config->twt_congestion_timeout;
+
+	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_TWT_REQUESTOR, &req_val);
+	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_TWT_RESPONDER, &resp_val);
+	sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_BCAST_TWT, &bcast_val);
+
+	hdd_debug("TWT cfg req:%d, responder:%d, bcast:%d, pdev:%d, cong:%d",
+		  req_val, resp_val, bcast_val, pdev_id, congestion_timeout);
+
+	if (req_val || resp_val || bcast_val)
+		wma_send_twt_enable_cmd(pdev_id, congestion_timeout);
 }
 

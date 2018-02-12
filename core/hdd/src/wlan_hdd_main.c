@@ -2007,6 +2007,7 @@ void hdd_update_tgt_cfg(hdd_handle_t hdd_handle, struct wma_tgt_cfg *cfg)
 		hdd_update_tgt_he_cap(hdd_ctx, cfg);
 	}
 	hdd_update_tgt_twt_cap(hdd_ctx, cfg);
+	hdd_send_twt_enable_cmd(hdd_ctx);
 
 	hdd_update_vdev_nss(hdd_ctx);
 
