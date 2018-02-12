@@ -2722,7 +2722,8 @@ uint8_t policy_mgr_get_cur_conc_system_pref(struct wlan_objmgr_psoc *psoc)
 
 QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 		struct wlan_objmgr_psoc *psoc, uint32_t *scan_config,
-		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini)
+		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini,
+		uint32_t channel_select_logic_conc)
 {
 	struct policy_mgr_psoc_priv_obj *pm_ctx;
 
@@ -2754,6 +2755,12 @@ QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 	default:
 		break;
 	}
+
+	WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_STA_SET(*fw_mode_config,
+		PM_CHANNEL_SELECT_LOGIC_STA_STA_GET(channel_select_logic_conc));
+	WMI_DBS_FW_MODE_CFG_DBS_FOR_STA_PLUS_P2P_SET(*fw_mode_config,
+		PM_CHANNEL_SELECT_LOGIC_STA_P2P_GET(channel_select_logic_conc));
+
 	policy_mgr_debug("*scan_config:%x ", *scan_config);
 	policy_mgr_debug("*fw_mode_config:%x ", *fw_mode_config);
 
