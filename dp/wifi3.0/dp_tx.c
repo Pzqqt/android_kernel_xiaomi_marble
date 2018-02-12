@@ -1544,11 +1544,6 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 		meta_data->valid_encrypt_type = 1;
 	}
 
-	if (mhdr->flags & METAHDR_FLAG_NOQOS)
-		msdu_info->tid = HTT_TX_EXT_TID_NON_QOS_MCAST_BCAST;
-	else
-		msdu_info->tid = qdf_nbuf_get_priority(nbuf);
-
 	meta_data->valid_key_flags = 1;
 	meta_data->key_flags = (mhdr->keyix & 0x3);
 
@@ -1559,6 +1554,11 @@ remove_meta_hdr:
 		qdf_nbuf_free(nbuf);
 		return NULL;
 	}
+
+	if (mhdr->flags & METAHDR_FLAG_NOQOS)
+		msdu_info->tid = HTT_TX_EXT_TID_NON_QOS_MCAST_BCAST;
+	else
+		msdu_info->tid = qdf_nbuf_get_priority(nbuf);
 
 	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s , Meta hdr %0x %0x %0x %0x %0x %0x"
