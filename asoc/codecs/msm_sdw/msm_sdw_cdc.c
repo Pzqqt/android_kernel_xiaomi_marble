@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -82,8 +82,8 @@ static const struct msm_sdw_reg_mask_val msm_sdw_spkr_default[] = {
 	{MSM_SDW_COMPANDER8_CTL3, 0x80, 0x80},
 	{MSM_SDW_COMPANDER7_CTL7, 0x01, 0x01},
 	{MSM_SDW_COMPANDER8_CTL7, 0x01, 0x01},
-	{MSM_SDW_BOOST0_BOOST_CTL, 0x7C, 0x50},
-	{MSM_SDW_BOOST1_BOOST_CTL, 0x7C, 0x50},
+	{MSM_SDW_BOOST0_BOOST_CTL, 0x7C, 0x58},
+	{MSM_SDW_BOOST1_BOOST_CTL, 0x7C, 0x58},
 };
 
 static const struct msm_sdw_reg_mask_val msm_sdw_spkr_mode1[] = {
@@ -1699,8 +1699,8 @@ static const struct msm_sdw_reg_mask_val msm_sdw_reg_init[] = {
 	{MSM_SDW_BOOST1_BOOST_CFG1, 0x3F, 0x12},
 	{MSM_SDW_BOOST1_BOOST_CFG2, 0x1C, 0x08},
 	{MSM_SDW_COMPANDER8_CTL7, 0x1E, 0x18},
-	{MSM_SDW_BOOST0_BOOST_CTL, 0x70, 0x50},
-	{MSM_SDW_BOOST1_BOOST_CTL, 0x70, 0x50},
+	{MSM_SDW_BOOST0_BOOST_CTL, 0x70, 0x58},
+	{MSM_SDW_BOOST1_BOOST_CTL, 0x70, 0x58},
 	{MSM_SDW_RX7_RX_PATH_CFG1, 0x08, 0x08},
 	{MSM_SDW_RX8_RX_PATH_CFG1, 0x08, 0x08},
 	{MSM_SDW_TOP_TOP_CFG1, 0x02, 0x02},
