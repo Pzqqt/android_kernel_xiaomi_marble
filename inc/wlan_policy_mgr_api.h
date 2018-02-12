@@ -60,6 +60,19 @@ typedef const enum policy_mgr_conc_next_action
 	policy_mgr_next_action_three_connection_table_type
 	[PM_MAX_TWO_CONNECTION_MODE][POLICY_MGR_MAX_BAND];
 
+#define PM_FW_MODE_STA_STA_BIT_POS       0
+#define PM_FW_MODE_STA_P2P_BIT_POS       1
+
+#define PM_FW_MODE_STA_STA_BIT_MASK      (0x1 << PM_FW_MODE_STA_STA_BIT_POS)
+#define PM_FW_MODE_STA_P2P_BIT_MASK      (0x1 << PM_FW_MODE_STA_P2P_BIT_POS)
+
+#define PM_CHANNEL_SELECT_LOGIC_STA_STA_GET(channel_select_logic_conc)  \
+	((channel_select_logic_conc & PM_FW_MODE_STA_STA_BIT_MASK) >>   \
+	 PM_FW_MODE_STA_STA_BIT_POS)
+#define PM_CHANNEL_SELECT_LOGIC_STA_P2P_GET(channel_select_logic_conc)  \
+	((channel_select_logic_conc & PM_FW_MODE_STA_P2P_BIT_MASK) >>   \
+	 PM_FW_MODE_STA_P2P_BIT_POS)
+
 /**
  * policy_mgr_set_concurrency_mode() - To set concurrency mode
  * @psoc: PSOC object data
@@ -2025,7 +2038,8 @@ bool policy_mgr_is_dnsc_set(struct wlan_objmgr_vdev *vdev);
  */
 QDF_STATUS policy_mgr_get_updated_scan_and_fw_mode_config(
 		struct wlan_objmgr_psoc *psoc, uint32_t *scan_config,
-		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini);
+		uint32_t *fw_mode_config, uint32_t dual_mac_disable_ini,
+		uint32_t channel_select_logic_conc);
 
 /**
  * policy_mgr_is_safe_channel - Check if the channel is in LTE
