@@ -16771,7 +16771,23 @@ csr_issue_del_sta_for_session_req(tpAniSirGlobal pMac, uint32_t sessionId,
 {
 	struct del_sta_self_params *del_sta_self_req;
 	struct scheduler_msg msg = {0};
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	tSirRetStatus status;
+
+	if (!wma_handle) {
+		sme_err("wma handle is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	/* Need to wait for all peer delete command sent to FW
+	 * before sending VDEV delete command
+	 * otherwise it will cause FW assert
+	 * Need to do this before sending to scheduler queue
+	 * otherwise the scheduler thread will be blocked
+	 * and fail to handle the VDEV stop timeout callback
+	 * in which peer delete command will also be sent
+	 */
+	wma_vdev_wait_for_peer_delete_completion(wma_handle, sessionId);
 
 	del_sta_self_req = qdf_mem_malloc(sizeof(struct del_sta_self_params));
 	if (NULL == del_sta_self_req) {

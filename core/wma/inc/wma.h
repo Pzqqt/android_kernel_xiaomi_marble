@@ -1111,7 +1111,7 @@ struct wma_txrx_node {
 	bool restore_dtim_setting;
 	uint32_t peer_count;
 	qdf_atomic_t fw_peer_count;
-	qdf_event_t fw_peer_delete;
+	qdf_event_t fw_peer_delete_completion;
 	bool roam_synch_in_progress;
 	void *plink_status_req;
 	void *psnr_req;
@@ -2659,4 +2659,16 @@ QDF_STATUS wma_config_bmiss_bcnt_params(uint32_t vdev_id, uint32_t first_cnt,
  * Return: None
  */
 void wma_check_and_set_wake_timer(uint32_t time);
+
+/**
+ * wma_vdev_wait_for_peer_delete_completion() - wait for all peers of the vdev
+ * to be deleted.
+ * @wma_handle: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return: None
+ */
+void wma_vdev_wait_for_peer_delete_completion(tp_wma_handle wma_handle,
+					      uint8_t vdev_id);
+
 #endif
