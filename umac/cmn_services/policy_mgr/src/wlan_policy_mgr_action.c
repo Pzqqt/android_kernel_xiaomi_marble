@@ -346,6 +346,78 @@ QDF_STATUS policy_mgr_update_and_wait_for_connection_update(
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * policy_mgr_is_dbs_allowed_for_concurrency() - If dbs is allowed for current
+ * concurreny
+ * @new_conn_mode: new connection mode
+ *
+ * When a new connection is about to come up, check if dbs is allowed for
+ * STA+STA or STA+P2P
+ *
+ * Return: true if dbs is allowed for STA+STA or STA+P2P else false
+ */
+static bool policy_mgr_is_dbs_allowed_for_concurrency(
+		struct wlan_objmgr_psoc *psoc, uint32_t session_id)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t count, dbs_for_sta_sta, dbs_for_sta_p2p;
+	enum tQDF_ADAPTER_MODE new_conn_mode = QDF_MAX_NO_OF_MODE;
+	bool ret = true;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return ret;
+	}
+
+	count = policy_mgr_get_connection_count(psoc);
+	if (pm_ctx->hdd_cbacks.hdd_get_device_mode)
+		new_conn_mode = pm_ctx->hdd_cbacks.
+					hdd_get_device_mode(session_id);
+
+	if (count != 1 || new_conn_mode == QDF_MAX_NO_OF_MODE)
+		return ret;
+
+	dbs_for_sta_sta = PM_CHANNEL_SELECT_LOGIC_STA_STA_GET(pm_ctx->user_cfg.
+						channel_select_logic_conc);
+	dbs_for_sta_p2p = PM_CHANNEL_SELECT_LOGIC_STA_P2P_GET(pm_ctx->user_cfg.
+						channel_select_logic_conc);
+
+	switch (pm_conc_connection_list[0].mode) {
+	case PM_STA_MODE:
+		switch (new_conn_mode) {
+		case QDF_STA_MODE:
+			if (!dbs_for_sta_sta)
+				return false;
+			break;
+		case QDF_P2P_DEVICE_MODE:
+		case QDF_P2P_CLIENT_MODE:
+		case QDF_P2P_GO_MODE:
+			if (!dbs_for_sta_p2p)
+				return false;
+			break;
+		default:
+			break;
+		}
+		break;
+	case PM_P2P_CLIENT_MODE:
+	case PM_P2P_GO_MODE:
+		switch (new_conn_mode) {
+		case QDF_STA_MODE:
+			if (!dbs_for_sta_p2p)
+				return false;
+			break;
+		default:
+			break;
+		}
+		break;
+	default:
+		break;
+	}
+
+	return ret;
+}
+
 QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 		uint32_t session_id,
 		uint8_t channel,
@@ -409,6 +481,22 @@ QDF_STATUS policy_mgr_current_connections_update(struct wlan_objmgr_psoc *psoc,
 			num_connections);
 		break;
 	}
+
+	/*
+	 * Based on channel_select_logic_conc ini, hw mode is set
+	 * when second connection is about to come up that results
+	 * in STA+STA and STA+P2P concurrency.
+	 * 1) If MCC is set and if current hw mode is dbs, hw mode
+	 *  should be set to single mac for above concurrency.
+	 * 2) If MCC is set and if current hw mode is not dbs, hw
+	 *  mode change is not required.
+	 */
+	if (policy_mgr_is_current_hwmode_dbs(psoc) &&
+		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, session_id))
+		next_action = PM_SINGLE_MAC;
+	else if (!policy_mgr_is_current_hwmode_dbs(psoc) &&
+		!policy_mgr_is_dbs_allowed_for_concurrency(psoc, session_id))
+		next_action = PM_NOP;
 
 	if (PM_NOP != next_action)
 		status = policy_mgr_next_actions(psoc, session_id,

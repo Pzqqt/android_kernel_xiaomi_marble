@@ -576,6 +576,8 @@ QDF_STATUS policy_mgr_register_hdd_cb(struct wlan_objmgr_psoc *psoc,
 		hdd_cbacks->wlan_hdd_get_channel_for_sap_restart;
 	pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev =
 		hdd_cbacks->get_mode_for_non_connected_vdev;
+	pm_ctx->hdd_cbacks.hdd_get_device_mode =
+		hdd_cbacks->hdd_get_device_mode;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -593,6 +595,7 @@ QDF_STATUS policy_mgr_deregister_hdd_cb(struct wlan_objmgr_psoc *psoc)
 	pm_ctx->hdd_cbacks.sap_restart_chan_switch_cb = NULL;
 	pm_ctx->hdd_cbacks.wlan_hdd_get_channel_for_sap_restart = NULL;
 	pm_ctx->hdd_cbacks.get_mode_for_non_connected_vdev = NULL;
+	pm_ctx->hdd_cbacks.hdd_get_device_mode = NULL;
 
 	return QDF_STATUS_SUCCESS;
 }
