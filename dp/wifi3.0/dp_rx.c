@@ -508,7 +508,7 @@ void dp_rx_fill_mesh_stats(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 
 	qdf_nbuf_set_rx_fctx_type(nbuf, (void *)rx_info, CB_FTYPE_MESH_RX_INFO);
 
-	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_MED,
 		FL("Mesh rx stats: flags %x, rssi %x, chn %x, rate %x, kix %x"),
 						rx_info->rs_flags,
 						rx_info->rs_rssi,

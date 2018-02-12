@@ -1560,13 +1560,16 @@ remove_meta_hdr:
 		return NULL;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			"%s , Meta hdr %0x %0x %0x %0x %0x to_fw %d\n",
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+			"%s , Meta hdr %0x %0x %0x %0x %0x %0x"
+			" tid %d to_fw %d\n",
 			__func__, msdu_info->meta_data[0],
 			msdu_info->meta_data[1],
 			msdu_info->meta_data[2],
 			msdu_info->meta_data[3],
-			msdu_info->meta_data[4], msdu_info->exception_fw);
+			msdu_info->meta_data[4],
+			msdu_info->meta_data[5],
+			msdu_info->tid, msdu_info->exception_fw);
 
 	return nbuf;
 }
