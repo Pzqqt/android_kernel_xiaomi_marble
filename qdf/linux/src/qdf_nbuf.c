@@ -1703,6 +1703,7 @@ bool __qdf_nbuf_is_bcast_pkt(qdf_nbuf_t nbuf)
 	struct ethhdr *eh = (struct ethhdr *)qdf_nbuf_data(nbuf);
 	return qdf_is_macaddr_broadcast((struct qdf_mac_addr *)eh->h_dest);
 }
+qdf_export_symbol(__qdf_nbuf_is_bcast_pkt);
 
 #ifdef MEMORY_DEBUG
 #define QDF_NET_BUF_TRACK_MAX_SIZE    (1024)
