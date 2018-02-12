@@ -291,11 +291,14 @@ static inline void copy_channel_info(
 
 	chan->band_center_freq1 = req->channel.cfreq1;
 	chan->band_center_freq2 = req->channel.cfreq2;
+	WMI_LOGI("%s: req->channel.phy_mode: %d ", req->channel.phy_mode);
 
 	if (req->channel.half_rate)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
 	else if (req->channel.quarter_rate)
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
+
+	WMI_LOGI("%s: req->channel.dfs_set: %d ", req->channel.dfs_set);
 
 	if (req->channel.dfs_set) {
 		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS);
@@ -398,14 +401,16 @@ static QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
 	WMI_LOGI("%s: vdev_id %d freq %d chanmode %d ch_info: 0x%x is_dfs %d "
 		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
 		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
-		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d",
-		__func__, req->vdev_id, chan->mhz, req->chan_mode, chan->info,
+		"Tx SS %d, Rx SS %d, ldpc_rx: %d, cac %d, regd %d, HE ops: %d"
+		"req->dis_hw_ack: %d ", __func__, req->vdev_id,
+		chan->mhz, req->chan_mode, chan->info,
 		req->is_dfs, req->beacon_intval, cmd->dtim_period,
 		chan->band_center_freq1, chan->band_center_freq2,
 		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
 		req->preferred_tx_streams, req->preferred_rx_streams,
 		req->ldpc_rx_enabled, req->cac_duration_ms,
-		req->regdomain, req->he_ops);
+		req->regdomain, req->he_ops,
+		req->dis_hw_ack);
 
 	if (req->is_restart)
 		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
@@ -16627,6 +16632,11 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	cmd->cac_duration_ms = param->cac_duration_ms;
 	cmd->num_vdevs = param->num_vdevs;
 
+	WMI_LOGI("%s:cmd->pdev_id: %d ,cmd->requestor_id: %d ,"
+		"cmd->disable_hw_ack: %d , cmd->cac_duration_ms:%d ,"
+		" cmd->num_vdevs: %d ",
+		__func__, cmd->pdev_id, cmd->requestor_id,
+		cmd->disable_hw_ack, cmd->cac_duration_ms, cmd->num_vdevs);
 	buf_ptr += sizeof(*cmd);
 
 	WMITLV_SET_HDR(buf_ptr,
@@ -16650,6 +16660,9 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	if (tchan_info->is_chan_passive)
 		WMI_SET_CHANNEL_FLAG(chan_info,
 				     WMI_CHAN_FLAG_PASSIVE);
+	if (tchan_info->dfs_set)
+		WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_DFS);
+
 	if (tchan_info->allow_vht)
 		WMI_SET_CHANNEL_FLAG(chan_info,
 				     WMI_CHAN_FLAG_ALLOW_VHT);
@@ -16663,6 +16676,20 @@ static QDF_STATUS send_multiple_vdev_restart_req_cmd_tlv(
 	WMI_SET_CHANNEL_ANTENNA_MAX(chan_info, tchan_info->antennamax);
 	WMI_SET_CHANNEL_REG_CLASSID(chan_info, tchan_info->reg_class_id);
 	WMI_SET_CHANNEL_MAX_TX_POWER(chan_info, tchan_info->maxregpower);
+
+	WMI_LOGI("%s:tchan_info->is_chan_passive: %d ,"
+		"tchan_info->dfs_set : %d ,tchan_info->allow_vht:%d ,"
+		"tchan_info->allow_ht: %d ,tchan_info->antennamax: %d ,"
+		"tchan_info->phy_mode: %d ,tchan_info->minpower: %d,"
+		"tchan_info->maxpower: %d ,tchan_info->maxregpower: %d ,"
+		"tchan_info->reg_class_id: %d ,"
+		"tchan_info->maxregpower : %d ", __func__,
+		tchan_info->is_chan_passive, tchan_info->dfs_set,
+		tchan_info->allow_vht, tchan_info->allow_ht,
+		tchan_info->antennamax, tchan_info->phy_mode,
+		tchan_info->minpower, tchan_info->maxpower,
+		tchan_info->maxregpower, tchan_info->reg_class_id,
+		tchan_info->maxregpower);
 
 	qdf_status = wmi_unified_cmd_send(wmi_handle, buf, len,
 				WMI_PDEV_MULTIPLE_VDEV_RESTART_REQUEST_CMDID);
