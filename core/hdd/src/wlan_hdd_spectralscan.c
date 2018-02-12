@@ -479,4 +479,9 @@ int spectral_scan_activate_service(void)
 				spectral_scan_msg_handler, NULL);
 	return 0;
 }
+#else
+int spectral_scan_activate_service(void)
+{
+	return 0;
+}
 #endif
