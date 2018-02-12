@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -459,6 +459,7 @@ typedef enum {
   WIFIPHYRX_TX_START_TIMING_E              = 430 /* 0x1ae */,
   WIFITXPCU_PREAMBLE_DONE_E                = 431 /* 0x1af */,
   WIFINDP_PREAMBLE_DONE_E                  = 432 /* 0x1b0 */,
+  WIFIPHYRX_OTHER_RECEIVE_INFO_RU_DETAILS_E = 444 /* 0x1bc */,
   WIFITLV_BASE_E                           = 511 /* 0x1ff */
 
 } tlv_tag_def__e; ///< tlv_tag_def Enum Type

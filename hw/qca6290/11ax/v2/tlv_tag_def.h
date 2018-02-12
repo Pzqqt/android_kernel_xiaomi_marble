@@ -16,7 +16,6 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
-
 /**
  * Generated file ... Do not hand edit ...
  */
@@ -447,6 +446,29 @@ typedef enum {
   WIFITQM_UPDATE_TX_MPDU_QUEUE_HEAD_STATUS_E = 418 /* 0x1a2 */,
   WIFIREO_UPDATE_RX_REO_QUEUE_E            = 419 /* 0x1a3 */,
   WIFICE_DST_DESC_E                        = 420 /* 0x1a4 */,
+  WIFITQM_MPDU_QUEUE_EMPTY_STATUS_E        = 421 /* 0x1a5 */,
+  WIFITQM_2_SCH_MPDU_AVAILABLE_E           = 422 /* 0x1a6 */,
+  WIFIPDG_TRIG_RESPONSE_E                  = 423 /* 0x1a7 */,
+  WIFITRIGGER_RESPONSE_TX_DONE_E           = 424 /* 0x1a8 */,
+  WIFIABORT_FROM_PHYRX_DETAILS_E           = 425 /* 0x1a9 */,
+  WIFISCH_TQM_CMD_WRAPPER_E                = 426 /* 0x1aa */,
+  WIFIMPDUS_AVAILABLE_E                    = 427 /* 0x1ab */,
+  WIFIRECEIVED_RESPONSE_INFO_PART2_E       = 428 /* 0x1ac */,
+  WIFIPHYRX_PKT_END_INFO_E                 = 429 /* 0x1ad */,
+  WIFIPHYRX_TX_START_TIMING_E              = 430 /* 0x1ae */,
+  WIFITXPCU_PREAMBLE_DONE_E                = 431 /* 0x1af */,
+  WIFINDP_PREAMBLE_DONE_E                  = 432 /* 0x1b0 */,
+  WIFISCH_TQM_CMD_WRAPPER_RBO_DROP_E       = 433 /* 0x1b1 */,
+  WIFISCH_TQM_CMD_WRAPPER_CONT_DROP_E      = 434 /* 0x1b2 */,
+  WIFIRX_PPDU_END_START_E                  = 435 /* 0x1b3 */,
+  WIFIRX_PPDU_END_MIDDLE_E                 = 436 /* 0x1b4 */,
+  WIFIRX_PPDU_END_LAST_E                   = 437 /* 0x1b5 */,
+  WIFIRECEIVE_USER_INFO_L1_E               = 438 /* 0x1b6 */,
+  WIFIMIMO_CONTROL_INFO_L1_E               = 439 /* 0x1b7 */,
+  WIFIPHYRX_GENERATED_CBF_DETAILS_L1_E     = 440 /* 0x1b8 */,
+  WIFIMACTX_CLEAR_PREV_TX_INFO_E           = 441 /* 0x1b9 */,
+  WIFIMACTX_BACKOFF_BASED_TRANSMISSION_E   = 442 /* 0x1ba */,
+  WIFIMACTX_OTHER_TRANSMIT_INFO_DL_OFDMA_TX_E = 443 /* 0x1bb */,
   WIFIPHYRX_OTHER_RECEIVE_INFO_RU_DETAILS_E = 444 /* 0x1bc */,
   WIFITLV_BASE_E                           = 511 /* 0x1ff */
 
