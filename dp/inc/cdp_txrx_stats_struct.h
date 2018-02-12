@@ -336,7 +336,6 @@ struct cdp_vdev_stats {
 	struct cdp_rx_stats rx;
 };
 
-
 struct cdp_peer_stats {
 	/* CDP Tx Stats */
 	struct cdp_tx_stats tx;
@@ -366,6 +365,372 @@ struct cdp_hist_rx_ind {
 	uint32_t pkts_81_100;
 	uint32_t pkts_101_200;
 	uint32_t pkts_201_plus;
+};
+
+struct cdp_htt_tlv_hdr {
+	/* BIT [11 :  0]   :- tag
+	 * BIT [23 : 12]   :- length
+	 * BIT [31 : 24]   :- reserved
+	 */
+	uint32_t tag__length;
+};
+
+#define HTT_STATS_SUBTYPE_MAX     16
+
+struct cdp_htt_rx_pdev_fw_stats_tlv {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    uint32_t mac_id__word;
+    /* Num PPDU status processed from HW */
+    uint32_t ppdu_recvd;
+    /* Num MPDU across PPDUs with FCS ok */
+    uint32_t mpdu_cnt_fcs_ok;
+    /* Num MPDU across PPDUs with FCS err */
+    uint32_t mpdu_cnt_fcs_err;
+    /* Num MSDU across PPDUs */
+    uint32_t tcp_msdu_cnt;
+    /* Num MSDU across PPDUs */
+    uint32_t tcp_ack_msdu_cnt;
+    /* Num MSDU across PPDUs */
+    uint32_t udp_msdu_cnt;
+    /* Num MSDU across PPDUs */
+    uint32_t other_msdu_cnt;
+    /* Num MPDU on FW ring indicated */
+    uint32_t fw_ring_mpdu_ind;
+    /* Num MGMT MPDU given to protocol */
+    uint32_t fw_ring_mgmt_subtype[HTT_STATS_SUBTYPE_MAX];
+    /* Num ctrl MPDU given to protocol */
+    uint32_t fw_ring_ctrl_subtype[HTT_STATS_SUBTYPE_MAX];
+    /* Num mcast data packet received */
+    uint32_t fw_ring_mcast_data_msdu;
+    /* Num broadcast data packet received */
+    uint32_t fw_ring_bcast_data_msdu;
+    /* Num unicat data packet received */
+    uint32_t fw_ring_ucast_data_msdu;
+    /* Num null data packet received  */
+    uint32_t fw_ring_null_data_msdu;
+    /* Num MPDU on FW ring dropped */
+    uint32_t fw_ring_mpdu_drop;
+
+    /* Num buf indication to offload */
+    uint32_t ofld_local_data_ind_cnt;
+    /* Num buf recycle from offload */
+    uint32_t ofld_local_data_buf_recycle_cnt;
+    /* Num buf indication to data_rx */
+    uint32_t drx_local_data_ind_cnt;
+    /* Num buf recycle from data_rx */
+    uint32_t drx_local_data_buf_recycle_cnt;
+    /* Num buf indication to protocol */
+    uint32_t local_nondata_ind_cnt;
+    /* Num buf recycle from protocol */
+    uint32_t local_nondata_buf_recycle_cnt;
+
+    /* Num buf fed */
+    uint32_t fw_status_buf_ring_refill_cnt;
+    /* Num ring empty encountered */
+    uint32_t fw_status_buf_ring_empty_cnt;
+    /* Num buf fed  */
+    uint32_t fw_pkt_buf_ring_refill_cnt;
+    /* Num ring empty encountered */
+    uint32_t fw_pkt_buf_ring_empty_cnt;
+    /* Num buf fed  */
+    uint32_t fw_link_buf_ring_refill_cnt;
+    /* Num ring empty encountered  */
+    uint32_t fw_link_buf_ring_empty_cnt;
+
+    /* Num buf fed */
+    uint32_t host_pkt_buf_ring_refill_cnt;
+    /* Num ring empty encountered */
+    uint32_t host_pkt_buf_ring_empty_cnt;
+    /* Num buf fed */
+    uint32_t mon_pkt_buf_ring_refill_cnt;
+    /* Num ring empty encountered */
+    uint32_t mon_pkt_buf_ring_empty_cnt;
+    /* Num buf fed */
+    uint32_t mon_status_buf_ring_refill_cnt;
+    /* Num ring empty encountered */
+    uint32_t mon_status_buf_ring_empty_cnt;
+    /* Num buf fed */
+    uint32_t mon_desc_buf_ring_refill_cnt;
+    /* Num ring empty encountered */
+    uint32_t mon_desc_buf_ring_empty_cnt;
+    /* Num buf fed */
+    uint32_t mon_dest_ring_update_cnt;
+    /* Num ring full encountered */
+    uint32_t mon_dest_ring_full_cnt;
+
+    /* Num rx suspend is attempted */
+    uint32_t rx_suspend_cnt;
+    /* Num rx suspend failed */
+    uint32_t rx_suspend_fail_cnt;
+    /* Num rx resume attempted */
+    uint32_t rx_resume_cnt;
+    /* Num rx resume failed */
+    uint32_t rx_resume_fail_cnt;
+    /* Num rx ring switch */
+    uint32_t rx_ring_switch_cnt;
+    /* Num rx ring restore */
+    uint32_t rx_ring_restore_cnt;
+    /* Num rx flush issued */
+    uint32_t rx_flush_cnt;
+};
+
+/* == TX PDEV STATS == */
+struct cdp_htt_tx_pdev_stats_cmn_tlv {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    uint32_t mac_id__word;
+    /* Num queued to HW */
+    uint32_t hw_queued;
+    /* Num PPDU reaped from HW */
+    uint32_t hw_reaped;
+    /* Num underruns */
+    uint32_t underrun;
+    /* Num HW Paused counter. */
+    uint32_t hw_paused;
+    /* Num HW flush counter. */
+    uint32_t hw_flush;
+    /* Num HW filtered counter. */
+    uint32_t hw_filt;
+    /* Num PPDUs cleaned up in TX abort */
+    uint32_t tx_abort;
+    /* Num MPDUs requed by SW */
+    uint32_t mpdu_requed;
+    /* excessive retries */
+    uint32_t tx_xretry;
+    /* Last used data hw rate code */
+    uint32_t data_rc;
+    /* frames dropped due to excessive sw retries */
+    uint32_t mpdu_dropped_xretry;
+    /* illegal rate phy errors  */
+    uint32_t illgl_rate_phy_err;
+    /* wal pdev continous xretry */
+    uint32_t cont_xretry;
+    /* wal pdev continous xretry */
+    uint32_t tx_timeout;
+    /* wal pdev resets  */
+    uint32_t pdev_resets;
+    /* PhY/BB underrun */
+    uint32_t phy_underrun;
+    /* MPDU is more than txop limit */
+    uint32_t txop_ovf;
+    /* Number of Sequences posted */
+    uint32_t seq_posted;
+    /* Number of Sequences failed queueing */
+    uint32_t seq_failed_queueing;
+    /* Number of Sequences completed */
+    uint32_t seq_completed;
+    /* Number of Sequences restarted */
+    uint32_t seq_restarted;
+    /* Number of MU Sequences posted */
+    uint32_t mu_seq_posted;
+    /* Number of time HW ring is paused between seq switch within ISR */
+    uint32_t seq_switch_hw_paused;
+    /* Number of times seq continuation in DSR */
+    uint32_t next_seq_posted_dsr;
+    /* Number of times seq continuation in ISR */
+    uint32_t seq_posted_isr;
+    /* Number of seq_ctrl cached. */
+    uint32_t seq_ctrl_cached;
+    /* Number of MPDUs successfully transmitted */
+    uint32_t mpdu_count_tqm;
+    /* Number of MSDUs successfully transmitted */
+    uint32_t msdu_count_tqm;
+    /* Number of MPDUs dropped */
+    uint32_t mpdu_removed_tqm;
+    /* Number of MSDUs dropped */
+    uint32_t msdu_removed_tqm;
+    /* Num MPDUs flushed by SW, HWPAUSED, SW TXABORT (Reset,channel change) */
+    uint32_t mpdus_sw_flush;
+    /* Num MPDUs filtered by HW, all filter condition (TTL expired) */
+    uint32_t mpdus_hw_filter;
+    /* Num MPDUs truncated by PDG (TXOP, TBTT, PPDU_duration based on rate, dyn_bw) */
+    uint32_t mpdus_truncated;
+    /* Num MPDUs that was tried but didn't receive ACK or BA */
+    uint32_t mpdus_ack_failed;
+    /* Num MPDUs that was dropped due to expiry (MSDU TTL). */
+    uint32_t mpdus_expired;
+    /* Num MPDUs that was retried within seq_ctrl (MGMT/LEGACY) */
+    uint32_t mpdus_seq_hw_retry;
+    /* Num of TQM acked cmds processed */
+    uint32_t ack_tlv_proc;
+    /* coex_abort_mpdu_cnt valid. */
+    uint32_t coex_abort_mpdu_cnt_valid;
+    /* coex_abort_mpdu_cnt from TX FES stats. */
+    uint32_t coex_abort_mpdu_cnt;
+    /* Number of total PPDUs(DATA, MGMT, excludes selfgen) tried over the air (OTA) */
+    uint32_t num_total_ppdus_tried_ota;
+    /* Number of data PPDUs tried over the air (OTA) */
+    uint32_t num_data_ppdus_tried_ota;
+    /* Num Local control/mgmt frames (MSDUs) queued */
+    uint32_t local_ctrl_mgmt_enqued;
+    /* local_ctrl_mgmt_freed:
+     * Num Local control/mgmt frames (MSDUs) done
+     * It includes all local ctrl/mgmt completions
+     * (acked, no ack, flush, TTL, etc)
+     */
+    uint32_t local_ctrl_mgmt_freed;
+    /* Num Local data frames (MSDUs) queued */
+    uint32_t local_data_enqued;
+    /* local_data_freed:
+     * Num Local data frames (MSDUs) done
+     * It includes all local data completions
+     * (acked, no ack, flush, TTL, etc)
+     */
+    uint32_t local_data_freed;
+};
+
+struct cdp_htt_tx_pdev_stats_urrn_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    uint32_t urrn_stats[1]; /* HTT_TX_PDEV_MAX_URRN_STATS */
+};
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+struct cdp_htt_tx_pdev_stats_flush_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    uint32_t flush_errs[1]; /* HTT_TX_PDEV_MAX_FLUSH_REASON_STATS */
+};
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+struct cdp_htt_tx_pdev_stats_sifs_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    uint32_t sifs_status[1]; /* HTT_TX_PDEV_MAX_SIFS_BURST_STATS */
+};
+
+/* NOTE: Variable length TLV, use length spec to infer array size */
+struct cdp_htt_tx_pdev_stats_phy_err_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    uint32_t  phy_errs[1]; /* HTT_TX_PDEV_MAX_PHY_ERR_STATS */
+};
+
+/* == RX PDEV/SOC STATS == */
+/* HTT_STATS_RX_SOC_FW_STATS_TAG */
+struct cdp_htt_rx_soc_fw_stats_tlv {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    /* Num Packets received on REO FW ring */
+    uint32_t fw_reo_ring_data_msdu;
+    /* Num bc/mc packets indicated from fw to host */
+    uint32_t fw_to_host_data_msdu_bcmc;
+    /* Num unicast packets indicated from fw to host */
+    uint32_t fw_to_host_data_msdu_uc;
+    /* Num remote buf recycle from offload  */
+    uint32_t ofld_remote_data_buf_recycle_cnt;
+    /* Num remote free buf given to offload */
+    uint32_t ofld_remote_free_buf_indication_cnt;
+};
+
+struct cdp_htt_rx_soc_fw_refill_ring_num_refill_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    /* Num total buf refilled from refill ring */
+    uint32_t refill_ring_num_refill[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
+};
+
+struct cdp_htt_rx_pdev_fw_ring_mpdu_err_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    /* Num error MPDU for each RxDMA error type  */
+    uint32_t fw_ring_mpdu_err[1]; /* HTT_RX_STATS_RXDMA_MAX_ERR */
+};
+
+struct cdp_htt_rx_pdev_fw_mpdu_drop_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    /* Num MPDU dropped  */
+    uint32_t fw_mpdu_drop[1]; /* HTT_RX_STATS_FW_DROP_REASON_MAX */
+};
+
+#define HTT_STATS_PHY_ERR_MAX 43
+
+struct cdp_htt_rx_pdev_fw_stats_phy_err_tlv {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+
+    /* BIT [ 7 :  0]   :- mac_id
+     * BIT [31 :  8]   :- reserved
+     */
+    uint32_t mac_id__word;
+    /* Num of phy err */
+    uint32_t total_phy_err_cnt;
+    /* Counts of different types of phy errs
+     * The mapping of PHY error types to phy_err array elements is HW dependent.
+     * The only currently-supported mapping is shown below:
+     *
+     * 0 phyrx_err_phy_off Reception aborted due to receiving a PHY_OFF TLV
+     * 1 phyrx_err_synth_off
+     * 2 phyrx_err_ofdma_timing
+     * 3 phyrx_err_ofdma_signal_parity
+     * 4 phyrx_err_ofdma_rate_illegal
+     * 5 phyrx_err_ofdma_length_illegal
+     * 6 phyrx_err_ofdma_restart
+     * 7 phyrx_err_ofdma_service
+     * 8 phyrx_err_ppdu_ofdma_power_drop
+     * 9 phyrx_err_cck_blokker
+     * 10 phyrx_err_cck_timing
+     * 11 phyrx_err_cck_header_crc
+     * 12 phyrx_err_cck_rate_illegal
+     * 13 phyrx_err_cck_length_illegal
+     * 14 phyrx_err_cck_restart
+     * 15 phyrx_err_cck_service
+     * 16 phyrx_err_cck_power_drop
+     * 17 phyrx_err_ht_crc_err
+     * 18 phyrx_err_ht_length_illegal
+     * 19 phyrx_err_ht_rate_illegal
+     * 20 phyrx_err_ht_zlf
+     * 21 phyrx_err_false_radar_ext
+     * 22 phyrx_err_green_field
+     * 23 phyrx_err_bw_gt_dyn_bw
+     * 24 phyrx_err_leg_ht_mismatch
+     * 25 phyrx_err_vht_crc_error
+     * 26 phyrx_err_vht_siga_unsupported
+     * 27 phyrx_err_vht_lsig_len_invalid
+     * 28 phyrx_err_vht_ndp_or_zlf
+     * 29 phyrx_err_vht_nsym_lt_zero
+     * 30 phyrx_err_vht_rx_extra_symbol_mismatch
+     * 31 phyrx_err_vht_rx_skip_group_id0
+     * 32 phyrx_err_vht_rx_skip_group_id1to62
+     * 33 phyrx_err_vht_rx_skip_group_id63
+     * 34 phyrx_err_ofdm_ldpc_decoder_disabled
+     * 35 phyrx_err_defer_nap
+     * 36 phyrx_err_fdomain_timeout
+     * 37 phyrx_err_lsig_rel_check
+     * 38 phyrx_err_bt_collision
+     * 39 phyrx_err_unsupported_mu_feedback
+     * 40 phyrx_err_ppdu_tx_interrupt_rx
+     * 41 phyrx_err_unsupported_cbf
+     * 42 phyrx_err_other
+     */
+    uint32_t phy_err[HTT_STATS_PHY_ERR_MAX];
+};
+
+struct cdp_htt_rx_soc_fw_refill_ring_empty_tlv_v {
+    struct cdp_htt_tlv_hdr tlv_hdr;
+    /* Num ring empty encountered */
+    uint32_t refill_ring_empty_cnt[1]; /* HTT_RX_STATS_REFILL_MAX_RING */
+};
+
+struct cdp_htt_tx_pdev_stats {
+    struct cdp_htt_tx_pdev_stats_cmn_tlv cmn_tlv;
+    struct cdp_htt_tx_pdev_stats_urrn_tlv_v underrun_tlv;
+    struct cdp_htt_tx_pdev_stats_sifs_tlv_v sifs_tlv;
+    struct cdp_htt_tx_pdev_stats_flush_tlv_v flush_tlv;
+    struct cdp_htt_tx_pdev_stats_phy_err_tlv_v phy_err_tlv;
+};
+
+struct cdp_htt_rx_soc_stats_t {
+    struct cdp_htt_rx_soc_fw_stats_tlv fw_tlv;
+    struct cdp_htt_rx_soc_fw_refill_ring_empty_tlv_v fw_refill_ring_empty_tlv;
+    struct cdp_htt_rx_soc_fw_refill_ring_num_refill_tlv_v fw_refill_ring_num_refill_tlv;
+};
+
+struct cdp_htt_rx_pdev_stats {
+    struct cdp_htt_rx_soc_stats_t soc_stats;
+    struct cdp_htt_rx_pdev_fw_stats_tlv fw_stats_tlv;
+    struct cdp_htt_rx_pdev_fw_ring_mpdu_err_tlv_v fw_ring_mpdu_err_tlv;
+    struct cdp_htt_rx_pdev_fw_mpdu_drop_tlv_v fw_ring_mpdu_drop;
+    struct cdp_htt_rx_pdev_fw_stats_phy_err_tlv fw_stats_phy_err_tlv;
 };
 
 struct cdp_pdev_stats {
@@ -418,6 +783,9 @@ struct cdp_pdev_stats {
 	/* Number of Rx ring descriptors reaped per interrupt */
 	struct cdp_hist_rx_ind rx_ind_histogram;
 	uint64_t ppdu_stats_counter[CDP_PPDU_STATS_MAX_TAG];
+
+	struct cdp_htt_tx_pdev_stats  htt_tx_pdev_stats;
+	struct cdp_htt_rx_pdev_stats  htt_rx_pdev_stats;
 };
 
 #ifndef BIG_ENDIAN_HOST

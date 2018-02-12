@@ -36,6 +36,8 @@
 #define HTT_MSG_BUF_SIZE(msg_bytes) \
 	((msg_bytes) + HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING)
 
+#define HTT_PID_BIT_MASK 0x3
+
 #define DP_EXT_MSG_LENGTH 2048
 #define DP_HTT_SEND_HTC_PKT(soc, pkt)                            \
 do {                                                             \
@@ -1308,7 +1310,7 @@ static inline QDF_STATUS dp_send_htt_stat_resp(struct htt_stats_context *htt_sta
 	msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
 
 	/*COOKIE MSB*/
-	pdev_id = *(msg_word + 2);
+	pdev_id = *(msg_word + 2) & HTT_PID_BIT_MASK;
 
 	/* stats message length + 16 size of HTT header*/
 	msg_remain_len = qdf_min(htt_stats->msg_len + 16,
@@ -1367,6 +1369,10 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 	uint32_t tlv_remain_len = 0;
 	uint32_t *tlv_start;
 	int cookie_val;
+	int cookie_msb;
+	int pdev_id;
+	bool copy_stats = false;
+	struct dp_pdev *pdev;
 
 	/* Process node in the HTT message queue */
 	while ((htt_msg = qdf_nbuf_queue_remove(&htt_stats->msg))
@@ -1379,11 +1385,17 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 				continue;
 			}
 		}
+		cookie_msb = *(msg_word + 2);
+		pdev_id = *(msg_word + 2) & HTT_PID_BIT_MASK;
+		pdev = soc->pdev_list[pdev_id];
+
+		if (cookie_msb >> 2) {
+			copy_stats = true;
+		}
 		/* read 5th word */
 		msg_word = msg_word + 4;
 		msg_remain_len = qdf_min(htt_stats->msg_len,
 				(uint32_t) DP_EXT_MSG_LENGTH);
-
 		/* Keep processing the node till node length is 0 */
 		while (msg_remain_len) {
 			/*
@@ -1424,7 +1436,10 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 					tlv_start = msg_word;
 				}
 
-				dp_htt_stats_print_tag(tlv_type, tlv_start);
+				if (copy_stats)
+					dp_htt_stats_copy_tag(pdev, tlv_type, tlv_start);
+				else
+					dp_htt_stats_print_tag(tlv_type, tlv_start);
 
 				msg_remain_len -= tlv_remain_len;
 
@@ -2877,7 +2892,7 @@ htt_soc_detach(void *htt_soc)
 QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask, uint32_t config_param_0,
 		uint32_t config_param_1, uint32_t config_param_2,
-		uint32_t config_param_3, int cookie_val)
+		uint32_t config_param_3, int cookie_val, int cookie_msb)
 {
 	struct htt_soc *soc = pdev->soc->htt_handle;
 	struct dp_htt_htc_pkt *pkt;
@@ -2962,7 +2977,9 @@ QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 	/* word 7 */
 	msg_word++;
 	*msg_word = 0;
-	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, pdev->pdev_id);
+	/*Using last 2 bits for pdev_id */
+	cookie_msb = ((cookie_msb << 2) | pdev->pdev_id);
+	HTT_H2T_EXT_STATS_REQ_CONFIG_PARAM_SET(*msg_word, cookie_msb);
 
 	pkt = htt_htc_pkt_alloc(soc);
 	if (!pkt) {

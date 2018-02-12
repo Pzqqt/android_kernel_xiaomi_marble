@@ -74,6 +74,7 @@ static void dp_peer_delete_wifi3(void *peer_handle, uint32_t bitmap);
 #define DP_MAX_MCS_STRING_LEN 30
 #define DP_CURR_FW_STATS_AVAIL 19
 #define DP_HTT_DBG_EXT_STATS_MAX 256
+#define DP_MAX_SLEEP_TIME 100
 
 #ifdef IPA_OFFLOAD
 /* Exclude IPA rings from the interrupt context */
@@ -5602,7 +5603,7 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 
 	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 			config_param0, config_param1, config_param2,
-			config_param3, 0);
+			config_param3, 0, 0);
 
 }
 
@@ -5635,7 +5636,7 @@ dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
 	dp_h2t_ext_stats_msg_send(pdev, req->stats_id,
 				req->config_param0, req->config_param1,
 				req->config_param2, req->config_param3,
-				req->cookie);
+				req->cookie, 0);
 }
 /*
  * dp_set_pdev_param: function to set parameters in pdev
@@ -5751,9 +5752,20 @@ dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, void *buf)
 {
 	struct dp_pdev *pdev = (struct dp_pdev *)pdev_handle;
 	struct cdp_pdev_stats *buffer = (struct cdp_pdev_stats *) buf;
+	struct cdp_txrx_stats_req req = {0,};
 
 	dp_aggregate_pdev_stats(pdev);
+	req.stats = HTT_DBG_EXT_STATS_PDEV_TX;
+	req.cookie_val = 1;
+	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
+				req.param1, req.param2, req.param3, 0, req.cookie_val);
+	msleep(DP_MAX_SLEEP_TIME);
 
+	req.stats = HTT_DBG_EXT_STATS_PDEV_RX;
+	req.cookie_val = 1;
+	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
+				req.param1, req.param2, req.param3, 0, req.cookie_val);
+	msleep(DP_MAX_SLEEP_TIME);
 	qdf_mem_copy(buffer, &pdev->stats, sizeof(pdev->stats));
 
 	return TXRX_STATS_LEVEL;
@@ -5819,7 +5831,7 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 	}
 
 	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
-				req->param1, req->param2, req->param3, 0);
+				req->param1, req->param2, req->param3, 0, 0);
 }
 
 /**

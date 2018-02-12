@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -2889,4 +2889,71 @@ void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
 	default:
 		break;
 	}
+}
+
+/*
+ * dp_htt_stats_copy_tag: function to select the tag type and
+ * copy the corresponding tag structure
+ * @pdev: DP_PDEV handle
+ * @tag_type: tag type that is to be printed
+ * @tag_buf: pointer to the tag structure
+ *
+ * return: void
+ */
+void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag_buf)
+{
+	void *dest_ptr = NULL;
+	uint32_t size = 0;
+
+	switch (tag_type) {
+	case HTT_STATS_TX_PDEV_CMN_TAG:
+		dest_ptr = &pdev->stats.htt_tx_pdev_stats.cmn_tlv;
+		size = sizeof(htt_tx_pdev_stats_cmn_tlv);
+		break;
+	case HTT_STATS_TX_PDEV_UNDERRUN_TAG:
+		dest_ptr = &pdev->stats.htt_tx_pdev_stats.underrun_tlv;
+		size = sizeof(htt_tx_pdev_stats_urrn_tlv_v);
+		break;
+	case HTT_STATS_TX_PDEV_SIFS_TAG:
+		dest_ptr = &pdev->stats.htt_tx_pdev_stats.sifs_tlv;
+		size = sizeof(htt_tx_pdev_stats_sifs_tlv_v);
+		break;
+	case HTT_STATS_TX_PDEV_FLUSH_TAG:
+		dest_ptr = &pdev->stats.htt_tx_pdev_stats.flush_tlv;
+		size = sizeof(htt_tx_pdev_stats_flush_tlv_v);
+		break;
+	case HTT_STATS_TX_PDEV_PHY_ERR_TAG:
+		dest_ptr = &pdev->stats.htt_tx_pdev_stats.phy_err_tlv;
+		size = sizeof(htt_tx_pdev_stats_phy_err_tlv_v);
+		break;
+	case HTT_STATS_RX_PDEV_FW_STATS_TAG:
+		dest_ptr = &pdev->stats.htt_rx_pdev_stats.fw_stats_tlv;
+		size = sizeof(htt_rx_pdev_fw_stats_tlv);
+		break;
+	case HTT_STATS_RX_SOC_FW_STATS_TAG:
+		dest_ptr = &pdev->stats.htt_rx_pdev_stats.soc_stats.fw_tlv;
+		size = sizeof(htt_rx_soc_fw_stats_tlv);
+		break;
+	case HTT_STATS_RX_SOC_FW_REFILL_RING_EMPTY_TAG:
+		dest_ptr = &pdev->stats.htt_rx_pdev_stats.soc_stats.fw_refill_ring_empty_tlv;
+		size = sizeof(htt_rx_soc_fw_refill_ring_empty_tlv_v);
+		break;
+	case HTT_STATS_RX_SOC_FW_REFILL_RING_NUM_REFILL_TAG:
+		dest_ptr = &pdev->stats.htt_rx_pdev_stats.soc_stats.fw_refill_ring_num_refill_tlv;
+		size = sizeof(htt_rx_soc_fw_refill_ring_num_refill_tlv_v);
+		break;
+	case HTT_STATS_RX_PDEV_FW_RING_MPDU_ERR_TAG:
+		dest_ptr = &pdev->stats.htt_rx_pdev_stats.fw_ring_mpdu_err_tlv;
+		size = sizeof(htt_rx_pdev_fw_ring_mpdu_err_tlv_v);
+		break;
+	case HTT_STATS_RX_PDEV_FW_MPDU_DROP_TAG:
+		dest_ptr = &pdev->stats.htt_rx_pdev_stats.fw_ring_mpdu_drop;
+		size = sizeof(htt_rx_pdev_fw_mpdu_drop_tlv_v);
+		break;
+	default:
+		break;
+	}
+
+	if (dest_ptr)
+		qdf_mem_copy(dest_ptr, tag_buf, size);
 }

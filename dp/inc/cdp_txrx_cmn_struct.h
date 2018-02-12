@@ -1125,6 +1125,7 @@ struct cdp_txrx_stats_req {
 	uint32_t	param1;
 	uint32_t	param2;
 	uint32_t	param3;
+	uint32_t	cookie_val;
 };
 
 /**
