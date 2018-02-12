@@ -8677,6 +8677,8 @@ QDF_STATUS hdd_set_policy_mgr_user_cfg(struct hdd_context *hdd_ctx)
 	user_cfg->sub_20_mhz_enabled = cds_is_sub_20_mhz_enabled();
 	user_cfg->is_sta_sap_scc_allowed_on_dfs_chan =
 		hdd_ctx->config->sta_sap_scc_on_dfs_chan;
+	user_cfg->channel_select_logic_conc =
+		hdd_ctx->config->channel_select_logic_conc;
 	status = policy_mgr_set_user_cfg(hdd_ctx->hdd_psoc, user_cfg);
 	qdf_mem_free(user_cfg);
 

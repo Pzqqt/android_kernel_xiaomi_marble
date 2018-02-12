@@ -1865,6 +1865,13 @@ int hdd_vdev_ready(struct hdd_adapter *adapter);
 QDF_STATUS hdd_init_station_mode(struct hdd_adapter *adapter);
 struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 			enum QDF_OPMODE mode);
+/*
+ * hdd_get_device_mode() - Get device mode
+ * @session_id: Session id
+ *
+ * Return: Device mode
+ */
+enum tQDF_ADAPTER_MODE hdd_get_device_mode(uint32_t session_id);
 void hdd_deinit_adapter(struct hdd_context *hdd_ctx,
 			struct hdd_adapter *adapter,
 			bool rtnl_held);

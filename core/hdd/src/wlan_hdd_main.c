@@ -2438,6 +2438,7 @@ static void hdd_register_policy_manager_callback(
 		wlan_hdd_get_channel_for_sap_restart;
 	hdd_cbacks.get_mode_for_non_connected_vdev =
 		wlan_hdd_get_mode_for_non_connected_vdev;
+	hdd_cbacks.hdd_get_device_mode = hdd_get_device_mode;
 
 	if (QDF_STATUS_SUCCESS !=
 	    policy_mgr_register_hdd_cb(psoc, &hdd_cbacks)) {
@@ -5941,6 +5942,26 @@ struct hdd_adapter *hdd_get_adapter(struct hdd_context *hdd_ctx,
 	}
 
 	return NULL;
+}
+
+enum tQDF_ADAPTER_MODE hdd_get_device_mode(uint32_t session_id)
+{
+	struct hdd_context *hdd_ctx;
+	struct hdd_adapter *adapter;
+
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		hdd_err("Invalid HDD context");
+		return QDF_MAX_NO_OF_MODE;
+	}
+
+	adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx, session_id);
+	if (!adapter) {
+		hdd_err("Invalid HDD adapter");
+		return QDF_MAX_NO_OF_MODE;
+	}
+
+	return adapter->device_mode;
 }
 
 /**
