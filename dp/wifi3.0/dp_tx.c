@@ -2788,7 +2788,7 @@ uint32_t dp_tx_comp_handler(struct dp_soc *soc, void *hal_srng, uint32_t quota)
 					htt_tx_status);
 		} else {
 			/* Pool id is not matching. Error */
-			if (tx_desc && (tx_desc->pool_id != pool_id)) {
+			if (tx_desc->pool_id != pool_id) {
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_FATAL,
 					"Tx Comp pool id %d not matched %d",
@@ -2964,6 +2964,62 @@ QDF_STATUS dp_tx_pdev_attach(struct dp_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef QCA_LL_TX_FLOW_CONTROL_V2
+/* Pools will be allocated dynamically */
+static int dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
+					int num_desc)
+{
+	uint8_t i;
+
+	for (i = 0; i < num_pool; i++) {
+		qdf_spinlock_create(&soc->tx_desc[i].flow_pool_lock);
+		soc->tx_desc[i].status = FLOW_POOL_INACTIVE;
+	}
+
+	return 0;
+}
+
+static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
+{
+	uint8_t i;
+
+	for (i = 0; i < num_pool; i++)
+		qdf_spinlock_destroy(&soc->tx_desc[i].flow_pool_lock);
+}
+
+static void dp_tx_desc_flush(struct dp_pdev *pdev)
+{
+}
+#else /* QCA_LL_TX_FLOW_CONTROL_V2! */
+static int dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
+					int num_desc)
+{
+	uint8_t i;
+
+	/* Allocate software Tx descriptor pools */
+	for (i = 0; i < num_pool; i++) {
+		if (dp_tx_desc_pool_alloc(soc, i, num_desc)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					"%s Tx Desc Pool alloc %d failed %pK\n",
+					__func__, i, soc);
+			return ENOMEM;
+		}
+	}
+	return 0;
+}
+
+static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
+{
+	uint8_t i;
+
+	for (i = 0; i < num_pool; i++) {
+		if (dp_tx_desc_pool_free(soc, i)) {
+			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
+				"%s Tx Desc Pool Free failed\n", __func__);
+		}
+	}
+}
+
 /* dp_tx_desc_flush() - release resources associated
  *                      to tx_desc
  * @pdev: physical device instance
@@ -3000,6 +3056,7 @@ static void dp_tx_desc_flush(struct dp_pdev *pdev)
 		}
 	}
 }
+#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 
 /**
  * dp_tx_pdev_detach() - detach pdev from dp tx
@@ -3014,60 +3071,6 @@ QDF_STATUS dp_tx_pdev_detach(struct dp_pdev *pdev)
 	dp_tx_me_exit(pdev);
 	return QDF_STATUS_SUCCESS;
 }
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-/* Pools will be allocated dynamically */
-static int dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
-					int num_desc)
-{
-	uint8_t i;
-
-	for (i = 0; i < num_pool; i++) {
-		qdf_spinlock_create(&soc->tx_desc[i].flow_pool_lock);
-		soc->tx_desc[i].status = FLOW_POOL_INACTIVE;
-	}
-
-	return 0;
-}
-
-static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
-{
-	uint8_t i;
-
-	for (i = 0; i < num_pool; i++)
-		qdf_spinlock_destroy(&soc->tx_desc[i].flow_pool_lock);
-}
-#else /* QCA_LL_TX_FLOW_CONTROL_V2! */
-static int dp_tx_alloc_static_pools(struct dp_soc *soc, int num_pool,
-					int num_desc)
-{
-	uint8_t i;
-
-	/* Allocate software Tx descriptor pools */
-	for (i = 0; i < num_pool; i++) {
-		if (dp_tx_desc_pool_alloc(soc, i, num_desc)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
-					"%s Tx Desc Pool alloc %d failed %pK\n",
-					__func__, i, soc);
-			return ENOMEM;
-		}
-	}
-	return 0;
-}
-
-static void dp_tx_delete_static_pools(struct dp_soc *soc, int num_pool)
-{
-	uint8_t i;
-
-	for (i = 0; i < num_pool; i++) {
-		if (dp_tx_desc_pool_free(soc, i)) {
-			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO,
-				"%s Tx Desc Pool Free failed\n", __func__);
-		}
-	}
-}
-
-#endif /* !QCA_LL_TX_FLOW_CONTROL_V2 */
 
 /**
  * dp_tx_soc_detach() - detach soc from dp tx
