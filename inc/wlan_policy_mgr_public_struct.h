@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1018,6 +1018,7 @@ struct policy_mgr_user_cfg {
 	uint32_t mcc_to_scc_switch_mode;
 	bool sub_20_mhz_enabled;
 	bool is_sta_sap_scc_allowed_on_dfs_chan;
+	uint32_t channel_select_logic_conc;
 };
 
 /**

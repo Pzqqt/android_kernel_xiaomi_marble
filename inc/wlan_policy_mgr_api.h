@@ -836,6 +836,7 @@ struct policy_mgr_hdd_cbacks {
 	enum policy_mgr_con_mode (*get_mode_for_non_connected_vdev)(
 				struct wlan_objmgr_psoc *psoc,
 				uint8_t vdev_id);
+	enum tQDF_ADAPTER_MODE (*hdd_get_device_mode)(uint32_t session_id);
 };
 
 
