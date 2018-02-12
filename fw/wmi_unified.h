@@ -4858,6 +4858,13 @@ typedef enum {
     WMI_PDEV_PARAM_DATA_STALL_DETECT_ENABLE,          /* 0x9b */
     /* GCMP Support indication to FW */
     WMI_PDEV_PARAM_GCMP_SUPPORT_ENABLE,               /* 0x9c */
+    /** Enable/Disable chain selection optimization for one chain dtim
+     *   non-zero - Enable optimization and use this non-zero value as the
+     *              chain imbalance threshold for optimization to kick in
+     *              (units = dB)
+     *   0- Disable optimization
+     */
+    WMI_PDEV_PARAM_1CH_DTIM_OPTIMIZED_CHAIN_SELECTION,/* 0x9d */
 } WMI_PDEV_PARAM;
 
 typedef struct {
