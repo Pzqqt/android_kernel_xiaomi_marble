@@ -5168,10 +5168,6 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.bcast.num);
 	DP_PRINT_STATS("Broadcast Bytes Received = %llu",
 			peer->stats.rx.bcast.bytes);
-	DP_PRINT_STATS("WDS Packets Received = %d",
-			peer->stats.rx.wds.num);
-	DP_PRINT_STATS("WDS Bytes Received = %llu",
-			peer->stats.rx.wds.bytes);
 	DP_PRINT_STATS("Intra BSS Packets Received = %d",
 			peer->stats.rx.intra_bss.pkts.num);
 	DP_PRINT_STATS("Intra BSS Bytes Received = %llu",

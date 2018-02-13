@@ -176,8 +176,6 @@ struct cdp_rx_stats {
 	struct cdp_pkt_info multicast;
 	/* Broadcast Packet Count*/
 	struct cdp_pkt_info bcast;
-	/* WDS packets received */
-	struct cdp_pkt_info wds;
 	/* Raw Pakets received */
 	struct cdp_pkt_info raw;
 	/* Total multicast packets */

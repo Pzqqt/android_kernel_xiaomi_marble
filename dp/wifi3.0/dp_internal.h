@@ -301,7 +301,6 @@ while (0)
 					_srcobj->stats.rx.multicast.bytes; \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.unicast); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.multicast); \
-		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.wds); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.raw); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.pkts); \
 		DP_STATS_AGGR_PKT(_tgtobj, _srcobj, rx.intra_bss.fail); \
