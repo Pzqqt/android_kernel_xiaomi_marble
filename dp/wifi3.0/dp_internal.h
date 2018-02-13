@@ -383,6 +383,8 @@ void dp_local_peer_id_free(struct dp_pdev *pdev, struct dp_peer *peer)
 {
 }
 #endif
+int dp_addba_resp_tx_completion_wifi3(void *peer_handle, uint8_t tid,
+	int status);
 extern int dp_addba_requestprocess_wifi3(void *peer_handle,
 	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,
 	uint16_t buffersize, uint16_t startseqnum);

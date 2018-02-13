@@ -892,6 +892,10 @@ void dp_rx_tid_stats_cb(struct dp_soc *soc, void *cb_ctxt,
 
 	DP_PRINT_STATS("Num of Addba Req = %d\n", rx_tid->num_of_addba_req);
 	DP_PRINT_STATS("Num of Addba Resp = %d\n", rx_tid->num_of_addba_resp);
+	DP_PRINT_STATS("Num of Addba Resp successful = %d\n",
+		       rx_tid->num_addba_rsp_success);
+	DP_PRINT_STATS("Num of Addba Resp failed = %d\n",
+		       rx_tid->num_addba_rsp_failed);
 	DP_PRINT_STATS("Num of Delba Req = %d\n", rx_tid->num_of_delba_req);
 	DP_PRINT_STATS("BA window size   = %d\n", rx_tid->ba_win_size);
 	DP_PRINT_STATS("Pn size = %d\n", rx_tid->pn_size);
@@ -1132,6 +1136,8 @@ static int dp_rx_tid_update_wifi3(struct dp_peer *peer, int tid, uint32_t
 	dp_set_ssn_valid_flag(&params, 0);
 
 	dp_reo_send_cmd(soc, CMD_UPDATE_RX_REO_QUEUE, &params, dp_rx_tid_update_cb, rx_tid);
+
+	rx_tid->ba_win_size = ba_window_size;
 	return 0;
 }
 
@@ -1219,6 +1225,8 @@ int dp_rx_tid_setup_wifi3(struct dp_peer *peer, int tid,
 	rx_tid->num_of_addba_req = 0;
 	rx_tid->num_of_delba_req = 0;
 	rx_tid->num_of_addba_resp = 0;
+	rx_tid->num_addba_rsp_failed = 0;
+	rx_tid->num_addba_rsp_success = 0;
 #ifdef notyet
 	hw_qdesc_size = hal_get_reo_qdesc_size(soc->hal_soc, ba_window_size);
 #else
@@ -1570,6 +1578,9 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 	int tid;
 	uint32_t tid_delete_mask = 0;
 	for (tid = 0; tid < DP_MAX_TIDS; tid++) {
+		struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+
+		qdf_spin_lock_bh(&rx_tid->tid_lock);
 		if (peer->rx_tid[tid].hw_qdesc_vaddr_unaligned != NULL) {
 			dp_rx_tid_delete_wifi3(peer, tid);
 
@@ -1579,6 +1590,7 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 
 			tid_delete_mask |= (1 << tid);
 		}
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	}
 #ifdef notyet /* See if FW can remove queues as part of peer cleanup */
 	if (soc->ol_ops->peer_rx_reorder_queue_remove) {
@@ -1587,6 +1599,8 @@ void dp_peer_rx_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 			tid_delete_mask);
 	}
 #endif
+	for (tid = 0; tid < DP_MAX_TIDS; tid++)
+		qdf_spinlock_destroy(&peer->rx_tid[tid].tid_lock);
 }
 
 /*
@@ -1606,42 +1620,52 @@ void dp_peer_cleanup(struct dp_vdev *vdev, struct dp_peer *peer)
 }
 
 /*
-* dp_rx_addba_requestprocess_wifi3() – Process ADDBA request from peer
+* dp_rx_addba_resp_tx_completion_wifi3() – Update Rx Tid State
 *
 * @peer: Datapath peer handle
-* @dialogtoken: dialogtoken from ADDBA frame
 * @tid: TID number
-* @startseqnum: Start seq. number received in BA sequence control
-* in ADDBA frame
-*
+* @status: tx completion status
 * Return: 0 on success, error code on failure
 */
-int dp_addba_requestprocess_wifi3(void *peer_handle,
-	uint8_t dialogtoken, uint16_t tid, uint16_t batimeout,
-	uint16_t buffersize, uint16_t startseqnum)
+int dp_addba_resp_tx_completion_wifi3(void *peer_handle,
+				      uint8_t tid, int status)
 {
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
-	if ((rx_tid->ba_status == DP_RX_BA_ACTIVE) &&
-			(rx_tid->hw_qdesc_vaddr_unaligned != NULL))
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	if (status) {
+		rx_tid->num_addba_rsp_failed++;
+		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 		rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx Tid- %d addba rsp tx completion failed!",
+			 __func__, tid);
+		return 0;
+	}
 
-	if (dp_rx_tid_setup_wifi3(peer, tid, buffersize,
-		startseqnum)) {
-		/* TODO: Should we send addba reject in this case */
+	rx_tid->num_addba_rsp_success++;
+	if (rx_tid->ba_status == DP_RX_BA_INACTIVE) {
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx Tid- %d hw qdesc is not in IN_PROGRESS",
+			__func__, tid);
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	if (dp_rx_tid_update_wifi3(peer, tid, rx_tid->ba_win_size,
+				   rx_tid->startseqnum)) {
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
 	if (rx_tid->userstatuscode != IEEE80211_STATUS_SUCCESS)
 		rx_tid->statuscode = rx_tid->userstatuscode;
 	else
 		rx_tid->statuscode = IEEE80211_STATUS_SUCCESS;
 
-	rx_tid->dialogtoken = dialogtoken;
 	rx_tid->ba_status = DP_RX_BA_ACTIVE;
-	rx_tid->num_of_addba_req++;
-
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	return 0;
 }
 
@@ -1662,12 +1686,63 @@ void dp_addba_responsesetup_wifi3(void *peer_handle, uint8_t tid,
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	rx_tid->num_of_addba_resp++;
 	/* setup ADDBA response parameters */
 	*dialogtoken = rx_tid->dialogtoken;
 	*statuscode = rx_tid->statuscode;
 	*buffersize = rx_tid->ba_win_size;
 	*batimeout  = 0;
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+}
+
+/*
+ * dp_addba_requestprocess_wifi3() - Process ADDBA request from peer
+ *
+ * @peer: Datapath peer handle
+ * @dialogtoken: dialogtoken from ADDBA frame
+ * @tid: TID number
+ * @batimeout: BA timeout
+ * @buffersize: BA window size
+ * @startseqnum: Start seq. number received in BA sequence control
+ *
+ * Return: 0 on success, error code on failure
+ */
+int dp_addba_requestprocess_wifi3(void *peer_handle,
+				  uint8_t dialogtoken,
+				  uint16_t tid, uint16_t batimeout,
+				  uint16_t buffersize,
+				  uint16_t startseqnum)
+{
+	struct dp_peer *peer = (struct dp_peer *)peer_handle;
+	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
+
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	rx_tid->num_of_addba_req++;
+	if ((rx_tid->ba_status == DP_RX_BA_ACTIVE &&
+	     rx_tid->hw_qdesc_vaddr_unaligned != NULL) ||
+	    (rx_tid->ba_status == DP_RX_BA_IN_PROGRESS)) {
+		dp_rx_tid_update_wifi3(peer, tid, 1, 0);
+		rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Rx Tid- %d hw qdesc is already setup",
+			__func__, tid);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (dp_rx_tid_setup_wifi3(peer, tid, 1, 0)) {
+		rx_tid->ba_status = DP_RX_BA_INACTIVE;
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
+		return QDF_STATUS_E_FAILURE;
+	}
+	rx_tid->ba_status = DP_RX_BA_IN_PROGRESS;
+
+	rx_tid->ba_win_size = buffersize;
+	rx_tid->dialogtoken = dialogtoken;
+	rx_tid->startseqnum = startseqnum;
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
+	return 0;
 }
 
 /*
@@ -1683,7 +1758,9 @@ void dp_set_addba_response(void *peer_handle, uint8_t tid,
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
 	rx_tid->userstatuscode = statuscode;
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 }
 
 /*
@@ -1700,9 +1777,11 @@ int dp_delba_process_wifi3(void *peer_handle,
 	struct dp_peer *peer = (struct dp_peer *)peer_handle;
 	struct dp_rx_tid *rx_tid = &peer->rx_tid[tid];
 
-	if (rx_tid->ba_status != DP_RX_BA_ACTIVE)
+	qdf_spin_lock_bh(&rx_tid->tid_lock);
+	if (rx_tid->ba_status == DP_RX_BA_INACTIVE) {
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 		return QDF_STATUS_E_FAILURE;
-
+	}
 	/* TODO: See if we can delete the existing REO queue descriptor and
 	 * replace with a new one without queue extenstion descript to save
 	 * memory
@@ -1711,7 +1790,7 @@ int dp_delba_process_wifi3(void *peer_handle,
 	dp_rx_tid_update_wifi3(peer, tid, 1, 0);
 
 	rx_tid->ba_status = DP_RX_BA_INACTIVE;
-
+	qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	return 0;
 }
 
@@ -1805,6 +1884,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 
 	for (i = 0; i < DP_MAX_TIDS; i++) {
 		struct dp_rx_tid *rx_tid = &peer->rx_tid[i];
+		qdf_spin_lock_bh(&rx_tid->tid_lock);
 		if (rx_tid->hw_qdesc_vaddr_unaligned != NULL) {
 			params.std.addr_lo =
 				rx_tid->hw_qdesc_paddr & 0xffffffff;
@@ -1832,6 +1912,7 @@ dp_set_pn_check_wifi3(struct cdp_vdev *vdev_handle, struct cdp_peer *peer_handle
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 				"PN Check not setup for TID :%d \n", i);
 		}
+		qdf_spin_unlock_bh(&rx_tid->tid_lock);
 	}
 }
 

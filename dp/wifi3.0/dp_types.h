@@ -410,6 +410,7 @@ struct dp_rx_reorder_array_elem {
 
 #define DP_RX_BA_INACTIVE 0
 #define DP_RX_BA_ACTIVE 1
+#define DP_RX_BA_IN_PROGRESS 2
 struct dp_reo_cmd_info {
 	uint16_t cmd;
 	enum hal_reo_cmd_type cmd_type;
@@ -432,6 +433,12 @@ struct dp_rx_tid {
 	/* Num of delba requests */
 	uint32_t num_of_delba_req;
 
+	/* Num of addba responses successful */
+	uint32_t num_addba_rsp_success;
+
+	/* Num of addba responses failed */
+	uint32_t num_addba_rsp_failed;
+
 	/* pn size */
 	uint8_t pn_size;
 	/* REO TID queue descriptors */
@@ -446,6 +453,9 @@ struct dp_rx_tid {
 	/* RX BA window size */
 	uint16_t ba_win_size;
 
+	/* Starting sequence number in Addba request */
+	uint16_t startseqnum;
+
 	/* TODO: Check the following while adding defragmentation support */
 	struct dp_rx_reorder_array_elem *array;
 	/* base - single rx reorder element used for non-aggr cases */
@@ -457,6 +467,9 @@ struct dp_rx_tid {
 	/* Store dst desc for reinjection */
 	void *dst_ring_desc;
 	struct dp_rx_desc *head_frag_desc;
+
+	/* rx_tid lock */
+	qdf_spinlock_t tid_lock;
 
 	/* Sequence and fragments that are being processed currently */
 	uint32_t curr_seq_num;

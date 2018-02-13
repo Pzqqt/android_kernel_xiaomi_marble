@@ -3879,7 +3879,8 @@ static void *dp_peer_create_wifi3(struct cdp_vdev *vdev_handle,
 		peer->bss_peer = 1;
 		vdev->vap_bss_peer = peer;
 	}
-
+	for (i = 0; i < DP_MAX_TIDS; i++)
+		qdf_spinlock_create(&peer->rx_tid[i].tid_lock);
 
 	dp_local_peer_id_alloc(pdev, peer);
 	DP_STATS_INIT(peer);
@@ -7335,6 +7336,7 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_ath_getstats = dp_get_device_stats,
 	.addba_requestprocess = dp_addba_requestprocess_wifi3,
 	.addba_responsesetup = dp_addba_responsesetup_wifi3,
+	.addba_resp_tx_completion = dp_addba_resp_tx_completion_wifi3,
 	.delba_process = dp_delba_process_wifi3,
 	.set_addba_response = dp_set_addba_response,
 	.get_peer_mac_addr_frm_id = dp_get_peer_mac_addr_frm_id,
