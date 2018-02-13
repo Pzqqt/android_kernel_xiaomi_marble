@@ -502,8 +502,19 @@ typedef enum {
     WMI_PEER_SET_RX_BLOCKSIZE_CMDID,
     /** request peer antdiv info from FW. FW shall respond with PEER_ANTDIV_INFO_EVENTID */
     WMI_PEER_ANTDIV_INFO_REQ_CMDID,
-    /** Peer operating mode change indication sent to host to update stats */
-    WMI_PEER_OPER_MODE_CHANGE_EVENTID,
+    /*
+     * The WMI_PEER_OPER_MODE_CHANGE_EVENTID def was originally mistakenly
+     * placed here, amongst the CMDID defs.
+     * The WMI_PEER_OPER_MODE_CHANGE_EVENTID def has been moved to the
+     * EVENTID section, but to preserve backwards compatibility, the value
+     * here that had been used for WMI_PEER_OPER_MODE_CHANGE_EVENTID
+     * is kept reserved/deprecated.
+     *
+     * This WMI_PEER_RESERVED0_CMDID value can be replaced with an actual
+     * WMI peer event message ID, though it will be simpler to instead add
+     * new WMI_PEER CMDID defs at the end of the WMI_GRP_PEER WMI_CMD_GRP.
+     */
+    WMI_PEER_RESERVED0_CMDID,
     /** Peer/Tid/Msduq threshold update */
     WMI_PEER_TID_MSDUQ_QDEPTH_THRESH_UPDATE_CMDID,
 
@@ -1270,6 +1281,32 @@ typedef enum {
     WMI_PEER_STA_PS_STATECHG_EVENTID,
     /** Peer Ant Div Info Event with rssi per chain, etc */
     WMI_PEER_ANTDIV_INFO_EVENTID,
+
+    /*
+     * WMI_PEER_RESERVED_EVENTID
+     * These values are used for placeholders, to allow the subsequent
+     * WMI_PEER_OPER_MODE_CHANGE_EVENTID constant to have the same value
+     * as it had in its original location, when it was mistakenly placed
+     * amongst the WMI_PEER CMDID defs.
+     *
+     * These WMI_PEER_RESERVED values can be replaced with actual WMI peer
+     * event message IDs, though it will be simpler to instead add new
+     * WMI_PEER EVENTID defs at the end of the WMI_GRP_PEER WMI_EVT_GRP.
+     */
+    WMI_PEER_RESERVED0_EVENTID,
+    WMI_PEER_RESERVED1_EVENTID,
+    WMI_PEER_RESERVED2_EVENTID,
+    WMI_PEER_RESERVED3_EVENTID,
+    WMI_PEER_RESERVED4_EVENTID,
+    WMI_PEER_RESERVED5_EVENTID,
+    WMI_PEER_RESERVED6_EVENTID,
+    WMI_PEER_RESERVED7_EVENTID,
+    WMI_PEER_RESERVED8_EVENTID,
+    WMI_PEER_RESERVED9_EVENTID,
+    WMI_PEER_RESERVED10_EVENTID,
+    /** Peer operating mode change indication sent to host to update stats */
+    WMI_PEER_OPER_MODE_CHANGE_EVENTID,
+
 
     /* beacon/mgmt specific events */
     /** RX management frame. the entire frame is carried along with the event.  */
