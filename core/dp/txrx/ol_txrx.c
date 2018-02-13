@@ -5911,6 +5911,16 @@ static struct cdp_mob_stats_ops ol_ops_mob_stats = {
 	.stats = ol_txrx_stats
 };
 
+static void *ol_get_pldev(struct cdp_pdev *txrx_pdev)
+{
+	struct ol_txrx_pdev_t *handle = (struct ol_txrx_pdev_t *)txrx_pdev;
+
+	if (handle != NULL)
+		return handle->pl_dev;
+
+	return NULL;
+}
+
 static struct cdp_cfg_ops ol_ops_cfg = {
 	.set_cfg_rx_fwd_disabled = ol_set_cfg_rx_fwd_disabled,
 	.set_cfg_packet_log_enabled = ol_set_cfg_packet_log_enabled,
@@ -5970,11 +5980,11 @@ static struct cdp_pmf_ops ol_ops_pmf = {
 	.get_pn_info = ol_txrx_get_pn_info
 };
 
-/* WINplatform specific structures */
 static struct cdp_ctrl_ops ol_ops_ctrl = {
-	/* EMPTY FOR MCL */
+	.txrx_get_pldev = ol_get_pldev,
 };
 
+/* WINplatform specific structures */
 static struct cdp_me_ops ol_ops_me = {
 	/* EMPTY FOR MCL */
 };
