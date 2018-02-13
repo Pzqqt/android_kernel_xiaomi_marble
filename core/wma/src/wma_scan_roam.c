@@ -2852,127 +2852,6 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 /**
- * wma_switch_channel() -  WMA api to switch channel dynamically
- * @wma: Pointer of WMA context
- * @req: Pointer vdev_start having channel switch info.
- *
- * Return: 0 for success, otherwise appropriate error code
- */
-static QDF_STATUS wma_switch_channel(tp_wma_handle wma,
-				     struct wma_vdev_start_req *req)
-{
-
-	wmi_buf_t buf;
-	wmi_channel *cmd;
-	int32_t len, ret;
-	WLAN_PHY_MODE chanmode;
-	struct wma_txrx_node *intr = wma->interfaces;
-	tpAniSirGlobal pmac;
-
-	pmac = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (pmac == NULL) {
-		WMA_LOGE("%s: channel switch failed as pmac is NULL",
-			 __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	chanmode = wma_chan_phy_mode(req->chan, req->chan_width,
-				     req->dot11_mode);
-
-	if (chanmode == MODE_UNKNOWN) {
-		WMA_LOGE("%s: invalid phy mode!", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	cmd = (wmi_channel *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_channel,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-
-	/* Fill channel info */
-	cmd->mhz = cds_chan_to_freq(req->chan);
-
-	intr[req->vdev_id].chanmode = chanmode; /* save channel mode */
-	intr[req->vdev_id].ht_capable = req->ht_capable;
-	intr[req->vdev_id].vht_capable = req->vht_capable;
-	intr[req->vdev_id].config.gtx_info.gtxRTMask[0] =
-						CFG_TGT_DEFAULT_GTX_HT_MASK;
-	intr[req->vdev_id].config.gtx_info.gtxRTMask[1] =
-						CFG_TGT_DEFAULT_GTX_VHT_MASK;
-
-	if (wlan_cfg_get_int(pmac, WNI_CFG_TGT_GTX_USR_CFG,
-	    &intr[req->vdev_id].config.gtx_info.gtxUsrcfg) != eSIR_SUCCESS) {
-		intr[req->vdev_id].config.gtx_info.gtxUsrcfg =
-						WNI_CFG_TGT_GTX_USR_CFG_STADEF;
-		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_WARN,
-			  "Failed to get WNI_CFG_TGT_GTX_USR_CFG");
-	}
-
-	intr[req->vdev_id].config.gtx_info.gtxPERThreshold =
-					CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
-	intr[req->vdev_id].config.gtx_info.gtxPERMargin =
-					CFG_TGT_DEFAULT_GTX_PER_MARGIN;
-	intr[req->vdev_id].config.gtx_info.gtxTPCstep =
-					CFG_TGT_DEFAULT_GTX_TPC_STEP;
-	intr[req->vdev_id].config.gtx_info.gtxTPCMin =
-					CFG_TGT_DEFAULT_GTX_TPC_MIN;
-	intr[req->vdev_id].config.gtx_info.gtxBWMask =
-					CFG_TGT_DEFAULT_GTX_BW_MASK;
-	intr[req->vdev_id].mhz = cmd->mhz;
-
-	WMI_SET_CHANNEL_MODE(cmd, chanmode);
-	cmd->band_center_freq1 = cmd->mhz;
-
-	if (chanmode == MODE_11AC_VHT80)
-		cmd->band_center_freq1 =
-			cds_chan_to_freq(req->ch_center_freq_seg0);
-
-	if ((chanmode == MODE_11NA_HT40) || (chanmode == MODE_11NG_HT40) ||
-			(chanmode == MODE_11AC_VHT40)) {
-		if (req->chan_width == CH_WIDTH_80MHZ)
-			cmd->band_center_freq1 += 10;
-		else
-			cmd->band_center_freq1 -= 10;
-	}
-	cmd->band_center_freq2 = 0;
-
-	/* Set half or quarter rate WMI flags */
-	if (req->is_half_rate)
-		WMI_SET_CHANNEL_FLAG(cmd, WMI_CHAN_FLAG_HALF_RATE);
-	else if (req->is_quarter_rate)
-		WMI_SET_CHANNEL_FLAG(cmd, WMI_CHAN_FLAG_QUARTER_RATE);
-
-	/* Find out min, max and regulatory power levels */
-	WMI_SET_CHANNEL_REG_POWER(cmd, req->max_txpow);
-	WMI_SET_CHANNEL_MAX_TX_POWER(cmd, req->max_txpow);
-
-
-	WMA_LOGE("%s: freq %d channel %d chanmode %d center_chan %d center_freq2 %d reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x",
-		 __func__, cmd->mhz, req->chan, chanmode,
-		 cmd->band_center_freq1, cmd->band_center_freq2,
-		 cmd->reg_info_1, cmd->reg_info_2, req->max_txpow);
-
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_PDEV_SET_CHANNEL_CMDID);
-
-	if (ret < 0) {
-		WMA_LOGP("%s: Failed to send vdev start command", __func__);
-		wmi_buf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-
-/**
  * wma_set_channel() - set channel
  * @wma: wma handle
  * @params: switch channel parameters
@@ -3092,39 +2971,34 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam() &&
 	    wma_is_vdev_up(vdev_id)) {
-		status = wma_switch_channel(wma, &req);
-		if (status != QDF_STATUS_SUCCESS)
-			WMA_LOGE("%s: wma_switch_channel failed %d\n", __func__,
-				 status);
-
-		/* This is temporary, should be removed */
-		ol_htt_mon_note_chan(pdev, req.chan);
-		goto send_resp;
-	} else {
-
-		msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
-				WMA_TARGET_REQ_TYPE_VDEV_START, params,
-				WMA_VDEV_START_REQUEST_TIMEOUT);
-		if (!msg) {
-			WMA_LOGP("%s: Failed to fill channel switch request for vdev %d",
-				__func__, req.vdev_id);
-			status = QDF_STATUS_E_NOMEM;
-			goto send_resp;
-		}
-		status = wma_vdev_start(wma, &req,
-				wma->interfaces[req.vdev_id].is_channel_switch);
-		if (status != QDF_STATUS_SUCCESS) {
-			wma_remove_vdev_req(wma, req.vdev_id,
-					    WMA_TARGET_REQ_TYPE_VDEV_START);
-			WMA_LOGP("%s: vdev start failed status = %d", __func__,
-				status);
-			goto send_resp;
-		}
-
-		/* This is temporary, should be removed */
-		if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
-			ol_htt_mon_note_chan(pdev, req.chan);
+		WMA_LOGD("%s: setting channel switch to true for vdev_id:%d",
+			 __func__, req.vdev_id);
+		wma->interfaces[req.vdev_id].is_channel_switch = true;
 	}
+
+	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
+			WMA_TARGET_REQ_TYPE_VDEV_START, params,
+			WMA_VDEV_START_REQUEST_TIMEOUT);
+	if (!msg) {
+		WMA_LOGP("%s: Failed to fill channel switch request for vdev %d",
+			__func__, req.vdev_id);
+		status = QDF_STATUS_E_NOMEM;
+		goto send_resp;
+	}
+	status = wma_vdev_start(wma, &req,
+			wma->interfaces[req.vdev_id].is_channel_switch);
+	if (status != QDF_STATUS_SUCCESS) {
+		wma_remove_vdev_req(wma, req.vdev_id,
+				    WMA_TARGET_REQ_TYPE_VDEV_START);
+		WMA_LOGP("%s: vdev start failed status = %d", __func__,
+			status);
+		goto send_resp;
+	}
+
+	/* This is temporary, should be removed */
+	if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
+		ol_htt_mon_note_chan(pdev, req.chan);
+
 	return;
 send_resp:
 	WMA_LOGD("%s: channel %d ch_width %d txpower %d status %d", __func__,
