@@ -19,6 +19,7 @@
 
 #ifdef IPA_OFFLOAD
 
+#define DP_IPA_MAX_IFACE	3
 #define IPA_TCL_DATA_RING_IDX	2
 #define IPA_TX_COMP_RING_IDX	2
 #define IPA_REO_DEST_RING_IDX	3
@@ -55,10 +56,21 @@ QDF_STATUS dp_ipa_get_stat(struct cdp_pdev *pdev);
 qdf_nbuf_t dp_tx_send_ipa_data_frame(struct cdp_vdev *vdev, qdf_nbuf_t skb);
 QDF_STATUS dp_ipa_enable_autonomy(struct cdp_pdev *pdev);
 QDF_STATUS dp_ipa_disable_autonomy(struct cdp_pdev *pdev);
+#ifdef CONFIG_IPA_WDI_UNIFIED_API
 QDF_STATUS dp_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
-		void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
-		uint32_t ipa_desc_size, void *ipa_priv, bool is_rm_enabled,
-		uint32_t *tx_pipe_handle, uint32_t *rx_pipe_handle);
+			void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+			uint32_t ipa_desc_size, void *ipa_priv,
+			bool is_rm_enabled, uint32_t *tx_pipe_handle,
+			uint32_t *rx_pipe_handle,
+			bool is_smmu_enabled,
+			qdf_ipa_sys_connect_params_t *sys_in);
+#else /* CONFIG_IPA_WDI_UNIFIED_API */
+QDF_STATUS dp_ipa_setup(struct cdp_pdev *pdev, void *ipa_i2w_cb,
+			void *ipa_w2i_cb, void *ipa_wdi_meter_notifier_cb,
+			uint32_t ipa_desc_size, void *ipa_priv,
+			bool is_rm_enabled, uint32_t *tx_pipe_handle,
+			uint32_t *rx_pipe_handle);
+#endif /* CONFIG_IPA_WDI_UNIFIED_API */
 QDF_STATUS dp_ipa_cleanup(uint32_t tx_pipe_handle,
 		uint32_t rx_pipe_handle);
 QDF_STATUS dp_ipa_remove_header(char *name);
