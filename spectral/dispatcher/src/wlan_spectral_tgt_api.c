@@ -205,6 +205,10 @@ tgt_spectral_register_nl_cb(
 	struct wlan_objmgr_psoc *psoc = NULL;
 	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
 
+	if (!pdev) {
+		spectral_err("PDEV is NULL!");
+		return;
+	}
 	psoc = wlan_pdev_get_psoc(pdev);
 
 	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
@@ -224,4 +228,20 @@ tgt_spectral_use_nl_bcast(struct wlan_objmgr_pdev *pdev)
 	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
 
 	return psptrl_tx_ops->sptrlto_use_nl_bcast(pdev);
+}
+
+void tgt_spectral_deregister_nl_cb(struct wlan_objmgr_pdev *pdev)
+{
+	struct wlan_objmgr_psoc *psoc = NULL;
+	struct wlan_lmac_if_sptrl_tx_ops *psptrl_tx_ops = NULL;
+
+	if (!pdev) {
+		spectral_err("PDEV is NULL!");
+		return;
+	}
+	psoc = wlan_pdev_get_psoc(pdev);
+
+	psptrl_tx_ops = &psoc->soc_cb.tx_ops.sptrl_tx_ops;
+
+	psptrl_tx_ops->sptrlto_deregister_netlink_cb(pdev);
 }

@@ -45,4 +45,5 @@ spectral_ctx_init_ol(struct spectral_context *sc)
 	    tgt_register_wmi_spectral_cmd_ops;
 	sc->sptrlc_register_netlink_cb = tgt_spectral_register_nl_cb;
 	sc->sptrlc_use_nl_bcast = tgt_spectral_use_nl_bcast;
+	sc->sptrlc_deregister_netlink_cb = tgt_spectral_deregister_nl_cb;
 }

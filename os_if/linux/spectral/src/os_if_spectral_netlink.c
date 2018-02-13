@@ -26,8 +26,8 @@
 #include <net/cnss_nl.h>
 #endif
 
-struct sock *os_if_spectral_nl_sock;
 #ifndef CNSS_GENL
+static struct sock *os_if_spectral_nl_sock;
 static atomic_t spectral_nl_users = ATOMIC_INIT(0);
 #endif
 
@@ -84,7 +84,7 @@ os_if_spectral_create_nl_sock(struct netlink_kernel_cfg *cfg)
 {
 	os_if_spectral_nl_sock =
 	    (struct sock *)netlink_kernel_create(&init_net,
-						 NETLINK_ATHEROS, cfg);
+						 SPECTRAL_NETLINK, cfg);
 }
 #elif KERNEL_VERSION(3, 6, 0) <= LINUX_VERSION_CODE
 static void
@@ -92,7 +92,7 @@ os_if_spectral_create_nl_sock(struct netlink_kernel_cfg *cfg)
 {
 	os_if_spectral_nl_sock =
 	    (struct sock *)netlink_kernel_create(&init_net,
-						 NETLINK_ATHEROS,
+						 SPECTRAL_NETLINK,
 						 THIS_MODULE, cfg);
 }
 #elif (KERNEL_VERSION(2, 6, 31) > LINUX_VERSION_CODE)
@@ -101,7 +101,7 @@ os_if_spectral_create_nl_sock(struct netlink_kernel_cfg *cfg)
 {
 	os_if_spectral_nl_sock =
 	    (struct sock *)netlink_kernel_create(
-		NETLINK_ATHEROS, 1,
+		SPECTRAL_NETLINK, 1,
 		&os_if_spectral_nl_data_ready,
 		THIS_MODULE);
 }
@@ -115,7 +115,7 @@ os_if_spectral_create_nl_sock(struct netlink_kernel_cfg *cfg)
 	cfg->input = &os_if_spectral_nl_data_ready;
 	os_if_spectral_nl_sock =
 	    (struct sock *)netlink_kernel_create(&init_net,
-						 NETLINK_ATHEROS, cfg);
+						 SPECTRAL_NETLINK, cfg);
 }
 #else
 static void
@@ -124,7 +124,7 @@ os_if_spectral_create_nl_sock(struct netlink_kernel_cfg *cfg)
 	os_if_spectral_nl_sock =
 	    (struct sock *)netlink_kernel_create(
 		&init_net,
-		NETLINK_ATHEROS, 1,
+		SPECTRAL_NETLINK, 1,
 		&os_if_spectral_nl_data_ready,
 		NULL, THIS_MODULE);
 }
@@ -239,7 +239,7 @@ os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev)
 		spectral_err("PDEV SPECTRAL object is NULL!");
 		return NULL;
 	}
-	ps->skb = dev_alloc_skb(MAX_SPECTRAL_PAYLOAD);
+	ps->skb = qdf_nbuf_alloc(NULL, MAX_SPECTRAL_PAYLOAD, 0, 0, false);
 
 	if (!ps->skb) {
 		spectral_err("allocate skb (len=%u) failed",
@@ -247,19 +247,17 @@ os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev)
 		return NULL;
 	}
 
-	skb_put(ps->skb, MAX_SPECTRAL_PAYLOAD);
+	qdf_nbuf_put_tail(ps->skb, MAX_SPECTRAL_PAYLOAD);
 	spectral_nlh = (struct nlmsghdr *)ps->skb->data;
 
-	OS_MEMZERO(spectral_nlh,
-		   sizeof(*spectral_nlh));
+	OS_MEMZERO(spectral_nlh, sizeof(*spectral_nlh));
 
 	/*
 	 * Possible bug that size of  struct spectral_samp_msg and
 	 * SPECTRAL_MSG differ by 3 bytes  so we miss 3 bytes
 	 */
 
-	spectral_nlh->nlmsg_len =
-	    NLMSG_SPACE(sizeof(struct spectral_samp_msg));
+	spectral_nlh->nlmsg_len = NLMSG_SPACE(sizeof(struct spectral_samp_msg));
 	spectral_nlh->nlmsg_pid = 0;
 	spectral_nlh->nlmsg_flags = 0;
 	spectral_nlh->nlmsg_type = WLAN_NL_MSG_SPECTRAL_SCAN;
@@ -460,9 +458,31 @@ os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev)
 	nl_cb.get_nbuff = os_if_spectral_prep_skb;
 	nl_cb.send_nl_bcast = os_if_spectral_nl_bcast_msg;
 	nl_cb.send_nl_unicast = os_if_spectral_nl_unicast_msg;
-	nl_cb.destroy_netlink = os_if_spectral_destroy_netlink;
 
 	if (sptrl_ctx->sptrlc_register_netlink_cb)
 		sptrl_ctx->sptrlc_register_netlink_cb(pdev, &nl_cb);
 }
 EXPORT_SYMBOL(os_if_spectral_netlink_init);
+
+void os_if_spectral_netlink_deinit(struct wlan_objmgr_pdev *pdev)
+{
+	struct spectral_context *sptrl_ctx;
+
+	if (!pdev) {
+		spectral_err("PDEV is NULL!");
+		return;
+	}
+
+	sptrl_ctx = spectral_get_spectral_ctx_from_pdev(pdev);
+
+	if (!sptrl_ctx) {
+		spectral_err("Spectral context is NULL!");
+		return;
+	}
+
+	if (sptrl_ctx->sptrlc_deregister_netlink_cb)
+		sptrl_ctx->sptrlc_deregister_netlink_cb(pdev);
+
+	os_if_spectral_destroy_netlink(pdev);
+}
+EXPORT_SYMBOL(os_if_spectral_netlink_deinit);

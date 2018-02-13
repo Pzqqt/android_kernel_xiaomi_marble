@@ -1841,8 +1841,6 @@ target_if_spectral_detach(struct target_if_spectral *spectral)
 
 		target_if_spectral_detach_simulation(spectral);
 
-		spectral->nl_cb.destroy_netlink(spectral->pdev_obj);
-
 		qdf_spinlock_destroy(&spectral->spectral_lock);
 		qdf_spinlock_destroy(&spectral->noise_pwr_reports_lock);
 
@@ -2785,6 +2783,26 @@ target_if_use_nl_bcast(struct wlan_objmgr_pdev *pdev)
 	return spectral->use_nl_bcast;
 }
 
+/**
+ * target_if_deregister_netlink_cb() - De-register Netlink callbacks
+ * @pdev: Pointer to pdev object
+ *
+ * Return: void
+ */
+static void
+target_if_deregister_netlink_cb(struct wlan_objmgr_pdev *pdev)
+{
+	struct target_if_spectral *spectral = NULL;
+
+	spectral = get_target_if_spectral_handle_from_pdev(pdev);
+	if (!spectral) {
+		spectral_err("SPECTRAL : Module doesn't exist");
+		return;
+	}
+
+	qdf_mem_zero(&spectral->nl_cb, sizeof(struct spectral_nl_cb));
+}
+
 void
 target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 {
@@ -2818,6 +2836,8 @@ target_if_sptrl_register_tx_ops(struct wlan_lmac_if_tx_ops *tx_ops)
 	    target_if_register_netlink_cb;
 	tx_ops->sptrl_tx_ops.sptrlto_use_nl_bcast =
 	    target_if_use_nl_bcast;
+	tx_ops->sptrl_tx_ops.sptrlto_deregister_netlink_cb =
+	    target_if_deregister_netlink_cb;
 }
 EXPORT_SYMBOL(target_if_sptrl_register_tx_ops);
 

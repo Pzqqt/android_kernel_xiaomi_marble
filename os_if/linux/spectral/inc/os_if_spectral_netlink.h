@@ -33,8 +33,8 @@ void os_if_spectral_nl_data_ready(struct sock *sk, int len);
 void os_if_spectral_nl_data_ready(struct sk_buff *skb);
 #endif /* VERSION CHECK */
 
-#ifndef NETLINK_ATHEROS
-#define NETLINK_ATHEROS              (NETLINK_GENERIC + 1)
+#ifndef SPECTRAL_NETLINK
+#define SPECTRAL_NETLINK              (NETLINK_GENERIC + 1)
 #endif
 #define MAX_SPECTRAL_PAYLOAD         1500
 
@@ -46,9 +46,8 @@ extern struct net init_net;
  * and register the NL handlers with Spectral target_if
  * @pdev: Pointer to pdev
  *
- * Sending Netlink messages to application layer and de-initialization of
- * netlink related data structures are defined in os_if layer,
- * they need to be registered with Spectral target_if
+ * Preparing socket buffer and sending Netlink messages to application layer are
+ * defined in os_if layer, they need to be registered with Spectral target_if
  *
  * Return: None
  */
@@ -64,4 +63,12 @@ void os_if_spectral_netlink_init(struct wlan_objmgr_pdev *pdev);
  */
 void *os_if_spectral_prep_skb(struct wlan_objmgr_pdev *pdev);
 
+/**
+ * os_if_spectral_netlink_deinit() - De-initialize Spectral Netlink data
+ * structures and de-register the NL handlers from Spectral target_if
+ * @pdev: Pointer to pdev
+ *
+ * Return: None
+ */
+void os_if_spectral_netlink_deinit(struct wlan_objmgr_pdev *pdev);
 #endif /* _OS_IF_SPECTRAL_NETLINK_H */

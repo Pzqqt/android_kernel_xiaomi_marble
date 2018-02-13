@@ -510,13 +510,11 @@ struct wlan_objmgr_pdev;
  * @get_nbuff:      Get the socket buffer to send the data to the application
  * @send_nl_bcast:  Send data to the application using netlink broadcast
  * @send_nl_unicast:  Send data to the application using netlink unicast
- * @destroy_netlink:    De-initialize Netlink data structures
  */
 struct spectral_nl_cb {
 	void *(*get_nbuff)(struct wlan_objmgr_pdev *pdev);
 	int (*send_nl_bcast)(struct wlan_objmgr_pdev *pdev);
 	int (*send_nl_unicast)(struct wlan_objmgr_pdev *pdev);
-	int (*destroy_netlink)(struct wlan_objmgr_pdev *pdev);
 };
 #ifdef WIN32
 #pragma pack(pop, spectral)

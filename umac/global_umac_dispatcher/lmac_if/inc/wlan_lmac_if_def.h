@@ -336,6 +336,7 @@ struct wmi_spectral_cmd_ops;
  * @sptrlto_get_spectral_diagstats: Get Spectral diagnostic statistics
  * @sptrlto_register_netlink_cb: Register Spectral Netlink callbacks
  * @sptrlto_use_nl_bcast: Get whether to use Netlink broadcast/unicast
+ * @sptrlto_deregister_netlink_cb: De-register Spectral Netlink callbacks
  **/
 struct wlan_lmac_if_sptrl_tx_ops {
 	void *(*sptrlto_pdev_spectral_init)(struct wlan_objmgr_pdev *pdev);
@@ -364,6 +365,7 @@ struct wlan_lmac_if_sptrl_tx_ops {
 		struct wlan_objmgr_pdev *pdev,
 		struct spectral_nl_cb *nl_cb);
 	bool (*sptrlto_use_nl_bcast)(struct wlan_objmgr_pdev *pdev);
+	void (*sptrlto_deregister_netlink_cb)(struct wlan_objmgr_pdev *pdev);
 };
 #endif /* WLAN_CONV_SPECTRAL_ENABLE */
 

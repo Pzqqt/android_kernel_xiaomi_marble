@@ -211,4 +211,12 @@ void tgt_spectral_register_nl_cb(struct wlan_objmgr_pdev *pdev,
  * Return: true for broadcast, false for unicast
  */
 bool tgt_spectral_use_nl_bcast(struct wlan_objmgr_pdev *pdev);
+
+/**
+ * tgt_spectral_deregister_nl_cb() - De-register Netlink callbacks
+ * @pdev: Pointer to pdev object
+ *
+ * Return: void
+ */
+void tgt_spectral_deregister_nl_cb(struct wlan_objmgr_pdev *pdev);
 #endif /* _WLAN_SPECTRAL_TGT_API_H_ */
