@@ -1425,7 +1425,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 		qdf_mem_free_consistent(
 			pdev->osdev, pdev->osdev->dev,
 			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) *
-							sizeof(qdf_nbuf_t),
+							sizeof(target_paddr_t),
 			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 			pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
 			qdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
