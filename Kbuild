@@ -1762,7 +1762,7 @@ PLD_OBJS +=	$(PLD_SRC_DIR)/pld_usb.o
 endif
 
 ifeq ($(CONFIG_QCA6290_11AX), y)
-TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v1 \
+TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/11ax/v2 \
 		-I$(WLAN_ROOT)/../fw-api/fw
 else
 TARGET_INC :=	-I$(WLAN_ROOT)/../fw-api/hw/qca6290/v2 \
