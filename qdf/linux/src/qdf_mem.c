@@ -61,7 +61,7 @@
 #include <qdf_list.h>
 
 /* Preprocessor Definitions and Constants */
-#define QDF_MEM_MAX_MALLOC (1024 * 1024) /* 1MiB */
+#define QDF_MEM_MAX_MALLOC (4096 * 1024) /* 4 Mega Bytes */
 #define QDF_MEM_WARN_THRESHOLD 300 /* ms */
 
 static qdf_list_t qdf_mem_domains[QDF_DEBUG_DOMAIN_COUNT];
