@@ -14199,7 +14199,7 @@ enum hdd_external_acs_freq_band {
  * nr_offload_time_offset - time interval in seconds after the
  * neighbor report offload command to send the first neighbor report request
  * frame
- * @Min: 30
+ * @Min: 0
  * @Max: 3600
  * @Default: 30
  *
@@ -14282,7 +14282,7 @@ enum hdd_external_acs_freq_band {
  * nr_offload_cache_timeout - time in seconds after which the
  * neighbor report cache is marked as timed out and any of the triggers would
  * cause a neighbor report request frame to be sent.
- * @Min: 300
+ * @Min: 5
  * @Max: 86400
  * @Default: 1200
  *
@@ -14294,7 +14294,7 @@ enum hdd_external_acs_freq_band {
  */
 #define CFG_OFFLOAD_NEIGHBOR_REPORT_CACHE_TIMEOUT_NAME \
 	"nr_offload_cache_timeout"
-#define CFG_OFFLOAD_NEIGHBOR_REPORT_CACHE_TIMEOUT_MIN     (300)
+#define CFG_OFFLOAD_NEIGHBOR_REPORT_CACHE_TIMEOUT_MIN     (5)
 #define CFG_OFFLOAD_NEIGHBOR_REPORT_CACHE_TIMEOUT_MAX     (86400)
 #define CFG_OFFLOAD_NEIGHBOR_REPORT_CACHE_TIMEOUT_DEFAULT (1200)
 
@@ -14304,7 +14304,7 @@ enum hdd_external_acs_freq_band {
  * report requests that can be sent to a connected peer in the current session.
  * This counter is reset once a successful roam happens or at cache timeout
  * @Min: 3
- * @Max: 10
+ * @Max: 300
  * @Default: 3
  *
  * Related : nr_offload_params_bitmask
