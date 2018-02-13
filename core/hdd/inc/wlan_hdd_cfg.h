@@ -5300,8 +5300,8 @@ enum hdd_link_speed_rpt_type {
  * <ini>
  * gSetTxChainmask1x1 - Sets Transmit chain mask.
  * @Min: 1
- * @Max: 2
- * @Default: 1
+ * @Max: 3
+ * @Default: 0
  *
  * This ini Sets Transmit chain mask.
  *
@@ -5311,6 +5311,7 @@ enum hdd_link_speed_rpt_type {
  * chain0 is selected for both Tx and Rx.
  * gSetTxChainmask1x1=1 or gSetRxChainmask1x1=1 to select chain0.
  * gSetTxChainmask1x1=2 or gSetRxChainmask1x1=2 to select chain1.
+ * gSetTxChainmask1x1=3 or gSetRxChainmask1x1=3 to select both chains.
  *
  * Supported Feature: 11AC
  *
@@ -5321,15 +5322,15 @@ enum hdd_link_speed_rpt_type {
 
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK         "gSetTxChainmask1x1"
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MIN     (0)
-#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MAX     (2)
+#define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MAX     (3)
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_DEFAULT (0)
 
 /*
  * <ini>
  * gSetRxChainmask1x1 - Sets Receive chain mask.
  * @Min: 1
- * @Max: 2
- * @Default: 1
+ * @Max: 3
+ * @Default: 0
  *
  * This ini is  used to set Receive chain mask.
  *
@@ -5339,6 +5340,7 @@ enum hdd_link_speed_rpt_type {
  * chain0 is selected for both Tx and Rx.
  * gSetTxChainmask1x1=1 or gSetRxChainmask1x1=1 to select chain0.
  * gSetTxChainmask1x1=2 or gSetRxChainmask1x1=2 to select chain1.
+ * gSetTxChainmask1x1=3 or gSetRxChainmask1x1=3 to select both chains.
  *
  * Supported Feature: 11AC
  *
@@ -5349,7 +5351,7 @@ enum hdd_link_speed_rpt_type {
 
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK         "gSetRxChainmask1x1"
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MIN     (0)
-#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MAX     (2)
+#define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_MAX     (3)
 #define CFG_VHT_ENABLE_1x1_RX_CHAINMASK_DEFAULT (0)
 
 /*
