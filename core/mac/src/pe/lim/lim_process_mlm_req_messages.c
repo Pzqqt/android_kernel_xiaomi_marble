@@ -168,9 +168,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 		lim_process_ft_preauth_rsp_timeout(mac_ctx);
 		break;
-	case SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT:
-		lim_process_insert_single_shot_noa_timeout(mac_ctx);
-		break;
 	case SIR_LIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE:
 		lim_convert_active_channel_to_passive_channel(mac_ctx);
 		break;

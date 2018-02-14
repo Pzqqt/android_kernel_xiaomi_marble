@@ -486,8 +486,7 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, struct scheduler_msg *limMs
 		    && (limMsg->type != WMA_SET_MIMOPS_RSP)
 		    && (limMsg->type != WMA_SWITCH_CHANNEL_RSP)
 		    && (limMsg->type != WMA_P2P_NOA_ATTR_IND)
-		    && (limMsg->type != WMA_P2P_NOA_START_IND) &&
-		    (limMsg->type != WMA_ADD_TS_RSP) &&
+		    && (limMsg->type != WMA_ADD_TS_RSP) &&
 		    /*
 		     * LIM won't process any defer queue commands if gLimAddtsSent is
 		     * set to TRUE. gLimAddtsSent will be set TRUE to while sending
@@ -1286,7 +1285,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	tUpdateBeaconParams beacon_params;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	uint8_t i;
-	uint8_t p2p_go_exists = 0;
 	tpPESession session_entry = NULL;
 	uint8_t defer_msg = false;
 	tLinkStateParams *link_state_param;
@@ -1496,46 +1494,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-	case SIR_HAL_P2P_NOA_START_IND:
-		session_entry = &mac_ctx->lim.gpSession[0];
-		pe_debug("LIM received NOA start %x", msg->type);
-
-		/* Since insert NOA is done and NOA start msg received,
-		 * we should deactivate the Insert NOA timer
-		 */
-		lim_deactivate_and_change_timer(mac_ctx,
-			eLIM_INSERT_SINGLESHOT_NOA_TIMER);
-
-		for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
-			session_entry = &mac_ctx->lim.gpSession[i];
-			if ((session_entry != NULL) && (session_entry->valid) &&
-				(session_entry->pePersona == QDF_P2P_GO_MODE)) {
-				/* Save P2P NOA start attribute for Go persona*/
-				p2p_go_exists = 1;
-				qdf_mem_copy(&session_entry->p2pGoPsNoaStartInd,
-					msg->bodyptr, sizeof(tSirP2PNoaStart));
-				qdf_status =
-					session_entry->p2pGoPsNoaStartInd.status;
-				if (qdf_status != QDF_STATUS_SUCCESS)
-					QDF_TRACE(QDF_MODULE_ID_PE, LOGW,
-						FL(
-						"GO NOA start status %d by FW"),
-						qdf_status);
-				break;
-			}
-		}
-
-		if (p2p_go_exists == 0)
-			QDF_TRACE(QDF_MODULE_ID_PE, LOGW,
-				FL(
-				"GO is removed by the time NOA start recvd"));
-
-		/* We received the NOA start indication. Now we can send down
-		 * the SME request which requires off-channel operation */
-		lim_process_regd_defd_sme_req_after_noa_start(mac_ctx);
-		qdf_mem_free(msg->bodyptr);
-		msg->bodyptr = NULL;
-		break;
 #ifdef FEATURE_WLAN_TDLS
 	case SIR_HAL_TDLS_IND:
 		tdls_ind = (tpSirTdlsInd) msg->bodyptr;
@@ -1631,7 +1589,6 @@ static void lim_process_messages(tpAniSirGlobal mac_ctx,
 	case SIR_LIM_ASSOC_FAIL_TIMEOUT:
 	case SIR_LIM_REASSOC_FAIL_TIMEOUT:
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
-	case SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT:
 	case SIR_LIM_DISASSOC_ACK_TIMEOUT:
 	case SIR_LIM_DEAUTH_ACK_TIMEOUT:
 	case SIR_LIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE:

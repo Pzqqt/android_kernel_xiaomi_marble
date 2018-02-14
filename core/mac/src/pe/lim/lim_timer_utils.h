@@ -72,7 +72,6 @@ enum {
 };
 
 #define LIM_DISASSOC_DEAUTH_ACK_TIMEOUT         500
-#define LIM_INSERT_SINGLESHOTNOA_TIMEOUT_VALUE  500
 
 /* Timer Handler functions */
 uint32_t lim_create_timers(tpAniSirGlobal);

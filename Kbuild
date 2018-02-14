@@ -603,7 +603,6 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ft.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ibss_peer_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_link_monitoring_algo.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_p2p.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_action_frame.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_assoc_req_frame.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_assoc_rsp_frame.o \

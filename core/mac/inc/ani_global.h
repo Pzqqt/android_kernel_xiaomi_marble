@@ -318,8 +318,6 @@ typedef struct sLimTimers {
 	TX_TIMER gLimPeriodicJoinProbeReqTimer;
 	TX_TIMER gLimDisassocAckTimer;
 	TX_TIMER gLimDeauthAckTimer;
-	/* This timer is started when single shot NOA insert msg is sent to FW for scan in P2P GO mode */
-	TX_TIMER gLimP2pSingleShotNoaInsertTimer;
 	/* This timer is used to convert active channel to
 	 * passive channel when there is no beacon
 	 * for a period of time on a particular DFS channel

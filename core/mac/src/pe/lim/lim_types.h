@@ -940,15 +940,8 @@ lim_change_channel_with_callback(tpAniSirGlobal pMac, uint8_t newChannel,
 				 CHANGE_CHANNEL_CALLBACK callback,
 				 uint32_t *cbdata, tpPESession psessionEntry);
 
-void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
-				 uint8_t *frame, uint32_t frameLen,
-				 uint16_t sessionId, uint32_t rxChan,
-				 tpPESession psessionEntry, int8_t rxRssi);
 void lim_process_remain_on_chn_timeout(tpAniSirGlobal pMac);
-void lim_process_insert_single_shot_noa_timeout(tpAniSirGlobal pMac);
-void lim_convert_active_channel_to_passive_channel(tpAniSirGlobal pMac);
 void lim_send_p2p_action_frame(tpAniSirGlobal pMac, struct scheduler_msg *pMsg);
-void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal pMac);
 
 void lim_process_disassoc_ack_timeout(tpAniSirGlobal pMac);
 void lim_process_deauth_ack_timeout(tpAniSirGlobal pMac);

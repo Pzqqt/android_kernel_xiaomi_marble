@@ -340,21 +340,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		goto err_timer;
 	}
 
-	/* (> no of BI* no of TUs per BI * 1TU in msec +
-	 * p2p start time offset*1 TU in msec = 2*100*1.024 + 5*1.024
-	 * = 204.8 + 5.12 = 209.20)
-	 */
-	cfgValue = LIM_INSERT_SINGLESHOTNOA_TIMEOUT_VALUE;
-	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(pMac,
-		&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer,
-		"Single Shot NOA Insert timeout", lim_timer_handler,
-		SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT, cfgValue, 0,
-		TX_NO_ACTIVATE) != TX_SUCCESS) {
-		pe_err("Can't create Single Shot NOA Insert Timeout tmr");
-		goto err_timer;
-	}
-
 	cfgValue = ACTIVE_TO_PASSIVE_CONVERISON_TIMEOUT;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	if (tx_timer_create(pMac,
@@ -386,7 +371,6 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimQuietBssTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimQuietTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimChannelSwitchTimer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
 	tx_timer_delete(&pMac->lim.limTimers.sae_auth_timer);
 
@@ -873,31 +857,6 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 				    val, 0) != TX_SUCCESS) {
 			/**
 			 * Could not change Join Failure
-			 * timer. Log error.
-			 */
-			pe_err("Unable to change timer");
-			return;
-		}
-		break;
-
-	case eLIM_INSERT_SINGLESHOT_NOA_TIMER:
-		if (tx_timer_deactivate
-			    (&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer) !=
-		    TX_SUCCESS) {
-			/**
-			** Could not deactivate SingleShot NOA Insert
-			** timer. Log error.
-			**/
-			pe_err("Unable to deactivate SingleShot NOA Insert timer");
-			return;
-		}
-		val = LIM_INSERT_SINGLESHOTNOA_TIMEOUT_VALUE;
-		val = SYS_MS_TO_TICKS(val);
-		if (tx_timer_change
-			    (&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer, val,
-			    0) != TX_SUCCESS) {
-			/**
-			 * Could not change Single Shot NOA Insert
 			 * timer. Log error.
 			 */
 			pe_err("Unable to change timer");

@@ -4103,51 +4103,6 @@ skip_match:
 	return;
 }
 
-static void __lim_deregister_deferred_sme_req_after_noa_start(tpAniSirGlobal pMac)
-{
-	pe_debug("Dereg msgType %d", pMac->lim.gDeferMsgTypeForNOA);
-	pMac->lim.gDeferMsgTypeForNOA = 0;
-	if (pMac->lim.gpDefdSmeMsgForNOA != NULL) {
-		/* __lim_process_sme_scan_req consumed the buffer. We can free it. */
-		qdf_mem_free(pMac->lim.gpDefdSmeMsgForNOA);
-		pMac->lim.gpDefdSmeMsgForNOA = NULL;
-	}
-}
-
-/**
- * lim_process_regd_defd_sme_req_after_noa_start()
- *
- * mac_ctx: Pointer to Global MAC structure
- *
- * This function is called to process deferred sme req message
- * after noa start.
- *
- * Return: None
- */
-void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal mac_ctx)
-{
-	pe_debug("Process defd sme req %d",
-		mac_ctx->lim.gDeferMsgTypeForNOA);
-
-	if ((mac_ctx->lim.gDeferMsgTypeForNOA == 0) ||
-			(mac_ctx->lim.gpDefdSmeMsgForNOA == NULL)) {
-		pe_warn("start rcvd from FW when no sme deferred msg pending. Do nothing");
-		pe_warn("It may happen when NOA start ind and timeout happen at the same time");
-		return;
-	}
-	switch (mac_ctx->lim.gDeferMsgTypeForNOA) {
-	case eWNI_SME_JOIN_REQ:
-		__lim_process_sme_join_req(mac_ctx,
-				mac_ctx->lim.gpDefdSmeMsgForNOA);
-		break;
-	default:
-		pe_err("Unknown deferred msg type %d",
-			mac_ctx->lim.gDeferMsgTypeForNOA);
-		break;
-	}
-	__lim_deregister_deferred_sme_req_after_noa_start(mac_ctx);
-}
-
 static void
 __lim_process_sme_reset_ap_caps_change(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 {
