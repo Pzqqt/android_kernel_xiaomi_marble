@@ -4843,6 +4843,11 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 			ret = -EINVAL;
 			goto free;
 		}
+
+		/* check if STA is on indoor channel*/
+		if (policy_mgr_is_force_scc(hdd_ctx->psoc))
+			hdd_check_and_disconnect_sta_on_invalid_channel(
+								       hdd_ctx);
 	}
 	if (adapter->device_mode == QDF_SAP_MODE) {
 		/*
