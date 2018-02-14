@@ -12764,11 +12764,24 @@ typedef struct {
     A_UINT32 vdev_id; /** unique id identifying the VDEV */
     A_UINT32 flags; /* status flags */
     A_UINT32 refresh_cnt; /* number of successful GTK refresh exchanges since last SET operation */
+    /*
+     * As with all WMI messages, this message uses little-endian byte
+     * ordering within each A_UINT32 field.
+     * If a big-endian host is using automatic swapping of the bytes within
+     * each 4-byte A_UINT32 to automatically correct the endianness of the
+     * A_UINT32 fields as the message is uploaded from target --> host, the
+     * big-endian host will have to undo the automatic byte swapping for the
+     * below A_UINT8 fields, to restore them to their original order.
+     */
     A_UINT8 replay_counter[GTK_REPLAY_COUNTER_BYTES]; /* current replay counter */
     A_UINT8 igtk_keyIndex; /* Use if IGTK_OFFLOAD is defined */
     A_UINT8 igtk_keyLength; /* Use if IGTK_OFFLOAD is defined */
     A_UINT8 igtk_keyRSC[IGTK_PN_SIZE]; /* key replay sequence counter *//* Use if IGTK_OFFLOAD is defined */
     A_UINT8 igtk_key[WMI_MAX_KEY_LEN]; /* Use if IGTK_OFFLOAD is defined */
+    A_UINT8 gtk_keyIndex; /* GTK key index */
+    A_UINT8 gtk_keyLength; /* GTK key length */
+    A_UINT8 gtk_keyRSC[GTK_REPLAY_COUNTER_BYTES]; /* GTK key replay sequence counter */
+    A_UINT8 gtk_key[WMI_MAX_KEY_LEN]; /* GTK key data */
 } WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param;
 
 typedef struct {
