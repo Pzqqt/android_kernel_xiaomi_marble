@@ -3802,6 +3802,7 @@ void dp_peer_unref_delete(void *peer_handle)
 	struct dp_peer *tmppeer;
 	int found = 0;
 	uint16_t peer_id;
+	uint16_t vdev_id;
 
 	/*
 	 * Hold the lock all the way from checking if the peer ref count
@@ -3819,6 +3820,7 @@ void dp_peer_unref_delete(void *peer_handle)
 		  peer, qdf_atomic_read(&peer->ref_cnt));
 	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		peer_id = peer->peer_ids[0];
+		vdev_id = vdev->vdev_id;
 
 		/*
 		 * Make sure that the reference to the peer in
@@ -3875,9 +3877,9 @@ void dp_peer_unref_delete(void *peer_handle)
 					" - its last peer is done"),
 					vdev, vdev->mac_addr.raw);
 				/* all peers are gone, go ahead and delete it */
-				dp_tx_flow_pool_unmap_handler(pdev, vdev->vdev_id,
+				dp_tx_flow_pool_unmap_handler(pdev, vdev_id,
 								FLOW_TYPE_VDEV,
-								vdev->vdev_id);
+								vdev_id);
 				dp_tx_vdev_detach(vdev);
 				QDF_TRACE(QDF_MODULE_ID_DP,
 					QDF_TRACE_LEVEL_INFO_HIGH,
@@ -3885,6 +3887,7 @@ void dp_peer_unref_delete(void *peer_handle)
 					vdev, vdev->mac_addr.raw);
 
 				qdf_mem_free(vdev);
+				vdev = NULL;
 				if (vdev_delete_cb)
 					vdev_delete_cb(vdev_delete_context);
 			}
@@ -3892,21 +3895,30 @@ void dp_peer_unref_delete(void *peer_handle)
 			qdf_spin_unlock_bh(&soc->peer_ref_mutex);
 		}
 
+		if (vdev) {
+			if (vdev->vap_bss_peer == peer) {
+				vdev->vap_bss_peer = NULL;
+			}
+		}
+
 		if (soc->cdp_soc.ol_ops->peer_unref_delete) {
 			soc->cdp_soc.ol_ops->peer_unref_delete(pdev->osif_pdev,
-					vdev->vdev_id, peer->mac_addr.raw);
+					vdev_id, peer->mac_addr.raw);
 		}
+
+		if (!vdev || !vdev->vap_bss_peer) {
+			goto free_peer;
+		}
+
 #ifdef notyet
 		qdf_mempool_free(soc->osdev, soc->mempool_ol_ath_peer, peer);
 #else
-		if (!vdev || !vdev->vap_bss_peer)
-			goto free_peer;
-
 		bss_peer = vdev->vap_bss_peer;
 		DP_UPDATE_STATS(bss_peer, peer);
 
 free_peer:
 		qdf_mem_free(peer);
+
 #endif
 	} else {
 		qdf_spin_unlock_bh(&soc->peer_ref_mutex);
