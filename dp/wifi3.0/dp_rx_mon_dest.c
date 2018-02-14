@@ -139,11 +139,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	void *p_last_buf_addr_info;
 	uint32_t rx_bufs_used = 0;
 	uint32_t msdu_ppdu_id, msdu_cnt, last_ppdu_id;
+	uint32_t msdu_len;
 	uint8_t *data;
 	uint32_t i;
 	uint32_t total_frag_len = 0, frag_len = 0;
 	bool is_frag, is_first_msdu;
 
+	msdu_len = 0;
 	msdu = 0;
 	last_ppdu_id = dp_pdev->ppdu_info.com_info.last_ppdu_id;
 
@@ -237,6 +239,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 				  "%s total_len %u frag_len %u flags %u",
 				  __func__, total_frag_len, frag_len,
 				  msdu_list.msdu_info[i].msdu_flags);
+			msdu_len += frag_len;
 
 			rx_pkt_offset = HAL_RX_MON_HW_RX_DESC_SIZE();
 			/*
@@ -307,6 +310,8 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	qdf_nbuf_set_next(last, NULL);
 
 	*tail_msdu = msdu;
+
+	dp_pdev->ppdu_info.rx_status.ppdu_len += msdu_len;
 
 	return rx_bufs_used;
 
@@ -749,8 +754,6 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 
 		if (ppdu_id != pdev->ppdu_info.com_info.ppdu_id) {
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
-			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
-				sizeof(pdev->ppdu_info.rx_status));
 			pdev->ppdu_info.com_info.last_ppdu_id =
 				pdev->ppdu_info.com_info.ppdu_id;
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
@@ -765,6 +768,7 @@ void dp_rx_mon_dest_process(struct dp_soc *soc, uint32_t mac_id, uint32_t quota)
 		rxdma_dst_ring_desc = hal_srng_dst_get_next(hal_soc,
 			mon_dst_srng);
 	}
+
 	hal_srng_access_end(hal_soc, mon_dst_srng);
 
 	if (rx_bufs_used) {

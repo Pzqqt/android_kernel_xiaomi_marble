@@ -72,6 +72,7 @@ dp_rx_populate_cdp_indication_ppdu(struct dp_soc *soc,
 	cdp_rx_ppdu->peer_id = peer->peer_ids[0];
 	cdp_rx_ppdu->vdev_id = peer->vdev->vdev_id;
 	cdp_rx_ppdu->ppdu_id = ppdu_info->com_info.ppdu_id;
+	cdp_rx_ppdu->length = ppdu_info->rx_status.ppdu_len;
 	cdp_rx_ppdu->duration = ppdu_info->rx_status.duration;
 	cdp_rx_ppdu->u.bw = ppdu_info->rx_status.bw;
 	cdp_rx_ppdu->tcp_msdu_count = ppdu_info->rx_status.tcp_msdu_count;
@@ -263,7 +264,6 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 	 * Do not allocate if fcs error,
 	 * ast idx invalid / fctl invalid
 	 */
-
 	if (!ppdu_info->rx_status.frame_control_info_valid)
 		return;
 
@@ -359,15 +359,18 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		}
 
 		if (tlv_status == HAL_TLV_STATUS_PPDU_DONE) {
+			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
+			dp_rx_mon_dest_process(soc, mac_id, quota);
 			if (pdev->enhanced_stats_en ||
 					pdev->mcopy_mode)
 				dp_rx_handle_ppdu_stats(soc, pdev, ppdu_info);
 
-			pdev->mon_ppdu_status = DP_PPDU_STATUS_DONE;
-			dp_rx_mon_dest_process(soc, mac_id, quota);
 			pdev->mon_ppdu_status = DP_PPDU_STATUS_START;
 			pdev->ppdu_info.com_info.last_ppdu_id =
 				pdev->ppdu_info.com_info.ppdu_id;
+
+			qdf_mem_zero(&(pdev->ppdu_info.rx_status),
+				sizeof(pdev->ppdu_info.rx_status));
 		}
 	}
 	return;

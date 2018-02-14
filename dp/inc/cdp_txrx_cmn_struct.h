@@ -1023,6 +1023,7 @@ struct cdp_tx_completion_msdu {
  * UL_BSR_TRIG/UNKNOWN
  * @rssi: RSSI value (units = dB above noise floor)
  * @timestamp: TSF at the reception of PPDU
+ * @length: PPDU length
  * @channel: Channel informartion
  * @lsig_A: L-SIG in 802.11 PHY header
  */
@@ -1060,6 +1061,7 @@ struct cdp_rx_indication_ppdu {
 	uint32_t lsig_a;
 	uint32_t rssi;
 	uint64_t timestamp;
+	uint32_t length;
 	uint8_t channel;
 };
 
