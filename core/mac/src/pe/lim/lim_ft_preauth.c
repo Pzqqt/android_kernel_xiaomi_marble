@@ -758,9 +758,18 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 {
 	tpPESession session_entry;
 
-	session_entry = pe_find_session_by_sme_session_id(mac_ctx, session_id);
+	if (event == SIR_SCAN_EVENT_COMPLETED) {
+		session_entry = pe_find_session_by_session_id(mac_ctx,
+			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
+	} else {
+		session_entry = pe_find_session_by_sme_session_id(mac_ctx,
+					session_id);
+	}
+
 	if (session_entry == NULL) {
-		pe_err("SessionId:%d Session Does not exist", session_id);
+		pe_err("SmeSessionId:%d PeSessionId:%d does not exist",
+			session_id,
+			mac_ctx->lim.limTimers.gLimFTPreAuthRspTimer.sessionId);
 		return;
 	}
 
