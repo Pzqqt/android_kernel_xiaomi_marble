@@ -16237,3 +16237,15 @@ QDF_STATUS sme_handle_sae_msg(tHalHandle hal, uint8_t session_id,
 	return qdf_status;
 }
 #endif
+
+bool sme_is_sta_key_exchange_in_progress(tHalHandle hal, uint8_t session_id)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sme_err("Invalid session id: %d", session_id);
+		return false;
+	}
+
+	return CSR_IS_WAIT_FOR_KEY(mac_ctx, session_id);
+}

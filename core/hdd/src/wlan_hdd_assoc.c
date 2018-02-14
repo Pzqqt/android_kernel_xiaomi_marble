@@ -332,7 +332,8 @@ struct hdd_adapter *hdd_get_sta_connection_in_progress(
 				return adapter;
 			} else if ((eConnectionState_Associated ==
 				   hdd_sta_ctx->conn_info.connState) &&
-				   !hdd_sta_ctx->conn_info.uIsAuthenticated) {
+				   sme_is_sta_key_exchange_in_progress(
+				   hdd_ctx->hHal, adapter->session_id)) {
 				hdd_debug("session_id %d: Key exchange is in progress",
 					  adapter->session_id);
 				return adapter;

@@ -2168,4 +2168,16 @@ static inline int sme_update_he_rx_stbc_cap(tHalHandle hal, uint8_t session_id,
 }
 #endif
 
+/**
+ * sme_is_sta_key_exchange_in_progress() - checks whether the STA/P2P client
+ * session has key exchange in progress
+ *
+ * @hal: global hal handle
+ * @session_id: session id
+ *
+ * Return: true - if key exchange in progress
+ *         false - if not in progress
+ */
+bool sme_is_sta_key_exchange_in_progress(tHalHandle hal, uint8_t session_id);
+
 #endif /* #if !defined( __SME_API_H ) */
