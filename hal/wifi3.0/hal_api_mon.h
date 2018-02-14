@@ -729,7 +729,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 				VHT_SIG_A_INFO_0, BANDWIDTH);
 		ppdu_info->rx_status.vht_flag_values2 =
 			ppdu_info->rx_status.bw;
-
+		ppdu_info->rx_status.vht_flag_values4 =
+			HAL_RX_GET(vht_sig_a_info,
+				  VHT_SIG_A_INFO_1, SU_MU_CODING);
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_SU_E:
