@@ -54,12 +54,12 @@
 #include "wlan_hdd_cfg80211.h"
 #include "hif.h"
 #include <wlan_ioctl_ftm.h>
+#include <wlan_cfg80211_ftm.h>
 
-#define MAX_UTF_LENGTH              1024
 struct qcmbr_data {
 	unsigned int cmd;
 	unsigned int length;
-	unsigned char buf[MAX_UTF_LENGTH + 4];
+	unsigned char buf[WLAN_FTM_DATA_MAX_LEN + 4];
 	unsigned int copy_to_user;
 };
 
@@ -144,9 +144,9 @@ static int wlan_hdd_qcmbr_compat_ioctl(struct hdd_adapter *adapter,
 	}
 
 	ret = wlan_hdd_qcmbr_command(adapter, qcmbr_data);
-	if ((ret == 0) && qcmbr_data->copy_to_user) {
+	if ((ret == 0) && (qcmbr_data->cmd == 0x1001)) {
 		ret = copy_to_user(ifr->ifr_data, qcmbr_data->buf,
-				   (MAX_UTF_LENGTH + 4));
+				   (WLAN_FTM_DATA_MAX_LEN + 4));
 	}
 
 exit:
@@ -183,9 +183,9 @@ static int wlan_hdd_qcmbr_ioctl(struct hdd_adapter *adapter, struct ifreq *ifr)
 	}
 
 	ret = wlan_hdd_qcmbr_command(adapter, qcmbr_data);
-	if ((ret == 0) && qcmbr_data->copy_to_user) {
+	if ((ret == 0) && (qcmbr_data->cmd == 0x1001)) {
 		ret = copy_to_user(ifr->ifr_data, qcmbr_data->buf,
-				   (MAX_UTF_LENGTH + 4));
+				   (WLAN_FTM_DATA_MAX_LEN + 4));
 	}
 
 exit:
