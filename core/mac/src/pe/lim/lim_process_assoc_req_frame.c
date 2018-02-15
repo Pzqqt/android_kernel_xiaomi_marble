@@ -1471,17 +1471,28 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->mlmStaContext.htCapability = 0;
 		sta_ds->mlmStaContext.vhtCapability = 0;
 	}
-	if (sta_ds->mlmStaContext.vhtCapability) {
+
+	if (sta_ds->mlmStaContext.vhtCapability && vht_caps) {
 		if (session->vht_config.su_beam_formee &&
-				assoc_req->VHTCaps.suBeamFormerCap)
+				vht_caps->suBeamFormerCap)
 			sta_ds->vhtBeamFormerCapable = 1;
 		else
 			sta_ds->vhtBeamFormerCapable = 0;
 		if (session->vht_config.su_beam_former &&
-				assoc_req->VHTCaps.suBeamformeeCap)
+				vht_caps->suBeamformeeCap)
 			sta_ds->vht_su_bfee_capable = 1;
 		else
 			sta_ds->vht_su_bfee_capable = 0;
+
+		pe_debug("peer_caps: suBformer: %d, suBformee: %d",
+			 vht_caps->suBeamFormerCap,
+			 vht_caps->suBeamformeeCap);
+		pe_debug("self_cap: suBformer: %d, suBformee: %d",
+			 session->vht_config.su_beam_former,
+			 session->vht_config.su_beam_formee);
+		pe_debug("connection's final cap: suBformer: %d, suBformee: %d",
+			 sta_ds->vhtBeamFormerCapable,
+			 sta_ds->vht_su_bfee_capable);
 	}
 
 	lim_intersect_sta_he_caps(assoc_req, session, sta_ds);
