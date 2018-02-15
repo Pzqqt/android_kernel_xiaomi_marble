@@ -3025,7 +3025,7 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
  * Return: QDF_STATUS_SUCCESS on success and QDF_STATUS_E_FAILURE for failures.
  */
 QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
-		struct wmi_dual_mac_config *msg)
+		struct policy_mgr_dual_mac_config *msg)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 

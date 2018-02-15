@@ -49,6 +49,10 @@
 #include "nan_public_structs.h"
 #endif
 
+#ifdef WLAN_POLICY_MGR_ENABLE
+#include "wlan_policy_mgr_public_struct.h"
+#endif
+
 /* HTC service ids for WMI for multi-radio */
 static const uint32_t multi_svc_ids[] = {WMI_CONTROL_SVC,
 				WMI_CONTROL_SVC_WMAC1,
@@ -13946,6 +13950,7 @@ static QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
 	return QDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_POLICY_MGR_ENABLE
 /**
  * send_pdev_set_dual_mac_config_cmd_tlv() - Set dual mac config to FW
  * @wmi_handle: wmi handle
@@ -13957,7 +13962,7 @@ static QDF_STATUS send_pdev_set_hw_mode_cmd_tlv(wmi_unified_t wmi_handle,
  */
 static
 QDF_STATUS send_pdev_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
-		struct wmi_dual_mac_config *msg)
+		struct policy_mgr_dual_mac_config *msg)
 {
 	wmi_pdev_set_mac_config_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -13992,6 +13997,7 @@ QDF_STATUS send_pdev_set_dual_mac_config_cmd_tlv(wmi_unified_t wmi_handle,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 #ifdef BIG_ENDIAN_HOST
 /**
@@ -22635,8 +22641,10 @@ struct wmi_ops tlv_ops =  {
 	.send_flush_logs_to_fw_cmd = send_flush_logs_to_fw_cmd_tlv,
 	.send_pdev_set_pcl_cmd = send_pdev_set_pcl_cmd_tlv,
 	.send_pdev_set_hw_mode_cmd = send_pdev_set_hw_mode_cmd_tlv,
+#ifdef WLAN_POLICY_MGR_ENABLE
 	.send_pdev_set_dual_mac_config_cmd =
 		 send_pdev_set_dual_mac_config_cmd_tlv,
+#endif
 	.send_app_type1_params_in_fw_cmd =
 		 send_app_type1_params_in_fw_cmd_tlv,
 	.send_set_ssid_hotlist_cmd = send_set_ssid_hotlist_cmd_tlv,
