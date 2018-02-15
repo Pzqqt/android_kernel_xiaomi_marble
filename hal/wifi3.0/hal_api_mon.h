@@ -110,6 +110,8 @@
 #define HE_GI_1_6 1
 #define HE_GI_3_2 2
 
+#define HT_SGI_PRESENT 0x80
+
 #define HE_LTF_1_X 0
 #define HE_LTF_2_X 1
 #define HE_LTF_4_X 2
@@ -569,6 +571,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		switch (ppdu_info->rx_status.preamble_type) {
 		case HAL_RX_PKT_TYPE_11N:
 			ppdu_info->rx_status.ht_flags = 1;
+			ppdu_info->rx_status.rtap_flags |= HT_SGI_PRESENT;
 			break;
 		case HAL_RX_PKT_TYPE_11AC:
 			ppdu_info->rx_status.vht_flags = 1;
