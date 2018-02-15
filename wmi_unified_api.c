@@ -1753,6 +1753,7 @@ QDF_STATUS wmi_unified_roam_scan_filter_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+#ifdef IPA_OFFLOAD
 /** wmi_unified_ipa_offload_control_cmd() - ipa offload control parameter
  * @wmi_hdl: wmi handle
  * @ipa_offload: ipa offload control parameter
@@ -1761,7 +1762,7 @@ QDF_STATUS wmi_unified_roam_scan_filter_cmd(void *wmi_hdl,
  *          error number otherwise
  */
 QDF_STATUS  wmi_unified_ipa_offload_control_cmd(void *wmi_hdl,
-		struct ipa_offload_control_params *ipa_offload)
+		struct ipa_uc_offload_control_params *ipa_offload)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
@@ -1771,6 +1772,7 @@ QDF_STATUS  wmi_unified_ipa_offload_control_cmd(void *wmi_hdl,
 
 	return QDF_STATUS_E_FAILURE;
 }
+#endif
 
 /**
  * wmi_unified_extscan_get_capabilities_cmd() - extscan get capabilities

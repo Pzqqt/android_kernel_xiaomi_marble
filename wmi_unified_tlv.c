@@ -7251,7 +7251,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
-
+#ifdef IPA_OFFLOAD
 /** send_ipa_offload_control_cmd_tlv() - ipa offload control parameter
  * @wmi_handle: wmi handle
  * @ipa_offload: ipa offload control parameter
@@ -7259,7 +7259,7 @@ static QDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
  * Returns: 0 on success, error number otherwise
  */
 static QDF_STATUS send_ipa_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
-		struct ipa_offload_control_params *ipa_offload)
+		struct ipa_uc_offload_control_params *ipa_offload)
 {
 	wmi_ipa_offload_enable_disable_cmd_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
@@ -7297,6 +7297,7 @@ static QDF_STATUS send_ipa_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
 
 	return QDF_STATUS_SUCCESS;
 }
+#endif
 
 /**
  * send_extscan_get_capabilities_cmd_tlv() - extscan get capabilities
@@ -22464,8 +22465,10 @@ struct wmi_ops tlv_ops =  {
 			send_roam_scan_filter_cmd_tlv,
 	.send_set_epno_network_list_cmd =
 			 send_set_epno_network_list_cmd_tlv,
+#ifdef IPA_OFFLOAD
 	.send_ipa_offload_control_cmd =
 			 send_ipa_offload_control_cmd_tlv,
+#endif
 	.send_extscan_get_capabilities_cmd =
 			 send_extscan_get_capabilities_cmd_tlv,
 	.send_extscan_get_cached_results_cmd =
