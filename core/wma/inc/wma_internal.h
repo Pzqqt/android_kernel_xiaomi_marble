@@ -409,9 +409,6 @@ QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req);
 #endif
 
-QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
-			struct sir_ipa_offload_enable_disable *ipa_offload);
-
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
 
 int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data, uint32_t len);

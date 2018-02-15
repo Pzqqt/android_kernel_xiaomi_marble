@@ -8084,11 +8084,6 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 				      msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-	case WMA_IPA_OFFLOAD_ENABLE_DISABLE:
-		wma_ipa_offload_enable_disable(wma_handle,
-			(struct sir_ipa_offload_enable_disable *)msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-		break;
 	case SIR_HAL_START_STOP_LOGGING:
 		wma_set_wifi_start_packet_stats(wma_handle,
 				(struct sir_wifi_start_log *)msg->bodyptr);

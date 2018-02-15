@@ -8722,57 +8722,6 @@ QDF_STATUS sme_handoff_request(tHalHandle hHal,
 	return status;
 }
 
-#ifdef IPA_OFFLOAD
-/*
- * sme_ipa_offload_enable_disable() -
- *  API to enable/disable IPA offload
- *
- * hal - The handle returned by macOpen.
- * session_id - Session Identifier
- * request -  Pointer to the offload request.
- * Return QDF_STATUS
- */
-QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal, uint8_t session_id,
-		struct sir_ipa_offload_enable_disable *request)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hal);
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	struct sir_ipa_offload_enable_disable *request_buf;
-	struct scheduler_msg msg = {0};
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_STATUS_SUCCESS == status) {
-		request_buf = qdf_mem_malloc(sizeof(*request_buf));
-		if (NULL == request_buf) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"Not able to allocate memory for IPA_OFFLOAD_ENABLE_DISABLE");
-			sme_release_global_lock(&pMac->sme);
-			return QDF_STATUS_E_NOMEM;
-		}
-
-		request_buf->offload_type = request->offload_type;
-		request_buf->vdev_id = request->vdev_id;
-		request_buf->enable = request->enable;
-
-		msg.type     = WMA_IPA_OFFLOAD_ENABLE_DISABLE;
-		msg.reserved = 0;
-		msg.bodyptr  = request_buf;
-		if (!QDF_IS_STATUS_SUCCESS(
-				scheduler_post_msg(QDF_MODULE_ID_WMA, &msg))) {
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"Not able to post WMA_IPA_OFFLOAD_ENABLE_DISABLE message to WMA");
-			qdf_mem_free(request_buf);
-			sme_release_global_lock(&pMac->sme);
-			return QDF_STATUS_E_FAILURE;
-		}
-
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* IPA_OFFLOAD */
-
 /*
  * SME API to check if there is any infra station or
  * P2P client is connected

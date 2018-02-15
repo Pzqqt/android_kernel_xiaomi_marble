@@ -4787,12 +4787,6 @@ enum {
 	SIR_STA_RX_DATA_OFFLOAD            = 0x01,
 };
 
-struct sir_ipa_offload_enable_disable {
-	uint32_t offload_type;
-	uint32_t vdev_id;
-	uint32_t enable;
-};
-
 /**
  * struct sir_set_vdev_ies_per_band
  * @msg_type: message type

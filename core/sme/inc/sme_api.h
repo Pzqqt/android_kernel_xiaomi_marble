@@ -982,27 +982,6 @@ QDF_STATUS sme_get_temperature(tHalHandle hHal,
 QDF_STATUS sme_set_scanning_mac_oui(tHalHandle hHal,
 		tSirScanMacOui *pScanMacOui);
 
-#ifdef IPA_OFFLOAD
-/* ---------------------------------------------------------------------------
-    \fn sme_ipa_offload_enable_disable
-    \brief  API to enable/disable IPA offload
-    \param  hHal - The handle returned by macOpen.
-    \param  sessionId - Session Identifier
-    \param  pRequest -  Pointer to the offload request.
-    \return QDF_STATUS
-  ---------------------------------------------------------------------------*/
-QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal,
-				uint8_t session_id,
-				struct sir_ipa_offload_enable_disable *request);
-#else
-static inline QDF_STATUS sme_ipa_offload_enable_disable(tHalHandle hal,
-				uint8_t session_id,
-				struct sir_ipa_offload_enable_disable *request)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* IPA_OFFLOAD */
-
 #ifdef DHCP_SERVER_OFFLOAD
 QDF_STATUS sme_set_dhcp_srv_offload(tHalHandle hHal,
 		tSirDhcpSrvOffloadInfo * pDhcpSrvInfo);
