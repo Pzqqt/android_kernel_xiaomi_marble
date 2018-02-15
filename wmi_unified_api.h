@@ -90,6 +90,7 @@ typedef qdf_nbuf_t wmi_buf_t;
 #define PHYERROR_MAX_BUFFER_LENGTH 0x7F000000
 
 struct wmi_soc;
+struct policy_mgr_dual_mac_config;
 /**
  * struct wmi_ops - service callbacks to upper layer
  * @service_ready_cbk: service ready callback
@@ -1069,7 +1070,7 @@ QDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
 				uint32_t hw_mode_index);
 
 QDF_STATUS wmi_unified_pdev_set_dual_mac_config_cmd(void *wmi_hdl,
-		struct wmi_dual_mac_config *msg);
+		struct policy_mgr_dual_mac_config *msg);
 
 QDF_STATUS wmi_unified_set_led_flashing_cmd(void *wmi_hdl,
 				struct flashing_req_params *flashing);

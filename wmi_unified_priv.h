@@ -761,7 +761,7 @@ QDF_STATUS (*send_pdev_set_hw_mode_cmd)(wmi_unified_t wmi_handle,
 				uint32_t hw_mode_index);
 
 QDF_STATUS (*send_pdev_set_dual_mac_config_cmd)(wmi_unified_t wmi_handle,
-		struct wmi_dual_mac_config *msg);
+		struct policy_mgr_dual_mac_config *msg);
 
 QDF_STATUS (*send_set_led_flashing_cmd)(wmi_unified_t wmi_handle,
 				struct flashing_req_params *flashing);

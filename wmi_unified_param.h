@@ -3364,18 +3364,6 @@ struct wmi_hw_mode_params {
 };
 
 /**
- * struct wmi_dual_mac_config - Dual MAC configuration
- * @scan_config: Scan configuration
- * @fw_mode_config: FW mode configuration
- * @set_dual_mac_cb: Callback function to be executed on response to the command
- */
-struct wmi_dual_mac_config {
-	uint32_t scan_config;
-	uint32_t fw_mode_config;
-	void *set_dual_mac_cb;
-};
-
-/**
  * struct ssid_hotlist_param - param for SSID Hotlist
  * @ssid: SSID which is being hotlisted
  * @band: Band in which the given SSID should be scanned
