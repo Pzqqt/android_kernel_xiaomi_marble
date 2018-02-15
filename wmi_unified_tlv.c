@@ -1004,6 +1004,45 @@ static QDF_STATUS send_peer_update_wds_entry_cmd_tlv(wmi_unified_t wmi_handle,
 			WMI_PEER_UPDATE_WDS_ENTRY_CMDID);
 }
 
+/**
+ * send_pdev_get_tpc_config_cmd_tlv() - send get tpc config command to fw
+ * @wmi_handle: wmi handle
+ * @param: pointer to get tpc config params
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS
+send_pdev_get_tpc_config_cmd_tlv(wmi_unified_t wmi_handle,
+				uint32_t param)
+{
+	wmi_pdev_get_tpc_config_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(wmi_pdev_get_tpc_config_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMI_LOGE("%s:wmi_buf_alloc failed\n", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_pdev_get_tpc_config_cmd_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_pdev_get_tpc_config_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_pdev_get_tpc_config_cmd_fixed_param));
+
+	cmd->param = param;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_GET_TPC_CONFIG_CMDID)) {
+		WMI_LOGE("Send pdev get tpc config cmd failed");
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+
+	}
+	WMI_LOGD("%s:send success", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+
 #ifdef WLAN_SUPPORT_GREEN_AP
 /**
  * send_green_ap_ps_cmd_tlv() - enable green ap powersave command
@@ -18756,6 +18795,55 @@ static QDF_STATUS extract_pdev_csa_switch_count_status_tlv(
 }
 
 /**
+ * extract_pdev_tpc_config_ev_param_tlv() - extract pdev tpc configuration
+ * param from event
+ * @wmi_handle: wmi handle
+ * @param evt_buf: pointer to event buffer
+ * @param param: Pointer to hold tpc configuration
+ *
+ * Return: 0 for success or error code
+ */
+static QDF_STATUS extract_pdev_tpc_config_ev_param_tlv(wmi_unified_t wmi_handle,
+		void *evt_buf,
+		wmi_host_pdev_tpc_config_event *param)
+{
+	wmi_pdev_tpc_config_event_fixed_param *event =
+		(wmi_pdev_tpc_config_event_fixed_param *)evt_buf;
+
+	if (!event) {
+		WMI_LOGE("Invalid event buffer");
+		return QDF_STATUS_E_INVAL;
+	}
+
+	param->pdev_id = event->pdev_id;
+	param->regDomain = event->regDomain;
+	param->chanFreq = event->chanFreq;
+	param->phyMode = event->phyMode;
+	param->twiceAntennaReduction = event->twiceAntennaReduction;
+	param->twiceMaxRDPower = event->twiceMaxRDPower;
+	param->powerLimit = event->powerLimit;
+	param->rateMax = event->rateMax;
+	param->numTxChain = event->numTxChain;
+	param->ctl = event->ctl;
+	param->flags = event->flags;
+
+	qdf_mem_copy(param->maxRegAllowedPower, event->maxRegAllowedPower,
+		sizeof(param->maxRegAllowedPower));
+	qdf_mem_copy(param->maxRegAllowedPowerAGCDD,
+		event->maxRegAllowedPowerAGCDD,
+		sizeof(param->maxRegAllowedPowerAGCDD));
+	qdf_mem_copy(param->maxRegAllowedPowerAGSTBC,
+		event->maxRegAllowedPowerAGSTBC,
+		sizeof(param->maxRegAllowedPowerAGSTBC));
+	qdf_mem_copy(param->maxRegAllowedPowerAGTXBF,
+		event->maxRegAllowedPowerAGTXBF,
+		sizeof(param->maxRegAllowedPowerAGTXBF));
+	WMI_LOGD("%s:extract success", __func__);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * extract_swba_num_vdevs_tlv() - extract swba num vdevs from event
  * @wmi_handle: wmi handle
  * @param evt_buf: pointer to event buffer
@@ -21966,6 +22054,7 @@ struct wmi_ops tlv_ops =  {
 	.send_peer_update_wds_entry_cmd = send_peer_update_wds_entry_cmd_tlv,
 	.send_pdev_utf_cmd = send_pdev_utf_cmd_tlv,
 	.send_pdev_param_cmd = send_pdev_param_cmd_tlv,
+	.send_pdev_get_tpc_config_cmd = send_pdev_get_tpc_config_cmd_tlv,
 	.send_suspend_cmd = send_suspend_cmd_tlv,
 	.send_resume_cmd = send_resume_cmd_tlv,
 #ifdef FEATURE_WLAN_D0WOW
@@ -22339,6 +22428,8 @@ struct wmi_ops tlv_ops =  {
 	.extract_pdev_csa_switch_count_status =
 				extract_pdev_csa_switch_count_status_tlv,
 	.extract_pdev_tpc_ev_param = extract_pdev_tpc_ev_param_tlv,
+	.extract_pdev_tpc_config_ev_param =
+			extract_pdev_tpc_config_ev_param_tlv,
 	.extract_wds_addr_event = extract_wds_addr_event_tlv,
 	.extract_peer_sta_ps_statechange_ev =
 		extract_peer_sta_ps_statechange_ev_tlv,
