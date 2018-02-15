@@ -2614,6 +2614,13 @@ static struct cdp_pdev *dp_pdev_attach_wifi3(struct cdp_soc_t *txrx_soc,
 	/* set the reo destination during initialization */
 	pdev->reo_dest = pdev->pdev_id + 1;
 
+	/*
+	 * initialize ppdu tlv list
+	 */
+	TAILQ_INIT(&pdev->ppdu_info_list);
+	pdev->tlv_count = 0;
+	pdev->list_depth = 0;
+
 	return (struct cdp_pdev *)pdev;
 
 fail1:

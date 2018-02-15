@@ -938,6 +938,29 @@ struct dp_neighbour_peer {
 	TAILQ_ENTRY(dp_neighbour_peer) neighbour_peer_list_elem;
 };
 
+/**
+ * struct ppdu_info - PPDU Status info descriptor
+ * @ppdu_id         - Unique ppduid assigned by firmware for every tx packet
+ * @max_ppdu_id     - wrap around for ppdu id
+ * @last_tlv_cnt    - Keep track for missing ppdu tlvs
+ * @last_user       - last ppdu processed for user
+ * @is_ampdu        - set if Ampdu aggregate
+ * @nbuf            - ppdu descriptor payload
+ * @ppdu_desc       - ppdu descriptor
+ * @ppdu_info_list_elem - linked list of ppdu tlvs
+ */
+struct ppdu_info {
+	uint32_t ppdu_id;
+	uint32_t max_ppdu_id;
+	uint16_t tlv_bitmap;
+	uint16_t last_tlv_cnt;
+	uint16_t last_user:8,
+		 is_ampdu:1;
+	qdf_nbuf_t nbuf;
+	struct cdp_tx_completion_ppdu *ppdu_desc;
+	TAILQ_ENTRY(ppdu_info) ppdu_info_list_elem;
+};
+
 /* PDEV level structure for data path */
 struct dp_pdev {
 	/* PDEV handle from OSIF layer TBD: see if we really need osif_pdev */
@@ -1133,6 +1156,10 @@ struct dp_pdev {
 #ifdef ATH_SUPPORT_NAC_RSSI
 	bool nac_rssi_filtering;
 #endif
+	/* list of ppdu tlvs */
+	TAILQ_HEAD(, ppdu_info) ppdu_info_list;
+	uint32_t tlv_count;
+	uint32_t list_depth;
 };
 
 struct dp_peer;

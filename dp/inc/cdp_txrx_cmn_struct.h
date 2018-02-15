@@ -903,6 +903,8 @@ struct cdp_tx_completion_ppdu_user {
  * @num_users: Number of users
  * @num_mpdu: Number of MPDUs in PPDU
  * @num_msdu: Number of MSDUs in PPDU
+ * @frame_type: frame SU or MU
+ * @frame_ctrl: frame control of 80211 header
  * @channel: Channel informartion
  * @ack_rssi: RSSI value of last ack packet (units=dB above noise floor)
  * @tx_duration: PPDU airtime
@@ -918,6 +920,7 @@ struct cdp_tx_completion_ppdu {
 	uint32_t num_mpdu:9,
 		 num_msdu:16;
 	uint16_t frame_type;
+	uint16_t frame_ctrl;
 	uint16_t channel;
 	uint16_t phy_mode;
 	uint32_t ack_rssi;
