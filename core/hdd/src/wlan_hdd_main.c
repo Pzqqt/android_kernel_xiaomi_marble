@@ -91,6 +91,7 @@
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_nan.h"
 #include "wlan_hdd_debugfs.h"
+#include "wlan_hdd_debugfs_csr.h"
 #include "wlan_hdd_driver_ops.h"
 #include "epping_main.h"
 #include "wlan_hdd_data_stall_detection.h"
@@ -4327,6 +4328,8 @@ static void hdd_cleanup_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter 
 	qdf_mutex_destroy(&adapter->disconnection_status_lock);
 	hdd_apf_context_destroy(adapter);
 
+	wlan_hdd_debugfs_csr_deinit(adapter);
+
 	hdd_debugfs_exit(adapter);
 
 	/*
@@ -4994,6 +4997,9 @@ struct hdd_adapter *hdd_open_adapter(struct hdd_context *hdd_ctx, uint8_t sessio
 	hdd_info("%s interface created. iftype: %d", netdev_name(adapter->dev),
 		 session_type);
 
+	if (adapter->device_mode == QDF_STA_MODE)
+		wlan_hdd_debugfs_csr_init(adapter);
+
 	return adapter;
 
 err_free_netdev:
@@ -5380,7 +5386,6 @@ QDF_STATUS hdd_stop_adapter_ext(struct hdd_context *hdd_ctx,
 	}
 
 	hdd_exit();
-
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -9245,6 +9250,7 @@ int hdd_start_station_adapter(struct hdd_adapter *adapter)
 		hdd_tx_flow_control_is_pause);
 
 	hdd_exit();
+
 	return 0;
 }
 
@@ -10926,6 +10932,7 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	bool is_recovery_stop = cds_is_driver_recovering();
 	int ret = 0;
 	int active_threads;
+	int debugfs_threads;
 	struct target_psoc_info *tgt_hdl;
 
 	hdd_enter();
@@ -10943,11 +10950,16 @@ int hdd_wlan_stop_modules(struct hdd_context *hdd_ctx, bool ftm_mode)
 	cds_set_module_stop_in_progress(true);
 
 	active_threads = cds_return_external_threads_count();
-	if (active_threads > 0 || hdd_ctx->is_wiphy_suspended) {
-		hdd_warn("External threads %d wiphy suspend %d",
-			 active_threads, hdd_ctx->is_wiphy_suspended);
+	debugfs_threads = hdd_return_debugfs_threads_count();
 
-		cds_print_external_threads();
+	if (active_threads > 0 || debugfs_threads > 0 ||
+	    hdd_ctx->is_wiphy_suspended) {
+		hdd_warn("External threads %d, Debugfs threads %d, wiphy suspend %d",
+			 active_threads, debugfs_threads,
+			 hdd_ctx->is_wiphy_suspended);
+
+		if (active_threads)
+			cds_print_external_threads();
 
 		if (IS_IDLE_STOP && !ftm_mode) {
 			mutex_unlock(&hdd_ctx->iface_change_lock);

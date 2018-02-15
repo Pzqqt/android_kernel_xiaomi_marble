@@ -63,6 +63,7 @@
 #include "wlan_hdd_tdls.h"
 #include "wlan_hdd_tsf.h"
 #include "wlan_hdd_cfg80211.h"
+#include "wlan_hdd_debugfs.h"
 #include <qdf_defer.h>
 #include "sap_api.h"
 #include <wlan_hdd_lro.h>
@@ -253,6 +254,8 @@ enum hdd_driver_flags {
 #define WLAN_WAIT_TIME_SET_DUAL_MAC_CFG 1500
 
 #define WLAN_WAIT_TIME_APF     1000
+
+#define WLAN_WAIT_TIME_FW_ROAM_STATS 1000
 
 /* Maximum time(ms) to wait for RSO CMD status event */
 #define WAIT_TIME_RSO_CMD_STATUS 2000
@@ -1470,6 +1473,10 @@ struct hdd_adapter {
 #ifdef FEATURE_WLAN_APF
 	struct hdd_apf_context apf_context;
 #endif /* FEATURE_WLAN_APF */
+
+#ifdef WLAN_DEBUGFS
+	struct hdd_debugfs_file_info csr_file[HDD_DEBUGFS_FILE_ID_MAX];
+#endif /* WLAN_DEBUGFS */
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(adapter) (&(adapter)->session.station)

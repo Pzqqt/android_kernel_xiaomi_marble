@@ -41,6 +41,51 @@
 #define POWER_DEBUGFS_BUFFER_MAX_LEN 4096
 #endif
 
+#define MAX_DEBUGFS_WAIT_ITERATIONS 20
+#define DEBUGFS_WAIT_SLEEP_TIME 100
+
+static qdf_atomic_t debugfs_thread_count;
+
+void hdd_debugfs_thread_increment(void)
+{
+	qdf_atomic_inc(&debugfs_thread_count);
+}
+
+void hdd_debugfs_thread_decrement(void)
+{
+	qdf_atomic_dec(&debugfs_thread_count);
+}
+
+int hdd_return_debugfs_threads_count(void)
+{
+	return qdf_atomic_read(&debugfs_thread_count);
+}
+
+bool hdd_wait_for_debugfs_threads_completion(void)
+{
+	int count = MAX_DEBUGFS_WAIT_ITERATIONS;
+	int r;
+
+	while (count) {
+		r = hdd_return_debugfs_threads_count();
+		if (!r)
+			break;
+
+		if (--count) {
+			hdd_debug("Waiting for %d debugfs threads to exit", r);
+			qdf_sleep(DEBUGFS_WAIT_SLEEP_TIME);
+		}
+	}
+
+	/* at least one debugfs thread is executing */
+	if (!count) {
+		hdd_err("Timed-out waiting for debugfs threads");
+		return false;
+	}
+
+	return true;
+}
+
 /**
  * __wcnss_wowpattern_write() - wow_pattern debugfs handler
  * @file: debugfs file handle

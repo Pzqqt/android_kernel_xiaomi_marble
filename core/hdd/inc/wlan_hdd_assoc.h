@@ -31,6 +31,8 @@
 #include <net/cfg80211.h>
 #include <linux/ieee80211.h>
 
+#define HDD_TIME_STRING_LEN 24
+
 /* Preprocessor Definitions and Constants */
 #ifdef FEATURE_WLAN_TDLS
 #define HDD_MAX_NUM_TDLS_STA          8
