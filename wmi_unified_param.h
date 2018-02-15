@@ -2263,18 +2263,6 @@ enum wmi_extscan_report_events_type {
 };
 
 /**
- * struct ipa_offload_control_params - ipa offload parameters
- * @offload_type: ipa offload type
- * @vdev_id: vdev id
- * @enable: ipa offload enable/disable
- */
-struct ipa_offload_control_params {
-	uint32_t offload_type;
-	uint32_t vdev_id;
-	uint32_t enable;
-};
-
-/**
  * struct extscan_capabilities_params - ext scan capablities
  * @request_id: request_id
  * @session_id: session_id
