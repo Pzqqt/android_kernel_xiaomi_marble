@@ -293,6 +293,16 @@ SAP_OBJS :=	$(SAP_SRC_DIR)/sap_api_link_cntl.o \
 		$(SAP_SRC_DIR)/sap_fsm.o \
 		$(SAP_SRC_DIR)/sap_module.o
 
+############ CFG ############
+CFG_REL_DIR := $(WLAN_COMMON_ROOT)/cfg
+CFG_DIR := $(WLAN_ROOT)/$(CFG_REL_DIR)
+CFG_INC := \
+	-I$(CFG_DIR)/inc \
+	-I$(CFG_DIR)/dispatcher/inc \
+	-I$(WLAN_ROOT)/components/cfg
+CFG_OBJS := \
+	$(CFG_REL_DIR)/src/cfg.o
+
 ############ DFS ############
 DFS_DIR :=     $(WLAN_COMMON_ROOT)/umac/dfs
 DFS_CORE_INC_DIR := $(DFS_DIR)/core/inc
@@ -1345,6 +1355,7 @@ INCS :=		$(HDD_INC) \
 		$(SYS_INC) \
 		$(QDF_INC) \
 		$(CDS_INC) \
+		$(CFG_INC) \
 		$(DFS_INC) \
 		$(TARGET_IF_INC) \
 		$(CLD_TARGET_IF_INC) \
@@ -1434,6 +1445,7 @@ OBJS :=		$(HDD_OBJS) \
 		$(SYS_OBJS) \
 		$(QDF_OBJS) \
 		$(CDS_OBJS) \
+		$(CFG_OBJS) \
 		$(FTM_OBJS)
 
 OBJS +=		$(WMA_OBJS) \

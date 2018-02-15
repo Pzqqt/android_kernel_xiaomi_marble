@@ -24,6 +24,7 @@
  */
 
 /* Include Files */
+#include "cfg_ucfg_api.h"
 #include <wlan_hdd_includes.h>
 #include <cds_api.h>
 #include <cds_sched.h>
@@ -285,6 +286,7 @@ static const struct category_info cinfo[MAX_SUPPORTED_CATEGORY] = {
 	[QDF_MODULE_ID_GREEN_AP] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_OCB] = {QDF_TRACE_LEVEL_ALL},
 	[QDF_MODULE_ID_IPA] = {QDF_TRACE_LEVEL_ALL},
+	[QDF_MODULE_ID_CONFIG] = {QDF_TRACE_LEVEL_ALL},
 };
 
 int limit_off_chan_tbl[HDD_MAX_AC][HDD_MAX_OFF_CHAN_ENTRIES] = {
@@ -6850,6 +6852,8 @@ static void hdd_context_destroy(struct hdd_context *hdd_ctx)
 	qdf_mem_free(hdd_ctx->config);
 	hdd_ctx->config = NULL;
 
+	cfg_release();
+
 	wiphy_free(hdd_ctx->wiphy);
 }
 
@@ -8918,6 +8922,11 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 		ret = -EINVAL;
 		goto err_free_config;
 	}
+
+	status = cfg_parse(WLAN_INI_FILE);
+	if (QDF_IS_STATUS_ERROR(status))
+		hdd_err("Failed to parse cfg %s; status:%d\n",
+			WLAN_INI_FILE, status);
 
 	ie_whitelist_attrs_init(hdd_ctx);
 
