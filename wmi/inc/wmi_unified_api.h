@@ -63,6 +63,10 @@
 #include "wlan_ocb_public_structs.h"
 #endif
 
+#ifdef IPA_OFFLOAD
+#include "wlan_ipa_public_struct.h"
+#endif
+
 typedef qdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
 
@@ -836,8 +840,10 @@ QDF_STATUS wmi_unified_roam_scan_filter_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
 		struct wifi_enhanched_pno_params *req);
 
+#ifdef IPA_OFFLOAD
 QDF_STATUS  wmi_unified_ipa_offload_control_cmd(void *wmi_hdl,
-		struct ipa_offload_control_params *ipa_offload);
+		struct ipa_uc_offload_control_params *ipa_offload);
+#endif
 
 QDF_STATUS wmi_unified_extscan_get_capabilities_cmd(void *wmi_hdl,
 			  struct extscan_capabilities_params *pgetcapab);
