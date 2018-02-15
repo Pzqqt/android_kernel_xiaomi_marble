@@ -2161,6 +2161,7 @@ int wlan_hdd_cfg80211_start_acs(struct hdd_adapter *adapter);
  */
 int hdd_cfg80211_update_acs_config(struct hdd_adapter *adapter,
 				   uint8_t reason);
+
 /**
  * hdd_update_acs_timer_reason() - update acs timer start reason
  * @adapter: hdd adapter
@@ -2183,6 +2184,26 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason);
  */
 void hdd_switch_sap_channel(struct hdd_adapter *adapter, uint8_t channel,
 			    bool forced);
+
+#if defined(FEATURE_WLAN_CH_AVOID)
+void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctx);
+
+void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
+		      struct unsafe_ch_list *unsafe_chan_list,
+		      struct ch_avoid_ind_type *avoid_freq_list);
+#else
+static inline
+void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctx)
+{
+}
+
+static inline
+void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
+		      struct unsafe_ch_list *unsafe_chan_list,
+		      struct ch_avoid_ind_type *avoid_freq_list)
+{
+}
+#endif
 
 void hdd_update_macaddr(struct hdd_config *config,
 			struct qdf_mac_addr hw_macaddr);
@@ -2444,9 +2465,7 @@ static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 }
 #endif
 void hdd_wlan_update_target_info(struct hdd_context *hdd_ctx, void *context);
-void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
-		struct unsafe_ch_list *unsafe_chan_list,
-		struct ch_avoid_ind_type *avoid_freq_list);
+
 enum  sap_acs_dfs_mode wlan_hdd_get_dfs_mode(enum dfs_mode mode);
 void hdd_unsafe_channel_restart_sap(struct hdd_context *hdd_ctx);
 /**

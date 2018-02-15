@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -205,6 +205,13 @@ wlan_hdd_cfg80211_ll_stats_ext_set_param(struct wiphy *wiphy,
 					 struct wireless_dev *wdev,
 					 const void *data,
 					 int data_len)
+{
+	return -EINVAL;
+}
+
+static inline
+int wlan_hdd_ll_stats_get(hdd_adapter_t *adapter, uint32_t req_id,
+			  uint32_t req_mask)
 {
 	return -EINVAL;
 }

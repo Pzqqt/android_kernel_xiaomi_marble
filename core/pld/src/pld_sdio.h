@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -31,6 +31,7 @@
 #endif
 
 #define PLD_QCA9377_REV1_1_VERSION          0x5020001
+#define PLD_QCA9379_REV1_VERSION            0x5040000
 #define TOTAL_DUMP_SIZE         0x00200000
 
 #ifndef CONFIG_CNSS
@@ -45,26 +46,6 @@
 #define PLD_AR6320_DEV_VERSION              0x1000000
 
 
-struct pld_fw_files fw_files_qca6174_fw_1_1 = {
-	PREFIX "qwlan11.bin", PREFIX  "bdwlan11.bin", PREFIX "otp11.bin",
-	PREFIX  "utf11.bin", PREFIX "utfbd11.bin", PREFIX "qsetup11.bin",
-	PREFIX "epping11.bin", ""};
-struct pld_fw_files fw_files_qca6174_fw_2_0 = {
-	PREFIX "qwlan20.bin", PREFIX "bdwlan20.bin", PREFIX "otp20.bin",
-	PREFIX "utf20.bin", PREFIX "utfbd20.bin", PREFIX "qsetup20.bin",
-	PREFIX "epping20.bin", ""};
-struct pld_fw_files fw_files_qca6174_fw_1_3 = {
-	PREFIX "qwlan13.bin", PREFIX "bdwlan13.bin", PREFIX "otp13.bin",
-	PREFIX "utf13.bin", PREFIX "utfbd13.bin", PREFIX "qsetup13.bin",
-	PREFIX "epping13.bin", ""};
-struct pld_fw_files fw_files_qca6174_fw_3_0 = {
-	PREFIX "qwlan30.bin", PREFIX "bdwlan30.bin", PREFIX "otp30.bin",
-	PREFIX "utf30.bin", PREFIX "utfbd30.bin", PREFIX "qsetup30.bin",
-	PREFIX "epping30.bin", PREFIX "qwlan30i.bin"};
-struct pld_fw_files fw_files_default = {
-	PREFIX "qwlan.bin", PREFIX "bdwlan.bin", PREFIX "otp.bin",
-	PREFIX "utf.bin", PREFIX "utfbd.bin", PREFIX "qsetup.bin",
-	PREFIX "epping.bin", ""};
 #endif
 
 #ifndef CONFIG_SDIO
@@ -94,11 +75,20 @@ int pld_sdio_register_driver(void);
 void pld_sdio_unregister_driver(void);
 int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 				     u32 target_type, u32 target_version);
+#ifdef CONFIG_CNSS
 static inline uint8_t *pld_sdio_get_wlan_mac_address(struct device *dev,
 						     uint32_t *num)
 {
 	return cnss_common_get_wlan_mac_address(dev, num);
 }
+#else
+static inline uint8_t *pld_sdio_get_wlan_mac_address(struct device *dev,
+						     uint32_t *num)
+{
+	*num = 0;
+	return NULL;
+}
+#endif
 #endif
 
 #ifdef CONFIG_PLD_SDIO_CNSS

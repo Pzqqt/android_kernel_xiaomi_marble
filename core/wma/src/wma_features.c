@@ -3863,6 +3863,7 @@ QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 }
 #endif /* WLAN_FEATURE_GPIO_LED_FLASHING */
 
+#ifdef FEATURE_WLAN_CH_AVOID
 /**
  * wma_process_ch_avoid_update_req() - handles channel avoid update request
  * @wma_handle: wma handle
@@ -3896,6 +3897,7 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 		 __func__);
 	return status;
 }
+#endif
 
 /**
  * wma_send_regdomain_info_to_fw() - send regdomain info to fw

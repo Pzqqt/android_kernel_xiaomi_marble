@@ -1588,6 +1588,9 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_version =  tgt_info->target_version;
 
+	reg_table.section = NULL;
+	reg_table.section_size = 0;
+
 	section_len = ol_ath_get_reg_table(scn, target_version, &reg_table);
 
 	if (!reg_table.section || !reg_table.section_size || !section_len) {

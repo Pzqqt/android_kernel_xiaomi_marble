@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -332,12 +332,19 @@ int ol_cfg_throttle_duty_cycle_level(struct cdp_cfg *cfg_pdev, int level)
 	return cfg->dutycycle_level[level];
 }
 
+#ifdef CONFIG_HL_SUPPORT
+int ol_cfg_is_full_reorder_offload(struct cdp_cfg *cfg_pdev)
+{
+	return 0;
+}
+#else
 int ol_cfg_is_full_reorder_offload(struct cdp_cfg *cfg_pdev)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)cfg_pdev;
 
 	return cfg->is_full_reorder_offload;
 }
+#endif
 
 #ifdef WLAN_FEATURE_TSF_PLUS
 void ol_set_cfg_ptp_rx_opt_enabled(struct cdp_cfg *cfg_pdev, u_int8_t val)
@@ -462,7 +469,7 @@ bool ol_cfg_is_ce_classify_enabled(struct cdp_cfg *cfg_pdev)
  *
  * Return: wrr_skip_weight for specified ac.
  */
-int ol_cfg_get_wrr_skip_weight(ol_pdev_handle pdev, int ac)
+int ol_cfg_get_wrr_skip_weight(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
@@ -479,7 +486,7 @@ int ol_cfg_get_wrr_skip_weight(ol_pdev_handle pdev, int ac)
  *
  * Return: credit_threshold for specified ac.
  */
-uint32_t ol_cfg_get_credit_threshold(ol_pdev_handle pdev, int ac)
+uint32_t ol_cfg_get_credit_threshold(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
@@ -496,7 +503,7 @@ uint32_t ol_cfg_get_credit_threshold(ol_pdev_handle pdev, int ac)
  *
  * Return: send_limit for specified ac.
  */
-uint16_t ol_cfg_get_send_limit(ol_pdev_handle pdev, int ac)
+uint16_t ol_cfg_get_send_limit(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
@@ -513,7 +520,7 @@ uint16_t ol_cfg_get_send_limit(ol_pdev_handle pdev, int ac)
  *
  * Return: credit_reserve for specified ac.
  */
-int ol_cfg_get_credit_reserve(ol_pdev_handle pdev, int ac)
+int ol_cfg_get_credit_reserve(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 
@@ -530,7 +537,7 @@ int ol_cfg_get_credit_reserve(ol_pdev_handle pdev, int ac)
  *
  * Return: discard_weight for specified ac.
  */
-int ol_cfg_get_discard_weight(ol_pdev_handle pdev, int ac)
+int ol_cfg_get_discard_weight(struct cdp_cfg *pdev, int ac)
 {
 	struct txrx_pdev_cfg_t *cfg = (struct txrx_pdev_cfg_t *)pdev;
 

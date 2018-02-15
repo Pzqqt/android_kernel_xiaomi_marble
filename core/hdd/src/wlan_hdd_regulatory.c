@@ -391,27 +391,6 @@ static void hdd_set_dfs_region(struct hdd_context *hdd_ctx,
 {
 	wlan_reg_set_dfs_region(hdd_ctx->hdd_pdev, dfs_reg);
 }
-#else
-static void hdd_set_dfs_region(struct hdd_context *hdd_ctx,
-			       enum dfs_region dfs_reg)
-{
-	/* remap the ctl code to dfs region code */
-	switch (hdd_ctx->reg.ctl_5g) {
-	case FCC:
-		cds_put_dfs_region(DFS_FCC_REGION);
-		break;
-	case ETSI:
-		cds_put_dfs_region(DFS_ETSI_REGION);
-		break;
-	case MKK:
-		cds_put_dfs_region(DFS_MKK_REGION);
-		break;
-	default:
-		/* set default dfs_region to FCC */
-		cds_put_dfs_region(DFS_FCC_REGION);
-		break;
-	}
-}
 #endif
 
 /**
@@ -525,7 +504,6 @@ static void hdd_process_regulatory_data(struct hdd_context *hdd_ctx,
 
 	wlan_hdd_cfg80211_update_band(hdd_ctx, wiphy, band_capability);
 }
-
 
 /**
  * hdd_regulatory_init_no_offload() - regulatory init
@@ -904,6 +882,7 @@ static void fill_wiphy_band_channels(struct wiphy *wiphy,
 	}
 }
 
+#ifdef FEATURE_WLAN_CH_AVOID
 /**
  * hdd_ch_avoid_ind() - Avoid notified channels from FW handler
  * @adapter:	HDD adapter pointer
@@ -993,7 +972,7 @@ void hdd_ch_avoid_ind(struct hdd_context *hdd_ctxt,
 	qdf_mem_free(local_unsafe_list);
 
 }
-
+#endif
 
 static void hdd_regulatory_dyn_cbk(struct wlan_objmgr_psoc *psoc,
 				   struct wlan_objmgr_pdev *pdev,

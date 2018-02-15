@@ -802,7 +802,16 @@ QDF_STATUS sme_get_reg_info(tHalHandle hHal, uint8_t chanId,
 QDF_STATUS sme_update_fw_tdls_state(tHalHandle hHal, void *psmeTdlsParams,
 		bool useSmeLock);
 #endif /* FEATURE_WLAN_TDLS */
-QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal);
+
+#ifdef FEATURE_WLAN_CH_AVOID
+QDF_STATUS sme_ch_avoid_update_req(tHalHandle hal_handle);
+#else
+static inline
+QDF_STATUS sme_ch_avoid_update_req(tHalHandle hal_handle)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 QDF_STATUS sme_set_auto_shutdown_cb(tHalHandle hHal, void (*pCallbackfn)(void));
 QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_value);

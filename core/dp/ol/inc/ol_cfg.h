@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -667,7 +667,7 @@ static inline uint8_t ol_cfg_is_flow_steering_enabled(struct cdp_cfg *cfg_pdev)
  *
  * Return: wrr_skip_weight for specified ac.
  */
-int ol_cfg_get_wrr_skip_weight(ol_pdev_handle pdev, int ac);
+int ol_cfg_get_wrr_skip_weight(struct cdp_cfg *pdev, int ac);
 
 /**
  * ol_cfg_get_credit_threshold() - Query for the param of credit_threshold
@@ -676,7 +676,7 @@ int ol_cfg_get_wrr_skip_weight(ol_pdev_handle pdev, int ac);
  *
  * Return: credit_threshold for specified ac.
  */
-uint32_t ol_cfg_get_credit_threshold(ol_pdev_handle pdev, int ac);
+uint32_t ol_cfg_get_credit_threshold(struct cdp_cfg *pdev, int ac);
 
 /**
  * ol_cfg_get_send_limit() - Query for the param of send_limit
@@ -685,7 +685,7 @@ uint32_t ol_cfg_get_credit_threshold(ol_pdev_handle pdev, int ac);
  *
  * Return: send_limit for specified ac.
  */
-uint16_t ol_cfg_get_send_limit(ol_pdev_handle pdev, int ac);
+uint16_t ol_cfg_get_send_limit(struct cdp_cfg *pdev, int ac);
 
 /**
  * ol_cfg_get_credit_reserve() - Query for the param of credit_reserve
@@ -694,7 +694,7 @@ uint16_t ol_cfg_get_send_limit(ol_pdev_handle pdev, int ac);
  *
  * Return: credit_reserve for specified ac.
  */
-int ol_cfg_get_credit_reserve(ol_pdev_handle pdev, int ac);
+int ol_cfg_get_credit_reserve(struct cdp_cfg *pdev, int ac);
 
 /**
  * ol_cfg_get_discard_weight() - Query for the param of discard_weight
@@ -703,5 +703,5 @@ int ol_cfg_get_credit_reserve(ol_pdev_handle pdev, int ac);
  *
  * Return: discard_weight for specified ac.
  */
-int ol_cfg_get_discard_weight(ol_pdev_handle pdev, int ac);
+int ol_cfg_get_discard_weight(struct cdp_cfg *pdev, int ac);
 #endif /* _OL_CFG__H_ */

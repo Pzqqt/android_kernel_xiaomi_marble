@@ -126,6 +126,7 @@
 #define NEXT_FIELD_OFFSET_IN32 1
 #endif /* HTT_PADDR64 */
 
+#ifndef CONFIG_HL_SUPPORT
 /**
  * htt_get_first_packet_after_wow_wakeup() - get first packet after wow wakeup
  * @msg_word: pointer to rx indication message word
@@ -196,6 +197,7 @@ static void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 	qdf_spinlock_destroy(&(pdev->rx_ring.rx_hash_lock));
 
 }
+#endif
 
 /*
  * This function is used both below within this file (which the compiler
@@ -242,7 +244,7 @@ htt_rx_mpdu_desc_retry_hl(htt_pdev_handle pdev, void *mpdu_desc)
 }
 
 #ifdef CONFIG_HL_SUPPORT
-u_int16_t
+static uint16_t
 htt_rx_mpdu_desc_seq_num_hl(htt_pdev_handle pdev, void *mpdu_desc)
 {
 	if (pdev->rx_desc_size_hl) {
@@ -360,19 +362,6 @@ htt_rx_msdu_is_frag_hl(htt_pdev_handle pdev, void *msdu_desc)
 		HTT_WORD_GET(*(u_int32_t *)rx_desc, HTT_HL_RX_DESC_MCAST_BCAST);
 }
 
-static bool
-htt_rx_msdu_first_msdu_flag_ll(htt_pdev_handle pdev, void *msdu_desc)
-{
-	struct htt_host_rx_desc_base *rx_desc =
-		(struct htt_host_rx_desc_base *)msdu_desc;
-	return (bool)
-		(((*(((uint32_t *) &rx_desc->msdu_end) + 4)) &
-		  RX_MSDU_END_4_FIRST_MSDU_MASK) >>
-		 RX_MSDU_END_4_FIRST_MSDU_LSB);
-}
-
-#ifndef CONFIG_HL_SUPPORT
-
 #define RX_PADDR_MAGIC_PATTERN 0xDEAD0000
 static qdf_dma_addr_t
 htt_rx_paddr_mark_high_bits(qdf_dma_addr_t paddr)
@@ -403,6 +392,18 @@ static inline qdf_dma_addr_t htt_paddr_trim_to_37(qdf_dma_addr_t paddr)
 	return paddr;
 }
 #endif /* HTT_PADDR64 */
+
+#ifndef CONFIG_HL_SUPPORT
+static bool
+htt_rx_msdu_first_msdu_flag_ll(htt_pdev_handle pdev, void *msdu_desc)
+{
+	struct htt_host_rx_desc_base *rx_desc =
+		(struct htt_host_rx_desc_base *)msdu_desc;
+	return (bool)
+		(((*(((uint32_t *)&rx_desc->msdu_end) + 4)) &
+		  RX_MSDU_END_4_FIRST_MSDU_MASK) >>
+		 RX_MSDU_END_4_FIRST_MSDU_LSB);
+}
 
 #ifdef ENABLE_DEBUG_ADDRESS_MARKING
 static qdf_dma_addr_t
@@ -600,9 +601,7 @@ fail:
 	return filled;
 }
 
-
 #ifndef CONFIG_HL_SUPPORT
-
 static int htt_rx_ring_size(struct htt_pdev_t *pdev)
 {
 	int size;
@@ -763,6 +762,37 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 }
 #endif
 
+/**
+ * htt_rx_mpdu_wifi_hdr_retrieve() - retrieve 802.11 header
+ * @pdev - pdev handle
+ * @mpdu_desc - mpdu descriptor
+ *
+ * Return : pointer to 802.11 header
+ */
+char *htt_rx_mpdu_wifi_hdr_retrieve(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	struct htt_host_rx_desc_base *rx_desc =
+		(struct htt_host_rx_desc_base *)mpdu_desc;
+
+	if (!rx_desc)
+		return NULL;
+	else
+		return rx_desc->rx_hdr_status;
+}
+
+/**
+ * htt_rx_mpdu_desc_tsf32() - Return the TSF timestamp indicating when
+ *                            a MPDU was received.
+ * @pdev - the HTT instance the rx data was received on
+ * @mpdu_desc - the abstract descriptor for the MPDU in question
+ *
+ * return : 32 LSBs of TSF time at which the MPDU's PPDU was received
+ */
+uint32_t htt_rx_mpdu_desc_tsf32(htt_pdev_handle pdev, void *mpdu_desc)
+{
+	return 0;
+}
+
 /*--- rx descriptor field access functions ----------------------------------*/
 /*
  * These functions need to use bit masks and shifts to extract fields
@@ -778,6 +808,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
  */
 /* FIX THIS: APPLIES TO LL ONLY */
 
+#ifndef CONFIG_HL_SUPPORT
 /**
  * htt_rx_mpdu_desc_retry_ll() - Returns the retry bit from the Rx descriptor
  *                               for the Low Latency driver
@@ -887,20 +918,6 @@ htt_rx_mpdu_desc_tid_ll(htt_pdev_handle pdev, void *mpdu_desc)
 		RX_MPDU_START_2_TID_LSB);
 }
 
-uint32_t htt_rx_mpdu_desc_tsf32(htt_pdev_handle pdev, void *mpdu_desc)
-{
-/* FIX THIS */
-	return 0;
-}
-
-/* FIX THIS: APPLIES TO LL ONLY */
-char *htt_rx_mpdu_wifi_hdr_retrieve(htt_pdev_handle pdev, void *mpdu_desc)
-{
-	struct htt_host_rx_desc_base *rx_desc =
-		(struct htt_host_rx_desc_base *)mpdu_desc;
-	return rx_desc->rx_hdr_status;
-}
-
 /* FIX THIS: APPLIES TO LL ONLY */
 static bool htt_rx_msdu_desc_completes_mpdu_ll(htt_pdev_handle pdev,
 					       void *msdu_desc)
@@ -947,6 +964,7 @@ static int htt_rx_msdu_is_frag_ll(htt_pdev_handle pdev, void *msdu_desc)
 		((*((uint32_t *) &rx_desc->attention)) &
 		 RX_ATTENTION_0_FRAGMENT_MASK) >> RX_ATTENTION_0_FRAGMENT_LSB;
 }
+#endif
 
 static inline
 uint8_t htt_rx_msdu_fw_desc_get(htt_pdev_handle pdev, void *msdu_desc)
@@ -1160,6 +1178,7 @@ void htt_set_checksum_result_hl(qdf_nbuf_t msdu,
 #define MAX_DONE_BIT_CHECK_ITER 5
 #endif
 
+#ifndef CONFIG_HL_SUPPORT
 static int
 htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		    qdf_nbuf_t rx_ind_msg,
@@ -1439,6 +1458,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 	 */
 	return msdu_chaining;
 }
+#endif
 
 #if defined(CONFIG_HL_SUPPORT)
 
@@ -1551,6 +1571,7 @@ htt_rx_offload_msdu_cnt_ll(
     return htt_rx_ring_elems(pdev);
 }
 
+#ifndef CONFIG_HL_SUPPORT
 static int
 htt_rx_offload_msdu_pop_ll(htt_pdev_handle pdev,
 			   qdf_nbuf_t offload_deliver_msg,
@@ -1646,9 +1667,11 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 	qdf_nbuf_set_pktlen(buf, msdu_len);
 	return 0;
 }
+#endif
 
 #define MIN(a, b) (((a) < (b)) ? (a) : (b))
 
+#ifndef CONFIG_HL_SUPPORT
 /**
  * htt_mon_rx_handle_amsdu_packet() - Handle consecutive fragments of amsdu
  * @msdu: pointer to first msdu of amsdu
@@ -2074,6 +2097,7 @@ static void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
 	rx_status->chan_flags = channel_flags;
 	rx_status->ant_signal_db = rx_desc->ppdu_start.rssi_comb;
 }
+#endif
 
 #ifdef RX_HASH_DEBUG
 #define HTT_RX_CHECK_MSDU_COUNT(msdu_count) HTT_ASSERT_ALWAYS(msdu_count)
@@ -2081,6 +2105,7 @@ static void htt_rx_mon_get_rx_status(htt_pdev_handle pdev,
 #define HTT_RX_CHECK_MSDU_COUNT(msdu_count)     /* no-op */
 #endif
 
+#ifndef CONFIG_HL_SUPPORT
 /**
  * htt_rx_mon_amsdu_rx_in_order_pop_ll() - Monitor mode HTT Rx in order pop
  * function
@@ -2258,6 +2283,7 @@ next_pop:
 
 	return 1;
 }
+#endif
 
 /**
  * htt_rx_mon_note_capture_channel() - Make note of channel to update in
@@ -2283,6 +2309,7 @@ uint32_t htt_rx_amsdu_rx_in_order_get_pktlog(qdf_nbuf_t rx_ind_msg)
 	return HTT_RX_IN_ORD_PADDR_IND_PKTLOG_GET(*msg_word);
 }
 
+#ifndef CONFIG_HL_SUPPORT
 /* Return values: 1 - success, 0 - failure */
 #define RX_DESC_DISCARD_IS_SET ((*((u_int8_t *) &rx_desc->fw_desc.u.val)) & \
 							FW_RX_DESC_DISCARD_M)
@@ -2479,6 +2506,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 
 	return 1;
 }
+#endif
 
 /* FIXME: This is a HW definition not provded by HW, where does it go ? */
 enum {
@@ -2930,6 +2958,7 @@ bool (*htt_rx_mpdu_is_encrypted)(htt_pdev_handle pdev, void *mpdu_desc);
 bool (*htt_rx_msdu_desc_key_id)(htt_pdev_handle pdev,
 				void *mpdu_desc, uint8_t *key_id);
 
+#ifndef CONFIG_HL_SUPPORT
 static
 void *htt_rx_mpdu_desc_list_next_ll(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
@@ -2939,6 +2968,7 @@ void *htt_rx_mpdu_desc_list_next_ll(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 	pdev->rx_ring.sw_rd_idx.msdu_desc = pdev->rx_ring.sw_rd_idx.msdu_payld;
 	return (void *)htt_rx_desc(netbuf);
 }
+#endif
 
 bool (*htt_rx_msdu_chan_info_present)(
 	htt_pdev_handle pdev,
@@ -2953,11 +2983,13 @@ bool (*htt_rx_msdu_center_freq)(
 	uint16_t *contig_chan2_center_freq_mhz,
 	uint8_t *phy_mode);
 
+#ifndef CONFIG_HL_SUPPORT
 static void *htt_rx_in_ord_mpdu_desc_list_next_ll(htt_pdev_handle pdev,
 						  qdf_nbuf_t netbuf)
 {
 	return (void *)htt_rx_desc(netbuf);
 }
+#endif
 
 #if defined(CONFIG_HL_SUPPORT)
 
@@ -3105,6 +3137,7 @@ htt_rx_msdu_desc_key_id_hl(htt_pdev_handle htt_pdev,
 
 #endif
 
+#ifndef CONFIG_HL_SUPPORT
 static void *htt_rx_msdu_desc_retrieve_ll(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 {
 	return htt_rx_desc(msdu);
@@ -3161,6 +3194,7 @@ htt_rx_msdu_desc_key_id_ll(htt_pdev_handle pdev, void *mpdu_desc,
 
 	return true;
 }
+#endif
 
 void htt_rx_desc_frame_free(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu)
 {
@@ -3208,7 +3242,6 @@ void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev)
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 }
 
-#ifndef CONFIG_HL_SUPPORT
 #define RX_RING_REFILL_DEBT_MAX 128
 int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 {
@@ -3245,6 +3278,7 @@ int htt_rx_msdu_buff_in_order_replenish(htt_pdev_handle pdev, uint32_t num)
 	return filled;
 }
 
+#ifndef CONFIG_HL_SUPPORT
 #define AR600P_ASSEMBLE_HW_RATECODE(_rate, _nss, _pream)     \
 	(((_pream) << 6) | ((_nss) << 4) | (_rate))
 
@@ -3388,7 +3422,9 @@ hli_end:
 	qdf_spin_unlock_bh(&(pdev->rx_ring.rx_hash_lock));
 	return rc;
 }
+#endif
 
+#ifndef CONFIG_HL_SUPPORT
 /*
  * Given a physical address this function will find the corresponding network
  *  buffer from the hash table.
@@ -3460,7 +3496,6 @@ qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev,
 
 	return netbuf;
 }
-#endif
 
 /*
  * Initialization function of the rx buffer hash table. This function will
@@ -3542,6 +3577,7 @@ hi_end:
 
 	return rc;
 }
+#endif
 
 /*--- RX In Order Hash Code --------------------------------------------------*/
 

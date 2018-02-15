@@ -1079,10 +1079,11 @@ QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 				struct flashing_req_params *flashing);
 #endif
 
-
+#ifdef FEATURE_WLAN_CH_AVOID
 QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 					   tSirChAvoidUpdateReq *
 					   ch_avoid_update_req);
+#endif
 
 #ifdef FEATURE_WLAN_TDLS
 

@@ -610,7 +610,6 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 
 		goto err_wma_close;
 	}
-	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_DEBUG,
 		"%s: target_type %d 8074:%d 6290:%d",
@@ -639,6 +638,8 @@ QDF_STATUS cds_open(struct wlan_objmgr_psoc *psoc)
 	cds_set_ac_specs_params(cds_cfg);
 
 	cds_cdp_cfg_attach(cds_cfg);
+
+	bmi_target_ready(scn, gp_cds_context->cfg_ctx);
 
 	/* Now proceed to open the MAC */
 	sirStatus =
@@ -2722,6 +2723,7 @@ void cds_svc_fw_shutdown_ind(struct device *dev)
 	hdd_svc_fw_shutdown_ind(dev);
 }
 
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 /*
  * cds_pkt_stats_to_logger_thread() - send pktstats to user
  * @pl_hdr: Pointer to pl_hdr
@@ -2741,6 +2743,7 @@ inline void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump,
 
 	wlan_pkt_stats_to_logger_thread(pl_hdr, pkt_dump, data);
 }
+#endif
 
 /**
  * cds_get_conparam() - Get the connection mode parameters

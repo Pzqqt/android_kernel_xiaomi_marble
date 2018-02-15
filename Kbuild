@@ -175,6 +175,7 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_WLAN_FEATURE_DSRC := y
 	endif
 
+ifneq ($(CONFIG_ROME_IF),usb)
 ifneq ($(CONFIG_ROME_IF),sdio)
 	#Flag to enable DISA
 	CONFIG_WLAN_FEATURE_DISA := y
@@ -205,6 +206,7 @@ ifneq ($(CONFIG_ROME_IF),sdio)
 	else
 		CONFIG_WLAN_LRO := n
 	endif
+endif
 endif
 
 ifeq ($(CONFIG_ROME_IF), snoc)
@@ -1421,9 +1423,14 @@ endif
 
 HIF_COMMON_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o \
-                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_irq_affinity.o
+                $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o
+
+ifeq ($(CONFIG_WLAN_NAPI), y)
+HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_exec.o
+HIF_COMMON_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_irq_affinity.o
+endif
+
+
 
 HIF_CE_OBJS :=  $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o \
                 $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
@@ -1558,7 +1565,7 @@ endif
 ifeq ($(CONFIG_ICNSS),y)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_snoc.o
 endif
-ifeq ($(CONFIG_CNSS_SDIO),y)
+ifeq ($(CONFIG_QCA_WIFI_SDIO), 1)
 PLD_OBJS +=	$(PLD_SRC_DIR)/pld_sdio.o
 endif
 ifeq ($(CONFIG_PLD_USB_CNSS), y)
@@ -1651,9 +1658,7 @@ ifeq ($(BUILD_DIAG_VERSION), 1)
 INCS +=		$(HOST_DIAG_LOG_INC)
 endif
 
-ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
 INCS +=		$(DISA_INC)
-endif
 
 INCS +=		$(UMAC_DISP_INC)
 INCS +=		$(UMAC_SCAN_INC)
@@ -2086,6 +2091,7 @@ endif
 ifeq ($(CONFIG_HIF_USB), 1)
 CDEFINES += -DHIF_USB \
             -DCONFIG_PLD_USB_CNSS \
+            -DDEBUG_HL_LOGGING \
             -DCONFIG_HL_SUPPORT
 endif
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -35,7 +35,31 @@
 /* SDIO manufacturer ID and Codes */
 #define MANUFACTURER_ID_AR6320_BASE        0x500
 #define MANUFACTURER_ID_QCA9377_BASE       0x700
+#define MANUFACTURER_ID_QCA9379_BASE       0x800
 #define MANUFACTURER_CODE                  0x271
+
+#ifndef CONFIG_CNSS
+static const struct pld_fw_files fw_files_qca6174_fw_1_1 = {
+	PREFIX "qwlan11.bin", PREFIX  "bdwlan11.bin", PREFIX "otp11.bin",
+	PREFIX  "utf11.bin", PREFIX "utfbd11.bin", PREFIX "qsetup11.bin",
+	PREFIX "epping11.bin", ""};
+static const struct pld_fw_files fw_files_qca6174_fw_2_0 = {
+	PREFIX "qwlan20.bin", PREFIX "bdwlan20.bin", PREFIX "otp20.bin",
+	PREFIX "utf20.bin", PREFIX "utfbd20.bin", PREFIX "qsetup20.bin",
+	PREFIX "epping20.bin", ""};
+static const struct pld_fw_files fw_files_qca6174_fw_1_3 = {
+	PREFIX "qwlan13.bin", PREFIX "bdwlan13.bin", PREFIX "otp13.bin",
+	PREFIX "utf13.bin", PREFIX "utfbd13.bin", PREFIX "qsetup13.bin",
+	PREFIX "epping13.bin", ""};
+static const struct pld_fw_files fw_files_qca6174_fw_3_0 = {
+	PREFIX "qwlan30.bin", PREFIX "bdwlan30.bin", PREFIX "otp30.bin",
+	PREFIX "utf30.bin", PREFIX "utfbd30.bin", PREFIX "qsetup30.bin",
+	PREFIX "epping30.bin", PREFIX "qwlan30i.bin"};
+static const struct pld_fw_files fw_files_default = {
+	PREFIX "qwlan.bin", PREFIX "bdwlan.bin", PREFIX "otp.bin",
+	PREFIX "utf.bin", PREFIX "utfbd.bin", PREFIX "qsetup.bin",
+	PREFIX "epping.bin", ""};
+#endif
 
 /**
  * pld_sdio_probe() - Probe function for SDIO platform driver
@@ -229,6 +253,22 @@ static struct sdio_device_id pld_sdio_id_table[] = {
 	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9377_BASE | 0xD))},
 	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9377_BASE | 0xE))},
 	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9377_BASE | 0xF))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x0))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x1))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x2))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x3))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x4))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x5))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x6))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x7))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x8))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0x9))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0xA))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0xB))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0xC))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0xD))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0xE))},
+	{SDIO_DEVICE(MANUFACTURER_CODE, (MANUFACTURER_ID_QCA9379_BASE | 0xF))},
 	{},
 };
 
@@ -267,14 +307,23 @@ void pld_sdio_unregister_driver(void)
 	cnss_sdio_wlan_unregister_driver(&pld_sdio_ops);
 }
 #else
+
+#ifdef CONFIG_PM
+static const struct dev_pm_ops pld_device_pm_ops = {
+	.suspend = pld_sdio_suspend,
+	.resume = pld_sdio_resume,
+};
+#endif
+
 struct sdio_driver pld_sdio_ops = {
 	.name       = "pld_sdio",
 	.id_table   = pld_sdio_id_table,
 	.probe      = pld_sdio_probe,
 	.remove     = pld_sdio_remove,
-#ifdef CONFIG_PM
-	.suspend    = pld_sdio_suspend,
-	.resume     = pld_sdio_resume,
+#if defined(CONFIG_PM)
+	.drv = {
+		.pm = &pld_device_pm_ops,
+	}
 #endif
 };
 
@@ -388,6 +437,7 @@ int pld_sdio_get_fw_files_for_target(struct pld_fw_files *pfw_files,
 		memcpy(pfw_files, &fw_files_qca6174_fw_3_0, sizeof(*pfw_files));
 		break;
 	case PLD_QCA9377_REV1_1_VERSION:
+	case PLD_QCA9379_REV1_VERSION:
 		get_qca9377_fw_files(pfw_files, sizeof(*pfw_files));
 		break;
 	default:

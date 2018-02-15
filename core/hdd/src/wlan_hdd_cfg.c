@@ -3416,7 +3416,7 @@ struct reg_table_entry g_registry_table[] = {
 		     CFG_IPA_UC_TX_PARTITION_BASE_MAX),
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	REG_VARIABLE(CFG_WLAN_LOGGING_SUPPORT_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, wlanLoggingEnable,
+		     struct hdd_config, wlan_logging_enable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_WLAN_LOGGING_SUPPORT_DEFAULT,
 		     CFG_WLAN_LOGGING_SUPPORT_DISABLE,
@@ -3424,7 +3424,7 @@ struct reg_table_entry g_registry_table[] = {
 
 	REG_VARIABLE(CFG_WLAN_LOGGING_CONSOLE_SUPPORT_NAME,
 		     WLAN_PARAM_Integer,
-		     struct hdd_config, wlanLoggingToConsole,
+		     struct hdd_config, wlan_logging_to_console,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DEFAULT,
 		     CFG_WLAN_LOGGING_CONSOLE_SUPPORT_DISABLE,

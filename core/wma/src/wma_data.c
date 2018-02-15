@@ -51,6 +51,7 @@
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "qdf_mem.h"
+#include "qdf_util.h"
 
 #include "wma_types.h"
 #include "lim_api.h"
@@ -2764,11 +2765,15 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	 */
 	if (status) {
 	/* Call Download Cb so that umac can free the buffer */
+		u32 rem;
+
 		if (tx_frm_download_comp_cb)
 			tx_frm_download_comp_cb(wma_handle->mac_context,
 						tx_frame,
 						WMA_TX_FRAME_BUFFER_FREE);
-		if (!(wma_handle->tx_fail_cnt % MAX_PRINT_FAILURE_CNT))
+		rem = qdf_do_div_rem(wma_handle->tx_fail_cnt,
+				     MAX_PRINT_FAILURE_CNT);
+		if (!rem)
 			WMA_LOGE("%s: Failed to send Mgmt Frame", __func__);
 		else
 			WMA_LOGD("%s: Failed to send Mgmt Frame", __func__);

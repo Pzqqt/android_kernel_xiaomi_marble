@@ -540,8 +540,16 @@ bool cds_is_5_mhz_enabled(void);
 bool cds_is_10_mhz_enabled(void);
 bool cds_is_sub_20_mhz_enabled(void);
 bool cds_is_self_recovery_enabled(void);
-void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data);
 enum QDF_GLOBAL_MODE cds_get_conparam(void);
+
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data);
+#else
+static inline
+void cds_pkt_stats_to_logger_thread(void *pl_hdr, void *pkt_dump, void *data)
+{
+}
+#endif
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 void cds_print_htc_credit_history(uint32_t count, qdf_abstract_print * print,

@@ -2581,7 +2581,6 @@ int hdd_wlan_start_modules(struct hdd_context *hdd_ctx,
 
 		pld_set_fw_log_mode(hdd_ctx->parent_dev,
 				    hdd_ctx->config->enable_fw_log);
-
 		ret = hdd_hif_open(qdf_dev->dev, qdf_dev->drv_hdl, qdf_dev->bid,
 				   qdf_dev->bus_type,
 				   (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
@@ -4612,6 +4611,19 @@ err_free_netdev:
 
 	return NULL;
 }
+
+#ifdef MSM_PLATFORM
+static inline
+void hdd_cancel_bus_bw_work(struct hdd_context *hdd_ctx)
+{
+	cancel_work_sync(&hdd_ctx->bus_bw_work);
+}
+#else
+static inline
+void hdd_cancel_bus_bw_work(struct hdd_context *hdd_ctx)
+{
+}
+#endif
 
 QDF_STATUS hdd_close_adapter(struct hdd_context *hdd_ctx, struct hdd_adapter *adapter,
 			     bool rtnl_held)
@@ -7108,7 +7120,7 @@ void hdd_bus_bandwidth_destroy(struct hdd_context *hdd_ctx)
 		hdd_reset_tcp_delack(hdd_ctx);
 
 	hdd_debug("wait for bus bw work to flush");
-	cancel_work_sync(&hdd_ctx->bus_bw_work);
+	hdd_cancel_bus_bw_work(hdd_ctx);
 	qdf_timer_free(&hdd_ctx->bus_bw_timer);
 	hdd_ctx->bus_bw_timer_running = false;
 	qdf_spinlock_destroy(&hdd_ctx->bus_bw_timer_lock);
@@ -7682,6 +7694,7 @@ static uint8_t hdd_get_safe_channel_from_pcl_and_acs_range(
 
 	return INVALID_CHANNEL_ID;
 }
+#endif
 
 /**
  * hdd_switch_sap_channel() - Move SAP to the given channel
@@ -7763,6 +7776,7 @@ int hdd_update_acs_timer_reason(struct hdd_adapter *adapter, uint8_t reason)
 	return status;
 }
 
+#if defined(FEATURE_WLAN_CH_AVOID)
 /**
  * hdd_unsafe_channel_restart_sap() - restart sap if sap is on unsafe channel
  * @hdd_ctx: hdd context pointer
@@ -8329,7 +8343,6 @@ static int ie_whitelist_attrs_init(struct hdd_context *hdd_ctx)
 	return ret;
 }
 
-
 /**
  * hdd_iface_change_callback() - Function invoked when stop modules expires
  * @priv: pointer to hdd context
@@ -8355,6 +8368,18 @@ static void hdd_iface_change_callback(void *priv)
 		hdd_err("Failed to stop modules");
 	EXIT();
 }
+
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+static void hdd_set_wlan_logging(struct hdd_context *hdd_ctx)
+{
+	wlan_logging_set_log_to_console(hdd_ctx->config->
+					wlan_logging_to_console);
+	wlan_logging_set_active(hdd_ctx->config->wlan_logging_enable);
+}
+#else
+static void hdd_set_wlan_logging(struct hdd_context *hdd_ctx)
+{ }
+#endif
 
 /**
  * hdd_context_create() - Allocate and inialize HDD context.
@@ -8439,8 +8464,7 @@ static struct hdd_context *hdd_context_create(struct device *dev)
 	if (ret)
 		goto err_deinit_txrx_histogram;
 
-	wlan_logging_set_log_to_console(hdd_ctx->config->wlanLoggingToConsole);
-	wlan_logging_set_active(hdd_ctx->config->wlanLoggingEnable);
+	hdd_set_wlan_logging(hdd_ctx);
 
 skip_multicast_logging:
 	hdd_set_trace_level_for_each(hdd_ctx);

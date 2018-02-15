@@ -745,14 +745,15 @@ ol_tx_classify_mgmt(
 	return txq;
 }
 
-static A_STATUS
+#ifdef currently_unused
+QDF_STATUS
 ol_tx_classify_extension(
 	struct ol_txrx_vdev_t *vdev,
 	struct ol_tx_desc_t *tx_desc,
 	qdf_nbuf_t tx_msdu,
 	struct ol_txrx_msdu_info_t *msdu_info)
 {
-	A_UINT8 *datap = qdf_nbuf_data(tx_msdu);
+	u8 *datap = qdf_nbuf_data(tx_msdu);
 	struct ol_txrx_peer_t *peer;
 	int which_key;
 
@@ -785,7 +786,7 @@ ol_tx_classify_extension(
 
 	if (!msdu_info->htt.info.is_unicast) {
 		int l2_hdr_size;
-		A_UINT16 ethertype;
+		u16 ethertype;
 
 		if (msdu_info->htt.info.l2_hdr_type == htt_pkt_type_ethernet) {
 			struct ethernet_hdr_t *eh;
@@ -853,10 +854,10 @@ ol_tx_classify_extension(
 	 */
 	msdu_info->htt.action.do_tx_complete = 0;
 
-	return A_OK;
+	return QDF_STATUS_SUCCESS;
 }
 
-static A_STATUS
+QDF_STATUS
 ol_tx_classify_mgmt_extension(
 		struct ol_txrx_vdev_t *vdev,
 		struct ol_tx_desc_t *tx_desc,
@@ -893,7 +894,7 @@ ol_tx_classify_mgmt_extension(
 		IEEE80211_FC0_SUBTYPE_SHIFT;
 	msdu_info->htt.info.l3_hdr_offset = sizeof(struct ieee80211_frame);
 
-	return A_OK;
+	return QDF_STATUS_SUCCESS;
 }
-
+#endif
 #endif /* defined(CONFIG_HL_SUPPORT) */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -557,10 +557,20 @@ htt_htc_misc_pkt_list_add(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt);
 void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev);
 #endif
 
+#ifdef CONFIG_HL_SUPPORT
+static inline int
+htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
+			qdf_dma_addr_t paddr,
+			qdf_nbuf_t netbuf)
+{
+	return 0;
+}
+#else
 int
 htt_rx_hash_list_insert(struct htt_pdev_t *pdev,
 			qdf_dma_addr_t paddr,
 			qdf_nbuf_t netbuf);
+#endif
 
 qdf_nbuf_t
 htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, qdf_dma_addr_t paddr);

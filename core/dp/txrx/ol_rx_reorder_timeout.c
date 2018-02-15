@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,6 +34,7 @@
 /* datapath internal interfaces */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT, etc. */
 #include <ol_rx_reorder.h>      /* ol_rx_reorder_flush, etc. */
+#include <ol_rx_reorder_timeout.h>
 
 #ifdef QCA_SUPPORT_OL_RX_REORDER_TIMEOUT
 

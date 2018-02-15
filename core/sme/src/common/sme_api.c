@@ -10505,6 +10505,7 @@ QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_val)
 }
 #endif
 
+#ifdef FEATURE_WLAN_CH_AVOID
 /*
  * sme_ch_avoid_update_req() -
  *   API to request channel avoidance update from FW.
@@ -10554,6 +10555,7 @@ QDF_STATUS sme_ch_avoid_update_req(tHalHandle hHal)
 
 	return status;
 }
+#endif
 
 /**
  * sme_set_miracast() - Function to set miracast value to UMAC

@@ -14937,8 +14937,8 @@ struct hdd_config {
 	uint32_t IpaUcTxPartitionBase;
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	/* WLAN Logging */
-	bool wlanLoggingEnable;
-	bool wlanLoggingToConsole;
+	bool wlan_logging_enable;
+	bool wlan_logging_to_console;
 #endif /* WLAN_LOGGING_SOCK_SVC_ENABLE */
 
 	uint8_t enableSifsBurst;

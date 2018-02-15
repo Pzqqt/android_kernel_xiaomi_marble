@@ -4883,7 +4883,7 @@ ol_txrx_display_stats(void *soc, uint16_t value,
 #endif
 
 #ifdef DEBUG_HL_LOGGING
-	case CDP__BUNDLE_STATS:
+	case CDP_BUNDLE_STATS:
 		htt_dump_bundle_stats(pdev->htt_pdev);
 		break;
 #endif

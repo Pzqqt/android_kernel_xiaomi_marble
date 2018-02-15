@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -515,7 +515,6 @@ struct ol_tx_sched_wrr_adv_category_info_t {
 		send_limit, \
 		credit_reserve, \
 		discard_weights) \
-	do {			\
 		enum { OL_TX_SCHED_WRR_ADV_ ## cat ## _WRR_SKIP_WEIGHT = \
 			(wrr_skip_weight) }; \
 		enum { OL_TX_SCHED_WRR_ADV_ ## cat ## _CREDIT_THRESHOLD = \
@@ -525,8 +524,7 @@ struct ol_tx_sched_wrr_adv_category_info_t {
 		enum { OL_TX_SCHED_WRR_ADV_ ## cat ## _CREDIT_RESERVE = \
 			(credit_reserve) }; \
 		enum { OL_TX_SCHED_WRR_ADV_ ## cat ## _DISCARD_WEIGHT = \
-			(discard_weights) }; \
-	} while (0)
+			(discard_weights) };
 /* Rome:
  * For high-volume traffic flows (VI, BE, BK), use a credit threshold
  * roughly equal to a large A-MPDU (occupying half the target memory
@@ -1021,8 +1019,9 @@ ol_tx_sched_category_info_wrr_adv(
  *
  * Return: none
  */
-void ol_tx_sched_wrr_param_update(struct ol_txrx_pdev_t *pdev,
-				struct ol_tx_sched_wrr_adv_t *scheduler)
+static void ol_tx_sched_wrr_param_update(struct ol_txrx_pdev_t *pdev,
+					 struct ol_tx_sched_wrr_adv_t *
+					 scheduler)
 {
 	int i;
 	static const char * const tx_sched_wrr_name[4] = {

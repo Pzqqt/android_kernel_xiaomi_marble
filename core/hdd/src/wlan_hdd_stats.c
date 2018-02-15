@@ -4529,9 +4529,11 @@ static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
 	if (clock_freq == 0)
 		return true;
 
-	survey->time = chan_info->cycle_count / clock_freq;
-	survey->time_busy = chan_info->rx_clear_count / clock_freq;
-	survey->time_tx = chan_info->tx_frame_count / clock_freq;
+	survey->time = qdf_do_div(chan_info->cycle_count, clock_freq);
+
+	survey->time_busy = qdf_do_div(chan_info->rx_clear_count, clock_freq);
+
+	survey->time_tx = qdf_do_div(chan_info->tx_frame_count, clock_freq);
 
 	survey->filled |= SURVEY_INFO_TIME |
 			  SURVEY_INFO_TIME_BUSY |
@@ -4558,9 +4560,13 @@ static bool wlan_fill_survey_result(struct survey_info *survey, int opfreq,
 	if (clock_freq == 0)
 		return true;
 
-	survey->channel_time = chan_info->cycle_count / clock_freq;
-	survey->channel_time_busy = chan_info->rx_clear_count / clock_freq;
-	survey->channel_time_tx = chan_info->tx_frame_count / clock_freq;
+	survey->channel_time = qdf_do_div(chan_info->cycle_count, clock_freq);
+
+	survey->channel_time_busy = qdf_do_div(chan_info->rx_clear_count,
+							 clock_freq);
+
+	survey->channel_time_tx = qdf_do_div(chan_info->tx_frame_count,
+							 clock_freq);
 
 	survey->filled |= SURVEY_INFO_CHANNEL_TIME |
 			  SURVEY_INFO_CHANNEL_TIME_BUSY |

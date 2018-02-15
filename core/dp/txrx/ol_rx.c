@@ -1667,6 +1667,7 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 	ol_rx_data_process(peer, msdu_list);
 }
 
+#ifndef CONFIG_HL_SUPPORT
 void
 ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 					uint32_t msdu_count,
@@ -1724,6 +1725,7 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 	}
 	htt_rx_msdu_buff_replenish(htt_pdev);
 }
+#endif
 
 /**
  * ol_htt_mon_note_chan() - Update monitor channel information
