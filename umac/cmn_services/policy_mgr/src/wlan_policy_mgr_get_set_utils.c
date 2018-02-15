@@ -884,7 +884,7 @@ void policy_mgr_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t fw_mode_config)
 {
 	policy_mgr_debug("Status:%d for scan_config:%x fw_mode_config:%x",
-			status, scan_config, fw_mode_config);
+			 status, scan_config, fw_mode_config);
 }
 
 void policy_mgr_set_dual_mac_scan_config(struct wlan_objmgr_psoc *psoc,
@@ -930,7 +930,7 @@ void policy_mgr_set_dual_mac_scan_config(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	cfg.set_dual_mac_cb = (void *)policy_mgr_soc_set_dual_mac_cfg_cb;
+	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
 
 	policy_mgr_debug("scan_config:%x fw_mode_config:%x",
 			cfg.scan_config, cfg.fw_mode_config);
@@ -977,7 +977,7 @@ void policy_mgr_set_dual_mac_fw_mode_config(struct wlan_objmgr_psoc *psoc,
 		return;
 	}
 
-	cfg.set_dual_mac_cb = (void *)policy_mgr_soc_set_dual_mac_cfg_cb;
+	cfg.set_dual_mac_cb = policy_mgr_soc_set_dual_mac_cfg_cb;
 
 	policy_mgr_debug("scan_config:%x fw_mode_config:%x",
 			cfg.scan_config, cfg.fw_mode_config);

@@ -788,6 +788,9 @@ enum set_hw_mode_status {
 	SET_HW_MODE_STATUS_ECOEX,
 };
 
+typedef void (*dual_mac_cb)(enum set_hw_mode_status status,
+		uint32_t scan_config,
+		uint32_t fw_mode_config);
 /**
  * enum policy_mgr_hw_mode_change - identify the HW mode switching to.
  *
@@ -895,7 +898,7 @@ struct policy_mgr_vdev_mac_map {
 struct policy_mgr_dual_mac_config {
 	uint32_t scan_config;
 	uint32_t fw_mode_config;
-	void *set_dual_mac_cb;
+	dual_mac_cb set_dual_mac_cb;
 };
 
 /**
