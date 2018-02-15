@@ -593,7 +593,7 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 		TAILQ_FOREACH_SAFE(precac_entry,
 				&dfs->dfs_precac_done_list,
 				pe_list, tmp_precac_entry) {
-			TAILQ_REMOVE(&dfs->dfs_precac_required_list,
+			TAILQ_REMOVE(&dfs->dfs_precac_done_list,
 					precac_entry, pe_list);
 			qdf_mem_free(precac_entry);
 		}
@@ -607,7 +607,7 @@ void dfs_deinit_precac_list(struct wlan_dfs *dfs)
 				pe_list,
 				tmp_precac_entry) {
 			qdf_timer_stop(&precac_entry->precac_nol_timer);
-			TAILQ_REMOVE(&dfs->dfs_precac_required_list,
+			TAILQ_REMOVE(&dfs->dfs_precac_nol_list,
 					precac_entry, pe_list);
 			qdf_mem_free(precac_entry);
 		}
