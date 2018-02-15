@@ -20437,6 +20437,8 @@ typedef struct {
     wmi_ppe_threshold he_ppet5G;
     /* chainmask table to be used for the MAC */
     A_UINT32 chainmask_table_id;
+    /* PDEV ID to LMAC ID mapping */
+    A_UINT32 lmac_id;
 } WMI_MAC_PHY_CAPABILITIES;
 
 typedef struct {
