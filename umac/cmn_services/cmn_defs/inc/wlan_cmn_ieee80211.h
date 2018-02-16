@@ -28,6 +28,9 @@
 #define IEEE80211_CCMP_HEADERLEN    8
 #define IEEE80211_CCMP_MICLEN       8
 #define IEEE80211_FC1_WEP           0x40
+#define WLAN_HDR_IV_LEN            3
+#define WLAN_HDR_EXT_IV_BIT        0x20
+#define WLAN_HDR_EXT_IV_LEN        4
 
 #define WLAN_SEQ_SEQ_SHIFT 4
 

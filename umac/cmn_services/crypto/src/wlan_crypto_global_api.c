@@ -779,7 +779,8 @@ QDF_STATUS wlan_crypto_delkey(struct wlan_objmgr_vdev *vdev,
 	if (!vdev || !macaddr ||
 		(key_idx >
 			(WLAN_CRYPTO_MAXKEYIDX + WLAN_CRYPTO_MAXIGTKKEYIDX))) {
-		qdf_print("%s[%d] Invalid params vdev %pK, macaddr %pK"
+			QDF_TRACE(QDF_MODULE_ID_CRYPTO, QDF_TRACE_LEVEL_ERROR,
+				"%s[%d] Invalid params vdev %pK, macaddr %pK"
 					"keyidx %d\n", __func__, __LINE__, vdev,
 					macaddr, key_idx);
 		return QDF_STATUS_E_INVAL;

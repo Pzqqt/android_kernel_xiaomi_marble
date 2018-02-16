@@ -846,6 +846,8 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	enum mgmt_frame_type frm_type;
 	struct mgmt_rx_handler *rx_handler;
 	struct mgmt_rx_handler *rx_handler_head = NULL, *rx_handler_tail = NULL;
+	u_int8_t *data, *ivp = NULL;
+	uint16_t buflen;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!buf) {
@@ -859,7 +861,12 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 		return QDF_STATUS_E_INVAL;
 	}
 
-	wh = (struct ieee80211_frame *)qdf_nbuf_data(buf);
+	data = (uint8_t *)qdf_nbuf_data(buf);
+	wh = (struct ieee80211_frame *)data;
+	buflen = qdf_nbuf_len(buf);
+
+	if (buflen > (sizeof(struct ieee80211_frame) + WLAN_HDR_EXT_IV_LEN))
+		ivp = data + sizeof(struct ieee80211_frame);
 
 	/* peer can be NULL in following 2 scenarios:
 	 * 1. broadcast frame received
@@ -897,10 +904,13 @@ QDF_STATUS tgt_mgmt_txrx_rx_frame_handler(
 	mpdu_data_ptr = (uint8_t *)qdf_nbuf_data(buf) +
 			sizeof(struct ieee80211_frame);
 	if ((wh->i_fc[1] & IEEE80211_FC1_WEP) &&
-	    (mgmt_subtype == MGMT_SUBTYPE_ACTION) &&
 	    !qdf_is_macaddr_group((struct qdf_mac_addr *)wh->i_addr1) &&
-	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1))
-		mpdu_data_ptr += IEEE80211_CCMP_HEADERLEN;
+	    !qdf_is_macaddr_broadcast((struct qdf_mac_addr *)wh->i_addr1)) {
+		if (ivp[WLAN_HDR_IV_LEN] & WLAN_HDR_EXT_IV_BIT)
+			mpdu_data_ptr += IEEE80211_CCMP_HEADERLEN;
+		else
+			mpdu_data_ptr += WLAN_HDR_EXT_IV_LEN;
+	}
 
 	frm_type = mgmt_txrx_get_frm_type(mgmt_subtype, mpdu_data_ptr);
 	if (frm_type == MGMT_FRM_UNSPECIFIED) {
