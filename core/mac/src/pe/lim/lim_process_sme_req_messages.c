@@ -200,7 +200,7 @@ static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct scheduler_msg message = {0};
-	struct sir_dual_mac_config *req_msg;
+	struct policy_mgr_dual_mac_config *req_msg;
 	uint32_t len;
 	struct sir_set_dual_mac_cfg *buf;
 	struct scheduler_msg resp_msg = {0};

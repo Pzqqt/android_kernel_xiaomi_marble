@@ -8309,7 +8309,7 @@ static QDF_STATUS wma_mc_process_msg(struct scheduler_msg *msg)
 		break;
 	case SIR_HAL_PDEV_DUAL_MAC_CFG_REQ:
 		wma_send_pdev_set_dual_mac_config(wma_handle,
-				(struct sir_dual_mac_config *)msg->bodyptr);
+				(struct policy_mgr_dual_mac_config *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_SET_IE_INFO:
@@ -8640,7 +8640,7 @@ fail:
  * Return: QDF_STATUS. 0 on success.
  */
 QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
-		struct sir_dual_mac_config *msg)
+		struct policy_mgr_dual_mac_config *msg)
 {
 	QDF_STATUS status;
 
@@ -8663,7 +8663,7 @@ QDF_STATUS wma_send_pdev_set_dual_mac_config(tp_wma_handle wma_handle,
 			     WMA_VDEV_PLCY_MGR_CMD_TIMEOUT);
 	status = wmi_unified_pdev_set_dual_mac_config_cmd(
 				wma_handle->wmi_handle,
-				(struct wmi_dual_mac_config *)msg);
+				(struct policy_mgr_dual_mac_config *)msg);
 	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("%s: Failed to send WMI_PDEV_SET_DUAL_MAC_CONFIG_CMDID: %d",
 				__func__, status);

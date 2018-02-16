@@ -452,18 +452,6 @@ struct s_sir_set_hw_mode {
 };
 
 /**
- * struct sir_dual_mac_config - Dual MAC configuration
- * @scan_config: Scan configuration
- * @fw_mode_config: FW mode configuration
- * @set_dual_mac_cb: Callback function to be executed on response to the command
- */
-struct sir_dual_mac_config {
-	uint32_t scan_config;
-	uint32_t fw_mode_config;
-	void *set_dual_mac_cb;
-};
-
-/**
  * struct sir_set_dual_mac_cfg - Set Dual mac config request
  * @message_type: Message type
  * @length: Length of the message
@@ -472,7 +460,7 @@ struct sir_dual_mac_config {
 struct sir_set_dual_mac_cfg {
 	uint16_t message_type;
 	uint16_t length;
-	struct sir_dual_mac_config set_dual_mac;
+	struct policy_mgr_dual_mac_config set_dual_mac;
 };
 
 /**
@@ -5674,8 +5662,6 @@ typedef void (*hw_mode_transition_cb)(uint32_t old_hw_mode_index,
 		uint32_t new_hw_mode_index,
 		uint32_t num_vdev_mac_entries,
 		struct policy_mgr_vdev_mac_map *vdev_mac_map);
-typedef void (*dual_mac_cb)(uint32_t status, uint32_t scan_config,
-		uint32_t fw_mode_config);
 typedef void (*antenna_mode_cb)(uint32_t status);
 
 /**
