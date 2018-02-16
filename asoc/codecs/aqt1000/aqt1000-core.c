@@ -28,6 +28,7 @@
 #include "aqt1000-internal.h"
 #include "aqt1000.h"
 #include "aqt1000-utils.h"
+#include "aqt1000-irq.h"
 
 static int aqt1000_bringup(struct aqt1000 *aqt)
 {
@@ -113,6 +114,11 @@ static int aqt1000_device_init(struct aqt1000 *aqt)
 		goto done;
 	}
 
+	ret = aqt_irq_init(aqt);
+	if (ret)
+		goto done;
+
+	return ret;
 done:
 	mutex_destroy(&aqt->io_lock);
 	mutex_destroy(&aqt->xfer_lock);
@@ -392,6 +398,7 @@ static int aqt1000_bringdown(struct device *dev)
 
 static void aqt1000_device_exit(struct aqt1000 *aqt)
 {
+	aqt_irq_exit(aqt);
 	aqt1000_bringdown(aqt->dev);
 	mutex_destroy(&aqt->io_lock);
 	mutex_destroy(&aqt->xfer_lock);

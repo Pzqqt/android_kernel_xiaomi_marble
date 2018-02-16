@@ -13,6 +13,7 @@
 #ifndef __AQT1000_IRQ_H_
 #define __AQT1000_IRQ_H_
 
+#include <linux/types.h>
 #include <linux/interrupt.h>
 #include <linux/regmap.h>
 
@@ -31,43 +32,15 @@ enum {
 	AQT1000_IRQ_HPH_PA_CNPR_COMPLETE,
 	AQT1000_CDC_HPHL_SURGE,
 	AQT1000_CDC_HPHR_SURGE,
-	AQT1000_PLL_LOCK_LOSS,
-	AQT1000_FLL_LOCK_LOSS,
-	AQT1000_DSD_INT,
 	AQT1000_NUM_IRQS,
 };
 
-/**
- * struct aqt_irq - AQT IRQ resource structure
- * @irq_lock:	lock used by irq_chip functions.
- * @nested_irq_lock: lock used while handling nested interrupts.
- * @irq:	interrupt number.
- * @irq_masks_cur: current mask value to be written to mask registers.
- * @irq_masks_cache: cached mask value.
- * @num_irqs: number of supported interrupts.
- * @num_irq_regs: number of irq registers.
- * @parent:	parent pointer.
- * @dev:	device pointer.
- * @domain:	irq domain pointer.
- *
- * Contains required members used in wsa irq driver.
- */
-
-struct aqt1000_irq {
-	struct mutex irq_lock;
-	struct mutex nested_irq_lock;
-	unsigned int irq;
-	u8 irq_masks_cur;
-	u8 irq_masks_cache;
-	bool irq_level_high[8];
-	int num_irqs;
-	int num_irq_regs;
-	void *parent;
-	struct device *dev;
-	struct irq_domain *domain;
-};
-
-int aqt_irq_init(void);
-void aqt_irq_exit(void);
+int aqt_request_irq(struct aqt1000 *aqt, int irq, const char *name,
+			irq_handler_t handler, void *data);
+void aqt_free_irq(struct aqt1000 *aqt, int irq, void *data);
+int aqt_irq_init(struct aqt1000 *aqt);
+int aqt_irq_exit(struct aqt1000 *aqt);
+void aqt_enable_irq(struct aqt1000 *aqt, int irq);
+void aqt_disable_irq(struct aqt1000 *aqt, int irq);
 
 #endif /* __AQT1000_IRQ_H_ */
