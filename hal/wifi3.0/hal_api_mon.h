@@ -508,13 +508,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 
 	case WIFIRX_PPDU_END_E:
 		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "[%s][%d] ppdu_end_e len=%d",
-				  __func__, __LINE__, tlv_len);
+			"[%s][%d] ppdu_end_e len=%d",
+				__func__, __LINE__, tlv_len);
 		/* This is followed by sub-TLVs of PPDU_END */
-
-		ppdu_info->rx_status.duration =
-			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_8,
-					RX_PPDU_DURATION);
 		break;
 
 	case WIFIRXPCU_PPDU_END_INFO_E:
@@ -524,6 +520,9 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		ppdu_info->rx_status.tsft = (ppdu_info->rx_status.tsft << 32) |
 			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_0,
 				WB_TIMESTAMP_LOWER_32);
+		ppdu_info->rx_status.duration =
+			HAL_RX_GET(rx_tlv, RXPCU_PPDU_END_INFO_8,
+				RX_PPDU_DURATION);
 		break;
 
 	case WIFIRX_PPDU_END_USER_STATS_E:
