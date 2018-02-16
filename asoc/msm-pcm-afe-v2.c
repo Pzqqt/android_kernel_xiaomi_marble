@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -489,20 +489,20 @@ static int msm_afe_open(struct snd_pcm_substream *substream)
 }
 
 static int msm_afe_playback_copy(struct snd_pcm_substream *substream,
-				int channel, snd_pcm_uframes_t hwoff,
-				void __user *buf, snd_pcm_uframes_t frames)
+				int channel, unsigned long hwoff,
+				void __user *buf, unsigned long fbytes)
 {
 	int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
-	char *hwbuf = runtime->dma_area + frames_to_bytes(runtime, hwoff);
+	char *hwbuf = runtime->dma_area + hwoff;
 	u32 mem_map_handle = 0;
 
 	pr_debug("%s : appl_ptr 0x%lx hw_ptr 0x%lx dest_to_copy 0x%pK\n",
 		__func__,
 		runtime->control->appl_ptr, runtime->status->hw_ptr, hwbuf);
 
-	if (copy_from_user(hwbuf, buf, frames_to_bytes(runtime, frames))) {
+	if (copy_from_user(hwbuf, buf, fbytes)) {
 		pr_err("%s :Failed to copy audio from user buffer\n",
 			__func__);
 
@@ -542,13 +542,13 @@ fail:
 }
 
 static int msm_afe_capture_copy(struct snd_pcm_substream *substream,
-				int channel, snd_pcm_uframes_t hwoff,
-				void __user *buf, snd_pcm_uframes_t frames)
+				int channel, unsigned long hwoff,
+				void __user *buf, unsigned long fbytes)
 {
 	int ret = 0;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
-	char *hwbuf = runtime->dma_area + frames_to_bytes(runtime, hwoff);
+	char *hwbuf = runtime->dma_area + hwoff;
 	u32 mem_map_handle = 0;
 
 	if (!prtd->mmap_flag) {
@@ -590,7 +590,7 @@ static int msm_afe_capture_copy(struct snd_pcm_substream *substream,
 			__func__, runtime->control->appl_ptr,
 			runtime->status->hw_ptr, hwbuf);
 
-	if (copy_to_user(buf, hwbuf, frames_to_bytes(runtime, frames))) {
+	if (copy_to_user(buf, hwbuf, fbytes)) {
 		pr_err("%s: copy to user failed\n", __func__);
 
 		goto fail;
@@ -602,8 +602,8 @@ fail:
 }
 
 static int msm_afe_copy(struct snd_pcm_substream *substream, int channel,
-			snd_pcm_uframes_t hwoff, void __user *buf,
-			snd_pcm_uframes_t frames)
+			unsigned long hwoff, void __user *buf,
+			unsigned long fbytes)
 {
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct pcm_afe_info *prtd = runtime->private_data;
@@ -618,10 +618,10 @@ static int msm_afe_copy(struct snd_pcm_substream *substream, int channel,
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
 		ret = msm_afe_playback_copy(substream, channel, hwoff,
-					buf, frames);
+					buf, fbytes);
 	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
 		ret = msm_afe_capture_copy(substream, channel, hwoff,
-					buf, frames);
+					buf, fbytes);
 	return ret;
 }
 
@@ -841,7 +841,7 @@ static snd_pcm_uframes_t msm_afe_pointer(struct snd_pcm_substream *substream)
 
 static const struct snd_pcm_ops msm_afe_ops = {
 	.open           = msm_afe_open,
-	.copy           = msm_afe_copy,
+	.copy_user      = msm_afe_copy,
 	.hw_params	= msm_afe_hw_params,
 	.trigger	= msm_afe_trigger,
 	.close          = msm_afe_close,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -714,10 +714,9 @@ static int msm_pcm_open(struct snd_pcm_substream *substream)
 }
 
 static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
-	snd_pcm_uframes_t hwoff, void __user *buf, snd_pcm_uframes_t frames)
+	unsigned long hwoff, void __user *buf, unsigned long fbytes)
 {
 	int ret = 0;
-	int fbytes = 0;
 	int xfer = 0;
 	char *bufptr = NULL;
 	void *data = NULL;
@@ -728,7 +727,6 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	struct msm_audio *prtd = runtime->private_data;
 
-	fbytes = frames_to_bytes(runtime, frames);
 	pr_debug("%s: prtd->out_count = %d\n",
 				__func__, atomic_read(&prtd->out_count));
 
@@ -775,8 +773,8 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 
 		bufptr = data;
 		if (bufptr) {
-			pr_debug("%s:fbytes =%d: xfer=%d size=%d\n",
-						__func__, fbytes, xfer, size);
+			pr_debug("%s:fbytes =%lu: xfer=%d size=%d\n",
+				 __func__, fbytes, xfer, size);
 			if (copy_from_user(bufptr, buf, xfer)) {
 				ret = -EFAULT;
 				pr_err("%s: copy_from_user failed\n",
@@ -786,8 +784,8 @@ static int msm_pcm_playback_copy(struct snd_pcm_substream *substream, int a,
 			}
 			buf += xfer;
 			fbytes -= xfer;
-			pr_debug("%s:fbytes = %d: xfer=%d\n", __func__, fbytes,
-				xfer);
+			pr_debug("%s:fbytes = %lu: xfer=%d\n", __func__,
+				 fbytes, xfer);
 			if (atomic_read(&prtd->start)) {
 				pr_debug("%s:writing %d bytes of buffer to dsp\n",
 						__func__, xfer);
@@ -870,11 +868,10 @@ static int msm_pcm_playback_close(struct snd_pcm_substream *substream)
 }
 
 static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
-		 int channel, snd_pcm_uframes_t hwoff, void __user *buf,
-						 snd_pcm_uframes_t frames)
+		 int channel, unsigned long hwoff, void __user *buf,
+						 unsigned long fbytes)
 {
 	int ret = 0;
-	int fbytes = 0;
 	int xfer;
 	char *bufptr;
 	void *data = NULL;
@@ -886,7 +883,6 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 
 
 	pr_debug("%s\n", __func__);
-	fbytes = frames_to_bytes(runtime, frames);
 
 	pr_debug("appl_ptr %d\n", (int)runtime->control->appl_ptr);
 	pr_debug("hw_ptr %d\n", (int)runtime->status->hw_ptr);
@@ -915,7 +911,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 	data = q6asm_is_cpu_buf_avail(OUT, prtd->audio_client, &size, &idx);
 	bufptr = data;
 	pr_debug("Size = %d\n", size);
-	pr_debug("fbytes = %d\n", fbytes);
+	pr_debug("fbytes = %lu\n", fbytes);
 	pr_debug("idx = %d\n", idx);
 	if (bufptr) {
 		xfer = fbytes;
@@ -932,7 +928,7 @@ static int msm_pcm_capture_copy(struct snd_pcm_substream *substream,
 		fbytes -= xfer;
 		size -= xfer;
 		prtd->in_frame_info[idx].offset += xfer;
-		pr_debug("%s:fbytes = %d: size=%d: xfer=%d\n",
+		pr_debug("%s:fbytes = %lu: size=%d: xfer=%d\n",
 					__func__, fbytes, size, xfer);
 		pr_debug(" Sending next buffer to dsp\n");
 		memset(&prtd->in_frame_info[idx], 0,
@@ -977,14 +973,14 @@ static int msm_pcm_capture_close(struct snd_pcm_substream *substream)
 }
 
 static int msm_pcm_copy(struct snd_pcm_substream *substream, int a,
-	 snd_pcm_uframes_t hwoff, void __user *buf, snd_pcm_uframes_t frames)
+	 unsigned long hwoff, void __user *buf, unsigned long fbytes)
 {
 	int ret = 0;
 
 	if (substream->stream == SNDRV_PCM_STREAM_PLAYBACK)
-		ret = msm_pcm_playback_copy(substream, a, hwoff, buf, frames);
+		ret = msm_pcm_playback_copy(substream, a, hwoff, buf, fbytes);
 	else if (substream->stream == SNDRV_PCM_STREAM_CAPTURE)
-		ret = msm_pcm_capture_copy(substream, a, hwoff, buf, frames);
+		ret = msm_pcm_capture_copy(substream, a, hwoff, buf, fbytes);
 	return ret;
 }
 
@@ -1086,7 +1082,7 @@ static int msm_pcm_hw_params(struct snd_pcm_substream *substream,
 
 static const struct snd_pcm_ops msm_pcm_ops = {
 	.open           = msm_pcm_open,
-	.copy		= msm_pcm_copy,
+	.copy_user	= msm_pcm_copy,
 	.hw_params	= msm_pcm_hw_params,
 	.close          = msm_pcm_close,
 	.ioctl          = snd_pcm_lib_ioctl,

@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -530,7 +530,7 @@ static snd_pcm_uframes_t msm_pcm_pointer(struct snd_pcm_substream *substream)
 }
 
 static int msm_pcm_copy(struct snd_pcm_substream *substream, int a,
-	 snd_pcm_uframes_t hwoff, void __user *buf, snd_pcm_uframes_t frames)
+	 unsigned long hwoff, void __user *buf, unsigned long fbytes)
 {
 	return -EINVAL;
 }
@@ -1182,7 +1182,7 @@ exit:
 static const struct snd_pcm_ops msm_pcm_ops = {
 	.open           = msm_pcm_open,
 	.prepare        = msm_pcm_prepare,
-	.copy           = msm_pcm_copy,
+	.copy_user      = msm_pcm_copy,
 	.hw_params	= msm_pcm_hw_params,
 	.ioctl          = msm_pcm_ioctl,
 #ifdef CONFIG_COMPAT
