@@ -1036,6 +1036,24 @@ uint32_t sap_weight_channel_status(struct sap_context *sap_ctx,
 }
 
 /**
+ * sap_check_channels_same_band() - Check if two channels belong to same band
+ * @ch_num1: channel number
+ * @ch_num2: channel number
+ *
+ * Return: true if both channels belong to same band else false
+ */
+static bool sap_check_channels_same_band(uint16_t ch_num1, uint16_t ch_num2)
+{
+	if ((ch_num1 <= SIR_11B_CHANNEL_END &&
+	     ch_num2 <= SIR_11B_CHANNEL_END) ||
+	    (ch_num1 >= SIR_11A_CHANNEL_BEGIN &&
+	     ch_num2 >= SIR_11A_CHANNEL_BEGIN))
+	    return true;
+
+	return false;
+}
+
+/**
  * sap_update_rssi_bsscount() - updates bss count and rssi effect.
  *
  * @pSpectCh:     Channel Information
@@ -1061,6 +1079,9 @@ static void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
 	if (pExtSpectCh != NULL &&
 	    pExtSpectCh >= spectch_start &&
 	    pExtSpectCh < spectch_end) {
+		if (!sap_check_channels_same_band(pSpectCh->chNum,
+		    pExtSpectCh->chNum))
+			return;
 		++pExtSpectCh->bssCount;
 		switch (offset) {
 		case -1:
@@ -1749,6 +1770,11 @@ static void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
 			if (pSpectCh[j].weight <
 			    pSpectCh[minWeightIndex].weight) {
 				minWeightIndex = j;
+			} else if (pSpectCh[j].weight ==
+				   pSpectCh[minWeightIndex].weight) {
+				if (pSpectCh[j].bssCount <
+				    pSpectCh[minWeightIndex].bssCount)
+					minWeightIndex = j;
 			}
 		}
 		if (minWeightIndex != i) {
