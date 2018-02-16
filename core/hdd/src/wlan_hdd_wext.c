@@ -7062,13 +7062,6 @@ static int __iw_setnone_getint(struct net_device *dev,
 	tSmeConfigParams *sme_config;
 	struct hdd_context *hdd_ctx;
 
-	sme_config = qdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		hdd_err("failed to allocate memory for sme_config");
-		return -ENOMEM;
-	}
-	qdf_mem_zero(sme_config, sizeof(*sme_config));
-
 	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -7079,6 +7072,12 @@ static int __iw_setnone_getint(struct net_device *dev,
 	ret = hdd_check_private_wext_control(hdd_ctx, info);
 	if (0 != ret)
 		return ret;
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("failed to allocate memory for sme_config");
+		return -ENOMEM;
+	}
 
 	switch (value[0]) {
 	case WE_GET_11D_STATE:
