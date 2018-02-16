@@ -422,8 +422,7 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 
 	if (!dma_buf || !paddr || !vaddr || !plen) {
 		pr_err("%s: Invalid params\n", __func__);
-		rc = -EINVAL;
-		goto err;
+		return -EINVAL;
 	}
 
 	/* bufsz should be 0 and fd shouldn't be 0 as of now */
@@ -436,10 +435,12 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 	}
 
 	if (ionflag != NULL) {
-		pr_err("%s: could not get flags for the dma_buf\n",
-			__func__);
-		rc = -EOPNOTSUPP;
-		goto err_ion_flag;
+		rc = dma_buf_get_flags(*dma_buf, ionflag);
+		if (rc) {
+			pr_err("%s: could not get flags for the dma_buf\n",
+				__func__);
+			goto err_ion_flag;
+		}
 	}
 
 	rc = msm_audio_ion_map_buf(*dma_buf, paddr, plen, *vaddr);
@@ -568,6 +569,63 @@ int msm_audio_ion_mmap(struct audio_buffer *abuff,
 	return ret;
 }
 EXPORT_SYMBOL(msm_audio_ion_mmap);
+
+/**
+ * msm_audio_ion_cache_operations-
+ *       Cache operations on cached Audio ION buffers
+ *
+ * @abuff: audio buf pointer
+ * @cache_op: cache operation to be performed
+ *
+ * Returns 0 on success or error on failure
+ */
+int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op)
+{
+	unsigned long ionflag = 0;
+	int rc = 0;
+
+	if (!abuff) {
+		pr_err("%s: Invalid params: %pK\n", __func__, abuff);
+		return -EINVAL;
+	}
+	rc = dma_buf_get_flags(abuff->dma_buf, &ionflag);
+	if (rc) {
+		pr_err("%s: dma_buf_get_flags failed: %d\n", __func__, rc);
+		goto cache_op_failed;
+	}
+
+	/* Has to be CACHED */
+	if (ionflag & ION_FLAG_CACHED) {
+		/* MSM_AUDIO_ION_INV_CACHES or MSM_AUDIO_ION_CLEAN_CACHES */
+		switch (cache_op) {
+		case MSM_AUDIO_ION_INV_CACHES:
+			rc = dma_buf_begin_cpu_access(abuff->dma_buf,
+						      DMA_BIDIRECTIONAL);
+			if (rc)
+				pr_err("%s: failed to invalidate caches. rc = %d\n",
+				       __func__, rc);
+			break;
+		case MSM_AUDIO_ION_CLEAN_CACHES:
+			rc = dma_buf_end_cpu_access(abuff->dma_buf,
+						    DMA_BIDIRECTIONAL);
+			if (rc)
+				pr_err("%s: failed to clean caches. rc = %d\n",
+				       __func__, rc);
+			break;
+		default:
+			pr_err("%s: Invalid cache operation %d\n",
+			       __func__, cache_op);
+		}
+	} else {
+		pr_err("%s: Cache ops called on uncached buffer: %pK\n",
+			__func__, abuff->dma_buf);
+		rc = -EINVAL;
+	}
+
+cache_op_failed:
+	return rc;
+}
+EXPORT_SYMBOL(msm_audio_ion_cache_operations);
 
 /**
  * msm_audio_populate_upper_32_bits -

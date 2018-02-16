@@ -17,6 +17,10 @@
 #include <sound/pcm.h>
 #include <linux/msm_ion.h>
 
+enum {
+	MSM_AUDIO_ION_INV_CACHES = 0,
+	MSM_AUDIO_ION_CLEAN_CACHES,
+};
 
 int msm_audio_ion_alloc(struct dma_buf **dma_buf, size_t bufsz,
 			dma_addr_t *paddr, size_t *pa_len, void **vaddr);
@@ -26,6 +30,7 @@ int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 			dma_addr_t *paddr, size_t *pa_len, void **vaddr);
 int msm_audio_ion_free(struct dma_buf *dma_buf);
 int msm_audio_ion_mmap(struct audio_buffer *abuff, struct vm_area_struct *vma);
+int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op);
 
 u32 msm_audio_populate_upper_32_bits(dma_addr_t pa);
 #endif /* _LINUX_MSM_AUDIO_ION_H */
