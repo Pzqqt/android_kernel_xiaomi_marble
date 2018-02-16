@@ -649,7 +649,7 @@ static int dp_srng_setup(struct dp_soc *soc, struct dp_srng *srng,
 		ring_params.intr_timer_thres_us =
 			wlan_cfg_get_int_timer_threshold_other(soc->wlan_cfg_ctx);
 		ring_params.intr_batch_cntr_thres_entries =
-			wlan_cfg_get_int_timer_threshold_other(soc->wlan_cfg_ctx);
+			wlan_cfg_get_int_batch_threshold_other(soc->wlan_cfg_ctx);
 	}
 
 	/* Enable low threshold interrupts for rx buffer rings (regular and
@@ -1512,8 +1512,8 @@ static void dp_hw_link_desc_pool_cleanup(struct dp_soc *soc)
 #define REO_REINJECT_RING_SIZE 32
 #define RX_RELEASE_RING_SIZE 1024
 #define REO_EXCEPTION_RING_SIZE 128
-#define REO_CMD_RING_SIZE 32
-#define REO_STATUS_RING_SIZE 32
+#define REO_CMD_RING_SIZE 64
+#define REO_STATUS_RING_SIZE 128
 #define RXDMA_BUF_RING_SIZE 1024
 #define RXDMA_REFILL_RING_SIZE 4096
 #define RXDMA_MONITOR_BUF_RING_SIZE 4096

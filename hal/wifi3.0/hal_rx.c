@@ -79,6 +79,9 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 
 	hal_uniform_desc_hdr_setup(reo_queue_desc, HAL_DESC_REO_OWNED,
 		HAL_REO_QUEUE_DESC);
+	/* Fixed pattern in reserved bits for debugging */
+	HAL_DESC_SET_FIELD(reo_queue_desc, UNIFORM_DESCRIPTOR_HEADER_0,
+		RESERVED_0A, 0xDDBEEF);
 
 	/* This a just a SW meta data and will be copied to REO destination
 	 * descriptors indicated by hardware.
@@ -203,16 +206,25 @@ void hal_reo_qdesc_setup(void *hal_soc, int tid, uint32_t ba_window_size,
 		/* Initialize first reo queue extension descriptor */
 		hal_uniform_desc_hdr_setup(reo_queue_ext_desc,
 			HAL_DESC_REO_OWNED, HAL_REO_QUEUE_EXT_DESC);
+		/* Fixed pattern in reserved bits for debugging */
+		HAL_DESC_SET_FIELD(reo_queue_ext_desc,
+			UNIFORM_DESCRIPTOR_HEADER_0, RESERVED_0A, 0xADBEEF);
 		/* Initialize second reo queue extension descriptor */
 		reo_queue_ext_desc = (uint32_t *)
 			(((struct rx_reo_queue_ext *)reo_queue_ext_desc) + 1);
 		hal_uniform_desc_hdr_setup(reo_queue_ext_desc,
 			HAL_DESC_REO_OWNED, HAL_REO_QUEUE_EXT_DESC);
+		/* Fixed pattern in reserved bits for debugging */
+		HAL_DESC_SET_FIELD(reo_queue_ext_desc,
+			UNIFORM_DESCRIPTOR_HEADER_0, RESERVED_0A, 0xBDBEEF);
 		/* Initialize third reo queue extension descriptor */
 		reo_queue_ext_desc = (uint32_t *)
 			(((struct rx_reo_queue_ext *)reo_queue_ext_desc) + 1);
 		hal_uniform_desc_hdr_setup(reo_queue_ext_desc,
 			HAL_DESC_REO_OWNED, HAL_REO_QUEUE_EXT_DESC);
+		/* Fixed pattern in reserved bits for debugging */
+		HAL_DESC_SET_FIELD(reo_queue_ext_desc,
+			UNIFORM_DESCRIPTOR_HEADER_0, RESERVED_0A, 0xCDBEEF);
 	}
 #endif
 }
