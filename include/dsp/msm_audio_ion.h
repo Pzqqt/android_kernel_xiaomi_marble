@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2015, 2017-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -18,28 +18,14 @@
 #include <linux/msm_ion.h>
 
 
-int msm_audio_ion_alloc(const char *name, struct ion_client **client,
-			struct ion_handle **handle, size_t bufsz,
-			ion_phys_addr_t *paddr, size_t *pa_len, void **vaddr);
+int msm_audio_ion_alloc(struct dma_buf **dma_buf, size_t bufsz,
+			dma_addr_t *paddr, size_t *pa_len, void **vaddr);
 
-int msm_audio_ion_import(const char *name, struct ion_client **client,
-			struct ion_handle **handle, int fd,
+int msm_audio_ion_import(struct dma_buf **dma_buf, int fd,
 			unsigned long *ionflag, size_t bufsz,
-			ion_phys_addr_t *paddr, size_t *pa_len, void **vaddr);
-int msm_audio_ion_free(struct ion_client *client, struct ion_handle *handle);
-int msm_audio_ion_mmap(struct audio_buffer *substream,
-		       struct vm_area_struct *vma);
+			dma_addr_t *paddr, size_t *pa_len, void **vaddr);
+int msm_audio_ion_free(struct dma_buf *dma_buf);
+int msm_audio_ion_mmap(struct audio_buffer *abuff, struct vm_area_struct *vma);
 
-bool msm_audio_ion_is_smmu_available(void);
-int msm_audio_ion_cache_operations(struct audio_buffer *abuff, int cache_op);
-
-struct ion_client *msm_audio_ion_client_create(const char *name);
-void msm_audio_ion_client_destroy(struct ion_client *client);
-int msm_audio_ion_import_legacy(const char *name, struct ion_client *client,
-			struct ion_handle **handle, int fd,
-			unsigned long *ionflag, size_t bufsz,
-			ion_phys_addr_t *paddr, size_t *pa_len, void **vaddr);
-int msm_audio_ion_free_legacy(struct ion_client *client,
-			struct ion_handle *handle);
-u32 msm_audio_populate_upper_32_bits(ion_phys_addr_t pa);
+u32 msm_audio_populate_upper_32_bits(dma_addr_t pa);
 #endif /* _LINUX_MSM_AUDIO_ION_H */

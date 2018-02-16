@@ -20,6 +20,7 @@
 #include <linux/slab.h>
 #include <linux/of_device.h>
 #include <linux/dma-mapping.h>
+#include <linux/dma-buf.h>
 
 #include <sound/core.h>
 #include <sound/soc.h>
@@ -451,7 +452,13 @@ static int msm_pcm_mmap_fd(struct snd_pcm_substream *substream,
 
 	apd = prtd->audio_client->port;
 	ab = &(apd[dir].buf[0]);
-	mmap_fd->fd = ion_share_dma_buf_fd(ab->client, ab->handle);
+	/*
+	 * Passing O_CLOEXEC as flag passed to fd, to be in sync with
+	 * previous implimentation.
+	 * This was the flag used by previous internal wrapper API, which
+	 * used to call dma_buf_fd internally.
+	 */
+	mmap_fd->fd = dma_buf_fd(ab->dma_buf, O_CLOEXEC);
 	if (mmap_fd->fd >= 0) {
 		mmap_fd->dir = dir;
 		mmap_fd->actual_size = ab->actual_size;

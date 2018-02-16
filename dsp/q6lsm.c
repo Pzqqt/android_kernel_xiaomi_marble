@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017, Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018, Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1413,10 +1413,8 @@ int q6lsm_snd_model_buf_free(struct lsm_client *client)
 			__func__, rc);
 
 	if (client->sound_model.data) {
-		msm_audio_ion_free(client->sound_model.client,
-				 client->sound_model.handle);
-		client->sound_model.client = NULL;
-		client->sound_model.handle = NULL;
+		msm_audio_ion_free(client->sound_model.dma_buf);
+		client->sound_model.dma_buf = NULL;
 		client->sound_model.data = NULL;
 		client->sound_model.phys = 0;
 		client->lsm_cal_phy_addr = 0;
@@ -1594,9 +1592,7 @@ int q6lsm_snd_model_buf_alloc(struct lsm_client *client, size_t len,
 			cal_block->cal_data.size);
 		pr_debug("%s: Pad zeros sound model %zd Total mem %zd\n",
 				 __func__, pad_zero, total_mem);
-		rc = msm_audio_ion_alloc("lsm_client",
-				&client->sound_model.client,
-				&client->sound_model.handle,
+		rc = msm_audio_ion_alloc(&client->sound_model.dma_buf,
 				total_mem,
 				&client->sound_model.phys,
 				&len,
@@ -2138,9 +2134,7 @@ int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc)
 				client->hw_params.period_count);
 			return -ENOMEM;
 		}
-		ret = msm_audio_ion_alloc("lsm_lab",
-			&client->lab_buffer[0].client,
-			&client->lab_buffer[0].handle,
+		ret = msm_audio_ion_alloc(&client->lab_buffer[0].dma_buf,
 			allocate_size, &client->lab_buffer[0].phys,
 			&len,
 			&client->lab_buffer[0].data);
@@ -2155,8 +2149,7 @@ int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc)
 				pr_err("%s: memory map filed ret %d size %zd\n",
 					__func__, ret, len);
 				msm_audio_ion_free(
-				client->lab_buffer[0].client,
-				client->lab_buffer[0].handle);
+				client->lab_buffer[0].dma_buf);
 			}
 		}
 		if (ret) {
@@ -2187,9 +2180,7 @@ int q6lsm_lab_buffer_alloc(struct lsm_client *client, bool alloc)
 		ret = q6lsm_memory_unmap_regions(client,
 			client->lab_buffer[0].mem_map_handle);
 		if (!ret)
-			msm_audio_ion_free(
-			client->lab_buffer[0].client,
-			client->lab_buffer[0].handle);
+			msm_audio_ion_free(client->lab_buffer[0].dma_buf);
 		else
 			pr_err("%s: unmap failed not freeing memory\n",
 			__func__);

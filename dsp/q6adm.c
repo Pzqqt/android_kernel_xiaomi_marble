@@ -74,8 +74,7 @@ struct adm_copp {
 };
 
 struct source_tracking_data {
-	struct ion_client *ion_client;
-	struct ion_handle *ion_handle;
+	struct dma_buf *dma_buf;
 	struct param_outband memmap;
 	int apr_cmd_status;
 };
@@ -1500,10 +1499,8 @@ static int32_t adm_callback(struct apr_client_data *data, void *priv)
 			 */
 			if (this_adm.sourceTrackingData.memmap.paddr != 0) {
 				msm_audio_ion_free(
-					this_adm.sourceTrackingData.ion_client,
-					this_adm.sourceTrackingData.ion_handle);
-				this_adm.sourceTrackingData.ion_client = NULL;
-				this_adm.sourceTrackingData.ion_handle = NULL;
+					this_adm.sourceTrackingData.dma_buf);
+				this_adm.sourceTrackingData.dma_buf = NULL;
 				this_adm.sourceTrackingData.memmap.size = 0;
 				this_adm.sourceTrackingData.memmap.kvaddr =
 									 NULL;
@@ -1918,7 +1915,7 @@ static int remap_cal_data(struct cal_block_data *cal_block, int cal_index)
 {
 	int ret = 0;
 
-	if (cal_block->map_data.ion_client == NULL) {
+	if (cal_block->map_data.dma_buf == NULL) {
 		pr_err("%s: No ION allocation for cal index %d!\n",
 			__func__, cal_index);
 		ret = -EINVAL;
@@ -3211,10 +3208,8 @@ int adm_close(int port_id, int perf_mode, int copp_idx)
 					__func__, ret);
 			}
 			msm_audio_ion_free(
-				this_adm.sourceTrackingData.ion_client,
-				this_adm.sourceTrackingData.ion_handle);
-			this_adm.sourceTrackingData.ion_client = NULL;
-			this_adm.sourceTrackingData.ion_handle = NULL;
+				this_adm.sourceTrackingData.dma_buf);
+			this_adm.sourceTrackingData.dma_buf = NULL;
 			this_adm.sourceTrackingData.memmap.size = 0;
 			this_adm.sourceTrackingData.memmap.kvaddr = NULL;
 			this_adm.sourceTrackingData.memmap.paddr = 0;
@@ -5021,9 +5016,7 @@ static int adm_source_tracking_alloc_map_memory(void)
 
 	pr_debug("%s: Enter\n", __func__);
 
-	ret = msm_audio_ion_alloc("SOURCE_TRACKING",
-				  &this_adm.sourceTrackingData.ion_client,
-				  &this_adm.sourceTrackingData.ion_handle,
+	ret = msm_audio_ion_alloc(&this_adm.sourceTrackingData.dma_buf,
 				  AUD_PROC_BLOCK_SIZE,
 				  &this_adm.sourceTrackingData.memmap.paddr,
 				  &this_adm.sourceTrackingData.memmap.size,
@@ -5046,10 +5039,8 @@ static int adm_source_tracking_alloc_map_memory(void)
 			(void *)this_adm.sourceTrackingData.memmap.paddr,
 			(uint32_t)this_adm.sourceTrackingData.memmap.size);
 
-		msm_audio_ion_free(this_adm.sourceTrackingData.ion_client,
-				   this_adm.sourceTrackingData.ion_handle);
-		this_adm.sourceTrackingData.ion_client = NULL;
-		this_adm.sourceTrackingData.ion_handle = NULL;
+		msm_audio_ion_free(this_adm.sourceTrackingData.dma_buf);
+		this_adm.sourceTrackingData.dma_buf = NULL;
 		this_adm.sourceTrackingData.memmap.size = 0;
 		this_adm.sourceTrackingData.memmap.kvaddr = NULL;
 		this_adm.sourceTrackingData.memmap.paddr = 0;
@@ -5251,8 +5242,7 @@ int __init adm_init(void)
 	if (adm_init_cal_data())
 		pr_err("%s: could not init cal data!\n", __func__);
 
-	this_adm.sourceTrackingData.ion_client = NULL;
-	this_adm.sourceTrackingData.ion_handle = NULL;
+	this_adm.sourceTrackingData.dma_buf = NULL;
 	this_adm.sourceTrackingData.memmap.size = 0;
 	this_adm.sourceTrackingData.memmap.kvaddr = NULL;
 	this_adm.sourceTrackingData.memmap.paddr = 0;

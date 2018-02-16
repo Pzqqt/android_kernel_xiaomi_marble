@@ -1,4 +1,4 @@
-/* Copyright (c) 2012-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2012-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1515,7 +1515,7 @@ static int remap_cal_data(struct cal_block_data *cal_block, int cal_index)
 {
 	int ret = 0;
 
-	if (cal_block->map_data.ion_client == NULL) {
+	if (cal_block->map_data.dma_buf == NULL) {
 		pr_err("%s: No ION allocation for cal index %d!\n",
 			__func__, cal_index);
 		ret = -EINVAL;
@@ -4502,8 +4502,8 @@ int q6afe_audio_client_buf_alloc_contiguous(unsigned int dir,
 
 	ac->port[dir].buf = buf;
 
-	rc = msm_audio_ion_alloc("afe_client", &buf[0].client,
-				&buf[0].handle, bufsz*bufcnt,
+	rc = msm_audio_ion_alloc(&buf[0].dma_buf,
+				bufsz * bufcnt,
 				&buf[0].phys, &len,
 				&buf[0].data);
 	if (rc) {
@@ -4777,16 +4777,13 @@ int q6afe_audio_client_buf_free_contiguous(unsigned int dir,
 	cnt = port->max_buf_cnt - 1;
 
 	if (port->buf[0].data) {
-		pr_debug("%s: data[%pK]phys[%pK][%pK] , client[%pK] handle[%pK]\n",
+		pr_debug("%s: data[%pK], phys[%pK], dma_buf[%pK]\n",
 			__func__,
 			port->buf[0].data,
 			&port->buf[0].phys,
-			&port->buf[0].phys,
-			port->buf[0].client,
-			port->buf[0].handle);
-		msm_audio_ion_free(port->buf[0].client, port->buf[0].handle);
-		port->buf[0].client = NULL;
-		port->buf[0].handle = NULL;
+			port->buf[0].dma_buf);
+		msm_audio_ion_free(port->buf[0].dma_buf);
+		port->buf[0].dma_buf = NULL;
 	}
 
 	while (cnt >= 0) {

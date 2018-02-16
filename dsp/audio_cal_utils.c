@@ -1,4 +1,4 @@
-/* Copyright (c) 2014-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2014-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -442,11 +442,9 @@ static void delete_cal_block(struct cal_block_data *cal_block)
 	cal_block->client_info = NULL;
 	kfree(cal_block->cal_info);
 	cal_block->cal_info = NULL;
-	if (cal_block->map_data.ion_client  != NULL) {
-		msm_audio_ion_free(cal_block->map_data.ion_client,
-			cal_block->map_data.ion_handle);
-		cal_block->map_data.ion_client = NULL;
-		cal_block->map_data.ion_handle = NULL;
+	if (cal_block->map_data.dma_buf  != NULL) {
+		msm_audio_ion_free(cal_block->map_data.dma_buf);
+		cal_block->map_data.dma_buf = NULL;
 	}
 	kfree(cal_block);
 done:
@@ -604,9 +602,7 @@ static int cal_block_ion_alloc(struct cal_block_data *cal_block)
 		goto done;
 	}
 
-	ret = msm_audio_ion_import("audio_cal_client",
-		&cal_block->map_data.ion_client,
-		&cal_block->map_data.ion_handle,
+	ret = msm_audio_ion_import(&cal_block->map_data.dma_buf,
 		cal_block->map_data.ion_map_handle,
 		NULL, 0,
 		&cal_block->cal_data.paddr,
@@ -736,10 +732,8 @@ static int realloc_memory(struct cal_block_data *cal_block)
 {
 	int ret = 0;
 
-	msm_audio_ion_free(cal_block->map_data.ion_client,
-		cal_block->map_data.ion_handle);
-	cal_block->map_data.ion_client = NULL;
-	cal_block->map_data.ion_handle = NULL;
+	msm_audio_ion_free(cal_block->map_data.dma_buf);
+	cal_block->map_data.dma_buf = NULL;
 	cal_block->cal_data.size = 0;
 
 	ret = cal_block_ion_alloc(cal_block);
