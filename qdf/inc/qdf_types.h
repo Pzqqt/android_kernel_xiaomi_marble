@@ -119,6 +119,14 @@ typedef void *qdf_handle_t;
  */
 typedef __qdf_device_t qdf_device_t;
 
+/* Byte order identifiers */
+typedef __qdf_le16_t qdf_le16_t;
+typedef __qdf_le32_t qdf_le32_t;
+typedef __qdf_le64_t qdf_le64_t;
+typedef __qdf_be16_t qdf_be16_t;
+typedef __qdf_be32_t qdf_be32_t;
+typedef __qdf_be64_t qdf_be64_t;
+
 /**
  * typedef qdf_size_t - size of an object
  */
