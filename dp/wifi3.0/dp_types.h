@@ -1005,7 +1005,7 @@ struct dp_pdev {
 		qdf_dma_addr_t base_paddr_unaligned;
 		qdf_dma_addr_t base_paddr;
 		uint32_t size;
-	} link_desc_banks[MAX_MON_LINK_DESC_BANKS];
+	} link_desc_banks[NUM_RXDMA_RINGS_PER_PDEV][MAX_MON_LINK_DESC_BANKS];
 
 
 	/**

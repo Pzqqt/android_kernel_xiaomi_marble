@@ -22,6 +22,7 @@
 #include "hal_rx.h"
 #include "dp_tx.h"
 #include "dp_peer.h"
+#include "dp_internal.h"
 
 #ifdef RXDMA_OPTIMIZATION
 #define RX_BUFFER_ALIGNMENT     128
@@ -540,16 +541,20 @@ void *dp_rx_cookie_2_link_desc_va(struct dp_soc *soc,
  */
 static inline
 void *dp_rx_cookie_2_mon_link_desc_va(struct dp_pdev *pdev,
-				  struct hal_buf_info *buf_info)
+				  struct hal_buf_info *buf_info,
+				  int mac_id)
 {
 	void *link_desc_va;
+	int mac_for_pdev = dp_get_mac_id_for_mac(pdev->soc, mac_id);
 
 	/* TODO */
 	/* Add sanity for  cookie */
 
-	link_desc_va = pdev->link_desc_banks[buf_info->sw_cookie].base_vaddr +
-		(buf_info->paddr -
-			pdev->link_desc_banks[buf_info->sw_cookie].base_paddr);
+	link_desc_va =
+	   pdev->link_desc_banks[mac_for_pdev][buf_info->sw_cookie].base_vaddr +
+	   (buf_info->paddr -
+	   pdev->link_desc_banks[mac_for_pdev][buf_info->sw_cookie].base_paddr);
+
 	return link_desc_va;
 }
 
