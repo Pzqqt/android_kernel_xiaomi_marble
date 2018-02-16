@@ -3680,7 +3680,7 @@ release_vdev:
 	 * In SSR or driver unloading case, directly exit may cause objects
 	 * leak, if sme_close_session failed. Free objects anyway.
 	 */
-	if (errno && !(cds_is_driver_recovering() || cds_is_driver_unloading()))
+	if (errno && !cds_is_driver_recovering() && !cds_is_driver_unloading())
 		return errno;
 
 	/* do vdev logical destroy via objmgr */
