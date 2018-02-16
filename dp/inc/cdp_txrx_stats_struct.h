@@ -161,6 +161,12 @@ struct cdp_tx_stats {
 		uint32_t fw_rem_tx;
 		/* aged out in mpdu/msdu queues*/
 		uint32_t age_out;
+		/* discarded by firmware reason 1 */
+		uint32_t fw_reason1;
+		/* discarded by firmware reason 2 */
+		uint32_t fw_reason2;
+		/* discarded by firmware reason 3 */
+		uint32_t fw_reason3;
 	} dropped;
 };
 

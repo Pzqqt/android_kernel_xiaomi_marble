@@ -2525,6 +2525,8 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 	if (!ts->release_src == HAL_TX_COMP_RELEASE_SOURCE_TQM)
 		return;
 
+
+	DP_STATS_INC_PKT(peer, tx.comp_pkt, 1, length);
 	DP_STATS_INCC(peer, tx.dropped.age_out, 1,
 			(ts->status == HAL_TX_TQM_RR_REM_CMD_AGED));
 
@@ -2536,6 +2538,15 @@ static void dp_tx_update_peer_stats(struct dp_peer *peer,
 
 	DP_STATS_INCC(peer, tx.dropped.fw_rem_tx, 1,
 			(ts->status == HAL_TX_TQM_RR_REM_CMD_TX));
+
+	DP_STATS_INCC(peer, tx.dropped.fw_reason1, 1,
+			(ts->status == HAL_TX_TQM_RR_FW_REASON1));
+
+	DP_STATS_INCC(peer, tx.dropped.fw_reason2, 1,
+			(ts->status == HAL_TX_TQM_RR_FW_REASON2));
+
+	DP_STATS_INCC(peer, tx.dropped.fw_reason3, 1,
+			(ts->status == HAL_TX_TQM_RR_FW_REASON3));
 
 	if (!ts->status == HAL_TX_TQM_RR_FRAME_ACKED)
 		return;

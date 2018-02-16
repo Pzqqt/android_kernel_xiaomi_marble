@@ -4538,11 +4538,16 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx_i.processed.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 			pdev->stats.tx_i.processed.bytes);
-	DP_PRINT_STATS("Completions:");
-	DP_PRINT_STATS("	Packets = %d",
+	DP_PRINT_STATS("Total Completions:");
+	DP_PRINT_STATS("	Packets = %u",
 			pdev->stats.tx.comp_pkt.num);
 	DP_PRINT_STATS("	Bytes = %llu",
 			pdev->stats.tx.comp_pkt.bytes);
+	DP_PRINT_STATS("Successful Completions:");
+	DP_PRINT_STATS("	Packets = %u",
+			pdev->stats.tx.tx_success.num);
+	DP_PRINT_STATS("	Bytes = %llu",
+			pdev->stats.tx.tx_success.bytes);
 	DP_PRINT_STATS("Dropped:");
 	DP_PRINT_STATS("	Total = %d",
 			pdev->stats.tx_i.dropped.dropped_pkt.num);
@@ -4562,6 +4567,12 @@ dp_print_pdev_tx_stats(struct dp_pdev *pdev)
 			pdev->stats.tx.dropped.fw_rem_tx);
 	DP_PRINT_STATS("	FW removed untransmitted = %d",
 			pdev->stats.tx.dropped.fw_rem_notx);
+	DP_PRINT_STATS("	FW removed untransmitted fw_reason1 = %d",
+			pdev->stats.tx.dropped.fw_reason1);
+	DP_PRINT_STATS("	FW removed untransmitted fw_reason2 = %d",
+			pdev->stats.tx.dropped.fw_reason2);
+	DP_PRINT_STATS("	FW removed untransmitted fw_reason3 = %d",
+			pdev->stats.tx.dropped.fw_reason3);
 	DP_PRINT_STATS("	Aged Out from msdu/mpdu queues = %d",
 			pdev->stats.tx.dropped.age_out);
 	DP_PRINT_STATS("Scatter Gather:");

@@ -279,6 +279,9 @@ while (0)
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_tx); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_rem_notx); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_reason1); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_reason2); \
+		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.fw_reason3); \
 		DP_STATS_AGGR(_tgtobj, _srcobj, tx.dropped.age_out); \
 								\
 		DP_STATS_AGGR(_tgtobj, _srcobj, rx.err.mic_err); \
