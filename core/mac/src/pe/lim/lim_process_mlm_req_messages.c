@@ -1476,6 +1476,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 				qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
 			if (NULL == sme_disassoc_rsp) {
 				pe_err("memory allocation failed for disassoc rsp");
+				qdf_mem_free(mlm_disassocreq);
 				return;
 			}
 
@@ -1497,6 +1498,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 
 			lim_send_sme_disassoc_deauth_ntf(mac_ctx,
 					QDF_STATUS_SUCCESS, msg);
+			qdf_mem_free(mlm_disassocreq);
 			return;
 
 		}
@@ -1560,6 +1562,11 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	/* Send Disassociate frame to peer entity */
 	if (send_disassoc_frame && (mlm_disassocreq->reasonCode !=
 		eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
+		if (mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq) {
+			pe_err("pMlmDisassocReq is not NULL, freeing");
+			qdf_mem_free(mac_ctx->lim.limDisassocDeauthCnfReq.
+				     pMlmDisassocReq);
+		}
 		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq =
 			mlm_disassocreq;
 		/*
@@ -1820,6 +1827,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				    qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
 				if (NULL == sme_deauth_rsp) {
 					pe_err("memory allocation failed for deauth rsp");
+					qdf_mem_free(mlm_deauth_req);
 					return;
 				}
 
@@ -1846,6 +1854,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 
 				lim_send_sme_disassoc_deauth_ntf(mac_ctx,
 						QDF_STATUS_SUCCESS, msg_buf);
+				qdf_mem_free(mlm_deauth_req);
 				return;
 			}
 
@@ -1956,7 +1965,14 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	sta_ds->mlmStaContext.disassocReason = (tSirMacReasonCodes)
 					       mlm_deauth_req->reasonCode;
 	sta_ds->mlmStaContext.cleanupTrigger = mlm_deauth_req->deauthTrigger;
+
+	if (mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq) {
+		pe_err("pMlmDeauthReq is not NULL, freeing");
+		qdf_mem_free(mac_ctx->lim.limDisassocDeauthCnfReq.
+			     pMlmDeauthReq);
+	}
 	mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = mlm_deauth_req;
+
 	/*
 	 * Set state to mlm State to eLIM_MLM_WT_DEL_STA_RSP_STATE
 	 * This is to address the issue of race condition between

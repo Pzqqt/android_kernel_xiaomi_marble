@@ -682,6 +682,17 @@ void lim_cleanup(tpAniSirGlobal pMac)
 		qdf_mem_free(pMac->lim.gpLimMlmScanReq);
 		pMac->lim.gpLimMlmScanReq = NULL;
 	}
+
+	if (pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq) {
+		qdf_mem_free(pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq);
+		pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;
+	}
+
+	if (pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq) {
+		qdf_mem_free(pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq);
+		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
+	}
+
 	/* Now, finally reset the deferred message queue pointers */
 	lim_reset_deferred_msg_q(pMac);
 
