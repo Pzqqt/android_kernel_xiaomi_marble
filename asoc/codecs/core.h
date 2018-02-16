@@ -1,4 +1,4 @@
-/* Copyright (c) 2011-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2011-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -104,6 +104,8 @@
 	((wcd->type == wcdtype) ? true : false)
 #define IS_CODEC_VERSION(wcd, wcdversion) \
 	((wcd->version == wcdversion) ? true : false)
+
+#define PAHU_VERSION_1_0             0
 
 enum {
 	CDC_V_1_0,
