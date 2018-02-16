@@ -119,6 +119,7 @@ enum codec_variant {
 	WCD9335,
 	WCD9326,
 	WCD934X,
+	WCD9360,
 };
 
 enum wcd9xxx_slim_slave_addr_type {
@@ -297,6 +298,7 @@ enum wcd9xxx_chipid_major {
 	TASHA_MAJOR = cpu_to_le16(0x0),
 	TASHA2P0_MAJOR = cpu_to_le16(0x107),
 	TAVIL_MAJOR = cpu_to_le16(0x108),
+	PAHU_MAJOR = cpu_to_le16(0x109),
 };
 
 enum codec_power_states {
