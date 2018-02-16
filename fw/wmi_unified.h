@@ -4902,6 +4902,14 @@ typedef enum {
      *   0- Disable optimization
      */
     WMI_PDEV_PARAM_1CH_DTIM_OPTIMIZED_CHAIN_SELECTION,/* 0x9d */
+    /*
+     * Override default FW behavior and explicitly enable / disable
+     * the use of CCK for PPDU transmissions.
+     *
+     * When CCK transmissions are disabled, the default OFDM legacy
+     * rate will be used instead.
+     */
+    WMI_PDEV_PARAM_CCK_TX_ENABLE,                     /* 0x9e */
 } WMI_PDEV_PARAM;
 
 typedef struct {
