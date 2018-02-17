@@ -98,17 +98,6 @@ enum {
 };
 
 enum {
-	MIC_BIAS_1 = 1,
-};
-
-enum {
-	MICB_PULLUP_ENABLE,
-	MICB_PULLUP_DISABLE,
-	MICB_ENABLE,
-	MICB_DISABLE,
-};
-
-enum {
 	INTn_1_INP_SEL_ZERO = 0,
 	INTn_1_INP_SEL_DEC0,
 	INTn_1_INP_SEL_DEC1,

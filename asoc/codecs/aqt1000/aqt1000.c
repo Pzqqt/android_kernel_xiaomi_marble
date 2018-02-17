@@ -36,6 +36,7 @@
 #include "aqt1000-registers.h"
 #include "aqt1000.h"
 #include "aqt1000-api.h"
+#include "aqt1000-mbhc.h"
 #include "aqt1000-routing.h"
 #include "../wcdcal-hwdep.h"
 #include "aqt1000-internal.h"
@@ -812,7 +813,15 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 		aqt->micb_ref++;
 		if (aqt->micb_ref == 1) {
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
+			if (post_on_event && aqt->mbhc)
+				blocking_notifier_call_chain(
+						&aqt->mbhc->notifier,
+						post_on_event,
+						&aqt->mbhc->wcd_mbhc);
 		}
+		if (is_dapm && post_dapm_on && aqt->mbhc)
+			blocking_notifier_call_chain(&aqt->mbhc->notifier,
+					post_dapm_on, &aqt->mbhc->wcd_mbhc);
 		break;
 	case MICB_DISABLE:
 		if (aqt->micb_ref > 0)
@@ -822,8 +831,21 @@ int aqt_micbias_control(struct snd_soc_codec *codec,
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
 		else if ((aqt->micb_ref == 0) &&
 			 (aqt->pullup_ref == 0)) {
+			if (pre_off_event && aqt->mbhc)
+				blocking_notifier_call_chain(
+						&aqt->mbhc->notifier,
+						pre_off_event,
+						&aqt->mbhc->wcd_mbhc);
 			snd_soc_update_bits(codec, micb_reg, 0xC0, 0x00);
+			if (post_off_event && aqt->mbhc)
+				blocking_notifier_call_chain(
+						&aqt->mbhc->notifier,
+						post_off_event,
+						&aqt->mbhc->wcd_mbhc);
 		}
+		if (is_dapm && post_dapm_off && aqt->mbhc)
+			blocking_notifier_call_chain(&aqt->mbhc->notifier,
+					post_dapm_off, &aqt->mbhc->wcd_mbhc);
 		break;
 	default:
 		dev_err(codec->dev, "%s: Invalid micbias request: %d\n",
@@ -2063,6 +2085,8 @@ static int aqt_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 	int hph_mode = aqt->hph_mode;
 	u8 dem_inp;
 	int ret = 0;
+	uint32_t impedl = 0;
+	uint32_t impedr = 0;
 
 	dev_dbg(codec->dev, "%s wname: %s event: %d hph_mode: %d\n", __func__,
 		w->name, event, hph_mode);
@@ -2096,6 +2120,17 @@ static int aqt_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 			snd_soc_update_bits(codec,
 					    AQT1000_CDC_RX1_RX_PATH_CFG0,
 					    0x10, 0x10);
+
+		ret = aqt_mbhc_get_impedance(aqt->mbhc,
+					       &impedl, &impedr);
+		if (!ret) {
+			aqt_clsh_imped_config(codec, impedl, false);
+			set_bit(CLSH_Z_CONFIG, &aqt->status_mask);
+		} else {
+			dev_dbg(codec->dev, "%s: Failed to get mbhc impedance %d\n",
+				__func__, ret);
+			ret = 0;
+		}
 		break;
 	case SND_SOC_DAPM_POST_PMD:
 		/* 1000us required as per HW requirement */
@@ -2104,6 +2139,10 @@ static int aqt_codec_hphl_dac_event(struct snd_soc_dapm_widget *w,
 			     AQT_CLSH_EVENT_POST_PA,
 			     AQT_CLSH_STATE_HPHL,
 			     hph_mode);
+		if (test_bit(CLSH_Z_CONFIG, &aqt->status_mask)) {
+			aqt_clsh_imped_config(codec, impedl, true);
+			clear_bit(CLSH_Z_CONFIG, &aqt->status_mask);
+		}
 		break;
 	default:
 		break;
@@ -2259,6 +2298,9 @@ static int aqt_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		aqt_codec_override(codec, aqt->hph_mode, event);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		blocking_notifier_call_chain(&aqt->mbhc->notifier,
+					     AQT_EVENT_PRE_HPHR_PA_OFF,
+					     &aqt->mbhc->wcd_mbhc);
 		snd_soc_update_bits(codec, AQT1000_HPH_R_TEST, 0x01, 0x00);
 		snd_soc_update_bits(codec, AQT1000_CDC_RX2_RX_PATH_CTL,
 				    0x10, 0x10);
@@ -2277,6 +2319,9 @@ static int aqt_codec_enable_hphr_pa(struct snd_soc_dapm_widget *w,
 		else
 			usleep_range(5000, 5100);
 		aqt_codec_override(codec, aqt->hph_mode, event);
+		blocking_notifier_call_chain(&aqt->mbhc->notifier,
+					     AQT_EVENT_POST_HPHR_PA_OFF,
+					     &aqt->mbhc->wcd_mbhc);
 		if (!(strcmp(w->name, "AQT ANC HPHR PA"))) {
 			ret = aqt_codec_enable_anc(w, kcontrol, event);
 			snd_soc_update_bits(codec,
@@ -2379,6 +2424,9 @@ static int aqt_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		aqt_codec_override(codec, aqt->hph_mode, event);
 		break;
 	case SND_SOC_DAPM_PRE_PMD:
+		blocking_notifier_call_chain(&aqt->mbhc->notifier,
+					     AQT_EVENT_PRE_HPHL_PA_OFF,
+					     &aqt->mbhc->wcd_mbhc);
 		snd_soc_update_bits(codec, AQT1000_HPH_L_TEST, 0x01, 0x00);
 		snd_soc_update_bits(codec, AQT1000_CDC_RX1_RX_PATH_CTL,
 				    0x10, 0x10);
@@ -2398,6 +2446,9 @@ static int aqt_codec_enable_hphl_pa(struct snd_soc_dapm_widget *w,
 		else
 			usleep_range(5000, 5100);
 		aqt_codec_override(codec, aqt->hph_mode, event);
+		blocking_notifier_call_chain(&aqt->mbhc->notifier,
+					     AQT_EVENT_POST_HPHL_PA_OFF,
+					     &aqt->mbhc->wcd_mbhc);
 		if (!(strcmp(w->name, "AQT ANC HPHL PA"))) {
 			ret = aqt_codec_enable_anc(w, kcontrol, event);
 			snd_soc_update_bits(codec,
@@ -3247,6 +3298,14 @@ static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
 	set_bit(WCD9XXX_ANC_CAL, aqt->fw_data->cal_bit);
 	set_bit(WCD9XXX_MBHC_CAL, aqt->fw_data->cal_bit);
 
+	/* Register for Clock */
+	aqt->ext_clk = clk_get(aqt->dev, "aqt_clk");
+	if (IS_ERR(aqt->ext_clk)) {
+		dev_err(aqt->dev, "%s: clk get %s failed\n",
+			__func__, "aqt_ext_clk");
+		goto err_clk;
+	}
+
 	ret = wcd_cal_create_hwdep(aqt->fw_data,
 				   AQT1000_CODEC_HWDEP_NODE, codec);
 	if (ret < 0) {
@@ -3254,6 +3313,12 @@ static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
 		goto err_hwdep;
 	}
 
+	/* Initialize MBHC module */
+	ret = aqt_mbhc_init(&aqt->mbhc, codec, aqt->fw_data);
+	if (ret) {
+		pr_err("%s: mbhc initialization failed\n", __func__);
+		goto err_hwdep;
+	}
 	aqt->codec = codec;
 	for (i = 0; i < COMPANDER_MAX; i++)
 		aqt->comp_enabled[i] = 0;
@@ -3317,6 +3382,8 @@ static int aqt_soc_codec_probe(struct snd_soc_codec *codec)
 	return ret;
 
 err_hwdep:
+	clk_put(aqt->ext_clk);
+err_clk:
 	devm_kfree(codec->dev, aqt->fw_data);
 	aqt->fw_data = NULL;
 err:
@@ -3329,8 +3396,12 @@ static int aqt_soc_codec_remove(struct snd_soc_codec *codec)
 {
 	struct aqt1000 *aqt = snd_soc_codec_get_drvdata(codec);
 
+	/* Deinitialize MBHC module */
+	aqt_mbhc_deinit(codec);
+	aqt->mbhc = NULL;
 	mutex_destroy(&aqt->i2s_lock);
 	mutex_destroy(&aqt->codec_mutex);
+	clk_put(aqt->ext_clk);
 
 	return 0;
 }
