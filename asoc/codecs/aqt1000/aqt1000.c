@@ -35,6 +35,7 @@
 #include <sound/info.h>
 #include "aqt1000-registers.h"
 #include "aqt1000.h"
+#include "aqt1000-api.h"
 #include "aqt1000-routing.h"
 #include "../wcdcal-hwdep.h"
 #include "aqt1000-internal.h"
@@ -46,6 +47,7 @@
 #define  CF_MIN_3DB_150HZ   0x2
 
 #define AQT_VERSION_ENTRY_SIZE 17
+#define AQT_VOUT_CTL_TO_MICB(x) (1000 + x *50)
 
 static struct interp_sample_rate sr_val_tbl[] = {
 	{8000, 0x0}, {16000, 0x1}, {32000, 0x3}, {48000, 0x4}, {96000, 0x5},
@@ -681,6 +683,81 @@ static int aqt_codec_enable_rx_bias(struct snd_soc_dapm_widget *w,
 
 	return 0;
 }
+
+/*
+ * aqt_mbhc_micb_adjust_voltage: adjust specific micbias voltage
+ * @codec: handle to snd_soc_codec *
+ * @req_volt: micbias voltage to be set
+ * @micb_num: micbias to be set, e.g. micbias1 or micbias2
+ *
+ * return 0 if adjustment is success or error code in case of failure
+ */
+int aqt_mbhc_micb_adjust_voltage(struct snd_soc_codec *codec,
+				   int req_volt, int micb_num)
+{
+	struct aqt1000 *aqt;
+	int cur_vout_ctl, req_vout_ctl;
+	int micb_reg, micb_val, micb_en;
+	int ret = 0;
+
+	if (!codec) {
+		pr_err("%s: Invalid codec pointer\n", __func__);
+		return -EINVAL;
+	}
+
+	if (micb_num != MIC_BIAS_1)
+		return -EINVAL;
+	else
+		micb_reg = AQT1000_ANA_MICB1;
+
+	aqt = snd_soc_codec_get_drvdata(codec);
+	mutex_lock(&aqt->micb_lock);
+
+	/*
+	 * If requested micbias voltage is same as current micbias
+	 * voltage, then just return. Otherwise, adjust voltage as
+	 * per requested value. If micbias is already enabled, then
+	 * to avoid slow micbias ramp-up or down enable pull-up
+	 * momentarily, change the micbias value and then re-enable
+	 * micbias.
+	 */
+	micb_val = snd_soc_read(codec, micb_reg);
+	micb_en = (micb_val & 0xC0) >> 6;
+	cur_vout_ctl = micb_val & 0x3F;
+
+	req_vout_ctl = aqt_get_micb_vout_ctl_val(req_volt);
+	if (req_vout_ctl < 0) {
+		ret = -EINVAL;
+		goto exit;
+	}
+	if (cur_vout_ctl == req_vout_ctl) {
+		ret = 0;
+		goto exit;
+	}
+
+	dev_dbg(codec->dev, "%s: micb_num: %d, cur_mv: %d, req_mv: %d, micb_en: %d\n",
+		 __func__, micb_num, AQT_VOUT_CTL_TO_MICB(cur_vout_ctl),
+		 req_volt, micb_en);
+
+	if (micb_en == 0x1)
+		snd_soc_update_bits(codec, micb_reg, 0xC0, 0x80);
+
+	snd_soc_update_bits(codec, micb_reg, 0x3F, req_vout_ctl);
+
+	if (micb_en == 0x1) {
+		snd_soc_update_bits(codec, micb_reg, 0xC0, 0x40);
+		/*
+		 * Add 2ms delay as per HW requirement after enabling
+		 * micbias
+		 */
+		usleep_range(2000, 2100);
+	}
+exit:
+	mutex_unlock(&aqt->micb_lock);
+
+	return ret;
+}
+EXPORT_SYMBOL(aqt_mbhc_micb_adjust_voltage);
 
 /*
  * aqt_micbias_control: enable/disable micbias
