@@ -8270,6 +8270,8 @@ static void hdd_set_trace_level_for_each(struct hdd_context *hdd_ctx)
 				hdd_ctx->config->qdf_trace_enable_nan);
 	hdd_qdf_trace_enable(QDF_MODULE_ID_REGULATORY,
 				hdd_ctx->config->qdf_trace_enable_regulatory);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_CP_STATS,
+				hdd_ctx->config->qdf_trace_enable_cp_stats);
 
 	hdd_cfg_print(hdd_ctx);
 }
