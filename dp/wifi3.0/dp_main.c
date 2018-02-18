@@ -6303,6 +6303,43 @@ static void dp_peer_teardown_wifi3(struct cdp_vdev *vdev_hdl, void *peer_hdl)
 }
 #endif
 
+#ifdef ATH_SUPPORT_NAC_RSSI
+static QDF_STATUS dp_config_for_nac_rssi(struct cdp_vdev *vdev_handle,
+		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
+		uint8_t chan_num)
+{
+
+	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
+	struct dp_pdev *pdev = (struct dp_pdev *)vdev->pdev;
+	struct dp_soc *soc = (struct dp_soc *) vdev->pdev->soc;
+
+	pdev->nac_rssi_filtering = 1;
+	/* Store address of NAC (neighbour peer) which will be checked
+	 * against TA of received packets.
+	 */
+
+	if (cmd == CDP_NAC_PARAM_ADD) {
+		qdf_mem_copy(vdev->cdp_nac_rssi.client_mac,
+				client_macaddr, DP_MAC_ADDR_LEN);
+		vdev->cdp_nac_rssi_enabled = 1;
+	} else if (cmd == CDP_NAC_PARAM_DEL) {
+		if (!qdf_mem_cmp(vdev->cdp_nac_rssi.client_mac,
+			client_macaddr, DP_MAC_ADDR_LEN)) {
+				/* delete this peer from the list */
+			qdf_mem_zero(vdev->cdp_nac_rssi.client_mac,
+				DP_MAC_ADDR_LEN);
+		}
+		vdev->cdp_nac_rssi_enabled = 0;
+	}
+
+	if (soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi)
+		soc->cdp_soc.ol_ops->config_bssid_in_fw_for_nac_rssi
+			(vdev->pdev->osif_pdev, vdev->vdev_id, cmd, bssid);
+
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 static struct cdp_cmn_ops dp_ops_cmn = {
 	.txrx_soc_attach_target = dp_soc_attach_target_wifi3,
 	.txrx_vdev_attach = dp_vdev_attach_wifi3,
@@ -6391,6 +6428,9 @@ static struct cdp_ctrl_ops dp_ops_ctrl = {
 	.txrx_get_pldev = dp_get_pldev,
 #endif
 	.txrx_set_pdev_param = dp_set_pdev_param,
+#ifdef ATH_SUPPORT_NAC_RSSI
+	.txrx_vdev_config_for_nac_rssi = dp_config_for_nac_rssi,
+#endif
 };
 
 static struct cdp_me_ops dp_ops_me = {
@@ -7101,3 +7141,4 @@ static void dp_pktlogmod_exit(struct dp_pdev *handle)
 #else
 static void dp_pktlogmod_exit(struct dp_pdev *handle) { }
 #endif
+

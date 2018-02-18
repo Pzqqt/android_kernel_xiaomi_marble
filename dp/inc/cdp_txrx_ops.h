@@ -45,6 +45,15 @@
 #define CDP_PEER_DELETE_NO_SPECIAL             0
 #define CDP_PEER_DO_NOT_START_UNMAP_TIMER      1
 
+/* same as ieee80211_nac_param */
+enum cdp_nac_param_cmd {
+	/* IEEE80211_NAC_PARAM_ADD */
+	CDP_NAC_PARAM_ADD = 1,
+	/* IEEE80211_NAC_PARAM_DEL */
+	CDP_NAC_PARAM_DEL,
+	/* IEEE80211_NAC_PARAM_LIST */
+	CDP_NAC_PARAM_LIST,
+};
 /******************************************************************************
  *
  * Control Interface (A Interface)
@@ -473,6 +482,12 @@ struct cdp_ctrl_ops {
 	int (*txrx_wdi_event_handler)(struct cdp_pdev *pdev,
 					uint32_t event, void *evt_data);
 	void * (*txrx_get_pldev)(struct cdp_pdev *pdev);
+
+#ifdef ATH_SUPPORT_NAC_RSSI
+	QDF_STATUS (*txrx_vdev_config_for_nac_rssi)(struct cdp_vdev *vdev,
+		enum cdp_nac_param_cmd cmd, char *bssid, char *client_macaddr,
+		uint8_t chan_num);
+#endif
 };
 
 struct cdp_me_ops {
@@ -699,7 +714,13 @@ struct ol_if_ops {
 
 	void (*record_act_change)(struct wlan_objmgr_pdev *pdev,
 				  u_int8_t *dstmac, bool active);
-
+#ifdef ATH_SUPPORT_NAC_RSSI
+	int (*config_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
+		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid,
+		char *client_macaddr, uint8_t chan_num);
+	int (*config_bssid_in_fw_for_nac_rssi)(struct wlan_objmgr_pdev *pdev,
+		u_int8_t vdev_id, enum cdp_nac_param_cmd cmd, char *bssid);
+#endif
 	/* TODO: Add any other control path calls required to OL_IF/WMA layer */
 };
 

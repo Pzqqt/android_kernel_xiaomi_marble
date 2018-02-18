@@ -1129,6 +1129,10 @@ struct dp_pdev {
 	bool pktlog_ppdu_stats;
 
 	void *dp_txrx_handle; /* Advanced data path handle */
+
+#ifdef ATH_SUPPORT_NAC_RSSI
+	bool nac_rssi_filtering;
+#endif
 };
 
 struct dp_peer;
@@ -1268,6 +1272,17 @@ struct dp_vdev {
 
 	enum cdp_sec_type  sec_type;
 
+#ifdef ATH_SUPPORT_NAC_RSSI
+	bool cdp_nac_rssi_enabled;
+	struct {
+		uint8_t bssid_mac[6];
+		uint8_t client_mac[6];
+		uint8_t  chan_num;
+		uint8_t client_rssi_valid;
+		uint8_t client_rssi;
+		uint8_t vdev_id;
+	} cdp_nac_rssi;
+#endif
 };
 
 

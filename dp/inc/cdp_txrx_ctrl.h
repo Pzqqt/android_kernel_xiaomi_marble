@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -762,4 +762,35 @@ cdp_get_pldev(ol_txrx_soc_handle soc,
 	return soc->ops->ctrl_ops->txrx_get_pldev(pdev);
 }
 
+#ifdef ATH_SUPPORT_NAC_RSSI
+/**
+  * cdp_vdev_config_for_nac_rssi(): To invoke dp callback for nac rssi config
+  * @soc: soc pointer
+  * @vdev: vdev pointer
+  * @nac_cmd: specfies nac_rss config action add, del, list
+  * @bssid: Neighbour bssid
+  * @client_macaddr: Non-Associated client MAC
+  * @chan_num: channel number to scan
+  *
+  * Return: QDF_STATUS
+  */
+static inline QDF_STATUS cdp_vdev_config_for_nac_rssi(ol_txrx_soc_handle soc,
+		struct cdp_vdev *vdev, enum cdp_nac_param_cmd nac_cmd,
+		char *bssid, char *client_macaddr, uint8_t chan_num)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_FATAL,
+			"%s invalid instance", __func__);
+		QDF_BUG(0);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!soc->ops->ctrl_ops ||
+			!soc->ops->ctrl_ops->txrx_vdev_config_for_nac_rssi)
+		return QDF_STATUS_E_FAILURE;
+
+	return soc->ops->ctrl_ops->txrx_vdev_config_for_nac_rssi(vdev,
+			nac_cmd, bssid, client_macaddr, chan_num);
+}
+#endif
 #endif

@@ -637,6 +637,45 @@ struct dp_vdev *dp_rx_nac_filter(struct dp_pdev *pdev,
 }
 
 /**
+ * dp_rx_process_nac_rssi_frames(): Store RSSI for configured NAC
+ * @pdev: DP pdev handle
+ * @rx_tlv_hdr: tlv hdr buf
+ *
+ * return: None
+ */
+#ifdef ATH_SUPPORT_NAC_RSSI
+static void dp_rx_process_nac_rssi_frames(struct dp_pdev *pdev, uint8_t *rx_tlv_hdr)
+{
+	struct dp_vdev *vdev = NULL;
+	struct dp_soc *soc  = pdev->soc;
+	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
+	struct ieee80211_frame *wh = (struct ieee80211_frame *)rx_pkt_hdr;
+
+	if (pdev->nac_rssi_filtering) {
+		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+			if (vdev->cdp_nac_rssi_enabled &&
+				(qdf_mem_cmp(vdev->cdp_nac_rssi.client_mac,
+					wh->i_addr1, DP_MAC_ADDR_LEN) == 0)) {
+				QDF_TRACE(QDF_MODULE_ID_DP,
+					QDF_TRACE_LEVEL_DEBUG, "RSSI updated");
+				vdev->cdp_nac_rssi.vdev_id = vdev->vdev_id;
+				vdev->cdp_nac_rssi.client_rssi =
+					hal_rx_msdu_start_get_rssi(rx_tlv_hdr);
+				dp_wdi_event_handler(WDI_EVENT_NAC_RSSI, soc,
+					(void *)&vdev->cdp_nac_rssi,
+					HTT_INVALID_PEER, WDI_NO_VAL,
+					pdev->pdev_id);
+			}
+		}
+	}
+}
+#else
+static void dp_rx_process_nac_rssi_frames(struct dp_pdev *pdev, uint8_t *rx_tlv_hdr)
+{
+}
+#endif
+
+/**
  * dp_rx_process_invalid_peer(): Function to pass invalid peer list to umac
  * @soc: DP SOC handle
  * @mpdu: mpdu for which peer is invalid
@@ -650,10 +689,10 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 	struct dp_pdev *pdev = NULL;
 	struct ieee80211_frame *wh;
 	uint8_t i;
-	uint8_t *rx_pkt_hdr;
 	qdf_nbuf_t curr_nbuf, next_nbuf;
+	uint8_t *rx_tlv_hdr = qdf_nbuf_data(mpdu);
+	uint8_t *rx_pkt_hdr = hal_rx_pkt_hdr_get(rx_tlv_hdr);
 
-	rx_pkt_hdr = hal_rx_pkt_hdr_get(qdf_nbuf_data(mpdu));
 	wh = (struct ieee80211_frame *)rx_pkt_hdr;
 
 	if (!DP_FRAME_IS_DATA(wh)) {
@@ -687,7 +726,12 @@ uint8_t dp_rx_process_invalid_peer(struct dp_soc *soc, qdf_nbuf_t mpdu)
 				return 0;
 			}
 		}
+
+
+		dp_rx_process_nac_rssi_frames(pdev, rx_tlv_hdr);
+
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+
 			if (qdf_mem_cmp(wh->i_addr1, vdev->mac_addr.raw,
 						DP_MAC_ADDR_LEN) == 0) {
 				goto out;
