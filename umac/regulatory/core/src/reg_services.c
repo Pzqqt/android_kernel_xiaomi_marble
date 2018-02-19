@@ -2150,7 +2150,9 @@ static void reg_find_low_limit_chan_enum(struct regulatory_channel *chan_list,
 
 		if ((center_freq - min_bw/2) >= low_freq) {
 			if ((center_freq - max_bw/2) < low_freq) {
-				max_bw = ((center_freq - low_freq) * 2);
+				if (max_bw <= 20)
+					max_bw = ((center_freq -
+						   low_freq) * 2);
 				if (max_bw < min_bw)
 					max_bw = min_bw;
 				chan_list[chan_enum].max_bw = max_bw;
@@ -2185,7 +2187,9 @@ static void reg_find_high_limit_chan_enum(struct regulatory_channel *chan_list,
 
 		if (center_freq + min_bw/2 <= high_freq) {
 			if ((center_freq + max_bw/2) > high_freq) {
-				max_bw = ((high_freq - center_freq) * 2);
+				if (max_bw <= 20)
+					max_bw = ((high_freq -
+						   center_freq) * 2);
 				if (max_bw < min_bw)
 					max_bw = min_bw;
 				chan_list[chan_enum].max_bw = max_bw;
