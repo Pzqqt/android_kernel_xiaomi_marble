@@ -37,7 +37,7 @@
 #else
 #include <qdf_ipa.h>
 #endif
-#include <cdp_txrx_mob_def.h>
+#include <cdp_txrx_cmn.h>
 #include "cdp_txrx_handle.h"
 
 /**
