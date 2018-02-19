@@ -10593,6 +10593,7 @@ int wlan_hdd_set_mon_chan(struct hdd_adapter *adapter, uint32_t chan,
 	return qdf_status_to_os_return(status);
 }
 
+#ifdef WMI_INTERFACE_EVENT_LOGGING
 static int printk_adapter(void *priv, const char *fmt, ...)
 {
 	int ret;
@@ -10606,7 +10607,6 @@ static int printk_adapter(void *priv, const char *fmt, ...)
 	return ret;
 }
 
-#ifdef WMI_INTERFACE_EVENT_LOGGING
 static void hdd_ioctl_log_buffer(int log_id, uint32_t count)
 {
 	qdf_abstract_print *print = &printk_adapter;
