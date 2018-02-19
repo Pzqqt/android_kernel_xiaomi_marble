@@ -90,6 +90,9 @@ typedef PREPACK struct {
 /* end of copy wmi.h */
 #endif /* CONFIG_WIN */
 
+#define WMI_MIN_HEAD_ROOM 64
+
+#ifdef WMI_INTERFACE_EVENT_LOGGING
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0))
 /* TODO Cleanup this backported function */
 static int wmi_bp_seq_printf(struct seq_file *m, const char *f, ...)
@@ -106,9 +109,6 @@ static int wmi_bp_seq_printf(struct seq_file *m, const char *f, ...)
 #define wmi_bp_seq_printf(m, fmt, ...) seq_printf((m), fmt, ##__VA_ARGS__)
 #endif
 
-#define WMI_MIN_HEAD_ROOM 64
-
-#ifdef WMI_INTERFACE_EVENT_LOGGING
 #ifndef MAX_WMI_INSTANCES
 #ifdef CONFIG_MCL
 #define MAX_WMI_INSTANCES 1
@@ -2026,7 +2026,7 @@ static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle)
 	}
 }
 #else
-void wmi_interface_logging_init(struct wmi_unified *wmi_handle)
+static inline void wmi_interface_logging_init(struct wmi_unified *wmi_handle)
 {
 }
 #endif
