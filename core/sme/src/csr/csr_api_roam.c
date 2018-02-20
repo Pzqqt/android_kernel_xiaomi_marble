@@ -11141,6 +11141,7 @@ csr_roam_prepare_filter_from_profile(tpAniSirGlobal mac_ctx,
 #endif
 	scan_fltr->csrPersona = profile->csrPersona;
 	csr_update_fils_scan_filter(scan_fltr, profile);
+	scan_fltr->force_rsne_override = profile->force_rsne_override;
 
 free_filter:
 	if (!QDF_IS_STATUS_SUCCESS(status))

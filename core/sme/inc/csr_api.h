@@ -414,6 +414,7 @@ typedef struct tagCsrScanResultFilter {
 	enum QDF_OPMODE csrPersona;
 	bool realm_check;
 	uint8_t fils_realm[2];
+	bool force_rsne_override;
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
