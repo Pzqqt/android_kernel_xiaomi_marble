@@ -77,7 +77,8 @@ int aqt_request_irq(struct aqt1000 *aqt, int irq, const char *name,
 	if (irq < 0)
 		return irq;
 
-	return request_threaded_irq(irq, NULL, handler, IRQF_ONESHOT,
+	return request_threaded_irq(irq, NULL, handler,
+				    IRQF_ONESHOT | IRQF_TRIGGER_RISING,
 				    name, data);
 }
 EXPORT_SYMBOL(aqt_request_irq);
@@ -160,6 +161,8 @@ static struct irq_chip aqt_irq_chip = {
 	.irq_enable = aqt_irq_enable,
 };
 
+static struct lock_class_key aqt_irq_lock_class;
+
 static int aqt_irq_map(struct irq_domain *irqd, unsigned int virq,
 			irq_hw_number_t hw)
 {
@@ -167,6 +170,7 @@ static int aqt_irq_map(struct irq_domain *irqd, unsigned int virq,
 
 	irq_set_chip_data(virq, data);
 	irq_set_chip_and_handler(virq, &aqt_irq_chip, handle_simple_irq);
+	irq_set_lockdep_class(virq, &aqt_irq_lock_class);
 	irq_set_nested_thread(virq, 1);
 	irq_set_noprobe(virq);
 
@@ -196,12 +200,6 @@ int aqt_irq_init(struct aqt1000 *aqt)
 		return -EINVAL;
 	}
 
-	if (!aqt->irq) {
-		dev_dbg(aqt->dev, "%s: No interrupt specified\n", __func__);
-		aqt->irq_base = 0;
-		return 0;
-	}
-
 	pdata = dev_get_platdata(aqt->dev);
 	if (!pdata) {
 		dev_err(aqt->dev, "%s: Invalid platform data\n", __func__);
@@ -214,13 +212,7 @@ int aqt_irq_init(struct aqt1000 *aqt)
 		flags = pdata->irq_flags;
 
 	if (pdata->irq_gpio) {
-		if (gpio_to_irq(pdata->irq_gpio) != aqt->irq) {
-			dev_warn(aqt->dev, "%s: IRQ %d is not GPIO %d (%d)\n",
-				 __func__, aqt->irq, pdata->irq_gpio,
-				gpio_to_irq(pdata->irq_gpio));
-			aqt->irq = gpio_to_irq(pdata->irq_gpio);
-		}
-
+		aqt->irq = gpio_to_irq(pdata->irq_gpio);
 		ret = devm_gpio_request_one(aqt->dev, pdata->irq_gpio,
 					    GPIOF_IN, "AQT IRQ");
 		if (ret) {
@@ -229,10 +221,6 @@ int aqt_irq_init(struct aqt1000 *aqt)
 			pdata->irq_gpio = 0;
 			return ret;
 		}
-	} else {
-		dev_dbg(aqt->dev, "%s: irq_gpio is %d\n",
-			__func__, pdata->irq_gpio);
-		return 0;
 	}
 
 	irq_data = irq_get_irq_data(aqt->irq);
@@ -242,6 +230,7 @@ int aqt_irq_init(struct aqt1000 *aqt)
 		return -EINVAL;
 	}
 
+	aqt->num_irq_regs = aqt_regmap_irq_chip.num_regs;
 	for (i = 0; i < aqt->num_irq_regs; i++) {
 		regmap_write(aqt->regmap,
 			     (AQT1000_INTR_CTRL_INT_TYPE_2 + i), 0);
