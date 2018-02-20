@@ -5705,9 +5705,7 @@ static inline void dp_print_peer_stats(struct dp_peer *peer)
 			peer->stats.rx.amsdu_cnt);
 	DP_PRINT_STATS("NAWDS : ");
 	DP_PRINT_STATS("	Nawds multicast Drop Rx Packet = %d",
-			peer->stats.rx.nawds_mcast_drop.num);
-	DP_PRINT_STATS("	Nawds multicast Drop Rx Packet Bytes = %llu",
-			peer->stats.rx.nawds_mcast_drop.bytes);
+			peer->stats.rx.nawds_mcast_drop);
 	DP_PRINT_STATS("SGI ="
 			" 0.8us %d"
 			" 0.4us %d"

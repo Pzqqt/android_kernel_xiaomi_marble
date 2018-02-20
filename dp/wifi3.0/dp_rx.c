@@ -1510,8 +1510,7 @@ done:
 		if (qdf_unlikely(peer && (peer->nawds_enabled == true) &&
 			(hal_rx_msdu_end_da_is_mcbc_get(rx_tlv_hdr)) &&
 			(hal_rx_get_mpdu_mac_ad4_valid(rx_tlv_hdr) == false))) {
-			DP_STATS_INC_PKT(peer, rx.nawds_mcast_drop, 1,
-				qdf_nbuf_len(nbuf));
+			DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
 			qdf_nbuf_free(nbuf);
 			nbuf = next;
 			continue;

@@ -583,8 +583,7 @@ dp_rx_null_q_desc_handle(struct dp_soc *soc,
 					QDF_TRACE_LEVEL_DEBUG,
 					"%s free buffer for multicast packet",
 					 __func__);
-		DP_STATS_INC_PKT(peer, rx.nawds_mcast_drop,
-					1, qdf_nbuf_len(nbuf));
+		DP_STATS_INC(peer, rx.nawds_mcast_drop, 1);
 		qdf_nbuf_free(nbuf);
 		return;
 	}

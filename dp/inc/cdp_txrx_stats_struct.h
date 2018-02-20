@@ -185,7 +185,7 @@ struct cdp_rx_stats {
 	/* Raw Pakets received */
 	struct cdp_pkt_info raw;
 	/* Total multicast packets */
-	struct cdp_pkt_info nawds_mcast_drop;
+	uint32_t nawds_mcast_drop;
 
 	struct {
 	/* Intra BSS packets received */
