@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -22,6 +22,8 @@
 #define _WLAN_OBJMGR_GLOBAL_OBJ_I_H_
 
 #include "wlan_objmgr_cmn.h"
+
+struct wlan_objmgr_debug_info;
 /**
  *  struct wlan_objmgr_global - Global object definition
  *  @psoc[]:                    Array of PSOCs to maintain PSOC's list,
@@ -50,6 +52,7 @@
  *  @peer_destroy_handler_arg[]: PEER destroy handler args array
  *  @peer_status_handler[]:     PEER status handler array
  *  @peer_status_handler_arg[]: PEER status handler args array
+ *  @debug_info:                Objmgr debug information
  *  @global_lock:               Global lock
  */
 struct wlan_objmgr_global {
@@ -90,6 +93,7 @@ struct wlan_objmgr_global {
 	wlan_objmgr_peer_status_handler
 		peer_status_handler[WLAN_UMAC_MAX_COMPONENTS];
 	void *peer_status_handler_arg[WLAN_UMAC_MAX_COMPONENTS];
+	struct wlan_objmgr_debug_info *debug_info;
 	qdf_spinlock_t	global_lock;
 };
 

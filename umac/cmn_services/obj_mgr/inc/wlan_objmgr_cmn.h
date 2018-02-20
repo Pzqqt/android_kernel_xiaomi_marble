@@ -97,10 +97,11 @@ typedef enum {
 
 /* Object type is assigned with value */
 enum wlan_objmgr_obj_type {
-	WLAN_PSOC_OP  = 0,
-	WLAN_PDEV_OP  = 1,
-	WLAN_VDEV_OP  = 2,
-	WLAN_PEER_OP  = 3,
+	WLAN_PSOC_OP      = 0,
+	WLAN_PDEV_OP      = 1,
+	WLAN_VDEV_OP      = 2,
+	WLAN_PEER_OP      = 3,
+	WLAN_OBJ_TYPE_MAX = 4,
 };
 
 /**

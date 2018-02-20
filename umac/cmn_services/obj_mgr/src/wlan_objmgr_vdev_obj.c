@@ -275,6 +275,7 @@ static QDF_STATUS wlan_objmgr_vdev_obj_destroy(struct wlan_objmgr_vdev *vdev)
 		obj_mgr_err("vdev is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_objmgr_notify_destroy(vdev, WLAN_VDEV_OP);
 
 	vdev_id = wlan_vdev_get_id(vdev);
 
@@ -341,6 +342,7 @@ QDF_STATUS wlan_objmgr_vdev_obj_delete(struct wlan_objmgr_vdev *vdev)
 	wlan_vdev_obj_lock(vdev);
 	vdev->obj_state = WLAN_OBJ_STATE_LOGICALLY_DELETED;
 	wlan_vdev_obj_unlock(vdev);
+	wlan_objmgr_notify_log_delete(vdev, WLAN_VDEV_OP);
 	wlan_objmgr_vdev_release_ref(vdev, WLAN_OBJMGR_ID);
 
 	return QDF_STATUS_SUCCESS;

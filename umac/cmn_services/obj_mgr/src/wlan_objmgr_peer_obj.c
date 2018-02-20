@@ -268,6 +268,7 @@ static QDF_STATUS wlan_objmgr_peer_obj_destroy(struct wlan_objmgr_peer *peer)
 		obj_mgr_err("PEER is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_objmgr_notify_destroy(peer, WLAN_PEER_OP);
 
 	macaddr = wlan_peer_get_macaddr(peer);
 
@@ -338,6 +339,7 @@ QDF_STATUS wlan_objmgr_peer_obj_delete(struct wlan_objmgr_peer *peer)
 	wlan_peer_obj_lock(peer);
 	peer->obj_state = WLAN_OBJ_STATE_LOGICALLY_DELETED;
 	wlan_peer_obj_unlock(peer);
+	wlan_objmgr_notify_log_delete(peer, WLAN_PEER_OP);
 	wlan_objmgr_peer_release_ref(peer, WLAN_OBJMGR_ID);
 
 	return QDF_STATUS_SUCCESS;

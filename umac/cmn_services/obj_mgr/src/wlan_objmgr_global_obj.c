@@ -51,6 +51,7 @@ QDF_STATUS wlan_objmgr_global_obj_init(void)
 	g_umac_glb_obj = umac_global_obj;
 	/* Initialize spinlock */
 	qdf_spinlock_create(&g_umac_glb_obj->global_lock);
+	wlan_objmgr_debug_info_init();
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -63,6 +64,8 @@ QDF_STATUS wlan_objmgr_global_obj_deinit(void)
 		obj_mgr_err("Global object is not allocated");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	wlan_objmgr_debug_info_deinit();
 
 	if (QDF_STATUS_SUCCESS == wlan_objmgr_global_obj_can_destroyed()) {
 		qdf_spinlock_destroy(&g_umac_glb_obj->global_lock);

@@ -23,6 +23,7 @@
 #define _WLAN_OBJMGR_PSOC_OBJ_H_
 
 #include "wlan_objmgr_cmn.h"
+#include "wlan_objmgr_debug.h"
 #include "wlan_lmac_if_def.h"
 
 #define REG_DMN_CH144        0x0001

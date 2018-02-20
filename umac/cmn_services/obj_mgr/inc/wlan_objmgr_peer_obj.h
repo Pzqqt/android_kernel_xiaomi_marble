@@ -24,6 +24,7 @@
 
 #include <qdf_types.h>
 #include <qdf_atomic.h>
+#include "wlan_objmgr_vdev_obj.h"
 
 /* peer flags */
 /* authorized for data */
@@ -846,6 +847,29 @@ static inline void *wlan_peer_get_dp_handle(struct wlan_objmgr_peer *peer)
 	}
 
 	return peer->dp_handle;
+}
+
+/**
+ * wlan_peer_get_psoc() - get psoc
+ * @peer: PEER object
+ *
+ * API to get peer's psoc
+ *
+ * Return: PSOC object or NULL if the psoc can not be found
+ */
+static inline struct wlan_objmgr_psoc *wlan_peer_get_psoc(
+			struct wlan_objmgr_peer *peer)
+{
+	struct wlan_objmgr_vdev *vdev;
+	struct wlan_objmgr_psoc *psoc;
+
+	vdev = wlan_peer_get_vdev(peer);
+	if (!vdev)
+		return NULL;
+
+	psoc = wlan_vdev_get_psoc(vdev);
+
+	return psoc;
 }
 
 #endif /* _WLAN_OBJMGR_PEER_OBJ_H_*/

@@ -26,6 +26,7 @@
 #include <wlan_objmgr_vdev_obj.h>
 #include <wlan_objmgr_peer_obj.h>
 #include <qdf_mem.h>
+#include <qdf_types.h>
 #include "wlan_objmgr_global_obj_i.h"
 #include "wlan_objmgr_psoc_obj_i.h"
 #include "wlan_objmgr_pdev_obj_i.h"
@@ -196,6 +197,7 @@ static QDF_STATUS wlan_objmgr_psoc_obj_destroy(struct wlan_objmgr_psoc *psoc)
 		obj_mgr_err("psoc is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
+	wlan_objmgr_notify_destroy(psoc, WLAN_PSOC_OP);
 
 	obj_mgr_info("Physically deleting psoc %d", psoc->soc_objmgr.psoc_id);
 
@@ -260,6 +262,7 @@ QDF_STATUS wlan_objmgr_psoc_obj_delete(struct wlan_objmgr_psoc *psoc)
 	wlan_psoc_obj_lock(psoc);
 	psoc->obj_state = WLAN_OBJ_STATE_LOGICALLY_DELETED;
 	wlan_psoc_obj_unlock(psoc);
+	wlan_objmgr_notify_log_delete(psoc, WLAN_PSOC_OP);
 	wlan_objmgr_psoc_release_ref(psoc, WLAN_OBJMGR_ID);
 
 	return QDF_STATUS_SUCCESS;
