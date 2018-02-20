@@ -1023,33 +1023,6 @@ static inline void cdp_flush_cache_rx_queue(ol_txrx_soc_handle soc)
 }
 
 /**
- * cdp_txrx_stats(): function to map to host and firmware statistics
- * Deprecated, use cdp_txrx_stats_request() instead.
- * @soc: soc handle
- * @vdev: virtual device
- * @stats: statistics option
- *
- * return: status
- */
-static inline
-int cdp_txrx_stats(ol_txrx_soc_handle soc, struct cdp_vdev *vdev,
-		enum cdp_stats stats)
-{
-	if (!soc || !soc->ops) {
-		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
-				"%s: Invalid Instance:", __func__);
-		QDF_BUG(0);
-		return 0;
-	}
-
-	if (!soc->ops->cmn_drv_ops ||
-	    !soc->ops->cmn_drv_ops->txrx_stats)
-		return 0;
-
-	return soc->ops->cmn_drv_ops->txrx_stats(vdev, stats);
-}
-
-/**
  * cdp_txrx_stats_request(): function to map to host and firmware statistics
  * @soc: soc handle
  * @vdev: virtual device

@@ -275,8 +275,6 @@ struct cdp_cmn_ops {
 	void (*set_pdev_dscp_tid_map)(struct cdp_pdev *pdev, uint8_t map_id,
 			uint8_t tos, uint8_t tid);
 
-	int (*txrx_stats)(struct cdp_vdev *vdev, enum cdp_stats stats);
-
 	int (*txrx_stats_request)(struct cdp_vdev *vdev,
 			struct cdp_txrx_stats_req *req);
 

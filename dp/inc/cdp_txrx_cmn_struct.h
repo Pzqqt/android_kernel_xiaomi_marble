@@ -1118,6 +1118,7 @@ struct cdp_config_params {
  * @param1: opaque argument 1 to be passed to htt
  * @param2: opaque argument 2 to be passed to htt
  * @param3: opaque argument 3 to be passed to htt
+ * @channel_param: Channel Information
  */
 struct cdp_txrx_stats_req {
 	enum cdp_stats	stats;
@@ -1126,6 +1127,7 @@ struct cdp_txrx_stats_req {
 	uint32_t	param2;
 	uint32_t	param3;
 	uint32_t	cookie_val;
+	uint8_t		channel;
 };
 
 /**

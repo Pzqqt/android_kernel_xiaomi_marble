@@ -383,7 +383,8 @@ void dp_tx_me_free_descriptor(struct cdp_pdev *pdev);
 QDF_STATUS dp_h2t_ext_stats_msg_send(struct dp_pdev *pdev,
 		uint32_t stats_type_upload_mask, uint32_t config_param_0,
 		uint32_t config_param_1, uint32_t config_param_2,
-		uint32_t config_param_3, int cookie, int cookie_msb);
+		uint32_t config_param_3, int cookie, int cookie_msb,
+		uint8_t channel);
 void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf);
 void dp_htt_stats_copy_tag(struct dp_pdev *pdev, uint8_t tag_type, uint32_t *tag_buf);
 void dp_peer_rxtid_stats(struct dp_peer *peer, void (*callback_fn),

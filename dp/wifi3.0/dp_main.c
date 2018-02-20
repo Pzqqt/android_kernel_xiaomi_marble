@@ -5708,7 +5708,7 @@ dp_get_fw_peer_stats(struct cdp_pdev *pdev_handle, uint8_t *mac_addr,
 
 	dp_h2t_ext_stats_msg_send(pdev, HTT_DBG_EXT_STATS_PEER_INFO,
 			config_param0, config_param1, config_param2,
-			config_param3, 0, 0);
+			config_param3, 0, 0, 0);
 
 }
 
@@ -5741,7 +5741,7 @@ dp_get_htt_stats(struct cdp_pdev *pdev_handle, void *data, uint32_t data_len)
 	dp_h2t_ext_stats_msg_send(pdev, req->stats_id,
 				req->config_param0, req->config_param1,
 				req->config_param2, req->config_param3,
-				req->cookie, 0);
+				req->cookie, 0, 0);
 }
 /*
  * dp_set_pdev_param: function to set parameters in pdev
@@ -5863,13 +5863,17 @@ dp_txrx_stats_publish(struct cdp_pdev *pdev_handle, void *buf)
 	req.stats = HTT_DBG_EXT_STATS_PDEV_TX;
 	req.cookie_val = 1;
 	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
-				req.param1, req.param2, req.param3, 0, req.cookie_val);
+				req.param1, req.param2, req.param3, 0,
+				req.cookie_val, 0);
+
 	msleep(DP_MAX_SLEEP_TIME);
 
 	req.stats = HTT_DBG_EXT_STATS_PDEV_RX;
 	req.cookie_val = 1;
 	dp_h2t_ext_stats_msg_send(pdev, req.stats, req.param0,
-				req.param1, req.param2, req.param3, 0, req.cookie_val);
+				req.param1, req.param2, req.param3, 0,
+				req.cookie_val, 0);
+
 	msleep(DP_MAX_SLEEP_TIME);
 	qdf_mem_copy(buffer, &pdev->stats, sizeof(pdev->stats));
 
@@ -5911,6 +5915,7 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 	struct dp_vdev *vdev = (struct dp_vdev *)vdev_handle;
 	struct dp_pdev *pdev = NULL;
 	uint32_t stats = req->stats;
+	uint8_t channel = req->channel;
 
 	if (!vdev) {
 		DP_TRACE(NONE, "VDEV not found");
@@ -5936,7 +5941,8 @@ static int dp_fw_stats_process(struct cdp_vdev *vdev_handle,
 	}
 
 	return dp_h2t_ext_stats_msg_send(pdev, stats, req->param0,
-				req->param1, req->param2, req->param3, 0, 0);
+				req->param1, req->param2, req->param3,
+				0, 0, channel);
 }
 
 /**
@@ -5958,6 +5964,7 @@ static int dp_txrx_stats_request(struct cdp_vdev *vdev,
 				"Invalid vdev/req instance");
 		return 0;
 	}
+
 	stats = req->stats;
 	if (stats >= CDP_TXRX_MAX_STATS)
 		return 0;
@@ -5989,22 +5996,6 @@ static int dp_txrx_stats_request(struct cdp_vdev *vdev,
 				"Wrong Input for TxRx Stats");
 
 	return 0;
-}
-
-/**
- * dp_txrx_stats() - function to map to firmware and host stats
- * @vdev: virtual handle
- * @stats: type of statistics requested
- *
- * Return: integer
- */
-static int dp_txrx_stats(struct cdp_vdev *vdev, enum cdp_stats stats)
-{
-	struct cdp_txrx_stats_req req = {0,};
-
-	req.stats = stats;
-
-	return dp_txrx_stats_request(vdev, &req);
 }
 
 /*
@@ -6563,7 +6554,6 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	/* TODO: get API's for dscp-tid need to be added*/
 	.set_vdev_dscp_tid_map = dp_set_vdev_dscp_tid_map_wifi3,
 	.set_pdev_dscp_tid_map = dp_set_pdev_dscp_tid_map_wifi3,
-	.txrx_stats = dp_txrx_stats,
 	.txrx_stats_request = dp_txrx_stats_request,
 	.txrx_set_monitor_mode = dp_vdev_set_monitor_mode,
 	.txrx_get_pdev_id_frm_pdev = dp_get_pdev_id_frm_pdev,
