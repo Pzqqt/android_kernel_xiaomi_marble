@@ -57,7 +57,6 @@
 #endif
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
-#define WMI_MAX_CMDS 1024
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 

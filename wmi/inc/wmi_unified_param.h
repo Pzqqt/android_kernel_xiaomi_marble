@@ -126,6 +126,7 @@
 #define WMI_HOST_PDEV_VI_PRIORITY_BIT     (1<<2)
 #define WMI_HOST_PDEV_BEACON_PRIORITY_BIT (1<<4)
 #define WMI_HOST_PDEV_MGMT_PRIORITY_BIT   (1<<5)
+#define WMI_MAX_CMDS 1024
 
 #define FIPS_ALIGN 4
 #define FIPS_ALIGNTO(__addr, __to) \
