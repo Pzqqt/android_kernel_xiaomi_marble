@@ -2603,6 +2603,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	 * hw_mode = any: only QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST attr
 	 * is present
 	 */
+
+	wlan_hdd_undo_acs(adapter);
 	if (tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]) {
 		char *tmp = nla_data(tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]);
 

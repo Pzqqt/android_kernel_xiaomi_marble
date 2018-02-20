@@ -6313,7 +6313,7 @@ QDF_STATUS hdd_init_ap_mode(struct hdd_adapter *adapter, bool reinit)
 
 	if (!reinit) {
 		adapter->session.ap.sap_config.acs_cfg.acs_mode = false;
-		qdf_mem_free(adapter->session.ap.sap_config.acs_cfg.ch_list);
+		wlan_hdd_undo_acs(adapter);
 		qdf_mem_zero(&adapter->session.ap.sap_config.acs_cfg,
 			     sizeof(struct sap_acs_cfg));
 	}
@@ -8269,11 +8269,7 @@ int wlan_hdd_cfg80211_start_bss(struct hdd_adapter *adapter,
 
 error:
 	clear_bit(SOFTAP_INIT_DONE, &adapter->event_flags);
-	if (adapter->session.ap.sap_config.acs_cfg.ch_list) {
-		qdf_mem_free(adapter->session.ap.sap_config.
-			acs_cfg.ch_list);
-		adapter->session.ap.sap_config.acs_cfg.ch_list = NULL;
-	}
+	wlan_hdd_undo_acs(adapter);
 
 free:
 	qdf_mem_free(sme_config);
