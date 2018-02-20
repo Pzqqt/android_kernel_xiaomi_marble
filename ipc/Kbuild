@@ -114,7 +114,7 @@ KBUILD_CPPFLAGS += $(CDEFINES)
 ifeq ($(KERNEL_BUILD), 0)
 
 HEADER_INSTALL_DIR := $(TOP)/kernel/msm-$(TARGET_KERNEL_VERSION)/scripts
-UAPI_OUT := $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/include
+UAPI_OUT := $(OUT)/obj/vendor/qcom/opensource/audio-kernel/include
 $(shell $(HEADER_INSTALL_DIR)/headers_install.sh $(UAPI_OUT)/linux/ $(AUDIO_ROOT)/include/uapi/linux/ avtimer.h;)
 $(shell $(HEADER_INSTALL_DIR)/headers_install.sh $(UAPI_OUT)/linux/ $(AUDIO_ROOT)/include/uapi/linux/ msm_audio.h;)
 $(shell $(HEADER_INSTALL_DIR)/headers_install.sh $(UAPI_OUT)/linux/ $(AUDIO_ROOT)/include/uapi/linux/ msm_audio_aac.h;)
