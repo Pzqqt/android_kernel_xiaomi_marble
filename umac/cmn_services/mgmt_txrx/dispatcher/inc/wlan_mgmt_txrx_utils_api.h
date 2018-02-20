@@ -854,4 +854,23 @@ QDF_STATUS wlan_mgmt_txrx_psoc_open(struct wlan_objmgr_psoc *psoc);
  * Return: QDF_STATUS_SUCCESS - in case of success
  */
 QDF_STATUS wlan_mgmt_txrx_psoc_close(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * wlan_mgmt_txrx_pdev_open() - mgmt txrx module pdev open API
+ * @pdev: pdev context
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_pdev_open(struct wlan_objmgr_pdev *pdev);
+
+
+/**
+ * wlan_mgmt_txrx_pdev_close() - mgmt txrx module pdev close API
+ * @pdev: pdev context
+ *
+ * Return: QDF_STATUS_SUCCESS - in case of success
+ */
+QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev);
 #endif
+
+

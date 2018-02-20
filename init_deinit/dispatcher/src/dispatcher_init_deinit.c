@@ -1183,6 +1183,9 @@ QDF_STATUS dispatcher_pdev_open(struct wlan_objmgr_pdev *pdev)
 	if (QDF_STATUS_SUCCESS != dispatcher_spectral_pdev_open(pdev))
 		goto spectral_pdev_open_fail;
 
+	if (QDF_STATUS_SUCCESS != wlan_mgmt_txrx_pdev_open(pdev))
+		goto out;
+
 	return QDF_STATUS_SUCCESS;
 
 spectral_pdev_open_fail:
@@ -1198,6 +1201,8 @@ QDF_STATUS dispatcher_pdev_close(struct wlan_objmgr_pdev *pdev)
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_regulatory_pdev_close(pdev));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_spectral_pdev_close(pdev));
+
+	QDF_BUG(QDF_STATUS_SUCCESS == wlan_mgmt_txrx_pdev_close(pdev));
 
 	return QDF_STATUS_SUCCESS;
 }
