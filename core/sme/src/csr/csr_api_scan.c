@@ -784,9 +784,7 @@ static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 /* Put the BSS into the scan result list */
 /* pIes can not be NULL */
 static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
-				struct tag_csrscan_result *pResult,
-				tDot11fBeaconIEs *pIes,
-				uint32_t sessionId)
+				struct tag_csrscan_result *pResult)
 {
 	qdf_nbuf_t buf;
 	uint8_t *data;
@@ -797,6 +795,11 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 	tSirBssDescription *bss_desc;
 	enum mgmt_frame_type frm_type = MGMT_BEACON;
 
+	if (!pResult) {
+		sme_err("pResult is null");
+		return;
+	}
+
 	bss_desc = &pResult->Result.BssDescriptor;
 	if (bss_desc->fProbeRsp)
 		frm_type = MGMT_PROBE_RESP;
@@ -805,6 +808,7 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 	rx_param.channel = bss_desc->channelId;
 	rx_param.rssi = bss_desc->rssi;
 	rx_param.tsf_delta = bss_desc->tsf_delta;
+
 	buf_len = GET_IE_LEN_IN_BSS(bss_desc->length) +
 		+ offsetof(struct wlan_bcn_frame, ie) + sizeof(*hdr);
 
@@ -813,7 +817,6 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 	if (!buf) {
 		sme_err("Failed to allocate wbuf for mgmt rx len (%u)",
 			buf_len);
-		csr_free_scan_result_entry(mac_ctx, pResult);
 		return;
 	}
 	qdf_nbuf_put_tail(buf, buf_len);
@@ -838,7 +841,6 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 		GET_IE_LEN_IN_BSS(bss_desc->length));
 	tgt_scan_bcn_probe_rx_callback(mac_ctx->psoc, NULL, buf, &rx_param,
 		frm_type);
-	csr_free_scan_result_entry(mac_ctx, pResult);
 }
 
 /*
@@ -1060,12 +1062,9 @@ static bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
 
 #endif
 
-static bool csr_scan_save_bss_description(tpAniSirGlobal
-							pMac,
+static bool csr_scan_save_bss_description(tpAniSirGlobal pMac,
 						     tSirBssDescription *
-						     pBSSDescription,
-						     tDot11fBeaconIEs *pIes,
-						     uint8_t sessionId)
+						     pBSSDescription)
 {
 	struct tag_csrscan_result *pCsrBssDescription = NULL;
 	uint32_t cbBSSDesc;
@@ -1093,20 +1092,18 @@ static bool csr_scan_save_bss_description(tpAniSirGlobal
 			       bssId));
 	qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
 		     pBSSDescription, cbBSSDesc);
-	csr_scan_add_result(pMac, pCsrBssDescription, pIes, sessionId);
+	csr_scan_add_result(pMac, pCsrBssDescription);
+	csr_free_scan_result_entry(pMac, pCsrBssDescription);
 
 	return true;
 }
 
 /* Append a Bss Description... */
 bool csr_scan_append_bss_description(tpAniSirGlobal pMac,
-						tSirBssDescription *
-						pSirBssDescription,
-						tDot11fBeaconIEs *pIes,
-						bool fForced, uint8_t sessionId)
+				     tSirBssDescription *pSirBssDescription)
 {
 	return csr_scan_save_bss_description(pMac,
-					pSirBssDescription, pIes, sessionId);
+					pSirBssDescription);
 }
 
 static void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList
@@ -3091,47 +3088,35 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 					       uint8_t channel)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tDot11fBeaconIEs *pNewIes = NULL;
 	struct csr_roam_session *pSession = CSR_GET_SESSION(pMac, sessionId);
 	tSirBssDescription *pNewBssDescriptor = NULL;
 	uint32_t size = 0;
 
 	if (NULL == pSession) {
-		status = QDF_STATUS_E_FAILURE;
-		return status;
+		return QDF_STATUS_E_FAILURE;
 	}
 	sme_debug("Current bssid::"MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(pSession->pConnectBssDesc->bssId));
 	sme_debug("My bssid::"MAC_ADDRESS_STR" channel %d",
 		MAC_ADDR_ARRAY(bssid.bytes), channel);
 
-	if (!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies(
-					pMac, pSession->pConnectBssDesc,
-					&pNewIes))) {
-		sme_err("Failed to parse IEs");
-		status = QDF_STATUS_E_FAILURE;
-		goto free_mem;
-	}
 	size = pSession->pConnectBssDesc->length +
 		sizeof(pSession->pConnectBssDesc->length);
 	if (!size) {
 		sme_err("length of bss descriptor is 0");
-		status = QDF_STATUS_E_FAILURE;
-		goto free_mem;
+		return QDF_STATUS_E_FAILURE;
 	}
 	pNewBssDescriptor = qdf_mem_malloc(size);
 	if (NULL == pNewBssDescriptor) {
 		sme_err("memory allocation failed");
-		status = QDF_STATUS_E_FAILURE;
-		goto free_mem;
+		return QDF_STATUS_E_FAILURE;
 	}
 	qdf_mem_copy(pNewBssDescriptor, pSession->pConnectBssDesc, size);
 	/* change the BSSID & channel as passed */
 	qdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
 			sizeof(tSirMacAddr));
 	pNewBssDescriptor->channelId = channel;
-	if (!csr_scan_append_bss_description(pMac, pNewBssDescriptor,
-						pNewIes, true, sessionId)) {
+	if (!csr_scan_append_bss_description(pMac, pNewBssDescriptor)) {
 		sme_err("csr_scan_append_bss_description failed");
 		status = QDF_STATUS_E_FAILURE;
 		goto free_mem;
@@ -3139,9 +3124,6 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 	sme_err("entry successfully added in scan cache");
 
 free_mem:
-	if (pNewIes)
-		qdf_mem_free(pNewIes);
-
 	if (pNewBssDescriptor)
 		qdf_mem_free(pNewBssDescriptor);
 
@@ -3180,9 +3162,7 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 		tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t length = 0;
-	tDot11fBeaconIEs *ies_local_ptr = NULL;
 	struct tag_csrscan_result *scan_res_ptr = NULL;
-	uint8_t session_id = roam_sync_ind_ptr->roamedVdevId;
 
 	length = roam_sync_ind_ptr->beaconProbeRespLength -
 		(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
@@ -3197,23 +3177,11 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 	qdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
 			bss_desc_ptr,
 			(sizeof(tSirBssDescription) + length));
-	ies_local_ptr = (tDot11fBeaconIEs *)(scan_res_ptr->Result.pvIes);
-	if (!ies_local_ptr &&
-		(!QDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies(
-						pMac, &scan_res_ptr->Result.
-						BssDescriptor,
-						&ies_local_ptr)))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-				"%s:Cannot Parse IEs", __func__);
-		csr_free_scan_result_entry(pMac, scan_res_ptr);
-		return QDF_STATUS_E_RESOURCES;
-	}
 
 	sme_debug("LFR3:Add BSSID to scan cache" MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(scan_res_ptr->Result.BssDescriptor.bssId));
-	csr_scan_add_result(pMac, scan_res_ptr, ies_local_ptr, session_id);
-	if ((scan_res_ptr->Result.pvIes == NULL) && ies_local_ptr)
-		qdf_mem_free(ies_local_ptr);
+	csr_scan_add_result(pMac, scan_res_ptr);
+	csr_free_scan_result_entry(pMac, scan_res_ptr);
 	return QDF_STATUS_SUCCESS;
 }
 #endif

@@ -254,10 +254,7 @@ void csr_roam_stopTKIPCounterMeasureTimer(tpAniSirGlobal pMac);
 QDF_STATUS csr_scan_open(tpAniSirGlobal pMac);
 QDF_STATUS csr_scan_close(tpAniSirGlobal pMac);
 bool csr_scan_append_bss_description(tpAniSirGlobal pMac,
-						tSirBssDescription *
-						pSirBssDescription,
-						tDot11fBeaconIEs *pIes,
-						bool fForced, uint8_t sessionId);
+				     tSirBssDescription *pSirBssDescription);
 void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 			    eCsrScanStatus scanStatus);
 QDF_STATUS csr_scan_copy_request(tpAniSirGlobal pMac, tCsrScanRequest *pDstReq,
@@ -445,15 +442,6 @@ void csr_reset_bkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId);
 QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 					uint32_t tableSize, tSirMacChanInfo
 					*channelTable);
-
-/* To check whether a country code matches the one in the IE Only check the
- * first two characters, ignoring in/outdoor pCountry -- caller allocated
- * buffer contain the country code that is checking against the one in pIes.
- * It can be NULL. caller must provide pIes, it cannot be NULL. This function
- * always return true if 11d support is not turned on. pIes cannot be NULL
- */
-bool csr_match_country_code(tpAniSirGlobal pMac, uint8_t *pCountry,
-			    tDot11fBeaconIEs *pIes);
 QDF_STATUS csr_roam_set_key(tpAniSirGlobal pMac, uint32_t sessionId,
 			    tCsrRoamSetKey *pSetKey, uint32_t roamId);
 QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,

@@ -1232,11 +1232,6 @@ static QDF_STATUS hdd_handle_acs_scan_event(tpSap_Event sap_event,
 		}
 	}
 	qdf_spin_unlock(&hdd_ctx->acs_skip_lock);
-	/* Update ACS scan result to cfg80211. Then OBSS scan can reuse the
-	 * scan result.
-	 */
-	if (wlan_hdd_cfg80211_update_bss(hdd_ctx->wiphy, adapter, 0))
-		hdd_debug("NO SCAN result");
 
 	hdd_debug("Reusing Last ACS scan result for %d sec",
 		ACS_SCAN_EXPIRY_TIMEOUT_S);

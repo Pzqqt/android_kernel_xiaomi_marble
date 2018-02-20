@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -314,15 +314,6 @@ bool csr_is_security_match(tHalHandle hHal, tCsrAuthList *authType,
 		eCsrEncryptionType *negotiatedMCCipher);
 bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
-/*
- * ppIes can be NULL. If caller want to get the *ppIes allocated by
- * this function, pass in *ppIes = NULL. Caller needs to free the memory
- * in this case
- */
-bool csr_match_bss(tHalHandle hHal, tSirBssDescription *pBssDesc,
-		tCsrScanResultFilter *pFilter, eCsrAuthType *pNegAuth,
-		eCsrEncryptionType *pNegUc, eCsrEncryptionType *pNegMc,
-		tDot11fBeaconIEs **ppIes);
 bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
 		struct qdf_mac_addr *BssBssid);
 bool csr_match_bss_to_connect_profile(tHalHandle hHal,

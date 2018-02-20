@@ -4439,8 +4439,7 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 	struct cfg80211_bss *bss_status;
 	struct hdd_context *hdd_ctx;
 
-	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roamStatus)
-		hdd_debug("CSR Callback: status= %d result= %d roamID=%d",
+	hdd_debug("CSR Callback: status= %d result= %d roamID=%d",
 			  roamStatus, roamResult, roamId);
 
 	/* Sanity check */
@@ -4453,9 +4452,7 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	/* Omitting eCSR_ROAM_UPDATE_SCAN_RESULT as this is too frequent */
-	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roamStatus)
-		MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
 				 adapter->session_id, roamStatus));
 
 	switch (roamStatus) {

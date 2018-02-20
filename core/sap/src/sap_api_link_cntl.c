@@ -916,11 +916,10 @@ wlansap_roam_callback(void *ctx, struct csr_roam_info *csr_roam_info,
 	}
 
 	mac_ctx = PMAC_STRUCT(hal);
-	if (eCSR_ROAM_UPDATE_SCAN_RESULT != roam_status) {
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			FL("roam_status = %d, roam_result = %d"),
 			roam_status, roam_result);
-	}
+
 
 	switch (roam_status) {
 	case eCSR_ROAM_INFRA_IND:

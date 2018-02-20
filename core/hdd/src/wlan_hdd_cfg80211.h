@@ -373,10 +373,6 @@ struct cfg80211_bss *
 wlan_hdd_cfg80211_update_bss_list(struct hdd_adapter *adapter,
 				  tSirMacAddr bssid);
 
-int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
-				 struct hdd_adapter *adapter,
-				 uint32_t scan_timestamp);
-
 void wlan_hdd_cfg80211_acs_ch_select_evt(struct hdd_adapter *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -436,6 +432,16 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
 				GFP_KERNEL);
 }
 #endif
+
+/**
+ * wlan_hdd_cfg80211_inform_bss_frame() - inform bss details to NL80211
+ * @adapter: Pointer to adapter
+ * @bss_desc: Pointer to bss descriptor
+ *
+ * This function is used to inform the BSS details to nl80211 interface.
+ *
+ * Return: struct cfg80211_bss pointer
+ */
 struct cfg80211_bss *
 wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
 				   struct bss_description *bss_desc);
