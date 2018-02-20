@@ -658,6 +658,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		default:
 			break;
 		}
+		ppdu_info->rx_status.cck_flag = 1;
 	break;
 	}
 
@@ -696,6 +697,7 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		default:
 			break;
 		}
+		ppdu_info->rx_status.ofdm_flag = 1;
 	break;
 	}
 

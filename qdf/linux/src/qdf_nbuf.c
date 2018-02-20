@@ -80,6 +80,25 @@
 #define RADIOTAP_VHT_BW_80	4
 #define RADIOTAP_VHT_BW_160	11
 
+/* channel number to freq conversion */
+#define CHANNEL_NUM_14 14
+#define CHANNEL_NUM_15 15
+#define CHANNEL_NUM_27 27
+#define CHANNEL_NUM_35 35
+#define CHANNEL_NUM_182 182
+#define CHANNEL_NUM_197 197
+#define CHANNEL_FREQ_2484 2484
+#define CHANNEL_FREQ_2407 2407
+#define CHANNEL_FREQ_2512 2512
+#define CHANNEL_FREQ_5000 5000
+#define CHANNEL_FREQ_4000 4000
+#define FREQ_MULTIPLIER_CONST_5MHZ 5
+#define FREQ_MULTIPLIER_CONST_20MHZ 20
+#define RADIOTAP_5G_SPECTRUM_CHANNEL 0x0100
+#define RADIOTAP_2G_SPECTRUM_CHANNEL 0x0080
+#define RADIOTAP_CCK_CHANNEL 0x0020
+#define RADIOTAP_OFDM_CHANNEL 0x0040
+
 #ifdef CONFIG_MCL
 #include <qdf_mc_timer.h>
 
@@ -3614,6 +3633,33 @@ qdf_nbuf_update_radiotap_he_mu_other_flags(struct mon_rx_status *rx_status,
 #define IEEE80211_RADIOTAP_HE_MU_OTHER	25
 
 /**
+ * radiotap_num_to_freq() - Get frequency from chan number
+ * @chan_num - Input channel number
+ *
+ * Return - Channel frequency in Mhz
+ */
+static uint16_t radiotap_num_to_freq (uint16_t chan_num)
+{
+	if (chan_num == CHANNEL_NUM_14)
+		return CHANNEL_FREQ_2484;
+	if (chan_num < CHANNEL_NUM_14)
+		return CHANNEL_FREQ_2407 +
+			(chan_num * FREQ_MULTIPLIER_CONST_5MHZ);
+
+	if (chan_num < CHANNEL_NUM_27)
+		return CHANNEL_FREQ_2512 +
+			((chan_num - CHANNEL_NUM_15) *
+			 FREQ_MULTIPLIER_CONST_20MHZ);
+
+	if (chan_num > CHANNEL_NUM_182 &&
+			chan_num < CHANNEL_NUM_197)
+		return ((chan_num * FREQ_MULTIPLIER_CONST_5MHZ) +
+			CHANNEL_FREQ_4000);
+
+	return CHANNEL_FREQ_5000 +
+		(chan_num * FREQ_MULTIPLIER_CONST_5MHZ);
+}
+/**
  * qdf_nbuf_update_radiotap() - Update radiotap header from rx_status
  * @rx_status: Pointer to rx_status.
  * @nbuf:      nbuf pointer to which radiotap has to be updated
@@ -3651,9 +3697,18 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 
 	/* IEEE80211_RADIOTAP_CHANNEL 2 x __le16   MHz, bitmap */
 	rthdr->it_present |= cpu_to_le32(1 << IEEE80211_RADIOTAP_CHANNEL);
+	rx_status->chan_freq = radiotap_num_to_freq(rx_status->chan_num);
 	put_unaligned_le16(rx_status->chan_freq, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 	/* Channel flags. */
+	if (rx_status->chan_num > CHANNEL_NUM_35)
+		rx_status->chan_flags = RADIOTAP_5G_SPECTRUM_CHANNEL;
+	else
+		rx_status->chan_flags = RADIOTAP_2G_SPECTRUM_CHANNEL;
+	if (rx_status->cck_flag)
+		rx_status->chan_flags |= RADIOTAP_CCK_CHANNEL;
+	if (rx_status->ofdm_flag)
+		rx_status->chan_flags |= RADIOTAP_OFDM_CHANNEL;
 	put_unaligned_le16(rx_status->chan_flags, &rtap_buf[rtap_len]);
 	rtap_len += 2;
 

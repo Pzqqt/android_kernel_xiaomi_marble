@@ -175,6 +175,8 @@
  * @tid: QoS traffic tid number
  * @rs_fcs_err: FCS error flag
  * @rs_flags: Flags to indicate AMPDU or AMSDU aggregation
+ * @cck_flag: Flag to indicate CCK modulation
+ * @ofdm_flag: Flag to indicate OFDM modulation
  * @he_per_user_1: HE per user info1
  * @he_per_user_2: HE per user info2
  * @he_per_user_position: HE per user position info
@@ -239,6 +241,8 @@ struct mon_rx_status {
 	uint32_t tid;
 	uint8_t  rs_fcs_err;
 	uint8_t      rs_flags;
+	uint8_t cck_flag;
+	uint8_t ofdm_flag;
 	/* New HE radiotap fields */
 	uint16_t he_per_user_1;
 	uint16_t he_per_user_2;
