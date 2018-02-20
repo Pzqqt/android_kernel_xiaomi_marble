@@ -599,7 +599,7 @@ util_scan_copy_beacon_data(struct scan_cache_entry *new_entry,
 	qdf_mem_copy(new_entry->raw_frame.ptr,
 		scan_entry->raw_frame.ptr,
 		scan_entry->raw_frame.len);
-
+	new_entry->raw_frame.len = scan_entry->raw_frame.len;
 	new_ptr = new_entry->raw_frame.ptr;
 	old_ptr = scan_entry->raw_frame.ptr;
 
