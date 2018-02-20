@@ -510,6 +510,7 @@ QDF_STATUS target_if_alloc_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 	}
 
 	wlan_psoc_set_tgt_if_handle(psoc, tgt_psoc_info);
+	target_psoc_set_preferred_hw_mode(tgt_psoc_info, WMI_HOST_HW_MODE_MAX);
 
 	qdf_init_waitqueue_head(&tgt_psoc_info->info.event_queue);
 

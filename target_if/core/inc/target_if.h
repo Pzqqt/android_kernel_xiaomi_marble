@@ -644,7 +644,7 @@ static inline uint32_t target_psoc_get_preferred_hw_mode
 		(struct target_psoc_info *psoc_info)
 {
 	if (psoc_info == NULL)
-		return (uint32_t)-1;
+		return WMI_HOST_HW_MODE_MAX;
 
 	return psoc_info->info.preferred_hw_mode;
 }

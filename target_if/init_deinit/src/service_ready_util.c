@@ -224,7 +224,7 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		if (status)
 			goto return_exit;
 
-		if (preferred_mode &&
+		if ((preferred_mode != WMI_HOST_HW_MODE_MAX) &&
 		    (hw_mode_caps[hw_idx].hw_mode_id != preferred_mode))
 			continue;
 
@@ -233,7 +233,7 @@ int init_deinit_populate_hw_mode_capability(void *wmi_handle,
 		if (status)
 			goto return_exit;
 
-		if (preferred_mode &&
+		if ((preferred_mode != WMI_HOST_HW_MODE_MAX) &&
 		    (hw_mode_caps[hw_idx].hw_mode_id == preferred_mode)) {
 			info->num_radios = info->total_mac_phy_cnt;
 			target_if_info("num radios is %d\n", info->num_radios);
@@ -519,6 +519,9 @@ bool init_deinit_is_preferred_hw_mode_supported(
 	}
 
 	info = &tgt_hdl->info;
+
+	if (info->preferred_hw_mode == WMI_HOST_HW_MODE_MAX)
+		return TRUE;
 
 	for (i = 0; i < target_psoc_get_total_mac_phy_cnt(tgt_hdl); i++) {
 		if (info->mac_phy_cap[i].hw_mode_id == info->preferred_hw_mode)
