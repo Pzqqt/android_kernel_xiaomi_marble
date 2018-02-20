@@ -1176,7 +1176,7 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 	struct mgmt_rx_event_params rx_param = {0};
 	struct wlan_frame_hdr *hdr;
 	struct wlan_bcn_frame *fixed_frame;
-	uint32_t buf_len;
+	uint32_t buf_len, i;
 	tSirBssDescription *bss_desc;
 	enum mgmt_frame_type frm_type = MGMT_BEACON;
 
@@ -1193,6 +1193,10 @@ static void csr_scan_add_result(tpAniSirGlobal mac_ctx,
 	rx_param.channel = bss_desc->channelId;
 	rx_param.rssi = bss_desc->rssi;
 	rx_param.tsf_delta = bss_desc->tsf_delta;
+
+	/* Set all per chain rssi as invalid */
+	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++)
+		rx_param.rssi_ctl[i] = WLAN_INVALID_PER_CHAIN_RSSI;
 
 	buf_len = GET_IE_LEN_IN_BSS(bss_desc->length) +
 		+ offsetof(struct wlan_bcn_frame, ie) + sizeof(*hdr);

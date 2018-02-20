@@ -16207,136 +16207,24 @@ struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_list(
 	return bss;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 3, 0)) || \
-	defined(CFG80211_INFORM_BSS_FRAME_DATA)
-static struct cfg80211_bss *
-wlan_hdd_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
-		struct ieee80211_channel *chan,
-		struct ieee80211_mgmt *mgmt,
-		size_t frame_len,
-		int rssi, gfp_t gfp,
-		uint64_t boottime_ns)
-{
-	struct cfg80211_bss *bss_status  = NULL;
-	struct cfg80211_inform_bss data  = {0};
-
-	data.chan = chan;
-	data.boottime_ns = boottime_ns;
-	data.signal = rssi;
-	bss_status = cfg80211_inform_bss_frame_data(wiphy, &data, mgmt,
-						    frame_len, gfp);
-	return bss_status;
-}
-#else
-static struct cfg80211_bss *
-wlan_hdd_cfg80211_inform_bss_frame_data(struct wiphy *wiphy,
-		struct ieee80211_channel *chan,
-		struct ieee80211_mgmt *mgmt,
-		size_t frame_len,
-		int rssi, gfp_t gfp,
-		uint64_t boottime_ns)
-{
-	struct cfg80211_bss *bss_status = NULL;
-
-	bss_status = cfg80211_inform_bss_frame(wiphy, chan, mgmt, frame_len,
-					       rssi, gfp);
-	return bss_status;
-}
-#endif
-
-/**
- * wlan_hdd_cfg80211_inform_bss_frame() - inform bss details to NL80211
- * @adapter: Pointer to adapter
- * @bss_desc: Pointer to bss descriptor
- *
- * This function is used to inform the BSS details to nl80211 interface.
- *
- * Return: struct cfg80211_bss pointer
- */
-struct cfg80211_bss *
-wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
-				   struct bss_description *bss_desc)
-{
-	/*
-	 * cfg80211_inform_bss() is not updating ie field of bss entry, if entry
-	 * already exists in bss data base of cfg80211 for that particular BSS
-	 * ID. Using cfg80211_inform_bss_frame to update the bss entry instead
-	 * of cfg80211_inform_bss, But this call expects mgmt packet as input.
-	 * As of now there is no possibility to get the mgmt(probe response)
-	 * frame from PE, converting bss_desc to ieee80211_mgmt(probe response)
-	 * and passing to cfg80211_inform_bss_frame.
-	 */
-	struct net_device *dev = adapter->dev;
-	struct wireless_dev *wdev = dev->ieee80211_ptr;
-	struct wiphy *wiphy = wdev->wiphy;
-	int chan_no = bss_desc->channelId;
 #ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
+static inline int
+wlan_hdd_get_frame_len(struct bss_description *bss_desc)
+{
+	return GET_IE_LEN_IN_BSS(bss_desc->length) + sizeof(qcom_ie_age);
+}
+
+static inline void wlan_hdd_add_age_ie(struct ieee80211_mgmt *mgmt,
+	uint32_t ie_length, struct bss_description *bss_desc)
+{
 	qcom_ie_age *qie_age = NULL;
-	int ie_length =
-		GET_IE_LEN_IN_BSS(bss_desc->length) + sizeof(qcom_ie_age);
-#else
-	int ie_length = GET_IE_LEN_IN_BSS(bss_desc->length);
-#endif
-	const char *ie =
-		((ie_length != 0) ? (const char *)&bss_desc->ieFields : NULL);
-	unsigned int freq;
-	struct ieee80211_channel *chan;
-	struct ieee80211_mgmt *mgmt = NULL;
-	struct cfg80211_bss *bss_status = NULL;
-	size_t frame_len = ie_length + offsetof(struct ieee80211_mgmt,
-						u.probe_resp.variable);
-	int rssi = 0;
-	struct hdd_context *hdd_ctx;
-	struct timespec ts;
-	struct hdd_config *cfg_param;
-
-	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	/*
-	 * wlan_hdd_validate_context should not be used here, In validate ctx
-	 * start_modules_in_progress or stop_modules_in_progress is validated,
-	 * If the start_modules_in_progress is set to true means the interface
-	 * is not UP yet if the stop_modules_in_progress means that interface
-	 * is already down. So in both the two scenario's driver should not be
-	 * informing bss to kernel. Hence removing the validate context.
+	 * GPS Requirement: need age ie per entry. Using vendor specific.
+	 * Assuming this is the last IE, copy at the end
 	 */
-
-	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
-		hdd_debug("HDD context is Null");
-		return NULL;
-	}
-
-	if (cds_is_driver_recovering() ||
-	    cds_is_load_or_unload_in_progress()) {
-		hdd_debug("Recovery or load/unload in progress. State: 0x%x",
-			  cds_get_driver_state());
-		return NULL;
-	}
-
-	cfg_param = hdd_ctx->config;
-	mgmt = qdf_mem_malloc((sizeof(struct ieee80211_mgmt) + ie_length));
-	if (!mgmt) {
-		hdd_err("memory allocation failed");
-		return NULL;
-	}
-
-	memcpy(mgmt->bssid, bss_desc->bssId, ETH_ALEN);
-
-	/* Android does not want the timestamp from the frame.
-	 * Instead it wants a monotonic increasing value
-	 */
-	get_monotonic_boottime(&ts);
-	mgmt->u.probe_resp.timestamp =
-		((u64) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-
-	mgmt->u.probe_resp.beacon_int = bss_desc->beaconInterval;
-	mgmt->u.probe_resp.capab_info = bss_desc->capabilityInfo;
-
-#ifdef WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS
-	/* GPS Requirement: need age ie per entry. Using vendor specific. */
-	/* Assuming this is the last IE, copy at the end */
 	ie_length -= sizeof(qcom_ie_age);
-	qie_age = (qcom_ie_age *) (mgmt->u.probe_resp.variable + ie_length);
+	qie_age = (qcom_ie_age *)mgmt->u.probe_resp.variable + ie_length;
 	qie_age->element_id = QCOM_VENDOR_IE_ID;
 	qie_age->len = QCOM_VENDOR_IE_AGE_LEN;
 	qie_age->oui_1 = QCOM_OUI1;
@@ -16349,90 +16237,145 @@ wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
 	 * results are sent to lowi the scan age is high.To address this,
 	 * send age in units of 1/10 ms.
 	 */
-	qie_age->age =
-		(uint32_t)(qdf_mc_timer_get_system_time() - bss_desc->received_time)/10;
+	qie_age->age = (uint32_t)(qdf_mc_timer_get_system_time() -
+				  bss_desc->received_time)/10;
 	qie_age->tsf_delta = bss_desc->tsf_delta;
 	memcpy(&qie_age->beacon_tsf, bss_desc->timeStamp,
 	       sizeof(qie_age->beacon_tsf));
 	memcpy(&qie_age->seq_ctrl, &bss_desc->seq_ctrl,
 	       sizeof(qie_age->seq_ctrl));
-#endif
+}
+#else
+static inline int
+wlan_hdd_get_frame_len(struct bss_description *bss_desc)
+{
+	return GET_IE_LEN_IN_BSS(bss_desc->length);
+}
+static inline void wlan_hdd_add_age_ie(struct ieee80211_mgmt *mgmt,
+	uint32_t ie_length, struct bss_description *bss_desc)
+{
+}
+#endif /* WLAN_ENABLE_AGEIE_ON_SCAN_RESULTS */
 
-	memcpy(mgmt->u.probe_resp.variable, ie, ie_length);
+
+struct cfg80211_bss *
+wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
+				     struct bss_description *bss_desc)
+{
+	struct wireless_dev *wdev = adapter->dev->ieee80211_ptr;
+	struct wiphy *wiphy = wdev->wiphy;
+	int ie_length = wlan_hdd_get_frame_len(bss_desc);
+	const char *ie =
+		((ie_length != 0) ? (const char *)&bss_desc->ieFields : NULL);
+	uint32_t freq, i;
+	struct cfg80211_bss *bss_status = NULL;
+	struct hdd_context *hdd_ctx;
+	struct timespec ts;
+	struct hdd_config *cfg_param;
+	struct wlan_cfg80211_inform_bss bss_data = {0};
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	/*
+	 * wlan_hdd_validate_context should not be used here, In validate ctx
+	 * start_modules_in_progress or stop_modules_in_progress is validated,
+	 * If the start_modules_in_progress is set to true means the interface
+	 * is not UP yet if the stop_modules_in_progress means that interface
+	 * is already down. So in both the two scenario's driver should not be
+	 * informing bss to kernel. Hence removing the validate context.
+	 */
+
+	if (!hdd_ctx || !hdd_ctx->config) {
+		hdd_debug("HDD context is Null");
+		return NULL;
+	}
+
+	if (cds_is_driver_recovering() ||
+	    cds_is_load_or_unload_in_progress()) {
+		hdd_debug("Recovery or load/unload in progress. State: 0x%x",
+			  cds_get_driver_state());
+		return NULL;
+	}
+
+	cfg_param = hdd_ctx->config;
+	bss_data.frame_len = ie_length + offsetof(struct ieee80211_mgmt,
+						  u.probe_resp.variable);
+	bss_data.mgmt = qdf_mem_malloc(bss_data.frame_len);
+	if (!bss_data.mgmt) {
+		hdd_err("memory allocation failed");
+		return NULL;
+	}
+
+	memcpy(bss_data.mgmt->bssid, bss_desc->bssId, ETH_ALEN);
+
+	/* Android does not want the timestamp from the frame.
+	 * Instead it wants a monotonic increasing value
+	 */
+	get_monotonic_boottime(&ts);
+	bss_data.mgmt->u.probe_resp.timestamp =
+		((u64) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+
+	bss_data.mgmt->u.probe_resp.beacon_int = bss_desc->beaconInterval;
+	bss_data.mgmt->u.probe_resp.capab_info = bss_desc->capabilityInfo;
+
+	wlan_hdd_add_age_ie(bss_data.mgmt, ie_length, bss_desc);
+
+	memcpy(bss_data.mgmt->u.probe_resp.variable, ie, ie_length);
 	if (bss_desc->fProbeRsp) {
-		mgmt->frame_control |=
+		bss_data.mgmt->frame_control |=
 			(u16) (IEEE80211_FTYPE_MGMT | IEEE80211_STYPE_PROBE_RESP);
 	} else {
-		mgmt->frame_control |=
+		bss_data.mgmt->frame_control |=
 			(u16) (IEEE80211_FTYPE_MGMT | IEEE80211_STYPE_BEACON);
 	}
 
-	if (chan_no <= ARRAY_SIZE(hdd_channels_2_4_ghz) &&
+	if (bss_desc->channelId <= ARRAY_SIZE(hdd_channels_2_4_ghz) &&
 	    (wiphy->bands[HDD_NL80211_BAND_2GHZ] != NULL)) {
 		freq =
-			ieee80211_channel_to_frequency(chan_no,
+			ieee80211_channel_to_frequency(bss_desc->channelId,
 						       HDD_NL80211_BAND_2GHZ);
-	} else if ((chan_no > ARRAY_SIZE(hdd_channels_2_4_ghz))
+	} else if ((bss_desc->channelId > ARRAY_SIZE(hdd_channels_2_4_ghz))
 		   && (wiphy->bands[HDD_NL80211_BAND_5GHZ] != NULL)) {
 		freq =
-			ieee80211_channel_to_frequency(chan_no,
+			ieee80211_channel_to_frequency(bss_desc->channelId,
 						       HDD_NL80211_BAND_5GHZ);
 	} else {
-		hdd_err("Invalid channel: %d", chan_no);
-		qdf_mem_free(mgmt);
+		hdd_err("Invalid channel: %d", bss_desc->channelId);
+		qdf_mem_free(bss_data.mgmt);
 		return NULL;
 	}
 
-	chan = ieee80211_get_channel(wiphy, freq);
-	/* When the band is changed on the fly using the GUI, three things are done
-	 * 1. scan abort
-	 * 2. flush scan results from cache
-	 * 3. update the band with the new band user specified (refer to the
-	 * hdd_set_band_helper function) as part of the scan abort, message will be
-	 * queued to PE and we proceed with flushing and changinh the band.
-	 * PE will stop the scanning further and report back the results what ever
-	 * it had till now by calling the call back function.
-	 * if the time between update band and scandone call back is sufficient
-	 * enough the band change reflects in SME, SME validates the channels
-	 * and discards the channels correponding to previous band and calls back
-	 * with zero bss results. but if the time between band update and scan done
-	 * callback is very small then band change will not reflect in SME and SME
-	 * reports to HDD all the channels correponding to previous band.this is due
-	 * to race condition.but those channels are invalid to the new band and so
-	 * this function ieee80211_get_channel will return NULL.Each time we
-	 * report scan result with this pointer null warning kernel trace is printed.
-	 * if the scan results contain large number of APs continuosly kernel
-	 * warning trace is printed and it will lead to apps watch dog bark.
-	 * So drop the bss and continue to next bss.
-	 */
-	if (chan == NULL) {
+	bss_data.chan = ieee80211_get_channel(wiphy, freq);
+	if (!bss_data.chan) {
 		hdd_err("chan pointer is NULL, chan_no: %d freq: %d",
-			chan_no, freq);
-		qdf_mem_free(mgmt);
+			bss_desc->channelId, freq);
+		qdf_mem_free(bss_data.mgmt);
 		return NULL;
 	}
 
-	/* Based on .ini configuration, raw rssi can be reported for bss.
+	/*
+	 * Based on .ini configuration, raw rssi can be reported for bss.
 	 * Raw rssi is typically used for estimating power.
 	 */
-
-	rssi = (cfg_param->inform_bss_rssi_raw) ? bss_desc->rssi_raw :
+	bss_data.rssi = (cfg_param->inform_bss_rssi_raw) ? bss_desc->rssi_raw :
 			bss_desc->rssi;
 
 	/* Supplicant takes the signal strength in terms of mBm(100*dBm) */
-	rssi = QDF_MIN(rssi, 0) * 100;
+	bss_data.rssi = QDF_MIN(bss_data.rssi, 0) * 100;
+
+	bss_data.boottime_ns = bss_desc->scansystimensec;
+
+	/* Set all per chain rssi as invalid */
+	for (i = 0; i < WLAN_MGMT_TXRX_HOST_MAX_ANTENNA; i++)
+		bss_data.per_chain_snr[i] = WLAN_INVALID_PER_CHAIN_RSSI;
 
 	hdd_debug("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d TSF %u",
-	       MAC_ADDR_ARRAY(mgmt->bssid), chan->center_freq,
-	       (int)(rssi / 100),
+	       MAC_ADDR_ARRAY(bss_data.mgmt->bssid), bss_data.chan->center_freq,
+	       (int)(bss_data.rssi / 100),
 	       bss_desc->timeStamp[0]);
 
-	bss_status = wlan_hdd_cfg80211_inform_bss_frame_data(wiphy, chan, mgmt,
-							     frame_len, rssi,
-							     GFP_KERNEL,
-							     bss_desc->scansystimensec);
+	bss_status = wlan_cfg80211_inform_bss_frame_data(wiphy, &bss_data);
 	hdd_ctx->beacon_probe_rsp_cnt_per_scan++;
-	qdf_mem_free(mgmt);
+	qdf_mem_free(bss_data.mgmt);
 	return bss_status;
 }
 
@@ -16457,11 +16400,10 @@ wlan_hdd_cfg80211_update_bss_db(struct hdd_adapter *adapter,
 	sme_roam_get_connect_profile(hHal, adapter->session_id, &roamProfile);
 
 	if (NULL != roamProfile.pBssDesc) {
-		bss = wlan_hdd_cfg80211_inform_bss_frame(adapter,
-							 roamProfile.pBssDesc);
+		bss = wlan_hdd_inform_bss_frame(adapter, roamProfile.pBssDesc);
 
 		if (NULL == bss)
-			hdd_debug("wlan_hdd_cfg80211_inform_bss_frame returned NULL");
+			hdd_debug("wlan_hdd_inform_bss_frame returned NULL");
 
 		sme_roam_free_connect_profile(&roamProfile);
 	} else {

@@ -434,7 +434,7 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
 #endif
 
 /**
- * wlan_hdd_cfg80211_inform_bss_frame() - inform bss details to NL80211
+ * wlan_hdd_inform_bss_frame() - inform bss details to NL80211
  * @adapter: Pointer to adapter
  * @bss_desc: Pointer to bss descriptor
  *
@@ -443,8 +443,8 @@ static inline void wlan_hdd_cfg80211_indicate_disconnect(struct net_device *dev,
  * Return: struct cfg80211_bss pointer
  */
 struct cfg80211_bss *
-wlan_hdd_cfg80211_inform_bss_frame(struct hdd_adapter *adapter,
-				   struct bss_description *bss_desc);
+wlan_hdd_inform_bss_frame(struct hdd_adapter *adapter,
+				     struct bss_description *bss_desc);
 
 /**
  * wlan_hdd_change_hw_mode_for_given_chnl() - change HW mode for given channel

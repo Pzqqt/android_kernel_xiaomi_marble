@@ -4711,8 +4711,8 @@ hdd_sme_roam_callback(void *pContext, struct csr_roam_info *roam_info,
 
 	case eCSR_ROAM_UPDATE_SCAN_RESULT:
 		if ((NULL != roam_info) && (NULL != roam_info->pBssDesc)) {
-			bss_status = wlan_hdd_cfg80211_inform_bss_frame(
-					adapter, roam_info->pBssDesc);
+			bss_status = wlan_hdd_inform_bss_frame(adapter,
+							roam_info->pBssDesc);
 			if (NULL == bss_status)
 				hdd_debug("UPDATE_SCAN_RESULT returned NULL");
 			else
