@@ -3330,6 +3330,7 @@ static __iw_softap_setparam(struct net_device *dev,
 	struct cdp_vdev *vdev = NULL;
 	struct cdp_pdev *pdev = NULL;
 	void *soc = NULL;
+	struct cdp_txrx_stats_req req;
 
 	ENTER_DEV(dev);
 
@@ -3481,9 +3482,10 @@ static __iw_softap_setparam(struct net_device *dev,
 				"Invalid Handles");
 			break;
 		}
-
+		req.stats = set_value;
+		req.channel = adapter->session.ap.operating_channel;
 		hdd_notice("QCSAP_PARAM_SET_TXRX_STATS val %d", set_value);
-		ret = cdp_txrx_stats(soc, vdev, set_value);
+		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
 

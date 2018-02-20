@@ -5526,6 +5526,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	void *soc = NULL;
 	struct cdp_pdev *pdev = NULL;
 	struct cdp_vdev *vdev = NULL;
+	struct cdp_txrx_stats_req req;
 
 	ENTER_DEV(dev);
 
@@ -6309,7 +6310,10 @@ static int __iw_setint_getnone(struct net_device *dev,
 				"Invalid handles");
 			break;
 		}
-		ret = cdp_txrx_stats(soc, vdev, set_value);
+
+		req.stats = set_value;
+		req.channel = adapter->session.station.conn_info.operationChannel;
+		ret = cdp_txrx_stats_request(soc, vdev, &req);
 		break;
 	}
 
