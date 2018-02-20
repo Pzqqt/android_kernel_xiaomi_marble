@@ -61,8 +61,14 @@ static inline void dp_print_stats_string_tlv(uint32_t *tag_buf)
 		(htt_stats_string_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char data[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *data = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!data) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_STATS_STRING_TLV:");
 	for (i = 0; i <  tag_len; i++) {
@@ -71,6 +77,7 @@ static inline void dp_print_stats_string_tlv(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->data[i]);
 	}
 	DP_TRACE_STATS(FATAL, "data = %s\n", data);
+	qdf_mem_free(data);
 }
 
 /*
@@ -179,8 +186,14 @@ static inline void dp_print_tx_pdev_stats_urrn_tlv_v(uint32_t *tag_buf)
 		(htt_tx_pdev_stats_urrn_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char urrn_stats[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *urrn_stats = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!urrn_stats) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_PDEV_MAX_URRN_STATS);
 	DP_TRACE_STATS(FATAL, "HTT_TX_PDEV_STATS_URRN_TLV_V:");
@@ -190,6 +203,7 @@ static inline void dp_print_tx_pdev_stats_urrn_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->urrn_stats[i]);
 	}
 	DP_TRACE_STATS(FATAL, "urrn_stats = %s\n", urrn_stats);
+	qdf_mem_free(urrn_stats);
 }
 
 /*
@@ -204,8 +218,14 @@ static inline void dp_print_tx_pdev_stats_flush_tlv_v(uint32_t *tag_buf)
 		(htt_tx_pdev_stats_flush_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char flush_errs[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *flush_errs = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!flush_errs) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len,
 			(uint32_t)HTT_TX_PDEV_MAX_FLUSH_REASON_STATS);
@@ -217,6 +237,7 @@ static inline void dp_print_tx_pdev_stats_flush_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->flush_errs[i]);
 	}
 	DP_TRACE_STATS(FATAL, "flush_errs = %s\n", flush_errs);
+	qdf_mem_free(flush_errs);
 }
 
 /*
@@ -231,8 +252,14 @@ static inline void dp_print_tx_pdev_stats_sifs_tlv_v(uint32_t *tag_buf)
 		(htt_tx_pdev_stats_sifs_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char sifs_status[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *sifs_status = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!sifs_status) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_PDEV_MAX_SIFS_BURST_STATS);
 
@@ -243,6 +270,7 @@ static inline void dp_print_tx_pdev_stats_sifs_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->sifs_status[i]);
 	}
 	DP_TRACE_STATS(FATAL, "sifs_status = %s\n", sifs_status);
+	qdf_mem_free(sifs_status);
 }
 
 /*
@@ -257,8 +285,14 @@ static inline void dp_print_tx_pdev_stats_phy_err_tlv_v(uint32_t *tag_buf)
 		(htt_tx_pdev_stats_phy_err_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char phy_errs[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *phy_errs = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!phy_errs) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_PDEV_MAX_PHY_ERR_STATS);
 
@@ -269,6 +303,7 @@ static inline void dp_print_tx_pdev_stats_phy_err_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->phy_errs[i]);
 	}
 	DP_TRACE_STATS(FATAL, "phy_errs = %s\n", phy_errs);
+	qdf_mem_free(phy_errs);
 }
 
 /*
@@ -283,7 +318,13 @@ static inline void dp_print_hw_stats_intr_misc_tlv(uint32_t *tag_buf)
 		(htt_hw_stats_intr_misc_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char hw_intr_name[DP_MAX_STRING_LEN];
+	char *hw_intr_name = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!hw_intr_name) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_HW_STATS_INTR_MISC_TLV:");
 	for (i = 0; i <  DP_HTT_HW_INTR_NAME_LEN; i++) {
@@ -296,6 +337,7 @@ static inline void dp_print_hw_stats_intr_misc_tlv(uint32_t *tag_buf)
 			dp_stats_buf->mask);
 	DP_TRACE_STATS(FATAL, "count = %d\n",
 			dp_stats_buf->count);
+	qdf_mem_free(hw_intr_name);
 }
 
 /*
@@ -310,7 +352,13 @@ static inline void dp_print_hw_stats_wd_timeout_tlv(uint32_t *tag_buf)
 		(htt_hw_stats_wd_timeout_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char hw_module_name[DP_MAX_STRING_LEN];
+	char *hw_module_name = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!hw_module_name) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_HW_STATS_WD_TIMEOUT_TLV:");
 	for (i = 0; i <  DP_HTT_HW_MODULE_NAME_LEN; i++) {
@@ -321,6 +369,7 @@ static inline void dp_print_hw_stats_wd_timeout_tlv(uint32_t *tag_buf)
 	DP_TRACE_STATS(FATAL, "hw_module_name = %s ", hw_module_name);
 	DP_TRACE_STATS(FATAL, "count = %d",
 			dp_stats_buf->count);
+	qdf_mem_free(hw_module_name);
 }
 
 /*
@@ -399,7 +448,13 @@ static inline void dp_print_tx_tid_stats_tlv(uint32_t *tag_buf)
 		(htt_tx_tid_stats_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char tid_name[DP_MAX_STRING_LEN];
+	char *tid_name = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!tid_name) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_TX_TID_STATS_TLV:");
 	for (i = 0; i <  DP_HTT_TID_NAME_LEN; i++) {
@@ -434,6 +489,7 @@ static inline void dp_print_tx_tid_stats_tlv(uint32_t *tag_buf)
 			dp_stats_buf->block_module_id);
 	DP_TRACE_STATS(FATAL, "tid_tx_airtime = %d\n",
 			dp_stats_buf->tid_tx_airtime);
+	qdf_mem_free(tid_name);
 }
 
 #ifdef CONFIG_WIN
@@ -449,7 +505,13 @@ static inline void dp_print_tx_tid_stats_v1_tlv(uint32_t *tag_buf)
 		(htt_tx_tid_stats_v1_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char tid_name[DP_MAX_STRING_LEN];
+	char *tid_name = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!tid_name) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_TX_TID_STATS_V1_TLV:");
 	for (i = 0; i <  DP_HTT_TID_NAME_LEN; i++) {
@@ -484,6 +546,7 @@ static inline void dp_print_tx_tid_stats_v1_tlv(uint32_t *tag_buf)
 			dp_stats_buf->block_module_id);
 	DP_TRACE_STATS(FATAL, "tid_tx_airtime = %d\n",
 			dp_stats_buf->tid_tx_airtime);
+	qdf_mem_free(tid_name);
 }
 #endif
 
@@ -499,7 +562,13 @@ static inline void dp_print_rx_tid_stats_tlv(uint32_t *tag_buf)
 		(htt_rx_tid_stats_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char tid_name[DP_MAX_STRING_LEN];
+	char *tid_name = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!tid_name) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_RX_TID_STATS_TLV:");
 	DP_TRACE_STATS(FATAL, "sw_peer_id__tid_num = %d",
@@ -518,6 +587,7 @@ static inline void dp_print_rx_tid_stats_tlv(uint32_t *tag_buf)
 			dp_stats_buf->dup_past_within_window);
 	DP_TRACE_STATS(FATAL, "rxdesc_err_decrypt = %d\n",
 			dp_stats_buf->rxdesc_err_decrypt);
+	qdf_mem_free(tid_name);
 }
 
 /*
@@ -532,7 +602,13 @@ static inline void dp_print_counter_tlv(uint32_t *tag_buf)
 		(htt_counter_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char counter_name[DP_MAX_STRING_LEN];
+	char *counter_name = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!counter_name) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_COUNTER_TLV:");
 	for (i = 0; i <  DP_HTT_COUNTER_NAME_LEN; i++) {
@@ -543,6 +619,7 @@ static inline void dp_print_counter_tlv(uint32_t *tag_buf)
 	DP_TRACE_STATS(FATAL, "counter_name = %s ", counter_name);
 	DP_TRACE_STATS(FATAL, "count = %d\n",
 			dp_stats_buf->count);
+	qdf_mem_free(counter_name);
 }
 
 /*
@@ -611,8 +688,14 @@ static inline void dp_print_tx_peer_rate_stats_tlv(uint32_t *tag_buf)
 		(htt_tx_peer_rate_stats_tlv *)tag_buf;
 	uint8_t i, j;
 	uint16_t index = 0;
-	char str_buf[DP_MAX_STRING_LEN];
 	char *tx_gi[HTT_TX_PEER_STATS_NUM_GI_COUNTERS];
+	char *str_buf = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!str_buf) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
 		tx_gi[i] = (char *)qdf_mem_malloc(DP_MAX_STRING_LEN);
@@ -706,6 +789,8 @@ static inline void dp_print_tx_peer_rate_stats_tlv(uint32_t *tag_buf)
 	DP_TRACE_STATS(FATAL, "tx_dcm = %s\n", str_buf);
 	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
 		qdf_mem_free(tx_gi[i]);
+
+	qdf_mem_free(str_buf);
 }
 
 /*
@@ -722,7 +807,13 @@ static inline void dp_print_rx_peer_rate_stats_tlv(uint32_t *tag_buf)
 	uint16_t index = 0;
 	char *rssi_chain[DP_HTT_PEER_NUM_SS];
 	char *rx_gi[HTT_RX_PEER_STATS_NUM_GI_COUNTERS];
-	char str_buf[DP_MAX_STRING_LEN];
+	char *str_buf = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!str_buf) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	for (i = 0; i < DP_HTT_PEER_NUM_SS; i++)
 		rssi_chain[i] = qdf_mem_malloc(DP_MAX_STRING_LEN);
@@ -824,6 +915,8 @@ static inline void dp_print_rx_peer_rate_stats_tlv(uint32_t *tag_buf)
 		qdf_mem_free(rssi_chain[i]);
 	for (i = 0; i < HTT_RX_PEER_STATS_NUM_GI_COUNTERS; i++)
 		qdf_mem_free(rx_gi[i]);
+
+	qdf_mem_free(str_buf);
 }
 
 /*
@@ -957,8 +1050,14 @@ static inline void dp_print_tx_hwq_difs_latency_stats_tlv_v(uint32_t *tag_buf)
 		(htt_tx_hwq_difs_latency_stats_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char difs_latency_hist[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *difs_latency_hist = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!difs_latency_hist) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len,
 			(uint32_t)HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS) - 1;
@@ -974,6 +1073,7 @@ static inline void dp_print_tx_hwq_difs_latency_stats_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->difs_latency_hist[i]);
 	}
 	DP_TRACE_STATS(FATAL, "difs_latency_hist = %s\n", difs_latency_hist);
+	qdf_mem_free(difs_latency_hist);
 }
 
 /*
@@ -988,8 +1088,14 @@ static inline void dp_print_tx_hwq_cmd_result_stats_tlv_v(uint32_t *tag_buf)
 		(htt_tx_hwq_cmd_result_stats_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char cmd_result[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *cmd_result = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!cmd_result) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_HWQ_MAX_CMD_RESULT_STATS);
 
@@ -1000,6 +1106,7 @@ static inline void dp_print_tx_hwq_cmd_result_stats_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->cmd_result[i]);
 	}
 	DP_TRACE_STATS(FATAL, "cmd_result = %s ", cmd_result);
+	qdf_mem_free(cmd_result);
 }
 
 /*
@@ -1014,8 +1121,14 @@ static inline void dp_print_tx_hwq_cmd_stall_stats_tlv_v(uint32_t *tag_buf)
 		(htt_tx_hwq_cmd_stall_stats_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char cmd_stall_status[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *cmd_stall_status = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!cmd_stall_status) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_HWQ_MAX_CMD_STALL_STATS);
 
@@ -1027,6 +1140,7 @@ static inline void dp_print_tx_hwq_cmd_stall_stats_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->cmd_stall_status[i]);
 	}
 	DP_TRACE_STATS(FATAL, "cmd_stall_status = %s\n", cmd_stall_status);
+	qdf_mem_free(cmd_stall_status);
 }
 
 /*
@@ -1041,8 +1155,14 @@ static inline void dp_print_tx_hwq_fes_result_stats_tlv_v(uint32_t *tag_buf)
 		(htt_tx_hwq_fes_result_stats_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char fes_result[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *fes_result = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!fes_result) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_HWQ_MAX_FES_RESULT_STATS);
 
@@ -1053,6 +1173,7 @@ static inline void dp_print_tx_hwq_fes_result_stats_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->fes_result[i]);
 	}
 	DP_TRACE_STATS(FATAL, "fes_result = %s ", fes_result);
+	qdf_mem_free(fes_result);
 }
 
 /*
@@ -1298,8 +1419,14 @@ static inline void dp_print_sched_txq_cmd_posted_tlv_v(uint32_t *tag_buf)
 		(htt_sched_txq_cmd_posted_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char sched_cmd_posted[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *sched_cmd_posted = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!sched_cmd_posted) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_PDEV_SCHED_TX_MODE_MAX);
 
@@ -1311,6 +1438,7 @@ static inline void dp_print_sched_txq_cmd_posted_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->sched_cmd_posted[i]);
 	}
 	DP_TRACE_STATS(FATAL, "sched_cmd_posted = %s\n", sched_cmd_posted);
+	qdf_mem_free(sched_cmd_posted);
 }
 
 /*
@@ -1325,8 +1453,14 @@ static inline void dp_print_sched_txq_cmd_reaped_tlv_v(uint32_t *tag_buf)
 		(htt_sched_txq_cmd_reaped_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char sched_cmd_reaped[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *sched_cmd_reaped = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!sched_cmd_reaped) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_PDEV_SCHED_TX_MODE_MAX);
 
@@ -1338,6 +1472,7 @@ static inline void dp_print_sched_txq_cmd_reaped_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->sched_cmd_reaped[i]);
 	}
 	DP_TRACE_STATS(FATAL, "sched_cmd_reaped = %s\n", sched_cmd_reaped);
+	qdf_mem_free(sched_cmd_reaped);
 }
 
 /*
@@ -1425,8 +1560,14 @@ static inline void dp_print_tx_tqm_gen_mpdu_stats_tlv_v(uint32_t *tag_buf)
 		(htt_tx_tqm_gen_mpdu_stats_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char gen_mpdu_end_reason[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *gen_mpdu_end_reason = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!gen_mpdu_end_reason) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len,
 			(uint32_t)HTT_TX_TQM_MAX_GEN_MPDU_END_REASON);
@@ -1439,6 +1580,7 @@ static inline void dp_print_tx_tqm_gen_mpdu_stats_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->gen_mpdu_end_reason[i]);
 	}
 	DP_TRACE_STATS(FATAL, "gen_mpdu_end_reason = %s\n", gen_mpdu_end_reason);
+	qdf_mem_free(gen_mpdu_end_reason);
 }
 
 /*
@@ -1453,8 +1595,14 @@ static inline void dp_print_tx_tqm_list_mpdu_stats_tlv_v(uint32_t *tag_buf)
 		(htt_tx_tqm_list_mpdu_stats_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char list_mpdu_end_reason[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *list_mpdu_end_reason = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!list_mpdu_end_reason) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len,
 			(uint32_t)HTT_TX_TQM_MAX_LIST_MPDU_END_REASON);
@@ -1468,6 +1616,7 @@ static inline void dp_print_tx_tqm_list_mpdu_stats_tlv_v(uint32_t *tag_buf)
 	}
 	DP_TRACE_STATS(FATAL, "list_mpdu_end_reason = %s\n",
 			list_mpdu_end_reason);
+	qdf_mem_free(list_mpdu_end_reason);
 }
 
 /*
@@ -1482,8 +1631,14 @@ static inline void dp_print_tx_tqm_list_mpdu_cnt_tlv_v(uint32_t *tag_buf)
 		(htt_tx_tqm_list_mpdu_cnt_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char list_mpdu_cnt_hist[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *list_mpdu_cnt_hist = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!list_mpdu_cnt_hist) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len,
 			(uint32_t)HTT_TX_TQM_MAX_LIST_MPDU_CNT_HISTOGRAM_BINS);
@@ -1496,6 +1651,7 @@ static inline void dp_print_tx_tqm_list_mpdu_cnt_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->list_mpdu_cnt_hist[i]);
 	}
 	DP_TRACE_STATS(FATAL, "list_mpdu_cnt_hist = %s\n", list_mpdu_cnt_hist);
+	qdf_mem_free(list_mpdu_cnt_hist);
 }
 
 /*
@@ -1926,8 +2082,13 @@ static inline void dp_print_ring_if_stats_tlv(uint32_t *tag_buf)
 		(htt_ring_if_stats_tlv *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char low_wm_hit_count[DP_MAX_STRING_LEN];
-	char high_wm_hit_count[DP_MAX_STRING_LEN];
+	char *wm_hit_count = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!wm_hit_count) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_RING_IF_STATS_TLV:");
 	DP_TRACE_STATS(FATAL, "base_addr = %d",
@@ -1954,21 +2115,23 @@ static inline void dp_print_ring_if_stats_tlv(uint32_t *tag_buf)
 			dp_stats_buf->cons_blockwait_count);
 
 	for (i = 0; i <  DP_HTT_LOW_WM_HIT_COUNT_LEN; i++) {
-		index += qdf_snprint(&low_wm_hit_count[index],
+		index += qdf_snprint(&wm_hit_count[index],
 				DP_MAX_STRING_LEN - index,
 				" %d:%d,", i,
 				dp_stats_buf->low_wm_hit_count[i]);
 	}
-	DP_TRACE_STATS(FATAL, "low_wm_hit_count = %s ", low_wm_hit_count);
+	DP_TRACE_STATS(FATAL, "low_wm_hit_count = %s ", wm_hit_count);
+
+	qdf_mem_zero(wm_hit_count, DP_MAX_STRING_LEN);
 
 	index = 0;
 	for (i = 0; i <  DP_HTT_HIGH_WM_HIT_COUNT_LEN; i++) {
-		index += qdf_snprint(&high_wm_hit_count[index],
+		index += qdf_snprint(&wm_hit_count[index],
 				DP_MAX_STRING_LEN - index,
 				" %d:%d,", i,
 				dp_stats_buf->high_wm_hit_count[i]);
 	}
-	DP_TRACE_STATS(FATAL, "high_wm_hit_count = %s\n", high_wm_hit_count);
+	DP_TRACE_STATS(FATAL, "high_wm_hit_count = %s\n", wm_hit_count);
 }
 
 /*
@@ -2001,8 +2164,14 @@ static inline void dp_print_sfm_client_user_tlv_v(uint32_t *tag_buf)
 		(htt_sfm_client_user_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char dwords_used_by_user_n[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *dwords_used_by_user_n = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!dwords_used_by_user_n) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_SFM_CLIENT_USER_TLV_V:");
 	for (i = 0; i <  tag_len; i++) {
@@ -2013,6 +2182,7 @@ static inline void dp_print_sfm_client_user_tlv_v(uint32_t *tag_buf)
 	}
 	DP_TRACE_STATS(FATAL, "dwords_used_by_user_n = %s\n",
 			dwords_used_by_user_n);
+	qdf_mem_free(dwords_used_by_user_n);
 }
 
 /*
@@ -2127,8 +2297,14 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 		(htt_tx_pdev_rate_stats_tlv *)tag_buf;
 	uint8_t i, j;
 	uint16_t index = 0;
-	char str_buf[DP_MAX_STRING_LEN];
 	char *tx_gi[HTT_TX_PEER_STATS_NUM_GI_COUNTERS];
+	char *str_buf = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!str_buf) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++) {
 		tx_gi[i] = (char *)qdf_mem_malloc(DP_MAX_STRING_LEN);
@@ -2233,6 +2409,8 @@ static inline void dp_print_tx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 
 	for (i = 0; i < HTT_TX_PEER_STATS_NUM_GI_COUNTERS; i++)
 		qdf_mem_free(tx_gi[i]);
+
+	qdf_mem_free(str_buf);
 }
 
 /*
@@ -2249,7 +2427,13 @@ static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 	uint16_t index = 0;
 	char *rssi_chain[DP_HTT_RSSI_CHAIN_LEN];
 	char *rx_gi[HTT_RX_PDEV_STATS_NUM_GI_COUNTERS];
-	char str_buf[DP_MAX_STRING_LEN];
+	char *str_buf = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!str_buf) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	for (i = 0; i < DP_HTT_RSSI_CHAIN_LEN; i++)
 		rssi_chain[i] = qdf_mem_malloc(DP_MAX_STRING_LEN);
@@ -2352,6 +2536,8 @@ static inline void dp_print_rx_pdev_rate_stats_tlv(uint32_t *tag_buf)
 		qdf_mem_free(rssi_chain[i]);
 	for (i = 0; i < HTT_RX_PDEV_STATS_NUM_GI_COUNTERS; i++)
 		qdf_mem_free(rx_gi[i]);
+
+	qdf_mem_free(str_buf);
 }
 
 /*
@@ -2391,8 +2577,14 @@ static inline void dp_print_rx_soc_fw_refill_ring_empty_tlv_v(uint32_t *tag_buf)
 		(htt_rx_soc_fw_refill_ring_empty_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char refill_ring_empty_cnt[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *refill_ring_empty_cnt = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!refill_ring_empty_cnt) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_RX_STATS_REFILL_MAX_RING);
 
@@ -2405,6 +2597,7 @@ static inline void dp_print_rx_soc_fw_refill_ring_empty_tlv_v(uint32_t *tag_buf)
 	}
 	DP_TRACE_STATS(FATAL, "refill_ring_empty_cnt = %s\n",
 			refill_ring_empty_cnt);
+	qdf_mem_free(refill_ring_empty_cnt);
 }
 
 /*
@@ -2421,8 +2614,14 @@ static inline void dp_print_rx_soc_fw_refill_ring_num_refill_tlv_v(
 		(htt_rx_soc_fw_refill_ring_num_refill_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char refill_ring_num_refill[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *refill_ring_num_refill = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!refill_ring_num_refill) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_TX_PDEV_MAX_URRN_STATS);
 
@@ -2435,6 +2634,7 @@ static inline void dp_print_rx_soc_fw_refill_ring_num_refill_tlv_v(
 	}
 	DP_TRACE_STATS(FATAL, "refill_ring_num_refill = %s\n",
 			refill_ring_num_refill);
+	qdf_mem_free(refill_ring_num_refill);
 }
 
 /*
@@ -2571,7 +2771,13 @@ static inline void dp_print_rx_pdev_fw_ring_mpdu_err_tlv_v(uint32_t *tag_buf)
 		(htt_rx_pdev_fw_ring_mpdu_err_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char fw_ring_mpdu_err[DP_MAX_STRING_LEN];
+	char *fw_ring_mpdu_err = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!fw_ring_mpdu_err) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	DP_TRACE_STATS(FATAL, "HTT_RX_PDEV_FW_RING_MPDU_ERR_TLV_V:");
 	for (i = 0; i <  DP_HTT_FW_RING_MPDU_ERR_LEN; i++) {
@@ -2581,6 +2787,7 @@ static inline void dp_print_rx_pdev_fw_ring_mpdu_err_tlv_v(uint32_t *tag_buf)
 				dp_stats_buf->fw_ring_mpdu_err[i]);
 	}
 	DP_TRACE_STATS(FATAL, "fw_ring_mpdu_err = %s\n", fw_ring_mpdu_err);
+	qdf_mem_free(fw_ring_mpdu_err);
 }
 
 /*
@@ -2595,8 +2802,14 @@ static inline void dp_print_rx_pdev_fw_mpdu_drop_tlv_v(uint32_t *tag_buf)
 		(htt_rx_pdev_fw_mpdu_drop_tlv_v *)tag_buf;
 	uint8_t i;
 	uint16_t index = 0;
-	char fw_mpdu_drop[DP_MAX_STRING_LEN];
 	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+	char *fw_mpdu_drop = qdf_mem_malloc(DP_MAX_STRING_LEN);
+
+	if (!fw_mpdu_drop) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			  FL("Output buffer not allocated\n"));
+		return;
+	}
 
 	tag_len = qdf_min(tag_len, (uint32_t)HTT_RX_STATS_FW_DROP_REASON_MAX);
 
@@ -2607,6 +2820,7 @@ static inline void dp_print_rx_pdev_fw_mpdu_drop_tlv_v(uint32_t *tag_buf)
 				" %d:%d,", i, dp_stats_buf->fw_mpdu_drop[i]);
 	}
 	DP_TRACE_STATS(FATAL, "fw_mpdu_drop = %s\n", fw_mpdu_drop);
+	qdf_mem_free(fw_mpdu_drop);
 }
 
 /*
