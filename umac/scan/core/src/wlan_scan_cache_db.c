@@ -694,6 +694,9 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		scan_entry = scan_node->entry;
 
+		if (scan_obj->cb.update_beacon)
+			scan_obj->cb.update_beacon(pdev, scan_entry);
+
 		if (wlan_reg_11d_enabled_on_host(psoc))
 			scm_11d_handle_country_info(psoc, pdev, scan_entry);
 
@@ -711,9 +714,6 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 			scan_entry->tsf_delta, scan_entry->seq_num,
 			scan_entry->ssid.length, scan_entry->ssid.ssid,
 			scan_entry->rssi_raw);
-
-		if (scan_obj->cb.update_beacon)
-			scan_obj->cb.update_beacon(pdev, scan_entry);
 
 		if (scan_obj->cb.inform_beacon)
 			scan_obj->cb.inform_beacon(pdev, scan_entry);
