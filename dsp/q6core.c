@@ -18,6 +18,8 @@
 #include <linux/mutex.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
+#include <linux/sysfs.h>
+#include <linux/kobject.h>
 #include <dsp/q6core.h>
 #include <dsp/audio_cal_utils.h>
 #include <dsp/apr_audio-v2.h>
@@ -81,6 +83,106 @@ struct generic_get_data_ {
 	int ints[];
 };
 static struct generic_get_data_ *generic_get_data;
+
+static DEFINE_MUTEX(kset_lock);
+static struct kset *audio_uevent_kset;
+
+static int q6core_init_uevent_kset(void)
+{
+	int ret = 0;
+
+	mutex_lock(&kset_lock);
+	if (audio_uevent_kset)
+		goto done;
+
+	/* Create a kset under /sys/kernel/ */
+	audio_uevent_kset = kset_create_and_add("q6audio", NULL, kernel_kobj);
+	if (!audio_uevent_kset) {
+		pr_err("%s: error creating uevent kernel set", __func__);
+		ret = -EINVAL;
+	}
+done:
+	mutex_unlock(&kset_lock);
+	return ret;
+}
+
+static void q6core_destroy_uevent_kset(void)
+{
+	if (audio_uevent_kset) {
+		kset_unregister(audio_uevent_kset);
+		audio_uevent_kset = NULL;
+	}
+}
+
+/**
+ * q6core_init_uevent_data - initialize kernel object required to send uevents.
+ *
+ * @uevent_data: uevent data (dynamically allocated memory).
+ * @name: name of the kernel object.
+ *
+ * Returns 0 on success or error otherwise.
+ */
+int q6core_init_uevent_data(struct audio_uevent_data *uevent_data, char *name)
+{
+	int ret = -EINVAL;
+
+	if (!uevent_data || !name)
+		return ret;
+
+	ret = q6core_init_uevent_kset();
+	if (ret)
+		return ret;
+
+	/* Set kset for kobject before initializing the kobject */
+	uevent_data->kobj.kset = audio_uevent_kset;
+
+	/* Initialize kobject and add it to kernel */
+	ret = kobject_init_and_add(&uevent_data->kobj, &uevent_data->ktype,
+					NULL, "%s", name);
+	if (ret) {
+		pr_err("%s: error initializing uevent kernel object: %d",
+			__func__, ret);
+		kobject_put(&uevent_data->kobj);
+		return ret;
+	}
+
+	/* Send kobject add event to the system */
+	kobject_uevent(&uevent_data->kobj, KOBJ_ADD);
+
+	return ret;
+}
+EXPORT_SYMBOL(q6core_init_uevent_data);
+
+/**
+ * q6core_destroy_uevent_data - destroy kernel object.
+ *
+ * @uevent_data: uevent data.
+ */
+void q6core_destroy_uevent_data(struct audio_uevent_data *uevent_data)
+{
+	if (uevent_data)
+		kobject_put(&uevent_data->kobj);
+}
+EXPORT_SYMBOL(q6core_destroy_uevent_data);
+
+/**
+ * q6core_send_uevent - send uevent to userspace.
+ *
+ * @uevent_data: uevent data.
+ * @event: event to send.
+ *
+ * Returns 0 on success or error otherwise.
+ */
+int q6core_send_uevent(struct audio_uevent_data *uevent_data, char *event)
+{
+	char *env[] = { event, NULL };
+
+	if (!event || !uevent_data)
+		return -EINVAL;
+
+	return kobject_uevent_env(&uevent_data->kobj, KOBJ_CHANGE, env);
+}
+EXPORT_SYMBOL(q6core_send_uevent);
 
 static int parse_fwk_version_info(uint32_t *payload)
 {
@@ -1110,6 +1212,7 @@ int __init core_init(void)
 	mutex_init(&q6core_lcl.ver_lock);
 
 	q6core_init_cal_data();
+	q6core_init_uevent_kset();
 
 	return 0;
 }
@@ -1119,6 +1222,7 @@ void core_exit(void)
 	mutex_destroy(&q6core_lcl.cmd_lock);
 	mutex_destroy(&q6core_lcl.ver_lock);
 	q6core_delete_cal_data();
+	q6core_destroy_uevent_kset();
 }
 MODULE_DESCRIPTION("ADSP core driver");
 MODULE_LICENSE("GPL v2");
