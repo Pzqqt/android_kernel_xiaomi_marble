@@ -337,4 +337,11 @@ QDF_STATUS wma_set_vc_mode_config(void *wma_handle,
 QDF_STATUS wma_process_dhcp_ind(WMA_HANDLE wma_handle,
 				tAniDHCPInd *ta_dhcp_ind);
 
+/**
+ * wma_wmi_stop() - send wmi stop cmd
+ *
+ *  Return: None
+ */
+void wma_wmi_stop(void);
+
 #endif

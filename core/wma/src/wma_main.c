@@ -2884,6 +2884,32 @@ void wma_vdev_deinit(struct wma_txrx_node *vdev)
 	vdev->is_waiting_for_key = false;
 }
 
+/**
+ * wma_wmi_stop() - generic function to block WMI commands
+ * @return: None
+ */
+void wma_wmi_stop(void)
+{
+	tp_wma_handle wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (wma_handle == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
+			  "wma_handle is NULL\n");
+		return;
+	}
+	wmi_stop(wma_handle->wmi_handle);
+}
+
+/**
+ * wma_open() - Allocate wma context and initialize it.
+ * @cds_context:  cds context
+ * @wma_tgt_cfg_cb: tgt config callback fun
+ * @radar_ind_cb: dfs radar indication callback
+ * @cds_cfg:  mac parameters
+ *
+ * Return: 0 on success, errno on failure
+ */
 QDF_STATUS wma_open(struct wlan_objmgr_psoc *psoc,
 		    wma_tgt_cfg_cb tgt_cfg_cb,
 		    struct cds_config_info *cds_cfg,
