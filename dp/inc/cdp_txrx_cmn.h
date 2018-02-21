@@ -1782,4 +1782,56 @@ static inline void cdp_deregister_rx_offld_flush_cb(ol_txrx_soc_handle soc)
 		return soc->ops->rx_offld_ops->deregister_rx_offld_flush_cb();
 }
 #endif /* RECEIVE_OFFLOAD */
+
+/**
+ * @cdp_set_ba_timeout() - set ba aging timeout per AC
+ *
+ * @soc - pointer to the soc
+ * @value - timeout value in millisec
+ * @ac - Access category
+ *
+ * @return - void
+ */
+static inline void cdp_set_ba_timeout(ol_txrx_soc_handle soc,
+				      uint8_t ac, uint32_t value)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_set_ba_aging_timeout)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_set_ba_aging_timeout(soc, ac, value);
+}
+
+/**
+ * @cdp_get_ba_timeout() - return ba aging timeout per AC
+ *
+ * @soc - pointer to the soc
+ * @ac - access category
+ * @value - timeout value in millisec
+ *
+ * @return - void
+ */
+static inline void cdp_get_ba_timeout(ol_txrx_soc_handle soc,
+				      uint8_t ac, uint32_t *value)
+{
+	if (!soc || !soc->ops) {
+		QDF_TRACE(QDF_MODULE_ID_CDP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s: Invalid Instance", __func__);
+		QDF_BUG(0);
+		return;
+	}
+
+	if (!soc->ops->cmn_drv_ops ||
+	    !soc->ops->cmn_drv_ops->txrx_get_ba_aging_timeout)
+		return;
+
+	soc->ops->cmn_drv_ops->txrx_get_ba_aging_timeout(soc, ac, value);
+}
 #endif /* _CDP_TXRX_CMN_H_ */

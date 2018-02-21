@@ -4076,6 +4076,38 @@ static void dp_set_vdev_rx_decap_type(struct cdp_vdev *vdev_handle,
 }
 
 /*
+ * dp_set_ba_aging_timeout() - set ba aging timeout per AC
+ * @txrx_soc: cdp soc handle
+ * @ac: Access category
+ * @value: timeout value in millisec
+ *
+ * Return: void
+ */
+static void dp_set_ba_aging_timeout(struct cdp_soc_t *txrx_soc,
+				    uint8_t ac, uint32_t value)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	hal_set_ba_aging_timeout(soc->hal_soc, ac, value);
+}
+
+/*
+ * dp_get_ba_aging_timeout() - get ba aging timeout per AC
+ * @txrx_soc: cdp soc handle
+ * @ac: access category
+ * @value: timeout value in millisec
+ *
+ * Return: void
+ */
+static void dp_get_ba_aging_timeout(struct cdp_soc_t *txrx_soc,
+				    uint8_t ac, uint32_t *value)
+{
+	struct dp_soc *soc = (struct dp_soc *)txrx_soc;
+
+	hal_get_ba_aging_timeout(soc->hal_soc, ac, value);
+}
+
+/*
  * dp_set_pdev_reo_dest() - set the reo destination ring for this pdev
  * @pdev_handle: physical device object
  * @val: reo destination ring index (1 - 4)
@@ -7635,6 +7667,8 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.set_dp_txrx_handle = dp_pdev_set_dp_txrx_handle,
 	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
 	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
+	.txrx_set_ba_aging_timeout = dp_set_ba_aging_timeout,
+	.txrx_get_ba_aging_timeout = dp_get_ba_aging_timeout,
 	.tx_send = dp_tx_send,
 	.txrx_peer_reset_ast = dp_wds_reset_ast_wifi3,
 	.txrx_peer_reset_ast_table = dp_wds_reset_ast_table_wifi3,

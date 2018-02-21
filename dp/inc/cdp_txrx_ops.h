@@ -325,6 +325,10 @@ struct cdp_cmn_ops {
 					  void *vdev_hdl);
 
 	void (*txrx_peer_flush_ast_table)(ol_txrx_soc_handle soc);
+	void (*txrx_set_ba_aging_timeout)(struct cdp_soc_t *soc_handle,
+					  uint8_t ac, uint32_t value);
+	void (*txrx_get_ba_aging_timeout)(struct cdp_soc_t *soc_handle,
+					  uint8_t ac, uint32_t *value);
 
 	QDF_STATUS (*txrx_peer_map_attach)(ol_txrx_soc_handle soc,
 			uint32_t num_peers);

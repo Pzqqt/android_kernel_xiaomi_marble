@@ -1118,4 +1118,25 @@ extern void hal_get_meminfo(void *hal_soc,struct hal_mem_info *mem );
  * @hal_soc: Opaque HAL SOC handle
  */
 uint32_t hal_get_target_type(struct hal_soc *hal);
+
+/**
+ * hal_get_ba_aging_timeout - Retrieve BA aging timeout
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @ac: Access category
+ * @value: timeout duration in millisec
+ */
+void hal_get_ba_aging_timeout(void *hal_soc, uint8_t ac,
+			      uint32_t *value);
+
+/**
+ * hal_set_aging_timeout - Set BA aging timeout
+ *
+ * @hal_soc: Opaque HAL SOC handle
+ * @ac: Access category in millisec
+ * @value: timeout duration value
+ */
+void hal_set_ba_aging_timeout(void *hal_soc, uint8_t ac,
+			      uint32_t value);
+
 #endif /* _HAL_APIH_ */
