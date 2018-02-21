@@ -399,6 +399,33 @@ mgmt_get_wnm_action_subtype(uint8_t action_code)
 	case WNM_NOTIF_RESPONSE:
 		frm_type = MGMT_ACTION_WNM_NOTIF_RESPONSE;
 		break;
+	case WNM_FMS_REQ:
+		frm_type = MGMT_ACTION_WNM_FMS_REQ;
+		break;
+	case WNM_FMS_RESP:
+		frm_type = MGMT_ACTION_WNM_FMS_RESP;
+		break;
+	case WNM_TFS_REQ:
+		frm_type = MGMT_ACTION_WNM_TFS_REQ;
+		break;
+	case WNM_TFS_RESP:
+		frm_type = MGMT_ACTION_WNM_TFS_RESP;
+		break;
+	case WNM_TFS_NOTIFY:
+		frm_type = MGMT_ACTION_WNM_TFS_NOTIFY;
+		break;
+	case WNM_SLEEP_REQ:
+		frm_type = MGMT_ACTION_WNM_SLEEP_REQ;
+		break;
+	case WNM_SLEEP_RESP:
+		frm_type = MGMT_ACTION_WNM_SLEEP_RESP;
+		break;
+	case WNM_TIM_REQ:
+		frm_type = MGMT_ACTION_WNM_TFS_REQ;
+		break;
+	case WNM_TIM_RESP:
+		frm_type = MGMT_ACTION_WNM_TFS_RESP;
+		break;
 	default:
 		frm_type = MGMT_FRM_UNSPECIFIED;
 		break;

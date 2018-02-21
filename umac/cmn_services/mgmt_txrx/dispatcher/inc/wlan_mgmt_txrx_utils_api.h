@@ -288,6 +288,15 @@ enum protected_dual_actioncode {
  * @WNM_BSS_TM_QUERY: wnm bss tm query frame
  * @WNM_BSS_TM_REQUEST: wnm bss tm request frame
  * @WNM_BSS_TM_RESPONSE: wnm bss tm response frame
+ * @WNM_FMS_REQ: wnm fms request frame
+ * @WNM_FMS_RESP: wnm fms response frame
+ * @WNM_TFS_REQ: wnm tfs request frame
+ * @WNM_TFS_RESP: wnm tfs response frame
+ * @WNM_TFS_NOTIFY: wnm tfs notify frame
+ * @WNM_SLEEP_REQ: wnm sleep request frame
+ * @WNM_SLEEP_RESP: wnm sleep response frame
+ * @WNM_TIM_REQ: wnm Tim broadcast request frame
+ * @WNM_TIM_RESP: wnm Tim broadcast response frame
  * @WNM_NOTIF_REQUEST: wnm notify request frame
  * @WNM_NOTIF_RESPONSE: wnm notify response frame
  */
@@ -295,6 +304,15 @@ enum wnm_actioncode {
 	WNM_BSS_TM_QUERY = 6,
 	WNM_BSS_TM_REQUEST = 7,
 	WNM_BSS_TM_RESPONSE = 8,
+	WNM_FMS_REQ = 9,
+	WNM_FMS_RESP = 10,
+	WNM_TFS_REQ = 13,
+	WNM_TFS_RESP = 14,
+	WNM_TFS_NOTIFY = 15,
+	WNM_SLEEP_REQ = 16,
+	WNM_SLEEP_RESP = 17,
+	WNM_TIM_REQ = 18,
+	WNM_TIM_RESP = 19,
 	WNM_NOTIF_REQUEST = 26,
 	WNM_NOTIF_RESPONSE = 27,
 };
@@ -468,6 +486,15 @@ struct action_frm_hdr {
  * @MGMT_ACTION_WNM_BSS_TM_RESPONSE: wnm bss tm response action frame
  * @MGMT_ACTION_WNM_NOTIF_REQUEST:  wnm notification request action frame
  * @MGMT_ACTION_WNM_NOTIF_RESPONSE: wnm notification response action frame
+ * @MGMT_ACTION_WNM_FMS_REQ:    wnm fms request frame
+ * @MGMT_ACTION_WNM_FMS_RESP:   wnm fms response frame
+ * @MGMT_ACTION_WNM_TFS_REQ:    wnm tfs request frame
+ * @MGMT_ACTION_WNM_TFS_RESP:   wnm tfs response frame
+ * @MGMT_ACTION_WNM_TFS_NOTIFY: wnm tfs notify frame
+ * @MGMT_ACTION_WNM_SLEEP_REQ:  wnm sleep request frame
+ * @MGMT_ACTION_WNM_SLEEP_RESP: wnm sleep response frame
+ * @MGMT_ACTION_WNM_TIM_REQ:    wnm Tim broadcast request frame
+ * @MGMT_ACTION_WNM_TIM_RESP:   wnm Tim broadcast response frame
  * @MGMT_ACTION_TDLS_SETUP_REQ:     tdls setup request action frame
  * @MGMT_ACTION_TDLS_SETUP_RSP:     tdls setup response frame
  * @MGMT_ACTION_TDLS_SETUP_CNF:     tdls setup confirm frame
@@ -567,6 +594,15 @@ enum mgmt_frame_type {
 	MGMT_ACTION_WNM_BSS_TM_RESPONSE,
 	MGMT_ACTION_WNM_NOTIF_REQUEST,
 	MGMT_ACTION_WNM_NOTIF_RESPONSE,
+	MGMT_ACTION_WNM_FMS_REQ,
+	MGMT_ACTION_WNM_FMS_RESP,
+	MGMT_ACTION_WNM_TFS_REQ,
+	MGMT_ACTION_WNM_TFS_RESP,
+	MGMT_ACTION_WNM_TFS_NOTIFY,
+	MGMT_ACTION_WNM_SLEEP_REQ,
+	MGMT_ACTION_WNM_SLEEP_RESP,
+	MGMT_ACTION_WNM_TIM_REQ,
+	MGMT_ACTION_WNM_TIM_RESP,
 	MGMT_ACTION_TDLS_SETUP_REQ,
 	MGMT_ACTION_TDLS_SETUP_RSP,
 	MGMT_ACTION_TDLS_SETUP_CNF,
