@@ -2506,6 +2506,21 @@ void wmi_set_tgt_assert(wmi_unified_t wmi_handle, bool val)
 	wmi_handle->tgt_force_assert_enable = val;
 }
 
+/**
+ * wmi_stop() - generic function to block unified WMI command
+ * @wmi_handle: handle to WMI.
+ *
+ * @Return: success always.
+ */
+int
+wmi_stop(wmi_unified_t wmi_handle)
+{
+	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
+		  "WMI Stop\n");
+	wmi_handle->wmi_stopinprogress = 1;
+	return 0;
+}
+
 #ifndef CONFIG_MCL
 /**
  * API to flush all the previous packets  associated with the wmi endpoint
@@ -2519,20 +2534,6 @@ wmi_flush_endpoint(wmi_unified_t wmi_handle)
 		wmi_handle->wmi_endpoint_id, 0);
 }
 qdf_export_symbol(wmi_flush_endpoint);
-
-/**
- * generic function to block unified WMI command
- * @param wmi_handle      : handle to WMI.
- * @return 0  on success and -ve on failure.
- */
-int
-wmi_stop(wmi_unified_t wmi_handle)
-{
-	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
-			"WMI Stop\n");
-	wmi_handle->wmi_stopinprogress = 1;
-	return 0;
-}
 
 /**
  * wmi_pdev_id_conversion_enable() - API to enable pdev_id conversion in WMI
