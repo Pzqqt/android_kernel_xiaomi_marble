@@ -886,6 +886,11 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_A_MU_DL_E:
+	{
+		uint8_t *he_sig_a_mu_dl_info = (uint8_t *)rx_tlv +
+			HAL_RX_OFFSET(PHYRX_HE_SIG_A_MU_DL_0,
+			HE_SIG_A_MU_DL_INFO_PHYRX_HE_SIG_A_MU_DL_INFO_DETAILS);
+
 		ppdu_info->rx_status.he_sig_A1 =
 			*((uint32_t *)((uint8_t *)rx_tlv +
 			HAL_RX_OFFSET(PHYRX_HE_SIG_A_MU_DL_0,
@@ -901,41 +906,136 @@ hal_rx_status_get_tlv_info(void *rx_tlv, struct hal_rx_ppdu_info *ppdu_info)
 			HE_SIG_A_MU_DL_INFO_PHYRX_HE_SIG_A_MU_DL_INFO_DETAILS)));
 		ppdu_info->rx_status.he_sig_A2_known =
 			QDF_MON_STATUS_HE_SIG_A2_MU_KNOWN_ALL;
+
+		ppdu_info->rx_status.he_mu_flags = 1;
+		ppdu_info->rx_status.he_flags1 =
+			QDF_MON_STATUS_SIG_B_MCS_KNOWN |
+			QDF_MON_STATUS_SIG_B_DCM_KNOWN |
+			QDF_MON_STATUS_SIG_B_COMPRESSION_FLAG_1_KNOWN |
+			QDF_MON_STATUS_SIG_B_SYM_NUM_KNOWN |
+			QDF_MON_STATUS_RU_0_KNOWN;
+
+		value = HAL_RX_GET(he_sig_a_mu_dl_info,
+				HE_SIG_A_MU_DL_INFO_0, MCS_OF_SIG_B);
+		ppdu_info->rx_status.he_flags1 |= value;
+		value = HAL_RX_GET(he_sig_a_mu_dl_info,
+				HE_SIG_A_MU_DL_INFO_0, DCM_OF_SIG_B);
+		value = value << QDF_MON_STATUS_DCM_FLAG_1_SHIFT;
+		ppdu_info->rx_status.he_flags1 |= value;
+
+		ppdu_info->rx_status.he_flags2 =
+			QDF_MON_STATUS_BW_KNOWN;
+
+		value = HAL_RX_GET(he_sig_a_mu_dl_info,
+				HE_SIG_A_MU_DL_INFO_0, TRANSMIT_BW);
+		ppdu_info->rx_status.he_flags2 |= value;
+		value = HAL_RX_GET(he_sig_a_mu_dl_info,
+				HE_SIG_A_MU_DL_INFO_0, COMP_MODE_SIG_B);
+		value = value << QDF_MON_STATUS_SIG_B_COMPRESSION_FLAG_2_SHIFT;
+		ppdu_info->rx_status.he_flags2 |= value;
+		value = HAL_RX_GET(he_sig_a_mu_dl_info,
+				HE_SIG_A_MU_DL_INFO_0, NUM_SIG_B_SYMBOLS);
+		value = value - 1;
+		value = value << QDF_MON_STATUS_NUM_SIG_B_SYMBOLS_SHIFT;
+		ppdu_info->rx_status.he_flags2 |= value;
 		break;
+	}
 	case WIFIPHYRX_HE_SIG_B1_MU_E:
 	{
+
 		uint8_t *he_sig_b1_mu_info = (uint8_t *)rx_tlv +
-			*((uint32_t *)((uint8_t *)rx_tlv +
 			HAL_RX_OFFSET(PHYRX_HE_SIG_B1_MU_0,
-			HE_SIG_B1_MU_INFO_PHYRX_HE_SIG_B1_MU_INFO_DETAILS)));
+			HE_SIG_B1_MU_INFO_PHYRX_HE_SIG_B1_MU_INFO_DETAILS);
 
-		ppdu_info->rx_status.he_sig_b_common_RU[0] =
-			HAL_RX_GET(he_sig_b1_mu_info, HE_SIG_B1_MU_INFO_0,
-				RU_ALLOCATION);
-
-		ppdu_info->rx_status.he_sig_b_common_known =
+		ppdu_info->rx_status.he_sig_b_common_known |=
 			QDF_MON_STATUS_HE_SIG_B_COMMON_KNOWN_RU0;
 		/* TODO: Check on the availability of other fields in
 		 * sig_b_common
 		 */
+
+		value = HAL_RX_GET(he_sig_b1_mu_info,
+				HE_SIG_B1_MU_INFO_0, RU_ALLOCATION);
+		ppdu_info->rx_status.he_RU[0] = value;
 		break;
 	}
 	case WIFIPHYRX_HE_SIG_B2_MU_E:
-		ppdu_info->rx_status.he_sig_b_user =
-			*((uint32_t *)((uint8_t *)rx_tlv +
+	{
+		uint8_t *he_sig_b2_mu_info = (uint8_t *)rx_tlv +
 			HAL_RX_OFFSET(PHYRX_HE_SIG_B2_MU_0,
-			HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS)));
-		ppdu_info->rx_status.he_sig_b_user_known =
-			QDF_MON_STATUS_HE_SIG_B_USER_KNOWN_SIG_B_ALL;
+			HE_SIG_B2_MU_INFO_PHYRX_HE_SIG_B2_MU_INFO_DETAILS);
+
+		ppdu_info->rx_status.he_mu_other_flags = 1;
+
+		ppdu_info->rx_status.he_per_user_known =
+			QDF_MON_STATUS_STA_ID_PER_USER_KNOWN |
+			QDF_MON_STATUS_STA_CODING_KNOWN |
+			QDF_MON_STATUS_STA_SPATIAL_CONFIG_KNOWN |
+			QDF_MON_STATUS_STA_MCS_KNOWN;
+
+		value = HAL_RX_GET(he_sig_b2_mu_info,
+				HE_SIG_B2_MU_INFO_0, STA_ID);
+		ppdu_info->rx_status.he_per_user_1 = value;
+		value = HAL_RX_GET(he_sig_b2_mu_info,
+				HE_SIG_B2_MU_INFO_0, STA_SPATIAL_CONFIG);
+		value = value << QDF_MON_STATUS_STA_SPATIAL_SHIFT;
+		ppdu_info->rx_status.he_per_user_1 |= value;
+
+		value = HAL_RX_GET(he_sig_b2_mu_info,
+				HE_SIG_B2_OFDMA_INFO_0, STA_MCS);
+		ppdu_info->rx_status.he_per_user_2 = value;
+		value = HAL_RX_GET(he_sig_b2_mu_info,
+				HE_SIG_B2_OFDMA_INFO_0, STA_CODING);
+		value = value << QDF_MON_STATUS_STA_DCM_SHIFT;
+		ppdu_info->rx_status.he_per_user_2 |= value;
+
 		break;
+	}
 	case WIFIPHYRX_HE_SIG_B2_OFDMA_E:
+	{
+		uint8_t *he_sig_b2_ofdma_info =
+		(uint8_t *)rx_tlv +
+		HAL_RX_OFFSET(PHYRX_HE_SIG_B2_OFDMA_0,
+		HE_SIG_B2_OFDMA_INFO_PHYRX_HE_SIG_B2_OFDMA_INFO_DETAILS);
 		ppdu_info->rx_status.he_sig_b_user =
 			*((uint32_t *)((uint8_t *)rx_tlv +
 			HAL_RX_OFFSET(PHYRX_HE_SIG_B2_OFDMA_0,
 			HE_SIG_B2_OFDMA_INFO_PHYRX_HE_SIG_B2_OFDMA_INFO_DETAILS)));
 		ppdu_info->rx_status.he_sig_b_user_known =
 			QDF_MON_STATUS_HE_SIG_B_USER_KNOWN_SIG_B_ALL;
+
+		ppdu_info->rx_status.he_per_user_known =
+			QDF_MON_STATUS_STA_ID_PER_USER_KNOWN |
+			QDF_MON_STATUS_STA_NSTS_KNOWN |
+			QDF_MON_STATUS_STA_TX_BF_KNOWN |
+			QDF_MON_STATUS_STA_MCS_KNOWN |
+			QDF_MON_STATUS_STA_DCM_KNOWN |
+			QDF_MON_STATUS_STA_CODING_KNOWN;
+
+		value = HAL_RX_GET(he_sig_b2_ofdma_info,
+				HE_SIG_B2_OFDMA_INFO_0, STA_ID);
+		ppdu_info->rx_status.he_per_user_1 = value;
+		value = HAL_RX_GET(he_sig_b2_ofdma_info,
+				HE_SIG_B2_OFDMA_INFO_0, NSTS);
+		value = value << QDF_MON_STATUS_STA_SPATIAL_SHIFT;
+		ppdu_info->rx_status.he_per_user_1 |= value;
+		value = HAL_RX_GET(he_sig_b2_ofdma_info,
+				HE_SIG_B2_OFDMA_INFO_0, TXBF);
+		value = value << QDF_MON_STATUS_TXBF_SHIFT;
+		ppdu_info->rx_status.he_per_user_1 |= value;
+
+		value = HAL_RX_GET(he_sig_b2_ofdma_info,
+				HE_SIG_B2_OFDMA_INFO_0, STA_MCS);
+		ppdu_info->rx_status.he_per_user_2 = value;
+		value = HAL_RX_GET(he_sig_b2_ofdma_info,
+				HE_SIG_B2_OFDMA_INFO_0, STA_DCM);
+		value = value << QDF_MON_STATUS_STA_MCS_SHIFT;
+		ppdu_info->rx_status.he_per_user_2 |= value;
+		value = HAL_RX_GET(he_sig_b2_ofdma_info,
+				HE_SIG_B2_OFDMA_INFO_0, STA_CODING);
+		value = value << QDF_MON_STATUS_STA_DCM_SHIFT;
+		ppdu_info->rx_status.he_per_user_2 |= value;
 		break;
+	}
 	case WIFIPHYRX_RSSI_LEGACY_E:
 	{
 		uint8_t *rssi_info_tlv = (uint8_t *)rx_tlv +
