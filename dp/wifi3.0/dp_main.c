@@ -2267,18 +2267,13 @@ void dp_mark_peer_inact(void *peer_handle, bool inactive)
 	peer->peer_bs_inact_flag = inactive ? 1 : 0;
 
 	if (inactive_old != inactive) {
-		struct ieee80211com *ic;
-		struct ol_ath_softc_net80211 *scn;
-
-		scn = (struct ol_ath_softc_net80211 *)pdev->osif_pdev;
-		ic = &scn->sc_ic;
 		/**
 		 * Note: a node lookup can happen in RX datapath context
 		 * when a node changes from inactive to active (at most once
 		 * per inactivity timeout threshold)
 		 */
 		if (soc->cdp_soc.ol_ops->record_act_change) {
-			soc->cdp_soc.ol_ops->record_act_change(ic->ic_pdev_obj,
+			soc->cdp_soc.ol_ops->record_act_change(pdev->osif_pdev,
 					peer->mac_addr.raw, !inactive);
 		}
 	}
