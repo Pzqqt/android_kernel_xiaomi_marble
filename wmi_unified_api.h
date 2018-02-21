@@ -162,6 +162,14 @@ void wmi_mgmt_cmd_record(wmi_unified_t wmi_handle, uint32_t cmd,
  */
 void wmi_unified_detach(struct wmi_unified *wmi_handle);
 
+/**
+ * API to sync time between host and firmware
+ *
+ *  @param wmi_handle      : handle to WMI.
+ *  @return void.
+ */
+void wmi_send_time_stamp_sync_cmd_tlv(void *wmi_hdl);
+
 void
 wmi_unified_remove_work(struct wmi_unified *wmi_handle);
 

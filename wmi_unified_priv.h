@@ -1544,6 +1544,7 @@ QDF_STATUS (*send_invoke_neighbor_report_cmd)(wmi_unified_t wmi_handle,
 		struct wmi_invoke_neighbor_report_params *params);
 
 void (*wmi_pdev_id_conversion_enable)(wmi_unified_t wmi_handle);
+void (*send_time_stamp_sync_cmd)(wmi_unified_t wmi_handle);
 void (*wmi_free_allocated_event)(A_UINT32 cmd_event_id,
 				void **wmi_cmd_struct_ptr);
 int (*wmi_check_and_pad_event)(void *os_handle, void *param_struc_ptr,
