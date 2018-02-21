@@ -3665,7 +3665,7 @@ unsigned int qdf_nbuf_update_radiotap(struct mon_rx_status *rx_status,
 	 * rssi_comb is int dB, need to convert it to dBm.
 	 * normalize value to noise floor of -96 dBm
 	 */
-	rtap_buf[rtap_len] = rx_status->ant_signal_db +
+	rtap_buf[rtap_len] = rx_status->rssi_comb +
 		NORMALIZED_TO_NOISE_FLOOR;
 	rtap_len += 1;
 
