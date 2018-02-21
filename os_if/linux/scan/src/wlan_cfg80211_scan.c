@@ -1049,7 +1049,7 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	psoc = wlan_pdev_get_psoc(pdev);
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 
-	wlan_cfg80211_cleanup_scan_queue(pdev);
+	wlan_cfg80211_cleanup_scan_queue(pdev, NULL);
 	scan_priv = osif_priv->osif_scan;
 	ucfg_scan_unregister_requester(psoc, scan_priv->req_id);
 	qdf_list_destroy(&scan_priv->scan_req_q);
@@ -1060,15 +1060,81 @@ QDF_STATUS wlan_cfg80211_scan_priv_deinit(struct wlan_objmgr_pdev *pdev)
 	return QDF_STATUS_SUCCESS;
 }
 
-void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
+/**
+ * wlan_cfg80211_enqueue_for_cleanup() - Function to populate scan cleanup queue
+ * @scan_cleanup_q: Scan cleanup queue to be populated
+ * @scan_priv: Pointer to scan related data used by cfg80211 scan
+ * @dev: Netdevice pointer
+ *
+ * The function synchrounously iterates through the global scan queue to
+ * identify entries that have to be cleaned up, copies identified entries
+ * to another queue(to send scan complete event to NL later) and removes the
+ * entry from the global scan queue.
+ *
+ * Return: None
+ */
+static void
+wlan_cfg80211_enqueue_for_cleanup(qdf_list_t *scan_cleanup_q,
+				  struct osif_scan_pdev *scan_priv,
+				  struct net_device *dev)
+{
+	struct scan_req *scan_req, *scan_cleanup;
+	qdf_list_node_t *node = NULL, *next_node = NULL;
+
+	qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
+	if (QDF_STATUS_SUCCESS !=
+		qdf_list_peek_front(&scan_priv->scan_req_q,
+				    &node)) {
+		qdf_mutex_release(&scan_priv->scan_req_q_lock);
+		return;
+	}
+
+	while (node) {
+		/*
+		 * Keep track of the next node, to traverse through the list
+		 * in the event of the current node being deleted.
+		 */
+		qdf_list_peek_next(&scan_priv->scan_req_q,
+				   node, &next_node);
+		scan_req = qdf_container_of(node, struct scan_req, node);
+		if (!dev || (dev == scan_req->dev)) {
+			scan_cleanup = qdf_mem_malloc(sizeof(struct scan_req));
+			if (!scan_cleanup) {
+				qdf_mutex_release(&scan_priv->scan_req_q_lock);
+				cfg80211_err("Failed to allocate memory");
+				return;
+			}
+			scan_cleanup->scan_request = scan_req->scan_request;
+			scan_cleanup->scan_id = scan_req->scan_id;
+			scan_cleanup->source = scan_req->source;
+			scan_cleanup->dev = scan_req->dev;
+			qdf_list_insert_back(scan_cleanup_q,
+					     &scan_cleanup->node);
+			if (QDF_STATUS_SUCCESS !=
+				qdf_list_remove_node(&scan_priv->scan_req_q,
+						     node)) {
+				qdf_mutex_release(&scan_priv->scan_req_q_lock);
+				cfg80211_err("Failed to remove scan request");
+				return;
+			}
+			qdf_mem_free(scan_req);
+		}
+		node = next_node;
+		next_node = NULL;
+	}
+	qdf_mutex_release(&scan_priv->scan_req_q_lock);
+}
+
+void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev,
+				      struct net_device *dev)
 {
 	struct scan_req *scan_req;
-	qdf_list_node_t *node = NULL;
 	struct cfg80211_scan_request *req;
 	uint8_t source;
 	bool aborted = true;
 	struct pdev_osif_priv *osif_priv;
-	struct osif_scan_pdev *scan_priv;
+	qdf_list_t scan_cleanup_q;
+	qdf_list_node_t *node = NULL;
 
 	if (!pdev) {
 		cfg80211_err("pdev is Null");
@@ -1077,28 +1143,33 @@ void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev)
 
 	osif_priv = wlan_pdev_get_ospriv(pdev);
 
-	scan_priv = osif_priv->osif_scan;
-	qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
-	while (!qdf_list_empty(&scan_priv->scan_req_q)) {
-		if (QDF_STATUS_SUCCESS !=
-			qdf_list_remove_front(&scan_priv->scan_req_q,
-						&node)) {
-			qdf_mutex_release(&scan_priv->scan_req_q_lock);
+	/*
+	 * To avoid any race conditions, create a local list to copy all the
+	 * scan entries to be removed and then send scan complete for each of
+	 * the identified entries to NL.
+	 */
+	qdf_list_create(&scan_cleanup_q, WLAN_MAX_SCAN_COUNT);
+	wlan_cfg80211_enqueue_for_cleanup(&scan_cleanup_q,
+					  osif_priv->osif_scan, dev);
+
+	while (!qdf_list_empty(&scan_cleanup_q)) {
+		if (QDF_STATUS_SUCCESS != qdf_list_remove_front(&scan_cleanup_q,
+								&node)) {
 			cfg80211_err("Failed to remove scan request");
 			return;
 		}
-		qdf_mutex_release(&scan_priv->scan_req_q_lock);
 		scan_req = container_of(node, struct scan_req, node);
 		req = scan_req->scan_request;
 		source = scan_req->source;
 		if (NL_SCAN == source)
-			wlan_cfg80211_scan_done(scan_req->dev, req, aborted);
+			wlan_cfg80211_scan_done(scan_req->dev, req,
+						aborted);
 		else
 			wlan_vendor_scan_callback(req, aborted);
+
 		qdf_mem_free(scan_req);
-		qdf_mutex_acquire(&scan_priv->scan_req_q_lock);
 	}
-	qdf_mutex_release(&scan_priv->scan_req_q_lock);
+	qdf_list_destroy(&scan_cleanup_q);
 
 	return;
 }

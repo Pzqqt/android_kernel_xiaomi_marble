@@ -300,12 +300,16 @@ QDF_STATUS wlan_abort_scan(struct wlan_objmgr_pdev *pdev,
 /**
  * wlan_cfg80211_cleanup_scan_queue() - remove entries in scan queue
  * @pdev: pdev pointer
+ * @dev: net device pointer
  *
- * Removes entries in scan queue and sends scan complete event to NL
+ * Removes entries in scan queue depending on dev provided and sends scan
+ * complete event to NL.
+ * Removes all entries in scan queue, if dev provided is NULL
  *
  * Return: None
  */
-void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev);
+void wlan_cfg80211_cleanup_scan_queue(struct wlan_objmgr_pdev *pdev,
+				      struct net_device *dev);
 
 
 #endif
