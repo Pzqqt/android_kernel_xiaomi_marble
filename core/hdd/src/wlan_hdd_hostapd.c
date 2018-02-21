@@ -675,6 +675,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	struct hdd_adapter *adapter;
 	struct hdd_context *hdd_ctx;
 	int ret = 0;
+	struct qdf_mac_addr mac_addr;
 
 	ENTER_DEV(dev);
 
@@ -683,6 +684,23 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
+
+	qdf_mem_copy(&mac_addr, psta_mac_addr->sa_data, sizeof(mac_addr));
+
+	if (qdf_is_macaddr_zero(&mac_addr)) {
+		hdd_err("MAC is all zero");
+		return -EINVAL;
+	}
+
+	if (qdf_is_macaddr_broadcast(&mac_addr)) {
+		hdd_err("MAC is Broadcast");
+		return -EINVAL;
+	}
+
+	if (ETHER_IS_MULTICAST(psta_mac_addr->sa_data)) {
+		hdd_err("MAC is Multicast");
+		return -EINVAL;
+	}
 
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	EXIT();
