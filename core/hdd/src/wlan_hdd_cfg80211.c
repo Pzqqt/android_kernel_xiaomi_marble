@@ -2667,6 +2667,11 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 				  pcl_channels_weight_list[i]);
 	}
 
+	if (hw_mode == QCA_ACS_MODE_IEEE80211ANY)
+		policy_mgr_trim_acs_channel_list(hdd_ctx->hdd_psoc,
+			sap_config->acs_cfg.ch_list,
+			&sap_config->acs_cfg.ch_list_count);
+
 	if (hdd_ctx->config->force_sap_acs) {
 		hdd_debug("forcing SAP acs start and end channel");
 		status = wlan_hdd_reset_force_acs_chan_range(hdd_ctx,
