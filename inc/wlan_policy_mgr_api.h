@@ -2244,4 +2244,15 @@ bool policy_mgr_is_sta_sap_scc_allowed_on_dfs_chan(
  * Return: true if sta is connected in 2g else false
  */
 bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
+
+/**
+ * policy_mgr_trim_acs_channel_list() - Trim the ACS channel list based
+ * on the number of active station connections
+ * @org_ch_list: ACS channel list from user space
+ * @org_ch_list_count: ACS channel count from user space
+ *
+ * Return: None
+ */
+void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
+		uint8_t *org_ch_list, uint8_t *org_ch_list_count);
 #endif /* __WLAN_POLICY_MGR_API_H */
