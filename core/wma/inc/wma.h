@@ -1534,6 +1534,7 @@ typedef struct {
 	bool tx_bfee_8ss_enabled;
 	bool in_imps;
 	uint8_t  ito_repeat_count;
+	qdf_mc_timer_t wma_fw_time_sync_timer;
 	qdf_atomic_t critical_events_in_flight;
 } t_wma_handle, *tp_wma_handle;
 

@@ -100,6 +100,9 @@
 
 #define WMA_LOG_COMPLETION_TIMER 3000 /* 3 seconds */
 #define WMI_TLV_HEADROOM 128
+
+#define WMA_FW_TIME_SYNC_TIMER 60000 /* 1 min */
+
 uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 static uint32_t g_fw_wlan_feat_caps;
 /**
@@ -3852,6 +3855,29 @@ fail:
 }
 
 /**
+ * wma_send_time_stamp_sync_cmd() - timer callback send timestamp to
+ * firmware to sync with host.
+ * @wma_handle: wma handle
+ *
+ * Return: void
+ */
+static void wma_send_time_stamp_sync_cmd(void *data)
+{
+	tp_wma_handle wma_handle;
+	QDF_STATUS qdf_status;
+
+	wma_handle = (tp_wma_handle) data;
+
+	wmi_send_time_stamp_sync_cmd_tlv(wma_handle->wmi_handle);
+
+	/* Start/Restart the timer */
+	qdf_status = qdf_mc_timer_start(&wma_handle->wma_fw_time_sync_timer,
+				       WMA_FW_TIME_SYNC_TIMER);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
+		WMA_LOGE("Failed to start the firmware time sync timer");
+}
+
+/**
  * wma_start() - wma start function.
  *               Intialize event handlers and timers.
  *
@@ -4010,6 +4036,19 @@ QDF_STATUS wma_start(void)
 		goto end;
 	}
 
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
+		/* Initialize firmware time stamp sync timer */
+		qdf_status =
+			qdf_mc_timer_init(&wma_handle->wma_fw_time_sync_timer,
+					  QDF_TIMER_TYPE_SW,
+					  wma_send_time_stamp_sync_cmd,
+					  wma_handle);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			WMA_LOGE(FL("Failed to initialize firmware time stamp sync timer"));
+		/* Start firmware time stamp sync timer */
+		wma_send_time_stamp_sync_cmd(wma_handle);
+	}
+
 	/* Initialize log completion timeout */
 	qdf_status = qdf_mc_timer_init(&wma_handle->log_completion_timer,
 			QDF_TIMER_TYPE_SW,
@@ -4161,6 +4200,15 @@ QDF_STATUS wma_stop(uint8_t reason)
 				interfaces[i].handle);
 		}
 	}
+
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
+		/* Destroy firmware time stamp sync timer */
+		qdf_status = qdf_mc_timer_destroy(
+					&wma_handle->wma_fw_time_sync_timer);
+		if (QDF_IS_STATUS_ERROR(qdf_status))
+			WMA_LOGE(FL("Failed to destroy the fw time sync timer"));
+	}
+
 	qdf_status = wma_tx_detach(wma_handle);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to deregister tx management", __func__);
