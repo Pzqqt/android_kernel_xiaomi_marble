@@ -3988,7 +3988,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	sta_ctx->conn_info.signal = sinfo->signal;
 	sta_ctx->conn_info.noise =
 		sta_ctx->conn_info.signal - snr;
-
+	sta_ctx->cache_conn_info.signal = sinfo->signal;
+	sta_ctx->cache_conn_info.noise = sta_ctx->conn_info.noise;
 	wlan_hdd_fill_station_info_signal(sinfo);
 
 	/*
@@ -4347,6 +4348,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	sinfo->rx_packets = adapter->stats.rx_packets;
 
 	qdf_mem_copy(&sta_ctx->conn_info.txrate,
+		     &sinfo->txrate, sizeof(sinfo->txrate));
+	qdf_mem_copy(&sta_ctx->cache_conn_info.txrate,
 		     &sinfo->txrate, sizeof(sinfo->txrate));
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)

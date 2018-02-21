@@ -866,6 +866,9 @@ static void hdd_save_bss_info(struct hdd_adapter *adapter,
 	} else {
 		hdd_sta_ctx->conn_info.conn_flag.vht_op_present = false;
 	}
+	/* Cache last connection info */
+	qdf_mem_copy(&hdd_sta_ctx->cache_conn_info, &hdd_sta_ctx->conn_info,
+		     sizeof(struct connection_info));
 }
 
 /**

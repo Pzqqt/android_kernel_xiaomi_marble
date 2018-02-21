@@ -644,6 +644,7 @@ struct hdd_station_ctx {
 	enum nl80211_wpa_versions wpa_versions;
 	struct qdf_mac_addr requested_bssid;
 	struct hdd_connection_info conn_info;
+	struct hdd_connection_info cache_conn_info;
 	struct hdd_roaming_info roam_info;
 	int ft_carrier_on;
 	int ibss_sta_generation;
