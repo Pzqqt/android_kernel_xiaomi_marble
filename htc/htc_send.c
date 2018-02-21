@@ -1458,16 +1458,25 @@ static inline QDF_STATUS __htc_send_pkt(HTC_HANDLE HTCHandle,
 }
 
 /* HTC API - htc_send_pkt */
-QDF_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket)
+QDF_STATUS htc_send_pkt(HTC_HANDLE htc_handle, HTC_PACKET *htc_packet)
 {
-	if (HTCHandle == NULL || pPacket == NULL)
+	if (!htc_handle) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("%s: HTCHandle is NULL \n", __func__));
 		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!htc_packet) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("%s: pPacket is NULL \n", __func__));
+		return QDF_STATUS_E_FAILURE;
+	}
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
 			("+-htc_send_pkt: Enter endPointId: %d, buffer: %pK, length: %d\n",
-			 pPacket->Endpoint, pPacket->pBuffer,
-			 pPacket->ActualLength));
-	return __htc_send_pkt(HTCHandle, pPacket);
+			 htc_packet->Endpoint, htc_packet->pBuffer,
+			 htc_packet->ActualLength));
+	return __htc_send_pkt(htc_handle, htc_packet);
 }
 qdf_export_symbol(htc_send_pkt);
 
