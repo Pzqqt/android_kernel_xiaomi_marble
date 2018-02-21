@@ -243,6 +243,7 @@
  * @WLAN_UMAC_COMP_FD:            FILS Discovery
  * @WLAN_UMAC_COMP_OCB:           OCB
  * @WLAN_UMAC_COMP_IPA:           IPA
+ * @WLAN_UMAC_COMP_CP_STATS:      Control Plane Statistics
  * @WLAN_UMAC_COMP_ID_MAX:        Maximum components in UMAC
  *
  * This id is static.
@@ -276,6 +277,7 @@ enum wlan_umac_comp_id {
 	WLAN_UMAC_COMP_FD,
 	WLAN_UMAC_COMP_OCB,
 	WLAN_UMAC_COMP_IPA,
+	WLAN_UMAC_COMP_CP_STATS,
 	WLAN_UMAC_COMP_ID_MAX,
 };
 

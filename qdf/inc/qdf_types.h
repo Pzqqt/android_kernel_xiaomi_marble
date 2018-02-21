@@ -361,6 +361,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_FD: FILS discovery logging
  * @QDF_MODULE_ID_OCB: OCB module ID
  * @QDF_MODULE_ID_IPA: IPA module ID
+ * @QDF_MODULE_ID_CP_STATS: Control Plane Statistics ID
  * @QDF_MODULE_ID_ANY: anything
  * @QDF_MODULE_ID_MAX: Max place holder module ID
  */
@@ -463,6 +464,7 @@ typedef enum {
 	QDF_MODULE_ID_FD,
 	QDF_MODULE_ID_OCB,
 	QDF_MODULE_ID_IPA,
+	QDF_MODULE_ID_CP_STATS,
 	QDF_MODULE_ID_ANY,
 	QDF_MODULE_ID_MAX,
 } QDF_MODULE_ID;
