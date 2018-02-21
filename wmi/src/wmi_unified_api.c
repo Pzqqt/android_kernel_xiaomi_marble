@@ -2881,6 +2881,13 @@ QDF_STATUS wmi_unified_log_supported_evt_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+void wmi_send_time_stamp_sync_cmd_tlv(void *wmi_hdl)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+	if (wmi_handle->ops->send_time_stamp_sync_cmd)
+		wmi_handle->ops->send_time_stamp_sync_cmd(wmi_handle);
+
+}
 /**
  * wmi_unified_enable_specific_fw_logs_cmd() - Start/Stop logging of diag log id
  * @wmi_hdl: wmi handle

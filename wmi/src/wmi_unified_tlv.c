@@ -1854,6 +1854,59 @@ static QDF_STATUS send_packet_log_disable_cmd_tlv(wmi_unified_t wmi_handle,
 }
 #endif
 
+#define WMI_FW_TIME_STAMP_LOW_MASK 0xffffffff
+/**
+ *  send_time_stamp_sync_cmd_tlv() - Send WMI command to
+ *  sync time between bwtween host and firmware
+ *  @param wmi_handle      : handle to WMI.
+ *
+ *  Return: None
+ */
+static void send_time_stamp_sync_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_buf_t buf;
+	A_STATUS status = A_OK;
+	WMI_DBGLOG_TIME_STAMP_SYNC_CMD_fixed_param *time_stamp;
+	int32_t len;
+	qdf_time_t time_ms;
+
+	len = sizeof(*time_stamp);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMI_LOGP(FL("wmi_buf_alloc failed"));
+		return;
+	}
+	time_stamp =
+		(WMI_DBGLOG_TIME_STAMP_SYNC_CMD_fixed_param *)
+			(wmi_buf_data(buf));
+	WMITLV_SET_HDR(&time_stamp->tlv_header,
+		WMITLV_TAG_STRUC_wmi_dbglog_time_stamp_sync_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		WMI_DBGLOG_TIME_STAMP_SYNC_CMD_fixed_param));
+
+	time_ms = qdf_get_time_of_the_day_ms();
+	time_stamp->mode = WMI_TIME_STAMP_SYNC_MODE_MS;
+	time_stamp->time_stamp_low = time_ms &
+		WMI_FW_TIME_STAMP_LOW_MASK;
+	/*
+	 * Send time_stamp_high 0 as the time converted from HR:MIN:SEC:MS to ms
+	 * wont exceed 27 bit
+	 */
+	time_stamp->time_stamp_high = 0;
+	WMI_LOGD(FL("WMA --> DBGLOG_TIME_STAMP_SYNC_CMDID mode %d time_stamp low %d high %d"),
+		time_stamp->mode, time_stamp->time_stamp_low,
+		time_stamp->time_stamp_high);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_DBGLOG_TIME_STAMP_SYNC_CMDID);
+	if (status) {
+		WMI_LOGE("Failed to send WMI_DBGLOG_TIME_STAMP_SYNC_CMDID command");
+		wmi_buf_free(buf);
+	}
+
+}
+
 #ifdef WLAN_SUPPORT_FILS
 /**
  * extract_swfda_vdev_id_tlv() - extract swfda vdev id from event
@@ -22071,6 +22124,7 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_set_param_cmd = send_vdev_set_param_cmd_tlv,
 	.send_stats_request_cmd = send_stats_request_cmd_tlv,
 	.send_packet_log_enable_cmd = send_packet_log_enable_cmd_tlv,
+	.send_time_stamp_sync_cmd = send_time_stamp_sync_cmd_tlv,
 	.send_packet_log_disable_cmd = send_packet_log_disable_cmd_tlv,
 	.send_beacon_send_cmd = send_beacon_send_cmd_tlv,
 	.send_beacon_tmpl_send_cmd = send_beacon_tmpl_send_cmd_tlv,

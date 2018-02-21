@@ -788,6 +788,22 @@ s64 qdf_get_monotonic_boottime_ns(void)
 }
 EXPORT_SYMBOL(qdf_get_monotonic_boottime_ns);
 
+qdf_time_t qdf_get_time_of_the_day_ms(void)
+{
+	struct timeval tv;
+	qdf_time_t local_time;
+	struct rtc_time tm;
+
+	do_gettimeofday(&tv);
+	local_time = (qdf_time_t)(tv.tv_sec - (sys_tz.tz_minuteswest * 60));
+	rtc_time_to_tm(local_time, &tm);
+
+	return (tm.tm_hour * 60 * 60 * 1000) +
+		(tm.tm_min * 60 * 1000) + (tm.tm_sec * 1000) +
+		(tv.tv_usec / 1000);
+}
+EXPORT_SYMBOL(qdf_get_time_of_the_day_ms);
+
 /**
  * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
  *

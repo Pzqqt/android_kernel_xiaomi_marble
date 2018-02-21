@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -276,6 +276,13 @@ s64 qdf_get_monotonic_boottime_ns(void);
  * Return: none
  */
 void qdf_timer_module_init(void);
+
+/**
+ * qdf_get_time_of_the_day_ms() - get time of the day in millisec
+ *
+ * Return: time of the day in ms
+ */
+qdf_time_t qdf_get_time_of_the_day_ms(void);
 
 /**
  * qdf_timer_module_deinit() - Deinitializes a QDF timer module.
