@@ -1123,7 +1123,7 @@ struct dp_pdev {
 		uint16_t tx_ppdu_id;
 		uint16_t tx_peer_id;
 		uint16_t rx_ppdu_id;
-	} am_copy_id;
+	} m_copy_id;
 
 	/* To check if PPDU Tx stats are enabled for Pktlog */
 	bool pktlog_ppdu_stats;

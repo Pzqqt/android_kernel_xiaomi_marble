@@ -5564,7 +5564,8 @@ dp_ppdu_ring_cfg(struct dp_pdev *pdev)
 	htt_tlv_filter.ppdu_end_status_done = 1;
 	htt_tlv_filter.enable_fp = 1;
 	htt_tlv_filter.enable_md = 0;
-	htt_tlv_filter.enable_mo = 0;
+	if (pdev->mcopy_mode)
+		htt_tlv_filter.enable_mo = 1;
 	htt_tlv_filter.fp_mgmt_filter = FILTER_MGMT_ALL;
 	htt_tlv_filter.fp_ctrl_filter = FILTER_CTRL_ALL;
 	htt_tlv_filter.fp_data_filter = FILTER_DATA_ALL;

@@ -2241,13 +2241,13 @@ dp_get_completion_indication_for_stack(struct dp_soc *soc,  struct dp_pdev *pdev
 	}
 
 	if (pdev->mcopy_mode) {
-		if ((pdev->am_copy_id.tx_ppdu_id == ppdu_id) &&
-			(pdev->am_copy_id.tx_peer_id == peer_id)) {
+		if ((pdev->m_copy_id.tx_ppdu_id == ppdu_id) &&
+			(pdev->m_copy_id.tx_peer_id == peer_id)) {
 			return QDF_STATUS_E_INVAL;
 		}
 
-		pdev->am_copy_id.tx_ppdu_id = ppdu_id;
-		pdev->am_copy_id.tx_peer_id = peer_id;
+		pdev->m_copy_id.tx_ppdu_id = ppdu_id;
+		pdev->m_copy_id.tx_peer_id = peer_id;
 	}
 
 	if (!qdf_nbuf_push_head(netbuf, sizeof(struct tx_capture_hdr))) {

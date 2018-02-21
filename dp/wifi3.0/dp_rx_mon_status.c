@@ -218,12 +218,13 @@ dp_rx_handle_mcopy_mode(struct dp_soc *soc, struct dp_pdev *pdev,
 	if (ppdu_info->first_msdu_payload == NULL)
 		return QDF_STATUS_SUCCESS;
 
-	if (pdev->am_copy_id.rx_ppdu_id == ppdu_info->com_info.ppdu_id)
+	if (pdev->m_copy_id.rx_ppdu_id == ppdu_info->com_info.ppdu_id)
 		return QDF_STATUS_SUCCESS;
 
-	pdev->am_copy_id.rx_ppdu_id = ppdu_info->com_info.ppdu_id;
+	pdev->m_copy_id.rx_ppdu_id = ppdu_info->com_info.ppdu_id;
 
-	size = ppdu_info->first_msdu_payload - qdf_nbuf_data(nbuf);
+	/* Include 2 bytes of reserved space appended to the msdu payload */
+	size = (ppdu_info->first_msdu_payload - qdf_nbuf_data(nbuf)) + 2;
 	ppdu_info->first_msdu_payload = NULL;
 
 	if (qdf_nbuf_pull_head(nbuf, size) == NULL)
@@ -287,8 +288,13 @@ dp_rx_handle_ppdu_stats(struct dp_soc *soc, struct dp_pdev *pdev,
 			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC, soc,
 					ppdu_nbuf, cdp_rx_ppdu->peer_id,
 					WDI_NO_VAL, pdev->pdev_id);
-		} else
+		} else if (pdev->mcopy_mode) {
+			dp_wdi_event_handler(WDI_EVENT_RX_PPDU_DESC, soc,
+					ppdu_nbuf, HTT_INVALID_PEER,
+					WDI_NO_VAL, pdev->pdev_id);
+		} else {
 			qdf_nbuf_free(ppdu_nbuf);
+		}
 	}
 }
 #else
@@ -317,7 +323,7 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 	uint8_t *rx_tlv;
 	uint8_t *rx_tlv_start;
 	uint32_t tlv_status = HAL_TLV_STATUS_BUF_DONE;
-	QDF_STATUS am_copy_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS m_copy_status = QDF_STATUS_SUCCESS;
 
 	ppdu_info = &pdev->ppdu_info;
 
@@ -336,7 +342,8 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 			status_nbuf, HTT_INVALID_PEER, WDI_NO_VAL, mac_id);
 #endif
 #endif
-		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en)) {
+		if ((pdev->monitor_vdev != NULL) || (pdev->enhanced_stats_en) ||
+				pdev->mcopy_mode) {
 
 			do {
 				tlv_status = hal_rx_status_get_tlv_info(rx_tlv,
@@ -350,9 +357,9 @@ dp_rx_mon_status_process_tlv(struct dp_soc *soc, uint32_t mac_id,
 		}
 
 		if (pdev->mcopy_mode) {
-			am_copy_status = dp_rx_handle_mcopy_mode(soc,
+			m_copy_status = dp_rx_handle_mcopy_mode(soc,
 						pdev, ppdu_info, status_nbuf);
-			if (am_copy_status == QDF_STATUS_SUCCESS)
+			if (m_copy_status == QDF_STATUS_SUCCESS)
 				qdf_nbuf_free(status_nbuf);
 		} else {
 			qdf_nbuf_free(status_nbuf);
