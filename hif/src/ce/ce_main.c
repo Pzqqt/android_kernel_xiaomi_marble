@@ -410,6 +410,7 @@ static struct service_to_pipe target_service_to_ce_map_qca8074[] = {
 	{ 0, 0, 0, },
 };
 
+#ifdef CONFIG_WIN
 static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
 	{ WMI_DATA_VO_SVC, PIPEDIR_IN , 2, },
@@ -425,9 +426,31 @@ static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
 	{ HTC_CTRL_RSVD_SVC, PIPEDIR_IN , 2, },
 	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
 	{ HTT_DATA_MSG_SVC, PIPEDIR_IN , 1, },
+	{ WMI_CONTROL_SVC_WMAC1, PIPEDIR_OUT, 7},
+	{ WMI_CONTROL_SVC_WMAC1, PIPEDIR_IN, 2},
 	/* (Additions here) */
 	{ 0, 0, 0, },
 };
+#else
+static struct service_to_pipe target_service_to_ce_map_qca6290[] = {
+	{ WMI_DATA_VO_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_VO_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_BK_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_BK_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_BE_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_BE_SVC, PIPEDIR_IN, 2, },
+	{ WMI_DATA_VI_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_DATA_VI_SVC, PIPEDIR_IN, 2, },
+	{ WMI_CONTROL_SVC, PIPEDIR_OUT, 3, },
+	{ WMI_CONTROL_SVC, PIPEDIR_IN, 2, },
+	{ HTC_CTRL_RSVD_SVC, PIPEDIR_OUT, 0, },
+	{ HTC_CTRL_RSVD_SVC, PIPEDIR_IN, 2, },
+	{ HTT_DATA_MSG_SVC, PIPEDIR_OUT, 4, },
+	{ HTT_DATA_MSG_SVC, PIPEDIR_IN, 1, },
+	/* (Additions here) */
+	{ 0, 0, 0, },
+};
+#endif
 
 static struct service_to_pipe target_service_to_ce_map_ar900b[] = {
 	{
