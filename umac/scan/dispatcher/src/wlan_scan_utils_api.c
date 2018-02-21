@@ -957,6 +957,7 @@ util_scan_unpack_beacon_frame(uint8_t *frame,
 
 	scan_node = qdf_mem_malloc(sizeof(*scan_node));
 	if (!scan_node) {
+		qdf_mem_free(scan_entry->raw_frame.ptr);
 		qdf_mem_free(scan_entry);
 		qdf_mem_free(scan_list);
 		return NULL;
