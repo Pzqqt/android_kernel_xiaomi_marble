@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -1007,7 +1007,7 @@ static ssize_t wcd_miscdev_write(struct file *filep, const char __user *ubuf,
 {
 	struct wcd_dsp_cntl *cntl = container_of(filep->private_data,
 						 struct wcd_dsp_cntl, miscdev);
-	char val[count];
+	char val[WCD_MISCDEV_CMD_MAX_LEN];
 	bool vote;
 	int ret = 0;
 
