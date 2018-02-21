@@ -257,7 +257,6 @@ dp_rx_deliver_raw(struct dp_vdev *vdev, qdf_nbuf_t nbuf_list,
 
 		DP_RX_LIST_APPEND(deliver_list_head, deliver_list_tail, nbuf);
 
-		DP_STATS_INC(vdev->pdev, rx_raw_pkts, 1);
 		/*
 		 * reset the chfrag_start and chfrag_end bits in nbuf cb
 		 * as this is a non-amsdu pkt and RAW mode simulation expects
@@ -355,6 +354,15 @@ dp_rx_intrabss_fwd(struct dp_soc *soc,
 	struct dp_peer *da_peer;
 	struct dp_ast_entry *ast_entry;
 	qdf_nbuf_t nbuf_copy;
+	struct dp_vdev *vdev = sa_peer->vdev;
+
+	/*
+	 * intrabss forwarding is not applicable if
+	 * vap is nawds enabled or ap_bridge is false.
+	 */
+	if (vdev->nawds_enabled)
+		return false;
+
 
 	/* check if the destination peer is available in peer table
 	 * and also check if the source peer and destination peer
@@ -906,80 +914,115 @@ static void dp_rx_lro(uint8_t *rx_tlv, struct dp_peer *peer,
 }
 #endif
 
-static inline void dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
+/**
+ * dp_rx_adjust_nbuf_len() - set appropriate msdu length in nbuf.
+ *
+ * @nbuf: pointer to msdu.
+ * @mpdu_len: mpdu length
+ *
+ * Return: returns true if nbuf is last msdu of mpdu else retuns false.
+ */
+static inline bool dp_rx_adjust_nbuf_len(qdf_nbuf_t nbuf, uint16_t *mpdu_len)
 {
-	if (*mpdu_len >= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN))
+	bool last_nbuf;
+
+	if (*mpdu_len >= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN)) {
 		qdf_nbuf_set_pktlen(nbuf, RX_BUFFER_SIZE);
-	else
+		last_nbuf = false;
+	} else {
 		qdf_nbuf_set_pktlen(nbuf, (*mpdu_len + RX_PKT_TLVS_LEN));
+		last_nbuf = true;
+	}
 
 	*mpdu_len -= (RX_BUFFER_SIZE - RX_PKT_TLVS_LEN);
+
+	return last_nbuf;
 }
 
 /**
  * dp_rx_sg_create() - create a frag_list for MSDUs which are spread across
  *		     multiple nbufs.
- * @nbuf: nbuf which can may be part of frag_list.
+ * @nbuf: pointer to the first msdu of an amsdu.
  * @rx_tlv_hdr: pointer to the start of RX TLV headers.
- * @mpdu_len: mpdu length.
- * @is_first_frag: is this the first nbuf in the fragmented MSDU.
- * @frag_list_len: length of all the fragments combined.
- * @head_frag_nbuf: parent nbuf
- * @frag_list_head: pointer to the first nbuf in the frag_list.
- * @frag_list_tail: pointer to the last nbuf in the frag_list.
+ *
  *
  * This function implements the creation of RX frag_list for cases
  * where an MSDU is spread across multiple nbufs.
  *
+ * Return: returns the head nbuf which contains complete frag_list.
  */
-void dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr,
-		uint16_t *mpdu_len, bool *is_first_frag,
-			uint16_t *frag_list_len, qdf_nbuf_t *head_frag_nbuf,
-			qdf_nbuf_t *frag_list_head, qdf_nbuf_t *frag_list_tail)
+qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr)
 {
-	if (qdf_unlikely(qdf_nbuf_is_rx_chfrag_cont(nbuf))) {
-		if (!(*is_first_frag)) {
-			*is_first_frag = 1;
-			qdf_nbuf_set_rx_chfrag_start(nbuf, 1);
-			*mpdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+	qdf_nbuf_t parent, next, frag_list;
+	uint16_t frag_list_len = 0;
+	uint16_t mpdu_len;
+	bool last_nbuf;
 
-			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
-			*head_frag_nbuf = nbuf;
-		} else {
-			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
-			qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
-			*frag_list_len += qdf_nbuf_len(nbuf);
-
-			DP_RX_LIST_APPEND(*frag_list_head,
-						*frag_list_tail,
-						nbuf);
-		}
-	} else {
-		if (qdf_unlikely(*is_first_frag)) {
-			qdf_nbuf_set_rx_chfrag_start(nbuf, 0);
-			dp_rx_adjust_nbuf_len(nbuf, mpdu_len);
-			qdf_nbuf_pull_head(nbuf,
-					RX_PKT_TLVS_LEN);
-			*frag_list_len += qdf_nbuf_len(nbuf);
-
-			DP_RX_LIST_APPEND(*frag_list_head,
-						*frag_list_tail,
-						nbuf);
-
-			qdf_nbuf_append_ext_list(*head_frag_nbuf,
-						*frag_list_head,
-						*frag_list_len);
-
-			*is_first_frag = 0;
-			return;
-		}
-		*head_frag_nbuf = nbuf;
+	/*
+	 * this is a case where the complete msdu fits in one single nbuf.
+	 * in this case HW sets both start and end bit and we only need to
+	 * reset these bits for RAW mode simulator to decap the pkt
+	 */
+	if (qdf_nbuf_is_rx_chfrag_start(nbuf) &&
+					qdf_nbuf_is_rx_chfrag_end(nbuf)) {
+		qdf_nbuf_set_rx_chfrag_start(nbuf, 0);
+		qdf_nbuf_set_rx_chfrag_end(nbuf, 0);
+		return nbuf;
 	}
+
+	/*
+	 * This is a case where we have multiple msdus (A-MSDU) spread across
+	 * multiple nbufs. here we create a fraglist out of these nbufs.
+	 *
+	 * the moment we encounter a nbuf with continuation bit set we
+	 * know for sure we have an MSDU which is spread across multiple
+	 * nbufs. We loop through and reap nbufs till we reach last nbuf.
+	 */
+	parent = nbuf;
+	frag_list = nbuf->next;
+	nbuf = nbuf->next;
+
+	/*
+	 * set the start bit in the first nbuf we encounter with continuation
+	 * bit set. This has the proper mpdu length set as it is the first
+	 * msdu of the mpdu. this becomes the parent nbuf and the subsequent
+	 * nbufs will form the frag_list of the parent nbuf.
+	 */
+	qdf_nbuf_set_rx_chfrag_start(parent, 1);
+	mpdu_len = hal_rx_msdu_start_msdu_len_get(rx_tlv_hdr);
+	last_nbuf = dp_rx_adjust_nbuf_len(parent, &mpdu_len);
+
+	/*
+	 * this is where we set the length of the fragments which are
+	 * associated to the parent nbuf. We iterate through the frag_list
+	 * till we hit the last_nbuf of the list.
+	 */
+	do {
+		last_nbuf = dp_rx_adjust_nbuf_len(nbuf, &mpdu_len);
+		qdf_nbuf_pull_head(nbuf, RX_PKT_TLVS_LEN);
+		frag_list_len += qdf_nbuf_len(nbuf);
+
+		if (last_nbuf) {
+			next = nbuf->next;
+			nbuf->next = NULL;
+			break;
+		}
+
+		nbuf = nbuf->next;
+	} while (!last_nbuf);
+
+	qdf_nbuf_set_rx_chfrag_start(nbuf, 0);
+	qdf_nbuf_append_ext_list(parent, frag_list, frag_list_len);
+	parent->next = next;
+
+	qdf_nbuf_pull_head(parent, RX_PKT_TLVS_LEN);
+	return parent;
 }
 
 static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 						struct dp_peer *peer,
-						qdf_nbuf_t nbuf_list)
+						qdf_nbuf_t nbuf_head,
+						qdf_nbuf_t nbuf_tail)
 {
 	/*
 	 * highly unlikely to have a vdev without a registerd rx
@@ -988,19 +1031,21 @@ static inline void dp_rx_deliver_to_stack(struct dp_vdev *vdev,
 	if (qdf_unlikely(!vdev->osif_rx)) {
 		qdf_nbuf_t nbuf;
 		do {
-			nbuf = nbuf_list;
-			nbuf_list = nbuf_list->next;
+			nbuf = nbuf_head;
+			nbuf_head = nbuf_head->next;
 			qdf_nbuf_free(nbuf);
-		} while (nbuf_list);
+		} while (nbuf_head);
 
 		return;
 	}
 
 	if (qdf_unlikely(vdev->rx_decap_type == htt_cmn_pkt_type_raw) ||
-			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi))
-		dp_rx_deliver_raw(vdev, nbuf_list, peer);
-	else
-		vdev->osif_rx(vdev->osif_vdev, nbuf_list);
+			(vdev->rx_decap_type == htt_cmn_pkt_type_native_wifi)) {
+		vdev->osif_rsim_rx_decap(vdev->osif_vdev, &nbuf_head,
+				&nbuf_tail, (struct cdp_peer *) peer);
+	}
+
+	vdev->osif_rx(vdev->osif_vdev, nbuf_head);
 
 }
 
@@ -1270,12 +1315,6 @@ dp_rx_process(struct dp_intr *int_ctx, void *hal_ring, uint32_t quota)
 	struct dp_soc *soc = int_ctx->soc;
 	uint8_t ring_id = 0;
 	uint8_t core_id = 0;
-	bool is_first_frag = 0;
-	uint16_t mpdu_len = 0;
-	qdf_nbuf_t head_frag_nbuf = NULL;
-	qdf_nbuf_t frag_list_head = NULL;
-	qdf_nbuf_t frag_list_tail = NULL;
-	uint16_t frag_list_len = 0;
 	qdf_nbuf_t nbuf_head = NULL;
 	qdf_nbuf_t nbuf_tail = NULL;
 	qdf_nbuf_t deliver_list_head = NULL;
@@ -1437,7 +1476,8 @@ done:
 		rx_bufs_used++;
 
 		if (deliver_list_head && peer && (vdev != peer->vdev)) {
-			dp_rx_deliver_to_stack(vdev, peer, deliver_list_head);
+			dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
+					deliver_list_tail);
 			deliver_list_head = NULL;
 			deliver_list_tail = NULL;
 		}
@@ -1478,21 +1518,10 @@ done:
 		if (qdf_unlikely(vdev->rx_decap_type ==
 				htt_cmn_pkt_type_raw)) {
 
-			dp_rx_sg_create(nbuf, rx_tlv_hdr, &mpdu_len,
-					&is_first_frag, &frag_list_len,
-					&head_frag_nbuf,
-					&frag_list_head,
-					&frag_list_tail);
+			DP_STATS_INC(vdev->pdev, rx_raw_pkts, 1);
 
-			if (is_first_frag) {
-				nbuf = next;
-				continue;
-			} else {
-				frag_list_head = NULL;
-				frag_list_tail = NULL;
-				nbuf = head_frag_nbuf;
-				rx_tlv_hdr = qdf_nbuf_data(nbuf);
-			}
+			nbuf = dp_rx_sg_create(nbuf, rx_tlv_hdr);
+			next = nbuf->next;
 		}
 
 		if (!dp_wds_rx_policy_check(rx_tlv_hdr, vdev, peer,
@@ -1618,7 +1647,8 @@ done:
 	}
 
 	if (deliver_list_head)
-		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head);
+		dp_rx_deliver_to_stack(vdev, peer, deliver_list_head,
+				deliver_list_tail);
 
 	return rx_bufs_used; /* Assume no scale factor for now */
 }

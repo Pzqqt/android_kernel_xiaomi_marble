@@ -295,15 +295,18 @@ uint32_t dp_rx_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
 uint32_t
 dp_rx_wbm_err_process(struct dp_soc *soc, void *hal_ring, uint32_t quota);
 
-void
-dp_rx_sg_create(qdf_nbuf_t nbuf,
-		uint8_t *rx_tlv_hdr,
-		uint16_t *mpdu_len,
-		bool *is_first_frag,
-		uint16_t *frag_list_len,
-		qdf_nbuf_t *head_frag_nbuf,
-		qdf_nbuf_t *frag_list_head,
-		qdf_nbuf_t *frag_list_tail);
+/**
+ * dp_rx_sg_create() - create a frag_list for MSDUs which are spread across
+ *		     multiple nbufs.
+ * @nbuf: pointer to the first msdu of an amsdu.
+ * @rx_tlv_hdr: pointer to the start of RX TLV headers.
+ *
+ * This function implements the creation of RX frag_list for cases
+ * where an MSDU is spread across multiple nbufs.
+ *
+ * Return: returns the head nbuf which contains complete frag_list.
+ */
+qdf_nbuf_t dp_rx_sg_create(qdf_nbuf_t nbuf, uint8_t *rx_tlv_hdr);
 
 QDF_STATUS dp_rx_desc_pool_alloc(struct dp_soc *soc,
 				uint32_t pool_id,
