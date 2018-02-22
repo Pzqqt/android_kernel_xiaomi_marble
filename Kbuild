@@ -1071,6 +1071,18 @@ OCB_OBJS :=	$(OCB_DIR)/dispatcher/src/wlan_ocb_ucfg_api.o \
 		$(OCB_DIR)/core/src/wlan_ocb_main.o
 endif
 
+######## IPA ##############
+IPA_DIR := components/ipa
+IPA_INC := -I$(WLAN_ROOT)/$(IPA_DIR)/core/inc \
+		-I$(WLAN_ROOT)/$(IPA_DIR)/dispatcher/inc
+
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
+IPA_OBJS :=	$(IPA_DIR)/dispatcher/src/wlan_ipa_ucfg_api.o \
+		$(IPA_DIR)/dispatcher/src/wlan_ipa_obj_mgmt_api.o \
+		$(IPA_DIR)/dispatcher/src/wlan_ipa_tgt_api.o \
+		$(IPA_DIR)/core/src/wlan_ipa_main.o
+endif
+
 ########## CLD TARGET_IF #######
 CLD_TARGET_IF_DIR := components/target_if
 
@@ -1097,6 +1109,11 @@ endif
 ifeq ($(CONFIG_WLAN_FEATURE_DISA), y)
 CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/disa/inc
 CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/disa/src/target_if_disa.o
+endif
+
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
+CLD_TARGET_IF_INC += -I$(WLAN_ROOT)/$(CLD_TARGET_IF_DIR)/ipa/inc
+CLD_TARGET_IF_OBJ += $(CLD_TARGET_IF_DIR)/ipa/src/target_if_ipa.o
 endif
 
 ############## UMAC P2P ###########
@@ -1681,6 +1698,8 @@ INCS +=		$(NLINK_INC) \
 INCS +=		$(PLD_INC)
 INCS +=		$(OCB_INC)
 
+INCS +=		$(IPA_INC)
+
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)
 INCS +=		$(PKTLOG_INC)
 endif
@@ -1753,6 +1772,10 @@ OBJS +=		$(PLD_OBJS)
 
 ifeq ($(CONFIG_WLAN_FEATURE_DSRC), y)
 OBJS +=		$(OCB_OBJS)
+endif
+
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
+OBJS +=		$(IPA_OBJS)
 endif
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)

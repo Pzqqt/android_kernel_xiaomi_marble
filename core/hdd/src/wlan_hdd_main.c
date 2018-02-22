@@ -131,6 +131,7 @@
 #include <cdp_txrx_cmn_struct.h>
 #include "wlan_hdd_sysfs.h"
 #include "wlan_disa_ucfg_api.h"
+#include "wlan_ipa_ucfg_api.h"
 #include <target_if.h>
 
 #ifdef CNSS_GENL
@@ -11884,6 +11885,7 @@ static void component_init(void)
 	pmo_init();
 	disa_init();
 	ucfg_ocb_init();
+	ipa_init();
 }
 
 /**
@@ -11893,6 +11895,7 @@ static void component_init(void)
  */
 static void component_deinit(void)
 {
+	ipa_deinit();
 	ucfg_ocb_deinit();
 	pmo_deinit();
 	disa_deinit();
