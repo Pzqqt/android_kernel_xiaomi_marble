@@ -12099,7 +12099,8 @@ static void __exit hdd_module_exit(void)
 }
 #endif
 
-static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
+static int fwpath_changed_handler(const char *kmessage,
+				  const struct kernel_param *kp)
 {
 	return param_set_copystring(kmessage, kp);
 }
@@ -12264,7 +12265,8 @@ static int hdd_register_req_mode(struct hdd_context *hdd_ctx,
  *
  * Return - 0 on success and failure code on failure
  */
-static int __con_mode_handler(const char *kmessage, struct kernel_param *kp,
+static int __con_mode_handler(const char *kmessage,
+			      const struct kernel_param *kp,
 			      struct hdd_context *hdd_ctx)
 {
 	int ret;
@@ -12374,7 +12376,7 @@ reset_flags:
 }
 
 
-static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
+static int con_mode_handler(const char *kmessage, const struct kernel_param *kp)
 {
 	int ret;
 	struct hdd_context *hdd_ctx;
@@ -12392,7 +12394,7 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 }
 
 static int con_mode_handler_ftm(const char *kmessage,
-				struct kernel_param *kp)
+				const struct kernel_param *kp)
 {
 	int ret;
 
@@ -12410,7 +12412,7 @@ static int con_mode_handler_ftm(const char *kmessage,
 }
 
 static int con_mode_handler_monitor(const char *kmessage,
-				struct kernel_param *kp)
+				    const struct kernel_param *kp)
 {
 	int ret;
 
@@ -13665,17 +13667,37 @@ MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Qualcomm Atheros, Inc.");
 MODULE_DESCRIPTION("WLAN HOST DEVICE DRIVER");
 
-module_param_call(con_mode, con_mode_handler, param_get_int, &con_mode,
-		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+static const struct kernel_param_ops con_mode_ops = {
+	.set = con_mode_handler,
+	.get = param_get_int,
+};
 
-module_param_call(con_mode_ftm, con_mode_handler_ftm, param_get_int,
-		  &con_mode_ftm, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+static const struct kernel_param_ops con_mode_ftm_ops = {
+	.set = con_mode_handler_ftm,
+	.get = param_get_int,
+};
 
-module_param_call(con_mode_monitor, con_mode_handler_monitor, param_get_int,
-		  &con_mode_monitor, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+static const struct kernel_param_ops con_mode_monitor_ops = {
+	.set = con_mode_handler_monitor,
+	.get = param_get_int,
+};
 
-module_param_call(fwpath, fwpath_changed_handler, param_get_string, &fwpath,
-		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+static const struct kernel_param_ops fwpath_ops = {
+	.set = fwpath_changed_handler,
+	.get = param_get_string,
+};
+
+module_param_cb(con_mode, &con_mode_ops, &con_mode,
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+module_param_cb(con_mode_ftm, &con_mode_ftm_ops, &con_mode_ftm,
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+module_param_cb(con_mode_monitor, &con_mode_monitor_ops, &con_mode_monitor,
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+
+module_param_cb(fwpath, &fwpath_ops, &fwpath,
+		S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 
 module_param(enable_dfs_chan_scan, int, S_IRUSR | S_IRGRP | S_IROTH);
 
