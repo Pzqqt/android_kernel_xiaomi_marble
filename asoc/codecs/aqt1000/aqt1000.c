@@ -3194,7 +3194,7 @@ int aqt_codec_info_create_codec_entry(struct snd_info_entry *codec_root,
 	aqt = snd_soc_codec_get_drvdata(codec);
 	if (!aqt) {
 		dev_dbg(codec->dev, "%s: aqt is NULL\n", __func__);
-		return _EINVAL;
+		return -EINVAL;
 	}
 	card = codec->component.card;
 	aqt->entry = snd_info_create_subdir(codec_root->module,
