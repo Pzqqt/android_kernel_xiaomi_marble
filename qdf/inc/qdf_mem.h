@@ -276,6 +276,20 @@ static inline int32_t qdf_str_cmp(const char *str1, const char *str2)
 }
 
 /**
+ * qdf_str_eq - compare two null-terminated strings for equality
+ * @left: the string left of the equality
+ * @right: the string right of the equality
+ *
+ * This is a thin wrapper over `if (strcmp(left, right) == 0)` for clarity.
+ *
+ * Return: true if strings are equal
+ */
+static inline bool qdf_str_eq(const char *left, const char *right)
+{
+	return qdf_str_cmp(left, right) == 0;
+}
+
+/**
  * qdf_str_lcopy - Copy from one string to another
  * @dest: destination string
  * @src: source string
