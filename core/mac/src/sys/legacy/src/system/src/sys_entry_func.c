@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -164,19 +164,8 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, struct scheduler_msg *msg,
 				mac_ctx->sys.gSysFrameCount[type][subtype]);
 		}
 
-		/*
-		 * Post the message to PE Queue. Prioritize the
-		 * Auth and assoc frames.
-		 */
-		if ((subtype == SIR_MAC_MGMT_AUTH) ||
-		   (subtype == SIR_MAC_MGMT_ASSOC_RSP) ||
-		   (subtype == SIR_MAC_MGMT_REASSOC_RSP) ||
-		   (subtype == SIR_MAC_MGMT_ASSOC_REQ) ||
-		   (subtype == SIR_MAC_MGMT_REASSOC_REQ))
-			ret = (tSirRetStatus)
-				   lim_post_msg_high_priority(mac_ctx, msg);
-		else
-			ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
+		/* Post the message to PE Queue */
+		ret = (tSirRetStatus) lim_post_msg_api(mac_ctx, msg);
 		if (ret != eSIR_SUCCESS) {
 			pe_err("posting to LIM2 failed, ret %d\n", ret);
 			goto fail;
