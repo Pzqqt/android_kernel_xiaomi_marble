@@ -1542,6 +1542,7 @@ qdf_nbuf_t dp_tx_extract_mesh_meta_data(struct dp_vdev *vdev, qdf_nbuf_t nbuf,
 	if (mhdr->flags & METAHDR_FLAG_NOENCRYPT) {
 		meta_data->encrypt_type = 0;
 		meta_data->valid_encrypt_type = 1;
+		meta_data->learning_frame = 0;
 	}
 
 	meta_data->valid_key_flags = 1;
@@ -1788,6 +1789,7 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 	qdf_nbuf_t nbuf_mesh = NULL;
 	qdf_nbuf_t nbuf_clone = NULL;
 	struct dp_vdev *vdev = (struct dp_vdev *) vap_dev;
+	uint8_t no_enc_frame = 0;
 
 	nbuf_mesh = qdf_nbuf_unshare(nbuf);
 	if (nbuf_mesh == NULL) {
@@ -1798,7 +1800,13 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 	nbuf = nbuf_mesh;
 
 	mhdr = (struct meta_hdr_s *)qdf_nbuf_data(nbuf);
-	if (mhdr->flags & METAHDR_FLAG_INFO_UPDATED) {
+
+	if ((vdev->sec_type != cdp_sec_type_none) &&
+			(mhdr->flags & METAHDR_FLAG_NOENCRYPT))
+		no_enc_frame = 1;
+
+	if ((mhdr->flags & METAHDR_FLAG_INFO_UPDATED) &&
+		       !no_enc_frame) {
 		nbuf_clone = qdf_nbuf_clone(nbuf);
 		if (nbuf_clone == NULL) {
 			QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
@@ -1815,8 +1823,17 @@ qdf_nbuf_t dp_tx_send_mesh(void *vap_dev, qdf_nbuf_t nbuf)
 			qdf_nbuf_free(nbuf_clone);
 	}
 
-	qdf_nbuf_set_tx_ftype(nbuf, CB_FTYPE_INVALID);
-	return dp_tx_send(vap_dev, nbuf);
+	if (no_enc_frame)
+		qdf_nbuf_set_tx_ftype(nbuf, CB_FTYPE_MESH_TX_INFO);
+	else
+		qdf_nbuf_set_tx_ftype(nbuf, CB_FTYPE_INVALID);
+
+	nbuf = dp_tx_send(vap_dev, nbuf);
+	if ((nbuf == NULL) && no_enc_frame) {
+		DP_STATS_INC(vdev, tx_i.mesh.exception_fw, 1);
+	}
+
+	return nbuf;
 }
 
 #else
