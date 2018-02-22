@@ -914,6 +914,8 @@ static inline struct dp_peer *dp_peer_find_add_id(struct dp_soc *soc,
 			   qdf_atomic_read(&peer->ref_cnt));
 		soc->peer_id_to_obj_map[peer_id] = peer;
 
+		qdf_assert_always(!peer->delete_in_progress);
+
 		if (dp_peer_find_add_id_to_obj(peer, peer_id)) {
 			/* TBDXXX: assert for now */
 			QDF_ASSERT(0);
@@ -994,7 +996,8 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 	struct dp_peer *peer;
 	struct dp_soc *soc = (struct dp_soc *)soc_handle;
 	uint8_t i;
-	peer = dp_peer_find_by_id(soc, peer_id);
+
+	peer = __dp_peer_find_by_id(soc, peer_id);
 
 	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_HIGH,
 		"peer_unmap_event (soc:%pK) peer_id %d peer %pK\n",
@@ -1005,8 +1008,12 @@ dp_rx_peer_unmap_handler(void *soc_handle, uint16_t peer_id)
 	 * If the peer ID is for a vdev, then the peer pointer stored
 	 * in peer_id_to_obj_map will be NULL.
 	 */
-	if (!peer)
+	if (!peer) {
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
+			"%s: Received unmap event for invalid peer_id"
+			" %u\n", __func__, peer_id);
 		return;
+	}
 
 	soc->peer_id_to_obj_map[peer_id] = NULL;
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {

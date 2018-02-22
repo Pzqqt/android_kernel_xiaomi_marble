@@ -23,9 +23,8 @@
 #include "dp_types.h"
 
 #define DP_INVALID_PEER_ID 0xffff
-
 /**
- * dp_peer_find_by_id() - Returns peer object given the peer id
+ * __dp_peer_find_by_id() - Returns peer object given the peer id
  *
  * @soc		: core DP soc context
  * @peer_id	: peer id from peer object can be retrieved
@@ -33,7 +32,7 @@
  * Return: struct dp_peer*: Pointer to DP peer object
  */
 static inline struct dp_peer *
-dp_peer_find_by_id(struct dp_soc *soc,
+__dp_peer_find_by_id(struct dp_soc *soc,
 		   uint16_t peer_id)
 {
 	struct dp_peer *peer;
@@ -49,6 +48,30 @@ dp_peer_find_by_id(struct dp_soc *soc,
 	 */
 	if (peer && !peer->bss_peer && peer->delete_in_progress)
 		return NULL;
+
+	return peer;
+}
+
+/**
+ * dp_peer_find_by_id() - Returns peer object given the peer id
+ *                        if delete_in_progress in not set for peer
+ *
+ * @soc		: core DP soc context
+ * @peer_id	: peer id from peer object can be retrieved
+ *
+ * Return: struct dp_peer*: Pointer to DP peer object
+ */
+static inline struct dp_peer *
+dp_peer_find_by_id(struct dp_soc *soc,
+		   uint16_t peer_id)
+{
+	struct dp_peer *peer;
+
+	peer = __dp_peer_find_by_id (soc, peer_id);
+
+	if (peer && peer->delete_in_progress) {
+		return NULL;
+	}
 
 	return peer;
 }
