@@ -23,6 +23,11 @@ include $(MY_LOCAL_PATH)/asoc/codecs/Android.mk
 include $(MY_LOCAL_PATH)/asoc/codecs/wcd934x/Android.mk
 endif
 
+ifeq ($(call is-board-platform-in-list,sdm670 msmnile),true)
+$(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/aqt1000/Module.symvers)
+include $(MY_LOCAL_PATH)/asoc/codecs/aqt1000/Android.mk
+endif
+
 ifeq ($(call is-board-platform-in-list,msm8953 sdm670 qcs605),true)
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/sdm660_cdc/Module.symvers)
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/msm_sdw/Module.symvers)
