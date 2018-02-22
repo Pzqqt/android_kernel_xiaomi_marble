@@ -42,6 +42,7 @@
 #endif
 
 typedef __qdf_wait_queue_head_t qdf_wait_queue_head_t;
+typedef void (*qdf_fw_down_callback)(void);
 
 /**
  * qdf_unlikely - Compiler-dependent macro denoting code likely to execute
@@ -655,4 +656,11 @@ void qdf_get_random_bytes(void *buf, int nbytes)
 {
 	return __qdf_get_random_bytes(buf, nbytes);
 }
+
+/**
+ * qdf_register_fw_down_callback() - API to register fw down callback
+ *
+ * Return: none
+ */
+void qdf_register_fw_down_callback(qdf_fw_down_callback *fw_down_callback);
 #endif /*_QDF_UTIL_H*/

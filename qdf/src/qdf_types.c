@@ -23,6 +23,8 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
+static qdf_fw_down_callback *is_fw_down_cb;
+
 static QDF_STATUS qdf_consume_char(char **str, char c)
 {
 	if ((*str)[0] != c)
@@ -524,3 +526,8 @@ QDF_STATUS qdf_ipv6_parse(char *ipv6_str, struct qdf_ipv6_addr *out_addr)
 }
 qdf_export_symbol(qdf_ipv6_parse);
 
+void qdf_register_fw_down_callback(qdf_fw_down_callback *fw_down_callback)
+{
+	is_fw_down_cb = fw_down_callback;
+}
+qdf_export_symbol(qdf_register_fw_down_callback);
