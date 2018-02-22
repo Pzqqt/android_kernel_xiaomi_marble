@@ -17,7 +17,7 @@
  */
 
 /**
- * DOC: Thin filesystem API abstractions
+ * DOC: Text parsing related abstractions, not related to a specific type
  */
 
 #ifndef __QDF_PARSE_H
@@ -25,15 +25,21 @@
 
 #include "qdf_status.h"
 
+typedef QDF_STATUS (*qdf_ini_section_cb)(void *context, const char *name);
+typedef QDF_STATUS (*qdf_ini_item_cb)(void *context,
+				      const char *key,
+				      const char *value);
+
 /**
- * cfg_ini_parse() - parse an ini file
+ * qdf_ini_parse() - parse an ini file
  * @ini_path: The full file path of the ini file to parse
+ * @context: The caller supplied context to pass into callbacks
  * @item_cb: Ini item (key/value pair) handler callback function
  *	Return QDF_STATUS_SUCCESS to continue parsing, else to abort
  * @section_cb: Ini section header handler callback function
  *	Return QDF_STATUS_SUCCESS to continue parsing, else to abort
  *
- * The *.ini file format is a simple format consiting of a list of key/value
+ * The *.ini file format is a simple format consisting of a list of key/value
  * pairs (items), separated by an '=' character. Comments are initiated with
  * a '#' character. Sections are also supported, using '[' and ']' around the
  * section name. e.g.
@@ -50,9 +56,8 @@
  * Return: QDF_STATUS
  */
 QDF_STATUS
-qdf_ini_parse(const char *ini_path,
-	      QDF_STATUS (*item_cb)(const char *key, const char *value),
-	      QDF_STATUS (*section_cb)(const char *name));
+qdf_ini_parse(const char *ini_path, void *context,
+	      qdf_ini_item_cb item_cb, qdf_ini_section_cb section_cb);
 
 #endif /* __QDF_PARSE_H */
 

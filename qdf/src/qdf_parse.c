@@ -24,10 +24,8 @@
 #include "qdf_trace.h"
 #include "qdf_types.h"
 
-QDF_STATUS
-qdf_ini_parse(const char *ini_path,
-	      QDF_STATUS (*item_cb)(const char *key, const char *value),
-	      QDF_STATUS (*section_cb)(const char *name))
+QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
+			 qdf_ini_item_cb item_cb, qdf_ini_section_cb section_cb)
 {
 	QDF_STATUS status;
 	char *fbuf;
@@ -98,7 +96,7 @@ qdf_ini_parse(const char *ini_path,
 		 *	3) a line containing whitespace
 		 */
 		if (value) {
-			status = item_cb(key, value);
+			status = item_cb(context, key, value);
 			if (QDF_IS_STATUS_ERROR(status))
 				goto free_fbuf;
 		} else if (key[0] == '[') {
@@ -108,7 +106,7 @@ qdf_ini_parse(const char *ini_path,
 				qdf_err("Invalid *.ini syntax '%s'", key);
 			} else {
 				key[len - 1] = '\0';
-				status = section_cb(key + 1);
+				status = section_cb(context, key + 1);
 				if (QDF_IS_STATUS_ERROR(status))
 					goto free_fbuf;
 			}
