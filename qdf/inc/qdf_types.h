@@ -329,7 +329,7 @@ typedef void (*qdf_timer_func_t)(void *);
  * @QDF_MODULE_ID_PMO: PMO (power manager and offloads) Module ID
  * @QDF_MODULE_ID_P2P: P2P module ID
  * @QDF_MODULE_ID_POLICY_MGR: Policy Manager module ID
- * @QDF_MODULE_ID_CONFIG: CONFIG module ID
+ * @QDF_MODULE_ID_CONFIG: CFG (configuration) component ID
  * @QDF_MODULE_ID_REGULATORY: REGULATORY module ID
  * @QDF_MODULE_ID_NAN: NAN module ID
  * @QDF_MODULE_ID_SPECTRAL: Spectral module ID
