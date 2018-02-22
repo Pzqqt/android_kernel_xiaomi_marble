@@ -18,7 +18,7 @@
 
 #include "i_qdf_str.h"
 
-char *__qdf_str_left_trim(char *str)
+const char *__qdf_str_left_trim(const char *str)
 {
 	while (qdf_str_is_space(str))
 		str++;
@@ -28,7 +28,7 @@ char *__qdf_str_left_trim(char *str)
 
 char *__qdf_str_trim(char *str)
 {
-	char *trimmed = qdf_str_left_trim(str);
+	char *trimmed = (char *)qdf_str_left_trim(str);
 
 	qdf_str_right_trim(str);
 

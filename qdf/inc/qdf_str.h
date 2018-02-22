@@ -57,7 +57,7 @@ QDF_STATUS qdf_str_dup(char **dest, const char *src);
  *
  * Return: A pointer to the first non-space character in @str
  */
-static inline char *qdf_str_left_trim(char *str)
+static inline const char *qdf_str_left_trim(const char *str)
 {
 	return __qdf_str_left_trim(str);
 }

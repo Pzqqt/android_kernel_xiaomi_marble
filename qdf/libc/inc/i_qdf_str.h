@@ -25,7 +25,7 @@
 #define __I_QDF_STR_H
 
 #define __qdf_is_space(c) isspace(c)
-char *__qdf_str_left_trim(char *str);
+const char *__qdf_str_left_trim(const char *str);
 char *__qdf_str_trim(char *str);
 #define __qdf_str_nlen(str, limit) strnlen(str, limit)
 

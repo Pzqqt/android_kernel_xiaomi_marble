@@ -678,7 +678,7 @@ typedef enum {
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_bool_parse(char *bool_str, bool *out_bool);
+QDF_STATUS qdf_bool_parse(const char *bool_str, bool *out_bool);
 
 /**
  * qdf_int32_parse() - parse the given string as a 32-bit signed integer
@@ -691,7 +691,7 @@ QDF_STATUS qdf_bool_parse(char *bool_str, bool *out_bool);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_int32_parse(char *int_str, int32_t *out_int);
+QDF_STATUS qdf_int32_parse(const char *int_str, int32_t *out_int);
 
 /**
  * qdf_uint32_parse() - parse the given string as a 32-bit unsigned integer
@@ -704,7 +704,7 @@ QDF_STATUS qdf_int32_parse(char *int_str, int32_t *out_int);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_uint32_parse(char *int_str, uint32_t *out_int);
+QDF_STATUS qdf_uint32_parse(const char *int_str, uint32_t *out_int);
 
 /**
  * qdf_int64_parse() - parse the given string as a 64-bit signed integer
@@ -717,7 +717,7 @@ QDF_STATUS qdf_uint32_parse(char *int_str, uint32_t *out_int);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_int64_parse(char *int_str, int64_t *out_int);
+QDF_STATUS qdf_int64_parse(const char *int_str, int64_t *out_int);
 
 /**
  * qdf_uint64_parse() - parse the given string as a 64-bit unsigned integer
@@ -730,7 +730,7 @@ QDF_STATUS qdf_int64_parse(char *int_str, int64_t *out_int);
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_uint64_parse(char *int_str, uint64_t *out_int);
+QDF_STATUS qdf_uint64_parse(const char *int_str, uint64_t *out_int);
 
 #define QDF_MAC_ADDR_SIZE 6
 #define QDF_MAC_ADDR_STR "%02x:%02x:%02x:%02x:%02x:%02x"
@@ -765,7 +765,7 @@ struct qdf_mac_addr {
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_mac_parse(char *mac_str, struct qdf_mac_addr *out_addr);
+QDF_STATUS qdf_mac_parse(const char *mac_str, struct qdf_mac_addr *out_addr);
 
 #define QDF_IPV4_ADDR_SIZE 4
 #define QDF_IPV4_ADDR_STR "%d.%d.%d.%d"
@@ -798,7 +798,7 @@ struct qdf_ipv4_addr {
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_ipv4_parse(char *ipv4_str, struct qdf_ipv4_addr *out_addr);
+QDF_STATUS qdf_ipv4_parse(const char *ipv4_str, struct qdf_ipv4_addr *out_addr);
 
 #define QDF_IPV6_ADDR_SIZE 16
 #define QDF_IPV6_ADDR_HEXTET_COUNT 8
@@ -841,7 +841,7 @@ struct qdf_ipv6_addr {
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS qdf_ipv6_parse(char *ipv6_str, struct qdf_ipv6_addr *out_addr);
+QDF_STATUS qdf_ipv6_parse(const char *ipv6_str, struct qdf_ipv6_addr *out_addr);
 
 #define QDF_MAX_NUM_CHAN   (128)
 
