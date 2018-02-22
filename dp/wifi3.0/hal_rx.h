@@ -827,6 +827,33 @@ hal_rx_mpdu_peer_meta_data_get(uint8_t *buf)
 	return peer_meta_data;
 }
 
+#define HAL_RX_MPDU_INFO_AMPDU_FLAG_GET(_rx_mpdu_info)	\
+	(_HAL_MS((*_OFFSET_TO_WORD_PTR(_rx_mpdu_info,	\
+		RX_MPDU_INFO_12_AMPDU_FLAG_OFFSET)),	\
+		RX_MPDU_INFO_12_AMPDU_FLAG_MASK,	\
+		RX_MPDU_INFO_12_AMPDU_FLAG_LSB))
+/**
+ * hal_rx_mpdu_info_ampdu_flag_get(): get ampdu flag bit
+ * from rx mpdu info
+ * @buf: pointer to rx_pkt_tlvs
+ *
+ * Return: ampdu flag
+ */
+static inline bool
+hal_rx_mpdu_info_ampdu_flag_get(uint8_t *buf)
+{
+	struct rx_pkt_tlvs *pkt_tlvs = (struct rx_pkt_tlvs *)buf;
+	struct rx_mpdu_start *mpdu_start =
+				 &pkt_tlvs->mpdu_start_tlv.rx_mpdu_start;
+
+	struct rx_mpdu_info *mpdu_info = &mpdu_start->rx_mpdu_info_details;
+	bool ampdu_flag;
+
+	ampdu_flag = HAL_RX_MPDU_INFO_AMPDU_FLAG_GET(mpdu_info);
+
+	return ampdu_flag;
+}
+
 #define HAL_RX_MPDU_PEER_META_DATA_SET(_rx_mpdu_info, peer_mdata)	\
 		((*(((uint32_t *)_rx_mpdu_info) +			\
 		(RX_MPDU_INFO_8_PEER_META_DATA_OFFSET >> 2))) =		\
