@@ -46,6 +46,7 @@
 
 enum {
 	ENC_FMT_NONE,
+	DEC_FMT_NONE = ENC_FMT_NONE,
 	ENC_FMT_SBC = ASM_MEDIA_FMT_SBC,
 	ENC_FMT_AAC_V2 = ASM_MEDIA_FMT_AAC_V2,
 	ENC_FMT_APTX = ASM_MEDIA_FMT_APTX,
@@ -200,6 +201,7 @@ struct msm_dai_q6_dai_data {
 	u32 afe_in_channels;
 	u16 afe_in_bitformat;
 	struct afe_enc_config enc_config;
+	struct afe_dec_config dec_config;
 	union afe_port_config port_config;
 	u16 vi_feed_mono;
 };
@@ -1538,22 +1540,46 @@ static int msm_dai_q6_prepare(struct snd_pcm_substream *substream,
 		if (dai_data->enc_config.format != ENC_FMT_NONE) {
 			int bitwidth = 0;
 
-			if (dai_data->afe_in_bitformat ==
-			    SNDRV_PCM_FORMAT_S24_LE)
+			switch (dai_data->afe_in_bitformat) {
+			case SNDRV_PCM_FORMAT_S32_LE:
+				bitwidth = 32;
+				break;
+			case SNDRV_PCM_FORMAT_S24_LE:
 				bitwidth = 24;
-			else if (dai_data->afe_in_bitformat ==
-				 SNDRV_PCM_FORMAT_S16_LE)
+				break;
+			case SNDRV_PCM_FORMAT_S16_LE:
+			default:
 				bitwidth = 16;
+				break;
+			}
 			pr_debug("%s: calling AFE_PORT_START_V2 with enc_format: %d\n",
 				 __func__, dai_data->enc_config.format);
 			rc = afe_port_start_v2(dai->id, &dai_data->port_config,
 					       dai_data->rate,
 					       dai_data->afe_in_channels,
 					       bitwidth,
-					       &dai_data->enc_config);
+					       &dai_data->enc_config, NULL);
 			if (rc < 0)
 				pr_err("%s: afe_port_start_v2 failed error: %d\n",
 					__func__, rc);
+		} else if (dai_data->dec_config.format != DEC_FMT_NONE) {
+			/*
+			 * A dummy Tx session is established in LPASS to
+			 * get the link statistics from BTSoC.
+			 * Depacketizer extracts the bit rate levels and
+			 * transmits them to the encoder on the Rx path.
+			 * Since this is a dummy decoder - channels, bit
+			 * width are sent as 0 and encoder config is NULL.
+			 * This could be updated in the future if there is
+			 * a complete Tx path set up that uses this decoder.
+			 */
+			rc = afe_port_start_v2(dai->id, &dai_data->port_config,
+					       dai_data->rate, 0, 0, NULL,
+					       &dai_data->dec_config);
+			if (rc < 0) {
+				pr_err("%s: fail to open AFE port 0x%x\n",
+					__func__, dai->id);
+			}
 		} else {
 			rc = afe_port_start(dai->id, &dai_data->port_config,
 						dai_data->rate);
@@ -2233,7 +2259,7 @@ static int msm_dai_q6_afe_enc_cfg_get(struct snd_kcontrol *kcontrol,
 	if (dai_data) {
 		int format_size = sizeof(dai_data->enc_config.format);
 
-		pr_debug("%s:encoder config for %d format\n",
+		pr_debug("%s: encoder config for %d format\n",
 			 __func__, dai_data->enc_config.format);
 		memcpy(ucontrol->value.bytes.data,
 			&dai_data->enc_config.format,
@@ -2345,10 +2371,11 @@ static const struct soc_enum afe_input_chs_enum[] = {
 	SOC_ENUM_SINGLE_EXT(3, afe_input_chs_text),
 };
 
-static const char *const afe_input_bit_format_text[] = {"S16_LE", "S24_LE"};
+static const char *const afe_input_bit_format_text[] = {"S16_LE", "S24_LE",
+							"S32_LE"};
 
 static const struct soc_enum afe_input_bit_format_enum[] = {
-	SOC_ENUM_SINGLE_EXT(2, afe_input_bit_format_text),
+	SOC_ENUM_SINGLE_EXT(3, afe_input_bit_format_text),
 };
 
 static int msm_dai_q6_afe_input_channel_get(struct snd_kcontrol *kcontrol,
@@ -2391,6 +2418,9 @@ static int msm_dai_q6_afe_input_bit_format_get(
 	}
 
 	switch (dai_data->afe_in_bitformat) {
+	case SNDRV_PCM_FORMAT_S32_LE:
+		ucontrol->value.integer.value[0] = 2;
+		break;
 	case SNDRV_PCM_FORMAT_S24_LE:
 		ucontrol->value.integer.value[0] = 1;
 		break;
@@ -2416,6 +2446,9 @@ static int msm_dai_q6_afe_input_bit_format_put(
 		return -EINVAL;
 	}
 	switch (ucontrol->value.integer.value[0]) {
+	case 2:
+		dai_data->afe_in_bitformat = SNDRV_PCM_FORMAT_S32_LE;
+		break;
 	case 1:
 		dai_data->afe_in_bitformat = SNDRV_PCM_FORMAT_S24_LE;
 		break;
@@ -2481,6 +2514,73 @@ static const struct snd_kcontrol_new afe_enc_config_controls[] = {
 		       0, 0, 1, 0,
 		       msm_dai_q6_afe_scrambler_mode_get,
 		       msm_dai_q6_afe_scrambler_mode_put),
+};
+
+static int  msm_dai_q6_afe_dec_cfg_info(struct snd_kcontrol *kcontrol,
+					struct snd_ctl_elem_info *uinfo)
+{
+	uinfo->type = SNDRV_CTL_ELEM_TYPE_BYTES;
+	uinfo->count = sizeof(struct afe_dec_config);
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_dec_cfg_get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	int format_size = 0;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	format_size = sizeof(dai_data->dec_config.format);
+	memcpy(ucontrol->value.bytes.data,
+		&dai_data->dec_config.format,
+		format_size);
+	memcpy(ucontrol->value.bytes.data + format_size,
+		&dai_data->dec_config.abr_dec_cfg,
+		sizeof(struct afe_abr_dec_cfg_t));
+
+	return 0;
+}
+
+static int msm_dai_q6_afe_dec_cfg_put(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	struct msm_dai_q6_dai_data *dai_data = kcontrol->private_data;
+	int format_size = 0;
+
+	if (!dai_data) {
+		pr_err("%s: Invalid dai data\n", __func__);
+		return -EINVAL;
+	}
+
+	memset(&dai_data->dec_config, 0x0,
+		sizeof(struct afe_dec_config));
+	format_size = sizeof(dai_data->dec_config.format);
+	memcpy(&dai_data->dec_config.format,
+		ucontrol->value.bytes.data,
+		format_size);
+	memcpy(&dai_data->dec_config.abr_dec_cfg,
+		ucontrol->value.bytes.data + format_size,
+		sizeof(struct afe_abr_dec_cfg_t));
+
+	return 0;
+}
+
+static const struct snd_kcontrol_new afe_dec_config_controls[] = {
+	{
+		.access = (SNDRV_CTL_ELEM_ACCESS_READWRITE |
+			   SNDRV_CTL_ELEM_ACCESS_INACTIVE),
+		.iface = SNDRV_CTL_ELEM_IFACE_PCM,
+		.name = "SLIM_7_TX Decoder Config",
+		.info = msm_dai_q6_afe_dec_cfg_info,
+		.get = msm_dai_q6_afe_dec_cfg_get,
+		.put = msm_dai_q6_afe_dec_cfg_put,
+	},
 };
 
 static int msm_dai_q6_slim_rx_drift_info(struct snd_kcontrol *kcontrol,
@@ -2649,6 +2749,11 @@ static int msm_dai_q6_dai_probe(struct snd_soc_dai *dai)
 		rc = snd_ctl_add(dai->component->card->snd_card,
 				snd_ctl_new1(&avd_drift_config_controls[2],
 					dai));
+		break;
+	case SLIMBUS_7_TX:
+		rc = snd_ctl_add(dai->component->card->snd_card,
+				 snd_ctl_new1(&afe_dec_config_controls[0],
+				 dai_data));
 		break;
 	case RT_PROXY_DAI_001_RX:
 		rc = snd_ctl_add(dai->component->card->snd_card,
