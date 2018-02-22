@@ -2505,59 +2505,57 @@ static inline void hal_rx_dump_rx_attention_tlv(struct rx_attention *rx_attn,
 							uint8_t dbg_level)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"\n--------------------\n"
-			"rx_attention tlv \n"
-			"\n--------------------\n"
-			"rxpcu_mpdu_filter_in_category	: %d\n"
-			"sw_frame_group_id               : %d\n"
-			"reserved_0                      : %d\n"
-			"phy_ppdu_id                     : %d\n"
-			"first_mpdu                      : %d\n"
-			"reserved_1a                     : %d\n"
-			"mcast_bcast                     : %d\n"
-			"ast_index_not_found             : %d\n"
-			"ast_index_timeout               : %d\n"
-			"power_mgmt                      : %d\n"
-			"non_qos                         : %d\n"
-			"null_data                       : %d\n"
-			"mgmt_type                       : %d\n"
-			"ctrl_type                       : %d\n"
-			"more_data                       : %d\n"
-			"eosp                            : %d\n"
-			"a_msdu_error                    : %d\n"
-			"fragment_flag                   : %d\n"
-			"order                           : %d\n"
-			"cce_match                       : %d\n"
-			"overflow_err                    : %d\n"
-			"msdu_length_err                 : %d\n"
-			"tcp_udp_chksum_fail             : %d\n"
-			"ip_chksum_fail                  : %d\n"
-			"sa_idx_invalid                  : %d\n"
-			"da_idx_invalid                  : %d\n"
-			"reserved_1b                     : %d\n"
-			"rx_in_tx_decrypt_byp            : %d\n"
-			"encrypt_required                : %d\n"
-			"directed                        : %d\n"
-			"buffer_fragment                 : %d\n"
-			"mpdu_length_err                 : %d\n"
-			"tkip_mic_err                    : %d\n"
-			"decrypt_err                     : %d\n"
-			"unencrypted_frame_err           : %d\n"
-			"fcs_err                         : %d\n"
-			"flow_idx_timeout                : %d\n"
-			"flow_idx_invalid                : %d\n"
-			"wifi_parser_error               : %d\n"
-			"amsdu_parser_error              : %d\n"
-			"sa_idx_timeout                  : %d\n"
-			"da_idx_timeout                  : %d\n"
-			"msdu_limit_error                : %d\n"
-			"da_is_valid                     : %d\n"
-			"da_is_mcbc                      : %d\n"
-			"sa_is_valid                     : %d\n"
-			"decrypt_status_code             : %d\n"
-			"rx_bitmap_not_updated           : %d\n"
-			"reserved_2                      : %d\n"
-			"msdu_done                       : %d\n",
+			"rx_attention tlv="
+			"rxpcu_mpdu_filter_in_category: %d "
+			"sw_frame_group_id: %d "
+			"reserved_0: %d "
+			"phy_ppdu_id: %d "
+			"first_mpdu : %d "
+			"reserved_1a: %d "
+			"mcast_bcast: %d "
+			"ast_index_not_found: %d "
+			"ast_index_timeout: %d "
+			"power_mgmt: %d "
+			"non_qos: %d "
+			"null_data: %d "
+			"mgmt_type: %d "
+			"ctrl_type: %d "
+			"more_data: %d "
+			"eosp: %d "
+			"a_msdu_error: %d "
+			"fragment_flag: %d "
+			"order: %d "
+			"cce_match: %d "
+			"overflow_err: %d "
+			"msdu_length_err: %d "
+			"tcp_udp_chksum_fail: %d "
+			"ip_chksum_fail: %d "
+			"sa_idx_invalid: %d "
+			"da_idx_invalid: %d "
+			"reserved_1b: %d "
+			"rx_in_tx_decrypt_byp: %d "
+			"encrypt_required: %d "
+			"directed: %d "
+			"buffer_fragment: %d "
+			"mpdu_length_err: %d "
+			"tkip_mic_err: %d "
+			"decrypt_err: %d "
+			"unencrypted_frame_err: %d "
+			"fcs_err: %d "
+			"flow_idx_timeout: %d "
+			"flow_idx_invalid: %d "
+			"wifi_parser_error: %d "
+			"amsdu_parser_error: %d "
+			"sa_idx_timeout: %d "
+			"da_idx_timeout: %d "
+			"msdu_limit_error: %d "
+			"da_is_valid: %d "
+			"da_is_mcbc: %d "
+			"sa_is_valid: %d "
+			"decrypt_status_code: %d "
+			"rx_bitmap_not_updated: %d "
+			"reserved_2: %d "
+			"msdu_done: %d ",
 			rx_attn->rxpcu_mpdu_filter_in_category,
 			rx_attn->sw_frame_group_id,
 			rx_attn->reserved_0,
@@ -2626,94 +2624,92 @@ uint8_t dbg_level)
 	struct	rx_mpdu_info *mpdu_info =
 		(struct rx_mpdu_info *) &mpdu_start->rx_mpdu_info_details;
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"\n--------------------\n"
-			"rx_mpdu_start tlv \n"
-			"--------------------\n"
-			"rxpcu_mpdu_filter_in_category: %d\n"
-			"sw_frame_group_id: %d\n"
-			"ndp_frame: %d\n"
-			"phy_err: %d\n"
-			"phy_err_during_mpdu_header: %d\n"
-			"protocol_version_err: %d\n"
-			"ast_based_lookup_valid: %d\n"
-			"phy_ppdu_id: %d\n"
-			"ast_index: %d\n"
-			"sw_peer_id: %d\n"
-			"mpdu_frame_control_valid: %d\n"
-			"mpdu_duration_valid: %d\n"
-			"mac_addr_ad1_valid: %d\n"
-			"mac_addr_ad2_valid: %d\n"
-			"mac_addr_ad3_valid: %d\n"
-			"mac_addr_ad4_valid: %d\n"
-			"mpdu_sequence_control_valid: %d\n"
-			"mpdu_qos_control_valid: %d\n"
-			"mpdu_ht_control_valid: %d\n"
-			"frame_encryption_info_valid: %d\n"
-			"fr_ds: %d\n"
-			"to_ds: %d\n"
-			"encrypted: %d\n"
-			"mpdu_retry: %d\n"
-			"mpdu_sequence_number: %d\n"
-			"epd_en: %d\n"
-			"all_frames_shall_be_encrypted: %d\n"
-			"encrypt_type: %d\n"
-			"mesh_sta: %d\n"
-			"bssid_hit: %d\n"
-			"bssid_number: %d\n"
-			"tid: %d\n"
-			"pn_31_0: %d\n"
-			"pn_63_32: %d\n"
-			"pn_95_64: %d\n"
-			"pn_127_96: %d\n"
-			"peer_meta_data: %d\n"
-			"rxpt_classify_info.reo_destination_indication: %d\n"
-			"rxpt_classify_info.use_flow_id_toeplitz_clfy: %d\n"
-			"rx_reo_queue_desc_addr_31_0: %d\n"
-			"rx_reo_queue_desc_addr_39_32: %d\n"
-			"receive_queue_number: %d\n"
-			"pre_delim_err_warning: %d\n"
-			"first_delim_err: %d\n"
-			"key_id_octet: %d\n"
-			"new_peer_entry: %d\n"
-			"decrypt_needed: %d\n"
-			"decap_type: %d\n"
-			"rx_insert_vlan_c_tag_padding: %d\n"
-			"rx_insert_vlan_s_tag_padding: %d\n"
-			"strip_vlan_c_tag_decap: %d\n"
-			"strip_vlan_s_tag_decap: %d\n"
-			"pre_delim_count: %d\n"
-			"ampdu_flag: %d\n"
-			"bar_frame: %d\n"
-			"mpdu_length: %d\n"
-			"first_mpdu: %d\n"
-			"mcast_bcast: %d\n"
-			"ast_index_not_found: %d\n"
-			"ast_index_timeout: %d\n"
-			"power_mgmt: %d\n"
-			"non_qos: %d\n"
-			"null_data: %d\n"
-			"mgmt_type: %d\n"
-			"ctrl_type: %d\n"
-			"more_data: %d\n"
-			"eosp: %d\n"
-			"fragment_flag: %d\n"
-			"order: %d\n"
-			"u_apsd_trigger: %d\n"
-			"encrypt_required: %d\n"
-			"directed: %d\n"
-			"mpdu_frame_control_field: %d\n"
-			"mpdu_duration_field: %d\n"
-			"mac_addr_ad1_31_0: %d\n"
-			"mac_addr_ad1_47_32: %d\n"
-			"mac_addr_ad2_15_0: %d\n"
-			"mac_addr_ad2_47_16: %d\n"
-			"mac_addr_ad3_31_0: %d\n"
-			"mac_addr_ad3_47_32: %d\n"
-			"mpdu_sequence_control_field: %d\n"
-			"mac_addr_ad4_31_0: %d\n"
-			"mac_addr_ad4_47_32: %d\n"
-			"mpdu_qos_control_field: %d\n"
-			"mpdu_ht_control_field: %d\n",
+			"rx_mpdu_start tlv - "
+			"rxpcu_mpdu_filter_in_category: %d "
+			"sw_frame_group_id: %d "
+			"ndp_frame: %d "
+			"phy_err: %d "
+			"phy_err_during_mpdu_header: %d "
+			"protocol_version_err: %d "
+			"ast_based_lookup_valid: %d "
+			"phy_ppdu_id: %d "
+			"ast_index: %d "
+			"sw_peer_id: %d "
+			"mpdu_frame_control_valid: %d "
+			"mpdu_duration_valid: %d "
+			"mac_addr_ad1_valid: %d "
+			"mac_addr_ad2_valid: %d "
+			"mac_addr_ad3_valid: %d "
+			"mac_addr_ad4_valid: %d "
+			"mpdu_sequence_control_valid: %d "
+			"mpdu_qos_control_valid: %d "
+			"mpdu_ht_control_valid: %d "
+			"frame_encryption_info_valid: %d "
+			"fr_ds: %d "
+			"to_ds: %d "
+			"encrypted: %d "
+			"mpdu_retry: %d "
+			"mpdu_sequence_number: %d "
+			"epd_en: %d "
+			"all_frames_shall_be_encrypted: %d "
+			"encrypt_type: %d "
+			"mesh_sta: %d "
+			"bssid_hit: %d "
+			"bssid_number: %d "
+			"tid: %d "
+			"pn_31_0: %d "
+			"pn_63_32: %d "
+			"pn_95_64: %d "
+			"pn_127_96: %d "
+			"peer_meta_data: %d "
+			"rxpt_classify_info.reo_destination_indication: %d "
+			"rxpt_classify_info.use_flow_id_toeplitz_clfy: %d "
+			"rx_reo_queue_desc_addr_31_0: %d "
+			"rx_reo_queue_desc_addr_39_32: %d "
+			"receive_queue_number: %d "
+			"pre_delim_err_warning: %d "
+			"first_delim_err: %d "
+			"key_id_octet: %d "
+			"new_peer_entry: %d "
+			"decrypt_needed: %d "
+			"decap_type: %d "
+			"rx_insert_vlan_c_tag_padding: %d "
+			"rx_insert_vlan_s_tag_padding: %d "
+			"strip_vlan_c_tag_decap: %d "
+			"strip_vlan_s_tag_decap: %d "
+			"pre_delim_count: %d "
+			"ampdu_flag: %d "
+			"bar_frame: %d "
+			"mpdu_length: %d "
+			"first_mpdu: %d "
+			"mcast_bcast: %d "
+			"ast_index_not_found: %d "
+			"ast_index_timeout: %d "
+			"power_mgmt: %d "
+			"non_qos: %d "
+			"null_data: %d "
+			"mgmt_type: %d "
+			"ctrl_type: %d "
+			"more_data: %d "
+			"eosp: %d "
+			"fragment_flag: %d "
+			"order: %d "
+			"u_apsd_trigger: %d "
+			"encrypt_required: %d "
+			"directed: %d "
+			"mpdu_frame_control_field: %d "
+			"mpdu_duration_field: %d "
+			"mac_addr_ad1_31_0: %d "
+			"mac_addr_ad1_47_32: %d "
+			"mac_addr_ad2_15_0: %d "
+			"mac_addr_ad2_47_16: %d "
+			"mac_addr_ad3_31_0: %d "
+			"mac_addr_ad3_47_32: %d "
+			"mpdu_sequence_control_field: %d "
+			"mac_addr_ad4_31_0: %d "
+			"mac_addr_ad4_47_32: %d "
+			"mpdu_qos_control_field: %d "
+			"mpdu_ht_control_field: %d ",
 			mpdu_info->rxpcu_mpdu_filter_in_category,
 			mpdu_info->sw_frame_group_id,
 			mpdu_info->ndp_frame,
@@ -2813,75 +2809,73 @@ static void hal_rx_dump_msdu_start_tlv(struct rx_msdu_start *msdu_start,
 							uint8_t dbg_level)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"\n--------------------\n"
-			"rx_msdu_start tlv \n"
-			"--------------------\n"
-			"rxpcu_mpdu_filter_in_category: %d\n"
-			"sw_frame_group_id: %d\n"
-			"phy_ppdu_id: %d\n"
-			"msdu_length: %d\n"
-			"ipsec_esp: %d\n"
-			"l3_offset: %d\n"
-			"ipsec_ah: %d\n"
-			"l4_offset: %d\n"
-			"msdu_number: %d\n"
-			"decap_format: %d\n"
-			"ipv4_proto: %d\n"
-			"ipv6_proto: %d\n"
-			"tcp_proto: %d\n"
-			"udp_proto: %d\n"
-			"ip_frag: %d\n"
-			"tcp_only_ack: %d\n"
-			"da_is_bcast_mcast: %d\n"
-			"ip4_protocol_ip6_next_header: %d\n"
-			"toeplitz_hash_2_or_4: %d\n"
-			"flow_id_toeplitz: %d\n"
-			"user_rssi: %d\n"
-			"pkt_type: %d\n"
-			"stbc: %d\n"
-			"sgi: %d\n"
-			"rate_mcs: %d\n"
-			"receive_bandwidth: %d\n"
-			"reception_type: %d\n"
+			"rx_msdu_start tlv - "
+			"rxpcu_mpdu_filter_in_category: %d "
+			"sw_frame_group_id: %d "
+			"phy_ppdu_id: %d "
+			"msdu_length: %d "
+			"ipsec_esp: %d "
+			"l3_offset: %d "
+			"ipsec_ah: %d "
+			"l4_offset: %d "
+			"msdu_number: %d "
+			"decap_format: %d "
+			"ipv4_proto: %d "
+			"ipv6_proto: %d "
+			"tcp_proto: %d "
+			"udp_proto: %d "
+			"ip_frag: %d "
+			"tcp_only_ack: %d "
+			"da_is_bcast_mcast: %d "
+			"ip4_protocol_ip6_next_header: %d "
+			"toeplitz_hash_2_or_4: %d "
+			"flow_id_toeplitz: %d "
+			"user_rssi: %d "
+			"pkt_type: %d "
+			"stbc: %d "
+			"sgi: %d "
+			"rate_mcs: %d "
+			"receive_bandwidth: %d "
+			"reception_type: %d "
 #if !defined(QCA_WIFI_QCA6290_11AX)
-			"toeplitz_hash: %d\n"
-			"nss: %d\n"
+			"toeplitz_hash: %d "
+			"nss: %d "
 #endif
-			"ppdu_start_timestamp: %d\n"
-			"sw_phy_meta_data: %d\n",
-		msdu_start->rxpcu_mpdu_filter_in_category,
-		msdu_start->sw_frame_group_id,
-		msdu_start->phy_ppdu_id,
-		msdu_start->msdu_length,
-		msdu_start->ipsec_esp,
-		msdu_start->l3_offset,
-		msdu_start->ipsec_ah,
-		msdu_start->l4_offset,
-		msdu_start->msdu_number,
-		msdu_start->decap_format,
-		msdu_start->ipv4_proto,
-		msdu_start->ipv6_proto,
-		msdu_start->tcp_proto,
-		msdu_start->udp_proto,
-		msdu_start->ip_frag,
-		msdu_start->tcp_only_ack,
-		msdu_start->da_is_bcast_mcast,
-		msdu_start->ip4_protocol_ip6_next_header,
-		msdu_start->toeplitz_hash_2_or_4,
-		msdu_start->flow_id_toeplitz,
-		msdu_start->user_rssi,
-		msdu_start->pkt_type,
-		msdu_start->stbc,
-		msdu_start->sgi,
-		msdu_start->rate_mcs,
-		msdu_start->receive_bandwidth,
-		msdu_start->reception_type,
+			"ppdu_start_timestamp: %d "
+			"sw_phy_meta_data: %d ",
+			msdu_start->rxpcu_mpdu_filter_in_category,
+			msdu_start->sw_frame_group_id,
+			msdu_start->phy_ppdu_id,
+			msdu_start->msdu_length,
+			msdu_start->ipsec_esp,
+			msdu_start->l3_offset,
+			msdu_start->ipsec_ah,
+			msdu_start->l4_offset,
+			msdu_start->msdu_number,
+			msdu_start->decap_format,
+			msdu_start->ipv4_proto,
+			msdu_start->ipv6_proto,
+			msdu_start->tcp_proto,
+			msdu_start->udp_proto,
+			msdu_start->ip_frag,
+			msdu_start->tcp_only_ack,
+			msdu_start->da_is_bcast_mcast,
+			msdu_start->ip4_protocol_ip6_next_header,
+			msdu_start->toeplitz_hash_2_or_4,
+			msdu_start->flow_id_toeplitz,
+			msdu_start->user_rssi,
+			msdu_start->pkt_type,
+			msdu_start->stbc,
+			msdu_start->sgi,
+			msdu_start->rate_mcs,
+			msdu_start->receive_bandwidth,
+			msdu_start->reception_type,
 #if !defined(QCA_WIFI_QCA6290_11AX)
-		msdu_start->toeplitz_hash,
-		msdu_start->nss,
+			msdu_start->toeplitz_hash,
+			msdu_start->nss,
 #endif
-		msdu_start->ppdu_start_timestamp,
-		msdu_start->sw_phy_meta_data);
+			msdu_start->ppdu_start_timestamp,
+			msdu_start->sw_phy_meta_data);
 }
 
 /**
@@ -2896,101 +2890,99 @@ static inline void hal_rx_dump_msdu_end_tlv(struct rx_msdu_end *msdu_end,
 							uint8_t dbg_level)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"\n--------------------\n"
-			"rx_msdu_end tlv \n"
-			"--------------------\n"
-			"rxpcu_mpdu_filter_in_category: %d\n"
-			"sw_frame_group_id: %d\n"
-			"phy_ppdu_id: %d\n"
-			"ip_hdr_chksum: %d\n"
-			"tcp_udp_chksum: %d\n"
-			"key_id_octet: %d\n"
-			"cce_super_rule: %d\n"
-			"cce_classify_not_done_truncat: %d\n"
-			"cce_classify_not_done_cce_dis: %d\n"
-			"ext_wapi_pn_63_48: %d\n"
-			"ext_wapi_pn_95_64: %d\n"
-			"ext_wapi_pn_127_96: %d\n"
-			"reported_mpdu_length: %d\n"
-			"first_msdu: %d\n"
-			"last_msdu: %d\n"
-			"sa_idx_timeout: %d\n"
-			"da_idx_timeout: %d\n"
-			"msdu_limit_error: %d\n"
-			"flow_idx_timeout: %d\n"
-			"flow_idx_invalid: %d\n"
-			"wifi_parser_error: %d\n"
-			"amsdu_parser_error: %d\n"
-			"sa_is_valid: %d\n"
-			"da_is_valid: %d\n"
-			"da_is_mcbc: %d\n"
-			"l3_header_padding: %d\n"
-			"ipv6_options_crc: %d\n"
-			"tcp_seq_number: %d\n"
-			"tcp_ack_number: %d\n"
-			"tcp_flag: %d\n"
-			"lro_eligible: %d\n"
-			"window_size: %d\n"
-			"da_offset: %d\n"
-			"sa_offset: %d\n"
-			"da_offset_valid: %d\n"
-			"sa_offset_valid: %d\n"
-			"rule_indication_31_0: %d\n"
-			"rule_indication_63_32: %d\n"
-			"sa_idx: %d\n"
-			"da_idx: %d\n"
-			"msdu_drop: %d\n"
-			"reo_destination_indication: %d\n"
-			"flow_idx: %d\n"
-			"fse_metadata: %d\n"
-			"cce_metadata: %d\n"
-			"sa_sw_peer_id: %d\n",
-		msdu_end->rxpcu_mpdu_filter_in_category,
-		msdu_end->sw_frame_group_id,
-		msdu_end->phy_ppdu_id,
-		msdu_end->ip_hdr_chksum,
-		msdu_end->tcp_udp_chksum,
-		msdu_end->key_id_octet,
-		msdu_end->cce_super_rule,
-		msdu_end->cce_classify_not_done_truncate,
-		msdu_end->cce_classify_not_done_cce_dis,
-		msdu_end->ext_wapi_pn_63_48,
-		msdu_end->ext_wapi_pn_95_64,
-		msdu_end->ext_wapi_pn_127_96,
-		msdu_end->reported_mpdu_length,
-		msdu_end->first_msdu,
-		msdu_end->last_msdu,
-		msdu_end->sa_idx_timeout,
-		msdu_end->da_idx_timeout,
-		msdu_end->msdu_limit_error,
-		msdu_end->flow_idx_timeout,
-		msdu_end->flow_idx_invalid,
-		msdu_end->wifi_parser_error,
-		msdu_end->amsdu_parser_error,
-		msdu_end->sa_is_valid,
-		msdu_end->da_is_valid,
-		msdu_end->da_is_mcbc,
-		msdu_end->l3_header_padding,
-		msdu_end->ipv6_options_crc,
-		msdu_end->tcp_seq_number,
-		msdu_end->tcp_ack_number,
-		msdu_end->tcp_flag,
-		msdu_end->lro_eligible,
-		msdu_end->window_size,
-		msdu_end->da_offset,
-		msdu_end->sa_offset,
-		msdu_end->da_offset_valid,
-		msdu_end->sa_offset_valid,
-		msdu_end->rule_indication_31_0,
-		msdu_end->rule_indication_63_32,
-		msdu_end->sa_idx,
-		msdu_end->da_idx,
-		msdu_end->msdu_drop,
-		msdu_end->reo_destination_indication,
-		msdu_end->flow_idx,
-		msdu_end->fse_metadata,
-		msdu_end->cce_metadata,
-		msdu_end->sa_sw_peer_id);
+			"rx_msdu_end tlv - "
+			"rxpcu_mpdu_filter_in_category: %d "
+			"sw_frame_group_id: %d "
+			"phy_ppdu_id: %d "
+			"ip_hdr_chksum: %d "
+			"tcp_udp_chksum: %d "
+			"key_id_octet: %d "
+			"cce_super_rule: %d "
+			"cce_classify_not_done_truncat: %d "
+			"cce_classify_not_done_cce_dis: %d "
+			"ext_wapi_pn_63_48: %d "
+			"ext_wapi_pn_95_64: %d "
+			"ext_wapi_pn_127_96: %d "
+			"reported_mpdu_length: %d "
+			"first_msdu: %d "
+			"last_msdu: %d "
+			"sa_idx_timeout: %d "
+			"da_idx_timeout: %d "
+			"msdu_limit_error: %d "
+			"flow_idx_timeout: %d "
+			"flow_idx_invalid: %d "
+			"wifi_parser_error: %d "
+			"amsdu_parser_error: %d "
+			"sa_is_valid: %d "
+			"da_is_valid: %d "
+			"da_is_mcbc: %d "
+			"l3_header_padding: %d "
+			"ipv6_options_crc: %d "
+			"tcp_seq_number: %d "
+			"tcp_ack_number: %d "
+			"tcp_flag: %d "
+			"lro_eligible: %d "
+			"window_size: %d "
+			"da_offset: %d "
+			"sa_offset: %d "
+			"da_offset_valid: %d "
+			"sa_offset_valid: %d "
+			"rule_indication_31_0: %d "
+			"rule_indication_63_32: %d "
+			"sa_idx: %d "
+			"da_idx: %d "
+			"msdu_drop: %d "
+			"reo_destination_indication: %d "
+			"flow_idx: %d "
+			"fse_metadata: %d "
+			"cce_metadata: %d "
+			"sa_sw_peer_id: %d ",
+			msdu_end->rxpcu_mpdu_filter_in_category,
+			msdu_end->sw_frame_group_id,
+			msdu_end->phy_ppdu_id,
+			msdu_end->ip_hdr_chksum,
+			msdu_end->tcp_udp_chksum,
+			msdu_end->key_id_octet,
+			msdu_end->cce_super_rule,
+			msdu_end->cce_classify_not_done_truncate,
+			msdu_end->cce_classify_not_done_cce_dis,
+			msdu_end->ext_wapi_pn_63_48,
+			msdu_end->ext_wapi_pn_95_64,
+			msdu_end->ext_wapi_pn_127_96,
+			msdu_end->reported_mpdu_length,
+			msdu_end->first_msdu,
+			msdu_end->last_msdu,
+			msdu_end->sa_idx_timeout,
+			msdu_end->da_idx_timeout,
+			msdu_end->msdu_limit_error,
+			msdu_end->flow_idx_timeout,
+			msdu_end->flow_idx_invalid,
+			msdu_end->wifi_parser_error,
+			msdu_end->amsdu_parser_error,
+			msdu_end->sa_is_valid,
+			msdu_end->da_is_valid,
+			msdu_end->da_is_mcbc,
+			msdu_end->l3_header_padding,
+			msdu_end->ipv6_options_crc,
+			msdu_end->tcp_seq_number,
+			msdu_end->tcp_ack_number,
+			msdu_end->tcp_flag,
+			msdu_end->lro_eligible,
+			msdu_end->window_size,
+			msdu_end->da_offset,
+			msdu_end->sa_offset,
+			msdu_end->da_offset_valid,
+			msdu_end->sa_offset_valid,
+			msdu_end->rule_indication_31_0,
+			msdu_end->rule_indication_63_32,
+			msdu_end->sa_idx,
+			msdu_end->da_idx,
+			msdu_end->msdu_drop,
+			msdu_end->reo_destination_indication,
+			msdu_end->flow_idx,
+			msdu_end->fse_metadata,
+			msdu_end->cce_metadata,
+			msdu_end->sa_sw_peer_id);
 }
 
 /**
@@ -3005,26 +2997,24 @@ static inline void hal_rx_dump_mpdu_end_tlv(struct rx_mpdu_end *mpdu_end,
 							uint8_t dbg_level)
 {
 	QDF_TRACE(QDF_MODULE_ID_DP, dbg_level,
-			"\n--------------------\n"
-			"rx_mpdu_end tlv \n"
-			"--------------------\n"
-			"rxpcu_mpdu_filter_in_category: %d\n"
-			"sw_frame_group_id: %d\n"
-			"phy_ppdu_id: %d\n"
-			"unsup_ktype_short_frame: %d\n"
-			"rx_in_tx_decrypt_byp: %d\n"
-			"overflow_err: %d\n"
-			"mpdu_length_err: %d\n"
-			"tkip_mic_err: %d\n"
-			"decrypt_err: %d\n"
-			"unencrypted_frame_err: %d\n"
-			"pn_fields_contain_valid_info: %d\n"
-			"fcs_err: %d\n"
-			"msdu_length_err: %d\n"
-			"rxdma0_destination_ring: %d\n"
-			"rxdma1_destination_ring: %d\n"
-			"decrypt_status_code: %d\n"
-			"rx_bitmap_not_updated: %d\n",
+			"rx_mpdu_end tlv - "
+			"rxpcu_mpdu_filter_in_category: %d "
+			"sw_frame_group_id: %d "
+			"phy_ppdu_id: %d "
+			"unsup_ktype_short_frame: %d "
+			"rx_in_tx_decrypt_byp: %d "
+			"overflow_err: %d "
+			"mpdu_length_err: %d "
+			"tkip_mic_err: %d "
+			"decrypt_err: %d "
+			"unencrypted_frame_err: %d "
+			"pn_fields_contain_valid_info: %d "
+			"fcs_err: %d "
+			"msdu_length_err: %d "
+			"rxdma0_destination_ring: %d "
+			"rxdma1_destination_ring: %d "
+			"decrypt_status_code: %d "
+			"rx_bitmap_not_updated: %d ",
 			mpdu_end->rxpcu_mpdu_filter_in_category,
 			mpdu_end->sw_frame_group_id,
 			mpdu_end->phy_ppdu_id,

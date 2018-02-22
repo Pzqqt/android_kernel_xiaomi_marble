@@ -436,6 +436,7 @@ void hal_rx_mon_hw_desc_get_mpdu_status(void *hw_desc_addr,
 	reg_value = HAL_RX_GET(rx_msdu_start, RX_MSDU_START_5, RECEPTION_TYPE);
 	rs->beamformed = (reg_value == HAL_RX_RECEPTION_TYPE_MU_MIMO) ? 1 : 0;
 	/* TODO: rs->beamformed should be set for SU beamforming also */
+	hal_rx_dump_pkt_tlvs((uint8_t *)rx_desc, QDF_TRACE_LEVEL_DEBUG);
 }
 
 struct hal_rx_ppdu_user_info {
@@ -578,6 +579,8 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info)
 	uint16_t he_gi = 0;
 	uint16_t he_ltf = 0;
 	void *rx_tlv;
+	bool unhandled = false;
+
 
 	tlv_tag = HAL_RX_GET_USER_TLV32_TYPE(rx_tlv_hdr);
 	user_id = HAL_RX_GET_USER_TLV32_USERID(rx_tlv_hdr);
@@ -587,9 +590,6 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info)
 	switch (tlv_tag) {
 
 	case WIFIRX_PPDU_START_E:
-		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-				  "[%s][%d] ppdu_start_e len=%d",
-					__func__, __LINE__, tlv_len);
 		ppdu_info->com_info.ppdu_id =
 			HAL_RX_GET(rx_tlv, RX_PPDU_START_0,
 				PHY_PPDU_ID);
@@ -1356,12 +1356,17 @@ hal_rx_status_get_tlv_info(void *rx_tlv_hdr, struct hal_rx_ppdu_info *ppdu_info)
 		return HAL_TLV_STATUS_PPDU_DONE;
 
 	default:
+		unhandled = true;
 		break;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
-			  "%s TLV type: %d, TLV len:%d",
-			  __func__, tlv_tag, tlv_len);
+	if (!unhandled)
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG,
+			  "%s TLV type: %d, TLV len:%d %s",
+			  __func__, tlv_tag, tlv_len,
+			  unhandled == true ? "unhandled" : "");
+
+	qdf_trace_hex_dump(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_DEBUG, rx_tlv, tlv_len);
 
 	return HAL_TLV_STATUS_PPDU_NOT_DONE;
 }

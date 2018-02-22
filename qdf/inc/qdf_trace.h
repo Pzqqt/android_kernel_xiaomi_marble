@@ -37,6 +37,7 @@
 /* Type declarations */
 
 #define FL(x)    "%s: %d: " x, __func__, __LINE__
+
 #define QDF_TRACE_BUFFER_SIZE (512)
 
 #ifdef CONFIG_MCL
