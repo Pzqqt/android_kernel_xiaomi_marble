@@ -829,6 +829,10 @@ ifeq ($(CONFIG_WLAN_DEBUGFS), y)
 QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_debugfs.o
 endif
 
+ifeq ($(CONFIG_IPA_OFFLOAD), 1)
+QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_ipa.o
+endif
+
 # enable CPU hotplug support if SMP is enabled
 ifeq ($(CONFIG_SMP),y)
 	QDF_OBJS += $(QDF_OBJ_DIR)/qdf_cpuhp.o
