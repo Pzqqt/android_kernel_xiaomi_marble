@@ -67,7 +67,7 @@ endif
 
 LINUX_INC +=	-Iinclude/linux
 
-INCS :=	$(COMMON_INC) \
+INCS +=	$(COMMON_INC) \
 	$(UAPI_INC)
 
 EXTRA_CFLAGS += $(INCS)
