@@ -19,6 +19,31 @@
 #include "qdf_mem.h"
 #include "qdf_module.h"
 #include "qdf_str.h"
+#include "qdf_trace.h"
+
+QDF_STATUS qdf_str_dup(char **dest, const char *src)
+{
+	qdf_size_t size;
+	char *dup;
+
+	*dest = NULL;
+
+	QDF_BUG(src);
+	if (!src)
+		return QDF_STATUS_E_INVAL;
+
+	/* size = length + null-terminator */
+	size = qdf_str_len(src) + 1;
+	dup = qdf_mem_malloc(size);
+	if (!dup)
+		return QDF_STATUS_E_NOMEM;
+
+	qdf_mem_copy(dup, src, size);
+	*dest = dup;
+
+	return QDF_STATUS_SUCCESS;
+}
+qdf_export_symbol(qdf_str_dup);
 
 void qdf_str_right_trim(char *str)
 {

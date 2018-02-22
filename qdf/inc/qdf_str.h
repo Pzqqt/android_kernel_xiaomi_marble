@@ -41,6 +41,17 @@ static inline bool qdf_is_space(char c)
 }
 
 /**
+ * qdf_str_dup() - duplicate null-terminated string @src
+ * @dest: double pointer to be populated
+ * @src: the null-terminated string to be duplicated
+ *
+ * @dest must be freed using qdf_mem_free() to avoid memory leaks.
+ *
+ * Return: QDF_STATUS; @dest set to NULL on failure, a valid address on success
+ */
+QDF_STATUS qdf_str_dup(char **dest, const char *src);
+
+/**
  * qdf_str_left_trim() - Trim any leading whitespace from @str
  * @str: the string to trim
  *
