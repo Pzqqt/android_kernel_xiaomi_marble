@@ -4517,14 +4517,12 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac,
 {
 	bool bufConsumed = true;        /* Set this flag to false within case block of any following message, that doesnt want pMsgBuf to be freed. */
 	uint32_t *pMsgBuf = pMsg->bodyptr;
-	tpSirSmeScanReq pScanReq;
 
 	pe_debug("LIM Received SME Message %s(%d) Global LimSmeState:%s(%d) Global LimMlmState: %s(%d)",
 		       lim_msg_str(pMsg->type), pMsg->type,
 		       lim_sme_state_str(pMac->lim.gLimSmeState), pMac->lim.gLimSmeState,
 		       lim_mlm_state_str(pMac->lim.gLimMlmState), pMac->lim.gLimMlmState);
 
-	pScanReq = (tpSirSmeScanReq) pMsgBuf;
 	/* If no insert NOA required then execute the code below */
 
 	switch (pMsg->type) {

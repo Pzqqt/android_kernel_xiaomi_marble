@@ -510,7 +510,6 @@ static void csr_assoc_rej_free_rssi_disallow_list(qdf_list_t *list)
 QDF_STATUS csr_close(tpAniSirGlobal pMac)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeCmd *saved_scan_cmd;
 
 	csr_roam_close(pMac);
 	csr_assoc_rej_free_rssi_disallow_list(
@@ -518,27 +517,6 @@ QDF_STATUS csr_close(tpAniSirGlobal pMac)
 	csr_scan_close(pMac);
 	csr_ll_close(&pMac->roam.statsClientReqList);
 	csr_ll_close(&pMac->roam.peStatsReqList);
-	saved_scan_cmd = (tSmeCmd *)pMac->sme.saved_scan_cmd;
-	if (saved_scan_cmd) {
-		csr_release_profile(pMac, saved_scan_cmd->u.scanCmd.
-				    pToRoamProfile);
-		if (saved_scan_cmd->u.scanCmd.pToRoamProfile) {
-			qdf_mem_free(saved_scan_cmd->u.scanCmd.pToRoamProfile);
-			saved_scan_cmd->u.scanCmd.pToRoamProfile = NULL;
-		}
-		if (saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList) {
-			qdf_mem_free(saved_scan_cmd->u.scanCmd.u.scanRequest.
-				     SSIDs.SSIDList);
-			saved_scan_cmd->u.scanCmd.u.scanRequest.SSIDs.
-				SSIDList = NULL;
-		}
-		if (saved_scan_cmd->u.roamCmd.pRoamBssEntry) {
-			qdf_mem_free(saved_scan_cmd->u.roamCmd.pRoamBssEntry);
-			saved_scan_cmd->u.roamCmd.pRoamBssEntry = NULL;
-		}
-		qdf_mem_free(saved_scan_cmd);
-		saved_scan_cmd = NULL;
-	}
 	/* DeInit Globals */
 	csr_roam_de_init_globals(pMac);
 	return status;
@@ -6873,7 +6851,7 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 			 * else case by sending assoc failure
 			 */
 			csr_roam_call_callback(mac_ctx, session_id,
-				&roam_info, cmd->u.scanCmd.roamId,
+				&roam_info, cmd->u.roamCmd.roamId,
 				eCSR_ROAM_ASSOCIATION_FAILURE,
 				eCSR_ROAM_RESULT_FAILURE);
 		}

@@ -236,15 +236,6 @@ int wma_roam_synch_frame_event_handler(void *handle, uint8_t *event,
 void wma_update_per_roam_config(WMA_HANDLE handle,
 				 struct wmi_per_roam_config_req *req_buf);
 
-QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
-				      tSirScanOffloadReq *scan_req,
-				      struct scan_req_params *cmd);
-
-QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
-				     wmi_buf_t *buf,
-				     int *buf_len,
-				     tAbortScanParams *abort_scan_req);
-
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list);
 

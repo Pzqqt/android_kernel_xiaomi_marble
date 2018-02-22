@@ -165,38 +165,11 @@ typedef enum {
 } eCsrRoamBssType;
 
 typedef enum {
-	eCSR_SCAN_REQUEST_11D_SCAN = 1,
-	eCSR_SCAN_REQUEST_FULL_SCAN,
-	eCSR_SCAN_IDLE_MODE_SCAN,
-	eCSR_SCAN_HO_PROBE_SCAN, /* direct probe on entry from candidate list */
-	eCSR_SCAN_P2P_DISCOVERY,
-
-	eCSR_SCAN_SOFTAP_CHANNEL_RANGE,
-	eCSR_SCAN_P2P_FIND_PEER,
-} eCsrRequestType;
-
-typedef enum {
-	eCSR_SCAN_RESULT_GET = 0,
-	eCSR_SCAN_RESULT_FLUSH = 1, /* to delete all cached scan results */
-} eCsrScanResultCmd;
-
-typedef enum {
 	eCSR_SCAN_SUCCESS,
 	eCSR_SCAN_FAILURE,
 	eCSR_SCAN_ABORT,
 	eCSR_SCAN_FOUND_PEER,
 } eCsrScanStatus;
-
-/*
- * Reason to abort the scan
- * The reason can used later to decide whether to update the scan results
- * to upper layer or not
- */
-typedef enum {
-	eCSR_SCAN_ABORT_DEFAULT = 1,
-	eCSR_SCAN_ABORT_DUE_TO_BAND_CHANGE, /* Scan abort due to band change */
-	eCSR_SCAN_ABORT_SSID_ONLY
-} eCsrAbortReason;
 
 typedef enum {
 	eCSR_BW_20MHz_VAL = 20,
@@ -287,31 +260,6 @@ typedef struct tagCsrStaParams {
 	uint8_t supported_oper_classes_len;
 	uint8_t supported_oper_classes[REG_MAX_SUPP_OPER_CLASSES];
 } tCsrStaParams;
-
-typedef struct tagCsrScanRequest {
-	tSirScanType scanType;
-	struct qdf_mac_addr bssid;
-	eCsrRoamBssType BSSType;
-	tCsrSSIDs SSIDs;
-	tCsrChannelInfo ChannelInfo;
-	uint32_t minChnTime;    /* in units of milliseconds */
-	uint32_t maxChnTime;    /* in units of milliseconds */
-	/* In units of milliseconds, ignored when not connected */
-	uint32_t restTime;
-	/* In units of milliseconds, ignored when not connected */
-	uint32_t min_rest_time;
-	/* In units of milliseconds, ignored when not connected */
-	uint32_t idle_time;
-	uint32_t uIEFieldLen;
-	uint8_t *pIEField;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	eCsrRequestType requestType; /* 11d scan or full scan */
-	bool p2pSearch;
-	bool skipDfsChnlInP2pSearch;
-	bool bcnRptReqScan;     /* is Scan issued by Beacon Report Request */
-	uint32_t scan_id;
-	uint32_t timestamp;
-} tCsrScanRequest;
 
 typedef struct tagCsrScanResultInfo {
 	/*

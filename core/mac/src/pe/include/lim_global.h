@@ -248,43 +248,6 @@ typedef struct sLimMlmJoinReq {
 	 */
 } tLimMlmJoinReq, *tpLimMlmJoinReq;
 
-typedef struct sLimMlmScanReq {
-	tSirBssType bssType;
-	tSirMacAddr bssId;
-	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
-	tSirScanType scanType;
-	uint32_t minChannelTime;
-	uint32_t maxChannelTime;
-	uint32_t dot11mode;
-	/* Number of SSIDs to scan(send Probe request) */
-	uint8_t numSsid;
-
-	bool p2pSearch;
-	uint16_t uIEFieldLen;
-	uint16_t uIEFieldOffset;
-
-	uint8_t sessionId;
-	/* channelList MUST be the last field of this structure */
-	tSirChannelList channelList;
-	/*-----------------------------
-	   tLimMlmScanReq....
-	   -----------------------------
-	   uIEFiledLen
-	   -----------------------------
-	   uIEFiledOffset               ----+
-	   -----------------------------    |
-	   channelList.numChannels          |
-	   -----------------------------    |
-	   ... variable size up to          |
-	   channelNumber[numChannels-1]     |
-	   This can be zero, if             |
-	   numChannel is zero.              |
-	   ----------------------------- <--+
-	   ... variable size uIEFiled
-	   up to uIEFieldLen (can be 0)
-	   -----------------------------*/
-} tLimMlmScanReq, *tpLimMlmScanReq;
-
 typedef struct tLimScanResultNode tLimScanResultNode;
 struct tLimScanResultNode {
 	tLimScanResultNode *next;

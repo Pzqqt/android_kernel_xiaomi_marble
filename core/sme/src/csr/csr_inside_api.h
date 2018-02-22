@@ -255,11 +255,6 @@ QDF_STATUS csr_scan_open(tpAniSirGlobal pMac);
 QDF_STATUS csr_scan_close(tpAniSirGlobal pMac);
 bool csr_scan_append_bss_description(tpAniSirGlobal pMac,
 				     tSirBssDescription *pSirBssDescription);
-void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
-			    eCsrScanStatus scanStatus);
-QDF_STATUS csr_scan_copy_request(tpAniSirGlobal pMac, tCsrScanRequest *pDstReq,
-				 tCsrScanRequest *pSrcReq);
-QDF_STATUS csr_scan_free_request(tpAniSirGlobal pMac, tCsrScanRequest *pReq);
 QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal pMac, uint32_t sessionId,
 			     tCsrRoamProfile *pProfile, uint32_t roamId,
 			     bool notify);
@@ -454,19 +449,6 @@ QDF_STATUS csr_roam_get_session_id_from_bssid(tpAniSirGlobal pMac,
 					      uint32_t *pSessionId);
 enum csr_cfgdot11mode csr_find_best_phy_mode(tpAniSirGlobal pMac,
 							uint32_t phyMode);
-
-/*
- * csr_scan_request() -
- * Request a 11d or full scan.
- *
- * callback - a callback function that scan calls upon finish, will not be
- * called if csr_scan_request returns error
- * pContext - a pointer passed in for the callback
- * Return QDF_STATUS
- */
-QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
-			tCsrScanRequest *scan_req,
-			csr_scan_completeCallback callback, void *pContext);
 
 /*
  * csr_scan_get_result() -

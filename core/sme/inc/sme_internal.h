@@ -56,7 +56,6 @@ typedef enum eSmeCommandType {
 	eSmeDropCommand,
 	/* this is not a command, it is to identify this is a CSR command */
 	eSmeCsrCommandMask = 0x10000,
-	eSmeCommandScan,
 	eSmeCommandRoam,
 	eSmeCommandWmStatusChange,
 #ifdef FEATURE_WLAN_TDLS
@@ -238,7 +237,6 @@ typedef struct tagSmeStruct {
 	void *dcc_stats_event_context;
 	ocb_callback dcc_stats_event_callback;
 	sme_set_thermal_level_callback set_thermal_level_cb;
-	void *saved_scan_cmd;
 	void *bpf_get_offload_context;
 	bpf_get_offload_cb bpf_get_offload_cb;
 	p2p_lo_callback p2p_lo_event_callback;

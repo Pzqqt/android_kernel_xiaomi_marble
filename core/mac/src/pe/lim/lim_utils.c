@@ -547,9 +547,6 @@ void lim_deactivate_timers(tpAniSirGlobal mac_ctx)
 
 	lim_deactivate_timers_host_roam(mac_ctx);
 
-	/* Deactivate Periodic Probe channel timers. */
-	tx_timer_deactivate(&lim_timer->gLimPeriodicProbeReqTimer);
-
 	/* Deactivate channel switch timer. */
 	tx_timer_deactivate(&lim_timer->gLimChannelSwitchTimer);
 
@@ -643,9 +640,6 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 		lim_deactivate_timers(mac_ctx);
 
 		lim_delete_timers_host_roam(mac_ctx);
-		/* Delete Periodic Probe channel timers. */
-		tx_timer_delete(&lim_timer->gLimPeriodicProbeReqTimer);
-
 		/* Delete channel switch timer. */
 		tx_timer_delete(&lim_timer->gLimChannelSwitchTimer);
 
@@ -6786,23 +6780,6 @@ lim_get_80Mhz_center_channel(uint8_t primary_channel)
 		return (149+161)/2;
 
 	return INVALID_CHANNEL_ID;
-}
-
-/**
- * lim_scan_type_to_string(): converts scan type enum to string.
- * @scan_type: enum value of scan_type.
- *
- * Return: Printable string for scan_type
- */
-const char *lim_scan_type_to_string(const uint8_t scan_type)
-{
-	switch (scan_type) {
-	CASE_RETURN_STRING(eSIR_PASSIVE_SCAN);
-	CASE_RETURN_STRING(eSIR_ACTIVE_SCAN);
-	CASE_RETURN_STRING(eSIR_BEACON_TABLE);
-	default:
-		return "Unknown scan_type";
-	}
 }
 
 /**

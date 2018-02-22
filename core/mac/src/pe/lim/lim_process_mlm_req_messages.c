@@ -58,7 +58,6 @@ static void lim_process_mlm_deauth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_set_keys_req(tpAniSirGlobal, uint32_t *);
 
 /* MLM Timeout event handler templates */
-static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx);
 static void lim_process_auth_rsp_timeout(tpAniSirGlobal, uint32_t);
 static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal);
 static void lim_process_auth_retry_timer(tpAniSirGlobal);
@@ -150,9 +149,6 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx,
 		break;
 	case LIM_MLM_SETKEYS_REQ:
 		lim_process_mlm_set_keys_req(mac_ctx, msg->bodyptr);
-		break;
-	case SIR_LIM_PERIODIC_PROBE_REQ_TIMEOUT:
-		lim_process_periodic_probe_req_timer(mac_ctx);
 		break;
 	case SIR_LIM_JOIN_FAIL_TIMEOUT:
 		lim_process_join_failure_timeout(mac_ctx);
@@ -2246,70 +2242,6 @@ end:
 	mlm_set_keys_cnf.sessionId = mlm_set_keys_req->sessionId;
 	lim_post_sme_set_keys_cnf(mac_ctx, mlm_set_keys_req, &mlm_set_keys_cnf);
 }
-
-/**
- * lim_process_periodic_probe_req_timer() - This function is called to process
- * periodic probe request to send during scan.
- *
- * @mac_ctx:      Pointer to Global MAC structure
- *
- * This function is called to process periodic probe request to send during scan
- *
- * @Return None
- */
-static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
-{
-	uint8_t channel_num;
-	uint8_t i = 0;
-	tLimMlmScanReq *mlm_scan_req;
-	tSirRetStatus status = eSIR_SUCCESS;
-	TX_TIMER *probe_req_timer =
-		&mac_ctx->lim.limTimers.gLimPeriodicProbeReqTimer;
-
-	if (qdf_mc_timer_get_current_state(&probe_req_timer->qdf_timer)
-					   != QDF_TIMER_STATE_STOPPED) {
-		pe_debug("Invalid state of timer");
-		return;
-	}
-
-	if (!((mac_ctx->lim.gLimMlmState == eLIM_MLM_WT_PROBE_RESP_STATE)
-	    && (probe_req_timer->sessionId != 0xff)
-	    && (mac_ctx->lim.probeCounter < mac_ctx->lim.maxProbe))) {
-		pe_debug("received unexpected Periodic scan timeout in state %X",
-			mac_ctx->lim.gLimMlmState);
-		return;
-	}
-
-	mlm_scan_req = mac_ctx->lim.gpLimMlmScanReq;
-	mac_ctx->lim.probeCounter++;
-	/* Periodic channel timer timed out to send probe request. */
-	channel_num = lim_get_current_scan_channel(mac_ctx);
-	do {
-		/*
-		 * Prepare and send Probe Request frame for all the SSIDs
-		 * present in the saved MLM
-		 */
-		status = lim_send_probe_req_mgmt_frame(mac_ctx,
-				&mlm_scan_req->ssId[i], mlm_scan_req->bssId,
-				channel_num, mac_ctx->lim.gSelfMacAddr,
-				mlm_scan_req->dot11mode,
-				mlm_scan_req->uIEFieldLen,
-				(uint8_t *) (mlm_scan_req) +
-					mlm_scan_req->uIEFieldOffset);
-		if (status != eSIR_SUCCESS) {
-			pe_err("send ProbeReq failed for SSID %s on channel: %d",
-				mlm_scan_req->ssId[i].ssId, channel_num);
-			return;
-		}
-		i++;
-	} while (i < mlm_scan_req->numSsid);
-	/* Activate timer again */
-	if (tx_timer_activate(probe_req_timer) != TX_SUCCESS) {
-		pe_warn("could not start periodic probe req timer");
-		return;
-	}
-}
-
 void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 {
 	tLimMlmJoinCnf mlm_join_cnf;

@@ -292,8 +292,6 @@ typedef struct sLimTimers {
 	/* Join Failure timeout on STA */
 	TX_TIMER gLimJoinFailureTimer;
 
-	TX_TIMER gLimPeriodicProbeReqTimer;
-
 	/* CNF_WAIT timer */
 	TX_TIMER *gpLimCnfWaitTimer;
 
@@ -383,9 +381,6 @@ typedef struct sAniSirLim {
 	 */
 	uint16_t gDeferMsgTypeForNOA;
 	uint32_t *gpDefdSmeMsgForNOA;
-
-	tLimMlmScanReq *gpLimMlmScanReq;
-
 
 	/* Used to store the list of legacy bss sta detected during scan on one channel */
 	uint16_t gLimRestoreCBNumScanInterval;

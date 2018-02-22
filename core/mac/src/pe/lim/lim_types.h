@@ -857,34 +857,6 @@ lim_post_mlm_message(tpAniSirGlobal pMac, uint32_t msgType, uint32_t *pMsgBuf)
 } /*** end lim_post_mlm_message() ***/
 
 /**
- * lim_get_current_scan_channel()
- *
- ***FUNCTION:
- * This function is called in various places to get current channel
- * number being scanned.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac      Pointer to Global MAC structure
- * @return Channel number
- */
-static inline uint8_t lim_get_current_scan_channel(tpAniSirGlobal pMac)
-{
-	uint8_t *pChanNum =
-		pMac->lim.gpLimMlmScanReq->channelList.channelNumber;
-
-	return *(pChanNum + pMac->lim.gLimCurrentScanChannelId);
-} /*** end lim_get_current_scan_channel() ***/
-
-/**
  * lim_get_ielen_from_bss_description()
  *
  ***FUNCTION:

@@ -91,7 +91,6 @@ static void __lim_init_scan_vars(tpAniSirGlobal pMac)
 	pMac->lim.gLimReturnUniqueResults = 0;
 
 	pMac->lim.gLimCurrentScanChannelId = 0;
-	pMac->lim.gpLimMlmScanReq = NULL;
 	pMac->lim.gDeferMsgTypeForNOA = 0;
 	pMac->lim.gpDefdSmeMsgForNOA = NULL;
 
@@ -676,11 +675,6 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	if (pMac->lim.gpDefdSmeMsgForNOA != NULL) {
 		qdf_mem_free(pMac->lim.gpDefdSmeMsgForNOA);
 		pMac->lim.gpDefdSmeMsgForNOA = NULL;
-	}
-
-	if (pMac->lim.gpLimMlmScanReq != NULL) {
-		qdf_mem_free(pMac->lim.gpLimMlmScanReq);
-		pMac->lim.gpLimMlmScanReq = NULL;
 	}
 
 	if (pMac->lim.limDisassocDeauthCnfReq.pMlmDisassocReq) {

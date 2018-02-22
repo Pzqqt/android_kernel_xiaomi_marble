@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012,2014-2015,2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -45,7 +45,6 @@
 uint8_t lim_is_sme_start_bss_req_valid(tpAniSirGlobal, tpSirSmeStartBssReq);
 uint8_t lim_set_rs_nie_wp_aiefrom_sme_start_bss_req_message(tpAniSirGlobal,
 							    tpSirRSNie, tpPESession);
-uint8_t lim_is_sme_scan_req_valid(tpAniSirGlobal, tpSirSmeScanReq);
 uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal, tpSirSmeJoinReq);
 uint8_t lim_is_sme_disassoc_req_valid(tpAniSirGlobal, tpSirSmeDisassocReq,
 				      tpPESession);

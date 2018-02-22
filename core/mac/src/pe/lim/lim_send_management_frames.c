@@ -273,12 +273,8 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * sent by P2P Client
 	 */
 	if ((WNI_CFG_DOT11_MODE_11B != dot11mode) && (p2pie != NULL) &&
-	    (((mac_ctx->lim.gpLimMlmScanReq != NULL) &&
-	      mac_ctx->lim.gpLimMlmScanReq->p2pSearch) ||
-	     ((pesession != NULL) &&
-	      (QDF_P2P_CLIENT_MODE == pesession->pePersona))
-	    )
-	   ) {
+	    ((pesession != NULL) &&
+	      (QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
 		/*
 		 * In the below API pass channel number > 14, do that it fills
 		 * only 11a rates in supported rates
@@ -443,17 +439,14 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* If this probe request is sent during P2P Search State, then we need
 	 * to send it at OFDM rate.
 	 */
-	if ((BAND_5G == lim_get_rf_band(channel))
-	    || ((mac_ctx->lim.gpLimMlmScanReq != NULL) &&
-		mac_ctx->lim.gpLimMlmScanReq->p2pSearch)
+	if ((BAND_5G == lim_get_rf_band(channel)) ||
 		/*
 		 * For unicast probe req mgmt from Join function we don't set
 		 * above variables. So we need to add one more check whether it
 		 * is pePersona is P2P_CLIENT or not
 		 */
-	    || ((pesession != NULL) &&
-		(QDF_P2P_CLIENT_MODE == pesession->pePersona))
-	    ) {
+	    ((pesession != NULL) &&
+		(QDF_P2P_CLIENT_MODE == pesession->pePersona))) {
 		txflag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 

@@ -324,24 +324,6 @@ struct csr_roamstart_bssparams {
 	uint32_t dfs_regdomain;
 };
 
-struct scan_cmd {
-	uint32_t scanID;
-	csr_scan_completeCallback callback;
-	void *pContext;
-	eCsrScanStatus status;
-	enum csr_roam_state lastRoamState[CSR_ROAM_SESSION_MAX];
-	tCsrRoamProfile *pToRoamProfile;
-	/* this is the ID related to the pToRoamProfile */
-	uint32_t roamId;
-	union {
-		tCsrScanRequest scanRequest;
-		/* tCsrBGScanRequest bgScanRequest is no longer used */
-	} u;
-	/* This flag will be set while aborting the scan due to band change */
-	eCsrAbortReason        abort_scan_indication;
-	qdf_mc_timer_t csr_scan_timer;
-};
-
 struct roam_cmd {
 	uint32_t roamId;
 	enum csr_roam_reason roamReason;

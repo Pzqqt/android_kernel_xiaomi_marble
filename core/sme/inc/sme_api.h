@@ -844,7 +844,6 @@ QDF_STATUS sme_modify_add_ie(tHalHandle hHal,
 QDF_STATUS sme_update_add_ie(tHalHandle hHal,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 QDF_STATUS sme_update_connect_debug(tHalHandle hHal, uint32_t set_value);
-const char *sme_scan_type_to_string(const uint8_t scan_type);
 const char *sme_bss_type_to_string(const uint8_t bss_type);
 QDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 		bool disablefwd);

@@ -169,7 +169,6 @@ typedef struct tagSmeCmd {
 	eSmeCommandType command;
 	uint32_t sessionId;
 	union {
-		struct scan_cmd scanCmd;
 		struct roam_cmd roamCmd;
 		struct wmstatus_changecmd wmStatusChangeCmd;
 		tGenericPmcCmd pmcCmd;

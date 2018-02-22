@@ -59,10 +59,6 @@
 #include <wlan_utility.h>
 #include "wlan_reg_services_api.h"
 
-#define MIN_CHN_TIME_TO_FIND_GO 100
-#define MAX_CHN_TIME_TO_FIND_GO 100
-#define DIRECT_SSID_LEN 7
-
 /* Purpose of HIDDEN_TIMER
  * When we remove hidden ssid from the profile i.e., forget the SSID via GUI
  * that SSID shouldn't see in the profile For above requirement we used timer
@@ -89,9 +85,6 @@
 #define CSR_SCAN_IS_OVER_BSS_LIMIT(pMac)  \
 	((pMac)->scan.nBssLimit <= (csr_ll_count(&(pMac)->scan.scanResultList)))
 
-static void csr_set_default_scan_timing(tpAniSirGlobal pMac,
-					tSirScanType scanType,
-					tCsrScanRequest *pScanRequest);
 static void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac, uint8_t
 					*pChannelList, uint8_t NumChannels);
 static void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
@@ -104,113 +97,396 @@ static bool csr_roam_is_valid_channel(tpAniSirGlobal pMac, uint8_t channel);
 #define CSR_IS_SOCIAL_CHANNEL(channel) \
 	(((channel) == 1) || ((channel) == 6) || ((channel) == 11))
 
-/* pResult is invalid calling this function. */
-void csr_free_scan_result_entry(tpAniSirGlobal pMac, struct tag_csrscan_result
-				*pResult)
-{
-	if (NULL != pResult->Result.pvIes)
-		qdf_mem_free(pResult->Result.pvIes);
+#ifndef NAPIER_SCAN
 
-	qdf_mem_free(pResult);
-}
+#define MIN_CHN_TIME_TO_FIND_GO 100
+#define MAX_CHN_TIME_TO_FIND_GO 100
+#define DIRECT_SSID_LEN 7
 
-static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
-					   tDblLinkList *pList)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tListElem *pEntry;
-	struct tag_csrscan_result *pBssDesc;
+/* Increase dwell time for P2P search in ms */
+#define P2P_SEARCH_DWELL_TIME_INCREASE   20
+#define P2P_SOCIAL_CHANNELS              3
 
-	csr_ll_lock(pList);
+/**
+ * csr_scan_filter_given_chnl_band() - filter all channels which matches given
+ *                                    channel's band
+ * @mac_ctx: pointer to mac context
+ * @channel: Given channel
+ * @dst_req: destination scan request
+ *
+ * when ever particular connection already exist, STA should not scan the
+ * channels which fall under same band as given channel's band.
+ * this routine will filter out those channels
+ *
+ * Return: true if success otherwise false for any failure
+ */
+static bool csr_scan_filter_given_chnl_band(tpAniSirGlobal mac_ctx,
+			uint8_t channel, tCsrScanRequest *dst_req) {
+	uint8_t valid_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint32_t filter_chnl_len = 0, i = 0;
+	uint32_t valid_chnl_len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 
-	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_NOLOCK)) != NULL) {
-		pBssDesc = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
-					Link);
-		csr_free_scan_result_entry(pMac, pBssDesc);
+	if (!channel) {
+		sme_debug("Nothing to filter as no IBSS session");
+		return true;
 	}
 
-	csr_ll_unlock(pList);
-
-	return status;
-}
-
-QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
-{
-	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList24);
-	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList5G);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
-{
-	csr_purge_channel_power(pMac, &pMac->scan.channelPowerInfoList24);
-	csr_purge_channel_power(pMac, &pMac->scan.channelPowerInfoList5G);
-	csr_ll_close(&pMac->scan.channelPowerInfoList24);
-	csr_ll_close(&pMac->scan.channelPowerInfoList5G);
-	ucfg_scan_set_enable(pMac->psoc, false);
-	return QDF_STATUS_SUCCESS;
-}
-
-/* Set scan timing parameters according to state of other driver sessions */
-/* No validation of the parameters is performed. */
-static void csr_set_default_scan_timing(tpAniSirGlobal pMac,
-					tSirScanType scanType,
-					tCsrScanRequest *pScanRequest)
-{
-#ifdef WLAN_AP_STA_CONCURRENCY
-	if (csr_is_any_session_connected(pMac)) {
-		/* Reset passive scan time as per ini parameter. */
-		cfg_set_int(pMac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
-			    pMac->roam.configParam.nPassiveMaxChnTimeConc);
-		/* If multi-session, use the appropriate default scan times */
-		if (scanType == eSIR_ACTIVE_SCAN) {
-			pScanRequest->maxChnTime =
-				pMac->roam.configParam.nActiveMaxChnTimeConc;
-			pScanRequest->minChnTime =
-				pMac->roam.configParam.nActiveMinChnTimeConc;
-		} else {
-			pScanRequest->maxChnTime =
-				pMac->roam.configParam.nPassiveMaxChnTimeConc;
-			pScanRequest->minChnTime =
-				pMac->roam.configParam.nPassiveMinChnTimeConc;
+	if (!dst_req) {
+		sme_err("No valid scan requests");
+		return false;
+	}
+	/*
+	 * In case of concurrent IBSS session exist, scan only
+	 * those channels which are not in IBSS channel's band.
+	 * In case if no-concurrent IBSS session exist then scan
+	 * full band
+	 */
+	if (dst_req->ChannelInfo.numOfChannels == 0) {
+		csr_get_cfg_valid_channels(mac_ctx, valid_chnl_list,
+				&valid_chnl_len);
+	} else {
+		valid_chnl_len = (WNI_CFG_VALID_CHANNEL_LIST_LEN >
+					dst_req->ChannelInfo.numOfChannels) ?
+					dst_req->ChannelInfo.numOfChannels :
+					WNI_CFG_VALID_CHANNEL_LIST_LEN;
+		qdf_mem_copy(valid_chnl_list, dst_req->ChannelInfo.ChannelList,
+				valid_chnl_len);
+	}
+	for (i = 0; i < valid_chnl_len; i++) {
+		if (valid_chnl_list[i] >= WLAN_REG_MIN_11P_CH_NUM)
+			continue;
+		if (WLAN_REG_IS_5GHZ_CH(channel) &&
+			WLAN_REG_IS_24GHZ_CH(valid_chnl_list[i])) {
+			valid_chnl_list[filter_chnl_len] =
+					valid_chnl_list[i];
+			filter_chnl_len++;
+		} else if (WLAN_REG_IS_24GHZ_CH(channel) &&
+			WLAN_REG_IS_5GHZ_CH(valid_chnl_list[i])) {
+			valid_chnl_list[filter_chnl_len] =
+					valid_chnl_list[i];
+			filter_chnl_len++;
 		}
-		pScanRequest->restTime = pMac->roam.configParam.nRestTimeConc;
+	}
+	if (filter_chnl_len == 0) {
+		sme_err("there no channels to scan due to IBSS session");
+		return false;
+	}
 
-		pScanRequest->min_rest_time =
-			pMac->roam.configParam.min_rest_time_conc;
-		pScanRequest->idle_time =
-			pMac->roam.configParam.idle_time_conc;
+	if (dst_req->ChannelInfo.ChannelList) {
+		qdf_mem_free(dst_req->ChannelInfo.ChannelList);
+		dst_req->ChannelInfo.ChannelList = NULL;
+		dst_req->ChannelInfo.numOfChannels = 0;
+	}
 
-		/* Return so that fields set above will not be overwritten. */
+	dst_req->ChannelInfo.ChannelList =
+			qdf_mem_malloc(filter_chnl_len *
+				sizeof(*dst_req->ChannelInfo.ChannelList));
+	dst_req->ChannelInfo.numOfChannels = filter_chnl_len;
+	if (NULL == dst_req->ChannelInfo.ChannelList) {
+		sme_err("Memory allocation failed");
+		return false;
+	}
+	qdf_mem_copy(dst_req->ChannelInfo.ChannelList, valid_chnl_list,
+			filter_chnl_len);
+	return true;
+}
+
+/**
+ * csr_scan_copy_request_valid_channels_only() - scan request of valid channels
+ * @mac_ctx : pointer to Global Mac Structure
+ * @dst_req: pointer to tCsrScanRequest
+ * @skip_dfs_chnl: 1 - skip dfs channel, 0 - don't skip dfs channel
+ * @src_req: pointer to tCsrScanRequest
+ *
+ * This function makes a copy of scan request with valid channels
+ *
+ * Return: none
+ */
+static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
+				tCsrScanRequest *dst_req, uint8_t skip_dfs_chnl,
+				tCsrScanRequest *src_req)
+{
+	uint32_t index = 0;
+	uint32_t new_index = 0;
+	uint16_t  unsafe_chan[NUM_CHANNELS];
+	uint16_t  unsafe_chan_cnt = 0;
+	uint16_t  cnt = 0;
+	bool      is_unsafe_chan;
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+	if (!qdf_ctx) {
+		cds_err("qdf_ctx is NULL");
 		return;
 	}
-#endif
+	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
+			&unsafe_chan_cnt,
+			sizeof(unsafe_chan));
 
-	/* This portion of the code executed if multi-session not supported */
-	/* (WLAN_AP_STA_CONCURRENCY not defined) or no multi-session. */
-	/* Use the "regular" (non-concurrency) default scan timing. */
-	cfg_set_int(pMac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
-		    pMac->roam.configParam.nPassiveMaxChnTime);
-	if (pScanRequest->scanType == eSIR_ACTIVE_SCAN) {
-		pScanRequest->maxChnTime =
-			pMac->roam.configParam.nActiveMaxChnTime;
-		pScanRequest->minChnTime =
-			pMac->roam.configParam.nActiveMinChnTime;
-	} else {
-		pScanRequest->maxChnTime =
-			pMac->roam.configParam.nPassiveMaxChnTime;
-		pScanRequest->minChnTime =
-			pMac->roam.configParam.nPassiveMinChnTime;
+	if (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
+			CSR_STA_ROAM_POLICY_DFS_DISABLED)
+		skip_dfs_chnl = true;
+
+	for (index = 0; index < src_req->ChannelInfo.numOfChannels; index++) {
+		/* Allow scan on valid channels only.
+		 * If it is p2p scan and valid channel list doesnt contain
+		 * social channels, enforce scan on social channels because
+		 * that is the only way to find p2p peers.
+		 * This can happen only if band is set to 5Ghz mode.
+		 */
+		if (src_req->ChannelInfo.ChannelList[index] <
+		    WLAN_REG_MIN_11P_CH_NUM &&
+		    ((csr_roam_is_valid_channel(mac_ctx,
+		     src_req->ChannelInfo.ChannelList[index])) ||
+		     ((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
+		      CSR_IS_SOCIAL_CHANNEL(
+				src_req->ChannelInfo.ChannelList[index])))) {
+			if (((src_req->skipDfsChnlInP2pSearch ||
+				skip_dfs_chnl) && (CHANNEL_STATE_DFS ==
+				wlan_reg_get_channel_state(mac_ctx->pdev,
+				src_req->ChannelInfo.ChannelList[index]))) &&
+				(src_req->ChannelInfo.numOfChannels > 1)) {
+				sme_debug(
+					"reqType= %d, numOfChannels=%d, ignoring DFS channel %d",
+					src_req->requestType,
+					src_req->ChannelInfo.numOfChannels,
+					src_req->ChannelInfo.ChannelList
+						[index]);
+				continue;
+			}
+			if (mac_ctx->roam.configParam.
+					sta_roam_policy.skip_unsafe_channels &&
+					unsafe_chan_cnt) {
+				is_unsafe_chan = false;
+				for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
+					if (unsafe_chan[cnt] ==
+						src_req->ChannelInfo.
+						ChannelList[index]) {
+						is_unsafe_chan = true;
+						break;
+					}
+				}
+				if (is_unsafe_chan &&
+					((CSR_IS_CHANNEL_24GHZ(
+						src_req->ChannelInfo.
+						ChannelList[index]) &&
+					mac_ctx->roam.configParam.
+					sta_roam_policy.sap_operating_band ==
+						BAND_2G) ||
+						(WLAN_REG_IS_5GHZ_CH(
+							src_req->ChannelInfo.
+							ChannelList[index]) &&
+					mac_ctx->roam.configParam.
+					sta_roam_policy.sap_operating_band ==
+						BAND_5G))) {
+					QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_DEBUG,
+					      FL("ignoring unsafe channel %d"),
+						src_req->ChannelInfo.
+						ChannelList[index]);
+					continue;
+				}
+			}
+
+			dst_req->ChannelInfo.ChannelList[new_index] =
+				src_req->ChannelInfo.ChannelList[index];
+			new_index++;
+		}
 	}
-#ifdef WLAN_AP_STA_CONCURRENCY
+	dst_req->ChannelInfo.numOfChannels = new_index;
+}
 
-	/* No rest time/Idle time if no sessions are connected. */
-	pScanRequest->restTime = 0;
-	pScanRequest->min_rest_time = 0;
-	pScanRequest->idle_time = 0;
+/**
+ * csr_scan_copy_request() - Function to copy scan request
+ * @mac_ctx : pointer to Global Mac Structure
+ * @dst_req: pointer to tCsrScanRequest
+ * @src_req: pointer to tCsrScanRequest
+ *
+ * This function makes a copy of scan request
+ *
+ * Return: 0 - Success, Error number - Failure
+ */
+QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
+				tCsrScanRequest *dst_req,
+				tCsrScanRequest *src_req)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t len = sizeof(mac_ctx->roam.validChannelList);
+	uint32_t index = 0;
+	uint32_t new_index = 0;
+	enum channel_state channel_state;
+	uint8_t channel = 0;
 
-#endif
+	bool skip_dfs_chnl =
+			mac_ctx->roam.configParam.initial_scan_no_dfs_chnl ||
+				!mac_ctx->scan.fEnableDFSChnlScan;
+
+	status = csr_scan_free_request(mac_ctx, dst_req);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		goto complete;
+	qdf_mem_copy(dst_req, src_req, sizeof(tCsrScanRequest));
+	/* Re-initialize the pointers to NULL since we did a copy */
+	dst_req->pIEField = NULL;
+	dst_req->ChannelInfo.ChannelList = NULL;
+	dst_req->SSIDs.SSIDList = NULL;
+
+	if (src_req->uIEFieldLen) {
+		dst_req->pIEField =
+			qdf_mem_malloc(src_req->uIEFieldLen);
+		if (NULL == dst_req->pIEField) {
+			status = QDF_STATUS_E_NOMEM;
+			sme_err("No memory for scanning IE fields");
+			goto complete;
+		} else {
+			status = QDF_STATUS_SUCCESS;
+			qdf_mem_copy(dst_req->pIEField, src_req->pIEField,
+				src_req->uIEFieldLen);
+			dst_req->uIEFieldLen = src_req->uIEFieldLen;
+		}
+	}
+
+	/* Allocate memory for IE field */
+	if (src_req->ChannelInfo.numOfChannels == 0) {
+		dst_req->ChannelInfo.ChannelList = NULL;
+		dst_req->ChannelInfo.numOfChannels = 0;
+	} else {
+		dst_req->ChannelInfo.ChannelList =
+			qdf_mem_malloc(src_req->ChannelInfo.numOfChannels *
+				sizeof(*dst_req->ChannelInfo.ChannelList));
+		if (NULL == dst_req->ChannelInfo.ChannelList) {
+			status = QDF_STATUS_E_NOMEM;
+			dst_req->ChannelInfo.numOfChannels = 0;
+			sme_err("No memory for scanning Channel List");
+			goto complete;
+		}
+
+		if ((src_req->scanType == eSIR_PASSIVE_SCAN) &&
+			(src_req->requestType == eCSR_SCAN_REQUEST_11D_SCAN)) {
+			for (index = 0; index < src_req->ChannelInfo.
+						numOfChannels; index++) {
+				channel_state = wlan_reg_get_channel_state(
+						mac_ctx->pdev,
+						src_req->ChannelInfo.
+						ChannelList[index]);
+				if (src_req->ChannelInfo.ChannelList[index] <
+				    WLAN_REG_MIN_11P_CH_NUM &&
+				    ((CHANNEL_STATE_ENABLE ==
+				      channel_state) ||
+				     ((CHANNEL_STATE_DFS == channel_state) &&
+				      !skip_dfs_chnl))) {
+					dst_req->ChannelInfo.ChannelList
+						[new_index] =
+						src_req->
+						ChannelInfo.
+						ChannelList
+						[index];
+					new_index++;
+				}
+			}
+			dst_req->ChannelInfo.numOfChannels = new_index;
+		} else if (QDF_IS_STATUS_SUCCESS(
+				csr_get_cfg_valid_channels(mac_ctx,
+						mac_ctx->roam.validChannelList,
+						&len))) {
+			new_index = 0;
+			mac_ctx->roam.numValidChannels = len;
+			csr_scan_copy_request_valid_channels_only(mac_ctx,
+							dst_req, skip_dfs_chnl,
+							src_req);
+		} else {
+			sme_err(
+				"Couldn't get the valid Channel List, keeping requester's list");
+			new_index = 0;
+			for (index = 0; index < src_req->ChannelInfo.
+				     numOfChannels; index++) {
+				if (src_req->ChannelInfo.ChannelList[index] <
+				    WLAN_REG_MIN_11P_CH_NUM) {
+					dst_req->ChannelInfo.
+						ChannelList[new_index] =
+						src_req->ChannelInfo.
+						ChannelList[index];
+					new_index++;
+				}
+			}
+			dst_req->ChannelInfo.numOfChannels =
+				new_index;
+		}
+	} /* Allocate memory for Channel List */
+
+	/*
+	 * If IBSS concurrent connection exist, and if the scan
+	 * request comes from STA adapter then we need to filter
+	 * out IBSS channel's band otherwise it will cause issue
+	 * in IBSS+STA concurrency
+	 *
+	 * If DFS SAP/GO concurrent connection exist, and if the scan
+	 * request comes from STA adapter then we need to filter
+	 * out SAP/GO channel's band otherwise it will cause issue in
+	 * SAP+STA concurrency
+	 */
+	if (policy_mgr_is_ibss_conn_exist(mac_ctx->psoc, &channel)) {
+		sme_debug("Conc IBSS exist, channel list will be modified");
+	} else if (policy_mgr_is_any_dfs_beaconing_session_present(
+			mac_ctx->psoc, &channel)) {
+		/*
+		 * 1) if agile & DFS scans are supported
+		 * 2) if hardware is DBS capable
+		 * 3) if current hw mode is non-dbs
+		 * if all above 3 conditions are true then don't skip any
+		 * channel from scan list
+		 */
+		if (true != policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) &&
+		    policy_mgr_get_dbs_plus_agile_scan_config(mac_ctx->psoc) &&
+		    policy_mgr_get_single_mac_scan_with_dfs_config(
+		    mac_ctx->psoc))
+			channel = 0;
+		else
+			sme_debug(
+				"Conc DFS SAP/GO exist, channel list will be modified");
+	}
+
+	if ((channel > 0) &&
+	    (!csr_scan_filter_given_chnl_band(mac_ctx, channel, dst_req))) {
+		sme_err("Can't filter channels due to IBSS/SAP DFS");
+		goto complete;
+	}
+
+	if (src_req->SSIDs.numOfSSIDs == 0) {
+		dst_req->SSIDs.numOfSSIDs = 0;
+		dst_req->SSIDs.SSIDList = NULL;
+	} else {
+		dst_req->SSIDs.SSIDList =
+			qdf_mem_malloc(src_req->SSIDs.numOfSSIDs *
+					sizeof(*dst_req->SSIDs.SSIDList));
+		if (NULL == dst_req->SSIDs.SSIDList)
+			status = QDF_STATUS_E_NOMEM;
+		else
+			status = QDF_STATUS_SUCCESS;
+		if (QDF_IS_STATUS_SUCCESS(status)) {
+			dst_req->SSIDs.numOfSSIDs =
+				src_req->SSIDs.numOfSSIDs;
+			qdf_mem_copy(dst_req->SSIDs.SSIDList,
+				src_req->SSIDs.SSIDList,
+				src_req->SSIDs.numOfSSIDs *
+				sizeof(*dst_req->SSIDs.SSIDList));
+		} else {
+			dst_req->SSIDs.numOfSSIDs = 0;
+			sme_err("No memory for scanning SSID List");
+			goto complete;
+		}
+	} /* Allocate memory for SSID List */
+	qdf_mem_copy(&dst_req->bssid, &src_req->bssid,
+		sizeof(struct qdf_mac_addr));
+	dst_req->p2pSearch = src_req->p2pSearch;
+	dst_req->skipDfsChnlInP2pSearch =
+		src_req->skipDfsChnlInP2pSearch;
+	dst_req->scan_id = src_req->scan_id;
+	dst_req->timestamp = src_req->timestamp;
+
+complete:
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		csr_scan_free_request(mac_ctx, dst_req);
+
+	return status;
 }
 
 /**
@@ -274,6 +550,67 @@ csr_scan_2g_only_request(tpAniSirGlobal mac_ctx,
 	}
 	scan_req->ChannelInfo.numOfChannels = lst_sz;
 	return QDF_STATUS_SUCCESS;
+}
+
+/* Set scan timing parameters according to state of other driver sessions */
+/* No validation of the parameters is performed. */
+static void csr_set_default_scan_timing(tpAniSirGlobal pMac,
+					tSirScanType scanType,
+					tCsrScanRequest *pScanRequest)
+{
+#ifdef WLAN_AP_STA_CONCURRENCY
+	if (csr_is_any_session_connected(pMac)) {
+		/* Reset passive scan time as per ini parameter. */
+		cfg_set_int(pMac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
+			    pMac->roam.configParam.nPassiveMaxChnTimeConc);
+		/* If multi-session, use the appropriate default scan times */
+		if (scanType == eSIR_ACTIVE_SCAN) {
+			pScanRequest->maxChnTime =
+				pMac->roam.configParam.nActiveMaxChnTimeConc;
+			pScanRequest->minChnTime =
+				pMac->roam.configParam.nActiveMinChnTimeConc;
+		} else {
+			pScanRequest->maxChnTime =
+				pMac->roam.configParam.nPassiveMaxChnTimeConc;
+			pScanRequest->minChnTime =
+				pMac->roam.configParam.nPassiveMinChnTimeConc;
+		}
+		pScanRequest->restTime = pMac->roam.configParam.nRestTimeConc;
+
+		pScanRequest->min_rest_time =
+			pMac->roam.configParam.min_rest_time_conc;
+		pScanRequest->idle_time =
+			pMac->roam.configParam.idle_time_conc;
+
+		/* Return so that fields set above will not be overwritten. */
+		return;
+	}
+#endif
+
+	/* This portion of the code executed if multi-session not supported */
+	/* (WLAN_AP_STA_CONCURRENCY not defined) or no multi-session. */
+	/* Use the "regular" (non-concurrency) default scan timing. */
+	cfg_set_int(pMac, WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
+		    pMac->roam.configParam.nPassiveMaxChnTime);
+	if (pScanRequest->scanType == eSIR_ACTIVE_SCAN) {
+		pScanRequest->maxChnTime =
+			pMac->roam.configParam.nActiveMaxChnTime;
+		pScanRequest->minChnTime =
+			pMac->roam.configParam.nActiveMinChnTime;
+	} else {
+		pScanRequest->maxChnTime =
+			pMac->roam.configParam.nPassiveMaxChnTime;
+		pScanRequest->minChnTime =
+			pMac->roam.configParam.nPassiveMinChnTime;
+	}
+#ifdef WLAN_AP_STA_CONCURRENCY
+
+	/* No rest time/Idle time if no sessions are connected. */
+	pScanRequest->restTime = 0;
+	pScanRequest->min_rest_time = 0;
+	pScanRequest->idle_time = 0;
+
+#endif
 }
 
 static QDF_STATUS
@@ -544,7 +881,55 @@ release_cmd:
 
 	return status;
 }
+#endif
 
+/* pResult is invalid calling this function. */
+void csr_free_scan_result_entry(tpAniSirGlobal pMac, struct tag_csrscan_result
+				*pResult)
+{
+	if (NULL != pResult->Result.pvIes)
+		qdf_mem_free(pResult->Result.pvIes);
+
+	qdf_mem_free(pResult);
+}
+
+static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
+					   tDblLinkList *pList)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tListElem *pEntry;
+	struct tag_csrscan_result *pBssDesc;
+
+	csr_ll_lock(pList);
+
+	while ((pEntry = csr_ll_remove_head(pList, LL_ACCESS_NOLOCK)) != NULL) {
+		pBssDesc = GET_BASE_ADDR(pEntry, struct tag_csrscan_result,
+					Link);
+		csr_free_scan_result_entry(pMac, pBssDesc);
+	}
+
+	csr_ll_unlock(pList);
+
+	return status;
+}
+
+QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
+{
+	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList24);
+	csr_ll_open(mac_ctx->hHdd, &mac_ctx->scan.channelPowerInfoList5G);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
+{
+	csr_purge_channel_power(pMac, &pMac->scan.channelPowerInfoList24);
+	csr_purge_channel_power(pMac, &pMac->scan.channelPowerInfoList5G);
+	csr_ll_close(&pMac->scan.channelPowerInfoList24);
+	csr_ll_close(&pMac->scan.channelPowerInfoList5G);
+	ucfg_scan_set_enable(pMac->psoc, false);
+	return QDF_STATUS_SUCCESS;
+}
 QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac_ctx,
 					   uint32_t session_id)
 {
@@ -1751,7 +2136,7 @@ csr_diag_scan_complete(tpAniSirGlobal mac_ctx,
  * csr_saved_scan_cmd_free_fields() - Free internal fields of scan command
  *
  * @mac_ctx: Global MAC context
- * @saved_scan_cmd: Pointer to scan command
+ * @session: sme session
  *
  * Frees data structures allocated inside saved_scan_cmd and releases
  * the profile.
@@ -2042,427 +2427,6 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
 	csr_ll_unlock(&pResultList->List);
 
 	return status;
-}
-
-/**
- * csr_scan_copy_request_valid_channels_only() - scan request of valid channels
- * @mac_ctx : pointer to Global Mac Structure
- * @dst_req: pointer to tCsrScanRequest
- * @skip_dfs_chnl: 1 - skip dfs channel, 0 - don't skip dfs channel
- * @src_req: pointer to tCsrScanRequest
- *
- * This function makes a copy of scan request with valid channels
- *
- * Return: none
- */
-static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
-				tCsrScanRequest *dst_req, uint8_t skip_dfs_chnl,
-				tCsrScanRequest *src_req)
-{
-	uint32_t index = 0;
-	uint32_t new_index = 0;
-	uint16_t  unsafe_chan[NUM_CHANNELS];
-	uint16_t  unsafe_chan_cnt = 0;
-	uint16_t  cnt = 0;
-	bool      is_unsafe_chan;
-	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-
-	if (!qdf_ctx) {
-		cds_err("qdf_ctx is NULL");
-		return;
-	}
-	pld_get_wlan_unsafe_channel(qdf_ctx->dev, unsafe_chan,
-			&unsafe_chan_cnt,
-			sizeof(unsafe_chan));
-
-	if (mac_ctx->roam.configParam.sta_roam_policy.dfs_mode ==
-			CSR_STA_ROAM_POLICY_DFS_DISABLED)
-		skip_dfs_chnl = true;
-
-	for (index = 0; index < src_req->ChannelInfo.numOfChannels; index++) {
-		/* Allow scan on valid channels only.
-		 * If it is p2p scan and valid channel list doesnt contain
-		 * social channels, enforce scan on social channels because
-		 * that is the only way to find p2p peers.
-		 * This can happen only if band is set to 5Ghz mode.
-		 */
-		if (src_req->ChannelInfo.ChannelList[index] <
-		    WLAN_REG_MIN_11P_CH_NUM &&
-		    ((csr_roam_is_valid_channel(mac_ctx,
-		     src_req->ChannelInfo.ChannelList[index])) ||
-		     ((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
-		      CSR_IS_SOCIAL_CHANNEL(
-				src_req->ChannelInfo.ChannelList[index])))) {
-			if (((src_req->skipDfsChnlInP2pSearch ||
-				skip_dfs_chnl) && (CHANNEL_STATE_DFS ==
-				wlan_reg_get_channel_state(mac_ctx->pdev,
-				src_req->ChannelInfo.ChannelList[index]))) &&
-				(src_req->ChannelInfo.numOfChannels > 1)) {
-				sme_debug(
-					"reqType= %d, numOfChannels=%d, ignoring DFS channel %d",
-					src_req->requestType,
-					src_req->ChannelInfo.numOfChannels,
-					src_req->ChannelInfo.ChannelList
-						[index]);
-				continue;
-			}
-			if (mac_ctx->roam.configParam.
-					sta_roam_policy.skip_unsafe_channels &&
-					unsafe_chan_cnt) {
-				is_unsafe_chan = false;
-				for (cnt = 0; cnt < unsafe_chan_cnt; cnt++) {
-					if (unsafe_chan[cnt] ==
-						src_req->ChannelInfo.
-						ChannelList[index]) {
-						is_unsafe_chan = true;
-						break;
-					}
-				}
-				if (is_unsafe_chan &&
-					((CSR_IS_CHANNEL_24GHZ(
-						src_req->ChannelInfo.
-						ChannelList[index]) &&
-					mac_ctx->roam.configParam.
-					sta_roam_policy.sap_operating_band ==
-						BAND_2G) ||
-						(WLAN_REG_IS_5GHZ_CH(
-							src_req->ChannelInfo.
-							ChannelList[index]) &&
-					mac_ctx->roam.configParam.
-					sta_roam_policy.sap_operating_band ==
-						BAND_5G))) {
-					QDF_TRACE(QDF_MODULE_ID_SME,
-						QDF_TRACE_LEVEL_DEBUG,
-					      FL("ignoring unsafe channel %d"),
-						src_req->ChannelInfo.
-						ChannelList[index]);
-					continue;
-				}
-			}
-
-			dst_req->ChannelInfo.ChannelList[new_index] =
-				src_req->ChannelInfo.ChannelList[index];
-			new_index++;
-		}
-	}
-	dst_req->ChannelInfo.numOfChannels = new_index;
-}
-
-/**
- * csr_scan_filter_given_chnl_band() - filter all channels which matches given
- *                                    channel's band
- * @mac_ctx: pointer to mac context
- * @channel: Given channel
- * @dst_req: destination scan request
- *
- * when ever particular connection already exist, STA should not scan the
- * channels which fall under same band as given channel's band.
- * this routine will filter out those channels
- *
- * Return: true if success otherwise false for any failure
- */
-static bool csr_scan_filter_given_chnl_band(tpAniSirGlobal mac_ctx,
-			uint8_t channel, tCsrScanRequest *dst_req) {
-	uint8_t valid_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
-	uint32_t filter_chnl_len = 0, i = 0;
-	uint32_t valid_chnl_len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-
-	if (!channel) {
-		sme_debug("Nothing to filter as no IBSS session");
-		return true;
-	}
-
-	if (!dst_req) {
-		sme_err("No valid scan requests");
-		return false;
-	}
-	/*
-	 * In case of concurrent IBSS session exist, scan only
-	 * those channels which are not in IBSS channel's band.
-	 * In case if no-concurrent IBSS session exist then scan
-	 * full band
-	 */
-	if (dst_req->ChannelInfo.numOfChannels == 0) {
-		csr_get_cfg_valid_channels(mac_ctx, valid_chnl_list,
-				&valid_chnl_len);
-	} else {
-		valid_chnl_len = (WNI_CFG_VALID_CHANNEL_LIST_LEN >
-					dst_req->ChannelInfo.numOfChannels) ?
-					dst_req->ChannelInfo.numOfChannels :
-					WNI_CFG_VALID_CHANNEL_LIST_LEN;
-		qdf_mem_copy(valid_chnl_list, dst_req->ChannelInfo.ChannelList,
-				valid_chnl_len);
-	}
-	for (i = 0; i < valid_chnl_len; i++) {
-		if (valid_chnl_list[i] >= WLAN_REG_MIN_11P_CH_NUM)
-			continue;
-		if (WLAN_REG_IS_5GHZ_CH(channel) &&
-			WLAN_REG_IS_24GHZ_CH(valid_chnl_list[i])) {
-			valid_chnl_list[filter_chnl_len] =
-					valid_chnl_list[i];
-			filter_chnl_len++;
-		} else if (WLAN_REG_IS_24GHZ_CH(channel) &&
-			WLAN_REG_IS_5GHZ_CH(valid_chnl_list[i])) {
-			valid_chnl_list[filter_chnl_len] =
-					valid_chnl_list[i];
-			filter_chnl_len++;
-		}
-	}
-	if (filter_chnl_len == 0) {
-		sme_err("there no channels to scan due to IBSS session");
-		return false;
-	}
-
-	if (dst_req->ChannelInfo.ChannelList) {
-		qdf_mem_free(dst_req->ChannelInfo.ChannelList);
-		dst_req->ChannelInfo.ChannelList = NULL;
-		dst_req->ChannelInfo.numOfChannels = 0;
-	}
-
-	dst_req->ChannelInfo.ChannelList =
-			qdf_mem_malloc(filter_chnl_len *
-				sizeof(*dst_req->ChannelInfo.ChannelList));
-	dst_req->ChannelInfo.numOfChannels = filter_chnl_len;
-	if (NULL == dst_req->ChannelInfo.ChannelList) {
-		sme_err("Memory allocation failed");
-		return false;
-	}
-	qdf_mem_copy(dst_req->ChannelInfo.ChannelList, valid_chnl_list,
-			filter_chnl_len);
-	return true;
-}
-
-/**
- * csr_scan_copy_request() - Function to copy scan request
- * @mac_ctx : pointer to Global Mac Structure
- * @dst_req: pointer to tCsrScanRequest
- * @src_req: pointer to tCsrScanRequest
- *
- * This function makes a copy of scan request
- *
- * Return: 0 - Success, Error number - Failure
- */
-QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
-				tCsrScanRequest *dst_req,
-				tCsrScanRequest *src_req)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	uint32_t len = sizeof(mac_ctx->roam.validChannelList);
-	uint32_t index = 0;
-	uint32_t new_index = 0;
-	enum channel_state channel_state;
-	uint8_t channel = 0;
-
-	bool skip_dfs_chnl =
-			mac_ctx->roam.configParam.initial_scan_no_dfs_chnl ||
-				!mac_ctx->scan.fEnableDFSChnlScan;
-
-	status = csr_scan_free_request(mac_ctx, dst_req);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		goto complete;
-	qdf_mem_copy(dst_req, src_req, sizeof(tCsrScanRequest));
-	/* Re-initialize the pointers to NULL since we did a copy */
-	dst_req->pIEField = NULL;
-	dst_req->ChannelInfo.ChannelList = NULL;
-	dst_req->SSIDs.SSIDList = NULL;
-
-	if (src_req->uIEFieldLen) {
-		dst_req->pIEField =
-			qdf_mem_malloc(src_req->uIEFieldLen);
-		if (NULL == dst_req->pIEField) {
-			status = QDF_STATUS_E_NOMEM;
-			sme_err("No memory for scanning IE fields");
-			goto complete;
-		} else {
-			status = QDF_STATUS_SUCCESS;
-			qdf_mem_copy(dst_req->pIEField, src_req->pIEField,
-				src_req->uIEFieldLen);
-			dst_req->uIEFieldLen = src_req->uIEFieldLen;
-		}
-	}
-
-	/* Allocate memory for IE field */
-	if (src_req->ChannelInfo.numOfChannels == 0) {
-		dst_req->ChannelInfo.ChannelList = NULL;
-		dst_req->ChannelInfo.numOfChannels = 0;
-	} else {
-		dst_req->ChannelInfo.ChannelList =
-			qdf_mem_malloc(src_req->ChannelInfo.numOfChannels *
-				sizeof(*dst_req->ChannelInfo.ChannelList));
-		if (NULL == dst_req->ChannelInfo.ChannelList) {
-			status = QDF_STATUS_E_NOMEM;
-			dst_req->ChannelInfo.numOfChannels = 0;
-			sme_err("No memory for scanning Channel List");
-			goto complete;
-		}
-
-		if ((src_req->scanType == eSIR_PASSIVE_SCAN) &&
-			(src_req->requestType == eCSR_SCAN_REQUEST_11D_SCAN)) {
-			for (index = 0; index < src_req->ChannelInfo.
-						numOfChannels; index++) {
-				channel_state = wlan_reg_get_channel_state(
-						mac_ctx->pdev,
-						src_req->ChannelInfo.
-						ChannelList[index]);
-				if (src_req->ChannelInfo.ChannelList[index] <
-				    WLAN_REG_MIN_11P_CH_NUM &&
-				    ((CHANNEL_STATE_ENABLE ==
-				      channel_state) ||
-				     ((CHANNEL_STATE_DFS == channel_state) &&
-				      !skip_dfs_chnl))) {
-					dst_req->ChannelInfo.ChannelList
-						[new_index] =
-						src_req->
-						ChannelInfo.
-						ChannelList
-						[index];
-					new_index++;
-				}
-			}
-			dst_req->ChannelInfo.numOfChannels = new_index;
-		} else if (QDF_IS_STATUS_SUCCESS(
-				csr_get_cfg_valid_channels(mac_ctx,
-						mac_ctx->roam.validChannelList,
-						&len))) {
-			new_index = 0;
-			mac_ctx->roam.numValidChannels = len;
-			csr_scan_copy_request_valid_channels_only(mac_ctx,
-							dst_req, skip_dfs_chnl,
-							src_req);
-		} else {
-			sme_err(
-				"Couldn't get the valid Channel List, keeping requester's list");
-			new_index = 0;
-			for (index = 0; index < src_req->ChannelInfo.
-				     numOfChannels; index++) {
-				if (src_req->ChannelInfo.ChannelList[index] <
-				    WLAN_REG_MIN_11P_CH_NUM) {
-					dst_req->ChannelInfo.
-						ChannelList[new_index] =
-						src_req->ChannelInfo.
-						ChannelList[index];
-					new_index++;
-				}
-			}
-			dst_req->ChannelInfo.numOfChannels =
-				new_index;
-		}
-	} /* Allocate memory for Channel List */
-
-	/*
-	 * If IBSS concurrent connection exist, and if the scan
-	 * request comes from STA adapter then we need to filter
-	 * out IBSS channel's band otherwise it will cause issue
-	 * in IBSS+STA concurrency
-	 *
-	 * If DFS SAP/GO concurrent connection exist, and if the scan
-	 * request comes from STA adapter then we need to filter
-	 * out SAP/GO channel's band otherwise it will cause issue in
-	 * SAP+STA concurrency
-	 */
-	if (policy_mgr_is_ibss_conn_exist(mac_ctx->psoc, &channel)) {
-		sme_debug("Conc IBSS exist, channel list will be modified");
-	} else if (policy_mgr_is_any_dfs_beaconing_session_present(
-			mac_ctx->psoc, &channel)) {
-		/*
-		 * 1) if agile & DFS scans are supported
-		 * 2) if hardware is DBS capable
-		 * 3) if current hw mode is non-dbs
-		 * if all above 3 conditions are true then don't skip any
-		 * channel from scan list
-		 */
-		if (true != policy_mgr_is_current_hwmode_dbs(mac_ctx->psoc) &&
-		    policy_mgr_get_dbs_plus_agile_scan_config(mac_ctx->psoc) &&
-		    policy_mgr_get_single_mac_scan_with_dfs_config(
-		    mac_ctx->psoc))
-			channel = 0;
-		else
-			sme_debug(
-				"Conc DFS SAP/GO exist, channel list will be modified");
-	}
-
-	if ((channel > 0) &&
-	    (!csr_scan_filter_given_chnl_band(mac_ctx, channel, dst_req))) {
-		sme_err("Can't filter channels due to IBSS/SAP DFS");
-		goto complete;
-	}
-
-	if (src_req->SSIDs.numOfSSIDs == 0) {
-		dst_req->SSIDs.numOfSSIDs = 0;
-		dst_req->SSIDs.SSIDList = NULL;
-	} else {
-		dst_req->SSIDs.SSIDList =
-			qdf_mem_malloc(src_req->SSIDs.numOfSSIDs *
-					sizeof(*dst_req->SSIDs.SSIDList));
-		if (NULL == dst_req->SSIDs.SSIDList)
-			status = QDF_STATUS_E_NOMEM;
-		else
-			status = QDF_STATUS_SUCCESS;
-		if (QDF_IS_STATUS_SUCCESS(status)) {
-			dst_req->SSIDs.numOfSSIDs =
-				src_req->SSIDs.numOfSSIDs;
-			qdf_mem_copy(dst_req->SSIDs.SSIDList,
-				src_req->SSIDs.SSIDList,
-				src_req->SSIDs.numOfSSIDs *
-				sizeof(*dst_req->SSIDs.SSIDList));
-		} else {
-			dst_req->SSIDs.numOfSSIDs = 0;
-			sme_err("No memory for scanning SSID List");
-			goto complete;
-		}
-	} /* Allocate memory for SSID List */
-	qdf_mem_copy(&dst_req->bssid, &src_req->bssid,
-		sizeof(struct qdf_mac_addr));
-	dst_req->p2pSearch = src_req->p2pSearch;
-	dst_req->skipDfsChnlInP2pSearch =
-		src_req->skipDfsChnlInP2pSearch;
-	dst_req->scan_id = src_req->scan_id;
-	dst_req->timestamp = src_req->timestamp;
-
-complete:
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		csr_scan_free_request(mac_ctx, dst_req);
-
-	return status;
-}
-
-QDF_STATUS csr_scan_free_request(tpAniSirGlobal pMac, tCsrScanRequest *pReq)
-{
-
-	if (pReq->ChannelInfo.ChannelList) {
-		qdf_mem_free(pReq->ChannelInfo.ChannelList);
-		pReq->ChannelInfo.ChannelList = NULL;
-	}
-	pReq->ChannelInfo.numOfChannels = 0;
-	if (pReq->pIEField) {
-		qdf_mem_free(pReq->pIEField);
-		pReq->pIEField = NULL;
-	}
-	pReq->uIEFieldLen = 0;
-	if (pReq->SSIDs.SSIDList) {
-		qdf_mem_free(pReq->SSIDs.SSIDList);
-		pReq->SSIDs.SSIDList = NULL;
-	}
-	pReq->SSIDs.numOfSSIDs = 0;
-
-	return QDF_STATUS_SUCCESS;
-}
-
-void csr_scan_call_callback(tpAniSirGlobal pMac, tSmeCmd *pCommand,
-			    eCsrScanStatus scanStatus)
-{
-	if (pCommand->u.scanCmd.callback) {
-		if (pCommand->u.scanCmd.abort_scan_indication) {
-			sme_debug("scanDone due to abort");
-			scanStatus = eCSR_SCAN_ABORT;
-		}
-		pCommand->u.scanCmd.callback(pMac, pCommand->u.scanCmd.pContext,
-					     pCommand->sessionId,
-					     pCommand->u.scanCmd.scanID,
-					     scanStatus);
-	} else {
-		sme_debug("Callback NULL!!!");
-	}
 }
 
 QDF_STATUS csr_scan_get_pmkid_candidate_list(tpAniSirGlobal pMac,
@@ -3261,29 +3225,6 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				sizeof(tSirBssDescription));
 	}
 	return bss_descr;
-}
-
-/**
- * scan_active_list_cmd_timeout_handle() - To handle scan active command timeout
- * @userData: scan context
- *
- * This routine is to handle scan active command timeout
- *
- * Return: None
- */
-void csr_scan_active_list_timeout_handle(void *userData)
-{
-	tSmeCmd *scan_cmd = (tSmeCmd *) userData;
-	uint16_t scan_id;
-
-	if (scan_cmd == NULL) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			FL("Scan Timeout: Scan command is NULL"));
-		return;
-	}
-	scan_id = scan_cmd->u.scanCmd.scanID;
-	sme_err("Scan Timeout:Sending abort to Firmware ID %d session %d",
-		scan_id, scan_cmd->sessionId);
 }
 
 static enum wlan_auth_type csr_covert_auth_type_new(eCsrAuthType auth)

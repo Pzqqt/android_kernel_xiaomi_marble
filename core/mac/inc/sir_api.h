@@ -71,10 +71,6 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 
 #define SIR_MAX_ELEMENT_ID         255
 
-/* Increase dwell time for P2P search in ms */
-#define P2P_SEARCH_DWELL_TIME_INCREASE   20
-#define P2P_SOCIAL_CHANNELS              3
-
 /* Max number of channels are 165, but to access 165th element of array,
    *array of 166 is required.
  */
@@ -377,8 +373,6 @@ struct rrm_config_param {
 #define IERATE_IS_BASICRATE(x)   ((x) & IERATE_BASICRATE_MASK)
 
 const char *lim_bss_type_to_string(const uint16_t bss_type);
-const char *lim_scan_type_to_string(const uint8_t scan_type);
-
 /**
  * struct sSirSupportedRates - stores rates/MCS supported
  * @llbRates: 11b rates in unit of 500kbps
@@ -869,117 +863,6 @@ typedef enum eSirLinkTrafficCheck {
 #define SIR_SCAN_MAX_NUM_SSID                          0x0A
 #define SIR_BG_SCAN_RETURN_LFR_CACHED_RESULTS          0x02
 #define SIR_BG_SCAN_PURGE_LFR_RESULTS                  0x40
-
-/* / Definition for scan request */
-typedef struct sSirSmeScanReq {
-	uint16_t messageType;   /* eWNI_SME_SCAN_REQ */
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId; /* Transaction ID for cmd */
-	struct qdf_mac_addr bssId;
-	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
-	struct qdf_mac_addr selfMacAddr;        /* Added For BT-AMP Support */
-	tSirBssType bssType;
-	uint8_t dot11mode;
-	tSirScanType scanType;
-	uint32_t scan_id;
-	/**
-	 * minChannelTime. Not used if scanType is passive.
-	 * 0x0 - Dont Use min channel timer. Only max channel timeout will used.
-	 * 11k measurements set this to 0 to user only single duration for scan.
-	 * <valid timeout> - Timeout value used for min channel timeout.
-	 */
-	uint32_t minChannelTime;
-	/**
-	 * maxChannelTime.
-	 * 0x0 - Invalid. In case of active scan.
-	 * In case of passive scan, MAX( maxChannelTime,
-	 * WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME) is used.
-	 */
-	uint32_t maxChannelTime;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	/**
-	 * returnAfterFirstMatch can take following values:
-	 * 0x00 - Return SCAN_RSP message after complete channel scan
-	 * 0x01 -  Return SCAN_RSP message after collecting BSS description
-	 *        that matches scan criteria.
-	 * 0xC0 - Return after collecting first 11d IE from 2.4 GHz &
-	 *        5 GHz band channels
-	 * 0x80 - Return after collecting first 11d IE from 5 GHz band
-	 *        channels
-	 * 0x40 - Return after collecting first 11d IE from 2.4 GHz
-	 *        band channels
-	 *
-	 * Values of 0xC0, 0x80 & 0x40 are to be used by
-	 * Roaming/application when 11d is enabled.
-	 */
-	/* in units of milliseconds, ignored when not connected */
-	uint32_t restTime;
-	/*in units of milliseconds, ignored when not connected*/
-	uint32_t min_rest_time;
-	/*in units of milliseconds, ignored when not connected*/
-	uint32_t idle_time;
-	uint8_t returnAfterFirstMatch;
-
-	/**
-	 * returnUniqueResults can take following values:
-	 * 0 - Collect & report all received BSS descriptions from same BSS.
-	 * 1 - Collect & report unique BSS description from same BSS.
-	 */
-	uint8_t returnUniqueResults;
-
-	/**
-	 * returnFreshResults can take following values:
-	 * 0x00 - Return background scan results.
-	 * 0x80 - Return & purge background scan results
-	 * 0x01 - Trigger fresh scan instead of returning background scan
-	 *        results.
-	 * 0x81 - Trigger fresh scan instead of returning background scan
-	 *        results and purge background scan results.
-	 */
-	uint8_t returnFreshResults;
-
-	/*  backgroundScanMode can take following values:
-	 *  0x0 - agressive scan
-	 *  0x1 - normal scan where HAL will check for link traffic
-	 *        prior to proceeding with the scan
-	 */
-	tSirBackgroundScanMode backgroundScanMode;
-
-	uint8_t hiddenSsid;
-
-	/* Number of SSIDs to scan */
-	uint8_t numSsid;
-
-	/* channelList has to be the last member of this structure. Check
-	 * tSirChannelList for the reason. This MUST be the last field of the
-	 * structure
-	 */
-
-	bool p2pSearch;
-	uint16_t uIEFieldLen;
-	uint16_t uIEFieldOffset;
-
-	/* channelList MUST be the last field of this structure */
-	tSirChannelList channelList;
-	/*-----------------------------
-	   tSirSmeScanReq....
-	   -----------------------------
-	   uIEFiledLen
-	   -----------------------------
-	   uIEFiledOffset               ----+
-	   -----------------------------    |
-	   channelList.numChannels          |
-	   -----------------------------    |
-	   ... variable size up to          |
-	   channelNumber[numChannels-1]     |
-	   This can be zero, if             |
-	   numChannel is zero.              |
-	   ----------------------------- <--+
-	   ... variable size uIEFiled
-	   up to uIEFieldLen (can be 0)
-	   -----------------------------*/
-} tSirSmeScanReq, *tpSirSmeScanReq;
 
 typedef struct sSirSmeScanAbortReq {
 	uint16_t type;
@@ -3691,51 +3574,6 @@ typedef struct sAniHandoffReq {
 	uint8_t channel;
 	uint8_t handoff_src;
 } tAniHandoffReq, *tpAniHandoffReq;
-
-typedef struct sSirScanOffloadReq {
-	uint8_t sessionId;
-	struct qdf_mac_addr bssId;
-	uint8_t numSsid;
-	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
-	uint8_t hiddenSsid;
-	struct qdf_mac_addr selfMacAddr;
-	tSirBssType bssType;
-	uint8_t dot11mode;
-	tSirScanType scanType;
-	uint32_t minChannelTime;
-	uint32_t maxChannelTime;
-	uint32_t scan_id;
-	uint32_t scan_requestor_id;
-	/* in units of milliseconds, ignored when not connected */
-	uint32_t restTime;
-	/*in units of milliseconds, ignored when not connected*/
-	uint32_t min_rest_time;
-	/*in units of milliseconds, ignored when not connected*/
-	uint32_t idle_time;
-	tSirP2pScanType p2pScanType;
-	enum wmi_dwelltime_adaptive_mode scan_adaptive_dwell_mode;
-	uint16_t uIEFieldLen;
-	uint16_t uIEFieldOffset;
-	uint32_t burst_scan_duration;
-	tSirChannelList channelList;
-	/*-----------------------------
-	  sSirScanOffloadReq....
-	  -----------------------------
-	  uIEFieldLen
-	  -----------------------------
-	  uIEFieldOffset               ----+
-	  -----------------------------    |
-	  channelList.numChannels          |
-	  -----------------------------    |
-	  ... variable size up to          |
-	  channelNumber[numChannels-1]     |
-	  This can be zero, if             |
-	  numChannel is zero.              |
-	  ----------------------------- <--+
-	  ... variable size uIEField
-	  up to uIEFieldLen (can be 0)
-	  -----------------------------*/
-} tSirScanOffloadReq, *tpSirScanOffloadReq;
 
 /**
  * sir_scan_event_type - scan event types used in LIM

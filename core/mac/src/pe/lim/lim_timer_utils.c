@@ -248,16 +248,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	 * timer expires
 	 */
 	cfgValue1 = cfgValue / 2;
-	/* Create periodic probe request timer and activate them later */
-	if (cfgValue1 >= 1
-	    && (tx_timer_create(pMac,
-			&pMac->lim.limTimers.gLimPeriodicProbeReqTimer,
-			"Periodic Probe Request Timer", lim_timer_handler,
-			SIR_LIM_PERIODIC_PROBE_REQ_TIMEOUT, cfgValue1, 0,
-			TX_NO_ACTIVATE) != TX_SUCCESS)) {
-		pe_err("could not create periodic probe timer");
-		goto err_timer;
-	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ACTIVE_MAXIMUM_CHANNEL_TIME,
 			     &cfgValue) != eSIR_SUCCESS)
@@ -396,7 +386,6 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimQuietBssTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimQuietTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimChannelSwitchTimer);
-	tx_timer_delete(&pMac->lim.limTimers.gLimPeriodicProbeReqTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
 	tx_timer_delete(&pMac->lim.limTimers.sae_auth_timer);
@@ -646,35 +635,6 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			/* Log error */
 			pe_err("Unable to deactivate AddtsRsp timer");
 		}
-		break;
-
-	case eLIM_PERIODIC_PROBE_REQ_TIMER:
-		if (tx_timer_deactivate
-			    (&pMac->lim.limTimers.gLimPeriodicProbeReqTimer)
-		    != TX_SUCCESS) {
-			/* Could not deactivate min channel timer. */
-			/* Log error */
-			pe_err("Unable to deactivate periodic timer");
-		}
-
-		val =
-			SYS_MS_TO_TICKS(pMac->lim.gpLimMlmScanReq->minChannelTime) /
-			2;
-		if (val) {
-			if (tx_timer_change(
-			    &pMac->lim.limTimers.gLimPeriodicProbeReqTimer,
-			    val, 0) != TX_SUCCESS) {
-				/* Could not change min channel timer. */
-				/* Log error */
-				pe_err("Unable to change periodic timer");
-			}
-		} else
-			pe_err("Do not change gLimPeriodicProbeReqTimer values,"
-			       "value: %d minchannel time: %d"
-			       "maxchannel time: %d", val,
-			       pMac->lim.gpLimMlmScanReq->minChannelTime,
-			       pMac->lim.gpLimMlmScanReq->maxChannelTime);
-
 		break;
 
 	case eLIM_JOIN_FAIL_TIMER:

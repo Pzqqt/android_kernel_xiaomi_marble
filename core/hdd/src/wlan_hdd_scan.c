@@ -337,30 +337,6 @@ void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 	cds_ssr_unprotect(__func__);
 }
 
-/**
- * wlan_hdd_copy_bssid_scan_request() - API to copy the bssid to Scan request
- * @scan_req: Pointer to CSR Scan Request
- * @request: scan request from Supplicant
- *
- * This API copies the BSSID in scan request from Supplicant and copies it to
- * the CSR Scan request
- *
- * Return: None
- */
-#if defined(CFG80211_SCAN_BSSID) || \
-	(LINUX_VERSION_CODE >= KERNEL_VERSION(4, 7, 0))
-static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
-					struct cfg80211_scan_request *request)
-{
-	qdf_mem_copy(scan_req->bssid.bytes, request->bssid, QDF_MAC_ADDR_SIZE);
-}
-#else
-static inline void wlan_hdd_copy_bssid_scan_request(tCsrScanRequest *scan_req,
-					struct cfg80211_scan_request *request)
-{
-}
-#endif
-
 /*
  * wlan_hdd_update_scan_ies() - API to update the scan IEs of scan request
  * with already stored default scan IEs
