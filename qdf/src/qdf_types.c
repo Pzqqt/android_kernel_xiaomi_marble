@@ -340,6 +340,7 @@ QDF_STATUS qdf_bool_parse(char *bool_str, bool *out_bool)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	bool_str++;
 	bool_str = qdf_str_left_trim(bool_str);
 	if (bool_str[0] != '\0')
 		return QDF_STATUS_E_FAILURE;
