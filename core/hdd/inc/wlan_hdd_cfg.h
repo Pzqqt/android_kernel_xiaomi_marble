@@ -3084,10 +3084,10 @@ enum hdd_dot11_mode {
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT  (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #endif
 
-#define CFG_DISABLE_PACKET_FILTER "gDisablePacketFilter"
-#define CFG_DISABLE_PACKET_FILTER_MIN       (0)
-#define CFG_DISABLE_PACKET_FILTER_MAX               (0x1)
-#define CFG_DISABLE_PACKET_FILTER_DEFAULT           (0)
+#define CFG_DISABLE_PACKET_FILTER		"gDisablePacketFilter"
+#define CFG_DISABLE_PACKET_FILTER_MIN		(0)
+#define CFG_DISABLE_PACKET_FILTER_MAX		(1)
+#define CFG_DISABLE_PACKET_FILTER_DEFAULT	(1)
 
 #define CFG_ENABLE_LTE_COEX              "gEnableLTECoex"
 #define CFG_ENABLE_LTE_COEX_MIN               (0)
