@@ -14,6 +14,7 @@ $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/Modul
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/Module.symvers)
 $(shell rm -rf $(PRODUCT_OUT)/obj/vendor/qcom/opensource/audio-kernel/asoc/codecs/wcd934x/Module.symvers)
 
+include $(MY_LOCAL_PATH)/include/uapi/Android.mk
 include $(MY_LOCAL_PATH)/ipc/Android.mk
 include $(MY_LOCAL_PATH)/dsp/Android.mk
 include $(MY_LOCAL_PATH)/dsp/codecs/Android.mk
