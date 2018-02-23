@@ -573,6 +573,9 @@ void policy_mgr_update_conc_list(struct wlan_objmgr_psoc *psoc,
 	pm_conc_connection_list[conn_index].vdev_id = vdev_id;
 	pm_conc_connection_list[conn_index].in_use = in_use;
 
+	if (pm_ctx->mode_change_cb)
+		pm_ctx->mode_change_cb();
+
 	policy_mgr_dump_connection_status_info(psoc);
 	if (pm_ctx->cdp_cbacks.cdp_update_mac_id)
 		pm_ctx->cdp_cbacks.cdp_update_mac_id(psoc, vdev_id, mac);
@@ -764,6 +767,13 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	QDF_STATUS ret;
 	struct policy_mgr_hw_mode_params hw_mode;
 	uint32_t i;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(context);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return;
+	}
 
 	policy_mgr_set_hw_mode_change_in_progress(context,
 		POLICY_MGR_HW_MODE_NOT_IN_PROGRESS);
@@ -803,6 +813,8 @@ void policy_mgr_pdev_set_hw_mode_cb(uint32_t status,
 	policy_mgr_update_hw_mode_conn_info(context, num_vdev_mac_entries,
 			vdev_mac_map,
 			hw_mode);
+	if (pm_ctx->mode_change_cb)
+		pm_ctx->mode_change_cb();
 
 	ret = policy_mgr_set_connection_update(context);
 	if (!QDF_IS_STATUS_SUCCESS(ret))

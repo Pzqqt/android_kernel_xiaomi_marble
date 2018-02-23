@@ -2910,3 +2910,31 @@ void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
 			org_ch_list[i] = ch_list[i];
 	}
 }
+
+uint32_t policy_mgr_get_connection_info(struct wlan_objmgr_psoc *psoc,
+					struct connection_info *info)
+{
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+	uint32_t conn_index, count = 0;
+
+	pm_ctx = policy_mgr_get_context(psoc);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid Context");
+		return count;
+	}
+
+	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
+	     conn_index++) {
+		if (PM_CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+			info[count].vdev_id =
+				pm_conc_connection_list[conn_index].vdev_id;
+			info[count].mac_id =
+				pm_conc_connection_list[conn_index].mac;
+			info[count].channel =
+				pm_conc_connection_list[conn_index].chan;
+			count++;
+		}
+	}
+
+	return count;
+}
