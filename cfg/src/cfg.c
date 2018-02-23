@@ -73,9 +73,10 @@ struct cfg_meta {
 #define cfg_value_ptr(store, meta) \
 	((void *)&(store)->values + (meta)->field_offset)
 
-static void cfg_int_item_handler(struct cfg_value_store *store,
-				 const struct cfg_meta *meta,
-				 const char *str_value)
+static __attribute__((unused)) void
+cfg_int_item_handler(struct cfg_value_store *store,
+		     const struct cfg_meta *meta,
+		     const char *str_value)
 {
 	QDF_STATUS status;
 	int32_t *store_value = cfg_value_ptr(store, meta);
@@ -115,9 +116,10 @@ static void cfg_int_item_handler(struct cfg_value_store *store,
 		meta->name, value, meta->min, meta->max, *store_value);
 }
 
-static void cfg_uint_item_handler(struct cfg_value_store *store,
-				  const struct cfg_meta *meta,
-				  const char *str_value)
+static __attribute__((unused)) void
+cfg_uint_item_handler(struct cfg_value_store *store,
+		      const struct cfg_meta *meta,
+		      const char *str_value)
 {
 	QDF_STATUS status;
 	uint32_t *store_value = cfg_value_ptr(store, meta);
@@ -167,9 +169,10 @@ static void cfg_uint_item_handler(struct cfg_value_store *store,
 		meta->name, value, min, max, *store_value);
 }
 
-static void cfg_bool_item_handler(struct cfg_value_store *store,
-				  const struct cfg_meta *meta,
-				  const char *str_value)
+static __attribute__((unused)) void
+cfg_bool_item_handler(struct cfg_value_store *store,
+		      const struct cfg_meta *meta,
+		      const char *str_value)
 {
 	QDF_STATUS status;
 	bool *store_value = cfg_value_ptr(store, meta);
@@ -182,9 +185,10 @@ static void cfg_bool_item_handler(struct cfg_value_store *store,
 		meta->name, str_value, status, *store_value ? "true" : "false");
 }
 
-static void cfg_string_item_handler(struct cfg_value_store *store,
-				    const struct cfg_meta *meta,
-				    const char *str_value)
+static __attribute__((unused)) void
+cfg_string_item_handler(struct cfg_value_store *store,
+			const struct cfg_meta *meta,
+			const char *str_value)
 {
 	char *store_value = cfg_value_ptr(store, meta);
 	qdf_size_t len;
@@ -215,9 +219,10 @@ static void cfg_string_item_handler(struct cfg_value_store *store,
 	qdf_str_lcopy(store_value, str_value, meta->max + 1);
 }
 
-static void cfg_mac_item_handler(struct cfg_value_store *store,
-				 const struct cfg_meta *meta,
-				 const char *str_value)
+static __attribute__((unused)) void
+cfg_mac_item_handler(struct cfg_value_store *store,
+		     const struct cfg_meta *meta,
+		     const char *str_value)
 {
 	QDF_STATUS status;
 	struct qdf_mac_addr *store_value = cfg_value_ptr(store, meta);
@@ -231,9 +236,10 @@ static void cfg_mac_item_handler(struct cfg_value_store *store,
 		QDF_MAC_ADDR_ARRAY(store_value->bytes));
 }
 
-static void cfg_ipv4_item_handler(struct cfg_value_store *store,
-				  const struct cfg_meta *meta,
-				  const char *str_value)
+static __attribute__((unused)) void
+cfg_ipv4_item_handler(struct cfg_value_store *store,
+		      const struct cfg_meta *meta,
+		      const char *str_value)
 {
 	QDF_STATUS status;
 	struct qdf_ipv4_addr *store_value = cfg_value_ptr(store, meta);
@@ -247,9 +253,10 @@ static void cfg_ipv4_item_handler(struct cfg_value_store *store,
 		QDF_IPV4_ADDR_ARRAY(store_value->bytes));
 }
 
-static void cfg_ipv6_item_handler(struct cfg_value_store *store,
-				  const struct cfg_meta *meta,
-				  const char *str_value)
+static __attribute__((unused)) void
+cfg_ipv6_item_handler(struct cfg_value_store *store,
+		      const struct cfg_meta *meta,
+		      const char *str_value)
 {
 	QDF_STATUS status;
 	struct qdf_ipv6_addr *store_value = cfg_value_ptr(store, meta);
@@ -335,7 +342,7 @@ cfg_ini_item_handler(void *context, const char *key, const char *value)
 	meta = cfg_lookup_meta(key);
 	if (!meta) {
 		/* TODO: promote to 'err' or 'warn' once legacy is ported */
-		cfg_info("Unknown config item '%s'", key);
+		cfg_debug("Unknown config item '%s'", key);
 		return QDF_STATUS_SUCCESS;
 	}
 

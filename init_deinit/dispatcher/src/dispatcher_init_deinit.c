@@ -16,6 +16,7 @@
  * PERFORMANCE OF THIS SOFTWARE.
  */
 
+#include "cfg_dispatcher.h"
 #include <qdf_types.h>
 #include <qdf_trace.h>
 #include <qdf_threads.h>
@@ -969,6 +970,9 @@ QDF_STATUS dispatcher_init(void)
 	if (QDF_STATUS_SUCCESS != dispatcher_ftm_init())
 		goto ftm_init_fail;
 
+	if (QDF_IS_STATUS_ERROR(cfg_dispatcher_init()))
+		goto cfg_init_fail;
+
 	/*
 	 * scheduler INIT has to be the last as each component's
 	 * initialization has to happen first and then at the end
@@ -980,6 +984,8 @@ QDF_STATUS dispatcher_init(void)
 	return QDF_STATUS_SUCCESS;
 
 scheduler_init_fail:
+	cfg_dispatcher_deinit();
+cfg_init_fail:
 	dispatcher_ftm_deinit();
 ftm_init_fail:
 	dispatcher_green_ap_deinit();
@@ -1031,7 +1037,12 @@ qdf_export_symbol(dispatcher_init);
 
 QDF_STATUS dispatcher_deinit(void)
 {
+	QDF_STATUS status;
+
 	QDF_BUG(QDF_STATUS_SUCCESS == scheduler_deinit());
+
+	status = cfg_dispatcher_deinit();
+	QDF_BUG(QDF_IS_STATUS_SUCCESS(status));
 
 	QDF_BUG(QDF_STATUS_SUCCESS == dispatcher_ftm_deinit());
 
