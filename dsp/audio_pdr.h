@@ -1,4 +1,4 @@
-/* Copyright (c) 2016-2017, The Linux Foundation. All rights reserved.
+/* Copyright (c) 2016-2018, The Linux Foundation. All rights reserved.
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License version 2 and
@@ -83,6 +83,10 @@ static inline int audio_pdr_register(struct notifier_block *nb)
 	return -ENODEV;
 }
 
+static inline int audio_pdr_deregister(struct notifier_block *nb)
+{
+	return -ENODEV;
+}
 
 static inline void *audio_pdr_service_register(int domain_id,
 					       struct notifier_block *nb,
