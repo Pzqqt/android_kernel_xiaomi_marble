@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,6 @@
 #include "qdf_defer.h"
 #include "wlan_reg_services_api.h"
 
-#define MAX_NUMBER_OF_CONC_CONNECTIONS 3
 #define DBS_OPPORTUNISTIC_TIME    10
 #ifdef QCA_WIFI_3_0_EMU
 #define CONNECTION_UPDATE_TIMEOUT 3000
@@ -275,6 +274,7 @@ struct policy_mgr_psoc_priv_obj {
 	uint8_t cur_conc_system_pref;
 	uint8_t sta_sap_scc_on_dfs_chan_allowed;
 	qdf_event_t opportunistic_update_done_evt;
+	send_mode_change_event_cb mode_change_cb;
 };
 
 /**

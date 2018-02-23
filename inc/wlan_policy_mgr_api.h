@@ -2270,4 +2270,30 @@ bool policy_mgr_is_sta_connected_2g(struct wlan_objmgr_psoc *psoc);
  */
 void policy_mgr_trim_acs_channel_list(struct wlan_objmgr_psoc *psoc,
 		uint8_t *org_ch_list, uint8_t *org_ch_list_count);
+/*
+ * policy_mgr_get_connection_info() - Get info of all active connections
+ * @info: Pointer to connection info
+ *
+ * Return: Connection count
+ */
+uint32_t policy_mgr_get_connection_info(struct wlan_objmgr_psoc *psoc,
+					struct connection_info *info);
+/**
+ * policy_mgr_register_mode_change_cb() - Register mode change callback with
+ * policy manager
+ * @callback: HDD callback to be registered
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_register_mode_change_cb(struct wlan_objmgr_psoc *psoc,
+			send_mode_change_event_cb mode_change_cb);
+/**
+ * policy_mgr_deregister_mode_change_cb() - Deregister mode change callback with
+ * policy manager
+ * @callback: HDD callback to be registered
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS policy_mgr_deregister_mode_change_cb(struct wlan_objmgr_psoc *psoc);
+
 #endif /* __WLAN_POLICY_MGR_API_H */

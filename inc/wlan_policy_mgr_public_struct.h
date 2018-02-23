@@ -66,6 +66,12 @@
 #define WEIGHT_OF_NON_PCL_CHANNELS 1
 #define WEIGHT_OF_DISALLOWED_CHANNELS 0
 
+#define MAX_MAC 2
+
+#define MAX_NUMBER_OF_CONC_CONNECTIONS 3
+
+typedef int (*send_mode_change_event_cb)(void);
+
 /**
  * enum hw_mode_ss_config - Possible spatial stream configuration
  * @HW_MODE_SS_0x0: Unused Tx and Rx of MAC
@@ -1029,5 +1035,17 @@ struct policy_mgr_user_cfg {
 struct dbs_nss {
 	enum hw_mode_ss_config mac0_ss;
 	enum hw_mode_ss_config mac1_ss;
+};
+
+/**
+ * struct connection_info - connection information
+ * @mac_id: The HW mac it is running
+ * @vdev_id: vdev id
+ * @channel: channel of the connection
+ */
+struct connection_info {
+	uint8_t mac_id;
+	uint8_t vdev_id;
+	uint8_t channel;
 };
 #endif /* __WLAN_POLICY_MGR_PUBLIC_STRUCT_H */

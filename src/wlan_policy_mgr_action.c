@@ -53,6 +53,13 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 	QDF_STATUS status;
 	struct policy_mgr_hw_mode_params hw_mode;
 	uint32_t i;
+	struct policy_mgr_psoc_priv_obj *pm_ctx;
+
+	pm_ctx = policy_mgr_get_context(context);
+	if (!pm_ctx) {
+		policy_mgr_err("Invalid context");
+		return;
+	}
 
 	if (!vdev_mac_map) {
 		policy_mgr_err("vdev_mac_map is NULL");
@@ -85,6 +92,9 @@ void policy_mgr_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 	policy_mgr_update_hw_mode_conn_info(context, num_vdev_mac_entries,
 					  vdev_mac_map,
 					  hw_mode);
+
+	if (pm_ctx->mode_change_cb)
+		pm_ctx->mode_change_cb();
 
 	return;
 }
