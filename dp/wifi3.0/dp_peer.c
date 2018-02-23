@@ -401,7 +401,7 @@ static inline void dp_peer_map_ast(struct dp_soc *soc,
  * add a new AST entry into peer AST list
  *
  * Return: 0 if new entry is allocated,
- *         1 if entry already exists or if allocation has failed
+ *        -1 if entry add failed
  */
 int dp_peer_add_ast(struct dp_soc *soc,
 			struct dp_peer *peer,
@@ -412,7 +412,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 	struct dp_ast_entry *ast_entry;
 	struct dp_vdev *vdev = peer->vdev;
 	uint8_t next_node_mac[6];
-	bool ret = 1;
+	int  ret = -1;
 
 	if (!vdev) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -436,7 +436,7 @@ int dp_peer_add_ast(struct dp_soc *soc,
 			ast_entry->is_active = TRUE;
 
 		qdf_spin_unlock_bh(&soc->ast_lock);
-		return ret;
+		return 0;
 	}
 
 	ast_entry = (struct dp_ast_entry *)
@@ -489,11 +489,13 @@ int dp_peer_add_ast(struct dp_soc *soc,
 		qdf_mem_copy(next_node_mac, peer->vdev->mac_addr.raw, 6);
 
 	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
-		ret = soc->cdp_soc.ol_ops->peer_add_wds_entry(
+		if (QDF_STATUS_SUCCESS ==
+				soc->cdp_soc.ol_ops->peer_add_wds_entry(
 				peer->vdev->osif_vdev,
 				mac_addr,
 				next_node_mac,
-				flags);
+				flags))
+			return 0;
 	}
 
 	return ret;
@@ -537,21 +539,24 @@ void dp_peer_del_ast(struct dp_soc *soc, struct dp_ast_entry *ast_entry)
  * tables
  *
  * Return: 0 if ast entry is updated successfully
- *         1 failure
+ *         -1 failure
  */
 int dp_peer_update_ast(struct dp_soc *soc, struct dp_peer *peer,
 		       struct dp_ast_entry *ast_entry, uint32_t flags)
 {
-	bool ret = 1;
+	int ret = -1;
 
 	ast_entry->peer = peer;
 	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
-		ret = soc->cdp_soc.ol_ops->peer_update_wds_entry(
+		if (QDF_STATUS_SUCCESS ==
+				soc->cdp_soc.ol_ops->peer_update_wds_entry(
 				peer->vdev->osif_vdev,
 				ast_entry->mac_addr.raw,
 				peer->mac_addr.raw,
-				flags);
+				flags))
+			return 0;
 	}
+
 	return ret;
 }
 
