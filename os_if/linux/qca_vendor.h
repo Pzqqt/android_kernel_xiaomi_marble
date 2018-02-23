@@ -257,6 +257,14 @@
  *	@QCA_NL80211_VENDOR_SUBCMD_SET_SAR_LIMITS and is used to retrieve the
  *	settings currently in use. The attributes returned by this command are
  *	defined by enum qca_vendor_attr_sar_limits.
+ * @QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO: Provides the current behaviour of
+ *      the WLAN hardware MAC's associated with each WLAN netdev interface.
+ *      This works both as a query (user space asks the current mode) or event
+ *      interface (driver advertizing the current mode to the user space).
+ *      Driver does not trigger this event for temporary hardware mode changes.
+ *      Mode changes w.r.t Wi-Fi connection updation ( VIZ creation / deletion,
+ *      channel change etc ) are updated with this event. Attributes for this
+ *      interface are defined in enum qca_wlan_vendor_attr_mac.
  * @QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH: Set MSDU queue depth threshold
  *	per peer per TID. Attributes for this command are define in
  *	enum qca_wlan_set_qdepth_thresh_attr
@@ -466,6 +474,7 @@ enum qca_nl80211_vendor_subcmds {
 	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS = 162,
 	QCA_NL80211_VENDOR_SUBCMD_GET_RROP_INFO = 163,
 	QCA_NL80211_VENDOR_SUBCMD_GET_SAR_LIMITS = 164,
+	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO = 165,
 	QCA_NL80211_VENDOR_SUBCMD_SET_QDEPTH_THRESH = 166,
 	/* Wi-Fi test configuration subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_WIFI_TEST_CONFIGURATION = 169,
@@ -807,6 +816,7 @@ enum qca_wlan_vendor_attr_get_station_info {
  *      conditional channel switch index
  * @QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX: NUD DEBUG Stats index
  * @QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX: hang event reason index
+ * @QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX: MAC mode info index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
@@ -889,6 +899,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_NUD_STATS_GET_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_HANG_REASON_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_HTT_STATS_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO_INDEX,
 };
 
 /**
@@ -5420,6 +5431,71 @@ enum qca_wlan_vendor_attr_rtplinst {
 	QCA_WLAN_VENDOR_ATTR_RTPLINST_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_RTPLINST_MAX =
 		QCA_WLAN_VENDOR_ATTR_RTPLINST_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_mac - Used by the vendor command
+ * QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MAC_INFO: MAC mode info list which has an
+ *  array of nested values as per attributes in
+ *  enum qca_wlan_vendor_attr_mac_mode_info.
+ */
+enum qca_wlan_vendor_attr_mac {
+	QCA_WLAN_VENDOR_ATTR_MAC_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_MAC_INFO = 1,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_MAC_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_MAC_MAX =
+		QCA_WLAN_VENDOR_ATTR_MAC_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_mac_iface_info - Information of the connected
+ * WiFi netdev interface on a respective MAC. Used by the attribute
+ * QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_ID: Wi-Fi Netdev's interface id(u32).
+ * @QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_FREQ: Associated frequency in MHz of
+ *  the connected Wi-Fi interface(u32).
+ */
+enum qca_wlan_vendor_attr_mac_iface_info {
+	QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_IFINDEX = 1,
+	QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_FREQ = 2,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_MAX =
+		QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO_AFTER_LAST - 1,
+};
+
+/**
+ * enum qca_wlan_vendor_attr_mac_info - Points to MAC the information.
+ *  Used by the attribute QCA_WLAN_VENDOR_ATTR_MAC_INFO of the
+ *  vendor command QCA_NL80211_VENDOR_SUBCMD_WLAN_MAC_INFO.
+ *
+ * @QCA_WLAN_VENDOR_ATTR_MAC_INFO_MAC_ID: Hardware MAC ID associated for the
+ *  MAC (u32)
+ * @QCA_WLAN_VENDOR_ATTR_MAC_INFO_BAND: Band supported by the respective MAC
+ *  at a given point. This is a u32 bitmask of BIT(NL80211_BAND_*) as described
+ *  in enum nl80211_band.
+ * @QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO: Refers to list of WLAN net dev
+ * interfaces associated with this MAC. Represented by enum
+ * qca_wlan_vendor_attr_mac_iface_info.
+ */
+enum qca_wlan_vendor_attr_mac_info {
+	QCA_WLAN_VENDOR_ATTR_MAC_INFO_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_MAC_INFO_MAC_ID = 1,
+	QCA_WLAN_VENDOR_ATTR_MAC_INFO_BAND = 2,
+	QCA_WLAN_VENDOR_ATTR_MAC_IFACE_INFO = 3,
+
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_MAC_INFO_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_MAC_INFO_MAX =
+		QCA_WLAN_VENDOR_ATTR_MAC_INFO_AFTER_LAST - 1,
+
 };
 
 #if !(defined (SUPPORT_WDEV_CFG80211_VENDOR_EVENT_ALLOC)) &&	\
