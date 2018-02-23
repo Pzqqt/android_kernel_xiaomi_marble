@@ -1060,7 +1060,7 @@ static inline void dp_print_tx_hwq_difs_latency_stats_tlv_v(uint32_t *tag_buf)
 	}
 
 	tag_len = qdf_min(tag_len,
-			(uint32_t)HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS) - 1;
+			(uint32_t)HTT_TX_HWQ_MAX_DIFS_LATENCY_BINS);
 
 	DP_TRACE_STATS(FATAL, "HTT_TX_HWQ_DIFS_LATENCY_STATS_TLV_V:");
 	DP_TRACE_STATS(FATAL, "hist_intvl = %d",
@@ -2553,15 +2553,28 @@ static inline void dp_print_rx_soc_fw_stats_tlv(uint32_t *tag_buf)
 
 	DP_TRACE_STATS(FATAL, "HTT_RX_SOC_FW_STATS_TLV:");
 	DP_TRACE_STATS(FATAL, "fw_reo_ring_data_msdu = %d",
-			dp_stats_buf->fw_reo_ring_data_msdu);
+		      dp_stats_buf->fw_reo_ring_data_msdu);
 	DP_TRACE_STATS(FATAL, "fw_to_host_data_msdu_bcmc = %d",
-			dp_stats_buf->fw_to_host_data_msdu_bcmc);
+		      dp_stats_buf->fw_to_host_data_msdu_bcmc);
 	DP_TRACE_STATS(FATAL, "fw_to_host_data_msdu_uc = %d",
-			dp_stats_buf->fw_to_host_data_msdu_uc);
+		      dp_stats_buf->fw_to_host_data_msdu_uc);
 	DP_TRACE_STATS(FATAL, "ofld_remote_data_buf_recycle_cnt = %d",
-			dp_stats_buf->ofld_remote_data_buf_recycle_cnt);
-	DP_TRACE_STATS(FATAL, "ofld_remote_free_buf_indication_cnt = %d\n",
-			dp_stats_buf->ofld_remote_free_buf_indication_cnt);
+		      dp_stats_buf->ofld_remote_data_buf_recycle_cnt);
+	DP_TRACE_STATS(FATAL, "ofld_remote_free_buf_indication_cnt = %d",
+		      dp_stats_buf->ofld_remote_free_buf_indication_cnt);
+	DP_TRACE_STATS(FATAL, "ofld_buf_to_host_data_msdu_uc = %d ",
+		      dp_stats_buf->ofld_buf_to_host_data_msdu_uc);
+	DP_TRACE_STATS(FATAL, "reo_fw_ring_to_host_data_msdu_uc = %d ",
+		      dp_stats_buf->reo_fw_ring_to_host_data_msdu_uc);
+	DP_TRACE_STATS(FATAL, "wbm_sw_ring_reap = %d ",
+		      dp_stats_buf->wbm_sw_ring_reap);
+	DP_TRACE_STATS(FATAL, "wbm_forward_to_host_cnt = %d ",
+		      dp_stats_buf->wbm_forward_to_host_cnt);
+	DP_TRACE_STATS(FATAL, "wbm_target_recycle_cnt = %d ",
+		      dp_stats_buf->wbm_target_recycle_cnt);
+	DP_TRACE_STATS(FATAL, "target_refill_ring_recycle_cnt = %d",
+		      dp_stats_buf->target_refill_ring_recycle_cnt);
+
 }
 
 /*
@@ -2821,6 +2834,134 @@ static inline void dp_print_rx_pdev_fw_mpdu_drop_tlv_v(uint32_t *tag_buf)
 	}
 	DP_TRACE_STATS(FATAL, "fw_mpdu_drop = %s\n", fw_mpdu_drop);
 	qdf_mem_free(fw_mpdu_drop);
+}
+
+/*
+ * dp_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv() - Accounts for rxdma error
+ * packets
+ *
+ * tag_buf - Buffer
+ * Return - NULL
+ */
+static inline void dp_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv(uint32_t *tag_buf)
+{
+	htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *dp_stats_buf =
+		(htt_rx_soc_fw_refill_ring_num_rxdma_err_tlv_v *)tag_buf;
+
+	uint8_t i;
+	uint16_t index = 0;
+	char rxdma_err_cnt[DP_MAX_STRING_LEN];
+	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+
+	tag_len = qdf_min(tag_len, (uint32_t)HTT_RX_RXDMA_MAX_ERR_CODE);
+
+	DP_TRACE_STATS(FATAL, "HTT_RX_SOC_FW_REFILL_RING_NUM_RXDMA_ERR_TLV_V");
+
+	for (i = 0; i <  tag_len; i++) {
+		index += snprintf(&rxdma_err_cnt[index],
+				DP_MAX_STRING_LEN - index,
+				" %d:%d,", i,
+				dp_stats_buf->rxdma_err[i]);
+	}
+
+	DP_TRACE_STATS(FATAL, "rxdma_err = %s\n", rxdma_err_cnt);
+}
+
+/*
+ * dp_print_rx_soc_fw_refill_ring_num_reo_err_tlv() - Accounts for reo error
+ * packets
+ *
+ * tag_buf - Buffer
+ * Return - NULL
+ */
+static inline void dp_print_rx_soc_fw_refill_ring_num_reo_err_tlv(uint32_t *tag_buf)
+{
+	htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *dp_stats_buf =
+		(htt_rx_soc_fw_refill_ring_num_reo_err_tlv_v *)tag_buf;
+
+	uint8_t i;
+	uint16_t index = 0;
+	char reo_err_cnt[DP_MAX_STRING_LEN];
+	uint32_t tag_len = (HTT_STATS_TLV_LENGTH_GET(*tag_buf) >> 2);
+
+	tag_len = qdf_min(tag_len, (uint32_t)HTT_RX_REO_MAX_ERR_CODE);
+
+	DP_TRACE_STATS(FATAL, "HTT_RX_SOC_FW_REFILL_RING_NUM_REO_ERR_TLV_V");
+
+	for (i = 0; i <  tag_len; i++) {
+		index += snprintf(&reo_err_cnt[index],
+				DP_MAX_STRING_LEN - index,
+				" %d:%d,", i,
+				dp_stats_buf->reo_err[i]);
+	}
+
+	DP_TRACE_STATS(FATAL, "reo_err = %s\n", reo_err_cnt);
+}
+
+/*
+ * dp_print_rx_reo_debug_stats_tlv() - REO Statistics
+ *
+ * tag_buf - Buffer
+ * Return - NULL
+ */
+static inline void dp_print_rx_reo_debug_stats_tlv(uint32_t *tag_buf)
+{
+	htt_rx_reo_resource_stats_tlv_v *dp_stats_buf =
+			(htt_rx_reo_resource_stats_tlv_v *)tag_buf;
+
+	DP_TRACE_STATS(FATAL, "HTT_RX_REO_RESOURCE_STATS_TLV");
+
+	DP_TRACE_STATS(FATAL, "sample_id: %d ",
+		      dp_stats_buf->sample_id);
+	DP_TRACE_STATS(FATAL, "total_max: %d ",
+		      dp_stats_buf->total_max);
+	DP_TRACE_STATS(FATAL, "total_avg: %d ",
+		      dp_stats_buf->total_avg);
+	DP_TRACE_STATS(FATAL, "total_sample: %d ",
+		      dp_stats_buf->total_sample);
+	DP_TRACE_STATS(FATAL, "non_zeros_avg: %d ",
+		      dp_stats_buf->non_zeros_avg);
+	DP_TRACE_STATS(FATAL, "non_zeros_sample: %d ",
+		      dp_stats_buf->non_zeros_sample);
+	DP_TRACE_STATS(FATAL, "last_non_zeros_max: %d ",
+		      dp_stats_buf->last_non_zeros_max);
+	DP_TRACE_STATS(FATAL, "last_non_zeros_min: %d ",
+		      dp_stats_buf->last_non_zeros_min);
+	DP_TRACE_STATS(FATAL, "last_non_zeros_avg: %d ",
+		      dp_stats_buf->last_non_zeros_avg);
+	DP_TRACE_STATS(FATAL, "last_non_zeros_sample: %d\n ",
+		      dp_stats_buf->last_non_zeros_sample);
+}
+
+/*
+ * dp_print_rx_pdev_fw_stats_phy_err_tlv() - Accounts for phy errors
+ *
+ * tag_buf - Buffer
+ * Return - NULL
+ */
+static inline void dp_print_rx_pdev_fw_stats_phy_err_tlv(uint32_t *tag_buf)
+{
+	htt_rx_pdev_fw_stats_phy_err_tlv *dp_stats_buf =
+		(htt_rx_pdev_fw_stats_phy_err_tlv *)tag_buf;
+
+	uint8_t i = 0;
+	uint16_t index = 0;
+	char phy_errs[DP_MAX_STRING_LEN];
+
+	DP_TRACE_STATS(FATAL, "HTT_RX_PDEV_FW_STATS_PHY_ERR_TLV");
+
+	DP_TRACE_STATS(FATAL, "mac_id_word: %d",
+		      dp_stats_buf->mac_id__word);
+	DP_TRACE_STATS(FATAL, "total_phy_err_cnt: %d",
+		      dp_stats_buf->total_phy_err_cnt);
+
+	for (i = 0; i < HTT_STATS_PHY_ERR_MAX; i++) {
+		index += snprintf(&phy_errs[index],
+				DP_MAX_STRING_LEN - index,
+				" %d:%d,", i, dp_stats_buf->phy_err[i]);
+	}
+
+	DP_TRACE_STATS(FATAL, "phy_errs: %s\n",  phy_errs);
 }
 
 /*
@@ -3097,9 +3238,27 @@ void dp_htt_stats_print_tag(uint8_t tag_type, uint32_t *tag_buf)
 	case HTT_STATS_PEER_RX_RATE_STATS_TAG:
 		dp_print_rx_peer_rate_stats_tlv(tag_buf);
 		break;
+
 	case HTT_STATS_TX_DE_COMPL_STATS_TAG:
 		dp_print_tx_de_compl_stats_tlv(tag_buf);
 		break;
+
+	case HTT_STATS_RX_REFILL_RXDMA_ERR_TAG:
+		dp_print_rx_soc_fw_refill_ring_num_rxdma_err_tlv(tag_buf);
+		break;
+
+	case HTT_STATS_RX_REFILL_REO_ERR_TAG:
+		dp_print_rx_soc_fw_refill_ring_num_reo_err_tlv(tag_buf);
+		break;
+
+	case HTT_STATS_RX_REO_RESOURCE_STATS_TAG:
+		dp_print_rx_reo_debug_stats_tlv(tag_buf);
+		break;
+
+	case HTT_STATS_RX_PDEV_FW_STATS_PHY_ERR_TAG:
+		dp_print_rx_pdev_fw_stats_phy_err_tlv(tag_buf);
+		break;
+
 	default:
 		break;
 	}

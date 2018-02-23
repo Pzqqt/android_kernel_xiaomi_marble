@@ -1400,6 +1400,7 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 				continue;
 			}
 		}
+
 		cookie_msb = *(msg_word + 2);
 		pdev_id = *(msg_word + 2) & HTT_PID_BIT_MASK;
 		pdev = soc->pdev_list[pdev_id];
@@ -1407,6 +1408,11 @@ static inline void dp_process_htt_stat_msg(struct htt_stats_context *htt_stats,
 		if (cookie_msb >> 2) {
 			copy_stats = true;
 		}
+
+		htt_stats->msg_len = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(
+					*(msg_word +
+					HTT_T2H_EXT_STATS_TLV_START_OFFSET));
+
 		/* read 5th word */
 		msg_word = msg_word + 4;
 		msg_remain_len = qdf_min(htt_stats->msg_len,
@@ -1512,7 +1518,6 @@ void htt_t2h_stats_handler(void *context)
 {
 	struct dp_soc *soc = (struct dp_soc *)context;
 	struct htt_stats_context htt_stats;
-	uint32_t length;
 	uint32_t *msg_word;
 	qdf_nbuf_t htt_msg = NULL;
 	uint8_t done;
@@ -1537,17 +1542,8 @@ void htt_t2h_stats_handler(void *context)
 	while ((htt_msg = qdf_nbuf_queue_remove(&soc->htt_stats.msg)) != NULL) {
 		msg_word = (uint32_t *) qdf_nbuf_data(htt_msg);
 		msg_word = msg_word + HTT_T2H_EXT_STATS_TLV_START_OFFSET;
-		length = HTT_T2H_EXT_STATS_CONF_TLV_LENGTH_GET(*msg_word);
 		done = HTT_T2H_EXT_STATS_CONF_TLV_DONE_GET(*msg_word);
 		qdf_nbuf_queue_add(&htt_stats.msg, htt_msg);
-		/*
-		 * HTT EXT stats response comes as stream of TLVs which span over
-		 * multiple T2H messages.
-		 * The first message will carry length of the response.
-		 * For rest of the messages length will be zero.
-		 */
-		if (length)
-			htt_stats.msg_len = length;
 		/*
 		 * Done bit signifies that this is the last T2H buffer in the
 		 * stream of HTT EXT STATS message
