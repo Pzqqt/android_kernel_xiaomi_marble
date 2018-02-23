@@ -1828,6 +1828,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 				   &frm->HTCaps, sizeof(frm->HTCaps));
+	} else if (pe_session->he_with_wep_tkip) {
+		pe_debug("Populate HT Caps in Assoc Request with WEP/TKIP");
+		populate_dot11f_ht_caps(mac_ctx, NULL, &frm->HTCaps);
 	}
 	pe_debug("SupportedChnlWidth: %d, mimoPS: %d, GF: %d, short GI20:%d, shortGI40: %d, dsssCck: %d, AMPDU Param: %x",
 		frm->HTCaps.supportedChannelWidthSet,
@@ -1850,7 +1853,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			populate_dot11f_operating_mode(mac_ctx,
 					&frm->OperatingMode, pe_session);
 		}
+	} else if (pe_session->he_with_wep_tkip) {
+		pe_debug("Populate VHT IEs in Assoc Request with WEP/TKIP");
+		populate_dot11f_vht_caps(mac_ctx, NULL, &frm->VHTCaps);
 	}
+
 	if (!vht_enabled &&
 			pe_session->is_vendor_specific_vhtcaps) {
 		pe_debug("Populate Vendor VHT IEs in Assoc Request");
@@ -1878,6 +1885,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_debug("Populate HE IEs");
 		populate_dot11f_he_caps(mac_ctx, pe_session,
 					&frm->he_cap);
+	} else if (pe_session->he_with_wep_tkip) {
+		pe_debug("Populate HE IEs in Assoc Request with WEP/TKIP");
+		populate_dot11f_he_caps(mac_ctx, NULL, &frm->he_cap);
 	}
 
 	if (pe_session->pLimJoinReq->is11Rconnection) {

@@ -6289,6 +6289,8 @@ wlan_hdd_wifi_test_config_policy[
 			.type = NLA_U8},
 		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_FRAGMENTATION] = {
 			.type = NLA_U8},
+		[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE] = {
+			.type = NLA_U8},
 };
 
 /**
@@ -7268,8 +7270,17 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	uint8_t cfg_val = 0;
 	uint8_t set_val = 0;
 	tSmeConfigParams *sme_config;
+	bool update_sme_cfg = false;
 
 	ENTER_DEV(dev);
+
+	sme_config = qdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		hdd_err("mem alloc failed for sme_config");
+		return -ENOMEM;
+	}
+	sme_get_config_param(hdd_ctx->hHal, sme_config);
+
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -7316,13 +7327,6 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE]) {
 		cfg_val = nla_get_u8(tb[
 			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WMM_ENABLE]);
-		sme_config = qdf_mem_malloc(sizeof(*sme_config));
-		if (!sme_config) {
-			hdd_err("mem alloc failed for sme_config");
-			return -ENOMEM;
-		}
-		qdf_mem_zero(sme_config, sizeof(*sme_config));
-		sme_get_config_param(hdd_ctx->hHal, sme_config);
 		if (!cfg_val) {
 			sme_config->csrConfig.WMMSupportMode =
 				hdd_to_csr_wmm_mode(HDD_WMM_USER_MODE_NO_QOS);
@@ -7332,8 +7336,7 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 				hdd_to_csr_wmm_mode(hdd_ctx->config->WmmMode);
 			hdd_debug("using wmm default value");
 		}
-		sme_update_config(hdd_ctx->hHal, sme_config);
-		qdf_mem_free(sme_config);
+		update_sme_cfg = true;
 	}
 
 	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_SEND_ADDBA_REQ]) {
@@ -7366,6 +7369,20 @@ __wlan_hdd_cfg80211_set_wifi_test_config(struct wiphy *wiphy,
 		ret_val = sme_update_he_frag_supp(hdd_ctx->hHal,
 				adapter->session_id, set_val);
 	}
+
+	if (tb[QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE]) {
+		cfg_val = nla_get_u8(tb[
+			QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE]);
+		sme_config->csrConfig.wep_tkip_in_he = cfg_val;
+		hdd_debug("Set WEP/TKIP allow in HE %d", cfg_val);
+
+		update_sme_cfg = true;
+	}
+
+	if (update_sme_cfg)
+		sme_update_config(hdd_ctx->hHal, sme_config);
+
+	qdf_mem_free(sme_config);
 
 	return ret_val;
 }

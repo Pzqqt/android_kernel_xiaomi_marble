@@ -2591,6 +2591,7 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.AdHocChannel5G = pParam->AdHocChannel5G;
 		pMac->roam.configParam.bandCapability = pParam->bandCapability;
 		pMac->roam.configParam.cbChoice = pParam->cbChoice;
+		pMac->roam.configParam.wep_tkip_in_he = pParam->wep_tkip_in_he;
 		pMac->roam.configParam.neighborRoamConfig.
 			delay_before_vdev_stop =
 			pParam->neighborRoamConfig.delay_before_vdev_stop;
@@ -3205,6 +3206,7 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #endif
 	pParam->enable_tx_ldpc = cfg_params->tx_ldpc_enable;
 	pParam->enable_rx_ldpc = cfg_params->rx_ldpc_enable;
+	pParam->wep_tkip_in_he = cfg_params->wep_tkip_in_he;
 	pParam->disable_high_ht_mcs_2x2 = cfg_params->disable_high_ht_mcs_2x2;
 	pParam->max_amsdu_num = cfg_params->max_amsdu_num;
 	pParam->nSelect5GHzMargin = cfg_params->nSelect5GHzMargin;
@@ -13131,7 +13133,8 @@ enum csr_cfgdot11mode curr_mode = mac_ctx->roam.configParam.uCfgDot11Mode;
 		&& (profile->EncryptionType.encryptionType[0] ==
 		eCSR_ENCRYPT_TYPE_NONE)))
 		&& ((eCSR_CFG_DOT11_MODE_11N == cfg_dot11_mode) ||
-	     (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode))) {
+		    (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode) ||
+		    (eCSR_CFG_DOT11_MODE_11AX == cfg_dot11_mode))) {
 		/* We cannot do 11n here */
 		if (WLAN_REG_IS_24GHZ_CH(opr_chn))
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
@@ -15278,6 +15281,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 					uapsd_mask = 0;
 			}
 		}
+
+		if (!CSR_IS_11n_ALLOWED(pProfile->negotiatedUCEncryptionType))
+			csr_join_req->he_with_wep_tkip =
+				pMac->roam.configParam.wep_tkip_in_he;
 
 		csr_join_req->UCEncryptionType =
 				csr_translate_encrypt_type_to_ed_type

@@ -1354,6 +1354,7 @@ typedef struct tagCsrConfigParam {
 	uint32_t btm_max_attempt_cnt;
 	uint32_t btm_sticky_time;
 	uint32_t offload_11k_enable_bitmask;
+	bool wep_tkip_in_he;
 	struct csr_neighbor_report_offload_params neighbor_report_offload;
 } tCsrConfigParam;
 

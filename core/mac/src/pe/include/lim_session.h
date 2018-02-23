@@ -542,6 +542,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t ht_client_cnt;
 	bool force_24ghz_in_ht20;
 	bool ch_switch_in_progress;
+	bool he_with_wep_tkip;
 #ifdef WLAN_FEATURE_FILS_SK
 	struct pe_fils_session *fils_info;
 	struct qdf_mac_addr dst_mac;

@@ -1127,7 +1127,7 @@ typedef struct sSirSmeJoinReq {
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
 	bool send_smps_action;
-
+	bool he_with_wep_tkip;
 	uint8_t max_amsdu_num;
 	bool isWMEenabled;
 	bool isQosEnabled;

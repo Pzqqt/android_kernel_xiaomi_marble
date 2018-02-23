@@ -1347,6 +1347,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->limWmeEnabled = sme_join_req->isWMEenabled;
 		session->limQosEnabled = sme_join_req->isQosEnabled;
 		session->wps_registration = sme_join_req->wps_registration;
+		session->he_with_wep_tkip = sme_join_req->he_with_wep_tkip;
 
 		session->enable_bcast_probe_rsp =
 				sme_join_req->enable_bcast_probe_rsp;
