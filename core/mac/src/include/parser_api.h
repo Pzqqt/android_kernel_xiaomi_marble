@@ -530,6 +530,11 @@ struct s_ext_cap {
 	uint8_t fine_time_meas_responder:1;
 	uint8_t fine_time_meas_initiator:1;
 	uint8_t fils_capability:1;
+	uint8_t ext_spectrum_management:1;
+	uint8_t future_channel_guidance:1;
+	uint8_t reserved7:2;
+	uint8_t twt_requestor_support:1;
+	uint8_t twt_responder_support:1;
 };
 
 uint8_t sirIsPropCapabilityEnabled(struct sAniSirGlobal *pMac, uint32_t bitnum);
@@ -1204,6 +1209,31 @@ static inline QDF_STATUS populate_dot11f_he_bss_color_change(
 	return QDF_STATUS_SUCCESS;
 }
 #endif
+
+#ifdef WLAN_SUPPORT_TWT
+/**
+ * populate_dot11f_twt_extended_caps() - populate TWT extended capabilities
+ * @mac_ctx: Global MAC context.
+ * @pe_session: Pointer to the PE session.
+ * @p_ext_cap: Pointer to the extended capabilities of the session.
+ *
+ * Populate the TWT extended capabilities based on the target and INI support.
+ *
+ * Return: tSirRetStatus Success or Failure
+ */
+tSirRetStatus populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
+						tpPESession pe_session,
+						struct s_ext_cap *p_ext_cap);
+#else
+static inline tSirRetStatus
+populate_dot11f_twt_extended_caps(tpAniSirGlobal mac_ctx,
+				  tpPESession pe_session,
+				  struct s_ext_cap *p_ext_cap)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * sir_unpack_beacon_ie: wrapper to unpack beacon and update def RSN params
  * if optional fields are not present.
