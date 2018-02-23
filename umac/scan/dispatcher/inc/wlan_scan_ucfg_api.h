@@ -200,23 +200,28 @@ QDF_STATUS ucfg_scan_set_miracast(
 		struct wlan_objmgr_psoc *psoc, bool enable);
 
 /**
- * ucfg_scan_set_disable_timeout() - Public API to disable/enable scan timeout
- * @psoc: psoc on which scan timeout need to be disabled
- * @disable: disable scan timeout if true else enable scan timeout
+ * ucfg_scan_set_global_config() - Public API to set global scan config
+ * @psoc: psoc context
+ * @config: config to set
+ * @val: new config value
  *
  * Return: QDF_STATUS.
  */
 QDF_STATUS
-ucfg_scan_set_disable_timeout(struct wlan_objmgr_psoc *psoc, bool disable);
+ucfg_scan_set_global_config(struct wlan_objmgr_psoc *psoc,
+		enum scan_config config, uint32_t val);
 
 /**
- * ucfg_scan_get_disable_timeout() - Public API to get if scan timeout
- * is enabled or disabled
- * @psoc: psoc on which scan timeout status need to be checked
+ * ucfg_scan_get_global_config() - Public API to get global scan config
+ * @psoc: psoc context
+ * @config: config to set
+ * @val: uint32* to hold returned config value
  *
- * Return: true if timeout is diaabled else false.
+ * Return: QDF_STATUS.
  */
-bool ucfg_scan_get_disable_timeout(struct wlan_objmgr_psoc *psoc);
+QDF_STATUS
+ucfg_scan_get_global_config(struct wlan_objmgr_psoc *psoc,
+		enum scan_config config, uint32_t *val);
 
 /**
  * ucfg_scan_set_wide_band_scan() - Public API to disable/enable wide band scan

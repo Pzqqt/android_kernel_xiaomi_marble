@@ -1329,4 +1329,15 @@ typedef void (*update_beacon_cb) (struct wlan_objmgr_pdev *pdev,
  */
 typedef QDF_STATUS (*scan_iterator_func) (void *arg,
 	struct scan_cache_entry *scan_entry);
+
+/**
+ * enum scan_priority - scan priority definitions
+ * @SCAN_CFG_DISABLE_SCAN_COMMAND_TIMEOUT: disable scan command timeout
+ * @SCAN_CFG_DROP_BCN_ON_CHANNEL_MISMATCH: config to drop beacon/probe
+ *  response frames if received channel and IE channels do not match
+ */
+enum scan_config {
+	SCAN_CFG_DISABLE_SCAN_COMMAND_TIMEOUT,
+	SCAN_CFG_DROP_BCN_ON_CHANNEL_MISMATCH,
+};
 #endif

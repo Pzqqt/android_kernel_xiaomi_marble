@@ -694,6 +694,20 @@ QDF_STATUS scm_handle_bcn_probe(struct scheduler_msg *msg)
 
 		scan_entry = scan_node->entry;
 
+		if (scan_obj->drop_bcn_on_chan_mismatch &&
+			scan_entry->channel_mismatch) {
+			scm_debug("Channel mismatch: Received %s from BSSID: %pM "
+				"tsf_delta = %u Seq Num: %x ssid:%.*s, rssi: %d",
+				(bcn->frm_type == MGMT_SUBTYPE_PROBE_RESP) ?
+				"Probe Rsp" : "Beacon", scan_entry->bssid.bytes,
+				scan_entry->tsf_delta, scan_entry->seq_num,
+				scan_entry->ssid.length, scan_entry->ssid.ssid,
+				scan_entry->rssi_raw);
+			util_scan_free_cache_entry(scan_entry);
+			qdf_mem_free(scan_node);
+			continue;
+		}
+
 		if (scan_obj->cb.update_beacon)
 			scan_obj->cb.update_beacon(pdev, scan_entry);
 

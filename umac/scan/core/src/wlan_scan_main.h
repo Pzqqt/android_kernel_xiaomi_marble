@@ -436,6 +436,7 @@ struct scan_cb {
  * @bt_a2dp_enabled: if bt a2dp is enabled
  * @miracast_enabled: miracast enabled
  * @disable_timeout: command timeout disabled
+ * @drop_bcn_on_chan_mismatch: drop bcn if channel mismatch
  * @scan_start_request_buff: buffer used to pass
  *      scan config to event handlers
  */
@@ -455,6 +456,7 @@ struct wlan_scan_obj {
 	bool bt_a2dp_enabled;
 	bool miracast_enabled;
 	bool disable_timeout;
+	bool drop_bcn_on_chan_mismatch;
 	struct scan_start_request scan_start_request_buff;
 };
 

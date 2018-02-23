@@ -950,34 +950,6 @@ QDF_STATUS ucfg_scan_set_miracast(
 }
 
 QDF_STATUS
-ucfg_scan_set_disable_timeout(struct wlan_objmgr_psoc *psoc, bool disable)
-{
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return QDF_STATUS_E_NULL_VALUE;
-	}
-	scan_obj->disable_timeout = disable;
-	scm_debug("set disable_timeout to %d", scan_obj->disable_timeout);
-
-	return QDF_STATUS_SUCCESS;
-}
-
-bool ucfg_scan_get_disable_timeout(struct wlan_objmgr_psoc *psoc)
-{
-	struct wlan_scan_obj *scan_obj;
-
-	scan_obj = wlan_psoc_get_scan_obj(psoc);
-	if (!scan_obj) {
-		scm_err("Failed to get scan object");
-		return false;
-	}
-	return scan_obj->disable_timeout;
-}
-
-QDF_STATUS
 ucfg_scan_set_wide_band_scan(struct wlan_objmgr_pdev *pdev, bool enable)
 {
 	uint8_t pdev_id;
@@ -1309,6 +1281,7 @@ static QDF_STATUS
 wlan_scan_global_init(struct wlan_scan_obj *scan_obj)
 {
 	scan_obj->enable_scan = true;
+	scan_obj->drop_bcn_on_chan_mismatch = true;
 	scan_obj->disable_timeout = false;
 	scan_obj->scan_def.active_dwell = SCAN_ACTIVE_DWELL_TIME;
 	scan_obj->scan_def.passive_dwell = SCAN_PASSIVE_DWELL_TIME;
@@ -2146,4 +2119,62 @@ bool ucfg_scan_get_bt_activity(struct wlan_objmgr_psoc *psoc)
 	}
 
 	return scan_obj->bt_a2dp_enabled;
+}
+
+QDF_STATUS
+ucfg_scan_set_global_config(struct wlan_objmgr_psoc *psoc,
+			       enum scan_config config, uint32_t val)
+{
+	struct wlan_scan_obj *scan_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj) {
+		scm_err("Failed to get scan object config:%d, val:%d",
+				config, val);
+		return QDF_STATUS_E_INVAL;
+	}
+	switch (config) {
+	case SCAN_CFG_DISABLE_SCAN_COMMAND_TIMEOUT:
+		scan_obj->disable_timeout = !!val;
+		break;
+	case SCAN_CFG_DROP_BCN_ON_CHANNEL_MISMATCH:
+		scan_obj->drop_bcn_on_chan_mismatch = !!val;
+		break;
+
+	default:
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
+}
+
+QDF_STATUS
+ucfg_scan_get_global_config(struct wlan_objmgr_psoc *psoc,
+			       enum scan_config config, uint32_t *val)
+{
+	struct wlan_scan_obj *scan_obj;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+
+	scan_obj = wlan_psoc_get_scan_obj(psoc);
+	if (!scan_obj || !val) {
+		scm_err("scan object:%pK config:%d, val:0x%pK",
+				scan_obj, config, val);
+		return QDF_STATUS_E_INVAL;
+	}
+	switch (config) {
+	case SCAN_CFG_DISABLE_SCAN_COMMAND_TIMEOUT:
+		*val = scan_obj->disable_timeout;
+		break;
+	case SCAN_CFG_DROP_BCN_ON_CHANNEL_MISMATCH:
+		*val = scan_obj->drop_bcn_on_chan_mismatch;
+		break;
+
+	default:
+		status = QDF_STATUS_E_INVAL;
+		break;
+	}
+
+	return status;
 }
