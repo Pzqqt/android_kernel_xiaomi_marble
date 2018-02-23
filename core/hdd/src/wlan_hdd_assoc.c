@@ -5223,6 +5223,18 @@ int hdd_set_genie_to_csr(struct hdd_adapter *adapter,
 				   pWextState->roamProfile.nRSNReqIELength);
 
 		pWextState->roamProfile.force_rsne_override = true;
+
+		hdd_debug("MFPEnabled %d", pWextState->roamProfile.MFPEnabled);
+		/*
+		 * Reset MFPEnabled if testmode RSNE passed doesnt have MFPR
+		 * or MFPC bit set
+		 */
+		if (pWextState->roamProfile.MFPEnabled &&
+		    !(pWextState->roamProfile.MFPRequired ||
+		      pWextState->roamProfile.MFPCapable)) {
+			hdd_debug("Reset MFPEnabled");
+			pWextState->roamProfile.MFPEnabled = 0;
+		}
 		/* If parsing failed set the def value for the roam profile */
 		if (status)
 			hdd_set_def_rsne_override(&pWextState->roamProfile,

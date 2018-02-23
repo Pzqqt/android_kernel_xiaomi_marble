@@ -3500,6 +3500,7 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 		}
 		filter->num_of_enc_type = idx;
 		filter->num_of_mc_enc_type = idx;
+		filter->ignore_pmf_cap = true;
 	} else {
 		filter->num_of_auth =
 			pFilter->authType.numEntries;
