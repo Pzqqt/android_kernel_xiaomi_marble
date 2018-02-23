@@ -815,7 +815,8 @@ QDF_OBJS := 	$(QDF_LINUX_OBJ_DIR)/qdf_defer.o \
 		$(QDF_LINUX_OBJ_DIR)/qdf_trace.o \
 		$(QDF_OBJ_DIR)/qdf_parse.o \
 		$(QDF_OBJ_DIR)/qdf_str.o \
-		$(QDF_OBJ_DIR)/qdf_types.o
+		$(QDF_OBJ_DIR)/qdf_types.o \
+		$(QDF_OBJ_DIR)/qdf_util.o
 
 ifeq ($(CONFIG_WLAN_DEBUGFS), y)
 QDF_OBJS += $(QDF_LINUX_OBJ_DIR)/qdf_debugfs.o
