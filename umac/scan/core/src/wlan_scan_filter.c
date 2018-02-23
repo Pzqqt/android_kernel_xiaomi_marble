@@ -529,7 +529,8 @@ static bool scm_is_rsn_security(struct scan_filter *filter,
 	if (!match)
 		return false;
 
-	match = scm_check_pmf_match(filter, &rsn);
+	if (!filter->ignore_pmf_cap)
+		match = scm_check_pmf_match(filter, &rsn);
 
 	if (match) {
 		security->auth_type = neg_auth;

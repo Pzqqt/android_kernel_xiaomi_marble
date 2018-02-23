@@ -495,6 +495,7 @@ struct fils_filter_info {
  * @num_of_enc_type: number of unicast enc type
  * @num_of_mc_enc_type: number of multicast enc type
  * @pmf_cap: Pmf capability
+ * @ignore_pmf_cap: Ignore pmf capability match
  * @num_of_pcl_channels: number of pcl channels
  * @bss_type: bss type BSS/IBSS etc
  * @dot11_mode: operating modes 0 mean any
@@ -530,6 +531,7 @@ struct scan_filter {
 	uint32_t num_of_enc_type;
 	uint32_t num_of_mc_enc_type;
 	enum wlan_pmf_cap pmf_cap;
+	bool ignore_pmf_cap;
 	uint32_t num_of_pcl_channels;
 	enum wlan_bss_type bss_type;
 	enum wlan_phymode dot11_mode;
