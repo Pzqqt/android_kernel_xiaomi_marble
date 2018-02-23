@@ -3059,22 +3059,27 @@ static void dp_tx_desc_flush(struct dp_pdev *pdev)
 	uint32_t num_desc;
 	struct dp_soc *soc = pdev->soc;
 	struct dp_tx_desc_s *tx_desc = NULL;
+	struct dp_tx_desc_pool_s *tx_desc_pool = NULL;
 
 	num_desc = wlan_cfg_get_num_tx_desc(soc->wlan_cfg_ctx);
 	num_pool = wlan_cfg_get_num_tx_desc_pool(soc->wlan_cfg_ctx);
 
 	for (i = 0; i < num_pool; i++) {
 		for (j = 0; j < num_desc; j++) {
-			tx_desc = dp_tx_desc_find(soc, i,
+			tx_desc_pool = &((soc)->tx_desc[(i)]);
+			if (tx_desc_pool &&
+				tx_desc_pool->desc_pages.cacheable_pages) {
+				tx_desc = dp_tx_desc_find(soc, i,
 					(j & DP_TX_DESC_ID_PAGE_MASK) >>
 					DP_TX_DESC_ID_PAGE_OS,
 					(j & DP_TX_DESC_ID_OFFSET_MASK) >>
 					DP_TX_DESC_ID_OFFSET_OS);
 
-			if (tx_desc && (tx_desc->pdev == pdev) &&
-				(tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
-				dp_tx_comp_free_buf(soc, tx_desc);
-				dp_tx_desc_release(tx_desc, i);
+				if (tx_desc && (tx_desc->pdev == pdev) &&
+					(tx_desc->flags & DP_TX_DESC_FLAG_ALLOCATED)) {
+					dp_tx_comp_free_buf(soc, tx_desc);
+					dp_tx_desc_release(tx_desc, i);
+				}
 			}
 		}
 	}
