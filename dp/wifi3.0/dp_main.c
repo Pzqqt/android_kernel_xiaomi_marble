@@ -4434,7 +4434,7 @@ void dp_peer_set_mesh_rx_filter(struct cdp_vdev *vdev_hdl, uint32_t val)
  *
  * Return: void
  */
-#define STATS_PROC_TIMEOUT        (HZ/10)
+#define STATS_PROC_TIMEOUT        (HZ/1000)
 
 static void
 dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
@@ -4450,6 +4450,14 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 					FL("DP Invalid Peer refernce"));
 				return;
 			}
+
+			if (peer->delete_in_progress) {
+				QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+					FL("DP Peer deletion in progress"));
+				continue;
+			}
+
+			qdf_atomic_inc(&peer->ref_cnt);
 			waitcnt = 0;
 			dp_peer_rxtid_stats(peer, dp_rx_bar_stats_cb, pdev);
 			while (!(qdf_atomic_read(&(pdev->stats_cmd_complete)))
@@ -4459,6 +4467,7 @@ dp_aggregate_pdev_ctrl_frames_stats(struct dp_pdev *pdev)
 				waitcnt++;
 			}
 			qdf_atomic_set(&(pdev->stats_cmd_complete), 0);
+			dp_peer_unref_delete(peer);
 		}
 	}
 }
