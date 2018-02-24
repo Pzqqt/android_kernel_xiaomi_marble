@@ -144,6 +144,7 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 	uint32_t i;
 	uint32_t total_frag_len = 0, frag_len = 0;
 	bool is_frag, is_first_msdu;
+	bool check_ppdu_id = true;
 
 	msdu_len = 0;
 	msdu = 0;
@@ -153,6 +154,13 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 	hal_rx_reo_ent_buf_paddr_get(rxdma_dst_ring_desc, &buf_info,
 		&p_last_buf_addr_info, &msdu_cnt);
+
+	if ((hal_rx_reo_ent_rxdma_push_reason_get(rxdma_dst_ring_desc) ==
+		HAL_RX_WBM_RXDMA_PSH_RSN_ERROR) &&
+		qdf_unlikely(hal_rx_reo_ent_rxdma_error_code_get(
+		rxdma_dst_ring_desc) == HAL_RXDMA_ERR_FLUSH_REQUEST)) {
+		check_ppdu_id = false;
+	}
 
 	is_frag = false;
 	is_first_msdu = true;
@@ -184,30 +192,39 @@ dp_rx_mon_mpdu_pop(struct dp_soc *soc, uint32_t mac_id,
 
 			rx_desc_tlv = HAL_RX_MON_DEST_GET_DESC(data);
 
-			if (is_first_msdu) {
-				msdu_ppdu_id =
-				HAL_RX_MON_HW_DESC_GET_PPDUID_GET(rx_desc_tlv);
-				is_first_msdu = false;
-			}
-
 			QDF_TRACE(QDF_MODULE_ID_DP,
-					  QDF_TRACE_LEVEL_DEBUG,
-					  "[%s][%d] i=%d, ppdu_id=%x, msdu_ppdu_id=%x last_ppdu_id=%x num msdus = %u",
-					  __func__, __LINE__, i,
-					  *ppdu_id, msdu_ppdu_id, last_ppdu_id,
-					  num_msdus);
+				QDF_TRACE_LEVEL_DEBUG,
+				"[%s] i=%d, ppdu_id=%x, "
+				"last_ppdu_id=%x num_msdus = %u\n",
+				__func__, i, *ppdu_id,
+				last_ppdu_id, num_msdus);
 
-			if (*ppdu_id > msdu_ppdu_id)
+			if (qdf_likely(check_ppdu_id)) {
+				if (is_first_msdu) {
+					msdu_ppdu_id =
+					HAL_RX_MON_HW_DESC_GET_PPDUID_GET(
+						rx_desc_tlv);
+					is_first_msdu = false;
+				}
+
 				QDF_TRACE(QDF_MODULE_ID_DP,
-						  QDF_TRACE_LEVEL_WARN,
-						  "[%s][%d] ppdu_id=%d msdu_ppdu_id=%d",
-						  __func__, __LINE__, *ppdu_id,
-						  msdu_ppdu_id);
+					QDF_TRACE_LEVEL_DEBUG,
+					"[%s] msdu_ppdu_id=%x\n",
+					__func__, msdu_ppdu_id);
 
-			if ((*ppdu_id < msdu_ppdu_id) && (*ppdu_id >
-				last_ppdu_id)) {
-				*ppdu_id = msdu_ppdu_id;
-				return rx_bufs_used;
+				if (*ppdu_id > msdu_ppdu_id)
+					QDF_TRACE(QDF_MODULE_ID_DP,
+						QDF_TRACE_LEVEL_WARN,
+						"[%s][%d] ppdu_id=%d "
+						"msdu_ppdu_id=%d\n",
+						__func__, __LINE__, *ppdu_id,
+						msdu_ppdu_id);
+
+				if ((*ppdu_id < msdu_ppdu_id) && (*ppdu_id >
+					last_ppdu_id)) {
+					*ppdu_id = msdu_ppdu_id;
+					return rx_bufs_used;
+				}
 			}
 
 			if (hal_rx_desc_is_first_msdu(rx_desc_tlv))
