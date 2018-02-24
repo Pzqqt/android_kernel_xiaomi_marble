@@ -272,8 +272,14 @@ out:
 	return 0;
 }
 
+#ifdef MULTI_IF_NAME
+#define PLD_SNOC_OPS_NAME "pld_snoc_" MULTI_IF_NAME
+#else
+#define PLD_SNOC_OPS_NAME "pld_snoc"
+#endif
+
 struct icnss_driver_ops pld_snoc_ops = {
-	.name       = "pld_snoc",
+	.name       = PLD_SNOC_OPS_NAME,
 	.probe      = pld_snoc_probe,
 	.remove     = pld_snoc_remove,
 	.shutdown   = pld_snoc_shutdown,
