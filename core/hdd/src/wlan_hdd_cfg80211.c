@@ -12876,6 +12876,12 @@ static int __wlan_hdd_cfg80211_set_nud_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if (adapter->device_mode != QDF_STA_MODE) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s STATS supported in only STA mode !!", __func__);
+		return -EINVAL;
+	}
+
 	if (tb[STATS_SET_START]) {
 		/* tracking is enabled for stats other than arp. */
 		if (tb[STATS_SET_DATA_PKT_INFO]) {
@@ -13374,6 +13380,12 @@ static int __wlan_hdd_cfg80211_get_nud_stats(struct wiphy *wiphy,
 	err = hdd_validate_adapter(adapter);
 	if (err)
 		return err;
+
+	if (adapter->device_mode != QDF_STA_MODE) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+			  "%s STATS supported in only STA mode !!", __func__);
+		return -EINVAL;
+	}
 
 	arp_stats_params.pkt_type = WLAN_NUD_STATS_ARP_PKT_TYPE;
 	arp_stats_params.vdev_id = adapter->session_id;
