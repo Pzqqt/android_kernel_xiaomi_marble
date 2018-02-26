@@ -684,7 +684,7 @@ void ol_txrx_peer_remove_obj_map_entries(ol_txrx_pdev_handle pdev,
 	int32_t peer_id_ref_cnt;
 	int32_t num_deleted_maps = 0;
 	uint16_t save_peer_ids[MAX_NUM_PEER_ID_PER_PEER];
-	uint16_t save_peer_id_ref_cnt[MAX_NUM_PEER_ID_PER_PEER];
+	uint16_t save_peer_id_ref_cnt[MAX_NUM_PEER_ID_PER_PEER] = {0};
 
 	qdf_spin_lock_bh(&pdev->peer_map_unmap_lock);
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
