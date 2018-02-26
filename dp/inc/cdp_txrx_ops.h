@@ -103,7 +103,8 @@ struct cdp_cmn_ops {
 
 	int (*txrx_peer_update_ast)
 		(ol_txrx_soc_handle soc, struct cdp_peer *peer_hdl,
-		void *ast_hdl, uint32_t flags);
+		uint8_t *mac_addr, uint32_t flags);
+
 
 	void *(*txrx_peer_ast_hash_find)
 		(ol_txrx_soc_handle soc, uint8_t *ast_mac_addr);
@@ -294,6 +295,13 @@ struct cdp_cmn_ops {
 	void *(*get_soc_dp_txrx_handle)(struct cdp_soc *soc_handle);
 	void (*set_soc_dp_txrx_handle)(struct cdp_soc *soc_handle,
 			void *dp_txrx_handle);
+
+	void (*txrx_peer_reset_ast)
+		(ol_txrx_soc_handle soc, uint8_t *ast_macaddr);
+
+	void (*txrx_peer_reset_ast_table)(ol_txrx_soc_handle soc);
+
+	void (*txrx_peer_flush_ast_table)(ol_txrx_soc_handle soc);
 
 	ol_txrx_tx_fp tx_send;
 };

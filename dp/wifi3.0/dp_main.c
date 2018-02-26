@@ -310,18 +310,115 @@ static void dp_peer_del_ast_wifi3(struct cdp_soc_t *soc_hdl,
 	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 
+
 static int dp_peer_update_ast_wifi3(struct cdp_soc_t *soc_hdl,
 						struct cdp_peer *peer_hdl,
-						void *ast_entry_hdl,
+						uint8_t *wds_macaddr,
 						uint32_t flags)
 {
 	int status;
 	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_ast_entry  *ast_entry = NULL;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
+
 	status = dp_peer_update_ast(soc,
 					(struct dp_peer *)peer_hdl,
-					(struct dp_ast_entry *)ast_entry_hdl,
+					ast_entry,
 					flags);
+	qdf_spin_unlock_bh(&soc->ast_lock);
+
 	return status;
+}
+
+/*
+ * dp_wds_reset_ast_wifi3() - Reset the is_active param for ast entry
+ * @soc_handle:		Datapath SOC handle
+ * @ast_entry_hdl:	AST Entry handle
+ * Return: None
+ */
+static void dp_wds_reset_ast_wifi3(struct cdp_soc_t *soc_hdl,
+						uint8_t *wds_macaddr)
+{
+	struct dp_soc *soc = (struct dp_soc *)soc_hdl;
+	struct dp_ast_entry *ast_entry = NULL;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+	ast_entry = dp_peer_ast_hash_find(soc, wds_macaddr);
+
+	if (ast_entry->type != CDP_TXRX_AST_TYPE_STATIC) {
+		ast_entry->is_active = TRUE;
+	}
+	qdf_spin_unlock_bh(&soc->ast_lock);
+}
+
+/*
+ * dp_wds_reset_ast_table_wifi3() - Reset the is_active param for all ast entry
+ * @soc:		Datapath SOC handle
+ *
+ * Return: None
+ */
+static void dp_wds_reset_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
+{
+	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	struct dp_ast_entry *ase, *temp_ase;
+	int i;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+
+	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
+		pdev = soc->pdev_list[i];
+		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
+				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
+					if (ase->type ==
+						CDP_TXRX_AST_TYPE_STATIC)
+						continue;
+					ase->is_active = TRUE;
+				}
+			}
+		}
+	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
+}
+
+/*
+ * dp_wds_flush_ast_table_wifi3() - Delete all wds and hmwds ast entry
+ * @soc:		Datapath SOC handle
+ *
+ * Return: None
+ */
+static void dp_wds_flush_ast_table_wifi3(struct cdp_soc_t  *soc_hdl)
+{
+	struct dp_soc *soc = (struct dp_soc *) soc_hdl;
+	struct dp_pdev *pdev;
+	struct dp_vdev *vdev;
+	struct dp_peer *peer;
+	struct dp_ast_entry *ase, *temp_ase;
+	int i;
+
+	qdf_spin_lock_bh(&soc->ast_lock);
+
+	for (i = 0; i < MAX_PDEV_CNT && soc->pdev_list[i]; i++) {
+		pdev = soc->pdev_list[i];
+		DP_PDEV_ITERATE_VDEV_LIST(pdev, vdev) {
+			DP_VDEV_ITERATE_PEER_LIST(vdev, peer) {
+				DP_PEER_ITERATE_ASE_LIST(peer, ase, temp_ase) {
+					if (ase->type ==
+						CDP_TXRX_AST_TYPE_STATIC)
+						continue;
+					dp_peer_del_ast(soc, ase);
+				}
+			}
+		}
+	}
+
+	qdf_spin_unlock_bh(&soc->ast_lock);
 }
 
 static void *dp_peer_ast_hash_find_wifi3(struct cdp_soc_t *soc_hdl,
@@ -574,6 +671,31 @@ static void dp_print_ast_stats(struct dp_soc *soc)
 	return;
 }
 #endif
+
+static void dp_print_peer_table(struct dp_vdev *vdev)
+{
+	struct dp_peer *peer = NULL;
+
+	DP_PRINT_STATS("Dumping Peer Table  Stats:");
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		if (!peer) {
+			DP_PRINT_STATS("Invalid Peer");
+			return;
+		}
+		DP_PRINT_STATS("    peer_mac_addr = %pM"
+			" nawds_enabled = %d"
+			" bss_peer = %d"
+			" wapi = %d"
+			" wds_enabled = %d"
+			" delete in progress = %d",
+			peer->mac_addr.raw,
+			peer->nawds_enabled,
+			peer->bss_peer,
+			peer->wapi,
+			peer->wds_enabled,
+			peer->delete_in_progress);
+	}
+}
 
 /*
  * dp_setup_srng - Internal function to setup SRNG rings used by data path
@@ -1587,6 +1709,7 @@ static void dp_wds_aging_timer_fn(void *soc_hdl)
 	if (qdf_atomic_read(&soc->cmn_init_done))
 		qdf_timer_mod(&soc->wds_aging_timer, DP_WDS_AGING_TIMER_DEFAULT_MS);
 }
+
 
 /*
  * dp_soc_wds_attach() - Setup WDS timer and AST table
@@ -5605,6 +5728,7 @@ dp_print_host_stats(struct cdp_vdev *vdev_handle, enum cdp_host_txrx_stats type)
 		break;
 	case TXRX_AST_STATS:
 		dp_print_ast_stats(pdev->soc);
+		dp_print_peer_table(vdev);
 		break;
 	case TXRX_SRNG_PTR_STATS:
 		 dp_print_ring_stats(pdev);
@@ -6714,6 +6838,9 @@ static struct cdp_cmn_ops dp_ops_cmn = {
 	.get_soc_dp_txrx_handle = dp_soc_get_dp_txrx_handle,
 	.set_soc_dp_txrx_handle = dp_soc_set_dp_txrx_handle,
 	.tx_send = dp_tx_send,
+	.txrx_peer_reset_ast = dp_wds_reset_ast_wifi3,
+	.txrx_peer_reset_ast_table = dp_wds_reset_ast_table_wifi3,
+	.txrx_peer_flush_ast_table = dp_wds_flush_ast_table_wifi3,
 };
 
 static struct cdp_ctrl_ops dp_ops_ctrl = {
