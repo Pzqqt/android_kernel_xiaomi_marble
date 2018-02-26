@@ -5561,6 +5561,13 @@ enum qca_wlan_vendor_attr_wifi_test_config {
 	 */
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_HE_MCS = 5,
 
+	/* 8-bit unsigned value to configure the driver to allow or not to
+	 * allow the connection with WEP/TKIP in HT/VHT/HE modes.
+	 * This attribute is used to configure the testbed device.
+	 * 1-allow wep/tkip in HT/VHT/HE, 0-do not allow wep/tkip
+	 */
+	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_WEP_TKIP_IN_HE = 6,
+
 	/* keep last */
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_WIFI_TEST_CONFIG_MAX =
