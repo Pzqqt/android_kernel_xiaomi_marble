@@ -1577,14 +1577,14 @@ static inline void *qdf_mem_dma_alloc(qdf_device_t osdev, void *dev,
 #endif
 
 #if defined(A_SIMOS_DEVHOST) || defined(HIF_SDIO) || defined(HIF_USB)
-inline void
+static inline void
 qdf_mem_dma_free(void *dev, qdf_size_t size, void *vaddr, qdf_dma_addr_t paddr)
 {
 	qdf_mem_free(vaddr);
 }
 #else
 
-inline void
+static inline void
 qdf_mem_dma_free(void *dev, qdf_size_t size, void *vaddr, qdf_dma_addr_t paddr)
 {
 	dma_free_coherent(dev, size, vaddr, paddr);

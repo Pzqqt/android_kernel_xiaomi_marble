@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,14 +35,17 @@
 
 #include <linux/jiffies.h>
 #include <linux/delay.h>
+#include <linux/ktime.h>
+#include <linux/timekeeping.h>
 #ifdef MSM_PLATFORM
 #include <asm/arch_timer.h>
 #else
-#include <linux/ktime.h>
+#include <linux/hrtimer.h>
 #endif
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
+#include <linux/version.h>
 
 typedef unsigned long __qdf_time_t;
 

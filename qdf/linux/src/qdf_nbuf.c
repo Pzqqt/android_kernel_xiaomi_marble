@@ -889,7 +889,7 @@ EXPORT_SYMBOL(__qdf_nbuf_unmap);
  *
  * Return: QDF_STATUS
  */
-#if defined(A_SIMOS_DEVHOST) || defined(HIF_USB)
+#if defined(A_SIMOS_DEVHOST) || defined(HIF_USB) || defined(HIF_SDIO)
 QDF_STATUS
 __qdf_nbuf_map_single(qdf_device_t osdev, qdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
@@ -926,7 +926,7 @@ EXPORT_SYMBOL(__qdf_nbuf_map_single);
  *
  * Return: none
  */
-#if defined(A_SIMOS_DEVHOST) || defined(HIF_USB)
+#if defined(A_SIMOS_DEVHOST) || defined(HIF_USB) || defined(HIF_SDIO)
 void __qdf_nbuf_unmap_single(qdf_device_t osdev, qdf_nbuf_t buf,
 				qdf_dma_dir_t dir)
 {

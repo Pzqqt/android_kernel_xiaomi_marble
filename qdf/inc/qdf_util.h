@@ -646,6 +646,20 @@ uint64_t qdf_do_div(uint64_t dividend, uint32_t divisor)
 }
 
 /**
+ * qdf_do_div_rem() - wrapper function for kernel macro(do_div)
+ *                    to get remainder.
+ * @dividend: Dividend value
+ * @divisor : Divisor value
+ *
+ * Return: remainder
+ */
+static inline
+uint64_t qdf_do_div_rem(uint64_t dividend, uint32_t divisor)
+{
+	return __qdf_do_div_rem(dividend, divisor);
+}
+
+/**
  * qdf_get_random_bytes() - returns nbytes bytes of random
  * data
  *
