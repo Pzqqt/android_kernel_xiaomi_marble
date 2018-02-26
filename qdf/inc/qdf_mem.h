@@ -34,7 +34,6 @@
 #define __QDF_MEMORY_H
 
 /* Include Files */
-#include "qdf_str.h" /* TODO: update references and remove */
 #include <qdf_types.h>
 #include <i_qdf_mem.h>
 
