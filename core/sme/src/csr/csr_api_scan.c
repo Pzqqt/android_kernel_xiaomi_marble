@@ -3484,26 +3484,16 @@ static QDF_STATUS csr_prepare_scan_filter(tpAniSirGlobal mac_ctx,
 	}
 
 	if (pFilter->force_rsne_override) {
-		int idx;
 
-		sme_debug("force_rsne_override enabled fill all auth type and enctype");
-		filter->num_of_auth = WLAN_NUM_OF_SUPPORT_AUTH_TYPE;
-		for (i = 0; i < filter->num_of_auth; i++)
-			filter->auth_type[i] = i;
+		sme_debug("force_rsne_override set auth type and enctype to any and ignore pmf cap");
 
-		idx = 0;
-		for (i = 0; i < WLAN_NUM_OF_ENCRYPT_TYPE; i++) {
-			if (i == WLAN_ENCRYPT_TYPE_TKIP ||
-			    i == WLAN_ENCRYPT_TYPE_AES ||
-			    i == WLAN_ENCRYPT_TYPE_AES_GCMP ||
-			    i == WLAN_ENCRYPT_TYPE_AES_GCMP_256) {
-				filter->enc_type[idx] = i;
-				filter->mc_enc_type[idx] = i;
-				idx++;
-			}
-		}
-		filter->num_of_enc_type = idx;
-		filter->num_of_mc_enc_type = idx;
+		filter->num_of_auth = 1;
+		filter->auth_type[0] = WLAN_AUTH_TYPE_ANY;
+		filter->num_of_enc_type = 1;
+		filter->enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+		filter->num_of_mc_enc_type = 1;
+		filter->mc_enc_type[0] = WLAN_ENCRYPT_TYPE_ANY;
+
 		filter->ignore_pmf_cap = true;
 	} else {
 		filter->num_of_auth =
