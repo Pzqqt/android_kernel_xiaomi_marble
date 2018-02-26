@@ -20,8 +20,9 @@
  * DOC: defines nan component os interface APIs
  */
 
-#include "qdf_types.h"
+#include "qdf_str.h"
 #include "qdf_trace.h"
+#include "qdf_types.h"
 #include "os_if_nan.h"
 #include "wlan_nan_api.h"
 #include "nan_ucfg_api.h"
