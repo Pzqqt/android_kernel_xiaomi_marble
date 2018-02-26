@@ -6864,7 +6864,7 @@ void *dp_soc_attach_wifi3(void *ctrl_psoc, void *hif_handle,
 
 		ret = soc->cdp_soc.ol_ops->get_dp_cfg_param(soc->ctrl_psoc,
 				CDP_CFG_CCE_DISABLE);
-		if (ret)
+		if (ret == 1)
 			soc->cce_disable = true;
 	}
 
