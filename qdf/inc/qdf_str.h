@@ -41,6 +41,20 @@ static inline bool qdf_is_space(char c)
 }
 
 /**
+ * qdf_str_cmp - Compare two strings
+ * @str1: First string
+ * @str2: Second string
+ * Return:
+ *	 0 - strings are equal
+ *	<0 - str1 sorts lexicographically before str2
+ *	>0 - str1 sorts lexicographically after str2
+ */
+static inline int32_t qdf_str_cmp(const char *str1, const char *str2)
+{
+	return __qdf_str_cmp(str1, str2);
+}
+
+/**
  * qdf_str_dup() - duplicate null-terminated string @src
  * @dest: double pointer to be populated
  * @src: the null-terminated string to be duplicated
@@ -52,6 +66,36 @@ static inline bool qdf_is_space(char c)
 QDF_STATUS qdf_str_dup(char **dest, const char *src);
 
 /**
+ * qdf_str_eq - compare two null-terminated strings for equality
+ * @left: the string left of the equality
+ * @right: the string right of the equality
+ *
+ * This is a thin wrapper over `if (strcmp(left, right) == 0)` for clarity.
+ *
+ * Return: true if strings are equal
+ */
+static inline bool qdf_str_eq(const char *left, const char *right)
+{
+	return qdf_str_cmp(left, right) == 0;
+}
+
+/**
+ * qdf_str_lcopy - Bounded copy from one string to another
+ * @dest: destination string
+ * @src: source string
+ * @dest_size: max number of bytes to copy (incl. null terminator)
+ *
+ * If the return value is >= @dest_size, @dest has been truncated.
+ *
+ * Return: length of @src
+ */
+static inline qdf_size_t
+qdf_str_lcopy(char *dest, const char *src, uint32_t dest_size)
+{
+	return __qdf_str_lcopy(dest, src, dest_size);
+}
+
+/**
  * qdf_str_left_trim() - Trim any leading whitespace from @str
  * @str: the string to trim
  *
@@ -60,6 +104,17 @@ QDF_STATUS qdf_str_dup(char **dest, const char *src);
 static inline const char *qdf_str_left_trim(const char *str)
 {
 	return __qdf_str_left_trim(str);
+}
+
+/**
+ * qdf_str_len() - returns the length of a null-terminated string
+ * @str: input string
+ *
+ * Return: length of @str (without null terminator)
+ */
+static inline qdf_size_t qdf_str_len(const char *str)
+{
+	return __qdf_str_len(str);
 }
 
 /**
@@ -92,9 +147,9 @@ static inline char *qdf_str_trim(char *str)
  * @str: the string to get the length of
  * @limit: the maximum number of characters to check
  *
- * Return: length of @str, or @limit if the end is not found
+ * Return: the less of @limit or the length of @str (without null terminator)
  */
-static inline qdf_size_t qdf_str_nlen(const char *str, size_t limit)
+static inline qdf_size_t qdf_str_nlen(const char *str, qdf_size_t limit)
 {
 	return __qdf_str_nlen(str, limit);
 }

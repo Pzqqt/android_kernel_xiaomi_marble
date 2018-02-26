@@ -108,34 +108,6 @@ typedef struct __qdf_mempool_ctxt {
 typedef enum dma_data_direction __dma_data_direction;
 
 /**
- * __qdf_str_cmp() - Compare two strings
- * @str1: First string
- * @str2: Second string
- *
- * Return: =0 equal
- * >0 not equal, if  str1  sorts lexicographically after str2
- * <0 not equal, if  str1  sorts lexicographically before str2
- */
-static inline int32_t __qdf_str_cmp(const char *str1, const char *str2)
-{
-	return strcmp(str1, str2);
-}
-
-/**
- * __qdf_str_lcopy() - Copy from one string to another
- * @dest: destination string
- * @src: source string
- * @bytes: limit of num bytes to copy
- *
- * @return: 0 returns the initial value of dest
- */
-static inline uint32_t __qdf_str_lcopy(char *dest, const char *src,
-				    uint32_t bytes)
-{
-	return strlcpy(dest, src, bytes);
-}
-
-/**
  * __qdf_dma_dir_to_os() - Convert DMA data direction to OS specific enum
  * @dir: QDF DMA data direction
  *
@@ -210,17 +182,6 @@ void __qdf_mempool_free(qdf_device_t osdev, __qdf_mempool_t pool, void *buf);
 
 #define __qdf_mempool_elem_size(_pool) ((_pool)->elem_size)
 #endif
-
-/**
- * __qdf_str_len() - returns the length of a string
- * @str: input string
- * Return:
- * length of string
- */
-static inline int32_t __qdf_str_len(const char *str)
-{
-	return strlen(str);
-}
 
 /**
  * __qdf_mem_cmp() - memory compare

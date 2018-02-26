@@ -24,8 +24,13 @@
 #ifndef __I_QDF_STR_H
 #define __I_QDF_STR_H
 
+#include "string.h"
+
 #define __qdf_is_space(c) isspace(c)
+#define __qdf_str_cmp(left, right) strcmp(left, right)
+#define __qdf_str_lcopy(dest, src, dest_size) strlcpy(dest, src, dest_size)
 const char *__qdf_str_left_trim(const char *str);
+#define __qdf_str_len(str) strlen(str)
 char *__qdf_str_trim(char *str);
 #define __qdf_str_nlen(str, limit) strnlen(str, limit)
 
