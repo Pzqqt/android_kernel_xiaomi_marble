@@ -70,6 +70,7 @@
 #include "wma_api.h"
 #endif
 #include "wlan_hdd_trace.h"
+#include "qdf_str.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
 #include "wlan_hdd_cfg.h"
