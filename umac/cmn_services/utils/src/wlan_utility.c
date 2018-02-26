@@ -20,6 +20,7 @@
  * DOC: This file contains definition for mandatory legacy API
  */
 
+#include "qdf_str.h"
 #include "wlan_utility.h"
 #include <wlan_cmn.h>
 #include "wlan_osif_priv.h"

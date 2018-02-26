@@ -32,6 +32,7 @@
  */
 
 /* Include Files */
+#include "qdf_str.h"
 #include <qdf_trace.h>
 #include <linux/export.h>
 
