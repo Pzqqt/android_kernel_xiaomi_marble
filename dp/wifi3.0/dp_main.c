@@ -3163,6 +3163,45 @@ static void dp_vdev_register_wifi3(struct cdp_vdev *vdev_handle,
 		"DP Vdev Register success");
 }
 
+/**
+ * dp_vdev_flush_peers() - Forcibily Flush peers of vdev
+ * @vdev: Datapath VDEV handle
+ *
+ * Return: void
+ */
+static void dp_vdev_flush_peers(struct dp_vdev *vdev)
+{
+	struct dp_pdev *pdev = vdev->pdev;
+	struct dp_soc *soc = pdev->soc;
+	struct dp_peer *peer;
+	uint16_t *peer_ids;
+	uint8_t i = 0, j = 0;
+
+	peer_ids = qdf_mem_malloc(soc->max_peers * sizeof(peer_ids[0]));
+	if (!peer_ids) {
+		QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_ERROR,
+			"DP alloc failure - unable to flush peers");
+		return;
+	}
+
+	qdf_spin_lock_bh(&soc->peer_ref_mutex);
+	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
+		for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
+			if (peer->peer_ids[i] != HTT_INVALID_PEER)
+				if (j < soc->max_peers)
+					peer_ids[j++] = peer->peer_ids[i];
+	}
+	qdf_spin_unlock_bh(&soc->peer_ref_mutex);
+
+	for (i = 0; i < j ; i++)
+		dp_rx_peer_unmap_handler(soc, peer_ids[i]);
+
+	qdf_mem_free(peer_ids);
+
+	QDF_TRACE(QDF_MODULE_ID_DP, QDF_TRACE_LEVEL_INFO_HIGH,
+		FL("Flushed peers for vdev object %pK "), vdev);
+}
+
 /*
  * dp_vdev_detach_wifi3() - Detach txrx vdev
  * @txrx_vdev:		Datapath VDEV handle
@@ -3185,6 +3224,14 @@ static void dp_vdev_detach_wifi3(struct cdp_vdev *vdev_handle,
 
 	if (wlan_op_mode_sta == vdev->opmode)
 		dp_peer_delete_wifi3(vdev->vap_bss_peer, 0);
+
+	/*
+	 * If Target is hung, flush all peers before detaching vdev
+	 * this will free all references held due to missing
+	 * unmap commands from Target
+	 */
+	if (hif_get_target_status(soc->hif_handle) == TARGET_STATUS_RESET)
+		dp_vdev_flush_peers(vdev);
 
 	/*
 	 * Use peer_ref_mutex while accessing peer_list, in case
