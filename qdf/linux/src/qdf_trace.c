@@ -2366,7 +2366,7 @@ int qdf_print_ctrl_register(const struct category_info *cinfo,
 
 	if (pctrl_name) {
 		qdf_str_lcopy(print_ctrl_obj[idx].name, pctrl_name,
-			      qdf_str_len(pctrl_name) + 1);
+			      sizeof(print_ctrl_obj[idx].name));
 	}
 
 	if (custom_print_handler)
