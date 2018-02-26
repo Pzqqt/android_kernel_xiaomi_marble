@@ -36,6 +36,7 @@
 #include "epping_main.h"
 #include "hif_main.h"
 #include "qwlan_version.h"
+#include "usb_api.h"
 
 #define DELAY_FOR_TARGET_READY 200	/* 200ms */
 
@@ -327,7 +328,7 @@ void hif_usb_disable_bus(struct hif_softc *hif_ctx)
 int hif_usb_bus_suspend(struct hif_softc *hif_ctx)
 {
 	struct hif_usb_softc *sc = HIF_GET_USB_SOFTC(hif_ctx);
-	HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(hif_ctx);
+	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(hif_ctx);
 
 	HIF_ENTER();
 	sc->suspend_state = 1;
@@ -348,7 +349,7 @@ int hif_usb_bus_suspend(struct hif_softc *hif_ctx)
 int hif_usb_bus_resume(struct hif_softc *hif_ctx)
 {
 	struct hif_usb_softc *sc = HIF_GET_USB_SOFTC(hif_ctx);
-	HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(hif_ctx);
+	struct HIF_DEVICE_USB *device = HIF_GET_USB_DEVICE(hif_ctx);
 
 	HIF_ENTER();
 	sc->suspend_state = 0;
@@ -723,3 +724,13 @@ int hif_check_fw_reg(struct hif_opaque_softc *scn)
 }
 #endif
 
+/**
+ * hif_usb_needs_bmi() - return true if the soc needs bmi through the driver
+ * @scn: hif context
+ *
+ * Return: true if soc needs driver bmi otherwise false
+ */
+bool hif_usb_needs_bmi(struct hif_softc *scn)
+{
+	return true;
+}

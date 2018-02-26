@@ -25,6 +25,7 @@
  * to the Linux Foundation.
  */
 
+#include "bmi_msg.h"
 #include "target_type.h"
 #include "cepci.h"
 

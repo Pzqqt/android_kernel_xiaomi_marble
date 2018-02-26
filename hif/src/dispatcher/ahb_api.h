@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -49,5 +49,5 @@ int hif_ahb_enable_radio(struct hif_pci_softc *sc,
 int hif_ahb_configure_irq(struct hif_pci_softc *sc);
 int hif_ahb_configure_grp_irq(struct hif_softc *scn,
 			      struct hif_exec_context *hif_ext_grp);
-
+bool hif_ahb_needs_bmi(struct hif_softc *scn);
 #endif

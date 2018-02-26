@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,4 +59,5 @@ int hif_pci_configure_grp_irq(struct hif_softc *scn,
 void hif_pci_display_stats(struct hif_softc *hif_ctx);
 void hif_pci_clear_stats(struct hif_softc *hif_ctx);
 int hif_pci_legacy_map_ce_to_irq(struct hif_softc *scn, int ce_id);
+bool hif_pci_needs_bmi(struct hif_softc *scn);
 #endif /* _PCI_API_H_ */

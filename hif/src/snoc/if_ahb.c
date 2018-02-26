@@ -28,6 +28,7 @@
 #include "hif_debug.h"
 #include "hif_io32.h"
 #include "ce_main.h"
+#include "ce_api.h"
 #include "ce_tasklet.h"
 #include "if_ahb.h"
 #include "if_pci.h"
@@ -712,3 +713,13 @@ void hif_ahb_exec_grp_irq_enable(struct hif_exec_context *hif_ext_group)
 	qdf_spin_unlock_irqrestore(&hif_ext_group->irq_lock);
 }
 
+/**
+ * hif_ahb_needs_bmi() - return true if the soc needs bmi through the driver
+ * @scn: hif context
+ *
+ * Return: true if soc needs driver bmi otherwise false
+ */
+bool hif_ahb_needs_bmi(struct hif_softc *scn)
+{
+	return !ce_srng_based(scn);
+}

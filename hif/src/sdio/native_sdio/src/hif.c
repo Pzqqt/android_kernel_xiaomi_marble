@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -144,9 +144,6 @@ MODULE_PARM_DESC(modstrength, "Adjust internal driver strength");
 
 #define dev_to_sdio_func(d)		container_of(d, struct sdio_func, dev)
 #define to_sdio_driver(d)		container_of(d, struct sdio_driver, drv)
-static int hif_device_inserted(struct sdio_func *func,
-			       const struct sdio_device_id *id);
-static void hif_device_removed(struct sdio_func *func);
 static struct hif_sdio_dev *add_hif_device(struct sdio_func *func);
 static struct hif_sdio_dev *get_hif_device(struct sdio_func *func);
 static void del_hif_device(struct hif_sdio_dev *device);
@@ -230,23 +227,6 @@ static const struct sdio_device_id ar6k_id_table[] = {
 #endif
 	{ /* null */ },
 };
-
-#ifndef CONFIG_CNSS_SDIO
-MODULE_DEVICE_TABLE(sdio, ar6k_id_table);
-
-static struct sdio_driver ar6k_driver = {
-	.name = "ar6k_wlan",
-	.id_table = ar6k_id_table,
-	.probe = hif_device_inserted,
-	.remove = hif_device_removed,
-};
-
-static const struct dev_pm_ops ar6k_device_pm_ops = {
-	.suspend = hif_device_suspend,
-	.resume = hif_device_resume,
-};
-
-#endif
 
 /* make sure we only unregister when registered. */
 static int registered;
@@ -980,8 +960,9 @@ static int sdio_enable4bits(struct hif_sdio_dev *device, int enable)
 					    enable ?
 					    SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6003
 					    : 0);
-		} else if (manufacturer_id == MANUFACTURER_ID_AR6320_BASE
-			   || manufacturer_id == MANUFACTURER_ID_QCA9377_BASE) {
+		} else if (manufacturer_id == MANUFACTURER_ID_AR6320_BASE ||
+			     manufacturer_id == MANUFACTURER_ID_QCA9377_BASE ||
+			     manufacturer_id == MANUFACTURER_ID_QCA9379_BASE) {
 			unsigned char data = 0;
 
 			setAsyncIRQ = 1;
@@ -1196,6 +1177,7 @@ static void set_extended_mbox_window_info(uint16_t manf_id,
 		break;
 	}
 	case MANUFACTURER_ID_QCA9377_BASE:
+	case MANUFACTURER_ID_QCA9379_BASE:
 		pinfo->mbox_prop[0].extended_address =
 			HIF_MBOX0_EXTENDED_BASE_ADDR_AR6320;
 		pinfo->mbox_prop[0].extended_size =
@@ -1601,6 +1583,21 @@ static void write_cccr(struct sdio_func *func)
 	}
 }
 
+#ifdef SDIO_BUS_WIDTH_8BIT
+static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
+{
+	return func0_cmd52_write_byte(func->card, SDIO_CCCR_IF,
+			SDIO_BUS_CD_DISABLE | SDIO_BUS_WIDTH_8BIT);
+}
+#else
+static int hif_cmd52_write_byte_8bit(struct sdio_func *func)
+{
+	AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+			("%s: 8BIT Bus Width not supported\n", __func__));
+	return QDF_STATUS_E_FAILURE;
+}
+#endif
+
 /**
  * hif_device_inserted() - hif-sdio driver probe handler
  * @func: pointer to sdio_func
@@ -1750,12 +1747,7 @@ static int hif_device_inserted(struct sdio_func *func,
 			} else if (mmcbuswidth == 8
 				 && (device->host->
 				     caps & MMC_CAP_8_BIT_DATA)) {
-				ret =
-					func0_cmd52_write_byte(func->card,
-						       SDIO_CCCR_IF,
-						       SDIO_BUS_CD_DISABLE
-						       |
-						       SDIO_BUS_WIDTH_8BIT);
+				ret = hif_cmd52_write_byte_8bit(func);
 				if (ret) {
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("%s: CMD52 to bus width failed: %d\n",
@@ -2061,8 +2053,9 @@ static QDF_STATUS hif_enable_func(struct hif_sdio_dev *device,
 				func0_cmd52_write_byte(func->card,
 					CCCR_SDIO_IRQ_MODE_REG_AR6003,
 					SDIO_IRQ_MODE_ASYNC_4BIT_IRQ_AR6003);
-		} else if (manufacturer_id == MANUFACTURER_ID_AR6320_BASE
-			   || manufacturer_id == MANUFACTURER_ID_QCA9377_BASE) {
+		} else if (manufacturer_id == MANUFACTURER_ID_AR6320_BASE ||
+			   manufacturer_id == MANUFACTURER_ID_QCA9377_BASE ||
+			   manufacturer_id == MANUFACTURER_ID_QCA9379_BASE) {
 			unsigned char data = 0;
 
 			setAsyncIRQ = 1;
@@ -2607,14 +2600,6 @@ static void reset_all_cards(void)
 {
 }
 
-static void hif_release_device(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
-	struct hif_sdio_dev *hif_device = scn->hif_handle;
-
-	hif_device->claimed_ctx = NULL;
-}
-
 QDF_STATUS hif_attach_htc(struct hif_sdio_dev *device,
 				struct htc_callbacks *callbacks)
 {
@@ -2730,7 +2715,6 @@ void hif_dump_cccr(struct hif_sdio_dev *hif_device)
 	AR_DEBUG_PRINTF(ATH_DEBUG_ERROR, ("\n"));
 }
 
-#ifdef CONFIG_CNSS_SDIO
 int hif_sdio_device_inserted(struct device *dev,
 					const struct sdio_device_id *id)
 {
@@ -2743,4 +2727,3 @@ void hif_sdio_device_removed(struct sdio_func *func)
 {
 	hif_device_removed(func);
 }
-#endif

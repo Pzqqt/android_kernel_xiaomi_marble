@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -108,7 +108,7 @@ struct HIF_USB_PIPE {
 	uint32_t flags;
 	uint8_t ep_address;
 	uint8_t logical_pipe_num;
-	struct _HIF_DEVICE_USB *device;
+	struct HIF_DEVICE_USB *device;
 	uint16_t max_packet_size;
 #ifdef HIF_USB_TASKLET
 	struct tasklet_struct io_complete_tasklet;
@@ -138,7 +138,7 @@ struct HIF_DEVICE_USB {
 };
 
 struct hif_usb_softc {
-	struct _HIF_DEVICE_USB hif_hdl;
+	struct HIF_DEVICE_USB hif_hdl;
 	/* For efficiency, should be first in struct */
 	struct device *dev;
 	struct usb_dev *pdev;
@@ -159,4 +159,20 @@ struct hif_usb_softc {
 	/* enable FW self-recovery for Rome USB */
 	bool enable_self_recovery;
 };
+
+/**
+ * hif_dump_info() - dump info about all HIF pipes and endpoints
+ * @scn: pointer to hif_opaque_softc
+ *
+ * Return: none
+ */
+void hif_dump_info(struct hif_opaque_softc *scn);
+
+/**
+ * hif_suspend_wow() - Send wow suspend command
+ * @scn: pointer to hif_opaque_softc
+ *
+ * Return: none
+ */
+void hif_suspend_wow(struct hif_opaque_softc *scn);
 #endif /* __ATH_USB_H__ */

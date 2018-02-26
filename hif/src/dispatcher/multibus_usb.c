@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -50,7 +50,6 @@ QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_claim_device = &hif_dummy_claim_device;
 	bus_ops->hif_shutdown_device = &hif_usb_shutdown_bus_device;
 	bus_ops->hif_stop = &hif_usb_stop_device;
-	bus_ops->hif_bus_pkt_dl_len_set = &hif_dummy_bus_pkt_dl_len_set;
 	bus_ops->hif_cancel_deferred_target_sleep =
 				&hif_dummy_cancel_deferred_target_sleep;
 	bus_ops->hif_irq_disable = &hif_usb_irq_disable;
@@ -58,13 +57,16 @@ QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_dump_registers = &hif_dummy_dump_registers;
 	bus_ops->hif_dump_target_memory = &hif_dummy_dump_target_memory;
 	bus_ops->hif_ipa_get_ce_resource = &hif_dummy_ipa_get_ce_resource;
+	bus_ops->hif_mask_interrupt_call = &hif_dummy_mask_interrupt_call;
 	bus_ops->hif_enable_power_management =
 			&hif_dummy_enable_power_management;
 	bus_ops->hif_disable_power_management =
 			&hif_dummy_disable_power_management;
-	bus_ops->hif_set_bundle_mode = hif_usb_set_bundle_mode;
-	bus_ops->hif_bus_reset_resume = hif_usb_bus_reset_resume;
 	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
+	bus_ops->hif_set_bundle_mode = &hif_usb_set_bundle_mode;
+	bus_ops->hif_bus_reset_resume = &hif_usb_bus_reset_resume;
+	bus_ops->hif_map_ce_to_irq = &hif_dummy_map_ce_to_irq;
+	bus_ops->hif_needs_bmi = &hif_usb_needs_bmi;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -47,15 +47,16 @@
 #include <cds_api.h>
 #include "regtable_sdio.h"
 #include <hif_debug.h>
+#include "target_type.h"
+#include "epping_main.h"
+#include "pld_sdio.h"
+#include "targaddrs.h"
+#include "sdio_api.h"
 #ifndef REMOVE_PKT_LOG
 #include "ol_txrx_types.h"
 #include "pktlog_ac_api.h"
 #include "pktlog_ac.h"
 #endif
-#include "target_type.h"
-#include "epping_main.h"
-#include "pld_sdio.h"
-#include "targaddrs.h"
 
 #ifndef ATH_BUS_PM
 #ifdef CONFIG_PM
@@ -207,27 +208,6 @@ err_alloc:
 }
 
 /**
- * ol_ath_sdio_configure() - configure sdio device
- * @hif_sc: pointer to sdio softc structure
- * @dev: pointer to net device
- * @hif_handle: pointer to sdio function
- *
- * Return: 0 for success and non-zero for failure
- */
-static int
-ol_ath_sdio_configure(void *hif_sc, struct net_device *dev,
-		      hif_handle_t *hif_hdl)
-{
-	struct hif_sdio_softc *sc = (struct hif_sdio_softc *)hif_sc;
-	int ret = 0;
-
-	sc->aps_osdev.netdev = dev;
-	*hif_hdl = sc->hif_handle;
-
-	return ret;
-}
-
-/**
  * hif_sdio_remove() - remove sdio device
  * @conext: sdio device context
  * @hif_handle: pointer to sdio function
@@ -341,21 +321,6 @@ static int init_ath_hif_sdio(void)
 }
 
 /**
- * hif_targ_is_awake(): check if target is awake
- *
- * This function returns true if the target is awake
- *
- * @scn: struct hif_softc
- * @mem: mapped mem base
- *
- * Return: bool
- */
-static bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
-{
-	return true;
-}
-
-/**
  * hif_sdio_bus_suspend() - suspend the bus
  *
  * This function suspends the bus, but sdio doesn't need to suspend.
@@ -402,15 +367,6 @@ void hif_enable_power_gating(void *hif_ctx)
 }
 
 /**
- * hif_disable_aspm() - hif_disable_aspm
- *
- * Return: n/a
- */
-static void hif_disable_aspm(void)
-{
-}
-
-/**
  * hif_sdio_close() - hif_bus_close
  *
  * Return: None
@@ -446,28 +402,6 @@ QDF_STATUS hif_sdio_open(struct hif_softc *hif_sc,
 	return status;
 }
 
-/**
- * hif_get_target_type() - Get the target type
- *
- * This function is used to query the target type.
- *
- * @ol_sc: ol_softc struct pointer
- * @dev: device pointer
- * @bdev: bus dev pointer
- * @bid: bus id pointer
- * @hif_type: HIF type such as HIF_TYPE_QCA6180
- * @target_type: target type such as TARGET_TYPE_QCA6180
- *
- * Return: 0 for success
- */
-static int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
-	void *bdev, const hif_bus_id *bid, uint32_t *hif_type,
-	uint32_t *target_type)
-{
-
-	return 0;
-}
-
 void hif_get_target_revision(struct hif_softc *ol_sc)
 {
 	struct hif_softc *ol_sc_local = (struct hif_softc *)ol_sc;
@@ -496,8 +430,8 @@ void hif_get_target_revision(struct hif_softc *ol_sc)
  * Return: QDF_STATUS
  */
 QDF_STATUS hif_sdio_enable_bus(struct hif_softc *hif_sc,
-			struct device *dev, void *bdev, const hif_bus_id *bid,
-			enum hif_enable_type type)
+		struct device *dev, void *bdev, const struct hif_bus_id *bid,
+		enum hif_enable_type type)
 {
 	int ret = 0;
 	const struct sdio_device_id *id = (const struct sdio_device_id *)bid;
@@ -654,13 +588,12 @@ void hif_wlan_disable(struct hif_softc *scn)
 }
 
 /**
- * hif_config_target() - configure hif bus
- * @hif_hdl: hif handle
- * @state:
+ * hif_sdio_needs_bmi() - return true if the soc needs bmi through the driver
+ * @scn: hif context
  *
- * Return: int
+ * Return: true if soc needs driver bmi otherwise false
  */
-static int hif_config_target(void *hif_hdl)
+bool hif_sdio_needs_bmi(struct hif_softc *scn)
 {
-	return 0;
+	return true;
 }

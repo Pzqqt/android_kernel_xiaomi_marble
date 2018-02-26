@@ -4480,3 +4480,14 @@ int hif_pci_addr_in_boundary(struct hif_softc *scn, uint32_t offset)
 
 	return -EINVAL;
 }
+
+/**
+ * hif_pci_needs_bmi() - return true if the soc needs bmi through the driver
+ * @scn: hif context
+ *
+ * Return: true if soc needs driver bmi otherwise false
+ */
+bool hif_pci_needs_bmi(struct hif_softc *scn)
+{
+	return !ce_srng_based(scn);
+}

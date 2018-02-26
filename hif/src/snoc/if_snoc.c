@@ -480,3 +480,14 @@ bool hif_is_target_register_access_allowed(struct hif_softc *scn)
 	else
 		return true;
 }
+
+/**
+ * hif_snoc_needs_bmi() - return true if the soc needs bmi through the driver
+ * @scn: hif context
+ *
+ * Return: true if soc needs driver bmi otherwise false
+ */
+bool hif_snoc_needs_bmi(struct hif_softc *scn)
+{
+	return false;
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -32,3 +32,4 @@ hif_sdio_get_config_item(struct hif_softc *hif_sc,
 void hif_sdio_set_mailbox_swap(struct hif_softc *hif_sc);
 void hif_sdio_claim_device(struct hif_softc *hif_sc);
 void hif_sdio_mask_interrupt_call(struct hif_softc *scn);
+bool hif_sdio_needs_bmi(struct hif_softc *scn);

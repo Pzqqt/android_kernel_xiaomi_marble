@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -17,6 +17,7 @@
  */
 #ifndef _USB_API_H_
 #define _USB_API_H_
+#include "if_usb.h"
 
 QDF_STATUS hif_usb_open(struct hif_softc *hif_ctx,
 			 enum qdf_bus_type bus_type);
@@ -39,6 +40,10 @@ int hif_usb_bus_resume(struct hif_softc *hif_ctx);
 void hif_usb_stop_device(struct hif_softc *hif_sc);
 void hif_usb_shutdown_bus_device(struct hif_softc *scn);
 int hif_usb_bus_reset_resume(struct hif_softc *hif_ctx);
-void hif_usb_set_bundle_mode(struct hif_opaque_softc *scn,
-					bool enabled, int rx_bundle_cnt);
+void hif_usb_set_bundle_mode(struct hif_softc *scn,
+			     bool enabled, int rx_bundle_cnt);
+void hif_usb_reg_tbl_attach(struct hif_softc *scn);
+void hif_fw_assert_ramdump_pattern(struct hif_usb_softc *sc);
+void hif_usb_ramdump_handler(struct hif_opaque_softc *scn);
+bool hif_usb_needs_bmi(struct hif_softc *scn);
 #endif /*_USB_API_H_*/

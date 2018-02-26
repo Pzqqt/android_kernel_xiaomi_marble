@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  ***Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,6 +40,7 @@
 static bool pending_events_func_check;
 static uint32_t command_credits;
 static uint32_t *p_bmi_cmd_credits = &command_credits;
+
 /* BMI Access routines */
 
 /**
@@ -297,8 +298,10 @@ hif_bmi_buffer_receive(struct hif_sdio_dev *device,
  *
  * Return: QDF_STATUS_SUCCESS for success.
  */
-QDF_STATUS hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
-					 struct bmi_target_info *targ_info) {
+QDF_STATUS
+hif_reg_based_get_target_info(struct hif_opaque_softc *hif_ctx,
+			      struct bmi_target_info *targ_info)
+{
 	QDF_STATUS status;
 	uint32_t cid;
 	struct hif_sdio_softc *scn = HIF_GET_SDIO_SOFTC(hif_ctx);
@@ -448,9 +451,10 @@ QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
  * Return: QDF_STATUS_SUCCESS for success.
  */
 
-static QDF_STATUS
+QDF_STATUS
 hif_bmi_raw_write(struct hif_sdio_dev *device, char *buffer,
-	      uint32_t length) {
+	      uint32_t length)
+{
 	return hif_bmi_buffer_send(device, buffer, length);
 }
 
@@ -463,7 +467,7 @@ hif_bmi_raw_write(struct hif_sdio_dev *device, char *buffer,
  *
  * Return: QDF_STATUS_SUCCESS for success.
  */
-static QDF_STATUS
+QDF_STATUS
 hif_bmi_raw_read(struct hif_sdio_dev *device, char *buffer,
 	     uint32_t length, bool want_timeout)
 {

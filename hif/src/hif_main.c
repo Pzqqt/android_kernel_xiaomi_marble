@@ -439,6 +439,24 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 	return GET_HIF_OPAQUE_HDL(scn);
 }
 
+#ifdef ADRASTEA_RRI_ON_DDR
+/**
+ * hif_uninit_rri_on_ddr(): free consistent memory allocated for rri
+ * @scn: hif context
+ *
+ * Return: none
+ */
+void hif_uninit_rri_on_ddr(struct hif_softc *scn)
+{
+	if (scn->vaddr_rri_on_ddr)
+		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+					(CE_COUNT * sizeof(uint32_t)),
+					scn->vaddr_rri_on_ddr,
+					scn->paddr_rri_on_ddr, 0);
+	scn->vaddr_rri_on_ddr = NULL;
+}
+#endif
+
 /**
  * hif_close(): hif_close
  * @hif_ctx: hif_ctx
@@ -466,13 +484,8 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 		qdf_mem_free(hw_name);
 	}
 
-	if (scn->vaddr_rri_on_ddr)
-		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
-					(CE_COUNT*sizeof(uint32_t)),
-				scn->vaddr_rri_on_ddr, scn->paddr_rri_on_ddr,
-				0);
+	hif_uninit_rri_on_ddr(scn);
 
-	scn->vaddr_rri_on_ddr = NULL;
 	hif_bus_close(scn);
 	qdf_mem_free(scn);
 }
@@ -821,21 +834,6 @@ end:
 }
 
 /**
- * hif_needs_bmi() - return true if the soc needs bmi through the driver
- * @hif_ctx: hif context
- *
- * Return: true if the soc needs driver bmi otherwise false
- */
-bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
-
-	return (hif_sc->bus_type != QDF_BUS_TYPE_SNOC) &&
-		!ce_srng_based(hif_sc);
-}
-qdf_export_symbol(hif_needs_bmi);
-
-/**
  * hif_get_bus_type() - return the bus type
  *
  * Return: enum qdf_bus_type
@@ -1031,6 +1029,25 @@ bool hif_is_load_or_unload_in_progress(struct hif_softc *scn)
 }
 
 /**
+ * hif_is_recovery_in_progress() - API to query upper layers if recovery in
+ * progress
+ * @scn: HIF Context
+ *
+ * Return: True/False
+ */
+bool hif_is_recovery_in_progress(struct hif_softc *scn)
+{
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (cbk && cbk->is_recovery_in_progress)
+		return cbk->is_recovery_in_progress(cbk->context);
+
+	return false;
+}
+
+#if defined(HIF_PCI) || defined(HIF_SNOC) || defined(HIF_AHB)
+
+/**
  * hif_update_pipe_callback() - API to register pipe specific callbacks
  * @osc: Opaque softc
  * @pipeid: pipe id
@@ -1061,23 +1078,6 @@ void hif_update_pipe_callback(struct hif_opaque_softc *osc,
 qdf_export_symbol(hif_update_pipe_callback);
 
 /**
- * hif_is_recovery_in_progress() - API to query upper layers if recovery in
- * progress
- * @scn: HIF Context
- *
- * Return: True/False
- */
-bool hif_is_recovery_in_progress(struct hif_softc *scn)
-{
-	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
-
-	if (cbk && cbk->is_recovery_in_progress)
-		return cbk->is_recovery_in_progress(cbk->context);
-
-	return false;
-}
-
-/**
  * hif_is_target_ready() - API to query if target is in ready state
  * progress
  * @scn: HIF Context
@@ -1093,7 +1093,7 @@ bool hif_is_target_ready(struct hif_softc *scn)
 
 	return false;
 }
-#if defined(HIF_PCI) || defined(SNOC) || defined(HIF_AHB)
+
 /**
  * hif_batch_send() - API to access hif specific function
  * ce_batch_send.
@@ -1209,21 +1209,17 @@ uint32_t hif_reg_read(struct hif_opaque_softc *hif_ctx, uint32_t offset)
 }
 qdf_export_symbol(hif_reg_read);
 
-#if defined(HIF_USB)
 /**
  * hif_ramdump_handler(): generic ramdump handler
  * @scn: struct hif_opaque_softc
  *
  * Return: None
  */
-
 void hif_ramdump_handler(struct hif_opaque_softc *scn)
-
 {
-	if (hif_get_bus_type == QDF_BUS_TYPE_USB)
-		hif_usb_ramdump_handler();
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_USB)
+		hif_usb_ramdump_handler(scn);
 }
-#endif
 
 #ifdef WLAN_SUSPEND_RESUME_TEST
 irqreturn_t hif_wake_interrupt_handler(int irq, void *context)

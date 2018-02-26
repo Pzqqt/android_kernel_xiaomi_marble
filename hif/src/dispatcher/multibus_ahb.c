@@ -68,6 +68,7 @@ QDF_STATUS hif_initialize_ahb_ops(struct hif_bus_ops *bus_ops)
 		&hif_dummy_disable_power_management;
 	bus_ops->hif_grp_irq_configure = &hif_ahb_configure_grp_irq;
 	bus_ops->hif_addr_in_boundary = &hif_dummy_addr_in_boundary;
+	bus_ops->hif_needs_bmi = &hif_ahb_needs_bmi;
 
 	return QDF_STATUS_SUCCESS;
 }

@@ -272,13 +272,13 @@ int hif_target_sleep_state_adjust(struct hif_softc *scn,
 					 bool sleep_ok,
 					 bool wait_for_it);
 int hif_get_rx_ctx_id(int ctx_id, struct hif_opaque_softc *hif_hdl);
+void hif_ramdump_handler(struct hif_opaque_softc *scn);
 #ifdef HIF_USB
 void hif_usb_get_hw_info(struct hif_softc *scn);
-void hif_ramdump_handler(struct hif_opaque_softc *scn);
-
+void hif_usb_ramdump_handler(struct hif_opaque_softc *scn);
 #else
 static inline void hif_usb_get_hw_info(struct hif_softc *scn) {}
-static inline void hif_ramdump_handler(struct hif_opaque_softc *scn) {}
+static inline void hif_usb_ramdump_handler(struct hif_opaque_softc *scn) {}
 #endif
 
 /**
@@ -298,5 +298,12 @@ bool hif_is_target_register_access_allowed(struct hif_softc *hif_sc)
 {
 	return true;
 }
+#endif
+
+#ifdef ADRASTEA_RRI_ON_DDR
+void hif_uninit_rri_on_ddr(struct hif_softc *scn);
+#else
+static inline
+void hif_uninit_rri_on_ddr(struct hif_softc *scn) {}
 #endif
 #endif /* __HIF_MAIN_H__ */

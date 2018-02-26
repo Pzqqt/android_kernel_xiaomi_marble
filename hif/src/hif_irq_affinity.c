@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -226,61 +226,8 @@ int hif_exec_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 	NAPI_DEBUG("<--[rc=%d]", rc);
 	return rc;
 }
+
 #endif
-
-/**
- * hif_napi_correct_cpu() - correct the interrupt affinity for napi if needed
- * @napi_info: pointer to qca_napi_info for the napi instance
- *
- * Return: true  => interrupt already on correct cpu, no correction needed
- *         false => interrupt on wrong cpu, correction done for cpu affinity
- *                   of the interrupt
- */
-static inline
-bool hif_exec_correct_cpu(struct hif_exec_context *exec_ctx)
-{
-	bool right_cpu = true;
-	int rc = 0;
-	cpumask_t cpumask;
-	int cpu;
-	struct hif_softc *hif_softc = HIF_GET_SOFTC(exec_ctx->hif);
-	struct qca_napi_data *napid;
-	int ind;
-
-	napid = &hif_softc->napi_data;
-
-	if (!(napid->flags & QCA_NAPI_FEATURE_CPU_CORRECTION))
-		goto done;
-
-	cpu = qdf_get_cpu();
-	if (likely((cpu == exec_ctx->cpu) ||
-		    hif_exec_cpu_blacklist(napid, BLACKLIST_QUERY) == 0))
-		goto done;
-
-	right_cpu = false;
-
-	NAPI_DEBUG("interrupt on wrong CPU, correcting");
-	cpumask.bits[0] = (0x01 << exec_ctx->cpu);
-
-	for (ind = 0; ind < exec_ctx->numirq; ind++) {
-		if (exec_ctx->os_irq[ind]) {
-			irq_modify_status(exec_ctx->os_irq[ind],
-					  IRQ_NO_BALANCING, 0);
-			rc = irq_set_affinity_hint(exec_ctx->os_irq[ind],
-						   &cpumask);
-			irq_modify_status(exec_ctx->os_irq[ind], 0,
-					  IRQ_NO_BALANCING);
-
-			if (rc)
-				HIF_ERROR("error setting irq affinity hint: %d",
-					  rc);
-			else
-				exec_ctx->stats[cpu].cpu_corrected++;
-		}
-	}
-done:
-	return right_cpu;
-}
 
 /**
  * hncm_migrate_to() - migrates a NAPI to a CPU

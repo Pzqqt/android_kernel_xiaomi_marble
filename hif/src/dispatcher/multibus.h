@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -88,6 +88,7 @@ struct hif_bus_ops {
 	int (*hif_bus_reset_resume)(struct hif_softc *hif_ctx);
 	int (*hif_map_ce_to_irq)(struct hif_softc *hif_sc, int ce_id);
 	int (*hif_addr_in_boundary)(struct hif_softc *scn, uint32_t offset);
+	bool (*hif_needs_bmi)(struct hif_softc *hif_sc);
 };
 
 #ifdef HIF_SNOC
@@ -183,6 +184,8 @@ static inline int hif_sdio_get_context_size(void)
 }
 #endif /* HIF_SDIO */
 
+int hif_grp_irq_configure(struct hif_softc *hif_sc,
+			  struct hif_exec_context *hif_exec);
 #ifdef HIF_USB
 QDF_STATUS hif_initialize_usb_ops(struct hif_bus_ops *bus_ops);
 int hif_usb_get_context_size(void);

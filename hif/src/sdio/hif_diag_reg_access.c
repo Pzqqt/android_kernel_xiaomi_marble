@@ -318,8 +318,8 @@ static QDF_STATUS hif_ar6k_read_target_register(struct hif_sdio_dev *hif_device,
  *
  * Return: None
  */
-static void hif_ar6k_fetch_target_regs(struct hif_sdio_dev *hif_device,
-		 uint32_t *targregs)
+void hif_ar6k_fetch_target_regs(struct hif_sdio_dev *hif_device,
+				uint32_t *targregs)
 {
 	int i;
 	uint32_t val;
