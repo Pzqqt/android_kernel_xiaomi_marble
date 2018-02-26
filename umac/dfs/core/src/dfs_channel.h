@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  * Copyright (c) 2008 Atheros Communications, Inc.
  *
  * Permission to use, copy, modify, and/or distribute this software for
@@ -266,7 +266,8 @@
 	((struct dfs_channel *) WLAN_CHAN_ANY)
 
 #define WLAN_IS_CHAN_MODE_20(_c)      \
-	(WLAN_IS_CHAN_11NA_HT20(_c)  ||  \
+	(WLAN_IS_CHAN_A(_c)        ||    \
+	 WLAN_IS_CHAN_11NA_HT20(_c)  ||  \
 	 WLAN_IS_CHAN_11AC_VHT20(_c) ||  \
 	 WLAN_IS_CHAN_11AXA_HE20(_c))
 
