@@ -2704,7 +2704,7 @@ static QDF_STATUS sap_fsm_state_disconnecting(struct sap_context *sap_ctx,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  FL("in state %s, event msg %d result %d"),
 			  "eSAP_DISCONNECTING ", msg, sap_event->u2);
-		sap_goto_disconnecting(sap_ctx);
+		qdf_status = sap_goto_disconnecting(sap_ctx);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),

@@ -439,9 +439,20 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 		  FL("sapdfs: changing target channel to [%d]"),
 		  mac_ctx->sap.SapDfsInfo.target_channel);
 	sap_ctx->channel = mac_ctx->sap.SapDfsInfo.target_channel;
-	/* Identify if this is channel change in radar detected state */
-	if (eSAP_DISCONNECTING != sap_ctx->sapsMachine)
+
+	/*
+	 * Identify if this is channel change in radar detected state
+	 * Also if we are waiting for sap to stop, don't proceed further
+	 * to restart SAP again.
+	 */
+	if ((eSAP_DISCONNECTING != sap_ctx->sapsMachine) ||
+	    sap_ctx->stop_bss_in_progress) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			  FL("sapdfs: state [%d] Stop BSS in progress [%d], not starting SAP after channel change"),
+			  sap_ctx->sapsMachine,
+			  sap_ctx->stop_bss_in_progress);
 		return;
+	}
 
 	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
 		is_ch_dfs = true;

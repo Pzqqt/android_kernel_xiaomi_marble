@@ -671,6 +671,7 @@ QDF_STATUS wlansap_start_bss(struct sap_context *sap_ctx,
 	sap_ctx->dfs_cac_offload = pConfig->dfs_cac_offload;
 	sap_ctx->isCacEndNotified = false;
 	sap_ctx->is_chan_change_inprogress = false;
+	sap_ctx->stop_bss_in_progress = false;
 	/* Set the BSSID to your "self MAC Addr" read the mac address
 		from Configuation ITEM received from HDD */
 	sap_ctx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
@@ -797,6 +798,21 @@ QDF_STATUS wlansap_set_mac_acl(struct sap_context *sap_ctx,
 
 	return qdf_status;
 } /* wlansap_set_mac_acl */
+
+void wlansap_set_stop_bss_inprogress(struct sap_context *sap_ctx,
+					bool in_progress)
+{
+	if (!sap_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from ctx", __func__);
+		return;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+		  "%s: Set stop_bss_in_progress to %d",
+		  __func__, in_progress);
+	sap_ctx->stop_bss_in_progress = in_progress;
+}
 
 QDF_STATUS wlansap_stop_bss(struct sap_context *sap_ctx)
 {
