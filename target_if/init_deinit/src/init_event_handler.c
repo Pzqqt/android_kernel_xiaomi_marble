@@ -198,11 +198,6 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 	wmi_handle = target_psoc_get_wmi_hdl(tgt_hdl);
 	info = (&tgt_hdl->info);
 
-	err_code = init_deinit_populate_dbr_ring_cap(psoc, wmi_handle,
-						event, info);
-	if (err_code)
-		goto exit;
-
 	err_code = init_deinit_populate_service_ready_ext_param(wmi_handle,
 				event, &(info->service_ext_param));
 	if (err_code)
@@ -236,6 +231,11 @@ static int init_deinit_service_ext_ready_event_handler(ol_scn_t scn_handle,
 		if (err_code)
 			goto exit;
 	}
+
+	err_code = init_deinit_populate_dbr_ring_cap(psoc, wmi_handle,
+						event, info);
+	if (err_code)
+		goto exit;
 
 	legacy_callback = target_if_get_psoc_legacy_service_ready_cb();
 	if (legacy_callback)

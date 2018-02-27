@@ -23,6 +23,7 @@
 #include <target_if_direct_buf_rx_api.h>
 #include "hal_api.h"
 #include <service_ready_util.h>
+#include <init_deinit_ucfg.h>
 
 static uint8_t get_num_dbr_modules_per_pdev(struct wlan_objmgr_pdev *pdev)
 {
@@ -142,19 +143,6 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 
 	direct_buf_rx_info("Dbr pdev obj %pK", dbr_pdev_obj);
 
-	num_modules = get_num_dbr_modules_per_pdev(pdev);
-	direct_buf_rx_info("Number of modules = %d pdev %d", num_modules,
-			   wlan_objmgr_pdev_get_pdev_id(pdev));
-	dbr_pdev_obj->num_modules = num_modules;
-	dbr_pdev_obj->dbr_mod_param = qdf_mem_malloc(num_modules *
-				sizeof(struct direct_buf_rx_module_param));
-
-	if (dbr_pdev_obj->dbr_mod_param == NULL) {
-		direct_buf_rx_err("Failed to allocate dir buf rx mod param");
-		qdf_mem_free(dbr_pdev_obj);
-		return QDF_STATUS_E_NOMEM;
-	}
-
 	status = wlan_objmgr_pdev_component_obj_attach(pdev,
 					WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
 					dbr_pdev_obj, QDF_STATUS_SUCCESS);
@@ -162,16 +150,34 @@ QDF_STATUS target_if_direct_buf_rx_pdev_create_handler(
 	if (status != QDF_STATUS_SUCCESS) {
 		direct_buf_rx_err("Failed to attach dir buf rx component %d",
 				  status);
-		goto attach_error;
+		qdf_mem_free(dbr_pdev_obj);
+		return status;
 	}
 
+	num_modules = get_num_dbr_modules_per_pdev(pdev);
+	direct_buf_rx_info("Number of modules = %d pdev %d", num_modules,
+			   wlan_objmgr_pdev_get_pdev_id(pdev));
+	dbr_pdev_obj->num_modules = num_modules;
+
+	if (!dbr_pdev_obj->num_modules) {
+		direct_buf_rx_info("Number of modules = %d", num_modules);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	dbr_pdev_obj->dbr_mod_param = qdf_mem_malloc(num_modules *
+				sizeof(struct direct_buf_rx_module_param));
+
+	if (dbr_pdev_obj->dbr_mod_param == NULL) {
+		direct_buf_rx_err("Failed to allocate dir buf rx mod param");
+		wlan_objmgr_pdev_component_obj_detach(pdev,
+					WLAN_TARGET_IF_COMP_DIRECT_BUF_RX,
+					dbr_pdev_obj);
+		qdf_mem_free(dbr_pdev_obj);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+
 	return QDF_STATUS_SUCCESS;
-
-attach_error:
-	qdf_mem_free(dbr_pdev_obj->dbr_mod_param);
-	qdf_mem_free(dbr_pdev_obj);
-
-	return status;
 }
 
 QDF_STATUS target_if_direct_buf_rx_pdev_destroy_handler(
@@ -566,7 +572,7 @@ static QDF_STATUS target_if_dbr_cfg_tgt(struct wlan_objmgr_pdev *pdev,
 
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
 	dbr_ring_cap = mod_param->dbr_ring_cap;
-	wmi_hdl = pdev->tgt_if_handle;
+	wmi_hdl = ucfg_get_pdev_wmi_handle(pdev);
 	if (!wmi_hdl) {
 		direct_buf_rx_err("WMI handle null. Can't send WMI CMD");
 		return QDF_STATUS_E_INVAL;
@@ -910,12 +916,15 @@ static QDF_STATUS target_if_dbr_deinit_ring(struct wlan_objmgr_pdev *pdev,
 	direct_buf_rx_info("dbr_psoc_obj %pK", dbr_psoc_obj);
 
 	dbr_ring_cfg = mod_param->dbr_ring_cfg;
-	target_if_dbr_empty_ring(pdev, dbr_psoc_obj, mod_param);
-	hal_srng_cleanup(dbr_psoc_obj->hal_soc, dbr_ring_cfg->srng);
-	qdf_mem_free_consistent(dbr_psoc_obj->osdev, dbr_psoc_obj->osdev->dev,
-			dbr_ring_cfg->ring_alloc_size,
-			dbr_ring_cfg->base_vaddr_unaligned,
+	if (dbr_ring_cfg) {
+		target_if_dbr_empty_ring(pdev, dbr_psoc_obj, mod_param);
+		hal_srng_cleanup(dbr_psoc_obj->hal_soc, dbr_ring_cfg->srng);
+		qdf_mem_free_consistent(dbr_psoc_obj->osdev,
+					dbr_psoc_obj->osdev->dev,
+					dbr_ring_cfg->ring_alloc_size,
+					dbr_ring_cfg->base_vaddr_unaligned,
 			(qdf_dma_addr_t)dbr_ring_cfg->base_paddr_unaligned, 0);
+	}
 
 	return QDF_STATUS_SUCCESS;
 }
