@@ -100,7 +100,7 @@ QDF_STATUS qdf_ini_parse(const char *ini_path, void *context,
 			if (QDF_IS_STATUS_ERROR(status))
 				goto free_fbuf;
 		} else if (key[0] == '[') {
-			int32_t len = qdf_str_len(key);
+			qdf_size_t len = qdf_str_len(key);
 
 			if (key[len - 1] != ']') {
 				qdf_err("Invalid *.ini syntax '%s'", key);
