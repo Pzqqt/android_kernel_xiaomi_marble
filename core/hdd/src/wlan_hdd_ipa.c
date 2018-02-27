@@ -1024,7 +1024,6 @@ static inline int hdd_ipa_wdi_init(struct hdd_ipa_priv *hdd_ipa)
 			    hdd_ipa->is_smmu_enabled);
 	} else {
 		ret = -EACCES;
-		QDF_BUG(0);
 	}
 
 	return ret;
@@ -1143,7 +1142,6 @@ static inline int hdd_ipa_wdi_init(struct hdd_ipa_priv *hdd_ipa)
 		hdd_ipa->uc_loaded = true;
 	} else {
 		ret = -EACCES;
-		QDF_BUG(0);
 	}
 
 	return ret;
