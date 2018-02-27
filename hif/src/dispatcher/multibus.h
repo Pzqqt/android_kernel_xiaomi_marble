@@ -74,7 +74,7 @@ struct hif_bus_ops {
 				       void *ramdump_base,
 				       uint32_t address, uint32_t size);
 	void (*hif_ipa_get_ce_resource)(struct hif_softc *hif_sc,
-					qdf_dma_addr_t *sr_base_paddr,
+					qdf_shared_mem_t **ce_sr,
 					uint32_t *sr_ring_size,
 					qdf_dma_addr_t *reg_paddr);
 	void (*hif_mask_interrupt_call)(struct hif_softc *hif_sc);

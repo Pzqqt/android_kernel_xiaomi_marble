@@ -351,14 +351,14 @@ void hif_dump_target_memory(struct hif_opaque_softc *hif_hdl,
 }
 
 void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_hdl,
-			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_shared_mem_t **ce_sr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr)
 {
 	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
 
-	hif_sc->bus_ops.hif_ipa_get_ce_resource(hif_sc, ce_sr_base_paddr,
-						ce_sr_ring_size, ce_reg_paddr);
+	hif_sc->bus_ops.hif_ipa_get_ce_resource(hif_sc, ce_sr,
+			ce_sr_ring_size, ce_reg_paddr);
 }
 
 void hif_mask_interrupt_call(struct hif_opaque_softc *hif_hdl)

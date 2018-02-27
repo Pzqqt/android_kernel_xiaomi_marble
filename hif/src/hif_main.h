@@ -199,6 +199,9 @@ struct hif_softc {
 #if HIF_CE_DEBUG_DATA_BUF
 	struct ce_desc_hist hif_ce_desc_hist;
 #endif /* #if defined(HIF_CONFIG_SLUB_DEBUG_ON) || HIF_CE_DEBUG_DATA_BUF */
+#ifdef IPA_OFFLOAD
+	qdf_shared_mem_t *ipa_ce_ring;
+#endif
 };
 
 static inline void *hif_get_hal_handle(void *hif_hdl)

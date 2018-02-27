@@ -237,12 +237,12 @@ static inline int hif_snoc_get_target_type(struct hif_softc *ol_sc,
 }
 
 #ifdef IPA_OFFLOAD
-static int hif_set_dma_coherent_mask(struct device *dev)
+static int hif_set_dma_coherent_mask(qdf_device_t osdev)
 {
 	uint8_t addr_bits;
 
 	if (false == hif_get_ipa_present())
-		return qdf_set_dma_coherent_mask(dev,
+		return qdf_set_dma_coherent_mask(osdev->dev,
 					DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE);
 
 	if (hif_get_ipa_hw_type() < IPA_HW_v3_0)
@@ -250,12 +250,12 @@ static int hif_set_dma_coherent_mask(struct device *dev)
 	else
 		addr_bits = DMA_COHERENT_MASK_IPA_VER_3_AND_ABOVE;
 
-	return qdf_set_dma_coherent_mask(dev, addr_bits);
+	return qdf_set_dma_coherent_mask(osdev->dev, addr_bits);
 }
 #else
-static int hif_set_dma_coherent_mask(struct device *dev)
+static int hif_set_dma_coherent_mask(qdf_device_t osdev)
 {
-	return qdf_set_dma_coherent_mask(dev, 37);
+	return qdf_set_dma_coherent_mask(osdev->dev, 37);
 }
 #endif
 
@@ -282,7 +282,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	ret = hif_set_dma_coherent_mask(dev);
+	ret = hif_set_dma_coherent_mask(ol_sc->qdf_dev);
 	if (ret) {
 		HIF_ERROR("%s: failed to set dma mask error = %d",
 				__func__, ret);

@@ -195,13 +195,13 @@ hif_ce_dump_target_memory(struct hif_softc *scn, void *ramdump_base,
 
 #ifdef IPA_OFFLOAD
 void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
-			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_shared_mem_t **ce_sr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr);
 #else
 static inline
 void hif_ce_ipa_get_ce_resource(struct hif_softc *scn,
-			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_shared_mem_t **ce_sr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr)
 {

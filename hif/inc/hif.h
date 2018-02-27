@@ -522,7 +522,7 @@ static inline void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int ret)
 #define CONFIG_DISABLE_CDC_MAX_PERF_WAR 0
 
 void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_ctx,
-			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_shared_mem_t **ce_sr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr);
 

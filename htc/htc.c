@@ -945,17 +945,15 @@ void *htc_get_targetdef(HTC_HANDLE htc_handle)
  * Return: None
  */
 void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
-			     qdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_shared_mem_t **ce_sr,
 			     uint32_t *ce_sr_ring_size,
 			     qdf_dma_addr_t *ce_reg_paddr)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
 
-	if (target->hif_dev != NULL) {
+	if (target->hif_dev)
 		hif_ipa_get_ce_resource(target->hif_dev,
-					ce_sr_base_paddr,
-					ce_sr_ring_size, ce_reg_paddr);
-	}
+					ce_sr, ce_sr_ring_size, ce_reg_paddr);
 }
 #endif /* IPA_OFFLOAD */
 

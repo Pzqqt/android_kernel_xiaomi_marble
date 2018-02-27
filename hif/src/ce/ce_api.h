@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -447,14 +447,14 @@ struct ce_sendlist {
 
 #ifdef IPA_OFFLOAD
 void ce_ipa_get_resource(struct CE_handle *ce,
-			 qdf_dma_addr_t *ce_sr_base_paddr,
+			 qdf_shared_mem_t **ce_sr,
 			 uint32_t *ce_sr_ring_size,
 			 qdf_dma_addr_t *ce_reg_paddr);
 #else
 /**
  * ce_ipa_get_resource() - get uc resource on copyengine
  * @ce: copyengine context
- * @ce_sr_base_paddr: copyengine source ring base physical address
+ * @ce_sr: copyengine source ring resource info
  * @ce_sr_ring_size: copyengine source ring size
  * @ce_reg_paddr: copyengine register physical address
  *
@@ -467,7 +467,7 @@ void ce_ipa_get_resource(struct CE_handle *ce,
  * Return: None
  */
 static inline void ce_ipa_get_resource(struct CE_handle *ce,
-			 qdf_dma_addr_t *ce_sr_base_paddr,
+			 qdf_shared_mem_t **ce_sr,
 			 uint32_t *ce_sr_ring_size,
 			 qdf_dma_addr_t *ce_reg_paddr)
 {

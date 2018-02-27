@@ -282,27 +282,22 @@ struct txrx_pdev_cfg_param_t {
  * ol_txrx_ipa_resources - Resources needed for IPA
  */
 struct ol_txrx_ipa_resources {
-	qdf_dma_addr_t ce_sr_base_paddr;
+	qdf_shared_mem_t *ce_sr;
 	uint32_t ce_sr_ring_size;
 	qdf_dma_addr_t ce_reg_paddr;
 
-	qdf_dma_addr_t tx_comp_ring_base_paddr;
-	uint32_t tx_comp_ring_size;
+	qdf_shared_mem_t *tx_comp_ring;
 	uint32_t tx_num_alloc_buffer;
 
-	qdf_dma_addr_t rx_rdy_ring_base_paddr;
-	uint32_t rx_rdy_ring_size;
-	qdf_dma_addr_t rx_proc_done_idx_paddr;
-	void *rx_proc_done_idx_vaddr;
+	qdf_shared_mem_t *rx_rdy_ring;
+	qdf_shared_mem_t *rx_proc_done_idx;
 
-	qdf_dma_addr_t rx2_rdy_ring_base_paddr;
-	uint32_t rx2_rdy_ring_size;
-	qdf_dma_addr_t rx2_proc_done_idx_paddr;
-	void *rx2_proc_done_idx_vaddr;
+	qdf_shared_mem_t *rx2_rdy_ring;
+	qdf_shared_mem_t *rx2_proc_done_idx;
 
 	/* IPA UC doorbell registers paddr */
-	qdf_dma_addr_t tx_comp_doorbell_paddr;
-	qdf_dma_addr_t rx_ready_doorbell_paddr;
+	qdf_dma_addr_t tx_comp_doorbell_dmaaddr;
+	qdf_dma_addr_t rx_ready_doorbell_dmaaddr;
 
 	uint32_t tx_pipe_handle;
 	uint32_t rx_pipe_handle;

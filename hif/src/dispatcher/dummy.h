@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2016-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -56,7 +56,7 @@ int hif_dummy_dump_registers(struct hif_softc *hif_sc);
 void hif_dummy_dump_target_memory(struct hif_softc *hif_sc, void *ramdump_base,
 				  uint32_t address, uint32_t size);
 void hif_dummy_ipa_get_ce_resource(struct hif_softc *hif_sc,
-				   qdf_dma_addr_t *sr_base_paddr,
+				   qdf_shared_mem_t **ce_sr,
 				   uint32_t *sr_ring_size,
 				   qdf_dma_addr_t *reg_paddr);
 void hif_dummy_mask_interrupt_call(struct hif_softc *hif_sc);
