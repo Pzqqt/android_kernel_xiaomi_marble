@@ -33,8 +33,9 @@ QDF_STATUS pmo_tgt_conf_hw_filter(struct wlan_objmgr_psoc *psoc,
 
 	pmo_enter();
 
-	pmo_debug("Configure hw filter; vdev_id:%u, mode:%d",
-		  req->vdev_id, req->mode);
+	pmo_debug("Send %s hw filter mode 0x%X for vdev_id %u",
+		  req->enable ? "Enable" : "Disable", req->mode_bitmap,
+		  req->vdev_id);
 
 	ops = GET_PMO_TX_OPS_FROM_PSOC(psoc);
 	if (!ops.send_conf_hw_filter_req) {

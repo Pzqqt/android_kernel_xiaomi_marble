@@ -262,7 +262,7 @@ enum pmo_auto_pwr_detect_failure_mode {
  * @ptrn_match_enable_all_vdev: true when pattern match is enable for all vdev
  * @apf_enable: true if psoc supports apf else false
  * @arp_offload_enable: true if arp offload is supported for psoc else false
- * @hw_filter_mode: which mode the hardware filter should use during DTIM
+ * @hw_filter_mode_bitmap: which mode the hardware filter should use during DTIM
  * @ns_offload_enable_static: true if psoc supports ns offload in ini else false
  * @ns_offload_enable_dynamic: to enable / disable the ns offload using
  *    ioctl or vendor command.
@@ -290,7 +290,7 @@ struct pmo_psoc_cfg {
 	bool ptrn_match_enable_all_vdev;
 	bool apf_enable;
 	bool arp_offload_enable;
-	enum pmo_hw_filter_mode hw_filter_mode;
+	enum pmo_hw_filter_mode hw_filter_mode_bitmap;
 	bool ns_offload_enable_static;
 	bool ns_offload_enable_dynamic;
 	bool packet_filter_enabled;

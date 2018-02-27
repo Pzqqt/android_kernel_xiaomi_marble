@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -36,19 +36,21 @@
  * waking up the firmware.
  */
 enum pmo_hw_filter_mode {
-	PMO_HW_FILTER_DISABLED = 0,
-	PMO_HW_FILTER_NON_ARP_BC = 1,
-	PMO_HW_FILTER_NON_ICMPV6_MC = 2,
+	PMO_HW_FILTER_DISABLED		= 0,
+	PMO_HW_FILTER_NON_ARP_BC	= (1 << 0),
+	PMO_HW_FILTER_NON_ICMPV6_MC	= (1 << 1),
 };
 
 /**
  * struct pmo_hw_filter_params - hardware filter configuration parameters
  * @vdev_id: Id of the virtual device to configure
- * @mode: the hardware filter mode to configure
+ * @enable: Enable/Disable the given hw filter modes
+ * @mode_bitmap: the hardware filter mode bitmap to configure
  */
 struct pmo_hw_filter_params {
 	uint8_t vdev_id;
-	enum pmo_hw_filter_mode mode;
+	bool enable;
+	enum pmo_hw_filter_mode mode_bitmap;
 };
 
 #endif /* _WLAN_PMO_HW_FILTER_PUBLIC_STRUCT_H */
