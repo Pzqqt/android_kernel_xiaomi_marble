@@ -8728,7 +8728,6 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		adapter, hdd_device_mode_to_string(adapter->device_mode),
 		adapter->device_mode, cds_is_sub_20_mhz_enabled());
 
-
 	if (policy_mgr_is_hw_mode_change_in_progress(hdd_ctx->hdd_psoc)) {
 		status = policy_mgr_wait_for_connection_update(
 			hdd_ctx->hdd_psoc);
@@ -8741,6 +8740,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	channel_width = wlan_hdd_get_channel_bw(params->chandef.width);
 	channel = ieee80211_frequency_to_channel(
 				params->chandef.chan->center_freq);
+	adapter->session.ap.sap_config.ch_params.center_freq_seg0 =
+				cds_freq_to_chan(params->chandef.center_freq1);
+	adapter->session.ap.sap_config.ch_params.center_freq_seg1 =
+				cds_freq_to_chan(params->chandef.center_freq2);
 
 	if (cds_is_sub_20_mhz_enabled()) {
 		enum channel_state ch_state;
@@ -8875,6 +8878,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 		adapter->session.ap.sap_config.ch_width_orig =
 						params->chandef.width;
+
 		status =
 			wlan_hdd_cfg80211_start_bss(adapter,
 				&params->beacon,
