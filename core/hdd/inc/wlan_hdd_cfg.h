@@ -4696,10 +4696,10 @@ enum station_keepalive_method {
  *
  * </ini>
  */
-#define CFG_HW_FILTER_MODE_NAME		"gHwFilterMode"
-#define CFG_HW_FILTER_MODE_MIN		(0)
-#define CFG_HW_FILTER_MODE_MAX		(3)
-#define CFG_HW_FILTER_MODE_DEFAULT	(1)
+#define CFG_HW_FILTER_MODE_BITMAP_NAME	"gHwFilterMode"
+#define CFG_HW_FILTER_MODE_BITMAP_MIN		(0)
+#define CFG_HW_FILTER_MODE_BITMAP_MAX		(3)
+#define CFG_HW_FILTER_MODE_BITMAP_DEFAULT	(1)
 
 /*
  * <ini>
@@ -14393,7 +14393,7 @@ struct hdd_config {
 	 */
 	bool bSingleTidRc;
 	bool fhostArpOffload;
-	enum pmo_hw_filter_mode hw_filter_mode;
+	enum pmo_hw_filter_mode hw_filter_mode_bitmap;
 	bool ssdp;
 
 #ifdef FEATURE_RUNTIME_PM

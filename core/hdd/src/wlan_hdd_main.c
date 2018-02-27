@@ -13054,7 +13054,7 @@ static int hdd_update_pmo_config(struct hdd_context *hdd_ctx)
 		(hdd_ctx->config->wowEnable & 0x02) ? true : false;
 	psoc_cfg.apf_enable = hdd_ctx->config->apf_packet_filter_enable;
 	psoc_cfg.arp_offload_enable = hdd_ctx->config->fhostArpOffload;
-	psoc_cfg.hw_filter_mode = hdd_ctx->config->hw_filter_mode;
+	psoc_cfg.hw_filter_mode_bitmap = hdd_ctx->config->hw_filter_mode_bitmap;
 	psoc_cfg.ns_offload_enable_dynamic = hdd_ctx->config->fhostNSOffload;
 	psoc_cfg.ns_offload_enable_static = hdd_ctx->config->fhostNSOffload;
 	psoc_cfg.packet_filter_enabled = !hdd_ctx->config->disablePacketFilter;
