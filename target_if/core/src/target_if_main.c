@@ -529,6 +529,10 @@ QDF_STATUS target_if_free_psoc_tgt_info(struct wlan_objmgr_psoc *psoc)
 	tgt_psoc_info = wlan_psoc_get_tgt_if_handle(psoc);
 
 	ext_param = target_psoc_get_service_ext_param(tgt_psoc_info);
+	if (!ext_param) {
+		target_if_err("tgt_psoc_info is NULL");
+		return QDF_STATUS_E_INVAL;
+	}
 	init_deinit_chainmask_table_free(ext_param);
 
 	wlan_psoc_set_tgt_if_handle(psoc, NULL);

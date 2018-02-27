@@ -2600,6 +2600,7 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 	uint8_t extraie_len_with_pad = 0;
 	uint8_t phymode_roundup = 0;
 	struct probe_req_whitelist_attr *ie_whitelist = &params->ie_whitelist;
+	wmi_unified_t pdev_wmi_handle;
 
 	/* Length TLV placeholder for array of uint32_t */
 	len += WMI_TLV_HDR_SIZE;
@@ -2763,9 +2764,14 @@ static QDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 		WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, 0);
 	}
 
-	ret = wmi_unified_cmd_send(
-			get_pdev_wmi_handle(wmi_handle, cmd->vdev_id), wmi_buf,
-				      len, WMI_START_SCAN_CMDID);
+	pdev_wmi_handle = get_pdev_wmi_handle(wmi_handle, cmd->vdev_id);
+	if (pdev_wmi_handle == NULL) {
+		WMI_LOGE("%s: Invalid PDEV WMI handle", __func__);
+		goto error;
+	}
+
+	ret = wmi_unified_cmd_send(pdev_wmi_handle, wmi_buf,
+				   len, WMI_START_SCAN_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to start scan: %d", __func__, ret);
 		wmi_buf_free(wmi_buf);
@@ -2790,6 +2796,7 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 	int ret;
 	int len = sizeof(*cmd);
 	wmi_buf_t wmi_buf;
+	wmi_unified_t pdev_wmi_handle;
 
 	/* Allocate the memory */
 	wmi_buf = wmi_buf_alloc(wmi_handle, len);
@@ -2825,8 +2832,15 @@ static QDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	ret = wmi_unified_cmd_send(get_pdev_wmi_handle(wmi_handle, cmd->vdev_id), wmi_buf,
-				      len, WMI_STOP_SCAN_CMDID);
+	pdev_wmi_handle = get_pdev_wmi_handle(wmi_handle, cmd->vdev_id);
+	if (pdev_wmi_handle == NULL) {
+		WMI_LOGE("%s: Invalid PDEV WMI handle", __func__);
+		wmi_buf_free(wmi_buf);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	ret = wmi_unified_cmd_send(pdev_wmi_handle, wmi_buf,
+				   len, WMI_STOP_SCAN_CMDID);
 	if (ret) {
 		WMI_LOGE("%s: Failed to send stop scan: %d", __func__, ret);
 		wmi_buf_free(wmi_buf);
@@ -16657,7 +16671,7 @@ static QDF_STATUS send_power_dbg_cmd_tlv(wmi_unified_t wmi_handle,
 		       (param->num_args * sizeof(uint32_t)));
 	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
 	WMI_LOGI("%s: %d num of args = ", __func__, param->num_args);
-	for (i = 0; (i < param->num_args && i < WMI_UNIT_TEST_MAX_NUM_ARGS); i++) {
+	for (i = 0; (i < param->num_args && i < WMI_MAX_POWER_DBG_ARGS); i++) {
 		cmd_args[i] = param->args[i];
 		WMI_LOGI("%d,", param->args[i]);
 	}
