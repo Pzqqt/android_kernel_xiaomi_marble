@@ -507,6 +507,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 {
 	void *peer;
 	struct cdp_pdev *pdev;
+	QDF_STATUS qdf_status;
 	uint8_t peer_id;
 	uint8_t vdev_id = del_sta_self_req_param->session_id;
 	struct wma_target_req *msg = NULL;
@@ -519,7 +520,8 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
-			return QDF_STATUS_E_FAULT;
+		qdf_status = QDF_STATUS_E_FAULT;
+		goto error;
 	}
 
 	peer = cdp_peer_find_by_addr(soc, pdev,
@@ -528,7 +530,8 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 	if (!peer) {
 		WMA_LOGE("%s Failed to find peer %pM", __func__,
 			 del_sta_self_req_param->self_mac_addr);
-		return QDF_STATUS_SUCCESS;
+		qdf_status = QDF_STATUS_SUCCESS;
+		goto error;
 	}
 	wma_remove_peer(wma_handle,
 			del_sta_self_req_param->self_mac_addr,
@@ -540,7 +543,8 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 			qdf_mem_malloc(sizeof(struct del_sta_self_rsp_params));
 		if (sta_self_wmi_rsp == NULL) {
 			WMA_LOGE(FL("Failed to allocate memory"));
-			return QDF_STATUS_E_NOMEM;
+			qdf_status = QDF_STATUS_E_NOMEM;
+			goto error;
 		}
 		sta_self_wmi_rsp->self_sta_param = del_sta_self_req_param;
 		sta_self_wmi_rsp->generate_rsp = generate_vdev_rsp;
@@ -554,10 +558,13 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 				 vdev_id);
 			wma_remove_req(wma_handle, vdev_id,
 				WMA_DEL_P2P_SELF_STA_RSP_START);
-			return QDF_STATUS_E_FAILURE;
+			qdf_status = QDF_STATUS_E_FAILURE;
+			goto error;
 		}
 	}
 	return QDF_STATUS_SUCCESS;
+error:
+	return qdf_status;
 }
 
 static void
@@ -781,8 +788,19 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	/* P2P Device */
 	if ((iface->type == WMI_VDEV_TYPE_AP) &&
 	    (iface->sub_type == WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE)) {
-		wma_self_peer_remove(wma_handle, pdel_sta_self_req_param,
-					generateRsp);
+		status = wma_self_peer_remove(wma_handle,
+					pdel_sta_self_req_param, generateRsp);
+		if ((status != QDF_STATUS_SUCCESS) && generateRsp) {
+			WMA_LOGE("can't remove selfpeer, send rsp session: %d",
+				 vdev_id);
+			goto send_fail_rsp;
+		} else {
+			WMA_LOGE("can't remove selfpeer, free msg session: %d",
+				 vdev_id);
+			qdf_mem_free(pdel_sta_self_req_param);
+			pdel_sta_self_req_param = NULL;
+			return status;
+		}
 		if (!wmi_service_enabled(wma_handle->wmi_handle,
 				wmi_service_sync_delete_cmds))
 			status = wma_handle_vdev_detach(wma_handle,
