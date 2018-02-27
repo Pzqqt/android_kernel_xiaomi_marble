@@ -775,7 +775,7 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 {
 	uint8_t *ifname;
 	uint16_t data_len;
-	uint8_t ifname_len;
+	qdf_size_t ifname_len;
 	uint32_t ndp_qos_config;
 	struct sk_buff *vendor_event;
 	enum nan_datapath_state state;
@@ -806,7 +806,7 @@ static void os_if_ndp_indication_handler(struct wlan_objmgr_vdev *vdev,
 	}
 	ifname_len = qdf_str_len(ifname);
 	if (ifname_len > IFNAMSIZ) {
-		cfg80211_err("ifname(%d) too long", ifname_len);
+		cfg80211_err("ifname(%zu) too long", ifname_len);
 		return;
 	}
 
@@ -915,7 +915,7 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 	uint8_t *ifname;
 	uint32_t data_len;
 	QDF_STATUS status;
-	uint8_t ifname_len;
+	qdf_size_t ifname_len;
 	uint32_t ndp_qos_config = 0;
 	struct sk_buff *vendor_event;
 	struct wlan_objmgr_pdev *pdev = wlan_vdev_get_pdev(vdev);
@@ -956,7 +956,7 @@ static void os_if_ndp_confirm_ind_handler(struct wlan_objmgr_vdev *vdev,
 	}
 	ifname_len = qdf_str_len(ifname);
 	if (ifname_len > IFNAMSIZ) {
-		cfg80211_err("ifname(%d) too long", ifname_len);
+		cfg80211_err("ifname(%zu) too long", ifname_len);
 		return;
 	}
 
