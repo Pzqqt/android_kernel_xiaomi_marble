@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2018 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -224,22 +224,32 @@ void htt_display(htt_pdev_handle pdev, int indent);
 #ifdef IPA_OFFLOAD
 int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev);
 
+/**
+ * htt_ipa_uc_get_resource() - Get uc resource from htt and lower layer
+ * @pdev - handle to the HTT instance
+ * @ce_sr - CE source ring DMA mapping info
+ * @tx_comp_ring - tx completion ring DMA mapping info
+ * @rx_rdy_ring - rx Ready ring DMA mapping info
+ * @rx2_rdy_ring - rx2 Ready ring DMA mapping info
+ * @rx_proc_done_idx - rx process done index
+ * @rx2_proc_done_idx - rx2 process done index
+ * @ce_sr_ring_size: copyengine source ring size
+ * @ce_reg_paddr - CE Register address
+ * @tx_num_alloc_buffer - Number of TX allocated buffers
+ *
+ * Return: 0 success
+ */
 int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			qdf_dma_addr_t *ce_sr_base_paddr,
+			qdf_shared_mem_t **ce_sr,
+			qdf_shared_mem_t **tx_comp_ring,
+			qdf_shared_mem_t **rx_rdy_ring,
+			qdf_shared_mem_t **rx2_rdy_ring,
+			qdf_shared_mem_t **rx_proc_done_idx,
+			qdf_shared_mem_t **rx2_proc_done_idx,
 			uint32_t *ce_sr_ring_size,
 			qdf_dma_addr_t *ce_reg_paddr,
-			qdf_dma_addr_t *tx_comp_ring_base_paddr,
-			uint32_t *tx_comp_ring_size,
-			uint32_t *tx_num_alloc_buffer,
-			qdf_dma_addr_t *rx_rdy_ring_base_paddr,
-			uint32_t *rx_rdy_ring_size,
-			qdf_dma_addr_t *rx_proc_done_idx_paddr,
-			void **rx_proc_done_idx_vaddr,
-			qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
-			uint32_t *rx2_rdy_ring_size,
-			qdf_dma_addr_t *rx2_proc_done_idx_paddr,
-			void **rx2_proc_done_idx_vaddr);
+			uint32_t *tx_num_alloc_buffer);
 
 int
 htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
@@ -267,46 +277,6 @@ void htt_ipa_uc_detach(struct htt_pdev_t *pdev);
  * Return: 0 success
  */
 static inline int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
-{
-	return 0;
-}
-
-/**
- * htt_ipa_uc_get_resource() - Get uc resource from htt and lower layer
- * @pdev: handle to the HTT instance
- * @ce_sr_base_paddr: copy engine source ring base physical address
- * @ce_sr_ring_size: copy engine source ring size
- * @ce_reg_paddr: copy engine register physical address
- * @tx_comp_ring_base_paddr: tx comp ring base physical address
- * @tx_comp_ring_size: tx comp ring size
- * @tx_num_alloc_buffer: number of allocated tx buffer
- * @rx_rdy_ring_base_paddr: rx ready ring base physical address
- * @rx_rdy_ring_size: rx ready ring size
- * @rx_proc_done_idx_paddr: rx process done index physical address
- * @rx_proc_done_idx_vaddr: rx process done index virtual address
- * @rx2_rdy_ring_base_paddr: rx done ring base physical address
- * @rx2_rdy_ring_size: rx done ring size
- * @rx2_proc_done_idx_paddr: rx done index physical address
- * @rx2_proc_done_idx_vaddr: rx done index virtual address
- *
- * Return: 0 success
- */
-static inline int
-htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			qdf_dma_addr_t *ce_sr_base_paddr,
-			uint32_t *ce_sr_ring_size,
-			qdf_dma_addr_t *ce_reg_paddr,
-			qdf_dma_addr_t *tx_comp_ring_base_paddr,
-			uint32_t *tx_comp_ring_size,
-			uint32_t *tx_num_alloc_buffer,
-			qdf_dma_addr_t *rx_rdy_ring_base_paddr,
-			uint32_t *rx_rdy_ring_size,
-			qdf_dma_addr_t *rx_proc_done_idx_paddr,
-			void **rx_proc_done_idx_vaddr,
-			qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
-			uint32_t *rx2_rdy_ring_size,
-			qdf_dma_addr_t *rx2_proc_done_idx_paddr,
-			void **rx2_proc_done_idx_vaddr)
 {
 	return 0;
 }

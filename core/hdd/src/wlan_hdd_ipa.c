@@ -950,9 +950,7 @@ static inline void hdd_ipa_wdi_get_wdi_version(struct hdd_ipa_priv *hdd_ipa)
 static inline bool hdd_ipa_wdi_is_smmu_enabled(struct hdd_ipa_priv *hdd_ipa,
 					qdf_device_t osdev)
 {
-	/* TODO: Need to check if SMMU is supported on cld_3.2 */
-	/* return hdd_ipa->is_smmu_enabled && qdf_mem_smmu_s1_enabled(osdev); */
-	return 0;
+	return hdd_ipa->is_smmu_enabled && qdf_mem_smmu_s1_enabled(osdev);
 }
 
 static inline QDF_STATUS hdd_ipa_wdi_setup(struct hdd_ipa_priv *hdd_ipa)
@@ -1103,9 +1101,7 @@ static inline void hdd_ipa_wdi_get_wdi_version(struct hdd_ipa_priv *hdd_ipa)
 static inline int hdd_ipa_wdi_is_smmu_enabled(struct hdd_ipa_priv *hdd_ipa,
 				       qdf_device_t osdev)
 {
-	/* TODO: Need to check if SMMU is supported on cld_3.2 */
-	/* return qdf_mem_smmu_s1_enabled(osdev); */
-	return 0;
+	return qdf_mem_smmu_s1_enabled(osdev);
 }
 
 static inline QDF_STATUS hdd_ipa_wdi_setup(struct hdd_ipa_priv *hdd_ipa)
@@ -5917,7 +5913,7 @@ static int __hdd_ipa_wlan_evt(struct hdd_adapter *adapter, uint8_t sta_id,
 		}
 		hdd_ipa->stats.num_send_msg++;
 
-		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "sap_num_connected_sta=%d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%d",
 			    hdd_ipa->sap_num_connected_sta);
 		return ret;
 
@@ -6381,7 +6377,8 @@ QDF_STATUS hdd_ipa_cleanup(struct hdd_context *hdd_ctx)
 
 int hdd_ipa_uc_smmu_map(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 {
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "Map: %d Num_buf: %d", map, num_buf);
+	HDD_IPA_DP_LOG(QDF_TRACE_LEVEL_DEBUG, "Map: %d Num_buf: %d",
+		       map, num_buf);
 
 	if (!num_buf) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "No buffers to map/unmap");

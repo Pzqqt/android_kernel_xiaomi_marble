@@ -84,22 +84,24 @@ struct ol_txrx_ipa_uc_rx_hdr {
 	(OL_TXRX_IPA_WLAN_FRAG_HEADER + OL_TXRX_IPA_WLAN_IPA_HEADER)
 
 #if defined(QCA_WIFI_3_0) && defined(CONFIG_IPA3)
-#define OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res) \
+#define OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res, osdev) \
 	do { \
-		pipe_in.u.ul.rdy_ring_rp_va = \
-		ipa_res->rx_proc_done_idx_vaddr; \
-		pipe_in.u.ul.rdy_comp_ring_base_pa = \
-		ipa_res->rx2_rdy_ring_base_paddr;\
-		pipe_in.u.ul.rdy_comp_ring_size = \
-		ipa_res->rx2_rdy_ring_size; \
-		pipe_in.u.ul.rdy_comp_ring_wp_pa = \
-		ipa_res->rx2_proc_done_idx_paddr; \
-		pipe_in.u.ul.rdy_comp_ring_wp_va = \
-		ipa_res->rx2_proc_done_idx_vaddr; \
+		QDF_IPA_PIPE_IN_UL_RDY_RING_RP_VA(pipe_in) = \
+			ipa_res->rx_proc_done_idx->vaddr; \
+		QDF_IPA_PIPE_IN_UL_RDY_COMP_RING(pipe_in) = \
+			qdf_mem_get_dma_addr(osdev, \
+				&ipa_res->rx2_rdy_ring->mem_info);\
+		QDF_IPA_PIPE_IN_UL_RDY_COMP_RING_SIZE(pipe_in) = \
+			ipa_res->rx2_rdy_ring->mem_info.size; \
+		QDF_IPA_PIPE_IN_UL_RDY_COMP_RING_WP_PA(pipe_in) = \
+			qdf_mem_get_dma_addr(osdev, \
+				&ipa_res->rx2_proc_done_idx->mem_info); \
+		QDF_IPA_PIPE_IN_UL_RDY_COMP_RING_WP_VA(pipe_in) = \
+			ipa_res->rx2_proc_done_idx->vaddr; \
 	} while (0)
 #else
 /* Do nothing */
-#define OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res)
+#define OL_TXRX_IPA_WDI2_SET(pipe_in, ipa_res, osdev)
 #endif /* IPA3 */
 
 QDF_STATUS ol_txrx_ipa_uc_get_resource(struct cdp_pdev *pdev);

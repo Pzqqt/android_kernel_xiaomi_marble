@@ -1070,26 +1070,39 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 {
 	unsigned int tx_buffer_count;
 	unsigned int  tx_buffer_count_pwr2;
-	void *buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	qdf_dma_addr_t *ring_vaddr;
 	uint16_t idx;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+	qdf_shared_mem_t *shared_tx_buffer;
 
-	ring_vaddr = (qdf_dma_addr_t *)pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
+	ring_vaddr = (qdf_dma_addr_t *)pdev->ipa_uc_tx_rsc.tx_comp_ring->vaddr;
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
+		mem_map_table = qdf_mem_map_table_alloc(uc_tx_buf_cnt);
+		if (!mem_map_table) {
+			qdf_print("%s: Failed to allocate memory for mem map table\n",
+				  __func__);
+			return 0;
+		}
+		mem_info = mem_map_table;
+	}
+
 	/* Allocate TX buffers as many as possible */
 	for (tx_buffer_count = 0;
 	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
 
-		buffer_vaddr = qdf_mem_alloc_consistent(pdev->osdev,
-			pdev->osdev->dev, uc_tx_buf_sz, &buffer_paddr);
-		if (!buffer_vaddr) {
+		shared_tx_buffer = qdf_mem_shared_mem_alloc(pdev->osdev,
+							    uc_tx_buf_sz);
+		if (!shared_tx_buffer || !shared_tx_buffer->vaddr) {
 			qdf_print("IPA WDI TX buffer alloc fail %d allocated\n",
 				tx_buffer_count);
 			goto pwr2;
 		}
 
-		header_ptr = buffer_vaddr;
+		header_ptr = shared_tx_buffer->vaddr;
+		buffer_paddr = qdf_mem_get_dma_addr(pdev->osdev,
+						&shared_tx_buffer->mem_info);
 
 		/* HTT control header */
 		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
@@ -1122,13 +1135,18 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr = buffer_paddr + IPA_UC_TX_BUF_FRAG_HDR_OFFSET;
 
 		*ring_vaddr = buffer_paddr;
-		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
-			buffer_vaddr;
-		pdev->ipa_uc_tx_rsc.paddr_strg[tx_buffer_count] =
-			buffer_paddr;
+		pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[tx_buffer_count] =
+			shared_tx_buffer;
+
 		/* Memory barrier to ensure actual value updated */
 
 		ring_vaddr++;
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
+			qdf_update_mem_map_table(pdev->osdev, mem_info,
+					shared_tx_buffer->mem_info.iova,
+					uc_tx_buf_sz);
+			 mem_info++;
+		}
 	}
 
 pwr2:
@@ -1146,22 +1164,20 @@ pwr2:
 
 		/* Free over allocated buffers below power of 2 */
 		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
-			if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
-				qdf_mem_free_consistent(
-					pdev->osdev, pdev->osdev->dev,
-					ol_cfg_ipa_uc_tx_buf_size(
-						pdev->ctrl_pdev),
-					pdev->ipa_uc_tx_rsc.
-						tx_buf_pool_vaddr_strg[idx],
-					pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
+			if (pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx]) {
+				qdf_mem_shared_mem_free(pdev->osdev,
+					pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[
+								idx]);
+				 pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx] =
+									NULL;
 			}
 		}
 	}
 
-	if (tx_buffer_count_pwr2 < 0) {
-		qdf_print("%s: Failed to round down Tx buffer count %d",
-				__func__, tx_buffer_count_pwr2);
-		tx_buffer_count_pwr2 = 0;
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
+		cds_smmu_map_unmap(true, tx_buffer_count_pwr2,
+				   mem_map_table);
+		qdf_mem_free(mem_map_table);
 	}
 
 	return tx_buffer_count_pwr2;
@@ -1180,12 +1196,15 @@ static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 	uint16_t idx;
 
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
-		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
-			qdf_mem_free_consistent(
-				pdev->osdev, pdev->osdev->dev,
-				ol_cfg_ipa_uc_tx_buf_size(pdev->ctrl_pdev),
-				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx],
-				pdev->ipa_uc_tx_rsc.paddr_strg[idx], 0);
+		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx]) {
+			if (qdf_mem_smmu_s1_enabled(pdev->osdev))
+				cds_smmu_map_unmap(false, 1,
+					&pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[
+						idx]->mem_info);
+			qdf_mem_shared_mem_free(pdev->osdev,
+						pdev->ipa_uc_tx_rsc.
+							tx_buf_pool_strg[idx]);
+			pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx] = NULL;
 		}
 	}
 }
@@ -1197,28 +1216,40 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 {
 	unsigned int tx_buffer_count;
 	unsigned int  tx_buffer_count_pwr2;
-	qdf_nbuf_t buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
 	uint16_t idx;
-	QDF_STATUS status;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+	qdf_shared_mem_t *shared_tx_buffer;
 
-	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
+	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_ring->vaddr;
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
+		mem_map_table = qdf_mem_map_table_alloc(uc_tx_buf_cnt);
+		if (!mem_map_table) {
+			qdf_print("%s: Failed to allocate memory for mem map table\n",
+				  __func__);
+			return 0;
+		}
+		mem_info = mem_map_table;
+	}
+
 	/* Allocate TX buffers as many as possible */
 	for (tx_buffer_count = 0;
 	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
-		buffer_vaddr = qdf_nbuf_alloc(pdev->osdev,
-					      uc_tx_buf_sz, 0, 4, false);
-		if (!buffer_vaddr) {
+		shared_tx_buffer = qdf_mem_shared_mem_alloc(pdev->osdev,
+							    uc_tx_buf_sz);
+		if (!shared_tx_buffer || !shared_tx_buffer->vaddr) {
 			qdf_print("%s: TX BUF alloc fail, loop index: %d",
 				  __func__, tx_buffer_count);
 			goto pwr2;
 		}
 
 		/* Init buffer */
-		qdf_mem_zero(qdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
-		header_ptr = (uint32_t *) qdf_nbuf_data(buffer_vaddr);
+		qdf_mem_zero(shared_tx_buffer->vaddr, uc_tx_buf_sz);
+		header_ptr = (uint32_t *)shared_tx_buffer->vaddr;
+		buffer_paddr = qdf_mem_get_dma_addr(pdev->osdev,
+						&shared_tx_buffer->mem_info);
 
 		/* HTT control header */
 		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
@@ -1227,19 +1258,9 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		/* PKT ID */
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
-
-		status = qdf_nbuf_map(pdev->osdev, buffer_vaddr,
-				      QDF_DMA_BIDIRECTIONAL);
-		if (status != QDF_STATUS_SUCCESS) {
-			QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
-			  "%s: nbuf map failed, loop index: %d",
-			  __func__, tx_buffer_count);
-			qdf_nbuf_free(buffer_vaddr);
-			goto pwr2;
-		}
-
-		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
+
+		/*FRAG Desc Pointer */
 		*header_ptr = (uint32_t) (buffer_paddr +
 						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
 		header_ptr++;
@@ -1250,11 +1271,17 @@ static int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr = buffer_paddr + IPA_UC_TX_BUF_FRAG_HDR_OFFSET;
 
 		*ring_vaddr = buffer_paddr;
-		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
-			buffer_vaddr;
+		pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[tx_buffer_count] =
+			shared_tx_buffer;
 		/* Memory barrier to ensure actual value updated */
 
 		ring_vaddr++;
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
+			qdf_update_mem_map_table(pdev->osdev, mem_info,
+					shared_tx_buffer->mem_info.iova,
+					uc_tx_buf_sz);
+			 mem_info++;
+		}
 	}
 
 pwr2:
@@ -1272,21 +1299,20 @@ pwr2:
 
 		/* Free over allocated buffers below power of 2 */
 		for (idx = tx_buffer_count_pwr2; idx < tx_buffer_count; idx++) {
-
-			buffer_vaddr =
-				pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx];
-			if (buffer_vaddr) {
-				qdf_nbuf_unmap(pdev->osdev, buffer_vaddr,
-						QDF_DMA_BIDIRECTIONAL);
-				qdf_nbuf_free(buffer_vaddr);
+			if (pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx]) {
+				qdf_mem_shared_mem_free(pdev->osdev,
+							pdev->ipa_uc_tx_rsc.
+							tx_buf_pool_strg[idx]);
+				pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx] =
+									NULL;
 			}
 		}
 	}
 
-	if (tx_buffer_count_pwr2 < 0) {
-		qdf_print("%s: Failed to round down Tx buffer count %d",
-				__func__, tx_buffer_count_pwr2);
-		tx_buffer_count_pwr2 = 0;
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev)) {
+		cds_smmu_map_unmap(true, tx_buffer_count_pwr2,
+				   mem_map_table);
+		qdf_mem_free(mem_map_table);
 	}
 
 	return tx_buffer_count_pwr2;
@@ -1295,14 +1321,17 @@ pwr2:
 static void htt_tx_buf_pool_free(struct htt_pdev_t *pdev)
 {
 	uint16_t idx;
-	void *buffer_vaddr;
 
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
-		buffer_vaddr = pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx];
-		if (buffer_vaddr) {
-			qdf_nbuf_unmap(pdev->osdev, buffer_vaddr,
-				      QDF_DMA_BIDIRECTIONAL);
-			qdf_nbuf_free(buffer_vaddr);
+		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx]) {
+			if (qdf_mem_smmu_s1_enabled(pdev->osdev))
+				cds_smmu_map_unmap(false, 1,
+					&pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[
+						idx]->mem_info);
+			qdf_mem_shared_mem_free(pdev->osdev,
+						pdev->ipa_uc_tx_rsc.
+							tx_buf_pool_strg[idx]);
+			pdev->ipa_uc_tx_rsc.tx_buf_pool_strg[idx] = NULL;
 		}
 	}
 }
@@ -1327,48 +1356,39 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	unsigned int tx_comp_ring_size;
 
 	/* Allocate CE Write Index WORD */
-	pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr =
-		qdf_mem_alloc_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			4, &pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr);
-	if (!pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
-		qdf_print("%s: CE Write Index WORD alloc fail", __func__);
+	pdev->ipa_uc_tx_rsc.tx_ce_idx =
+		qdf_mem_shared_mem_alloc(pdev->osdev, 4);
+	if (!pdev->ipa_uc_tx_rsc.tx_ce_idx) {
+		qdf_print("%s: Unable to allocate memory for IPA tx ce idx\n",
+			  __func__);
 		return -ENOBUFS;
 	}
 
 	/* Allocate TX COMP Ring */
 	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(target_paddr_t);
-	pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr =
-		qdf_mem_alloc_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			tx_comp_ring_size,
-			&pdev->ipa_uc_tx_rsc.tx_comp_base.paddr);
-	if (!pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
+	pdev->ipa_uc_tx_rsc.tx_comp_ring =
+		qdf_mem_shared_mem_alloc(pdev->osdev,
+					 tx_comp_ring_size);
+	if (!pdev->ipa_uc_tx_rsc.tx_comp_ring ||
+	    !pdev->ipa_uc_tx_rsc.tx_comp_ring->vaddr) {
 		qdf_print("%s: TX COMP ring alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_ce_idx;
 	}
 
-	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr, tx_comp_ring_size);
-
 	/* Allocate TX BUF vAddress Storage */
-	pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg =
+	pdev->ipa_uc_tx_rsc.tx_buf_pool_strg =
 		qdf_mem_malloc(uc_tx_buf_cnt *
-			sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg));
-	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg) {
+			sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_strg));
+	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_strg) {
 		qdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
 
-	pdev->ipa_uc_tx_rsc.paddr_strg =
-		qdf_mem_malloc(uc_tx_buf_cnt *
-			sizeof(pdev->ipa_uc_tx_rsc.paddr_strg));
-	if (!pdev->ipa_uc_tx_rsc.paddr_strg) {
-		qdf_print("%s: TX BUF POOL paddr storage alloc fail", __func__);
-		return_code = -ENOBUFS;
-		goto free_tx_buf_pool_vaddr_strg;
-	}
+	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_strg,
+		     uc_tx_buf_cnt *
+		     sizeof(*pdev->ipa_uc_tx_rsc.tx_buf_pool_strg));
 
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
 		pdev, uc_tx_buf_sz, uc_tx_buf_cnt, uc_tx_partition_base);
@@ -1376,26 +1396,13 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 	return 0;
 
-free_tx_buf_pool_vaddr_strg:
-	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
 free_tx_comp_base:
-	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
-				   tx_comp_ring_size,
-				   pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
-				   pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
-				   qdf_get_dma_mem_context((&pdev->
-							    ipa_uc_tx_rsc.
-							    tx_comp_base),
-							   memctx));
+	qdf_mem_shared_mem_free(pdev->osdev,
+				pdev->ipa_uc_tx_rsc.tx_comp_ring);
 free_tx_ce_idx:
-	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
-				   4,
-				   pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
-				   pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
-				   qdf_get_dma_mem_context((&pdev->
-							    ipa_uc_tx_rsc.
-							    tx_ce_idx),
-							   memctx));
+	qdf_mem_shared_mem_free(pdev->osdev,
+				pdev->ipa_uc_tx_rsc.tx_ce_idx);
+
 	return return_code;
 }
 
@@ -1410,35 +1417,16 @@ free_tx_ce_idx:
  */
 int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
-	if (pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			4,
-			pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
-			pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
-			qdf_get_dma_mem_context(
-				(&pdev->ipa_uc_tx_rsc.tx_ce_idx),
-				memctx));
-	}
-
-	if (pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) *
-							sizeof(target_paddr_t),
-			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
-			pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
-						 tx_comp_base),
-						memctx));
-	}
+	qdf_mem_shared_mem_free(pdev->osdev,
+				pdev->ipa_uc_tx_rsc.tx_ce_idx);
+	qdf_mem_shared_mem_free(pdev->osdev,
+				pdev->ipa_uc_tx_rsc.tx_comp_ring);
 
 	/* Free each single buffer */
 	htt_tx_buf_pool_free(pdev);
 
 	/* Free storage */
-	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
-	qdf_mem_free(pdev->ipa_uc_tx_rsc.paddr_strg);
+	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_strg);
 
 	return 0;
 }

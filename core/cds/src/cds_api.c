@@ -2869,6 +2869,7 @@ int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)
 #else
 void cds_smmu_mem_map_setup(qdf_device_t osdev)
 {
+	osdev->smmu_s1_enabled = false;
 }
 
 int cds_smmu_map_unmap(bool map, uint32_t num_buf, qdf_mem_info_t *buf_arr)

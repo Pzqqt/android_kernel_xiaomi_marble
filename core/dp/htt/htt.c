@@ -843,6 +843,7 @@ int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
 	QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_DEBUG, "%s: enter",
 		  __func__);
 
+	pdev->uc_map_reqd = 0;
 	/* TX resource attach */
 	error = htt_tx_ipa_uc_attach(
 		pdev,
@@ -893,67 +894,28 @@ void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 		__func__);
 }
 
-/**
- * htt_ipa_uc_get_resource() - Get uc resource from htt and lower layer
- * @pdev: handle to the HTT instance
- * @ce_sr_base_paddr: copy engine source ring base physical address
- * @ce_sr_ring_size: copy engine source ring size
- * @ce_reg_paddr: copy engine register physical address
- * @tx_comp_ring_base_paddr: tx comp ring base physical address
- * @tx_comp_ring_size: tx comp ring size
- * @tx_num_alloc_buffer: number of allocated tx buffer
- * @rx_rdy_ring_base_paddr: rx ready ring base physical address
- * @rx_rdy_ring_size: rx ready ring size
- * @rx_proc_done_idx_paddr: rx process done index physical address
- * @rx_proc_done_idx_vaddr: rx process done index virtual address
- * @rx2_rdy_ring_base_paddr: rx done ring base physical address
- * @rx2_rdy_ring_size: rx done ring size
- * @rx2_proc_done_idx_paddr: rx done index physical address
- * @rx2_proc_done_idx_vaddr: rx done index virtual address
- *
- * Return: 0 success
- */
 int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			qdf_dma_addr_t *ce_sr_base_paddr,
+			qdf_shared_mem_t **ce_sr,
+			qdf_shared_mem_t **tx_comp_ring,
+			qdf_shared_mem_t **rx_rdy_ring,
+			qdf_shared_mem_t **rx2_rdy_ring,
+			qdf_shared_mem_t **rx_proc_done_idx,
+			qdf_shared_mem_t **rx2_proc_done_idx,
 			uint32_t *ce_sr_ring_size,
 			qdf_dma_addr_t *ce_reg_paddr,
-			qdf_dma_addr_t *tx_comp_ring_base_paddr,
-			uint32_t *tx_comp_ring_size,
-			uint32_t *tx_num_alloc_buffer,
-			qdf_dma_addr_t *rx_rdy_ring_base_paddr,
-			uint32_t *rx_rdy_ring_size,
-			qdf_dma_addr_t *rx_proc_done_idx_paddr,
-			void **rx_proc_done_idx_vaddr,
-			qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
-			uint32_t *rx2_rdy_ring_size,
-			qdf_dma_addr_t *rx2_proc_done_idx_paddr,
-			void **rx2_proc_done_idx_vaddr)
+			uint32_t *tx_num_alloc_buffer)
 {
 	/* Release allocated resource to client */
-	*tx_comp_ring_base_paddr =
-		pdev->ipa_uc_tx_rsc.tx_comp_base.paddr;
-	*tx_comp_ring_size =
-		(uint32_t) ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev);
-	*tx_num_alloc_buffer = (uint32_t) pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt;
-	*rx_rdy_ring_base_paddr =
-		pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr;
-	*rx_rdy_ring_size = (uint32_t) pdev->ipa_uc_rx_rsc.rx_ind_ring_size;
-	*rx_proc_done_idx_paddr =
-		pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr;
-	*rx_proc_done_idx_vaddr =
-		(void *)pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr;
-	*rx2_rdy_ring_base_paddr =
-		pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr;
-	*rx2_rdy_ring_size = (uint32_t) pdev->ipa_uc_rx_rsc.rx2_ind_ring_size;
-	*rx2_proc_done_idx_paddr =
-		pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr;
-	*rx2_proc_done_idx_vaddr =
-		(void *)pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr;
+	*tx_comp_ring = pdev->ipa_uc_tx_rsc.tx_comp_ring;
+	*rx_rdy_ring = pdev->ipa_uc_rx_rsc.rx_ind_ring;
+	*rx2_rdy_ring = pdev->ipa_uc_rx_rsc.rx2_ind_ring;
+	*rx_proc_done_idx = pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx;
+	*rx2_proc_done_idx = pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx;
+	*tx_num_alloc_buffer = (uint32_t)pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt;
 
 	/* Get copy engine, bus resource */
-	htc_ipa_get_ce_resource(pdev->htc_pdev,
-				ce_sr_base_paddr,
+	htc_ipa_get_ce_resource(pdev->htc_pdev, ce_sr,
 				ce_sr_ring_size, ce_reg_paddr);
 
 	return 0;

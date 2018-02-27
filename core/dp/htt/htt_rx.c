@@ -485,12 +485,23 @@ static int htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 	struct htt_host_rx_desc_base *rx_desc;
 	int filled = 0;
 	int debt_served = 0;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+	int num_alloc = 0;
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+		mem_map_table = qdf_mem_map_table_alloc(num);
+		if (!mem_map_table) {
+			qdf_print("%s: Failed to allocate memory for mem map table\n",
+				  __func__);
+			goto fail;
+		}
+		mem_info = mem_map_table;
+	}
 
 moretofill:
 	while (num > 0) {
-		qdf_dma_addr_t paddr;
+		qdf_dma_addr_t paddr, paddr_marked;
 		qdf_nbuf_t rx_netbuf;
 		int headroom;
 
@@ -513,7 +524,7 @@ moretofill:
 			qdf_timer_start(
 				&pdev->rx_ring.refill_retry_timer,
 				HTT_RX_RING_REFILL_RETRY_TIME_MS);
-			goto fail;
+			goto free_mem_map_table;
 		}
 
 		/* Clear rx_desc attention word before posting to Rx ring */
@@ -550,13 +561,13 @@ moretofill:
 #endif
 		if (status != QDF_STATUS_SUCCESS) {
 			qdf_nbuf_free(rx_netbuf);
-			goto fail;
+			goto free_mem_map_table;
 		}
 		paddr = qdf_nbuf_get_frag_paddr(rx_netbuf, 0);
-		paddr = htt_rx_paddr_mark_high_bits(paddr);
+		paddr_marked = htt_rx_paddr_mark_high_bits(paddr);
 		if (pdev->cfg.is_full_reorder_offload) {
 			if (qdf_unlikely(htt_rx_hash_list_insert(
-					pdev, paddr, rx_netbuf))) {
+					pdev, paddr_marked, rx_netbuf))) {
 				QDF_TRACE(QDF_MODULE_ID_HTT,
 					  QDF_TRACE_LEVEL_ERROR,
 					  "%s: hash insert failed!", __func__);
@@ -568,13 +579,21 @@ moretofill:
 					       QDF_DMA_FROM_DEVICE);
 #endif
 				qdf_nbuf_free(rx_netbuf);
-				goto fail;
+				goto free_mem_map_table;
 			}
-			htt_rx_dbg_rxbuf_set(pdev, paddr, rx_netbuf);
+			htt_rx_dbg_rxbuf_set(pdev, paddr_marked, rx_netbuf);
 		} else {
 			pdev->rx_ring.buf.netbufs_ring[idx] = rx_netbuf;
 		}
-		pdev->rx_ring.buf.paddrs_ring[idx] = paddr;
+
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+			qdf_update_mem_map_table(pdev->osdev, mem_info,
+						 paddr, HTT_RX_BUF_SIZE);
+			mem_info++;
+			num_alloc++;
+		}
+
+		pdev->rx_ring.buf.paddrs_ring[idx] = paddr_marked;
 		pdev->rx_ring.fill_cnt++;
 
 		num--;
@@ -586,6 +605,12 @@ moretofill:
 		num = qdf_atomic_read(&pdev->rx_ring.refill_debt);
 		debt_served += num;
 		goto moretofill;
+	}
+
+free_mem_map_table:
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+		cds_smmu_map_unmap(true, num_alloc, mem_map_table);
+		qdf_mem_free(mem_map_table);
 	}
 
 fail:
@@ -2332,6 +2357,9 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	struct htt_host_rx_desc_base *rx_desc;
 	enum rx_pkt_fate status = RX_PKT_FATE_SUCCESS;
 	qdf_dma_addr_t paddr;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+	uint32_t num_unmapped = 0;
+	int ret = 1;
 
 	HTT_ASSERT1(htt_rx_in_order_ring_elems(pdev) != 0);
 
@@ -2347,9 +2375,17 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 	/* Get the total number of MSDUs */
 	msdu_count = HTT_RX_IN_ORD_PADDR_IND_MSDU_CNT_GET(*(msg_word + 1));
 	HTT_RX_CHECK_MSDU_COUNT(msdu_count);
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+		mem_map_table = qdf_mem_map_table_alloc(msdu_count);
+		if (!mem_map_table) {
+			qdf_print("%s: Failed to allocate memory for mem map table\n",
+				  __func__);
+			return 0;
+		}
+		mem_info = mem_map_table;
+	}
 	ol_rx_update_histogram_stats(msdu_count, frag_ind, offload_ind);
 	htt_rx_dbg_rxbuf_httrxind(pdev, msdu_count);
-
 
 	msg_word =
 		(uint32_t *) (rx_ind_data + HTT_RX_IN_ORD_PADDR_IND_HDR_BYTES);
@@ -2357,7 +2393,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		ol_rx_offload_paddr_deliver_ind_handler(pdev, msdu_count,
 							msg_word);
 		*head_msdu = *tail_msdu = NULL;
-		return 0;
+		ret = 0;
+		goto free_mem_map_table;
 	}
 
 	paddr = htt_rx_in_ord_paddr_get(msg_word);
@@ -2367,10 +2404,18 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		qdf_print("%s: netbuf pop failed!\n", __func__);
 		*tail_msdu = NULL;
 		pdev->rx_ring.pop_fail_cnt++;
-		return 0;
+		ret = 0;
+		goto free_mem_map_table;
 	}
 
 	while (msdu_count > 0) {
+		if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+			qdf_update_mem_map_table(pdev->osdev, mem_info,
+						 QDF_NBUF_CB_PADDR(msdu),
+						 HTT_RX_BUF_SIZE);
+			mem_info++;
+			num_unmapped++;
+		}
 
 		/*
 		 * Set the netbuf length to be the entire buffer length
@@ -2446,11 +2491,12 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				/* if this is the only msdu */
 				if (!prev) {
 					*head_msdu = *tail_msdu = NULL;
-					return 0;
+					ret = 0;
+					goto free_mem_map_table;
 				}
 				*tail_msdu = prev;
 				qdf_nbuf_set_next(prev, NULL);
-				return 1;
+				goto free_mem_map_table;
 			} else { /* if this is not the last msdu */
 				/* get the next msdu */
 				msg_word += HTT_RX_IN_ORD_PADDR_IND_MSDU_DWORDS;
@@ -2461,7 +2507,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 								 __func__);
 					*tail_msdu = NULL;
 					pdev->rx_ring.pop_fail_cnt++;
-					return 0;
+					ret = 0;
+					goto free_mem_map_table;
 				}
 
 				/* if this is not the first msdu, update the
@@ -2493,7 +2540,8 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					  __func__);
 				*tail_msdu = NULL;
 				pdev->rx_ring.pop_fail_cnt++;
-				return 0;
+				ret = 0;
+				goto free_mem_map_table;
 			}
 			qdf_nbuf_set_next(msdu, next);
 			prev = msdu;
@@ -2504,7 +2552,14 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		}
 	}
 
-	return 1;
+free_mem_map_table:
+	if (qdf_mem_smmu_s1_enabled(pdev->osdev) && pdev->uc_map_reqd) {
+		if (num_unmapped)
+			cds_smmu_map_unmap(false, num_unmapped,
+					   mem_map_table);
+		qdf_mem_free(mem_map_table);
+	}
+	return ret;
 }
 #endif
 
@@ -3812,46 +3867,52 @@ static int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 	 *
 	 * RX indication ring size, by bytes
 	 */
-	pdev->ipa_uc_rx_rsc.rx2_ind_ring_size =
-		rx_ind_ring_elements * sizeof(target_paddr_t);
-	pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr =
-		qdf_mem_alloc_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
-			&pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr);
-	if (!pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
-		qdf_print("%s: RX IND RING alloc fail", __func__);
-		return -ENOBUFS;
+	pdev->ipa_uc_rx_rsc.rx2_ind_ring =
+		qdf_mem_shared_mem_alloc(pdev->osdev,
+					 rx_ind_ring_elements *
+					 sizeof(qdf_dma_addr_t));
+	if (!pdev->ipa_uc_rx_rsc.rx2_ind_ring) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Unable to allocate memory for IPA rx2 ind ring",
+			  __func__);
+		return 1;
 	}
 
-	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
-		     pdev->ipa_uc_rx_rsc.rx2_ind_ring_size);
-
-	/* Allocate RX process done index */
-	pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr =
-		qdf_mem_alloc_consistent(
-			pdev->osdev, pdev->osdev->dev, 4,
-			&pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr);
-	if (!pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
-		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx2_ind_ring_base),
-						memctx));
-		return -ENOBUFS;
+	pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx =
+		qdf_mem_shared_mem_alloc(pdev->osdev, 4);
+	if (!pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Unable to allocate memory for IPA rx proc done index",
+			  __func__);
+		qdf_mem_shared_mem_free(pdev->osdev,
+					pdev->ipa_uc_rx_rsc.rx2_ind_ring);
+		return 1;
 	}
-	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr, 4);
+
 	return 0;
+}
+
+/**
+ * htt_rx_ipa_uc_free_wdi2_rsc() - Free WDI2.0 resources
+ * @pdev: htt context
+ *
+ * Return: None
+ */
+static void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
+{
+	qdf_mem_shared_mem_free(pdev->osdev, pdev->ipa_uc_rx_rsc.rx2_ind_ring);
+	qdf_mem_shared_mem_free(pdev->osdev,
+				pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx);
 }
 #else
 static int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 			 unsigned int rx_ind_ring_elements)
 {
 	return 0;
+}
+
+static void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
+{
 }
 #endif
 
@@ -3874,111 +3935,82 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	 *   2bytes: VDEV ID
 	 *   2bytes: length
 	 */
-	pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr =
-		qdf_mem_alloc_consistent(
-			pdev->osdev,
-			pdev->osdev->dev,
-			rx_ind_ring_elements *
-			sizeof(struct ipa_uc_rx_ring_elem_t),
-			&pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr);
-	if (!pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr) {
-		qdf_print("%s: RX IND RING alloc fail", __func__);
-		return -ENOBUFS;
+	pdev->ipa_uc_rx_rsc.rx_ind_ring =
+		qdf_mem_shared_mem_alloc(pdev->osdev,
+					 rx_ind_ring_elements *
+					 sizeof(struct ipa_uc_rx_ring_elem_t));
+	if (!pdev->ipa_uc_rx_rsc.rx_ind_ring) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Unable to allocate memory for IPA rx ind ring",
+			  __func__);
+		return 1;
 	}
 
-	/* RX indication ring size, by bytes */
-	pdev->ipa_uc_rx_rsc.rx_ind_ring_size =
-		rx_ind_ring_elements * sizeof(struct ipa_uc_rx_ring_elem_t);
-	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
-		pdev->ipa_uc_rx_rsc.rx_ind_ring_size);
-
-	/* Allocate RX process done index */
-	pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr =
-		qdf_mem_alloc_consistent(
-			pdev->osdev, pdev->osdev->dev, 4,
-			&pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr);
-	if (!pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
-		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
-			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
-			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ind_ring_base),
-						memctx));
-		return -ENOBUFS;
+	pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx =
+		qdf_mem_shared_mem_alloc(pdev->osdev, 4);
+	if (!pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx) {
+		QDF_TRACE(QDF_MODULE_ID_HTT, QDF_TRACE_LEVEL_ERROR,
+			  "%s: Unable to allocate memory for IPA rx proc done index",
+			  __func__);
+		qdf_mem_shared_mem_free(pdev->osdev,
+					pdev->ipa_uc_rx_rsc.rx_ind_ring);
+		return 1;
 	}
-	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr, 4);
 
 	ret = htt_rx_ipa_uc_alloc_wdi2_rsc(pdev, rx_ind_ring_elements);
+	if (ret) {
+		qdf_mem_shared_mem_free(pdev->osdev, pdev->ipa_uc_rx_rsc.rx_ind_ring);
+		qdf_mem_shared_mem_free(pdev->osdev,
+					pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx);
+	}
 	return ret;
 }
 
-#ifdef QCA_WIFI_3_0
-/**
- * htt_rx_ipa_uc_free_wdi2_rsc() - Free WDI2.0 resources
- * @pdev: htt context
- *
- * Return: None
- */
-static void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
-{
-	if (pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
-			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx2_ind_ring_base),
-						memctx));
-	}
-
-	if (pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			4,
-			pdev->ipa_uc_rx_rsc.
-			rx2_ipa_prc_done_idx.vaddr,
-			pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx2_ipa_prc_done_idx),
-						memctx));
-	}
-}
-#else
-static void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
-{
-}
-#endif
-
 int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
-	if (pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr) {
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
-			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
-			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ind_ring_base),
-						memctx));
-	}
-
-	if (pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
-		qdf_mem_free_consistent(
-			pdev->osdev, pdev->osdev->dev,
-			4,
-			pdev->ipa_uc_rx_rsc.
-			rx_ipa_prc_done_idx.vaddr,
-			pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx2_ipa_prc_done_idx),
-						memctx));
-	}
+	qdf_mem_shared_mem_free(pdev->osdev, pdev->ipa_uc_rx_rsc.rx_ind_ring);
+	qdf_mem_shared_mem_free(pdev->osdev,
+				pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx);
 
 	htt_rx_ipa_uc_free_wdi2_rsc(pdev);
+	return 0;
+}
+
+int htt_rx_ipa_uc_buf_pool_map(struct htt_pdev_t *pdev)
+{
+	struct htt_rx_hash_entry *hash_entry;
+	struct htt_list_node *list_iter = NULL;
+	qdf_mem_info_t *mem_map_table = NULL, *mem_info = NULL;
+	uint32_t num_alloc = 0;
+	uint32_t i;
+
+	mem_map_table = qdf_mem_map_table_alloc(HTT_RX_RING_SIZE_MAX);
+	if (!mem_map_table) {
+		qdf_print("%s: Failed to allocate memory for mem map table\n",
+			  __func__);
+		return 1;
+	}
+	mem_info = mem_map_table;
+	for (i = 0; i < RX_NUM_HASH_BUCKETS; i++) {
+		list_iter = pdev->rx_ring.hash_table[i]->listhead.next;
+		while (list_iter != &pdev->rx_ring.hash_table[i]->listhead) {
+			hash_entry = (struct htt_rx_hash_entry *)(
+				(char *)list_iter -
+				pdev->rx_ring.listnode_offset);
+			if (hash_entry->netbuf) {
+				qdf_update_mem_map_table(pdev->osdev,
+					mem_info,
+					QDF_NBUF_CB_PADDR(hash_entry->netbuf),
+					HTT_RX_BUF_SIZE);
+				mem_info++;
+				num_alloc++;
+			}
+			list_iter = list_iter->next;
+		}
+	}
+	cds_smmu_map_unmap(true, num_alloc, mem_map_table);
+	qdf_mem_free(mem_map_table);
+
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
