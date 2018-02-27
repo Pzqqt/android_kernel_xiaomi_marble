@@ -14542,11 +14542,16 @@ static QDF_STATUS send_conf_hw_filter_cmd_tlv(wmi_unified_t wmi,
 		  WMITLV_TAG_STRUC_wmi_hw_data_filter_cmd_fixed_param,
 		  WMITLV_GET_STRUCT_TLVLEN(wmi_hw_data_filter_cmd_fixed_param));
 	cmd->vdev_id = req->vdev_id;
-	cmd->enable = req->mode != PMO_HW_FILTER_DISABLED;
-	cmd->hw_filter_bitmap = req->mode;
+	cmd->enable = req->enable;
+	/* Set all modes in case of disable */
+	if (!cmd->enable)
+		cmd->hw_filter_bitmap = ((uint32_t)~0U);
+	else
+		cmd->hw_filter_bitmap = req->mode_bitmap;
 
-	WMI_LOGD("configure hw filter (vdev_id: %d, mode: %d)",
-		 req->vdev_id, req->mode);
+	WMI_LOGD("Send %s hw filter mode: 0x%X for vdev id %d",
+		 req->enable ? "enable" : "disable", req->mode_bitmap,
+		 req->vdev_id);
 
 	status = wmi_unified_cmd_send(wmi, wmi_buf, sizeof(*cmd),
 				      WMI_HW_DATA_FILTER_CMDID);
