@@ -4802,8 +4802,7 @@ QDF_STATUS hdd_stop_adapter(struct hdd_context *hdd_ctx,
 				wlan_hdd_cfg80211_indicate_disconnect(
 					adapter->dev, true,
 					WLAN_REASON_UNSPECIFIED);
-			}
-			else
+			} else
 				qdf_ret_status = sme_roam_disconnect(
 					hdd_ctx->hHal,
 					adapter->session_id,
