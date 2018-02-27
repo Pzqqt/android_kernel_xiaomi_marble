@@ -75,8 +75,8 @@ const struct snd_soc_dapm_route pahu_slim_audio_map[] = {
 	{"SLIM TX7", NULL, "CDC_IF TX7 MUX"},
 	{"SLIM TX8", NULL, "CDC_IF TX8 MUX"},
 	{"SLIM TX9", NULL, "CDC_IF TX9 MUX"},
-	{"SLIM TX10", NULL, "CDC_IF TX10 MUX"},
-	{"SLIM TX11", NULL, "CDC_IF TX11 MUX"},
+	{"SLIM TX10", NULL, "CDC_IF TX10 MUX2"},
+	{"SLIM TX11", NULL, "CDC_IF TX11 MUX2"},
 	{"SLIM TX13", NULL, "CDC_IF TX13 MUX"},
 
 	{"SLIM RX0 MUX", "AIF1_PB", "AIF1 PB"},
@@ -138,7 +138,6 @@ const struct snd_soc_dapm_route pahu_slim_audio_map[] = {
 	{"AIF4_VI Mixer", "SPKR_VI_1", "VIINPUT"},
 	{"AIF4_VI Mixer", "SPKR_VI_2", "VIINPUT"},
 	{"AIF4 VI", NULL, "AIF4_VI Mixer"},
-
 };
 
 const struct snd_soc_dapm_route pahu_audio_map[] = {
@@ -266,7 +265,9 @@ const struct snd_soc_dapm_route pahu_audio_map[] = {
 	{"CDC_IF TX9 MUX", "DEC7_192", "ADC US MUX7"},
 	{"CDC_IF TX10 MUX", "DEC6", "ADC MUX6"},
 	{"CDC_IF TX10 MUX", "DEC6_192", "ADC US MUX6"},
+	{"CDC_IF TX10 MUX2", "TX10_MUX1", "CDC_IF TX10 MUX"},
 
+	{"CDC_IF TX11 MUX2", "TX11_MUX1", "CDC_IF TX11 MUX"},
 	{"CDC_IF TX11 MUX", "DEC_0_5", "CDC_IF TX11 INP1 MUX"},
 	{"CDC_IF TX11 MUX", "DEC_9_12", "CDC_IF TX11 INP1 MUX"},
 	{"CDC_IF TX11 INP1 MUX", "DEC0", "ADC MUX0"},
@@ -859,6 +860,18 @@ const struct snd_soc_dapm_route pahu_audio_map[] = {
 
 	{"ASRC3 MUX", "ASRC_IN_SPKR2", "RX INT8_2 INTERP"},
 	{"RX INT8 SEC MIX", NULL, "ASRC3 MUX"},
+
+	/* SLIMBUS-I2S Bridge interface */
+	{"I2S TX1_0 MUX", "AIF4_PB", "AIF4 PB"},
+	{"I2S TX1_1 MUX", "AIF4_PB", "AIF4 PB"},
+	{"I2S TX1 MIXER", NULL, "I2S TX1_0 MUX"},
+	{"I2S TX1 MIXER", NULL, "I2S TX1_1 MUX"},
+	{"I2S1 CAP", NULL, "I2S TX1 MIXER"},
+
+	{"CDC_IF TX10 MUX2", "I2SRX1_0_BRDG", "CDC_IF RX2 MUX"},
+	{"CDC_IF TX11 MUX2", "I2SRX1_1_BRDG", "CDC_IF RX3 MUX"},
+	{"CDC_IF RX2 MUX", "I2SRX1_0", "I2S1 PB"},
+	{"CDC_IF RX3 MUX", "I2SRX1_1", "I2S1 PB"},
 };
 
 #endif
