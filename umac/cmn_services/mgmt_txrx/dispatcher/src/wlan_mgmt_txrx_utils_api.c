@@ -398,7 +398,7 @@ QDF_STATUS wlan_mgmt_txrx_mgmt_frame_tx(struct wlan_objmgr_peer *peer,
 	if (!pdev) {
 		mgmt_txrx_err("pdev unavailable for peer %pK vdev %pK",
 				peer, vdev);
-		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_SB_ID);
+		wlan_objmgr_peer_release_ref(peer, WLAN_MGMT_NB_ID);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
@@ -762,7 +762,7 @@ QDF_STATUS wlan_mgmt_txrx_pdev_close(struct wlan_objmgr_pdev *pdev)
 			mgmt_desc = &mgmt_txrx_pdev_ctx->mgmt_desc_pool.pool[index];
 			qdf_nbuf_free(mgmt_desc->nbuf);
 			wlan_objmgr_peer_release_ref(mgmt_desc->peer,
-				WLAN_MGMT_SB_ID);
+				WLAN_MGMT_NB_ID);
 			wlan_mgmt_txrx_desc_put(mgmt_txrx_pdev_ctx, index);
 		}
 	}
