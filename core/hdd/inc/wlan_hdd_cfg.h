@@ -8267,6 +8267,29 @@ enum hdd_link_speed_rpt_type {
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_DEFAULT (100)
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MIN     (0)
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MAX     (10000)
+
+/*
+ * <ini>
+ * gEnableTcpLimitOutput - Control to enable TCP limit output byte
+ * @Min: 0
+ * @Max: 1
+ * @Default: 1
+ *
+ * This ini is used to enable dynamic configuration of TCP limit output bytes
+ * tcp_limit_output_bytes param. Enabling this will let driver post message to
+ * cnss-daemon, accordingly cnss-daemon will modify the tcp_limit_output_bytes.
+ *
+ * Supported Feature: Tcp limit output bytes
+ *
+ * Usage: Internal
+ *
+ * </ini>
+ */
+#define CFG_ENABLE_TCP_LIMIT_OUTPUT                      "gTcpLimitOutputEnable"
+#define CFG_ENABLE_TCP_LIMIT_OUTPUT_DEFAULT              (1)
+#define CFG_ENABLE_TCP_LIMIT_OUTPUT_MIN                  (0)
+#define CFG_ENABLE_TCP_LIMIT_OUTPUT_MAX                  (1)
+
 /*
  * <ini>
  * gTcpAdvWinScaleEnable - Control to enable  TCP adv window scaling
@@ -14883,6 +14906,7 @@ struct hdd_config {
 	uint32_t busBandwidthLowThreshold;
 	uint32_t busBandwidthComputeInterval;
 	uint32_t enable_tcp_delack;
+	bool     enable_tcp_limit_output;
 	uint32_t enable_tcp_adv_win_scale;
 	uint32_t tcpDelackThresholdHigh;
 	uint32_t tcpDelackThresholdLow;

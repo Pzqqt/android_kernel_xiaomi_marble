@@ -6931,7 +6931,8 @@ static void hdd_pld_request_bus_bandwidth(struct hdd_context *hdd_ctx,
 	else
 		next_tx_level = WLAN_SVC_TP_LOW;
 
-	if (hdd_ctx->cur_tx_level != next_tx_level) {
+	if ((hdd_ctx->config->enable_tcp_limit_output) &&
+	    (hdd_ctx->cur_tx_level != next_tx_level)) {
 		hdd_debug("change TCP TX trigger level %d, average_tx: %llu",
 				next_tx_level, temp_tx);
 		hdd_ctx->cur_tx_level = next_tx_level;
