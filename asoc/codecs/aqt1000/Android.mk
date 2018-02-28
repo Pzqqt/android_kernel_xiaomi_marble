@@ -2,7 +2,7 @@
 
 AUDIO_CHIPSET := audio
 # Build/Package only in case of supported target
-ifeq ($(call is-board-platform-in-list,sdm670 msmnile),true)
+ifeq ($(call is-board-platform-in-list,sdm670),true)
 
 LOCAL_PATH := $(call my-dir)
 
