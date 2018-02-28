@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2017 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2017-2018 The Linux Foundation. All rights reserved.
  *
  * Permission to use, copy, modify, and/or distribute this software for
  * any purpose with or without fee is hereby granted, provided that the
@@ -188,16 +188,14 @@ static inline enum QDF_OPMODE pmo_core_get_vdev_op_mode(
  *
  * Return: None
  */
-static inline
-void pmo_core_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
-	void *dp_hdl)
+static inline void
+pmo_core_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc, void *dp_hdl)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	psoc_ctx->dp_hdl = dp_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->dp_hdl = dp_hdl;
+	}
 }
 
 /**
@@ -206,16 +204,14 @@ void pmo_core_psoc_update_dp_handle(struct wlan_objmgr_psoc *psoc,
  *
  * Return: psoc data path handle
  */
-static inline
-void *pmo_core_psoc_get_dp_handle(struct wlan_objmgr_psoc *psoc)
+static inline void *pmo_core_psoc_get_dp_handle(struct wlan_objmgr_psoc *psoc)
 {
 	void *dp_hdl;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	dp_hdl = psoc_ctx->dp_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		dp_hdl = psoc_ctx->dp_hdl;
+	}
 
 	return dp_hdl;
 }
@@ -266,16 +262,14 @@ void *pmo_core_vdev_get_dp_handle(struct wlan_objmgr_vdev *vdev)
  *
  * Return: None
  */
-static inline
-void pmo_core_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
-	void *htc_hdl)
+static inline void
+pmo_core_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc, void *htc_hdl)
 {
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	psoc_ctx->htc_hdl = htc_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		psoc_ctx->htc_hdl = htc_hdl;
+	}
 }
 
 /**
@@ -284,16 +278,14 @@ void pmo_core_psoc_update_htc_handle(struct wlan_objmgr_psoc *psoc,
  *
  * Return: psoc htc layer handle
  */
-static inline
-void *pmo_core_psoc_get_htc_handle(struct wlan_objmgr_psoc *psoc)
+static inline void *pmo_core_psoc_get_htc_handle(struct wlan_objmgr_psoc *psoc)
 {
 	void *htc_hdl;
 	struct pmo_psoc_priv_obj *psoc_ctx;
 
-	psoc_ctx = pmo_psoc_get_priv(psoc);
-	qdf_spin_lock_bh(&psoc_ctx->lock);
-	htc_hdl = psoc_ctx->htc_hdl;
-	qdf_spin_unlock_bh(&psoc_ctx->lock);
+	pmo_psoc_with_ctx(psoc, psoc_ctx) {
+		htc_hdl = psoc_ctx->htc_hdl;
+	}
 
 	return htc_hdl;
 }
